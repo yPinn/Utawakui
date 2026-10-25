@@ -43,6 +43,27 @@ function client(overrides = {}) {
 }
 
 describe('structured LRCLIB acquisition flow', () => {
+  it('limits automatic search to exact plus one structured request without title-only recovery', async () => {
+    const provider = client();
+    await searchLrclibCandidates(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        duration: 243,
+      },
+      {
+        client: provider,
+        automatic: true,
+      },
+    );
+    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.search).toHaveBeenCalledOnce();
+    expect(provider.search.mock.calls[0][1]).toMatchObject({
+      priority: 'background',
+    });
+    expect(provider.searchBroad).not.toHaveBeenCalled();
+  });
+
   it('searches exact then one structured request and returns grouped candidates', async () => {
     const provider = client({
       getExact: vi.fn().mockResolvedValue({ status: 'ok', record: record() }),

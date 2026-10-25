@@ -53,7 +53,7 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 
 - Provider 匯入與 metadata backfill 在音訊提交成功後於背景執行；歌詞 miss、gate 關閉或失敗都不延後或回滾匯入。
 - 只有 LRCLIB 與 NetEase 參與，只接受 `exact`；`strong`／`related` 即使是 T2 也不自動保存。已有任何來源時，新的 T1 不算升級，只有完整 T2 可新增為自動偏好；已有完整 T2 時不發請求。
-- 佇列同時最多兩首，每曲 single-flight，以 main 推導的 track id 為 job key。保存前重讀 manifest 與 timing sidecar，並在 refetch 後、同步寫入前再檢查 generation、實際音訊與完整 T2 狀態；已刪除曲目的舊工作不得重建目錄。
+- 背景佇列預設一次一首，每曲 single-flight，以 main 推導的 track id 為 job key。同曲庫、同曲目 metadata 的背景嘗試完成後五分鐘內不重排，最多保留 256 筆 process-local 記憶；刪除／重新匯入會失效，不阻擋手動搜尋。保存前重讀 manifest 與 timing sidecar，並在 refetch 後、同步寫入前再檢查 generation、實際音訊與完整 T2 狀態；已刪除曲目的舊工作不得重建目錄。
 - `lyrics/lyrics.json` 可存 `{ filename, origin }` 偏好，`origin` 為 `user` 或 `automatic`；使用者選擇不被自動偏好覆寫，偏好來源刪除時一併清除。Renderer 選擇順序：目前有效的畫面選擇 → 持久化偏好 → 語言推測 → 第一筆來源。
 - Timing metric 只記 provider、cache hit、duration、候選數與 status，不記曲名、歌手或歌詞。
 
@@ -71,6 +71,7 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 ### LRCLIB
 
 - 固定 `https://lrclib.net`，User-Agent 含 `Utawakui/<version>` 與專案 URL。單一 main scheduler 串行所有 LRCLIB 流量，請求間隔 ≥ 250 ms，有 timeout 與 body 上限。
+- 背景請求起點至少距前一請求 1000 ms，尚未開始的背景請求讓位給互動請求；不取消已發出的請求。自動取得最多一次 exact 與一次 structured search，不進入跨語別名／title-only recovery；成功候選保存仍另做一次 refetch。互動搜尋維持原本較完整的查詢範圍，兩者的搜尋快取與 in-flight key 分開，背景精簡結果不冒充完整手動結果。這是 App 的請求預算，不代表來源官方配額。
 - 查詢：有可信 title／artist 時先做一次 `/api/get` 簽章查詢（自動取得不直接保存，仍交給跨來源比較）；再做一次 structured `/api/search`（不與 `q` 混用）；結果弱或空時才允許使用者明確「擴大搜尋」一次。
 - Record 正規化為完整欄位（id、name、trackName、artistName、albumName、duration、instrumental、plainLyrics、syncedLyrics、lyricsfile），缺值存 `null`；無效 record 在 search 中略過並計數，在 `/api/get/:id` 直接拒絕。
 - Lyricsfile 只解析 1.0，受 byte／深度／節點／行／字上限；拒絕多文件、重複 key、alias、自訂 tag 與不一致結構。未知版本只保存原文；`offset_ms` 只作 provenance；缺少的 end 保持 `null`；重疊不被攤平。

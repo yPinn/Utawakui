@@ -13,6 +13,7 @@ HTTP 429／5xx 會記錄失敗；NetEase JSON code 與 Musixmatch API status cod
 無有效提示時，429 從 30 秒、5xx 從 5 秒倍增，fallback 最多 5 分鐘。
 
 冷卻中的 request 不送網路，提供僅含 HTTP status 的空 response，交給各 client 原有的 bounded error mapping，避免更改 IPC error 格式。
+LRCLIB 的 Main 診斷另保留固定分類：`stage` 為 `network`／`cooldown`，`status` 為 `background`／`interactive`，並保留實際或冷卻來源的 HTTP status；冷卻攔截不視為另一筆送到網站的請求。此標記由本機 guard 的 WeakSet 判定，不信任回應 headers 提供的分類。
 caller 已取消時保留 abort 行為。不同 origin 的狀態互不影響；同 transport／origin 的 client 實例共用狀態。
 新的成功 response 只在沒有較新失敗的情況下清除連續失敗計數；較早發出的晚回成功不能解除新的冷卻。
 狀態為 process-local，不寫磁碟或新增 telemetry，App 重啟後重新建立。

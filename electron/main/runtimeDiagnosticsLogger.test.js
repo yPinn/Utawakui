@@ -134,6 +134,34 @@ describe('runtime diagnostics logger', () => {
     });
   });
 
+  it('keeps categorical transport and trigger evidence without accepting arbitrary values', () => {
+    const service = { record: vi.fn() };
+    const logger = createRuntimeDiagnosticsLogger({
+      service,
+      consoleTarget: {},
+      cooldownMs: 0,
+    });
+    logger.warn('[lyrics] LRCLIB search failed', new Error('unavailable'), {
+      stage: 'cooldown',
+      status: 'background',
+      httpStatus: 503,
+      query: 'private',
+    });
+    expect(service.record.mock.calls[0][0].context).toEqual({
+      stage: 'cooldown',
+      status: 'background',
+      httpStatus: 503,
+      retryable: true,
+    });
+    logger.warn('[lyrics] LRCLIB search failed', new Error('unavailable'), {
+      stage: 'private-url',
+      status: 'private-title',
+    });
+    expect(service.record.mock.calls[1][0].context).toEqual({
+      retryable: true,
+    });
+  });
+
   it('maps automatic music analysis failures to a bounded audio event', () => {
     const failure = new Error('private model path failed');
     const service = { record: vi.fn(() => ({ ok: true })) };

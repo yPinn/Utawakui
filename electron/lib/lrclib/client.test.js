@@ -51,6 +51,29 @@ describe('parseRetryAfterMs', () => {
 });
 
 describe('createLrclibClient', () => {
+  it('distinguishes an actual outage from local cooldown and forwards background scheduling', async () => {
+    const fetch = vi.fn(async () => new Response(null, { status: 503 }));
+    const scheduler = immediateScheduler();
+    const client = createLrclibClient({ fetch, scheduler });
+    await expect(
+      client.search({ trackName: 'Song' }, { priority: 'background' }),
+    ).resolves.toMatchObject({
+      reason: 'service-unavailable',
+      httpStatus: 503,
+      requestSource: 'network',
+    });
+    await expect(client.search({ trackName: 'Other' })).resolves.toMatchObject({
+      reason: 'service-unavailable',
+      httpStatus: 503,
+      requestSource: 'cooldown',
+    });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(scheduler.schedule.mock.calls[0][1]).toMatchObject({
+      priority: 'background',
+      minIntervalMs: 1000,
+    });
+  });
+
   it('fetches and normalizes a complete record by id through the scheduler', async () => {
     const fetch = vi.fn().mockResolvedValue(
       new Response(JSON.stringify(completeRecord()), {
@@ -214,6 +237,8 @@ describe('createLrclibClient', () => {
       await expect(client.getById(42)).resolves.toEqual({
         status: 'error',
         reason: 'service-unavailable',
+        httpStatus: 503,
+        requestSource: 'network',
       });
       expect(fetch).toHaveBeenCalledTimes(2);
       expect(scheduler.deferFor).toHaveBeenCalledWith(2000);
@@ -236,6 +261,7 @@ describe('createLrclibClient', () => {
       status: 'error',
       reason: 'http-error',
       httpStatus: 418,
+      requestSource: 'network',
     });
     await expect(
       client.search({ trackName: 'Song', artistName: 'Artist' }),

@@ -309,7 +309,12 @@ describe('record and offline replay through production clients', () => {
       )
       .mockResolvedValueOnce(new Response(JSON.stringify(record())));
     const recorder = createContractRecorder('lrclib', live);
-    const result = { status: 'error', reason: 'rate-limited' };
+    const result = {
+      status: 'error',
+      reason: 'rate-limited',
+      httpStatus: 429,
+      requestSource: 'network',
+    };
     await expect(
       createLrclibClient({ fetch: recorder.fetch, scheduler }).getExact(query),
     ).resolves.toEqual(result);

@@ -6,6 +6,7 @@ const { sharedLrclibRequestScheduler } = require('./scheduler.js');
 const {
   createProviderRequestGuard,
   parseRetryAfterMs,
+  isProviderCooldownResponse,
 } = require('../providerServiceCooldown.js');
 
 const LRCLIB_API_BASE_URL = 'https://lrclib.net';
@@ -172,7 +173,12 @@ function createLrclibClient(options = {}) {
             if (retryAllowed) scheduler.deferFor(delayMs);
             return fetched;
           },
-          { signal: requestOptions.signal || acquisitionSignal },
+          {
+            signal: requestOptions.signal || acquisitionSignal,
+            ...(requestOptions.priority === 'background'
+              ? { priority: 'background', minIntervalMs: 1000 }
+              : {}),
+          },
         );
       } catch (error) {
         return classifyTransportFailure(error);
@@ -185,16 +191,26 @@ function createLrclibClient(options = {}) {
 
       if (!response.ok) {
         await response.body?.cancel().catch(() => undefined);
+        const failureContext = {
+          httpStatus: response.status,
+          requestSource: isProviderCooldownResponse(response)
+            ? 'cooldown'
+            : 'network',
+        };
         if (response.status === 429) {
-          return { status: 'error', reason: 'rate-limited' };
+          return { status: 'error', reason: 'rate-limited', ...failureContext };
         }
         if (response.status === 503) {
-          return { status: 'error', reason: 'service-unavailable' };
+          return {
+            status: 'error',
+            reason: 'service-unavailable',
+            ...failureContext,
+          };
         }
         return {
           status: 'error',
           reason: 'http-error',
-          httpStatus: response.status,
+          ...failureContext,
         };
       }
 

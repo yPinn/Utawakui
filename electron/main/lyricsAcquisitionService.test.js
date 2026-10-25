@@ -118,6 +118,57 @@ function client(overrides = {}) {
 }
 
 describe('createLyricsAcquisitionService', () => {
+  it('does not reuse a reduced automatic search as a complete interactive search', async () => {
+    const provider = client({
+      getExact: vi
+        .fn()
+        .mockResolvedValue({ status: 'unavailable', reason: 'not-found' }),
+      search: vi.fn().mockResolvedValue({
+        status: 'ok',
+        records: [],
+        invalidRecordCount: 0,
+      }),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider: unavailableNeteaseProvider(),
+    });
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.search).toHaveBeenCalledOnce();
+    await service.searchCandidates(track);
+    expect(provider.getExact).toHaveBeenCalledTimes(2);
+    expect(provider.search.mock.calls.length).toBeGreaterThan(1);
+  });
+  it('deduplicates recent automatic failures without blocking interactive searches or track invalidation', async () => {
+    const provider = client({
+      getExact: vi
+        .fn()
+        .mockResolvedValue({ status: 'error', reason: 'service-unavailable' }),
+    });
+    let time = 1000;
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider: unavailableNeteaseProvider(),
+      now: () => time,
+      logger: { warn: vi.fn() },
+    });
+    await service.acquireBestIfNeeded(track, trackDir);
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.getExact).toHaveBeenCalledOnce();
+    await service.searchCandidates(track);
+    expect(provider.getExact).toHaveBeenCalledTimes(2);
+    service.invalidateAutomaticAcquisition(track.id);
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.getExact).toHaveBeenCalledTimes(3);
+    time += 300_001;
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.getExact).toHaveBeenCalledTimes(4);
+  });
+
   let rootDir;
   let trackDir;
 
@@ -478,7 +529,12 @@ describe('createLyricsAcquisitionService', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       '[lyrics] LRCLIB search failed',
       expect.any(Error),
-      { reason: 'http-error', httpStatus: 503, retryable: true },
+      {
+        reason: 'http-error',
+        httpStatus: 503,
+        retryable: true,
+        status: 'interactive',
+      },
     );
     expect(logger.error).not.toHaveBeenCalled();
     expect(JSON.stringify(logger.warn.mock.calls)).not.toContain('Song');
@@ -505,7 +561,7 @@ describe('createLyricsAcquisitionService', () => {
       expect.objectContaining({
         message: 'LRCLIB search failed: exception',
       }),
-      { reason: 'exception', retryable: true },
+      { reason: 'exception', retryable: true, status: 'interactive' },
     );
     expect(JSON.stringify(logger.error.mock.calls)).not.toContain(
       failure.message,
@@ -542,7 +598,7 @@ describe('createLyricsAcquisitionService', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       '[lyrics] LRCLIB save failed',
       expect.any(Error),
-      { reason: 'service-unavailable', retryable: true },
+      { reason: 'service-unavailable', retryable: true, status: 'interactive' },
     );
   });
 

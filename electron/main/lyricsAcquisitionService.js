@@ -53,7 +53,9 @@ const NON_RETRYABLE_REASONS = new Set([
 ]);
 const DEFAULT_CANDIDATE_CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHED_CANDIDATE_SEARCHES = 32;
-const DEFAULT_AUTOMATIC_CONCURRENCY = 2;
+const DEFAULT_AUTOMATIC_CONCURRENCY = 1;
+const AUTOMATIC_ATTEMPT_COOLDOWN_MS = 5 * 60 * 1000;
+const MAX_RECENT_AUTOMATIC_ATTEMPTS = 256;
 const MAX_AUTOMATIC_CONCURRENCY = 4;
 const MAX_AUTOMATIC_TRACK_KEY_LENGTH = 128;
 
@@ -76,6 +78,7 @@ function candidateSearchKey(providerId, track, options) {
     options?.query?.title ?? '',
     options?.query?.artist ?? '',
     options?.mode ?? 'structured',
+    options?.automatic === true,
   ]);
 }
 
@@ -127,6 +130,7 @@ function createLyricsAcquisitionService({
   const automaticAcquisitionCounts = new Map();
   const automaticGenerationByTrackKey = new Map();
   const automaticQueue = [];
+  const recentAutomaticAttempts = new Map();
   const automaticConcurrencyLimit =
     Number.isSafeInteger(automaticConcurrency) && automaticConcurrency > 0
       ? Math.min(automaticConcurrency, MAX_AUTOMATIC_CONCURRENCY)
@@ -201,7 +205,7 @@ function createLyricsAcquisitionService({
     }
   }
 
-  async function observeProviderOperation(operation, start) {
+  async function observeProviderOperation(operation, start, options = {}) {
     try {
       const result = await start();
       if (result?.status === 'error' && result.reason !== 'busy') {
@@ -211,6 +215,10 @@ function createLyricsAcquisitionService({
             ? { httpStatus: result.httpStatus }
             : {}),
           retryable: isRetryableFailure(result),
+          status: options.automatic ? 'background' : 'interactive',
+          ...(['network', 'cooldown'].includes(result.requestSource)
+            ? { stage: result.requestSource }
+            : {}),
         });
       }
       return result;
@@ -222,6 +230,7 @@ function createLyricsAcquisitionService({
         {
           reason: 'exception',
           retryable: true,
+          status: options.automatic ? 'background' : 'interactive',
         },
       );
       throw error;
@@ -285,26 +294,35 @@ function createLyricsAcquisitionService({
 
   function startProviderCandidateSearch(providerId, track, options, signal) {
     if (providerId === 'lrclib') {
-      return observeProviderOperation('search', () =>
-        searchLrclibCandidates(track, {
-          ...options,
-          client,
-          signal,
-          includeTimelineEvidence: true,
-        }),
+      return observeProviderOperation(
+        'search',
+        () =>
+          searchLrclibCandidates(track, {
+            ...options,
+            client,
+            signal,
+            includeTimelineEvidence: true,
+          }),
+        options,
       );
     }
     if (providerId === 'betterlyrics') {
-      return observeProviderOperation('betterlyrics-search', () =>
-        betterLyricsProvider.searchCandidates(track, { ...options, signal }),
+      return observeProviderOperation(
+        'betterlyrics-search',
+        () =>
+          betterLyricsProvider.searchCandidates(track, { ...options, signal }),
+        options,
       );
     }
-    return observeProviderOperation('netease-search', () =>
-      neteaseProvider.searchCandidates(track, {
-        ...options,
-        signal,
-        includeTimelineEvidence: true,
-      }),
+    return observeProviderOperation(
+      'netease-search',
+      () =>
+        neteaseProvider.searchCandidates(track, {
+          ...options,
+          signal,
+          includeTimelineEvidence: true,
+        }),
+      options,
     );
   }
 
@@ -440,11 +458,17 @@ function createLyricsAcquisitionService({
     if (candidateSavesInFlight.has(saveKey)) {
       return { provider: 'lrclib', status: 'error', reason: 'busy' };
     }
-    const operation = observeProviderOperation('save', () =>
-      saveLrclibCandidate({
-        ...options,
-        fetchRecord: (recordId) => fetchLrclibRecord(recordId, { client }),
-      }),
+    const operation = observeProviderOperation(
+      'save',
+      () =>
+        saveLrclibCandidate({
+          ...options,
+          fetchRecord: (recordId) =>
+            options.automatic
+              ? client.getById(recordId, { priority: 'background' })
+              : fetchLrclibRecord(recordId, { client }),
+        }),
+      options,
     );
     candidateSavesInFlight.set(saveKey, operation);
     try {
@@ -472,8 +496,10 @@ function createLyricsAcquisitionService({
     }
     const provider =
       providerId === 'betterlyrics' ? betterLyricsProvider : neteaseProvider;
-    const operation = observeProviderOperation(`${providerId}-save`, () =>
-      provider.saveCandidate(options),
+    const operation = observeProviderOperation(
+      `${providerId}-save`,
+      () => provider.saveCandidate(options),
+      options,
     );
     candidateSavesInFlight.set(saveKey, operation);
     try {
@@ -509,7 +535,7 @@ function createLyricsAcquisitionService({
     const providerResults = await searchProviderSet(
       AUTOMATIC_LYRICS_PROVIDER_IDS,
       track,
-      {},
+      { automatic: true },
       { cancelSuperseded: false },
     );
     const aggregate = aggregateLyricsProviderResults(track, providerResults);
@@ -538,6 +564,7 @@ function createLyricsAcquisitionService({
       trackDir,
       candidateId: candidate.id,
       expectedFingerprint: candidate.previewFingerprint,
+      automatic: true,
       validateCommit: () =>
         automaticCommitDenial(key, generation, track, trackDir, candidate),
     });
@@ -572,24 +599,47 @@ function createLyricsAcquisitionService({
     const generation = automaticGeneration(key);
     const existing = automaticAcquisitionsInFlight.get(key);
     if (existing?.generation === generation) return existing.operation;
+    const attemptKey = JSON.stringify([
+      trackDir,
+      candidateSearchKey('all', track, {}),
+    ]);
+    const recent = recentAutomaticAttempts.get(attemptKey);
+    if (recent && now() - recent.at < AUTOMATIC_ATTEMPT_COOLDOWN_MS) {
+      return Promise.resolve({ status: 'skipped', reason: 'recent-attempt' });
+    }
     automaticAcquisitionCounts.set(
       key,
       (automaticAcquisitionCounts.get(key) || 0) + 1,
     );
     const operation = enqueueAutomatic(() =>
       runAutomaticAcquisition(track, trackDir, key, generation),
-    ).finally(() => {
-      if (automaticAcquisitionsInFlight.get(key)?.operation === operation) {
-        automaticAcquisitionsInFlight.delete(key);
-      }
-      const remaining = (automaticAcquisitionCounts.get(key) || 1) - 1;
-      if (remaining > 0) {
-        automaticAcquisitionCounts.set(key, remaining);
-      } else {
-        automaticAcquisitionCounts.delete(key);
-        automaticGenerationByTrackKey.delete(key);
-      }
-    });
+    )
+      .then((result) => {
+        if (
+          automaticGeneration(key) === generation &&
+          result?.reason !== 'stale-track'
+        ) {
+          if (recentAutomaticAttempts.size >= MAX_RECENT_AUTOMATIC_ATTEMPTS) {
+            recentAutomaticAttempts.delete(
+              recentAutomaticAttempts.keys().next().value,
+            );
+          }
+          recentAutomaticAttempts.set(attemptKey, { at: now(), trackId: key });
+        }
+        return result;
+      })
+      .finally(() => {
+        if (automaticAcquisitionsInFlight.get(key)?.operation === operation) {
+          automaticAcquisitionsInFlight.delete(key);
+        }
+        const remaining = (automaticAcquisitionCounts.get(key) || 1) - 1;
+        if (remaining > 0) {
+          automaticAcquisitionCounts.set(key, remaining);
+        } else {
+          automaticAcquisitionCounts.delete(key);
+          automaticGenerationByTrackKey.delete(key);
+        }
+      });
     automaticAcquisitionsInFlight.set(key, { generation, operation });
     return operation;
   }
@@ -597,6 +647,9 @@ function createLyricsAcquisitionService({
   function invalidateAutomaticAcquisition(trackId) {
     const key = boundedTrackKey(trackId);
     if (!key) return false;
+    for (const [attemptKey, attempt] of recentAutomaticAttempts) {
+      if (attempt.trackId === key) recentAutomaticAttempts.delete(attemptKey);
+    }
     if ((automaticAcquisitionCounts.get(key) || 0) > 0) {
       automaticGenerationByTrackKey.set(key, automaticGeneration(key) + 1);
     }

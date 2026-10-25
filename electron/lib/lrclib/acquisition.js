@@ -45,6 +45,7 @@ function providerFailure(result, extra = {}) {
     status: 'error',
     reason: result.reason,
     ...(result.httpStatus ? { httpStatus: result.httpStatus } : {}),
+    ...(result.requestSource ? { requestSource: result.requestSource } : {}),
     ...extra,
   };
 }
@@ -173,7 +174,13 @@ async function searchLrclibCandidates(track, options = {}) {
     return unavailable('missing-track-title', { candidates: [], groups: null });
   }
   const client = clientForOptions(options);
-  const requestOptions = options.signal ? { signal: options.signal } : null;
+  const requestOptions =
+    options.signal || options.automatic
+      ? {
+          ...(options.signal ? { signal: options.signal } : {}),
+          ...(options.automatic ? { priority: 'background' } : {}),
+        }
+      : null;
 
   const records = [];
   let invalidRecordCount = 0;
@@ -188,7 +195,10 @@ async function searchLrclibCandidates(track, options = {}) {
     }
   }
 
-  for (const query of plan.structuredQueries || [plan.structured]) {
+  const queries = options.automatic
+    ? [plan.structured]
+    : plan.structuredQueries || [plan.structured];
+  for (const query of queries) {
     const structured = requestOptions
       ? await client.search(query, requestOptions)
       : await client.search(query);
@@ -205,7 +215,7 @@ async function searchLrclibCandidates(track, options = {}) {
     invalidRecordCount,
     options.includeTimelineEvidence,
   );
-  if (constrained.groups.best.length === 0) {
+  if (!options.automatic && constrained.groups.best.length === 0) {
     for (const query of plan.recoveryQueries || []) {
       const recovered = requestOptions
         ? await client.search(query, requestOptions)

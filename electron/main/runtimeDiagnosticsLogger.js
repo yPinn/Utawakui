@@ -188,6 +188,12 @@ function normalizeRuntimeContext(value) {
     ...(Number.isInteger(context.httpStatus)
       ? { httpStatus: context.httpStatus }
       : {}),
+    ...(['network', 'cooldown'].includes(context.stage)
+      ? { stage: context.stage }
+      : {}),
+    ...(['background', 'interactive'].includes(context.status)
+      ? { status: context.status }
+      : {}),
     retryable:
       typeof context.retryable === 'boolean' ? context.retryable : true,
   };

@@ -60,14 +60,22 @@ function createProviderRequestScheduler(options = {}) {
     pumping = true;
     try {
       while (queue.length > 0) {
-        const entry = queue.shift();
+        const interactiveIndex = queue.findIndex(
+          (entry) => entry.priority !== 'background',
+        );
+        const [entry] = queue.splice(
+          interactiveIndex < 0 ? 0 : interactiveIndex,
+          1,
+        );
         entry.started = true;
         activeEntry = entry;
         try {
           throwIfAborted(entry.signal);
           const currentTime = now();
           const nextIntervalStart =
-            lastStartedAt === null ? currentTime : lastStartedAt + intervalMs;
+            lastStartedAt === null
+              ? currentTime
+              : lastStartedAt + entry.intervalMs;
           const nextStart = Math.max(
             currentTime,
             nextIntervalStart,
@@ -118,6 +126,10 @@ function createProviderRequestScheduler(options = {}) {
     const entry = {
       operation,
       signal,
+      priority: scheduleOptions.priority,
+      intervalMs: Number.isFinite(scheduleOptions.minIntervalMs)
+        ? Math.max(intervalMs, scheduleOptions.minIntervalMs)
+        : intervalMs,
       resolve: resolveEntry,
       reject: rejectEntry,
       started: false,

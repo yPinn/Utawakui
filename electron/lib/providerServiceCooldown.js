@@ -2,6 +2,7 @@
 
 // A transport's callers share service health, never credentials or response data.
 const transports = new WeakMap();
+const cooldownResponses = new WeakSet();
 const MAX_BACKOFF_MS = 5 * 60 * 1000;
 
 function parseRetryAfterMs(value, now = Date.now()) {
@@ -63,7 +64,9 @@ function createProviderRequestGuard(fetchFn, options = {}) {
     if (state.until > now()) {
       // Preserve each client's existing HTTP classification; never resubmit a
       // POST or wait out a long server deadline in a UI request.
-      return new Response(null, { status: state.status });
+      const response = new Response(null, { status: state.status });
+      cooldownResponses.add(response);
+      return response;
     }
     const revision = state.revision;
     const response = await fetchFn(input, init);
@@ -90,4 +93,12 @@ function createProviderRequestGuard(fetchFn, options = {}) {
   return { fetch: guardedFetch, recordFailure };
 }
 
-module.exports = { createProviderRequestGuard, parseRetryAfterMs };
+function isProviderCooldownResponse(response) {
+  return cooldownResponses.has(response);
+}
+
+module.exports = {
+  createProviderRequestGuard,
+  parseRetryAfterMs,
+  isProviderCooldownResponse,
+};

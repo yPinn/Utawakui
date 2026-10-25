@@ -2,6 +2,39 @@ import { describe, expect, it, vi } from 'vitest';
 import { createProviderRequestScheduler } from './providerRequestScheduler.js';
 
 describe('createProviderRequestScheduler', () => {
+  it('prioritizes interactive requests and slows background starts without overlapping work', async () => {
+    let release;
+    let currentTime = 0;
+    const starts = [];
+    const scheduler = createProviderRequestScheduler({
+      intervalMs: 250,
+      now: () => currentTime,
+      wait: async (ms) => {
+        currentTime += ms;
+      },
+    });
+    const active = scheduler.schedule(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    await vi.waitFor(() => expect(release).toBeTypeOf('function'));
+    const background = scheduler.schedule(
+      () => starts.push(['background', currentTime]),
+      { priority: 'background', minIntervalMs: 1000 },
+    );
+    const manual = scheduler.schedule(() =>
+      starts.push(['interactive', currentTime]),
+    );
+    release();
+    await Promise.all([active, background, manual]);
+    expect(starts).toEqual([
+      ['interactive', 250],
+      ['background', 1250],
+    ]);
+  });
+
   it('serializes operations and enforces a finite interval', async () => {
     let currentTime = 0;
     const wait = vi.fn(async (delayMs) => {

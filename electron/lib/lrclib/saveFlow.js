@@ -17,6 +17,7 @@ function providerFailure(result) {
     status: result.status === 'unavailable' ? 'unavailable' : 'error',
     reason: result.reason,
     ...(result.httpStatus ? { httpStatus: result.httpStatus } : {}),
+    ...(result.requestSource ? { requestSource: result.requestSource } : {}),
   };
 }
 
