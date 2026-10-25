@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-> This inventory is for Utawakui 0.4.0 release preparation. It summarizes
+> This inventory is for Utawakui 0.5.0 release preparation. It summarizes
 > third-party software distributed in the packaged app or used by app-managed
 > feature downloads. It is not legal advice.
 

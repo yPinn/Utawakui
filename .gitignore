@@ -28,3 +28,6 @@ uv-cache/
 # Dev-only update-signing private key (docs/adr/0018-signed-update-manifest.md).
 # Never commit a private key, dev or production.
 tools/update-signing/.local/
+
+# Local Wrangler state for services/feedback-relay (wrangler dev／deploy).
+.wrangler/
