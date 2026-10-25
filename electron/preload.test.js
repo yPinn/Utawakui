@@ -172,6 +172,8 @@ const MAIN_INVOKE_CHANNELS = [
   'lyrics-experimental:estimate',
   'lyrics:get-reading',
   'lyrics:get-track',
+  'lyrics:get-vocal-roles',
+  'lyrics:save-vocal-roles',
   'lyrics:import-file',
   'lyrics:import-text',
   'lyrics:probe-musixmatch',

@@ -446,3 +446,17 @@ describe('packaged dependency boundary', () => {
     expect(trimmed).toEqual([]);
   });
 });
+
+describe('manual vocal role packaging', () => {
+  it('keeps the source-bound store inside the shipped Electron dependency closure', () => {
+    expect(
+      runtimeSources.some(
+        (source) => source.file === 'electron/lib/library/lyricsVocalRoles.js',
+      ),
+    ).toBe(true);
+    expect(
+      typeof require('./electron/lib/library/lyricsVocalRoles.js')
+        .saveTrackVocalRoles,
+    ).toBe('function');
+  });
+});

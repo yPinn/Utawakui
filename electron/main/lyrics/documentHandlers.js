@@ -17,6 +17,10 @@ const { deleteStoredAmllSource } = require('../../lib/amll');
 const { deleteStoredBetterLyricsSource } = require('../../lib/betterlyrics');
 const { deleteStoredLrclibSource } = require('../../lib/lrclib');
 const { deleteStoredNeteaseSource } = require('../../lib/netease');
+const {
+  loadTrackVocalRoles,
+  saveTrackVocalRoles,
+} = require('../../lib/library/lyricsVocalRoles');
 
 function registerLyricsDocumentHandlers({
   ipcMain,
@@ -26,6 +30,31 @@ function registerLyricsDocumentHandlers({
   getMainWindow,
   notifyLibraryUpdated,
 }) {
+  function vocalSource(trackId, filename) {
+    const dir = resolveDownloadDir(getConfig());
+    if (
+      !findTrackRecord(dir, trackId) ||
+      !readTrackLyrics(dir, trackId, filename)
+    )
+      throw new Error('unknown lyrics source');
+    return resolveTrackDir(dir, trackId);
+  }
+  ipcMain.handle(
+    'lyrics:get-vocal-roles',
+    (_event, trackId, filename, documentId) =>
+      loadTrackVocalRoles(vocalSource(trackId, filename), filename, documentId),
+  );
+  ipcMain.handle(
+    'lyrics:save-vocal-roles',
+    (_event, trackId, filename, documentId, revision, assignments) =>
+      saveTrackVocalRoles(
+        vocalSource(trackId, filename),
+        filename,
+        documentId,
+        revision,
+        assignments,
+      ),
+  );
   ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
     const dir = resolveDownloadDir(getConfig());
     const result = readTrackLyrics(dir, trackId, filename);

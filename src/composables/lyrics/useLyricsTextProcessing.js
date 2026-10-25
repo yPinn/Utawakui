@@ -1,12 +1,24 @@
 import { computed, readonly, shallowRef, toValue, watch } from 'vue';
+import { useLyricsVocalRoles } from './useLyricsVocalRoles.js';
 import {
+  lyricsLineVocalRoles,
   preprocessLyricsDocument,
   projectLyricsTextSelection,
 } from '../../../shared/presentation/lyricsTextProcessing.mjs';
 
-export function useLyricsTextProcessing({ document, sourceKey, performers }) {
+export function useLyricsTextProcessing({
+  document,
+  sourceKey,
+  performers,
+  trackId,
+  reportError,
+}) {
+  const vocalRoles = useLyricsVocalRoles({ document, trackId, reportError });
   const overrides = shallowRef(new Map());
-  const options = () => ({ performers: toValue(performers) ?? [] });
+  const options = () => ({
+    performers: toValue(performers) ?? [],
+    assignments: vocalRoles.assignments.value,
+  });
   const analysis = computed(() =>
     preprocessLyricsDocument(toValue(document), options()),
   );
@@ -40,7 +52,11 @@ export function useLyricsTextProcessing({ document, sourceKey, performers }) {
     return true;
   }
   return {
+    vocalRoles,
     candidates: computed(() => analysis.value.outputCandidates),
+    lineRoles: computed(() =>
+      lyricsLineVocalRoles(toValue(document), hiddenLineIds.value, options()),
+    ),
     hiddenLineIds: readonly(hiddenLineIds),
     setHidden,
     restore: () => {

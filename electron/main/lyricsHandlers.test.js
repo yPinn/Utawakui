@@ -90,6 +90,47 @@ describe('lyrics timing IPC', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
+  it('saves and reloads source-bound vocal roles through fixed local IPC', async () => {
+    const { normalizeLyricsDocument } =
+      await import('../../src/utils/lyricsDocument.js');
+    const loaded = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    const document = normalizeLyricsDocument({
+      text: loaded.text,
+      source: loaded.source,
+      timing: loaded.timing,
+      sourceFingerprint: loaded.timing.sourceFingerprint,
+    });
+    const load = ipcMain.handlers.get('lyrics:get-vocal-roles'),
+      save = ipcMain.handlers.get('lyrics:save-vocal-roles');
+    expect(load(null, 'track-a', 'main.lrc', document.documentId).status).toBe(
+      'missing',
+    );
+    const rows = [
+      { lineId: document.lines[0].lineId, role: 'male', scope: 'line' },
+    ];
+    expect(
+      save(null, 'track-a', 'main.lrc', document.documentId, 0, rows)
+        .assignments,
+    ).toEqual(rows);
+    expect(
+      load(null, 'track-a', 'main.lrc', document.documentId).assignments,
+    ).toEqual(rows);
+    expect(() =>
+      save(null, 'unknown', 'main.lrc', document.documentId, 0, rows),
+    ).toThrow();
+    expect(() =>
+      load(null, 'track-a', '../main.lrc', document.documentId),
+    ).toThrow();
+    expect(
+      fs.readFileSync(path.join(trackDir, 'lyrics', 'main.lrc'), 'utf8'),
+    ).toBe(loaded.text);
+    expect(requireFeatureGate).not.toHaveBeenCalled();
+  });
+
   it('loads source identity and saves a bounded main-derived timing sidecar', async () => {
     const loaded = await ipcMain.handlers.get('lyrics:get-track')(
       null,

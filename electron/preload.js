@@ -851,6 +851,23 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
+  getLyricsVocalRoles: (trackId, filename, documentId) =>
+    ipcRenderer.invoke('lyrics:get-vocal-roles', trackId, filename, documentId),
+  saveLyricsVocalRoles: (
+    trackId,
+    filename,
+    documentId,
+    revision,
+    assignments,
+  ) =>
+    ipcRenderer.invoke(
+      'lyrics:save-vocal-roles',
+      trackId,
+      filename,
+      documentId,
+      revision,
+      assignments,
+    ),
   getLyricsAcousticEstimate: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-acoustic-estimate', trackId, filename),
   getLyricsResearchStatus: () => ipcRenderer.invoke('lyrics-research:status'),

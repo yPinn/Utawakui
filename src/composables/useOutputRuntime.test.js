@@ -415,6 +415,7 @@ describe('output source handshake', () => {
       selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
       const document = {
         documentId: 'producer-document',
+        source: { filename: 'source.lrc', sha256: 'b'.repeat(64) },
         granularity: 'T1',
         lines: [
           {
@@ -433,9 +434,20 @@ describe('output source handshake', () => {
       };
       lyricsDocument.value = document;
       activeLineId.value = 'producer';
+      bridge.getLyricsVocalRoles = vi.fn(async () => ({
+        revision: 0,
+        assignments: [],
+      }));
+      bridge.saveLyricsVocalRoles = vi.fn(
+        async (_id, _file, _doc, revision, assignments) => ({
+          revision: revision + 1,
+          assignments,
+        }),
+      );
       textProcessingOverride = scope.run(() =>
         useLyricsTextProcessing({
           document: lyricsDocument,
+          trackId: () => 'track-1',
           sourceKey: () => 'track-1/source',
         }),
       );
@@ -457,6 +469,17 @@ describe('output source handshake', () => {
           .filter((m) => m.stream === 'state.snapshot')
           .at(-1).payload.lyrics.activeLineId,
       ).toBeNull();
+      await flushMicrotasks();
+      expect(
+        await textProcessingOverride.vocalRoles.paint(['voice'], 'male'),
+      ).toBe(true);
+      await flushMicrotasks();
+      await flushMicrotasks();
+      expect(
+        latest()
+          .filter((m) => m.stream === 'lyrics.document')
+          .at(-1).payload.document.lines[0].vocalParts[0].role,
+      ).toBe('male');
       textProcessingOverride.setHidden('producer', false);
       textProcessingOverride.setHidden('voice', false);
       await flushMicrotasks();

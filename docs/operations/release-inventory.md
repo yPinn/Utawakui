@@ -628,3 +628,7 @@ missing audio is bundled. Its adjacent synthetic Python test is excluded.
 Verify the packaged worker exists, Main derives its fixed path, the anonymous
 source lookup terminates on cancel／quit, and persisted playlists v4 remains
 readable with the provider gate disabled. See the [contract](../contracts/release-source-catalog.md).
+
+## 歌詞手動聲部標註
+
+`electron/lib/library/lyricsVocalRoles.js` 使用既有遞迴 Electron runtime 包含規則；相鄰測試排除。`tracks/<trackId>/lyrics/vocal-roles/<sourceFilename>.json` 是本機使用者資料，不是安裝資產。Main 依目前來源計算 fingerprint，檢查來源 document identity、聲部意圖與儲存 revision；不封裝使用者標註、來源歌詞或模型。新增的 renderer 聲部控制由 Vite 既有 bundle 發布。

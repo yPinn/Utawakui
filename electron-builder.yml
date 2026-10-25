@@ -76,6 +76,7 @@ files:
   # works.json/playlists.json user data is never an installer asset.
   # Experimental post-separation lyrics reuses the fixed research environment;
   # only its coordinator/store ship here, never downloaded models or results.
+  # Source-bound manual vocal roles ship in library/lyricsVocalRoles.js; sidecars stay user data.
   - '!electron/**/*.test.js'
   # Synthetic corpora are source-only inputs to tests and benchmark tooling.
   - '!electron/**/fixtures/**/*'
