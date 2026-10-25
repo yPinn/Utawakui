@@ -1046,7 +1046,7 @@ describe('useLyrics', () => {
     expect(lyrics.state.tracks.map((track) => track.id)).toEqual([trackB.id]);
   });
 
-  it('supports Lyrics-owned local and missing-lyrics scopes', async () => {
+  it('supports Lyrics-owned local, missing-lyrics and available-lyrics scopes', async () => {
     listTracksMock.mockResolvedValue([
       trackA,
       { ...trackB, sourceType: 'local-file' },
@@ -1065,6 +1065,13 @@ describe('useLyrics', () => {
       trackMissingLyrics.id,
     ]);
     expect(lyrics.state.selectedTrackId).toBe(trackMissingLyrics.id);
+
+    lyrics.setTrackScope('available-lyrics');
+    await flushPromises();
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
+      trackA.id,
+      trackB.id,
+    ]);
   });
 
   it('keeps the manually selected track when Setlist playlist selection changes', async () => {
@@ -1191,6 +1198,13 @@ describe('useLyrics', () => {
     expect(lyrics.activeSegmentId.value).toBe('segment_1');
     expect(lyrics.playbackState.value.activeSegmentProgress).toBe(0.5);
     expect(lyrics.currentLyricsPositionMs.value).toBe(1250);
+    expect(lyrics.currentTrackId.value).toBe(trackA.id);
+    expect(lyrics.isSelectedTrackPlaying.value).toBe(true);
+    expect(lyrics.localLyricsFrame.value.paintClock).toMatchObject({
+      positionMs: 1250,
+      rate: 1,
+    });
+    expect(lyrics.lyricsTextProcessing.candidates.value).toEqual([]);
   });
 
   it('persists a timing document only when explicitly requested', async () => {

@@ -573,6 +573,25 @@ describe('registerConfigHandlers', () => {
     },
   );
 
+  it('reads the browser-cookie and automatic error reporting preferences', async () => {
+    const { ipcMain } = register();
+    await ipcMain.handlers.get('config:set-youtube-browser-cookies')(
+      null,
+      true,
+    );
+    await ipcMain.handlers.get('config:set-auto-error-reporting')(
+      null,
+      'never',
+    );
+
+    await expect(
+      ipcMain.handlers.get('config:get-youtube-browser-cookies')(),
+    ).resolves.toBe(true);
+    await expect(
+      ipcMain.handlers.get('config:get-auto-error-reporting')(),
+    ).resolves.toBe('never');
+  });
+
   it.each([null, 0, 'true', {}])(
     'rejects invalid browser-cookie opt-in value %j',
     async (enabled) => {

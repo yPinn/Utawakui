@@ -166,6 +166,24 @@ describe('registerMediaProtocol', () => {
     expect(library.buildRangeResponse).not.toHaveBeenCalled();
   });
 
+  it.each([
+    'utawakui-media://track/..%2F..%2Fsecret/audio.wav',
+    'utawakui-media://track/..%2Fx/separations/preset.wav',
+    'utawakui-media://playlist-cover/..%2Fx/cover.webp',
+    'utawakui-media://artist-photo/..%2Fx/photo.jpg',
+    'utawakui-media://folder-asset/..%2Fx/image.png',
+    'utawakui-media://local/..%2F..%2Fsecret.mp3',
+  ])('rejects traversal with the production resolvers: %s', (url) => {
+    let handler;
+    registerMediaProtocol({
+      protocol: { handle: (_scheme, next) => (handler = next) },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'E:\\Library',
+    });
+
+    expect(handler(request(url)).status).toBe(404);
+  });
+
   it('returns 404 when a resolver rejects the bounded route', () => {
     library.resolveTrackAssetPath.mockReturnValue(null);
     const { handler } = setup();

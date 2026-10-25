@@ -658,6 +658,26 @@ describe('output source handshake', () => {
     });
   });
 
+  it('withholds a state snapshot when the clock sample belongs to another track', async () => {
+    const runtime = await initializePlaying();
+    samplePlaybackClock.mockImplementation(({ now }) => ({
+      trackId: 'previous',
+      continuityRevision: playerState.continuityRevision,
+      positionMs: 0,
+      rate: 1,
+      phase: 'playing',
+      sampledAt: now(),
+    }));
+
+    await runtime.refreshProjection();
+
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.some(
+        ([envelope]) => envelope.stream === 'state.snapshot',
+      ),
+    ).toBe(false);
+  });
+
   it('skips stale content after a document wait crosses a track continuity change', async () => {
     const runtime = await initializePlaying();
     const pending = deferred();

@@ -102,6 +102,45 @@ describe('usePerformerViewState', () => {
     });
   });
 
+  it('schedules a display-driven clock tick only while playback is playing', async () => {
+    vi.useFakeTimers();
+    const state = usePerformerViewState();
+    await lifecycle.mounted[0]();
+    const baseline = vi.getTimerCount();
+
+    state.setDisplayBoundary(100);
+    expect(vi.getTimerCount()).toBe(baseline);
+
+    snapshotListener({
+      state: { revision: 6, playback: { status: 'playing', track: null } },
+    });
+    const playingBaseline = vi.getTimerCount();
+    for (const delay of [Number.NaN, -1]) {
+      state.setDisplayBoundary(delay);
+      expect(vi.getTimerCount()).toBe(playingBaseline);
+    }
+
+    state.setDisplayBoundary(100);
+    state.setDisplayBoundary(200);
+    expect(vi.getTimerCount()).toBe(playingBaseline + 1);
+    vi.advanceTimersByTime(201);
+    expect(vi.getTimerCount()).toBe(playingBaseline);
+  });
+
+  it('treats a missing window-state payload as an open plain window', async () => {
+    const state = usePerformerViewState();
+    await lifecycle.mounted[0]();
+    windowStateListener({ open: false, fullScreen: true, alwaysOnTop: true });
+
+    windowStateListener();
+
+    expect(state.windowState).toMatchObject({
+      open: true,
+      fullScreen: false,
+      alwaysOnTop: false,
+    });
+  });
+
   it('routes toolbar commands with the displayed context, guards pending calls and reports bounded failures', async () => {
     bridge.getSnapshot.mockResolvedValue({
       state: {
