@@ -157,8 +157,8 @@ describe('read-only output windows', () => {
         width,
         height,
         useContentSize: true,
-        resizable: false,
-        maximizable: false,
+        resizable: true,
+        maximizable: true,
         fullscreenable: false,
         transparent: false,
         webPreferences: {

@@ -58,7 +58,7 @@ V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount�
 | 歌單   | Utawakui 輸出｜歌單   | 480×810                                               |
 | 播放中 | Utawakui 輸出｜播放中 | Art Card 480×270；Cover Player 預設360×480、大480×640 |
 
-`electron/main/windows/outputWindow.js` 每種最多保留一窗；重複開啟會 restore／show／focus。名稱不隨頁面 title、曲名或模板變更，slot 更新依既有尺寸契約調整內容；Windows 建窗可能先依 work area 裁小，建立後再明確設定 content size。原生框架只供移動、最小化與關閉，不允許手動 resize／最大化／全螢幕；FHD 加上框架可能超出目前螢幕工作區，OBS 應擷取 client area。
+`electron/main/windows/outputWindow.js` 每種最多保留一窗；重複開啟會 restore／show／focus。名稱不隨頁面 title、曲名或模板變更，slot 更新依既有尺寸契約調整內容；Windows 建窗可能先依 work area 裁小，建立後再明確設定 content size。原生框架供移動、手動 resize、最大化、最小化與關閉；無選單快捷鍵可離開，故不允許全螢幕；建窗與 slot 尺寸變更時重設為模板內容尺寸，手動調整不保存；FHD 加上框架可能超出目前螢幕工作區，OBS 應擷取 client area。
 
 視窗直接使用現有 Output 頁面，不新增 renderer entry、播放器、設定副本或模板。它沒有 preload，使用獨立非持久 session，拒絕 permission、popup、外部 navigation／redirect 與下載，關閉 DevTools／Node／webview，保留 sandbox／context isolation／web security，並靜音。`output-window:open` 只接受目前控制台 main frame；提詞器或 Output 不取得控制能力。錯誤在 main 保存私有原因，IPC 只回 bounded、可重試錯誤。
 
