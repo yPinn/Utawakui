@@ -17,6 +17,16 @@ describe('useAppView', () => {
     useAppView().openLibraryContent();
   });
 
+  it('returns from lyrics authoring to live lyrics and resets the Library workspace', () => {
+    const appView = useAppView();
+    appView.openPerformancePreparation();
+    appView.openLyricsAuthoring();
+    appView.returnFromLyricsAuthoring();
+    expect(appView.activeView.value).toBe('performance');
+    expect(appView.performanceTool.value).toBe('live-lyrics');
+    expect(appView.libraryWorkspace.value).toBe('browse');
+  });
+
   it('remembers the non-Settings source and keeps repeated opens idempotent', () => {
     const appView = useAppView();
     appView.openLyricsAuthoring();

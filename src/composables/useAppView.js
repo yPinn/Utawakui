@@ -56,6 +56,12 @@ function openLiveLyrics() {
   commitActiveView('performance');
 }
 
+// Authoring is entered from live lyrics, so leaving it returns there.
+function returnFromLyricsAuthoring() {
+  libraryWorkspace.value = 'browse';
+  openLiveLyrics();
+}
+
 function openPerformancePreparation() {
   performanceArchiveId.value = null;
   performanceTool.value = 'session';
@@ -120,6 +126,7 @@ export function useAppView() {
     openLibraryContent,
     openLyricsAuthoring,
     openLiveLyrics,
+    returnFromLyricsAuthoring,
     openPerformancePreparation,
     openPerformanceArchive,
     selectPerformanceTool,

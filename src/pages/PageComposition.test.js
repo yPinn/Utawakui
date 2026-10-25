@@ -14,7 +14,7 @@ describe('destination Page composition', () => {
       "import LibraryBrowseWorkspace from '../components/library/LibraryBrowseWorkspace.vue';",
     );
     expect(source).toContain('libraryWorkspace');
-    expect(source).toContain('openLibraryContent');
+    expect(source).toContain('returnFromLyricsAuthoring');
     expect(source).not.toContain('ImportWorkspace');
     expect(source).toContain(
       "import('../components/lyrics/LyricsAuthoringWorkspace.vue')",
@@ -24,8 +24,8 @@ describe('destination Page composition', () => {
     expect(source).toContain(
       '<LibraryBrowseWorkspace v-if="libraryWorkspace === \'browse\'"',
     );
-    expect(source).toContain('returnToLibrary');
-    expect(source).toContain("focusAppDestinationTrigger('library')");
+    expect(source).toContain('returnToLiveLyrics');
+    expect(source).toContain("focusAppDestinationTrigger('performance')");
     expect(source).toContain("'library-page__content--workspace'");
   });
 

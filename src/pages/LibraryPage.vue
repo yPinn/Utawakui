@@ -13,7 +13,7 @@ const LyricsAuthoringWorkspace = defineAsyncComponent(
   () => import('../components/lyrics/LyricsAuthoringWorkspace.vue'),
 );
 
-const { libraryWorkspace, openLibraryContent } = useAppView();
+const { libraryWorkspace, returnFromLyricsAuthoring } = useAppView();
 
 const workspaceDefinition = computed(() => ({
   component: LyricsAuthoringWorkspace,
@@ -24,10 +24,10 @@ const workspaceDefinition = computed(() => ({
   pageMode: 'workspace',
 }));
 
-async function returnToLibrary() {
-  openLibraryContent();
+async function returnToLiveLyrics() {
+  returnFromLyricsAuthoring();
   await nextTick();
-  focusAppDestinationTrigger('library');
+  focusAppDestinationTrigger('performance');
 }
 </script>
 
@@ -51,8 +51,8 @@ async function returnToLibrary() {
               {{ workspaceDefinition.description }}
             </template>
             <template #actions>
-              <UiButton :icon="ArrowLeft" @click="returnToLibrary">
-                返回曲庫
+              <UiButton :icon="ArrowLeft" @click="returnToLiveLyrics">
+                返回歌詞
               </UiButton>
             </template>
           </UiPageHeader>
