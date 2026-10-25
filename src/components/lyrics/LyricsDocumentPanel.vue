@@ -45,6 +45,11 @@ const props = defineProps({
   lyricsScript: { type: String, default: 'unknown' },
   canEditTiming: { type: Boolean, default: false },
   editableTimingLineIds: { type: Array, default: null },
+  // Whole-line vocal roles by lineId; colours the highlighter.
+  vocalRoles: { type: Object, default: () => ({}) },
+  // Painting turns line clicks into role strokes and shows every marked line.
+  isPaintingVocals: { type: Boolean, default: false },
+  vocalSectionLineIds: { type: Array, default: () => [] },
   // 'sheet' prints the live lyrics on paper with a highlighter on the sung line.
   presentation: {
     type: String,
@@ -60,6 +65,7 @@ const emit = defineEmits([
   'update-reading-draft',
   'commit-reading-edit',
   'cancel-reading-edit',
+  'paint-line',
 ]);
 
 const LYRICS_SCROLL_KEYS = new Set([
@@ -94,6 +100,17 @@ const editableTimingIds = computed(() =>
     ? null
     : new Set(props.editableTimingLineIds),
 );
+const vocalSections = computed(() => new Set(props.vocalSectionLineIds));
+const VOCAL_ROLE_LABELS = { male: '男', female: '女', group: '合' };
+function vocalRoleLabel(line) {
+  const role = VOCAL_ROLE_LABELS[props.vocalRoles[line.lineId]];
+  if (!vocalSections.value.has(line.lineId)) return role ?? '';
+  return role ? `${role} · 段落` : '段落起點';
+}
+function clickLine(line, event) {
+  if (props.isPaintingVocals) emit('paint-line', line.lineId, event.shiftKey);
+  else emit('seek-line', line);
+}
 const lyricsLang = computed(() =>
   ['ja', 'ko'].includes(props.lyricsScript) ? props.lyricsScript : undefined,
 );
@@ -332,7 +349,11 @@ watch(
       <UiHint v-else-if="hasSelectedSource && lines.length === 0" padded>
         這份歌詞沒有文字。從「顯示 → 管理來源」更換歌詞。
       </UiHint>
-      <ol v-else class="lyrics-lines">
+      <ol
+        v-else
+        class="lyrics-lines"
+        :class="{ 'lyrics-lines--painting': isPaintingVocals }"
+      >
         <li
           v-for="(line, index) in lines"
           :key="line.lineId"
@@ -341,6 +362,9 @@ watch(
             'lyrics-line--active': index === locatedLineIndex,
             'lyrics-line--past': index < locatedLineIndex,
             'lyrics-line--ruby': showsFurigana,
+            'lyrics-line--marked': isPaintingVocals && vocalRoles[line.lineId],
+            [`lyrics-line--role-${vocalRoles[line.lineId]}`]:
+              vocalRoles[line.lineId],
           }"
         >
           <div
@@ -385,13 +409,15 @@ watch(
             <button
               type="button"
               class="lyrics-line__button"
-              :disabled="!canSeekLine(line)"
+              :disabled="!isPaintingVocals && !canSeekLine(line)"
               :aria-label="
-                canSeekLine(line)
-                  ? `從 ${formatLyricTime(line.start)} 播放`
-                  : '未同步歌詞'
+                isPaintingVocals
+                  ? `標註聲部：${line.text}`
+                  : canSeekLine(line)
+                    ? `從 ${formatLyricTime(line.start)} 播放`
+                    : '未同步歌詞'
               "
-              @click="emit('seek-line', line)"
+              @click="clickLine(line, $event)"
             >
               <span class="lyrics-line__time">{{
                 formatLyricTime(line.start)
@@ -444,6 +470,11 @@ watch(
                 </span>
               </span>
             </button>
+            <span
+              v-if="isPaintingVocals && vocalRoleLabel(line)"
+              class="lyrics-line__role"
+              >{{ vocalRoleLabel(line) }}</span
+            >
             <UiButton
               v-if="
                 canEditTiming &&
@@ -524,11 +555,15 @@ watch(
   padding: var(--ui-space-4);
   list-style: none;
 }
+.lyrics-lines--painting {
+  user-select: none;
+}
 .lyrics-line {
   display: grid;
   gap: var(--ui-space-1);
   border-radius: var(--ui-radius-md);
   color: var(--ui-color-text-muted);
+  --lyrics-line-highlight: var(--ui-lyrics-highlight);
 }
 .lyrics-line__row,
 .lyrics-line__edit-row {
@@ -560,6 +595,12 @@ watch(
 .lyrics-line__edit {
   flex: 0 0 auto;
   opacity: 0;
+}
+.lyrics-line__role {
+  flex: 0 0 auto;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  white-space: nowrap;
 }
 .lyrics-line:hover .lyrics-line__edit,
 .lyrics-line:focus-within .lyrics-line__edit {
@@ -639,13 +680,23 @@ watch(
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.lyrics-line--active .lyrics-line__ink {
+.lyrics-line--role-male {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight-male);
+}
+.lyrics-line--role-female {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight-female);
+}
+.lyrics-line--role-group {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight-group);
+}
+.lyrics-line--active .lyrics-line__ink,
+.lyrics-line--marked .lyrics-line__ink {
   background-image: linear-gradient(
     104deg,
     transparent var(--ui-lyrics-marker-cut),
-    var(--ui-lyrics-highlight)
+    var(--lyrics-line-highlight)
       calc(var(--ui-lyrics-marker-cut) + var(--ui-border-width)),
-    var(--ui-lyrics-highlight)
+    var(--lyrics-line-highlight)
       calc(100% - var(--ui-lyrics-marker-cut) - var(--ui-border-width)),
     transparent calc(100% - var(--ui-lyrics-marker-cut))
   );
@@ -654,7 +705,8 @@ watch(
   background-repeat: no-repeat;
 }
 @media (forced-colors: active) {
-  .lyrics-line--active .lyrics-line__ink {
+  .lyrics-line--active .lyrics-line__ink,
+  .lyrics-line--marked .lyrics-line__ink {
     outline: var(--ui-border-width) solid Highlight;
     outline-offset: var(--ui-border-width);
   }

@@ -191,6 +191,7 @@ onMounted(initialize);
       :offset-label="offsetLabel"
       :can-reset-offset="state.offsetSeconds !== 0"
       :offset-error="state.offsetSave.error || ''"
+      :vocal-roles="lyrics.lyricsTextProcessing?.lineRoles?.value ?? {}"
       presentation="sheet"
       @seek-line="playFromLine"
       @adjust-offset="adjustOffset"

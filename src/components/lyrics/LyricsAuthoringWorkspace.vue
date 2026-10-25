@@ -6,6 +6,8 @@ import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import { isVocalSection } from '../../composables/lyrics/useLyricsVocalRoles.js';
 import { useLyricsTimingEditor } from '../../composables/useLyricsTimingEditor.js';
 import { formatDuration } from '../../utils/format.js';
 import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
@@ -86,6 +88,25 @@ const isTrackPickerOpen = ref(false);
 const editingReadingLineIndex = ref(null);
 const readingLineDraft = ref('');
 const editMode = ref('preview');
+const vocalRoles = computed(() => lyrics.lyricsTextProcessing?.vocalRoles);
+const canEditVocals = computed(
+  () =>
+    vocalRoles.value?.status.value === 'ready' &&
+    lyricsDocument.value.lines.length > 0,
+);
+const vocalSectionLineIds = computed(() =>
+  lyricsDocument.value.lines
+    .filter((line) => isVocalSection(line.text))
+    .map((line) => line.lineId),
+);
+const VOCAL_PENS = [
+  { id: 'male', label: '男' },
+  { id: 'female', label: '女' },
+  { id: 'group', label: '合' },
+  { id: 'auto', label: '清除' },
+];
+const vocalPen = ref('male');
+let lastPaintedLineId = null;
 const acousticEstimate = computed(
   () => lyrics.lyricsAcousticEstimate?.value ?? { status: 'missing' },
 );
@@ -114,17 +135,24 @@ const editingHelp = computed(() => {
   if (hasEditingDraft.value)
     return '儲存或取消這行編輯後，可繼續選擇其他歌詞。';
   if (editMode.value === 'timing') return '選擇歌詞行的時鐘開始逐字校時。';
+  if (editMode.value === 'vocal')
+    return '點歌詞行標註，Shift＋點標一段；人名行沿用至下一位。';
   return isGeneratingReading.value || isPreparingReading.value
     ? '正在準備讀音…'
     : '選擇歌詞行的鉛筆修正讀音。';
 });
 function setEditMode(mode) {
-  if (isEditingLocked.value || !['preview', 'reading', 'timing'].includes(mode))
+  if (
+    isEditingLocked.value ||
+    !['preview', 'reading', 'timing', 'vocal'].includes(mode)
+  )
     return;
   if (mode !== 'preview' && (!selectedSource.value || state.isLoadingLyrics))
     return;
   if (mode === 'reading' && !showsReadingAid.value) return;
   if (mode === 'timing' && !canEditTiming.value) return;
+  if (mode === 'vocal' && !canEditVocals.value) return;
+  lastPaintedLineId = null;
   editMode.value = mode;
   if (mode === 'reading' && readingVariant.value === 'off') {
     void setReadingVariant(lyricsScript.value === 'ja' ? 'furigana' : 'romaji');
@@ -285,6 +313,21 @@ async function commitReadingLineEdit(index) {
   }
 }
 
+// Shift extends the stroke from the last painted row, in source order.
+function paintVocalLine(lineId, extend) {
+  if (editMode.value !== 'vocal' || !vocalRoles.value) return;
+  const ids = lyricsDocument.value.lines.map((line) => line.lineId);
+  const to = ids.indexOf(lineId);
+  if (to < 0) return;
+  const from =
+    extend && lastPaintedLineId ? ids.indexOf(lastPaintedLineId) : -1;
+  lastPaintedLineId = lineId;
+  void vocalRoles.value.paint(
+    from < 0 ? [lineId] : ids.slice(Math.min(from, to), Math.max(from, to) + 1),
+    vocalPen.value,
+  );
+}
+
 const timingReadings = computed(
   () =>
     new Map(
@@ -353,6 +396,7 @@ async function commitTimingDocument() {
         :is-reloading="isReloading"
         :can-edit-readings="showsReadingAid && !state.isLoadingLyrics"
         :can-edit-timing="canEditTiming && !state.isLoadingLyrics"
+        :can-edit-vocals="canEditVocals && !state.isLoadingLyrics"
         :is-locked="isEditingLocked"
         :edit-mode="editMode"
         @select-track="isTrackPickerOpen = true"
@@ -394,6 +438,12 @@ async function commitTimingDocument() {
       </LyricsWorkspaceHeader>
       <div v-if="editMode !== 'preview'" class="lyrics-edit-context">
         <UiHint role="status">{{ editingHelp }}</UiHint>
+        <UiSegmentedControl
+          v-if="editMode === 'vocal'"
+          v-model="vocalPen"
+          :items="VOCAL_PENS"
+          aria-label="聲部筆色"
+        />
         <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')"
           >結束編輯</UiButton
         >
@@ -403,6 +453,17 @@ async function commitTimingDocument() {
           :message="readingError"
           compact
         />
+        <UiNotice
+          v-if="editMode === 'vocal' && vocalRoles?.error.value"
+          tone="danger"
+          :message="vocalRoles.error.value"
+          compact
+        />
+        <UiButton
+          v-if="editMode === 'vocal' && vocalRoles?.error.value"
+          @click="vocalRoles.reload()"
+          >重新載入</UiButton
+        >
       </div>
       <div
         v-if="timingDraft || showsAcousticPreview"
@@ -477,6 +538,9 @@ async function commitTimingDocument() {
         :can-edit-timing="
           editMode === 'timing' && canEditTiming && !hasEditingDraft
         "
+        :vocal-roles="lyrics.lyricsTextProcessing?.lineRoles?.value ?? {}"
+        :is-painting-vocals="editMode === 'vocal'"
+        :vocal-section-line-ids="vocalSectionLineIds"
         :offset-label="offsetLabel"
         :can-reset-offset="state.offsetSeconds !== 0"
         :offset-error="state.offsetSave.error || ''"
@@ -487,6 +551,7 @@ async function commitTimingDocument() {
         @update-reading-draft="readingLineDraft = $event"
         @commit-reading-edit="commitReadingLineEdit"
         @cancel-reading-edit="cancelReadingLineEdit"
+        @paint-line="paintVocalLine"
         @adjust-offset="adjustOffset"
         @reset-offset="resetOffset"
         @retry-offset="retryOffsetSave"

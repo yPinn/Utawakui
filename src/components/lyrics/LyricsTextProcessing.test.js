@@ -37,14 +37,14 @@ describe('shared text processing controls', () => {
       createSSRApp({ render: () => h(LyricsTextProcessing) }),
     );
     expect(html).toContain('共用文字處理');
-    expect(html).toContain('明確製作欄位預設從 Output 隱藏');
-    expect(html).toContain('原歌詞與校時不變');
+    expect(html).toContain('勾選項目只在 Output 隱藏');
+    expect(html).toContain('原歌詞與時間不變');
     expect(html).toContain('&lt;script&gt;一起唱&lt;/script&gt;');
     expect(html).not.toContain('<script>');
     expect(html).toContain('type="checkbox"');
     expect(html).toMatch(/\schecked(?:[\s=>])/u);
-    expect(html).toContain('恢復全部原文輸出');
-    expect(html).toContain('隱藏提示標記（第 2 行）');
-    expect(html).toContain('實唱、對唱與和聲唱詞保留');
+    expect(html).toContain('全部還原');
+    expect(html).toContain('ui-btn--accent');
+    expect(html).toContain('第 2 行 · 片段');
   });
 });

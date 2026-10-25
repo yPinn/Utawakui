@@ -13,6 +13,7 @@ const props = defineProps({
   isReloading: { type: Boolean, default: false },
   canEditReadings: { type: Boolean, default: false },
   canEditTiming: { type: Boolean, default: false },
+  canEditVocals: { type: Boolean, default: false },
   isLocked: { type: Boolean, default: false },
   editMode: { type: String, default: 'preview' },
 });
@@ -45,6 +46,12 @@ const menuContent = computed(() => ({
           disabledReason: !props.canEditTiming
             ? '需要可用的字詞分段與起訖時間'
             : '',
+        },
+        {
+          id: 'vocal',
+          kind: 'action',
+          label: '標註聲部',
+          disabled: !props.canEditVocals || props.isLocked,
         },
       ],
     },
@@ -91,7 +98,7 @@ function selectAction(item) {
     .find((entry) => entry.id === item.id);
   if (!action || action.disabled) return;
   menuOpen.value = false;
-  if (item.id === 'reading' || item.id === 'timing')
+  if (['reading', 'timing', 'vocal'].includes(item.id))
     emit('editModeChange', item.id);
   else emit(item.id);
 }

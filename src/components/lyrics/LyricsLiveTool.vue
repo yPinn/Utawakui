@@ -29,6 +29,9 @@ defineProps({
   lyricsScript: { type: String, default: 'unknown' },
   canEditTiming: { type: Boolean, default: false },
   editableTimingLineIds: { type: Array, default: null },
+  vocalRoles: { type: Object, default: () => ({}) },
+  isPaintingVocals: { type: Boolean, default: false },
+  vocalSectionLineIds: { type: Array, default: () => [] },
   offsetLabel: { type: String, required: true },
   canResetOffset: { type: Boolean, default: false },
   offsetError: { type: String, default: '' },
@@ -43,6 +46,7 @@ const emit = defineEmits([
   'updateReadingDraft',
   'commitReadingEdit',
   'cancelReadingEdit',
+  'paintLine',
   'adjustOffset',
   'resetOffset',
   'retryOffset',
@@ -80,12 +84,16 @@ const emit = defineEmits([
       :can-edit-timing="allowAuthoringActions && canEditTiming"
       :editable-timing-line-ids="editableTimingLineIds"
       :presentation="presentation"
+      :vocal-roles="vocalRoles"
+      :is-painting-vocals="allowAuthoringActions && isPaintingVocals"
+      :vocal-section-line-ids="vocalSectionLineIds"
       @seek-line="emit('seekLine', $event)"
       @edit-timing="emit('editTiming', $event)"
       @start-reading-edit="emit('startReadingEdit', $event)"
       @update-reading-draft="emit('updateReadingDraft', $event)"
       @commit-reading-edit="emit('commitReadingEdit', $event)"
       @cancel-reading-edit="emit('cancelReadingEdit')"
+      @paint-line="(lineId, extend) => emit('paintLine', lineId, extend)"
     />
 
     <LyricsLiveControls

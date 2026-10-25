@@ -264,6 +264,43 @@ describe('Lyrics workspace control contracts', () => {
     expect(editTiming).toHaveBeenCalledWith('line_1');
   });
 
+  it('turns line clicks into vocal strokes while painting and labels roles', () => {
+    const seekLine = vi.fn();
+    const paintLine = vi.fn();
+    const panel = mount(LyricsDocumentPanel, {
+      lines: [
+        { lineId: 'a', start: 1, text: '(Sabrina)' },
+        { lineId: 'b', start: null, text: '未同步' },
+      ],
+      trackCount: 1,
+      hasSelectedTrack: true,
+      lyricsStatus: 'available',
+      hasSelectedSource: true,
+      activeLineIndex: 0,
+      vocalRoles: { a: 'female' },
+      vocalSectionLineIds: ['a'],
+      isPaintingVocals: true,
+      onSeekLine: seekLine,
+      onPaintLine: paintLine,
+    });
+    const unsynced = findByProp(panel.root, 'aria-label', '標註聲部：未同步');
+    expect(unsynced.props.disabled).toBe(false);
+    unsynced.props.onClick({ shiftKey: true });
+    findByProp(panel.root, 'aria-label', '標註聲部：(Sabrina)').props.onClick({
+      shiftKey: false,
+    });
+    expect(paintLine.mock.calls).toEqual([
+      ['b', true],
+      ['a', false],
+    ]);
+    expect(seekLine).not.toHaveBeenCalled();
+    const marked = findAll(panel.root, (node) =>
+      String(node.props?.class ?? '').includes('lyrics-line--role-female'),
+    );
+    expect(marked).toHaveLength(1);
+    expect(nodeText(panel.root)).toContain('女 · 段落');
+  });
+
   it('lets manual scrolling pause line following until the return action resumes it', async () => {
     const activeLineIndex = ref(0);
     const documentId = ref('lyrics-document-1');
@@ -763,6 +800,7 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
       backfillStatus: { error: '', isRunning: false },
     });
     const selectSource = vi.fn();
+    const paintVocals = vi.fn();
     const adjustOffset = vi.fn();
     const resetOffset = vi.fn();
     const refresh = vi.fn();
@@ -804,6 +842,13 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
           hiddenLineIds: ref([]),
           setHidden: vi.fn(),
           restore: vi.fn(),
+          lineRoles: ref({}),
+          vocalRoles: {
+            status: ref('ready'),
+            error: ref(''),
+            paint: paintVocals,
+            reload: vi.fn(),
+          },
         },
         lyricsTextVariant,
         lyricLines: lyricLinesRef,
@@ -1050,5 +1095,29 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
       lyricsDocumentRef.value,
       'ja',
     );
+
+    lyricsDocumentRef.value = {
+      documentId: 'duet',
+      granularity: 'T1',
+      lines: ['(Sabrina)', '第一句', '第二句'].map((text, index) => ({
+        lineId: `v${index}`,
+        text,
+        startMs: index * 1000,
+        endMs: null,
+      })),
+    };
+    await nextTick();
+    vm.setEditMode('vocal');
+    expect(vm.editMode).toBe('vocal');
+    expect(vm.vocalSectionLineIds).toEqual(['v0']);
+    vm.paintVocalLine('v0', false);
+    vm.vocalPen = 'group';
+    vm.paintVocalLine('v2', true);
+    vm.paintVocalLine('v1', false);
+    expect(paintVocals.mock.calls).toEqual([
+      [['v0'], 'male'],
+      [['v0', 'v1', 'v2'], 'group'],
+      [['v1'], 'group'],
+    ]);
   });
 });

@@ -224,8 +224,8 @@ describe('LyricsDocumentPanel presentation', () => {
       expect(rule('.lyrics-line__experimental-active')).not.toContain(
         'background: var(',
       );
-      expect(rule('.lyrics-line--active .lyrics-line__ink')).toContain(
-        'var(--ui-lyrics-highlight)',
+      expect(rule('.lyrics-line--marked .lyrics-line__ink')).toContain(
+        'var(--lyrics-line-highlight)',
       );
     },
   );
@@ -309,9 +309,16 @@ describe('LyricsDocumentPanel presentation', () => {
     expect(
       rule('.lyrics-preview--sheet .lyrics-line--active .lyrics-line__row'),
     ).toContain('background: transparent;');
-    expect(rule('.lyrics-line--active .lyrics-line__ink')).toContain(
-      'var(--ui-lyrics-highlight)',
+    expect(rule('.lyrics-line--marked .lyrics-line__ink')).toContain(
+      'var(--lyrics-line-highlight)',
     );
+    expect(rule('.lyrics-line')).toContain(
+      '--lyrics-line-highlight: var(--ui-lyrics-highlight);',
+    );
+    for (const role of ['male', 'female', 'group'])
+      expect(rule(`.lyrics-line--role-${role}`)).toContain(
+        `var(--ui-lyrics-highlight-${role})`,
+      );
     expect(rule('.lyrics-line__ink')).toContain('box-decoration-break: clone');
   });
   it('does not invent a word underline on a plain unsupported line', async () => {
@@ -330,7 +337,7 @@ describe('LyricsDocumentPanel presentation', () => {
 
   it('keeps a whole-line cue when forced colors remove the marker image', () => {
     expect(source).toMatch(
-      /@media \(forced-colors: active\)\s*\{\s*\.lyrics-line--active \.lyrics-line__ink\s*\{\s*outline: var\(--ui-border-width\) solid Highlight;/u,
+      /@media \(forced-colors: active\)\s*\{\s*\.lyrics-line--active \.lyrics-line__ink,\s*\.lyrics-line--marked \.lyrics-line__ink\s*\{\s*outline: var\(--ui-border-width\) solid Highlight;/u,
     );
   });
 
