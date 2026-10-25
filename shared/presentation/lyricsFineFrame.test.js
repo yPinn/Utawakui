@@ -274,67 +274,82 @@ describe('model fine timing presentation', () => {
     const ids = prepareLyricsPaintFrame(colliding).units.map((u) => u.unitId);
     expect(new Set(ids).size).toBe(ids.length);
   });
-  it('keeps repeated KTV phrases source-relative and gives each lane its own fine intervals', () => {
-    const phrase = '今日歌う、';
-    const text = phrase.repeat(10);
-    const chunks = Array.from({ length: 10 }, (_, i) => ({
-      segmentId: `s${i}`,
-      text: phrase,
-      startMs: 1000 + i * 2000,
-    }));
-    const units = chunks.map((s, i) => ({
-      unitId: `u${i}`,
-      from: i * phrase.length,
-      to: i * phrase.length + 4,
-      startMs: s.startMs + 100,
-      endMs: s.startMs + 1000,
-    }));
-    const long = {
-      lineId: 'repeat',
-      text,
-      startMs: 1000,
-      endMs: 22000,
-      estimatedStarts: { version: 1, segments: chunks },
-      estimatedFineTiming: { version: 1, units },
-    };
-    const generatedAt = '2026-10-22T00:00:00Z';
-    const snapshot = {
-      revision: 1,
-      generatedAt,
-      playback: {
-        track: { id: 'song' },
-        status: 'playing',
-        positionMs: 1000,
-        sampledAt: generatedAt,
-        playbackRate: 1,
-      },
-      lyrics: { trackId: 'song', synced: true, offsetMs: 0, lines: [long] },
-    };
-    const frames = chunks.map((s) => {
-      snapshot.playback.positionMs = s.startMs + 500;
-      return selectLyricsOverlayFrame(snapshot, {
-        templateId: 'karaoke-stack',
-        nowMs: Date.parse(generatedAt),
-      }).ktv;
-    });
-    expect(frames.some((f) => f.currentSourceRange?.from > 0)).toBe(true);
-    for (const f of frames) {
-      for (const u of (f.currentFineTiming?.units ?? []).filter(
-        (u) => u.timingSource !== 'display-estimate',
-      )) {
-        const original = units.find((x) => x.unitId === u.unitId);
-        expect(u.from).toBe(original.from - f.currentSourceRange.from);
-        expect([u.startMs, u.endMs]).toEqual([
-          original.startMs,
-          original.endMs,
-        ]);
-        expect(f.currentText.slice(u.from, u.to)).toBe(
-          text.slice(original.from, original.to),
-        );
+  it.each([
+    ['enumeration', '今日歌う、', 1],
+    ['authored rows', '今日歌う\n', 10],
+  ])(
+    'keeps repeated KTV %s source-relative with unchanged fine intervals',
+    (_kind, phrase, rangeCount) => {
+      const text = phrase.repeat(10);
+      const chunks = Array.from({ length: 10 }, (_, i) => ({
+        segmentId: `s${i}`,
+        text: phrase,
+        startMs: 1000 + i * 2000,
+      }));
+      const units = chunks.map((s, i) => ({
+        unitId: `u${i}`,
+        from: i * phrase.length,
+        to: i * phrase.length + 4,
+        startMs: s.startMs + 100,
+        endMs: s.startMs + 1000,
+      }));
+      const long = {
+        lineId: 'repeat',
+        text,
+        startMs: 1000,
+        endMs: 22000,
+        estimatedStarts: { version: 1, segments: chunks },
+        estimatedFineTiming: { version: 1, units },
+      };
+      const generatedAt = '2026-10-22T00:00:00Z';
+      const snapshot = {
+        revision: 1,
+        generatedAt,
+        playback: {
+          track: { id: 'song' },
+          status: 'playing',
+          positionMs: 1000,
+          sampledAt: generatedAt,
+          playbackRate: 1,
+        },
+        lyrics: { trackId: 'song', synced: true, offsetMs: 0, lines: [long] },
+      };
+      const frames = chunks.map((s) => {
+        snapshot.playback.positionMs = s.startMs + 500;
+        return selectLyricsOverlayFrame(snapshot, {
+          templateId: 'karaoke-stack',
+          nowMs: Date.parse(generatedAt),
+        }).ktv;
+      });
+      expect(
+        new Set(frames.map((f) => JSON.stringify(f.currentSourceRange))).size,
+      ).toBe(rangeCount);
+      for (const f of frames) {
+        for (const u of (f.currentFineTiming?.units ?? []).filter(
+          (u) => u.timingSource !== 'display-estimate',
+        )) {
+          const original = units.find((x) => x.unitId === u.unitId);
+          expect(u.from).toBe(original.from - f.currentSourceRange.from);
+          expect([u.startMs, u.endMs]).toEqual([
+            original.startMs,
+            original.endMs,
+          ]);
+          expect(f.currentText.slice(u.from, u.to)).toBe(
+            text.slice(original.from, original.to),
+          );
+        }
       }
-    }
-    expect(frames.some((f) => f.nextFineTiming?.units.length)).toBe(true);
-  });
+      expect(frames.some((f) => f.nextFineTiming?.units.length)).toBe(
+        rangeCount > 1,
+      );
+      if (rangeCount === 1)
+        expect(
+          frames[0].currentFineTiming.units.filter(
+            (u) => u.timingSource !== 'display-estimate',
+          ),
+        ).toHaveLength(units.length);
+    },
+  );
   it('uses the same local ink shape for native T2, keeping unknown ends cue-only', () => {
     const native = {
       ...line,

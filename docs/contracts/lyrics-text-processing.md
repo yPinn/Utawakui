@@ -21,6 +21,8 @@
 
 工程職稱另涵蓋 Mixing Engineer／Assistant、Mastering Engineer、Recording Engineer／Assistant、Vocal Production & Recording、部分中日韓樂器職務及 Guitar／Bass／Drums／Piano 等欄名。例如 `混音助理 Mixing Assistant: Grove Miki @ Jamroom`、`人聲製作和錄音 Vocal Production & Recording: HARIKIRI @ Jamroom`、`母帶 Mastering Engineer: Craig J Williams` 與 `吉他 Guitar: Iki Zhou`。署名可附一個有界的 `@`／`＠` 工作室後綴；不查外部人名或把任意正文當成演職員表。
 
+企劃／企划、監製／监制、出品／出品人也屬製作欄位。已知職務後可接受有界的大寫 Latin 名稱接 Han 姓名，例如 `企劃：Mandy王夢帆/王子`；符合署名字形時整行預設隱藏，不能只移除職務而留下署名。正文形值仍列候選、預設保留，逐行還原恢復完整欄位與原時間。
+
 文字標註 v4 提供 `defaultHidden`：署名符合保守字形規則的單行欄位，預設從 Output 隱藏。Latin 署名須大寫開頭的姓名／handle；Han、Katakana、Hangul 署名另要求製作／錄音／混音等職務，不把短中文作詞正文直接當成人名。疑似句子、額外冒號、演唱字樣或無法判定的署名只列候選、預設保留。這是可還原的格式判斷，不聲稱已確認實際人名或理解歌詞；漏判保留給逐行確認。
 
 實唱合唱／和聲、引號內的製作字樣與無明確前綴的文字保留為 lyric。演唱／Vocal／和聲前綴不作製作資訊候選。全域標點清理尚未啟用：問號、英文撇號、歌名書名號與引用保留；不把所有逗號、句點或括號一併剝除。
@@ -50,6 +52,10 @@ Output publisher 先按原文件驗證讀音，再以 stable lineId 過濾隱藏
 共用文字處理不決定氣泡、直排、角色色或動畫。這些仍由五個已登錄模板的 profiles 與 capabilities 決定；舊 Focus 僅保留相容路徑。字型／色彩／位置／材料由 appearance registry 決定。
 
 Output 的尺寸量測與保真來源範圍由共用容量 planner 持有；每條分行／直欄依序成為一個批次，明確原始換行不合回同批。空白與分隔符保留在原文範圍，不產生空白批次。模板消費批次，保留各自的氣泡、字層、角色提示與動畫；相同文字但來源範圍不同仍為新批次，單純進度 tick 不重播入場。這是顯示排版，不代表辨識到演唱停頓或語意句界；時間不足維持 unfit，不刪詞或改寫來源時間。詳見[容量與時間契約](lyrics-timing-contract.md)。
+
+頓號 `、` 與緊鄰的排版空白不是強制句界；`我們在清明、冬至、新年拜的祖宗墳` 在容量足夠時維持同批，容量不足才優先在列舉分隔後分頁。明確換行、其他詞組空白與聲部變更仍遵守既有批次界線，所有原始分隔字元及來源時間保留。
+
+KTV 的相鄰純 Latin／英文逗號子句先以保真來源範圍合併，再交容量量測；不受短句的三十六字元與字元白名單限制。例如 `Jinzy, Llil Ca$, ￥ouki, we cosign` 不因藝名含 `$`、`￥`／`¥` 而逐項拆批。長列舉仍按容量分頁，明確換行、聲部及既有較強句界不因這項合併而消失；中日韓正文逗號的既有分句規則維持。此步驟只整理 KTV 輸入批次，不改其他模板進階顯示所需的原始語意標註，也不把實唱人名列舉當作製作資訊。
 
 只有目前支援 presentation policy 的 Live Stage 顯示「模板進階顯示」控制。未指定或無效值預設為 Balanced，保留重複實唱詞、語助詞與括號和聲；Literal 同樣可選。既有明確保存的 Broadcast Compact 不改寫，它仍可省略重複詞、語助詞與部分標點；進階區明示此效果。它不是全域 parser 或製作資訊清理器。
 

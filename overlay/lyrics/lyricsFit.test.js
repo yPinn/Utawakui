@@ -203,6 +203,60 @@ describe('lyric fit controller lifecycle', () => {
     s.controller.stop();
   });
 
+  it.each([1000, 18])(
+    'fits a symbolic Latin list at capacity %i with stable preview and alternating lanes',
+    (capacity) => {
+      const text = 'Jinzy, Llil Ca$, ￥ouki, we cosign';
+      const s = surface('karaoke-stack', {
+        measure: () => ({
+          fits: (value) => value.length <= capacity,
+          rows: (value) => [{ text: value }],
+        }),
+      });
+      s.snapshot.playback.track = { id: 'list' };
+      s.snapshot.lyrics = {
+        trackId: 'list',
+        synced: true,
+        source: { language: 'en' },
+        lines: [
+          { lineId: 'a', text, startMs: 1000, endMs: 25000 },
+          { lineId: 'b', text: 'next phrase', startMs: 25000, endMs: 30000 },
+        ],
+      };
+      const before = structuredClone(s.snapshot.lyrics);
+      const at = (positionMs) => {
+        s.snapshot.playback.positionMs = positionMs;
+        return s.controller.prepare(
+          s.snapshot,
+          selectLyricsOverlayFrame(s.snapshot, s.settings),
+          s.settings,
+        ).frame.ktv;
+      };
+      const batches = [];
+      let current = at(1000);
+      while (current.lineIndex === 0 && batches.length < 10) {
+        batches.push(current);
+        const next = at(Math.ceil(current.currentSourceRange.endMs));
+        expect(next.currentText).toBe(current.nextText);
+        expect(next.displayBatchId).toBe(current.nextDisplayBatchId);
+        expect(next.currentLaneIndex).toBe(current.currentLaneIndex + 1);
+        current = next;
+      }
+      expect(current.lineIndex).toBe(1);
+      expect(
+        batches
+          .map((batch) => batch.currentText)
+          .join('')
+          .replace(/\s/gu, ''),
+      ).toBe(text.replace(/\s/gu, ''));
+      expect(batches.length).toBe(capacity === 1000 ? 1 : 2);
+      s.controller.invalidate();
+      expect(at(25000).currentLaneIndex).toBe(current.currentLaneIndex);
+      expect(s.snapshot.lyrics).toEqual(before);
+      s.controller.stop();
+    },
+  );
+
   it('keeps the full mixed English phrase through source → KTV state → fit, and bounds the next preview', () => {
     const s = surface('karaoke-stack');
     const text = '想看見天上璀璨星光sing it with me';

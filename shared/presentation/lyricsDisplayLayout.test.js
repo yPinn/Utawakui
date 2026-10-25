@@ -18,6 +18,54 @@ const fits = (text) =>
 
 describe('bounded lyric display pages', () => {
   it.each([
+    '我們在清明、冬至、新年拜的祖宗墳',
+    '我們在清明 、 冬至 、 新年拜的祖宗墳',
+    '我们在清明、冬至、新年拜的祖宗坟',
+    '春、夏、秋、冬を君と歩く',
+    '春 、 夏 、 秋 、 冬を君と歩く',
+  ])(
+    'keeps a fitting enumeration together, including spacing around 、: %s',
+    (text) => {
+      const input = line(text),
+        before = structuredClone(input);
+      const result = planLyricsDisplay(input, {
+        fits: () => true,
+        sequentialRows: true,
+        phraseRows: true,
+      });
+      expect(result.pages.map((page) => page.text)).toEqual([text]);
+      expect(input).toEqual(before);
+    },
+  );
+  it('uses enumeration commas as capacity candidates without tiny mandatory batches', () => {
+    const text = '我們在清明、冬至、新年拜的祖宗墳';
+    const result = planLyricsDisplay(line(text), {
+      fits: (value) => [...value.trimEnd()].length <= 12,
+      sequentialRows: true,
+      phraseRows: true,
+    });
+    expect(result.status).toBe('ready');
+    expect(result.pages.map((page) => page.text)).toEqual([
+      '我們在清明、冬至、',
+      '新年拜的祖宗墳',
+    ]);
+    expect(result.pages.map((page) => page.text).join('')).toBe(text);
+  });
+  it('retains real newline and role boundaries within an enumeration', () => {
+    const text = '清明、冬至\n[女]新年、春日';
+    const result = planLyricsDisplay(line(text), {
+      fits: () => true,
+      sequentialRows: true,
+      phraseRows: true,
+    });
+    expect(result.pages.map((page) => page.text)).toEqual([
+      '清明、冬至\n',
+      '[女]新年、春日',
+    ]);
+  });
+  it.each([
+    'Jinzy, Llil Ca$, ￥ouki, we cosign',
+    'Jinzy, Llil Ca$, ¥ouki, we cosign',
     '盜竊hiphop的聲場',
     '林宛瑜買斷預付了五 K',
     'We the 水碩還手低眼高',

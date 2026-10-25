@@ -13,6 +13,9 @@ const CREDIT_ROLE = [
   '制作人',
   '製作',
   '制作',
+  '企[劃划]',
+  '監製|监制',
+  '出品(?:人)?',
   '(?:錄音|录音|混音)(?:工程[師师]|[師师]|助理)?',
   '母[帶带](?:工程[師师]|[師师]|後期|后期)?',
   '人[聲声](?:製作|制作)(?:[ \\t]*(?:和|與|与|及)[ \\t]*(?:錄音|录音))?',
@@ -67,7 +70,7 @@ function bylineNames(value, header) {
   )
     return false;
   const productionRole =
-    /製作|制作|producer|produced|mix|master|record|プロデュー|프로듀|錄音|录音|混音|母帶|母带|録音|ミックス|マスタリング|믹싱|마스터링|녹음/iu.test(
+    /製作|制作|企[劃划]|監製|监制|出品|producer|produced|mix|master|record|プロデュー|프로듀|錄音|录音|混音|母帶|母带|録音|ミックス|マスタリング|믹싱|마스터링|녹음/iu.test(
       header,
     );
   return value.split(/[/／&＆、,，+＋]/u).every((name) => {
@@ -86,6 +89,9 @@ function bylineNames(value, header) {
       ) ||
       (productionRole &&
         (/^[\p{Script=Han}·・]{2,8}$/u.test(token) ||
+          /^[A-Z][A-Za-z0-9'’._-]*[ \t]*[\p{Script=Han}·・]{2,8}$/u.test(
+            token,
+          ) ||
           /^[\p{Script=Katakana}ー・]{2,20}$/u.test(token) ||
           /^[\p{Script=Hangul}]{2,8}$/u.test(token)))
     );

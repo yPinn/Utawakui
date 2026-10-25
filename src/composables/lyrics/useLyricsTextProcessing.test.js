@@ -3,6 +3,48 @@ import { describe, expect, it } from 'vitest';
 import { useLyricsTextProcessing } from './useLyricsTextProcessing.js';
 
 describe('source-owned text selections', () => {
+  it('defaults screenshot planning credits to whole-line hiding and restores them independently', () => {
+    const scope = effectScope();
+    const document = shallowRef({
+      documentId: 'planning-cast',
+      lines: [
+        { lineId: 's', text: 'IMGOOD', startMs: 199000, endMs: 200000 },
+        {
+          lineId: 'p',
+          text: '企劃： Mandy王夢帆/王子',
+          startMs: 200000,
+          endMs: 221000,
+        },
+        {
+          lineId: 'e',
+          text: '監製:冉啟升/王政典',
+          startMs: 221000,
+          endMs: 221100,
+        },
+        { lineId: 'c', text: '出品:黃俊', startMs: 221100, endMs: 225000 },
+      ],
+    });
+    const before = structuredClone(document.value);
+    const owner = scope.run(() =>
+      useLyricsTextProcessing({
+        document,
+        sourceKey: () => 'planning-source',
+      }),
+    );
+    expect(owner.hiddenLineIds.value).toEqual(['p', 'e', 'c']);
+    expect(owner.project(document.value).lines).toMatchObject([
+      before.lines[0],
+    ]);
+    owner.setHidden('p', false);
+    expect(owner.project(document.value).lines).toMatchObject(
+      before.lines.slice(0, 2),
+    );
+    owner.setHidden('e', false);
+    owner.setHidden('c', false);
+    expect(owner.project(document.value).lines).toMatchObject(before.lines);
+    expect(document.value).toEqual(before);
+    scope.stop();
+  });
   it.each(['(和聲)', '（和聲）', '(和声)', '（和声）'])(
     'defaults exact %s markers hidden in Output, preserving sung text, source times and restoration',
     (marker) => {

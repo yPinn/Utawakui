@@ -20,7 +20,8 @@ export const LYRICS_PRESENTATION_PROFILE_VERSION = 1;
 const PARENTHETICAL_RE = /\([^()（）]+\)|（[^()（）]+）/gu;
 const PARENTHESIS_MARK_RE = /[()（）]/u;
 const SPEAKER_RE = /^\[([^\]\r\n]{1,40})\](?:[ \t]*\r?\n|[ \t]*)/u;
-const SEMANTIC_PUNCTUATION_RE = /[,，、。！？!?;；:：]/u;
+// Enumeration commas remain width candidates; they do not start singing batches.
+const SEMANTIC_PUNCTUATION_RE = /[,，。！？!?;；:：]/u;
 const WORD_RE = /[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu;
 const CJK_GLYPH_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u;
 const HANGUL_RE = /[\uac00-\ud7af]/u;
@@ -520,6 +521,12 @@ export function lyricsAuthoredPhraseBreaks(value, options = {}) {
       breaks.add(offset);
   };
   for (const match of text.matchAll(/[ \t]+/gu)) {
+    // Platform spacing beside an enumeration comma is not an authored phrase row.
+    if (
+      text[match.index - 1] === '、' ||
+      text[match.index + match[0].length] === '、'
+    )
+      continue;
     if (
       runs.some(
         (run) =>
@@ -563,8 +570,37 @@ export function lyricsAuthoredPhraseBreaks(value, options = {}) {
 }
 
 export function parseKtvDisplayPhrases(analysis, options = {}) {
-  const units = Array.isArray(analysis?.units) ? analysis.units : [];
   const source = String(analysis?.sourceText ?? '');
+  const rawUnits = Array.isArray(analysis?.units) ? analysis.units : [];
+  const units = [];
+  const joinsComma = (left, right) =>
+    left.kind === 'main' &&
+    right?.kind === 'main' &&
+    right.breakBefore === 'punctuation' &&
+    /[,，]$/u.test(left.text) &&
+    /^[ \t]*$/u.test(source.slice(left.sourceEnd, right.sourceStart)) &&
+    [left, right].every(
+      (unit) =>
+        !CJK_GLYPH_RE.test(unit.text) && /\p{Script=Latin}/u.test(unit.text),
+    );
+  // Latin comma lists reach the width planner intact, including symbolic
+  // artist names. Rebuild each run once, without rescanning a growing prefix.
+  for (let index = 0; index < rawUnits.length; index++) {
+    const first = rawUnits[index];
+    let last = first;
+    while (joinsComma(last, rawUnits[index + 1])) last = rawUnits[++index];
+    units.push(
+      first === last
+        ? first
+        : semanticUnit(
+            source,
+            'main',
+            first.sourceStart,
+            last.sourceEnd,
+            first.breakBefore,
+          ),
+    );
+  }
   const from = units[0]?.sourceStart ?? 0,
     to = units.at(-1)?.sourceEnd ?? 0;
   const compact = source.slice(from, to);

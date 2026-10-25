@@ -16,6 +16,20 @@ function mangaPresentation(text, options = {}) {
   return adaptMangaLyricsPresentation(analyzeLyricsSource(text), options);
 }
 
+describe('enumeration phrase boundaries', () => {
+  it.each([
+    '我們在清明、冬至、新年拜的祖宗墳',
+    '我們在清明 、 冬至 、 新年拜的祖宗墳',
+    '春、夏、秋、冬を君と歩く',
+  ])('does not make mandatory KTV phrases at 、: %s', (text) => {
+    const phrases = parseKtvDisplayPhrases(analyzeLyricsSource(text));
+    expect(phrases).toHaveLength(1);
+    expect(phrases[0].text).toBe(text.replace(/[ \t]+/gu, ' '));
+    expect(phrases[0].sourceStart).toBe(0);
+    expect(phrases[0].sourceEnd).toBe(text.length);
+  });
+});
+
 function visibleMangaBubbles(text, options = {}) {
   return mangaPresentation(text, options).bubbles.map(({ kind, text }) => ({
     kind,
@@ -1379,6 +1393,50 @@ describe('Live Stage caption preprocessing', () => {
 });
 
 describe('compact screenshot phrase preservation', () => {
+  it.each([
+    'Jinzy, Llil Ca$, ￥ouki, we cosign',
+    'Jinzy, Llil Ca$, ¥ouki, we cosign',
+    'Jinzy, Lil Ca$, ￥ouki, we cosign',
+    'Jinzy，Llil Ca$，￥ouki，we cosign',
+    'Jinzy, Llil Ca$, ￥ouki, everybody sings with us tonight',
+  ])(
+    'keeps Latin comma lists intact before capacity measurement: %s',
+    (text) => {
+      const analysis = analyzeLyricsSource(text);
+      const before = structuredClone(analysis);
+      const phrases = parseKtvDisplayPhrases(analysis);
+      expect(phrases.map((phrase) => phrase.text)).toEqual([text]);
+      expect(phrases[0]).toMatchObject({
+        sourceStart: 0,
+        sourceEnd: text.length,
+      });
+      expect(analysis).toEqual(before);
+    },
+  );
+  it.each([
+    [
+      'Jinzy, Llil Ca$\n￥ouki, we cosign',
+      ['Jinzy, Llil Ca$', '￥ouki, we cosign'],
+    ],
+    [
+      'Jinzy, Llil Ca$; ￥ouki, we cosign tonight',
+      ['Jinzy, Llil Ca$;', '￥ouki, we cosign tonight'],
+    ],
+    [
+      'Jinzy, Llil Ca$! ￥ouki, we cosign tonight',
+      ['Jinzy, Llil Ca$!', '￥ouki, we cosign tonight'],
+    ],
+    ['幾句是非，也無法將我的熱情冷卻', ['幾句是非，', '也無法將我的熱情冷卻']],
+  ])(
+    'retains authored rows and established clause boundaries: %s',
+    (text, expected) => {
+      expect(
+        parseKtvDisplayPhrases(analyzeLyricsSource(text)).map(
+          (phrase) => phrase.text,
+        ),
+      ).toEqual(expected);
+    },
+  );
   it.each([
     ['盜竊hiphop的聲場', ['盜竊hiphop的聲場']],
     ['林宛瑜買斷預付了五 K', ['林宛瑜買斷預付了五 K']],

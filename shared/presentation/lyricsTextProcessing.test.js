@@ -10,6 +10,55 @@ import {
 
 describe('lossless shared text annotations', () => {
   it.each([
+    '企劃： Mandy王夢帆/王子',
+    '監製:冉啟升/王政典',
+    '出品:黃俊',
+    '企划：Mandy王梦帆／王子',
+    '监制：冉启升/王政典',
+    '出品人：黃俊',
+  ])(
+    'hides the entire planning byline rather than only its prefix: %s',
+    (text) => {
+      const doc = {
+        documentId: 'planning',
+        lines: [{ lineId: 'c', text, startMs: 200000, endMs: 201000 }],
+      };
+      const before = structuredClone(doc);
+      expect(analyzeLyricsText(text)).toMatchObject({
+        kind: 'credit-candidate',
+        defaultHidden: true,
+        vocalMarkers: [],
+      });
+      const defaults = preprocessLyricsDocument(doc)
+        .outputCandidates.filter((candidate) => candidate.defaultHidden)
+        .map((candidate) => candidate.lineId);
+      expect(projectLyricsTextSelection(doc, defaults).lines).toEqual([]);
+      expect(projectLyricsTextSelection(doc, []).lines).toMatchObject(
+        doc.lines,
+      );
+      expect(doc).toEqual(before);
+    },
+  );
+  it.each([
+    'Jinzy, Llil Ca$, ￥ouki, we cosign',
+    'Jinzy, Llil Ca$, ¥ouki, we cosign',
+    '企劃：我們把夢想寫進明天',
+    '監製：I sing for you',
+    '出品：這是我的歌',
+    '企劃：Mandy王夢帆說今晚一起走',
+    '王子：一起唱到天亮',
+    '我們在清明、冬至、新年拜的祖宗墳',
+  ])('keeps sung or ambiguous prose visible by default: %s', (text) => {
+    const doc = {
+      documentId: 'planning-prose',
+      lines: [{ lineId: 'v', text }],
+    };
+    const defaults = preprocessLyricsDocument(doc)
+      .outputCandidates.filter((candidate) => candidate.defaultHidden)
+      .map((candidate) => candidate.lineId);
+    expect(projectLyricsTextSelection(doc, defaults).lines[0].text).toBe(text);
+  });
+  it.each([
     ['[男声]夜空', '夜空', 'male'],
     ['【女聲】夜空', '夜空', 'female'],
     ['男女合唱：夜空', '夜空', 'group'],
