@@ -4,6 +4,8 @@
 
 ## Runtime Ownership
 
+播放器的 `player/usePlayerLibrarySync.js` 持有 metadata refresh 的非同步讀取 revision，保留目前 occurrence token 並拒絕舊播放／舊讀取結果；音訊 element 與 transport 的權威仍在 `usePlayer.js`，Web Audio 接線仍由 `usePlayerAudioGraph.js` 擁有。
+
 | Runtime                                                      | 責任                                                                                                  | 不可持有                                                 |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | Electron main (`electron/main/`)                             | Window lifecycle、IPC trust boundary、feature gate enforcement、本機服務、diagnostics                 | Renderer reactive state、client 提供的路徑               |
@@ -74,12 +76,14 @@
 - Main 的 `providerDownloadScheduler` 是全域 admission owner：最多同時兩個 track id，重複 id 共用工作，可逐首取消。下載完成後進入並行 1 的曲庫 finalize lane（寫索引、排程 sidecar／分析、套用空間政策），下載槽不等待。下載時以 yt-dlp metadata phase 取得的 `info.json` duration 為準。
 - `useSeparationQueue.js` 由 App shell 唯一持有；`useSeparationPreparation.js` 持有來源選擇（預設目前播放順序，或 playlist／album），依來源順序投影「尚未準備／已有伴奏」並排除同 recipe 已在佇列的曲目。主要動作只快照尚未準備的曲目，既有結果只能明確重新準備。佇列操作（排序、移除、重試、清除紀錄）在 `SeparationToolbarList.vue` 與右鍵選單；處理狀態權威在 main。
 
+- 專輯批次下載由 Main `releaseDownloadBatches.js` 持有有界工作與逐位置結果；`releases/runtime.js` 從完整已保存曲序驗證未持有位置，`catalogRuntime.js` 導出私有目標並在開始／納入時重驗 slot identity、排除及 scope。批次不受 Renderer 分頁影響，重用同一 Provider scheduler、去重及匯入完成副作用；停止只阻止尚未開始的項目，重試只含失敗／未納入結果。`useReleaseCatalogBatchDownloads.js` 是跨頁唯一狀態 facade，active 時以有界間隔讀取固定 IPC，結束後停止並合併刷新與通知；`ReleaseCatalogBatchActions.vue` 在頁首既有 rail 提供共用 icon buttons，曲目列共用 pending 投影。詳見[來源曲序契約](contracts/release-source-catalog.md)。
+
 ### 播放、BGM、試聽、節拍器
 
 - `usePlayer.js` 是 HTML audio event 權威與 transport facade；`player/usePlayerAudioGraph.js` 擁有四聲道 accompaniment／guide-vocal 路由、monitor／capture mix、Signalsmith pitch、capture sink 與清理，不註冊時間事件。Monitor graph lazy 建立；儲存的 capture 裝置須先由 `useAudioOutput.js` 列舉驗證，裝置遺失或錯誤時關閉 capture、清除設定並保留 monitor，不 fallback 到預設喇叭。`pitchProcessorLoader.js` 首次需要時才載入 Signalsmith worklet，失敗可重試，不放寬 CSP。
 - Chromium 自然 EOF 的 pause→ended 由 ended 這個 terminal owner 處理，不投影為操作暫停，以免略過 BGM post-roll。
 - 最近播放與啟動恢復：`usePlaybackHistory.js` 依實際 progress／ended 判定 qualified event；`useRecentPlaybackActivation.js` 以插播方式播放歷史曲目，不重建來源佇列；`usePlaybackResume.js` 只投影與 paused rehydrate。演唱音量與監聽／擷取 level 由 `shared/audioControlValues.json` 定義，存於 `config.json.audioPreferences`，preload 同步 seed 第一幀，`useAudioPreferences.js` 合併寫回。見[播放紀錄契約](contracts/playback-history-and-resume.md)。
-- BGM：`src/bgm/audioDeck.js` 擁有第二個 audio element 與 logical gain bus（目前只連系統預設 monitor）；`src/bgm/handoffCoordinator.js` 仲裁 BGM request、演唱後 deferred restore、fade gate、pre-roll／post-roll 與 stale generation。`useBgmSession.js` 由 App 在啟動時初始化一次，組合 plan、library、OBS、deck、coordinator 與 player 的單一 pre-start hook；`BgmPlayer.vue` 是安排 Dock footer 的場間音樂控制組合，主頁更多選單可導向此處，mount／unmount 不改變音訊。BGM 不進 Queue、history、resume、Output、SMTC。見 [BGM 契約](contracts/bgm-standby-lane.md)與 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
+- BGM：`src/bgm/audioDeck.js` 擁有第二個 audio element 與 logical gain bus（monitor 與 post-gain PCM bridge）；bridge 透過有獨立 silence gate 的 lease 接入既有演唱 capture sink，不經演唱 pitch／guide／monitor gain。兩條 lane 共用 capture 最後總音量，預設 50%、獨立保存；BGM 開始前等候選定 sink 就緒，失效即停止 BGM 雙路輸出；`src/bgm/handoffCoordinator.js` 仲裁 BGM request、演唱後 deferred restore、fade gate、pre-roll／post-roll 與 stale generation。`useBgmSession.js` 由 App 在啟動時初始化一次，組合 plan、library、OBS、deck、coordinator 與 player 的單一 pre-start hook；`BgmPlayer.vue` 是安排 Dock footer 的場間音樂控制組合，主頁更多選單可導向此處，mount／unmount 不改變音訊。BGM 不進 Queue、history、resume、Output、SMTC。見 [BGM 契約](contracts/bgm-standby-lane.md)與 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
 - 曲目試聽是同一 coordinator 仲裁的第三條、最低優先 lane：`acquirePreview()` 回傳可被搶占的 lease；演唱開始、BGM 播放、進入直播／錄影都會搶占試聽，直播／錄影中直接拒絕。Owner 是 `useTrackPreview.js`（自有 audio element），`TrackPreviewOverlay.vue` 只投影狀態。見[試聽契約](contracts/track-preview.md)。
 - `useTrackPreviewEligibility` 僅控制本地試聽入口：來源專輯沿用當頁 Main catalog 的全目錄可用數，其他專輯只確認目前集合；確認中／全無可用／失敗時停用，不改展示投影，也不做啟動全庫摘要。開始前仍 fresh resolve，專輯序列維持來源順序並略過無效音源；owner 拒絕非本地 media scheme，不做來源試聽。
 - 節拍器 `useMetronome.js` 使用獨立 AudioContext 與 lookahead scheduler；`useMetronomeTrackTempo.js` 只在停止且未手動覆寫時套用通過信心門檻的分析 BPM，不回寫 sidecar。
@@ -162,7 +166,7 @@
 
 ### 藝人、照片與封面
 
-- 藝人整理（[ADR 0022](adr/0022-artist-identity-and-organization.md)）：`artists/artistIndex.js` 依有序演出者 credit 建立分組；`artistOrganization.js` 把已確認 credit 投影到 stable UUID entity，不改寫曲目 metadata。`artists.json` 保存 revision、entities、catalog facts 與最多 20 筆 undo，原子寫入並備份損毀檔；未整理藝人用衍生 hash id，舊 id 有 redirect。Index 在首次請求時才讀取。
+- 藝人整理（[ADR 0022](adr/0022-artist-identity-and-organization.md)）：`artists/artistIndex.js` 依有序演出者 credit 建立分組；`artistOrganization.js` 把已確認 credit 投影到 stable UUID entity，不改寫曲目 metadata。`artists.json` 保存 revision、entities、catalog facts 與最多 20 筆 undo，原子寫入並備份損毀檔；未整理藝人用衍生 hash id，舊 id 有 redirect。Index 在首次請求時才讀取；後續以 track id、artist scalar 與 Main 讀取的 `info.json` size／mtime／ctime stamp 快取 sidecar facts，缺檔後補齊或替換只重讀該曲目，非同步讀取不跨曲庫共用快取。
 - Merge／split／顯示名稱／undo 經固定 IPC，以 expected revision 防止覆寫；renderer 只傳 id 與最多 200 字的名稱。`artistIdentityService.js` 經全 App 1.1 秒的 MusicBrainz scheduler 自動整理：重查 `provider-flow`、single-flight、每輪最多 64 次，只自動套用有本機曲目佐證的唯一 exact name／alias；相同 MBID 自動合併，split 保存 negative evidence。Renderer 永遠拿不到 MBID 或原始回應。
 - 藝人照片：`artistPhotoService.js` 在 `provider-flow` 開啟時，以 yt-dlp 讀第一署名曲目多數非 Topic 頻道的頭像，經 `artwork/image.js` 驗證下載（只允許兩個 Google 圖片 host）寫入 `artists/<artistId>/`。明確的線上候選搜尋由 `artistPhotoCandidateService.js` 在 Provider Python 做一次匿名 YT Music 查詢，renderer 只拿到 candidate id 與驗證後的 bytes，一律由使用者確認。見[照片契約](contracts/artist-photo-provider.md)。
 - Music identity：`electron/lib/musicIdentity/` 是 provider 中立的逐軸 evidence 純 domain，不連網、不寫檔，也不決定總分或自動保存；歌詞（`lyricsProviders/recordingPolicy.js`）、匯入（`importRecordingPolicy.js`）與封面各自映射並保有自己的門檻。 Consumer 直接匯入所需子模組；跨模組驗證位於同目錄的 integration test。
@@ -200,30 +204,30 @@
 
 ## 權威狀態與資料
 
-| 資料                      | 權威 owner                         | 投影／持久化                                                                                |
-| ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
-| 曲目存在                  | 曲庫檔案系統                       | `library.json` 只補 scalar metadata                                                         |
-| 曲目加入時間              | Main library／import               | 新匯入寫 `importedAt`；舊資料以音訊 mtime 相容投影                                          |
-| 播放時間與狀態            | Renderer HTML audio element        | Main、taskbar、SMTC、Output 只收投影                                                        |
-| 演唱音訊偏好              | Main config                        | `config.json.audioPreferences`；preload seed 第一幀                                         |
-| Queue／目前曲目／歌詞     | Renderer composables               | Projection Hub 驗證後給提詞器與 Overlay；提詞器操作經 revision／track 驗證回到原 owner      |
-| 最近播放                  | Main playback persistence          | 本機 bounded JSON                                                                           |
-| 完整最後播放索引          | Main playback persistence          | Main 私有，只供去人聲 LRU                                                                   |
-| 啟動恢復                  | Renderer player／queue 投影        | Main 驗證並原子保存；啟動只 paused rehydrate                                                |
-| 演出安排                  | Main session plan store            | Library root bounded JSON                                                                   |
-| BGM 準備                  | Main BGM plan store                | Library root `bgm-standby.json`                                                             |
-| BGM transport／交接       | Renderer BGM deck／coordinator     | HTML audio 事件與唯讀投影                                                                   |
-| Feature confirmation      | Main config                        | Renderer 只顯示與提交 allowlisted intent                                                    |
-| 歌詞／分析／分離 sidecars | Main library services              | Renderer 只提供 track id 與產品 intent                                                      |
-| 曲庫空間政策              | Main config／library service       | Renderer 只收分類容量並提交 allowlisted 政策                                                |
-| 依賴 registry             | `shared/featureDependencies.json`  | Main 解析 URL、hash、路徑、模型與參數                                                       |
-| OBS endpoint／密碼        | Main config／加密檔                | Renderer 只提交 bounded 設定                                                                |
-| OBS session history       | Main session history service       | 本機 JSON；renderer 只讀                                                                    |
-| CPU／RAM 觀測             | Main usage service                 | Titlebar 只收百分比                                                                         |
-| 藝人 index／整理          | Main artist index／organization    | `artists.json`；renderer 只送 opaque id、名稱與 revision                                    |
-| 藝人照片                  | Main artist photo services         | `artists/<artistId>/`；renderer 只送 id 與選圖／移除／候選 intent                           |
-| 曲目編輯草稿              | Renderer editor＋Main path session | Main 持有本機路徑，單一 Save 才寫入，失敗回滾封面                                           |
-| Folder 頁面物件           | Main folder object store           | Library root manifest＋opaque 資產目錄；renderer 只送 page／key／placement／Pin／order 批次 |
+| 資料                      | 權威 owner                         | 投影／持久化                                                                                            |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 曲目存在                  | 曲庫檔案系統                       | `library.json` 只補 scalar metadata                                                                     |
+| 曲目加入時間              | Main library／import               | 新匯入寫 `importedAt`；舊資料以音訊 mtime 相容投影                                                      |
+| 播放時間與狀態            | Renderer HTML audio element        | Main、taskbar、SMTC、Output 只收投影                                                                    |
+| 演唱音訊偏好              | Main config                        | `config.json.audioPreferences`；含 monitor／guide 與共用 captureVolume（預設 0.5）；preload seed 第一幀 |
+| Queue／目前曲目／歌詞     | Renderer composables               | Projection Hub 驗證後給提詞器與 Overlay；提詞器操作經 revision／track 驗證回到原 owner                  |
+| 最近播放                  | Main playback persistence          | 本機 bounded JSON                                                                                       |
+| 完整最後播放索引          | Main playback persistence          | Main 私有，只供去人聲 LRU                                                                               |
+| 啟動恢復                  | Renderer player／queue 投影        | Main 驗證並原子保存；啟動只 paused rehydrate                                                            |
+| 演出安排                  | Main session plan store            | Library root bounded JSON                                                                               |
+| BGM 準備                  | Main BGM plan store                | Library root `bgm-standby.json`                                                                         |
+| BGM transport／交接       | Renderer BGM deck／coordinator     | HTML audio 事件與唯讀投影                                                                               |
+| Feature confirmation      | Main config                        | Renderer 只顯示與提交 allowlisted intent                                                                |
+| 歌詞／分析／分離 sidecars | Main library services              | Renderer 只提供 track id 與產品 intent                                                                  |
+| 曲庫空間政策              | Main config／library service       | Renderer 只收分類容量並提交 allowlisted 政策                                                            |
+| 依賴 registry             | `shared/featureDependencies.json`  | Main 解析 URL、hash、路徑、模型與參數                                                                   |
+| OBS endpoint／密碼        | Main config／加密檔                | Renderer 只提交 bounded 設定                                                                            |
+| OBS session history       | Main session history service       | 本機 JSON；renderer 只讀                                                                                |
+| CPU／RAM 觀測             | Main usage service                 | Titlebar 只收百分比                                                                                     |
+| 藝人 index／整理          | Main artist index／organization    | `artists.json`；renderer 只送 opaque id、名稱與 revision                                                |
+| 藝人照片                  | Main artist photo services         | `artists/<artistId>/`；renderer 只送 id 與選圖／移除／候選 intent                                       |
+| 曲目編輯草稿              | Renderer editor＋Main path session | Main 持有本機路徑，單一 Save 才寫入，失敗回滾封面                                                       |
+| Folder 頁面物件           | Main folder object store           | Library root manifest＋opaque 資產目錄；renderer 只送 page／key／placement／Pin／order 批次             |
 
 ## Feature Gates 與最小依賴單位
 
