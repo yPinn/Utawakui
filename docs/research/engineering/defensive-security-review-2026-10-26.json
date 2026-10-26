@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-26",
+  "sourceBase": "d0069f3155eb8c15b976658b9d8d0292e436a8d7",
+  "sourceIncludesUncommittedFixes": true,
+  "threatModel": "Modified renderer or direct IPC caller; not a hostile local administrator",
+  "windowsFilenameBoundary": {
+    "fixed": true,
+    "realNtfsAlternateStreamFixture": true,
+    "rejected": [
+      "alternate-data-stream",
+      "dos-device-name",
+      "control-character",
+      "trailing-dot-or-space",
+      "reserved-windows-character"
+    ],
+    "owners": [
+      "electron/lib/textGuards.js",
+      "electron/lib/library/paths.js",
+      "electron/lib/featureDependencies/archive.js"
+    ],
+    "doesNotClaimJunctionOrLocalTamperProtection": true
+  },
+  "mainNpmAudit": {
+    "command": "npm audit --json",
+    "exitCode": 0,
+    "advisoryPackageEntries": 0
+  },
+  "independentProvider": {
+    "providerVersionUnchanged": "4.40.1",
+    "beforeHighPackageEntries": 4,
+    "afterHighPackageEntries": 2,
+    "auditExitCode": 1,
+    "lockEntriesChanged": 3,
+    "versions": {
+      "nested-body-parser": "1.20.9",
+      "body-parser": "2.4.0",
+      "follow-redirects": "1.16.2"
+    },
+    "remaining": {
+      "package": "node-forge",
+      "version": "1.4.0",
+      "advisory": "GHSA-86w9-cpqp-85rv",
+      "fixAvailable": false,
+      "parentAlsoFlagged": "@neteasecloudmusicapienhanced/api"
+    },
+    "syntheticCrossOriginCredentialTests": 2,
+    "offlineIntegrationTestsPassed": 9,
+    "liveProviderAcceptanceRun": false,
+    "userActivationRebuilt": false
+  },
+  "audioPythonOsv": {
+    "queriedNameVersionPairs": 24,
+    "exitCode": 1,
+    "lockUpgraded": false,
+    "affectedLock": "resources/audio-processing/analysis-beat-this-py314-lock.json",
+    "findings": [
+      {
+        "package": "filelock",
+        "version": "3.32.4",
+        "ids": [
+          "GHSA-567q-5qvw-pf92",
+          "GHSA-9vhv-jxww-xfm5",
+          "GHSA-v4x8-3wr5-3wq8"
+        ],
+        "advisoryPatchedVersion": "4.2.1",
+        "runtimeReachabilityProven": false
+      },
+      {
+        "package": "setuptools",
+        "version": "81.0.0",
+        "ids": [
+          "GHSA-h35f-9h28-mq5c",
+          "GHSA-xmj3-9gf7-h52w",
+          "PYSEC-2026-3447"
+        ],
+        "advisoryPatchedVersionCoveringBothIssues": "84.1.0",
+        "note": "sdist Unicode issue is macOS-specific; app extracts pinned wheels rather than invoking legacy setuptools installation"
+      },
+      {
+        "package": "torch",
+        "version": "2.11.0",
+        "ids": ["GHSA-rrmf-rvhw-rf47"],
+        "advisoryPatchedVersion": "2.13.0",
+        "runtimeReachabilityProven": false
+      }
+    ],
+    "binaryAdvisoriesNotIndividuallyVerified": [
+      "Python embeddable 3.14.7",
+      "bgutil Rust provider 0.8.1",
+      "bgutil Rust plugin 0.8.1",
+      "FFmpeg essentials release"
+    ]
+  },
+  "existingArtifact": {
+    "path": "release/win-unpacked/electron.exe",
+    "mtimeUtc": "2026-10-25T04:26:27.348Z",
+    "containsCurrentFixes": false,
+    "authenticodeStatus": "NotSigned",
+    "fusesReadFromBinary": {
+      "RunAsNode": true,
+      "EnableNodeOptionsEnvironmentVariable": false,
+      "EnableNodeCliInspectArguments": false,
+      "EnableEmbeddedAsarIntegrityValidation": true,
+      "OnlyLoadAppFromAsar": true,
+      "GrantFileProtocolExtraPrivileges": true
+    },
+    "asarTamperInjectionTestRun": false,
+    "newPackageBuilt": false
+  },
+  "updateSignature": {
+    "signedManifestEnabled": false,
+    "activeProductionKeyId": null,
+    "developmentKeyOnly": true
+  },
+  "verification": {
+    "fullSuiteFilesPassed": 1122,
+    "fullSuiteTestsPassed": 11329,
+    "fullSuiteTestsSkipped": 1,
+    "fullSuiteExitCode": 0,
+    "eslintExitCode": 0,
+    "markdownFilesChecked": 204,
+    "markdownExitCode": 0,
+    "formatExitCode": 0,
+    "viteBuildExitCode": 0,
+    "existingLargeChunkWarnings": true,
+    "formalUserDataModified": false,
+    "committed": false
+  }
+}
