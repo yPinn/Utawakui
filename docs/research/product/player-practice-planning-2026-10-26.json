@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 1,
+  "plannedOn": "2026-10-26",
+  "timezone": "Asia/Taipei",
+  "status": "planning-draft-not-implemented",
+  "authorization": "Owner requested proceeding in order after the ranked planning proposal. This is a documentation and planning deliverable; no product implementation, asset/model download, microphone permission or runtime experiment was performed.",
+  "authority": {
+    "currentProductStatus": "docs/spec.md",
+    "planningDocument": "docs/research/product/player-practice-planning-2026-10-26.md",
+    "previousDatedEvidence": "docs/research/product/product-and-documentation-review-2026-10-26.json",
+    "previousEvidencePolicy": "Preserve original snapshot; current source corrections are recorded here and in the current spec/competitor entry."
+  },
+  "order": [
+    {
+      "rank": 1,
+      "id": "track-performance-preferences",
+      "deliverable": "reviewable-behavior-draft",
+      "implemented": false,
+      "fields": [
+        "transposeSemitones",
+        "pitchCents",
+        "tempoRate",
+        "monitorGuideVocalEnabled"
+      ],
+      "excluded": [
+        "monitor/capture guide levels",
+        "capture guide enable",
+        "master/capture gain or mute",
+        "device",
+        "BGM",
+        "lyrics source/offset",
+        "loop markers",
+        "resume position"
+      ],
+      "scope": "library + canonical track",
+      "persistence": "explicit save of applied values; Main-owned versioned sidecar; exact filename/IPC not yet accepted",
+      "prerequisite": "DSP application must report success/failure; loading profile must not persist effective values into machine preferences"
+    },
+    {
+      "rank": 2,
+      "id": "ab-practice",
+      "deliverable": "reviewable-behavior-draft",
+      "implemented": false,
+      "scope": "current main-player track session; no persistence in first version",
+      "prototypeOnly": {
+        "minimumSpanMs": 500,
+        "gapSeconds": [0, 1, 2, 4]
+      },
+      "prerequisites": [
+        "one transport/terminal decision",
+        "real-media-clock overshoot budget",
+        "BGM coordinator lease during gap"
+      ],
+      "excluded": [
+        "sample-accurate loop guarantee",
+        "new audio deck",
+        "saved bookmarks/notes",
+        "automatic phrase selection",
+        "per-lap guide fading"
+      ]
+    },
+    {
+      "rank": 3,
+      "id": "lyrics-timing-review",
+      "deliverable": "reviewable-behavior-draft",
+      "implemented": false,
+      "scope": "existing library lyrics editor; original-audio waveform; explicit per-source timing review",
+      "identity": [
+        "Main-owned media revision/equivalence evidence",
+        "source fingerprint/document id",
+        "timing revision",
+        "effective offset",
+        "review scope"
+      ],
+      "prerequisites": [
+        "bounded waveform feasibility and cache identity",
+        "partial-save and stale-context policy"
+      ],
+      "excluded": [
+        "second lyrics editor",
+        "ASR/model preparation",
+        "T0-as-timed review",
+        "T1+-as-trusted-T2",
+        "proof of OBS/hardware synchronization"
+      ]
+    },
+    {
+      "rank": 4,
+      "id": "configurable-global-commands",
+      "deliverable": "bounded-command-proposal",
+      "implemented": false,
+      "commands": ["play/pause", "previous/next", "Key", "lyrics offset"],
+      "prerequisites": [
+        "existing focus/modal/IME conflicts audited",
+        "atomic registration replacement and explicit OS conflict result"
+      ],
+      "excluded": [
+        "arbitrary IPC binding",
+        "device/capture configuration",
+        "global plain-character defaults"
+      ]
+    },
+    {
+      "rank": 5,
+      "id": "manual-performance",
+      "deliverable": "existing-capability-verification-plan",
+      "newImplementationRequired": false,
+      "observedImplementation": true,
+      "visibleAcceptancePerformed": false,
+      "scope": "existing manual item, explicit start/finish, external audio/self accompaniment",
+      "excluded": [
+        "new media/item model",
+        "fake audio clock",
+        "timed finish without separate decision"
+      ]
+    },
+    {
+      "rank": 6,
+      "id": "derived-audio-compaction",
+      "deliverable": "bounded-experiment-plan",
+      "experimentRun": false,
+      "scope": "new derived results first; source media preserved",
+      "prerequisites": [
+        "codec quality and channel/seek/DSP evidence",
+        "staging, manifest transaction, cancel/restore and disk policy"
+      ],
+      "codecSelected": false
+    },
+    {
+      "rank": 7,
+      "id": "mic-level-visuals",
+      "deliverable": "bounded-experiment-plan",
+      "experimentRun": false,
+      "scope": "explicit selected input -> bounded normalized envelope -> one local visual prototype",
+      "prerequisites": [
+        "input lifecycle",
+        "noise/bleed control",
+        "bounded visual lag and playback cost"
+      ],
+      "excluded": [
+        "microphone playback monitoring",
+        "recording",
+        "raw Mic audio publication",
+        "automatic replacement input"
+      ]
+    },
+    {
+      "rank": 8,
+      "id": "mic-pitch-visualization",
+      "deliverable": "staged-experiment-plan",
+      "experimentRun": false,
+      "scope": "input pitch -> reference melody -> calibrated time comparison",
+      "prerequisites": [
+        "credible unknown/coverage handling",
+        "reference melody validation",
+        "separate output/input/window delay and drift evidence"
+      ],
+      "excluded": [
+        "singing-quality score",
+        "rankings/personal comparison",
+        "voice monitoring"
+      ],
+      "modelSelected": false
+    }
+  ],
+  "sourceCorrections": [
+    {
+      "id": "C01",
+      "previousClassification": "Unaccompanied performance needs a new data model",
+      "finding": "manual already exists in the store, playback coordinator, form, facade, preload and Main handlers; explicit start/finish supports external audio or self accompaniment",
+      "change": "Classify as existing capability with visible acceptance pending; timed finish is separate"
+    },
+    {
+      "id": "C02",
+      "previousClassification": "Arrangement still needs OBS history commit wiring",
+      "finding": "confirmed start is already integrated with Main sessionHistoryService.observePerformance",
+      "change": "Classify wiring as present and real OBS/end-to-end acceptance as pending"
+    },
+    {
+      "id": "C03",
+      "finding": "Current guide level persistence watches effective player state; directly applying per-track guide levels would change machine preferences",
+      "change": "Exclude per-track guide levels/capture configuration from first version; require a separate effective layer before extending"
+    },
+    {
+      "id": "C04",
+      "finding": "Some pitch setters handle failure internally and resolve",
+      "change": "Do not treat fulfilled Promise as proof of successful profile application"
+    }
+  ],
+  "plannedAcceptanceScenarios": [
+    {
+      "id": "P01",
+      "description": "沒有歌曲設定時套用 canonical defaults，不變更 machine preferences",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P02",
+      "description": "明確保存已套用數值，重啟後載入同曲設定且保持 paused",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P03",
+      "description": "Pause／resume／buffering／同次循環保留臨時值",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P04",
+      "description": "新 occurrence 重套保存設定，明確整首 restart 與 A–B 分開",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P05",
+      "description": "同曲原曲／分離 URL 更新保留現行控制",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P06",
+      "description": "缺分離結果不自動排程；不啟用 capture guide 或更改其 level",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P07",
+      "description": "讀取／DSP／保存／CAS 失敗分別可辨識、可重試",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "P08",
+      "description": "切曲／換庫 A→B→A／取消期間晚回不套錯對象",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L01",
+      "description": "A／B 有限、順序、duration 與最小長度驗證",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L02",
+      "description": "paused 時啟用不自行播放",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L03",
+      "description": "區間內 seek 保留、外側 seek 停用並保留標記",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L04",
+      "description": "tempo 變化不改媒體端點，區段重播不重套歌曲設定",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L05",
+      "description": "倒數 pause／stop／clear／換曲後不誤啟動",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L06",
+      "description": "EOF 在唯一 transport 仲裁，無下一首競態",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L07",
+      "description": "不逐輪增加歷史／場次／章節，repeat 與 shuffle 無第二 owner",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L08",
+      "description": "BGM 不在 loop gap 插播；安排持有播放時拒絕啟用",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "L09",
+      "description": "前景／背景／負載／換庫的真實位置與 overshoot 量測",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T01",
+      "description": "T0／T1／可信 T2／T1+ 不互相冒充精度",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T02",
+      "description": "共用既有 editor draft／save／cancel／undo",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T03",
+      "description": "waveform 不成為播放 clock 或隱式分離入口",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T04",
+      "description": "每個來源／修訂獨立人工確認",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T05",
+      "description": "文字／timing／offset 改變使舊確認不適用",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T06",
+      "description": "純顯示與 pitch／tempo 變化不改 canonical timing 確認",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T07",
+      "description": "媒體修訂及只改 FLAC tags 的等價／保守失效政策",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T08",
+      "description": "時間已存而確認失敗時保留部分成功與重試",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "T09",
+      "description": "長曲／取消／快取成本與晚到回應身份防線",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "K01",
+      "description": "註冊／更換／失敗回復與已保存設定一致",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "K02",
+      "description": "OS 或其他程式占用組合鍵時明示未生效",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "K03",
+      "description": "輸入框／IME／modal／長按／重複觸發分派正確",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "K04",
+      "description": "停用／退出釋放，與現有 transport／SMTC 共用命令",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "M01",
+      "description": "以現有 form、facade、preload 與 Main 新增 manual",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "M02",
+      "description": "手動開始／完成／中止及外部曲目接手維持單一 NP",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "M03",
+      "description": "BGM／confirmed history／重啟／封存與匯出損失可見驗收",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "R01",
+      "description": "衍生音訊格式與交易研究；量測體積、CPU／RAM、seek、四聲道、DSP／自然音樂品質及取消回復",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "R02",
+      "description": "Mic 電平包絡研究；量測噪聲／串音、平滑／上限、輸入到畫面延遲、失訊及 reduced motion",
+      "status": "planned-not-run"
+    },
+    {
+      "id": "R03",
+      "description": "Mic 音準分段研究；輸入音高、參考旋律、延遲校準／jitter／drift、可信覆蓋與未知區段",
+      "status": "planned-not-run"
+    }
+  ],
+  "scopeControls": {
+    "productCodeChanged": false,
+    "architectureDecisionChanged": false,
+    "committed": false,
+    "microphoneAccessed": false,
+    "modelsDownloaded": false,
+    "competitorExecuted": false,
+    "existingPhonePlanPreserved": true,
+    "onboardingWaitsForVisualDecision": true
+  },
+  "verification": {
+    "status": "complete-documentation-only",
+    "markdown": {
+      "files": 214,
+      "issues": 0,
+      "command": "npm run lint:md",
+      "exitCode": 0
+    },
+    "format": {
+      "files": 6,
+      "command": "npx --no-install prettier --check --ignore-path .gitignore <six scoped planning/index files>",
+      "exitCode": 0
+    },
+    "localLinks": {
+      "markdownFiles": 214,
+      "docsFiles": 180,
+      "localLinks": 1069,
+      "issues": [],
+      "unlinkedDocuments": []
+    },
+    "diffCheck": {
+      "command": "git diff --check -- docs/spec.md docs/research/README.md docs/research/product",
+      "exitCode": 0
+    },
+    "scenarioLedger": {
+      "count": 36,
+      "uniqueIds": true,
+      "allPlannedNotRun": true
+    },
+    "sourceSnapshotConsistency": {
+      "files": 20,
+      "changedSinceObservation": []
+    },
+    "initialFailures": [
+      {
+        "kind": "markdown-lint",
+        "description": "One duplicate subheading was renamed; full Markdown lint then passed."
+      }
+    ],
+    "productTestsRun": false,
+    "productBuildRun": false,
+    "reason": "Planning and documentation only. No feature behavior, waveform, codec or microphone experiment was implemented or measured."
+  },
+  "observedSources": [
+    {
+      "path": "shared/audioControlValues.json",
+      "sha256": "26cb605f01553f95029449bfe22949192fd98d7776a80eff1a9d6273860251f6"
+    },
+    {
+      "path": "src/utils/audioPreferences.js",
+      "sha256": "b8a6a922a93e6a1920cbd686f3b5e421fc18878dd76550f54c2015aa767e070b"
+    },
+    {
+      "path": "src/composables/useAudioPreferencesPersistence.js",
+      "sha256": "2d740ad451337f4ebf08e326d07c5fd66c7a42f541fc44d51bc3d4e6accb0869"
+    },
+    {
+      "path": "src/composables/usePlayer.js",
+      "sha256": "7e5d62ffc5621122e328d2b537aa72a3ad1965ea1c7c733b45e049a439e0176e"
+    },
+    {
+      "path": "src/composables/player/usePlayerAudioGraph.js",
+      "sha256": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    {
+      "path": "src/composables/usePerformanceSessionPlaybackController.js",
+      "sha256": "fba78c1b33f4a5ded11e6ef8d16ffae8cbb452d49329eff3aafa31598f2a64f1"
+    },
+    {
+      "path": "src/composables/usePerformanceSessionPlan.js",
+      "sha256": "8d7acb538cccb7ac375a5a88ef05337c55c8388e4b6b73e46a081528bc9f5df4"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionManualItemForm.vue",
+      "sha256": "ca4c7e9eb39b2254ba523333577d3bb318f0c1149c32ec4c77b151ae8aa6ea78"
+    },
+    {
+      "path": "src/components/performance-session/PerformanceSessionWorkspace.vue",
+      "sha256": "ac1ffe9a509967cdd8d6b2d9fcee16632cca61c853fe8aa243658e24bdac9465"
+    },
+    {
+      "path": "electron/main/performanceSessionPlanHandlers.js",
+      "sha256": "c0d434f3c3e51bb4a63cbadecac624c41cd12f2f7e83eb6ff44c8399d8105c3b"
+    },
+    {
+      "path": "electron/lib/performanceSessionPlan.js",
+      "sha256": "cb35ccc4f1f0945dd5d2645d9252b6b62a52e63ec9724dee7d30c88969237691"
+    },
+    {
+      "path": "src/composables/usePerformanceHistoryObserver.js",
+      "sha256": "8bd080835a993ebedb7cb302a66c3e0ec26b1f9ca434d49a86ba87c164347861"
+    },
+    {
+      "path": "src/composables/useLyricsTimingEditor.js",
+      "sha256": "5a7d4b0241a10734755e7dce73e15f51b7e51603659a8460a711001d936e227f"
+    },
+    {
+      "path": "electron/lib/library/lyricsTiming.js",
+      "sha256": "b3cec7ce6e45f675a27492916f162bf0fe993b8383e4a884bd2339ef7ff7e3d3"
+    },
+    {
+      "path": "src/utils/inputBindingRegistry.js",
+      "sha256": "1bd4bc3a101aed3f067be5e4d4b5379c6bfd613bce0835f398a12876dc3c1fd8"
+    },
+    {
+      "path": "docs/contracts/playback-history-and-resume.md",
+      "sha256": "be2f4e817335caf14446b73b68f05e45dbd9354289368cbee019ea529272bbae"
+    },
+    {
+      "path": "docs/contracts/performance-session-preparation.md",
+      "sha256": "f5071762d2f320d20145f01bdae94c69eccf036a172cc04e3e33d90b97aa0ad3"
+    },
+    {
+      "path": "docs/contracts/lyrics-timing-contract.md",
+      "sha256": "cd54d03ac03ff4310bc46df10d4d10e95bbd1dc14b79a0278c72102936804f10"
+    },
+    {
+      "path": "docs/contracts/performer-prompter-contract.md",
+      "sha256": "389c07513c89f710f8adbb6a5912f932f2391dbf03b66a4eb930c7bfe8c14eaf"
+    },
+    {
+      "path": "docs/contracts/input-bindings.md",
+      "sha256": "97041dd3fa1361151dbe283b37ae59d71893d96e6cb7e221676541ba90f42ab9"
+    }
+  ]
+}

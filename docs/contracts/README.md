@@ -10,6 +10,7 @@
 - [曲庫檢查與校對](library-reconciliation.md)
 - [音檔標籤回寫](audio-tag-writeback.md)
 - [作品、版本與發行資料](works-versions-and-releases.md)
+- [來源發行曲序、本地持有與批次下載](release-source-catalog.md)
 - [Folder 頁面物件](folder-page-objects.md)
 - [曲目試聽](track-preview.md)
 - [播放紀錄與啟動恢復](playback-history-and-resume.md)

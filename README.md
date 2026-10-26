@@ -2,8 +2,8 @@
 
 > 為 OBS 歌回與翻唱流程設計的 local-first Windows 桌面控制台。
 
-Utawakui 將本機曲庫、歌單、播放、歌詞、音訊處理與 OBS Browser Source
-輸出集中在同一個操作介面。預設工作流只使用使用者自備的本機媒體；外部來源、
+Utawakui 以本機曲庫與播放器為核心，將歌單、排練、演出安排、歌詞與 OBS Browser Source
+輸出集中在同一個操作介面。預設工作流使用使用者自備的本機媒體；外部來源、
 歌詞服務、音訊處理與公開輸出均是可獨立啟用的進階流程。
 
 目前專案處於 **Windows x64 公開測試階段**。它不是曲庫、授權服務或串流平台的
@@ -20,7 +20,8 @@ Utawakui 將本機曲庫、歌單、播放、歌詞、音訊處理與 OBS Browse
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 本機曲庫與播放  | MP3、FLAC、WAV、AAC／M4A、Ogg／Opus／WebM 等已驗證格式可直接匯入；WMA、AIFF、ALAC、APE、WavPack、CAF 可在明示確認後轉成 FLAC 副本，原檔不變。歌單、待播佇列、播放控制與 Windows shell integration **已可用**，按 X 可選背景執行或完整退出並記住選擇。 |
 | 練習與音訊      | Pitch/tempo 即時預覽、可發聲節拍器、`quick`／`general` 分離與 guide vocal **已可用**；pre-render 與 Refined recipe **尚未成為產品能力**。                                                                                                             |
-| 歌詞            | 本機匯入、provider lookup、時間軸／讀音、演出者視窗與 Lyrics Overlay 主路徑**已建立**，仍持續做視覺驗收與操作整理。                                                                                                                                   |
+| 演出安排與 BGM  | 待唱、演出紀錄、封存／恢復與場間 BGM 交接**已具備本地流程**；實際擷取與演出聽感仍需驗收。                                                                                                                                                             |
+| 歌詞            | 本機匯入、provider lookup、時間軸／讀音、桌面提詞器與 Lyrics Overlay 主路徑**已建立**，仍持續做視覺驗收與操作整理。                                                                                                                                   |
 | 輸出與 OBS 連線 | 三類 Browser Source、Gallery、Workbench 與 URL 複製**已完成 MVP**；另可選擇唯讀連線 OBS，記錄場次時間標記並輸出為 YouTube 章節文字。                                                                                                                  |
 | 進階來源        | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。                                                                                                                                              |
 | 發布與維護      | NSIS installer、啟動量測、local diagnostics 與 updater runtime **已建立**；公開測試版**採未簽章發行**。                                                                                                                                               |

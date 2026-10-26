@@ -45,4 +45,11 @@
 - [正式 runtime 打包驗證](engineering/runtime-packaging-verification-2026-10-26.md)（10-26）：六個壓縮入口、三個自有 unpacked 檔、啟動／播放與四聲道輸出比對。
 - [輕量混淆候選評估](engineering/light-obfuscation-assessment-2026-10-26.md)與[第一批正式驗證](engineering/light-symbols-verification-2026-10-26.md)（10-26）：Main 兩個規則模組的私有符號轉換、實際 ASAR 邊界、播放與四聲道管線、兩輪各十冷／十暖交錯量測；第二批未啟用。
 - 視覺：[Row／Grid 收束](design/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
-- 產品：[競品調查](product/competitive-research.md)、[外觀贊助模式](product/appearance-support-models-market-plan-2026-10-20.md)（10-20）、[v0.4.0 公開網站稿](product/public-site-content-v0.4.0.md)
+
+## 產品與競品
+
+- [播放器與排練能力順序規劃](product/player-practice-planning-2026-10-26.md)與[規劃 JSON](product/player-practice-planning-2026-10-26.json)（10-26）：前三項小規格、快捷操作提案與三項研究進入條件；manual／confirmed history 已有實作的分類補正，全部新增規劃尚未實作。
+- [競品現況與採用判斷](product/competitive-research.md)：2026-10-26 更新 Setlista、聲嶼、歌回救星與 KAREOKIE；本案功能狀態只見 spec。
+- [本輪文件與路線整理](product/product-and-documentation-review-2026-10-26.md)及[證據 JSON](product/product-and-documentation-review-2026-10-26.json)：全量文件分類／連結盤點、來源識別與修改界線；不作為第二份 roadmap。
+- [外觀贊助模式研究](product/appearance-support-models-market-plan-2026-10-20.md)（10-20）：市場選項與成本；現行交付原則見 governance，付款／帳號仍待決策。
+- [v0.4.0 公開網站稿](product/public-site-content-v0.4.0.md)（10-17）：指定版本的歷史內容稿，不能用作目前公開版或工作樹現況。

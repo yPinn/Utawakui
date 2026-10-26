@@ -1,232 +1,95 @@
-# 競品調查：歌回與 OBS 輔助工具
+# 競品調查：歌回、播放器與歡唱工具
 
-> 研究日期：2026-09-25（第四輪；首次調查為 2026-08-13；Setlista 版本補查：2026-10-02）。本文是產品與工程判斷用的 dated evidence，不構成法律意見，也不是 Utawakui 現況來源。
->
-> Utawakui 的目前狀態以[產品規格](../../spec.md)與[文件導覽](../../README.md)為準。前三輪完整內容保留在 Git history；本輪只保留仍影響決策的現況、變化與證據限制。
+本輪查核：2026-10-26（Asia/Taipei）。本頁維護競品現況與比較原則；當輪來源、文件盤點及採用判斷見[日期報告](product-and-documentation-review-2026-10-26.md)與[證據 JSON](product-and-documentation-review-2026-10-26.json)。前輪內容保留於 Git history。
+
+Utawakui 的實作、公開支援與剩餘驗收只由[產品規格](../../spec.md)維護，本頁不再保存另一份本案完成度矩陣。
 
 ## 1. 範圍與證據規則
 
-本輪延續三個直接競品：Setlista、EliteSand Pro、歌回救星／Singing Stream
-Savior。第四輪觀察截止時間為 2026-09-25（Asia/Taipei）；2026-10-02 只補查 Setlista
-版本與既有演出操作，沒有重新查證其他產品。
+本輪更新 Setlista、聲嶼 Elitesand Pro、歌回救星，加入 KAREOKIE 作為本機歡唱／練習的相鄰產品。四者的工作流不同，不能用功能總數或模板數量排名。
 
-| 產品                             | 最新可驗證版本                                       | 現況來源                                                                                                                                                                     | 相對 2026-09-15     |
-| -------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| Setlista／セトリスタ 3rd session | `0.24.0`，2026-09-20，仍標示試驗公開                 | [官方 3rd session 手冊](https://nekosogi.org/setlista3)、[Control](https://app.nekosogi.org/setlista3/control.html)                                                          | `0.23.0 → 0.24.0`   |
-| EliteSand Pro                    | `1.0.6`，2026-09-18 UTC／09-19 台灣時間              | [官方 repository](https://github.com/z22115554/elitesand-pro)、[v1.0.6 release](https://github.com/z22115554/elitesand-pro/releases/tag/v1.0.6)                              | `1.0.4 → 1.0.6`     |
-| 歌回救星／Singing Stream Savior  | App `2.1.6.1`、Launcher `1.2.0.8`、runtime `1.0.0.8` | [官方手冊](https://noonisawesome.github.io/Singing-Stream-Savior-Manual/)、[更新倉庫](https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates)、`updates/stable.json` | `2.1.4.3 → 2.1.6.1` |
-
-證據強度分四層：
-
-1. **已發布**：official release／stable manifest 有可下載資產、版本與 hash。
-2. **公開支援**：官方手冊把能力寫成一般使用流程，而非實驗或未來方向。
-3. **實驗性／source-verified**：原始碼或發行內容可證明功能存在，但官方仍標示實驗性，或尚未列為一般支援。
-4. **未驗證品質**：官方文字能證明產品宣稱，不能證明音質、穩定性、相容性或實際使用者體驗。
-
-比較時不把「repo 裡有檔案」直接等同「使用者已可穩定使用」，也不把 release note 的
-「改善」直接等同問題已完全消失。
+證據分為已發布資產、官方文件支援、原始碼／實驗性能力、未驗證的品質宣稱。官方 release、manifest 與手冊來源可證明版本或宣稱；沒有實機測試就不判定音質、評分、低延遲或耐久已達標。README 與 release 不同時，版本依正式 release／stable manifest；模板分類不一致時不提供假精確總數。
 
 ## 2. 本輪新增變化
 
-### 2.1 Setlista
+| 產品                 | 本輪可驗證版本                                                       | 相對前輪的主要變化                                                                                                | 一手來源                                                                                                                                                                                                                                                                                               |
+| -------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Setlista 3rd session | 0.26.0，2026-10-21，仍標試驗公開                                     | 0.25.0 增加歌名／藝人分隔顯示與 Control 布局調整；0.26.0 補對應 skins。                                           | [官方頁面與更新紀錄](https://nekosogi.org/setlista3)                                                                                                                                                                                                                                                   |
+| 聲嶼 Elitesand Pro   | 1.1.1，2026-10-18                                                    | 新中文名稱、準備流程／UI 重整、波形對時與已對時標記、自訂／全域快捷鍵、常駐字效與限時互動；本版需完整 Installer。 | [正式 release](https://github.com/z22115554/elitesand-pro/releases/tag/v1.1.1)、[該 tag README](https://github.com/z22115554/elitesand-pro/blob/v1.1.1/README.md)                                                                                                                                      |
+| 歌回救星             | App 2.2.0.2，2026-10-26 台灣時間；Launcher 1.3.0.0、runtime 1.0.0.19 | 2.2 加入須申請開通的觀眾點歌／私人 Studio、主播身分備份；後續修正待播完成與歌詞套用。                             | [正式 release](https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates/releases/tag/v2.2.0.2)、[stable manifest](https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates/blob/master/updates/stable.json)、[官方手冊來源](https://github.com/NoonIsAwesome/Singing-Stream-Savior-Manual) |
+| KAREOKIE             | 0.1.14，2026-10-26                                                   | 本機 AI 歡唱／Mic 評分；近期加入個人比較、逐句回饋、歌曲壓縮與安裝復原。                                          | [官方網站](https://kareokie.pages.dev/zh-tw/)、[正式 release](https://github.com/a8594755-maker/KAREOKIE-releases/releases/tag/v0.1.14)                                                                                                                                                                |
 
-2026-10-02 補查時，`0.24.0`（2026-09-20）是最新版本，3rd session 仍標示試驗公開；該版只新增
-sidebar mascot，未改變核心演出流程。Control 仍以 Reserve List 每行一首、Now Singing、可編輯
-Set List、前進／返回與時間戳支援低摩擦現場操作。
+歌回救星更新庫 README 仍連向 2.1.8.10，與本輪 stable manifest／release 不同；不以該欄位判定目前版本。聲嶼 README 的模板總數與新增列分類並不一致，本輪不沿用舊報告的固定數字。
 
-這次補查的價值是確認資料模型沒有因版本增加而改變：Setlista 仍代表低導入成本、窄場景打磨，
-而不是完整播放器或音訊處理工作站。Utawakui 可參考其線性 review 節奏，但不能把任意文字直接
-當成可播放媒體或 canonical track identity。
+## 3. 定位與關係
 
-### 2.2 EliteSand Pro
+| 產品     | 主要使用情境                 | 與 Utawakui 的關係   | 適合對照的行為                                   |
+| -------- | ---------------------------- | -------------------- | ------------------------------------------------ |
+| Setlista | 在 OBS 內操作文字歌單與章節  | 窄用途的相鄰工具     | 導入成本、現場操作步驟、歌名／藝人呈現。         |
+| 聲嶼     | 歌詞演出、OBS 畫面與觀眾互動 | 歌回工作流直接競品   | 對時可修正性、準備狀態、快捷操作與大量資料反應。 |
+| 歌回救星 | 歌唱場次、BGM 與進階音訊路由 | 場次／音訊直接競品   | 交接、故障復原、裝置診斷、混音與本機／線上分工。 |
+| KAREOKIE | 接 Mic 歡唱、視覺音準與成績  | 歡唱／練習的部分競爭 | 輸入分析的價值、練習回饋與本機衍生音訊成本。     |
 
-`1.0.5`（2026-09-16）新增兩項會改變比較矩陣的能力：
+本案以本機曲庫與播放器為核心，服務排練、場次與可選 OBS 輸出。競品擴張帳號、活動或音訊工作站能力，不改變這條主線。
 
-- 獨立 BGM 待機清單；開始唱歌時自動淡出／暫停，停止或唱完後依延遲設定恢復。
-- 選用的公開點歌頁可設定自訂分享網址；BGM 不進公開點歌目錄。
+## 4. 現況快照
 
-`1.0.6`（2026-09-18 UTC）強化日文讀音／諧音：以日文發音分析處理助詞、促音、
-長音與拗音，支援逐行人工修正並保存 override；同版也修正雙路音訊每曲開頭的短暫
-同步偏移。
+### Setlista
 
-發行面維持「Ed25519 簽章更新計畫＋artifact hash」的雙層設計，`1.0.6` 同時發布完整
-Installer 與從 `1.0.3`／`1.0.4`／`1.0.5` 升級的增量包。Windows Installer 本身仍未做
-Authenticode code signing。官方 repository 自 `1.0.3` 起已公開完整 source tree，採
-MPL-2.0；上輪「只靠本機 private-source snapshot」的限制已不再成立。
+維持 Browser Dock／Browser Source 的文字歌單工作流，近期加強分隔顯示與 skin 配套。沒有本輪證據顯示它擴張成本機媒體播放器；「少步驟完成現場任務」仍是主要參考。
 
-官方 `1.0.6` tag 的 README 標題仍寫 `1.0.4`，因此版本判斷以 release／tag／asset 為準，
-不以 README 單一欄位為準。AI 人聲分離仍標示實驗性、預設關閉；Spout2 仍屬 source／
-release 可見但非一般支援基線的實驗路徑。
+### 聲嶼 Elitesand Pro
 
-### 2.3 歌回救星
+官方文件列有來源匯入、多來源歌詞、逐曲播放設定、手機／Stream Deck、Twitch 互動與實驗性 AI 分離。1.1.1 重點轉向準備流程、波形對時、全域快捷鍵與活動視覺；限時活動與常駐模板須分開看。該版因桌面執行環境更動要求完整安裝，不能沿用「每版都有可用增量包」的舊結論。
 
-`2.1.4.3` 之後到 `2.1.6.1` 的公開更新主要是可靠性與操作邊界：
+### 歌回救星
 
-- `2.1.5.x` 持續修正 BGM 斷音、伴奏停止延遲、VST3 Profile、UVR 暫存檔、錄音收尾、
-  YouTube fallback 與 OBS Timeline 逾時時的時間戳準確性。
-- `2.1.6.0` 新增本機診斷資料匯出；ZIP 由使用者主動產生，不自動上傳或寄信。
-- `2.1.6.1` 修正進階直播模式的麥克風電平顯示，以及 YouTube 下載／轉檔問題。
-- Launcher `1.2.0.8` 新增有限重試、重新連線、驗證式斷點續傳與更清楚的驗證／安裝狀態；
-  manifest 仍以 size 與 SHA-256 驗證 package。
+本機播放器、BGM、無伴奏項目、歌詞與原生 OBS 音訊仍是主軸；2.2 的線上點歌是可選、需開通的服務，一般本機播放不需申請。進階手冊明列 ASIO／Windows Audio、App Buffer 健檢及 Dry Cue，仍建議唱歌主監聽優先使用硬體 Direct Monitor；不能據此宣稱任意硬體的往返延遲已解決。
 
-Stable manifest 在 2026-09-24 宣告 App `2.1.6.1`、Launcher `1.2.0.8`、runtime pack
-`1.0.0.8`，並將 application runtime、UVR-MDX、UVR-HP models 分成獨立 package。
+### KAREOKIE
 
-上輪「沒有正式隱私權政策公開頁面」已過時。官方手冊在 2026-09-21 增加
-[App Privacy Notice](https://noonisawesome.github.io/Singing-Stream-Savior-Manual/privacy.html)，
-說明本機處理、無個人使用分析遙測、外部查詢對象、診斷資料不自動上傳，以及使用者
-主動提供資料的處理方式。
-
-現行手冊仍公開支援 OBS 專用音訊外掛、VB-CABLE 備援、VST3／ASIO、Buffer 健檢與
-六軌 meter。這些頁面可證明支援流程存在；相容性與實際音質仍未經本輪獨立實機驗證。
-
-## 3. 現況快照
-
-### 3.1 Setlista：低導入成本的單一場景工具
-
-- 純 Browser Dock／Browser Source，不安裝播放器或模型 runtime。
-- Reserve／Now Singing／Set List 的演出心智模型清楚。
-- 章節時間戳與大量 skin 是核心價值。
-- 不處理本機曲庫、歌詞同步、pitch／tempo、人聲分離或 provider acquisition。
-
-對 Utawakui 的參考價值仍是 OBS 導入成本、窄場景操作速度與 skin discovery，而不是
-功能覆蓋率。
-
-### 3.2 EliteSand Pro：歌詞覆蓋與直播互動廣度
-
-- 本機／YouTube 匯入、播放器、直播歌單、OBS lyrics、手機控制、Stream Deck 與 Twitch
-  點歌整合在同一個 Windows 應用程式。
-- 多來源歌詞、逐字格式、日／韓讀音、中文拼音與可編輯日文諧音是目前最清楚的內容覆蓋優勢。
-- AI 人聲分離提供 NVIDIA GPU、WebGPU、CPU fallback，但仍是實驗性、預設關閉。
-- `1.0.5` 後也具有 BGM 待機 lane，與歌回救星形成重複市場訊號。
-- 更新 manifest 的獨立簽章與增量包已進公開發行；Installer 仍未 Authenticode 簽章。
-
-### 3.3 歌回救星：音訊管線與原生 OBS 整合深度
-
-- BGM／伴奏交接、無伴奏演出項目、播放器、歌詞、歌單與 OBS output 是核心工作流。
-- UVR 人聲分離、guide vocal、Profile、VST3／ASIO、錄音與 Buffer 健檢形成完整音訊子系統。
-- OBS 專用音訊外掛可接收完整 Stream Output；VB-CABLE 是其他應用程式需要同一 mix 時的備援。
-- 更新採獨立 Launcher、component package、size／SHA-256 驗證與驗證式續傳。
-- 本機診斷匯出與公開隱私聲明補上上輪缺少的 support／privacy 基線。
-
-近幾版大量穩定性修正顯示能力正在實際打磨；這是「功能活躍」的證據，不是「已無問題」
-的證據。
-
-## 4. 功能矩陣
-
-| 面向                   | Setlista                | EliteSand Pro                                         | 歌回救星                                  | Utawakui 現況                                                           |
-| ---------------------- | ----------------------- | ----------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-| 版本／發布             | `0.24.0`，試驗公開      | `1.0.6`，Installer＋增量包                            | `2.1.6.1`，ZIP＋獨立 Launcher／packages   | Source tree；公開發行驗收持續進行                                       |
-| 本機曲庫／播放器       | 無                      | 有                                                    | 有，BGM／伴奏分 lane                      | 已實作                                                                  |
-| BGM 自動交接           | 無                      | `1.0.5` 起公開支援                                    | 核心能力，近期仍持續修正                  | 規劃中；獨立 lane 與嚴格互斥 handoff                                    |
-| 無伴奏演出項目         | 可用純文字 setlist 表達 | 未見專用資料模型                                      | 有，手動或計時結束                        | 尚待產品決策                                                            |
-| 逐曲演出準備           | Reserve → Now Singing   | 本輪未驗證 focused review                             | 本輪未驗證 focused review                 | 規劃中；placeholder 需 linked＋verified                                 |
-| OBS setlist            | 核心                    | 有，含 session／chapter                               | 有，多主題                                | 三個固定 slot MVP；session／chapter 已實作                              |
-| OBS lyrics             | 無                      | 11 個官方 performance templates；另有 source 分類差異 | 9 個 animated styles，另有 Basic／Classic | 6 個 presentation profiles                                              |
-| 歌詞來源               | 無                      | BetterLyrics／Apple／酷狗／QQ／LRCLIB／NetEase 等     | LRCLIB／YouTube captions／local           | LRCLIB／NetEase／Better Lyrics                                          |
-| 讀音／跟唱輔助         | 無                      | 日／韓讀音、中文拼音、可編輯日文諧音                  | Basic Lyrics 日／韓 romanization          | 日／韓 reading 與 authored correction                                   |
-| Pitch／tempo           | 無                      | SoundTouch／WSOLA，每曲保存                           | SoundTouch＋Signalsmith 系列，每曲保存    | Signalsmith Stretch 即時 preview                                        |
-| Vocal separation       | 無                      | GPU／WebGPU／CPU；實驗性                              | UVR MDX／HP；公開支援                     | `quick`／`general`，DirectML→CPU fallback                               |
-| 進階直播音訊           | 無                      | 未作為公開產品主軸                                    | VST3／ASIO／Profiles／錄音／Buffer 健檢   | 未納入產品範圍                                                          |
-| OBS 狀態／時間戳       | わんコメ時間戳          | session／chapter                                      | OBS WebSocket Timeline                    | 唯讀 OBS WebSocket、session history、chapter export                     |
-| 原生畫面輸出           | 無                      | Spout2 實驗路徑                                       | 未見                                      | Spout2 Lyrics sender 實驗路徑                                           |
-| 原生 OBS 音訊          | 無                      | 未見                                                  | 公開支援專用音訊外掛                      | 未納入產品範圍                                                          |
-| 觀眾點歌／遠端控制     | 無                      | Twitch、公開點歌頁、手機、Stream Deck                 | 未見 Twitch 點歌主軸                      | Chat 點歌非目標；write-capable adapter 尚待需求證據                     |
-| Diagnostics／privacy   | 不適用於本機 app        | logs／health checks；公開 privacy 細節有限            | 本機診斷 ZIP＋正式 privacy notice         | Redacted diagnostics＋預覽後回饋；媒體不自動上傳                        |
-| 更新完整性             | 不適用                  | Ed25519 manifest＋artifact hash＋增量包               | Component size／SHA-256＋驗證式續傳       | Ed25519 多簽章＋exact artifact binding 已完成；production gate 尚未啟用 |
-| Installer code signing | 不適用                  | 未 Authenticode 簽章                                  | 未見受信任 publisher signature 的公開證據 | 接受 unsigned boundary；目前無購買憑證規劃                              |
-
-矩陣只比較公開或可驗證存在的能力，不對音質、穩定性與使用者滿意度排名。模板數字沿用各產品
-官方分類；不同產品對 default／basic／performance template 的計數方式不同，不能拿 raw file
-count 當作直接品質指標。
+以本機匯入、分離、歌詞對齊、日文假名與 Mic 音高／評分形成歡唱流程。官網與 release 可確認功能宣稱，公開庫只有發佈檔，無法審核評分演算法。本輪沒有找到人聲回放監聽管線或往返延遲實測；延遲設定與藍牙警告不等於已解決監聽問題。
 
 ## 5. 對 Utawakui 的產品含義
 
 ### 5.1 BGM lane 與無伴奏項目已形成重複需求訊號
 
-歌回救星長期以 BGM／伴奏交接為核心；EliteSand Pro `1.0.5` 也加入獨立 BGM 清單、自動
-淡出／暫停與延遲恢復。這使 BGM standby 從「單一競品特色」變成兩個完整工作流競品都採用
-的模式，值得列入產品決策。
-
-這仍不等於應直接實作。若採用，BGM 必須是獨立 owner，不污染演唱 queue／history／chapter；
-交接狀態機需先定義暫停、快速切歌、失敗、使用者手動介入與恢復延遲。無伴奏演出則是另一個
-資料模型問題，不應用假媒體檔或特殊 BGM 項目代替。
+BGM 與外部音訊／自行伴奏的 manual 項目已有實作，後續比較集中於入口、真實擷取、交接與故障復原，不再列為新資料模型。競品的定時結束不能視為本案已支援；差異與程式依據見[順序規劃補正](player-practice-planning-2026-10-26.md#目前實作核對與分類補正)。
 
 ### 5.2 原生 OBS 音訊仍是高成本候選，不是追趕項目
 
-歌回救星證明「專用 OBS 音訊來源＋一鍵安裝／移除＋虛擬音源備援」可形成完整 UX，
-但它也引入 OBS 主行程內 native code、安裝相容性、GPL／SDK 散布與 crash blast radius。
-Utawakui 的 Browser Source 與四聲道播放架構目前沒有被證明不足，因此維持 open decision，
-不因競品已做就提高為 roadmap 承諾。
+歌回救星提供可對照的原生音訊、路由與診斷流程，但會擴大安裝、裝置、程序內故障與第三方依賴邊界。尚未證明本案現有輸出不足前，維持需求驅動的待決策項目；不因競品提供就提高為實作承諾。
 
-### 5.3 內容修正能力比來源數量更值得對標
+### 5.3 修正能力與播放器練習比功能數量更值得比較
 
-EliteSand Pro 的優勢不只在 provider 數量；`1.0.6` 把日文發音分析、逐字映射、使用者 override
-與來源切換後保存串成一個可修正流程。Utawakui 已有 reading／authoring 邊界，後續比較應看
-「錯誤能否被辨識、修正、保存並保有 provenance」，而不是只追求 provider 或模板數量。
+優先觀察錯誤對時能否辨識、修正、保存，及現有變調／變速／導唱能否減少排練操作。A–B 區段、標記與逐曲設定是本次提出的我方延伸候選，不冒稱為四個競品都已支援；Owner 已要求依序開始規劃，具體範圍見[播放器排練規劃](player-practice-planning-2026-10-26.md)，不代表已實作。影片擷取音訊與衍生音訊減量同樣先驗證需求、品質與保存界線。
 
-### 5.4 Diagnostics 與隱私說明正在成為桌面工具基線
+### 5.4 本機處理、帳號依賴與資料傳送分開比較
 
-歌回救星新增本機診斷匯出與 privacy notice 後，Utawakui 的 redaction、強制預覽與不自動上傳
-仍較具體，但「有本機診斷」「資料留在本機」本身不再是差異化。差異應落在 bounded export、
-預覽內容、第三方 endpoint 揭露與可驗證的不自動上傳行為。
+- 聲嶼 tag README 揭露預設開啟、可停用的匿名偏移分享與用量彙總；不能將本機執行概括成完全不連網。
+- 歌回救星的核心可離線，選用觀眾點歌另有申請、歌單 metadata 與狀態同步；本機功能與線上功能分開。
+- KAREOKIE 公開條款草稿列出 Google 登入與週期授權驗證；隱私草稿列有成績摘要、官方擴充匯入摘要、診斷與遙控資料。本機音訊處理不代表整個產品沒有雲端依賴。[條款](https://kareokie.pages.dev/zh-tw/terms/)、[隱私政策](https://kareokie.pages.dev/zh-tw/privacy/)。
 
-### 5.5 更新比較需拆成三個層次
+以上是官方揭露，不是封包稽核或法律效力判定。本案的連線、同意回報與五個 gate 仍以 PRODUCT／spec 為準。
 
-- EliteSand Pro：公開發行已使用獨立 Ed25519 manifest signature、artifact hash 與增量包。
-- 歌回救星：公開證據是 componentized package、size／SHA-256、有限重試與驗證式續傳；本輪未找到
-  非對稱簽章 manifest 的公開證據。
-- Utawakui：Ed25519 多簽章、exact artifact binding 與 package／sign／publish 分權 workflow
-  已實作；production key custody、gate activation 與連續版本 acceptance 尚未完成。
+### 5.5 發布、更新完整性與實際升級分開
 
-因此正確結論不是「兩個競品都有非對稱簽章」，而是兩者的實際更新交付都比 Utawakui 目前的
-公開發行驗收更完整；其中只有 EliteSand Pro 可作獨立 manifest signature 的直接對照。
+正式 release／stable manifest 可證明可下載版本；hash、manifest 簽章與 Windows publisher signature 是不同證據。聲嶼本版完整 Installer、歌回救星的 component packages、KAREOKIE 的更新資產也不能直接換算為實際升級品質。Utawakui 同樣須區分公開 release、工作樹版本與 installed-upgrade 收據，狀態只維護在 spec。
 
 ### 5.6 產品邊界維持不變
 
-- 不跟進 Twitch／公開 chat 點歌 automation；EliteSand Pro 的擴張不改變 Utawakui 的非目標。
-- 不把 vocal separation 或 native output 描述成獨佔差異化；差異在 recipe、gate、四聲道整合與
-  dependency lifecycle。
-- Provider acquisition、external lyrics、audio processing、public Output 與 OBS credential 仍維持
-  分離 gate，不因競品將它們包成單一 onboarding 而合併。
-- 不追 VST3／ASIO／虛擬音訊的全功能工作站範圍；若有實際需求，先借鑑 helper process 與故障隔離，
-  不先擴張產品承諾。
+手機遙控／提詞器是既有規劃；引導等待視覺定案。本案不跟進雲端排行榜、成績競賽、chat 點歌自動化或全功能音訊工作站；Provider、外部歌詞、處理、公開輸出與 OBS 連線仍各自可選。外觀 Pack 的取得／付款也不隨模板能力一併啟動。
+
+### 5.7 Mic 分析、視覺反應與監聽分開研究
+
+可獨立評估音準視覺化及以輸入電平增減畫面效果。兩者不需要先做人聲回放，但仍有輸入延遲、校準或視覺落後問題。音量摘要應有噪聲門檻、平滑、強度上限與停用／失訊回基準，並保留歌詞可讀性及 reduced motion。成績比較優先度低；軟體監聽與錄音不在本次候選內。這是本案研究分類，不是競品效果已驗證的結論。
 
 ## 6. 權利、平台與隱私邊界
 
-競品新增功能不改變素材權利：YouTube acquisition、第三方歌詞、分離 stems、直播混音、錄影／VOD
-仍需由使用者確認來源與平台政策。功能存在不等於取得下載、重製、改作、公開演出、公開傳輸或
-歌詞展示權利。
-
-本輪只重新查證競品現況，沒有重新審核 YouTube、Twitch、Spotify 或各司法管轄區的政策。Utawakui
-的合規立場仍以[法律合規指南](../../governance/legal-compliance.md)為準，不在本研究複製政策全文。
-
-歌回救星新增 privacy notice 可證明其公開揭露已改善；它仍是廠商自述，不能代替封包觀察或實機
-隱私稽核。EliteSand Pro 與歌回救星的 native／model dependency 也仍受各自授權與散布條件約束。
+本輪沒有重審平台條款、素材授權、SDK 散布或各司法管轄區法規，不新增法律結論；現行規則見[合規指南](../../governance/legal-compliance.md)。軟體功能、帳號同意與素材使用權利分別處理，不把功能存在當成權利保證。
 
 ## 7. Review
 
-本輪已完成：
+已核對四個產品的官方版本來源、主要變化與證據限制，修正舊矩陣對本案 BGM／演出安排的過時分類。完整來源識別、文件分類盤點及驗證收據見日期報告／JSON。
 
-- 2026-09-25 第四輪重新讀取 Setlista 官方手冊，當時確認 `0.23.0`；2026-10-02 版本補查確認
-  `0.24.0` 只新增 sidebar mascot，Reserve／Now Singing／Set List 核心操作未變。
-- 以 EliteSand Pro 官方 remote refs、GitHub releases、tag source tree 與 assets 確認 `1.0.6`，補入
-  BGM lane、公開點歌網址、日文諧音 override、MPL-2.0 公開原始碼與增量更新現況。
-- 以歌回救星官方 releases、manual repository 與 stable manifest 確認 App `2.1.6.1`、Launcher
-  `1.2.0.8`、runtime `1.0.0.8`；補入 diagnostics 與 privacy notice，移除「沒有正式隱私頁」舊結論。
-- 更正「兩個競品都有非對稱簽章 manifest」的過度推論；歌回救星只記錄本輪能公開驗證的
-  size／SHA-256 與 package delivery。
-- 以目前 Utawakui code／spec 重算矩陣：OBS session／chapter 已實作、pitch 已改用 Signalsmith、
-  signed-manifest verifier 已部分實作，不再沿用 2026-09-15 的 source-tree 快照。
-- 刪除三輪重複的版本流水帳、逐檔實作清單、單一完成度排名與重複平台政策摘要；保留可影響
-  roadmap、產品邊界、ADR 與驗收策略的證據。
-
-限制：
-
-- 未安裝並實機操作三個競品；官方 release／manual 能證明發布與宣稱，不能證明實際品質。
-- Setlista 沒有可對照的 desktop artifact；以官方頁面及其 changelog 為準。
-- 2026-10-02 Setlista 補查不是完整第五輪調查；其他競品版本仍以 2026-09-25 證據為準。
-- EliteSand Pro `1.0.6` README 的版本字串仍停在 `1.0.4`；本文以 release／tag／asset 為權威。
-- 歌回救星 manifest 與 privacy notice 是官方自述；未做 network capture、plugin crash test 或 VST3
-  compatibility matrix。
-- 平台政策與法律來源未在本輪重新查證，本文不新增法律結論。
+未安裝或執行競品，未量測音質、延遲、分離／評分品質或長時間穩定性。部分託管頁面無法由研究工具直接讀取時，採官方 GitHub 手冊來源；不把來源讀取當成已操作 UI。版本與公開政策只代表本輪觀察，不對未來版本推論。

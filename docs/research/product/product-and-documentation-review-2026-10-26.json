@@ -1,0 +1,1652 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-10-26",
+  "timezone": "Asia/Taipei",
+  "purpose": "Dated competitor evidence and documentation classification audit; current Utawakui status and roadmap are owned by docs/spec.md.",
+  "authorization": "Owner confirmed the proposed documentation-only scope in this chat; no product behavior changes or commits.",
+  "competitors": [
+    {
+      "id": "setlista",
+      "name": "Setlista 3rd session",
+      "version": "0.26.0",
+      "releaseDateAsShown": "2026-10-21",
+      "status": "trial-public",
+      "sourceUrl": "https://nekosogi.org/setlista3",
+      "evidenceKind": "official-page-and-changelog",
+      "changes": [
+        "0.25.0 adds title/artist delimiter display and adjusts Control layout",
+        "0.26.0 adds skins supporting the delimiter"
+      ],
+      "qualityTested": false
+    },
+    {
+      "id": "elitesand",
+      "name": "聲嶼 Elitesand Pro",
+      "version": "v1.1.1",
+      "publishedAt": "2026-10-18T12:33:47Z",
+      "releaseUrl": "https://github.com/z22115554/elitesand-pro/releases/tag/v1.1.1",
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "Elitesand.Pro.Setup.1.1.1.exe",
+          "sizeBytes": 244525194,
+          "sha256": "ccbe1907f0c33d3a92361cc640dce08b35c025768999650c3bbb931bcf22dc0d"
+        },
+        {
+          "name": "Elitesand.Pro.Setup.1.1.1.exe.sha256",
+          "sizeBytes": 64,
+          "sha256": "f08441c9016750bbe594953973c1cfa756da0cea6f9401e58cf0273b884334f2"
+        }
+      ],
+      "qualityTested": false,
+      "sourceFiles": [
+        {
+          "path": "README.md",
+          "blobSha": "e5a321b2f01e5e39d1a5552d6e324f57e182ae1a",
+          "url": "https://github.com/z22115554/elitesand-pro/blob/v1.1.1/README.md"
+        }
+      ],
+      "changes": [
+        "Preparation UI and waveform timing with saved reviewed marker",
+        "Custom/global shortcuts and persistent lyric effects",
+        "Seasonal viewer interactions are separate from persistent templates",
+        "1.1.1 requires full installer rather than older incremental upgrade packages"
+      ],
+      "limitations": [
+        "Vocal separation remains documented as experimental",
+        "Template count prose and expanded table are not used as a comparable count",
+        "Defaults disclosed for optional anonymous feedback are not a network audit"
+      ]
+    },
+    {
+      "id": "s3s",
+      "name": "歌回救星 / Singing Stream Savior",
+      "version": "v2.2.0.2",
+      "publishedAt": "2026-10-25T19:42:41Z",
+      "releaseUrl": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates/releases/tag/v2.2.0.2",
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "SHA256SUMS.txt",
+          "sizeBytes": 859,
+          "sha256": "6206f8cd730cba4baa0e99ebe5f541c19642eb36519ee05da20bc5d0f783e656"
+        },
+        {
+          "name": "Singing-Stream-Savior-2.2.0.2-LGPL-Relink-Kit.zip",
+          "sizeBytes": 497995483,
+          "sha256": "d6d6356663fc7d7d54b41c2044e155e1a24ea0e982c91f93c6b6e27f762db09d"
+        },
+        {
+          "name": "Singing-Stream-Savior-Application-Runtime.s3spack",
+          "sizeBytes": 88663831,
+          "sha256": "6480ed0424636846753dd2cd5dbca25858aaa226a8b05e246e37ba13b06ef817"
+        },
+        {
+          "name": "Singing-Stream-Savior-Launcher.exe",
+          "sizeBytes": 2406912,
+          "sha256": "c0807812ce5ccc0665cd99cb23af32ce22d8775a0291ebd3c49c9871e407a3e8"
+        },
+        {
+          "name": "Singing-Stream-Savior-Runtime.s3spack",
+          "sizeBytes": 87570454,
+          "sha256": "5567a4498158f4c9034a3d483c74bd74db847b2e622051a495bb492ff2a6a600"
+        },
+        {
+          "name": "Singing-Stream-Savior-UVR-HP-Models.s3spack",
+          "sizeBytes": 235235985,
+          "sha256": "7aab9311af4532b6553332eebe8fba40ccce6b91d421f144a9a54252435d0d88"
+        },
+        {
+          "name": "Singing-Stream-Savior-UVR-MDX-Runtime.s3spack",
+          "sizeBytes": 213746603,
+          "sha256": "9f732fe95767067f0e02402493e68e4e111a1b49146dee64100f9ac8bafe7fd1"
+        },
+        {
+          "name": "Singing-Stream-Savior.exe",
+          "sizeBytes": 50918912,
+          "sha256": "88f42fdd22deb65d747590d6dfc17f2a61d1ec2878e5f82280d2e64fa3e8d82a"
+        },
+        {
+          "name": "Singing.Stream.Savior.2.2.0.2.zip",
+          "sizeBytes": 876929368,
+          "sha256": "3e40779e182d813418dcceff194bbea22527e81435eac2fa117f30c7cc346c99"
+        }
+      ],
+      "qualityTested": false,
+      "launcherVersion": "1.3.0.0",
+      "runtimeVersion": "1.0.0.19",
+      "manifest": {
+        "url": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates/blob/master/updates/stable.json",
+        "blobSha": "987dcda677c583d47a9ecff6ba32dbe025970658",
+        "version": "2.2.0.2",
+        "packages": [
+          {
+            "id": "application-runtime",
+            "version": "1.0.0.19",
+            "requiredForStartup": false
+          },
+          {
+            "id": "uvr-mdx",
+            "version": "1.2.0.1",
+            "requiredForStartup": false
+          },
+          {
+            "id": "uvr-hp-models",
+            "version": "1.2.0.1",
+            "requiredForStartup": false
+          }
+        ]
+      },
+      "sourceFiles": [
+        {
+          "path": "README.md",
+          "blobSha": "83d2aa0cdc185734a89cde4815adb30f01d2095d",
+          "url": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates/blob/master/README.md"
+        },
+        {
+          "path": "audience-requests.md",
+          "blobSha": "94d890e2ecf334e4af974fddef8419e76d42de53",
+          "url": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Manual/blob/master/audience-requests.md"
+        },
+        {
+          "path": "advanced-streaming.md",
+          "blobSha": "6d9d907dd949df7099bf04e1a5d1641636dc7193",
+          "url": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Manual/blob/master/advanced-streaming.md"
+        },
+        {
+          "path": "library-and-playback.md",
+          "blobSha": "97de010c1292a2e39296cc35add266a41ce02554",
+          "url": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Manual/blob/master/library-and-playback.md"
+        },
+        {
+          "path": "_data/privacy.json",
+          "blobSha": "14c5eebe7df063863e08261d1dabc58932b39e8c",
+          "url": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Manual/blob/master/_data/privacy.json"
+        }
+      ],
+      "changes": [
+        "2.2 adds optional audience requests, private Studio and streamer identity backup",
+        "2.2.0.2 improves Reserve completion and lyric edits; supports identity restore on a new computer"
+      ],
+      "limitations": [
+        "Update repository README still links to 2.1.8.10; release and stable manifest determine current version",
+        "Manual recommends hardware Direct Monitor for primary singing monitoring; ASIO/App Buffer/Dry Cue do not prove arbitrary-device latency",
+        "No runtime or audio quality tests performed"
+      ]
+    },
+    {
+      "id": "kareokie",
+      "name": "KAREOKIE",
+      "version": "v0.1.14",
+      "publishedAt": "2026-10-26T01:51:21Z",
+      "releaseUrl": "https://github.com/a8594755-maker/KAREOKIE-releases/releases/tag/v0.1.14",
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "KAREOKIE-Setup-0.1.14.exe",
+          "sizeBytes": 121340294,
+          "sha256": "fc2f52c17f21edbf47eb8058d91dade3dcac43d13c26d2ab33af3d464173f10a"
+        },
+        {
+          "name": "KAREOKIE-Setup-0.1.14.exe.blockmap",
+          "sizeBytes": 127935,
+          "sha256": "d823b60e17876290c40ccfda51c6dbcc11680b8ff1b24713a2d0112416a8b3b0"
+        },
+        {
+          "name": "latest.yml",
+          "sizeBytes": 1908,
+          "sha256": "83873ce6fc9e84839ce4ae0f60321f6defdde401dc147ecfa3c8b5f0458c67bb"
+        }
+      ],
+      "qualityTested": false,
+      "siteUrl": "https://kareokie.pages.dev/zh-tw/",
+      "policyUrls": [
+        "https://kareokie.pages.dev/zh-tw/privacy/",
+        "https://kareokie.pages.dev/zh-tw/terms/"
+      ],
+      "policyStatus": "public pages marked draft; read through browser during this conversation",
+      "changes": [
+        "Local audio/video preparation, vocal separation, lyrics alignment and microphone pitch/scoring workflow",
+        "0.1.12 adds personal comparison and line feedback plus compact assets and a key-change cache limit",
+        "0.1.13-0.1.14 add background compaction and setup recovery"
+      ],
+      "limitations": [
+        "Release-only repository; algorithm source not reviewed",
+        "No public proof found of microphone playback monitoring or measured round-trip latency",
+        "Homepage LAN remote description differs from newer network-remote changelog",
+        "Policy text describes Google sign-in, periodic online verification and summary uploads; no packet capture or legal conclusion"
+      ]
+    }
+  ],
+  "utawakui": {
+    "latestPublicObserved": {
+      "version": "v0.5.0",
+      "publishedAt": "2026-10-25T05:31:44Z",
+      "releaseUrl": "https://github.com/yPinn/Utawakui-Releases/releases/tag/v0.5.0",
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "latest.yml",
+          "sizeBytes": 345,
+          "sha256": "8bd2d613a47eb5c5a91ecf0474d25c0316ab84d6b3d23982d6faa3133f3b80d3"
+        },
+        {
+          "name": "SHA256SUMS.txt",
+          "sizeBytes": 91,
+          "sha256": "c90a919183424bb47c6080dbf969d627e03297fce41e7601ecc2bfb8528d529a"
+        },
+        {
+          "name": "Utawakui-Setup-0.5.0.exe",
+          "sizeBytes": 176568105,
+          "sha256": "3fcbf403699164c480dfc9ad7897497122b9f85e2c1644c64eb758d9e0d85a1a"
+        },
+        {
+          "name": "Utawakui-Setup-0.5.0.exe.blockmap",
+          "sizeBytes": 182820,
+          "sha256": "57f11ba7f70ce8ffeead7d85f85174e1e69a1d6efc720ad40b084ecc25165643"
+        }
+      ],
+      "qualityTested": false
+    },
+    "workingTreeVersion": "0.5.1",
+    "releaseNoteFileNotProofOfPublication": true,
+    "statusOwner": "docs/spec.md"
+  },
+  "auditMethod": {
+    "inventory": "All tracked Markdown files were inventoried by path, headings, size and SHA-256. Roles, index coverage and local Markdown links/anchors were checked; current product/design/index/competitor documents and relevant contracts were semantically reviewed. This is not a claim that every historical result was rerun.",
+    "localLinkParser": "Inline Markdown links outside fenced code, file targets and GitHub-style heading anchors; baseline unchanged malformed or generated cases would require manual review.",
+    "networkScope": "Official release APIs, stable manifest, official documentation source and browser-observed public pages; no installs, uploads, logins, software execution or policy-law re-audit."
+  },
+  "findings": [
+    {
+      "id": "D1",
+      "problem": "Competitor report contained stale versions and a duplicate Utawakui status table",
+      "action": "Refresh four products and make spec the sole current product-status matrix"
+    },
+    {
+      "id": "D2",
+      "problem": "Spec mixed detailed implementation history, accepted work, blocked prerequisites and new ideas",
+      "action": "Condense status table and separate acceptance, accepted direction, prerequisites and research candidates"
+    },
+    {
+      "id": "D3",
+      "problem": "DESIGN front matter contained obsolete palette/component values not present in current token source",
+      "action": "Remove obsolete scaffold palette/component metadata; retain valid rem-radius contract and current CSS-token source."
+    },
+    {
+      "id": "D4",
+      "problem": "Source release catalog contract missing from contract index; one lyric verification report lacked incoming links",
+      "action": "Add focused index entries"
+    },
+    {
+      "id": "D5",
+      "problem": "Release-note files and old release narrative could be mistaken for published/upgraded state",
+      "action": "Separate published release, working tree and installed-upgrade receipt; preserve historical release notes"
+    },
+    {
+      "id": "D6",
+      "problem": "Research index mixed product sources and a version-specific website draft with ongoing engineering entries",
+      "action": "Create a product/research section and label the v0.4.0 draft as historical"
+    },
+    {
+      "id": "D7",
+      "problem": "Historical snapshots can be mistaken for current development commitments",
+      "action": "Keep original dated reports, ADR decisions and release notes; document classification by purpose rather than mass-moving files"
+    }
+  ],
+  "verification": {
+    "status": "complete",
+    "markdown": {
+      "command": "npm run lint:md",
+      "files": 213,
+      "issues": 0,
+      "exitCode": 0
+    },
+    "format": {
+      "command": "npx --no-install prettier --check --ignore-path .gitignore <13 scoped documentation files>",
+      "files": 13,
+      "exitCode": 0
+    },
+    "focusedTests": {
+      "command": "npx --no-install vitest run --project unit src/styles/tokens.test.js src/styles/ui-component-tokens.test.js",
+      "files": 2,
+      "passed": 45,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "localLinks": {
+      "markdownFiles": 213,
+      "docsFiles": 179,
+      "localLinks": 1056,
+      "issues": [],
+      "unlinkedDocuments": []
+    },
+    "diffCheck": {
+      "command": "git diff --check -- README.md PRODUCT.md DESIGN.md docs",
+      "exitCode": 0
+    },
+    "historicalAndUnownedDocuments": {
+      "baselineDocumentsNotInEditScope": 201,
+      "unchangedBaselineDocuments": 200,
+      "outsideScopeChangesObserved": [
+        "docs/contracts/settings-operation-feedback.md"
+      ],
+      "note": "The settings-operation-feedback contract and settings source edits changed concurrently. They are outside this task and were left untouched; no claim is made that the entire workspace stayed unchanged."
+    },
+    "initialFailures": [
+      {
+        "kind": "document-contract",
+        "failure": "One test required the valid rem-radius front matter. Restored that metadata and reran all 45 focused tests successfully; tests unchanged."
+      },
+      {
+        "kind": "local-link",
+        "failure": "One archived document still linked to the old spec 6.1 anchor. Updated only that navigation target; final scan has no issues."
+      }
+    ],
+    "changedDocumentation": [
+      "README.md",
+      "PRODUCT.md",
+      "DESIGN.md",
+      "docs/spec.md",
+      "docs/README.md",
+      "docs/contracts/README.md",
+      "docs/research/README.md",
+      "docs/research/product/competitive-research.md",
+      "docs/research/product/product-and-documentation-review-2026-10-26.md",
+      "docs/research/product/product-and-documentation-review-2026-10-26.json",
+      "docs/operations/release-runbook.md",
+      "docs/adr/0007-public-release-app-updates.md",
+      "docs/archive/lyrics-t2-implementation-plan.md"
+    ],
+    "notRun": [
+      "Full product test suite",
+      "Product build or packaging",
+      "Competitor installation or runtime/audio measurements"
+    ],
+    "reasonForNotRun": "Documentation-only scope; the two existing tests that consume DESIGN.md were run. Concurrent settings edits are excluded.",
+    "committed": false
+  },
+  "documentationBaseline": {
+    "markdownFiles": 212,
+    "docsFiles": 178,
+    "localLinks": 1041,
+    "missingTargetsOrAnchors": 0,
+    "unlinkedDocuments": [
+      "docs/operations/lyrics-cast-enumeration-verification-2026-10-25.md"
+    ]
+  },
+  "documentInventory": [
+    {
+      "path": ".agents/skills/run-electron/SKILL.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 77,
+      "baselineSha256": "22450c9aab104138149696473d7acae4ac4410ac26d4f5139dc05985c194c46c"
+    },
+    {
+      "path": ".claude/skills/run-electron/SKILL.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 77,
+      "baselineSha256": "22450c9aab104138149696473d7acae4ac4410ac26d4f5139dc05985c194c46c"
+    },
+    {
+      "path": ".impeccable.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 10,
+      "baselineSha256": "67ef0a1e9a9a8829ce575d206a0cd66ae3e7b2045d342fe311abfb9e816fd7cf"
+    },
+    {
+      "path": ".impeccable/critique/2026-10-16T03-17-33Z__src-components-bgm-bgmplayer-vue.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 116,
+      "baselineSha256": "e4ef0194b8d6776ac153cc7258d711c24e935193b818640d924d091f467557c4"
+    },
+    {
+      "path": ".impeccable/surfaces/overlay-cover-player.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 27,
+      "baselineSha256": "d4e83c9bff9d61dc5d0179af489c7578b50ee4b20d595446734f20aa1d9f1a06"
+    },
+    {
+      "path": ".impeccable/surfaces/overlay-lyrics.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 21,
+      "baselineSha256": "5b70dba02f38c215f3000340d00148912325e7b45256ea21655804f9f17f0cf8"
+    },
+    {
+      "path": ".impeccable/surfaces/overlay-setlist.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 33,
+      "baselineSha256": "a780527f784953e2570e042db0167a7ee210b8bdc65ac321aa037d6cb9705e94"
+    },
+    {
+      "path": ".impeccable/surfaces/src-pages-settingspage-vue.md",
+      "role": "agent-or-design-tool-guidance",
+      "linesBefore": 21,
+      "baselineSha256": "288dec6e69884450b870a27af4c048ecd64099956f32bf387824a673ce5546a7"
+    },
+    {
+      "path": "AGENTS.md",
+      "role": "module-or-maintenance-guide",
+      "linesBefore": 208,
+      "baselineSha256": "3851444e1038bbf7d4ae2638cd3784cdcd3c2f743030fd08d45da0257fb59ea1"
+    },
+    {
+      "path": "CLAUDE.md",
+      "role": "module-or-maintenance-guide",
+      "linesBefore": 9,
+      "baselineSha256": "f58afebaaf84e10d718db185529fb7dd6a9cce57bd47713695cdee7d08f355a9"
+    },
+    {
+      "path": "DESIGN.md",
+      "role": "current-design-guide",
+      "linesBefore": 1462,
+      "baselineSha256": "ddb37b072747489dd3e4e7c68e24547155d5f81c21103f31d2944a7161257763"
+    },
+    {
+      "path": "LICENSE.md",
+      "role": "license-and-notices",
+      "linesBefore": 92,
+      "baselineSha256": "c23210308619cc26a1c670950b1045778a8d717d03d2747fd29083cb086d345e"
+    },
+    {
+      "path": "PRODUCT.md",
+      "role": "stable-product-boundary",
+      "linesBefore": 145,
+      "baselineSha256": "b74dbed40085c03aed684662454378230a9fc491d21a4d46a06bd9a946cb4e55"
+    },
+    {
+      "path": "README.md",
+      "role": "public-introduction",
+      "linesBefore": 85,
+      "baselineSha256": "af676854fd4380dc53ccd5ea64ed9eb68ea2629b5e0fc9b8fb3deff578a68cfe"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "role": "license-and-notices",
+      "linesBefore": 170,
+      "baselineSha256": "47f766d8c005209695ea8373f1c1a59e674ed72a7aa6d98f4da35b691689e3db"
+    },
+    {
+      "path": "docs/README.md",
+      "role": "directory-guide",
+      "linesBefore": 48,
+      "baselineSha256": "a33511db8667579c206c0a9c2faeb1f0cc862b9478ad3cf6befaad12c02b689c"
+    },
+    {
+      "path": "docs/adr/0001-standalone-ytdlp-no-plugin-support.md",
+      "role": "architecture-decision",
+      "linesBefore": 30,
+      "baselineSha256": "163db4cd9a498756cbaa492a192ae798c8494126e0bc397015fa955888acdebf"
+    },
+    {
+      "path": "docs/adr/0002-packaged-exe-kept-as-electron-exe.md",
+      "role": "architecture-decision",
+      "linesBefore": 54,
+      "baselineSha256": "f4764abc681cb32c6e689e25ab55926a8b5e64a51dc51091fb590ffd6b8e0bca"
+    },
+    {
+      "path": "docs/adr/0003-japanese-reading-analyzer-stack.md",
+      "role": "architecture-decision",
+      "linesBefore": 130,
+      "baselineSha256": "65a3f3025f202bf4a5bb6492e207e690f6c93add8b5adcae0eb49674a8b1da3b"
+    },
+    {
+      "path": "docs/adr/0004-korean-romanization-package.md",
+      "role": "architecture-decision",
+      "linesBefore": 126,
+      "baselineSha256": "5dcd125960b13b2495a58132adde41618c61ab31c7d03fd7528664e0486b971c"
+    },
+    {
+      "path": "docs/adr/0005-python-ytdlp-provider-engine.md",
+      "role": "architecture-decision",
+      "linesBefore": 226,
+      "baselineSha256": "6f313419a76b99262b550acbf271c1f2ab63e51b31ec19f60322d7671f63c70e"
+    },
+    {
+      "path": "docs/adr/0006-loopback-output-websocket-runtime.md",
+      "role": "architecture-decision",
+      "linesBefore": 103,
+      "baselineSha256": "064cc0c14489d80a45447540565299b99eddd203d4e8bfd726fe0825375b7d42"
+    },
+    {
+      "path": "docs/adr/0007-public-release-app-updates.md",
+      "role": "architecture-decision",
+      "linesBefore": 261,
+      "baselineSha256": "3ba82902664f276e1bb0ab2a703914b3592596350b42de77c3e79e85d26aff98"
+    },
+    {
+      "path": "docs/adr/0008-local-diagnostics-and-error-handling.md",
+      "role": "architecture-decision",
+      "linesBefore": 316,
+      "baselineSha256": "ab4a459c29e23b419b71a3fd86bb603e19fe0a75a390c61952b77ad00b053ff1"
+    },
+    {
+      "path": "docs/adr/0009-tiered-audio-processing-runtime.md",
+      "role": "architecture-decision",
+      "linesBefore": 463,
+      "baselineSha256": "e87dd183cd9eb2657a625d5927190ca8de750963edcb8aec7e3c068975c12028"
+    },
+    {
+      "path": "docs/adr/0010-lyrics-timing-granularity-and-output-content-split.md",
+      "role": "architecture-decision",
+      "linesBefore": 220,
+      "baselineSha256": "4d91f75f8f79419722bb9fbd8858b709769259d52f4a4a2feadc2e2946c2ec9a"
+    },
+    {
+      "path": "docs/adr/0011-overlay-instances-and-presentation-pack-delivery.md",
+      "role": "architecture-decision",
+      "linesBefore": 258,
+      "baselineSha256": "9ce171daecdbbb1c6be0d3236545c63690f647ab0183033431c0d43e5faed116"
+    },
+    {
+      "path": "docs/adr/0012-state-convergence-and-startup-phases.md",
+      "role": "architecture-decision",
+      "linesBefore": 186,
+      "baselineSha256": "84ce0cfb19adf981c9ef57dbbd437ada0f2296bdd941c253a7e2074ec6fabd91"
+    },
+    {
+      "path": "docs/adr/0013-external-integration-planes.md",
+      "role": "architecture-decision",
+      "linesBefore": 204,
+      "baselineSha256": "087111d9a83317d741201b3e91d3e00cd605355c95c762701df14052c4b5660e"
+    },
+    {
+      "path": "docs/adr/0014-audio-python-runtime-family.md",
+      "role": "architecture-decision",
+      "linesBefore": 354,
+      "baselineSha256": "cf5d05dbc9183c727c84431fadb896a7299421b8450f40e18e377fdea9b3087c"
+    },
+    {
+      "path": "docs/adr/0015-recording-first-provider-discovery.md",
+      "role": "architecture-decision",
+      "linesBefore": 107,
+      "baselineSha256": "42e7eec8dfe104bc7c532578a89b08f83b9e991fec805201758594dbc144e340"
+    },
+    {
+      "path": "docs/adr/0016-user-feedback-intake.md",
+      "role": "architecture-decision",
+      "linesBefore": 149,
+      "baselineSha256": "088bb879084a13062c0c4baa4380c6bd3210def426aab2715e4dcf1d8eed537d"
+    },
+    {
+      "path": "docs/adr/0017-directml-execution-provider-for-mdx-separation.md",
+      "role": "architecture-decision",
+      "linesBefore": 258,
+      "baselineSha256": "e271fc87b84a10e575a51ffac68a8691e1d0b38bbd237adbfbc4dae7ea0e4bb4"
+    },
+    {
+      "path": "docs/adr/0018-signed-update-manifest.md",
+      "role": "architecture-decision",
+      "linesBefore": 134,
+      "baselineSha256": "c8eae011d0bb64ad314dc3b85f48029a30342accd211861ef18832db86bab9be"
+    },
+    {
+      "path": "docs/adr/0019-signalsmith-stretch-pitch-transpose.md",
+      "role": "architecture-decision",
+      "linesBefore": 182,
+      "baselineSha256": "83cddc37e57c484e830279079b7a4c67f1b350afadb2481c0db6ae41ba331708"
+    },
+    {
+      "path": "docs/adr/0020-metronome-lookahead-audio-scheduling.md",
+      "role": "architecture-decision",
+      "linesBefore": 207,
+      "baselineSha256": "9ca43b1e05881e898f297c1386a27088ecbd858d5557cae76da4802dacc6c30a"
+    },
+    {
+      "path": "docs/adr/0021-bgm-standby-audio-and-handoff.md",
+      "role": "architecture-decision",
+      "linesBefore": 121,
+      "baselineSha256": "72ee2c2fe29c3b226b8c5e9f5254c1e2aefcb4add5ec42fb0675b3fb76786f71"
+    },
+    {
+      "path": "docs/adr/0022-artist-identity-and-organization.md",
+      "role": "architecture-decision",
+      "linesBefore": 350,
+      "baselineSha256": "1d9cfd83ac6f36035e5862a0a8b5ce3c2a07bbf02efeace06e159cabda4bd28d"
+    },
+    {
+      "path": "docs/adr/0023-renderer-destination-and-workspace-model.md",
+      "role": "architecture-decision",
+      "linesBefore": 234,
+      "baselineSha256": "75fd4260eed77628a1de6ba2a74c7a0439d52d563bcbca9a7697467dbb50e7c2"
+    },
+    {
+      "path": "docs/adr/0024-explicit-local-audio-compatibility-transcoding.md",
+      "role": "architecture-decision",
+      "linesBefore": 71,
+      "baselineSha256": "b2141f4e5f3c0f8f7beb12503e9db2b5d4c5e13712c3aa40e7cdefcde191a45e"
+    },
+    {
+      "path": "docs/adr/0025-renderer-navigation-history.md",
+      "role": "architecture-decision",
+      "linesBefore": 110,
+      "baselineSha256": "0807e08db673abb5f6c22d4c2d2d275688718fd957e8f3dca245645b0c9051bf"
+    },
+    {
+      "path": "docs/adr/0026-t1-acoustic-estimates.md",
+      "role": "architecture-decision",
+      "linesBefore": 140,
+      "baselineSha256": "ca99fcd281dced6c60c801a9a0ce2d5feb11d7fae19f32702687c74cc62e38ee"
+    },
+    {
+      "path": "docs/adr/0027-output-template-elements-and-property-workspace.md",
+      "role": "architecture-decision",
+      "linesBefore": 317,
+      "baselineSha256": "6ec8cca9efea034f8421c6e9844c3ad7c28ae29a86c667653da909234946b9e9"
+    },
+    {
+      "path": "docs/adr/0028-local-works-versions-and-releases.md",
+      "role": "architecture-decision",
+      "linesBefore": 116,
+      "baselineSha256": "6c08bc50ffe84590d1cbe93dea7618828428c709b57e902c0396c38ada7fd88c"
+    },
+    {
+      "path": "docs/adr/0029-consented-automatic-error-reports.md",
+      "role": "architecture-decision",
+      "linesBefore": 69,
+      "baselineSha256": "580dc1da5cd5c549a05dcd8cb4ede04be0da849657f969ec0bb701443b025278"
+    },
+    {
+      "path": "docs/adr/0030-release-runtime-bundles.md",
+      "role": "architecture-decision",
+      "linesBefore": 68,
+      "baselineSha256": "f1737d47d9a7b3ea8c5cf2b355c3c8212de84b1df598263f0cd6a6cf67d6dfb9"
+    },
+    {
+      "path": "docs/adr/0031-scoped-release-private-symbols.md",
+      "role": "architecture-decision",
+      "linesBefore": 66,
+      "baselineSha256": "ce0041197573a412ccbed97b4a2b71ac582777b077ad120920fa9b77235f0c9f"
+    },
+    {
+      "path": "docs/adr/README.md",
+      "role": "directory-guide",
+      "linesBefore": 40,
+      "baselineSha256": "3d5da95509b8b2cb38f3e8d9a92a2e324155a440fa942efbc699548c4fcb3cc5"
+    },
+    {
+      "path": "docs/architecture.md",
+      "role": "implemented-runtime-map",
+      "linesBefore": 308,
+      "baselineSha256": "0c5d9506049901a74dcba1fe2fdc2c83ad2fdda1ff399e2102c13decd02901de"
+    },
+    {
+      "path": "docs/archive/README.md",
+      "role": "directory-guide",
+      "linesBefore": 15,
+      "baselineSha256": "30d0fd3be2611eca46adb8469e8e2bff48760ecf3714235317481458c5983b5b"
+    },
+    {
+      "path": "docs/archive/community-feature-tiers-plan-2026-10-20.md",
+      "role": "historical-snapshot",
+      "linesBefore": 150,
+      "baselineSha256": "80457825f526fb98d2dbd772c65c297ff966a2aefa4601d73a7e32d4bdefdd6d"
+    },
+    {
+      "path": "docs/archive/lyrics-display-performance-2026-10.md",
+      "role": "historical-snapshot",
+      "linesBefore": 758,
+      "baselineSha256": "22ccc53c3cc3411ecafbba1e69541573791c8fb8544c8b40ac90f7883860a5b1"
+    },
+    {
+      "path": "docs/archive/lyrics-session-handoff-2026-10-21.md",
+      "role": "historical-snapshot",
+      "linesBefore": 34,
+      "baselineSha256": "0c9b6c78aab95106792a8c20edc75b2113d23e531ec63c580a2c29d322476ac8"
+    },
+    {
+      "path": "docs/archive/lyrics-source-and-cues-2026-10.md",
+      "role": "historical-snapshot",
+      "linesBefore": 681,
+      "baselineSha256": "384d50ef502bf6595f058c2d5e67a6de1831ebf73755d78e1eec0aa8047bb56e"
+    },
+    {
+      "path": "docs/archive/lyrics-t2-implementation-plan.md",
+      "role": "historical-snapshot",
+      "linesBefore": 347,
+      "baselineSha256": "c42d6fdc23ea20f2d7cebdcb6e8ee69e8be5b07b95cb5eabcb0b5fb83f0bfd21"
+    },
+    {
+      "path": "docs/archive/netease-isolated-technical-validation.md",
+      "role": "historical-snapshot",
+      "linesBefore": 88,
+      "baselineSha256": "93ddac1e8149b4bde582dbd3fea93eedc5a2ec6c62937294e9271ea5346e7884"
+    },
+    {
+      "path": "docs/archive/token-v2-replacement.md",
+      "role": "historical-snapshot",
+      "linesBefore": 576,
+      "baselineSha256": "7cbbece7419a34cec66b1539cdb34a8f8ca6df0b71784c1f339273c329cd2c82"
+    },
+    {
+      "path": "docs/archive/visual-system-evolution.md",
+      "role": "historical-snapshot",
+      "linesBefore": 324,
+      "baselineSha256": "351de765dd8f65de26b66b71eb7e3990eb633957c0a6bff9c5a66420483a6018"
+    },
+    {
+      "path": "docs/contracts/README.md",
+      "role": "directory-guide",
+      "linesBefore": 50,
+      "baselineSha256": "2ee6f39689f2d9d33f3dc78f5fecb70cb86ca810e78681af1ab025c67cccf625"
+    },
+    {
+      "path": "docs/contracts/action-intent-and-confirmation.md",
+      "role": "behavior-contract",
+      "linesBefore": 50,
+      "baselineSha256": "39a49bab3d97df8b445a1821011be1a4ec1dd5cbf9ded8ec01e609af67854837"
+    },
+    {
+      "path": "docs/contracts/artist-photo-provider.md",
+      "role": "behavior-contract",
+      "linesBefore": 183,
+      "baselineSha256": "1455e18d3b937a6ea6e05645ddfcae324549659b1727554cfc111923e66b0b85"
+    },
+    {
+      "path": "docs/contracts/audio-tag-writeback.md",
+      "role": "behavior-contract",
+      "linesBefore": 92,
+      "baselineSha256": "16ee5d1847b12632673456a95337ea2bcc6cae7eb96ea648bb20363d5fef7d38"
+    },
+    {
+      "path": "docs/contracts/bgm-standby-lane.md",
+      "role": "behavior-contract",
+      "linesBefore": 448,
+      "baselineSha256": "032aa7b88496efad64b46d06c5ebb99c139dd75b67a9d2723019ddb5a362888b"
+    },
+    {
+      "path": "docs/contracts/codebase-naming.md",
+      "role": "behavior-contract",
+      "linesBefore": 131,
+      "baselineSha256": "ba1e93aaed267b2ca0f981deb1992ff7a9e16417cbf863910dfe9b6e50e6366b"
+    },
+    {
+      "path": "docs/contracts/external-service-request-policy.md",
+      "role": "behavior-contract",
+      "linesBefore": 29,
+      "baselineSha256": "5411b75b639c04da38d20e089fd6a95c2573094dd188f8e4bc62de39ca815268"
+    },
+    {
+      "path": "docs/contracts/folder-page-objects.md",
+      "role": "behavior-contract",
+      "linesBefore": 44,
+      "baselineSha256": "b81793d5203c66dc44957bfa339a6c7ec790ab1aae6297f65a90bb64fefce70c"
+    },
+    {
+      "path": "docs/contracts/import-task-session.md",
+      "role": "behavior-contract",
+      "linesBefore": 78,
+      "baselineSha256": "44c8771b014448ea825910f81377a609b1ee1d3c12e8a50cef6a7da56b59f31d"
+    },
+    {
+      "path": "docs/contracts/input-bindings.md",
+      "role": "behavior-contract",
+      "linesBefore": 122,
+      "baselineSha256": "97041dd3fa1361151dbe283b37ae59d71893d96e6cb7e221676541ba90f42ab9"
+    },
+    {
+      "path": "docs/contracts/integration-adapter-contract.md",
+      "role": "behavior-contract",
+      "linesBefore": 271,
+      "baselineSha256": "598fbfab9cbb73f15941889941b55ae4ff8e1cd0f982a641ed09a03d763d340a"
+    },
+    {
+      "path": "docs/contracts/library-reconciliation.md",
+      "role": "behavior-contract",
+      "linesBefore": 113,
+      "baselineSha256": "fdeb083502c18ddf0fc3a4c977960615d007dbbbe42a49b98047b0e57189e718"
+    },
+    {
+      "path": "docs/contracts/library-storage-management.md",
+      "role": "behavior-contract",
+      "linesBefore": 48,
+      "baselineSha256": "241a4619e9b08d455506bb35b40946fa42281b523947b060c1a840b5b52f5896"
+    },
+    {
+      "path": "docs/contracts/lyrics-acoustic-estimate-contract.md",
+      "role": "behavior-contract",
+      "linesBefore": 560,
+      "baselineSha256": "4e0e0392d34033176816f21eb0e6e8a2c8c4e3b89b056630a462c29d674813a2"
+    },
+    {
+      "path": "docs/contracts/lyrics-provider-evaluation-corpus.md",
+      "role": "behavior-contract",
+      "linesBefore": 364,
+      "baselineSha256": "814f5e8c881291b0220a71b7cc51a588c5f4b58d9325d603c6a938fc66092723"
+    },
+    {
+      "path": "docs/contracts/lyrics-reading-quality-contract.md",
+      "role": "behavior-contract",
+      "linesBefore": 310,
+      "baselineSha256": "fef3c46e66b23ec0df14b1ed5786564c848139c3ba838b9f36198a0d87cf726c"
+    },
+    {
+      "path": "docs/contracts/lyrics-sources.md",
+      "role": "behavior-contract",
+      "linesBefore": 117,
+      "baselineSha256": "9c8a91bb5e0353d269c09d11a1b34f104c2766ebfe0d5cc4064d1e815b3a945c"
+    },
+    {
+      "path": "docs/contracts/lyrics-text-processing.md",
+      "role": "behavior-contract",
+      "linesBefore": 74,
+      "baselineSha256": "52a08004d8647ce2f472881d29871d765e12e2995e745fb0969d343af72101bd"
+    },
+    {
+      "path": "docs/contracts/lyrics-timing-contract.md",
+      "role": "behavior-contract",
+      "linesBefore": 525,
+      "baselineSha256": "cd54d03ac03ff4310bc46df10d4d10e95bbd1dc14b79a0278c72102936804f10"
+    },
+    {
+      "path": "docs/contracts/music-analysis.md",
+      "role": "behavior-contract",
+      "linesBefore": 113,
+      "baselineSha256": "26c1fe14efc132f9f022e71741ee4b6efbbaa6b589516e07d2d8f1d4480cbcc4"
+    },
+    {
+      "path": "docs/contracts/music-identity-evidence-contract.md",
+      "role": "behavior-contract",
+      "linesBefore": 280,
+      "baselineSha256": "4fd4a56124315fb8180ecfd0c40d8d9628568aa4cbe4d394c0ad6227aeff5a83"
+    },
+    {
+      "path": "docs/contracts/output-appearance.md",
+      "role": "behavior-contract",
+      "linesBefore": 164,
+      "baselineSha256": "a28c6be1967d1eb0f1162f1cf72efb0e0a8d1b70c35fd3960e75779738d54a36"
+    },
+    {
+      "path": "docs/contracts/output-runtime.md",
+      "role": "behavior-contract",
+      "linesBefore": 122,
+      "baselineSha256": "dcddd1839d59bbfcdeea438b05414c617cc5bb17544978cba3e18f530c1ca029"
+    },
+    {
+      "path": "docs/contracts/overlay-pack.md",
+      "role": "behavior-contract",
+      "linesBefore": 72,
+      "baselineSha256": "8b966f3d90f252822bb802892136907ea364f183e7d6b598620ddc2210145bed"
+    },
+    {
+      "path": "docs/contracts/performance-session-preparation.md",
+      "role": "behavior-contract",
+      "linesBefore": 257,
+      "baselineSha256": "f5071762d2f320d20145f01bdae94c69eccf036a172cc04e3e33d90b97aa0ad3"
+    },
+    {
+      "path": "docs/contracts/performer-prompter-contract.md",
+      "role": "behavior-contract",
+      "linesBefore": 114,
+      "baselineSha256": "389c07513c89f710f8adbb6a5912f932f2391dbf03b66a4eb930c7bfe8c14eaf"
+    },
+    {
+      "path": "docs/contracts/playback-history-and-resume.md",
+      "role": "behavior-contract",
+      "linesBefore": 107,
+      "baselineSha256": "be2f4e817335caf14446b73b68f05e45dbd9354289368cbee019ea529272bbae"
+    },
+    {
+      "path": "docs/contracts/release-source-catalog.md",
+      "role": "behavior-contract",
+      "linesBefore": 162,
+      "baselineSha256": "559ad484d112b58fdc1d2cce41b5e394274e5a3e1298e1f0e34efe64e01af53e"
+    },
+    {
+      "path": "docs/contracts/settings-operation-feedback.md",
+      "role": "behavior-contract",
+      "linesBefore": 190,
+      "baselineSha256": "9373b0e3b1f7965a2998af1929c384b28cc9d8e8ed567d515e77b848c3cd37e8"
+    },
+    {
+      "path": "docs/contracts/token-v2-component-review.md",
+      "role": "behavior-contract",
+      "linesBefore": 740,
+      "baselineSha256": "45c70445789f2ee5bf0267c51cf7fb0779889d7c926947bd628c599f544f2009"
+    },
+    {
+      "path": "docs/contracts/track-editing.md",
+      "role": "behavior-contract",
+      "linesBefore": 66,
+      "baselineSha256": "baf4c67b5a8eab3b97173a644f558d71e62775bc8da36fff11cb28beb0b84de6"
+    },
+    {
+      "path": "docs/contracts/track-preview.md",
+      "role": "behavior-contract",
+      "linesBefore": 220,
+      "baselineSha256": "77a36ea5ab86574b15e2b4474d0b6a9c3dfc1511ae20f7669dff70cd7bd19c43"
+    },
+    {
+      "path": "docs/contracts/works-versions-and-releases.md",
+      "role": "behavior-contract",
+      "linesBefore": 386,
+      "baselineSha256": "d221fdfc414cc62f579c0fc2650de73de1a12f1e697bb41ab7375a9927249691"
+    },
+    {
+      "path": "docs/governance/appearance-sets-plan.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 66,
+      "baselineSha256": "ef1824c323882cb3ed1a8f1118e710d3d92f685efd931c8ba317ec1afe3daf08"
+    },
+    {
+      "path": "docs/governance/appearance-template-gap-audit-2026-10-20.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 146,
+      "baselineSha256": "3af320bb2f1b66bfef58845b7c9b3fce4e41ea97c9fb22f0dfd9dbd21b3b2a98"
+    },
+    {
+      "path": "docs/governance/community-dependency-boundaries-2026-10-20.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 383,
+      "baselineSha256": "6f9a70a224663f8566ca4b2c8ad4601040e75814e14b4bc1b39bb85809874cee"
+    },
+    {
+      "path": "docs/governance/feature-notice-review-2026-10-18.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 167,
+      "baselineSha256": "f35f8d0cd76010655ff60236548d464a43806743e7e19f125608ee96b14e933d"
+    },
+    {
+      "path": "docs/governance/legal-compliance.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 684,
+      "baselineSha256": "87ed539832e926c64666ddb4a28030ecf6e4904c74fc9f18e96d64d785d658fc"
+    },
+    {
+      "path": "docs/governance/packaged-notices-repair-2026-10-18.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 68,
+      "baselineSha256": "49a4a58429b793f7ce5d0ecbc9578487e965ce653690598e2909868fb1f0bb96"
+    },
+    {
+      "path": "docs/governance/release-license-review-2026-10-18.md",
+      "role": "governance-rule-or-dated-audit",
+      "linesBefore": 176,
+      "baselineSha256": "0f321a2e0db4cbdc483af3de09523e204d0d99b26613c3703ec444d7420b07a9"
+    },
+    {
+      "path": "docs/operations/ci-usage.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 131,
+      "baselineSha256": "33eb7a4358a1a277b26194eae4acca16efada70f2cf8437ecbb3b67d2a8dfdf7"
+    },
+    {
+      "path": "docs/operations/diagnostics-rollout.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 112,
+      "baselineSha256": "6f3af2be036882923bb95571bfe6caedf808d2d12621510c33404705996bcee6"
+    },
+    {
+      "path": "docs/operations/installer-maintenance-verification-2026-10-18.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 43,
+      "baselineSha256": "c20c74e17b024f5228df1320b61829af774189ba7fdf458c2b48a31867d54681"
+    },
+    {
+      "path": "docs/operations/lyrics-alignment-research.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 124,
+      "baselineSha256": "a5de4bbb7329afaae8f486c8ee6a77cf3b8b925d0396c74d87447336f550bbd3"
+    },
+    {
+      "path": "docs/operations/lyrics-cast-enumeration-verification-2026-10-25.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 46,
+      "baselineSha256": "8f31685bb810bf697185b46bbcf83cf48e9682c349dc7f1d17555155ef1d58b7"
+    },
+    {
+      "path": "docs/operations/lyrics-issue-feedback.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 48,
+      "baselineSha256": "7343803a3e828d3cb6eb7d60a7436c88ecceed0bec41901feeb85e0deee45c40"
+    },
+    {
+      "path": "docs/operations/lyrics-line-batches-verification-2026-10-24.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 133,
+      "baselineSha256": "bfdf2f84caf41a9123941ce3f3410c571ba758eaeb3324b5462aec3f945c3a8a"
+    },
+    {
+      "path": "docs/operations/lyrics-provider-contracts.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 40,
+      "baselineSha256": "a63d618331bc09ecae00f97eed861159ee5a257bd00f778d30e8ea02aed5c1bd"
+    },
+    {
+      "path": "docs/operations/lyrics-timing-manual-acceptance-2026-10-21.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 47,
+      "baselineSha256": "dca20c49a5516363500f555eb894c87c39843b01bf2f84f187c06e7636395a3c"
+    },
+    {
+      "path": "docs/operations/manual-acceptance.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 150,
+      "baselineSha256": "551a2213ed86b0825c9339441d9036db5b35e8f9d9d1ee679b0d7156dc898a25"
+    },
+    {
+      "path": "docs/operations/output-appearance-acceptance.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 320,
+      "baselineSha256": "ce8496059eb97cab11ededeac3fb405c142aaa70cf1eabf1de47a039908251fd"
+    },
+    {
+      "path": "docs/operations/release-inventory.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 656,
+      "baselineSha256": "b910e8ec2a5c64f715ef36922e8a34424e7bc05c2b03f609e73710878b1b3247"
+    },
+    {
+      "path": "docs/operations/release-notes-template.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 163,
+      "baselineSha256": "26d92e32c40253c97fdde2049e99f16d2f78859ea69b8906402f04d4c98312ce"
+    },
+    {
+      "path": "docs/operations/release-runbook.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 237,
+      "baselineSha256": "ae0505998e0ed112bcd475956b143c6045dee7b11b20fa9c246467588331479c"
+    },
+    {
+      "path": "docs/operations/startup-performance-baseline.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 109,
+      "baselineSha256": "6284a98f5b65ffdef740719228b3ef2501398877dfdf6c0697428bd1a54d9097"
+    },
+    {
+      "path": "docs/operations/update-acceptance-template.md",
+      "role": "runbook-or-verification-receipt",
+      "linesBefore": 98,
+      "baselineSha256": "bca027970659d9cfc3173545bc8ff8d43cfbc744eee42afb036bcf82694c389d"
+    },
+    {
+      "path": "docs/releases/v0.1.1.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 50,
+      "baselineSha256": "27c4ff0d6f247221a7f58c851a749fb52142528c65017fb4c386a3f9327e9b7b"
+    },
+    {
+      "path": "docs/releases/v0.1.2.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 95,
+      "baselineSha256": "3a6dd7495170ec21c126043ac83278c50e1c2f985b978601f0135f2408213852"
+    },
+    {
+      "path": "docs/releases/v0.2.0.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 129,
+      "baselineSha256": "faa25cbd86d91e55ad298e544cf6107708b7e47835c8e9b0c60143ae8c291b51"
+    },
+    {
+      "path": "docs/releases/v0.3.0.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 84,
+      "baselineSha256": "6974fe2d3ce6de87b9e4d2ac5ab932058eef3377926985f13981f47f7453eaaa"
+    },
+    {
+      "path": "docs/releases/v0.4.0.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 84,
+      "baselineSha256": "d161d0362e188b65d8f3c3272edcee85c075cb18d6d66b2122f016daf6234783"
+    },
+    {
+      "path": "docs/releases/v0.5.0.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 116,
+      "baselineSha256": "4014a112ed70d18c4ba67c709f2f8d4781713c3d17e9e5b79c9cce4aa456b886"
+    },
+    {
+      "path": "docs/releases/v0.5.1.md",
+      "role": "version-specific-release-notes",
+      "linesBefore": 80,
+      "baselineSha256": "a1e4a9c1707532c5cd4f18c351ec1534f270b1bca64cfb119f20ecc3e4c67495"
+    },
+    {
+      "path": "docs/research/README.md",
+      "role": "directory-guide",
+      "linesBefore": 49,
+      "baselineSha256": "1a8a1b9fdd14be2ffb996fc9351c6e1df9b63d47b28e469bb0cedbcd48547e04"
+    },
+    {
+      "path": "docs/research/audio/audio-processing-baseline-2026-08-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 109,
+      "baselineSha256": "c0b25a6889e908f25cf2c94afaa84bdbcfb307e8b74ac5ee6f9441fce8c63dac"
+    },
+    {
+      "path": "docs/research/audio/audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 112,
+      "baselineSha256": "a1cdfa1d95a1b0b996c6bf149e180ec6e674df6e0f61f7038aefe10e550230e5"
+    },
+    {
+      "path": "docs/research/audio/audio-processing-model-review-2026-08-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 144,
+      "baselineSha256": "65d92d71bac74c623771aae967157b2fb017a3fb5e98a768520459da674b9261"
+    },
+    {
+      "path": "docs/research/audio/audio-python-analysis-structure-spike-2026-08-24.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 79,
+      "baselineSha256": "744933e9f06a5a4ab028a2e50430192e77b87382ae534aa478fec6ca139d28f0"
+    },
+    {
+      "path": "docs/research/audio/audio-python-beat-this-m1-spike-2026-08-24.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 114,
+      "baselineSha256": "bcabe24f5ad4993080036a36b9f2650751a11a520c5811e8c60528e27698e0b2"
+    },
+    {
+      "path": "docs/research/audio/audio-python-separation-cpu-spike-2026-08-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 280,
+      "baselineSha256": "112bc7c41ff0a7af23c99f0094771137cb968d74c13b6986457ce808e5f71333"
+    },
+    {
+      "path": "docs/research/audio/lyrics-hubertfa-directml-2026-10-21.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 49,
+      "baselineSha256": "8793e58eb64cf905c09e53c96dbe8f8f78398ab6e262e4e6f6fddb132462223d"
+    },
+    {
+      "path": "docs/research/audio/music-analysis-bpm-normalization-2026-08-28.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 120,
+      "baselineSha256": "b18831ccf2929c8aecb3803e4a49e215f73a8d2016afcd8e02b84fdbcccb27c6"
+    },
+    {
+      "path": "docs/research/audio/music-analysis-model-survey-2026-08-24.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 148,
+      "baselineSha256": "6e641a9165f5e77e0aaa03964f7be19f581ca68ca5c022c14085d721bd22fb74"
+    },
+    {
+      "path": "docs/research/audio/processing-gpu-shared-preference-2026-10-21.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 56,
+      "baselineSha256": "f0c6463ab34a83322002ece2493f90bad0d0bcd5758ffa2209260f081f599116"
+    },
+    {
+      "path": "docs/research/audio/whisper-small-gpu-cost-2026-10-21.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 76,
+      "baselineSha256": "1dba303d833eacf7d28d8c465a387e86e3ce4e29ab3d3387a1c3cdd71bce0f11"
+    },
+    {
+      "path": "docs/research/design/apple-hig-alignment-review-2026-09-15.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 138,
+      "baselineSha256": "34e5463419445acc3f66db3467e1535610b310450dd2a88692c90c992bd9358b"
+    },
+    {
+      "path": "docs/research/design/nintendo-wonder-reference-structure.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 185,
+      "baselineSha256": "ac2d06638406a0d2bc3fd3301a81b783d0616f93078a6dcd1673f0118ba96e20"
+    },
+    {
+      "path": "docs/research/design/track-collection-row-consolidation-proposal-2026-10-14.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 234,
+      "baselineSha256": "888a8229026754ace6450ea51f7103a04650d3ce1361d0047253e103ae280de7"
+    },
+    {
+      "path": "docs/research/engineering/bgm-startup-profile-2026-10-18.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 73,
+      "baselineSha256": "150e9615cd3add9b25a9811bff23277f51b55264a1e2d03de7b4b9e620473136"
+    },
+    {
+      "path": "docs/research/engineering/defensive-security-review-2026-10-26.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 81,
+      "baselineSha256": "c90b2969fc6b1387c86b9372fe9b21eb17d18c036e36cf7309de7d20bc4515cf"
+    },
+    {
+      "path": "docs/research/engineering/dependency-security-review-2026-10-16.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 160,
+      "baselineSha256": "e8735f232d18dbaaadf9c3da3f0b110d99d854a1067a2092cf1192e3a78db959"
+    },
+    {
+      "path": "docs/research/engineering/light-obfuscation-assessment-2026-10-26.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 86,
+      "baselineSha256": "d149a429bbb1b28cf73a6cbb6ac3411c694134f9e997ea9fddaa47587e08b8a6"
+    },
+    {
+      "path": "docs/research/engineering/light-symbols-verification-2026-10-26.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 85,
+      "baselineSha256": "81d9cdc8c8d42522e177fb2d92366d153892b49b2a23de50e82b6bbc266a4503"
+    },
+    {
+      "path": "docs/research/engineering/output-first-frame-profile-2026-10-18.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 206,
+      "baselineSha256": "97f4550e62b42fbddf1fc6c7c267004ecbdacfb64e25a9c1adbb7f27fcd35118"
+    },
+    {
+      "path": "docs/research/engineering/playback-distortion-diagnostics-2026-10-26.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 129,
+      "baselineSha256": "9295f929041997a0453ac67aafe5365f652698d7172f1283f4c8818833494d99"
+    },
+    {
+      "path": "docs/research/engineering/playback-distortion-investigation-2026-10-26.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 181,
+      "baselineSha256": "092f9aa41c26d8065c73e41b53a6241be547129907094f646b89eda2eb2ffc48"
+    },
+    {
+      "path": "docs/research/engineering/runtime-packaging-verification-2026-10-26.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 69,
+      "baselineSha256": "a1bfae908037cc8a70e1e08e510379cb06029a49b245d14306cd64f039f98b04"
+    },
+    {
+      "path": "docs/research/engineering/startup-settings-profile-2026-10-18.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 161,
+      "baselineSha256": "21c508b98c9529692ca8cd2dd664e01fe320d98b241f502306d7c4e4b5cd18be"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyricfloat-cost-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 57,
+      "baselineSha256": "db7ac1f3047e873b53f1e04b083fed81702836d070e8eb8957be96d122bd322f"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-acoustic-environment-readiness-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 98,
+      "baselineSha256": "6fc084ecb684c7b09bd2646e1a84b920e24810067d2640359ed013c3d2e53fe3"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-acoustic-lifecycle-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 64,
+      "baselineSha256": "d04381f5129ff3c6968981206e3d8ccf23aff41cf56e046858fd12eeafefdefe"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-acoustic-phase2-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 110,
+      "baselineSha256": "6806a86e297a426c18cff86e3d6b7e2273945ee1a192b0eb9617176149157053"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-acoustic-segmentation-implementation-assessment-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 125,
+      "baselineSha256": "de1da23032d1b0f94a1e74f869d61a98e8c7a8c5c59afab5a878c3694065c216"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-acoustic-weight-license-gate-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 107,
+      "baselineSha256": "24f2b11671981bbfb494afbad772e6ef8dd63f64a9a9aa6a93b1f9e187057dce"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-alignment-candidates-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 157,
+      "baselineSha256": "4e6a2397b75025c203261c7081c1543a9ab6ffec940e534cd133017ebb98974d"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-alignment-cjk-evaluation-2026-10-18.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 210,
+      "baselineSha256": "e8e4ecb066c88e71677f1e5abc31954276e7ed4cc0bed6cabdff99d950ba7d42"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-alignment-methods-comparison-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 115,
+      "baselineSha256": "8f5a6e6a12fe946dd7b6db933a6208eb7a03cffe22f68d6d58e6dd3ca8a4ae22"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-alignment-pilot-2026-10-18.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 196,
+      "baselineSha256": "654f930b7e318d41f75fcf9fbbfc17ba4a95d2c224f37c6f99376babd0917c5f"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-alignment-summary.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 99,
+      "baselineSha256": "5c441b179277366cbe30d294ddbf6fedb8cfd175cf66f82ea9fde59a60c2c778"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-audio-alignment-evaluation-2026-10-18.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 421,
+      "baselineSha256": "2697c4cdbdeac68d2fbda32b24d910ba8a3043efb6f54555219d9cac5bdd47c0"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-content-time-offline-validation-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 52,
+      "baselineSha256": "d097f47ba1da98ea0e40ad52dfae511a6ab00a404c086c279402ef456da35dc4"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-content-time-separation-plan-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 68,
+      "baselineSha256": "3e9944d3d9bafda1c25601c397523fb109094f1507c0371248f6cf7f744b262c"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-english-validation-2026-10-20.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 42,
+      "baselineSha256": "cfc635303eef6911e6d072e6be919d14607da992bd2c0b81087a7e04105e6779"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-fine-timing-clock-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 83,
+      "baselineSha256": "6db2fd42d1dd6aa79e86dfc53c0c98f5c6f01cca084cc34078ebe24c3b257efe"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-fresh-decision-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 83,
+      "baselineSha256": "5991e12b9d063bc21b64800b7da66c4d41652a27dd28954e0f2e83525a0cc378"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-hfa-small-listening-trial-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 44,
+      "baselineSha256": "9ba8090d9d450f6692425f2d78b2d18b694afba16978ebdde1cace737f219ac1"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-hubertfa-fresh-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 85,
+      "baselineSha256": "c0e4b5c0e703a97c001e0f891845dab4b8432e2152328604c031f87862e264f9"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-mixed-cpu-bounded-2026-10-21.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 64,
+      "baselineSha256": "d2a98026ddb9387a99d48e3722d54aaaac0e1e7b6444bfdfee323de6e8b770e4"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-mixed-cpu-feasibility-2026-10-21.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 38,
+      "baselineSha256": "04313fcf53d21d320f6b209e540be328d02550993f855bbe76ad7377a6066411"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-mixed-phrases-2026-10-21.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 34,
+      "baselineSha256": "b679be4533a5c76ca6948d2da54384f62ea29c64bcaf38ab3793cf64e01ad33a"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-model-pair-listening-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 63,
+      "baselineSha256": "721ee202fea1333b4ac2337c4c45a6d78b7913ff50aad8c259c86b4e7ad6d653"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-model-pairing-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 105,
+      "baselineSha256": "62084a56e4ef57a0d586edd5670720336e817c031a7afca8419b6d7162037d63"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-offset-cache-audit-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 48,
+      "baselineSha256": "61609a7a5adb1fbc128b156dae06ba25d5fd9163f268cb30f96984dd989e7bba"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-offset-consensus-plan-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 98,
+      "baselineSha256": "297945df6846c4ed7541c71dd461a6b436f4d5a6cb923c99c9e78c2845b86311"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-offset-zh-front-cache-check-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 35,
+      "baselineSha256": "50b67647d6e44950f160a13f5aba4d7d905e7db331e9c857614556da6a406259"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-offset-zh-six-line-plan-2026-10-22.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 72,
+      "baselineSha256": "8c1040a720da66e90bfe249635a500265869c194055a46fef07bb05525e951e2"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-qwen-quality-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 131,
+      "baselineSha256": "d8de71067d751e42226faaf729a338625b0ba2820406f21db20b4f70fc1796b6"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-root-causes-and-noncommercial-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 86,
+      "baselineSha256": "fabca5e6a07f3738005422e27b71cc41e46910f246c86428cf80b613b3864d6c"
+    },
+    {
+      "path": "docs/research/lyrics-alignment/lyrics-t1-acoustic-segmentation-2026-10-19.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 150,
+      "baselineSha256": "a390f4966ae22b1a5195f2cd997a280c502a35efb3b5da195fe774190660dffb"
+    },
+    {
+      "path": "docs/research/lyrics-providers/lrclib-t2-live-validation-2026-08-24.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 103,
+      "baselineSha256": "382663584b1f21147830e8566db1f7bad858c4374cb7b73dc2ed86a010c2ebbe"
+    },
+    {
+      "path": "docs/research/lyrics-providers/lyrics-provider-commercial-evaluation-2026-08-31.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 236,
+      "baselineSha256": "e560f953ec491d274ce53a5784f55da0cccd83cb627988fbab5d131493c729d0"
+    },
+    {
+      "path": "docs/research/lyrics-providers/lyrics-provider-technical-evaluation-2026-09-01.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 97,
+      "baselineSha256": "388fcbe8771f82b2f32535dadcdee77134b427e3f55f0538c05f144d865a9eb2"
+    },
+    {
+      "path": "docs/research/lyrics-providers/netease-isolated-technical-validation-2026-08-28.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 86,
+      "baselineSha256": "f103a7b65d28698de722063585e9c92bf2154fe56cc6887b0eda92d806be9de5"
+    },
+    {
+      "path": "docs/research/lyrics-text-blind-validation-plan-2026-10-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 123,
+      "baselineSha256": "6559b70c1803eb9a8c703a85e9cb4332b06a226a63704140304c4479fe9767bf"
+    },
+    {
+      "path": "docs/research/lyrics-text-holdout-results-2026-10-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 125,
+      "baselineSha256": "10ebc532a7e42c38db4d4b01851b8f5bad5100ed9f737ae0ee3edfb2b01d2f52"
+    },
+    {
+      "path": "docs/research/lyrics-text-preprocessing-feasibility-2026-10-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 116,
+      "baselineSha256": "f6e9522678a5ec7efc80d8fd58e64cef096eb1cde5337d508db0868dddad56f6"
+    },
+    {
+      "path": "docs/research/lyrics-text-qwen-ablation-2026-10-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 110,
+      "baselineSha256": "621c7d40702bd1b4cb3196e690aa914fcaad4821b1b966aa84a9a2bcabdeaee4"
+    },
+    {
+      "path": "docs/research/lyrics-text-qwen-pilot-2026-10-23.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 116,
+      "baselineSha256": "21e8f98fea1f9ef661dff649b59b262eb1071004c3574641bcaae32bd25af575"
+    },
+    {
+      "path": "docs/research/metadata/artist-photo-sources-2026-10-05.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 69,
+      "baselineSha256": "14229a05df542bfc7ad2d898911488882f16b6baa643b7443590628448ca8a3f"
+    },
+    {
+      "path": "docs/research/metadata/musicbrainz-artist-coverage-2026-10-05.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 83,
+      "baselineSha256": "7c4e71e908709b86f8ce7ec81d17763b8dc0a212526ab77618be697d28fa6b53"
+    },
+    {
+      "path": "docs/research/metadata/online-artwork-provider-evaluation-2026-09-27.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 265,
+      "baselineSha256": "8243dcb7d5c177f73cb16511f3098c515a5cde4c78f583c8dcae9d25c3fc37ef"
+    },
+    {
+      "path": "docs/research/product/appearance-support-models-market-plan-2026-10-20.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 184,
+      "baselineSha256": "ee530e30f32682cc6e2a3c4826024f3d16903962ef0efdac848f3b0d59c12065"
+    },
+    {
+      "path": "docs/research/product/competitive-research.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 233,
+      "baselineSha256": "e6371b2b2a8fcad86477f790bb832c7a3d88260de3ec258d98383676c1409eb7"
+    },
+    {
+      "path": "docs/research/product/public-site-content-v0.4.0.md",
+      "role": "dated-or-topic-research",
+      "linesBefore": 275,
+      "baselineSha256": "e2d6e2ba6011ac7a15013016d0ac0fb33faccf8cda73cf40be24a7b51b55261c"
+    },
+    {
+      "path": "docs/spec.md",
+      "role": "current-status-and-roadmap",
+      "linesBefore": 184,
+      "baselineSha256": "8d7ff48e4212d4067920c57eb31624900c0855144f44558292a0234ef0b325cb"
+    },
+    {
+      "path": "prototypes/README.md",
+      "role": "directory-guide",
+      "linesBefore": 29,
+      "baselineSha256": "37daef8593679bfc7bfd8619466e86166a15445d58720833f0a000a9f7b61175"
+    },
+    {
+      "path": "prototypes/studio-library-workspace/README.md",
+      "role": "directory-guide",
+      "linesBefore": 70,
+      "baselineSha256": "86d923577fc988c5359ba015076d8d94c1575520d40e94f3f381b52d0ea792db"
+    },
+    {
+      "path": "prototypes/ui-component-lab/README.md",
+      "role": "directory-guide",
+      "linesBefore": 37,
+      "baselineSha256": "63485dca01e5ee1af92e561665310829f3c1abc25f5e09c85bb700dcf9c69e12"
+    },
+    {
+      "path": "resources/README.md",
+      "role": "directory-guide",
+      "linesBefore": 54,
+      "baselineSha256": "0668b34645553be41ca3036286ef228a7219bd8a17f10a9980a30f8bd8b92cdc"
+    },
+    {
+      "path": "scripts/README.md",
+      "role": "directory-guide",
+      "linesBefore": 51,
+      "baselineSha256": "b534c0b944d6bf6c6ec38d7f4b6b8e65dce2a1bf5d79750bacceb396b4eeb671"
+    },
+    {
+      "path": "scripts/fixtures/output/README.md",
+      "role": "directory-guide",
+      "linesBefore": 33,
+      "baselineSha256": "9cd2436ff7c66100b42ff49492c259a8bc0614fd7d12062c8a8cdc8e1fdc6b78"
+    },
+    {
+      "path": "scripts/fixtures/tags/README.md",
+      "role": "directory-guide",
+      "linesBefore": 8,
+      "baselineSha256": "c14a95993372d327617496d6c9dcfb7de17ca020ae92292d22ce122204cf0b73"
+    },
+    {
+      "path": "scripts/research/lyricsAcoustic/README.md",
+      "role": "directory-guide",
+      "linesBefore": 112,
+      "baselineSha256": "26f320599e9e7e7ba34fd4a5868ba54d8e107d41321494097219762d8a23cba8"
+    },
+    {
+      "path": "scripts/research/lyricsAlignmentCandidates/README.md",
+      "role": "directory-guide",
+      "linesBefore": 157,
+      "baselineSha256": "c20f2e01457c9e51b648f6877869386e847c80a143f6a2a5e60db2c3a9471db0"
+    },
+    {
+      "path": "scripts/research/lyricsFreshEvaluation/README.md",
+      "role": "directory-guide",
+      "linesBefore": 89,
+      "baselineSha256": "1efd20e5888f0e127499ea4881c0a158df6350ca30ca11de29cfe1cc4f948a1b"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/README.md",
+      "role": "directory-guide",
+      "linesBefore": 65,
+      "baselineSha256": "085d466ef364c1f068560ab2881a9989873976901450ef6db519e8e29582dc34"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/ablation-study.md",
+      "role": "module-or-maintenance-guide",
+      "linesBefore": 69,
+      "baselineSha256": "cafbeed1463e401e4edc741b2bf5c193c2eeac779921305c6546456df8197c30"
+    },
+    {
+      "path": "scripts/research/lyricsTextPreprocessing/holdout-study.md",
+      "role": "module-or-maintenance-guide",
+      "linesBefore": 87,
+      "baselineSha256": "914a993c47b5f3db40ee8130f22fc6d3888faec122ec26821c16b270404aed30"
+    },
+    {
+      "path": "services/feedback-relay/README.md",
+      "role": "directory-guide",
+      "linesBefore": 103,
+      "baselineSha256": "e117f72f7db0a111cfa770ed2bc289ad2d88ddd7a5034be6ddcb33758c4a6f27"
+    },
+    {
+      "path": "src/assets/README.md",
+      "role": "directory-guide",
+      "linesBefore": 22,
+      "baselineSha256": "c40e407c9e61e8f1973a3173e491c87d986b76fe4cc081e208e06867727b4e52"
+    },
+    {
+      "path": "src/assets/demo/track-thumb/README.md",
+      "role": "directory-guide",
+      "linesBefore": 29,
+      "baselineSha256": "270f20b85e4cf52f480aa8b6328b4ee841a4c94d692544b5ef3c17fe038a4b50"
+    },
+    {
+      "path": "src/assets/output-template-thumbnails/README.md",
+      "role": "directory-guide",
+      "linesBefore": 55,
+      "baselineSha256": "d5cfa471106825ade1899d01df13f99c097bc31f4340eaa400e81b3a1972bb3a"
+    },
+    {
+      "path": "src/assets/track-artwork/README.md",
+      "role": "directory-guide",
+      "linesBefore": 19,
+      "baselineSha256": "449d0b5ba8f4adc7b4176c8fd1c384a994f809ff5332521fbd2a705e46bffbd2"
+    },
+    {
+      "path": "tools/README.md",
+      "role": "directory-guide",
+      "linesBefore": 23,
+      "baselineSha256": "b7bb0a684995251474b77338519cdeb3d81b324ab5e45c4fca7c61f4ee321a2a"
+    }
+  ]
+}

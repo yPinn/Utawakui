@@ -38,7 +38,7 @@ Utawakui 讓使用者在同一套本機工作流中完成：
 
 ## Positioning
 
-Utawakui 是 **local-first 的 Windows 歌唱場次控制台**。它把本機媒體、播放、歌詞、
+Utawakui 是 **local-first 的 Windows 歌唱場次控制台**，以本機曲庫與播放器為核心。它把媒體、歌單、播放、歌詞、
 音訊處理與 OBS 輸出收斂成一條操作工作流，同時把 Provider、外部歌詞、音訊處理、
 公開輸出與外部應用連線拆成可獨立啟用、準備與復原的單位。
 
@@ -67,7 +67,7 @@ Utawakui 是 **local-first 的 Windows 歌唱場次控制台**。它把本機媒
 - HTML audio element 是播放時間與播放狀態的唯一權威；播放器、佇列與歌詞各自只有一份
   renderer 狀態，視窗與 Overlay 只接收投影。
 - 使用者檔案系統是曲目存在與否的權威；曲庫 metadata 不保存 absolute path。
-- Browser Source 是支援基線；目前不提供 OBS scene／source 寫入或遠端播放控制。
+- Browser Source 是公開呈現基線；手機與其他可寫入的控制入口須另有明確權限與生命週期，不擴張既有唯讀輸出通道。
 - 產品協助整理、播放、處理與輸出，但不替使用者判定素材、直播、錄影、VOD 或平台權利。
 
 ### Feature Gate 語意
