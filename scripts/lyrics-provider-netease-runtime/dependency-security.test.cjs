@@ -9,7 +9,9 @@ const { spawnSync } = require('node:child_process');
 const { once } = require('node:events');
 const { createRequire } = require('node:module');
 const net = require('node:net');
+const http = require('node:http');
 const { test } = require('node:test');
+const redirects = require('follow-redirects');
 const { getUri } = require('get-uri');
 const proxyaddr = require('proxy-addr');
 const qs = require('qs');
@@ -63,6 +65,77 @@ test('proxy trust rejects the malformed mapped subnet without breaking IPv4', ()
   assert.equal(proxyaddr.compile('::ffff:10.0.0.0/8')('203.0.113.10'), false);
   assert.equal(proxyaddr.compile('10.0.0.0/8')('10.1.2.3'), true);
 });
+
+for (const headerShape of ['object', 'array']) {
+  test(
+    `cross-origin redirects strip credential headers supplied as ${headerShape}`,
+    { timeout: 5000 },
+    async (context) => {
+      const originalRequests = [];
+      const target = http.createServer((request, response) => {
+        response.end(JSON.stringify(request.headers));
+      });
+      const source = http.createServer((request, response) => {
+        originalRequests.push(request.headers);
+        response.writeHead(302, {
+          Location: `http://127.0.0.1:${target.address().port}/target`,
+        });
+        response.end();
+      });
+      context.after(async () => {
+        await Promise.all(
+          [source, target].map(
+            (server) =>
+              new Promise((resolve) => {
+                server.closeAllConnections();
+                server.close(resolve);
+              }),
+          ),
+        );
+      });
+      for (const server of [target, source]) {
+        server.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+      }
+      const headers = {
+        Authorization: 'Bearer synthetic-test',
+        Cookie: 'session=synthetic-test',
+        'Proxy-Authorization': 'Basic synthetic-test',
+        'X-Api^Key': 'synthetic-test',
+        'X-Token|Secret': 'synthetic-test',
+        'X-Public': 'retained',
+      };
+      const received = await new Promise((resolve, reject) => {
+        const request = redirects.http.get(
+          `http://127.0.0.1:${source.address().port}/start`,
+          {
+            headers:
+              headerShape === 'array'
+                ? Object.entries(headers).flat()
+                : headers,
+            sensitiveHeaders: ['X-Api^Key', 'X-Token|Secret'],
+          },
+          (response) => {
+            let body = '';
+            response.on('error', reject);
+            response.on('data', (chunk) => (body += chunk));
+            response.on('end', () => resolve(JSON.parse(body)));
+          },
+        );
+        request.on('error', reject);
+        request.setTimeout(2000, () => request.destroy(new Error('timeout')));
+      });
+      assert.equal(originalRequests.length, 1);
+      for (const name of Object.keys(headers).filter(
+        (name) => name !== 'X-Public',
+      )) {
+        assert.ok(originalRequests[0][name.toLowerCase()]);
+        assert.equal(received[name.toLowerCase()], undefined);
+      }
+      assert.equal(received['x-public'], 'retained');
+    },
+  );
+}
 
 test('FTP parser rejects the long malformed line within a process deadline', () => {
   // Resolve the actual client used by get-uri, even if npm nests it in future.

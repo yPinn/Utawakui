@@ -182,24 +182,23 @@ describe('NetEase evaluation runtime contract', () => {
     ['qs', '>=6.16.0 <7'],
     ['ip-address', '>=10.7.1 <11'],
     ['music-metadata', '>=11.16.0 <12'],
-  ])(
-    'locks every %s instance above its moderate advisory floor',
-    (name, range) => {
-      const lock = JSON.parse(
-        fs.readFileSync(
-          'scripts/lyrics-provider-netease-runtime/package-lock.json',
-          'utf8',
-        ),
-      );
-      const entries = Object.entries(lock.packages).filter(([packagePath]) =>
-        packagePath.endsWith(`node_modules/${name}`),
-      );
-      expect(entries.length).toBeGreaterThan(0);
-      for (const [packagePath, metadata] of entries) {
-        expect(satisfies(metadata.version, range), packagePath).toBe(true);
-      }
-    },
-  );
+    ['body-parser', '>=1.20.9 <2 || >=2.4.0 <3'],
+    ['follow-redirects', '>=1.16.1 <2'],
+  ])('locks every %s instance above its advisory floor', (name, range) => {
+    const lock = JSON.parse(
+      fs.readFileSync(
+        'scripts/lyrics-provider-netease-runtime/package-lock.json',
+        'utf8',
+      ),
+    );
+    const entries = Object.entries(lock.packages).filter(([packagePath]) =>
+      packagePath.endsWith(`node_modules/${name}`),
+    );
+    expect(entries.length).toBeGreaterThan(0);
+    for (const [packagePath, metadata] of entries) {
+      expect(satisfies(metadata.version, range), packagePath).toBe(true);
+    }
+  });
 
   it('derives one ignored runtime root separate from node_modules and application data', () => {
     const projectRoot = makeTemporaryRoot();
