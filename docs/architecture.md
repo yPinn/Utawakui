@@ -82,6 +82,8 @@
 
 ### 播放、BGM、試聽、節拍器
 
+- 音訊設定的要求值與確認結果由 `utils/audioControlApplication.js` 管理 revision／取消／期限，實際 DSP 仍由 graph owner 執行；`player/usePlayerAudioStart.js` 執行交接後的準備／play／失敗／取消交易，facade 保留 audio events 與唯一 BGM hook。Play／resume 與 library reload 在必要 monitor／capture 路徑確認後，實際 play 前再驗就緒，見[套用契約](contracts/player-audio-controls.md)。
+
 - `usePlayer.js` 是 HTML audio event 權威與 transport facade；`player/usePlayerAudioGraph.js` 擁有四聲道 accompaniment／guide-vocal 路由、monitor／capture mix、Signalsmith pitch、capture sink 與清理，不註冊時間事件。Monitor graph lazy 建立；儲存的 capture 裝置須先由 `useAudioOutput.js` 列舉驗證，裝置遺失或錯誤時關閉 capture、清除設定並保留 monitor，不 fallback 到預設喇叭。`pitchProcessorLoader.js` 首次需要時才載入 Signalsmith worklet，失敗可重試，不放寬 CSP。
 - Chromium 自然 EOF 的 pause→ended 由 ended 這個 terminal owner 處理，不投影為操作暫停，以免略過 BGM post-roll。
 - 最近播放與啟動恢復：`usePlaybackHistory.js` 依實際 progress／ended 判定 qualified event；`useRecentPlaybackActivation.js` 以插播方式播放歷史曲目，不重建來源佇列；`usePlaybackResume.js` 只投影與 paused rehydrate。演唱音量與監聽／擷取 level 由 `shared/audioControlValues.json` 定義，存於 `config.json.audioPreferences`，preload 同步 seed 第一幀，`useAudioPreferences.js` 合併寫回。見[播放紀錄契約](contracts/playback-history-and-resume.md)。

@@ -54,6 +54,8 @@ vi.mock('./player/usePlayerAudioGraph.js', () => ({
     tempoRate: 1,
   }),
   usePlayerAudioGraph: () => ({
+    isPlaybackReady: (result) => result?.ok === true,
+    cancelAudioControlApplication: vi.fn(),
     applyCaptureDevice: vi.fn(),
     prepareCaptureDevice: vi.fn(),
     resetPitchTempo: vi.fn(),
@@ -72,7 +74,7 @@ vi.mock('./player/usePlayerAudioGraph.js', () => ({
     setMuted: vi.fn(),
     toggleCaptureGuideVocal: vi.fn(),
     toggleMute: vi.fn(),
-    resume: vi.fn(async () => {}),
+    resume: vi.fn(async () => ({ ok: true, status: 'applied' })),
     cleanup: vi.fn(),
   }),
 }));

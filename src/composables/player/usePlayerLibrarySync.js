@@ -54,12 +54,20 @@ export function usePlayerLibrarySync({
     if (wasPlaying) {
       const requestRevision = getStartRevision();
       try {
-        await audioGraph.resume();
+        const result = await audioGraph.resume({
+          isCurrent: () =>
+            requestRevision === getStartRevision() &&
+            syncRevision === trackSyncRevision &&
+            playbackRevision === state.playbackRevision &&
+            state.track?.id === trackId,
+        });
         if (
           requestRevision !== getStartRevision() ||
           syncRevision !== trackSyncRevision
         )
           return;
+        if (!audioGraph.isPlaybackReady(result))
+          throw new Error('Audio preparation incomplete');
         await audio.play();
       } catch (error) {
         if (

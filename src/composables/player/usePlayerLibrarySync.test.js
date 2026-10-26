@@ -4,6 +4,48 @@ import { usePlayerLibrarySync } from './usePlayerLibrarySync.js';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('player metadata refresh', () => {
+  it.each([
+    undefined,
+    { ok: false, status: 'failed' },
+    { ok: true, status: 'applied' },
+  ])(
+    'does not treat fulfilled preparation as readiness: %j',
+    async (result) => {
+      const state = {
+        track: { id: 'song', url: 'old' },
+        playbackRevision: 1,
+        isPlaying: true,
+        currentTime: 10,
+      };
+      vi.stubGlobal('window', {
+        Utawakui: { getTrack: async () => ({ id: 'song', url: 'new' }) },
+      });
+      const audio = { play: vi.fn() };
+      const notifyStopped = vi.fn();
+      const isPlaybackReady = vi.fn(() => false);
+      const sync = usePlayerLibrarySync({
+        state,
+        audio,
+        getStartRevision: () => 1,
+        audioGraph: {
+          isPlaybackReady,
+          resume: vi.fn(async () => result),
+          routeAudioGraph: vi.fn(),
+          restoreGuideVocalState: vi.fn(),
+          restoreCaptureGuideVocalState: vi.fn(),
+        },
+        seek: vi.fn(),
+        reportPlayerError: vi.fn(() => '版本更新後需重試'),
+        notifyStopped,
+      });
+      await sync();
+      expect(isPlaybackReady).toHaveBeenCalledWith(result);
+      expect(audio.play).not.toHaveBeenCalled();
+      expect(state.playbackPhase).toBe('error');
+      expect(notifyStopped).toHaveBeenCalledWith('error');
+    },
+  );
+
   it('does not stop a newer playback when an old URL reload fails', async () => {
     const pending = Promise.withResolvers();
     let revision = 1;

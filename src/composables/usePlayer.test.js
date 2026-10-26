@@ -225,6 +225,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -370,6 +371,7 @@ describe('guide vocal defaults', () => {
     expect(Object.keys(player).sort()).toEqual(
       [
         'applyCaptureDevice',
+        'applyAudioControls',
         'cancelPendingStart',
         'clearTrack',
         'cyclePlaybackMode',
@@ -1524,25 +1526,26 @@ describe('capture device lifecycle', () => {
     expect(player.state.captureDeviceId).toBe('capture-device');
   });
 
-  it('keeps monitor playback running when a prepared capture device cannot start', async () => {
+  it('rejects a start when its selected capture device cannot start', async () => {
     const player = await loadPlayer();
     MockAudioContext.unavailableSinkIds.add('missing-device');
     player.prepareCaptureDevice('missing-device');
 
-    await player.playTrack({
+    const started = await player.playTrack({
       id: 'track-1',
       title: 'Track 1',
       url: 'utawakui-media://track/track-1/audio.wav',
     });
 
-    expect(MockAudio.latest.play).toHaveBeenCalledOnce();
+    expect(started).toBe(false);
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
     expect(player.state.captureDeviceId).toBeNull();
     await vi.waitFor(() =>
       expect(player.state.captureError).toBe('擷取輸出裝置無法使用。'),
     );
   });
 
-  it('does not delay monitor playback while a prepared capture device is still starting', async () => {
+  it('waits for its selected capture device before starting monitor playback', async () => {
     const player = await loadPlayer();
     const pendingResume = createDeferred();
     MockAudioContext.resumeDeferredBySinkId.set(
@@ -1558,9 +1561,10 @@ describe('capture device lifecycle', () => {
     });
     await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
 
-    expect(MockAudio.latest.play).toHaveBeenCalledOnce();
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
     pendingResume.resolve();
-    await playback;
+    await expect(playback).resolves.toBe(true);
+    expect(MockAudio.latest.play).toHaveBeenCalledOnce();
     await vi.waitFor(() =>
       expect(player.state.captureDeviceId).toBe('slow-capture-device'),
     );
@@ -1775,6 +1779,424 @@ describe('capture device lifecycle', () => {
 });
 
 describe('transpose AudioWorklet routing', () => {
+  it('rechecks a confirmed sink immediately before play instead of accepting a stale success', async () => {
+    const player = await loadPlayer();
+    const { watch } = await import('vue');
+    await player.applyCaptureDevice('sink');
+    let queued = false;
+    const stop = watch(
+      () => player.state.audioControlApplication,
+      (result) => {
+        if (result.ok && !queued) {
+          queued = true;
+          queueMicrotask(() => {
+            MockAudioContext.instances[1].sinkId = '';
+            MockAudioContext.instances[1].dispatch('sinkchange');
+          });
+        }
+      },
+      { flush: 'sync' },
+    );
+    try {
+      await expect(player.playTrack({ id: 'a', url: 'media:a' })).resolves.toBe(
+        false,
+      );
+      expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    } finally {
+      stop();
+    }
+  });
+
+  it.each([
+    null,
+    {},
+    { extra: true },
+    { transposeSemitones: 13 },
+    { transposeSemitones: -13 },
+    { transposeSemitones: 1.5 },
+    { pitchCents: 51 },
+    { pitchCents: 0.5 },
+    { tempoRate: 1.01 },
+    { tempoRate: 1.55 },
+    { monitorGuideVocalEnabled: 'false' },
+  ])('rejects invalid batch shape or bounded field: %j', async (patch) => {
+    const player = await loadPlayer();
+    const values =
+      patch === null || Object.keys(patch).length === 0
+        ? patch
+        : {
+            transposeSemitones: 0,
+            pitchCents: 0,
+            tempoRate: 1,
+            monitorGuideVocalEnabled: true,
+            ...patch,
+          };
+    await expect(player.applyAudioControls(values)).resolves.toMatchObject({
+      status: 'invalid',
+      applied: null,
+    });
+    expect(MockAudioContext.instances).toHaveLength(0);
+    expect(MockAudio.latest.pause).not.toHaveBeenCalled();
+  });
+
+  it('keeps lazy defaults unconfirmed until playback prepares their graph', async () => {
+    const player = await loadPlayer();
+    await expect(player.resetPitchTempo()).resolves.toMatchObject({
+      ok: false,
+      status: 'deferred',
+      applied: null,
+    });
+    expect(MockAudioContext.instances).toHaveLength(0);
+    player.restorePlaybackState({ track: { id: 'a', url: 'media:a' } });
+    expect(MockAudioContext.instances).toHaveLength(0);
+    expect(player.state.isPlaying).toBe(false);
+    await expect(player.play()).resolves.toBe(true);
+    expect(player.state.audioControlApplication).toMatchObject({
+      ok: true,
+      lanes: { monitor: 'applied', capture: 'disabled' },
+    });
+    expect(MockAudioContext.instances).toHaveLength(1);
+  });
+
+  it('releases the existing BGM handoff after a failed required capture preparation', async () => {
+    const player = await loadPlayer();
+    const { createBgmHandoffCoordinator } =
+      await import('../bgm/handoffCoordinator.js');
+    const deck = {
+      hasSource: () => true,
+      startSilent: vi.fn(async () => true),
+      fadeIn: vi.fn(async () => true),
+      fadeOutAndPause: vi.fn(async () => true),
+      cut: vi.fn(),
+    };
+    const coordinator = createBgmHandoffCoordinator({
+      deck,
+      getSettings: () => ({ preRollSeconds: 0, postRollSeconds: 0 }),
+    });
+    player.registerBeforePlaybackStart(() =>
+      coordinator.beforePerformanceStart(),
+    );
+    player.onStopped(() => coordinator.notifyPerformanceEnded());
+    await coordinator.requestBgmPlay();
+    MockAudioContext.unavailableSinkIds.add('missing-device');
+    player.prepareCaptureDevice('missing-device');
+    await expect(player.playTrack({ id: 'a', url: 'media:a' })).resolves.toBe(
+      false,
+    );
+    await vi.waitFor(() => expect(coordinator.state.phase).toBe('bgm-playing'));
+    expect(coordinator.state.audibleLane).toBe('bgm');
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    expect(deck.startSilent).toHaveBeenCalledTimes(2);
+    coordinator.dispose();
+  });
+
+  it('releases a pending graph handoff on cancel even when native pause emits no event', async () => {
+    const player = await loadPlayer();
+    const pending = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('', pending);
+    MockAudio.latest.pause.mockImplementation(() => {});
+    const stopped = vi.fn();
+    player.onStopped(stopped);
+    const start = player.playTrack({ id: 'a', url: 'media:a' });
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(1));
+    player.cancelPendingStart();
+    await expect(start).resolves.toBe(false);
+    expect(stopped).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ reason: 'start-cancelled', trackId: 'a' }),
+    );
+    expect(player.state.pendingStartTrackId).toBeNull();
+    pending.resolve();
+  });
+
+  it('bounds a stalled start, releases its pending state, and ignores late capture failure', async () => {
+    const player = await loadPlayer();
+    vi.useFakeTimers();
+    const pending = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('slow', pending);
+    player.prepareCaptureDevice('slow');
+    const stopped = vi.fn();
+    player.onStopped(stopped);
+    const start = player.playTrack({ id: 'a', url: 'media:a' });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await expect(start).resolves.toBe(false);
+    expect(stopped).toHaveBeenCalledOnce();
+    expect(player.state.pendingStartTrackId).toBeNull();
+    const result = player.state.audioControlApplication;
+    expect(result).toMatchObject({ status: 'timeout', applied: null });
+    MockAudioContext.unavailableSinkIds.add('slow');
+    pending.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(player.state.audioControlApplication).toBe(result);
+    expect(player.state.captureError).toBeNull();
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+  });
+
+  it('invalidates confirmed controls on sink loss and prevents a stale apply result from being saved', async () => {
+    const player = await loadPlayer();
+    await player.applyCaptureDevice('sink');
+    await player.setTransposeSemitones(2);
+    expect(player.state.audioControlApplication.ok).toBe(true);
+    MockAudioContext.instances[1].sinkId = '';
+    MockAudioContext.instances[1].dispatch('sinkchange');
+    expect(player.state.audioControlApplication).toMatchObject({
+      ok: false,
+      applied: null,
+      lanes: { capture: 'failed' },
+    });
+  });
+
+  it('reports asynchronous schedule rejection and keeps its result unconfirmed', async () => {
+    const player = await loadPlayer();
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    await player.setTransposeSemitones(1);
+    MockPitchNode.instances[0].schedule.mockRejectedValueOnce(
+      new Error('private processor failure'),
+    );
+    await expect(player.setPitchCents(5)).resolves.toMatchObject({
+      ok: false,
+      applied: null,
+      lanes: { monitor: 'failed' },
+    });
+    expect(player.state.error).toBe('音高調整暫時無法使用。');
+  });
+
+  it('does not confirm a scheduled pitch before the worklet acknowledges it', async () => {
+    const player = await loadPlayer();
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    await player.setTransposeSemitones(1);
+    const pending = createDeferred();
+    MockPitchNode.instances[0].schedule.mockReturnValueOnce(pending.promise);
+    const changing = player.setPitchCents(12);
+    await Promise.resolve();
+    expect(player.state.audioControlApplication).toMatchObject({
+      status: 'pending',
+      applied: null,
+    });
+    pending.resolve();
+    await expect(changing).resolves.toMatchObject({
+      ok: true,
+      applied: { transposeSemitones: 1, pitchCents: 12 },
+    });
+  });
+
+  it('returns failure rather than a fulfilled success when monitor registration fails', async () => {
+    const player = await loadPlayer();
+    await player.playTrack({
+      id: 'a',
+      url: 'utawakui-media://track/a/audio.wav',
+    });
+    MockAudioContext.instances[0].failWorkletRegistration = true;
+    await expect(player.setTransposeSemitones(2)).resolves.toMatchObject({
+      ok: false,
+      status: 'failed',
+      applied: null,
+      lanes: { monitor: 'failed' },
+    });
+    expect(player.state.audioControlApplication.applied).toBeNull();
+  });
+
+  it('applies one combined batch on each enabled path and preserves machine controls and position', async () => {
+    const player = await loadPlayer();
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    await player.applyCaptureDevice('capture-device');
+    await player.playTrack({
+      id: 'a',
+      url: 'utawakui-media://track/a/audio.wav',
+      usesSeparatedAudio: true,
+    });
+    player.setVolume(0.3);
+    player.setCaptureVolume(0.4);
+    player.setGuideVocalValue(0.25);
+    player.setCaptureGuideVocalValue(0.15);
+    player.setCaptureGuideVocalOn(true);
+    player.seek(12);
+    const target = {
+      transposeSemitones: 2,
+      pitchCents: 12,
+      tempoRate: 0.9,
+      monitorGuideVocalEnabled: false,
+    };
+    const result = await player.applyAudioControls(target);
+    expect(result).toMatchObject({
+      ok: true,
+      status: 'applied',
+      requested: target,
+      applied: target,
+      lanes: { monitor: 'applied', capture: 'applied' },
+    });
+    expect(MockPitchNode.instances).toHaveLength(2);
+    for (const node of MockPitchNode.instances) {
+      expect(node.schedule).toHaveBeenCalledExactlyOnceWith({
+        active: true,
+        semitones: 2.12,
+      });
+    }
+    expect(player.state).toMatchObject({
+      isPlaying: false,
+      currentTime: 12,
+      guideVocalOn: false,
+      volume: 0.3,
+      captureVolume: 0.4,
+      guideVocalValue: 0.25,
+      captureGuideVocalValue: 0.15,
+      captureGuideVocalOn: true,
+    });
+    expect(MockAudio.latest.playbackRate).toBe(0.9);
+  });
+
+  it.each([NaN, Infinity, '2'])(
+    'rejects non-canonical batch values without changing controls or transport: %s',
+    async (value) => {
+      const player = await loadPlayer();
+      await player.playTrack({
+        id: 'a',
+        url: 'utawakui-media://track/a/audio.wav',
+      });
+      const pauses = MockAudio.latest.pause.mock.calls.length;
+      await expect(
+        player.applyAudioControls({
+          transposeSemitones: value,
+          pitchCents: 0,
+          tempoRate: 1,
+          monitorGuideVocalEnabled: true,
+        }),
+      ).resolves.toMatchObject({ ok: false, status: 'invalid' });
+      expect(player.state.transposeSemitones).toBe(0);
+      expect(MockAudio.latest.pause).toHaveBeenCalledTimes(pauses);
+    },
+  );
+
+  it('reports partial monitor success and blocks resume after capture pitch failure until capture is explicitly disabled', async () => {
+    const player = await loadPlayer();
+    await player.applyCaptureDevice('capture-device');
+    await player.playTrack({
+      id: 'a',
+      url: 'utawakui-media://track/a/audio.wav',
+    });
+    MockAudioContext.instances[1].failWorkletRegistration = true;
+    const stopped = vi.fn();
+    player.onStopped(stopped);
+    player.registerBeforePlaybackStart(vi.fn(async () => true));
+    const target = {
+      transposeSemitones: 3,
+      pitchCents: 0,
+      tempoRate: 1,
+      monitorGuideVocalEnabled: true,
+    };
+    await expect(player.applyAudioControls(target)).resolves.toMatchObject({
+      ok: false,
+      applied: null,
+      lanes: { monitor: 'applied', capture: 'failed' },
+    });
+    const playCount = MockAudio.latest.play.mock.calls.length;
+    await expect(player.play()).resolves.toBe(false);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCount);
+    expect(player.state.pendingStartTrackId).toBeNull();
+    expect(stopped).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'error', trackId: 'a' }),
+    );
+    await player.applyCaptureDevice(null);
+    await expect(player.play()).resolves.toBe(true);
+  });
+
+  it('keeps pending targets unconfirmed and settles superseded work without a stale schedule', async () => {
+    const player = await loadPlayer();
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    const pending = createDeferred();
+    MockAudioContext.workletDeferredBySinkId.set('', pending);
+    const old = player.setTransposeSemitones(4);
+    await vi.waitFor(() =>
+      expect(
+        MockAudioContext.instances[0].audioWorklet.addModule,
+      ).toHaveBeenCalled(),
+    );
+    expect(player.state.audioControlApplication).toMatchObject({
+      status: 'pending',
+      requested: { transposeSemitones: 4 },
+      applied: null,
+    });
+    await player.setTransposeSemitones(0);
+    await expect(old).resolves.toMatchObject({
+      status: 'cancelled',
+      applied: null,
+    });
+    pending.resolve();
+    await vi.waitFor(() => expect(MockPitchNode.instances).toHaveLength(1));
+    expect(MockPitchNode.instances[0].schedule).not.toHaveBeenCalled();
+    expect(player.state.audioControlApplication).toMatchObject({
+      status: 'applied',
+      applied: { transposeSemitones: 0 },
+    });
+    expect(pitchCrossfade(MockAudioContext.instances[0])).toEqual({
+      dry: 1,
+      wet: 0,
+    });
+  });
+
+  it('does not let an old worklet failure overwrite a new track or revive a cleared source', async () => {
+    const player = await loadPlayer();
+    const pending = createDeferred();
+    MockAudioContext.workletDeferredBySinkId.set('', pending);
+    const old = player.setPitchCents(25);
+    await vi.waitFor(() =>
+      expect(
+        MockAudioContext.instances[0].audioWorklet.addModule,
+      ).toHaveBeenCalled(),
+    );
+    MockAudioContext.instances[0].failWorkletRegistration = true;
+    await player.playTrack({
+      id: 'new',
+      url: 'utawakui-media://track/new/audio.wav',
+    });
+    await expect(old).resolves.toMatchObject({ status: 'cancelled' });
+    player.clearTrack();
+    pending.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(player.state.track).toBeNull();
+    expect(player.state.error).toBeNull();
+    expect(player.state.pitchCents).toBe(0);
+  });
+
+  it('cancels pending DSP and playback immediately on pause even if a worklet never settles', async () => {
+    const player = await loadPlayer();
+    const pending = createDeferred();
+    MockAudioContext.workletDeferredBySinkId.set('', pending);
+    const controls = player.setTransposeSemitones(2);
+    await vi.waitFor(() =>
+      expect(
+        MockAudioContext.instances[0].audioWorklet.addModule,
+      ).toHaveBeenCalled(),
+    );
+    player.pause();
+    await expect(controls).resolves.toMatchObject({
+      status: 'cancelled',
+      applied: null,
+    });
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    pending.resolve();
+  });
+
+  it('does not connect a monitor worklet or publish an application after cleanup', async () => {
+    const player = await loadPlayer();
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    const pending = createDeferred();
+    MockAudioContext.workletDeferredBySinkId.set('', pending);
+    const controls = player.setPitchCents(20);
+    await vi.waitFor(() =>
+      expect(
+        MockAudioContext.instances[0].audioWorklet.addModule,
+      ).toHaveBeenCalled(),
+    );
+    const { cleanupPlayerResources } = await import('./usePlayer.js');
+    cleanupPlayerResources();
+    await expect(controls).resolves.toMatchObject({ status: 'cancelled' });
+    pending.resolve();
+    await vi.waitFor(() => expect(MockPitchNode.instances).toHaveLength(1));
+    expect(MockPitchNode.instances[0].connect).not.toHaveBeenCalled();
+    expect(MockPitchNode.instances[0].schedule).not.toHaveBeenCalled();
+  });
+
   it('rolls back fine pitch when lazy worklet registration fails', async () => {
     const player = await loadPlayer();
     await player.playTrack({

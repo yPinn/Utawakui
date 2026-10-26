@@ -14,6 +14,7 @@
 - [Folder 頁面物件](folder-page-objects.md)
 - [曲目試聽](track-preview.md)
 - [播放紀錄與啟動恢復](playback-history-and-resume.md)
+- [播放器音訊設定套用](player-audio-controls.md)
 - [本地播放安排與場次進度](performance-session-preparation.md)
 - [BGM準備、播放與互斥交接](bgm-standby-lane.md)
 

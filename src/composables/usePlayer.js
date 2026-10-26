@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue';
 import { usePlayerDiagnostics } from './player/usePlayerDiagnostics.js';
 import { usePlayerLibrarySync } from './player/usePlayerLibrarySync.js';
+import { usePlayerAudioStart } from './player/usePlayerAudioStart.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import {
   usePlayerAudioGraph,
@@ -322,32 +323,17 @@ async function requestPlaybackStart({ trackId, requestRevision, resume }) {
   }
 }
 
-async function startAudio(requestRevision, operation) {
-  try {
-    await audioGraph.resume();
-    if (requestRevision !== playbackStartRequestRevision) return false;
-    await audio.play();
-    return requestRevision === playbackStartRequestRevision;
-  } catch (error) {
-    if (requestRevision === playbackStartRequestRevision) {
-      state.error = reportPlayerError(
-        error,
-        operation,
-        operation === 'resume'
-          ? '目前無法繼續播放，請再試一次。'
-          : '目前無法播放這首曲目，請再試一次。',
-      );
-      state.playbackPhase = 'error';
-      notifyStopped('error');
-    }
-    return false;
-  } finally {
-    if (requestRevision === playbackStartRequestRevision)
-      state.pendingStartTrackId = null;
-  }
-}
+const { startAudio, cancelAudioStart } = usePlayerAudioStart({
+  audio,
+  state,
+  audioGraph,
+  getStartRevision: () => playbackStartRequestRevision,
+  reportPlayerError,
+  notifyStopped,
+});
 
 async function playTrack(track) {
+  audioGraph.cancelAudioControlApplication();
   const requestRevision = ++playbackStartRequestRevision;
   state.pendingStartTrackId = track.id;
   terminalStopNotified = false;
@@ -380,6 +366,7 @@ function restorePlaybackState({
   playbackMode = PLAYBACK_MODES.sequence,
 } = {}) {
   if (!track) return false;
+  audioGraph.cancelAudioControlApplication();
   playbackStartRequestRevision += 1;
   state.pendingStartTrackId = null;
   state.error = null;
@@ -420,10 +407,13 @@ function pause() {
   audio.pause();
 }
 
-// Drops a start still awaiting the gate or graph resume, with no terminal stop.
+// Before the gate grants a track there is no new playback identity to stop.
+// Once graph preparation owns it, explicitly release that handoff: pausing an
+// already-paused native element emits no event in Chromium.
 function cancelPendingStart() {
-  playbackStartRequestRevision += 1;
+  const previousRevision = playbackStartRequestRevision++;
   state.pendingStartTrackId = null;
+  cancelAudioStart(previousRevision);
 }
 
 function toggle() {
@@ -442,9 +432,21 @@ function restartTrack() {
   seek(0);
 }
 
+// Explicit batches pause; live sliders retain their existing setters.
+// Persistence is deliberately not connected in this slice.
+function applyAudioControls(values) {
+  return audioGraph.applyAudioControls(values, {
+    beforeApply() {
+      cancelPendingStart();
+      audio.pause();
+    },
+  });
+}
+
 function clearTrack(trackId = null) {
   if (trackId !== null && state.track?.id !== trackId) return false;
 
+  audioGraph.cancelAudioControlApplication();
   playbackStartRequestRevision += 1;
   state.pendingStartTrackId = null;
   notifyStopped('cleared');
@@ -579,6 +581,7 @@ export function usePlayer() {
     applyCaptureDevice,
     prepareCaptureOutput,
     registerCaptureInput,
+    applyAudioControls,
     setTransposeSemitones,
     setPitchCents,
     setTempoRate,

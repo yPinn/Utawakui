@@ -1,5 +1,6 @@
 import { loadPitchProcessor } from '../../utils/pitchProcessorLoader.js';
 import { AUDIO_CONTROL_VALUES } from '../../utils/audioPreferences.js';
+import { createAudioControlApplication } from '../../utils/audioControlApplication.js';
 
 const GAIN_RAMP_SECONDS = 0.03;
 
@@ -39,9 +40,8 @@ function boundedOrCurrent(value, range, currentValue) {
 // pitch-as-ratio) that combined additively. Signalsmith Stretch's
 // .schedule() takes a single `semitones` field instead, so both user
 // controls (coarse transpose + fine cents) collapse into one value here.
-// Pure/DOM-independent — the one piece of this file that unit tests can
-// actually exercise (see usePlayerAudioGraph.pitch.test.js and ADR 0019 for
-// why the rest of this file's Web Audio behavior isn't automatable).
+// This arithmetic is DOM-independent. Graph tests use Web Audio mocks for
+// application ownership and routing; they do not measure real DSP quality.
 export function combinedSemitones(transposeSemitones, pitchCents) {
   return transposeSemitones + pitchCents / 100;
 }
@@ -71,10 +71,37 @@ export function usePlayerAudioGraph({
   let pitchNode = null;
   let pitchNodeReady = null;
   let pitchProcessingError = null;
+  let monitorPitchFailed = false;
   let capturePitchProcessingError = null;
   let usesSeparatedAudioGraph = false;
   const captureInputs = new Map();
   let pendingCaptureSelection = null;
+  let monitorControls = null;
+  const applications = createAudioControlApplication({
+    publish: (result) => {
+      state.audioControlApplication = result;
+    },
+  });
+  state.audioControlApplication = {
+    status: 'idle',
+    ok: false,
+    requested: null,
+    applied: null,
+    lanes: { monitor: 'unconfirmed', capture: 'disabled' },
+  };
+
+  function controlValues() {
+    return {
+      transposeSemitones: state.transposeSemitones,
+      pitchCents: state.pitchCents,
+      tempoRate: state.tempoRate ?? PLAYER_AUDIO_DEFAULTS.tempoRate,
+      monitorGuideVocalEnabled: state.guideVocalOn,
+    };
+  }
+
+  function cancelAudioControlApplication() {
+    applications.cancel();
+  }
 
   function connectCaptureInput(graph, key, input) {
     const source = graph.context.createMediaStreamSource(input.stream);
@@ -119,6 +146,7 @@ export function usePlayerAudioGraph({
   function handleMonitorStateChange() {
     if (isDisposed || !state.isPlaying || audioCtx?.state === 'running') return;
     if (['suspended', 'interrupted', 'closed'].includes(audioCtx?.state)) {
+      applications.invalidate('monitor');
       recordAudioDiagnostic('context-state', 'monitor', {
         status: audioCtx.state,
       });
@@ -201,6 +229,8 @@ export function usePlayerAudioGraph({
       dry: context.createGain(),
       wet: context.createGain(),
       pitchNode: null,
+      pitchFailed: false,
+      prepared: false,
       inputNodes: new Map(),
       pitchNodeReady: null,
       invalidated: false,
@@ -254,6 +284,7 @@ export function usePlayerAudioGraph({
   function invalidateCaptureGraph(graph, message) {
     graph.invalidated = true;
     if (captureGraph !== graph) return;
+    applications.invalidate('capture', 'failed');
     desiredCaptureDeviceId = null;
     state.captureError = message;
     state.captureDeviceId = null;
@@ -272,7 +303,12 @@ export function usePlayerAudioGraph({
   }
 
   function isCaptureGraphReady(graph) {
-    if (graph.invalidated || graph.disposed || captureGraph !== graph) {
+    if (
+      !graph ||
+      graph.invalidated ||
+      graph.disposed ||
+      captureGraph !== graph
+    ) {
       return false;
     }
     if (
@@ -363,10 +399,15 @@ export function usePlayerAudioGraph({
   }
 
   function setGuideVocalOn(on) {
-    state.guideVocalOn = on;
-    if (!audioCtx) return;
-    if (on) applyMonitorGuideVocalGain();
-    else hardStopGain(audioCtx, vocalGain.gain);
+    state.guideVocalOn = Boolean(on);
+    if (audioCtx) {
+      if (state.guideVocalOn) applyMonitorGuideVocalGain();
+      else hardStopGain(audioCtx, vocalGain.gain);
+    }
+    return applyAudioControls({
+      ...controlValues(),
+      monitorGuideVocalEnabled: Boolean(on),
+    });
   }
 
   function setCaptureGuideVocalOn(on) {
@@ -405,8 +446,12 @@ export function usePlayerAudioGraph({
     pitchProcessingError = null;
   }
 
-  function reportCapturePitchProcessingError() {
-    capturePitchProcessingError = '擷取輸出的音高調整暫時無法使用。';
+  function reportCapturePitchProcessingError(error) {
+    capturePitchProcessingError = reportPlayerError(
+      error,
+      'capture-pitch-processing',
+      '擷取輸出的音高調整暫時無法使用。',
+    );
     state.captureError = capturePitchProcessingError;
   }
 
@@ -432,11 +477,19 @@ export function usePlayerAudioGraph({
     if (!pitchNodeReady) {
       pitchNodeReady = (async () => {
         const SignalsmithStretch = await loadPitchProcessor();
+        if (isDisposed) return null;
         const node = await SignalsmithStretch(audioCtx, {
           outputChannelCount: [2],
         });
-        node.onprocessorerror = () =>
+        if (isDisposed) {
+          node.disconnect();
+          return null;
+        }
+        node.onprocessorerror = () => {
+          monitorPitchFailed = true;
+          applications.invalidate('monitor', 'failed');
           recordAudioDiagnostic('processor-error', 'monitor');
+        };
         masterGain.connect(node);
         node.connect(wetGain);
         pitchNode = node;
@@ -461,8 +514,12 @@ export function usePlayerAudioGraph({
         });
         if (!isCaptureGraphReady(graph)) return null;
         graph.mix.connect(node);
-        node.onprocessorerror = () =>
+        node.onprocessorerror = () => {
+          graph.pitchFailed = true;
+          if (captureGraph === graph)
+            applications.invalidate('capture', 'failed');
           recordAudioDiagnostic('processor-error', 'capture');
+        };
         node.connect(graph.wet);
         graph.pitchNode = node;
         return node;
@@ -474,24 +531,8 @@ export function usePlayerAudioGraph({
     return graph.pitchNodeReady;
   }
 
-  function updatePitchBypass() {
-    const active =
-      state.transposeSemitones !== PLAYER_AUDIO_DEFAULTS.transposeSemitones ||
-      state.pitchCents !== PLAYER_AUDIO_DEFAULTS.pitchCents;
-    if (audioCtx) {
-      rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
-      rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
-    }
-    const graph = captureGraph;
-    if (graph) {
-      const captureActive = active && Boolean(graph.pitchNode);
-      rampGain(graph.context, graph.dry.gain, captureActive ? 0 : 1);
-      rampGain(graph.context, graph.wet.gain, captureActive ? 1 : 0);
-    }
-  }
-
   function syncPitchNodeToCurrentState(node) {
-    node.schedule({
+    return node.schedule({
       active: true,
       semitones: combinedSemitones(state.transposeSemitones, state.pitchCents),
     });
@@ -504,7 +545,8 @@ export function usePlayerAudioGraph({
     if (!needsPitch) return true;
     const node = await ensureCapturePitchNode(graph);
     if (!node || !isCaptureGraphReady(graph)) return false;
-    syncPitchNodeToCurrentState(node);
+    await syncPitchNodeToCurrentState(node);
+    if (!isCaptureGraphReady(graph)) return false;
     // Controls can reset while registration is pending. Choose the route from
     // current intent, just as the processor schedule above does.
     const active =
@@ -515,92 +557,180 @@ export function usePlayerAudioGraph({
     return true;
   }
 
-  async function applyToCapturePitchNode() {
-    const graph = captureGraph;
-    if (graph?.pitchNode) {
-      syncPitchNodeToCurrentState(graph.pitchNode);
-      clearCapturePitchProcessingError();
-      return;
-    }
-    if (!graph) return;
+  function validControls(values) {
+    if (!values || typeof values !== 'object' || Array.isArray(values))
+      return false;
+    const fields = Object.keys(controlValues());
+    if (
+      Object.keys(values).length !== fields.length ||
+      fields.some((key) => !Object.hasOwn(values, key))
+    )
+      return false;
+    return (
+      Number.isInteger(values.transposeSemitones) &&
+      values.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.min &&
+      values.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.max &&
+      Number.isInteger(values.pitchCents) &&
+      values.pitchCents >= PITCH_CENTS_RANGE.min &&
+      values.pitchCents <= PITCH_CENTS_RANGE.max &&
+      Number.isFinite(values.tempoRate) &&
+      values.tempoRate >= TEMPO_RATE_RANGE.min &&
+      values.tempoRate <= TEMPO_RATE_RANGE.max &&
+      Math.abs(values.tempoRate * 20 - Math.round(values.tempoRate * 20)) <
+        1e-8 &&
+      typeof values.monitorGuideVocalEnabled === 'boolean'
+    );
+  }
 
-    const needsPitch =
-      state.transposeSemitones !== PLAYER_AUDIO_DEFAULTS.transposeSemitones ||
-      state.pitchCents !== PLAYER_AUDIO_DEFAULTS.pitchCents;
-    if (!needsPitch) {
-      clearCapturePitchProcessingError();
-      return;
-    }
-
+  async function applyControlTarget(target, job) {
+    const active =
+      combinedSemitones(target.transposeSemitones, target.pitchCents) !== 0;
     try {
-      const node = await ensureCapturePitchNode(graph);
-      if (!node || captureGraph !== graph) return;
-      syncPitchNodeToCurrentState(node);
+      if (active && monitorPitchFailed)
+        throw new Error('Monitor pitch processor stopped');
+      const node = active ? (pitchNode ?? (await ensurePitchNode())) : null;
+      if (!job.isCurrent() || isDisposed) return false;
+      if (active && !node) return false;
+      if (node) {
+        await node.schedule({
+          active: true,
+          semitones: combinedSemitones(
+            target.transposeSemitones,
+            target.pitchCents,
+          ),
+        });
+        if (!job.isCurrent()) return false;
+      }
+      audio.defaultPlaybackRate = target.tempoRate;
+      audio.playbackRate = target.tempoRate;
+      if (
+        audio.playbackRate !== target.tempoRate ||
+        audio.defaultPlaybackRate !== target.tempoRate
+      )
+        throw new Error('Tempo not applied');
+      if (!audioCtx) {
+        job.lane('monitor', 'deferred');
+        job.lane('capture', desiredCaptureDeviceId ? 'deferred' : 'disabled');
+        return 'deferred';
+      }
+      rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
+      rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
+      if (target.monitorGuideVocalEnabled) applyMonitorGuideVocalGain();
+      else hardStopGain(audioCtx, vocalGain.gain);
+      monitorControls = { ...target };
+      clearPitchProcessingError();
+      job.lane('monitor', 'applied');
+    } catch (error) {
+      if (!job.isCurrent()) return false;
+      // Preserve the historical live-control rollback when registration fails.
+      // A failed result never promotes that fallback to a confirmed batch.
+      state.transposeSemitones = monitorControls?.transposeSemitones ?? 0;
+      state.pitchCents = monitorControls?.pitchCents ?? 0;
+      reportPitchProcessingError(error);
+      job.lane('monitor', 'failed');
+      return false;
+    }
+    const graph = captureGraph;
+    if (!graph) {
+      job.lane(
+        'capture',
+        state.captureError
+          ? 'failed'
+          : desiredCaptureDeviceId
+            ? 'unconfirmed'
+            : 'disabled',
+      );
+      return !state.captureError && !desiredCaptureDeviceId;
+    }
+    try {
+      if (!isCaptureGraphReady(graph)) throw new Error('Capture not ready');
+      if (active && graph.pitchFailed)
+        throw new Error('Capture pitch processor stopped');
+      const node = active
+        ? (graph.pitchNode ?? (await ensureCapturePitchNode(graph)))
+        : null;
+      if (!job.isCurrent() || captureGraph !== graph) return false;
+      if (active && !node) throw new Error('Capture pitch unavailable');
+      if (node)
+        await node.schedule({
+          active: true,
+          semitones: combinedSemitones(
+            target.transposeSemitones,
+            target.pitchCents,
+          ),
+        });
+      if (!job.isCurrent() || !isCaptureGraphReady(graph)) return false;
+      rampGain(graph.context, graph.dry.gain, active ? 0 : 1);
+      rampGain(graph.context, graph.wet.gain, active ? 1 : 0);
       clearCapturePitchProcessingError();
-    } catch {
-      if (captureGraph === graph) reportCapturePitchProcessingError();
+      job.lane('capture', 'applied');
+      return true;
+    } catch (error) {
+      if (!job.isCurrent() || captureGraph !== graph) return false;
+      reportCapturePitchProcessingError(error);
+      job.lane('capture', 'failed');
+      return false;
     }
   }
 
-  async function setTransposeSemitones(semitones) {
-    const next = clamp(Math.round(semitones), TRANSPOSE_SEMITONES_RANGE);
-    state.transposeSemitones = next;
-    if (pitchNode) {
-      syncPitchNodeToCurrentState(pitchNode);
-    } else if (next !== PLAYER_AUDIO_DEFAULTS.transposeSemitones) {
-      try {
-        syncPitchNodeToCurrentState(await ensurePitchNode());
-      } catch (error) {
-        if (state.transposeSemitones === next) {
-          state.transposeSemitones = PLAYER_AUDIO_DEFAULTS.transposeSemitones;
-        }
-        reportPitchProcessingError(error);
-        return;
-      }
-    }
-    clearPitchProcessingError();
-    await applyToCapturePitchNode();
-    updatePitchBypass();
+  function applyAudioControls(
+    values,
+    { beforeApply, isCurrent = () => true } = {},
+  ) {
+    if (!validControls(values) || isDisposed)
+      return Promise.resolve({ ok: false, status: 'invalid', applied: null });
+    const target = { ...values };
+    beforeApply?.();
+    state.transposeSemitones = target.transposeSemitones;
+    state.pitchCents = target.pitchCents;
+    state.tempoRate = target.tempoRate;
+    state.guideVocalOn = target.monitorGuideVocalEnabled;
+    return applications.run(target, (job) => applyControlTarget(target, job), {
+      isCurrent,
+    });
   }
 
-  async function setPitchCents(cents) {
-    const next = clamp(Math.round(cents), PITCH_CENTS_RANGE);
-    state.pitchCents = next;
-    if (pitchNode) {
-      syncPitchNodeToCurrentState(pitchNode);
-    } else if (next !== PLAYER_AUDIO_DEFAULTS.pitchCents) {
-      try {
-        syncPitchNodeToCurrentState(await ensurePitchNode());
-      } catch (error) {
-        if (state.pitchCents === next) {
-          state.pitchCents = PLAYER_AUDIO_DEFAULTS.pitchCents;
-        }
-        reportPitchProcessingError(error);
-        return;
-      }
-    }
-    clearPitchProcessingError();
-    await applyToCapturePitchNode();
-    updatePitchBypass();
+  function setTransposeSemitones(semitones) {
+    return applyAudioControls({
+      ...controlValues(),
+      transposeSemitones: clamp(
+        Math.round(semitones),
+        TRANSPOSE_SEMITONES_RANGE,
+      ),
+    });
+  }
+
+  function setPitchCents(cents) {
+    return applyAudioControls({
+      ...controlValues(),
+      pitchCents: clamp(Math.round(cents), PITCH_CENTS_RANGE),
+    });
   }
 
   function setTempoRate(rate) {
-    const next = clamp(rate, TEMPO_RATE_RANGE);
-    state.tempoRate = next;
-    audio.defaultPlaybackRate = next;
-    audio.playbackRate = next;
+    return applyAudioControls({
+      ...controlValues(),
+      tempoRate: clamp(rate, TEMPO_RATE_RANGE),
+    });
   }
 
   function resetPitchTempo() {
-    setTempoRate(PLAYER_AUDIO_DEFAULTS.tempoRate);
-    setTransposeSemitones(PLAYER_AUDIO_DEFAULTS.transposeSemitones);
-    setPitchCents(PLAYER_AUDIO_DEFAULTS.pitchCents);
+    return applyAudioControls({
+      ...controlValues(),
+      transposeSemitones: 0,
+      pitchCents: 0,
+      tempoRate: 1,
+    });
   }
 
   function resetTrackAudioControls() {
-    setGuideVocalOn(true);
     setCaptureGuideVocalOn(false);
-    resetPitchTempo();
+    return applyAudioControls({
+      transposeSemitones: 0,
+      pitchCents: 0,
+      tempoRate: 1,
+      monitorGuideVocalEnabled: true,
+    });
   }
 
   function routeAudioGraph(usesSeparatedAudio) {
@@ -650,13 +780,17 @@ export function usePlayerAudioGraph({
 
   function prepareCaptureDevice(deviceId) {
     if (isDisposed) return false;
+    applications.invalidate('capture');
     desiredCaptureDeviceId = deviceId || null;
     state.captureDeviceId = desiredCaptureDeviceId;
     state.captureError = null;
     return true;
   }
 
-  async function selectCaptureDevice(deviceId) {
+  async function selectCaptureDevice(
+    deviceId,
+    { isCurrent = () => true, syncControls = true } = {},
+  ) {
     if (isDisposed) return;
     desiredCaptureDeviceId = deviceId || null;
     const selectionRevision = ++captureSelectionRevision;
@@ -664,7 +798,12 @@ export function usePlayerAudioGraph({
     state.captureDeviceId = null;
     const previousGraph = captureGraph;
     await disposeCaptureGraph(previousGraph);
-    if (isDisposed || selectionRevision !== captureSelectionRevision) return;
+    if (
+      isDisposed ||
+      !isCurrent() ||
+      selectionRevision !== captureSelectionRevision
+    )
+      return;
     if (!deviceId) {
       return;
     }
@@ -676,12 +815,14 @@ export function usePlayerAudioGraph({
       await graph.context.resume();
       if (
         isDisposed ||
+        !isCurrent() ||
         selectionRevision !== captureSelectionRevision ||
         !isCaptureGraphReady(graph)
       ) {
         await disposeCaptureGraph(graph);
         if (
           !isDisposed &&
+          isCurrent() &&
           selectionRevision === captureSelectionRevision &&
           !state.captureError
         ) {
@@ -691,20 +832,28 @@ export function usePlayerAudioGraph({
         }
         return;
       }
-      const synced = await syncCaptureChainToCurrentState(graph);
+      const synced =
+        !syncControls || (await syncCaptureChainToCurrentState(graph));
       if (
         !synced ||
         isDisposed ||
+        !isCurrent() ||
         selectionRevision !== captureSelectionRevision ||
         !isCaptureGraphReady(graph)
       ) {
         await disposeCaptureGraph(graph);
         return;
       }
+      graph.prepared = true;
       state.captureDeviceId = deviceId;
     } catch {
       await disposeCaptureGraph(graph);
-      if (isDisposed || selectionRevision !== captureSelectionRevision) return;
+      if (
+        isDisposed ||
+        !isCurrent() ||
+        selectionRevision !== captureSelectionRevision
+      )
+        return;
       desiredCaptureDeviceId = null;
       state.captureDeviceId = null;
       state.captureError = '擷取輸出裝置無法使用。';
@@ -712,9 +861,16 @@ export function usePlayerAudioGraph({
     }
   }
 
-  function applyCaptureDevice(deviceId) {
-    const operation = selectCaptureDevice(deviceId);
-    const pending = { deviceId, operation };
+  function applyCaptureDevice(
+    deviceId,
+    { forApplication = false, isCurrent = () => true } = {},
+  ) {
+    if (!forApplication) applications.invalidate('capture');
+    const operation = selectCaptureDevice(deviceId, {
+      isCurrent,
+      syncControls: !forApplication,
+    });
+    const pending = { deviceId, operation, isCurrent };
     pendingCaptureSelection = pending;
     const clear = () => {
       if (pendingCaptureSelection === pending) pendingCaptureSelection = null;
@@ -738,22 +894,82 @@ export function usePlayerAudioGraph({
     );
   }
 
-  async function resume() {
+  function resume({ isCurrent = () => true, operation = 'resume' } = {}) {
+    if (isDisposed)
+      return Promise.resolve({ ok: false, status: 'cancelled', applied: null });
     const context = ensureMonitorGraph();
-    if (!context) return;
-    await context.resume();
-    if (desiredCaptureDeviceId && !captureGraph) {
-      const deviceId = desiredCaptureDeviceId;
-      void applyCaptureDevice(deviceId).catch(() => {
-        if (isDisposed || desiredCaptureDeviceId !== deviceId) return;
-        desiredCaptureDeviceId = null;
-        state.captureDeviceId = null;
-        state.captureError = '擷取輸出裝置無法使用。';
-      });
-    }
+    const target = controlValues();
+    return applications.run(
+      target,
+      async (job) => {
+        if (!context || !job.isCurrent()) return false;
+        try {
+          await context.resume();
+        } catch (error) {
+          if (!job.isCurrent()) return false;
+          state.error = reportPlayerError(
+            error,
+            operation,
+            operation === 'resume'
+              ? '目前無法繼續播放，請再試一次。'
+              : '目前無法播放這首曲目，請再試一次。',
+          );
+          job.lane('monitor', 'failed');
+          return false;
+        }
+        if (!job.isCurrent()) return false;
+        if (context.state !== undefined && context.state !== 'running')
+          return false;
+        // Device preparation stays inside this application; user device changes
+        // cancel it through applyCaptureDevice instead of joining its ownership.
+        const deviceId = desiredCaptureDeviceId;
+        if (
+          deviceId &&
+          (!captureGraph?.prepared || !isCaptureGraphReady(captureGraph))
+        ) {
+          if (
+            pendingCaptureSelection?.deviceId === deviceId &&
+            pendingCaptureSelection.isCurrent()
+          )
+            await pendingCaptureSelection.operation;
+          else
+            await applyCaptureDevice(deviceId, {
+              forApplication: true,
+              isCurrent: job.isCurrent,
+            });
+          if (!job.isCurrent()) return false;
+        }
+        if (
+          state.captureError ||
+          desiredCaptureDeviceId !== deviceId ||
+          (deviceId && !isCaptureGraphReady(captureGraph))
+        ) {
+          job.lane('capture', 'failed');
+          return false;
+        }
+        return applyControlTarget(target, job);
+      },
+      { isCurrent: () => !isDisposed && isCurrent() },
+    );
+  }
+
+  function isPlaybackReady(result) {
+    return (
+      !isDisposed &&
+      result?.ok === true &&
+      state.audioControlApplication === result &&
+      Boolean(
+        audioCtx &&
+        (audioCtx.state === undefined || audioCtx.state === 'running'),
+      ) &&
+      !state.captureError &&
+      (!desiredCaptureDeviceId ||
+        (captureGraph?.prepared && isCaptureGraphReady(captureGraph)))
+    );
   }
 
   function cleanup() {
+    applications.invalidate('monitor');
     isDisposed = true;
     audioCtx?.removeEventListener?.('statechange', handleMonitorStateChange);
     desiredCaptureDeviceId = null;
@@ -778,6 +994,9 @@ export function usePlayerAudioGraph({
 
   return {
     resume,
+    isPlaybackReady,
+    applyAudioControls,
+    cancelAudioControlApplication,
     routeAudioGraph,
     resetTrackAudioControls,
     restoreGuideVocalState,
