@@ -469,6 +469,52 @@ describe('import clipboard suggestion boundary', () => {
 });
 
 describe('generic import source resolution', () => {
+  it('does not publish a completed download into a new library while finalization is pending', async () => {
+    let scope = { dir: 'library-dir', epoch: 1 };
+    const cleanup = Promise.withResolvers(),
+      catalog = vi.fn();
+    const policy = vi.fn(() => cleanup.promise);
+    const h = registerDownload({
+      getReleaseScope: () => scope,
+      enforceLibraryStoragePolicy: policy,
+      enqueueReleaseCatalog: catalog,
+    });
+    const outcome = h.handlers
+      .get('yt:download-audio')({}, 'abcdefghijk')
+      .catch((e) => e);
+    await vi.waitFor(() => expect(policy).toHaveBeenCalledOnce());
+    scope = { dir: 'library-dir', epoch: 3 };
+    cleanup.resolve();
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(h.notifyLibraryUpdated).not.toHaveBeenCalled();
+    expect(catalog).not.toHaveBeenCalled();
+  });
+  it('rechecks provider access after runtime preparation before starting a queued download', async () => {
+    const { createAppError } = await import('../lib/appError.js');
+    const ready = Promise.withResolvers();
+    let enabled = true;
+    const h = registerDownload({
+      getProviderRunner: () => ready.promise,
+      requireFeatureGate: () => {
+        if (!enabled)
+          throw createAppError({
+            code: 'FEATURE_GATE_REQUIRED',
+            title: '外部來源未啟用',
+            message: '請先啟用外部來源。',
+          });
+      },
+    });
+    const request = h.handlers.get('yt:download-audio')({}, 'abcdefghijk');
+    const outcome = request.catch((error) => error);
+    await flushAsync();
+    enabled = false;
+    ready.resolve({});
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(h.downloadTrackAudio).not.toHaveBeenCalled();
+    expect(h.recordDiagnostic).not.toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'DOWNLOAD_FAILED' }),
+    );
+  });
   it.each(['music.youtube.com', 'www.youtube.com'])(
     'projects the provider release type separately from collection kind (%s)',
     async (host) => {

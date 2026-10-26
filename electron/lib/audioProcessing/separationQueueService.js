@@ -72,6 +72,7 @@ function createSeparationQueueService({
   onUpdate = () => {},
   scheduleTask = queueMicrotask,
   now = Date.now,
+  getScopeKey = () => '',
 }) {
   if (
     typeof resolveRecipe !== 'function' ||
@@ -91,6 +92,15 @@ function createSeparationQueueService({
   let draining = false;
   let drainScheduled = false;
   let lastProgressEmitAt = -Infinity;
+
+  function assertCurrent(entry) {
+    if (entry.scopeKey !== getScopeKey()) {
+      throw Object.assign(new Error('separation library scope changed'), {
+        code: 'SEPARATION_SOURCE_UNAVAILABLE',
+        failureReason: 'source-unavailable',
+      });
+    }
+  }
 
   function snapshot() {
     if (items.length === 0) return { queue: null };
@@ -176,12 +186,14 @@ function createSeparationQueueService({
         entry.status = 'checking';
         emitUpdate();
         try {
+          assertCurrent(entry);
           const currentResult = entry.regenerate
             ? false
             : await hasCurrentResult({
                 trackId: entry.trackId,
                 recipeId: entry.recipeId,
               });
+          assertCurrent(entry);
           if (entry.cancelRequested) {
             throw new Error(CANCELLED_MESSAGE);
           }
@@ -195,6 +207,7 @@ function createSeparationQueueService({
             entry.result = await runTrack({
               trackId: entry.trackId,
               recipeId: entry.recipeId,
+              assertCurrent: () => assertCurrent(entry),
               onProgress: (progress) => {
                 if (entry.status !== 'running') return;
                 const previousStage = entry.stage;
@@ -215,10 +228,14 @@ function createSeparationQueueService({
                 emitUpdate();
               },
             });
+            assertCurrent(entry);
             entry.status = 'completed';
             entry.percent = 100;
           }
         } catch (error) {
+          // A cancellation request is not an acknowledgement. Let its decision
+          // settle before classifying a concurrent worker failure.
+          if (entry.cancellation) await entry.cancellation.catch(() => false);
           entry.error = error;
           if (entry.cancelRequested || error?.message === CANCELLED_MESSAGE) {
             entry.status = 'cancelled';
@@ -249,11 +266,13 @@ function createSeparationQueueService({
     }
     const uniqueTrackIds = validateTrackIds(trackIds);
     const recipe = resolveRecipe(recipeId);
+    const scopeKey = getScopeKey();
     const newCount = uniqueTrackIds.filter(
       (trackId) =>
         !items.some(
           (entry) =>
             OPEN_ITEM_STATUSES.has(entry.status) &&
+            entry.scopeKey === scopeKey &&
             entry.trackId === trackId &&
             entry.recipeId === recipe.id,
         ),
@@ -270,6 +289,7 @@ function createSeparationQueueService({
       const existing = items.find(
         (entry) =>
           OPEN_ITEM_STATUSES.has(entry.status) &&
+          entry.scopeKey === scopeKey &&
           entry.trackId === trackId &&
           entry.recipeId === recipe.id,
       );
@@ -290,6 +310,7 @@ function createSeparationQueueService({
         itemId,
         trackId,
         recipeId: recipe.id,
+        scopeKey,
         regenerate,
         status: 'pending',
         cancelRequested: false,
@@ -427,12 +448,28 @@ function createSeparationQueueService({
   async function cancelActive() {
     const entry = findEntry(activeItemId);
     if (!entry || !ACTIVE_ITEM_STATUSES.has(entry.status)) return false;
+    if (entry.cancellation) return entry.cancellation;
     entry.cancelRequested = true;
     emitUpdate();
     if (entry.status === 'checking') return true;
-    const cancelled = await cancelActiveTrack();
-    if (cancelled === false) entry.cancelRequested = false;
-    return cancelled !== false;
+    const cancellation = Promise.resolve()
+      .then(cancelActiveTrack)
+      .then(
+        (cancelled) => {
+          if (cancelled === false) entry.cancelRequested = false;
+          return cancelled !== false;
+        },
+        (error) => {
+          entry.cancelRequested = false;
+          throw error;
+        },
+      );
+    entry.cancellation = cancellation;
+    try {
+      return await cancellation;
+    } finally {
+      if (entry.cancellation === cancellation) delete entry.cancellation;
+    }
   }
 
   return {

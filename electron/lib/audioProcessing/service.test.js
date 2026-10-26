@@ -32,6 +32,38 @@ function makeService(overrides = {}) {
 }
 
 describe('AudioProcessingService', () => {
+  it('rechecks scope after asynchronous preparation and releases the active lock on stale admission', async () => {
+    const prepared = deferred();
+    let current = true;
+    const h = makeService({ prepareJob: () => prepared.promise });
+    const outcome = h.service
+      .run({
+        trackId: 'track-1',
+        recipeId: 'quick',
+        assertCurrent: () => {
+          if (!current) throw Error('stale');
+        },
+      })
+      .catch((e) => e);
+    current = false;
+    prepared.resolve({});
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(h.createEngineJob).not.toHaveBeenCalled();
+    expect(h.service.getActiveJob()).toBeNull();
+  });
+  it('does not acknowledge cancellation when the scheduler declines it', async () => {
+    const worker = deferred(),
+      cancel = vi.fn(async () => false);
+    const { service } = makeService({
+      createEngineJob: () => ({ result: worker.promise, cancel }),
+    });
+    const run = service.run({ trackId: 'track-1', recipeId: 'quick' });
+    await vi.waitFor(() => expect(service.getActiveJob()).not.toBeNull());
+    await Promise.resolve();
+    expect(await service.cancelActiveJob()).toBe(false);
+    worker.resolve({});
+    await run;
+  });
   it('resolves and prepares a recipe before starting its engine job', async () => {
     const { service, prepareJob, createEngineJob } = makeService();
 

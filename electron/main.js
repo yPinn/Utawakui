@@ -1380,6 +1380,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
       onQueueUpdate: windowState.setSeparationQueueStatus,
+      getLibraryScope: getReleaseScope,
       onSeparationComplete: experimentalLyricsQueue.enqueue,
       recordDiagnostic,
       enforceLibraryStoragePolicy,

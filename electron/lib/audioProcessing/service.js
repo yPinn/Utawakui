@@ -8,7 +8,12 @@ function createAudioProcessingService({
 }) {
   let activeJob = null;
 
-  async function run({ trackId, recipeId, onProgress }) {
+  async function run({
+    trackId,
+    recipeId,
+    onProgress,
+    assertCurrent = () => {},
+  }) {
     if (activeJob) {
       throw new Error('an audio-processing job is already running');
     }
@@ -24,7 +29,9 @@ function createAudioProcessingService({
     activeJob = jobState;
 
     try {
+      assertCurrent();
       const prepared = await prepareJob({ jobId, trackId, recipe });
+      assertCurrent();
       const emitProgress = ({ stage, percent }) => {
         onProgress?.({
           jobId,
@@ -41,13 +48,16 @@ function createAudioProcessingService({
         engineId: recipe.engineId,
         prepared,
         emitProgress,
+        assertCurrent,
       });
       if (!engineJob || !engineJob.result) {
         throw new Error('audio-processing engine did not return a job result');
       }
       jobState.cancel =
         typeof engineJob.cancel === 'function' ? engineJob.cancel : null;
-      return await engineJob.result;
+      const result = await engineJob.result;
+      assertCurrent();
+      return result;
     } finally {
       if (activeJob === jobState) activeJob = null;
     }
@@ -61,8 +71,8 @@ function createAudioProcessingService({
 
   async function cancelActiveJob() {
     if (!activeJob?.cancel) return false;
-    await activeJob.cancel();
-    return true;
+    const cancelled = await activeJob.cancel();
+    return cancelled !== false;
   }
 
   return { run, getActiveJob, cancelActiveJob };

@@ -289,6 +289,17 @@ function registerImportHandlers({
   function runProviderDownload(videoId, { beforeStart = () => {} } = {}) {
     const destDir = resolveDownloadDir(getConfig());
     const releaseScope = getReleaseScope();
+    const assertLibraryCurrent = () => {
+      if (
+        resolveDownloadDir(getConfig()) !== destDir ||
+        getReleaseScope()?.epoch !== releaseScope?.epoch
+      )
+        throw createAppError({
+          code: 'IMPORT_LIBRARY_CHANGED',
+          title: '曲庫位置已變更',
+          message: '請重新開始下載。',
+        });
+    };
     const existing = providerDownloadTasks.get(videoId);
     if (existing) {
       if (existing.dir !== destDir || existing.epoch !== releaseScope?.epoch)
@@ -335,17 +346,11 @@ function registerImportHandlers({
         videoId,
         async ({ signal }) => {
           await beforeStart();
+          requireFeatureGate(featureIds.PROVIDER_FLOW);
           const runner = await getProviderRunner();
           await beforeStart();
-          if (
-            resolveDownloadDir(getConfig()) !== destDir ||
-            getReleaseScope()?.epoch !== releaseScope?.epoch
-          )
-            throw createAppError({
-              code: 'IMPORT_LIBRARY_CHANGED',
-              title: '曲庫位置已變更',
-              message: '請重新開始下載。',
-            });
+          requireFeatureGate(featureIds.PROVIDER_FLOW);
+          assertLibraryCurrent();
           return downloadTrackAudio(videoId, destDir, {
             runner,
             signal,
@@ -358,12 +363,14 @@ function registerImportHandlers({
       );
 
       await runLibraryFinalize(async () => {
+        assertLibraryCurrent();
         if (!metadataCommitted && !runImport) commitMetadata(result);
         await enforceLibraryStoragePolicySafely({
           enforceLibraryStoragePolicy,
           options: { protectedTrackIds: [videoId] },
           recordDiagnostic,
         });
+        assertLibraryCurrent();
         // Publish the committed audio and metadata even when every optional
         // background service is disabled, delayed or unavailable.
         notifyLibraryUpdated({ allowProviderBackfill: false });

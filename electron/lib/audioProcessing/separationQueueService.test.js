@@ -51,6 +51,69 @@ function createHarness(overrides = {}) {
 }
 
 describe('separation queue service', () => {
+  it('rejects an obsolete result check and does not merge same ids across library generations', async () => {
+    let scope = 'a:1';
+    const check = deferred(),
+      h = createHarness({
+        getScopeKey: () => scope,
+        hasCurrentResult: () => check.promise,
+      });
+    h.service.enqueue({ trackIds: ['track-1'], recipeId: 'quick' });
+    await flush();
+    scope = 'a:3';
+    const newer = h.service.enqueue({
+      trackIds: ['track-1'],
+      recipeId: 'quick',
+      regenerate: true,
+    });
+    expect(newer.itemIds).toEqual(['item-2']);
+    check.resolve(true);
+    await flush();
+    expect(h.service.getStatus().queue.items[0]).toMatchObject({
+      status: 'failed',
+      reason: 'source-unavailable',
+    });
+    expect(h.runs).toHaveLength(1);
+    h.runs[0].task.resolve({});
+    await flush();
+    expect(h.service.retry('item-1')).toBe(true);
+    await flush();
+    expect(h.service.getStatus().queue.items[0].status).toBe('failed');
+    expect(h.runs).toHaveLength(1);
+  });
+  it('does not classify an engine failure as cancelled after a rejected cancellation', async () => {
+    const h = createHarness();
+    h.cancelActiveTrack.mockRejectedValueOnce(Error('cancel failed'));
+    h.service.enqueue({ trackIds: ['track-1'], recipeId: 'quick' });
+    await flush();
+    await expect(h.service.cancelActive()).rejects.toThrow('cancel failed');
+    h.runs[0].task.reject(Error('engine failed'));
+    await flush();
+    expect(h.service.getStatus().queue.items[0]).toMatchObject({
+      status: 'failed',
+      reason: 'processing-failed',
+    });
+  });
+  it('waits for a pending cancellation decision and shares duplicate cancellation requests', async () => {
+    const decision = deferred(),
+      h = createHarness();
+    h.cancelActiveTrack.mockReturnValueOnce(decision.promise);
+    h.service.enqueue({ trackIds: ['track-1'], recipeId: 'quick' });
+    await flush();
+    const first = h.service.cancelActive(),
+      second = h.service.cancelActive();
+    h.runs[0].task.reject(Error('engine failed'));
+    await flush();
+    decision.resolve(false);
+    expect(await first).toBe(false);
+    expect(await second).toBe(false);
+    await flush();
+    expect(h.cancelActiveTrack).toHaveBeenCalledOnce();
+    expect(h.service.getStatus().queue.items[0]).toMatchObject({
+      status: 'failed',
+      reason: 'processing-failed',
+    });
+  });
   it('deduplicates track/recipe work and runs accepted items in order', async () => {
     const harness = createHarness();
 

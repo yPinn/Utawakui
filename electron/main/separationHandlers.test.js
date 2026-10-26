@@ -90,6 +90,172 @@ function createQueueHarness() {
 }
 
 describe('registerSeparationHandlers', () => {
+  it('rechecks the processing gate when a queued heavy worker can actually start', async () => {
+    let enabled = true;
+    const slot = Promise.withResolvers(),
+      engine = vi.fn(() => ({ result: Promise.resolve({}), cancel: vi.fn() }));
+    const scheduler = {
+      schedule: vi.fn(({ start }) => slot.promise.then(() => start().result)),
+      cancel: vi.fn(),
+    };
+    const handlers = register({
+      resolveUserDataDir: () => 'user-data',
+      heavyJobScheduler: scheduler,
+      createSeparationEngineJob: engine,
+      requireFeatureGate: () => {
+        if (!enabled) throw Error('gate disabled');
+      },
+      findSeparationTrackRecord: () => ({ id: 'same-id' }),
+      resolveSeparationsOutputDir: () => 'output',
+      resolveSeparationInputAudioPath: () => 'input.wav',
+    });
+    const outcome = handlers
+      .get('separation:run')(null, 'same-id', 'quick')
+      .catch((e) => e);
+    await vi.waitFor(() => expect(scheduler.schedule).toHaveBeenCalledOnce());
+    enabled = false;
+    slot.resolve();
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(engine).not.toHaveBeenCalled();
+  });
+  it('rechecks scope after storage cleanup before publishing optional completion work', async () => {
+    let scope = { dir: 'library-a', epoch: 1 };
+    const cleanup = Promise.withResolvers(),
+      completed = vi.fn(),
+      notify = vi.fn();
+    const policy = vi.fn(() => cleanup.promise);
+    const handlers = register({
+      resolveUserDataDir: () => 'user-data',
+      getLibraryScope: () => scope,
+      resolveDownloadDir: () => scope.dir,
+      enforceLibraryStoragePolicy: policy,
+      notifyLibraryUpdated: notify,
+      onSeparationComplete: completed,
+      heavyJobScheduler: {
+        schedule: ({ start }) => start().result,
+        cancel: vi.fn(),
+      },
+      createSeparationEngineJob: () => ({
+        result: Promise.resolve({}),
+        cancel: vi.fn(),
+      }),
+      findSeparationTrackRecord: () => ({ id: 'same-id' }),
+      resolveSeparationsOutputDir: () => 'output',
+      resolveSeparationInputAudioPath: () => 'input.wav',
+    });
+    const outcome = handlers
+      .get('separation:run')(null, 'same-id', 'quick')
+      .catch((e) => e);
+    await vi.waitFor(() => expect(policy).toHaveBeenCalledOnce());
+    scope = { dir: 'library-b', epoch: 2 };
+    cleanup.resolve();
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(notify).not.toHaveBeenCalled();
+    expect(completed).not.toHaveBeenCalled();
+  });
+  it('never resolves a queued track id in a different library after a directory switch', async () => {
+    let scope = { dir: 'library-a', epoch: 1 };
+    const createSeparationEngineJob = vi.fn(() => ({
+      result: Promise.resolve({}),
+      cancel: vi.fn(),
+    }));
+    const handlers = register({
+      resolveUserDataDir: () => 'user-data',
+      getLibraryScope: () => scope,
+      resolveDownloadDir: () => scope.dir,
+      heavyJobScheduler: {
+        schedule: ({ start }) => start().result,
+        cancel: vi.fn(),
+      },
+      createSeparationEngineJob,
+      findSeparationTrackRecord: () => ({ id: 'same-id' }),
+      resolveSeparationsOutputDir: () => 'output',
+      resolveSeparationInputAudioPath: () => 'input.wav',
+    });
+    await handlers.get('separation:pause-queue')();
+    await handlers.get('separation:enqueue')(null, {
+      trackIds: ['same-id'],
+      recipeId: 'quick',
+      regenerate: true,
+    });
+    scope = { dir: 'library-b', epoch: 2 };
+    await handlers.get('separation:resume-queue')();
+    await vi.waitFor(async () =>
+      expect(
+        (await handlers.get('separation:get-queue-status')()).queue.status,
+      ).toBe('idle'),
+    );
+    expect(createSeparationEngineJob).not.toHaveBeenCalled();
+    expect(
+      (await handlers.get('separation:get-queue-status')()).queue.items[0],
+    ).toMatchObject({ status: 'failed', reason: 'source-unavailable' });
+  });
+
+  it('rejects an A-to-B-to-A scope change while waiting for a heavy worker slot', async () => {
+    let scope = { dir: 'library-a', epoch: 1 };
+    const gate = Promise.withResolvers();
+    const engine = vi.fn(() => ({
+      result: Promise.resolve({}),
+      cancel: vi.fn(),
+    }));
+    const scheduler = {
+      schedule: vi.fn(({ start }) => gate.promise.then(() => start().result)),
+      cancel: vi.fn(),
+    };
+    const handlers = register({
+      resolveUserDataDir: () => 'user-data',
+      getLibraryScope: () => scope,
+      resolveDownloadDir: () => scope.dir,
+      heavyJobScheduler: scheduler,
+      createSeparationEngineJob: engine,
+      findSeparationTrackRecord: () => ({ id: 'same-id' }),
+      resolveSeparationsOutputDir: () => 'output',
+      resolveSeparationInputAudioPath: () => 'input.wav',
+    });
+    const outcome = handlers
+      .get('separation:run')(null, 'same-id', 'quick')
+      .catch((e) => e);
+    await vi.waitFor(() => expect(scheduler.schedule).toHaveBeenCalledOnce());
+    scope = { dir: 'library-a', epoch: 3 };
+    gate.resolve();
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(engine).not.toHaveBeenCalled();
+  });
+
+  it('does not run completion side effects against a newly selected library', async () => {
+    let scope = { dir: 'library-a', epoch: 1 };
+    const worker = Promise.withResolvers();
+    const notifyLibraryUpdated = vi.fn(),
+      enforceLibraryStoragePolicy = vi.fn(),
+      onSeparationComplete = vi.fn();
+    const engine = vi.fn(() => ({ result: worker.promise, cancel: vi.fn() }));
+    const handlers = register({
+      resolveUserDataDir: () => 'user-data',
+      getLibraryScope: () => scope,
+      resolveDownloadDir: () => scope.dir,
+      heavyJobScheduler: {
+        schedule: ({ start }) => start().result,
+        cancel: vi.fn(),
+      },
+      createSeparationEngineJob: engine,
+      notifyLibraryUpdated,
+      enforceLibraryStoragePolicy,
+      onSeparationComplete,
+      findSeparationTrackRecord: () => ({ id: 'same-id' }),
+      resolveSeparationsOutputDir: () => 'output',
+      resolveSeparationInputAudioPath: () => 'input.wav',
+    });
+    const outcome = handlers
+      .get('separation:run')(null, 'same-id', 'quick')
+      .catch((e) => e);
+    await vi.waitFor(() => expect(engine).toHaveBeenCalledOnce());
+    scope = { dir: 'library-b', epoch: 2 };
+    worker.resolve({});
+    expect(await outcome).toBeInstanceOf(Error);
+    expect(notifyLibraryUpdated).not.toHaveBeenCalled();
+    expect(enforceLibraryStoragePolicy).not.toHaveBeenCalled();
+    expect(onSeparationComplete).not.toHaveBeenCalled();
+  });
   it.each(['success', 'failure', 'cancelled', 'enqueue-error'])(
     'keeps post-separation lyrics independent: %s',
     async (mode) => {

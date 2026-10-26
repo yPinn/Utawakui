@@ -70,6 +70,7 @@ function registerSeparationHandlers({
   loadStoredSeparationManifest = loadSeparationManifest,
   hasStoredSeparationResultFile = hasSeparationResultFile,
   enforceLibraryStoragePolicy = async () => undefined,
+  getLibraryScope = () => ({ dir: resolveDownloadDir(getConfig()), epoch: 0 }),
 }) {
   const service = createAudioProcessingService({
     resolveRecipe,
@@ -113,15 +114,23 @@ function registerSeparationHandlers({
         preferGpu: getConfig().separationGpuAcceleration !== false,
       };
     },
-    createEngineJob: ({ jobId, engineId, prepared, emitProgress }) => {
+    createEngineJob: ({
+      jobId,
+      engineId,
+      prepared,
+      emitProgress,
+      assertCurrent,
+    }) => {
       if (engineId !== 'onnx-mdx') {
         throw new Error(`unsupported audio-processing engine: ${engineId}`);
       }
       return {
         result: heavyJobScheduler.schedule({
           jobId,
-          start: () =>
-            createSeparationEngineJob({
+          start: () => {
+            assertCurrent();
+            requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+            return createSeparationEngineJob({
               workerPath: path.join(
                 __dirname,
                 '..',
@@ -139,7 +148,8 @@ function registerSeparationHandlers({
                 preferGpu: prepared.preferGpu,
               },
               emitProgress,
-            }),
+            });
+          },
         }),
         cancel: () => heavyJobScheduler.cancel(jobId),
       };
@@ -148,6 +158,10 @@ function registerSeparationHandlers({
 
   const queueService = createSeparationQueue({
     resolveRecipe,
+    getScopeKey: () => {
+      const scope = getLibraryScope();
+      return JSON.stringify([path.resolve(scope.dir), scope.epoch]);
+    },
     createItemId: randomUUID,
     hasCurrentResult: ({ trackId, recipeId }) => {
       const recipe = resolveRecipe(recipeId);
@@ -161,7 +175,12 @@ function registerSeparationHandlers({
         hasStoredSeparationResultFile(separationsDir, result.artifactFilename),
       );
     },
-    runTrack: async ({ trackId, recipeId, onProgress }) => {
+    runTrack: async ({
+      trackId,
+      recipeId,
+      onProgress,
+      assertCurrent = () => {},
+    }) => {
       // A queue item can start long after it was added. Recheck the gate at
       // the execution boundary, but keep this expected control flow outside
       // the operational diagnostic wrapper.
@@ -190,6 +209,7 @@ function registerSeparationHandlers({
           const result = await service.run({
             trackId,
             recipeId,
+            assertCurrent,
             onProgress: (progress) => {
               getMainWindow()?.webContents.send(
                 'separation:progress',
@@ -212,6 +232,7 @@ function registerSeparationHandlers({
             },
             recordDiagnostic,
           });
+          assertCurrent();
           notifyLibraryUpdated();
           // Publication succeeded. Lyrics are an independent opt-in job;
           // even a scheduling failure must preserve this successful accompaniment.
