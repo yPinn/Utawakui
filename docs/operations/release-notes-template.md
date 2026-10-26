@@ -7,6 +7,11 @@ copying the commit log or describing how the software is built.
 
 ## Section Rules
 
+- Keep versioned notes ready for direct publication even while the GitHub Release
+  is a draft awaiting manual review. Do not add draft status, pending review,
+  planned-delivery claims or release-process instructions to the public copy.
+  Keep workflow state and unfinished acceptance in internal operations records;
+  retain accurate user-facing known limitations in the notes.
 - The versioned Chinese and English titles, their short summaries, and both
   installation sections are required.
 - Copy the Chinese short summary verbatim into `shared/releaseAnnouncement.json`'s
@@ -14,8 +19,9 @@ copying the commit log or describing how the software is built.
   "what's new" modal (see `src/composables/useAppAnnouncement.js`), so the first
   thing a user reads after updating must match the top of this document — not a
   second, independently drifting sentence. `shared/releaseAnnouncement.test.js`
-  fails the build if `version` falls out of sync with `package.json`, but it
-  cannot catch a `summary` that no longer matches this file's wording.
+  checks both the package version and exact agreement with the Chinese
+  introduction. Run that test when changing the introduction or its layout,
+  together with the release-contract and release-workflow tests.
 - Prefer everyday language and short sentences. Avoid internal library, model,
   format, component, pipeline, lifecycle, and protocol names unless the term is
   visible in the product and helps the reader act.

@@ -6,10 +6,12 @@ repository.
 
 Package contents and dependency locations are documented separately in
 [release-inventory.md](release-inventory.md). Versioned files under `releases/`
-may be unreleased drafts or published announcements; a file's existence is not
-proof of publication. Public assets and the current source tree may differ.
-The current v0.5.1 draft boundary and remaining freeze steps are recorded in the
-[version scope checklist](v0.5.1-release-scope.md).
+are publication-ready announcement copy, including before manual review. Draft
+state belongs to GitHub Release and internal operations records; do not put it
+in the versioned announcement. A file's existence is not proof of publication.
+Public assets and the current source tree may differ. The v0.5.1 scope and
+verification evidence are recorded in the
+[version scope record](v0.5.1-release-scope.md).
 
 ## Current Release Boundary
 
@@ -90,7 +92,9 @@ platform-enforced merge gates; a failed executed check must not be merged.
    `docs/releases/v<version>.md`. Keep matching Chinese／English change categories,
    write for broad readers without assumed engineering knowledge, remove empty
    optional sections, and retain concise unsigned-publisher, official-download,
-   update-behavior, and data-retention guidance.
+   update-behavior, and data-retention guidance. Keep the text ready for direct
+   publication; track unfinished acceptance separately and do not insert draft
+   status or planned-delivery wording into the announcement.
 3. Run the normal CI checks and Windows package/startup acceptance.
 4. Commit the release source on `main`, then create the exact tag `v<version>`.
 5. Never reuse a published version. Correct a failed release with a higher version.
@@ -202,6 +206,10 @@ its next update.
 ## Acceptance Before Publish
 
 Before manually publishing the draft:
+
+Review the versioned announcement as the exact public copy, including its
+agreement with the bundled summary. GitHub's draft flag carries the review state;
+the body must not retain draft notices or internal acceptance instructions.
 
 Complete the cross-feature
 [manual acceptance checklist](manual-acceptance.md) in addition to the release
