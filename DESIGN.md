@@ -1,89 +1,12 @@
 ---
 name: Utawakui
-description: Baseline design-system scaffold for a local-first OBS singing-session control panel.
-colors:
-  canvas: '#1F2328'
-  surface: '#292F35'
-  surface-raised: '#30383E'
-  surface-hover: '#344046'
-  text: '#F7F1E7'
-  text-muted: '#AEB8B6'
-  border: '#3C4749'
-  accent: '#55A2A7'
-  accent-hover: '#6AB4B8'
-  accent-contrast: '#102326'
-  success: '#7BBD8B'
-  warning: '#D6A84F'
-  danger: '#DD7078'
-  info: '#7FB8BD'
-typography:
-  display:
-    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
-    fontSize: '1.75rem'
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: '0'
-  heading:
-    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
-    fontSize: '1.5rem'
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: '0'
-  title:
-    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
-    fontSize: '1.125rem'
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: '0'
-  body:
-    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
-    fontSize: '1rem'
-    fontWeight: 400
-    lineHeight: 1.5
-    letterSpacing: '0'
-  label:
-    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
-    fontSize: '0.875rem'
-    fontWeight: 600
-    lineHeight: 1.25
-    letterSpacing: '0'
+description: Current design guide for the local-first Windows singing-session control panel; renderer values are owned by src/styles/tokens.css.
 rounded:
   xs: '0.125rem'
   sm: '0.25rem'
   md: '0.375rem'
   lg: '0.5rem'
   pill: '999rem'
-spacing:
-  0: '0'
-  1: '0.25rem'
-  2: '0.5rem'
-  3: '0.75rem'
-  4: '1rem'
-  5: '1.5rem'
-  6: '2rem'
-  7: '3rem'
-  8: '4rem'
-components:
-  button-primary:
-    backgroundColor: '{colors.accent}'
-    textColor: '{colors.accent-contrast}'
-    rounded: '{rounded.md}'
-    padding: '0.25rem 0.5rem'
-  button-ghost:
-    backgroundColor: 'transparent'
-    textColor: '{colors.text-muted}'
-    rounded: '{rounded.md}'
-    padding: '0.25rem 0.5rem'
-  track-row:
-    backgroundColor: 'transparent'
-    textColor: '{colors.text}'
-    rounded: '{rounded.md}'
-    padding: '0.5rem 0.75rem'
-  panel:
-    backgroundColor: '{colors.surface}'
-    textColor: '{colors.text}'
-    rounded: '{rounded.lg}'
-    padding: '1rem'
 ---
 
 > **Visual system status — 2026-10-03:** Token v2 is the sole control-panel
