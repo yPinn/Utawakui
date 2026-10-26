@@ -1,0 +1,2150 @@
+{
+  "date": "2026-10-26",
+  "sourceCommit": "eeec8eda8a16fcf9c884db4f46c6969c86cf6f67",
+  "includesUncommittedChanges": true,
+  "scope": [
+    "electron/lib/importRecordingPolicy.js",
+    "electron/lib/artwork/releasePolicy.js"
+  ],
+  "privateFunctionsProtected": 16,
+  "exportedFunctionsReserved": 10,
+  "toolchain": {
+    "rolldown": "1.2.15",
+    "directDevDependencyAdded": true,
+    "newTransitivePackageVersions": 0,
+    "runtimeObfuscator": false
+  },
+  "artifactComparison": {
+    "onlyMainChanged": true,
+    "changedFiles": ["runtime/main.cjs"],
+    "runtimeBytes": {
+      "baseline": {
+        "runtime/main.cjs": 1209295,
+        "runtime/performer-preload.cjs": 1577,
+        "runtime/preload.cjs": 35784,
+        "runtime/probe.cjs": 2970,
+        "runtime/reading.cjs": 5156,
+        "runtime/separation.cjs": 158199
+      },
+      "candidate": {
+        "runtime/main.cjs": 1209151,
+        "runtime/performer-preload.cjs": 1577,
+        "runtime/preload.cjs": 35784,
+        "runtime/probe.cjs": 2970,
+        "runtime/reading.cjs": 5156,
+        "runtime/separation.cjs": 158199
+      }
+    },
+    "runtimeHashes": {
+      "baseline": {
+        "runtime/main.cjs": "4c1f70bcc46955e1b17d88a7d41bef31dae6a6903ffffba89aa437fba8bb7c6e",
+        "runtime/performer-preload.cjs": "5609985fb775830f528c4557d7f2803d89bb612ca325938fd2956bf40459bacc",
+        "runtime/preload.cjs": "4832d4a16424d70c8cf370a2ec5b0d7bf8b5c105066bef07e63caec614dbe424",
+        "runtime/probe.cjs": "ba50507dfc81adafb278ac05178f6bf3df88856190b3f49b365f39514611bc2e",
+        "runtime/reading.cjs": "52aa410c6d5e633f135711c81c494fb5a158f4200cd19b52b7ea4122d768c488",
+        "runtime/separation.cjs": "ca6e7249c41e8e26259241098b8d9c54b16c4e93e366858bca74ac2aaaf38ffa"
+      },
+      "candidate": {
+        "runtime/main.cjs": "239c84dc1842b139a3b4eb3536ef5fdfd380a4873579b6fb52207170a1718b42",
+        "runtime/performer-preload.cjs": "5609985fb775830f528c4557d7f2803d89bb612ca325938fd2956bf40459bacc",
+        "runtime/preload.cjs": "4832d4a16424d70c8cf370a2ec5b0d7bf8b5c105066bef07e63caec614dbe424",
+        "runtime/probe.cjs": "ba50507dfc81adafb278ac05178f6bf3df88856190b3f49b365f39514611bc2e",
+        "runtime/reading.cjs": "52aa410c6d5e633f135711c81c494fb5a158f4200cd19b52b7ea4122d768c488",
+        "runtime/separation.cjs": "ca6e7249c41e8e26259241098b8d9c54b16c4e93e366858bca74ac2aaaf38ffa"
+      }
+    }
+  },
+  "startup": {
+    "rounds": [
+      {
+        "round": 1,
+        "summary": {
+          "baseline": {
+            "method": "nearest-rank",
+            "budgets": null,
+            "scenarios": {
+              "cold": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 204.421,
+                    "p95": 264.956
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 208.391,
+                    "p95": 290.766
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 242.042,
+                    "p95": 336.683
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 280.029,
+                    "p95": 390.087
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 477.11,
+                    "p95": 624.136
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 481.563,
+                    "p95": 630.696
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 515.423,
+                    "p95": 663.336
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 528.073,
+                    "p95": 692.35
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 1770.556,
+                    "p95": 2698.223
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 1775.556,
+                    "p95": 2701.023
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 3797.497,
+                    "p95": 4707.824
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.209,
+                    "p95": 0.717
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 740744,
+                    "p95": 745452
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 758428,
+                    "p95": 764436
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              },
+              "warm": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 238.575,
+                    "p95": 265.76
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 242.959,
+                    "p95": 270.835
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 287.512,
+                    "p95": 318.264
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 333.351,
+                    "p95": 370.72
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 540.896,
+                    "p95": 581.574
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 546.351,
+                    "p95": 588.745
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 588.394,
+                    "p95": 625.674
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 589.496,
+                    "p95": 646.519
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 591.013,
+                    "p95": 2221.574
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 595.313,
+                    "p95": 2225.174
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 2624.592,
+                    "p95": 4247.635
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.021,
+                    "p95": 0.085
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 739244,
+                    "p95": 741588
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 751768,
+                    "p95": 757512
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              }
+            }
+          },
+          "candidate": {
+            "method": "nearest-rank",
+            "budgets": null,
+            "scenarios": {
+              "cold": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 215.737,
+                    "p95": 264.941
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 220.056,
+                    "p95": 269.534
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 259.673,
+                    "p95": 325.588
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 302.616,
+                    "p95": 374.815
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 501.691,
+                    "p95": 638.985
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 507.075,
+                    "p95": 645.743
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 540.713,
+                    "p95": 679.585
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 552.471,
+                    "p95": 710.188
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 1644.913,
+                    "p95": 1845.285
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 1649.713,
+                    "p95": 1846.885
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 3655.351,
+                    "p95": 3848.425
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.17,
+                    "p95": 0.887
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 740744,
+                    "p95": 744476
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 758444,
+                    "p95": 763704
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              },
+              "warm": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 238.152,
+                    "p95": 250.912
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 242.635,
+                    "p95": 255.996
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 285.45,
+                    "p95": 313.606
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 333.03,
+                    "p95": 368.388
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 554.906,
+                    "p95": 655.385
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 562.643,
+                    "p95": 662.723
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 605.306,
+                    "p95": 699.885
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 616.245,
+                    "p95": 719.302
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 619.751,
+                    "p95": 722.585
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 625.363,
+                    "p95": 727.285
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 2638.085,
+                    "p95": 2749.051
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.024,
+                    "p95": 0.091
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 740144,
+                    "p95": 743008
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 754252,
+                    "p95": 756876
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              }
+            }
+          }
+        }
+      },
+      {
+        "round": 2,
+        "summary": {
+          "baseline": {
+            "method": "nearest-rank",
+            "budgets": null,
+            "scenarios": {
+              "cold": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 245.368,
+                    "p95": 256.781
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 250.316,
+                    "p95": 485.441
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 297.568,
+                    "p95": 538.545
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 344.621,
+                    "p95": 591.277
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 583.671,
+                    "p95": 969.945
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 601.433,
+                    "p95": 975.58
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 633.171,
+                    "p95": 1012.045
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 672.588,
+                    "p95": 1027.097
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 1709.058,
+                    "p95": 1886.345
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 1713.834,
+                    "p95": 1891.545
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 3725.307,
+                    "p95": 3916.317
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.174,
+                    "p95": 0.358
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 740892,
+                    "p95": 767944
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 759060,
+                    "p95": 785532
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              },
+              "warm": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 248.622,
+                    "p95": 261.847
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 253.656,
+                    "p95": 267.182
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 296.551,
+                    "p95": 317.652
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 348.236,
+                    "p95": 371.641
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 565.476,
+                    "p95": 645.766
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 575.396,
+                    "p95": 653.41
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 608.776,
+                    "p95": 692.366
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 634.833,
+                    "p95": 719.098
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 636.176,
+                    "p95": 720.966
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 646.376,
+                    "p95": 731.266
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 2664.171,
+                    "p95": 2750.007
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.02,
+                    "p95": 0.026
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 739836,
+                    "p95": 744624
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 751680,
+                    "p95": 756440
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              }
+            }
+          },
+          "candidate": {
+            "method": "nearest-rank",
+            "budgets": null,
+            "scenarios": {
+              "cold": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 246.126,
+                    "p95": 271.24
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 250.523,
+                    "p95": 312.536
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 295.791,
+                    "p95": 358.965
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 344.534,
+                    "p95": 409.453
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 578.397,
+                    "p95": 643.75
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 584.715,
+                    "p95": 744.002
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 631.189,
+                    "p95": 757.597
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 663.895,
+                    "p95": 787.833
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 1787.589,
+                    "p95": 2542.292
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 1794.589,
+                    "p95": 2544.492
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 3808.063,
+                    "p95": 4550.512
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.139,
+                    "p95": 0.235
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 742704,
+                    "p95": 749260
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 761640,
+                    "p95": 767040
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              },
+              "warm": {
+                "runs": 10,
+                "milestones": {
+                  "process-start": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "electron-ready": {
+                    "samples": 10,
+                    "p50": 252.793,
+                    "p95": 265.426
+                  },
+                  "config-ready": {
+                    "samples": 10,
+                    "p50": 258.576,
+                    "p95": 270.389
+                  },
+                  "window-created": {
+                    "samples": 10,
+                    "p50": 304.554,
+                    "p95": 316.843
+                  },
+                  "output-listening": {
+                    "samples": 10,
+                    "p50": 356.147,
+                    "p95": 380.203
+                  },
+                  "interactive-shell": {
+                    "samples": 10,
+                    "p50": 591.057,
+                    "p95": 626.124
+                  },
+                  "dom-loaded": {
+                    "samples": 10,
+                    "p50": 596.912,
+                    "p95": 632.632
+                  },
+                  "first-paint": {
+                    "samples": 10,
+                    "p50": 637.334,
+                    "p95": 670.724
+                  },
+                  "source-synchronized": {
+                    "samples": 10,
+                    "p50": 654.092,
+                    "p95": 684.874
+                  },
+                  "first-instance-ready": {
+                    "samples": 10,
+                    "p50": 656.737,
+                    "p95": 687.224
+                  },
+                  "first-rendered-frame": {
+                    "samples": 10,
+                    "p50": 664.774,
+                    "p95": 700.024
+                  },
+                  "baseline-complete": {
+                    "samples": 10,
+                    "p50": 2685.188,
+                    "p95": 2725.728
+                  }
+                },
+                "baseline": {
+                  "cpuPercent": {
+                    "samples": 10,
+                    "p50": 0.024,
+                    "p95": 0.026
+                  },
+                  "workingSetKb": {
+                    "samples": 10,
+                    "p50": 739688,
+                    "p95": 743772
+                  },
+                  "peakWorkingSetKb": {
+                    "samples": 10,
+                    "p50": 752252,
+                    "p95": 758692
+                  },
+                  "processCount": {
+                    "samples": 10,
+                    "p50": 7,
+                    "p95": 7
+                  },
+                  "outputQueuedBytes": {
+                    "samples": 10,
+                    "p50": 0,
+                    "p95": 0
+                  },
+                  "outputClients": {
+                    "samples": 10,
+                    "p50": 1,
+                    "p95": 1
+                  }
+                },
+                "gpuAccelerationObserved": [true]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "samples": [
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 1,
+        "interactiveMs": 541.231,
+        "electronReadyMs": 213.636,
+        "configReadyMs": 252.156,
+        "windowCreatedMs": 292.192,
+        "workingSetKiB": 737540
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 2,
+        "interactiveMs": 480.69,
+        "electronReadyMs": 198.098,
+        "configReadyMs": 202.498,
+        "windowCreatedMs": 236.719,
+        "workingSetKiB": 744072
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 3,
+        "interactiveMs": 472.156,
+        "electronReadyMs": 198.003,
+        "configReadyMs": 201.562,
+        "windowCreatedMs": 236.9,
+        "workingSetKiB": 740744
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 4,
+        "interactiveMs": 477.11,
+        "electronReadyMs": 204.421,
+        "configReadyMs": 208.391,
+        "windowCreatedMs": 242.042,
+        "workingSetKiB": 745452
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 5,
+        "interactiveMs": 472.523,
+        "electronReadyMs": 197.668,
+        "configReadyMs": 201.193,
+        "windowCreatedMs": 236.266,
+        "workingSetKiB": 740776
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 6,
+        "interactiveMs": 476.286,
+        "electronReadyMs": 198.929,
+        "configReadyMs": 202.881,
+        "windowCreatedMs": 236.863,
+        "workingSetKiB": 737412
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 7,
+        "interactiveMs": 624.136,
+        "electronReadyMs": 264.956,
+        "configReadyMs": 290.766,
+        "windowCreatedMs": 336.683,
+        "workingSetKiB": 742992
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 8,
+        "interactiveMs": 584.416,
+        "electronReadyMs": 209.973,
+        "configReadyMs": 214.316,
+        "windowCreatedMs": 254.885,
+        "workingSetKiB": 738624
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 9,
+        "interactiveMs": 563.146,
+        "electronReadyMs": 213.67,
+        "configReadyMs": 218.069,
+        "windowCreatedMs": 256.562,
+        "workingSetKiB": 738684
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 10,
+        "interactiveMs": 474.57,
+        "electronReadyMs": 206.962,
+        "configReadyMs": 211.191,
+        "windowCreatedMs": 248.006,
+        "workingSetKiB": 740832
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 1,
+        "interactiveMs": 581.574,
+        "electronReadyMs": 265.76,
+        "configReadyMs": 270.835,
+        "windowCreatedMs": 318.264,
+        "workingSetKiB": 740480
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 2,
+        "interactiveMs": 500.196,
+        "electronReadyMs": 211.914,
+        "configReadyMs": 216.119,
+        "windowCreatedMs": 256.792,
+        "workingSetKiB": 741588
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 3,
+        "interactiveMs": 542.994,
+        "electronReadyMs": 239.704,
+        "configReadyMs": 244.667,
+        "windowCreatedMs": 288.808,
+        "workingSetKiB": 736344
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 4,
+        "interactiveMs": 509.446,
+        "electronReadyMs": 226.892,
+        "configReadyMs": 231.08,
+        "windowCreatedMs": 274.654,
+        "workingSetKiB": 735900
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 5,
+        "interactiveMs": 570.62,
+        "electronReadyMs": 260.508,
+        "configReadyMs": 264.923,
+        "windowCreatedMs": 305.559,
+        "workingSetKiB": 736280
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 6,
+        "interactiveMs": 555.551,
+        "electronReadyMs": 238.575,
+        "configReadyMs": 242.959,
+        "windowCreatedMs": 287.512,
+        "workingSetKiB": 739764
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 7,
+        "interactiveMs": 515.897,
+        "electronReadyMs": 221.469,
+        "configReadyMs": 225.988,
+        "windowCreatedMs": 268.098,
+        "workingSetKiB": 739244
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 8,
+        "interactiveMs": 540.896,
+        "electronReadyMs": 243.623,
+        "configReadyMs": 248.271,
+        "windowCreatedMs": 290.315,
+        "workingSetKiB": 740168
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 9,
+        "interactiveMs": 529.213,
+        "electronReadyMs": 232.945,
+        "configReadyMs": 237.386,
+        "windowCreatedMs": 278.259,
+        "workingSetKiB": 738916
+      },
+      {
+        "round": 1,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 10,
+        "interactiveMs": 566.759,
+        "electronReadyMs": 244.69,
+        "configReadyMs": 249.852,
+        "windowCreatedMs": 293.719,
+        "workingSetKiB": 741000
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 1,
+        "interactiveMs": 515.02,
+        "electronReadyMs": 236.448,
+        "configReadyMs": 242.248,
+        "windowCreatedMs": 286.878,
+        "workingSetKiB": 738152
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 2,
+        "interactiveMs": 473.716,
+        "electronReadyMs": 202.073,
+        "configReadyMs": 205.816,
+        "windowCreatedMs": 243.241,
+        "workingSetKiB": 740744
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 3,
+        "interactiveMs": 531.972,
+        "electronReadyMs": 221.067,
+        "configReadyMs": 225.454,
+        "windowCreatedMs": 263.393,
+        "workingSetKiB": 740432
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 4,
+        "interactiveMs": 489.513,
+        "electronReadyMs": 215.737,
+        "configReadyMs": 220.056,
+        "windowCreatedMs": 259.673,
+        "workingSetKiB": 743576
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 5,
+        "interactiveMs": 466.314,
+        "electronReadyMs": 197.426,
+        "configReadyMs": 201.561,
+        "windowCreatedMs": 239.246,
+        "workingSetKiB": 736628
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 6,
+        "interactiveMs": 501.691,
+        "electronReadyMs": 222.249,
+        "configReadyMs": 225.904,
+        "windowCreatedMs": 265.775,
+        "workingSetKiB": 743524
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 7,
+        "interactiveMs": 638.985,
+        "electronReadyMs": 264.941,
+        "configReadyMs": 269.534,
+        "windowCreatedMs": 325.588,
+        "workingSetKiB": 742072
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 8,
+        "interactiveMs": 480.786,
+        "electronReadyMs": 207.521,
+        "configReadyMs": 211.399,
+        "windowCreatedMs": 249.063,
+        "workingSetKiB": 737136
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 9,
+        "interactiveMs": 549.838,
+        "electronReadyMs": 215.057,
+        "configReadyMs": 219.573,
+        "windowCreatedMs": 258.298,
+        "workingSetKiB": 744476
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 10,
+        "interactiveMs": 533.54,
+        "electronReadyMs": 224.127,
+        "configReadyMs": 229.126,
+        "windowCreatedMs": 272.523,
+        "workingSetKiB": 741296
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 1,
+        "interactiveMs": 655.385,
+        "electronReadyMs": 235.234,
+        "configReadyMs": 240.321,
+        "windowCreatedMs": 283.176,
+        "workingSetKiB": 740144
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 2,
+        "interactiveMs": 569.209,
+        "electronReadyMs": 228.98,
+        "configReadyMs": 234.4,
+        "windowCreatedMs": 279.862,
+        "workingSetKiB": 739596
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 3,
+        "interactiveMs": 535.635,
+        "electronReadyMs": 231.838,
+        "configReadyMs": 236.256,
+        "windowCreatedMs": 283.569,
+        "workingSetKiB": 742960
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 4,
+        "interactiveMs": 546.363,
+        "electronReadyMs": 231.941,
+        "configReadyMs": 236.665,
+        "windowCreatedMs": 281.149,
+        "workingSetKiB": 742804
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 5,
+        "interactiveMs": 572.713,
+        "electronReadyMs": 249.118,
+        "configReadyMs": 253.774,
+        "windowCreatedMs": 297.3,
+        "workingSetKiB": 738704
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 6,
+        "interactiveMs": 552.942,
+        "electronReadyMs": 241.116,
+        "configReadyMs": 245.708,
+        "windowCreatedMs": 288.749,
+        "workingSetKiB": 741020
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 7,
+        "interactiveMs": 554.906,
+        "electronReadyMs": 238.152,
+        "configReadyMs": 242.635,
+        "windowCreatedMs": 285.45,
+        "workingSetKiB": 738944
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 8,
+        "interactiveMs": 557.551,
+        "electronReadyMs": 244.049,
+        "configReadyMs": 249.741,
+        "windowCreatedMs": 293.581,
+        "workingSetKiB": 741316
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 9,
+        "interactiveMs": 542.627,
+        "electronReadyMs": 241.589,
+        "configReadyMs": 246.362,
+        "windowCreatedMs": 288.095,
+        "workingSetKiB": 739200
+      },
+      {
+        "round": 1,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 10,
+        "interactiveMs": 591.226,
+        "electronReadyMs": 250.912,
+        "configReadyMs": 255.996,
+        "windowCreatedMs": 313.606,
+        "workingSetKiB": 743008
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 1,
+        "interactiveMs": 557.001,
+        "electronReadyMs": 243.765,
+        "configReadyMs": 248.333,
+        "windowCreatedMs": 294.363,
+        "workingSetKiB": 739496
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 2,
+        "interactiveMs": 579.052,
+        "electronReadyMs": 243.095,
+        "configReadyMs": 247.445,
+        "windowCreatedMs": 292.758,
+        "workingSetKiB": 735924
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 3,
+        "interactiveMs": 560.56,
+        "electronReadyMs": 247.506,
+        "configReadyMs": 252.208,
+        "windowCreatedMs": 299.156,
+        "workingSetKiB": 740892
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 4,
+        "interactiveMs": 969.945,
+        "electronReadyMs": 256.781,
+        "configReadyMs": 485.441,
+        "windowCreatedMs": 538.545,
+        "workingSetKiB": 767944
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 5,
+        "interactiveMs": 575.079,
+        "electronReadyMs": 245.368,
+        "configReadyMs": 250.316,
+        "windowCreatedMs": 297.568,
+        "workingSetKiB": 743308
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 6,
+        "interactiveMs": 633.642,
+        "electronReadyMs": 253.94,
+        "configReadyMs": 259.278,
+        "windowCreatedMs": 306.284,
+        "workingSetKiB": 743732
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 7,
+        "interactiveMs": 583.671,
+        "electronReadyMs": 244.593,
+        "configReadyMs": 249.17,
+        "windowCreatedMs": 293.057,
+        "workingSetKiB": 741320
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 8,
+        "interactiveMs": 618.658,
+        "electronReadyMs": 256.736,
+        "configReadyMs": 271.984,
+        "windowCreatedMs": 319.115,
+        "workingSetKiB": 737456
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 9,
+        "interactiveMs": 596.734,
+        "electronReadyMs": 241.229,
+        "configReadyMs": 245.948,
+        "windowCreatedMs": 294.026,
+        "workingSetKiB": 738020
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "cold",
+        "index": 10,
+        "interactiveMs": 593.571,
+        "electronReadyMs": 249.749,
+        "configReadyMs": 273.536,
+        "windowCreatedMs": 320.349,
+        "workingSetKiB": 741248
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 1,
+        "interactiveMs": 581.114,
+        "electronReadyMs": 258.67,
+        "configReadyMs": 263.418,
+        "windowCreatedMs": 305.194,
+        "workingSetKiB": 740340
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 2,
+        "interactiveMs": 583.787,
+        "electronReadyMs": 252.028,
+        "configReadyMs": 257.144,
+        "windowCreatedMs": 305.326,
+        "workingSetKiB": 736780
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 3,
+        "interactiveMs": 564.554,
+        "electronReadyMs": 248.622,
+        "configReadyMs": 253.656,
+        "windowCreatedMs": 296.551,
+        "workingSetKiB": 741580
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 4,
+        "interactiveMs": 645.766,
+        "electronReadyMs": 258.735,
+        "configReadyMs": 265.061,
+        "windowCreatedMs": 317.652,
+        "workingSetKiB": 740840
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 5,
+        "interactiveMs": 605.069,
+        "electronReadyMs": 261.847,
+        "configReadyMs": 267.182,
+        "windowCreatedMs": 317.014,
+        "workingSetKiB": 739476
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 6,
+        "interactiveMs": 551.47,
+        "electronReadyMs": 236.441,
+        "configReadyMs": 242.078,
+        "windowCreatedMs": 287.648,
+        "workingSetKiB": 744624
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 7,
+        "interactiveMs": 565.476,
+        "electronReadyMs": 253.965,
+        "configReadyMs": 259.6,
+        "windowCreatedMs": 304.336,
+        "workingSetKiB": 736384
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 8,
+        "interactiveMs": 579.542,
+        "electronReadyMs": 243.626,
+        "configReadyMs": 248.64,
+        "windowCreatedMs": 294.023,
+        "workingSetKiB": 737576
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 9,
+        "interactiveMs": 559.452,
+        "electronReadyMs": 242.889,
+        "configReadyMs": 248.291,
+        "windowCreatedMs": 291.141,
+        "workingSetKiB": 739836
+      },
+      {
+        "round": 2,
+        "phase": "baseline",
+        "scenario": "warm",
+        "index": 10,
+        "interactiveMs": 548.496,
+        "electronReadyMs": 236.176,
+        "configReadyMs": 240.529,
+        "windowCreatedMs": 286.599,
+        "workingSetKiB": 743052
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 1,
+        "interactiveMs": 558.217,
+        "electronReadyMs": 236.587,
+        "configReadyMs": 241.291,
+        "windowCreatedMs": 285.028,
+        "workingSetKiB": 744404
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 2,
+        "interactiveMs": 578.397,
+        "electronReadyMs": 255.011,
+        "configReadyMs": 259.234,
+        "windowCreatedMs": 304.16,
+        "workingSetKiB": 743856
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 3,
+        "interactiveMs": 622.092,
+        "electronReadyMs": 246.126,
+        "configReadyMs": 250.523,
+        "windowCreatedMs": 292.726,
+        "workingSetKiB": 749260
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 4,
+        "interactiveMs": 572.889,
+        "electronReadyMs": 245.159,
+        "configReadyMs": 249.73,
+        "windowCreatedMs": 295.209,
+        "workingSetKiB": 738756
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 5,
+        "interactiveMs": 643.75,
+        "electronReadyMs": 271.24,
+        "configReadyMs": 276.477,
+        "windowCreatedMs": 325.21,
+        "workingSetKiB": 742412
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 6,
+        "interactiveMs": 628.253,
+        "electronReadyMs": 254.175,
+        "configReadyMs": 312.536,
+        "windowCreatedMs": 358.965,
+        "workingSetKiB": 740328
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 7,
+        "interactiveMs": 612.797,
+        "electronReadyMs": 259.078,
+        "configReadyMs": 263.765,
+        "windowCreatedMs": 310.503,
+        "workingSetKiB": 738540
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 8,
+        "interactiveMs": 562.327,
+        "electronReadyMs": 244.158,
+        "configReadyMs": 248.652,
+        "windowCreatedMs": 295.791,
+        "workingSetKiB": 745784
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 9,
+        "interactiveMs": 610.268,
+        "electronReadyMs": 249.01,
+        "configReadyMs": 278.962,
+        "windowCreatedMs": 331.051,
+        "workingSetKiB": 742704
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "cold",
+        "index": 10,
+        "interactiveMs": 571.096,
+        "electronReadyMs": 238.63,
+        "configReadyMs": 243.627,
+        "windowCreatedMs": 291.209,
+        "workingSetKiB": 746828
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 1,
+        "interactiveMs": 565.339,
+        "electronReadyMs": 249.28,
+        "configReadyMs": 254.196,
+        "windowCreatedMs": 297.729,
+        "workingSetKiB": 737732
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 2,
+        "interactiveMs": 591.057,
+        "electronReadyMs": 264.164,
+        "configReadyMs": 270.389,
+        "windowCreatedMs": 314.122,
+        "workingSetKiB": 739688
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 3,
+        "interactiveMs": 600.981,
+        "electronReadyMs": 251.174,
+        "configReadyMs": 257.531,
+        "windowCreatedMs": 303.36,
+        "workingSetKiB": 741256
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 4,
+        "interactiveMs": 601.874,
+        "electronReadyMs": 252.793,
+        "configReadyMs": 258.576,
+        "windowCreatedMs": 304.249,
+        "workingSetKiB": 736464
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 5,
+        "interactiveMs": 626.124,
+        "electronReadyMs": 263.558,
+        "configReadyMs": 268.791,
+        "windowCreatedMs": 316.843,
+        "workingSetKiB": 738744
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 6,
+        "interactiveMs": 600.637,
+        "electronReadyMs": 256.929,
+        "configReadyMs": 262.415,
+        "windowCreatedMs": 308.415,
+        "workingSetKiB": 743772
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 7,
+        "interactiveMs": 574.584,
+        "electronReadyMs": 250.852,
+        "configReadyMs": 256.687,
+        "windowCreatedMs": 304.554,
+        "workingSetKiB": 740044
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 8,
+        "interactiveMs": 572.069,
+        "electronReadyMs": 261.693,
+        "configReadyMs": 267.114,
+        "windowCreatedMs": 310.987,
+        "workingSetKiB": 739916
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 9,
+        "interactiveMs": 558.476,
+        "electronReadyMs": 243.624,
+        "configReadyMs": 248.115,
+        "windowCreatedMs": 291.641,
+        "workingSetKiB": 742424
+      },
+      {
+        "round": 2,
+        "phase": "candidate",
+        "scenario": "warm",
+        "index": 10,
+        "interactiveMs": 597.934,
+        "electronReadyMs": 265.426,
+        "configReadyMs": 270.1,
+        "windowCreatedMs": 315.074,
+        "workingSetKiB": 738404
+      }
+    ],
+    "combined": {
+      "baseline-cold": {
+        "samples": 20,
+        "p50": 563.146,
+        "p95": 633.642,
+        "workingSetKiB": {
+          "p50": 740776,
+          "p95": 745452
+        }
+      },
+      "baseline-warm": {
+        "samples": 20,
+        "p50": 559.452,
+        "p95": 605.069,
+        "workingSetKiB": {
+          "p50": 739764,
+          "p95": 743052
+        }
+      },
+      "candidate-cold": {
+        "samples": 20,
+        "p50": 558.217,
+        "p95": 638.985,
+        "workingSetKiB": {
+          "p50": 742072,
+          "p95": 746828
+        }
+      },
+      "candidate-warm": {
+        "samples": 20,
+        "p50": 572.069,
+        "p95": 626.124,
+        "workingSetKiB": {
+          "p50": 739916,
+          "p95": 743008
+        }
+      }
+    },
+    "interpretation": "First-round cold p50 and warm p95 exceed the predeclared screen, but independent repetition does not reproduce either breach. All samples retained; warm p50 remains 14.010 to 25.581 ms slower. This is a bounded same-machine acceptance, not zero-overhead proof."
+  },
+  "native": [
+    {
+      "phase": "baseline",
+      "round": 1,
+      "errors": [],
+      "ruleLoad": {
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 110000,
+          "system": 31000
+        },
+        "elapsed": 2207.7263,
+        "batchP50": 0.8815999999997075,
+        "batchP95": 2.0178000000000793,
+        "eventLoopP95": 16.777215,
+        "eventLoopMax": 18.137087
+      },
+      "rendererFrames": {
+        "elapsed": 2503.1000000000004,
+        "maxFrame": 8.400000000000091,
+        "meanFrame": 4.192797319932999,
+        "frames": 597
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "baseline",
+      "round": 2,
+      "errors": [],
+      "ruleLoad": {
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 110000,
+          "system": 47000
+        },
+        "elapsed": 2217.8642000000004,
+        "batchP50": 0.7678999999998268,
+        "batchP95": 1.333100000000286,
+        "eventLoopP95": 17.072127,
+        "eventLoopMax": 18.333695
+      },
+      "rendererFrames": {
+        "elapsed": 2503.2999999970198,
+        "maxFrame": 8.399999999999636,
+        "meanFrame": 4.214309764304747,
+        "frames": 594
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "baseline",
+      "round": 3,
+      "errors": [],
+      "ruleLoad": {
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 31000,
+          "system": 15000
+        },
+        "elapsed": 2214.4952000000003,
+        "batchP50": 0.699500000000171,
+        "batchP95": 1.0682999999999083,
+        "eventLoopP95": 17.055743,
+        "eventLoopMax": 17.383423
+      },
+      "rendererFrames": {
+        "elapsed": 2502.8,
+        "maxFrame": 9.900000000000091,
+        "meanFrame": 4.2205733558178755,
+        "frames": 593
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "baseline",
+      "round": 4,
+      "errors": [],
+      "ruleLoad": {
+        "outputHash": "c429f701f9ac652e34c7fb48f954cc60abf1dd3f1c64b4f6b84ecba5fde3e90d",
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 62000,
+          "system": 94000
+        },
+        "elapsed": 2215.9685000000004,
+        "batchP50": 0.7435999999997875,
+        "batchP95": 1.335399999999936,
+        "eventLoopP95": 17.170431,
+        "eventLoopMax": 18.055167
+      },
+      "rendererFrames": {
+        "elapsed": 2501.5000000119207,
+        "maxFrame": 17.199999999999818,
+        "meanFrame": 4.3963093146079455,
+        "frames": 569
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "candidate",
+      "round": 1,
+      "errors": [],
+      "ruleLoad": {
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 359000,
+          "system": 281000
+        },
+        "elapsed": 2216.7632000000003,
+        "batchP50": 0.6632999999997082,
+        "batchP95": 1.0033000000003085,
+        "eventLoopP95": 16.990207,
+        "eventLoopMax": 17.530879
+      },
+      "rendererFrames": {
+        "elapsed": 2501.1000000000004,
+        "maxFrame": 8.300000000000182,
+        "meanFrame": 4.182441471571907,
+        "frames": 598
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "candidate",
+      "round": 2,
+      "errors": [],
+      "ruleLoad": {
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 110000,
+          "system": 156000
+        },
+        "elapsed": 2226.2763,
+        "batchP50": 0.6716999999998734,
+        "batchP95": 1.2424999999998363,
+        "eventLoopP95": 17.104895,
+        "eventLoopMax": 20.086783
+      },
+      "rendererFrames": {
+        "elapsed": 2501.90000000298,
+        "maxFrame": 8.400000000000546,
+        "meanFrame": 4.240508474581322,
+        "frames": 590
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "candidate",
+      "round": 3,
+      "errors": [],
+      "ruleLoad": {
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 32000,
+          "system": 32000
+        },
+        "elapsed": 2222.0498000000002,
+        "batchP50": 0.6425999999996748,
+        "batchP95": 0.9938000000001921,
+        "eventLoopP95": 16.957439,
+        "eventLoopMax": 17.416191
+      },
+      "rendererFrames": {
+        "elapsed": 2505.5000000029804,
+        "maxFrame": 8.400000000000546,
+        "meanFrame": 4.210924369752909,
+        "frames": 595
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    },
+    {
+      "phase": "candidate",
+      "round": 4,
+      "errors": [],
+      "ruleLoad": {
+        "outputHash": "c429f701f9ac652e34c7fb48f954cc60abf1dd3f1c64b4f6b84ecba5fde3e90d",
+        "batches": 71,
+        "checksum": 15904,
+        "cpu": {
+          "user": 0,
+          "system": 31000
+        },
+        "elapsed": 2207.7893,
+        "batchP50": 0.7992999999996755,
+        "batchP95": 1.2130000000001928,
+        "eventLoopP95": 16.941055,
+        "eventLoopMax": 18.300927
+      },
+      "rendererFrames": {
+        "elapsed": 2501,
+        "maxFrame": 20.5,
+        "meanFrame": 4.357142857142857,
+        "frames": 574
+      },
+      "performancePeak": 0.06250190734863281,
+      "bgmMonitorPeak": 0.031250953674316406,
+      "bgmCapturePeak": 0.015625476837158203,
+      "readingsHash": "5e8536a5002236545d91c94ec4d0b31616de5ef6e63794341749597f20072a2f"
+    }
+  ],
+  "inference": {
+    "fixture": "synthetic ONNX Identity, real CPU ORT + FFmpeg + FFT + four-channel WAV writer",
+    "runs": [
+      {
+        "phase": "baseline",
+        "ms": 1227.7047,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "candidate",
+        "ms": 1191.4238000000003,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "candidate",
+        "ms": 1300.0137,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "baseline",
+        "ms": 1169.5063,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "baseline",
+        "ms": 1232.3222999999998,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "candidate",
+        "ms": 1267.3270000000002,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      }
+    ],
+    "byteIdentical": true
+  },
+  "verification": {
+    "focusedCoverage": {
+      "statements": 91.89,
+      "branches": 91.39,
+      "functions": 97.22,
+      "lines": 93.86,
+      "exitCode": 0
+    },
+    "fullTests": {
+      "filesPassed": 1127,
+      "testsPassed": 11374,
+      "testsSkipped": 1,
+      "exitCode": 0
+    },
+    "candidatePackageExitCode": 0,
+    "packagedProbe": {
+      "status": 1,
+      "stdoutEmpty": true,
+      "stderrEmpty": true,
+      "runtimeHashesMatchTestedArtifacts": true
+    },
+    "lint": {
+      "exitCode": 0
+    },
+    "markdown": {
+      "exitCode": 0,
+      "files": 209
+    },
+    "format": {
+      "exitCode": 0
+    },
+    "rendererBuild": {
+      "exitCode": 0,
+      "artifactOutputUnchanged": true
+    },
+    "runtimePackage": {
+      "entries": 6,
+      "exitCode": 0
+    }
+  },
+  "secondBatch": {
+    "enabled": false,
+    "candidates": [
+      "electron/lib/lyricsProviders/recordingPolicy.js",
+      "electron/lib/lyricsProviders/candidates.js"
+    ],
+    "decision": "Separate opt-in trial only after first-batch acceptance; modest symbol-only gain does not justify automatic expansion into background acquisition, timeline or rate-limit state"
+  },
+  "limits": [
+    "Packaged startup uses actual executable; native playback uses same-version Electron loading actual ASAR with observation preload and in-memory rule bridge",
+    "Synthetic PCM and ONNX Identity fixture, real CPU ORT/FFmpeg/FFT, not real UVR/GPU/OBS or long-duration dropout acceptance",
+    "Warm startup is measurably different within budget; no absolute zero-overhead claim",
+    "Private names elsewhere, public contracts and numerical algorithms remain recoverable"
+  ],
+  "acceptance": {
+    "status": "passed-with-measured-limits",
+    "repeatedStartupBudgetRegression": false,
+    "audioErrors": 0,
+    "allOriginalSamplesRetained": true,
+    "secondBatchImplemented": false,
+    "zeroOverheadClaim": false
+  }
+}

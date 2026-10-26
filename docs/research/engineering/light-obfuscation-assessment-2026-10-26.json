@@ -1,0 +1,325 @@
+{
+  "date": "2026-10-26",
+  "sourceCommit": "eeec8eda8a16fcf9c884db4f46c6969c86cf6f67",
+  "status": "assessment-and-isolated-probe-only",
+  "productionBuildChanged": false,
+  "obfuscatorInstalled": false,
+  "entryBuilds": {
+    "main": {
+      "file": "main.cjs",
+      "bytes": 1209277,
+      "sha256": "bcff609cefdb327cc1427543a0a783c12ce1b558f19b7b68e5570299703b1c38",
+      "moduleCount": 346,
+      "matchesCurrentRuntimeBaseline": true,
+      "candidateModules": [
+        "electron/lib/artwork/releasePolicy.js",
+        "electron/lib/importRecordingPolicy.js",
+        "electron/lib/lyricsProviders/candidates.js",
+        "electron/lib/lyricsProviders/recordingPolicy.js"
+      ]
+    },
+    "preload": {
+      "file": "preload.cjs",
+      "bytes": 35784,
+      "sha256": "4832d4a16424d70c8cf370a2ec5b0d7bf8b5c105066bef07e63caec614dbe424",
+      "moduleCount": 2,
+      "matchesCurrentRuntimeBaseline": true,
+      "candidateModules": []
+    },
+    "performerPreload": {
+      "file": "performer-preload.cjs",
+      "bytes": 1577,
+      "sha256": "5609985fb775830f528c4557d7f2803d89bb612ca325938fd2956bf40459bacc",
+      "moduleCount": 2,
+      "matchesCurrentRuntimeBaseline": true,
+      "candidateModules": []
+    },
+    "readingWorker": {
+      "file": "reading.cjs",
+      "bytes": 5156,
+      "sha256": "52aa410c6d5e633f135711c81c494fb5a158f4200cd19b52b7ea4122d768c488",
+      "moduleCount": 5,
+      "matchesCurrentRuntimeBaseline": true,
+      "candidateModules": []
+    },
+    "separationWorker": {
+      "file": "separation.cjs",
+      "bytes": 158181,
+      "sha256": "ea9ec140e7caa05638f938e7278938656b4ff3e1983be58a6db068a23da1e0d3",
+      "moduleCount": 50,
+      "matchesCurrentRuntimeBaseline": true,
+      "candidateModules": []
+    },
+    "lyricsProbe": {
+      "file": "probe.cjs",
+      "bytes": 2970,
+      "sha256": "ba50507dfc81adafb278ac05178f6bf3df88856190b3f49b365f39514611bc2e",
+      "moduleCount": 2,
+      "matchesCurrentRuntimeBaseline": true,
+      "candidateModules": []
+    }
+  },
+  "candidates": [
+    {
+      "file": "electron/lib/importRecordingPolicy.js",
+      "sourceBytes": 4582,
+      "sourceSha256": "709cfc76108152b0b7e551fa01c7edf4c584c2df36bcd413ae768c0fe50369cc",
+      "exports": [
+        "buildImportObservedTrack",
+        "compareImportRecordingIdentity",
+        "importDurationScore",
+        "importTextEvidence",
+        "importTextScore",
+        "scoreImportRecording"
+      ],
+      "imports": [
+        "./musicIdentity/recordingEvidence.js",
+        "./musicIdentity/observedTrack.js",
+        "./musicTitle.js"
+      ],
+      "declaredFunctionCount": 9,
+      "internalDeclaredFunctions": [
+        "firstDefined",
+        "confidenceFields",
+        "textReason"
+      ],
+      "readableFunctionNamesInCurrentMain": [
+        "firstDefined",
+        "confidenceFields",
+        "buildImportObservedTrack",
+        "importTextEvidence",
+        "textReason",
+        "compareImportRecordingIdentity",
+        "importTextScore",
+        "importDurationScore",
+        "scoreImportRecording"
+      ],
+      "staticReflectionTimerOrEvalNodes": [],
+      "deliveredIn": ["main"],
+      "priority": "first-trial"
+    },
+    {
+      "file": "electron/lib/artwork/releasePolicy.js",
+      "sourceBytes": 8307,
+      "sourceSha256": "5c6d6a07f67798506a737a2d2e5853c6adb764c49a762f856f9cf57330e24d22",
+      "exports": [
+        "canonicalArtworkIdentity",
+        "evaluateArtworkCandidate",
+        "rankArtworkCandidates",
+        "rankArtworkProposals"
+      ],
+      "imports": [
+        "../musicIdentity/recordingEvidence.js",
+        "../musicIdentity/observedTrack.js"
+      ],
+      "declaredFunctionCount": 17,
+      "internalDeclaredFunctions": [
+        "textScore",
+        "appendTextReason",
+        "normalizeType",
+        "yearFrom",
+        "expectedObservation",
+        "candidateIsrc",
+        "candidateObservation",
+        "statusEvidence",
+        "typeEvidence",
+        "durationEvidence",
+        "yearEvidence",
+        "confidenceFor",
+        "compareEvaluatedCandidates"
+      ],
+      "readableFunctionNamesInCurrentMain": [
+        "textScore",
+        "appendTextReason",
+        "normalizeType",
+        "yearFrom",
+        "expectedObservation",
+        "candidateIsrc",
+        "candidateObservation",
+        "statusEvidence",
+        "typeEvidence",
+        "durationEvidence",
+        "yearEvidence",
+        "confidenceFor",
+        "evaluateArtworkCandidate",
+        "compareEvaluatedCandidates",
+        "rankArtworkProposals",
+        "canonicalArtworkIdentity",
+        "rankArtworkCandidates"
+      ],
+      "staticReflectionTimerOrEvalNodes": [],
+      "deliveredIn": ["main"],
+      "priority": "first-trial"
+    },
+    {
+      "file": "electron/lib/lyricsProviders/recordingPolicy.js",
+      "sourceBytes": 4114,
+      "sourceSha256": "8995e5d394f8b9e8637d5e78e295da01c9baefa10b71277f0ef64e12e5cb41e2",
+      "exports": [
+        "classifyLyricsMatch",
+        "compareLyricsRecordingIdentity",
+        "isAutomaticLyricsCandidate",
+        "lyricsTextEvidence",
+        "lyricsTextMatchScore",
+        "scoreLyricsTextEvidence"
+      ],
+      "imports": ["../musicIdentity/recordingEvidence.js", "../musicTitle.js"],
+      "declaredFunctionCount": 9,
+      "internalDeclaredFunctions": [
+        "firstDefined",
+        "textReason",
+        "passesMatchRule"
+      ],
+      "readableFunctionNamesInCurrentMain": [
+        "firstDefined",
+        "lyricsTextEvidence",
+        "scoreLyricsTextEvidence",
+        "lyricsTextMatchScore",
+        "textReason",
+        "compareLyricsRecordingIdentity",
+        "passesMatchRule",
+        "classifyLyricsMatch",
+        "isAutomaticLyricsCandidate"
+      ],
+      "staticReflectionTimerOrEvalNodes": [],
+      "deliveredIn": ["main"],
+      "priority": "defer-until-first-trial-accepted"
+    },
+    {
+      "file": "electron/lib/lyricsProviders/candidates.js",
+      "sourceBytes": 9996,
+      "sourceSha256": "6a48606c7265d9c839497c7bb870657cf9cd87aeca1aba1e058742b11867167c",
+      "exports": [
+        "aggregateLyricsProviderResults",
+        "compareUnifiedLyricsCandidates",
+        "selectAutomaticLyricsCandidate"
+      ],
+      "imports": [
+        "crypto",
+        "../musicTitle.js",
+        "./timelineComparison.js",
+        "./recordingPolicy.js"
+      ],
+      "declaredFunctionCount": 14,
+      "internalDeclaredFunctions": [
+        "trackIdentity",
+        "unifiedMatch",
+        "capabilityOrder",
+        "stableCandidateId",
+        "candidateDurationDelta",
+        "durationOrder",
+        "sameRecording",
+        "recordingKey",
+        "groupCandidates",
+        "boundedProviderStatus",
+        "aggregateStatus"
+      ],
+      "readableFunctionNamesInCurrentMain": [
+        "trackIdentity",
+        "unifiedMatch",
+        "capabilityOrder",
+        "stableCandidateId",
+        "candidateDurationDelta",
+        "durationOrder",
+        "compareUnifiedLyricsCandidates",
+        "selectAutomaticLyricsCandidate",
+        "sameRecording",
+        "recordingKey",
+        "groupCandidates",
+        "boundedProviderStatus",
+        "aggregateStatus",
+        "aggregateLyricsProviderResults"
+      ],
+      "staticReflectionTimerOrEvalNodes": [],
+      "deliveredIn": ["main"],
+      "priority": "defer-until-first-trial-accepted"
+    }
+  ],
+  "isolatedSymbolProbe": {
+    "compiler": "installed Rolldown 1.2.15 / Oxc",
+    "modules": [
+      {
+        "file": "electron/lib/importRecordingPolicy.js",
+        "privateDeclaredFunctions": 3,
+        "remainingPrivateDeclaredFunctionNames": [],
+        "exportsPreserved": true,
+        "exportFunctionNamesAndArityPreserved": true,
+        "comparisons": 204,
+        "sourceBytes": 4582,
+        "scratchOutputBytes": 2759,
+        "scope": "Isolated module probe only; not a release bundle or performance acceptance",
+        "options": {
+          "module": false,
+          "compress": false,
+          "mangle": {
+            "toplevel": true,
+            "keepNames": false,
+            "reserved": [
+              "exports",
+              "module",
+              "require",
+              "__dirname",
+              "__filename",
+              "buildImportObservedTrack",
+              "compareImportRecordingIdentity",
+              "importDurationScore",
+              "importTextEvidence",
+              "importTextScore",
+              "scoreImportRecording"
+            ]
+          },
+          "sourcemap": false
+        }
+      },
+      {
+        "file": "electron/lib/artwork/releasePolicy.js",
+        "privateDeclaredFunctions": 13,
+        "remainingPrivateDeclaredFunctionNames": [],
+        "exportsPreserved": true,
+        "exportFunctionNamesAndArityPreserved": true,
+        "comparisons": 31,
+        "sourceBytes": 8307,
+        "scratchOutputBytes": 4442,
+        "scope": "Isolated module probe only; not a release bundle or performance acceptance",
+        "options": {
+          "module": false,
+          "compress": false,
+          "mangle": {
+            "toplevel": true,
+            "keepNames": false,
+            "reserved": [
+              "exports",
+              "module",
+              "require",
+              "__dirname",
+              "__filename",
+              "canonicalArtworkIdentity",
+              "evaluateArtworkCandidate",
+              "rankArtworkCandidates",
+              "rankArtworkProposals"
+            ]
+          },
+          "sourcemap": false
+        }
+      }
+    ],
+    "outputComparisonsPassed": 235,
+    "releaseIntegrationTested": false,
+    "performanceMeasured": false
+  },
+  "baselineTests": {
+    "filesPassed": 6,
+    "testsPassed": 84,
+    "exitCode": 0,
+    "testsTransformedProduct": false
+  },
+  "officialDocumentation": [
+    "https://github.com/javascript-obfuscator/javascript-obfuscator/blob/5.9.0/README.md",
+    "https://rolldown.rs/reference/OutputOptions.keepNames"
+  ],
+  "limits": [
+    "Static caller and per-entry graph classification is not runtime frequency profiling",
+    "No formal obfuscated artifact, native playback or performance acceptance in this assessment",
+    "Private symbol renaming only raises semantic reading cost; constants, public exports and behavior remain recoverable"
+  ]
+}
