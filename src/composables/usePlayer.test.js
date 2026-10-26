@@ -1858,6 +1858,44 @@ describe('transpose AudioWorklet routing', () => {
     expect(player.state.captureError).toBeNull();
   });
 
+  it.each([
+    ['transpose', 'setTransposeSemitones', 2],
+    ['fine pitch', 'setPitchCents', 25],
+  ])(
+    'keeps capture dry when %s resets during its pitch initialization',
+    async (_label, setter, value) => {
+      const player = await loadPlayer();
+      await player[setter](value);
+      const pendingWorklet = createDeferred();
+      MockAudioContext.workletDeferredBySinkId.set(
+        'reset-during-init',
+        pendingWorklet,
+      );
+
+      const selection = player.applyCaptureDevice('reset-during-init');
+      await vi.waitFor(() =>
+        expect(
+          MockAudioContext.instances[1].audioWorklet.addModule,
+        ).toHaveBeenCalled(),
+      );
+      await player[setter](0);
+      const captureContext = MockAudioContext.instances[1];
+      expect(pitchCrossfade(captureContext)).toEqual({ dry: 1, wet: 0 });
+
+      pendingWorklet.resolve();
+      await selection;
+
+      expect(player.state.transposeSemitones).toBe(0);
+      expect(player.state.pitchCents).toBe(0);
+      expect(player.state.captureDeviceId).toBe('reset-during-init');
+      expect(pitchCrossfade(captureContext)).toEqual({ dry: 1, wet: 0 });
+      expect(pitchCrossfade(MockAudioContext.instances[0])).toEqual({
+        dry: 1,
+        wet: 0,
+      });
+    },
+  );
+
   it('does not connect a stale pitch worklet into a replacement graph', async () => {
     const player = await loadPlayer();
     const { MockPitchNode } = await import('signalsmith-stretch');

@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-26",
+  "timezone": "Asia/Taipei",
+  "sourceCommit": "74714d6f",
+  "appVersion": "0.5.1",
+  "initialWorkingTreeClean": true,
+  "scope": "read-only source and existing evidence investigation; experiment design",
+  "rootCause": "unresolved",
+  "newAudibleReproduction": false,
+  "newDeviceRecording": false,
+  "productionSettingsChanged": false,
+  "obsChanged": false,
+  "playbackCodeChanged": false,
+  "existingDiagnostics": {
+    "location": "conventional application logs directory; not queried from running app",
+    "filesFound": 1,
+    "file": "diagnostics.jsonl",
+    "tailLimitPerFile": 2000,
+    "eventsRead": 68,
+    "firstTimestampUtc": "2026-10-25T04:34:34.169Z",
+    "lastTimestampUtc": "2026-10-25T17:08:06.259Z",
+    "relevantEvents": [
+      {
+        "timestampUtc": "2026-10-25T16:24:05.783Z",
+        "source": "audio-output",
+        "operation": "apply-capture-device",
+        "code": "AUDIO_OUTPUT_DEVICE_UNAVAILABLE",
+        "appVersion": "0.5.0",
+        "electronVersion": "43.8.3"
+      }
+    ],
+    "symptomCorrelationAvailable": false,
+    "privateIdentifiersOmitted": true
+  },
+  "historicalEvidence": [
+    {
+      "reference": "tasks/audio-runtime-audit/result-idle-dsp.json",
+      "synthetic": true,
+      "silentSink": true,
+      "pitchCallbackCount": 768,
+      "returnedToZeroCallbackCount": 768,
+      "approximatePhaseSeconds": 2,
+      "provesAudibleDistortion": false
+    },
+    {
+      "reference": "tasks/audio-runtime-audit/result-dual-partial.json",
+      "lastStage": "starting-bypass",
+      "complete": false
+    },
+    {
+      "reference": "docs/research/engineering/runtime-packaging-verification-2026-10-26.md",
+      "realDeviceAndObsAcceptance": false
+    },
+    {
+      "reference": "docs/research/engineering/light-symbols-verification-2026-10-26.md",
+      "realDeviceAndObsAcceptance": false
+    }
+  ],
+  "candidates": [
+    {
+      "id": "pitch-node-retained-after-zero",
+      "source": "src/composables/player/usePlayerAudioGraph.js",
+      "status": "source and historical callback evidence; causal role unknown"
+    },
+    {
+      "id": "capture-pitch-initialization-after-reset",
+      "source": "src/composables/player/usePlayerAudioGraph.js",
+      "function": "syncCaptureChainToCurrentState",
+      "status": "source-derived interleaving; not reproduced"
+    },
+    {
+      "id": "cross-context-media-stream-bridges",
+      "source": "src/composables/player/usePlayerAudioGraph.js",
+      "status": "topology verified; drift and device behavior unmeasured"
+    },
+    {
+      "id": "monitor-pitch-init-after-cleanup",
+      "source": "src/composables/player/usePlayerAudioGraph.js",
+      "status": "missing post-await lifetime guard observed; not reproduced"
+    }
+  ],
+  "verification": {
+    "focusedTests": {
+      "command": "npm.cmd test -- src/composables/usePlayer.test.js src/composables/usePlayer.playbackPhase.test.js src/composables/player/usePlayerDiagnostics.test.js src/composables/player/usePlayerAudioGraph.pitch.test.js src/composables/player/usePlayerLibrarySync.test.js src/bgm/audioDeck.test.js src/composables/useAudioOutput.test.js electron/main/mediaProtocol.test.js electron/lib/library/range.test.js",
+      "exitCode": 0,
+      "filesPassed": 9,
+      "testsPassed": 135,
+      "provesAudibleQuality": false
+    },
+    "markdownLint": {
+      "command": "npm.cmd run lint:md",
+      "exitCode": 0,
+      "filesChecked": 211,
+      "issues": 0
+    },
+    "formatCheck": {
+      "command": "npm.cmd exec -- prettier --check docs/research/README.md docs/research/engineering/playback-distortion-investigation-2026-10-26.md docs/research/engineering/playback-distortion-investigation-2026-10-26.json",
+      "exitCode": 0
+    },
+    "diffCheck": {
+      "command": "git diff --check; new documentation checked separately with git diff --no-index --check",
+      "trackedExitCode": 0,
+      "newFileExitCodes": [1, 1],
+      "whitespaceIssueOutput": "none",
+      "note": "--no-index implies --exit-code; new files differ from NUL and return 1 without whitespace issues"
+    },
+    "newBuildOrPackage": "not run; documentation-only changes"
+  },
+  "implementation": "pending user check-in required by supplied AGENTS.md workflow"
+}

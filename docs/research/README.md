@@ -30,6 +30,7 @@
 
 ## 音訊處理與分析
 
+- [播放偶發失真實驗方案](engineering/playback-distortion-investigation-2026-10-26.md)與[第一階段診斷結果](engineering/playback-distortion-diagnostics-2026-10-26.md)（10-26）：隔離時間線／25 秒 PCM、三種編碼原曲對照與 capture pitch 初始化競態修正；電子音根因仍未定位，真實裝置／OBS 未驗。
 - [HubertFA CPU／DirectML 對照](audio/lyrics-hubertfa-directml-2026-10-21.md)（10-21）：四案實測完成，未接產品
 - [Whisper small GPU 容量與投入](audio/whisper-small-gpu-cost-2026-10-21.md)（10-21）：成本評估完成，GPU 實測暫緩
 - [GPU 共用偏好](audio/processing-gpu-shared-preference-2026-10-21.md)（10-21）：提案暫緩；目前 CPU 足夠，既有分離 DirectML 不變

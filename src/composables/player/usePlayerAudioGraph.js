@@ -505,8 +505,13 @@ export function usePlayerAudioGraph({
     const node = await ensureCapturePitchNode(graph);
     if (!node || !isCaptureGraphReady(graph)) return false;
     syncPitchNodeToCurrentState(node);
-    rampGain(graph.context, graph.dry.gain, 0);
-    rampGain(graph.context, graph.wet.gain, 1);
+    // Controls can reset while registration is pending. Choose the route from
+    // current intent, just as the processor schedule above does.
+    const active =
+      state.transposeSemitones !== PLAYER_AUDIO_DEFAULTS.transposeSemitones ||
+      state.pitchCents !== PLAYER_AUDIO_DEFAULTS.pitchCents;
+    rampGain(graph.context, graph.dry.gain, active ? 0 : 1);
+    rampGain(graph.context, graph.wet.gain, active ? 1 : 0);
     return true;
   }
 

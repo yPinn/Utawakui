@@ -1,0 +1,1427 @@
+{
+  "date": "2026-10-26",
+  "timezone": "Asia/Taipei",
+  "sourceCommit": "74714d6f",
+  "appVersion": "0.5.1",
+  "includesUncommittedChanges": true,
+  "rootCauseOfReportedDistortion": "unresolved",
+  "userClarification": "most tracks affected",
+  "productionSettingsChanged": false,
+  "formalObsChanged": false,
+  "realDeviceRecording": false,
+  "newPackageBuilt": false,
+  "instrumentation": {
+    "directory": "tasks/playback-distortion-20261026",
+    "electron": "43.8.3",
+    "signalsmith": "1.3.2",
+    "isolatedProfilePerRun": true,
+    "silentSinkForAutomaticRuns": true,
+    "recorders": 2,
+    "preSeconds": 15,
+    "postSeconds": 10,
+    "framesPer48kClip": 1200000,
+    "bytesPer48kPlanarClip": 9600000,
+    "traceCapacity": 20000,
+    "nativeUnderrunCounter": "unavailable",
+    "gcObservation": "unavailable",
+    "internalPcmDoesNotVerifyDeviceOutput": true,
+    "overfullSamplesThreshold": "absolute sample value >= 1; not proof of device clipping"
+  },
+  "captureInitializationRace": {
+    "status": "reproduced and locally fixed; relationship to reported noise unproven",
+    "failingRegressionTestsBeforeFix": 2,
+    "passingRegressionTestsAfterFix": 2,
+    "before": [
+      {
+        "run": "run-full-dry-uE7JOc",
+        "options": {
+          "mode": "full-dry",
+          "record": "on",
+          "capture": false,
+          "hardware": false,
+          "manual": false,
+          "defer": true,
+          "seconds": 16,
+          "sampleRate": 48000,
+          "channels": 2
+        },
+        "source": {
+          "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+          "sampleRate": 48000,
+          "channels": 2,
+          "frequencies": [440, 660, 880, 1320],
+          "durationSeconds": 60
+        },
+        "errors": [],
+        "completed": true,
+        "durationMs": 28142,
+        "traceDropped": 0,
+        "decodedMonitorIdentical": true,
+        "recordings": [
+          {
+            "label": "monitor-output",
+            "frames": 1200000,
+            "completePostroll": true,
+            "markerOffsetFrames": 720000,
+            "stats": {
+              "frames": 1269632,
+              "callbacks": 9919,
+              "nonfiniteSamples": 0,
+              "overfullSamples": 0,
+              "missingChannelSamples": 0,
+              "contextGapFrames": 0,
+              "peak": 0.12500381469726562,
+              "sumSquares": 12399.056040853722,
+              "zeroSamples": 5290
+            },
+            "sha256": "4a8acbb51ba8a4434b45c1a61d2dbd3c16575901fc79d4c75587378be0e52444"
+          },
+          {
+            "label": "source-decoded",
+            "frames": 1200000,
+            "completePostroll": true,
+            "markerOffsetFrames": 720000,
+            "stats": {
+              "frames": 1269632,
+              "callbacks": 9919,
+              "nonfiniteSamples": 0,
+              "overfullSamples": 0,
+              "missingChannelSamples": 0,
+              "contextGapFrames": 0,
+              "peak": 0.12500381469726562,
+              "sumSquares": 12399.056040853722,
+              "zeroSamples": 5290
+            },
+            "sha256": "4a8acbb51ba8a4434b45c1a61d2dbd3c16575901fc79d4c75587378be0e52444"
+          }
+        ],
+        "rendererCpuMedian": 0.5052497289682841,
+        "mainLoopP95MedianMs": 32.309247,
+        "heartbeatP95Ms": 1.5,
+        "captureGainsAfterRace": [0, 1, 0.5, 0, 1],
+        "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+      },
+      {
+        "run": "run-full-dry-2RWE6J",
+        "options": {
+          "mode": "full-dry",
+          "record": "on",
+          "capture": false,
+          "hardware": false,
+          "manual": false,
+          "defer": true,
+          "seconds": 16,
+          "sampleRate": 48000,
+          "channels": 2
+        },
+        "source": {
+          "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+          "sampleRate": 48000,
+          "channels": 2,
+          "frequencies": [440, 660, 880, 1320],
+          "durationSeconds": 60
+        },
+        "errors": [],
+        "completed": true,
+        "durationMs": 28283,
+        "traceDropped": 0,
+        "decodedMonitorIdentical": null,
+        "recordings": [
+          {
+            "label": "monitor-output",
+            "frames": 1200000,
+            "completePostroll": true,
+            "markerOffsetFrames": 720000,
+            "stats": {
+              "frames": 1270144,
+              "callbacks": 9923,
+              "nonfiniteSamples": 0,
+              "overfullSamples": 0,
+              "missingChannelSamples": 0,
+              "contextGapFrames": 0,
+              "peak": 0.12500381469726562,
+              "sumSquares": 12397.1784182037,
+              "zeroSamples": 5244
+            },
+            "sha256": "1301f373e35fe569001415dc95807d5eed7c399c87e99aa7177e3f8a5e7c7dd4"
+          },
+          {
+            "label": "capture-output",
+            "frames": 1200000,
+            "completePostroll": true,
+            "markerOffsetFrames": 720000,
+            "stats": {
+              "frames": 1268096,
+              "callbacks": 9907,
+              "nonfiniteSamples": 0,
+              "overfullSamples": 0,
+              "missingChannelSamples": 0,
+              "contextGapFrames": 0,
+              "peak": 0.062501922249794,
+              "sumSquares": 3080.4947951862955,
+              "zeroSamples": 1924
+            },
+            "sha256": "c40ea79eb4457cc049f21fb57d585ed68e84b187b08bc01c4b3e9d7800f04ac9"
+          }
+        ],
+        "rendererCpuMedian": 0.510768333822089,
+        "mainLoopP95MedianMs": 32.440319,
+        "heartbeatP95Ms": 1.2000000029802322,
+        "captureGainsAfterRace": [0, 1, 0.5, 0, 1],
+        "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+      }
+    ],
+    "after": {
+      "run": "run-full-dry-oavjJR",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": true,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 28899,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1269632,
+            "callbacks": 9919,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12392.200698921131,
+            "zeroSamples": 5242
+          },
+          "sha256": "7982b4abb8e0c95aaacfcc51157161b0328c2274219c612132d8dd9f4b99783e"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1267200,
+            "callbacks": 9900,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.06250190734863281,
+            "sumSquares": 3091.499448584879,
+            "zeroSamples": 7195
+          },
+          "sha256": "7384045ce73083c2f30b1983418ad9d50cd9263c0eca7f4db0c28d02dd84f1ff"
+        }
+      ],
+      "rendererCpuMedian": 0.49285668134511584,
+      "mainLoopP95MedianMs": 32.276479,
+      "heartbeatP95Ms": 1.7000000029802322,
+      "captureGainsAfterRace": [0, 1, 0.5, 1, 0],
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    "correction": "re-evaluate transpose and cents after asynchronous capture processor initialization before choosing dry/wet targets"
+  },
+  "observerCostExploratoryPair": {
+    "off": {
+      "run": "run-minimal-3UXzJM",
+      "options": {
+        "mode": "minimal",
+        "record": "off",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 17177,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [],
+      "rendererCpuMedian": 0.11992228049024917,
+      "mainLoopP95MedianMs": 32.489471,
+      "heartbeatP95Ms": 13.199999988079071,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    "on": {
+      "run": "run-minimal-2Ronk9",
+      "options": {
+        "mode": "minimal",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27255,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": true,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1247616,
+            "callbacks": 9747,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12184.134540185429,
+            "zeroSamples": 5198
+          },
+          "sha256": "3811bf42b7e6e731538be120e7d150533078a78c53ecb4eb3a2762ae243524e0"
+        },
+        {
+          "label": "source-decoded",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1247616,
+            "callbacks": 9747,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12184.134540185429,
+            "zeroSamples": 5198
+          },
+          "sha256": "3811bf42b7e6e731538be120e7d150533078a78c53ecb4eb3a2762ae243524e0"
+        }
+      ],
+      "rendererCpuMedian": 0.21077749129766854,
+      "mainLoopP95MedianMs": 32.391167,
+      "heartbeatP95Ms": 10.400000005960464,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    "limitation": "one short pair; not zero overhead or a performance acceptance result; renderer CPU is Electron percentCPUUsage"
+  },
+  "syntheticShortComparisons": [
+    {
+      "condition": "minimal-on",
+      "run": "run-minimal-2Ronk9",
+      "options": {
+        "mode": "minimal",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27255,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": true,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1247616,
+            "callbacks": 9747,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12184.134540185429,
+            "zeroSamples": 5198
+          },
+          "sha256": "3811bf42b7e6e731538be120e7d150533078a78c53ecb4eb3a2762ae243524e0"
+        },
+        {
+          "label": "source-decoded",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1247616,
+            "callbacks": 9747,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12184.134540185429,
+            "zeroSamples": 5198
+          },
+          "sha256": "3811bf42b7e6e731538be120e7d150533078a78c53ecb4eb3a2762ae243524e0"
+        }
+      ],
+      "rendererCpuMedian": 0.21077749129766854,
+      "mainLoopP95MedianMs": 32.391167,
+      "heartbeatP95Ms": 10.400000005960464,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    {
+      "condition": "zero-monitor",
+      "run": "run-full-zero-TyXxu1",
+      "options": {
+        "mode": "full-zero",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27564,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": true,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248384,
+            "callbacks": 9753,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12191.661451367689,
+            "zeroSamples": 5201
+          },
+          "sha256": "718987155d757994c21fc947f97c095367e235b4a7d6633ad19981633e6b5b21"
+        },
+        {
+          "label": "source-decoded",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248384,
+            "callbacks": 9753,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12191.661451367689,
+            "zeroSamples": 5201
+          },
+          "sha256": "718987155d757994c21fc947f97c095367e235b4a7d6633ad19981633e6b5b21"
+        }
+      ],
+      "rendererCpuMedian": 0.3408698761366277,
+      "mainLoopP95MedianMs": 32.374783,
+      "heartbeatP95Ms": 13.299999997019768,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    {
+      "condition": "dry-capture",
+      "run": "run-full-dry-ChWL09",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 28030,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12187.910919496904,
+            "zeroSamples": 5200
+          },
+          "sha256": "06c1d99125fd23e139a554aac3324f3140cad8356bd854d21724d59d2d5832ac"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1246976,
+            "callbacks": 9742,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.06250190734863281,
+            "sumSquares": 3043.4996255767555,
+            "zeroSamples": 6026
+          },
+          "sha256": "ad53c23204174e007dcfdfa89bd1857f95b396964704a6e0f6e4fdeee13abe0f"
+        }
+      ],
+      "rendererCpuMedian": 0.2912405956933386,
+      "mainLoopP95MedianMs": 32.309247,
+      "heartbeatP95Ms": 1.2000000029802322,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    {
+      "condition": "zero-capture",
+      "run": "run-full-zero-JC4R7r",
+      "options": {
+        "mode": "full-zero",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "549ec3d2e8e618e3733cd0f8d3d9bacb743bd1899ebbab4b9c60dfc0d60aac82",
+        "sampleRate": 48000,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27924,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248384,
+            "callbacks": 9753,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12500381469726562,
+            "sumSquares": 12191.661451367689,
+            "zeroSamples": 5201
+          },
+          "sha256": "718987155d757994c21fc947f97c095367e235b4a7d6633ad19981633e6b5b21"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.06250190734863281,
+            "sumSquares": 3045.8095695160205,
+            "zeroSamples": 6158
+          },
+          "sha256": "bbd43a0da993565a365f53115d09db7671937760a1bae19a0ba46d682e3300f9"
+        }
+      ],
+      "rendererCpuMedian": 0.5270045710407602,
+      "mainLoopP95MedianMs": 32.309247,
+      "heartbeatP95Ms": 13.900000005960464,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    {
+      "condition": "four-channel",
+      "run": "run-full-dry-CVCkiA",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 4
+      },
+      "source": {
+        "sha256": "45c56fafaa7a12d830597199e9d3975b2c477ad66c13fca03bbf3c7009197c0b",
+        "sampleRate": 48000,
+        "channels": 4,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27411,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248512,
+            "callbacks": 9754,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.12866602838039398,
+            "sumSquares": 12383.28884024357,
+            "zeroSamples": 5202
+          },
+          "sha256": "174f5aa9e767595555de93faf3b220305703b3495e6e8d25af6c1a67aa400c54"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.06250190734863281,
+            "sumSquares": 3046.928679487243,
+            "zeroSamples": 5264
+          },
+          "sha256": "60ebe572010e004368f4a952d54514c000099f3acae83201f0a20eba14ea7706"
+        }
+      ],
+      "rendererCpuMedian": 0.3049911218209788,
+      "mainLoopP95MedianMs": 32.063487,
+      "heartbeatP95Ms": 1.2000000029802322,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    },
+    {
+      "condition": "44k-source",
+      "run": "run-full-dry-eKDiXj",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "seconds": 16,
+        "sampleRate": 44100,
+        "channels": 2
+      },
+      "source": {
+        "sha256": "d8bed3b96060248df6415fe8ced7d3b5ad2e42f8d2362bc8640dd56b40c9352a",
+        "sampleRate": 44100,
+        "channels": 2,
+        "frequencies": [440, 660, 880, 1320],
+        "durationSeconds": 60
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27871,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": true,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.1250123679637909,
+            "sumSquares": 12188.0258586288,
+            "zeroSamples": 0
+          },
+          "sha256": "ea0572175c3a7b68a72dae5b47733b7c7402d5dea8a361b9fd777192806434f8"
+        },
+        {
+          "label": "source-decoded",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.1250123679637909,
+            "sumSquares": 12188.0258586288,
+            "zeroSamples": 0
+          },
+          "sha256": "ea0572175c3a7b68a72dae5b47733b7c7402d5dea8a361b9fd777192806434f8"
+        }
+      ],
+      "rendererCpuMedian": 0.2151982735203886,
+      "mainLoopP95MedianMs": 32.391167,
+      "heartbeatP95Ms": 5.800000011920929,
+      "captureGainsAfterRace": null,
+      "graphHash": "df44ae0fc766cea3ddb8888b49c72b9482c2de003c7a63136317513f688b7989"
+    }
+  ],
+  "realSourceShortComparisons": [
+    {
+      "condition": "opus-minimal",
+      "run": "run-minimal-a2gyCG",
+      "options": {
+        "mode": "minimal",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "sourceOrdinal": 1,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "ordinal": 1,
+        "extension": "webm",
+        "sha256": "efe16fb94c6472ef2d76d6ff9cd10231069374bf8ce1decfac95d45f0073d6b4",
+        "sampleRate": 48000,
+        "channels": 2,
+        "codec": "OPUS",
+        "container": "EBML/webm",
+        "durationSeconds": 123.041
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27966,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": true,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 1836,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1526294946670532,
+            "sumSquares": 88082.97064235287,
+            "zeroSamples": 0
+          },
+          "sha256": "f4570ad5d8f437ac69d97655b153f28362be8ec14ed2a7b94d43f8e5ac90fd41"
+        },
+        {
+          "label": "source-decoded",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 1836,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1526294946670532,
+            "sumSquares": 88082.97064235287,
+            "zeroSamples": 0
+          },
+          "sha256": "f4570ad5d8f437ac69d97655b153f28362be8ec14ed2a7b94d43f8e5ac90fd41"
+        }
+      ],
+      "rendererCpuMedian": 0.22739027359835287,
+      "mainLoopP95MedianMs": 32.456703,
+      "heartbeatP95Ms": 1.2000000029802322,
+      "captureGainsAfterRace": null,
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    {
+      "condition": "opus-dry",
+      "run": "run-full-dry-v71o4A",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": false,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "sourceOrdinal": 1,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "ordinal": 1,
+        "extension": "webm",
+        "sha256": "efe16fb94c6472ef2d76d6ff9cd10231069374bf8ce1decfac95d45f0073d6b4",
+        "sampleRate": 48000,
+        "channels": 2,
+        "codec": "OPUS",
+        "container": "EBML/webm",
+        "durationSeconds": 123.041
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27902,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": true,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 1836,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1526294946670532,
+            "sumSquares": 88082.97064235287,
+            "zeroSamples": 0
+          },
+          "sha256": "f4570ad5d8f437ac69d97655b153f28362be8ec14ed2a7b94d43f8e5ac90fd41"
+        },
+        {
+          "label": "source-decoded",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 1836,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1526294946670532,
+            "sumSquares": 88082.97064235287,
+            "zeroSamples": 0
+          },
+          "sha256": "f4570ad5d8f437ac69d97655b153f28362be8ec14ed2a7b94d43f8e5ac90fd41"
+        }
+      ],
+      "rendererCpuMedian": 0.24829610967881455,
+      "mainLoopP95MedianMs": 32.440319,
+      "heartbeatP95Ms": 9.700000002980232,
+      "captureGainsAfterRace": null,
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    {
+      "condition": "opus-zero-capture",
+      "run": "run-full-zero-3hCRX9",
+      "options": {
+        "mode": "full-zero",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "sourceOrdinal": 1,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "ordinal": 1,
+        "extension": "webm",
+        "sha256": "efe16fb94c6472ef2d76d6ff9cd10231069374bf8ce1decfac95d45f0073d6b4",
+        "sampleRate": 48000,
+        "channels": 2,
+        "codec": "OPUS",
+        "container": "EBML/webm",
+        "durationSeconds": 123.041
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27873,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 1843,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1526294946670532,
+            "sumSquares": 88897.59001211637,
+            "zeroSamples": 0
+          },
+          "sha256": "144c42c58e3970f732192b46ee7e9548d365b84530dd877428f7954d6aee5239"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.5763147473335266,
+            "sumSquares": 22090.108319001007,
+            "zeroSamples": 960
+          },
+          "sha256": "83ceb1cb104ce8eb57f198a7b6151d6f84b95271e237a7a3caac15030a8ef060"
+        }
+      ],
+      "rendererCpuMedian": 0.5313027675578246,
+      "mainLoopP95MedianMs": 32.260095,
+      "heartbeatP95Ms": 2,
+      "captureGainsAfterRace": null,
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    {
+      "condition": "mp3-dry-capture",
+      "run": "run-full-dry-KzBqxz",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "sourceOrdinal": 2,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "ordinal": 2,
+        "extension": "mp3",
+        "sha256": "dd3619df75009cb0e97088d2b059d693390645ce611a22b81eca356bf3941ebd",
+        "sampleRate": 48000,
+        "channels": 2,
+        "codec": "MPEG 1 Layer 3",
+        "container": "MPEG",
+        "durationSeconds": 23.136
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27938,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248384,
+            "callbacks": 9753,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.2853480577468872,
+            "sumSquares": 4955.071616110632,
+            "zeroSamples": 1431
+          },
+          "sha256": "654ec0759eac0f34150eef8f04ba257807a61dc1b2f444fee59e553228b8dc91"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.1426740288734436,
+            "sumSquares": 1235.242907971419,
+            "zeroSamples": 2263
+          },
+          "sha256": "632ed1a2278aff125e7ad6b8634d103298eb5d27953a191bea23c39777e8c3c9"
+        }
+      ],
+      "rendererCpuMedian": 0.3085197642392201,
+      "mainLoopP95MedianMs": 32.555007,
+      "heartbeatP95Ms": 1.5999999940395355,
+      "captureGainsAfterRace": null,
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    {
+      "condition": "aac-dry-capture",
+      "run": "run-full-dry-sS6c1p",
+      "options": {
+        "mode": "full-dry",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "sourceOrdinal": 3,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "ordinal": 3,
+        "extension": "m4a",
+        "sha256": "39ef637abf8a8079f24f21f6c2b573fa544b095b8e51bb850b956d1ced78c828",
+        "sampleRate": 44100,
+        "channels": 2,
+        "codec": "MPEG-4/AAC",
+        "container": "isom/iso2/mp41",
+        "durationSeconds": 218.92095238095237
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 28538,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248384,
+            "callbacks": 9753,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 216,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1816905736923218,
+            "sumSquares": 240165.21772783552,
+            "zeroSamples": 0
+          },
+          "sha256": "06e421fa4ff5bd7ab83a329f089c92feaed75ab4711d33b8e6715907e02329a9"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248000,
+            "callbacks": 9750,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.5908452868461609,
+            "sumSquares": 60025.394205461365,
+            "zeroSamples": 832
+          },
+          "sha256": "48c3fbb1748a1823aff9ff307dfacf3ca187c6cb35aa9a4f1a97275bec4d3f72"
+        }
+      ],
+      "rendererCpuMedian": 0.27577750154391856,
+      "mainLoopP95MedianMs": 32.391167,
+      "heartbeatP95Ms": 1.2999999970197678,
+      "captureGainsAfterRace": null,
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    },
+    {
+      "condition": "aac-zero-capture",
+      "run": "run-full-zero-tEvw93",
+      "options": {
+        "mode": "full-zero",
+        "record": "on",
+        "capture": true,
+        "hardware": false,
+        "manual": false,
+        "defer": false,
+        "sourceOrdinal": 3,
+        "seconds": 16,
+        "sampleRate": 48000,
+        "channels": 2
+      },
+      "source": {
+        "ordinal": 3,
+        "extension": "m4a",
+        "sha256": "39ef637abf8a8079f24f21f6c2b573fa544b095b8e51bb850b956d1ced78c828",
+        "sampleRate": 44100,
+        "channels": 2,
+        "codec": "MPEG-4/AAC",
+        "container": "isom/iso2/mp41",
+        "durationSeconds": 218.92095238095237
+      },
+      "errors": [],
+      "completed": true,
+      "durationMs": 27665,
+      "traceDropped": 0,
+      "decodedMonitorIdentical": null,
+      "recordings": [
+        {
+          "label": "monitor-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1248512,
+            "callbacks": 9754,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 216,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 1.1816905736923218,
+            "sumSquares": 240347.5626559338,
+            "zeroSamples": 0
+          },
+          "sha256": "795e79e499619e88fa8e31a073ce5fed7b48fef21a47a65ebabea0abc77a0512"
+        },
+        {
+          "label": "capture-output",
+          "frames": 1200000,
+          "completePostroll": true,
+          "markerOffsetFrames": 720000,
+          "stats": {
+            "frames": 1247616,
+            "callbacks": 9747,
+            "nonfiniteSamples": 0,
+            "overfullSamples": 0,
+            "missingChannelSamples": 0,
+            "contextGapFrames": 0,
+            "peak": 0.5908452868461609,
+            "sumSquares": 60053.58837897162,
+            "zeroSamples": 64
+          },
+          "sha256": "9de19b7230481d8343eadb97e00bd6f5e67c32ba07bb75775138d21a9f97f367"
+        }
+      ],
+      "rendererCpuMedian": 0.46548147521253636,
+      "mainLoopP95MedianMs": 32.243711,
+      "heartbeatP95Ms": 1.1000000089406967,
+      "captureGainsAfterRace": null,
+      "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+    }
+  ],
+  "offlineDecode": {
+    "tool": "FFmpeg 9.0",
+    "fixtureOrdinals": [1, 2, 3],
+    "fullFiles": true,
+    "exitCodes": [0, 0, 0],
+    "errorLogsEmpty": true,
+    "provesLivePlaybackQuality": false
+  },
+  "exploratoryTenMinuteRun": {
+    "run": "run-full-zero-7dk5ts",
+    "options": {
+      "mode": "full-zero",
+      "record": "on",
+      "capture": true,
+      "hardware": false,
+      "manual": false,
+      "defer": false,
+      "sourceOrdinal": 3,
+      "seconds": 600,
+      "sampleRate": 48000,
+      "channels": 2
+    },
+    "source": {
+      "ordinal": 3,
+      "extension": "m4a",
+      "sha256": "39ef637abf8a8079f24f21f6c2b573fa544b095b8e51bb850b956d1ced78c828",
+      "sampleRate": 44100,
+      "channels": 2,
+      "codec": "MPEG-4/AAC",
+      "container": "isom/iso2/mp41",
+      "durationSeconds": 218.92095238095237
+    },
+    "errors": [],
+    "completed": true,
+    "durationMs": 612595,
+    "traceDropped": 0,
+    "decodedMonitorIdentical": null,
+    "recordings": [
+      {
+        "label": "monitor-output",
+        "frames": 1200000,
+        "completePostroll": true,
+        "markerOffsetFrames": 720000,
+        "stats": {
+          "frames": 29261184,
+          "callbacks": 228603,
+          "nonfiniteSamples": 0,
+          "overfullSamples": 86107,
+          "missingChannelSamples": 0,
+          "contextGapFrames": 0,
+          "peak": 1.3770778179168701,
+          "sumSquares": 7733407.53977949,
+          "zeroSamples": 840
+        },
+        "sha256": "808a51d0a12257ba52924af06c1793c94f6a1e2efede75c9c3353f6c44f23cad"
+      },
+      {
+        "label": "capture-output",
+        "frames": 1200000,
+        "completePostroll": true,
+        "markerOffsetFrames": 720000,
+        "stats": {
+          "frames": 29262208,
+          "callbacks": 228611,
+          "nonfiniteSamples": 0,
+          "overfullSamples": 0,
+          "missingChannelSamples": 0,
+          "contextGapFrames": 0,
+          "peak": 0.6885389089584351,
+          "sumSquares": 1933178.3903241989,
+          "zeroSamples": 3720
+        },
+        "sha256": "08a4c23fea1a92fb3386a5666f3da81bdade34e08ba8ab76d520e0523e4eecf5"
+      }
+    ],
+    "rendererCpuMedian": 0.5604086448888337,
+    "mainLoopP95MedianMs": 32.309247,
+    "heartbeatP95Ms": 1.5,
+    "captureGainsAfterRace": null,
+    "graphHash": "cf5e856e4281712ee0d30841e4bc6add16bf89ed920928daf1e957541bf8d9d9"
+  },
+  "failedAttempts": {
+    "sandboxElectronBeforeReport": "run-full-dry-cdohIB",
+    "canonicalFixtureConflict": ["run-minimal-Q965q6", "run-minimal-VXO5KP"],
+    "resolution": "keep one canonical audio asset in isolated fixture track directory; production resolver unchanged"
+  },
+  "verification": {
+    "ringTests": {
+      "passed": 4
+    },
+    "focused": {
+      "filesPassed": 9,
+      "testsPassed": 137
+    },
+    "focusedGraphCoverage": {
+      "statements": 94.38,
+      "branches": 82.4,
+      "functions": 95.45,
+      "lines": 98.02
+    },
+    "sandboxFullSuite": {
+      "exitCode": 1,
+      "filesFailed": 88,
+      "testsFailed": 651,
+      "errors": 11,
+      "causeEvidence": "Temp rename/link EPERM",
+      "preserved": true
+    },
+    "permittedFullSuite": {
+      "exitCode": 0,
+      "filesPassed": 1127,
+      "testsPassed": 11376,
+      "skipped": 1
+    },
+    "lint": {
+      "exitCode": 0
+    },
+    "build": {
+      "exitCode": 0,
+      "existingLargeChunkWarning": true
+    },
+    "markdown": {
+      "exitCode": 0,
+      "filesChecked": 212
+    },
+    "format": {
+      "exitCode": 0,
+      "scope": "changed tracked files and new research documents; local harness formatted separately"
+    },
+    "diff": {
+      "exitCode": 0,
+      "scope": "tracked diff and new-document whitespace output"
+    },
+    "cleanup": {
+      "automaticallyLaunchedProcessesStillRunning": 0,
+      "processes": []
+    }
+  },
+  "remaining": [
+    "user-described audible distortion marker",
+    "physical monitor endpoint and capture receiver recordings",
+    "isolated OBS comparison",
+    "three ten-minute repetitions per condition",
+    "full application background work comparisons",
+    "device rate and clock experiments"
+  ],
+  "savedEnvironmentReadOnly": {
+    "appConfigVersion": 4,
+    "captureConfigured": false,
+    "audioPreferences": {
+      "performanceVolume": 0.3,
+      "captureVolume": 0.5,
+      "performanceMuted": false,
+      "monitorGuideVocalLevel": 0.5,
+      "captureGuideVocalLevel": 1
+    },
+    "obsConfigurationPresent": true,
+    "obsSavedSampleRates": ["48000"],
+    "obsAudioSourceTypes": [
+      {
+        "sourceType": "wasapi_input_capture",
+        "count": 3
+      },
+      {
+        "sourceType": "wasapi_process_output_capture",
+        "count": 4
+      }
+    ]
+  },
+  "fourChannelVerification": {
+    "frequencies": [440, 660, 880, 1320],
+    "monitor": [
+      [
+        0.12500118182203093, 1.4430203689676186e-16, 0.015629174307519762,
+        4.4850850556574895e-8
+      ],
+      [
+        1.9908163886547412e-16, 0.06250399596819153, 1.390172568227857e-16,
+        0.007811653318608642
+      ]
+    ],
+    "capture": [
+      [
+        0.0625007077600312, 2.431497242975748e-16, 1.633938797949738e-6,
+        5.764160962223126e-10
+      ],
+      [
+        4.82352398485915e-17, 0.03125199807329465, 6.879600137763317e-17,
+        2.031087229782844e-7
+      ]
+    ],
+    "expectedMonitor": [
+      [0.125, 0, 0.015625, 0],
+      [0, 0.0625, 0, 0.0078125]
+    ],
+    "expectedCapture": [
+      [0.0625, 0, 0, 0],
+      [0, 0.03125, 0, 0]
+    ],
+    "absoluteTolerance": 5e-5,
+    "passed": true
+  },
+  "manualHandoff": {
+    "run": "run-full-dry-2WNhvl",
+    "ready": true,
+    "mediaElementCountAtHandoff": 0,
+    "audioContextCountAtHandoff": 0,
+    "automaticPlayback": false,
+    "intentionallyLeftForUser": true
+  }
+}
