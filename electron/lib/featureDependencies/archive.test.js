@@ -79,6 +79,7 @@ describe('validateZipArchiveBuffer', () => {
         { name: 'package/bin/tool.exe', data: 'exe' },
         { name: 'package\\bin\\helper.exe', data: 'exe' },
         { name: 'package/licenses/', data: '' },
+        { name: './package/曲目/.hidden/COM10.txt', data: 'ordinary file' },
       ]);
 
       expect(() =>
@@ -95,6 +96,14 @@ describe('validateZipArchiveBuffer', () => {
     '/absolute.txt',
     'C:\\absolute.txt',
     'D:drive-relative.txt',
+    'package/private.txt:tool.exe',
+    'package/dir:stream/tool.exe',
+    'package/nul.txt',
+    'package/COM¹.exe',
+    'package/bin./tool.exe',
+    'package/bin /tool.exe',
+    'package/.. /tool.exe',
+    'package/bad\u0000.exe',
   ])('rejects unsafe entry name %j', (name) => {
     const archive = createStoredZip([{ name, data: 'unsafe' }]);
 

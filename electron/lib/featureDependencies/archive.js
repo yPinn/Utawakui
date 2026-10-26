@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { dependencyDownloadLabel } = require('./download');
+const { isSafeWindowsFilename } = require('../textGuards');
 
 const DEFAULT_ARCHIVE_EXTRACTION_TIMEOUT_MS = 5 * 60_000;
 
@@ -20,7 +21,9 @@ function validateZipEntryName(entryName, destinationDir, dependency) {
     /^[A-Za-z]:/u.test(normalizedName) ||
     path.isAbsolute(normalizedName) ||
     path.win32.isAbsolute(normalizedName) ||
-    zipEntrySegments(normalizedName).includes('..')
+    zipEntrySegments(normalizedName).some(
+      (segment) => segment !== '.' && !isSafeWindowsFilename(segment),
+    )
   ) {
     throw new Error(
       `Archive entry extracts outside the destination for ${label}: ${normalizedName}`,

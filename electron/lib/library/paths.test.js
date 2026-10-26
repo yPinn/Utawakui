@@ -4,6 +4,8 @@ import path from 'path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   isServableFilename,
+  isSafeTrackId,
+  isBoundedTrackId,
   isArtworkFilename,
   isLyricsSubtitleFilename,
   resolveTrackPath,
@@ -12,6 +14,72 @@ import {
   resolveTrackArtworkPath,
   resolveTrackAssetPath,
 } from './paths.js';
+
+describe('Windows library name boundary', () => {
+  it.each([
+    'private.txt:audio.mp3',
+    'track:stream',
+    'track\u0000',
+    'track\n',
+    'track\u007f',
+    'track.',
+    'track ',
+    '.. ',
+    'CON',
+    'nul.mp3',
+    'COM1',
+    'lpt9.mp3',
+    'COM¹',
+    'LPT².wav',
+    'track?',
+    'track*',
+    'track|pipe',
+    'track"quote',
+    'track<name>',
+  ])('rejects non-file Windows segments before resolving: %j', (name) => {
+    expect(isSafeTrackId(name)).toBe(false);
+    expect(isBoundedTrackId(name)).toBe(false);
+    expect(resolveTrackDir('library', name)).toBeNull();
+  });
+
+  it.each(['曲目 01', 'Seven (feat. Latto)', '.hidden', 'COM10', 'CONcert'])(
+    'preserves ordinary Unicode and legacy names: %s',
+    (name) => {
+      expect(isSafeTrackId(name)).toBe(true);
+      expect(isBoundedTrackId(name)).toBe(true);
+      expect(resolveTrackDir('library', name)).not.toBeNull();
+    },
+  );
+
+  it.each(['private.txt:audio.mp3', 'nul.mp3', 'COM¹.wav', 'bad\u0000.mp3'])(
+    'does not treat a device, stream or malformed name as audio: %j',
+    (name) => {
+      expect(isServableFilename(name)).toBe(false);
+      expect(resolveTrackPath('library', name)).toBeNull();
+    },
+  );
+
+  it.runIf(process.platform === 'win32')(
+    'rejects a real NTFS alternate stream despite its audio extension',
+    () => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-ads-'));
+      try {
+        const base = path.join(dir, 'private.txt');
+        fs.writeFileSync(base, 'ordinary file');
+        fs.writeFileSync(`${base}:audio.mp3`, 'hidden stream');
+        // Verify the fixture is an alternate stream, not a colon-named file.
+        expect(fs.readFileSync(`${base}:audio.mp3`, 'utf8')).toBe(
+          'hidden stream',
+        );
+        expect(fs.readdirSync(dir)).toEqual(['private.txt']);
+        expect(resolveTrackPath(dir, 'private.txt:audio.mp3')).toBeNull();
+        expect(fs.readFileSync(base, 'utf8')).toBe('ordinary file');
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    },
+  );
+});
 
 describe('isServableFilename', () => {
   it('accepts known audio extensions', () => {
@@ -66,6 +134,7 @@ describe('isLyricsSubtitleFilename', () => {
     expect(isLyricsSubtitleFilename('lyrics/ja.vtt')).toBe(false);
     expect(isLyricsSubtitleFilename('../ja.vtt')).toBe(false);
     expect(isLyricsSubtitleFilename('ja')).toBe(false);
+    expect(isLyricsSubtitleFilename('NUL.vtt')).toBe(false);
   });
 });
 

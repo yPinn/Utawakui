@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { hasControlCharacters } = require('../textGuards');
+const { isSafeWindowsFilename } = require('../textGuards');
 const {
   AUDIO_EXTENSIONS,
   IMAGE_EXTENSIONS,
@@ -16,8 +16,7 @@ const {
 // Asset-serving helpers apply stricter basename checks on top of this, and no
 // caller accepts path separators.
 function isServableFilename(filename) {
-  if (typeof filename !== 'string' || filename.length === 0) return false;
-  if (filename.includes('/') || filename.includes('\\')) return false;
+  if (!isSafeWindowsFilename(filename)) return false;
   return AUDIO_EXTENSIONS.has(path.extname(filename).toLowerCase());
 }
 
@@ -30,8 +29,7 @@ function isStructuredAudioFilename(filename) {
 }
 
 function isArtworkFilename(filename) {
-  if (typeof filename !== 'string' || filename.length === 0) return false;
-  if (filename.includes('/') || filename.includes('\\')) return false;
+  if (!isSafeWindowsFilename(filename)) return false;
   if (path.basename(filename, path.extname(filename)) !== ARTWORK_BASENAME) {
     return false;
   }
@@ -39,8 +37,7 @@ function isArtworkFilename(filename) {
 }
 
 function isLyricsSubtitleFilename(filename) {
-  if (typeof filename !== 'string' || filename.length === 0) return false;
-  if (filename.includes('/') || filename.includes('\\')) return false;
+  if (!isSafeWindowsFilename(filename)) return false;
   const ext = path.extname(filename).toLowerCase();
   const stem = path.basename(filename, ext);
   if (!LYRICS_EXTENSIONS.has(ext)) return false;
@@ -63,21 +60,14 @@ function trackIdFromFilename(filename) {
 }
 
 function isSafeTrackId(trackId) {
-  if (typeof trackId !== 'string' || trackId.length === 0) return false;
-  if (trackId.includes('/') || trackId.includes('\\')) return false;
-  if (trackId === '.' || trackId === '..') return false;
-  if (/^[A-Za-z]:/.test(trackId)) return false;
+  if (!isSafeWindowsFilename(trackId)) return false;
   return !path.isAbsolute(trackId) && !path.win32.isAbsolute(trackId);
 }
 
 // Track ids that cross IPC or persistence: safe as a path segment, bounded,
 // and free of control characters.
 function isBoundedTrackId(value, maxLength = 255) {
-  return (
-    isSafeTrackId(value) &&
-    value.length <= maxLength &&
-    !hasControlCharacters(value)
-  );
+  return isSafeTrackId(value) && value.length <= maxLength;
 }
 
 function resolveChildPath(root, childName) {
