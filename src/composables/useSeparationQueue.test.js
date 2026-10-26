@@ -63,12 +63,14 @@ function createHarness() {
       return unsubscribe;
     }),
   };
-  const separationQueue = useSeparationQueue({ bridge });
+  const notify = vi.fn();
+  const separationQueue = useSeparationQueue({ bridge, notify });
   return {
     bridge,
     separationQueue,
     emit: (payload) => listener?.(payload),
     unsubscribe,
+    notify,
   };
 }
 
@@ -115,6 +117,204 @@ describe('normalizeSeparationQueueStatus', () => {
 });
 
 describe('useSeparationQueue', () => {
+  it('preserves the latest push across fast enqueue replies and shows current operation failures', async () => {
+    const h = createHarness();
+    await h.separationQueue.initialize();
+    const enqueued = Promise.withResolvers();
+    h.bridge.enqueueSeparations.mockReturnValueOnce(enqueued.promise);
+    const adding = h.separationQueue.enqueue(['track-0']);
+    h.emit(snapshot(['running']));
+    h.emit(snapshot(['completed']));
+    enqueued.resolve(snapshot(['pending']));
+    await adding;
+    expect(h.separationQueue.queue.value.status).toBe('idle');
+    expect(h.notify).toHaveBeenCalledOnce();
+    h.bridge.enqueueSeparations.mockRejectedValueOnce(Error('private enqueue'));
+    await h.separationQueue.enqueue(['track-1']);
+    expect(h.separationQueue.error.value).toContain('歌曲目前無法加入');
+    h.bridge.pauseSeparationQueue.mockRejectedValueOnce(Error('private pause'));
+    await h.separationQueue.pause();
+    expect(h.separationQueue.error.value).toBe(
+      '目前無法更新處理清單，請再試一次。',
+    );
+    h.bridge.removeSeparationQueueItem.mockRejectedValueOnce(
+      Error('private remove'),
+    );
+    await h.separationQueue.remove('item-0');
+    expect(h.separationQueue.error.value).not.toContain('private');
+    h.bridge.getSeparationQueueStatus.mockRejectedValueOnce(
+      Error('private read'),
+    );
+    await h.separationQueue.refreshStatus();
+    expect(h.separationQueue.error.value).toBe(
+      '處理清單暫時無法讀取，請稍後再試。',
+    );
+  });
+  it('keeps a known snapshot on malformed pushes and refuses actions after disposal', async () => {
+    const h = createHarness();
+    await h.separationQueue.initialize();
+    h.emit(runningQueue());
+    h.emit({ queue: { total: 9999 } });
+    expect(h.separationQueue.queue.value.total).toBe(3);
+    h.separationQueue.dispose();
+    await h.separationQueue.initialize();
+    await h.separationQueue.enqueue(['track-1']);
+    await h.separationQueue.pause();
+    await h.separationQueue.retry('item-1');
+    expect(h.bridge.getSeparationQueueStatus).toHaveBeenCalledOnce();
+    expect(h.bridge.enqueueSeparations).not.toHaveBeenCalled();
+    expect(h.bridge.pauseSeparationQueue).not.toHaveBeenCalled();
+    expect(h.bridge.retrySeparationQueueItem).not.toHaveBeenCalled();
+  });
+  function snapshot(statuses, paused = false) {
+    const items = statuses.map((status, index) => ({
+      itemId: `item-${index}`,
+      trackId: `track-${index}`,
+      recipeId: 'general',
+      status,
+    }));
+    const count = (status) =>
+      items.filter((item) => item.status === status).length;
+    const active = items.find((item) =>
+      ['checking', 'running'].includes(item.status),
+    );
+    const pending = count('pending');
+    const completed = count('completed'),
+      skipped = count('skipped'),
+      failed = count('failed'),
+      cancelled = count('cancelled');
+    return {
+      queue: {
+        items,
+        total: items.length,
+        completed,
+        skipped,
+        failed,
+        cancelled,
+        done: completed + skipped + failed + cancelled,
+        pending,
+        activeItemId: active?.itemId ?? null,
+        paused,
+        status: paused
+          ? active
+            ? 'pausing'
+            : 'paused'
+          : active || pending
+            ? 'running'
+            : 'idle',
+      },
+    };
+  }
+
+  it('announces a completed round once after publication, not at writing 100 percent', async () => {
+    const h = createHarness();
+    await h.separationQueue.initialize();
+    const working = snapshot(['running']);
+    working.queue.items[0] = {
+      ...working.queue.items[0],
+      stage: 'writing',
+      percent: 100,
+    };
+    h.emit(working);
+    expect(h.notify).not.toHaveBeenCalled();
+    const completed = snapshot(['completed']);
+    h.emit(completed);
+    h.emit(completed);
+    h.bridge.getSeparationQueueStatus.mockResolvedValue(completed);
+    await h.separationQueue.refreshStatus();
+    expect(h.notify).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        title: '伴奏處理完成',
+        tone: 'success',
+        lifecycle: 'transient',
+        actionLabel: '查看處理清單',
+      }),
+    );
+  });
+
+  it('ignores historical results and reports one mixed summary for the current round', async () => {
+    const h = createHarness();
+    h.bridge.getSeparationQueueStatus.mockResolvedValue(
+      snapshot(['completed']),
+    );
+    await h.separationQueue.initialize();
+    expect(h.notify).not.toHaveBeenCalled();
+    h.emit(snapshot(['completed', 'running', 'pending']));
+    h.emit(snapshot(['completed', 'completed', 'running']));
+    expect(h.notify).not.toHaveBeenCalled();
+    h.emit(snapshot(['completed', 'completed', 'failed']));
+    expect(h.notify).toHaveBeenCalledOnce();
+    expect(h.notify.mock.calls[0][0]).toMatchObject({
+      tone: 'warning',
+      message: '1 首完成，1 首失敗',
+      lifecycle: 'persistent',
+    });
+    h.emit({ queue: null });
+    expect(h.notify).toHaveBeenCalledOnce();
+  });
+
+  it('reports a same-item retry as a new round and a stopped round without success', async () => {
+    const h = createHarness();
+    await h.separationQueue.initialize();
+    h.emit(snapshot(['running']));
+    h.emit(snapshot(['failed']));
+    expect(h.notify.mock.calls[0][0].tone).toBe('danger');
+    h.emit(snapshot(['pending'], true));
+    expect(h.notify).toHaveBeenCalledOnce();
+    h.emit(snapshot(['cancelled'], true));
+    h.emit(snapshot(['cancelled'], true));
+    expect(h.notify).toHaveBeenCalledTimes(2);
+    expect(h.notify.mock.calls[1][0]).toMatchObject({
+      title: '伴奏處理已停止',
+      tone: 'info',
+      lifecycle: 'transient',
+    });
+  });
+
+  it('keeps a newer completion push when the initial status read arrives late', async () => {
+    const h = createHarness(),
+      read = Promise.withResolvers();
+    h.bridge.getSeparationQueueStatus.mockReturnValueOnce(read.promise);
+    const initializing = h.separationQueue.initialize();
+    h.emit(snapshot(['running']));
+    h.emit(snapshot(['completed']));
+    read.resolve(snapshot(['running']));
+    await initializing;
+    expect(h.separationQueue.queue.value.status).toBe('idle');
+    expect(h.notify).toHaveBeenCalledOnce();
+  });
+
+  it('ignores older reads, late failures and controls after a newer push or disposal', async () => {
+    const h = createHarness();
+    await h.separationQueue.initialize();
+    const old = Promise.withResolvers(),
+      latest = Promise.withResolvers();
+    h.bridge.getSeparationQueueStatus
+      .mockReturnValueOnce(old.promise)
+      .mockReturnValueOnce(latest.promise);
+    const first = h.separationQueue.refreshStatus(),
+      second = h.separationQueue.refreshStatus();
+    latest.resolve(snapshot(['running']));
+    await second;
+    old.reject(Error('stale read'));
+    await first;
+    expect(h.separationQueue.error.value).toBe('');
+    const control = Promise.withResolvers();
+    h.bridge.pauseSeparationQueue.mockReturnValueOnce(control.promise);
+    const pause = h.separationQueue.pause();
+    h.emit(snapshot(['completed']));
+    control.resolve(snapshot(['pending'], true));
+    await pause;
+    expect(h.separationQueue.queue.value.status).toBe('idle');
+    const last = Promise.withResolvers();
+    h.bridge.getSeparationQueueStatus.mockReturnValueOnce(last.promise);
+    const refreshing = h.separationQueue.refreshStatus();
+    h.separationQueue.dispose();
+    last.reject(Error('disposed'));
+    await refreshing;
+    expect(h.separationQueue.error.value).toBe('');
+  });
+
   it('restores status, listens for progress, and cleans up', async () => {
     const harness = createHarness();
     harness.bridge.getSeparationQueueStatus.mockResolvedValue(runningQueue());

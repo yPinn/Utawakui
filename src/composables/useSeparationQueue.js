@@ -1,4 +1,6 @@
 import { computed, readonly, shallowRef } from 'vue';
+import { useAppNotifications } from './useAppNotifications.js';
+import { useSeparationQueueNotifications } from './useSeparationQueueNotifications.js';
 import {
   boundedCount,
   hasControlCharacters,
@@ -135,11 +137,16 @@ export function normalizeSeparationQueueStatus(payload) {
   };
 }
 
-export function useSeparationQueue({ bridge = window.Utawakui } = {}) {
+export function useSeparationQueue({
+  bridge = window.Utawakui,
+  notify = useAppNotifications().notify,
+} = {}) {
   const queue = shallowRef(null);
   const error = shallowRef('');
   let unsubscribe = null;
   let disposed = false;
+  let revision = 0;
+  const observeCompletion = useSeparationQueueNotifications(notify);
 
   const active = computed(() =>
     ['running', 'pausing'].includes(queue.value?.status),
@@ -150,27 +157,38 @@ export function useSeparationQueue({ bridge = window.Utawakui } = {}) {
     try {
       queue.value = normalizeSeparationQueueStatus(payload);
       error.value = '';
+      observeCompletion(queue.value);
       return queue.value;
     } catch {
-      queue.value = null;
       error.value = '處理清單暫時無法讀取，請重新開啟後再試。';
       return null;
     }
   }
 
   async function refreshStatus() {
-    if (typeof bridge?.getSeparationQueueStatus !== 'function') return null;
+    if (disposed || typeof bridge?.getSeparationQueueStatus !== 'function')
+      return null;
+    const current = ++revision;
     try {
-      return applyStatus(await bridge.getSeparationQueueStatus());
+      const payload = await bridge.getSeparationQueueStatus();
+      return !disposed && current === revision
+        ? applyStatus(payload)
+        : queue.value;
     } catch {
-      error.value = '處理清單暫時無法讀取，請稍後再試。';
+      if (!disposed && current === revision)
+        error.value = '處理清單暫時無法讀取，請稍後再試。';
       return null;
     }
   }
 
   async function initialize() {
+    if (disposed) return null;
     if (!unsubscribe) {
-      unsubscribe = bridge?.onSeparationQueueProgress?.(applyStatus) ?? null;
+      unsubscribe =
+        bridge?.onSeparationQueueProgress?.((payload) => {
+          revision++;
+          applyStatus(payload);
+        }) ?? null;
     }
     return refreshStatus();
   }
@@ -184,44 +202,55 @@ export function useSeparationQueue({ bridge = window.Utawakui } = {}) {
       ),
     ].slice(0, MAX_QUEUE_ITEMS);
     if (
+      disposed ||
       uniqueTrackIds.length === 0 ||
       !RECIPE_IDS.has(recipeId) ||
       typeof bridge?.enqueueSeparations !== 'function'
     ) {
       return null;
     }
+    const current = ++revision;
     try {
-      return applyStatus(
-        await bridge.enqueueSeparations(
-          uniqueTrackIds,
-          recipeId,
-          regenerate === true,
-        ),
+      const payload = await bridge.enqueueSeparations(
+        uniqueTrackIds,
+        recipeId,
+        regenerate === true,
       );
+      return !disposed && current === revision
+        ? applyStatus(payload)
+        : queue.value;
     } catch {
-      error.value = '歌曲目前無法加入，請到設定完成準備後再試。';
+      if (!disposed && current === revision)
+        error.value = '歌曲目前無法加入，請到設定完成準備後再試。';
       return null;
     }
   }
 
   async function applyStatusAction(methodName) {
-    if (typeof bridge?.[methodName] !== 'function') return null;
+    if (disposed || typeof bridge?.[methodName] !== 'function') return null;
+    const current = ++revision;
     try {
-      return applyStatus(await bridge[methodName]());
+      const payload = await bridge[methodName]();
+      return !disposed && current === revision
+        ? applyStatus(payload)
+        : queue.value;
     } catch {
-      error.value = '目前無法更新處理清單，請再試一次。';
+      if (!disposed && current === revision)
+        error.value = '目前無法更新處理清單，請再試一次。';
       return null;
     }
   }
 
   async function applyRefreshAction(methodName, ...args) {
-    if (typeof bridge?.[methodName] !== 'function') return false;
+    if (disposed || typeof bridge?.[methodName] !== 'function') return false;
+    const current = ++revision;
     try {
       const result = await bridge[methodName](...args);
       await refreshStatus();
       return result;
     } catch {
-      error.value = '目前無法更新處理清單，請再試一次。';
+      if (!disposed && current === revision)
+        error.value = '目前無法更新處理清單，請再試一次。';
       return false;
     }
   }

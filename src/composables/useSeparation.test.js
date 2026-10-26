@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // re-stubbing window before each dynamic import gives every test a fresh
 // module instance instead of leaking inFlight/errors state between tests.
 let progressCallback;
+let queueCallback;
 let runSeparationMock;
 let selectSeparationResultMock;
 let getFeatureConfirmationsMock;
@@ -33,6 +34,9 @@ beforeEach(() => {
       confirmFeatureGate: vi.fn(),
       onSeparationProgress: (callback) => {
         progressCallback = callback;
+      },
+      onSeparationQueueProgress: (callback) => {
+        queueCallback = callback;
       },
       runSeparation: runSeparationMock,
       selectSeparationResult: selectSeparationResultMock,
@@ -243,6 +247,87 @@ describe('progressPercent()', () => {
 });
 
 describe('separate()', () => {
+  it('does not admit two same-track requests while feature access is still resolving', async () => {
+    const owner = await loadSeparation();
+    runSeparationMock.mockImplementation(() => new Promise(() => {}));
+    const { useFeatureGates } = await import('./useFeatureGates.js');
+    await useFeatureGates().refreshConfirmations();
+    owner.separate({ id: 't1', title: 'Song' });
+    owner.separate({ id: 't1', title: 'Song' });
+    await flushPromises();
+    expect(runSeparationMock).toHaveBeenCalledOnce();
+  });
+  it('does not clear a newer queued run when an older direct request settles', async () => {
+    const owner = await loadSeparation(),
+      old = Promise.withResolvers();
+    runSeparationMock.mockReturnValueOnce(old.promise);
+    const request = owner.separate({ id: 't1', title: 'Song' });
+    await vi.waitFor(() => expect(runSeparationMock).toHaveBeenCalledOnce());
+    const item = {
+      itemId: 'new',
+      trackId: 't1',
+      recipeId: 'quick',
+      status: 'running',
+    };
+    queueCallback?.({
+      queue: {
+        status: 'running',
+        paused: false,
+        total: 1,
+        done: 0,
+        completed: 0,
+        skipped: 0,
+        failed: 0,
+        cancelled: 0,
+        pending: 0,
+        activeItemId: 'new',
+        items: [item],
+      },
+    });
+    progressCallback({
+      trackId: 't1',
+      recipeId: 'quick',
+      stage: 'separating',
+      percent: 20,
+    });
+    old.resolve({});
+    await request;
+    expect(owner.isSeparating('t1')).toBe(true);
+    expect(owner.inFlightPresetId('t1')).toBe('quick');
+  });
+  it('clears queued progress after completion even without a direct separate request', async () => {
+    const owner = await loadSeparation();
+    progressCallback({
+      trackId: 't1',
+      recipeId: 'general',
+      stage: 'writing',
+      percent: 100,
+    });
+    expect(owner.isSeparating('t1')).toBe(true);
+    queueCallback?.({
+      queue: {
+        status: 'idle',
+        paused: false,
+        total: 1,
+        done: 1,
+        completed: 1,
+        skipped: 0,
+        failed: 0,
+        cancelled: 0,
+        pending: 0,
+        activeItemId: null,
+        items: [
+          {
+            itemId: 'item-1',
+            trackId: 't1',
+            recipeId: 'general',
+            status: 'completed',
+          },
+        ],
+      },
+    });
+    expect(owner.isSeparating('t1')).toBe(false);
+  });
   it('is a no-op while the same track is already separating', async () => {
     const { separate, isSeparating } = await loadSeparation();
     const { useFeatureGates } = await import('./useFeatureGates.js');

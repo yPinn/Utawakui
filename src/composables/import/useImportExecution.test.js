@@ -23,6 +23,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 function fixture(count = 1) {
+  const notify = vi.fn();
+  let revision = 0;
   const state = reactive({
     input: 'collection',
     sourceKind: 'playlist',
@@ -39,7 +41,8 @@ function fixture(count = 1) {
   const reportImportError = vi.fn();
   const execution = useImportExecution({
     state,
-    getDraftRevision: () => 0,
+    getDraftRevision: () => revision,
+    notify,
     canConfirmImport: { value: true },
     canRetryFailed: { value: true },
     ensureProviderFlow: vi.fn().mockResolvedValue(true),
@@ -47,8 +50,87 @@ function fixture(count = 1) {
     reportImportError,
     setStatus: vi.fn(),
   });
-  return { state, execution, reportImportError };
+  return {
+    state,
+    execution,
+    reportImportError,
+    notify,
+    nextDraft: () => revision++,
+  };
 }
+
+it('reports one background batch summary only after collection finalization', async () => {
+  const saving = Promise.withResolvers();
+  playlists.create.mockReturnValueOnce(saving.promise);
+  const h = fixture(3);
+  await h.execution.submitImport();
+  await vi.waitFor(() =>
+    expect(h.execution.activity.batches[0].phase).toBe('finalizing'),
+  );
+  h.nextDraft();
+  expect(h.notify).not.toHaveBeenCalled();
+  saving.resolve({ id: 'saved' });
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledOnce());
+  expect(h.notify.mock.calls[0][0]).toMatchObject({
+    title: '下載完成',
+    message: '3 首下載完成',
+    tone: 'success',
+    actionLabel: '查看下載結果',
+  });
+});
+
+it('reports one single download result and does not duplicate a concurrent submission', async () => {
+  const downloaded = Promise.withResolvers();
+  window.Utawakui.downloadAudio.mockReturnValueOnce(downloaded.promise);
+  const h = fixture();
+  Object.assign(h.state, {
+    sourceKind: 'single',
+    singleTrack: { id: 'song', title: 'Song' },
+    input: 'song',
+  });
+  const first = await h.execution.submitImport();
+  expect(await h.execution.submitImport()).toBe(first);
+  downloaded.resolve({ title: 'Saved song' });
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledOnce());
+  expect(h.notify.mock.calls[0][0]).toMatchObject({
+    title: '下載完成',
+    message: 'Saved song',
+    tone: 'success',
+  });
+});
+
+it('reports partial failure once, then replaces that batch result on retry without redownloading successes', async () => {
+  window.Utawakui.downloadAudio.mockRejectedValueOnce(
+    Error('private provider failure'),
+  );
+  const h = fixture(2),
+    id = await h.execution.submitImport();
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledOnce());
+  expect(h.notify.mock.calls[0][0]).toMatchObject({
+    tone: 'warning',
+    message: '1 首下載完成，1 首失敗',
+  });
+  expect(JSON.stringify(h.notify.mock.calls)).not.toContain('private');
+  await h.execution.retryBatch(id);
+  expect(h.notify).toHaveBeenCalledTimes(2);
+  expect(h.notify.mock.calls[1][0].key).toBe(h.notify.mock.calls[0][0].key);
+  expect(window.Utawakui.downloadAudio).toHaveBeenCalledTimes(3);
+});
+
+it('keeps a failed cancellation from relabeling a successful download as stopped', async () => {
+  const downloaded = Promise.withResolvers();
+  window.Utawakui.downloadAudio.mockReturnValueOnce(downloaded.promise);
+  window.Utawakui.cancelAudioDownload.mockRejectedValueOnce(
+    Error('private cancel failure'),
+  );
+  const h = fixture(),
+    id = await h.execution.submitImport();
+  expect(await h.execution.cancelBatch(id)).toBe(false);
+  downloaded.resolve({ title: 'Done' });
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledOnce());
+  expect(h.execution.activity.batches[0].phase).toBe('completed');
+  expect(h.notify.mock.calls[0][0].tone).toBe('success');
+});
 
 it('retains the accepted release type in activity while the next preview changes', async () => {
   const { state, execution } = fixture();

@@ -6,6 +6,8 @@ import {
 } from '../../utils/downloadFailureDisplay.js';
 import { normalizeAppError } from '../../utils/appErrors.js';
 import { usePlaylists } from '../usePlaylists.js';
+import { useAppNotifications } from '../useAppNotifications.js';
+import { useImportResultNotification } from './useImportResultNotification.js';
 
 const CONCURRENCY = 2;
 const ACTIVE_PHASES = new Set(['queued', 'running', 'finalizing']);
@@ -41,6 +43,7 @@ export function useImportExecution({
   handleProviderSetupError,
   reportImportError,
   setStatus,
+  notify = useAppNotifications().notify,
 }) {
   const {
     create: createPlaylist,
@@ -58,6 +61,7 @@ export function useImportExecution({
     targets = new Map(),
     submissions = new Map();
   const pending = [];
+  const notifyResult = useImportResultNotification(notify);
   const activeKeys = new Set();
   let active = 0,
     nextId = 0;
@@ -226,6 +230,7 @@ export function useImportExecution({
 
   function publishResult(batch) {
     syncDraft(batch);
+    notifyResult(batch);
     if (!current(batch) || batch.setupRequired) return;
     const failed = batch.tracks.filter((t) => t.status === 'error');
     const dominant = failed.find((t) => t.errorCode)?.errorCode;

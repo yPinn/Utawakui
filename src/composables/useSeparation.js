@@ -7,6 +7,7 @@ import {
 } from '../constants/separationPresets.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { normalizeSeparationQueueStatus } from './useSeparationQueue.js';
 
 // Single shared instance (module scope, not per-component), same as
 // usePlayer.js: LibraryBrowseContent unmounts on every destination switch, so state that
@@ -32,6 +33,9 @@ const state = reactive({
 });
 
 let unsubscribeProgress = null;
+let unsubscribeQueue = null;
+let queuedTrackIds = new Set();
+const requestedTrackIds = new Set();
 
 // Subscribed once at module load, same lifetime as App.vue's composables.
 if (typeof window !== 'undefined' && window.Utawakui) {
@@ -49,11 +53,32 @@ if (typeof window !== 'undefined' && window.Utawakui) {
       }
     },
   );
+  unsubscribeQueue = window.Utawakui.onSeparationQueueProgress?.((payload) => {
+    let queue;
+    try {
+      queue = normalizeSeparationQueueStatus(payload);
+    } catch {
+      return;
+    }
+    const open = new Set(
+      (queue?.items ?? [])
+        .filter((item) =>
+          ['pending', 'checking', 'running'].includes(item.status),
+        )
+        .map((item) => item.trackId),
+    );
+    queuedTrackIds = open;
+    for (const item of queue?.items ?? []) {
+      if (!open.has(item.trackId)) state.inFlight.delete(item.trackId);
+    }
+    if (!queue) state.inFlight.clear();
+  });
 }
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unsubscribeProgress?.();
+    unsubscribeQueue?.();
   });
 }
 
@@ -117,8 +142,17 @@ function describe(trackId) {
 }
 
 async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
-  if (isSeparating(track.id)) return;
+  if (isSeparating(track.id) || requestedTrackIds.has(track.id)) return;
   if (!isRunnableSeparationRecipe(presetId)) return;
+  requestedTrackIds.add(track.id);
+  try {
+    await runSeparationRequest(track, presetId);
+  } finally {
+    requestedTrackIds.delete(track.id);
+  }
+}
+
+async function runSeparationRequest(track, presetId) {
   state.selectedPresets.set(track.id, presetId);
   state.errors.delete(track.id);
   const enabled = await requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
@@ -141,6 +175,7 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
     state.errors.set(track.id, appError.message);
     return;
   }
+  if (queuedTrackIds.has(track.id)) return;
 
   // Seeds an entry immediately so isSeparating() is true (and the button
   // shows "準備中") from the very first render after the click, instead of
@@ -177,7 +212,7 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
     }
     state.errors.set(track.id, appError.message);
   } finally {
-    state.inFlight.delete(track.id);
+    if (!queuedTrackIds.has(track.id)) state.inFlight.delete(track.id);
   }
 }
 
