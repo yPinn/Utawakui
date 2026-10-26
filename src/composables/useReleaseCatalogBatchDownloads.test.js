@@ -27,6 +27,48 @@ afterEach(() => {
   vi.useRealTimers();
 });
 describe('release catalog batch facade', () => {
+  it('does not publish an old completion after a newer retry starts during refresh', async () => {
+    const refreshed = Promise.withResolvers(),
+      notify = vi.fn();
+    const bridge = {
+      releaseCatalogDownloadBatch: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          snapshot: snapshot({
+            phase: 'complete',
+            total: 1,
+            completed: 1,
+            failed: 1,
+          }),
+        })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          snapshot: snapshot({
+            batchId: 2,
+            active: true,
+            phase: 'running',
+            total: 1,
+          }),
+        }),
+    };
+    const api = createReleaseCatalogBatchDownloads({
+      bridge,
+      requireFeatureGate: async () => true,
+      refresh: () => refreshed.promise,
+      notify,
+    });
+    const old = api.inspect(collection);
+    await vi.waitFor(() =>
+      expect(bridge.releaseCatalogDownloadBatch).toHaveBeenCalledOnce(),
+    );
+    await api.retry(collection);
+    refreshed.resolve();
+    await old;
+    expect(api.snapshotFor(collection).batchId).toBe(2);
+    expect(notify).not.toHaveBeenCalled();
+    api.dispose();
+  });
   it('reuses the production singleton across remounts and refreshes the canonical library after completion', async () => {
     vi.resetModules();
     const bridge = {

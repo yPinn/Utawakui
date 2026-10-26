@@ -121,16 +121,16 @@ export function createReleaseCatalogBatchDownloads({
         ) {
           const receipt = JSON.stringify([key, snapshot.batchId]);
           if (!reported.has(receipt)) {
-            reported.add(receipt);
-            if (reported.size > 128)
-              reported.delete(reported.values().next().value);
             let refreshFailed = false;
             try {
               await refresh();
             } catch {
               refreshFailed = true;
             }
-            if (disposed) return true;
+            if (disposed || versions.get(key) !== version) return true;
+            reported.add(receipt);
+            if (reported.size > 128)
+              reported.delete(reported.values().next().value);
             const problems = snapshot.failed + snapshot.unlinked;
             const message = `${snapshot.succeeded} 首完成${problems ? `，${problems} 首待重試或校對` : ''}${snapshot.cancelled ? `，${snapshot.cancelled} 首已停止排隊` : ''}${snapshot.skipped ? `，${snapshot.skipped} 首已在其他下載中` : ''}${refreshFailed ? '；畫面更新失敗，請重新讀取。' : ''}`;
             notify({
