@@ -6,7 +6,10 @@ repository.
 
 Package contents and dependency locations are documented separately in
 [release-inventory.md](release-inventory.md). Versioned files under `releases/`
-describe already published artifacts and may differ from the current source tree.
+may be unreleased drafts or published announcements; a file's existence is not
+proof of publication. Public assets and the current source tree may differ.
+The current v0.5.1 draft boundary and remaining freeze steps are recorded in the
+[version scope checklist](v0.5.1-release-scope.md).
 
 ## Current Release Boundary
 
@@ -24,9 +27,12 @@ and `SHA256SUMS.txt`.
 
 Published v0.1.1 predates the updater metadata bundle. v0.3.0 is the first
 published updater-enabled release, so existing v0.1.1 users need one manual
-installation of v0.3.0. v0.4.0 is the first version that can prove the in-app
-update path from a published updater-enabled release; its production-feed update
-evidence is still pending (see the acceptance template).
+installation of v0.3.0. v0.4.0 was the first eligible target for proving an in-app
+update from that published updater-enabled release. A published installer or
+prepared release-note file does not prove that upgrade acceptance passed.
+Current public／working-tree versions and remaining acceptance are maintained in
+[the product spec](../spec.md#3-功能現況); record each actual upgrade using the
+[acceptance template](update-acceptance-template.md).
 
 ## Pull Request And Main CI
 
