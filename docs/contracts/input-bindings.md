@@ -26,7 +26,7 @@
 - 按鍵比對不分大小寫；`Ctrl`、`Alt`、`Meta` 必須與綁定宣告完全相符，因此未宣告的 `Alt`／`Meta` 組合仍保留、不解析為任何綁定。目前只有歷史走訪宣告 `Alt`。
 - `Ctrl` 是綁定的一部分：按住 `Ctrl` 時不會退回同鍵的純按鍵綁定。
 - `shift` 為 `null` 時忽略 Shift；為 `true`／`false` 時必須相符。
-- `editable: 'ignore'` 的綁定在 `INPUT`、`TEXTAREA`、contentEditable 目標上不觸發；`'allow'` 不看焦點。
+- `editable: 'ignore'` 的綁定在 `INPUT`、`TEXTAREA`、`SELECT`、contentEditable 目標上不觸發；`'allow'` 不看焦點。
 - 視圖切換綁定由 [appDestinationRegistry.js](../../src/utils/appDestinationRegistry.js) 衍生，不重複宣告快捷鍵。
 - dev-only 綁定只在 `internalViewShortcuts` 提供時存在，正式版沒有。
 - `noRepeat` 的綁定忽略按鍵自動重複（仍 `preventDefault`）；`skipIfHandled` 的綁定在事件已被元件處理（`defaultPrevented`）時讓位。
@@ -57,6 +57,8 @@
 F4 依 [ADR 0023](../adr/0023-renderer-destination-and-workspace-model.md) 保持未指派。
 `obs.marker` 的 K 是占位綁定，待 Owner 依功能使用數據統一安排；清點前保留現狀。
 音高（cents）刻意只提供滑鼠與面板操作。
+
+目前 `player.guide-vocal` 的 G 實際呼叫 `toggleCaptureGuideVocal`，切換擷取導唱，與監聽導唱開關不同；registry 顯示名稱較泛，本文件明示執行對象，不在此改變綁定。
 
 ## Pointer 綁定與歷史走訪
 
@@ -112,7 +114,7 @@ Main 端的 `app-command`（`browser-backward`、`browser-forward`）由
 下列項目為清點時發現，目前行為維持不變，待 Owner 依使用數據決定：
 
 1. F 鍵（視圖切換）在輸入框內也會觸發，其餘 app 綁定則會忽略可編輯欄位。
-2. 可編輯判斷只涵蓋 `INPUT`、`TEXTAREA` 與 contentEditable，`SELECT`、slider 等控件不在內。
+2. 可編輯判斷已涵蓋 `INPUT`、`TEXTAREA`、`SELECT` 與 contentEditable；原生 `INPUT` range 也在其中。自訂 ARIA widget／slider、內層事件目標與焦點組合仍需實機盤點。
 3. 只有 `TrackPreviewOverlay` 會隔離全域按鍵；其他 modal 開啟時，F 鍵與 M／G／K／方向鍵是否穿透尚未實測。
 4. Esc 由多個元件各自監聽，靠 `stopPropagation`、`defaultPrevented` 與 `hasOpenTransientOverlay` 協調，沒有統一的 dismiss 堆疊。
 5. 沒有空白鍵播放／暫停。

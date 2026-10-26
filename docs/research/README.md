@@ -48,8 +48,11 @@
 
 ## 產品與競品
 
-- [播放器與排練能力順序規劃](product/player-practice-planning-2026-10-26.md)與[規劃 JSON](product/player-practice-planning-2026-10-26.json)（10-26）：前三項小規格、快捷操作提案與三項研究進入條件；manual／confirmed history 已有實作的分類補正，全部新增規劃尚未實作。
-- [競品現況與採用判斷](product/competitive-research.md)：2026-10-26 更新 Setlista、聲嶼、歌回救星與 KAREOKIE；本案功能狀態只見 spec。
+- [播放器／排練規劃入口](product/player-practice-planning-2026-10-26.md)：四項提案、共用前置與待決策；初始 JSON 僅保存歷史基線。細節由各提案持有，功能狀態只見 spec。
+- [競品現況](product/competitive-research.md)：2026-10-26 查核 Setlista、聲嶼、歌回救星、KAREOKIE。
+- 受眾與資料：[歡唱／有限雲端](product/audience-and-optional-cloud-2026-10-26.md)、[商業模式／資料架構](product/business-model-and-data-architecture-2026-10-26.md)。研究證據，不是採用承諾。
+- [音源／影片與收藏](product/source-video-osu-collection-2026-10-26.md)：公開 ID metadata 查核、影片前提與正式音源統計資格；不等於播放／同步驗證。
+- osu!：[本機工作流](product/osu-local-first-interaction-and-capabilities-2026-10-26.md)、[單人／多人映射](product/osu-play-modes-and-product-mapping-2026-10-26.md)。本機互動供提案參考，多人僅遠期備忘。
 - [本輪文件與路線整理](product/product-and-documentation-review-2026-10-26.md)及[證據 JSON](product/product-and-documentation-review-2026-10-26.json)：全量文件分類／連結盤點、來源識別與修改界線；不作為第二份 roadmap。
 - [外觀贊助模式研究](product/appearance-support-models-market-plan-2026-10-20.md)（10-20）：市場選項與成本；現行交付原則見 governance，付款／帳號仍待決策。
 - [v0.4.0 公開網站稿](product/public-site-content-v0.4.0.md)（10-17）：指定版本的歷史內容稿，不能用作目前公開版或工作樹現況。
