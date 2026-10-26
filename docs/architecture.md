@@ -58,6 +58,7 @@
 - 來源專輯由 `LibrarySourceTracklist` 轉接同一 album 表格、欄位偏好與密度；source-only entry 只有展示資料與 slot intent，沒有 canonical track。未下載列停用播放、選取與選單，同一狀態 slot 保留下載；本地列沿用伴奏操作／徽章。來源曲號獨立於本地 tags 的其他發行碟號；同專輯不逐列重複封面。一般頁移除行內解除關聯及曲序尾註，維護入口集中設定。
 - 專輯欄先由 `useAlbumNavigation.js` 解析來源型專輯；只有 scalar album 時，`usePlaylists.js` 持有 session-only 的 `selectedAlbumReference`，`albumReference.js` 以正規化專輯名即時推導唯讀成員，不寫 `playlists.json`。
 - Sidebar 參照區由 `orderReferenceItems()` 依藝人名混排專輯與藝人，從該來源播放過的列依 `usePlaybackHistory` 的來源時間置前；`selectedArtistId` 與 collection 選取互斥，`artistPage.js` 推導藝人頁。曲目列、PlayerBar、Queue 以 `trackArtistIds` 投影 entity 顯示名稱，index 未載入時回退 scalar；搜尋同時接受 canonical 名稱與所有 credit。
+- `useArtistIndex.js` 的曲庫與 gate 監聽由模組持有的 detached effect scope 管理，切換頁面不停止索引更新，HMR 才釋放；下載在音訊／metadata 提交及空間清理完成後主動通知曲庫，不依賴背景歌詞或發行補齊完成。
 
 ### Right Dock
 
@@ -131,6 +132,7 @@
 
 - `SettingsPage` 擁有唯一 page scroll 與 local overlay host；`SettingsView` 組合曲庫、音訊、應用程式、選用功能與支援五個 domain，各 section component 持有自己的 lifecycle、確認與 deep-link。系統 FFmpeg 偵測經 `useOnFirstVisible` 延到區段可見時。
 - `useAppNotifications.js` 保存通知投影與私有 action callback，`App.vue` 掛載唯一 `AppNotificationHost`；`useTaskNotification.js` 由各 domain 事件更新同一投影。Modal 與通知共用 `useUiModalStack.js`，modal 開啟期間暫停通知倒數。見 [Settings 操作回饋契約](contracts/settings-operation-feedback.md)。
+- 伴奏完成摘要由 App 持有的 `useSeparationQueue` 依本輪觀察到的項目終態收斂，歷史讀取與重複推送不重播；一般外部匯入由 `useImportExecution` 在 accepted batch 的下載及 collection 保存結束後投影一次，不依賴目前草稿或 Dock 掛載。兩類沿用原準備清單作為查看結果入口，詳見[背景工作通知](contracts/settings-operation-feedback.md#背景工作完成通知)。
 - 偏好與儲存狀態由 `useLibraryStorage`、`useSettingsPreference` 依 bridge 共用，切頁不重建寫入；OBS 密碼輸入離頁即清除。
 
 ## Main 服務
@@ -199,6 +201,8 @@
 ### 音訊處理與分析
 
 - `audioProcessing/separationQueueService.js` 是 main 記憶體內的序列佇列，以 `(trackId, recipeId)` 去重，每首開始前重查 gate、依賴、來源與結果；只有明確重新準備才覆寫。佇列狀態只代表本次 session，manifest 才是結果權威；清除紀錄不刪除結果。`separationHandlers.js` 把狀態送到 `mainWindow.js`，taskbar 顯示 aggregate progress、paused 或 error。
+- Renderer 佇列的推送使較早的讀取／控制回應失效；`useSeparation` 同時消費佇列終態，清除由批次進度建立的 in-flight 狀態，舊單曲請求不能清除新的排程工作。曲庫與歌單單例的初始化由最新讀取結束來完成，不使用會隨首個呼叫頁面卸載而停止的 watcher。
+- 伴奏每個排程項目私下固定曲庫路徑與 `workLibraryEpoch`；跨曲庫或 A→B→A 都不重新解讀同 track id。檢查既有結果、準備後、實際取得 heavy worker slot、worker 結束及清理後各檢查原 scope，過期不啟動 worker 或對新曲庫觸發完成副作用。重試保留原項目的 scope；新曲庫需重新提交。取消請求的接受與工作終態分開，重複取消共用一次確認，拒絕／例外不能把實際處理失敗標成取消。
 - `audioProcessing/structureAnalysisAutoQueue.js` 是匯入後的去重單工佇列，重查自動分析偏好、gate、capability 與 sidecar 是否最新，手動分析結束後才執行；失敗不回滾匯入。
 - Renderer：Settings 的 `useMusicAnalysisSettings.js`／`MusicAnalysisSettingsRow.vue` 管理 lifecycle 與自動分析偏好；`analysis/useMusicAnalysisCapabilitySession.js` 依 bridge 共用 capability 投影。F5 工作台 `useMusicAnalysisWorkbench.js` 只做單曲強制執行、批次重跑與診斷；Music M2 的 `useMusicAnalysisReferenceAnnotation.js` 持有人工標註草稿。見[音樂分析契約](contracts/music-analysis.md)。
 
