@@ -209,12 +209,18 @@ function updatePolicy(fields) {
 }
 
 .library-storage__controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.45fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: end;
   gap: var(--ui-space-2);
   padding-block-start: var(--ui-space-3);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.library-storage__limit {
+  inline-size: min(100%, var(--settings-select-inline-size));
+  min-inline-size: min(100%, 8ic);
+  max-inline-size: var(--settings-select-inline-size);
 }
 
 .library-storage__feedback {
@@ -229,12 +235,8 @@ function updatePolicy(fields) {
     grid-template-columns: 1fr;
   }
 
-  .library-storage__controls {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
   .library-storage__auto-manage {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
   }
 }
 </style>

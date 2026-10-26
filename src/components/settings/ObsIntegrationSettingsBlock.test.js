@@ -65,8 +65,7 @@ describe('ObsIntegrationSettingsBlock', () => {
 
     expect(html).toContain('匯出時間標記');
     expect(html).toContain('演出待唱側欄');
-    expect(html).toContain('兩份佇列各自安排');
-    expect(html).toContain('此設定只控制側欄顯示，不會自動播放');
+    expect(html).toContain('兩份佇列獨立，不會自動播放');
     expect(html).not.toContain('匯出 YouTube 章節');
   });
 

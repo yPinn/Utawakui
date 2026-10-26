@@ -31,6 +31,9 @@ describe('Settings copy density', () => {
     expect(capabilitiesSource).not.toContain(
       'settings-capabilities-section__copy',
     );
+    expect(capabilitiesSource).not.toContain('label="重新讀取功能狀態"');
+    expect(capabilitiesSource).toContain('@action="refreshConfirmations"');
+    expect(supportSource).not.toContain('announcement.summary');
   });
 
   it('removes row copy that only restates its title, value, or control', () => {
@@ -43,7 +46,9 @@ describe('Settings copy density', () => {
 
   it('keeps decision-changing consequences while shortening routine guidance', () => {
     expect(librarySource).toContain('切換位置不會搬移既有曲目。');
-    expect(metadataSource).toContain('啟動時整理本地資料；手動編輯會保留。');
+    expect(metadataSource).toContain(
+      '啟動時整理本機資料；線上補齊專輯與曲序，保留手動編輯。',
+    );
     expect(metadataSource).not.toContain('value="啟動時補齊曲目與發行資訊"');
     expect(metadataSource).not.toContain('<UiHint>從來源更新會連線');
     expect(historySource).toContain('自動保存；清除不影響佇列或歌單。');
@@ -55,16 +60,16 @@ describe('Settings copy density', () => {
 
   it('uses concise supporting copy for integrations and support actions', () => {
     expect(audioOutputSource).toContain(
-      '供直播或錄影軟體擷取音訊；與本機聆聽裝置分開設定。',
+      '供直播或錄影擷取；與本機聆聽分開設定。',
     );
     expect(outputSource).toContain(
-      '供直播或錄影軟體的「瀏覽器來源」顯示歌詞與曲目。',
+      '透過直播或錄影軟體的瀏覽器來源顯示歌詞與曲目。',
     );
     expect(outputSource).toContain(
-      '實驗性：傳送透明背景歌詞，供支援 Spout2 的軟體接收。',
+      '實驗性透明歌詞輸出，需接收軟體支援 Spout2。',
     );
     expect(feedbackSource).toContain(
-      '回報使用問題、提出建議，或反映歌曲與歌詞來源問題。',
+      '回報使用、歌曲或歌詞來源問題，也可提出建議。',
     );
     expect(supportSource).toContain('公告、交流與開發者聯絡。');
   });

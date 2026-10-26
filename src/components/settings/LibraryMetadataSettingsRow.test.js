@@ -13,6 +13,9 @@ const maintenance = vi.hoisted(() => ({
 vi.mock('../../composables/useLibraryMetadataMaintenance.js', () => ({
   useLibraryMetadataMaintenance: () => maintenance,
 }));
+vi.mock('../../composables/useLibraryReconciliation.js', () => ({
+  useLibraryReconciliation: () => ({ state: { busy: false }, open: vi.fn() }),
+}));
 
 beforeEach(() => {
   Object.assign(maintenance.state, {
@@ -39,27 +42,23 @@ describe('LibraryMetadataSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('>曲庫資訊</h3>');
-    expect(html).toContain('啟動時整理本地資料；手動編輯會保留。');
-    expect(html).toContain('線上補齊');
     expect(html).toContain(
-      'aria-description="重新讀取本地曲目與作品，不連線。"',
+      '啟動時整理本機資料；線上補齊專輯與曲序，保留手動編輯。',
     );
+    expect(html).toContain('線上補齊');
     expect(html).toContain(
       'aria-description="連線補齊所屬專輯與完整曲序，保留手動編輯。"',
     );
-    expect(html).toContain(
-      'aria-description="檢查重複發行、音檔與資訊差異，逐欄校對後儲存。"',
-    );
-    expect(html).toContain('>自動</span>');
-    expect(html.match(/<button\b/gu)).toHaveLength(3);
-    expect(html).toContain('>校對</span>');
+    expect(html).not.toContain('>自動</span>');
+    expect(html.match(/<button\b/gu)).toHaveLength(2);
+    expect(html).toContain('曲庫資訊選項');
+    expect(html).not.toContain('>校對</span>');
     expect(
       html.match(/settings-document-item__supporting-copy/gu),
     ).toHaveLength(1);
     expect(html).not.toContain('settings-document-item__value');
     expect(html).not.toContain('settings-document-item__feedback');
     expect(html).not.toContain('已啟用');
-    expect(html).not.toContain('ui-icon-button');
     expect(maintenance.refresh).not.toHaveBeenCalled();
   });
 
@@ -68,16 +67,15 @@ describe('LibraryMetadataSettingsRow', () => {
     maintenance.state.progress = { status: 'running' };
     maintenance.feedback = '查詢中 · 1 / 3 個來源 · 已補齊 1 張';
     const html = await renderRow();
-    expect(html.match(/<button\b/gu)).toHaveLength(4);
-    expect(html).toContain('aria-busy="true"');
-    expect(html).toContain('>更新中</span>');
+    expect(html.match(/<button\b/gu)).toHaveLength(2);
+    expect(html).not.toContain('>線上補齊</span>');
     expect(html).toContain('>停止</span>');
     expect(html).toContain('role="status"');
     expect(html).toContain(maintenance.feedback);
     maintenance.state.cancelling = true;
     expect(
       (await renderRow()).match(/<button\b[^>]*\bdisabled/gu),
-    ).toHaveLength(4);
+    ).toHaveLength(1);
   });
 
   it.each([
@@ -92,7 +90,7 @@ describe('LibraryMetadataSettingsRow', () => {
       expect(html).toContain(`role="${role}"`);
       expect(html).toContain(error ? 'ui-hint--danger' : 'ui-hint--muted');
       expect(html.match(/settings-document-item__feedback/gu)).toHaveLength(1);
-      expect(html.match(/<button\b/gu)).toHaveLength(3);
+      expect(html.match(/<button\b/gu)).toHaveLength(2);
       expect(html).toContain('線上補齊');
       expect(html).not.toContain('>停止</span>');
       expect(html).toContain(feedback);

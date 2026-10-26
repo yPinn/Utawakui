@@ -29,6 +29,7 @@ const OPTIONS = Object.freeze([
     <template #actions>
       <UiSelect
         id="auto-error-reporting"
+        class="auto-error-reporting-settings-row__select"
         label="嚴重錯誤回報"
         label-hidden
         :model-value="reporting"
@@ -51,3 +52,11 @@ const OPTIONS = Object.freeze([
     </template>
   </SettingsDocumentItem>
 </template>
+
+<style scoped>
+.auto-error-reporting-settings-row__select {
+  inline-size: var(--settings-select-inline-size);
+  min-inline-size: min(100%, 6ic);
+  max-inline-size: 100%;
+}
+</style>

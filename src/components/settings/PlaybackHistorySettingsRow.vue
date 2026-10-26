@@ -28,12 +28,6 @@ const valueLabel = computed(() => {
     : '尚無播放紀錄';
 });
 
-const statusLabel = computed(() => {
-  if (props.readError) return '無法讀取';
-  if (props.isLoading || props.isClearing) return '處理中';
-  return props.recordCount > 0 ? '有紀錄' : '無紀錄';
-});
-
 const menuAnchor = computed(() => ({
   kind: 'element',
   element: menuAnchorEl.value,
@@ -82,8 +76,6 @@ function handleMenuSelect(actionId) {
       :icon="Clock"
       title="播放紀錄"
       :value="valueLabel"
-      :status="statusLabel"
-      :status-tone="readError ? 'warning' : 'muted'"
       guidance="自動保存；清除不影響佇列或歌單。"
     >
       <template #actions>

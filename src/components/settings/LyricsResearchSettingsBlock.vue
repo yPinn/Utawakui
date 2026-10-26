@@ -1,9 +1,16 @@
 <script setup>
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import { useLyricsResearch } from '../../composables/lyrics/useLyricsResearch.js';
-import { Captions } from '../../icons/index.js';
+import {
+  Captions,
+  RefreshCw,
+  Trash2,
+  Wrench,
+  Check,
+} from '../../icons/index.js';
 import SettingsSection from './SettingsSection.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import LyricsExperimentalQueueSettings from './LyricsExperimentalQueueSettings.vue';
 import LyricsResearchPreviewTools from './LyricsResearchPreviewTools.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -11,7 +18,6 @@ import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 
 const research = useLyricsResearch();
-const managementOpen = shallowRef(false);
 const toolsOpen = shallowRef(false);
 let timer;
 const status = computed(() => research.status.value?.status);
@@ -61,6 +67,28 @@ const primary = computed(
 const installed = computed(() =>
   Boolean(status.value && status.value !== 'missing'),
 );
+const managementItem = computed(() => ({
+  title: '歌詞分析工具',
+  advancedActions: [
+    { id: 'refresh', label: '重新讀取', icon: RefreshCw },
+    ...(status.value === 'ready'
+      ? [{ id: 'verify', label: '檢查工具', icon: Check }]
+      : []),
+    ...(installed.value && status.value !== 'damaged'
+      ? [{ id: 'prepare', label: '重新下載修復', icon: Wrench }]
+      : []),
+    ...(installed.value
+      ? [{ id: 'remove', label: '移除工具', icon: Trash2, intent: 'danger' }]
+      : []),
+  ].map((action) => ({ ...action, disabled: research.busy.value })),
+}));
+function manage({ action }) {
+  if (research.busy.value) return;
+  if (!managementItem.value.advancedActions.some((item) => item.id === action))
+    return;
+  if (action === 'refresh') void research.refresh();
+  else void research.action(action);
+}
 onMounted(() => {
   void research.refresh();
   // Automatic work may change readiness while management is closed.
@@ -76,9 +104,13 @@ onUnmounted(() => clearInterval(timer));
     </UiHint>
     <SettingsDocumentItem
       :icon="Captions"
-      title="歌詞時間分析（實驗）"
-      description="估算中文、日文與英文歌詞的分段時間。"
-      guidance="下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 可用空間。"
+      title="歌詞分析工具"
+      description="估算中、日、英文歌詞分段時間；需使用 Utawakui 管理的音訊轉換工具。"
+      :guidance="
+        status === 'ready'
+          ? ''
+          : '下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 空間。'
+      "
       :status="statusLabel"
       :status-tone="statusTone"
       status-live
@@ -104,6 +136,10 @@ onUnmounted(() => clearInterval(timer));
           @click="research.cancel"
           >取消</UiButton
         >
+        <SettingsDependencyActions
+          :item="managementItem"
+          @advanced-action="manage"
+        />
       </template>
       <template v-if="research.error.value" #feedback>
         <UiHint tone="danger" role="alert">{{ research.error.value }}</UiHint>
@@ -113,58 +149,16 @@ onUnmounted(() => clearInterval(timer));
     <LyricsExperimentalQueueSettings />
 
     <UiDisclosure
-      v-model:open="managementOpen"
-      class="settings-section__disclosure"
-      label="工具管理與詳細說明"
-    >
-      <div class="lyrics-settings__details">
-        <UiHint
-          >請先展開「本機音訊處理」的「工具與模型」，在「音訊轉換工具」選擇「Utawakui
-          管理版本」。</UiHint
-        >
-        <UiHint
-          >此試用使用 HubertFA 與 Whisper
-          small。正式的歌詞音訊輔助功能仍未開放；本試用不代表已取得模型或字典的使用與散布授權。</UiHint
-        >
-        <div class="lyrics-settings__actions">
-          <UiButton
-            variant="ghost"
-            :disabled="research.busy.value"
-            @click="research.refresh"
-            >重新讀取</UiButton
-          >
-          <UiButton
-            v-if="installed"
-            variant="ghost"
-            intent="danger"
-            :disabled="research.busy.value"
-            @click="research.action('remove')"
-            >移除工具</UiButton
-          >
-          <UiButton
-            v-if="installed && status !== 'damaged'"
-            variant="secondary"
-            :disabled="research.busy.value"
-            @click="research.action('prepare')"
-            >重新下載修復</UiButton
-          >
-          <UiButton
-            v-if="status === 'ready'"
-            variant="accent"
-            :disabled="research.busy.value"
-            @click="research.action('verify')"
-            >檢查工具</UiButton
-          >
-        </div>
-      </div>
-    </UiDisclosure>
-
-    <UiDisclosure
       v-model:open="toolsOpen"
       class="settings-section__disclosure"
       label="片段預覽（進階）"
     >
       <div v-if="toolsOpen" class="lyrics-settings__details">
+        <UiHint
+          >需在「本機音訊處理 → 工具與模型 → 音訊轉換工具」選用「Utawakui
+          管理版本」。分析使用 HubertFA 與 Whisper
+          small；正式歌詞音訊輔助仍未開放。</UiHint
+        >
         <UiHint>每次分析約 30 秒、最多 10 句歌詞，結果僅在此預覽。</UiHint>
         <LyricsResearchPreviewTools />
       </div>
@@ -183,12 +177,5 @@ onUnmounted(() => clearInterval(timer));
   padding-block: var(--settings-child-padding-block, var(--ui-space-3));
   padding-inline-start: var(--settings-copy-inset, 0);
   min-inline-size: 0;
-}
-.lyrics-settings__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
-  align-items: center;
 }
 </style>

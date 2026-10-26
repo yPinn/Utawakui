@@ -27,7 +27,7 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
       :value="deviceLabel"
       :status="enabled ? '已啟用' : '未啟用'"
       :status-tone="enabled ? 'success' : 'muted'"
-      guidance="供直播或錄影軟體擷取音訊；與本機聆聽裝置分開設定。"
+      guidance="供直播或錄影擷取；與本機聆聽分開設定。"
     >
       <template #actions>
         <UiIconButton
@@ -41,6 +41,7 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
 
     <UiRange
       id="capture-master-volume"
+      class="audio-output-settings-block__volume"
       label="直播擷取總音量"
       :model-value="captureVolume"
       :min="AUDIO_CONTROL_VALUES.captureVolume.min"
@@ -48,7 +49,7 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
       :step="AUDIO_CONTROL_VALUES.captureVolume.step"
       :default-value="AUDIO_CONTROL_VALUES.captureVolume.defaultValue"
       :value-text="`${Math.round(captureVolume * 100)}%`"
-      hint="套用演唱與 BGM；預設 50% 保留音量餘裕，不影響監聽與導唱比例。"
+      hint="套用演唱與 BGM；預設 50% 保留餘裕，不影響監聽或導唱比例。"
       @update:model-value="emit('update:captureVolume', $event)"
     />
 
@@ -66,5 +67,19 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
   min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-2);
+}
+
+.audio-output-settings-block__volume {
+  margin-inline-start: var(--settings-copy-inset, 0);
+  min-inline-size: min(
+    100% - var(--settings-copy-inset, 0px),
+    var(--settings-range-min-inline-size)
+  );
+  inline-size: min(
+    100% - var(--settings-copy-inset, 0px),
+    var(--settings-range-max-inline-size)
+  );
+  max-inline-size: var(--settings-range-max-inline-size);
+  padding-block-end: var(--settings-row-padding-block, var(--ui-space-4));
 }
 </style>

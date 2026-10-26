@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import Component from './LyricsExperimentalQueueSettings.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
-import UiChip from '../ui/UiChip.vue';
 import {
   attachClientRender,
   mount,
@@ -10,23 +9,17 @@ import {
   textContent,
   trigger,
 } from '../ui/uiTestHost.js';
-vi.mock('../../composables/useLibrary.js', () => ({
-  useLibrary: () => ({
-    state: { tracks: [{ id: 'song', title: '測試歌曲' }] },
-  }),
-}));
 vi.mock('../ui/UiCheckbox.vue', async () => {
   const { h } = await import('vue');
   return {
     default: {
-      props: ['modelValue', 'label', 'hint', 'disabled'],
+      props: ['modelValue', 'label', 'disabled'],
       emits: ['update:modelValue'],
       setup:
         (props, { emit }) =>
         () =>
           h('label', [
             props.label,
-            props.hint,
             h('input', {
               checked: props.modelValue,
               disabled: props.disabled,
@@ -59,52 +52,18 @@ vi.mock('../ui/UiHint.vue', async () => {
     },
   };
 });
-vi.mock('../ui/UiSelect.vue', async () => {
-  const { h } = await import('vue');
-  return {
-    default: {
-      props: ['modelValue', 'options', 'label', 'hint', 'disabled'],
-      emits: ['update:modelValue'],
-      setup:
-        (props, { emit }) =>
-        () =>
-          h('label', [
-            props.label,
-            props.hint,
-            h(
-              'select',
-              {
-                value: props.modelValue,
-                disabled: props.disabled,
-                onChange: (event) =>
-                  emit('update:modelValue', event.target.value),
-              },
-              props.options.map((o) =>
-                h('option', { value: o.value }, o.label),
-              ),
-            ),
-          ]),
-    },
-  };
-});
 let mounted, snapshot, bridge;
 const flush = async () => {
-  await nextTick();
-  await nextTick();
+  await vi.advanceTimersByTimeAsync(0);
   await nextTick();
 };
-const button = (text) =>
-  findAll(
-    mounted.root,
-    (node) => node.type === 'button' && textContent(node).includes(text),
-  )[0];
+const input = () => findAll(mounted.root, (node) => node.type === 'input')[0];
 beforeEach(() => {
   attachClientRender(
     SettingsDocumentItem,
     './SettingsDocumentItem.vue',
     import.meta.url,
   );
-  attachClientRender(UiChip, '../ui/UiChip.vue', import.meta.url);
   attachClientRender(
     Component,
     './LyricsExperimentalQueueSettings.vue',
@@ -124,94 +83,116 @@ beforeEach(() => {
 });
 afterEach(() => {
   mounted?.app.unmount();
+  mounted = null;
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
-describe('experimental lyrics settings workflow', () => {
-  it('explains an unknown language and sends a manual choice as one-task intent only', async () => {
-    snapshot = {
-      enabled: true,
-      allowed: true,
-      items: [
-        { trackId: 'song', status: 'skipped', reason: 'language-unknown' },
-      ],
-    };
+describe('experimental lyrics global preference', () => {
+  it('does not render song history or per-song actions, regardless of queue size or status', async () => {
+    snapshot.items = Array.from({ length: 100 }, (_, index) => ({
+      trackId: `song-${index}`,
+      title: `歌曲紀錄-${index}`,
+      status: ['running', 'ready', 'failed', 'skipped', 'cancelled'][index % 5],
+    }));
     mounted = mount(Component);
     await flush();
-    expect(textContent(mounted.root)).toContain('來源語言未知');
-    const select = findAll(mounted.root, (node) => node.type === 'select')[0];
-    trigger(select, 'onChange', { target: { value: 'ja' } });
-    await flush();
-    trigger(button('重試分析'), 'onClick');
-    await flush();
-    expect(bridge.retryExperimentalLyrics).toHaveBeenCalledWith('song', 'ja');
-    expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
+    expect(findAll(mounted.root, (node) => node.type === 'h3')).toHaveLength(1);
+    expect(textContent(mounted.root)).not.toContain('歌曲紀錄');
+    expect(textContent(mounted.root)).not.toContain('取消分析');
+    expect(textContent(mounted.root)).not.toContain('重試分析');
+    expect(textContent(mounted.root)).toContain('結果、重試與套用請至歌詞頁');
+    expect(bridge.cancelExperimentalLyrics).not.toHaveBeenCalled();
+    expect(bridge.retryExperimentalLyrics).not.toHaveBeenCalled();
   });
-  it('distinguishes native T2 and does not offer unnecessary re-analysis', async () => {
-    snapshot.items = [
-      { trackId: 'song', status: 'skipped', reason: 'native-t2' },
-    ];
+  it('starts unchecked and only persists an explicit preference change', async () => {
     mounted = mount(Component);
     await flush();
-    expect(textContent(mounted.root)).toContain('已有逐字時間');
-    expect(button('重試分析')).toBeUndefined();
-    expect(
-      findAll(mounted.root, (node) => node.type === 'select'),
-    ).toHaveLength(0);
-  });
-  it('starts unchecked, performs only explicit opt-in and never downloads', async () => {
-    mounted = mount(Component);
-    await flush();
-    const input = findAll(mounted.root, (node) => node.type === 'input')[0];
-    expect(input.props.checked).toBe(false);
+    expect(input().props.checked).toBe(false);
     expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
     expect(textContent(mounted.root)).toContain('不會自動下載工具');
-    trigger(input, 'onChange', { target: { checked: true } });
+    trigger(input(), 'onChange', { target: { checked: true } });
     await flush();
     expect(bridge.setExperimentalLyricsEnabled).toHaveBeenCalledWith(true);
-    expect(input.props.checked).toBe(true);
+    expect(input().props.checked).toBe(true);
   });
-  it('polls bounded progress and exposes independent cancellation and retry', async () => {
-    snapshot = {
-      enabled: true,
-      allowed: true,
-      items: [{ trackId: 'song', status: 'running' }],
-    };
-    mounted = mount(Component);
-    await flush();
-    expect(textContent(mounted.root)).toContain('測試歌曲');
-    trigger(button('取消分析'), 'onClick');
-    await flush();
-    expect(bridge.cancelExperimentalLyrics).toHaveBeenCalledWith('song');
-    snapshot.items[0].status = 'failed';
-    await vi.advanceTimersByTimeAsync(1000);
-    await flush();
-    expect(textContent(mounted.root)).toContain('伴奏仍可使用');
-    trigger(button('重試分析'), 'onClick');
-    await flush();
-    expect(bridge.retryExperimentalLyrics).toHaveBeenCalledWith('song');
-  });
-  it('retains the audio-processing prerequisite without activating it or downloading', async () => {
+  it('keeps the gate prerequisite current and releases polling on unmount', async () => {
     snapshot.allowed = false;
     mounted = mount(Component);
     await flush();
-    const input = findAll(mounted.root, (node) => node.type === 'input')[0];
-    expect(input.props.disabled).toBe(true);
-    expect(input.props.checked).toBe(false);
+    expect(input().props.disabled).toBe(true);
     expect(textContent(mounted.root)).toContain('請先啟用音訊處理功能');
+    snapshot.allowed = true;
+    await vi.advanceTimersByTimeAsync(1000);
+    await flush();
+    expect(input().props.disabled).toBe(false);
+    mounted.app.unmount();
+    mounted = null;
+    const reads = bridge.getExperimentalLyricsStatus.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(bridge.getExperimentalLyricsStatus).toHaveBeenCalledTimes(reads);
     expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
   });
-  it('keeps cancellation failure bounded and the original lyrics/accompaniment available', async () => {
-    snapshot.items = [{ trackId: 'song', status: 'running' }];
-    bridge.cancelExperimentalLyrics.mockRejectedValueOnce(
+  it('keeps an enabled preference switch available to turn off after the gate closes', async () => {
+    snapshot = { enabled: true, allowed: false, items: [] };
+    mounted = mount(Component);
+    await flush();
+    expect(input().props.disabled).toBe(false);
+    trigger(input(), 'onChange', { target: { checked: false } });
+    await flush();
+    expect(bridge.setExperimentalLyricsEnabled).toHaveBeenCalledWith(false);
+  });
+  it('prevents overlapping saves and restores interaction after completion', async () => {
+    let finish;
+    bridge.setExperimentalLyricsEnabled.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    mounted = mount(Component);
+    await flush();
+    trigger(input(), 'onChange', { target: { checked: true } });
+    await flush();
+    expect(input().props.disabled).toBe(true);
+    trigger(input(), 'onChange', { target: { checked: false } });
+    expect(bridge.setExperimentalLyricsEnabled).toHaveBeenCalledTimes(1);
+    finish();
+    await flush();
+    expect(input().props.disabled).toBe(false);
+  });
+  it('does not claim loading after an unknown preference fails to read, and recovers locally', async () => {
+    bridge.getExperimentalLyricsStatus
+      .mockResolvedValueOnce(null)
+      .mockRejectedValueOnce(Error('private read'));
+    mounted = mount(Component);
+    await flush();
+    expect(textContent(mounted.root)).toContain('讀取中');
+    await vi.advanceTimersByTimeAsync(1000);
+    await flush();
+    expect(textContent(mounted.root)).toContain('無法讀取');
+    expect(textContent(mounted.root)).not.toContain('讀取中');
+    expect(input().props.disabled).toBe(true);
+    const retry = findAll(
+      mounted.root,
+      (node) =>
+        node.type === 'button' && textContent(node).includes('重新讀取'),
+    )[0];
+    trigger(retry, 'onClick');
+    await flush();
+    expect(textContent(mounted.root)).not.toContain('無法讀取');
+    expect(input().props.disabled).toBe(false);
+  });
+  it('keeps the failure bounded without exposing private details', async () => {
+    bridge.setExperimentalLyricsEnabled.mockRejectedValueOnce(
       Error('private path'),
     );
     mounted = mount(Component);
     await flush();
-    trigger(button('取消分析'), 'onClick');
+    trigger(input(), 'onChange', { target: { checked: true } });
     await flush();
     expect(textContent(mounted.root)).toContain('伴奏與原有歌詞仍可使用');
     expect(textContent(mounted.root)).not.toContain('private path');
-    expect(button('取消分析')).toBeDefined();
+    expect(input().props.checked).toBe(false);
+    expect(input().props.disabled).toBe(false);
   });
 });

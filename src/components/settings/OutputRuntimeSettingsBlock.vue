@@ -204,7 +204,7 @@ onMounted(() => {
         :value="serviceStatus.detail"
         :status="serviceStatus.label"
         :status-tone="serviceStatus.tone"
-        guidance="供直播或錄影軟體的「瀏覽器來源」顯示歌詞與曲目。"
+        guidance="透過直播或錄影軟體的瀏覽器來源顯示歌詞與曲目。"
         variant="nested"
       >
         <template #actions>
@@ -309,9 +309,7 @@ onMounted(() => {
             />
           </div>
 
-          <UiHint
-            >修改後按「儲存設定」套用；變更連接埠後，請更新直播軟體的來源網址。</UiHint
-          >
+          <UiHint>儲存後套用；變更連接埠須更新直播軟體的來源網址。</UiHint>
 
           <UiHint
             v-if="settingsError && !hasPortConflict"
@@ -359,7 +357,7 @@ onMounted(() => {
       :value="spoutReadError ? '尚未確認 Spout2 狀態' : spoutValue"
       :status="spoutReadError ? '無法讀取' : spoutPresentation.label"
       :status-tone="spoutReadError ? 'warning' : spoutPresentation.tone"
-      guidance="實驗性：傳送透明背景歌詞，供支援 Spout2 的軟體接收。"
+      guidance="實驗性透明歌詞輸出，需接收軟體支援 Spout2。"
       variant="nested"
     >
       <template #actions>
@@ -452,6 +450,7 @@ onMounted(() => {
 
 .output-runtime-settings-block__fields {
   display: flex;
+  flex-wrap: wrap;
   align-items: start;
   gap: var(--ui-space-3);
 }
@@ -463,11 +462,16 @@ onMounted(() => {
 /* Five port digits; the delay field keeps room for its hint. */
 .output-runtime-settings-block__number {
   flex: 0 0 var(--settings-port-inline-size);
+  max-inline-size: 100%;
 }
 
 .output-runtime-settings-block__delay {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 1 var(--settings-text-inline-size);
+  min-inline-size: min(100%, 16ch);
+  max-inline-size: 100%;
+}
+.output-runtime-settings-block__delay :deep(.ui-text-field__control-row) {
+  max-inline-size: var(--settings-number-inline-size);
 }
 
 .output-runtime-settings-block__suggestions {

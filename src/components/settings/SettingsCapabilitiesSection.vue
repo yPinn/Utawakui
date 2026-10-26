@@ -1,6 +1,5 @@
 <script setup>
 import { computed, nextTick, onMounted, shallowRef, watch } from 'vue';
-import { RefreshCw } from '../../icons/index.js';
 import {
   FEATURE_DEPENDENCY_IDS,
   getFeatureDependencies,
@@ -22,7 +21,6 @@ import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
 import SettingsSection from './SettingsSection.vue';
 import MusicAnalysisPreferenceRow from './MusicAnalysisPreferenceRow.vue';
 import YoutubeBrowserCookiesRow from './YoutubeBrowserCookiesRow.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import FfmpegSourceModal from './FfmpegSourceModal.vue';
 import MusicAnalysisSettingsRow from './MusicAnalysisSettingsRow.vue';
@@ -350,15 +348,6 @@ onMounted(() => {
           :title="group.title"
           tabindex="-1"
         >
-          <template v-if="group.id === 'sources'" #actions>
-            <UiIconButton
-              :icon="RefreshCw"
-              :disabled="featureGateState.isLoading"
-              label="重新讀取功能狀態"
-              @click="refreshConfirmations"
-            />
-          </template>
-
           <SettingsFeatureGateRow
             v-for="gate in group.gates"
             :id="`settings-feature-${gate.id}`"

@@ -104,6 +104,7 @@ async function playLine(line) {
       <UiSelect
         :id="`${prefix}-track`"
         v-model="trackId"
+        class="lyrics-research__track"
         label="曲庫歌曲"
         placeholder="選擇已有歌詞的歌曲"
         :options="tracks"
@@ -112,6 +113,7 @@ async function playLine(line) {
       <UiSelect
         :id="`${prefix}-language`"
         v-model="language"
+        class="lyrics-research__language"
         label="分析語言"
         :options="[
           { value: 'zh', label: '中文' },
@@ -124,6 +126,7 @@ async function playLine(line) {
     <UiSelect
       :id="`${prefix}-line`"
       v-model="lineIndex"
+      class="lyrics-research__line-select"
       label="從哪句開始試算"
       placeholder="選擇有時間的歌詞句"
       :options="lines"
@@ -219,9 +222,21 @@ async function playLine(line) {
   justify-self: end;
 }
 .lyrics-research__fields {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
   gap: var(--ui-space-3);
+}
+.lyrics-research__track,
+.lyrics-research__line-select {
+  inline-size: var(--settings-long-text-inline-size);
+  min-inline-size: min(100%, 20ch);
+  max-inline-size: 100%;
+}
+.lyrics-research__language {
+  inline-size: var(--settings-select-inline-size);
+  min-inline-size: min(100%, 6ic);
+  max-inline-size: 100%;
 }
 .lyrics-research__line {
   display: grid;
@@ -250,10 +265,5 @@ async function playLine(line) {
 }
 .lyrics-research__chunk--active {
   color: var(--ui-color-accent);
-}
-@container settings-section (max-width: 30rem) {
-  .lyrics-research__fields {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 </style>

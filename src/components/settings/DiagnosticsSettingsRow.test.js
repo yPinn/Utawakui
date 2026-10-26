@@ -43,7 +43,7 @@ describe('DiagnosticsSettingsRow', () => {
     const html = await renderRow({ recordCount: 4 });
 
     expect(html).toContain('錯誤紀錄');
-    expect(html).toContain('有紀錄');
+    expect(html).not.toContain('>有紀錄</span>');
     expect(html).toContain('4 筆近期錯誤');
     expect(html).toMatch(
       /class="ui-visually-hidden"[^>]*>匯出錯誤紀錄<\/span>/u,
@@ -69,7 +69,7 @@ describe('DiagnosticsSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('錯誤紀錄');
-    expect(html).toContain('無紀錄');
+    expect(html).not.toContain('>無紀錄</span>');
     expect(html).toContain('沒有近期錯誤');
     expect(html).not.toContain('settings-action-row__description');
   });

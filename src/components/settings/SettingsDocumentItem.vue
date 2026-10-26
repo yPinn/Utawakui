@@ -212,7 +212,8 @@ const supportingCopy = computed(() =>
 
 .settings-document-item__actions {
   min-inline-size: 0;
-  inline-size: 100%;
+  max-inline-size: 100%;
+  justify-self: end;
   display: flex;
   justify-content: flex-end;
   align-items: center;

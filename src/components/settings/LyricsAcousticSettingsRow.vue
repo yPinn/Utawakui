@@ -58,7 +58,7 @@ function advanced({ action }) {
 <template>
   <SettingsDocumentItem
     title="歌詞音訊輔助元件"
-    description="估算中文、日文歌詞的分段時間所需工具。"
+    description="正式歌詞分析所需工具，與實驗功能分開管理。"
     :status="busy ? '環境操作中' : status"
     :status-tone="capability?.status === 'ready' ? 'success' : 'muted'"
     variant="nested"
@@ -91,7 +91,7 @@ function advanced({ action }) {
         >上次移除未完成，請再次移除以清理剩餘元件。原有歌詞仍可使用。</UiHint
       >
       <UiHint v-if="capability?.status === 'blocked'"
-        >模型使用與分發資料確認中，暫不提供下載。原有歌詞仍可使用。</UiHint
+        >模型使用與分發資料確認中，暫不提供下載。</UiHint
       >
       <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
       <UiButton

@@ -73,7 +73,6 @@ onMounted(() => {
       :icon="Info"
       title="版本公告"
       :value="`v${announcement.version}`"
-      :guidance="announcement.summary"
     >
       <template #actions>
         <UiIconButton

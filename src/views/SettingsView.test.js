@@ -179,7 +179,8 @@ describe('SettingsView behavior wiring', () => {
     expect(supportSource).toContain('<FeedbackReportSettingsRow');
     expect(supportSource).toContain('<DiagnosticsSettingsRow');
     expect(supportSource).toContain(':value="`v${announcement.version}`"');
-    expect(supportSource).toContain(':guidance="announcement.summary"');
+    expect(supportSource).not.toContain('announcement.summary');
+    expect(supportSource).toContain('@click="announcement.reopen"');
   });
 
   it('wires application update telemetry and Windows close behavior', () => {

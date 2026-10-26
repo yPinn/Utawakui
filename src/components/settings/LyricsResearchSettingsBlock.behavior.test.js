@@ -6,6 +6,7 @@ import SettingsSection from './SettingsSection.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiChip from '../ui/UiChip.vue';
+import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import {
   attachClientRender,
   mount,
@@ -14,6 +15,47 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 const state = vi.hoisted(() => ({}));
+vi.mock('../ui/UiIconButton.vue', async () => {
+  const { h } = await import('vue');
+  return {
+    default: {
+      props: ['label', 'disabled'],
+      setup:
+        (props, { attrs }) =>
+        () =>
+          h('button', { ...attrs, disabled: props.disabled }, props.label),
+    },
+  };
+});
+vi.mock('../ui/UiActionMenu.vue', async () => {
+  const { h } = await import('vue');
+  return {
+    default: {
+      props: ['open', 'content'],
+      emits: ['select', 'close'],
+      setup:
+        (props, { emit }) =>
+        () =>
+          props.open
+            ? h(
+                'div',
+                props.content.groups
+                  .flatMap((group) => group.items)
+                  .map((item) =>
+                    h(
+                      'button',
+                      {
+                        disabled: item.disabled,
+                        onClick: () => emit('select', item.value),
+                      },
+                      item.label,
+                    ),
+                  ),
+              )
+            : null,
+    },
+  };
+});
 vi.mock('../../composables/lyrics/useLyricsResearch.js', () => ({
   useLyricsResearch: () => state.owner,
 }));
@@ -84,6 +126,7 @@ for (const [component, path] of [
   [SettingsDocumentItem, './SettingsDocumentItem.vue'],
   [UiDisclosure, '../ui/UiDisclosure.vue'],
   [UiChip, '../ui/UiChip.vue'],
+  [SettingsDependencyActions, './SettingsDependencyActions.vue'],
 ])
   attachClientRender(component, path, import.meta.url);
 let mounted;
@@ -154,7 +197,7 @@ describe('integrated experimental lyrics settings', () => {
     mounted = mount(Component);
     await nextTick();
     const details = findAll(mounted.root, (n) => n.type === 'details');
-    expect(details).toHaveLength(2);
+    expect(details).toHaveLength(1);
     expect(details.every((n) => !n.props.open)).toBe(true);
     const notice = findAll(
       mounted.root,
@@ -202,33 +245,47 @@ describe('integrated experimental lyrics settings', () => {
     expect(state.owner.cancel).toHaveBeenCalled();
     expect(button('產生預覽')).toBeUndefined();
   });
-  it('keeps repair, verification and removal inside collapsed environment management', async () => {
+  it('keeps maintenance in the overflow menu and dispatches each original intent', async () => {
     state.owner.status.value = { status: 'ready' };
     mounted = mount(Component);
     await nextTick();
     expect(textContent(mounted.root)).toContain('可使用');
     expect(textContent(mounted.root)).toContain('伴奏完成後自動產生詞塊');
     expect(button('檢查工具')).toBeUndefined();
-    await disclose(
-      '工具管理與詳細說明',
-      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
-    );
-    await nextTick();
-    trigger(button('檢查工具'), 'onClick');
-    trigger(button('重新下載修復'), 'onClick');
-    trigger(button('移除工具'), 'onClick');
+    for (const label of ['檢查工具', '重新下載修復', '移除工具']) {
+      trigger(button('歌詞分析工具選項'), 'onClick', {
+        stopPropagation() {},
+        currentTarget: {},
+      });
+      await nextTick();
+      trigger(button(label), 'onClick');
+      await nextTick();
+      expect(button(label)).toBeUndefined();
+    }
     expect(state.owner.action.mock.calls).toEqual([
       ['verify'],
       ['prepare'],
       ['remove'],
     ]);
-    await disclose(
-      '工具管理與詳細說明',
-      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
-    );
-    await nextTick();
     expect(button('移除工具')).toBeUndefined();
     expect(state.library.initialize).not.toHaveBeenCalled();
+  });
+  it('blocks a maintenance menu selection if a background operation starts while open', async () => {
+    state.owner.status.value = { status: 'ready' };
+    mounted = mount(Component);
+    await nextTick();
+    trigger(button('歌詞分析工具選項'), 'onClick', {
+      stopPropagation() {},
+      currentTarget: {},
+    });
+    await nextTick();
+    const remove = button('移除工具');
+    state.owner.busy.value = true;
+    await nextTick();
+    expect(button('移除工具').props.disabled).toBe(true);
+    trigger(remove, 'onClick');
+    expect(state.owner.action).not.toHaveBeenCalled();
+    expect(button('取消')).toBeDefined();
   });
   it('refreshes status even with research tools closed and stops polling when unmounted', async () => {
     mounted = mount(Component);
@@ -248,7 +305,7 @@ describe('integrated experimental lyrics settings', () => {
     state.owner.clearPreview.mockClear();
     await disclose(
       '片段預覽',
-      !findAll(mounted.root, (n) => n.type === 'details')[1].props.open,
+      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
     );
     await nextTick();
     expect(state.owner.clearPreview).toHaveBeenCalled();
@@ -270,12 +327,12 @@ describe('integrated experimental lyrics settings', () => {
     expect(button('產生預覽').props.disabled).toBe(false);
     await disclose(
       '片段預覽',
-      !findAll(mounted.root, (n) => n.type === 'details')[1].props.open,
+      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
     );
     await nextTick();
     await disclose(
       '片段預覽',
-      !findAll(mounted.root, (n) => n.type === 'details')[1].props.open,
+      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
     );
     await nextTick();
     expect(button('產生預覽').props.disabled).toBe(true);

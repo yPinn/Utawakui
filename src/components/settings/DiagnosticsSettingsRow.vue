@@ -111,16 +111,6 @@ function handleMenuSelect(actionId) {
               ? `${recordCount} 筆近期錯誤`
               : '沒有近期錯誤'
       "
-      :status="
-        notice
-          ? '無法讀取'
-          : isLoading
-            ? '讀取中'
-            : recordCount > 0
-              ? '有紀錄'
-              : '無紀錄'
-      "
-      :status-tone="notice || recordCount > 0 ? 'warning' : 'muted'"
       guidance="排查播放、匯入與音訊處理。"
     >
       <template #actions>

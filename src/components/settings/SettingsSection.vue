@@ -60,6 +60,15 @@ const headingId = `settings-section-${useId()}`;
   --settings-port-inline-size: calc(
     5ch + 2 * var(--ui-field-padding-inline) + 2 * var(--ui-border-width)
   );
+  /* Content-sized controls; their consumers still clamp to the container. */
+  --settings-number-inline-size: calc(
+    8ch + 2 * var(--ui-field-padding-inline) + 2 * var(--ui-border-width)
+  );
+  --settings-select-inline-size: calc(10ic + var(--ui-space-6));
+  --settings-text-inline-size: 32ch;
+  --settings-long-text-inline-size: 48ch;
+  --settings-range-min-inline-size: 16rem;
+  --settings-range-max-inline-size: 24rem;
   --settings-copy-inset: calc(
     var(--ui-icon-button-size-md) + var(--ui-space-3)
   );

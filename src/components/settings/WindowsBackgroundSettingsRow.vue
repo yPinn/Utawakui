@@ -72,6 +72,8 @@ const closeBehaviorItems = Object.freeze([
 }
 
 .windows-background-settings-row__select {
-  inline-size: 100%;
+  inline-size: var(--settings-select-inline-size);
+  min-inline-size: min(100%, 10ic);
+  max-inline-size: 100%;
 }
 </style>

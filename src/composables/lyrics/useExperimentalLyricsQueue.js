@@ -1,9 +1,11 @@
-import { readonly, shallowRef } from 'vue';
+import { computed, readonly, shallowRef } from 'vue';
 const state = shallowRef(null),
-  error = shallowRef(''),
+  readError = shallowRef(''),
+  operationError = shallowRef(''),
   revision = shallowRef(0),
   completions = shallowRef([]);
 let read = 0;
+const error = computed(() => operationError.value || readError.value);
 let completionBridge, unsubscribeCompletion;
 export function useExperimentalLyricsQueue() {
   async function refresh() {
@@ -20,17 +22,18 @@ export function useExperimentalLyricsQueue() {
             ),
         );
         state.value = value ?? null;
+        readError.value = '';
         if (completed.length) {
           completions.value = completed;
           revision.value++;
         }
       }
     } catch {
-      error.value = '無法讀取詞塊分析狀態，請重試。';
+      if (current === read) readError.value = '無法讀取詞塊分析狀態，請重試。';
     }
   }
   async function action(name, value, ...extra) {
-    error.value = '';
+    operationError.value = '';
     ++read;
     try {
       const result = await window.Utawakui[
@@ -39,7 +42,7 @@ export function useExperimentalLyricsQueue() {
       if (name === 'retry' && result?.queued === false)
         throw Error('analysis not queued');
     } catch {
-      error.value = '操作未完成，伴奏與原有歌詞仍可使用。';
+      operationError.value = '操作未完成，伴奏與原有歌詞仍可使用。';
     }
     await refresh();
   }
@@ -54,6 +57,7 @@ export function useExperimentalLyricsQueue() {
   return {
     state: readonly(state),
     error: readonly(error),
+    readError: readonly(readError),
     revision: readonly(revision),
     completions: readonly(completions),
     refresh,

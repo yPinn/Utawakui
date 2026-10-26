@@ -1,6 +1,8 @@
 <script setup>
-import { RefreshCw } from '../../icons/index.js';
+import { computed } from 'vue';
+import { ListChecks, RefreshCw } from '../../icons/index.js';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import { useLibraryMetadataMaintenance } from '../../composables/useLibraryMetadataMaintenance.js';
@@ -10,34 +12,40 @@ import LibraryReconciliationModal from './LibraryReconciliationModal.vue';
 const { state, feedback, refresh, cancel, reload } =
   useLibraryMetadataMaintenance();
 const reconciliation = useLibraryReconciliation();
+const busy = computed(() => state.busy || reconciliation.state.busy);
+const managementItem = computed(() => ({
+  title: '曲庫資訊',
+  advancedActions: [
+    { id: 'reconcile', label: '校對曲庫資訊', icon: ListChecks },
+    { id: 'reload', label: '重新讀取本機資料', icon: RefreshCw },
+  ].map((action) => ({ ...action, disabled: busy.value })),
+}));
+function manage({ action }) {
+  if (busy.value) return;
+  if (action === 'reconcile') reconciliation.open();
+  else if (action === 'reload') reload();
+}
 </script>
 
 <template>
   <SettingsDocumentItem
     :icon="RefreshCw"
     title="曲庫資訊"
-    status="自動"
-    status-tone="success"
-    guidance="啟動時整理本地資料；手動編輯會保留。"
+    guidance="啟動時整理本機資料；線上補齊專輯與曲序，保留手動編輯。"
   >
     <template #actions>
       <UiButton
-        :disabled="state.busy || reconciliation.state.busy"
-        title="檢查重複發行、音檔與資訊差異，逐欄校對後儲存。"
-        aria-description="檢查重複發行、音檔與資訊差異，逐欄校對後儲存。"
-        @click="reconciliation.open"
-        >校對</UiButton
-      >
-      <UiButton
-        :disabled="state.busy"
-        title="重新讀取本地曲目與作品，不連線。"
-        aria-description="重新讀取本地曲目與作品，不連線。"
-        @click="reload"
-        >重新讀取</UiButton
-      >
-      <UiButton
-        :icon="RefreshCw"
+        v-if="state.busy && state.progress?.status === 'running'"
         variant="secondary"
+        :disabled="state.cancelling"
+        @click="cancel"
+        >停止</UiButton
+      >
+      <UiButton
+        v-else
+        :icon="RefreshCw"
+        variant="accent"
+        :disabled="busy"
         :loading="state.busy"
         loading-label="更新中"
         title="連線補齊所屬專輯與完整曲序，保留手動編輯。"
@@ -45,12 +53,10 @@ const reconciliation = useLibraryReconciliation();
         @click="refresh"
         >線上補齊</UiButton
       >
-      <UiButton
-        v-if="state.busy && state.progress?.status === 'running'"
-        :disabled="state.cancelling"
-        @click="cancel"
-        >停止</UiButton
-      >
+      <SettingsDependencyActions
+        :item="managementItem"
+        @advanced-action="manage"
+      />
     </template>
     <template v-if="feedback" #feedback>
       <UiHint

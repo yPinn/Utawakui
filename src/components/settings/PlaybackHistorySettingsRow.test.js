@@ -37,7 +37,7 @@ describe('PlaybackHistorySettingsRow', () => {
 
     expect(html).toContain('播放紀錄');
     expect(html).toContain('已保存 7 首');
-    expect(html).toContain('有紀錄');
+    expect(html).not.toContain('>有紀錄</span>');
     expect(html).toContain('播放紀錄選項');
     expect(html).toContain('aria-haspopup="menu"');
     expect(html).not.toContain('清除播放紀錄');

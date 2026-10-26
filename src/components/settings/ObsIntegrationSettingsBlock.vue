@@ -214,6 +214,7 @@ watch(
     <UiHint v-if="readError" tone="danger" role="alert">{{ readError }}</UiHint>
     <UiButton
       v-if="readError"
+      class="obs-integration-settings-block__read-retry"
       variant="ghost"
       :loading="isLoading"
       @click="emit('refreshSettings')"
@@ -330,7 +331,8 @@ watch(
           label="場次紀錄門檻（秒）"
           :model-value="skipThresholdSeconds"
           placeholder="10"
-          hint="播放未滿指定秒數便切歌時，不列入場次紀錄；0 表示停用此篩選。"
+          class="obs-integration-settings-block__threshold"
+          hint="未滿門檻就切歌不記錄；0 表示不篩選。"
           :disabled="isSaving || isLoading || Boolean(readError)"
           @update:model-value="emit('update:skipThresholdSeconds', $event)"
         />
@@ -355,7 +357,7 @@ watch(
 
     <SettingsDocumentItem
       title="演出待唱側欄"
-      guidance="連線至 OBS 後顯示「演出待唱」側欄，可切換「一般播放」。兩份佇列各自安排；此設定只控制側欄顯示，不會自動播放。"
+      guidance="連線後顯示演出待唱，可切回一般播放；兩份佇列獨立，不會自動播放。"
       variant="nested"
     >
       <template #actions>
@@ -425,13 +427,15 @@ watch(
   /* Host and port stay tightly paired (--ui-space-2) — they're one address,
      not two unrelated fields. */
   display: flex;
+  flex-wrap: wrap;
   align-items: start;
   gap: var(--ui-space-2);
 }
 
 .obs-integration-settings-block__host {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 1 var(--settings-text-inline-size);
+  min-inline-size: min(100%, 16ch);
+  max-inline-size: 100%;
 }
 
 .obs-integration-settings-block__port {
@@ -439,6 +443,7 @@ watch(
      match the host field — equal-width columns for unequal content is the
      "monotonous grid" this replaces. */
   flex: 0 0 var(--settings-port-inline-size);
+  max-inline-size: 100%;
 }
 
 .obs-integration-settings-block__credential {
@@ -448,8 +453,25 @@ watch(
 }
 
 .obs-integration-settings-block__password {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 1 var(--settings-long-text-inline-size);
+  min-inline-size: min(100%, 20ch);
+  max-inline-size: 100%;
+}
+
+.obs-integration-settings-block__threshold {
+  inline-size: var(--settings-text-inline-size);
+  max-inline-size: 100%;
+}
+.obs-integration-settings-block__threshold :deep(.ui-text-field__control-row) {
+  max-inline-size: var(--settings-number-inline-size);
+}
+
+.obs-integration-settings-block__stored-credential {
+  inline-size: var(--settings-long-text-inline-size);
+  max-inline-size: 100%;
+}
+.obs-integration-settings-block__read-retry {
+  justify-self: end;
 }
 
 .obs-integration-settings-block__submit {
