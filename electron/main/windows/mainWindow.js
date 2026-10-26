@@ -12,6 +12,7 @@ const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../../lib/thumbarIcons');
 const { isBoundedTrackId } = require('../../lib/library/paths');
 const { normalizeAudioPreferences } = require('../../lib/config');
+const { resolveRuntimeEntry } = require('../../lib/runtimeEntries');
 const {
   projectSeparationTaskbarProgress,
 } = require('../separationTaskbarProgress');
@@ -240,7 +241,10 @@ function createMainWindow(
     icon: iconPath,
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, '..', '..', 'preload.js'),
+      preload: resolveRuntimeEntry(
+        path.resolve(__dirname, '../../..'),
+        'preload',
+      ),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,

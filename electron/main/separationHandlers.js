@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const { resolveRuntimeEntry } = require('../lib/runtimeEntries');
 const { randomUUID } = require('crypto');
 const { app } = require('electron');
 const {
@@ -131,11 +132,9 @@ function registerSeparationHandlers({
             assertCurrent();
             requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
             return createSeparationEngineJob({
-              workerPath: path.join(
-                __dirname,
-                '..',
-                'lib',
-                'vocalSeparationWorker.js',
+              workerPath: resolveRuntimeEntry(
+                path.resolve(__dirname, '../..'),
+                'separationWorker',
               ),
               workerData: {
                 inputPath: prepared.inputPath,

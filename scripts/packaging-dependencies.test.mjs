@@ -1,8 +1,15 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  mkdtempSync,
+  rmSync,
+} from 'node:fs';
 import { builtinModules, createRequire } from 'node:module';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { buildReleaseRuntime } from './build-release-runtime.mjs';
 import * as yaml from 'js-yaml';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -74,8 +81,57 @@ function bareSpecifiers() {
 }
 
 const dependencies = new Set(Object.keys(packageJson.dependencies));
+let bundleDirectory;
+let bundledSources;
+beforeAll(async () => {
+  bundleDirectory = mkdtempSync(path.join(root, 'tasks/packaging-runtime-'));
+  const result = await buildReleaseRuntime({
+    rootDirectory: root,
+    outputDirectory: path.join(bundleDirectory, 'runtime'),
+  });
+  bundledSources = new Set(result.modules);
+});
+afterAll(() => {
+  if (bundleDirectory)
+    rmSync(bundleDirectory, { recursive: true, force: true });
+});
+function isDelivered(file) {
+  if (bundledSources.has(file)) return true;
+  return (
+    builder.files.some(
+      (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+    ) &&
+    !builder.files.some(
+      (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
+    )
+  );
+}
 
 describe('packaged dependency boundary', () => {
+  it('ships only built app-owned entries and unpacks three process entry bundles', () => {
+    expect(builder.beforePack).toBe('scripts/beforePackReleaseRuntime.cjs');
+    expect(builder.extraMetadata.main).toBe('runtime/main.cjs');
+    expect(builder.files).toContain('runtime/*.cjs');
+    expect(builder.files).not.toContain('electron/**/*');
+    expect(
+      builder.asarUnpack.filter((glob) => glob.startsWith('runtime/')),
+    ).toEqual([
+      'runtime/reading.cjs',
+      'runtime/separation.cjs',
+      'runtime/probe.cjs',
+    ]);
+    expect(
+      builder.asarUnpack.some((glob) => glob.startsWith('electron/')),
+    ).toBe(false);
+    expect(bundledSources).toContain('electron/main.js');
+    expect(bundledSources).toContain('electron/main/spoutHelperEntry.js');
+    expect([...bundledSources].some((file) => /\.test\./u.test(file))).toBe(
+      false,
+    );
+    expect(
+      [...bundledSources].some((file) => file.includes('/fixtures/')),
+    ).toBe(false);
+  });
   it('ships app-owned reconciliation and FLAC writeback without test media or an extra writer runtime', () => {
     for (const file of [
       'electron/lib/reconciliation/runtime.js',
@@ -89,7 +145,7 @@ describe('packaged dependency boundary', () => {
         file,
       ).toBe(true);
     expect(packageJson.dependencies).not.toHaveProperty('taglib-wasm');
-    expect(builder.asarUnpack).toContain('electron/lib/**/*');
+    expect(bundledSources).toContain('electron/lib/tags/runtime.js');
     expect(
       builder.files.some(
         (glob) =>
@@ -138,9 +194,9 @@ describe('packaged dependency boundary', () => {
         file,
       ).toBe(true);
     }
-    expect(builder.files).toContain('electron/**/*');
-    expect(builder.files).toContain('!electron/**/*.test.js');
-    expect(builder.asarUnpack).toContain('electron/lib/**/*');
+    expect(builder.files).toContain('runtime/*.cjs');
+    expect(bundledSources).toContain('electron/lib/works/runtime.js');
+    expect(bundledSources).toContain('electron/lib/releases/runtime.js');
     expect(builder.files).not.toContain('works.json');
     expect(builder.files).not.toContain('playlists.json');
   });
@@ -150,30 +206,14 @@ describe('packaged dependency boundary', () => {
       'electron/main/performanceSessionHistoryHandlers.js',
     ]) {
       expect(runtimeSources.some((source) => source.file === file)).toBe(true);
-      expect(
-        builder.files.some(
-          (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
-        ),
-      ).toBe(true);
-      expect(
-        builder.files.some(
-          (glob) =>
-            glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
-        ),
-      ).toBe(false);
-      expect(
-        builder.files.some(
-          (glob) =>
-            glob.startsWith('!') &&
-            path.matchesGlob(file.replace('.js', '.test.js'), glob.slice(1)),
-        ),
-      ).toBe(true);
+      expect(isDelivered(file)).toBe(true);
+      expect(isDelivered(file.replace('.js', '.test.js'))).toBe(false);
     }
     expect(
       builder.asarUnpack.some((glob) =>
         path.matchesGlob('electron/lib/performanceSessionArchive.js', glob),
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
   it('keeps synthetic test corpora in source and outside the packaged runtime', () => {
     const fixtures = ['electron/lib/fixtures', 'electron/lib/lrclib/fixtures']
@@ -191,13 +231,7 @@ describe('packaged dependency boundary', () => {
       );
     expect(fixtures.length).toBeGreaterThan(0);
     for (const file of fixtures) {
-      const included = builder.files.some(
-        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
-      );
-      const excluded = builder.files.some(
-        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
-      );
-      expect(included && !excluded, file).toBe(false);
+      expect(isDelivered(file), file).toBe(false);
     }
   });
 
@@ -215,30 +249,15 @@ describe('packaged dependency boundary', () => {
   it('ships the shared service cooldown helper while excluding its tests', () => {
     const helper = 'electron/lib/providerServiceCooldown.js';
     expect(runtimeSources.some(({ file }) => file === helper)).toBe(true);
-    expect(
-      builder.files.some(
-        (glob) => !glob.startsWith('!') && path.matchesGlob(helper, glob),
-      ),
-    ).toBe(true);
-    expect(
-      builder.files.some(
-        (glob) =>
-          glob.startsWith('!') && path.matchesGlob(helper, glob.slice(1)),
-      ),
-    ).toBe(false);
+    expect(isDelivered(helper)).toBe(true);
     expect(
       builder.asarUnpack.some((glob) => path.matchesGlob(helper, glob)),
-    ).toBe(true);
+    ).toBe(false);
     for (const file of [
       'electron/lib/providerServiceCooldown.test.js',
       'electron/lib/providerServiceCooldown.integration.test.js',
     ]) {
-      expect(
-        builder.files.some(
-          (glob) =>
-            glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
-        ),
-      ).toBe(true);
+      expect(isDelivered(file)).toBe(false);
     }
     expect(
       require('./electron/lib/providerServiceCooldown.js')
@@ -279,13 +298,7 @@ describe('packaged dependency boundary', () => {
       'electron/lib/lyricsResearch/estimates.js',
       'electron/main/lyrics/experimentalHandlers.js',
     ]) {
-      const included = builder.files.some(
-        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
-      );
-      const excluded = builder.files.some(
-        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
-      );
-      expect(included && !excluded).toBe(true);
+      expect(isDelivered(file), file).toBe(true);
     }
   });
   it('keeps research CLIs, credentials, downloads and evaluation data excluded', () => {
@@ -296,19 +309,14 @@ describe('packaged dependency boundary', () => {
       '.tmp/hfa-runtime.json',
       'tasks/labels.json',
     ]) {
-      expect(
-        builder.files.some(
-          (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
-        ),
-      ).toBe(false);
+      expect(isDelivered(file), file).toBe(false);
     }
     for (const file of [
-      'src/package.json',
-      'src/utils/lyrics.js',
-      'src/utils/lyricsDocument.js',
       'scripts/research/lyricsFreshEvaluation/trial-assets.json',
     ])
       expect(builder.files).toContain(file);
+    for (const file of ['src/utils/lyrics.js', 'src/utils/lyricsDocument.js'])
+      expect(bundledSources).toContain(file);
     for (const file of ['frontend.cjs', 'decoder.py'])
       expect(builder.asarUnpack).toContain(
         'scripts/research/lyricsAcoustic/' + file,
@@ -318,7 +326,7 @@ describe('packaged dependency boundary', () => {
     ).toBeTypeOf('function');
   });
   it('keeps model-independent lyric estimate runtime inside existing packaged source boundaries', () => {
-    expect(builder.files).toContain('electron/**/*');
+    expect(builder.files).toContain('runtime/*.cjs');
     expect(builder.files).toContain('shared/**/*');
     for (const file of [
       'electron/lib/library/lyricsAcousticEstimates.js',
@@ -340,13 +348,7 @@ describe('packaged dependency boundary', () => {
       ['electron/main/previewSession.js', true],
       ['electron/main/previewSession.test.js', false],
     ]) {
-      const included = builder.files.some(
-        (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
-      );
-      const excluded = builder.files.some(
-        (glob) => glob.startsWith('!') && path.matchesGlob(file, glob.slice(1)),
-      );
-      expect(included && !excluded).toBe(expected);
+      expect(isDelivered(file), file).toBe(expected);
     }
   });
 

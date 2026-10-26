@@ -37,8 +37,8 @@ describe('renderer entry and window ownership boundary', () => {
     expect(main).toContain("require('./main/windows/prompterWindow')");
     expect(main).toContain('devServerUrl(rendererEntries.prompter)');
     expect(main).toContain("'dist', rendererEntries.prompter");
-    expect(main).toContain(
-      "preloadPath: path.join(__dirname, 'performerPreload.js')",
+    expect(main).toMatch(
+      /preloadPath:\s*resolveRuntimeEntry\(\s*path.resolve\(__dirname,\s*'\.\.'\),\s*'performerPreload',?\s*\)/u,
     );
     expect(read('electron/main/windows/prompterWindow.js')).toContain(
       "'performer-view:snapshot'",

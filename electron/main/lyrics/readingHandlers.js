@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const { resolveRuntimeEntry } = require('../../lib/runtimeEntries');
 const { Worker } = require('worker_threads');
 const {
   deleteTrackReading,
@@ -91,7 +92,7 @@ function requireTrackDir(dir, trackId, resolveDir) {
 function runReadingWorker({ lines, script, onProgress }) {
   return new Promise((resolve, reject) => {
     const worker = new Worker(
-      path.join(__dirname, '..', '..', 'lib', 'lyricsReadingWorker.js'),
+      resolveRuntimeEntry(path.resolve(__dirname, '../../..'), 'readingWorker'),
       { workerData: { lines, script } },
     );
     worker.on('message', (message) => {

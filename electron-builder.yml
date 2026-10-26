@@ -13,6 +13,9 @@ productName: Utawakui
 # Electron distribution locked by a running dev session.
 electronVersion: 43.8.3
 afterPack: scripts/afterPackThirdPartyNotices.cjs
+beforePack: scripts/beforePackReleaseRuntime.cjs
+extraMetadata:
+  main: runtime/main.cjs
 # Must equal productName in shared/appIdentity.json / app.setName() — this is the
 # folder name under app.getPath('userData'). A mismatch here silently moves
 # config.json and the downloaded .onnx models out from under an existing
@@ -47,10 +50,9 @@ publish:
   releaseType: release
 
 files:
-  # Preserve the local ESM scope for main-side canonical lyrics normalization.
-  - src/package.json
-  - src/utils/lyrics.js
-  - src/utils/lyricsDocument.js
+  # App-owned Main/preloads/workers are built independently from the renderer.
+  # beforePack regenerates these six minified CJS entries from current source.
+  - runtime/*.cjs
   - scripts/research/lyricsAcoustic/assets.cjs
   - scripts/research/lyricsAcoustic/process.cjs
   - scripts/research/lyricsAcoustic/protocol.cjs
@@ -69,18 +71,8 @@ files:
   - scripts/research/lyricsFreshEvaluation/trial-assets.json
   # Includes nested HTML at dist/src/entries/prompter/index.html.
   - dist/**/*
-  # Window owners live in electron/main/windows/; preloads remain electron/*.
-  # Includes the read-only Output window owner/handler; it loads loopback HTML.
-  - electron/**/*
-  # Includes Main-owned release download batches; colocated tests are excluded below.
-  # Includes works/version and release runtimes, fixed Main handlers and schemas; library-root
-  # works.json/playlists.json user data is never an installer asset.
-  # Experimental post-separation lyrics reuses the fixed research environment;
-  # only its coordinator/store ship here, never downloaded models or results.
-  # Source-bound manual vocal roles ship in library/lyricsVocalRoles.js; sidecars stay user data.
-  - '!electron/**/*.test.js'
-  # Synthetic corpora are source-only inputs to tests and benchmark tooling.
-  - '!electron/**/fixtures/**/*'
+  # Original electron/ and src/ modules, adjacent tests and fixture corpora
+  # are absent from the package; their runtime code is inside the bundles.
   # Main only reads the shell icon; the renderer's PNG icons ship via dist/.
   - public/assets/icons/app-icon.ico
   # Independent Browser Source pages and the single inspection guide source.
@@ -129,14 +121,20 @@ asarUnpack:
   # unpacked directory as the .node binding, so the whole bin/ tree is
   # unpacked rather than just **/*.node.
   - node_modules/onnxruntime-node/bin/**/*
-  # separationHandlers.js's `new Worker(...)` entry path isn't asar-patched
-  # like require() is, so vocalSeparationWorker.js's require graph needs
-  # to resolve unpacked too — electron/lib is small, so unpack it whole.
-  - electron/lib/**/*
+  - node_modules/onnxruntime-node/dist/**/*
+  - node_modules/onnxruntime-node/package.json
+  - node_modules/onnxruntime-common/dist/cjs/**/*
+  - node_modules/onnxruntime-common/package.json
+  - node_modules/kissfft-js/**/*
+  # Workers/probes execute in a plain Node context. Their app-owned dependency
+  # graphs are self-contained; only these three bundles require real disk paths.
+  - runtime/reading.cjs
+  - runtime/separation.cjs
+  - runtime/probe.cjs
   # Read directly by Windows shell APIs (setAppDetails's appIconPath in
   # electron/main.js), not through Electron/Node's own fs layer.
   - public/assets/icons/app-icon.ico
-  # lyricsReadingWorker.js (unpacked above via electron/lib/**/*) requires these
+  # reading.cjs (unpacked above) requires these
   # inside the worker thread, which has its own Node context without
   # Electron's asar fs patch — same reasoning as onnxruntime-node's bin/
   # above, but here the whole package (not just a native binary) is what a
@@ -144,6 +142,12 @@ asarUnpack:
   # kuromoji's dictionary is read via fs.readFile, and wanakana is
   # require()'d directly.
   - node_modules/kuromoji/**/*
+  # Include kuromoji's actual Node require graph, including builder-hoisted
+  # dependencies. Worker checks reject fallback to a developer node_modules.
+  - node_modules/async/**/*
+  - node_modules/doublearray/**/*
+  - node_modules/zlibjs/**/*
+  - node_modules/lodash/**/*
   - node_modules/wanakana/**/*
   # Same worker-thread require() reasoning as kuromoji/wanakana above —
   # koroman (Stage 5c, Korean romanization) is tiny (~40KB, zero deps) but

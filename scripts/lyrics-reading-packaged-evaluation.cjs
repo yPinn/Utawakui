@@ -5,6 +5,7 @@ const path = require('node:path');
 const { performance } = require('node:perf_hooks');
 const { pathToFileURL } = require('node:url');
 const { Worker } = require('node:worker_threads');
+const { resolveRuntimeEntry } = require('../electron/lib/runtimeEntries');
 
 let artifactFs = fs;
 try {
@@ -17,6 +18,15 @@ const MAX_BENCHMARK_BYTES = 8 * 1024 * 1024;
 const WORKER_TIMEOUT_MS = 60_000;
 const MAX_ARTIFACT_ENTRIES = 100_000;
 const MAX_ARTIFACT_SCAN_MS = 10_000;
+
+// The maintainer evaluation tool also compares historical source-layout builds.
+function resolvePackagedReadingWorker(packageRoot) {
+  const archive = path.join(packageRoot, 'resources', 'app.asar');
+  const bundle = resolveRuntimeEntry(archive, 'readingWorker');
+  return artifactFs.existsSync(bundle)
+    ? bundle
+    : path.join(archive, 'electron', 'lib', 'lyricsReadingWorker.js');
+}
 
 function roundMetric(value) {
   return Number(value.toFixed(6));
@@ -212,14 +222,7 @@ async function main(argv) {
   const lines = benchmark.cases.map(
     (benchmarkCase) => benchmarkCase.lines[benchmarkCase.targetLineIndex],
   );
-  const workerPath = path.join(
-    resolvedPackagePath,
-    'resources',
-    'app.asar',
-    'electron',
-    'lib',
-    'lyricsReadingWorker.js',
-  );
+  const workerPath = resolvePackagedReadingWorker(resolvedPackagePath);
   const performanceResult = await runWorker(
     workerPath,
     lines,
@@ -261,5 +264,6 @@ module.exports = {
   assertWorkerResult,
   directorySize,
   runWorker,
+  resolvePackagedReadingWorker,
   writeJsonNoClobber,
 };

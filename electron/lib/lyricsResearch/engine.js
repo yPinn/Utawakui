@@ -1,4 +1,5 @@
 'use strict';
+const { resolveRuntimeEntry } = require('../runtimeEntries');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -99,7 +100,7 @@ async function probeResearchModels(config, { signal }) {
     await runProbe(
       process.execPath,
       [
-        require.resolve('../lyricsAcoustic/probe'),
+        resolveRuntimeEntry(path.resolve(__dirname, '../../..'), 'lyricsProbe'),
         '--node',
         path.join(config.modelDir, 'model.onnx'),
       ],

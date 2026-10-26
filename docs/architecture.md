@@ -30,6 +30,7 @@
 - Output server 的 HTTP 只接受 `Host: 127.0.0.1:<port>`，WebSocket 另要求同值 Origin，以阻擋 DNS rebinding。
 - Output 頁面與控制台之間只有一條單向訊息：Workbench 預覽（`workbench=1` 且被嵌入時）以動態 import 載入 `overlay/shared/elementReporter.mjs`，把元素矩形 `postMessage` 給 parent。Output 頁面不註冊任何 message listener；targetOrigin 為 `*`（正式控制台是不透明的 `file://` origin），可嵌入者由 CSP `frame-ancestors` 限定。控制台只接受自己預覽 iframe 的 `event.source`、預覽 URL 的 origin，並以 `shared/outputElementMessage.mjs` 驗證型別、元素 id 與數量上限（ADR 0027 P4）。
 - 這些是固定 shell 不變式，不是使用者設定。
+- 曲庫名稱與依賴 ZIP entry 共用 `lib/textGuards.js` 的 Windows filename 驗證：拒絕 NTFS alternate streams、DOS device names、控制字元、尾端點／空白及保留字元；ZIP 保留正常 `./` 與巢狀目錄。這補充 lexical containment，不提供本機管理員竄改防護。驗證與發行限制見[防禦檢查](research/engineering/defensive-security-review-2026-10-26.md)。
 
 ### 視窗
 
@@ -291,7 +292,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 
 ## Packaging Boundary
 
-- `dist/` 是 Vite renderer 輸出；`overlay/` 不進 Vite bundle。`electron/`、`shared/` 與內建 resources 進 `app.asar`，需外部解析或執行的檔案以明確 `asarUnpack`／`extraResources` 交付。完整對照見 [release inventory](operations/release-inventory.md)。
+- `dist/` 是 Vite renderer 輸出；`overlay/` 不進 Vite bundle。正式 Main／preloads／Node workers 另由 `scripts/build-release-runtime.mjs` 產生六個壓縮 CJS 入口，builder beforePack 重建、`extraMetadata.main` 指向 `runtime/main.cjs`，不交付原始 `electron/` 目錄。`lib/runtimeEntries.js` 保留開發／正式入口映射，只有 reading／separation／probe 三個 bundle 需 unpack；第三方 native／dictionary／Node wrappers 與固定研究／Python resources 仍明確交付。完整界線與 lazy require／dirname 語意見 [ADR 0030](adr/0030-release-runtime-bundles.md)及 [release inventory](operations/release-inventory.md)。
 - Electron 43；實際 patch 由 npm lock 與 `electron-builder.yml` 一致釘選，見 [release inventory](operations/release-inventory.md#current-build-shape)。關閉 Node options 與 inspect fuses，開啟 ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給 yt-dlp EJS runtime（ADR 0005）與 ONNX 環境 probe（ADR 0026）；`GrantFileProtocolExtraPrivileges` 保留給主 renderer 的 `file://` 載入，兩者待替代方案完成後關閉；在此之前的 CSP 收斂見[安全不變式](#安全不變式)。
 - Provider、FFmpeg、models 與 Audio Python 存在 userData 依賴目錄，不綁入 installer，也不在啟動關鍵路徑。
 - 第三方授權全文 `third-party/NOTICES.txt`／`manifest.json` 經 `extraResources` 交付到 `resources/third-party/`，由 generator 與 afterPack verifier 檢查；Electron／Chromium 與字型 notices 各自保留。

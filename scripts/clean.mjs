@@ -8,7 +8,7 @@ const SCRIPT_PATH = fileURLToPath(import.meta.url);
 // alone: they hold fetched evaluation data and are expensive to regenerate,
 // unlike a fresh `vite build`, `vitest run --coverage`, or `electron-builder`
 // pass.
-const FIXED_TARGETS = ['dist', 'coverage', 'node_modules/.vite'];
+const FIXED_TARGETS = ['dist', 'runtime', 'coverage', 'node_modules/.vite'];
 const RELEASE_DIR_RE = /^release(-.*)?$/;
 
 function findReleaseDirs(rootDir, fsApi) {

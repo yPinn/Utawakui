@@ -20,7 +20,12 @@ describe('computeCleanTargets', () => {
 
     const targets = computeCleanTargets('/repo', fsApi);
 
-    expect(targets).toEqual(['dist', 'coverage', 'node_modules/.vite']);
+    expect(targets).toEqual([
+      'dist',
+      'runtime',
+      'coverage',
+      'node_modules/.vite',
+    ]);
   });
 
   it('discovers release and release-* directories without hardcoding names', () => {
@@ -38,6 +43,7 @@ describe('computeCleanTargets', () => {
 
     expect(targets).toEqual([
       'dist',
+      'runtime',
       'coverage',
       'node_modules/.vite',
       'release',

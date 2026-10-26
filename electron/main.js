@@ -111,6 +111,7 @@ const {
 } = require('./lib/startupTrace');
 const windowState = require('./main/windows/mainWindow');
 const rendererEntries = require('../shared/rendererEntries.json');
+const { resolveRuntimeEntry } = require('./lib/runtimeEntries');
 const { createLibraryTrackSnapshot } = require('./main/libraryTrackSnapshot');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
@@ -1195,7 +1196,10 @@ if (!gotSingleInstanceLock) {
       isDev: windowState.isDev,
       devUrl: devServerUrl(rendererEntries.prompter),
       pagePath: path.join(__dirname, '..', 'dist', rendererEntries.prompter),
-      preloadPath: path.join(__dirname, 'performerPreload.js'),
+      preloadPath: resolveRuntimeEntry(
+        path.resolve(__dirname, '..'),
+        'performerPreload',
+      ),
       iconPath: windowState.getAppIconPath(),
       getPersistedBounds: () => configState.getConfig().performerWindowBounds,
       persistBounds: (bounds) =>

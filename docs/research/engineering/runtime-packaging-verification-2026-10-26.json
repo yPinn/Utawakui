@@ -1,0 +1,383 @@
+{
+  "date": "2026-10-26",
+  "sourceBaseCommit": "d0069f3155eb8c15b976658b9d8d0292e436a8d7",
+  "includesUncommittedChanges": true,
+  "artifacts": {
+    "raw": {
+      "path": "tasks/release-runtime-raw/win-unpacked",
+      "electronSourceFiles": 299,
+      "electronSourceBytes": 2192884,
+      "unpackedElectronSourceFiles": 211,
+      "runtimeBundles": 0,
+      "runtimeBytes": 0,
+      "physicalRuntimeBundles": [],
+      "runtimeHashes": {},
+      "runtimeMaps": 0,
+      "sourceOrBundleFingerprint": "9caa3d3be30259dc347acc3562055d3ccee18819b6a9447ba714fa8dc83a7cba"
+    },
+    "final": {
+      "path": "tasks/release-runtime-final/win-unpacked",
+      "electronSourceFiles": 0,
+      "electronSourceBytes": 0,
+      "unpackedElectronSourceFiles": 0,
+      "runtimeBundles": 6,
+      "runtimeBytes": 1412945,
+      "physicalRuntimeBundles": [
+        "runtime/probe.cjs",
+        "runtime/reading.cjs",
+        "runtime/separation.cjs"
+      ],
+      "runtimeHashes": {
+        "runtime/main.cjs": "bcff609cefdb327cc1427543a0a783c12ce1b558f19b7b68e5570299703b1c38",
+        "runtime/performer-preload.cjs": "5609985fb775830f528c4557d7f2803d89bb612ca325938fd2956bf40459bacc",
+        "runtime/preload.cjs": "4832d4a16424d70c8cf370a2ec5b0d7bf8b5c105066bef07e63caec614dbe424",
+        "runtime/probe.cjs": "ba50507dfc81adafb278ac05178f6bf3df88856190b3f49b365f39514611bc2e",
+        "runtime/reading.cjs": "52aa410c6d5e633f135711c81c494fb5a158f4200cd19b52b7ea4122d768c488",
+        "runtime/separation.cjs": "ea9ec140e7caa05638f938e7278938656b4ff3e1983be58a6db068a23da1e0d3"
+      },
+      "runtimeMaps": 0,
+      "matchesCurrentBuild": true,
+      "sourceOrBundleFingerprint": "d75dbb4884e60ee5dd647b0e6f9c1a3ad33e16a8e30aaba37989b8081931e037"
+    }
+  },
+  "startup": {
+    "raw": {
+      "counts": {
+        "cold": 3,
+        "warm": 3,
+        "warmPrimeExcluded": 1
+      },
+      "scenarios": {
+        "cold": {
+          "interactiveShell": {
+            "samples": 3,
+            "p50": 516.196,
+            "p95": 521.665
+          },
+          "firstPaint": {
+            "samples": 3,
+            "p50": 560.296,
+            "p95": 560.847
+          },
+          "workingSetKiB": {
+            "samples": 3,
+            "p50": 744784,
+            "p95": 745304
+          }
+        },
+        "warm": {
+          "interactiveShell": {
+            "samples": 3,
+            "p50": 537.062,
+            "p95": 548.093
+          },
+          "firstPaint": {
+            "samples": 3,
+            "p50": 582.762,
+            "p95": 583.993
+          },
+          "workingSetKiB": {
+            "samples": 3,
+            "p50": 745896,
+            "p95": 746632
+          }
+        }
+      }
+    },
+    "final": {
+      "counts": {
+        "cold": 3,
+        "warm": 3,
+        "warmPrimeExcluded": 1
+      },
+      "scenarios": {
+        "cold": {
+          "interactiveShell": {
+            "samples": 3,
+            "p50": 494.091,
+            "p95": 528.207
+          },
+          "firstPaint": {
+            "samples": 3,
+            "p50": 530.791,
+            "p95": 565.507
+          },
+          "workingSetKiB": {
+            "samples": 3,
+            "p50": 734492,
+            "p95": 735324
+          }
+        },
+        "warm": {
+          "interactiveShell": {
+            "samples": 3,
+            "p50": 468.885,
+            "p95": 487.909
+          },
+          "firstPaint": {
+            "samples": 3,
+            "p50": 504.885,
+            "p95": 523.809
+          },
+          "workingSetKiB": {
+            "samples": 3,
+            "p50": 734212,
+            "p95": 738192
+          }
+        }
+      }
+    }
+  },
+  "nativePlayback": {
+    "raw": {
+      "errors": [],
+      "initialAudioContexts": 0,
+      "timing": {
+        "elapsed": 2500.6000000059603,
+        "maxFrame": 5.2000000000000455,
+        "meanFrame": 4.160732113154676,
+        "frames": 601
+      },
+      "playingPeaks": [
+        {
+          "peak": 0.06250190734863281,
+          "sinkId": "",
+          "gain": 1
+        },
+        {
+          "peak": 0,
+          "sinkId": "",
+          "gain": 0
+        },
+        {
+          "peak": 0.06250190734863281,
+          "sinkId": "default",
+          "gain": 0.5
+        }
+      ],
+      "bgmPeaks": [
+        {
+          "peak": 0,
+          "sinkId": "",
+          "gain": 1
+        },
+        {
+          "peak": 0,
+          "sinkId": "",
+          "gain": 0
+        },
+        {
+          "peak": 0.015625476837158203,
+          "sinkId": "default",
+          "gain": 0.5
+        },
+        {
+          "peak": 0.031250953674316406,
+          "sinkId": "",
+          "gain": 0.25
+        }
+      ],
+      "cutPeaks": [0, 0, 0, 0],
+      "readerResults": [
+        {
+          "script": "ja",
+          "ms": 211.03819999999996,
+          "resultHash": "4b9d119c294b80cc0e81d0cb175531db3ae15fcead19aa2ecfbef17674b8ca09"
+        },
+        {
+          "script": "ko",
+          "ms": 342.2501000000002,
+          "resultHash": "6d07b63fbbe99d45d4c7ed3b0e97406a9f2b7a87f6654dd5a9e1e4860277480e"
+        }
+      ]
+    },
+    "final": {
+      "errors": [],
+      "initialAudioContexts": 0,
+      "timing": {
+        "elapsed": 2503.40000000298,
+        "maxFrame": 9.200000000000045,
+        "meanFrame": 4.16539101498,
+        "frames": 601
+      },
+      "playingPeaks": [
+        {
+          "peak": 0.06250190734863281,
+          "sinkId": "",
+          "gain": 1
+        },
+        {
+          "peak": 0,
+          "sinkId": "",
+          "gain": 0
+        },
+        {
+          "peak": 0.06250190734863281,
+          "sinkId": "default",
+          "gain": 0.5
+        }
+      ],
+      "bgmPeaks": [
+        {
+          "peak": 0,
+          "sinkId": "",
+          "gain": 1
+        },
+        {
+          "peak": 0,
+          "sinkId": "",
+          "gain": 0
+        },
+        {
+          "peak": 0.015625476837158203,
+          "sinkId": "default",
+          "gain": 0.5
+        },
+        {
+          "peak": 0.031250953674316406,
+          "sinkId": "",
+          "gain": 0.25
+        }
+      ],
+      "cutPeaks": [0, 0, 0, 0],
+      "readerResults": [
+        {
+          "script": "ja",
+          "ms": 218.67309999999998,
+          "resultHash": "4b9d119c294b80cc0e81d0cb175531db3ae15fcead19aa2ecfbef17674b8ca09"
+        },
+        {
+          "script": "ko",
+          "ms": 474.9504999999999,
+          "resultHash": "6d07b63fbbe99d45d4c7ed3b0e97406a9f2b7a87f6654dd5a9e1e4860277480e"
+        }
+      ]
+    }
+  },
+  "scope": {
+    "newDependency": false,
+    "rendererChanged": false,
+    "realUvrModelTested": false,
+    "directMlTested": false,
+    "liveObsTested": false,
+    "nsisBuilt": false,
+    "signed": false,
+    "published": false,
+    "formalUserDataModified": false,
+    "committed": false
+  },
+  "rendererByteIdentical": true,
+  "readerResultsIdentical": true,
+  "separation": {
+    "fixture": "synthetic ONNX Identity, real CPU ORT + FFmpeg + FFT + four-channel WAV writer",
+    "runs": [
+      {
+        "phase": "raw",
+        "ms": 1061.5265,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "final",
+        "ms": 975.9133999999999,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "final",
+        "ms": 988.6489000000001,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "raw",
+        "ms": 1595.5509000000002,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "raw",
+        "ms": 1332.9951,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      },
+      {
+        "phase": "final",
+        "ms": 1359.6594999999998,
+        "stages": ["loading-model", "decoding", "separating", "writing"],
+        "sha256": "7bd5909270ebd039e0a46c5481527091da2c79c49e3fceb9060ca7a3b70964a3",
+        "bytes": 141164,
+        "channels": 4,
+        "sampleRate": 44100
+      }
+    ],
+    "byteIdentical": true
+  },
+  "verification": {
+    "fullSuite": {
+      "filesPassed": 1125,
+      "testsPassed": 11353,
+      "testsSkipped": 1,
+      "exitCode": 0
+    },
+    "coverage": {
+      "lines": {
+        "total": 97,
+        "covered": 90,
+        "skipped": 0,
+        "pct": 92.78
+      },
+      "statements": {
+        "total": 105,
+        "covered": 95,
+        "skipped": 0,
+        "pct": 90.47
+      },
+      "functions": {
+        "total": 15,
+        "covered": 14,
+        "skipped": 0,
+        "pct": 93.33
+      },
+      "branches": {
+        "total": 83,
+        "covered": 70,
+        "skipped": 0,
+        "pct": 84.33
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "eslintExitCode": 0,
+    "markdownExitCode": 0,
+    "markdownFilesChecked": 206,
+    "formatExitCode": 0,
+    "rendererBuildExitCode": 0,
+    "runtimeBuildExitCode": 0,
+    "packagedDirectoryBuildExitCode": 0,
+    "packagedProbeInvalidCliExitCode": 1,
+    "packagedProbeStderrEmpty": true,
+    "bundleGraphModules": 352,
+    "bundleGraphTestOrFixtureInputs": 0,
+    "legacyPackagedEvaluationCompatible": true
+  }
+}

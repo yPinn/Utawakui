@@ -13,6 +13,7 @@ const {
   assertTrustedPackageRoot,
   directorySize,
   runWorker,
+  resolvePackagedReadingWorker,
   writeJsonNoClobber,
 } = require(scriptPath);
 const fixture = JSON.parse(
@@ -27,6 +28,36 @@ const fixture = JSON.parse(
 const lines = fixture.cases.map(
   (benchmarkCase) => benchmarkCase.lines[benchmarkCase.targetLineIndex],
 );
+
+describe('packaged reading entry compatibility', () => {
+  it('selects the physical bundle for the new package layout', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-layout-'));
+    try {
+      const worker = path.join(
+        root,
+        'resources/app.asar.unpacked/runtime/reading.cjs',
+      );
+      fs.mkdirSync(path.dirname(worker), { recursive: true });
+      fs.writeFileSync(worker, '');
+      expect(resolvePackagedReadingWorker(root)).toBe(worker);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+  it('keeps historical source-layout packages evaluable', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-layout-'));
+    try {
+      expect(resolvePackagedReadingWorker(root)).toBe(
+        path.join(
+          root,
+          'resources/app.asar/electron/lib/lyricsReadingWorker.js',
+        ),
+      );
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
 
 function createWorkerFile(rootPath, source) {
   const workerPath = path.join(rootPath, 'lyricsReadingWorker.js');

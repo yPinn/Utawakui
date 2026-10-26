@@ -10,6 +10,7 @@ module.exports = [
     ignores: [
       'coverage/**',
       'dist/**',
+      'runtime/**',
       '.tmp/**',
       'release/**',
       'release-*/**',

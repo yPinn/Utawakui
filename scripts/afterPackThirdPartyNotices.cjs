@@ -7,4 +7,7 @@ module.exports = async function afterPackThirdPartyNotices(context) {
     context.packager.projectDir,
     context.appOutDir,
   );
+  const { verifyReleaseRuntimePackage } =
+    await import('./verify-runtime-package.mjs');
+  verifyReleaseRuntimePackage(context.appOutDir);
 };
