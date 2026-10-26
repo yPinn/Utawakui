@@ -36,12 +36,19 @@ export function createBgmAudioDeck({
     duration: state.duration ?? 0,
     error: state.error ?? null,
     isDimmed: state.isDimmed ?? false,
+    usesSeparatedAudio: false,
+    guideVocalOn: false,
   });
 
   let settings = { ...DEFAULT_SETTINGS };
   let context = null;
   let sourceNode = null;
+  let sourceConnected = false;
   let gainNode = null;
+  let splitter = null;
+  let accompanimentMerger = null;
+  let guideMerger = null;
+  let guideGain = null;
   let transitionGeneration = 0;
   let pendingPlaying = null;
   let sourceUrl = '';
@@ -62,9 +69,9 @@ export function createBgmAudioDeck({
       context = createAudioContext();
       sourceNode = context.createMediaElementSource(audio);
       gainNode = context.createGain();
-      sourceNode.connect(gainNode);
       gainNode.connect(context.destination);
       gainNode.gain.setValueAtTime(0, context.currentTime);
+      routeSource();
     }
     if (connectCaptureInput && !captureInput) {
       if (!captureBridge) {
@@ -76,6 +83,46 @@ export function createBgmAudioDeck({
       });
     }
     return context;
+  }
+
+  function routeSource() {
+    if (!sourceNode) return;
+    if (sourceConnected) sourceNode.disconnect();
+    sourceConnected = true;
+    if (!state.usesSeparatedAudio) {
+      sourceNode.connect(gainNode);
+      return;
+    }
+    if (!splitter) {
+      splitter = context.createChannelSplitter(4);
+      accompanimentMerger = context.createChannelMerger(2);
+      guideMerger = context.createChannelMerger(2);
+      guideGain = context.createGain();
+      splitter.connect(accompanimentMerger, 0, 0);
+      splitter.connect(accompanimentMerger, 1, 1);
+      splitter.connect(guideMerger, 2, 0);
+      splitter.connect(guideMerger, 3, 1);
+      accompanimentMerger.connect(gainNode);
+      guideMerger.connect(guideGain);
+      guideGain.connect(gainNode);
+    }
+    applyGuideGain();
+    sourceNode.connect(splitter);
+  }
+
+  function applyGuideGain() {
+    if (!guideGain) return;
+    guideGain.gain.cancelScheduledValues(context.currentTime);
+    guideGain.gain.setValueAtTime(
+      state.guideVocalOn ? 1 : 0,
+      context.currentTime,
+    );
+  }
+
+  function setGuideVocalOn(on) {
+    state.guideVocalOn = state.usesSeparatedAudio && on === true;
+    applyGuideGain();
+    return state.guideVocalOn;
   }
 
   function failCapture() {
@@ -217,6 +264,9 @@ export function createBgmAudioDeck({
     state.error = null;
     state.isPlaying = false;
     state.duration = 0;
+    state.usesSeparatedAudio = options.usesSeparatedAudio === true;
+    setGuideVocalOn(options.guideVocalOn === true);
+    routeSource();
     configure(options);
     audio.src = sourceUrl;
     audio.currentTime = Math.max(0, Number(options.positionSeconds) || 0);
@@ -391,6 +441,10 @@ export function createBgmAudioDeck({
     audio.removeAttribute('src');
     audio.load();
     sourceNode?.disconnect();
+    splitter?.disconnect();
+    accompanimentMerger?.disconnect();
+    guideMerger?.disconnect();
+    guideGain?.disconnect();
     gainNode?.disconnect?.();
     captureInput?.release();
     captureBridge?.stream.getTracks?.().forEach((track) => track.stop());
@@ -408,6 +462,7 @@ export function createBgmAudioDeck({
     setVolume,
     setMuted,
     setDimmed,
+    setGuideVocalOn,
     seek,
     hasSource,
     isSilentAndPaused,

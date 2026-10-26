@@ -61,14 +61,31 @@ class MockAudioParam {
 
 function createHarness({ wait, capture = false } = {}) {
   const audio = new MockAudio();
-  const gain = { gain: new MockAudioParam(), connect: vi.fn() };
+  const gain = {
+    gain: new MockAudioParam(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  };
+  const guideGain = {
+    gain: new MockAudioParam(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  };
+  const splitter = { connect: vi.fn(), disconnect: vi.fn() };
+  const instMerger = { connect: vi.fn(), disconnect: vi.fn() };
+  const vocMerger = { connect: vi.fn(), disconnect: vi.fn() };
   const source = { connect: vi.fn(), disconnect: vi.fn() };
   const context = {
     currentTime: 10,
     destination: {},
     state: 'suspended',
     createMediaElementSource: vi.fn(() => source),
-    createGain: vi.fn(() => gain),
+    createGain: vi.fn().mockReturnValueOnce(gain).mockReturnValue(guideGain),
+    createChannelSplitter: vi.fn(() => splitter),
+    createChannelMerger: vi
+      .fn()
+      .mockReturnValueOnce(instMerger)
+      .mockReturnValue(vocMerger),
     resume: vi.fn(async () => {
       context.state = 'running';
     }),
@@ -98,6 +115,10 @@ function createHarness({ wait, capture = false } = {}) {
     createAudioContext,
     deck,
     gain,
+    guideGain,
+    splitter,
+    instMerger,
+    vocMerger,
     source,
     bridge,
     connectCaptureInput,
@@ -108,6 +129,57 @@ function createHarness({ wait, capture = false } = {}) {
 }
 
 describe('BGM audio deck', () => {
+  it('routes four-channel accompaniment and independently switchable guide before the shared monitor/capture gain', async () => {
+    const h = createHarness({ capture: true });
+    h.deck.load('utawakui-media://track/a/stems.wav', {
+      usesSeparatedAudio: true,
+    });
+    const start = h.deck.startSilent();
+    await vi.waitFor(() => expect(h.audio.play).toHaveBeenCalled());
+    h.audio.dispatch('playing');
+    await start;
+    expect(h.source.connect).toHaveBeenLastCalledWith(h.splitter);
+    expect(h.source.connect).not.toHaveBeenCalledWith(h.gain);
+    expect(h.splitter.connect.mock.calls).toEqual([
+      [h.instMerger, 0, 0],
+      [h.instMerger, 1, 1],
+      [h.vocMerger, 2, 0],
+      [h.vocMerger, 3, 1],
+    ]);
+    expect(h.instMerger.connect).toHaveBeenCalledWith(h.gain);
+    expect(h.vocMerger.connect).toHaveBeenCalledWith(h.guideGain);
+    expect(h.guideGain.connect).toHaveBeenCalledWith(h.gain);
+    expect(h.guideGain.gain.value).toBe(0);
+    expect(h.deck.state.guideVocalOn).toBe(false);
+    expect(h.deck.state.usesSeparatedAudio).toBe(true);
+    h.deck.setGuideVocalOn(true);
+    expect(h.guideGain.gain.value).toBe(1);
+    h.deck.setDimmed(true);
+    expect(h.guideGain.gain.value).toBe(1);
+    expect(h.gain.connect).toHaveBeenCalledWith(h.bridge);
+    h.deck.setGuideVocalOn(false);
+    expect(h.guideGain.gain.value).toBe(0);
+    expect(h.audio.play).toHaveBeenCalledOnce();
+    await h.deck.dispose();
+    expect(h.splitter.disconnect).toHaveBeenCalledOnce();
+    expect(h.instMerger.disconnect).toHaveBeenCalledOnce();
+    expect(h.vocMerger.disconnect).toHaveBeenCalledOnce();
+    expect(h.guideGain.disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('resets guide on a new source and never pretends to remove vocals from an original track', async () => {
+    const h = createHarness();
+    h.deck.load('stems', { usesSeparatedAudio: true });
+    h.deck.setGuideVocalOn(true);
+    expect(h.deck.state.guideVocalOn).toBe(true);
+    h.deck.load('other-stems', { usesSeparatedAudio: true });
+    expect(h.deck.state.guideVocalOn).toBe(false);
+    h.deck.load('original');
+    h.deck.setGuideVocalOn(true);
+    expect(h.deck.state.usesSeparatedAudio).toBe(false);
+    expect(h.deck.state.guideVocalOn).toBe(false);
+    expect(h.createAudioContext).not.toHaveBeenCalled();
+  });
   it('does not let a cancelled capture preparation disable a newer start', async () => {
     const h = createHarness({ capture: true });
     const pending = createDeferred();

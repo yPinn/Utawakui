@@ -112,10 +112,14 @@ function createHarness() {
   const deck = {
     state: deckState,
     configure: vi.fn(),
-    load: vi.fn(),
+    load: vi.fn((_url, options) => {
+      deckState.usesSeparatedAudio = options.usesSeparatedAudio;
+      deckState.guideVocalOn = options.guideVocalOn;
+    }),
     setVolume: vi.fn(),
     setMuted: vi.fn(),
     setDimmed: vi.fn(),
+    setGuideVocalOn: vi.fn(),
     seek: vi.fn((position) => position),
     dispose: vi.fn(async () => {}),
   };
@@ -184,6 +188,53 @@ function createHarness() {
 }
 
 describe('BGM session controller', () => {
+  it('routes the BGM guide switch only to its own deck', async () => {
+    const { controller, deck, plan } = createHarness();
+    await controller.initialize();
+    controller.setGuideVocalOn(true);
+    expect(deck.setGuideVocalOn).toHaveBeenCalledWith(true);
+    expect(plan.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it('updates an available variant for the same track with current position and guide selection', async () => {
+    const { controller, library, deck, deckState } = createHarness();
+    await controller.initialize();
+    deckState.currentTime = 48;
+    deckState.guideVocalOn = true;
+    library.state.tracks[0].stemsUrl =
+      'utawakui-media://track/bgm-track/revised-stems.wav';
+    await nextTick();
+    await vi.waitFor(() => expect(deck.load).toHaveBeenCalledTimes(2));
+    expect(deck.load).toHaveBeenLastCalledWith(
+      'utawakui-media://track/bgm-track/revised-stems.wav',
+      expect.objectContaining({
+        usesSeparatedAudio: true,
+        guideVocalOn: true,
+        positionSeconds: 48,
+      }),
+    );
+    expect(deck.setGuideVocalOn).not.toHaveBeenCalled();
+  });
+
+  it('falls back to labeled original mode when no ready stems exist and resets guide on another track', async () => {
+    const { controller, library, deck, deckState, plan } = createHarness();
+    await controller.initialize();
+    deckState.guideVocalOn = true;
+    plan.state.plan.currentTrackId = 'other-track';
+    await nextTick();
+    expect(deck.load).toHaveBeenLastCalledWith(
+      'utawakui-media://track/other-track/audio.wav',
+      expect.objectContaining({
+        usesSeparatedAudio: false,
+        guideVocalOn: false,
+      }),
+    );
+    library.state.tracks[1].stemsUrl =
+      'utawakui-media://track/other-track/stems.wav';
+    await nextTick();
+    expect(deck.load).toHaveBeenCalledTimes(2);
+  });
+
   it('projects both old and requested media while a source replacement is fading out', async () => {
     const { controller, coordinator, plan } = createHarness();
     await controller.initialize();
@@ -239,7 +290,7 @@ describe('BGM session controller', () => {
     expect(controller.state.error).not.toContain('E:/private');
   });
 
-  it('initializes preparation and loads the original library audio silently', async () => {
+  it('initializes preparation and prefers the available accompaniment silently', async () => {
     const { controller, deck, library, obs, plan } = createHarness();
 
     await controller.initialize();
@@ -248,10 +299,13 @@ describe('BGM session controller', () => {
     expect(library.initialize).toHaveBeenCalledOnce();
     expect(obs.refreshObsStatus).toHaveBeenCalledOnce();
     expect(deck.load).toHaveBeenCalledWith(
-      'utawakui-media://track/bgm-track/audio.wav',
+      'utawakui-media://track/bgm-track/stems.wav',
       expect.objectContaining({ loop: true, positionSeconds: 14 }),
     );
-    expect(deck.load.mock.calls[0][0]).not.toContain('stems.wav');
+    expect(deck.load.mock.calls[0][1]).toMatchObject({
+      usesSeparatedAudio: true,
+      guideVocalOn: false,
+    });
     expect(deck.configure).toHaveBeenCalledWith(plan.state.plan.settings);
     expect(controller.state.isInitialized).toBe(true);
   });
@@ -395,7 +449,7 @@ describe('BGM session controller', () => {
     latestChange.resolve();
     await vi.waitFor(() => expect(deck.load).toHaveBeenCalledOnce());
     expect(deck.load).toHaveBeenLastCalledWith(
-      'utawakui-media://track/bgm-track/audio.wav',
+      'utawakui-media://track/bgm-track/stems.wav',
       expect.any(Object),
     );
   });

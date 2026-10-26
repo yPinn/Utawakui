@@ -25,9 +25,7 @@ timestamp，或讓 BGM 與演唱 lane 重疊。
 
 - BGM 只引用現有曲庫中的本機 track id，不複製媒體，也不建立 BGM 專用假媒體格式。
 - 同一首曲目可同時存在於一般 playlist 與目前 BGM；一般播放順序與 BGM 播放位置互不影響。
-- 現行 monitor slice 使用曲目的原始立體聲 playable asset；是否允許使用者明確選定既有
-  accompaniment variant 留待 media policy 決策。BGM 不套用 guide vocal、pitch、
-  tempo、lyrics timing 或 Music Analysis transport 行為，也不在播放時隱式排程分離。
+- BGM 預設優先使用 Main 回報已可用的分離結果；四聲道中 0／1 是伴奏 L／R，2／3 經 BGM 自己的導唱開關混入。同一份 mix 送到 monitor 與 shared capture，不沿用演唱播放器的導唱、pitch、tempo 或歌詞設定，也不在播放時隱式排程分離。沒有結果時使用原曲並明示「原曲」，導唱開關停用；來源讀取失敗不暗中回退成含人聲的原曲。
 - BGM 來源、參數與明確的 monitor 試播不依賴 provider、外部歌詞、Audio Python、Output server
   或作用中的 OBS session。inactive 試播是現場前檢查，不是一般聆聽用的常駐背景播放模式；
   是否進入 live／record 不得成為 transport permission。
@@ -264,10 +262,10 @@ BGM fade 至零、確認 deck paused，再完成 pre-roll。buffering／stalled�
   `utawakui-media:` 解析的 track id。
 - 既有 provider assist 可作為選用取得路徑，但候選必須先經使用者確認、下載並匯入本機，
   才能加入 BGM。BGM deck 不直接串流遠端 YouTube URL，也不新增自動下載或權利宣告。
-- 純音樂／instrumental source 是預設選擇。系統不因曲目被加入 BGM 就自動做人聲分離；
+- 既有可用伴奏是預設來源；新選 BGM 曲目時導唱預設關閉。開關只屬於目前 BGM，不寫入演唱／機器偏好；同曲 pause／resume 保留，換曲回關閉，同曲分離結果更新經原 coordinator 交接並保留當時開關與實際位置。系統不因曲目被加入 BGM 就自動做人聲分離；
   separation 成本、等待時間與 artifact lifecycle 仍由既有 audio-processing flow 管理。
-- 若曲目已有可用 accompaniment result，BGM item 可明確選擇該 variant。沒有結果時只能使用
-  原始音訊，或由使用者先執行既有分離流程；不得在按下 play 後才隱式排程處理。
+- 選取來源依 `hasSeparation` 與 `stemsUrl`，不把只有 recipe 名稱或尚未產生的 artifact 當就緒。沒有結果時使用原始音訊，或由使用者先執行既有分離流程；不得在按下 play 後才隱式排程處理。原曲本身含有人聲時，導唱開關不能宣稱能移除它。
+- 展開的操作列依序是 BGM 導唱（MicVocal）、壓低音量（Volume1 單音波）、靜音與音量。兩個開關沿用 `UiIconButton`、active／aria-pressed 與動作提示；壓低提示為相對降低 dB 或按下恢復，不顯示成另一個絕對音量。狀態列顯示「伴奏」、「伴奏＋導唱」或「原曲」，維持原本固定行高。
 - BGM 需要獨立 volume／mute，並可為單一 item 保存 bounded gain trim；不得改寫原始音訊。
   自動 loudness normalization 目前未實作，若後續加入，必須保存分析 metadata、使用
   non-destructive gain、設定 true-peak ceiling，且不把一般播放音量或演唱 mix 一起改掉。

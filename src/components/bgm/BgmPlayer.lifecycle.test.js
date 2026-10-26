@@ -39,6 +39,8 @@ vi.mock('./BgmPlayerTransport.vue', () => ({
       'currentTrack',
       'isDimmed',
       'isMuted',
+      'hasGuideVocal',
+      'guideVocalOn',
       'dimDb',
       'volume',
       'currentTime',
@@ -128,10 +130,13 @@ beforeEach(() => {
     deckState: reactive({
       error: null,
       isDimmed: false,
+      usesSeparatedAudio: true,
+      guideVocalOn: false,
       currentTime: 0,
       duration: 120,
     }),
     currentTrack: ref({ id: 'one', title: 'One' }),
+    canToggleGuideVocal: ref(true),
     settings: reactive({ volume: 0.4, isMuted: false, dimDb: -12 }),
   };
   for (const name of [
@@ -143,6 +148,7 @@ beforeEach(() => {
     'seekBgm',
     'commitBgmPosition',
     'setDimmed',
+    'setGuideVocalOn',
     'previewVolume',
     'setVolume',
     'setMuted',
@@ -328,9 +334,11 @@ describe('session BGM composition and lifecycle', () => {
     await nextTick();
     fixture.transport.emit('play');
     fixture.transport.emit('pause');
+    fixture.transport.emit('setGuideVocalOn', true);
     fixture.transport.emit('commitVolume', 0.3);
     expect(fixture.session.playBgm).toHaveBeenCalledOnce();
     expect(fixture.session.pauseBgm).toHaveBeenCalledOnce();
+    expect(fixture.session.setGuideVocalOn).toHaveBeenCalledWith(true);
     expect(fixture.session.setVolume).toHaveBeenCalledWith(0.3);
     dock.app.unmount();
     expect(fixture.session.initialize).not.toHaveBeenCalled();

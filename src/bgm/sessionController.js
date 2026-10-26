@@ -23,6 +23,14 @@ export function createBgmSessionController({
     );
   });
   const settings = computed(() => plan.state.plan.settings);
+  const currentSource = computed(() => {
+    const track = currentTrack.value;
+    const usesSeparatedAudio = Boolean(track?.hasSeparation && track?.stemsUrl);
+    return {
+      url: usesSeparatedAudio ? track.stemsUrl : (track?.url ?? ''),
+      usesSeparatedAudio,
+    };
+  });
   const sessionIndicators = computed(() => {
     const observed = obs.state.observed;
     const isReady = observed?.lifecycle === 'ready';
@@ -38,6 +46,8 @@ export function createBgmSessionController({
   let loadedUrl = null;
   const requestedTrackId = shallowRef(null);
   let requestedUrl = null;
+  let loadedSeparatedAudio = false;
+  let requestedSeparatedAudio = false;
   let sessionModeUpdates = Promise.resolve();
   let sourceUpdates = Promise.resolve();
   const stopWatchers = [];
@@ -50,26 +60,38 @@ export function createBgmSessionController({
   function syncDeckSource() {
     const track = currentTrack.value;
     const trackId = track?.id ?? null;
-    const url = track?.url ?? null;
+    const { url, usesSeparatedAudio } = currentSource.value;
     const matchesRequestedSource =
-      trackId === requestedTrackId.value && url === requestedUrl;
+      trackId === requestedTrackId.value &&
+      url === requestedUrl &&
+      usesSeparatedAudio === requestedSeparatedAudio;
     const matchesSettledSource =
       requestedTrackId.value === null &&
       trackId === loadedTrackId.value &&
-      url === loadedUrl;
+      url === loadedUrl &&
+      usesSeparatedAudio === loadedSeparatedAudio;
     if (matchesRequestedSource || matchesSettledSource) {
       return sourceUpdates;
     }
 
     requestedTrackId.value = trackId;
     requestedUrl = url;
+    requestedSeparatedAudio = usesSeparatedAudio;
     const update = coordinator.replaceBgmSource(() => {
+      const sameTrack = trackId !== null && trackId === loadedTrackId.value;
       deck.load(url ?? '', {
         ...plan.state.plan.settings,
-        positionSeconds: track ? plan.state.plan.positionSeconds : 0,
+        positionSeconds: sameTrack
+          ? deck.state.currentTime
+          : track
+            ? plan.state.plan.positionSeconds
+            : 0,
+        usesSeparatedAudio,
+        guideVocalOn: sameTrack && deck.state.guideVocalOn === true,
       });
       loadedTrackId.value = trackId;
       loadedUrl = url;
+      loadedSeparatedAudio = usesSeparatedAudio;
     });
     sourceUpdates = update.then((completed) => {
       if (requestedTrackId.value === trackId && requestedUrl === url) {
@@ -100,7 +122,8 @@ export function createBgmSessionController({
       watch(
         [
           () => plan.state.plan.currentTrackId,
-          () => currentTrack.value?.url ?? null,
+          () => currentSource.value.url,
+          () => currentSource.value.usesSeparatedAudio,
         ],
         syncDeckSource,
         { immediate: true },
@@ -220,6 +243,16 @@ export function createBgmSessionController({
     return updated;
   }
 
+  const canToggleGuideVocal = computed(
+    () =>
+      loadedTrackId.value === currentTrack.value?.id &&
+      deck.state.usesSeparatedAudio === true,
+  );
+  function setGuideVocalOn(on) {
+    if (!canToggleGuideVocal.value) return false;
+    return deck.setGuideVocalOn(on);
+  }
+
   async function dispose() {
     stopWatchers.splice(0).forEach((stop) => stop());
     unsubscribePlayer.splice(0).forEach((unsubscribe) => unsubscribe());
@@ -232,6 +265,7 @@ export function createBgmSessionController({
     handoffState: readonly(coordinator.state),
     deckState: readonly(deck.state),
     currentTrack,
+    canToggleGuideVocal,
     sourceTrackIds: computed(() => [
       ...new Set([loadedTrackId.value, requestedTrackId.value].filter(Boolean)),
     ]),
@@ -248,6 +282,7 @@ export function createBgmSessionController({
     previewVolume,
     setVolume,
     setMuted,
+    setGuideVocalOn,
     dispose,
   };
 }

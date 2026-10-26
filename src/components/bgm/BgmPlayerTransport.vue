@@ -1,10 +1,15 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import { Square, Volume2, VolumeX } from '../../icons/index.js';
+import {
+  MicVocal,
+  Square,
+  Volume1,
+  Volume2,
+  VolumeX,
+} from '../../icons/index.js';
 import { projectBgmPrimaryAction } from './bgmPresentation.js';
 import { formatDuration } from '../../utils/format.js';
 import audioControlValues from '../../../shared/audioControlValues.json';
-import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
@@ -20,6 +25,8 @@ const props = defineProps({
   currentTrack: { type: Object, default: null },
   isDimmed: { type: Boolean, default: false },
   isMuted: { type: Boolean, default: false },
+  hasGuideVocal: { type: Boolean, default: false },
+  guideVocalOn: { type: Boolean, default: false },
   dimDb: { type: Number, default: audioControlValues.bgmDimDb.defaultValue },
   volume: { type: Number, default: audioControlValues.bgmVolume.defaultValue },
   currentTime: { type: Number, default: 0 },
@@ -32,6 +39,7 @@ const emit = defineEmits([
   'cut',
   'setDimmed',
   'setMuted',
+  'setGuideVocalOn',
   'previewVolume',
   'commitVolume',
   'seek',
@@ -58,6 +66,15 @@ const dimActionLabel = computed(() =>
   props.isDimmed
     ? '壓低 BGM（按下恢復 BGM 音量）'
     : `壓低 BGM（降低 ${dimReductionDb.value} dB）`,
+);
+const guideActionLabel = computed(() =>
+  !props.currentTrack
+    ? '請先選擇 BGM'
+    : !props.hasGuideVocal
+      ? 'BGM 原曲播放，需先準備伴奏才能切換導唱'
+      : props.guideVocalOn
+        ? '關閉 BGM 導唱'
+        : '開啟 BGM 導唱',
 );
 const primaryAction = computed(() =>
   projectBgmPrimaryAction({
@@ -128,16 +145,24 @@ function updatePosition(value) {
         :disabled="primaryAction.disabled"
         @click="activatePrimaryAction"
       />
-      <UiButton
+      <UiIconButton
+        class="bgm-transport__guide"
+        :icon="MicVocal"
+        :label="guideActionLabel"
+        :active="guideVocalOn && hasGuideVocal"
+        :aria-pressed="guideVocalOn && hasGuideVocal"
+        :disabled="!hasGuideVocal"
+        @click="emit('setGuideVocalOn', !guideVocalOn)"
+      />
+      <UiIconButton
         class="bgm-transport__talk"
-        :title="dimActionLabel"
+        :icon="Volume1"
+        :label="dimActionLabel"
         :active="isDimmed"
         :aria-label="dimActionLabel"
         :aria-pressed="isDimmed"
         @click="emit('setDimmed', !isDimmed)"
-      >
-        壓低 BGM
-      </UiButton>
+      />
 
       <div class="bgm-transport__audio" role="group" aria-label="BGM 音量">
         <UiIconButton
@@ -197,7 +222,7 @@ function updatePosition(value) {
 
 .bgm-transport__controls {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto auto auto minmax(0, 1fr);
   align-items: center;
   gap: var(--ui-space-1);
 }
@@ -213,7 +238,7 @@ function updatePosition(value) {
   );
 }
 .bgm-transport--dock .bgm-transport__controls {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto auto minmax(0, 1fr);
 }
 
 .bgm-transport__volume {

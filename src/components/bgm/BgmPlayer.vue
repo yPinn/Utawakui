@@ -42,6 +42,7 @@ const {
   handoffState,
   deckState,
   currentTrack,
+  canToggleGuideVocal,
   settings,
   playBgm,
   pauseBgm,
@@ -49,6 +50,7 @@ const {
   seekBgm,
   commitBgmPosition,
   setDimmed,
+  setGuideVocalOn,
   previewVolume,
   setVolume,
   setMuted,
@@ -92,6 +94,20 @@ const operationalStatus = computed(() =>
     restorePending: handoffState.restorePending,
     error: error.value,
   }),
+);
+const sourceModeLabel = computed(() =>
+  !currentTrack.value
+    ? ''
+    : deckState.usesSeparatedAudio
+      ? deckState.guideVocalOn
+        ? '伴奏＋導唱'
+        : '伴奏'
+      : '原曲',
+);
+const statusAccessibleLabel = computed(() =>
+  [operationalStatus.value.accessibleLabel, sourceModeLabel.value]
+    .filter(Boolean)
+    .join('，'),
 );
 const searchResults = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase();
@@ -148,6 +164,8 @@ async function changeTrack(trackId) {
         :current-track="currentTrack"
         :is-dimmed="deckState.isDimmed"
         :is-muted="settings.isMuted"
+        :has-guide-vocal="canToggleGuideVocal"
+        :guide-vocal-on="deckState.guideVocalOn"
         :dim-db="settings.dimDb"
         :volume="settings.volume"
         :current-time="deckState.currentTime"
@@ -156,6 +174,7 @@ async function changeTrack(trackId) {
         @pause="pauseBgm"
         @cut="emergencyCut"
         @set-dimmed="setDimmed"
+        @set-guide-vocal-on="setGuideVocalOn"
         @set-muted="setMuted"
         @preview-volume="previewVolume"
         @commit-volume="setVolume"
@@ -163,13 +182,13 @@ async function changeTrack(trackId) {
         @commit-position="commitBgmPosition"
       >
         <template #context>
-          <UiTooltip :text="operationalStatus.accessibleLabel">
+          <UiTooltip :text="statusAccessibleLabel">
             <template #trigger="{ triggerProps }">
               <span
                 v-bind="triggerProps"
                 class="bgm-player__status"
                 :class="`bgm-player__status--${operationalStatus.tone}`"
-                :aria-label="operationalStatus.accessibleLabel"
+                :aria-label="statusAccessibleLabel"
                 role="status"
                 aria-live="polite"
               >
@@ -178,7 +197,12 @@ async function changeTrack(trackId) {
                   v-if="operationalStatus.icon"
                   aria-hidden="true"
                 />
-                <span>{{ operationalStatus.label }}</span>
+                <span
+                  >{{ operationalStatus.label
+                  }}<template v-if="sourceModeLabel"
+                    >・{{ sourceModeLabel }}</template
+                  ></span
+                >
               </span>
             </template>
           </UiTooltip>

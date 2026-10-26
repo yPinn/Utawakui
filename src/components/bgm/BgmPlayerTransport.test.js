@@ -11,6 +11,46 @@ const source = readFileSync(
 );
 
 describe('BgmPlayerTransport', () => {
+  it.each([false, true])(
+    'exposes an independent BGM guide-vocal icon toggle, enabled=%s',
+    async (guideVocalOn) => {
+      const html = await renderToString(
+        createSSRApp(BgmPlayerTransport, {
+          phase: 'bgm-playing',
+          currentTrack: { id: 'a' },
+          hasGuideVocal: true,
+          guideVocalOn,
+        }),
+      );
+      const button = html.match(
+        /<button[^>]*bgm-transport__guide[^>]*>[\s\S]*?<\/button>/u,
+      )?.[0];
+      expect(button).toContain('ui-icon-btn');
+      expect(button).toContain(`aria-pressed="${guideVocalOn}"`);
+      expect(button).toContain(
+        guideVocalOn ? '關閉 BGM 導唱' : '開啟 BGM 導唱',
+      );
+      expect(button).not.toContain('disabled');
+      expect(source).toContain("emit('setGuideVocalOn', !guideVocalOn)");
+    },
+  );
+
+  it('explains the original-audio fallback and disables unavailable guide removal', async () => {
+    const html = await renderToString(
+      createSSRApp(BgmPlayerTransport, {
+        phase: 'idle',
+        currentTrack: { id: 'a' },
+        hasGuideVocal: false,
+      }),
+    );
+    const button = html.match(
+      /<button[^>]*bgm-transport__guide[^>]*>[\s\S]*?<\/button>/u,
+    )?.[0];
+    expect(button).toContain('disabled');
+    expect(button).toContain('原曲播放');
+    expect(button).toContain('準備伴奏');
+  });
+
   it('uses BGM player identity and exposes the complete safety transport', async () => {
     const html = await renderToString(
       createSSRApp(BgmPlayerTransport, {
@@ -28,13 +68,14 @@ describe('BgmPlayerTransport', () => {
     expect(html).not.toContain('目前可聽：BGM');
     expect(html).toContain('暫停 BGM');
     expect(html).toContain('壓低 BGM（降低 12 dB）');
-    expect(source).toMatch(/>\s*壓低 BGM\s*<\/UiButton>/u);
+    expect(source).not.toMatch(/>\s*壓低 BGM\s*<\/UiButton>/u);
     const dimButton = html.match(
       /<button[^>]*bgm-transport__talk[^>]*>[\s\S]*?<\/button>/u,
     )?.[0];
     expect(dimButton).toContain('aria-pressed="false"');
-    expect(dimButton).not.toContain('<svg');
-    expect(source).not.toContain('MicVocal');
+    expect(dimButton).toContain('<svg');
+    expect(dimButton).toContain('volume-1');
+    expect(dimButton).toContain('ui-icon-btn');
     expect(html).toContain('立即停止 BGM（不淡出）');
     expect(html).toContain('aria-label="BGM 進度"');
     expect(html).toContain('0:42');
@@ -60,9 +101,10 @@ describe('BgmPlayerTransport', () => {
       /<button[^>]*bgm-transport__talk[^>]*>[\s\S]*?<\/button>/u,
     )?.[0];
     expect(dimButton).toContain('aria-pressed="true"');
-    expect(dimButton).toContain('aria-label="壓低 BGM（按下恢復 BGM 音量）"');
+    expect(dimButton).toContain('ui-visually-hidden');
+    expect(dimButton).toContain('壓低 BGM（按下恢復 BGM 音量）');
     expect(dimButton).toContain('壓低 BGM');
-    expect(dimButton).not.toContain('<svg');
+    expect(dimButton).toContain('volume-1');
     expect(html).not.toContain('Talk／Dim');
     expect(html).not.toContain('Dim：25%');
   });

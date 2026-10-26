@@ -90,6 +90,7 @@ export {
   UserRoundPlus,
   Video,
   Volume2,
+  Volume1,
   VolumeX,
   Wrench,
   X,
