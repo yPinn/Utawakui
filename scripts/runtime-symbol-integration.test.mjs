@@ -9,6 +9,7 @@ import {
 } from './runtime-symbol-policy.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
+fs.mkdirSync(path.join(root, 'tasks'), { recursive: true });
 const temporary = fs.mkdtempSync(path.join(root, 'tasks/symbol-integration-'));
 let baseline;
 let candidate;

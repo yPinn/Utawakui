@@ -11,6 +11,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const require = createRequire(import.meta.url);
 const temporary = [];
 function temp(parent = path.join(root, 'tasks')) {
+  fs.mkdirSync(parent, { recursive: true });
   const dir = fs.mkdtempSync(path.join(parent, 'utawakui-release-'));
   temporary.push(dir);
   return dir;

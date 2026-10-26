@@ -4,6 +4,7 @@ import {
   readFileSync,
   readdirSync,
   mkdtempSync,
+  mkdirSync,
   rmSync,
 } from 'node:fs';
 import { builtinModules, createRequire } from 'node:module';
@@ -84,6 +85,7 @@ const dependencies = new Set(Object.keys(packageJson.dependencies));
 let bundleDirectory;
 let bundledSources;
 beforeAll(async () => {
+  mkdirSync(path.join(root, 'tasks'), { recursive: true });
   bundleDirectory = mkdtempSync(path.join(root, 'tasks/packaging-runtime-'));
   const result = await buildReleaseRuntime({
     rootDirectory: root,

@@ -20,6 +20,7 @@ async function fixture({
   mainExtra = '',
   omitPublic = false,
 } = {}) {
+  fs.mkdirSync(path.resolve('tasks'), { recursive: true });
   const root = fs.mkdtempSync(path.resolve('tasks/package-verification-'));
   temporary.push(root);
   const source = path.join(root, 'source');
