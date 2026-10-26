@@ -416,6 +416,7 @@ async function play() {
 }
 
 function pause() {
+  cancelPendingStart();
   audio.pause();
 }
 
