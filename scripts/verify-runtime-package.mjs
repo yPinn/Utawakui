@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import * as asar from '@electron/asar';
 import runtime from '../electron/lib/runtimeEntries.js';
+import { verifyReleaseSymbolBundle } from './runtime-symbol-policy.mjs';
 
 export const PHYSICAL_RUNTIME_PACKAGES = Object.freeze([
   'onnxruntime-node',
@@ -36,6 +37,9 @@ export function verifyReleaseRuntimePackage(appOutDir) {
   );
   if (manifest.main !== 'runtime/main.cjs')
     throw new Error('Incorrect release entry');
+  verifyReleaseSymbolBundle(
+    asar.extractFile(archive, 'runtime/main.cjs').toString('utf8'),
+  );
   for (const entry of Object.values(runtime.RUNTIME_ENTRIES)) {
     const file = path.join('runtime', entry.file);
     if (

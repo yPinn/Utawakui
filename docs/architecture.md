@@ -292,6 +292,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 
 ## Packaging Boundary
 
+- 第一批輕量符號保護只在 Main bundling 前處理 `importRecordingPolicy.js` 與 `artwork/releasePolicy.js`；固定 exports／CommonJS reservations 保留公開函式名稱與欄位，未知匯出或跨到非 Main 入口會使 build 失敗。建置固定使用 Rolldown 1.2.15，不加入 runtime decoder、控制流變形或反除錯。其他五入口與 renderer 不轉換；詳見 [ADR 0031](adr/0031-scoped-release-private-symbols.md)。
 - `dist/` 是 Vite renderer 輸出；`overlay/` 不進 Vite bundle。正式 Main／preloads／Node workers 另由 `scripts/build-release-runtime.mjs` 產生六個壓縮 CJS 入口，builder beforePack 重建、`extraMetadata.main` 指向 `runtime/main.cjs`，不交付原始 `electron/` 目錄。`lib/runtimeEntries.js` 保留開發／正式入口映射，只有 reading／separation／probe 三個 bundle 需 unpack；第三方 native／dictionary／Node wrappers 與固定研究／Python resources 仍明確交付。完整界線與 lazy require／dirname 語意見 [ADR 0030](adr/0030-release-runtime-bundles.md)及 [release inventory](operations/release-inventory.md)。
 - Electron 43；實際 patch 由 npm lock 與 `electron-builder.yml` 一致釘選，見 [release inventory](operations/release-inventory.md#current-build-shape)。關閉 Node options 與 inspect fuses，開啟 ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給 yt-dlp EJS runtime（ADR 0005）與 ONNX 環境 probe（ADR 0026）；`GrantFileProtocolExtraPrivileges` 保留給主 renderer 的 `file://` 載入，兩者待替代方案完成後關閉；在此之前的 CSP 收斂見[安全不變式](#安全不變式)。
 - Provider、FFmpeg、models 與 Audio Python 存在 userData 依賴目錄，不綁入 installer，也不在啟動關鍵路徑。

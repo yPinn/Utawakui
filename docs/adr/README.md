@@ -36,3 +36,4 @@
 | [0028](0028-local-works-versions-and-releases.md)                  | 本機作品、版本與發行分類              | Accepted                          |
 | [0029](0029-consented-automatic-error-reports.md)                  | 嚴重錯誤的同意制自動回報              | Accepted                          |
 | [0030](0030-release-runtime-bundles.md)                            | 正式版 runtime bundles 與 unpack 邊界 | Accepted                          |
+| [0031](0031-scoped-release-private-symbols.md)                     | 正式版 Main 私有符號的限範圍轉換      | Accepted                          |

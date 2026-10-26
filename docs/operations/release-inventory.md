@@ -53,9 +53,14 @@ network install or signed-installer acceptance; see the
   `scripts/beforePackReleaseRuntime.cjs` using the existing Vite API. Packaged
   `package.json` points to `runtime/main.cjs`; source development still uses
   `electron/entry.js`. Original `electron/` and Main's `src/utils/` modules do not
-  ship as separate files. Function names, lazy CJS initialization and source-relative
-  resource locations are preserved. No runtime source maps, bytecode loader or
-  heavy obfuscation is added. See [ADR 0030](../adr/0030-release-runtime-bundles.md).
+  ship as separate files. Public function names, lazy CJS initialization and source-relative
+  resource locations are preserved. Main's import recording and artwork release
+  policy modules receive the fixed private-symbol pass from
+  `scripts/runtime-symbol-policy.mjs`; its Rolldown dependency is build-only,
+  and no policy tool, source map, decoder, mapping or bytecode loader ships.
+  The other five entry bundles and unpack allowlist are unchanged.
+  See [ADR 0030](../adr/0030-release-runtime-bundles.md) and
+  [ADR 0031](../adr/0031-scoped-release-private-symbols.md).
 - Album download batches: `electron/main/releaseDownloadBatches.js` uses the
   Main bundle's dependency closure; its adjacent tests stay excluded.
   The fixed `library:release-download-batch` IPC uses the existing main preload.

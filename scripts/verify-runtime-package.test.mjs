@@ -7,6 +7,7 @@ import {
   PHYSICAL_RUNTIME_PACKAGES,
 } from './verify-runtime-package.mjs';
 import runtime from '../electron/lib/runtimeEntries.js';
+import { RELEASE_SYMBOL_TARGETS } from './runtime-symbol-policy.mjs';
 
 const temporary = [];
 afterEach(() => {
@@ -16,6 +17,8 @@ afterEach(() => {
 async function fixture({
   sourceLeak = false,
   unpack = '**/{reading,separation,probe}.cjs',
+  mainExtra = '',
+  omitPublic = false,
 } = {}) {
   const root = fs.mkdtempSync(path.resolve('tasks/package-verification-'));
   temporary.push(root);
@@ -28,7 +31,12 @@ async function fixture({
   for (const entry of Object.values(runtime.RUNTIME_ENTRIES))
     fs.writeFileSync(
       path.join(source, 'runtime', entry.file),
-      'module.exports={};',
+      entry.file === 'main.cjs'
+        ? RELEASE_SYMBOL_TARGETS.flatMap((target) => target.exports)
+            .filter((name) => !omitPublic || name !== 'scoreImportRecording')
+            .map((name) => `function ${name}(){}`)
+            .join('\n') + mainExtra
+        : 'module.exports={};',
     );
   if (sourceLeak) {
     fs.mkdirSync(path.join(source, 'electron'));
@@ -52,6 +60,14 @@ async function fixture({
 describe('release artifact runtime boundary', () => {
   it('checks the actual ASAR layout and physical worker dependency roots', async () => {
     expect(verifyReleaseRuntimePackage(await fixture()).entries).toBe(6);
+  });
+  it('rejects an old unprotected Main bundle', async () => {
+    const root = await fixture({ mainExtra: 'function confidenceFields(){}' });
+    expect(() => verifyReleaseRuntimePackage(root)).toThrow(/symbol/u);
+  });
+  it('rejects a missing public rule function in Main', async () => {
+    const root = await fixture({ omitPublic: true });
+    expect(() => verifyReleaseRuntimePackage(root)).toThrow(/symbol/u);
   });
   it('rejects accidental delivery of original Electron modules', async () => {
     const root = await fixture({ sourceLeak: true });

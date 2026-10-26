@@ -3,10 +3,33 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build, transformWithOxc } from 'vite';
 import runtimeEntries from '../electron/lib/runtimeEntries.js';
+import {
+  protectReleaseModule,
+  RELEASE_SYMBOL_TARGETS,
+  verifyReleaseSymbolBundle,
+} from './runtime-symbol-policy.mjs';
 
 const { RUNTIME_ENTRIES } = runtimeEntries;
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const ROOT_VARIABLE = '__utawakuiReleaseRoot';
+
+function releaseSymbols(root, receipts) {
+  return {
+    name: 'utawakui-first-phase-release-symbols',
+    enforce: 'pre',
+    transform(code, id) {
+      if (id.startsWith('\0')) return null;
+      const file = path
+        .relative(root, path.resolve(id.split('?')[0]))
+        .replaceAll(path.sep, '/');
+      if (!RELEASE_SYMBOL_TARGETS.some((target) => target.file === file))
+        return null;
+      const result = protectReleaseModule(code, file);
+      receipts.set(file, { file, privateFunctions: result.privateFunctions });
+      return { code: result.code, map: null };
+    },
+  };
+}
 
 function outputPath(root, directory) {
   const output = path.resolve(directory);
@@ -71,7 +94,10 @@ export async function buildReleaseRuntime({
   rootDirectory = projectRoot,
   outputDirectory = path.join(rootDirectory, 'runtime'),
   entries = RUNTIME_ENTRIES,
+  protectSymbols = true,
 } = {}) {
+  if (typeof protectSymbols !== 'boolean')
+    throw new TypeError('Invalid release symbol mode');
   const root = path.resolve(rootDirectory);
   const output = outputPath(root, outputDirectory);
   const existing = await fs.lstat(output).catch((error) => {
@@ -83,6 +109,7 @@ export async function buildReleaseRuntime({
   await fs.mkdir(path.join(root, '.tmp'), { recursive: true });
   const staging = await fs.mkdtemp(path.join(root, '.tmp/release-runtime-'));
   const modules = new Set();
+  const protectedModules = new Map();
   try {
     for (const [key, entry] of Object.entries(entries)) {
       const preload = key === 'preload' || key === 'performerPreload';
@@ -91,7 +118,12 @@ export async function buildReleaseRuntime({
         root,
         publicDir: false,
         logLevel: 'silent',
-        plugins: [releaseModuleLocations(root, entry)],
+        plugins: [
+          releaseModuleLocations(root, entry),
+          ...(key === 'main' && protectSymbols
+            ? [releaseSymbols(root, protectedModules)]
+            : []),
+        ],
         build: {
           ssr: true,
           write: false,
@@ -129,6 +161,25 @@ export async function buildReleaseRuntime({
       }
       for (const id of Object.keys(chunk.modules))
         modules.add(path.relative(root, id).replaceAll(path.sep, '/'));
+      if (
+        key !== 'main' &&
+        protectSymbols &&
+        RELEASE_SYMBOL_TARGETS.some((target) =>
+          Object.keys(chunk.modules).some(
+            (id) => path.resolve(id) === path.join(root, target.file),
+          ),
+        )
+      )
+        throw new Error('Release symbol target reached an entry outside Main');
+      if (
+        root === projectRoot &&
+        key === 'main' &&
+        protectSymbols &&
+        protectedModules.size !== RELEASE_SYMBOL_TARGETS.length
+      )
+        throw new Error('Release symbol targets missing from Main');
+      if (root === projectRoot && key === 'main' && protectSymbols)
+        verifyReleaseSymbolBundle(chunk.code);
       await fs.writeFile(path.join(staging, entry.file), chunk.code);
     }
     await fs.mkdir(path.dirname(output), { recursive: true });
@@ -137,6 +188,9 @@ export async function buildReleaseRuntime({
     return {
       files: Object.values(entries).map((entry) => entry.file),
       modules: [...modules].sort(),
+      protectedModules: [...protectedModules.values()].sort((a, b) =>
+        a.file.localeCompare(b.file),
+      ),
     };
   } finally {
     await fs.rm(staging, { recursive: true, force: true });
