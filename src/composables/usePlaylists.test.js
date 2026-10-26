@@ -32,6 +32,26 @@ function createDeferred() {
   return { promise, resolve, reject };
 }
 
+it('finishes singleton hydration after the requesting page unmounts', async () => {
+  const read = Promise.withResolvers();
+  listPlaylistsMock.mockReturnValueOnce(read.promise);
+  const { usePlaylists } = await import('./usePlaylists.js'),
+    { effectScope } = await import('vue');
+  const owner = usePlaylists(),
+    page = effectScope();
+  let settled = false;
+  page.run(() =>
+    owner.initialize().then(() => {
+      settled = true;
+    }),
+  );
+  page.stop();
+  read.resolve([{ id: 'new', name: 'New', trackIds: [] }]);
+  await flushMicrotasks();
+  expect(settled).toBe(true);
+  expect(owner.state.isInitialized).toBe(true);
+});
+
 it('keeps selection and resolves old source ids after a confirmed release merge', async () => {
   listPlaylistsMock.mockResolvedValue([
     { id: 'old', name: 'Original', trackIds: [] },

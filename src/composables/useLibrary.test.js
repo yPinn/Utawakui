@@ -48,6 +48,24 @@ async function importLibrary() {
 }
 
 describe('initial load', () => {
+  it('finishes singleton hydration after the requesting page unmounts', async () => {
+    const read = Promise.withResolvers();
+    listTracksMock.mockReturnValueOnce(read.promise);
+    const library = await importLibrary(),
+      { effectScope } = await import('vue');
+    const page = effectScope();
+    let settled = false;
+    page.run(() =>
+      library.initialize().then(() => {
+        settled = true;
+      }),
+    );
+    page.stop();
+    read.resolve([{ id: 'new' }]);
+    await flushMicrotasks();
+    expect(settled).toBe(true);
+    expect(library.state.isInitialized).toBe(true);
+  });
   it('shows a saved release cover at cold start and keeps it independent of action admission', async () => {
     const collection = {
       id: 'r',

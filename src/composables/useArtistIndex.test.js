@@ -154,6 +154,60 @@ describe('useArtistIndex', () => {
     expect(autoResolveArtistIdentitiesMock).toHaveBeenCalledTimes(2);
   });
 
+  it('keeps new download artist links current after the first Library page unmounts', async () => {
+    const { artistIndex } = await load();
+    const { effectScope } = await import('vue');
+    const { artistCreditLinks } = await import('../utils/artistPage.js');
+    const firstPage = effectScope();
+    firstPage.run(() => artistIndex.ensureLoaded());
+    await flushMicrotasks();
+    firstPage.stop();
+
+    const downloaded = { id: 'b', artist: '정국 (Jung Kook)' };
+    listTracksMock.mockResolvedValue([
+      { id: 'a', artist: 'Aimer' },
+      downloaded,
+    ]);
+    getArtistIndexMock.mockResolvedValue({
+      artists: [
+        { id: 'artist-aimer', name: 'Aimer', trackIds: ['a'] },
+        { id: 'artist-jung-kook', name: downloaded.artist, trackIds: ['b'] },
+      ],
+      trackArtistIds: { a: ['artist-aimer'], b: ['artist-jung-kook'] },
+    });
+    await libraryUpdatedCallback();
+    await flushMicrotasks();
+
+    const returnedPage = effectScope();
+    returnedPage.run(() => artistIndex.ensureLoaded());
+    returnedPage.stop();
+    expect(getArtistIndexMock).toHaveBeenCalledTimes(2);
+    expect(artistCreditLinks(downloaded, artistIndex.state.index)).toEqual([
+      { text: downloaded.artist, artistId: 'artist-jung-kook' },
+    ]);
+  });
+
+  it('still observes provider gate changes after the requesting page unmounts', async () => {
+    const { artistIndex, featureGates } = await load();
+    const { effectScope } = await import('vue');
+    const page = effectScope();
+    page.run(() => artistIndex.ensureLoaded());
+    await flushMicrotasks();
+    page.stop();
+
+    getFeatureConfirmationsMock.mockResolvedValue({
+      'provider-flow': {
+        featureId: 'provider-flow',
+        noticeVersion: 'provider-flow-notice-v5',
+        confirmedAt: '2026-10-12T06:00:00.000Z',
+        enabled: true,
+      },
+    });
+    await featureGates.refreshConfirmations();
+    await flushMicrotasks();
+    expect(autoResolveArtistIdentitiesMock).toHaveBeenCalledTimes(2);
+  });
+
   it('does not restart automatic identity work for an unchanged track set', async () => {
     const { artistIndex } = await load();
     artistIndex.ensureLoaded();

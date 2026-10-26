@@ -364,6 +364,9 @@ function registerImportHandlers({
           options: { protectedTrackIds: [videoId] },
           recordDiagnostic,
         });
+        // Publish the committed audio and metadata even when every optional
+        // background service is disabled, delayed or unavailable.
+        notifyLibraryUpdated({ allowProviderBackfill: false });
       });
 
       try {

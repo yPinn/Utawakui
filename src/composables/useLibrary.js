@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, ref, watch } from 'vue';
+import { computed, reactive, readonly, ref } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 import { collectionDisplayTrackIds } from '../utils/albumMembership.js';
@@ -63,6 +63,7 @@ const state = reactive({
 
 let unsubscribeLibraryUpdated = null;
 let initializationPromise = null;
+let finishHydration = null;
 let readRevision = 0;
 
 const tracksById = computed(
@@ -96,7 +97,11 @@ async function refresh(options) {
       context: { retryable: true },
     });
   } finally {
-    if (revision === readRevision) state.isLoading = false;
+    if (revision === readRevision) {
+      state.isLoading = false;
+      finishHydration?.();
+      finishHydration = null;
+    }
   }
 }
 
@@ -108,12 +113,12 @@ function initialize() {
       unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
     }
     const initialRead = refresh();
-    // A superseded initial response cannot finish hydration. Observe the
-    // current initial read's settled state, including a newer failure.
+    // The latest read settles hydration independently of the requesting
+    // component's scope, including a superseding read that fails.
     const hydration = state.isLoading
-      ? new Promise((resolve) =>
-          watch(() => state.isLoading, resolve, { once: true, flush: 'post' }),
-        )
+      ? new Promise((resolve) => {
+          finishHydration = resolve;
+        })
       : initialRead;
     await Promise.all([hydration, playlistInitialization]);
     state.isInitialized = true;

@@ -1,4 +1,4 @@
-import { reactive, readonly, watch } from 'vue';
+import { effectScope, reactive, readonly, watch } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGates } from './useFeatureGates.js';
@@ -25,8 +25,7 @@ const { state: libraryState } = useLibrary();
 const { recordError } = useAppDiagnostics();
 const { isFeatureEnabled } = useFeatureGates();
 
-let stopWatch = null;
-let stopFeatureGateWatch = null;
+let indexScope = null;
 let requestRevision = 0;
 let identityRequestRevision = 0;
 let lastAutomaticIdentityTrackKey = null;
@@ -98,15 +97,21 @@ async function refresh() {
 }
 
 function ensureLoaded() {
-  stopWatch ??= watch(() => libraryState.tracks, refresh, { immediate: true });
-  stopFeatureGateWatch ??= watch(
-    () => isFeatureEnabled(FEATURE_IDS.PROVIDER_FLOW),
-    (enabled, wasEnabled) => {
-      if (!enabled || wasEnabled || !state.index) return;
-      lastAutomaticIdentityTrackKey = null;
-      requestAutomaticIdentityResolution();
-    },
-  );
+  if (indexScope) return;
+  // This module owns the index for every surface. A requesting page may
+  // unmount while downloads continue, so it must not own these watchers.
+  indexScope = effectScope(true);
+  indexScope.run(() => {
+    watch(() => libraryState.tracks, refresh, { immediate: true });
+    watch(
+      () => isFeatureEnabled(FEATURE_IDS.PROVIDER_FLOW),
+      (enabled, wasEnabled) => {
+        if (!enabled || wasEnabled || !state.index) return;
+        lastAutomaticIdentityTrackKey = null;
+        requestAutomaticIdentityResolution();
+      },
+    );
+  });
 }
 
 // Automatic photos (ADR 0022): one artist at a time, each at most once per
@@ -330,8 +335,7 @@ async function cancelCatalogSearch(artistId) {
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    stopWatch?.();
-    stopFeatureGateWatch?.();
+    indexScope?.stop();
   });
 }
 

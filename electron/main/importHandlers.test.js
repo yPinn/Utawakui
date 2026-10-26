@@ -261,6 +261,9 @@ describe('import clipboard suggestion boundary', () => {
     expect(createLibraryImportAdmission).toHaveBeenCalledOnce();
     expect(runImport).toHaveBeenCalledOnce();
     expect(saveProviderIndexEntry).toHaveBeenCalledOnce();
+    expect(view.notifyLibraryUpdated).toHaveBeenCalledExactlyOnceWith({
+      allowProviderBackfill: false,
+    });
   });
   it('preserves checked metadata through the default writer on repeated downloads', async () => {
     fs.mkdirSync('.tmp', { recursive: true });
@@ -865,6 +868,7 @@ describe('provider download scheduling and automatic music analysis', () => {
     await expect(Promise.all([first, duplicate])).resolves.toHaveLength(2);
     expect(saveProviderIndexEntry).toHaveBeenCalledOnce();
     expect(harness.enforceLibraryStoragePolicy).toHaveBeenCalledOnce();
+    expect(harness.notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 
   it('cancels an active provider download without recording it as a failure', async () => {
@@ -901,6 +905,7 @@ describe('provider download scheduling and automatic music analysis', () => {
     expect(harness.recordDiagnostic).not.toHaveBeenCalledWith(
       expect.objectContaining({ code: 'DOWNLOAD_FAILED' }),
     );
+    expect(harness.notifyLibraryUpdated).not.toHaveBeenCalled();
   });
 
   it('uses the downloaded file duration for lyrics acquisition', async () => {
@@ -942,7 +947,29 @@ describe('provider download scheduling and automatic music analysis', () => {
     ).toHaveBeenCalledOnce();
   });
 
-  it('refreshes the library only after automatic lyrics are saved', async () => {
+  it('publishes an installed download before optional lyrics or catalog work completes', async () => {
+    const cleanup = Promise.withResolvers();
+    const harness = registerDownload({
+      lyricsAcquisitionService: {
+        scheduleAutomaticAcquisition: vi.fn(() => new Promise(() => {})),
+      },
+      enqueueReleaseCatalog: vi.fn(() => new Promise(() => {})),
+      enforceLibraryStoragePolicy: () => cleanup.promise,
+    });
+    const download = harness.handlers.get('yt:download-audio')(
+      null,
+      'dQw4w9WgXcQ',
+    );
+    await flushAsync();
+    expect(harness.notifyLibraryUpdated).not.toHaveBeenCalled();
+    cleanup.resolve();
+    await download;
+    expect(harness.notifyLibraryUpdated).toHaveBeenCalledExactlyOnceWith({
+      allowProviderBackfill: false,
+    });
+  });
+
+  it('also refreshes the library when automatic lyrics are saved', async () => {
     const lyricsAcquisitionService = {
       scheduleAutomaticAcquisition: vi.fn((_track, _trackDir, options) => {
         options.onSaved();

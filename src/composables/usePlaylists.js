@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, watch } from 'vue';
+import { computed, reactive, readonly } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
@@ -45,6 +45,7 @@ const ERROR_PRESENTATION = Object.freeze({
 let pending = Promise.resolve();
 let unsubscribeLibraryUpdated = null;
 let initializationPromise = null;
+let finishHydration = null;
 let readRevision = 0;
 
 // Clear selection whenever the selected playlist disappears.
@@ -135,7 +136,11 @@ async function refresh() {
       state.hasLoaded = true;
     return result;
   } finally {
-    if (revision === readRevision) state.isLoading = false;
+    if (revision === readRevision) {
+      state.isLoading = false;
+      finishHydration?.();
+      finishHydration = null;
+    }
   }
 }
 
@@ -156,9 +161,9 @@ function initialize() {
     unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
     const initialRead = refresh();
     if (state.isLoading) {
-      await new Promise((resolve) =>
-        watch(() => state.isLoading, resolve, { once: true, flush: 'post' }),
-      );
+      await new Promise((resolve) => {
+        finishHydration = resolve;
+      });
     } else {
       await initialRead;
     }
