@@ -729,6 +729,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('library:performance-settings-get', {
       trackId: value?.trackId,
     }),
+  verifyPerformanceSettingsSource: (value) =>
+    ipcRenderer.invoke('library:performance-settings-verify-source', {
+      trackId: value?.trackId,
+      token: value?.token,
+    }),
   savePerformanceSettings: (value) =>
     ipcRenderer.invoke('library:performance-settings-save', {
       trackId: value?.trackId,

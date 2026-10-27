@@ -26,6 +26,7 @@ import WorkVersionEditor from './components/library/WorkVersionEditor.vue';
 import ReleaseInfoEditor from './components/library/ReleaseInfoEditor.vue';
 import ReleaseCatalogModal from './components/library/ReleaseCatalogModal.vue';
 import { useBgmSession } from './composables/useBgmSession.js';
+import { usePlayerPractice } from './composables/usePlayerPractice.js';
 import { usePerformanceHistoryObserver } from './composables/usePerformanceHistoryObserver.js';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
@@ -210,6 +211,7 @@ const { currentTrack: queueCurrentTrack } = usePlaybackQueue();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
 // Audio authority outlives the session page and its Dock projection.
 const bgmSession = useBgmSession();
+usePlayerPractice();
 const tagPreview = useTrackPreview();
 const reportTagActivity = () =>
   window.Utawakui?.reportLibraryTagActivity?.({

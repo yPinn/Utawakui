@@ -4,6 +4,31 @@ import { usePlayerLibrarySync } from './usePlayerLibrarySync.js';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('player metadata refresh', () => {
+  it.each(['current', 'start', 'occurrence'])(
+    'only invalidates missing media for the current lookup: %s',
+    async (change) => {
+      const pending = Promise.withResolvers();
+      let revision = 1;
+      const state = { track: { id: 'song', url: 'old' }, playbackRevision: 1 };
+      vi.stubGlobal('window', {
+        Utawakui: { getTrack: () => pending.promise },
+      });
+      const practiceBoundary = { intent: vi.fn() };
+      const sync = usePlayerLibrarySync({
+        state,
+        getStartRevision: () => revision,
+        practiceBoundary,
+      });
+      const refreshing = sync();
+      if (change === 'start') revision++;
+      if (change === 'occurrence') state.playbackRevision++;
+      pending.resolve(null);
+      await refreshing;
+      expect(practiceBoundary.intent).toHaveBeenCalledTimes(
+        change === 'current' ? 1 : 0,
+      );
+    },
+  );
   it.each([
     undefined,
     { ok: false, status: 'failed' },

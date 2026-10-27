@@ -21,6 +21,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:performance-settings-remove',
   'library:performance-settings-cancel',
   'library:performance-settings-set-default',
+  'library:performance-settings-verify-source',
   'app-update:check',
   'app-update:download',
   'app-update:get-status',
@@ -894,6 +895,16 @@ describe('main preload bridge', () => {
 
   it('projects performance settings intents without media paths or arbitrary fields', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.verifyPerformanceSettingsSource({
+      trackId: 'one',
+      token: 'opaque',
+      path: 'private',
+      expectedRevision: 'never-rebase',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:performance-settings-verify-source',
+      { trackId: 'one', token: 'opaque' },
+    );
     const values = {
       transposeSemitones: 2,
       pitchCents: 0,

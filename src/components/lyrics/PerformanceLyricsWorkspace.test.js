@@ -11,6 +11,16 @@ const source = readFileSync(
 );
 
 describe('PerformanceLyricsWorkspace live controls', () => {
+  it('places the A–B loop entry in the lyrics workspace and keeps PlayerBar free of it', () => {
+    expect(source).toContain(
+      '<LyricsLoopTool :context-track-id="selectedTrack?.id',
+    );
+    const bar = readFileSync(
+      new URL('../playback/PlayerBar.vue', import.meta.url),
+      'utf8',
+    );
+    expect(bar).not.toContain('LoopTool');
+  });
   it('shares the source control and manager without navigating to authoring', () => {
     expect(source).toContain('<LyricsDisplayControls');
     expect(source).toContain('<LyricsSourceManagerModal');

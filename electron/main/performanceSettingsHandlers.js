@@ -24,28 +24,32 @@ function valid(input, operation) {
       ? ['token']
       : operation === 'get'
         ? ['trackId']
-        : [
-            'trackId',
-            'token',
-            'expectedRevision',
-            'slot',
-            ...(operation === 'save' ? ['values'] : []),
-          ];
-  return Boolean(
-    input &&
-    typeof input === 'object' &&
-    !Array.isArray(input) &&
-    Object.keys(input).length === fields.length &&
-    fields.every((key) => Object.hasOwn(input, key)) &&
-    (operation === 'cancel'
-      ? token(input.token)
-      : isBoundedTrackId(input.trackId) &&
-        (operation === 'get' ||
-          (token(input.token) &&
-            validPerformanceSlot(input.slot) &&
-            (input.expectedRevision === null ||
-              token(input.expectedRevision)) &&
-            (operation !== 'save' || validPerformanceSettings(input.values))))),
+        : operation === 'verifySource'
+          ? ['trackId', 'token']
+          : [
+              'trackId',
+              'token',
+              'expectedRevision',
+              'slot',
+              ...(operation === 'save' ? ['values'] : []),
+            ];
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    Array.isArray(input) ||
+    Object.keys(input).length !== fields.length ||
+    !fields.every((key) => Object.hasOwn(input, key))
+  )
+    return false;
+  if (operation === 'cancel') return token(input.token);
+  if (!isBoundedTrackId(input.trackId)) return false;
+  if (operation === 'get') return true;
+  if (!token(input.token)) return false;
+  if (operation === 'verifySource') return true;
+  return (
+    validPerformanceSlot(input.slot) &&
+    (input.expectedRevision === null || token(input.expectedRevision)) &&
+    (operation !== 'save' || validPerformanceSettings(input.values))
   );
 }
 function registerPerformanceSettingsHandlers({
@@ -54,9 +58,16 @@ function registerPerformanceSettingsHandlers({
   runtime,
   recordDiagnostic,
 }) {
-  for (const operation of ['get', 'save', 'remove', 'cancel', 'setDefault']) {
+  for (const operation of [
+    'get',
+    'save',
+    'remove',
+    'cancel',
+    'setDefault',
+    'verifySource',
+  ]) {
     ipcMain.handle(
-      `library:performance-settings-${operation === 'setDefault' ? 'set-default' : operation}`,
+      `library:performance-settings-${operation === 'setDefault' ? 'set-default' : operation === 'verifySource' ? 'verify-source' : operation}`,
       async (event, input) => {
         const window = getMainWindow();
         if (

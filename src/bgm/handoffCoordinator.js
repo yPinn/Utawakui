@@ -40,6 +40,7 @@ export function createBgmHandoffCoordinator({
   let deferredSourceReplacement = null;
   let previewLease = null;
   let previewAcquisition = null;
+  let practiceLease = null;
   let disposed = false;
 
   function isCurrent(candidate) {
@@ -128,10 +129,41 @@ export function createBgmHandoffCoordinator({
     return true;
   }
 
+  function preemptPractice() {
+    const lease = practiceLease;
+    if (!lease) return false;
+    practiceLease = null;
+    lease.onPreempt?.();
+    notifyPerformanceInterrupted('pause');
+    return true;
+  }
+
+  function acquirePractice({ onPreempt } = {}) {
+    if (
+      disposed ||
+      practiceLease ||
+      previewLease ||
+      previewAcquisition ||
+      performanceHandoffPending ||
+      state.phase === 'postroll-silence'
+    )
+      return null;
+    const lease = { onPreempt };
+    practiceLease = lease;
+    return {
+      release() {
+        if (practiceLease !== lease) return false;
+        practiceLease = null;
+        return true;
+      },
+    };
+  }
+
   // The caller has already dropped the player's pending start and paused it;
   // the asynchronous pause event must not clear the granted preview lane.
   async function acquirePreview({ onPreempt } = {}) {
     if (disposed || state.sessionMode !== 'inactive') return null;
+    preemptPractice();
     preemptPreview();
 
     const candidate = nextGeneration();
@@ -232,6 +264,7 @@ export function createBgmHandoffCoordinator({
   }
 
   async function requestBgmPlay() {
+    preemptPractice();
     state.error = null;
     preemptPreview();
 
@@ -410,6 +443,7 @@ export function createBgmHandoffCoordinator({
   }
 
   async function notifyPerformanceEnded() {
+    if (practiceLease) return false;
     const wasPerformanceActive = performanceActive;
     const wasPerformancePaused = performancePaused;
     if (!wasPerformanceActive && state.phase === 'postroll-silence') {
@@ -474,6 +508,7 @@ export function createBgmHandoffCoordinator({
   function dispose() {
     disposed = true;
     nextGeneration();
+    preemptPractice();
     preemptPreview();
     performancePaused = false;
     performanceHandoffPending = false;
@@ -491,6 +526,7 @@ export function createBgmHandoffCoordinator({
     requestBgmPlay,
     requestBgmPause,
     acquirePreview,
+    acquirePractice,
     replaceBgmSource,
     beforePerformanceStart,
     notifyPerformancePlaying,

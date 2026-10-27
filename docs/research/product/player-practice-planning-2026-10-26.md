@@ -40,7 +40,7 @@
 
 ## 2. 區段練習
 
-行為與 A01–A18 見[詳細提案](ab-practice-detail-2026-10-26.md)。先審啟用／取消、前景支援、最短區間及誤差預算；品質未量測，不承諾無縫或 sample-accurate loop。
+行為與 A01–A18 見[詳細提案](ab-practice-detail-2026-10-26.md)。2026-10-27 Owner 接受原候選參數供原型驗證；沿原案先做 terminal／pause／BGM 占用前置與中段品質原型，再過 EOF、紀錄／Output、來源等 gates。前置及量測分母見[契約](../../contracts/player-ab-practice.md)，不承諾無縫或 sample-accurate loop。
 
 ## 3. 歌詞對時確認
 

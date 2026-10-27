@@ -82,6 +82,8 @@
 
 ### 播放、BGM、試聽、節拍器
 
+- `player/usePlayerMediaBoundary.js` 持有原生 pause／playing／ended 的投影與訂閱，在 final-ended fan-out 前提供單一同步分類，內部返回 pause 綁有效 lap／occurrence／source 證據。`handoffCoordinator.acquirePractice()` 在同一 coordinator 保留練習 hold，明確 BGM／preview 接手才 preempt；不增加 audio lane 或 pre-start hook。`player/usePlayerPracticeRuntime.js` 持有 session／返回，`usePlayerPractice.js` 於 App lifetime 組合 BGM／場次／queue；歌詞頁 `LyricsLoopTool` 只投影同一 owner。原型入口重匯出同一 factory，正式 renderer 不 import prototypes。見[區段練習契約](contracts/player-ab-practice.md)。
+
 - 逐曲設定由 `electron/lib/performanceSettings/` 持有三組與預設位置，固定 handlers／preload 只傳 id、token、revision、slot 與四欄 intent；保存／移除／指定預設共用 works library lane，曲庫 epoch 與刪曲 callback 失效 tokens 並通知 Renderer。`player/usePlayerPerformanceSettings.js` 持有 baseline／選組／未保存複製草稿／IO 世代，消費原 graph 當前 revision 的 applied 結果；未提交開始的返回選組綁定原 occurrence，接受新目標後清除；新開始、lazy restore、保留同次臨時值及既有工具 footer 均沿原 player／start owners。媒體 memo、fresh tag 等價遷移與 UUID tombstone 見[套用契約](contracts/player-audio-controls.md#main-逐曲保存)，不新增 DSP／播放權威。
 
 - 音訊設定的要求值與確認結果由 `utils/audioControlApplication.js` 管理 revision／取消／期限，實際 DSP 仍由 graph owner 執行；`player/usePlayerAudioStart.js` 執行交接後的準備／play／失敗／取消交易，facade 保留 audio events 與唯一 BGM hook。Play／resume 與 library reload 在必要 monitor／capture 路徑確認後，實際 play 前再驗就緒，見[套用契約](contracts/player-audio-controls.md)。

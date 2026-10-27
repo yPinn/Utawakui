@@ -276,6 +276,7 @@ export function createBgmSessionController({
     pauseBgm,
     emergencyCut,
     acquirePreviewLane,
+    acquirePracticeLane: (options) => coordinator.acquirePractice(options),
     seekBgm,
     commitBgmPosition,
     setDimmed,

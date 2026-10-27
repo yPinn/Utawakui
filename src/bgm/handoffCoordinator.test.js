@@ -51,6 +51,53 @@ function createHarness(overrides = {}) {
 }
 
 describe('BGM handoff coordinator', () => {
+  it('holds the same performance lane during practice pause and blocked return without post-roll', async () => {
+    const { coordinator, deck, wait } = createHarness();
+    await coordinator.requestBgmPlay();
+    await coordinator.beforePerformanceStart();
+    coordinator.notifyPerformancePlaying();
+    const lease = coordinator.acquirePractice({ onPreempt: vi.fn() });
+    expect(lease).toBeTruthy();
+    const waits = wait.mock.calls.length,
+      starts = deck.startSilent.mock.calls.length;
+    coordinator.notifyPerformanceInterrupted('pause');
+    await coordinator.notifyPerformanceEnded();
+    expect(deck.startSilent).toHaveBeenCalledTimes(starts);
+    expect(wait).toHaveBeenCalledTimes(waits);
+    expect(await coordinator.beforePerformanceStart()).toBe(true);
+    expect(wait).toHaveBeenCalledTimes(waits);
+    expect(lease.release()).toBe(true);
+    expect(lease.release()).toBe(false);
+  });
+  it.each(['bgm', 'preview'])(
+    'preempts practice only on an explicit %s request and invalidates old leases',
+    async (kind) => {
+      const { coordinator } = createHarness();
+      coordinator.notifyPerformancePlaying();
+      const onPreempt = vi.fn();
+      const lease = coordinator.acquirePractice({ onPreempt });
+      const result =
+        kind === 'bgm'
+          ? await coordinator.requestBgmPlay()
+          : await coordinator.acquirePreview();
+      expect(result).toBeTruthy();
+      expect(onPreempt).toHaveBeenCalledOnce();
+      expect(lease.release()).toBe(false);
+      expect(coordinator.state.audibleLane).toBe(kind);
+    },
+  );
+  it('does not allow a rejected live preview or duplicate holder to disturb practice', async () => {
+    const { coordinator } = createHarness();
+    const onPreempt = vi.fn();
+    const lease = coordinator.acquirePractice({ onPreempt });
+    expect(coordinator.acquirePractice()).toBeNull();
+    await coordinator.updateSessionMode('live');
+    expect(await coordinator.acquirePreview()).toBeNull();
+    expect(onPreempt).not.toHaveBeenCalled();
+    coordinator.dispose();
+    expect(onPreempt).toHaveBeenCalledOnce();
+    expect(lease.release()).toBe(false);
+  });
   it('uses the short default handoff rhythm when persisted settings are unavailable', async () => {
     let time = 0;
     const deck = {

@@ -437,6 +437,29 @@ export function usePlayerPerformanceSettings({
     hasSaved,
     dirty,
     prepare,
+    async verifySource() {
+      const snapshot = state.snapshot,
+        currentGeneration = generation;
+      if (
+        !ownsTrack() ||
+        !snapshot?.token ||
+        !bridge?.verifyPerformanceSettingsSource
+      )
+        return false;
+      try {
+        const result = await bridge.verifyPerformanceSettingsSource({
+          trackId: state.trackId,
+          token: snapshot.token,
+        });
+        return (
+          generation === currentGeneration &&
+          ownsTrack() &&
+          result?.status === 'equivalent'
+        );
+      } catch {
+        return false;
+      }
+    },
     restore,
     ensure,
     clear,

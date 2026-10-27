@@ -46,6 +46,28 @@ afterEach(() => {
 });
 
 describe('Main performance settings', () => {
+  it('verifies the existing source token without rebasing sidecar CAS or writing data', async () => {
+    const saved = await runtime.save(
+      intent(await runtime.get({ trackId: 'one' })),
+    );
+    const raw = fs.readFileSync(file(), 'utf8');
+    fs.writeFileSync(file(), raw + '\n');
+    expect(
+      await runtime.verifySource({ trackId: 'one', token: saved.token }),
+    ).toEqual({ status: 'equivalent' });
+    expect(fs.readFileSync(file(), 'utf8')).toBe(raw + '\n');
+    await expect(runtime.save(intent(saved))).rejects.toMatchObject({
+      code: 'PERFORMANCE_CONFLICT',
+    });
+    fs.writeFileSync(audio(), 'different recording');
+    await expect(
+      runtime.verifySource({ trackId: 'one', token: saved.token }),
+    ).rejects.toMatchObject({ code: 'PERFORMANCE_SOURCE_STALE' });
+    runtime.cancel({ token: saved.token });
+    await expect(
+      runtime.verifySource({ trackId: 'one', token: saved.token }),
+    ).rejects.toMatchObject({ code: 'PERFORMANCE_STALE' });
+  });
   it('keeps the same track id isolated across actual library A→B→A switches', async () => {
     const first = await runtime.save(
       intent(await runtime.get({ trackId: 'one' })),

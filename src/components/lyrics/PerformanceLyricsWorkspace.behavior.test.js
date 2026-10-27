@@ -13,6 +13,17 @@ vi.mock('../../composables/useLyricsReading.js', () => ({
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => ({ openLyricsAuthoring: vi.fn() }),
 }));
+vi.mock('../../composables/usePlayer.js', () => ({
+  usePlayer: () => ({ state: { track: null } }),
+}));
+vi.mock('../../composables/usePlayerPractice.js', () => ({
+  usePlayerPractice: () => ({
+    state: {},
+    canEnable: { value: false },
+    running: { value: false },
+    unavailableReason: { value: '請先選擇曲目。' },
+  }),
+}));
 
 const deferred = () => {
   let resolve;

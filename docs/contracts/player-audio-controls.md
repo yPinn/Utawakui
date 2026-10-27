@@ -4,7 +4,7 @@
 
 ## Main 逐曲保存
 
-`electron/lib/performanceSettings/` 持有資料、媒體驗證與 session tokens；`main/performanceSettingsHandlers.js` 提供固定 get／save／remove／set-default／cancel IPC，僅接受主視窗 main frame。Preload 只投影 trackId、opaque token、expectedRevision、1–3 的 slot 與四欄值；路徑、原音檔 SHA-256、tag 收據與備份不跨 IPC。`shared/performanceSettings.mjs` 與既有 graph 共用 strict validator／defaults。
+`electron/lib/performanceSettings/` 持有資料、媒體驗證與 session tokens；`main/performanceSettingsHandlers.js` 提供固定 get／save／remove／set-default／cancel 與唯讀 verify-source IPC，僅接受主視窗 main frame。Preload 只投影 trackId、opaque token、expectedRevision、1–3 的 slot 與四欄值；路徑、原音檔 SHA-256、tag 收據與備份不跨 IPC。verify-source 只驗來源等價，不重讀保存 baseline 或放寬 CAS，使用邊界見[區段練習契約](player-ab-practice.md)。`shared/performanceSettings.mjs` 與既有 graph 共用 strict validator／defaults。
 
 每個 canonical track 保存一份 `tracks/<trackId>/performance-settings.json` v2：UUID revision、Main 私有原音檔 binding、三個固定 slots 與 defaultSlot。每組是完整四欄值或 null；首次保存成為預設，之後只經明確 set-default 更改，下次新開始／restore 取該組。移除只清選定組；移除預設時選第一個仍已保存的組，無保存則回位置 1／基準。整份文件共用 CAS，任何組的變更都使舊 revision 失效；全部清空仍保留 tombstone 防止 ABA。早期 v1 單組唯讀映射到位置 1，下一次明確寫入才存 v2。程序重啟後重新讀取取得 token；不修改 machine config、library metadata 或 resume snapshot。
 

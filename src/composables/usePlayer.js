@@ -3,6 +3,7 @@ import { usePlayerDiagnostics } from './player/usePlayerDiagnostics.js';
 import { usePlayerLibrarySync } from './player/usePlayerLibrarySync.js';
 import { usePlayerAudioStart } from './player/usePlayerAudioStart.js';
 import { usePlayerPerformanceSettings } from './player/usePlayerPerformanceSettings.js';
+import { usePlayerMediaBoundary } from './player/usePlayerMediaBoundary.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import {
   usePlayerAudioGraph,
@@ -119,9 +120,6 @@ const {
   toggleMute,
 } = audioGraph;
 
-const endedListeners = new Set();
-const pausedListeners = new Set();
-const playingListeners = new Set();
 const stoppedListeners = new Set();
 const playbackProgressListeners = new Set();
 let beforePlaybackStartListener = null;
@@ -129,6 +127,18 @@ let playbackStartRequestRevision = 0;
 let lastObservedCurrentTime = 0;
 let pendingRestorePosition = null;
 let terminalStopNotified = false;
+const practiceBoundary = usePlayerMediaBoundary({
+  audio,
+  state,
+  cancelStart: cancelPendingStart,
+  flushProgress: handleTimeUpdate,
+  onTerminal: () => {
+    terminalStopNotified = true;
+  },
+  onPlaying: () => {
+    terminalStopNotified = false;
+  },
+});
 
 function notifyStopped(reason, track = state.track) {
   if (!track || terminalStopNotified) return;
@@ -145,47 +155,6 @@ function handlePlay() {
   state.isPlaying = true;
   state.currentTime = audio.currentTime || 0;
   state.playbackPhase = 'buffering';
-}
-
-function handlePause() {
-  state.isPlaying = false;
-  state.currentTime = audio.currentTime || 0;
-  // Chromium queues pause before ended at natural EOF. Only ended owns this
-  // terminal boundary; treating it as an operator pause skips BGM post-roll.
-  if (audio.ended) return;
-  state.playbackPhase = state.track ? 'paused' : 'idle';
-  if (!state.track) return;
-  const pausedEvent = {
-    trackId: state.track.id,
-    playbackRevision: state.playbackRevision,
-  };
-  pausedListeners.forEach((listener) => listener(pausedEvent));
-}
-
-function handleEnded() {
-  const endedEvent = state.track
-    ? {
-        trackId: state.track.id,
-        playbackRevision: state.playbackRevision,
-      }
-    : null;
-  state.isPlaying = false;
-  state.currentTime = audio.currentTime || state.currentTime;
-  state.playbackPhase = 'ended';
-  terminalStopNotified = true;
-  endedListeners.forEach((listener) => listener(endedEvent));
-}
-
-function handlePlaying() {
-  terminalStopNotified = false;
-  state.currentTime = audio.currentTime || 0;
-  state.playbackPhase = 'playing';
-  if (!state.track) return;
-  const playingEvent = {
-    trackId: state.track.id,
-    playbackRevision: state.playbackRevision,
-  };
-  playingListeners.forEach((listener) => listener(playingEvent));
 }
 
 function handleBuffering(event) {
@@ -222,6 +191,9 @@ function handleSeeked() {
 }
 
 function handleTimeUpdate() {
+  const progressing =
+    (state.isPlaying || (audio.ended && state.playbackPhase === 'playing')) &&
+    !audio.seeking;
   const previousTime = lastObservedCurrentTime;
   const nextTime = audio.currentTime;
   const didAdvance = nextTime !== previousTime;
@@ -230,7 +202,7 @@ function handleTimeUpdate() {
   if (state.isPlaying && didAdvance && state.playbackPhase !== 'seeking') {
     state.playbackPhase = 'playing';
   }
-  if (state.isPlaying && nextTime > previousTime && state.track) {
+  if (progressing && nextTime > previousTime && state.track) {
     const progressEvent = {
       trackId: state.track.id,
       playbackRevision: state.playbackRevision,
@@ -272,9 +244,6 @@ function handleError() {
 }
 
 audio.addEventListener('play', handlePlay);
-audio.addEventListener('playing', handlePlaying);
-audio.addEventListener('pause', handlePause);
-audio.addEventListener('ended', handleEnded);
 audio.addEventListener('waiting', handleBuffering);
 audio.addEventListener('stalled', handleBuffering);
 audio.addEventListener('seeking', handleSeeking);
@@ -301,8 +270,10 @@ const {
   pause,
   seek,
   advanceStartRevision: () => ++playbackStartRequestRevision,
-  prepareControls: (track, options) =>
-    performanceSettings.prepare(track, options),
+  prepareControls: (track, options) => {
+    practiceBoundary.intent('restart');
+    return performanceSettings.prepare(track, options);
+  },
   commitControls: () => performanceSettings.commitPreparedSelection(),
   reportPlayerError,
   notifyStopped,
@@ -318,6 +289,7 @@ const performanceSettings = usePlayerPerformanceSettings({
 });
 
 async function playTrack(track, { useDefaults = false } = {}) {
+  practiceBoundary.intent('replace');
   audioGraph.cancelAudioControlApplication();
   const requestRevision = ++playbackStartRequestRevision;
   state.pendingStartTrackId = track.id;
@@ -362,6 +334,7 @@ function restorePlaybackState({
   playbackMode = PLAYBACK_MODES.sequence,
 } = {}) {
   if (!track) return false;
+  practiceBoundary.intent('restore');
   audioGraph.cancelAudioControlApplication();
   playbackStartRequestRevision += 1;
   state.pendingStartTrackId = null;
@@ -383,12 +356,18 @@ function restorePlaybackState({
   return true;
 }
 
-async function play({ useDefaults = false } = {}) {
+async function play({ useDefaults = false, practiceToken } = {}) {
   if (!state.track) return false;
   const requestRevision = ++playbackStartRequestRevision;
   state.pendingStartTrackId = state.track.id;
   terminalStopNotified = false;
   state.error = null;
+  if (!(await practiceBoundary.beforePlay(practiceToken))) {
+    if (requestRevision === playbackStartRequestRevision)
+      state.pendingStartTrackId = null;
+    return false;
+  }
+  if (requestRevision !== playbackStartRequestRevision) return false;
   const ready = await performanceSettings.ensure(
     state.track,
     () => requestRevision === playbackStartRequestRevision,
@@ -411,6 +390,7 @@ async function play({ useDefaults = false } = {}) {
 }
 
 function pause() {
+  practiceBoundary.intent('pause');
   cancelPendingStart();
   audio.pause();
 }
@@ -418,20 +398,23 @@ function pause() {
 // Before the gate grants a track there is no new playback identity to stop.
 // Once graph preparation owns it, explicitly release that handoff: pausing an
 // already-paused native element emits no event in Chromium.
-function cancelPendingStart() {
+function cancelPendingStart(practiceToken) {
+  practiceBoundary.intent('cancel', practiceToken);
   const previousRevision = playbackStartRequestRevision++;
   performanceSettings.cancelStart();
   state.pendingStartTrackId = null;
   cancelAudioStart(previousRevision);
 }
 
-function seek(time) {
+function seek(time, practiceToken) {
+  practiceBoundary.intent('seek', practiceToken, time);
   lastObservedCurrentTime = time;
   audio.currentTime = time;
 }
 
 function clearTrack(trackId = null) {
   if (trackId !== null && state.track?.id !== trackId) return false;
+  practiceBoundary.intent('clear');
 
   audioGraph.cancelAudioControlApplication();
   performanceSettings.clear();
@@ -462,6 +445,8 @@ const syncCurrentTrack = usePlayerLibrarySync({
   seek,
   reportPlayerError,
   notifyStopped,
+  practiceBoundary,
+  verifySource: () => performanceSettings.verifySource(),
 });
 
 let unsubscribeLibraryUpdated = null;
@@ -471,6 +456,7 @@ if (typeof window !== 'undefined' && window.Utawakui) {
 }
 
 function setPlaybackMode(mode) {
+  practiceBoundary.intent('mode');
   const nextMode = PLAYBACK_MODE_ORDER.includes(mode)
     ? mode
     : PLAYBACK_MODES.sequence;
@@ -494,9 +480,7 @@ function subscribe(listeners, listener) {
   return () => listeners.delete(listener);
 }
 
-const onEnded = (listener) => subscribe(endedListeners, listener);
-const onPlaying = (listener) => subscribe(playingListeners, listener);
-const onPaused = (listener) => subscribe(pausedListeners, listener);
+const { onEnded, onPlaying, onPaused } = practiceBoundary;
 const onStopped = (listener) => subscribe(stoppedListeners, listener);
 const onPlaybackProgress = (listener) =>
   subscribe(playbackProgressListeners, listener);
@@ -511,11 +495,9 @@ function registerBeforePlaybackStart(listener) {
 }
 
 export function cleanupPlayerResources() {
+  practiceBoundary.dispose();
   performanceSettings.dispose();
   audio.removeEventListener('play', handlePlay);
-  audio.removeEventListener('playing', handlePlaying);
-  audio.removeEventListener('pause', handlePause);
-  audio.removeEventListener('ended', handleEnded);
   audio.removeEventListener('waiting', handleBuffering);
   audio.removeEventListener('stalled', handleBuffering);
   audio.removeEventListener('seeking', handleSeeking);
@@ -523,9 +505,6 @@ export function cleanupPlayerResources() {
   audio.removeEventListener('timeupdate', handleTimeUpdate);
   audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
   audio.removeEventListener('error', handleError);
-  endedListeners.clear();
-  pausedListeners.clear();
-  playingListeners.clear();
   stoppedListeners.clear();
   playbackProgressListeners.clear();
   beforePlaybackStartListener = null;
@@ -545,6 +524,7 @@ export function usePlayer() {
   return {
     state: readonly(state),
     performanceSettings,
+    practiceBoundary,
     getPlaybackStartRequestRevision: () => playbackStartRequestRevision,
     samplePlaybackClock,
     playTrack,

@@ -240,6 +240,35 @@ function createPerformanceSettingsRuntime({
   }
   return {
     get,
+    verifySource(input) {
+      return runOperation(async (scope, check) => {
+        validate(input, ['trackId', 'token']);
+        const token = tokenFor(input, scope, true);
+        const verified = await media.verify(scope, input.trackId, check);
+        check();
+        tokenFor(input, scope, true);
+        if (
+          originalMedia(scope.dir, input.trackId).stamp !== verified.stamp ||
+          token.verified.trackIdentity !== verified.trackIdentity
+        )
+          throw failure('PERFORMANCE_SOURCE_STALE');
+        if (!bindingsEqual(token.verified.binding, verified.binding)) {
+          const equivalents = await aliases(
+            scope.dir,
+            input.trackId,
+            verified.binding.value,
+          );
+          check();
+          tokenFor(input, scope, true);
+          if (
+            !equivalents.includes(token.verified.binding.value) ||
+            originalMedia(scope.dir, input.trackId).stamp !== verified.stamp
+          )
+            throw failure('PERFORMANCE_SOURCE_STALE');
+        }
+        return { status: 'equivalent' };
+      });
+    },
     save: (input) => mutate(input, 'save'),
     remove: (input) => mutate(input, 'remove'),
     setDefault: (input) => mutate(input, 'set-default'),

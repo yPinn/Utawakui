@@ -9,6 +9,8 @@ export function usePlayerLibrarySync({
   seek,
   reportPlayerError,
   notifyStopped,
+  practiceBoundary,
+  verifySource = async () => false,
 }) {
   let trackSyncRevision = 0;
   async function syncCurrentTrack() {
@@ -18,6 +20,14 @@ export function usePlayerLibrarySync({
     const startRevision = getStartRevision();
     const playbackRevision = state.playbackRevision;
     const updated = await window.Utawakui.getTrack(trackId);
+    if (
+      !updated &&
+      state.track?.id === trackId &&
+      syncRevision === trackSyncRevision &&
+      startRevision === getStartRevision() &&
+      playbackRevision === state.playbackRevision
+    )
+      practiceBoundary?.intent('source-missing');
     if (
       !updated ||
       state.track?.id !== trackId ||
@@ -43,6 +53,24 @@ export function usePlayerLibrarySync({
     const captureGuideOn = state.captureGuideVocalOn;
     const captureGuideValue = state.captureGuideVocalValue;
 
+    if (
+      !urlChanged &&
+      !(await (practiceBoundary?.verifyMetadata(verifySource) ?? true))
+    )
+      return;
+    const preparing = urlChanged
+      ? practiceBoundary?.prepareSourceChange(verifySource)
+      : null;
+    const preparedRevision = getStartRevision();
+    const transfer = await preparing;
+    if (
+      syncRevision !== trackSyncRevision ||
+      preparedRevision !== getStartRevision() ||
+      state.track?.id !== trackId ||
+      playbackRevision !== state.playbackRevision
+    )
+      return;
+
     state.track = playable;
     if (!urlChanged) return;
 
@@ -50,8 +78,11 @@ export function usePlayerLibrarySync({
     audio.src = playable.url;
     audioGraph.restoreGuideVocalState(guideOn, guideValue);
     audioGraph.restoreCaptureGuideVocalState(captureGuideOn, captureGuideValue);
-    seek(resumeTime);
-    if (wasPlaying) {
+    if (!transfer) seek(resumeTime);
+    const resumeAllowed = transfer
+      ? await practiceBoundary.completeSourceChange(transfer)
+      : true;
+    if (wasPlaying && resumeAllowed) {
       const requestRevision = getStartRevision();
       try {
         const result = await audioGraph.resume({

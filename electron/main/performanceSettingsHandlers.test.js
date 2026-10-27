@@ -10,6 +10,7 @@ function fixture() {
     remove: vi.fn(),
     cancel: vi.fn(),
     setDefault: vi.fn(),
+    verifySource: vi.fn(),
   };
   const recordDiagnostic = vi.fn();
   registerPerformanceSettingsHandlers({
@@ -30,9 +31,22 @@ function fixture() {
   };
 }
 describe('performance settings IPC', () => {
+  it('only accepts track id and an opaque token for the read-only source proof', async () => {
+    const f = fixture(),
+      token = '12345678-1234-1234-1234-123456789abc';
+    f.runtime.verifySource.mockResolvedValue({ status: 'equivalent' });
+    const verify = f.handlers['library:performance-settings-verify-source'];
+    expect(
+      await verify(f.event, { trackId: 'one', token, path: 'private' }),
+    ).toEqual({ status: 'invalid-intent' });
+    expect(await verify(f.event, { trackId: 'one', token })).toEqual({
+      status: 'equivalent',
+    });
+    expect(f.runtime.verifySource).toHaveBeenCalledOnce();
+  });
   it('uses fixed channels and rejects foreign frames before invoking service', async () => {
     const f = fixture();
-    expect(Object.keys(f.handlers)).toHaveLength(5);
+    expect(Object.keys(f.handlers)).toHaveLength(6);
     for (const handler of Object.values(f.handlers)) {
       expect(await handler({ ...f.event, senderFrame: {} }, {})).toEqual({
         status: 'invalid-intent',

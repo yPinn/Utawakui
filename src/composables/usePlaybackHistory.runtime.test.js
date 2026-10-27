@@ -3,6 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPlaybackPersistence } from '../../electron/lib/playbackPersistence.js';
+import { createAbPracticePrototype } from '../../prototypes/ab-practice/runtime.mjs';
+import { projectDynamicOutputState } from '../utils/outputStreamProjection.js';
 
 // Windows AppContainer temp directories can allow file creation but reject
 // rename. Keep real atomic writes inside the workspace's writable test area.
@@ -96,15 +98,17 @@ class MockAudio {
   }
 
   addEventListener(type, listener) {
-    this.listeners.set(type, listener);
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type).add(listener);
   }
 
-  removeEventListener(type) {
-    this.listeners.delete(type);
+  removeEventListener(type, listener) {
+    this.listeners.get(type)?.delete(listener);
+    if (!this.listeners.get(type)?.size) this.listeners.delete(type);
   }
 
   dispatch(type) {
-    this.listeners.get(type)?.();
+    this.listeners.get(type)?.forEach((listener) => listener({ type }));
   }
 
   removeAttribute(attribute) {
@@ -171,6 +175,89 @@ describe('playback history runtime chain', () => {
     audio.currentTime = currentTime;
     audio.dispatch('timeupdate');
   }
+
+  it.each(['sequence', 'repeat-one', 'repeat-list'])(
+    'keeps %s practice EOF out of terminal consumers, qualifies actual progress once and projects paused A',
+    async (mode) => {
+      const { player, audio, record } = await createRuntime();
+      await player.playTrack(harness.tracksById.get('track-a'));
+      player.setPlaybackMode(mode);
+      Object.assign(audio, {
+        duration: 1,
+        paused: true,
+        seeking: false,
+        ended: false,
+        playbackRate: 1,
+        seekable: { length: 1, start: () => 0, end: () => 1 },
+      });
+      audio.play.mockImplementation(async () => {
+        audio.paused = false;
+        audio.ended = false;
+        audio.dispatch('play');
+        audio.dispatch('playing');
+      });
+      audio.pause.mockImplementation(() => {
+        audio.paused = true;
+        audio.dispatch('pause');
+      });
+      const wrapped = {
+        ...player,
+        seek(time, token) {
+          player.seek(time, token);
+          audio.seeking = true;
+          audio.dispatch('seeking');
+          queueMicrotask(() => {
+            audio.seeking = false;
+            audio.ended = false;
+            audio.dispatch('seeked');
+          });
+        },
+      };
+      const practice = createAbPracticePrototype({
+        player: wrapped,
+        acquireHold: () => ({ release: () => true }),
+        visibility: null,
+      });
+      practice.setRange(0.5, 1);
+      practice.setGap(1);
+      await practice.enable();
+      await player.play();
+      expect(audio.loop).toBe(false);
+      expect(player.state.playbackMode).toBe(mode);
+      const revision = player.state.playbackRevision;
+      try {
+        for (let lap = 0; lap < 22; lap++) {
+          progress(audio, 0.75);
+          audio.currentTime = 1;
+          audio.ended = true;
+          audio.paused = true;
+          audio.dispatch('pause');
+          audio.dispatch('ended');
+          await vi.waitFor(() => expect(practice.state.phase).toBe('gap'));
+          const sample = player.samplePlaybackClock();
+          const output = projectDynamicOutputState({
+            player: {
+              ...player.state,
+              currentTime: sample.positionMs / 1000,
+              playbackPhase: sample.phase,
+            },
+          });
+          expect(output.playback.positionMs).toBe(500);
+          expect(output.playback.status).toBe('paused');
+          expect(sample.continuityRevision).toBeGreaterThan(lap);
+          expect(player.state.playbackRevision).toBe(revision);
+          if (lap < 19) expect(record).not.toHaveBeenCalled();
+          await player.play();
+        }
+        expect(record).toHaveBeenCalledOnce();
+        practice.disable();
+        audio.dispatch('ended');
+        expect(record).toHaveBeenCalledOnce();
+      } finally {
+        practice.dispose();
+      }
+    },
+  );
 
   it('writes playback-history.json once after ten seconds of real player progress events', async () => {
     const { player, service, audio, record } = await createRuntime();

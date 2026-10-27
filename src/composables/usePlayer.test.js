@@ -195,15 +195,17 @@ class MockAudio {
   }
 
   addEventListener(type, listener) {
-    this.listeners.set(type, listener);
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type).add(listener);
   }
 
-  removeEventListener(type) {
-    this.listeners.delete(type);
+  removeEventListener(type, listener) {
+    this.listeners.get(type)?.delete(listener);
+    if (!this.listeners.get(type)?.size) this.listeners.delete(type);
   }
 
   dispatch(type) {
-    this.listeners.get(type)?.();
+    this.listeners.get(type)?.forEach((listener) => listener({ type }));
   }
 
   removeAttribute(attribute) {
@@ -943,6 +945,7 @@ describe('guide vocal defaults', () => {
         'onStopped',
         'pause',
         'performanceSettings',
+        'practiceBoundary',
         'play',
         'playTrack',
         'prepareCaptureDevice',

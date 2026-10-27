@@ -465,7 +465,7 @@ function setActiveTab(key) {
 .player-tools__metro-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--ui-space-1);
 }
 

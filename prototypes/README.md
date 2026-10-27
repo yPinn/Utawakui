@@ -6,6 +6,7 @@
 | -------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------- |
 | [UI Component Lab](ui-component-lab/README.md)                 | 載入正式 Vue primitives 與共用 tokens 的隔離元件檢查；沒有播放器／曲庫狀態 | 獨立 Vite config，先 build 再 capture       |
 | [Studio Library Workspace](studio-library-workspace/README.md) | 歷史工作區設計參考，保留 token／viewport／互動隔離檢查                     | 直接開 standalone Vite 路徑；已不在 F8 掛載 |
+| [A–B 區段練習](ab-practice/README.md)                          | 共用正式 owner 的中段／EOF／來源與歌詞 Loop 入口隔離驗證                   | 固定 localhost Vite 與專用 Electron probe   |
 
 ## 共用 Capture 入口
 

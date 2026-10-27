@@ -12,8 +12,9 @@ import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
-import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
+import LyricsLoopTool from './LyricsLoopTool.vue';
 
 const lyrics = useLyrics();
 const reading = useLyricsReading();
@@ -109,6 +110,7 @@ onMounted(initialize);
       :meta-lang="trackLang"
     >
       <template #actions>
+        <LyricsLoopTool :context-track-id="selectedTrack?.id ?? ''" />
         <UiPopover
           v-model:open="displayMenuOpen"
           aria-label="歌詞顯示設定"
@@ -117,14 +119,13 @@ onMounted(initialize);
           focus-on-open
         >
           <template #trigger="{ triggerProps }">
-            <UiButton
+            <UiIconButton
               v-bind="triggerProps"
               :icon="SlidersHorizontal"
+              label="歌詞顯示設定"
               :active="displayMenuOpen"
               @click="toggleDisplayMenu"
-            >
-              顯示
-            </UiButton>
+            />
           </template>
           <LyricsDisplayControls
             class="performance-lyrics-workspace__display"
@@ -154,14 +155,13 @@ onMounted(initialize);
             <template #text-processing><LyricsTextProcessing /></template>
           </LyricsDisplayControls>
         </UiPopover>
-        <UiButton
+        <UiIconButton
           v-if="selectedTrack"
           :icon="Pencil"
+          label="編輯歌詞"
           title="在曲庫編輯這首歌的歌詞、來源與讀音"
           @click="openLyricsAuthoring"
-        >
-          編輯歌詞
-        </UiButton>
+        />
       </template>
     </AppFolderWorkspaceToolbar>
 
