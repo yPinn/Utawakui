@@ -16,6 +16,7 @@ function createFakeEngine() {
     clicks,
     now: () => Date.now() / 1000,
     resume: vi.fn(() => Promise.resolve()),
+    setVolume: vi.fn(),
     scheduleClick: (time, accent) => {
       clicks.push({ time, accent });
     },
@@ -30,6 +31,75 @@ async function loadMetronome() {
 }
 
 describe('useMetronome', () => {
+  it('reports default-output failure without private details and can retry from the sound toggle', async () => {
+    const metro = await loadMetronome();
+    metro.setBpm(90);
+    metro.setVolume(0.35);
+    metro.engine.resume.mockRejectedValueOnce(Error('private driver detail'));
+    metro.setSoundEnabled(true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(metro.state.soundEnabled).toBe(false);
+    expect(metro.state.soundError).toContain('系統預設輸出');
+    expect(metro.state.soundError).not.toContain('private');
+    expect(metro.engine.close).toHaveBeenCalledOnce();
+    metro.setSoundEnabled(true);
+    metro.start();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(metro.state).toMatchObject({
+      soundError: '',
+      soundEnabled: true,
+      isRunning: true,
+      bpm: 90,
+      volume: 0.35,
+    });
+    metro.stop();
+  });
+
+  it('ignores a failed old resume after a newer start without closing its clock', async () => {
+    const metro = await loadMetronome();
+    let rejectOld;
+    metro.engine.resume.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectOld = reject;
+        }),
+    );
+    metro.setSoundEnabled(true);
+    metro.start();
+    rejectOld(Error('late failure'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(metro.state).toMatchObject({
+      isRunning: true,
+      soundEnabled: true,
+      soundError: '',
+    });
+    expect(metro.engine.close).not.toHaveBeenCalled();
+    metro.stop();
+  });
+
+  it('bounds independent click volume without changing sound or tempo', async () => {
+    const { state, engine, setVolume, setSoundEnabled, setBpm, reset } =
+      await loadMetronome();
+    expect(state.volume).toBe(1);
+    setBpm(90);
+    setVolume(0.35);
+    expect(state.volume).toBe(0.35);
+    expect(engine.setVolume).toHaveBeenLastCalledWith(0.35);
+    expect(state.soundEnabled).toBe(false);
+    setSoundEnabled(true);
+    setSoundEnabled(false);
+    expect(state.volume).toBe(0.35);
+    expect(state.bpm).toBe(90);
+    setVolume(-2);
+    expect(state.volume).toBe(0);
+    setVolume(3);
+    expect(state.volume).toBe(1);
+    setVolume(NaN);
+    expect(state.volume).toBe(1);
+    setVolume(0.2);
+    reset();
+    expect(state.volume).toBe(1);
+  });
   it('starts at 120 BPM and advances beats on the current interval', async () => {
     const { state, currentBeatLabel, start, stop } = await loadMetronome();
 

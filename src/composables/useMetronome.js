@@ -1,4 +1,5 @@
 import { computed, reactive } from 'vue';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import {
   beatIntervalSeconds,
   collectDueBeats,
@@ -28,6 +29,8 @@ const state = reactive({
   lastTickAt: null,
   tapCount: 0,
   soundEnabled: false,
+  volume: 1,
+  soundError: '',
   // 'default': never touched. 'manual': the user set it (stepper/tap).
   // 'track-estimate': applied from the current track's analyzed BPM.
   // Only 'manual' blocks further track-estimate application; reset()
@@ -37,6 +40,7 @@ const state = reactive({
 });
 
 let engine = null;
+let soundRevision = 0;
 let tickTimerId = null;
 let nextBeatTime = 0;
 let scheduledBeatNumber = 1;
@@ -70,7 +74,36 @@ function resolveEngine(options = {}) {
   } else if (!engine) {
     engine = createMetronomeClickEngine();
   }
+  engine.setVolume?.(state.volume);
   return engine;
+}
+
+function setVolume(value) {
+  if (!Number.isFinite(value)) return;
+  state.volume = Math.min(1, Math.max(0, value));
+  engine?.setVolume?.(state.volume);
+}
+
+function failSound(error) {
+  stop();
+  state.soundEnabled = false;
+  state.soundError = '請確認系統預設輸出後重新啟用節拍音效。';
+  void Promise.resolve(engine?.close()).catch(() => {});
+  useAppDiagnostics().recordError(error, {
+    code: 'METRONOME_AUDIO_UNAVAILABLE',
+    title: '節拍音效已停止',
+    message: state.soundError,
+    source: 'metronome',
+    operation: 'resume-audio',
+    context: { retryable: true },
+  });
+}
+
+function resumeAudio() {
+  const revision = ++soundRevision;
+  void engine.resume().catch((error) => {
+    if (revision === soundRevision) failSound(error);
+  });
 }
 
 function clearTickTimer() {
@@ -112,8 +145,15 @@ function runTick() {
 
 function start() {
   if (state.isRunning) return;
+  state.soundError = '';
   resolveEngine();
-  const startTime = engine.now();
+  let startTime;
+  try {
+    startTime = engine.now();
+  } catch (error) {
+    failSound(error);
+    return;
+  }
   state.isRunning = true;
   state.currentBeat = 1;
   state.pulseId += 1;
@@ -128,13 +168,13 @@ function start() {
   pendingVisualBeats = [];
   clearTickTimer();
   tickTimerId = setInterval(runTick, LOOKAHEAD_TICK_MS);
-  // Fire-and-forget: autoplay policy requires resume() from a user gesture
-  // (start() only ever runs from one), but a rejected/slow resume must not
-  // block the visual pulse from starting.
-  void engine.resume().catch(() => {});
+  // Request resume within the user gesture without delaying the clock setup.
+  // Only the current attempt may report failure and stop this run.
+  resumeAudio();
 }
 
 function stop() {
+  soundRevision += 1;
   state.isRunning = false;
   clearTickTimer();
   pendingVisualBeats = [];
@@ -190,10 +230,12 @@ function adjustBeatsPerBar(delta) {
 }
 
 function setSoundEnabled(enabled) {
+  soundRevision += 1;
   state.soundEnabled = Boolean(enabled);
   if (state.soundEnabled) {
     resolveEngine();
-    void engine.resume().catch(() => {});
+    state.soundError = '';
+    resumeAudio();
   }
 }
 
@@ -222,6 +264,7 @@ function reset() {
   state.bpmSource = 'default';
   state.bpmSourceConfidence = null;
   clearTaps();
+  setVolume(1);
 }
 
 function tapTempo(timestamp = Date.now()) {
@@ -277,6 +320,7 @@ export function useMetronome(options = {}) {
     adjustBeatsPerBar,
     setSoundEnabled,
     toggleSound,
+    setVolume,
     tapTempo,
     resetTaps: clearTaps,
   };

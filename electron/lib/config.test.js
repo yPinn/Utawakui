@@ -294,6 +294,21 @@ describe('config', () => {
     expect(loadConfig(configPath).sidebarWidth).toBe(64);
   });
 
+  it('ignores the retired metronome device preference and removes it on normal save', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        metronomeDeviceId: 'old-device',
+        captureDeviceId: 'capture-device',
+      }),
+    );
+    expect(loadConfig(configPath)).not.toHaveProperty('metronomeDeviceId');
+    saveConfig(configPath, { uiTheme: 'dark' });
+    const saved = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    expect(saved).not.toHaveProperty('metronomeDeviceId');
+    expect(saved.captureDeviceId).toBe('capture-device');
+  });
+
   it('round-trips captureDeviceId through save/load', () => {
     saveConfig(configPath, { captureDeviceId: 'device-abc' });
     expect(loadConfig(configPath).captureDeviceId).toBe('device-abc');

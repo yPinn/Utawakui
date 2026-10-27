@@ -192,6 +192,71 @@ never written back to the track, player tempo, or analysis sidecar.
 7. If an OBS/capture output device is selected in Settings, confirm the
    click is **not** present in that captured output.
 
+## Self-accompaniment settings review (2026-10-27)
+
+The primary scenario is singing while playing an instrument, including a manual
+performance item with no audio loaded. Prerecorded accompaniment belongs to local
+import and playback. The current controls provide BPM, tap tempo, beats per bar,
+first-beat accent, sound enable and independent click volume (0–100%). The volume
+defaults to 100% of the existing synthesized click level, changes through a short
+gain ramp, and works without a player track. Mute retains the chosen volume;
+the full metronome reset restores it to 100%, while tap clearing does not.
+These are session settings, not saved track preferences.
+
+The UI labels the count as beats per bar, not a fixed `N/4` time signature.
+The pulse interval remains 60/BPM; denominator, compound-meter grouping and
+subdivision are not implemented. Applying an analyzed BPM does not align a
+downbeat with the audio, follow playback speed, or synchronize transport.
+
+The independent context follows the system default output, as does the player's
+local monitor. Independence here means a separate audio clock and click gain,
+not a separate hardware-device preference. There is no metronome device selector,
+startup device restoration or device-setting IPC. The existing capture selector
+continues to configure only the player's capture mix. The metronome bypasses that
+graph, but this does not exclude it from OBS desktop-audio or application-audio capture.
+
+The standalone metronome device setting was withdrawn after the product review:
+the primary self-accompaniment scenario does not justify a second output policy
+and settings entry. Its private state, modal, config fields and bridge methods
+are removed. Obsolete local preferences are ignored and disappear on the next
+normal config save. The capture picker and enumeration remain in their existing
+owners; no extra shared layer remains solely for the removed selector.
+
+Audio contexts remain lazy until start or enabling sound. Resume has a five-second
+deadline. A current audio failure stops the metronome, disables sound and shows
+a bounded system-output message; the sound toggle can retry without selecting a
+device. Late failures from an older attempt cannot stop a newer start. Click volume
+and tempo remain available, and actual audibility, hardware default changes and
+OBS capture still need real-device acceptance. If custom monitoring is later
+required, evaluate one shared local-monitor choice before adding another selector.
+
+Prioritized candidates, not implementation commitments:
+
+1. Count-in (off / one / two bars): define preparing, running and cancelled states
+   for a manual performance start; decide whether clicks continue after count-in.
+   Do not mark the performance started before the agreed boundary or imply that
+   the app starts an external instrument or recording.
+2. Beat subdivision (one, two or three pulses per beat), followed by explicit
+   compound-meter grouping if needed. Retain one audio-clock scheduler and
+   distinguish subdivision clicks from beat and bar accents.
+3. Hands-free start/stop and tap through the existing shortcut ownership;
+   keyboard-emulating pedals can be evaluated first. Native MIDI support needs
+   its own input-device and mapping decision.
+4. Per-manual-item tempo/count presets after the above semantics settle. Keep
+   these separate from track DSP preferences and machine audio-device settings.
+
+A reference tone for finding a singing entry pitch is a lower-priority candidate
+that can work without microphone input; a microphone tuner is a separate input
+feature. Beatgrid editing, dual decks and automatic DJ synchronization are outside
+this self-accompaniment pass.
+
+[Ableton's metronome documentation](https://www.ableton.com/en/live-manual/12/recording-new-clips/#metronome-settings)
+provides precedent for volume, count-in and rhythmic divisions; its recording
+start semantics must not be copied onto a manual performance without adaptation.
+[VirtualDJ's BPM editor](https://virtualdj.com/manuals/virtualdj/editors/bpmeditor.html)
+separates tempo correction from beatgrid-anchor/downbeat correction, supporting
+the distinction between equal BPM and actual phase alignment here.
+
 ## References
 
 - [ADR 0019: Signalsmith Stretch replaces SoundTouchJS](0019-signalsmith-stretch-pitch-transpose.md)

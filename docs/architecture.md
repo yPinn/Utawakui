@@ -90,7 +90,7 @@
 - BGM：`src/bgm/audioDeck.js` 擁有第二個 audio element 與 logical gain bus（monitor 與 post-gain PCM bridge）；bridge 透過有獨立 silence gate 的 lease 接入既有演唱 capture sink，不經演唱 pitch／guide／monitor gain。兩條 lane 共用 capture 最後總音量，預設 50%、獨立保存；BGM 開始前等候選定 sink 就緒，失效即停止 BGM 雙路輸出；`src/bgm/handoffCoordinator.js` 仲裁 BGM request、演唱後 deferred restore、fade gate、pre-roll／post-roll 與 stale generation。`useBgmSession.js` 由 App 在啟動時初始化一次，組合 plan、library、OBS、deck、coordinator 與 player 的單一 pre-start hook；`BgmPlayer.vue` 是安排 Dock footer 的場間音樂控制組合，主頁更多選單可導向此處，mount／unmount 不改變音訊。BGM 不進 Queue、history、resume、Output、SMTC。見 [BGM 契約](contracts/bgm-standby-lane.md)與 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。 BGM 優先選既有四聲道伴奏，導唱經自身 gain 開關（新曲預設 off）混到共同 monitor／capture bus；原曲回退明示且不能切除人聲。
 - 曲目試聽是同一 coordinator 仲裁的第三條、最低優先 lane：`acquirePreview()` 回傳可被搶占的 lease；演唱開始、BGM 播放、進入直播／錄影都會搶占試聽，直播／錄影中直接拒絕。Owner 是 `useTrackPreview.js`（自有 audio element），`TrackPreviewOverlay.vue` 只投影狀態。見[試聽契約](contracts/track-preview.md)。
 - `useTrackPreviewEligibility` 僅控制本地試聽入口：來源專輯沿用當頁 Main catalog 的全目錄可用數，其他專輯只確認目前集合；確認中／全無可用／失敗時停用，不改展示投影，也不做啟動全庫摘要。開始前仍 fresh resolve，專輯序列維持來源順序並略過無效音源；owner 拒絕非本地 media scheme，不做來源試聽。
-- 節拍器 `useMetronome.js` 使用獨立 AudioContext 與 lookahead scheduler；`useMetronomeTrackTempo.js` 只在停止且未手動覆寫時套用通過信心門檻的分析 BPM，不回寫 sidecar。
+- 節拍器 `useMetronome.js` 使用獨立 AudioContext、節拍音量與 lookahead scheduler，與本機監聽一樣跟隨系統預設輸出，不接播放器擷取 graph；沒有獨立裝置偏好、選擇視窗或 IPC。音效啟動失敗以有界訊息提示，透過既有發聲開關重試；舊請求失敗不影響新的開始。`useMetronomeTrackTempo.js` 只在停止且未手動覆寫時套用通過信心門檻的分析 BPM，不代表歌曲相位同步，也不回寫 sidecar。
 
 ### 演出安排
 
