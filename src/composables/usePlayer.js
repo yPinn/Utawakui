@@ -2,6 +2,7 @@ import { reactive, readonly } from 'vue';
 import { usePlayerDiagnostics } from './player/usePlayerDiagnostics.js';
 import { usePlayerLibrarySync } from './player/usePlayerLibrarySync.js';
 import { usePlayerAudioStart } from './player/usePlayerAudioStart.js';
+import { usePlayerPerformanceSettings } from './player/usePlayerPerformanceSettings.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import {
   usePlayerAudioGraph,
@@ -36,7 +37,6 @@ const PLAYBACK_MODE_ORDER = Object.freeze([
   PLAYBACK_MODES.repeatList,
   PLAYBACK_MODES.repeatOne,
 ]);
-const LOOP_WRAP_EDGE_SECONDS = 1;
 const { recordError } = useAppDiagnostics();
 
 const initialAudioPreferences = normalizeAudioPreferences(
@@ -221,23 +221,10 @@ function handleSeeked() {
   state.playbackPhase = state.isPlaying ? 'buffering' : 'paused';
 }
 
-function isRepeatOneLoopWrap(previousTime, nextTime) {
-  return (
-    state.playbackMode === PLAYBACK_MODES.repeatOne &&
-    Number.isFinite(state.duration) &&
-    state.duration > 0 &&
-    previousTime >= state.duration - LOOP_WRAP_EDGE_SECONDS &&
-    nextTime <= LOOP_WRAP_EDGE_SECONDS
-  );
-}
-
 function handleTimeUpdate() {
   const previousTime = lastObservedCurrentTime;
   const nextTime = audio.currentTime;
   const didAdvance = nextTime !== previousTime;
-  if (isRepeatOneLoopWrap(previousTime, nextTime)) {
-    resetTrackAudioControls();
-  }
   lastObservedCurrentTime = nextTime;
   state.currentTime = nextTime;
   if (state.isPlaying && didAdvance && state.playbackPhase !== 'seeking') {
@@ -296,43 +283,41 @@ audio.addEventListener('timeupdate', handleTimeUpdate);
 audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 audio.addEventListener('error', handleError);
 
-async function requestPlaybackStart({ trackId, requestRevision, resume }) {
-  try {
-    const request = { trackId, requestRevision };
-    if (resume) request.resume = true;
-    const allowed = await beforePlaybackStartListener?.(request);
-    if (allowed === false || requestRevision !== playbackStartRequestRevision) {
-      if (requestRevision === playbackStartRequestRevision) {
-        state.pendingStartTrackId = null;
-        notifyStopped('start-cancelled');
-      }
-      return false;
-    }
-    return true;
-  } catch (error) {
-    if (requestRevision === playbackStartRequestRevision) {
-      state.pendingStartTrackId = null;
-      state.error = reportPlayerError(
-        error,
-        'pre-start',
-        '曲目開始前的音訊交接未完成，請再試一次。',
-      );
-      notifyStopped('error');
-    }
-    return false;
-  }
-}
-
-const { startAudio, cancelAudioStart } = usePlayerAudioStart({
+const {
+  startAudio,
+  cancelAudioStart,
+  requestPlaybackStart,
+  restartAudio: restartTrack,
+  applyAudioControls,
+  toggle,
+} = usePlayerAudioStart({
   audio,
   state,
   audioGraph,
   getStartRevision: () => playbackStartRequestRevision,
+  getBeforePlaybackStart: () => beforePlaybackStartListener,
+  cancelPendingStart,
+  play,
+  pause,
+  seek,
+  advanceStartRevision: () => ++playbackStartRequestRevision,
+  prepareControls: (track, options) =>
+    performanceSettings.prepare(track, options),
+  commitControls: () => performanceSettings.commitPreparedSelection(),
   reportPlayerError,
   notifyStopped,
 });
+const performanceSettings = usePlayerPerformanceSettings({
+  playerState: state,
+  graph: audioGraph,
+  applyValues: applyAudioControls,
+  onScopeInvalidated: (event) => {
+    cancelPendingStart();
+    if (!event.trackId || event.trackId === state.track?.id) clearTrack();
+  },
+});
 
-async function playTrack(track) {
+async function playTrack(track, { useDefaults = false } = {}) {
   audioGraph.cancelAudioControlApplication();
   const requestRevision = ++playbackStartRequestRevision;
   state.pendingStartTrackId = track.id;
@@ -342,6 +327,16 @@ async function playTrack(track) {
   // boundary. Stop the current performance immediately, but keep its
   // identity/source stable until the BGM handoff hook grants the new start.
   if (state.isPlaying) audio.pause();
+  const controls = await performanceSettings.prepare(track, {
+    isCurrent: () => requestRevision === playbackStartRequestRevision,
+    useDefaults,
+    retry: (defaults) => playTrack(track, { useDefaults: defaults }),
+  });
+  if (requestRevision !== playbackStartRequestRevision) return false;
+  if (!controls) {
+    state.pendingStartTrackId = null;
+    return false;
+  }
   const allowed = await requestPlaybackStart({
     trackId: track.id,
     requestRevision,
@@ -354,7 +349,8 @@ async function playTrack(track) {
   state.duration = 0;
   lastObservedCurrentTime = 0;
   pendingRestorePosition = null;
-  resetTrackAudioControls();
+  resetTrackAudioControls(controls);
+  performanceSettings.commitPreparedSelection();
   routeAudioGraph(Boolean(track.usesSeparatedAudio));
   audio.src = track.url;
   return startAudio(requestRevision, 'play-track');
@@ -383,15 +379,27 @@ function restorePlaybackState({
   routeAudioGraph(Boolean(track.usesSeparatedAudio));
   setPlaybackMode(playbackMode);
   audio.src = track.url;
+  void performanceSettings.restore(track);
   return true;
 }
 
-async function play() {
+async function play({ useDefaults = false } = {}) {
   if (!state.track) return false;
   const requestRevision = ++playbackStartRequestRevision;
   state.pendingStartTrackId = state.track.id;
   terminalStopNotified = false;
   state.error = null;
+  const ready = await performanceSettings.ensure(
+    state.track,
+    () => requestRevision === playbackStartRequestRevision,
+    useDefaults,
+    (defaults) => play({ useDefaults: defaults }),
+  );
+  if (requestRevision !== playbackStartRequestRevision) return false;
+  if (!ready) {
+    state.pendingStartTrackId = null;
+    return false;
+  }
   const allowed = await requestPlaybackStart({
     trackId: state.track.id,
     requestRevision,
@@ -412,13 +420,9 @@ function pause() {
 // already-paused native element emits no event in Chromium.
 function cancelPendingStart() {
   const previousRevision = playbackStartRequestRevision++;
+  performanceSettings.cancelStart();
   state.pendingStartTrackId = null;
   cancelAudioStart(previousRevision);
-}
-
-function toggle() {
-  if (state.isPlaying) return pause();
-  return play();
 }
 
 function seek(time) {
@@ -426,27 +430,11 @@ function seek(time) {
   audio.currentTime = time;
 }
 
-function restartTrack() {
-  if (!state.track) return;
-  resetTrackAudioControls();
-  seek(0);
-}
-
-// Explicit batches pause; live sliders retain their existing setters.
-// Persistence is deliberately not connected in this slice.
-function applyAudioControls(values) {
-  return audioGraph.applyAudioControls(values, {
-    beforeApply() {
-      cancelPendingStart();
-      audio.pause();
-    },
-  });
-}
-
 function clearTrack(trackId = null) {
   if (trackId !== null && state.track?.id !== trackId) return false;
 
   audioGraph.cancelAudioControlApplication();
+  performanceSettings.clear();
   playbackStartRequestRevision += 1;
   state.pendingStartTrackId = null;
   notifyStopped('cleared');
@@ -523,6 +511,7 @@ function registerBeforePlaybackStart(listener) {
 }
 
 export function cleanupPlayerResources() {
+  performanceSettings.dispose();
   audio.removeEventListener('play', handlePlay);
   audio.removeEventListener('playing', handlePlaying);
   audio.removeEventListener('pause', handlePause);
@@ -555,6 +544,7 @@ if (import.meta.hot) {
 export function usePlayer() {
   return {
     state: readonly(state),
+    performanceSettings,
     getPlaybackStartRequestRevision: () => playbackStartRequestRevision,
     samplePlaybackClock,
     playTrack,

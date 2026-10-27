@@ -314,7 +314,7 @@ export function usePerformanceSessionPlaybackController({
       return enqueue(async () => (await stopItem('interrupted')) && nextItem());
     },
     previous: () => {
-      if (request && !request.manual) player.restartTrack();
+      if (request && !request.manual) return player.restartTrack();
     },
     complete: () =>
       enqueue(async () => {

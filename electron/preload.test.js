@@ -16,6 +16,11 @@ const originalArgv = [...process.argv];
 const originalModuleLoad = Module._load;
 
 const MAIN_INVOKE_CHANNELS = [
+  'library:performance-settings-get',
+  'library:performance-settings-save',
+  'library:performance-settings-remove',
+  'library:performance-settings-cancel',
+  'library:performance-settings-set-default',
   'app-update:check',
   'app-update:download',
   'app-update:get-status',
@@ -295,6 +300,7 @@ const MAIN_INVOKE_CHANNELS = [
 ].sort();
 
 const MAIN_EVENT_CHANNELS = [
+  'library:performance-settings-invalidated',
   'auto-report:prompt',
   'auto-report:sent',
   'app:history-command',
@@ -883,6 +889,35 @@ describe('main preload bridge', () => {
     });
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'import:clipboard-suggestion',
+    );
+  });
+
+  it('projects performance settings intents without media paths or arbitrary fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const values = {
+      transposeSemitones: 2,
+      pitchCents: 0,
+      tempoRate: 1,
+      monitorGuideVocalEnabled: false,
+    };
+    await bridge.savePerformanceSettings({
+      trackId: 'one',
+      slot: 2,
+      token: 'opaque',
+      expectedRevision: null,
+      values: { ...values, captureVolume: 1 },
+      path: 'C:/private',
+      hash: 'secret',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'library:performance-settings-save',
+      {
+        trackId: 'one',
+        slot: 2,
+        token: 'opaque',
+        expectedRevision: null,
+        values,
+      },
     );
   });
 

@@ -1,6 +1,10 @@
 import { loadPitchProcessor } from '../../utils/pitchProcessorLoader.js';
 import { AUDIO_CONTROL_VALUES } from '../../utils/audioPreferences.js';
 import { createAudioControlApplication } from '../../utils/audioControlApplication.js';
+import {
+  validPerformanceSettings,
+  PERFORMANCE_SETTINGS_DEFAULTS,
+} from '../../../shared/performanceSettings.mjs';
 
 const GAIN_RAMP_SECONDS = 0.03;
 
@@ -19,9 +23,7 @@ export const GUIDE_VOCAL_LEVEL_RANGE = Object.freeze({
 export const PLAYER_AUDIO_DEFAULTS = Object.freeze({
   volume: AUDIO_CONTROL_VALUES.performanceVolume.defaultValue,
   captureVolume: AUDIO_CONTROL_VALUES.captureVolume.defaultValue,
-  transposeSemitones: 0,
-  pitchCents: 0,
-  tempoRate: 1,
+  ...PERFORMANCE_SETTINGS_DEFAULTS,
   monitorGuideVocalLevel:
     AUDIO_CONTROL_VALUES.monitorGuideVocalLevel.defaultValue,
   captureGuideVocalLevel:
@@ -558,28 +560,7 @@ export function usePlayerAudioGraph({
   }
 
   function validControls(values) {
-    if (!values || typeof values !== 'object' || Array.isArray(values))
-      return false;
-    const fields = Object.keys(controlValues());
-    if (
-      Object.keys(values).length !== fields.length ||
-      fields.some((key) => !Object.hasOwn(values, key))
-    )
-      return false;
-    return (
-      Number.isInteger(values.transposeSemitones) &&
-      values.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.min &&
-      values.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.max &&
-      Number.isInteger(values.pitchCents) &&
-      values.pitchCents >= PITCH_CENTS_RANGE.min &&
-      values.pitchCents <= PITCH_CENTS_RANGE.max &&
-      Number.isFinite(values.tempoRate) &&
-      values.tempoRate >= TEMPO_RATE_RANGE.min &&
-      values.tempoRate <= TEMPO_RATE_RANGE.max &&
-      Math.abs(values.tempoRate * 20 - Math.round(values.tempoRate * 20)) <
-        1e-8 &&
-      typeof values.monitorGuideVocalEnabled === 'boolean'
-    );
+    return validPerformanceSettings(values);
   }
 
   async function applyControlTarget(target, job) {
@@ -723,14 +704,22 @@ export function usePlayerAudioGraph({
     });
   }
 
-  function resetTrackAudioControls() {
+  function resetTrackAudioControls(values = PERFORMANCE_SETTINGS_DEFAULTS) {
     setCaptureGuideVocalOn(false);
-    return applyAudioControls({
-      transposeSemitones: 0,
-      pitchCents: 0,
-      tempoRate: 1,
-      monitorGuideVocalEnabled: true,
-    });
+    return applyAudioControls(values);
+  }
+
+  // Restore stages requested values while remaining paused/lazy. Only resume
+  // prepares the necessary graph and publishes confirmed applied values.
+  function stageAudioControls(values) {
+    if (!validControls(values)) return;
+    applications.invalidate('monitor');
+    state.transposeSemitones = values.transposeSemitones;
+    state.pitchCents = values.pitchCents;
+    state.tempoRate = values.tempoRate;
+    state.guideVocalOn = values.monitorGuideVocalEnabled;
+    audio.defaultPlaybackRate = values.tempoRate;
+    audio.playbackRate = values.tempoRate;
   }
 
   function routeAudioGraph(usesSeparatedAudio) {
@@ -999,6 +988,7 @@ export function usePlayerAudioGraph({
     cancelAudioControlApplication,
     routeAudioGraph,
     resetTrackAudioControls,
+    stageAudioControls,
     restoreGuideVocalState,
     restoreCaptureGuideVocalState,
     setGuideVocalValue,

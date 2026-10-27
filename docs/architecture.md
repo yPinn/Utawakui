@@ -82,6 +82,8 @@
 
 ### 播放、BGM、試聽、節拍器
 
+- 逐曲設定由 `electron/lib/performanceSettings/` 持有三組與預設位置，固定 handlers／preload 只傳 id、token、revision、slot 與四欄 intent；保存／移除／指定預設共用 works library lane，曲庫 epoch 與刪曲 callback 失效 tokens 並通知 Renderer。`player/usePlayerPerformanceSettings.js` 持有 baseline／選組／未保存複製草稿／IO 世代，消費原 graph 當前 revision 的 applied 結果；未提交開始的返回選組綁定原 occurrence，接受新目標後清除；新開始、lazy restore、保留同次臨時值及既有工具 footer 均沿原 player／start owners。媒體 memo、fresh tag 等價遷移與 UUID tombstone 見[套用契約](contracts/player-audio-controls.md#main-逐曲保存)，不新增 DSP／播放權威。
+
 - 音訊設定的要求值與確認結果由 `utils/audioControlApplication.js` 管理 revision／取消／期限，實際 DSP 仍由 graph owner 執行；`player/usePlayerAudioStart.js` 執行交接後的準備／play／失敗／取消交易，facade 保留 audio events 與唯一 BGM hook。Play／resume 與 library reload 在必要 monitor／capture 路徑確認後，實際 play 前再驗就緒，見[套用契約](contracts/player-audio-controls.md)。
 - `PlayerBar` 的演出工具依序提供調整／導唱／節拍器，`PlayerToolsPanel` 重用 `UiPopover` 與 RightDock 的寬度 owner；伴奏產生由既有曲目準備入口提供，不在播放器另接一組分離操作。視覺與互動見[元件契約](contracts/token-v2-component-review.md)。
 

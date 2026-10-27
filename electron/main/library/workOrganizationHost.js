@@ -16,6 +16,7 @@ function createWorkOrganizationHost({
   notifyChanged = () => undefined,
   notifyLibraryUpdated = () => undefined,
   recordDiagnostic,
+  onTrackDeleting,
   removePlaylistTrack = removeTrackFromAllPlaylists,
   unlinkSessionTrack = (dir, trackId) =>
     createPerformanceSessionPlanStore({ directory: dir }).unlinkTrack(trackId),
@@ -24,6 +25,7 @@ function createWorkOrganizationHost({
 }) {
   const runtime = createWorkOrganizationRuntime({
     getDirectory,
+    onTrackDeleting,
     cleanupReferences,
     notifyChanged,
   });

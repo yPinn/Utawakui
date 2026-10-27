@@ -67,6 +67,14 @@ network install or signed-installer acceptance; see the
   Renderer batch controls and state are bundled into `dist/**/*`; no worker,
   executable, dependency or new resource directory is added.
 
+- Track performance settings: `electron/lib/performanceSettings/` and
+  `electron/main/performanceSettingsHandlers.js` use the existing Main bundle
+  dependency closure; fixed intents use the main preload bundle. The pure
+  `shared/performanceSettings.mjs` contract ships under the existing shared
+  allowlist and is bundled into renderer consumers. Adjacent tests are excluded;
+  per-track `performance-settings.json` is library user data, never an installer
+  asset. No new runtime dependency, worker or packaging location is introduced.
+
 - Local works/version persistence and release schemas: `electron/lib/works/`
   and `electron/lib/releases/` are included in the Main bundle;
   original modules and adjacent tests are not separately delivered.

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PERFORMANCE_SETTINGS_DEFAULTS as profileDefaults } from '../../shared/performanceSettings.mjs';
 
 // Mirrors signalsmith-stretch's real behavior (confirmed by reading the
 // package source, see ADR 0019): the AudioWorklet module-registration
@@ -251,8 +252,567 @@ function createDeferred() {
   });
   return { promise, resolve };
 }
+function setSnapshot(defaultSlot = 1) {
+  const slots = [
+    { ...profileDefaults },
+    { ...profileDefaults, transposeSemitones: -2 },
+    null,
+  ];
+  return {
+    status: 'saved',
+    trackId: 'one',
+    token: 'one-token',
+    revision: 'rev',
+    defaultSlot,
+    values: slots[defaultSlot - 1],
+    slots,
+  };
+}
 
 describe('guide vocal defaults', () => {
+  it('keeps a completed paused restart selection when a later replacement is cancelled', async () => {
+    const saved = setSnapshot(),
+      read = createDeferred();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async ({ trackId }) =>
+          trackId === 'two' ? read.promise : saved,
+        ),
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    await player.performanceSettings.selectSlot(2);
+    player.pause();
+    expect(await player.restartTrack()).toBe(true);
+    expect(player.performanceSettings.state.selectedSlot).toBe(1);
+    const replacing = player.playTrack({ id: 'two', url: 'media:two' });
+    await vi.waitFor(() =>
+      expect(player.performanceSettings.state.trackId).toBe('two'),
+    );
+    player.pause();
+    read.resolve(saved);
+    expect(await replacing).toBe(false);
+    expect(await player.play()).toBe(true);
+    expect(player.performanceSettings.state.selectedSlot).toBe(1);
+    expect(player.state.transposeSemitones).toBe(0);
+  });
+  it('does not turn a live adjustment that supersedes copying into a failure or select its destination', async () => {
+    const saved = setSnapshot(2),
+      gate = createDeferred();
+    const savePerformanceSettings = vi.fn(async (input) => ({
+      ...saved,
+      values: input.values,
+      slots: saved.slots.map((value, index) =>
+        index === input.slot - 1 ? input.values : value,
+      ),
+    }));
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => saved),
+        savePerformanceSettings,
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    const { MockPitchNode } = await import('signalsmith-stretch');
+    MockPitchNode.instances[0].schedule.mockImplementationOnce(
+      () => gate.promise,
+    );
+    const copying = player.performanceSettings.copyToSlot(3);
+    await player.setTransposeSemitones(8);
+    expect(await copying).toBe(false);
+    gate.resolve();
+    await Promise.resolve();
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+    expect(player.performanceSettings.state.error).toBeNull();
+    expect(player.state.transposeSemitones).toBe(8);
+    expect(player.state.isPlaying).toBe(true);
+    expect(await player.performanceSettings.save()).toBe(true);
+    expect(savePerformanceSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ slot: 2 }),
+    );
+  });
+  it.each(['read', 'handoff'])(
+    'restores the original set and temporary values after cancelling a same-track %s',
+    async (stage) => {
+      const saved = setSnapshot(),
+        read = createDeferred(),
+        handoff = createDeferred();
+      let holdRead = false;
+      const getPerformanceSettings = vi.fn(async () => {
+        if (holdRead) {
+          holdRead = false;
+          return read.promise;
+        }
+        return saved;
+      });
+      vi.stubGlobal('window', {
+        Utawakui: { getPerformanceSettings, onLibraryUpdated: () => vi.fn() },
+      });
+      const player = await loadPlayer();
+      await player.playTrack({ id: 'one', url: 'media:one' });
+      await player.performanceSettings.selectSlot(2);
+      await player.setTransposeSemitones(5);
+      const revision = player.state.playbackRevision;
+      MockAudio.latest.currentTime = 23;
+      const hook = vi.fn(({ resume }) => (resume ? true : handoff.promise));
+      player.registerBeforePlaybackStart(hook);
+      holdRead = stage === 'read';
+      const replacing = player.playTrack({ id: 'one', url: 'media:one' });
+      await vi.waitFor(() =>
+        expect(
+          stage === 'read'
+            ? getPerformanceSettings.mock.calls.length
+            : hook.mock.calls.length,
+        ).toBe(stage === 'read' ? 2 : 1),
+      );
+      player.pause();
+      read.resolve(saved);
+      handoff.resolve(true);
+      expect(await replacing).toBe(false);
+      expect(await player.play()).toBe(true);
+      expect(player.performanceSettings.state.selectedSlot).toBe(2);
+      expect(player.state.transposeSemitones).toBe(5);
+      expect(player.state.playbackRevision).toBe(revision);
+      expect(MockAudio.latest.currentTime).toBe(23);
+    },
+  );
+  it('resumes the original set after a replacement read fails', async () => {
+    const saved = setSnapshot();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async ({ trackId }) =>
+          trackId === 'one' ? saved : { status: 'invalid' },
+        ),
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    await player.performanceSettings.selectSlot(2);
+    await player.setTransposeSemitones(5);
+    expect(await player.playTrack({ id: 'two', url: 'media:two' })).toBe(false);
+    expect(await player.play()).toBe(true);
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+    expect(player.state.transposeSemitones).toBe(5);
+  });
+  it.each(['read', 'handoff'])(
+    'resumes the original set after same-track replacement %s fails',
+    async (stage) => {
+      const saved = setSnapshot(),
+        getPerformanceSettings = vi.fn(async () => saved);
+      vi.stubGlobal('window', {
+        Utawakui: { getPerformanceSettings, onLibraryUpdated: () => vi.fn() },
+      });
+      const player = await loadPlayer();
+      await player.playTrack({ id: 'one', url: 'media:one' });
+      await player.performanceSettings.selectSlot(2);
+      await player.setTransposeSemitones(5);
+      if (stage === 'read')
+        getPerformanceSettings.mockResolvedValueOnce({ status: 'invalid' });
+      else player.registerBeforePlaybackStart(({ resume }) => Boolean(resume));
+      expect(await player.playTrack({ id: 'one', url: 'media:one' })).toBe(
+        false,
+      );
+      expect(await player.play()).toBe(true);
+      expect(player.performanceSettings.state.selectedSlot).toBe(2);
+      expect(player.state.transposeSemitones).toBe(5);
+    },
+  );
+  it.each([false, true])(
+    'allows the first explicit Play after pausing an unresolved restore, with pending Play=%s',
+    async (withPlay) => {
+      const read = createDeferred(),
+        saved = setSnapshot(2);
+      const getPerformanceSettings = vi
+        .fn()
+        .mockImplementationOnce(() => read.promise)
+        .mockResolvedValue(saved);
+      vi.stubGlobal('window', {
+        Utawakui: { getPerformanceSettings, onLibraryUpdated: () => vi.fn() },
+      });
+      const player = await loadPlayer();
+      player.restorePlaybackState({
+        track: { id: 'one', url: 'media:one' },
+        positionSeconds: 12,
+      });
+      const starting = withPlay ? player.play() : null;
+      await vi.waitFor(() =>
+        expect(getPerformanceSettings).toHaveBeenCalledOnce(),
+      );
+      player.pause();
+      read.resolve(saved);
+      if (starting) expect(await starting).toBe(false);
+      await Promise.resolve();
+      expect(MockAudio.latest.play).not.toHaveBeenCalled();
+      expect(await player.play()).toBe(true);
+      expect(player.performanceSettings.state.selectedSlot).toBe(2);
+      expect(player.state.transposeSemitones).toBe(-2);
+    },
+  );
+  it('copies a saved set as a draft without pausing, restarting, seeking or writing', async () => {
+    const source = {
+      transposeSemitones: 3,
+      pitchCents: 10,
+      tempoRate: 0.9,
+      monitorGuideVocalEnabled: false,
+    };
+    const savePerformanceSettings = vi.fn();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({
+          status: 'saved',
+          trackId: 'one',
+          token: 'one-token',
+          revision: 'rev',
+          defaultSlot: 1,
+          values: source,
+          slots: [source, null, null],
+        })),
+        savePerformanceSettings,
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    await player.setTransposeSemitones(5);
+    MockAudio.latest.currentTime = 23;
+    const revision = player.state.playbackRevision;
+    const pauseCalls = MockAudio.latest.pause.mock.calls.length;
+    const playCalls = MockAudio.latest.play.mock.calls.length;
+    expect(await player.performanceSettings.resetSlot(2)).toBe(true);
+    expect(player.state.isPlaying).toBe(true);
+    expect(MockAudio.latest.pause).toHaveBeenCalledTimes(pauseCalls);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCalls);
+    expect(MockAudio.latest.currentTime).toBe(23);
+    expect(player.state.transposeSemitones).toBe(0);
+    await player.performanceSettings.selectSlot(1);
+    expect(await player.performanceSettings.copyToSlot(2)).toBe(true);
+    expect(player.state.isPlaying).toBe(true);
+    expect(MockAudio.latest.pause).toHaveBeenCalledTimes(pauseCalls);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCalls);
+    expect(MockAudio.latest.currentTime).toBe(23);
+    expect(player.state.playbackRevision).toBe(revision);
+    expect(player.state.audioControlApplication.applied).toEqual(source);
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+    expect(player.performanceSettings.dirty.value).toBe(true);
+    await player.performanceSettings.selectSlot(1);
+    player.pause();
+    expect(await player.performanceSettings.copyToSlot(3)).toBe(true);
+    expect(player.state.isPlaying).toBe(false);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCalls);
+    expect(savePerformanceSettings).not.toHaveBeenCalled();
+  });
+  it('stages a set on a paused restored track without treating a deferred graph as a failure', async () => {
+    const source = {
+      transposeSemitones: 0,
+      pitchCents: 0,
+      tempoRate: 1,
+      monitorGuideVocalEnabled: true,
+    };
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({
+          status: 'saved',
+          values: source,
+          slots: [source, null, null],
+        })),
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    player.restorePlaybackState({
+      track: { id: 'one', url: 'media:one' },
+      positionSeconds: 12,
+    });
+    await vi.waitFor(() =>
+      expect(player.performanceSettings.state.reading).toBe(false),
+    );
+    expect(await player.performanceSettings.copyToSlot(3)).toBe(true);
+    expect(player.performanceSettings.dirty.value).toBe(true);
+    expect(await player.performanceSettings.selectSlot(2)).toBe(true);
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+    expect(player.performanceSettings.state.error).toBeNull();
+    expect(await player.performanceSettings.reset()).toBe(true);
+    expect(player.performanceSettings.canSave.value).toBe(false);
+    expect(player.state.audioControlApplication.status).toBe('deferred');
+    expect(MockAudioContext.instances).toHaveLength(0);
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    expect(await player.play()).toBe(true);
+    expect(player.state.audioControlApplication.ok).toBe(true);
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+  });
+  it('switches and resets saved sets without pausing, restarting, saving or moving playback', async () => {
+    const slots = [
+      {
+        transposeSemitones: 3,
+        pitchCents: 10,
+        tempoRate: 0.9,
+        monitorGuideVocalEnabled: false,
+      },
+      {
+        transposeSemitones: -2,
+        pitchCents: -15,
+        tempoRate: 1.1,
+        monitorGuideVocalEnabled: true,
+      },
+      null,
+    ];
+    const savePerformanceSettings = vi.fn();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({
+          status: 'saved',
+          trackId: 'one',
+          values: slots[0],
+          slots,
+          defaultSlot: 1,
+        })),
+        savePerformanceSettings,
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    const revision = player.state.playbackRevision;
+    MockAudio.latest.currentTime = 23;
+    await player.setTransposeSemitones(5);
+    const pauseCalls = MockAudio.latest.pause.mock.calls.length;
+    const playCalls = MockAudio.latest.play.mock.calls.length;
+    expect(await player.performanceSettings.selectSlot(2)).toBe(true);
+    expect(player.state.isPlaying).toBe(true);
+    expect(MockAudio.latest.pause).toHaveBeenCalledTimes(pauseCalls);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCalls);
+    expect(MockAudio.latest.currentTime).toBe(23);
+    expect(player.state.playbackRevision).toBe(revision);
+    expect(player.state.audioControlApplication.applied).toEqual(slots[1]);
+    expect(player.performanceSettings.dirty.value).toBe(false);
+    expect(await player.performanceSettings.reset()).toBe(true);
+    expect(player.state.isPlaying).toBe(true);
+    expect(player.state.transposeSemitones).toBe(0);
+    expect(player.state.pitchCents).toBe(0);
+    expect(player.state.tempoRate).toBe(1);
+    expect(player.state.guideVocalOn).toBe(true);
+    expect(MockAudio.latest.pause).toHaveBeenCalledTimes(pauseCalls);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCalls);
+    expect(MockAudio.latest.currentTime).toBe(23);
+    expect(player.state.playbackRevision).toBe(revision);
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+    expect(player.performanceSettings.dirty.value).toBe(true);
+    await player.performanceSettings.selectSlot(3);
+    expect(player.state.transposeSemitones).toBe(0);
+    expect(player.state.pitchCents).toBe(0);
+    expect(player.state.tempoRate).toBe(1);
+    expect(player.state.isPlaying).toBe(true);
+    player.pause();
+    await player.performanceSettings.selectSlot(1);
+    expect(player.state.audioControlApplication.applied).toEqual(slots[0]);
+    expect(await player.performanceSettings.reset()).toBe(true);
+    expect(player.state.isPlaying).toBe(false);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(playCalls);
+    expect(savePerformanceSettings).not.toHaveBeenCalled();
+  });
+  it('preserves current temporary controls when a replacement start is cancelled during BGM handoff', async () => {
+    const defaults = {
+      transposeSemitones: 0,
+      pitchCents: 0,
+      tempoRate: 1,
+      monitorGuideVocalEnabled: true,
+    };
+    const snapshot = {
+      status: 'saved',
+      trackId: 'one',
+      token: 'one-token',
+      revision: 'rev',
+      defaultSlot: 1,
+      values: defaults,
+      slots: [defaults, { ...defaults, transposeSemitones: -2 }, null],
+    };
+    const savePerformanceSettings = vi.fn(async (input) => ({
+      ...snapshot,
+      slots: snapshot.slots.map((values, index) =>
+        index === input.slot - 1 ? input.values : values,
+      ),
+    }));
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async ({ trackId }) =>
+          trackId === 'one'
+            ? snapshot
+            : { status: 'absent', trackId, values: null },
+        ),
+        savePerformanceSettings,
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    await player.performanceSettings.selectSlot(2);
+    await player.setTransposeSemitones(5);
+    const gate = createDeferred();
+    player.registerBeforePlaybackStart(({ trackId }) =>
+      trackId === 'two' ? gate.promise : true,
+    );
+    const replacing = player.playTrack({ id: 'two', url: 'media:two' });
+    await vi.waitFor(() =>
+      expect(player.performanceSettings.state.reading).toBe(false),
+    );
+    player.pause();
+    gate.resolve(true);
+    expect(await replacing).toBe(false);
+    await player.play();
+    expect(player.state.track.id).toBe('one');
+    expect(player.state.transposeSemitones).toBe(5);
+    expect(player.performanceSettings.state.selectedSlot).toBe(2);
+    expect(player.performanceSettings.dirty.value).toBe(true);
+    expect(await player.performanceSettings.save()).toBe(true);
+    expect(savePerformanceSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ trackId: 'one', slot: 2 }),
+    );
+  });
+  it('keeps restart occurrence and playing intent through a failed read and explicit defaults retry', async () => {
+    const getPerformanceSettings = vi.fn(async () => ({
+      status: 'absent',
+      values: null,
+    }));
+    vi.stubGlobal('window', {
+      Utawakui: { getPerformanceSettings, onLibraryUpdated: () => vi.fn() },
+    });
+    const player = await loadPlayer();
+    await player.playTrack({
+      id: 'one',
+      url: 'media:one',
+      arrangementRequestId: 'occurrence',
+    });
+    const revision = player.state.playbackRevision;
+    getPerformanceSettings.mockResolvedValueOnce({ status: 'invalid' });
+    expect(await player.restartTrack()).toBe(false);
+    expect(await player.performanceSettings.useDefaultsOnce()).toBe(true);
+    expect(player.state.playbackRevision).toBe(revision);
+    expect(player.state.track.arrangementRequestId).toBe('occurrence');
+    expect(player.state.isPlaying).toBe(true);
+    expect(MockAudio.latest.currentTime).toBe(0);
+  });
+
+  it('cancels a prepared start if Main invalidates its scope while BGM handoff is pending', async () => {
+    let invalidate;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({
+          status: 'absent',
+          values: null,
+        })),
+        onPerformanceSettingsInvalidated: (listener) => {
+          invalidate = listener;
+          return vi.fn();
+        },
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer(),
+      gate = createDeferred();
+    player.registerBeforePlaybackStart(() => gate.promise);
+    const pending = player.playTrack({ id: 'one', url: 'media:one' });
+    await vi.waitFor(() =>
+      expect(player.performanceSettings.state.reading).toBe(false),
+    );
+    invalidate({ libraryEpoch: 2 });
+    gate.resolve(true);
+    expect(await pending).toBe(false);
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    expect(player.state.track).toBeNull();
+  });
+  it('reads saved controls before the existing BGM hook and preserves edits on resume', async () => {
+    const getPerformanceSettings = vi.fn(async () => ({
+      status: 'saved',
+      trackId: 'one',
+      values: {
+        transposeSemitones: 3,
+        pitchCents: 10,
+        tempoRate: 0.9,
+        monitorGuideVocalEnabled: false,
+      },
+    }));
+    vi.stubGlobal('window', {
+      Utawakui: { getPerformanceSettings, onLibraryUpdated: () => vi.fn() },
+    });
+    const player = await loadPlayer();
+    const gate = vi.fn(() => {
+      expect(getPerformanceSettings).toHaveBeenCalledOnce();
+      return true;
+    });
+    player.registerBeforePlaybackStart(gate);
+    await player.playTrack({ id: 'one', url: 'media:one' });
+    expect(player.state.transposeSemitones).toBe(3);
+    expect(player.state.guideVocalOn).toBe(false);
+    await player.setTransposeSemitones(5);
+    player.pause();
+    await player.play();
+    expect(player.state.transposeSemitones).toBe(5);
+    expect(getPerformanceSettings).toHaveBeenCalledOnce();
+  });
+
+  it('keeps corrupt settings stopped and supports explicit one-time defaults', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({ status: 'invalid' })),
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    expect(await player.playTrack({ id: 'one', url: 'media:one' })).toBe(false);
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    expect(notifications.items.value).toContainEqual(
+      expect.objectContaining({
+        key: 'player-performance-settings',
+        tone: 'danger',
+        lifecycle: 'persistent',
+        message: '歌曲設定已損壞，原檔已保留。',
+      }),
+    );
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    expect(player.state.pendingStartTrackId).toBeNull();
+    expect(await player.performanceSettings.useDefaultsOnce()).toBe(true);
+    expect(player.state.transposeSemitones).toBe(0);
+    expect(
+      notifications.items.value.some(
+        (item) => item.key === 'player-performance-settings',
+      ),
+    ).toBe(false);
+  });
+
+  it('stages saved restore values without a graph and starts only on explicit play', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({
+          status: 'saved',
+          trackId: 'one',
+          values: {
+            transposeSemitones: 3,
+            pitchCents: 10,
+            tempoRate: 0.9,
+            monitorGuideVocalEnabled: false,
+          },
+        })),
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    player.restorePlaybackState({
+      track: { id: 'one', url: 'media:one' },
+      positionSeconds: 20,
+    });
+    await vi.waitFor(() => expect(player.state.transposeSemitones).toBe(3));
+    expect(MockAudioContext.instances).toHaveLength(0);
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    await player.play();
+    expect(MockAudioContext.instances).toHaveLength(1);
+    expect(player.state.audioControlApplication.ok).toBe(true);
+  });
   it('applies one independent capture master to performance and leased BGM inputs', async () => {
     const player = await loadPlayer();
     expect(player.state.captureVolume).toBe(0.5);
@@ -382,6 +942,7 @@ describe('guide vocal defaults', () => {
         'onPlaybackProgress',
         'onStopped',
         'pause',
+        'performanceSettings',
         'play',
         'playTrack',
         'prepareCaptureDevice',
@@ -467,11 +1028,11 @@ describe('guide vocal defaults', () => {
 
     player.setGuideVocalOn(false);
     player.setCaptureGuideVocalOn(true);
-    player.restartTrack();
+    await player.restartTrack();
 
     expect(player.state.guideVocalOn).toBe(true);
     expect(player.state.guideVocalValue).toBe(0.75);
-    expect(player.state.captureGuideVocalOn).toBe(false);
+    expect(player.state.captureGuideVocalOn).toBe(true);
     expect(player.state.captureGuideVocalValue).toBe(0.25);
   });
 
@@ -658,7 +1219,7 @@ describe('mix and transport controls', () => {
     expect(player.state.error).not.toContain('decoder');
   });
 
-  it('resets per-track switches on a native repeat-one loop wrap', async () => {
+  it('preserves temporary controls on a native repeat-one loop wrap', async () => {
     const player = await loadPlayer();
     const audio = MockAudio.latest;
 
@@ -682,12 +1243,12 @@ describe('mix and transport controls', () => {
     audio.currentTime = 0.2;
     audio.dispatch('timeupdate');
 
-    expect(player.state.guideVocalOn).toBe(true);
+    expect(player.state.guideVocalOn).toBe(false);
     expect(player.state.guideVocalValue).toBe(0.7);
-    expect(player.state.captureGuideVocalOn).toBe(false);
+    expect(player.state.captureGuideVocalOn).toBe(true);
     expect(player.state.captureGuideVocalValue).toBe(0.2);
-    expect(player.state.transposeSemitones).toBe(0);
-    expect(player.state.tempoRate).toBe(1);
+    expect(player.state.transposeSemitones).toBe(2);
+    expect(player.state.tempoRate).toBe(1.2);
   });
 
   it('toggles through the audio element and clears only the intended track', async () => {
@@ -867,11 +1428,13 @@ describe('mix and transport controls', () => {
 
     const resume = player.play();
 
-    expect(hook).toHaveBeenCalledWith({
-      trackId: 'track-resume',
-      requestRevision: 3,
-      resume: true,
-    });
+    await vi.waitFor(() =>
+      expect(hook).toHaveBeenCalledWith({
+        trackId: 'track-resume',
+        requestRevision: 3,
+        resume: true,
+      }),
+    );
     expect(audio.play).not.toHaveBeenCalled();
 
     gate.resolve(true);

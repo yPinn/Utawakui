@@ -120,6 +120,7 @@ function createWorkOrganizationRuntime({
   deleteTrack = tracks.deleteTrack,
   cleanupReferences = async () => {},
   notifyChanged = () => {},
+  onTrackDeleting = () => {},
 } = {}) {
   if (typeof getDirectory !== 'function') throw failure();
   let generation = 0;
@@ -641,6 +642,7 @@ function createWorkOrganizationRuntime({
     return service.runInLibrary(async (context) => {
       record(input, ['trackId']);
       identifier(input.trackId, true);
+      onTrackDeleting(input.trackId);
       available(context);
       const before = organization.loadWorks(context.dir);
       const pending = Object.entries(before.pendingTrackDeletions).find(

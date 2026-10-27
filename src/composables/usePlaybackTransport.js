@@ -39,7 +39,7 @@ export function usePlaybackTransport() {
       return;
     }
 
-    restartTrack();
+    return restartTrack();
   }
 
   function playNext() {

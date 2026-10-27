@@ -70,6 +70,7 @@ export {
   Plus,
   Power,
   RefreshCw,
+  Save,
   Repeat,
   Repeat1,
   RotateCcw,

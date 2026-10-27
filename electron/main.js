@@ -148,6 +148,12 @@ const {
 } = require('./main/library/workOrganizationHandlers');
 const { createReleaseOrganizationRuntime } = require('./lib/releases/runtime');
 const {
+  createPerformanceSettingsRuntime,
+} = require('./lib/performanceSettings/runtime');
+const {
+  registerPerformanceSettingsHandlers,
+} = require('./main/performanceSettingsHandlers');
+const {
   registerLibraryReleaseHandlers,
 } = require('./main/library/releaseHandlers');
 const {
@@ -528,7 +534,34 @@ if (!gotSingleInstanceLock) {
       windowState.notifyLibraryUpdated(options);
     };
     let workLibraryEpoch = 0;
+    const performanceSettingsRuntime = createPerformanceSettingsRuntime({
+      getDirectory: () => ({
+        dir: configState.resolveDownloadDir(configState.getConfig()),
+        epoch: workLibraryEpoch,
+      }),
+    });
+    registerPerformanceSettingsHandlers({
+      ipcMain,
+      runtime: performanceSettingsRuntime,
+      getMainWindow: windowState.getMainWindow,
+      recordDiagnostic,
+    });
+    const invalidatePerformanceSettings = (trackId) => {
+      if (trackId) performanceSettingsRuntime.invalidateTrack(trackId);
+      else performanceSettingsRuntime.invalidate();
+      const window = windowState.getMainWindow();
+      try {
+        if (window && !window.isDestroyed())
+          window.webContents.send('library:performance-settings-invalidated', {
+            libraryEpoch: workLibraryEpoch,
+            ...(trackId ? { trackId } : {}),
+          });
+      } catch {
+        /* A closing renderer cannot block scope invalidation. */
+      }
+    };
     const workOrganizationHost = createWorkOrganizationHost({
+      onTrackDeleting: invalidatePerformanceSettings,
       getDirectory: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
         epoch: workLibraryEpoch,
@@ -1407,6 +1440,7 @@ if (!gotSingleInstanceLock) {
         reconciliationService.invalidate();
         tagWritebackService.invalidate();
         workLibraryEpoch += 1;
+        invalidatePerformanceSettings();
         recoverLibraryReconciliation();
         workOrganizationHost.invalidate();
         releaseOrganizationRuntime.invalidate();

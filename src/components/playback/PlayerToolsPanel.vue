@@ -28,6 +28,7 @@ import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiHint from '../ui/UiHint.vue';
+import PlayerPerformanceSettingsControls from './PlayerPerformanceSettingsControls.vue';
 
 defineProps({
   open: { type: Boolean, default: false },
@@ -40,9 +41,10 @@ defineProps({
   guideVocalVisible: { type: Boolean, default: false },
   guideVocalRows: { type: Array, default: () => [] },
   pitchTempoRows: { type: Array, default: () => [] },
+  performanceSettings: { type: Object, default: null },
 });
 
-const emit = defineEmits(['update:open', 'update:activeTab']);
+const emit = defineEmits(['update:open', 'update:activeTab', 'settingsAction']);
 const { width: dockWidth } = useAppRightDockWidth();
 const panelStyle = computed(() => ({
   inlineSize: `${dockWidth.value}px`,
@@ -389,6 +391,12 @@ function setActiveTab(key) {
         </template>
       </div>
     </section>
+    <template v-if="performanceSettings && activeTab !== 'live'" #footer>
+      <PlayerPerformanceSettingsControls
+        :state="performanceSettings"
+        @action="emit('settingsAction', $event)"
+      />
+    </template>
   </UiPopover>
 </template>
 

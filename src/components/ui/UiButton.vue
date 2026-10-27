@@ -137,9 +137,13 @@ function buttonAttrs(tooltipTriggerProps) {
     max-width: 100%;
     justify-content: center;
     padding: var(--ui-space-1) var(--ui-space-3);
-    border: var(--ui-border-width) solid transparent;
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  /* Scoped defaults must not override the secondary variant's visible border. */
+  .ui-btn:not(.ui-btn--secondary) {
+    border: var(--ui-border-width) solid transparent;
   }
 
   .ui-btn__label {

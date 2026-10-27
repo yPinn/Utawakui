@@ -7,12 +7,50 @@ export function usePlayerAudioStart({
   getStartRevision,
   reportPlayerError,
   notifyStopped,
+  getBeforePlaybackStart = () => null,
+  cancelPendingStart,
+  play,
+  pause,
+  seek,
+  advanceStartRevision,
+  prepareControls,
+  commitControls = () => {},
 }) {
   let activeRevision = null;
 
   function cancelAudioStart(requestRevision) {
     audioGraph.cancelAudioControlApplication();
     if (activeRevision === requestRevision) notifyStopped('start-cancelled');
+  }
+
+  async function requestPlaybackStart({ trackId, requestRevision, resume }) {
+    try {
+      const request = {
+        trackId,
+        requestRevision,
+        ...(resume ? { resume: true } : {}),
+      };
+      const allowed = await getBeforePlaybackStart()?.(request);
+      if (allowed === false || requestRevision !== getStartRevision()) {
+        if (requestRevision === getStartRevision()) {
+          state.pendingStartTrackId = null;
+          notifyStopped('start-cancelled');
+        }
+        return false;
+      }
+      return true;
+    } catch (error) {
+      if (requestRevision === getStartRevision()) {
+        state.pendingStartTrackId = null;
+        state.error = reportPlayerError(
+          error,
+          'pre-start',
+          '曲目開始前的音訊交接未完成，請再試一次。',
+        );
+        notifyStopped('error');
+      }
+      return false;
+    }
   }
 
   async function startAudio(requestRevision, operation) {
@@ -56,5 +94,45 @@ export function usePlayerAudioStart({
     }
   }
 
-  return { startAudio, cancelAudioStart };
+  async function restartAudio({
+    useDefaults = false,
+    wasPlaying = state.isPlaying,
+  } = {}) {
+    if (!state.track) return false;
+    const track = state.track;
+    pause();
+    const requestRevision = advanceStartRevision();
+    state.pendingStartTrackId = track.id;
+    const controls = await prepareControls(track, {
+      isCurrent: () => requestRevision === getStartRevision(),
+      useDefaults,
+      retry: (defaults) => restartAudio({ useDefaults: defaults, wasPlaying }),
+    });
+    if (requestRevision !== getStartRevision()) return false;
+    state.pendingStartTrackId = null;
+    if (!controls) return false;
+    audioGraph.stageAudioControls(controls);
+    commitControls();
+    seek(0);
+    return wasPlaying ? play() : true;
+  }
+
+  function applyAudioControls(values, { preservePlayback = false } = {}) {
+    return audioGraph.applyAudioControls(values, {
+      beforeApply() {
+        if (preservePlayback) return;
+        cancelPendingStart();
+        audio.pause();
+      },
+    });
+  }
+
+  return {
+    toggle: () => (state.isPlaying ? pause() : play()),
+    startAudio,
+    cancelAudioStart,
+    requestPlaybackStart,
+    restartAudio,
+    applyAudioControls,
+  };
 }

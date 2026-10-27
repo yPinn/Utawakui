@@ -79,8 +79,14 @@ describe('Main work organization host', () => {
     upsertAlbum(dir, { name: 'Release', trackIds: ['song'] });
     const unlinkSessionTrack = vi.fn();
     const removeBgmTrack = vi.fn();
-    const { runtime } = host({ unlinkSessionTrack, removeBgmTrack });
+    const onTrackDeleting = vi.fn();
+    const { runtime } = host({
+      unlinkSessionTrack,
+      removeBgmTrack,
+      onTrackDeleting,
+    });
     await expect(runtime.deleteTrack({ trackId: 'song' })).resolves.toBe(true);
+    expect(onTrackDeleting).toHaveBeenCalledWith('song');
     expect(loadPlaylists(dir)[0].trackIds).toEqual([]);
     expect(unlinkSessionTrack).toHaveBeenCalledWith(dir, 'song');
     expect(removeBgmTrack).toHaveBeenCalledWith(dir, 'song');

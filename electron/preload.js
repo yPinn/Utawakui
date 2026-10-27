@@ -725,6 +725,58 @@ contextBridge.exposeInMainWorld('Utawakui', {
       ...(value?.offset !== undefined ? { offset: value.offset } : {}),
       ...(value?.limit !== undefined ? { limit: value.limit } : {}),
     }),
+  getPerformanceSettings: (value) =>
+    ipcRenderer.invoke('library:performance-settings-get', {
+      trackId: value?.trackId,
+    }),
+  savePerformanceSettings: (value) =>
+    ipcRenderer.invoke('library:performance-settings-save', {
+      trackId: value?.trackId,
+      token: value?.token,
+      expectedRevision: value?.expectedRevision,
+      slot: value?.slot,
+      values: value?.values && {
+        transposeSemitones: value.values.transposeSemitones,
+        pitchCents: value.values.pitchCents,
+        tempoRate: value.values.tempoRate,
+        monitorGuideVocalEnabled: value.values.monitorGuideVocalEnabled,
+      },
+    }),
+  removePerformanceSettings: (value) =>
+    ipcRenderer.invoke('library:performance-settings-remove', {
+      trackId: value?.trackId,
+      token: value?.token,
+      expectedRevision: value?.expectedRevision,
+      slot: value?.slot,
+    }),
+  setDefaultPerformanceSettings: (value) =>
+    ipcRenderer.invoke('library:performance-settings-set-default', {
+      trackId: value?.trackId,
+      token: value?.token,
+      expectedRevision: value?.expectedRevision,
+      slot: value?.slot,
+    }),
+  cancelPerformanceSettings: (value) =>
+    ipcRenderer.invoke('library:performance-settings-cancel', {
+      token: value?.token,
+    }),
+  onPerformanceSettingsInvalidated: (callback) => {
+    const listener = (_event, payload) => {
+      if (!Number.isSafeInteger(payload?.libraryEpoch)) return;
+      callback({
+        libraryEpoch: payload.libraryEpoch,
+        ...(typeof payload.trackId === 'string'
+          ? { trackId: payload.trackId }
+          : {}),
+      });
+    };
+    ipcRenderer.on('library:performance-settings-invalidated', listener);
+    return () =>
+      ipcRenderer.removeListener(
+        'library:performance-settings-invalidated',
+        listener,
+      );
+  },
   searchWorkOrganization: (value) =>
     ipcRenderer.invoke('library:search-work-organization', {
       trackId: value?.trackId,

@@ -66,7 +66,50 @@ const {
   setPitchCents,
   setTempoRate,
   onEnded,
+  performanceSettings,
+  cancelPendingStart,
 } = usePlayer();
+const performanceSettingsView = computed(() =>
+  performanceSettings
+    ? {
+        ...performanceSettings.state,
+        hasTrack: Boolean(state.track),
+        pendingStart: Boolean(state.pendingStartTrackId),
+        playing: state.isPlaying,
+        canSave: performanceSettings.canSave.value,
+        busy: performanceSettings.busy.value,
+        dirty: performanceSettings.dirty.value,
+        hasSaved: performanceSettings.hasSaved.value,
+        defaultSlot: performanceSettings.state.snapshot?.defaultSlot ?? 1,
+        savedSlots: performanceSettings.state.snapshot?.slots?.map(Boolean) ?? [
+          false,
+          false,
+          false,
+        ],
+      }
+    : null,
+);
+function handleSettingsAction(action) {
+  if (action?.kind === 'selectSlot')
+    return performanceSettings?.selectSlot(action.slot);
+  if (action?.kind === 'copyToSlot')
+    return performanceSettings?.copyToSlot(action.slot);
+  if (action?.kind === 'resetSlot')
+    return performanceSettings?.resetSlot(action.slot);
+  if (action === 'cancelStart') return cancelPendingStart();
+  if (
+    [
+      'save',
+      'reset',
+      'remove',
+      'reload',
+      'retry',
+      'useDefaultsOnce',
+      'setDefault',
+    ].includes(action)
+  )
+    void performanceSettings?.[action]();
+}
 const { state: queueState, toggleShuffle } = usePlaybackQueue();
 const {
   playPrevious,
@@ -528,6 +571,8 @@ onUnmounted(() => {
           :guide-vocal-visible="showGuideVocal"
           :guide-vocal-rows="guideVocalRows"
           :pitch-tempo-rows="pitchTempoRows"
+          :performance-settings="performanceSettingsView"
+          @settings-action="handleSettingsAction"
         >
           <template #trigger="{ triggerProps }">
             <UiIconButton
