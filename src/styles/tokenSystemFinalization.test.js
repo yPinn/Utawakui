@@ -33,7 +33,7 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(554);
+    expect(names.size).toBe(548);
     expect(names).toContain('--ui-notification-swipe-intent-distance');
     expect(names).toContain('--ui-scrollbar-visual-reserve');
     expect(names).toContain('--ui-action-menu-max-block-size');

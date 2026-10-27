@@ -83,6 +83,7 @@
 ### 播放、BGM、試聽、節拍器
 
 - 音訊設定的要求值與確認結果由 `utils/audioControlApplication.js` 管理 revision／取消／期限，實際 DSP 仍由 graph owner 執行；`player/usePlayerAudioStart.js` 執行交接後的準備／play／失敗／取消交易，facade 保留 audio events 與唯一 BGM hook。Play／resume 與 library reload 在必要 monitor／capture 路徑確認後，實際 play 前再驗就緒，見[套用契約](contracts/player-audio-controls.md)。
+- `PlayerBar` 的演出工具依序提供調整／導唱／節拍器，`PlayerToolsPanel` 重用 `UiPopover` 與 RightDock 的寬度 owner；伴奏產生由既有曲目準備入口提供，不在播放器另接一組分離操作。視覺與互動見[元件契約](contracts/token-v2-component-review.md)。
 
 - `usePlayer.js` 是 HTML audio event 權威與 transport facade；`player/usePlayerAudioGraph.js` 擁有四聲道 accompaniment／guide-vocal 路由、monitor／capture mix、Signalsmith pitch、capture sink 與清理，不註冊時間事件。Monitor graph lazy 建立；儲存的 capture 裝置須先由 `useAudioOutput.js` 列舉驗證，裝置遺失或錯誤時關閉 capture、清除設定並保留 monitor，不 fallback 到預設喇叭。`pitchProcessorLoader.js` 首次需要時才載入 Signalsmith worklet，失敗可重試，不放寬 CSP。
 - Chromium 自然 EOF 的 pause→ended 由 ended 這個 terminal owner 處理，不投影為操作暫停，以免略過 BGM post-roll。
@@ -204,7 +205,7 @@
 ### 音訊處理與分析
 
 - `audioProcessing/separationQueueService.js` 是 main 記憶體內的序列佇列，以 `(trackId, recipeId)` 去重，每首開始前重查 gate、依賴、來源與結果；只有明確重新準備才覆寫。佇列狀態只代表本次 session，manifest 才是結果權威；清除紀錄不刪除結果。`separationHandlers.js` 把狀態送到 `mainWindow.js`，taskbar 顯示 aggregate progress、paused 或 error。
-- Renderer 佇列的推送使較早的讀取／控制回應失效；`useSeparation` 同時消費佇列終態，清除由批次進度建立的 in-flight 狀態，舊單曲請求不能清除新的排程工作。曲庫與歌單單例的初始化由最新讀取結束來完成，不使用會隨首個呼叫頁面卸載而停止的 watcher。
+- `useSeparationQueue` 是 Renderer 伴奏排程狀態的唯一 owner，推送使較早的讀取／控制回應失效；單曲 action 與曲目準備共用同一佇列，不再保留播放器專用的分離 owner。曲庫與歌單單例的初始化由最新讀取結束來完成，不使用會隨首個呼叫頁面卸載而停止的 watcher。
 - 伴奏每個排程項目私下固定曲庫路徑與 `workLibraryEpoch`；跨曲庫或 A→B→A 都不重新解讀同 track id。檢查既有結果、準備後、實際取得 heavy worker slot、worker 結束及清理後各檢查原 scope，過期不啟動 worker 或對新曲庫觸發完成副作用。重試保留原項目的 scope；新曲庫需重新提交。取消請求的接受與工作終態分開，重複取消共用一次確認，拒絕／例外不能把實際處理失敗標成取消。
 - `audioProcessing/structureAnalysisAutoQueue.js` 是匯入後的去重單工佇列，重查自動分析偏好、gate、capability 與 sidecar 是否最新，手動分析結束後才執行；失敗不回滾匯入。
 - Renderer：Settings 的 `useMusicAnalysisSettings.js`／`MusicAnalysisSettingsRow.vue` 管理 lifecycle 與自動分析偏好；`analysis/useMusicAnalysisCapabilitySession.js` 依 bridge 共用 capability 投影。F5 工作台 `useMusicAnalysisWorkbench.js` 只做單曲強制執行、批次重跑與診斷；Music M2 的 `useMusicAnalysisReferenceAnnotation.js` 持有人工標註草稿。見[音樂分析契約](contracts/music-analysis.md)。

@@ -51,7 +51,6 @@ const settingsRenderGraphPaths = [
   '../components/settings/LyricsResearchSettingsBlock.vue',
   '../components/settings/LyricsResearchPreviewTools.vue',
   '../components/settings/LyricsExperimentalQueueSettings.vue',
-  '../components/separation/SeparationPresetControl.vue',
   '../components/settings/CaptureDeviceModal.vue',
   '../components/settings/FfmpegSourceModal.vue',
   '../components/settings/LibraryStorageSettingsRow.vue',

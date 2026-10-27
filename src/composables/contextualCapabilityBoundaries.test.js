@@ -39,7 +39,7 @@ describe('contextual capability boundaries after the destination cutover', () =>
     );
 
     expect(lyricsHeaderSource).not.toContain('SeparationPresetControl');
-    expect(playerToolsSource).toContain('<SeparationPresetControl');
+    expect(playerToolsSource).not.toContain('SeparationPresetControl');
     expect(preparationSource).toContain('<SeparationDockContent');
     expect(APP_DESTINATIONS.some(({ id }) => id === 'separation')).toBe(false);
     expect(

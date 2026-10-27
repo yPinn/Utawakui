@@ -19,7 +19,6 @@ import UiActionMenu from '../ui/UiActionMenu.vue';
 import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
 import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
-import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -65,10 +64,6 @@ UiActionMenu.render = () => null;
 attachClientRender(LyricsSegmentEditor, './LyricsSegmentEditor.vue');
 attachClientRender(LyricsTimingToolbar, './LyricsTimingToolbar.vue');
 attachClientRender(LyricsWorkspaceHeader, './LyricsWorkspaceHeader.vue');
-attachClientRender(
-  SeparationPresetControl,
-  '../separation/SeparationPresetControl.vue',
-);
 attachClientRender(UiButton, '../ui/UiButton.vue');
 attachClientRender(UiButtonGroup, '../ui/UiButtonGroup.vue');
 attachClientRender(UiChip, '../ui/UiChip.vue');
@@ -807,9 +802,6 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
     const generateReading = vi.fn();
     const loadReading = vi.fn().mockResolvedValue(null);
     const readingDoc = ref(null);
-    const separate = vi.fn();
-    const selectPreset = vi.fn();
-    const selectedPreset = ref('quick');
     const readingVariant = ref('off');
     const lyricsTextVariant = ref('traditional-tw');
     const setLyricsTextVariant = vi.fn((variant) => {
@@ -877,19 +869,6 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
         loadReading,
         generateReading,
         setReadingLine: vi.fn(),
-      }),
-    }));
-    vi.doMock('../../composables/useSeparation.js', () => ({
-      useSeparation: () => ({
-        state: { errors: new Map() },
-        isSeparating: () => false,
-        presetIdFor: () => selectedPreset.value,
-        progressPercent: () => 0,
-        separate,
-        selectPreset: (selectedTrack, presetId) => {
-          selectedPreset.value = presetId;
-          return selectPreset(selectedTrack, presetId);
-        },
       }),
     }));
     vi.doMock('../../composables/usePlayer.js', () => ({
@@ -965,8 +944,6 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
     expect(selectSource).toHaveBeenCalledWith('main.lrc');
     expect(readingVariant.value).toBe('romaji');
     expect(generateReading).toHaveBeenCalledOnce();
-    expect(selectPreset).not.toHaveBeenCalled();
-    expect(separate).not.toHaveBeenCalled();
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
 

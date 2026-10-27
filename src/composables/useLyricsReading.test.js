@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Module-scope singleton, same reasoning as useSeparation.test.js:
+// The module-scope singleton persists across component remounts:
 // resetModules + re-stubbing window before each dynamic import gives every
 // test a fresh module instance instead of leaking docs/inFlight/errors.
 let getLyricsReadingMock;

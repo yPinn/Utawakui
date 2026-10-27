@@ -1,119 +1,155 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
-import {
-  DEFAULT_SEPARATION_PRESET_ID,
-  SEPARATION_PRESET_OPTIONS,
-  SEPARATION_PRESET_SELECT_TITLE,
-} from '../../constants/separationPresets.js';
+import { useAppRightDockWidth } from '../../composables/useAppRightDockWidth.js';
+import { Headphones, Volume2 } from '../../icons/index.js';
 
-const componentSource = fs.readFileSync(
+const source = fs.readFileSync(
   new URL('./PlayerToolsPanel.vue', import.meta.url),
   'utf8',
 );
+const barSource = fs.readFileSync(
+  new URL('./PlayerBar.vue', import.meta.url),
+  'utf8',
+);
 
-function renderPanel(props = {}) {
-  return renderToString(
+async function render(props = {}) {
+  const context = {};
+  const html = await renderToString(
     createSSRApp({
-      render: () =>
-        h(PlayerToolsPanel, {
-          open: true,
-          activeTab: 'process',
-          selectedSeparationPresetId: DEFAULT_SEPARATION_PRESET_ID,
-          separationPresetOptions: SEPARATION_PRESET_OPTIONS,
-          separationPresetTitle: SEPARATION_PRESET_SELECT_TITLE,
-          ...props,
-        }),
+      render: () => h(PlayerToolsPanel, { open: true, ...props }),
     }),
+    context,
   );
+  return html + Object.values(context.teleports ?? {}).join('');
 }
 
-describe('PlayerToolsPanel process tab', () => {
-  it('uses the shared equal-width tabs with three linked tabpanels', () => {
-    expect(componentSource).toContain('<UiTabs');
-    expect(componentSource).toContain('distribution="equal"');
-    expect(componentSource).not.toContain('role="tablist"');
-    expect(componentSource).not.toContain('class="player-tools__tab"');
-    expect(componentSource.match(/role="tabpanel"/g)).toHaveLength(3);
-    for (const id of ['adjust', 'live', 'process']) {
-      expect(componentSource).toContain(`id="player-tools-${id}-panel"`);
-      expect(componentSource).toContain(
-        `aria-labelledby="player-tools-${id}-tab"`,
-      );
+describe('PlayerToolsPanel shared surface', () => {
+  it('reads the reference frequency before the primary cents value', async () => {
+    const html = await render({
+      hasTrack: true,
+      pitchTempoRows: [
+        {
+          key: 'pitch',
+          label: '音高微調',
+          value: '+50 音分',
+          secondaryValue: '452.9 Hz',
+          sliderValue: 50,
+          defaultValue: 0,
+          min: -50,
+          max: 50,
+          step: 1,
+          sliderLabel: '音分',
+          minusLabel: '降低音分',
+          plusLabel: '提高音分',
+        },
+      ],
+    });
+    const text = html.replace(/<[^>]*>/g, ' ');
+    expect(text.indexOf('452.9 Hz')).toBeLessThan(text.indexOf('+50 音分'));
+  });
+
+  it('uses an anchored shared popover with guide mixing as the second linked tab', async () => {
+    expect(source).toContain('<UiPopover');
+    expect(source).not.toContain('PlayerBarPanel');
+    expect(source).toContain('placement="top-end"');
+    expect(source).toContain('scroll-axis="vertical"');
+    expect(source).toContain('focus-on-open');
+    expect(source).toContain('variant="bar"');
+    const html = await render();
+    expect(html).toContain('演出工具');
+    expect(html).toContain('調整');
+    expect(html).not.toContain('選擇節拍監聽裝置');
+    for (const id of ['adjust', 'guide', 'live'])
+      expect(html).toContain(`player-tools-${id}-panel`);
+    expect(html.indexOf('id="player-tools-adjust-tab"')).toBeLessThan(
+      html.indexOf('id="player-tools-guide-tab"'),
+    );
+    expect(html.indexOf('id="player-tools-guide-tab"')).toBeLessThan(
+      html.indexOf('id="player-tools-live-tab"'),
+    );
+    expect(html).not.toContain('player-tools-process-panel');
+  });
+
+  it('follows the shared RightDock width without a second width owner', async () => {
+    const dock = useAppRightDockWidth();
+    try {
+      dock.setWidth(272);
+      expect(await render()).toContain('inline-size:272px');
+      dock.setWidth(280);
+      expect(await render()).toContain('inline-size:280px');
+      expect(source).not.toMatch(/22\.5rem|position:\s*fixed/);
+    } finally {
+      dock.setWidth(280);
     }
   });
 
-  it('forwards the shared control preset id without treating it as a DOM event', () => {
-    expect(componentSource).toMatch(
-      /function handleSeparationPresetChange\(presetId\)\s*\{[^}]*emit\('selectSeparationPreset', presetId\)/s,
-    );
+  it('removes the duplicate separation entry and dedicated PlayerBar wiring', async () => {
+    for (const value of [
+      'SeparationPresetControl',
+      'generateSeparation',
+      'selectSeparationPreset',
+      'separationPresetOptions',
+    ]) {
+      expect(source).not.toContain(value);
+      expect(barSource).not.toContain(value);
+    }
+    expect(barSource).not.toContain('useSeparation');
+    expect(source).toContain('<UiIconButton');
+    const html = await render();
+    expect(html).not.toContain('產生伴奏');
+    expect(html).not.toContain('處理模式');
   });
 
-  it('keeps the compact shared control free of panel-specific sizing hacks', () => {
-    expect(componentSource).not.toContain(
-      ':deep(.separation-preset-control__label)',
-    );
-    expect(componentSource).not.toContain(':deep(.separation-preset-control)');
-    expect(componentSource).not.toMatch(/flex:\s*1\s+1\s+calc\(/s);
-  });
-
-  it('uses the right dock raised-section grammar for every tool card', () => {
-    expect(componentSource.match(/class="player-tools__card/g)).toHaveLength(4);
-    expect(componentSource).toMatch(
-      /\.player-tools__card\s*\{[^}]*padding:\s*var\(--ui-space-3\)[^}]*border-radius:\s*var\(--ui-radius-lg\)[^}]*background:\s*var\(--ui-color-surface-raised\)/s,
-    );
-    expect(componentSource).not.toContain('player-tools__section-divider');
-  });
-
-  it('renders vocal separation controls for the current track', async () => {
-    const html = await renderPanel({
-      currentTrack: { id: 't1', title: 'Song A' },
+  it('keeps independent guide controls in their own pane without percentage preset buttons', async () => {
+    const html = await render({
+      activeTab: 'guide',
+      hasTrack: true,
+      guideVocalVisible: true,
+      guideVocalRows: ['監聽', '擷取'].map((label) => ({
+        key: label,
+        label,
+        icon: Headphones,
+        deviceName: `${label}裝置`,
+        onIcon: Volume2,
+        on: true,
+        onLabel: `關閉導唱(${label})`,
+        value: '50%',
+        sliderValue: 0.5,
+        defaultValue: 0.5,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        sliderLabel: `導唱比例(${label})`,
+        marks: [0, 0.25, 0.5, 0.75, 1],
+      })),
     });
-
-    expect(html).toContain('伴奏分離');
-    expect(html).toContain('Song A');
-    expect(html).toContain('處理模式');
-    expect(html).toContain('速度優先');
-    expect(html).toContain('品質優先');
-    expect(html).not.toContain('和聲保留+');
-    expect(html).toContain('產生');
+    for (const label of ['監聽', '擷取']) {
+      expect(html).toContain(`關閉導唱(${label})`);
+      expect(html).toContain(`aria-label="導唱比例(${label})"`);
+    }
+    expect(html).not.toContain('player-tools__stop-button');
+    const adjust = html.slice(
+      html.indexOf('id="player-tools-adjust-panel"'),
+      html.indexOf(
+        '</section>',
+        html.indexOf('id="player-tools-adjust-panel"'),
+      ),
+    );
+    const guide = html.slice(
+      html.indexOf('id="player-tools-guide-panel"'),
+      html.indexOf('</section>', html.indexOf('id="player-tools-guide-panel"')),
+    );
+    expect(adjust).not.toContain('導唱比例');
+    expect(guide).toContain('導唱比例(監聽)');
+    expect(guide).toContain('導唱比例(擷取)');
   });
 
-  it('shows the in-flight status as the disabled action label, and disables the preset select too', async () => {
-    const html = await renderPanel({
-      currentTrack: { id: 't1', title: 'Song A' },
-      separationInFlight: true,
-      separationProgressPercent: 42,
-    });
-
-    expect(html).toMatch(/>42%\s*<\/span>/);
-    expect(html).not.toContain('分離中');
-    expect(html).toContain('disabled');
-  });
-
-  it('shows an already-generated state for a preset with a result, and disables only the action button', async () => {
-    const html = await renderPanel({
-      currentTrack: { id: 't1', title: 'Song A' },
-      separationHasResult: true,
-    });
-
-    expect(html).toContain('aria-label="此模式已產生；切換模式可查看其他結果"');
-    expect(html).not.toMatch(/>已產生<\/span>/);
-    expect(html).not.toContain('重新產生');
-    // The <select> stays enabled so the user can switch to a preset that
-    // has no result yet; only the action button is disabled.
-    const selectTag = html.match(/<select[^>]*>/)[0];
-    expect(selectTag).not.toContain('disabled');
-    expect(html).not.toContain('aria-label="產生伴奏"');
-  });
-
-  it('does not surface unimplemented render cache placeholders', async () => {
-    const html = await renderPanel();
-
-    expect(html).toContain('請先載入歌曲');
-    expect(html).not.toContain('Render Cache');
-    expect(html).not.toContain('待實作');
+  it('explains the unavailable guide controls without adding another preparation entry', async () => {
+    const html = await render({ activeTab: 'guide' });
+    expect(html).toContain('使用伴奏音訊後可調整導唱比例。');
+    expect(html).not.toContain('產生伴奏');
   });
 });

@@ -275,15 +275,7 @@
     ),
     var(--ui-player-extras-inline-size)
   );
-  --ui-player-panel-edge-offset: var(--ui-shell-edge-inset-inline);
-  --ui-player-panel-padding: var(--ui-space-3);
-  --ui-player-panel-inline-size: 22.5rem;
-  --ui-player-panel-max-block-size: 40rem;
-  --ui-player-panel-viewport-offset: calc(
-    var(--ui-player-bar-height) + var(--ui-space-7)
-  );
   --ui-player-tools-beat-block-size: var(--ui-space-1);
-  --ui-player-tools-meter-control-block-size: 3.5rem;
   --ui-folder-sheet-background: var(--ui-color-surface);
   --ui-folder-sheet-frame-block-end-gap: var(--ui-space-5);
   --ui-folder-sheet-binding-gutter: var(--ui-space-6);

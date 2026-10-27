@@ -2,7 +2,7 @@ import { reactive, readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 // Single shared instance (module scope, not per-component), same as
-// useSeparation.js/usePlayer.js: LyricsAuthoringWorkspace unmounts on every tab
+// usePlayer.js: LyricsAuthoringWorkspace unmounts on every tab
 // switch, so state kept in component refs would appear to vanish mid-run
 // even though a generation worker keeps going on the main process.
 const { recordError } = useAppDiagnostics();

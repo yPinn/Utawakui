@@ -20,11 +20,6 @@ import { usePlaybackTransport } from '../../composables/usePlaybackTransport.js'
 import { useMetronome } from '../../composables/useMetronome.js';
 import { useMetronomeTrackTempo } from '../../composables/useMetronomeTrackTempo.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
-import { useSeparation } from '../../composables/useSeparation.js';
-import {
-  SEPARATION_PRESET_SELECT_TITLE,
-  separationPresetOptionsFor,
-} from '../../constants/separationPresets.js';
 import {
   GUIDE_VOCAL_LEVEL_RANGE,
   PITCH_CENTS_RANGE,
@@ -86,14 +81,6 @@ const { state: metronomeState } = useMetronome();
 useMetronomeTrackTempo();
 const { activeView, performanceTool, openLiveLyrics } = useAppView();
 const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
-const {
-  state: separationState,
-  isSeparating,
-  presetIdFor,
-  progressPercent: separationProgressPercentFor,
-  separate,
-  selectPreset,
-} = useSeparation();
 const isPlayerToolsOpen = ref(false);
 const activeToolTab = ref('adjust');
 
@@ -163,34 +150,6 @@ const pitchReferenceHz = computed(() =>
   (A4_REFERENCE_HZ * 2 ** (state.pitchCents / 1200)).toFixed(1),
 );
 const tempoLabel = computed(() => `${state.tempoRate.toFixed(2)}x`);
-const currentSeparationTrack = computed(() => state.track || null);
-const selectedSeparationPresetId = computed(() =>
-  presetIdFor(currentSeparationTrack.value),
-);
-const currentSeparationResults = computed(
-  () => currentSeparationTrack.value?.separation?.results || {},
-);
-const currentSeparationPresetOptions = computed(() =>
-  separationPresetOptionsFor(currentSeparationTrack.value),
-);
-const isCurrentTrackSeparating = computed(() =>
-  currentSeparationTrack.value
-    ? isSeparating(currentSeparationTrack.value.id)
-    : false,
-);
-const currentSeparationProgressPercent = computed(() =>
-  currentSeparationTrack.value
-    ? separationProgressPercentFor(currentSeparationTrack.value.id)
-    : 0,
-);
-const currentSeparationError = computed(() =>
-  currentSeparationTrack.value
-    ? (separationState.errors.get(currentSeparationTrack.value.id) ?? '')
-    : '',
-);
-const selectedSeparationHasResult = computed(() =>
-  Boolean(currentSeparationResults.value[selectedSeparationPresetId.value]),
-);
 const playerToolsEngaged = computed(
   () =>
     state.transposeSemitones !== 0 ||
@@ -202,7 +161,6 @@ const playerToolsEngaged = computed(
     // current track actually has separated audio to mix.
     (showGuideVocal.value &&
       (state.guideVocalOn || state.captureGuideVocalOn)) ||
-    isCurrentTrackSeparating.value ||
     metronomeState.isRunning,
 );
 const playerToolsLabel = computed(() => {
@@ -231,32 +189,10 @@ function adjustTempo(delta) {
   setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
 }
 
-// Five quick-jump stops plus a fine slider: the right level is a mix- and
-// hardware-dependent judgment call, so stops alone cannot cover it. The stops are
-// coarser (25%) than the slider step (5%); they jump to known positions, they do
-// not replace dragging. Plain percentages with no named-scenario copy (抓Key/對唱/
-// 背景音樂): the number is self-explanatory for a mix control.
-const GUIDE_VOCAL_STOPS = [
-  { value: 0, label: '0%' },
-  { value: 0.25, label: '25%' },
-  { value: 0.5, label: '50%' },
-  { value: 0.75, label: '75%' },
-  { value: 1, label: '100%' },
-];
+// Keep quarter-scale marks for orientation; fine adjustment and right-click
+// reset belong to the shared range control, with no duplicate preset buttons.
+const GUIDE_VOCAL_MARKS = [0, 0.25, 0.5, 0.75, 1];
 const GUIDE_VOCAL_STEP = GUIDE_VOCAL_LEVEL_RANGE.step;
-
-// All five stops (0% included) are plain value picks — on/off is its own
-// dedicated control (the row's speaker icon, see guideVocalRows below),
-// not something a value of 0 secretly triggers. A single click is never
-// fast enough to restart the ramp before it settles, so there's no
-// zipper-noise risk to guard against here regardless of value.
-function selectMonitorGuideVocalStop(value) {
-  setGuideVocalValue(value);
-}
-
-function selectCaptureGuideVocalStop(value) {
-  setCaptureGuideVocalValue(value);
-}
 
 // A slider drag fires far more 'input' events than the audio thread can
 // usefully act on — each one restarts vocalGain's exponential ramp (see
@@ -293,7 +229,7 @@ const guideVocalRows = computed(() => {
   const rows = [
     {
       key: 'guide-vocal-monitor',
-      // Short and fixed — the section label above already says "導唱混音",
+      // Short and fixed — the dedicated tab already says "導唱",
       // so the row only needs to say *which* output. The icon carries that
       // distinction; the real device name lives in deviceName (row title
       // tooltip) instead of being crammed into the visible label.
@@ -308,12 +244,7 @@ const guideVocalRows = computed(() => {
       onIcon: state.guideVocalOn ? Volume2 : VolumeX,
       onLabel: state.guideVocalOn ? '關閉導唱(監聽)' : '開啟導唱(監聽)',
       onToggle: () => setGuideVocalOn(!state.guideVocalOn),
-      stops: GUIDE_VOCAL_STOPS.map((stop) => ({
-        ...stop,
-        active: state.guideVocalValue === stop.value,
-        disabled: !state.track,
-        onSelect: () => selectMonitorGuideVocalStop(stop.value),
-      })),
+      marks: GUIDE_VOCAL_MARKS,
       sliderValue: state.guideVocalValue,
       defaultValue: PLAYER_AUDIO_DEFAULTS.monitorGuideVocalLevel,
       min: 0,
@@ -335,12 +266,7 @@ const guideVocalRows = computed(() => {
       onIcon: state.captureGuideVocalOn ? Volume2 : VolumeX,
       onLabel: state.captureGuideVocalOn ? '關閉導唱(擷取)' : '開啟導唱(擷取)',
       onToggle: toggleCaptureGuideVocal,
-      stops: GUIDE_VOCAL_STOPS.map((stop) => ({
-        ...stop,
-        active: state.captureGuideVocalValue === stop.value,
-        disabled: !state.track,
-        onSelect: () => selectCaptureGuideVocalStop(stop.value),
-      })),
+      marks: GUIDE_VOCAL_MARKS,
       sliderValue: state.captureGuideVocalValue,
       defaultValue: PLAYER_AUDIO_DEFAULTS.captureGuideVocalLevel,
       min: 0,
@@ -360,9 +286,6 @@ const pitchTempoRows = computed(() => [
     label: '變調',
     value: transposeLabel.value,
     secondaryValue: null,
-    resetDisabled: !state.track || state.transposeSemitones === 0,
-    resetTitle: '重設變調',
-    onReset: () => setTransposeSemitones(0),
     minusDisabled:
       !state.track || state.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.min,
     minusLabel: '降半音',
@@ -387,10 +310,7 @@ const pitchTempoRows = computed(() => [
     key: 'pitch',
     label: '音高微調',
     value: pitchCentsLabel.value,
-    secondaryValue: `· ${pitchReferenceHz.value} Hz`,
-    resetDisabled: !state.track || state.pitchCents === 0,
-    resetTitle: '重設音高微調',
-    onReset: () => setPitchCents(0),
+    secondaryValue: `${pitchReferenceHz.value} Hz`,
     minusDisabled: !state.track || state.pitchCents <= PITCH_CENTS_RANGE.min,
     minusLabel: '音高微調降低',
     minusTitle: '音高微調降低',
@@ -414,9 +334,6 @@ const pitchTempoRows = computed(() => [
     label: '變速',
     value: tempoLabel.value,
     secondaryValue: null,
-    resetDisabled: !state.track || state.tempoRate === 1,
-    resetTitle: '重設變速',
-    onReset: () => setTempoRate(1),
     minusDisabled: !state.track || state.tempoRate <= TEMPO_RATE_RANGE.min,
     minusLabel: '放慢',
     minusTitle: '放慢 (Ctrl+Shift+↓)',
@@ -440,18 +357,6 @@ const pitchTempoRows = computed(() => [
 // enough — no track needs to be passed through.
 function showCurrentTrackLyrics() {
   openLiveLyrics();
-}
-
-function selectSeparationPreset(presetId) {
-  const track = currentSeparationTrack.value;
-  if (!track) return;
-  selectPreset(track, presetId);
-}
-
-function generateSeparation() {
-  const track = currentSeparationTrack.value;
-  if (!track) return;
-  separate(track, selectedSeparationPresetId.value);
 }
 
 function toggleQueuePanel() {
@@ -616,15 +521,25 @@ onUnmounted(() => {
       </div>
 
       <div class="player-bar__performance-actions">
-        <UiIconButton
-          :icon="SlidersHorizontal"
-          :active="isPlayerToolsOpen"
-          :label="playerToolsLabel"
-          :aria-expanded="isPlayerToolsOpen"
-          aria-controls="player-tools-panel"
-          :title="playerToolsTitle"
-          @click="togglePlayerToolsPanel"
-        />
+        <PlayerToolsPanel
+          v-model:open="isPlayerToolsOpen"
+          v-model:active-tab="activeToolTab"
+          :has-track="Boolean(state.track)"
+          :guide-vocal-visible="showGuideVocal"
+          :guide-vocal-rows="guideVocalRows"
+          :pitch-tempo-rows="pitchTempoRows"
+        >
+          <template #trigger="{ triggerProps }">
+            <UiIconButton
+              v-bind="triggerProps"
+              :icon="SlidersHorizontal"
+              :active="isPlayerToolsOpen"
+              :label="playerToolsLabel"
+              :title="playerToolsTitle"
+              @click="togglePlayerToolsPanel"
+            />
+          </template>
+        </PlayerToolsPanel>
         <span
           v-if="playerToolsEngaged && !isPlayerToolsOpen"
           class="player-bar__tools-marker"
@@ -653,27 +568,6 @@ onUnmounted(() => {
         />
       </div>
     </div>
-
-    <PlayerToolsPanel
-      id="player-tools-panel"
-      v-model:active-tab="activeToolTab"
-      :selected-separation-preset-id="selectedSeparationPresetId"
-      :open="isPlayerToolsOpen"
-      :has-track="Boolean(state.track)"
-      :guide-vocal-visible="showGuideVocal"
-      :guide-vocal-rows="guideVocalRows"
-      :pitch-tempo-rows="pitchTempoRows"
-      :current-track="currentSeparationTrack"
-      :separation-preset-options="currentSeparationPresetOptions"
-      :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
-      :separation-in-flight="isCurrentTrackSeparating"
-      :separation-progress-percent="currentSeparationProgressPercent"
-      :separation-error="currentSeparationError"
-      :separation-has-result="selectedSeparationHasResult"
-      @close="isPlayerToolsOpen = false"
-      @generate-separation="generateSeparation"
-      @select-separation-preset="selectSeparationPreset"
-    />
   </div>
 </template>
 

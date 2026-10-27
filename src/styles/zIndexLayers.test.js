@@ -10,7 +10,6 @@ const GLOBAL_LAYER_OWNERS = new Set([
   'App.vue',
   'components/output/ObsLookSelect.vue',
   'components/playback/PlayerBar.vue',
-  'components/playback/PlayerBarPanel.vue',
   'components/ui/UiCombobox.vue',
   'components/ui/UiActionMenu.vue',
   'components/ui/UiModal.vue',

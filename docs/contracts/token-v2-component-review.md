@@ -193,6 +193,20 @@ Compact／windowed 使用 32px icon action 與 80px range。所有相鄰尾端�
 獨立 passive marker 與簡短 tooltip 表示，不將 engaged state 偽裝為面板
 selected state。
 
+演出工具沿用 `UiPopover` 的 anchor、viewport clamp、單一垂直捲動、focus 與 dismissal，
+寬度直接讀取 `useAppRightDockWidth` 的 272–280px 狀態；不再保留獨立的 fixed panel 外殼與尺寸 token。
+背景歌詞捲動不關閉調整面板；Escape、關閉按鈕及外部點擊仍可關閉。
+內容使用 `UiTabs` bar、`UiIconButton`、`UiRangeControl`，分頁依序為「調整／導唱／節拍器」；
+伴奏產生留在既有曲目準備入口。導唱獨立在第二個分頁，監聽與擷取分開控制；保留當前比例、開關、滑桿刻度與右鍵重置，移除底下的預設百分比按鈕。未使用伴奏音訊時沿 `UiHint` 顯示使用條件。
+節拍器第一列保留獨立 BPM `UiButtonGroup` 與右側操作；上下共用 50／50 欄：左欄依序是 BPM 與拍數兩個獨立 `UiButtonGroup`，右欄依序是操作按鈕與獨立拍點顯示。兩框同寬同高，左右步進按鈕對齊；拍數以數字與 BEATS 顯示（不是完整拍號），拍點以進度數字與 bars 顯示，不與左側設定共框。下方以單列發聲開關＋滑桿整合獨立節拍音量，再接測速區；不顯示常駐百分比，數值沿共用 range preview／`valueText`，保留右鍵回復 100%，調整不改發聲開關。只顯示一次 BPM，拍點更新不重建啟停按鈕。
+節拍器兩列數字沿 title、BPM／BEATS 單位由 caption 縮小一級（0.125rem），數字／單位置中集中，保留窄版最大值與標準 target；調整頁既有數值與 Hz 字級保持。導唱每路依標籤與數值／開關、滑桿排列，監聽與擷取共用同一欄位節奏。
+調整頁 Hz 參考值在前、音分主值在最右，兩者保持同一行；數值列及兩個導唱通道之間沿用 `UiSeparator`。滑桿沿 `defaultValue` 右鍵重置，不另放重複的重設按鈕；三頁的圖示按鈕及滑桿操作高度均沿用共用密度尺寸，不為壓低面板高度另行縮小。
+主要操作靠右：節拍器的啟停與點擊測速置於列尾，重設／清除等輔助操作在前；調整列以降低、滑桿、提高排列。DOM 與視覺順序一致。
+工具面板本身設為 `user-select: none`，避免 Teleport 後數值仍可被誤選；點擊測速使用 Metronome 圖示加短文字的 `UiButton`，沿共用高度並加寬，保留共用 tooltip。
+測速不顯示常駐點擊次數；首次點擊只提示「再點一下」，第二次起以 BPM 結果回饋。估算視窗與清除動作仍由原節拍器 owner 持有。
+
+節拍器右上保留重設與啟停，圖示按鈕沿既有 ghost 外觀，主要啟停保持最右；發聲切換保留 active state，測速維持 secondary。節拍聲跟隨系統預設輸出，不提供獨立裝置按鈕或設定頁入口；發聲開關與音量保持獨立，音效失敗提示確認系統輸出後重新啟用。
+
 - `UiSeparator`：Horizontal／vertical、decorative／semantic，原生 attrs fallthrough；只使用既有 border／color tokens，不擁有間距、內容或互動，Action Menu 內部 separator 不上提。
 - `UiSegmentedControl`：Caller 提供 items 與 controlled value；primitive 擁有 radiogroup／radio、disabled skip、roving tabindex、Arrow／Home／End、RTL 與 focus，不知道 filter／mode／persistence。
 - `UiColorField`：組合 `UiField`、native color picker、可編輯六位 hex draft、驗證、described-by 與 update／commit 分責；文字 control 依 `#RRGGBB` 七字元格式使用 compact component measure，整組最多 100% available width；無效草稿不更新 caller，也不改變上一個有效色票。

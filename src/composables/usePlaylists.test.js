@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // subscribes to window.Utawakui.onLibraryUpdated when explicitly initialized —
 // resetModules + re-stubbing window before each dynamic import gives every
 // test a fresh module instance instead of leaking playlists/selectedId
-// state between tests, same approach as useSeparation.test.js.
+// state between tests.
 let libraryUpdatedCallback;
 let listPlaylistsMock;
 let createPlaylistMock;

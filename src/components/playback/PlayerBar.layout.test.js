@@ -7,7 +7,7 @@ const componentSource = readFileSync(
   'utf8',
 );
 const panelSource = readFileSync(
-  new URL('./PlayerBarPanel.vue', import.meta.url),
+  new URL('../ui/UiPopover.vue', import.meta.url),
   'utf8',
 );
 const tokenSource = readFileSync(
@@ -67,19 +67,22 @@ describe('PlayerBar responsive metadata layout', () => {
       componentSource,
       '.player-bar__tools-marker',
     );
-    const panelRule = cssRule(panelSource, '.player-bar-panel');
+    const panelRule = cssRule(panelSource, '.ui-popover');
 
     expect(playerBarRule).toContain('background: transparent');
     expect(playerBarRule).not.toContain('border-top:');
     expect(toolsMarkerRule).toContain(
       'border: var(--ui-border-width) solid var(--ui-color-canvas)',
     );
-    expect(panelRule).toContain('background: var(--ui-color-surface)');
+    expect(panelRule).toContain('background: var(--ui-color-surface-raised)');
   });
 
   it('orders right-side tools by conditional guide output, playback context, tools, then volume', () => {
     const extrasStart = componentSource.indexOf('class="player-bar__extras"');
-    const extrasEnd = componentSource.indexOf('<PlayerToolsPanel', extrasStart);
+    const extrasEnd = componentSource.indexOf(
+      '</template>',
+      componentSource.indexOf('class="player-bar__volume"', extrasStart),
+    );
     const extrasSource = componentSource.slice(extrasStart, extrasEnd);
     const guideOutputIndex = extrasSource.indexOf(':icon="Cable"');
     const lyricsIndex = extrasSource.indexOf(':icon="MicVocal"');
@@ -101,7 +104,10 @@ describe('PlayerBar responsive metadata layout', () => {
 
   it('uses the formal icon button contract for every right-side action', () => {
     const extrasStart = componentSource.indexOf('class="player-bar__extras"');
-    const extrasEnd = componentSource.indexOf('<PlayerToolsPanel', extrasStart);
+    const extrasEnd = componentSource.indexOf(
+      '</template>',
+      componentSource.indexOf('class="player-bar__volume"', extrasStart),
+    );
     const extrasSource = componentSource.slice(extrasStart, extrasEnd);
 
     expect(extrasSource).toContain('<UiIconButton');
@@ -335,7 +341,10 @@ describe('PlayerBar responsive metadata layout', () => {
     const queueStart = componentSource.indexOf(':icon="ListMusic"');
     const queueEnd = componentSource.indexOf('/>', queueStart);
     const queueSource = componentSource.slice(queueStart, queueEnd);
-    const toolsStart = componentSource.indexOf(':icon="SlidersHorizontal"');
+    const toolsStart = componentSource.lastIndexOf(
+      '<UiIconButton',
+      componentSource.indexOf(':icon="SlidersHorizontal"'),
+    );
     const toolsEnd = componentSource.indexOf('/>', toolsStart);
     const toolsSource = componentSource.slice(toolsStart, toolsEnd);
 
@@ -347,15 +356,12 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(toolsSource).toContain(':label="playerToolsLabel"');
     expect(toolsSource).toContain(':title="playerToolsTitle"');
     expect(toolsSource).not.toContain('aria-pressed');
-    expect(toolsSource).toContain(':aria-expanded="isPlayerToolsOpen"');
-    expect(toolsSource).toContain('aria-controls="player-tools-panel"');
+    expect(toolsSource).toContain('v-bind="triggerProps"');
     expect(componentSource).toContain(
       'v-if="playerToolsEngaged && !isPlayerToolsOpen"',
     );
     expect(componentSource).toContain('class="player-bar__tools-marker"');
     expect(componentSource).toContain('演出工具 · 啟用中');
-    expect(componentSource).toContain(
-      '<PlayerToolsPanel\n      id="player-tools-panel"',
-    );
+    expect(componentSource).toContain('v-model:open="isPlayerToolsOpen"');
   });
 });

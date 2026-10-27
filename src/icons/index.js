@@ -49,6 +49,7 @@ export {
   Maximize2,
   MemoryStick,
   MessageSquare,
+  Metronome,
   MicAudioLines,
   MicVocal,
   Minus,

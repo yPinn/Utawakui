@@ -10,7 +10,6 @@ const shellSources = [
   '../components/layout/AppPlaylistSidebar.vue',
   '../components/layout/AppTitleBar.vue',
   '../components/playback/PlayerBar.vue',
-  '../components/playback/PlayerBarPanel.vue',
   '../components/playback/PlayerToolsPanel.vue',
   '../components/playlists/PlaylistDetailsModal.vue',
   '../components/playlists/PlaylistSidebar.vue',
@@ -85,7 +84,6 @@ describe('Persistent App Shell Token v2 cutover', () => {
       '--ui-player-action-size',
       '--ui-player-center-max-inline-size',
       '--ui-player-track-inline-size',
-      '--ui-player-panel-inline-size',
       '--ui-player-tools-beat-block-size',
     ]) {
       expect(tokens).toContain(`${token}:`);
