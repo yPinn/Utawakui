@@ -1,5 +1,9 @@
 import performerValues from '../../shared/performerContractValues.json';
-import { normalizePerformerReadingVariant } from '../../shared/performerViewContract.mjs';
+import timingLimits from '../../shared/lyricsTimingValues.json';
+import {
+  normalizePerformerReadingVariant,
+  parsePerformerWordCue,
+} from '../../shared/performerViewContract.mjs';
 import { projectOutputSnapshot } from './outputSnapshot.js';
 
 function projectReadingLine(line, lyricText) {
@@ -29,6 +33,46 @@ function projectReadingLine(line, lyricText) {
 }
 
 const MAX_PUBLIC_ERROR_LENGTH = 240;
+
+function projectWordCue(input, state) {
+  const frame = input.lyrics?.wordFrame,
+    index = state.lyrics.activeLineIndex;
+  const source = input.lyrics?.lines?.[index],
+    line = state.lyrics.lines[index];
+  if (
+    !frame ||
+    !['t2', 'acoustic-estimate'].includes(frame.timingSource) ||
+    !source ||
+    frame.lineId !== source.lineId ||
+    frame.text !== line?.text ||
+    !Array.isArray(frame.chunks) ||
+    frame.chunks.length > timingLimits.maxSegmentsPerLine ||
+    frame.chunks.map((c) => c.text).join('') !== line.text
+  )
+    return null;
+  let from = 0;
+  for (const [i, chunk] of frame.chunks.entries()) {
+    const to = from + chunk.text.length;
+    if (chunk.state === 'active' && chunk.cueActive !== false) {
+      try {
+        return parsePerformerWordCue(
+          {
+            lineIndex: index,
+            from,
+            to,
+            startMs: chunk.startMs,
+            endMs: chunk.endMs ?? frame.chunks[i + 1]?.startMs ?? line.endMs,
+          },
+          state,
+        );
+      } catch {
+        return null;
+      }
+    }
+    from = to;
+  }
+  return null;
+}
 
 function projectLyricsOffsetControls(input, state) {
   const available = Boolean(
@@ -66,9 +110,11 @@ export function projectPerformerSnapshot(input = {}, options = {}) {
     ? input.readings.lines
     : [];
 
+  const wordCue = projectWordCue(input, state);
   return {
     version: performerValues.stateVersion,
     state,
+    ...(wordCue ? { wordCue } : {}),
     adjustments: {
       transposeSemitones: Number.isFinite(input.player?.transposeSemitones)
         ? input.player.transposeSemitones

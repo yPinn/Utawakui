@@ -37,6 +37,47 @@ function setup(prepareLyrics) {
 }
 
 describe('lyrics source preparation boundary', () => {
+  it('cancels a scoped offset before IPC and restores only its own preview without overwriting a newer edit', async () => {
+    for (const newer of [false, true]) {
+      const f = setup();
+      await f.owner.loadSelectedLyrics();
+      let current = true;
+      window.Utawakui.setLyricsSourceOffset = vi.fn(
+        async (_id, _name, offsetMs) => ({
+          source: { offsetMs },
+          sourceSession: {
+            ...f.owner.sourceSession.value,
+            offsetRevision: 'new',
+          },
+        }),
+      );
+      const old = f.owner.adjustOffset(0.1, { isCurrent: () => current });
+      current = false;
+      const fresh = newer ? f.owner.adjustOffset(0.1) : null;
+      expect(await old).toBeNull();
+      if (fresh) await fresh;
+      expect(window.Utawakui.setLyricsSourceOffset).toHaveBeenCalledTimes(
+        newer ? 1 : 0,
+      );
+      expect(f.state.offsetSeconds).toBe(newer ? 0.2 : 0);
+      expect(f.state.offsetSave.isSaving).toBe(false);
+    }
+  });
+  it('returns the offset owner persistence result rather than claiming an immediate save', async () => {
+    const f = setup();
+    await f.owner.loadSelectedLyrics();
+    const saved = Promise.withResolvers();
+    window.Utawakui.setLyricsSourceOffset = vi.fn(() => saved.promise);
+    const task = f.owner.adjustOffset(0.1);
+    expect(task).toBeInstanceOf(Promise);
+    const value = {
+      source: { offsetMs: 100 },
+      sourceSession: { ...f.owner.sourceSession.value, offsetRevision: 'o1' },
+    };
+    saved.resolve(value);
+    expect(await task).toEqual(value);
+    expect(f.owner.sourceSession.value.offsetRevision).toBe('o1');
+  });
   it('keeps the canonical identity and queued offset through a same-source refresh', async () => {
     const f = setup(),
       session = { id: 'stable', timingRevision: 't0', offsetRevision: 'o0' };

@@ -205,7 +205,7 @@ export function useLyricsSourceDocuments({
     return selectedLyricsLoad;
   }
 
-  function persistSelectedOffset() {
+  function persistSelectedOffset({ isCurrent, onCancelled } = {}) {
     offsetIntentRevision++;
     const trackId = state.selectedTrackId;
     const sourceFilename = state.selectedSourceFilename;
@@ -223,6 +223,13 @@ export function useLyricsSourceDocuments({
     state.offsetSave.error = null;
     const saving = offsetQueue.then(async () => {
       if (!current()) return null;
+      if (isCurrent && (!isCurrent() || requestId !== offsetSaveRequestId)) {
+        if (requestId === offsetSaveRequestId) {
+          onCancelled?.();
+          state.offsetSave.isSaving = false;
+        }
+        return null;
+      }
       try {
         if (typeof window.Utawakui?.setLyricsSourceOffset !== 'function') {
           throw new Error('lyrics offset bridge unavailable');
@@ -257,10 +264,17 @@ export function useLyricsSourceDocuments({
     return saving;
   }
 
-  function adjustOffset(deltaSeconds) {
+  function adjustOffset(deltaSeconds, { isCurrent } = {}) {
+    if (isCurrent && !isCurrent()) return Promise.resolve(null);
+    const previousOffset = state.offsetSeconds;
     state.offsetSeconds =
       Math.round((state.offsetSeconds + deltaSeconds) * 10) / 10;
-    persistSelectedOffset();
+    return persistSelectedOffset({
+      isCurrent,
+      onCancelled: () => {
+        state.offsetSeconds = previousOffset;
+      },
+    });
   }
 
   function resetOffset() {

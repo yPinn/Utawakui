@@ -34,7 +34,11 @@ function setup() {
   const viewport = shallowRef({ fromMs: 0, toMs: 10000 });
   const offset = shallowRef(1000);
   const commit = vi.fn((kind, value) =>
-    kind === 'start' ? editor.setLineStart(value) : editor.setLineEnd(value),
+    kind === 'move'
+      ? editor.shiftLine(value)
+      : kind === 'start'
+        ? editor.setLineStart(value)
+        : editor.setLineEnd(value),
   );
   scope = effectScope();
   const drag = scope.run(() =>
@@ -67,6 +71,134 @@ function setup() {
   });
   return { drag, event, commit, enabled, context, viewport, offset, target };
 }
+it('previews a whole-line delta, preserves segments and commits inferred dependencies in one undo', () => {
+  const s = setup();
+  editor.beginLine(
+    {
+      lines: [
+        {
+          lineId: 'before',
+          text: 'A',
+          startMs: 0,
+          endMs: 3000,
+          endInferred: true,
+        },
+        {
+          lineId: 'line',
+          text: 'AB',
+          startMs: 3000,
+          endMs: 6000,
+          endInferred: true,
+          segments: [
+            { segmentId: 's1', text: 'A', startMs: 3000, endMs: 4000 },
+            { segmentId: 's2', text: 'B', startMs: 4500, endMs: 5500 },
+          ],
+        },
+        { lineId: 'after', text: 'C', startMs: 6000, endMs: null },
+      ],
+    },
+    'line',
+    null,
+    { id: 'session' },
+    { mode: 'line' },
+  );
+  const before = JSON.stringify(editor.draft.value);
+  expect(s.drag.begin(s.event(150), 'move')).toBe(true);
+  s.drag.move(s.event(175));
+  expect(s.drag.previewLine.value).toMatchObject({
+    startMs: 3500,
+    endMs: 6500,
+    segments: [
+      { segmentId: 's1', text: 'A', startMs: 3500, endMs: 4500 },
+      { segmentId: 's2', text: 'B', startMs: 5000, endMs: 6000 },
+    ],
+  });
+  expect(s.drag.previewLine.value.endInferred).toBeUndefined();
+  expect(JSON.stringify(editor.draft.value)).toBe(before);
+  expect(editor.canUndo.value).toBe(false);
+  // Reverse within the same capture, then use the final release position.
+  s.drag.move(s.event(140));
+  s.drag.finish(s.event(160));
+  expect(s.commit).toHaveBeenCalledExactlyOnceWith('move', 200);
+  expect(editor.dependencies.value[0].endMs).toBe(3200);
+  expect(editor.draft.value.startMs).toBe(3200);
+  editor.undo();
+  expect(JSON.stringify(editor.draft.value)).toBe(before);
+  expect(editor.canUndo.value).toBe(false);
+});
+it.each([
+  'context',
+  'offset',
+  'viewport',
+  'disabled',
+  'draft',
+  'cancel',
+  'dispose',
+  'escape',
+  'lost capture',
+])('cancels whole-line preview on %s and rejects late release', (kind) => {
+  const s = setup();
+  s.drag.begin(s.event(150), 'move');
+  s.drag.move(s.event(175));
+  expect(s.drag.previewLine.value.startMs).toBe(3500);
+  if (kind === 'context') {
+    s.context.value = 'source-b';
+    s.context.value = 'source-a';
+  }
+  if (kind === 'offset') s.offset.value = 2000;
+  if (kind === 'viewport') s.viewport.value = { fromMs: 1000, toMs: 11000 };
+  if (kind === 'disabled') s.enabled.value = false;
+  if (kind === 'draft') editor.setLineEnd(6500);
+  if (kind === 'cancel' || kind === 'lost capture') s.drag.cancel(s.event(175));
+  if (kind === 'dispose') scope.stop();
+  if (kind === 'escape')
+    s.drag.key(
+      { key: 'Escape', preventDefault: vi.fn(), stopPropagation: vi.fn() },
+      'move',
+    );
+  s.drag.finish(s.event(175));
+  expect(s.commit).not.toHaveBeenCalled();
+  expect(s.drag.previewLine.value).toBeNull();
+});
+it('rejects a final invalid move, enforces both media edges, and leaves unknown tails unknown', () => {
+  const s = setup();
+  s.drag.begin(s.event(150), 'move');
+  s.drag.move(s.event(175));
+  s.drag.finish(s.event(400)); // next start exceeds following start
+  expect(s.commit).not.toHaveBeenCalled();
+  expect(s.drag.invalid.value).toBe(true);
+  expect(editor.validationError.value).toBe('');
+  editor.beginLine(
+    { lines: [{ lineId: 'last', text: 'tail', startMs: 18000, endMs: 20500 }] },
+    'last',
+    null,
+    null,
+    { mode: 'line' },
+  );
+  s.drag.begin(s.event(150), 'move');
+  s.drag.finish(s.event(200)); // end media 20500 exceeds 20000
+  expect(s.commit).not.toHaveBeenCalled();
+  editor.beginLine(
+    { lines: [{ lineId: 'last', text: 'tail', startMs: 3000, endMs: null }] },
+    'last',
+    null,
+    null,
+    { mode: 'line' },
+  );
+  s.drag.begin(s.event(150), 'move');
+  s.drag.finish(s.event(40)); // media -200, canonical still positive
+  expect(s.commit).not.toHaveBeenCalled();
+  s.drag.key(
+    { key: 'ArrowRight', preventDefault: vi.fn(), stopPropagation: vi.fn() },
+    'move',
+  );
+  expect(s.commit).toHaveBeenCalledExactlyOnceWith('move', 100);
+  expect(editor.draft.value).toMatchObject({
+    startMs: 3100,
+    endMs: null,
+    segments: [],
+  });
+});
 it('previews canonical time with offset, then commits one gesture and inferred dependency as one undo', () => {
   const { drag, event, commit } = setup();
   expect(drag.begin(event(110), 'start')).toBe(true); // media 2000 + offset 1000

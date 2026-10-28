@@ -16,6 +16,8 @@ const originalArgv = [...process.argv];
 const originalModuleLoad = Module._load;
 
 const MAIN_INVOKE_CHANNELS = [
+  'keyboard-shortcuts:get',
+  'keyboard-shortcuts:set',
   'library:performance-settings-get',
   'library:performance-settings-save',
   'library:performance-settings-remove',
@@ -1837,6 +1839,71 @@ describe('main preload bridge', () => {
         captureGuideVocalLevel: 0.15,
       },
     );
+  });
+
+  it('projects bounded shortcut DTOs from reactive values without forwarding callbacks, paths or arbitrary fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const configuration = {
+      schemaVersion: 1,
+      globalEnabled: false,
+      bindings: [
+        {
+          command: 'player.next',
+          app: {
+            mode: 'custom',
+            chord: {
+              key: 'j',
+              ctrl: true,
+              alt: false,
+              shift: false,
+              path: 'private',
+            },
+          },
+          global: null,
+          path: 'private',
+        },
+      ],
+      path: 'private',
+    };
+    await bridge.setKeyboardShortcuts({
+      expectedRevision: null,
+      configuration,
+      path: 'private',
+      callback: () => {},
+    });
+    const [, input] = electron.ipcRenderer.invoke.mock.calls.at(-1);
+    expect(input).toEqual({
+      expectedRevision: null,
+      configuration: {
+        schemaVersion: 1,
+        globalEnabled: false,
+        bindings: [
+          {
+            command: 'player.next',
+            app: {
+              mode: 'custom',
+              chord: { key: 'j', ctrl: true, alt: false, shift: false },
+            },
+            global: null,
+          },
+        ],
+      },
+    });
+    await bridge.setKeyboardShortcuts({
+      expectedRevision: 'x'.repeat(1000),
+      configuration: {
+        ...configuration,
+        bindings: Array(8).fill(configuration.bindings[0]),
+      },
+    });
+    expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
+      'keyboard-shortcuts:set',
+      null,
+    ]);
+    await bridge.getKeyboardShortcuts();
+    expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
+      'keyboard-shortcuts:get',
+    ]);
   });
 
   it('shapes library storage policy without accepting paths or arbitrary limits', async () => {

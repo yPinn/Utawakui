@@ -111,6 +111,16 @@ function isDelivered(file) {
 }
 
 describe('packaged dependency boundary', () => {
+  it('bundles machine shortcut persistence and the shared fixed binding policy without a new helper process', () => {
+    for (const file of [
+      'electron/lib/keyboardShortcutSettings.js',
+      'electron/main/keyboardShortcutHandlers.js',
+      'shared/keyboardBindingDefinitions.mjs',
+      'shared/keyboardShortcutContract.mjs',
+    ])
+      expect(bundledSources).toContain(file);
+    expect(builder.files).not.toContain('keyboard-shortcuts.json');
+  });
   it('keeps the waveform metadata runtime graph physical and complete', () => {
     for (const name of WAVEFORM_RUNTIME_PACKAGES) {
       expect(builder.asarUnpack).toContain(`node_modules/${name}/**/*`);

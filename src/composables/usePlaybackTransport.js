@@ -20,6 +20,9 @@ export function usePlaybackTransport() {
   const arrangementActive = computed(
     () => arrangement.value?.ownsPlayback.value === true,
   );
+  const arrangementBusy = computed(
+    () => arrangement.value?.state?.busy === true,
+  );
   const canPlayNext = computed(() =>
     arrangementActive.value
       ? arrangement.value.canNext.value
@@ -28,15 +31,14 @@ export function usePlaybackTransport() {
 
   function playQueuedTrack(track) {
     if (!track) return;
-    playTrack(toPlayableTrack(track));
+    return playTrack(toPlayableTrack(track));
   }
 
   function playPrevious() {
     if (arrangementActive.value) return arrangement.value.previous();
     const previous = previousTrack();
     if (previous) {
-      playQueuedTrack(previous);
-      return;
+      return playQueuedTrack(previous);
     }
 
     return restartTrack();
@@ -44,7 +46,7 @@ export function usePlaybackTransport() {
 
   function playNext() {
     if (arrangementActive.value) return arrangement.value.next();
-    playQueuedTrack(nextTrack());
+    return playQueuedTrack(nextTrack());
   }
 
   function playAfterEnded(event) {
@@ -74,5 +76,6 @@ export function usePlaybackTransport() {
     playAfterEnded,
     canPlayNext,
     arrangementActive,
+    arrangementBusy,
   };
 }

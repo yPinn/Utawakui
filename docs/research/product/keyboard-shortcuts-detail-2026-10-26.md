@@ -1,6 +1,6 @@
 # 可自訂／全域快捷操作：行為提案
 
-2026-10-26；未實作／註冊 OS 快捷鍵，S01–S18 待驗。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。按鍵只呼叫既有命令，設定已保存、OS 已註冊、當下可執行是不同狀態。
+2026-10-26；2026-10-28 已接 S01–S03 配置／registry 前置及 S11–S13 的七命令／dispatcher 執行切片，App 保存／錄製切片已接入；OS 全域操作及 S01–S18 的完整平台驗收仍待逐項執行。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。按鍵只呼叫既有命令，設定已保存、OS 已註冊、當下可執行是不同狀態。
 
 ## 七個命令與預設
 
@@ -98,8 +98,14 @@ SMTC play／pause 保持明確意圖，不改成 toggle。Key／offset 跨 await
 
 ## 實作前決策與證據
 
+2026-10-28 前置與執行切片：七命令 allowlist、有界 schema、明示 modifiers／邏輯子集、default／disabled／custom、同 scope／跨 scope／固定鍵及 Shift wildcard 衝突已有純測試。registry 可編譯驗過的 App 配置，替換只保留一組、停用釋出原鍵，default Key 保留原長按、custom 拒 repeat／handled；dispatcher 可接不可變配置，驗 editable／widget composed path／IME／AltGr／錄製／浮層及 canExecute，換配置／卸載使在途失效。S11–S13 執行協調既有 player／transport／lyrics；一般 pending 取消、真 player／練習 owner gap 立即播放、DSP confirmed／來源失效、offset 保存前取消與 CAS 由測試涵蓋。詳細目前契約見[輸入綁定](../../contracts/input-bindings.md#七命令執行邊界)。App 由單一機器偏好 owner 讀取配置，Settings 已接錄製／套用／取消／停用／預設，global 未註冊；不把單元結果當 Windows 每命令或全部場次／OBS 驗收。後續仍為 Main manager／Windows 每命令長按與去重 gate。
+
 先定七命令／保留鍵／焦點，補 App 自訂；再固定 Main manager／envelope／staging 契約，最後 Windows 每命令過 gate 才 global opt-in。前三項的未完成／錯誤可供 canExecute 使用，不要求三項全實作後才做 App 綁定。
+
+較早的命令執行切片另以隔離 RASEN 副本、程式指定的測試配置跑可見 Electron 14 項原生操作：Key confirmed 與未自動存 profile、offset ±0.1／CAS、active source 清除、播放／暫停、Queue 尾端、paused previous restart、widget／錄製讓位、靜音真媒體 A–B gap 立即恢復、壞配置 fallback 與卸載。沒有在 App 安裝正式配置或 OS 註冊；測試值恢復、正式媒體 9 檔 SHA256 不變。這不代表真實裝置／OBS 聽辨、DSP 音質或 Windows global 長按已驗收。
 
 本輪查 [registry](../../../src/utils/inputBindingRegistry.js)、[dispatcher](../../../src/composables/useKeyboardShortcuts.js)、[DOM](../../../src/utils/dom.js)、[SMTC](../../../src/composables/useMediaSession.js)、[transport](../../../src/composables/usePlaybackTransport.js)及[輸入契約](../../contracts/input-bindings.md)；G 實為擷取導唱、SELECT 已忽略，taskbar 上／下一首目前停用。7份既有測試73 passed，僅基線，原 K01–K04 留[初始證據](player-practice-planning-2026-10-26.json)。
 
 package-lock 為 Electron43.8.3，查核 Context7 43 系列並交叉實際 [v43.8.3 API](https://github.com/electron/electron/blob/v43.8.3/docs/api/global-shortcut.md)／[快捷鍵文件](https://github.com/electron/electron/blob/v43.8.3/docs/tutorial/keyboard-shortcuts.md)：Main ready 後註冊、失焦可觸發、register 可因占用失敗，isRegistered 只查本 App，registerAll 不提供整組交易，accelerator 為不分大小寫的 modifiers＋單鍵。上述平台能力不替代本案的 Windows 實測。
+
+本輪 App 保存／錄製切片使用同一隔離 RASEN profile，在完整重啟的新 Main／preload 下跑 22 項原生操作：候選／半組／Space／保留 F 鍵／Shift wildcard 不提前保存或誤執行、套用後正式 App dispatcher 生效、改 Key 釋放原鍵、停用／單列預設保其他設定、亮暗及 960px、重啟自動恢復且不重寫、CAS 保較新檔並要求重讀、native blur／最小化取消、壞檔保 bytes／待讀、修復後明確重讀及整組預設。Tab 取消回可見設定按鈕，結束 paused／無錄製／Key 與音量恢復，僅隔離設定檔被寫入。保存契約與不支援 global 的邊界見[機器保存與錄製](../../contracts/input-bindings.md#機器保存與錄製)；實際裝置／OBS 音質、跨程式 global 長按／去重仍不在這批證據內。

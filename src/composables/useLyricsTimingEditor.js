@@ -104,7 +104,7 @@ function changeLine(kind, value) {
 // Gesture previews use the same complete-document validation without changing
 // the draft, validation message, inferred dependencies or undo history.
 function previewLineTiming(kind, value) {
-  if (!draft.value || !['start', 'end'].includes(kind)) return null;
+  if (!draft.value || !['start', 'end', 'move'].includes(kind)) return null;
   const result = editLineTiming(
     draftDocument.value,
     activeLineId.value,

@@ -177,6 +177,26 @@ function setWaveformBoundary({ kind, value }) {
   if (waveformTimingDisabled.value) return;
   if (kind === 'start') setLineStart(value);
   else if (kind === 'end') setLineEnd(value);
+  else if (kind === 'move') shiftLine(value);
+}
+const waveformLine = computed(
+  () =>
+    timingDraft.value ?? lyricsDocument.value.lines[positionedLineIndex.value],
+);
+const waveformPlaybackTarget = computed(() =>
+  reviewBusy.value || (timingDraft.value && waveformTimingDisabled.value)
+    ? null
+    : (lyrics.timingPlaybackTarget?.(
+        waveformLine.value?.startMs,
+        timingSourceSession.value ?? lyricsTiming.value.sourceSession,
+      ) ?? null),
+);
+function navigateWaveformLine(mode) {
+  if (!waveformPlaybackTarget.value) return;
+  const position = waveformLine.value?.startMs;
+  const session = timingSourceSession.value ?? lyricsTiming.value.sourceSession;
+  if (mode === 'seek') lyrics.seekTimingPosition(position, session);
+  else if (mode === 'play') void lyrics.playTimingPosition(position, session);
 }
 const editingHelp = computed(() => {
   if (hasEditingDraft.value)
@@ -498,6 +518,7 @@ async function confirmTimingReview() {
             :timing-disabled="waveformTimingDisabled"
             :edit-context="lyricsTiming.sourceSession"
             :preview-timing="previewLineTiming"
+            :playback-target="waveformPlaybackTarget"
             :offset-ms="Math.round(state.offsetSeconds * 1000)"
             :position-ms="
               Number.isFinite(currentLyricsPositionMs)
@@ -506,6 +527,8 @@ async function confirmTimingReview() {
                 : null
             "
             @set-boundary="setWaveformBoundary"
+            @seek-line="navigateWaveformLine('seek')"
+            @play-line="navigateWaveformLine('play')"
           />
           <LyricsTimingReviewTool
             v-if="lyrics.timingReview"

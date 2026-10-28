@@ -1,3 +1,5 @@
+import timingLimits from './lyricsTimingValues.json' with { type: 'json' };
+
 export const PERFORMER_READING_SCALES = Object.freeze([
   'near',
   'desk',
@@ -78,4 +80,61 @@ const CONTROL_ACTIONS = new Set([
 ]);
 export function parsePerformerControlIntent(value) {
   return parseIntent(value, CONTROL_ACTIONS, 'control');
+}
+
+// A bounded presentation cue for the current published line, never a timing
+// document or an authoring intent. Older snapshots simply omit this member.
+export function parsePerformerWordCue(value, state) {
+  if (value == null) return null;
+  const invalid = () => {
+    throw new TypeError('Invalid performer snapshot wordCue');
+  };
+  if (
+    typeof value !== 'object' ||
+    Array.isArray(value) ||
+    Object.keys(value).sort().join(',') !== 'endMs,from,lineIndex,startMs,to'
+  )
+    invalid();
+  const { lineIndex, from, to, startMs, endMs } = value;
+  const lyrics = state?.lyrics,
+    line = lyrics?.lines?.[lineIndex];
+  if (
+    !Number.isSafeInteger(lineIndex) ||
+    lineIndex < 0 ||
+    lineIndex !== lyrics?.activeLineIndex ||
+    !state?.playback?.track?.id ||
+    lyrics.trackId !== state.playback.track.id ||
+    lyrics.synced !== true ||
+    !line ||
+    !Number.isSafeInteger(from) ||
+    !Number.isSafeInteger(to) ||
+    from < 0 ||
+    to <= from ||
+    to > line.text.length ||
+    !Number.isSafeInteger(startMs) ||
+    !Number.isSafeInteger(endMs) ||
+    startMs < 0 ||
+    endMs > timingLimits.maxTimeMs ||
+    endMs <= startMs ||
+    !Number.isFinite(line.startMs) ||
+    startMs < line.startMs ||
+    (Number.isFinite(line.endMs) && endMs > line.endMs)
+  )
+    invalid();
+  const boundaries = new Set([
+    0,
+    ...Array.from(
+      new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(
+        line.text,
+      ),
+      (g) => g.index + g.segment.length,
+    ),
+  ]);
+  if (
+    !boundaries.has(from) ||
+    !boundaries.has(to) ||
+    !line.text.slice(from, to).trim()
+  )
+    invalid();
+  return { lineIndex, from, to, startMs, endMs };
 }

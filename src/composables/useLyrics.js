@@ -1,6 +1,7 @@
 import { computed, nextTick, reactive, readonly, shallowRef, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
+import { usePlaybackTransport } from './usePlaybackTransport.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
@@ -24,17 +25,13 @@ import {
 } from '../utils/lyricsTextVariantValues.js';
 import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
 import { projectNativeLyricsFrame } from '../../shared/presentation/lyricsFineFrame.mjs';
-import { toPlayableTrack } from '../utils/playableTrack.js';
+import { useLyricsPlaybackNavigation } from './lyrics/useLyricsPlaybackNavigation.js';
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
 const lyricsTextVariant = shallowRef(DEFAULT_LYRICS_TEXT_VARIANT);
-const {
-  state: playerState,
-  playTrack,
-  play,
-  seek,
-  samplePlaybackClock,
-} = usePlayer();
+const player = usePlayer();
+const { state: playerState, samplePlaybackClock } = player;
 const { setQueue } = usePlaybackQueue();
+const { arrangementBusy } = usePlaybackTransport();
 const { selectedPlaylist, initialize: initializePlaylists } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
@@ -146,7 +143,6 @@ const {
   lyricsAcousticEstimate,
   loadSelectedLyrics,
   waitForSelectedLyricsLoad,
-  adjustOffset,
   resetOffset,
   retryOffsetSave,
   saveTimingDocument,
@@ -426,19 +422,19 @@ function applyBackfillStatus(payload = {}) {
   }
 }
 
-async function playFromLine(line) {
-  if (!line || !Number.isFinite(line.start) || !selectedTrack.value) return;
-  const targetTime = Math.max(0, line.start - state.offsetSeconds);
-  if (playerState.track?.id !== selectedTrack.value.id) {
-    setQueue(state.tracks, selectedTrack.value.id, {
-      sourceName: '歌詞',
-      sourceId: 'lyrics-workspace',
-    });
-    await playTrack(toPlayableTrack(selectedTrack.value));
-  }
-  seek(targetTime);
-  await play();
-}
+const {
+  playFromLine,
+  timingPlaybackTarget,
+  seekTimingPosition,
+  playTimingPosition,
+} = useLyricsPlaybackNavigation({
+  state,
+  selectedTrack,
+  lyricsTiming,
+  player,
+  setQueue,
+  arrangementBusy,
+});
 
 const stopPlayerSync = watch(
   () => playerState.track?.id,
@@ -502,6 +498,7 @@ export function useLyrics() {
     refreshSourceDetails: sourcePresentation.refresh,
     selectedSource,
     lyricsTiming: readonly(lyricsTiming),
+    sourceSession: sourceDocuments.sourceSession,
     timingReview: sourceDocuments.timingReview,
     lyricsAcousticEstimate: readonly(lyricsAcousticEstimate),
     lyricsDocument,
@@ -527,11 +524,14 @@ export function useLyrics() {
     selectTrack,
     selectSource,
     setLyricsTextVariant,
-    adjustOffset,
+    adjustOffset: sourceDocuments.adjustOffset,
     resetOffset,
     retryOffsetSave,
     saveTimingDocument,
     playFromLine,
+    timingPlaybackTarget,
+    seekTimingPosition,
+    playTimingPosition,
     probeMusixmatch,
     ensureLyricsFlow,
     clearCandidateSearch,

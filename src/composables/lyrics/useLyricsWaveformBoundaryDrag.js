@@ -18,18 +18,40 @@ export function useLyricsWaveformBoundaryDrag({
     active = shallowRef(false);
   let gesture = null;
   const endpoint = (kind) =>
-    toValue(draft)?.[kind === 'start' ? 'startMs' : 'endMs'];
+    kind === 'move'
+      ? 0
+      : toValue(draft)?.[kind === 'start' ? 'startMs' : 'endMs'];
+  function withinMedia(line) {
+    const offset = toValue(offsetMs),
+      duration = toValue(durationMs);
+    return (
+      Boolean(line) &&
+      Number.isSafeInteger(offset) &&
+      Number.isFinite(duration) &&
+      [line, ...(line.segments ?? [])].every((part) =>
+        [part.startMs, part.endMs].every(
+          (value) =>
+            value === null ||
+            (Number.isSafeInteger(value) &&
+              value - offset >= 0 &&
+              value - offset <= duration),
+        ),
+      )
+    );
+  }
   function available(kind) {
     const value = endpoint(kind),
       offset = toValue(offsetMs),
       duration = toValue(durationMs);
     return (
       toValue(enabled) &&
-      ['start', 'end'].includes(kind) &&
+      (kind === 'move'
+        ? Number.isSafeInteger(toValue(draft)?.startMs) &&
+          withinMedia(toValue(draft))
+        : ['start', 'end'].includes(kind)) &&
       Number.isSafeInteger(value) &&
       Number.isSafeInteger(offset) &&
-      value - offset >= 0 &&
-      value - offset <= duration
+      (kind === 'move' || (value - offset >= 0 && value - offset <= duration))
     );
   }
   function release() {
@@ -89,10 +111,14 @@ export function useLyricsWaveformBoundaryDrag({
       gesture.value + (dx / gesture.width) * gesture.span,
     );
     gesture.next = value;
-    const line =
-      value - gesture.offset >= 0 && value - gesture.offset <= gesture.duration
+    const candidate =
+      gesture.kind === 'move' ||
+      (value - gesture.offset >= 0 &&
+        value - gesture.offset <= gesture.duration)
         ? preview(gesture.kind, value)
         : null;
+    const line =
+      gesture.kind === 'move' && !withinMedia(candidate) ? null : candidate;
     invalid.value = !line;
     previewLine.value = line;
   }
@@ -122,11 +148,13 @@ export function useLyricsWaveformBoundaryDrag({
     event.stopPropagation();
     freeze();
     const value = endpoint(kind) + direction * 100;
-    const line =
-      value - toValue(offsetMs) >= 0 &&
-      value - toValue(offsetMs) <= toValue(durationMs)
+    const candidate =
+      kind === 'move' ||
+      (value - toValue(offsetMs) >= 0 &&
+        value - toValue(offsetMs) <= toValue(durationMs))
         ? preview(kind, value)
         : null;
+    const line = kind === 'move' && !withinMedia(candidate) ? null : candidate;
     invalid.value = !line;
     if (line) commit(kind, value);
     return Boolean(line);
@@ -149,6 +177,7 @@ export function useLyricsWaveformBoundaryDrag({
     active: readonly(active),
     previewLine: readonly(previewLine),
     invalid: readonly(invalid),
+    available,
     begin,
     move,
     finish,

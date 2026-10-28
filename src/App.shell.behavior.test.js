@@ -60,7 +60,7 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('folderActiveDestination');
     expect(source).toContain('@navigate="setActiveView"');
     expect(source).toContain(
-      'useKeyboardShortcuts({ internalViewShortcuts });',
+      'shortcutConfiguration: keyboardShortcutSettings.configuration',
     );
     expect(source).not.toContain('v-model:active-view="activeView"');
   });

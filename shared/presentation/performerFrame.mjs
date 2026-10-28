@@ -72,7 +72,22 @@ export function selectPerformerFrame(snapshot, options = {}) {
   const lyricPositionMs =
     playbackPositionMs(state, nowMs) +
     (Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0);
-  const upcomingIndex = nextLineIndex(lines, activeIndex, lyricPositionMs);
+  const linked = Boolean(
+    state.playback?.track?.id && lyrics.trackId === state.playback.track.id,
+  );
+  let readingIndex = linked
+    ? lines.findLastIndex(
+        (line) =>
+          text(line?.text) &&
+          Number.isFinite(line.startMs) &&
+          line.startMs <= lyricPositionMs,
+      )
+    : -1;
+  if (linked && (lyrics.synced !== true || readingIndex < 0))
+    readingIndex = lines.findIndex((line) => text(line?.text));
+  const upcomingIndex = linked
+    ? nextLineIndex(lines, readingIndex, lyricPositionMs)
+    : -1;
   const readingLines = Array.isArray(snapshot?.readings?.lines)
     ? snapshot.readings.lines
     : [];
@@ -83,10 +98,10 @@ export function selectPerformerFrame(snapshot, options = {}) {
     Array.isArray(state.queue?.items) ? state.queue.items : []
   ).find((item) => item?.state === 'queued')?.track;
   const track = state.playback?.track ?? null;
-  const currentLine = activeIndex >= 0 ? (lines[activeIndex] ?? null) : null;
+  const currentLine = readingIndex >= 0 ? (lines[readingIndex] ?? null) : null;
   const effectiveEndMs =
     currentLine?.endMs ??
-    lines.slice(activeIndex + 1).find((line) => Number.isFinite(line.startMs))
+    lines.slice(readingIndex + 1).find((line) => Number.isFinite(line.startMs))
       ?.startMs ??
     (Number.isFinite(state.playback?.durationMs)
       ? state.playback.durationMs + (lyrics.offsetMs ?? 0)
@@ -96,7 +111,8 @@ export function selectPerformerFrame(snapshot, options = {}) {
   if (!track) mode = 'idle';
   else if (lines.length === 0 || lyrics.trackId !== track.id) {
     mode = 'no-lyrics';
-  } else if (lyrics.synced !== true) mode = 'unsynced';
+  } else if (readingIndex < 0) mode = 'no-lyrics';
+  else if (lyrics.synced !== true) mode = 'unsynced';
   else if (activeIndex < 0) mode = 'waiting';
 
   return {
@@ -126,8 +142,15 @@ export function selectPerformerFrame(snapshot, options = {}) {
         ? { ...currentLine, endMs: effectiveEndMs }
         : currentLine,
     currentReading:
-      activeIndex >= 0
-        ? selectedReading(readingLines[activeIndex], readingVariant)
+      readingIndex >= 0
+        ? selectedReading(readingLines[readingIndex], readingVariant)
+        : null,
+    currentWordCue:
+      linked &&
+      snapshot.wordCue?.lineIndex === readingIndex &&
+      lyricPositionMs >= snapshot.wordCue.startMs &&
+      lyricPositionMs < snapshot.wordCue.endMs
+        ? { from: snapshot.wordCue.from, to: snapshot.wordCue.to }
         : null,
     nextLine: upcomingIndex >= 0 ? (lines[upcomingIndex] ?? null) : null,
     nextReading:

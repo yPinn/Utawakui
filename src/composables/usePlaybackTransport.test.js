@@ -47,6 +47,14 @@ beforeEach(() => {
 });
 
 describe('usePlaybackTransport', () => {
+  it('returns the existing player completion for ordinary previous and next', async () => {
+    player.playTrack.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    queue.nextTrack.mockReturnValue({ id: 'next' });
+    queue.previousTrack.mockReturnValue({ id: 'previous' });
+    const transport = usePlaybackTransport();
+    expect(await transport.playNext()).toBe(false);
+    expect(await transport.playPrevious()).toBe(true);
+  });
   it('uses one arrangement owner for PlayerBar, media keys and ended without advancing the ordinary queue', () => {
     const arrangement = {
       ownsPlayback: { value: true },

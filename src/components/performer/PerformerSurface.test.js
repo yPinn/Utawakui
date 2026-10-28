@@ -33,7 +33,10 @@ function frame(overrides = {}) {
     currentReading: {
       text: '沈むように溶けてゆくように',
       romaji: 'shizumu you ni tokete yuku you ni',
-      segments: [{ text: '沈', reading: 'しず' }, { text: 'むように' }],
+      segments: [
+        { text: '沈', reading: 'しず' },
+        { text: 'むように溶けてゆくように' },
+      ],
     },
     nextLine: { text: '二人だけの空が広がる夜に' },
     nextReading: null,
@@ -66,6 +69,39 @@ function render(props = {}) {
 }
 
 describe('PerformerSurface', () => {
+  it('shows actual lyrics before the first cue without a waiting placeholder', async () => {
+    const html = await render({
+      frame: frame({
+        mode: 'waiting',
+        currentLine: { text: 'First lyric' },
+        nextLine: { text: 'Next lyric' },
+      }),
+    });
+    expect(html).not.toContain('等待下一句');
+    const text = html.replace(/<[^>]+>/gu, '');
+    expect(text).toContain('First lyric');
+    expect(text).toContain('Next lyric');
+  });
+  it('underlines only the current timed text across reading partitions without hiding lyrics or ruby', async () => {
+    const html = await render({
+      frame: frame({
+        currentLine: { text: '歌い出し' },
+        currentWordCue: { from: 1, to: 3 },
+        currentReading: {
+          text: '歌い出し',
+          segments: [
+            { text: '歌い', reading: 'うたい' },
+            { text: '出し', reading: 'だし' },
+          ],
+        },
+      }),
+    });
+    expect(html).toContain('performer-lyric-cue__word--active');
+    expect(html).toMatch(/word--active[^>]*>い<\/span>/u);
+    expect(html).toMatch(/word--active[^>]*>出<\/span>/u);
+    expect(html).toContain('うたい');
+    expect(html).toContain('だし');
+  });
   it.each(['off', 'furigana', 'romaji'])(
     'renders only the selected %s aid for both cues',
     async (variant) => {

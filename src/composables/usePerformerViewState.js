@@ -1,5 +1,8 @@
 import { computed, onMounted, onUnmounted, reactive, shallowRef } from 'vue';
-import { nextLyricsBoundaryDelayMs } from '../../shared/presentation/state.mjs';
+import {
+  nextLyricsBoundaryDelayMs,
+  playbackPositionMs,
+} from '../../shared/presentation/state.mjs';
 import { normalizePerformerReadingScale } from '../../shared/performerViewContract.mjs';
 import { selectPerformerFrame } from '../../shared/presentation/performerFrame.mjs';
 import { normalizeAppError } from '../utils/appErrors.js';
@@ -88,8 +91,21 @@ export function usePerformerViewState() {
     const state = snapshot.value?.state;
     if (!state) return;
     const nowMs = Date.now();
-    const delay = nextLyricsBoundaryDelayMs(state, { nowMs });
-    if (delay === null) return;
+    const cue = snapshot.value.wordCue;
+    const position =
+      playbackPositionMs(state, nowMs) + (state.lyrics?.offsetMs ?? 0);
+    const edge =
+      cue && state.playback?.status === 'playing'
+        ? [cue.startMs, cue.endMs].find((ms) => ms > position)
+        : null;
+    const delays = [
+      nextLyricsBoundaryDelayMs(state, { nowMs }),
+      Number.isFinite(edge)
+        ? Math.max(1, Math.ceil((edge - position) / (state.playback.rate || 1)))
+        : null,
+    ].filter(Number.isFinite);
+    if (!delays.length) return;
+    const delay = Math.min(...delays);
     boundaryTimer = setTimeout(() => {
       clockNow.value = Date.now();
       scheduleBoundary();

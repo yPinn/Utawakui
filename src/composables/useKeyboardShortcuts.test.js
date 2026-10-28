@@ -1,7 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createSSRApp, h, nextTick } from 'vue';
-import { renderToString } from '@vue/server-renderer';
+import { h, nextTick, ref } from 'vue';
+import { mount } from '../components/ui/uiTestHost.js';
 import { useAppView } from './useAppView.js';
+
+const commands = vi.hoisted(() => ({
+  canExecute: vi.fn(),
+  execute: vi.fn(),
+  invalidate: vi.fn(),
+  dispose: vi.fn(),
+}));
+const createCommands = vi.hoisted(() => vi.fn(() => commands));
+vi.mock('./useShortcutCommands.js', () => ({
+  useShortcutCommands: createCommands,
+}));
 
 const player = vi.hoisted(() => ({
   state: { volume: 0.5, transposeSemitones: 0, tempoRate: 1 },
@@ -22,9 +33,17 @@ vi.mock('./useObsIntegration.js', () => ({
 }));
 
 let keydownListener;
+let mountedShortcuts;
 
 beforeEach(() => {
   keydownListener = null;
+  createCommands.mockClear();
+  commands.canExecute.mockReset().mockReturnValue(true);
+  commands.execute
+    .mockReset()
+    .mockResolvedValue({ ok: true, status: 'executed' });
+  commands.invalidate.mockClear();
+  commands.dispose.mockClear();
   addMarkerMock.mockClear();
   requestHistoryTraversal.mockClear();
   Object.assign(player.state, {
@@ -50,6 +69,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  mountedShortcuts?.app.unmount();
+  mountedShortcuts = null;
   vi.unstubAllGlobals();
   useAppView().openLibraryContent();
 });
@@ -59,17 +80,114 @@ async function setupShortcuts(options) {
   appView.openLibraryContent();
   const { useKeyboardShortcuts } = await import('./useKeyboardShortcuts.js');
 
-  await renderToString(
-    createSSRApp({
-      setup() {
-        useKeyboardShortcuts(options);
-        return () => h('div');
-      },
-    }),
-  );
+  mountedShortcuts = mount({
+    setup() {
+      useKeyboardShortcuts(options);
+      return () => h('div');
+    },
+  });
 
   return appView;
 }
+
+const customConfig = () => ({
+  schemaVersion: 1,
+  globalEnabled: false,
+  bindings: [
+    {
+      command: 'player.next',
+      app: {
+        mode: 'custom',
+        chord: { key: 'j', ctrl: true, alt: false, shift: false },
+      },
+      global: null,
+    },
+  ],
+});
+
+describe('custom command dispatcher', () => {
+  it('removes the listener and invalidates its owner exactly once on unmount', async () => {
+    const config = ref(customConfig());
+    await setupShortcuts({ shortcutConfiguration: config });
+    dispatchKey('j', { ctrlKey: true });
+    const current = commands.execute.mock.calls[0][1].isCurrent;
+    mountedShortcuts.app.unmount();
+    mountedShortcuts = null;
+    expect(commands.dispose).toHaveBeenCalledOnce();
+    expect(window.removeEventListener).toHaveBeenCalledWith(
+      'keydown',
+      keydownListener,
+    );
+    expect(current()).toBe(false);
+    dispatchKey('j', { ctrlKey: true });
+    expect(commands.execute).toHaveBeenCalledTimes(1);
+  });
+  it('keeps legacy defaults without constructing the custom executor', async () => {
+    await setupShortcuts();
+    expect(createCommands).not.toHaveBeenCalled();
+    dispatchKey('ArrowUp', { ctrlKey: true, repeat: true });
+    expect(player.setTransposeSemitones).toHaveBeenCalledWith(1);
+  });
+  it('executes exactly one candidate only when its owner can execute, preventing default only after acceptance', async () => {
+    await setupShortcuts({ shortcutConfiguration: customConfig() });
+    expect(dispatchKey('j', { ctrlKey: true })).toHaveBeenCalledOnce();
+    expect(commands.execute).toHaveBeenCalledWith(
+      'player.next',
+      expect.objectContaining({ isCurrent: expect.any(Function) }),
+    );
+    commands.canExecute.mockReturnValue(false);
+    expect(dispatchKey('j', { ctrlKey: true })).not.toHaveBeenCalled();
+    expect(commands.execute).toHaveBeenCalledTimes(1);
+  });
+  it('yields custom commands to native widgets, repeat, IME, handled input and transient overlays', async () => {
+    let blocked = false;
+    await setupShortcuts({
+      shortcutConfiguration: customConfig(),
+      getShortcutContext: () => ({ blocked }),
+    });
+    for (const extra of [
+      { target: { tagName: 'INPUT' } },
+      { target: { tagName: 'BUTTON' } },
+      { repeat: true },
+      { defaultPrevented: true },
+      { isComposing: true },
+      { getModifierState: () => true },
+    ])
+      expect(
+        dispatchKey('j', { ctrlKey: true, ...extra }),
+      ).not.toHaveBeenCalled();
+    blocked = true;
+    expect(dispatchKey('j', { ctrlKey: true })).not.toHaveBeenCalled();
+    expect(commands.execute).not.toHaveBeenCalled();
+  });
+  it('blocks all dispatch while recording, without silently changing legacy overlay policy', async () => {
+    let recording = true;
+    await setupShortcuts({
+      shortcutConfiguration: customConfig(),
+      getShortcutContext: () => ({ recording, blocked: true }),
+    });
+    expect(dispatchKey('m')).not.toHaveBeenCalled();
+    expect(player.toggleMute).not.toHaveBeenCalled();
+    recording = false;
+    dispatchKey('m');
+    expect(player.toggleMute).toHaveBeenCalledOnce();
+  });
+  it('invalidates old mappings on immutable configuration replacement and falls back to the legacy baseline on invalid schema', async () => {
+    const config = ref(customConfig());
+    await setupShortcuts({ shortcutConfiguration: config });
+    dispatchKey('j', { ctrlKey: true });
+    const current = commands.execute.mock.calls[0][1].isCurrent;
+    expect(current()).toBe(true);
+    config.value = { ...customConfig(), bindings: [] };
+    expect(current()).toBe(false);
+    expect(commands.invalidate).toHaveBeenCalledTimes(2);
+    expect(dispatchKey('j', { ctrlKey: true })).not.toHaveBeenCalled();
+    config.value = { schemaVersion: 100 };
+    expect(dispatchKey('j', { ctrlKey: true })).not.toHaveBeenCalled();
+    dispatchKey('ArrowUp', { ctrlKey: true });
+    expect(player.setTransposeSemitones).toHaveBeenCalledWith(1);
+  });
+});
 
 function dispatchKey(key, modifiers = {}) {
   const preventDefault = vi.fn();

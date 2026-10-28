@@ -123,6 +123,12 @@ const { registerWaveformHandlers } = require('./main/waveformHandlers');
 const { createLibraryTrackSnapshot } = require('./main/libraryTrackSnapshot');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
+const {
+  registerKeyboardShortcutHandlers,
+} = require('./main/keyboardShortcutHandlers');
+const {
+  createKeyboardShortcutSettingsStore,
+} = require('./lib/keyboardShortcutSettings');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
 const {
   registerExternalNavigationHandlers,
@@ -1524,6 +1530,15 @@ if (!gotSingleInstanceLock) {
         appUpdateService.setAutoCheckEnabled(enabled),
       applyWindowCloseBehavior: (behavior) =>
         windowsTrayController.setCloseBehavior(behavior),
+    });
+
+    registerKeyboardShortcutHandlers({
+      ipcMain,
+      getMainWindow: windowState.getMainWindow,
+      store: createKeyboardShortcutSettingsStore({
+        userDataDirectory: app.getPath('userData'),
+      }),
+      recordDiagnostic,
     });
 
     registerFeatureGateHandlers({

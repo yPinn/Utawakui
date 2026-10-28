@@ -21,18 +21,18 @@ const modeMessages = {
   idle: '尚未播放曲目',
   'no-lyrics': '目前曲目沒有可顯示的歌詞',
   unsynced: '目前歌詞沒有時間軸',
-  waiting: '等待下一句',
 };
 </script>
 
 <template>
   <section ref="host" class="performer-cue-stack" aria-live="polite">
-    <p v-if="fittedFrame.mode !== 'live'" class="performer-cue-stack__state">
+    <p v-if="!fittedFrame.currentLine" class="performer-cue-stack__state">
       {{ modeMessages[fittedFrame.mode] }}
     </p>
     <PerformerLyricCue
       :line="fittedFrame.currentLine"
       :reading="fittedFrame.currentReading"
+      :word-cue="fittedFrame.currentWordCue"
       current
     />
     <PerformerLyricCue

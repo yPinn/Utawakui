@@ -54,6 +54,64 @@ function snapshot() {
 }
 
 describe('performer snapshot contract', () => {
+  it('accepts an optional active word cue and preserves old snapshots without it', () => {
+    const value = snapshot();
+    value.wordCue = {
+      lineIndex: 0,
+      from: 1,
+      to: 3,
+      startMs: 1100,
+      endMs: 1800,
+    };
+    expect(parsePerformerSnapshot(value).wordCue).toEqual(value.wordCue);
+    delete value.wordCue;
+    expect(parsePerformerSnapshot(value)).not.toHaveProperty('wordCue');
+  });
+  it.each([
+    { lineIndex: 1 },
+    { lineIndex: -1 },
+    { from: -1 },
+    { from: 1.5 },
+    { to: 5000 },
+    { to: 0 },
+    { startMs: 500 },
+    { endMs: 4000 },
+    { endMs: 1100 },
+    { path: 'private' },
+    { endMs: Number.MAX_SAFE_INTEGER },
+  ])('rejects invalid or foreign word cue fields %j', (changes) => {
+    const value = snapshot();
+    value.wordCue = {
+      lineIndex: 0,
+      from: 0,
+      to: 1,
+      startMs: 1100,
+      endMs: 1800,
+      ...changes,
+    };
+    expect(() => parsePerformerSnapshot(value)).toThrow('wordCue');
+  });
+  it('rejects a stale track, inactive line, or a range splitting a grapheme', () => {
+    const value = snapshot();
+    value.wordCue = {
+      lineIndex: 0,
+      from: 1,
+      to: 2,
+      startMs: 1100,
+      endMs: 1800,
+    };
+    value.state.lyrics.lines[0].text = '𝄞A';
+    value.readings.lines = [null];
+    expect(() => parsePerformerSnapshot(value)).toThrow('wordCue');
+    value.wordCue.from = 0;
+    value.wordCue.to = 2;
+    value.state.lyrics.activeLineIndex = -1;
+    expect(() => parsePerformerSnapshot(value)).toThrow('wordCue');
+    value.state.lyrics.activeLineIndex = 0;
+    value.state.lyrics.trackId = 'other';
+    value.readings.trackId = 'other';
+    expect(() => parsePerformerSnapshot(value)).toThrow();
+  });
   it.each([
     { availableVariants: ['off', 'off'] },
     { availableVariants: ['unexpected'] },

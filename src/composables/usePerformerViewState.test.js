@@ -28,6 +28,41 @@ function snapshot(revision) {
 }
 
 describe('usePerformerViewState', () => {
+  it('expires a word cue on the existing boundary timer without waiting for another snapshot', async () => {
+    vi.useFakeTimers();
+    try {
+      const now = Date.now();
+      bridge.getSnapshot.mockResolvedValue({
+        state: {
+          revision: 10,
+          generatedAt: new Date(now).toISOString(),
+          playback: {
+            status: 'playing',
+            positionMs: 1500,
+            rate: 1,
+            track: { id: 'a' },
+          },
+          lyrics: {
+            trackId: 'a',
+            synced: true,
+            offsetMs: 0,
+            activeLineIndex: 0,
+            lines: [{ text: 'AB', startMs: 1000, endMs: 6000 }],
+          },
+        },
+        wordCue: { lineIndex: 0, from: 0, to: 1, startMs: 1000, endMs: 1800 },
+      });
+      const owner = usePerformerViewState();
+      for (const mount of lifecycle.mounted) await mount();
+      expect(owner.frame.value.currentWordCue).toEqual({ from: 0, to: 1 });
+      await vi.advanceTimersByTimeAsync(302);
+      expect(owner.frame.value.currentWordCue).toBeNull();
+      expect(owner.frame.value.currentLine.text).toBe('AB');
+    } finally {
+      for (const unmount of lifecycle.unmounted) unmount();
+      vi.useRealTimers();
+    }
+  });
   let bridge;
   let snapshotListener;
   let windowStateListener;

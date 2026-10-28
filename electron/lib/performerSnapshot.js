@@ -6,6 +6,7 @@ const outputValues = require('../../shared/outputContractValues.json');
 const {
   isPerformerReadingVariant,
   normalizePerformerReadingVariant,
+  parsePerformerWordCue,
 } = require('../../shared/performerViewContract.mjs');
 
 const MAX_TEXT_LENGTH = 2000;
@@ -198,9 +199,11 @@ function parsePerformerSnapshot(value) {
   if (state.displayDelayMs !== 0) {
     invalid('state.displayDelayMs', 'must be 0 for local self-view');
   }
+  const wordCue = parsePerformerWordCue(snapshot.wordCue, state);
   return {
     version: performerValues.stateVersion,
     state,
+    ...(wordCue ? { wordCue } : {}),
     adjustments: parseAdjustments(snapshot.adjustments),
     readings: parseReadings(snapshot.readings, state.lyrics),
     controls: parseControls(snapshot.controls),

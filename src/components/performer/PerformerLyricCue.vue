@@ -1,15 +1,29 @@
 <script setup>
 import { computed } from 'vue';
+import { lyricsCueTextGroups } from '../../utils/lyricsCueText.js';
 
 const props = defineProps({
   line: { type: Object, default: null },
   reading: { type: Object, default: null },
   current: { type: Boolean, default: false },
+  wordCue: { type: Object, default: null },
 });
 
-const hasRuby = computed(() =>
-  props.reading?.segments?.some((segment) => segment.reading),
-);
+const groups = computed(() => {
+  const text = props.line?.text ?? '',
+    cue = props.current ? props.wordCue : null;
+  const chunks = cue
+    ? [
+        { text: text.slice(0, cue.from), state: 'past' },
+        { text: text.slice(cue.from, cue.to), state: 'active' },
+        { text: text.slice(cue.to), state: 'upcoming' },
+      ]
+    : [{ text, state: 'upcoming' }];
+  return lyricsCueTextGroups(
+    { text, chunks },
+    props.reading?.segments?.map((s) => ({ t: s.text, r: s.reading })),
+  );
+});
 </script>
 
 <template>
@@ -20,16 +34,18 @@ const hasRuby = computed(() =>
     :data-cue-priority="current ? 'primary' : 'secondary'"
   >
     <p class="performer-lyric-cue__text">
-      <template v-if="hasRuby">
-        <ruby
-          v-for="(segment, index) in reading.segments"
-          :key="`${index}-${segment.text}`"
-        >
-          {{ segment.text
-          }}<rt v-if="segment.reading">{{ segment.reading }}</rt>
-        </ruby>
-      </template>
-      <template v-else>{{ line.text }}</template>
+      <component
+        :is="group.reading ? 'ruby' : 'span'"
+        v-for="group in groups"
+        :key="group.from"
+      >
+        <span
+          v-for="part in group.parts"
+          :key="part.from"
+          :class="{ 'performer-lyric-cue__word--active': part.cue }"
+          >{{ part.text }}</span
+        ><rt v-if="group.reading">{{ group.reading }}</rt>
+      </component>
     </p>
     <p v-if="reading?.romaji" class="performer-lyric-cue__reading">
       <span v-if="reading.romajiScope === 'line'">整句讀音：</span
@@ -49,6 +65,12 @@ const hasRuby = computed(() =>
 .performer-lyric-cue__reading {
   margin: 0;
   overflow-wrap: anywhere;
+}
+.performer-lyric-cue__word--active {
+  text-decoration: underline;
+  text-decoration-color: var(--ui-color-accent);
+  text-underline-offset: 0.15em;
+  text-decoration-skip-ink: none;
 }
 
 .performer-lyric-cue__text {

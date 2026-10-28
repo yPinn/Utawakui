@@ -182,8 +182,8 @@ describe('Performer renderer Token v2 cutover', () => {
     }
     expect(nextTrackSource).toContain('<footer v-if="track"');
     expect(nextTrackSource).not.toContain('未排定');
-    expect(cueSource).toContain('<ruby');
-    expect(cueSource).toContain('<rt v-if="segment.reading">');
+    expect(cueSource).toContain("group.reading ? 'ruby' : 'span'");
+    expect(cueSource).toContain('<rt v-if="group.reading">');
     expect(cueSource).toContain('reading?.romaji');
     expect(surfaceSource).toContain('container-name: performer-surface');
     expect(syncControlsSource).toContain("$emit('action', 'delay')");

@@ -20,6 +20,7 @@ import {
   LocateFixed,
   Ellipsis,
   Info,
+  Play,
 } from '../../icons/index.js';
 import UiPopover from '../ui/UiPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -47,12 +48,13 @@ const props = defineProps({
   timingDisabled: { type: Boolean, default: true },
   editContext: { type: Object, default: null },
   previewTiming: { type: Function, default: null },
+  playbackTarget: { type: Object, default: null },
   offsetMs: { type: Number, default: 0 },
   positionMs: { type: Number, default: null },
   isPlaying: { type: Boolean, default: false },
   samplePlaybackClock: { type: Function, default: null },
 });
-const emit = defineEmits(['set-boundary']);
+const emit = defineEmits(['set-boundary', 'seek-line', 'play-line']);
 const waveform = useLyricsWaveform({
   trackId: () => props.trackId,
   sourceKey: () => props.sourceKey,
@@ -196,6 +198,21 @@ const {
   invalid: boundaryInvalid,
   active: boundaryDragging,
 } = boundaryDrag;
+const canNavigateLine = computed(() =>
+  Boolean(
+    open.value &&
+    referenceActive.value &&
+    overview.value &&
+    !clearing.value &&
+    !boundaryDragging.value &&
+    props.playbackTarget,
+  ),
+);
+function navigateLine(mode) {
+  if (!canNavigateLine.value || !['seek', 'play'].includes(mode)) return false;
+  emit(mode === 'seek' ? 'seek-line' : 'play-line');
+  return true;
+}
 const overviewBox = computed(() =>
   durationMs.value > 0
     ? {
@@ -330,15 +347,28 @@ const focusedRange = computed(
 );
 const boundaryHandles = computed(() =>
   boundaryEditing.value
-    ? ['start', 'end'].flatMap((kind) => {
+    ? ['start', 'end', 'move'].flatMap((kind) => {
         // Keep hit targets at the unchanged draft endpoints during a preview:
         // pointer capture owns the gesture; the solid range shows its candidate.
-        const value = props.draftLine[kind === 'start' ? 'startMs' : 'endMs'];
+        const line = props.draftLine;
+        const value =
+          kind === 'move'
+            ? line.endMs === null
+              ? line.startMs
+              : (line.startMs + line.endMs) / 2
+            : line[kind === 'start' ? 'startMs' : 'endMs'];
         const media = value - props.offsetMs;
+        const position =
+          kind === 'move' && line.endMs !== null
+            ? Math.max(fromMs.value, Math.min(toMs.value, media))
+            : media;
         if (
-          !Number.isSafeInteger(value) ||
-          media < fromMs.value ||
-          media > toMs.value ||
+          !boundaryDrag.available(kind) ||
+          !Number.isFinite(value) ||
+          (kind === 'move' && line.endMs !== null
+            ? line.endMs - props.offsetMs < fromMs.value ||
+              line.startMs - props.offsetMs > toMs.value
+            : media < fromMs.value || media > toMs.value) ||
           media < 0 ||
           media > durationMs.value ||
           toMs.value <= fromMs.value
@@ -347,8 +377,9 @@ const boundaryHandles = computed(() =>
         return [
           {
             kind,
-            label: kind === 'start' ? '句首' : '句尾',
-            left: `clamp(0px, calc(${((media - fromMs.value) / (toMs.value - fromMs.value)) * 100}% - 12px), calc(100% - 24px))`,
+            label:
+              kind === 'move' ? '平移整句' : kind === 'start' ? '句首' : '句尾',
+            left: `clamp(0px, calc(${((position - fromMs.value) / (toMs.value - fromMs.value)) * 100}% - 12px), calc(100% - 24px))`,
           },
         ];
       })
@@ -645,6 +676,21 @@ const noticeLabel = computed(
             <span v-if="focusedRange.unknownEnd">句尾未定</span>
             <span v-if="focusedRange.outside">超出原媒體</span>
           </template>
+          <span v-if="playbackTarget?.usesSeparatedAudio">目前混音</span>
+          <UiIconButton
+            :icon="LocateFixed"
+            label="定位句首"
+            :title="`${draftLine ? '草稿' : '已存'}句首：保留播放／暫停狀態`"
+            :disabled="!canNavigateLine"
+            @click="navigateLine('seek')"
+          />
+          <UiIconButton
+            :icon="Play"
+            label="從句首播放"
+            :title="`從${draftLine ? '草稿' : '已存'}句首播放：${playbackTarget?.usesSeparatedAudio ? '目前伴奏／導唱混音，波形仍是原音訊' : '目前原音訊'}`"
+            :disabled="!canNavigateLine"
+            @click="navigateLine('play')"
+          />
         </div>
         <div class="lyrics-waveform__axis" aria-hidden="true">
           <span
@@ -673,7 +719,7 @@ const noticeLabel = computed(
                 ? `${rangeLabel} 原音訊峰值、能量與句級範圍`
                 : '原音訊波形，尚無可用摘要'
             "
-            aria-description="拖移波形可瀏覽；編輯中以起／迄把手調整草稿，不修改播放位置。"
+            aria-description="拖移波形可瀏覽；編輯中以起／迄把手調整端點，以移把手平移整句草稿，不修改播放位置。"
             :class="{ 'lyrics-waveform__dragging': dragKind === 'detail' }"
             @pointerdown="startDrag($event, 'detail')"
             @pointermove="moveDrag"
@@ -821,7 +867,13 @@ const noticeLabel = computed(
             @pointercancel.stop="boundaryDrag.cancel"
             @lostpointercapture.stop="boundaryDrag.cancel"
             @keydown="boundaryDrag.key($event, handle.kind)"
-            >{{ handle.kind === 'start' ? '起' : '迄' }}</UiButton
+            >{{
+              handle.kind === 'move'
+                ? '移'
+                : handle.kind === 'start'
+                  ? '起'
+                  : '迄'
+            }}</UiButton
           >
         </div>
         <div class="lyrics-waveform__notice">
@@ -946,9 +998,9 @@ const noticeLabel = computed(
   pointer-events: none;
 }
 .lyrics-waveform__sentence {
-  block-size: 1.5rem;
+  block-size: var(--ui-control-height);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--ui-space-2);
   margin-block-end: var(--ui-space-2);
   font-size: var(--ui-type-caption-size);
@@ -1001,6 +1053,9 @@ const noticeLabel = computed(
 }
 .lyrics-waveform__boundary--end {
   bottom: 0;
+}
+.lyrics-waveform__boundary--move {
+  top: calc(50% - 12px);
 }
 .lyrics-waveform__notice {
   block-size: 2rem;

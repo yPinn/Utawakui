@@ -131,6 +131,19 @@ export function usePerformerLyricsFit(source, host, onBoundary, options = {}) {
         page.sourceStart,
         page.sourceEnd,
       ),
+      currentWordCue:
+        original.currentWordCue &&
+        original.currentWordCue.from < page.sourceEnd &&
+        original.currentWordCue.to > page.sourceStart
+          ? {
+              from:
+                Math.max(original.currentWordCue.from, page.sourceStart) -
+                page.sourceStart,
+              to:
+                Math.min(original.currentWordCue.to, page.sourceEnd) -
+                page.sourceStart,
+            }
+          : null,
       nextLine: null,
       nextReading: null,
       displayFit: {

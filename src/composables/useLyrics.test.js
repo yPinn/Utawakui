@@ -309,6 +309,9 @@ describe('useLyrics', () => {
         'lyricsTextVariant',
         'lyricsTiming',
         'playFromLine',
+        'timingPlaybackTarget',
+        'seekTimingPosition',
+        'playTimingPosition',
         'playbackState',
         'positionedLineIndex',
         'probeMusixmatch',
@@ -329,6 +332,7 @@ describe('useLyrics', () => {
         'setLyricsTextVariant',
         'setSourceLabel',
         'setTrackScope',
+        'sourceSession',
         'state',
         'timingReview',
         'tracksById',
@@ -1641,6 +1645,107 @@ describe('useLyrics', () => {
 
     expect(seekMock).not.toHaveBeenCalled();
     expect(playTrackMock).not.toHaveBeenCalled();
+  });
+
+  it('positions timing drafts without playing and explicitly auditions through the current player with offset once', async () => {
+    const lyrics = await loadLyrics();
+    const session = lyrics.lyricsTiming.value.sourceSession;
+    playerState.isPlaying = false;
+    playerState.tempoRate = 1.5;
+    lyrics.adjustOffset(0.5);
+    await vi.waitFor(() =>
+      expect(lyrics.state.offsetSave.isSaving).toBe(false),
+    );
+    expect(lyrics.timingPlaybackTarget(12500, session)?.positionSeconds).toBe(
+      12,
+    );
+    expect(lyrics.seekTimingPosition(12500, session)).toBe(true);
+    expect(seekMock).toHaveBeenCalledExactlyOnceWith(12);
+    expect(playMock).not.toHaveBeenCalled();
+    expect(playerState.isPlaying).toBe(false);
+    await lyrics.playTimingPosition(12500, session);
+    expect(playMock).toHaveBeenCalledOnce();
+    expect(playTrackMock).not.toHaveBeenCalled();
+    lyrics.adjustOffset(-1);
+    await vi.waitFor(() =>
+      expect(lyrics.state.offsetSave.isSaving).toBe(false),
+    );
+    playerState.isPlaying = true;
+    await lyrics.playTimingPosition(12500, session);
+    expect(seekMock).toHaveBeenLastCalledWith(13);
+    expect(playMock).toHaveBeenCalledOnce(); // playing seek has no redundant resume
+  });
+
+  it('refuses timing navigation for stale sources, pending starts, different tracks and media bounds without clamping or queue changes', async () => {
+    const lyrics = await loadLyrics();
+    const session = lyrics.lyricsTiming.value.sourceSession;
+    for (const value of [-1, NaN, 120001, 1.5]) {
+      expect(lyrics.seekTimingPosition(value, session)).toBe(false);
+    }
+    lyrics.adjustOffset(0.5);
+    await vi.waitFor(() =>
+      expect(lyrics.state.offsetSave.isSaving).toBe(false),
+    );
+    expect(lyrics.seekTimingPosition(100, session)).toBe(false);
+    lyrics.resetOffset();
+    await vi.waitFor(() =>
+      expect(lyrics.state.offsetSave.isSaving).toBe(false),
+    );
+    playerState.pendingStartTrackId = trackB.id;
+    expect(await lyrics.playTimingPosition(12000, session)).toBe(false);
+    playerState.pendingStartTrackId = null;
+    playerState.track = trackB;
+    expect(await lyrics.playTimingPosition(12000, session)).toBe(false);
+    playerState.track = trackA;
+    const unregister = (
+      await import('./usePlaybackTransport.js')
+    ).registerPlaybackArrangement({ state: { busy: true } });
+    expect(lyrics.seekTimingPosition(12000, session)).toBe(false);
+    unregister();
+    expect(lyrics.seekTimingPosition(12000, { ...session, id: 'stale' })).toBe(
+      false,
+    );
+    expect(
+      lyrics.seekTimingPosition(12000, { ...session, timingRevision: 'stale' }),
+    ).toBe(false);
+    setLyricsSourceOffsetMock.mockRejectedValueOnce(new Error('failed'));
+    lyrics.adjustOffset(0.1);
+    expect(lyrics.seekTimingPosition(12000, session)).toBe(false);
+    await vi.waitFor(() => expect(lyrics.state.offsetSave.error).toBeTruthy());
+    expect(await lyrics.playTimingPosition(12000, session)).toBe(false);
+    expect(seekMock).not.toHaveBeenCalled();
+    expect(playMock).not.toHaveBeenCalled();
+    expect(playTrackMock).not.toHaveBeenCalled();
+  });
+  it('uses the loaded original or existing separated mix without changing the route, and rejects a stale media URL', async () => {
+    const lyrics = await loadLyrics();
+    const session = lyrics.lyricsTiming.value.sourceSession;
+    listTracksMock.mockResolvedValueOnce([
+      {
+        ...trackA,
+        hasSeparation: true,
+        stemsUrl: 'utawakui-media://track/track-a/stems.wav',
+      },
+    ]);
+    await lyrics.refresh();
+    await vi.waitFor(() => expect(lyrics.state.isLoadingLyrics).toBe(false));
+    expect(
+      lyrics.timingPlaybackTarget(12000, session)?.usesSeparatedAudio,
+    ).toBe(false);
+    playerState.track = {
+      ...trackA,
+      usesSeparatedAudio: true,
+      url: 'utawakui-media://track/track-a/stems.wav',
+    };
+    expect(
+      lyrics.timingPlaybackTarget(12000, session)?.usesSeparatedAudio,
+    ).toBe(true);
+    playerState.track = {
+      ...trackA,
+      url: 'utawakui-media://track/track-a/old.wav',
+    };
+    expect(lyrics.seekTimingPosition(12000, session)).toBe(false);
+    expect(seekMock).not.toHaveBeenCalled();
   });
 
   it('leaves the selected track alone when the playing track stops matching any lyrics track', async () => {

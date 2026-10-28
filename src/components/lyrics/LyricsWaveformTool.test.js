@@ -154,7 +154,11 @@ it('offers handles only for an unlocked active draft and emits one intent withou
   expect(vm.boundaryHandles).toEqual([]);
   instance.props.timingDisabled = false;
   await nextTick();
-  expect(vm.boundaryHandles.map((h) => h.kind)).toEqual(['start', 'end']);
+  expect(vm.boundaryHandles.map((h) => h.kind)).toEqual([
+    'start',
+    'end',
+    'move',
+  ]);
   const target = {
     closest: () => ({ getBoundingClientRect: () => ({ width: 500 }) }),
     setPointerCapture: vi.fn(),
@@ -192,6 +196,95 @@ it('offers handles only for an unlocked active draft and emits one intent withou
   expect(commits).toHaveBeenCalledOnce();
   expect(vm.boundaryPreview).toBeNull();
   expect(vm.boundaryHandles).toEqual([]);
+});
+it('offers a distinct whole-line handle only for a visible, media-bounded draft and cancels it on revalidation', async () => {
+  const props = app._instance.subTree.component.props;
+  props.document = {
+    lines: [{ lineId: 'a', text: 'phrase', startMs: 3000, endMs: 5000 }],
+  };
+  props.draftLine = props.document.lines[0];
+  props.focusLineId = 'a';
+  props.timingDisabled = false;
+  props.previewTiming = vi.fn((kind, delta) =>
+    kind === 'move'
+      ? { ...props.draftLine, startMs: 3000 + delta, endMs: 5000 + delta }
+      : null,
+  );
+  await nextTick();
+  expect(vm.boundaryHandles.find((h) => h.kind === 'move')).toMatchObject({
+    label: '平移整句',
+  });
+  const event = (x) => ({
+    button: 0,
+    pointerId: 1,
+    clientX: x,
+    preventDefault: vi.fn(),
+    currentTarget: {
+      closest: () => ({ getBoundingClientRect: () => ({ width: 500 }) }),
+      setPointerCapture: vi.fn(),
+      hasPointerCapture: () => false,
+    },
+  });
+  vm.boundaryDrag.begin(event(100), 'move');
+  vm.boundaryDrag.move(event(125));
+  expect(vm.boundaryPreview.startMs).toBe(3500);
+  state.owner.overview.value = { durationSec: 21.3, mediaRevision: 'new' };
+  vm.boundaryDrag.finish(event(125));
+  expect(vm.boundaryPreview).toBeNull();
+  expect(props.draftLine.startMs).toBe(3000);
+  props.draftLine = { ...props.draftLine, endMs: 22000 };
+  await nextTick();
+  expect(vm.boundaryHandles.some((h) => h.kind === 'move')).toBe(false);
+  props.draftLine = { ...props.draftLine, endMs: null };
+  await nextTick();
+  expect(vm.boundaryHandles.some((h) => h.kind === 'move')).toBe(true);
+  await vm.navigate(1);
+  expect(vm.boundaryHandles.some((h) => h.kind === 'move')).toBe(false);
+});
+it('keeps explicit seek and play separate and refuses stale, hidden or mid-gesture navigation', async () => {
+  const instance = app._instance.subTree.component;
+  const seek = vi.fn(),
+    play = vi.fn();
+  instance.vnode.props.onSeekLine = seek;
+  instance.vnode.props.onPlayLine = play;
+  expect(vm.navigateLine('seek')).toBe(false);
+  instance.props.playbackTarget = {
+    positionSeconds: 3,
+    usesSeparatedAudio: true,
+  };
+  await nextTick();
+  expect(vm.navigateLine('seek')).toBe(true);
+  expect(seek).toHaveBeenCalledOnce();
+  expect(play).not.toHaveBeenCalled();
+  expect(vm.navigateLine('play')).toBe(true);
+  expect(play).toHaveBeenCalledOnce();
+  instance.props.draftLine = { lineId: 'line', startMs: 3000, endMs: 5000 };
+  instance.props.previewTiming = vi.fn();
+  instance.props.timingDisabled = false;
+  await nextTick();
+  vm.boundaryDrag.begin(
+    {
+      button: 0,
+      pointerId: 1,
+      clientX: 100,
+      preventDefault: vi.fn(),
+      currentTarget: {
+        closest: () => ({ getBoundingClientRect: () => ({ width: 500 }) }),
+        setPointerCapture: vi.fn(),
+        hasPointerCapture: () => false,
+      },
+    },
+    'move',
+  );
+  expect(vm.navigateLine('seek')).toBe(false);
+  expect(vm.navigateLine('play')).toBe(false);
+  vm.boundaryDrag.cancel();
+  state.owner.overview.value = null;
+  expect(vm.navigateLine('seek')).toBe(false);
+  state.owner.open.value = false;
+  expect(vm.navigateLine('play')).toBe(false);
+  expect(seek).toHaveBeenCalledOnce();
+  expect(play).toHaveBeenCalledOnce();
 });
 it('moves a persistent reference panel by pointer or keyboard within the viewport and resets on closure', async () => {
   let left = 255,

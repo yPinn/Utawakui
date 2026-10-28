@@ -2,6 +2,41 @@ import { describe, expect, it } from 'vitest';
 import { projectPerformerSnapshot } from './performerSnapshot.js';
 
 describe('projectPerformerSnapshot', () => {
+  it.each(['t2', 'acoustic-estimate'])(
+    'projects only the existing %s active word with bounded source coordinates',
+    (timingSource) => {
+      const input = {
+        player: { track: { id: 'a' } },
+        lyrics: {
+          trackId: 'a',
+          source: { filename: 'a.lrc' },
+          activeLineIndex: 0,
+          lines: [{ lineId: 'l', text: 'AB CD', start: 1, end: 4 }],
+          wordFrame: {
+            lineId: 'l',
+            text: 'AB CD',
+            timingSource,
+            chunks: [
+              { text: 'AB', startMs: 1000, endMs: 2000, state: 'past' },
+              { text: ' CD', startMs: 2200, endMs: 4000, state: 'active' },
+            ],
+          },
+        },
+      };
+      expect(projectPerformerSnapshot(input).wordCue).toEqual({
+        lineIndex: 0,
+        from: 2,
+        to: 5,
+        startMs: 2200,
+        endMs: 4000,
+      });
+      input.lyrics.wordFrame.chunks[1].cueActive = false;
+      expect(projectPerformerSnapshot(input)).not.toHaveProperty('wordCue');
+      input.lyrics.wordFrame.chunks[1].cueActive = true;
+      input.lyrics.wordFrame.text = 'stale';
+      expect(projectPerformerSnapshot(input)).not.toHaveProperty('wordCue');
+    },
+  );
   it.each(['off', 'furigana', 'romaji'])(
     'projects the shared reading preference %s',
     (variant) => {

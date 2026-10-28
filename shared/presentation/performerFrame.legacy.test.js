@@ -74,8 +74,8 @@ describe('selectPerformerFrame legacy snapshots', () => {
       }),
     ).toMatchObject({
       mode: 'waiting',
-      currentLine: null,
-      nextLine: { text: 'first' },
+      currentLine: { text: 'first' },
+      nextLine: { text: 'second' },
     });
   });
 

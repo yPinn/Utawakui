@@ -1,4 +1,11 @@
-import { nextTick, onUnmounted } from 'vue';
+import {
+  nextTick,
+  onUnmounted,
+  readonly,
+  shallowRef,
+  toValue,
+  watch,
+} from 'vue';
 import { useObsIntegration } from './useObsIntegration.js';
 import { useAppView } from './useAppView.js';
 import { usePlayer } from './usePlayer.js';
@@ -6,6 +13,8 @@ import { isEditableTarget } from '../utils/dom.js';
 import { isAppDestination } from '../utils/appDestinationRegistry.js';
 import { focusAppDestinationTrigger } from '../utils/appDestinationFocus.js';
 import { requestHistoryTraversal } from './useNavigationInput.js';
+import { useShortcutCommands } from './useShortcutCommands.js';
+import { hasOpenTransientOverlay } from '../utils/transientOverlay.js';
 import {
   createKeyboardBindings,
   resolveKeyboardBinding,
@@ -23,7 +32,11 @@ const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.
 const TEMPO_STEP = 0.05;
 
-export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
+export function useKeyboardShortcuts({
+  internalViewShortcuts = {},
+  shortcutConfiguration,
+  getShortcutContext = () => ({}),
+} = {}) {
   const { isSettingsView, openSettings, setActiveView } = useAppView();
   const {
     state,
@@ -34,7 +47,33 @@ export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
     setTempoRate,
   } = usePlayer();
   const { addMarker: addObsMarker } = useObsIntegration();
-  const bindings = createKeyboardBindings({ internalViewShortcuts });
+  const baseline = createKeyboardBindings({ internalViewShortcuts });
+  const bindings = shallowRef(baseline);
+  const configurationError = shallowRef(null);
+  const commands =
+    shortcutConfiguration === undefined ? null : useShortcutCommands();
+  let registryRevision = 0,
+    disposed = false;
+  const stopConfiguration = commands
+    ? watch(
+        () => toValue(shortcutConfiguration),
+        (configuration) => {
+          registryRevision++;
+          commands.invalidate();
+          try {
+            bindings.value = createKeyboardBindings({
+              internalViewShortcuts,
+              shortcutConfiguration: configuration,
+            });
+            configurationError.value = null;
+          } catch {
+            bindings.value = baseline;
+            configurationError.value = 'invalid-shortcut-configuration';
+          }
+        },
+        { immediate: true, flush: 'sync' },
+      )
+    : null;
 
   function adjustVolume(delta) {
     const next = Math.min(1, Math.max(0, state.volume + delta));
@@ -92,17 +131,40 @@ export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
   };
 
   function handleKeydown(event) {
-    const binding = resolveKeyboardBinding(event, bindings);
+    if (disposed) return;
+    const suppliedContext = getShortcutContext();
+    if (suppliedContext.recording) return;
+    const context = {
+      ...suppliedContext,
+      blocked: suppliedContext.blocked || hasOpenTransientOverlay(),
+    };
+    const binding = resolveKeyboardBinding(event, bindings.value, context);
     if (!binding) return;
     if (binding.skipIfHandled && event.defaultPrevented) return;
     if (binding.editable === 'ignore' && isEditableTarget(event.target)) return;
+    if (binding.custom && !commands?.canExecute(binding.id)) return;
     if (binding.preventDefault) event.preventDefault();
     if (binding.noRepeat && event.repeat) return;
-    if (binding.history) requestHistoryTraversal(binding.history);
+    if (binding.custom) {
+      const revision = registryRevision;
+      void commands
+        .execute(binding.id, {
+          isCurrent: () => !disposed && revision === registryRevision,
+        })
+        .catch(() => {});
+    } else if (binding.history) requestHistoryTraversal(binding.history);
     else if (binding.view) openView(binding.view);
     else actions[binding.id]?.();
   }
 
   window.addEventListener('keydown', handleKeydown);
-  onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+  function dispose() {
+    if (disposed) return;
+    disposed = true;
+    stopConfiguration?.();
+    commands?.dispose();
+    window.removeEventListener('keydown', handleKeydown);
+  }
+  onUnmounted(dispose);
+  return { configurationError: readonly(configurationError), dispose };
 }

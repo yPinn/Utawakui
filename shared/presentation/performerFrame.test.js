@@ -165,9 +165,67 @@ describe('selectPerformerFrame', () => {
       }),
     ).toMatchObject({
       mode: 'waiting',
-      currentLine: null,
-      nextLine: { text: 'first' },
+      currentLine: { text: 'first' },
+      nextLine: { text: 'second' },
     });
+  });
+
+  it('holds the positioned lyric through gaps and after the final end without claiming active singing', () => {
+    const value = snapshot();
+    value.state.playback.status = 'paused';
+    value.state.lyrics.offsetMs = 0;
+    value.state.lyrics.lines[1].startMs = 4000;
+    value.state.lyrics.lines[1].endMs = 5000;
+    value.state.playback.positionMs = 3000;
+    expect(selectPerformerFrame(value)).toMatchObject({
+      mode: 'waiting',
+      currentLine: { text: 'first' },
+      nextLine: { text: 'second' },
+      currentWordCue: null,
+    });
+    value.state.playback.positionMs = 6000;
+    expect(selectPerformerFrame(value)).toMatchObject({
+      currentLine: { text: 'second' },
+      nextLine: null,
+      currentWordCue: null,
+    });
+    value.state.lyrics.synced = false;
+    value.state.lyrics.activeLineIndex = -1;
+    expect(selectPerformerFrame(value)).toMatchObject({
+      mode: 'unsynced',
+      currentLine: { text: 'first' },
+      nextLine: { text: 'second' },
+    });
+    value.state.lyrics.trackId = 'other';
+    expect(selectPerformerFrame(value)).toMatchObject({
+      mode: 'no-lyrics',
+      currentLine: null,
+      nextLine: null,
+    });
+  });
+
+  it('uses only a matching, currently valid word cue and clears it on gaps, seek and track changes', () => {
+    const value = snapshot();
+    value.state.playback.status = 'paused';
+    value.state.playback.positionMs = 1500;
+    value.state.lyrics.offsetMs = 0;
+    value.wordCue = {
+      lineIndex: 0,
+      from: 0,
+      to: 3,
+      startMs: 1000,
+      endMs: 1800,
+    };
+    expect(selectPerformerFrame(value).currentWordCue).toEqual({
+      from: 0,
+      to: 3,
+    });
+    value.state.playback.positionMs = 1900;
+    expect(selectPerformerFrame(value).currentWordCue).toBeNull();
+    value.state.playback.positionMs = 2200;
+    expect(selectPerformerFrame(value).currentWordCue).toBeNull();
+    value.state.lyrics.trackId = 'other';
+    expect(selectPerformerFrame(value).currentWordCue).toBeNull();
   });
 
   it('distinguishes idle, missing lyrics, and unsynced lyrics', () => {

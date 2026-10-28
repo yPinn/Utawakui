@@ -31,6 +31,7 @@ export {
   GalleryVerticalEnd,
   GripVertical,
   Grid2X2,
+  Keyboard,
   Headphones,
   Heart,
   ImagePlus,

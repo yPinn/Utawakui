@@ -1,5 +1,109 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERFORMANCE_SETTINGS_DEFAULTS as profileDefaults } from '../../shared/performanceSettings.mjs';
+vi.mock('./useLyrics.js', () => ({ useLyrics: vi.fn() }));
+vi.mock('./usePlaybackTransport.js', () => ({ usePlaybackTransport: vi.fn() }));
+
+it('passes a caller scope barrier through the existing transpose application', async () => {
+  const { usePlayer } = await import('./usePlayer.js');
+  const player = usePlayer();
+  const applied = await player.setTransposeSemitones(1, {
+    isCurrent: () => false,
+  });
+  expect(applied.ok).toBe(false);
+  expect(applied.status).toBe('cancelled');
+});
+
+it('cancels a real player pre-start through shortcut toggle without replaying its late handoff', async () => {
+  const player = await loadPlayer();
+  await player.playTrack({
+    id: 'one',
+    url: 'utawakui-media://track/one/audio.webm',
+  });
+  player.pause();
+  const gate = createDeferred(),
+    entered = vi.fn(() => gate.promise);
+  player.registerBeforePlaybackStart(entered);
+  const { useShortcutCommandExecutor } =
+    await import('./useShortcutCommands.js');
+  const commands = useShortcutCommandExecutor({
+    player,
+    transport: { arrangementBusy: { value: false } },
+    lyrics: {},
+  });
+  const count = MockAudio.latest.play.mock.calls.length;
+  const play = commands.execute('player.play-pause');
+  await vi.waitFor(() => expect(entered).toHaveBeenCalled());
+  expect(player.state.pendingStartTrackId).toBe('one');
+  expect((await commands.execute('player.play-pause')).ok).toBe(true);
+  gate.resolve(true);
+  expect((await play).ok).toBe(false);
+  expect(MockAudio.latest.play).toHaveBeenCalledTimes(count);
+  expect(player.state.isPlaying).toBe(false);
+  commands.dispose();
+});
+
+it('starts immediately from a real practice gap through shortcut Play, retaining the practice owner', async () => {
+  const player = await loadPlayer();
+  await player.playTrack({
+    id: 'one',
+    url: 'utawakui-media://track/one/audio.webm',
+  });
+  player.pause();
+  const audio = MockAudio.latest;
+  audio.paused = true;
+  audio.duration = 10;
+  audio.readyState = 4;
+  audio.seekable = { length: 1, start: () => 0, end: () => 10 };
+  let position = 0;
+  Object.defineProperty(audio, 'currentTime', {
+    get: () => position,
+    set: (value) => {
+      position = value;
+      queueMicrotask(() => audio.dispatch('seeked'));
+    },
+  });
+  audio.play.mockImplementation(async () => {
+    audio.paused = false;
+    audio.dispatch('play');
+  });
+  audio.pause.mockImplementation(() => {
+    audio.paused = true;
+    audio.dispatch('pause');
+  });
+  audio.dispatch('loadedmetadata');
+  const { usePlayerPracticeRuntime } =
+    await import('./player/usePlayerPracticeRuntime.js');
+  const practice = usePlayerPracticeRuntime({
+    player,
+    acquireHold: () => ({ release: vi.fn() }),
+    visibility: null,
+  });
+  const { useShortcutCommandExecutor } =
+    await import('./useShortcutCommands.js');
+  const commands = useShortcutCommandExecutor({
+    player,
+    transport: { arrangementBusy: { value: false } },
+    lyrics: {},
+  });
+  try {
+    practice.setRange(0.5, 1);
+    practice.setGap(20);
+    expect(await practice.enable()).toBe(true);
+    await player.play();
+    position = 1;
+    audio.dispatch('timeupdate');
+    await vi.waitFor(() => expect(practice.state.phase).toBe('gap'));
+    expect(player.state.isPlaying).toBe(false);
+    expect((await commands.execute('player.play-pause')).ok).toBe(true);
+    expect(practice.state.enabled).toBe(true);
+    expect(practice.state.phase).toBe('armed');
+    expect(player.state.isPlaying).toBe(true);
+  } finally {
+    commands.dispose();
+    practice.dispose();
+    player.pause();
+  }
+});
 
 // Mirrors signalsmith-stretch's real behavior (confirmed by reading the
 // package source, see ADR 0019): the AudioWorklet module-registration

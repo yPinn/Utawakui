@@ -671,14 +671,17 @@ export function usePlayerAudioGraph({
     });
   }
 
-  function setTransposeSemitones(semitones) {
-    return applyAudioControls({
-      ...controlValues(),
-      transposeSemitones: clamp(
-        Math.round(semitones),
-        TRANSPOSE_SEMITONES_RANGE,
-      ),
-    });
+  function setTransposeSemitones(semitones, options) {
+    return applyAudioControls(
+      {
+        ...controlValues(),
+        transposeSemitones: clamp(
+          Math.round(semitones),
+          TRANSPOSE_SEMITONES_RANGE,
+        ),
+      },
+      options,
+    );
   }
 
   function setPitchCents(cents) {

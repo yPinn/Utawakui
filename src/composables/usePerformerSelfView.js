@@ -23,7 +23,7 @@ import { usePlayer } from './usePlayer.js';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
-const { state: playerState, play, pause } = usePlayer();
+const { state: playerState, play, pause, samplePlaybackClock } = usePlayer();
 const { state: queueState, upcomingTracks } = usePlaybackQueue();
 const {
   state: lyricsState,
@@ -31,6 +31,7 @@ const {
   selectedSource: lyricsSource,
   lyricLines,
   activeLineIndex,
+  localLyricsFrame,
   adjustOffset,
   resetOffset,
   retryOffsetSave,
@@ -151,6 +152,7 @@ function projectionInput() {
       source: lyricsSource.value,
       lines: lyricLines.value,
       activeLineIndex: activeLineIndex.value,
+      wordFrame: localLyricsFrame?.value,
       offsetSeconds: lyricsState.offsetSeconds,
       offsetSave: lyricsState.offsetSave,
     },
@@ -175,14 +177,20 @@ const projectedState = computed(() =>
 
 function currentSnapshot() {
   revision += 1;
-  const snapshot = {
-    ...projectedState.value,
-    state: {
-      ...projectedState.value.state,
-      revision,
-      generatedAt: new Date().toISOString(),
-    },
-  };
+  const input = projectionInput(),
+    sample = samplePlaybackClock?.();
+  const matched = sample?.trackId && sample.trackId === input.player.track?.id;
+  if (matched)
+    input.player = {
+      ...input.player,
+      currentTime: sample.positionMs / 1000,
+      tempoRate: sample.rate,
+      playbackPhase: sample.phase,
+    };
+  const snapshot = projectPerformerSnapshot(input, {
+    revision,
+    generatedAt: matched ? sample.sampledAt : new Date().toISOString(),
+  });
   publishedContexts.set(revision, currentLyricsContext());
   while (publishedContexts.size > MAX_PUBLISHED_CONTEXTS) {
     publishedContexts.delete(publishedContexts.keys().next().value);

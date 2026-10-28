@@ -6,6 +6,7 @@ import { useWindowsIntegrationSettings } from '../../composables/useWindowsInteg
 import SettingsSection from './SettingsSection.vue';
 import AppUpdateSettingsRow from './AppUpdateSettingsRow.vue';
 import WindowsBackgroundSettingsRow from './WindowsBackgroundSettingsRow.vue';
+import KeyboardShortcutSettingsBlock from './KeyboardShortcutSettingsBlock.vue';
 
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
@@ -34,6 +35,7 @@ onMounted(() => {
     title="應用程式"
     tabindex="-1"
   >
+    <KeyboardShortcutSettingsBlock />
     <WindowsBackgroundSettingsRow
       :behavior="windowsIntegrationSettings.windowCloseBehavior.value"
       :busy="windowsIntegrationSettings.preferenceBusy.value"

@@ -22,6 +22,10 @@
 
 ## 顯示層級
 
+同曲有可讀歌詞時直接以歌詞作主要內容，不以「等待下一句」取代。首句開始前預顯第一句與下一句，句間保留最近已到的句子，下一句起點才切換，末句結束後保留末句；T0 先顯示第一個可讀行，不自動製造時間。閱讀位置與實際演唱活動分開，保留文字不表示仍在唱；沒有曲目、來源不符或沒有可讀歌詞才顯示對應空狀態。
+
+目前詞只用靜態底線，不連續填色或累積劃線。主 renderer 重用 `useLyrics.localLyricsFrame` 的原生 T2／已套用 T1+ cue；沒有可靠時間、空白、fine evidence 的已知停頓與句間皆不標詞。`lyricsCueTextGroups` 與歌詞閱讀頁共用文字／讀音交界分組，保留原文及 ruby；一個時間詞可跨讀音區塊，沒有讀音不能補造逐字時間。容量分頁只裁切可見文字範圍，不重分詞長、改時間或以換行建立新時間。下一句保持純文字／讀音。
+
 Performer 是讀詞工具，不是資訊 dashboard。目前句是唯一高顯著層；目前讀音、下一句與下一句讀音以字級、字重與間距建立層次，資訊文字仍須在當下背景達到正常文字 4.5:1 或大字 3:1。次要資訊使用 `--ui-performer-secondary-foreground`，不以全域 subtle 色或 opacity 降低整區可讀性。次句假名在 near／desk／stage 使用 14／16／18px，獨立於目前句的 55% ruby 比例。曲名／藝人、播放狀態、Key／Tempo、同步微調與閱讀距離屬 quiet edge chrome，不得回復為與歌詞競爭的框狀 status chips、全寬分隔或裝飾 surface。
 
 控制仍須持續可見並保有完整 focus、disabled、saving、error 與 retry 狀態；低干擾不等於 hover-only 或隱藏功能。下一首等 optional context 只有真實資料存在時才渲染，不以「未排定」或空容器長期占位。
@@ -34,6 +38,8 @@ HTML audio element、`usePlayer`、`usePlaybackQueue` 與 `useLyrics` 保持唯�
 
 讀音顯示沿用歌詞頁的 `useLyricsReading.variant` session preference，不在提詞器另存一份。
 Snapshot 的 `readings.variant` 只接受 `off`、`furigana`、`romaji`；舊 snapshot 缺欄位時回退 `off`，main 拒絕其他已提供值。
+
+Snapshot 可選帶單一 `wordCue`：`lineIndex`、UTF-16 的 `from`／`to`、canonical `startMs`／`endMs`。Main 驗同曲、目前已發布行、完整 grapheme 邊界、非空白範圍、正長度整數時間及原行／時間上限，拒絕額外欄位；舊 snapshot 未帶此成員仍可讀。只傳目前 cue，不複製整份 timing、模型證據或 editor 草稿，不新增控制 IPC。每次發布使用既有 player sampler 的實際位置、phase、rate 與配對時間；提詞器沿原 snapshot clock 與同一個邊界 timer 在 cue 終點清除底線，晚到 snapshot 不延長舊詞。Pause 保留所在詞，seek／offset／來源變更按新投影重新判斷，不改播放或來源時間，也不將 T1+ 升格為 T2。
 Pure frame 對目前與下一句一併套用選項：關閉時不顯示讀音也不提示缺讀音，假名只提供 ruby，羅馬字只提供輔助文字行。
 切換時透過現有 snapshot publisher 更新已開啟的提詞器；關閉後重新開啟使用目前選項，閱讀距離與歌詞 offset 不受影響。
 

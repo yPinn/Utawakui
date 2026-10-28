@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { APP_DESTINATIONS } from './appDestinationRegistry.js';
+import { defaultShortcutConfiguration } from '../../shared/keyboardShortcutContract.mjs';
 import {
   createKeyboardBindings,
   createPointerBindings,
@@ -332,5 +333,176 @@ describe('pointer bindings', () => {
     ];
 
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('custom App binding candidates', () => {
+  const chord = (key, extra = {}) => ({
+    key,
+    ctrl: false,
+    alt: false,
+    shift: false,
+    ...extra,
+  });
+  const config = (bindings) => ({
+    schemaVersion: 1,
+    globalEnabled: false,
+    bindings,
+  });
+  const row = (command, app, global = null) => ({ command, app, global });
+  const custom = (value) => ({ mode: 'custom', chord: value });
+
+  it('keeps the entire legacy registry and its repeat policy for default configuration', () => {
+    const baseline = createKeyboardBindings({
+      internalViewShortcuts: INTERNAL_VIEWS,
+    });
+    const result = createKeyboardBindings({
+      internalViewShortcuts: INTERNAL_VIEWS,
+      shortcutConfiguration: defaultShortcutConfiguration(),
+    });
+    expect(result).toEqual(baseline);
+    expect(result.find((b) => b.id === 'player.transpose-up').noRepeat).toBe(
+      false,
+    );
+    expect(
+      resolveKeyboardBinding(
+        keyEvent('ArrowUp', { ctrlKey: true, repeat: true }),
+        result,
+      )?.id,
+    ).toBe('player.transpose-up');
+  });
+
+  it('replaces rather than duplicates a Key binding and makes explicit custom mappings strict', () => {
+    const bindings = createKeyboardBindings({
+      shortcutConfiguration: config([
+        row('player.transpose-up', custom(chord('J', { ctrl: true }))),
+      ]),
+    });
+    expect(bindings.filter((b) => b.id === 'player.transpose-up')).toHaveLength(
+      1,
+    );
+    expect(
+      resolveKeyboardBinding(keyEvent('ArrowUp', { ctrlKey: true }), bindings),
+    ).toBeNull();
+    expect(
+      resolveKeyboardBinding(keyEvent('J', { ctrlKey: true }), bindings),
+    ).toMatchObject({
+      id: 'player.transpose-up',
+      custom: true,
+      noRepeat: true,
+      skipIfHandled: true,
+      preventDefault: true,
+      shift: false,
+    });
+    for (const extra of [
+      { repeat: true },
+      { defaultPrevented: true },
+      { isComposing: true },
+      { keyCode: 229 },
+      { location: 3 },
+      { getModifierState: () => true },
+    ]) {
+      expect(
+        resolveKeyboardBinding(
+          keyEvent('J', { ctrlKey: true, ...extra }),
+          bindings,
+        ),
+      ).toBeNull();
+    }
+  });
+
+  it('frees a disabled original chord for exactly one new command, without binding desired global chords', () => {
+    const bindings = createKeyboardBindings({
+      shortcutConfiguration: config([
+        row('player.transpose-up', { mode: 'disabled' }),
+        row(
+          'player.next',
+          custom(chord('up', { ctrl: true })),
+          chord('j', { alt: true }),
+        ),
+      ]),
+    });
+    expect(bindings.some((b) => b.id === 'player.transpose-up')).toBe(false);
+    expect(
+      resolveKeyboardBinding(keyEvent('ArrowUp', { ctrlKey: true }), bindings)
+        ?.id,
+    ).toBe('player.next');
+    expect(
+      resolveKeyboardBinding(keyEvent('j', { altKey: true }), bindings),
+    ).toBeNull();
+    expect(
+      resolveKeyboardBinding(
+        keyEvent('ArrowUp', { ctrlKey: true, shiftKey: true }),
+        bindings,
+      )?.id,
+    ).toBe('player.tempo-up');
+  });
+
+  it('matches an explicitly assigned logical Space and aliases without changing legacy plain keys', () => {
+    const bindings = createKeyboardBindings({
+      shortcutConfiguration: config([
+        row('player.play-pause', custom(chord('Spacebar'))),
+      ]),
+    });
+    for (const key of [' ', 'Spacebar', 'Space'])
+      expect(resolveKeyboardBinding(keyEvent(key), bindings)?.id).toBe(
+        'player.play-pause',
+      );
+    expect(
+      resolveKeyboardBinding(keyEvent('M', { shiftKey: true }), bindings)?.id,
+    ).toBe('player.mute');
+  });
+
+  it('rejects fixed, wildcard and desired cross-scope conflicts before compiling', () => {
+    for (const value of [
+      config([row('player.next', custom(chord('m', { shift: true })))]),
+      config([
+        row('player.next', custom(chord('up', { ctrl: true, shift: true }))),
+      ]),
+      config([row('player.next', custom(chord('left', { alt: true })))]),
+      config([
+        row('player.next', custom(chord('j', { ctrl: true }))),
+        row('player.previous', { mode: 'default' }, chord('j', { ctrl: true })),
+      ]),
+    ])
+      expect(() =>
+        createKeyboardBindings({ shortcutConfiguration: value }),
+      ).toThrow('conflict');
+  });
+
+  it('yields custom candidates to the current input context while keeping the old registry policy', () => {
+    const bindings = createKeyboardBindings({
+      shortcutConfiguration: config([
+        row('player.next', custom(chord('j', { ctrl: true }))),
+      ]),
+    });
+    for (const target of [
+      { tagName: 'INPUT' },
+      { tagName: 'TEXTAREA' },
+      { tagName: 'SELECT' },
+      { isContentEditable: true },
+      { tagName: 'BUTTON' },
+    ]) {
+      expect(
+        resolveKeyboardBinding(
+          keyEvent('j', { ctrlKey: true, target }),
+          bindings,
+        ),
+      ).toBeNull();
+    }
+    for (const context of [{ recording: true }, { blocked: true }])
+      expect(
+        resolveKeyboardBinding(
+          keyEvent('j', { ctrlKey: true }),
+          bindings,
+          context,
+        ),
+      ).toBeNull();
+    expect(
+      resolveKeyboardBinding(
+        keyEvent('F2', { target: { tagName: 'INPUT' } }),
+        bindings,
+      )?.id,
+    ).toBe('view.performance');
   });
 });

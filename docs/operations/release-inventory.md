@@ -74,6 +74,14 @@ network install or signed-installer acceptance; see the
   allowlist and is bundled into renderer consumers. Adjacent tests are excluded;
   per-track `performance-settings.json` is library user data, never an installer
   asset. No new runtime dependency, worker or packaging location is introduced.
+- App shortcut settings: `electron/lib/keyboardShortcutSettings.js` and
+  `electron/main/keyboardShortcutHandlers.js` use the existing Main bundle;
+  fixed get/set intents use the main preload bundle. Pure
+  `shared/keyboardBindingDefinitions.mjs` and `keyboardShortcutContract.mjs`
+  enter the existing Main/renderer dependency closure and shared allowlist.
+  Settings/recording consumers are bundled in `dist/**/*`, adjacent tests remain
+  excluded, and `keyboard-shortcuts.json` is machine userData rather than a
+  packaged asset. No worker, external dependency or OS shortcut helper is added.
 - Lyrics timing source sessions and human receipts: `electron/lib/library/lyricsSourceSessions.js`,
   `lyricsTimingReview.js` and `lyricsTimingReviewStore.js`
   is included by the existing Main bundle dependency closure. The fixed lyrics

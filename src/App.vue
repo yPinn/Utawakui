@@ -41,6 +41,7 @@ import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
+import { useKeyboardShortcutSettings } from './composables/useKeyboardShortcutSettings.js';
 import { useNavigationHistory } from './composables/useNavigationHistory.js';
 import { useNavigationInput } from './composables/useNavigationInput.js';
 import { useFeedbackReport } from './composables/useFeedbackReport.js';
@@ -156,6 +157,8 @@ const playbackHistory = usePlaybackHistory();
 const performanceHistoryObserver = usePerformanceHistoryObserver();
 const playbackResume = usePlaybackResume();
 const audioPreferences = useAudioPreferences();
+const keyboardShortcutSettings = useKeyboardShortcutSettings();
+void keyboardShortcutSettings.initialize();
 audioPreferences.initialize();
 void Promise.allSettled([
   playbackResume.initialize(),
@@ -168,6 +171,7 @@ onUnmounted(() => {
   playbackHistory.dispose();
   performanceHistoryObserver.dispose();
   void audioPreferences.dispose();
+  keyboardShortcutSettings.dispose();
 });
 // Validate and stage the persisted capture device before playback. The capture
 // AudioContext itself stays closed until the first explicit play action.
@@ -440,7 +444,13 @@ const activeViewOwnsFolderPage = computed(() =>
   pageComposedFolderViews.has(activeView.value),
 );
 
-useKeyboardShortcuts({ internalViewShortcuts });
+useKeyboardShortcuts({
+  internalViewShortcuts,
+  shortcutConfiguration: keyboardShortcutSettings.configuration,
+  getShortcutContext: () => ({
+    recording: keyboardShortcutSettings.isRecording.value,
+  }),
+});
 </script>
 
 <template>

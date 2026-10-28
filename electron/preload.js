@@ -400,7 +400,55 @@ function bgmStandbyPositionIntent(value) {
   };
 }
 
+function keyboardShortcutSettingsIntent(input) {
+  const configuration = input?.configuration;
+  if (
+    !Array.isArray(configuration?.bindings) ||
+    configuration.bindings.length > 7 ||
+    !(
+      input.expectedRevision === null ||
+      (typeof input.expectedRevision === 'string' &&
+        /^[a-f0-9]{64}$/.test(input.expectedRevision))
+    )
+  )
+    return null;
+  const text = (value, max) =>
+    typeof value === 'string' && value.length <= max ? value : null;
+  const flag = (value) => (typeof value === 'boolean' ? value : null);
+  const chord = (value) =>
+    value === null
+      ? null
+      : {
+          key: text(value?.key, 12),
+          ctrl: flag(value?.ctrl),
+          alt: flag(value?.alt),
+          shift: flag(value?.shift),
+        };
+  return {
+    expectedRevision:
+      input.expectedRevision === null ? null : text(input.expectedRevision, 64),
+    configuration: {
+      schemaVersion: configuration.schemaVersion === 1 ? 1 : null,
+      globalEnabled: flag(configuration.globalEnabled),
+      bindings: configuration.bindings.map((binding) => ({
+        command: text(binding?.command, 64),
+        app:
+          binding?.app?.mode === 'custom'
+            ? { mode: 'custom', chord: chord(binding.app.chord) }
+            : { mode: text(binding?.app?.mode, 8) },
+        global: chord(binding?.global),
+      })),
+    },
+  };
+}
+
 contextBridge.exposeInMainWorld('Utawakui', {
+  getKeyboardShortcuts: () => ipcRenderer.invoke('keyboard-shortcuts:get'),
+  setKeyboardShortcuts: (input) =>
+    ipcRenderer.invoke(
+      'keyboard-shortcuts:set',
+      keyboardShortcutSettingsIntent(input),
+    ),
   startupTraceEnabled,
   recordStartupMilestone: (milestone) => {
     if (startupTraceEnabled) {
