@@ -104,7 +104,7 @@ export function useKeyboardShortcutRecorder({
       return saved;
     } catch {
       if (!disposed && request === serial)
-        state.error = '快捷鍵尚未確認儲存，請重試或取消。';
+        state.error = '快捷鍵尚未確認儲存，請再試一次或取消。';
       return false;
     } finally {
       if (request === serial) state.saving = false;

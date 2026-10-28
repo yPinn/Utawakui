@@ -457,7 +457,7 @@ const statusLabel = computed(() =>
         busy: '音訊工作正在收尾，請稍後再試。',
         cancelled: '讀取已取消',
         unavailable: '波形目前無法使用',
-        timeout: '讀取逾時，請重試。',
+        timeout: '讀取逾時，請再試一次。',
       }[status.value] ?? ''),
 );
 const noticeLabel = computed(
