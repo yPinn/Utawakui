@@ -43,7 +43,7 @@
 
 - 識別：[封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）
 - 效能與安全：[啟動與 Settings](engineering/startup-settings-profile-2026-10-18.md)、[Output 首幀](engineering/output-first-frame-profile-2026-10-18.md)、[BGM 啟動](engineering/bgm-startup-profile-2026-10-18.md)（10-18）、[依賴安全](engineering/dependency-security-review-2026-10-16.md)（10-16）
-- [診斷關聯 ID 提案](engineering/diagnostics-correlation-proposal-2026-10-28.md)（10-28）：IPC 失敗與長任務的 correlationId 現況、三種方案比較與分階段建議；未實作，待決策後修訂 ADR 0008。
+- [診斷關聯 ID 提案](engineering/diagnostics-correlation-proposal-2026-10-29.md)（10-29）：IPC 失敗、錯誤回報與長任務的 correlationId 現況與分階段建議；未實作，待決策後修訂 ADR 0008。
 - [防禦編程與發行防護檢查](engineering/defensive-security-review-2026-10-26.md)（10-26）：Windows 名稱／ZIP 邊界、獨立工具修補、fuse 實測及尚未啟用的更新簽章。
 - [正式 runtime 打包驗證](engineering/runtime-packaging-verification-2026-10-26.md)（10-26）：六個壓縮入口、三個自有 unpacked 檔、啟動／播放與四聲道輸出比對。
 - [輕量混淆候選評估](engineering/light-obfuscation-assessment-2026-10-26.md)與[第一批正式驗證](engineering/light-symbols-verification-2026-10-26.md)（10-26）：Main 兩個規則模組的私有符號轉換、實際 ASAR 邊界、播放與四聲道管線、兩輪各十冷／十暖交錯量測；第二批未啟用。
