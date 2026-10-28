@@ -27,12 +27,14 @@ export function useLyricsWaveform({
     prefetchJob = null,
     detailJob = null;
   let cancellation = Promise.resolve();
-  const reportFailure = () =>
+  // Read failures are tool state shown beside the waveform with its reload;
+  // only the explicit cache clear is a one-shot result for the shared notice.
+  const reportClearFailure = () =>
     notify({
       key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
       tone: 'danger',
-      title: '波形操作未完成',
-      message: '請稍後重新嘗試；歌詞與已保存的對時不受影響。',
+      title: '波形快取未清除',
+      message: '請再試一次；歌詞與已保存的對時不受影響。',
     });
   async function cancelPending() {
     const ids = [...pending];
@@ -165,23 +167,8 @@ export function useLyricsWaveform({
         ).value = result.summary;
         return true;
       }
-      if (!speculative && ['unavailable', 'timeout'].includes(status.value))
-        notify({
-          key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
-          tone: 'danger',
-          title: '波形無法讀取',
-          message: '請稍後重新讀取；歌詞與已保存的對時不受影響。',
-        });
     } catch {
-      if (current() && !speculative) {
-        status.value = 'unavailable';
-        notify({
-          key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
-          tone: 'danger',
-          title: '波形無法讀取',
-          message: '請稍後重新讀取。',
-        });
-      }
+      if (current() && !speculative) status.value = 'unavailable';
     } finally {
       pending.delete(requestId);
     }
@@ -300,11 +287,11 @@ export function useLyricsWaveform({
       if (id === serial && !disposed)
         status.value = result?.status === 'done' ? 'idle' : 'unavailable';
       if (id === serial && !disposed && status.value === 'unavailable')
-        reportFailure();
+        reportClearFailure();
     } catch {
       if (id === serial && !disposed) {
         status.value = 'unavailable';
-        reportFailure();
+        reportClearFailure();
       }
     } finally {
       if (id === serial) clearing.value = false;

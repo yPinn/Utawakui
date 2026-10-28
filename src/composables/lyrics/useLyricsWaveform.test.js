@@ -382,19 +382,35 @@ it('keeps only visible summaries, clears without regenerating or success notices
   await read;
   expect(f.notices).toEqual([]);
 });
-it('shows gate requirements locally and sends only current operational failure to shared notification', async () => {
+it('keeps read failures in the tool and notifies only a failed cache clear', async () => {
   const f = fixture();
   const opening = f.owner.setOpen(true);
   await tick();
   f.pending[0].resolve({ status: 'gate-disabled' });
   await opening;
   expect(f.owner.status.value).toBe('gate-disabled');
-  expect(f.notices).toEqual([]);
   const read = f.owner.reload();
   await tick();
   f.pending[1].resolve({ status: 'unavailable', diagnosticRecorded: true });
   await read;
+  expect(f.owner.status.value).toBe('unavailable');
+  const timedOut = f.owner.reload();
+  await tick();
+  f.pending[2].resolve({ status: 'timeout' });
+  await timedOut;
+  expect(f.owner.status.value).toBe('timeout');
+  f.api.readWaveform.mockRejectedValueOnce(new Error('private path'));
+  await f.owner.reload();
+  expect(f.owner.status.value).toBe('unavailable');
+  expect(f.notices).toEqual([]);
+
+  f.api.clearWaveform.mockRejectedValueOnce(new Error('private path'));
+  await f.owner.clear();
   expect(f.notices).toHaveLength(1);
+  expect(f.notices[0]).toMatchObject({
+    title: '波形快取未清除',
+    tone: 'danger',
+  });
   expect(f.notices[0].message).not.toContain('path');
   f.scope.stop();
 });
