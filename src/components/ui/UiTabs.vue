@@ -291,7 +291,7 @@ function moveFocus(item, event) {
   right: var(--ui-space-2);
   bottom: 0;
   left: var(--ui-space-2);
-  height: var(--ui-drag-indicator-width);
+  height: var(--ui-border-width-strong);
   border-radius: var(--ui-radius-pill) var(--ui-radius-pill) 0 0;
   background: currentColor;
 }

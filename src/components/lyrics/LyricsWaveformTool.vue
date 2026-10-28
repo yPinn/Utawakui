@@ -1150,7 +1150,7 @@ const noticeLabel = computed(
   border-block-start: var(--ui-border-width) solid var(--ui-color-warning);
 }
 .lyrics-waveform__legend .lyrics-waveform__legend-draft::before {
-  border-block-start: 2px solid var(--ui-color-accent);
+  border-block-start: var(--ui-border-width-strong) solid var(--ui-color-accent);
 }
 .lyrics-waveform__move {
   cursor: move;

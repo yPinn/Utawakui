@@ -217,6 +217,21 @@ describe('shared UI component token contract', () => {
     }
   });
 
+  it('keeps emphasis strokes off the focus-only width', () => {
+    const values = declarations(tokens);
+
+    expect(values.get('--ui-border-width-strong')).toBe('2px');
+    expect(values.get('--ui-drag-indicator-width')).toBe(
+      'var(--ui-border-width-strong)',
+    );
+    expect(componentSource('UiTabs.vue')).toContain(
+      'height: var(--ui-border-width-strong);',
+    );
+    expect(componentSource('range/UiRangeControl.vue')).toContain(
+      'border: var(--ui-border-width-strong) solid',
+    );
+  });
+
   it('keeps the Sidebar plate edge inset identical across expanded and compact', () => {
     const values = declarations(tokens);
 

@@ -111,7 +111,8 @@ describe('DemoCoreMinimums', () => {
       '--ui-font-size-sm: 0.875rem;',
       '--ui-font-size-md: 1rem;',
       '--ui-focus-width: 2px;',
-      '--ui-drag-indicator-width: 2px;',
+      '--ui-border-width-strong: 2px;',
+      '--ui-drag-indicator-width: var(--ui-border-width-strong);',
       '--ui-control-height-live: 2.75rem;',
       '--ui-control-height-emergency: 3rem;',
       '--ui-checkbox-size: var(--ui-space-4);',
@@ -170,7 +171,8 @@ describe('DemoCoreMinimums', () => {
       '--ui-track-row-thumb-size: var(--ui-track-artwork-size);',
       '--ui-player-bar-height: 4.75rem;',
       '--ui-focus-width: 2px;',
-      '--ui-drag-indicator-width: 2px;',
+      '--ui-border-width-strong: 2px;',
+      '--ui-drag-indicator-width: var(--ui-border-width-strong);',
     ]) {
       expect(tokenSource).toContain(source);
     }

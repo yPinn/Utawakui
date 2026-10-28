@@ -321,7 +321,7 @@ defineExpose({ focus });
       (var(--ui-range-track-size) - var(--ui-range-thumb-size)) / 2
     );
     appearance: none;
-    border: var(--ui-focus-width) solid var(--ui-range-thumb-border);
+    border: var(--ui-border-width-strong) solid var(--ui-range-thumb-border);
     border-radius: var(--ui-radius-pill);
     background: var(--ui-range-thumb);
     opacity: 0;

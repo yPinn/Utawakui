@@ -436,7 +436,7 @@ onUnmounted(() => {
 }
 
 .reference-editor__segment--active {
-  box-shadow: inset 0 0 0 var(--ui-focus-width) var(--ui-color-current);
+  box-shadow: inset 0 0 0 var(--ui-border-width-strong) var(--ui-color-current);
 }
 
 .reference-editor__segment--empty {

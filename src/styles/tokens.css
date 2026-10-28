@@ -146,8 +146,10 @@
 
   /* Exact optical boundaries are intentional px exceptions. */
   --ui-border-width: 1px;
+  /* Emphasis strokes: active rings, tab underlines, insert lines. */
+  --ui-border-width-strong: 2px;
   --ui-focus-width: 2px;
-  --ui-drag-indicator-width: 2px;
+  --ui-drag-indicator-width: var(--ui-border-width-strong);
   --ui-resize-handle-hit-size: var(--ui-space-3);
 
   /* Restrained shape scale: literal 0 is used for structural seams. */

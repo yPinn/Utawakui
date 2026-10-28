@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(554);
+    expect(uniqueNames.size).toBe(555);
     expect(uniqueNames).toContain('--ui-shell-workspace-min-inline-size');
     expect(uniqueNames).toContain('--ui-shell-layout-recovery-inline-size');
     expect(uniqueNames).toContain('--ui-shell-dock-inline-size');
@@ -514,7 +514,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(pxTokens).toEqual(
       [
         '--ui-border-width',
-        '--ui-drag-indicator-width',
+        '--ui-border-width-strong',
         '--ui-focus-offset',
         '--ui-focus-offset-inset',
         '--ui-focus-width',

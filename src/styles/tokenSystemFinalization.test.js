@@ -33,7 +33,7 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(554);
+    expect(names.size).toBe(555);
     expect(names).toContain('--ui-shell-workspace-min-inline-size');
     expect(names).toContain('--ui-shell-layout-recovery-inline-size');
     expect(names).toContain('--ui-shell-dock-inline-size');

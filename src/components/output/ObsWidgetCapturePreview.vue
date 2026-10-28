@@ -331,7 +331,7 @@ onBeforeUnmount(() => {
 .obs-widget-capture-preview__option--selected
   .obs-widget-capture-preview__frame {
   border-color: var(--ui-color-accent);
-  box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent-soft);
+  box-shadow: 0 0 0 var(--ui-border-width-strong) var(--ui-color-accent-soft);
 }
 
 .obs-widget-capture-preview__iframe {

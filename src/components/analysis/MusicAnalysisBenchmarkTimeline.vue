@@ -240,7 +240,7 @@ function seekTo(section) {
     color-mix(in srgb, var(--ui-color-surface) 45%, transparent) 5px,
     color-mix(in srgb, var(--ui-color-surface) 45%, transparent) 9px
   );
-  box-shadow: inset 0 0 0 2px var(--ui-color-warning);
+  box-shadow: inset 0 0 0 var(--ui-border-width-strong) var(--ui-color-warning);
 }
 
 .benchmark-timeline__playhead {

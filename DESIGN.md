@@ -554,15 +554,15 @@ These CSS-pixel equivalents assume a `16px` root and 100% Chromium zoom. Treat t
 
 The control panel is **rem-first, not rem-only**. Choose units by responsibility:
 
-| Responsibility                | Unit                       | Rule                                                                                                              |
-| ----------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Scalable product geometry     | `rem`                      | Typography, spacing, radius, control／row height, panel bounds, material thickness and CSS responsive thresholds. |
-| Exact optical boundaries      | `px`                       | One-pixel borders plus two-pixel focus, drag and state indicators that must stay optically crisp.                 |
-| Flexible layout tracks        | `%`, `fr`, `minmax()`      | Columns and proportions that respond to available container space.                                                |
-| Readable text measure         | `ch`／`ic`                 | Latin／CJK reading width where content measure matters.                                                           |
-| Line height                   | Unitless                   | Inherits proportionally from the owning text role.                                                                |
-| Electron window geometry      | DIP number                 | BrowserWindow bounds and screen coordinates passed through Electron APIs without a CSS unit suffix.               |
-| Raster source／canvas backing | Physical pixel calculation | Encoded image dimensions and backing-buffer fidelity, independent from CSS layout size.                           |
+| Responsibility                | Unit                       | Rule                                                                                                                                                |
+| ----------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scalable product geometry     | `rem`                      | Typography, spacing, radius, control／row height, panel bounds, material thickness and CSS responsive thresholds.                                   |
+| Exact optical boundaries      | `px`                       | `--ui-border-width` (1px), `--ui-border-width-strong` (2px emphasis: active rings, tab underlines, insert lines) and focus-only `--ui-focus-width`. |
+| Flexible layout tracks        | `%`, `fr`, `minmax()`      | Columns and proportions that respond to available container space.                                                                                  |
+| Readable text measure         | `ch`／`ic`                 | Latin／CJK reading width where content measure matters.                                                                                             |
+| Line height                   | Unitless                   | Inherits proportionally from the owning text role.                                                                                                  |
+| Electron window geometry      | DIP number                 | BrowserWindow bounds and screen coordinates passed through Electron APIs without a CSS unit suffix.                                                 |
+| Raster source／canvas backing | Physical pixel calculation | Encoded image dimensions and backing-buffer fidelity, independent from CSS layout size.                                                             |
 
 CSS responsive thresholds use `rem`; Electron window acceptance examples such as
 `960 × 650` are BrowserWindow DIP values, not media-query `px` tokens. CSS image slots
