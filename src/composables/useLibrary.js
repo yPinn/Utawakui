@@ -105,12 +105,34 @@ async function refresh(options) {
   }
 }
 
+// Each read is a full library scan in Main, so notices that land while one
+// runs fold into a single follow-up read instead of one scan per notice.
+let noticeRead = null;
+let pendingNotice = null;
+
+function onLibraryNotice(options) {
+  const allowBackfill = options?.allowProviderBackfill !== false;
+  pendingNotice = {
+    allowBackfill: Boolean(pendingNotice?.allowBackfill) || allowBackfill,
+  };
+  noticeRead ??= (async () => {
+    while (pendingNotice) {
+      const { allowBackfill: allow } = pendingNotice;
+      pendingNotice = null;
+      await refresh(allow ? undefined : { allowProviderBackfill: false });
+    }
+  })().finally(() => {
+    noticeRead = null;
+  });
+}
+
 function initialize() {
   if (initializationPromise) return initializationPromise;
   initializationPromise = (async () => {
     const playlistInitialization = initializePlaylists();
     if (typeof window !== 'undefined' && window.Utawakui) {
-      unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
+      unsubscribeLibraryUpdated ??=
+        window.Utawakui.onLibraryUpdated(onLibraryNotice);
     }
     const initialRead = refresh();
     // The latest read settles hydration independently of the requesting

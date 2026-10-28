@@ -256,6 +256,43 @@ describe('initial load', () => {
     expect(state.tracks).toEqual([{ id: 't2', title: 'Track 2' }]);
   });
 
+  it('folds notices that arrive during a read into one follow-up read', async () => {
+    await loadLibrary();
+    const inFlight = Promise.withResolvers();
+    listTracksMock.mockReturnValueOnce(inFlight.promise);
+
+    libraryUpdatedCallback({ allowProviderBackfill: false });
+    libraryUpdatedCallback({ allowProviderBackfill: false });
+    libraryUpdatedCallback({ allowProviderBackfill: false });
+    libraryUpdatedCallback({ allowProviderBackfill: false });
+    expect(listTracksMock).toHaveBeenCalledTimes(2);
+
+    inFlight.resolve([]);
+    await flushMicrotasks();
+    expect(listTracksMock).toHaveBeenCalledTimes(3);
+    expect(listTracksMock).toHaveBeenLastCalledWith({
+      allowProviderBackfill: false,
+    });
+
+    await flushMicrotasks();
+    expect(listTracksMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('lets a folded read backfill when any merged notice allowed it', async () => {
+    await loadLibrary();
+    const inFlight = Promise.withResolvers();
+    listTracksMock.mockReturnValueOnce(inFlight.promise);
+
+    libraryUpdatedCallback({ allowProviderBackfill: false });
+    libraryUpdatedCallback({ allowProviderBackfill: false });
+    libraryUpdatedCallback({ reason: 'metadata' });
+    inFlight.resolve([]);
+    await flushMicrotasks();
+
+    expect(listTracksMock).toHaveBeenCalledTimes(3);
+    expect(listTracksMock).toHaveBeenLastCalledWith();
+  });
+
   it('records a fetch error and clears it on the next successful fetch', async () => {
     listTracksMock.mockRejectedValueOnce(
       new Error('EACCES C:\\Users\\Singer\\Music\\private'),
