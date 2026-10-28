@@ -695,7 +695,7 @@ function reorderHeaderFromKeyboard(column, event) {
   position: absolute;
   z-index: var(--ui-layer-indicator);
   inset-block: var(--ui-space-2);
-  inline-size: var(--ui-focus-width);
+  inline-size: var(--ui-drag-indicator-width);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-accent);
   content: '';
