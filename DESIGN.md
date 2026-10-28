@@ -434,15 +434,19 @@ Radius decisions:
 | --------------------------------------------- | --------------- | --------- | --------------------------------------------------- |
 | Hairlines, progress tracks／fills             | `0.125rem`      | Spotify   | Keeps thin interactive marks crisp.                 |
 | Dense thumbnails, artwork, checkbox indicator | `0.25rem`       | Spotify   | Keeps compact inner objects precise.                |
-| Rows, buttons, inputs, menus                  | `0.375rem`      | Shared    | Default operational radius: friendly, not pillowy.  |
-| Modals, popovers, major panels                | `0.5rem`        | macOS     | Softens system surfaces without card-heavy styling. |
+| Rows, buttons, inputs, focus rings            | `0.375rem`      | Shared    | Default operational radius: friendly, not pillowy.  |
+| Modals, popovers, menus, major panels         | `0.5rem`        | macOS     | Softens system surfaces without card-heavy styling. |
 | Chips, transport toggles                      | `999rem`        | Spotify   | Pills are reserved for binary and status controls.  |
 | App icon                                      | platform-native | macOS     | Follows OS icon masks, not component radii.         |
 
-The Folder exterior perimeter／cover rail and major panels
-share the `0.5rem` large-surface radius. The nested neutral
+The Folder exterior perimeter／cover rail, the Sidebar, the Right Dock and other
+major panels share the `0.5rem` large-surface radius. The nested neutral
 Folder document may keep its smaller sheet radius; it must not change the visible
 four-corner contract of the colored exterior.
+
+Rows nested inside a padded container step down to `0.25rem` so their corners
+stay concentric: menu／listbox items and side-panel rows use the small radius.
+Circles use the pill token, not `50%`.
 
 Do not increase general UI cards beyond `0.5rem` (8 CSS px at the default root). If a
 surface wants more softness, use tone, spacing, or artwork rather than larger

@@ -78,7 +78,7 @@ const props = defineProps({
 .ui-skeleton--circle .ui-skeleton__shape {
   block-size: auto;
   aspect-ratio: 1;
-  border-radius: 50%;
+  border-radius: var(--ui-radius-pill);
 }
 
 @keyframes ui-skeleton-pulse {

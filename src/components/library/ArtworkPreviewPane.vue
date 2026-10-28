@@ -117,7 +117,7 @@ const previewTrack = computed(() =>
 .artwork-preview__thumb {
   align-self: center;
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-radius-sm);
 }
 
 .artwork-preview__actions {

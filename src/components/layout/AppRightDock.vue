@@ -61,7 +61,7 @@ function handleResizeKeydown(event) {
       'app-right-dock--performance': performance,
     }"
     tone="surface"
-    radius="sm"
+    radius="lg"
     stroke="inset"
     :style="rootStyle"
     :aria-label="expanded ? label : `${label}（已摺疊）`"

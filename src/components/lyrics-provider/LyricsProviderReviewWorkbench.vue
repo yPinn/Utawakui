@@ -170,7 +170,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   grid-template-rows: auto auto minmax(0, 1fr);
   overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-lg);
   background: var(--ui-color-canvas);
   -webkit-user-select: none;
   user-select: none;

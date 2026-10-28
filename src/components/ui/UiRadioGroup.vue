@@ -242,7 +242,7 @@ function select(item) {
   display: grid;
   place-items: center;
   border: var(--ui-border-width) solid var(--ui-color-control-boundary);
-  border-radius: 50%;
+  border-radius: var(--ui-radius-pill);
   background: var(--ui-field-bg);
 }
 
@@ -250,7 +250,7 @@ function select(item) {
   content: '';
   inline-size: var(--ui-radio-dot-size);
   block-size: var(--ui-radio-dot-size);
-  border-radius: 50%;
+  border-radius: var(--ui-radius-pill);
   background: var(--ui-color-accent);
   transform: scale(0);
   transition: transform var(--ui-motion-duration-feedback)

@@ -137,10 +137,9 @@ function handleResizeKeydown(event) {
   box-sizing: border-box;
   height: 100%;
   background: var(--ui-color-surface);
-  /* Matches AppFolderPage/TrackContextPanel's own --ui-radius-sm
-     card corners. Safe alongside the container-type below — unlike a real
-     border, radius doesn't change the content-box size. */
-  border-radius: var(--ui-radius-sm);
+  /* Shell panels (Sidebar, Folder, Right Dock) share the large radius. Safe
+     alongside the container-type below — radius doesn't change the content-box size. */
+  border-radius: var(--ui-radius-lg);
   /* An inset box-shadow, not a border — this element is also the size
      container query root below, and a real border shrinks its content-box
      just enough to falsely trigger the compact-mode @container rule at the

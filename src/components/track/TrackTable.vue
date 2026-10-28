@@ -681,7 +681,7 @@ function reorderHeaderFromKeyboard(column, event) {
 }
 
 .library-track-table__header-column--reorderable:focus-visible {
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
@@ -731,7 +731,7 @@ function reorderHeaderFromKeyboard(column, event) {
 }
 
 .library-track-table__sort:focus-visible {
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
