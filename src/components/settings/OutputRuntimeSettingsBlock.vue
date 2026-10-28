@@ -444,7 +444,7 @@ onMounted(() => {
 
 .output-runtime-settings-block__form {
   display: grid;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-3);
   padding-inline-start: var(--settings-copy-inset, 0);
 }
 

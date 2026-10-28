@@ -156,7 +156,7 @@ function failureLabel(track) {
 .import-execution-list__rows {
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-1);
+  gap: var(--ui-track-list-gap);
   margin: 0;
   padding: 0;
   list-style: none;

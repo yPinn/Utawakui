@@ -92,7 +92,7 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
 
 .separation-preparation-list__items {
   display: grid;
-  gap: var(--ui-space-1);
+  gap: var(--ui-track-list-gap);
   margin: 0;
   padding: 0;
   list-style: none;

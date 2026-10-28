@@ -99,7 +99,7 @@ function openTrackMenu(entry, payload) {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-1);
+  gap: var(--ui-track-list-gap);
   min-inline-size: 0;
   margin: 0;
   padding: 0;

@@ -130,7 +130,7 @@ function selectCandidate(candidateId) {
 }
 
 .review-candidates__empty {
-  padding: var(--ui-space-5);
+  padding: var(--ui-space-4);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   text-align: center;

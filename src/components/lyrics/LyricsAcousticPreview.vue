@@ -82,7 +82,7 @@ const timingLabel = computed(
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-3);
 }
 .lyrics-acoustic-preview__text {
   margin: 0;

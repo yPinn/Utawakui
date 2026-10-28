@@ -244,7 +244,7 @@ function handleTrackSelect(track) {
 
 .lyrics-track-picker__rows {
   display: grid;
-  gap: var(--ui-space-1);
+  gap: var(--ui-track-list-gap);
   margin: 0;
   padding: 0;
   list-style: none;

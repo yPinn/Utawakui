@@ -385,7 +385,7 @@ function previewLineHasTiming(line) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--ui-space-3);
+  gap: var(--ui-space-2);
   flex: 0 0 auto;
   max-inline-size: 100%;
 }

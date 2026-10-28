@@ -47,7 +47,7 @@ const resetLabel = computed(() => `恢復「${props.title}」預設`);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-3);
   --obs-property-section-label-block-size: calc(
     var(--ui-type-label-size) * var(--ui-type-label-line-height)
   );

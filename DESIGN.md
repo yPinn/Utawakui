@@ -1141,6 +1141,13 @@ Spacing and radius follow the same layered rule. `--ui-space-*` and `--ui-radius
 
 Promote a repeated combination into a semantic recipe only after two production consumers share the same intent or anatomy. A recipe should reduce ambiguity, not create a synonym for every primitive value.
 
+Shared spacing roles:
+
+- Lists of track rows use `--ui-track-list-gap`; Sidebar collections use `--ui-playlist-list-gap`.
+- Stacked form fields use `--ui-space-3` (`--ui-modal-section-gap` inside a Modal); a single input with its attached action uses `--ui-space-2`.
+- A title／actions header row uses `--ui-space-3`; action groups follow the Buttons grouping gap.
+- Empty states pad by scope: `--ui-space-6` for an empty workspace, `--ui-space-4` for a filtered list or panel, `--ui-space-3` for an inline hint.
+
 ### Text Intent Mapping
 
 Intent names describe what copy means in a component; they do not automatically become global type roles. Use the conventional role first, then add a component recipe only when a repeated anatomy needs a stable bundle.
