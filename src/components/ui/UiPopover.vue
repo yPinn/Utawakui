@@ -23,6 +23,7 @@ defineOptions({ inheritAttrs: false });
 const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
+  maximized: { type: Boolean, default: false },
   open: { type: Boolean, default: false },
   focusOnOpen: { type: Boolean, default: false },
   closeOnScroll: { type: Boolean, default: true },
@@ -70,7 +71,7 @@ const triggerProps = computed(() => ({
 }));
 
 function updatePosition() {
-  if (!props.open || typeof window === 'undefined') return;
+  if (!props.open || props.maximized || typeof window === 'undefined') return;
   const anchor = anchorRef.value?.getBoundingClientRect();
   const panel = panelRef.value?.getBoundingClientRect();
   if (!anchor || !panel) return;
@@ -93,6 +94,44 @@ function requestClose(reason) {
   emit('update:open', false);
   emit('close', reason);
   if (returnFocus?.focus) nextTick(() => returnFocus.focus());
+}
+function maximizedTabStops() {
+  return [
+    ...(panelRef.value?.querySelectorAll?.(
+      'button:not([disabled]), select:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href], summary, [tabindex]:not([tabindex="-1"])',
+    ) ?? []),
+  ].filter(
+    (node) =>
+      node.getClientRects?.().length && !node.closest?.('[inert], [hidden]'),
+  );
+}
+function handleMaximizedTab(event) {
+  if (
+    !props.maximized ||
+    event.key !== 'Tab' ||
+    event.defaultPrevented ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.metaKey
+  )
+    return;
+  const stops = maximizedTabStops(),
+    first = stops[0],
+    last = stops.at(-1),
+    active = globalThis.document?.activeElement;
+  if (!stops.length) {
+    event.preventDefault();
+    panelRef.value?.focus?.();
+    return;
+  }
+  if (
+    event.shiftKey
+      ? active === first || !stops.includes(active)
+      : active === last || !stops.includes(active)
+  ) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
 }
 
 function isRelatedFloatingSurface(target) {
@@ -163,6 +202,21 @@ function openPanel() {
 }
 
 watch(
+  () => props.maximized,
+  () =>
+    nextTick(() => {
+      updatePosition();
+      if (
+        props.maximized &&
+        !panelRef.value?.contains?.(globalThis.document?.activeElement)
+      )
+        (maximizedTabStops()[0] ?? panelRef.value)?.focus?.({
+          preventScroll: true,
+        });
+    }),
+  { flush: 'post' },
+);
+watch(
   () => props.open,
   (open) => {
     if (open) nextTick(openPanel);
@@ -218,7 +272,21 @@ onBeforeUnmount(() => {
       :aria-label="props.ariaLabel"
       :aria-modal="props.role === 'dialog' ? 'false' : undefined"
       :tabindex="focusOnOpen ? -1 : undefined"
-      :style="[props.panelStyle, position]"
+      :style="[
+        props.panelStyle,
+        position,
+        props.maximized
+          ? {
+              left: 'var(--ui-floating-viewport-inset)',
+              top: 'var(--ui-floating-viewport-inset)',
+              width: 'calc(100vw - 2 * var(--ui-floating-viewport-inset))',
+              height: 'calc(100vh - 2 * var(--ui-floating-viewport-inset))',
+              maxInlineSize: 'none',
+              translate: 'none',
+            }
+          : undefined,
+      ]"
+      @keydown="handleMaximizedTab"
     >
       <header v-if="$slots.header" class="ui-popover__header">
         <slot name="header" />

@@ -47,7 +47,7 @@ describe('AppRightDock', () => {
   it('mounts the resize hook only while the Dock is expanded', () => {
     expect(source).toContain('useAppRightDockWidth');
     expect(source).toMatch(
-      /<div\s+v-if="expanded"\s+class="app-right-dock__handle"/u,
+      /<div\s+v-if="expanded"\s+v-show="!props.maximized"\s+class="app-right-dock__handle"/u,
     );
     expect(source).toContain('role="separator"');
     expect(source).toContain('@pointerdown="dockWidth.startResize($event)"');

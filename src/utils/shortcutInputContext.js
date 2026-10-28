@@ -38,18 +38,23 @@ function ownsKeyboardInput(node) {
   return roles.some((role) => WIDGET_ROLES.has(role));
 }
 
-// Only the custom candidate path uses this policy. Legacy F/player/history
-// bindings keep their existing focus behavior until separately accepted.
+// Custom commands and the accepted default volume-arrow policy share these
+// ownership checks. Other legacy bindings keep their existing focus behavior.
 export function isShortcutInputBlocked(
   event,
-  { recording = false, blocked = false } = {},
+  { recording = false, blocked = false, includeFocusable = false } = {},
 ) {
   if (recording || blocked) return true;
+  const ownsInput = (node) =>
+    ownsKeyboardInput(node) ||
+    (includeFocusable &&
+      typeof node?.getAttribute === 'function' &&
+      node.getAttribute('tabindex') !== null);
   const path = event.composedPath?.() ?? [];
-  if (path.length > 128 || path.some(ownsKeyboardInput)) return true;
+  if (path.length > 128 || path.some(ownsInput)) return true;
   let node = event.target;
   for (let depth = 0; node; depth++) {
-    if (depth >= 128 || ownsKeyboardInput(node)) return true;
+    if (depth >= 128 || ownsInput(node)) return true;
     node = node.parentElement;
   }
   return false;

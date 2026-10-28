@@ -1906,6 +1906,31 @@ describe('main preload bridge', () => {
     ]);
   });
 
+  it('projects all ten shortcut rows and rejects an eleventh row independently of revision validation', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const { defaultShortcutConfiguration } =
+      await import('../shared/keyboardShortcutContract.mjs');
+    const configuration = defaultShortcutConfiguration();
+    await bridge.setKeyboardShortcuts({
+      expectedRevision: null,
+      configuration,
+    });
+    expect(
+      electron.ipcRenderer.invoke.mock.calls.at(-1)[1]?.configuration.bindings,
+    ).toHaveLength(10);
+    await bridge.setKeyboardShortcuts({
+      expectedRevision: null,
+      configuration: {
+        ...configuration,
+        bindings: [...configuration.bindings, configuration.bindings[0]],
+      },
+    });
+    expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
+      'keyboard-shortcuts:set',
+      null,
+    ]);
+  });
+
   it('shapes library storage policy without accepting paths or arbitrary limits', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 

@@ -79,7 +79,7 @@ network install or signed-installer acceptance; see the
   fixed get/set intents use the main preload bundle. Pure
   `shared/keyboardBindingDefinitions.mjs` and `keyboardShortcutContract.mjs`
   enter the existing Main/renderer dependency closure and shared allowlist.
-  Settings/recording consumers are bundled in `dist/**/*`, adjacent tests remain
+  Settings/recording consumers, the category/reference presentation and its ten-command catalog are bundled in `dist/**/*`, adjacent tests remain
   excluded, and `keyboard-shortcuts.json` is machine userData rather than a
   packaged asset. No worker, external dependency or OS shortcut helper is added.
 - Lyrics timing source sessions and human receipts: `electron/lib/library/lyricsSourceSessions.js`,

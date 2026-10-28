@@ -183,7 +183,7 @@ describe('App shell right Dock', () => {
   });
 
   it('keeps the collapsed restore action in flow while the allocator reclaims its bay', () => {
-    expect(source).toContain('<div class="shell__workspace">');
+    expect(source).toMatch(/<div\s[^>]*class="shell__workspace"[^>]*>/u);
     expect(source).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );

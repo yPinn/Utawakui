@@ -62,6 +62,28 @@ describe('custom shortcut input context', () => {
     expect(isShortcutInputBlocked({ target: element('DIV') })).toBe(false);
     expect(isShortcutInputBlocked({})).toBe(false);
   });
+  it('can yield directional defaults to focusable regions without changing custom modifier policy', () => {
+    const focusable = element('DIV', { tabindex: '0' });
+    expect(isShortcutInputBlocked({ target: focusable })).toBe(false);
+    expect(
+      isShortcutInputBlocked(
+        { target: element('SPAN', {}, focusable) },
+        { includeFocusable: true },
+      ),
+    ).toBe(true);
+    expect(
+      isShortcutInputBlocked(
+        { target: element(), composedPath: () => [element(), focusable] },
+        { includeFocusable: true },
+      ),
+    ).toBe(true);
+    expect(
+      isShortcutInputBlocked(
+        { target: element('DIV') },
+        { includeFocusable: true },
+      ),
+    ).toBe(false);
+  });
   it('blocks bounded-path overflow and malformed cyclic ancestry without hanging', () => {
     expect(
       isShortcutInputBlocked({ composedPath: () => Array(129).fill({}) }),

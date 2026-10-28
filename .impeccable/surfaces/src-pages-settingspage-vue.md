@@ -17,4 +17,10 @@ FIRST VIEWPORT: Folder destination tabs與外框保持固定；紙張標題、�
 
 FORM: Established Folder document的精確替換，依Owner指定直接採用`AppFolderPage` document composition；這是direct-owner方向，沒有concept-seed。互動只用既有控制狀態與必要的scroll-to-section，不加入裝飾性頁面動效。
 
+快捷鍵為此文件內的局部延伸：展開App快捷鍵後依播放控制、音訊調整、歌詞對時、操作說明四個Tab排序；沿UiTabs Bar、UiKbd與ledger列，前三類3／5／2命令、說明唯讀。原位錄製、候選套用／取消，更多收單列停用／預設，整組預設留末端；切分類取消未提交錄製。保持單文件捲動與既有明暗tokens，不形成Settings第二層分類導覽，也不在本輪放實體鍵盤圖或更換推薦預設。
+
+Owner 接受主工作區、右側面板與波形共用暫時放大／還原；它是一般並排幾何的明確例外，隱藏另一區但保留掛載及偏好。共通設定說明集中於「操作說明 → 設定方式」，不在前三類重複。固定面板操作仍用同一 UiKbd 參考列；既有 Folder、Popover、按鈕及 tokens 不改造。
+
+Owner修正：共通說明集中揭露，列內只留必要短句；功能／鍵組與狀態／操作分組，錄製獨立整列，以快捷鍵區自身container寬度換行。設定、候選與操作參考共用UiKbd鍵組，modifier組合保持完整；參考以UiDisclosure分類並分開情境、鍵組、動作，窄區堆疊，不將按鍵塞回敘述文字。
+
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

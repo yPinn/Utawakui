@@ -73,7 +73,7 @@ export function useKeyboardShortcutRecorder({
     event.preventDefault();
     if (['Control', 'Alt', 'Shift'].includes(event.key)) return;
     if (!chord) {
-      state.error = '這組按鍵未開放，請改用其他組合。';
+      state.error = '無法使用這組按鍵，請換一組。';
       return;
     }
     try {

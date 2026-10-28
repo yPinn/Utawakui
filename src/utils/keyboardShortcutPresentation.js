@@ -38,8 +38,8 @@ export function shortcutConflictMessage(error, command) {
       (item) => item.id === other,
     )?.label;
     return label
-      ? `與「${label}」的快捷鍵衝突，請改用其他組合。`
+      ? `這組按鍵已用於「${label}」，請換一組。`
       : '這組快捷鍵已被使用，請改用其他組合。';
   }
-  return '這組按鍵未開放，請改用其他組合。';
+  return '無法使用這組按鍵，請換一組。';
 }

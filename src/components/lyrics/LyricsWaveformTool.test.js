@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { nextTick, shallowRef } from 'vue';
 import LyricsWaveformTool from './LyricsWaveformTool.vue';
 import { mount } from '../ui/uiTestHost.js';
+import { usePanelView } from '../../composables/usePanelView.js';
 const state = vi.hoisted(() => ({ owner: null }));
 vi.mock('../../composables/lyrics/useLyricsWaveform.js', () => ({
   useLyricsWaveform: () => state.owner,
@@ -346,6 +347,179 @@ it('zooms to one second around the linked clock while keeping viewport requests 
   await vm.navigate(1);
   expect(vm.viewport).toEqual({ fromMs: 4500, toMs: 5500 });
   expect(state.owner.selectWindow).toHaveBeenLastCalledWith(0, 0);
+});
+const zoomKey = (key, extra = {}) => ({
+  key,
+  target: { tagName: 'DIV' },
+  preventDefault: vi.fn(),
+  stopPropagation: vi.fn(),
+  ...extra,
+});
+it('uses local =/- keys through the existing bounded zoom without transport or draft intents', async () => {
+  const instance = app._instance.subTree.component;
+  const boundary = vi.fn(),
+    seek = vi.fn(),
+    play = vi.fn();
+  Object.assign(instance.vnode.props, {
+    onSetBoundary: boundary,
+    onSeekLine: seek,
+    onPlayLine: play,
+  });
+  const first = zoomKey('=');
+  await vm.zoomWithKey(first);
+  expect(first.preventDefault).toHaveBeenCalledOnce();
+  expect(first.stopPropagation).toHaveBeenCalledOnce();
+  expect(vm.zoomIndex).toBe(1);
+  expect(vm.viewport).toEqual({ fromMs: 1500, toMs: 6500 });
+  await vm.zoomWithKey(zoomKey('='));
+  await vm.zoomWithKey(zoomKey('='));
+  await vm.zoomWithKey(zoomKey('='));
+  expect(vm.zoomIndex).toBe(3);
+  await vm.zoomWithKey(zoomKey('-'));
+  expect(vm.zoomIndex).toBe(2);
+  expect(boundary).not.toHaveBeenCalled();
+  expect(seek).not.toHaveBeenCalled();
+  expect(play).not.toHaveBeenCalled();
+});
+it('leaves text input, modifiers, IME, repeat, handled input and open menus alone', async () => {
+  for (const extra of [
+    { target: { tagName: 'INPUT' } },
+    { target: { tagName: 'TEXTAREA' } },
+    { target: { isContentEditable: true } },
+    { ctrlKey: true },
+    { altKey: true },
+    { metaKey: true },
+    { shiftKey: true },
+    { isComposing: true },
+    { keyCode: 229 },
+    { getModifierState: () => true },
+    { repeat: true },
+    { defaultPrevented: true },
+  ]) {
+    const event = zoomKey('=', extra);
+    expect(vm.zoomWithKey(event)).toBe(false);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(event.stopPropagation).not.toHaveBeenCalled();
+  }
+  const unrelated = zoomKey('g');
+  expect(vm.zoomWithKey(unrelated)).toBe(false);
+  vm.openMenu({ currentTarget: {} });
+  expect(vm.zoomWithKey(zoomKey('='))).toBe(false);
+  expect(vm.zoomIndex).toBe(0);
+  expect(state.owner.selectWindow).not.toHaveBeenCalled();
+});
+it('refuses local zoom after source invalidation, while clearing or closed, and cancels an uncommitted pan before zooming', async () => {
+  const overview = state.owner.overview.value;
+  state.owner.overview.value = null;
+  expect(vm.zoomWithKey(zoomKey('='))).toBe(false);
+  state.owner.overview.value = overview;
+  state.owner.clearing.value = true;
+  expect(vm.zoomWithKey(zoomKey('='))).toBe(false);
+  state.owner.clearing.value = false;
+  const target = {
+    getBoundingClientRect: () => ({ width: 500 }),
+    setPointerCapture: vi.fn(),
+    hasPointerCapture: () => true,
+    releasePointerCapture: vi.fn(),
+  };
+  const pointer = {
+    button: 0,
+    pointerId: 1,
+    clientX: 0,
+    preventDefault: vi.fn(),
+    currentTarget: target,
+  };
+  vm.startDrag(pointer, 'overview');
+  vm.moveDrag({ ...pointer, clientX: 100 });
+  expect(vm.dragKind).toBe('overview');
+  await vm.zoomWithKey(zoomKey('='));
+  expect(vm.dragKind).toBeNull();
+  expect(target.releasePointerCapture).toHaveBeenCalledWith(1);
+  expect(vm.viewport).toEqual({ fromMs: 1500, toMs: 6500 });
+  state.owner.open.value = false;
+  await nextTick();
+  const reads = state.owner.selectWindow.mock.calls.length;
+  expect(vm.zoomWithKey(zoomKey('='))).toBe(false);
+  expect(vm.zoomIndex).toBe(0);
+  expect(state.owner.selectWindow).toHaveBeenCalledTimes(reads);
+});
+it('invalidates a sentence preview through the same viewport change and refuses the late pointer release', async () => {
+  const instance = app._instance.subTree.component,
+    commit = vi.fn();
+  instance.vnode.props.onSetBoundary = commit;
+  Object.assign(instance.props, {
+    draftLine: { lineId: 'line', startMs: 3000, endMs: 5000 },
+    previewTiming: vi.fn(() => ({ ok: true })),
+    timingDisabled: false,
+  });
+  await nextTick();
+  const target = {
+    closest: () => ({ getBoundingClientRect: () => ({ width: 500 }) }),
+    setPointerCapture: vi.fn(),
+    hasPointerCapture: () => true,
+    releasePointerCapture: vi.fn(),
+  };
+  const event = {
+    button: 0,
+    pointerId: 1,
+    clientX: 100,
+    preventDefault: vi.fn(),
+    currentTarget: target,
+  };
+  vm.boundaryDrag.begin(event, 'move');
+  vm.boundaryDrag.move({ ...event, clientX: 125 });
+  expect(vm.boundaryDragging).toBe(true);
+  await vm.zoomWithKey(zoomKey('='));
+  expect(vm.boundaryDragging).toBe(false);
+  vm.boundaryDrag.finish({ ...event, clientX: 125 });
+  expect(commit).not.toHaveBeenCalled();
+  expect(instance.props.draftLine).toEqual({
+    lineId: 'line',
+    startMs: 3000,
+    endMs: 5000,
+  });
+});
+it('cancels a timing preview before panel maximization can change its pixel geometry', async () => {
+  const instance = app._instance.subTree.component,
+    commit = vi.fn(),
+    panels = usePanelView();
+  instance.vnode.props.onSetBoundary = commit;
+  Object.assign(instance.props, {
+    draftLine: { lineId: 'line', startMs: 3000, endMs: 5000 },
+    previewTiming: vi.fn(() => ({ ok: true })),
+    timingDisabled: false,
+  });
+  await nextTick();
+  const target = {
+    closest: () => ({ getBoundingClientRect: () => ({ width: 500 }) }),
+    setPointerCapture: vi.fn(),
+    hasPointerCapture: () => true,
+    releasePointerCapture: vi.fn(),
+  };
+  const event = {
+    button: 0,
+    pointerId: 1,
+    clientX: 100,
+    preventDefault: vi.fn(),
+    currentTarget: target,
+  };
+  vm.boundaryDrag.begin(event, 'move');
+  vm.boundaryDrag.move({ ...event, clientX: 125 });
+  expect(vm.boundaryDragging).toBe(true);
+  const unregister = panels.register('waveform', {
+    element: { isConnected: true },
+    label: '原音訊波形',
+    overlay: true,
+  });
+  try {
+    panels.toggle('waveform');
+    expect(vm.boundaryDragging).toBe(false);
+    vm.boundaryDrag.finish({ ...event, clientX: 125 });
+    expect(commit).not.toHaveBeenCalled();
+  } finally {
+    unregister();
+    panels.reset();
+  }
 });
 it('uses overview keys to reach both media ends while preserving zoom and clamping the short tail', async () => {
   vm.zoom(1);

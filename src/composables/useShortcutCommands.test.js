@@ -31,6 +31,8 @@ function fixture() {
     playbackRevision: 1,
     pendingStartTrackId: null,
     isPlaying: false,
+    volume: 0.5,
+    isMuted: false,
     transposeSemitones: 0,
     pitchCents: 0,
     tempoRate: 1,
@@ -46,6 +48,12 @@ function fixture() {
   let startRevision = 1;
   const player = {
     state,
+    setVolume: vi.fn((value) => {
+      state.volume = value;
+    }),
+    toggleMute: vi.fn(() => {
+      state.isMuted = !state.isMuted;
+    }),
     performanceSettings: { busy: ref(false) },
     practiceBoundary: { intent: vi.fn() },
     getPlaybackStartRequestRevision: () => startRevision,
@@ -112,6 +120,62 @@ function fixture() {
 }
 
 describe('shortcut command owners', () => {
+  it('adjusts only the main player volume and mute through its owners without needing a track or touching transport', async () => {
+    const { executor, player, state, transport, lyrics } = fixture();
+    state.track = null;
+    transport.arrangementBusy.value = true;
+    state.pendingStartTrackId = 'pending';
+    expect(await executor.execute('player.volume-up')).toEqual({
+      ok: true,
+      status: 'executed',
+    });
+    expect(state.volume).toBe(0.6);
+    expect(await executor.execute('player.volume-down')).toEqual({
+      ok: true,
+      status: 'executed',
+    });
+    expect(state.volume).toBe(0.5);
+    expect(await executor.execute('player.mute')).toEqual({
+      ok: true,
+      status: 'executed',
+    });
+    expect(state.isMuted).toBe(true);
+    expect(player.play).not.toHaveBeenCalled();
+    expect(player.pause).not.toHaveBeenCalled();
+    expect(transport.playNext).not.toHaveBeenCalled();
+    expect(player.practiceBoundary.intent).not.toHaveBeenCalled();
+    expect(lyrics.adjustOffset).not.toHaveBeenCalled();
+  });
+  it('bounds volume, rejects unknown values and stale intent, and catches synchronous owner failures', async () => {
+    const { executor, player, state } = fixture();
+    state.volume = 0.96;
+    await executor.execute('player.volume-up');
+    expect(player.setVolume).toHaveBeenLastCalledWith(1);
+    expect(executor.canExecute('player.volume-up')).toBe(false);
+    state.volume = 0.04;
+    await executor.execute('player.volume-down');
+    expect(player.setVolume).toHaveBeenLastCalledWith(0);
+    expect(executor.canExecute('player.volume-down')).toBe(false);
+    for (const value of [NaN, -1, 2]) {
+      state.volume = value;
+      expect(executor.canExecute('player.volume-up')).toBe(false);
+    }
+    state.volume = 0.5;
+    expect(
+      (await executor.execute('player.mute', { isCurrent: () => false }))
+        .status,
+    ).toBe('stale');
+    expect(player.toggleMute).not.toHaveBeenCalled();
+    player.toggleMute.mockImplementation(() => {
+      throw Error('private');
+    });
+    expect(await executor.execute('player.mute')).toEqual({
+      ok: false,
+      status: 'failed',
+    });
+    executor.dispose();
+    expect(executor.canExecute('player.volume-up')).toBe(false);
+  });
   it.each([
     'timing',
     'source',

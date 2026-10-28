@@ -25,7 +25,7 @@ const row = (command, app, global = null) => ({ command, app, global });
 const custom = (value) => ({ mode: 'custom', chord: value });
 
 describe('bounded shortcut configuration', () => {
-  it('defines exactly the original seven commands and leaves global and new App commands unassigned', () => {
+  it('extends the original seven commands with three master-volume commands without assigning new transport keys', () => {
     expect(SHORTCUT_COMMANDS.map((c) => c.id)).toEqual([
       'player.play-pause',
       'player.previous',
@@ -34,10 +34,13 @@ describe('bounded shortcut configuration', () => {
       'player.transpose-down',
       'lyrics.offset-up',
       'lyrics.offset-down',
+      'player.volume-up',
+      'player.volume-down',
+      'player.mute',
     ]);
     const result = defaultShortcutConfiguration();
     expect(result.globalEnabled).toBe(false);
-    expect(result.bindings).toHaveLength(7);
+    expect(result.bindings).toHaveLength(10);
     expect(
       result.bindings.every(
         (r) => r.app.mode === 'default' && r.global === null,
@@ -47,7 +50,50 @@ describe('bounded shortcut configuration', () => {
       SHORTCUT_COMMANDS.filter((c) => c.defaultApp).map(
         (c) => c.defaultApp.key,
       ),
-    ).toEqual(['arrowup', 'arrowdown']);
+    ).toEqual(['arrowup', 'arrowdown', 'arrowup', 'arrowdown', 'm']);
+  });
+  it('reads an old seven-row configuration without rewriting it or changing its effective defaults', () => {
+    const input = config(
+      SHORTCUT_COMMANDS.slice(0, 7).map(({ id }) =>
+        row(id, { mode: 'default' }),
+      ),
+    );
+    const before = JSON.stringify(input);
+    const output = normalizeShortcutConfiguration(input);
+    expect(output.bindings).toHaveLength(10);
+    expect(
+      output.bindings
+        .slice(7)
+        .every(({ app, global }) => app.mode === 'default' && global === null),
+    ).toBe(true);
+    expect(JSON.stringify(input)).toBe(before);
+  });
+  it('reserves both Shift states of legacy volume and mute until the owning command is disabled or replaced', () => {
+    for (const key of ['m', 'arrowup', 'arrowdown']) {
+      const command =
+        key === 'm'
+          ? 'player.mute'
+          : key === 'arrowup'
+            ? 'player.volume-up'
+            : 'player.volume-down';
+      const claim = row(
+        'player.play-pause',
+        custom(chord(key, { shift: true })),
+      );
+      expect(() => validateShortcutConfiguration(config([claim]))).toThrow(
+        'Shortcut conflict',
+      );
+      expect(() =>
+        validateShortcutConfiguration(
+          config([claim, row(command, { mode: 'disabled' })]),
+        ),
+      ).not.toThrow();
+      expect(() =>
+        validateShortcutConfiguration(
+          config([claim, row(command, custom(chord('j', { alt: true })))]),
+        ),
+      ).not.toThrow();
+    }
   });
   it('normalizes logical aliases and requires every modifier explicitly', () => {
     expect(normalizeShortcutChord(chord('UP', { ctrl: true }))).toEqual(
@@ -214,7 +260,7 @@ describe('same/cross-scope and wildcard conflicts', () => {
       ).toThrow('conflict');
     expect(
       validateShortcutConfiguration(config(), reserved).bindings,
-    ).toHaveLength(7);
+    ).toHaveLength(10);
     expect(() =>
       validateShortcutConfiguration(
         config([row('player.next', custom(chord('up', { ctrl: true })))]),

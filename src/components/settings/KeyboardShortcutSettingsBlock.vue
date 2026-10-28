@@ -1,19 +1,102 @@
 <script setup>
 import { computed, nextTick, onMounted, shallowRef, useId, watch } from 'vue';
-import { Keyboard } from '../../icons/index.js';
-import { SHORTCUT_COMMANDS } from '../../../shared/keyboardShortcutContract.mjs';
+import { Ellipsis, Keyboard } from '../../icons/index.js';
+import {
+  SHORTCUT_CATEGORIES,
+  shortcutSettingsRows,
+} from '../../utils/keyboardShortcutSettingsPresentation.js';
 import { useKeyboardShortcutSettings } from '../../composables/useKeyboardShortcutSettings.js';
 import { useKeyboardShortcutRecorder } from '../../composables/useKeyboardShortcutRecorder.js';
 import { formatShortcutChord } from '../../utils/keyboardShortcutPresentation.js';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiTabs from '../ui/UiTabs.vue';
+import KeyboardShortcutKeys from './KeyboardShortcutKeys.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
+import KeyboardShortcutReference from './KeyboardShortcutReference.vue';
 
 const settings = useKeyboardShortcutSettings();
 const expanded = shallowRef(false),
   surface = shallowRef(null),
   recordButton = shallowRef(null);
 const panelId = `keyboard-shortcuts-${useId()}`;
+const activeTab = shallowRef('playback');
+const categoryGuidance = computed(
+  () =>
+    SHORTCUT_CATEGORIES.find((category) => category.id === activeTab.value)
+      ?.guidance ?? '',
+);
+const menuRow = shallowRef(null),
+  menuAnchorEl = shallowRef(null),
+  lastAction = shallowRef(null);
+const tabs = computed(() =>
+  SHORTCUT_CATEGORIES.map(({ id, label }) => ({
+    id,
+    label,
+    disabled: settings.state.busy,
+  })),
+);
+const menuAnchor = computed(() => ({
+  kind: 'element',
+  element: menuAnchorEl.value,
+}));
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'shortcut',
+      items: menuRow.value
+        ? [
+            {
+              id: 'disable',
+              kind: 'action',
+              value: 'disabled',
+              label: `停用${menuRow.value.label}快捷鍵`,
+              disabled:
+                !settings.canEdit.value ||
+                settings.isRecording.value ||
+                menuRow.value.app.mode === 'disabled' ||
+                (menuRow.value.app.mode === 'default' &&
+                  !menuRow.value.defaultApp),
+            },
+            {
+              id: 'default',
+              kind: 'action',
+              value: 'default',
+              label: `恢復${menuRow.value.label}預設快捷鍵`,
+              disabled:
+                !settings.canEdit.value ||
+                settings.isRecording.value ||
+                menuRow.value.app.mode === 'default',
+            },
+          ]
+        : [],
+    },
+  ],
+}));
+function closeMenu() {
+  menuRow.value = null;
+  menuAnchorEl.value = null;
+}
+function openMenu(row, event) {
+  menuRow.value = row;
+  menuAnchorEl.value = event.currentTarget;
+}
+function selectMenu(mode) {
+  const row = menuRow.value;
+  closeMenu();
+  if (
+    !row ||
+    !['disabled', 'default'].includes(mode) ||
+    !settings.canEdit.value ||
+    settings.isRecording.value
+  )
+    return;
+  lastAction.value = row.id;
+  void settings.saveBinding(row.id, { mode });
+}
 const recorder = useKeyboardShortcutRecorder({
   settings,
   focusCommand: (command) =>
@@ -24,35 +107,42 @@ const recorder = useKeyboardShortcutRecorder({
       ?.focus(),
 });
 const rows = computed(() =>
-  SHORTCUT_COMMANDS.map((command, index) => {
-    const app = settings.configuration.value.bindings[index].app;
-    return {
-      ...command,
-      app,
-      value: !settings.state.loaded
-        ? '尚未讀取'
-        : app.mode === 'disabled'
-          ? '已停用'
-          : formatShortcutChord(
-              app.mode === 'custom' ? app.chord : command.defaultApp,
-            ) +
-            (app.mode === 'default' && command.defaultApp ? '（預設）' : ''),
-    };
-  }),
+  shortcutSettingsRows(
+    settings.configuration.value,
+    activeTab.value,
+    settings.state.loaded,
+  ),
 );
 const feedback = computed(
-  () => settings.state.readError || settings.state.saveError,
+  () =>
+    settings.state.readError || (!lastAction.value && settings.state.saveError),
 );
 onMounted(() => {
   void settings.initialize();
 });
 watch(expanded, (open) => {
-  if (!open) recorder.cancel({ focus: false });
+  if (!open) {
+    recorder.cancel({ focus: false });
+    closeMenu();
+  }
+});
+watch(
+  activeTab,
+  () => {
+    recorder.cancel({ focus: false });
+    closeMenu();
+  },
+  { flush: 'sync' },
+);
+watch(settings.canEdit, (value) => {
+  if (!value) closeMenu();
 });
 async function begin(command) {
+  closeMenu();
   if (!recorder.begin(command)) return;
+  lastAction.value = command;
   await nextTick();
-  recordButton.value?.focus?.();
+  if (recorder.state.command === command) recordButton.value?.focus?.();
 }
 function setRecordButton(value) {
   recordButton.value = value?.$el ?? value;
@@ -67,12 +157,12 @@ function leaveEditor(event) {
   <div class="keyboard-shortcut-settings">
     <SettingsDocumentItem
       :icon="Keyboard"
-      title="App 快捷鍵"
-      guidance="在 Utawakui 主視窗內使用。"
+      title="快捷鍵"
+      guidance="按「設定」更改按鍵；其他操作見「操作說明」。"
     >
       <template #actions>
         <UiButton
-          :aria-label="expanded ? '收合 App 快捷鍵' : '展開 App 快捷鍵'"
+          :aria-label="expanded ? '收合快捷鍵設定' : '展開快捷鍵設定'"
           :aria-expanded="expanded"
           :aria-controls="panelId"
           :disabled="settings.state.busy"
@@ -82,7 +172,7 @@ function leaveEditor(event) {
       </template>
       <template v-if="feedback || !settings.state.loaded" #feedback>
         <UiHint :tone="feedback ? 'danger' : 'muted'" role="status">{{
-          feedback || '讀取中；尚未確認已儲存設定。'
+          feedback || '正在載入快捷鍵…'
         }}</UiHint>
         <UiButton
           v-if="feedback"
@@ -100,115 +190,194 @@ function leaveEditor(event) {
       ref="surface"
       class="keyboard-shortcut-settings__panel"
       role="region"
-      aria-label="App 快捷鍵設定"
+      aria-label="快捷鍵設定"
     >
+      <UiTabs
+        v-model:active-id="activeTab"
+        :items="tabs"
+        aria-label="快捷鍵分類"
+        :tab-id-prefix="panelId"
+        :panel-id-prefix="panelId"
+        variant="bar"
+      />
       <div
-        v-for="row in rows"
-        :key="row.id"
-        :data-shortcut-command="row.id"
-        class="keyboard-shortcut-settings__row"
+        v-for="category in SHORTCUT_CATEGORIES"
+        :id="`${panelId}-${category.id}-panel`"
+        :key="category.id"
+        role="tabpanel"
+        :aria-labelledby="`${panelId}-${category.id}-tab`"
+        :hidden="activeTab !== category.id"
+        :tabindex="activeTab === category.id ? 0 : -1"
       >
-        <SettingsDocumentItem
-          variant="nested"
-          :title="row.label"
-          :value="row.value"
-        >
-          <template #actions>
+        <template v-if="activeTab === category.id">
+          <UiHint
+            v-if="categoryGuidance"
+            class="keyboard-shortcut-settings__intro"
+            >{{ categoryGuidance }}</UiHint
+          >
+          <KeyboardShortcutReference v-if="activeTab === 'reference'" />
+
+          <section
+            v-for="row in rows"
+            :key="row.id"
+            :data-shortcut-command="row.id"
+            class="keyboard-shortcut-settings__row"
+            :aria-labelledby="panelId + '-' + row.id + '-title'"
+          >
+            <div class="keyboard-shortcut-settings__copy">
+              <h4 :id="panelId + '-' + row.id + '-title'">{{ row.title }}</h4>
+              <UiHint v-if="row.guidance">{{ row.guidance }}</UiHint>
+            </div>
+            <div class="keyboard-shortcut-settings__binding">
+              <KeyboardShortcutKeys
+                v-if="row.keys.length"
+                :chords="[row.keys]"
+                :label="row.label + '目前快捷鍵'"
+                :aria-description="row.scope"
+              />
+              <UiHint class="keyboard-shortcut-settings__status">{{
+                row.status
+              }}</UiHint>
+            </div>
             <div
-              v-if="recorder.state.command === row.id"
-              class="keyboard-shortcut-settings__editor"
-              role="group"
-              :aria-label="`設定${row.label}快捷鍵`"
-              @focusout="leaveEditor"
+              v-if="recorder.state.command !== row.id"
+              class="keyboard-shortcut-settings__actions"
             >
               <UiButton
-                :ref="setRecordButton"
-                variant="secondary"
-                :aria-label="`錄製${row.label}快捷鍵`"
-                :aria-describedby="`${panelId}-${row.id}-hint`"
-                :disabled="recorder.state.saving"
-                @click="begin(row.id)"
-                @keydown="recorder.capture"
-                @keyup.stop.prevent
-                >{{
-                  recorder.state.candidate
-                    ? formatShortcutChord(recorder.state.candidate)
-                    : '請按下快捷鍵…'
-                }}</UiButton
-              >
-              <UiButton
-                variant="accent"
-                :aria-label="`套用${row.label}快捷鍵`"
-                :disabled="!recorder.state.candidate || !settings.canEdit.value"
-                :loading="recorder.state.saving"
-                @click="recorder.apply"
-                >套用</UiButton
-              >
-              <UiButton
-                :aria-label="`取消${row.label}快捷鍵`"
-                :disabled="recorder.state.saving"
-                @click="recorder.cancel()"
-                >取消</UiButton
-              >
-            </div>
-            <template v-else>
-              <UiButton
                 class="keyboard-shortcut-settings__configure"
-                :aria-label="`設定${row.label}快捷鍵`"
+                :aria-label="'設定' + row.label + '快捷鍵'"
                 :disabled="
                   !settings.canEdit.value || settings.isRecording.value
                 "
                 @click="begin(row.id)"
                 >設定</UiButton
               >
-              <UiButton
-                :aria-label="`停用${row.label}快捷鍵`"
+              <UiIconButton
+                :icon="Ellipsis"
+                :label="row.label + '選項'"
+                aria-haspopup="menu"
+                :aria-expanded="menuRow?.id === row.id"
                 :disabled="
-                  !settings.canEdit.value ||
-                  settings.isRecording.value ||
-                  row.app.mode === 'disabled' ||
-                  (row.app.mode === 'default' && !row.defaultApp)
+                  !settings.canEdit.value || settings.isRecording.value
                 "
-                @click="settings.saveBinding(row.id, { mode: 'disabled' })"
-                >停用</UiButton
-              >
-              <UiButton
-                :aria-label="`恢復${row.label}預設快捷鍵`"
-                :disabled="
-                  !settings.canEdit.value ||
-                  settings.isRecording.value ||
-                  row.app.mode === 'default'
-                "
-                @click="settings.saveBinding(row.id, { mode: 'default' })"
-                >預設</UiButton
-              >
-            </template>
-          </template>
-          <template v-if="recorder.state.command === row.id" #feedback>
-            <UiHint
-              :id="`${panelId}-${row.id}-hint`"
-              :tone="recorder.state.error ? 'danger' : 'muted'"
-              :role="recorder.state.error ? 'alert' : 'status'"
-              >{{
-                recorder.state.error ||
-                (recorder.state.capturing
-                  ? '按下按鍵組合；Esc 取消，Tab 離開。App 快捷鍵暫停。'
-                  : '按「套用」保存；App 快捷鍵暫停至套用或取消。')
-              }}</UiHint
+                @click="openMenu(row, $event)"
+              />
+            </div>
+            <div
+              v-else
+              class="keyboard-shortcut-settings__editor"
+              role="group"
+              :aria-label="'設定' + row.label + '快捷鍵'"
+              @focusout="leaveEditor"
             >
-          </template>
-        </SettingsDocumentItem>
+              <UiButton
+                :ref="setRecordButton"
+                class="keyboard-shortcut-settings__record"
+                variant="secondary"
+                :aria-label="'錄製' + row.label + '快捷鍵'"
+                :aria-describedby="panelId + '-' + row.id + '-hint'"
+                :disabled="recorder.state.saving"
+                @click="begin(row.id)"
+                @keydown="recorder.capture"
+                @keyup.stop.prevent
+              >
+                <KeyboardShortcutKeys
+                  v-if="recorder.state.candidate"
+                  :chords="[
+                    formatShortcutChord(recorder.state.candidate).split(' + '),
+                  ]"
+                />
+                <span v-else>按下按鍵組合…</span>
+              </UiButton>
+              <UiButton
+                variant="accent"
+                :aria-label="'套用' + row.label + '快捷鍵'"
+                :disabled="!recorder.state.candidate || !settings.canEdit.value"
+                :loading="recorder.state.saving"
+                @click="recorder.apply"
+                >套用</UiButton
+              >
+              <UiButton
+                :aria-label="'取消' + row.label + '快捷鍵'"
+                :disabled="recorder.state.saving"
+                @click="recorder.cancel()"
+                >取消</UiButton
+              >
+            </div>
+            <UiHint
+              v-if="
+                recorder.state.command === row.id ||
+                (lastAction === row.id && settings.state.saveError)
+              "
+              :id="panelId + '-' + row.id + '-hint'"
+              class="keyboard-shortcut-settings__feedback"
+              :tone="
+                recorder.state.error || settings.state.saveError
+                  ? 'danger'
+                  : 'muted'
+              "
+              :role="
+                recorder.state.error || settings.state.saveError
+                  ? 'alert'
+                  : 'status'
+              "
+            >
+              <template v-if="recorder.state.error || settings.state.saveError"
+                >{{ recorder.state.error || settings.state.saveError
+                }}<span
+                  v-if="settings.state.saveError && settings.isRecording.value"
+                  >先按「取消」，再重新讀取。</span
+                ></template
+              >
+              <template v-else>
+                {{
+                  recorder.state.capturing
+                    ? '按下想用的按鍵；此時不會執行功能。'
+                    : '按「套用」儲存並生效。'
+                }}
+                <KeyboardShortcutKeys :chords="[['Esc']]" /> 取消<span
+                  v-if="recorder.state.capturing"
+                  >，<KeyboardShortcutKeys :chords="[['Tab']]" /> 離開</span
+                >。
+              </template>
+            </UiHint>
+            <UiButton
+              v-if="
+                lastAction === row.id && settings.state.saveError && !feedback
+              "
+              class="keyboard-shortcut-settings__retry"
+              aria-label="重新讀取快捷鍵"
+              :loading="settings.state.reading"
+              :disabled="settings.isRecording.value || settings.state.busy"
+              @click="settings.refresh"
+              >重新讀取</UiButton
+            >
+          </section>
+        </template>
       </div>
+      <UiActionMenu
+        :open="Boolean(menuRow)"
+        :anchor="menuAnchor"
+        :content="menuContent"
+        aria-label="快捷鍵操作"
+        size="sm"
+        @select="selectMenu"
+        @close="closeMenu"
+      />
       <div class="keyboard-shortcut-settings__footer">
-        <UiHint>全域快捷鍵尚未開放。</UiHint>
+        <UiHint>切到其他程式後，自訂快捷鍵不會生效。</UiHint>
         <UiButton
+          v-if="activeTab !== 'reference'"
           aria-label="恢復全部快捷鍵預設"
           :disabled="
             !settings.canEdit.value ||
             settings.isRecording.value ||
             settings.isDefault.value
           "
-          @click="settings.restoreAll"
+          @click="
+            lastAction = null;
+            settings.restoreAll();
+          "
           >恢復全部預設</UiButton
         >
       </div>
@@ -217,24 +386,106 @@ function leaveEditor(event) {
 </template>
 
 <style scoped>
+.keyboard-shortcut-settings {
+  container: shortcut-settings / inline-size;
+}
 .keyboard-shortcut-settings,
 .keyboard-shortcut-settings__panel {
   min-inline-size: 0;
 }
+.keyboard-shortcut-settings__intro {
+  margin-block: var(--ui-space-3);
+}
 .keyboard-shortcut-settings__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content) max-content;
+  align-items: center;
+  gap: var(--ui-space-2) var(--ui-space-4);
+  padding: var(--ui-space-3);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
-.keyboard-shortcut-settings__editor,
+.keyboard-shortcut-settings__row > * {
+  min-inline-size: 0;
+}
+.keyboard-shortcut-settings__copy {
+  display: grid;
+  gap: var(--ui-space-1);
+  overflow-wrap: break-word;
+}
+h4 {
+  margin: 0;
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
+}
+.keyboard-shortcut-settings__binding,
+.keyboard-shortcut-settings__actions,
 .keyboard-shortcut-settings__footer {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--ui-space-2);
   min-inline-size: 0;
 }
+.keyboard-shortcut-settings__binding {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.keyboard-shortcut-settings__status {
+  white-space: nowrap;
+}
+.keyboard-shortcut-settings__actions {
+  justify-self: end;
+  flex-wrap: nowrap;
+}
+.keyboard-shortcut-settings__editor {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-inline-size: 0;
+}
+.keyboard-shortcut-settings__record {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: normal;
+  justify-content: flex-start;
+  padding-inline: var(--ui-space-2);
+}
+.keyboard-shortcut-settings__feedback {
+  grid-column: 1 / -1;
+  overflow-wrap: break-word;
+}
+.keyboard-shortcut-settings__retry {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
 .keyboard-shortcut-settings__footer {
+  flex-wrap: wrap;
   justify-content: space-between;
   padding-block: var(--ui-space-3);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+@container shortcut-settings (max-width:38rem) {
+  .keyboard-shortcut-settings__row {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+  .keyboard-shortcut-settings__copy {
+    grid-column: 1 / -1;
+  }
+  .keyboard-shortcut-settings__binding {
+    justify-content: flex-start;
+  }
+}
+@container shortcut-settings (max-width:28rem) {
+  .keyboard-shortcut-settings__row {
+    padding-inline: var(--ui-space-2);
+  }
+  .keyboard-shortcut-settings__editor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .keyboard-shortcut-settings__record {
+    grid-column: 1 / -1;
+  }
 }
 </style>

@@ -47,6 +47,10 @@ import { useNavigationInput } from './composables/useNavigationInput.js';
 import { useFeedbackReport } from './composables/useFeedbackReport.js';
 import { provideNoticeReporter } from './components/ui/noticeReporter.js';
 import { useShellLayout } from './composables/useShellLayout.js';
+import {
+  usePanelView,
+  usePanelViewTarget,
+} from './composables/usePanelView.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
@@ -407,6 +411,7 @@ function handleRightDockKeydown(event) {
     event.key !== 'Escape' ||
     event.defaultPrevented ||
     !rightDockExpanded.value ||
+    panelView.maximizedId.value ||
     hasOpenTransientOverlay()
   ) {
     return;
@@ -444,7 +449,27 @@ const activeViewOwnsFolderPage = computed(() =>
   pageComposedFolderViews.has(activeView.value),
 );
 
+const panelView = usePanelView();
+const workspacePanel = useTemplateRef('workspacePanel');
+const dockPanel = useTemplateRef('dockPanel');
+usePanelViewTarget({
+  id: 'workspace',
+  element: workspacePanel,
+  label: '主工作區',
+  context: activeView,
+});
+usePanelViewTarget({
+  id: 'dock',
+  element: dockPanel,
+  label: rightDockLabel,
+  enabled: rightDockExpanded,
+  context: restorableDockSurface,
+});
+watch([activeView, rightDockExpanded, restorableDockSurface], () =>
+  panelView.restore({ focus: false }),
+);
 useKeyboardShortcuts({
+  onPanelShortcut: panelView.handleKeydown,
   internalViewShortcuts,
   shortcutConfiguration: keyboardShortcutSettings.configuration,
   getShortcutContext: () => ({
@@ -485,8 +510,16 @@ useKeyboardShortcuts({
         @toggle-expanded="toggleSidebar"
       />
     </div>
-    <main class="shell__main shell__main--with-dock">
-      <div class="shell__workspace">
+    <main
+      class="shell__main shell__main--with-dock"
+      :data-panel-view="panelView.maximizedId.value"
+    >
+      <div
+        ref="workspacePanel"
+        class="shell__workspace"
+        tabindex="-1"
+        :inert="panelView.maximizedId.value === 'dock'"
+      >
         <AppSurfaceBoundary surface-id="app-folder">
           <AppFolderLayout
             :active-destination="activeView"
@@ -504,12 +537,16 @@ useKeyboardShortcuts({
       </div>
 
       <div
+        ref="dockPanel"
         class="shell__dock"
+        tabindex="-1"
+        :inert="panelView.maximizedId.value === 'workspace'"
         :class="{
           'shell__dock--collapsed': !rightDockExpanded,
         }"
       >
         <AppRightDock
+          :maximized="panelView.maximizedId.value === 'dock'"
           :expanded="rightDockExpanded"
           :performance="
             queueSurfaceActive && rightDock.queueVariant.value === 'arrangement'
@@ -691,6 +728,18 @@ useKeyboardShortcuts({
   min-width: 0;
   min-height: 0;
   padding-top: var(--ui-shell-content-inset-block);
+}
+.shell__main[data-panel-view='workspace'],
+.shell__main[data-panel-view='dock'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.shell__main[data-panel-view='workspace'] > .shell__workspace,
+.shell__main[data-panel-view='dock'] > .shell__dock {
+  grid-area: 1 / 1;
+}
+.shell__main[data-panel-view='workspace'] > .shell__dock,
+.shell__main[data-panel-view='dock'] > .shell__workspace {
+  display: none;
 }
 
 .shell__dock {

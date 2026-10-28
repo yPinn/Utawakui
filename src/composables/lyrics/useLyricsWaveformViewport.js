@@ -164,8 +164,8 @@ export function useLyricsWaveformViewport({
       ArrowDown: viewport.value.fromMs - span,
       ArrowRight: viewport.value.fromMs + span,
       ArrowUp: viewport.value.fromMs + span,
-      PageDown: viewport.value.fromMs - span * 5,
-      PageUp: viewport.value.fromMs + span * 5,
+      PageDown: viewport.value.fromMs + span * 5,
+      PageUp: viewport.value.fromMs - span * 5,
       Home: 0,
       End: durationMs.value - span,
     }[event.key];

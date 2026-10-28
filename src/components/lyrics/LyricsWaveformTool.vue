@@ -6,6 +6,7 @@ import {
   onMounted,
   onBeforeUnmount,
   useId,
+  useTemplateRef,
 } from 'vue';
 import {
   AudioWaveform,
@@ -25,9 +26,12 @@ import {
 import UiPopover from '../ui/UiPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiKbd from '../ui/UiKbd.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiButton from '../ui/UiButton.vue';
+import PanelViewButton from '../layout/PanelViewButton.vue';
+import { usePanelViewTarget } from '../../composables/usePanelView.js';
 import { useLyricsWaveformBoundaryDrag } from '../../composables/lyrics/useLyricsWaveformBoundaryDrag.js';
 import { useLyricsWaveform } from '../../composables/lyrics/useLyricsWaveform.js';
 import { useLyricsWaveformViewport } from '../../composables/lyrics/useLyricsWaveformViewport.js';
@@ -39,6 +43,7 @@ import {
   waveformGaps,
 } from '../../utils/waveformPresentation.js';
 import { formatDuration } from '../../utils/format.js';
+import { isEditableTarget } from '../../utils/dom.js';
 const props = defineProps({
   trackId: { type: String, default: '' },
   sourceKey: { type: String, default: '' },
@@ -60,6 +65,7 @@ const waveform = useLyricsWaveform({
   sourceKey: () => props.sourceKey,
 });
 const { open, overview, detail, adjacentDetail, status, clearing } = waveform;
+const waveformPanel = useTemplateRef('waveformPanel');
 const { position: playbackPosition, active: referenceActive } =
   useLyricsWaveformClock({
     open,
@@ -68,6 +74,14 @@ const { position: playbackPosition, active: referenceActive } =
     isPlaying: () => props.isPlaying,
     sample: () => props.samplePlaybackClock?.(),
   });
+const { maximized: panelMaximized } = usePanelViewTarget({
+  id: 'waveform',
+  element: () => waveformPanel.value?.closest('.ui-popover'),
+  label: '原音訊波形',
+  overlay: true,
+  enabled: () => open.value && referenceActive.value,
+  context: () => props.sourceKey,
+});
 const {
   viewport,
   zoomIndex,
@@ -164,6 +178,30 @@ watch(open, (value) => {
 const fromMs = computed(() => viewport.value.fromMs);
 const toMs = computed(() => viewport.value.toMs);
 const controlsUnavailable = computed(() => clearing.value || !overview.value);
+function zoomWithKey(event) {
+  const direction = event.key === '=' ? 1 : event.key === '-' ? -1 : 0;
+  if (
+    !direction ||
+    !open.value ||
+    !referenceActive.value ||
+    controlsUnavailable.value ||
+    menuOpen.value ||
+    event.defaultPrevented ||
+    event.repeat ||
+    event.isComposing ||
+    event.keyCode === 229 ||
+    event.getModifierState?.('AltGraph') ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.metaKey ||
+    event.shiftKey ||
+    isEditableTarget(event.target)
+  )
+    return false;
+  event.preventDefault();
+  event.stopPropagation();
+  return zoom(direction);
+}
 const durationMs = computed(() => (overview.value?.durationSec ?? 0) * 1000);
 const boundaryEditing = computed(() =>
   Boolean(
@@ -198,6 +236,21 @@ const {
   invalid: boundaryInvalid,
   active: boundaryDragging,
 } = boundaryDrag;
+watch(
+  panelMaximized,
+  () => {
+    boundaryDrag.cancel();
+    cancelDrag();
+    if (panelDrag) {
+      const target = waveformPanel.value?.querySelector(
+        '.lyrics-waveform__move',
+      );
+      if (target)
+        endPanelDrag({ pointerId: panelDrag.id, currentTarget: target });
+    }
+  },
+  { flush: 'sync' },
+);
 const canNavigateLine = computed(() =>
   Boolean(
     open.value &&
@@ -416,7 +469,7 @@ const menuContent = computed(() => ({
         {
           id: 'help',
           kind: 'action',
-          label: showsHelp.value ? '隱藏波形說明' : '波形說明',
+          label: showsHelp.value ? '收起操作說明' : '操作說明',
           icon: Info,
         },
       ],
@@ -488,7 +541,8 @@ const noticeLabel = computed(
     focus-on-open
     :close-on-scroll="false"
     :close-on-outside-pointer="false"
-    :close-on-escape="!boundaryDragging"
+    :close-on-escape="!boundaryDragging && !panelMaximized"
+    :maximized="panelMaximized"
     :panel-style="{
       width: 'min(32rem, calc(100vw - 2rem))',
       translate: `${panelOffset.x}px ${panelOffset.y}px`,
@@ -505,13 +559,20 @@ const noticeLabel = computed(
         @click="waveform.setOpen(!open)"
       />
     </template>
-    <div class="lyrics-waveform" :aria-busy="status === 'loading'">
+    <div
+      ref="waveformPanel"
+      class="lyrics-waveform"
+      :class="{ 'lyrics-waveform--maximized': panelMaximized }"
+      :aria-busy="status === 'loading'"
+      @keydown="zoomWithKey"
+    >
       <div class="lyrics-waveform__heading">
         <strong>原音訊波形</strong>
         <UiIconButton
           class="lyrics-waveform__move"
           :icon="GripVertical"
           label="移動波形面板"
+          :disabled="panelMaximized"
           @pointerdown="beginPanelDrag"
           @pointermove="movePanel"
           @pointerup="endPanelDrag"
@@ -519,6 +580,7 @@ const noticeLabel = computed(
           @lostpointercapture="endPanelDrag"
           @keydown="movePanelWithKey"
         />
+        <PanelViewButton panel-id="waveform" />
         <UiIconButton
           :icon="X"
           label="關閉原音訊波形"
@@ -539,7 +601,7 @@ const noticeLabel = computed(
         role="slider"
         :tabindex="controlsUnavailable ? -1 : 0"
         aria-label="全曲波形檢視區間"
-        aria-description="左右拖曳移動檢視；方向鍵逐視窗，Home／End 到兩端，PageUp／Down 跨五個視窗。不更動播放位置。"
+        aria-description="左右拖曳移動檢視；方向鍵逐視窗，Home／End 到兩端，PgUp 往開頭、PgDn 往結尾跨五個視窗；= 放大、- 縮小。不更動播放位置。"
         :aria-valuemin="0"
         :aria-valuemax="Math.max(0, durationMs - (toMs - fromMs))"
         :aria-valuenow="fromMs"
@@ -641,6 +703,7 @@ const noticeLabel = computed(
         <UiIconButton
           :icon="Minus"
           label="縮小波形"
+          aria-keyshortcuts="-"
           :disabled="controlsUnavailable || zoomIndex === 0"
           @click="zoom(-1)"
         />
@@ -650,6 +713,7 @@ const noticeLabel = computed(
         <UiIconButton
           :icon="Plus"
           label="放大波形"
+          aria-keyshortcuts="="
           :disabled="controlsUnavailable || zoomIndex === zoomSpans.length - 1"
           @click="zoom(1)"
         />
@@ -897,10 +961,12 @@ const noticeLabel = computed(
         </div>
       </div>
       <div v-if="showsHelp" class="lyrics-waveform__help">
-        <UiHint
-          >淺色為峰值，深色為 RMS
-          能量；保留原音訊，不代表人聲或對時確認。</UiHint
-        >
+        <UiHint class="lyrics-waveform__shortcuts">
+          <span>波形面板內：</span><UiKbd>=</UiKbd><span>放大</span>
+          <UiKbd>-</UiKbd><span>縮小</span>
+          <UiKbd aria-label="反引號鍵">`</UiKbd><span>放大／還原面板</span>
+        </UiHint>
+        <UiHint>波形只供參考，請搭配原音訊確認歌詞時間。</UiHint>
         <div class="lyrics-waveform__legend">
           <span class="lyrics-waveform__legend-marker">已存句界</span>
           <span class="lyrics-waveform__legend-draft">草稿句界</span>
@@ -1036,6 +1102,12 @@ const noticeLabel = computed(
   position: relative;
   block-size: 7rem;
 }
+.lyrics-waveform--maximized .lyrics-waveform__canvas {
+  block-size: clamp(7rem, 35vh, 24rem);
+}
+.lyrics-waveform--maximized .lyrics-waveform__detail {
+  height: 100%;
+}
 .lyrics-waveform__canvas .lyrics-waveform__boundary {
   position: absolute;
   inline-size: 24px;
@@ -1078,6 +1150,12 @@ const noticeLabel = computed(
   gap: var(--ui-space-2);
   padding-block-start: var(--ui-space-2);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+.lyrics-waveform__shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
 }
 .lyrics-waveform__grid,
 .lyrics-waveform__baseline {

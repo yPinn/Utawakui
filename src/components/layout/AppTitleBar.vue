@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import PanelViewButton from './PanelViewButton.vue';
 import {
   Cpu,
   ICON_SIZE,
@@ -224,6 +225,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
       </div>
 
       <div class="app-title-bar__controls">
+        <PanelViewButton />
         <UiIconButton
           data-app-preparation-trigger
           class="app-title-bar__preparation"

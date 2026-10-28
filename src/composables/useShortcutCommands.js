@@ -5,6 +5,13 @@ import { SHORTCUT_COMMANDS } from '../../shared/keyboardShortcutContract.mjs';
 import { validPerformanceSettings } from '../../shared/performanceSettings.mjs';
 
 const COMMANDS = new Set(SHORTCUT_COMMANDS.map(({ id }) => id));
+const isVolume = (command) =>
+  command === 'player.volume-up' || command === 'player.volume-down';
+const volumeTarget = (command, value) =>
+  Math.round(
+    Math.min(1, Math.max(0, value + (command.endsWith('up') ? 0.1 : -0.1))) *
+      100,
+  ) / 100;
 const result = (status) => Object.freeze({ ok: status === 'executed', status });
 const domain = (command) =>
   command.startsWith('lyrics.')
@@ -24,6 +31,17 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
   function availability(command) {
     if (!COMMANDS.has(command)) return 'unknown';
     if (disposed) return 'blocked';
+    // Main-player preferences remain usable without a loaded song or while a
+    // transport/profile transaction is busy. These existing owners are sync.
+    if (command === 'player.mute')
+      return typeof state.isMuted === 'boolean' ? null : 'unavailable';
+    if (isVolume(command))
+      return Number.isFinite(state.volume) &&
+        state.volume >= 0 &&
+        state.volume <= 1 &&
+        volumeTarget(command, state.volume) !== state.volume
+        ? null
+        : 'unavailable';
     // Pause remains an immediate cancellation, including a pending command Play.
     if (command === 'player.play-pause' && pausing()) {
       return transport.arrangementBusy.value && !state.isPlaying
@@ -99,6 +117,15 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
     const unavailable = availability(command);
     if (unavailable) return result(unavailable);
     if (!isCurrent()) return result('stale');
+    if (command === 'player.mute' || isVolume(command)) {
+      try {
+        if (command === 'player.mute') player.toggleMute();
+        else player.setVolume(volumeTarget(command, state.volume));
+        return result('executed');
+      } catch {
+        return result('failed');
+      }
+    }
     if (command === 'player.play-pause' && pausing()) {
       try {
         player.pause();

@@ -106,6 +106,35 @@ const customConfig = () => ({
 });
 
 describe('custom command dispatcher', () => {
+  it('also yields a custom volume arrow to a focused reader while leaving other custom modifier policy intact', async () => {
+    await setupShortcuts({
+      shortcutConfiguration: {
+        schemaVersion: 1,
+        globalEnabled: false,
+        bindings: [
+          {
+            command: 'player.volume-up',
+            app: {
+              mode: 'custom',
+              chord: { key: 'arrowup', ctrl: false, alt: false, shift: false },
+            },
+            global: null,
+          },
+        ],
+      },
+    });
+    const target = {
+      tagName: 'DIV',
+      getAttribute: (name) => (name === 'tabindex' ? '0' : null),
+    };
+    expect(dispatchKey('ArrowUp', { target })).not.toHaveBeenCalled();
+    expect(commands.execute).not.toHaveBeenCalled();
+    dispatchKey('ArrowUp');
+    expect(commands.execute).toHaveBeenCalledWith(
+      'player.volume-up',
+      expect.any(Object),
+    );
+  });
   it('removes the listener and invalidates its owner exactly once on unmount', async () => {
     const config = ref(customConfig());
     await setupShortcuts({ shortcutConfiguration: config });
@@ -207,6 +236,42 @@ function dispatchKey(key, modifiers = {}) {
 const EDITABLE_TARGET = { tagName: 'INPUT' };
 
 describe('useKeyboardShortcuts', () => {
+  it.each(['ArrowUp', 'ArrowDown'])(
+    'yields default %s volume to handled events, focused tools, widgets, overlays and IME, including Shift',
+    async (key) => {
+      let blocked = false;
+      await setupShortcuts({ getShortcutContext: () => ({ blocked }) });
+      const element = (attributes = {}, parentElement = null) => ({
+        tagName: 'DIV',
+        parentElement,
+        getAttribute: (name) => attributes[name] ?? null,
+      });
+      const widget = element({ role: 'slider' });
+      const focusable = element({ tabindex: '0' });
+      for (const shiftKey of [false, true]) {
+        for (const extra of [
+          { defaultPrevented: true },
+          { target: element({}, widget) },
+          { target: focusable },
+          { target: element(), composedPath: () => [element(), focusable] },
+          { isComposing: true },
+          { keyCode: 229 },
+          { getModifierState: (name) => name === 'AltGraph' },
+        ])
+          expect(
+            dispatchKey(key, { shiftKey, ...extra }),
+          ).not.toHaveBeenCalled();
+        blocked = true;
+        expect(dispatchKey(key, { shiftKey })).not.toHaveBeenCalled();
+        blocked = false;
+      }
+      expect(player.setVolume).not.toHaveBeenCalled();
+      expect(player.setTransposeSemitones).not.toHaveBeenCalled();
+      expect(player.setTempoRate).not.toHaveBeenCalled();
+      dispatchKey(key, { repeat: true, shiftKey: true });
+      expect(player.setVolume).toHaveBeenCalledOnce();
+    },
+  );
   it.each(['ArrowDown', 'ArrowUp'])(
     'leaves native SELECT %s to the control without adjusting player volume',
     async (key) => {

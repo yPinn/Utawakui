@@ -31,6 +31,34 @@ afterEach(() => {
 });
 
 describe('UiPopover attribute fallthrough', () => {
+  it('maximizes and restores the same panel and content without closing or discarding caller geometry', async () => {
+    const view = mount(
+      UiPopover,
+      { open: true, panelStyle: { width: '32rem', translate: '10px 20px' } },
+      { default: () => h('input', { 'aria-label': '草稿' }) },
+    );
+    app = view.app;
+    await nextTick();
+    const panel = findAll(
+      view.overlayHost,
+      (n) => n.props?.class === 'ui-popover',
+    )[0];
+    const input = findAll(panel, (n) => n.type === 'input')[0];
+    const props = app._instance.subTree.component.props;
+    props.maximized = true;
+    await nextTick();
+    expect(
+      findAll(view.overlayHost, (n) => n.props?.class === 'ui-popover')[0],
+    ).toBe(panel);
+    expect(findAll(panel, (n) => n.type === 'input')[0]).toBe(input);
+    expect(panel.props.style.width).toContain('100vw');
+    expect(panel.props.style.translate).toBe('none');
+    props.maximized = false;
+    await nextTick();
+    expect(panel.props.style.width).toBe('32rem');
+    expect(panel.props.style.translate).toBe('10px 20px');
+    expect(props.open).toBe(true);
+  });
   it('places caller layout attributes on the in-flow anchor, not the panel', async () => {
     const view = mount(
       UiPopover,

@@ -123,7 +123,7 @@ describe('shortcut recording lifecycle', () => {
     const f = setup();
     f.recorder.begin('player.next');
     f.recorder.capture(key('m', { shiftKey: true }));
-    expect(f.recorder.state.error).toContain('靜音切換');
+    expect(f.recorder.state.error).toContain('歌曲靜音');
     f.recorder.capture(key('j', { ctrlKey: true, repeat: true }));
     expect(f.recorder.state.candidate).toBeNull();
     f.recorder.capture(key('j', { ctrlKey: true, defaultPrevented: true }));

@@ -42,6 +42,29 @@ afterEach(() => {
 });
 
 describe('machine shortcut settings persistence', () => {
+  it('expands old seven-row files without writing and preserves the byte revision for an explicit ten-row save', () => {
+    const f = setup();
+    f.store.set({ expectedRevision: null, configuration: config() });
+    const old = JSON.parse(fs.readFileSync(f.file, 'utf8'));
+    old.configuration.bindings = old.configuration.bindings.slice(0, 7);
+    fs.writeFileSync(f.file, JSON.stringify(old));
+    const bytes = fs.readFileSync(f.file);
+    const loaded = f.store.get();
+    expect(loaded.status).toBe('ready');
+    expect(loaded.configuration.bindings).toHaveLength(10);
+    expect(fs.readFileSync(f.file)).toEqual(bytes);
+    const next = structuredClone(loaded.configuration);
+    next.bindings.find((b) => b.command === 'player.mute').app = {
+      mode: 'disabled',
+    };
+    expect(
+      f.store.set({ expectedRevision: loaded.revision, configuration: next })
+        .status,
+    ).toBe('ready');
+    expect(
+      JSON.parse(fs.readFileSync(f.file, 'utf8')).configuration.bindings,
+    ).toHaveLength(10);
+  });
   it('reads missing defaults without writing, then persists across new owners with a CAS revision', () => {
     const f = setup(),
       initial = f.store.get();

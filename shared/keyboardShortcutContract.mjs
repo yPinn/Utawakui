@@ -1,5 +1,6 @@
 // Product intents only. Neither this contract nor its configuration registers
 // accelerators, executes commands, or owns persistence.
+import { LEGACY_KEYBOARD_BINDINGS } from './keyboardBindingDefinitions.mjs';
 const chord = (key, ctrl = false) =>
   Object.freeze({ key, ctrl, alt: false, shift: false });
 
@@ -8,12 +9,25 @@ export const SHORTCUT_COMMANDS = Object.freeze(
     ['player.play-pause', '播放／暫停'],
     ['player.previous', '上一首'],
     ['player.next', '下一首'],
-    ['player.transpose-up', '移調 +1', chord('arrowup', true)],
-    ['player.transpose-down', '移調 −1', chord('arrowdown', true)],
-    ['lyrics.offset-up', '歌詞偏移 +0.1 秒'],
-    ['lyrics.offset-down', '歌詞偏移 −0.1 秒'],
+    ['player.transpose-up', '升調 1 半音', chord('arrowup', true)],
+    ['player.transpose-down', '降調 1 半音', chord('arrowdown', true)],
+    ['lyrics.offset-up', '歌詞提前 0.1 秒'],
+    ['lyrics.offset-down', '歌詞延後 0.1 秒'],
+    ['player.volume-up', '歌曲音量 +10%', chord('arrowup')],
+    ['player.volume-down', '歌曲音量 −10%', chord('arrowdown')],
+    ['player.mute', '歌曲靜音', chord('m')],
   ].map(([id, label, defaultApp = null]) =>
-    Object.freeze({ id, label, defaultApp }),
+    Object.freeze({
+      id,
+      label,
+      defaultApp,
+      defaultShiftWildcard: Boolean(
+        defaultApp &&
+        LEGACY_KEYBOARD_BINDINGS.some(
+          (binding) => binding.id === id && binding.shift === null,
+        ),
+      ),
+    }),
   ),
 );
 
@@ -156,7 +170,9 @@ export function validateShortcutConfiguration(value, reservedBindings = []) {
   for (const [index, binding] of normalized.bindings.entries()) {
     const app =
       binding.app.mode === 'default'
-        ? SHORTCUT_COMMANDS[index].defaultApp
+        ? SHORTCUT_COMMANDS[index].defaultShiftWildcard
+          ? { ...SHORTCUT_COMMANDS[index].defaultApp, shift: null }
+          : SHORTCUT_COMMANDS[index].defaultApp
         : binding.app.mode === 'custom'
           ? binding.app.chord
           : null;

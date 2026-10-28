@@ -35,7 +35,10 @@ describe('shared legacy keyboard policy', () => {
     )) {
       expect(
         LEGACY_KEYBOARD_BINDINGS.find((binding) => binding.id === command.id),
-      ).toMatchObject(command.defaultApp);
+      ).toMatchObject({
+        ...command.defaultApp,
+        shift: command.defaultShiftWildcard ? null : command.defaultApp.shift,
+      });
     }
     expect(
       validateShortcutConfiguration(

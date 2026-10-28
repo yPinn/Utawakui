@@ -17,7 +17,7 @@ it('formats product chords without reflecting arbitrary keys or private conflict
       { code: 'shortcut-conflict', commands: ['player.next', 'player.mute'] },
       'player.next',
     ),
-  ).toContain('靜音切換');
+  ).toContain('歌曲靜音');
   expect(
     shortcutConflictMessage(
       { code: 'shortcut-conflict', commands: ['private/path'] },

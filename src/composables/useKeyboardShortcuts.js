@@ -15,6 +15,7 @@ import { focusAppDestinationTrigger } from '../utils/appDestinationFocus.js';
 import { requestHistoryTraversal } from './useNavigationInput.js';
 import { useShortcutCommands } from './useShortcutCommands.js';
 import { hasOpenTransientOverlay } from '../utils/transientOverlay.js';
+import { isShortcutInputBlocked } from '../utils/shortcutInputContext.js';
 import {
   createKeyboardBindings,
   resolveKeyboardBinding,
@@ -36,6 +37,7 @@ export function useKeyboardShortcuts({
   internalViewShortcuts = {},
   shortcutConfiguration,
   getShortcutContext = () => ({}),
+  onPanelShortcut,
 } = {}) {
   const { isSettingsView, openSettings, setActiveView } = useAppView();
   const {
@@ -134,12 +136,23 @@ export function useKeyboardShortcuts({
     if (disposed) return;
     const suppliedContext = getShortcutContext();
     if (suppliedContext.recording) return;
+    if (onPanelShortcut?.(event)) return;
     const context = {
       ...suppliedContext,
       blocked: suppliedContext.blocked || hasOpenTransientOverlay(),
     };
     const binding = resolveKeyboardBinding(event, bindings.value, context);
     if (!binding) return;
+    if (
+      ['player.volume-up', 'player.volume-down'].includes(binding.id) &&
+      /^arrow(?:up|down|left|right)$/u.test(binding.key) &&
+      (event.defaultPrevented ||
+        event.isComposing ||
+        event.keyCode === 229 ||
+        event.getModifierState?.('AltGraph') ||
+        isShortcutInputBlocked(event, { ...context, includeFocusable: true }))
+    )
+      return;
     if (binding.skipIfHandled && event.defaultPrevented) return;
     if (binding.editable === 'ignore' && isEditableTarget(event.target)) return;
     if (binding.custom && !commands?.canExecute(binding.id)) return;

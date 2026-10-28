@@ -231,6 +231,11 @@ gate 承接，不再以此阻止元件檔案存在。第二批七項同樣未修
 - `UiPopover`：Controlled、non-modal anchored panel；擁有Teleport、logical placement、RTL／viewport clamp、outside pointer／Escape／external scroll dismissal、Escape focus return，以及optional header／body／footer的compact interactive-panel anatomy；footer actions靠inline-end。Caller仍擁有各區內容，不帶Notice status／tone、menu semantics、focus trap或background inert。
 - `UiNotificationHost`：Caller控制items與identity；host擁有bottom-end bounded queue、避開persistent PlayerBar的block-end offset、bounded enter／leave／move motion、transient／progress／persistent lifecycle、hover／focus／document-hidden pause、manual close與touch／pen swipe，並組合`UiNotice`／`UiIconButton`；不從tone推導lifecycle或announcement。
 
+2026-10-29 owner 確認 App 快捷鍵分類設定使用 `UiKbd`，由
+`KeyboardShortcutSettingsBlock` 完成首個 production consumer。Primitive 仍只呈現
+caller 解析後的按鍵文字；設定 owner、registry、衝突與錄製／保存不移入 primitive。
+正式 consumer guard 因此開放 Kbd，其餘尚未採用的 infra 維持 pending；不新增 token 或外觀系統。
+
 2026-10-18 owner 核准 Settings 使用 `UiDisclosure` 試作漸進揭露：OBS 伺服器與場次設定、
 公開輸出連接埠與同步、工具與模型管理、曲庫空間及曲目維護直接組合正式 primitive。
 常用啟用／運作狀態、錯誤與復原入口留在外層；設定草稿與原有 domain lifecycle 不因收合而卸載。

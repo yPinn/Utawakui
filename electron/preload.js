@@ -404,7 +404,7 @@ function keyboardShortcutSettingsIntent(input) {
   const configuration = input?.configuration;
   if (
     !Array.isArray(configuration?.bindings) ||
-    configuration.bindings.length > 7 ||
+    configuration.bindings.length > 10 ||
     !(
       input.expectedRevision === null ||
       (typeof input.expectedRevision === 'string' &&

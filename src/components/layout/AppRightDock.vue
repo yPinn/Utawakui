@@ -11,6 +11,7 @@ import UiSurface from '../ui/UiSurface.vue';
 
 const props = defineProps({
   expanded: { type: Boolean, required: true },
+  maximized: { type: Boolean, default: false },
   performance: { type: Boolean, default: false },
   label: { type: String, default: '右側區塊' },
   expandLabel: { type: String, default: '展開右側區塊' },
@@ -25,7 +26,10 @@ const props = defineProps({
 const emit = defineEmits(['expand', 'toggleExpanded']);
 const dockWidth = useAppRightDockWidth();
 const rootStyle = computed(() => ({
-  '--ui-right-dock-width': `${dockWidth.width.value}px`,
+  width: props.maximized ? '100%' : undefined,
+  '--ui-right-dock-width': props.maximized
+    ? '100%'
+    : `${dockWidth.width.value}px`,
 }));
 
 function handleResizeKeydown(event) {
@@ -90,11 +94,13 @@ function handleResizeKeydown(event) {
 
     <div
       v-if="expanded"
+      v-show="!props.maximized"
       class="app-right-dock__handle"
       :class="{
         'app-right-dock__handle--active': dockWidth.isResizing.value,
       }"
       role="separator"
+      :inert="props.maximized"
       tabindex="0"
       aria-orientation="vertical"
       :aria-valuemin="RIGHT_DOCK_WIDTH_MIN"

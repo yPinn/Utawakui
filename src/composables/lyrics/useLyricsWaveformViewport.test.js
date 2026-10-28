@@ -173,9 +173,9 @@ it('navigates the overview with keyboard equivalents, preserving zoom and guardi
   expect(f.view.viewport.value.fromMs).toBe(0);
   await f.view.moveOverviewWithKey(key('ArrowRight'));
   expect(f.view.viewport.value.fromMs).toBe(1000);
-  await f.view.moveOverviewWithKey(key('PageUp'));
-  expect(f.view.viewport.value.fromMs).toBe(6000);
   await f.view.moveOverviewWithKey(key('PageDown'));
+  expect(f.view.viewport.value.fromMs).toBe(6000);
+  await f.view.moveOverviewWithKey(key('PageUp'));
   expect(f.view.viewport.value.fromMs).toBe(1000);
   expect(f.view.zoomIndex.value).toBe(3);
   const escape = key('Escape');

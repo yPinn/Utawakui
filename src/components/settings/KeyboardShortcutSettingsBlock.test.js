@@ -8,6 +8,9 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 import Component from './KeyboardShortcutSettingsBlock.vue';
+import Reference from './KeyboardShortcutReference.vue';
+import Keys from './KeyboardShortcutKeys.vue';
+import Disclosure from '../ui/UiDisclosure.vue';
 import { useKeyboardShortcutSettings } from '../../composables/useKeyboardShortcutSettings.js';
 import { defaultShortcutConfiguration } from '../../../shared/keyboardShortcutContract.mjs';
 
@@ -26,6 +29,74 @@ vi.mock('../ui/UiHint.vue', () => ({
       (_, { slots }) =>
       () =>
         h('p', slots.default?.()),
+  },
+}));
+vi.mock('../ui/UiKbd.vue', () => ({
+  default: {
+    setup:
+      (_, { slots }) =>
+      () =>
+        h('kbd', slots.default?.()),
+  },
+}));
+vi.mock('../ui/UiIconButton.vue', () => ({
+  default: {
+    props: ['label', 'disabled'],
+    setup: (p) => () =>
+      h('button', { 'aria-label': p.label, disabled: p.disabled }, '更多'),
+  },
+}));
+vi.mock('../ui/UiTabs.vue', () => ({
+  default: {
+    props: ['items', 'activeId'],
+    emits: ['update:activeId'],
+    setup:
+      (p, { emit }) =>
+      () =>
+        h(
+          'div',
+          { role: 'tablist' },
+          p.items.map((item) =>
+            h(
+              'button',
+              {
+                role: 'tab',
+                'aria-selected': item.id === p.activeId,
+                disabled: item.disabled,
+                onClick: () => emit('update:activeId', item.id),
+              },
+              item.label,
+            ),
+          ),
+        ),
+  },
+}));
+vi.mock('../ui/UiActionMenu.vue', () => ({
+  default: {
+    props: ['open', 'content'],
+    emits: ['select', 'close'],
+    setup:
+      (p, { emit }) =>
+      () =>
+        p.open
+          ? h(
+              'div',
+              { role: 'menu' },
+              p.content.groups.flatMap((group) =>
+                group.items.map((item) =>
+                  h(
+                    'button',
+                    {
+                      disabled: item.disabled,
+                      'aria-label': item.label,
+                      onClick: () => emit('select', item.value),
+                    },
+                    item.label,
+                  ),
+                ),
+              ),
+            )
+          : null,
   },
 }));
 vi.mock('./SettingsDocumentItem.vue', () => ({
@@ -92,23 +163,69 @@ async function setup(
     './KeyboardShortcutSettingsBlock.vue',
     import.meta.url,
   );
+  attachClientRender(
+    Reference,
+    './KeyboardShortcutReference.vue',
+    import.meta.url,
+  );
+  attachClientRender(Keys, './KeyboardShortcutKeys.vue', import.meta.url);
+  attachClientRender(Disclosure, '../ui/UiDisclosure.vue', import.meta.url);
   mounted = mount(Component);
   owner = useKeyboardShortcutSettings({ bridge });
   await owner.initialize();
   await nextTick();
-  trigger(button('展開 App 快捷鍵'), 'onClick');
+  trigger(button('展開快捷鍵設定'), 'onClick');
   await nextTick();
   return bridge;
 }
+async function tab(label) {
+  trigger(
+    findAll(
+      mounted.root,
+      (n) => n.props?.role === 'tab' && textContent(n) === label,
+    )[0],
+    'onClick',
+  );
+  await nextTick();
+}
 describe('App shortcut settings document', () => {
-  it('keeps seven commands inside the existing inline Settings surface with default assignments', async () => {
+  it('orders four categories with 3/5/2 editable rows and a read-only reference, without assigning Space', async () => {
     await setup();
     expect(
       findAll(mounted.root, (n) => n.props?.['data-shortcut-command']),
-    ).toHaveLength(7);
-    expect(textContent(mounted.root)).toContain('Ctrl + ↑');
+    ).toHaveLength(3);
+    expect(
+      findAll(mounted.root, (n) => n.props?.role === 'tab').map(textContent),
+    ).toEqual(['播放控制', '音訊調整', '歌詞對時', '操作說明']);
     expect(textContent(mounted.root)).toContain('未設定');
-    expect(textContent(mounted.root)).toContain('全域快捷鍵尚未開放');
+    await tab('音訊調整');
+    expect(
+      findAll(mounted.root, (n) => n.props?.['data-shortcut-command']).map(
+        (n) => n.props['data-shortcut-command'],
+      ),
+    ).toEqual([
+      'player.volume-up',
+      'player.volume-down',
+      'player.mute',
+      'player.transpose-up',
+      'player.transpose-down',
+    ]);
+    expect(
+      findAll(mounted.root, (n) => n.type === 'kbd').length,
+    ).toBeGreaterThan(0);
+    await tab('歌詞對時');
+    expect(
+      findAll(mounted.root, (n) => n.props?.['data-shortcut-command']),
+    ).toHaveLength(2);
+    expect(textContent(mounted.root)).toContain('會自動儲存');
+    await tab('操作說明');
+    expect(
+      findAll(mounted.root, (n) => n.props?.['data-shortcut-command']),
+    ).toHaveLength(0);
+    expect(textContent(mounted.root)).toContain('鍵盤媒體鍵');
+    expect(textContent(mounted.root)).toContain(
+      '切到其他程式後，自訂快捷鍵不會生效',
+    );
     expect(
       findAll(mounted.root, (n) => n.props?.role === 'dialog'),
     ).toHaveLength(0);
@@ -130,7 +247,15 @@ describe('App shortcut settings document', () => {
       expect(owner.configuration.value.bindings[2].app.mode).toBe('custom'),
     );
     await nextTick();
-    expect(textContent(mounted.root)).toContain('Ctrl + J');
+    expect(
+      findAll(
+        findAll(
+          mounted.root,
+          (n) => n.props?.['data-shortcut-command'] === 'player.next',
+        )[0],
+        (n) => n.type === 'kbd',
+      ).map(textContent),
+    ).toEqual(['Ctrl', 'J']);
     expect(owner.isRecording.value).toBe(false);
   });
   it('cancels partial recording without a save, and offers clickable disable and default restoration', async () => {
@@ -146,13 +271,44 @@ describe('App shortcut settings document', () => {
     await nextTick();
     expect(bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
     expect(owner.isRecording.value).toBe(false);
-    trigger(button('停用移調 +1快捷鍵'), 'onClick');
+    await tab('音訊調整');
+    trigger(button('歌曲音量 +10%選項'), 'onClick');
+    await nextTick();
+    expect(button('停用歌曲音量 +10%快捷鍵')).toBeTruthy();
+    trigger(button('停用歌曲音量 +10%快捷鍵'), 'onClick');
+    await vi.waitFor(() =>
+      expect(
+        owner.configuration.value.bindings.find(
+          (b) => b.command === 'player.volume-up',
+        ).app.mode,
+      ).toBe('disabled'),
+    );
+    trigger(button('升調 1 半音選項'), 'onClick');
+    await nextTick();
+    trigger(button('停用升調 1 半音快捷鍵'), 'onClick');
     await vi.waitFor(() =>
       expect(owner.configuration.value.bindings[3].app.mode).toBe('disabled'),
     );
     await nextTick();
     trigger(button('恢復全部快捷鍵預設'), 'onClick');
     await vi.waitFor(() => expect(owner.isDefault.value).toBe(true));
+  });
+  it('cancels an unapplied candidate on a category change without saving or stealing focus back', async () => {
+    const bridge = await setup();
+    trigger(button('設定下一首快捷鍵'), 'onClick');
+    await nextTick();
+    trigger(
+      button('錄製下一首快捷鍵'),
+      'onKeydown',
+      event('j', { ctrlKey: true }),
+    );
+    await nextTick();
+    expect(owner.isRecording.value).toBe(true);
+    await tab('音訊調整');
+    expect(owner.isRecording.value).toBe(false);
+    expect(bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    await tab('播放控制');
+    expect(button('錄製下一首快捷鍵')).toBeUndefined();
   });
   it('shows preserved-file read errors with retry and no active-looking assignment', async () => {
     const bridge = await setup({ status: 'invalid' });
@@ -166,5 +322,28 @@ describe('App shortcut settings document', () => {
     });
     trigger(button('重新讀取快捷鍵'), 'onClick');
     await vi.waitFor(() => expect(owner.state.loaded).toBe(true));
+  });
+  it('offers reload beside a failed row save after cancelling its candidate', async () => {
+    const bridge = await setup();
+    bridge.setKeyboardShortcuts.mockResolvedValue({ status: 'unavailable' });
+    trigger(button('設定下一首快捷鍵'), 'onClick');
+    await nextTick();
+    trigger(
+      button('錄製下一首快捷鍵'),
+      'onKeydown',
+      event('j', { ctrlKey: true }),
+    );
+    await nextTick();
+    trigger(button('套用下一首快捷鍵'), 'onClick');
+    await vi.waitFor(() => expect(owner.state.saveError).toContain('重新讀取'));
+    await nextTick();
+    expect(button('重新讀取快捷鍵').props.disabled).toBe(true);
+    trigger(button('取消下一首快捷鍵'), 'onClick');
+    await nextTick();
+    expect(button('重新讀取快捷鍵').props.disabled).toBe(false);
+    trigger(button('重新讀取快捷鍵'), 'onClick');
+    await vi.waitFor(() => expect(owner.state.saveError).toBe(''));
+    expect(bridge.getKeyboardShortcuts).toHaveBeenCalledTimes(2);
+    expect(owner.configuration.value.bindings[2].app.mode).toBe('default');
   });
 });

@@ -47,7 +47,7 @@
 
 - `useAppView.js` 單獨擁有目的地狀態。Library／Performance／Display／Settings 進入 `AppFolderLayout`＋`AppFolderPage`；`LibraryPage`、`PerformancePage`、`DisplayPage`、`SettingsPage` 是各目的地的組合 owner。
 - 導覽歷史由 `useNavigationHistory.js` 擁有（[ADR 0025](adr/0025-renderer-navigation-history.md)）：只記目的地、Library 選取與 Settings 返回來源，不記播放、佇列、搜尋或排序。滑鼠側鍵、`Alt+←／→`、瀏覽器鍵與 Main 轉送的 Windows `app-command` 經 `inputBindingRegistry.js`／`useNavigationInput.js` 共用同一出口。
-- 自訂快捷鍵由 `shared/keyboardShortcutContract.mjs` 固定七命令／有界配置，`keyboardBindingDefinitions.mjs` 共用原 player／history 保留鍵。Main `keyboardShortcutSettings.js`／`keyboardShortcutHandlers.js` 擁有固定 userData 檔、CAS 與有界 IPC；`useKeyboardShortcutSettings.js` 共用 confirmed 偏好，Settings 文件列與 `useKeyboardShortcutRecorder.js` 擁有候選／錄製生命週期，App 將保存配置與 recording context 交給既有 dispatcher。`useShortcutCommands.js` 仍只協調 player／transport／lyrics 與來源／edit 屏障；沒有新的播放／歌詞 owner 或 OS manager，見[輸入契約](contracts/input-bindings.md#機器保存與錄製)。
+- 自訂快捷鍵由 `shared/keyboardShortcutContract.mjs` 固定十命令／有界配置，`keyboardBindingDefinitions.mjs` 共用原 player／history 保留鍵。Main `keyboardShortcutSettings.js`／`keyboardShortcutHandlers.js` 擁有固定 userData 檔、CAS 與有界 IPC；`useKeyboardShortcutSettings.js` 共用 confirmed 偏好，Settings 快捷鍵區的四個局部分類 Tab、`KeyboardShortcutReference.vue`／`keyboardShortcutSettingsPresentation.js` 唯讀呈現與 `useKeyboardShortcutRecorder.js` 擁有候選／錄製生命週期，App 將保存配置與 recording context 交給既有 dispatcher。`useShortcutCommands.js` 仍只協調 player／transport／lyrics 與來源／edit 屏障；沒有新的播放／歌詞 owner 或 OS manager，見[輸入契約](contracts/input-bindings.md#機器保存與錄製)。
 - `openSettings()` 首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings 目的地；Titlebar、F9、Tray 與依賴設定請求共用此 action。
 - Token：Main 與 Performer 的 `#app` 在 mount 前登記為 v2 surface，兩個 entry 只載入 `src/styles/tokens.css`。Token v1 已全部移除，source gate 禁止回流（[Token v2 替換](archive/token-v2-replacement.md)）。`overlay/` 只用 `--ovl-*`，兩者互不匯入。
 - Modal 內的動作選單由 `UiModal` 提供當前 backdrop 作為局部 floating host；`UiActionMenu` 優先 Teleport 至該 host，保持在 clipped panel 外且屬於同一 dialog 堆疊。非 modal 選單仍使用已登記的 surface overlay host，不以頁面自訂 z-index 修補遮蔽。
@@ -66,6 +66,7 @@
 
 - `useShellLayout.js` 依實測Shell寬度、Dock展開狀態及語意tokens，統一投影左側64／256px與Dock實際佔位。兩側全程並排，先自動摺Sidebar再縮Dock；Dock開關在所有支援尺寸共用同一有效欄寬；窄窗先摺左再將共用欄位壓至最少272px，只繪製40px摺疊開關，開關不改中央寬度或Sidebar門檻，沒有窄窗overlay或臨時Sidebar。使用者偏好與受限顯示分離，恢復有4rem餘裕；中央640px為舒適目標，最窄窗由內容reflow。幾何、手動展開與驗證見[Shell空間分配契約](contracts/shell-layout.md)。
 - `App.vue` 組合Shell幾何；`useAppRightDock.js` 擁有surface stack與前景切換，不持有播放或處理資料。內容寬度與欄位佔位分開；resize、Escape與焦點還原屬於Shell，不回流到PlayerBar。
+- `usePanelView.js` 只持有主工作區／右側面板／原音訊波形的暫時放大與最近操作目標；註冊現有 DOM，沿既有鍵盤 dispatcher 與共用 `PanelViewButton.vue` 切換。Shell 重排原區域、波形擴大原 `UiPopover`，不重建內容或保存寬度；來源／目的地失效還原，沒有新的 player／editor owner，見[面板檢視契約](contracts/shell-layout.md#暫時放大目前面板)。
 - `QueuePanel.vue`、`TrackContextPanel.vue` 與 `PreparationDockPanel.vue` 透過 `AppRightDockPanel.vue` 共用 header、單一 scroll owner、可選 summary 與 footer slot。PlayerBar 縮圖是直接開啟 metadata 的 intent。
 - Queue surface 有一般與「演出安排」兩個 variant；安排 variant 的 footer 放場間音樂，OBS 直播／錄影中時 Dock 加強框色並顯示 LIVE／REC（只讀 OBS 投影，讀取失敗即清除）。
 - Queue 與最近播放的列由 `QueueTrackButton`／`RecentPlaybackList` 組合 `UiTrackRow`；排序與拖曳由 Queue feature 持有，`UiTrackRow` 不持有排序語意。`playbackActions=false` 可關閉封面、Enter 與雙擊播放。`TrackIdentityRow.vue` 提供可導向專輯／藝人的曲目身分列，在切換目的地前發出 `navigate` 讓 Modal／Dock 先收合。
