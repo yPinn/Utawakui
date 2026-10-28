@@ -45,7 +45,7 @@ async function load() {
     }
     preview.value = result.plan;
   } catch {
-    if (current === revision) error.value = '無法取得歌單預覽，請重試。';
+    if (current === revision) error.value = '無法取得歌單預覽，請再試一次。';
   } finally {
     if (current === revision) loading.value = false;
   }
@@ -107,7 +107,7 @@ async function save() {
     emit('saved', playlistId);
     emit('close');
   } catch {
-    error.value = '歌單尚未保存，請重試；重試不會重複建立同一份歌單。';
+    error.value = '歌單尚未保存，請再試一次；再次保存不會重複建立同一份歌單。';
   } finally {
     saving.value = false;
   }

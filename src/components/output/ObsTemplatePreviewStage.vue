@@ -183,7 +183,7 @@ onBeforeUnmount(stopPreview);
       v-if="previewFailed"
       class="obs-template-preview-stage__motion"
       role="status"
-      >動態預覽載入失敗，請重試</span
+      >動態預覽載入失敗，請再試一次</span
     >
   </section>
 </template>

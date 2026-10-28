@@ -16,12 +16,12 @@ export function usePerformanceArchive(sessionId) {
       const result = await window.Utawakui.getPerformanceSession(id);
       if (request !== revision) return;
       if (result?.ok !== true || result.plan?.id !== id) {
-        error.value = result?.error?.message || '場次無法讀取，請重試。';
+        error.value = result?.error?.message || '場次無法讀取，請再試一次。';
         return;
       }
       session.value = result.plan;
     } catch {
-      if (request === revision) error.value = '場次無法讀取，請重試。';
+      if (request === revision) error.value = '場次無法讀取，請再試一次。';
     } finally {
       if (request === revision) loading.value = false;
     }

@@ -37,7 +37,7 @@ function reviewErrorOptions(recordDiagnostic, operation) {
       publicError: {
         code: 'LYRICS_PROVIDER_REVIEW_LOOKUP_FAILED',
         title: '查證動作未完成',
-        message: '目前無法複製或開啟查證頁面，請重試。',
+        message: '目前無法複製或開啟查證頁面，請再試一次。',
       },
     };
   }

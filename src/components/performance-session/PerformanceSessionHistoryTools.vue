@@ -144,7 +144,7 @@ async function archive() {
     // Stop through the existing owner, including a pending audio start. Main
     // still rejects a playing item if that transition did not commit.
     if (!(await playback.stop())) {
-      error.value = '目前曲目尚未停止，請重試。';
+      error.value = '目前曲目尚未停止，請再試一次。';
       return;
     }
     if (!(await plan.archiveSession(name.value.trim(), finish.value.id))) {
@@ -161,7 +161,7 @@ async function archive() {
       message: '可在已封存場次中查看。',
     });
   } catch {
-    error.value = '場次尚未封存，請重試；原安排仍保留。';
+    error.value = '場次尚未封存，請再試一次；原安排仍保留。';
   } finally {
     archiving.value = false;
   }

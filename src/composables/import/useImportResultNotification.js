@@ -29,7 +29,7 @@ function notifyImportResult(batch, notify) {
     failed ? `${failed} 首失敗` : '',
     cancelled ? `${cancelled} 首已停止` : '',
     local ? `${local} 首已在曲庫` : '',
-    batch.saveError ? '播放清單未儲存，請重試' : '',
+    batch.saveError ? '播放清單未儲存，請再試一次' : '',
   ]
     .filter(Boolean)
     .join('，');

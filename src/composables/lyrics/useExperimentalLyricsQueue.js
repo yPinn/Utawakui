@@ -29,7 +29,8 @@ export function useExperimentalLyricsQueue() {
         }
       }
     } catch {
-      if (current === read) readError.value = '無法讀取詞塊分析狀態，請重試。';
+      if (current === read)
+        readError.value = '無法讀取詞塊分析狀態，請再試一次。';
     }
   }
   async function action(name, value, ...extra) {

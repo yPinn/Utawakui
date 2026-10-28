@@ -62,7 +62,7 @@ function registerConfigHandlers({
         operation: 'get-obs-arrangement-dock',
         code: 'OBS_ARRANGEMENT_DOCK_READ_FAILED',
         title: '無法讀取播放安排顯示偏好',
-        message: '目前無法讀取播放安排顯示偏好，請重試。',
+        message: '目前無法讀取播放安排顯示偏好，請再試一次。',
       },
       () => getConfig().autoShowArrangementOnObs === true,
     ),
@@ -80,7 +80,7 @@ function registerConfigHandlers({
         operation: 'set-obs-arrangement-dock',
         code: 'OBS_ARRANGEMENT_DOCK_UPDATE_FAILED',
         title: '無法儲存播放安排顯示偏好',
-        message: '目前無法儲存播放安排顯示偏好，請重試。',
+        message: '目前無法儲存播放安排顯示偏好，請再試一次。',
       },
       () => {
         updateConfig({ autoShowArrangementOnObs: enabled });

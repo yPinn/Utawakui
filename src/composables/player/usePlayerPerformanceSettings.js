@@ -113,7 +113,7 @@ export function usePlayerPerformanceSettings({
   }
   function error(result) {
     setError(
-      messages[result?.status] ?? '歌曲設定暫時無法讀取或保存，請重試。',
+      messages[result?.status] ?? '歌曲設定暫時無法讀取或保存，請再試一次。',
     );
   }
   function cancelPreparation() {
@@ -394,7 +394,7 @@ export function usePlayerPerformanceSettings({
       return true;
     } catch {
       if (generation === currentGeneration)
-        setError('本次演唱設定尚未完成，請重試。');
+        setError('本次演唱設定尚未完成，請再試一次。');
       return false;
     } finally {
       if (generation === currentGeneration) state.applying = false;

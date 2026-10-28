@@ -74,7 +74,7 @@ export function useLyricsVocalRoles({
     } catch (e) {
       if (disposed || ticket !== generation) return;
       status.value = 'error';
-      error.value = '聲部標註讀取失敗，請重試。';
+      error.value = '聲部標註讀取失敗，請再試一次。';
       reportError(e, 'load-vocal-roles', error.value);
     }
   }

@@ -72,7 +72,7 @@ export function deriveReleaseDetail({
   ];
   let message = '';
   if (verification.state === 'error')
-    message = verification.error || '發行曲目確認未完成，請重試。';
+    message = verification.error || '發行曲目確認未完成，請再試一次。';
   else if (!ids.length) message = '這份單曲發行尚未收錄本機曲目。';
   else if (!available.length)
     message = '目前找不到本機曲目，請檢查曲庫或在發行資訊中確認。';

@@ -368,7 +368,7 @@ describe('player performance settings owner', () => {
     expect(f.notifications.notify).toHaveBeenLastCalledWith(
       expect.objectContaining({
         key: 'player-performance-settings',
-        message: '本次演唱設定尚未完成，請重試。',
+        message: '本次演唱設定尚未完成，請再試一次。',
       }),
     );
     expect(JSON.stringify(f.notifications.notify.mock.calls)).not.toContain(

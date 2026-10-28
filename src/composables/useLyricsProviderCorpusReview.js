@@ -10,7 +10,7 @@ const PUBLIC_LOAD_ERROR = Object.freeze({
 });
 const PUBLIC_SAVE_ERROR = Object.freeze({
   title: '審核決定未能儲存',
-  message: '原始審核資料未變更，請重試。',
+  message: '原始審核資料未變更，請再試一次。',
   actionLabel: '',
 });
 const exportAttempts = new WeakMap();

@@ -400,7 +400,7 @@ describe('useLyricsProviderCorpusReview', () => {
     await review.rejectAndNext('other');
     expect(review.error.value).toEqual({
       title: '審核決定未能儲存',
-      message: '原始審核資料未變更，請重試。',
+      message: '原始審核資料未變更，請再試一次。',
       actionLabel: '',
     });
     expect(JSON.stringify(review.error.value)).not.toMatch(/private|reviews/i);

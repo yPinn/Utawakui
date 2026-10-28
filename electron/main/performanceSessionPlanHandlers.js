@@ -19,17 +19,17 @@ const OPERATION_ERRORS = Object.freeze({
   archive: {
     code: 'PERFORMANCE_SESSION_ARCHIVE_FAILED',
     title: '場次尚未封存',
-    message: '場次尚未封存，目前資料仍保留，請重試。',
+    message: '場次尚未封存，目前資料仍保留，請再試一次。',
   },
   history: {
     code: 'PERFORMANCE_SESSION_HISTORY_FAILED',
     title: '演出紀錄未更新',
-    message: '目前無法讀取或保存演出紀錄，請重試。',
+    message: '目前無法讀取或保存演出紀錄，請再試一次。',
   },
   export: {
     code: 'PERFORMANCE_SESSION_EXPORT_FAILED',
     title: '演出歌單尚未保存',
-    message: '演出歌單尚未保存，請重試。',
+    message: '演出歌單尚未保存，請再試一次。',
   },
   get: {
     code: 'PERFORMANCE_SESSION_PLAN_GET_FAILED',
