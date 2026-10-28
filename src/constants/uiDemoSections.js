@@ -16,6 +16,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       { key: 'spacing-shape', title: '間距與形狀' },
       { key: 'core-minimums', title: '核心最小尺寸' },
       { key: 'density', title: '密度與尺寸' },
+      { key: 'structure-row-height', title: '分析段落列高比較' },
       { key: 'artwork-ramp', title: '封面尺寸階層' },
     ],
   },
