@@ -55,6 +55,39 @@ describe('useMetronome', () => {
     metro.stop();
   });
 
+  it('raises one shell notice for a stopped metronome and restarts it from the action', async () => {
+    const metro = await loadMetronome();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    metro.setSoundEnabled(true);
+    metro.start();
+    await vi.advanceTimersByTimeAsync(0);
+    metro.engine.resume.mockRejectedValueOnce(Error('private driver detail'));
+    metro.setSoundEnabled(true);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(metro.state.isRunning).toBe(false);
+    const [notice] = notifications.items.value;
+    expect(notice).toMatchObject({
+      key: 'metronome-sound',
+      title: '節拍器已停止',
+      tone: 'warning',
+      lifecycle: 'persistent',
+      actionLabel: '重新啟動',
+    });
+    expect(notice.message).not.toContain('private');
+
+    await notifications.runAction(notice.id);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(metro.state).toMatchObject({
+      isRunning: true,
+      soundEnabled: true,
+      soundError: '',
+    });
+    expect(notifications.items.value).toEqual([]);
+    metro.stop();
+  });
+
   it('ignores a failed old resume after a newer start without closing its clock', async () => {
     const metro = await loadMetronome();
     let rejectOld;

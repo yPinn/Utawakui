@@ -1,4 +1,5 @@
 import { computed, reactive, readonly } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
@@ -202,17 +203,17 @@ async function clear() {
     }
     state.sourceRecency = {};
     notifications.notify({
-      key: 'playback-history-clear',
+      key: NOTIFICATION_KEYS.PLAYBACK_HISTORY_CLEAR,
       title: '播放紀錄已清除',
       message: '播放佇列與歌單已保留。',
     });
     return true;
   } catch {
     notifications.notify({
-      key: 'playback-history-clear',
+      key: NOTIFICATION_KEYS.PLAYBACK_HISTORY_CLEAR,
       tone: 'danger',
       title: '播放紀錄未清除',
-      message: '最近播放紀錄暫時無法清除，請再試一次。',
+      message: '請再試一次。',
     });
     return false;
   } finally {

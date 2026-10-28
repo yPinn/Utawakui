@@ -6,6 +6,7 @@ import {
   shallowRef,
   watch,
 } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { alignReadings, detectLyricsScript } from '../utils/lyrics.js';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import {
@@ -14,7 +15,6 @@ import {
 } from '../utils/performerOffsetIntent.js';
 import { useLyricsDisplay } from './useLyricsDisplay.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
-import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
@@ -40,7 +40,6 @@ const {
   getDoc: getReadingDoc,
   loadReading,
 } = useLyricsReading();
-const { recordError } = useAppDiagnostics();
 const notifications = useAppNotifications();
 let errorOperation = null;
 
@@ -75,23 +74,25 @@ function bridgeMethod(name) {
 
 function reportPerformerError(error, operation, message) {
   errorOperation = operation;
-  const publicMessage = recordError(error, {
-    code: `PERFORMER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-    title: '表演者畫面未完成',
+  return notifications.notifyFailure({
+    key: NOTIFICATION_KEYS.PERFORMER_VIEW,
+    title: '表演者畫面操作未完成',
     message,
+    error,
+    code: `PERFORMER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
     source: 'performer',
     operation,
     context: { retryable: true },
-  }).message;
-  notifications.notify({
-    key: 'performer-view',
-    title: '表演者畫面操作未完成',
-    message: publicMessage,
-    tone: 'danger',
     actionLabel: '重試',
     action: toggle,
   });
-  return publicMessage;
+}
+
+function clearPerformerError(operation) {
+  if (operation && errorOperation !== operation) return;
+  state.error = '';
+  errorOperation = null;
+  notifications.clear(NOTIFICATION_KEYS.PERFORMER_VIEW);
 }
 
 function applyStatus(status = {}) {
@@ -227,24 +228,20 @@ function handleControlIntent(intent) {
 const publisher = createLatestAsyncPublisher(
   (snapshot) => bridgeMethod('publishPerformerSnapshot')(snapshot),
   {
+    // Every projection change republishes; only the first failure of a
+    // streak is recorded and shown, and the next success withdraws it.
     onError: (error) => {
-      state.error = reportPerformerError(
-        error,
-        'publish',
-        '表演者畫面未更新，請再試一次。',
-      );
+      if (errorOperation === 'publish') return;
+      state.error = reportPerformerError(error, 'publish', '請再試一次。');
     },
+    onSuccess: () => clearPerformerError('publish'),
   },
 );
 
 async function refreshStatus() {
   try {
     applyStatus(await bridgeMethod('getPerformerViewStatus')());
-    if (errorOperation === 'status') {
-      state.error = '';
-      errorOperation = null;
-      notifications.clear('performer-view');
-    }
+    clearPerformerError('status');
     return state.open;
   } catch (error) {
     state.error = reportPerformerError(
@@ -260,9 +257,7 @@ async function open() {
   state.isOpening = true;
   try {
     applyStatus(await bridgeMethod('openPerformerView')(currentSnapshot()));
-    state.error = '';
-    errorOperation = null;
-    notifications.clear('performer-view');
+    clearPerformerError();
     return true;
   } catch (error) {
     state.error = reportPerformerError(
@@ -280,9 +275,7 @@ async function close() {
   state.isOpening = true;
   try {
     applyStatus(await bridgeMethod('closePerformerView')());
-    state.error = '';
-    errorOperation = null;
-    notifications.clear('performer-view');
+    clearPerformerError();
     return true;
   } catch (error) {
     state.error = reportPerformerError(

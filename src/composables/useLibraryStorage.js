@@ -1,4 +1,5 @@
 import { computed, reactive, shallowRef } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import storageValues from '../../shared/libraryStorageValues.json';
 import { useAppNotifications } from './useAppNotifications.js';
 import { formatBytes } from '../utils/format.js';
@@ -112,7 +113,7 @@ function createStorageSession(bridge) {
       state.readError = '';
       const freedBytes = result?.cleanup?.freedBytes;
       notifications.notify({
-        key: 'library-cleanup',
+        key: NOTIFICATION_KEYS.LIBRARY_CLEANUP,
         title: freedBytes > 0 ? '去人聲版本已清理' : '目前不需清理',
         message:
           freedBytes > 0
@@ -122,10 +123,10 @@ function createStorageSession(bridge) {
       return true;
     } catch {
       notifications.notify({
-        key: 'library-cleanup',
+        key: NOTIFICATION_KEYS.LIBRARY_CLEANUP,
         tone: 'danger',
         title: '去人聲版本未清理',
-        message: '目前無法清理去人聲版本，請再試一次。',
+        message: '請再試一次。',
       });
       return false;
     } finally {

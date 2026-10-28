@@ -142,7 +142,7 @@
 ### Settings 與通知
 
 - `SettingsPage` 擁有唯一 page scroll 與 local overlay host；`SettingsView` 組合曲庫、音訊、應用程式、選用功能與支援五個 domain，各 section component 持有自己的 lifecycle、確認與 deep-link。系統 FFmpeg 偵測經 `useOnFirstVisible` 延到區段可見時。
-- `useAppNotifications.js` 保存通知投影與私有 action callback，`App.vue` 掛載唯一 `AppNotificationHost`；`useTaskNotification.js` 由各 domain 事件更新同一投影。Modal 與通知共用 `useUiModalStack.js`，modal 開啟期間暫停通知倒數。見 [Settings 操作回饋契約](contracts/settings-operation-feedback.md)。
+- `useAppNotifications.js` 保存通知投影與私有 action callback，`App.vue` 掛載唯一 `AppNotificationHost`；`useTaskNotification.js` 由各 domain 事件更新同一投影。通知 key 登記於 `constants/notificationKeys.js`，操作失敗經 `notifyFailure` 同時記錄診斷與通知，可見中的相同失敗只算一次。Modal 與通知共用 `useUiModalStack.js`，modal 開啟期間暫停通知倒數。見 [Settings 操作回饋契約](contracts/settings-operation-feedback.md)。
 - 伴奏完成摘要由 App 持有的 `useSeparationQueue` 依本輪觀察到的項目終態收斂，歷史讀取與重複推送不重播；一般外部匯入由 `useImportExecution` 在 accepted batch 的下載及 collection 保存結束後投影一次，不依賴目前草稿或 Dock 掛載。兩類沿用原準備清單作為查看結果入口，詳見[背景工作通知](contracts/settings-operation-feedback.md#背景工作完成通知)。
 - 偏好與儲存狀態由 `useLibraryStorage`、`useSettingsPreference` 依 bridge 共用，切頁不重建寫入；OBS 密碼輸入離頁即清除。
 

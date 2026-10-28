@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { normalizeAppError } from '../utils/appErrors.js';
 import { useAppNotifications } from './useAppNotifications.js';
 
@@ -26,7 +27,7 @@ function bridgeMethod(name) {
   return typeof method === 'function' ? method : null;
 }
 
-function failureNotice({ title, message = '請稍後再試一次。', operation }) {
+function failureNotice({ title, message = '請再試一次。', operation }) {
   return normalizeAppError(null, {
     code: `DIAGNOSTICS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
     title,
@@ -39,9 +40,9 @@ function failureNotice({ title, message = '請稍後再試一次。', operation 
 
 function notifyFailure(title, operation, action = null) {
   notifications.notify({
-    key: `diagnostics-${operation}`,
+    key: notificationKey.diagnostics(operation),
     title,
-    message: '請稍後再試一次。',
+    message: '請再試一次。',
     tone: 'danger',
     actionLabel: '重試',
     action,
@@ -103,7 +104,7 @@ async function clear() {
     state.recordCount = 0;
     state.notice = null;
     notifications.notify({
-      key: 'diagnostics-clear',
+      key: notificationKey.diagnostics('clear'),
       title: '錯誤紀錄已清除',
       message: '已移除這台電腦上的錯誤紀錄。',
     });
@@ -129,7 +130,7 @@ async function openFolder() {
   try {
     const result = await openDiagnosticsFolder();
     if (!result?.ok) throw new Error('diagnostics folder open failed');
-    notifications.clear('diagnostics-open-folder');
+    notifications.clear(notificationKey.diagnostics('open-folder'));
     return true;
   } catch {
     notifyFailure('無法開啟錯誤紀錄資料夾', 'open-folder', openFolder);
@@ -156,7 +157,7 @@ async function exportBundle() {
     if (result?.cancelled) return true;
     if (!result?.ok) throw new Error('diagnostics export failed');
     notifications.notify({
-      key: 'diagnostics-export',
+      key: notificationKey.diagnostics('export'),
       title: '已匯出錯誤紀錄',
       message: '檔案已儲存在你選擇的位置。',
     });

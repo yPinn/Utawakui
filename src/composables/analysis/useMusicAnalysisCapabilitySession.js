@@ -1,4 +1,5 @@
 import { reactive, readonly, shallowRef } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useMusicAnalysisCapability } from './useMusicAnalysisCapability.js';
 import { useTaskNotification } from '../useTaskNotification.js';
 import { useAppView } from '../useAppView.js';
@@ -27,7 +28,7 @@ export function useMusicAnalysisCapabilitySession({ bridge } = {}) {
     bridge: resolved,
     onActionStart(operation) {
       feedback = useTaskNotification({
-        key: 'task:music-analysis-capability',
+        key: NOTIFICATION_KEYS.TASK_MUSIC_ANALYSIS_CAPABILITY,
         title: `BPM 分析元件${OPERATIONS[operation]}中`,
         action: openSettings,
       });

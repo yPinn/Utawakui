@@ -2,6 +2,7 @@ import {
   RIGHT_DOCK_SURFACE_PREPARATION,
   useAppRightDock,
 } from '../useAppRightDock.js';
+import { notificationKey } from '../../constants/notificationKeys.js';
 
 export function useImportResultNotification(notify) {
   return (batch) => notifyImportResult(batch, notify);
@@ -33,7 +34,7 @@ function notifyImportResult(batch, notify) {
     .filter(Boolean)
     .join('，');
   notify({
-    key: `provider-import-${batch.id}`,
+    key: notificationKey.providerImport(batch.id),
     title: problems
       ? '下載未完成'
       : stopped

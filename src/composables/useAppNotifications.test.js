@@ -152,4 +152,101 @@ describe('app notification owner', () => {
       title: '操作未完成',
     });
   });
+  it('keeps a visible identical failure instead of re-entering it', async () => {
+    const owner = await load();
+    const first = vi.fn();
+    const latest = vi.fn();
+    const failure = (action) => ({
+      key: 'autosave',
+      title: '配置未儲存',
+      message: '請再試一次。',
+      tone: 'danger',
+      actionLabel: '重試',
+      action,
+    });
+    const id = owner.notify(failure(first));
+    const item = owner.items.value[0];
+
+    expect(owner.notify(failure(latest))).toBe(id);
+    expect(owner.items.value).toEqual([item]);
+    await owner.runAction(id);
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledOnce();
+  });
+  it('still re-enters changed, transient or dismissed results', async () => {
+    const owner = await load();
+    const failed = { key: 'save', title: '未儲存', tone: 'danger' };
+    const id = owner.notify(failed);
+    const changed = owner.notify({ ...failed, message: '請稍後再試。' });
+    expect(changed).not.toBe(id);
+    owner.dismiss(changed);
+    expect(owner.notify({ ...failed, message: '請稍後再試。' })).not.toBe(
+      changed,
+    );
+    const copied = owner.notify({ key: 'copy', title: '已複製' });
+    expect(owner.notify({ key: 'copy', title: '已複製' })).not.toBe(copied);
+  });
+  it('records a failure once and shows the same bounded public message', async () => {
+    const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
+    vi.stubGlobal('window', { Utawakui: { recordDiagnostic } });
+    const owner = await load();
+    const message = owner.notifyFailure({
+      key: 'download',
+      title: '下載未完成',
+      message: '請再試一次。',
+      error: new Error('C:\\private\\song.mp3'),
+      code: 'DOWNLOAD_FAILED',
+      source: 'library',
+      operation: 'download',
+    });
+
+    expect(message).toBe('請再試一次。');
+    expect(owner.items.value[0]).toMatchObject({
+      title: '下載未完成',
+      message: '請再試一次。',
+      tone: 'danger',
+      lifecycle: 'persistent',
+    });
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+    expect(JSON.stringify(recordDiagnostic.mock.calls)).not.toContain(
+      'private',
+    );
+
+    const recorded = new Error(
+      `UTAWAKUI_APP_ERROR:${JSON.stringify({
+        code: 'LIBRARY_FAILED',
+        message: '曲庫暫時無法讀取。',
+        context: { diagnosticRecorded: true },
+      })}`,
+    );
+    owner.notifyFailure({ key: 'read', title: '讀取未完成', error: recorded });
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+    expect(owner.items.value[1].message).toBe('曲庫暫時無法讀取。');
+    vi.unstubAllGlobals();
+  });
+  it('records a repeated visible failure once per incident', async () => {
+    const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
+    vi.stubGlobal('window', { Utawakui: { recordDiagnostic } });
+    const owner = await load();
+    const fail = () =>
+      owner.notifyFailure({
+        key: 'layout',
+        title: '配置未儲存',
+        message: '請再試一次。',
+        error: new Error('offline'),
+        code: 'LAYOUT_FAILED',
+        source: 'library',
+        operation: 'layout',
+      });
+
+    const first = fail();
+    fail();
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+    expect(owner.items.value).toHaveLength(1);
+
+    owner.dismiss(owner.items.value[0].id);
+    expect(fail()).toBe(first);
+    expect(recordDiagnostic).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
 });

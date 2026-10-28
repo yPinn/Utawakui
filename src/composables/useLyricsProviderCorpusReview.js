@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, ref } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { useAppNotifications } from './useAppNotifications.js';
 
 const MAX_TEXT_LENGTH = 256;
@@ -317,7 +318,7 @@ export function useLyricsProviderCorpusReview(
         throw new Error('invalid corpus export result');
       if (exportAttempts.get(bridge) !== attempt) return false;
       notifications.notify({
-        key: 'lyrics-provider-corpus-export',
+        key: NOTIFICATION_KEYS.LYRICS_PROVIDER_CORPUS_EXPORT,
         title: '語料已匯出',
         message: '固定 corpus 已寫入私有評估目錄。',
       });
@@ -325,7 +326,7 @@ export function useLyricsProviderCorpusReview(
     } catch {
       if (exportAttempts.get(bridge) !== attempt) return false;
       notifications.notify({
-        key: 'lyrics-provider-corpus-export',
+        key: NOTIFICATION_KEYS.LYRICS_PROVIDER_CORPUS_EXPORT,
         title: '語料尚未匯出',
         message: '請重新讀取審核資料、確認所有候選已核准後再試一次。',
         tone: 'danger',

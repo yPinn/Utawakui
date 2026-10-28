@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import {
   Copy,
   Download,
@@ -155,7 +156,7 @@ async function archive() {
     }
     finish.value = null;
     notifications.notify({
-      key: 'performance-session-archive',
+      key: NOTIFICATION_KEYS.PERFORMANCE_SESSION_ARCHIVE,
       title: '場次已封存',
       message: '可在已封存場次中查看。',
     });

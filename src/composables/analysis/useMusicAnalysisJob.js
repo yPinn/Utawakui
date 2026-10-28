@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 
 // Only notification ownership is shared across remounted workbenches. Main and
@@ -99,7 +100,7 @@ export function useMusicAnalysisJob(options = {}) {
       return;
     attempt.announced = true;
     notifications.notify({
-      key: 'music-analysis-result',
+      key: NOTIFICATION_KEYS.MUSIC_ANALYSIS_RESULT,
       title,
       message,
       tone,
@@ -239,7 +240,7 @@ export function useMusicAnalysisJob(options = {}) {
       true,
     );
     requestAttempt = attempt;
-    notifications.clear('music-analysis-result');
+    notifications.clear(NOTIFICATION_KEYS.MUSIC_ANALYSIS_RESULT);
     state.error = '';
     state.notice = '';
     state.progress = null;

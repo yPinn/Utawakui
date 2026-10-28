@@ -51,4 +51,23 @@ describe('latest async publisher', () => {
     );
     expect(send).toHaveBeenLastCalledWith('second');
   });
+
+  it('reports each successful send so a failure streak can recover', async () => {
+    const events = [];
+    const send = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(true);
+    const publisher = createLatestAsyncPublisher(send, {
+      onError: () => events.push('error'),
+      onSuccess: () => events.push('success'),
+    });
+
+    publisher.request('first');
+    await publisher.whenIdle();
+    publisher.request('second');
+    await publisher.whenIdle();
+
+    expect(events).toEqual(['error', 'success']);
+  });
 });

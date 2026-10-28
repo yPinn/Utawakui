@@ -1,5 +1,6 @@
 import { readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { normalizeAppError } from '../utils/appErrors.js';
 
 const items = shallowRef([]);
 const actions = new Map();
@@ -16,6 +17,33 @@ function clear(key) {
   for (const item of items.value) {
     if (item.key === key) dismiss(item.id);
   }
+}
+
+const REPEAT_FIELDS = Object.freeze([
+  'title',
+  'message',
+  'tone',
+  'variant',
+  'actionLabel',
+  'dismissLabel',
+]);
+
+// A background owner that fails the same way again (autosave, publish loops)
+// keeps the visible notice instead of re-entering and re-announcing it.
+function visibleRepeat(key, next) {
+  const id = latestByKey.get(key);
+  const current = items.value.find((item) => item.id === id);
+  if (
+    !current ||
+    current.lifecycle !== 'persistent' ||
+    next.lifecycle !== 'persistent'
+  )
+    return null;
+  return REPEAT_FIELDS.every(
+    (field) => (current[field] ?? '') === (next[field] ?? ''),
+  )
+    ? current
+    : null;
 }
 
 // Operation callbacks stay private. Domain owners still own requests and state;
@@ -39,6 +67,20 @@ function notify({
   consumeAction = true,
   dismissLabel = '',
 }) {
+  const repeat = visibleRepeat(key, {
+    title,
+    message,
+    tone,
+    variant,
+    lifecycle,
+    dismissLabel,
+    actionLabel: typeof action === 'function' ? actionLabel : '',
+  });
+  if (repeat) {
+    // The newest attempt owns the action; nothing else visible changes.
+    if (typeof action === 'function') actions.set(repeat.id, action);
+    return repeat.id;
+  }
   clear(key);
   const id = `notification-${++revision}`;
   latestByKey.set(key, id);
@@ -123,10 +165,46 @@ async function runAction(id) {
   }
 }
 
+// One exit for a failed operation: the renderer diagnostic (skipped when main
+// already recorded it) and the notice share the same bounded public message.
+// While an identical failure is still on screen, a repeat is the same incident
+// and is not recorded again.
+function notifyFailure({
+  error,
+  code,
+  source,
+  operation,
+  context,
+  message,
+  ...notification
+}) {
+  const options = {
+    code,
+    source,
+    operation,
+    title: notification.title,
+    message,
+    context,
+  };
+  const notice = { tone: 'danger', ...notification };
+  const publicMessage = normalizeAppError(error, options).message;
+  const repeat = visibleRepeat(notice.key, {
+    ...notice,
+    message: publicMessage,
+    lifecycle: notice.lifecycle ?? 'persistent',
+    actionLabel:
+      typeof notice.action === 'function' ? (notice.actionLabel ?? '') : '',
+  });
+  if (!repeat) useAppDiagnostics().recordError(error, options);
+  notify({ ...notice, message: publicMessage });
+  return publicMessage;
+}
+
 export function useAppNotifications() {
   return {
     items: readonly(items),
     notify,
+    notifyFailure,
     update,
     dismiss,
     clear,

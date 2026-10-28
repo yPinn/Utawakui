@@ -1,4 +1,5 @@
 import { useAppNotifications } from './useAppNotifications.js';
+import { notificationKey } from '../constants/notificationKeys.js';
 
 const ACTIONS = new Map([
   ['copy-candidate-id', ['候選 ID 已複製', '無法複製候選 ID']],
@@ -28,7 +29,7 @@ export function useLyricsProviderLookupActions({
       candidateId.length > 256
     )
       return false;
-    const key = `lyrics-provider-lookup:${action}`;
+    const key = notificationKey.lyricsProviderLookup(action);
     const attempt = {};
     latest.set(action, attempt);
     notifications.clear(key);
@@ -50,8 +51,8 @@ export function useLyricsProviderLookupActions({
         title: labels[1],
         message:
           action === 'open-musicbrainz-recording'
-            ? '請重試，或使用 Recording MBID 查詢。'
-            : '請重試，或手動選取表單中的文字。',
+            ? '請再試一次，或改用 Recording MBID 查詢。'
+            : '請再試一次，或手動選取表單中的文字。',
         tone: 'danger',
         actionLabel: '重試',
         action: () => run(candidateId, action),

@@ -20,17 +20,23 @@ function setup() {
   };
   const gate = vi.fn(async () => true),
     refresh = vi.fn(async () => {}),
-    notify = vi.fn();
+    notify = vi.fn(),
+    notifyFailure = vi.fn(),
+    clearNotice = vi.fn();
   return {
     bridge,
     gate,
     refresh,
     notify,
+    notifyFailure,
+    clearNotice,
     api: createReleaseCatalogDownloads({
       bridge,
       requireFeatureGate: gate,
       refresh,
       notify,
+      notifyFailure,
+      clearNotice,
     }),
   };
 }
@@ -118,4 +124,26 @@ it('retains per-library feedback for partial attachment and gate refusal and cle
   expect(await h.api.download(collection, row)).toBe(false);
   expect(h.api.errorFor(collection)).not.toContain('private path');
   expect(h.api.pendingSlots(collection).size).toBe(0);
+});
+it('keeps one album success slot and a per-row failure until that row succeeds', async () => {
+  const h = setup();
+  const other = { key: 'slot-3', title: 'Other' };
+  h.bridge.downloadReleaseCatalogTrack.mockRejectedValueOnce(
+    Error('private path'),
+  );
+  await h.api.download(collection, row);
+  await h.api.download(collection, other);
+  await h.api.download(collection, row);
+
+  const [failure] = h.notifyFailure.mock.calls[0];
+  expect(failure).toMatchObject({
+    title: '下載未完成',
+    message: '請確認外部來源工具後再試。',
+    code: 'RELEASE_TRACK_DOWNLOAD_FAILED',
+  });
+  const successKeys = h.notify.mock.calls.map(([notice]) => notice.key);
+  expect(successKeys).toHaveLength(2);
+  expect(new Set(successKeys).size).toBe(1);
+  expect(successKeys[0]).not.toBe(failure.key);
+  expect(h.clearNotice).toHaveBeenLastCalledWith(failure.key);
 });

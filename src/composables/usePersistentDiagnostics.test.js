@@ -72,7 +72,7 @@ describe('usePersistentDiagnostics', () => {
 
     expect(diagnostics.state.notice).toMatchObject({
       title: '無法讀取錯誤紀錄',
-      message: '請稍後再試一次。',
+      message: '請再試一次。',
       actionLabel: '重試',
     });
     expect(JSON.stringify(diagnostics.state)).not.toContain('EACCES');
@@ -113,7 +113,7 @@ describe('usePersistentDiagnostics', () => {
     expect(diagnostics.state.notice).toBeNull();
     expect(useAppNotifications().items.value[0]).toMatchObject({
       title: '無法開啟錯誤紀錄資料夾',
-      message: '請稍後再試一次。',
+      message: '請再試一次。',
     });
     expect(JSON.stringify(diagnostics.state)).not.toContain('private path');
   });
@@ -178,7 +178,7 @@ describe('usePersistentDiagnostics', () => {
     expect(diagnostics.state.notice).toBeNull();
     expect(useAppNotifications().items.value[0]).toMatchObject({
       title: '無法匯出錯誤紀錄',
-      message: '請稍後再試一次。',
+      message: '請再試一次。',
     });
   });
 

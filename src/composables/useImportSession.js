@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import {
   IMPORT_FILTERS,
   filterPlaylistImportTracks,
@@ -292,7 +293,7 @@ function reportDirectoryFailure(
   reportImportError(error, operation, message);
   if (notifyFailure) {
     notifications.notify({
-      key: `library-directory-${operation}`,
+      key: notificationKey.libraryDirectory(operation),
       title:
         operation === 'read-settings'
           ? '曲庫位置無法讀取'
@@ -315,7 +316,7 @@ async function refreshConfig({ notifyFailure = false } = {}) {
     state.isDownloadDirAvailable = config.available !== false;
     state.downloadDirIssue = config.reason || null;
     state.configError = '';
-    notifications.clear('library-directory-read-settings');
+    notifications.clear(notificationKey.libraryDirectory('read-settings'));
     return true;
   } catch (error) {
     state.configError = '目前無法讀取曲庫位置，請再試一次。';
@@ -333,7 +334,7 @@ async function refreshConfig({ notifyFailure = false } = {}) {
 async function chooseDownloadDir({ notifyFailure = false } = {}) {
   try {
     await window.Utawakui.chooseDownloadDir();
-    notifications.clear('library-directory-choose-folder');
+    notifications.clear(notificationKey.libraryDirectory('choose-folder'));
     return refreshConfig({ notifyFailure });
   } catch (error) {
     reportDirectoryFailure(
@@ -350,7 +351,7 @@ async function chooseDownloadDir({ notifyFailure = false } = {}) {
 async function resetDownloadDir({ notifyFailure = false } = {}) {
   try {
     await window.Utawakui.resetDownloadDir();
-    notifications.clear('library-directory-reset-folder');
+    notifications.clear(notificationKey.libraryDirectory('reset-folder'));
     return refreshConfig({ notifyFailure });
   } catch (error) {
     reportDirectoryFailure(
@@ -367,7 +368,7 @@ async function resetDownloadDir({ notifyFailure = false } = {}) {
 async function openDownloadDir({ notifyFailure = false } = {}) {
   try {
     await window.Utawakui.openDownloadDir();
-    notifications.clear('library-directory-open-folder');
+    notifications.clear(notificationKey.libraryDirectory('open-folder'));
     return true;
   } catch (error) {
     reportDirectoryFailure(

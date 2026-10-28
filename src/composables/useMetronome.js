@@ -1,5 +1,6 @@
 import { computed, reactive } from 'vue';
-import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
+import { useAppNotifications } from './useAppNotifications.js';
 import {
   beatIntervalSeconds,
   collectDueBeats,
@@ -87,16 +88,33 @@ function setVolume(value) {
 function failSound(error) {
   stop();
   state.soundEnabled = false;
-  state.soundError = '請確認系統預設輸出後重新啟用節拍音效。';
+  state.soundError = '請確認系統預設輸出後再重新啟動。';
   void Promise.resolve(engine?.close()).catch(() => {});
-  useAppDiagnostics().recordError(error, {
-    code: 'METRONOME_AUDIO_UNAVAILABLE',
-    title: '節拍音效已停止',
+  // The tools panel may be closed mid-performance, so the shell owns this.
+  useAppNotifications().notifyFailure({
+    key: NOTIFICATION_KEYS.METRONOME_SOUND,
+    title: '節拍器已停止',
     message: state.soundError,
+    tone: 'warning',
+    error,
+    code: 'METRONOME_AUDIO_UNAVAILABLE',
     source: 'metronome',
     operation: 'resume-audio',
     context: { retryable: true },
+    actionLabel: '重新啟動',
+    action: restartWithSound,
   });
+}
+
+function clearSoundError() {
+  if (!state.soundError) return;
+  state.soundError = '';
+  useAppNotifications().clear(NOTIFICATION_KEYS.METRONOME_SOUND);
+}
+
+function restartWithSound() {
+  setSoundEnabled(true);
+  start();
 }
 
 function resumeAudio() {
@@ -145,7 +163,7 @@ function runTick() {
 
 function start() {
   if (state.isRunning) return;
-  state.soundError = '';
+  clearSoundError();
   resolveEngine();
   let startTime;
   try {
@@ -234,7 +252,7 @@ function setSoundEnabled(enabled) {
   state.soundEnabled = Boolean(enabled);
   if (state.soundEnabled) {
     resolveEngine();
-    state.soundError = '';
+    clearSoundError();
     resumeAudio();
   }
 }

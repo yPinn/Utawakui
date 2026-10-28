@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { ImagePlus, Search, Trash2, UserRound } from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
@@ -852,12 +853,12 @@ async function removeTrack(track) {
   });
   if (!confirmed) return;
   clearTrack(track.id);
-  notifications.clear('library-delete-track');
+  notifications.clear(NOTIFICATION_KEYS.LIBRARY_DELETE_TRACK);
   try {
     const deleted = await window.Utawakui.deleteTrack(track.id);
     if (!deleted) {
       notifications.notify({
-        key: 'library-delete-track',
+        key: NOTIFICATION_KEYS.LIBRARY_DELETE_TRACK,
         title: '曲目未刪除',
         message: '找不到這首曲目，曲庫可能已更新。',
         tone: 'warning',
@@ -876,7 +877,7 @@ async function removeTrack(track) {
       context: { retryable: true },
     });
     notifications.notify({
-      key: 'library-delete-track',
+      key: NOTIFICATION_KEYS.LIBRARY_DELETE_TRACK,
       title: notice.title,
       message: notice.message,
       tone: 'danger',

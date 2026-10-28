@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { FEATURE_DEPENDENCIES } from '../constants/featureDependencies.js';
 import { useTaskNotification } from './useTaskNotification.js';
 import { useAppView } from './useAppView.js';
@@ -39,7 +40,7 @@ function beginFeedback(dependencyId, operation) {
     dependency?.featureId === 'provider-flow' ? 'sources' : 'processing';
   const openSettings = () => useAppView().openSettings(section);
   const feedback = useTaskNotification({
-    key: `task:dependency:${dependencyId}`,
+    key: notificationKey.taskDependency(dependencyId),
     title: `${name}${OPERATIONS[operation]}中`,
     action: openSettings,
   });

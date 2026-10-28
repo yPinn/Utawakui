@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { useAppNotifications } from './useAppNotifications.js';
 
 export const LIBRARY_FOLDER_USER_OBJECT_LIMIT = 12;
@@ -90,23 +91,30 @@ export function createLibraryFolderObjects(options = {}) {
     message,
     { onError } = {},
     action = null,
+    error = null,
   ) {
     if (isActivePage(targetPage)) state.error = message;
     // A departed editor cannot consume a failure behind a different document.
     if (onError && isActivePage(targetPage) && onError(message) !== false)
       return;
-    notifications.notify({
-      key: `folder:${operation}:${pageKey(targetPage)}`,
+    notifications.notifyFailure({
+      key: notificationKey.folderObjects(operation, pageKey(targetPage)),
       title: operation === 'layout' ? '頁面配置未儲存' : '頁面物件操作未完成',
       message,
-      tone: 'danger',
+      error,
+      code: `FOLDER_OBJECTS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+      source: 'library',
+      operation: `folder-${operation}`,
+      context: { retryable: true },
       actionLabel: action ? '重試儲存' : '',
       action,
     });
   }
 
   function recovered(operation, targetPage) {
-    notifications.clear(`folder:${operation}:${pageKey(targetPage)}`);
+    notifications.clear(
+      notificationKey.folderObjects(operation, pageKey(targetPage)),
+    );
     if (isActivePage(targetPage)) state.error = '';
   }
 
@@ -156,7 +164,7 @@ export function createLibraryFolderObjects(options = {}) {
         await bridge.saveFolderPageLayout({ page: batchPage, entries });
         recovered('layout', batchPage);
         if (batch.entries.size === 0) layoutBatches.delete(key);
-      } catch {
+      } catch (error) {
         succeeded = false;
         // Newer changes to the same object always win over the failed snapshot.
         batch.entries = new Map([
@@ -164,11 +172,18 @@ export function createLibraryFolderObjects(options = {}) {
           ...batch.entries,
         ]);
         requestedLayouts.delete(key);
-        failure('layout', batchPage, '目前無法儲存頁面物件配置。', {}, () => {
-          if (disposed || !layoutBatches.has(key)) return false;
-          requestedLayouts.add(key);
-          return startWorker();
-        });
+        failure(
+          'layout',
+          batchPage,
+          '目前無法儲存頁面物件配置。',
+          {},
+          () => {
+            if (disposed || !layoutBatches.has(key)) return false;
+            requestedLayouts.add(key);
+            return startWorker();
+          },
+          error,
+        );
       } finally {
         inFlightLayout = null;
       }
@@ -274,8 +289,15 @@ export function createLibraryFolderObjects(options = {}) {
       setObjects([...objects.value, result.object]);
       recovered('add-photo', activePage);
       return result.object.key;
-    } catch {
-      failure('add-photo', activePage, '目前無法新增頁面照片。');
+    } catch (error) {
+      failure(
+        'add-photo',
+        activePage,
+        '目前無法新增頁面照片。',
+        {},
+        null,
+        error,
+      );
       return null;
     } finally {
       state.adding = false;
@@ -307,8 +329,15 @@ export function createLibraryFolderObjects(options = {}) {
       setObjects([...objects.value, note]);
       recovered('add-note', activePage);
       return note.key;
-    } catch {
-      failure('add-note', activePage, '目前無法新增頁面便條。', feedback);
+    } catch (error) {
+      failure(
+        'add-note',
+        activePage,
+        '目前無法新增頁面便條。',
+        feedback,
+        null,
+        error,
+      );
       return null;
     } finally {
       state.adding = false;
@@ -344,8 +373,15 @@ export function createLibraryFolderObjects(options = {}) {
       );
       recovered('update-note', activePage);
       return true;
-    } catch {
-      failure('update-note', activePage, '目前無法儲存頁面便條。', feedback);
+    } catch (error) {
+      failure(
+        'update-note',
+        activePage,
+        '目前無法儲存頁面便條。',
+        feedback,
+        null,
+        error,
+      );
       return false;
     }
   }
@@ -381,8 +417,15 @@ export function createLibraryFolderObjects(options = {}) {
       );
       recovered('photo-text', activePage);
       return true;
-    } catch {
-      failure('photo-text', activePage, '目前無法儲存照片文字。', feedback);
+    } catch (error) {
+      failure(
+        'photo-text',
+        activePage,
+        '目前無法儲存照片文字。',
+        feedback,
+        null,
+        error,
+      );
       return false;
     }
   }
@@ -416,8 +459,15 @@ export function createLibraryFolderObjects(options = {}) {
       }
       recovered('remove', activePage);
       return true;
-    } catch {
-      failure('remove', activePage, '目前無法移除頁面物件。', feedback);
+    } catch (error) {
+      failure(
+        'remove',
+        activePage,
+        '目前無法移除頁面物件。',
+        feedback,
+        null,
+        error,
+      );
       return false;
     } finally {
       state.removing = false;

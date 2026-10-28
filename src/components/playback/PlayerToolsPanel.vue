@@ -26,7 +26,6 @@ import UiRangeControl from '../ui/range/UiRangeControl.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
-import UiNotice from '../ui/UiNotice.vue';
 import UiHint from '../ui/UiHint.vue';
 import PlayerPerformanceSettingsControls from './PlayerPerformanceSettingsControls.vue';
 
@@ -236,13 +235,6 @@ function setActiveTab(key) {
             @update:model-value="setVolume"
           />
         </div>
-
-        <UiNotice
-          v-if="metronome.soundError"
-          title="節拍音效已停止"
-          :message="metronome.soundError"
-          compact
-        />
 
         <div class="player-tools__tap-row">
           <span

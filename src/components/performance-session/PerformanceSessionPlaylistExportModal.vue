@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import UiModal from '../ui/UiModal.vue';
@@ -99,7 +100,7 @@ async function save() {
     // into another create or report that the saved playlist was lost.
     await refresh().catch(() => {});
     notifications.notify({
-      key: 'performance-playlist-export',
+      key: NOTIFICATION_KEYS.PERFORMANCE_PLAYLIST_EXPORT,
       title: '演出歌單已保存',
       message: '可在曲庫的播放清單中查看。',
     });

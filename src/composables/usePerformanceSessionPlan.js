@@ -1,4 +1,5 @@
 import { computed, readonly } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { useSerializedPlanStore } from './useSerializedPlanStore.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
@@ -48,7 +49,7 @@ if (import.meta.hot) import.meta.hot.dispose(dispose);
 
 const notifications = useAppNotifications();
 function enqueueMenuMutation(operation, name, title) {
-  const key = `performance-session:${name}`;
+  const key = notificationKey.performanceSession(name);
   return enqueue(
     () => {
       notifications.clear(key);

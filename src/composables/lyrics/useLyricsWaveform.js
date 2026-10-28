@@ -1,4 +1,5 @@
 import { onScopeDispose, readonly, shallowRef, toValue, watch } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 
 export function useLyricsWaveform({
@@ -19,7 +20,7 @@ export function useLyricsWaveform({
   let cancellation = Promise.resolve();
   const reportFailure = () =>
     notify({
-      key: 'lyrics-waveform',
+      key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
       tone: 'danger',
       title: '波形操作未完成',
       message: '請稍後重新嘗試；歌詞與已保存的對時不受影響。',
@@ -74,7 +75,7 @@ export function useLyricsWaveform({
       }
       if (['unavailable', 'timeout'].includes(status.value))
         notify({
-          key: 'lyrics-waveform',
+          key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
           tone: 'danger',
           title: '波形無法讀取',
           message: '請稍後重新讀取；歌詞與已保存的對時不受影響。',
@@ -83,7 +84,7 @@ export function useLyricsWaveform({
       if (current()) {
         status.value = 'unavailable';
         notify({
-          key: 'lyrics-waveform',
+          key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
           tone: 'danger',
           title: '波形無法讀取',
           message: '請稍後重新讀取。',

@@ -1,4 +1,5 @@
 import { computed, reactive, readonly } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 import {
   PERFORMANCE_SETTINGS_DEFAULTS as defaults,
@@ -98,12 +99,12 @@ export function usePlayerPerformanceSettings({
   });
   function clearError() {
     state.error = null;
-    notifications.clear('player-performance-settings');
+    notifications.clear(NOTIFICATION_KEYS.PLAYER_PERFORMANCE_SETTINGS);
   }
   function setError(message) {
     state.error = message;
     notifications.notify({
-      key: 'player-performance-settings',
+      key: NOTIFICATION_KEYS.PLAYER_PERFORMANCE_SETTINGS,
       title: '歌曲設定未完成',
       message,
       tone: 'danger',

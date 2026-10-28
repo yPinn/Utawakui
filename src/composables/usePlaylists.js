@@ -1,4 +1,5 @@
 import { computed, reactive, readonly } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
@@ -94,7 +95,7 @@ function enqueue(
       else {
         state.actionError = null;
         notifications.clear(
-          `playlists:${ERROR_PRESENTATION[errorPrefix]?.[0]}`,
+          notificationKey.playlists(ERROR_PRESENTATION[errorPrefix]?.[0]),
         );
       }
       return playlists;
@@ -105,10 +106,13 @@ function enqueue(
       else {
         state.actionError = message;
         if (!onError || onError(message) === false)
+          // The title names the failure; inline surfaces keep the full sentence.
           notifications.notify({
-            key: `playlists:${ERROR_PRESENTATION[errorPrefix]?.[0]}`,
+            key: notificationKey.playlists(
+              ERROR_PRESENTATION[errorPrefix]?.[0],
+            ),
             title: errorPrefix,
-            message,
+            message: '請再試一次。',
             tone: 'danger',
           });
       }
@@ -295,7 +299,7 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
   ) {
     state.actionError = '請重新啟動應用程式後再調整播放清單順序。';
     notifications.notify({
-      key: 'playlists:reorder',
+      key: notificationKey.playlists('reorder'),
       title: '歌單排序未儲存',
       message: state.actionError,
       tone: 'danger',

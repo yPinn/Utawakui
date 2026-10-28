@@ -1,5 +1,6 @@
 export function createLatestAsyncPublisher(send, options = {}) {
   const onError = options.onError ?? (() => {});
+  const onSuccess = options.onSuccess ?? (() => {});
   let latestValue;
   let hasPendingValue = false;
   let activePromise = null;
@@ -10,6 +11,7 @@ export function createLatestAsyncPublisher(send, options = {}) {
       hasPendingValue = false;
       try {
         await send(value);
+        onSuccess();
       } catch (error) {
         onError(error);
       }

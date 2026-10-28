@@ -1,4 +1,5 @@
 import { computed, reactive, readonly } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { useTaskNotification } from './useTaskNotification.js';
 import { useAppView } from './useAppView.js';
 import { formatDownloadProgress } from '../utils/appUpdateProgress.js';
@@ -76,7 +77,7 @@ let statusEventRevision = 0;
 function beginDownloadFeedback() {
   if (downloadFeedback) return;
   downloadFeedback = useTaskNotification({
-    key: 'task:app-update',
+    key: NOTIFICATION_KEYS.TASK_APP_UPDATE,
     title: 'Utawakui 更新下載中',
     action: () => useAppView().openSettings('application'),
   });

@@ -1,4 +1,5 @@
 import { computed, shallowRef, unref } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { DEFAULT_SEPARATION_PRESET_ID } from '../constants/separationPresets.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
@@ -58,7 +59,7 @@ export function useTrackSeparationAction({
       );
       if (!enabled) return null;
 
-      notifications.clear('library-separation-enqueue');
+      notifications.clear(NOTIFICATION_KEYS.LIBRARY_SEPARATION_ENQUEUE);
 
       const result = await separationController.enqueue(
         [trackId],
@@ -69,7 +70,7 @@ export function useTrackSeparationAction({
         error.value =
           unref(separationController.error) || '歌曲目前無法加入伴奏處理佇列。';
         notifications.notify({
-          key: 'library-separation-enqueue',
+          key: NOTIFICATION_KEYS.LIBRARY_SEPARATION_ENQUEUE,
           title: '伴奏處理未加入',
           message: error.value,
           tone: 'danger',

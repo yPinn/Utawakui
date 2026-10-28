@@ -4,6 +4,7 @@ import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { notificationKey } from '../constants/notificationKeys.js';
 
 const sessions = new WeakMap();
 const unavailable = {};
@@ -17,6 +18,8 @@ export function createReleaseCatalogDownloads({
   requireFeatureGate,
   refresh,
   notify = () => {},
+  notifyFailure = (notice) => notify({ tone: 'danger', ...notice }),
+  clearNotice = () => {},
 }) {
   const state = reactive({ pending: new Map(), errors: new Map() });
   const requests = new Map();
@@ -24,6 +27,10 @@ export function createReleaseCatalogDownloads({
     const key = jobKey(collection, row);
     if (requests.has(key)) return requests.get(key);
     const scope = scopeKey(collection);
+    // Successes share one album slot so a run of row downloads cannot fill
+    // the shelf; a row's own problem stays until that row succeeds.
+    const albumNotice = notificationKey.releaseDownload(scope);
+    const trackNotice = notificationKey.releaseTrack(key);
     const input = {
       collectionId: collection.id,
       expectedRevision: collection.resolvedRelease.revision,
@@ -59,37 +66,53 @@ export function createReleaseCatalogDownloads({
           if (result.status !== 'ok') {
             const message = '音檔已下載，專輯關聯尚未更新，請重新讀取後校對。';
             state.errors.set(scope, message);
-            notify({ key, title: '曲目已下載', message, tone: 'warning' });
+            notify({
+              key: trackNotice,
+              title: '曲目已下載',
+              message,
+              tone: 'warning',
+            });
             return false;
           }
           if (refreshFailed) {
             const message = '曲目已納入專輯，畫面更新失敗，請重新讀取。';
             state.errors.set(scope, message);
             notify({
-              key,
+              key: trackNotice,
               title: local ? '已納入專輯' : '下載完成',
               message,
               tone: 'warning',
             });
             return true;
           }
+          clearNotice(trackNotice);
           notify({
-            key,
+            key: albumNotice,
             title: local ? '已納入專輯' : '下載完成',
             message: row.title || '來源未提供曲名',
             tone: 'success',
           });
           return true;
-        } catch {
-          const message = local
-            ? '目前無法納入本地曲目，請重新讀取後再試。'
-            : '曲目下載未完成，請確認外部來源工具後再試。';
-          state.errors.set(scope, message);
-          notify({
-            key,
+        } catch (error) {
+          state.errors.set(
+            scope,
+            local
+              ? '目前無法納入本地曲目，請重新讀取後再試。'
+              : '曲目下載未完成，請確認外部來源工具後再試。',
+          );
+          notifyFailure({
+            key: trackNotice,
             title: local ? '專輯關聯未更新' : '下載未完成',
-            message,
-            tone: 'danger',
+            message: local
+              ? '請重新讀取後再試。'
+              : '請確認外部來源工具後再試。',
+            error,
+            code: local
+              ? 'RELEASE_TRACK_LINK_FAILED'
+              : 'RELEASE_TRACK_DOWNLOAD_FAILED',
+            source: 'library',
+            operation: local ? 'link-release-track' : 'download-release-track',
+            context: { retryable: true },
           });
           return false;
         }
@@ -133,6 +156,8 @@ export function useReleaseCatalogDownloads() {
             throw Error('Refresh unavailable');
         },
         notify: useAppNotifications().notify,
+        notifyFailure: useAppNotifications().notifyFailure,
+        clearNotice: useAppNotifications().clear,
       }),
     );
   return sessions.get(bridge);

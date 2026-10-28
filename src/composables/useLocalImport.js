@@ -1,4 +1,5 @@
 import { computed, reactive, readonly } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { normalizeAppError } from '../utils/appErrors.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
@@ -39,7 +40,7 @@ const { refresh: refreshLibrary } = useLibrary();
 const { recordError } = useAppDiagnostics();
 const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const notifications = useAppNotifications();
-const RESULT_KEY = 'local-import-result';
+const RESULT_KEY = NOTIFICATION_KEYS.LOCAL_IMPORT_RESULT;
 const SKIP_REASONS = Object.freeze({
   'duplicate-content': '曲庫已有相同音訊',
   'unsupported-extension': '不支援此檔案格式',

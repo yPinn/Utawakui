@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useLibrary } from './useLibrary.js';
@@ -134,7 +135,7 @@ export function createReleaseCatalogBatchDownloads({
             const problems = snapshot.failed + snapshot.unlinked;
             const message = `${snapshot.succeeded} 首完成${problems ? `，${problems} 首待重試或校對` : ''}${snapshot.cancelled ? `，${snapshot.cancelled} 首已停止排隊` : ''}${snapshot.skipped ? `，${snapshot.skipped} 首已在其他下載中` : ''}${refreshFailed ? '；畫面更新失敗，請重新讀取。' : ''}`;
             notify({
-              key: `release-batch-${receipt}`,
+              key: notificationKey.releaseBatch(receipt),
               title:
                 snapshot.phase === 'stopped'
                   ? '專輯下載已停止排隊'

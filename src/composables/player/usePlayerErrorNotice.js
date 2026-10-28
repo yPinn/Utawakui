@@ -1,7 +1,8 @@
 import { watch } from 'vue';
+import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 
-const NOTICE_KEY = 'player-playback';
+const NOTICE_KEY = NOTIFICATION_KEYS.PLAYER_PLAYBACK;
 
 // Projects the player's current error into the shared notification owner,
 // instead of a second fixed layer beside it. Sync flush sees a retry clear the

@@ -1,4 +1,5 @@
 import outputValues from '../../../shared/outputTemplateValues.json';
+import { notificationKey } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 
 const labels = new Map(outputValues.slots.map(({ id, label }) => [id, label]));
@@ -16,7 +17,7 @@ export function useOutputClipboard({
     const label = labels.get(kind);
     if (!label) return false;
     const attempt = {};
-    const key = `output-copy:${kind}`;
+    const key = notificationKey.outputCopy(kind);
     latest.set(kind, attempt);
     notifications.clear(key);
     try {
@@ -29,13 +30,16 @@ export function useOutputClipboard({
         message: '可貼到 OBS 的瀏覽器來源。',
       });
       return true;
-    } catch {
+    } catch (error) {
       if (latest.get(kind) !== attempt) return false;
-      notifications.notify({
+      notifications.notifyFailure({
         key,
         title: `無法複製${label}網址`,
         message: '請再試一次。',
-        tone: 'danger',
+        error,
+        code: 'OUTPUT_COPY_URL_FAILED',
+        source: 'output',
+        operation: 'copy-url',
         actionLabel: '重試',
         action: () => copy(kind),
       });

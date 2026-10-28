@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import { formatFeedbackReportReference } from '../../shared/feedbackReference.mjs';
 import { useAppNotifications } from './useAppNotifications.js';
 import { useFeedbackReport } from './useFeedbackReport.js';
@@ -16,7 +17,7 @@ function notifySent({ reportId } = {}) {
   if (typeof reportId !== 'string') return;
   const reference = formatFeedbackReportReference(reportId);
   useAppNotifications().notify({
-    key: 'auto-error-report',
+    key: NOTIFICATION_KEYS.AUTO_ERROR_REPORT,
     title: '已自動回報錯誤',
     message: `回報碼 ${reference}`,
     // One follow-up path for prompted and automatic sends alike.

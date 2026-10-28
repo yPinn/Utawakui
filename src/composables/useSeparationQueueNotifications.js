@@ -2,6 +2,7 @@ import {
   RIGHT_DOCK_SURFACE_PREPARATION,
   useAppRightDock,
 } from './useAppRightDock.js';
+import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 
 const OPEN = new Set(['pending', 'checking', 'running']);
 const emptyCounts = () => ({
@@ -53,7 +54,7 @@ export function useSeparationQueueNotifications(notify) {
       .filter(Boolean)
       .join('，');
     notify({
-      key: 'separation-queue-result',
+      key: NOTIFICATION_KEYS.SEPARATION_QUEUE_RESULT,
       title:
         failed && !completed && !skipped
           ? '伴奏處理未完成'
