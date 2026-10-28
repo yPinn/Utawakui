@@ -3,7 +3,6 @@ export const SIDEBAR_EXPANDED_WIDTH = 256;
 export const DOCK_MIN_WIDTH = 272;
 export const DOCK_DEFAULT_WIDTH = 280;
 export const DOCK_MAX_WIDTH = 384;
-export const DOCK_COLLAPSED_WIDTH = 40;
 
 // Calibrated against Library, Performance, Display and Settings in Electron.
 // This is the Folder outer box; each page still owns its internal padding.
@@ -24,10 +23,7 @@ export function resolveShellLayout({
     ? Math.max(DOCK_MIN_WIDTH, Math.min(DOCK_MAX_WIDTH, dockPreference))
     : DOCK_DEFAULT_WIDTH;
   const expandedBudget =
-    SIDEBAR_EXPANDED_WIDTH +
-    (dockExpanded ? requestedDock : DOCK_COLLAPSED_WIDTH) +
-    minimumWorkspace +
-    overhead;
+    SIDEBAR_EXPANDED_WIDTH + requestedDock + minimumWorkspace + overhead;
   const autoCollapsed =
     sidebarPreference >= SIDEBAR_EXPANDED_WIDTH &&
     !forceSidebarExpanded &&
@@ -38,19 +34,22 @@ export function resolveShellLayout({
       ? SIDEBAR_EXPANDED_WIDTH
       : SIDEBAR_COLLAPSED_WIDTH;
   const availableDock = Math.max(0, available - sidebarWidth - overhead);
-  const dockMaximum = Math.min(
+  // Disclosure changes only the painted surface. Both states must fit the
+  // same content minimum so opening the Dock cannot reflow the workspace.
+  const dockBayMaximum = Math.min(
     DOCK_MAX_WIDTH,
     availableDock,
-    dockExpanded
-      ? Math.max(DOCK_MIN_WIDTH, availableDock - minimumWorkspace)
-      : DOCK_MAX_WIDTH,
+    Math.max(DOCK_MIN_WIDTH, availableDock - minimumWorkspace),
   );
+  const dockMaximum = dockExpanded
+    ? dockBayMaximum
+    : Math.min(DOCK_MAX_WIDTH, availableDock);
   const dockWidth = Math.min(requestedDock, dockMaximum);
   return {
     sidebarWidth,
     autoCollapsed,
     dockMaximum,
     dockWidth,
-    dockBayWidth: dockExpanded ? dockWidth : DOCK_COLLAPSED_WIDTH,
+    dockBayWidth: Math.min(requestedDock, dockBayMaximum),
   };
 }

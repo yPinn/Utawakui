@@ -682,7 +682,7 @@ useKeyboardShortcuts({
 }
 
 .shell__main--with-dock {
-  /* Both panels stay in flow. A folded Dock keeps only its restore control. */
+  /* Both panels stay in flow; Dock disclosure keeps the same allocated bay. */
   grid-template-columns: minmax(0, 1fr) var(--ui-shell-dock-inline-size);
   gap: var(--ui-space-3);
 }
@@ -709,7 +709,7 @@ useKeyboardShortcuts({
 }
 
 .shell__dock--collapsed {
-  /* The column shrinks to the restore control width. */
+  /* Only the restore control paints inside the reserved composition space. */
   align-items: flex-end;
 }
 

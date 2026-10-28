@@ -64,7 +64,7 @@
 
 ### Right Dock
 
-- `useShellLayout.js` 依實測Shell寬度、Dock展開狀態及語意tokens，統一投影左側64／256px與Dock實際佔位。兩側全程並排，先自動摺Sidebar再縮Dock；Dock摺疊只保留40px，沒有窄窗overlay或臨時Sidebar。使用者偏好與受限顯示分離，恢復有4rem餘裕；中央640px為舒適目標，最窄窗由內容reflow。幾何、手動展開與驗證見[Shell空間分配契約](contracts/shell-layout.md)。
+- `useShellLayout.js` 依實測Shell寬度、Dock展開狀態及語意tokens，統一投影左側64／256px與Dock實際佔位。兩側全程並排，先自動摺Sidebar再縮Dock；Dock開關在所有支援尺寸共用同一有效欄寬；窄窗先摺左再將共用欄位壓至最少272px，只繪製40px摺疊開關，開關不改中央寬度或Sidebar門檻，沒有窄窗overlay或臨時Sidebar。使用者偏好與受限顯示分離，恢復有4rem餘裕；中央640px為舒適目標，最窄窗由內容reflow。幾何、手動展開與驗證見[Shell空間分配契約](contracts/shell-layout.md)。
 - `App.vue` 組合Shell幾何；`useAppRightDock.js` 擁有surface stack與前景切換，不持有播放或處理資料。內容寬度與欄位佔位分開；resize、Escape與焦點還原屬於Shell，不回流到PlayerBar。
 - `QueuePanel.vue`、`TrackContextPanel.vue` 與 `PreparationDockPanel.vue` 透過 `AppRightDockPanel.vue` 共用 header、單一 scroll owner、可選 summary 與 footer slot。PlayerBar 縮圖是直接開啟 metadata 的 intent。
 - Queue surface 有一般與「演出安排」兩個 variant；安排 variant 的 footer 放場間音樂，OBS 直播／錄影中時 Dock 加強框色並顯示 LIVE／REC（只讀 OBS 投影，讀取失敗即清除）。

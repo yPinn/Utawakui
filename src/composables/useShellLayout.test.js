@@ -61,7 +61,7 @@ describe('Shell layout state', () => {
     expect(dock.setMaximum).toHaveBeenLastCalledWith(384);
   });
 
-  it('returns the collapsed Dock bay to the workspace and restores the original width on reopen', () => {
+  it('keeps the same composition and navigation state when toggling a roomy Dock', () => {
     const { shell, dockExpanded, dock, dispose } = setup(1280);
     expect(shell.layout.value).toMatchObject({
       sidebarWidth: 64,
@@ -69,8 +69,8 @@ describe('Shell layout state', () => {
     });
     dockExpanded.value = false;
     expect(shell.layout.value).toMatchObject({
-      sidebarWidth: 256,
-      dockBayWidth: 40,
+      sidebarWidth: 64,
+      dockBayWidth: 384,
     });
     expect(dock.preferredWidth.value).toBe(384);
     dockExpanded.value = true;
@@ -78,6 +78,55 @@ describe('Shell layout state', () => {
       sidebarWidth: 64,
       dockBayWidth: 384,
     });
+    dispose();
+  });
+
+  it('restores folded whitespace before navigation without overwriting preferences', () => {
+    const { shell, sidebar, dockExpanded, dock, dispose } = setup();
+    dockExpanded.value = false;
+    shell.updateGeometry({ width: 960 });
+    expect(shell.layout.value).toMatchObject({
+      sidebarWidth: 64,
+      dockBayWidth: 272,
+      dockWidth: 384,
+    });
+    dockExpanded.value = true;
+    expect(shell.layout.value).toMatchObject({
+      sidebarWidth: 64,
+      dockBayWidth: 272,
+    });
+    dockExpanded.value = false;
+    expect(shell.layout.value.dockBayWidth).toBe(272);
+    shell.updateGeometry({ width: 1128 });
+    expect(shell.layout.value).toMatchObject({
+      sidebarWidth: 64,
+      dockBayWidth: 384,
+    });
+    shell.updateGeometry({ width: 1383 });
+    expect(shell.sidebarExpanded.value).toBe(false);
+    shell.updateGeometry({ width: 1384 });
+    expect(shell.layout.value).toMatchObject({
+      sidebarWidth: 256,
+      dockBayWidth: 384,
+    });
+    expect(sidebar.width.value).toBe(256);
+    expect(dock.preferredWidth.value).toBe(384);
+    dispose();
+  });
+
+  it('does not move the workspace while repeatedly toggling a narrowed Dock', () => {
+    const { shell, dockExpanded, sidebar, dispose } = setup(960);
+    const geometry = () => ({
+      sidebarWidth: shell.layout.value.sidebarWidth,
+      dockBayWidth: shell.layout.value.dockBayWidth,
+    });
+    const before = geometry();
+    expect(before).toEqual({ sidebarWidth: 64, dockBayWidth: 272 });
+    for (let i = 0; i < 8; i++) {
+      dockExpanded.value = !dockExpanded.value;
+      expect(geometry()).toEqual(before);
+    }
+    expect(sidebar.width.value).toBe(256);
     dispose();
   });
 
@@ -123,12 +172,13 @@ describe('Shell layout state', () => {
     dispose();
   });
 
-  it('does not pin a roomy manual expansion against a later Dock opening', async () => {
-    const { shell, sidebar, dockExpanded, dispose } = setup(1280, false);
+  it('does not pin a roomy manual expansion against a wider reserved Dock bay', async () => {
+    const { shell, sidebar, dock, dispose } = setup(1280, false);
+    dock.preferredWidth.value = 272;
     sidebar.width.value = 64;
     await shell.toggleSidebar();
     expect(shell.layout.value.sidebarWidth).toBe(256);
-    dockExpanded.value = true;
+    dock.preferredWidth.value = 384;
     expect(shell.layout.value.sidebarWidth).toBe(64);
     dispose();
   });
