@@ -22,10 +22,17 @@ const rootRef = ref(null);
 const textRef = ref(null);
 const isOverflowing = shallowRef(false);
 const distance = shallowRef(0);
+const motionReduced = shallowRef(false);
 
 const displayText = computed(() => String(props.text ?? ''));
+// The moving text already reveals the full value; only a reduced-motion
+// ellipsis needs the tooltip, so long and short titles otherwise match.
 const tooltipDisabled = computed(
-  () => !props.tooltipEnabled || !isOverflowing.value || !displayText.value,
+  () =>
+    !props.tooltipEnabled ||
+    !motionReduced.value ||
+    !isOverflowing.value ||
+    !displayText.value,
 );
 const {
   open: tooltipOpen,
@@ -39,11 +46,36 @@ const {
   disabled: tooltipDisabled,
   describedBy: true,
 });
-defineExpose({ triggerProps: tooltipTriggerProps });
+const motionAwareTriggerProps = computed(() => ({
+  ...tooltipTriggerProps.value,
+  onPointerenter: handlePointerenter,
+  onFocusin: handleFocusin,
+}));
+defineExpose({ triggerProps: motionAwareTriggerProps });
 const rootProps = computed(() => ({
   ...attrs,
-  ...tooltipTriggerProps.value,
+  ...motionAwareTriggerProps.value,
 }));
+
+// Mirrors the CSS stop conditions: root data-ui-motion or the OS preference.
+function readMotionReduced() {
+  motionReduced.value =
+    globalThis.document?.documentElement?.dataset?.uiMotion === 'reduced' ||
+    Boolean(
+      globalThis.window?.matchMedia?.('(prefers-reduced-motion: reduce)')
+        ?.matches,
+    );
+}
+
+function handlePointerenter(event) {
+  readMotionReduced();
+  tooltipTriggerProps.value.onPointerenter(event);
+}
+
+function handleFocusin(event) {
+  readMotionReduced();
+  tooltipTriggerProps.value.onFocusin(event);
+}
 const marqueeDuration = computed(() => {
   const seconds = distance.value / 26 + 4;
   return `${Math.min(16, Math.max(7, seconds)).toFixed(2)}s`;
@@ -69,6 +101,7 @@ function measure() {
     const root = rootRef.value;
     const text = textRef.value;
     if (!root || !text) return;
+    readMotionReduced();
     if (!(root.clientWidth > 0 && root.clientHeight > 0)) {
       isOverflowing.value = false;
       distance.value = 0;

@@ -44,9 +44,13 @@ for (const [component, filename] of [
 let body;
 let documentListeners;
 let windowListeners;
+// Tooltips share a skip-delay window, so each test starts far from the last.
+let fakeClock = 0;
 
 beforeEach(() => {
   vi.useFakeTimers();
+  fakeClock += 3_600_000;
+  vi.setSystemTime(fakeClock);
   body = hostNode('body');
   documentListeners = new Map();
   windowListeners = new Map();
@@ -344,6 +348,183 @@ describe('UiTooltip', () => {
     await nextTick();
     expect(windowListeners.has('resize')).toBe(false);
     expect(windowListeners.has('scroll')).toBe(false);
+    mounted.app.unmount();
+  });
+
+  it('closes on ancestor scroll instead of following the anchor, until hover leaves', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '捲動提示', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(300);
+    expect(surfaces()).toHaveLength(1);
+
+    windowListeners.get('scroll')({ target: button });
+    await nextTick();
+    expect(surfaces()).toHaveLength(1);
+
+    windowListeners.get('scroll')({ target: hostNode('div') });
+    await nextTick();
+    expect(surfaces()).toHaveLength(1);
+
+    windowListeners.get('scroll')({ target: button.parent });
+    await nextTick();
+    expect(surfaces()).toHaveLength(0);
+    expect(windowListeners.has('scroll')).toBe(false);
+
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(surfaces()).toHaveLength(0);
+
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(300);
+    expect(surfaces()).toHaveLength(1);
+    mounted.app.unmount();
+  });
+
+  it('dismisses on activation and stays closed while hover or focus remains', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '開啟選單', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(300);
+    trigger(button, 'onPointerdown', { pointerType: 'mouse' });
+    await nextTick();
+    expect(surfaces()).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(surfaces()).toHaveLength(0);
+
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    trigger(button, 'onFocusin', { target: { matches: () => true } });
+    await nextTick();
+    expect(surfaces()).toHaveLength(1);
+    trigger(button, 'onKeydown', { key: 'Enter' });
+    await nextTick();
+    expect(surfaces()).toHaveLength(0);
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(surfaces()).toHaveLength(0);
+    mounted.app.unmount();
+  });
+
+  it('skips the hover delay for a neighbouring tooltip shortly after one closes', async () => {
+    const tooltipTrigger = (text) =>
+      mount(
+        UiTooltip,
+        { text, delayMs: 500 },
+        { trigger: ({ triggerProps }) => h('button', triggerProps, text) },
+      );
+    const first = tooltipTrigger('上一首');
+    const second = tooltipTrigger('下一首');
+    const third = tooltipTrigger('隨機播放');
+    const button = (mounted) =>
+      findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+
+    trigger(button(first), 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(499);
+    expect(surfaces()).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(surfaces()).toHaveLength(1);
+
+    trigger(button(first), 'onPointerleave', { pointerType: 'mouse' });
+    trigger(button(second), 'onPointerenter', { pointerType: 'mouse' });
+    await nextTick();
+    expect(surfaces().map(textContent)).toEqual(['下一首']);
+
+    trigger(button(second), 'onPointerleave', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(100 + 300);
+    trigger(button(third), 'onPointerenter', { pointerType: 'mouse' });
+    await nextTick();
+    expect(surfaces()).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(surfaces()).toHaveLength(1);
+    [first, second, third].forEach((mounted) => mounted.app.unmount());
+  });
+
+  it('keeps the hover delay after a scroll dismissal', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '捲動後提示', delayMs: 500 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    windowListeners.get('scroll')({ target: button.parent });
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await nextTick();
+    expect(surfaces()).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(surfaces()).toHaveLength(1);
+    mounted.app.unmount();
+  });
+
+  it('stays open while the pointer moves from the trigger onto the tooltip', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '可停留提示', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    const surfaces = () =>
+      findAll(body, (node) => node.props.role === 'tooltip');
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(300);
+    const surface = surfaces()[0];
+    expect(String(surface.props.class)).toContain('ui-tooltip--hoverable');
+
+    trigger(button, 'onPointerleave', { pointerType: 'mouse' });
+    surface.listeners.get('pointerenter')({ pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(surfaces()).toHaveLength(1);
+
+    surface.listeners.get('pointerleave')({ pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(100);
+    expect(surfaces()).toHaveLength(0);
+    mounted.app.unmount();
+  });
+
+  it('stays hidden while its trigger reports an expanded menu', async () => {
+    const mounted = mount(
+      UiTooltip,
+      { text: '更多選項', delayMs: 300 },
+      {
+        trigger: ({ triggerProps }) =>
+          h('button', { ...triggerProps, 'aria-expanded': 'true' }, '開啟'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    trigger(button, 'onFocusin', { target: { matches: () => true } });
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
     mounted.app.unmount();
   });
 });

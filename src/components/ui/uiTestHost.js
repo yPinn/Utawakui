@@ -65,6 +65,14 @@ export function hostNode(type, text = '') {
       for (const name of classNames) clone.classList.add(name);
       return clone;
     },
+    listeners: new Map(),
+    addEventListener(name, handler) {
+      this.listeners.set(name, handler);
+    },
+    getAttribute(name) {
+      const value = this.props[name];
+      return value == null ? null : String(value);
+    },
     contains(candidate) {
       let current = candidate;
       while (current) {

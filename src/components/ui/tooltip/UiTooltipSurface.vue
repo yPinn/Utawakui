@@ -12,6 +12,7 @@ defineProps({
   position: { type: Object, required: true },
   placement: { type: String, required: true },
   setElement: { type: Function, required: true },
+  hoverable: { type: Boolean, default: true },
 });
 </script>
 
@@ -21,6 +22,7 @@ defineProps({
       :id="tooltipId"
       :ref="setElement"
       class="ui-tooltip"
+      :class="{ 'ui-tooltip--hoverable': hoverable }"
       role="tooltip"
       :data-placement="placement"
       :style="position"
@@ -60,6 +62,10 @@ defineProps({
   pointer-events: none;
   -webkit-user-select: none;
   user-select: none;
+}
+
+.ui-tooltip--hoverable {
+  pointer-events: auto;
 }
 
 .ui-tooltip__label,

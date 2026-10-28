@@ -249,6 +249,7 @@ defineExpose({ focus });
       :position="previewPosition"
       placement="top"
       :set-element="setPreviewTooltip"
+      :hoverable="false"
     />
   </div>
 </template>

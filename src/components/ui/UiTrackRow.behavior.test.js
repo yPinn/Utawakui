@@ -69,7 +69,10 @@ beforeEach(() => {
   );
   vi.stubGlobal('document', {
     body,
-    documentElement: hostNode('html'),
+    // Marquee hints exist only while motion is reduced.
+    documentElement: Object.assign(hostNode('html'), {
+      dataset: { uiMotion: 'reduced' },
+    }),
     querySelector: (s) => (s === 'body' ? body : null),
   });
   const computedStyle = (e) => ({

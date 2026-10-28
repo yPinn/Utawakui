@@ -53,7 +53,10 @@ beforeEach(() => {
   );
   vi.stubGlobal('document', {
     body,
-    documentElement: hostNode('html'),
+    // Hints exist only while motion is reduced; tests opt out per case.
+    documentElement: Object.assign(hostNode('html'), {
+      dataset: { uiMotion: 'reduced' },
+    }),
     querySelector: (s) => (s === 'body' ? body : null),
   });
   const computedStyle = (e) => ({
@@ -214,6 +217,31 @@ describe('UiMarqueeText measured overflow lifecycle', () => {
     trigger(m.root, 'onKeydown', { key: 'Escape', stopPropagation: vi.fn() });
     await vi.advanceTimersByTimeAsync(600);
     expect(tips()).toHaveLength(0);
+    m.app.unmount();
+  });
+  it('stays silent while the marquee moves, so long and short titles match', async () => {
+    document.documentElement.dataset.uiMotion = undefined;
+    const m = specimen();
+    await flush();
+    expect(overflow(m.root)).toBe(true);
+    trigger(m.root, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(1000);
+    trigger(m.root, 'onFocusin', { currentTarget: m.root });
+    await nextTick();
+    expect(tips()).toHaveLength(0);
+    expect(m.root.props['aria-describedby'] ?? undefined).toBeUndefined();
+    m.app.unmount();
+  });
+  it('follows the OS reduced-motion preference as well as the root flag', async () => {
+    document.documentElement.dataset.uiMotion = undefined;
+    window.matchMedia = vi.fn((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+    }));
+    const m = specimen();
+    await flush();
+    trigger(m.root, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(textContent(tips()[0])).toBe('非常長的曲目名稱');
     m.app.unmount();
   });
   it('delays pointer hints, ignores touch, supports numeric zero and tooltip opt-out', async () => {

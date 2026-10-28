@@ -13,6 +13,17 @@ import {
 } from './floatingPosition.js';
 
 export const TOOLTIP_PLACEMENTS = ['bottom', 'end', 'start', 'top'];
+export const TOOLTIP_SKIP_DELAY_MS = 300;
+
+// Shared by every tooltip: only one is visible at a time, and moving to a
+// neighbouring trigger soon after one starts closing skips the hover delay.
+let hideActiveTooltip = null;
+let lastLeftAt = Number.NEGATIVE_INFINITY;
+
+function hoverDelaySkipped() {
+  const elapsed = Date.now() - lastLeftAt;
+  return elapsed >= 0 && elapsed < TOOLTIP_SKIP_DELAY_MS;
+}
 
 export function isTooltipPlacement(value) {
   return TOOLTIP_PLACEMENTS.includes(value);
@@ -32,6 +43,7 @@ export function useTooltip(options) {
       : {}),
     onPointerenter: scheduleShow,
     onPointerleave: handlePointerleave,
+    onPointerdown: () => dismiss(),
     onFocusin: handleFocusin,
     onFocusout: handleFocusout,
     onKeydown: handleKeydown,
@@ -42,17 +54,34 @@ export function useTooltip(options) {
   let viewportListenersAttached = false;
   let pointerInside = false;
   let keyboardFocused = false;
+  // Set by activation or scroll; cleared once both hover and focus have left.
+  let dismissed = false;
 
   function canShow() {
     return !toValue(options.disabled) && Boolean(toValue(options.text));
+  }
+
+  function triggerExpanded() {
+    return anchorRef.value?.getAttribute?.('aria-expanded') === 'true';
   }
 
   function setAnchor(value) {
     anchorRef.value = value?.$el ?? value;
   }
 
+  // WCAG 1.4.13: hovering the surface keeps it open like hovering the trigger.
   function setTooltip(value) {
-    tooltipRef.value = value?.$el ?? value;
+    const element = value?.$el ?? value;
+    if (element === tooltipRef.value) return;
+    tooltipRef.value = element;
+    element?.addEventListener?.('pointerenter', handleSurfacePointerenter);
+    element?.addEventListener?.('pointerleave', handlePointerleave);
+  }
+
+  function handleSurfacePointerenter(event) {
+    if (event?.pointerType === 'touch') return;
+    pointerInside = true;
+    clearTimers();
   }
 
   function clearTimers() {
@@ -80,25 +109,47 @@ export function useTooltip(options) {
     position.value = { left: `${left}px`, top: `${top}px` };
   }
 
+  // Only an ancestor scroll moves the trigger; sibling regions and the
+  // trigger's own content (e.g. credit viewports) leave the tooltip open.
+  function handleScroll(event) {
+    const target = event?.target;
+    const anchor = anchorRef.value;
+    if (!anchor || target === anchor || !target?.contains?.(anchor)) return;
+    dismiss({ warm: false });
+  }
+
   function attachViewportListeners() {
     if (viewportListenersAttached || typeof window === 'undefined') return;
     window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('scroll', handleScroll, true);
     viewportListenersAttached = true;
   }
 
   function removeViewportListeners() {
     if (!viewportListenersAttached || typeof window === 'undefined') return;
     window.removeEventListener('resize', updatePosition);
-    window.removeEventListener('scroll', updatePosition, true);
+    window.removeEventListener('scroll', handleScroll, true);
     viewportListenersAttached = false;
   }
 
+  // A scroll dismissal cools the shared group so passing triggers stay quiet.
+  function setOpen(value, { warm = true } = {}) {
+    if (open.value === value) return;
+    open.value = value;
+    if (value) {
+      if (hideActiveTooltip !== hideNow) hideActiveTooltip?.();
+      hideActiveTooltip = hideNow;
+      return;
+    }
+    if (hideActiveTooltip === hideNow) hideActiveTooltip = null;
+    lastLeftAt = warm ? Date.now() : Number.NEGATIVE_INFINITY;
+  }
+
   function show() {
-    if (!canShow()) return;
+    if (!canShow() || dismissed || triggerExpanded()) return;
     clearTimers();
     attachViewportListeners();
-    open.value = true;
+    setOpen(true);
     nextTick(updatePosition);
   }
 
@@ -120,11 +171,16 @@ export function useTooltip(options) {
     clearTimers();
     if (!canShow()) return;
     if (open.value) return;
+    if (hoverDelaySkipped()) {
+      show();
+      return;
+    }
     openTimer = setTimeout(show, Math.max(0, toValue(options.delayMs) ?? 500));
   }
 
   function handlePointerleave() {
     pointerInside = false;
+    if (!keyboardFocused) dismissed = false;
     clearTimeout(openTimer);
     openTimer = undefined;
     scheduleHide();
@@ -132,28 +188,39 @@ export function useTooltip(options) {
 
   function handleFocusout() {
     keyboardFocused = false;
+    if (!pointerInside) dismissed = false;
     scheduleHide();
   }
 
   function scheduleHide() {
     if (pointerInside || keyboardFocused) return;
+    if (open.value) lastLeftAt = Date.now();
     clearTimers();
     closeTimer = setTimeout(
       () => {
-        open.value = false;
+        setOpen(false);
         removeViewportListeners();
       },
       Math.max(0, toValue(options.closeDelayMs) ?? 100),
     );
   }
 
-  function hideNow() {
+  function hideNow(closeOptions) {
     clearTimers();
-    open.value = false;
+    setOpen(false, closeOptions);
     removeViewportListeners();
   }
 
+  function dismiss(closeOptions) {
+    dismissed = pointerInside || keyboardFocused;
+    hideNow(closeOptions);
+  }
+
   function handleKeydown(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      dismiss();
+      return;
+    }
     if (event.key !== 'Escape' || !open.value) return;
     event.stopPropagation();
     hideNow();
@@ -174,6 +241,7 @@ export function useTooltip(options) {
 
   onBeforeUnmount(() => {
     clearTimers();
+    if (hideActiveTooltip === hideNow) hideActiveTooltip = null;
     removeViewportListeners();
   });
 
