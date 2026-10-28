@@ -1,6 +1,6 @@
 # 歌詞對時確認：行為提案
 
-2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../../spec.md)。R01–R18 仍為完整分層驗收；收據與唯讀波形通過不等於句級擴充或人工品質驗收完成。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
+2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../../spec.md)。R01–R18 仍為完整分層驗收；收據、唯讀波形及句級數值操作通過不等於波形拖曳或人工品質驗收完成。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
 
 ## 範圍與確認含義
 
@@ -34,7 +34,7 @@ offset 後越過 0／duration 要明示，不 clamp 再保存；明確跳最近�
 
 ## 單一草稿與句級操作
 
-現有 editor 已有句內 tap／nudge／undo／保存／取消，未具備完整句級拖曳。擴充同一 owner／Main mutation，保留 document／line／segment ids、原文與未改行；草稿僅作者預覽，不發布到 Performer／Output。
+句級數值／微調與句內 tap／nudge 共用同一 editor／Main mutation，當前語意及視覺驗收入口集中於[保存與確認契約](../../contracts/lyrics-timing-review.md)。以下保留完整句級規劃，波形拖曳與真實聽辨仍須後續驗；保留 document／line／segment ids、原文與未改行，草稿僅作者預覽，不發布到 Performer／Output。
 
 | 操作               | 提案規則                                                                             |
 | ------------------ | ------------------------------------------------------------------------------------ |

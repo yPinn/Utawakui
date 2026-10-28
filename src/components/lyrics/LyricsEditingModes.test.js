@@ -10,7 +10,7 @@ describe('minimal lyrics authoring entry points', () => {
     expect(header).not.toContain('SeparationPresetControl');
     expect(header).not.toContain('<UiSegmentedControl');
     expect(header).toContain("label: '修正讀音'");
-    expect(header).toContain("label: '逐字校時'");
+    expect(header).toContain("label: '調整對時'");
     expect(header).toContain("label: '選擇曲目'");
     expect(header).toContain("label: '重新掃描歌詞'");
   });

@@ -1,4 +1,4 @@
-import { LIMITS, validateMetadata } from './policy.mjs';
+import { LIMITS, PRODUCER_VERSION, validateMetadata } from './policy.mjs';
 
 function summary(count, startFrame, frames, endFrame) {
   return {
@@ -7,13 +7,15 @@ function summary(count, startFrame, frames, endFrame) {
     strideFrames: Math.max(1, Math.ceil(frames / count)),
     min: new Float32Array(count).fill(Infinity),
     max: new Float32Array(count).fill(-Infinity),
+    energy: new Float64Array(count),
   };
 }
-function update(target, frame, min, max) {
+function update(target, frame, min, max, meanSquare) {
   if (frame < target.startFrame || frame >= target.endFrame) return;
   const index = Math.floor((frame - target.startFrame) / target.strideFrames);
   if (min < target.min[index]) target.min[index] = min;
   if (max > target.max[index]) target.max[index] = max;
+  target.energy[index] += meanSquare;
 }
 export class PeakAccumulator {
   constructor(
@@ -39,12 +41,16 @@ export class PeakAccumulator {
     );
     this.detail = summary(LIMITS.detailBuckets, start, end - start, end);
   }
-  record(min, max) {
-    if (!Number.isFinite(min) || !Number.isFinite(max))
+  record(min, max, meanSquare) {
+    if (
+      !Number.isFinite(min) ||
+      !Number.isFinite(max) ||
+      !Number.isFinite(meanSquare)
+    )
       throw Error('PCM_SAMPLE');
     if (this.frames >= this.maxFrames) throw Error('PCM_DURATION');
-    update(this.coarse, this.frames, min, max);
-    update(this.detail, this.frames, min, max);
+    update(this.coarse, this.frames, min, max, meanSquare);
+    update(this.detail, this.frames, min, max, meanSquare);
     this.frames++;
   }
   pushInterleaved(view) {
@@ -53,14 +59,16 @@ export class PeakAccumulator {
     if (view.byteLength % frameBytes) throw Error('PCM_FRAME');
     for (let offset = 0; offset < view.byteLength; offset += frameBytes) {
       let min = Infinity,
-        max = -Infinity;
+        max = -Infinity,
+        squares = 0;
       for (let channel = 0; channel < this.metadata.channels; channel++) {
         const value = view.getFloat32(offset + channel * 4, true);
         if (!Number.isFinite(value)) throw Error('PCM_SAMPLE');
         min = Math.min(min, value);
         max = Math.max(max, value);
+        squares += value * value;
       }
-      this.record(min, max);
+      this.record(min, max, squares / this.metadata.channels);
     }
   }
   pushPlanar(channels, from, count) {
@@ -72,14 +80,16 @@ export class PeakAccumulator {
       throw Error('PCM_FRAME');
     for (let frame = from; frame < from + count; frame++) {
       let min = Infinity,
-        max = -Infinity;
+        max = -Infinity,
+        squares = 0;
       for (const channel of channels) {
         const value = channel[frame];
         if (!Number.isFinite(value)) throw Error('PCM_SAMPLE');
         min = Math.min(min, value);
         max = Math.max(max, value);
+        squares += value * value;
       }
-      this.record(min, max);
+      this.record(min, max, squares / this.metadata.channels);
     }
   }
   finish() {
@@ -91,12 +101,25 @@ export class PeakAccumulator {
     )
       throw Error('PCM_DURATION');
     for (const target of [this.coarse, this.detail]) {
-      for (let i = 0; i < target.min.length; i++)
+      target.rms = new Float32Array(target.min.length);
+      for (let i = 0; i < target.min.length; i++) {
         if (!Number.isFinite(target.min[i])) target.min[i] = target.max[i] = 0;
+        const count = Math.max(
+          0,
+          Math.min(
+            target.strideFrames,
+            this.frames - target.startFrame - i * target.strideFrames,
+            target.endFrame - target.startFrame - i * target.strideFrames,
+          ),
+        );
+        if (count) target.rms[i] = Math.sqrt(target.energy[i] / count);
+      }
+      delete target.energy;
     }
-    const bytes = (target) => target.min.byteLength + target.max.byteLength;
+    const bytes = (target) =>
+      target.min.byteLength + target.max.byteLength + target.rms.byteLength;
     return {
-      producerVersion: 'channel-extrema-v1',
+      producerVersion: PRODUCER_VERSION,
       sampleRate: this.metadata.sampleRate,
       channels: this.metadata.channels,
       frames: this.frames,

@@ -7,11 +7,13 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import { isVocalSection } from '../../composables/lyrics/useLyricsVocalRoles.js';
 import { useLyricsTimingEditor } from '../../composables/useLyricsTimingEditor.js';
 import { formatDuration } from '../../utils/format.js';
 import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
-import { canEditTimingLine } from '../../utils/lyricsTiming.js';
+import { canEditLineTiming } from '../../utils/lyricsLineTiming.js';
+import LyricsLineTimingEditor from './LyricsLineTimingEditor.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsAcousticPreview from './LyricsAcousticPreview.vue';
 import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
@@ -51,7 +53,7 @@ const {
   saveTimingDocument,
   lyricsTiming,
 } = lyrics;
-const { state: playerState } = usePlayer();
+const { state: playerState, samplePlaybackClock } = usePlayer();
 
 const {
   draft: timingDraft,
@@ -64,6 +66,13 @@ const {
   undo: undoTiming,
   buildDocument: buildTimingDocument,
   cancel: cancelTiming,
+  shiftLine,
+  setLineStart,
+  setLineEnd,
+  enableSegments,
+  canEnableSegments,
+  dependencies: timingDependencies,
+  validationError: timingValidationError,
 } = useLyricsTimingEditor();
 
 const { setReadingLine } = reading;
@@ -92,6 +101,18 @@ const isTrackPickerOpen = ref(false);
 const editingReadingLineIndex = ref(null);
 const readingLineDraft = ref('');
 const editMode = ref('preview');
+// The editor survives view switching; only resume a draft for this exact source.
+if (timingDraft.value) {
+  if (
+    timingSourceSession.value?.id &&
+    timingSourceSession.value.id === lyricsTiming.value.sourceSession?.id &&
+    lyricsDocument.value.lines.some(
+      (line) => line.lineId === timingDraft.value.lineId,
+    )
+  )
+    editMode.value = 'timing';
+  else cancelTiming();
+}
 const vocalRoles = computed(() => lyrics.lyricsTextProcessing?.vocalRoles);
 const canEditVocals = computed(
   () =>
@@ -142,7 +163,8 @@ const isEditingLocked = computed(
 const editingHelp = computed(() => {
   if (hasEditingDraft.value)
     return '儲存或取消這行編輯後，可繼續選擇其他歌詞。';
-  if (editMode.value === 'timing') return '選擇歌詞行的時鐘開始逐字校時。';
+  if (editMode.value === 'timing')
+    return '選擇歌詞行的時鐘調整句級或逐字時間。';
   if (editMode.value === 'vocal')
     return '點歌詞行標註，Shift＋點標一段；人名行沿用至下一位。';
   return isGeneratingReading.value || isPreparingReading.value
@@ -346,9 +368,7 @@ const timingReadings = computed(
 );
 const editableTimingLineIds = computed(() =>
   lyricsDocument.value.lines
-    .filter((line) =>
-      canEditTimingLine(line, timingReadings.value.get(line.lineId)),
-    )
+    .filter(canEditLineTiming)
     .map((line) => line.lineId),
 );
 const canEditTiming = computed(() => editableTimingLineIds.value.length > 0);
@@ -377,6 +397,7 @@ function startTimingEdit(lineId) {
     lineId,
     timingReadings.value.get(lineId),
     lyricsTiming.value.sourceSession,
+    { mode: 'line' },
   );
 }
 
@@ -444,7 +465,18 @@ async function confirmTimingReview() {
           <LyricsWaveformTool
             :track-id="selectedTrack?.id || ''"
             :source-key="acousticSourceKey"
+            :is-playing="
+              selectedTrack?.id === playerState.track?.id &&
+              playerState.isPlaying
+            "
+            :sample-playback-clock="samplePlaybackClock"
             :document="lyricsDocument"
+            :focus-line-id="
+              timingDraft?.lineId ||
+              lyricsDocument.lines[positionedLineIndex]?.lineId ||
+              ''
+            "
+            :draft-line="timingDraft"
             :offset-ms="Math.round(state.offsetSeconds * 1000)"
             :position-ms="
               Number.isFinite(currentLyricsPositionMs)
@@ -560,14 +592,36 @@ async function confirmTimingReview() {
           @save="commitTimingDocument"
           @cancel="cancelTiming"
         />
-        <LyricsSegmentEditor
+        <UiScrollRegion
           v-if="timingDraft"
-          :draft="timingDraft"
-          :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
-          :is-saving="state.timingSave.isSaving || reviewBusy"
-          @tap="recordTimingBoundary"
-          @nudge-boundary="nudgeBoundary"
-        />
+          class="lyrics-timing-stack__editor"
+          axis="vertical"
+          aria-label="對時草稿工具"
+        >
+          <LyricsLineTimingEditor
+            v-if="timingDraft"
+            :draft="timingDraft"
+            :position-ms="currentLyricsPositionMs"
+            :disabled="state.timingSave.isSaving || reviewBusy"
+            :can-enable-segments="canEnableSegments"
+            :dependencies="timingDependencies"
+            :error="timingValidationError"
+            :offset-ms="Math.round(state.offsetSeconds * 1000)"
+            :duration-ms="selectedDurationMs"
+            @shift="shiftLine"
+            @set-start="setLineStart"
+            @set-end="setLineEnd"
+            @enable-segments="enableSegments"
+          />
+          <LyricsSegmentEditor
+            v-if="timingDraft?.segments.length > 1"
+            :draft="timingDraft"
+            :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
+            :is-saving="state.timingSave.isSaving || reviewBusy"
+            @tap="recordTimingBoundary"
+            @nudge-boundary="nudgeBoundary"
+          />
+        </UiScrollRegion>
       </div>
       <LyricsLiveTool
         :experimental-frame="
@@ -650,7 +704,7 @@ async function confirmTimingReview() {
   position: relative;
   display: grid;
   container-type: inline-size;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, auto) minmax(6rem, 1fr);
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -670,9 +724,20 @@ async function confirmTimingReview() {
 }
 .lyrics-timing-stack {
   grid-row: 3;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  max-block-size: min(22rem, 35vh);
   min-width: 0;
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   background: var(--ui-color-surface-raised);
+}
+.lyrics-timing-stack > :not(.lyrics-timing-stack__editor) {
+  flex-shrink: 0;
+}
+.lyrics-timing-stack__editor {
+  flex: 1 1 auto;
+  min-block-size: 0;
 }
 
 .lyrics-stage__live-tool {

@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const { PRODUCER_VERSION } = require('../../../shared/waveform/policy.mjs');
 const digest = (value) =>
   crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
@@ -92,17 +93,36 @@ function createWaveformRuntime({
       )
         throw Error('INVALID_INTENT');
       const group = groupFor(entry.scope, entry.trackId);
+      // Public, read-only coherence proof for overview and neighboring tiles.
+      // Hash private scope/media/decoder evidence; never expose its source values.
+      const mediaRevision = digest([
+        entry.scope.dir,
+        entry.scope.epoch,
+        entry.generation,
+        entry.trackId,
+        source.binding,
+        source.stamp,
+        decoder.file,
+        decoder.stamp,
+        PRODUCER_VERSION,
+      ]);
       const key = digest([
         source.binding,
         source.stamp.split('/')[0],
         decoder.stamp,
-        'channel-extrema-v1',
+        PRODUCER_VERSION,
         intent.kind,
         intent.tileIndex,
       ]);
       const cached = await cache.get(group, key);
       check();
-      if (cached) return { status: 'ready', cacheHit: true, summary: cached };
+      if (cached)
+        return {
+          status: 'ready',
+          cacheHit: true,
+          mediaRevision,
+          summary: cached,
+        };
       if (
         active &&
         (active.key !== key || active.group !== group || active.stopping)
@@ -172,7 +192,7 @@ function createWaveformRuntime({
       active.consumers.add(entry);
       const summary = await active.result;
       check();
-      return { status: 'ready', cacheHit: false, summary };
+      return { status: 'ready', cacheHit: false, mediaRevision, summary };
     };
     entry.completion = work();
     entry.completion

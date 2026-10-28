@@ -483,8 +483,8 @@ watch(
               "
               class="lyrics-line__edit"
               :icon="Clock"
-              :title="`編輯逐字時間：${line.text}`"
-              :aria-label="`編輯逐字時間：${line.text}`"
+              :title="`編輯歌詞時間：${line.text}`"
+              :aria-label="`編輯歌詞時間：${line.text}`"
               @click="emit('edit-timing', line.lineId)"
             />
             <UiButton

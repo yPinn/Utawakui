@@ -250,7 +250,7 @@ describe('Lyrics workspace control contracts', () => {
     findByProp(
       panel.root,
       'aria-label',
-      '編輯逐字時間：Hello world',
+      '編輯歌詞時間：Hello world',
     ).props.onClick();
 
     expect(seekLine).toHaveBeenCalledWith(
@@ -495,9 +495,9 @@ describe('Lyrics workspace control contracts', () => {
       onCancel: cancel,
     });
 
-    findByProp(toolbar.root, 'aria-label', '復原逐字時間').props.onClick();
-    findByProp(toolbar.root, 'aria-label', '儲存逐字時間').props.onClick();
-    findByProp(toolbar.root, 'aria-label', '取消逐字編輯').props.onClick();
+    findByProp(toolbar.root, 'aria-label', '復原歌詞時間').props.onClick();
+    findByProp(toolbar.root, 'aria-label', '儲存歌詞時間').props.onClick();
+    findByProp(toolbar.root, 'aria-label', '取消對時編輯').props.onClick();
 
     expect(nodeText(toolbar.root)).toContain('逐字校時');
     expect(nodeText(toolbar.root)).toContain('已記錄 1 / 2');

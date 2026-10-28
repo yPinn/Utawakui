@@ -1,4 +1,5 @@
 'use strict';
+const { PRODUCER_VERSION } = require('../../../shared/waveform/policy.mjs');
 function validateSummary(value) {
   const p = value?.peaks;
   const exact = (object, fields) =>
@@ -15,8 +16,15 @@ function validateSummary(value) {
       'durationSec',
       'peaks',
     ]) ||
-    !exact(p, ['startFrame', 'endFrame', 'strideFrames', 'min', 'max']) ||
-    value?.producerVersion !== 'channel-extrema-v1' ||
+    !exact(p, [
+      'startFrame',
+      'endFrame',
+      'strideFrames',
+      'min',
+      'max',
+      'rms',
+    ]) ||
+    value?.producerVersion !== PRODUCER_VERSION ||
     !Number.isInteger(value.sampleRate) ||
     value.sampleRate < 8000 ||
     value.sampleRate > 192000 ||
@@ -30,8 +38,10 @@ function validateSummary(value) {
     !p ||
     !(p.min instanceof Float32Array) ||
     !(p.max instanceof Float32Array) ||
-    ![4096, 8192].includes(p.min.length) ||
+    !(p.rms instanceof Float32Array) ||
+    p.min.length !== 4096 ||
     p.min.length !== p.max.length ||
+    p.min.length !== p.rms.length ||
     !Number.isInteger(p.startFrame) ||
     p.startFrame < 0 ||
     !Number.isInteger(p.endFrame) ||
@@ -43,7 +53,12 @@ function validateSummary(value) {
       Math.max(1, Math.ceil((p.endFrame - p.startFrame) / p.min.length)) ||
     p.min.some(
       (v, i) =>
-        !Number.isFinite(v) || !Number.isFinite(p.max[i]) || v > p.max[i],
+        !Number.isFinite(v) ||
+        !Number.isFinite(p.max[i]) ||
+        v > p.max[i] ||
+        !Number.isFinite(p.rms[i]) ||
+        p.rms[i] < 0 ||
+        p.rms[i] > Math.max(Math.abs(v), Math.abs(p.max[i])) * (1 + 1e-6),
     )
   )
     throw Error('PAYLOAD');

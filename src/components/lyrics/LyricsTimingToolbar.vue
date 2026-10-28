@@ -16,10 +16,12 @@ defineEmits(['undo', 'save', 'cancel']);
 </script>
 
 <template>
-  <div class="lyrics-timing" aria-label="逐字時間工具">
+  <div class="lyrics-timing" aria-label="歌詞時間工具">
     <div class="lyrics-timing__copy">
-      <strong class="lyrics-timing__title">逐字校時</strong>
-      <span class="lyrics-timing__progress">
+      <strong class="lyrics-timing__title">{{
+        totalBoundaries > 0 ? '逐字校時' : '句級對時'
+      }}</strong>
+      <span v-if="totalBoundaries > 0" class="lyrics-timing__progress">
         已記錄 {{ completedBoundaries }} / {{ totalBoundaries }}
       </span>
     </div>
@@ -27,8 +29,8 @@ defineEmits(['undo', 'save', 'cancel']);
       <UiButton
         :icon="RotateCcw"
         :disabled="!canUndo || isSaving"
-        aria-label="復原逐字時間"
-        title="復原逐字時間"
+        aria-label="復原歌詞時間"
+        title="復原歌詞時間"
         @click="$emit('undo')"
       >
         復原
@@ -39,8 +41,8 @@ defineEmits(['undo', 'save', 'cancel']);
         :disabled="!canSave || isSaving"
         :loading="isSaving"
         loading-label="儲存中"
-        aria-label="儲存逐字時間"
-        title="儲存逐字時間"
+        aria-label="儲存歌詞時間"
+        title="儲存歌詞時間"
         @click="$emit('save')"
       >
         儲存
@@ -48,8 +50,8 @@ defineEmits(['undo', 'save', 'cancel']);
       <UiButton
         :icon="X"
         :disabled="isSaving"
-        aria-label="取消逐字編輯"
-        title="取消逐字編輯"
+        aria-label="取消對時編輯"
+        title="取消對時編輯"
         @click="$emit('cancel')"
       >
         取消

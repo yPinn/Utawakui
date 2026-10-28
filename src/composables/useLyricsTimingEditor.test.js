@@ -26,6 +26,90 @@ beforeEach(() => {
 });
 
 describe('useLyricsTimingEditor', () => {
+  it('bounds undo history while retaining the most recent complete document snapshots', async () => {
+    const editor = await loadEditor();
+    editor.beginLine(document, 'line_01', null, null, { mode: 'line' });
+    for (let i = 0; i < 120; i++) expect(editor.shiftLine(1)).toBe(true);
+    let count = 0;
+    while (editor.undo()) count++;
+    expect(count).toBe(100);
+    expect(editor.draft.value.startMs).toBe(1020);
+  });
+  it('keeps sentence edits and inferred neighbors in the same undoable draft without making T2', async () => {
+    const editor = await loadEditor();
+    const original = {
+      ...document,
+      lines: [
+        { ...document.lines[0], text: '前', endInferred: true },
+        { lineId: 'next', text: '後', startMs: 3000, endMs: null },
+      ],
+    };
+    editor.beginLine(
+      original,
+      'next',
+      null,
+      { id: 'baseline' },
+      { mode: 'line' },
+    );
+    expect(editor.shiftLine(200)).toBe(true);
+    expect(editor.buildDocument().lines[0].endMs).toBe(3200);
+    expect(editor.buildDocument().granularity).toBe('T1');
+    expect(editor.setLineEnd(5000)).toBe(true);
+    expect(editor.undo()).toBe(true);
+    expect(editor.draft.value.endMs).toBe(null);
+    expect(original.lines[0].endMs).toBe(3000);
+    expect(editor.sourceSession.value).toEqual({ id: 'baseline' });
+    editor.cancel();
+    expect(editor.buildDocument()).toBe(null);
+  });
+  it('combines sentence edits and explicitly enabled word timing in one source baseline', async () => {
+    const editor = await loadEditor();
+    expect(
+      editor.beginLine(document, 'line_01', null, null, { mode: 'line' }),
+    ).toBe(true);
+    expect(editor.shiftLine(100)).toBe(true);
+    expect(editor.canEnableSegments.value).toBe(true);
+    expect(editor.enableSegments()).toBe(true);
+    expect(editor.canCommit.value).toBe(false);
+    expect(editor.tapBoundary(1700)).toBe(true);
+    expect(editor.buildDocument().lines[0]).toMatchObject({
+      startMs: 1100,
+      endMs: 3100,
+    });
+    expect(editor.buildDocument().granularity).toBe('T2');
+    editor.undo();
+    editor.undo();
+    expect(editor.buildDocument().granularity).toBe('T1');
+  });
+  it('blocks save after a rejected endpoint, and preserves authored native segment ids and null ends', async () => {
+    const editor = await loadEditor();
+    const value = {
+      ...document,
+      granularity: 'T2',
+      lines: [
+        {
+          ...document.lines[0],
+          segments: [
+            {
+              segmentId: 'only',
+              text: 'Hello world',
+              startMs: 1200,
+              endMs: null,
+            },
+          ],
+        },
+      ],
+    };
+    editor.beginLine(value, 'line_01', null, null, { mode: 'line' });
+    expect(editor.setLineEnd(3500)).toBe(true);
+    expect(editor.setLineStart(1300)).toBe(false);
+    expect(editor.canCommit.value).toBe(false);
+    expect(editor.setLineStart(1000)).toBe(false);
+    expect(editor.canCommit.value).toBe(true);
+    expect(editor.buildDocument().lines[0].segments).toEqual(
+      value.lines[0].segments,
+    );
+  });
   it('rejects a single-segment line instead of offering a 0/0 save', async () => {
     const editor = await loadEditor();
     expect(

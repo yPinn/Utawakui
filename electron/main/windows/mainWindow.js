@@ -280,6 +280,24 @@ function createMainWindow(
   let currentUiDensity = UI_DENSITY_COMPACT;
   let isMaximized = false;
   let isFullScreen = false;
+  let windowVisible = false,
+    windowMinimized = false,
+    lastVisibility = null;
+  const publishVisibility = (force = false) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const visible = windowVisible && !windowMinimized;
+    if (!force && visible === lastVisibility) return;
+    lastVisibility = visible;
+    mainWindow.webContents.send('main-window:visibility', visible);
+  };
+  for (const event of ['show', 'hide', 'minimize', 'restore'])
+    mainWindow.on(event, () => {
+      if (event === 'show' || event === 'hide')
+        windowVisible = event === 'show';
+      else windowMinimized = event === 'minimize';
+      publishVisibility();
+    });
+  mainWindow.webContents.on('did-finish-load', () => publishVisibility(true));
   const publishUiDensity = () => {
     const nextUiDensity =
       isMaximized || isFullScreen ? UI_DENSITY_STANDARD : UI_DENSITY_COMPACT;

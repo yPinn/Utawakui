@@ -1,3 +1,4 @@
+export const PRODUCER_VERSION = 'channel-extrema-rms-v2';
 export const LIMITS = Object.freeze({
   durationSec: 1800,
   channels: 8,
@@ -8,7 +9,7 @@ export const LIMITS = Object.freeze({
   hostLoopMs: 50,
   decoderReserveBytes: 64 * 1024 ** 2,
   coarseBuckets: 4096,
-  detailBuckets: 8192,
+  detailBuckets: 4096,
   summaryBytes: 64 * 1024,
   pcmChunkBytes: 256 * 1024,
   deadlineMs: 30000,

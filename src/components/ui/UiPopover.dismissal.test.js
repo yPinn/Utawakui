@@ -33,7 +33,7 @@ afterEach(() => {
   app?.unmount();
   vi.unstubAllGlobals();
 });
-function setup(closeOnScroll) {
+function setup(closeOnScroll, closeOnOutsidePointer) {
   const close = vi.fn();
   const view = mount(
     UiPopover,
@@ -42,6 +42,7 @@ function setup(closeOnScroll) {
       ariaLabel: '歌詞顯示設定',
       onClose: close,
       ...(closeOnScroll === undefined ? {} : { closeOnScroll }),
+      ...(closeOnOutsidePointer === undefined ? {} : { closeOnOutsidePointer }),
     },
     {
       trigger: () => h('button', '顯示'),
@@ -53,6 +54,14 @@ function setup(closeOnScroll) {
 }
 
 describe('Popover dismissal policy', () => {
+  it('keeps reference tools open on outside pointer while retaining Escape', async () => {
+    const { close } = setup(false, false);
+    await nextTick();
+    events.get('pointerdown')({ target: hostNode('lyrics-editor') });
+    expect(close).not.toHaveBeenCalled();
+    events.get('keydown')({ key: 'Escape', target: hostNode('outside') });
+    expect(close).toHaveBeenCalledWith('escape');
+  });
   it('retains the existing scroll dismissal default', async () => {
     const { close } = setup();
     await nextTick();

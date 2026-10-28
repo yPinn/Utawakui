@@ -5,7 +5,8 @@ import { createHeavyJobScheduler } from '../audioProcessing/heavyJobScheduler.js
 function fixture() {
   let stamp = 'original',
     epoch = 0,
-    enabled = true;
+    enabled = true,
+    decoderStamp = 'decoder';
   const pending = Promise.withResolvers();
   const source = {
     file: 'private.wav',
@@ -31,7 +32,7 @@ function fixture() {
     requireGate: () => {
       if (!enabled) throw Error('GATE_DISABLED');
     },
-    getDecoder: () => ({ file: 'private-ffmpeg', stamp: 'decoder' }),
+    getDecoder: () => ({ file: 'private-ffmpeg', stamp: decoderStamp }),
     prepareSource: async (_scope, _id, check) => {
       check();
       return source;
@@ -48,6 +49,9 @@ function fixture() {
     start,
     producer,
     source,
+    changeDecoder: () => {
+      decoderStamp = 'another-decoder';
+    },
     scheduler,
     change: () => {
       stamp = 'changed';
@@ -76,6 +80,34 @@ it('installs one completed summary, releases the lane and allows a cache hit wit
   f.cache.get.mockResolvedValue({ durationSec: 1 });
   expect((await f.runtime.read(intent('2'))).cacheHit).toBe(true);
   expect(f.start).toHaveBeenCalledOnce();
+});
+it('projects the same opaque media revision across cached tiles and changes it for media, scope or decoder evidence', async () => {
+  const f = fixture();
+  f.source.metadata.durationSec = 30;
+  f.cache.get.mockResolvedValue({ durationSec: 30 });
+  const a = await f.runtime.read(intent('overview'));
+  const b = await f.runtime.read({
+    ...intent('tile'),
+    kind: 'detail',
+    tileIndex: 1,
+  });
+  expect(a.mediaRevision).toMatch(/^[a-f0-9]{64}$/);
+  expect(b.mediaRevision).toBe(a.mediaRevision);
+  expect(JSON.stringify(a)).not.toContain('private');
+  f.source.binding = { value: 'different-content-same-duration' };
+  const c = await f.runtime.read({
+    ...intent('changed'),
+    kind: 'detail',
+    tileIndex: 2,
+  });
+  expect(c.mediaRevision).not.toBe(a.mediaRevision);
+  f.scope();
+  const d = await f.runtime.read(intent('scope'));
+  expect(d.mediaRevision).not.toBe(c.mediaRevision);
+  f.changeDecoder();
+  expect((await f.runtime.read(intent('decoder'))).mediaRevision).not.toBe(
+    d.mediaRevision,
+  );
 });
 it('bounds active consumers, rejects another tile and blocks reads throughout clear', async () => {
   const f = fixture();

@@ -235,6 +235,40 @@ describe('windowState security boundary', () => {
       'compact',
     );
   });
+  it('publishes native visibility independently of background audio throttling and seeds renderer reloads', async () => {
+    const { module, windowDouble } = await loadWindowState();
+    module.createMainWindow();
+    const { webContents } = windowDouble.win,
+      events = windowDouble.windowListeners;
+    events.get('show')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'main-window:visibility',
+      true,
+    );
+    events.get('minimize')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'main-window:visibility',
+      false,
+    );
+    windowDouble.webContentsListeners.get('did-finish-load')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'main-window:visibility',
+      false,
+    );
+    events.get('restore')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'main-window:visibility',
+      true,
+    );
+    events.get('hide')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'main-window:visibility',
+      false,
+    );
+    expect(windowDouble.options.webPreferences.backgroundThrottling).toBe(
+      false,
+    );
+  });
 
   it('denies new windows and prevents navigation away from the loaded document', async () => {
     const { module, windowDouble } = await loadWindowState();

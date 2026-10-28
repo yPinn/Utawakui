@@ -1,6 +1,11 @@
 'use strict';
 
 const { contextBridge, ipcRenderer } = require('electron');
+let mainWindowVisible = true;
+// Retain the latest native state for tools mounted after the window event.
+ipcRenderer.on('main-window:visibility', (_event, visible) => {
+  if (typeof visible === 'boolean') mainWindowVisible = visible;
+});
 
 // Parsed from the `--ui-theme=` arg main.js passes via additionalArguments —
 // lets the renderer paint the persisted theme on first frame, no async wait.
@@ -465,6 +470,14 @@ contextBridge.exposeInMainWorld('Utawakui', {
   },
   initialUiTheme: readInitialUiTheme(),
   initialUiDensity: readInitialUiDensity(),
+  onMainWindowVisibilityChanged: (callback) => {
+    const listener = (_event, visible) => {
+      if (typeof visible === 'boolean') callback(visible);
+    };
+    ipcRenderer.on('main-window:visibility', listener);
+    callback(mainWindowVisible);
+    return () => ipcRenderer.removeListener('main-window:visibility', listener);
+  },
   onUiDensityChanged: (callback) => {
     const listener = (event, density) => {
       if (density === 'compact' || density === 'standard') callback(density);

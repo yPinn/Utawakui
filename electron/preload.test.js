@@ -339,6 +339,7 @@ const MAIN_EVENT_CHANNELS = [
   'separation:queue-progress',
   'spout-output:status',
   'ui-density:changed',
+  'main-window:visibility',
   'window-close:dismiss',
   'window-close:error',
   'window-close:request',
@@ -800,6 +801,28 @@ describe('main preload bridge', () => {
     cleanup();
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'ui-density:changed',
+      listener,
+    );
+  });
+  it('replays native visibility for late reference tools, bounds events and releases the subscription', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const cached = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'main-window:visibility',
+    )[1];
+    cached({}, false);
+    const callback = vi.fn(),
+      cleanup = bridge.onMainWindowVisibilityChanged(callback);
+    expect(callback).toHaveBeenCalledExactlyOnceWith(false);
+    const listener = electron.ipcRenderer.on.mock.calls
+      .filter(([channel]) => channel === 'main-window:visibility')
+      .at(-1)[1];
+    listener({}, { private: 'not-a-boolean' });
+    expect(callback).toHaveBeenCalledTimes(1);
+    listener({}, true);
+    expect(callback).toHaveBeenLastCalledWith(true);
+    cleanup();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
+      'main-window:visibility',
       listener,
     );
   });

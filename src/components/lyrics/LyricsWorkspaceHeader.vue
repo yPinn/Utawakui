@@ -41,11 +41,9 @@ const menuContent = computed(() => ({
         {
           id: 'timing',
           kind: 'action',
-          label: '逐字校時',
+          label: '調整對時',
           disabled: !props.canEditTiming || props.isLocked,
-          disabledReason: !props.canEditTiming
-            ? '需要可用的字詞分段與起訖時間'
-            : '',
+          disabledReason: !props.canEditTiming ? '需要已有句首時間的歌詞' : '',
         },
         {
           id: 'vocal',

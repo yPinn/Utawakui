@@ -10,7 +10,7 @@ export function timingSegmentsFor(line, readingLine = null) {
   const existing = line.segments;
   if (
     Array.isArray(existing) &&
-    existing.length > 1 &&
+    existing.length > 0 &&
     existing.every((s) => typeof s.text === 'string' && s.text.length > 0) &&
     existing.map((s) => s.text).join('') === line.text
   ) {

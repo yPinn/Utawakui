@@ -41,7 +41,7 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
     expect(readerIndex).toBeGreaterThan(-1);
     expect(liveControlsIndex).toBeGreaterThan(readerIndex);
     expect(workspaceSource).toContain(
-      'grid-template-rows: auto auto auto minmax(0, 1fr)',
+      'grid-template-rows: auto auto minmax(0, auto) minmax(6rem, 1fr)',
     );
     expect(workspaceSource).not.toContain(
       'grid-template-rows: auto auto auto minmax(0, 1fr) auto',

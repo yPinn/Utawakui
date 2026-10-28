@@ -77,7 +77,7 @@ function createWaveformCache(
           if (bytesRead !== buffer.length) return null;
           const stored = JSON.parse(buffer.toString('utf8'));
           if (
-            stored.version !== 1 ||
+            stored.version !== 2 ||
             stored.group !== group ||
             stored.key !== key
           )
@@ -100,6 +100,7 @@ function createWaveformCache(
               ...stored.value.peaks,
               min: decode(stored.value.peaks.min),
               max: decode(stored.value.peaks.max),
+              rms: decode(stored.value.peaks.rms),
             },
           };
           validateSummary(value);
@@ -129,7 +130,7 @@ function createWaveformCache(
           ).toString('base64');
         const bytes = Buffer.from(
           JSON.stringify({
-            version: 1,
+            version: 2,
             group,
             key,
             value: {
@@ -138,6 +139,7 @@ function createWaveformCache(
                 ...value.peaks,
                 min: encode(value.peaks.min),
                 max: encode(value.peaks.max),
+                rms: encode(value.peaks.rms),
               },
             },
           }),

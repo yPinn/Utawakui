@@ -201,6 +201,23 @@ describe('contextual lyrics editing tasks', () => {
     expect(owners.timing.draft.value).toBe(null);
     expect(vm.editMode).toBe('preview');
   });
+  it('restores the timing task on return only while its source session still matches', () => {
+    vm.setEditMode('timing');
+    vm.startTimingEdit('one');
+    app.unmount();
+    let mounted = mount({ ...LyricsAuthoringWorkspace, render: () => null });
+    app = mounted.app;
+    vm = app._instance.subTree.component.setupState;
+    expect(vm.editMode).toBe('timing');
+    expect(owners.timing.draft.value?.lineId).toBe('one');
+    app.unmount();
+    owners.lyrics.lyricsTiming.value = { sourceSession: { id: 'source-b' } };
+    mounted = mount({ ...LyricsAuthoringWorkspace, render: () => null });
+    app = mounted.app;
+    vm = app._instance.subTree.component.setupState;
+    expect(owners.timing.draft.value).toBe(null);
+    expect(vm.editMode).toBe('preview');
+  });
 });
 describe('minimal lyrics toolbar', () => {
   it('renders only the display and edit commands in the default toolbar', async () => {

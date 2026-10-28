@@ -157,6 +157,8 @@ describe('waveform backend experiment bounds', () => {
     const a = planar.finish(),
       b = interleaved.finish();
     expect(a.coarse.min).toEqual(b.coarse.min);
+    expect(a.coarse.rms).toEqual(b.coarse.rms);
+    expect(a.coarse.rms[0]).toBe(0.75);
     expect(Math.min(...a.coarse.min)).toBe(-0.75);
     expect(Math.max(...a.coarse.max)).toBe(0.75);
     expect(
@@ -165,6 +167,46 @@ describe('waveform backend experiment bounds', () => {
     expect(
       a.detail.min.byteLength + a.detail.max.byteLength,
     ).toBeLessThanOrEqual(65536);
+  });
+  it('measures sample energy, not the extrema envelope, with bounded RMS payloads and exact partial tails', () => {
+    const meta = { ...metadata, durationSec: 10, channels: 2 };
+    const acc = new PeakAccumulator(meta, { detailStartSec: 0 });
+    const left = new Float32Array(80000),
+      right = new Float32Array(80000);
+    // First detail bucket spans 20 frames. An impulse has a full peak but low RMS.
+    left[0] = 1;
+    right[0] = -1;
+    left[79999] = right[79999] = 0.5;
+    for (let from = 0; from < left.length; from += 8000)
+      acc.pushPlanar([left, right], from, Math.min(8000, left.length - from));
+    const value = acc.finish();
+    expect(value.detail.strideFrames).toBe(20);
+    expect(value.detail.max[0]).toBe(1);
+    expect(value.detail.rms[0]).toBeCloseTo(Math.sqrt(1 / 20));
+    expect(value.detail.rms[1]).toBe(0);
+    expect(value.detail.rms[3999]).toBeCloseTo(Math.sqrt(0.25 / 20));
+    expect(value.detail.rms[4000]).toBe(0);
+    expect(value.payloadBytes).toBe(49152);
+    expect(value.workingSummaryBytes).toBe(98304);
+    const partial = new PeakAccumulator({
+      ...metadata,
+      durationSec: 1.001,
+      channels: 1,
+    });
+    partial.pushPlanar([new Float32Array(8008).fill(0.5)], 0, 8008);
+    const tail = partial.finish();
+    const last = Math.floor((tail.frames - 1) / tail.coarse.strideFrames);
+    expect(tail.coarse.rms[last]).toBe(0.5);
+    expect(tail.coarse.rms[last + 1]).toBe(0);
+  });
+  it('averages energy over every channel rather than taking the loudest channel', () => {
+    const acc = new PeakAccumulator({ ...metadata, channels: 4 });
+    const one = new Float32Array(8000).fill(1),
+      zero = new Float32Array(8000);
+    acc.pushPlanar([one, zero, zero, zero], 0, 8000);
+    const value = acc.finish();
+    expect(value.coarse.max[0]).toBe(1);
+    expect(value.coarse.rms[0]).toBe(0.5);
   });
   it('rejects non-finite samples, truncated frames, duration and chunk overruns', () => {
     expect(() =>
