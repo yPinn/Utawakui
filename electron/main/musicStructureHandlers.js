@@ -50,6 +50,18 @@ function publicBatchError(error) {
   return new Error('music analysis batch failed');
 }
 
+// Fallback public messages mean the cause was not an expected state (busy,
+// cancelled, not installed, missing track, invalid request); only those are
+// recorded. The public strings stay plain: the renderer classifies them.
+const UNEXPECTED_FAILURES = new Set([
+  'music structure analysis failed',
+  'music analysis preparation failed',
+  'music analysis batch failed',
+  'unable to load benchmark review',
+  'unable to open reference annotation',
+  'unable to save reference annotation',
+]);
+
 function benchmarkDialogOptions() {
   return {
     title: '開啟 M2 Benchmark Run',
@@ -81,7 +93,27 @@ function registerMusicStructureHandlers({
   analysisService,
   capabilityService,
   batchService,
+  recordDiagnostic,
 }) {
+  function publicFailure(error, publicError, operation, code) {
+    if (UNEXPECTED_FAILURES.has(publicError.message)) {
+      try {
+        recordDiagnostic?.({
+          process: 'main',
+          level: 'error',
+          source: 'audio-processing',
+          operation,
+          code,
+          error,
+          context: { retryable: true },
+        });
+      } catch {
+        // Diagnostics are fail-open and never replace the public failure.
+      }
+    }
+    return publicError;
+  }
+
   ipcMain.handle('music-structure:get-track', async (event, trackId) =>
     loadMusicStructure(resolveDownloadDir(getConfig()), trackId),
   );
@@ -98,8 +130,13 @@ function registerMusicStructureHandlers({
       return loadBenchmarkReview(result.filePaths[0], {
         expectedLibraryRoot: resolveDownloadDir(getConfig()),
       });
-    } catch {
-      throw new Error('unable to load benchmark review');
+    } catch (error) {
+      throw publicFailure(
+        error,
+        new Error('unable to load benchmark review'),
+        'benchmark-review-open',
+        'MUSIC_ANALYSIS_BENCHMARK_OPEN_FAILED',
+      );
     }
   });
 
@@ -115,8 +152,13 @@ function registerMusicStructureHandlers({
       return referenceAnnotationService.open(result.filePaths[0], {
         expectedLibraryRoot: resolveDownloadDir(getConfig()),
       });
-    } catch {
-      throw new Error('unable to open reference annotation');
+    } catch (error) {
+      throw publicFailure(
+        error,
+        new Error('unable to open reference annotation'),
+        'reference-annotation-open',
+        'MUSIC_ANALYSIS_ANNOTATION_OPEN_FAILED',
+      );
     }
   });
 
@@ -125,8 +167,13 @@ function registerMusicStructureHandlers({
     async (event, payload) => {
       try {
         return referenceAnnotationService.save(payload);
-      } catch {
-        throw new Error('unable to save reference annotation');
+      } catch (error) {
+        throw publicFailure(
+          error,
+          new Error('unable to save reference annotation'),
+          'reference-annotation-save',
+          'MUSIC_ANALYSIS_ANNOTATION_SAVE_FAILED',
+        );
       }
     },
   );
@@ -148,7 +195,12 @@ function registerMusicStructureHandlers({
         },
       });
     } catch (error) {
-      throw publicAnalysisError(error);
+      throw publicFailure(
+        error,
+        publicAnalysisError(error),
+        'analyze-track',
+        'MUSIC_ANALYSIS_FAILED',
+      );
     }
     notifyLibraryUpdated();
     return result;
@@ -182,7 +234,12 @@ function registerMusicStructureHandlers({
         },
       });
     } catch (error) {
-      throw publicBatchError(error);
+      throw publicFailure(
+        error,
+        publicBatchError(error),
+        'start-batch',
+        'MUSIC_ANALYSIS_BATCH_START_FAILED',
+      );
     }
   });
 
@@ -210,7 +267,12 @@ function registerMusicStructureHandlers({
     try {
       return await capabilityService.prepare(progressOptions());
     } catch (error) {
-      throw publicCapabilityError(error);
+      throw publicFailure(
+        error,
+        publicCapabilityError(error),
+        'prepare-capability',
+        'MUSIC_ANALYSIS_CAPABILITY_FAILED',
+      );
     }
   });
 
@@ -219,7 +281,12 @@ function registerMusicStructureHandlers({
     try {
       return await capabilityService.repair(progressOptions());
     } catch (error) {
-      throw publicCapabilityError(error);
+      throw publicFailure(
+        error,
+        publicCapabilityError(error),
+        'repair-capability',
+        'MUSIC_ANALYSIS_CAPABILITY_FAILED',
+      );
     }
   });
 
@@ -228,7 +295,12 @@ function registerMusicStructureHandlers({
     try {
       return await capabilityService.remove();
     } catch (error) {
-      throw publicCapabilityError(error);
+      throw publicFailure(
+        error,
+        publicCapabilityError(error),
+        'remove-capability',
+        'MUSIC_ANALYSIS_CAPABILITY_FAILED',
+      );
     }
   });
 }

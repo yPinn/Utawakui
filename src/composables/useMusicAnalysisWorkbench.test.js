@@ -2,6 +2,7 @@ import { shallowRef } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMusicAnalysisWorkbench } from './useMusicAnalysisWorkbench.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { useMusicAnalysisCapabilitySession } from './analysis/useMusicAnalysisCapabilitySession.js';
 
 const notifications = useAppNotifications();
 afterEach(() => {
@@ -255,6 +256,31 @@ describe('Music Analysis workbench', () => {
 
     expect(harness.workbench.state.progress?.percent).toBe(100);
     expect(harness.workbench.state.capabilityProgress?.percent).toBe(0);
+  });
+
+  it('shows capability read failures but leaves action failures to the task notice', async () => {
+    const harness = createHarness();
+    harness.bridge.getMusicStructureCapabilityStatus.mockRejectedValueOnce(
+      new Error('private read'),
+    );
+    await harness.workbench.initialize();
+    expect(harness.workbench.state.capabilityError).toBe(
+      '目前無法讀取分析功能狀態，請重新讀取。',
+    );
+
+    await harness.workbench.refreshCapabilityStatus();
+    harness.bridge.repairMusicStructureCapability.mockRejectedValueOnce(
+      new Error('private repair'),
+    );
+    const session = useMusicAnalysisCapabilitySession({
+      bridge: harness.bridge,
+    });
+    await session.owner.repair();
+
+    expect(session.state.capabilityError).toBe(
+      '分析功能修復未完成，請再試一次。',
+    );
+    expect(harness.workbench.state.capabilityError).toBe('');
   });
 
   it('uses a bounded unavailable capability when its bridge is absent', async () => {

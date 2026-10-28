@@ -99,6 +99,7 @@ function createStructureAnalysisBatchService({
   currentProfileIds,
   onTrackComplete = () => {},
   createBatchId = crypto.randomUUID,
+  recordDiagnostic = () => {},
 }) {
   if (
     !analysisService ||
@@ -152,6 +153,37 @@ function createStructureAnalysisBatchService({
     batch.status = 'cancelled';
     emitUpdate();
     return true;
+  }
+
+  // One bounded event per finished batch: counts plus the first failure's
+  // stack, never one event per track.
+  function recordFailures() {
+    const failed = batch.items.filter(({ status }) => status === 'failed');
+    if (failed.length === 0) return;
+    const analysisFailed = failed.some(
+      ({ reason }) => reason === 'analysis-failed',
+    );
+    try {
+      recordDiagnostic({
+        process: 'main',
+        level: analysisFailed ? 'error' : 'warning',
+        source: 'audio-processing',
+        operation: 'music-analysis-batch',
+        code: 'MUSIC_ANALYSIS_BATCH_ITEMS_FAILED',
+        message: 'Music analysis batch finished with failed tracks',
+        error: batch.firstFailure,
+        context: {
+          failureCount: failed.length,
+          successCount: batch.items.filter(
+            ({ status }) => status === 'completed',
+          ).length,
+          count: batch.items.length,
+          reason: analysisFailed ? 'analysis-failed' : 'unavailable-source',
+        },
+      });
+    } catch {
+      // Diagnostics are fail-open and never change the batch result.
+    }
   }
 
   async function runBatch() {
@@ -212,6 +244,7 @@ function createStructureAnalysisBatchService({
             ? 'unavailable-source'
             : 'analysis-failed',
         });
+        batch.firstFailure ??= error;
         delete item.jobId;
         delete item.stage;
         delete item.percent;
@@ -219,6 +252,7 @@ function createStructureAnalysisBatchService({
       }
     }
     batch.status = 'completed';
+    recordFailures();
     emitUpdate();
   }
 
@@ -247,8 +281,9 @@ function createStructureAnalysisBatchService({
     const initial = emitUpdate();
     Promise.resolve()
       .then(runBatch)
-      .catch(() => {
+      .catch((error) => {
         if (!active()) return;
+        batch.firstFailure ??= error;
         for (const item of batch.items) {
           if (!TERMINAL_ITEM_STATUSES.has(item.status)) {
             Object.assign(item, {
@@ -258,6 +293,7 @@ function createStructureAnalysisBatchService({
           }
         }
         batch.status = 'completed';
+        recordFailures();
         emitUpdate();
       });
     return initial;

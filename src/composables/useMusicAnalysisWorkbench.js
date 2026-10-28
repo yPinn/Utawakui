@@ -41,8 +41,10 @@ export function useMusicAnalysisWorkbench(options = {}) {
     get capabilityBusy() {
       return capabilitySession.state.capabilityBusy;
     },
+    // Only status-read failures; prepare/repair/remove failures are owned by
+    // the capability task notice, which already offers the retry.
     get capabilityError() {
-      return capabilitySession.state.capabilityError;
+      return capabilityOwner.readError.value;
     },
     initialized: false,
   });

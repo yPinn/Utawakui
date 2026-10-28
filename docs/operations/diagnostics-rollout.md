@@ -73,7 +73,12 @@ error contract from `electron/lib/downloadFailure.js` and
 `shared/downloadFailureValues.json`. Its catch-all fallback records through
 `recordSearchDiagnostic`, then rethrows the classified error unchanged. Do not
 wrap it mechanically in `runDiagnosticIpcOperation`: the renderer relies on its
-age/region/members-only classifications. Playback's fire-and-forget
+age/region/members-only classifications. `electron/main/musicStructureHandlers.js`
+keeps its plain public error strings for the same reason (the renderer maps
+busy, cancelled, not-installed and missing-track states from them); it records
+only failures that fall through to the generic public message. Batch track
+failures are recorded once per finished batch with counts and the first
+failure's stack, not once per track. Playback's fire-and-forget
 `player:state`／`player:command` channels are also not invoke handlers to migrate.
 
 ## Remaining Verification And Scoped Follow-Up

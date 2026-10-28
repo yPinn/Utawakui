@@ -364,7 +364,7 @@ describe('Music Analysis single-job owner', () => {
       },
     });
     await harness.owner.analyzeSelectedTrack();
-    expect(harness.state.error).toContain('音樂結構分析未完成');
+    expect(harness.state.error).toBe('請再試一次。');
     expect(notifications.items.value).toHaveLength(0);
   });
   it('validates progress, projects labels, and ignores events after disposal', () => {
@@ -417,7 +417,7 @@ describe('Music Analysis single-job owner', () => {
   it.each([
     ['job is already running', '已有一個音訊處理工作正在執行'],
     ['source unavailable', '所選曲目的音訊目前無法使用'],
-    ['private failure', '音樂結構分析未完成'],
+    ['private failure', '請再試一次。'],
   ])('maps an analysis error containing %s', async (message, expected) => {
     const harness = createHarness();
     harness.bridge.analyzeTrackMusicStructure.mockRejectedValue(
@@ -453,9 +453,7 @@ describe('Music Analysis single-job owner', () => {
 
     await expect(harness.owner.cancelAnalysis()).resolves.toBe(false);
 
-    expect(harness.state.error).toBe(
-      '音樂結構分析未完成，請查看診斷記錄後再試一次。',
-    );
+    expect(harness.state.error).toBe('請再試一次。');
     expect(harness.state.phase).toBe('analyzing');
   });
 

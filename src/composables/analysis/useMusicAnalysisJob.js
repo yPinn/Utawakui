@@ -25,7 +25,7 @@ function publicErrorMessage(error) {
   }
   if (message.includes('cancelled')) return '分析工作已取消。';
   if (message.includes('unavailable')) return '所選曲目的音訊目前無法使用。';
-  return '音樂結構分析未完成，請查看診斷記錄後再試一次。';
+  return '請再試一次。';
 }
 
 function normalizedProgress(payload) {

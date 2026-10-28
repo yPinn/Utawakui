@@ -109,13 +109,23 @@ function runPrimaryAction() {
     </div>
 
     <UiNotice
-      v-if="capabilityError || error"
+      v-if="capabilityError"
       tone="danger"
-      title="操作未完成"
-      :message="capabilityError || error"
+      :message="capabilityError"
       compact
     />
-    <UiHint v-else-if="notice" tone="info" role="status">
+    <UiNotice
+      v-if="error"
+      tone="danger"
+      title="分析未完成"
+      :message="error"
+      compact
+    />
+    <UiHint
+      v-if="!capabilityError && !error && notice"
+      tone="info"
+      role="status"
+    >
       {{ notice }}
     </UiHint>
 

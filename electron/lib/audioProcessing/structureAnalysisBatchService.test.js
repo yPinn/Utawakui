@@ -90,6 +90,39 @@ describe('structure-analysis batch service', () => {
     expect(JSON.stringify(batch)).not.toContain('private path');
   });
 
+  it('records one bounded summary per batch with failed tracks', async () => {
+    const recordDiagnostic = vi.fn();
+    const harness = createHarness({ recordDiagnostic });
+    harness.service.start({ trackIds: ['broken', 'fresh', 'broken-2'] });
+    harness.analysisService.run.mockImplementation(async ({ trackId }) => {
+      if (trackId.startsWith('broken')) throw new Error(`${trackId} failed`);
+      return { trackId };
+    });
+    await waitForTerminal(harness.service);
+
+    expect(recordDiagnostic).toHaveBeenCalledOnce();
+    const [event] = recordDiagnostic.mock.calls[0];
+    expect(event).toMatchObject({
+      level: 'error',
+      code: 'MUSIC_ANALYSIS_BATCH_ITEMS_FAILED',
+      context: {
+        failureCount: 2,
+        successCount: 1,
+        count: 3,
+        reason: 'analysis-failed',
+      },
+    });
+    expect(event.error.message).toBe('broken failed');
+  });
+
+  it('records nothing for a batch without failures', async () => {
+    const recordDiagnostic = vi.fn();
+    const harness = createHarness({ recordDiagnostic });
+    harness.service.start({ trackIds: ['current', 'fresh'] });
+    await waitForTerminal(harness.service);
+    expect(recordDiagnostic).not.toHaveBeenCalled();
+  });
+
   it('force-analyzes a current M1 or M2 sidecar', async () => {
     const harness = createHarness({
       inspectTrack: vi.fn(async (trackId) =>

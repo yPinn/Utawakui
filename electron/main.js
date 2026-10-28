@@ -798,6 +798,7 @@ if (!gotSingleInstanceLock) {
       },
       currentProfileIds: structureAnalysisProfileIds,
       onTrackComplete: notifyLibraryUpdated,
+      recordDiagnostic,
     });
     const structureAnalysisCapabilityService =
       createStructureAnalysisCapabilityService({
@@ -1385,6 +1386,7 @@ if (!gotSingleInstanceLock) {
       analysisService: structureAnalysisService,
       capabilityService: structureAnalysisCapabilityService,
       batchService: structureAnalysisBatchService,
+      recordDiagnostic,
     });
 
     registerPlaylistsHandlers({

@@ -162,6 +162,66 @@ describe('music-structure handlers', () => {
     ).rejects.not.toThrow(/Users|input\.wav/i);
   });
 
+  it('records unexpected failures but not expected busy or setup states', async () => {
+    const handlers = new Map();
+    const recordDiagnostic = vi.fn(() => ({ ok: true }));
+    const run = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('EPERM: C:\\private\\input.wav'))
+      .mockRejectedValueOnce(
+        new Error('a structure-analysis job is already running'),
+      );
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: () => null,
+      notifyLibraryUpdated: vi.fn(),
+      requireFeatureGate: vi.fn(),
+      featureIds: { AUDIO_PROCESSING_FLOW: 'audio-processing-flow' },
+      analysisService: {
+        run,
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(),
+      },
+      capabilityService: capabilityService({
+        prepare: vi.fn(async () => {
+          throw new Error('pip exited with 1');
+        }),
+        repair: vi.fn(async () => {
+          throw new Error('setup is still in use');
+        }),
+      }),
+      batchService: batchService(),
+      recordDiagnostic,
+    });
+
+    await expect(
+      handlers.get('music-structure:analyze-track')(null, 'track-1'),
+    ).rejects.toThrow('music structure analysis failed');
+    await expect(
+      handlers.get('music-structure:analyze-track')(null, 'track-1'),
+    ).rejects.toThrow('a structure-analysis job is already running');
+    await expect(
+      handlers.get('music-structure:prepare-capability')(),
+    ).rejects.toThrow('music analysis preparation failed');
+    await expect(
+      handlers.get('music-structure:repair-capability')(),
+    ).rejects.toThrow('music analysis setup is currently in use');
+
+    expect(recordDiagnostic.mock.calls.map(([event]) => event.code)).toEqual([
+      'MUSIC_ANALYSIS_FAILED',
+      'MUSIC_ANALYSIS_CAPABILITY_FAILED',
+    ]);
+    expect(recordDiagnostic.mock.calls[1][0]).toMatchObject({
+      source: 'audio-processing',
+      operation: 'prepare-capability',
+      level: 'error',
+    });
+  });
+
   it('exposes bounded preparation lifecycle actions and progress', async () => {
     const handlers = new Map();
     const send = vi.fn();
