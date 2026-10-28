@@ -193,10 +193,13 @@
   );
   --ui-shell-navigation-inline-size: 4rem;
   --ui-shell-navigation-inline-size-min: 4rem;
-  --ui-shell-navigation-inline-size-max: 17.5rem;
+  --ui-shell-navigation-inline-size-max: 16rem;
+  --ui-shell-workspace-min-inline-size: 40rem;
+  --ui-shell-layout-recovery-inline-size: 4rem;
   --ui-sidebar-compact-threshold: 16rem;
   --ui-right-dock-width: 17.5rem;
   --ui-right-dock-rail-width: 2.5rem;
+  --ui-shell-dock-inline-size: var(--ui-right-dock-rail-width);
   --ui-side-panel-content-inset: var(--ui-space-2);
   --ui-side-panel-section-gap: var(--ui-space-4);
   --ui-side-panel-content-gap: var(--ui-space-2);

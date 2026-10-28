@@ -46,6 +46,7 @@
 
 ## 操作介面與共同規則
 
+- [Shell 左右欄與空間分配](shell-layout.md)
 - [操作層級與確認](action-intent-and-confirmation.md)
 - [輸入綁定](input-bindings.md)
 - [Settings操作回饋](settings-operation-feedback.md)

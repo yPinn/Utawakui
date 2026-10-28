@@ -7,22 +7,22 @@ describe('AppPlaylistSidebar shell', () => {
     'utf8',
   );
 
-  it('exposes the bidirectional double-click toggle on the draggable axis', () => {
+  it('keeps the original boundary separator for two-state pointer and keyboard disclosure', () => {
+    expect(source).toContain('data-sidebar-disclosure');
+    expect(source).toContain(':aria-expanded="props.expanded"');
+    expect(source).toContain('aria-controls="app-playlist-sidebar-content"');
     expect(source).toContain('role="separator"');
-    expect(source).toContain('tabindex="0"');
-    expect(source).toContain('aria-orientation="vertical"');
-    expect(source).toContain(':aria-valuemin="SIDEBAR_WIDTH_MIN"');
-    expect(source).toContain(':aria-valuemax="SIDEBAR_WIDTH_MAX"');
-    expect(source).toContain(':aria-valuenow="sidebarWidth"');
-    expect(source).toContain(':aria-expanded="!sidebarCompact"');
-    expect(source).toContain('@dblclick="toggleSidebarCollapse"');
+    expect(source).toContain('@pointerdown="startResize"');
     expect(source).toContain('@keydown="handleResizeKeydown"');
+    expect(source).toContain('@dblclick=');
+    expect(source).toContain('col-resize');
+    expect(source).not.toContain('<UiIconButton');
+    expect(source).not.toContain('app-playlist-sidebar__disclosure');
   });
 
-  it('delegates collection scrolling to PlaylistSidebar and keeps resize outside that owner', () => {
+  it('delegates collection scrolling and leaves the handle outside that owner', () => {
     expect(source).not.toContain('import UiScrollRegion');
     expect(source).not.toContain('<UiScrollRegion');
-    expect(source).not.toContain('app-playlist-sidebar__scroll-viewport');
     expect(source.indexOf('<PlaylistSidebar')).toBeLessThan(
       source.indexOf('class="app-playlist-sidebar__handle"'),
     );
@@ -33,10 +33,10 @@ describe('AppPlaylistSidebar shell', () => {
     expect(source).not.toContain('@import-tracks');
   });
 
-  it('derives the collection interaction mode from the shell-owned sidebar width', () => {
-    expect(source).toContain('SIDEBAR_COMPACT_THRESHOLD');
-    expect(source).toContain('const sidebarCompact = computed(');
-    expect(source).toContain(':compact="sidebarCompact"');
+  it('uses the Shell projection for compact interactions and activates the library directly', () => {
+    expect(source).toContain(':compact="!props.expanded"');
+    expect(source).toContain('@activate-library="openLibraryContent"');
+    expect(source).not.toContain("emit('navigate')");
   });
 
   it('draws a complete inset panel stroke without changing container-query geometry', () => {
@@ -44,13 +44,5 @@ describe('AppPlaylistSidebar shell', () => {
       'box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);',
     );
     expect(source).not.toContain('inset calc(-1 * var(--ui-border-width)) 0 0');
-  });
-
-  it('uses the shared resize hit area without covering the visible scrollbar thumb', () => {
-    expect(source).toContain('inline-size: var(--ui-resize-handle-hit-size);');
-    expect(source).toMatch(
-      /inset-inline-end:\s*calc\(\s*\(\s*var\(--ui-resize-handle-hit-size\)\s*-\s*var\(--ui-scrollbar-thumb-inset\)\s*\)\s*\/\s*-1\s*\);/su,
-    );
-    expect(source).not.toContain('width: 6px;');
   });
 });

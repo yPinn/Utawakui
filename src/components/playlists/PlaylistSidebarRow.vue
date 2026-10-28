@@ -367,7 +367,7 @@ function toggleFromArtwork(event) {
 }
 
 /* Compact sidebar (see AppPlaylistSidebar.vue's container-type: inline-size
-   and useSidebarResize.js's snap-to-min behavior) — collapses straight to
+   and the Shell's fixed 64px/256px states) — collapses straight to
    icon-only rather than letting the title/kind text get squeezed and
    clipped. Literal px value, kept in sync by hand with
    --ui-sidebar-compact-threshold in tokens.css since @container

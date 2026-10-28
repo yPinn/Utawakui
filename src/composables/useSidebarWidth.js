@@ -7,31 +7,36 @@ import { ref } from 'vue';
 // src/styles/tokens.css and electron/lib/config.js's SIDEBAR_WIDTH_MIN/MAX
 // — neither CSS nor the main process can read these from one shared source.
 export const SIDEBAR_WIDTH_MIN = 64; // 4rem
-export const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
-export const SIDEBAR_WIDTH_KEYBOARD_STEP = 8; // 0.5rem at the app baseline
+export const SIDEBAR_WIDTH_MAX = 256; // 16rem; expanded is a fixed state.
 // Keep in sync with --ui-playlist-sidebar-compact-threshold and the
 // @container (width < 256px) rules in the Sidebar components.
 export const SIDEBAR_COMPACT_THRESHOLD = 256; // 16rem
 
-const width = ref(window.Utawakui?.initialSidebarWidth ?? SIDEBAR_WIDTH_MIN);
-
-function clamp(px) {
-  return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, px));
+function normalize(px) {
+  return Number.isFinite(px) && px >= SIDEBAR_COMPACT_THRESHOLD
+    ? SIDEBAR_WIDTH_MAX
+    : SIDEBAR_WIDTH_MIN;
 }
 
-// Live update during a drag — no IPC call. useSidebarResize.js calls this
-// on every pointermove; a round-trip per pixel would be wasteful and
-// unnecessary since only the final width needs to persist.
+// Persisted intent only; responsive projection belongs to useShellLayout.
+const width = ref(normalize(window.Utawakui?.initialSidebarWidth));
+
 function setWidth(px) {
-  width.value = clamp(px);
+  if (Number.isFinite(px)) width.value = normalize(px);
 }
 
-// Persists the current width — called once when a resize drag ends, not
-// debounced, since it's already only invoked at that one point.
+// Only a user's disclosure action commits; automatic collapse never does.
 async function commitWidth() {
   await window.Utawakui?.setSidebarWidth(width.value);
 }
 
+async function toggleSidebarCollapse() {
+  setWidth(
+    width.value === SIDEBAR_WIDTH_MIN ? SIDEBAR_WIDTH_MAX : SIDEBAR_WIDTH_MIN,
+  );
+  await commitWidth();
+}
+
 export function useSidebarWidth() {
-  return { width, setWidth, commitWidth };
+  return { width, setWidth, commitWidth, toggleSidebarCollapse };
 }

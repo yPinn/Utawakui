@@ -104,7 +104,7 @@ describe('AppRightDock', () => {
     const left = key('ArrowLeft');
     trigger(handle, 'onKeydown', left);
     expect(left.preventDefault).toHaveBeenCalledOnce();
-    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MAX);
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN + 8);
     trigger(handle, 'onKeydown', key('ArrowRight'));
     expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN);
     trigger(handle, 'onKeydown', key('Home'));
@@ -117,7 +117,7 @@ describe('AppRightDock', () => {
     trigger(handle, 'onDblclick');
     expect(onToggleExpanded).toHaveBeenCalledTimes(3);
 
-    dockWidth.width.value = originalWidth;
+    dockWidth.setWidth(originalWidth);
     app.unmount();
   });
 

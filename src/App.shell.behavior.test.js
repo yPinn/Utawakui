@@ -41,8 +41,15 @@ describe('App shell right Dock', () => {
     expect(source).toContain('useAppRightDockWidth');
     expect(source).toContain("'--ui-right-dock-width':");
     expect(source).toMatch(
-      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);/su,
+      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-space-3\);/su,
     );
+  });
+
+  it('connects the actual Dock disclosure state before creating its layout allocator', () => {
+    expect(source.indexOf('const rightDockExpanded = computed(')).toBeLessThan(
+      source.indexOf('useShellLayout(shellRef, rightDockExpanded)'),
+    );
+    expect(source).toContain("'--ui-shell-dock-inline-size':");
   });
 
   it('routes shell navigation through the app-view action API', () => {
@@ -175,10 +182,10 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('RIGHT_DOCK_SURFACE_BGM');
   });
 
-  it('keeps the collapsed Dock bay reserved while reducing its visible control to a local restore action', () => {
+  it('keeps the collapsed restore action in flow while the allocator reclaims its bay', () => {
     expect(source).toContain('<div class="shell__workspace">');
     expect(source).toMatch(
-      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
+      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );
     expect(source).toMatch(
       /\.shell__dock\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*pointer-events:\s*none;[^}]*\}/su,
@@ -289,13 +296,12 @@ describe('App shell right Dock', () => {
     expect(source).toContain('utawakui:right-dock:queue-toggle');
   });
 
-  it('keeps the expanded Dock as an overlay at the compact breakpoint', () => {
-    expect(source).toMatch(
-      /@media \(max-width: 70rem\)[\s\S]*\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);[^}]*gap:\s*0;[^}]*\}/u,
-    );
-    expect(source).toMatch(
-      /@media \(max-width: 70rem\)[\s\S]*\.shell__main--dock-expanded\s+\.shell__dock\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/u,
-    );
+  it('never turns either side panel into a floating layout or blocks the workspace', () => {
+    expect(source).not.toContain('shell--dock-overlay');
+    expect(source).not.toContain('shell__sidebar--overlay');
+    expect(source).not.toContain('temporarySidebar');
+    expect(source).not.toContain('shell__sidebar-backdrop');
+    expect(source).not.toMatch(/\.shell__dock\s*\{[^}]*position:\s*absolute/su);
   });
   it('keeps Escape with an open modal or menu instead of also closing the dock', () => {
     const handler = source.slice(

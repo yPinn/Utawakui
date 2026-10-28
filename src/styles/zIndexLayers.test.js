@@ -8,6 +8,8 @@ const srcRoot = fileURLToPath(new URL('..', import.meta.url));
 // Shell chrome and teleported overlays are the only global layer owners.
 const GLOBAL_LAYER_OWNERS = new Set([
   'App.vue',
+  // Shell-owned transparent drag cursor, teleported only during pointer capture.
+  'components/layout/AppPlaylistSidebar.vue',
   'components/output/ObsLookSelect.vue',
   'components/playback/PlayerBar.vue',
   'components/ui/UiCombobox.vue',

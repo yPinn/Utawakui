@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import { PanelRightOpen } from '../../icons/index.js';
 import {
   RIGHT_DOCK_WIDTH_KEYBOARD_STEP,
-  RIGHT_DOCK_WIDTH_MAX,
   RIGHT_DOCK_WIDTH_MIN,
   useAppRightDockWidth,
 } from '../../composables/useAppRightDockWidth.js';
@@ -41,7 +40,7 @@ function handleResizeKeydown(event) {
     ArrowLeft: () => dockWidth.resizeBy(RIGHT_DOCK_WIDTH_KEYBOARD_STEP),
     ArrowRight: () => dockWidth.resizeBy(-RIGHT_DOCK_WIDTH_KEYBOARD_STEP),
     Home: () => dockWidth.setWidth(RIGHT_DOCK_WIDTH_MIN),
-    End: () => dockWidth.setWidth(RIGHT_DOCK_WIDTH_MAX),
+    End: () => dockWidth.setWidth(dockWidth.maximum.value),
   };
   const handler = handlers[event.key];
   if (!handler) return;
@@ -99,7 +98,7 @@ function handleResizeKeydown(event) {
       tabindex="0"
       aria-orientation="vertical"
       :aria-valuemin="RIGHT_DOCK_WIDTH_MIN"
-      :aria-valuemax="RIGHT_DOCK_WIDTH_MAX"
+      :aria-valuemax="dockWidth.maximum.value"
       :aria-valuenow="dockWidth.width.value"
       :aria-valuetext="`${dockWidth.width.value} 像素`"
       :aria-controls="contentId"
@@ -405,16 +404,6 @@ function handleResizeKeydown(event) {
   .app-right-dock__content,
   .app-right-dock__handle::after {
     transition: none;
-  }
-}
-
-@media (max-width: 70rem) {
-  .app-right-dock--expanded {
-    width: min(
-      var(--ui-right-dock-width),
-      calc(100vw - var(--ui-right-dock-rail-width))
-    );
-    box-shadow: var(--ui-shadow-overlay);
   }
 }
 </style>

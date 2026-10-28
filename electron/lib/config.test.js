@@ -260,10 +260,20 @@ describe('config', () => {
     expect(loadConfig(configPath).uiTheme).toBe('dark');
   });
 
-  it('round-trips sidebarWidth through save/load', () => {
-    saveConfig(configPath, { sidebarWidth: 200 });
-    expect(loadConfig(configPath).sidebarWidth).toBe(200);
-  });
+  it.each([
+    [64, 64],
+    [200, 64],
+    [255, 64],
+    [256, 256],
+    [272, 256],
+    [280, 256],
+  ])(
+    'maps the legacy sidebar width %s to the fixed state %s',
+    (saved, expected) => {
+      saveConfig(configPath, { sidebarWidth: saved });
+      expect(loadConfig(configPath).sidebarWidth).toBe(expected);
+    },
+  );
 
   it.each([68, 72])(
     'uses the 64px compact Sidebar boundary and migrates the legacy %spx rail',

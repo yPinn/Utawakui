@@ -42,7 +42,8 @@ const UI_THEMES = ['light', 'dark'];
 // src/styles/tokens.css — main process can't read CSS.
 const SIDEBAR_WIDTH_MIN = 64; // 4rem
 const LEGACY_SIDEBAR_WIDTH_MINS = new Set([68, 72]);
-const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
+const SIDEBAR_WIDTH_MAX = 256; // 16rem; fixed expanded state.
+const LEGACY_SIDEBAR_WIDTH_MAX = 280;
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
 const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
@@ -212,8 +213,10 @@ function normalizeSidebarWidth(value) {
   if (LEGACY_SIDEBAR_WIDTH_MINS.has(value)) return SIDEBAR_WIDTH_MIN;
   return Number.isFinite(value) &&
     value >= SIDEBAR_WIDTH_MIN &&
-    value <= SIDEBAR_WIDTH_MAX
-    ? value
+    value <= LEGACY_SIDEBAR_WIDTH_MAX
+    ? value >= SIDEBAR_WIDTH_MAX
+      ? SIDEBAR_WIDTH_MAX
+      : SIDEBAR_WIDTH_MIN
     : DEFAULTS.sidebarWidth;
 }
 

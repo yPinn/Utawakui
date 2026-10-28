@@ -63,7 +63,8 @@
 
 ### Right Dock
 
-- `App.vue` 與 `useAppRightDock.js` 擁有 Dock 幾何、surface stack 與前景切換，不持有播放或處理資料。寬度調整、桌面保留欄位、compact overlay、Escape 與焦點還原屬於 shell，不回流到 PlayerBar。
+- `useShellLayout.js` 依實測Shell寬度、Dock展開狀態及語意tokens，統一投影左側64／256px與Dock實際佔位。兩側全程並排，先自動摺Sidebar再縮Dock；Dock摺疊只保留40px，沒有窄窗overlay或臨時Sidebar。使用者偏好與受限顯示分離，恢復有4rem餘裕；中央640px為舒適目標，最窄窗由內容reflow。幾何、手動展開與驗證見[Shell空間分配契約](contracts/shell-layout.md)。
+- `App.vue` 組合Shell幾何；`useAppRightDock.js` 擁有surface stack與前景切換，不持有播放或處理資料。內容寬度與欄位佔位分開；resize、Escape與焦點還原屬於Shell，不回流到PlayerBar。
 - `QueuePanel.vue`、`TrackContextPanel.vue` 與 `PreparationDockPanel.vue` 透過 `AppRightDockPanel.vue` 共用 header、單一 scroll owner、可選 summary 與 footer slot。PlayerBar 縮圖是直接開啟 metadata 的 intent。
 - Queue surface 有一般與「演出安排」兩個 variant；安排 variant 的 footer 放場間音樂，OBS 直播／錄影中時 Dock 加強框色並顯示 LIVE／REC（只讀 OBS 投影，讀取失敗即清除）。
 - Queue 與最近播放的列由 `QueueTrackButton`／`RecentPlaybackList` 組合 `UiTrackRow`；排序與拖曳由 Queue feature 持有，`UiTrackRow` 不持有排序語意。`playbackActions=false` 可關閉封面、Enter 與雙擊播放。`TrackIdentityRow.vue` 提供可導向專輯／藝人的曲目身分列，在切換目的地前發出 `navigate` 讓 Modal／Dock 先收合。

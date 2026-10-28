@@ -226,8 +226,7 @@ function registerConfigHandlers({
   ipcMain.handle('config:set-sidebar-width', async (event, width) => {
     if (
       !Number.isFinite(width) ||
-      width < SIDEBAR_WIDTH_MIN ||
-      width > SIDEBAR_WIDTH_MAX
+      (width !== SIDEBAR_WIDTH_MIN && width !== SIDEBAR_WIDTH_MAX)
     ) {
       throw createValidationError(
         'SIDEBAR_WIDTH_INVALID',

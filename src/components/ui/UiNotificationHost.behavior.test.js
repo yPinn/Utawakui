@@ -878,7 +878,7 @@ describe('UiNotificationHost', () => {
       (node) => String(node.props.class ?? '') === 'ui-notification-host',
     )[0];
     expect(host.props.style['--ui-notification-preferred-inline-size']).toBe(
-      '280px',
+      `${RIGHT_DOCK_WIDTH_MAX}px`,
     );
     useAppRightDockWidth().setWidth(RIGHT_DOCK_WIDTH_MIN);
     await nextTick();

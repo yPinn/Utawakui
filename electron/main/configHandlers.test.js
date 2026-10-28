@@ -485,7 +485,7 @@ describe('registerConfigHandlers', () => {
     },
   );
 
-  it.each([SIDEBAR_WIDTH_MIN, 256.5, SIDEBAR_WIDTH_MAX])(
+  it.each([SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX])(
     'persists a bounded sidebar width of %s',
     async (width) => {
       const { ipcMain, updateConfig } = register();
@@ -498,6 +498,8 @@ describe('registerConfigHandlers', () => {
   );
 
   it.each([
+    200,
+    256.5,
     Number.NaN,
     Number.POSITIVE_INFINITY,
     SIDEBAR_WIDTH_MIN - 1,
@@ -898,7 +900,7 @@ describe('registerConfigHandlers', () => {
     const { ipcMain, recordDiagnostic } = register({ updateConfig });
 
     const thrown = await ipcMain.handlers
-      .get('config:set-sidebar-width')(null, 200)
+      .get('config:set-sidebar-width')(null, 256)
       .catch((error) => error);
 
     expect(recordDiagnostic).toHaveBeenCalledWith(

@@ -6,6 +6,7 @@ import {
   onMounted,
   onUnmounted,
   provide,
+  useTemplateRef,
   watch,
 } from 'vue';
 import AppFolderLayout from './components/layout/AppFolderLayout.vue';
@@ -44,7 +45,7 @@ import { useNavigationHistory } from './composables/useNavigationHistory.js';
 import { useNavigationInput } from './composables/useNavigationInput.js';
 import { useFeedbackReport } from './composables/useFeedbackReport.js';
 import { provideNoticeReporter } from './components/ui/noticeReporter.js';
-import { useSidebarWidth } from './composables/useSidebarWidth.js';
+import { useShellLayout } from './composables/useShellLayout.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
@@ -195,11 +196,17 @@ onMounted(refreshAppUpdateStatus);
 const announcement = useAppAnnouncement();
 onMounted(announcement.initialize);
 
-// Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
-// writes into the same useSidebarWidth.js singleton this reads).
-const { width: sidebarWidth } = useSidebarWidth();
-const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
+const rightDockExpanded = computed(
+  () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
+);
+const shellRef = useTemplateRef('shell');
+const {
+  layout: shellGeometry,
+  sidebarExpanded,
+  toggleSidebar,
+} = useShellLayout(shellRef, rightDockExpanded);
+const { width: rightDockWidth } = useAppRightDockWidth();
 usePlaybackDockDisplay();
 const preparationActivity = usePreparationActivity();
 const separationQueue = useSeparationQueue();
@@ -250,7 +257,6 @@ const views = {
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const {
   activeView,
-  performanceTool,
   isSettingsView,
   setActiveView,
   openSettings,
@@ -305,9 +311,6 @@ const preparationIndicator = computed(() =>
     providerImport: preparationActivity.providerImport.value,
     localImport: preparationActivity.localImport.value,
   }),
-);
-const rightDockExpanded = computed(
-  () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
 );
 const restorableDockSurface = computed(
   () =>
@@ -442,10 +445,12 @@ useKeyboardShortcuts({ internalViewShortcuts });
 
 <template>
   <div
+    ref="shell"
     class="shell"
     :style="{
-      '--ui-shell-navigation-inline-size': `${sidebarWidth}px`,
+      '--ui-shell-navigation-inline-size': `${shellGeometry.sidebarWidth}px`,
       '--ui-right-dock-width': `${rightDockWidth}px`,
+      '--ui-shell-dock-inline-size': `${shellGeometry.dockBayWidth}px`,
     }"
   >
     <div v-bind="appOverlayHostAttributes" class="ui-overlay-host" />
@@ -465,16 +470,12 @@ useKeyboardShortcuts({ internalViewShortcuts });
       @toggle-settings="toggleSettings"
     />
     <div class="shell__sidebar">
-      <AppPlaylistSidebar />
+      <AppPlaylistSidebar
+        :expanded="sidebarExpanded"
+        @toggle-expanded="toggleSidebar"
+      />
     </div>
-    <main
-      class="shell__main shell__main--with-dock"
-      :class="{
-        'shell__main--dock-expanded': rightDockExpanded,
-        'shell__main--session':
-          activeView === 'performance' && performanceTool === 'session',
-      }"
-    >
+    <main class="shell__main shell__main--with-dock">
       <div class="shell__workspace">
         <AppSurfaceBoundary surface-id="app-folder">
           <AppFolderLayout
@@ -601,21 +602,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
     'titlebar titlebar'
     'sidebar  main'
     'player   player';
-  /* clamp(), not the raw variable — a defensive bound on the rendered
-     column so an out-of-range persisted/runtime value (e.g. from an older
-     config.json) can't push the grid column past useSidebarWidth.js's own
-     min/max. useSidebarResize.js already clamps during a live drag; this
-     is the CSS-side backstop for values that arrive some other way.
-     Plus --ui-shell-edge-inset-inline: .shell__sidebar's own padding-left (the sidebar's
-     outer margin from the window edge) below eats into whatever this track
-     hands it — without the extra space here, that padding would shrink
-     AppPlaylistSidebar.vue's own rendered width below its calibrated
-     min/max/compact-threshold values instead of just shifting it right.
-     Must match .shell__sidebar's padding-left exactly, or the resize
-     drag's tracked width (useSidebarWidth.js) and the actual DOM width the
-     @container query measures (PlaylistSidebar.vue/PlaylistSidebarRow.vue)
-     drift apart, desyncing the collapsed/expanded snap point from the drag
-     position. */
+  /* The Shell allocator owns both fixed navigation states and Dock fit. */
   grid-template-columns:
     calc(
       clamp(
@@ -685,9 +672,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
 }
 
 .shell__main--with-dock {
-  /* Keep the desktop workspace width stable across Dock disclosure. The
-     collapsed surface is transparent, but its structural bay remains. */
-  grid-template-columns: minmax(0, 1fr) var(--ui-right-dock-width);
+  /* Both panels stay in flow. A folded Dock keeps only its restore control. */
+  grid-template-columns: minmax(0, 1fr) var(--ui-shell-dock-inline-size);
   gap: var(--ui-space-3);
 }
 
@@ -713,7 +699,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
 }
 
 .shell__dock--collapsed {
-  /* The column remains reserved, but only the local restore action paints. */
+  /* The column shrinks to the restore control width. */
   align-items: flex-end;
 }
 
@@ -767,34 +753,6 @@ useKeyboardShortcuts({ internalViewShortcuts });
 @media (prefers-reduced-motion: reduce) {
   .shell__dock-surface {
     transition: none;
-  }
-}
-
-@media (max-width: 70rem) {
-  .shell__main--with-dock {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-
-  .shell__dock--collapsed {
-    position: absolute;
-    z-index: var(--ui-z-sticky);
-    inset-inline-end: var(--ui-shell-edge-inset-inline);
-    inset-block: 0 var(--ui-shell-content-inset-block);
-  }
-
-  .shell__main--dock-expanded .shell__dock {
-    position: absolute;
-    z-index: var(--ui-z-sticky);
-    inset-block: 0 var(--ui-shell-content-inset-block);
-    inset-inline-end: var(--ui-shell-edge-inset-inline);
-  }
-  .shell__main--session.shell__main--dock-expanded {
-    grid-template-columns: minmax(0, 1fr) var(--ui-right-dock-width);
-    gap: var(--ui-space-3);
-  }
-  .shell__main--session.shell__main--dock-expanded .shell__dock {
-    position: static;
   }
 }
 

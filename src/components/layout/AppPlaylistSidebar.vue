@@ -1,17 +1,10 @@
 <script setup>
-import { computed } from 'vue';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
-import { useSidebarResize } from '../../composables/useSidebarResize.js';
-import {
-  SIDEBAR_COMPACT_THRESHOLD,
-  SIDEBAR_WIDTH_KEYBOARD_STEP,
-  SIDEBAR_WIDTH_MAX,
-  SIDEBAR_WIDTH_MIN,
-  useSidebarWidth,
-} from '../../composables/useSidebarWidth.js';
+import { useResizeDrag } from '../../composables/useResizeDrag.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
@@ -32,31 +25,42 @@ const {
   clearCover,
   handlePlaylistMenuAction,
 } = usePlaylistActions();
-const { isResizing, startResize, resizeBy, resizeTo, toggleSidebarCollapse } =
-  useSidebarResize();
-const { width: sidebarWidth } = useSidebarWidth();
-const sidebarCompact = computed(
-  () => sidebarWidth.value < SIDEBAR_COMPACT_THRESHOLD,
-);
-
-async function handleResizeKeydown(event) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    await toggleSidebarCollapse();
-    return;
-  }
-  if (sidebarCompact.value) return;
-
-  const handlers = {
-    ArrowLeft: () => resizeBy(-SIDEBAR_WIDTH_KEYBOARD_STEP),
-    ArrowRight: () => resizeBy(SIDEBAR_WIDTH_KEYBOARD_STEP),
-    Home: () => resizeTo(SIDEBAR_WIDTH_MIN),
-    End: () => resizeTo(SIDEBAR_WIDTH_MAX),
-  };
-  const handler = handlers[event.key];
-  if (!handler) return;
+const props = defineProps({
+  expanded: { type: Boolean, default: false },
+});
+const emit = defineEmits(['toggleExpanded']);
+const overlayHost = useUiOverlayHost();
+let dragExpanded = false;
+let directionAnchor = 0;
+const { isResizing, startResize: startDrag } = useResizeDrag({
+  onMove: (delta) => {
+    // Follow the furthest point in the current direction. A reversal needs
+    // its own deliberate movement, even if the pointer passed the old origin.
+    directionAnchor = dragExpanded
+      ? Math.max(directionAnchor, delta)
+      : Math.min(directionAnchor, delta);
+    if (
+      dragExpanded ? delta > directionAnchor - 24 : delta < directionAnchor + 24
+    )
+      return;
+    dragExpanded = !dragExpanded;
+    directionAnchor = delta;
+    emit('toggleExpanded');
+  },
+});
+function startResize(event) {
+  dragExpanded = props.expanded;
+  directionAnchor = 0;
+  startDrag(event);
+}
+function handleResizeKeydown(event) {
+  const toggle = ['Enter', ' '].includes(event.key);
+  const expand = ['ArrowRight', 'End'].includes(event.key);
+  const collapse = ['ArrowLeft', 'Home'].includes(event.key);
+  if (!toggle && !expand && !collapse) return;
   event.preventDefault();
-  await handler();
+  if (toggle || (expand && !props.expanded) || (collapse && props.expanded))
+    emit('toggleExpanded');
 }
 </script>
 
@@ -72,34 +76,39 @@ async function handleResizeKeydown(event) {
       :tracks-by-id="tracksById"
       :library-loading="libraryState.isLoading"
       :library-view="playlistState.libraryView"
-      :compact="sidebarCompact"
+      :compact="!props.expanded"
       @library-view-select="setLibraryView"
       @activate-library="openLibraryContent"
       @playlist-action="handlePlaylistMenuAction"
     />
 
     <button
+      data-sidebar-disclosure
       type="button"
       class="app-playlist-sidebar__handle"
       :class="{ 'app-playlist-sidebar__handle--active': isResizing }"
       role="separator"
       tabindex="0"
       aria-orientation="vertical"
-      :aria-valuemin="SIDEBAR_WIDTH_MIN"
-      :aria-valuemax="SIDEBAR_WIDTH_MAX"
-      :aria-valuenow="sidebarWidth"
-      :aria-valuetext="`${sidebarWidth} 像素`"
+      :aria-valuemin="64"
+      :aria-valuemax="256"
+      :aria-valuenow="props.expanded ? 256 : 64"
+      :aria-valuetext="props.expanded ? '已展開，256 像素' : '已摺疊，64 像素'"
+      :aria-expanded="props.expanded"
       aria-controls="app-playlist-sidebar-content"
-      :aria-expanded="!sidebarCompact"
       :aria-label="
-        sidebarCompact
-          ? '展開播放清單側欄；Enter、空白鍵或雙擊'
-          : '調整播放清單側欄寬度；方向鍵調整，Enter、空白鍵或雙擊切換摺疊'
+        props.expanded
+          ? '摺疊播放清單側欄；拖曳、Enter、空白鍵或雙擊'
+          : '展開播放清單側欄；拖曳、Enter、空白鍵或雙擊'
       "
       @pointerdown="startResize"
-      @dblclick="toggleSidebarCollapse"
+      @dblclick="emit('toggleExpanded')"
       @keydown="handleResizeKeydown"
     ></button>
+
+    <Teleport v-if="isResizing && overlayHost" :to="overlayHost">
+      <div class="app-playlist-sidebar__drag-feedback" aria-hidden="true"></div>
+    </Teleport>
 
     <!-- Independent of which playlist/album is currently selected/viewed —
          right-clicking any sidebar row opens this for that row without
@@ -192,6 +201,16 @@ async function handleResizeKeydown(event) {
 
 .app-playlist-sidebar__handle:focus-visible::after {
   background: var(--ui-color-focus);
+}
+
+/* Keep the resize cursor after the original axis snaps away from the pointer. */
+.app-playlist-sidebar__drag-feedback {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ui-z-popover);
+  cursor: col-resize;
+  user-select: none;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
