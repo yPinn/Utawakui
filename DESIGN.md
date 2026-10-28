@@ -1258,6 +1258,7 @@ Performer display settings use the shared Popover panel-style interface for a bo
 - **Destructive intent:** use `intent="danger"` only for irreversible deletion or an explicitly confirmed loss. Keep it orthogonal to Accent／Secondary／Ghost hierarchy; do not add a parallel `danger` variant or infer danger from a label containing「清除」、「停止」or「取消」.
 - **Action confirmation scope:** immediate persisted cover／photo removal and playlist membership loss use the existing confirmation owner; artwork draft removal remains neutral until the editor's Save. Automatically saved annotation merges require confirmation when they remove boundaries／roles. BGM Emergency Cut retains its explicitly defined danger emphasis and immediate response. Cross-feature decisions and stale-target guards are documented in the [action intent contract](docs/contracts/action-intent-and-confirmation.md).
 - **Focus:** the shared [Focus Ring](#focus-ring).
+- **Grouping gap:** adjacent icon-only actions use `--ui-space-1`, text-button groups `--ui-space-2`, and rows mixing fields with actions follow the `--ui-space-3` form gap.
 - **Touch baseline:** desktop buttons can be compact, but touch-responsive surfaces should preserve at least `44pt` iOS / `48dp` Android target guidance.
 
 ### Inputs / Fields

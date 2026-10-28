@@ -100,7 +100,7 @@ defineEmits(['undo', 'save', 'cancel']);
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--ui-space-1);
+  gap: var(--ui-space-2);
 }
 
 .lyrics-timing__error {

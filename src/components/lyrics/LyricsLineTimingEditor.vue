@@ -161,7 +161,7 @@ function record(which) {
 .lyrics-line-timing__actions {
   display: flex;
   align-items: center;
-  gap: var(--ui-space-1);
+  gap: var(--ui-space-2);
   flex-wrap: wrap;
 }
 @container (max-width: 27rem) {

@@ -261,7 +261,7 @@ describe('shared UI component token contract', () => {
       'var(--ui-track-artwork-size-standard)',
     );
     expect(values.get('--ui-player-leading-padding-inline')).toContain(
-      'var(--ui-shell-leading-artwork-centerline) - 1.5rem',
+      'var(--ui-shell-leading-artwork-centerline) - var(--ui-artwork-size-sm) / 2',
     );
     expect(values.has('--ui-inspector-width')).toBe(false);
     expect(values.has('--ui-inspector-rail-width')).toBe(false);

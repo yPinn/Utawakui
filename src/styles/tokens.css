@@ -225,7 +225,7 @@
   --ui-sidebar-row-padding-inline: calc(
     var(--ui-sidebar-artwork-centerline) -
       var(--ui-playlist-sidebar-padding-inline) - var(--ui-border-width) -
-      1.25rem
+      var(--ui-sidebar-artwork-size) / 2
   );
   --ui-sidebar-row-compact-hit-size: var(--ui-sidebar-row-min-height);
   --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);
@@ -258,7 +258,7 @@
   --ui-player-padding-block-end: var(--ui-shell-content-inset-block);
   --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
   --ui-player-leading-padding-inline: calc(
-    var(--ui-shell-leading-artwork-centerline) - 1.5rem
+    var(--ui-shell-leading-artwork-centerline) - var(--ui-artwork-size-sm) / 2
   );
   --ui-player-track-inline-size: 15rem;
   --ui-player-track-min-inline-size: 11rem;
