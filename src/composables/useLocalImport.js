@@ -62,6 +62,16 @@ const skippedResults = computed(() =>
   })),
 );
 
+// The open import tab already shows the review with its convert action.
+function importTabVisible() {
+  const dock = useAppRightDock();
+  return (
+    dock.isExpanded.value &&
+    dock.topSurface.value === RIGHT_DOCK_SURFACE_PREPARATION &&
+    dock.preparationTab.value === 'import'
+  );
+}
+
 function notifyResult(conversion = false) {
   if (state.statusType === 'pending' && !state.conversionReview) return;
   if (
@@ -71,6 +81,16 @@ function notifyResult(conversion = false) {
     state.statusType !== 'error'
   )
     return;
+  if (
+    !conversion &&
+    state.conversionReview &&
+    !state.imported.length &&
+    !state.skipped.length &&
+    importTabVisible()
+  ) {
+    notifications.clear(RESULT_KEY);
+    return;
+  }
   const error = state.statusType === 'error';
   const needsAttention =
     state.skipped.some((item) => item.reason !== 'duplicate-content') ||

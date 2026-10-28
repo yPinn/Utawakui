@@ -80,6 +80,37 @@ describe('useLocalImport', () => {
     expect(owner.state.isConverting).toBe(false);
   });
 
+  it('leaves a conversion-only review to the visible import tab', async () => {
+    const review = {
+      imported: [],
+      skipped: [],
+      conversionReview: {
+        sessionId: '11111111-1111-4111-8111-111111111111',
+        files: [{ filename: 'a.wma', sourceFormat: 'wma' }],
+      },
+    };
+    importLocalAudioFilesMock.mockResolvedValueOnce(review);
+    const owner = await loadLocalImport();
+    const { useAppRightDock } = await import('./useAppRightDock.js');
+    const dock = useAppRightDock();
+    dock.selectPreparationTab('import');
+    dock.showSurface('preparation');
+    await owner.importFiles();
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    expect(owner.state.conversionReview).toBeTruthy();
+    expect(useAppNotifications().items.value).toHaveLength(0);
+
+    dock.hideSurface('preparation');
+    importLocalAudioFilesMock.mockResolvedValueOnce({
+      ...review,
+      imported: [{ id: 'song-a', title: 'A' }],
+    });
+    await owner.importFiles();
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '需要相容轉檔',
+    });
+  });
+
   it('summarizes duplicate-only batches as information and retains readable skip reasons', async () => {
     importLocalAudioFilesMock.mockResolvedValueOnce({
       imported: [],
