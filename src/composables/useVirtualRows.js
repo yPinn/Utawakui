@@ -80,7 +80,10 @@ export function useVirtualRows({
       : (globalThis.innerHeight ?? 0);
     const row = list.querySelector?.(':scope > [data-virtual-row]');
     const height = row?.getBoundingClientRect().height ?? 0;
-    if (height > 0) measuredRowHeight.value = height;
+    // Row pitch includes the list's flex gap, so spacers match real layout.
+    const gap =
+      Number.parseFloat(globalThis.getComputedStyle?.(list).rowGap) || 0;
+    if (height > 0) measuredRowHeight.value = height + gap;
   }
 
   function schedule() {
@@ -139,4 +142,91 @@ export function useVirtualRows({
   );
 
   return { segments, rowHeight, remeasure: schedule };
+}
+
+// List-level wrapper shared by windowed lists: picks rows by key, tracks the
+// focused row so it stays mounted, and returns per-row and list bindings.
+export function useVirtualList({
+  listRef,
+  items,
+  keyOf,
+  threshold,
+  pinnedKeys = () => [],
+  estimateRowHeight,
+  overscan,
+}) {
+  const focusedKey = shallowRef('');
+  const virtualized = computed(() => {
+    const limit = threshold();
+    return limit > 0 && items().length > limit;
+  });
+  const indexByKey = computed(() =>
+    virtualized.value
+      ? new Map(items().map((item, index) => [keyOf(item), index]))
+      : new Map(),
+  );
+  const { segments } = useVirtualRows({
+    listRef,
+    count: () => items().length,
+    enabled: () => virtualized.value,
+    pinnedIndexes: () =>
+      [focusedKey.value, ...pinnedKeys()].map((key) =>
+        indexByKey.value.get(key),
+      ),
+    estimateRowHeight,
+    overscan,
+  });
+
+  // Skipped rows become the next row's top margin and the tail becomes list
+  // padding, so the list keeps one flat v-for and its full scroll height.
+  const rows = computed(() => {
+    const list = items();
+    if (!segments.value) {
+      return list.map((item, index) => ({ key: keyOf(item), item, index }));
+    }
+    const rendered = [];
+    let gap = 0;
+    for (const segment of segments.value) {
+      if (segment.kind === 'spacer') {
+        gap += segment.height;
+        continue;
+      }
+      const item = list[segment.index];
+      rendered.push({ key: keyOf(item), item, index: segment.index, gap });
+      gap = 0;
+    }
+    rendered.tailGap = gap;
+    return rendered;
+  });
+
+  function rowAttrs({ key, index, gap }) {
+    if (!virtualized.value) return {};
+    return {
+      style: gap ? { marginBlockStart: `${gap}px` } : undefined,
+      'data-virtual-row': '',
+      'data-virtual-key': key,
+      'aria-setsize': items().length,
+      'aria-posinset': index + 1,
+    };
+  }
+
+  const listStyle = computed(() =>
+    rows.value.tailGap
+      ? { paddingBlockEnd: `${rows.value.tailGap}px` }
+      : undefined,
+  );
+
+  const listListeners = {
+    focusin(event) {
+      if (!virtualized.value) return;
+      focusedKey.value =
+        event.target?.closest?.('[data-virtual-key]')?.dataset.virtualKey ?? '';
+    },
+    focusout(event) {
+      if (!virtualized.value) return;
+      if (!listRef.value?.contains(event.relatedTarget)) focusedKey.value = '';
+    },
+  };
+
+  return { virtualized, rows, rowAttrs, listStyle, listListeners };
 }

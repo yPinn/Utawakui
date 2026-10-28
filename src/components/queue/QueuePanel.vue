@@ -75,6 +75,8 @@ const selectedTrackId = shallowRef(null);
 const selectedRecentEntryKey = shallowRef(null);
 const trackMenu = shallowRef(null);
 const dockPanel = useTemplateRef('dockPanel');
+// Queue rows cost about 1 ms each, so long sections window early.
+const QUEUE_VIRTUALIZE_ABOVE = 100;
 
 const currentTracks = computed(() =>
   currentTrack.value ? [currentTrack.value] : [],
@@ -389,6 +391,7 @@ const {
           title="佇列中下一首"
           menu-context="queued"
           :tracks="queuedTracks"
+          :virtualize-above="QUEUE_VIRTUALIZE_ABOVE"
           :selected-track-id="selectedTrackId"
           :open-menu-key="openTrackMenuKey"
           :playing-track-id="playerState.track?.id ?? null"
@@ -420,6 +423,7 @@ const {
           :title="upcomingSourceLabel"
           menu-context="source"
           :tracks="sourceUpcomingTracks"
+          :virtualize-above="QUEUE_VIRTUALIZE_ABOVE"
           :selected-track-id="selectedTrackId"
           :open-menu-key="openTrackMenuKey"
           :playing-track-id="playerState.track?.id ?? null"

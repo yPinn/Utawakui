@@ -9,6 +9,7 @@ import {
   Music2,
 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { useVirtualList } from '../../composables/useVirtualRows.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -71,6 +72,22 @@ const visibleTracks = computed(() => {
         .includes(needle),
     ),
   );
+});
+
+const trackList = shallowRef(null);
+const {
+  rows: trackRows,
+  rowAttrs,
+  listStyle,
+  listListeners,
+} = useVirtualList({
+  listRef: trackList,
+  items: () => visibleTracks.value,
+  keyOf: (track) => track.id,
+  // Picker rows cost about 1 ms each; an unfiltered library would block opening.
+  threshold: () => 100,
+  // First-frame guess (3.25rem row + gap); replaced once one renders.
+  estimateRowHeight: () => 56,
 });
 
 const selectedScopeLabel = computed(
@@ -150,38 +167,45 @@ function handleTrackSelect(track) {
         v-else
         class="lyrics-track-picker__list"
         axis="both"
-        viewport-tag="ul"
         viewport-class="lyrics-track-picker__list-viewport"
       >
-        <TrackIdentityRow
-          v-for="track in visibleTracks"
-          :key="track.id"
-          :track="track"
-          :active="track.id === state.selectedTrackId"
-          :current="track.id === currentTrackId"
-          interactive
-          :action-label="`選取 ${track.title}`"
-          hide-duration
-          navigation="album"
-          @row-click="handleTrackSelect(track)"
-          @navigate="emit('close')"
+        <ul
+          ref="trackList"
+          class="lyrics-track-picker__rows"
+          :style="listStyle"
+          v-on="listListeners"
         >
-          <template #trail>
-            <div class="lyrics-track-picker__row-status">
-              <UiStatusIcon
-                v-if="track.id === state.selectedTrackId"
-                :icon="Check"
-                tone="accent"
-                label="已選取"
-              />
-              <UiStatusIcon
-                :icon="Captions"
-                :tone="lyricsStatusIconTone(track)"
-                :label="lyricsStatusLabel(track)"
-              />
-            </div>
-          </template>
-        </TrackIdentityRow>
+          <TrackIdentityRow
+            v-for="{ key, item: track, index, gap } in trackRows"
+            :key="key"
+            v-bind="rowAttrs({ key, index, gap })"
+            :track="track"
+            :active="track.id === state.selectedTrackId"
+            :current="track.id === currentTrackId"
+            interactive
+            :action-label="`選取 ${track.title}`"
+            hide-duration
+            navigation="album"
+            @row-click="handleTrackSelect(track)"
+            @navigate="emit('close')"
+          >
+            <template #trail>
+              <div class="lyrics-track-picker__row-status">
+                <UiStatusIcon
+                  v-if="track.id === state.selectedTrackId"
+                  :icon="Check"
+                  tone="accent"
+                  label="已選取"
+                />
+                <UiStatusIcon
+                  :icon="Captions"
+                  :tone="lyricsStatusIconTone(track)"
+                  :label="lyricsStatusLabel(track)"
+                />
+              </div>
+            </template>
+          </TrackIdentityRow>
+        </ul>
       </UiScrollRegion>
     </div>
   </UiModal>
@@ -216,6 +240,9 @@ function handleTrackSelect(track) {
 .lyrics-track-picker__list :deep(.lyrics-track-picker__list-viewport) {
   block-size: auto;
   max-block-size: inherit;
+}
+
+.lyrics-track-picker__rows {
   display: grid;
   gap: var(--ui-space-1);
   margin: 0;

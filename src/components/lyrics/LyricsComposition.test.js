@@ -67,6 +67,15 @@ describe('lyrics contextual compositions', () => {
     expect(source).not.toContain("label: '本機曲目'");
   });
 
+  it('windows long track picker lists inside the scroll region', () => {
+    const source = readComponent('./LyricsTrackPickerModal.vue');
+
+    expect(source).toContain('useVirtualList({');
+    expect(source).toContain('threshold: () => 100,');
+    expect(source).toContain('ref="trackList"');
+    expect(source).toContain('v-bind="rowAttrs({ key, index, gap })"');
+  });
+
   it('uses the shared identity-navigation row recipe in the track picker', () => {
     const source = readComponent('./LyricsTrackPickerModal.vue');
 

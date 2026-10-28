@@ -1,4 +1,6 @@
 <script setup>
+import { shallowRef } from 'vue';
+import { useVirtualList } from '../../composables/useVirtualRows.js';
 import UiHint from '../ui/UiHint.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
@@ -32,6 +34,8 @@ const props = defineProps({
   titleLinkAriaLabel: { type: String, default: '' },
   menuContext: { type: String, required: true },
   openMenuKey: { type: String, default: '' },
+  // Window rows once the section is longer than this; 0 renders every row.
+  virtualizeAbove: { type: Number, default: 0 },
 });
 
 const emit = defineEmits([
@@ -47,6 +51,24 @@ const emit = defineEmits([
   'trackDragEnd',
   'openTrackMenu',
 ]);
+
+const list = shallowRef(null);
+const { rows, rowAttrs, listStyle, listListeners } = useVirtualList({
+  listRef: list,
+  items: () => props.tracks,
+  keyOf: (track) => track.id,
+  threshold: () => props.virtualizeAbove,
+  // Dragged rows and the row anchoring an open menu stay mounted.
+  pinnedKeys: () =>
+    [
+      props.draggingTrackId,
+      props.openMenuKey.startsWith(`${props.menuContext}:`)
+        ? props.openMenuKey.slice(props.menuContext.length + 1)
+        : '',
+    ].filter(Boolean),
+  // First-frame guess (3.25rem row + gap); replaced once one renders.
+  estimateRowHeight: () => 56,
+});
 
 function openTrackMenu(track, payload) {
   emit('openTrackMenu', {
@@ -91,10 +113,17 @@ function openTrackMenu(track, payload) {
     <UiHint v-if="tracks.length === 0 && emptyText">
       {{ emptyText }}
     </UiHint>
-    <ul v-else class="queue-section__list">
+    <ul
+      v-else
+      ref="list"
+      class="queue-section__list"
+      :style="listStyle"
+      v-on="listListeners"
+    >
       <QueueTrackButton
-        v-for="track in tracks"
-        :key="track.id"
+        v-for="{ key, item: track, index, gap } in rows"
+        :key="key"
+        v-bind="rowAttrs({ key, index, gap })"
         class="queue-section__item"
         :class="{
           'queue-section__item--draggable': draggableItems,

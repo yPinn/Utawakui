@@ -504,3 +504,25 @@ describe('QueuePanel shared Dock content', () => {
     expect(sectionCss).not.toMatch(/contain-intrinsic-(?:block-)?size:/u);
   });
 });
+
+describe('QueuePanel long sections', () => {
+  it('windows the user queue and source upcoming rows past one threshold', () => {
+    expect(source).toContain('const QUEUE_VIRTUALIZE_ABOVE = 100;');
+    for (const tracks of ['queuedTracks', 'sourceUpcomingTracks']) {
+      expect(source).toMatch(
+        new RegExp(
+          String.raw`:tracks="${tracks}"\s+:virtualize-above="QUEUE_VIRTUALIZE_ABOVE"`,
+          'u',
+        ),
+      );
+    }
+    expect(source).not.toMatch(/:tracks="currentTracks"\s+:virtualize-above/u);
+  });
+
+  it('keeps dragged rows and the open-menu row mounted while windowed', () => {
+    expect(sectionSource).toContain('useVirtualList({');
+    expect(sectionSource).toContain('props.draggingTrackId,');
+    expect(sectionSource).toMatch(/props\.openMenuKey\.startsWith\(/u);
+    expect(sectionSource).toContain('v-bind="rowAttrs({ key, index, gap })"');
+  });
+});

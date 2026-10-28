@@ -1050,7 +1050,7 @@ describe('TrackTable virtualization', () => {
     expect(rows.every((row) => row.props['aria-setsize'] === undefined)).toBe(
       true,
     );
-    expect(tableBody(view.root).props.style).toBeUndefined();
+    expect(tableBody(view.root).props.style?.paddingBlockEnd).toBeUndefined();
   });
 
   it('windows long lists and pads the list to its full height', () => {

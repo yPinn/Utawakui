@@ -1,6 +1,10 @@
 import { effectScope, nextTick, shallowRef } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { computeVirtualSegments, useVirtualRows } from './useVirtualRows.js';
+import {
+  computeVirtualSegments,
+  useVirtualList,
+  useVirtualRows,
+} from './useVirtualRows.js';
 
 const base = {
   count: 1000,
@@ -190,6 +194,16 @@ describe('useVirtualRows', () => {
     scope.stop();
   });
 
+  it('adds the list row gap to the measured pitch', async () => {
+    stubFrames();
+    vi.stubGlobal('getComputedStyle', () => ({ rowGap: '4px' }));
+    const { rowHeight, scope } = setup({ dom: fakeDom({ rowHeight: 50 }) });
+    await nextTick();
+
+    expect(rowHeight.value).toBe(54);
+    scope.stop();
+  });
+
   it('uses the estimate until a row can be measured', async () => {
     stubFrames();
     const { rowHeight, scope } = setup({ dom: fakeDom({}) });
@@ -242,5 +256,83 @@ describe('useVirtualRows', () => {
       expect.any(Function),
     );
     expect(frames.observers[0].disconnect).toHaveBeenCalled();
+  });
+});
+
+describe('useVirtualList', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const items = Array.from({ length: 30 }, (_, index) => ({ id: `t${index}` }));
+
+  function setupList({ threshold = 10, pinned = () => [] } = {}) {
+    stubFrames();
+    const dom = fakeDom({ rowHeight: 20 });
+    dom.list.contains = vi.fn(() => false);
+    const listRef = shallowRef(null);
+    const scope = effectScope();
+    const list = scope.run(() =>
+      useVirtualList({
+        listRef,
+        items: () => items,
+        keyOf: (item) => item.id,
+        threshold: () => threshold,
+        pinnedKeys: pinned,
+        estimateRowHeight: () => 20,
+        overscan: 2,
+      }),
+    );
+    listRef.value = dom.list;
+    return { ...list, scope };
+  }
+
+  it('renders plain rows without bindings up to the threshold', async () => {
+    const list = setupList({ threshold: 30 });
+    await nextTick();
+
+    expect(list.virtualized.value).toBe(false);
+    expect(list.rows.value).toHaveLength(30);
+    expect(list.rowAttrs(list.rows.value[0])).toEqual({});
+    expect(list.listStyle.value).toBeUndefined();
+    list.scope.stop();
+  });
+
+  it('turns skipped rows into margins and the tail into list padding', async () => {
+    const list = setupList({ pinned: () => ['t20'] });
+    await nextTick();
+    const rows = list.rows.value;
+
+    // 500px viewport ÷ 20px rows + 2 overscan, plus the pinned t20.
+    expect(rows.map((row) => row.key)).toEqual([
+      ...items.slice(0, 27).map((item) => item.id),
+    ]);
+    expect(list.listStyle.value).toEqual({ paddingBlockEnd: `${3 * 20}px` });
+    expect(list.rowAttrs(rows[1])).toMatchObject({
+      'data-virtual-row': '',
+      'data-virtual-key': 't1',
+      'aria-setsize': 30,
+      'aria-posinset': 2,
+    });
+    list.scope.stop();
+  });
+
+  it('keeps pinned and focused rows mounted in place', async () => {
+    const list = setupList({ pinned: () => ['t29'] });
+    await nextTick();
+    let rows = list.rows.value;
+    expect(rows.at(-1)).toMatchObject({ key: 't29', gap: 2 * 20 });
+
+    list.scope.stop();
+    const focused = setupList();
+    await nextTick();
+    focused.listListeners.focusin({
+      target: { closest: () => ({ dataset: { virtualKey: 't28' } }) },
+    });
+    rows = focused.rows.value;
+    expect(rows.at(-1)).toMatchObject({ key: 't28', gap: 1 * 20 });
+    expect(focused.listStyle.value).toEqual({ paddingBlockEnd: '20px' });
+
+    focused.listListeners.focusout({ relatedTarget: null });
+    expect(focused.rows.value.at(-1).key).toBe('t26');
+    focused.scope.stop();
   });
 });
