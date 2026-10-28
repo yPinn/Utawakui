@@ -89,7 +89,7 @@ export function useLyricsTimingReview({
         review.error = report(
           error,
           'review-load',
-          '無法讀取確認狀態，請重試。',
+          '無法讀取確認狀態，請再試一次。',
         );
       }
     } finally {
@@ -139,7 +139,7 @@ export function useLyricsTimingReview({
         if (current())
           review.error = review.timingSaved
             ? '時間已儲存；同步調整未儲存，處理後再確認。'
-            : '同步調整未儲存，請重試後再確認。';
+            : '同步調整未儲存，請重新儲存後再確認。';
         return false;
       }
       if (!current()) return false;
@@ -188,8 +188,8 @@ export function useLyricsTimingReview({
           error,
           `review-${kind}`,
           review.timingSaved
-            ? '時間已儲存；確認未完成，請重試確認。'
-            : '確認操作未完成，請重試。',
+            ? '時間已儲存；確認未完成，請再確認一次。'
+            : '確認操作未完成，請再試一次。',
         );
       }
       return false;
