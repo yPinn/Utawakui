@@ -376,7 +376,7 @@ describe('DemoCollageThumbAppearance', () => {
     expect(inspectorSource).not.toContain('UiCollageThumb');
     expect(inspectorSource).not.toContain('COLLECTION_COVER_SIZE');
     expect(artistPreviewSource).toContain('UiCollageThumb');
-    expect(artistPreviewSource).toContain(':size="64"');
+    expect(artistPreviewSource).toContain(':size="ARTWORK_SIZE.md"');
     expect(inspectorSource).not.toContain('useStudioLibraryInspectorWidth');
     expect(inspectorSource).not.toContain('UiTrackRow');
     expect(queuePreviewSource).toContain('QueueTrackButton');

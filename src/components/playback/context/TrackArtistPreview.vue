@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { ARTWORK_SIZE } from '../../../constants/ui.js';
 import { UserRound } from '../../../icons/index.js';
 import AppRightDockSection from '../../layout/AppRightDockSection.vue';
 import UiButton from '../../ui/UiButton.vue';
@@ -34,7 +35,7 @@ const summaryText = computed(() => {
         :cover-url="summary.photoUrl"
         :tracks="[]"
         :can-collage="false"
-        :size="64"
+        :size="ARTWORK_SIZE.md"
         radius="var(--ui-radius-pill)"
         :empty-icon="UserRound"
       />

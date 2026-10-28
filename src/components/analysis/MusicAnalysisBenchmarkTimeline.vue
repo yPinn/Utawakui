@@ -171,7 +171,7 @@ function seekTo(section) {
 .benchmark-timeline__segment {
   position: absolute;
   inset-block: 0;
-  min-width: 2px;
+  min-width: var(--ui-border-width-strong);
   overflow: hidden;
   padding: 0 var(--ui-space-1);
   border: 0;
@@ -247,9 +247,9 @@ function seekTo(section) {
   position: absolute;
   z-index: var(--ui-layer-overlay);
   inset-block: 0;
-  width: 2px;
+  width: var(--ui-border-width-strong);
   background: var(--ui-color-text);
-  box-shadow: 0 0 0 1px
+  box-shadow: 0 0 0 var(--ui-border-width)
     color-mix(in srgb, var(--ui-color-surface) 55%, transparent);
   pointer-events: none;
 }

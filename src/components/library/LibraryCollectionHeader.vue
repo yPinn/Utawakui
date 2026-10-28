@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { FOLDER_DOSSIER_GLYPH_SIZE } from '../../constants/ui.js';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import {
   ICON_SIZE,
@@ -70,9 +71,6 @@ const emit = defineEmits([
   'update:searchQuery',
   'updateDensity',
 ]);
-
-// Matches UiCollageThumb's empty glyph at 136px (size / 2.5).
-const EMPTY_PHOTO_GLYPH_SIZE = 54;
 
 // The empty avatar has no visible text, so it names itself on hover／focus.
 const {
@@ -192,7 +190,7 @@ function handleMenuAction(value) {
             </template>
             <UserRoundPlus
               v-else
-              :size="EMPTY_PHOTO_GLYPH_SIZE"
+              :size="FOLDER_DOSSIER_GLYPH_SIZE"
               class="library-collection-header__photo-icon"
               aria-hidden="true"
             />

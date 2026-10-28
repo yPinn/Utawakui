@@ -16,3 +16,5 @@ export const ARTWORK_SIZE = Object.freeze({
 export const PLAYLIST_ROW_THUMB_SIZE = ARTWORK_SIZE.xs;
 export const PLAYER_BAR_ARTWORK_SIZE = ARTWORK_SIZE.sm;
 export const FOLDER_DOSSIER_ARTWORK_SIZE = ARTWORK_SIZE.xl;
+// Dossier placeholder glyph; matches UiCollageThumb's empty glyph (size / 2.5).
+export const FOLDER_DOSSIER_GLYPH_SIZE = 54;

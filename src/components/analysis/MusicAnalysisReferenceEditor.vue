@@ -415,14 +415,14 @@ onUnmounted(() => {
 }
 
 .reference-editor__beat--downbeat {
-  width: 2px;
+  width: var(--ui-border-width-strong);
   background: color-mix(in srgb, var(--ui-color-current) 72%, transparent);
 }
 
 .reference-editor__segment {
   position: relative;
   z-index: var(--ui-layer-raised);
-  min-width: 1px;
+  min-width: var(--ui-border-width);
   overflow: hidden;
   border: 0;
   border-inline-end: var(--ui-border-width) solid var(--ui-color-surface);

@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
-import { FOLDER_DOSSIER_ARTWORK_SIZE } from '../../constants/ui.js';
+import {
+  FOLDER_DOSSIER_ARTWORK_SIZE,
+  FOLDER_DOSSIER_GLYPH_SIZE,
+} from '../../constants/ui.js';
 import { FolderOpen, Library, UserRound } from '../../icons/index.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import AppFolderDossier from '../layout/AppFolderDossier.vue';
@@ -75,7 +78,11 @@ const summaryFields = computed(() =>
   >
     <template #artwork>
       <span v-if="isLibrary" class="library-entity-dossier__icon">
-        <component :is="libraryIcon" :size="56" aria-hidden="true" />
+        <component
+          :is="libraryIcon"
+          :size="FOLDER_DOSSIER_GLYPH_SIZE"
+          aria-hidden="true"
+        />
       </span>
       <!-- The bordered frame is the single radius clip, so the thumb and its
            overlay plane composite inside it without their own radius.

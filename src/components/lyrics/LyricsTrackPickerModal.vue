@@ -234,7 +234,7 @@ function handleTrackSelect(track) {
 }
 
 .lyrics-track-picker__list {
-  max-height: min(52vh, 520px);
+  max-height: min(52vh, 32.5rem);
 }
 
 .lyrics-track-picker__list :deep(.lyrics-track-picker__list-viewport) {
