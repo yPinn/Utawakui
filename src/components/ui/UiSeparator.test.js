@@ -65,6 +65,9 @@ describe('UiSeparator', () => {
     expect(source).toMatch(
       /\.ui-separator--accent\s*\{[^}]*background:\s*var\(--ui-color-accent\);/su,
     );
+    expect(source).toMatch(
+      /\.ui-separator--horizontal\.ui-separator--accent\s*\{[^}]*block-size:\s*var\(--ui-border-width-strong\);/su,
+    );
     expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(|hsla?\(/iu);
     expect(source).not.toMatch(/margin(?:-\w+)?:/u);
     expect(source).not.toContain('@click');

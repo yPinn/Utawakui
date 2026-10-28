@@ -474,7 +474,7 @@ progress midpoint remains the viewport midpoint in both densities. At the
 Volume controls, while the DOM and keyboard order remain track, playback, tools.
 
 Pending accompaniment rows reuse Queue's list interaction grammar: the whole
-row is draggable, an Accent `UiSeparator` marks the before／after destination,
+row is draggable, an Accent `UiSeparator` (the shared 2px insert line) marks the before／after destination,
 and Ellipsis plus pointer context-menu open the same concise action menu. The
 menu trigger is excluded from drag start. This reuse does not import Queue's
 selection, double-click playback, or artwork-control semantics.

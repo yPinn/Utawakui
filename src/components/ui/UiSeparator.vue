@@ -43,7 +43,16 @@ defineProps({
   block-size: auto;
 }
 
+/* Accent marks an insertion point, so it uses the emphasis stroke. */
 .ui-separator--accent {
   background: var(--ui-color-accent);
+}
+
+.ui-separator--horizontal.ui-separator--accent {
+  block-size: var(--ui-border-width-strong);
+}
+
+.ui-separator--vertical.ui-separator--accent {
+  inline-size: var(--ui-border-width-strong);
 }
 </style>
