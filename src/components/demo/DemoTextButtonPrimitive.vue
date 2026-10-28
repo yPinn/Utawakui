@@ -402,7 +402,7 @@ const COVERAGE = {
 .demo-text-button-state[data-text-button-state='focus'] :deep(button) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-focus-radius);
 }
 
 .demo-text-button-coverage {

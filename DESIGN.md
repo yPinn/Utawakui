@@ -430,28 +430,18 @@ Utawakui should split shape language by job:
 
 Radius decisions:
 
-| Target                                        | Radius          | Reference | Reason                                              |
-| --------------------------------------------- | --------------- | --------- | --------------------------------------------------- |
-| Hairlines, progress tracks／fills             | `0.125rem`      | Spotify   | Keeps thin interactive marks crisp.                 |
-| Dense thumbnails, artwork, checkbox indicator | `0.25rem`       | Spotify   | Keeps compact inner objects precise.                |
-| Rows, buttons, inputs, focus rings            | `0.375rem`      | Shared    | Default operational radius: friendly, not pillowy.  |
-| Modals, popovers, menus, major panels         | `0.5rem`        | macOS     | Softens system surfaces without card-heavy styling. |
-| Chips, transport toggles                      | `999rem`        | Spotify   | Pills are reserved for binary and status controls.  |
-| App icon                                      | platform-native | macOS     | Follows OS icon masks, not component radii.         |
+| Scale              | Value      | Targets                                                                        | Role tokens                                                                         |
+| ------------------ | ---------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `--ui-radius-xs`   | `0.125rem` | Hairlines, progress tracks／fills, Folder document sheets                      | —                                                                                   |
+| `--ui-radius-sm`   | `0.25rem`  | Thumbnails, artwork, checkbox indicator; rows nested in a padded container     | `--ui-track-thumb-radius`, `--ui-side-panel-row-radius`, `--ui-floating-row-radius` |
+| `--ui-radius-md`   | `0.375rem` | Buttons, inputs, standalone rows, focus rings on borderless targets            | `--ui-field-radius`, `--ui-focus-radius`                                            |
+| `--ui-radius-lg`   | `0.5rem`   | Shell panels, modals, popovers, menus, workbench frames                        | `--ui-shell-panel-radius`, `--ui-floating-list-radius`                              |
+| `--ui-radius-pill` | `999rem`   | Chips, switches, transport toggles, status dots and every circle (never `50%`) | `--ui-scrollbar-radius`                                                             |
 
-The Folder exterior perimeter／cover rail, the Sidebar, the Right Dock and other
-major panels share the `0.5rem` large-surface radius. The nested neutral
-Folder document may keep its smaller sheet radius; it must not change the visible
-four-corner contract of the colored exterior.
-
-Rows nested inside a padded container step down to `0.25rem` so their corners
-stay concentric: menu／listbox items and side-panel rows use the small radius.
-Circles use the pill token, not `50%`.
-
-Do not increase general UI cards beyond `0.5rem` (8 CSS px at the default root). If a
-surface wants more softness, use tone, spacing, or artwork rather than larger
-radius. The app icon and overlay graphics may use larger rounded silhouettes
-because they are brand／art surfaces, not control-panel components.
+- Use a role token when one exists; consume the scale directly only for a single local decision.
+- The Sidebar, Folder perimeter／cover rail and Right Dock are one shell family. The Right Dock reaches the same role through `UiSurface radius="lg"`.
+- Rows nested inside a padded container step down one scale so corners stay concentric. The nested Folder document keeps its smaller sheet radius without changing the colored exterior's four corners.
+- `0.5rem` is the ceiling for control-panel surfaces; seek softness through tone, spacing or artwork. The app icon follows platform masks, and overlay graphics may use larger brand silhouettes.
 
 Density decisions:
 

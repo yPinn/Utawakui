@@ -145,7 +145,7 @@ function isCurrent(index) {
 .ui-breadcrumb__link:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-focus-radius);
   color: var(--ui-color-text);
   text-decoration: underline;
 }

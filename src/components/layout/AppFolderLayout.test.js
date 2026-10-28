@@ -140,10 +140,10 @@ describe('AppFolderLayout', () => {
 
   it('uses the shared large-surface radius for every visible exterior corner', () => {
     expect(source).toMatch(
-      /\.app-folder-layout__navigation::after\s*\{[^}]*border-radius:\s*var\(--ui-radius-lg\) var\(--ui-radius-lg\) 0 0;/su,
+      /\.app-folder-layout__navigation::after\s*\{[^}]*border-radius:\s*var\(--ui-shell-panel-radius\) var\(--ui-shell-panel-radius\) 0 0;/su,
     );
     expect(source).toMatch(
-      /\.app-folder-layout__perimeter\s*\{[^}]*border-radius:\s*var\(--ui-radius-lg\);/su,
+      /\.app-folder-layout__perimeter\s*\{[^}]*border-radius:\s*var\(--ui-shell-panel-radius\);/su,
     );
     expect(source).not.toContain(
       'border-radius: 0 var(--ui-radius-sm) var(--ui-radius-sm);',

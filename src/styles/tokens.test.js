@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(551);
+    expect(uniqueNames.size).toBe(553);
     expect(uniqueNames).toContain('--ui-shell-workspace-min-inline-size');
     expect(uniqueNames).toContain('--ui-shell-layout-recovery-inline-size');
     expect(uniqueNames).toContain('--ui-shell-dock-inline-size');

@@ -191,6 +191,32 @@ describe('shared UI component token contract', () => {
     ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
   });
 
+  it('gives every shell panel and borderless focus ring one radius role', () => {
+    const values = declarations(tokens);
+
+    expect(values.get('--ui-shell-panel-radius')).toBe('var(--ui-radius-lg)');
+    expect(values.get('--ui-focus-radius')).toBe('var(--ui-radius-md)');
+    const layoutSource = (filename) =>
+      fs.readFileSync(
+        path.join(dirname, '..', 'components', 'layout', filename),
+        'utf8',
+      );
+    for (const file of ['AppPlaylistSidebar.vue', 'AppFolderLayout.vue']) {
+      expect(layoutSource(file)).toContain(
+        'border-radius: var(--ui-shell-panel-radius);',
+      );
+    }
+    // UiSurface owns the Right Dock frame; its prop must name the same role.
+    expect(layoutSource('AppRightDock.vue')).toMatch(
+      /<UiSurface[\s\S]*?radius="lg"/u,
+    );
+    for (const file of ['UiTextButton.vue', 'UiBreadcrumb.vue']) {
+      expect(componentSource(file)).toContain(
+        'border-radius: var(--ui-focus-radius);',
+      );
+    }
+  });
+
   it('keeps the Sidebar plate edge inset identical across expanded and compact', () => {
     const values = declarations(tokens);
 

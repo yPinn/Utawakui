@@ -191,6 +191,8 @@
   --ui-shell-leading-artwork-centerline: calc(
     var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
   );
+  /* Sidebar, Folder perimeter and Right Dock frames. */
+  --ui-shell-panel-radius: var(--ui-radius-lg);
   --ui-shell-navigation-inline-size: 4rem;
   --ui-shell-navigation-inline-size-min: 4rem;
   --ui-shell-navigation-inline-size-max: 16rem;
@@ -627,6 +629,8 @@
   --ui-opacity-dragging: 0.45;
   --ui-focus-offset: 2px;
   --ui-focus-offset-inset: -2px;
+  /* Rings drawn on borderless text targets. */
+  --ui-focus-radius: var(--ui-radius-md);
 
   /* Component aliases exist only where the component owns a real contract. */
   --ui-field-height: var(--ui-control-height);

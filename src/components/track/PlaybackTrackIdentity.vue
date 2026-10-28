@@ -134,7 +134,7 @@ function jumpToCurrentTrackAlbum() {
 .playback-track-title-button:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-focus-radius);
 }
 
 .playback-track-title-marquee {

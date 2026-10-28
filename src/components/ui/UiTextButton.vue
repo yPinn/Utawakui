@@ -167,6 +167,6 @@ function handleClick(event) {
 .ui-text-btn:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-focus-radius);
 }
 </style>

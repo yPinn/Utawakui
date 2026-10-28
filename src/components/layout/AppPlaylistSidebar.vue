@@ -139,7 +139,7 @@ function handleResizeKeydown(event) {
   background: var(--ui-color-surface);
   /* Shell panels (Sidebar, Folder, Right Dock) share the large radius. Safe
      alongside the container-type below — radius doesn't change the content-box size. */
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-shell-panel-radius);
   /* An inset box-shadow, not a border — this element is also the size
      container query root below, and a real border shrinks its content-box
      just enough to falsely trigger the compact-mode @container rule at the
