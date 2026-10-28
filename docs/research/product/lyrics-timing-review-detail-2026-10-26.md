@@ -91,14 +91,14 @@ waveform 綁原始媒體 revision／producer 版本／解析度，不綁歌詞�
 
 多聲道不能直接平均成相消的假靜音；固定摘要策略並標為原音訊振幅，不能稱主唱活動。粗摘要只供顯示，不作細時間吸附或正確性判定。
 
-理論例：30 分鐘、48kHz stereo Float32 單 PCM buffer 約 659MiB，未算原檔／副本／decoder；不是實測。候選粗 4,096 min／max Float32 buckets 約32KiB、細 tile 8,192 約64KiB（單摘要，另加 metadata）只是實驗前預算，未定格式／精度。
+原候選採粗摘要加細 tile；預算、分母與測量限制集中於下列實驗報告，正式 cache 格式與精度仍待接入契約固定。
 
 | Backend 候選   | 需驗證                                                                                             |
 | -------------- | -------------------------------------------------------------------------------------------------- |
 | Browser decode | codec、完整 PCM／副本峰值、長曲取消與 UI 阻塞；不能只限壓縮檔 bytes 或最終摘要。超預算明確不生成。 |
 | Main 派生      | 固定 decoder、分塊記憶體、deadline／輸出上限／真正取消；若用 FFmpeg 沿原 gate，不隱式準備。        |
 
-尚未選 backend／套件。明確開波形才啟動，同來源去重、取消停止 producer、不在啟動／掃庫全庫生成。來源 generation 提交前重驗，過期不安裝；cache 壞、codec 不支援、容量不足不拖垮原 timing editor。排程／播放負荷與容量需實測。
+2026-10-28 的[隔離預算與取消實驗](../engineering/lyrics-waveform-backend-2026-10-28.md)保留 Main 分塊 FFmpeg＋隔離 worker 作候選；Browser 完整 decode 不作長曲／硬取消主路徑。正式 backend／cache／介面仍未接入，不新增套件或 decoder 準備流程。明確開波形才啟動，同來源去重、取消停止 producer、不在啟動／掃庫全庫生成。來源 generation 提交前重驗，過期不安裝；cache 壞、codec 不支援、容量不足不拖垮原 timing editor。正式排程／共享播放負荷、封裝 decoder、真實長曲與容量仍待後續 gate。
 
 ## 待執行驗收
 

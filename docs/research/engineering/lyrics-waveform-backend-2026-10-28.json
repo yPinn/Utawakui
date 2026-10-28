@@ -1,0 +1,875 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "platform": "win32",
+  "node": "24.17.0",
+  "decoder": "ffmpeg version 9.0-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\r",
+  "limits": {
+    "durationSec": 1800,
+    "channels": 8,
+    "sampleRate": 192000,
+    "inputBytes": 1073741824,
+    "browserBudgetBytes": 268435456,
+    "mainBudgetBytes": 268435456,
+    "hostLoopMs": 50,
+    "decoderReserveBytes": 67108864,
+    "coarseBuckets": 4096,
+    "detailBuckets": 8192,
+    "summaryBytes": 65536,
+    "pcmChunkBytes": 262144,
+    "deadlineMs": 30000,
+    "cancelMs": 1000
+  },
+  "measurement": "Host RSS sampled 20ms; worker OS maxRSS; decoder OS peak working set sampled 20ms in a prestarted PowerShell observer. First/repeat reads do not flush OS cache.",
+  "main": [
+    {
+      "id": "mono",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 15,
+        "sampleRate": 16000,
+        "channels": 1,
+        "inputBytes": 480078
+      },
+      "min": -0.124969482421875,
+      "max": 0.124969482421875,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 49.62180000000001,
+      "pcmBytes": 960000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 67969024,
+      "workerPeakRssBytes": 67977216,
+      "workerLoopMaxMs": 21.676031,
+      "producerClosed": true,
+      "totalMs": 104.25900000000001,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 13086720,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 64704512,
+            "samples": 1,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 67
+      },
+      "observedPeakSumBytes": 79163392,
+      "hostPeakDeltaBytes": 1372160,
+      "hostLoopMaxMs": 23.330815,
+      "installed": 1
+    },
+    {
+      "id": "wav",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 30,
+        "sampleRate": 44100,
+        "channels": 2,
+        "inputBytes": 5292078
+      },
+      "min": -0.124969482421875,
+      "max": 0.124969482421875,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 78.5093,
+      "pcmBytes": 10584000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 76619776,
+      "workerPeakRssBytes": 76623872,
+      "workerLoopMaxMs": 16.670719,
+      "producerClosed": true,
+      "totalMs": 130.77260000000024,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 23814144,
+            "samples": 2,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 69840896,
+            "samples": 2,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 90
+      },
+      "observedPeakSumBytes": 94531584,
+      "hostPeakDeltaBytes": 876544,
+      "hostLoopMaxMs": 18.448383,
+      "installed": 1
+    },
+    {
+      "id": "mp3",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 30,
+        "sampleRate": 44100,
+        "channels": 2,
+        "inputBytes": 481114
+      },
+      "min": -0.08400162309408188,
+      "max": 0.08426441997289658,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 66.91489999999999,
+      "pcmBytes": 10584000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 74489856,
+      "workerPeakRssBytes": 74493952,
+      "workerLoopMaxMs": 22.265855,
+      "producerClosed": true,
+      "totalMs": 117.27660000000014,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 22814720,
+            "samples": 2,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 71729152,
+            "samples": 2,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 85
+      },
+      "observedPeakSumBytes": 94543872,
+      "hostPeakDeltaBytes": 0,
+      "hostLoopMaxMs": 21.168127,
+      "installed": 1
+    },
+    {
+      "id": "aac",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 30,
+        "sampleRate": 48000,
+        "channels": 2,
+        "inputBytes": 486865
+      },
+      "min": -0.09156011044979095,
+      "max": 0.0915609747171402,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 65.8061,
+      "pcmBytes": 11520000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 79069184,
+      "workerPeakRssBytes": 79073280,
+      "workerLoopMaxMs": 21.954559,
+      "producerClosed": true,
+      "totalMs": 117.59069999999974,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 23531520,
+            "samples": 2,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 75714560,
+            "samples": 2,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 85
+      },
+      "observedPeakSumBytes": 99426304,
+      "hostPeakDeltaBytes": 180224,
+      "hostLoopMaxMs": 20.430847,
+      "installed": 1
+    },
+    {
+      "id": "opus",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 30.0065,
+        "sampleRate": 48000,
+        "channels": 2,
+        "inputBytes": 447373
+      },
+      "min": -0.08912843465805054,
+      "max": 0.08910760283470154,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 70.5808,
+      "pcmBytes": 11520000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 70172672,
+      "workerPeakRssBytes": 74170368,
+      "workerLoopMaxMs": 15.032319,
+      "producerClosed": true,
+      "totalMs": 119.97990000000027,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 22913024,
+            "samples": 2,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 74022912,
+            "samples": 2,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 86
+      },
+      "observedPeakSumBytes": 97173504,
+      "hostPeakDeltaBytes": 237568,
+      "hostLoopMaxMs": 18.251775,
+      "installed": 1
+    },
+    {
+      "id": "medium",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 120,
+        "sampleRate": 48000,
+        "channels": 2,
+        "inputBytes": 2653610
+      },
+      "min": -0.124969482421875,
+      "max": 0.124969482421875,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 116.4569,
+      "pcmBytes": 46080000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 76492800,
+      "workerPeakRssBytes": 86110208,
+      "workerLoopMaxMs": 22.364159,
+      "producerClosed": true,
+      "totalMs": 166.33230000000003,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 22667264,
+            "samples": 3,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 86110208,
+            "samples": 3,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 133
+      },
+      "observedPeakSumBytes": 109568000,
+      "hostPeakDeltaBytes": 790528,
+      "hostLoopMaxMs": 20.316159,
+      "installed": 1
+    },
+    {
+      "id": "long",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 1800,
+        "sampleRate": 48000,
+        "channels": 2,
+        "inputBytes": 39737449
+      },
+      "min": -0.124969482421875,
+      "max": 0.124969482421875,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 1056.4102,
+      "pcmBytes": 691200000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 85897216,
+      "workerPeakRssBytes": 92336128,
+      "workerLoopMaxMs": 15.278079,
+      "producerClosed": true,
+      "totalMs": 1108.4142000000002,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 24612864,
+            "samples": 23,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 92336128,
+            "samples": 23,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 1064
+      },
+      "observedPeakSumBytes": 117112832,
+      "hostPeakDeltaBytes": 163840,
+      "hostLoopMaxMs": 25.624575,
+      "installed": 1
+    },
+    {
+      "id": "quad",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 15,
+        "sampleRate": 96000,
+        "channels": 4,
+        "inputBytes": 43376
+      },
+      "min": -0.20000004768371582,
+      "max": 0.19999992847442627,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 76.58879999999999,
+      "pcmBytes": 23040000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 77787136,
+      "workerPeakRssBytes": 77791232,
+      "workerLoopMaxMs": 22.446079,
+      "producerClosed": true,
+      "totalMs": 129.09689999999955,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 22573056,
+            "samples": 2,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 76472320,
+            "samples": 2,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 84
+      },
+      "observedPeakSumBytes": 99045376,
+      "hostPeakDeltaBytes": 0,
+      "hostLoopMaxMs": 16.015359,
+      "installed": 1
+    },
+    {
+      "id": "eight",
+      "variant": "first-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 5,
+        "sampleRate": 192000,
+        "channels": 8,
+        "inputBytes": 46616
+      },
+      "min": -0.40000009536743164,
+      "max": 0.3999999761581421,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 78.0461,
+      "pcmBytes": 30720000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 81866752,
+      "workerPeakRssBytes": 82817024,
+      "workerLoopMaxMs": 15.114239,
+      "producerClosed": true,
+      "totalMs": 131.3083999999999,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 22945792,
+            "samples": 2,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 80793600,
+            "samples": 2,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 83
+      },
+      "observedPeakSumBytes": 103919616,
+      "hostPeakDeltaBytes": 180224,
+      "hostLoopMaxMs": 16.048127,
+      "installed": 1
+    },
+    {
+      "id": "long",
+      "variant": "repeat-read",
+      "status": "completed",
+      "metadata": {
+        "durationSec": 1800,
+        "sampleRate": 48000,
+        "channels": 2,
+        "inputBytes": 39737449
+      },
+      "min": -0.124969482421875,
+      "max": 0.124969482421875,
+      "payloadBytes": 65536,
+      "workingSummaryBytes": 98304,
+      "elapsedMs": 1067.1428,
+      "pcmBytes": 691200000,
+      "maxChunkBytes": 65536,
+      "workerRssBytes": 87265280,
+      "workerPeakRssBytes": 92733440,
+      "workerLoopMaxMs": 17.367039,
+      "producerClosed": true,
+      "totalMs": 1119.2119999999995,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 24662016,
+            "samples": 23,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 92733440,
+            "samples": 23,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 1082
+      },
+      "observedPeakSumBytes": 118542336,
+      "hostPeakDeltaBytes": 1146880,
+      "hostLoopMaxMs": 21.757951,
+      "installed": 1
+    },
+    {
+      "id": "long",
+      "variant": "cancel",
+      "status": "CANCELLED",
+      "sourceCancelled": false,
+      "elapsedMs": 42.9316,
+      "pcmBytes": 155648,
+      "maxChunkBytes": 65536,
+      "workerPeakRssBytes": 67768320,
+      "producerClosed": true,
+      "totalMs": 93.79719999999998,
+      "cancelToExitMs": 10.340499999999338,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 3211264,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 64630784,
+            "samples": 1,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 48
+      },
+      "producerAlive": false,
+      "installed": 0,
+      "cancelWaitMs": 18.797300000000178
+    },
+    {
+      "id": "long",
+      "variant": "source",
+      "status": "STALE",
+      "sourceCancelled": true,
+      "elapsedMs": 41.418800000000005,
+      "pcmBytes": 163840,
+      "maxChunkBytes": 65536,
+      "workerPeakRssBytes": 67620864,
+      "producerClosed": true,
+      "totalMs": 100.32729999999992,
+      "cancelToExitMs": 10.729699999999866,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 3215360,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 64704512,
+            "samples": 1,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 40
+      },
+      "producerAlive": false,
+      "installed": 0,
+      "cancelWaitMs": 12.358799999999974
+    },
+    {
+      "id": "long",
+      "variant": "deadline",
+      "status": "DEADLINE",
+      "sourceCancelled": false,
+      "elapsedMs": 10.3126,
+      "pcmBytes": 0,
+      "maxChunkBytes": 0,
+      "workerPeakRssBytes": 64671744,
+      "producerClosed": true,
+      "totalMs": 62.35660000000007,
+      "cancelToExitMs": 38.82930000000033,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 0,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": null,
+            "samples": 0,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 48
+      },
+      "producerAlive": false,
+      "installed": 0,
+      "cancelWaitMs": null
+    },
+    {
+      "id": "long",
+      "variant": "output-limit",
+      "status": "PCM_DURATION",
+      "sourceCancelled": false,
+      "elapsedMs": 44.9571,
+      "pcmBytes": 491520,
+      "maxChunkBytes": 65536,
+      "workerPeakRssBytes": 67670016,
+      "producerClosed": true,
+      "totalMs": 92.63210000000072,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 3211264,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 64696320,
+            "samples": 1,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 47
+      },
+      "producerAlive": false,
+      "installed": 0,
+      "cancelWaitMs": null
+    },
+    {
+      "id": "long",
+      "variant": "worker-exit",
+      "status": "WORKER_FAILED",
+      "sourceCancelled": false,
+      "totalMs": 86.03850000000057,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 3211264,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 64741376,
+            "samples": 1,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 34
+      },
+      "producerAlive": false,
+      "installed": 0,
+      "cancelWaitMs": 5.640899999999419
+    },
+    {
+      "id": "corrupt",
+      "variant": "corrupt",
+      "status": "DECODE_FAILED",
+      "sourceCancelled": false,
+      "elapsedMs": 38.5878,
+      "pcmBytes": 0,
+      "maxChunkBytes": 0,
+      "workerPeakRssBytes": 64782336,
+      "producerClosed": true,
+      "totalMs": 88.74290000000019,
+      "cancelToExitMs": null,
+      "workerClosed": true,
+      "producerMemory": {
+        "processes": [
+          {
+            "peakWorkingSetBytes": 3211264,
+            "samples": 1,
+            "role": "decoder"
+          },
+          {
+            "peakWorkingSetBytes": 64724992,
+            "samples": 1,
+            "role": "worker"
+          }
+        ],
+        "observedMs": 40
+      },
+      "producerAlive": false,
+      "installed": 0,
+      "cancelWaitMs": null
+    }
+  ],
+  "browser": {
+    "electron": "43.8.3",
+    "chrome": "150.0.7871.250",
+    "results": [
+      {
+        "id": "mono",
+        "status": "completed",
+        "elapsedMs": 59.5,
+        "decodeMs": 4,
+        "loopMaxMs": 0,
+        "pcmBytes": 960000,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.124969482421875,
+        "max": 0.12497329711914062,
+        "admitted": true,
+        "reservedBytes": 69508942,
+        "wallMs": 60.61250000000001,
+        "rendererPeakBytes": 128770048,
+        "rendererDeltaBytes": 7413760,
+        "mainPeakRssBytes": 152940544,
+        "sampleIntervalMs": 20,
+        "memorySamples": 3
+      },
+      {
+        "id": "wav",
+        "status": "completed",
+        "elapsedMs": 127.40000000596046,
+        "decodeMs": 15.900000005960464,
+        "loopMaxMs": 2.7999999821186066,
+        "pcmBytes": 10584000,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.124969482421875,
+        "max": 0.12497329711914062,
+        "admitted": true,
+        "reservedBytes": 93568942,
+        "wallMs": 128.92969999999997,
+        "rendererPeakBytes": 153722880,
+        "rendererDeltaBytes": 30814208,
+        "mainPeakRssBytes": 160591872,
+        "sampleIntervalMs": 20,
+        "memorySamples": 6
+      },
+      {
+        "id": "mp3",
+        "status": "completed",
+        "elapsedMs": 153.2000000178814,
+        "decodeMs": 48.79999998211861,
+        "loopMaxMs": 2,
+        "pcmBytes": 10584000,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.084014892578125,
+        "max": 0.08426160365343094,
+        "admitted": true,
+        "reservedBytes": 88757978,
+        "wallMs": 154.6014,
+        "rendererPeakBytes": 147664896,
+        "rendererDeltaBytes": 24776704,
+        "mainPeakRssBytes": 161394688,
+        "sampleIntervalMs": 20,
+        "memorySamples": 7
+      },
+      {
+        "id": "aac",
+        "status": "completed",
+        "elapsedMs": 153.5,
+        "decodeMs": 44.400000005960464,
+        "loopMaxMs": 3,
+        "pcmBytes": 11520000,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.09156011044979095,
+        "max": 0.0915609747171402,
+        "admitted": true,
+        "reservedBytes": 90635729,
+        "wallMs": 155.01340000000005,
+        "rendererPeakBytes": 162586624,
+        "rendererDeltaBytes": 39731200,
+        "mainPeakRssBytes": 162947072,
+        "sampleIntervalMs": 20,
+        "memorySamples": 6
+      },
+      {
+        "id": "opus",
+        "status": "completed",
+        "elapsedMs": 161.59999999403954,
+        "decodeMs": 48.5,
+        "loopMaxMs": 6.9000000059604645,
+        "pcmBytes": 11522496,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.08912844210863113,
+        "max": 0.08910761028528214,
+        "admitted": true,
+        "reservedBytes": 90601229,
+        "wallMs": 162.9885999999999,
+        "rendererPeakBytes": 149217280,
+        "rendererDeltaBytes": 26292224,
+        "mainPeakRssBytes": 164532224,
+        "sampleIntervalMs": 20,
+        "memorySamples": 7
+      },
+      {
+        "id": "medium",
+        "status": "completed",
+        "elapsedMs": 568.1999999880791,
+        "decodeMs": 99.69999998807907,
+        "loopMaxMs": 1.199999988079071,
+        "pcmBytes": 46080000,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.124969482421875,
+        "max": 0.12497329711914062,
+        "admitted": true,
+        "reservedBytes": 161922474,
+        "wallMs": 569.7799000000002,
+        "rendererPeakBytes": 231931904,
+        "rendererDeltaBytes": 109117440,
+        "mainPeakRssBytes": 167354368,
+        "sampleIntervalMs": 20,
+        "memorySamples": 20
+      },
+      {
+        "id": "long",
+        "status": "budget-refused",
+        "admitted": false,
+        "pcmBytes": 691200000,
+        "reservedBytes": 1489246313,
+        "wallMs": 0.7015000000001237,
+        "rendererPeakBytes": 122929152,
+        "rendererDeltaBytes": 36864,
+        "mainPeakRssBytes": 167723008,
+        "sampleIntervalMs": 20,
+        "memorySamples": 2
+      },
+      {
+        "id": "eight",
+        "status": "completed",
+        "elapsedMs": 108.80000001192093,
+        "decodeMs": 30.80000001192093,
+        "loopMaxMs": 10.399999976158142,
+        "pcmBytes": 30720000,
+        "payloadBytes": 65536,
+        "workingSummaryBytes": 98304,
+        "min": -0.40000009536743164,
+        "max": 0.3999999761581421,
+        "admitted": true,
+        "reservedBytes": 128595480,
+        "wallMs": 110.14849999999979,
+        "rendererPeakBytes": 186519552,
+        "rendererDeltaBytes": 63582208,
+        "mainPeakRssBytes": 169127936,
+        "sampleIntervalMs": 20,
+        "memorySamples": 5
+      },
+      {
+        "id": "medium-cancel",
+        "status": "logical-cancel",
+        "decodeStatusAfterCancel": "fulfilled",
+        "settledAfterCancelMs": 97,
+        "physicalStopProven": false,
+        "elapsedMs": 112.39999997615814,
+        "admitted": true,
+        "pcmBytes": 46080000,
+        "reservedBytes": 161922474,
+        "wallMs": 113.44000000000005,
+        "rendererPeakBytes": 231825408,
+        "rendererDeltaBytes": 108875776,
+        "mainPeakRssBytes": 172498944,
+        "sampleIntervalMs": 20,
+        "memorySamples": 5
+      }
+    ]
+  },
+  "gates": {
+    "main": {
+      "completeDenominator": true,
+      "completeDecode": true,
+      "summaryAndChunk": true,
+      "memory": true,
+      "deadline": true,
+      "hostResponsiveness": true,
+      "antiPhase": true,
+      "actualCancellation": true,
+      "guardStopsProducer": true,
+      "failureStopsProducer": true
+    },
+    "mainCandidate": true,
+    "browser": {
+      "longRefused": true,
+      "cancellationObservation": {
+        "id": "medium-cancel",
+        "status": "logical-cancel",
+        "decodeStatusAfterCancel": "fulfilled",
+        "settledAfterCancelMs": 97,
+        "physicalStopProven": false,
+        "elapsedMs": 112.39999997615814,
+        "admitted": true,
+        "pcmBytes": 46080000,
+        "reservedBytes": 161922474,
+        "wallMs": 113.44000000000005,
+        "rendererPeakBytes": 231825408,
+        "rendererDeltaBytes": 108875776,
+        "mainPeakRssBytes": 172498944,
+        "sampleIntervalMs": 20,
+        "memorySamples": 5
+      },
+      "incompleteProbes": 0,
+      "sameRendererHardCancelSupported": false
+    },
+    "browserCandidate": false
+  },
+  "environment": {
+    "cpu": "AMD Ryzen 7 7700 8-Core Processor",
+    "logicalCpus": 16,
+    "ramBytes": 67817906176,
+    "arch": "x64",
+    "osRelease": "10.0.26300"
+  }
+}
