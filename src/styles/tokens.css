@@ -185,11 +185,12 @@
   --ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);
   --ui-list-header-height: 2.25rem;
   --ui-player-bar-height: 4.75rem;
-  --ui-panel-inset: 1rem;
   --ui-window-titlebar-block-size: 2.5rem;
   --ui-shell-content-inset-block: var(--ui-shell-edge-inset-inline);
   --ui-shell-edge-inset-inline: var(--ui-space-2);
-  --ui-shell-workspace-inline-start: var(--ui-space-3);
+  /* Gap between shell columns: Sidebar, workspace and Right Dock. */
+  --ui-shell-gutter: var(--ui-space-3);
+  --ui-shell-workspace-inline-start: var(--ui-shell-gutter);
   --ui-shell-leading-artwork-centerline: calc(
     var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
   );
@@ -254,7 +255,6 @@
   );
   --ui-right-dock-sticky-blur: 0.75rem;
   --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
-  --ui-shell-gutter: 0.75rem;
   --ui-player-padding-block-end: var(--ui-shell-content-inset-block);
   --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
   --ui-player-leading-padding-inline: calc(
@@ -838,8 +838,6 @@
   --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
   --ui-list-header-height: 2rem;
   --ui-player-volume-inline-size: 6rem;
-  --ui-panel-inset: 0.75rem;
-  --ui-shell-gutter: 0.5rem;
   --ui-modal-viewport-inset: var(--ui-space-4);
   --ui-modal-content-inset: var(--ui-space-4);
   --ui-modal-section-gap: var(--ui-space-3);

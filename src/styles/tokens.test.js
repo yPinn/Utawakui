@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(555);
+    expect(uniqueNames.size).toBe(554);
     expect(uniqueNames).toContain('--ui-shell-workspace-min-inline-size');
     expect(uniqueNames).toContain('--ui-shell-layout-recovery-inline-size');
     expect(uniqueNames).toContain('--ui-shell-dock-inline-size');
@@ -573,11 +573,11 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(tokens).toContain(
       '--ui-shell-edge-inset-inline: var(--ui-space-2);',
     );
+    expect(tokens).toContain('--ui-shell-gutter: var(--ui-space-3);');
     expect(tokens).toContain(
-      '--ui-shell-workspace-inline-start: var(--ui-space-3);',
+      '--ui-shell-workspace-inline-start: var(--ui-shell-gutter);',
     );
-    expect(tokens).toContain('--ui-panel-inset: 1rem;');
-    expect(tokens).toContain('--ui-panel-inset: 0.75rem;');
+    expect(tokens).not.toContain('--ui-panel-inset');
     expect(app).toMatch(
       /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );

@@ -1143,6 +1143,7 @@ Promote a repeated combination into a semantic recipe only after two production 
 
 Shared spacing roles:
 
+- Shell columns (Sidebar, workspace, Right Dock) are separated by `--ui-shell-gutter`; the window edge uses `--ui-shell-edge-inset-inline`.
 - Lists of track rows use `--ui-track-list-gap`; Sidebar collections use `--ui-playlist-list-gap`.
 - Stacked form fields use `--ui-space-3` (`--ui-modal-section-gap` inside a Modal); a single input with its attached action uses `--ui-space-2`.
 - A title／actions header row uses `--ui-space-3`; action groups follow the Buttons grouping gap.

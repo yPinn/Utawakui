@@ -25,7 +25,6 @@ const ACTIVE_DENSITY_TOKENS = [
   '--ui-right-dock-track-artwork-size',
   '--ui-list-header-height',
   '--ui-player-bar-height',
-  '--ui-panel-inset',
   '--ui-right-dock-content-inset',
   '--ui-shell-gutter',
 ];

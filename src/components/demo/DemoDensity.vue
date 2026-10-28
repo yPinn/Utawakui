@@ -72,12 +72,6 @@ const DENSITY_CONTRACTS = Object.freeze([
     samples: pair('4.75rem'),
   },
   {
-    label: 'Panel inset',
-    token: '--ui-panel-inset',
-    shape: 'space',
-    samples: pair('1rem', '0.75rem'),
-  },
-  {
     label: 'Side panel 基準邊距',
     token: '--ui-right-dock-content-inset',
     shape: 'space',
@@ -87,7 +81,7 @@ const DENSITY_CONTRACTS = Object.freeze([
     label: 'Shell gutter',
     token: '--ui-shell-gutter',
     shape: 'space',
-    samples: pair('0.75rem', '0.5rem'),
+    samples: pair('0.75rem'),
   },
 ]);
 </script>
