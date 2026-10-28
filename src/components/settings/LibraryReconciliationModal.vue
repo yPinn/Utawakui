@@ -271,7 +271,7 @@ function save() {
   justify-content: space-between;
   gap: var(--ui-space-3);
   padding-block: var(--ui-space-3);
-  border-block-end: 1px solid var(--ui-color-border);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
 }
 .library-reconciliation__copy {
   flex: 1 1 16rem;

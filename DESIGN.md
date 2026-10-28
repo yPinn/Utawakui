@@ -1190,7 +1190,13 @@ Utawakui should be flat by default and layered by tone before shadow. Depth exis
 ### Shadow Vocabulary
 
 - **Overlay Shadow** (`0 1.5rem 3rem rgb(0 0 0 / 28%)`): Floating menus, popovers, and modal surfaces.
-- **Focus Ring** (`0 0 0 2px {colors.accent}`): Keyboard focus and critical interaction target.
+
+### Focus Ring
+
+- Keyboard focus is an `outline`, not a shadow: `var(--ui-focus-width) solid var(--ui-color-focus)`.
+- Offset with `--ui-focus-offset` outside the target, or `--ui-focus-offset-inset` for rows, scroll regions and containers whose edge would clip the ring. Borderless targets add `--ui-focus-radius`.
+- A component may replace the outline only with an equivalent indicator it owns (a row `:has()` plate, a resize-handle line, the range thumb's shadow ring); every focusable element keeps a visible indicator.
+- Forced colors use `Highlight` at the same width.
 
 ### Elevation Rules
 
@@ -1251,7 +1257,7 @@ Performer display settings use the shared Popover panel-style interface for a bo
 - **Ghost:** transparent at rest, neutral hover fill, used for toolbar and repeated actions.
 - **Destructive intent:** use `intent="danger"` only for irreversible deletion or an explicitly confirmed loss. Keep it orthogonal to Accent／Secondary／Ghost hierarchy; do not add a parallel `danger` variant or infer danger from a label containing「清除」、「停止」or「取消」.
 - **Action confirmation scope:** immediate persisted cover／photo removal and playlist membership loss use the existing confirmation owner; artwork draft removal remains neutral until the editor's Save. Automatically saved annotation merges require confirmation when they remove boundaries／roles. BGM Emergency Cut retains its explicitly defined danger emphasis and immediate response. Cross-feature decisions and stale-target guards are documented in the [action intent contract](docs/contracts/action-intent-and-confirmation.md).
-- **Focus:** visible 2px focus ring with 1-2px offset.
+- **Focus:** the shared [Focus Ring](#focus-ring).
 - **Touch baseline:** desktop buttons can be compact, but touch-responsive surfaces should preserve at least `44pt` iOS / `48dp` Android target guidance.
 
 ### Inputs / Fields

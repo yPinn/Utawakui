@@ -307,7 +307,7 @@ async function archive() {
 }
 .session-history-tools:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: calc(-1 * var(--ui-focus-width));
+  outline-offset: var(--ui-focus-offset-inset);
 }
 .session-history-tools__archives {
   --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);

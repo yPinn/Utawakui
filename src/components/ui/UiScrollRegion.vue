@@ -420,7 +420,7 @@ watch(
 
 .ui-scroll-region__viewport:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: calc(var(--ui-focus-width) * -1);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-scroll-region__rail {

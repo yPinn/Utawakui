@@ -101,7 +101,7 @@ function choose(field, value) {
   margin: 0;
   padding: var(--ui-space-3) 0 0;
   border: 0;
-  border-block-start: 1px solid var(--ui-color-border);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 .reconciliation-merge__comparison {
   margin: var(--ui-space-2) 0;

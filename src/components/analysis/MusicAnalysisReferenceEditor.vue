@@ -359,7 +359,12 @@ onUnmounted(() => {
 .reference-editor {
   display: grid;
   gap: var(--ui-space-4);
-  outline: none;
+}
+
+/* The editor root hosts keyboard shortcuts, so its focus must stay visible. */
+.reference-editor:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .reference-editor__controls {

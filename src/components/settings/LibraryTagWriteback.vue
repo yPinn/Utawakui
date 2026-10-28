@@ -186,7 +186,7 @@ async function restore(receiptId) {
 
 <style scoped>
 .library-tags {
-  border-block-start: 1px solid var(--ui-color-border);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
   padding-block-start: var(--ui-space-4);
 }
 .library-tags__body,

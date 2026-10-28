@@ -1093,8 +1093,8 @@ const noticeLabel = computed(
   vector-effect: non-scaling-stroke;
 }
 .lyrics-waveform__overview:focus-visible {
-  outline: 2px solid var(--ui-color-focus);
-  outline-offset: 2px;
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 .lyrics-waveform__marker {
   stroke: var(--ui-color-text-muted);

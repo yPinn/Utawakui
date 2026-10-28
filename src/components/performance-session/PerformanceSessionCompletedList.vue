@@ -146,6 +146,6 @@ watch([busy, menuEntry], ([saving, entry]) => {
 }
 .performance-session-completed-list:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: calc(-1 * var(--ui-focus-width));
+  outline-offset: var(--ui-focus-offset-inset);
 }
 </style>
