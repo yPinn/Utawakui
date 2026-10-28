@@ -38,7 +38,6 @@ import PlaybackTrackIdentity from '../track/PlaybackTrackIdentity.vue';
 import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiNotice from '../ui/UiNotice.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 defineProps({
@@ -429,16 +428,6 @@ onUnmounted(() => {
     role="region"
     aria-label="播放控制列"
   >
-    <UiNotice
-      v-if="state.error"
-      class="player-bar__notice"
-      tone="danger"
-      title="播放未完成"
-      :message="state.error"
-      action-label="重試"
-      compact
-      @action="toggle"
-    />
     <PlaybackTrackIdentity class="player-bar__track" :track="state.track">
       <template #artwork>
         <PlayerBarArtwork
@@ -639,15 +628,6 @@ onUnmounted(() => {
   /* Otherwise dragging a slider triggers native text selection, which can
      swallow a click on a nearby button instead of registering it. */
   user-select: none;
-}
-
-.player-bar__notice {
-  position: absolute;
-  right: var(--ui-space-3);
-  bottom: calc(100% + var(--ui-space-2));
-  z-index: var(--ui-z-popover);
-  /* UiNotice is an inline-size container, so it needs a definite width. */
-  inline-size: min(28rem, calc(100vw - 2 * var(--ui-space-3)));
 }
 
 .player-bar__track {

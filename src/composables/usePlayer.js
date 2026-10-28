@@ -4,6 +4,7 @@ import { usePlayerLibrarySync } from './player/usePlayerLibrarySync.js';
 import { usePlayerAudioStart } from './player/usePlayerAudioStart.js';
 import { usePlayerPerformanceSettings } from './player/usePlayerPerformanceSettings.js';
 import { usePlayerMediaBoundary } from './player/usePlayerMediaBoundary.js';
+import { usePlayerErrorNotice } from './player/usePlayerErrorNotice.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import {
   usePlayerAudioGraph,
@@ -278,6 +279,7 @@ const {
   reportPlayerError,
   notifyStopped,
 });
+usePlayerErrorNotice({ state, retry: () => toggle() });
 const performanceSettings = usePlayerPerformanceSettings({
   playerState: state,
   graph: audioGraph,

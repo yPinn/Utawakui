@@ -8,6 +8,7 @@
 通知同一 operation key 的更新會替換舊 item，並建立新 id；舊 callback、過期的關閉與重試事件不能影響新通知。
 通知依結果／失敗／進度的 priority 排列，同優先權維持先到順序；長任務沿用第三期的同 id 投影。
 Shell 既有的表演者畫面錯誤也由同一通知 owner 呈現，不再維護另一個相同位置的固定浮層。
+播放器的播放錯誤同樣由 `usePlayer` owner 投影為固定 key 的持續 danger 通知並附重試；錯誤清除（重新播放、換曲）即撤下，重試再失敗會重新出現。PlayerBar 不另設浮動 Notice。
 通知 item 使用正式不透明 surface 承接半透明 semantic Notice 背景，避免底下的操作內容透出干擾閱讀。
 一般進出場只使用位移，item 的 opacity 全程維持 1；離場以原本距離 shelf 底部的布局位置固定，避免 bottom-anchored shelf 收縮時把通知推入播放列。
 App adapter 明確傳入既有 Dock owner 的目前寬度（272–280px，預設 280px），Dock 收合時仍保留這個可讀寬度；不依賴 Teleport 的 attrs fallthrough 或區域 CSS 變數繼承。
