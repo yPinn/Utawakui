@@ -1022,3 +1022,88 @@ describe('TrackTable production collection contract', () => {
     expect(`${source}\n${rowSource}`).not.toContain(':deep(');
   });
 });
+
+describe('TrackTable virtualization', () => {
+  const manyEntries = Array.from({ length: 10 }, (_, index) => ({
+    track: { id: `track-${index}`, title: `第 ${index} 首`, duration: 60 },
+  }));
+
+  function tableBody(root) {
+    return findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__body'),
+    )[0];
+  }
+
+  function bodyRows(root) {
+    return tableBody(root).children.filter((node) => node.type === 'li');
+  }
+
+  it('renders every row without window attributes up to the threshold', () => {
+    const view = mount(TrackTable, {
+      entries: manyEntries,
+      collectionKind: 'library-all',
+      virtualizeAbove: 10,
+    });
+    const rows = bodyRows(view.root);
+
+    expect(rows).toHaveLength(10);
+    expect(rows.every((row) => row.props['aria-setsize'] === undefined)).toBe(
+      true,
+    );
+    expect(tableBody(view.root).props.style).toBeUndefined();
+  });
+
+  it('windows long lists and pads the list to its full height', () => {
+    const view = mount(TrackTable, {
+      entries: manyEntries,
+      collectionKind: 'library-all',
+      virtualizeAbove: 5,
+    });
+    const rows = bodyRows(view.root);
+
+    // No measurable viewport here: only the leading overscan rows render.
+    expect(rows).toHaveLength(8);
+    expect(rows[0].props['aria-setsize']).toBe(10);
+    expect(rows[7].props['aria-posinset']).toBe(8);
+    expect(tableBody(view.root).props.style).toEqual({
+      paddingBlockEnd: `${2 * 46}px`,
+    });
+  });
+
+  it('keeps a focused row mounted in place after it leaves the window', async () => {
+    const props = reactive({
+      entries: manyEntries,
+      collectionKind: 'library-all',
+      virtualizeAbove: 5,
+    });
+    const view = mount(TrackTable, props);
+    const focusedRow = bodyRows(view.root)[0];
+
+    trigger(tableBody(view.root), 'onFocusin', {
+      target: { closest: () => ({ dataset: { virtualKey: 'track-0' } }) },
+    });
+    // New tracks ahead push the focused row to index 9, outside the window.
+    // (Prepending avoids moving nodes, which the test host cannot do.)
+    const added = Array.from({ length: 9 }, (_, index) => ({
+      track: { id: `added-${index}`, title: `新 ${index}`, duration: 60 },
+    }));
+    props.entries = [...added, ...manyEntries];
+    await nextTick();
+    let rows = bodyRows(view.root);
+    expect(rows).toHaveLength(9);
+    expect(rows.at(-1)).toBe(focusedRow);
+    expect(rows.at(-1).props['aria-posinset']).toBe(10);
+    expect(rows.at(-1).props.style).toMatchObject({
+      marginBlockStart: '46px',
+    });
+    expect(tableBody(view.root).props.style).toEqual({
+      paddingBlockEnd: `${9 * 46}px`,
+    });
+
+    trigger(tableBody(view.root), 'onFocusout', { relatedTarget: null });
+    await nextTick();
+    rows = bodyRows(view.root);
+    expect(rows).not.toContain(focusedRow);
+    expect(rows).toHaveLength(8);
+  });
+});

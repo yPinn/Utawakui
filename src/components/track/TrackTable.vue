@@ -3,6 +3,7 @@ import { computed, shallowRef, toRef, watch } from 'vue';
 import { ChevronDown, ICON_SIZE } from '../../icons/index.js';
 import { useTrackCollectionColumns } from '../../composables/useTrackCollectionColumns.js';
 import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
+import { useVirtualRows } from '../../composables/useVirtualRows.js';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import '../../styles/loading.css';
 import TrackCollectionRow from './TrackCollectionRow.vue';
@@ -60,6 +61,8 @@ const props = defineProps({
     default: 'list',
     validator: (value) => ['list', 'compact'].includes(value),
   },
+  // Window rows once the list is longer than this; 0 renders every row.
+  virtualizeAbove: { type: Number, default: 0 },
 });
 
 const emit = defineEmits([
@@ -102,6 +105,78 @@ const profile = computed(() =>
 const projectedEntries = computed(() =>
   projectTrackCollectionEntries(props.entries, resolvedCollectionKind.value),
 );
+function rowKey(entry) {
+  return profile.value.readOnly || profile.value.managedActions
+    ? entry.key
+    : (entry.key ?? entry.track.id);
+}
+
+const bodyList = shallowRef(null);
+const focusedRowKey = shallowRef('');
+const virtualized = computed(
+  () =>
+    props.virtualizeAbove > 0 &&
+    projectedEntries.value.length > props.virtualizeAbove,
+);
+const rowIndexByKey = computed(() =>
+  virtualized.value
+    ? new Map(projectedEntries.value.map((entry, i) => [rowKey(entry), i]))
+    : new Map(),
+);
+const { segments: virtualSegments } = useVirtualRows({
+  listRef: bodyList,
+  count: () => projectedEntries.value.length,
+  enabled: () => virtualized.value,
+  // Focused and dragged rows stay mounted so focus and dragend survive scrolling.
+  pinnedIndexes: () => {
+    const indexes = [rowIndexByKey.value.get(focusedRowKey.value)];
+    if (props.draggingTrackId) {
+      indexes.push(
+        projectedEntries.value.findIndex(
+          (entry) => entry.track?.id === props.draggingTrackId,
+        ),
+      );
+    }
+    return indexes;
+  },
+  // First-frame guess from measured default rows; replaced once one renders.
+  estimateRowHeight: () => (props.density === 'compact' ? 36 : 46),
+});
+// Windowed gaps become a row's top margin and the tail becomes list padding,
+// so the list keeps one flat v-for and its full scroll height.
+const renderedRows = computed(() => {
+  const entries = projectedEntries.value;
+  if (!virtualSegments.value) {
+    return entries.map((entry, index) => ({
+      key: rowKey(entry),
+      entry,
+      index,
+    }));
+  }
+  const rows = [];
+  let gap = 0;
+  for (const segment of virtualSegments.value) {
+    if (segment.kind === 'spacer') {
+      gap += segment.height;
+      continue;
+    }
+    const entry = entries[segment.index];
+    rows.push({ key: rowKey(entry), entry, index: segment.index, gap });
+    gap = 0;
+  }
+  rows.tailGap = gap;
+  return rows;
+});
+
+function trackRowFocus(event) {
+  focusedRowKey.value =
+    event.target?.closest?.('[data-virtual-key]')?.dataset.virtualKey ?? '';
+}
+
+function releaseRowFocus(event) {
+  if (!bodyList.value?.contains(event.relatedTarget)) focusedRowKey.value = '';
+}
+
 const dragEnabled = computed(
   () =>
     profile.value.canReorderPlaylistTracks && props.canReorderPlaylistTracks,
@@ -464,19 +539,28 @@ function reorderHeaderFromKeyboard(column, event) {
     </ul>
     <ul
       v-else
+      ref="bodyList"
       class="library-track-table__body"
       :class="{ 'ui-loading-content-enter': revealContent }"
       role="list"
       :aria-label="label || profile.accessibleLabel"
+      :style="
+        renderedRows.tailGap
+          ? { paddingBlockEnd: `${renderedRows.tailGap}px` }
+          : undefined
+      "
       @animationend.self="finishReveal"
+      @focusin="virtualized && trackRowFocus($event)"
+      @focusout="virtualized && releaseRowFocus($event)"
     >
       <TrackCollectionRow
-        v-for="entry in projectedEntries"
-        :key="
-          profile.readOnly || profile.managedActions
-            ? entry.key
-            : (entry.key ?? entry.track.id)
-        "
+        v-for="{ key, entry, index, gap } in renderedRows"
+        :key="key"
+        :style="gap ? { marginBlockStart: `${gap}px` } : undefined"
+        :data-virtual-row="virtualized ? '' : undefined"
+        :data-virtual-key="virtualized ? key : undefined"
+        :aria-setsize="virtualized ? projectedEntries.length : undefined"
+        :aria-posinset="virtualized ? index + 1 : undefined"
         :data-occurrence-id="
           profile.readOnly || profile.managedActions ? entry.key : undefined
         "

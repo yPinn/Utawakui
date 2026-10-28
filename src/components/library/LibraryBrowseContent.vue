@@ -1382,6 +1382,7 @@ onMounted(async () => {
             :loading="collectionTableLoading"
             :content-key="collectionContentKey"
             :entries="displayedTableEntries"
+            :virtualize-above="300"
             :collection-kind="tableCollectionKind"
             :column-preferences="currentTableColumnPreferences"
             :label="`${pageTitle}曲目`"
