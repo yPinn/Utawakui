@@ -6,6 +6,22 @@ const FATAL_RENDERER_REASONS = new Set([
   'launch-failed',
   'oom',
 ]);
+// Child exits are only failures for these reasons; `killed` and
+// `memory-eviction` are warnings, and a clean exit is routine evidence.
+const ABNORMAL_CHILD_REASONS = new Set([
+  'abnormal-exit',
+  'crashed',
+  'integrity-failure',
+  'launch-failed',
+  'oom',
+]);
+// ERR_ABORTED: a superseded navigation, not a load failure.
+const ABORTED_LOAD_ERROR_CODE = -3;
+
+function exitLevel(reason, failureReasons) {
+  if (reason === 'clean-exit') return 'info';
+  return failureReasons.has(reason) ? 'error' : 'warning';
+}
 
 function registerDiagnosticsLifecycle({
   app,
@@ -60,11 +76,11 @@ function registerDiagnosticsLifecycle({
     const fatal = FATAL_RENDERER_REASONS.has(details.reason);
     service.record({
       process: 'main',
-      level: 'error',
+      level: exitLevel(details.reason, FATAL_RENDERER_REASONS),
       source: 'electron',
       operation: 'render-process-gone',
       code: 'RENDER_PROCESS_GONE',
-      message: 'Renderer process terminated unexpectedly',
+      message: 'Renderer process exited',
       context: {
         fatal,
         reason: details.reason,
@@ -77,11 +93,11 @@ function registerDiagnosticsLifecycle({
   const onChildProcessGone = (event, details = {}) => {
     service.record({
       process: 'main',
-      level: 'error',
+      level: exitLevel(details.reason, ABNORMAL_CHILD_REASONS),
       source: 'electron',
       operation: 'child-process-gone',
       code: 'CHILD_PROCESS_GONE',
-      message: 'Electron child process terminated unexpectedly',
+      message: 'Electron child process exited',
       context: {
         fatal: false,
         processType: details.type,
@@ -99,7 +115,9 @@ function registerDiagnosticsLifecycle({
       validatedUrl,
       isMainFrame,
     ) => {
-      if (isMainFrame === false) return;
+      if (isMainFrame === false || errorCode === ABORTED_LOAD_ERROR_CODE) {
+        return;
+      }
       service.record({
         process: 'main',
         level: 'error',
@@ -109,9 +127,7 @@ function registerDiagnosticsLifecycle({
         message: 'Renderer failed to load',
         context: { errorCode, reason: errorDescription },
       });
-      if (errorCode !== -3) {
-        recoverMainRenderer(webContents, 'renderer-load-failed');
-      }
+      recoverMainRenderer(webContents, 'renderer-load-failed');
     };
 
     const onUnresponsive = () => {

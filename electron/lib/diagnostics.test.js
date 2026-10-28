@@ -165,6 +165,27 @@ describe('normalizeDiagnosticEvent', () => {
     expect(event.stack).not.toContain('Alice');
   });
 
+  it('relativizes percent-encoded renderer bundle URLs', () => {
+    const appRoot =
+      'C:\\Users\\Alice Smith\\AppData\\Local\\Programs\\Utawakui\\resources\\app.asar';
+    const error = {
+      stack: [
+        'TypeError: boom',
+        '    at render (file:///C:/Users/Alice%20Smith/AppData/Local/Programs/Utawakui/resources/app.asar/dist/assets/index-a1.js:3:40)',
+      ].join('\n'),
+    };
+
+    const event = normalizeDiagnosticEvent(
+      { process: 'renderer', source: 'vue', operation: 'x', error },
+      deterministicDefaults({ appRoot }),
+    );
+
+    expect(event.stack).toContain(
+      'at render (app:dist/assets/index-a1.js:3:40)',
+    );
+    expect(event.stack).not.toContain('Alice');
+  });
+
   it('redacts bare credential assignments outside URLs', () => {
     expect(redactText('apikey=SECRET123 rejected')).toBe(
       'apikey=[redacted] rejected',

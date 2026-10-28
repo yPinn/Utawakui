@@ -61,7 +61,28 @@ describe('registerDiagnosticsHandlers', () => {
       message: 'Unable to play C:\\Users\\Alice\\private.mp3',
       correlationId: 'correlation-id',
       context: { stage: 'decode', trackTitle: 'private title' },
+      error: { stack: 'private stack' },
     });
+  });
+
+  it('forwards only a bounded renderer stack string for service redaction', async () => {
+    const ipcMain = createIpcMain();
+    const record = vi.fn(() => ({ ok: true }));
+    registerDiagnosticsHandlers({
+      ipcMain,
+      service: { record, listRecent: vi.fn(), clear: vi.fn() },
+      openLogsDirectory: vi.fn(),
+    });
+    const recordRenderer = ipcMain.handlers.get('diagnostics:record-renderer');
+
+    await recordRenderer(null, {
+      code: 'WINDOW_ERROR',
+      stack: 'x'.repeat(9000),
+    });
+    await recordRenderer(null, { code: 'WINDOW_ERROR', stack: { frames: [] } });
+
+    expect(record.mock.calls[0][0].error.stack).toHaveLength(4000);
+    expect(record.mock.calls[1][0]).not.toHaveProperty('error');
   });
 
   it('returns a public projection without stack or session identifiers', async () => {

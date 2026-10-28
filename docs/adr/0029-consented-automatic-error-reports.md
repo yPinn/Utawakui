@@ -25,8 +25,16 @@ retention contract existed; this ADR is that contract for one narrow report.
 - **S1** reports on first occurrence: `UNCAUGHT_EXCEPTION`, fatal
   `RENDER_PROCESS_GONE`, `PRELOAD_FAILED`, `STARTUP_DEFERRED_MIGRATION_FAILED`.
 - **S2** reports only after three occurrences of the same fingerprint within
-  one hour: unhandled rejections, unresponsive or failed renderer loads, child
-  process exits, Vue and window errors, Output automatic start failures.
+  one hour: unhandled rejections, unresponsive or failed renderer loads,
+  abnormal child process exits, Vue and window errors, Output automatic start
+  failures.
+- Each listed code counts only from the process that owns it: renderer events
+  cannot raise main-process codes, and only unhandled rejections are accepted
+  from both. Lifecycle grades clean exits as `info` and killed／evicted exits
+  as `warning`; a child exit escalates only at `error`. Aborted main-frame
+  navigations (`ERR_ABORTED`) are not recorded.
+- Renderer Vue／window／rejection events carry a bounded stack; main redacts it
+  and rewrites bundle frames to `app:` so their fingerprints stay distinct.
 - Every other code, `info` and `debug` stays local. New codes are local until
   this table lists them.
 

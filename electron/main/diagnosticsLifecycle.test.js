@@ -99,7 +99,7 @@ describe('registerDiagnosticsLifecycle', () => {
       source: 'electron',
       operation: 'render-process-gone',
       code: 'RENDER_PROCESS_GONE',
-      message: 'Renderer process terminated unexpectedly',
+      message: 'Renderer process exited',
       context: { fatal: true, reason: 'crashed', exitCode: 9 },
     });
     expect(record).toHaveBeenNthCalledWith(2, {
@@ -108,7 +108,7 @@ describe('registerDiagnosticsLifecycle', () => {
       source: 'electron',
       operation: 'child-process-gone',
       code: 'CHILD_PROCESS_GONE',
-      message: 'Electron child process terminated unexpectedly',
+      message: 'Electron child process exited',
       context: {
         fatal: false,
         processType: 'GPU',
@@ -241,6 +241,54 @@ describe('registerDiagnosticsLifecycle', () => {
 
     expect(record).toHaveBeenCalledOnce();
     expect(record.mock.calls[0][0].context.fatal).toBe(false);
+  });
+
+  it('grades exits by reason so routine exits never count as errors', () => {
+    const { app, processTarget, record } = createTargets();
+    registerDiagnosticsLifecycle({
+      app,
+      processTarget,
+      service: { record },
+    });
+
+    const renderExit = (reason) =>
+      app.emit('render-process-gone', {}, {}, { reason, exitCode: 0 });
+    const childExit = (reason) =>
+      app.emit('child-process-gone', {}, { type: 'Utility', reason });
+    renderExit('clean-exit');
+    renderExit('killed');
+    renderExit('oom');
+    childExit('clean-exit');
+    childExit('memory-eviction');
+    childExit('abnormal-exit');
+
+    expect(record.mock.calls.map(([event]) => event.level)).toEqual([
+      'info',
+      'warning',
+      'error',
+      'info',
+      'warning',
+      'error',
+    ]);
+  });
+
+  it('skips aborted main-frame loads without recovering the renderer', () => {
+    const { app, processTarget, record } = createTargets();
+    const webContents = new EventEmitter();
+    const requestRendererRecovery = vi.fn();
+    registerDiagnosticsLifecycle({
+      app,
+      processTarget,
+      service: { record },
+      getMainWebContents: () => webContents,
+      requestRendererRecovery,
+    });
+    app.emit('web-contents-created', {}, webContents);
+
+    webContents.emit('did-fail-load', {}, -3, 'ERR_ABORTED', 'x', true);
+
+    expect(record).not.toHaveBeenCalled();
+    expect(requestRendererRecovery).not.toHaveBeenCalled();
   });
 
   it('does not recover companion renderers or nonfatal main exits', () => {

@@ -107,7 +107,13 @@ function relativizeAppPaths(text, appRoot) {
     (path.win32.isAbsolute(appRoot) || path.posix.isAbsolute(appRoot));
   if (!isAbsolute) return text;
   const forward = appRoot.replaceAll('\\', '/').replace(/\/+$/, '');
-  const roots = [`file:///${forward.replace(/^\//, '')}`, forward];
+  const fileRoot = forward.replace(/^\//, '');
+  // Renderer stacks carry the bundle as a percent-encoded file URL.
+  const roots = [
+    `file:///${encodeURI(fileRoot)}`,
+    `file:///${fileRoot}`,
+    forward,
+  ];
   if (appRoot.includes('\\')) roots.push(appRoot.replace(/\\+$/, ''));
   let result = text;
   for (const root of roots) {

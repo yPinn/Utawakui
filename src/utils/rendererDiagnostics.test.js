@@ -36,6 +36,7 @@ describe('installRendererDiagnostics', () => {
       code: 'VUE_UNHANDLED_ERROR',
       message: 'render failed',
       context: { errorName: 'Error', vueInfo: 'render function' },
+      stack: error.stack,
     });
   });
 
@@ -45,12 +46,14 @@ describe('installRendererDiagnostics', () => {
     const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
     installRendererDiagnostics({ app, windowTarget, recordDiagnostic });
 
+    const windowError = new TypeError('window failed');
+    const rejection = new Error('promise failed');
     windowTarget.emit('error', {
-      error: new TypeError('window failed'),
+      error: windowError,
       filename: 'C:\\private\\renderer.js',
     });
     windowTarget.emit('unhandledrejection', {
-      reason: new Error('promise failed'),
+      reason: rejection,
       promise: Promise.resolve(),
     });
 
@@ -61,6 +64,7 @@ describe('installRendererDiagnostics', () => {
       code: 'WINDOW_ERROR',
       message: 'window failed',
       context: { errorName: 'TypeError' },
+      stack: windowError.stack,
     });
     expect(recordDiagnostic).toHaveBeenNthCalledWith(2, {
       level: 'error',
@@ -69,7 +73,23 @@ describe('installRendererDiagnostics', () => {
       code: 'UNHANDLED_REJECTION',
       message: 'promise failed',
       context: { errorName: 'Error' },
+      stack: rejection.stack,
     });
+  });
+
+  it('omits the stack for non-error values and bounds long stacks', () => {
+    const app = { config: {} };
+    const windowTarget = createWindowTarget();
+    const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
+    installRendererDiagnostics({ app, windowTarget, recordDiagnostic });
+
+    windowTarget.emit('unhandledrejection', { reason: 'plain string' });
+    windowTarget.emit('unhandledrejection', {
+      reason: Object.assign(new Error('long'), { stack: 'x'.repeat(9000) }),
+    });
+
+    expect(recordDiagnostic.mock.calls[0][0]).not.toHaveProperty('stack');
+    expect(recordDiagnostic.mock.calls[1][0].stack).toHaveLength(4000);
   });
 
   it('swallows bridge failures and restores prior handlers during cleanup', async () => {

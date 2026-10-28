@@ -4,24 +4,37 @@ import severityModule from './severity.js';
 const { appFramesOf, classifyDiagnosticEvent, fingerprintOf } = severityModule;
 
 describe('auto report severity', () => {
+  const main = (code, level = 'error') => ({ level, process: 'main', code });
+  const renderer = (code) => ({ level: 'error', process: 'renderer', code });
+
   it('classifies listed codes and fails closed for everything else', () => {
-    expect(
-      classifyDiagnosticEvent({ level: 'error', code: 'UNCAUGHT_EXCEPTION' }),
-    ).toBe('S1');
-    expect(
-      classifyDiagnosticEvent({ level: 'error', code: 'UNHANDLED_REJECTION' }),
-    ).toBe('S2');
-    expect(
-      classifyDiagnosticEvent({ level: 'error', code: 'DOWNLOAD_FAILED' }),
-    ).toBe('S3');
-    expect(
-      classifyDiagnosticEvent({ level: 'info', code: 'UNCAUGHT_EXCEPTION' }),
-    ).toBe('S4');
+    expect(classifyDiagnosticEvent(main('UNCAUGHT_EXCEPTION'))).toBe('S1');
+    expect(classifyDiagnosticEvent(main('UNHANDLED_REJECTION'))).toBe('S2');
+    expect(classifyDiagnosticEvent(main('DOWNLOAD_FAILED'))).toBe('S3');
+    expect(classifyDiagnosticEvent(main('UNCAUGHT_EXCEPTION', 'info'))).toBe(
+      'S4',
+    );
+  });
+
+  it('counts each code only from the process that owns it', () => {
+    expect(classifyDiagnosticEvent(renderer('UNCAUGHT_EXCEPTION'))).toBe('S3');
+    expect(classifyDiagnosticEvent(renderer('PRELOAD_FAILED'))).toBe('S3');
+    expect(classifyDiagnosticEvent(main('VUE_UNHANDLED_ERROR'))).toBe('S3');
+    expect(classifyDiagnosticEvent(renderer('VUE_UNHANDLED_ERROR'))).toBe('S2');
+    expect(classifyDiagnosticEvent(renderer('UNHANDLED_REJECTION'))).toBe('S2');
+  });
+
+  it('escalates child exits only when lifecycle graded them as errors', () => {
+    expect(classifyDiagnosticEvent(main('CHILD_PROCESS_GONE'))).toBe('S2');
+    expect(classifyDiagnosticEvent(main('CHILD_PROCESS_GONE', 'warning'))).toBe(
+      'S3',
+    );
   });
 
   it('treats renderer exits as S1 only for fatal reasons', () => {
     const exit = (fatal) => ({
       level: 'error',
+      process: 'main',
       code: 'RENDER_PROCESS_GONE',
       context: { fatal },
     });

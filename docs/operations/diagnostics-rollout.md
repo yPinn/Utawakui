@@ -43,7 +43,7 @@ added to IPC for this workflow.
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `electron/lib/diagnostics.js`                               | Schema v1 normalization/redaction, JSONL persistence/recovery, 5 MiB per file plus five rotations, recent read, managed clear and fail-open results |
 | `electron/main.js`, `electron/main/diagnosticsLifecycle.js` | One service using `app.getPath('logs')`; fatal monitor and Electron lifecycle capture                                                               |
-| `src/utils/rendererDiagnostics.js`                          | Vue, browser error and unhandled-rejection capture through bounded intents                                                                          |
+| `src/utils/rendererDiagnostics.js`                          | Vue, browser error and unhandled-rejection capture through bounded intents, including a bounded stack that main redacts                             |
 | `electron/main/diagnosticsHandlers.js`                      | Renderer-write validation/rate limit, public recent-event projection, clear, open folder and export                                                 |
 | `electron/lib/diagnosticsExport.js`                         | Shape normalized service events into a support bundle; main owns the save destination and atomic write                                              |
 | `src/composables/useAppDiagnostics.js`                      | Bounded public errors in renderer memory; suppress re-forwarding when `diagnosticRecorded` is true                                                  |

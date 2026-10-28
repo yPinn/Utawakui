@@ -7,6 +7,7 @@ const DEFAULT_RECENT_LIMIT = 100;
 const MAX_RECENT_LIMIT = 500;
 const DEFAULT_RENDERER_EVENTS_PER_MINUTE = 120;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+const MAX_RENDERER_STACK_LENGTH = 4000;
 
 function boundedRecentLimit(value) {
   if (!Number.isInteger(value)) return DEFAULT_RECENT_LIMIT;
@@ -27,6 +28,11 @@ function rebuildRendererEvent(payload) {
     message: event.message,
     correlationId: event.correlationId,
     context: event.context,
+    // Only the stack string crosses; the service redacts it and rewrites
+    // bundle frames to app:<path> for local triage and report fingerprints.
+    ...(typeof event.stack === 'string' && event.stack
+      ? { error: { stack: event.stack.slice(0, MAX_RENDERER_STACK_LENGTH) } }
+      : {}),
   };
 }
 
