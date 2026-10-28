@@ -69,6 +69,7 @@ const {
   shiftLine,
   setLineStart,
   setLineEnd,
+  previewLineTiming,
   enableSegments,
   canEnableSegments,
   dependencies: timingDependencies,
@@ -160,6 +161,23 @@ const isEditingLocked = computed(
     state.timingSave.isSaving ||
     reviewBusy.value,
 );
+const waveformTimingDisabled = computed(() =>
+  Boolean(
+    state.isLoadingLyrics ||
+    state.timingSave.isSaving ||
+    reviewBusy.value ||
+    state.offsetSave.isSaving ||
+    state.offsetSave.error ||
+    !timingDraft.value ||
+    !timingSourceSession.value?.id ||
+    timingSourceSession.value.id !== lyricsTiming.value.sourceSession?.id,
+  ),
+);
+function setWaveformBoundary({ kind, value }) {
+  if (waveformTimingDisabled.value) return;
+  if (kind === 'start') setLineStart(value);
+  else if (kind === 'end') setLineEnd(value);
+}
 const editingHelp = computed(() => {
   if (hasEditingDraft.value)
     return '儲存或取消這行編輯後，可繼續選擇其他歌詞。';
@@ -477,6 +495,9 @@ async function confirmTimingReview() {
               ''
             "
             :draft-line="timingDraft"
+            :timing-disabled="waveformTimingDisabled"
+            :edit-context="lyricsTiming.sourceSession"
+            :preview-timing="previewLineTiming"
             :offset-ms="Math.round(state.offsetSeconds * 1000)"
             :position-ms="
               Number.isFinite(currentLyricsPositionMs)
@@ -484,6 +505,7 @@ async function confirmTimingReview() {
                   Math.round(state.offsetSeconds * 1000)
                 : null
             "
+            @set-boundary="setWaveformBoundary"
           />
           <LyricsTimingReviewTool
             v-if="lyrics.timingReview"

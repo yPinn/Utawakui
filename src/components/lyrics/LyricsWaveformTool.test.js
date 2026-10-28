@@ -138,6 +138,61 @@ afterEach(() => {
   app?.unmount();
   vi.unstubAllGlobals();
 });
+it('offers handles only for an unlocked active draft and emits one intent without panning or changing saved timing', async () => {
+  const instance = app._instance.subTree.component;
+  const line = { lineId: 'a', text: 'Phrase', startMs: 3000, endMs: 6000 };
+  const commits = vi.fn();
+  instance.vnode.props.onSetBoundary = commits;
+  instance.props.document = { lines: [line] };
+  instance.props.focusLineId = 'a';
+  instance.props.draftLine = line;
+  instance.props.previewTiming = (kind, value) => ({
+    ...line,
+    [kind === 'start' ? 'startMs' : 'endMs']: value,
+  });
+  await nextTick();
+  expect(vm.boundaryHandles).toEqual([]);
+  instance.props.timingDisabled = false;
+  await nextTick();
+  expect(vm.boundaryHandles.map((h) => h.kind)).toEqual(['start', 'end']);
+  const target = {
+    closest: () => ({ getBoundingClientRect: () => ({ width: 500 }) }),
+    setPointerCapture: vi.fn(),
+    hasPointerCapture: () => true,
+    releasePointerCapture: vi.fn(),
+  };
+  const event = (x) => ({
+    pointerId: 1,
+    button: 0,
+    clientX: x,
+    currentTarget: target,
+    preventDefault: vi.fn(),
+  });
+  vm.boundaryDrag.begin(event(100), 'start');
+  vm.boundaryDrag.move(event(125));
+  expect(vm.boundaryPreview.startMs).toBe(3500);
+  expect(instance.props.draftLine.startMs).toBe(3000);
+  const original = { ...vm.viewport };
+  vm.boundaryDrag.finish(event(125));
+  expect(commits).toHaveBeenCalledExactlyOnceWith({
+    kind: 'start',
+    value: 3500,
+  });
+  expect(vm.viewport).toEqual(original);
+  expect(instance.props.document.lines[0].startMs).toBe(3000);
+  vm.boundaryDrag.begin(event(100), 'start');
+  vm.boundaryDrag.move(event(125));
+  vm.resetPanelPosition(); // resize repositions the panel; a late release must not write timing
+  vm.boundaryDrag.finish(event(125));
+  expect(commits).toHaveBeenCalledOnce();
+  vm.boundaryDrag.begin(event(100), 'start');
+  vm.boundaryDrag.move(event(125));
+  state.owner.overview.value = null; // media invalidation cancels the gesture synchronously
+  vm.boundaryDrag.finish(event(125));
+  expect(commits).toHaveBeenCalledOnce();
+  expect(vm.boundaryPreview).toBeNull();
+  expect(vm.boundaryHandles).toEqual([]);
+});
 it('moves a persistent reference panel by pointer or keyboard within the viewport and resets on closure', async () => {
   let left = 255,
     top = 286;

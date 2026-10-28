@@ -829,6 +829,7 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
         selectedLyrics: ref({ status: 'available', sources: [source] }),
         selectedSource: selectedSourceRef,
         lyricsDocument: lyricsDocumentRef,
+        lyricsTiming: ref({ sourceSession: null }),
         lyricsTextProcessing: {
           candidates: ref([]),
           hiddenLineIds: ref([]),

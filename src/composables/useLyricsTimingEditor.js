@@ -101,6 +101,21 @@ function changeLine(kind, value) {
     : '';
   return result.document ? replaceDocument(result.document) : false;
 }
+// Gesture previews use the same complete-document validation without changing
+// the draft, validation message, inferred dependencies or undo history.
+function previewLineTiming(kind, value) {
+  if (!draft.value || !['start', 'end'].includes(kind)) return null;
+  const result = editLineTiming(
+    draftDocument.value,
+    activeLineId.value,
+    kind,
+    value,
+  );
+  return (
+    result.document?.lines.find((line) => line.lineId === activeLineId.value) ??
+    (result.reason === null ? draft.value : null)
+  );
+}
 function enableSegments() {
   if (!canEnableSegments.value) return false;
   const segments = timingSegmentsFor(draft.value, readingSuggestion.value);
@@ -188,6 +203,7 @@ export function useLyricsTimingEditor() {
     beginLine,
     enableSegments,
     shiftLine: (deltaMs) => changeLine('move', deltaMs),
+    previewLineTiming,
     setLineStart: (positionMs) => changeLine('start', positionMs),
     setLineEnd: (positionMs) => changeLine('end', positionMs),
     tapBoundary,

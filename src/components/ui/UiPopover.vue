@@ -27,6 +27,7 @@ const props = defineProps({
   focusOnOpen: { type: Boolean, default: false },
   closeOnScroll: { type: Boolean, default: true },
   closeOnOutsidePointer: { type: Boolean, default: true },
+  closeOnEscape: { type: Boolean, default: true },
   ariaLabel: { type: String, required: true },
   placement: {
     type: String,
@@ -121,6 +122,7 @@ function handleOutsidePointer(event) {
 function handleKeydown(event) {
   if (
     !props.open ||
+    !props.closeOnEscape ||
     event.key !== 'Escape' ||
     isRelatedFloatingSurface(event.target) ||
     (panelRef.value?.contains(event.target) &&

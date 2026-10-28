@@ -54,6 +54,17 @@ function setup(closeOnScroll, closeOnOutsidePointer) {
 }
 
 describe('Popover dismissal policy', () => {
+  it('lets a child gesture own Escape while explicitly suspended, then restores dismissal', async () => {
+    const { close, app: mounted } = setup(false, false);
+    await nextTick();
+    const instance = mounted._instance.subTree.component;
+    instance.props.closeOnEscape = false;
+    events.get('keydown')({ key: 'Escape', target: hostNode('handle') });
+    expect(close).not.toHaveBeenCalled();
+    instance.props.closeOnEscape = true;
+    events.get('keydown')({ key: 'Escape', target: hostNode('handle') });
+    expect(close).toHaveBeenCalledWith('escape');
+  });
   it('keeps reference tools open on outside pointer while retaining Escape', async () => {
     const { close } = setup(false, false);
     await nextTick();

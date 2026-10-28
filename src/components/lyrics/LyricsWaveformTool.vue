@@ -26,6 +26,8 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import UiButton from '../ui/UiButton.vue';
+import { useLyricsWaveformBoundaryDrag } from '../../composables/lyrics/useLyricsWaveformBoundaryDrag.js';
 import { useLyricsWaveform } from '../../composables/lyrics/useLyricsWaveform.js';
 import { useLyricsWaveformViewport } from '../../composables/lyrics/useLyricsWaveformViewport.js';
 import { useLyricsWaveformClock } from '../../composables/lyrics/useLyricsWaveformClock.js';
@@ -42,11 +44,15 @@ const props = defineProps({
   document: { type: Object, default: null },
   focusLineId: { type: String, default: '' },
   draftLine: { type: Object, default: null },
+  timingDisabled: { type: Boolean, default: true },
+  editContext: { type: Object, default: null },
+  previewTiming: { type: Function, default: null },
   offsetMs: { type: Number, default: 0 },
   positionMs: { type: Number, default: null },
   isPlaying: { type: Boolean, default: false },
   samplePlaybackClock: { type: Function, default: null },
 });
+const emit = defineEmits(['set-boundary']);
 const waveform = useLyricsWaveform({
   trackId: () => props.trackId,
   sourceKey: () => props.sourceKey,
@@ -87,6 +93,7 @@ const menuOpen = shallowRef(false),
 const clipId = `waveform-${useId().replaceAll(':', '')}`;
 let panelDrag = null;
 function resetPanelPosition() {
+  boundaryDrag.cancel();
   panelDrag = null;
   panelOffset.value = { x: 0, y: 0 };
 }
@@ -156,6 +163,39 @@ const fromMs = computed(() => viewport.value.fromMs);
 const toMs = computed(() => viewport.value.toMs);
 const controlsUnavailable = computed(() => clearing.value || !overview.value);
 const durationMs = computed(() => (overview.value?.durationSec ?? 0) * 1000);
+const boundaryEditing = computed(() =>
+  Boolean(
+    open.value &&
+    referenceActive.value &&
+    overview.value &&
+    !clearing.value &&
+    !props.timingDisabled &&
+    props.draftLine &&
+    props.previewTiming,
+  ),
+);
+const boundaryDrag = useLyricsWaveformBoundaryDrag({
+  enabled: boundaryEditing,
+  context: computed(() => [
+    props.trackId,
+    props.sourceKey,
+    props.document,
+    props.editContext,
+    overview.value,
+  ]),
+  draft: () => props.draftLine,
+  viewport,
+  durationMs,
+  offsetMs: () => props.offsetMs,
+  preview: (kind, value) => props.previewTiming?.(kind, value),
+  commit: (kind, value) => emit('set-boundary', { kind, value }),
+  freeze: () => setFollowing(false),
+});
+const {
+  previewLine: boundaryPreview,
+  invalid: boundaryInvalid,
+  active: boundaryDragging,
+} = boundaryDrag;
 const overviewBox = computed(() =>
   durationMs.value > 0
     ? {
@@ -272,7 +312,7 @@ const lineFocus = computed(() =>
   waveformLineFocus(
     props.document,
     props.focusLineId,
-    props.draftLine,
+    boundaryPreview.value ?? props.draftLine,
     props.offsetMs,
     (overview.value?.durationSec ?? 0) * 1000,
     viewport.value,
@@ -287,6 +327,32 @@ const focusRegions = computed(() => {
 });
 const focusedRange = computed(
   () => lineFocus.value?.draft ?? lineFocus.value?.saved,
+);
+const boundaryHandles = computed(() =>
+  boundaryEditing.value
+    ? ['start', 'end'].flatMap((kind) => {
+        // Keep hit targets at the unchanged draft endpoints during a preview:
+        // pointer capture owns the gesture; the solid range shows its candidate.
+        const value = props.draftLine[kind === 'start' ? 'startMs' : 'endMs'];
+        const media = value - props.offsetMs;
+        if (
+          !Number.isSafeInteger(value) ||
+          media < fromMs.value ||
+          media > toMs.value ||
+          media < 0 ||
+          media > durationMs.value ||
+          toMs.value <= fromMs.value
+        )
+          return [];
+        return [
+          {
+            kind,
+            label: kind === 'start' ? '句首' : '句尾',
+            left: `clamp(0px, calc(${((media - fromMs.value) / (toMs.value - fromMs.value)) * 100}% - 12px), calc(100% - 24px))`,
+          },
+        ];
+      })
+    : [],
 );
 const hasFocusedRegion = computed(
   () => focusedRange.value?.x !== null && (focusedRange.value?.width ?? 0) > 0,
@@ -365,6 +431,7 @@ const statusLabel = computed(() =>
 );
 const noticeLabel = computed(
   () =>
+    (boundaryInvalid.value ? '此落點超出媒體或破壞句級範圍，未套用。' : '') ||
     (previewPath.value
       ? status.value === 'loading'
         ? '概覽預覽，正在讀取細節…'
@@ -390,6 +457,7 @@ const noticeLabel = computed(
     focus-on-open
     :close-on-scroll="false"
     :close-on-outside-pointer="false"
+    :close-on-escape="!boundaryDragging"
     :panel-style="{
       width: 'min(32rem, calc(100vw - 2rem))',
       translate: `${panelOffset.x}px ${panelOffset.y}px`,
@@ -605,7 +673,7 @@ const noticeLabel = computed(
                 ? `${rangeLabel} 原音訊峰值、能量與句級範圍`
                 : '原音訊波形，尚無可用摘要'
             "
-            aria-description="可左右拖移瀏覽，不修改播放位置或句級時間。"
+            aria-description="拖移波形可瀏覽；編輯中以起／迄把手調整草稿，不修改播放位置。"
             :class="{ 'lyrics-waveform__dragging': dragKind === 'detail' }"
             @pointerdown="startDrag($event, 'detail')"
             @pointermove="moveDrag"
@@ -736,6 +804,25 @@ const noticeLabel = computed(
               class="lyrics-waveform__cursor-head"
             />
           </svg>
+          <UiButton
+            v-for="handle in boundaryHandles"
+            :key="handle.kind"
+            variant="accent"
+            class="lyrics-waveform__boundary"
+            :class="`lyrics-waveform__boundary--${handle.kind}`"
+            :style="{ left: handle.left }"
+            :aria-label="`拖曳${handle.label}`"
+            :title="
+              boundaryDragging ? '' : `${handle.label}：拖曳或左右鍵微調 0.1 秒`
+            "
+            @pointerdown.stop="boundaryDrag.begin($event, handle.kind)"
+            @pointermove.stop="boundaryDrag.move"
+            @pointerup.stop="boundaryDrag.finish"
+            @pointercancel.stop="boundaryDrag.cancel"
+            @lostpointercapture.stop="boundaryDrag.cancel"
+            @keydown="boundaryDrag.key($event, handle.kind)"
+            >{{ handle.kind === 'start' ? '起' : '迄' }}</UiButton
+          >
         </div>
         <div class="lyrics-waveform__notice">
           <UiTooltip :text="noticeLabel" :disabled="!noticeLabel">
@@ -896,6 +983,24 @@ const noticeLabel = computed(
 .lyrics-waveform__canvas {
   position: relative;
   block-size: 7rem;
+}
+.lyrics-waveform__canvas .lyrics-waveform__boundary {
+  position: absolute;
+  inline-size: 24px;
+  min-block-size: 24px;
+  block-size: 24px;
+  padding: 0;
+  justify-content: center;
+  cursor: ew-resize;
+  touch-action: none;
+  user-select: none;
+  font-size: var(--ui-type-caption-size);
+}
+.lyrics-waveform__boundary--start {
+  top: 0;
+}
+.lyrics-waveform__boundary--end {
+  bottom: 0;
 }
 .lyrics-waveform__notice {
   block-size: 2rem;
