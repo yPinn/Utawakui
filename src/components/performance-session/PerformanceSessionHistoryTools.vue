@@ -310,7 +310,7 @@ async function archive() {
   outline-offset: var(--ui-focus-offset-inset);
 }
 .session-history-tools__archives {
-  --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);
+  --ui-sidebar-row-selected-background: var(--ui-color-surface-active);
   --ui-playlist-row-state-surface-outset-inline: var(
     --ui-right-dock-track-row-state-surface-outset-inline
   );

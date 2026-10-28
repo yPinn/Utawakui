@@ -181,8 +181,8 @@ describe('UiColorField', () => {
     for (const token of [
       '--ui-control-height',
       '--ui-field-border',
-      '--ui-field-bg',
-      '--ui-field-fg',
+      '--ui-field-background',
+      '--ui-field-foreground',
       '--ui-field-radius',
       '--ui-field-hex-value-inline-size',
       '--ui-field-font-size',

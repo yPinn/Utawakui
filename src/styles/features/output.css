@@ -3,10 +3,10 @@
      token system. Keep these values stable while v1 and v2 surfaces coexist. */
   /* Measured with both modes: below 14rem segmented labels clip. The upper
      bound is a workspace policy, additionally limited by the main minimum. */
-  --ui-output-side-width-min: 14rem;
+  --ui-output-side-min-width: 14rem;
   --ui-output-side-width-default: 18rem;
-  --ui-output-side-width-max: 24rem;
-  --ui-output-main-width-min: 16rem;
+  --ui-output-side-max-width: 24rem;
+  --ui-output-main-min-width: 16rem;
   /* Display-space cells: the full checker tile contains two cells. */
   --ui-output-preview-checker-cell: 8px;
   --ui-output-preview-checker-tile: calc(
@@ -24,7 +24,7 @@
   --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
   --ui-output-range-value-width: 3.5rem; /* stable numeric lane; slider consumes the remaining width */
-  --ui-output-setting-label-width-min: 4rem; /* compact setting label column */
+  --ui-output-setting-label-min-width: 4rem; /* compact setting label column */
 
   /* Representative full-strength Look swatches for the control-panel picker.
      These preview the bounded Output palettes without importing Overlay tokens. */

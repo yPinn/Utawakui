@@ -46,13 +46,13 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
   });
   it('defines semantic field surfaces for controls nested on a raised Candidate shell', () => {
     expect(tokenSource).toContain(
-      '--ui-field-bg-on-raised: var(--ui-color-surface)',
+      '--ui-field-background-on-raised: var(--ui-color-surface)',
     );
     expect(tokenSource).toContain(
-      '--ui-field-bg-hover-on-raised: var(--ui-color-surface-hover)',
+      '--ui-field-background-hover-on-raised: var(--ui-color-surface-hover)',
     );
     expect(tokenSource).toContain(
-      '--ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised)',
+      '--ui-field-background-readonly-on-raised: var(--ui-color-surface-raised)',
     );
   });
 });

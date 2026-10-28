@@ -201,9 +201,9 @@ onBeforeUnmount(() => {
 .demo-candidate-modal {
   --demo-candidate-modal-inline-size: var(--ui-modal-inline-size-medium);
   --demo-candidate-modal-max-block-size: var(--ui-modal-max-block-size-medium);
-  --ui-field-bg: var(--ui-field-bg-on-raised);
-  --ui-field-bg-hover: var(--ui-field-bg-hover-on-raised);
-  --ui-field-bg-readonly: var(--ui-field-bg-readonly-on-raised);
+  --ui-field-background: var(--ui-field-background-on-raised);
+  --ui-field-background-hover: var(--ui-field-background-hover-on-raised);
+  --ui-field-background-readonly: var(--ui-field-background-readonly-on-raised);
 
   position: fixed;
   inset: 0;

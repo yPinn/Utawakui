@@ -141,7 +141,7 @@ describe('feedback content and tone recovery', () => {
         .split(' ')
         .includes('ui-chip'),
     )[0];
-    expect(chip.props.style['--ui-chip-bg']).toBeUndefined();
+    expect(chip.props.style['--ui-chip-background']).toBeUndefined();
     expect(chip.props.style['--ui-chip-color']).toBeUndefined();
     expect(String(chip.props.class)).toContain('ui-chip--info');
     expect(textContent(chip)).toBe('短');
@@ -190,7 +190,9 @@ describe('feedback content and tone recovery', () => {
       ).toContain('overflow-wrap: anywhere');
     const chip = readFileSync(new URL('./UiChip.vue', import.meta.url), 'utf8');
     expect(chip).toContain('text-overflow: ellipsis');
-    expect(chip).toContain('--ui-chip-tone-bg: var(--ui-color-info-soft)');
+    expect(chip).toContain(
+      '--ui-chip-tone-background: var(--ui-color-info-soft)',
+    );
     expect(chip).toMatch(
       /\.ui-chip--accent\s*\{[^}]*--ui-chip-tone-color:\s*var\(--ui-color-text\);/su,
     );

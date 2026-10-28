@@ -778,14 +778,14 @@ describe('UiCombobox', () => {
 
     for (const token of [
       '--ui-field-height',
-      '--ui-field-bg',
+      '--ui-field-background',
       '--ui-field-border',
       '--ui-color-focus',
       '--ui-focus-width',
       '--ui-z-popover',
       '--ui-floating-viewport-inset',
       '--ui-floating-row-min-height',
-      '--ui-floating-list-bg',
+      '--ui-floating-list-background',
       '--ui-floating-list-shadow',
       '--ui-opacity-disabled',
     ]) {

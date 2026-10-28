@@ -121,7 +121,7 @@ defineExpose({ focus });
   padding-inline-end: var(--ui-field-padding-inline);
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
+  background: var(--ui-field-background);
   color: var(--ui-color-text-muted);
 }
 
@@ -165,7 +165,7 @@ defineExpose({ focus });
   outline: 0;
   padding: 0;
   background: transparent;
-  color: var(--ui-field-fg);
+  color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
   font-weight: var(--ui-field-font-weight);

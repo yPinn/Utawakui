@@ -666,7 +666,7 @@ function coverageFor(layer, state, index) {
 
 .demo-field-state[data-field-state='hover'] :deep(.ui-text-field) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-field-state[data-field-state='focus'] :deep(.ui-text-field) {
@@ -691,7 +691,7 @@ function coverageFor(layer, state, index) {
 .demo-field-layer--candidate
   .demo-field-state[data-field-state='readonly']
   :deep(.ui-text-field:read-only) {
-  background: var(--ui-field-bg-readonly);
+  background: var(--ui-field-background-readonly);
   border-color: var(--ui-field-border);
 }
 

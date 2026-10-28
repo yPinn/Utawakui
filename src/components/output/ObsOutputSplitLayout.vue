@@ -88,10 +88,10 @@ function measure() {
   };
   const values = {
     width: node.clientWidth,
-    min: length('--ui-output-side-width-min'),
+    min: length('--ui-output-side-min-width'),
     default: length('--ui-output-side-width-default'),
-    max: length('--ui-output-side-width-max'),
-    main: length('--ui-output-main-width-min'),
+    max: length('--ui-output-side-max-width'),
+    main: length('--ui-output-main-min-width'),
     gap: length('--ui-output-split-gap'),
   };
   if (Object.values(values).every(Number.isFinite)) geometry.value = values;
@@ -254,12 +254,12 @@ onBeforeUnmount(() => {
     minmax(0, 1fr)
     var(--ui-output-split-gap)
     clamp(
-      var(--ui-output-side-width-min),
+      var(--ui-output-side-min-width),
       var(--ui-output-side-width, var(--ui-output-side-width-default)),
       min(
-        var(--ui-output-side-width-max),
+        var(--ui-output-side-max-width),
         calc(
-          100cqw - var(--ui-output-split-gap) - var(--ui-output-main-width-min)
+          100cqw - var(--ui-output-split-gap) - var(--ui-output-main-min-width)
         )
       )
     );

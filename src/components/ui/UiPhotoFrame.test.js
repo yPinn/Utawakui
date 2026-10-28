@@ -25,7 +25,7 @@ describe('UiPhotoFrame', () => {
     expect(html).toContain('src="/photo.jpg"');
     expect(html).toContain('alt="頁面照片"');
     expect(source).toMatch(
-      /\.ui-photo-frame\s*\{[^}]*padding:\s*var\(--ui-photo-frame-padding\);[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-photo-frame-border-color\);[^}]*background-color:\s*var\(--ui-photo-frame-bg\);[^}]*box-shadow:\s*var\(--ui-photo-frame-shadow\);/su,
+      /\.ui-photo-frame\s*\{[^}]*padding:\s*var\(--ui-photo-frame-padding\);[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-photo-frame-border-color\);[^}]*background-color:\s*var\(--ui-photo-frame-background\);[^}]*box-shadow:\s*var\(--ui-photo-frame-shadow\);/su,
     );
     expect(source).not.toMatch(/#[\da-f]{3,8}\b/iu);
   });

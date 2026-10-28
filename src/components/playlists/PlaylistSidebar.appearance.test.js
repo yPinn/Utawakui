@@ -247,7 +247,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
     expect(
       tokens.match(
-        /--ui-sidebar-row-selected-bg: var\(--ui-color-surface-active\);/gu,
+        /--ui-sidebar-row-selected-background: var\(--ui-color-surface-active\);/gu,
       ),
     ).toHaveLength(2);
     expect(source).not.toContain('--ui-playlist-navigation-active-indicator');
@@ -270,7 +270,9 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
       expect(css).toContain(
         'outline: var(--ui-focus-width) solid var(--ui-color-focus);',
       );
-      expect(css).toContain('background: var(--ui-sidebar-row-selected-bg);');
+      expect(css).toContain(
+        'background: var(--ui-sidebar-row-selected-background);',
+      );
     }
   });
 

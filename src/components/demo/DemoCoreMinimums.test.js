@@ -182,7 +182,7 @@ describe('DemoCoreMinimums', () => {
 
     expect(iconButtonSource).toContain('--ui-icon-button-size-override');
     expect(iconButtonSource).toContain('var(--ui-icon-button-size-md)');
-    expect(iconButtonSource).toContain('min-width: var(--ui-icon-btn-size)');
+    expect(iconButtonSource).toContain('min-width: var(--ui-icon-button-size)');
     expect(checkboxSource).toContain('width: var(--ui-checkbox-size)');
     expect(rangeControlSource).toContain('width: var(--ui-range-thumb-size)');
     expect(trackRowSource).toContain(

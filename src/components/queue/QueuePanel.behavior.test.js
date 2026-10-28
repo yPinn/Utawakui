@@ -211,7 +211,7 @@ describe('QueuePanel shared Dock content', () => {
       /\.ui-track--state-surface:not\(\.ui-track--active\):hover::before,[\s\S]*?background:\s*var\(--ui-color-surface-hover\);/u,
     );
     expect(trackRowSource).toMatch(
-      /\.ui-track--active::before\s*\{[^}]*background:\s*var\(--ui-track-row-selected-surface\);/su,
+      /\.ui-track--active::before\s*\{[^}]*background:\s*var\(--ui-track-row-selected-background\);/su,
     );
     expect(trackRowSource).not.toContain('--ui-row-active-shadow');
     expect(trackRowSource).not.toContain('--ui-track-row-active-shadow');

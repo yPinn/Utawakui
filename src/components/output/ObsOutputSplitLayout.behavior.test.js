@@ -40,10 +40,10 @@ beforeEach(() => {
     cancelAnimationFrame: vi.fn(),
   });
   const values = {
-    '--ui-output-side-width-min': '14rem',
+    '--ui-output-side-min-width': '14rem',
     '--ui-output-side-width-default': '18rem',
-    '--ui-output-side-width-max': '24rem',
-    '--ui-output-main-width-min': '16rem',
+    '--ui-output-side-max-width': '24rem',
+    '--ui-output-main-min-width': '16rem',
     '--ui-output-split-gap': '0.75rem',
   };
   vi.stubGlobal('getComputedStyle', () => ({

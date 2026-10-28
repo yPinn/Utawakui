@@ -44,7 +44,7 @@ defineProps({
 }
 
 .ui-button-group--raised {
-  background: var(--ui-button-group-bg-raised);
+  background: var(--ui-button-group-background-raised);
   box-shadow: var(--ui-button-group-shadow-raised);
 }
 

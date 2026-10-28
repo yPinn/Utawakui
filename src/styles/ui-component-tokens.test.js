@@ -15,9 +15,9 @@ const fieldTokens = [
   '--ui-field-padding-block',
   '--ui-field-padding-inline',
   '--ui-field-radius',
-  '--ui-field-bg',
-  '--ui-field-bg-hover',
-  '--ui-field-fg',
+  '--ui-field-background',
+  '--ui-field-background-hover',
+  '--ui-field-foreground',
   '--ui-field-placeholder',
   '--ui-field-border',
   '--ui-field-border-hover',
@@ -330,7 +330,7 @@ describe('shared UI component token contract', () => {
   it('defines one floating-list and row recipe for menus and listboxes', () => {
     const values = declarations(tokens);
 
-    expect(values.get('--ui-floating-list-bg')).toBe(
+    expect(values.get('--ui-floating-list-background')).toBe(
       'var(--ui-color-surface-raised)',
     );
     expect(values.get('--ui-floating-list-border')).toBe(
@@ -368,12 +368,12 @@ describe('shared UI component token contract', () => {
     const values = declarations(tokens);
     const folderArtifact = componentSource('UiFolderArtifact.vue');
 
-    expect(values.get('--ui-photo-frame-archival-bg')).toBe(
+    expect(values.get('--ui-photo-frame-archival-background')).toBe(
       'var(--ui-palette-neutral-950)',
     );
-    expect(values.get('--ui-photo-frame-archival-border-color')).toBe(
-      'var(--ui-photo-frame-archival-bg)',
-    );
+    expect(
+      normalizedValue(values.get('--ui-photo-frame-archival-border-color')),
+    ).toBe('var(--ui-photo-frame-archival-background)');
     expect(folderArtifact).not.toContain('--ui-palette-');
   });
 

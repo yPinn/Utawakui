@@ -33,7 +33,7 @@ describe('UiCombobox appearance contract', () => {
       /\.ui-combobox__native\s*\{[^}]*border-radius:\s*var\(--ui-field-radius\);/s,
     );
     expect(source).toMatch(
-      /\.ui-combobox__listbox\s*\{[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-floating-list-border\);[^}]*border-radius:\s*var\(--ui-floating-list-radius\);[^}]*background:\s*var\(--ui-floating-list-bg\);[^}]*box-shadow:\s*var\(--ui-floating-list-shadow\);/s,
+      /\.ui-combobox__listbox\s*\{[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-floating-list-border\);[^}]*border-radius:\s*var\(--ui-floating-list-radius\);[^}]*background:\s*var\(--ui-floating-list-background\);[^}]*box-shadow:\s*var\(--ui-floating-list-shadow\);/s,
     );
   });
 

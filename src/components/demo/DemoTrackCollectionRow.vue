@@ -313,7 +313,7 @@ function handleDrop(event) {
 }
 
 .demo-track-collection-row--selected {
-  background: var(--ui-track-row-selected-surface);
+  background: var(--ui-track-row-selected-background);
 }
 
 .demo-track-collection-row--current .demo-track-collection-row__title {

@@ -411,9 +411,9 @@ onUnmounted(() => {
   --ui-modal-inline-size: var(--ui-modal-inline-size-small);
   --ui-modal-max-block-size: var(--ui-modal-max-block-size-small);
   --ui-modal-focus-safe-inset: var(--ui-focus-safe-inset);
-  --ui-field-bg: var(--ui-field-bg-on-raised);
-  --ui-field-bg-hover: var(--ui-field-bg-hover-on-raised);
-  --ui-field-bg-readonly: var(--ui-field-bg-readonly-on-raised);
+  --ui-field-background: var(--ui-field-background-on-raised);
+  --ui-field-background-hover: var(--ui-field-background-hover-on-raised);
+  --ui-field-background-readonly: var(--ui-field-background-readonly-on-raised);
 
   box-sizing: border-box;
   container-type: inline-size;
@@ -516,9 +516,9 @@ onUnmounted(() => {
   --ui-modal-content-inset: var(--ui-space-6);
   --ui-modal-section-gap: var(--ui-space-5);
   --ui-modal-footer-inset-block: var(--ui-space-4);
-  --ui-field-bg: var(--ui-color-surface-raised);
-  --ui-field-bg-hover: var(--ui-color-surface-hover);
-  --ui-field-bg-readonly: var(--ui-color-surface);
+  --ui-field-background: var(--ui-color-surface-raised);
+  --ui-field-background-hover: var(--ui-color-surface-hover);
+  --ui-field-background-readonly: var(--ui-color-surface);
 
   background: var(--ui-color-surface);
   border-radius: var(--ui-radius-xs);

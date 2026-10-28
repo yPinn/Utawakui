@@ -94,8 +94,8 @@ defineExpose({ focus });
   resize: vertical;
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
-  color: var(--ui-field-fg);
+  background: var(--ui-field-background);
+  color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-textarea-font-size);
   font-weight: var(--ui-textarea-font-weight);
@@ -111,7 +111,7 @@ defineExpose({ focus });
 
 .ui-textarea:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .ui-textarea::placeholder {

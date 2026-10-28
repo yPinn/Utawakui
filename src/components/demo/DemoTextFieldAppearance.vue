@@ -783,7 +783,7 @@ function coverageFor(layer, state) {
   .demo-text-field-state[data-text-field-state='hover']
   :deep(.ui-text-field) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-text-field-layer--candidate
@@ -809,7 +809,7 @@ function coverageFor(layer, state) {
 .demo-text-field-layer--candidate
   .demo-text-field-state[data-text-field-state='readonly']
   :deep(.ui-text-field) {
-  background: var(--ui-field-bg-readonly);
+  background: var(--ui-field-background-readonly);
   border-color: var(--ui-field-border);
 }
 

@@ -97,6 +97,7 @@ function openAlbum() {
 <style scoped>
 .track-context-hero {
   min-inline-size: 0;
+  max-inline-size: var(--ui-right-dock-hero-max-inline-size, 100%);
   aspect-ratio: 1;
   /* Shapes the shadow only; the artwork thumb is the single radius clip. */
   border-radius: var(--ui-radius-lg);

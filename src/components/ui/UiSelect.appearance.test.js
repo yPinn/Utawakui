@@ -13,12 +13,12 @@ const css = compileStyle({
 describe('UiSelect native popup surface', () => {
   it('gives options and groups an independent floating surface after scoped compilation', () => {
     expect(css).toMatch(
-      /\.ui-select option\[data-v-select-test\],[\s\S]*?\.ui-select optgroup\[data-v-select-test\]\s*\{\s*background-color:\s*var\(--ui-floating-list-bg\);/u,
+      /\.ui-select option\[data-v-select-test\],[\s\S]*?\.ui-select optgroup\[data-v-select-test\]\s*\{\s*background-color:\s*var\(--ui-floating-list-background\);/u,
     );
   });
 
   it('keeps field hover and native option highlight as separate owners', () => {
-    expect(source).toContain('background: var(--ui-field-bg-hover)');
+    expect(source).toContain('background: var(--ui-field-background-hover)');
     expect(source).not.toMatch(
       /option:(?:hover|checked)|optgroup:(?:hover|checked)/u,
     );

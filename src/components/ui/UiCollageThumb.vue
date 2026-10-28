@@ -60,7 +60,7 @@ const singleIconSize = computed(() =>
       width: `${size}px`,
       height: `${size}px`,
       '--ui-collage-thumb-radius': radius,
-      '--ui-collage-thumb-bg': background,
+      '--ui-collage-thumb-background': background,
       '--ui-collage-thumb-color': color,
       '--ui-collage-thumb-font-size': `${Math.max(8, Math.round(size / 5))}px`,
       '--ui-collage-thumb-transform': uppercase ? 'uppercase' : 'none',
@@ -143,7 +143,7 @@ const singleIconSize = computed(() =>
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
-  background: var(--ui-collage-thumb-bg, var(--ui-color-canvas));
+  background: var(--ui-collage-thumb-background, var(--ui-color-canvas));
 }
 
 /* No artwork: the hairline ring is the edge itself, so it follows the radius
@@ -196,7 +196,7 @@ const singleIconSize = computed(() =>
   align-items: center;
   justify-content: center;
   min-width: 0;
-  background: var(--ui-collage-thumb-bg, var(--ui-color-surface-hover));
+  background: var(--ui-collage-thumb-background, var(--ui-color-surface-hover));
   font-size: var(--ui-collage-thumb-font-size);
   font-weight: var(--ui-type-label-weight);
   text-transform: var(--ui-collage-thumb-transform, uppercase);
@@ -210,7 +210,7 @@ const singleIconSize = computed(() =>
    custom-property trap. */
 .ui-collage-thumb__cell:nth-child(2),
 .ui-collage-thumb__cell:nth-child(3) {
-  background: var(--ui-collage-thumb-bg, var(--ui-color-surface));
+  background: var(--ui-collage-thumb-background, var(--ui-color-surface));
   opacity: var(--ui-opacity-muted);
 }
 

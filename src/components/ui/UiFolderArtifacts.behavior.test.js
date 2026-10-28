@@ -387,13 +387,13 @@ describe('UiFolderArtifact', () => {
     expect(artifactSource).not.toContain('opacity: 0.');
     expect(artifactSource).not.toContain('backdrop-filter');
     expect(activeTokensSource).toMatch(
-      /--ui-folder-artifact-note-bg:\s*color-mix\([\s\S]*?var\(--ui-color-accent-soft\)/u,
+      /--ui-folder-artifact-note-background:\s*color-mix\([\s\S]*?var\(--ui-color-accent-soft\)/u,
     );
     expect(activeTokensSource).toContain(
       '--ui-folder-artifact-note-opacity: 84%;',
     );
     expect(artifactSource).toMatch(
-      /\.ui-folder-artifact--note\.ui-folder-artifact--translucent\s*\{[^}]*color-mix\([\s\S]*?var\(--ui-folder-artifact-note-paper, var\(--ui-folder-artifact-note-bg\)\)[\s\S]*?var\(--ui-folder-artifact-note-opacity\)/u,
+      /\.ui-folder-artifact--note\.ui-folder-artifact--translucent\s*\{[^}]*color-mix\([\s\S]*?var\(\s*--ui-folder-artifact-note-paper,\s*var\(--ui-folder-artifact-note-background\)\s*\)[\s\S]*?var\(--ui-folder-artifact-note-opacity\)/u,
     );
   });
 
@@ -559,11 +559,11 @@ describe('UiFolderArtifact', () => {
     );
     for (const tokensSource of [activeTokensSource, v2TokensSource]) {
       expect(tokensSource).toMatch(
-        /--ui-folder-artifact-photo-bg-back:\s*color-mix\(\s*in srgb,\s*var\(--ui-photo-frame-bg\) 90%,\s*var\(--ui-color-canvas\)\s*\);/u,
+        /--ui-folder-artifact-photo-background-back:\s*color-mix\(\s*in srgb,\s*var\(--ui-photo-frame-background\) 90%,\s*var\(--ui-color-canvas\)\s*\);/u,
       );
     }
     expect(artifactSource).toMatch(
-      /\.ui-folder-artifact__stack-layer--back\s*\{[^}]*background-color:\s*var\(--ui-folder-artifact-photo-bg-back\);/su,
+      /\.ui-folder-artifact__stack-layer--back\s*\{[^}]*background-color:\s*var\(--ui-folder-artifact-photo-background-back\);/su,
     );
     // Rotated front layer must stay inside the measured artifact box.
     expect(artifactSource).toMatch(
@@ -638,7 +638,7 @@ describe('UiFolderArtifact', () => {
       ),
     );
     expect(rule).toMatch(
-      /^[^}]*--ui-photo-frame-bg: var\(--ui-photo-frame-archival-bg\);/u,
+      /^[^}]*--ui-photo-frame-background: var\(--ui-photo-frame-archival-background\);/u,
     );
     expect(rule).toMatch(
       /^[^}]*--ui-photo-frame-border-color: var\(--ui-photo-frame-archival-border-color\);/u,

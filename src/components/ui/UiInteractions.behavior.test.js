@@ -67,7 +67,7 @@ describe('shared UI interaction contracts', () => {
       'utf8',
     );
     expect(source).toMatch(
-      /\.ui-icon-btn--stretch\s*\{[^}]*min-width:\s*var\(--ui-icon-btn-size\);[^}]*min-height:\s*var\(--ui-icon-btn-size\);[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
+      /\.ui-icon-btn--stretch\s*\{[^}]*min-width:\s*var\(--ui-icon-button-size\);[^}]*min-height:\s*var\(--ui-icon-button-size\);[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
     );
     expect(source).toContain('--ui-icon-button-size-override');
     expect(source).toContain(

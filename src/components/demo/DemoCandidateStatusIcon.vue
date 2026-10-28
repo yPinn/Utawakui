@@ -105,6 +105,6 @@ const attrs = useAttrs();
 
 .demo-candidate-status-icon--gated {
   --demo-status-icon-tone: var(--ui-color-gated);
-  --demo-status-icon-tone-soft: var(--ui-color-gated-bg);
+  --demo-status-icon-tone-soft: var(--ui-color-gated-background);
 }
 </style>

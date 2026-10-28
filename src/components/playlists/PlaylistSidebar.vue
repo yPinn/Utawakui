@@ -879,7 +879,7 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__item--active .playlist-sidebar__item-state-surface {
   border-color: transparent;
-  background: var(--ui-sidebar-row-selected-bg);
+  background: var(--ui-sidebar-row-selected-background);
 }
 
 .playlist-sidebar__item:active .playlist-sidebar__item-state-surface {

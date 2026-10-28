@@ -681,7 +681,7 @@ function coverageFor(layer, state, index) {
   padding-inline: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
+  background: var(--ui-field-background);
 }
 
 .demo-search-layer--candidate .demo-search-anatomy-visual__control {
@@ -871,7 +871,7 @@ function coverageFor(layer, state, index) {
   .demo-search-state[data-search-state='field-hover']
   :deep(.ui-search-box__control) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-search-layer--candidate
@@ -1015,7 +1015,7 @@ function coverageFor(layer, state, index) {
     .ui-search-box__control:hover:not(:has(.ui-search-box__input:disabled))
   ) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-search-layer--candidate

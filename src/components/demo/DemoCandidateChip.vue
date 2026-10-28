@@ -114,6 +114,6 @@ const attrs = useAttrs();
 
 .demo-candidate-chip--gated {
   --demo-chip-tone: var(--ui-color-gated);
-  --demo-chip-tone-soft: var(--ui-color-gated-bg);
+  --demo-chip-tone-soft: var(--ui-color-gated-background);
 }
 </style>

@@ -30,6 +30,9 @@ const rootStyle = computed(() => ({
   '--ui-right-dock-width': props.maximized
     ? '100%'
     : `${dockWidth.width.value}px`,
+  '--ui-right-dock-hero-max-inline-size': props.maximized
+    ? 'var(--ui-artwork-size-hero)'
+    : undefined,
 }));
 
 function handleResizeKeydown(event) {

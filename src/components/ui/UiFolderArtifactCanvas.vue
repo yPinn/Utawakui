@@ -637,7 +637,7 @@ defineExpose({ reset, togglePinById });
   min-height: var(--ui-folder-artifact-canvas-min-height);
   overflow: hidden;
   border-radius: var(--ui-radius-xs);
-  background: var(--ui-folder-artifact-canvas-bg);
+  background: var(--ui-folder-artifact-canvas-background);
 }
 
 .ui-folder-artifact-canvas__sheet {
@@ -646,7 +646,7 @@ defineExpose({ reset, togglePinById });
   inset: var(--ui-folder-artifact-sheet-inset-block)
     var(--ui-folder-artifact-sheet-inset-inline);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  background: var(--ui-folder-artifact-sheet-bg);
+  background: var(--ui-folder-artifact-sheet-background);
 }
 
 .ui-folder-artifact-canvas__pin-inset-measure {

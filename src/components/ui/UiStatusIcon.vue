@@ -97,7 +97,7 @@ function rootProps() {
      LyricsAuthoringWorkspace.vue's .lyrics-row-status) when its own background
      differs from the default contrast target below. Custom properties
      inherit through the DOM, so the scoped-style boundary doesn't block it. */
-  background: var(--ui-status-icon-bg, var(--ui-color-surface-hover));
+  background: var(--ui-status-icon-background, var(--ui-color-surface-hover));
   color: var(--ui-color-text-muted);
 }
 
@@ -128,7 +128,7 @@ function rootProps() {
 
 .ui-status-icon--gated {
   color: var(--ui-color-gated);
-  background: var(--ui-color-gated-bg);
+  background: var(--ui-color-gated-background);
 }
 
 .ui-status-icon--text {

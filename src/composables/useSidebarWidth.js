@@ -3,7 +3,7 @@ import { ref } from 'vue';
 // Module-scope singleton, same pattern as useTheme.js — one sidebar width
 // applies to the whole shell, not per-component state.
 
-// Keep in sync with --ui-shell-navigation-inline-size-min/-max in
+// Keep in sync with --ui-shell-navigation-min-inline-size/-max in
 // src/styles/tokens.css and electron/lib/config.js's SIDEBAR_WIDTH_MIN/MAX
 // — neither CSS nor the main process can read these from one shared source.
 export const SIDEBAR_WIDTH_MIN = 64; // 4rem

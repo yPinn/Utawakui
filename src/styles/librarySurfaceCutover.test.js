@@ -74,7 +74,7 @@ describe('Library Token v2 surface cutover', () => {
     expect(trackRowSource).toContain('border-radius: 0;');
     expect(trackRowSource).toContain('var(--ui-folder-ledger-rule');
     expect(trackRowSource).toContain(
-      'background: var(--ui-track-row-selected-surface);',
+      'background: var(--ui-track-row-selected-background);',
     );
     expect(trackRowSource).not.toContain('--ui-row-active-shadow');
     expect(trackRowSource).not.toContain('--ui-track-row-active-shadow');

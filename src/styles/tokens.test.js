@@ -338,8 +338,8 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-side-panel-content-gap');
     expect(uniqueNames).toContain('--ui-side-panel-list-gap');
     expect(uniqueNames).toContain('--ui-track-list-gap');
-    expect(uniqueNames).toContain('--ui-field-bg-readonly');
-    expect(uniqueNames).toContain('--ui-field-bg-on-raised');
+    expect(uniqueNames).toContain('--ui-field-background-readonly');
+    expect(uniqueNames).toContain('--ui-field-background-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
     expect(uniqueNames).toContain('--ui-skeleton-text-block-size');
     expect(uniqueNames).toContain('--ui-skeleton-pulse-duration');
@@ -367,7 +367,7 @@ describe('Studio Library workspace prototype isolation', () => {
     );
     expect(uniqueNames).toContain('--ui-folder-artifact-note-opacity');
     expect(uniqueNames).not.toContain(
-      '--ui-folder-artifact-note-bg-translucent',
+      '--ui-folder-artifact-note-background-translucent',
     );
     for (const paper of [
       'periwinkle',
@@ -399,8 +399,8 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-notification-block-end-offset');
     expect(uniqueNames).toContain('--ui-notification-motion-offset');
     expect(uniqueNames).toContain('--ui-notification-swipe-dismiss-distance');
-    expect(uniqueNames).toContain('--ui-field-bg-hover-on-raised');
-    expect(uniqueNames).toContain('--ui-field-bg-readonly-on-raised');
+    expect(uniqueNames).toContain('--ui-field-background-hover-on-raised');
+    expect(uniqueNames).toContain('--ui-field-background-readonly-on-raised');
     expect(uniqueNames).toContain('--ui-field-hex-value-inline-size');
     expect(uniqueNames).not.toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-right-dock-width');
@@ -526,7 +526,7 @@ describe('Studio Library workspace prototype isolation', () => {
 
   it('owns one quiet selected surface for every track row consumer', () => {
     expect(tokens).toMatch(
-      /--ui-track-row-selected-surface:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-text\) 8%,\s*transparent\s*\);/su,
+      /--ui-track-row-selected-background:\s*color-mix\(\s*in srgb,\s*var\(--ui-color-text\) 8%,\s*transparent\s*\);/su,
     );
     expect(tokens).not.toContain('--ui-row-active-shadow');
     expect(tokens).not.toContain('--ui-track-row-active-shadow');

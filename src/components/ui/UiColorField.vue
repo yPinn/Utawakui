@@ -151,7 +151,7 @@ defineExpose({ focus });
   min-height: var(--ui-field-height);
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
+  background: var(--ui-field-background);
   transition:
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),
@@ -180,7 +180,7 @@ defineExpose({ focus });
 .ui-color-field__input {
   inline-size: 100%;
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
-  color: var(--ui-field-fg);
+  color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
   font-weight: var(--ui-field-font-weight);
@@ -192,7 +192,7 @@ defineExpose({ focus });
 .ui-color-field__picker:where(:hover:not(:disabled)),
 .ui-color-field__input:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .ui-color-field__input::placeholder {

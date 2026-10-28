@@ -300,7 +300,7 @@ function toggleFromArtwork(event) {
 
 .playlist-sidebar-row--active .playlist-sidebar-row__state-surface {
   border-color: transparent;
-  background: var(--ui-sidebar-row-selected-bg);
+  background: var(--ui-sidebar-row-selected-background);
 }
 
 .playlist-sidebar-row:has(.playlist-sidebar-row__select:active)

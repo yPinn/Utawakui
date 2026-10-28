@@ -123,9 +123,9 @@ function buttonAttrs(triggerProps) {
 
 <style scoped>
 .ui-icon-btn {
-  width: var(--ui-icon-btn-size);
-  height: var(--ui-icon-btn-size);
-  flex: 0 0 var(--ui-icon-btn-size);
+  width: var(--ui-icon-button-size);
+  height: var(--ui-icon-button-size);
+  flex: 0 0 var(--ui-icon-button-size);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -173,14 +173,14 @@ function buttonAttrs(triggerProps) {
 }
 
 .ui-icon-btn--md {
-  --ui-icon-btn-size: var(
+  --ui-icon-button-size: var(
     --ui-icon-button-size-override,
     var(--ui-icon-button-size-md)
   );
 }
 
 .ui-icon-btn--lg {
-  --ui-icon-btn-size: var(
+  --ui-icon-button-size: var(
     --ui-icon-button-size-override,
     var(--ui-icon-button-size-lg)
   );
@@ -199,8 +199,8 @@ function buttonAttrs(triggerProps) {
 }
 
 .ui-icon-btn--stretch {
-  min-width: var(--ui-icon-btn-size);
-  min-height: var(--ui-icon-btn-size);
+  min-width: var(--ui-icon-button-size);
+  min-height: var(--ui-icon-button-size);
   width: 100%;
   height: 100%;
   flex: 1 1 auto;

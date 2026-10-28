@@ -970,7 +970,7 @@ function coverageFor(layer, state) {
   .demo-select-state[data-select-state='hover']
   :deep(.demo-candidate-select__native) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-select-layer--candidate

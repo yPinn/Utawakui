@@ -18,13 +18,13 @@ describe('DemoFieldReadonlyAppearance', () => {
       createSSRApp(DemoFieldReadonlyAppearance),
     );
     expect(tokenSource).toContain(
-      '--ui-field-bg-readonly: var(--ui-color-surface);',
+      '--ui-field-background-readonly: var(--ui-color-surface);',
     );
     expect(componentSource).toMatch(
-      /\.demo-field-readonly-layer--candidate[\s\S]*?:deep\(\.ui-text-field:read-only\)[\s\S]*?:deep\(\.ui-textarea:read-only\)[\s\S]*?background: var\(--ui-field-bg-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
+      /\.demo-field-readonly-layer--candidate[\s\S]*?:deep\(\.ui-text-field:read-only\)[\s\S]*?:deep\(\.ui-textarea:read-only\)[\s\S]*?background: var\(--ui-field-background-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
     );
     expect(componentSource).toMatch(
-      /\.demo-field-readonly-layer--candidate[\s\S]*?:read-only:hover[\s\S]*?background: var\(--ui-field-bg-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
+      /\.demo-field-readonly-layer--candidate[\s\S]*?:read-only:hover[\s\S]*?background: var\(--ui-field-background-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
     );
     expect(componentSource).not.toMatch(/:read-only[^{}]*\{[^}]*opacity:/u);
     expect(componentSource).not.toMatch(

@@ -795,7 +795,7 @@ function coverageFor(layer, state) {
   .demo-textarea-state[data-textarea-state='hover']
   :deep(.ui-textarea) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-textarea-layer--candidate
@@ -821,7 +821,7 @@ function coverageFor(layer, state) {
 .demo-textarea-layer--candidate
   .demo-textarea-state[data-textarea-state='readonly']
   :deep(.ui-textarea) {
-  background: var(--ui-field-bg-readonly);
+  background: var(--ui-field-background-readonly);
   border-color: var(--ui-field-border);
 }
 

@@ -87,10 +87,10 @@ const localizedSharedComponentTokens = [
 ];
 
 const outputOwnedTokens = [
-  '--ui-output-side-width-min',
-  '--ui-output-side-width-max',
+  '--ui-output-side-min-width',
+  '--ui-output-side-max-width',
   '--ui-output-side-width-default',
-  '--ui-output-main-width-min',
+  '--ui-output-main-min-width',
   '--ui-output-split-gap',
   '--ui-output-toolbar-height',
   '--ui-output-gallery-preview-max-width',
@@ -98,7 +98,7 @@ const outputOwnedTokens = [
   '--ui-output-workbench-stage-max-width',
   '--ui-output-settings-command-button-width',
   '--ui-output-template-thumb-min-height',
-  '--ui-output-setting-label-width-min',
+  '--ui-output-setting-label-min-width',
 ];
 
 describe('Output Token v2 surface cutover', () => {

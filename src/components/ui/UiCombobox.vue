@@ -610,8 +610,8 @@ onBeforeUnmount(() => {
   );
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
-  color: var(--ui-field-fg);
+  background: var(--ui-field-background);
+  color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
   font-weight: var(--ui-field-font-weight);
@@ -649,7 +649,7 @@ onBeforeUnmount(() => {
 
 .ui-combobox__native:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .ui-combobox__native:focus-visible {
@@ -670,7 +670,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 50%;
   inset-inline-end: var(--ui-field-padding-inline);
-  color: var(--ui-field-fg);
+  color: var(--ui-field-foreground);
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -685,7 +685,7 @@ onBeforeUnmount(() => {
   );
   border: var(--ui-border-width) solid var(--ui-floating-list-border);
   border-radius: var(--ui-floating-list-radius);
-  background: var(--ui-floating-list-bg);
+  background: var(--ui-floating-list-background);
   box-shadow: var(--ui-floating-list-shadow);
 }
 

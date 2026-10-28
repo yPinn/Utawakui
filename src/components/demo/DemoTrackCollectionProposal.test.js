@@ -1146,7 +1146,7 @@ describe('F8 Track Collection proposal', () => {
     );
     expect(rowSource).toContain('background: var(--ui-color-surface-hover);');
     expect(rowSource).toContain(
-      'background: var(--ui-track-row-selected-surface);',
+      'background: var(--ui-track-row-selected-background);',
     );
     expect(rowSource).not.toContain(':nth-child(');
     expect(tableSource).not.toContain('var(--ui-color-surface-raised)');

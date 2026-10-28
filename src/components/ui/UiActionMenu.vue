@@ -1067,7 +1067,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--ui-floating-list-bg);
+  background: var(--ui-floating-list-background);
   border: var(--ui-border-width) solid var(--ui-floating-list-border);
   border-radius: var(--ui-floating-list-radius);
   box-shadow: var(--ui-floating-list-shadow);

@@ -36,7 +36,7 @@ function toCssLength(value) {
       width: toCssLength(size),
       height: toCssLength(size),
       '--ui-track-thumb-radius': radius,
-      '--ui-track-thumb-bg': background,
+      '--ui-track-thumb-background': background,
       '--ui-track-thumb-color': color,
       '--ui-track-thumb-font-size': fontSize,
       '--ui-track-artwork-transform': uppercase ? 'uppercase' : 'none',
@@ -59,7 +59,7 @@ function toCssLength(value) {
   justify-content: center;
   overflow: hidden;
   border-radius: var(--ui-track-thumb-radius, var(--ui-radius-sm));
-  background: var(--ui-track-thumb-bg, var(--ui-color-surface-hover));
+  background: var(--ui-track-thumb-background, var(--ui-color-surface-hover));
   color: var(--ui-track-thumb-color, var(--ui-color-text));
   font-size: var(--ui-track-thumb-font-size, var(--ui-font-size-sm));
   font-weight: var(--ui-font-weight-semibold);

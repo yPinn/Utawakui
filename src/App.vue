@@ -653,9 +653,9 @@ useKeyboardShortcuts({
   grid-template-columns:
     calc(
       clamp(
-          var(--ui-shell-navigation-inline-size-min),
+          var(--ui-shell-navigation-min-inline-size),
           var(--ui-shell-navigation-inline-size),
-          var(--ui-shell-navigation-inline-size-max)
+          var(--ui-shell-navigation-max-inline-size)
         ) +
         var(--ui-shell-edge-inset-inline)
     )

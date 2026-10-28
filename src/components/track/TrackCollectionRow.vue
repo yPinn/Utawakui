@@ -421,7 +421,7 @@ function openContextMenu(event) {
 }
 
 .library-track-row--selected {
-  background: var(--ui-track-row-selected-surface);
+  background: var(--ui-track-row-selected-background);
 }
 
 .library-track-row--current .library-track-row__title {

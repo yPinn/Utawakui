@@ -263,7 +263,7 @@ function handleActionKeydown(event) {
 }
 
 .ui-track--active::before {
-  background: var(--ui-track-row-selected-surface);
+  background: var(--ui-track-row-selected-background);
 }
 
 .ui-track__action {
@@ -385,7 +385,7 @@ function handleActionKeydown(event) {
 }
 
 .ui-track.ui-track--disabled.ui-track--active[aria-disabled='true']::before {
-  background: var(--ui-track-row-selected-surface);
+  background: var(--ui-track-row-selected-background);
 }
 
 .ui-track--disabled :deep(.ui-marquee__text) {

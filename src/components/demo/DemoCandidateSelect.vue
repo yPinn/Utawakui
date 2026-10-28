@@ -193,8 +193,8 @@ defineExpose({ focus });
   appearance: none;
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
-  color: var(--ui-field-fg);
+  background: var(--ui-field-background);
+  color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-type-body-compact-size);
   font-weight: var(--ui-type-body-compact-weight);
@@ -263,7 +263,7 @@ defineExpose({ focus });
   position: absolute;
   top: 50%;
   inset-inline-end: 0.75rem;
-  color: var(--ui-field-fg);
+  color: var(--ui-field-foreground);
   pointer-events: none;
   transform: translateY(-50%);
 }
@@ -292,7 +292,7 @@ defineExpose({ focus });
 
 .demo-candidate-select__native:hover:not(:disabled) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .demo-candidate-select__native:focus-visible {

@@ -97,8 +97,8 @@ defineExpose({ focus });
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
-  color: var(--ui-field-fg);
+  background: var(--ui-field-background);
+  color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
   font-weight: var(--ui-field-font-weight);
@@ -120,7 +120,7 @@ defineExpose({ focus });
 
 .ui-text-field:where(:hover:not(:disabled)) {
   border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-bg-hover);
+  background: var(--ui-field-background-hover);
 }
 
 .ui-text-field::placeholder {

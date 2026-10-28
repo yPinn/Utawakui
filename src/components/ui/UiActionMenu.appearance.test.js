@@ -59,7 +59,7 @@ describe('UiActionMenu appearance contract', () => {
       "customLengthPixels('--ui-floating-list-padding', 0.5) * 2",
     );
     expect(menuSource).toMatch(
-      /\.ui-action-menu\s*\{[^}]*max-block-size:\s*min\(\s*var\(--ui-action-menu-max-block-size\),[^}]*background:\s*var\(--ui-floating-list-bg\);[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-floating-list-border\);[^}]*border-radius:\s*var\(--ui-floating-list-radius\);[^}]*box-shadow:\s*var\(--ui-floating-list-shadow\);/s,
+      /\.ui-action-menu\s*\{[^}]*max-block-size:\s*min\(\s*var\(--ui-action-menu-max-block-size\),[^}]*background:\s*var\(--ui-floating-list-background\);[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-floating-list-border\);[^}]*border-radius:\s*var\(--ui-floating-list-radius\);[^}]*box-shadow:\s*var\(--ui-floating-list-shadow\);/s,
     );
     expect(menuSource).not.toContain(
       "customLengthPixels('--ui-space-2', FLOATING_GAP_REM)",

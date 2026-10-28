@@ -243,7 +243,7 @@ function select(item) {
   place-items: center;
   border: var(--ui-border-width) solid var(--ui-color-control-boundary);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-field-bg);
+  background: var(--ui-field-background);
 }
 
 .ui-radio-group__indicator::after {

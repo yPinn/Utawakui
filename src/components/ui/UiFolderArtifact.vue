@@ -522,7 +522,7 @@ function handleStackLayerKeydown(layer, event) {
   border-radius: var(--ui-radius-xs);
   background-color: var(
     --ui-folder-artifact-note-paper,
-    var(--ui-folder-artifact-note-bg)
+    var(--ui-folder-artifact-note-background)
   );
   background-image: var(--ui-folder-artifact-note-grain, none);
   background-position: var(--ui-folder-artifact-note-grain-offset, 0 0);
@@ -578,7 +578,10 @@ function handleStackLayerKeydown(layer, event) {
 .ui-folder-artifact--note.ui-folder-artifact--translucent {
   background-color: color-mix(
     in srgb,
-    var(--ui-folder-artifact-note-paper, var(--ui-folder-artifact-note-bg))
+    var(
+        --ui-folder-artifact-note-paper,
+        var(--ui-folder-artifact-note-background)
+      )
       var(--ui-folder-artifact-note-opacity),
     transparent
   );
@@ -749,7 +752,7 @@ function handleStackLayerKeydown(layer, event) {
   margin: 0;
   padding: var(--ui-photo-frame-padding);
   border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  background-color: var(--ui-photo-frame-bg);
+  background-color: var(--ui-photo-frame-background);
   color: inherit;
   font: inherit;
   text-align: inherit;
@@ -762,7 +765,7 @@ function handleStackLayerKeydown(layer, event) {
 }
 
 .ui-folder-artifact__stack-layer--back {
-  background-color: var(--ui-folder-artifact-photo-bg-back);
+  background-color: var(--ui-folder-artifact-photo-background-back);
   transform: translate3d(
       var(--ui-folder-artifact-stack-back-x),
       var(--ui-folder-artifact-stack-back-y),

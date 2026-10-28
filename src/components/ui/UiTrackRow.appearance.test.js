@@ -24,7 +24,7 @@ describe('UiTrackRow state tokens', () => {
           r.selector.startsWith('.ui-track--active[') &&
           r.selector.endsWith('::before'),
       )?.declarations.background,
-    ).toBe('var(--ui-track-row-selected-surface)');
+    ).toBe('var(--ui-track-row-selected-background)');
     expect(
       rules.filter(
         (r) => r.declarations.background === 'var(--ui-color-surface-hover)',
@@ -49,7 +49,7 @@ describe('UiTrackRow state tokens', () => {
       r.selector.startsWith('.ui-track.ui-track--disabled.ui-track--active'),
     );
     expect(selected.declarations.background).toBe(
-      'var(--ui-track-row-selected-surface)',
+      'var(--ui-track-row-selected-background)',
     );
     expect(
       rules.find(

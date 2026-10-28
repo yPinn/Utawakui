@@ -442,7 +442,7 @@ describe('TrackTable shared row behavior', () => {
     )?.groups?.body;
 
     expect(selectedRule).toContain(
-      'background: var(--ui-track-row-selected-surface);',
+      'background: var(--ui-track-row-selected-background);',
     );
     expect(selectedRule).not.toContain('box-shadow');
     expect(rowSource).not.toContain('--ui-color-surface-selected');

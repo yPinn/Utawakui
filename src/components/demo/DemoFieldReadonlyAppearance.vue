@@ -253,13 +253,13 @@ function stateNote(layer, state) {
 
 .demo-field-readonly-layer--candidate :deep(.ui-text-field:read-only),
 .demo-field-readonly-layer--candidate :deep(.ui-textarea:read-only) {
-  background: var(--ui-field-bg-readonly);
+  background: var(--ui-field-background-readonly);
   border-color: var(--ui-field-border);
 }
 
 .demo-field-readonly-layer--candidate :deep(.ui-text-field:read-only:hover),
 .demo-field-readonly-layer--candidate :deep(.ui-textarea:read-only:hover) {
-  background: var(--ui-field-bg-readonly);
+  background: var(--ui-field-background-readonly);
   border-color: var(--ui-field-border);
 }
 

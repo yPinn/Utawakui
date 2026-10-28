@@ -47,7 +47,7 @@ describe('floating surfaces stay independent from row interaction', () => {
       );
       expect(surfacePaint).toHaveLength(1);
       expect(surfacePaint[0].declarations.background).toBe(
-        'var(--ui-floating-list-bg)',
+        'var(--ui-floating-list-background)',
       );
     },
   );
@@ -57,7 +57,7 @@ describe('floating surfaces stay independent from row interaction', () => {
     (file) => {
       for (const rule of rulesFor(file)) {
         for (const name of [
-          '--ui-floating-list-bg',
+          '--ui-floating-list-background',
           '--ui-color-surface-raised',
           '--ui-color-surface-hover',
           '--ui-color-surface-selected',

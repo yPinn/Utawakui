@@ -46,7 +46,7 @@ defineProps({
   min-width: 0;
   min-height: calc(var(--ui-control-height) + var(--ui-space-2));
   display: grid;
-  grid-template-columns: var(--ui-output-setting-label-width-min) minmax(
+  grid-template-columns: var(--ui-output-setting-label-min-width) minmax(
       0,
       1fr
     );

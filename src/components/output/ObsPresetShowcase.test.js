@@ -127,7 +127,7 @@ describe('OBS output workspace layout contract', () => {
     const compactSplitLayoutSource = compactWhitespace(splitLayoutSource);
 
     expect(previewTokenSource).toContain('--ui-output-side-width-default:');
-    expect(previewTokenSource).toContain('--ui-output-side-width-max');
+    expect(previewTokenSource).toContain('--ui-output-side-max-width');
     expect(previewTokenSource).toContain(
       '--ui-output-gallery-preview-max-width',
     );
@@ -147,7 +147,7 @@ describe('OBS output workspace layout contract', () => {
     }
     expect(previewTokenSource).not.toContain('22vw');
     expect(previewTokenSource).not.toContain('34cqi');
-    expect(previewTokenSource).toContain('--ui-output-setting-label-width-min');
+    expect(previewTokenSource).toContain('--ui-output-setting-label-min-width');
     expect(componentSource).not.toContain('--ui-font-size-xs');
     expect(workspaceSource).toContain('container-name: output-workspace');
     expect(compactComponentSource).toContain(
@@ -158,7 +158,7 @@ describe('OBS output workspace layout contract', () => {
       'var(--ui-output-side-width, var(--ui-output-side-width-default))',
     );
     expect(compactSplitLayoutSource).not.toMatch(
-      /minmax\(\s*var\(--ui-output-gallery-detail-width-min\),\s*var\(--ui-output-side-width-max\)\s*\)/,
+      /minmax\(\s*var\(--ui-output-gallery-detail-width-min\),\s*var\(--ui-output-side-max-width\)\s*\)/,
     );
     expect(mockupSource).toContain(
       'max-inline-size: var(--ui-output-gallery-preview-max-width)',
@@ -401,7 +401,7 @@ describe('OBS output workspace layout contract', () => {
     expect(appearanceFieldSource).not.toContain('type="color"');
     expect(appearanceControlRowSource).toContain('<slot />');
     expect(compactAppearanceControlRowSource).toMatch(
-      /grid-template-columns:\s*var\(--ui-output-setting-label-width-min\)\s*minmax\(\s*0,\s*1fr\s*\)/,
+      /grid-template-columns:\s*var\(--ui-output-setting-label-min-width\)\s*minmax\(\s*0,\s*1fr\s*\)/,
     );
     expect(appearanceControlRowSource).not.toContain('border-block-start:');
     expect(appearanceControlRowSource).not.toContain('v-model');

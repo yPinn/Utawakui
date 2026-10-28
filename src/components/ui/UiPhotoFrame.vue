@@ -99,7 +99,7 @@ const labelStyle = computed(() => {
   margin: 0;
   padding: var(--ui-photo-frame-padding);
   border: var(--ui-border-width) solid var(--ui-photo-frame-border-color);
-  background-color: var(--ui-photo-frame-bg);
+  background-color: var(--ui-photo-frame-background);
   box-shadow: var(--ui-photo-frame-shadow);
 }
 
@@ -158,7 +158,7 @@ const labelStyle = computed(() => {
 /* A dark archival print: a smaller 3R stock, restated tokens only. */
 .ui-photo-frame[data-photo-frame='archival'] {
   --ui-photo-frame-padding: var(--ui-space-1);
-  --ui-photo-frame-bg: var(--ui-photo-frame-archival-bg);
+  --ui-photo-frame-background: var(--ui-photo-frame-archival-background);
   --ui-photo-frame-border-color: var(--ui-photo-frame-archival-border-color);
   --ui-photo-frame-filter: grayscale(0.85) contrast(1.05);
   --ui-photo-frame-long-mm: var(--ui-photo-archival-long-mm);

@@ -74,13 +74,13 @@ describe('UiModal appearance contract', () => {
 
   it('uses the reviewed raised shell, nested field aliases, and semantic zone spacing', () => {
     expect(modalSource).toContain(
-      '--ui-field-bg: var(--ui-field-bg-on-raised);',
+      '--ui-field-background: var(--ui-field-background-on-raised);',
     );
     expect(modalSource).toContain(
-      '--ui-field-bg-hover: var(--ui-field-bg-hover-on-raised);',
+      '--ui-field-background-hover: var(--ui-field-background-hover-on-raised);',
     );
     expect(modalSource).toContain(
-      '--ui-field-bg-readonly: var(--ui-field-bg-readonly-on-raised);',
+      '--ui-field-background-readonly: var(--ui-field-background-readonly-on-raised);',
     );
     expect(modalSource).toContain(
       'background: var(--ui-color-surface-raised);',

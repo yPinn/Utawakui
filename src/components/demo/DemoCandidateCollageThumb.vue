@@ -61,7 +61,7 @@ function handleCoverImageError() {
       width: `${size}px`,
       height: `${size}px`,
       '--ui-collage-thumb-radius': radius,
-      '--ui-collage-thumb-bg': background,
+      '--ui-collage-thumb-background': background,
       '--ui-collage-thumb-color': color,
       '--ui-collage-thumb-font-size': `${Math.max(8, Math.round(size / 5))}px`,
       '--ui-track-artwork-transform': uppercase ? 'uppercase' : 'none',
@@ -120,7 +120,7 @@ function handleCoverImageError() {
   grid-template-rows: repeat(2, minmax(0, 1fr));
   overflow: hidden;
   border-radius: var(--ui-collage-thumb-radius, var(--ui-radius-sm));
-  background: var(--ui-collage-thumb-bg, var(--ui-color-surface-hover));
+  background: var(--ui-collage-thumb-background, var(--ui-color-surface-hover));
   box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
   color: var(--ui-collage-thumb-color, var(--ui-color-text));
   font-size: var(--ui-collage-thumb-font-size);
@@ -152,11 +152,11 @@ function handleCoverImageError() {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: var(--ui-collage-thumb-bg, var(--ui-color-surface-hover));
+  background: var(--ui-collage-thumb-background, var(--ui-color-surface-hover));
 }
 
 .demo-candidate-collage-thumb__cell--alternate {
-  background: var(--ui-collage-thumb-bg, var(--ui-color-surface));
+  background: var(--ui-collage-thumb-background, var(--ui-color-surface));
 }
 
 .demo-candidate-collage-thumb__cell--vacant {

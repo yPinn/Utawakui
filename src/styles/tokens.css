@@ -197,8 +197,8 @@
   /* Sidebar, Folder perimeter and Right Dock frames. */
   --ui-shell-panel-radius: var(--ui-radius-lg);
   --ui-shell-navigation-inline-size: 4rem;
-  --ui-shell-navigation-inline-size-min: 4rem;
-  --ui-shell-navigation-inline-size-max: 16rem;
+  --ui-shell-navigation-min-inline-size: 4rem;
+  --ui-shell-navigation-max-inline-size: 16rem;
   --ui-shell-workspace-min-inline-size: 40rem;
   --ui-shell-layout-recovery-inline-size: 4rem;
   --ui-sidebar-compact-threshold: 16rem;
@@ -229,7 +229,7 @@
       var(--ui-sidebar-artwork-size) / 2
   );
   --ui-sidebar-row-compact-hit-size: var(--ui-sidebar-row-min-height);
-  --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);
+  --ui-sidebar-row-selected-background: var(--ui-color-surface-active);
   --ui-sidebar-toolbar-gap: var(--ui-space-2);
   --ui-sidebar-toolbar-block-size: var(--ui-sidebar-row-min-height);
   --ui-sidebar-toolbar-padding-block: 0;
@@ -340,8 +340,8 @@
     var(--ui-focus-safe-inset) + var(--ui-border-width)
   );
   --ui-folder-artifact-pinned-region-inset: var(--ui-space-4);
-  --ui-folder-artifact-canvas-bg: var(--ui-color-surface);
-  --ui-folder-artifact-sheet-bg: var(--ui-color-canvas);
+  --ui-folder-artifact-canvas-background: var(--ui-color-surface);
+  --ui-folder-artifact-sheet-background: var(--ui-color-canvas);
   --ui-folder-artifact-sheet-inset-inline: var(--ui-space-7);
   --ui-folder-artifact-sheet-inset-block: var(--ui-space-5);
   --ui-folder-artifact-photo-width: 17rem;
@@ -360,9 +360,11 @@
   --ui-folder-artifact-note-min-height-compact: 7rem;
   --ui-photo-frame-padding: var(--ui-space-2);
   --ui-photo-frame-border-color: var(--ui-color-border-strong);
-  --ui-photo-frame-bg: var(--ui-color-surface-raised);
-  --ui-photo-frame-archival-bg: var(--ui-palette-neutral-950);
-  --ui-photo-frame-archival-border-color: var(--ui-photo-frame-archival-bg);
+  --ui-photo-frame-background: var(--ui-color-surface-raised);
+  --ui-photo-frame-archival-background: var(--ui-palette-neutral-950);
+  --ui-photo-frame-archival-border-color: var(
+    --ui-photo-frame-archival-background
+  );
   /* Photos are sized from their real stock: one millimetre at 96 dpi, shrunk
      on the page and enlarged when expanded, so their size relation matches
      the objects on a desk. Stock sizes are unitless millimetres. */
@@ -391,12 +393,12 @@
     brightness(0.96);
   --ui-media-max-inline-size: var(--ui-modal-media-max-inline-size);
   --ui-media-max-block-size: var(--ui-modal-media-max-block-size);
-  --ui-folder-artifact-photo-bg-back: color-mix(
+  --ui-folder-artifact-photo-background-back: color-mix(
     in srgb,
-    var(--ui-photo-frame-bg) 90%,
+    var(--ui-photo-frame-background) 90%,
     var(--ui-color-canvas)
   );
-  --ui-folder-artifact-note-bg: color-mix(
+  --ui-folder-artifact-note-background: color-mix(
     in srgb,
     var(--ui-folder-layout-background) 32%,
     var(--ui-color-surface-raised)
@@ -607,7 +609,7 @@
     var(--ui-color-surface)
   );
   --ui-color-gated: var(--ui-color-warning);
-  --ui-color-gated-bg: var(--ui-color-warning-soft);
+  --ui-color-gated-background: var(--ui-color-warning-soft);
   --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
   --ui-color-overlay-scrim-hover: rgb(0 0 0 / 68%);
   --ui-color-overlay-scrim-active: rgb(0 0 0 / 78%);
@@ -651,13 +653,13 @@
       var(--ui-border-width) + var(--ui-border-width)
   );
   --ui-field-radius: var(--ui-radius-md);
-  --ui-field-bg: var(--ui-color-surface-raised);
-  --ui-field-bg-hover: var(--ui-color-surface-hover);
-  --ui-field-bg-readonly: var(--ui-color-surface);
-  --ui-field-bg-on-raised: var(--ui-color-surface);
-  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
-  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
-  --ui-field-fg: var(--ui-color-text);
+  --ui-field-background: var(--ui-color-surface-raised);
+  --ui-field-background-hover: var(--ui-color-surface-hover);
+  --ui-field-background-readonly: var(--ui-color-surface);
+  --ui-field-background-on-raised: var(--ui-color-surface);
+  --ui-field-background-hover-on-raised: var(--ui-color-surface-hover);
+  --ui-field-background-readonly-on-raised: var(--ui-color-surface-raised);
+  --ui-field-foreground: var(--ui-color-text);
   --ui-field-placeholder: var(--ui-color-text-muted);
   --ui-field-border: var(--ui-color-border);
   --ui-field-border-hover: var(--ui-color-border-strong);
@@ -688,7 +690,7 @@
     var(--ui-color-danger)
   );
   --ui-button-group-border: var(--ui-color-border);
-  --ui-button-group-bg-raised: var(--ui-color-surface-raised);
+  --ui-button-group-background-raised: var(--ui-color-surface-raised);
   --ui-button-group-shadow-raised: var(--ui-shadow-overlay);
   --ui-segmented-selected-foreground: var(--ui-color-text);
   --ui-segmented-selected-indicator: var(--ui-color-control-boundary);
@@ -737,7 +739,7 @@
   --ui-scrollbar-radius: var(--ui-radius-pill);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
-  --ui-floating-list-bg: var(--ui-color-surface-raised);
+  --ui-floating-list-background: var(--ui-color-surface-raised);
   --ui-floating-list-border: var(--ui-color-border);
   --ui-floating-list-radius: var(--ui-radius-lg);
   --ui-floating-list-shadow: var(--ui-shadow-overlay);
@@ -809,7 +811,7 @@
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
   --ui-track-row-state-surface-outset-inline: 0;
-  --ui-track-row-selected-surface: color-mix(
+  --ui-track-row-selected-background: color-mix(
     in srgb,
     var(--ui-color-text) 8%,
     transparent
@@ -1115,19 +1117,19 @@
     var(--ui-color-surface)
   );
   --ui-color-gated: var(--ui-color-warning);
-  --ui-color-gated-bg: var(--ui-color-warning-soft);
+  --ui-color-gated-background: var(--ui-color-warning-soft);
 }
 
 /* Recompose control aliases at either local color boundary. */
 [data-ui-system='v2'] [data-ui-region='receipt'],
 [data-ui-system='v2'] [data-ui-region='chrome'] {
-  --ui-field-bg: var(--ui-color-surface-raised);
-  --ui-field-bg-hover: var(--ui-color-surface-hover);
-  --ui-field-bg-readonly: var(--ui-color-surface);
-  --ui-field-bg-on-raised: var(--ui-color-surface);
-  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
-  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
-  --ui-field-fg: var(--ui-color-text);
+  --ui-field-background: var(--ui-color-surface-raised);
+  --ui-field-background-hover: var(--ui-color-surface-hover);
+  --ui-field-background-readonly: var(--ui-color-surface);
+  --ui-field-background-on-raised: var(--ui-color-surface);
+  --ui-field-background-hover-on-raised: var(--ui-color-surface-hover);
+  --ui-field-background-readonly-on-raised: var(--ui-color-surface-raised);
+  --ui-field-foreground: var(--ui-color-text);
   --ui-field-placeholder: var(--ui-color-text-muted);
   --ui-field-border: var(--ui-color-border);
   --ui-field-border-hover: var(--ui-color-border-strong);
@@ -1157,8 +1159,8 @@
     var(--ui-color-danger-contrast) 75%,
     var(--ui-color-danger)
   );
-  --ui-sidebar-row-selected-bg: var(--ui-color-surface-active);
-  --ui-track-row-selected-surface: color-mix(
+  --ui-sidebar-row-selected-background: var(--ui-color-surface-active);
+  --ui-track-row-selected-background: color-mix(
     in srgb,
     var(--ui-color-text) 8%,
     transparent
@@ -1192,7 +1194,7 @@
   --ui-color-status-outline: var(--ui-color-text);
   --ui-color-live-soft: var(--ui-color-danger-soft);
   --ui-color-gated: var(--ui-color-warning);
-  --ui-color-gated-bg: var(--ui-color-warning-soft);
+  --ui-color-gated-background: var(--ui-color-warning-soft);
   --ui-segmented-selected-foreground: var(--ui-color-text);
   --ui-segmented-selected-indicator: var(--ui-color-control-boundary);
 }

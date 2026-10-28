@@ -255,6 +255,6 @@ function handleTrackSelect(track) {
   align-items: center;
   gap: var(--ui-space-1);
   flex: 0 0 auto;
-  --ui-status-icon-bg: var(--ui-color-canvas);
+  --ui-status-icon-background: var(--ui-color-canvas);
 }
 </style>
