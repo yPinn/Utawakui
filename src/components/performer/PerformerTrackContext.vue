@@ -94,8 +94,8 @@ const statusLabels = {
 }
 
 .performer-track-context__playback-indicator {
-  width: 0.375rem;
-  height: 0.375rem;
+  width: var(--ui-status-dot-size);
+  height: var(--ui-status-dot-size);
   flex: 0 0 0.375rem;
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-accent);

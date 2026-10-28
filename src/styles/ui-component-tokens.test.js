@@ -217,6 +217,12 @@ describe('shared UI component token contract', () => {
     }
   });
 
+  it('sizes every status dot from one token', () => {
+    expect(declarations(tokens).get('--ui-status-dot-size')).toBe(
+      'var(--ui-space-2)',
+    );
+  });
+
   it('keeps emphasis strokes off the focus-only width', () => {
     const values = declarations(tokens);
 

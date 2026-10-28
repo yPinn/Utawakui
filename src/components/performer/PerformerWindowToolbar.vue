@@ -75,8 +75,8 @@ defineEmits([
 }
 
 .performer-toolbar__mark {
-  width: var(--ui-space-2);
-  height: var(--ui-space-2);
+  width: var(--ui-status-dot-size);
+  height: var(--ui-status-dot-size);
   border-radius: var(--ui-radius-xs);
   background: var(--ui-color-accent);
 }

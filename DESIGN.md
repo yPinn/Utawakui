@@ -548,6 +548,8 @@ step instead of a raw length.
 | `3xl`  | `14rem` (224 CSS px)  | Track editor artwork column minimum.              |
 | `hero` | `20rem` (320 CSS px)  | Track preview overlay.                            |
 
+Status and attention dots (current source, modified, runtime state, tool markers) all use `--ui-status-dot-size`.
+
 These CSS-pixel equivalents assume a `16px` root and 100% Chromium zoom. Treat the rem values as implementation targets when refreshing tokens and components. A future touch-first surface can introduce touch-specific component tokens without shrinking the desktop hard floors.
 
 ### Unit Rules

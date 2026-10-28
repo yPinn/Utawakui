@@ -719,8 +719,8 @@ onUnmounted(() => {
   top: 0;
   right: 0;
   box-sizing: border-box;
-  width: var(--ui-space-2);
-  height: var(--ui-space-2);
+  width: var(--ui-status-dot-size);
+  height: var(--ui-status-dot-size);
   pointer-events: none;
   border: var(--ui-border-width) solid var(--ui-color-canvas);
   border-radius: var(--ui-radius-pill);

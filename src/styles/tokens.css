@@ -719,6 +719,8 @@
   --ui-skeleton-pulse-duration: 1.4s;
   --ui-radio-size: var(--ui-space-4);
   --ui-radio-dot-size: var(--ui-space-2);
+  /* Status／attention dots beside labels, icons and artwork. */
+  --ui-status-dot-size: var(--ui-space-2);
   --ui-scrollbar-lane-size: var(--ui-space-3);
   --ui-scrollbar-thumb-inset: calc(var(--ui-border-width) * 3);
   /* Content and adjacent fixed chrome align to the visible thumb edge. */

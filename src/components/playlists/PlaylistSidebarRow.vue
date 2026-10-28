@@ -413,8 +413,8 @@ function toggleFromArtwork(event) {
     position: absolute;
     right: var(--ui-space-1);
     top: var(--ui-space-1);
-    width: var(--ui-space-2);
-    height: var(--ui-space-2);
+    width: var(--ui-status-dot-size);
+    height: var(--ui-status-dot-size);
     border-radius: var(--ui-radius-pill);
     background: var(--ui-color-current);
     box-shadow: 0 0 0 var(--ui-border-width) var(--ui-color-surface);

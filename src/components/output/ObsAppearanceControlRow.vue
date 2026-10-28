@@ -64,8 +64,8 @@ defineProps({
 
 .obs-appearance-control-row__modified {
   display: inline-block;
-  inline-size: var(--ui-space-1);
-  block-size: var(--ui-space-1);
+  inline-size: var(--ui-status-dot-size);
+  block-size: var(--ui-status-dot-size);
   margin-inline-start: var(--ui-space-1);
   vertical-align: middle;
   border-radius: var(--ui-radius-pill);

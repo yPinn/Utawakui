@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { ARTWORK_SIZE } from '../../constants/ui.js';
 import { UserRound } from '../../icons/index.js';
 import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -10,7 +11,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 
-const CANDIDATE_PHOTO_SIZE = 128;
+const CANDIDATE_PHOTO_SIZE = ARTWORK_SIZE.xl;
 
 const props = defineProps({
   open: { type: Boolean, default: false },

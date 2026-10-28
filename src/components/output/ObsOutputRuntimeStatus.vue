@@ -79,8 +79,8 @@ const runtimeStatus = computed(() =>
 }
 
 .obs-output-runtime-status__dot {
-  inline-size: var(--ui-space-3);
-  block-size: var(--ui-space-3);
+  inline-size: var(--ui-status-dot-size);
+  block-size: var(--ui-status-dot-size);
   flex: 0 0 auto;
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-text-muted);
