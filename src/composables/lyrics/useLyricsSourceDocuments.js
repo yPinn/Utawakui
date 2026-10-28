@@ -1,4 +1,5 @@
-import { shallowRef } from 'vue';
+import { readonly, shallowRef } from 'vue';
+import { useLyricsTimingReview } from './useLyricsTimingReview.js';
 
 const EMPTY_TIMING = Object.freeze({
   status: 'missing',
@@ -17,10 +18,38 @@ export function useLyricsSourceDocuments({
   // Replacing a shallow ref avoids recursively proxying each snapshot.
   const lyricsTiming = shallowRef(EMPTY_TIMING);
   const lyricsAcousticEstimate = shallowRef({ status: 'missing' });
+  const sourceSession = shallowRef(null),
+    savedOffsetMs = shallowRef(0);
   let lyricsRequestId = 0;
   let offsetSaveRequestId = 0;
+  let timingSaveRequestId = 0,
+    offsetQueue = Promise.resolve();
   let selectedLyricsLoad = Promise.resolve();
   let selectedAcousticLoad = Promise.resolve();
+  let loadedContext = null;
+  let offsetIntentRevision = 0;
+  let offsetContextGeneration = 0;
+  function cancelSession(value) {
+    if (!value?.id || !window.Utawakui?.cancelLyricsSourceSession) return;
+    try {
+      Promise.resolve(
+        window.Utawakui.cancelLyricsSourceSession(value.id),
+      ).catch(() => {});
+    } catch {
+      /* Closing source must not block selection. */
+    }
+  }
+  function applySession(value, field) {
+    if (value && sourceSession.value && value.id === sourceSession.value.id)
+      sourceSession.value = { ...sourceSession.value, [field]: value[field] };
+  }
+  function releaseUnusedRead(value, trackId, filename) {
+    if (
+      selectedTrack.value?.id !== trackId ||
+      state.selectedSourceFilename !== filename
+    )
+      cancelSession(value);
+  }
 
   async function loadAcousticEstimate(trackId, filename, requestId) {
     if (typeof window.Utawakui?.getLyricsAcousticEstimate !== 'function')
@@ -46,17 +75,38 @@ export function useLyricsSourceDocuments({
     const filename = state.selectedSourceFilename;
     lyricsRequestId += 1;
     const requestId = lyricsRequestId;
-    offsetSaveRequestId += 1;
+    timingSaveRequestId++;
+    const previousSession = sourceSession.value;
+    const sameSource =
+      loadedContext &&
+      track &&
+      loadedContext.trackId === track.id &&
+      loadedContext.filename === filename;
+    if (!sameSource) {
+      cancelSession(previousSession);
+      offsetContextGeneration++;
+      offsetSaveRequestId++;
+      sourceSession.value = null;
+      savedOffsetMs.value = 0;
+      offsetQueue = Promise.resolve();
+      state.lyricsText = '';
+      state.lyricSource = null;
+      state.offsetSeconds = 0;
+      state.offsetSave.isSaving = false;
+      state.offsetSave.error = null;
+      lyricsTiming.value = EMPTY_TIMING;
+    }
+    if (state.timingSave) {
+      state.timingSave.isSaving = false;
+      state.timingSave.error = null;
+    }
 
-    state.lyricsText = '';
-    state.lyricSource = null;
-    state.offsetSeconds = 0;
-    state.offsetSave.isSaving = false;
-    state.offsetSave.error = null;
-    lyricsTiming.value = EMPTY_TIMING;
     lyricsAcousticEstimate.value = { status: 'missing' };
     selectedAcousticLoad = Promise.resolve();
-    if (!track || !filename) return;
+    if (!track || !filename) {
+      state.isLoadingLyrics = false;
+      return;
+    }
 
     if (typeof window.Utawakui?.getTrackLyrics !== 'function') {
       state.error = '請重新啟動應用程式後再讀取歌詞。';
@@ -65,17 +115,53 @@ export function useLyricsSourceDocuments({
 
     state.isLoadingLyrics = true;
     try {
-      const result = await window.Utawakui.getTrackLyrics(track.id, filename);
+      if (sameSource) await offsetQueue;
       if (requestId !== lyricsRequestId) return;
+      const offsetAtRead = offsetIntentRevision;
+      const result = await window.Utawakui.getTrackLyrics(track.id, filename);
+      if (requestId !== lyricsRequestId) {
+        releaseUnusedRead(result?.sourceSession, track.id, filename);
+        return;
+      }
       const preparation = prepareLyrics(result);
       if (preparation) await preparation;
-      if (requestId !== lyricsRequestId) return;
+      if (requestId !== lyricsRequestId) {
+        releaseUnusedRead(result?.sourceSession, track.id, filename);
+        return;
+      }
       state.lyricsText = result?.text ?? '';
       state.lyricSource = result?.source ?? null;
-      state.offsetSeconds = Number.isInteger(result?.source?.offsetMs)
-        ? result.source.offsetMs / 1000
+      const sameRoot =
+        sameSource && previousSession?.id === result?.sourceSession?.id;
+      const pendingOffset =
+        sameRoot &&
+        (state.offsetSave.isSaving || offsetAtRead !== offsetIntentRevision);
+      const keepPreview = sameRoot && (pendingOffset || state.offsetSave.error);
+      const storedOffset = Number.isInteger(result?.source?.offsetMs)
+        ? result.source.offsetMs
         : 0;
-      lyricsTiming.value = result?.timing ?? EMPTY_TIMING;
+      if (!keepPreview) state.offsetSeconds = storedOffset / 1000;
+      lyricsTiming.value = result?.timing
+        ? { ...result.timing, sourceSession: result.sourceSession ?? null }
+        : EMPTY_TIMING;
+      const currentOffsetRevision = sourceSession.value?.offsetRevision;
+      sourceSession.value = result?.sourceSession
+        ? {
+            ...result.sourceSession,
+            ...(pendingOffset ? { offsetRevision: currentOffsetRevision } : {}),
+          }
+        : null;
+      if (sameSource && !sameRoot) {
+        offsetContextGeneration++;
+        offsetSaveRequestId++;
+        offsetQueue = Promise.resolve();
+        state.offsetSave.isSaving = false;
+        state.offsetSave.error = null;
+      }
+      loadedContext = { trackId: track.id, filename };
+      if (previousSession?.id !== sourceSession.value?.id)
+        cancelSession(previousSession);
+      if (!pendingOffset) savedOffsetMs.value = storedOffset;
       state.error = null;
       selectedAcousticLoad = loadAcousticEstimate(
         track.id,
@@ -84,6 +170,10 @@ export function useLyricsSourceDocuments({
       );
     } catch (error) {
       if (requestId !== lyricsRequestId) return;
+      cancelSession(previousSession);
+      sourceSession.value = null;
+      offsetContextGeneration++;
+      state.offsetSave.isSaving = false;
       state.error = reportLyricsError(
         error,
         'load',
@@ -103,39 +193,56 @@ export function useLyricsSourceDocuments({
     return selectedLyricsLoad;
   }
 
-  async function persistSelectedOffset() {
+  function persistSelectedOffset() {
+    offsetIntentRevision++;
     const trackId = state.selectedTrackId;
     const sourceFilename = state.selectedSourceFilename;
     const offsetMs = Math.round(state.offsetSeconds * 1000);
-    if (!trackId || !sourceFilename) return null;
+    if (!trackId || !sourceFilename) return Promise.resolve(null);
 
     offsetSaveRequestId += 1;
     const requestId = offsetSaveRequestId;
+    const generation = offsetContextGeneration;
+    const current = () =>
+      generation === offsetContextGeneration &&
+      state.selectedTrackId === trackId &&
+      state.selectedSourceFilename === sourceFilename;
     state.offsetSave.isSaving = true;
     state.offsetSave.error = null;
-    try {
-      if (typeof window.Utawakui?.setLyricsSourceOffset !== 'function') {
-        throw new Error('lyrics offset bridge unavailable');
-      }
-      return await window.Utawakui.setLyricsSourceOffset(
-        trackId,
-        sourceFilename,
-        offsetMs,
-      );
-    } catch (error) {
-      if (requestId === offsetSaveRequestId) {
-        state.offsetSave.error = reportLyricsError(
-          error,
-          'offset-save',
-          '同步調整未儲存，請再試一次。',
+    const saving = offsetQueue.then(async () => {
+      if (!current()) return null;
+      try {
+        if (typeof window.Utawakui?.setLyricsSourceOffset !== 'function') {
+          throw new Error('lyrics offset bridge unavailable');
+        }
+        const saved = await window.Utawakui.setLyricsSourceOffset(
+          trackId,
+          sourceFilename,
+          offsetMs,
+          sourceSession.value,
         );
+        if (current()) {
+          savedOffsetMs.value = saved?.source?.offsetMs ?? 0;
+          applySession(saved?.sourceSession, 'offsetRevision');
+        }
+        return saved;
+      } catch (error) {
+        if (current() && requestId === offsetSaveRequestId) {
+          state.offsetSave.error = reportLyricsError(
+            error,
+            'offset-save',
+            '同步調整未儲存，請再試一次。',
+          );
+        }
+        return null;
+      } finally {
+        if (current() && requestId === offsetSaveRequestId) {
+          state.offsetSave.isSaving = false;
+        }
       }
-      return null;
-    } finally {
-      if (requestId === offsetSaveRequestId) {
-        state.offsetSave.isSaving = false;
-      }
-    }
+    });
+    offsetQueue = saving;
+    return saving;
   }
 
   function adjustOffset(deltaSeconds) {
@@ -149,7 +256,7 @@ export function useLyricsSourceDocuments({
     persistSelectedOffset();
   }
 
-  async function saveTimingDocument(document) {
+  async function saveTimingDocument(document, baseline = sourceSession.value) {
     const trackId = state.selectedTrackId;
     const sourceFilename = state.selectedSourceFilename;
     const sourceFingerprint = lyricsTiming.value.sourceFingerprint;
@@ -161,6 +268,23 @@ export function useLyricsSourceDocuments({
       state.timingSave.error = '請重新啟動應用程式後再儲存歌詞時間。';
       return null;
     }
+    if (
+      !baseline ||
+      !sourceSession.value ||
+      baseline.id !== sourceSession.value.id
+    ) {
+      if (!state.timingSave.isSaving)
+        state.timingSave.error =
+          '這份時間草稿的來源版本已變更，請重新讀取後再試一次。';
+      return null;
+    }
+    const generation = lyricsRequestId,
+      requestId = ++timingSaveRequestId;
+    const current = () =>
+      generation === lyricsRequestId &&
+      requestId === timingSaveRequestId &&
+      state.selectedTrackId === trackId &&
+      state.selectedSourceFilename === sourceFilename;
 
     state.timingSave.isSaving = true;
     state.timingSave.error = null;
@@ -170,24 +294,41 @@ export function useLyricsSourceDocuments({
         sourceFilename,
         sourceFingerprint,
         document,
+        {
+          id: baseline.id,
+          timingRevision: baseline.timingRevision,
+          offsetRevision: baseline.offsetRevision,
+        },
       );
+      if (current()) {
+        lyricsTiming.value = timing;
+        applySession(timing?.sourceSession, 'timingRevision');
+      }
+      if (current()) return timing?.document ?? document;
       if (
         state.selectedTrackId === trackId &&
-        state.selectedSourceFilename === sourceFilename &&
-        lyricsTiming.value.sourceFingerprint === sourceFingerprint
+        state.selectedSourceFilename === sourceFilename
       ) {
-        lyricsTiming.value = timing;
+        await selectedLyricsLoad;
+        if (
+          sourceSession.value?.id === baseline.id &&
+          timing?.sourceSession?.id === baseline.id &&
+          timing.sourceSession.timingRevision ===
+            sourceSession.value.timingRevision
+        )
+          return timing.document ?? document;
       }
-      return timing?.document ?? document;
+      return null;
     } catch (error) {
-      state.timingSave.error = reportLyricsError(
-        error,
-        'save-timing',
-        '歌詞時間未儲存，請再試一次。',
-      );
+      if (current())
+        state.timingSave.error = reportLyricsError(
+          error,
+          'save-timing',
+          '歌詞時間未儲存，請再試一次。',
+        );
       return null;
     } finally {
-      state.timingSave.isSaving = false;
+      if (current()) state.timingSave.isSaving = false;
     }
   }
 
@@ -314,7 +455,31 @@ export function useLyricsSourceDocuments({
     }
   }
 
+  async function waitForSavedOffset() {
+    const generation = lyricsRequestId;
+    await offsetQueue;
+    return (
+      Boolean(sourceSession.value) &&
+      generation === lyricsRequestId &&
+      !state.offsetSave.isSaving &&
+      !state.offsetSave.error &&
+      savedOffsetMs.value === Math.round(state.offsetSeconds * 1000)
+    );
+  }
+  const timingReview = useLyricsTimingReview({
+    state,
+    sourceSession,
+    waitForSavedOffset,
+    saveTimingDocument,
+    reportLyricsError,
+    getOffsetIntentRevision: () => offsetIntentRevision,
+    reloadSource: loadSelectedLyrics,
+  });
   return {
+    timingReview,
+    sourceSession: readonly(sourceSession),
+    savedOffsetMs: readonly(savedOffsetMs),
+    waitForSavedOffset,
     lyricsTiming,
     lyricsAcousticEstimate,
     waitForSelectedAcousticEstimate: () => selectedAcousticLoad,

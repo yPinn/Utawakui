@@ -110,6 +110,7 @@ function selectAction(item) {
       :meta="trackMeta"
     >
       <template #actions>
+        <slot name="review" />
         <UiPopover
           v-model:open="displayOpen"
           aria-label="歌詞顯示設定"

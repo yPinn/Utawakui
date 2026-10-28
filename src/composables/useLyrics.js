@@ -108,7 +108,6 @@ const state = reactive({
   error: null,
   offsetSeconds: 0,
 });
-
 const selectedTrack = computed(
   () =>
     state.tracks.find((track) => track.id === state.selectedTrackId) ?? null,
@@ -503,6 +502,7 @@ export function useLyrics() {
     refreshSourceDetails: sourcePresentation.refresh,
     selectedSource,
     lyricsTiming: readonly(lyricsTiming),
+    timingReview: sourceDocuments.timingReview,
     lyricsAcousticEstimate: readonly(lyricsAcousticEstimate),
     lyricsDocument,
     displayLyricsDocument,

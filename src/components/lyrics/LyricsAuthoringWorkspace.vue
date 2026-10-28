@@ -22,6 +22,7 @@ import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
+import LyricsTimingReviewTool from './LyricsTimingReviewTool.vue';
 
 const lyrics = useLyrics();
 const reading = useLyricsReading();
@@ -47,11 +48,13 @@ const {
   retryOffsetSave,
   playFromLine,
   saveTimingDocument,
+  lyricsTiming,
 } = lyrics;
 const { state: playerState } = usePlayer();
 
 const {
   draft: timingDraft,
+  sourceSession: timingSourceSession,
   canCommit: canCommitTiming,
   canUndo: canUndoTiming,
   beginLine: beginTimingLine,
@@ -124,12 +127,16 @@ const selectedDurationMs = computed(() =>
     : null,
 );
 const isSavingReading = ref(false);
+const reviewBusy = computed(() => lyrics.timingReview?.state.isBusy ?? false);
 const hasEditingDraft = computed(
   () => Boolean(timingDraft.value) || editingReadingLineIndex.value !== null,
 );
 const isEditingLocked = computed(
   () =>
-    hasEditingDraft.value || isSavingReading.value || state.timingSave.isSaving,
+    hasEditingDraft.value ||
+    isSavingReading.value ||
+    state.timingSave.isSaving ||
+    reviewBusy.value,
 );
 const editingHelp = computed(() => {
   if (hasEditingDraft.value)
@@ -162,6 +169,7 @@ let restoreDisplayAfterManager = null;
 let disposed = false;
 onUnmounted(() => {
   disposed = true;
+  lyrics.timingReview?.cancel?.();
   restoreDisplayAfterManager = null;
 });
 async function openSourceManager(closeDisplay, restoreDisplay) {
@@ -223,6 +231,7 @@ watch(
     () => selectedTrack.value?.id,
     () => selectedSource.value?.filename,
     () => lyricsDocument.value?.documentId,
+    () => lyricsTiming?.value.sourceSession?.id,
   ],
   () => {
     cancelReadingLineEdit();
@@ -366,6 +375,7 @@ function startTimingEdit(lineId) {
     lyricsDocument.value,
     lineId,
     timingReadings.value.get(lineId),
+    lyricsTiming.value.sourceSession,
   );
 }
 
@@ -381,8 +391,34 @@ async function commitTimingDocument() {
   const draft = timingDraft.value;
   const document = buildTimingDocument();
   if (!document) return;
-  if ((await saveTimingDocument(document)) && timingDraft.value === draft)
+  if (
+    (await saveTimingDocument(document, timingSourceSession.value)) &&
+    timingDraft.value === draft
+  )
     cancelTiming();
+}
+async function confirmTimingReview() {
+  if (
+    isSavingReading.value ||
+    editingReadingLineIndex.value !== null ||
+    reviewBusy.value
+  )
+    return;
+  const draft = timingDraft.value;
+  if (draft && !canCommitTiming.value) return;
+  let saved = false;
+  await lyrics.timingReview.confirm({
+    document: draft ? buildTimingDocument() : null,
+    baseline: timingSourceSession.value,
+    isCurrent: () =>
+      !disposed &&
+      !lyrics.experimentalLyrics?.applied.value &&
+      (saved ? timingDraft.value === null : timingDraft.value === draft),
+    onSaved: () => {
+      if (timingDraft.value === draft) cancelTiming();
+      saved = true;
+    },
+  });
 }
 </script>
 
@@ -403,6 +439,26 @@ async function commitTimingDocument() {
         @refresh="refresh"
         @edit-mode-change="setEditMode"
       >
+        <template #review>
+          <LyricsTimingReviewTool
+            v-if="lyrics.timingReview"
+            :review="lyrics.timingReview"
+            :context-key="selectedSource ? acousticSourceKey : ''"
+            :has-draft="Boolean(timingDraft)"
+            :edit-revision="timingDraft"
+            :can-save="canCommitTiming"
+            :blocked="
+              isSavingReading ||
+              editingReadingLineIndex !== null ||
+              state.isLoadingLyrics
+            "
+            :estimated="lyrics.experimentalLyrics?.applied.value ?? false"
+            :offset-pending="
+              Boolean(state.offsetSave.isSaving || state.offsetSave.error)
+            "
+            @confirm="confirmTimingReview"
+          />
+        </template>
         <template #display="{ closeDisplay, restoreDisplay }">
           <LyricsPreparationBar
             :sources="availableSources ?? selectedLyrics.sources"
@@ -485,7 +541,7 @@ async function commitTimingDocument() {
           :can-save="canCommitTiming"
           :completed-boundaries="completedTimingBoundaries"
           :total-boundaries="totalTimingBoundaries"
-          :is-saving="state.timingSave.isSaving"
+          :is-saving="state.timingSave.isSaving || reviewBusy"
           :error="state.timingSave.error || ''"
           @undo="undoTiming"
           @save="commitTimingDocument"
@@ -495,7 +551,7 @@ async function commitTimingDocument() {
           v-if="timingDraft"
           :draft="timingDraft"
           :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
-          :is-saving="state.timingSave.isSaving"
+          :is-saving="state.timingSave.isSaving || reviewBusy"
           @tap="recordTimingBoundary"
           @nudge-boundary="nudgeBoundary"
         />

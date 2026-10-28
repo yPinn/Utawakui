@@ -442,6 +442,9 @@ function deleteLyricsSource(trackDir, filename) {
   deleteTrackVocalRoles(trackDir, filename);
   deleteTrackLyricsTiming(trackDir, filename);
   deleteTrackAcousticEstimate(trackDir, filename);
+  // Review receipts are derived from this exact source, never retained on reimport.
+  const { deleteReview } = require('./lyricsTimingReviewStore');
+  deleteReview(trackDir, filename);
 
   const remaining = listTrackLyricsSources(trackDir).sources.filter(
     (source) => source.filename !== filename,

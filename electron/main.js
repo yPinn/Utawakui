@@ -534,6 +534,7 @@ if (!gotSingleInstanceLock) {
       windowState.notifyLibraryUpdated(options);
     };
     let workLibraryEpoch = 0;
+    let lyricsSourceSessions;
     const performanceSettingsRuntime = createPerformanceSettingsRuntime({
       getDirectory: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
@@ -561,7 +562,10 @@ if (!gotSingleInstanceLock) {
       }
     };
     const workOrganizationHost = createWorkOrganizationHost({
-      onTrackDeleting: invalidatePerformanceSettings,
+      onTrackDeleting: (trackId) => {
+        invalidatePerformanceSettings(trackId);
+        lyricsSourceSessions?.invalidateTrack(trackId);
+      },
       getDirectory: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
         epoch: workLibraryEpoch,
@@ -1307,7 +1311,7 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
-    registerLyricsHandlers({
+    lyricsSourceSessions = registerLyricsHandlers({
       ipcMain,
       dialog,
       getConfig: configState.getConfig,
@@ -1318,6 +1322,10 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       lyricsAcquisitionService,
       recordDiagnostic,
+      getLibraryContext: () => ({
+        dir: configState.resolveDownloadDir(configState.getConfig()),
+        epoch: workLibraryEpoch,
+      }),
     });
 
     registerMusicStructureHandlers({

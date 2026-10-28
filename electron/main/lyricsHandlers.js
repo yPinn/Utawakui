@@ -11,10 +11,11 @@ const {
 const { registerLyricsReadingHandlers } = require('./lyrics/readingHandlers');
 
 function registerLyricsHandlers(options) {
-  registerLyricsDocumentHandlers(options);
+  const sourceSessions = registerLyricsDocumentHandlers(options);
   registerLyricsAcousticEstimateHandlers(options);
   registerLyricsAcquisitionHandlers(options);
   registerLyricsReadingHandlers(options);
+  return sourceSessions;
 }
 
 module.exports = {

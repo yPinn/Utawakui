@@ -1,6 +1,6 @@
 # 歌詞對時確認：行為提案
 
-2026-10-26；未實作／產生波形，R01–R18 待驗。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
+2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../../spec.md)。R01–R18 仍為完整分層驗收；收據通過不等於句級擴充或波形已交付。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
 
 ## 範圍與確認含義
 
@@ -128,3 +128,13 @@ waveform 綁原始媒體 revision／producer 版本／解析度，不綁歌詞�
 先定 source session／revision／offset barrier／receipt；資料語意可先於波形驗。再比較 backend 的預算與取消，擴充同一 editor 的句級相依，最後按既有視覺節奏與真實音訊驗收，不重建整頁。
 
 當輪依據：[editor](../../../src/composables/useLyricsTimingEditor.js)、[source owner](../../../src/composables/lyrics/useLyricsSourceDocuments.js)、[Main validator](../../../electron/lib/library/lyricsTiming.js)、[timing 契約](../../contracts/lyrics-timing-contract.md)、[T1+ 契約](../../contracts/lyrics-acoustic-estimate-contract.md)。7 份既有測試72 passed：系統 TEMP 首次7 fail／65 pass（rename EPERM），工作區 TEMP／TMP 同組重驗全過，未改程式。原 T01–T09 留[初始證據](player-practice-planning-2026-10-26.json)，不是新增驗收結果。
+
+## 保存與收據驗證（2026-10-28）
+
+依原順序的本輪驗證只涵蓋保存／確認，不把下列結果當整份 R01–R18 通過；功能現況仍只見 spec。
+
+- R01／R08／R11／R14 的資料子集：Main 推導 T0／T1／混合計時與逐字 coverage；同原文 timing CAS、來源隔離、no-op、timing／offset A→B→A、重啟後撤銷／過期不復活，壞檔／未知 schema 保留原 bytes。
+- R09／R10：草稿起始 session 複製成 plain bridge intent；同來源刷新保留 canonical 身份與 offset FIFO／失敗預覽。Timing→offset 屏障→fresh-read→receipt 分段執行，測試部分成功、回應遺失後重讀、A→B→A 晚成功／失敗／finally，以及已送出確認 token 的取消。
+- R12／R17 的程式子集：原媒體替換／觀察到缺失會過期；receipt 目錄轉向拒寫、來源刪除清理、scope／deadline／token 取消後不落盤。FLAC 等價遷移重用既有 fresh alias verifier，收據層以注入證據驗證；真實 FLAC 回寫端到端驗收仍待執行。
+- 可見 Electron 使用 production renderer 與全新 Main／preload、隔離 profile／合成 WAV：確認→撤銷→再確認→offset 過期→一般儲存→儲存並確認，逐字邊界由 1500→1600→1700ms，T2／2 行與其中 1 行逐字 coverage 保留。播放穩定後 play／pause 呼叫維持 2／0、renderer errors 為空；亮 960／暗 1280、更多選單與 popover 的 Escape 焦點返回通過。
+- 入口僅在編輯歌詞第二級頁面，演唱頁沿既有編輯入口。真實聽辨、Performer／Output 的人工畫面一致性、句級相依與波形記憶體／取消仍依 R02–R07／R15–R18 後續驗，不宣稱裝置或 OBS 校準。

@@ -115,6 +115,11 @@ beforeEach(() => {
     .fn()
     .mockResolvedValue([trackA, trackB, trackMissingLyrics]);
   getTrackLyricsMock = vi.fn().mockResolvedValue({
+    sourceSession: {
+      id: 'current-source',
+      timingRevision: 't0',
+      offsetRevision: 'o0',
+    },
     source: { filename: 'en.vtt', language: 'en', kind: 'youtube-cc' },
     text: lyricsText,
     timing: {
@@ -129,6 +134,11 @@ beforeEach(() => {
       sourceFingerprint: fingerprint,
       normalizerProfileId: document.normalizerProfileId,
       document,
+      sourceSession: {
+        id: 'current-source',
+        timingRevision: 't1',
+        offsetRevision: 'o0',
+      },
     }),
   );
   setLyricsSourceOffsetMock = vi.fn().mockResolvedValue({
@@ -320,6 +330,7 @@ describe('useLyrics', () => {
         'setSourceLabel',
         'setTrackScope',
         'state',
+        'timingReview',
         'tracksById',
       ].sort(),
     );
@@ -1238,6 +1249,7 @@ describe('useLyrics', () => {
       'en.vtt',
       lyricsSourceFingerprint,
       document,
+      expect.objectContaining({ id: 'current-source' }),
     );
     expect(lyrics.lyricsTiming.value).toMatchObject({
       status: 'current',
@@ -1350,6 +1362,11 @@ describe('useLyrics', () => {
       ['ja.vtt', -1300],
     ]);
     getTrackLyricsMock.mockImplementation(async (_trackId, filename) => ({
+      sourceSession: {
+        id: filename,
+        timingRevision: 't0',
+        offsetRevision: 'o0',
+      },
       source: {
         filename,
         language: filename === 'ja.vtt' ? 'ja' : 'en',
@@ -1381,6 +1398,7 @@ describe('useLyrics', () => {
       trackA.id,
       initialFilename,
       2600,
+      expect.objectContaining({ id: initialFilename }),
     );
 
     lyrics.selectSource(initialFilename); // same filename: no-op
@@ -1399,6 +1417,7 @@ describe('useLyrics', () => {
       trackA.id,
       otherFilename,
       0,
+      expect.objectContaining({ id: otherFilename }),
     );
 
     lyrics.selectSource(initialFilename);
@@ -1480,6 +1499,7 @@ describe('useLyrics', () => {
     );
 
     lyrics.adjustOffset(0.1);
+    await Promise.resolve();
     lyrics.selectTrack(trackB.id);
     await flushPromises();
     rejectStaleSave(new Error('stale disk failure'));

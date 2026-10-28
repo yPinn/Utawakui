@@ -74,6 +74,13 @@ network install or signed-installer acceptance; see the
   allowlist and is bundled into renderer consumers. Adjacent tests are excluded;
   per-track `performance-settings.json` is library user data, never an installer
   asset. No new runtime dependency, worker or packaging location is introduced.
+- Lyrics timing source sessions and human receipts: `electron/lib/library/lyricsSourceSessions.js`,
+  `lyricsTimingReview.js` and `lyricsTimingReviewStore.js`
+  is included by the existing Main bundle dependency closure. The fixed lyrics
+  read/save/cancel intents use the existing main preload, and the renderer source
+  owner remains bundled in `dist/**/*`. Session revisions are process memory;
+  existing timing, manifest and per-source `lyrics/review/` files remain library user data. No new worker,
+  runtime dependency, waveform asset or installed data path is introduced.
 
 - Local works/version persistence and release schemas: `electron/lib/works/`
   and `electron/lib/releases/` are included in the Main bundle;

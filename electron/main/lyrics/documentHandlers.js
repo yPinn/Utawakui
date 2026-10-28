@@ -8,9 +8,7 @@ const {
   loadTrackLyricsManifest,
   readTrackLyrics,
   resolveTrackDir,
-  saveTrackLyricsTiming,
   setLyricsSourceLabel,
-  setLyricsSourceOffset,
   setLyricsSourcePreference,
 } = require('../../lib/library');
 const { deleteStoredAmllSource } = require('../../lib/amll');
@@ -21,6 +19,14 @@ const {
   loadTrackVocalRoles,
   saveTrackVocalRoles,
 } = require('../../lib/library/lyricsVocalRoles');
+const {
+  createLyricsSourceSessions,
+} = require('../../lib/library/lyricsSourceSessions');
+const {
+  createLyricsTimingReview,
+} = require('../../lib/library/lyricsTimingReview');
+const { createAppError } = require('../../lib/appError');
+const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
 
 function registerLyricsDocumentHandlers({
   ipcMain,
@@ -29,7 +35,68 @@ function registerLyricsDocumentHandlers({
   resolveDownloadDir,
   getMainWindow,
   notifyLibraryUpdated,
+  getLibraryContext,
+  recordDiagnostic,
 }) {
+  let timingReview;
+  const sourceSessions = createLyricsSourceSessions({
+    beforeMutation: (value) => timingReview.invalidate(value),
+    getContext:
+      getLibraryContext ??
+      (() => ({ dir: resolveDownloadDir(getConfig()), epoch: 0 })),
+  });
+  timingReview = createLyricsTimingReview({ sources: sourceSessions });
+  async function sourceOperation(event, operation, run) {
+    const window = getMainWindow();
+    if (
+      !window ||
+      window.isDestroyed() ||
+      event?.sender !== window.webContents ||
+      event?.senderFrame !== window.webContents.mainFrame
+    )
+      throw createAppError({
+        code: 'LYRICS_SOURCE_INVALID',
+        message: '無法執行這個歌詞來源操作。',
+      });
+    try {
+      return await run();
+    } catch (error) {
+      if (
+        [
+          'LYRICS_SOURCE_INVALID',
+          'LYRICS_SOURCE_CONFLICT',
+          'LYRICS_SOURCE_STALE',
+          'LYRICS_SOURCE_UNUSABLE',
+        ].includes(error.code)
+      )
+        throw createAppError({
+          code: error.code,
+          severity: 'warning',
+          message:
+            error.code === 'LYRICS_SOURCE_UNUSABLE'
+              ? '這份歌詞時間資料無法保存，請先檢查來源版本。'
+              : '歌詞來源或保存版本已變更，請重新讀取後再試一次。',
+        });
+      return runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'lyrics-source',
+            operation,
+            code: 'LYRICS_SOURCE_FAILED',
+          },
+          publicError: {
+            code: 'LYRICS_SOURCE_FAILED',
+            message: '歌詞來源操作未完成，請再試一次。',
+            context: { retryable: true },
+          },
+        },
+        () => {
+          throw error;
+        },
+      );
+    }
+  }
   function vocalSource(trackId, filename) {
     const dir = resolveDownloadDir(getConfig());
     if (
@@ -56,11 +123,27 @@ function registerLyricsDocumentHandlers({
       ),
   );
   ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
-    const dir = resolveDownloadDir(getConfig());
-    const result = readTrackLyrics(dir, trackId, filename);
-    if (!result) return null;
-    return result;
+    return sourceOperation(event, 'load', () =>
+      sourceSessions.open(trackId, filename),
+    );
   });
+  ipcMain.handle('lyrics:cancel-source-session', (event, id) =>
+    sourceOperation(event, 'cancel', () => sourceSessions.cancel(id)),
+  );
+  ipcMain.handle('lyrics:cancel-timing-review', (event, token) =>
+    sourceOperation(event, 'cancel-review', () => timingReview.cancel(token)),
+  );
+  for (const [channel, method] of [
+    ['lyrics:get-timing-review', 'get'],
+    ['lyrics:confirm-timing-review', 'confirm'],
+    ['lyrics:revoke-timing-review', 'revoke'],
+  ]) {
+    ipcMain.handle(channel, (event, trackId, filename, session, token) =>
+      sourceOperation(event, method, () =>
+        timingReview[method](trackId, filename, session, token),
+      ),
+    );
+  }
 
   ipcMain.handle(
     'lyrics:save-timing',
@@ -70,20 +153,19 @@ function registerLyricsDocumentHandlers({
       sourceFilename,
       expectedSourceFingerprint,
       document,
+      sourceSession,
     ) => {
-      const dir = resolveDownloadDir(getConfig());
-      const track = findTrackRecord(dir, trackId);
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const saved = saveTrackLyricsTiming(
-        trackDir,
-        sourceFilename,
-        expectedSourceFingerprint,
-        document,
-      );
-      notifyLibraryUpdated();
-      return saved;
+      return sourceOperation(event, 'save-timing', () => {
+        const saved = sourceSessions.saveTiming(
+          trackId,
+          sourceFilename,
+          expectedSourceFingerprint,
+          document,
+          sourceSession,
+        );
+        notifyLibraryUpdated();
+        return saved;
+      });
     },
   );
 
@@ -104,19 +186,10 @@ function registerLyricsDocumentHandlers({
 
   ipcMain.handle(
     'lyrics:set-source-offset',
-    async (event, trackId, filename, offsetMs) => {
-      const dir = resolveDownloadDir(getConfig());
-      const track = findTrackRecord(dir, trackId);
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const sources = setLyricsSourceOffset(trackDir, filename, offsetMs);
-      const source = sources?.find(
-        (candidate) => candidate.filename === filename,
+    async (event, trackId, filename, offsetMs, sourceSession) => {
+      return sourceOperation(event, 'save-offset', () =>
+        sourceSessions.saveOffset(trackId, filename, offsetMs, sourceSession),
       );
-      if (!source) throw new Error(`invalid lyrics source offset: ${filename}`);
-
-      return { source };
     },
   );
 
@@ -195,6 +268,7 @@ function registerLyricsDocumentHandlers({
     notifyLibraryUpdated();
     return result;
   });
+  return sourceSessions;
 }
 
 module.exports = { registerLyricsDocumentHandlers };

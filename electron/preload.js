@@ -4,6 +4,15 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Parsed from the `--ui-theme=` arg main.js passes via additionalArguments —
 // lets the renderer paint the persisted theme on first frame, no async wait.
+function projectLyricsSession(value) {
+  return value
+    ? {
+        id: value.id,
+        timingRevision: value.timingRevision,
+        offsetRevision: value.offsetRevision,
+      }
+    : null;
+}
 function readInitialUiTheme() {
   const arg = process.argv.find((a) => a.startsWith('--ui-theme='));
   const theme = arg ? arg.slice('--ui-theme='.length) : 'light';
@@ -1021,6 +1030,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     sourceFilename,
     expectedSourceFingerprint,
     document,
+    sourceSession,
   ) =>
     ipcRenderer.invoke(
       'lyrics:save-timing',
@@ -1028,6 +1038,40 @@ contextBridge.exposeInMainWorld('Utawakui', {
       sourceFilename,
       expectedSourceFingerprint,
       document,
+      sourceSession
+        ? {
+            id: sourceSession.id,
+            timingRevision: sourceSession.timingRevision,
+            offsetRevision: sourceSession.offsetRevision,
+          }
+        : null,
+    ),
+  cancelLyricsSourceSession: (id) =>
+    ipcRenderer.invoke('lyrics:cancel-source-session', id),
+  cancelLyricsTimingReview: (token) =>
+    ipcRenderer.invoke('lyrics:cancel-timing-review', token),
+  getLyricsTimingReview: (trackId, filename, session) =>
+    ipcRenderer.invoke(
+      'lyrics:get-timing-review',
+      trackId,
+      filename,
+      projectLyricsSession(session),
+    ),
+  confirmLyricsTimingReview: (trackId, filename, session, token) =>
+    ipcRenderer.invoke(
+      'lyrics:confirm-timing-review',
+      trackId,
+      filename,
+      projectLyricsSession(session),
+      token,
+    ),
+  revokeLyricsTimingReview: (trackId, filename, session, token) =>
+    ipcRenderer.invoke(
+      'lyrics:revoke-timing-review',
+      trackId,
+      filename,
+      projectLyricsSession(session),
+      token,
     ),
   probeMusixmatchLyrics: (trackId) =>
     ipcRenderer.invoke('lyrics:probe-musixmatch', trackId),
@@ -1067,8 +1111,20 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:backfill-source-labels', trackId),
   setLyricsSourceLabel: (trackId, filename, label) =>
     ipcRenderer.invoke('lyrics:set-source-label', trackId, filename, label),
-  setLyricsSourceOffset: (trackId, filename, offsetMs) =>
-    ipcRenderer.invoke('lyrics:set-source-offset', trackId, filename, offsetMs),
+  setLyricsSourceOffset: (trackId, filename, offsetMs, sourceSession) =>
+    ipcRenderer.invoke(
+      'lyrics:set-source-offset',
+      trackId,
+      filename,
+      offsetMs,
+      sourceSession
+        ? {
+            id: sourceSession.id,
+            timingRevision: sourceSession.timingRevision,
+            offsetRevision: sourceSession.offsetRevision,
+          }
+        : null,
+    ),
   setLyricsSourcePreference: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:set-preferred-source', trackId, filename),
   deleteLyricsSource: (trackId, filename) =>

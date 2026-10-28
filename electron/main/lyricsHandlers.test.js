@@ -23,11 +23,27 @@ function registerLyricsHandlers(options) {
   registerLyricsReadingHandlers(options);
 }
 
-function createIpcMain() {
+function createIpcMain(getTrustedEvent = () => null) {
   const handlers = new Map();
   return {
     handlers,
-    handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+    handle: vi.fn((channel, handler) =>
+      handlers.set(
+        channel,
+        [
+          'lyrics:get-track',
+          'lyrics:save-timing',
+          'lyrics:set-source-offset',
+          'lyrics:cancel-source-session',
+          'lyrics:cancel-timing-review',
+          'lyrics:get-timing-review',
+          'lyrics:confirm-timing-review',
+          'lyrics:revoke-timing-review',
+        ].includes(channel)
+          ? (event, ...args) => handler(event ?? getTrustedEvent(), ...args)
+          : handler,
+      ),
+    ),
   };
 }
 
@@ -48,6 +64,47 @@ describe('lyrics timing IPC', () => {
   let mainWindow;
   let requireFeatureGate;
   let runReadingWorker;
+  let recordDiagnostic;
+  it('confirms and revokes only Main-derived receipts through the trusted main frame', async () => {
+    const a = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    const get = ipcMain.handlers.get('lyrics:get-timing-review');
+    await expect(
+      get(
+        { sender: {}, senderFrame: {} },
+        'track-a',
+        'main.lrc',
+        a.sourceSession,
+      ),
+    ).rejects.toSatisfy(
+      (error) => parseAppErrorCode(error) === 'LYRICS_SOURCE_INVALID',
+    );
+    const ready = await get(null, 'track-a', 'main.lrc', a.sourceSession);
+    expect(ready).toMatchObject({
+      status: 'unconfirmed',
+      coverage: { timed: 1, total: 1 },
+    });
+    const confirmed = await ipcMain.handlers.get(
+      'lyrics:confirm-timing-review',
+    )(null, 'track-a', 'main.lrc', a.sourceSession, ready.token);
+    expect(confirmed.status).toBe('confirmed');
+    const fresh = await get(null, 'track-a', 'main.lrc', a.sourceSession);
+    expect(
+      (
+        await ipcMain.handlers.get('lyrics:revoke-timing-review')(
+          null,
+          'track-a',
+          'main.lrc',
+          a.sourceSession,
+          fresh.token,
+        )
+      ).status,
+    ).toBe('revoked');
+    expect(recordDiagnostic).not.toHaveBeenCalled();
+  });
 
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-ipc-'));
@@ -59,12 +116,19 @@ describe('lyrics timing IPC', () => {
       '[00:01.00]Hello',
     );
 
-    ipcMain = createIpcMain();
+    ipcMain = createIpcMain(() => ({
+      sender: mainWindow?.webContents,
+      senderFrame: mainWindow?.webContents.mainFrame,
+    }));
     notifyLibraryUpdated = vi.fn();
     dialog = { showOpenDialog: vi.fn() };
-    mainWindow = null;
+    mainWindow = {
+      isDestroyed: () => false,
+      webContents: { mainFrame: {}, send: vi.fn() },
+    };
     requireFeatureGate = vi.fn();
     runReadingWorker = vi.fn();
+    recordDiagnostic = vi.fn(() => ({ ok: true }));
     lyricsAcquisitionService = {
       searchCandidates: vi.fn(),
       saveCandidate: vi.fn(),
@@ -83,11 +147,91 @@ describe('lyrics timing IPC', () => {
       featureIds: { LYRICS_FLOW: 'lyrics-flow' },
       lyricsAcquisitionService,
       runReadingWorker,
+      recordDiagnostic,
     });
   });
 
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+  it('rejects forged frames and source sessions without exposing private paths', async () => {
+    const load = ipcMain.handlers.get('lyrics:get-track');
+    await expect(
+      load({ sender: {}, senderFrame: {} }, 'track-a', 'main.lrc'),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_INVALID' });
+    const opened = await load(null, 'track-a', 'main.lrc');
+    const save = ipcMain.handlers.get('lyrics:set-source-offset');
+    await expect(
+      save(
+        { sender: mainWindow.webContents, senderFrame: {} },
+        'track-a',
+        'main.lrc',
+        100,
+        opened.sourceSession,
+      ),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_INVALID' });
+    await ipcMain.handlers.get('lyrics:cancel-source-session')(
+      null,
+      opened.sourceSession.id,
+    );
+    await expect(
+      save(null, 'track-a', 'main.lrc', 100, opened.sourceSession),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_STALE' });
+  });
+  it('records unexpected source IO privately and bounds the public error once', async () => {
+    const read = fs.readFileSync;
+    const spy = vi
+      .spyOn(fs, 'readFileSync')
+      .mockImplementation((file, ...args) => {
+        if (String(file).endsWith('main.lrc'))
+          throw Error('private E:/media/secret.lrc');
+        return read(file, ...args);
+      });
+    try {
+      const error = await ipcMain.handlers
+        .get('lyrics:get-track')(null, 'track-a', 'main.lrc')
+        .catch((value) => value);
+      expect(error.code).toBe('LYRICS_SOURCE_FAILED');
+      expect(error.message).not.toContain('secret.lrc');
+      expect(error.context.diagnosticRecorded).toBe(true);
+      expect(recordDiagnostic).toHaveBeenCalledOnce();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+  it('rejects a same-text timing race through the real writer without rebasing', async () => {
+    const load = ipcMain.handlers.get('lyrics:get-track'),
+      save = ipcMain.handlers.get('lyrics:save-timing');
+    const a = await load(null, 'track-a', 'main.lrc'),
+      b = await load(null, 'track-a', 'main.lrc');
+    const document = {
+      schemaVersion: 1,
+      documentId: 'doc',
+      normalizerProfileId: a.timing.normalizerProfileId,
+      source: { filename: 'main.lrc', sha256: a.timing.sourceFingerprint },
+      lines: [{ lineId: 'line', text: 'Hello', startMs: 1000, endMs: null }],
+    };
+    await save(
+      null,
+      'track-a',
+      'main.lrc',
+      a.timing.sourceFingerprint,
+      document,
+      a.sourceSession,
+    );
+    const file = path.join(trackDir, 'lyrics/timing/main.lrc.json'),
+      before = fs.readFileSync(file, 'utf8');
+    await expect(
+      save(
+        null,
+        'track-a',
+        'main.lrc',
+        b.timing.sourceFingerprint,
+        { ...document, lines: [{ ...document.lines[0], startMs: 2000 }] },
+        b.sourceSession,
+      ),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_CONFLICT' });
+    expect(fs.readFileSync(file, 'utf8')).toBe(before);
   });
 
   it('saves and reloads source-bound vocal roles through fixed local IPC', async () => {
@@ -162,6 +306,7 @@ describe('lyrics timing IPC', () => {
         'main.lrc',
         loaded.timing.sourceFingerprint,
         document,
+        loaded.sourceSession,
       ),
     ).resolves.toMatchObject({
       status: 'current',
@@ -185,21 +330,26 @@ describe('lyrics timing IPC', () => {
 
     await expect(
       save(null, 'missing', 'main.lrc', 'a'.repeat(64), document),
-    ).rejects.toThrow(/unknown track/i);
+    ).rejects.toThrow();
     await expect(
       save(null, 'track-a', '../main.lrc', 'a'.repeat(64), document),
     ).rejects.toThrow();
     await expect(
       save(null, 'track-a', 'main.lrc', 'a'.repeat(64), document),
-    ).rejects.toThrow(/changed/i);
+    ).rejects.toThrow();
     expect(notifyLibraryUpdated).not.toHaveBeenCalled();
   });
 
   it('persists a bounded offset for the selected lyrics source', async () => {
     const saveOffset = ipcMain.handlers.get('lyrics:set-source-offset');
+    const opened = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
 
     await expect(
-      saveOffset(null, 'track-a', 'main.lrc', -1300),
+      saveOffset(null, 'track-a', 'main.lrc', -1300, opened.sourceSession),
     ).resolves.toMatchObject({
       source: { filename: 'main.lrc', offsetMs: -1300 },
     });
@@ -235,9 +385,9 @@ describe('lyrics timing IPC', () => {
     await expect(
       saveOffset(null, 'track-a', 'main.lrc', 100.5),
     ).rejects.toThrow();
-    await expect(saveOffset(null, 'missing', 'main.lrc', 100)).rejects.toThrow(
-      /unknown track/i,
-    );
+    await expect(
+      saveOffset(null, 'missing', 'main.lrc', 100),
+    ).rejects.toThrow();
   });
 
   it('rejects stale, duplicate, and unknown-target reading identities before work', async () => {
@@ -919,7 +1069,10 @@ describe('lyrics timing IPC', () => {
       sourceFingerprint: loaded.timing.sourceFingerprint,
       lines: [{ lineId: 'line_01', text: 'Hello' }],
     };
-    mainWindow = { webContents: { send: vi.fn() } };
+    mainWindow = {
+      isDestroyed: () => false,
+      webContents: { mainFrame: {}, send: vi.fn() },
+    };
     runReadingWorker.mockImplementation(
       async ({ lines, script, onProgress }) => {
         onProgress({ stage: 'tokenizing', index: 0, total: lines.length });

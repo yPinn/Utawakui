@@ -46,6 +46,7 @@ beforeEach(() => {
     selectedSource: shallowRef({ filename: 'a.lrc' }),
     selectedLyrics: shallowRef({ sources: [] }),
     lyricsDocument: shallowRef(document),
+    lyricsTiming: shallowRef({ sourceSession: { id: 'source-a' } }),
     lyricLines: shallowRef(document.lines),
     activeLineIndex: shallowRef(0),
     currentLyricsPositionMs: shallowRef(0),
@@ -80,10 +81,12 @@ beforeEach(() => {
   const draft = shallowRef(null);
   owners.timing = {
     draft,
+    sourceSession: shallowRef(null),
     canCommit: computed(() => Boolean(draft.value)),
     canUndo: shallowRef(false),
-    beginLine: vi.fn((doc, id) => {
+    beginLine: vi.fn((doc, id, readings, session) => {
       draft.value = { lineId: id, segments: [] };
+      owners.timing.sourceSession.value = session;
     }),
     cancel: vi.fn(() => {
       draft.value = null;
@@ -100,10 +103,15 @@ describe('contextual lyrics editing tasks', () => {
   it('keeps timing drafts on failure and never clears a replacement draft after an older save', async () => {
     vm.setEditMode('timing');
     vm.startTimingEdit('one');
+    expect(owners.timing.sourceSession.value).toEqual({ id: 'source-a' });
     vm.recordTimingBoundary();
     expect(owners.timing.tapBoundary).toHaveBeenCalledWith(0);
     owners.lyrics.saveTimingDocument.mockResolvedValueOnce(false);
     await vm.commitTimingDocument();
+    expect(owners.lyrics.saveTimingDocument).toHaveBeenLastCalledWith(
+      owners.lyrics.lyricsDocument.value,
+      owners.timing.sourceSession.value,
+    );
     expect(owners.timing.draft.value?.lineId).toBe('one');
     let resolve;
     owners.lyrics.saveTimingDocument.mockImplementationOnce(

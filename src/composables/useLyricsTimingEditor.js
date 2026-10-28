@@ -8,6 +8,7 @@ export { suggestSplitOffsets } from '../utils/lyricsTiming.js';
 
 const draft = shallowRef(null);
 const baseDocument = shallowRef(null);
+const sourceSession = shallowRef(null);
 const history = [];
 const initialSegments = shallowRef([]);
 
@@ -45,13 +46,14 @@ const hasChanges = computed(() =>
 const canCommit = computed(() => hasChanges.value && isValidDraft(draft.value));
 const canUndo = computed(() => draft.value !== null && history.length > 0);
 
-function beginLine(document, lineId, readingLine = null) {
+function beginLine(document, lineId, readingLine = null, session = null) {
   const line = document?.lines?.find(
     (candidate) => candidate.lineId === lineId,
   );
   if (!canEditTimingLine(line, readingLine)) return false;
 
   baseDocument.value = document;
+  sourceSession.value = session;
   history.length = 0;
   const segments = timingSegmentsFor(line, readingLine);
   initialSegments.value = cloneSegments(segments);
@@ -132,6 +134,7 @@ function buildDocument() {
 function cancel() {
   draft.value = null;
   baseDocument.value = null;
+  sourceSession.value = null;
   initialSegments.value = [];
   history.length = 0;
 }
@@ -139,6 +142,7 @@ function cancel() {
 export function useLyricsTimingEditor() {
   return {
     draft: readonly(draft),
+    sourceSession: readonly(sourceSession),
     canCommit,
     canUndo,
     suggestSplitOffsets,

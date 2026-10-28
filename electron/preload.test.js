@@ -155,6 +155,11 @@ const MAIN_INVOKE_CHANNELS = [
   'library-storage:get',
   'library-storage:set-policy',
   'lyrics:backfill-source-labels',
+  'lyrics:cancel-source-session',
+  'lyrics:cancel-timing-review',
+  'lyrics:confirm-timing-review',
+  'lyrics:get-timing-review',
+  'lyrics:revoke-timing-review',
   'lyrics:delete-reading',
   'lyrics:delete-source',
   'lyrics:generate-reading',
@@ -930,6 +935,59 @@ describe('main preload bridge', () => {
         values,
       },
     );
+  });
+  it('projects only source session revisions on the fixed timing and offset channels', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const session = {
+      id: 'id',
+      timingRevision: 'timing',
+      offsetRevision: 'offset',
+    };
+    await bridge.saveLyricsTiming(
+      'track',
+      'main.lrc',
+      'hash',
+      {},
+      { ...session, path: 'private', hash: 'private' },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'lyrics:save-timing',
+      'track',
+      'main.lrc',
+      'hash',
+      {},
+      session,
+    );
+    await bridge.setLyricsSourceOffset('track', 'main.lrc', 100, {
+      ...session,
+      path: 'private',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'lyrics:set-source-offset',
+      'track',
+      'main.lrc',
+      100,
+      session,
+    );
+    for (const [method, channel] of [
+      ['getLyricsTimingReview', 'lyrics:get-timing-review'],
+      ['confirmLyricsTimingReview', 'lyrics:confirm-timing-review'],
+      ['revokeLyricsTimingReview', 'lyrics:revoke-timing-review'],
+    ]) {
+      await bridge[method](
+        'track',
+        'main.lrc',
+        { ...session, path: 'private', confidence: 1 },
+        'receipt-token',
+      );
+      expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+        channel,
+        'track',
+        'main.lrc',
+        session,
+        ...(method === 'getLyricsTimingReview' ? [] : ['receipt-token']),
+      );
+    }
   });
 
   it('exposes only fixed invoke, send, and subscription channels', async () => {
