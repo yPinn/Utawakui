@@ -29,6 +29,14 @@ export function useLyricsSourceDocuments({
   let loadedContext = null;
   let offsetIntentRevision = 0;
   let offsetContextGeneration = 0;
+  // Source-list maintenance (label, delete, backfill). `operation` titles the
+  // failure; `attempt` lets a view hide one result without owning the state.
+  state.sourceAction ??= {
+    isSaving: false,
+    operation: null,
+    attempt: 0,
+    error: null,
+  };
   function cancelSession(value) {
     if (!value?.id || !window.Utawakui?.cancelLyricsSourceSession) return;
     try {
@@ -99,6 +107,10 @@ export function useLyricsSourceDocuments({
     if (state.timingSave) {
       state.timingSave.isSaving = false;
       state.timingSave.error = null;
+    }
+    if (state.sourceAction && loadedContext?.trackId !== track?.id) {
+      state.sourceAction.operation = null;
+      state.sourceAction.error = null;
     }
 
     lyricsAcousticEstimate.value = { status: 'missing' };
@@ -332,70 +344,54 @@ export function useLyricsSourceDocuments({
     }
   }
 
-  async function setSourceLabel(filename, label) {
-    const track = selectedTrack.value;
-    if (!track) return null;
-
-    if (typeof window.Utawakui?.setLyricsSourceLabel !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再編輯標籤。';
+  async function runSourceAction(operation, bridgeName, work) {
+    if (!selectedTrack.value) return null;
+    const action = state.sourceAction;
+    action.operation = operation;
+    action.attempt += 1;
+    if (typeof window.Utawakui?.[bridgeName] !== 'function') {
+      action.error = '請重新啟動應用程式後再試。';
       return null;
     }
-
-    state.manualSave.isSaving = true;
-    state.manualSave.error = null;
+    action.isSaving = true;
+    action.error = null;
     try {
-      const result = await window.Utawakui.setLyricsSourceLabel(
-        track.id,
-        filename,
-        label,
-      );
-      await refreshLibrary();
-      return result;
+      return await work(window.Utawakui[bridgeName], selectedTrack.value);
     } catch (error) {
-      state.manualSave.error = reportLyricsError(
-        error,
-        'set-label',
-        '標籤未更新，請再試一次。',
-      );
+      action.error = reportLyricsError(error, operation, '請再試一次。');
       return null;
     } finally {
-      state.manualSave.isSaving = false;
+      action.isSaving = false;
     }
   }
 
-  async function deleteSource(filename) {
-    const track = selectedTrack.value;
-    if (!track) return null;
+  function setSourceLabel(filename, label) {
+    return runSourceAction(
+      'set-label',
+      'setLyricsSourceLabel',
+      async (bridge, track) => {
+        const result = await bridge(track.id, filename, label);
+        await refreshLibrary();
+        return result;
+      },
+    );
+  }
 
-    if (typeof window.Utawakui?.deleteLyricsSource !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再刪除歌詞來源。';
-      return null;
-    }
-
-    state.manualSave.isSaving = true;
-    state.manualSave.error = null;
-    try {
-      const result = await window.Utawakui.deleteLyricsSource(
-        track.id,
-        filename,
-      );
-      await refreshLibrary();
-      if (state.selectedSourceFilename === filename) {
-        selectSource(result.sources[0]?.filename ?? '', {
-          persistPreference: false,
-        });
-      }
-      return result;
-    } catch (error) {
-      state.manualSave.error = reportLyricsError(
-        error,
-        'delete-source',
-        '無法刪除歌詞來源，請再試一次。',
-      );
-      return null;
-    } finally {
-      state.manualSave.isSaving = false;
-    }
+  function deleteSource(filename) {
+    return runSourceAction(
+      'delete-source',
+      'deleteLyricsSource',
+      async (bridge, track) => {
+        const result = await bridge(track.id, filename);
+        await refreshLibrary();
+        if (state.selectedSourceFilename === filename) {
+          selectSource(result.sources[0]?.filename ?? '', {
+            persistPreference: false,
+          });
+        }
+        return result;
+      },
+    );
   }
 
   async function importManualLyricsText(payload) {
@@ -403,7 +399,7 @@ export function useLyricsSourceDocuments({
     if (!track) return null;
 
     if (typeof window.Utawakui?.importLyricsText !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再匯入歌詞。';
+      state.manualSave.error = '請重新啟動應用程式後再試。';
       return null;
     }
 
@@ -418,7 +414,7 @@ export function useLyricsSourceDocuments({
       state.manualSave.error = reportLyricsError(
         error,
         'import-text',
-        '歌詞未匯入，請再試一次。',
+        '請再試一次。',
       );
       return null;
     } finally {
@@ -431,7 +427,7 @@ export function useLyricsSourceDocuments({
     if (!track) return null;
 
     if (typeof window.Utawakui?.importLyricsFile !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再匯入歌詞檔。';
+      state.manualSave.error = '請重新啟動應用程式後再試。';
       return null;
     }
 
@@ -447,7 +443,7 @@ export function useLyricsSourceDocuments({
       state.manualSave.error = reportLyricsError(
         error,
         'import-file',
-        '歌詞未匯入，請再試一次。',
+        '請再試一次。',
       );
       return null;
     } finally {

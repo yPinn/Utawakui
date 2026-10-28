@@ -72,7 +72,7 @@ async function handleFileImport() {
     <UiNotice
       v-if="state.manualSave.error"
       tone="danger"
-      title="歌詞變更未完成"
+      title="歌詞未匯入"
       :message="state.manualSave.error"
       compact
     />

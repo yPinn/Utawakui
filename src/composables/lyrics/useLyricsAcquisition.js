@@ -69,7 +69,7 @@ function providerSaveFailureMessage(providerId, reason) {
       ? BETTER_LYRICS_SAVE_FAILURE_MESSAGES[reason]
       : null) ||
     PROVIDER_FAILURE_MESSAGES[providerId]?.[reason] ||
-    '歌詞未儲存，請再試一次。'
+    '請再試一次。'
   );
 }
 
@@ -222,6 +222,10 @@ export function useLyricsAcquisition({
         state.musixmatchProbe.error = message;
       } else if (options.errorTarget === 'manualSave') {
         state.manualSave.error = message;
+      } else if (options.errorTarget === 'sourceAction') {
+        state.sourceAction.operation = options.operation;
+        state.sourceAction.attempt += 1;
+        state.sourceAction.error = message;
       } else {
         state.candidateSearch.error = message;
       }
@@ -377,7 +381,7 @@ export function useLyricsAcquisition({
     const legacySave =
       providerId === 'lrclib' ? window.Utawakui?.saveLyricsCandidate : null;
     if (typeof genericSave !== 'function' && typeof legacySave !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再儲存歌詞。';
+      state.manualSave.error = '請重新啟動應用程式後再試。';
       return null;
     }
 
@@ -448,7 +452,7 @@ export function useLyricsAcquisition({
       state.manualSave.error = reportLyricsError(
         error,
         'save-candidate',
-        '歌詞未儲存，請再試一次。',
+        '請再試一次。',
         { persist: false },
       );
       return null;
@@ -474,28 +478,37 @@ export function useLyricsAcquisition({
   async function backfillSourceLabels() {
     const track = selectedTrack.value;
     if (!track) return null;
-    if (!(await ensureLyricsFlow())) return null;
+    if (
+      !(await ensureLyricsFlow({
+        errorTarget: 'sourceAction',
+        operation: 'backfill-labels',
+      }))
+    )
+      return null;
 
+    const action = state.sourceAction;
+    action.operation = 'backfill-labels';
+    action.attempt += 1;
     if (typeof window.Utawakui?.backfillLyricsSourceLabels !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再更新標籤。';
+      action.error = '請重新啟動應用程式後再試。';
       return null;
     }
 
-    state.manualSave.isSaving = true;
-    state.manualSave.error = null;
+    action.isSaving = true;
+    action.error = null;
     try {
       const result = await window.Utawakui.backfillLyricsSourceLabels(track.id);
       await refreshLibrary();
       return result;
     } catch (error) {
-      state.manualSave.error = reportLyricsError(
+      action.error = reportLyricsError(
         error,
         'backfill-labels',
-        '標籤未更新，請再試一次。',
+        '請再試一次。',
       );
       return null;
     } finally {
-      state.manualSave.isSaving = false;
+      action.isSaving = false;
     }
   }
 

@@ -7,6 +7,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
@@ -92,6 +93,7 @@ for (const [component, path] of [
   [UiButton, '../ui/UiButton.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiHint, '../ui/UiHint.vue'],
+  [UiNotice, '../ui/UiNotice.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
   [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
@@ -108,6 +110,12 @@ beforeEach(() => {
       selectedTrackId: 'track',
       selectedSourceFilename: null,
       offsetSeconds: 0,
+      sourceAction: {
+        isSaving: false,
+        operation: null,
+        attempt: 0,
+        error: null,
+      },
     }),
     selectedLyrics: computed(() => ({ sources: sources.items })),
     availableSources: computed(() => sortLyricsSources(sources.items)),
@@ -310,6 +318,41 @@ describe('local lyrics collection modal navigation', () => {
     sources.items[0].label = '已補齊';
     await nextTick();
     expect(button('補齊標籤')).toBeUndefined();
+  });
+
+  it('titles source-list failures in place and keeps the edit open for retry', async () => {
+    sources.items = [{ filename: 'one.lrc', kind: 'manual', label: '' }];
+    const { root, button } = setup();
+    const fail = (operation) => async () => {
+      Object.assign(domain.state.sourceAction, {
+        operation,
+        attempt: domain.state.sourceAction.attempt + 1,
+        error: '請再試一次。',
+      });
+      return null;
+    };
+    domain.setSourceLabel.mockImplementation(fail('set-label'));
+    domain.deleteSource.mockImplementation(fail('delete-source'));
+
+    trigger(button('編輯標籤'), 'onClick');
+    await nextTick();
+    trigger(button('儲存'), 'onClick');
+    await nextTick();
+    await nextTick();
+    expect(textContent(root)).toContain('標籤未更新');
+    expect(button('儲存')).toBeDefined();
+
+    trigger(button('取消'), 'onClick');
+    await nextTick();
+    expect(textContent(root)).not.toContain('標籤未更新');
+
+    trigger(button('刪除這個歌詞來源'), 'onClick');
+    await nextTick();
+    trigger(button('刪除來源'), 'onClick');
+    await nextTick();
+    await nextTick();
+    expect(textContent(root)).toContain('歌詞來源未刪除');
+    expect(button('刪除來源')).toBeDefined();
   });
 
   it('reopens the collection after an external close during search', async () => {

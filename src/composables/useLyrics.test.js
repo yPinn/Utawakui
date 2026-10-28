@@ -1852,7 +1852,7 @@ describe('useLyrics', () => {
 
     expect(lyrics.state.manualSave).toMatchObject({
       isSaving: false,
-      error: '請重新啟動應用程式後再匯入歌詞。',
+      error: '請重新啟動應用程式後再試。',
     });
   });
 
@@ -1882,9 +1882,7 @@ describe('useLyrics', () => {
     );
 
     await expect(lyrics.saveLyricsCandidate(candidate)).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe(
-      '請重新啟動應用程式後再儲存歌詞。',
-    );
+    expect(lyrics.state.manualSave.error).toBe('請重新啟動應用程式後再試。');
   });
 
   it('bounds rejected provider search, save, and label-backfill failures', async () => {
@@ -1911,10 +1909,14 @@ describe('useLyrics', () => {
         previewFingerprint: 'b'.repeat(64),
       }),
     ).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe('歌詞未儲存，請再試一次。');
+    expect(lyrics.state.manualSave.error).toBe('請再試一次。');
 
     await expect(lyrics.backfillSourceLabels()).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe('標籤未更新，請再試一次。');
+    expect(lyrics.state.sourceAction).toMatchObject({
+      operation: 'backfill-labels',
+      error: '請再試一次。',
+    });
+    expect(lyrics.state.manualSave.error).toBe('請再試一次。');
   });
 
   it.each([
@@ -1958,7 +1960,7 @@ describe('useLyrics', () => {
       'en.vtt',
       'Primary',
     );
-    expect(lyrics.state.manualSave.isSaving).toBe(false);
+    expect(lyrics.state.sourceAction.isSaving).toBe(false);
   });
 
   it('selects the first remaining source after deleting the active source', async () => {
@@ -1983,20 +1985,27 @@ describe('useLyrics', () => {
     await expect(lyrics.setSourceLabel('en.vtt', 'Primary')).resolves.toBe(
       null,
     );
-    expect(lyrics.state.manualSave.error).toBe('標籤未更新，請再試一次。');
+    expect(lyrics.state.sourceAction).toMatchObject({
+      operation: 'set-label',
+      error: '請再試一次。',
+    });
 
     await expect(lyrics.deleteSource('en.vtt')).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe(
-      '無法刪除歌詞來源，請再試一次。',
-    );
+    expect(lyrics.state.sourceAction).toMatchObject({
+      operation: 'delete-source',
+      error: '請再試一次。',
+    });
+    // Source-list failures never leak into the manual import panel.
+    expect(lyrics.state.manualSave.error).toBe(null);
 
     await expect(lyrics.importManualLyricsText({ text: 'line' })).resolves.toBe(
       null,
     );
-    expect(lyrics.state.manualSave.error).toBe('歌詞未匯入，請再試一次。');
+    expect(lyrics.state.manualSave.error).toBe('請再試一次。');
 
     await expect(lyrics.importManualLyricsFile()).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe('歌詞未匯入，請再試一次。');
+    expect(lyrics.state.manualSave.error).toBe('請再試一次。');
+    expect(lyrics.state.sourceAction.error).toBe('請再試一次。');
   });
 
   it('rejects unverifiable timing and unavailable offset bridges locally', async () => {
@@ -2029,14 +2038,13 @@ describe('useLyrics', () => {
     );
 
     await expect(lyrics.deleteSource('en.vtt')).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe(
-      '請重新啟動應用程式後再刪除歌詞來源。',
-    );
+    expect(lyrics.state.sourceAction).toMatchObject({
+      operation: 'delete-source',
+      error: '請重新啟動應用程式後再試。',
+    });
 
     await expect(lyrics.importManualLyricsFile()).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe(
-      '請重新啟動應用程式後再匯入歌詞檔。',
-    );
+    expect(lyrics.state.manualSave.error).toBe('請重新啟動應用程式後再試。');
   });
 
   // Regression test: the shared useLibrary.js singleton's own

@@ -288,10 +288,13 @@ describe('lyrics source preparation boundary', () => {
     const { state, owner } = setup();
     await owner.loadSelectedLyrics();
     expect(await owner.setSourceLabel('zh.vtt', '排練用')).toBeNull();
-    expect(state.manualSave.error).toBe('請重新啟動應用程式後再編輯標籤。');
+    expect(state.sourceAction).toMatchObject({
+      operation: 'set-label',
+      error: '請重新啟動應用程式後再試。',
+    });
     expect(state.lyricsText).toBe('a中文');
     expect(state.selectedSourceFilename).toBe('zh.vtt');
-    expect(state.manualSave.isSaving).not.toBe(true);
+    expect(state.sourceAction.isSaving).not.toBe(true);
   });
   it('does not publish Chinese text until preparation completes', async () => {
     let resolve;

@@ -24,6 +24,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiTextField from '../ui/UiTextField.vue';
@@ -67,6 +68,25 @@ const isDeletingSource = ref(false);
 const displaySources = computed(
   () => availableSources?.value ?? selectedLyrics.value.sources,
 );
+const SOURCE_ACTION_TITLES = Object.freeze({
+  'set-label': '標籤未更新',
+  'delete-source': '歌詞來源未刪除',
+  'backfill-labels': '標籤未補齊',
+});
+const sourceActionTitle = computed(
+  () => SOURCE_ACTION_TITLES[state.sourceAction?.operation] ?? '操作未完成',
+);
+// Cancel/close hides only the shown attempt; the domain clears it on the
+// next action or track change.
+const dismissedAttempt = ref(null);
+const sourceActionError = computed(() =>
+  state.sourceAction?.attempt === dismissedAttempt.value
+    ? ''
+    : state.sourceAction?.error || '',
+);
+function dismissSourceActionError() {
+  dismissedAttempt.value = state.sourceAction?.attempt ?? null;
+}
 const modalTitle = computed(() =>
   activeView.value === 'search' ? '搜尋歌詞' : '可用歌詞',
 );
@@ -77,6 +97,7 @@ watch(
     if (!open) {
       activeView.value = 'sources';
       pendingDeleteSource.value = null;
+      dismissSourceActionError();
     }
   },
 );
@@ -122,11 +143,13 @@ function startEdit(source) {
 
 function cancelEdit() {
   editingFilename.value = null;
+  dismissSourceActionError();
 }
 
+// A failed save keeps the draft open so the user can retry in place.
 async function commitEdit(filename) {
   await setSourceLabel(filename, labelDraft.value);
-  editingFilename.value = null;
+  if (!state.sourceAction?.error) editingFilename.value = null;
 }
 
 function handleDelete(source) {
@@ -137,6 +160,7 @@ function handleDelete(source) {
 function cancelDelete() {
   if (isDeletingSource.value) return;
   pendingDeleteSource.value = null;
+  dismissSourceActionError();
 }
 
 async function confirmDelete() {
@@ -145,7 +169,7 @@ async function confirmDelete() {
   isDeletingSource.value = true;
   try {
     await deleteSource(source.filename);
-    pendingDeleteSource.value = null;
+    if (!state.sourceAction?.error) pendingDeleteSource.value = null;
   } finally {
     isDeletingSource.value = false;
   }
@@ -234,6 +258,14 @@ function reportSource(source) {
     />
     <div v-else class="lyrics-source-manager">
       <section aria-label="可使用的歌詞">
+        <UiNotice
+          v-if="sourceActionError"
+          class="lyrics-source-manager__action-error"
+          tone="danger"
+          compact
+          :title="sourceActionTitle"
+          :message="sourceActionError"
+        />
         <UiHint v-if="selectedLyrics.sources.length === 0">
           尚無可用歌詞，可搜尋歌詞或手動匯入。
         </UiHint>
@@ -467,5 +499,9 @@ function reportSource(source) {
 
 .lyrics-source-manager__manual-import {
   margin-top: var(--ui-space-3);
+}
+
+.lyrics-source-manager__action-error {
+  margin-bottom: var(--ui-space-3);
 }
 </style>
