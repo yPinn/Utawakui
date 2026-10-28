@@ -55,7 +55,7 @@ export function usePerformanceSessionPlaybackController({
       try {
         return await operation();
       } catch {
-        state.error = '曲目進度未更新，請重試。';
+        state.error = '曲目進度未更新，請再試一次。';
         return false;
       } finally {
         state.busy = false;
@@ -80,7 +80,7 @@ export function usePerformanceSessionPlaybackController({
     active.confirmation = plan.setProgress(active.item.itemId, 'playing');
     const saved = await active.confirmation;
     if (!saved) {
-      state.error = '播放進度未儲存，請停止後重試。';
+      state.error = '播放進度未儲存，請停止後再試一次。';
       if (request === active) player.pause();
     }
     return saved;
@@ -105,7 +105,7 @@ export function usePerformanceSessionPlaybackController({
       item?.progress === 'playing' &&
       !(await plan.setProgress(item.itemId, progress))
     ) {
-      state.error = '曲目進度未儲存，請重試。';
+      state.error = '曲目進度未儲存，請再試一次。';
       return false;
     }
     release(active);
@@ -165,7 +165,8 @@ export function usePerformanceSessionPlaybackController({
     if (!started) {
       if (active.confirmation) await finish(active, 'interrupted');
       else release(active);
-      if (!active.ending) state.error = '這首曲目未能開始，請重試或檢查音檔。';
+      if (!active.ending)
+        state.error = '這首曲目未能開始，請再試一次或檢查音檔。';
       return false;
     }
     active.playbackRevision = player.state.playbackRevision;

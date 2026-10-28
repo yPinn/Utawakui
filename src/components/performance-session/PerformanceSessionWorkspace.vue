@@ -350,14 +350,21 @@ async function selectWorkspaceAction(action) {
         </template>
       </AppFolderWorkspaceToolbar>
       <UiNotice
-        v-if="state.error || playback.state.error"
+        v-if="state.error"
         tone="danger"
         title="演出安排未完成"
-        :message="state.error || playback.state.error"
+        :message="state.error"
         compact
       />
       <UiNotice
-        v-else-if="workspaceValidationError"
+        v-if="playback.state.error"
+        tone="danger"
+        title="演出播放未完成"
+        :message="playback.state.error"
+        compact
+      />
+      <UiNotice
+        v-if="!state.error && !playback.state.error && workspaceValidationError"
         tone="warning"
         title="尚未完成"
         :message="workspaceValidationError.message"
