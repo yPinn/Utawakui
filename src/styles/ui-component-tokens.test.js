@@ -191,6 +191,21 @@ describe('shared UI component token contract', () => {
     ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
   });
 
+  it('keeps the Sidebar plate edge inset identical across expanded and compact', () => {
+    const values = declarations(tokens);
+
+    expect(values.get('--ui-playlist-sidebar-padding-inline-compact')).toBe(
+      '0.375rem',
+    );
+    expect(
+      normalizedValue(
+        values.get('--ui-playlist-row-state-surface-outset-inline'),
+      ),
+    ).toBe(
+      'calc(var(--ui-playlist-sidebar-padding-inline) - var(--ui-playlist-sidebar-padding-inline-compact))',
+    );
+  });
+
   it('keeps shell, Sidebar, Right Dock, and Player geometry on explicit roles', () => {
     const values = declarations(tokens);
 

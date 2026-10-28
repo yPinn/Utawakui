@@ -888,7 +888,12 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__toolbar {
   position: relative;
-  margin-inline: var(--ui-playlist-sidebar-padding-inline);
+  margin-inline-start: var(--ui-playlist-sidebar-padding-inline);
+  /* Same visible scrollbar edge as the fixed navigation below. */
+  margin-inline-end: calc(
+    var(--ui-playlist-row-state-surface-outset-inline) +
+      var(--ui-scrollbar-visual-reserve)
+  );
   block-size: var(--ui-sidebar-toolbar-block-size);
   min-height: var(--ui-sidebar-toolbar-block-size);
   overflow: hidden;
@@ -1078,7 +1083,7 @@ function startDrag(playlist, event) {
   .playlist-sidebar__toolbar {
     align-self: center;
     margin-inline: var(--ui-playlist-sidebar-padding-inline-compact);
-    inline-size: var(--ui-sidebar-row-min-height);
+    inline-size: var(--ui-sidebar-row-compact-hit-size);
     block-size: var(--ui-sidebar-toolbar-block-size);
     min-height: var(--ui-sidebar-toolbar-block-size);
   }
@@ -1092,7 +1097,7 @@ function startDrag(playlist, event) {
   .playlist-sidebar__toolbar-action--compact {
     inset-inline-start: calc(
       (
-          var(--ui-sidebar-row-min-height) -
+          var(--ui-sidebar-row-compact-hit-size) -
             var(--ui-sidebar-toolbar-control-size)
         ) /
         2

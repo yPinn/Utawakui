@@ -102,7 +102,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
       /\.playlist-sidebar\s*\{[^}]*padding-block-start:\s*var\(--ui-playlist-sidebar-padding-block\);/su,
     );
     expect(source).toMatch(
-      /\.playlist-sidebar__toolbar\s*\{[^}]*margin-inline:\s*var\(--ui-playlist-sidebar-padding-inline\);/su,
+      /\.playlist-sidebar__toolbar\s*\{[^}]*margin-inline-start:\s*var\(--ui-playlist-sidebar-padding-inline\);[^}]*margin-inline-end:\s*calc\(\s*var\(--ui-playlist-row-state-surface-outset-inline\)\s*\+\s*var\(--ui-scrollbar-visual-reserve\)\s*\);/su,
     );
     expect(source).toMatch(
       /\.playlist-sidebar__fixed-navigation\s*\{[^}]*margin-inline-start:\s*var\(--ui-playlist-sidebar-padding-inline\);[^}]*margin-inline-end:\s*calc\(\s*var\(--ui-playlist-row-state-surface-outset-inline\)\s*\+\s*var\(--ui-scrollbar-visual-reserve\)\s*\);/su,
