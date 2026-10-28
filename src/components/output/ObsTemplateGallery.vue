@@ -251,15 +251,9 @@ function applyPreset(preset) {
 }
 
 .obs-template-gallery__group {
-  --ui-scroll-layout-padding-block-start: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-block-end: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-inline-start: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --ui-scroll-layout-padding-block-start: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-block-end: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-inline-start: var(--ui-focus-safe-inset);
   --ui-scroll-layout-padding-inline-end: var(--ui-focus-width);
   min-height: 0;
   min-width: 0;

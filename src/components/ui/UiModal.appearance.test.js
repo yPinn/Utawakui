@@ -173,7 +173,7 @@ describe('UiModal appearance contract', () => {
 
   it('reserves a complete focus ring inside the body scrollport without changing section rhythm', () => {
     expect(modalSource).toMatch(
-      /\.ui-modal\s*\{[\s\S]*?--ui-modal-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
+      /\.ui-modal\s*\{[\s\S]*?--ui-modal-focus-safe-inset:\s*var\(--ui-focus-safe-inset\);/u,
     );
     expect(modalSource).toMatch(
       /\.ui-modal__body :deep\(\.ui-modal__body-viewport\),\s*\.ui-modal__workspace-body\s*\{[\s\S]*?padding:\s*var\(--ui-modal-focus-safe-inset\)\s+var\(--ui-modal-content-inset\)\s+var\(--ui-modal-content-inset\);[\s\S]*?scroll-padding-block:\s*var\(--ui-modal-focus-safe-inset\);/u,

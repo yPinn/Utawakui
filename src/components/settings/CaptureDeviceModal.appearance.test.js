@@ -14,7 +14,7 @@ describe('CaptureDeviceModal appearance contract', () => {
     expect(source).not.toContain('420px');
     expect(source).toContain('<UiRadioGroup');
     expect(source).toMatch(
-      /\.capture-device-modal\s*\{[\s\S]*?--capture-device-modal-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
+      /\.capture-device-modal\s*\{[\s\S]*?--capture-device-modal-focus-safe-inset:\s*var\(--ui-focus-safe-inset\);/u,
     );
     expect(source).toContain('--ui-scroll-layout-padding-inline-start: var(');
     expect(source).toContain('--ui-scroll-layout-padding-inline-end: var(');

@@ -310,23 +310,15 @@ watch(
   min-width: 0;
   min-block-size: calc(
     var(--ui-list-header-height) + var(--ui-track-row-min-height) + 2 *
-      (var(--ui-focus-width) + var(--ui-focus-offset))
+      var(--ui-focus-safe-inset)
   );
 }
 
 .performance-session-plan-list__body-scroll {
-  --ui-scroll-layout-padding-block-start: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-block-end: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-inline-start: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-inline-end: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --ui-scroll-layout-padding-block-start: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-block-end: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-inline-start: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-inline-end: var(--ui-focus-safe-inset);
   flex: 1;
   min-height: 0;
 }

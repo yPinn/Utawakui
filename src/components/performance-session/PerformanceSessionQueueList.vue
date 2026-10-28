@@ -217,18 +217,10 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
 
 <style scoped>
 .performance-session-queue-scroll {
-  --ui-scroll-layout-padding-block-start: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-block-end: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-inline-start: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
-  --ui-scroll-layout-padding-inline-end: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --ui-scroll-layout-padding-block-start: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-block-end: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-inline-start: var(--ui-focus-safe-inset);
+  --ui-scroll-layout-padding-inline-end: var(--ui-focus-safe-inset);
   flex: 1;
   min-block-size: 0;
 }

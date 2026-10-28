@@ -551,9 +551,7 @@ function reportCandidate(candidate) {
 
 <style scoped>
 .lyrics-lrclib-search {
-  --lyrics-lrclib-search-focus-safe-inset: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --lyrics-lrclib-search-focus-safe-inset: var(--ui-focus-safe-inset);
 
   min-height: 0;
   display: flex;

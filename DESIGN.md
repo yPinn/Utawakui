@@ -1194,7 +1194,7 @@ Utawakui should be flat by default and layered by tone before shadow. Depth exis
 ### Focus Ring
 
 - Keyboard focus is an `outline`, not a shadow: `var(--ui-focus-width) solid var(--ui-color-focus)`.
-- Offset with `--ui-focus-offset` outside the target, or `--ui-focus-offset-inset` for rows, scroll regions and containers whose edge would clip the ring. Borderless targets add `--ui-focus-radius`.
+- Offset with `--ui-focus-offset` outside the target, or `--ui-focus-offset-inset` for rows, scroll regions and containers whose edge would clip the ring. Borderless targets add `--ui-focus-radius`. A scroll or clip edge that must keep an outer ring visible reserves `--ui-focus-safe-inset`.
 - A component may replace the outline only with an equivalent indicator it owns (a row `:has()` plate, a resize-handle line, the range thumb's shadow ring); every focusable element keeps a visible indicator.
 - Forced colors use `Highlight` at the same width.
 

@@ -32,7 +32,7 @@ describe('ObsOutputSplitLayout focus-safe inspector boundary', () => {
 
   it('reserves the outward focus ring and overlay scrollbar inside the side viewport', () => {
     expect(splitLayoutSource).toMatch(
-      /--ui-output-side-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
+      /--ui-output-side-focus-safe-inset:\s*var\(--ui-focus-safe-inset\);/u,
     );
     expect(splitLayoutSource).toMatch(
       /--ui-output-side-content-inset-end:[\s\S]*?var\(--ui-scrollbar-visual-reserve\)/u,

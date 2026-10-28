@@ -335,7 +335,7 @@
       var(--ui-folder-extension-block-inset)
   );
   --ui-folder-artifact-safe-inset: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset) + var(--ui-border-width)
+    var(--ui-focus-safe-inset) + var(--ui-border-width)
   );
   --ui-folder-artifact-pinned-region-inset: var(--ui-space-4);
   --ui-folder-artifact-canvas-bg: var(--ui-color-surface);
@@ -629,6 +629,8 @@
   --ui-opacity-dragging: 0.45;
   --ui-focus-offset: 2px;
   --ui-focus-offset-inset: -2px;
+  /* Room an outer focus ring needs before a clipping edge. */
+  --ui-focus-safe-inset: calc(var(--ui-focus-width) + var(--ui-focus-offset));
   /* Rings drawn on borderless text targets. */
   --ui-focus-radius: var(--ui-radius-md);
 

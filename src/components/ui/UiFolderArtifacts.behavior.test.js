@@ -281,7 +281,7 @@ describe('UiFolderArtifactCanvas', () => {
       /\.ui-folder-artifact-canvas\s*\{[^}]*overflow:\s*hidden;/su,
     );
     expect(activeTokensSource).toMatch(
-      /--ui-folder-artifact-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\+\s*var\(--ui-border-width\)\s*\);/u,
+      /--ui-folder-artifact-safe-inset:\s*calc\(\s*var\(--ui-focus-safe-inset\)\s*\+\s*var\(--ui-border-width\)\s*\);/u,
     );
     expect(activeTokensSource).toMatch(
       /--ui-folder-artifact-folder-min-height:\s*calc\([\s\S]*?--ui-folder-artifact-canvas-min-height[\s\S]*?--ui-folder-extension-block-inset[\s\S]*?--ui-folder-extension-block-inset[\s\S]*?\);/u,

@@ -410,9 +410,7 @@ onUnmounted(() => {
 .ui-modal {
   --ui-modal-inline-size: var(--ui-modal-inline-size-small);
   --ui-modal-max-block-size: var(--ui-modal-max-block-size-small);
-  --ui-modal-focus-safe-inset: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --ui-modal-focus-safe-inset: var(--ui-focus-safe-inset);
   --ui-field-bg: var(--ui-field-bg-on-raised);
   --ui-field-bg-hover: var(--ui-field-bg-hover-on-raised);
   --ui-field-bg-readonly: var(--ui-field-bg-readonly-on-raised);

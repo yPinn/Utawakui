@@ -192,9 +192,7 @@ function choose(deviceId) {
 
 <style scoped>
 .capture-device-modal {
-  --capture-device-modal-focus-safe-inset: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --capture-device-modal-focus-safe-inset: var(--ui-focus-safe-inset);
   min-block-size: 0;
   display: flex;
   flex-direction: column;

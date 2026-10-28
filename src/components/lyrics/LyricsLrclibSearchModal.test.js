@@ -295,7 +295,7 @@ describe('online lyrics search modal contract', () => {
     const workspace = source('./LyricsLrclibSearchWorkspace.vue');
 
     expect(workspace).toMatch(
-      /\.lyrics-lrclib-search\s*\{[\s\S]*?--lyrics-lrclib-search-focus-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\);/u,
+      /\.lyrics-lrclib-search\s*\{[\s\S]*?--lyrics-lrclib-search-focus-safe-inset:\s*var\(--ui-focus-safe-inset\);/u,
     );
     expect(workspace).toMatch(
       /\.lyrics-lrclib-search\s*\{[^}]*overflow:\s*clip;[^}]*overflow-clip-margin:\s*var\(--lyrics-lrclib-search-focus-safe-inset\);/su,

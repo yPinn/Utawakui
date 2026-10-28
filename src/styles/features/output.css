@@ -12,10 +12,7 @@
   --ui-output-preview-checker-tile: calc(
     var(--ui-output-preview-checker-cell) * 2
   );
-  --ui-output-preview-inset: max(
-    var(--ui-space-3),
-    calc(var(--ui-focus-width) + var(--ui-focus-offset))
-  );
+  --ui-output-preview-inset: max(var(--ui-space-3), var(--ui-focus-safe-inset));
   --ui-output-split-gap: var(--ui-space-3);
   --ui-output-toolbar-height: calc(
     var(--ui-control-height) + var(--ui-space-5)

@@ -311,9 +311,7 @@ onBeforeUnmount(() => {
   grid-column: 3;
   --ui-output-side-visual-inset-start: var(--ui-space-4);
   --ui-output-side-visual-inset-end: var(--ui-space-3);
-  --ui-output-side-focus-safe-inset: calc(
-    var(--ui-focus-width) + var(--ui-focus-offset)
-  );
+  --ui-output-side-focus-safe-inset: var(--ui-focus-safe-inset);
   --ui-output-side-content-inset-start: max(
     var(--ui-output-side-visual-inset-start),
     var(--ui-output-side-focus-safe-inset)

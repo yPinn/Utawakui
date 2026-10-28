@@ -552,7 +552,7 @@ async function selectWorkspaceAction(action) {
   min-height: calc(
     var(--ui-control-height) * 3 + var(--ui-list-header-height) +
       var(--ui-track-row-min-height) + var(--ui-space-2) * 4 + 2 *
-      (var(--ui-focus-width) + var(--ui-focus-offset))
+      var(--ui-focus-safe-inset)
   );
 }
 .performance-session-workspace__list-scroll {
