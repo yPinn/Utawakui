@@ -10,6 +10,10 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../../lib/thumbarIcons');
+const {
+  WEB_CONTENTS_ROLES,
+  tagWebContentsRole,
+} = require('../webContentsRoles');
 const { isBoundedTrackId } = require('../../lib/library/paths');
 const { normalizeAudioPreferences } = require('../../lib/config');
 const { resolveRuntimeEntry } = require('../../lib/runtimeEntries');
@@ -330,6 +334,7 @@ function createMainWindow(
   hardenWebContentsNavigation(mainWindow.webContents, {
     isAllowedNavigation: (url) => url === mainWindow.webContents.getURL(),
   });
+  tagWebContentsRole(mainWindow.webContents, WEB_CONTENTS_ROLES.MAIN);
 
   mainWindow.on('closed', () => {
     mainWindow = null;

@@ -42,6 +42,7 @@ const CONTEXT_KEYS = Object.freeze([
   'status',
   'successCount',
   'vueInfo',
+  'windowRole',
 ]);
 
 const SAFE_IDENTIFIER_RE = /^[a-z][a-z0-9-]*$/;

@@ -272,6 +272,34 @@ describe('registerDiagnosticsLifecycle', () => {
     ]);
   });
 
+  it('names the failing window by its tagged role', () => {
+    const { app, processTarget, record } = createTargets();
+    const performer = new EventEmitter();
+    const untagged = new EventEmitter();
+    const roles = new Map([[performer, 'performer']]);
+    registerDiagnosticsLifecycle({
+      app,
+      processTarget,
+      service: { record },
+      webContentsRoleOf: (contents) => roles.get(contents),
+    });
+    app.emit('web-contents-created', {}, performer);
+    app.emit('web-contents-created', {}, untagged);
+
+    performer.emit('unresponsive');
+    app.emit('render-process-gone', {}, performer, { reason: 'oom' });
+    untagged.emit('unresponsive');
+
+    expect(record.mock.calls[0][0].context).toEqual({
+      windowRole: 'performer',
+    });
+    expect(record.mock.calls[1][0].context).toMatchObject({
+      fatal: true,
+      windowRole: 'performer',
+    });
+    expect(record.mock.calls[2][0]).not.toHaveProperty('context');
+  });
+
   it('skips aborted main-frame loads without recovering the renderer', () => {
     const { app, processTarget, record } = createTargets();
     const webContents = new EventEmitter();

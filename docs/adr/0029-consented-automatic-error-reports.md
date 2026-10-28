@@ -57,8 +57,10 @@ dropped. There is no user text, library, lyrics, track, path or event list.
 
 ### Frequency and retention
 
-- One report per fingerprint (code plus top app frame without line numbers)
-  per 24 hours, and at most three reports per local day.
+- One report per fingerprint (code, window role when present, and top app
+  frame without line numbers) per 24 hours, and at most three reports per
+  local day. Lifecycle events have no stack, so the role keeps one window's
+  failures from escalating another's.
 - Throttle history and one pending report live in `userData`, bounded to
   recent fingerprints, so a crash loop cannot flood the channel.
 - The pending report is written synchronously before sending; a failed or

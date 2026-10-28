@@ -97,9 +97,12 @@ function appFramesOf(stack) {
 }
 
 // Line and column are dropped so a report groups across small code moves.
+// Lifecycle events carry no stack, so the window role keeps one window's
+// failures from counting toward another's.
 function fingerprintOf(event) {
   const [topFrame = ''] = appFramesOf(event?.stack);
-  return `${event?.code ?? 'UNKNOWN'}|${topFrame.replace(/:\d+(?::\d+)?\)?$/u, '')}`;
+  const role = event?.context?.windowRole;
+  return `${event?.code ?? 'UNKNOWN'}${role ? `@${role}` : ''}|${topFrame.replace(/:\d+(?::\d+)?\)?$/u, '')}`;
 }
 
 module.exports = {

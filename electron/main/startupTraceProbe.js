@@ -1,4 +1,8 @@
 const { hardenWebContentsNavigation } = require('./webContentsSecurity');
+const {
+  WEB_CONTENTS_ROLES,
+  tagWebContentsRole,
+} = require('./webContentsRoles');
 
 function parseLoopbackRuntimeUrl(value) {
   let parsed;
@@ -58,6 +62,10 @@ function createStartupTraceProbe({ BrowserWindow, memorySession = false }) {
     hardenWebContentsNavigation(probeWindow.webContents, {
       isAllowedNavigation: (url) => url === probeUrl,
     });
+    tagWebContentsRole(
+      probeWindow.webContents,
+      WEB_CONTENTS_ROLES.STARTUP_PROBE,
+    );
     Promise.resolve(probeWindow.loadURL(probeUrl)).catch(() => {});
     return true;
   }

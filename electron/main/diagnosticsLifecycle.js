@@ -29,8 +29,18 @@ function registerDiagnosticsLifecycle({
   service,
   getMainWebContents = () => null,
   requestRendererRecovery = () => {},
+  webContentsRoleOf = () => undefined,
 }) {
   const webContentsCleanups = new Set();
+  // Fixed role ids only; an untagged contents (e.g. devtools) records none.
+  const roleContext = (webContents) => {
+    const windowRole = webContentsRoleOf(webContents);
+    return windowRole ? { windowRole } : {};
+  };
+  const roleField = (webContents) => {
+    const context = roleContext(webContents);
+    return context.windowRole ? { context } : {};
+  };
 
   const recoverMainRenderer = (webContents, reason) => {
     if (!webContents || webContents !== getMainWebContents()) return;
@@ -85,6 +95,7 @@ function registerDiagnosticsLifecycle({
         fatal,
         reason: details.reason,
         exitCode: details.exitCode,
+        ...roleContext(webContents),
       },
     });
     if (fatal) recoverMainRenderer(webContents, 'renderer-crashed');
@@ -125,7 +136,11 @@ function registerDiagnosticsLifecycle({
         operation: 'did-fail-load',
         code: 'RENDERER_LOAD_FAILED',
         message: 'Renderer failed to load',
-        context: { errorCode, reason: errorDescription },
+        context: {
+          errorCode,
+          reason: errorDescription,
+          ...roleContext(webContents),
+        },
       });
       recoverMainRenderer(webContents, 'renderer-load-failed');
     };
@@ -138,6 +153,7 @@ function registerDiagnosticsLifecycle({
         operation: 'unresponsive',
         code: 'RENDERER_UNRESPONSIVE',
         message: 'Renderer became unresponsive',
+        ...roleField(webContents),
       });
       recoverMainRenderer(webContents, 'renderer-unresponsive');
     };
@@ -150,6 +166,7 @@ function registerDiagnosticsLifecycle({
         operation: 'preload-error',
         code: 'PRELOAD_FAILED',
         error,
+        ...roleField(webContents),
       });
       recoverMainRenderer(webContents, 'renderer-preload-failed');
     };

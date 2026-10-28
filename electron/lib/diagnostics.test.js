@@ -54,6 +54,7 @@ describe('normalizeDiagnosticEvent', () => {
           successCount: 2,
           failureCount: 1,
           candidateCount: 5,
+          windowRole: 'performer',
           trackTitle: 'private title',
           nested: { secret: 'drop me' },
         },
@@ -81,6 +82,7 @@ describe('normalizeDiagnosticEvent', () => {
         successCount: 2,
         failureCount: 1,
         candidateCount: 5,
+        windowRole: 'performer',
       },
     });
   });

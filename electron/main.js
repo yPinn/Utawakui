@@ -231,6 +231,7 @@ const {
 } = require('./main/playbackPersistenceHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
+const { webContentsRoleOf } = require('./main/webContentsRoles');
 const { createTrustedIpcMain } = require('./main/ipcSenderPolicy');
 const { createRendererRecoveryController } = require('./main/rendererRecovery');
 const { registerFeedbackHandlers } = require('./main/feedbackHandlers');
@@ -462,6 +463,7 @@ registerDiagnosticsLifecycle({
   service: diagnosticsService,
   getMainWebContents: () => windowState.getMainWindow()?.webContents ?? null,
   requestRendererRecovery: rendererRecoveryController.requestRecovery,
+  webContentsRoleOf,
 });
 
 // Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let

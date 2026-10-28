@@ -5,6 +5,10 @@ const capture = require('../../../shared/outputCaptureValues.json');
 const { host } = require('../../../shared/outputRuntimeValues.json');
 const { sanitizeOutputSlot } = require('../../lib/outputSlots');
 const { hardenWebContentsNavigation } = require('../webContentsSecurity');
+const {
+  WEB_CONTENTS_ROLES,
+  tagWebContentsRole,
+} = require('../webContentsRoles');
 const { getWindowIdentity } = require('./windowIdentity');
 
 const definitions = new Map(slots.map((slot) => [slot.id, slot]));
@@ -139,6 +143,7 @@ function createOutputWindowManager({
         hardenWebContentsNavigation(contents, {
           isAllowedNavigation: (url) => url === surface.url,
         });
+        tagWebContentsRole(contents, WEB_CONTENTS_ROLES.OUTPUT);
         window.on('page-title-updated', (event) => event.preventDefault());
         window.once('ready-to-show', () => {
           if (!window.isDestroyed() && windows.get(kind) === entry)

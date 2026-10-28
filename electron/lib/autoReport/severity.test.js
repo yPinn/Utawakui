@@ -63,4 +63,18 @@ describe('auto report severity', () => {
       'X|at onStatusChange (app:electron/main.js',
     );
   });
+
+  it('separates stackless lifecycle failures by window role', () => {
+    const unresponsive = (windowRole) => ({
+      code: 'RENDERER_UNRESPONSIVE',
+      context: windowRole ? { windowRole } : {},
+    });
+    expect(fingerprintOf(unresponsive('main'))).toBe(
+      'RENDERER_UNRESPONSIVE@main|',
+    );
+    expect(fingerprintOf(unresponsive('performer'))).not.toBe(
+      fingerprintOf(unresponsive('main')),
+    );
+    expect(fingerprintOf(unresponsive())).toBe('RENDERER_UNRESPONSIVE|');
+  });
 });

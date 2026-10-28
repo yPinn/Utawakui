@@ -10,6 +10,10 @@ const {
   normalizePerformerWindowBounds,
 } = require('../../lib/performerWindowBounds');
 const { hardenWebContentsNavigation } = require('../webContentsSecurity');
+const {
+  WEB_CONTENTS_ROLES,
+  tagWebContentsRole,
+} = require('../webContentsRoles');
 const { getWindowIdentity } = require('./windowIdentity');
 
 const BOUNDS_PERSIST_DEBOUNCE_MS = 300;
@@ -189,6 +193,7 @@ function createPerformerWindowManager(options) {
     hardenWebContentsNavigation(window.webContents, {
       isAllowedNavigation: (url) => url === window.webContents.getURL(),
     });
+    tagWebContentsRole(window.webContents, WEB_CONTENTS_ROLES.PERFORMER);
     window.on('move', rememberAndScheduleBounds);
     window.on('resize', rememberAndScheduleBounds);
     window.on('close', () => {
