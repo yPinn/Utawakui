@@ -1,6 +1,6 @@
 # 歌詞對時確認：行為提案
 
-2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../../spec.md)。R01–R18 仍為完整分層驗收；收據通過不等於句級擴充或波形已交付。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
+2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../../spec.md)。R01–R18 仍為完整分層驗收；收據與唯讀波形通過不等於句級擴充或人工品質驗收完成。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
 
 ## 範圍與確認含義
 
@@ -55,7 +55,7 @@ offset 現在即時投影並自動嘗試保存，保留此語意。區分預覽�
 
 Main 導出 scope／track／原媒體及等價證據、source fingerprint／documentId、canonical 文字與 timing revision、已存 offset、確認範圍／coverage、receipt revision 與時間戳。Renderer 只送 source session／expected revision／intent，不自填可信度或私有證據。
 
-目前 source fingerprint 防原文變更，並非完整 timing CAS；同原文仍可有不同時間修訂，需新 revision／snapshot 契約。只保存每來源有界的當前 receipt／失效資訊，與原文、timing、waveform 分開，不建無限審核歷史。
+source fingerprint 只能防原文變更；同原文仍可有不同時間修訂，保存必須沿既有 revision／完整 snapshot CAS。只保存每來源有界的當前 receipt／失效資訊，與原文、timing、waveform 分開，不建無限審核歷史。
 
 | 命令／結果               | 語意                                                                                                          |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------- |
@@ -87,18 +87,20 @@ Main 導出 scope／track／原媒體及等價證據、source fingerprint／docu
 
 ## 有界波形
 
+Main 接入與按需介面的 ownership、固定預算與清理邊界集中在[波形契約](../../contracts/lyrics-waveform.md)；下列仍是完整能力與驗收規劃，不因唯讀振幅交付而完成句級編輯或人工品質驗收。
+
 waveform 綁原始媒體 revision／producer 版本／解析度，不綁歌詞文字或 offset；多來源共用、時間編輯不重解碼、清 cache 不刪 receipt。可評估粗摘要加細 tile，只接有界可見範圍／解析度，回峰值摘要與 opaque identity，不透過 IPC 傳完整 PCM／任意 decoder 參數。
 
 多聲道不能直接平均成相消的假靜音；固定摘要策略並標為原音訊振幅，不能稱主唱活動。粗摘要只供顯示，不作細時間吸附或正確性判定。
 
-原候選採粗摘要加細 tile；預算、分母與測量限制集中於下列實驗報告，正式 cache 格式與精度仍待接入契約固定。
+原候選採粗摘要加細 tile；實驗預算、分母與測量限制集中於下列報告，正式 cache 格式與精度見波形契約。
 
 | Backend 候選   | 需驗證                                                                                             |
 | -------------- | -------------------------------------------------------------------------------------------------- |
 | Browser decode | codec、完整 PCM／副本峰值、長曲取消與 UI 阻塞；不能只限壓縮檔 bytes 或最終摘要。超預算明確不生成。 |
 | Main 派生      | 固定 decoder、分塊記憶體、deadline／輸出上限／真正取消；若用 FFmpeg 沿原 gate，不隱式準備。        |
 
-2026-10-28 的[隔離預算與取消實驗](../engineering/lyrics-waveform-backend-2026-10-28.md)保留 Main 分塊 FFmpeg＋隔離 worker 作候選；Browser 完整 decode 不作長曲／硬取消主路徑。正式 backend／cache／介面仍未接入，不新增套件或 decoder 準備流程。明確開波形才啟動，同來源去重、取消停止 producer、不在啟動／掃庫全庫生成。來源 generation 提交前重驗，過期不安裝；cache 壞、codec 不支援、容量不足不拖垮原 timing editor。正式排程／共享播放負荷、封裝 decoder、真實長曲與容量仍待後續 gate。
+2026-10-28 的[隔離預算與取消實驗](../engineering/lyrics-waveform-backend-2026-10-28.md)選用 Main 分塊 FFmpeg＋隔離 worker；Browser 完整 decode 不作長曲／硬取消主路徑。正式接入與已驗範圍見波形契約，不新增 decoder 準備流程。明確開波形才啟動，同來源去重、取消停止 producer、不在啟動／掃庫全庫生成。來源 generation 提交前重驗，過期不安裝；cache 壞、codec 不支援、容量不足不拖垮原 timing editor。封裝 decoder 版本與真實長曲壓力仍待後續 gate。
 
 ## 待執行驗收
 

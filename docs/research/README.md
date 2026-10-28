@@ -39,7 +39,7 @@
 
 ## 其他
 
-- [歌詞波形 backend 預算與取消](engineering/lyrics-waveform-backend-2026-10-28.md)（10-28）：16 個 Main／9 個 Browser 合成 cases；Main 分塊 producer 留作候選，Browser close 後 decode 仍完成。正式 gate／cache／UI 與真實長曲未接入；資料與限制見報告。
+- [歌詞波形 backend 預算與取消](engineering/lyrics-waveform-backend-2026-10-28.md)（10-28）：16 個 Main／9 個 Browser 合成 cases；採用 Main 分塊 producer，Browser close 後 decode 仍完成。實驗分母與限制見報告；後續 Main／cache／唯讀介面驗收見[波形契約](../contracts/lyrics-waveform.md)。
 
 - 識別：[封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）
 - 效能與安全：[啟動與 Settings](engineering/startup-settings-profile-2026-10-18.md)、[Output 首幀](engineering/output-first-frame-profile-2026-10-18.md)、[BGM 啟動](engineering/bgm-startup-profile-2026-10-18.md)（10-18）、[依賴安全](engineering/dependency-security-review-2026-10-16.md)（10-16）

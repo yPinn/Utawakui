@@ -5,7 +5,23 @@ import * as asar from '@electron/asar';
 import runtime from '../electron/lib/runtimeEntries.js';
 import { verifyReleaseSymbolBundle } from './runtime-symbol-policy.mjs';
 
+export const WAVEFORM_RUNTIME_PACKAGES = Object.freeze([
+  'music-metadata',
+  '@borewit/text-codec',
+  '@tokenizer/inflate',
+  'content-type',
+  'debug',
+  'file-type',
+  'ieee754',
+  'media-typer',
+  'ms',
+  'strtok3',
+  'token-types',
+  'uint8array-extras',
+  'win-guid',
+]);
 export const PHYSICAL_RUNTIME_PACKAGES = Object.freeze([
+  ...WAVEFORM_RUNTIME_PACKAGES,
   'onnxruntime-node',
   'onnxruntime-common',
   'kuromoji',

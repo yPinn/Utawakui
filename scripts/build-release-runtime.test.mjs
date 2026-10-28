@@ -140,7 +140,7 @@ describe('application release entries', () => {
     await buildReleaseRuntime({ rootDirectory: root, outputDirectory });
   });
 
-  it('emits only six minified CJS entries without source maps or original module paths', () => {
+  it('emits only seven minified CJS entries without source maps or original module paths', () => {
     expect(fs.readdirSync(outputDirectory).sort()).toEqual([
       'main.cjs',
       'performer-preload.cjs',
@@ -148,6 +148,7 @@ describe('application release entries', () => {
       'probe.cjs',
       'reading.cjs',
       'separation.cjs',
+      'waveform.cjs',
     ]);
     const main = fs.readFileSync(
       path.join(outputDirectory, 'main.cjs'),

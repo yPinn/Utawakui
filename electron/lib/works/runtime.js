@@ -642,65 +642,69 @@ function createWorkOrganizationRuntime({
     return service.runInLibrary(async (context) => {
       record(input, ['trackId']);
       identifier(input.trackId, true);
-      onTrackDeleting(input.trackId);
-      available(context);
-      const before = organization.loadWorks(context.dir);
-      const pending = Object.entries(before.pendingTrackDeletions).find(
-        ([, receipt]) => receipt.trackId === input.trackId,
-      );
-      if (pending) {
+      const release = await onTrackDeleting(input.trackId);
+      try {
+        available(context);
+        const before = organization.loadWorks(context.dir);
+        const pending = Object.entries(before.pendingTrackDeletions).find(
+          ([, receipt]) => receipt.trackId === input.trackId,
+        );
+        if (pending) {
+          const inspected = await inspect(input.trackId, context, {
+            allowEmpty: true,
+          });
+          if (
+            inspected.status === 'missing' ||
+            !bindingsEqual(inspected.binding, pending[1].binding) ||
+            pending[1].phase === 'media-deleted'
+          ) {
+            await reconcileInLane(context, input.trackId);
+            return true;
+          }
+          organization.finishTrackDeletion(context.dir, {
+            expectedRevision: before.revision,
+            operationId: pending[0],
+            cancel: true,
+          });
+        }
         const inspected = await inspect(input.trackId, context, {
           allowEmpty: true,
         });
-        if (
-          inspected.status === 'missing' ||
-          !bindingsEqual(inspected.binding, pending[1].binding) ||
-          pending[1].phase === 'media-deleted'
-        ) {
-          await reconcileInLane(context, input.trackId);
-          return true;
-        }
-        organization.finishTrackDeletion(context.dir, {
-          expectedRevision: before.revision,
-          operationId: pending[0],
-          cancel: true,
+        if (inspected.status !== 'present') return false;
+        const document = organization.loadWorks(context.dir);
+        const prepared = organization.prepareTrackDeletion(context.dir, {
+          expectedRevision: document.revision,
+          trackId: input.trackId,
+          binding: inspected.binding,
         });
-      }
-      const inspected = await inspect(input.trackId, context, {
-        allowEmpty: true,
-      });
-      if (inspected.status !== 'present') return false;
-      const document = organization.loadWorks(context.dir);
-      const prepared = organization.prepareTrackDeletion(context.dir, {
-        expectedRevision: document.revision,
-        trackId: input.trackId,
-        binding: inspected.binding,
-      });
-      const [operationId] = Object.entries(prepared.pendingTrackDeletions).find(
-        ([, receipt]) => receipt.trackId === input.trackId,
-      );
-      if (
-        !bindingsEqual(
-          inspected.binding,
-          await resolve(input.trackId, context, { allowEmpty: true }),
+        const [operationId] = Object.entries(
+          prepared.pendingTrackDeletions,
+        ).find(([, receipt]) => receipt.trackId === input.trackId);
+        if (
+          !bindingsEqual(
+            inspected.binding,
+            await resolve(input.trackId, context, { allowEmpty: true }),
+          )
         )
-      )
-        throw failure('WORKS_BINDING_MISMATCH');
-      // findTrackRecord/deleteTrack retain the existing filesystem-first deletion
-      // and scalar metadata cleanup; provider execution never enters this lane.
-      if (
-        !findTrackRecord(context.dir, input.trackId) ||
-        !(await deleteTrack(context.dir, input.trackId))
-      )
-        throw failure('WORKS_NOT_FOUND');
-      assertCurrent(context);
-      organization.markTrackMediaDeleted(context.dir, {
-        expectedRevision: prepared.revision,
-        operationId,
-      });
-      const updated = await finish(context, operationId);
-      changed(context, updated, [input.trackId]);
-      return true;
+          throw failure('WORKS_BINDING_MISMATCH');
+        // findTrackRecord/deleteTrack retain the existing filesystem-first deletion
+        // and scalar metadata cleanup; provider execution never enters this lane.
+        if (
+          !findTrackRecord(context.dir, input.trackId) ||
+          !(await deleteTrack(context.dir, input.trackId))
+        )
+          throw failure('WORKS_NOT_FOUND');
+        assertCurrent(context);
+        organization.markTrackMediaDeleted(context.dir, {
+          expectedRevision: prepared.revision,
+          operationId,
+        });
+        const updated = await finish(context, operationId);
+        changed(context, updated, [input.trackId]);
+        return true;
+      } finally {
+        if (typeof release === 'function') release();
+      }
     });
   }
   function runImport(input, finalize) {

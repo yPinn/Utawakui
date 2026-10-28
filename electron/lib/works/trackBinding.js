@@ -34,13 +34,14 @@ function bindingsEqual(left, right) {
 // Fixed-size reads keep memory bounded even for large local files.
 async function hashAudioFile(
   filePath,
-  { maxBytes = 4 * 1024 ** 3, allowEmpty = false } = {},
+  { maxBytes = 4 * 1024 ** 3, allowEmpty = false, check = () => {} } = {},
 ) {
   if (
     !Number.isSafeInteger(maxBytes) ||
     maxBytes <= 0 ||
     maxBytes > 4 * 1024 ** 3 ||
-    typeof allowEmpty !== 'boolean'
+    typeof allowEmpty !== 'boolean' ||
+    typeof check !== 'function'
   ) {
     throw Object.assign(new Error('Invalid audio size limit'), {
       code: 'WORKS_INVALID',
@@ -63,6 +64,7 @@ async function hashAudioFile(
     const buffer = Buffer.alloc(Math.min(initial.size, 1024 * 1024));
     let total = 0;
     while (true) {
+      check();
       const { bytesRead } = await handle.read(buffer, 0, buffer.length, null);
       if (!bytesRead) break;
       total += bytesRead;
@@ -73,6 +75,7 @@ async function hashAudioFile(
       }
       hash.update(buffer.subarray(0, bytesRead));
     }
+    check();
     const final = await handle.stat();
     const current = await fs.promises.stat(filePath);
     if (

@@ -24,7 +24,7 @@
 
 下列工具保留直接執行方式，不為每支工具增加 npm 別名。帶私有輸入或模型的工具，先閱讀對應契約與程式的參數驗證；不要直接以正式曲庫試跑。
 
-- [歌詞波形 backend](../prototypes/lyrics-waveform/README.md)：Node runner 使用已安裝的 FFmpeg／ffprobe 生成合成 fixtures，再比較隔離 worker 與 Browser decode；結果見連結報告，不代表正式波形已接入。
+- [歌詞波形 backend](../prototypes/lyrics-waveform/README.md)：Node runner 使用已安裝的 FFmpeg／ffprobe 生成合成 fixtures，比較隔離 worker 與 Browser decode；實驗結果見連結報告。正式 worker／取消／封裝回歸由 `lyrics-waveform-main.test.mjs` 固定，ownership 見[波形契約](../docs/contracts/lyrics-waveform.md)。
 - [NetEase Phase A 隔離評估](lyrics-provider-netease-cli.mjs)：歷史驗證與 Sentinel 工具，直接使用 `node scripts/lyrics-provider-netease-cli.mjs <command>`；固定子命令見程式的 usage，隔離條件見[歷史契約](../docs/archive/netease-isolated-technical-validation.md)。不屬於現行產品取得流程。
 
 - [Output 短時效能 probe](output-performance-probe.mjs)：入口與參數見[外觀驗收手冊](../docs/operations/output-appearance-acceptance.md)。`output-performance-driver.cjs` 是受控子程序。

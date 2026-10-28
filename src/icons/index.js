@@ -51,6 +51,7 @@ export {
   MessageSquare,
   Metronome,
   MicAudioLines,
+  AudioWaveform,
   MicVocal,
   Minus,
   Minimize2,

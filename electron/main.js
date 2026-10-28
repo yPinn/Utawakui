@@ -112,6 +112,14 @@ const {
 const windowState = require('./main/windows/mainWindow');
 const rendererEntries = require('../shared/rendererEntries.json');
 const { resolveRuntimeEntry } = require('./lib/runtimeEntries');
+const { createWaveformRuntime } = require('./lib/waveform/runtime');
+const {
+  createWaveformSource,
+  decoderIdentity,
+} = require('./lib/waveform/source');
+const { createWaveformCache } = require('./lib/waveform/cache');
+const { createStreamingProducer } = require('./lib/waveform/producer');
+const { registerWaveformHandlers } = require('./main/waveformHandlers');
 const { createLibraryTrackSnapshot } = require('./main/libraryTrackSnapshot');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
@@ -535,6 +543,7 @@ if (!gotSingleInstanceLock) {
     };
     let workLibraryEpoch = 0;
     let lyricsSourceSessions;
+    let waveformRuntime;
     const performanceSettingsRuntime = createPerformanceSettingsRuntime({
       getDirectory: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
@@ -562,9 +571,10 @@ if (!gotSingleInstanceLock) {
       }
     };
     const workOrganizationHost = createWorkOrganizationHost({
-      onTrackDeleting: (trackId) => {
+      onTrackDeleting: async (trackId) => {
         invalidatePerformanceSettings(trackId);
         lyricsSourceSessions?.invalidateTrack(trackId);
+        return waveformRuntime?.holdTrack(trackId);
       },
       getDirectory: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
@@ -705,6 +715,41 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
     heavyJobScheduler = createHeavyJobScheduler();
+    const startWaveform = (request) =>
+      createStreamingProducer(request, {
+        workerPath: resolveRuntimeEntry(app.getAppPath(), 'waveformWorker'),
+      });
+    const waveformSource = createWaveformSource({
+      scheduler: heavyJobScheduler,
+      start: startWaveform,
+    });
+    waveformRuntime = createWaveformRuntime({
+      getScope: () => ({
+        dir: configState.resolveDownloadDir(configState.getConfig()),
+        epoch: workLibraryEpoch,
+      }),
+      requireGate: () => requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW),
+      getDecoder: () =>
+        decoderIdentity(
+          getPreparedFfmpegPath(
+            app.getPath('userData'),
+            configState.getConfig().systemFfmpegPath,
+          ),
+        ),
+      prepareSource: waveformSource.prepare,
+      inspectSource: waveformSource.inspect,
+      cache: createWaveformCache(
+        path.join(app.getPath('userData'), 'waveform-cache-v1'),
+      ),
+      scheduler: heavyJobScheduler,
+      start: startWaveform,
+    });
+    registerWaveformHandlers({
+      ipcMain,
+      getMainWindow: windowState.getMainWindow,
+      runtime: waveformRuntime,
+      recordDiagnostic,
+    });
     registerHeavyJobSchedulerLifecycle({
       app,
       scheduler: heavyJobScheduler,
@@ -1448,6 +1493,7 @@ if (!gotSingleInstanceLock) {
         reconciliationService.invalidate();
         tagWritebackService.invalidate();
         workLibraryEpoch += 1;
+        void waveformRuntime.invalidate().catch(() => {});
         invalidatePerformanceSettings();
         recoverLibraryReconciliation();
         workOrganizationHost.invalidate();

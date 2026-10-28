@@ -21,6 +21,6 @@ Node runner 啟動 Electron 時只對該子程序移除 `ELECTRON_RUN_AS_NODE`�
 
 固定分母、暫定預算、數值與採用限制只維護於[驗證報告](../../docs/research/engineering/lyrics-waveform-backend-2026-10-28.md)及其機器證據；可執行參數見 `policy.mjs`。這裡只記重現與工具 ownership，不另列產品支援上限。
 
-`policy.mjs`／`peaks.mjs` 定義有限分母及跨聲道 min／max，不平均成相消的假靜音；`lane.mjs` 驗去重／consumer 取消／generation 安裝屏障。`producer.mjs`／`decode-worker.cjs` 與 `memory.ps1` 只供這個 Node 實驗；`capture.cjs`／`browser.mjs` 是獨立 sandboxed Chromium 量測面。
+`policy.mjs`／`peaks.mjs` re-export 正式 `shared/waveform/` 的預算與跨聲道 min／max 核心，不平均成相消的假靜音；`lane.mjs` 驗去重／consumer 取消／generation 安裝屏障。`producer.mjs`／`decode-worker.cjs` 與 `memory.ps1` 只供這個 Node 實驗；`capture.cjs`／`browser.mjs` 是獨立 sandboxed Chromium 量測面。
 
-正式接入仍需既有 gate／scheduler、原媒體 token／fresh proof、cache／清理與封裝版本驗證；本 runner 不是正式服務入口。
+正式 gate／scheduler、原媒體 proof、cache／清理與封裝驗證集中在[波形契約](../../docs/contracts/lyrics-waveform.md)；本 runner 不是正式服務入口。

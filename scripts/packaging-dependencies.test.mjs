@@ -11,6 +11,7 @@ import { builtinModules, createRequire } from 'node:module';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildReleaseRuntime } from './build-release-runtime.mjs';
+import { WAVEFORM_RUNTIME_PACKAGES } from './verify-runtime-package.mjs';
 import * as yaml from 'js-yaml';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -110,7 +111,21 @@ function isDelivered(file) {
 }
 
 describe('packaged dependency boundary', () => {
-  it('ships only built app-owned entries and unpacks three process entry bundles', () => {
+  it('keeps the waveform metadata runtime graph physical and complete', () => {
+    for (const name of WAVEFORM_RUNTIME_PACKAGES) {
+      expect(builder.asarUnpack).toContain(`node_modules/${name}/**/*`);
+      const pkg = JSON.parse(
+        readFileSync(
+          path.join(root, 'node_modules', name, 'package.json'),
+          'utf8',
+        ),
+      );
+      for (const dependency of Object.keys(pkg.dependencies ?? {}))
+        if (dependency !== '@tokenizer/token')
+          expect(WAVEFORM_RUNTIME_PACKAGES).toContain(dependency);
+    }
+  });
+  it('ships only built app-owned entries and unpacks four process entry bundles', () => {
     expect(builder.beforePack).toBe('scripts/beforePackReleaseRuntime.cjs');
     expect(builder.extraMetadata.main).toBe('runtime/main.cjs');
     expect(builder.files).toContain('runtime/*.cjs');
@@ -119,6 +134,7 @@ describe('packaged dependency boundary', () => {
       builder.asarUnpack.filter((glob) => glob.startsWith('runtime/')),
     ).toEqual([
       'runtime/reading.cjs',
+      'runtime/waveform.cjs',
       'runtime/separation.cjs',
       'runtime/probe.cjs',
     ]);

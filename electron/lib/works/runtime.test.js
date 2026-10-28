@@ -53,6 +53,27 @@ afterEach(() => {
 });
 
 describe('Main work organization runtime', () => {
+  it('awaits cancellable readers and releases their hold after the filesystem deletion', async () => {
+    const barrier = Promise.withResolvers(),
+      released = vi.fn();
+    const onTrackDeleting = vi.fn(async () => {
+      await barrier.promise;
+      return released;
+    });
+    const host = createWorkOrganizationRuntime({
+      getDirectory: () => scope,
+      onTrackDeleting,
+    });
+    const removing = host.deleteTrack({ trackId: 'one' });
+    for (let i = 0; i < 12; i++) await Promise.resolve();
+    expect(onTrackDeleting).toHaveBeenCalledWith('one');
+    expect(fs.existsSync(path.join(dir, 'tracks/one/audio.mp3'))).toBe(true);
+    expect(released).not.toHaveBeenCalled();
+    barrier.resolve();
+    expect(await removing).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'tracks/one'))).toBe(false);
+    expect(released).toHaveBeenCalledOnce();
+  });
   it.each(['unlinked', 'linked'])(
     'preserves distinct titles, performers and version profiles when linking to an %s target and unlinking',
     async (targetState) => {

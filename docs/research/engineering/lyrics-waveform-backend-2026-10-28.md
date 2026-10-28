@@ -57,6 +57,8 @@ Browser 在 decode 開始後立即呼叫 `AudioContext.close()`，decode 仍於�
 
 ## 採用邊界與後續 gate
 
+以下是本次隔離實驗的採用決策；後續 Main 接入、cache 與介面驗收集中在[波形契約](../../contracts/lyrics-waveform.md)，不回改本報告量測分母。
+
 Main 分塊 producer 通過本合成分母的預算／取消 gate，適合作下一步候選。正式接入須重用既有 FFmpeg gate／scheduler 與原媒體 proof，固定 producer／解析度 identity、generation commit fence、有界 cache／清理與 UI intent；不從 renderer 收路徑、decoder 參數或完整 PCM。
 
 本輪沒有 cache 生產實作、共享播放負載、真實長曲／容器尾段、封裝 decoder 或長時間壓力驗收。20ms OS 工作集取樣可能漏掉短峰；各程序峰值相加也不是精確同時峰值，不能當硬 RSS 限制或所有 codec 的記憶體上界證明。上述正式整合與真實分母尚未通過前，不開放通用 Browser fallback、不新增波形承諾，也不將振幅當人聲活動或對時正確性證據。

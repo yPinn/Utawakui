@@ -919,6 +919,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
+  readWaveform: (intent) => ipcRenderer.invoke('waveform:read', intent),
+  cancelWaveform: (requestId) =>
+    ipcRenderer.invoke('waveform:cancel', { requestId }),
+  clearWaveform: (trackId) => ipcRenderer.invoke('waveform:clear', { trackId }),
   getLyricsVocalRoles: (trackId, filename, documentId) =>
     ipcRenderer.invoke('lyrics:get-vocal-roles', trackId, filename, documentId),
   saveLyricsVocalRoles: (

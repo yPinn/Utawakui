@@ -23,6 +23,7 @@ import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
 import LyricsTimingReviewTool from './LyricsTimingReviewTool.vue';
+import LyricsWaveformTool from './LyricsWaveformTool.vue';
 
 const lyrics = useLyrics();
 const reading = useLyricsReading();
@@ -440,6 +441,18 @@ async function confirmTimingReview() {
         @edit-mode-change="setEditMode"
       >
         <template #review>
+          <LyricsWaveformTool
+            :track-id="selectedTrack?.id || ''"
+            :source-key="acousticSourceKey"
+            :document="lyricsDocument"
+            :offset-ms="Math.round(state.offsetSeconds * 1000)"
+            :position-ms="
+              Number.isFinite(currentLyricsPositionMs)
+                ? currentLyricsPositionMs -
+                  Math.round(state.offsetSeconds * 1000)
+                : null
+            "
+          />
           <LyricsTimingReviewTool
             v-if="lyrics.timingReview"
             :review="lyrics.timingReview"

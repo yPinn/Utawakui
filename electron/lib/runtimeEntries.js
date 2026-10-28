@@ -24,6 +24,11 @@ const RUNTIME_ENTRIES = Object.freeze({
     file: 'probe.cjs',
     physical: true,
   },
+  waveformWorker: {
+    source: 'electron/lib/waveform/worker.js',
+    file: 'waveform.cjs',
+    physical: true,
+  },
 });
 
 function resolveRuntimeEntry(appRoot, key) {

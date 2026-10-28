@@ -23,6 +23,7 @@
 ## 歌詞與來源
 
 - [T0／T1／T2時間與回退](lyrics-timing-contract.md)
+- [原音訊波形的 gate、媒體綁定與有界 cache](lyrics-waveform.md)
 - [來源保真、共用文字預處理與模板分區](lyrics-text-processing.md)
 - [獨立聲學詞塊估計](lyrics-acoustic-estimate-contract.md)
 - [讀音品質與人工驗收](lyrics-reading-quality-contract.md)
