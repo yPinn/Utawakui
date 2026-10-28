@@ -16,6 +16,10 @@ import {
 } from './floatingPosition.js';
 import UiScrollRegion from './UiScrollRegion.vue';
 
+// Two roots (anchor + teleported panel): caller layout attrs belong on the
+// in-flow anchor, never on the floating panel.
+defineOptions({ inheritAttrs: false });
+
 const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
@@ -195,7 +199,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <span ref="anchor" class="ui-popover__anchor">
+  <span ref="anchor" class="ui-popover__anchor" v-bind="$attrs">
     <slot name="trigger" :open="props.open" :trigger-props="triggerProps" />
   </span>
   <!-- Deferred: an always-mounted overlay can mount in the same pass as its

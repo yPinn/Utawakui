@@ -432,7 +432,6 @@ onUnmounted(() => {
       <template #artwork>
         <PlayerBarArtwork
           v-if="state.track"
-          class="player-bar__artwork"
           :track="state.track"
           :expandable="artworkExpandable"
           :expanded="artworkExpanded"
