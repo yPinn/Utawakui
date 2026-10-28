@@ -75,6 +75,7 @@ const {
   position: absolute;
   right: var(--ui-space-4);
   bottom: var(--ui-space-4);
-  max-width: min(32rem, calc(100% - 2 * var(--ui-space-4)));
+  /* UiNotice is an inline-size container, so it needs a definite width. */
+  inline-size: min(32rem, calc(100% - 2 * var(--ui-space-4)));
 }
 </style>

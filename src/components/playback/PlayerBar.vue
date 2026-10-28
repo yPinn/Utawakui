@@ -646,7 +646,8 @@ onUnmounted(() => {
   right: var(--ui-space-3);
   bottom: calc(100% + var(--ui-space-2));
   z-index: var(--ui-z-popover);
-  max-width: min(28rem, calc(100vw - 2 * var(--ui-space-3)));
+  /* UiNotice is an inline-size container, so it needs a definite width. */
+  inline-size: min(28rem, calc(100vw - 2 * var(--ui-space-3)));
 }
 
 .player-bar__track {
