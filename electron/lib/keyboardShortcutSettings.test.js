@@ -6,7 +6,7 @@ import { defaultShortcutConfiguration } from '../../shared/keyboardShortcutContr
 
 const tempRoot = path.resolve('.tmp');
 const directories = [];
-function setup() {
+function setup(options = {}) {
   fs.mkdirSync(tempRoot, { recursive: true });
   const directory = fs.mkdtempSync(path.join(tempRoot, 'shortcut-settings-'));
   directories.push(directory);
@@ -15,6 +15,7 @@ function setup() {
     file: path.join(directory, 'keyboard-shortcuts.json'),
     store: createKeyboardShortcutSettingsStore({
       userDataDirectory: directory,
+      ...options,
     }),
   };
 }
@@ -31,6 +32,50 @@ const config = () => ({
         }
       : b,
   ),
+});
+it('prepares without writing, then rechecks CAS before committing', () => {
+  const f = setup();
+  const input = { expectedRevision: null, configuration: config() };
+  expect(f.store.prepare(input)).toMatchObject({ status: 'prepared' });
+  expect(fs.existsSync(f.file)).toBe(false);
+  const written = f.store.set(input);
+  expect(f.store.prepare(input)).toEqual({ status: 'conflict' });
+  expect(f.store.get().revision).toBe(written.revision);
+});
+it('requires explicit Main-only eligibility even for disabled desired global chords', () => {
+  const configuration = config();
+  configuration.bindings = configuration.bindings.map((b) =>
+    b.command === 'player.play-pause'
+      ? { ...b, global: { key: 'j', ctrl: true, alt: false, shift: true } }
+      : b,
+  );
+  const denied = setup();
+  expect(
+    denied.store.prepare({ expectedRevision: null, configuration }).status,
+  ).toBe('invalid-intent');
+  const allowed = setup({ globalCommands: ['player.play-pause'] });
+  const written = allowed.store.set({ expectedRevision: null, configuration });
+  expect(written.status).toBe('ready');
+  expect(allowed.store.get()).toEqual(written);
+  expect(denied.store.get().revision).toBe(null);
+});
+it('returns the known committed bytes without a fallible post-rename reread', () => {
+  const f = setup();
+  const rename = fs.renameSync.bind(fs);
+  vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+    rename(from, to);
+    if (to === f.file)
+      vi.spyOn(fs, 'openSync').mockImplementation(() => {
+        throw Error('post-commit read');
+      });
+  });
+  const written = f.store.set({
+    expectedRevision: null,
+    configuration: config(),
+  });
+  expect(written.status).toBe('ready');
+  vi.restoreAllMocks();
+  expect(f.store.get()).toEqual(written);
 });
 afterEach(() => {
   vi.restoreAllMocks();

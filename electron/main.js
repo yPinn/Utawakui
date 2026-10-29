@@ -21,6 +21,8 @@ const {
   clipboard,
   safeStorage,
   powerSaveBlocker,
+  powerMonitor,
+  globalShortcut,
 } = require('electron');
 
 const { productName: APP_NAME } = require('../shared/appIdentity.json');
@@ -129,6 +131,9 @@ const {
 const {
   createKeyboardShortcutSettingsStore,
 } = require('./lib/keyboardShortcutSettings');
+const {
+  createKeyboardShortcutRuntime,
+} = require('./main/keyboardShortcutRuntime');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
 const {
   registerExternalNavigationHandlers,
@@ -506,7 +511,7 @@ if (!gotSingleInstanceLock) {
     }
   });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     recordMainMilestone('electron-ready');
     void preparePreviewSession(session.defaultSession);
     if (process.platform === 'win32')
@@ -1532,12 +1537,27 @@ if (!gotSingleInstanceLock) {
         windowsTrayController.setCloseBehavior(behavior),
     });
 
-    registerKeyboardShortcutHandlers({
-      ipcMain,
-      getMainWindow: windowState.getMainWindow,
+    const keyboardShortcutRuntime = createKeyboardShortcutRuntime({
+      app,
+      powerMonitor,
+      globalShortcut,
       store: createKeyboardShortcutSettingsStore({
         userDataDirectory: app.getPath('userData'),
       }),
+      onError: (error, operation) =>
+        recordDiagnostic({
+          source: 'keyboard-shortcuts',
+          operation,
+          code: 'GLOBAL_SHORTCUT_REGISTRATION_FAILED',
+          error,
+        }),
+    });
+    await keyboardShortcutRuntime.ready;
+    registerKeyboardShortcutHandlers({
+      ipcMain,
+      getMainWindow: windowState.getMainWindow,
+      store: keyboardShortcutRuntime,
+      getRuntime: keyboardShortcutRuntime.snapshot,
       recordDiagnostic,
     });
 

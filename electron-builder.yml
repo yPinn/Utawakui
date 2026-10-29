@@ -53,6 +53,7 @@ files:
   # App-owned Main/preloads/workers are built independently from the renderer.
   # beforePack regenerates these seven minified CJS entries from current source.
   - runtime/*.cjs
+  - runtime/keyboard-helper.json
   - scripts/research/lyricsAcoustic/assets.cjs
   - scripts/research/lyricsAcoustic/process.cjs
   - scripts/research/lyricsAcoustic/protocol.cjs
@@ -206,6 +207,11 @@ extraResources:
     to: provider/artist_photo_ytmusic_worker.py
   - from: resources/provider/release_catalog_worker.py
     to: provider/release_catalog_worker.py
+  - from: native/keyboard-shortcuts/.build
+    to: keyboard-shortcuts
+    filter:
+      - HotkeyHost.exe
+      - HotkeyHost.exe.config
 
 win:
   target:

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { registerKeyboardShortcutHandlers } from './keyboardShortcutHandlers.js';
 
-function fixture() {
+function fixture(options = {}) {
   const handlers = {};
   const webContents = { mainFrame: {} };
   const store = {
@@ -15,6 +15,7 @@ function fixture() {
     getMainWindow: () => window,
     store,
     recordDiagnostic,
+    ...options,
   });
   return {
     handlers,
@@ -25,6 +26,26 @@ function fixture() {
   };
 }
 describe('machine shortcut IPC', () => {
+  it('exposes only a payload-free Main-frame runtime snapshot and never accepts execution intents', async () => {
+    const getRuntime = vi.fn(() => ({
+      state: 'disabled',
+      eligibleCommands: [],
+    }));
+    const f = fixture({ getRuntime });
+    const handler = f.handlers['keyboard-shortcuts:runtime'];
+    expect(await handler({ ...f.event, senderFrame: {} })).toEqual({
+      status: 'invalid-intent',
+    });
+    expect(await handler(f.event, { globalEnabled: true })).toEqual({
+      status: 'invalid-intent',
+    });
+    expect(getRuntime).not.toHaveBeenCalled();
+    expect(await handler(f.event)).toEqual({
+      state: 'disabled',
+      eligibleCommands: [],
+    });
+    expect(f.handlers['keyboard-shortcuts:execute']).toBeUndefined();
+  });
   it('accepts only the fixed Main frame, with no payload on read', async () => {
     const f = fixture();
     expect(Object.keys(f.handlers)).toEqual([

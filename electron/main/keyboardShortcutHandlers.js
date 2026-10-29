@@ -6,6 +6,7 @@ function registerKeyboardShortcutHandlers({
   getMainWindow,
   store,
   recordDiagnostic,
+  getRuntime,
 }) {
   for (const operation of ['get', 'set']) {
     ipcMain.handle(`keyboard-shortcuts:${operation}`, async (event, input) => {
@@ -38,6 +39,20 @@ function registerKeyboardShortcutHandlers({
         },
         () => (operation === 'get' ? store.get() : store.set(input)),
       );
+    });
+  }
+  if (getRuntime) {
+    ipcMain.handle('keyboard-shortcuts:runtime', (event, input) => {
+      const window = getMainWindow();
+      if (
+        !window ||
+        window.isDestroyed() ||
+        event?.sender !== window.webContents ||
+        event?.senderFrame !== window.webContents.mainFrame ||
+        input !== undefined
+      )
+        return { status: 'invalid-intent' };
+      return getRuntime();
     });
   }
 }

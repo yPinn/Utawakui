@@ -3,12 +3,13 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash, randomUUID } = require('node:crypto');
-const { atomicWriteJson } = require('./atomicWrite');
+const { atomicWriteBuffer } = require('./atomicWrite');
 const {
   LEGACY_KEYBOARD_BINDINGS,
 } = require('../../shared/keyboardBindingDefinitions.mjs');
 const {
   defaultShortcutConfiguration,
+  SHORTCUT_COMMANDS,
   validateShortcutConfiguration,
 } = require('../../shared/keyboardShortcutContract.mjs');
 
@@ -20,14 +21,24 @@ const record = (value, fields) =>
   !Array.isArray(value) &&
   Reflect.ownKeys(value).length === fields.length &&
   fields.every((key) => Object.hasOwn(value, key));
-const appOnly = (configuration) =>
-  !configuration.globalEnabled &&
-  configuration.bindings.every((binding) => binding.global === null);
 
 // Machine userData is supplied by Main, never by renderer intent or library.
 // There is no OS registration here. Unknown/corrupt bytes are read-only.
-function createKeyboardShortcutSettingsStore({ userDataDirectory }) {
+function createKeyboardShortcutSettingsStore({
+  userDataDirectory,
+  globalCommands = [],
+}) {
   const file = path.join(userDataDirectory, 'keyboard-shortcuts.json');
+  const eligible = new Set(
+    globalCommands.filter((id) =>
+      SHORTCUT_COMMANDS.some((command) => command.id === id),
+    ),
+  );
+  const supported = (configuration) =>
+    (!configuration.globalEnabled || eligible.size > 0) &&
+    configuration.bindings.every(
+      (binding) => binding.global === null || eligible.has(binding.command),
+    );
   function readBytes() {
     let stat;
     try {
@@ -97,13 +108,13 @@ function createKeyboardShortcutSettingsStore({ userDataDirectory }) {
         saved.configuration,
         LEGACY_KEYBOARD_BINDINGS,
       );
-      if (!appOnly(configuration)) return { status: 'unsupported' };
+      if (!supported(configuration)) return { status: 'unsupported' };
       return { status: 'ready', revision: digest(bytes), configuration };
     } catch {
       return { status: 'invalid' };
     }
   }
-  function set(input) {
+  function prepare(input) {
     if (
       !record(input, ['expectedRevision', 'configuration']) ||
       !(
@@ -122,11 +133,17 @@ function createKeyboardShortcutSettingsStore({ userDataDirectory }) {
     } catch {
       return { status: 'invalid-intent' };
     }
-    if (!appOnly(configuration)) return { status: 'invalid-intent' };
+    if (!supported(configuration)) return { status: 'invalid-intent' };
     const previous = get();
     if (previous.status !== 'ready') return { status: previous.status };
     if (previous.revision !== input.expectedRevision)
       return { status: 'conflict' };
+    return { status: 'prepared', configuration };
+  }
+  function set(input) {
+    const prepared = prepare(input);
+    if (prepared.status !== 'prepared') return prepared;
+    const configuration = prepared.configuration;
     // A fresh write id prevents a saved A-B-A from reviving an old CAS token.
     // Reuse the existing atomic JSON primitive on a unique staging path, then
     // install it in one rename. Neither staging path crosses IPC.
@@ -135,13 +152,20 @@ function createKeyboardShortcutSettingsStore({ userDataDirectory }) {
       `.keyboard-shortcuts-${randomUUID()}.json`,
     );
     try {
-      atomicWriteJson(staging, {
-        schemaVersion: 1,
-        writeId: randomUUID(),
-        configuration,
-      });
+      const bytes = Buffer.from(
+        JSON.stringify(
+          {
+            schemaVersion: 1,
+            writeId: randomUUID(),
+            configuration,
+          },
+          null,
+          2,
+        ),
+      );
+      atomicWriteBuffer(staging, bytes);
       fs.renameSync(staging, file);
-      return get();
+      return { status: 'ready', revision: digest(bytes), configuration };
     } finally {
       for (const owned of [staging, `${staging}.tmp`]) {
         try {
@@ -152,7 +176,7 @@ function createKeyboardShortcutSettingsStore({ userDataDirectory }) {
       }
     }
   }
-  return { get, set };
+  return { get, set, prepare };
 }
 
 module.exports = { createKeyboardShortcutSettingsStore };

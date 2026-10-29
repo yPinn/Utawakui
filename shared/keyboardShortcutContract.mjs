@@ -73,7 +73,7 @@ export function normalizeShortcutChord(value, scope = 'app') {
     (ctrl && alt) ||
     (ctrl && RESERVED_CTRL_LETTERS.has(key)) ||
     (alt && key === 'space') ||
-    (scope === 'global' && !ctrl && !alt)
+    (scope === 'global' && ((!ctrl && !alt) || key === 'f12'))
   ) {
     throw new TypeError('Unsupported shortcut chord');
   }

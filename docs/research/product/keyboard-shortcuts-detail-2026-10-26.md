@@ -197,6 +197,14 @@ Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與�
 | S17 | crash／reload／quit／睡眠釋放或重驗，無訂閱累加／補播／假永遠 active。            |
 | S18 | 可見 Windows 與 OBS／瀏覽器、SMTC／taskbar 並行無雙註冊，焦點／長按／衝突可重現。 |
 
+## 2026-10-29 註冊／復原前置與平台門檻
+
+沿本案先固定[全域註冊與復原契約](../../contracts/global-keyboard-shortcuts.md)，接唯一 Main manager、唯讀 prepare／CAS 再驗、staging／保存／映射提交、占用與清理失敗降級，以及休眠／喚醒／退出清理。runtime 快照只報 Electron 可觀察的本 App 註冊，不將 isRegistered 當 OS 空閒或獨立存活證據；Store rename 後回已知 bytes 的結果，沒有新增 fsync。
+
+現用 Windows／Electron43.8.3 的隔離 OS 路徑，一次短按與一段重複 keydown 得到14次回呼，且公開API沒有放鍵證據。S10未過，正式 capability allowlist 保持空，不能靠cooldown假單次，也不私加native hook／鍵盤監看。此階段只完成註冊／復原前置；正式命令 envelope、前背景去重、全域錄製入口及S08–S10／S18繼續待定，不將App內或mock通過數當全域已驗。後續須先解決可靠的重複按壓／放鍵證據與實作邊界，再接執行切片。
+
+接續的隔離 Win32 MOD_NOREPEAT 原型可將普通持鍵連發的 13 次通知降至 1 次，並保留 3 次主鍵重按及 10 次快速短按；主鍵仍按住時重組修飾鍵、解除再重建註冊各再觸發一次。Owner 已確認全域操作允許完整組合重新形成時再次觸發；普通持鍵連發只一次，重建／喚醒本身不補觸發，App 內既有 repeat 政策不變。註冊前後各一次的限定鍵狀態取樣，實測可拒絕持鍵註冊並保原註冊、放開後明確重試，仍無法證明完整放鍵歷史。Windows x64 註冊 helper 已接 Main adapter 與封裝：建置時編譯、ASAR manifest 驗實體檔，明列 .NET Framework 4.8 以上前提；不加入 hook、持續監看或執行時編譯／下載。既有 manager 已接可等待 backend 的 busy／CAS／生命週期取消、保存後 runtime 分報與可選來源啟用柵欄；正式 receiver／全域 UI 未接，capability 仍為空，關閉時不啟動 helper。證據、限制與同一交易後續所需的通知世代／封裝條件集中於[Windows 持鍵抑制驗證](../../contracts/global-keyboard-shortcuts.md#windows-持鍵抑制的隔離驗證)，不另立全域計畫或將 S10 改列完成。
+
 ## 實作前決策與證據
 
 2026-10-28 前置與執行切片：七命令 allowlist、有界 schema、明示 modifiers／邏輯子集、default／disabled／custom、同 scope／跨 scope／固定鍵及 Shift wildcard 衝突已有純測試。registry 可編譯驗過的 App 配置，替換只保留一組、停用釋出原鍵，default Key 保留原長按、custom 拒 repeat／handled；dispatcher 可接不可變配置，驗 editable／widget composed path／IME／AltGr／錄製／浮層及 canExecute，換配置／卸載使在途失效。S11–S13 執行協調既有 player／transport／lyrics；一般 pending 取消、真 player／練習 owner gap 立即播放、DSP confirmed／來源失效、offset 保存前取消與 CAS 由測試涵蓋。詳細目前契約見[輸入綁定](../../contracts/input-bindings.md#十命令執行邊界)。App 由單一機器偏好 owner 讀取配置，Settings 已接錄製／套用／取消／停用／預設，global 未註冊；不把單元結果當 Windows 每命令或全部場次／OBS 驗收。後續仍為 Main manager／Windows 每命令長按與去重 gate。

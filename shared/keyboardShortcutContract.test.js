@@ -193,13 +193,16 @@ describe('bounded shortcut configuration', () => {
       'right',
       'F10',
       'F11',
-      'F12',
     ]) {
       expect(normalizeShortcutChord(chord(key)).key).toBeTruthy();
       expect(
         normalizeShortcutChord(chord(key, { alt: true }), 'global').alt,
       ).toBe(true);
     }
+    expect(normalizeShortcutChord(chord('F12')).key).toBe('f12');
+    expect(() =>
+      normalizeShortcutChord(chord('F12', { alt: true }), 'global'),
+    ).toThrow();
     expect(() => normalizeShortcutChord(chord('j'), 'arbitrary')).toThrow();
     for (const value of [
       null,

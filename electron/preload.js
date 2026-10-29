@@ -444,6 +444,8 @@ function keyboardShortcutSettingsIntent(input) {
 
 contextBridge.exposeInMainWorld('Utawakui', {
   getKeyboardShortcuts: () => ipcRenderer.invoke('keyboard-shortcuts:get'),
+  getKeyboardShortcutRuntime: () =>
+    ipcRenderer.invoke('keyboard-shortcuts:runtime'),
   setKeyboardShortcuts: (input) =>
     ipcRenderer.invoke(
       'keyboard-shortcuts:set',

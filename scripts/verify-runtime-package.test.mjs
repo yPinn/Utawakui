@@ -8,6 +8,7 @@ import {
 } from './verify-runtime-package.mjs';
 import runtime from '../electron/lib/runtimeEntries.js';
 import { RELEASE_SYMBOL_TARGETS } from './runtime-symbol-policy.mjs';
+import { createHash } from 'node:crypto';
 
 const temporary = [];
 afterEach(() => {
@@ -45,6 +46,29 @@ async function fixture({
   }
   const archive = path.join(root, 'resources/app.asar');
   fs.mkdirSync(path.dirname(archive));
+  const helperDirectory = path.join(root, 'resources/keyboard-shortcuts');
+  fs.mkdirSync(helperDirectory);
+  const bytes = Buffer.alloc(256);
+  bytes.write('MZ');
+  bytes.writeUInt32LE(64, 60);
+  bytes.write('PE\0\0', 64);
+  bytes.writeUInt16LE(0x8664, 68);
+  bytes.writeUInt16LE(0x20b, 88);
+  const files = {};
+  for (const [name, contents] of [
+    ['HotkeyHost.exe', bytes],
+    ['HotkeyHost.exe.config', Buffer.from('<configuration/>')],
+  ]) {
+    fs.writeFileSync(path.join(helperDirectory, name), contents);
+    files[name] = {
+      bytes: contents.length,
+      sha256: createHash('sha256').update(contents).digest('hex'),
+    };
+  }
+  fs.writeFileSync(
+    path.join(source, 'runtime/keyboard-helper.json'),
+    JSON.stringify({ protocol: 1, arch: 'x64', framework: '4.8', files }),
+  );
   await createPackageWithOptions(source, archive, { unpack });
   for (const name of [...PHYSICAL_RUNTIME_PACKAGES, 'async']) {
     const pkg = path.join(`${archive}.unpacked`, 'node_modules', name);
@@ -59,6 +83,14 @@ async function fixture({
 }
 
 describe('release artifact runtime boundary', () => {
+  it('rejects a missing or tampered physical keyboard helper against the ASAR manifest', async () => {
+    const root = await fixture();
+    fs.appendFileSync(
+      path.join(root, 'resources/keyboard-shortcuts/HotkeyHost.exe'),
+      'changed',
+    );
+    expect(() => verifyReleaseRuntimePackage(root)).toThrow(/helper/u);
+  });
   it('checks the actual ASAR layout and physical worker dependency roots', async () => {
     expect(verifyReleaseRuntimePackage(await fixture()).entries).toBe(7);
   });

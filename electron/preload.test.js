@@ -17,6 +17,7 @@ const originalModuleLoad = Module._load;
 
 const MAIN_INVOKE_CHANNELS = [
   'keyboard-shortcuts:get',
+  'keyboard-shortcuts:runtime',
   'keyboard-shortcuts:set',
   'library:performance-settings-get',
   'library:performance-settings-save',
@@ -1903,6 +1904,13 @@ describe('main preload bridge', () => {
     await bridge.getKeyboardShortcuts();
     expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
       'keyboard-shortcuts:get',
+    ]);
+    await bridge.getKeyboardShortcutRuntime({
+      channel: 'arbitrary',
+      execute: true,
+    });
+    expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
+      'keyboard-shortcuts:runtime',
     ]);
   });
 

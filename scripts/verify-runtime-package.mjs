@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import * as asar from '@electron/asar';
 import runtime from '../electron/lib/runtimeEntries.js';
 import { verifyReleaseSymbolBundle } from './runtime-symbol-policy.mjs';
+import helper from '../electron/lib/keyboardShortcutHelper.js';
 
 export const WAVEFORM_RUNTIME_PACKAGES = Object.freeze([
   'music-metadata',
@@ -70,6 +71,14 @@ export function verifyReleaseRuntimePackage(appOutDir) {
       throw new Error('Missing physical worker bundle');
     }
   }
+  helper.verifyHelperFiles(
+    path.join(root, 'resources/keyboard-shortcuts'),
+    JSON.parse(
+      asar
+        .extractFile(archive, 'runtime/keyboard-helper.json')
+        .toString('utf8'),
+    ),
+  );
   const workerRequire = createRequire(
     path.join(`${archive}.unpacked`, 'runtime', 'reading.cjs'),
   );

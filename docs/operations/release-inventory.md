@@ -76,12 +76,25 @@ network install or signed-installer acceptance; see the
   asset. No new runtime dependency, worker or packaging location is introduced.
 - App shortcut settings: `electron/lib/keyboardShortcutSettings.js` and
   `electron/main/keyboardShortcutHandlers.js` use the existing Main bundle;
+  `keyboardShortcutRegistration.js`, `keyboardShortcutRuntime.js` and
+  `windowsShortcutBackend.js` add gated registration/recovery to the same bundle.
+  The production global capability stays closed; no hook or command-execution channel is added.
   fixed get/set intents use the main preload bundle. Pure
   `shared/keyboardBindingDefinitions.mjs` and `keyboardShortcutContract.mjs`
   enter the existing Main/renderer dependency closure and shared allowlist.
   Settings/recording consumers, the category/reference presentation and its ten-command catalog are bundled in `dist/**/*`, adjacent tests remain
   excluded, and `keyboard-shortcuts.json` is machine userData rather than a
-  packaged asset. No worker, external dependency or OS shortcut helper is added.
+  packaged asset. The app-owned Windows x64 shortcut helper is compiled from
+  `native/keyboard-shortcuts/HotkeyHost.cs` by `scripts/build-keyboard-shortcut-helper.mjs`
+  during beforePack, after Main runtime bundling. Only `HotkeyHost.exe` and
+  `HotkeyHost.exe.config` ship physically under `resources/keyboard-shortcuts/`;
+  the expected length/hash/protocol/x64 manifest ships inside ASAR at
+  `runtime/keyboard-helper.json`. Build output and source do not enter ASAR.
+  Runtime requires Windows x64 with .NET Framework 4.8 or newer; no compiler,
+  PowerShell, runtime installer or helper download is invoked by the product.
+  Missing/mismatched resources fail closed for global controls; App-only shortcuts
+  remain available. Package verification checks the physical files against the
+  ASAR manifest; a closed capability starts no helper.
 - Lyrics timing source sessions and human receipts: `electron/lib/library/lyricsSourceSessions.js`,
   `lyricsTimingReview.js` and `lyricsTimingReviewStore.js`
   is included by the existing Main bundle dependency closure. The fixed lyrics

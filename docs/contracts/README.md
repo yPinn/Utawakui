@@ -50,6 +50,7 @@
 - [Shell 左右欄與空間分配](shell-layout.md)
 - [操作層級與確認](action-intent-and-confirmation.md)
 - [輸入綁定](input-bindings.md)
+- [全域快捷鍵註冊與失敗復原](global-keyboard-shortcuts.md)
 - [Settings操作回饋](settings-operation-feedback.md)
 - [Token v2元件檢查](token-v2-component-review.md)
 - [程式命名](codebase-naming.md)

@@ -22,6 +22,8 @@
 
 ## 手動與研究工具
 
+Windows 快捷鍵 helper 可用 `node scripts/build-keyboard-shortcut-helper.mjs` 單獨重建；正式 beforePack 會在 runtime bundle 後自動執行。需 Windows x64 Framework compiler，產物進 ignored `.build/`；不在產品啟動時編譯或下載。固定資源與驗證見[全域快捷鍵契約](../docs/contracts/global-keyboard-shortcuts.md#windows-helper-與實體資源)。
+
 下列工具保留直接執行方式，不為每支工具增加 npm 別名。帶私有輸入或模型的工具，先閱讀對應契約與程式的參數驗證；不要直接以正式曲庫試跑。
 
 - [歌詞波形 backend](../prototypes/lyrics-waveform/README.md)：Node runner 使用已安裝的 FFmpeg／ffprobe 生成合成 fixtures，比較隔離 worker 與 Browser decode；實驗結果見連結報告。正式 worker／取消／封裝回歸由 `lyrics-waveform-main.test.mjs` 固定，ownership 見[波形契約](../docs/contracts/lyrics-waveform.md)。
