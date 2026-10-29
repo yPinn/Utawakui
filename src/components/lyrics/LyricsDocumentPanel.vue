@@ -599,7 +599,7 @@ watch(
 .lyrics-line__role {
   flex: 0 0 auto;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   white-space: nowrap;
 }
 .lyrics-line:hover .lyrics-line__edit,
@@ -638,7 +638,7 @@ watch(
   background: transparent;
 }
 .lyrics-line__time {
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   line-height: inherit;
   font-variant-numeric: tabular-nums;
 }

@@ -173,7 +173,7 @@ function finalValue(field) {
 }
 .reconciliation-fields__values dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 .reconciliation-fields__values dd {
   margin: var(--ui-space-1) 0 0;

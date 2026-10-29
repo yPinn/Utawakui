@@ -846,7 +846,7 @@ function startDrag(playlist, event) {
   background: transparent;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
   text-align: left;
   cursor: pointer;
   user-select: none;

@@ -410,7 +410,7 @@ onUnmounted(structureSignals.clear);
 
 .reference-annotation__dirty {
   color: var(--ui-color-warning);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .reference-annotation__empty {
@@ -496,7 +496,7 @@ onUnmounted(structureSignals.clear);
 }
 .reference-annotation__case-header p {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .reference-annotation__detail {
@@ -531,7 +531,8 @@ onUnmounted(structureSignals.clear);
 .reference-annotation__case-header h3 {
   overflow-wrap: anywhere;
   font-size: var(--ui-type-heading-size);
-  line-height: var(--ui-type-title-line-height);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
 }
 
 @media (max-width: 840px) {

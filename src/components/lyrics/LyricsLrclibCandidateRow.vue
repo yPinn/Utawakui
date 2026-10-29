@@ -280,7 +280,7 @@ function previewLineHasTiming(line) {
   gap: var(--ui-space-2);
   margin-inline-start: auto;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .lyrics-lrclib-candidate-row__saved-status {
@@ -341,7 +341,7 @@ function previewLineHasTiming(line) {
   flex-shrink: 0;
   padding-top: calc(var(--ui-border-width) + var(--ui-space-1));
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
 }
 
@@ -397,7 +397,7 @@ function previewLineHasTiming(line) {
   padding: 0;
   list-style: none;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
 }
 
 .lyrics-lrclib-candidate-preview__line {

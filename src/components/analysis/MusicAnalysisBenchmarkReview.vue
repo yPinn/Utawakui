@@ -372,7 +372,7 @@ onMounted(library.initialize);
 }
 .benchmark-review__case-header p {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .benchmark-review__detail {
@@ -406,7 +406,8 @@ onMounted(library.initialize);
 .benchmark-review__case-header h3 {
   overflow-wrap: anywhere;
   font-size: var(--ui-type-heading-size);
-  line-height: var(--ui-type-title-line-height);
+  font-weight: var(--ui-type-heading-weight);
+  line-height: var(--ui-type-heading-line-height);
 }
 
 .benchmark-review__metrics {
@@ -427,7 +428,7 @@ onMounted(library.initialize);
 
 .benchmark-review__metrics dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .benchmark-review__metrics dd {
@@ -444,7 +445,7 @@ onMounted(library.initialize);
   padding-block-start: var(--ui-space-3);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   overflow-wrap: anywhere;
 }
 

@@ -79,6 +79,6 @@ const modeMessages = {
 }
 
 .performer-cue-stack__reading-status {
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 </style>

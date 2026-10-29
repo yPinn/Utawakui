@@ -104,7 +104,7 @@ function resetLyricsOffset() {
   min-width: var(--ui-lyrics-live-display-width);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-type-body-size);
   font-variant-numeric: tabular-nums;
   text-align: center;
   user-select: none;

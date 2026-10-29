@@ -322,7 +322,7 @@ const descriptionPlaceholder = computed(
 
 .feedback-report__row dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .feedback-report__row dd {
@@ -348,7 +348,7 @@ const descriptionPlaceholder = computed(
   margin: 0;
   padding-left: var(--ui-space-4);
   overflow-y: auto;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   overflow-wrap: anywhere;
 }
 
@@ -359,7 +359,7 @@ const descriptionPlaceholder = computed(
 .feedback-report__report-id {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   -webkit-user-select: text;
   user-select: text;
 }

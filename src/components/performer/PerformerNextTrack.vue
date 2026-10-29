@@ -43,6 +43,6 @@ defineProps({
 
 .performer-next-track small {
   color: var(--ui-performer-secondary-foreground);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 </style>

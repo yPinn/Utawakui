@@ -60,11 +60,11 @@ onMounted(initialize);
 
 .auto-error-report__scope {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .auto-error-report__message {
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   overflow-wrap: anywhere;
 }
 </style>

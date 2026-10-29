@@ -210,7 +210,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   gap: var(--ui-space-3);
   padding: var(--ui-space-5);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   text-align: center;
 }
 

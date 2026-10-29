@@ -762,9 +762,9 @@ onBeforeUnmount(() => {
   display: block;
   padding: var(--ui-space-2) var(--ui-space-2) var(--ui-space-1);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
+  font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-caption-line-height);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .ui-combobox__option--grouped .ui-combobox__option-content {

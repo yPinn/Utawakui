@@ -510,12 +510,12 @@ function submitApproval() {
 
 .review-form .review-form__lookup-title {
   margin: 0;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-label-size);
 }
 
 .review-form__lookup-heading > span {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .review-form__lookup-list {
@@ -551,7 +551,7 @@ function submitApproval() {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -608,7 +608,7 @@ function submitApproval() {
 .review-form h3 {
   margin: 0 0 var(--ui-space-3);
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-type-subtitle-size);
 }
 
 .review-form dl {
@@ -628,7 +628,7 @@ function submitApproval() {
 
 .review-form dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 
 .review-form dd {
@@ -636,7 +636,7 @@ function submitApproval() {
   margin: 0;
   overflow-wrap: anywhere;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
 }
 
 .review-form__confirmation-scroll :deep(.review-form__confirmation-body) {

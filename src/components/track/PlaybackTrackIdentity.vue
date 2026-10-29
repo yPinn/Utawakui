@@ -139,7 +139,7 @@ function jumpToCurrentTrackAlbum() {
 
 .playback-track-title-marquee {
   color: inherit;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
   font-weight: inherit;
   line-height: inherit;
 }

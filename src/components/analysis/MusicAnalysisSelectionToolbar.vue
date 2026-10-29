@@ -58,7 +58,7 @@ function toggleVisible() {
 .analysis-selection-toolbar__count {
   margin-inline-start: auto;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

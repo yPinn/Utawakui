@@ -105,7 +105,7 @@ function selectCandidate(candidateId) {
   padding: var(--ui-space-2) var(--ui-space-3);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-label-size);
 }
 
 .review-candidates__header strong {
@@ -132,7 +132,7 @@ function selectCandidate(candidateId) {
 .review-candidates__empty {
   padding: var(--ui-space-4);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   text-align: center;
 }
 </style>

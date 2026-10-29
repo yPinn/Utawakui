@@ -315,7 +315,7 @@ onScopeDispose(() => clearInterval(timer));
   display: grid;
   gap: var(--ui-space-1);
   overflow-wrap: anywhere;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-label-size);
   color: var(--ui-color-text);
 }
 .lyrics-source-analysis__heading span {

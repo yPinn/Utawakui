@@ -216,7 +216,7 @@ function cancel() {
   background: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
   cursor: pointer;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-label-size);
 }
 
 .playlist-details__cover-edit:focus-visible {

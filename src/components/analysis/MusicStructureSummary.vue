@@ -327,7 +327,7 @@ function sectionLabel(role) {
   min-height: var(--ui-control-height);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
 }
 
 .structure-summary__section-role {

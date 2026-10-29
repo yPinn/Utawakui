@@ -480,6 +480,6 @@ onMounted(() => {
   align-items: center;
   gap: var(--ui-space-2);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
 }
 </style>

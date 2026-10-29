@@ -251,7 +251,7 @@ onMounted(workbench.refresh);
 .diagnostics-workbench__detail {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   white-space: pre-wrap;
   word-break: break-word;
   user-select: text;

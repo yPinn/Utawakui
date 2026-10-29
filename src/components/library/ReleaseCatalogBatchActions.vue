@@ -87,7 +87,7 @@ watch(
   display: contents;
 }
 .release-batch-actions__status {
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   color: var(--ui-color-text-muted);
 }
 </style>

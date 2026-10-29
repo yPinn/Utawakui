@@ -418,7 +418,7 @@ function reportSource(source) {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-label-size);
   white-space: nowrap;
 }
 
@@ -441,7 +441,7 @@ function reportSource(source) {
   flex: 0 0 var(--ui-lyrics-source-meta-width);
   width: var(--ui-lyrics-source-meta-width);
   box-sizing: border-box;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-caption-size);
   white-space: nowrap;
 }
 

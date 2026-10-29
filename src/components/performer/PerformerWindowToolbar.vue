@@ -57,7 +57,7 @@ defineEmits([
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-type-body-compact-size);
   user-select: none;
   app-region: drag;
   -webkit-app-region: drag;

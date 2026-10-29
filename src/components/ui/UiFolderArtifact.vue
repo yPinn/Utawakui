@@ -792,10 +792,10 @@ function handleStackLayerKeydown(layer, event) {
   border-radius: var(--ui-radius-xs);
   background-color: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-type-caption-size);
+  font-size: var(--ui-type-label-size);
   font-variant-numeric: tabular-nums;
   font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-caption-line-height);
+  line-height: var(--ui-type-label-line-height);
   opacity: 0;
   transition: opacity var(--ui-motion-duration-feedback)
     var(--ui-motion-easing-standard);
