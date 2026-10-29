@@ -308,7 +308,7 @@ describe('AppTitleBar', () => {
     expect(obsTimeBlock).toContain('color: var(--ui-color-text-muted);');
 
     expect(source).toContain(
-      '.app-title-bar__obs-dot {\n  flex-shrink: 0;\n  width: var(--ui-space-2);\n  height: var(--ui-space-2);\n  border-radius: var(--ui-radius-pill);\n  background: var(--ui-color-text-muted);\n}',
+      '.app-title-bar__obs-dot {\n  flex-shrink: 0;\n  width: var(--ui-status-dot-size);\n  height: var(--ui-status-dot-size);\n  border-radius: var(--ui-radius-pill);\n  background: var(--ui-color-text-muted);\n}',
     );
   });
 

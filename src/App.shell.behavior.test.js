@@ -41,7 +41,7 @@ describe('App shell right Dock', () => {
     expect(source).toContain('useAppRightDockWidth');
     expect(source).toContain("'--ui-right-dock-width':");
     expect(source).toMatch(
-      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-space-3\);/su,
+      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-shell-gutter\);/su,
     );
   });
 
@@ -185,7 +185,7 @@ describe('App shell right Dock', () => {
   it('keeps the collapsed restore action in flow while the allocator reclaims its bay', () => {
     expect(source).toMatch(/<div\s[^>]*class="shell__workspace"[^>]*>/u);
     expect(source).toMatch(
-      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
+      /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-shell-dock-inline-size\);[^}]*gap:\s*var\(--ui-shell-gutter\);[^}]*\}/su,
     );
     expect(source).toMatch(
       /\.shell__dock\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*pointer-events:\s*none;[^}]*\}/su,

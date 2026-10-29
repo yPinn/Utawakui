@@ -414,8 +414,8 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
 
 .app-title-bar__obs-dot {
   flex-shrink: 0;
-  width: var(--ui-space-2);
-  height: var(--ui-space-2);
+  width: var(--ui-status-dot-size);
+  height: var(--ui-status-dot-size);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-text-muted);
 }
@@ -481,8 +481,8 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   position: absolute;
   top: var(--ui-space-1);
   right: var(--ui-space-1);
-  width: var(--ui-space-2);
-  height: var(--ui-space-2);
+  width: var(--ui-status-dot-size);
+  height: var(--ui-status-dot-size);
   border: var(--ui-border-width) solid var(--ui-color-canvas);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-info);
