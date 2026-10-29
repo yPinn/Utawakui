@@ -1,5 +1,5 @@
 <script setup>
-import { shallowRef, useTemplateRef } from 'vue';
+import { useTemplateRef } from 'vue';
 import AppRightDockHeader from './AppRightDockHeader.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
@@ -14,11 +14,6 @@ const props = defineProps({
 
 const emit = defineEmits(['collapse']);
 const scrollRegion = useTemplateRef('scrollRegion');
-const hasScrolled = shallowRef(false);
-
-function updateScrollState(event) {
-  hasScrolled.value = event.currentTarget.scrollTop > 0;
-}
 
 function scrollTo(...args) {
   scrollRegion.value?.scrollTo(...args);
@@ -31,12 +26,7 @@ defineExpose({ scrollTo });
   <section class="app-right-dock-panel" :aria-label="ariaLabel || title">
     <slot name="overlay" />
 
-    <div
-      class="app-right-dock-panel__chrome"
-      :class="{
-        'app-right-dock-panel__chrome--scrolled': hasScrolled,
-      }"
-    >
+    <div class="app-right-dock-panel__chrome">
       <AppRightDockHeader
         :title="props.title"
         :subtitle="props.subtitle"
@@ -61,7 +51,7 @@ defineExpose({ scrollTo });
       ref="scrollRegion"
       class="app-right-dock-panel__scroll"
       axis="vertical"
-      @scroll="updateScrollState"
+      :edge-shadow="$slots.footer ? 'both' : 'start'"
     >
       <div class="app-right-dock-panel__body">
         <slot />
@@ -91,16 +81,6 @@ defineExpose({ scrollTo });
   position: relative;
   z-index: var(--ui-layer-overlay);
   background: var(--ui-right-dock-sticky-background);
-  transition:
-    box-shadow var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
-    backdrop-filter var(--ui-motion-duration-fast)
-      var(--ui-motion-easing-standard);
-}
-
-.app-right-dock-panel__chrome--scrolled {
-  -webkit-backdrop-filter: blur(var(--ui-right-dock-sticky-blur));
-  backdrop-filter: blur(var(--ui-right-dock-sticky-blur));
-  box-shadow: var(--ui-right-dock-sticky-shadow);
 }
 
 .app-right-dock-panel__summary {
@@ -141,15 +121,5 @@ defineExpose({ scrollTo });
   min-block-size: 0;
   overflow: hidden;
   padding-inline: var(--ui-right-dock-content-inset);
-}
-
-:global(:root[data-ui-motion='reduced'] .app-right-dock-panel__chrome) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-right-dock-panel__chrome {
-    transition: none;
-  }
 }
 </style>

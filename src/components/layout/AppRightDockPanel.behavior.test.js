@@ -151,34 +151,31 @@ describe('AppRightDockPanel', () => {
     app.unmount();
   });
 
-  it('adds header elevation only after its own viewport scrolls', async () => {
-    const { app, root } = mount(
-      AppRightDockPanel,
-      {
-        title: '播放清單',
-        collapseLabel: '摺疊播放清單',
-      },
-      { default: () => 'Queue content' },
-    );
-    const chrome = findAll(root, (node) =>
-      String(node.props?.class ?? '').includes('app-right-dock-panel__chrome'),
-    )[0];
-    const viewport = findAll(root, (node) =>
-      String(node.props?.class ?? '').includes('ui-scroll-region__viewport'),
-    )[0];
+  it('delegates header and footer elevation to the scroll region edges', () => {
+    const regionEdge = (slots) => {
+      const { app, root } = mount(
+        AppRightDockPanel,
+        { title: '播放清單', collapseLabel: '摺疊播放清單' },
+        slots,
+      );
+      const region = findAll(root, (node) =>
+        String(node.props?.class ?? '').includes('ui-scroll-region'),
+      )[0];
+      const edge = region.props['data-edge-shadow'];
+      app.unmount();
+      return edge;
+    };
 
-    expect(String(chrome.props.class)).not.toContain(
-      'app-right-dock-panel__chrome--scrolled',
-    );
-    trigger(viewport, 'onScroll', { currentTarget: { scrollTop: 12 } });
-    await nextTick();
-    expect(String(chrome.props.class)).toContain(
-      'app-right-dock-panel__chrome--scrolled',
-    );
-    app.unmount();
+    expect(regionEdge({ default: () => 'Queue content' })).toBe('start');
+    expect(
+      regionEdge({
+        default: () => 'Queue content',
+        footer: () => 'Footer content',
+      }),
+    ).toBe('both');
   });
 
-  it('keeps the viewport as scroll-state authority during imperative scrolling', async () => {
+  it('keeps imperative scrolling on the shared viewport', async () => {
     const panelRef = shallowRef(null);
     const TestHost = {
       setup: () => () =>
@@ -193,19 +190,10 @@ describe('AppRightDockPanel', () => {
         ),
     };
     const { app, root } = mount(TestHost);
-    const chrome = findAll(root, (node) =>
-      String(node.props?.class ?? '').includes('app-right-dock-panel__chrome'),
-    )[0];
     const viewport = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('ui-scroll-region__viewport'),
     )[0];
     viewport.scrollTo = vi.fn();
-
-    trigger(viewport, 'onScroll', { currentTarget: { scrollTop: 12 } });
-    await nextTick();
-    expect(String(chrome.props.class)).toContain(
-      'app-right-dock-panel__chrome--scrolled',
-    );
 
     panelRef.value.scrollTo({ top: 0, behavior: 'smooth' });
     await nextTick();
@@ -213,25 +201,15 @@ describe('AppRightDockPanel', () => {
       top: 0,
       behavior: 'smooth',
     });
-    expect(String(chrome.props.class)).toContain(
-      'app-right-dock-panel__chrome--scrolled',
-    );
-
-    trigger(viewport, 'onScroll', { currentTarget: { scrollTop: 0 } });
-    await nextTick();
-    expect(String(chrome.props.class)).not.toContain(
-      'app-right-dock-panel__chrome--scrolled',
-    );
     app.unmount();
   });
 
-  it('owns the complete scroll-elevation visual recipe', () => {
-    expect(panelSource).toMatch(
-      /\.app-right-dock-panel__chrome--scrolled\s*\{[^}]*backdrop-filter:\s*blur\(var\(--ui-right-dock-sticky-blur\)\);[^}]*box-shadow:\s*var\(--ui-right-dock-sticky-shadow\);/su,
-    );
+  it('owns no private scroll-elevation recipe', () => {
+    expect(panelSource).not.toContain('chrome--scrolled');
+    expect(panelSource).not.toContain('backdrop-filter');
     expect(tokenSource).toContain('--ui-right-dock-sticky-background:');
-    expect(tokenSource).toContain('--ui-right-dock-sticky-blur: 0.75rem;');
-    expect(tokenSource).toContain('--ui-right-dock-sticky-shadow:');
+    expect(tokenSource).not.toContain('--ui-right-dock-sticky-blur');
+    expect(tokenSource).not.toContain('--ui-right-dock-sticky-shadow');
   });
 });
 

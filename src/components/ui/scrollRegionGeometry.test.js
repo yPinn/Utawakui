@@ -1,8 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import {
   getOverlayThumbGeometry,
+  getScrollEdges,
   getScrollOffsetFromThumbDelta,
 } from './scrollRegionGeometry.js';
+
+describe('scroll region edges', () => {
+  it('reports only the edges that currently hide content', () => {
+    const size = { viewportSize: 200, contentSize: 600 };
+    expect(getScrollEdges({ ...size, scrollOffset: 0 })).toEqual({
+      start: false,
+      end: true,
+    });
+    expect(getScrollEdges({ ...size, scrollOffset: 120 })).toEqual({
+      start: true,
+      end: true,
+    });
+    expect(getScrollEdges({ ...size, scrollOffset: 399.6 })).toEqual({
+      start: true,
+      end: false,
+    });
+  });
+
+  it('reports no hidden edge when content fits', () => {
+    expect(
+      getScrollEdges({ viewportSize: 300, contentSize: 300, scrollOffset: 0 }),
+    ).toEqual({ start: false, end: false });
+  });
+});
 
 describe('scroll region overlay geometry', () => {
   it('hides an axis when its content fits the viewport', () => {

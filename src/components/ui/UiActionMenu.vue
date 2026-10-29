@@ -822,6 +822,11 @@ onUnmounted(() => {
           class="ui-action-menu__body"
           axis="vertical"
           viewport-class="ui-action-menu__viewport"
+          :edge-shadow="
+            content.kind === 'filterable-actions' || rootEntrySet.pinned.length
+              ? 'start'
+              : 'none'
+          "
         >
           <p v-if="rootPresentation.emptyText" class="ui-action-menu__empty">
             {{ rootPresentation.emptyText }}

@@ -18,6 +18,31 @@ const candidateTokenSource = readFileSync(
 );
 
 describe('UiScrollRegion production contract', () => {
+  it('owns scroll-edge shadows for edges that sit against fixed chrome', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () => h(UiScrollRegion, { edgeShadow: 'both' }, () => 'Body'),
+      }),
+    );
+    expect(html).toContain('data-edge-shadow="both"');
+    expect(html).toContain('data-scrolled-start="false"');
+    expect(html).toContain('data-scrolled-end="false"');
+    expect(componentSource).toContain('getScrollEdges({');
+    expect(componentSource).toMatch(
+      /\.ui-scroll-region::before\s*\{[^}]*box-shadow:\s*var\(--ui-scroll-edge-shadow-start\);/su,
+    );
+    expect(componentSource).toMatch(
+      /\.ui-scroll-region::after\s*\{[^}]*box-shadow:\s*var\(--ui-scroll-edge-shadow-end\);/su,
+    );
+    for (const token of [
+      '--ui-scroll-edge-shadow-start:',
+      '--ui-scroll-edge-shadow-end:',
+      '--ui-scroll-edge-band-size:',
+    ]) {
+      expect(activeTokenSource).toContain(token);
+    }
+  });
+
   it('keeps consumer geometry on the root and accessible scroll attrs on the native viewport', async () => {
     const app = createSSRApp({
       render: () =>

@@ -256,8 +256,6 @@
     var(--ui-color-surface) 88%,
     transparent
   );
-  --ui-right-dock-sticky-blur: 0.75rem;
-  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
   --ui-player-padding-block-end: var(--ui-shell-content-inset-block);
   --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
   --ui-player-leading-padding-inline: calc(
@@ -472,6 +470,10 @@
   --ui-shadow-contact: none;
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 32%);
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(0 0 0 / 42%);
+  /* Cast by fixed chrome onto content scrolled beneath it (see UiScrollRegion). */
+  --ui-scroll-edge-shadow-start: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
+  --ui-scroll-edge-shadow-end: 0 -0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
+  --ui-scroll-edge-band-size: var(--ui-space-6);
 
   /* Global semantic layers: only shell chrome and teleported overlays. */
   --ui-z-sticky: 10;
@@ -923,7 +925,8 @@
   --ui-shadow-contact: 0 0.125rem 0.375rem rgb(39 41 40 / 10%);
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(39 41 40 / 18%);
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
-  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(39 41 40 / 24%);
+  --ui-scroll-edge-shadow-start: 0 0.5rem 1.25rem -0.75rem rgb(39 41 40 / 24%);
+  --ui-scroll-edge-shadow-end: 0 -0.5rem 1.25rem -0.75rem rgb(39 41 40 / 24%);
 
   --ui-color-shell-substrate: var(--ui-palette-neutral-950);
   --ui-color-canvas: var(--ui-palette-warm-neutral-300);

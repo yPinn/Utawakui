@@ -64,3 +64,14 @@ export function getScrollOffsetFromThumbDelta({
   if (maximum === 0 || thumbTravel === 0) return start;
   return clamp(start + (pointerDelta / thumbTravel) * maximum, 0, maximum);
 }
+
+// Which block edges currently hide content. A half-pixel tolerance absorbs
+// fractional offsets so a fully scrolled viewport never reports its end.
+export function getScrollEdges({ viewportSize, contentSize, scrollOffset }) {
+  const maxScroll = Math.max(
+    0,
+    finiteNonNegative(contentSize) - finiteNonNegative(viewportSize),
+  );
+  const offset = finiteNonNegative(scrollOffset);
+  return { start: offset > 0.5, end: offset < maxScroll - 0.5 };
+}

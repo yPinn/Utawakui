@@ -11,6 +11,7 @@ import {
 } from 'vue';
 import {
   getOverlayThumbGeometry,
+  getScrollEdges,
   getScrollOffsetFromThumbDelta,
 } from './scrollRegionGeometry.js';
 
@@ -39,6 +40,13 @@ const props = defineProps({
     default: 'auto',
     validator: (value) => ['auto', 'hidden'].includes(value),
   },
+  // Block edges that sit against fixed chrome; each casts a shadow only while
+  // content is hidden behind it.
+  edgeShadow: {
+    type: String,
+    default: 'none',
+    validator: (value) => ['none', 'start', 'end', 'both'].includes(value),
+  },
 });
 
 const attrs = useAttrs();
@@ -59,6 +67,7 @@ const hiddenGeometry = () => ({
 const verticalGeometry = shallowRef(hiddenGeometry());
 const horizontalGeometry = shallowRef(hiddenGeometry());
 const draggingAxis = shallowRef('');
+const scrolledEdges = shallowRef({ start: false, end: false });
 
 const rootAttrs = computed(() =>
   Object.fromEntries(
@@ -152,6 +161,15 @@ function measure() {
           trackSize: horizontalTrackSize,
           minThumbSize: resolvedMinThumbSize('horizontal'),
           maxThumbSize: resolvedMaxThumbSize('horizontal'),
+        });
+
+  scrolledEdges.value =
+    props.axis === 'horizontal'
+      ? { start: false, end: false }
+      : getScrollEdges({
+          viewportSize: viewport.clientHeight,
+          contentSize: viewport.scrollHeight,
+          scrollOffset: viewport.scrollTop,
         });
 }
 
@@ -319,6 +337,9 @@ watch(
     :data-scroll-axis="props.axis"
     :data-overflow-x="horizontalGeometry.visible ? 'true' : 'false'"
     :data-overflow-y="verticalGeometry.visible ? 'true' : 'false'"
+    :data-scrolled-start="scrolledEdges.start ? 'true' : 'false'"
+    :data-scrolled-end="scrolledEdges.end ? 'true' : 'false'"
+    :data-edge-shadow="props.edgeShadow"
   >
     <component
       :is="props.viewportTag"
@@ -423,6 +444,42 @@ watch(
   outline-offset: var(--ui-focus-offset-inset);
 }
 
+/* Edge shadows: an off-screen band above／below the viewport casts the shared
+   scroll-edge shadow inward, matching chrome that sits on that edge. */
+.ui-scroll-region::before,
+.ui-scroll-region::after {
+  content: '';
+  position: absolute;
+  z-index: var(--ui-layer-raised);
+  inset-inline: 0;
+  block-size: var(--ui-scroll-edge-band-size);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
+}
+
+.ui-scroll-region::before {
+  inset-block-end: 100%;
+  box-shadow: var(--ui-scroll-edge-shadow-start);
+}
+
+.ui-scroll-region::after {
+  inset-block-start: 100%;
+  box-shadow: var(--ui-scroll-edge-shadow-end);
+}
+
+.ui-scroll-region:is(
+    [data-edge-shadow='start'],
+    [data-edge-shadow='both']
+  )[data-scrolled-start='true']::before,
+.ui-scroll-region:is(
+    [data-edge-shadow='end'],
+    [data-edge-shadow='both']
+  )[data-scrolled-end='true']::after {
+  opacity: 1;
+}
+
 .ui-scroll-region__rail {
   position: absolute;
   z-index: var(--ui-layer-raised);
@@ -504,7 +561,14 @@ watch(
   cursor: grabbing;
 }
 
+:global(:root[data-ui-motion='reduced'] .ui-scroll-region::before),
+:global(:root[data-ui-motion='reduced'] .ui-scroll-region::after) {
+  transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .ui-scroll-region::before,
+  .ui-scroll-region::after,
   .ui-scroll-region__rail,
   .ui-scroll-region__thumb {
     transition: none;
