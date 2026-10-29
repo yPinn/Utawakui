@@ -72,6 +72,188 @@ function fixture({
     set,
   };
 }
+it('trial stages without dispatch or persistence and restores only the previous registrations', async () => {
+  const f = fixture();
+  await f.set(configuration([['player.play-pause', chord('j')]]));
+  const bytes = fs.readFileSync(f.file);
+  f.globalShortcut.register.mockImplementation((key, callback) => {
+    f.registered.set(key, callback);
+    callback();
+    return true;
+  });
+  const reply = await f.manager.test({
+    expectedRevision: f.store.get().revision,
+    configuration: configuration([
+      ['player.play-pause', chord('j')],
+      ['player.next', chord('u')],
+    ]),
+  });
+  expect(reply.status).toBe('tested');
+  expect(reply.runtime).toMatchObject({
+    busy: false,
+    state: 'active',
+    pending: [],
+  });
+  expect(reply.runtime.active.map((b) => b.command)).toEqual([
+    'player.play-pause',
+  ]);
+  expect([...f.registered.keys()]).toEqual(['Control+Shift+J']);
+  expect(fs.readFileSync(f.file)).toEqual(bytes);
+  expect(f.onCommand).not.toHaveBeenCalled();
+});
+it('trial rechecks CAS after async acquisition, always cleans up, and apply rechecks occupancy', async () => {
+  const f = fixture();
+  const cfg = configuration([['player.next', chord('j')]]);
+  const input = { expectedRevision: null, configuration: cfg };
+  expect((await f.manager.test(input)).status).toBe('tested');
+  f.globalShortcut.register.mockReturnValue(false);
+  expect((await f.manager.set(input)).status).toBe('occupied');
+  expect(fs.existsSync(f.file)).toBe(false);
+  f.globalShortcut.register.mockImplementation((key, callback) => {
+    f.registered.set(key, callback);
+    f.store.set({
+      expectedRevision: null,
+      configuration: configuration([], false),
+    });
+    return true;
+  });
+  expect((await f.manager.test(input)).status).toBe('conflict');
+  expect(f.registered.size).toBe(0);
+});
+it('closed gate refuses trial without touching OS and release failure cannot report tested', async () => {
+  const closed = fixture({ eligible: [] });
+  expect(
+    (
+      await closed.manager.test({
+        expectedRevision: null,
+        configuration: configuration([['player.next', chord('j')]]),
+      })
+    ).status,
+  ).not.toBe('tested');
+  expect(closed.globalShortcut.register).not.toHaveBeenCalled();
+  const f = fixture();
+  f.globalShortcut.unregister.mockImplementation(() => {});
+  const result = await f.manager.test({
+    expectedRevision: null,
+    configuration: configuration([['player.next', chord('j')]]),
+  });
+  expect(result.status).toBe('degraded');
+  expect(result.runtime.active).toEqual([]);
+  expect(result.runtime.held).toHaveLength(1);
+  expect(fs.existsSync(f.file)).toBe(false);
+});
+it('explicit disable stops dispatch even when saving fails, and reading cannot silently reactivate', async () => {
+  const f = fixture();
+  const cfg = configuration([['player.next', chord('j')]]);
+  await f.set(cfg);
+  const bytes = fs.readFileSync(f.file);
+  vi.spyOn(f.store, 'set').mockImplementation(() => {
+    throw Error('private disk');
+  });
+  await expect(f.set({ ...cfg, globalEnabled: false })).rejects.toThrow(
+    'private disk',
+  );
+  expect(f.manager.snapshot()).toMatchObject({
+    active: [],
+    held: [],
+    state: 'disabled',
+  });
+  expect(fs.readFileSync(f.file)).toEqual(bytes);
+  await f.manager.get();
+  expect(f.manager.snapshot().active).toEqual([]);
+  expect(f.registered.size).toBe(0);
+  vi.restoreAllMocks();
+  const preserved = await f.set(cfg);
+  expect(preserved.status).toBe('ready');
+  expect(preserved.runtime).toMatchObject({
+    active: [],
+    sessionDisabled: true,
+  });
+  const enabled = await f.manager.enable({
+    expectedRevision: f.store.get().revision,
+    configuration: cfg,
+  });
+  expect(enabled.status).toBe('ready');
+  expect(enabled.runtime).toMatchObject({
+    state: 'active',
+    sessionDisabled: false,
+  });
+});
+it('stops on a valid disable even when CAS is stale, and never rewrites the newer file', async () => {
+  const f = fixture();
+  const cfg = configuration([['player.next', chord('j')]]);
+  await f.set(cfg);
+  const bytes = fs.readFileSync(f.file);
+  expect((await f.set({ ...cfg, globalEnabled: false }, null)).status).toBe(
+    'conflict',
+  );
+  expect(f.manager.snapshot()).toMatchObject({
+    active: [],
+    held: [],
+    sessionDisabled: true,
+  });
+  expect(fs.readFileSync(f.file)).toEqual(bytes);
+  await f.manager.get();
+  expect(f.registered.size).toBe(0);
+});
+it('revokes a validated stop before prepare read IO, while malformed stops cannot touch registrations', async () => {
+  const f = fixture();
+  const cfg = configuration([['player.next', chord('j')]]);
+  await f.set(cfg);
+  const callback = f.registered.get('Control+Shift+J');
+  vi.spyOn(f.store, 'prepare').mockImplementation(() => {
+    throw Error('read EACCES');
+  });
+  expect(
+    (
+      await f.manager.set({
+        expectedRevision: null,
+        configuration: { globalEnabled: false },
+      })
+    ).status,
+  ).toBe('invalid-intent');
+  expect(f.manager.snapshot().active).toHaveLength(1);
+  await expect(f.set({ ...cfg, globalEnabled: false })).rejects.toThrow(
+    'read EACCES',
+  );
+  expect(f.manager.snapshot()).toMatchObject({
+    active: [],
+    held: [],
+    sessionDisabled: true,
+  });
+  callback();
+  expect(f.onCommand).not.toHaveBeenCalled();
+});
+it('keeps trial busy, cleans a late acquisition on suspend, and never persists or replays', async () => {
+  const f = fixture();
+  const pending = Promise.withResolvers();
+  f.globalShortcut.register.mockImplementation(async (key, callback) => {
+    await pending.promise;
+    f.registered.set(key, callback);
+    callback();
+    return true;
+  });
+  const input = {
+    expectedRevision: null,
+    configuration: configuration([['player.next', chord('j')]]),
+  };
+  const testing = f.manager.test(input);
+  await vi.waitFor(() => expect(f.globalShortcut.register).toHaveBeenCalled());
+  expect((await f.manager.set(input)).status).toBe('busy');
+  const suspending = f.manager.suspend();
+  pending.resolve();
+  expect((await testing).status).toBe('unavailable');
+  await suspending;
+  expect(f.manager.snapshot()).toMatchObject({
+    state: 'suspended',
+    active: [],
+    held: [],
+    pending: [],
+    busy: false,
+  });
+  expect(f.onCommand).not.toHaveBeenCalled();
+  expect(fs.existsSync(f.file)).toBe(false);
+});
 it('derives bounded accelerators and never accepts arbitrary accelerator strings', () => {
   expect(shortcutAccelerator(chord('arrowup'))).toBe('Control+Shift+Up');
   expect(shortcutAccelerator({ ...chord('f11'), ctrl: false, alt: true })).toBe(

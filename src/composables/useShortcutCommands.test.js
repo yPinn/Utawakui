@@ -120,6 +120,72 @@ function fixture() {
 }
 
 describe('shortcut command owners', () => {
+  it.each([
+    ['lyrics.offset-down', 100],
+    ['lyrics.offset-up', -100],
+  ])(
+    'confirms %s returning to an omitted zero offset through the lyrics owner',
+    async (command, offsetMs) => {
+      const f = fixture();
+      const bridge = {
+        getTrackLyrics: vi.fn(async () => ({
+          text: 'hello',
+          source: { filename: 'a.lrc', offsetMs },
+          sourceSession: {
+            id: 'real',
+            timingRevision: 't0',
+            offsetRevision: 'o0',
+          },
+          timing: { status: 'missing' },
+        })),
+        setLyricsSourceOffset: vi.fn(async () => ({
+          // Main omits the default zero from its canonical source projection.
+          source: { filename: 'a.lrc' },
+          sourceSession: {
+            id: 'real',
+            timingRevision: 't0',
+            offsetRevision: 'o1',
+          },
+        })),
+      };
+      vi.stubGlobal('window', { Utawakui: bridge });
+      const owner = useLyricsSourceDocuments({
+        state: f.lyrics.state,
+        selectedTrack: ref({ id: 'a' }),
+        reportLyricsError: () => 'failed',
+      });
+      await owner.loadSelectedLyrics();
+      f.lyrics.sourceSession = owner.sourceSession;
+      f.lyrics.adjustOffset = owner.adjustOffset;
+      expect(await f.executor.execute(command, { scope: 'global' })).toEqual({
+        ok: true,
+        status: 'executed',
+      });
+      expect(bridge.setLyricsSourceOffset).toHaveBeenCalledExactlyOnceWith(
+        'a',
+        'a.lrc',
+        0,
+        { id: 'real', timingRevision: 't0', offsetRevision: 'o0' },
+      );
+      expect(f.lyrics.state.offsetSeconds).toBe(0);
+      expect(f.lyrics.state.offsetSave.isSaving).toBe(false);
+      expect(owner.sourceSession.value.offsetRevision).toBe('o1');
+    },
+  );
+  it.each([undefined, { offsetMs: null }, { offsetMs: '0' }])(
+    'does not treat an invalid offset source acknowledgement %s as a confirmed zero',
+    async (source) => {
+      const f = fixture();
+      f.lyrics.state.offsetSeconds = 0.1;
+      f.lyrics.adjustOffset.mockImplementation(async () => {
+        f.lyrics.state.offsetSeconds = 0;
+        return { source, sourceSession: f.lyrics.sourceSession.value };
+      });
+      expect((await f.executor.execute('lyrics.offset-down')).status).toBe(
+        'failed',
+      );
+    },
+  );
   it('global invalidation cannot cancel an App command pending in the same executor', async () => {
     const f = fixture(),
       d = deferred();

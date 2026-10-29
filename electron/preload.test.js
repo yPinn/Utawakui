@@ -23,6 +23,8 @@ const MAIN_INVOKE_CHANNELS = [
   'keyboard-shortcuts:get',
   'keyboard-shortcuts:runtime',
   'keyboard-shortcuts:set',
+  'keyboard-shortcuts:test',
+  'keyboard-shortcuts:enable',
   'library:performance-settings-get',
   'library:performance-settings-save',
   'library:performance-settings-remove',
@@ -1896,6 +1898,26 @@ describe('main preload bridge', () => {
         ],
       },
     });
+    await bridge.testKeyboardShortcuts({
+      expectedRevision: null,
+      configuration,
+      path: 'private',
+      callback: () => {},
+    });
+    expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
+      'keyboard-shortcuts:test',
+      input,
+    ]);
+    await bridge.enableKeyboardShortcuts({
+      expectedRevision: null,
+      configuration,
+      path: 'private',
+      callback: () => {},
+    });
+    expect(electron.ipcRenderer.invoke.mock.calls.at(-1)).toEqual([
+      'keyboard-shortcuts:enable',
+      input,
+    ]);
     await bridge.setKeyboardShortcuts({
       expectedRevision: 'x'.repeat(1000),
       configuration: {

@@ -1,8 +1,148 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultShortcutConfiguration } from '../../shared/keyboardShortcutContract.mjs';
-import { useKeyboardShortcutSettings } from './useKeyboardShortcutSettings.js';
+import {
+  useKeyboardShortcutSettings,
+  createKeyboardShortcutSettings,
+} from './useKeyboardShortcutSettings.js';
 
 afterEach(() => vi.useRealTimers());
+it.each(['failed', 'pending', 'timeout'])(
+  'can stop confirmed background bindings while runtime status is %s',
+  async (mode) => {
+    if (mode !== 'failed') vi.useFakeTimers();
+    const pendingRuntime = Promise.withResolvers();
+    const runtime = {
+      state: 'active',
+      busy: false,
+      eligibleCommands: ['player.next'],
+      active: [],
+    };
+    const cfg = { ...defaultShortcutConfiguration(), globalEnabled: true };
+    const bridge = {
+      getKeyboardShortcuts: vi.fn(async () => ({
+        status: 'ready',
+        revision: 'a'.repeat(64),
+        configuration: cfg,
+        runtime,
+      })),
+      getKeyboardShortcutRuntime: vi.fn(() =>
+        mode === 'failed'
+          ? Promise.reject(Error('private runtime'))
+          : pendingRuntime.promise,
+      ),
+      setKeyboardShortcuts: vi.fn(async (input) => ({
+        status: 'ready',
+        revision: 'b'.repeat(64),
+        configuration: input.configuration,
+        runtime: { ...runtime, state: 'disabled', sessionDisabled: true },
+      })),
+      enableKeyboardShortcuts: vi.fn(),
+    };
+    const owner = createKeyboardShortcutSettings({
+      bridge,
+      globalCommands: ['player.next'],
+    });
+    await owner.initialize();
+    const reading = owner.refreshRuntime();
+    if (mode === 'failed') await reading;
+    if (mode === 'timeout') {
+      await vi.advanceTimersByTimeAsync(10001);
+      await reading;
+    }
+    expect(await owner.setGlobalEnabled(true)).toBe(false);
+    expect(await owner.setGlobalEnabled(false)).toBe(true);
+    expect(bridge.setKeyboardShortcuts).toHaveBeenCalledExactlyOnceWith({
+      expectedRevision: 'a'.repeat(64),
+      configuration: { ...cfg, globalEnabled: false },
+    });
+    expect(bridge.enableKeyboardShortcuts).not.toHaveBeenCalled();
+    expect(owner.runtime.value.sessionDisabled).toBe(true);
+    expect(owner.configuration.value.globalEnabled).toBe(false);
+    if (mode === 'pending') {
+      pendingRuntime.resolve(runtime);
+      await reading;
+      expect(owner.runtime.value.sessionDisabled).toBe(true);
+    }
+    owner.dispose();
+  },
+);
+it('allows an explicit stop retry after both runtime reading and stop persistence fail', async () => {
+  const cfg = { ...defaultShortcutConfiguration(), globalEnabled: true };
+  const bridge = {
+    getKeyboardShortcuts: vi.fn(async () => ({
+      status: 'ready',
+      revision: 'a'.repeat(64),
+      configuration: cfg,
+    })),
+    getKeyboardShortcutRuntime: vi
+      .fn()
+      .mockRejectedValue(Error('runtime unavailable')),
+    setKeyboardShortcuts: vi
+      .fn()
+      .mockRejectedValueOnce(Error('disk unavailable'))
+      .mockImplementation(async (input) => ({
+        status: 'ready',
+        revision: 'b'.repeat(64),
+        configuration: input.configuration,
+      })),
+    enableKeyboardShortcuts: vi.fn(),
+  };
+  const owner = createKeyboardShortcutSettings({
+    bridge,
+    globalCommands: ['player.next'],
+  });
+  await owner.initialize();
+  await owner.refreshRuntime();
+  expect(await owner.setGlobalEnabled(false)).toBe(false);
+  expect(owner.configuration.value.globalEnabled).toBe(true);
+  expect(owner.state.saveError).toBeTruthy();
+  expect(await owner.setGlobalEnabled(false)).toBe(true);
+  expect(bridge.setKeyboardShortcuts).toHaveBeenCalledTimes(2);
+  expect(bridge.enableKeyboardShortcuts).not.toHaveBeenCalled();
+  owner.dispose();
+});
+it.each(['production', 'unknown', 'invalid', 'disposed'])(
+  'runtime projection cannot grant a stop action to %s settings',
+  async (kind) => {
+    const runtime = {
+      state: 'active',
+      busy: false,
+      eligibleCommands: ['player.next'],
+      active: [],
+    };
+    const bridge = {
+      getKeyboardShortcuts: vi.fn(async () =>
+        kind === 'invalid'
+          ? { status: 'invalid' }
+          : {
+              status: 'ready',
+              revision: 'a'.repeat(64),
+              configuration: {
+                ...defaultShortcutConfiguration(),
+                globalEnabled: true,
+              },
+            },
+      ),
+      getKeyboardShortcutRuntime: vi.fn(async () => runtime),
+      setKeyboardShortcuts: vi.fn(),
+    };
+    const owner =
+      kind === 'production'
+        ? useKeyboardShortcutSettings({ bridge })
+        : createKeyboardShortcutSettings({
+            bridge,
+            globalCommands:
+              kind === 'unknown' ? ['unknown.command'] : ['player.next'],
+          });
+    await owner.initialize();
+    await owner.refreshRuntime();
+    if (kind === 'disposed') owner.dispose();
+    expect(owner.canStopGlobal.value).toBe(false);
+    expect(await owner.setGlobalEnabled(false)).toBe(false);
+    expect(bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    owner.dispose();
+  },
+);
 const revision = 'a'.repeat(64),
   nextRevision = 'b'.repeat(64);
 const config = () => ({
@@ -35,6 +175,197 @@ function setup() {
   };
   return { bridge, owner: useKeyboardShortcutSettings({ bridge }) };
 }
+it('isolates background capability from the production singleton and preserves App bindings', async () => {
+  const f = setup();
+  f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue({
+    state: 'disabled',
+    busy: false,
+    eligibleCommands: ['player.next'],
+    active: [],
+  });
+  const owner = createKeyboardShortcutSettings({
+    bridge: f.bridge,
+    globalCommands: ['player.next'],
+  });
+  await owner.initialize();
+  await owner.refreshRuntime();
+  await f.owner.initialize();
+  await f.owner.refreshRuntime();
+  expect(owner.canConfigure('player.next', 'global')).toBe(true);
+  expect(f.owner.canConfigure('player.next', 'global')).toBe(false);
+  expect(owner.canConfigure('player.previous', 'global')).toBe(false);
+  const next = owner.configurationFor(
+    'player.next',
+    { key: 'j', ctrl: true, alt: false, shift: true },
+    'global',
+  );
+  expect(next.globalEnabled).toBe(false);
+  expect(next.bindings.find((b) => b.command === 'player.next').app).toEqual({
+    mode: 'default',
+  });
+  expect(() =>
+    f.owner.configurationFor(
+      'player.next',
+      next.bindings.find((b) => b.command === 'player.next').global,
+      'global',
+    ),
+  ).toThrow();
+  owner.dispose();
+  f.owner.dispose();
+});
+it('only the explicit enable action uses the fixed enable bridge and keeps failed activation separate from persistence', async () => {
+  const f = setup();
+  const cfg = {
+    ...defaultShortcutConfiguration(),
+    bindings: defaultShortcutConfiguration().bindings.map((b) =>
+      b.command === 'player.next'
+        ? { ...b, global: { key: 'j', ctrl: true, alt: false, shift: true } }
+        : b,
+    ),
+  };
+  const runtime = {
+    state: 'disabled',
+    busy: false,
+    eligibleCommands: ['player.next'],
+    active: [],
+  };
+  f.bridge.getKeyboardShortcuts.mockResolvedValue({
+    status: 'ready',
+    revision,
+    configuration: cfg,
+  });
+  f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue(runtime);
+  f.bridge.enableKeyboardShortcuts = vi.fn(async (input) => ({
+    status: 'ready',
+    revision: nextRevision,
+    configuration: input.configuration,
+    runtime: { ...runtime, state: 'degraded' },
+  }));
+  const owner = createKeyboardShortcutSettings({
+    bridge: f.bridge,
+    globalCommands: ['player.next'],
+  });
+  await owner.initialize();
+  await owner.refreshRuntime();
+  expect(await owner.setGlobalEnabled(true)).toBe(true);
+  expect(f.bridge.enableKeyboardShortcuts).toHaveBeenCalledTimes(1);
+  expect(f.bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+  expect(owner.configuration.value.globalEnabled).toBe(true);
+  expect(owner.runtimePresentation.value.status).toBe('暫停使用');
+  owner.dispose();
+  f.owner.dispose();
+});
+it('trial tests an enabled candidate without saving or changing confirmed configuration and bounds failure text', async () => {
+  const f = setup();
+  const runtime = {
+    state: 'disabled',
+    busy: false,
+    eligibleCommands: ['player.next'],
+    active: [],
+  };
+  f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue(runtime);
+  f.bridge.testKeyboardShortcuts = vi
+    .fn()
+    .mockResolvedValue({ status: 'tested', runtime });
+  const owner = createKeyboardShortcutSettings({
+    bridge: f.bridge,
+    globalCommands: ['player.next'],
+  });
+  await owner.initialize();
+  await owner.refreshRuntime();
+  const before = owner.configuration.value;
+  const chord = { key: 'j', ctrl: true, alt: false, shift: true };
+  expect(await owner.testBinding('player.next', chord)).toBe(true);
+  expect(f.bridge.testKeyboardShortcuts.mock.calls[0][0]).toMatchObject({
+    expectedRevision: null,
+    configuration: { globalEnabled: true },
+  });
+  expect(f.bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+  expect(owner.configuration.value).toBe(before);
+  f.bridge.testKeyboardShortcuts.mockResolvedValue({
+    status: 'occupied',
+    private: 'E:/secret',
+    runtime,
+  });
+  expect(await owner.testBinding('player.next', chord)).toBe(false);
+  expect(owner.state.testError).toContain('其他程式');
+  expect(JSON.stringify(owner.state)).not.toContain('secret');
+  owner.dispose();
+  f.owner.dispose();
+});
+it('separates a failed stop save from the stopped runtime and cannot re-enable through an App edit or read', async () => {
+  const f = setup();
+  const cfg = { ...defaultShortcutConfiguration(), globalEnabled: true };
+  f.bridge.getKeyboardShortcuts.mockResolvedValue({
+    status: 'ready',
+    revision,
+    configuration: cfg,
+  });
+  const runtime = {
+    state: 'disabled',
+    busy: false,
+    eligibleCommands: ['player.next'],
+    active: [],
+    sessionDisabled: true,
+  };
+  f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue(runtime);
+  const owner = createKeyboardShortcutSettings({
+    bridge: f.bridge,
+    globalCommands: ['player.next'],
+  });
+  await owner.initialize();
+  await owner.refreshRuntime();
+  f.bridge.setKeyboardShortcuts.mockRejectedValue(Error('private disk'));
+  expect(await owner.setGlobalEnabled(false)).toBe(false);
+  expect(owner.configuration.value.globalEnabled).toBe(true);
+  expect(owner.runtime.value.sessionDisabled).toBe(true);
+  expect(owner.runtimePresentation.value.status).toBe('本次已停用');
+  expect(owner.state.saveError).toContain('重新讀取');
+  await owner.refresh();
+  expect(owner.runtime.value.sessionDisabled).toBe(true);
+  await owner.saveBinding('player.next', { mode: 'disabled' });
+  expect(
+    f.bridge.setKeyboardShortcuts.mock.calls.at(-1)[0].configuration
+      .globalEnabled,
+  ).toBe(false);
+  owner.dispose();
+  f.owner.dispose();
+});
+it('trial timeout and disposal never authorize a late result or mutate confirmed preferences', async () => {
+  vi.useFakeTimers();
+  const f = setup();
+  const runtime = {
+    state: 'disabled',
+    busy: false,
+    eligibleCommands: ['player.next'],
+    active: [],
+  };
+  f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue(runtime);
+  const pending = Promise.withResolvers();
+  f.bridge.testKeyboardShortcuts = vi.fn().mockReturnValue(pending.promise);
+  const owner = createKeyboardShortcutSettings({
+    bridge: f.bridge,
+    globalCommands: ['player.next'],
+  });
+  await owner.initialize();
+  await owner.refreshRuntime();
+  const testing = owner.testBinding('player.next', {
+    key: 'j',
+    ctrl: true,
+    alt: false,
+    shift: true,
+  });
+  expect(owner.state.testing).toBe(true);
+  await vi.advanceTimersByTimeAsync(10000);
+  expect(await testing).toBe(false);
+  expect(owner.canConfigure('player.next', 'global')).toBe(false);
+  pending.resolve({ status: 'tested', runtime });
+  await Promise.resolve();
+  expect(owner.runtime.value).toBeNull();
+  expect(owner.configuration.value).toEqual(defaultShortcutConfiguration());
+  owner.dispose();
+  f.owner.dispose();
+});
 
 describe('shared machine shortcut settings owner', () => {
   it('reads runtime status separately without saving, activating or disabling App preferences', async () => {

@@ -22,6 +22,29 @@ const record = (value, fields) =>
   Reflect.ownKeys(value).length === fields.length &&
   fields.every((key) => Object.hasOwn(value, key));
 
+function parseKeyboardShortcutSettingsIntent(input) {
+  if (
+    !record(input, ['expectedRevision', 'configuration']) ||
+    !(
+      input.expectedRevision === null ||
+      (typeof input.expectedRevision === 'string' &&
+        /^[a-f0-9]{64}$/u.test(input.expectedRevision))
+    )
+  )
+    return null;
+  try {
+    return {
+      expectedRevision: input.expectedRevision,
+      configuration: validateShortcutConfiguration(
+        input.configuration,
+        LEGACY_KEYBOARD_BINDINGS,
+      ),
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Machine userData is supplied by Main, never by renderer intent or library.
 // There is no OS registration here. Unknown/corrupt bytes are read-only.
 function createKeyboardShortcutSettingsStore({
@@ -115,24 +138,9 @@ function createKeyboardShortcutSettingsStore({
     }
   }
   function prepare(input) {
-    if (
-      !record(input, ['expectedRevision', 'configuration']) ||
-      !(
-        input.expectedRevision === null ||
-        (typeof input.expectedRevision === 'string' &&
-          /^[a-f0-9]{64}$/u.test(input.expectedRevision))
-      )
-    )
-      return { status: 'invalid-intent' };
-    let configuration;
-    try {
-      configuration = validateShortcutConfiguration(
-        input.configuration,
-        LEGACY_KEYBOARD_BINDINGS,
-      );
-    } catch {
-      return { status: 'invalid-intent' };
-    }
+    const intent = parseKeyboardShortcutSettingsIntent(input);
+    if (!intent) return { status: 'invalid-intent' };
+    const configuration = intent.configuration;
     if (!supported(configuration)) return { status: 'invalid-intent' };
     const previous = get();
     if (previous.status !== 'ready') return { status: previous.status };
@@ -179,4 +187,7 @@ function createKeyboardShortcutSettingsStore({
   return { get, set, prepare };
 }
 
-module.exports = { createKeyboardShortcutSettingsStore };
+module.exports = {
+  createKeyboardShortcutSettingsStore,
+  parseKeyboardShortcutSettingsIntent,
+};

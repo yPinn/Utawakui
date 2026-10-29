@@ -203,7 +203,10 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
         )
           return result('stale');
         return result(
-          saved?.source?.offsetMs === targetMs &&
+          saved?.source &&
+            (saved.source.offsetMs === undefined
+              ? 0
+              : saved.source.offsetMs) === targetMs &&
             saved?.sourceSession?.id === sourceStamp.session &&
             saved.sourceSession.offsetRevision ===
               lyrics.sourceSession.value.offsetRevision &&

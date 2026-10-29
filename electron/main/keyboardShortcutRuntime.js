@@ -138,6 +138,20 @@ function createKeyboardShortcutRuntime({
         receiver.refresh();
       }
     },
+    async test(input) {
+      try {
+        return await registration.test(input);
+      } finally {
+        receiver.refresh();
+      }
+    },
+    async enable(input) {
+      try {
+        return await registration.enable(input);
+      } finally {
+        receiver.refresh();
+      }
+    },
     snapshot: registration.snapshot,
     ready,
     dispose,

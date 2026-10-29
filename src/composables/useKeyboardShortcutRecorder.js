@@ -8,10 +8,13 @@ export function useKeyboardShortcutRecorder({
 }) {
   const state = reactive({
     command: null,
+    scope: 'app',
     candidate: null,
     capturing: false,
     saving: false,
     error: '',
+    testing: false,
+    tested: false,
   });
   let token = null,
     serial = 0,
@@ -28,6 +31,8 @@ export function useKeyboardShortcutRecorder({
       capturing: false,
       saving: false,
       error: '',
+      testing: false,
+      tested: false,
     });
   }
   function restoreFocus(command) {
@@ -42,14 +47,16 @@ export function useKeyboardShortcutRecorder({
     reset();
     if (focus) restoreFocus(command);
   }
-  function begin(command) {
+  function begin(command, scope = 'app') {
     if (disposed || state.saving) return false;
+    if (!['app', 'global'].includes(scope)) return false;
     if (state.command) reset();
-    token = settings.beginRecording(command);
+    token = settings.beginRecording(command, scope);
     if (!token) return false;
     serial++;
     Object.assign(state, {
       command,
+      scope,
       candidate: null,
       capturing: true,
       error: '',
@@ -57,7 +64,8 @@ export function useKeyboardShortcutRecorder({
     return true;
   }
   function capture(event) {
-    if (!state.command || !state.capturing || state.saving) return;
+    if (!state.command || !state.capturing || state.saving || state.testing)
+      return;
     if (event.key === 'Tab') {
       cancel({ focus: false });
       return;
@@ -77,7 +85,11 @@ export function useKeyboardShortcutRecorder({
       return;
     }
     try {
-      settings.configurationFor(state.command, { mode: 'custom', chord });
+      settings.configurationFor(
+        state.command,
+        state.scope === 'global' ? chord : { mode: 'custom', chord },
+        state.scope,
+      );
       state.candidate = chord;
       state.capturing = false;
       state.error = '';
@@ -85,22 +97,61 @@ export function useKeyboardShortcutRecorder({
       state.error = shortcutConflictMessage(error, state.command);
     }
   }
+  async function test() {
+    if (
+      state.scope !== 'global' ||
+      !state.command ||
+      !state.candidate ||
+      state.testing ||
+      state.saving
+    )
+      return false;
+    const request = serial;
+    state.testing = true;
+    state.tested = false;
+    state.error = '';
+    try {
+      const tested = await settings.testBinding(state.command, state.candidate);
+      if (disposed || request !== serial) return false;
+      state.tested = tested;
+      if (!tested)
+        state.error =
+          settings.state?.testError || '無法確認按鍵是否可用，請重試。';
+      return tested;
+    } catch {
+      if (!disposed && request === serial)
+        state.error = '無法確認按鍵是否可用，請重試。';
+      return false;
+    } finally {
+      if (request === serial) state.testing = false;
+    }
+  }
   async function apply() {
-    if (!state.command || !state.candidate || state.saving) return false;
+    if (
+      !state.command ||
+      !state.candidate ||
+      state.saving ||
+      state.testing ||
+      (state.scope === 'global' && !state.tested)
+    )
+      return false;
     const command = state.command,
       candidate = state.candidate,
       request = serial;
     state.saving = true;
     try {
-      const saved = await settings.saveBinding(command, {
-        mode: 'custom',
-        chord: candidate,
-      });
+      const saved =
+        state.scope === 'global'
+          ? await settings.saveBinding(command, candidate, 'global')
+          : await settings.saveBinding(command, {
+              mode: 'custom',
+              chord: candidate,
+            });
       if (disposed || request !== serial) return saved;
       if (saved) {
         reset();
         restoreFocus(command);
-      }
+      } else if (state.scope === 'global') state.tested = false;
       return saved;
     } catch {
       if (!disposed && request === serial)
@@ -133,5 +184,5 @@ export function useKeyboardShortcutRecorder({
     view?.removeEventListener('keydown', escape, true);
     document?.removeEventListener?.('visibilitychange', hidden);
   });
-  return { state: readonly(state), begin, capture, apply, cancel };
+  return { state: readonly(state), begin, capture, test, apply, cancel };
 }

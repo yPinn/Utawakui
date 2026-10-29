@@ -39,6 +39,7 @@
 
 ## 其他
 
+- [全域快捷操作的分層驗證](engineering/global-keyboard-shortcut-verification-2026-10-29.md)（10-29，10-30 集中整理）：原生探針、modifier-only 推論撤回、helper／接收端及隔離互動的原始分母與限制；不解除正式平台 gate。
 - [歌詞波形 backend 預算與取消](engineering/lyrics-waveform-backend-2026-10-28.md)（10-28）：16 個 Main／9 個 Browser 合成 cases；採用 Main 分塊 producer，Browser close 後 decode 仍完成。實驗分母與限制見報告；後續 Main／cache／唯讀介面驗收見[波形契約](../contracts/lyrics-waveform.md)。
 
 - 識別：[封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）

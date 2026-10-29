@@ -55,6 +55,8 @@
 - Modal 內的動作選單由 `UiModal` 提供當前 backdrop 作為局部 floating host；`UiActionMenu` 優先 Teleport 至該 host，保持在 clipped panel 外且屬於同一 dialog 堆疊。非 modal 選單仍使用已登記的 surface overlay host，不以頁面自訂 z-index 修補遮蔽。
 - Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 以 `constants/internalTools.js` 分為 Operations（F5 音樂分析、F6 Diagnostics）與 Evaluation（Music M2、F7 歌詞 provider 語料），一次只掛載一個工作台，不改變 gate 或 IPC 邊界。
 
+第 4 項背景互動沿同一 settings owner／recorder 與註冊 manager 擴充：候選試註冊重用 staging／rollback，不寫檔或執行命令；合法停用在讀檔／CAS 前撤分派，Main 保留未保存的本次停用，普通保存／重讀／喚醒不能解除，只有固定 enable 意圖可重新啟用。正式 renderer singleton 與 Main allowlist 仍閉鎖，隔離工廠驗 App／背景範圍及復原 UI，不新增播放 owner 或平台支援承諾。邊界見[全域契約](contracts/global-keyboard-shortcuts.md#設定交易)。
+
 ### 曲庫瀏覽
 
 - `LibraryBrowseWorkspace.vue` 持有 Library 的 Folder 頁與頁面物件；`LibraryBrowseContent.vue` 把曲庫身分與搜尋放在固定 header，其餘留在唯一 document scroll；`LibraryArtistIdentityController.vue` 單獨持有藝人整理 modal 與 mutation。

@@ -12,6 +12,7 @@ import Reference from './KeyboardShortcutReference.vue';
 import Keys from './KeyboardShortcutKeys.vue';
 import Disclosure from '../ui/UiDisclosure.vue';
 import { useKeyboardShortcutSettings } from '../../composables/useKeyboardShortcutSettings.js';
+import * as settingsModule from '../../composables/useKeyboardShortcutSettings.js';
 import { defaultShortcutConfiguration } from '../../../shared/keyboardShortcutContract.mjs';
 
 vi.mock('../ui/UiButton.vue', () => ({
@@ -71,6 +72,31 @@ vi.mock('../ui/UiTabs.vue', () => ({
         ),
   },
 }));
+vi.mock('../ui/UiSegmentedControl.vue', () => ({
+  default: {
+    props: ['items', 'modelValue', 'disabled'],
+    emits: ['update:modelValue'],
+    setup:
+      (p, { emit }) =>
+      () =>
+        h(
+          'div',
+          { role: 'radiogroup' },
+          p.items.map((item) =>
+            h(
+              'button',
+              {
+                role: 'radio',
+                'aria-checked': item.id === p.modelValue,
+                disabled: p.disabled,
+                onClick: () => emit('update:modelValue', item.id),
+              },
+              item.label,
+            ),
+          ),
+        ),
+  },
+}));
 vi.mock('../ui/UiActionMenu.vue', () => ({
   default: {
     props: ['open', 'content'],
@@ -123,6 +149,7 @@ afterEach(() => {
   mounted = null;
   owner = null;
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 const button = (label) =>
   findAll(
@@ -145,6 +172,7 @@ async function setup(
     revision: null,
     configuration: defaultShortcutConfiguration(),
   },
+  isolated = false,
 ) {
   let sequence = 1;
   const bridge = {
@@ -161,6 +189,31 @@ async function setup(
       configuration: input.configuration,
     })),
   };
+  if (isolated) {
+    const runtime = {
+      state: 'disabled',
+      busy: false,
+      eligibleCommands: ['player.next'],
+      active: [],
+    };
+    bridge.getKeyboardShortcutRuntime.mockResolvedValue(runtime);
+    bridge.testKeyboardShortcuts = vi
+      .fn()
+      .mockResolvedValue({ status: 'tested', runtime });
+    bridge.setKeyboardShortcuts.mockImplementation(async (input) => ({
+      status: 'ready',
+      revision: (sequence++).toString(16).padStart(64, '0'),
+      configuration: input.configuration,
+      runtime,
+    }));
+    owner = settingsModule.createKeyboardShortcutSettings({
+      bridge,
+      globalCommands: ['player.next'],
+    });
+    vi.spyOn(settingsModule, 'useKeyboardShortcutSettings').mockReturnValue(
+      owner,
+    );
+  }
   vi.stubGlobal('window', {
     Utawakui: bridge,
     addEventListener: vi.fn(),
@@ -197,6 +250,96 @@ async function tab(label) {
   await nextTick();
 }
 describe('App shortcut settings document', () => {
+  it.each(['failed', 'pending'])(
+    'keeps the isolated stop action available when runtime reading is %s',
+    async (mode) => {
+      const cfg = { ...defaultShortcutConfiguration(), globalEnabled: true };
+      const bridge = await setup(
+        { status: 'ready', revision: 'a'.repeat(64), configuration: cfg },
+        true,
+      );
+      bridge.enableKeyboardShortcuts = vi.fn();
+      expect(owner.state.loaded).toBe(true);
+      await vi.waitFor(() => expect(owner.hasGlobalSettings.value).toBe(true));
+      const pending = Promise.withResolvers();
+      if (mode === 'failed')
+        bridge.getKeyboardShortcutRuntime.mockRejectedValue(
+          Error('private status failure'),
+        );
+      else bridge.getKeyboardShortcutRuntime.mockReturnValue(pending.promise);
+      const reading = owner.refreshRuntime();
+      if (mode === 'failed') await reading;
+      await nextTick();
+      const stop = button('停用背景快捷鍵');
+      expect(stop).toBeTruthy();
+      expect(Boolean(stop.props.disabled)).toBe(false);
+      trigger(stop, 'onClick');
+      await vi.waitFor(() =>
+        expect(bridge.setKeyboardShortcuts).toHaveBeenCalledTimes(1),
+      );
+      expect(
+        bridge.setKeyboardShortcuts.mock.calls[0][0].configuration
+          .globalEnabled,
+      ).toBe(false);
+      expect(bridge.enableKeyboardShortcuts).not.toHaveBeenCalled();
+      if (mode === 'pending') {
+        pending.resolve({
+          state: 'active',
+          busy: false,
+          eligibleCommands: ['player.next'],
+          active: [],
+        });
+        await reading;
+        expect(owner.configuration.value.globalEnabled).toBe(false);
+      }
+    },
+  );
+  it('isolates background scope, trials without saving, applies explicitly, and cancels on scope change', async () => {
+    const bridge = await setup(undefined, true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    expect(owner.hasGlobalSettings.value).toBe(true);
+    const radio = (label) =>
+      findAll(
+        mounted.root,
+        (n) => n.props?.role === 'radio' && textContent(n) === label,
+      )[0];
+    trigger(radio('背景'), 'onClick');
+    await nextTick();
+    expect(button('設定上一首快捷鍵').props.disabled).toBe(true);
+    trigger(button('設定下一首快捷鍵'), 'onClick');
+    await nextTick();
+    trigger(
+      button('錄製下一首快捷鍵'),
+      'onKeydown',
+      event('j', { ctrlKey: true, shiftKey: true }),
+    );
+    await nextTick();
+    expect(button('套用下一首快捷鍵').props.disabled).toBe(true);
+    expect(bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    trigger(button('試用下一首背景按鍵'), 'onClick');
+    expect(button('取消下一首快捷鍵').focus).toHaveBeenCalled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    expect(textContent(mounted.root)).toContain('目前可用');
+    expect(bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    trigger(button('套用下一首快捷鍵'), 'onClick');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    expect(bridge.setKeyboardShortcuts).toHaveBeenCalledTimes(1);
+    expect(owner.configuration.value.globalEnabled).toBe(false);
+    expect(
+      owner.configuration.value.bindings.find(
+        (b) => b.command === 'player.next',
+      ),
+    ).toMatchObject({ app: { mode: 'default' }, global: { key: 'j' } });
+    trigger(button('設定下一首快捷鍵'), 'onClick');
+    await nextTick();
+    trigger(radio('App 內'), 'onClick');
+    await nextTick();
+    expect(owner.isRecording.value).toBe(false);
+    expect(bridge.setKeyboardShortcuts).toHaveBeenCalledTimes(1);
+  });
   it('retries read-only background status without saving or exposing a global recorder', async () => {
     const bridge = await setup();
     await vi.waitFor(() =>

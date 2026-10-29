@@ -46,6 +46,8 @@ export function shortcutRuntimePresentation(runtime) {
     return { status: '暫停使用', tone: 'warning' };
   if (!runtime.eligibleCommands.length)
     return { status: '尚未開放', tone: 'muted' };
+  if (runtime.sessionDisabled === true)
+    return { status: '本次已停用', tone: 'muted' };
   return runtime.state === 'active' && runtime.active.length
     ? { status: '已註冊', tone: 'info' }
     : { status: '未啟用', tone: 'muted' };
@@ -102,7 +104,13 @@ const descriptions = {
   'player.previous': '沒有上一首時，回到這首歌開頭。',
   'player.next': '依目前播放清單或演唱安排切換。',
 };
-export function shortcutSettingsRows(configuration, categoryId, loaded) {
+export function shortcutSettingsRows(
+  configuration,
+  categoryId,
+  loaded,
+  bindingScope = 'app',
+  runtime = null,
+) {
   const category = SHORTCUT_CATEGORIES.find(({ id }) => id === categoryId);
   const bindings = new Map(
     configuration.bindings.map((binding) => [binding.command, binding.app]),
@@ -110,6 +118,43 @@ export function shortcutSettingsRows(configuration, categoryId, loaded) {
   return (category?.commands ?? []).map((id) => {
     const command = SHORTCUT_COMMANDS.find((item) => item.id === id),
       app = bindings.get(id);
+    if (bindingScope === 'global') {
+      const binding = configuration.bindings.find(
+        (item) => item.command === id,
+      ).global;
+      const eligible = runtime?.eligibleCommands.includes(id) === true;
+      const registered = runtime?.active.some(
+        (item) =>
+          item.command === id &&
+          binding &&
+          ['key', 'ctrl', 'alt', 'shift'].every(
+            (key) => item.chord[key] === binding[key],
+          ),
+      );
+      return {
+        ...command,
+        app,
+        title: titles[id] ?? command.label,
+        guidance: descriptions[id] ?? '',
+        scope: '切到其他程式時仍可使用；每次按下只執行一次。',
+        keys:
+          loaded && binding ? formatShortcutChord(binding).split(' + ') : [],
+        status: !loaded
+          ? '尚未讀取'
+          : !eligible
+            ? '尚未開放'
+            : !binding
+              ? '未設定'
+              : registered
+                ? '已註冊'
+                : runtime?.sessionDisabled
+                  ? '本次已停用'
+                  : !configuration.globalEnabled
+                    ? '未啟用'
+                    : '暫停使用',
+        global: binding,
+      };
+    }
     const active = loaded && app.mode !== 'disabled';
     const chord = active
       ? app.mode === 'custom'

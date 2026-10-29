@@ -26,12 +26,12 @@ function setup() {
       beginRecording: vi.fn(() => token),
       finishRecording: vi.fn(),
       saveBinding: vi.fn().mockResolvedValue(true),
-      configurationFor: (id, app) =>
+      configurationFor: (id, value, scope = 'app') =>
         validateShortcutConfiguration(
           {
             ...defaultShortcutConfiguration(),
             bindings: defaultShortcutConfiguration().bindings.map((b) =>
-              b.command === id ? { ...b, app } : b,
+              b.command === id ? { ...b, [scope]: value } : b,
             ),
           },
           LEGACY_KEYBOARD_BINDINGS,
@@ -58,6 +58,33 @@ const key = (value, extra = {}) => ({
   ...extra,
 });
 describe('shortcut recording lifecycle', () => {
+  it('records background candidates separately, requires a successful trial and never saves on cancel or late trial', async () => {
+    const f = setup();
+    f.settings.testBinding = vi.fn().mockResolvedValue(true);
+    expect(f.recorder.begin('player.next', 'global')).toBe(true);
+    f.recorder.capture(key('j', { ctrlKey: true }));
+    expect(f.recorder.state.scope).toBe('global');
+    expect(await f.recorder.apply()).toBe(false);
+    expect(f.settings.saveBinding).not.toHaveBeenCalled();
+    expect(await f.recorder.test()).toBe(true);
+    expect(f.recorder.state.tested).toBe(true);
+    expect(await f.recorder.apply()).toBe(true);
+    expect(f.settings.saveBinding).toHaveBeenCalledWith(
+      'player.next',
+      expect.objectContaining({ key: 'j' }),
+      'global',
+    );
+    f.recorder.begin('player.next', 'global');
+    f.recorder.capture(key('j', { ctrlKey: true }));
+    const pending = Promise.withResolvers();
+    f.settings.testBinding.mockReturnValue(pending.promise);
+    const testing = f.recorder.test();
+    f.recorder.cancel();
+    pending.resolve(true);
+    await testing;
+    expect(f.recorder.state.command).toBeNull();
+    expect(f.recorder.state.tested).toBe(false);
+  });
   it('uses global Escape/hidden cancellation and bounds unexpected save errors without clearing a committed intent', async () => {
     const doc = {
       hidden: false,

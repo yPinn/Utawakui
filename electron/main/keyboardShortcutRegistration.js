@@ -1,6 +1,9 @@
 'use strict';
 const { randomUUID } = require('node:crypto');
 const {
+  parseKeyboardShortcutSettingsIntent,
+} = require('../lib/keyboardShortcutSettings');
+const {
   normalizeShortcutChord,
   SHORTCUT_COMMANDS,
 } = require('../../shared/keyboardShortcutContract.mjs');
@@ -55,7 +58,8 @@ function createKeyboardShortcutRegistration({
     lifecycle = 0,
     stopTarget = null,
     stopTask = null,
-    settled = Promise.resolve();
+    settled = Promise.resolve(),
+    sessionDisabled = false;
   const pending = new Map();
   let savedSnapshot = { status: 'unavailable' };
   const snapshot = () => ({
@@ -65,6 +69,7 @@ function createKeyboardShortcutRegistration({
     busy: transitioning || stopTask !== null,
     eligibleCommands: [...eligible],
     capabilityReason: eligible.length ? null : capabilityReason,
+    sessionDisabled,
     active: [...active.values()].map(({ command, chord }) => ({
       command,
       chord,
@@ -325,25 +330,48 @@ function createKeyboardShortcutRegistration({
         issues = failure ? [failure] : [];
     }
   }
-  async function set(input) {
+  async function set(input, trial = false, explicitEnable = false) {
     if (disposed) return reply({ status: 'unavailable' });
     if (transitioning || stopTask) return reply({ status: 'busy' });
     if (stopTarget) return reply({ status: 'unavailable' });
-    const prepared = store.prepare(input);
-    if (prepared.status !== 'prepared') return reply(prepared);
-    const next = wanted(prepared.configuration);
-    if (unsupported(prepared.configuration))
-      return reply({ status: 'unsupported' });
-    if (state === 'degraded') return reply({ status: 'degraded' });
-    const previous = new Map(active),
-      transaction = begin();
+    const intent = parseKeyboardShortcutSettingsIntent(input);
+    if (!intent) return reply({ status: 'invalid-intent' });
+    const requested = wanted(intent.configuration);
+    if (unsupported(intent.configuration)) {
+      const blocked = store.prepare(input);
+      return reply(
+        blocked.status === 'prepared' ? { status: 'unsupported' } : blocked,
+      );
+    }
+    if ((trial || explicitEnable) && !requested.size)
+      return reply({ status: 'invalid-intent' });
+    const preserveStop =
+      sessionDisabled &&
+      !trial &&
+      !explicitEnable &&
+      intent.configuration.globalEnabled;
+    const next = preserveStop ? new Map() : requested;
+    const disabling = !trial && !intent.configuration.globalEnabled;
+    if (state === 'degraded' && !disabling)
+      return reply({ status: 'degraded' });
+    // An explicit stop survives failed persistence, reads and power resume.
+    // Only a subsequently confirmed enable may clear this session intent.
+    if (disabling) sessionDisabled = true;
+    const previous = disabling ? new Map() : new Map(active);
+    let transaction = disabling ? begin() : null;
     const terminal = (result) => {
-      end(transaction);
+      if (transaction) end(transaction);
       return reply(result);
     };
     let added = [],
       savedResult;
     try {
+      if (disabling) await commit(new Map(), transaction.epoch);
+      if (transaction && cancelled(transaction.epoch))
+        return terminal({ status: 'unavailable' });
+      const prepared = store.prepare(input);
+      if (prepared.status !== 'prepared') return terminal(prepared);
+      transaction ??= begin();
       const staged = await stage(next, transaction.epoch);
       added = staged.added;
       if (cancelled(transaction.epoch)) {
@@ -372,12 +400,26 @@ function createKeyboardShortcutRegistration({
       // CAS + atomic rename. After ready, runtime failures cannot undo the save.
       if (cancelled(transaction.epoch))
         return terminal({ status: 'unavailable' });
+      if (trial) {
+        const confirmed = store.prepare(input);
+        await rollback(added, null, previous, transaction.epoch);
+        return terminal({
+          status: cancelled(transaction.epoch)
+            ? 'unavailable'
+            : state === 'degraded'
+              ? 'degraded'
+              : confirmed.status === 'prepared'
+                ? 'tested'
+                : confirmed.status,
+        });
+      }
       const saved = store.set(input);
       savedResult = saved;
       if (saved.status !== 'ready') {
         await rollback(added, null, previous, transaction.epoch);
         return terminal(saved);
       }
+      sessionDisabled = preserveStop;
       await commit(next, transaction.epoch);
       return terminal(saved);
     } catch (error) {
@@ -387,10 +429,10 @@ function createKeyboardShortcutRegistration({
           failClosed([{ code: 'activation-failed' }], 'degraded');
         return terminal(savedResult);
       }
-      await rollback(added, null, previous, transaction.epoch);
+      if (transaction) await rollback(added, null, previous, transaction.epoch);
       throw error;
     } finally {
-      end(transaction);
+      if (transaction) end(transaction);
     }
   }
   async function refresh() {
@@ -418,7 +460,7 @@ function createKeyboardShortcutRegistration({
         if (!cancelled(transaction.epoch)) failClosed(failures, 'blocked');
         return terminal();
       }
-      const next = wanted(saved.configuration);
+      const next = sessionDisabled ? new Map() : wanted(saved.configuration);
       if (unsupported(saved.configuration)) {
         const failures = await release([...owned.keys()]);
         if (!cancelled(transaction.epoch)) failClosed(failures, 'blocked');
@@ -491,6 +533,8 @@ function createKeyboardShortcutRegistration({
       return reply(savedSnapshot);
     },
     set,
+    test: (input) => set(input, true),
+    enable: (input) => set(input, false, true),
     snapshot,
     refresh,
     suspend: () => stop('suspended'),

@@ -26,6 +26,23 @@ function fixture(options = {}) {
   };
 }
 describe('machine shortcut IPC', () => {
+  it('restricts candidate trials to the Main frame and uses the diagnostic boundary without executing commands', async () => {
+    const test = vi.fn().mockResolvedValue({ status: 'tested' });
+    const f = fixture({ store: { test, get: vi.fn(), set: vi.fn() } });
+    const handler = f.handlers['keyboard-shortcuts:test'];
+    expect(await handler({ ...f.event, senderFrame: {} }, {})).toEqual({
+      status: 'invalid-intent',
+    });
+    expect(test).not.toHaveBeenCalled();
+    const intent = { expectedRevision: null, configuration: {} };
+    expect(await handler(f.event, intent)).toEqual({ status: 'tested' });
+    expect(test).toHaveBeenCalledWith(intent);
+    test.mockRejectedValue(Error('E:/private'));
+    const error = await handler(f.event, intent).catch((value) => value);
+    expect(error.message).not.toContain('private');
+    expect(f.recordDiagnostic).toHaveBeenCalled();
+    expect(f.handlers['keyboard-shortcuts:execute']).toBeUndefined();
+  });
   it('keeps operational receiver failures private and records them through the existing IPC boundary', async () => {
     const f = fixture({
       receiver: {

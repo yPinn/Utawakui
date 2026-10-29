@@ -63,25 +63,29 @@ Settings 展開快捷鍵後依播放控制、音訊調整、歌詞對時、操�
 - 移調只從本次 DSP applied、兩個必要 lane 與畫面值一致的 confirmed 值 ±1，達 ±12、不確定／失敗或 pending 不再提交。現有 setter 接受 `isCurrent`，graph 跨 await 驗播放 id／URL／revision／start request 與配置 generation，失效不套到新曲。新快捷鍵的 busy 不排隊；舊預設 Key 長按仍維持原 setter 政策。
 - 主播放器音量沿 setVolume 調整 ±10%、限制 0–100% 並取到整數百分比；靜音沿 toggleMute。不需已載入曲目、不受 transport pending／場次 busy 影響，不切歌、不改練習、不動 BGM／OBS／系統音量。無效值／音量端點不可執行，失效 receiver 不產生副作用，custom 單次且不排隊。
 - offset 只調與載入 player 同曲的 active source；缺 session、來源讀取、timing／offset／source action／人工確認 busy、offset 保存錯誤或 profile／場次 pending 不執行。不暗選來源、不發布 editor 草稿或人工收據；±0.1 秒沿原 round／Main ±1 小時界限及 CAS 保存。
-- offset 進原保存 queue 前再驗來源 session、timing／offset revision、播放與配置、較新的 offset intent 及 busy。尚未送 IPC 的取消，只撤回仍由該 intent 擁有的 preview；有新 edit 不覆蓋。已送出的保存沿原 source owner／Main CAS，提交結果不因配置變更回滾；晚回不對新情境報成功。成功須保存回應、session／revision 及目前 preview 都相符。
+- offset 進原保存 queue 前再驗來源 session、timing／offset revision、播放與配置、較新的 offset intent 及 busy。尚未送 IPC 的取消，只撤回仍由該 intent 擁有的 preview；有新 edit 不覆蓋。已送出的保存沿原 source owner／Main CAS，提交結果不因配置變更回滾；晚回不對新情境報成功。成功須保存回應、session／revision 及目前 preview 都相符；Main 來源投影省略的零 offset 視為 0，缺失來源或明列非數值仍不能當作保存成功。
 
-配置替換／卸載只取消仍由該 executor 同步交給 player、request revision 相符的 pending start，不取消其他 caller 的後續 start；已交給 transport／場次的操作仍由其 owner 管理，不逆向撤回已提交進度。Main global envelope／單一 OS 分派尚待後續，不用 App 單元結果取代 Windows gate。
+配置替換／卸載只取消仍由該 executor 同步交給 player、request revision 相符的 pending start，不取消其他 caller 的後續 start；已交給 transport／場次的操作仍由其 owner 管理，不逆向撤回已提交進度。Main envelope、接收租約與單一 OS 分派遵循[全域契約](global-keyboard-shortcuts.md)，App 單元結果不能取代 Windows gate。
 
 ## 機器保存與錄製
 
 `electron/lib/keyboardShortcutSettings.js` 只使用 Main 提供的 userData，固定保存 `keyboard-shortcuts.json`，與 library 及一般 `config.json` 分開。檔案上限 16 KiB；只讀普通檔案，open 後再驗 identity／大小並有界讀取。Envelope 只含 `schemaVersion: 1`、每次寫入新產生的 `writeId` 及完整 `configuration`。公開 CAS revision 為 Main 導出的不透明 bytes digest；新 write id 使正常保存 A–B–A 不復活舊 revision。不存在時回 default／null revision，不自動建檔；壞 JSON、未知 schema、過量／不合法配置或重導目標保留原 bytes，不被 default 覆蓋。
 
-本階段 Main 保存只接受 global 關閉、所有 global chord 為 null 的配置；含未支援 global 資料的檔案保持唯讀。純 validator 仍能預先檢查跨 scope 衝突，不代表已開放全域設定。保存前 Main 重驗十命令、與共用固定鍵的衝突及 expected revision，衝突不寫；沿既有原子 JSON primitive 使用 Main 隨機命名 staging，最後 rename 安裝，失敗清理自己的 staging，不改舊檔。沒有新增 dependency／worker 或 library 欄位。
+正式 Main allowlist 為空，只接受 global 關閉、所有 global chord 為 null 的配置；含未支援 global 資料的檔案保持唯讀。純 validator 能檢查跨 scope 衝突，不授予平台能力。保存前 Main 重驗十命令、固定鍵衝突與 expected revision，衝突不寫；沿原子 JSON primitive 寫 Main 隨機 staging，再 rename 安裝，失敗只清自己的 staging。
 
-展開快捷鍵設定時，同一 settings owner 另以既有唯讀 runtime IPC 取得背景狀態；不寫偏好、不重新註冊或啟動 helper。`SettingsDocumentItem` 共用狀態列呈現尚未開放／處理中／暫停等短狀態，讀取失敗可重新讀取；不影響 App 偏好已載入或可編輯狀態。有界等待、獨立讀取序號與 dispose 防止晚到結果復活。正式 capability 仍空且 renderer 保存範圍不變，沒有全域開關或錄製入口。
+正式設定區展開後，同一 settings owner 以唯讀 runtime IPC 取得背景狀態，不寫偏好、重新註冊或啟動 helper。`SettingsDocumentItem` 呈現短狀態與原位重讀；錯誤不清 App 偏好，獨立讀取序號、有界等待與 dispose 防晚回。正式 UI 不提供背景啟用、錄製或保存入口。
 
-全域註冊／占用／復原現沿[專用契約](global-keyboard-shortcuts.md)由唯一 Main manager 管理。Store 的 prepare 唯讀驗意圖及 CAS，set 在註冊 staging 後再驗 CAS；以既有原子 buffer primitive 寫入已序列化 bytes，rename 成功即回本次配置與其 digest，不因額外重讀失敗誤判已提交結果。這提供原子可見性，沒有新增 fsync 或宣稱斷電耐久。單一接收端已接安裝確認、來源 generation、一次性 admission 與 UI／來源失效屏障，沿既有 commands／owners；正式 capability allowlist 因平台驗收未完維持空，App-only 保存範圍不變，全域錄製入口未開放。
+註冊、占用、復原與接收端由[全域契約](global-keyboard-shortcuts.md)的唯一 Main manager 管理。Rename 成功即以本次已知配置及 digest 回覆，不因事後重讀失敗誤判已提交；僅保證原子可見性，不新增 fsync 或斷電耐久承諾。來源 generation、一次性 admission 與 UI／來源屏障沿同一 commands／owners。
 
-`keyboard-shortcuts:get` 無 payload；`keyboard-shortcuts:set` 只收 expected revision 與完整配置。兩者只接受主控制台的 main frame，Performer／Output／foreign frame 不可使用；preload 僅暴露固定方法，將 readonly renderer 配置投影為有界普通 DTO，不轉送 callback、任意欄位、檔案路徑或 accelerator。I/O 錯誤沿既有 Main diagnostics／public error 邊界；壞資料與 CAS 衝突是有界預期結果。
+`keyboard-shortcuts:get` 無 payload；`set`、`test`、`enable` 均沿同一前綴，只收 expected revision 與完整配置。只接受主控制台 main frame，Performer／Output／foreign frame 不可使用；preload 投影有界普通 DTO，不轉送 callback、任意欄位、路徑或 accelerator。I/O 錯誤沿 Main diagnostics／public error 邊界；壞資料與 CAS 衝突是有界預期結果。
 
 `useKeyboardShortcutSettings` 是 App 與 Settings 共用的單一機器偏好 owner。讀取失敗／壞檔／未支援格式讓 custom 停用並呈現待讀，基本綁定仍可操作；不把 fallback 顯示為已讀取。保存採悲觀啟用、busy 不排隊，回應須是相同完整配置與新的有效 revision。失敗保原 active／候選並提供重讀；CAS／不合法磁碟狀態使舊 custom 失效，重讀後才重新啟用。讀寫有 10 秒結果等待上限，timeout 不聲稱回滾 Main 已提交的保存，晚回與卸載不改新 owner。
 
 錄製只在明確聚焦的設定控制內接收完整邏輯 chord。Modifier 單獨按下不存半組，IME／AltGr／Meta／numpad／repeat／handled 或保留鍵不成為候選；與固定／其他命令衝突顯示已知命令名稱。錄到候選後仍持有錄製 session，直到套用或取消才恢復 App dispatcher，避免放開前的長按或試鍵觸發原命令。候選不自動保存；套用成功才更新 active，失敗可重試或取消。Esc、Tab、離開編輯群組、native blur／最小化、hidden、收合或卸載取消未提交錄製；已送出保存的確認結果由偏好 owner 管理，不冒稱取消可撤回已提交。獨立 token 防止舊 recorder 清掉新的錄製 session。
+
+第 4 項的背景互動沿同一 owner／recorder 延伸，行為見[候選試註冊](global-keyboard-shortcuts.md#第-4-項續接互動設定與候選試註冊)。正式 singleton 仍只開 App；獨立 `createKeyboardShortcutSettings` 工廠才可注入測試命令，runtime 回覆不能提高正式權限。隔離 UI 共用四分類、App／背景範圍、候選試用／套用／取消及設定列；背景關閉時保存鍵位不啟用，移除背景鍵不改 App。占用／保存失敗及 runtime 暫停分報，取消晚回不復活候選。
+
+`test` 不保存或執行；`enable` 才是明確重新啟用意圖，普通 App 保存不能解除 Main 未保存的本次停用。兩者仍受同一平台 allowlist，不構成正式背景入口。
 
 ## Registry 規則
 

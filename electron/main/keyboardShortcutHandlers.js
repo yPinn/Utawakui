@@ -12,7 +12,13 @@ function registerKeyboardShortcutHandlers({
   getRuntime,
   receiver,
 }) {
-  for (const operation of ['get', 'set']) {
+  for (const operation of [
+    'get',
+    'set',
+    ...['test', 'enable'].filter(
+      (method) => typeof store[method] === 'function',
+    ),
+  ]) {
     ipcMain.handle(`keyboard-shortcuts:${operation}`, async (event, input) => {
       const window = getMainWindow();
       if (
@@ -41,7 +47,7 @@ function registerKeyboardShortcutHandlers({
             context: { retryable: true },
           },
         },
-        () => (operation === 'get' ? store.get() : store.set(input)),
+        () => (operation === 'get' ? store.get() : store[operation](input)),
       );
     });
   }

@@ -6,42 +6,15 @@
 
 Main 在 single-instance 成功及 app ready 後建立唯一註冊管理器；renderer 只傳既有十命令與有界邏輯 chord，不傳 accelerator、callback 或 IPC channel。Windows x64 已接僅負責註冊的 helper，取代原先只能評估的公開 Electron 路徑；不加入低階 hook、raw input、持續鍵盤監看或模擬輸入至產品。正式 capability 仍為空，App 內快捷鍵不依賴 helper。
 
-2026-10-29，現用 Electron 43.8.3／Chromium 150.0.7871.250 的 Windows OS 註冊探針可成功註冊及釋放；一次短按與一段重複 keydown 序列合計收到 14 次回呼。這是隔離測試視窗中的 Windows SendInput 測試，不冒充實體鍵盤長按或 OBS 驗收。公開 callback 沒有 keyup／repeat 證據，因此本階段所有正式全域命令仍未通過 S10；產品 capability allowlist 保持空，不保存或註冊這些全域配置。不能用 cooldown 宣稱一次持鍵只執行一次。
-
 註冊／復原與 Main–renderer 單一分派接收端基礎已接入，測試才注入已驗命令。正式 capability 仍為空；全域設定錄製入口與 S08–S10／S18 完整平台操作尚未開放或驗收，不因 manager／receiver 存在就自動開放。
 
 ## Windows 持鍵抑制的隔離驗證
 
-2026-10-29 接續 S10，以同機隔離 Win32 原型比較 RegisterHotKey 有無 MOD_NOREPEAT。原型未進產品、未改正式設定，也未新增產品依賴。按鍵由測試程式只送到已確認聚焦的自有 Electron 視窗；另一自有視窗用於驗證接收者不必是前景視窗，不代替 OBS／瀏覽器或實體鍵盤驗收。
+再次觸發以主鍵放開再按為準；Ctrl／Shift 等修飾鍵可持續按住，普通持鍵連發只執行一次。不承諾主鍵仍按住時只重按 Ctrl 就會再次觸發。重建／喚醒本身不算新按壓，不補觸發；App 內既有 repeat 政策不變。
 
-| 情境                             | 一般註冊通知數 | MOD_NOREPEAT 通知數 |
-| -------------------------------- | -------------- | ------------------- |
-| 短按一次                         | 1              | 1                   |
-| 主鍵按下後再送 12 次重複 keydown | 13             | 1                   |
-| 保持修飾鍵，主鍵放開重按 3 次    | 3              | 3                   |
-| 快速放開重按 10 次               | 10             | 10                  |
-| 切到另一自有視窗後短按 3 次      | 3              | 3                   |
-| 切回後重複 keydown               | 13             | 1                   |
+Windows helper 使用 MOD_NOREPEAT；註冊前後各一次、限已設定鍵的 GetAsyncKeyState 高位取樣，不是 keyup 歷史，也不能消除 OS 註冊、desktop／權限與取樣之間的非原子限制。不能靠 cooldown、低階 hook 或持續鍵盤監看補成通過。
 
-現行再次觸發操作為主鍵放開再按；Ctrl／Shift 等修飾鍵可以保持按住，普通持鍵連發只執行一次。不承諾主鍵仍按住時，只放開重按 Ctrl 就一定再次觸發。2026-10-29 Owner 在實體測試後明確接受此規則，取代稍早接受的完整組合重組語意。重建／喚醒本身不算新按壓，不可因此補觸發；App 內既有 repeat 政策不變。
-
-先前合成探針在 Ctrl 放開／重按後，又額外送五次 F11 keydown 才觀察新增通知，混合兩種刺激，不能證明 modifier-only 重組成功；撤回該成功判斷，保留原始記錄並註明範圍。持鍵解除再重建註冊的另一觀察仍只用於生命週期防護，不代表可繞過主鍵重按操作。MOD_NOREPEAT 是 OS 抑制連發行為，不是本 App 獨立取得的 keyup 歷史。
-
-隔離原型另在註冊前後各讀一次已設定 Ctrl／Shift／F11 的 GetAsyncKeyState 高位，不用低位歷史、不持續輪詢或安裝 hook。實測啟動時已按住會拒絕；持鍵重建時保留原註冊且拒絕該次要求，後續重複 keydown 新增零通知；全部放開後明確重試與兩次新短按得到兩次通知。外部占用拒絕與程序終止後另一程序重新取得亦通過。這僅驗特定序列中的註冊保護：各鍵取樣與 OS 註冊不是原子操作；高位清除也不能證明放鍵歷史，API 在非作用中 desktop／權限限制下亦可能回零。現行主鍵重按規則不解除正式後端的註冊生命週期與平台操作驗收，S10 未整體結案。
-
-### 原型至後端接入
-
-Windows 主鍵放開再按的操作語意已接受。本輪接入只擁有註冊與 WM_HOTKEY 訊息的 Windows helper，明列其 .NET Framework 4.8 以上前提與包裝邊界。GetAsyncKeyState 的有界狀態觀察不能稱為完全沒有鍵盤狀態觀察；不以 cooldown、漏吞合法重按或隱藏鍵盤監看補洞。
-
-後端沿同一註冊交易，不另建設定／播放 owner：
-
-- Main 固定 helper 路徑、版本與協定；只傳已驗命令導出的有限鍵組，不接 renderer 提供的執行檔、原生鍵碼或任意 channel。單一 helper 執行緒擁有訊息迴圈與所有註冊，使用 MOD_NOREPEAT；不收集任意鍵盤事件。
-- manager 已改可等待同步或非同步 backend，不能用尚未回覆的 helper 假扮同步 globalShortcut。須等待逐筆 ACK、跨等待保 busy、保存前再驗 CAS；新增註冊仍只 staging，同 chord 換映射保留實際註冊。取消／休眠／故障先撤分派，保存結果與清理結果分報。
-- 每個 helper instance、實際註冊 token、啟用 generation 與通知 sequence 均由受信任端持有；重建、換映射或重啟後的舊通知不得以當前映射補送。待啟用的 OS／pipe 佇列不能只在收件時套上最新 generation，就當成新按壓。
-- 啟動／停止與協定回覆有期限、訊息與註冊數有界；EOF、程序退出、錯誤或逾時先停止命令分派，釋放狀態無法確認就降級。只明確重試，不背景等待放鍵、改鍵或重啟；預設關閉不啟動 helper。
-- 本輪採 C# x64 helper，在建置／封裝時以 Framework64 v4 compiler、固定參照與選項編譯。執行時須 Windows x64 與 .NET Framework 4.8 以上；不在使用者啟動時呼叫編譯器／PowerShell、安裝 runtime 或下載 helper。每次產物記錄來源與 compiler SHA-256，不聲稱二進位逐 byte 可重現。完整安裝版仍待驗。
-
-上述原型、已接受操作語意與已接後端都未開啟正式 capability。接收端與單一分派基礎見下節；S08／S09／S18 可見前背景操作、實體鍵盤／OBS 與真實休眠仍未驗收，全域設定入口保持關閉。
+原合成探針在重按 Ctrl 後另送 F11 keydown，不能證明 modifier-only 重組，成功推論已撤回。Owner 接受主鍵重按規則並回報實體重按／長按正常，證據仍限隔離 mute stub；原始數據、撤回與人工回報限制見[分層驗證紀錄](../research/engineering/global-keyboard-shortcut-verification-2026-10-29.md#windows-持鍵原型原契約片段)。
 
 ## Windows helper 與實體資源
 
@@ -57,9 +30,25 @@ Windows 主鍵放開再按的操作語意已接受。本輪接入只擁有註冊
 
 ## 設定交易
 
+### 第 4 項續接：互動設定與候選試註冊
+
+App 與背景是兩個設定範圍，共用既有四分類與十命令，不另建命令或設定 owner。App 只在主窗使用；背景適用其他程式前景、最小化或隱藏時，仍受 receiver 與當下命令政策限制，不帶前。正式 `eligibleCommands` 維持空，renderer 的正式工廠仍拒絕全域配置；以下互動先由隔離工廠注入已驗命令驗證，狀態回覆不能授予正式 UI 權限。
+
+- 選背景範圍只檢視／編輯該命令的背景綁定，不複製 App 鍵位、不自動啟用。未通過平台門檻的命令不可錄製或保存。總啟用與逐命令綁定分開；停用保留已存鍵位，移除單鍵不影響 App 綁定。
+- 錄製只收完整、合法且無內部衝突的候選；候選期間所有 executor 停止。重新錄製、換範圍／分類、失焦、隱藏、Esc、取消或卸載均撤候選及試用結果，不寫檔。
+- 「試用按鍵」把候選完整配置與 expected revision 交同一 Main manager：驗 gate／CAS，短暫 staging 新增鍵，隨即釋放並以新來源世代恢復舊映射。試用不保存、不執行任何產品命令、不跨 RPC 留租約；回覆後的占用可能改變，成功文案僅為「目前可用」。背景已啟用時，套用再註冊及重驗 CAS；背景關閉時只以 CAS 保存鍵位，不留下註冊，之後明確啟用才再驗占用。試用完成前可取消 UI；晚回結果不復活候選，Main 仍完成清理。
+- 背景候選須試用成功才能套用。套用送出後不可假報取消；只有確認保存的配置更新設定投影，runtime 的暫停／降級另行呈現。試用或套用遇占用可改鍵或明確重試，不猜占用者，不自動換鍵或輪詢。
+- 試用釋放失敗保實際持有並降級；不顯示成功或允許套用。試用期間休眠／退出沿原立即撤分派及晚到 ACK 清理，不恢復舊意圖。
+- 啟用／改鍵保存失敗撤新增並保舊配置／舊 active；CAS 衝突要求重讀，不覆寫外部新版本。關閉背景或恢復全部預設先撤分派及清理，再嘗試保存；保存失敗仍保持本次停用，明示下次啟動的設定尚未儲存，重讀不代替明確的重新啟用。
+- Main 的純意圖解析與讀檔分開：完整意圖及 gate 合法的停用先撤分派，再讀檔／驗 CAS／保存；讀取 I/O 失敗亦不能讓背景繼續操作。未保存的本次停用由 Main `sessionDisabled` 持有；普通 set、App 改鍵、重讀與喚醒均不解除。只有固定 `keyboard-shortcuts:enable` 的明確啟用意圖在 CAS 保存及啟用成功路徑才可解除；它沿同一交易與平台 allowlist，不能由任意 channel 或 runtime 投影授權。
+
+唯讀 runtime 讀取中、逾時或失敗不阻擋停用：隔離工廠有本地資格且已確認啟用配置時，停用仍送原固定 set 意圖，由 Main 再驗 gate／CAS 並先撤分派；停用保存失敗可明確重試，不能因狀態未知而自行恢復。啟用仍須已確認 runtime，讀取晚回不能蓋過停用結果。正式 singleton 不因這條復原路徑取得資格。
+
+以上切片不解除 S08–S10／S18 平台門檻，也不新增 OBS、實際裝置／音訊或安裝版驗收證據。
+
 Main 的 store 沿原固定 userData 檔、16 KiB 上限、完整驗證、CAS revision 及原子保存。新增 prepare 只驗意圖、目前 bytes 與 revision，不寫檔；真正 set 在寫入前重新驗 CAS。global chord 即使全域關閉也必須屬平台已驗命令；預設空 allowlist 保持目前 App-only 的保存與未知資料唯讀行為。
 
-1. 先驗完整意圖、十命令／保留鍵衝突、平台 allowlist 及 CAS。無效、壞檔、未知版本、衝突均不碰 OS。
+1. 先驗完整意圖、十命令／保留鍵衝突及平台 allowlist，再驗 CAS。無效或越權意圖不碰 OS；啟用／改鍵遇壞檔、未知版本或衝突亦不碰 OS。合法的停用／恢復全部預設例外：先撤分派並清理，再讀檔／驗 CAS，不覆寫有問題或較新 bytes。
 2. 由 Main 正規化 chord 導出固定 accelerator。沿用前先重驗本 App 的註冊紀錄，遺失或無法確認就停止分派、不保存新設定，待明確重驗；只逐筆註冊新增鍵。新增 callback 尚未 commit 時不執行，其他內部持有者的鍵不搶占或清除。
 3. 任一新增註冊失敗，僅清理本交易新增鍵，保留原 bytes 與原映射。register=false 表示這次未取得，不將 isRegistered=false 當成系統空閒。
 4. 全部新增鍵確認持有後才呼叫 store.set。保存失敗或 CAS 再驗失敗，撤新增鍵；已送出保存不向 renderer 假報取消。
@@ -78,7 +67,7 @@ manager 的 backend 方法可回同步值或 Promise；有來源柵欄的 backen
 
 唯讀 runtime 快照同步讀取快取，區分 disabled、active、blocked、degraded、suspended、disposed，另列 active、仍持有或待確認釋放的 held、等待註冊確認的 pending、busy、平台已驗命令及有界問題。這些是透過 backend 可觀察的本 App 註冊紀錄：Electron 的 isRegistered 不是獨立 OS 存活探針，unregister 也不回成功 boolean；不能據此保證所有 OS 失效都能被偵測。bootId／generation 由 Main 產生；不把註冊持有視為目前播放或來源可操作的證據。另一隔離程序可重新取得測試鍵，才是本輪 OS 釋放驗證的補充證據。
 
-啟動等待 ready，明確重新讀取重驗已保存 desired，不自動改檔或挑另一組鍵。停用成功才釋放舊鍵；尚未確認釋放者以 degraded 呈現。休眠／退出同步撤銷分派及生命週期 token，再等待在途確認、清理自己的鍵；舊交易不能重新保存、啟用或覆寫停止狀態。喚醒等待先前清理完成後重新讀取與逐筆確認，失敗保持不可執行；較新休眠會使較早喚醒失效。EventEmitter listener 接住 Promise rejection，不累積訂閱，不在 renderer crash／reload 後補發命令。will-quit 本身不等待非同步 listener；有 helper 時使用前述 before-quit 與 parent-disconnect 清理，本輪空 capability 不持有產品 OS 鍵。
+啟動等待 ready，明確重新讀取重驗已保存 desired，不自動改檔或挑另一組鍵；未保存的本次停用優先於 desired，重讀不重新啟用。合法停用先撤分派／釋放舊鍵再保存；尚未確認釋放者以 degraded 呈現。休眠／退出同步撤銷分派及生命週期 token，再等待在途確認、清理自己的鍵；舊交易不能重新保存、啟用或覆寫停止狀態。喚醒等待先前清理完成後重新讀取與逐筆確認，失敗保持不可執行；較新休眠會使較早喚醒失效。EventEmitter listener 接住 Promise rejection，不累積訂閱，不在 renderer crash／reload 後補發命令。will-quit 本身不等待非同步 listener；有 helper 時使用前述 before-quit 與 parent-disconnect 清理，本輪空 capability 不持有產品 OS 鍵。
 
 固定 keyboard-shortcuts:runtime 只接受主控制台 main frame、無 payload；既有 get/set 與下述 receiver 操作仍走同一驗權與 diagnostics 邊界。Performer／Output／foreign frame 不可讀寫。Renderer 不可藉 payload 開啟平台 capability，沒有 renderer 自選命令的執行 IPC。
 
@@ -94,11 +83,11 @@ manager 的 backend 方法可回同步值或 Promise；有來源柵欄的 backen
 
 固定 invoke 為 `keyboard-shortcuts:receiver-connect`、`receiver-confirm`、`receiver-admit`、`receiver-release`（後三者沿同一前綴）；固定推送為 `keyboard-shortcuts:receiver-state`、`keyboard-shortcuts:command`。Confirm 只收 receiverId／offerId／contextRevision，admit 只收 receiverId／offerId／sequence，release 只收 receiverId；不收任意 command、路徑、channel、焦點或來源狀態。Preload 只投影已知欄位，Main 重新驗權與完整 payload，操作錯誤沿既有私有診斷／有界公開錯誤。
 
-主控制台前景採本 App 焦點／IME／浮層規則，Performer、其他內部視窗或 DevTools 聚焦時拒絕。主控制台失焦、最小化或 Tray 隱藏但 renderer 仍存活時，可按背景政策請求執行；不帶前、不查其他 App 文字／IME，也不把舊 activeElement 當其他 App 焦點。以上為已接政策與自動化測試，尚非可見跨 App 驗收。
+主控制台前景採本 App 焦點／IME／浮層規則，Performer、其他內部視窗或 DevTools 聚焦時拒絕。主控制台失焦、最小化或 Tray 隱藏但 renderer 仍存活時，可按背景政策請求執行；不帶前、不查其他 App 文字／IME，也不把舊 activeElement 當其他 App 焦點。隔離視窗支援證據不代替真 Performer、Tray 入口、十命令或 OBS 完整驗收。
 
 Main-frame navigation、frame 更換、crash、destroy 或 unresponsive 撤租約與待決 admission；初次載入中的 lease 保留至 did-finish-load 才重新 offer。焦點或 runtime 變更撤 ready，重新確認須經來源柵欄；較早 rearm 完成不得覆蓋較新 offer。重新載入、明確重讀／保存配置可重連；不以 responsive 或 timer 自動重播。卸載精確移除訂閱並只釋放自己的 receiverId。正式 eligible 仍為空，這條路徑不啟動 helper 或提供全域設定 UI。
 
-設定區目前只接背景狀態的唯讀列，沿同一 `useKeyboardShortcutSettings` owner 與共用設定列；展開才讀既有 runtime 快取，失敗可重讀，不觸發註冊復原。只把白名單 runtime 欄位轉成短狀態，不展示私有錯誤、原生識別或路徑，也不把 held／desired 當 active。讀取逾時或失敗不清 App 偏好，dispose 不接晚到結果；沒有全域啟用、錄製或保存入口，正式 capability 不變。
+正式設定區只提供背景狀態的唯讀列，沿同一 `useKeyboardShortcutSettings` owner 與共用設定列；展開才讀既有 runtime 快取，失敗可重讀，不觸發註冊復原。只把白名單 runtime 欄位轉成短狀態，不展示私有錯誤、原生識別或路徑，也不把 held／desired 當 active。讀取逾時或失敗不清 App 偏好，dispose 不接晚到結果；沒有全域啟用、錄製或保存入口，正式 capability 不變。
 
 ## 驗收
 
@@ -108,29 +97,7 @@ Main-frame navigation、frame 更換、crash、destroy 或 unresponsive 撤租�
 - 正常 Windows OS 路徑另驗 register/isRegistered/unregister 與占用復原；單元 mock 不替代平台證據。公開 Electron adapter 的重複 keydown 證據不合格；helper 與現行主鍵重按規則僅部分驗證，正式全域入口保持關閉。
 - S08／S09 已有 receiver／DOM 所有權及一次分派的自動化基礎；S08–S10／S18 可見 Windows／跨 App／實體操作仍待驗，不能沿用 App 內或 mock 通過數當成全域操作已驗收。
 
-2026-10-29 前置驗證：相鄰 store／manager／lifecycle／handler／preload 與架構檢查共 8 檔 144 項通過；完整回歸 1191 檔、12185 項通過／1 skipped。隔離雙程序 OS 測試另通過占用保原狀、釋放後重試、中途占用撤新增、保存失敗復原、新 manager 讀取恢復且不改檔、停用後另一程序可取得、正式 capability 不能被測試配置開啟七項。完整重啟的 App 驗主視窗唯讀 runtime、拒絕全域配置、原設定 bytes 不變及零 OS 註冊；未驗實體鍵盤、OBS 並行或實際休眠。
-
-接續非同步交易切片：相鄰五檔 110 項通過；四個核心模組定向 coverage 為 statements 93.59%、branches 87.84%、functions 96.82%、lines 96.15%。完整回歸單獨執行為 1191 檔、12197 項通過／1 skipped；首次與全庫格式／lint 並行時出現跨模組逾時及一項斷言失敗，未調整逾時或產品程式，單獨完整重跑通過，失敗紀錄保留。全庫 lint／Markdown／format、renderer／Main runtime 建置通過。隔離 Windows 雙程序七項重新通過；以新 Main／preload 與已建置 renderer 完整重啟，設定 bytes 不變、busy 為 false、pending／active／held 為空且零正式 OS 註冊，測試 App 正常退出。這批不涵蓋 native helper、安裝版、實體鍵盤／OBS 或真正休眠。
-
-Windows helper 與封裝切片：最終完整回歸 1194 檔、12229 項通過／1 skipped；四個核心模組 63 項定向測試，coverage 為 statements 92.17%、branches 84.82%、functions 93.81%、lines 95.03%。全庫 lint／Markdown／format 通過，renderer 建置及兩次隔離 unpacked artifact／afterPack 資源檢查通過。實體 helper 的合成按鍵驗一般／快速／自有 A–B 視窗通知數為 1／1／3／10／3／1，舊重組探針記錄為 1／1／2，但含額外 F11 keydown，不作 modifier-only 證據；staging 不補通知、外部占用後明確重試、持鍵 resume 拒絕且不自動重試／改檔、放開後明確恢復與父程序結束後另一程序可取得均通過。
-
-另以隔離 Electron host 載入 artifact ASAR 內的 Main／preload／renderer，實際設定 IPC ready、拒絕正式全域配置、原設定 bytes 不變且正式 helper 啟動數為零；再明確測試該 artifact 的實體 helper 註冊／確認／啟用／退出，App exit 0，無殘留專案 helper。這是封裝程式與資源路徑驗證，不是安裝版 executable、實體鍵盤、OBS、真實休眠或權限／配置矩陣驗收；排空上限／極端原生 queue backlog 尚未獨立壓測，正式 capability 維持空。
-
-單一接收端切片：定向 10 檔 189 項通過；三個 receiver 實作模組 coverage 為 statements 86.01%、branches 85.87%、functions 87.17%、lines 87.86%。完整回歸單獨執行為 1198 檔、12255 項通過／1 skipped；全庫 lint／Markdown／format、renderer／Main runtime 建置及獨立 code／security review 通過。完整重啟的隱藏隔離 App，以新 Main／preload 和已建置 renderer 驗到 root 接收端 connect offered、正式全域意圖拒絕、原設定 bytes 不變、eligible／active／held／pending 空且 helper 啟動／OS 註冊皆為零，正常退出。
-
-較早的可見原生送鍵探針因送鍵當下 OS 前景非自有視窗而拒絕，未送鍵，不列通過；未放寬前景限制或反覆帶前。前述自動化／IPC 證據不替代 S08／S09 可見主視窗／Performer／跨 App／最小化／Tray 與原生去重驗收，也未新增實體鍵盤、OBS、音訊品質、真休眠或安裝版證據。正式 capability／全域 UI 保持關閉。
-
-接續以 Computer Use 操作可見隔離視窗，兩批共 13 組檢查通過。Main 沿真正 manager／Windows backend／receiver，僅測試工廠允許 mute；renderer 載入真正 `useKeyboardShortcuts`、registry、executor 與 receiver，只以共用 reactive stub 取代 player／lyrics／transport／OBS owners。App custom 與 global 都設 Ctrl+Shift+F11，比較 owner 呼叫次數，避免雙 toggle 回原狀而誤判。正式 runtime／設定未開 gate，也未使用產品 env flag。
-
-原生合成短按涵蓋前景一次、錄製／editable／浮層阻擋、自有獨立程序前景下忽略主窗舊 editable 焦點且不帶前、最小化不還原、隱藏不顯示、同 App 另一內部視窗阻擋、明確 remount 後新按壓一次，以及停用 global 後同 chord 回 App 路徑一次。Windows 註冊時未收到該 F11 DOM keydown，故普通／repeat DOM 抑制另以合成 `KeyboardEvent` 經真正 dispatcher 驗證；envelope 重送、unresponsive 注入／remount 不補送另列支援證據。來源變更後延遲 admission 未執行，但該情境亦跨過 1 秒期限，未獨立歸因為來源防線。
-
-這批是可見自有視窗、合成短按與 stub effect 的整合證據；另一內部視窗不等於真 Performer，隱藏不等於 Tray 入口已驗，未驗真播放器／十命令效果、實體長按／修飾鍵重組、OBS 前景、真休眠或安裝版。S08–S10／S18 維持部分證據、完整驗收未結案；人工回報另見下段，正式 capability 仍為空。
-
-人工實體測試回報：保持 Shift+F11，只放開重按 Ctrl 沒有增加計數，原重組要求未滿足；Owner 因此接受主鍵放開重按。針對維持 Ctrl+Shift、F11 放開短按兩次各增加一次，再長按約 1 秒只增加一次的追問，Owner 回覆「都正常了」。這是隔離 mute stub 的人工煙霧驗證，沒有逐次前後的 helper 收據，不能據累計數定位哪層吞通知。追問亦含條件式 OBS 前景檢查，回覆未獨立列出 OBS 是否開啟／擷取方式；不將它擴大為 OBS、真播放器或十命令驗收，也不開正式 capability。
-
-唯讀狀態列切片的定向 3 檔 27 項通過，coverage 為 statements 96.01%、branches 94.76%、functions 97.72%、lines 97.12%。全庫 lint／Markdown／format、renderer 建置與最終獨立 code／security／UX review 通過。完整回歸以 2 個 worker 執行，1198 檔、12261 項通過／1 skipped；前兩次預設 worker 執行分別有一／兩個 release runtime 建置前置超過原 10 秒門檻，失敗紀錄保留，未增加 timeout 或修改無關程式。
-
-新 Main／preload 載入建置 renderer 的隔離可見 BrowserWindow，明暗主題各驗 1280／960 寬度，另驗窄版讀取失敗／重試恢復，共六個狀態通過；實際視窗 capturePage 與幾何檢查均未見文字／按鈕重疊或水平溢出，人工檢視擷取圖確認換行。原生畫面工具混入其他前景畫面，未用其錯誤擷取作驗收；這批不驗 OS alpha 合成。設定 bytes 不變，runtime 的 eligible／active／held／pending 為空，隔離 App 正常退出。沒有全域啟用入口，平台／OBS／音訊品質與安裝版限制不變。
+歷次測試數、原生探針、接收端支援證據及隔離互動結果，集中於[分層驗證紀錄](../research/engineering/global-keyboard-shortcut-verification-2026-10-29.md)。公開 Electron callback 缺少 keyup／repeat 證據，helper 與隔離互動測試不能直接解除逐命令平台門檻。
 
 ## 平台來源
 

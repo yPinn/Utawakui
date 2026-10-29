@@ -1,6 +1,6 @@
 # 可自訂／全域快捷操作：行為提案
 
-2026-10-26；2026-10-28 已接 S01–S03 配置／registry 前置及 S11–S13 的七命令／dispatcher 執行切片，App 保存／錄製切片已接入；OS 全域操作及 S01–S18 的完整平台驗收仍待逐項執行。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。按鍵只呼叫既有命令，設定已保存、OS 已註冊、當下可執行是不同狀態。
+本提案固定原第 4 項的十命令、輸入／註冊政策與 S01–S18 分層驗收。功能現況只見 [spec](../../spec.md)，現行 App 行為見[輸入契約](../../contracts/input-bindings.md)，背景交易與平台門檻見[全域契約](../../contracts/global-keyboard-shortcuts.md)。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。設定已保存、OS 已註冊、當下可執行是不同狀態。
 
 ## 十個命令與預設
 
@@ -127,7 +127,7 @@ Owner 要求在完整盤點後，先分類、判斷最低設定範圍，再依�
 
 ### 設定 UI 的最低交付
 
-沿下節既有 Folder 文件與 UiKbd：基本區八列、進階區兩列，提供功能名稱、已確認鍵位、生效範圍、錄製／停用／恢復預設與列旁衝突說明；另用 disclosure 收納固定導覽與元件操作參考。主播放器／BGM／擷取導唱等對象必須直接寫在名稱或描述內。
+沿既有 Folder 文件、四個局部 Tab 與 UiKbd：播放三列、音訊五列、歌詞兩列、操作說明唯讀。提供功能名稱、確認鍵位、作用範圍、設定／停用／恢復預設與衝突回饋；固定導覽與元件參考用 disclosure。主播放器／BGM／擷取導唱等對象必須直接具名。
 
 首版十列不需要整張實體鍵盤圖；UiKbd 加分組清單已足以設定與查閱，也能呈現未指派功能。全鍵盤圖可作後續輔助，等焦點／Shift wildcard／布局與更多命令範圍穩定後再評估；若採用仍沿下一節的 modifier／情境切換，不當另一套綁定真值。
 
@@ -172,9 +172,9 @@ Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與�
 
 鍵盤圖首版若採 Windows ANSI 示意，須明說布局僅示意；現有 chord 是邏輯 `event.key`，不能把圖上的固定物理位置或 `code` 當匹配真值。ISO／JIS、中文 IME、numpad、Fn／媒體鍵的外觀與可錄製範圍不同，不應畫成全數可綁。Shift wildcard 要在圖的 Shift 層也揭露，例如 Shift+M 同樣靜音；未設／停用仍由功能清單呈現，不能從鍵盤空位推論功能不存在。
 
-開始擴充設定前，操作檢查需先決定三個行為政策：舊 App 鍵與 widget 的讓位順序、Shift wildcard／長按是否保留，以及哪些既有固定命令要正式納入可自訂。新 custom 目前也會讓位於聚焦的普通按鈕，不能僅顯示「主窗內有效」而省略這個限制。這些是原 S05–S07／S10 的待驗部分，變更時同步原 owners／registry／契約，不在清單或鍵盤圖內另造分派器；global 仍依原 Windows gate，沒有新排程。
+輸入優先序、Shift wildcard／長按與十命令範圍沿[輸入契約](../../contracts/input-bindings.md)，不重新列為未決政策。Custom 讓位於聚焦的普通按鈕；若要改成允許未使用的 modifier chord，仍須另驗 primitives 與 S05–S07，不在清單或鍵盤圖另造分派器。Global 依逐命令 Windows gate，沒有新排程。
 
-## 待執行驗收
+## 驗收情境（S01–S18）
 
 | ID  | 情境與必要結果                                                                    |
 | --- | --------------------------------------------------------------------------------- |
@@ -197,24 +197,8 @@ Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與�
 | S17 | crash／reload／quit／睡眠釋放或重驗，無訂閱累加／補播／假永遠 active。            |
 | S18 | 可見 Windows 與 OBS／瀏覽器、SMTC／taskbar 並行無雙註冊，焦點／長按／衝突可重現。 |
 
-## 2026-10-29 註冊／復原前置與平台門檻
+## 整合與驗收入口
 
-沿本案先固定[全域註冊與復原契約](../../contracts/global-keyboard-shortcuts.md)，接唯一 Main manager、唯讀 prepare／CAS 再驗、staging／保存／映射提交、占用與清理失敗降級，以及休眠／喚醒／退出清理。runtime 快照只報 Electron 可觀察的本 App 註冊，不將 isRegistered 當 OS 空閒或獨立存活證據；Store rename 後回已知 bytes 的結果，沒有新增 fsync。
+十命令的 App 保存／錄製與既有 executor 邊界見[輸入契約](../../contracts/input-bindings.md#機器保存與錄製)；背景作用範圍、候選試用、套用／取消及占用／保存失敗復原，見[全域互動契約](../../contracts/global-keyboard-shortcuts.md#第-4-項續接互動設定與候選試註冊)。兩者共用原 settings／recorder 與 player／queue／lyrics owners。
 
-現用 Windows／Electron43.8.3 的隔離 OS 路徑，一次短按與一段重複 keydown 得到14次回呼，且公開API沒有放鍵證據。S10未過，正式 capability allowlist 保持空，不能靠cooldown假單次，也不私加native hook／鍵盤監看。此為註冊／復原前置當時的門檻；後續 helper 與 receiver 基礎進度見下一段，全域錄製入口及 S08–S10／S18 完整平台驗收仍待完成，不將 App 內或 mock 通過數當全域已驗。
-
-接續的隔離 Win32 MOD_NOREPEAT 原型可將普通持鍵連發的 13 次通知降至 1 次，並保留 3 次主鍵重按及 10 次快速短按；舊重組探針在重按 Ctrl 後又額外送 F11 keydown，不能證明只重按修飾鍵可再次觸發，已撤回該成功判斷。Owner 實體回報主鍵保持時重按 Ctrl 無新增，改為接受主鍵放開再按、修飾鍵可持續按住；再驗主鍵重按／長按回報正常。普通持鍵連發只一次，重建／喚醒本身不補觸發，App 內既有 repeat 政策不變。註冊前後各一次的限定鍵狀態取樣，實測可拒絕持鍵註冊並保原註冊、放開後明確重試，仍無法證明完整放鍵歷史。Windows x64 註冊 helper 已接 Main adapter 與封裝：建置時編譯、ASAR manifest 驗實體檔，明列 .NET Framework 4.8 以上前提；不加入 hook、持續監看或執行時編譯／下載。既有 manager 已接可等待 backend 的 busy／CAS／生命週期取消、保存後 runtime 分報與可選來源啟用柵欄；Main–renderer receiver 已接安裝確認後來源世代、一次性 admission、同一 executor 與 DOM repeat 所有權抑制；UI 與來源跨等待失效分驗，reload／crash／unresponsive 撤租約。正式全域 UI 未開，capability 仍為空，關閉時不啟動 helper；S08／S09 可見前背景驗收仍待完成。證據、限制與同一交易後續所需的通知世代／封裝條件集中於[Windows 持鍵抑制驗證](../../contracts/global-keyboard-shortcuts.md#windows-持鍵抑制的隔離驗證)，不另立全域計畫或將 S10 改列完成。
-
-## 實作前決策與證據
-
-2026-10-28 前置與執行切片：七命令 allowlist、有界 schema、明示 modifiers／邏輯子集、default／disabled／custom、同 scope／跨 scope／固定鍵及 Shift wildcard 衝突已有純測試。registry 可編譯驗過的 App 配置，替換只保留一組、停用釋出原鍵，default Key 保留原長按、custom 拒 repeat／handled；dispatcher 可接不可變配置，驗 editable／widget composed path／IME／AltGr／錄製／浮層及 canExecute，換配置／卸載使在途失效。S11–S13 執行協調既有 player／transport／lyrics；一般 pending 取消、真 player／練習 owner gap 立即播放、DSP confirmed／來源失效、offset 保存前取消與 CAS 由測試涵蓋。詳細目前契約見[輸入綁定](../../contracts/input-bindings.md#十命令執行邊界)。App 由單一機器偏好 owner 讀取配置，Settings 已接錄製／套用／取消／停用／預設，global 未註冊；不把單元結果當 Windows 每命令或全部場次／OBS 驗收。後續仍為 Main manager／Windows 每命令長按與去重 gate。
-
-先定七命令／保留鍵／焦點，補 App 自訂；再固定 Main manager／envelope／staging 契約，最後 Windows 每命令過 gate 才 global opt-in。前三項的未完成／錯誤可供 canExecute 使用，不要求三項全實作後才做 App 綁定。
-
-較早的命令執行切片另以隔離 RASEN 副本、程式指定的測試配置跑可見 Electron 14 項原生操作：Key confirmed 與未自動存 profile、offset ±0.1／CAS、active source 清除、播放／暫停、Queue 尾端、paused previous restart、widget／錄製讓位、靜音真媒體 A–B gap 立即恢復、壞配置 fallback 與卸載。沒有在 App 安裝正式配置或 OS 註冊；測試值恢復、正式媒體 9 檔 SHA256 不變。這不代表真實裝置／OBS 聽辨、DSP 音質或 Windows global 長按已驗收。
-
-本輪查 [registry](../../../src/utils/inputBindingRegistry.js)、[dispatcher](../../../src/composables/useKeyboardShortcuts.js)、[DOM](../../../src/utils/dom.js)、[SMTC](../../../src/composables/useMediaSession.js)、[transport](../../../src/composables/usePlaybackTransport.js)及[輸入契約](../../contracts/input-bindings.md)；G 實為擷取導唱、SELECT 已忽略，taskbar 上／下一首目前停用。7份既有測試73 passed，僅基線，原 K01–K04 留[初始證據](player-practice-planning-2026-10-26.json)。
-
-package-lock 為 Electron43.8.3，查核 Context7 43 系列並交叉實際 [v43.8.3 API](https://github.com/electron/electron/blob/v43.8.3/docs/api/global-shortcut.md)／[快捷鍵文件](https://github.com/electron/electron/blob/v43.8.3/docs/tutorial/keyboard-shortcuts.md)：Main ready 後註冊、失焦可觸發、register 可因占用失敗，isRegistered 只查本 App，registerAll 不提供整組交易，accelerator 為不分大小寫的 modifiers＋單鍵。上述平台能力不替代本案的 Windows 實測。
-
-本輪 App 保存／錄製切片使用同一隔離 RASEN profile，在完整重啟的新 Main／preload 下跑 22 項原生操作：候選／半組／Space／保留 F 鍵／Shift wildcard 不提前保存或誤執行、套用後正式 App dispatcher 生效、改 Key 釋放原鍵、停用／單列預設保其他設定、亮暗及 960px、重啟自動恢復且不重寫、CAS 保較新檔並要求重讀、native blur／最小化取消、壞檔保 bytes／待讀、修復後明確重讀及整組預設。Tab 取消回可見設定按鈕，結束 paused／無錄製／Key 與音量恢復，僅隔離設定檔被寫入。保存契約與不支援 global 的邊界見[機器保存與錄製](../../contracts/input-bindings.md#機器保存與錄製)；實際裝置／OBS 音質、跨程式 global 長按／去重仍不在這批證據內。
+App、自有可見視窗、stub owners、in-memory 註冊、原生 helper 與真實 Windows／OBS 必須分層驗收；S01–S18 表是完整情境，不是全部待做或全部通過的進度表。歷次數字、modifier-only 推論撤回與實體回報限制集中於[分層驗證紀錄](../engineering/global-keyboard-shortcut-verification-2026-10-29.md)；正式開放條件與現況由 [spec](../../spec.md) 持有，不在提案另列逐輪日誌。
