@@ -270,7 +270,12 @@ describe('settings Popover persistence across consumers', () => {
       overlayHost,
       (node) => node.props['aria-label'] === '每小節拍數',
     )[0];
-    expect(textContent(meter)).toContain('BEATS');
+    // Units sit above each stepper as compact labels, not inside the group.
+    const unitLabels = findAll(
+      overlayHost,
+      (node) => node.props?.class === 'player-tools__stepper-label',
+    ).map(textContent);
+    expect(unitLabels).toEqual(['BPM', '拍數']);
     expect(textContent(meter)).not.toContain('每小節');
     expect(textContent(meter)).not.toContain('4/4');
   });
