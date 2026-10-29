@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import UiKbd from '../ui/UiKbd.vue';
 
 const keyLabels = {
@@ -11,21 +12,49 @@ const keyLabels = {
   BrowserBack: ['Back', '上一頁鍵'],
   BrowserForward: ['Fwd', '下一頁鍵'],
 };
-defineProps({
+const props = defineProps({
   chords: { type: Array, required: true },
   label: { type: String, default: '' },
+});
+const sharedModifiers = computed(() => {
+  const prefix = props.chords[0]?.slice(0, -1) ?? [];
+  return props.chords.length > 1 &&
+    prefix.length > 0 &&
+    prefix.every((key) => ['Ctrl', 'Alt', 'Shift'].includes(key)) &&
+    props.chords.every(
+      (chord) =>
+        chord.length === prefix.length + 1 &&
+        prefix.every((key, index) => chord[index] === key),
+    )
+    ? prefix
+    : [];
+});
+const displayedChords = computed(() =>
+  props.chords.map((chord, index) =>
+    index && sharedModifiers.value.length
+      ? chord.slice(sharedModifiers.value.length)
+      : chord,
+  ),
+);
+const accessibleLabel = computed(() => {
+  if (!sharedModifiers.value.length) return props.label || undefined;
+  const expanded = props.chords
+    .map((chord) => chord.map((key) => keyLabels[key]?.[1] ?? key).join(' + '))
+    .join(' 或 ');
+  return props.label ? `${props.label}：${expanded}` : expanded;
 });
 </script>
 <template>
   <span
     class="keyboard-shortcut-keys"
     role="group"
-    :aria-label="label || undefined"
+    :aria-label="accessibleLabel"
   >
     <span
-      v-for="(chord, index) in chords"
+      v-for="(chord, index) in displayedChords"
       :key="index"
       class="keyboard-shortcut-keys__alternative"
+      :aria-hidden="sharedModifiers.length ? true : undefined"
     >
       <span
         v-if="index"

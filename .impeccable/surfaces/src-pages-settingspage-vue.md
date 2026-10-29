@@ -23,4 +23,6 @@ Owner 接受主工作區、右側面板與波形共用暫時放大／還原；�
 
 Owner修正：共通說明集中揭露，列內只留必要短句；功能／鍵組與狀態／操作分組，錄製獨立整列，以快捷鍵區自身container寬度換行。設定、候選與操作參考共用UiKbd鍵組，modifier組合保持完整；參考以UiDisclosure分類並分開情境、鍵組、動作，窄區堆疊，不將按鍵塞回敘述文字。
 
+Owner 接受同列相同修飾鍵的替代操作共用前綴鍵帽，例如 Shift＋←／↑／↓／→，以斜線表示任選。不同修飾或功能不混併；首組完整 chord 不拆行，可存取名稱逐組展開，實際按鍵值與錄製流程不改。
+
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
