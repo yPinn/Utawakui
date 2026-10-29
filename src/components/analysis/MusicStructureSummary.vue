@@ -324,7 +324,7 @@ function sectionLabel(role) {
   grid-template-columns: minmax(8rem, 1fr) auto 3.5rem;
   gap: var(--ui-space-3);
   align-items: center;
-  min-height: var(--ui-menu-item-height);
+  min-height: var(--ui-control-height);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);

@@ -13,7 +13,6 @@ import DemoDensity from './DemoDensity.vue';
 import DemoScrollbarAppearance from './DemoScrollbarAppearance.vue';
 import DemoSpacingShape from './DemoSpacingShape.vue';
 import DemoStatusPalette from './DemoStatusPalette.vue';
-import DemoStructureRowHeight from './DemoStructureRowHeight.vue';
 import DemoTypography from './DemoTypography.vue';
 
 defineProps({
@@ -169,9 +168,6 @@ const SYSTEM_COLOR_SWATCHES = [
       <DemoCoreMinimums v-else-if="section.key === 'core-minimums'" />
 
       <DemoDensity v-else-if="section.key === 'density'" />
-      <DemoStructureRowHeight
-        v-else-if="section.key === 'structure-row-height'"
-      />
 
       <DemoArtworkRamp v-else-if="section.key === 'artwork-ramp'" />
 

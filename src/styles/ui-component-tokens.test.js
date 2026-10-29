@@ -376,9 +376,7 @@ describe('shared UI component token contract', () => {
     expect(values.get('--ui-floating-row-line-height')).toBe(
       'var(--ui-type-body-compact-line-height)',
     );
-    expect(values.get('--ui-menu-item-height')).toBe(
-      'var(--ui-floating-row-min-height)',
-    );
+    expect(values.has('--ui-menu-item-height')).toBe(false);
   });
 
   it('keeps fixed archival material colors behind component aliases', () => {

@@ -795,8 +795,6 @@
   --ui-bgm-player-time-inline-size: 4.5rem;
   --ui-search-clear-hit-size: var(--ui-field-height);
   --ui-search-box-divider-inset-block: var(--ui-space-2);
-  /* Compatibility alias for feature menus pending bounded migration. */
-  --ui-menu-item-height: var(--ui-floating-row-min-height);
   --ui-modal-inline-size-small: 24rem;
   --ui-modal-inline-size-medium: 32rem;
   --ui-modal-inline-size-large: 48rem;
