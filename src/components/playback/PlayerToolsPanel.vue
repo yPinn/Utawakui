@@ -132,24 +132,28 @@ function setActiveTab(key) {
     >
       <div class="player-tools__metronome">
         <div class="player-tools__metro-main">
-          <UiButtonGroup label="節拍器速度">
-            <UiIconButton
-              :icon="Minus"
-              label="降低 BPM"
-              :disabled="metronome.bpm <= METRONOME_BPM_RANGE.min"
-              @click="adjustBpm(-1)"
-            />
-            <span class="player-tools__stepper-value player-tools__bpm-value">
-              <strong>{{ metronome.bpm }}</strong>
-              <small>BPM</small>
-            </span>
-            <UiIconButton
-              :icon="Plus"
-              label="提高 BPM"
-              :disabled="metronome.bpm >= METRONOME_BPM_RANGE.max"
-              @click="adjustBpm(1)"
-            />
-          </UiButtonGroup>
+          <div class="player-tools__stepper">
+            <span class="player-tools__stepper-label" aria-hidden="true"
+              >BPM</span
+            >
+            <UiButtonGroup label="節拍器速度">
+              <UiIconButton
+                :icon="Minus"
+                label="降低 BPM"
+                :disabled="metronome.bpm <= METRONOME_BPM_RANGE.min"
+                @click="adjustBpm(-1)"
+              />
+              <span class="player-tools__stepper-value player-tools__bpm-value">
+                <strong>{{ metronome.bpm }}</strong>
+              </span>
+              <UiIconButton
+                :icon="Plus"
+                label="提高 BPM"
+                :disabled="metronome.bpm >= METRONOME_BPM_RANGE.max"
+                @click="adjustBpm(1)"
+              />
+            </UiButtonGroup>
+          </div>
           <div class="player-tools__metro-actions">
             <UiIconButton :icon="RotateCcw" label="重設節拍器" @click="reset" />
 
@@ -161,24 +165,28 @@ function setActiveTab(key) {
               @click="toggle"
             />
           </div>
-          <UiButtonGroup label="每小節拍數">
-            <UiIconButton
-              :icon="Minus"
-              label="減少拍數"
-              :disabled="metronome.beatsPerBar <= METRONOME_BEATS_RANGE.min"
-              @click="adjustBeatsPerBar(-1)"
-            />
-            <span class="player-tools__stepper-value">
-              <strong>{{ metronome.beatsPerBar }}</strong>
-              <small>BEATS</small>
-            </span>
-            <UiIconButton
-              :icon="Plus"
-              label="增加拍數"
-              :disabled="metronome.beatsPerBar >= METRONOME_BEATS_RANGE.max"
-              @click="adjustBeatsPerBar(1)"
-            />
-          </UiButtonGroup>
+          <div class="player-tools__stepper">
+            <span class="player-tools__stepper-label" aria-hidden="true"
+              >拍數</span
+            >
+            <UiButtonGroup label="每小節拍數">
+              <UiIconButton
+                :icon="Minus"
+                label="減少拍數"
+                :disabled="metronome.beatsPerBar <= METRONOME_BEATS_RANGE.min"
+                @click="adjustBeatsPerBar(-1)"
+              />
+              <span class="player-tools__stepper-value">
+                <strong>{{ metronome.beatsPerBar }}</strong>
+              </span>
+              <UiIconButton
+                :icon="Plus"
+                label="增加拍數"
+                :disabled="metronome.beatsPerBar >= METRONOME_BEATS_RANGE.max"
+                @click="adjustBeatsPerBar(1)"
+              />
+            </UiButtonGroup>
+          </div>
           <div
             class="player-tools__metro-beats"
             role="img"
@@ -449,7 +457,7 @@ function setActiveTab(key) {
 .player-tools__metro-main {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: center;
+  align-items: end;
   column-gap: var(--ui-space-2);
   row-gap: var(--ui-space-2);
 }
@@ -498,6 +506,12 @@ function setActiveTab(key) {
   background: var(--ui-color-current);
 }
 
+.player-tools__stepper {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
 .player-tools__stepper-value {
   flex: 1;
   min-width: 4ch;
@@ -515,7 +529,7 @@ function setActiveTab(key) {
   line-height: var(--ui-type-title-line-height);
 }
 
-.player-tools__stepper-value small,
+.player-tools__stepper-label,
 .player-tools__description {
   display: block;
   color: var(--ui-color-text-muted);
