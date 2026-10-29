@@ -1136,15 +1136,16 @@ Custom font settings should not affect control panel UI. The control panel shoul
 
 Semantic type recipes group size, weight and line height into named reading or operator roles. They sit above foundation typography tokens and below component recipes.
 
-| Role         | Recipe                     | Values                  | Intended use                            |
-| ------------ | -------------------------- | ----------------------- | --------------------------------------- |
-| Display      | `--ui-type-display-*`      | `1.75rem` / 700 / 1.15  | Rare identity or page anchors           |
-| Heading      | `--ui-type-heading-*`      | `1.5rem` / 700 / 1.2    | Major view and modal titles             |
-| Title        | `--ui-type-title-*`        | `1.125rem` / 600 / 1.3  | Section, entity and editable titles     |
-| Body         | `--ui-type-body-*`         | `1rem` / 400 / 1.5      | Standard copy and readable prose        |
-| Body compact | `--ui-type-body-compact-*` | `0.875rem` / 400 / 1.25 | Dense values, command rows and controls |
-| Label        | `--ui-type-label-*`        | `0.875rem` / 600 / 1.25 | Field labels, tabs and button labels    |
-| Caption      | `--ui-type-caption-*`      | `0.875rem` / 400 / 1.4  | Metadata, hints and status copy         |
+| Role         | Recipe                     | Values                  | Intended use                                            |
+| ------------ | -------------------------- | ----------------------- | ------------------------------------------------------- |
+| Display      | `--ui-type-display-*`      | `1.75rem` / 700 / 1.15  | Rare identity or page anchors                           |
+| Heading      | `--ui-type-heading-*`      | `1.5rem` / 700 / 1.2    | Major view and modal titles                             |
+| Title        | `--ui-type-title-*`        | `1.125rem` / 600 / 1.3  | Section, entity and editable titles                     |
+| Subtitle     | `--ui-type-subtitle-*`     | `1rem` / 600 / 1.3      | Sub-section, item and candidate titles inside a section |
+| Body         | `--ui-type-body-*`         | `1rem` / 400 / 1.5      | Standard copy and readable prose                        |
+| Body compact | `--ui-type-body-compact-*` | `0.875rem` / 400 / 1.25 | Dense values, command rows and controls                 |
+| Label        | `--ui-type-label-*`        | `0.875rem` / 600 / 1.25 | Field labels, tabs and button labels                    |
+| Caption      | `--ui-type-caption-*`      | `0.875rem` / 400 / 1.4  | Metadata, hints and status copy                         |
 
 Type recipes never own text color. Text color remains a semantic surface/content/state decision through tokens such as `--ui-color-text`, `--ui-color-text-muted`, status colors and component state aliases.
 
@@ -1164,20 +1165,23 @@ Shared spacing roles:
 
 Intent names describe what copy means in a component; they do not automatically become global type roles. Use the conventional role first, then add a component recipe only when a repeated anatomy needs a stable bundle.
 
-| Text intent                | Typography owner             | Color owner                               |
-| -------------------------- | ---------------------------- | ----------------------------------------- |
-| Page title                 | Heading                      | Primary text                              |
-| Section or entity title    | Title                        | Primary text                              |
-| Content or readable copy   | Body                         | Primary text                              |
-| Description or subtitle    | Caption; Body for long prose | Muted text                                |
-| Metadata                   | Caption                      | Muted or subtle text                      |
-| Field label                | Label                        | Field semantic foreground                 |
-| Field value                | `--ui-field-font-*`          | Field component foreground                |
-| Multiline field value      | `--ui-textarea-font-*`       | Field component foreground                |
-| Menu item or command       | `--ui-floating-row-font-*`   | Floating-row component foreground         |
-| Helper, validation, status | Caption                      | Muted or contextual semantic status color |
+| Text intent                | Typography owner                    | Color owner                               |
+| -------------------------- | ----------------------------------- | ----------------------------------------- |
+| Page title                 | Heading                             | Primary text                              |
+| Section or entity title    | Title                               | Primary text                              |
+| Sub-section or item title  | Subtitle                            | Primary text                              |
+| Content or readable copy   | Body                                | Primary text                              |
+| Compact multi-line copy    | Body compact size, Body line height | Primary text                              |
+| Collapsed page title       | Title size, Heading weight          | Primary text                              |
+| Description or subtitle    | Caption; Body for long prose        | Muted text                                |
+| Metadata                   | Caption                             | Muted or subtle text                      |
+| Field label                | Label                               | Field semantic foreground                 |
+| Field value                | `--ui-field-font-*`                 | Field component foreground                |
+| Multiline field value      | `--ui-textarea-font-*`              | Field component foreground                |
+| Menu item or command       | `--ui-floating-row-font-*`          | Floating-row component foreground         |
+| Helper, validation, status | Caption                             | Muted or contextual semantic status color |
 
-`--ui-field-font-*` and `--ui-floating-row-font-*` both resolve to Body compact today because their measurements match, while preserving independent component contracts. `--ui-textarea-font-*` keeps the same compact size and weight but uses Body line height for multiline readability. Description, metadata, helper and validation remain intents that combine Caption with the appropriate semantic color; they are not extra global type levels. Typography recipes contain only strongly related font size, weight and line height. Margin, padding, gap, radius, surface color, text color, focus geometry and interaction state stay with layout, semantic color or component recipes.
+`--ui-field-font-*` and `--ui-floating-row-font-*` both resolve to Body compact today because their measurements match, while preserving independent component contracts. `--ui-textarea-font-*` keeps the same compact size and weight but uses Body line height for multiline readability. Description, metadata, helper and validation remain intents that combine Caption with the appropriate semantic color; they are not extra global type levels. Compact multi-line copy that must be read in full (confirmation, announcement and destructive-action text) pairs the Body compact size with Body leading, as Textarea does. A collapsed Folder page title keeps the Heading weight at Title size so it still reads as the same page title. Typography recipes contain only strongly related font size, weight and line height. Margin, padding, gap, radius, surface color, text color, focus geometry and interaction state stay with layout, semantic color or component recipes.
 
 Tooltip copy uses the Caption role through the shared `--ui-tooltip-font-*` component aliases. Its dark floating material is explicit through `--ui-tooltip-background`, `--ui-tooltip-text`, `--ui-tooltip-detail-text`, `--ui-tooltip-border` and `--ui-tooltip-shadow`, and remains dark in both app themes instead of being derived by swapping page text and canvas colors. Icon-only actions keep an accessible name through visually hidden button text, while the tooltip remains a regular-weight visible hint rather than a second ARIA label. Placement is owned by the semantic trigger (`top` by default; logical `start`／`end` only when the object-level rail context requires it) and must still pass viewport collision handling. The surface uses intrinsic content width first; the shared max-inline-size and viewport inset are upper bounds rather than a fixed text column. Long labels wrap only after reaching those bounds, while a caller-owned short action suffix may be marked as one non-breaking phrase so CJK operation words such as「的更多選項」do not split mid-word. A collection-information tooltip may add one secondary detail line; that detail belongs to the collection object, while a playback tooltip remains owned by the playback button.
 

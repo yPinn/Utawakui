@@ -120,6 +120,9 @@
   --ui-type-title-size: var(--ui-font-size-lg);
   --ui-type-title-weight: var(--ui-font-weight-semibold);
   --ui-type-title-line-height: var(--ui-line-height-title);
+  --ui-type-subtitle-size: var(--ui-font-size-md);
+  --ui-type-subtitle-weight: var(--ui-font-weight-semibold);
+  --ui-type-subtitle-line-height: var(--ui-line-height-title);
   --ui-type-body-size: var(--ui-font-size-md);
   --ui-type-body-weight: var(--ui-font-weight-regular);
   --ui-type-body-line-height: var(--ui-line-height-body);

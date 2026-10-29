@@ -41,9 +41,11 @@ describe('Chinese feature notice document typography', () => {
     expect(list).toContain('list-style-type: trad-chinese-informal');
     expect(list).toContain('padding-inline-start: var(--ui-space-6)');
     const heading = rule('.feature-notice__section-title');
-    expect(heading).toContain('font-size: var(--ui-type-body-size)');
-    expect(heading).toContain('font-weight: var(--ui-type-label-weight)');
-    expect(heading).toContain('line-height: var(--ui-type-body-line-height)');
+    expect(heading).toContain('font-size: var(--ui-type-subtitle-size)');
+    expect(heading).toContain('font-weight: var(--ui-type-subtitle-weight)');
+    expect(heading).toContain(
+      'line-height: var(--ui-type-subtitle-line-height)',
+    );
     expect(heading).toContain('margin: 0 0 var(--ui-space-2)');
     expect(documentSource).not.toMatch(/font-(?:size|weight):\s*\d/u);
   });

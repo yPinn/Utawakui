@@ -305,9 +305,9 @@ function previewLineHasTiming(line) {
   flex: 0 1 auto;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

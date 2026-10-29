@@ -559,8 +559,8 @@ function submitApproval() {
 .review-form__lookup-row > p {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .review-form__lookup-actions {

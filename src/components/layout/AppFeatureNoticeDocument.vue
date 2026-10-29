@@ -69,9 +69,9 @@ defineProps({ feature: { type: Object, required: true } });
   margin: 0 0 var(--ui-space-2);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
 }
 
 .feature-notice__copy {

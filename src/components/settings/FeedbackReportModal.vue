@@ -300,8 +300,8 @@ const descriptionPlaceholder = computed(
 .feedback-report__intro {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .feedback-report__summary {
@@ -328,8 +328,8 @@ const descriptionPlaceholder = computed(
 .feedback-report__row dd {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   overflow-wrap: anywhere;
 }
 

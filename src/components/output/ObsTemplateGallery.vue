@@ -322,9 +322,9 @@ function applyPreset(preset) {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

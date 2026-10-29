@@ -131,9 +131,9 @@ async function handleFileImport() {
 .lyrics-manual-import-panel__header h4 {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
 }
 
 .lyrics-manual-import-panel__header p {

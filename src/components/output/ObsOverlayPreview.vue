@@ -374,9 +374,9 @@ onBeforeUnmount(() => {
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-label-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

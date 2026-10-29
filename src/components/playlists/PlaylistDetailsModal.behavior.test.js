@@ -53,7 +53,7 @@ describe('PlaylistDetailsModal component contract', () => {
     );
     expect(modalSource).not.toContain(':deep(.ui-text-field)');
     expect(modalSource).toMatch(
-      /\.playlist-details__readonly-description\s*\{[\s\S]*?font-size:\s*var\(--ui-type-body-compact-size\);[\s\S]*?font-weight:\s*var\(--ui-type-body-compact-weight\);[\s\S]*?line-height:\s*var\(--ui-type-body-line-height\);/u,
+      /\.playlist-details__readonly-description\s*\{[\s\S]*?font-size:\s*var\(--ui-type-caption-size\);[\s\S]*?font-weight:\s*var\(--ui-type-caption-weight\);[\s\S]*?line-height:\s*var\(--ui-type-caption-line-height\);/u,
     );
     expect(modalSource).toMatch(
       /\.playlist-details__description-field\s*\{[\s\S]*?block-size:\s*100%;/u,

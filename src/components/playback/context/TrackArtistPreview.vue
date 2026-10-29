@@ -76,9 +76,9 @@ const summaryText = computed(() => {
   max-inline-size: 100%;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

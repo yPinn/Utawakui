@@ -257,9 +257,9 @@ function cancel() {
   margin: 0;
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  font-weight: var(--ui-type-body-compact-weight);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

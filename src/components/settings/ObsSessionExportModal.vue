@@ -212,8 +212,8 @@ watch(
 .obs-session-export-modal__status {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .obs-session-export-modal__controls {

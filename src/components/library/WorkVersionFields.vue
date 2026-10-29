@@ -97,9 +97,9 @@ const fields = [
 }
 .work-version-fields__title {
   margin: 0;
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
 }
 .work-version-fields__details {
   display: grid;

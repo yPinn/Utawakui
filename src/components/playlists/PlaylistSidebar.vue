@@ -1029,8 +1029,8 @@ function startDrag(playlist, event) {
   margin: 0;
   padding: var(--ui-space-1) var(--ui-sidebar-row-padding-inline);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-body-compact-size);
-  line-height: var(--ui-type-body-line-height);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 /* Same compact-sidebar collapse as PlaylistSidebarRow.vue's own

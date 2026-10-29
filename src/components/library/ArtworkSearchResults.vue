@@ -210,9 +210,9 @@ function handleRadioKeydown(event, index) {
 .artwork-results__title {
   flex: 1 1 auto;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-label-line-height);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
 }
 
 .artwork-results__artist,
