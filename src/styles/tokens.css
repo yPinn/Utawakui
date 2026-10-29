@@ -721,6 +721,9 @@
   --ui-skeleton-pulse-duration: 1.4s;
   --ui-radio-size: var(--ui-space-4);
   --ui-radio-dot-size: var(--ui-space-2);
+  /* Hover-revealed utility actions inside dense track tables (documented
+     exception to the 2rem icon-button floor; the row context menu duplicates them). */
+  --ui-track-row-utility-size: var(--ui-space-5);
   /* Status／attention dots beside labels, icons and artwork. */
   --ui-status-dot-size: var(--ui-space-2);
   --ui-scrollbar-lane-size: var(--ui-space-3);

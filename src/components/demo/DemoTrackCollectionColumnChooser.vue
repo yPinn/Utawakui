@@ -118,7 +118,7 @@ function updateColumn(column, visible) {
 
 <style scoped>
 .demo-track-collection-column-chooser__trigger {
-  --ui-icon-button-size-override: var(--ui-space-5);
+  --ui-icon-button-size-override: var(--ui-track-row-utility-size);
 }
 
 .demo-track-collection-column-chooser__options {

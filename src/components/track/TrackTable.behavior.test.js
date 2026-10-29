@@ -415,7 +415,7 @@ describe('TrackTable canonical grid', () => {
 
   it('keeps accompaniment status immediately before time in one right-aligned trailing group', () => {
     expect(rowSource).toMatch(
-      /\.library-track-row__duration\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(--ui-space-5\) auto;[^}]*gap:\s*var\(--ui-space-4\);[^}]*justify-content:\s*end;/su,
+      /\.library-track-row__duration\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*var\(--ui-track-row-utility-size\) auto;[^}]*gap:\s*var\(--ui-space-4\);[^}]*justify-content:\s*end;/su,
     );
     expect(rowSource).not.toMatch(
       /\.library-track-row__duration\s*\{[^}]*grid-template-columns:[^}]*minmax\(0,\s*1fr\)/su,

@@ -129,7 +129,7 @@ const unmatchedEntries = computed(() =>
 
 <style scoped>
 .library-source-tracks__download {
-  --ui-icon-button-size-override: var(--ui-space-5);
+  --ui-icon-button-size-override: var(--ui-track-row-utility-size);
   pointer-events: auto;
 }
 .library-source-tracks__heading {

@@ -17,7 +17,7 @@ const CANONICAL_SEMANTIC_ROLES = Object.freeze([
   'imported',
   'usage',
 ]);
-// Matches --ui-space-5: exactly one dense chooser／overflow control track.
+// Mirrors --ui-track-row-utility-size: one dense chooser／overflow control track.
 const TRACK_ROW_UTILITY_LANE_WIDTH = 24;
 
 const COLUMN_DEFINITIONS = Object.freeze({

@@ -518,12 +518,12 @@ function openContextMenu(event) {
 }
 
 .library-track-row__playback-control {
-  --ui-icon-button-size-override: var(--ui-space-5);
+  --ui-icon-button-size-override: var(--ui-track-row-utility-size);
 }
 
 .library-track-row__separation-action,
 .library-track-row__more-action {
-  --ui-icon-button-size-override: var(--ui-space-5);
+  --ui-icon-button-size-override: var(--ui-track-row-utility-size);
 }
 
 .library-track-row:hover .library-track-row__playback-control,
@@ -583,7 +583,7 @@ function openContextMenu(event) {
 .library-track-row__duration {
   inline-size: 100%;
   display: grid;
-  grid-template-columns: var(--ui-space-5) auto;
+  grid-template-columns: var(--ui-track-row-utility-size) auto;
   align-items: center;
   gap: var(--ui-space-4);
   justify-content: end;

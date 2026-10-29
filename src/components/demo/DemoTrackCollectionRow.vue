@@ -286,7 +286,7 @@ function handleDrop(event) {
 <style scoped>
 .demo-track-collection-row {
   --demo-track-collection-status-slot: calc(
-    (var(--ui-space-5) * 2) + var(--ui-space-1)
+    (var(--ui-track-row-utility-size) * 2) + var(--ui-space-1)
   );
 
   position: relative;
@@ -405,7 +405,7 @@ function handleDrop(event) {
 }
 
 .demo-track-collection-row__playback-control {
-  --ui-icon-button-size-override: var(--ui-space-5);
+  --ui-icon-button-size-override: var(--ui-track-row-utility-size);
 
   opacity: 0;
   pointer-events: none;

@@ -217,6 +217,23 @@ describe('shared UI component token contract', () => {
     }
   });
 
+  it('keeps dense table utility actions on their documented 24px exception', () => {
+    expect(declarations(tokens).get('--ui-track-row-utility-size')).toBe(
+      'var(--ui-space-5)',
+    );
+    const profiles = fs.readFileSync(
+      path.join(
+        dirname,
+        '..',
+        'components',
+        'track',
+        'trackCollectionProfiles.js',
+      ),
+      'utf8',
+    );
+    expect(profiles).toContain('const TRACK_ROW_UTILITY_LANE_WIDTH = 24;');
+  });
+
   it('sizes every status dot from one token', () => {
     expect(declarations(tokens).get('--ui-status-dot-size')).toBe(
       'var(--ui-space-2)',
