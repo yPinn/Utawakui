@@ -1205,14 +1205,18 @@ Utawakui should be flat by default and layered by tone before shadow. Depth exis
 
 ### Stacking Layers
 
-- **Global layers** (`--ui-z-*`): sticky 10, floating 15, popover 20, backdrop 30, dialog 40, toast 50, tooltip 60, drag 70. Only shell chrome and teleported overlays use them; `floating` is for persistent shell overlays, so menus always paint above it.
+- **Global layers** (`--ui-z-*`): sticky 10, floating 15, popover 20, dialog 40, toast 50, tooltip 60. Only shell chrome and teleported overlays use them; `floating` is for persistent shell overlays, so menus always paint above it.
 - **Local layers** (`--ui-layer-*`): behind -1, base 0, raised 1, overlay 2, indicator 3, focus 4. They resolve against the nearest owner that isolates its stacking context (`isolation: isolate`); a repeated row or control isolates its own root so inner values never compete with siblings. A row that must paint over a neighbour (a drop target) raises itself, not its inner indicator.
 - **Literal values:** every `z-index` uses one of these tokens or a runtime-derived component variable such as the finite Folder artifact order; `src/styles/zIndexLayers.test.js` enforces it.
 - **Overlay hosts:** a surface's overlay host must sit outside every content stacking context between it and the renderer root. The Folder perimeter therefore creates none, `AppFolderPage` isolates its own content, and a child surface nested in an isolated region (the Lyrics authoring workspace inside Library) mounts its host beside the parent's via `AppSurfaceBoundary` `childHosts`／`detachedHost`.
 
 ### Shadow Vocabulary
 
-- **Overlay Shadow** (`0 1.5rem 3rem rgb(0 0 0 / 28%)`): Floating menus, popovers, and modal surfaces.
+- `--ui-shadow-contact`: a resting card on a surface; `none` in the dark theme.
+- `--ui-shadow-overlay`: menus, listboxes, popovers, tooltips and controls layered over artwork or content.
+- `--ui-shadow-dialog`: modal dialogs.
+- Feature materials (Folder artifacts, photo frames, Right Dock sticky chrome) keep their own `--ui-*-shadow` aliases.
+- Each theme owns its shadow alpha; components reference these tokens instead of shadow values.
 
 ### Focus Ring
 
