@@ -523,11 +523,6 @@ function setActiveTab(key) {
   line-height: var(--ui-type-caption-line-height);
 }
 
-.player-tools__stepper-value small {
-  font-size: calc(var(--ui-type-caption-size) - 0.125rem);
-  line-height: var(--ui-line-height-label);
-}
-
 .player-tools__tap-row {
   display: flex;
   align-items: center;
