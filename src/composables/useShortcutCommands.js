@@ -113,7 +113,10 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
     stamp.revision === state.playbackRevision &&
     stamp.start === player.getPlaybackStartRequestRevision();
 
-  async function execute(command, { isCurrent = () => true } = {}) {
+  async function execute(
+    command,
+    { isCurrent = () => true, scope = 'app' } = {},
+  ) {
     const unavailable = availability(command);
     if (unavailable) return result(unavailable);
     if (!isCurrent()) return result('stale');
@@ -135,10 +138,13 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
       }
     }
     const key = domain(command),
-      operation = { generation, start: null };
+      operation = { generation, start: null, scope, revoked: false };
     pending.set(key, operation);
     const current = () =>
-      !disposed && operation.generation === generation && isCurrent();
+      !disposed &&
+      !operation.revoked &&
+      operation.generation === generation &&
+      isCurrent();
     const stamp = playerStamp();
     try {
       if (key === 'transpose') {
@@ -233,22 +239,38 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
       if (pending.get(key) === operation) pending.delete(key);
     }
   }
-  function invalidate() {
-    generation++;
-    for (const operation of pending.values()) {
+  function invalidate(scope) {
+    if (scope === undefined) generation++;
+    for (const [key, operation] of pending) {
+      if (scope !== undefined && operation.scope !== scope) continue;
+      operation.revoked = true;
       if (
         operation.start !== null &&
         state.pendingStartTrackId &&
         operation.start === player.getPlaybackStartRequestRevision()
       )
         player.cancelPendingStart();
+      pending.delete(key);
     }
-    pending.clear();
   }
   return {
     canExecute: (command) => availability(command) === null,
     execute,
     invalidate,
+    contextIdentity: () =>
+      JSON.stringify([
+        state.track?.id,
+        state.track?.url,
+        state.playbackRevision,
+        state.pendingStartTrackId,
+        state.isPlaying,
+        player.getPlaybackStartRequestRevision(),
+        lyrics.state.selectedTrackId,
+        lyrics.state.selectedSourceFilename,
+        lyrics.sourceSession.value?.id,
+        lyrics.sourceSession.value?.timingRevision,
+        lyrics.sourceSession.value?.offsetRevision,
+      ]),
     dispose() {
       invalidate();
       disposed = true;

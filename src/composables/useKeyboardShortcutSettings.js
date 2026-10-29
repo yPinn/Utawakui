@@ -5,6 +5,7 @@ import {
   validateShortcutConfiguration,
 } from '../../shared/keyboardShortcutContract.mjs';
 import { LEGACY_KEYBOARD_BINDINGS } from '../../shared/keyboardBindingDefinitions.mjs';
+import { shortcutRuntimePresentation } from '../utils/keyboardShortcutSettingsPresentation.js';
 
 const sessions = new WeakMap(),
   owners = new Set();
@@ -65,6 +66,7 @@ export function useKeyboardShortcutSettings({
 } = {}) {
   if (bridge && sessions.has(bridge)) return sessions.get(bridge);
   const configuration = shallowRef(defaultShortcutConfiguration());
+  const runtimePresentation = shallowRef(null);
   const state = reactive({
     loaded: false,
     reading: false,
@@ -73,12 +75,15 @@ export function useKeyboardShortcutSettings({
     readError: '',
     saveError: '',
     recordingCommand: null,
+    runtimeReading: false,
+    runtimeError: '',
   });
   let revision = null,
     serial = 0,
     disposed = false,
     initialization = null,
     recordingToken = null;
+  let runtimeSerial = 0;
   const canEdit = computed(() => state.loaded && !state.reading && !state.busy);
   const isRecording = computed(() => Boolean(state.recordingCommand));
   const isDefault = computed(() =>
@@ -116,6 +121,27 @@ export function useKeyboardShortcutSettings({
       return false;
     } finally {
       if (request === serial) state.reading = false;
+    }
+  }
+  async function refreshRuntime() {
+    if (disposed || state.runtimeReading) return false;
+    const request = ++runtimeSerial;
+    state.runtimeReading = true;
+    state.runtimeError = '';
+    runtimePresentation.value = null;
+    try {
+      const reply = await boundedWait(() =>
+        bridge.getKeyboardShortcutRuntime(),
+      );
+      if (disposed || request !== runtimeSerial) return false;
+      runtimePresentation.value = shortcutRuntimePresentation(reply);
+      return true;
+    } catch {
+      if (!disposed && request === runtimeSerial)
+        state.runtimeError = '無法讀取背景快捷鍵狀態，請重新讀取。';
+      return false;
+    } finally {
+      if (request === runtimeSerial) state.runtimeReading = false;
     }
   }
   function configurationFor(command, app) {
@@ -179,12 +205,14 @@ export function useKeyboardShortcutSettings({
   }
   const owner = {
     configuration: readonly(configuration),
+    runtimePresentation: readonly(runtimePresentation),
     state: readonly(state),
     canEdit,
     isRecording,
     isDefault,
     initialize: () => (initialization ??= refresh()),
     refresh,
+    refreshRuntime,
     save,
     configurationFor,
     async saveBinding(command, app) {
@@ -211,12 +239,15 @@ export function useKeyboardShortcutSettings({
     dispose() {
       disposed = true;
       serial++;
+      runtimeSerial++;
+      runtimePresentation.value = null;
       recordingToken = null;
       Object.assign(state, {
         loaded: false,
         reading: false,
         busy: false,
         recordingCommand: null,
+        runtimeReading: false,
       });
       if (bridge && sessions.get(bridge) === owner) sessions.delete(bridge);
       owners.delete(owner);

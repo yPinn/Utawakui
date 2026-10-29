@@ -201,9 +201,9 @@ Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與�
 
 沿本案先固定[全域註冊與復原契約](../../contracts/global-keyboard-shortcuts.md)，接唯一 Main manager、唯讀 prepare／CAS 再驗、staging／保存／映射提交、占用與清理失敗降級，以及休眠／喚醒／退出清理。runtime 快照只報 Electron 可觀察的本 App 註冊，不將 isRegistered 當 OS 空閒或獨立存活證據；Store rename 後回已知 bytes 的結果，沒有新增 fsync。
 
-現用 Windows／Electron43.8.3 的隔離 OS 路徑，一次短按與一段重複 keydown 得到14次回呼，且公開API沒有放鍵證據。S10未過，正式 capability allowlist 保持空，不能靠cooldown假單次，也不私加native hook／鍵盤監看。此階段只完成註冊／復原前置；正式命令 envelope、前背景去重、全域錄製入口及S08–S10／S18繼續待定，不將App內或mock通過數當全域已驗。後續須先解決可靠的重複按壓／放鍵證據與實作邊界，再接執行切片。
+現用 Windows／Electron43.8.3 的隔離 OS 路徑，一次短按與一段重複 keydown 得到14次回呼，且公開API沒有放鍵證據。S10未過，正式 capability allowlist 保持空，不能靠cooldown假單次，也不私加native hook／鍵盤監看。此為註冊／復原前置當時的門檻；後續 helper 與 receiver 基礎進度見下一段，全域錄製入口及 S08–S10／S18 完整平台驗收仍待完成，不將 App 內或 mock 通過數當全域已驗。
 
-接續的隔離 Win32 MOD_NOREPEAT 原型可將普通持鍵連發的 13 次通知降至 1 次，並保留 3 次主鍵重按及 10 次快速短按；主鍵仍按住時重組修飾鍵、解除再重建註冊各再觸發一次。Owner 已確認全域操作允許完整組合重新形成時再次觸發；普通持鍵連發只一次，重建／喚醒本身不補觸發，App 內既有 repeat 政策不變。註冊前後各一次的限定鍵狀態取樣，實測可拒絕持鍵註冊並保原註冊、放開後明確重試，仍無法證明完整放鍵歷史。Windows x64 註冊 helper 已接 Main adapter 與封裝：建置時編譯、ASAR manifest 驗實體檔，明列 .NET Framework 4.8 以上前提；不加入 hook、持續監看或執行時編譯／下載。既有 manager 已接可等待 backend 的 busy／CAS／生命週期取消、保存後 runtime 分報與可選來源啟用柵欄；正式 receiver／全域 UI 未接，capability 仍為空，關閉時不啟動 helper。證據、限制與同一交易後續所需的通知世代／封裝條件集中於[Windows 持鍵抑制驗證](../../contracts/global-keyboard-shortcuts.md#windows-持鍵抑制的隔離驗證)，不另立全域計畫或將 S10 改列完成。
+接續的隔離 Win32 MOD_NOREPEAT 原型可將普通持鍵連發的 13 次通知降至 1 次，並保留 3 次主鍵重按及 10 次快速短按；舊重組探針在重按 Ctrl 後又額外送 F11 keydown，不能證明只重按修飾鍵可再次觸發，已撤回該成功判斷。Owner 實體回報主鍵保持時重按 Ctrl 無新增，改為接受主鍵放開再按、修飾鍵可持續按住；再驗主鍵重按／長按回報正常。普通持鍵連發只一次，重建／喚醒本身不補觸發，App 內既有 repeat 政策不變。註冊前後各一次的限定鍵狀態取樣，實測可拒絕持鍵註冊並保原註冊、放開後明確重試，仍無法證明完整放鍵歷史。Windows x64 註冊 helper 已接 Main adapter 與封裝：建置時編譯、ASAR manifest 驗實體檔，明列 .NET Framework 4.8 以上前提；不加入 hook、持續監看或執行時編譯／下載。既有 manager 已接可等待 backend 的 busy／CAS／生命週期取消、保存後 runtime 分報與可選來源啟用柵欄；Main–renderer receiver 已接安裝確認後來源世代、一次性 admission、同一 executor 與 DOM repeat 所有權抑制；UI 與來源跨等待失效分驗，reload／crash／unresponsive 撤租約。正式全域 UI 未開，capability 仍為空，關閉時不啟動 helper；S08／S09 可見前背景驗收仍待完成。證據、限制與同一交易後續所需的通知世代／封裝條件集中於[Windows 持鍵抑制驗證](../../contracts/global-keyboard-shortcuts.md#windows-持鍵抑制的隔離驗證)，不另立全域計畫或將 S10 改列完成。
 
 ## 實作前決策與證據
 

@@ -14,6 +14,7 @@ import { isAppDestination } from '../utils/appDestinationRegistry.js';
 import { focusAppDestinationTrigger } from '../utils/appDestinationFocus.js';
 import { requestHistoryTraversal } from './useNavigationInput.js';
 import { useShortcutCommands } from './useShortcutCommands.js';
+import { useGlobalShortcutReceiver } from './useGlobalShortcutReceiver.js';
 import { hasOpenTransientOverlay } from '../utils/transientOverlay.js';
 import { isShortcutInputBlocked } from '../utils/shortcutInputContext.js';
 import {
@@ -55,7 +56,8 @@ export function useKeyboardShortcuts({
   const commands =
     shortcutConfiguration === undefined ? null : useShortcutCommands();
   let registryRevision = 0,
-    disposed = false;
+    disposed = false,
+    globalReceiver;
   const stopConfiguration = commands
     ? watch(
         () => toValue(shortcutConfiguration),
@@ -72,9 +74,22 @@ export function useKeyboardShortcuts({
             bindings.value = baseline;
             configurationError.value = 'invalid-shortcut-configuration';
           }
+          void globalReceiver?.reconnect();
         },
         { immediate: true, flush: 'sync' },
       )
+    : null;
+  globalReceiver = commands
+    ? useGlobalShortcutReceiver({
+        commands,
+        getShortcutContext: () => ({
+          ...getShortcutContext(),
+          globalBlocked:
+            Boolean(configurationError.value) ||
+            getShortcutContext().globalBlocked,
+        }),
+        getRegistryRevision: () => registryRevision,
+      })
     : null;
 
   function adjustVolume(delta) {
@@ -134,6 +149,10 @@ export function useKeyboardShortcuts({
 
   function handleKeydown(event) {
     if (disposed) return;
+    if (globalReceiver?.owns(event)) {
+      event.preventDefault();
+      return;
+    }
     const suppliedContext = getShortcutContext();
     if (suppliedContext.recording) return;
     if (onPanelShortcut?.(event)) return;
@@ -175,6 +194,7 @@ export function useKeyboardShortcuts({
     if (disposed) return;
     disposed = true;
     stopConfiguration?.();
+    void globalReceiver?.dispose();
     commands?.dispose();
     window.removeEventListener('keydown', handleKeydown);
   }

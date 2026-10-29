@@ -474,6 +474,7 @@ useKeyboardShortcuts({
   shortcutConfiguration: keyboardShortcutSettings.configuration,
   getShortcutContext: () => ({
     recording: keyboardShortcutSettings.isRecording.value,
+    globalBlocked: !keyboardShortcutSettings.state.loaded,
   }),
 });
 </script>

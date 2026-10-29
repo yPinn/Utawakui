@@ -120,6 +120,33 @@ function fixture() {
 }
 
 describe('shortcut command owners', () => {
+  it('global invalidation cannot cancel an App command pending in the same executor', async () => {
+    const f = fixture(),
+      d = deferred();
+    f.player.play.mockImplementationOnce(() => {
+      f.state.pendingStartTrackId = 'a';
+      return d.promise;
+    });
+    const task = f.executor.execute('player.play-pause');
+    f.executor.invalidate('global');
+    expect(f.player.cancelPendingStart).not.toHaveBeenCalled();
+    d.resolve(true);
+    expect((await task).status).toBe('executed');
+  });
+  it('global invalidation cancels only the start that its own command still owns', async () => {
+    const f = fixture(),
+      d = deferred();
+    const play = f.player.play.getMockImplementation();
+    f.player.play.mockImplementationOnce(() => {
+      play();
+      return d.promise;
+    });
+    const task = f.executor.execute('player.play-pause', { scope: 'global' });
+    f.executor.invalidate('global');
+    expect(f.player.cancelPendingStart).toHaveBeenCalledOnce();
+    d.resolve(true);
+    expect((await task).status).toBe('stale');
+  });
   it('adjusts only the main player volume and mute through its owners without needing a track or touching transport', async () => {
     const { executor, player, state, transport, lyrics } = fixture();
     state.track = null;

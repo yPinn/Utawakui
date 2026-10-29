@@ -78,11 +78,16 @@ network install or signed-installer acceptance; see the
   `electron/main/keyboardShortcutHandlers.js` use the existing Main bundle;
   `keyboardShortcutRegistration.js`, `keyboardShortcutRuntime.js` and
   `windowsShortcutBackend.js` add gated registration/recovery to the same bundle.
-  The production global capability stays closed; no hook or command-execution channel is added.
-  fixed get/set intents use the main preload bundle. Pure
+  `keyboardShortcutReceiver.js` adds the main-frame lease, source rearm and bounded
+  single-use admission to the same Main bundle. Fixed receiver connect/confirm/admit/release
+  intents and state/command events use the main preload; the renderer cannot select a command to execute.
+  `shared/globalShortcutReceiver.mjs` uses the existing shared allowlist and bundle closure;
+  renderer reception reuses the existing shortcut executor in `dist/**/*`.
+  The production global capability stays closed; no hook, new executable or dependency is added.
+  Fixed get/set intents use the main preload bundle. Pure
   `shared/keyboardBindingDefinitions.mjs` and `keyboardShortcutContract.mjs`
   enter the existing Main/renderer dependency closure and shared allowlist.
-  Settings/recording consumers, the category/reference presentation and its ten-command catalog are bundled in `dist/**/*`, adjacent tests remain
+  Settings/recording consumers, the read-only background status row, the category/reference presentation and its ten-command catalog are bundled in `dist/**/*`, adjacent tests remain
   excluded, and `keyboard-shortcuts.json` is machine userData rather than a
   packaged asset. The app-owned Windows x64 shortcut helper is compiled from
   `native/keyboard-shortcuts/HotkeyHost.cs` by `scripts/build-keyboard-shortcut-helper.mjs`

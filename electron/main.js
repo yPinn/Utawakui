@@ -1539,6 +1539,8 @@ if (!gotSingleInstanceLock) {
 
     const keyboardShortcutRuntime = createKeyboardShortcutRuntime({
       app,
+      getMainWindow: windowState.getMainWindow,
+      getFocusedWindow: () => BrowserWindow.getFocusedWindow(),
       powerMonitor,
       globalShortcut,
       store: createKeyboardShortcutSettingsStore({
@@ -1558,6 +1560,7 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       store: keyboardShortcutRuntime,
       getRuntime: keyboardShortcutRuntime.snapshot,
+      receiver: keyboardShortcutRuntime.receiver,
       recordDiagnostic,
     });
 

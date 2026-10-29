@@ -26,3 +26,5 @@ Owner修正：共通說明集中揭露，列內只留必要短句；功能／鍵
 Owner 接受同列相同修飾鍵的替代操作共用前綴鍵帽，例如 Shift＋←／↑／↓／→，以斜線表示任選。不同修飾或功能不混併；首組完整 chord 不拆行，可存取名稱逐組展開，實際按鍵值與錄製流程不改。
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+背景快捷鍵先接唯讀狀態，位於快捷鍵展開內容內；沿 `SettingsDocumentItem` nested 列、既有狀態 chip／按鈕／錯誤提示與明暗 tokens，不增加卡片或固定高度。短文只說用途，空 capability 顯示尚未開放，失敗能原位重新讀取；不提供啟用／錄製／保存入口，不因人工單鍵煙霧驗證就開正式 gate。

@@ -16,6 +16,10 @@ const originalArgv = [...process.argv];
 const originalModuleLoad = Module._load;
 
 const MAIN_INVOKE_CHANNELS = [
+  'keyboard-shortcuts:receiver-connect',
+  'keyboard-shortcuts:receiver-confirm',
+  'keyboard-shortcuts:receiver-admit',
+  'keyboard-shortcuts:receiver-release',
   'keyboard-shortcuts:get',
   'keyboard-shortcuts:runtime',
   'keyboard-shortcuts:set',
@@ -312,6 +316,8 @@ const MAIN_INVOKE_CHANNELS = [
 ].sort();
 
 const MAIN_EVENT_CHANNELS = [
+  'keyboard-shortcuts:command',
+  'keyboard-shortcuts:receiver-state',
   'library:performance-settings-invalidated',
   'auto-report:prompt',
   'auto-report:sent',

@@ -1,6 +1,55 @@
-import { SHORTCUT_COMMANDS } from '../../shared/keyboardShortcutContract.mjs';
+import {
+  SHORTCUT_COMMANDS,
+  normalizeShortcutChord,
+} from '../../shared/keyboardShortcutContract.mjs';
 import { createKeyboardBindings } from './inputBindingRegistry.js';
 import { formatShortcutChord } from './keyboardShortcutPresentation.js';
+
+// Read-only presentation, never a capability grant or a command dispatch input.
+export function shortcutRuntimePresentation(runtime) {
+  const phases = [
+    'disabled',
+    'active',
+    'blocked',
+    'degraded',
+    'suspended',
+    'disposed',
+  ];
+  if (
+    !runtime ||
+    !phases.includes(runtime.state) ||
+    typeof runtime.busy !== 'boolean' ||
+    !Array.isArray(runtime.eligibleCommands) ||
+    runtime.eligibleCommands.length > SHORTCUT_COMMANDS.length ||
+    new Set(runtime.eligibleCommands).size !==
+      runtime.eligibleCommands.length ||
+    runtime.eligibleCommands.some(
+      (id) => !SHORTCUT_COMMANDS.some((command) => command.id === id),
+    ) ||
+    !Array.isArray(runtime.active) ||
+    runtime.active.length > runtime.eligibleCommands.length
+  )
+    throw TypeError('Invalid shortcut runtime');
+  const seen = new Set();
+  for (const binding of runtime.active) {
+    if (
+      !binding ||
+      !runtime.eligibleCommands.includes(binding.command) ||
+      seen.has(binding.command)
+    )
+      throw TypeError('Invalid active shortcut');
+    normalizeShortcutChord(binding.chord, 'global');
+    seen.add(binding.command);
+  }
+  if (runtime.busy) return { status: '處理中', tone: 'muted' };
+  if (['blocked', 'degraded', 'suspended', 'disposed'].includes(runtime.state))
+    return { status: '暫停使用', tone: 'warning' };
+  if (!runtime.eligibleCommands.length)
+    return { status: '尚未開放', tone: 'muted' };
+  return runtime.state === 'active' && runtime.active.length
+    ? { status: '已註冊', tone: 'info' }
+    : { status: '未啟用', tone: 'muted' };
+}
 
 export const SHORTCUT_CATEGORIES = Object.freeze(
   [

@@ -26,6 +26,50 @@ function fixture(options = {}) {
   };
 }
 describe('machine shortcut IPC', () => {
+  it('keeps operational receiver failures private and records them through the existing IPC boundary', async () => {
+    const f = fixture({
+      receiver: {
+        connect: () => {
+          throw Error('E:/private/context');
+        },
+      },
+    });
+    const error = await f.handlers['keyboard-shortcuts:receiver-connect'](
+      f.event,
+    ).catch((value) => value);
+    expect(error.message).not.toContain('private');
+    expect(f.recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'receiver-connect',
+        error: expect.any(Error),
+      }),
+    );
+  });
+  it('restricts receiver registration, confirmation and one-time admission to the Main frame', async () => {
+    const receiver = Object.fromEntries(
+      ['connect', 'confirm', 'admit', 'release'].map((name) => [
+        name,
+        vi.fn(() => ({ status: 'ready' })),
+      ]),
+    );
+    const f = fixture({ receiver });
+    for (const name of Object.keys(receiver)) {
+      const handler = f.handlers[`keyboard-shortcuts:receiver-${name}`];
+      expect(await handler({ ...f.event, senderFrame: {} }, {})).toEqual({
+        status: 'invalid-intent',
+      });
+      expect(receiver[name]).not.toHaveBeenCalled();
+    }
+    expect(
+      await f.handlers['keyboard-shortcuts:receiver-connect'](f.event, {
+        command: 'player.next',
+      }),
+    ).toEqual({ status: 'invalid-intent' });
+    expect(
+      await f.handlers['keyboard-shortcuts:receiver-connect'](f.event),
+    ).toEqual({ status: 'ready' });
+    expect(f.handlers['keyboard-shortcuts:execute']).toBeUndefined();
+  });
   it('exposes only a payload-free Main-frame runtime snapshot and never accepts execution intents', async () => {
     const getRuntime = vi.fn(() => ({
       state: 'disabled',

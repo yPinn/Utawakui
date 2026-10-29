@@ -101,7 +101,7 @@ vi.mock('../ui/UiActionMenu.vue', () => ({
 }));
 vi.mock('./SettingsDocumentItem.vue', () => ({
   default: {
-    props: ['title', 'value', 'guidance'],
+    props: ['title', 'value', 'guidance', 'status', 'description'],
     setup:
       (p, { slots }) =>
       () =>
@@ -109,6 +109,8 @@ vi.mock('./SettingsDocumentItem.vue', () => ({
           h('h3', p.title),
           h('p', p.value),
           h('p', p.guidance),
+          h('p', p.status),
+          h('p', p.description),
           slots.actions?.(),
           slots.feedback?.(),
         ]),
@@ -147,6 +149,12 @@ async function setup(
   let sequence = 1;
   const bridge = {
     getKeyboardShortcuts: vi.fn().mockResolvedValue(reply),
+    getKeyboardShortcutRuntime: vi.fn().mockResolvedValue({
+      state: 'disabled',
+      busy: false,
+      eligibleCommands: [],
+      active: [],
+    }),
     setKeyboardShortcuts: vi.fn(async (input) => ({
       status: 'ready',
       revision: (sequence++).toString(16).padStart(64, '0'),
@@ -189,6 +197,29 @@ async function tab(label) {
   await nextTick();
 }
 describe('App shortcut settings document', () => {
+  it('retries read-only background status without saving or exposing a global recorder', async () => {
+    const bridge = await setup();
+    await vi.waitFor(() =>
+      expect(owner.runtimePresentation.value?.status).toBe('尚未開放'),
+    );
+    bridge.getKeyboardShortcutRuntime.mockRejectedValueOnce(
+      Error('private details'),
+    );
+    trigger(button('重新讀取背景快捷鍵狀態'), 'onClick');
+    await vi.waitFor(() =>
+      expect(owner.state.runtimeError).toContain('重新讀取'),
+    );
+    await nextTick();
+    expect(textContent(mounted.root)).not.toContain('private details');
+    expect(owner.canEdit.value).toBe(true);
+    trigger(button('重新讀取背景快捷鍵狀態'), 'onClick');
+    await vi.waitFor(() => expect(owner.state.runtimeError).toBe(''));
+    expect(bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    expect(
+      findAll(mounted.root, (node) => node.props?.role === 'switch'),
+    ).toHaveLength(0);
+    expect(owner.state.recordingCommand).toBe(null);
+  });
   it('orders four categories with 3/5/2 editable rows and a read-only reference, without assigning Space', async () => {
     await setup();
     expect(
@@ -223,9 +254,8 @@ describe('App shortcut settings document', () => {
       findAll(mounted.root, (n) => n.props?.['data-shortcut-command']),
     ).toHaveLength(0);
     expect(textContent(mounted.root)).toContain('鍵盤媒體鍵');
-    expect(textContent(mounted.root)).toContain(
-      '切到其他程式後，自訂快捷鍵不會生效',
-    );
+    expect(textContent(mounted.root)).toContain('背景快捷鍵');
+    expect(textContent(mounted.root)).toContain('尚未開放');
     expect(
       findAll(mounted.root, (n) => n.props?.role === 'dialog'),
     ).toHaveLength(0);

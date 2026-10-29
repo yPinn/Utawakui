@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { h, nextTick, ref } from 'vue';
+import { setImmediate } from 'node:timers/promises';
 import { mount } from '../components/ui/uiTestHost.js';
 import { useAppView } from './useAppView.js';
 
@@ -106,6 +107,67 @@ const customConfig = () => ({
 });
 
 describe('custom command dispatcher', () => {
+  it('suppresses native-owned default DOM chords including repeats and reuses one executor', async () => {
+    const id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    let receive;
+    const offer = {
+      version: 1,
+      receiverId: id,
+      offerId: id,
+      bootId: id,
+      generation: 2,
+      role: 'main',
+      active: [
+        {
+          command: 'player.transpose-up',
+          chord: { key: 'arrowup', ctrl: true, alt: false, shift: false },
+        },
+      ],
+    };
+    const bridge = {
+      onKeyboardShortcutReceiverState: () => () => {},
+      onGlobalShortcutCommand: (cb) => {
+        receive = cb;
+        return () => {};
+      },
+      connectKeyboardShortcutReceiver: async () => ({
+        status: 'offered',
+        offer,
+      }),
+      confirmKeyboardShortcutReceiver: vi.fn(async () => ({
+        status: 'ready',
+        offer: { ...offer, generation: 3 },
+      })),
+      admitGlobalShortcut: async () => ({ status: 'admitted', role: 'main' }),
+      releaseKeyboardShortcutReceiver: async () => ({ status: 'released' }),
+    };
+    window.Utawakui = bridge;
+    await setupShortcuts({ shortcutConfiguration: customConfig() });
+    await setImmediate();
+    expect(
+      dispatchKey('ArrowUp', { ctrlKey: true, repeat: true }),
+    ).toHaveBeenCalled();
+    expect(player.setTransposeSemitones).not.toHaveBeenCalled();
+    const packet = {
+      version: 1,
+      receiverId: id,
+      offerId: id,
+      bootId: id,
+      generation: 3,
+      sequence: 1,
+      contextRevision:
+        bridge.confirmKeyboardShortcutReceiver.mock.calls.at(-1)[0]
+          .contextRevision,
+      command: 'player.transpose-up',
+    };
+    receive(packet);
+    receive(packet);
+    await setImmediate();
+    expect(commands.execute).toHaveBeenCalledTimes(1);
+    expect(createCommands).toHaveBeenCalledTimes(1);
+    dispatchKey('ArrowDown', { ctrlKey: true });
+    expect(player.setTransposeSemitones).toHaveBeenCalledOnce();
+  });
   it('also yields a custom volume arrow to a focused reader while leaving other custom modifier policy intact', async () => {
     await setupShortcuts({
       shortcutConfiguration: {

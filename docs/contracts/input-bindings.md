@@ -32,7 +32,7 @@
 
 Chord 僅含邏輯 `key` 與明示 boolean 的 `ctrl`／`alt`／`shift`，不收 accelerator 字串。正規化大小寫、Up／Down／Left／Right 至 Arrow 名稱、Spacebar／空白字元至 Space；首版子集為 ASCII A–Z、0–9、四方向鍵、Home／End／PageUp／PageDown、Space、F10–F12。符號、非 ASCII、numpad、媒體鍵、Tab／Enter／Esc、F1–F9（包含 ADR 保留 F4 與 dev 工具）不開放。Meta／Windows 不在 DTO；Ctrl+Alt 組合、Alt+Space，以及 Ctrl 搭配 A／C／F／H／L／N／O／P／R／S／T／V／W／X／Y／Z（含 Shift）保留。Global 另須 Ctrl 或 Alt，且拒絕 Windows debugger 保留的 F12；App 內 F12 不變。這是允許提交的邏輯子集，不代表 OS 已註冊或所有鍵盤配置已實測。
 
-驗證同時檢查有效 App、desired global（即使全域關閉）與呼叫端提供的固定 registry；Ctrl／Alt／Meta 精確相符，舊 `shift: null` 與兩種 Shift 都重疊。同 scope／不同命令、跨 scope／不同命令及固定鍵重疊拒絕，錯誤只附兩個命令識別。跨 scope 同命令同 chord 可存為候選；單一執行者與 global active 的分派仍待後續接線。原可替換命令依完整配置重新計算，不拿舊 Ctrl+↑／↓ 當不可釋放的固定鍵。
+驗證同時檢查有效 App、desired global（即使全域關閉）與呼叫端提供的固定 registry；Ctrl／Alt／Meta 精確相符，舊 `shift: null` 與兩種 Shift 都重疊。同 scope／不同命令、跨 scope／不同命令及固定鍵重疊拒絕，錯誤只附兩個命令識別。跨 scope 同命令同 chord 可存為候選；接收端已共用單一 executor，只有 Main 確認 active 的 chord 才優先抑制 DOM（包含 repeat），確認來源柵欄後由 OS envelope 分派。未註冊／失敗的 desired 不吞 App 操作；正式 global capability 仍為空。原可替換命令依完整配置重新計算，不拿舊 Ctrl+↑／↓ 當不可釋放的固定鍵。
 
 `createKeyboardBindings({ shortcutConfiguration })` 先驗整份候選，再移除被停用／替換的舊命令，新增每命令最多一組 App 綁定；不使用 global chord。default 沿舊 Key 長按政策，明示 custom 才啟用 `noRepeat`／`skipIfHandled`。候選解析經 [shortcutInputContext.js](../../src/utils/shortcutInputContext.js) 讓位於原生 editable、interactive 祖先與 composed path 的 ARIA widget；IME composing／229、AltGraph、Meta、numpad、repeat、已處理事件也拒絕。dispatcher 也讓 custom 避開現有 transient overlay，並支援 caller 的額外 blocked／recording context；錄製期間整個 dispatcher 讓位。下列舊綁定的浮層差異保留，不因此宣稱已修正。
 
@@ -73,7 +73,9 @@ Settings 展開快捷鍵後依播放控制、音訊調整、歌詞對時、操�
 
 本階段 Main 保存只接受 global 關閉、所有 global chord 為 null 的配置；含未支援 global 資料的檔案保持唯讀。純 validator 仍能預先檢查跨 scope 衝突，不代表已開放全域設定。保存前 Main 重驗十命令、與共用固定鍵的衝突及 expected revision，衝突不寫；沿既有原子 JSON primitive 使用 Main 隨機命名 staging，最後 rename 安裝，失敗清理自己的 staging，不改舊檔。沒有新增 dependency／worker 或 library 欄位。
 
-全域註冊／占用／復原前置現沿[專用契約](global-keyboard-shortcuts.md)由唯一 Main manager 管理。Store 的 prepare 唯讀驗意圖及 CAS，set 在註冊 staging 後再驗 CAS；以既有原子 buffer primitive 寫入已序列化 bytes，rename 成功即回本次配置與其 digest，不因額外重讀失敗誤判已提交結果。這提供原子可見性，沒有新增 fsync 或宣稱斷電耐久。正式 capability allowlist 因 S10 重複 keydown 未過而維持空；App-only 保存範圍不變，未接全域命令執行／錄製入口。
+展開快捷鍵設定時，同一 settings owner 另以既有唯讀 runtime IPC 取得背景狀態；不寫偏好、不重新註冊或啟動 helper。`SettingsDocumentItem` 共用狀態列呈現尚未開放／處理中／暫停等短狀態，讀取失敗可重新讀取；不影響 App 偏好已載入或可編輯狀態。有界等待、獨立讀取序號與 dispose 防止晚到結果復活。正式 capability 仍空且 renderer 保存範圍不變，沒有全域開關或錄製入口。
+
+全域註冊／占用／復原現沿[專用契約](global-keyboard-shortcuts.md)由唯一 Main manager 管理。Store 的 prepare 唯讀驗意圖及 CAS，set 在註冊 staging 後再驗 CAS；以既有原子 buffer primitive 寫入已序列化 bytes，rename 成功即回本次配置與其 digest，不因額外重讀失敗誤判已提交結果。這提供原子可見性，沒有新增 fsync 或宣稱斷電耐久。單一接收端已接安裝確認、來源 generation、一次性 admission 與 UI／來源失效屏障，沿既有 commands／owners；正式 capability allowlist 因平台驗收未完維持空，App-only 保存範圍不變，全域錄製入口未開放。
 
 `keyboard-shortcuts:get` 無 payload；`keyboard-shortcuts:set` 只收 expected revision 與完整配置。兩者只接受主控制台的 main frame，Performer／Output／foreign frame 不可使用；preload 僅暴露固定方法，將 readonly renderer 配置投影為有界普通 DTO，不轉送 callback、任意欄位、檔案路徑或 accelerator。I/O 錯誤沿既有 Main diagnostics／public error 邊界；壞資料與 CAS 衝突是有界預期結果。
 

@@ -457,6 +457,20 @@ function deferred() {
   });
   return { promise, resolve };
 }
+it('rearms a receiver with a new native epoch while retaining registrations and saved bytes', async () => {
+  const f = fixture();
+  f.globalShortcut.activate = vi.fn(async () => true);
+  await f.set(configuration([['player.next', chord('k')]]));
+  const bytes = fs.readFileSync(f.file),
+    generation = f.manager.snapshot().generation;
+  expect(await f.manager.rearm(generation - 1)).toBeNull();
+  const armed = await f.manager.rearm(generation);
+  expect(armed.generation).toBeGreaterThan(generation);
+  expect(armed.busy).toBe(false);
+  expect(fs.readFileSync(f.file)).toEqual(bytes);
+  expect(f.globalShortcut.register).toHaveBeenCalledTimes(1);
+  expect(f.globalShortcut.unregister).not.toHaveBeenCalled();
+});
 it('treats a native held-key refusal as expected without claiming or diagnosing a registration', async () => {
   const f = fixture();
   f.globalShortcut.register.mockRejectedValue(

@@ -444,6 +444,35 @@ function keyboardShortcutSettingsIntent(input) {
 
 contextBridge.exposeInMainWorld('Utawakui', {
   getKeyboardShortcuts: () => ipcRenderer.invoke('keyboard-shortcuts:get'),
+  connectKeyboardShortcutReceiver: () =>
+    ipcRenderer.invoke('keyboard-shortcuts:receiver-connect'),
+  confirmKeyboardShortcutReceiver: (input) =>
+    ipcRenderer.invoke(
+      'keyboard-shortcuts:receiver-confirm',
+      releaseTargetIntent(input, ['receiverId', 'offerId', 'contextRevision']),
+    ),
+  admitGlobalShortcut: (input) =>
+    ipcRenderer.invoke(
+      'keyboard-shortcuts:receiver-admit',
+      releaseTargetIntent(input, ['receiverId', 'offerId', 'sequence']),
+    ),
+  releaseKeyboardShortcutReceiver: (input) =>
+    ipcRenderer.invoke(
+      'keyboard-shortcuts:receiver-release',
+      releaseTargetIntent(input, ['receiverId']),
+    ),
+  onKeyboardShortcutReceiverState: (callback) => {
+    const listener = (_event, value) => callback(value);
+    ipcRenderer.on('keyboard-shortcuts:receiver-state', listener);
+    return () =>
+      ipcRenderer.removeListener('keyboard-shortcuts:receiver-state', listener);
+  },
+  onGlobalShortcutCommand: (callback) => {
+    const listener = (_event, value) => callback(value);
+    ipcRenderer.on('keyboard-shortcuts:command', listener);
+    return () =>
+      ipcRenderer.removeListener('keyboard-shortcuts:command', listener);
+  },
   getKeyboardShortcutRuntime: () =>
     ipcRenderer.invoke('keyboard-shortcuts:runtime'),
   setKeyboardShortcuts: (input) =>

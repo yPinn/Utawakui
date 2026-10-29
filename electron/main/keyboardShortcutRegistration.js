@@ -464,6 +464,26 @@ function createKeyboardShortcutRegistration({
     return stopTask;
   }
   return {
+    async rearm(expectedGeneration) {
+      if (
+        disposed ||
+        transitioning ||
+        stopTask ||
+        stopTarget ||
+        generation !== expectedGeneration
+      )
+        return null;
+      if (state === 'disabled') return snapshot();
+      if (state !== 'active') return null;
+      const next = new Map(active),
+        transaction = begin();
+      try {
+        await commit(next, transaction.epoch);
+      } finally {
+        end(transaction);
+      }
+      return snapshot();
+    },
     async get() {
       if (disposed) return reply({ status: 'unavailable' });
       if (transitioning || stopTask) return reply({ status: 'busy' });

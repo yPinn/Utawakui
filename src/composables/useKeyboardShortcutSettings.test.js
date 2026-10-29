@@ -37,6 +37,88 @@ function setup() {
 }
 
 describe('shared machine shortcut settings owner', () => {
+  it('reads runtime status separately without saving, activating or disabling App preferences', async () => {
+    const f = setup();
+    f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue({
+      state: 'disabled',
+      busy: false,
+      eligibleCommands: [],
+      active: [],
+    });
+    await f.owner.initialize();
+    const configuration = f.owner.configuration.value;
+    expect(await f.owner.refreshRuntime()).toBe(true);
+    expect(f.owner.runtimePresentation.value.status).toBe('尚未開放');
+    expect(f.owner.configuration.value).toBe(configuration);
+    expect(f.owner.state.loaded).toBe(true);
+    expect(f.bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    f.owner.dispose();
+  });
+  it('fails closed on malformed runtime and retries without changing saved bindings', async () => {
+    const f = setup();
+    f.bridge.getKeyboardShortcutRuntime = vi.fn().mockResolvedValue({
+      state: 'active',
+      busy: false,
+      eligibleCommands: ['arbitrary'],
+      active: [],
+    });
+    await f.owner.initialize();
+    expect(await f.owner.refreshRuntime()).toBe(false);
+    expect(f.owner.runtimePresentation.value).toBe(null);
+    expect(f.owner.state.runtimeError).toContain('重新讀取');
+    expect(f.owner.canEdit.value).toBe(true);
+    f.bridge.getKeyboardShortcutRuntime.mockResolvedValue({
+      state: 'disabled',
+      busy: false,
+      eligibleCommands: [],
+      active: [],
+    });
+    expect(await f.owner.refreshRuntime()).toBe(true);
+    expect(f.owner.state.runtimeError).toBe('');
+    expect(f.bridge.setKeyboardShortcuts).not.toHaveBeenCalled();
+    f.owner.dispose();
+  });
+  it('does not overlap runtime reads or apply a reply after disposal', async () => {
+    const f = setup(),
+      pending = deferred();
+    f.bridge.getKeyboardShortcutRuntime = vi
+      .fn()
+      .mockReturnValue(pending.promise);
+    const reading = f.owner.refreshRuntime();
+    expect(await f.owner.refreshRuntime()).toBe(false);
+    f.owner.dispose();
+    pending.resolve({
+      state: 'disabled',
+      busy: false,
+      eligibleCommands: [],
+      active: [],
+    });
+    expect(await reading).toBe(false);
+    expect(f.owner.runtimePresentation.value).toBe(null);
+    expect(f.owner.state.runtimeReading).toBe(false);
+    expect(f.bridge.getKeyboardShortcutRuntime).toHaveBeenCalledTimes(1);
+  });
+  it('bounds a hung runtime read and ignores its eventual reply', async () => {
+    vi.useFakeTimers();
+    const f = setup(),
+      pending = deferred();
+    f.bridge.getKeyboardShortcutRuntime = vi
+      .fn()
+      .mockReturnValue(pending.promise);
+    const reading = f.owner.refreshRuntime();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(await reading).toBe(false);
+    pending.resolve({
+      state: 'disabled',
+      busy: false,
+      eligibleCommands: [],
+      active: [],
+    });
+    await Promise.resolve();
+    expect(f.owner.runtimePresentation.value).toBe(null);
+    expect(f.owner.state.runtimeReading).toBe(false);
+    f.owner.dispose();
+  });
   it('rejects fabricated write acknowledgements without activating them', async () => {
     for (const reply of [
       { status: 'ready', revision: null, configuration: config() },

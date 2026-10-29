@@ -3,7 +3,71 @@ import { defaultShortcutConfiguration } from '../../shared/keyboardShortcutContr
 import {
   shortcutSettingsRows,
   SHORTCUT_REFERENCE_SECTIONS,
+  shortcutRuntimePresentation,
 } from './keyboardShortcutSettingsPresentation.js';
+
+it('presents bounded runtime status without treating held or desired keys as executable', () => {
+  const runtime = {
+    state: 'disabled',
+    busy: false,
+    eligibleCommands: [],
+    active: [],
+  };
+  expect(shortcutRuntimePresentation(runtime)).toMatchObject({
+    status: '尚未開放',
+    tone: 'muted',
+  });
+  expect(
+    shortcutRuntimePresentation({
+      ...runtime,
+      eligibleCommands: ['player.mute'],
+    }),
+  ).toMatchObject({ status: '未啟用' });
+  expect(
+    shortcutRuntimePresentation({
+      ...runtime,
+      state: 'degraded',
+      held: [{ command: 'player.mute' }],
+    }),
+  ).toMatchObject({ status: '暫停使用', tone: 'warning' });
+  expect(
+    shortcutRuntimePresentation({ ...runtime, state: 'active', busy: true }),
+  ).toMatchObject({ status: '處理中' });
+  const binding = {
+    command: 'player.mute',
+    chord: { key: 'f11', ctrl: true, alt: false, shift: true },
+  };
+  expect(
+    shortcutRuntimePresentation({
+      ...runtime,
+      state: 'active',
+      eligibleCommands: ['player.mute'],
+      active: [binding],
+    }),
+  ).toMatchObject({ status: '已註冊' });
+  for (const active of [
+    [{ ...binding, command: 'unknown.command' }],
+    [{ ...binding, chord: { key: 'f11' } }],
+    [binding, binding],
+  ])
+    expect(() =>
+      shortcutRuntimePresentation({
+        ...runtime,
+        state: 'active',
+        eligibleCommands: ['player.mute', 'player.next'],
+        active,
+      }),
+    ).toThrow();
+  for (const value of [
+    null,
+    { ...runtime, state: 'private text' },
+    { ...runtime, busy: 'yes' },
+    { ...runtime, eligibleCommands: ['private command'] },
+    { ...runtime, eligibleCommands: ['player.mute', 'player.mute'] },
+    { ...runtime, active: [{ command: 'player.mute' }] },
+  ])
+    expect(() => shortcutRuntimePresentation(value)).toThrow();
+});
 import {
   createKeyboardBindings,
   resolveKeyboardBinding,

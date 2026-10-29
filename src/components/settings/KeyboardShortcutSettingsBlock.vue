@@ -117,11 +117,22 @@ const feedback = computed(
   () =>
     settings.state.readError || (!lastAction.value && settings.state.saveError),
 );
+const backgroundStatus = computed(() =>
+  settings.state.runtimeReading
+    ? { status: '讀取中', tone: 'muted' }
+    : settings.state.runtimeError
+      ? { status: '無法讀取', tone: 'warning' }
+      : (settings.runtimePresentation.value ?? {
+          status: '尚未讀取',
+          tone: 'muted',
+        }),
+);
 onMounted(() => {
   void settings.initialize();
 });
 watch(expanded, (open) => {
-  if (!open) {
+  if (open) void settings.refreshRuntime();
+  else {
     recorder.cancel({ focus: false });
     closeMenu();
   }
@@ -364,8 +375,28 @@ function leaveEditor(event) {
         @select="selectMenu"
         @close="closeMenu"
       />
+      <SettingsDocumentItem
+        title="背景快捷鍵"
+        description="切到其他程式時使用的快捷鍵。"
+        variant="nested"
+        :status="backgroundStatus.status"
+        :status-tone="backgroundStatus.tone"
+        status-live
+      >
+        <template #actions>
+          <UiButton
+            aria-label="重新讀取背景快捷鍵狀態"
+            :loading="settings.state.runtimeReading"
+            :disabled="settings.isRecording.value || settings.state.busy"
+            @click="settings.refreshRuntime"
+            >重新讀取</UiButton
+          >
+        </template>
+        <template v-if="settings.state.runtimeError" #feedback>
+          <UiHint tone="danger">{{ settings.state.runtimeError }}</UiHint>
+        </template>
+      </SettingsDocumentItem>
       <div class="keyboard-shortcut-settings__footer">
-        <UiHint>切到其他程式後，自訂快捷鍵不會生效。</UiHint>
         <UiButton
           v-if="activeTab !== 'reference'"
           aria-label="恢復全部快捷鍵預設"
