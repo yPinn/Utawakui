@@ -86,7 +86,7 @@ relay 與其父套用操作沿用 10 秒期限；只有對應父 revision 的取
 
 內部建構選項 `monitorBridgeReturn=false` 保留前一版 staged legacy 回退：先準備綁 capture sink 的靜音候選，再進來源 native lane 關舊 gate、恢復來源 default、接 inst／voc bridge 並升級。此路徑前置不接來源／input，失敗保留健康原 capture／偏好；提交後失敗則關閘，native lane 仍等實際呼叫 settle，再由最新有效交易復原，不退成未確認 dry。裝置／BGM 準備仍沿原雙路交易，relay 準備或 close 晚回不占該 lane。
 
-relay 將 bridge 的 buffering／sample-rate／時鐘及短零風險放到 monitor，未消除 bridge 風險，不保證監聽零延遲或品質。此路徑的 monitor 品質未通過；有限實機與人工驗收紀錄另行保存，實體聲學延遲尚未量測。
+relay 將 bridge 的 buffering／sample-rate／時鐘及短零風險放到 monitor，未消除 bridge 風險，不保證監聽零延遲或品質。舊 N3 的 53.33ms 與 staged 後 52.67ms 證據均保留且各自綁舊來源快照；新 relay 已完成[單次有限 N3](../research/audio/capture-only-path-validation-2026-10-30.md#n3-capture-直出monitor-relay-單次驗收2026-10-31)，capture／同次 OBS 未見同項短零，但 monitor 出現六段 10ms 精確零及非零差異，使用者聽見卡頓／雜音、品質不接受；實體聲學延遲仍未量測。
 
 BGM 保留自己的 audio、混音與 post-gain bridge；既有 `prepareCaptureOutput()` 確認回到原 capture context 後才回 true，包含尚在排隊的直接準備。Lease 仍在最後 capture 總音量前、繞過演唱控制；未經準備不能在直接分支啟用 input。Mic 研究、試聽、節拍器與其 owners 不接入此路徑。
 
