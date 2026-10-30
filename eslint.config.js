@@ -22,6 +22,10 @@ const I18N_MIGRATED = [
   'src/utils/{keyboardShortcutPresentation,keyboardShortcutSettingsPresentation,inputBindingRegistry}.js',
   'shared/{keyboardBindingDefinitions,keyboardShortcutContract}.mjs',
   'electron/main/keyboardShortcutHandlers.js',
+  'src/components/settings/{SettingsLibrarySection,LibraryMetadataSettingsRow,LibraryStorageSettingsRow,PlaybackHistorySettingsRow,LibraryReconciliationModal,ReconciliationMetadataFields,ReconciliationMergePreview,LibraryTagWriteback}.vue',
+  'src/composables/{useLibraryReconciliation,useLibraryTagWriteback,useLibraryMetadataMaintenance,useLibraryStorage,usePlaybackHistory}.js',
+  'src/utils/{libraryReconciliation,format}.js',
+  'electron/main/{libraryStorageHandlers,libraryMetadataHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

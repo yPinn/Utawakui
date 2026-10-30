@@ -8,6 +8,7 @@ import {
   reconciliationReason,
 } from '../../utils/libraryReconciliation.js';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   preview: { type: Object, required: true },
   choices: { type: Object, default: () => ({}) },
@@ -16,9 +17,9 @@ const props = defineProps({
 const emit = defineEmits(['update:choices']);
 const prefix = useId();
 const options = [
-  { value: 'suggested', label: '建議值（保留人工資料）' },
-  { value: 'keep', label: '保留原值' },
-  { value: 'other', label: '採用另一張' },
+  { value: 'suggested', label: t('reconciliation.mergePreview.suggested') },
+  { value: 'keep', label: t('reconciliation.mergePreview.keep') },
+  { value: 'other', label: t('reconciliation.mergePreview.other') },
 ];
 const display = (field, value) =>
   field === 'type' ? releaseTypeLabel(value) : displayMetadata(value);
@@ -33,16 +34,19 @@ function choose(field, value) {
 <template>
   <div class="reconciliation-merge">
     <p class="reconciliation-merge__summary">
-      保留「{{ preview.kept.name }}」，接入「{{
-        preview.retired.name
-      }}」的曲序。
+      {{
+        t('reconciliation.mergePreview.summary', {
+          kept: preview.kept.name,
+          retired: preview.retired.name,
+        })
+      }}
     </p>
     <UiHint v-if="!preview.mergeable">{{
       reconciliationReason(preview.reason)
     }}</UiHint>
-    <UiHint v-if="preview.mergeable"
-      >保留原發行與封面，便條及照片一併保留；可復原。</UiHint
-    >
+    <UiHint v-if="preview.mergeable">{{
+      t('reconciliation.mergePreview.keptHint')
+    }}</UiHint>
     <fieldset
       v-for="field in preview.fields"
       :key="field.field"
@@ -51,13 +55,23 @@ function choose(field, value) {
     >
       <legend>{{ MERGE_LABELS[field.field] }}</legend>
       <p class="reconciliation-merge__comparison">
-        原值：{{ display(field.field, field.kept) }}<br />另一張：{{
-          display(field.field, field.other)
+        {{
+          t('reconciliation.mergePreview.kept', {
+            value: display(field.field, field.kept),
+          })
+        }}<br />{{
+          t('reconciliation.mergePreview.otherValue', {
+            value: display(field.field, field.other),
+          })
         }}
       </p>
       <UiSelect
         :id="`${prefix}-${field.field}`"
-        :label="`${MERGE_LABELS[field.field]}的合併方式`"
+        :label="
+          t('reconciliation.mergePreview.methodNamed', {
+            field: MERGE_LABELS[field.field],
+          })
+        "
         label-hidden
         :model-value="choices[field.field] ?? 'suggested'"
         :options="options"
@@ -65,23 +79,35 @@ function choose(field, value) {
         @update:model-value="choose(field.field, $event)"
       />
       <p class="reconciliation-merge__comparison">
-        合併後：{{
-          display(
-            field.field,
-            choices[field.field] === 'other'
-              ? field.other
-              : choices[field.field] === 'keep'
-                ? field.kept
-                : field.proposed,
-          )
+        {{
+          t('reconciliation.mergePreview.after', {
+            value: display(
+              field.field,
+              choices[field.field] === 'other'
+                ? field.other
+                : choices[field.field] === 'keep'
+                  ? field.kept
+                  : field.proposed,
+            ),
+          })
         }}
       </p>
     </fieldset>
-    <UiHint v-if="preview.movedObjects"
-      >保留另一頁的 {{ preview.movedObjects }} 個物件。</UiHint
-    >
+    <UiHint v-if="preview.movedObjects">{{
+      t(
+        'reconciliation.mergePreview.movedObjects',
+        { count: preview.movedObjects },
+        preview.movedObjects,
+      )
+    }}</UiHint>
     <p class="reconciliation-merge__comparison">
-      {{ preview.tracks.length }} 首本地曲目，音檔不變。
+      {{
+        t(
+          'reconciliation.mergePreview.tracks',
+          { count: preview.tracks.length },
+          preview.tracks.length,
+        )
+      }}
     </p>
   </div>
 </template>

@@ -5,6 +5,7 @@ import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
 import { createPlaybackQualificationTracker } from '../utils/playbackHistoryQualification.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 const state = reactive({
   entries: [],
@@ -75,7 +76,7 @@ async function recordQualifiedTrack(trackId) {
     if (current === historyRevision) state.updateError = null;
   } catch {
     if (current === historyRevision)
-      state.updateError = '最近播放紀錄暫時無法更新。';
+      state.updateError = t('librarySettings.history.updateFailed');
   }
 }
 
@@ -139,7 +140,7 @@ function initialize() {
         }
       } catch {
         if (current === historyRevision)
-          state.readError = '最近播放紀錄暫時無法讀取。';
+          state.readError = t('librarySettings.history.readFailed');
       }
     }
     try {
@@ -179,7 +180,7 @@ async function refresh() {
     return true;
   } catch {
     if (current === historyRevision)
-      state.readError = '最近播放紀錄暫時無法讀取。';
+      state.readError = t('librarySettings.history.readFailed');
     return false;
   } finally {
     if (current === historyRevision) state.isReading = false;
@@ -204,16 +205,16 @@ async function clear() {
     state.sourceRecency = {};
     notifications.notify({
       key: NOTIFICATION_KEYS.PLAYBACK_HISTORY_CLEAR,
-      title: '播放紀錄已清除',
-      message: '播放佇列與歌單已保留。',
+      title: t('librarySettings.history.cleared'),
+      message: t('librarySettings.history.clearedMessage'),
     });
     return true;
   } catch {
     notifications.notify({
       key: NOTIFICATION_KEYS.PLAYBACK_HISTORY_CLEAR,
       tone: 'danger',
-      title: '播放紀錄未清除',
-      message: '請再試一次。',
+      title: t('librarySettings.history.notCleared'),
+      message: t('librarySettings.history.retry'),
     });
     return false;
   } finally {

@@ -4,5 +4,13 @@
   "confirm": "Confirm",
   "save": "Save",
   "saving": "Saving",
-  "ok": "OK"
+  "ok": "OK",
+  "sentenceJoin": " ",
+  "listSeparator": ", ",
+  "none": "Not provided",
+  "blank": "Blank",
+  "back": "Back",
+  "stopping": "Stopping",
+  "previousPage": "Previous",
+  "nextPage": "Next"
 }

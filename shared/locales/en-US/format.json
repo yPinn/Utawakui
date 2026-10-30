@@ -1,0 +1,7 @@
+{
+  "duration": {
+    "hoursMinutes": "{hours} hr {minutes} min",
+    "hours": "{hours} hr",
+    "minutes": "{minutes} min"
+  }
+}

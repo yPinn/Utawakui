@@ -6,6 +6,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   recordCount: { type: Number, default: 0 },
@@ -20,12 +21,16 @@ const isMenuOpen = shallowRef(false);
 const menuAnchorEl = shallowRef(null);
 
 const valueLabel = computed(() => {
-  if (props.readError) return '尚未確認播放紀錄';
-  if (props.isLoading) return '讀取中';
-  if (props.isClearing) return '清除中';
+  if (props.readError) return t('librarySettings.history.unconfirmed');
+  if (props.isLoading) return t('librarySettings.reading');
+  if (props.isClearing) return t('librarySettings.history.clearing');
   return props.recordCount > 0
-    ? `已保存 ${props.recordCount} 首`
-    : '尚無播放紀錄';
+    ? t(
+        'librarySettings.history.saved',
+        { count: props.recordCount },
+        props.recordCount,
+      )
+    : t('librarySettings.history.empty');
 });
 
 const menuAnchor = computed(() => ({
@@ -42,7 +47,7 @@ const menuContent = computed(() => ({
           id: 'clear',
           kind: 'action',
           value: 'clear',
-          label: '清除播放紀錄',
+          label: t('librarySettings.history.clear'),
           icon: ListX,
           intent: 'danger',
           disabled:
@@ -74,31 +79,34 @@ function handleMenuSelect(actionId) {
   <div class="playback-history-settings-row">
     <SettingsDocumentItem
       :icon="Clock"
-      title="播放紀錄"
+      :title="t('librarySettings.history.title')"
       :value="valueLabel"
-      guidance="自動保存；清除不影響佇列或歌單。"
+      :guidance="t('librarySettings.history.guidance')"
     >
       <template #actions>
         <UiIconButton
           :icon="Ellipsis"
-          label="播放紀錄選項"
+          :label="t('librarySettings.history.options')"
           aria-haspopup="menu"
           :aria-expanded="isMenuOpen ? 'true' : 'false'"
           @click="openMenu"
         />
       </template>
       <template v-if="error" #feedback>
-        <UiHint tone="danger" role="alert"
-          >{{ readError ? '播放紀錄無法讀取' : '播放紀錄未更新' }}：{{
-            error
-          }}</UiHint
-        >
+        <UiHint tone="danger" role="alert">{{
+          t(
+            readError
+              ? 'librarySettings.history.readFailedNamed'
+              : 'librarySettings.history.updateFailedNamed',
+            { error },
+          )
+        }}</UiHint>
         <UiButton
           v-if="readError"
           variant="ghost"
           :loading="isLoading"
           @click="emit('refresh')"
-          >重新讀取</UiButton
+          >{{ t('librarySettings.reload') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>
@@ -107,7 +115,7 @@ function handleMenuSelect(actionId) {
       :open="isMenuOpen"
       :anchor="menuAnchor"
       size="sm"
-      aria-label="播放紀錄操作"
+      :aria-label="t('librarySettings.history.actions')"
       :content="menuContent"
       @select="handleMenuSelect"
       @close="closeMenu"

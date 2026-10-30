@@ -1,20 +1,20 @@
 import { reactive, readonly } from 'vue';
+import { t } from '../utils/i18n.js';
 
 const sessions = new WeakMap();
 const unavailable = {};
 const MESSAGES = {
-  busy: '音源正在使用中，請停止播放、預覽或處理後再恢復。',
-  conflict: '資料已變更，請重新檢查後再確認。',
-  stale: '曲庫位置已變更，請重新檢查。',
-  expired: '這份預覽已失效，請重新檢查。',
-  'source-missing': '參考資料未提供這個欄位，請保留目前值或手動輸入。',
-  'invalid-intent': '欄位內容不完整或不合法，請檢查後再試。',
-  'recovery-required': '上次寫入尚未完成，請先恢復未完成操作。',
-  'recovery-conflict':
-    '未完成操作涉及的資料已被修改，請保留現有檔案並檢查備份。',
-  'asset-conflict': '兩張作品的頁面物件有衝突，請先整理後重新檢查。',
-  'asset-limit': '合併後的頁面物件超過上限，請先整理後重新檢查。',
-  limit: '本次資料超過可處理上限，請縮小範圍後再試。',
+  busy: t('reconciliation.messages.busy'),
+  conflict: t('reconciliation.messages.conflict'),
+  stale: t('reconciliation.messages.stale'),
+  expired: t('reconciliation.messages.expired'),
+  'source-missing': t('reconciliation.messages.sourceMissing'),
+  'invalid-intent': t('reconciliation.messages.invalidIntent'),
+  'recovery-required': t('reconciliation.messages.recoveryRequired'),
+  'recovery-conflict': t('reconciliation.messages.recoveryConflict'),
+  'asset-conflict': t('reconciliation.messages.assetConflict'),
+  'asset-limit': t('reconciliation.messages.assetLimit'),
+  limit: t('reconciliation.messages.limit'),
 };
 
 function createSession(bridge) {
@@ -60,13 +60,14 @@ function createSession(bridge) {
   function check(value, statuses) {
     if (statuses.includes(value?.status)) return true;
     if (value?.status === 'cancelled') {
-      state.message = '已停止檢查。';
+      state.message = t('reconciliation.messages.stopped');
       return false;
     }
     state.needsRecovery =
       value?.status === 'recovery-required' ||
       value?.status === 'recovery-conflict';
-    state.error = MESSAGES[value?.status] ?? '目前無法完成操作，請稍後再試。';
+    state.error =
+      MESSAGES[value?.status] ?? t('reconciliation.messages.failed');
     return false;
   }
   async function run(work) {
@@ -77,7 +78,7 @@ function createSession(bridge) {
     try {
       return await work(generation);
     } catch {
-      state.error ||= '目前無法完成操作，請稍後再試。';
+      state.error ||= t('reconciliation.messages.failed');
       return false;
     } finally {
       state.busy = false;
@@ -176,7 +177,7 @@ function createSession(bridge) {
       });
       if (!accepts(value, token) || !check(value, ['saved'])) return false;
       const success = await loadScan(token);
-      if (success) state.message = '已儲存到曲庫。';
+      if (success) state.message = t('reconciliation.messages.saved');
       return success;
     });
   }
@@ -199,7 +200,7 @@ function createSession(bridge) {
       });
       if (!accepts(value, token) || !check(value, ['saved'])) return false;
       const success = await loadScan(token);
-      if (success) state.message = '已復原發行合併。';
+      if (success) state.message = t('reconciliation.messages.undone');
       return success;
     });
   }
@@ -211,7 +212,7 @@ function createSession(bridge) {
       return true;
     } catch {
       state.cancelling = false;
-      state.error = '目前無法停止，請稍後再試。';
+      state.error = t('reconciliation.messages.stopFailed');
       return false;
     }
   }

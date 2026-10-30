@@ -3,6 +3,7 @@ import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
 import storageValues from '../../shared/libraryStorageValues.json';
 import { useAppNotifications } from './useAppNotifications.js';
 import { formatBytes } from '../utils/format.js';
+import { t } from '../utils/i18n.js';
 
 function resolveBridge(bridge) {
   if (bridge) return bridge;
@@ -44,7 +45,7 @@ function createStorageSession(bridge) {
     if (state.saving || state.cleaning) return false;
     const current = ++revision;
     if (typeof bridge?.getLibraryStorage !== 'function') {
-      state.readError = '目前無法讀取曲庫空間。';
+      state.readError = t('librarySettings.storage.readFailed');
       return false;
     }
 
@@ -57,7 +58,7 @@ function createStorageSession(bridge) {
       return true;
     } catch {
       if (current !== revision) return false;
-      state.readError = '目前無法讀取曲庫空間。';
+      state.readError = t('librarySettings.storage.readFailed');
       return false;
     } finally {
       if (current === revision) state.loading = false;
@@ -92,7 +93,7 @@ function createStorageSession(bridge) {
       state.readError = '';
       return true;
     } catch {
-      state.saveError = '目前無法儲存曲庫空間設定，已保留原設定。';
+      state.saveError = t('librarySettings.storage.saveFailed');
       return false;
     } finally {
       state.saving = false;
@@ -114,19 +115,25 @@ function createStorageSession(bridge) {
       const freedBytes = result?.cleanup?.freedBytes;
       notifications.notify({
         key: NOTIFICATION_KEYS.LIBRARY_CLEANUP,
-        title: freedBytes > 0 ? '去人聲版本已清理' : '目前不需清理',
+        title: t(
+          freedBytes > 0
+            ? 'librarySettings.storage.cleaned'
+            : 'librarySettings.storage.nothingToClean',
+        ),
         message:
           freedBytes > 0
-            ? `已釋放 ${formatBytes(freedBytes)}。原始歌曲已保留。`
-            : '原始歌曲已保留。',
+            ? t('librarySettings.storage.freed', {
+                size: formatBytes(freedBytes),
+              })
+            : t('librarySettings.storage.originalsKept'),
       });
       return true;
     } catch {
       notifications.notify({
         key: NOTIFICATION_KEYS.LIBRARY_CLEANUP,
         tone: 'danger',
-        title: '去人聲版本未清理',
-        message: '請再試一次。',
+        title: t('librarySettings.storage.notCleaned'),
+        message: t('librarySettings.storage.retry'),
       });
       return false;
     } finally {

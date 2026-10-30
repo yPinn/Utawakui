@@ -14,6 +14,7 @@ import LibraryMetadataSettingsRow from './LibraryMetadataSettingsRow.vue';
 import LibraryStorageSettingsRow from './LibraryStorageSettingsRow.vue';
 import PlaybackHistorySettingsRow from './PlaybackHistorySettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const {
   state: importState,
@@ -36,8 +37,8 @@ const downloadDirMenuAnchorEl = shallowRef(null);
 
 const downloadDirUnavailableMessage = computed(() =>
   importState.isDefaultDir
-    ? '無法建立預設資料夾。請選擇其他位置。'
-    : '設定已保留。請重新連接磁碟，或選擇其他位置。',
+    ? t('librarySettings.location.defaultUnavailable')
+    : t('librarySettings.location.customUnavailable'),
 );
 const downloadDirMenuAnchor = computed(() => ({
   kind: 'element',
@@ -53,21 +54,21 @@ const downloadDirMenuContent = computed(() => ({
           id: 'choose',
           kind: 'action',
           icon: FolderOpen,
-          label: '選擇其他資料夾',
+          label: t('librarySettings.location.choose'),
           value: 'choose',
         },
         {
           id: 'reset',
           kind: 'action',
           icon: RotateCcw,
-          label: '還原預設資料夾',
+          label: t('librarySettings.location.reset'),
           value: 'reset',
           disabled: importState.isDefaultDir,
         },
       ],
     },
   ],
-  emptyText: '沒有可用的操作',
+  emptyText: t('librarySettings.location.noActions'),
 }));
 
 function openDownloadDirMenu(event) {
@@ -89,10 +90,10 @@ function handleDownloadDirMenuSelect(actionId) {
 
 async function handleClearPlaybackHistory() {
   const confirmed = await confirmAction({
-    title: '清除最近播放紀錄？',
-    message: '最近播放紀錄會被清除，側欄的藝人與專輯也會回到預設順序。',
-    detail: '播放佇列、播放清單、OBS 場次與錯誤紀錄會保留。',
-    confirmLabel: '清除播放紀錄',
+    title: t('librarySettings.history.clearTitle'),
+    message: t('librarySettings.history.clearMessage'),
+    detail: t('librarySettings.history.clearDetail'),
+    confirmLabel: t('librarySettings.history.clear'),
     intent: 'danger',
   });
   if (!confirmed) return;
@@ -102,10 +103,10 @@ async function handleClearPlaybackHistory() {
 
 async function handleCleanupLibraryStorage() {
   const confirmed = await confirmAction({
-    title: '清理去人聲空間？',
-    message: '將依容量設定與磁碟空間需求，清理可重新產生的去人聲版本。',
-    detail: '原始歌曲會保留，需要時可重新產生去人聲版本。',
-    confirmLabel: '清理空間',
+    title: t('librarySettings.storage.cleanupTitle'),
+    message: t('librarySettings.storage.cleanupMessage'),
+    detail: t('librarySettings.storage.cleanupDetail'),
+    confirmLabel: t('librarySettings.storage.cleanupConfirm'),
     intent: 'danger',
   });
   if (confirmed) await libraryStorage.cleanup();
@@ -127,24 +128,28 @@ onUnmounted(() => libraryStorage.dispose());
   <SettingsSection
     id="settings-library"
     class="settings-library-section"
-    title="曲庫與儲存"
+    :title="t('librarySettings.section')"
     tabindex="-1"
   >
     <SettingsDocumentItem
       :icon="FolderOpen"
-      title="曲庫位置"
+      :title="t('librarySettings.location.title')"
       :value="
         importState.downloadDir ||
-        (importState.configError ? '尚未確認曲庫位置' : '讀取中')
+        t(
+          importState.configError
+            ? 'librarySettings.location.unconfirmed'
+            : 'librarySettings.reading',
+        )
       "
       :status="
         importState.configError
-          ? '無法讀取'
+          ? t('librarySettings.unreadable')
           : !importState.isDownloadDirAvailable
-            ? '無法使用'
+            ? t('librarySettings.location.unavailable')
             : importState.isDefaultDir
-              ? '預設'
-              : '自訂'
+              ? t('librarySettings.location.default')
+              : t('librarySettings.location.custom')
       "
       :status-tone="
         importState.configError
@@ -155,18 +160,18 @@ onUnmounted(() => libraryStorage.dispose());
               ? 'muted'
               : 'accent'
       "
-      guidance="切換位置不會搬移既有曲目。"
+      :guidance="t('librarySettings.location.guidance')"
     >
       <template #actions>
         <UiIconButton
           :icon="FolderOpen"
-          label="開啟曲庫資料夾"
+          :label="t('librarySettings.location.open')"
           :disabled="!importState.isDownloadDirAvailable"
           @click="openDownloadDir({ notifyFailure: true })"
         />
         <UiIconButton
           :icon="Ellipsis"
-          label="曲庫位置其他操作"
+          :label="t('librarySettings.location.more')"
           aria-haspopup="menu"
           :aria-expanded="isDownloadDirMenuOpen ? 'true' : 'false'"
           @click="openDownloadDirMenu"
@@ -185,9 +190,9 @@ onUnmounted(() => libraryStorage.dispose());
     <UiNotice
       v-if="!importState.configError && !importState.isDownloadDirAvailable"
       tone="danger"
-      title="曲庫位置無法使用"
+      :title="t('librarySettings.location.unavailableTitle')"
       :message="downloadDirUnavailableMessage"
-      action-label="選擇其他資料夾"
+      :action-label="t('librarySettings.location.choose')"
       compact
       @action="chooseDownloadDir({ notifyFailure: true })"
     />
@@ -195,9 +200,9 @@ onUnmounted(() => libraryStorage.dispose());
     <UiNotice
       v-if="importState.configError"
       tone="danger"
-      title="曲庫位置無法讀取"
+      :title="t('librarySettings.location.unreadableTitle')"
       :message="importState.configError"
-      action-label="重新讀取"
+      :action-label="t('librarySettings.reload')"
       compact
       @action="refreshConfig()"
     />
@@ -217,7 +222,7 @@ onUnmounted(() => libraryStorage.dispose());
 
     <UiDisclosure
       class="settings-section__disclosure"
-      label="曲目資訊與播放紀錄"
+      :label="t('librarySettings.details')"
       :open="Boolean(playbackHistoryState.error)"
     >
       <LibraryMetadataSettingsRow />

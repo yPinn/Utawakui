@@ -7,6 +7,7 @@ import {
   METADATA_LABELS,
   displayMetadata,
 } from '../../utils/libraryReconciliation.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   preview: { type: Object, required: true },
@@ -21,23 +22,25 @@ const fields = computed(() =>
     ...data,
     label: METADATA_LABELS[field],
     options: [
-      { value: 'keep', label: '保留目前值' },
+      { value: 'keep', label: t('reconciliation.fields.keep') },
       ...(data.observed !== null && data.observed !== undefined
         ? [
             {
               value: 'source',
               label:
                 data.observedKind === 'provider'
-                  ? '採用本次來源'
-                  : '採用音檔標籤',
+                  ? t('reconciliation.fields.useSource')
+                  : t('reconciliation.fields.useTags'),
             },
             ...(data.canFollow
-              ? [{ value: 'follow', label: '恢復跟隨來源' }]
+              ? [{ value: 'follow', label: t('reconciliation.fields.follow') }]
               : []),
           ]
         : []),
-      { value: 'manual', label: '手動輸入' },
-      ...(field !== 'title' ? [{ value: 'clear', label: '清空' }] : []),
+      { value: 'manual', label: t('reconciliation.fields.manual') },
+      ...(field !== 'title'
+        ? [{ value: 'clear', label: t('reconciliation.fields.clear') }]
+        : []),
     ],
   })),
 );
@@ -92,29 +95,33 @@ function finalValue(field) {
       <dl class="reconciliation-fields__values">
         <div>
           <dt>
-            曲庫{{
-              field.origin === 'manual'
-                ? ' · 人工'
-                : field.origin === 'source'
-                  ? ' · 跟隨來源'
-                  : ''
+            {{
+              t(
+                field.origin === 'manual'
+                  ? 'reconciliation.fields.libraryManual'
+                  : field.origin === 'source'
+                    ? 'reconciliation.fields.librarySource'
+                    : 'reconciliation.fields.library',
+              )
             }}
           </dt>
           <dd>{{ displayMetadata(field.value) }}</dd>
         </div>
         <div>
-          <dt>音檔標籤</dt>
+          <dt>{{ t('reconciliation.fields.tags') }}</dt>
           <dd>{{ displayMetadata(preview.fileTags[field.field]) }}</dd>
         </div>
         <div>
-          <dt>來源資料</dt>
+          <dt>{{ t('reconciliation.fields.sourceData') }}</dt>
           <dd>{{ displayMetadata(preview.providerValues?.[field.field]) }}</dd>
         </div>
       </dl>
       <div class="reconciliation-fields__edit">
         <UiSelect
           :id="`${prefix}-${field.field}-action`"
-          :label="`${field.label}的處理方式`"
+          :label="
+            t('reconciliation.fields.actionNamed', { field: field.label })
+          "
           label-hidden
           :options="field.options"
           :model-value="decisions[field.field]?.action ?? 'keep'"
@@ -124,15 +131,21 @@ function finalValue(field) {
         <UiTextField
           v-if="decisions[field.field]?.action === 'manual'"
           :id="`${prefix}-${field.field}-value`"
-          label="新值"
-          :aria-label="`${field.label}的新值`"
+          :label="t('reconciliation.fields.newValue')"
+          :aria-label="
+            t('reconciliation.fields.newValueNamed', { field: field.label })
+          "
           :type="numeric(field.field) ? 'number' : 'text'"
           :model-value="decisions[field.field].value ?? ''"
           :maxlength="200"
           :disabled="disabled"
           :required="field.field === 'title'"
           :min="numeric(field.field) ? 1 : undefined"
-          :hint="field.field === 'releaseDate' ? '年份、年-月或年-月-日。' : ''"
+          :hint="
+            field.field === 'releaseDate'
+              ? t('reconciliation.fields.dateHint')
+              : ''
+          "
           @update:model-value="edit(field.field, $event)"
         />
       </div>
@@ -143,7 +156,11 @@ function finalValue(field) {
         tone="text"
         class="reconciliation-fields__result"
       >
-        儲存後：{{ displayMetadata(finalValue(field)) }}
+        {{
+          t('reconciliation.fields.afterSave', {
+            value: displayMetadata(finalValue(field)),
+          })
+        }}
       </UiHint>
     </fieldset>
   </div>

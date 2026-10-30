@@ -1,0 +1,7 @@
+{
+  "duration": {
+    "hoursMinutes": "{hours} 小時 {minutes} 分",
+    "hours": "{hours} 小時",
+    "minutes": "{minutes} 分"
+  }
+}

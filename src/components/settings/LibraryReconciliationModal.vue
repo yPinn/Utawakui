@@ -13,6 +13,7 @@ import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import ReconciliationMetadataFields from './ReconciliationMetadataFields.vue';
 import ReconciliationMergePreview from './ReconciliationMergePreview.vue';
 import LibraryTagWriteback from './LibraryTagWriteback.vue';
+import { t } from '../../utils/i18n.js';
 
 const api = useLibraryReconciliation();
 const contentScroll = useTemplateRef('contentScroll');
@@ -34,11 +35,11 @@ const dirty = computed(() =>
   Object.values(decisions.value).some((d) => d.action !== 'keep'),
 );
 const filterOptions = [
-  { value: 'all', label: '所有項目' },
-  { value: 'release-pair', label: '發行檢查' },
-  { value: 'metadata', label: '曲目資訊' },
-  { value: 'files', label: '音檔問題' },
-  { value: 'reviewed', label: '已保留分開' },
+  { value: 'all', label: t('reconciliation.filters.all') },
+  { value: 'release-pair', label: t('reconciliation.filters.releasePair') },
+  { value: 'metadata', label: t('reconciliation.filters.metadata') },
+  { value: 'files', label: t('reconciliation.filters.files') },
+  { value: 'reviewed', label: t('reconciliation.filters.reviewed') },
 ];
 function save() {
   api.commit(
@@ -52,7 +53,7 @@ function save() {
 <template>
   <UiModal
     :open="state.open"
-    title="曲庫校對"
+    :title="t('reconciliation.title')"
     size="wide"
     max-block-size="small"
     fixed-height
@@ -64,7 +65,7 @@ function save() {
       ref="contentScroll"
       class="library-reconciliation__scroll"
       content-class="library-reconciliation"
-      aria-label="校對內容"
+      :aria-label="t('reconciliation.contents')"
       role="region"
       tabindex="0"
     >
@@ -72,15 +73,19 @@ function save() {
         state.error
       }}</UiHint>
       <UiHint v-if="state.message" role="status">{{ state.message }}</UiHint>
-      <UiHint v-if="state.scanning" role="status"
-        >檢查中{{
-          state.progress
-            ? ` · ${state.progress.completed} / ${state.progress.total}`
-            : '…'
-        }}</UiHint
-      >
-      <UiButton v-if="state.needsRecovery" :disabled="busy" @click="api.recover"
-        >恢復未完成操作</UiButton
+      <UiHint v-if="state.scanning" role="status">{{
+        state.progress
+          ? t('reconciliation.scanningProgress', {
+              completed: state.progress.completed,
+              total: state.progress.total,
+            })
+          : t('reconciliation.scanning')
+      }}</UiHint>
+      <UiButton
+        v-if="state.needsRecovery"
+        :disabled="busy"
+        @click="api.recover"
+        >{{ t('reconciliation.recover') }}</UiButton
       >
       <template v-if="state.preview">
         <ReconciliationMetadataFields
@@ -105,19 +110,26 @@ function save() {
       </template>
       <template v-else-if="state.page">
         <UiHint tone="text" class="library-reconciliation__summary">
-          {{ state.page.summary.tracks }} 首曲目 ·
-          {{ state.page.summary.releases }} 張發行 ·
-          {{ state.page.summary.candidates }} 組疑似重複
+          {{
+            t('reconciliation.summary', {
+              tracks: state.page.summary.tracks,
+              releases: state.page.summary.releases,
+              candidates: state.page.summary.candidates,
+            })
+          }}
         </UiHint>
         <UiSelect
           id="library-reconciliation-filter"
-          label="項目"
+          :label="t('reconciliation.filter')"
           :options="filterOptions"
           :model-value="state.kind"
           :disabled="busy"
           @update:model-value="api.page(0, $event)"
         />
-        <ul class="library-reconciliation__list" aria-label="曲庫檢查結果">
+        <ul
+          class="library-reconciliation__list"
+          :aria-label="t('reconciliation.results')"
+        >
           <li
             v-for="item in state.page.items"
             :key="item.itemId"
@@ -126,26 +138,41 @@ function save() {
             <div class="library-reconciliation__copy">
               <strong>{{
                 item.kind === 'release-pair'
-                  ? `${item.leftName} ／ ${item.rightName}`
+                  ? t('reconciliation.pair', {
+                      left: item.leftName,
+                      right: item.rightName,
+                    })
                   : item.title
               }}</strong>
               <UiHint class="library-reconciliation__detail">
                 {{ reconciliationItemLabel(item.kind)
-                }}<template v-if="item.artist"> · {{ item.artist }}</template
-                ><template v-if="item.kind === 'metadata'">
-                  <template v-if="item.fields.length">
-                    · {{ `${item.fields.length} 個欄位有差異` }}</template
-                  ></template
-                ><template v-if="item.dismissed"> · 已保留分開</template>
+                }}<template v-if="item.artist"
+                  >{{ t('reconciliation.detailSeparator')
+                  }}{{ item.artist }}</template
+                ><template v-if="item.kind === 'metadata' && item.fields.length"
+                  >{{ t('reconciliation.detailSeparator')
+                  }}{{
+                    t(
+                      'reconciliation.fieldDifferences',
+                      { count: item.fields.length },
+                      item.fields.length,
+                    )
+                  }}</template
+                ><template v-if="item.dismissed"
+                  >{{ t('reconciliation.detailSeparator')
+                  }}{{ t('reconciliation.keptSeparate') }}</template
+                >
               </UiHint>
               <UiHint v-if="item.kind === 'release-pair' && !item.mergeable">{{
                 reconciliationReason(item.reason)
               }}</UiHint>
-              <UiHint v-if="item.kind === 'duplicate-file'"
-                >共
-                {{ item.trackIds.length }}
-                首，不會自動刪除。</UiHint
-              >
+              <UiHint v-if="item.kind === 'duplicate-file'">{{
+                t(
+                  'reconciliation.duplicateCount',
+                  { count: item.trackIds.length },
+                  item.trackIds.length,
+                )
+              }}</UiHint>
             </div>
             <div class="library-reconciliation__actions">
               <UiButton
@@ -153,22 +180,39 @@ function save() {
                 :disabled="busy"
                 :aria-label="
                   item.kind === 'metadata'
-                    ? `校對：${item.title}`
-                    : `比較發行：${item.leftName} ／ ${item.rightName}`
+                    ? t('reconciliation.reviewNamed', { title: item.title })
+                    : t('reconciliation.compareNamed', {
+                        left: item.leftName,
+                        right: item.rightName,
+                      })
                 "
                 @click="api.preview(item)"
-                >{{ item.kind === 'metadata' ? '校對' : '比較' }}</UiButton
+                >{{
+                  t(
+                    item.kind === 'metadata'
+                      ? 'reconciliation.review'
+                      : 'reconciliation.compare',
+                  )
+                }}</UiButton
               >
               <UiButton
                 v-if="item.kind === 'release-pair'"
                 :disabled="busy"
                 @click="api.decide(item, item.dismissed ? 'review' : 'dismiss')"
-                >{{ item.dismissed ? '重新列入' : '保留分開' }}</UiButton
+                >{{
+                  t(
+                    item.dismissed
+                      ? 'reconciliation.restore'
+                      : 'reconciliation.keepSeparate',
+                  )
+                }}</UiButton
               >
             </div>
           </li>
         </ul>
-        <UiHint v-if="!state.page.total">沒有符合的項目。</UiHint>
+        <UiHint v-if="!state.page.total">{{
+          t('reconciliation.noMatches')
+        }}</UiHint>
         <div
           v-if="state.page.total > 25"
           class="library-reconciliation__actions"
@@ -176,25 +220,26 @@ function save() {
           <UiButton
             :disabled="busy || state.page.offset === 0"
             @click="api.page(Math.max(0, state.page.offset - 25))"
-            >上一頁</UiButton
+            >{{ t('common.previousPage') }}</UiButton
           >
-          <span
-            >{{ state.page.offset + 1 }}–{{
-              Math.min(state.page.offset + 25, state.page.total)
-            }}
-            / {{ state.page.total }}</span
-          >
+          <span>{{
+            t('reconciliation.range', {
+              start: state.page.offset + 1,
+              end: Math.min(state.page.offset + 25, state.page.total),
+              total: state.page.total,
+            })
+          }}</span>
           <UiButton
             :disabled="busy || state.page.offset + 25 >= state.page.total"
             @click="api.page(state.page.offset + 25)"
-            >下一頁</UiButton
+            >{{ t('common.nextPage') }}</UiButton
           >
         </div>
         <details
           v-if="state.page.merges.length"
           class="library-reconciliation__history"
         >
-          <summary>合併紀錄</summary>
+          <summary>{{ t('reconciliation.mergeHistory') }}</summary>
           <ul class="library-reconciliation__list">
             <li
               v-for="merge in state.page.merges"
@@ -204,9 +249,11 @@ function save() {
               <span class="library-reconciliation__copy">{{ merge.name }}</span
               ><UiButton
                 :disabled="busy"
-                :aria-label="`復原合併：${merge.name}`"
+                :aria-label="
+                  t('reconciliation.undoMergeNamed', { name: merge.name })
+                "
                 @click="api.undo(merge.mergeId)"
-                >復原合併</UiButton
+                >{{ t('reconciliation.undoMerge') }}</UiButton
               >
             </li>
           </ul>
@@ -218,15 +265,22 @@ function save() {
         v-if="state.scanning"
         :disabled="state.cancelling"
         @click="api.cancel"
-        >{{ state.cancelling ? '停止中' : '停止檢查' }}</UiButton
+        >{{
+          state.cancelling ? t('common.stopping') : t('reconciliation.stopScan')
+        }}</UiButton
       >
-      <UiButton v-if="state.preview" :disabled="busy" @click="api.back"
-        >返回</UiButton
+      <UiButton v-if="state.preview" :disabled="busy" @click="api.back">{{
+        t('common.back')
+      }}</UiButton>
+      <UiButton
+        v-else-if="!state.scanning"
+        :disabled="busy"
+        @click="api.scan"
+        >{{ t('reconciliation.rescan') }}</UiButton
       >
-      <UiButton v-else-if="!state.scanning" :disabled="busy" @click="api.scan"
-        >重新檢查</UiButton
-      >
-      <UiButton :disabled="busy" @click="api.close">關閉</UiButton>
+      <UiButton :disabled="busy" @click="api.close">{{
+        t('common.close')
+      }}</UiButton>
       <UiButton
         v-if="state.preview"
         variant="accent"
@@ -238,7 +292,13 @@ function save() {
             : !state.preview.mergeable)
         "
         @click="save"
-        >{{ state.preview.kind === 'metadata' ? '儲存' : '合併發行' }}</UiButton
+        >{{
+          t(
+            state.preview.kind === 'metadata'
+              ? 'reconciliation.save'
+              : 'reconciliation.merge',
+          )
+        }}</UiButton
       >
     </template>
   </UiModal>

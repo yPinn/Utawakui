@@ -1,5 +1,11 @@
 import { UI_LOCALE } from './uiLocale.js';
+import { t } from './i18n.js';
 
+const LONG_DATE_FORMATTER = new Intl.DateTimeFormat(UI_LOCALE, {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
 const GROUPED_INTEGER_FORMATTER = new Intl.NumberFormat(UI_LOCALE, {
   useGrouping: true,
   maximumFractionDigits: 0,
@@ -54,14 +60,15 @@ export function formatLongDuration(seconds) {
   const totalMinutes = Math.max(1, Math.round(seconds / 60));
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  if (hours && minutes) return `${hours} 小時 ${minutes} 分`;
-  if (hours) return `${hours} 小時`;
-  return `${minutes} 分`;
+  if (hours && minutes)
+    return t('format.duration.hoursMinutes', { hours, minutes });
+  if (hours) return t('format.duration.hours', { hours });
+  return t('format.duration.minutes', { minutes });
 }
 
 export function formatAddedDate(value) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  return LONG_DATE_FORMATTER.format(date);
 }

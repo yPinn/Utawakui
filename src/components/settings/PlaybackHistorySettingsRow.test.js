@@ -1,12 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 import PlaybackHistorySettingsRow from './PlaybackHistorySettingsRow.vue';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./PlaybackHistorySettingsRow.vue', import.meta.url),
-  'utf8',
 );
 
 async function renderRow(props = {}) {

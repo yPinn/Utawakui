@@ -87,6 +87,22 @@
     "title": "Could not reset the download location",
     "message": "The download location cannot be reset right now. Try again later."
   },
+  "LIBRARY_STORAGE_CLEANUP_FAILED": {
+    "title": "Library cleanup not completed",
+    "message": "Vocal-removed versions can't be cleaned up right now. Try again."
+  },
+  "LIBRARY_STORAGE_POLICY_INVALID": {
+    "title": "Could not apply the storage setting",
+    "message": "This setting is not valid. Choose again."
+  },
+  "LIBRARY_STORAGE_POLICY_UPDATE_FAILED": {
+    "title": "Could not save the storage setting",
+    "message": "The storage setting can't be saved right now. Try again."
+  },
+  "LIBRARY_STORAGE_READ_FAILED": {
+    "title": "Could not read library storage",
+    "message": "Library storage can't be read right now."
+  },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
     "title": "Could not save the arrangement display preference",
     "message": "This setting is not valid. Choose again."
@@ -98,6 +114,10 @@
   "OBS_ARRANGEMENT_DOCK_UPDATE_FAILED": {
     "title": "Could not save the arrangement display preference",
     "message": "The arrangement display preference cannot be saved right now. Try again later."
+  },
+  "RELEASE_METADATA_REFRESH_FAILED": {
+    "title": "Release information not updated",
+    "message": "Release information can't be updated right now. Try again later."
   },
   "SEPARATION_GPU_ACCELERATION_INVALID": {
     "title": "Could not apply the GPU acceleration setting",

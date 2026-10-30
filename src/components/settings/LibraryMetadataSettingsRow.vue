@@ -8,16 +8,25 @@ import UiHint from '../ui/UiHint.vue';
 import { useLibraryMetadataMaintenance } from '../../composables/useLibraryMetadataMaintenance.js';
 import { useLibraryReconciliation } from '../../composables/useLibraryReconciliation.js';
 import LibraryReconciliationModal from './LibraryReconciliationModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const { state, feedback, refresh, cancel, reload } =
   useLibraryMetadataMaintenance();
 const reconciliation = useLibraryReconciliation();
 const busy = computed(() => state.busy || reconciliation.state.busy);
 const managementItem = computed(() => ({
-  title: '曲庫資訊',
+  title: t('librarySettings.metadata.title'),
   advancedActions: [
-    { id: 'reconcile', label: '校對曲庫資訊', icon: ListChecks },
-    { id: 'reload', label: '重新讀取本機資料', icon: RefreshCw },
+    {
+      id: 'reconcile',
+      label: t('librarySettings.metadata.reconcile'),
+      icon: ListChecks,
+    },
+    {
+      id: 'reload',
+      label: t('librarySettings.metadata.reloadLocal'),
+      icon: RefreshCw,
+    },
   ].map((action) => ({ ...action, disabled: busy.value })),
 }));
 function manage({ action }) {
@@ -30,8 +39,8 @@ function manage({ action }) {
 <template>
   <SettingsDocumentItem
     :icon="RefreshCw"
-    title="曲庫資訊"
-    guidance="啟動時整理本機資料；線上補齊專輯與曲序，保留手動編輯。"
+    :title="t('librarySettings.metadata.title')"
+    :guidance="t('librarySettings.metadata.guidance')"
   >
     <template #actions>
       <UiButton
@@ -39,7 +48,7 @@ function manage({ action }) {
         variant="secondary"
         :disabled="state.cancelling"
         @click="cancel"
-        >停止</UiButton
+        >{{ t('librarySettings.metadata.stop') }}</UiButton
       >
       <UiButton
         v-else
@@ -47,11 +56,11 @@ function manage({ action }) {
         variant="accent"
         :disabled="busy"
         :loading="state.busy"
-        loading-label="更新中"
-        title="連線補齊所屬專輯與完整曲序，保留手動編輯。"
-        aria-description="連線補齊所屬專輯與完整曲序，保留手動編輯。"
+        :loading-label="t('librarySettings.metadata.updating')"
+        :title="t('librarySettings.metadata.fillHint')"
+        :aria-description="t('librarySettings.metadata.fillHint')"
         @click="refresh"
-        >線上補齊</UiButton
+        >{{ t('librarySettings.metadata.fill') }}</UiButton
       >
       <SettingsDependencyActions
         :item="managementItem"

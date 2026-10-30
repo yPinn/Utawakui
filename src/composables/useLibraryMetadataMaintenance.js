@@ -3,6 +3,7 @@ import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
+import { t } from '../utils/i18n.js';
 
 const sessions = new WeakMap();
 const unavailableBridge = {};
@@ -46,7 +47,7 @@ function createSession(
       function changedScope() {
         stale = true;
         state.progress = null;
-        state.message = '曲庫位置已變更，請重新更新。';
+        state.message = t('librarySettings.metadata.locationChanged');
       }
       function accept(progress) {
         if (stale) return false;
@@ -63,10 +64,10 @@ function createSession(
           !(await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
             source: 'library-metadata',
             operation: 'refresh-releases',
-            message: '啟用外部來源後，即可補齊所屬發行與完整曲序。',
+            message: t('librarySettings.metadata.enableSourcesNotice'),
           }))
         ) {
-          state.message = '請先啟用外部來源。';
+          state.message = t('librarySettings.metadata.enableSources');
           return false;
         }
         if (typeof bridge.refreshReleaseMetadata !== 'function')
@@ -79,30 +80,49 @@ function createSession(
         dispose = bridge.onReleaseMetadataProgress?.(accept);
         const result = await bridge.refreshReleaseMetadata();
         if (result?.status === 'disabled') {
-          state.message = '請先啟用外部來源。';
+          state.message = t('librarySettings.metadata.enableSources');
           return false;
         }
         if (!accept(result)) return false;
         if (!['complete', 'cancelled', 'interrupted'].includes(result?.status))
           throw new Error('Invalid result');
         state.error = false;
-        const filled = `已補齊 ${result.updated} 張作品`;
+        const count = (key, value) => t(key, { count: value }, value);
+        // Independent sentences, joined per locale.
+        const sentences = [];
         if (result.status === 'cancelled')
-          state.message = `已停止，${filled}。`;
+          sentences.push(
+            count('librarySettings.metadata.stopped', result.updated),
+          );
         else if (result.status === 'interrupted') {
           state.error = true;
-          state.message = `更新中斷，${filled}。請確認曲庫與外部來源設定後重試。`;
+          sentences.push(
+            count('librarySettings.metadata.interrupted', result.updated),
+          );
         } else if (result.total === 0)
-          state.message = '目前沒有可從來源補齊的作品。';
-        else
-          state.message = `${filled}。${result.unresolved ? `仍有 ${result.unresolved} 個來源資訊不完整，可稍後重試。` : ''}`;
+          sentences.push(t('librarySettings.metadata.nothingToFill'));
+        else {
+          sentences.push(
+            count('librarySettings.metadata.filled', result.updated),
+          );
+          if (result.unresolved)
+            sentences.push(
+              count('librarySettings.metadata.unresolved', result.unresolved),
+            );
+        }
         if (result.needsConfirmation > 0)
-          state.message += `另有 ${result.needsConfirmation} 首需由曲目選單「補齊專輯資料」確認歸屬。`;
+          sentences.push(
+            count(
+              'librarySettings.metadata.needsConfirmation',
+              result.needsConfirmation,
+            ),
+          );
+        state.message = sentences.join(t('common.sentenceJoin'));
         return result.status === 'complete';
       } catch {
         if (stale) return false;
         state.error = true;
-        state.message = '目前無法更新發行資訊，請稍後再試。';
+        state.message = t('librarySettings.metadata.refreshFailed');
         return false;
       } finally {
         dispose?.();
@@ -123,7 +143,7 @@ function createSession(
       await bridge.cancelReleaseMetadata();
     } catch {
       state.cancelling = false;
-      state.message = '目前無法停止，請稍後再試。';
+      state.message = t('librarySettings.metadata.stopFailed');
       state.error = true;
     }
   }
@@ -131,7 +151,16 @@ function createSession(
     state.error && state.message
       ? state.message
       : state.busy && state.progress?.status === 'running'
-        ? `${state.cancelling ? '停止中' : '查詢中'} · ${state.progress.completed} / ${state.progress.total} 個來源 · 已補齊 ${state.progress.updated} 張`
+        ? t(
+            state.cancelling
+              ? 'librarySettings.metadata.progressStopping'
+              : 'librarySettings.metadata.progressQuerying',
+            {
+              completed: state.progress.completed,
+              total: state.progress.total,
+              updated: state.progress.updated,
+            },
+          )
         : state.message,
   );
   async function reload() {
@@ -142,11 +171,11 @@ function createSession(
     state.message = '';
     try {
       await reloadLibrary();
-      state.message = '已重新讀取本地曲庫。';
+      state.message = t('librarySettings.metadata.reloaded');
       return true;
     } catch {
       state.error = true;
-      state.message = '目前無法重新讀取曲庫，請稍後再試。';
+      state.message = t('librarySettings.metadata.reloadFailed');
       return false;
     } finally {
       state.busy = false;

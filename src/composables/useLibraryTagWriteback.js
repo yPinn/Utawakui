@@ -1,17 +1,18 @@
 import { reactive, readonly } from 'vue';
+import { t } from '../utils/i18n.js';
 
 const MESSAGES = {
-  busy: '音源正在使用中，請停止播放、預覽或處理後再試。',
-  unsupported: '這組音檔標籤目前無法安全回寫，曲庫校對資訊仍保留。',
-  conflict: '資料或音檔已變更，請重新開啟預覽。',
-  stale: '曲庫已切換，請重新檢查。',
-  expired: '預覽已失效，請重新建立。',
-  'verification-failed': '檔案保留驗證未通過，原音檔未被替換。',
-  'insufficient-space': '備份與回寫所需空間不足。',
-  limit: '已達本次檔案或備份上限，音檔尚未同步。',
-  'recovery-required': '上次音檔寫入尚未完成，請先恢復。',
-  'recovery-conflict': '恢復資料與現有檔案有衝突，請保留備份並檢查。',
-  'invalid-intent': '請檢查所選欄位與主要發行。',
+  busy: t('tagWriteback.messages.busy'),
+  unsupported: t('tagWriteback.messages.unsupported'),
+  conflict: t('tagWriteback.messages.conflict'),
+  stale: t('tagWriteback.messages.stale'),
+  expired: t('tagWriteback.messages.expired'),
+  'verification-failed': t('tagWriteback.messages.verificationFailed'),
+  'insufficient-space': t('tagWriteback.messages.insufficientSpace'),
+  limit: t('tagWriteback.messages.limit'),
+  'recovery-required': t('tagWriteback.messages.recoveryRequired'),
+  'recovery-conflict': t('tagWriteback.messages.recoveryConflict'),
+  'invalid-intent': t('tagWriteback.messages.invalidIntent'),
 };
 export function useLibraryTagWriteback({
   bridge = globalThis.window?.Utawakui,
@@ -40,14 +41,13 @@ export function useLibraryTagWriteback({
   function accept(value, status) {
     if (value?.status === status) return true;
     if (value?.status === 'cancelled') {
-      state.message = '已取消音檔回寫，原音檔未變更。';
+      state.message = t('tagWriteback.messages.cancelled');
       return false;
     }
     state.needsRecovery = ['recovery-required', 'recovery-conflict'].includes(
       value?.status,
     );
-    state.error =
-      MESSAGES[value?.status] ?? '目前無法同步音檔，已儲存的曲庫資訊會保留。';
+    state.error = MESSAGES[value?.status] ?? t('tagWriteback.messages.failed');
     return false;
   }
   async function run(work) {
@@ -59,8 +59,7 @@ export function useLibraryTagWriteback({
     try {
       return await work(token);
     } catch {
-      if (token === generation)
-        state.error = '目前無法同步音檔，已儲存的曲庫資訊會保留。';
+      if (token === generation) state.error = t('tagWriteback.messages.failed');
       return false;
     } finally {
       state.busy = false;
@@ -102,7 +101,7 @@ export function useLibraryTagWriteback({
       );
       if (token !== generation || !accept(v, 'saved')) return false;
       state.preview = null;
-      state.message = '已同步音檔資訊，原音檔已備份。';
+      state.message = t('tagWriteback.messages.synced');
       return true;
     });
   }
@@ -113,7 +112,7 @@ export function useLibraryTagWriteback({
       );
       if (token !== generation || !accept(v, 'saved')) return false;
       state.preview = null;
-      state.message = '已還原音檔，曲庫校對資訊仍保留。';
+      state.message = t('tagWriteback.messages.restored');
       return true;
     });
   }
@@ -122,7 +121,7 @@ export function useLibraryTagWriteback({
       const v = await bridge.recoverLibraryTags();
       if (token !== generation || !accept(v, 'ready')) return false;
       state.needsRecovery = false;
-      state.message = '已恢復音檔寫入，請重新開啟預覽。';
+      state.message = t('tagWriteback.messages.recovered');
       return true;
     });
   }
@@ -148,7 +147,7 @@ export function useLibraryTagWriteback({
       return true;
     } catch {
       state.cancelling = false;
-      state.error = '目前無法停止回寫，請稍候。';
+      state.error = t('tagWriteback.messages.stopFailed');
       return false;
     }
   }

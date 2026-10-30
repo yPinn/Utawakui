@@ -64,8 +64,6 @@ function registerLibraryMetadataHandlers({
         },
         publicError: {
           code: 'RELEASE_METADATA_REFRESH_FAILED',
-          title: '發行資訊未更新',
-          message: '目前無法更新發行資訊，請稍後再試。',
           context: { retryable: true },
         },
       },

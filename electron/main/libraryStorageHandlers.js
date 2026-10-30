@@ -8,8 +8,6 @@ function validationError() {
   return createAppError({
     code: 'LIBRARY_STORAGE_POLICY_INVALID',
     severity: 'warning',
-    title: '無法套用曲庫空間設定',
-    message: '指定的曲庫空間設定無效。',
   });
 }
 
@@ -29,15 +27,12 @@ function response(policy, result, includeCleanup) {
   };
 }
 
-function runStorageOperation(
-  { recordDiagnostic, operation, code, title, message },
-  handler,
-) {
+function runStorageOperation({ recordDiagnostic, operation, code }, handler) {
   return runDiagnosticIpcOperation(
     {
       recordDiagnostic,
       diagnostic: { source: 'library-storage', operation, code },
-      publicError: { code, title, message },
+      publicError: { code },
     },
     handler,
   );
@@ -81,8 +76,6 @@ function registerLibraryStorageHandlers({
         recordDiagnostic,
         operation: 'inspect',
         code: 'LIBRARY_STORAGE_READ_FAILED',
-        title: '無法讀取曲庫空間',
-        message: '目前無法讀取曲庫空間。',
       },
       () => ({
         policy: getConfig().libraryStorage,
@@ -103,8 +96,6 @@ function registerLibraryStorageHandlers({
         recordDiagnostic,
         operation: 'set-policy',
         code: 'LIBRARY_STORAGE_POLICY_UPDATE_FAILED',
-        title: '無法儲存曲庫空間設定',
-        message: '目前無法儲存曲庫空間設定，請再試一次。',
       },
       () => {
         updateConfig({ libraryStorage: policy });
@@ -126,8 +117,6 @@ function registerLibraryStorageHandlers({
         recordDiagnostic,
         operation: 'cleanup',
         code: 'LIBRARY_STORAGE_CLEANUP_FAILED',
-        title: '曲庫清理未完成',
-        message: '目前無法清理去人聲版本，請再試一次。',
       },
       () => {
         const policy = getConfig().libraryStorage;

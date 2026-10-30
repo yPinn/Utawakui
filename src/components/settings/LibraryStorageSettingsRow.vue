@@ -9,6 +9,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   storage: { type: Object, default: null },
@@ -24,14 +25,25 @@ const emit = defineEmits(['set-policy', 'cleanup', 'refresh']);
 
 const limitOptions = storageValues.separationLimitOptionsBytes.map((value) => ({
   value,
-  label: value === null ? '不限量' : `${formatBytes(value, false)}`,
+  label:
+    value === null
+      ? t('librarySettings.storage.unlimited')
+      : formatBytes(value, false),
 }));
 
 const summary = computed(() => {
-  if (props.readError) return '無法讀取空間資訊';
-  if (props.error) return '空間設定未儲存';
-  if (!props.storage) return props.loading ? '計算中' : '尚無資料';
-  return `${formatBytes(props.storage.totalBytes)} 已使用 · ${formatBytes(props.storage.driveFreeBytes)} 可用`;
+  if (props.readError) return t('librarySettings.storage.readFailedValue');
+  if (props.error) return t('librarySettings.storage.unsaved');
+  if (!props.storage)
+    return t(
+      props.loading
+        ? 'librarySettings.storage.calculating'
+        : 'librarySettings.storage.noData',
+    );
+  return t('librarySettings.storage.usage', {
+    used: formatBytes(props.storage.totalBytes),
+    free: formatBytes(props.storage.driveFreeBytes),
+  });
 });
 
 function updatePolicy(fields) {
@@ -43,34 +55,41 @@ function updatePolicy(fields) {
   <div class="library-storage-settings-row">
     <UiDisclosure
       class="library-storage settings-section__disclosure"
-      label="查看曲庫空間"
+      :label="t('librarySettings.storage.view')"
       :open="Boolean(error || readError)"
     >
       <template #summary>
         <span class="library-storage__summary-copy">
-          <span class="library-storage__title">曲庫空間</span>
+          <span class="library-storage__title">{{
+            t('librarySettings.storage.title')
+          }}</span>
           <span
             class="library-storage__status"
             :class="{ 'library-storage__status--error': error || readError }"
             >{{ summary }}</span
           >
-          <span class="ui-visually-hidden">查看曲庫空間</span>
+          <span class="ui-visually-hidden">{{
+            t('librarySettings.storage.view')
+          }}</span>
         </span>
       </template>
 
       <div class="library-storage__body">
         <template v-if="storage">
-          <dl class="library-storage__categories" aria-label="曲庫空間分類">
+          <dl
+            class="library-storage__categories"
+            :aria-label="t('librarySettings.storage.categories')"
+          >
             <div class="library-storage__category">
-              <dt>歌曲</dt>
+              <dt>{{ t('librarySettings.storage.songs') }}</dt>
               <dd>{{ formatBytes(storage.songBytes) }}</dd>
             </div>
             <div class="library-storage__category">
-              <dt>去人聲</dt>
+              <dt>{{ t('librarySettings.storage.instrumental') }}</dt>
               <dd>{{ formatBytes(storage.separationBytes) }}</dd>
             </div>
             <div class="library-storage__category">
-              <dt>其他</dt>
+              <dt>{{ t('librarySettings.storage.other') }}</dt>
               <dd>{{ formatBytes(storage.otherBytes) }}</dd>
             </div>
           </dl>
@@ -79,7 +98,7 @@ function updatePolicy(fields) {
             <UiCheckbox
               id="auto-manage-separation-storage"
               class="library-storage__auto-manage"
-              label="自動清理去人聲版本"
+              :label="t('librarySettings.storage.autoCleanup')"
               :model-value="policy.autoManageSeparation"
               :disabled="saving || cleaning || loading || Boolean(readError)"
               @update:model-value="
@@ -89,7 +108,7 @@ function updatePolicy(fields) {
             <UiSelect
               id="separation-storage-limit"
               class="library-storage__limit"
-              label="去人聲容量上限"
+              :label="t('librarySettings.storage.limit')"
               :model-value="policy.separationLimitBytes"
               :options="limitOptions"
               :disabled="saving || cleaning || loading || Boolean(readError)"
@@ -99,23 +118,23 @@ function updatePolicy(fields) {
             />
             <UiIconButton
               :icon="Trash2"
-              label="清理去人聲空間"
+              :label="t('librarySettings.storage.cleanup')"
               intent="danger"
               :loading="cleaning"
-              loading-label="清理中"
+              :loading-label="t('librarySettings.storage.cleaning')"
               :disabled="saving || cleaning || storage.separationBytes === 0"
               @click="emit('cleanup')"
             />
           </div>
 
           <div class="library-storage__feedback">
-            <UiHint
-              >超過上限或磁碟空間不足時，清理去人聲版本；原始歌曲保留。啟用後會立即檢查。</UiHint
-            >
+            <UiHint>{{ t('librarySettings.storage.cleanupHint') }}</UiHint>
           </div>
         </template>
 
-        <UiHint v-else-if="loading">計算中</UiHint>
+        <UiHint v-else-if="loading">{{
+          t('librarySettings.storage.calculating')
+        }}</UiHint>
         <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
         <UiHint v-if="readError" tone="danger" role="alert">{{
           readError
@@ -126,7 +145,7 @@ function updatePolicy(fields) {
           variant="ghost"
           :loading="loading"
           @click="emit('refresh')"
-          >重新讀取曲庫空間</UiButton
+          >{{ t('librarySettings.storage.reload') }}</UiButton
         >
       </div>
     </UiDisclosure>

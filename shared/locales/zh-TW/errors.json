@@ -87,6 +87,22 @@
     "title": "無法重設下載位置",
     "message": "目前無法重設下載位置，請稍後再試。"
   },
+  "LIBRARY_STORAGE_CLEANUP_FAILED": {
+    "title": "曲庫清理未完成",
+    "message": "目前無法清理去人聲版本，請再試一次。"
+  },
+  "LIBRARY_STORAGE_POLICY_INVALID": {
+    "title": "無法套用曲庫空間設定",
+    "message": "指定的曲庫空間設定無效。"
+  },
+  "LIBRARY_STORAGE_POLICY_UPDATE_FAILED": {
+    "title": "無法儲存曲庫空間設定",
+    "message": "目前無法儲存曲庫空間設定，請再試一次。"
+  },
+  "LIBRARY_STORAGE_READ_FAILED": {
+    "title": "無法讀取曲庫空間",
+    "message": "目前無法讀取曲庫空間。"
+  },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
     "title": "無法儲存播放安排顯示偏好",
     "message": "這個設定無效，請重新選擇。"
@@ -98,6 +114,10 @@
   "OBS_ARRANGEMENT_DOCK_UPDATE_FAILED": {
     "title": "無法儲存播放安排顯示偏好",
     "message": "目前無法儲存播放安排顯示偏好，請再試一次。"
+  },
+  "RELEASE_METADATA_REFRESH_FAILED": {
+    "title": "發行資訊未更新",
+    "message": "目前無法更新發行資訊，請稍後再試。"
   },
   "SEPARATION_GPU_ACCELERATION_INVALID": {
     "title": "無法套用 GPU 加速設定",

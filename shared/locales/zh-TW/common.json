@@ -4,5 +4,13 @@
   "confirm": "確認",
   "save": "儲存",
   "saving": "儲存中",
-  "ok": "確定"
+  "ok": "確定",
+  "sentenceJoin": "",
+  "listSeparator": "、",
+  "none": "未提供",
+  "blank": "空白",
+  "back": "返回",
+  "stopping": "停止中",
+  "previousPage": "上一頁",
+  "nextPage": "下一頁"
 }

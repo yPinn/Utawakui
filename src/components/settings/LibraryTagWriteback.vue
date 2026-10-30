@@ -10,6 +10,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiHint from '../ui/UiHint.vue';
 import { UI_LOCALE } from '../../utils/uiLocale.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   trackId: { type: String, required: true },
@@ -23,10 +24,13 @@ const expanded = shallowRef(false),
   releaseKey = shallowRef('');
 const releases = shallowRef([]);
 const releaseOptions = computed(() => [
-  { value: '', label: '只同步曲目資訊' },
+  { value: '', label: t('tagWriteback.trackInfoOnly') },
   ...releases.value.map((r, i) => ({
     value: String(i),
-    label: `${r.name} · 第 ${r.position} 首`,
+    label: t('tagWriteback.releaseOption', {
+      name: r.name,
+      position: r.position,
+    }),
   })),
 ]);
 const fields = computed(() => Object.keys(state.options?.values ?? {}));
@@ -78,49 +82,48 @@ async function restore(receiptId) {
 
 <template>
   <details class="library-tags" :open="expanded" @toggle="open">
-    <summary>同步音檔資訊</summary>
+    <summary>{{ t('tagWriteback.title') }}</summary>
     <div v-if="expanded" class="library-tags__body">
-      <UiHint
-        >先儲存曲庫校對。支援 FLAC
-        文字標籤，封面不變；其他格式暫不支援。</UiHint
-      >
+      <UiHint>{{ t('tagWriteback.intro') }}</UiHint>
       <UiHint v-if="state.error" tone="danger" role="alert">{{
         state.error
       }}</UiHint>
       <UiHint v-if="state.message" role="status">{{ state.message }}</UiHint>
       <UiHint v-if="state.phase" role="status">{{
         state.phase === 'waiting'
-          ? '已排入回寫，等待播放、預覽或處理結束。'
+          ? t('tagWriteback.waiting')
           : state.phase === 'committing'
-            ? '正在完成音檔與曲庫寫入…'
-            : '正在準備音檔與備份…'
+            ? t('tagWriteback.committing')
+            : t('tagWriteback.preparing')
       }}</UiHint>
       <UiButton
         v-if="state.busy && state.phase"
         :disabled="state.cancelling || state.phase === 'committing'"
         @click="api.cancel"
-        >{{ state.cancelling ? '停止中' : '取消回寫' }}</UiButton
+        >{{
+          state.cancelling ? t('common.stopping') : t('tagWriteback.cancel')
+        }}</UiButton
       >
       <UiButton
         v-if="state.needsRecovery"
         :disabled="disabled"
         @click="api.recover"
-        >恢復音檔寫入</UiButton
+        >{{ t('tagWriteback.recover') }}</UiButton
       >
-      <UiHint v-if="state.options && !state.options.supported"
-        >此格式僅能儲存曲庫資訊，不會寫入音檔。</UiHint
-      >
+      <UiHint v-if="state.options && !state.options.supported">{{
+        t('tagWriteback.unsupportedFormat')
+      }}</UiHint>
       <template v-if="state.options?.supported">
         <template v-if="!state.preview">
           <UiSelect
             id="tags-primary-release"
-            label="主要發行"
+            :label="t('tagWriteback.primaryRelease')"
             :model-value="releaseKey"
             :options="releaseOptions"
             :disabled="disabled"
             @update:model-value="choose"
           />
-          <UiHint>專輯、曲號需選擇發行；曲號依已確認位置，碟號不推測。</UiHint>
+          <UiHint>{{ t('tagWriteback.releaseHint') }}</UiHint>
           <div class="library-tags__fields">
             <div
               v-for="field in fields"
@@ -139,9 +142,9 @@ async function restore(receiptId) {
           </div>
           <UiButton
             :disabled="disabled || !selected.length"
-            aria-label="預覽音檔變更"
+            :aria-label="t('tagWriteback.previewLabel')"
             @click="api.preview(selected)"
-            >預覽變更</UiButton
+            >{{ t('tagWriteback.preview') }}</UiButton
           >
           <ul v-if="state.options.history.length" class="library-tags__history">
             <li v-for="item in state.options.history" :key="item.receiptId">
@@ -151,7 +154,7 @@ async function restore(receiptId) {
               ><UiButton
                 :disabled="disabled || !item.canRestore"
                 @click="restore(item.receiptId)"
-                >還原音檔</UiButton
+                >{{ t('tagWriteback.restore') }}</UiButton
               >
             </li>
           </ul>
@@ -165,20 +168,28 @@ async function restore(receiptId) {
             >
               <dt>{{ METADATA_LABELS[field.field] }}</dt>
               <dd>
-                {{ field.before.length ? field.before.join('、') : '未提供' }} →
-                {{ displayMetadata(field.after) }}
+                {{
+                  t('tagWriteback.change', {
+                    before: field.before.length
+                      ? field.before.join(t('common.listSeparator'))
+                      : t('common.none'),
+                    after: displayMetadata(field.after),
+                  })
+                }}
               </dd>
             </div>
           </dl>
-          <UiHint>僅回寫所選欄位，音訊與其他標籤不變；可能需重新分析。</UiHint>
+          <UiHint>{{ t('tagWriteback.commitHint') }}</UiHint>
           <div class="library-tags__actions">
-            <UiButton :disabled="disabled" @click="api.back">返回</UiButton
+            <UiButton :disabled="disabled" @click="api.back">{{
+              t('common.back')
+            }}</UiButton
             ><UiButton
               variant="accent"
               :disabled="disabled || state.preview.unchanged"
               :loading="state.busy"
               @click="commit"
-              >確認回寫音檔</UiButton
+              >{{ t('tagWriteback.commit') }}</UiButton
             >
           </div>
         </template>
