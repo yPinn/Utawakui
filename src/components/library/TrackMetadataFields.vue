@@ -27,6 +27,7 @@ const props = defineProps({
   },
   artworkCandidates: { type: Array, default: () => [] },
   selectedArtworkCandidateId: { type: String, default: null },
+  titleError: { type: String, default: '' },
   error: { type: String, default: '' },
 });
 
@@ -73,9 +74,7 @@ const searchControlsDisabled = computed(
     props.artworkPreparing ||
     props.artworkSearching,
 );
-const titleError = computed(() =>
-  props.error === '歌名必填' ? props.error : '',
-);
+const titleError = computed(() => props.titleError);
 const generalError = computed(() => (titleError.value ? '' : props.error));
 
 async function focusArtworkSearch() {

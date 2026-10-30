@@ -142,6 +142,7 @@ function batchStatus(trackId) {
     <UiSearchBox
       v-model="query"
       class="analysis-picker__search"
+      label="搜尋曲目"
       placeholder="搜尋可分析曲目"
     />
 

@@ -118,11 +118,15 @@ function relatedLabel(version) {
           ? dimensions.instrumental
           : '',
       ].filter(Boolean);
+  // A custom label may already name the relationship; reuse its display label.
+  const coverLabel = relationshipOptions.find(
+    (option) => option.value === 'cover',
+  ).label;
   if (
     version.relationship === 'cover' &&
-    !labels.some((label) => label.includes('翻唱'))
+    !labels.some((label) => label.includes(coverLabel))
   )
-    labels.push('翻唱');
+    labels.push(coverLabel);
   return labels.join(' · ');
 }
 onMounted(() => {
@@ -205,9 +209,7 @@ onUnmounted(songEditor.dispose);
             :selected-artwork-candidate-id="
               metadata.state.selectedArtworkCandidateId
             "
-            :error="
-              metadata.state.error === '歌名必填' ? metadata.state.error : ''
-            "
+            :title-error="metadata.state.titleError"
             @save="songEditor.save"
             @choose-thumbnail="metadata.chooseThumbnail"
             @clear-thumbnail="metadata.clearThumbnail"
@@ -335,7 +337,7 @@ onUnmounted(songEditor.dispose);
       <div class="work-version-editor__footer">
         <div class="work-version-editor__notices" aria-label="歌曲整理提示">
           <UiNotice
-            v-if="metadata.state.error && metadata.state.error !== '歌名必填'"
+            v-if="metadata.state.error"
             compact
             tone="danger"
             :message="metadata.state.error"

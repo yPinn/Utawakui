@@ -29,17 +29,29 @@ const { recordError } = useAppDiagnostics();
 const notifications = useAppNotifications();
 
 const ERROR_PRESENTATION = Object.freeze({
-  讀取歌單失敗: ['list', '目前無法讀取播放清單，請再試一次。'],
-  建立歌單失敗: ['create', '無法建立播放清單，請再試一次。'],
-  重新命名歌單失敗: ['rename', '變更未儲存，請再試一次。'],
-  刪除歌單失敗: ['delete', '無法刪除播放清單，請再試一次。'],
-  轉換歌單類型失敗: ['set-kind', '變更未儲存，請再試一次。'],
-  更新歌單說明失敗: ['set-description', '變更未儲存，請再試一次。'],
-  設定封面失敗: ['set-cover', '封面未更新，請再試一次。'],
-  移除封面失敗: ['clear-cover', '封面未更新，請再試一次。'],
-  建立專輯歌單失敗: ['upsert-album', '專輯未儲存，請再試一次。'],
-  歌單排序儲存失敗: ['reorder', '排序未儲存，請再試一次。'],
-  歌單儲存失敗: ['set-tracks', '變更未儲存，請再試一次。'],
+  list: {
+    title: '讀取歌單失敗',
+    message: '目前無法讀取播放清單，請再試一次。',
+  },
+  create: { title: '建立歌單失敗', message: '無法建立播放清單，請再試一次。' },
+  rename: { title: '重新命名歌單失敗', message: '變更未儲存，請再試一次。' },
+  delete: { title: '刪除歌單失敗', message: '無法刪除播放清單，請再試一次。' },
+  'set-kind': {
+    title: '轉換歌單類型失敗',
+    message: '變更未儲存，請再試一次。',
+  },
+  'set-description': {
+    title: '更新歌單說明失敗',
+    message: '變更未儲存，請再試一次。',
+  },
+  'set-cover': { title: '設定封面失敗', message: '封面未更新，請再試一次。' },
+  'clear-cover': { title: '移除封面失敗', message: '封面未更新，請再試一次。' },
+  'upsert-album': {
+    title: '建立專輯歌單失敗',
+    message: '專輯未儲存，請再試一次。',
+  },
+  reorder: { title: '歌單排序儲存失敗', message: '排序未儲存，請再試一次。' },
+  'set-tracks': { title: '歌單儲存失敗', message: '變更未儲存，請再試一次。' },
 });
 
 // Serialize mutations so rapid actions cannot overwrite each other.
@@ -62,14 +74,16 @@ function applyPlaylists(playlists) {
   }
 }
 
-function formatError(prefix, err) {
-  const [operation, message] = ERROR_PRESENTATION[prefix] ?? [
-    'unknown',
-    '操作未完成，請再試一次。',
-  ];
+const UNKNOWN_ERROR = Object.freeze({
+  title: '歌單操作失敗',
+  message: '操作未完成，請再試一次。',
+});
+
+function formatError(operation, err) {
+  const { title, message } = ERROR_PRESENTATION[operation] ?? UNKNOWN_ERROR;
   return recordError(err, {
     code: `PLAYLIST_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-    title: prefix,
+    title,
     message,
     source: 'playlists',
     operation,
@@ -79,7 +93,7 @@ function formatError(prefix, err) {
 
 function enqueue(
   operation,
-  errorPrefix,
+  errorOperation,
   { read = false, isCurrent = null, onError = null } = {},
 ) {
   if (typeof window === 'undefined' || !window.Utawakui) {
@@ -94,24 +108,20 @@ function enqueue(
       if (read) state.error = null;
       else {
         state.actionError = null;
-        notifications.clear(
-          notificationKey.playlists(ERROR_PRESENTATION[errorPrefix]?.[0]),
-        );
+        notifications.clear(notificationKey.playlists(errorOperation));
       }
       return playlists;
     } catch (err) {
       if (isCurrent && !isCurrent()) return null;
-      const message = formatError(errorPrefix, err);
+      const message = formatError(errorOperation, err);
       if (read) state.error = message;
       else {
         state.actionError = message;
         if (!onError || onError(message) === false)
           // The title names the failure; inline surfaces keep the full sentence.
           notifications.notify({
-            key: notificationKey.playlists(
-              ERROR_PRESENTATION[errorPrefix]?.[0],
-            ),
-            title: errorPrefix,
+            key: notificationKey.playlists(errorOperation),
+            title: (ERROR_PRESENTATION[errorOperation] ?? UNKNOWN_ERROR).title,
             message: '請再試一次。',
             tone: 'danger',
           });
@@ -130,7 +140,7 @@ async function refresh() {
   try {
     const result = await enqueue(
       () => window.Utawakui.listPlaylists(),
-      '讀取歌單失敗',
+      'list',
       {
         read: true,
         isCurrent: () => revision === readRevision,
@@ -208,7 +218,7 @@ function setLibraryView(view) {
 async function create(name) {
   const playlists = await enqueue(
     () => window.Utawakui.createPlaylist(name),
-    '建立歌單失敗',
+    'create',
   );
   const created = playlists?.[playlists.length - 1];
   if (created) select(created.id);
@@ -219,30 +229,27 @@ async function rename(id, name, feedback) {
   return Boolean(
     await enqueue(
       () => window.Utawakui.renamePlaylist(id, name),
-      '重新命名歌單失敗',
+      'rename',
       feedback,
     ),
   );
 }
 
 async function remove(id) {
-  await enqueue(() => window.Utawakui.deletePlaylist(id), '刪除歌單失敗');
+  await enqueue(() => window.Utawakui.deletePlaylist(id), 'delete');
 }
 
 // Manual escape hatch for when the automatic album/playlist heuristic
 // (main.js's startup migration) guesses wrong on an existing collection.
 async function setKind(id, kind) {
-  await enqueue(
-    () => window.Utawakui.setPlaylistKind(id, kind),
-    '轉換歌單類型失敗',
-  );
+  await enqueue(() => window.Utawakui.setPlaylistKind(id, kind), 'set-kind');
 }
 
 async function setDescription(id, description, feedback) {
   return Boolean(
     await enqueue(
       () => window.Utawakui.setPlaylistDescription(id, description),
-      '更新歌單說明失敗',
+      'set-description',
       feedback,
     ),
   );
@@ -255,7 +262,7 @@ async function setCover(id, feedback) {
   return Boolean(
     await enqueue(
       () => window.Utawakui.choosePlaylistCover(id),
-      '設定封面失敗',
+      'set-cover',
       feedback,
     ),
   );
@@ -265,7 +272,7 @@ async function clearCover(id, feedback) {
   return Boolean(
     await enqueue(
       () => window.Utawakui.clearPlaylistCover(id),
-      '移除封面失敗',
+      'clear-cover',
       feedback,
     ),
   );
@@ -278,7 +285,7 @@ async function clearCover(id, feedback) {
 async function upsertAlbum(payload) {
   const playlists = await enqueue(
     () => window.Utawakui.upsertAlbum(payload),
-    '建立專輯歌單失敗',
+    'upsert-album',
   );
   return (
     playlists?.find(
@@ -337,7 +344,7 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
   state.playlists = next;
   enqueue(
     () => window.Utawakui.reorderPlaylist(draggedId, targetId, position),
-    '歌單排序儲存失敗',
+    'reorder',
   );
 }
 
@@ -375,7 +382,7 @@ function mutateTracks(playlistId, computeNext) {
 
   return enqueue(
     () => window.Utawakui.setPlaylistTracks(playlistId, next),
-    '歌單儲存失敗',
+    'set-tracks',
   ).then(Boolean);
 }
 

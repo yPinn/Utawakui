@@ -286,7 +286,8 @@ describe('useTrackMetadataEditor', () => {
 
     expect(saveTrackEditsMock).not.toHaveBeenCalled();
     expect(editor.state.track.id).toBe('local-1');
-    expect(editor.state.error).toBe('歌名必填');
+    expect(editor.state.titleError).toBe('歌名必填');
+    expect(editor.state.error).toBe(null);
   });
 
   it('does not call the bridge when Save is requested without any changes', async () => {

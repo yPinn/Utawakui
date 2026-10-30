@@ -160,6 +160,8 @@ function selectMenuAction(value) {
         v-if="showSearch"
         :model-value="searchQuery"
         class="collection-action-rail__search"
+        label="搜尋曲目"
+        placeholder="搜尋曲目"
         @update:model-value="emit('update:searchQuery', $event)"
       />
       <TrackListDensityMenu

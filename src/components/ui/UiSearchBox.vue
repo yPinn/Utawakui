@@ -11,9 +11,9 @@ defineOptions({ inheritAttrs: false });
 
 const props = defineProps({
   id: { type: String, default: '' },
-  label: { type: String, default: '搜尋曲目' },
+  label: { type: String, default: '搜尋' },
   modelValue: { type: String, default: '' },
-  placeholder: { type: String, default: '搜尋曲目' },
+  placeholder: { type: String, default: '搜尋' },
   disabled: { type: Boolean, default: false },
   // Square divided icon cell, so the glyph can share a caller's artwork column.
   iconCell: { type: Boolean, default: false },

@@ -186,7 +186,7 @@ function updateSnapToDownbeats(value) {
 }
 
 function retryErrorAction() {
-  if (annotation.error.value?.actionLabel === '重試儲存') annotation.save();
+  if (annotation.error.value?.action === 'retry-save') annotation.save();
   else openWorklist();
 }
 

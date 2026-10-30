@@ -51,7 +51,7 @@ const selectedAvailabilitySummary = computed(() => {
   const availability = selectedPreset.value?.availability;
   if (
     !availability?.summary ||
-    (availability.available !== false && availability.label === '可用')
+    (availability.available !== false && availability.status === 'available')
   ) {
     return '';
   }

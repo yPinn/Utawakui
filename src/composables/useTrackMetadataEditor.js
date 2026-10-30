@@ -50,6 +50,8 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     artworkQuery: { album: '' },
     artworkCandidates: [],
     selectedArtworkCandidateId: null,
+    // Field validation stays apart from operation errors.
+    titleError: '',
     error: null,
   });
 
@@ -143,6 +145,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.artworkDraft = { action: 'keep' };
     state.artworkPreviewUrl = '';
     state.error = null;
+    state.titleError = '';
   }
 
   function open(track, { discoverArtwork = true } = {}) {
@@ -158,6 +161,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.artistDraft = track?.artist ?? '';
     state.artworkPreviewUrl = track?.thumbnailUrl ?? '';
     state.error = null;
+    state.titleError = '';
     if (discoverArtwork && track && !track.thumbnailUrl) {
       openArtworkSearch({ promptForGate: false });
     }
@@ -179,9 +183,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     const nextValue = String(value ?? '');
     if (state.titleDraft === nextValue) return;
     state.titleDraft = nextValue;
-    if (state.error === REQUIRED_TITLE_MESSAGE && nextValue.trim()) {
-      state.error = null;
-    }
+    if (state.titleError && nextValue.trim()) state.titleError = '';
     if (state.artworkSearchOpen) {
       if (state.isArtworkSearching) cancelArtworkSearch();
       else invalidateArtworkResults();
@@ -505,7 +507,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     const title = state.titleDraft.trim();
     const artist = state.artistDraft.trim();
     if (!title) {
-      state.error = REQUIRED_TITLE_MESSAGE;
+      state.titleError = REQUIRED_TITLE_MESSAGE;
       return null;
     }
     if (!isDirty.value) return null;

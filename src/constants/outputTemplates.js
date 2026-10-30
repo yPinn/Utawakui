@@ -277,10 +277,10 @@ const DEFAULT_TEMPLATE_IDS = new Set(
 // Labels follow state: each slot's default is 建議, the rest are 可用.
 function availabilityForTemplate(template, available = true) {
   const status = !available
-    ? { label: '尚未提供', tone: 'warning' }
+    ? { status: 'unavailable', label: '尚未提供', tone: 'warning' }
     : DEFAULT_TEMPLATE_IDS.has(template.id)
-      ? { label: '建議', tone: 'accent' }
-      : { label: '可用', tone: 'muted' };
+      ? { status: 'recommended', label: '建議', tone: 'accent' }
+      : { status: 'available', label: '可用', tone: 'muted' };
   return Object.freeze({ ...template.availability, ...status, available });
 }
 

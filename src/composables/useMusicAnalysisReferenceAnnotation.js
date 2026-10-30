@@ -9,11 +9,13 @@ import {
 } from '../utils/musicAnalysisReferenceAnnotation.js';
 
 const PUBLIC_LOAD_ERROR = Object.freeze({
+  action: 'reselect',
   title: '人工標註工作集無法開啟',
   message: '請確認選擇的是有效的 run config，且工作集屬於目前曲庫。',
   actionLabel: '重新選擇',
 });
 const PUBLIC_SAVE_ERROR = Object.freeze({
+  action: 'retry-save',
   title: '人工標註尚未儲存',
   message: '工作集未變更，請稍後再試。',
   actionLabel: '重試儲存',
