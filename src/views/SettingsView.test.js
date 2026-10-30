@@ -127,7 +127,7 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain('@clear="handleClearPlaybackHistory"');
     expect(source).toContain('initializePlaybackHistory(),');
     expect(source).toContain("title: '清除最近播放紀錄？'");
-    expect(source).toContain('播放佇列、播放清單、OBS 場次與錯誤紀錄會保留。');
+    expect(source).toContain('播放佇列、播放清單與 OBS 場次會保留。');
   });
 
   it('keeps storage and automatic metadata organization in the library section', () => {

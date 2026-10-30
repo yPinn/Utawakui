@@ -93,7 +93,7 @@
   },
   "LIBRARY_STORAGE_POLICY_INVALID": {
     "title": "無法套用曲庫空間設定",
-    "message": "指定的曲庫空間設定無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "LIBRARY_STORAGE_POLICY_UPDATE_FAILED": {
     "title": "無法儲存曲庫空間設定",

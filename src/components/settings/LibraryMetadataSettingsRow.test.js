@@ -42,12 +42,10 @@ describe('LibraryMetadataSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('>曲庫資訊</h3>');
-    expect(html).toContain(
-      '啟動時整理本機資料；線上補齊專輯與曲序，保留手動編輯。',
-    );
+    expect(html).toContain('可從網路補齊專輯與曲序，不會覆蓋手動編輯。');
     expect(html).toContain('線上補齊');
     expect(html).toContain(
-      'aria-description="連線補齊所屬專輯與完整曲序，保留手動編輯。"',
+      'aria-description="從網路補齊專輯與曲序，不會覆蓋手動編輯。"',
     );
     expect(html).not.toContain('>自動</span>');
     expect(html.match(/<button\b/gu)).toHaveLength(2);

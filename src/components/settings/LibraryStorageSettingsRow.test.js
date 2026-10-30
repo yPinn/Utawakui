@@ -58,7 +58,7 @@ describe('LibraryStorageSettingsRow', () => {
     expect(source).toContain('其他');
     expect(source).toContain('自動清理去人聲版本');
     expect(source).toContain('label="去人聲容量上限"');
-    expect(source).toContain('原始歌曲保留。啟用後會立即檢查');
+    expect(source).toContain('自動刪除去人聲版本；原始歌曲會保留');
     expect(source).toContain('<UiIconButton');
     expect(source).toContain('label="清理去人聲空間"');
     expect(source).toContain('loading-label="清理中"');

@@ -46,7 +46,7 @@ describe('Settings copy density', () => {
   it('keeps decision-changing consequences while shortening routine guidance', () => {
     expect(librarySource).toContain('切換位置不會搬移既有曲目。');
     expect(metadataSource).toContain(
-      '啟動時整理本機資料；線上補齊專輯與曲序，保留手動編輯。',
+      '可從網路補齊專輯與曲序，不會覆蓋手動編輯。',
     );
     expect(metadataSource).not.toContain('value="啟動時補齊曲目與發行資訊"');
     expect(metadataSource).not.toContain('<UiHint>從來源更新會連線');

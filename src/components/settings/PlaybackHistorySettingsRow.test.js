@@ -26,7 +26,7 @@ async function renderRow(props = {}) {
 describe('PlaybackHistorySettingsRow', () => {
   it('marks a failed read as unknown and offers one local retry', async () => {
     const html = await renderRow({ error: '讀取失敗', readError: '讀取失敗' });
-    expect(html).toContain('尚未確認播放紀錄');
+    expect(html).toContain('暫時無法讀取');
     expect(html).toContain('重新讀取');
     expect(html).not.toContain('尚無播放紀錄');
     expect(html).not.toContain('>無紀錄<');

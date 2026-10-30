@@ -58,13 +58,11 @@ it('allows a title-only local track to preview without a hidden artist selection
     trackId: 't',
     fields: ['title'],
   });
-  await vi.waitFor(() =>
-    expect(textContent(view.root)).toContain('確認回寫音檔'),
-  );
+  await vi.waitFor(() => expect(textContent(view.root)).toContain('寫入音檔'));
   expect(bridge.commitLibraryTags).not.toHaveBeenCalled();
   const confirm = findAll(
     view.root,
-    (n) => n.type === 'button' && textContent(n) === '確認回寫音檔',
+    (n) => n.type === 'button' && textContent(n) === '寫入音檔',
   )[0];
   expect(String(confirm.props.class)).toContain('ui-btn--accent');
   trigger(confirm, 'onClick');
