@@ -47,6 +47,8 @@ defineProps({
   font-weight: var(--ui-type-heading-weight);
   line-height: var(--ui-type-heading-line-height);
   color: var(--ui-color-text);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .ui-page-header__actions {

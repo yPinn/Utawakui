@@ -18,6 +18,7 @@ describe('production text selection contract', () => {
     ['./UiTabs.vue', '.ui-tabs__tab'],
     ['./UiField.vue', '.ui-field__label'],
     ['./UiBreadcrumb.vue', '.ui-breadcrumb'],
+    ['./UiPageHeader.vue', '.ui-page-header__title'],
     ['../artists/ArtistIdentityCredits.vue', '.artist-identity-credits__count'],
     ['../artists/ArtistIdentityModal.vue', '.artist-identity-modal__status'],
     ['../bgm/BgmPlayer.vue', '.bgm-player__status'],
