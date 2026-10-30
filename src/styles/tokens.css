@@ -1139,6 +1139,9 @@
 /* Recompose control aliases at either local color boundary. */
 [data-ui-system='v2'] [data-ui-region='receipt'],
 [data-ui-system='v2'] [data-ui-region='chrome'] {
+  /* Native <select> popups cannot teleport out of the boundary. */
+  --ui-floating-list-background: var(--ui-color-surface-raised);
+  --ui-floating-list-border: var(--ui-color-border);
   --ui-field-background: var(--ui-color-surface-raised);
   --ui-field-background-hover: var(--ui-color-surface-hover);
   --ui-field-background-readonly: var(--ui-color-surface);
