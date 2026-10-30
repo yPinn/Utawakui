@@ -3,6 +3,7 @@
 // Use vitest/config so the test field is recognized.
 const { defineConfig } = require('vitest/config');
 const vue = require('@vitejs/plugin-vue');
+const vueI18n = require('@intlify/unplugin-vue-i18n/vite');
 const path = require('node:path');
 const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
 const { createSharedAssetsPlugin } = require('./scripts/viteSharedAssets.js');
@@ -32,6 +33,11 @@ const TIMEOUT_SCALE = process.argv.includes('--coverage') ? 3 : 1;
 module.exports = defineConfig({
   plugins: [
     vue(),
+    // Precompiles UI catalogs; production then bundles the runtime-only build.
+    vueI18n({
+      include: path.resolve(__dirname, 'shared/locales/**'),
+      strictMessage: false,
+    }),
     createAppIdentityPlugin(),
     createOverlayReloadPlugin(__dirname),
     createSharedAssetsPlugin(),

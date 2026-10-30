@@ -1,26 +1,28 @@
+import { t } from './i18n.js';
+
 export const APP_DESTINATIONS = Object.freeze(
   [
     {
       id: 'library',
-      label: '曲庫',
+      label: t('destination.library'),
       material: 'primary',
       shortcut: 'f1',
     },
     {
       id: 'performance',
-      label: '演唱工具',
+      label: t('destination.performance'),
       material: 'secondary',
       shortcut: 'f2',
     },
     {
       id: 'display',
-      label: '畫面輸出',
+      label: t('destination.display'),
       material: 'tertiary',
       shortcut: 'f3',
     },
     {
       id: 'settings',
-      label: '設定',
+      label: t('destination.settings'),
       material: 'neutral',
       shortcut: 'f9',
     },

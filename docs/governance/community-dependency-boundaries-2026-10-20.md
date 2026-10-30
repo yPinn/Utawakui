@@ -88,8 +88,10 @@ Electron／Chromium 與 DLL 的內嵌元件，另需保留完整附文，不只�
 | `vue`                          | 3.5.43   | renderer runtime，位於 devDependencies                    | MIT                     | 保留適用版權、授權與免責文字；native／vendored 另核 |
 | `@lucide/vue`                  | 1.52.0   | renderer 圖示，位於 devDependencies                       | ISC                     | 保留適用版權、授權與免責文字；native／vendored 另核 |
 | `signalsmith-stretch`          | 1.3.2    | renderer pitch／tempo JS／WASM，位於 devDependencies      | MIT                     | MIT＋embedded 補充附文，build provenance 保留限制   |
+| `vue-i18n`                     | 11.4.16  | renderer UI 字串目錄，位於 devDependencies                | MIT                     | 保留適用版權、授權與免責文字；native／vendored 另核 |
 
 完整附文已由 `npm run license:verify` 核對至 93 個 package entries 與 2 個額外項目。
+2026-10-30 加入 `vue-i18n` 後，closure 新增 `vue-i18n`、`@intlify/core-base`／`message-compiler`／`shared`／`devtools-types` 與 `@vue/devtools-api`（套件未附全文，改由 `third-party/reviewed-sources.json` 登記上游 v6.6.4 LICENSE），`license:verify` 為 99＋2；下方逐項表仍為 2026-10-20 快照。
 這不等於所有模型、API 或 native build provenance 已完成核准；Signalsmith 嵌入 runtime 的編譯器版本證據仍依[先前補正紀錄](../archive/packaged-notices-repair-2026-10-18.md)保留限制。
 
 ## 選用 Provider 依賴
@@ -244,13 +246,14 @@ Qwen／Whisper 的 private research configs、環境、素材與結果不納入 
 
 ## 開發工具直接依賴
 
-下表排除已列入 runtime 的 Electron、Vue、Lucide 與 Signalsmith。工具本身的 license 不代表其產物、內嵌資產或所有 transitive dependencies 都只有同一授權。
+下表排除已列入 runtime 的 Electron、Vue、vue-i18n、Lucide 與 Signalsmith。工具本身的 license 不代表其產物、內嵌資產或所有 transitive dependencies 都只有同一授權。
 
 | 套件                              | 版本    | 取用                  | license |
 | --------------------------------- | ------- | --------------------- | ------- |
 | `@commitlint/cli`                 | 21.2.3  | 開發／build／測試工具 | MIT     |
 | `@commitlint/config-conventional` | 21.2.3  | 開發／build／測試工具 | MIT     |
 | `@eslint/js`                      | 10.0.1  | 開發／build／測試工具 | MIT     |
+| `@intlify/unplugin-vue-i18n`      | 11.2.8  | 開發／build／測試工具 | MIT     |
 | `@vitejs/plugin-vue`              | 6.0.9   | 開發／build／測試工具 | MIT     |
 | `@vitest/coverage-istanbul`       | 4.1.11  | 開發／build／測試工具 | MIT     |
 | `@vitest/coverage-v8`             | 4.1.11  | 開發／build／測試工具 | MIT     |

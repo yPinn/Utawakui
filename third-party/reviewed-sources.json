@@ -93,6 +93,17 @@
       "version": "0.1.8",
       "license": "MIT AND BSD-3-Clause",
       "files": []
+    },
+    {
+      "path": "node_modules/@vue/devtools-api",
+      "version": "6.6.4",
+      "files": [
+        {
+          "path": "upstream/vue-devtools-license.txt",
+          "sha256": "050bbca6960784db52ff387271bf2ecc5cbed7cf8581b415d528a6ecb6585015",
+          "source": "https://raw.githubusercontent.com/vuejs/devtools-v6/v6.6.4/LICENSE"
+        }
+      ]
     }
   ],
   "additional": [

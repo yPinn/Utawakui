@@ -10,6 +10,7 @@ const browserRuntimeRoots = [
   'opencc-js',
   'signalsmith-stretch',
   'vue',
+  'vue-i18n',
 ];
 const noticeName =
   /^(?:licen[cs]e|copying|notice|third[-_]party[-_](?:notices|licenses))(?:[._-]|$)/iu;
