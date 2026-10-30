@@ -292,7 +292,8 @@ describe('PlayerBar responsive metadata layout', () => {
   });
 
   it('keeps accompaniment background work out of playback controls', () => {
-    expect(componentSource).not.toContain('useSeparationQueue');
+    // Reads the app-provided queue for the guide tab; never owns one.
+    expect(componentSource).not.toMatch(/useSeparationQueue\(/);
     expect(componentSource).not.toContain('separationQueueIndicator');
     expect(componentSource).not.toContain('ListChecks');
     expect(componentSource).not.toContain('separationExpanded');

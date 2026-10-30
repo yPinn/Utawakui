@@ -96,7 +96,9 @@ describe('PlayerToolsPanel shared surface', () => {
       expect(source).not.toContain(value);
       expect(barSource).not.toContain(value);
     }
-    expect(barSource).not.toContain('useSeparation');
+    expect(barSource).not.toContain("useSeparation.js'");
+    // The guide tab reuses the library row's shared queue action.
+    expect(barSource).toContain('useTrackSeparationAction');
     expect(source).toContain('<UiIconButton');
     const html = await render();
     expect(html).not.toContain('產生伴奏');
@@ -147,9 +149,57 @@ describe('PlayerToolsPanel shared surface', () => {
     expect(guide).toContain('導唱比例(擷取)');
   });
 
-  it('explains the unavailable guide controls without adding another preparation entry', async () => {
+  it('explains the unavailable guide controls when no track status is known', async () => {
     const html = await render({ activeTab: 'guide' });
     expect(html).toContain('使用伴奏音訊後可調整導唱比例。');
+    expect(html).not.toContain('產生伴奏');
+  });
+
+  it('keeps guide sliders visible but disabled above an accompaniment action', async () => {
+    const html = await render({
+      activeTab: 'guide',
+      hasTrack: true,
+      guideAccompaniment: {
+        message: '這首歌還沒有伴奏',
+        actionLabel: '產生伴奏',
+      },
+      guideVocalRows: [
+        {
+          key: 'monitor',
+          label: '監聽',
+          icon: Headphones,
+          deviceName: '監聽裝置',
+          onIcon: Volume2,
+          on: true,
+          onLabel: '關閉導唱(監聽)',
+          value: '50%',
+          sliderValue: 0.5,
+          defaultValue: 0.5,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          sliderLabel: '導唱比例(監聽)',
+        },
+      ],
+    });
+    const guide = html.slice(html.indexOf('id="player-tools-guide-panel"'));
+    expect(guide).toContain('這首歌還沒有伴奏');
+    expect(guide.indexOf('產生伴奏')).toBeLessThan(
+      guide.indexOf('導唱比例(監聽)'),
+    );
+    expect(guide).not.toContain('使用伴奏音訊後可調整導唱比例。');
+    expect(guide).toMatch(/aria-label="導唱比例\(監聽\)"[^>]*disabled/);
+    expect(guide).toMatch(/aria-pressed="true"[^>]*disabled/);
+  });
+
+  it('shows queue progress instead of the action while accompaniment is processing', async () => {
+    const html = await render({
+      activeTab: 'guide',
+      hasTrack: true,
+      guideAccompaniment: { message: '伴奏處理中', detail: '42%', busy: true },
+    });
+    expect(html).toContain('伴奏處理中');
+    expect(html).toContain('42%');
     expect(html).not.toContain('產生伴奏');
   });
 });

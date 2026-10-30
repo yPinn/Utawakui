@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, unref } from 'vue';
 import {
   Cable,
   Headphones,
@@ -20,6 +20,10 @@ import { usePlaybackTransport } from '../../composables/usePlaybackTransport.js'
 import { useMetronome } from '../../composables/useMetronome.js';
 import { useMetronomeTrackTempo } from '../../composables/useMetronomeTrackTempo.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
+import { useLibrary } from '../../composables/useLibrary.js';
+import { useSeparationQueueContext } from '../../composables/useSeparationQueueContext.js';
+import { useTrackSeparationAction } from '../../composables/useTrackSeparationAction.js';
+import { separationItemLabel } from '../separation/separationQueuePresentation.js';
 import {
   GUIDE_VOCAL_LEVEL_RANGE,
   PITCH_CENTS_RANGE,
@@ -158,6 +162,47 @@ const playbackModeActive = computed(
 );
 
 const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
+
+// Same queue and gate as the library row action; RightDock stays the place
+// to manage the whole queue.
+const { tracksById } = useLibrary();
+const separationController = useSeparationQueueContext();
+const { enqueueingTrackId, queueTrackForSeparation } = useTrackSeparationAction(
+  { separationController, tracksById },
+);
+const OPEN_SEPARATION_STATUSES = new Set(['pending', 'checking', 'running']);
+const guideAccompaniment = computed(() => {
+  const trackId = String(state.track?.id ?? '');
+  if (!trackId || showGuideVocal.value) return null;
+  const track = tracksById.value.get(trackId);
+  if (!track) return null;
+  if (
+    track.hasSeparation ||
+    Object.values(track.separation?.results ?? {}).some(Boolean)
+  ) {
+    return { message: '伴奏已就緒' };
+  }
+  const items = (unref(separationController.queue)?.items ?? []).filter(
+    (item) => item.trackId === trackId,
+  );
+  const item =
+    items.find(({ status }) => OPEN_SEPARATION_STATUSES.has(status)) ??
+    items.at(-1);
+  if (item && OPEN_SEPARATION_STATUSES.has(item.status)) {
+    return {
+      message: '伴奏處理中',
+      detail: separationItemLabel(item),
+      busy: true,
+    };
+  }
+  const attention = item?.status === 'failed' || item?.status === 'cancelled';
+  return {
+    message: attention ? '伴奏未完成' : '這首歌還沒有伴奏',
+    actionLabel: attention ? '重新產生' : '產生伴奏',
+    loading: enqueueingTrackId.value === trackId,
+    onAction: () => queueTrackForSeparation(track),
+  };
+});
 // Kept mounted (visibility:hidden, not v-if) so the trailing controls and
 // their balanced grid reserve stay stable when this capability changes.
 const canQuickToggleCaptureGuideVocal = computed(
@@ -558,6 +603,7 @@ onUnmounted(() => {
           :has-track="Boolean(state.track)"
           :guide-vocal-visible="showGuideVocal"
           :guide-vocal-rows="guideVocalRows"
+          :guide-accompaniment="guideAccompaniment"
           :pitch-tempo-rows="pitchTempoRows"
           :performance-settings="performanceSettingsView"
           @settings-action="handleSettingsAction"

@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue';
 import {
+  CircleDashed,
   ICON_SIZE,
+  MicAudioLines,
   Metronome,
   Minus,
   Pause,
@@ -27,6 +29,7 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import PlayerPerformanceSettingsControls from './PlayerPerformanceSettingsControls.vue';
 
 defineProps({
@@ -39,6 +42,8 @@ defineProps({
   hasTrack: { type: Boolean, default: false },
   guideVocalVisible: { type: Boolean, default: false },
   guideVocalRows: { type: Array, default: () => [] },
+  // { message, detail?, busy?, actionLabel?, loading?, onAction? }
+  guideAccompaniment: { type: Object, default: null },
   pitchTempoRows: { type: Array, default: () => [] },
   performanceSettings: { type: Object, default: null },
 });
@@ -338,8 +343,41 @@ function setActiveTab(key) {
       aria-labelledby="player-tools-guide-tab"
       tabindex="0"
     >
-      <UiHint v-if="!guideVocalVisible">使用伴奏音訊後可調整導唱比例。</UiHint>
-      <div v-else class="player-tools__group">
+      <div
+        v-if="!guideVocalVisible && guideAccompaniment"
+        class="player-tools__accompaniment"
+        role="status"
+      >
+        <UiStatusIcon
+          v-if="guideAccompaniment.busy"
+          :icon="CircleDashed"
+          tone="info"
+          spinning
+          decorative
+          label="伴奏處理中"
+        />
+        <span class="player-tools__accompaniment-message">{{
+          guideAccompaniment.message
+        }}</span>
+        <span
+          v-if="guideAccompaniment.detail"
+          class="player-tools__accompaniment-detail"
+          >{{ guideAccompaniment.detail }}</span
+        >
+        <UiButton
+          v-if="guideAccompaniment.actionLabel"
+          :icon="MicAudioLines"
+          variant="secondary"
+          :loading="guideAccompaniment.loading"
+          loading-label="正在加入伴奏處理佇列"
+          @click="guideAccompaniment.onAction"
+          >{{ guideAccompaniment.actionLabel }}</UiButton
+        >
+      </div>
+      <UiHint v-else-if="!guideVocalVisible"
+        >使用伴奏音訊後可調整導唱比例。</UiHint
+      >
+      <div class="player-tools__group">
         <template v-for="(row, index) in guideVocalRows" :key="row.key">
           <UiSeparator v-if="index > 0" />
           <div class="player-tools__adjust-row">
@@ -364,6 +402,7 @@ function setActiveTab(key) {
               <span class="player-tools__value">{{ row.value }}</span>
               <UiIconButton
                 :icon="row.onIcon"
+                :disabled="!guideVocalVisible"
                 :active="row.on"
                 :label="row.onLabel"
                 :aria-pressed="row.on"
@@ -379,7 +418,7 @@ function setActiveTab(key) {
                 :min="row.min"
                 :max="row.max"
                 :step="row.step"
-                :disabled="!hasTrack"
+                :disabled="!hasTrack || !guideVocalVisible"
                 :marks="row.marks"
                 :value-text="row.value"
                 :format-value="row.formatSliderValue"
@@ -574,6 +613,29 @@ function setActiveTab(key) {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
   font-weight: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.player-tools__accompaniment {
+  min-block-size: var(--ui-control-height);
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.player-tools__accompaniment-message {
+  flex: 1;
+  min-width: 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
+}
+
+.player-tools__accompaniment-detail {
+  color: var(--ui-color-text);
+  font-size: var(--ui-type-label-size);
+  line-height: var(--ui-type-label-line-height);
   font-variant-numeric: tabular-nums;
 }
 
