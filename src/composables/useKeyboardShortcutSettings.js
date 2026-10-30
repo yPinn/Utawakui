@@ -6,22 +6,23 @@ import {
 } from '../../shared/keyboardShortcutContract.mjs';
 import { LEGACY_KEYBOARD_BINDINGS } from '../../shared/keyboardBindingDefinitions.mjs';
 import { shortcutRuntimePresentation } from '../utils/keyboardShortcutSettingsPresentation.js';
+import { t } from '../utils/i18n.js';
 
 const sessions = new WeakMap(),
   owners = new Set();
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const commands = new Set(SHORTCUT_COMMANDS.map(({ id }) => id));
 const messages = {
-  invalid: '快捷鍵設定已損壞，原檔已保留。',
-  unsupported: '快捷鍵設定格式尚未支援，原檔已保留。',
-  conflict: '快捷鍵已在其他操作中變更，請重新讀取。',
+  invalid: t('shortcuts.errors.invalid'),
+  unsupported: t('shortcuts.errors.unsupportedFormat'),
+  conflict: t('shortcuts.errors.conflict'),
 };
 const operationMessages = {
-  occupied: '這組按鍵已被其他程式使用，請換一組或重試。',
-  'keys-held': '請放開所有按鍵，再試一次。',
-  busy: '快捷鍵正在處理，請稍後再試。',
-  degraded: '背景快捷鍵已暫停，請重新讀取快捷鍵後再試。',
-  unsupported: '這項背景快捷鍵尚未開放。',
+  occupied: t('shortcuts.errors.occupied'),
+  'keys-held': t('shortcuts.errors.keysHeld'),
+  busy: t('shortcuts.errors.busy'),
+  degraded: t('shortcuts.errors.degraded'),
+  unsupported: t('shortcuts.errors.unsupportedGlobal'),
 };
 function boundedWait(work) {
   let timer;
@@ -109,7 +110,7 @@ export function createKeyboardShortcutSettings({
     configuration.value = defaultShortcutConfiguration();
     state.loaded = false;
     state.status = status;
-    state.readError = messages[status] ?? '無法讀取快捷鍵，請重新讀取。';
+    state.readError = messages[status] ?? t('shortcuts.errors.readFailed');
   }
   async function refresh() {
     if (disposed || state.busy || state.reading) return false;
@@ -156,7 +157,7 @@ export function createKeyboardShortcutSettings({
       return true;
     } catch {
       if (!disposed && request === runtimeSerial)
-        state.runtimeError = '無法讀取背景快捷鍵狀態，請重新讀取。';
+        state.runtimeError = t('shortcuts.errors.runtimeReadFailed');
       return false;
     } finally {
       if (request === runtimeSerial) state.runtimeReading = false;
@@ -223,7 +224,7 @@ export function createKeyboardShortcutSettings({
     try {
       candidate = validate(next, eligible);
     } catch {
-      state.saveError = '這組快捷鍵無法使用，請重新設定。';
+      state.saveError = t('shortcuts.errors.unusable');
       return false;
     }
     const request = ++serial;
@@ -246,7 +247,7 @@ export function createKeyboardShortcutSettings({
         } catch {
           runtime.value = null;
           runtimePresentation.value = null;
-          state.runtimeError = '無法讀取背景快捷鍵狀態，請重新讀取。';
+          state.runtimeError = t('shortcuts.errors.runtimeReadFailed');
         }
       }
       if (reply?.status !== 'ready') {
@@ -255,7 +256,7 @@ export function createKeyboardShortcutSettings({
         state.saveError =
           operationMessages[reply?.status] ??
           messages[reply?.status] ??
-          '快捷鍵尚未確認儲存，請重新讀取後再試。';
+          t('shortcuts.errors.saveUnconfirmed');
         return false;
       }
       const saved = snapshot(reply, eligible);
@@ -276,7 +277,7 @@ export function createKeyboardShortcutSettings({
       return true;
     } catch {
       if (!disposed && request === serial) {
-        state.saveError = '快捷鍵尚未確認儲存，請重新讀取後再試。';
+        state.saveError = t('shortcuts.errors.saveUnconfirmed');
         if (eligible.length && !candidate.globalEnabled) {
           try {
             const reply = await boundedWait(() =>
@@ -287,7 +288,7 @@ export function createKeyboardShortcutSettings({
             if (!disposed && request === serial) {
               runtime.value = null;
               runtimePresentation.value = null;
-              state.runtimeError = '無法讀取背景快捷鍵狀態，請重新讀取。';
+              state.runtimeError = t('shortcuts.errors.runtimeReadFailed');
             }
           }
         }
@@ -306,7 +307,7 @@ export function createKeyboardShortcutSettings({
         eligible,
       );
     } catch {
-      state.testError = '這組快捷鍵無法使用，請重新設定。';
+      state.testError = t('shortcuts.errors.unusable');
       return false;
     }
     const request = ++serial;
@@ -335,14 +336,14 @@ export function createKeyboardShortcutSettings({
       state.testError =
         operationMessages[reply?.status] ??
         messages[reply?.status] ??
-        '無法確認按鍵是否可用，請重試。';
+        t('shortcuts.errors.testFailed');
       return false;
     } catch {
       if (!disposed && request === serial) {
-        state.testError = '無法確認按鍵是否可用，請重新讀取後再試。';
+        state.testError = t('shortcuts.errors.testFailedReload');
         runtime.value = null;
         runtimePresentation.value = null;
-        state.runtimeError = '無法讀取背景快捷鍵狀態，請重新讀取。';
+        state.runtimeError = t('shortcuts.errors.runtimeReadFailed');
       }
       return false;
     } finally {
@@ -376,7 +377,7 @@ export function createKeyboardShortcutSettings({
             : next,
         );
       } catch {
-        state.saveError = '這組快捷鍵無法使用，請重新設定。';
+        state.saveError = t('shortcuts.errors.unusable');
         return false;
       }
     },

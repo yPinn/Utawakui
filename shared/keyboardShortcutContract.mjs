@@ -6,20 +6,19 @@ const chord = (key, ctrl = false) =>
 
 export const SHORTCUT_COMMANDS = Object.freeze(
   [
-    ['player.play-pause', '播放／暫停'],
-    ['player.previous', '上一首'],
-    ['player.next', '下一首'],
-    ['player.transpose-up', '升調 1 半音', chord('arrowup', true)],
-    ['player.transpose-down', '降調 1 半音', chord('arrowdown', true)],
-    ['lyrics.offset-up', '歌詞提前 0.1 秒'],
-    ['lyrics.offset-down', '歌詞延後 0.1 秒'],
-    ['player.volume-up', '歌曲音量 +10%', chord('arrowup')],
-    ['player.volume-down', '歌曲音量 −10%', chord('arrowdown')],
-    ['player.mute', '歌曲靜音', chord('m')],
-  ].map(([id, label, defaultApp = null]) =>
+    ['player.play-pause'],
+    ['player.previous'],
+    ['player.next'],
+    ['player.transpose-up', chord('arrowup', true)],
+    ['player.transpose-down', chord('arrowdown', true)],
+    ['lyrics.offset-up'],
+    ['lyrics.offset-down'],
+    ['player.volume-up', chord('arrowup')],
+    ['player.volume-down', chord('arrowdown')],
+    ['player.mute', chord('m')],
+  ].map(([id, defaultApp = null]) =>
     Object.freeze({
       id,
-      label,
       defaultApp,
       defaultShiftWildcard: Boolean(
         defaultApp &&

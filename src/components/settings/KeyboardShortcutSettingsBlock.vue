@@ -17,6 +17,7 @@ import KeyboardShortcutKeys from './KeyboardShortcutKeys.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import KeyboardShortcutReference from './KeyboardShortcutReference.vue';
+import { t } from '../../utils/i18n.js';
 
 const settings = useKeyboardShortcutSettings();
 const expanded = shallowRef(false),
@@ -35,8 +36,8 @@ const hasBackgroundBindings = computed(() =>
   settings.configuration.value.bindings.some((binding) => binding.global),
 );
 const scopes = [
-  { id: 'app', label: 'App 內' },
-  { id: 'global', label: '背景' },
+  { id: 'app', label: t('shortcuts.block.scopeApp') },
+  { id: 'global', label: t('shortcuts.block.scopeGlobal') },
 ];
 const categoryGuidance = computed(
   () =>
@@ -69,7 +70,9 @@ const menuContent = computed(() => ({
                 id: 'remove',
                 kind: 'action',
                 value: 'remove',
-                label: `移除${menuRow.value.label}背景快捷鍵`,
+                label: t('shortcuts.block.removeGlobal', {
+                  command: menuRow.value.label,
+                }),
                 disabled:
                   !settings.canConfigure(menuRow.value.id, 'global') ||
                   settings.isRecording.value ||
@@ -82,7 +85,9 @@ const menuContent = computed(() => ({
                   id: 'disable',
                   kind: 'action',
                   value: 'disabled',
-                  label: `停用${menuRow.value.label}快捷鍵`,
+                  label: t('shortcuts.block.disableCommand', {
+                    command: menuRow.value.label,
+                  }),
                   disabled:
                     !settings.canEdit.value ||
                     settings.isRecording.value ||
@@ -94,7 +99,9 @@ const menuContent = computed(() => ({
                   id: 'default',
                   kind: 'action',
                   value: 'default',
-                  label: `恢復${menuRow.value.label}預設快捷鍵`,
+                  label: t('shortcuts.block.restoreCommand', {
+                    command: menuRow.value.label,
+                  }),
                   disabled:
                     !settings.canEdit.value ||
                     settings.isRecording.value ||
@@ -152,11 +159,11 @@ const feedback = computed(
 );
 const backgroundStatus = computed(() =>
   settings.state.runtimeReading
-    ? { status: '讀取中', tone: 'muted' }
+    ? { status: t('shortcuts.status.loading'), tone: 'muted' }
     : settings.state.runtimeError
-      ? { status: '無法讀取', tone: 'warning' }
+      ? { status: t('shortcuts.status.unreadable'), tone: 'warning' }
       : (settings.runtimePresentation.value ?? {
-          status: '尚未讀取',
+          status: t('shortcuts.status.notLoaded'),
           tone: 'muted',
         }),
 );
@@ -210,30 +217,38 @@ function leaveEditor(event) {
   <div class="keyboard-shortcut-settings">
     <SettingsDocumentItem
       :icon="Keyboard"
-      title="快捷鍵"
-      guidance="按「設定」更改按鍵；其他操作見「操作說明」。"
+      :title="t('shortcuts.block.title')"
+      :guidance="t('shortcuts.block.guidance')"
     >
       <template #actions>
         <UiButton
-          :aria-label="expanded ? '收合快捷鍵設定' : '展開快捷鍵設定'"
+          :aria-label="
+            t(expanded ? 'shortcuts.block.collapse' : 'shortcuts.block.expand')
+          "
           :aria-expanded="expanded"
           :aria-controls="panelId"
           :disabled="settings.state.busy && !settings.state.testing"
           @click="expanded = !expanded"
-          >{{ expanded ? '收合' : '設定' }}</UiButton
+          >{{
+            t(
+              expanded
+                ? 'shortcuts.block.collapseShort'
+                : 'shortcuts.block.expandShort',
+            )
+          }}</UiButton
         >
       </template>
       <template v-if="feedback || !settings.state.loaded" #feedback>
         <UiHint :tone="feedback ? 'danger' : 'muted'" role="status">{{
-          feedback || '正在載入快捷鍵…'
+          feedback || t('shortcuts.block.loading')
         }}</UiHint>
         <UiButton
           v-if="feedback"
-          aria-label="重新讀取快捷鍵"
+          :aria-label="t('shortcuts.block.reload')"
           :loading="settings.state.reading"
           :disabled="settings.isRecording.value || settings.state.busy"
           @click="settings.refresh"
-          >重新讀取</UiButton
+          >{{ t('shortcuts.block.reloadShort') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>
@@ -243,12 +258,12 @@ function leaveEditor(event) {
       ref="surface"
       class="keyboard-shortcut-settings__panel"
       role="region"
-      aria-label="快捷鍵設定"
+      :aria-label="t('shortcuts.block.settingsLabel')"
     >
       <UiTabs
         v-model:active-id="activeTab"
         :items="tabs"
-        aria-label="快捷鍵分類"
+        :aria-label="t('shortcuts.block.categoriesLabel')"
         :tab-id-prefix="panelId"
         :panel-id-prefix="panelId"
         variant="bar"
@@ -272,13 +287,13 @@ function leaveEditor(event) {
             v-if="settings.hasGlobalSettings.value && activeTab !== 'reference'"
             v-model="scope"
             :items="scopes"
-            aria-label="快捷鍵作用範圍"
+            :aria-label="t('shortcuts.block.scopeLabel')"
             :disabled="settings.state.busy && !settings.state.testing"
           />
           <UiHint
             v-if="scope === 'global' && activeTab !== 'reference'"
             class="keyboard-shortcut-settings__intro"
-            >背景按鍵需含 Ctrl 或 Alt。先試用，再套用；不會執行功能。</UiHint
+            >{{ t('shortcuts.block.globalHint') }}</UiHint
           >
           <KeyboardShortcutReference v-if="activeTab === 'reference'" />
 
@@ -297,7 +312,9 @@ function leaveEditor(event) {
               <KeyboardShortcutKeys
                 v-if="row.keys.length"
                 :chords="[row.keys]"
-                :label="row.label + '目前快捷鍵'"
+                :label="
+                  t('shortcuts.block.currentKeys', { command: row.label })
+                "
                 :aria-description="row.scope"
               />
               <UiHint class="keyboard-shortcut-settings__status">{{
@@ -310,17 +327,19 @@ function leaveEditor(event) {
             >
               <UiButton
                 class="keyboard-shortcut-settings__configure"
-                :aria-label="'設定' + row.label + '快捷鍵'"
+                :aria-label="
+                  t('shortcuts.block.configure', { command: row.label })
+                "
                 :disabled="
                   !settings.canConfigure(row.id, scope) ||
                   settings.isRecording.value
                 "
                 @click="begin(row.id)"
-                >設定</UiButton
+                >{{ t('shortcuts.block.configureShort') }}</UiButton
               >
               <UiIconButton
                 :icon="Ellipsis"
-                :label="row.label + '選項'"
+                :label="t('shortcuts.block.options', { command: row.label })"
                 aria-haspopup="menu"
                 :aria-expanded="menuRow?.id === row.id"
                 :disabled="
@@ -338,14 +357,18 @@ function leaveEditor(event) {
                   scope === 'global',
               }"
               role="group"
-              :aria-label="'設定' + row.label + '快捷鍵'"
+              :aria-label="
+                t('shortcuts.block.configure', { command: row.label })
+              "
               @focusout="leaveEditor"
             >
               <UiButton
                 :ref="setRecordButton"
                 class="keyboard-shortcut-settings__record"
                 variant="secondary"
-                :aria-label="'錄製' + row.label + '快捷鍵'"
+                :aria-label="
+                  t('shortcuts.block.record', { command: row.label })
+                "
                 :aria-describedby="panelId + '-' + row.id + '-hint'"
                 :disabled="recorder.state.saving || recorder.state.testing"
                 @click="begin(row.id)"
@@ -358,19 +381,19 @@ function leaveEditor(event) {
                     formatShortcutChord(recorder.state.candidate).split(' + '),
                   ]"
                 />
-                <span v-else>按下按鍵組合…</span>
+                <span v-else>{{ t('shortcuts.block.pressKeys') }}</span>
               </UiButton>
               <UiButton
                 v-if="scope === 'global'"
-                :aria-label="'試用' + row.label + '背景按鍵'"
+                :aria-label="t('shortcuts.block.test', { command: row.label })"
                 :disabled="!recorder.state.candidate || !settings.canEdit.value"
                 :loading="recorder.state.testing"
                 @click="testCandidate"
-                >試用按鍵</UiButton
+                >{{ t('shortcuts.block.testShort') }}</UiButton
               >
               <UiButton
                 variant="accent"
-                :aria-label="'套用' + row.label + '快捷鍵'"
+                :aria-label="t('shortcuts.block.apply', { command: row.label })"
                 :disabled="
                   !recorder.state.candidate ||
                   !settings.canEdit.value ||
@@ -378,14 +401,16 @@ function leaveEditor(event) {
                 "
                 :loading="recorder.state.saving"
                 @click="recorder.apply"
-                >套用</UiButton
+                >{{ t('shortcuts.block.applyShort') }}</UiButton
               >
               <UiButton
                 :ref="setCancelButton"
-                :aria-label="'取消' + row.label + '快捷鍵'"
+                :aria-label="
+                  t('shortcuts.block.cancel', { command: row.label })
+                "
                 :disabled="recorder.state.saving"
                 @click="recorder.cancel()"
-                >取消</UiButton
+                >{{ t('shortcuts.block.cancelShort') }}</UiButton
               >
             </div>
             <UiHint
@@ -410,25 +435,28 @@ function leaveEditor(event) {
                 >{{ recorder.state.error || settings.state.saveError
                 }}<span
                   v-if="settings.state.saveError && settings.isRecording.value"
-                  >先按「取消」，再重新讀取。</span
+                  >{{ t('shortcuts.block.cancelThenReload') }}</span
                 ></template
               >
               <template v-else>
                 {{
                   recorder.state.capturing
-                    ? '按下想用的按鍵；此時不會執行功能。'
+                    ? t('shortcuts.block.recordingPrompt')
                     : scope === 'global'
                       ? recorder.state.testing
-                        ? '正在確認按鍵…'
+                        ? t('shortcuts.block.testing')
                         : recorder.state.tested
-                          ? '目前可用；按「套用」儲存。'
-                          : '先試用按鍵，再按「套用」儲存。'
-                      : '按「套用」儲存並生效。'
+                          ? t('shortcuts.block.testPassed')
+                          : t('shortcuts.block.testFirst')
+                      : t('shortcuts.block.applyToSave')
                 }}
-                <KeyboardShortcutKeys :chords="[['Esc']]" /> 取消<span
-                  v-if="recorder.state.capturing"
-                  >，<KeyboardShortcutKeys :chords="[['Tab']]" /> 離開</span
-                >。
+                <KeyboardShortcutKeys :chords="[['Esc']]" />
+                {{ t('shortcuts.block.keyCancel')
+                }}<span v-if="recorder.state.capturing"
+                  >{{ t('shortcuts.block.keySeparator')
+                  }}<KeyboardShortcutKeys :chords="[['Tab']]" />
+                  {{ t('shortcuts.block.keyLeave') }}</span
+                >{{ t('shortcuts.block.keyEnd') }}
               </template>
             </UiHint>
             <UiButton
@@ -436,11 +464,11 @@ function leaveEditor(event) {
                 lastAction === row.id && settings.state.saveError && !feedback
               "
               class="keyboard-shortcut-settings__retry"
-              aria-label="重新讀取快捷鍵"
+              :aria-label="t('shortcuts.block.reload')"
               :loading="settings.state.reading"
               :disabled="settings.isRecording.value || settings.state.busy"
               @click="settings.refresh"
-              >重新讀取</UiButton
+              >{{ t('shortcuts.block.reloadShort') }}</UiButton
             >
           </section>
         </template>
@@ -449,17 +477,17 @@ function leaveEditor(event) {
         :open="Boolean(menuRow)"
         :anchor="menuAnchor"
         :content="menuContent"
-        aria-label="快捷鍵操作"
+        :aria-label="t('shortcuts.block.actionsLabel')"
         size="sm"
         @select="selectMenu"
         @close="closeMenu"
       />
       <SettingsDocumentItem
-        title="背景快捷鍵"
+        :title="t('shortcuts.block.globalTitle')"
         :description="
           settings.hasGlobalSettings.value && !hasBackgroundBindings
-            ? '先在「背景」設定按鍵，再啟用。'
-            : '切到其他程式時使用的快捷鍵。'
+            ? t('shortcuts.block.globalNeedsKeys')
+            : t('shortcuts.block.globalGuidance')
         "
         variant="nested"
         :status="backgroundStatus.status"
@@ -472,7 +500,11 @@ function leaveEditor(event) {
               settings.hasGlobalSettings.value || settings.canStopGlobal.value
             "
             :aria-label="
-              backgroundEnabled ? '停用背景快捷鍵' : '啟用背景快捷鍵'
+              t(
+                backgroundEnabled
+                  ? 'shortcuts.block.globalDisable'
+                  : 'shortcuts.block.globalEnable',
+              )
             "
             :disabled="
               !settings.canEdit.value ||
@@ -486,14 +518,20 @@ function leaveEditor(event) {
               lastAction = null;
               settings.setGlobalEnabled(!backgroundEnabled);
             "
-            >{{ backgroundEnabled ? '停用' : '啟用' }}</UiButton
+            >{{
+              t(
+                backgroundEnabled
+                  ? 'shortcuts.block.disableShort'
+                  : 'shortcuts.block.enableShort',
+              )
+            }}</UiButton
           >
           <UiButton
-            aria-label="重新讀取背景快捷鍵狀態"
+            :aria-label="t('shortcuts.block.reloadGlobal')"
             :loading="settings.state.runtimeReading"
             :disabled="settings.isRecording.value || settings.state.busy"
             @click="settings.refreshRuntime"
-            >重新讀取</UiButton
+            >{{ t('shortcuts.block.reloadShort') }}</UiButton
           >
         </template>
         <template v-if="settings.state.runtimeError" #feedback>
@@ -505,22 +543,21 @@ function leaveEditor(event) {
             settings.configuration.value.globalEnabled
           "
           #feedback
-          ><UiHint tone="warning"
-            >本次已停用；下次啟動的設定尚未儲存。請重試停用或重新讀取。</UiHint
+          ><UiHint tone="warning">{{ t('shortcuts.block.sessionOnly') }}</UiHint
           ><UiButton
             :disabled="!settings.canEdit.value || settings.isRecording.value"
             @click="
               lastAction = null;
               settings.setGlobalEnabled(false);
             "
-            >重試停用</UiButton
+            >{{ t('shortcuts.block.retryDisable') }}</UiButton
           ></template
         >
       </SettingsDocumentItem>
       <div class="keyboard-shortcut-settings__footer">
         <UiButton
           v-if="activeTab !== 'reference'"
-          aria-label="恢復全部快捷鍵預設"
+          :aria-label="t('shortcuts.block.restoreAll')"
           :disabled="
             !settings.canEdit.value ||
             settings.isRecording.value ||
@@ -530,7 +567,7 @@ function leaveEditor(event) {
             lastAction = null;
             settings.restoreAll();
           "
-          >恢復全部預設</UiButton
+          >{{ t('shortcuts.block.restoreAllShort') }}</UiButton
         >
       </div>
     </div>

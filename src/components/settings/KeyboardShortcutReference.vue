@@ -7,6 +7,7 @@ import {
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import KeyboardShortcutKeys from './KeyboardShortcutKeys.vue';
+import { t } from '../../utils/i18n.js';
 const openSection = shallowRef('navigation');
 const sections = SHORTCUT_REFERENCE_SECTIONS.map((section) => {
   const groups = new Map();
@@ -27,7 +28,7 @@ function setSectionOpen(id, open) {
 <template>
   <div class="keyboard-shortcut-reference">
     <UiDisclosure
-      label="設定方式"
+      :label="t('shortcuts.block.setupMethod')"
       :open="openSection === 'usage'"
       @update:open="setSectionOpen('usage', $event)"
     >
@@ -37,13 +38,13 @@ function setSectionOpen(id, open) {
       <div class="keyboard-shortcut-reference__usage">
         <KeyboardShortcutKeys
           :chords="[['↑'], ['↓'], ['M']]"
-          label="預設音量與靜音鍵"
+          :label="t('shortcuts.block.defaultVolumeKeys')"
         />
-        <UiHint>使用預設鍵時，也可同時按住</UiHint
+        <UiHint>{{ t('shortcuts.block.holdModifier') }}</UiHint
         ><KeyboardShortcutKeys :chords="[['Shift']]" />
       </div>
     </UiDisclosure>
-    <UiHint>以下為固定操作；先點選對應面板或區域再使用。</UiHint>
+    <UiHint>{{ t('shortcuts.block.fixedHint') }}</UiHint>
     <UiDisclosure
       v-for="section in sections"
       :key="section.id"
@@ -67,7 +68,11 @@ function setSectionOpen(id, open) {
             >
               <KeyboardShortcutKeys
                 :chords="row.chords"
-                :label="row.action + '快捷鍵'"
+                :label="
+                  t('shortcuts.block.referenceShortcut', {
+                    command: row.action,
+                  })
+                "
               />
               <div class="keyboard-shortcut-reference__action">
                 <p>{{ row.action }}</p>

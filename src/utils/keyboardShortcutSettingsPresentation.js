@@ -3,7 +3,11 @@ import {
   normalizeShortcutChord,
 } from '../../shared/keyboardShortcutContract.mjs';
 import { createKeyboardBindings } from './inputBindingRegistry.js';
-import { formatShortcutChord } from './keyboardShortcutPresentation.js';
+import {
+  formatShortcutChord,
+  shortcutCommandLabel,
+} from './keyboardShortcutPresentation.js';
+import { t } from './i18n.js';
 
 // Read-only presentation, never a capability grant or a command dispatch input.
 export function shortcutRuntimePresentation(runtime) {
@@ -41,30 +45,31 @@ export function shortcutRuntimePresentation(runtime) {
     normalizeShortcutChord(binding.chord, 'global');
     seen.add(binding.command);
   }
-  if (runtime.busy) return { status: '處理中', tone: 'muted' };
+  if (runtime.busy)
+    return { status: t('shortcuts.status.busy'), tone: 'muted' };
   if (['blocked', 'degraded', 'suspended', 'disposed'].includes(runtime.state))
-    return { status: '暫停使用', tone: 'warning' };
+    return { status: t('shortcuts.status.paused'), tone: 'warning' };
   if (!runtime.eligibleCommands.length)
-    return { status: '尚未開放', tone: 'muted' };
+    return { status: t('shortcuts.status.notAvailable'), tone: 'muted' };
   if (runtime.sessionDisabled === true)
-    return { status: '本次已停用', tone: 'muted' };
+    return { status: t('shortcuts.status.sessionDisabled'), tone: 'muted' };
   return runtime.state === 'active' && runtime.active.length
-    ? { status: '已註冊', tone: 'info' }
-    : { status: '未啟用', tone: 'muted' };
+    ? { status: t('shortcuts.status.registered'), tone: 'info' }
+    : { status: t('shortcuts.status.inactive'), tone: 'muted' };
 }
 
 export const SHORTCUT_CATEGORIES = Object.freeze(
   [
     {
       id: 'playback',
-      label: '播放控制',
-      guidance: '控制播放、暫停與切歌。',
+      label: t('shortcuts.categories.playback.label'),
+      guidance: t('shortcuts.categories.playback.guidance'),
       commands: ['player.play-pause', 'player.previous', 'player.next'],
     },
     {
       id: 'audio',
-      label: '音訊調整',
-      guidance: '音量與靜音不影響背景音樂；升降調後需自行儲存。',
+      label: t('shortcuts.categories.audio.label'),
+      guidance: t('shortcuts.categories.audio.guidance'),
       commands: [
         'player.volume-up',
         'player.volume-down',
@@ -75,34 +80,39 @@ export const SHORTCUT_CATEGORIES = Object.freeze(
     },
     {
       id: 'lyrics',
-      label: '歌詞對時',
-      guidance: '調整目前歌曲選用的歌詞，會自動儲存。',
+      label: t('shortcuts.categories.lyrics.label'),
+      guidance: t('shortcuts.categories.lyrics.guidance'),
       commands: ['lyrics.offset-up', 'lyrics.offset-down'],
     },
-    { id: 'reference', label: '操作說明', guidance: '', commands: [] },
+    {
+      id: 'reference',
+      label: t('shortcuts.categories.reference.label'),
+      guidance: '',
+      commands: [],
+    },
   ].map((category) =>
     Object.freeze({ ...category, commands: Object.freeze(category.commands) }),
   ),
 );
 
 export const SHORTCUT_USAGE_NOTES = Object.freeze([
-  '按功能旁的「設定」，按下想用的按鍵，再按「套用」儲存。「⋯」可停用或恢復該功能的預設鍵。',
-  '輸入文字時，快捷鍵不會生效。',
-  '操作按鈕、選單或滑桿時，自訂快捷鍵暫不生效；每次按下只執行一次。',
-  '方向鍵操作清單、面板或歌詞時，不會同時調整音量。',
-  '預設快捷鍵可長按連續操作。',
+  t('shortcuts.usage.configure'),
+  t('shortcuts.usage.typing'),
+  t('shortcuts.usage.controls'),
+  t('shortcuts.usage.arrows'),
+  t('shortcuts.usage.hold'),
 ]);
 const titles = {
-  'player.volume-up': '音量 +10%',
-  'player.volume-down': '音量 −10%',
-  'player.mute': '靜音',
-  'lyrics.offset-up': '提前 0.1 秒',
-  'lyrics.offset-down': '延後 0.1 秒',
+  'player.volume-up': t('shortcuts.commands.playerVolumeUp.title'),
+  'player.volume-down': t('shortcuts.commands.playerVolumeDown.title'),
+  'player.mute': t('shortcuts.commands.playerMute.title'),
+  'lyrics.offset-up': t('shortcuts.commands.lyricsOffsetUp.title'),
+  'lyrics.offset-down': t('shortcuts.commands.lyricsOffsetDown.title'),
 };
 const descriptions = {
-  'player.play-pause': '請先從曲庫載入歌曲。',
-  'player.previous': '沒有上一首時，回到這首歌開頭。',
-  'player.next': '依目前播放清單或演唱安排切換。',
+  'player.play-pause': t('shortcuts.commands.playerPlayPause.description'),
+  'player.previous': t('shortcuts.commands.playerPrevious.description'),
+  'player.next': t('shortcuts.commands.playerNext.description'),
 };
 export function shortcutSettingsRows(
   configuration,
@@ -133,25 +143,28 @@ export function shortcutSettingsRows(
       );
       return {
         ...command,
+        label: shortcutCommandLabel(id),
         app,
-        title: titles[id] ?? command.label,
+        title: titles[id] ?? shortcutCommandLabel(id),
         guidance: descriptions[id] ?? '',
-        scope: '切到其他程式時仍可使用；每次按下只執行一次。',
+        scope: t('shortcuts.scope.global'),
         keys:
           loaded && binding ? formatShortcutChord(binding).split(' + ') : [],
-        status: !loaded
-          ? '尚未讀取'
-          : !eligible
-            ? '尚未開放'
-            : !binding
-              ? '未設定'
-              : registered
-                ? '已註冊'
-                : runtime?.sessionDisabled
-                  ? '本次已停用'
-                  : !configuration.globalEnabled
-                    ? '未啟用'
-                    : '暫停使用',
+        status: t(
+          !loaded
+            ? 'shortcuts.status.notLoaded'
+            : !eligible
+              ? 'shortcuts.status.notAvailable'
+              : !binding
+                ? 'shortcuts.status.unset'
+                : registered
+                  ? 'shortcuts.status.registered'
+                  : runtime?.sessionDisabled
+                    ? 'shortcuts.status.sessionDisabled'
+                    : !configuration.globalEnabled
+                      ? 'shortcuts.status.inactive'
+                      : 'shortcuts.status.paused',
+        ),
         global: binding,
       };
     }
@@ -161,29 +174,36 @@ export function shortcutSettingsRows(
         ? app.chord
         : command.defaultApp
       : null;
-    const status = !loaded
-      ? '尚未讀取'
-      : app.mode === 'disabled'
-        ? '已停用'
-        : !chord
-          ? '未設定'
-          : app.mode === 'custom'
-            ? '自訂'
-            : '預設';
-    const scope =
+    const status = t(
+      !loaded
+        ? 'shortcuts.status.notLoaded'
+        : app.mode === 'disabled'
+          ? 'shortcuts.status.disabled'
+          : !chord
+            ? 'shortcuts.status.unset'
+            : app.mode === 'custom'
+              ? 'shortcuts.status.custom'
+              : 'shortcuts.status.default',
+    );
+    const volume = ['player.volume-up', 'player.volume-down'].includes(id);
+    const scope = t(
       app.mode === 'custom'
-        ? '輸入文字或操作按鈕、選單、滑桿時不生效；每次按下只執行一次。'
-        : chord
-          ? (['player.volume-up', 'player.volume-down'].includes(id)
-              ? '輸入文字或操作按鈕、選單、面板時不觸發；可長按'
-              : '輸入欄位內不觸發；可長按') +
-            (command.defaultShiftWildcard ? '，也接受 Shift' : '') +
-            '。'
-          : '只在主視窗內使用；請先設定按鍵。';
+        ? 'shortcuts.scope.custom'
+        : !chord
+          ? 'shortcuts.scope.unset'
+          : volume
+            ? command.defaultShiftWildcard
+              ? 'shortcuts.scope.defaultVolumeShift'
+              : 'shortcuts.scope.defaultVolume'
+            : command.defaultShiftWildcard
+              ? 'shortcuts.scope.defaultShift'
+              : 'shortcuts.scope.default',
+    );
     return {
       ...command,
+      label: shortcutCommandLabel(id),
       app,
-      title: titles[id] ?? command.label,
+      title: titles[id] ?? shortcutCommandLabel(id),
       status,
       keys: chord ? formatShortcutChord(chord).split(' + ') : [],
       guidance: descriptions[id] ?? '',
@@ -203,8 +223,16 @@ const fixedKeys = (binding) => {
     shift: binding.shift === true,
   }).split(' + ');
 };
-const entry = (context, chords, action, note = '') =>
-  Object.freeze({ context, chords, action, note });
+// Rows name catalog keys; view bindings pass their already-resolved label.
+const row = (context, chords, action, note = '') =>
+  Object.freeze({
+    context: t(`shortcuts.reference.contexts.${context}`),
+    chords,
+    action,
+    note: note ? t(`shortcuts.reference.notes.${note}`) : '',
+  });
+const entry = (context, chords, action, note) =>
+  row(context, chords, t(`shortcuts.reference.actions.${action}`), note);
 const pair = (modifier, first, second) => [
   [...modifier, first],
   [...modifier, second],
@@ -214,129 +242,79 @@ const fixed = createKeyboardBindings();
 export const SHORTCUT_REFERENCE_SECTIONS = Object.freeze([
   {
     id: 'navigation',
-    title: '導覽',
+    title: t('shortcuts.reference.sections.navigation'),
     rows: [
       ...fixed
         .filter((binding) => binding.view || binding.history)
         .map((binding) =>
-          entry(
-            '主視窗',
-            [fixedKeys(binding)],
-            binding.history
-              ? binding.history === 'back'
-                ? '上一頁'
-                : '下一頁'
-              : binding.label,
-          ),
+          binding.history
+            ? entry(
+                'mainWindow',
+                [fixedKeys(binding)],
+                binding.history === 'back' ? 'previousPage' : 'nextPage',
+              )
+            : row('mainWindow', [fixedKeys(binding)], binding.label),
         ),
-      entry('主視窗', [['F4']], '目前沒有功能'),
+      entry('mainWindow', [['F4']], 'nothing'),
     ],
   },
   {
     id: 'practice',
-    title: '排練／編輯',
-    guidance: '波形操作：歌詞編輯 → 編輯 → 調整對時 → 行旁時鐘 → 原音訊波形。',
+    title: t('shortcuts.reference.sections.practice'),
+    guidance: t('shortcuts.reference.sections.practiceGuidance'),
     rows: [
-      entry(
-        '歌曲速度',
-        pair(['Ctrl', 'Shift'], '↑', '↓'),
-        '加快／放慢 0.05 倍',
-      ),
-      entry(
-        '導唱（直播收音）',
-        [['G']],
-        '開啟／關閉導唱',
-        '不影響你自己聽到的導唱。',
-      ),
-      entry('OBS 標記', [['K']], '新增標記'),
-      entry('波形面板的移動把手', arrows, '移動面板位置'),
-      entry(
-        '上方全曲波形',
-        [['←'], ['↓']],
-        '向歌曲開頭移動一頁',
-        '只移動畫面，不改播放位置。',
-      ),
-      entry('上方全曲波形', [['→'], ['↑']], '向歌曲結尾移動一頁'),
-      entry(
-        '上方全曲波形',
-        [['Page Up'], ['Page Down']],
-        '向開頭／結尾移動五頁',
-      ),
-      entry('上方全曲波形', [['Home'], ['End']], '顯示歌曲開頭／結尾'),
-      entry('波形面板', [['='], ['-']], '放大／縮小波形', '只調整檢視。'),
-      entry(
-        '句首／句尾／整句把手',
-        [['←'], ['→']],
-        '提前／延後 0.1 秒',
-        '調整後請按「儲存」。',
-      ),
-      entry('句首／句尾／整句把手', [['Esc']], '取消目前拖曳'),
-      entry('編輯讀音／歌詞來源名稱', [['Enter'], ['Esc']], '確認／取消編輯'),
+      entry('tempo', pair(['Ctrl', 'Shift'], '↑', '↓'), 'tempo'),
+      entry('guideVocal', [['G']], 'guideVocal', 'guideVocal'),
+      entry('obsMarker', [['K']], 'addMarker'),
+      entry('waveformHandle', arrows, 'movePanel'),
+      entry('waveformOverview', [['←'], ['↓']], 'pageToStart', 'viewOnly'),
+      entry('waveformOverview', [['→'], ['↑']], 'pageToEnd'),
+      entry('waveformOverview', [['Page Up'], ['Page Down']], 'fivePages'),
+      entry('waveformOverview', [['Home'], ['End']], 'showEdges'),
+      entry('waveformPanel', [['='], ['-']], 'zoom', 'viewZoom'),
+      entry('cueHandles', [['←'], ['→']], 'nudgeCue', 'saveAfter'),
+      entry('cueHandles', [['Esc']], 'cancelDrag'),
+      entry('readingEdit', [['Enter'], ['Esc']], 'confirmEdit'),
     ],
   },
   {
     id: 'widgets',
-    title: '介面操作',
+    title: t('shortcuts.reference.sections.widgets'),
     rows: [
+      entry('panelView', [['`']], 'togglePanel', 'panelView'),
+      entry('panelView', [['Esc']], 'restorePanel', 'restorePanel'),
+      entry('rightPanel', [['Esc']], 'collapsePanel'),
+      entry('trackRow', [['Space'], ['Enter']], 'selectTrack', 'trackRow'),
+      entry('sortableRow', [['↑'], ['↓']], 'moveRow'),
       entry(
-        '面板檢視',
-        [['`']],
-        '放大面板／還原面板',
-        '主工作區、右側與波形面板共用；先點選面板。',
-      ),
-      entry(
-        '面板檢視',
-        [['Esc']],
-        '還原面板',
-        '僅面板放大時；輸入欄與選單優先。',
-      ),
-      entry('右側面板', [['Esc']], '收合面板'),
-      entry(
-        '歌曲列',
-        [['Space'], ['Enter']],
-        '選取歌曲／開啟或播放',
-        '依所在清單的操作。',
-      ),
-      entry('可排序曲目列', [['↑'], ['↓']], '向上／向下移動'),
-      entry(
-        '滑桿預設值',
+        'sliderDefault',
         [['ContextMenu'], ['Shift', 'F10']],
-        '重設',
-        '部分鍵盤或系統可能不支援。',
+        'reset',
+        'sliderReset',
       ),
-      entry('可重排表頭', pair(['Alt'], '←', '→'), '向左／向右移動欄位'),
-      entry('欄位邊緣', [['←'], ['→']], '小幅調整欄寬'),
-      entry('欄位邊緣', pair(['Shift'], '←', '→'), '大幅調整欄寬'),
-      entry('欄位邊緣', [['Home'], ['End']], '最小／最大欄寬'),
-      entry('待唱歌曲列', pair(['Alt'], '↑', '↓'), '向上／向下移動'),
-      entry('左右面板邊緣', [['Enter'], ['Space']], '展開／收合'),
-      entry('左側播放清單邊緣', [['←'], ['Home']], '收合播放清單'),
-      entry('左側播放清單邊緣', [['→'], ['End']], '展開播放清單'),
-      entry('右側面板／畫面輸出邊緣', [['←'], ['→']], '加寬／減寬面板'),
-      entry('右側面板／畫面輸出邊緣', [['Home'], ['End']], '最小／最大寬度'),
-      entry('便利貼／照片', arrows, '小幅移動位置'),
+      entry('reorderableHeader', pair(['Alt'], '←', '→'), 'moveColumn'),
+      entry('columnEdge', [['←'], ['→']], 'nudgeColumn'),
+      entry('columnEdge', pair(['Shift'], '←', '→'), 'resizeColumn'),
+      entry('columnEdge', [['Home'], ['End']], 'columnLimits'),
+      entry('queueRow', pair(['Alt'], '↑', '↓'), 'moveRow'),
+      entry('panelEdge', [['Enter'], ['Space']], 'toggleEdge'),
+      entry('playlistEdge', [['←'], ['Home']], 'collapsePlaylist'),
+      entry('playlistEdge', [['→'], ['End']], 'expandPlaylist'),
+      entry('rightPanelEdge', [['←'], ['→']], 'resizePanel'),
+      entry('rightPanelEdge', [['Home'], ['End']], 'panelLimits'),
+      entry('noteOrPhoto', arrows, 'nudgeItem'),
       entry(
-        '便利貼／照片',
+        'noteOrPhoto',
         arrows.map((keys) => ['Shift', ...keys]),
-        '大幅移動位置',
+        'moveItem',
       ),
-      entry('便利貼／照片', [['Home']], '回到預設位置'),
+      entry('noteOrPhoto', [['Home']], 'resetItem'),
+      entry('photoStack', [['Enter'], ['Space']], 'flipPhoto', 'photoStack'),
+      entry('noteDirectEdit', [['Esc']], 'finishNote', 'noteKeep'),
+      entry('longRead', [['←'], ['Page Up']], 'previousPage'),
+      entry('longRead', [['→'], ['Page Down']], 'nextPage'),
       entry(
-        '照片堆疊',
-        [['Enter'], ['Space']],
-        '翻動照片',
-        '後層翻上一張，前／中層翻下一張。',
-      ),
-      entry(
-        '直接編輯便利貼',
-        [['Esc']],
-        '結束編輯並保留文字',
-        '不會取消修改。',
-      ),
-      entry('長文閱讀', [['←'], ['Page Up']], '上一頁'),
-      entry('長文閱讀', [['→'], ['Page Down']], '下一頁'),
-      entry(
-        '歌詞捲動區',
+        'lyricsScroll',
         [
           ['↑'],
           ['↓'],
@@ -346,19 +324,19 @@ export const SHORTCUT_REFERENCE_SECTIONS = Object.freeze([
           ['Page Down'],
           ['Space'],
         ],
-        '暫停跟隨目前句',
+        'pauseFollow',
       ),
     ],
   },
   {
     id: 'system',
-    title: '鍵盤媒體鍵',
+    title: t('shortcuts.reference.sections.system'),
     rows: [
       entry(
-        '鍵盤上的媒體按鍵',
+        'mediaKeys',
         [['MediaPlayPause'], ['MediaTrackPrevious'], ['MediaTrackNext']],
-        '播放／暫停、上一首／下一首',
-        '由 Windows 處理，不可在此改鍵。',
+        'mediaKeys',
+        'mediaKeys',
       ),
     ],
   },

@@ -1,0 +1,297 @@
+{
+  "commands": {
+    "playerPlayPause": {
+      "label": "Play/pause",
+      "description": "Load a song from the library first."
+    },
+    "playerPrevious": {
+      "label": "Previous song",
+      "description": "With no previous song, returns to the start of this one."
+    },
+    "playerNext": {
+      "label": "Next song",
+      "description": "Follows the current playlist or performance plan."
+    },
+    "playerTransposeUp": {
+      "label": "Transpose up a semitone"
+    },
+    "playerTransposeDown": {
+      "label": "Transpose down a semitone"
+    },
+    "lyricsOffsetUp": {
+      "label": "Lyrics 0.1 s earlier",
+      "title": "0.1 s earlier"
+    },
+    "lyricsOffsetDown": {
+      "label": "Lyrics 0.1 s later",
+      "title": "0.1 s later"
+    },
+    "playerVolumeUp": {
+      "label": "Song volume +10%",
+      "title": "Volume +10%"
+    },
+    "playerVolumeDown": {
+      "label": "Song volume −10%",
+      "title": "Volume −10%"
+    },
+    "playerMute": {
+      "label": "Mute song",
+      "title": "Mute"
+    }
+  },
+  "bindings": {
+    "playerTransposeUp": "Transpose +1",
+    "playerTransposeDown": "Transpose −1",
+    "playerTempoUp": "Speed up",
+    "playerTempoDown": "Slow down",
+    "playerMute": "Toggle mute",
+    "playerGuideVocal": "Toggle guide vocal",
+    "playerVolumeUp": "Volume +10%",
+    "playerVolumeDown": "Volume −10%",
+    "obsMarker": "Add OBS marker",
+    "historyBack": "Back",
+    "historyForward": "Forward",
+    "historyBackBrowserKey": "Back (browser key)",
+    "historyForwardBrowserKey": "Forward (browser key)",
+    "historyBackMouse": "Back (mouse side button)",
+    "historyForwardMouse": "Forward (mouse side button)",
+    "goTo": "Go to {destination}",
+    "internalView": "Open internal workbench ({view})"
+  },
+  "status": {
+    "busy": "Working",
+    "paused": "Paused",
+    "notAvailable": "Not available yet",
+    "sessionDisabled": "Off for this session",
+    "registered": "Registered",
+    "inactive": "Off",
+    "notLoaded": "Not loaded",
+    "unset": "Not set",
+    "disabled": "Disabled",
+    "custom": "Custom",
+    "default": "Default",
+    "loading": "Loading",
+    "unreadable": "Unavailable"
+  },
+  "categories": {
+    "playback": {
+      "label": "Playback",
+      "guidance": "Play, pause and switch songs."
+    },
+    "audio": {
+      "label": "Audio",
+      "guidance": "Volume and mute don't affect background music; save after transposing."
+    },
+    "lyrics": {
+      "label": "Lyrics timing",
+      "guidance": "Adjusts the lyrics chosen for the current song and saves automatically."
+    },
+    "reference": {
+      "label": "How to use"
+    }
+  },
+  "usage": {
+    "configure": "Select Set next to a feature, press the keys you want, then select Apply. Use ⋯ to disable a feature or restore its default keys.",
+    "typing": "Shortcuts don't work while you type.",
+    "controls": "Custom shortcuts pause while you use buttons, menus or sliders; each press runs once.",
+    "arrows": "Arrow keys in lists, panels or lyrics don't change the volume at the same time.",
+    "hold": "Hold a default shortcut to repeat it."
+  },
+  "scope": {
+    "global": "Works while other apps are in front; each press runs once.",
+    "custom": "Doesn't work while you type or use buttons, menus or sliders; each press runs once.",
+    "defaultVolume": "Doesn't fire while you type or use buttons, menus or panels; hold to repeat.",
+    "defaultVolumeShift": "Doesn't fire while you type or use buttons, menus or panels; hold to repeat; Shift also works.",
+    "default": "Doesn't fire in text fields; hold to repeat.",
+    "defaultShift": "Doesn't fire in text fields; hold to repeat; Shift also works.",
+    "unset": "Works in the main window only; set the keys first."
+  },
+  "reference": {
+    "sections": {
+      "navigation": "Navigation",
+      "practice": "Rehearsal and editing",
+      "practiceGuidance": "Waveform: Lyrics editor → Edit → Adjust timing → clock beside a line → source waveform.",
+      "widgets": "Interface",
+      "system": "Keyboard media keys"
+    },
+    "contexts": {
+      "mainWindow": "Main window",
+      "tempo": "Song speed",
+      "guideVocal": "Guide vocal (stream audio)",
+      "obsMarker": "OBS marker",
+      "waveformHandle": "Waveform panel move handle",
+      "waveformOverview": "Full-song waveform at the top",
+      "waveformPanel": "Waveform panel",
+      "cueHandles": "Line start, end and whole-line handles",
+      "readingEdit": "Editing a reading or lyrics source name",
+      "panelView": "Panel view",
+      "rightPanel": "Side panel",
+      "trackRow": "Song row",
+      "sortableRow": "Sortable song row",
+      "sliderDefault": "Slider default",
+      "reorderableHeader": "Reorderable column header",
+      "columnEdge": "Column edge",
+      "queueRow": "Queued song row",
+      "panelEdge": "Side panel edges",
+      "playlistEdge": "Playlist sidebar edge",
+      "rightPanelEdge": "Side panel or output edge",
+      "noteOrPhoto": "Note or photo",
+      "photoStack": "Photo stack",
+      "noteDirectEdit": "Editing a note directly",
+      "longRead": "Long text reader",
+      "lyricsScroll": "Lyrics scroll area",
+      "mediaKeys": "Keyboard media keys"
+    },
+    "actions": {
+      "previousPage": "Back",
+      "nextPage": "Forward",
+      "nothing": "Not used right now",
+      "tempo": "Speed up or slow down by 0.05×",
+      "guideVocal": "Turn the guide vocal on or off",
+      "addMarker": "Add a marker",
+      "movePanel": "Move the panel",
+      "pageToStart": "Move one page toward the start",
+      "pageToEnd": "Move one page toward the end",
+      "fivePages": "Move five pages toward the start or end",
+      "showEdges": "Show the start or end of the song",
+      "zoom": "Zoom the waveform in or out",
+      "nudgeCue": "0.1 s earlier or later",
+      "cancelDrag": "Cancel the current drag",
+      "confirmEdit": "Confirm or cancel the edit",
+      "togglePanel": "Maximize or restore the panel",
+      "restorePanel": "Restore the panel",
+      "collapsePanel": "Collapse the panel",
+      "selectTrack": "Select the song, open or play it",
+      "moveRow": "Move up or down",
+      "reset": "Reset",
+      "moveColumn": "Move the column left or right",
+      "nudgeColumn": "Adjust the width slightly",
+      "resizeColumn": "Adjust the width a lot",
+      "columnLimits": "Minimum or maximum width",
+      "toggleEdge": "Expand or collapse",
+      "collapsePlaylist": "Collapse the playlist sidebar",
+      "expandPlaylist": "Expand the playlist sidebar",
+      "resizePanel": "Widen or narrow the panel",
+      "panelLimits": "Minimum or maximum width",
+      "nudgeItem": "Move slightly",
+      "moveItem": "Move a lot",
+      "resetItem": "Return to the default position",
+      "flipPhoto": "Flip through photos",
+      "finishNote": "Finish editing and keep the text",
+      "pauseFollow": "Stop following the current line",
+      "mediaKeys": "Play/pause, previous or next song"
+    },
+    "notes": {
+      "guideVocal": "Doesn't change the guide vocal you hear yourself.",
+      "viewOnly": "Moves the view only, not the playback position.",
+      "viewZoom": "Changes the view only.",
+      "saveAfter": "Select Save afterwards.",
+      "panelView": "Shared by the main workspace, side panel and waveform panel; select a panel first.",
+      "restorePanel": "Only while a panel is maximized; text fields and menus come first.",
+      "trackRow": "Follows the action of the list it is in.",
+      "sliderReset": "Some keyboards or systems may not support this.",
+      "photoStack": "The back photo flips backward; the front and middle photos flip forward.",
+      "noteKeep": "Changes are not discarded.",
+      "mediaKeys": "Handled by Windows; can't be changed here."
+    }
+  },
+  "keys": {
+    "or": " or ",
+    "mediaPlayPause": "Play/Pause key",
+    "mediaPrevious": "Previous track key",
+    "mediaNext": "Next track key",
+    "contextMenu": "Menu key",
+    "browserBack": "Browser Back key",
+    "browserForward": "Browser Forward key",
+    "labelled": "{label}: {keys}"
+  },
+  "conflict": {
+    "named": "These keys are already used for “{command}”. Choose another combination.",
+    "generic": "This shortcut is already in use. Choose another combination.",
+    "invalid": "These keys can't be used. Choose another combination."
+  },
+  "unset": "Not set",
+  "block": {
+    "title": "Keyboard shortcuts",
+    "guidance": "Select Set to change keys; see How to use for other controls.",
+    "expand": "Expand shortcut settings",
+    "collapse": "Collapse shortcut settings",
+    "expandShort": "Set",
+    "collapseShort": "Collapse",
+    "loading": "Loading shortcuts…",
+    "reload": "Reload shortcuts",
+    "reloadShort": "Reload",
+    "settingsLabel": "Shortcut settings",
+    "categoriesLabel": "Shortcut categories",
+    "scopeLabel": "Shortcut scope",
+    "scopeApp": "In app",
+    "scopeGlobal": "Background",
+    "globalHint": "Background keys need Ctrl or Alt. Test them, then apply; testing doesn't run the feature.",
+    "currentKeys": "Current shortcut for {command}",
+    "configure": "Set the shortcut for {command}",
+    "configureShort": "Set",
+    "options": "Options for {command}",
+    "record": "Record the shortcut for {command}",
+    "pressKeys": "Press a key combination…",
+    "test": "Test the background keys for {command}",
+    "testShort": "Test keys",
+    "apply": "Apply the shortcut for {command}",
+    "applyShort": "Apply",
+    "cancel": "Cancel the shortcut for {command}",
+    "cancelShort": "Cancel",
+    "cancelThenReload": "Select Cancel, then reload.",
+    "recordingPrompt": "Press the keys you want; the feature won't run now.",
+    "testing": "Checking the keys…",
+    "testPassed": "Available; select Apply to save.",
+    "testFirst": "Test the keys, then select Apply to save.",
+    "applyToSave": "Select Apply to save and use it.",
+    "keyCancel": "Cancel",
+    "keySeparator": ", ",
+    "keyLeave": "Leave",
+    "actionsLabel": "Shortcut actions",
+    "globalTitle": "Background shortcuts",
+    "globalNeedsKeys": "Set keys under Background first, then turn them on.",
+    "globalGuidance": "Shortcuts that work while other apps are in front.",
+    "globalDisable": "Turn off background shortcuts",
+    "globalEnable": "Turn on background shortcuts",
+    "disableShort": "Turn off",
+    "enableShort": "Turn on",
+    "reloadGlobal": "Reload background shortcut status",
+    "sessionOnly": "Off for this session; the setting for next launch isn't saved yet. Retry or reload.",
+    "retryDisable": "Retry turning off",
+    "restoreAll": "Restore all default shortcuts",
+    "restoreAllShort": "Restore all defaults",
+    "removeGlobal": "Remove the background shortcut for {command}",
+    "disableCommand": "Disable the shortcut for {command}",
+    "restoreCommand": "Restore the default shortcut for {command}",
+    "referenceShortcut": "Shortcut for {command}",
+    "setupMethod": "How to set",
+    "defaultVolumeKeys": "Default volume and mute keys",
+    "holdModifier": "With default keys you can also hold",
+    "fixedHint": "These controls are fixed; select the matching panel or area first.",
+    "keyEnd": "."
+  },
+  "errors": {
+    "invalid": "The shortcut settings are damaged; the original file was kept.",
+    "unsupportedFormat": "This shortcut settings format isn't supported yet; the original file was kept.",
+    "conflict": "Shortcuts were changed elsewhere. Reload them.",
+    "occupied": "Another app is using these keys. Choose another combination or retry.",
+    "keysHeld": "Release all keys and try again.",
+    "busy": "Shortcuts are busy. Try again shortly.",
+    "degraded": "Background shortcuts are paused. Reload shortcuts and try again.",
+    "unsupportedGlobal": "This background shortcut isn't available yet.",
+    "readFailed": "Shortcuts could not be read. Reload them.",
+    "runtimeReadFailed": "Background shortcut status could not be read. Reload it.",
+    "unusable": "This shortcut can't be used. Set it again.",
+    "saveUnconfirmed": "The shortcut save isn't confirmed. Reload and try again.",
+    "testFailed": "Couldn't check whether the keys are available. Retry.",
+    "testFailedReload": "Couldn't check whether the keys are available. Reload and try again.",
+    "recordUnusable": "These keys can't be used. Choose another combination.",
+    "recordUnconfirmed": "The shortcut save isn't confirmed. Try again or cancel."
+  },
+  "mainErrors": {
+    "settingsTitle": "Shortcut settings not completed",
+    "receiverTitle": "Shortcuts aren't ready",
+    "receiverMessage": "Reload the shortcut settings and try again."
+  }
+}

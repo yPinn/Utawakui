@@ -1,0 +1,297 @@
+{
+  "commands": {
+    "playerPlayPause": {
+      "label": "播放／暫停",
+      "description": "請先從曲庫載入歌曲。"
+    },
+    "playerPrevious": {
+      "label": "上一首",
+      "description": "沒有上一首時，回到這首歌開頭。"
+    },
+    "playerNext": {
+      "label": "下一首",
+      "description": "依目前播放清單或演唱安排切換。"
+    },
+    "playerTransposeUp": {
+      "label": "升調 1 半音"
+    },
+    "playerTransposeDown": {
+      "label": "降調 1 半音"
+    },
+    "lyricsOffsetUp": {
+      "label": "歌詞提前 0.1 秒",
+      "title": "提前 0.1 秒"
+    },
+    "lyricsOffsetDown": {
+      "label": "歌詞延後 0.1 秒",
+      "title": "延後 0.1 秒"
+    },
+    "playerVolumeUp": {
+      "label": "歌曲音量 +10%",
+      "title": "音量 +10%"
+    },
+    "playerVolumeDown": {
+      "label": "歌曲音量 −10%",
+      "title": "音量 −10%"
+    },
+    "playerMute": {
+      "label": "歌曲靜音",
+      "title": "靜音"
+    }
+  },
+  "bindings": {
+    "playerTransposeUp": "移調 +1",
+    "playerTransposeDown": "移調 −1",
+    "playerTempoUp": "加快速度",
+    "playerTempoDown": "放慢速度",
+    "playerMute": "靜音切換",
+    "playerGuideVocal": "導引人聲切換",
+    "playerVolumeUp": "音量 +10%",
+    "playerVolumeDown": "音量 −10%",
+    "obsMarker": "新增 OBS 標記",
+    "historyBack": "上一頁",
+    "historyForward": "下一頁",
+    "historyBackBrowserKey": "上一頁（瀏覽器鍵）",
+    "historyForwardBrowserKey": "下一頁（瀏覽器鍵）",
+    "historyBackMouse": "上一頁（滑鼠側鍵）",
+    "historyForwardMouse": "下一頁（滑鼠側鍵）",
+    "goTo": "前往{destination}",
+    "internalView": "開啟內部工作台（{view}）"
+  },
+  "status": {
+    "busy": "處理中",
+    "paused": "暫停使用",
+    "notAvailable": "尚未開放",
+    "sessionDisabled": "本次已停用",
+    "registered": "已註冊",
+    "inactive": "未啟用",
+    "notLoaded": "尚未讀取",
+    "unset": "未設定",
+    "disabled": "已停用",
+    "custom": "自訂",
+    "default": "預設",
+    "loading": "讀取中",
+    "unreadable": "無法讀取"
+  },
+  "categories": {
+    "playback": {
+      "label": "播放控制",
+      "guidance": "控制播放、暫停與切歌。"
+    },
+    "audio": {
+      "label": "音訊調整",
+      "guidance": "音量與靜音不影響背景音樂；升降調後需自行儲存。"
+    },
+    "lyrics": {
+      "label": "歌詞對時",
+      "guidance": "調整目前歌曲選用的歌詞，會自動儲存。"
+    },
+    "reference": {
+      "label": "操作說明"
+    }
+  },
+  "usage": {
+    "configure": "按功能旁的「設定」，按下想用的按鍵，再按「套用」儲存。「⋯」可停用或恢復該功能的預設鍵。",
+    "typing": "輸入文字時，快捷鍵不會生效。",
+    "controls": "操作按鈕、選單或滑桿時，自訂快捷鍵暫不生效；每次按下只執行一次。",
+    "arrows": "方向鍵操作清單、面板或歌詞時，不會同時調整音量。",
+    "hold": "預設快捷鍵可長按連續操作。"
+  },
+  "scope": {
+    "global": "切到其他程式時仍可使用；每次按下只執行一次。",
+    "custom": "輸入文字或操作按鈕、選單、滑桿時不生效；每次按下只執行一次。",
+    "defaultVolume": "輸入文字或操作按鈕、選單、面板時不觸發；可長按。",
+    "defaultVolumeShift": "輸入文字或操作按鈕、選單、面板時不觸發；可長按，也接受 Shift。",
+    "default": "輸入欄位內不觸發；可長按。",
+    "defaultShift": "輸入欄位內不觸發；可長按，也接受 Shift。",
+    "unset": "只在主視窗內使用；請先設定按鍵。"
+  },
+  "reference": {
+    "sections": {
+      "navigation": "導覽",
+      "practice": "排練／編輯",
+      "practiceGuidance": "波形操作：歌詞編輯 → 編輯 → 調整對時 → 行旁時鐘 → 原音訊波形。",
+      "widgets": "介面操作",
+      "system": "鍵盤媒體鍵"
+    },
+    "contexts": {
+      "mainWindow": "主視窗",
+      "tempo": "歌曲速度",
+      "guideVocal": "導唱（直播收音）",
+      "obsMarker": "OBS 標記",
+      "waveformHandle": "波形面板的移動把手",
+      "waveformOverview": "上方全曲波形",
+      "waveformPanel": "波形面板",
+      "cueHandles": "句首／句尾／整句把手",
+      "readingEdit": "編輯讀音／歌詞來源名稱",
+      "panelView": "面板檢視",
+      "rightPanel": "右側面板",
+      "trackRow": "歌曲列",
+      "sortableRow": "可排序曲目列",
+      "sliderDefault": "滑桿預設值",
+      "reorderableHeader": "可重排表頭",
+      "columnEdge": "欄位邊緣",
+      "queueRow": "待唱歌曲列",
+      "panelEdge": "左右面板邊緣",
+      "playlistEdge": "左側播放清單邊緣",
+      "rightPanelEdge": "右側面板／畫面輸出邊緣",
+      "noteOrPhoto": "便利貼／照片",
+      "photoStack": "照片堆疊",
+      "noteDirectEdit": "直接編輯便利貼",
+      "longRead": "長文閱讀",
+      "lyricsScroll": "歌詞捲動區",
+      "mediaKeys": "鍵盤上的媒體按鍵"
+    },
+    "actions": {
+      "previousPage": "上一頁",
+      "nextPage": "下一頁",
+      "nothing": "目前沒有功能",
+      "tempo": "加快／放慢 0.05 倍",
+      "guideVocal": "開啟／關閉導唱",
+      "addMarker": "新增標記",
+      "movePanel": "移動面板位置",
+      "pageToStart": "向歌曲開頭移動一頁",
+      "pageToEnd": "向歌曲結尾移動一頁",
+      "fivePages": "向開頭／結尾移動五頁",
+      "showEdges": "顯示歌曲開頭／結尾",
+      "zoom": "放大／縮小波形",
+      "nudgeCue": "提前／延後 0.1 秒",
+      "cancelDrag": "取消目前拖曳",
+      "confirmEdit": "確認／取消編輯",
+      "togglePanel": "放大面板／還原面板",
+      "restorePanel": "還原面板",
+      "collapsePanel": "收合面板",
+      "selectTrack": "選取歌曲／開啟或播放",
+      "moveRow": "向上／向下移動",
+      "reset": "重設",
+      "moveColumn": "向左／向右移動欄位",
+      "nudgeColumn": "小幅調整欄寬",
+      "resizeColumn": "大幅調整欄寬",
+      "columnLimits": "最小／最大欄寬",
+      "toggleEdge": "展開／收合",
+      "collapsePlaylist": "收合播放清單",
+      "expandPlaylist": "展開播放清單",
+      "resizePanel": "加寬／減寬面板",
+      "panelLimits": "最小／最大寬度",
+      "nudgeItem": "小幅移動位置",
+      "moveItem": "大幅移動位置",
+      "resetItem": "回到預設位置",
+      "flipPhoto": "翻動照片",
+      "finishNote": "結束編輯並保留文字",
+      "pauseFollow": "暫停跟隨目前句",
+      "mediaKeys": "播放／暫停、上一首／下一首"
+    },
+    "notes": {
+      "guideVocal": "不影響你自己聽到的導唱。",
+      "viewOnly": "只移動畫面，不改播放位置。",
+      "viewZoom": "只調整檢視。",
+      "saveAfter": "調整後請按「儲存」。",
+      "panelView": "主工作區、右側與波形面板共用；先點選面板。",
+      "restorePanel": "僅面板放大時；輸入欄與選單優先。",
+      "trackRow": "依所在清單的操作。",
+      "sliderReset": "部分鍵盤或系統可能不支援。",
+      "photoStack": "後層翻上一張，前／中層翻下一張。",
+      "noteKeep": "不會取消修改。",
+      "mediaKeys": "由 Windows 處理，不可在此改鍵。"
+    }
+  },
+  "keys": {
+    "or": " 或 ",
+    "mediaPlayPause": "播放／暫停鍵",
+    "mediaPrevious": "上一首鍵",
+    "mediaNext": "下一首鍵",
+    "contextMenu": "選單鍵",
+    "browserBack": "上一頁鍵",
+    "browserForward": "下一頁鍵",
+    "labelled": "{label}：{keys}"
+  },
+  "conflict": {
+    "named": "這組按鍵已用於「{command}」，請換一組。",
+    "generic": "這組快捷鍵已被使用，請改用其他組合。",
+    "invalid": "無法使用這組按鍵，請換一組。"
+  },
+  "unset": "未設定",
+  "block": {
+    "title": "快捷鍵",
+    "guidance": "按「設定」更改按鍵；其他操作見「操作說明」。",
+    "expand": "展開快捷鍵設定",
+    "collapse": "收合快捷鍵設定",
+    "expandShort": "設定",
+    "collapseShort": "收合",
+    "loading": "正在載入快捷鍵…",
+    "reload": "重新讀取快捷鍵",
+    "reloadShort": "重新讀取",
+    "settingsLabel": "快捷鍵設定",
+    "categoriesLabel": "快捷鍵分類",
+    "scopeLabel": "快捷鍵作用範圍",
+    "scopeApp": "App 內",
+    "scopeGlobal": "背景",
+    "globalHint": "背景按鍵需含 Ctrl 或 Alt。先試用，再套用；不會執行功能。",
+    "currentKeys": "{command}目前快捷鍵",
+    "configure": "設定{command}快捷鍵",
+    "configureShort": "設定",
+    "options": "{command}選項",
+    "record": "錄製{command}快捷鍵",
+    "pressKeys": "按下按鍵組合…",
+    "test": "試用{command}背景按鍵",
+    "testShort": "試用按鍵",
+    "apply": "套用{command}快捷鍵",
+    "applyShort": "套用",
+    "cancel": "取消{command}快捷鍵",
+    "cancelShort": "取消",
+    "cancelThenReload": "先按「取消」，再重新讀取。",
+    "recordingPrompt": "按下想用的按鍵；此時不會執行功能。",
+    "testing": "正在確認按鍵…",
+    "testPassed": "目前可用；按「套用」儲存。",
+    "testFirst": "先試用按鍵，再按「套用」儲存。",
+    "applyToSave": "按「套用」儲存並生效。",
+    "keyCancel": "取消",
+    "keySeparator": "，",
+    "keyLeave": "離開",
+    "actionsLabel": "快捷鍵操作",
+    "globalTitle": "背景快捷鍵",
+    "globalNeedsKeys": "先在「背景」設定按鍵，再啟用。",
+    "globalGuidance": "切到其他程式時使用的快捷鍵。",
+    "globalDisable": "停用背景快捷鍵",
+    "globalEnable": "啟用背景快捷鍵",
+    "disableShort": "停用",
+    "enableShort": "啟用",
+    "reloadGlobal": "重新讀取背景快捷鍵狀態",
+    "sessionOnly": "本次已停用；下次啟動的設定尚未儲存。請重試停用或重新讀取。",
+    "retryDisable": "重試停用",
+    "restoreAll": "恢復全部快捷鍵預設",
+    "restoreAllShort": "恢復全部預設",
+    "removeGlobal": "移除{command}背景快捷鍵",
+    "disableCommand": "停用{command}快捷鍵",
+    "restoreCommand": "恢復{command}預設快捷鍵",
+    "referenceShortcut": "{command}快捷鍵",
+    "setupMethod": "設定方式",
+    "defaultVolumeKeys": "預設音量與靜音鍵",
+    "holdModifier": "使用預設鍵時，也可同時按住",
+    "fixedHint": "以下為固定操作；先點選對應面板或區域再使用。",
+    "keyEnd": "。"
+  },
+  "errors": {
+    "invalid": "快捷鍵設定已損壞，原檔已保留。",
+    "unsupportedFormat": "快捷鍵設定格式尚未支援，原檔已保留。",
+    "conflict": "快捷鍵已在其他操作中變更，請重新讀取。",
+    "occupied": "這組按鍵已被其他程式使用，請換一組或重試。",
+    "keysHeld": "請放開所有按鍵，再試一次。",
+    "busy": "快捷鍵正在處理，請稍後再試。",
+    "degraded": "背景快捷鍵已暫停，請重新讀取快捷鍵後再試。",
+    "unsupportedGlobal": "這項背景快捷鍵尚未開放。",
+    "readFailed": "無法讀取快捷鍵，請重新讀取。",
+    "runtimeReadFailed": "無法讀取背景快捷鍵狀態，請重新讀取。",
+    "unusable": "這組快捷鍵無法使用，請重新設定。",
+    "saveUnconfirmed": "快捷鍵尚未確認儲存，請重新讀取後再試。",
+    "testFailed": "無法確認按鍵是否可用，請重試。",
+    "testFailedReload": "無法確認按鍵是否可用，請重新讀取後再試。",
+    "recordUnusable": "無法使用這組按鍵，請換一組。",
+    "recordUnconfirmed": "快捷鍵尚未確認儲存，請再試一次或取消。"
+  },
+  "mainErrors": {
+    "settingsTitle": "快捷鍵設定未完成",
+    "receiverTitle": "快捷鍵尚未就緒",
+    "receiverMessage": "請重新讀取快捷鍵設定後再試。"
+  }
+}

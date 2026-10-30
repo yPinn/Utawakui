@@ -1,6 +1,7 @@
 import { nextTick, onMounted, onUnmounted, reactive, readonly } from 'vue';
 import { shortcutChordFromEvent } from '../../shared/keyboardShortcutContract.mjs';
 import { shortcutConflictMessage } from '../utils/keyboardShortcutPresentation.js';
+import { t } from '../utils/i18n.js';
 
 export function useKeyboardShortcutRecorder({
   settings,
@@ -81,7 +82,7 @@ export function useKeyboardShortcutRecorder({
     event.preventDefault();
     if (['Control', 'Alt', 'Shift'].includes(event.key)) return;
     if (!chord) {
-      state.error = '無法使用這組按鍵，請換一組。';
+      state.error = t('shortcuts.errors.recordUnusable');
       return;
     }
     try {
@@ -116,11 +117,11 @@ export function useKeyboardShortcutRecorder({
       state.tested = tested;
       if (!tested)
         state.error =
-          settings.state?.testError || '無法確認按鍵是否可用，請重試。';
+          settings.state?.testError || t('shortcuts.errors.testFailed');
       return tested;
     } catch {
       if (!disposed && request === serial)
-        state.error = '無法確認按鍵是否可用，請重試。';
+        state.error = t('shortcuts.errors.testFailed');
       return false;
     } finally {
       if (request === serial) state.testing = false;
@@ -155,7 +156,7 @@ export function useKeyboardShortcutRecorder({
       return saved;
     } catch {
       if (!disposed && request === serial)
-        state.error = '快捷鍵尚未確認儲存，請再試一次或取消。';
+        state.error = t('shortcuts.errors.recordUnconfirmed');
       return false;
     } finally {
       if (request === serial) state.saving = false;

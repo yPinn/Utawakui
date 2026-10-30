@@ -10,6 +10,11 @@ import {
   validateShortcutConfiguration,
 } from '../../shared/keyboardShortcutContract.mjs';
 import { isShortcutInputBlocked } from './shortcutInputContext.js';
+import { t } from './i18n.js';
+import {
+  shortcutBindingLabel,
+  shortcutCommandLabel,
+} from './keyboardShortcutPresentation.js';
 
 // App-level keyboard bindings. Widget conventions (roving arrows, Enter-to-submit,
 // Escape-to-dismiss) stay with their components; see docs/contracts/input-bindings.md.
@@ -39,7 +44,7 @@ export function createKeyboardBindings({
   const destinations = APP_DESTINATIONS.map((destination) =>
     viewBinding(
       `view.${destination.id}`,
-      `前往${destination.label}`,
+      t('shortcuts.bindings.goTo', { destination: destination.label }),
       destination.shortcut,
       destination.id,
     ),
@@ -49,7 +54,7 @@ export function createKeyboardBindings({
   const internal = Object.entries(internalViewShortcuts).map(([key, view]) =>
     viewBinding(
       `view.internal.${view}`,
-      `開啟內部工作台（${view}）`,
+      t('shortcuts.bindings.internalView', { view }),
       key,
       view,
       true,
@@ -59,7 +64,10 @@ export function createKeyboardBindings({
   const baseline = [
     ...destinations,
     ...internal,
-    ...LEGACY_KEYBOARD_BINDINGS,
+    ...LEGACY_KEYBOARD_BINDINGS.map((binding) => ({
+      ...binding,
+      label: shortcutBindingLabel(binding.id),
+    })),
   ].map(define);
   if (shortcutConfiguration === undefined) return Object.freeze(baseline);
   const configuration = validateShortcutConfiguration(
@@ -78,7 +86,7 @@ export function createKeyboardBindings({
     bindings.push(
       define({
         id: binding.command,
-        label: SHORTCUT_COMMANDS[index].label,
+        label: shortcutCommandLabel(SHORTCUT_COMMANDS[index].id),
         ...binding.app.chord,
         custom: true,
         preventDefault: true,
@@ -120,13 +128,13 @@ export function createPointerBindings() {
   return Object.freeze([
     Object.freeze({
       id: 'history.back.mouse',
-      label: '上一頁（滑鼠側鍵）',
+      label: shortcutBindingLabel('history.back.mouse'),
       button: 3,
       history: 'back',
     }),
     Object.freeze({
       id: 'history.forward.mouse',
-      label: '下一頁（滑鼠側鍵）',
+      label: shortcutBindingLabel('history.forward.mouse'),
       button: 4,
       history: 'forward',
     }),

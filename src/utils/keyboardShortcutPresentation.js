@@ -3,6 +3,7 @@ import {
   SHORTCUT_COMMANDS,
 } from '../../shared/keyboardShortcutContract.mjs';
 import { LEGACY_KEYBOARD_BINDINGS } from '../../shared/keyboardBindingDefinitions.mjs';
+import { t } from './i18n.js';
 
 const labels = {
   arrowup: '↑',
@@ -20,7 +21,7 @@ export function formatShortcutChord(value) {
   try {
     chord = normalizeShortcutChord(value);
   } catch {
-    return '未設定';
+    return t('shortcuts.unset');
   }
   return [
     chord.ctrl ? 'Ctrl' : null,
@@ -34,12 +35,28 @@ export function formatShortcutChord(value) {
 export function shortcutConflictMessage(error, command) {
   if (error?.code === 'shortcut-conflict') {
     const other = error.commands?.find((id) => id !== command);
-    const label = [...SHORTCUT_COMMANDS, ...LEGACY_KEYBOARD_BINDINGS].find(
-      (item) => item.id === other,
-    )?.label;
+    const label = SHORTCUT_COMMANDS.some((item) => item.id === other)
+      ? shortcutCommandLabel(other)
+      : LEGACY_KEYBOARD_BINDINGS.some((item) => item.id === other)
+        ? shortcutBindingLabel(other)
+        : '';
     return label
-      ? `這組按鍵已用於「${label}」，請換一組。`
-      : '這組快捷鍵已被使用，請改用其他組合。';
+      ? t('shortcuts.conflict.named', { command: label })
+      : t('shortcuts.conflict.generic');
   }
-  return '無法使用這組按鍵，請換一組。';
+  return t('shortcuts.conflict.invalid');
+}
+
+// Command and binding ids map to camelCase catalog keys (player.play-pause →
+// playerPlayPause); shared contracts carry ids only, never display copy.
+export function shortcutCatalogKey(id) {
+  return id.replace(/[.-]+(\w)/gu, (_, letter) => letter.toUpperCase());
+}
+
+export function shortcutCommandLabel(id) {
+  return t(`shortcuts.commands.${shortcutCatalogKey(id)}.label`);
+}
+
+export function shortcutBindingLabel(id) {
+  return t(`shortcuts.bindings.${shortcutCatalogKey(id)}`);
 }

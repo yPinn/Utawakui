@@ -17,6 +17,11 @@ const I18N_MIGRATED = [
   'src/utils/appUpdateProgress.js',
   'src/constants/feedback.js',
   'electron/main/configHandlers.js',
+  'src/components/settings/KeyboardShortcut*.vue',
+  'src/composables/{useKeyboardShortcutSettings,useKeyboardShortcutRecorder}.js',
+  'src/utils/{keyboardShortcutPresentation,keyboardShortcutSettingsPresentation,inputBindingRegistry}.js',
+  'shared/{keyboardBindingDefinitions,keyboardShortcutContract}.mjs',
+  'electron/main/keyboardShortcutHandlers.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -1,16 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 import UiKbd from '../ui/UiKbd.vue';
+import { t } from '../../utils/i18n.js';
 
 const keyLabels = {
   'Page Up': ['PgUp', 'Page Up'],
   'Page Down': ['PgDn', 'Page Down'],
-  MediaPlayPause: ['Play/Pause', '播放／暫停鍵'],
-  MediaTrackPrevious: ['Prev', '上一首鍵'],
-  MediaTrackNext: ['Next', '下一首鍵'],
-  ContextMenu: ['Menu', '選單鍵'],
-  BrowserBack: ['Back', '上一頁鍵'],
-  BrowserForward: ['Fwd', '下一頁鍵'],
+  MediaPlayPause: ['Play/Pause', t('shortcuts.keys.mediaPlayPause')],
+  MediaTrackPrevious: ['Prev', t('shortcuts.keys.mediaPrevious')],
+  MediaTrackNext: ['Next', t('shortcuts.keys.mediaNext')],
+  ContextMenu: ['Menu', t('shortcuts.keys.contextMenu')],
+  BrowserBack: ['Back', t('shortcuts.keys.browserBack')],
+  BrowserForward: ['Fwd', t('shortcuts.keys.browserForward')],
 };
 const props = defineProps({
   chords: { type: Array, required: true },
@@ -40,8 +41,10 @@ const accessibleLabel = computed(() => {
   if (!sharedModifiers.value.length) return props.label || undefined;
   const expanded = props.chords
     .map((chord) => chord.map((key) => keyLabels[key]?.[1] ?? key).join(' + '))
-    .join(' 或 ');
-  return props.label ? `${props.label}：${expanded}` : expanded;
+    .join(t('shortcuts.keys.or'));
+  return props.label
+    ? t('shortcuts.keys.labelled', { label: props.label, keys: expanded })
+    : expanded;
 });
 </script>
 <template>

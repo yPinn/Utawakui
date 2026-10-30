@@ -1,4 +1,5 @@
 'use strict';
+const { t } = require('../lib/i18n');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const {
   parseReceiverIntent,
@@ -39,11 +40,12 @@ function registerKeyboardShortcutHandlers({
           },
           publicError: {
             code: 'KEYBOARD_SHORTCUT_SETTINGS_FAILED',
-            title: '快捷鍵設定未完成',
-            message:
+            title: t('shortcuts.mainErrors.settingsTitle'),
+            message: t(
               operation === 'get'
-                ? '無法讀取快捷鍵，請重新讀取。'
-                : '快捷鍵尚未確認儲存，請重新讀取後再試。',
+                ? 'shortcuts.errors.readFailed'
+                : 'shortcuts.errors.saveUnconfirmed',
+            ),
             context: { retryable: true },
           },
         },
@@ -89,8 +91,8 @@ function registerKeyboardShortcutHandlers({
               },
               publicError: {
                 code: 'KEYBOARD_SHORTCUT_RECEIVER_FAILED',
-                title: '快捷鍵尚未就緒',
-                message: '請重新讀取快捷鍵設定後再試。',
+                title: t('shortcuts.mainErrors.receiverTitle'),
+                message: t('shortcuts.mainErrors.receiverMessage'),
                 context: { retryable: true },
               },
             },
