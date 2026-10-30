@@ -26,7 +26,8 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'ghost',
-    validator: (value) => ['ghost', 'secondary', 'accent'].includes(value),
+    validator: (value) =>
+      ['ghost', 'secondary', 'accent', 'overlay'].includes(value),
   },
   intent: {
     type: String,
@@ -36,6 +37,7 @@ const props = defineProps({
   active: { type: Boolean, default: false }, // toggle state, e.g. repeat-on
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
+  stretch: { type: Boolean, default: false }, // fills a full-cover plane
   loadingLabel: { type: String, default: '處理中' },
 });
 
@@ -78,6 +80,7 @@ function buttonAttrs(tooltipTriggerProps) {
       `ui-btn--intent-${intent}`,
       {
         'ui-btn--active': active,
+        'ui-btn--stretch': stretch,
         'ui-btn--icon-only': (icon || loading) && !$slots.default,
         'is-loading': loading,
       },
@@ -167,6 +170,10 @@ function buttonAttrs(tooltipTriggerProps) {
     background: var(--ui-color-accent-active);
   }
 
+  .ui-btn--overlay:not(:disabled):not([aria-disabled='true']):active {
+    background: var(--ui-color-overlay-scrim-active);
+  }
+
   .ui-btn--intent-danger.ui-btn--ghost:not(:disabled):not(
       [aria-disabled='true']
     ):active {
@@ -246,6 +253,25 @@ function buttonAttrs(tooltipTriggerProps) {
   background: var(--ui-color-accent-hover);
 }
 
+/* Theme-independent scrim: it sits over artwork, not an app surface, so its
+   disabled state keeps the contrast color and dims by opacity only. */
+.ui-btn--overlay {
+  background: var(--ui-color-overlay-scrim);
+  color: var(--ui-color-overlay-contrast);
+}
+
+.ui-btn--overlay:not(:disabled):not([aria-disabled='true']):hover {
+  background: var(--ui-color-overlay-scrim-hover);
+}
+
+/* A full-cover action stacks its icon over the label. */
+.ui-btn--stretch {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  border-radius: inherit;
+}
+
 .ui-btn--intent-danger.ui-btn--ghost {
   color: var(--ui-button-danger-text);
 }
@@ -318,6 +344,10 @@ function buttonAttrs(tooltipTriggerProps) {
 .ui-btn:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-btn--stretch:focus-visible {
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-btn__spinner {

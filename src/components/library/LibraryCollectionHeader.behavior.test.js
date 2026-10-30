@@ -125,8 +125,11 @@ describe('LibraryCollectionHeader', () => {
     expect(withPhoto).not.toContain(
       'library-collection-header__photo-action--empty',
     );
+    // With a photo the visible label names the shared overlay button.
     expect(withPhoto).toContain('更換照片');
-    expect(withPhoto).toContain('aria-label="選擇藝人照片"');
+    expect(withPhoto).toContain('ui-btn--overlay');
+    expect(withPhoto).toContain('ui-btn--stretch');
+    expect(withPhoto).not.toContain('aria-label="選擇藝人照片"');
     // Fill and clip come from the dossier's shared overlay plane.
     expect(source).toContain(
       'v-else-if="entityKind === \'artist\'" #artwork-overlay',

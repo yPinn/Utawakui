@@ -6,7 +6,7 @@
 // metadata, not user-authored; see LibraryEntityDossier.vue).
 import { computed, shallowRef, watch } from 'vue';
 import { ARTWORK_SIZE } from '../../constants/ui.js';
-import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
+import { Pencil, X } from '../../icons/index.js';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -16,7 +16,6 @@ import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
-import UiTooltip from '../ui/UiTooltip.vue';
 
 const PLAYLIST_DETAILS_COVER_SIZE = ARTWORK_SIZE['2xl'];
 const playlistDetailsStyle = Object.freeze({
@@ -90,21 +89,15 @@ function cancel() {
         >
           <template v-if="!isAlbum" #overlay>
             <UiArtworkReveal>
-              <UiTooltip text="選擇封面">
-                <template #trigger="{ triggerProps }">
-                  <button
-                    v-bind="triggerProps"
-                    type="button"
-                    class="playlist-details__cover-edit"
-                    aria-label="選擇封面"
-                    :disabled="saving"
-                    @click="emit('chooseCover')"
-                  >
-                    <Pencil :size="ICON_SIZE" aria-hidden="true" />
-                    <span>選擇封面</span>
-                  </button>
-                </template>
-              </UiTooltip>
+              <UiButton
+                :icon="Pencil"
+                variant="overlay"
+                stretch
+                :disabled="saving"
+                @click="emit('chooseCover')"
+              >
+                選擇封面
+              </UiButton>
             </UiArtworkReveal>
           </template>
         </UiCollageThumb>
@@ -204,25 +197,6 @@ function cancel() {
 
 /* Both cover controls reveal through UiArtworkReveal on cover hover
    (data-artwork-reveal-scope) or their own keyboard focus. */
-
-/* Sized by UiArtworkOverlay inside UiCollageThumb. */
-.playlist-details__cover-edit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: var(--ui-space-1);
-  border: none;
-  background: var(--ui-color-overlay-scrim);
-  color: var(--ui-color-overlay-contrast);
-  cursor: pointer;
-  font-size: var(--ui-type-label-size);
-}
-
-.playlist-details__cover-edit:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
 
 /* Corner control: positioned by the cover, outside the overlay plane. */
 .playlist-details__cover-clear {

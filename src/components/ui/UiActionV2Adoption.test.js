@@ -34,7 +34,10 @@ function vueSources(directoryUrl) {
 describe('Token v2 shared primitive adoption', () => {
   it('adopts the reviewed Button hierarchy and complete state contract', () => {
     expect(buttonSource).toContain(
-      "['ghost', 'secondary', 'accent'].includes(value)",
+      "['ghost', 'secondary', 'accent', 'overlay'].includes(value)",
+    );
+    expect(buttonSource).toContain(
+      ".ui-btn--overlay:not(:disabled):not([aria-disabled='true']):active",
     );
     expect(buttonSource).toContain('class="ui-btn__label"');
     expect(buttonSource).toContain('text-overflow: ellipsis;');

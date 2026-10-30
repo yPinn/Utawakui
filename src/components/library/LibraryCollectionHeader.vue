@@ -3,13 +3,13 @@ import { computed } from 'vue';
 import { FOLDER_DOSSIER_GLYPH_SIZE } from '../../constants/ui.js';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import {
-  ICON_SIZE,
   ImagePlus,
   ListPlus,
   Pencil,
   UserRoundPlus,
 } from '../../icons/index.js';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -168,30 +168,27 @@ function handleMenuAction(value) {
           :is="coverUrl ? UiArtworkReveal : 'span'"
           :class="{ 'library-collection-header__photo-static': !coverUrl }"
         >
+          <UiButton
+            v-if="coverUrl"
+            :icon="ImagePlus"
+            variant="overlay"
+            stretch
+            @click="emit('choosePhoto')"
+          >
+            更換照片
+          </UiButton>
+          <!-- The add glyph stands in for the avatar placeholder, so it keeps
+               the dossier glyph size rather than a control icon size. -->
           <button
+            v-else
             v-bind="photoTooltipTriggerProps"
             type="button"
-            class="library-collection-header__photo-action"
-            :class="{
-              'library-collection-header__photo-action--empty': !coverUrl,
-            }"
+            class="library-collection-header__photo-action library-collection-header__photo-action--empty"
             aria-label="選擇藝人照片"
             @click="emit('choosePhoto')"
           >
-            <template v-if="coverUrl">
-              <ImagePlus
-                :size="ICON_SIZE"
-                class="library-collection-header__photo-icon"
-                aria-hidden="true"
-              />
-              <span class="library-collection-header__photo-label">
-                更換照片
-              </span>
-            </template>
             <UserRoundPlus
-              v-else
               :size="FOLDER_DOSSIER_GLYPH_SIZE"
-              class="library-collection-header__photo-icon"
               aria-hidden="true"
             />
           </button>
@@ -259,37 +256,22 @@ function handleMenuAction(value) {
   display: grid;
 }
 
-/* Sized and clipped by the dossier's UiArtworkOverlay plane; revealed by
-   UiArtworkReveal when a photo exists. */
+/* Sized and clipped by the dossier's UiArtworkOverlay plane. */
 .library-collection-header__photo-action {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--ui-space-1);
   padding: 0;
   border: 0;
-  background: var(--ui-color-overlay-scrim);
-  color: var(--ui-color-overlay-contrast);
   font: inherit;
   cursor: pointer;
   transition: background var(--ui-motion-duration-fast)
     var(--ui-motion-easing-standard);
 }
 
-.library-collection-header__photo-action:active {
-  background: var(--ui-color-overlay-scrim-active);
-}
-
 .library-collection-header__photo-action:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
-}
-
-.library-collection-header__photo-label {
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
 }
 
 /* An empty avatar keeps the invitation visible as one centered add glyph, so
