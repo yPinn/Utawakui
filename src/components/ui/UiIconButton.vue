@@ -367,8 +367,7 @@ function buttonAttrs(triggerProps) {
 }
 
 .ui-icon-btn__spinner {
-  animation: ui-icon-btn-spin calc(var(--ui-motion-duration-slow) * 4) linear
-    infinite;
+  animation: ui-icon-btn-spin var(--ui-motion-duration-spin) linear infinite;
 }
 
 @keyframes ui-icon-btn-spin {

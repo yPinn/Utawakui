@@ -497,6 +497,24 @@ describe('shared UI component token contract', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('times loading loops from the shared loop and spin durations', () => {
+    for (const [name, role] of [
+      ['UiArtworkLoading.vue', 'loop'],
+      ['UiProgress.vue', 'loop'],
+      ['UiSkeleton.vue', 'loop'],
+      ['UiButton.vue', 'spin'],
+      ['UiIconButton.vue', 'spin'],
+      ['UiStatusIcon.vue', 'spin'],
+    ]) {
+      expect(componentSource(name), name).toMatch(
+        new RegExp(
+          `animation:\\s*[\\w-]+\\s+var\\(--ui-motion-duration-${role}\\)[^;]*infinite`,
+          'u',
+        ),
+      );
+    }
+  });
+
   it('gives every continuously animated component OS and manual reduced-motion paths', () => {
     for (const name of [
       'UiArtworkLoading.vue',

@@ -498,6 +498,8 @@
   --ui-motion-duration-fast: 140ms;
   --ui-motion-duration-standard: 200ms;
   --ui-motion-duration-slow: 280ms;
+  --ui-motion-duration-loop: 1.4s;
+  --ui-motion-duration-spin: 1s;
   --ui-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --ui-motion-easing-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ui-motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
@@ -725,7 +727,6 @@
   --ui-skeleton-text-block-size: var(--ui-space-3);
   --ui-skeleton-block-min-block-size: var(--ui-control-height);
   --ui-skeleton-circle-size: var(--ui-control-height);
-  --ui-skeleton-pulse-duration: 1.4s;
   --ui-radio-size: var(--ui-space-4);
   --ui-radio-dot-size: var(--ui-space-2);
   /* Hover-revealed utility actions inside dense track tables (documented

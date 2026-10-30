@@ -141,8 +141,7 @@ function rootProps() {
 }
 
 .ui-status-icon__glyph--spin {
-  animation: ui-status-icon-spin calc(var(--ui-motion-duration-slow) * 4) linear
-    infinite;
+  animation: ui-status-icon-spin var(--ui-motion-duration-spin) linear infinite;
 }
 
 @keyframes ui-status-icon-spin {

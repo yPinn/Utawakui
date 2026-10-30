@@ -180,7 +180,7 @@ describe('structural and skeleton specialist contracts', () => {
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none;/u,
     );
-    expect(css).toContain('var(--ui-skeleton-pulse-duration)');
+    expect(css).toContain('var(--ui-motion-duration-loop)');
   });
 
   it('renders keyboard notation as semantic text without creating a tab stop', () => {

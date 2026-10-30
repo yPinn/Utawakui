@@ -51,7 +51,7 @@ const props = defineProps({
   overflow: hidden;
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface-hover);
-  animation: ui-skeleton-pulse var(--ui-skeleton-pulse-duration)
+  animation: ui-skeleton-pulse var(--ui-motion-duration-loop)
     var(--ui-motion-easing-standard) infinite alternate;
 }
 

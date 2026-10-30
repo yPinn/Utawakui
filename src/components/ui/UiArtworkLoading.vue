@@ -17,7 +17,8 @@ defineProps({
 .ui-artwork-loading {
   background: var(--ui-color-surface-hover);
   opacity: 0.72;
-  animation: ui-artwork-loading 1.4s ease-in-out infinite alternate;
+  animation: ui-artwork-loading var(--ui-motion-duration-loop)
+    var(--ui-motion-easing-standard) infinite alternate;
 }
 
 @keyframes ui-artwork-loading {

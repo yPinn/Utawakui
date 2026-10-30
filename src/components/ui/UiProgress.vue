@@ -164,8 +164,8 @@ watch(ratio, (next, previous) => {
       )
       0 0 / 220% 100% no-repeat,
     var(--ui-color-surface-hover);
-  animation: ui-progress-indeterminate 1.4s var(--ui-motion-easing-standard)
-    infinite;
+  animation: ui-progress-indeterminate var(--ui-motion-duration-loop)
+    var(--ui-motion-easing-standard) infinite;
 }
 
 .ui-progress__track:indeterminate::-webkit-progress-bar {
@@ -178,8 +178,8 @@ watch(ratio, (next, previous) => {
       )
       0 0 / 220% 100% no-repeat,
     var(--ui-color-surface-hover);
-  animation: ui-progress-indeterminate 1.4s var(--ui-motion-easing-standard)
-    infinite;
+  animation: ui-progress-indeterminate var(--ui-motion-duration-loop)
+    var(--ui-motion-easing-standard) infinite;
 }
 
 @keyframes ui-progress-indeterminate {

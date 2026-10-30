@@ -351,8 +351,7 @@ function buttonAttrs(tooltipTriggerProps) {
 }
 
 .ui-btn__spinner {
-  animation: ui-btn-spin calc(var(--ui-motion-duration-slow) * 4) linear
-    infinite;
+  animation: ui-btn-spin var(--ui-motion-duration-spin) linear infinite;
 }
 
 @keyframes ui-btn-spin {
