@@ -51,7 +51,7 @@ defineExpose({ scrollTo });
       ref="scrollRegion"
       class="app-right-dock-panel__scroll"
       axis="vertical"
-      :edge-shadow="$slots.footer ? 'both' : 'start'"
+      edge-shadow="both"
     >
       <div class="app-right-dock-panel__body">
         <slot />

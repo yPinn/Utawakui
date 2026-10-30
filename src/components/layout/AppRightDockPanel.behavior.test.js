@@ -151,7 +151,7 @@ describe('AppRightDockPanel', () => {
     app.unmount();
   });
 
-  it('delegates header and footer elevation to the scroll region edges', () => {
+  it('cues hidden content at both dock edges, with or without a footer', () => {
     const regionEdge = (slots) => {
       const { app, root } = mount(
         AppRightDockPanel,
@@ -166,7 +166,7 @@ describe('AppRightDockPanel', () => {
       return edge;
     };
 
-    expect(regionEdge({ default: () => 'Queue content' })).toBe('start');
+    expect(regionEdge({ default: () => 'Queue content' })).toBe('both');
     expect(
       regionEdge({
         default: () => 'Queue content',

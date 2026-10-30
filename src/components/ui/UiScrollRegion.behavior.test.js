@@ -28,11 +28,17 @@ describe('UiScrollRegion production contract', () => {
     expect(html).toContain('data-scrolled-start="false"');
     expect(html).toContain('data-scrolled-end="false"');
     expect(componentSource).toContain('getScrollEdges({');
+    expect(html).toContain('ui-scroll-region__edge--start');
+    expect(html).toContain('ui-scroll-region__edge--end');
     expect(componentSource).toMatch(
-      /\.ui-scroll-region::before\s*\{[^}]*box-shadow:\s*var\(--ui-scroll-edge-shadow-start\);/su,
+      /\.ui-scroll-region__edge--start\s*\{[^}]*box-shadow:\s*var\(--ui-scroll-edge-shadow-start\);/su,
     );
     expect(componentSource).toMatch(
-      /\.ui-scroll-region::after\s*\{[^}]*box-shadow:\s*var\(--ui-scroll-edge-shadow-end\);/su,
+      /\.ui-scroll-region__edge--end\s*\{[^}]*box-shadow:\s*var\(--ui-scroll-edge-shadow-end\);/su,
+    );
+    // Consumers such as the Folder tab bar keep their own pseudo-elements.
+    expect(componentSource).not.toMatch(
+      /\.ui-scroll-region::(?:before|after)/u,
     );
     for (const token of [
       '--ui-scroll-edge-shadow-start:',
@@ -129,6 +135,7 @@ describe('UiScrollRegion production contract', () => {
 
     expect(html).toContain('class="ui-scroll-region__viewport"');
     expect(html).not.toContain('ui-scroll-region__rail');
+    expect(html).not.toContain('ui-scroll-region__edge');
   });
 
   it('owns a zero-gutter overlay appearance with platform accessibility fallbacks', () => {

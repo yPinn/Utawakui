@@ -68,6 +68,10 @@ const verticalGeometry = shallowRef(hiddenGeometry());
 const horizontalGeometry = shallowRef(hiddenGeometry());
 const draggingAxis = shallowRef('');
 const scrolledEdges = shallowRef({ start: false, end: false });
+const hasStartEdge = computed(() =>
+  ['start', 'both'].includes(props.edgeShadow),
+);
+const hasEndEdge = computed(() => ['end', 'both'].includes(props.edgeShadow));
 
 const rootAttrs = computed(() =>
   Object.fromEntries(
@@ -352,6 +356,18 @@ watch(
       <slot />
     </component>
 
+    <!-- Own elements, not root pseudo-elements, so consumers keep ::before／::after. -->
+    <span
+      v-if="hasStartEdge"
+      class="ui-scroll-region__edge ui-scroll-region__edge--start"
+      aria-hidden="true"
+    />
+    <span
+      v-if="hasEndEdge"
+      class="ui-scroll-region__edge ui-scroll-region__edge--end"
+      aria-hidden="true"
+    />
+
     <div
       v-if="props.scrollbarVisibility !== 'hidden'"
       ref="verticalRail"
@@ -445,13 +461,11 @@ watch(
 }
 
 /* Edge shadows: an off-screen band above／below the viewport casts the shared
-   scroll-edge shadow inward, matching chrome that sits on that edge. */
-.ui-scroll-region::before,
-.ui-scroll-region::after {
-  content: '';
+   scroll-edge shadow inward; it overhangs inline so the corners stay even. */
+.ui-scroll-region__edge {
   position: absolute;
   z-index: var(--ui-layer-raised);
-  inset-inline: 0;
+  inset-inline: calc(-1 * var(--ui-scroll-edge-band-size));
   block-size: var(--ui-scroll-edge-band-size);
   opacity: 0;
   pointer-events: none;
@@ -459,24 +473,18 @@ watch(
     var(--ui-motion-easing-standard);
 }
 
-.ui-scroll-region::before {
+.ui-scroll-region__edge--start {
   inset-block-end: 100%;
   box-shadow: var(--ui-scroll-edge-shadow-start);
 }
 
-.ui-scroll-region::after {
+.ui-scroll-region__edge--end {
   inset-block-start: 100%;
   box-shadow: var(--ui-scroll-edge-shadow-end);
 }
 
-.ui-scroll-region:is(
-    [data-edge-shadow='start'],
-    [data-edge-shadow='both']
-  )[data-scrolled-start='true']::before,
-.ui-scroll-region:is(
-    [data-edge-shadow='end'],
-    [data-edge-shadow='both']
-  )[data-scrolled-end='true']::after {
+[data-scrolled-start='true'] > .ui-scroll-region__edge--start,
+[data-scrolled-end='true'] > .ui-scroll-region__edge--end {
   opacity: 1;
 }
 
@@ -561,14 +569,12 @@ watch(
   cursor: grabbing;
 }
 
-:global(:root[data-ui-motion='reduced'] .ui-scroll-region::before),
-:global(:root[data-ui-motion='reduced'] .ui-scroll-region::after) {
+:global(:root[data-ui-motion='reduced'] .ui-scroll-region__edge) {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-scroll-region::before,
-  .ui-scroll-region::after,
+  .ui-scroll-region__edge,
   .ui-scroll-region__rail,
   .ui-scroll-region__thumb {
     transition: none;
