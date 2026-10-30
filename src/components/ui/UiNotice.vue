@@ -208,8 +208,13 @@ const role = computed(() =>
 }
 
 .ui-notice__title {
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
+}
+
+.ui-notice--compact .ui-notice__title {
   font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
   line-height: var(--ui-type-label-line-height);
 }
 
