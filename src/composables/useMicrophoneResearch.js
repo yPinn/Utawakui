@@ -23,9 +23,14 @@ export function useMicrophoneResearch() {
       }),
   });
   const stopOnUnload = () => runtime.stop();
+  const activityVisibilityChanged = () =>
+    runtime.setActivitySuspended(document.hidden);
+  activityVisibilityChanged();
+  document.addEventListener('visibilitychange', activityVisibilityChanged);
   window.addEventListener('pagehide', stopOnUnload);
   onScopeDispose(() => {
     window.removeEventListener('pagehide', stopOnUnload);
+    document.removeEventListener('visibilitychange', activityVisibilityChanged);
     runtime.destroy();
   });
   return { state: readonly(state), ...runtime };

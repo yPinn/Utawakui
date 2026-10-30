@@ -80,7 +80,7 @@ describe('Specialist workbench Token v2 cleanup', () => {
 
   it('keeps workbench content inside the bounded composition body', () => {
     expect(internalToolsSource).toMatch(
-      /\.internal-tools-view\s*\{(?=[^}]*height:\s*100%)(?=[^}]*min-height:\s*0)(?=[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\))[^}]*\}/su,
+      /\.internal-tools-view\s*\{(?=[^}]*height:\s*100%)(?=[^}]*min-height:\s*0)[^}]*\}/su,
     );
     expect(internalToolsSource).toMatch(
       /\.internal-tools-view__body\s*\{(?=[^}]*min-height:\s*0)(?=[^}]*overflow:\s*hidden)[^}]*\}/su,

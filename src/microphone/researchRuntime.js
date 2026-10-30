@@ -1,12 +1,30 @@
 import {
   MICROPHONE_LEVEL_DEFAULTS,
   normalizeMicrophoneControls,
-  measureMicrophoneLevel,
   projectMicrophoneLevel,
 } from './level.js';
+import {
+  normalizeMicrophoneInputOptions,
+  microphoneProcessingSupport,
+  MICROPHONE_PROCESSING_KEYS,
+  createMicrophoneInputGraph,
+} from './inputProcessing.js';
+import {
+  createMicrophoneActivity,
+  normalizeMicrophoneActivityOptions,
+} from './activity.js';
+import { recommendMicrophoneActivityThresholds } from './calibration.js';
 
 const SAMPLE_MS = 33;
-const RESET = { dbfs: -100, peak: 0, intensity: 0, clipped: false };
+const RESET = {
+  dbfs: -100,
+  peak: 0,
+  intensity: 0,
+  clipped: false,
+  rawDbfs: -100,
+  rawPeak: 0,
+  rawClipped: false,
+};
 
 // Owns one analysis-only stream. No player, destination, file or Output access.
 export function createMicrophoneResearchRuntime({
@@ -17,6 +35,9 @@ export function createMicrophoneResearchRuntime({
   onError = () => {},
   now = () => performance.now(),
 } = {}) {
+  const activityOwner = createMicrophoneActivity();
+  let activitySignature = null;
+  let activitySuspended = false;
   let state = {
     status: 'idle',
     error: '',
@@ -25,6 +46,11 @@ export function createMicrophoneResearchRuntime({
     refreshing: false,
     controls: { ...MICROPHONE_LEVEL_DEFAULTS },
     settings: null,
+    inputOptions: normalizeMicrophoneInputOptions(),
+    activityOptions: normalizeMicrophoneActivityOptions(),
+    activityCalibrated: false,
+    activity: activityOwner.reset('idle'),
+    processingSupport: microphoneProcessingSupport(mediaDevices),
     ...RESET,
   };
   let current = null;
@@ -34,6 +60,31 @@ export function createMicrophoneResearchRuntime({
     if (destroyed) return;
     state = { ...state, ...values };
     publish(state);
+  }
+  const activityEnabled = () =>
+    state.activityOptions.mode === 'manual' || state.activityCalibrated;
+  const activityPhase = (
+    options = state.activityOptions,
+    calibrated = state.activityCalibrated,
+    status = state.status,
+  ) =>
+    status !== 'running'
+      ? 'idle'
+      : activitySuspended
+        ? 'paused'
+        : options.mode === 'manual' || calibrated
+          ? 'armed'
+          : 'uncalibrated';
+  const inputSignature = (settings = state.settings) =>
+    JSON.stringify([state.selectedDeviceId, state.inputOptions, settings]);
+  function invalidateActivity() {
+    activitySignature = null;
+    return {
+      activityCalibrated: false,
+      activity: activityOwner.reset(
+        activityPhase(state.activityOptions, false),
+      ),
+    };
   }
   function report(error, code) {
     onError(error, code);
@@ -52,8 +103,7 @@ export function createMicrophoneResearchRuntime({
     clearTimeout(op.watchdog);
     for (const remove of op.listeners) remove();
     op.listeners = [];
-    op.source?.disconnect();
-    op.analyser?.disconnect();
+    op.inputGraph?.dispose();
     stopTracks(op.stream);
     op.stream = null;
     if (op.context) {
@@ -70,7 +120,14 @@ export function createMicrophoneResearchRuntime({
     current = null;
     listRevision += 1;
     if (previous) clean(previous);
-    update({ status, error, refreshing: false, settings: null, ...RESET });
+    update({
+      status,
+      error,
+      refreshing: false,
+      settings: null,
+      activity: activityOwner.reset('idle'),
+      ...RESET,
+    });
   }
   const isCurrent = (op) => !destroyed && current === op;
   function fail(op, error, code, message) {
@@ -116,7 +173,9 @@ export function createMicrophoneResearchRuntime({
       )
         ? state.selectedDeviceId
         : '';
-      update({ devices, selectedDeviceId, status: 'idle' });
+      const invalidated =
+        selectedDeviceId !== state.selectedDeviceId ? invalidateActivity() : {};
+      update({ devices, selectedDeviceId, status: 'idle', ...invalidated });
       return true;
     } catch (error) {
       if (!destroyed && revision === listRevision) {
@@ -136,7 +195,7 @@ export function createMicrophoneResearchRuntime({
     if (destroyed || !state.devices.some((d) => d.id === id)) return false;
     if (id !== state.selectedDeviceId) {
       stop();
-      update({ selectedDeviceId: id });
+      update({ selectedDeviceId: id, ...invalidateActivity() });
     }
     return true;
   }
@@ -155,6 +214,7 @@ export function createMicrophoneResearchRuntime({
       watchdog: null,
     };
     const deviceId = state.selectedDeviceId;
+    const inputOptions = { ...state.inputOptions };
     current = op;
     update({ status: 'requesting', error: '' });
     op.watchdog = setTimeout(
@@ -186,9 +246,9 @@ export function createMicrophoneResearchRuntime({
         audio: {
           deviceId: { exact: deviceId },
           channelCount: { ideal: 1 },
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
+          echoCancellation: inputOptions.echoCancellation,
+          noiseSuppression: inputOptions.noiseSuppression,
+          autoGainControl: inputOptions.autoGainControl,
         },
       });
       if (!isCurrent(op)) {
@@ -225,17 +285,17 @@ export function createMicrophoneResearchRuntime({
       if (!isCurrent(op)) return false;
       if (op.context.state !== 'running')
         throw new Error('Analysis context unavailable');
-      op.source = op.context.createMediaStreamSource(stream);
-      op.analyser = op.context.createAnalyser();
-      op.analyser.fftSize = 2048;
-      op.source.connect(op.analyser);
-      const samples = new Float32Array(op.analyser.fftSize);
+      op.inputGraph = createMicrophoneInputGraph(
+        op.context,
+        stream,
+        inputOptions,
+        (error) => report(error, 'MIC_RESEARCH_GRAPH_CLEANUP_FAILED'),
+      );
       let lastSample = now();
       function sample() {
         if (!isCurrent(op)) return;
         try {
-          op.analyser.getFloatTimeDomainData(samples);
-          const measured = measureMicrophoneLevel(samples);
+          const measured = op.inputGraph.sample();
           const time = now();
           const intensity = projectMicrophoneLevel(
             measured.dbfs,
@@ -244,7 +304,15 @@ export function createMicrophoneResearchRuntime({
             state.controls,
           );
           lastSample = time;
-          update({ ...measured, intensity });
+          const activity = activitySuspended
+            ? activityOwner.reset('paused')
+            : activityOwner.observe(
+                measured.dbfs,
+                time,
+                state.activityOptions,
+                activityEnabled(),
+              );
+          update({ ...measured, intensity, activity });
           op.timer = setTimeout(sample, SAMPLE_MS);
         } catch (error) {
           fail(
@@ -258,15 +326,31 @@ export function createMicrophoneResearchRuntime({
       clearTimeout(op.watchdog);
       release(op.lease);
       op.lease = null;
+      const actualSettings = {
+        sampleRate: settings.sampleRate ?? op.context.sampleRate,
+        channelCount: settings.channelCount ?? null,
+        autoGainControl: settings.autoGainControl ?? null,
+        noiseSuppression: settings.noiseSuppression ?? null,
+        echoCancellation: settings.echoCancellation ?? null,
+        gainDb: inputOptions.gainDb,
+        highPassHz: inputOptions.highPassHz,
+      };
+      const invalidated =
+        activitySignature !== null &&
+        activitySignature !== inputSignature(actualSettings)
+          ? invalidateActivity()
+          : {};
       update({
         status: 'running',
-        settings: {
-          sampleRate: settings.sampleRate ?? op.context.sampleRate,
-          channelCount: settings.channelCount ?? null,
-          autoGainControl: settings.autoGainControl ?? null,
-          noiseSuppression: settings.noiseSuppression ?? null,
-          echoCancellation: settings.echoCancellation ?? null,
-        },
+        settings: actualSettings,
+        ...invalidated,
+        activity: activityOwner.reset(
+          activityPhase(
+            state.activityOptions,
+            invalidated.activityCalibrated ?? state.activityCalibrated,
+            'running',
+          ),
+        ),
       });
       op.timer = setTimeout(sample, SAMPLE_MS);
       return true;
@@ -289,8 +373,10 @@ export function createMicrophoneResearchRuntime({
       const devices = availableDevices(await mediaDevices.enumerateDevices());
       if (!isCurrent(op)) return;
       update({ devices });
-      if (!devices.some((device) => device.id === state.selectedDeviceId))
+      if (!devices.some((device) => device.id === state.selectedDeviceId)) {
         stop('lost', '所選輸入已移除，請重新讀取並選擇裝置。');
+        update(invalidateActivity());
+      }
     } catch (error) {
       fail(
         op,
@@ -305,6 +391,116 @@ export function createMicrophoneResearchRuntime({
       controls: normalizeMicrophoneControls({ ...state.controls, ...input }),
     });
   }
+  function configureActivity(input = {}) {
+    if (
+      destroyed ||
+      state.status === 'requesting' ||
+      !input ||
+      typeof input !== 'object'
+    )
+      return false;
+    const options = normalizeMicrophoneActivityOptions({
+      ...state.activityOptions,
+      ...input,
+    });
+    if (!options) return false;
+    if (
+      options.mode === 'calibration' &&
+      (Object.hasOwn(input, 'openThreshold') ||
+        Object.hasOwn(input, 'closeThreshold'))
+    )
+      return false;
+    if (JSON.stringify(options) === JSON.stringify(state.activityOptions))
+      return true;
+    const invalidated =
+      options.mode !== state.activityOptions.mode ? invalidateActivity() : {};
+    update({
+      activityOptions: options,
+      ...invalidated,
+      activity: activityOwner.reset(
+        activityPhase(
+          options,
+          invalidated.activityCalibrated ?? state.activityCalibrated,
+        ),
+      ),
+    });
+    return true;
+  }
+  function applyActivityCalibration(results) {
+    if (destroyed || state.status !== 'running') return false;
+    const candidate = recommendMicrophoneActivityThresholds(results);
+    const conditions = results?.quiet?.conditions;
+    if (
+      candidate.status !== 'ready' ||
+      conditions.selectedDeviceId !== state.selectedDeviceId ||
+      ['controls', 'inputOptions', 'settings', 'activityOptions'].some(
+        (key) => JSON.stringify(conditions[key]) !== JSON.stringify(state[key]),
+      )
+    )
+      return false;
+    activitySignature = inputSignature();
+    const options = {
+      ...state.activityOptions,
+      mode: 'calibration',
+      openThreshold: candidate.openThreshold,
+      closeThreshold: candidate.closeThreshold,
+    };
+    update({
+      activityOptions: options,
+      activityCalibrated: true,
+      activity: activityOwner.reset(activityPhase(options, true)),
+    });
+    return true;
+  }
+  function setActivitySuspended(suspended) {
+    activitySuspended = suspended === true;
+    update({ activity: activityOwner.reset(activityPhase()) });
+  }
+  function configureInput(input) {
+    if (destroyed || state.status === 'requesting') return false;
+    const options = normalizeMicrophoneInputOptions({
+      ...state.inputOptions,
+      ...input,
+    });
+    if (
+      MICROPHONE_PROCESSING_KEYS.some(
+        (key) => options[key] && !state.processingSupport[key],
+      )
+    )
+      return false;
+    if (
+      current &&
+      Object.keys(options).some(
+        (key) => key !== 'gainDb' && options[key] !== state.inputOptions[key],
+      )
+    )
+      return false;
+    if (current && options.gainDb !== state.inputOptions.gainDb) {
+      try {
+        current.inputGraph.setGainDb(options.gainDb);
+      } catch (error) {
+        fail(
+          current,
+          error,
+          'MIC_RESEARCH_GAIN_FAILED',
+          '輸入增益無法套用，請重新開始。',
+        );
+        return false;
+      }
+    }
+    const invalidated =
+      JSON.stringify(options) !== JSON.stringify(state.inputOptions)
+        ? invalidateActivity()
+        : {};
+    update({
+      inputOptions: options,
+      ...invalidated,
+      ...(state.settings
+        ? { settings: { ...state.settings, gainDb: options.gainDb } }
+        : {}),
+    });
+    return true;
+  }
   function destroy() {
     stop();
     destroyed = true;
@@ -318,6 +514,10 @@ export function createMicrophoneResearchRuntime({
     start,
     stop: () => stop(),
     configure,
+    configureActivity,
+    applyActivityCalibration,
+    setActivitySuspended,
+    configureInput,
     destroy,
   };
 }

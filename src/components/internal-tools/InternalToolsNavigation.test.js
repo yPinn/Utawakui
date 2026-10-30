@@ -20,7 +20,10 @@ describe('InternalToolsNavigation', () => {
     expect(html).toContain('F5');
     expect(html).toContain('F6');
     expect(html).not.toContain('Lyrics Provider Corpus');
-    expect(html).toContain('產品操作');
+    expect(html).not.toContain('僅開發版本');
+    expect(html).not.toContain(
+      INTERNAL_TOOL_CATEGORIES[0].tools[0].description,
+    );
   });
 
   it('shows evaluation tools without inventing a shortcut for Music M2', async () => {
@@ -35,6 +38,6 @@ describe('InternalToolsNavigation', () => {
     expect(html).toContain('Lyrics Provider Corpus');
     expect(html).toContain('F7');
     expect(html).not.toContain('F8');
-    expect(html).toContain('研究評估');
+    expect(html).toContain('Mic Level R02');
   });
 });

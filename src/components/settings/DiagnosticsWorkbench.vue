@@ -12,7 +12,6 @@ import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import UiStack from '../ui/UiStack.vue';
-import UiSurface from '../ui/UiSurface.vue';
 
 const LEVELS = ['error', 'warning', 'info', 'debug'];
 const LEVEL_LABELS = {
@@ -62,9 +61,6 @@ onMounted(workbench.refresh);
 <template>
   <UiStack class="diagnostics-workbench" direction="column" :gap="4">
     <UiPageHeader title="Live Diagnostics">
-      <template #description>
-        唯讀檢視最近 500 筆執行期事件，可依等級與關鍵字篩選。
-      </template>
       <template #actions>
         <UiButton
           :icon="RefreshCw"
@@ -73,7 +69,6 @@ onMounted(workbench.refresh);
         >
           重新讀取
         </UiButton>
-        <UiChip tone="info">支援操作 · F6</UiChip>
       </template>
     </UiPageHeader>
 
@@ -81,12 +76,7 @@ onMounted(workbench.refresh);
       {{ workbench.state.error }}
     </UiHint>
 
-    <UiSurface
-      class="diagnostics-workbench__panel"
-      tag="section"
-      radius="lg"
-      aria-label="診斷事件"
-    >
+    <section class="diagnostics-workbench__panel" aria-label="診斷事件">
       <UiStack
         class="diagnostics-workbench__summary"
         wrap
@@ -176,7 +166,7 @@ onMounted(workbench.refresh);
       >
         沒有符合條件的紀錄
       </p>
-    </UiSurface>
+    </section>
   </UiStack>
 </template>
 
@@ -196,7 +186,6 @@ onMounted(workbench.refresh);
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
   overflow: hidden;
 }
 

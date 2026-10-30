@@ -255,7 +255,6 @@ onUnmounted(structureSignals.clear);
     />
 
     <div v-if="!annotation.dataset.value" class="reference-annotation__empty">
-      <UiChip tone="gated">Reference only</UiChip>
       <h3>選擇 M2 run config</h3>
       <p>逐首播放並標記 BPM、段落邊界與角色；這裡不顯示分析結果。</p>
       <UiButton
@@ -420,9 +419,6 @@ onUnmounted(structureSignals.clear);
   align-content: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-6);
-  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
   text-align: center;
 }
 
@@ -438,9 +434,6 @@ onUnmounted(structureSignals.clear);
   display: grid;
   grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
 }
 
 .reference-annotation__cases,
@@ -453,11 +446,6 @@ onUnmounted(structureSignals.clear);
   display: flex;
   flex-direction: column;
   border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface-raised) 48%,
-    var(--ui-color-surface)
-  );
 }
 
 .reference-annotation__summary {

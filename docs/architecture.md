@@ -54,7 +54,7 @@
 - `openSettings()` 首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings 目的地；Titlebar、F9、Tray 與依賴設定請求共用此 action。
 - Token：Main 與 Performer 的 `#app` 在 mount 前登記為 v2 surface，兩個 entry 只載入 `src/styles/tokens.css`。Token v1 已全部移除，source gate 禁止回流（[Token v2 替換](archive/token-v2-replacement.md)）。`overlay/` 只用 `--ovl-*`，兩者互不匯入。
 - Modal 內的動作選單由 `UiModal` 提供當前 backdrop 作為局部 floating host；`UiActionMenu` 優先 Teleport 至該 host，保持在 clipped panel 外且屬於同一 dialog 堆疊。非 modal 選單仍使用已登記的 surface overlay host，不以頁面自訂 z-index 修補遮蔽。
-- Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 以 `constants/internalTools.js` 分為 Operations（F5 音樂分析、F6 Diagnostics）與 Evaluation（Music M2、F7 歌詞 provider 語料），一次只掛載一個工作台，不改變 gate 或 IPC 邊界。
+- Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 依 `constants/internalTools.js` 管理 Operations／Evaluation，持有單一 workspace `AppFolderPage` 與固定 header 導覽，一次掛載一個工作台。工作台擁有內容及局部捲動，overlay host 留在紙頁外；`App.vue` 依內部工具 route 清單避免重複包頁，不改 gate 或 IPC 邊界。
 
 第 4 項背景互動沿同一 settings owner／recorder 與註冊 manager 擴充：候選試註冊重用 staging／rollback，不寫檔或執行命令；合法停用在讀檔／CAS 前撤分派，Main 保留未保存的本次停用，普通保存／重讀／喚醒不能解除，只有固定 enable 意圖可重新啟用。正式 renderer singleton 與 Main allowlist 仍閉鎖，隔離工廠驗 App／背景範圍及復原 UI，不新增播放 owner 或平台支援承諾。邊界見[全域契約](contracts/global-keyboard-shortcuts.md#設定交易)。
 
@@ -148,7 +148,7 @@
 
 ### Settings 與通知
 
-- 開發限定 Mic 研究：`useMicrophoneResearch` 隨內部工具作用域建立／清理 `src/microphone/researchRuntime.js` 的獨立輸入與 Analyser graph，`level.js` 只計算本機有界電平。Main 的 `microphoneResearchAccess.js` 經可信 IPC 發出短期 lease，`audioOutputPermissions.js` 的兩條 permission hook 只在 lease 有效時放行主 frame 音訊。正式 Main／preload 不開研究操作，renderer 不進正式 bundle；無 player／BGM／Output 接線、監聽或錄音。見[研究契約](contracts/microphone-level-research.md)。
+- 開發限定 Mic 研究：`useMicrophoneResearch` 隨內部工具作用域建立／清理 `src/microphone/researchRuntime.js` 的獨立輸入；`inputProcessing.js` 持有裝置回傳／低切與增益後的雙 Analyser graph，`level.js` 只計算本機有界電平，`activity.js` 另持有不修改 PCM 的雙門檻／時間活動投影，runtime 管理其設定及校準條件失效；`useMicrophoneMeasurement`／`src/microphone/measurement.js` 持有操作者倒數窗口、數值歷史與快照摘要。Main 的 `microphoneResearchAccess.js` 經可信 IPC 發出短期 lease，`audioOutputPermissions.js` 的兩條 permission hook 只在 lease 有效時放行主 frame 音訊。正式 Main／preload 不開研究操作，renderer 不進正式 bundle；無 player／BGM／Output 接線、監聽或錄音。見[研究契約](contracts/microphone-level-research.md)。
 
 - `SettingsPage` 擁有唯一 page scroll 與 local overlay host；`SettingsView` 組合曲庫、音訊、應用程式、選用功能與支援五個 domain，各 section component 持有自己的 lifecycle、確認與 deep-link。系統 FFmpeg 偵測經 `useOnFirstVisible` 延到區段可見時。
 - `useAppNotifications.js` 保存通知投影與私有 action callback，`App.vue` 掛載唯一 `AppNotificationHost`；`useTaskNotification.js` 由各 domain 事件更新同一投影。通知 key 登記於 `constants/notificationKeys.js`，操作失敗經 `notifyFailure` 同時記錄診斷與通知，可見中的相同失敗只算一次。Modal 與通知共用 `useUiModalStack.js`，modal 開啟期間暫停通知倒數。見 [Settings 操作回饋契約](contracts/settings-operation-feedback.md)。

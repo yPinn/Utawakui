@@ -76,7 +76,7 @@ describe('Music Analysis scroll layout', () => {
   });
 
   it('keeps operations separate from annotation and benchmark evaluation', () => {
-    expect(workbenchSource).toContain('Music Analysis 作業');
+    expect(workbenchSource).toContain('title="Music Analysis"');
     expect(workbenchSource).not.toContain('MusicAnalysisReferenceAnnotation');
     expect(workbenchSource).not.toContain('MusicAnalysisBenchmarkReview');
     expect(workbenchSource).not.toContain('MusicAnalysisCapabilityModal');

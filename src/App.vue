@@ -11,6 +11,7 @@ import {
 } from 'vue';
 import AppFolderLayout from './components/layout/AppFolderLayout.vue';
 import AppFolderPage from './components/layout/AppFolderPage.vue';
+import { INTERNAL_TOOL_ROUTES } from './constants/internalTools.js';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppRightDock from './components/layout/AppRightDock.vue';
 import AppSurfaceBoundary from './components/layout/AppSurfaceBoundary.vue';
@@ -442,6 +443,7 @@ onUnmounted(() =>
 );
 
 const pageComposedFolderViews = new Set([
+  ...INTERNAL_TOOL_ROUTES.map((tool) => tool.route),
   'library',
   'performance',
   'display',

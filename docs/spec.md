@@ -201,7 +201,7 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 無伴奏／自行伴奏的 manual 已有開始／完成，屬既有能力驗收；定時結束另議。[覆核](research/product/player-practice-planning-2026-10-26.md#5-無伴奏演出既有能力覆核)。
 
-正式版尚無 Mic 輸入、監聽或錄音。R02 已有開發版內部工具的單一輸入／本機電平原型，明確啟停、精確裝置與失訊清理沿[研究契約](contracts/microphone-level-research.md)；真 Mic、串音、播放／OBS 成本與畫面延遲仍待驗，未接 Output。電平用 dBFS／相對強度，不是環境聲壓或演唱品質；噪聲門檻、平滑／上限、失訊回基準、可讀性與 reduced motion 見[研究方案](research/product/player-practice-planning-2026-10-26.md#7-mic-電平驅動畫面研究方案)。R03 音準尚未實作，需另驗參考與校準，不宣稱已解監聽延遲；分數競賽／遊戲化回饋目前不投入。
+正式版尚無 Mic 輸入、監聽或錄音。R02 已有開發版內部工具的單一輸入／本機電平原型，明確啟停、精確裝置、失訊清理、基本分析輸入設定、即時電平歷史、操作者逐步量測與雙門檻活動校準沿[研究契約](contracts/microphone-level-research.md)；真 Mic、串音、播放／OBS 成本與畫面延遲仍待驗，未接 Output。電平用 dBFS／相對強度，不是環境聲壓或演唱品質；噪聲門檻、平滑／上限、失訊回基準、可讀性與 reduced motion 見[研究方案](research/product/player-practice-planning-2026-10-26.md#7-mic-電平驅動畫面研究方案)。R03 音準尚未實作，需另驗參考與校準，不宣稱已解監聽延遲；分數競賽／遊戲化回饋目前不投入。
 
 ### 7.4 一般歡唱受眾與可選歌曲資訊
 

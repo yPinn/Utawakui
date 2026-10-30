@@ -117,7 +117,6 @@ onMounted(library.initialize);
     />
 
     <div v-if="!review.dataset.value" class="benchmark-review__empty">
-      <UiChip tone="gated">Benchmark only</UiChip>
       <h3>選擇已完成的 M2 run config</h3>
       <p>畫面會讀取對應 predictions，顯示每首歌的段落、信心與降級原因。</p>
       <UiButton
@@ -297,9 +296,6 @@ onMounted(library.initialize);
   align-content: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-6);
-  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
   text-align: center;
 }
 
@@ -315,9 +311,6 @@ onMounted(library.initialize);
   display: grid;
   grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
 }
 
 .benchmark-review__cases,
@@ -330,11 +323,6 @@ onMounted(library.initialize);
   display: flex;
   flex-direction: column;
   border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface-raised) 48%,
-    var(--ui-color-surface)
-  );
 }
 
 .benchmark-review__run-summary {

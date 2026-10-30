@@ -27,6 +27,13 @@ describe('InternalToolsView', () => {
   });
 
   it('keeps one classified navigation owner outside the active workbench', () => {
+    expect(viewSource).toContain('<AppFolderPage mode="workspace"');
+    expect(viewSource).toMatch(
+      /<template #header>\s*<InternalToolsNavigation/su,
+    );
+    expect(appSource).toContain(
+      '...INTERNAL_TOOL_ROUTES.map((tool) => tool.route)',
+    );
     expect(viewSource).toContain('<InternalToolsNavigation');
     expect(viewSource).toContain('class="internal-tools-view__body"');
     expect(viewSource).toContain('<component :is="activeTool.component"');

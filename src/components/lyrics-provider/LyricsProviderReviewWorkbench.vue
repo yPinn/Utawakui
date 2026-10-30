@@ -56,9 +56,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
         title="Lyrics Provider Corpus"
         title-id="lyrics-review-title"
       >
-        <template #description>
-          逐筆審核歌詞來源候選並核准或退回，完成後可匯出評估用 corpus。
-        </template>
         <template #actions>
           <UiButton
             v-if="review.dataset.value"
@@ -70,7 +67,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
           >
             {{ review.exporting.value ? '匯出中…' : '匯出 corpus' }}
           </UiButton>
-          <UiChip tone="warning">研究評估 · F7</UiChip>
         </template>
       </UiPageHeader>
       <div v-if="review.dataset.value" class="lyrics-review__progress">
@@ -169,9 +165,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-canvas);
   -webkit-user-select: none;
   user-select: none;
 }
@@ -181,9 +174,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
+  padding-block-end: var(--ui-space-3);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  background: var(--ui-color-canvas);
 }
 
 .lyrics-review__progress {

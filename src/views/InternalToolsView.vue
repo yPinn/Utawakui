@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineAsyncComponent } from 'vue';
 import InternalToolsNavigation from '../components/internal-tools/InternalToolsNavigation.vue';
+import AppFolderPage from '../components/layout/AppFolderPage.vue';
 import { useAppView } from '../composables/useAppView.js';
 import {
   INTERNAL_TOOL_CATEGORIES,
@@ -55,17 +56,21 @@ const activeTool = computed(() => {
     aria-label="內部工具"
   >
     <div v-bind="internalToolsOverlayHostAttributes" class="ui-overlay-host" />
-    <InternalToolsNavigation
-      :categories="INTERNAL_TOOL_CATEGORIES"
-      :active-tool-id="activeToolId"
-      @navigate="setActiveView"
-    />
-    <div class="internal-tools-view__body">
-      <component :is="activeTool.component" v-if="activeTool" />
-      <p v-else class="internal-tools-view__missing" role="status">
-        找不到指定的內部工具。
-      </p>
-    </div>
+    <AppFolderPage mode="workspace" body-label="內部工具工作區">
+      <template #header>
+        <InternalToolsNavigation
+          :categories="INTERNAL_TOOL_CATEGORIES"
+          :active-tool-id="activeToolId"
+          @navigate="setActiveView"
+        />
+      </template>
+      <div class="internal-tools-view__body">
+        <component :is="activeTool.component" v-if="activeTool" />
+        <p v-else class="internal-tools-view__missing" role="status">
+          找不到指定的內部工具。
+        </p>
+      </div>
+    </AppFolderPage>
   </section>
 </template>
 
@@ -75,13 +80,11 @@ const activeTool = computed(() => {
   height: 100%;
   min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--ui-space-4);
   color: var(--ui-color-text);
 }
 
 .internal-tools-view__body {
+  height: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;

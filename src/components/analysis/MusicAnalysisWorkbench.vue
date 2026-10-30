@@ -2,12 +2,10 @@
 import { onMounted, onUnmounted, shallowRef, watch } from 'vue';
 import { useMusicAnalysisWorkbench } from '../../composables/useMusicAnalysisWorkbench.js';
 import { useAppView } from '../../composables/useAppView.js';
-import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStack from '../ui/UiStack.vue';
-import UiSurface from '../ui/UiSurface.vue';
 import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
 import MusicAnalysisJobPanel from './MusicAnalysisJobPanel.vue';
 import MusicAnalysisTrackPicker from './MusicAnalysisTrackPicker.vue';
@@ -38,14 +36,7 @@ watch(
 
 <template>
   <UiStack class="analysis-workbench" direction="column" :gap="4">
-    <UiPageHeader title="Music Analysis 作業">
-      <template #description>
-        強制執行單曲分析、依序批次重跑，並檢查歌曲目前的結構結果。
-      </template>
-      <template #actions>
-        <UiChip tone="accent">產品操作 · F5</UiChip>
-      </template>
-    </UiPageHeader>
+    <UiPageHeader title="Music Analysis" />
 
     <UiNotice
       v-if="workbench.libraryState.error"
@@ -53,7 +44,7 @@ watch(
       @action="workbench.retryLibrary"
     />
 
-    <UiSurface class="analysis-workbench__layout" radius="lg">
+    <div class="analysis-workbench__layout">
       <aside class="analysis-workbench__tracks">
         <MusicAnalysisTrackPicker
           :tracks="workbench.tracks.value"
@@ -129,7 +120,7 @@ watch(
           </template>
         </UiStack>
       </UiScrollRegion>
-    </UiSurface>
+    </div>
   </UiStack>
 </template>
 
@@ -155,18 +146,13 @@ watch(
 }
 
 .analysis-workbench__tracks {
-  padding: var(--ui-space-4);
+  padding-inline-end: var(--ui-space-4);
   overflow: hidden;
   border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface-raised) 48%,
-    var(--ui-color-surface)
-  );
 }
 
 .analysis-workbench__detail :deep(.analysis-workbench__detail-viewport) {
-  padding: var(--ui-space-4);
+  padding-inline-start: var(--ui-space-4);
   overscroll-behavior: contain;
 }
 

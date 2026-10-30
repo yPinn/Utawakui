@@ -6,6 +6,11 @@ function source(relativePath) {
 }
 
 const standardControlSurfaces = [
+  '../microphone/MicrophoneResearchWorkbench.vue',
+  '../microphone/MicrophoneInputSettings.vue',
+  '../microphone/MicrophoneMeasurementPanel.vue',
+  '../microphone/MicrophoneThresholdCalibration.vue',
+  '../microphone/MicrophoneActivitySettings.vue',
   '../analysis/MusicAnalysisWorkbench.vue',
   '../analysis/MusicAnalysisTrackPicker.vue',
   '../analysis/MusicAnalysisJobPanel.vue',

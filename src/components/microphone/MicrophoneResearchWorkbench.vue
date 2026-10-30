@@ -8,9 +8,32 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
+import { useMicrophoneMeasurement } from '../../composables/useMicrophoneMeasurement.js';
+import MicrophoneLevelHistory from './MicrophoneLevelHistory.vue';
+import MicrophoneMeasurementPanel from './MicrophoneMeasurementPanel.vue';
+import MicrophoneInputSettings from './MicrophoneInputSettings.vue';
+import MicrophoneActivitySettings from './MicrophoneActivitySettings.vue';
 
-const { state, refreshDevices, selectDevice, start, stop, configure } =
-  useMicrophoneResearch();
+const {
+  state,
+  refreshDevices,
+  selectDevice,
+  start,
+  stop,
+  configure,
+  configureInput,
+  configureActivity,
+  applyActivityCalibration,
+} = useMicrophoneResearch();
+const {
+  state: measurement,
+  busy: measuring,
+  begin: beginMeasurement,
+  cancel: cancelMeasurement,
+  clear: clearMeasurements,
+  applyCalibration: applyMeasuredCalibration,
+} = useMicrophoneMeasurement(state);
 const active = computed(() =>
   ['requesting', 'running'].includes(state.value.status),
 );
@@ -38,10 +61,8 @@ const intensityText = computed(
 );
 const inputSettingsText = computed(() => {
   const settings = state.value.settings;
-  if (!settings) return '開始後顯示裝置實際回報的輸入格式。';
-  const value = (enabled) =>
-    enabled == null ? '未回報' : enabled ? '開' : '關';
-  return `${settings.sampleRate} Hz · ${settings.channelCount ?? '未知'} 聲道 · 自動增益 ${value(settings.autoGainControl)} · 降噪 ${value(settings.noiseSuppression)} · 回音消除 ${value(settings.echoCancellation)}`;
+  if (!settings) return '';
+  return `${settings.sampleRate} Hz · ${settings.channelCount ?? '未知'} 聲道 · 分析增益 ${settings.gainDb} dB · 低切 ${settings.highPassHz ? `${settings.highPassHz} Hz` : '關閉'}`;
 });
 </script>
 
@@ -50,125 +71,186 @@ const inputSettingsText = computed(() => {
     class="microphone-research"
     content-class="microphone-research__content"
   >
-    <UiPageHeader title="Mic 電平研究">
-      <template #description
-        >選擇輸入並開始測試，觀察聲音強度與畫面反應。離開此工具即停止。</template
-      >
-    </UiPageHeader>
-    <p class="microphone-research__scope">
-      本機分析原型；不回放、不錄音、不傳送至 Output。電平不代表音準或演唱品質。
-    </p>
-    <div class="microphone-research__input">
-      <UiSelect
-        id="mic-research-device"
-        label="音訊輸入"
-        :model-value="state.selectedDeviceId"
-        :options="options"
-        placeholder="先讀取裝置，再選擇輸入"
-        :disabled="active || state.refreshing"
-        @update:model-value="selectDevice"
-      />
-      <div class="microphone-research__actions">
-        <UiButton
+    <div class="microphone-research__setup">
+      <UiPageHeader title="Mic 輸入" />
+      <div class="microphone-research__input">
+        <UiSelect
+          id="mic-research-device"
+          label="音訊輸入"
+          :model-value="state.selectedDeviceId"
+          :options="options"
+          placeholder="先讀取裝置，再選擇輸入"
           :disabled="active || state.refreshing"
-          @click="refreshDevices"
-          >{{ state.refreshing ? '讀取中…' : '讀取裝置' }}</UiButton
+          @update:model-value="selectDevice"
+        />
+        <div class="microphone-research__actions">
+          <UiButton
+            :disabled="active || state.refreshing"
+            @click="refreshDevices"
+            >{{ state.refreshing ? '讀取中…' : '讀取裝置' }}</UiButton
+          >
+          <UiButton v-if="active" variant="accent" @click="stop"
+            >停止輸入</UiButton
+          >
+          <UiButton
+            v-else
+            variant="accent"
+            :disabled="!state.selectedDeviceId || state.refreshing"
+            @click="start"
+            >開始測試</UiButton
+          >
+        </div>
+      </div>
+      <div class="microphone-research__status" role="status">
+        <UiChip :tone="state.status === 'running' ? 'success' : 'muted'">{{
+          statusText
+        }}</UiChip>
+        <UiChip v-if="state.rawClipped" tone="warning"
+          >裝置回傳接近削波，請降低麥克風或 VM 增益</UiChip
         >
-        <UiButton v-if="active" variant="accent" @click="stop"
-          >停止輸入</UiButton
-        >
-        <UiButton
-          v-else
-          variant="accent"
-          :disabled="!state.selectedDeviceId || state.refreshing"
-          @click="start"
-          >開始測試</UiButton
+        <UiChip v-else-if="state.clipped" tone="warning"
+          >分析電平接近削波，請降低分析增益</UiChip
         >
       </div>
+      <UiHint v-if="state.error" tone="warning" role="alert">{{
+        state.error
+      }}</UiHint>
+      <MicrophoneInputSettings
+        :options="state.inputOptions"
+        :support="state.processingSupport"
+        :settings="state.settings"
+        :raw-dbfs="state.rawDbfs"
+        :active="active"
+        :requesting="state.status === 'requesting'"
+        :measuring="measuring"
+        @configure="configureInput"
+      />
+      <UiHint>不錄音、不監聽；離開即停止。</UiHint>
     </div>
-    <div class="microphone-research__status" role="status">
-      <UiChip :tone="state.status === 'running' ? 'success' : 'muted'">{{
-        statusText
-      }}</UiChip>
-      <UiChip v-if="state.clipped" tone="warning"
-        >接近削波，請降低輸入增益</UiChip
-      >
-    </div>
-    <UiHint v-if="state.error" tone="warning" role="alert">{{
-      state.error
-    }}</UiHint>
-    <div class="microphone-research__measurement">
-      <label for="mic-research-dbfs"
-        >輸入電平 <output>{{ dbfsText }}</output></label
-      >
-      <meter
-        id="mic-research-dbfs"
-        min="-100"
-        max="0"
-        :value="state.dbfs"
-        :aria-valuetext="dbfsText"
+    <div class="microphone-research__results">
+      <MicrophoneActivitySettings
+        :options="state.activityOptions"
+        :activity="state.activity"
+        :calibrated="state.activityCalibrated"
+        :busy="measuring"
+        :requesting="state.status === 'requesting'"
+        @configure="configureActivity"
       />
-      <label for="mic-research-intensity"
-        >畫面反應強度 <output>{{ intensityText }}</output></label
-      >
-      <meter
-        id="mic-research-intensity"
-        min="0"
-        max="1"
-        :value="state.intensity"
-        :aria-valuetext="intensityText"
+
+      <div class="microphone-research__measurement">
+        <label for="mic-research-dbfs"
+          >分析後電平 <output>{{ dbfsText }}</output></label
+        >
+        <meter
+          id="mic-research-dbfs"
+          min="-100"
+          max="0"
+          :value="state.dbfs"
+          :aria-valuetext="dbfsText"
+        />
+        <label for="mic-research-intensity"
+          >相對電平 <output>{{ intensityText }}</output></label
+        >
+        <meter
+          id="mic-research-intensity"
+          min="0"
+          max="1"
+          :value="state.intensity"
+          :aria-valuetext="intensityText"
+        />
+        <p v-if="inputSettingsText" class="microphone-research__scope">
+          {{ inputSettingsText }}
+        </p>
+      </div>
+      <MicrophoneLevelHistory
+        :history="measurement.history"
+        :activity-options="state.activityOptions"
+        :activity-enabled="
+          state.activityOptions.mode === 'manual' || state.activityCalibrated
+        "
       />
-      <p class="microphone-research__scope">{{ inputSettingsText }}</p>
-    </div>
-    <div class="microphone-research__controls">
-      <UiRange
-        id="mic-research-floor"
-        label="噪聲門檻"
-        :min="-90"
-        :max="-10"
-        :step="1"
-        :model-value="state.controls.noiseFloor"
-        :value-text="`${state.controls.noiseFloor} dBFS`"
-        hint="低於門檻時，畫面反應回到零；不修改輸入音訊。"
-        @update:model-value="configure({ noiseFloor: $event })"
-      />
-      <UiRange
-        id="mic-research-sensitivity"
-        label="反應靈敏度"
-        :min="0.25"
-        :max="4"
-        :step="0.25"
-        :model-value="state.controls.sensitivity"
-        :value-text="`${state.controls.sensitivity}×`"
-        @update:model-value="configure({ sensitivity: $event })"
-      />
-      <UiRange
-        id="mic-research-smoothing"
-        label="反應平滑"
-        :min="0"
-        :max="1000"
-        :step="10"
-        :model-value="state.controls.smoothingMs"
-        :value-text="`${state.controls.smoothingMs} ms`"
-        hint="較大的值反應較緩。這些研究設定只保留到離開工具。"
-        @update:model-value="configure({ smoothingMs: $event })"
+      <MicrophoneMeasurementPanel
+        :state="measurement"
+        :busy="measuring"
+        :running="state.status === 'running'"
+        :activity-options="state.activityOptions"
+        :calibrated="state.activityCalibrated"
+        @begin="beginMeasurement"
+        @cancel="cancelMeasurement"
+        @clear="clearMeasurements"
+        @apply-calibration="applyMeasuredCalibration(applyActivityCalibration)"
       />
     </div>
+    <UiDisclosure
+      class="microphone-research__display-options"
+      label="相對電平投影設定"
+    >
+      <div class="microphone-research__controls">
+        <UiRange
+          id="mic-research-floor"
+          :disabled="measuring"
+          label="相對電平門檻"
+          :min="-90"
+          :max="-10"
+          :step="1"
+          :model-value="state.controls.noiseFloor"
+          :value-text="`${state.controls.noiseFloor} dBFS`"
+          hint="只調整相對電平比例，與活動雙門檻分開。"
+          @update:model-value="configure({ noiseFloor: $event })"
+        />
+        <UiRange
+          id="mic-research-sensitivity"
+          :disabled="measuring"
+          label="反應靈敏度"
+          :min="0.25"
+          :max="4"
+          :step="0.25"
+          :model-value="state.controls.sensitivity"
+          :value-text="`${state.controls.sensitivity}×`"
+          @update:model-value="configure({ sensitivity: $event })"
+        />
+        <UiRange
+          id="mic-research-smoothing"
+          :disabled="measuring"
+          label="反應平滑"
+          :min="0"
+          :max="1000"
+          :step="10"
+          :model-value="state.controls.smoothingMs"
+          :value-text="`${state.controls.smoothingMs} ms`"
+          hint="數值越大，反應越緩。"
+          @update:model-value="configure({ smoothingMs: $event })"
+        />
+      </div>
+    </UiDisclosure>
   </UiScrollLayout>
 </template>
 
 <style scoped>
 .microphone-research {
   block-size: 100%;
-  background: var(--ui-color-surface);
   color: var(--ui-color-text);
 }
 .microphone-research :deep(.microphone-research__content) {
   display: grid;
   gap: var(--ui-space-4);
   align-content: start;
-  max-inline-size: 52rem;
-  padding: var(--ui-space-2);
+  grid-template-columns: minmax(16rem, 0.85fr) minmax(0, 1.5fr);
+  align-items: start;
+  padding-inline-end: var(--ui-space-2);
+}
+.microphone-research__setup,
+.microphone-research__results {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--ui-space-3);
+}
+.microphone-research__results {
+  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
+  padding-inline-start: var(--ui-space-4);
+}
+.microphone-research__display-options {
+  grid-column: 1 / -1;
 }
 .microphone-research__scope {
   margin: 0;
@@ -202,8 +284,27 @@ const inputSettingsText = computed(() => {
   gap: var(--ui-space-3);
 }
 .microphone-research__measurement {
-  border-block: var(--ui-border-width) solid var(--ui-color-border);
-  padding-block: var(--ui-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-block-end: var(--ui-space-3);
+}
+.microphone-research__measurement > :nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.microphone-research__measurement > :nth-child(2) {
+  grid-column: 1;
+  grid-row: 2;
+}
+.microphone-research__measurement > :nth-child(3) {
+  grid-column: 2;
+  grid-row: 1;
+}
+.microphone-research__measurement > :nth-child(4) {
+  grid-column: 2;
+  grid-row: 2;
+}
+.microphone-research__measurement > p {
+  grid-column: 1 / -1;
 }
 .microphone-research__measurement label {
   display: flex;
@@ -224,5 +325,14 @@ const inputSettingsText = computed(() => {
 }
 .microphone-research meter::-webkit-meter-optimum-value {
   background: var(--ui-color-accent);
+}
+@container app-folder-layout (max-width: 52rem) {
+  .microphone-research :deep(.microphone-research__content) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .microphone-research__results {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
 }
 </style>
