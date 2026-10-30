@@ -158,6 +158,29 @@ architecture map. Two rules an agent must not violate while editing code:
 - The control panel optimizes operator clarity and dense live use. Preserve visible
   focus, keyboard access, reduced-motion behavior and WCAG AA contrast.
 
+## UI Text And Locale
+
+The UI language is resolved once per launch and changes only on relaunch; see the
+locale entry in the [architecture map](docs/architecture.md#視窗). Existing literals
+migrate feature by feature, so new or edited text follows these rules now:
+
+- User-visible control-panel, prompter and shell text lives in
+  `shared/locales/zh-TW/<namespace>.json`, one namespace per feature, and is read
+  with `t()` from `src/utils/i18n.js` (renderer) or `electron/lib/i18n.js` (main).
+  zh-TW is the source catalog; `en-US` keys may lag and fall back to zh-TW.
+- Write whole sentences with named parameters. Do not build a sentence by
+  concatenating fragments, and never compare, branch on or key by display text;
+  use codes and derive the label.
+- `Ui*` primitives keep only neutral `ui.*` defaults, and every text stays
+  overridable by props. Product wording belongs to feature components and pages.
+- Main public errors resolve `errors.<CODE>` keys; the IPC error shape is
+  unchanged.
+- Not catalog text: data rules (lyrics role markers, regex, matching), user or
+  source content, OBS Output and overlay text (a separate Output language), demo
+  components and test fixtures.
+- Feature-gate notices change only with a `noticeVersion` bump and owner review of
+  every locale.
+
 ## Markdown Conventions
 
 Applies to documents whose primary audience is an end user reading for context or

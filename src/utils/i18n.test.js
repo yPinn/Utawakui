@@ -1,15 +1,9 @@
-import fs from 'node:fs';
 import { describe, it, expect } from 'vitest';
+import { readLocaleCatalogs } from '../../electron/lib/localeCatalogs.js';
 import { i18n, t } from './i18n.js';
 
-// Raw JSON: the Vite plugin turns catalog imports into compiled message ASTs.
-const readCatalog = (locale) =>
-  JSON.parse(
-    fs.readFileSync(
-      new URL(`../../shared/locales/${locale}.json`, import.meta.url),
-      'utf8',
-    ),
-  );
+// Raw JSON from disk: Vite-imported catalogs are compiled message ASTs.
+const catalogs = readLocaleCatalogs();
 
 function messageKeys(messages, prefix = '') {
   return Object.entries(messages).flatMap(([key, value]) =>
@@ -30,9 +24,9 @@ describe('i18n', () => {
   });
 
   it('keeps every English key backed by the zh-TW source catalog', () => {
-    const source = new Set(messageKeys(readCatalog('zh-TW')));
+    const source = new Set(messageKeys(catalogs['zh-TW']));
     expect(
-      messageKeys(readCatalog('en-US')).filter((key) => !source.has(key)),
+      messageKeys(catalogs['en-US']).filter((key) => !source.has(key)),
     ).toEqual([]);
   });
 });

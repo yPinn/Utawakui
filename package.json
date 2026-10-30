@@ -29,6 +29,7 @@
     "test:coverage": "vitest run --coverage && node scripts/coverageRatchet.js",
     "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",
     "prepare": "husky",
+    "i18n:baseline": "node scripts/uiLiteralRatchet.js --write",
     "license:inventory": "node scripts/license-inventory.mjs",
     "license:write": "node scripts/third-party-notices.mjs --write",
     "license:verify": "node scripts/third-party-notices.mjs",

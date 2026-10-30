@@ -1,11 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect } from 'vitest';
+import { readLocaleCatalogs } from '../../electron/lib/localeCatalogs.js';
 
 const root = path.resolve(import.meta.dirname, '../..');
-const catalog = JSON.parse(
-  fs.readFileSync(path.join(root, 'shared/locales/zh-TW.json'), 'utf8'),
-);
+const catalog = readLocaleCatalogs()['zh-TW'];
 
 function messageKeys(messages, prefix = '') {
   return Object.entries(messages).flatMap(([key, value]) =>

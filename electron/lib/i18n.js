@@ -11,8 +11,7 @@ const {
   translate,
 } = require('@intlify/core-base');
 const { fallbackLocale } = require('../../shared/uiLocaleValues.json');
-const zhTW = require('../../shared/locales/zh-TW.json');
-const enUS = require('../../shared/locales/en-US.json');
+const { readLocaleCatalogs } = require('./localeCatalogs');
 const { getUiLocale } = require('./uiLocale');
 
 // Same catalogs and message syntax as the renderer's vue-i18n.
@@ -27,7 +26,7 @@ function t(key, named = {}) {
   context ??= createCoreContext({
     locale: getUiLocale(),
     fallbackLocale,
-    messages: { 'zh-TW': zhTW, 'en-US': enUS },
+    messages: readLocaleCatalogs(),
   });
   return translate(context, key, named);
 }
