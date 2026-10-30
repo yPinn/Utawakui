@@ -9,6 +9,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiHint from '../ui/UiHint.vue';
+import { UI_LOCALE } from '../../utils/uiLocale.js';
 
 const props = defineProps({
   trackId: { type: String, required: true },
@@ -144,7 +145,9 @@ async function restore(receiptId) {
           >
           <ul v-if="state.options.history.length" class="library-tags__history">
             <li v-for="item in state.options.history" :key="item.receiptId">
-              <span>{{ new Date(item.createdAt).toLocaleString() }}</span
+              <span>{{
+                new Date(item.createdAt).toLocaleString(UI_LOCALE)
+              }}</span
               ><UiButton
                 :disabled="disabled || !item.canRestore"
                 @click="restore(item.receiptId)"

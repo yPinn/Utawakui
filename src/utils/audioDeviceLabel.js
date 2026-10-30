@@ -1,3 +1,5 @@
+import { UI_LOCALE } from './uiLocale.js';
+
 // Pure string classification for MediaDeviceInfo labels; no DOM/Electron access,
 // so it is plain-Node testable (sole caller: CaptureDeviceModal.vue).
 //
@@ -63,18 +65,11 @@ export function deviceRoleBadgeLabel(deviceId) {
 // entry mirrors the system default would be a regression, not a tidy-up.
 const ROLE_DEVICE_PRIORITY = { default: 0, communications: 1 };
 
-// Locale pinned explicitly, not left to the runtime default: this codebase
-// has no i18n layer (every string in the app is hardcoded Traditional
-// Chinese), and localeCompare's Latin-vs-CJK ordering is locale-sensitive —
-// leaving it unset would sort labels differently in a test run than in the
-// packaged app depending on whichever locale each process happens to carry.
-const DEVICE_LABEL_LOCALE = 'zh-Hant';
-
 export function compareAudioDevices(a, b) {
   const aPriority = ROLE_DEVICE_PRIORITY[a.deviceId] ?? 2;
   const bPriority = ROLE_DEVICE_PRIORITY[b.deviceId] ?? 2;
   if (aPriority !== bPriority) return aPriority - bPriority;
-  return (a.label || '').localeCompare(b.label || '', DEVICE_LABEL_LOCALE);
+  return (a.label || '').localeCompare(b.label || '', UI_LOCALE);
 }
 
 // enumerateDevices() lists the Default/Communications role pseudo-devices

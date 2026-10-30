@@ -1,4 +1,5 @@
 import { deriveAlbumSummary } from './albumSummary.js';
+import { UI_LOCALE } from './uiLocale.js';
 
 // Shared by PlaylistSidebar.vue (nav rows) and LyricsAuthoringWorkspace.vue (the playlist
 // <select>) so both present playlists in the same order; the sidebar defines it:
@@ -27,7 +28,7 @@ export function orderPlaylistsForDisplay(playlists, tracksById) {
       };
     });
   withSummary.sort((a, b) => {
-    const byArtist = a.artist.localeCompare(b.artist, undefined, {
+    const byArtist = a.artist.localeCompare(b.artist, UI_LOCALE, {
       sensitivity: 'base',
     });
     if (byArtist !== 0) return byArtist;
@@ -40,7 +41,7 @@ export function orderPlaylistsForDisplay(playlists, tracksById) {
       return b.releaseYear - a.releaseYear;
     }
 
-    return a.playlist.name.localeCompare(b.playlist.name, undefined, {
+    return a.playlist.name.localeCompare(b.playlist.name, UI_LOCALE, {
       sensitivity: 'base',
     });
   });

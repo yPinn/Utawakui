@@ -154,6 +154,7 @@ describe('windowState security boundary', () => {
         webSecurity: true,
         allowRunningInsecureContent: false,
         webviewTag: false,
+        spellcheck: false,
         devTools: false,
         additionalArguments: [
           '--ui-theme=light',

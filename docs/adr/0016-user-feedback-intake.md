@@ -90,7 +90,8 @@ backend of its own; this is the app's first user-initiated network upload.
   drive-by scanners. The actual abuse defense is the relay's mandatory rate
   limiter; changing the marker contract requires compatible app and relay
   versions rather than secret rotation.
-- `environment.locale` (from `app.getLocale()`) is captured on every report
+- `environment.locale` (`app.getSystemLocale()`;
+  `app.getLocale()` is pinned to the UI locale) is captured on every report
   even though the app has no i18n today, because language is already part of
   a report's usage context and will matter once i18n exists — see
   `docs/spec.md` §3. Adding it now cost one field, not a schema migration;

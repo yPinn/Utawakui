@@ -9,6 +9,7 @@ import {
   findTrack,
   updateTrackMetadata,
   deleteTrack,
+  compareTracks,
 } from './tracks.js';
 import { loadIndex, saveIndexEntry } from './metadataIndex.js';
 import {
@@ -1228,5 +1229,30 @@ describe('deleteTrack', () => {
     expect(
       fs.existsSync(path.join(dir, '.duplicates', 'abc', 'abc.webm')),
     ).toBe(true);
+  });
+});
+
+describe('compareTracks — UI locale', () => {
+  it('orders mixed-script artists by the UI locale, not the OS locale', () => {
+    const artists = [
+      'YOASOBI',
+      '陳奕迅',
+      'あいみょん',
+      '王菲',
+      'Aimer',
+      '周杰倫',
+    ];
+    const sorted = artists
+      .map((artist, index) => ({ id: `t${index}`, artist, title: 'x' }))
+      .sort(compareTracks)
+      .map((track) => track.artist);
+    expect(sorted).toEqual([
+      '王菲',
+      '周杰倫',
+      '陳奕迅',
+      'Aimer',
+      'YOASOBI',
+      'あいみょん',
+    ]);
   });
 });

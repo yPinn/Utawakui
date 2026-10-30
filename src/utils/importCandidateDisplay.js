@@ -1,4 +1,5 @@
 import { formatGroupedInteger } from './format.js';
+import { UI_LOCALE } from './uiLocale.js';
 
 export function candidateId(candidate) {
   return candidate?.playbackVideoId || candidate?.id || '';
@@ -19,7 +20,7 @@ export function playbackKindLabel(kind) {
   return labels[kind] || '來源';
 }
 
-const COMPACT_FORMATTER = new Intl.NumberFormat('zh-TW', {
+const COMPACT_FORMATTER = new Intl.NumberFormat(UI_LOCALE, {
   maximumFractionDigits: 1,
 });
 

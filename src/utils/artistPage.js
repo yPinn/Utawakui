@@ -1,5 +1,6 @@
 import { releaseCard } from './releasePresentation.js';
 import { albumArtistId } from './artistCollections.js';
+import { UI_LOCALE } from './uiLocale.js';
 
 // Artist ids come from main's derived index; queue sources and history share
 // the sourceId namespace with playlist UUIDs, which never use this prefix.
@@ -10,7 +11,7 @@ export function artistTrackPreview(orderedEntries) {
   return orderedEntries.slice(0, 10);
 }
 
-const nameCollator = new Intl.Collator(undefined, {
+const nameCollator = new Intl.Collator(UI_LOCALE, {
   sensitivity: 'base',
   numeric: true,
 });

@@ -13,6 +13,7 @@ import {
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
+import { UI_LOCALE } from '../utils/uiLocale.js';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
@@ -425,7 +426,7 @@ export function orderOutputTemplates(templates) {
     const orderDelta = normalizeOrder(a.order) - normalizeOrder(b.order);
     if (orderDelta !== 0) return orderDelta;
 
-    return a.name.localeCompare(b.name);
+    return a.name.localeCompare(b.name, UI_LOCALE);
   });
 }
 

@@ -6,6 +6,7 @@ import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspa
 import { useOutputAppearanceAutosave } from '../../composables/output/useOutputAppearanceAutosave.js';
 import { MonitorUp, Settings } from '../../icons/index.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
+import { UI_LOCALE } from '../../utils/uiLocale.js';
 import ObsOutputRuntimeStatus from './ObsOutputRuntimeStatus.vue';
 import ObsTemplateGallery from './ObsTemplateGallery.vue';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
@@ -25,7 +26,7 @@ const props = defineProps({
 function orderPresets(presets) {
   return [...presets].sort((a, b) => {
     const orderDelta = (a.order ?? 100) - (b.order ?? 100);
-    return orderDelta || a.name.localeCompare(b.name);
+    return orderDelta || a.name.localeCompare(b.name, UI_LOCALE);
   });
 }
 

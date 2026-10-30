@@ -1,7 +1,9 @@
+import { UI_LOCALE } from './uiLocale.js';
+
 export function performanceArchiveDate(value, { includeTime = true } = {}) {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString('zh-TW', {
+  return date.toLocaleString(UI_LOCALE, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

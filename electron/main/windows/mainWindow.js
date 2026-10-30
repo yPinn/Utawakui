@@ -257,6 +257,8 @@ function createMainWindow(
       webSecurity: true,
       allowRunningInsecureContent: false,
       webviewTag: false,
+      // OS-language spellcheck flags artist names and lyrics; there is no suggestion menu.
+      spellcheck: false,
       devTools: isDev,
       // Lets preload read first-frame UI and audio preferences synchronously,
       // so controls never paint defaults and then jump after an IPC round

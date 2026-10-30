@@ -182,7 +182,7 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 ### 7.2 系統與環境
 
 1. 直播期間是否抑制 App 或系統通知？
-2. 啟動完整 i18n，或先依 OS locale 處理數字／日期？
+2. 何時啟動 i18n 與應用內語言切換（即時套用或重啟）？目前 UI 語系固定 zh-TW，格式化不依 OS，見[架構](architecture.md#視窗)。
 3. 偵測系統字型供 Lyrics／Overlay，並檢查 CJK 缺字？
 4. 控制台主題是否跟隨 Windows 深淺色？
 5. Per-monitor DPI 與提詞器／Workbench 跨螢幕重算？

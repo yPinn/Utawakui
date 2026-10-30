@@ -1,5 +1,6 @@
 import { releaseCard } from './releasePresentation.js';
 import { albumArtistId, albumsForArtist } from './artistCollections.js';
+import { UI_LOCALE } from './uiLocale.js';
 
 function validReleaseYear(value) {
   return Number.isInteger(value) && value > 0 ? value : undefined;
@@ -28,7 +29,7 @@ export function deriveAlbumSupportingContent({
     .sort(
       (a, b) =>
         (b.releaseYear ?? 0) - (a.releaseYear ?? 0) ||
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+        a.name.localeCompare(b.name, UI_LOCALE, { sensitivity: 'base' }),
     );
 
   const tracksById = new Map(

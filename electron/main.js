@@ -26,6 +26,7 @@ const {
 } = require('electron');
 
 const { productName: APP_NAME } = require('../shared/appIdentity.json');
+const { uiLocale: UI_LOCALE } = require('../shared/uiLocaleValues.json');
 // Apply Chromium sandboxing before ready and before any BrowserWindow can be
 // created. The helper process repeats the same invariant in its own bootstrap.
 app.enableSandbox();
@@ -34,6 +35,8 @@ app.enableSandbox();
 // default app name instead of ours.
 app.setName(APP_NAME);
 app.setAppLogsPath();
+// UI copy is fixed zh-TW; pin Chromium's own strings and navigator.language to it.
+app.commandLine.appendSwitch('lang', UI_LOCALE);
 
 const {
   applyPackagedRuntimeRestrictions,
@@ -292,6 +295,10 @@ const runtimeDiagnosticsLogger = createRuntimeDiagnosticsLogger({
 const feedbackClient = createFeedbackClient({
   baseUrl: resolveFeedbackEndpoint(),
 });
+// app.getLocale() is pinned to the UI locale; reports keep the OS language.
+function systemLocale() {
+  return app.getSystemLocale();
+}
 // Subscribed before lifecycle monitoring so an early crash is still seen.
 const autoReportStore = createAutoReportStateStore(app.getPath('userData'));
 const autoReportMonitor = createAutoReportMonitor({
@@ -308,7 +315,7 @@ const autoReportMonitor = createAutoReportMonitor({
     appVersion: app.getVersion(),
     electronVersion: process.versions.electron,
     platform: process.platform,
-    locale: app.isReady() ? app.getLocale() : '',
+    locale: app.isReady() ? systemLocale() : '',
   }),
   idGenerator: () => crypto.randomUUID(),
 });
@@ -1221,7 +1228,7 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       appVersion: app.getVersion(),
       electronVersion: process.versions.electron,
-      locale: app.getLocale(),
+      locale: systemLocale(),
     });
     registerAutoReportHandlers({ ipcMain, monitor: autoReportMonitor });
     autoReportMonitor.resumePending();

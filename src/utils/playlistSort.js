@@ -1,3 +1,5 @@
+import { UI_LOCALE } from './uiLocale.js';
+
 export const PLAYLIST_SORT_KEYS = {
   title: 'title',
   album: 'album',
@@ -18,7 +20,7 @@ const OPTIONAL_VALUE_SORT_KEYS = new Set([
 ]);
 
 export function compareText(a, b) {
-  return String(a ?? '').localeCompare(String(b ?? ''), undefined, {
+  return String(a ?? '').localeCompare(String(b ?? ''), UI_LOCALE, {
     sensitivity: 'base',
   });
 }

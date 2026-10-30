@@ -1,3 +1,5 @@
+import { UI_LOCALE } from './uiLocale.js';
+
 function isLocalTrack(track) {
   return track?.sourceType === 'local-file';
 }
@@ -11,7 +13,7 @@ function titleKey(track) {
 }
 
 function compareText(a, b) {
-  return textKey(a).localeCompare(textKey(b), undefined, {
+  return textKey(a).localeCompare(textKey(b), UI_LOCALE, {
     sensitivity: 'base',
     numeric: true,
   });

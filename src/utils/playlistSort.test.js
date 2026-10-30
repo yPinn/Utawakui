@@ -267,3 +267,24 @@ describe('nextPlaylistSort', () => {
     ).toEqual({ key: 'duration', direction: 'asc' });
   });
 });
+
+describe('compareText — UI locale', () => {
+  it('orders mixed-script titles by the UI locale, not the OS locale', () => {
+    const titles = [
+      '夜に駆ける',
+      'Lemon',
+      '晴天',
+      'アイドル',
+      '小幸運',
+      'butter',
+    ];
+    expect([...titles].sort(compareText)).toEqual([
+      '小幸運',
+      '夜に駆ける',
+      '晴天',
+      'butter',
+      'Lemon',
+      'アイドル',
+    ]);
+  });
+});

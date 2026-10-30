@@ -1,4 +1,6 @@
-const GROUPED_INTEGER_FORMATTER = new Intl.NumberFormat('zh-TW', {
+import { UI_LOCALE } from './uiLocale.js';
+
+const GROUPED_INTEGER_FORMATTER = new Intl.NumberFormat(UI_LOCALE, {
   useGrouping: true,
   maximumFractionDigits: 0,
 });
