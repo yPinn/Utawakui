@@ -16,6 +16,7 @@
 - [播放紀錄與啟動恢復](playback-history-and-resume.md)
 - [播放器音訊設定套用](player-audio-controls.md)
 - [Mic 輸入與電平研究（開發原型）](microphone-level-research.md)
+- [新分離結果的受控輸出格式](separation-output-format.md)
 - [區段練習媒體邊界與歌詞 Loop 工具](player-ab-practice.md)
 - [歌詞對時確認的來源與保存邊界](lyrics-timing-review.md)
 - [本地播放安排與場次進度](performance-session-preparation.md)

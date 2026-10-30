@@ -58,7 +58,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 | 演出安排                  | 本地流程              | 目前／待唱／紀錄、manual 手動項目、連續播放、完成／略過／中止、封存／恢復及另存歌單；confirmed start 已接 Main 場次時間軸。                              | 實際 OBS 連線／去重、BGM 交接及最終操作／聽感待驗。[演出安排](contracts/performance-session-preparation.md)。                                                                                                                                                                                                                                                             |
 | 歌詞與提詞器              | 主路徑                | T0／T1／T2、多來源、保真編輯、可撤回的 Output 文字處理、聲部標註、讀音與桌面提詞器；句級對時（數值／原曲波形拖曳、草稿復原、手動保存）與逐來源人工確認。 | 人工視覺／時間品質待驗；手機 transport 未接入。[時間](contracts/lyrics-timing-contract.md)、[確認](contracts/lyrics-timing-review.md)、[波形](contracts/lyrics-waveform.md)、[文字](contracts/lyrics-text-processing.md)、[來源](contracts/lyrics-sources.md)、[讀音](contracts/lyrics-reading-quality-contract.md)、[提詞器](contracts/performer-prompter-contract.md)。 |
 | 聲學歌詞估計              | 實驗性 T1+            | 手動準備環境後，CPU 逐句分流中／日／英；來源版本隔離、相容舊分析及有界細時間呈現／回退。                                                                 | 正式模型 gate／預設下載與人工時間驗收未完成；句內混語與 GPU 擴充暫緩。[聲學估計](contracts/lyrics-acoustic-estimate-contract.md)。                                                                                                                                                                                                                                        |
-| 音訊分離                  | 基礎能力              | `quick`／`general`、DirectML→CPU 回退、guide vocal 與序列處理佇列。                                                                                      | 跨重啟／平行處理／ETA、Refined 與 pre-render 未完成。[ADR 0009](adr/0009-tiered-audio-processing-runtime.md)。                                                                                                                                                                                                                                                            |
+| 音訊分離                  | 基礎能力              | `quick`／`general`、DirectML→CPU 回退、guide vocal 與序列處理佇列；新結果受控 FLAC 5／WAV 回退工廠，含交易遺留清理與真模型隔離驗證。                     | 正式 FLAC 關閉，無 UI 入口或舊音訊遷移；隔離驗證不代表裝置品質通過。[輸出格式](contracts/separation-output-format.md)。跨重啟／平行處理／ETA、Refined 與 pre-render 未完成。[ADR 0009](adr/0009-tiered-audio-processing-runtime.md)。                                                                                                                                     |
 | 音樂分析                  | 可執行、待品質驗收    | BPM／節拍分析與有界 sidecar；就緒時可在匯入後背景執行。                                                                                                  | 尚未列為正式公開能力，準確度、離線、容量與 UI 門檻見[分析契約](contracts/music-analysis.md)。                                                                                                                                                                                                                                                                             |
 | Provider assist           | 核心路徑              | App-managed yt-dlp、YT Music 優先搜尋、recording-first 匯入／backfill、批次下載與封面候選。                                                              | 非官方 API；不含 Spotify／Apple Music 轉換與帳號歌單。[ADR 0015](adr/0015-recording-first-provider-discovery.md)。                                                                                                                                                                                                                                                        |
 | OBS 輸出                  | MVP                   | 三個固定 slot、九個模板、Gallery／Workbench、字體／色票與只讀擷取視窗。                                                                                  | Default pack W3 短測已確認；alpha／跨環境／耐久待驗，Instance／Pack 未交付。[顯示契約](contracts/output-appearance.md)、[驗收](operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。                                                                                                                                                                        |
@@ -149,13 +149,13 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 ### 6.2 已接受方向：依前置條件推進
 
-| 方向             | 後續範圍                                                          | 前置與界線                                                                                                       |
-| ---------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| 本地演出完整性   | 既有場次／OBS 時間軸的實機驗收；VOD／clip 狀態與輸出 review。     | 本機播放與安排不依賴 OBS；review 政策另定。                                                                      |
-| 手機遙控／提詞器 | 延續既有手機操作與讀詞規劃，共用 Performer presentation。         | 桌面提詞器已存在；手機 pairing／權限／撤銷與 transport 未接入，不暴露現有唯讀 Output 為控制 API。                |
-| 音訊準備與設定   | Pitch／tempo pre-render cache、preset 匯出入。                    | 非即時變調的重做；保存範圍、缺曲 remap 與結果生命週期另定。                                                      |
-| Output 外觀交付  | Instance、受限 Presentation Pack／User Variant 與逐模板藝術改善。 | 依 ADR 0011／0027 與[外觀交付標準](governance/appearance-sets-plan.md)分期；帳號、付款與遠端取得不隨之自動啟動。 |
-| 曲庫細節         | 跨語言弱藝人證據、本機 tag 與翻唱歸屬。                           | 延續已保存的人工校對與作品／版本邊界，不重做既有曲庫能力。                                                       |
+| 方向             | 後續範圍                                                                          | 前置與界線                                                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 本地演出完整性   | 既有場次／OBS 時間軸的實機驗收；VOD／clip 狀態與輸出 review。                     | 本機播放與安排不依賴 OBS；review 政策另定。                                                                                                     |
+| 手機遙控／提詞器 | 延續既有手機操作與讀詞規劃，共用 Performer presentation。                         | 桌面提詞器已存在；手機 pairing／權限／撤銷與 transport 未接入，不暴露現有唯讀 Output 為控制 API。                                               |
+| 音訊準備與設定   | 新分離結果的受控 FLAC 5／WAV 回退；Pitch／tempo pre-render cache、preset 匯出入。 | FLAC 正式維持關閉、只驗隔離工廠、不遷移舊音訊；[格式契約](contracts/separation-output-format.md)。其餘保存範圍、缺曲 remap 與結果生命週期另定。 |
+| Output 外觀交付  | Instance、受限 Presentation Pack／User Variant 與逐模板藝術改善。                 | 依 ADR 0011／0027 與[外觀交付標準](governance/appearance-sets-plan.md)分期；帳號、付款與遠端取得不隨之自動啟動。                                |
+| 曲庫細節         | 跨語言弱藝人證據、本機 tag 與翻唱歸屬。                                           | 延續已保存的人工校對與作品／版本邊界，不重做既有曲庫能力。                                                                                      |
 
 播放器／排練四項沿[原規劃順序](research/product/player-practice-planning-2026-10-26.md)接續已接受的切片，不另列一套排程；完整現況與待驗範圍見第 3 節。逐曲設定、區段練習、對時確認及 App／背景快捷鍵須各守來源、保存與平台門檻，未完成的實機／品質驗收不因程式切片完成而解除。
 
@@ -192,12 +192,11 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 下表保留尚未接受為開發路線的研究候選；已接受的播放器／排練切片見第 6.2 節，功能現況仍只由第 3 節持有。
 
-| 候選                     | 實作前條件                                                                                                                                                                                            |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 本機影片擷取音訊         | 先確認自備 MP4／MKV 等需求，再擴明示轉檔入口。                                                                                                                                                        |
-| 衍生音訊減量             | 格式、FIFO／DSP 分流及獨立複核已完成階段研究；已補最小觀測對照，仍缺原生排程、觀測成本與品質驗收。FLAC 5 維持候選，不遷移既有音訊。[研究](research/audio/derived-audio-reduction-r01-2026-10-30.md)。 |
-| Mic 電平畫面／音準視覺化 | 兩項獨立研究：輸入生命週期、噪聲／串音、畫面落後或旋律／時間校準。                                                                                                                                    |
-| 原生音訊與可寫 adapters  | 有具體需求證據後，另定故障與權限邊界。[研究](research/product/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目)。                                                                   |
+| 候選                     | 實作前條件                                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 本機影片擷取音訊         | 先確認自備 MP4／MKV 等需求，再擴明示轉檔入口。                                                                                      |
+| Mic 電平畫面／音準視覺化 | 兩項獨立研究：輸入生命週期、噪聲／串音、畫面落後或旋律／時間校準。                                                                  |
+| 原生音訊與可寫 adapters  | 有具體需求證據後，另定故障與權限邊界。[研究](research/product/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目)。 |
 
 無伴奏／自行伴奏的 manual 已有開始／完成，屬既有能力驗收；定時結束另議。[覆核](research/product/player-practice-planning-2026-10-26.md#5-無伴奏演出既有能力覆核)。
 

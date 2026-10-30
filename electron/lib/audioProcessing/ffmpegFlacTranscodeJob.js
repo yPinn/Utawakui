@@ -58,6 +58,10 @@ function createFfmpegFlacTranscodeJob({
   let resolveCancellation;
   let resolveResult;
   let rejectResult;
+  let resolveClosed;
+  const closed = new Promise((resolve) => {
+    resolveClosed = resolve;
+  });
   const result = new Promise((resolve, reject) => {
     resolveResult = resolve;
     rejectResult = reject;
@@ -77,9 +81,13 @@ function createFfmpegFlacTranscodeJob({
           : 'local audio compatibility conversion failed',
       ),
     );
-    resolveCancellation?.();
+    if (child.pid === undefined) {
+      resolveClosed();
+      resolveCancellation?.();
+    }
   });
   child.on('close', (code) => {
+    resolveClosed();
     if (cancelRequested) {
       settle(
         rejectResult,
@@ -99,7 +107,10 @@ function createFfmpegFlacTranscodeJob({
   });
 
   async function cancel() {
-    if (settled || cancelRequested) return;
+    if (settled || cancelRequested) {
+      await closed;
+      return;
+    }
     cancelRequested = true;
     const cancellation = new Promise((resolve) => {
       resolveCancellation = resolve;
@@ -111,12 +122,16 @@ function createFfmpegFlacTranscodeJob({
         rejectResult,
         new Error('local audio compatibility conversion cancelled'),
       );
-      resolveCancellation();
+      if (child.pid === undefined) {
+        resolveClosed();
+        resolveCancellation();
+      }
     }
     await cancellation;
+    await closed;
   }
 
-  return { result, cancel };
+  return { result, cancel, closed, pid: child.pid };
 }
 
 module.exports = { createFfmpegFlacTranscodeJob };

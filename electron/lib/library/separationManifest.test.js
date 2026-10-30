@@ -78,6 +78,36 @@ describe('resolveSeparationResultPath', () => {
     expect(resolveSeparationResultPath(dir, 'abc', 'standard.wav')).toBe(null);
   });
 
+  it('serves compressed results only after exact manifest publication', () => {
+    const output = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(output, { recursive: true });
+    fs.writeFileSync(path.join(output, 'general-new.flac'), 'flac');
+    expect(resolveSeparationResultPath(dir, 'abc', 'general-new.flac')).toBe(
+      null,
+    );
+    recordSeparationResult(output, {
+      recipeId: 'general',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-inst-hq4-v1',
+      modelIds: ['inst-hq4'],
+      artifactFilename: 'general-new.flac',
+      completedAt: '2026-10-30',
+      outputLayout: 'accompaniment-guide-4ch',
+    });
+    expect(resolveSeparationResultPath(dir, 'abc', 'general-new.flac')).toBe(
+      path.join(output, 'general-new.flac'),
+    );
+    expect(hasSeparation(dir, 'abc')).toBe(true);
+    for (const name of [
+      '../general-new.flac',
+      'candidate.flac.tmp',
+      'general-new.flac:secret',
+      'general-new.opus',
+    ])
+      expect(resolveSeparationResultPath(dir, 'abc', name)).toBe(null);
+  });
+
   it('rejects a filename outside the safe charset (path traversal, wrong extension)', () => {
     const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
     fs.mkdirSync(separationsDir, { recursive: true });

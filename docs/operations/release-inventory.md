@@ -705,4 +705,10 @@ readable with the provider gate disabled. See the [contract](../contracts/releas
 
 `electron/lib/library/lyricsVocalRoles.js` 編譯進 Main bundle；相鄰測試排除。`tracks/<trackId>/lyrics/vocal-roles/<sourceFilename>.json` 是本機使用者資料，不是安裝資產。Main 依目前來源計算 fingerprint，檢查來源 document identity、聲部意圖與儲存 revision；不封裝使用者標註、來源歌詞或模型。新增的 renderer 聲部控制由 Vite 既有 bundle 發布。
 
+## 受控分離輸出格式
+
+`electron/lib/audioProcessing/separationOutputJob.js` 經既有 Main bundle closure 發布，重用 separation worker 與已準備的 FFmpeg，沒有新增 executable、下載來源或 runtime asset，builder allowlist 不變。相鄰 unit／runtime tests 不隨安裝包交付。正式 composition root 不開放 FLAC；隔離工廠以固定 FLAC 5、完整四聲道 PCM 驗證及 WAV 回退核對，既有音訊不遷移。
+
+`separationOutputRecovery.js` 同樣編譯入 Main；硬中斷測試的 `scripts/fixtures/separationCrashChild.cjs` 與相關測試不交付，交易 journal 為本機衍生資料，不是封裝資產。沒有新增外部 helper 或依賴。
+
 Mic 研究授權工廠依用途命名為 `electron/main/microphoneResearchAccess.js`，既有 Main bundle closure 交付，測試排除；IPC／權限生命週期與開發限定門檻不變，builder 沒有新增資產規則。

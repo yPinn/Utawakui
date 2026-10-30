@@ -11,6 +11,7 @@ function createAudioProcessingService({
   async function run({
     trackId,
     recipeId,
+    outputFormat,
     onProgress,
     assertCurrent = () => {},
   }) {
@@ -30,7 +31,12 @@ function createAudioProcessingService({
 
     try {
       assertCurrent();
-      const prepared = await prepareJob({ jobId, trackId, recipe });
+      const prepared = await prepareJob({
+        jobId,
+        trackId,
+        recipe,
+        ...(outputFormat ? { outputFormat } : {}),
+      });
       assertCurrent();
       const emitProgress = ({ stage, percent }) => {
         onProgress?.({

@@ -14,6 +14,27 @@ function childProcessDouble() {
 }
 
 describe('createFfmpegFlacTranscodeJob', () => {
+  it('keeps close and cancel pending after an error with a live process identity', async () => {
+    const child = childProcessDouble();
+    child.pid = 12345;
+    const job = createFfmpegFlacTranscodeJob({
+      ffmpegPath: absolute('ffmpeg.exe'),
+      inputPath: absolute('input.wav'),
+      outputPath: absolute('output.flac'),
+      spawnImpl: () => child,
+    });
+    const failure = expect(job.result).rejects.toThrow('conversion failed');
+    child.emit('error', new Error('EPERM'));
+    let closed = false;
+    const wait = job.cancel().then(() => {
+      closed = true;
+    });
+    await Promise.resolve();
+    expect(closed).toBe(false);
+    child.emit('close', 1);
+    await wait;
+    await failure;
+  });
   it('spawns one fixed lossless audio-only FLAC recipe without a shell', async () => {
     const child = childProcessDouble();
     const spawnImpl = vi.fn(() => child);

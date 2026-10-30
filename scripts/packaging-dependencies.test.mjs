@@ -111,6 +111,25 @@ function isDelivered(file) {
 }
 
 describe('packaged dependency boundary', () => {
+  it('bundles the closed controlled-output path without shipping its tests', () => {
+    expect(isDelivered('scripts/fixtures/separationCrashChild.cjs')).toBe(
+      false,
+    );
+    expect(bundledSources).toContain(
+      'electron/lib/audioProcessing/separationOutputRecovery.js',
+    );
+    expect(bundledSources).toContain(
+      'electron/lib/audioProcessing/separationOutputJob.js',
+    );
+    expect(
+      isDelivered('electron/lib/audioProcessing/separationOutputJob.test.js'),
+    ).toBe(false);
+    expect(
+      isDelivered(
+        'electron/lib/audioProcessing/separationOutputJob.runtime.test.js',
+      ),
+    ).toBe(false);
+  });
   it('bundles machine shortcut persistence and the shared fixed binding policy without a new helper process', () => {
     for (const file of [
       'electron/lib/keyboardShortcutSettings.js',

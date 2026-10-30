@@ -51,6 +51,50 @@ function createHarness(overrides = {}) {
 }
 
 describe('separation queue service', () => {
+  it('keeps distinct output intents and preserves FLAC on retry', async () => {
+    const h = createHarness();
+    h.service.pause();
+    h.service.enqueue({ trackIds: ['one'], recipeId: 'general' });
+    const flac = h.service.enqueue({
+      trackIds: ['one'],
+      recipeId: 'general',
+      outputFormat: 'flac5',
+    });
+    expect(flac.queue.items).toHaveLength(2);
+    expect(flac.queue.items[1].outputFormat).toBe('flac5');
+    h.service.resume();
+    await flush();
+    h.runs[0].task.resolve({});
+    await flush();
+    expect(h.runTrack.mock.calls[1][0].outputFormat).toBe('flac5');
+    h.runs[1].task.reject(new Error('failed'));
+    await flush();
+    h.service.retry(flac.itemIds[0]);
+    await flush();
+    expect(h.runTrack.mock.calls[2][0].outputFormat).toBe('flac5');
+    h.runs[2].task.resolve({});
+    await flush();
+  });
+
+  it('does not re-encode existing results when the requested new format differs', async () => {
+    const h = createHarness({ hasCurrentResult: vi.fn(async () => true) });
+    const item = h.service.enqueue({
+      trackIds: ['one'],
+      recipeId: 'general',
+      outputFormat: 'flac5',
+    });
+    await expect(h.service.waitForItem(item.itemIds[0])).resolves.toMatchObject(
+      { status: 'skipped' },
+    );
+    expect(h.runTrack).not.toHaveBeenCalled();
+    expect(() =>
+      h.service.enqueue({
+        trackIds: ['two'],
+        recipeId: 'general',
+        outputFormat: 'opus',
+      }),
+    ).toThrow(/output format/);
+  });
   it('rejects an obsolete result check and does not merge same ids across library generations', async () => {
     let scope = 'a:1';
     const check = deferred(),

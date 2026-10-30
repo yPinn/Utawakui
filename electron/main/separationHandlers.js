@@ -31,6 +31,10 @@ const {
 } = require('../lib/audioProcessing/engines/onnxMdxJob');
 const { MEDIA_SCHEME } = require('./mediaScheme');
 const { createAppError } = require('../lib/appError');
+const {
+  normalizeSeparationOutputFormat,
+  createSeparationOutputJob,
+} = require('../lib/audioProcessing/separationOutputJob');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const {
   enforceLibraryStoragePolicySafely,
@@ -67,16 +71,26 @@ function registerSeparationHandlers({
   getPreparedSeparationModel = getPreparedSeparationModelPath,
   resolveUserDataDir = () => app.getPath('userData'),
   createSeparationEngineJob = createOnnxMdxJob,
+  // Closed in the formal composition root; isolated factories opt in explicitly.
+  allowFlacOutput = false,
+  createControlledOutputJob = createSeparationOutputJob,
   createSeparationQueue = createSeparationQueueService,
   loadStoredSeparationManifest = loadSeparationManifest,
   hasStoredSeparationResultFile = hasSeparationResultFile,
   enforceLibraryStoragePolicy = async () => undefined,
   getLibraryScope = () => ({ dir: resolveDownloadDir(getConfig()), epoch: 0 }),
 }) {
+  const assertOutputFormat = (value) => {
+    const format = normalizeSeparationOutputFormat(value);
+    if (format === 'flac5' && allowFlacOutput !== true)
+      throw new Error('FLAC separation output is not enabled');
+    return format;
+  };
   const service = createAudioProcessingService({
     resolveRecipe,
     createJobId: randomUUID,
-    prepareJob: async ({ trackId, recipe }) => {
+    prepareJob: async ({ trackId, recipe, outputFormat }) => {
+      const format = assertOutputFormat(outputFormat);
       const dir = resolveDownloadDir(getConfig());
       const track = findSeparationTrackRecord(dir, trackId);
       if (!track) throw sourceUnavailableError(`unknown track id: ${trackId}`);
@@ -113,10 +127,12 @@ function registerSeparationHandlers({
         // Boolean product intent read fresh per run, not a renderer-chosen
         // execution-provider name — see ADR 0017/0009.
         preferGpu: getConfig().separationGpuAcceleration !== false,
+        ...(format === 'flac5' ? { outputFormat: format } : {}),
       };
     },
     createEngineJob: ({
       jobId,
+      trackId,
       engineId,
       prepared,
       emitProgress,
@@ -131,7 +147,37 @@ function registerSeparationHandlers({
           start: () => {
             assertCurrent();
             requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
-            return createSeparationEngineJob({
+            const createJob =
+              prepared.outputFormat === 'flac5'
+                ? createControlledOutputJob
+                : createSeparationEngineJob;
+            return createJob({
+              ...(prepared.outputFormat === 'flac5'
+                ? {
+                    createWorkerJob: createSeparationEngineJob,
+                    onRecovery: (result, error) =>
+                      recordDiagnostic?.({
+                        source: 'separation',
+                        operation: 'output-recovery',
+                        code: 'SEPARATION_OUTPUT_RECOVERY_DEFERRED',
+                        error,
+                        context: { trackId, deferred: result.deferred.length },
+                      }),
+                    onFallback: (error) =>
+                      recordDiagnostic?.({
+                        source: 'separation',
+                        operation: 'flac-output',
+                        code: 'SEPARATION_FLAC_FALLBACK',
+                        error,
+                        context: { trackId, presetId: prepared.engineRecipeId },
+                      }),
+                    assertCurrent: () => {
+                      assertCurrent();
+                      assertOutputFormat(prepared.outputFormat);
+                      requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+                    },
+                  }
+                : {}),
               workerPath: resolveRuntimeEntry(
                 path.resolve(__dirname, '../..'),
                 'separationWorker',
@@ -177,6 +223,7 @@ function registerSeparationHandlers({
     runTrack: async ({
       trackId,
       recipeId,
+      outputFormat,
       onProgress,
       assertCurrent = () => {},
     }) => {
@@ -208,6 +255,7 @@ function registerSeparationHandlers({
           const result = await service.run({
             trackId,
             recipeId,
+            ...(outputFormat ? { outputFormat } : {}),
             assertCurrent,
             onProgress: (progress) => {
               getMainWindow()?.webContents.send(
@@ -269,19 +317,26 @@ function registerSeparationHandlers({
     },
   });
 
-  ipcMain.handle('separation:run', async (event, trackId, recipeId) => {
-    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
-    const resolvedRecipeId = recipeId ?? DEFAULT_RECIPE_ID;
-    const queued = queueService.enqueue({
-      trackIds: [trackId],
-      recipeId: resolvedRecipeId,
-      regenerate: true,
-    });
-    await queueService.waitForItem(queued.itemIds[0]);
-    return {
-      stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedRecipeId)}.wav`,
-    };
-  });
+  ipcMain.handle(
+    'separation:run',
+    async (event, trackId, recipeId, outputFormat) => {
+      requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+      const format = assertOutputFormat(outputFormat);
+      const resolvedRecipeId = recipeId ?? DEFAULT_RECIPE_ID;
+      const queued = queueService.enqueue({
+        trackIds: [trackId],
+        recipeId: resolvedRecipeId,
+        regenerate: true,
+        ...(format === 'flac5' ? { outputFormat: format } : {}),
+      });
+      const completed = await queueService.waitForItem(queued.itemIds[0]);
+      const artifactFilename =
+        completed?.result?.artifactFilename ?? `${resolvedRecipeId}.wav`;
+      return {
+        stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(artifactFilename)}`,
+      };
+    },
+  );
 
   ipcMain.handle('separation:cancel', async () => ({
     cancelled: await queueService.cancelActive(),
@@ -293,10 +348,12 @@ function registerSeparationHandlers({
 
   ipcMain.handle('separation:enqueue', async (event, payload) => {
     requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    const format = assertOutputFormat(payload?.outputFormat);
     return queueService.enqueue({
       trackIds: payload?.trackIds,
       recipeId: payload?.recipeId ?? DEFAULT_RECIPE_ID,
       regenerate: payload?.regenerate ?? false,
+      ...(format === 'flac5' ? { outputFormat: format } : {}),
     });
   });
 

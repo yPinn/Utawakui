@@ -14,7 +14,7 @@ const OUTPUT_LAYOUT = 'accompaniment-guide-4ch';
 const BACKING_VOCAL_POLICIES = new Set(['mixed-into-accompaniment']);
 const SAFE_RECIPE_ID_RE = /^[a-z0-9-]+$/i;
 const SAFE_PROFILE_ID_RE = /^[a-z0-9-]+$/i;
-const SAFE_ARTIFACT_FILENAME_RE = /^[a-z0-9-]+\.wav$/i;
+const SAFE_ARTIFACT_FILENAME_RE = /^[a-z0-9-]+\.(?:wav|flac)$/i;
 const recipeCatalog = require('../../../shared/audioProcessingRecipes.json');
 const RESULT_RECIPE_ALIASES = Object.freeze({
   ...(recipeCatalog.resultAliases || {}),
@@ -115,6 +115,7 @@ function normalizeV2Entry(recipeId, entry) {
     !Array.isArray(entry.modelIds) ||
     entry.modelIds.length === 0 ||
     !entry.modelIds.every((modelId) => typeof modelId === 'string') ||
+    typeof entry.artifactFilename !== 'string' ||
     !SAFE_ARTIFACT_FILENAME_RE.test(entry.artifactFilename) ||
     typeof entry.completedAt !== 'string' ||
     entry.outputLayout !== OUTPUT_LAYOUT
@@ -245,6 +246,7 @@ function removeSeparationResult(separationsDir, recipeId) {
 
 function hasSeparationResultFile(separationsDir, artifactFilename) {
   return (
+    typeof artifactFilename === 'string' &&
     SAFE_ARTIFACT_FILENAME_RE.test(artifactFilename) &&
     fs.existsSync(path.join(separationsDir, artifactFilename))
   );
@@ -276,11 +278,22 @@ function hasSeparation(dir, trackId) {
 // charset allowlist (not an extension check alone) before it ever touches
 // the filesystem, same pattern as resolveTrackAssetPath's other branches.
 function resolveSeparationResultPath(dir, trackId, presetFilename) {
-  if (!SAFE_ARTIFACT_FILENAME_RE.test(presetFilename)) {
+  if (
+    typeof presetFilename !== 'string' ||
+    !SAFE_ARTIFACT_FILENAME_RE.test(presetFilename)
+  ) {
     return null;
   }
   const separationsDir = resolveSeparationsDir(dir, trackId);
   if (!separationsDir) return null;
+  // New compressed artifacts must be published, not merely present on disk.
+  if (
+    /\.flac$/i.test(presetFilename) &&
+    !Object.values(loadSeparationManifest(separationsDir).results).some(
+      (entry) => entry.artifactFilename === presetFilename,
+    )
+  )
+    return null;
   const filePath = path.join(separationsDir, presetFilename);
   return fs.existsSync(filePath) ? filePath : null;
 }

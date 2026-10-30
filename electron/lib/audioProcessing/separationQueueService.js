@@ -2,6 +2,7 @@
 
 const { isBoundedTrackId } = require('../library/paths');
 const { hasControlCharacters } = require('../textGuards');
+const { normalizeSeparationOutputFormat } = require('./separationOutputJob');
 
 const MAX_QUEUE_ITEMS = 500;
 const ACTIVE_ITEM_STATUSES = new Set(['checking', 'running']);
@@ -56,6 +57,7 @@ function publicItem(entry) {
     itemId: entry.itemId,
     trackId: entry.trackId,
     recipeId: entry.recipeId,
+    ...(entry.outputFormat === 'flac5' ? { outputFormat: 'flac5' } : {}),
     status: entry.status,
     ...(typeof entry.stage === 'string' ? { stage: entry.stage } : {}),
     ...(Number.isFinite(entry.percent) ? { percent: entry.percent } : {}),
@@ -207,6 +209,9 @@ function createSeparationQueueService({
             entry.result = await runTrack({
               trackId: entry.trackId,
               recipeId: entry.recipeId,
+              ...(entry.outputFormat === 'flac5'
+                ? { outputFormat: 'flac5' }
+                : {}),
               assertCurrent: () => assertCurrent(entry),
               onProgress: (progress) => {
                 if (entry.status !== 'running') return;
@@ -260,7 +265,13 @@ function createSeparationQueueService({
     }
   }
 
-  function enqueue({ trackIds, recipeId, regenerate = false } = {}) {
+  function enqueue({
+    trackIds,
+    recipeId,
+    regenerate = false,
+    outputFormat,
+  } = {}) {
+    const format = normalizeSeparationOutputFormat(outputFormat);
     if (typeof regenerate !== 'boolean') {
       throw new Error('invalid separation queue options');
     }
@@ -274,7 +285,8 @@ function createSeparationQueueService({
             OPEN_ITEM_STATUSES.has(entry.status) &&
             entry.scopeKey === scopeKey &&
             entry.trackId === trackId &&
-            entry.recipeId === recipe.id,
+            entry.recipeId === recipe.id &&
+            entry.outputFormat === format,
         ),
     ).length;
     // The entire public snapshot is bounded, not only unfinished work. This
@@ -291,7 +303,8 @@ function createSeparationQueueService({
           OPEN_ITEM_STATUSES.has(entry.status) &&
           entry.scopeKey === scopeKey &&
           entry.trackId === trackId &&
-          entry.recipeId === recipe.id,
+          entry.recipeId === recipe.id &&
+          entry.outputFormat === format,
       );
       if (existing) {
         // An explicit regenerate request must not be absorbed by earlier
@@ -310,6 +323,7 @@ function createSeparationQueueService({
         itemId,
         trackId,
         recipeId: recipe.id,
+        outputFormat: format,
         scopeKey,
         regenerate,
         status: 'pending',

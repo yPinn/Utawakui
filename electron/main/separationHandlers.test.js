@@ -54,6 +54,55 @@ function register(overrides = {}) {
   return ipcMain.handlers;
 }
 
+describe('controlled separation output format', () => {
+  it('rejects FLAC before enqueue in the formal factory', async () => {
+    const { queue, createSeparationQueue } = createQueueHarness();
+    const handlers = register({ createSeparationQueue });
+    await expect(
+      handlers.get('separation:enqueue')(null, {
+        trackIds: ['track-1'],
+        recipeId: 'general',
+        outputFormat: 'flac5',
+      }),
+    ).rejects.toThrow(/not enabled/);
+    await expect(
+      handlers.get('separation:run')(null, 'track-1', 'general', 'flac5'),
+    ).rejects.toThrow(/not enabled/);
+    expect(queue.enqueue).not.toHaveBeenCalled();
+  });
+
+  it('accepts bounded FLAC intent only in an explicitly opted-in factory', async () => {
+    const { queue, createSeparationQueue } = createQueueHarness();
+    const handlers = register({ createSeparationQueue, allowFlacOutput: true });
+    await handlers.get('separation:enqueue')(null, {
+      trackIds: ['track-1'],
+      recipeId: 'general',
+      outputFormat: 'flac5',
+    });
+    expect(queue.enqueue).toHaveBeenCalledWith({
+      trackIds: ['track-1'],
+      recipeId: 'general',
+      regenerate: false,
+      outputFormat: 'flac5',
+    });
+    queue.waitForItem.mockResolvedValue({
+      result: { artifactFilename: 'general-result.flac' },
+    });
+    await expect(
+      handlers.get('separation:run')(null, 'track-1', 'general', 'flac5'),
+    ).resolves.toEqual({
+      stemsUrl:
+        'utawakui-media://track/track-1/separations/general-result.flac',
+    });
+    await expect(
+      handlers.get('separation:enqueue')(null, {
+        trackIds: ['track-1'],
+        outputFormat: '../../evil',
+      }),
+    ).rejects.toThrow(/invalid separation output format/);
+  });
+});
+
 function createQueueHarness() {
   const queue = {
     enqueue: vi.fn(() => ({

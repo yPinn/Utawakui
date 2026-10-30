@@ -220,7 +220,9 @@
 
 ### 音訊處理與分析
 
-- `audioProcessing/separationQueueService.js` 是 main 記憶體內的序列佇列，以 `(trackId, recipeId)` 去重，每首開始前重查 gate、依賴、來源與結果；只有明確重新準備才覆寫。佇列狀態只代表本次 session，manifest 才是結果權威；清除紀錄不刪除結果。`separationHandlers.js` 把狀態送到 `mainWindow.js`，taskbar 顯示 aggregate progress、paused 或 error。
+- `audioProcessing/separationQueueService.js` 是 main 記憶體內的序列佇列，以 `(trackId, recipeId, outputFormat)` 去重，省略格式為 WAV，每首開始前重查 gate、依賴、來源與結果；只有明確重新準備才覆寫。佇列狀態只代表本次 session，manifest 才是結果權威；清除紀錄不刪除結果。`separationHandlers.js` 把狀態送到 `mainWindow.js`，taskbar 顯示 aggregate progress、paused 或 error。
+- `audioProcessing/separationOutputJob.js` 在 Main 持有受控 FLAC 5 的 staging、固定編碼、STREAMINFO／完整 PCM SHA 驗證、WAV 回退與唯一檔名發布；重用原 worker 與 heavy scheduler，取消等待子程序結束，發布前重查原 scope 與音訊 gate。正式 handler 工廠預設拒絕 FLAC，composition root 不注入開放，Renderer 無新入口；隔離工廠才可驗證。v2 manifest 保留 WAV 相容性，FLAC 解析須精確匹配 manifest。原 player／BGM owners 不變，見[輸出格式契約](contracts/separation-output-format.md)。
+- `audioProcessing/separationOutputRecovery.js` 只在受控工作邊界處理該曲有版本 journal 的交易；Main／已記錄子程序均確認不存在、內容為已知 regular files 才清理。manifest 引用與 published 音檔保留，存活或 spawn 記錄不確定、未知檔／連結或壞 metadata 延後；不掃全庫、不按 TTL 猜測、不殺 journal PID。journal 與候選名同 UUID；子程序接管先於 PID 保存，取消等待實際 close，清理失敗不覆蓋 manifest 已提交的成功或原失敗。正式 WAV／gate 不變。
 - `useSeparationQueue` 是 Renderer 伴奏排程狀態的唯一 owner，推送使較早的讀取／控制回應失效；單曲 action 與曲目準備共用同一佇列，不再保留播放器專用的分離 owner。曲庫與歌單單例的初始化由最新讀取結束來完成，不使用會隨首個呼叫頁面卸載而停止的 watcher。
 - 伴奏每個排程項目私下固定曲庫路徑與 `workLibraryEpoch`；跨曲庫或 A→B→A 都不重新解讀同 track id。檢查既有結果、準備後、實際取得 heavy worker slot、worker 結束及清理後各檢查原 scope，過期不啟動 worker 或對新曲庫觸發完成副作用。重試保留原項目的 scope；新曲庫需重新提交。取消請求的接受與工作終態分開，重複取消共用一次確認，拒絕／例外不能把實際處理失敗標成取消。
 - `audioProcessing/structureAnalysisAutoQueue.js` 是匯入後的去重單工佇列，重查自動分析偏好、gate、capability 與 sidecar 是否最新，手動分析結束後才執行；失敗不回滾匯入。
