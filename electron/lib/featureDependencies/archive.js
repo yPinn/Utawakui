@@ -134,6 +134,8 @@ function expandZipArchive(
         'Bypass',
         '-Command',
         [
+          // Localized errors otherwise arrive in the OS code page, not UTF-8.
+          '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8',
           '$ArchivePath = $env:UTAWAKUI_ARCHIVE_PATH',
           '$DestinationPath = $env:UTAWAKUI_ARCHIVE_DESTINATION',
           "$ErrorActionPreference = 'Stop'",

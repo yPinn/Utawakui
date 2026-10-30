@@ -107,17 +107,16 @@ def invalid_request() -> WorkerError:
 
 
 def write_message(message: dict[str, Any]) -> None:
-    """Write one compact JSON-lines protocol message."""
-    sys.stdout.write(
-        json.dumps(
-            message,
-            ensure_ascii=False,
-            separators=(",", ":"),
-            allow_nan=False,
-        )
+    """Write one compact JSON-lines protocol message as UTF-8 bytes."""
+    # Text-mode stdout uses the OS code page (cp950/cp1252), not UTF-8.
+    payload = json.dumps(
+        message,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        allow_nan=False,
     )
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+    sys.stdout.buffer.write(payload.encode("utf-8") + b"\n")
+    sys.stdout.buffer.flush()
 
 
 def write_error(code: str, message: str) -> None:
