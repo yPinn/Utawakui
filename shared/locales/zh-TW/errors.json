@@ -1,7 +1,7 @@
 {
   "ANNOUNCEMENT_SEEN_VERSION_INVALID": {
     "title": "無法儲存公告狀態",
-    "message": "指定的版本號無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "ANNOUNCEMENT_SEEN_VERSION_READ_FAILED": {
     "title": "無法讀取公告狀態",
@@ -13,7 +13,7 @@
   },
   "APP_UPDATE_AUTO_CHECK_INVALID": {
     "title": "無法套用自動檢查更新設定",
-    "message": "指定的自動檢查更新設定無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "APP_UPDATE_AUTO_CHECK_READ_FAILED": {
     "title": "無法讀取自動檢查更新設定",
@@ -25,7 +25,7 @@
   },
   "AUDIO_PREFERENCES_INVALID": {
     "title": "無法保存音量設定",
-    "message": "指定的音量設定超出支援範圍。"
+    "message": "音量設定超出可用範圍。"
   },
   "AUDIO_PREFERENCES_READ_FAILED": {
     "title": "無法讀取音量設定",
@@ -37,7 +37,7 @@
   },
   "AUTO_ERROR_REPORTING_INVALID": {
     "title": "無法套用自動回報設定",
-    "message": "指定的錯誤自動回報設定無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "AUTO_ERROR_REPORTING_READ_FAILED": {
     "title": "無法讀取自動回報設定",
@@ -49,7 +49,7 @@
   },
   "AUTO_MUSIC_ANALYSIS_INVALID": {
     "title": "無法套用自動分析設定",
-    "message": "指定的自動分析設定無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "AUTO_MUSIC_ANALYSIS_READ_FAILED": {
     "title": "無法讀取自動分析設定",
@@ -61,7 +61,7 @@
   },
   "CAPTURE_DEVICE_INVALID": {
     "title": "無法套用擷取裝置",
-    "message": "指定的擷取裝置識別值無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "CAPTURE_DEVICE_READ_FAILED": {
     "title": "無法讀取擷取裝置",
@@ -89,7 +89,7 @@
   },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
     "title": "無法儲存播放安排顯示偏好",
-    "message": "指定的顯示偏好無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "OBS_ARRANGEMENT_DOCK_READ_FAILED": {
     "title": "無法讀取播放安排顯示偏好",
@@ -101,7 +101,7 @@
   },
   "SEPARATION_GPU_ACCELERATION_INVALID": {
     "title": "無法套用 GPU 加速設定",
-    "message": "指定的 GPU 加速設定無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "SEPARATION_GPU_ACCELERATION_READ_FAILED": {
     "title": "無法讀取 GPU 加速設定",
@@ -113,7 +113,7 @@
   },
   "SIDEBAR_WIDTH_INVALID": {
     "title": "無法調整側欄寬度",
-    "message": "指定的側欄寬度超出支援範圍。"
+    "message": "側欄寬度超出可用範圍。"
   },
   "SIDEBAR_WIDTH_READ_FAILED": {
     "title": "無法讀取側欄寬度",
@@ -125,7 +125,7 @@
   },
   "UI_THEME_INVALID": {
     "title": "無法套用介面主題",
-    "message": "指定的介面主題不受支援。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "UI_THEME_READ_FAILED": {
     "title": "無法讀取介面主題",
@@ -141,7 +141,7 @@
   },
   "WINDOW_CLOSE_BEHAVIOR_INVALID": {
     "title": "無法套用關閉行為",
-    "message": "指定的關閉行為無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "WINDOW_CLOSE_BEHAVIOR_READ_FAILED": {
     "title": "無法讀取關閉行為",
@@ -153,7 +153,7 @@
   },
   "YOUTUBE_BROWSER_COOKIES_INVALID": {
     "title": "無法套用登入資料設定",
-    "message": "指定的瀏覽器登入資料設定無效。"
+    "message": "這個設定無效，請重新選擇。"
   },
   "YOUTUBE_BROWSER_COOKIES_READ_FAILED": {
     "title": "無法讀取登入資料設定",

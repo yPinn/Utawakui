@@ -50,7 +50,7 @@ describe('AppUpdateSettingsRow', () => {
   it('uses bounded fallback copy when updater metadata omits a version', async () => {
     const html = await renderRow({ phase: 'available' });
 
-    expect(html).toContain('可下載 新版本');
+    expect(html).toContain('有新版本可下載');
     expect(html).not.toContain('null');
   });
 

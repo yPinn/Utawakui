@@ -33,9 +33,9 @@
   "environment": "Environment",
   "environmentValue": "App {version} · {platform}",
   "diagnosticsHeading": "Error log",
-  "diagnosticsAttached": "The latest {count} event is attached | The latest {count} events are attached",
+  "diagnosticsAttached": "The latest {count} entry is attached | The latest {count} entries are attached",
   "viewDetails": "View details",
-  "fallbackIntro": "If sending fails, save a file instead. Saved files are not sent; pass them to the developer yourself.",
+  "fallbackIntro": "If sending fails, save a file and pass it to the developer yourself.",
   "sent": "Feedback sent. Thank you!",
   "reportCode": "Report code: {reference}",
   "prefill": "Problem: {title}",
@@ -50,11 +50,11 @@
     "restartMessage": "Restart to send feedback.",
     "previewFailed": "Could not create the preview",
     "rateLimited": "Too many reports were sent from this computer recently. Try again later.",
-    "submitUnavailable": "Sending is unavailable right now. You can save a file and pass it to the developer yourself.",
+    "submitUnavailable": "Sending is unavailable right now. Save a file and pass it to the developer yourself.",
     "submitFailed": "Could not send",
     "exportFailed": "Could not save the file",
     "exportedTitle": "File saved",
-    "exportedMessage": "The file was saved but not sent. Pass it to the developer yourself."
+    "exportedMessage": "The file is saved. Pass it to the developer yourself."
   },
   "eventMeta": "{time} · {level}"
 }

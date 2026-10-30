@@ -31,7 +31,7 @@
     "settings": "Settings",
     "settingsUpdate": "Settings (update available)",
     "resources": "Utawakui resource usage",
-    "resourcesLabel": "Utawakui resource usage; its own processes only",
+    "resourcesLabel": "Computer resources used by Utawakui",
     "obsStatus": "OBS streaming/recording status"
   },
   "sidebar": {
@@ -67,11 +67,11 @@
   "recovery": {
     "title": "Utawakui needs to restart",
     "message": "The main window cannot continue",
-    "rendererCrashed": "The main window process stopped unexpectedly. Restart to continue.",
+    "rendererCrashed": "The main window stopped unexpectedly. Restart to continue.",
     "rendererUnresponsive": "The main window is not responding. Restart to continue.",
-    "rendererLoadFailed": "The main window failed to load. Restart to continue.",
-    "rendererPreloadFailed": "The main window's secure bridge failed to load. Restart to continue.",
-    "unknown": "The main window hit an unrecoverable error. Restart to continue.",
+    "rendererLoadFailed": "The main window could not load. Restart to continue.",
+    "rendererPreloadFailed": "The main window could not load. Restart to continue.",
+    "unknown": "The main window ran into a problem. Restart to continue.",
     "restart": "Restart Utawakui",
     "quit": "Quit"
   },

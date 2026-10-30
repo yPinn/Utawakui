@@ -29,7 +29,7 @@ describe('WindowsBackgroundSettingsRow', () => {
     expect(html).toContain('每次詢問');
     expect(html).toContain('在系統匣背景執行');
     expect(html).toContain('結束');
-    expect(html).toContain('背景執行保留播放、OBS 與輸出；最小化仍在工作列。');
+    expect(html).toContain('背景執行時，播放、OBS 與輸出會繼續。');
     expect(html).toContain('class="ui-select" value="ask"');
   });
 

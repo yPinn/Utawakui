@@ -340,7 +340,7 @@ describe('windowsTrayController', () => {
 
     expect(presentCloseError).toHaveBeenCalledWith(win, {
       title: '無法儲存關閉行為',
-      message: '視窗仍保持開啟，請稍後再試，或在設定頁重新選擇。',
+      message: '視窗會保持開啟，請稍後再試。',
     });
     expect(dialog.showMessageBox).not.toHaveBeenCalled();
   });

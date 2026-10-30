@@ -8,7 +8,7 @@
     "idle": "Not checked yet",
     "checking": "Checking for updates",
     "availableVersion": "v{version} available to download",
-    "availableUnknown": "New version available to download",
+    "availableUnknown": "A new version is available to download",
     "latest": "Up to date",
     "downloadedVersion": "v{version} downloaded",
     "downloadedUnknown": "New version downloaded",
@@ -46,7 +46,7 @@
     "packagedOnly": "Available in the installed release only"
   },
   "reloadInfo": "Reload version information",
-  "autoCheckUnconfirmed": "Loading; the automatic check setting is not confirmed yet.",
+  "autoCheckUnconfirmed": "Loading…",
   "reloadAutoCheck": "Reload the automatic check setting",
   "reloadStatus": "Reload update status",
   "autoCheckReadFailed": "The automatic check setting could not be read. Reload it.",
@@ -57,7 +57,7 @@
     "downloadFailedMessage": "Check your network connection and try again.",
     "retryDownload": "Retry download",
     "downloaded": "Update downloaded and ready to install",
-    "downloadedMessage": "Installing restarts Utawakui, so pick a good moment.",
+    "downloadedMessage": "Installing restarts Utawakui.",
     "viewUpdate": "View update",
     "failedTitle": "Update failed"
   },

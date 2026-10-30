@@ -6,10 +6,10 @@
   "reading": "讀取中",
   "reload": "重新讀取",
   "notLoaded": "尚未讀取",
-  "unconfirmed": "讀取中；尚未確認已儲存設定。",
+  "unconfirmed": "讀取中…",
   "background": {
     "title": "關閉主視窗時",
-    "guidance": "背景執行保留播放、OBS 與輸出；最小化仍在工作列。",
+    "guidance": "背景執行時，播放、OBS 與輸出會繼續。",
     "label": "關閉主視窗時的行為",
     "ask": "每次詢問",
     "tray": "在系統匣背景執行",
@@ -28,10 +28,10 @@
   },
   "diagnostics": {
     "title": "錯誤紀錄",
-    "unconfirmed": "尚未確認近期紀錄",
+    "unconfirmed": "暫時無法讀取",
     "recent": "{count} 筆近期錯誤",
     "none": "沒有近期錯誤",
-    "guidance": "排查播放、匯入與音訊處理。",
+    "guidance": "回報問題時，可匯出給開發者。",
     "export": "匯出錯誤紀錄",
     "options": "錯誤紀錄選項",
     "openFolder": "開啟資料夾",
@@ -39,14 +39,14 @@
   },
   "autoReport": {
     "title": "嚴重錯誤回報",
-    "guidance": "App 發生嚴重錯誤時，傳送錯誤類型與程式位置給開發者；不含曲庫、歌詞或檔案路徑。",
+    "guidance": "發生嚴重錯誤時，把錯誤類型、發生位置與版本傳給開發者；不含曲庫、歌詞或檔案。",
     "ask": "每次詢問",
     "always": "自動傳送",
     "never": "不傳送"
   },
   "feedback": {
     "title": "回報與建議",
-    "guidance": "回報使用、歌曲或歌詞來源問題，也可提出建議。",
+    "guidance": "回報問題或提出建議。",
     "open": "開啟回報與建議"
   }
 }

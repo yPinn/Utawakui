@@ -31,7 +31,7 @@
     "settings": "設定",
     "settingsUpdate": "設定（有可用更新）",
     "resources": "Utawakui 的資源用量",
-    "resourcesLabel": "Utawakui 資源使用率；僅含自身程序",
+    "resourcesLabel": "Utawakui 的電腦資源用量",
     "obsStatus": "OBS 直播／錄影狀態"
   },
   "sidebar": {
@@ -67,11 +67,11 @@
   "recovery": {
     "title": "Utawakui 需要重新啟動",
     "message": "主畫面無法繼續運作",
-    "rendererCrashed": "主畫面程序意外停止，請重新啟動以恢復操作。",
-    "rendererUnresponsive": "主畫面沒有回應，請重新啟動以恢復操作。",
-    "rendererLoadFailed": "主畫面載入失敗，請重新啟動以恢復操作。",
-    "rendererPreloadFailed": "主畫面安全橋接載入失敗，請重新啟動以恢復操作。",
-    "unknown": "主畫面發生無法恢復的錯誤，請重新啟動。",
+    "rendererCrashed": "主畫面意外停止，請重新啟動。",
+    "rendererUnresponsive": "主畫面沒有回應，請重新啟動。",
+    "rendererLoadFailed": "主畫面無法載入，請重新啟動。",
+    "rendererPreloadFailed": "主畫面無法載入，請重新啟動。",
+    "unknown": "主畫面發生錯誤，請重新啟動。",
     "restart": "重新啟動 Utawakui",
     "quit": "退出"
   },

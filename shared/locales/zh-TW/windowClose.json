@@ -7,8 +7,8 @@
   "modal": {
     "backgroundQuestion": "要改為背景執行嗎？",
     "separationQuestion": "要繼續在背景處理嗎？",
-    "backgroundDetail": "播放、OBS 連線與輸出會繼續，可從系統匣重新開啟或結束。",
-    "separationDetail": "結束會取消目前歌曲，其他排程也不會保留。",
+    "backgroundDetail": "播放、OBS 連線與輸出會繼續，可從系統匣開啟或結束。",
+    "separationDetail": "停止會取消目前歌曲與其餘排程。",
     "quit": "結束",
     "stopAndQuit": "停止並結束",
     "quitting": "結束中",
@@ -16,16 +16,16 @@
     "continueProcessing": "繼續處理"
   },
   "native": {
-    "backgroundQuestion": "要在背景繼續執行嗎？",
-    "backgroundDetail": "播放、OBS 連線與輸出會保留，可從系統匣開啟或結束。",
-    "separationDetail": "停止會取消目前歌曲，其餘排程不保留。",
+    "backgroundQuestion": "要改為背景執行嗎？",
+    "backgroundDetail": "播放、OBS 連線與輸出會繼續，可從系統匣開啟或結束。",
+    "separationDetail": "停止會取消目前歌曲與其餘排程。",
     "continueBackground": "在背景繼續",
     "background": "背景執行",
     "quit": "結束",
     "stopAndQuit": "停止並結束",
     "saveFailed": "無法儲存關閉行為",
-    "saveFailedDetail": "視窗仍保持開啟，請稍後再試，或在設定頁重新選擇。",
+    "saveFailedDetail": "視窗會保持開啟，請稍後再試。",
     "trayUnavailable": "無法在背景執行",
-    "trayUnavailableDetail": "系統匣目前無法建立，視窗會保持開啟。請稍後再試。"
+    "trayUnavailableDetail": "目前無法使用系統匣，視窗會保持開啟。"
   }
 }

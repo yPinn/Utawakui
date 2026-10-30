@@ -33,9 +33,9 @@
   "environment": "環境資訊",
   "environmentValue": "App {version}・{platform}",
   "diagnosticsHeading": "錯誤紀錄",
-  "diagnosticsAttached": "已附上最近 {count} 筆事件記錄",
+  "diagnosticsAttached": "已附上最近 {count} 筆紀錄",
   "viewDetails": "查看內容",
-  "fallbackIntro": "無法送出時可另存檔案；另存不會自動傳送，仍需自行傳給開發者。",
+  "fallbackIntro": "無法送出時，可另存檔案再自行傳給開發者。",
   "sent": "回饋已送出，謝謝！",
   "reportCode": "回報碼：{reference}",
   "prefill": "發生問題：{title}",
@@ -50,11 +50,11 @@
     "restartMessage": "重新啟動後即可送出回饋。",
     "previewFailed": "無法建立預覽",
     "rateLimited": "這台電腦短時間內送出太多次，請稍後再試。",
-    "submitUnavailable": "目前無法送出，你可以改成另存成檔案自行傳給開發者。",
+    "submitUnavailable": "目前無法送出，可另存檔案再自行傳給開發者。",
     "submitFailed": "送出失敗",
     "exportFailed": "無法另存檔案",
     "exportedTitle": "已另存檔案",
-    "exportedMessage": "檔案已儲存，尚未傳送；請自行將檔案傳給開發者。"
+    "exportedMessage": "檔案已儲存，請自行傳給開發者。"
   },
   "eventMeta": "{time}・{level}"
 }

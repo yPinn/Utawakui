@@ -34,7 +34,7 @@ describe('DiagnosticsSettingsRow', () => {
         operation: 'list',
       },
     });
-    expect(html).toContain('尚未確認近期紀錄');
+    expect(html).toContain('暫時無法讀取');
     expect(html).not.toContain('沒有近期錯誤');
     expect(html).not.toContain('>無紀錄<');
     expect(html.match(/role="alert"/g)).toHaveLength(1);

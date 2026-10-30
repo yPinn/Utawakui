@@ -6,10 +6,10 @@
   "reading": "Loading",
   "reload": "Reload",
   "notLoaded": "Not loaded",
-  "unconfirmed": "Loading; the saved setting is not confirmed yet.",
+  "unconfirmed": "Loading…",
   "background": {
     "title": "When the main window closes",
-    "guidance": "Running in the background keeps playback, OBS and output; minimizing keeps it on the taskbar.",
+    "guidance": "In the background, playback, OBS and output keep running.",
     "label": "Behavior when the main window closes",
     "ask": "Ask every time",
     "tray": "Run in the system tray",
@@ -28,10 +28,10 @@
   },
   "diagnostics": {
     "title": "Error log",
-    "unconfirmed": "Recent entries not confirmed",
+    "unconfirmed": "Unavailable right now",
     "recent": "{count} recent error | {count} recent errors",
     "none": "No recent errors",
-    "guidance": "Troubleshoot playback, import and audio processing.",
+    "guidance": "Export it for the developer when reporting a problem.",
     "export": "Export error log",
     "options": "Error log options",
     "openFolder": "Open folder",
@@ -39,14 +39,14 @@
   },
   "autoReport": {
     "title": "Critical error reports",
-    "guidance": "When the app hits a critical error, send the error type and code location to the developer; never your library, lyrics or file paths.",
+    "guidance": "When a critical error happens, send its type, location and the app version to the developer; never your library, lyrics or files.",
     "ask": "Ask every time",
     "always": "Send automatically",
     "never": "Don't send"
   },
   "feedback": {
     "title": "Feedback and suggestions",
-    "guidance": "Report problems with the app, songs or lyrics sources, or suggest ideas.",
+    "guidance": "Report a problem or suggest an idea.",
     "open": "Open feedback and suggestions"
   }
 }

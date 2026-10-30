@@ -26,7 +26,7 @@ describe('AppFolderLayout', () => {
   it('owns the four product destinations and global navigation semantics', async () => {
     const html = await renderLayout();
 
-    expect(html).toContain('aria-label="Folder 頁面"');
+    expect(html).toContain('aria-label="頁面切換"');
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain('role="tablist"');
     expect(html).not.toContain('role="tab"');
