@@ -60,3 +60,26 @@ describe('createAppError', () => {
     });
   });
 });
+
+describe('createAppError catalog copy', () => {
+  it('reads errors.<CODE> when neither title nor message is given', () => {
+    const error = createAppError({ code: 'UI_THEME_READ_FAILED' });
+    expect(error.title).toBe('無法讀取介面主題');
+    expect(error.publicMessage).toBe('目前無法讀取介面主題。');
+  });
+
+  it('keeps explicit copy from callers that pass either field', () => {
+    const error = createAppError({
+      code: 'UI_THEME_READ_FAILED',
+      message: '自訂',
+    });
+    expect(error.title).toBeUndefined();
+    expect(error.publicMessage).toBe('自訂');
+  });
+
+  it('fails tests when a code has no catalog entry', () => {
+    expect(() => createAppError({ code: 'NOT_IN_CATALOG' })).toThrow(
+      'Missing UI catalog entry: errors.NOT_IN_CATALOG.title',
+    );
+  });
+});

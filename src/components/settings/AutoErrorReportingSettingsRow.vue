@@ -3,6 +3,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   reporting: { type: String, default: 'ask' },
@@ -15,22 +16,22 @@ defineProps({
 const emit = defineEmits(['setReporting', 'refreshPreference']);
 
 const OPTIONS = Object.freeze([
-  { value: 'ask', label: '每次詢問' },
-  { value: 'always', label: '自動傳送' },
-  { value: 'never', label: '不傳送' },
+  { value: 'ask', label: t('settings.autoReport.ask') },
+  { value: 'always', label: t('settings.autoReport.always') },
+  { value: 'never', label: t('settings.autoReport.never') },
 ]);
 </script>
 
 <template>
   <SettingsDocumentItem
-    title="嚴重錯誤回報"
-    guidance="App 發生嚴重錯誤時，傳送錯誤類型與程式位置給開發者；不含曲庫、歌詞或檔案路徑。"
+    :title="t('settings.autoReport.title')"
+    :guidance="t('settings.autoReport.guidance')"
   >
     <template #actions>
       <UiSelect
         id="auto-error-reporting"
         class="auto-error-reporting-settings-row__select"
-        label="嚴重錯誤回報"
+        :label="t('settings.autoReport.title')"
         label-hidden
         :model-value="reporting"
         :options="OPTIONS"
@@ -40,14 +41,14 @@ const OPTIONS = Object.freeze([
     </template>
     <template v-if="error || readError || !loaded" #feedback>
       <UiHint :tone="error || readError ? 'danger' : 'muted'" role="status">{{
-        error || readError || '讀取中；尚未確認已儲存設定。'
+        error || readError || t('settings.unconfirmed')
       }}</UiHint>
       <UiButton
         v-if="readError"
         variant="ghost"
         :loading="reading"
         @click="emit('refreshPreference')"
-        >重新讀取</UiButton
+        >{{ t('settings.reload') }}</UiButton
       >
     </template>
   </SettingsDocumentItem>

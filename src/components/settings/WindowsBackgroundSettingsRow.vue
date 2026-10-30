@@ -4,6 +4,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   behavior: {
@@ -21,9 +22,9 @@ defineProps({
 const emit = defineEmits(['setBehavior', 'refreshPreference']);
 
 const closeBehaviorItems = Object.freeze([
-  { value: 'ask', label: '每次詢問' },
-  { value: 'tray', label: '在系統匣背景執行' },
-  { value: 'quit', label: '結束' },
+  { value: 'ask', label: t('settings.background.ask') },
+  { value: 'tray', label: t('settings.background.tray') },
+  { value: 'quit', label: t('settings.background.quit') },
 ]);
 </script>
 
@@ -31,17 +32,17 @@ const closeBehaviorItems = Object.freeze([
   <div class="windows-background-settings-row">
     <SettingsDocumentItem
       :icon="Minimize2"
-      title="關閉主視窗時"
-      guidance="背景執行保留播放、OBS 與輸出；最小化仍在工作列。"
+      :title="t('settings.background.title')"
+      :guidance="t('settings.background.guidance')"
     >
       <template #actions>
         <UiSelect
           id="windows-close-behavior"
           class="windows-background-settings-row__select"
-          label="關閉主視窗時的行為"
+          :label="t('settings.background.label')"
           :options="closeBehaviorItems"
           :model-value="loaded ? behavior : ''"
-          :placeholder="loaded ? '' : '尚未讀取'"
+          :placeholder="loaded ? '' : t('settings.notLoaded')"
           :disabled="busy || reading || !loaded"
           :error="error"
           label-hidden
@@ -50,14 +51,14 @@ const closeBehaviorItems = Object.freeze([
       </template>
       <template v-if="readError || !loaded" #feedback>
         <UiHint :tone="readError ? 'danger' : 'muted'" role="status">{{
-          readError || '讀取中；尚未確認已儲存設定。'
+          readError || t('settings.unconfirmed')
         }}</UiHint>
         <UiButton
           v-if="readError"
           variant="ghost"
           :loading="reading"
           @click="emit('refreshPreference')"
-          >重新讀取</UiButton
+          >{{ t('settings.reload') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>

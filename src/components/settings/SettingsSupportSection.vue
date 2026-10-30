@@ -12,6 +12,7 @@ import DiagnosticsSettingsRow from './DiagnosticsSettingsRow.vue';
 import AutoErrorReportingSettingsRow from './AutoErrorReportingSettingsRow.vue';
 import FeedbackReportSettingsRow from './FeedbackReportSettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const {
   state: persistentDiagnosticsState,
@@ -31,10 +32,10 @@ function openCommunityDiscord() {
 
 async function handleClearDiagnostics() {
   const confirmed = await confirmAction({
-    title: '清除錯誤紀錄？',
-    message: '已儲存的錯誤紀錄會被清除。',
-    detail: '此動作無法復原。',
-    confirmLabel: '清除紀錄',
+    title: t('settings.support.clearTitle'),
+    message: t('settings.support.clearMessage'),
+    detail: t('settings.support.clearDetail'),
+    confirmLabel: t('settings.support.clearConfirm'),
     intent: 'danger',
   });
   if (confirmed) await clearDiagnostics();
@@ -66,18 +67,18 @@ onMounted(() => {
   <SettingsSection
     id="settings-support"
     class="settings-support-section"
-    title="支援與維護"
+    :title="t('settings.sections.support')"
     tabindex="-1"
   >
     <SettingsDocumentItem
       :icon="Info"
-      title="版本公告"
+      :title="t('settings.support.announcements')"
       :value="`v${announcement.version}`"
     >
       <template #actions>
         <UiIconButton
           :icon="Info"
-          label="查看版本公告"
+          :label="t('settings.support.viewAnnouncements')"
           @click="announcement.reopen"
         />
       </template>
@@ -107,13 +108,13 @@ onMounted(() => {
 
     <SettingsDocumentItem
       :icon="ExternalLink"
-      title="社群 Discord"
-      guidance="公告、交流與開發者聯絡。"
+      :title="t('settings.support.discord')"
+      :guidance="t('settings.support.discordGuidance')"
     >
       <template #actions>
         <UiIconButton
           :icon="ExternalLink"
-          label="開啟社群 Discord"
+          :label="t('settings.support.openDiscord')"
           @click="openCommunityDiscord"
         />
       </template>

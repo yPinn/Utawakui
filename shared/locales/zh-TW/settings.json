@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "application": "應用程式",
+    "support": "支援與維護"
+  },
+  "reading": "讀取中",
+  "reload": "重新讀取",
+  "notLoaded": "尚未讀取",
+  "unconfirmed": "讀取中；尚未確認已儲存設定。",
+  "background": {
+    "title": "關閉主視窗時",
+    "guidance": "背景執行保留播放、OBS 與輸出；最小化仍在工作列。",
+    "label": "關閉主視窗時的行為",
+    "ask": "每次詢問",
+    "tray": "在系統匣背景執行",
+    "quit": "結束"
+  },
+  "support": {
+    "clearTitle": "清除錯誤紀錄？",
+    "clearMessage": "已儲存的錯誤紀錄會被清除。",
+    "clearDetail": "此動作無法復原。",
+    "clearConfirm": "清除紀錄",
+    "announcements": "版本公告",
+    "viewAnnouncements": "查看版本公告",
+    "discord": "社群 Discord",
+    "discordGuidance": "公告、交流與開發者聯絡。",
+    "openDiscord": "開啟社群 Discord"
+  },
+  "diagnostics": {
+    "title": "錯誤紀錄",
+    "unconfirmed": "尚未確認近期紀錄",
+    "recent": "{count} 筆近期錯誤",
+    "none": "沒有近期錯誤",
+    "guidance": "排查播放、匯入與音訊處理。",
+    "export": "匯出錯誤紀錄",
+    "options": "錯誤紀錄選項",
+    "openFolder": "開啟資料夾",
+    "clear": "清除紀錄"
+  },
+  "autoReport": {
+    "title": "嚴重錯誤回報",
+    "guidance": "App 發生嚴重錯誤時，傳送錯誤類型與程式位置給開發者；不含曲庫、歌詞或檔案路徑。",
+    "ask": "每次詢問",
+    "always": "自動傳送",
+    "never": "不傳送"
+  },
+  "feedback": {
+    "title": "回報與建議",
+    "guidance": "回報使用、歌曲或歌詞來源問題，也可提出建議。",
+    "open": "開啟回報與建議"
+  }
+}

@@ -2,6 +2,7 @@
 import { MessageSquare } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const emit = defineEmits(['open']);
 </script>
@@ -9,13 +10,13 @@ const emit = defineEmits(['open']);
 <template>
   <SettingsDocumentItem
     :icon="MessageSquare"
-    title="回報與建議"
-    guidance="回報使用、歌曲或歌詞來源問題，也可提出建議。"
+    :title="t('settings.feedback.title')"
+    :guidance="t('settings.feedback.guidance')"
   >
     <template #actions>
       <UiIconButton
         :icon="MessageSquare"
-        label="開啟回報與建議"
+        :label="t('settings.feedback.open')"
         @click="emit('open')"
       />
     </template>

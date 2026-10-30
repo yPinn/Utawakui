@@ -1,0 +1,16 @@
+{
+  "title": "發生嚴重錯誤",
+  "lead": "{error}。要回報給開發者嗎？",
+  "leadRepeated": "{error}（{count} 次）。要回報給開發者嗎？",
+  "scope": "只含錯誤類型、位置與版本，不含曲庫、歌詞或檔案。可在「設定」更改。",
+  "viewDetails": "查看內容",
+  "never": "不要",
+  "once": "傳送",
+  "always": "自動傳送",
+  "sentTitle": "已自動回報錯誤",
+  "sentMessage": "回報碼 {reference}",
+  "addDetails": "補充說明",
+  "followUpPrefill": "補充自動回報（回報碼 {reference}）：",
+  "readFailed": "目前無法讀取自動回報設定，請重新讀取。",
+  "saveFailed": "目前無法儲存自動回報設定，已恢復原設定。"
+}

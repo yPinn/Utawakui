@@ -7,6 +7,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   currentVersion: { type: String, default: '' },
@@ -52,24 +53,36 @@ const emit = defineEmits([
   'refreshInfo',
 ]);
 
-const availableVersionLabel = computed(() =>
-  props.availableVersion ? `v${props.availableVersion}` : '新版本',
-);
-
 const updatePresentation = computed(() => {
   switch (props.phase) {
     case 'idle':
-      return { value: '尚未檢查更新', status: '待命', tone: 'muted' };
+      return {
+        value: t('appUpdate.phase.idle'),
+        status: t('appUpdate.status.idle'),
+        tone: 'muted',
+      };
     case 'checking':
-      return { value: '正在檢查更新', status: '檢查中', tone: 'info' };
+      return {
+        value: t('appUpdate.phase.checking'),
+        status: t('appUpdate.status.checking'),
+        tone: 'info',
+      };
     case 'available':
       return {
-        value: `可下載 ${availableVersionLabel.value}`,
-        status: '有更新',
+        value: props.availableVersion
+          ? t('appUpdate.phase.availableVersion', {
+              version: props.availableVersion,
+            })
+          : t('appUpdate.phase.availableUnknown'),
+        status: t('appUpdate.status.available'),
         tone: 'warning',
       };
     case 'not-available':
-      return { value: '已是最新版本', status: '最新', tone: 'success' };
+      return {
+        value: t('appUpdate.phase.latest'),
+        status: t('appUpdate.status.latest'),
+        tone: 'success',
+      };
     case 'downloading':
       return {
         value: formatDownloadProgress({
@@ -77,25 +90,29 @@ const updatePresentation = computed(() => {
           downloadBytesPerSecond: props.downloadBytesPerSecond,
           downloadEtaSeconds: props.downloadEtaSeconds,
         }),
-        status: '下載中',
+        status: t('appUpdate.status.downloading'),
         tone: 'info',
       };
     case 'downloaded':
       return {
-        value: `${availableVersionLabel.value} 已下載`,
-        status: '可安裝',
+        value: props.availableVersion
+          ? t('appUpdate.phase.downloadedVersion', {
+              version: props.availableVersion,
+            })
+          : t('appUpdate.phase.downloadedUnknown'),
+        status: t('appUpdate.status.installable'),
         tone: 'success',
       };
     case 'error':
       return {
-        value: props.error || '更新失敗，請再試一次。',
-        status: '需重試',
+        value: props.error || t('appUpdate.phase.failed'),
+        status: t('appUpdate.status.retry'),
         tone: 'warning',
       };
     default:
       return {
-        value: '開發版不支援自動更新',
-        status: '僅正式版',
+        value: t('appUpdate.phase.unsupported'),
+        status: t('appUpdate.status.packagedOnly'),
         tone: 'muted',
       };
   }
@@ -105,19 +122,26 @@ const rowPresentation = computed(() => {
   if (props.statusReadError)
     return {
       value: props.statusReadError,
-      status: '無法讀取',
+      status: t('appUpdate.status.unreadable'),
       tone: 'warning',
     };
   if (!props.currentVersion) {
     return {
-      value: props.infoError ? '版本資訊無法取得' : '讀取中',
-      status: props.infoError ? '無法讀取' : '讀取中',
+      value: props.infoError
+        ? t('appUpdate.phase.infoUnavailable')
+        : t('settings.reading'),
+      status: props.infoError
+        ? t('appUpdate.status.unreadable')
+        : t('settings.reading'),
       tone: props.infoError ? 'warning' : 'muted',
     };
   }
 
   return {
-    value: `v${props.currentVersion} · ${updatePresentation.value.value}`,
+    value: t('appUpdate.currentWithStatus', {
+      version: props.currentVersion,
+      status: updatePresentation.value.value,
+    }),
     status: updatePresentation.value.status,
     tone: updatePresentation.value.tone,
   };
@@ -139,14 +163,17 @@ const action = computed(() => {
 const actionDisabled = computed(() => !props.enabled);
 
 const actionLabel = computed(() => {
-  if (action.value === 'download') return '下載';
-  if (action.value === 'install') return '重新啟動並安裝';
-  return '檢查更新';
+  if (action.value === 'download') return t('appUpdate.action.download');
+  if (action.value === 'install') return t('appUpdate.action.install');
+  return t('appUpdate.action.check');
 });
 
-const actionTitle = computed(() =>
-  actionDisabled.value ? '正式安裝版才可使用' : `${actionLabel.value} Utawakui`,
-);
+const actionTitle = computed(() => {
+  if (actionDisabled.value) return t('appUpdate.action.packagedOnly');
+  if (action.value === 'download') return t('appUpdate.action.downloadTitle');
+  if (action.value === 'install') return t('appUpdate.action.installTitle');
+  return t('appUpdate.action.checkTitle');
+});
 
 function handleAction() {
   if (!actionDisabled.value && action.value) emit(action.value);
@@ -157,18 +184,18 @@ function handleAction() {
   <div class="app-update-settings-row">
     <SettingsDocumentItem
       :icon="RefreshCw"
-      title="Utawakui 版本"
+      :title="t('appUpdate.title')"
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"
-      description="可自動檢查更新；下載與安裝需手動確認。"
+      :description="t('appUpdate.description')"
       :guidance="infoError"
     >
       <template #actions>
         <UiCheckbox
           id="app-update-auto-check"
-          label="自動檢查"
-          aria-label="自動檢查更新"
+          :label="t('appUpdate.autoCheck')"
+          :aria-label="t('appUpdate.autoCheckLabel')"
           :model-value="autoCheckLoaded && autoCheckEnabled"
           :error="autoCheckError"
           :disabled="
@@ -207,27 +234,32 @@ function handleAction() {
         "
         #feedback
       >
-        <UiButton v-if="infoError" variant="ghost" @click="emit('refreshInfo')"
-          >重新讀取版本資訊</UiButton
+        <UiButton
+          v-if="infoError"
+          variant="ghost"
+          @click="emit('refreshInfo')"
+          >{{ t('appUpdate.reloadInfo') }}</UiButton
         >
         <UiHint
           v-if="autoCheckReadError || !autoCheckLoaded"
           :tone="autoCheckReadError ? 'danger' : 'muted'"
           role="status"
-          >{{ autoCheckReadError || '讀取中；尚未確認自動檢查設定。' }}</UiHint
+          >{{
+            autoCheckReadError || t('appUpdate.autoCheckUnconfirmed')
+          }}</UiHint
         >
         <UiButton
           v-if="autoCheckReadError"
           variant="ghost"
           :loading="autoCheckReading"
           @click="emit('refreshAutoCheck')"
-          >重新讀取自動檢查設定</UiButton
+          >{{ t('appUpdate.reloadAutoCheck') }}</UiButton
         >
         <UiButton
           v-if="statusReadError"
           variant="ghost"
           @click="emit('refreshStatus')"
-          >重新讀取更新狀態</UiButton
+          >{{ t('appUpdate.reloadStatus') }}</UiButton
         >
         <UiHint
           v-if="actionError && phase !== 'error'"

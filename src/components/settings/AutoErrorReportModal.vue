@@ -4,6 +4,7 @@ import { useAutoErrorReport } from '../../composables/useAutoErrorReport.js';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiModal from '../ui/UiModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const { state, initialize, respond } = useAutoErrorReport();
 
@@ -13,34 +14,46 @@ onMounted(initialize);
 <template>
   <UiModal
     :open="Boolean(state.prompt)"
-    title="發生嚴重錯誤"
+    :title="t('autoReport.title')"
     size="notice"
     @close="respond('dismiss')"
   >
     <div v-if="state.prompt" class="auto-error-report">
       <p class="auto-error-report__lead">
-        {{ state.prompt.title
-        }}<template v-if="state.prompt.occurrences > 1"
-          >（{{ state.prompt.occurrences }} 次）</template
-        >。要回報給開發者嗎？
+        {{
+          state.prompt.occurrences > 1
+            ? t('autoReport.leadRepeated', {
+                error: state.prompt.title,
+                count: state.prompt.occurrences,
+              })
+            : t('autoReport.lead', { error: state.prompt.title })
+        }}
       </p>
       <p class="auto-error-report__scope">
-        只含錯誤類型、位置與版本，不含曲庫、歌詞或檔案。可在「設定」更改。
+        {{ t('autoReport.scope') }}
       </p>
-      <UiDisclosure v-if="state.prompt.message" label="查看內容">
+      <UiDisclosure
+        v-if="state.prompt.message"
+        :label="t('autoReport.viewDetails')"
+      >
         <p class="auto-error-report__message">{{ state.prompt.message }}</p>
       </UiDisclosure>
     </div>
     <template #footer>
-      <UiButton variant="ghost" :disabled="state.busy" @click="respond('never')"
-        >不要</UiButton
+      <UiButton
+        variant="ghost"
+        :disabled="state.busy"
+        @click="respond('never')"
+        >{{ t('autoReport.never') }}</UiButton
       >
-      <UiButton :disabled="state.busy" @click="respond('once')">傳送</UiButton>
+      <UiButton :disabled="state.busy" @click="respond('once')">{{
+        t('autoReport.once')
+      }}</UiButton>
       <UiButton
         variant="accent"
         :loading="state.busy"
         @click="respond('always')"
-        >自動傳送</UiButton
+        >{{ t('autoReport.always') }}</UiButton
       >
     </template>
   </UiModal>

@@ -13,6 +13,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   recordCount: { type: Number, default: 0 },
@@ -48,7 +49,7 @@ const menuContent = computed(() => ({
           id: 'refresh',
           kind: 'action',
           value: 'refresh',
-          label: '重新讀取',
+          label: t('settings.reload'),
           icon: RefreshCw,
           disabled: props.isLoading,
         },
@@ -56,7 +57,7 @@ const menuContent = computed(() => ({
           id: 'open-folder',
           kind: 'action',
           value: 'open-folder',
-          label: '開啟資料夾',
+          label: t('settings.diagnostics.openFolder'),
           icon: FolderOpen,
         },
       ],
@@ -68,7 +69,7 @@ const menuContent = computed(() => ({
           id: 'clear',
           kind: 'action',
           value: 'clear',
-          label: '清除紀錄',
+          label: t('settings.diagnostics.clear'),
           icon: ListX,
           intent: 'danger',
           disabled: props.isLoading || props.recordCount === 0,
@@ -101,28 +102,32 @@ function handleMenuSelect(actionId) {
   <div class="diagnostics-settings-row">
     <SettingsDocumentItem
       :icon="ListChecks"
-      title="錯誤紀錄"
+      :title="t('settings.diagnostics.title')"
       :value="
         notice
-          ? '尚未確認近期紀錄'
+          ? t('settings.diagnostics.unconfirmed')
           : isLoading
-            ? '讀取中'
+            ? t('settings.reading')
             : recordCount > 0
-              ? `${recordCount} 筆近期錯誤`
-              : '沒有近期錯誤'
+              ? t(
+                  'settings.diagnostics.recent',
+                  { count: recordCount },
+                  recordCount,
+                )
+              : t('settings.diagnostics.none')
       "
-      guidance="排查播放、匯入與音訊處理。"
+      :guidance="t('settings.diagnostics.guidance')"
     >
       <template #actions>
         <UiIconButton
           :icon="Download"
-          label="匯出錯誤紀錄"
+          :label="t('settings.diagnostics.export')"
           :disabled="isLoading"
           @click="emit('export')"
         />
         <UiIconButton
           :icon="Ellipsis"
-          label="錯誤紀錄選項"
+          :label="t('settings.diagnostics.options')"
           aria-haspopup="menu"
           :aria-expanded="isMenuOpen ? 'true' : 'false'"
           @click="openMenu"

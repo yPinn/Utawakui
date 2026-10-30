@@ -20,6 +20,7 @@ const COVERAGE_NEUTRAL_SOURCES = new Map([
   ['src/components/demo/demoTrackCollectionProfiles.js', 're-export-only'],
   ['src/icons/index.js', 're-export-only'],
   ['src/components/ui/uiTestHost.js', 'test-infrastructure'],
+  ['src/utils/catalogSourceText.js', 'test-infrastructure'],
   // Node/vitest has no real Web Audio implementation (same posture as
   // usePlayerAudioGraph.js's untested half, see ADR 0019 and ADR 0020):
   // node creation, gain envelopes, and currentTime-based scheduling here

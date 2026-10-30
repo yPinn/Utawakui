@@ -1,0 +1,166 @@
+{
+  "ANNOUNCEMENT_SEEN_VERSION_INVALID": {
+    "title": "無法儲存公告狀態",
+    "message": "指定的版本號無效。"
+  },
+  "ANNOUNCEMENT_SEEN_VERSION_READ_FAILED": {
+    "title": "無法讀取公告狀態",
+    "message": "目前無法讀取公告狀態。"
+  },
+  "ANNOUNCEMENT_SEEN_VERSION_UPDATE_FAILED": {
+    "title": "無法儲存公告狀態",
+    "message": "目前無法儲存公告狀態，請稍後再試。"
+  },
+  "APP_UPDATE_AUTO_CHECK_INVALID": {
+    "title": "無法套用自動檢查更新設定",
+    "message": "指定的自動檢查更新設定無效。"
+  },
+  "APP_UPDATE_AUTO_CHECK_READ_FAILED": {
+    "title": "無法讀取自動檢查更新設定",
+    "message": "目前無法讀取自動檢查更新設定。"
+  },
+  "APP_UPDATE_AUTO_CHECK_UPDATE_FAILED": {
+    "title": "無法套用自動檢查更新設定",
+    "message": "目前無法套用自動檢查更新設定，請稍後再試。"
+  },
+  "AUDIO_PREFERENCES_INVALID": {
+    "title": "無法保存音量設定",
+    "message": "指定的音量設定超出支援範圍。"
+  },
+  "AUDIO_PREFERENCES_READ_FAILED": {
+    "title": "無法讀取音量設定",
+    "message": "目前無法讀取音量設定。"
+  },
+  "AUDIO_PREFERENCES_UPDATE_FAILED": {
+    "title": "無法保存音量設定",
+    "message": "目前無法保存音量設定，請稍後再試。"
+  },
+  "AUTO_ERROR_REPORTING_INVALID": {
+    "title": "無法套用自動回報設定",
+    "message": "指定的錯誤自動回報設定無效。"
+  },
+  "AUTO_ERROR_REPORTING_READ_FAILED": {
+    "title": "無法讀取自動回報設定",
+    "message": "目前無法讀取錯誤自動回報設定。"
+  },
+  "AUTO_ERROR_REPORTING_UPDATE_FAILED": {
+    "title": "無法套用自動回報設定",
+    "message": "目前無法套用錯誤自動回報設定，請稍後再試。"
+  },
+  "AUTO_MUSIC_ANALYSIS_INVALID": {
+    "title": "無法套用自動分析設定",
+    "message": "指定的自動分析設定無效。"
+  },
+  "AUTO_MUSIC_ANALYSIS_READ_FAILED": {
+    "title": "無法讀取自動分析設定",
+    "message": "目前無法讀取自動分析設定。"
+  },
+  "AUTO_MUSIC_ANALYSIS_UPDATE_FAILED": {
+    "title": "無法套用自動分析設定",
+    "message": "目前無法套用自動分析設定，請稍後再試。"
+  },
+  "CAPTURE_DEVICE_INVALID": {
+    "title": "無法套用擷取裝置",
+    "message": "指定的擷取裝置識別值無效。"
+  },
+  "CAPTURE_DEVICE_READ_FAILED": {
+    "title": "無法讀取擷取裝置",
+    "message": "目前無法讀取擷取裝置設定。"
+  },
+  "CAPTURE_DEVICE_UPDATE_FAILED": {
+    "title": "無法套用擷取裝置",
+    "message": "目前無法套用擷取裝置，請稍後再試。"
+  },
+  "DOWNLOAD_DIRECTORY_CHOOSE_FAILED": {
+    "title": "無法變更下載位置",
+    "message": "目前無法變更下載位置，請稍後再試。"
+  },
+  "DOWNLOAD_DIRECTORY_OPEN_FAILED": {
+    "title": "無法開啟下載位置",
+    "message": "目前無法開啟下載位置，請確認資料夾仍可使用。"
+  },
+  "DOWNLOAD_DIRECTORY_READ_FAILED": {
+    "title": "無法讀取下載位置",
+    "message": "目前無法讀取下載位置，請稍後再試。"
+  },
+  "DOWNLOAD_DIRECTORY_RESET_FAILED": {
+    "title": "無法重設下載位置",
+    "message": "目前無法重設下載位置，請稍後再試。"
+  },
+  "OBS_ARRANGEMENT_DOCK_INVALID": {
+    "title": "無法儲存播放安排顯示偏好",
+    "message": "指定的顯示偏好無效。"
+  },
+  "OBS_ARRANGEMENT_DOCK_READ_FAILED": {
+    "title": "無法讀取播放安排顯示偏好",
+    "message": "目前無法讀取播放安排顯示偏好，請再試一次。"
+  },
+  "OBS_ARRANGEMENT_DOCK_UPDATE_FAILED": {
+    "title": "無法儲存播放安排顯示偏好",
+    "message": "目前無法儲存播放安排顯示偏好，請再試一次。"
+  },
+  "SEPARATION_GPU_ACCELERATION_INVALID": {
+    "title": "無法套用 GPU 加速設定",
+    "message": "指定的 GPU 加速設定無效。"
+  },
+  "SEPARATION_GPU_ACCELERATION_READ_FAILED": {
+    "title": "無法讀取 GPU 加速設定",
+    "message": "目前無法讀取 GPU 加速設定。"
+  },
+  "SEPARATION_GPU_ACCELERATION_UPDATE_FAILED": {
+    "title": "無法套用 GPU 加速設定",
+    "message": "目前無法套用 GPU 加速設定，請稍後再試。"
+  },
+  "SIDEBAR_WIDTH_INVALID": {
+    "title": "無法調整側欄寬度",
+    "message": "指定的側欄寬度超出支援範圍。"
+  },
+  "SIDEBAR_WIDTH_READ_FAILED": {
+    "title": "無法讀取側欄寬度",
+    "message": "目前無法讀取側欄寬度。"
+  },
+  "SIDEBAR_WIDTH_UPDATE_FAILED": {
+    "title": "無法調整側欄寬度",
+    "message": "目前無法調整側欄寬度，請稍後再試。"
+  },
+  "UI_THEME_INVALID": {
+    "title": "無法套用介面主題",
+    "message": "指定的介面主題不受支援。"
+  },
+  "UI_THEME_READ_FAILED": {
+    "title": "無法讀取介面主題",
+    "message": "目前無法讀取介面主題。"
+  },
+  "UI_THEME_UPDATE_FAILED": {
+    "title": "無法套用介面主題",
+    "message": "目前無法套用介面主題，請稍後再試。"
+  },
+  "UNKNOWN": {
+    "title": "操作未完成",
+    "message": "目前無法完成這項操作，請再試一次。"
+  },
+  "WINDOW_CLOSE_BEHAVIOR_INVALID": {
+    "title": "無法套用關閉行為",
+    "message": "指定的關閉行為無效。"
+  },
+  "WINDOW_CLOSE_BEHAVIOR_READ_FAILED": {
+    "title": "無法讀取關閉行為",
+    "message": "目前無法讀取關閉行為。"
+  },
+  "WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED": {
+    "title": "無法套用關閉行為",
+    "message": "目前無法套用關閉行為，請稍後再試。"
+  },
+  "YOUTUBE_BROWSER_COOKIES_INVALID": {
+    "title": "無法套用登入資料設定",
+    "message": "指定的瀏覽器登入資料設定無效。"
+  },
+  "YOUTUBE_BROWSER_COOKIES_READ_FAILED": {
+    "title": "無法讀取登入資料設定",
+    "message": "目前無法讀取瀏覽器登入資料設定。"
+  },
+  "YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED": {
+    "title": "無法套用登入資料設定",
+    "message": "目前無法套用瀏覽器登入資料設定，請稍後再試。"
+  }
+}

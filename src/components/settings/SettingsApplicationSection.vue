@@ -7,6 +7,7 @@ import SettingsSection from './SettingsSection.vue';
 import AppUpdateSettingsRow from './AppUpdateSettingsRow.vue';
 import WindowsBackgroundSettingsRow from './WindowsBackgroundSettingsRow.vue';
 import KeyboardShortcutSettingsBlock from './KeyboardShortcutSettingsBlock.vue';
+import { t } from '../../utils/i18n.js';
 
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
@@ -32,7 +33,7 @@ onMounted(() => {
   <SettingsSection
     id="settings-application"
     class="settings-application-section"
-    title="應用程式"
+    :title="t('settings.sections.application')"
     tabindex="-1"
   >
     <KeyboardShortcutSettingsBlock />

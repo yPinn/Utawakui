@@ -12,6 +12,11 @@ const I18N_MIGRATED = [
   'src/composables/{useAppConfirmation,useAppNotifications,useAppRightDock,usePanelView,useWindowCloseDecision}.js',
   'electron/main/{rendererRecovery,windowsTrayController}.js',
   'electron/main/windows/mainWindow.js',
+  'src/components/settings/{SettingsApplicationSection,AppUpdateSettingsRow,WindowsBackgroundSettingsRow,SettingsSupportSection,DiagnosticsSettingsRow,AutoErrorReportingSettingsRow,FeedbackReportSettingsRow,FeedbackReportModal,AutoErrorReportModal}.vue',
+  'src/composables/{useAppUpdate,useAutoErrorReport,useFeedbackReport}.js',
+  'src/utils/appUpdateProgress.js',
+  'src/constants/feedback.js',
+  'electron/main/configHandlers.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -1,8 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../utils/catalogSourceText.js';
 
-const readSource = (path) =>
-  readFileSync(new URL(path, import.meta.url), 'utf8');
+const readSource = (path) => readCatalogSource(new URL(path, import.meta.url));
 
 const appSource = readSource('../App.vue');
 const settingsPageSource = readSource('../pages/SettingsPage.vue');

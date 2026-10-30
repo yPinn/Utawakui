@@ -5,6 +5,7 @@ import { useAppView } from './useAppView.js';
 import { formatDownloadProgress } from '../utils/appUpdateProgress.js';
 import { useSettingsPreference } from './useSettingsPreference.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 const { recordError } = useAppDiagnostics();
 
@@ -24,8 +25,8 @@ const autoCheck = useSettingsPreference({
   read: () => window.Utawakui.getAppUpdateAutoCheck(),
   write: (enabled) => window.Utawakui.setAppUpdateAutoCheck(enabled),
   validate: (value) => typeof value === 'boolean',
-  readMessage: '無法讀取自動檢查設定，請重新讀取。',
-  saveMessage: '自動檢查設定未儲存，已恢復原設定。',
+  readMessage: t('appUpdate.autoCheckReadFailed'),
+  saveMessage: t('appUpdate.autoCheckSaveFailed'),
 });
 const state = reactive({
   enabled: false,
@@ -78,7 +79,7 @@ function beginDownloadFeedback() {
   if (downloadFeedback) return;
   downloadFeedback = useTaskNotification({
     key: NOTIFICATION_KEYS.TASK_APP_UPDATE,
-    title: 'Utawakui 更新下載中',
+    title: t('appUpdate.notify.downloading'),
     action: () => useAppView().openSettings('application'),
   });
 }
@@ -87,16 +88,16 @@ function finishDownloadFeedback(failed = false) {
   downloadFeedback.finish(
     failed
       ? {
-          title: '更新下載未完成',
-          message: '請檢查網路連線後再試一次。',
+          title: t('appUpdate.notify.downloadFailed'),
+          message: t('appUpdate.notify.downloadFailedMessage'),
           tone: 'danger',
-          actionLabel: '重試下載',
+          actionLabel: t('appUpdate.notify.retryDownload'),
           action: downloadAppUpdate,
         }
       : {
-          title: '更新已下載，可安裝',
-          message: '安裝會重新啟動 Utawakui，請在適合的時間操作。',
-          actionLabel: '查看更新',
+          title: t('appUpdate.notify.downloaded'),
+          message: t('appUpdate.notify.downloadedMessage'),
+          actionLabel: t('appUpdate.notify.viewUpdate'),
           action: () => useAppView().openSettings('application'),
         },
   );
@@ -131,7 +132,7 @@ function applyStatus(status) {
     typeof status.releaseDate === 'string' ? status.releaseDate : null;
   state.error =
     typeof status.error === 'string' && status.error
-      ? '更新失敗，請再試一次。'
+      ? t('appUpdate.phase.failed')
       : null;
   if (state.phase === 'downloading') {
     beginDownloadFeedback();
@@ -152,10 +153,10 @@ async function invoke(method) {
   ensureSubscription();
   if (!hasBridge(method)) {
     if (method === 'getAppUpdateStatus')
-      state.statusReadError = '無法讀取更新狀態，請重新啟動後再試。';
-    else state.actionError = '請重新啟動 Utawakui 後再試。';
+      state.statusReadError = t('appUpdate.statusReadFailedRestart');
+    else state.actionError = t('appUpdate.restartRequired');
     if (method === 'downloadAppUpdate') finishDownloadFeedback(true);
-    state.error = '請重新啟動 Utawakui 後再試。';
+    state.error = t('appUpdate.restartRequired');
     return;
   }
   const revision = statusEventRevision;
@@ -181,14 +182,14 @@ async function invoke(method) {
     if (method === 'downloadAppUpdate') finishDownloadFeedback(true);
     const message = recordError(error, {
       code: 'APP_UPDATE_ACTION_FAILED',
-      title: '更新失敗',
-      message: '更新失敗，請再試一次。',
+      title: t('appUpdate.notify.failedTitle'),
+      message: t('appUpdate.phase.failed'),
       source: 'app-update',
       operation: method,
     }).message;
     state.error = message;
     if (method === 'getAppUpdateStatus')
-      state.statusReadError = '無法讀取更新狀態，請重新讀取。';
+      state.statusReadError = t('appUpdate.statusReadFailed');
     else {
       state.actionError = message;
       state.actionOperation = method;

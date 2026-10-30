@@ -1,7 +1,9 @@
 // Formats the bounded download telemetry that appUpdateService projects
 // (percent + bytes/second + whole-second ETA) into the single status line the
 // Settings row shows. Every input is optional; missing parts are dropped so the
-// line degrades to just a percentage, or "正在下載中" when nothing is known.
+// line degrades to just a percentage, or a generic downloading label.
+
+import { t } from './i18n.js';
 
 function formatRate(bytesPerSecond) {
   if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return null;
@@ -12,9 +14,13 @@ function formatRate(bytesPerSecond) {
 
 function formatEta(seconds) {
   if (!Number.isFinite(seconds) || seconds < 0) return null;
-  if (seconds < 60) return `剩餘約 ${Math.max(1, Math.round(seconds))} 秒`;
-  if (seconds < 3600) return `剩餘約 ${Math.round(seconds / 60)} 分`;
-  return `剩餘約 ${Math.round(seconds / 3600)} 小時`;
+  const [unit, count] =
+    seconds < 60
+      ? ['seconds', Math.max(1, Math.round(seconds))]
+      : seconds < 3600
+        ? ['minutes', Math.round(seconds / 60)]
+        : ['hours', Math.round(seconds / 3600)];
+  return t(`appUpdate.progress.eta.${unit}`, { count }, count);
 }
 
 export function formatDownloadProgress({
@@ -24,12 +30,12 @@ export function formatDownloadProgress({
 } = {}) {
   const parts = [];
   if (Number.isFinite(progress)) {
-    parts.push(`正在下載 ${progress}%`);
+    parts.push(t('appUpdate.progress.percent', { percent: progress }));
   }
   const rate = formatRate(downloadBytesPerSecond);
   if (rate) parts.push(rate);
   const eta = formatEta(downloadEtaSeconds);
   if (eta) parts.push(eta);
 
-  return parts.length ? parts.join(' · ') : '正在下載中';
+  return parts.length ? parts.join(' · ') : t('appUpdate.progress.unknown');
 }

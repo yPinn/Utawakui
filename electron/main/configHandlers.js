@@ -14,19 +14,17 @@ const {
 } = require('../../shared/windowCloseBehaviorContract.mjs');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 
-function createValidationError(code, title, message) {
-  return createAppError({ code, severity: 'warning', title, message });
+// Copy comes from errors.<CODE> in the UI catalog.
+function createValidationError(code) {
+  return createAppError({ code, severity: 'warning' });
 }
 
-function runConfigOperation(
-  { recordDiagnostic, operation, code, title, message },
-  handler,
-) {
+function runConfigOperation({ recordDiagnostic, operation, code }, handler) {
   return runDiagnosticIpcOperation(
     {
       recordDiagnostic,
       diagnostic: { source: 'config', operation, code },
-      publicError: { code, title, message },
+      publicError: { code },
     },
     handler,
   );
@@ -61,26 +59,18 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-obs-arrangement-dock',
         code: 'OBS_ARRANGEMENT_DOCK_READ_FAILED',
-        title: '無法讀取播放安排顯示偏好',
-        message: '目前無法讀取播放安排顯示偏好，請再試一次。',
       },
       () => getConfig().autoShowArrangementOnObs === true,
     ),
   );
   ipcMain.handle('config:set-obs-arrangement-dock', async (_event, enabled) => {
     if (typeof enabled !== 'boolean')
-      throw createValidationError(
-        'OBS_ARRANGEMENT_DOCK_INVALID',
-        '無法儲存播放安排顯示偏好',
-        '指定的顯示偏好無效。',
-      );
+      throw createValidationError('OBS_ARRANGEMENT_DOCK_INVALID');
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-obs-arrangement-dock',
         code: 'OBS_ARRANGEMENT_DOCK_UPDATE_FAILED',
-        title: '無法儲存播放安排顯示偏好',
-        message: '目前無法儲存播放安排顯示偏好，請再試一次。',
       },
       () => {
         updateConfig({ autoShowArrangementOnObs: enabled });
@@ -94,8 +84,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-download-directory',
         code: 'DOWNLOAD_DIRECTORY_READ_FAILED',
-        title: '無法讀取下載位置',
-        message: '目前無法讀取下載位置，請稍後再試。',
       },
       () => getDownloadDirStatus(getConfig()),
     ),
@@ -107,8 +95,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'choose-download-directory',
         code: 'DOWNLOAD_DIRECTORY_CHOOSE_FAILED',
-        title: '無法變更下載位置',
-        message: '目前無法變更下載位置，請稍後再試。',
       },
       async () => {
         const result = await dialog.showOpenDialog(getMainWindow(), {
@@ -134,8 +120,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'reset-download-directory',
         code: 'DOWNLOAD_DIRECTORY_RESET_FAILED',
-        title: '無法重設下載位置',
-        message: '目前無法重設下載位置，請稍後再試。',
       },
       () => {
         const defaultDir = resolveDownloadDir({
@@ -156,8 +140,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'open-download-directory',
         code: 'DOWNLOAD_DIRECTORY_OPEN_FAILED',
-        title: '無法開啟下載位置',
-        message: '目前無法開啟下載位置，請確認資料夾仍可使用。',
       },
       async () => {
         // Electron resolves with an OS error string instead of rejecting.
@@ -173,8 +155,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-ui-theme',
         code: 'UI_THEME_READ_FAILED',
-        title: '無法讀取介面主題',
-        message: '目前無法讀取介面主題。',
       },
       () => getConfig().uiTheme,
     ),
@@ -182,19 +162,13 @@ function registerConfigHandlers({
 
   ipcMain.handle('config:set-ui-theme', async (event, theme) => {
     if (!Object.hasOwn(titlebarColors, theme)) {
-      throw createValidationError(
-        'UI_THEME_INVALID',
-        '無法套用介面主題',
-        '指定的介面主題不受支援。',
-      );
+      throw createValidationError('UI_THEME_INVALID');
     }
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-ui-theme',
         code: 'UI_THEME_UPDATE_FAILED',
-        title: '無法套用介面主題',
-        message: '目前無法套用介面主題，請稍後再試。',
       },
       () => {
         updateConfig({ uiTheme: theme });
@@ -216,8 +190,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-sidebar-width',
         code: 'SIDEBAR_WIDTH_READ_FAILED',
-        title: '無法讀取側欄寬度',
-        message: '目前無法讀取側欄寬度。',
       },
       () => getConfig().sidebarWidth,
     ),
@@ -228,19 +200,13 @@ function registerConfigHandlers({
       !Number.isFinite(width) ||
       (width !== SIDEBAR_WIDTH_MIN && width !== SIDEBAR_WIDTH_MAX)
     ) {
-      throw createValidationError(
-        'SIDEBAR_WIDTH_INVALID',
-        '無法調整側欄寬度',
-        '指定的側欄寬度超出支援範圍。',
-      );
+      throw createValidationError('SIDEBAR_WIDTH_INVALID');
     }
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-sidebar-width',
         code: 'SIDEBAR_WIDTH_UPDATE_FAILED',
-        title: '無法調整側欄寬度',
-        message: '目前無法調整側欄寬度，請稍後再試。',
       },
       () => {
         updateConfig({ sidebarWidth: width });
@@ -255,8 +221,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-capture-device',
         code: 'CAPTURE_DEVICE_READ_FAILED',
-        title: '無法讀取擷取裝置',
-        message: '目前無法讀取擷取裝置設定。',
       },
       () => getConfig().captureDeviceId,
     ),
@@ -269,19 +233,13 @@ function registerConfigHandlers({
         deviceId.length === 0 ||
         deviceId.length > CAPTURE_DEVICE_ID_MAX_LENGTH)
     ) {
-      throw createValidationError(
-        'CAPTURE_DEVICE_INVALID',
-        '無法套用擷取裝置',
-        '指定的擷取裝置識別值無效。',
-      );
+      throw createValidationError('CAPTURE_DEVICE_INVALID');
     }
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-capture-device',
         code: 'CAPTURE_DEVICE_UPDATE_FAILED',
-        title: '無法套用擷取裝置',
-        message: '目前無法套用擷取裝置，請稍後再試。',
       },
       () => {
         updateConfig({ captureDeviceId: deviceId });
@@ -296,8 +254,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-audio-preferences',
         code: 'AUDIO_PREFERENCES_READ_FAILED',
-        title: '無法讀取音量設定',
-        message: '目前無法讀取音量設定。',
       },
       () => ({ ...getConfig().audioPreferences }),
     ),
@@ -307,19 +263,13 @@ function registerConfigHandlers({
     'config:set-audio-preferences',
     async (event, audioPreferences) => {
       if (!isValidAudioPreferences(audioPreferences)) {
-        throw createValidationError(
-          'AUDIO_PREFERENCES_INVALID',
-          '無法保存音量設定',
-          '指定的音量設定超出支援範圍。',
-        );
+        throw createValidationError('AUDIO_PREFERENCES_INVALID');
       }
       return runConfigOperation(
         {
           recordDiagnostic,
           operation: 'set-audio-preferences',
           code: 'AUDIO_PREFERENCES_UPDATE_FAILED',
-          title: '無法保存音量設定',
-          message: '目前無法保存音量設定，請稍後再試。',
         },
         () => {
           updateConfig({ audioPreferences });
@@ -335,8 +285,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-auto-music-analysis',
         code: 'AUTO_MUSIC_ANALYSIS_READ_FAILED',
-        title: '無法讀取自動分析設定',
-        message: '目前無法讀取自動分析設定。',
       },
       () => getConfig().autoAnalyzeMusicStructure,
     ),
@@ -344,19 +292,13 @@ function registerConfigHandlers({
 
   ipcMain.handle('config:set-auto-music-analysis', async (event, enabled) => {
     if (typeof enabled !== 'boolean') {
-      throw createValidationError(
-        'AUTO_MUSIC_ANALYSIS_INVALID',
-        '無法套用自動分析設定',
-        '指定的自動分析設定無效。',
-      );
+      throw createValidationError('AUTO_MUSIC_ANALYSIS_INVALID');
     }
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-auto-music-analysis',
         code: 'AUTO_MUSIC_ANALYSIS_UPDATE_FAILED',
-        title: '無法套用自動分析設定',
-        message: '目前無法套用自動分析設定，請稍後再試。',
       },
       () => {
         updateConfig({ autoAnalyzeMusicStructure: enabled });
@@ -371,8 +313,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-youtube-browser-cookies',
         code: 'YOUTUBE_BROWSER_COOKIES_READ_FAILED',
-        title: '無法讀取登入資料設定',
-        message: '目前無法讀取瀏覽器登入資料設定。',
       },
       () => getConfig().youtubeBrowserCookies,
     ),
@@ -382,19 +322,13 @@ function registerConfigHandlers({
     'config:set-youtube-browser-cookies',
     async (event, enabled) => {
       if (typeof enabled !== 'boolean') {
-        throw createValidationError(
-          'YOUTUBE_BROWSER_COOKIES_INVALID',
-          '無法套用登入資料設定',
-          '指定的瀏覽器登入資料設定無效。',
-        );
+        throw createValidationError('YOUTUBE_BROWSER_COOKIES_INVALID');
       }
       return runConfigOperation(
         {
           recordDiagnostic,
           operation: 'set-youtube-browser-cookies',
           code: 'YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED',
-          title: '無法套用登入資料設定',
-          message: '目前無法套用瀏覽器登入資料設定，請稍後再試。',
         },
         () => {
           updateConfig({ youtubeBrowserCookies: enabled });
@@ -410,8 +344,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-auto-error-reporting',
         code: 'AUTO_ERROR_REPORTING_READ_FAILED',
-        title: '無法讀取自動回報設定',
-        message: '目前無法讀取錯誤自動回報設定。',
       },
       () => getConfig().autoErrorReporting,
     ),
@@ -419,19 +351,13 @@ function registerConfigHandlers({
 
   ipcMain.handle('config:set-auto-error-reporting', async (event, value) => {
     if (!AUTO_ERROR_REPORTING_VALUES.has(value)) {
-      throw createValidationError(
-        'AUTO_ERROR_REPORTING_INVALID',
-        '無法套用自動回報設定',
-        '指定的錯誤自動回報設定無效。',
-      );
+      throw createValidationError('AUTO_ERROR_REPORTING_INVALID');
     }
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-auto-error-reporting',
         code: 'AUTO_ERROR_REPORTING_UPDATE_FAILED',
-        title: '無法套用自動回報設定',
-        message: '目前無法套用錯誤自動回報設定，請稍後再試。',
       },
       () => {
         updateConfig({ autoErrorReporting: value });
@@ -446,8 +372,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-separation-gpu-acceleration',
         code: 'SEPARATION_GPU_ACCELERATION_READ_FAILED',
-        title: '無法讀取 GPU 加速設定',
-        message: '目前無法讀取 GPU 加速設定。',
       },
       () => getConfig().separationGpuAcceleration,
     ),
@@ -457,19 +381,13 @@ function registerConfigHandlers({
     'config:set-separation-gpu-acceleration',
     async (event, enabled) => {
       if (typeof enabled !== 'boolean') {
-        throw createValidationError(
-          'SEPARATION_GPU_ACCELERATION_INVALID',
-          '無法套用 GPU 加速設定',
-          '指定的 GPU 加速設定無效。',
-        );
+        throw createValidationError('SEPARATION_GPU_ACCELERATION_INVALID');
       }
       return runConfigOperation(
         {
           recordDiagnostic,
           operation: 'set-separation-gpu-acceleration',
           code: 'SEPARATION_GPU_ACCELERATION_UPDATE_FAILED',
-          title: '無法套用 GPU 加速設定',
-          message: '目前無法套用 GPU 加速設定，請稍後再試。',
         },
         () => {
           updateConfig({ separationGpuAcceleration: enabled });
@@ -485,8 +403,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-app-update-auto-check',
         code: 'APP_UPDATE_AUTO_CHECK_READ_FAILED',
-        title: '無法讀取自動檢查更新設定',
-        message: '目前無法讀取自動檢查更新設定。',
       },
       () => getConfig().autoCheckAppUpdates,
     ),
@@ -494,19 +410,13 @@ function registerConfigHandlers({
 
   ipcMain.handle('config:set-app-update-auto-check', async (event, enabled) => {
     if (typeof enabled !== 'boolean') {
-      throw createValidationError(
-        'APP_UPDATE_AUTO_CHECK_INVALID',
-        '無法套用自動檢查更新設定',
-        '指定的自動檢查更新設定無效。',
-      );
+      throw createValidationError('APP_UPDATE_AUTO_CHECK_INVALID');
     }
     return runConfigOperation(
       {
         recordDiagnostic,
         operation: 'set-app-update-auto-check',
         code: 'APP_UPDATE_AUTO_CHECK_UPDATE_FAILED',
-        title: '無法套用自動檢查更新設定',
-        message: '目前無法套用自動檢查更新設定，請稍後再試。',
       },
       () => {
         updateConfig({ autoCheckAppUpdates: enabled });
@@ -523,8 +433,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-window-close-behavior',
         code: 'WINDOW_CLOSE_BEHAVIOR_READ_FAILED',
-        title: '無法讀取關閉行為',
-        message: '目前無法讀取關閉行為。',
       },
       () => getConfig().windowCloseBehavior,
     ),
@@ -534,19 +442,13 @@ function registerConfigHandlers({
     'config:set-window-close-behavior',
     async (event, behavior) => {
       if (!isWindowCloseBehavior(behavior)) {
-        throw createValidationError(
-          'WINDOW_CLOSE_BEHAVIOR_INVALID',
-          '無法套用關閉行為',
-          '指定的關閉行為無效。',
-        );
+        throw createValidationError('WINDOW_CLOSE_BEHAVIOR_INVALID');
       }
       return runConfigOperation(
         {
           recordDiagnostic,
           operation: 'set-window-close-behavior',
           code: 'WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED',
-          title: '無法套用關閉行為',
-          message: '目前無法套用關閉行為，請稍後再試。',
         },
         () => {
           const previous = getConfig().windowCloseBehavior;
@@ -581,8 +483,6 @@ function registerConfigHandlers({
         recordDiagnostic,
         operation: 'get-announcement-seen-version',
         code: 'ANNOUNCEMENT_SEEN_VERSION_READ_FAILED',
-        title: '無法讀取公告狀態',
-        message: '目前無法讀取公告狀態。',
       },
       () => getConfig().lastSeenAnnouncementVersion,
     ),
@@ -596,19 +496,13 @@ function registerConfigHandlers({
         version.length === 0 ||
         version.length > ANNOUNCEMENT_VERSION_MAX_LENGTH
       ) {
-        throw createValidationError(
-          'ANNOUNCEMENT_SEEN_VERSION_INVALID',
-          '無法儲存公告狀態',
-          '指定的版本號無效。',
-        );
+        throw createValidationError('ANNOUNCEMENT_SEEN_VERSION_INVALID');
       }
       return runConfigOperation(
         {
           recordDiagnostic,
           operation: 'set-announcement-seen-version',
           code: 'ANNOUNCEMENT_SEEN_VERSION_UPDATE_FAILED',
-          title: '無法儲存公告狀態',
-          message: '目前無法儲存公告狀態，請稍後再試。',
         },
         () => {
           updateConfig({ lastSeenAnnouncementVersion: version });

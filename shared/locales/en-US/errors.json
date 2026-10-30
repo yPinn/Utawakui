@@ -1,0 +1,166 @@
+{
+  "ANNOUNCEMENT_SEEN_VERSION_INVALID": {
+    "title": "Could not save announcement status",
+    "message": "The version number is not valid."
+  },
+  "ANNOUNCEMENT_SEEN_VERSION_READ_FAILED": {
+    "title": "Could not read announcement status",
+    "message": "Announcement status cannot be read right now."
+  },
+  "ANNOUNCEMENT_SEEN_VERSION_UPDATE_FAILED": {
+    "title": "Could not save announcement status",
+    "message": "Announcement status cannot be saved right now. Try again later."
+  },
+  "APP_UPDATE_AUTO_CHECK_INVALID": {
+    "title": "Could not apply the automatic update check setting",
+    "message": "The automatic update check setting value is not valid."
+  },
+  "APP_UPDATE_AUTO_CHECK_READ_FAILED": {
+    "title": "Could not read the automatic update check setting",
+    "message": "The automatic update check setting cannot be read right now."
+  },
+  "APP_UPDATE_AUTO_CHECK_UPDATE_FAILED": {
+    "title": "Could not apply the automatic update check setting",
+    "message": "The automatic update check setting cannot be applied right now. Try again later."
+  },
+  "AUDIO_PREFERENCES_INVALID": {
+    "title": "Could not save volume settings",
+    "message": "The volume settings are outside the supported range."
+  },
+  "AUDIO_PREFERENCES_READ_FAILED": {
+    "title": "Could not read volume settings",
+    "message": "Volume settings cannot be read right now."
+  },
+  "AUDIO_PREFERENCES_UPDATE_FAILED": {
+    "title": "Could not save volume settings",
+    "message": "Volume settings cannot be saved right now. Try again later."
+  },
+  "AUTO_ERROR_REPORTING_INVALID": {
+    "title": "Could not apply the automatic error report setting",
+    "message": "The automatic error report setting value is not valid."
+  },
+  "AUTO_ERROR_REPORTING_READ_FAILED": {
+    "title": "Could not read the automatic error report setting",
+    "message": "The automatic error report setting cannot be read right now."
+  },
+  "AUTO_ERROR_REPORTING_UPDATE_FAILED": {
+    "title": "Could not apply the automatic error report setting",
+    "message": "The automatic error report setting cannot be applied right now. Try again later."
+  },
+  "AUTO_MUSIC_ANALYSIS_INVALID": {
+    "title": "Could not apply the automatic analysis setting",
+    "message": "The automatic analysis setting value is not valid."
+  },
+  "AUTO_MUSIC_ANALYSIS_READ_FAILED": {
+    "title": "Could not read the automatic analysis setting",
+    "message": "The automatic analysis setting cannot be read right now."
+  },
+  "AUTO_MUSIC_ANALYSIS_UPDATE_FAILED": {
+    "title": "Could not apply the automatic analysis setting",
+    "message": "The automatic analysis setting cannot be applied right now. Try again later."
+  },
+  "CAPTURE_DEVICE_INVALID": {
+    "title": "Could not apply the capture device",
+    "message": "The capture device ID is not valid."
+  },
+  "CAPTURE_DEVICE_READ_FAILED": {
+    "title": "Could not read the capture device",
+    "message": "The capture device cannot be read right now."
+  },
+  "CAPTURE_DEVICE_UPDATE_FAILED": {
+    "title": "Could not apply the capture device",
+    "message": "The capture device cannot be applied right now. Try again later."
+  },
+  "DOWNLOAD_DIRECTORY_CHOOSE_FAILED": {
+    "title": "Could not change the download location",
+    "message": "The download location cannot be changed right now. Try again later."
+  },
+  "DOWNLOAD_DIRECTORY_OPEN_FAILED": {
+    "title": "Could not open the download location",
+    "message": "The download location cannot be opened. Check that the folder is still available."
+  },
+  "DOWNLOAD_DIRECTORY_READ_FAILED": {
+    "title": "Could not read the download location",
+    "message": "The download location cannot be read right now. Try again later."
+  },
+  "DOWNLOAD_DIRECTORY_RESET_FAILED": {
+    "title": "Could not reset the download location",
+    "message": "The download location cannot be reset right now. Try again later."
+  },
+  "OBS_ARRANGEMENT_DOCK_INVALID": {
+    "title": "Could not save the arrangement display preference",
+    "message": "The arrangement display preference value is not valid."
+  },
+  "OBS_ARRANGEMENT_DOCK_READ_FAILED": {
+    "title": "Could not read the arrangement display preference",
+    "message": "The arrangement display preference cannot be read right now."
+  },
+  "OBS_ARRANGEMENT_DOCK_UPDATE_FAILED": {
+    "title": "Could not save the arrangement display preference",
+    "message": "The arrangement display preference cannot be saved right now. Try again later."
+  },
+  "SEPARATION_GPU_ACCELERATION_INVALID": {
+    "title": "Could not apply the GPU acceleration setting",
+    "message": "The GPU acceleration setting value is not valid."
+  },
+  "SEPARATION_GPU_ACCELERATION_READ_FAILED": {
+    "title": "Could not read the GPU acceleration setting",
+    "message": "The GPU acceleration setting cannot be read right now."
+  },
+  "SEPARATION_GPU_ACCELERATION_UPDATE_FAILED": {
+    "title": "Could not apply the GPU acceleration setting",
+    "message": "The GPU acceleration setting cannot be applied right now. Try again later."
+  },
+  "SIDEBAR_WIDTH_INVALID": {
+    "title": "Could not apply the sidebar width",
+    "message": "The sidebar width is outside the supported range."
+  },
+  "SIDEBAR_WIDTH_READ_FAILED": {
+    "title": "Could not read the sidebar width",
+    "message": "The sidebar width cannot be read right now."
+  },
+  "SIDEBAR_WIDTH_UPDATE_FAILED": {
+    "title": "Could not apply the sidebar width",
+    "message": "The sidebar width cannot be applied right now. Try again later."
+  },
+  "UI_THEME_INVALID": {
+    "title": "Could not apply the theme",
+    "message": "The theme is not supported."
+  },
+  "UI_THEME_READ_FAILED": {
+    "title": "Could not read the theme",
+    "message": "The theme cannot be read right now."
+  },
+  "UI_THEME_UPDATE_FAILED": {
+    "title": "Could not apply the theme",
+    "message": "The theme cannot be applied right now. Try again later."
+  },
+  "UNKNOWN": {
+    "title": "Action not completed",
+    "message": "This action could not be completed. Try again."
+  },
+  "WINDOW_CLOSE_BEHAVIOR_INVALID": {
+    "title": "Could not apply the close behavior",
+    "message": "The close behavior value is not valid."
+  },
+  "WINDOW_CLOSE_BEHAVIOR_READ_FAILED": {
+    "title": "Could not read the close behavior",
+    "message": "The close behavior cannot be read right now."
+  },
+  "WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED": {
+    "title": "Could not apply the close behavior",
+    "message": "The close behavior cannot be applied right now. Try again later."
+  },
+  "YOUTUBE_BROWSER_COOKIES_INVALID": {
+    "title": "Could not apply the browser sign-in setting",
+    "message": "The browser sign-in setting value is not valid."
+  },
+  "YOUTUBE_BROWSER_COOKIES_READ_FAILED": {
+    "title": "Could not read the browser sign-in setting",
+    "message": "The browser sign-in setting cannot be read right now."
+  },
+  "YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED": {
+    "title": "Could not apply the browser sign-in setting",
+    "message": "The browser sign-in setting cannot be applied right now. Try again later."
+  }
+}

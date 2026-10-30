@@ -1,0 +1,67 @@
+{
+  "title": "Utawakui version",
+  "description": "Updates can be checked automatically; downloading and installing need your confirmation.",
+  "autoCheck": "Check automatically",
+  "autoCheckLabel": "Check for updates automatically",
+  "currentWithStatus": "v{version} · {status}",
+  "phase": {
+    "idle": "Not checked yet",
+    "checking": "Checking for updates",
+    "availableVersion": "v{version} available to download",
+    "availableUnknown": "New version available to download",
+    "latest": "Up to date",
+    "downloadedVersion": "v{version} downloaded",
+    "downloadedUnknown": "New version downloaded",
+    "failed": "Update failed. Try again.",
+    "unsupported": "Development builds don't update automatically",
+    "infoUnavailable": "Version information unavailable"
+  },
+  "status": {
+    "idle": "Idle",
+    "checking": "Checking",
+    "available": "Update available",
+    "latest": "Latest",
+    "downloading": "Downloading",
+    "installable": "Ready to install",
+    "retry": "Retry needed",
+    "packagedOnly": "Release builds only",
+    "unreadable": "Unavailable"
+  },
+  "progress": {
+    "percent": "Downloading {percent}%",
+    "eta": {
+      "seconds": "About {count} second left | About {count} seconds left",
+      "minutes": "About {count} minute left | About {count} minutes left",
+      "hours": "About {count} hour left | About {count} hours left"
+    },
+    "unknown": "Downloading"
+  },
+  "action": {
+    "download": "Download",
+    "install": "Restart and install",
+    "check": "Check for updates",
+    "downloadTitle": "Download Utawakui",
+    "installTitle": "Restart and install Utawakui",
+    "checkTitle": "Check for Utawakui updates",
+    "packagedOnly": "Available in the installed release only"
+  },
+  "reloadInfo": "Reload version information",
+  "autoCheckUnconfirmed": "Loading; the automatic check setting is not confirmed yet.",
+  "reloadAutoCheck": "Reload the automatic check setting",
+  "reloadStatus": "Reload update status",
+  "autoCheckReadFailed": "The automatic check setting could not be read. Reload it.",
+  "autoCheckSaveFailed": "The automatic check setting was not saved and has been restored.",
+  "notify": {
+    "downloading": "Downloading Utawakui update",
+    "downloadFailed": "Update download not completed",
+    "downloadFailedMessage": "Check your network connection and try again.",
+    "retryDownload": "Retry download",
+    "downloaded": "Update downloaded and ready to install",
+    "downloadedMessage": "Installing restarts Utawakui, so pick a good moment.",
+    "viewUpdate": "View update",
+    "failedTitle": "Update failed"
+  },
+  "statusReadFailedRestart": "Update status could not be read. Restart and try again.",
+  "statusReadFailed": "Update status could not be read. Reload it.",
+  "restartRequired": "Restart Utawakui and try again."
+}

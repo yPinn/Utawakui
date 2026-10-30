@@ -6,6 +6,7 @@ import {
   MAX_DESCRIPTION_LENGTH,
   MAX_TRACK_LABEL_LENGTH,
 } from '../constants/feedback.js';
+import { t } from '../utils/i18n.js';
 
 // Module-level singleton (same shape as usePersistentDiagnostics.js) so any
 // entry point in the app — an error notice's action, a Settings row — can
@@ -35,9 +36,9 @@ function bridgeMethod(name) {
 
 function failureNotice({
   title,
-  message = '請稍後再試一次。',
+  message = t('feedback.failure.defaultMessage'),
   operation,
-  actionLabel = '重試',
+  actionLabel = t('feedback.failure.retry'),
 }) {
   return normalizeAppError(null, {
     code: `FEEDBACK_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
@@ -77,9 +78,15 @@ function resetDraft({ kind, errorRecord, description, trackLabel } = {}) {
     typeof description === 'string'
       ? description
       : errorRecord
-        ? `發生問題：${errorRecord.title || ''}${
-            errorRecord.message ? ` — ${errorRecord.message}` : ''
-          }\n\n`
+        ? `${t(
+            errorRecord.message
+              ? 'feedback.prefillWithMessage'
+              : 'feedback.prefill',
+            {
+              title: errorRecord.title || '',
+              message: errorRecord.message,
+            },
+          )}\n\n`
         : '',
     MAX_DESCRIPTION_LENGTH,
   );
@@ -125,7 +132,7 @@ function updateDraft(patch) {
   if (state.validationAttempt)
     state.descriptionError = state.description.trim()
       ? ''
-      : '簡短描述你遇到的狀況，才能繼續預覽。';
+      : t('feedback.descriptionRequired');
   state.previewPayload = null;
   if (patch.kind) {
     state.includeDiagnostics = DIAGNOSTICS_DEFAULT_BY_KIND[patch.kind] ?? false;
@@ -141,8 +148,8 @@ function returnToComposeForExpiredPreview() {
   state.step = 'compose';
   state.previewPayload = null;
   state.notice = failureNotice({
-    title: '預覽已逾時',
-    message: '請重新建立預覽後再送出。',
+    title: t('feedback.failure.expiredTitle'),
+    message: t('feedback.failure.expiredMessage'),
     actionLabel: '',
     operation: 'preview',
   });
@@ -163,7 +170,7 @@ async function goToPreview() {
   state.validationAttempt += 1;
   state.descriptionError = state.description.trim()
     ? ''
-    : '簡短描述你遇到的狀況，才能繼續預覽。';
+    : t('feedback.descriptionRequired');
   if (state.descriptionError) {
     state.notice = null;
     return false;
@@ -172,9 +179,9 @@ async function goToPreview() {
   const buildPreview = bridgeMethod('buildFeedbackPreview');
   if (!buildPreview) {
     state.notice = failureNotice({
-      title: '需要重新啟動',
+      title: t('feedback.failure.restartTitle'),
       actionLabel: '',
-      message: '重新啟動後即可送出回饋。',
+      message: t('feedback.failure.restartMessage'),
       operation: 'preview',
     });
     return false;
@@ -193,7 +200,7 @@ async function goToPreview() {
   } catch {
     if (current !== requestRevision) return false;
     state.notice = failureNotice({
-      title: '無法建立預覽',
+      title: t('feedback.failure.previewFailed'),
       operation: 'preview',
     });
     return false;
@@ -213,7 +220,7 @@ async function submitReport() {
   const submit = bridgeMethod('submitFeedback');
   if (!submit) {
     state.notice = failureNotice({
-      title: '需要重新啟動',
+      title: t('feedback.failure.restartTitle'),
       actionLabel: '',
       operation: 'submit',
     });
@@ -233,13 +240,13 @@ async function submitReport() {
     if (!result?.ok) {
       const message =
         result?.errorCode === 'FEEDBACK_RATE_LIMITED'
-          ? '這台電腦短時間內送出太多次，請稍後再試。'
-          : '目前無法送出，你可以改成另存成檔案自行傳給開發者。';
+          ? t('feedback.failure.rateLimited')
+          : t('feedback.failure.submitUnavailable');
       state.notice = failureNotice({
-        title: '送出失敗',
+        title: t('feedback.failure.submitFailed'),
         message,
         operation: 'submit',
-        actionLabel: '另存檔案',
+        actionLabel: t('feedback.saveFile'),
       });
       return false;
     }
@@ -249,10 +256,10 @@ async function submitReport() {
   } catch {
     if (current !== requestRevision) return false;
     state.notice = failureNotice({
-      title: '送出失敗',
-      message: '目前無法送出，你可以改成另存成檔案自行傳給開發者。',
+      title: t('feedback.failure.submitFailed'),
+      message: t('feedback.failure.submitUnavailable'),
       operation: 'submit',
-      actionLabel: '另存檔案',
+      actionLabel: t('feedback.saveFile'),
     });
     return false;
   } finally {
@@ -265,7 +272,7 @@ async function exportFallback() {
   const exportFn = bridgeMethod('exportFeedbackFallback');
   if (!exportFn) {
     state.notice = failureNotice({
-      title: '無法另存檔案',
+      title: t('feedback.failure.exportFailed'),
       operation: 'export-fallback',
     });
     return false;
@@ -292,8 +299,8 @@ async function exportFallback() {
     state.notice = normalizeAppError(null, {
       code: 'FEEDBACK_EXPORTED',
       severity: 'success',
-      title: '已另存檔案',
-      message: '檔案已儲存，尚未傳送；請自行將檔案傳給開發者。',
+      title: t('feedback.failure.exportedTitle'),
+      message: t('feedback.failure.exportedMessage'),
       source: 'feedback',
       operation: 'export-fallback',
     });
@@ -301,7 +308,7 @@ async function exportFallback() {
   } catch {
     if (current !== requestRevision) return false;
     state.notice = failureNotice({
-      title: '無法另存檔案',
+      title: t('feedback.failure.exportFailed'),
       operation: 'export-fallback',
     });
     return false;

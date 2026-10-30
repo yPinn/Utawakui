@@ -22,13 +22,24 @@ registerLocaleFallbacker(fallbackWithLocaleChain);
 let context = null;
 
 // Created on first use, after main has resolved the launch locale.
-function t(key, named = {}) {
+function coreContext() {
   context ??= createCoreContext({
     locale: getUiLocale(),
     fallbackLocale,
     messages: readLocaleCatalogs(),
   });
-  return translate(context, key, named);
+  return context;
 }
 
-module.exports = { t };
+function t(key, named = {}) {
+  return translate(coreContext(), key, named);
+}
+
+function hasMessage(key) {
+  const { messages } = coreContext();
+  return [getUiLocale(), fallbackLocale].some(
+    (locale) => typeof resolveValue(messages[locale] ?? {}, key) === 'string',
+  );
+}
+
+module.exports = { hasMessage, t };

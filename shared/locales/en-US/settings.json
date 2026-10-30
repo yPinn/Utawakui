@@ -1,0 +1,52 @@
+{
+  "sections": {
+    "application": "Application",
+    "support": "Support and maintenance"
+  },
+  "reading": "Loading",
+  "reload": "Reload",
+  "notLoaded": "Not loaded",
+  "unconfirmed": "Loading; the saved setting is not confirmed yet.",
+  "background": {
+    "title": "When the main window closes",
+    "guidance": "Running in the background keeps playback, OBS and output; minimizing keeps it on the taskbar.",
+    "label": "Behavior when the main window closes",
+    "ask": "Ask every time",
+    "tray": "Run in the system tray",
+    "quit": "Quit"
+  },
+  "support": {
+    "clearTitle": "Clear error log?",
+    "clearMessage": "The saved error log will be cleared.",
+    "clearDetail": "This cannot be undone.",
+    "clearConfirm": "Clear log",
+    "announcements": "Release announcements",
+    "viewAnnouncements": "View release announcements",
+    "discord": "Community Discord",
+    "discordGuidance": "Announcements, discussion and developer contact.",
+    "openDiscord": "Open community Discord"
+  },
+  "diagnostics": {
+    "title": "Error log",
+    "unconfirmed": "Recent entries not confirmed",
+    "recent": "{count} recent error | {count} recent errors",
+    "none": "No recent errors",
+    "guidance": "Troubleshoot playback, import and audio processing.",
+    "export": "Export error log",
+    "options": "Error log options",
+    "openFolder": "Open folder",
+    "clear": "Clear log"
+  },
+  "autoReport": {
+    "title": "Critical error reports",
+    "guidance": "When the app hits a critical error, send the error type and code location to the developer; never your library, lyrics or file paths.",
+    "ask": "Ask every time",
+    "always": "Send automatically",
+    "never": "Don't send"
+  },
+  "feedback": {
+    "title": "Feedback and suggestions",
+    "guidance": "Report problems with the app, songs or lyrics sources, or suggest ideas.",
+    "open": "Open feedback and suggestions"
+  }
+}

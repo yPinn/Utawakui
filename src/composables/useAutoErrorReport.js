@@ -4,6 +4,7 @@ import { formatFeedbackReportReference } from '../../shared/feedbackReference.mj
 import { useAppNotifications } from './useAppNotifications.js';
 import { useFeedbackReport } from './useFeedbackReport.js';
 import { useSettingsPreference } from './useSettingsPreference.js';
+import { t } from '../utils/i18n.js';
 
 // Module singleton: main raises at most one pending severe-error report.
 const state = reactive({ prompt: null, busy: false });
@@ -18,16 +19,16 @@ function notifySent({ reportId } = {}) {
   const reference = formatFeedbackReportReference(reportId);
   useAppNotifications().notify({
     key: NOTIFICATION_KEYS.AUTO_ERROR_REPORT,
-    title: '已自動回報錯誤',
-    message: `回報碼 ${reference}`,
+    title: t('autoReport.sentTitle'),
+    message: t('autoReport.sentMessage', { reference }),
     // The report code appears nowhere else, so it must not time out.
     lifecycle: 'persistent',
     // One follow-up path for prompted and automatic sends alike.
-    actionLabel: '補充說明',
+    actionLabel: t('autoReport.addDetails'),
     action: () =>
       useFeedbackReport().openReport({
         kind: 'bug',
-        description: `補充自動回報（回報碼 ${reference}）：\n`,
+        description: `${t('autoReport.followUpPrefill', { reference })}\n`,
       }),
   });
 }
@@ -80,8 +81,8 @@ export function useAutoErrorReportingSetting(options = {}) {
     read: () => api.getAutoErrorReporting(),
     write: (value) => api.setAutoErrorReporting(value),
     validate: (value) => ['ask', 'always', 'never'].includes(value),
-    readMessage: '目前無法讀取自動回報設定，請重新讀取。',
-    saveMessage: '目前無法儲存自動回報設定，已恢復原設定。',
+    readMessage: t('autoReport.readFailed'),
+    saveMessage: t('autoReport.saveFailed'),
   });
   return {
     reporting: preference.value,

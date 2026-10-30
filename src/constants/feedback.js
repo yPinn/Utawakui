@@ -3,6 +3,9 @@
 // featureGates.js and electron/lib/featureGates.js each hold their own copy
 // of enum-like values), so this list and the length bounds below must be
 // kept in sync by hand if either side changes.
+
+import { t } from '../utils/i18n.js';
+
 export const FEEDBACK_KINDS = Object.freeze({
   BUG: 'bug',
   FEATURE: 'feature',
@@ -11,10 +14,10 @@ export const FEEDBACK_KINDS = Object.freeze({
 });
 
 export const FEEDBACK_KIND_OPTIONS = Object.freeze([
-  { value: FEEDBACK_KINDS.BUG, label: '錯誤回報' },
-  { value: FEEDBACK_KINDS.FEATURE, label: '功能請求' },
-  { value: FEEDBACK_KINDS.EXPERIENCE, label: '使用體驗意見' },
-  { value: FEEDBACK_KINDS.CONTENT, label: '內容／歌詞來源問題' },
+  { value: FEEDBACK_KINDS.BUG, label: t('feedback.kinds.bug') },
+  { value: FEEDBACK_KINDS.FEATURE, label: t('feedback.kinds.feature') },
+  { value: FEEDBACK_KINDS.EXPERIENCE, label: t('feedback.kinds.experience') },
+  { value: FEEDBACK_KINDS.CONTENT, label: t('feedback.kinds.content') },
 ]);
 
 // Only a bug report has an exception to point at; the other kinds have no

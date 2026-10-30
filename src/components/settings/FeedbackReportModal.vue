@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Self-contained like CaptureDeviceModal.vue: this modal owns its own
 // composable rather than SettingsView.vue passing every field down as
 // props, since useFeedbackReport() is a module singleton any entry point
@@ -90,10 +91,10 @@ function kindLabel(kind) {
 }
 
 const DESCRIPTION_PLACEHOLDER_BY_KIND = {
-  [FEEDBACK_KINDS.BUG]: '描述你原本想做什麼，以及實際發生的情況。',
-  [FEEDBACK_KINDS.FEATURE]: '描述想要的功能，以及它能解決的問題。',
-  [FEEDBACK_KINDS.EXPERIENCE]: '哪個部分不順手？也歡迎分享其他想法。',
-  [FEEDBACK_KINDS.CONTENT]: '這首歌或這個歌詞來源有什麼問題？',
+  [FEEDBACK_KINDS.BUG]: t('feedback.prompts.bug'),
+  [FEEDBACK_KINDS.FEATURE]: t('feedback.prompts.feature'),
+  [FEEDBACK_KINDS.EXPERIENCE]: t('feedback.prompts.experience'),
+  [FEEDBACK_KINDS.CONTENT]: t('feedback.prompts.content'),
 };
 
 const descriptionPlaceholder = computed(
@@ -106,7 +107,7 @@ const descriptionPlaceholder = computed(
 <template>
   <UiModal
     :open="state.open"
-    title="回報與建議"
+    :title="t('feedback.title')"
     size="notice"
     max-block-size="small"
     @close="closeReport"
@@ -117,38 +118,40 @@ const descriptionPlaceholder = computed(
         variant="accent"
         :loading="state.isLoading"
         @click="goToPreview"
-        >預覽</UiButton
+        >{{ t('feedback.preview') }}</UiButton
       >
       <template v-else-if="state.step === 'preview'">
         <UiIconButton
           :icon="ArrowLeft"
-          label="返回編輯"
+          :label="t('feedback.backToEdit')"
           :disabled="state.isLoading"
           @click="backToCompose"
         />
         <UiIconButton
           :icon="Download"
-          label="另存檔案"
+          :label="t('feedback.saveFile')"
           :disabled="state.isLoading"
           @click="exportFallback"
         />
         <UiButton
           variant="accent"
-          aria-label="送出回饋"
+          :aria-label="t('feedback.submitLabel')"
           :loading="state.isLoading"
           @click="submitReport"
-          >送出</UiButton
+          >{{ t('feedback.submit') }}</UiButton
         >
       </template>
     </template>
     <div class="feedback-report">
       <template v-if="state.step === 'compose'">
-        <p class="feedback-report__intro">填寫問題或建議，預覽確認後再送出。</p>
+        <p class="feedback-report__intro">
+          {{ t('feedback.composeIntro') }}
+        </p>
 
         <UiSelect
           id="feedback-kind"
           :disabled="state.isLoading"
-          label="類別"
+          :label="t('feedback.kind')"
           :model-value="state.kind"
           :options="FEEDBACK_KIND_OPTIONS"
           @update:model-value="(value) => updateDraft({ kind: value })"
@@ -159,7 +162,7 @@ const descriptionPlaceholder = computed(
           ref="descriptionField"
           :disabled="state.isLoading"
           :error="state.descriptionError"
-          label="說明"
+          :label="t('feedback.description')"
           :model-value="state.description"
           :maxlength="MAX_DESCRIPTION_LENGTH"
           :rows="4"
@@ -172,10 +175,10 @@ const descriptionPlaceholder = computed(
           v-if="state.kind === FEEDBACK_KINDS.CONTENT"
           id="feedback-track-label"
           :disabled="state.isLoading"
-          label="歌曲資訊（選填）"
+          :label="t('feedback.track')"
           :model-value="state.trackLabel"
           :maxlength="MAX_TRACK_LABEL_LENGTH"
-          placeholder="歌手 - 歌名"
+          :placeholder="t('feedback.trackPlaceholder')"
           @update:model-value="(value) => updateDraft({ trackLabel: value })"
         />
 
@@ -183,7 +186,7 @@ const descriptionPlaceholder = computed(
           v-if="DIAGNOSTICS_ALLOWED_KINDS.has(state.kind)"
           id="feedback-include-diagnostics"
           :disabled="state.isLoading"
-          label="附上最近的錯誤紀錄"
+          :label="t('feedback.attachDiagnostics')"
           :model-value="state.includeDiagnostics"
           @update:model-value="
             (value) => updateDraft({ includeDiagnostics: value })
@@ -193,11 +196,11 @@ const descriptionPlaceholder = computed(
         <UiTextField
           id="feedback-contact"
           :disabled="state.isLoading"
-          label="聯絡方式（選填）"
+          :label="t('feedback.contact')"
           :model-value="state.contact"
           :maxlength="MAX_CONTACT_LENGTH"
-          hint="需要回覆時使用，例如 Discord 帳號或 Email。"
-          placeholder="可留空"
+          :hint="t('feedback.contactHint')"
+          :placeholder="t('feedback.contactPlaceholder')"
           @update:model-value="(value) => updateDraft({ contact: value })"
         />
 
@@ -205,20 +208,20 @@ const descriptionPlaceholder = computed(
       </template>
 
       <template v-else-if="state.step === 'preview'">
-        <p class="feedback-report__intro">確認以下內容後送出。</p>
+        <p class="feedback-report__intro">{{ t('feedback.previewIntro') }}</p>
 
         <dl
           ref="previewSummary"
           class="feedback-report__summary"
           tabindex="-1"
-          aria-label="回報內容預覽"
+          :aria-label="t('feedback.previewLabel')"
         >
           <div class="feedback-report__row">
-            <dt>類別</dt>
+            <dt>{{ t('feedback.kind') }}</dt>
             <dd>{{ kindLabel(state.previewPayload?.kind) }}</dd>
           </div>
           <div class="feedback-report__row">
-            <dt>說明</dt>
+            <dt>{{ t('feedback.description') }}</dt>
             <dd class="feedback-report__description">
               {{ state.previewPayload?.description }}
             </dd>
@@ -227,42 +230,53 @@ const descriptionPlaceholder = computed(
             v-if="state.previewPayload?.trackLabel"
             class="feedback-report__row"
           >
-            <dt>歌曲資訊</dt>
+            <dt>{{ t('feedback.trackHeading') }}</dt>
             <dd>{{ state.previewPayload.trackLabel }}</dd>
           </div>
           <div
             v-if="state.previewPayload?.contact"
             class="feedback-report__row"
           >
-            <dt>聯絡方式</dt>
+            <dt>{{ t('feedback.contactHeading') }}</dt>
             <dd>{{ state.previewPayload.contact }}</dd>
           </div>
           <div class="feedback-report__row">
-            <dt>環境資訊</dt>
+            <dt>{{ t('feedback.environment') }}</dt>
             <dd>
-              App {{ state.previewPayload?.environment?.appVersion }}・
-              {{ state.previewPayload?.environment?.platform }}
+              {{
+                t('feedback.environmentValue', {
+                  version: state.previewPayload?.environment?.appVersion,
+                  platform: state.previewPayload?.environment?.platform,
+                })
+              }}
             </dd>
           </div>
           <div
             v-if="state.previewPayload?.diagnostics"
             class="feedback-report__row"
           >
-            <dt>錯誤紀錄</dt>
+            <dt>{{ t('feedback.diagnosticsHeading') }}</dt>
             <dd>
-              已附上最近
-              {{ state.previewPayload.diagnostics.eventCount }}
-              筆事件記錄
+              {{
+                t(
+                  'feedback.diagnosticsAttached',
+                  { count: state.previewPayload.diagnostics.eventCount },
+                  state.previewPayload.diagnostics.eventCount,
+                )
+              }}
               <UiDisclosure
                 v-if="diagnosticsSummary.length"
                 class="feedback-report__events"
-                label="查看內容"
+                :label="t('feedback.viewDetails')"
               >
                 <ol class="feedback-report__event-list">
                   <li v-for="row in diagnosticsSummary" :key="row.key">
-                    <span class="feedback-report__event-meta"
-                      >{{ row.time }}・{{ row.level }}</span
-                    >
+                    <span class="feedback-report__event-meta">{{
+                      t('feedback.eventMeta', {
+                        time: row.time,
+                        level: row.level,
+                      })
+                    }}</span>
                     {{ row.message }}
                   </li>
                 </ol>
@@ -274,17 +288,17 @@ const descriptionPlaceholder = computed(
         <UiNotice v-if="state.notice" :notice="visibleNotice" compact />
         <div class="feedback-report__fallback">
           <p class="feedback-report__intro">
-            無法送出時可另存檔案；另存不會自動傳送，仍需自行傳給開發者。
+            {{ t('feedback.fallbackIntro') }}
           </p>
         </div>
       </template>
 
       <template v-else-if="state.step === 'result'">
         <p ref="resultMessage" class="feedback-report__intro" tabindex="-1">
-          回饋已送出，謝謝！
+          {{ t('feedback.sent') }}
         </p>
         <p v-if="reportReference" class="feedback-report__report-id">
-          回報碼：{{ reportReference }}
+          {{ t('feedback.reportCode', { reference: reportReference }) }}
         </p>
       </template>
     </div>

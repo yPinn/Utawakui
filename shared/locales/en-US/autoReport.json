@@ -1,0 +1,16 @@
+{
+  "title": "A critical error occurred",
+  "lead": "{error}. Report it to the developer?",
+  "leadRepeated": "{error} ({count} times). Report it to the developer?",
+  "scope": "Only the error type, location and version are sent, never your library, lyrics or files. You can change this in Settings.",
+  "viewDetails": "View details",
+  "never": "Don't send",
+  "once": "Send",
+  "always": "Always send",
+  "sentTitle": "Error reported automatically",
+  "sentMessage": "Report code {reference}",
+  "addDetails": "Add details",
+  "followUpPrefill": "Follow-up to automatic report (report code {reference}):",
+  "readFailed": "The automatic report setting could not be read. Reload it.",
+  "saveFailed": "The automatic report setting could not be saved and has been restored."
+}
