@@ -41,9 +41,16 @@ describe('runDiagnosticIpcOperation', () => {
       operation: 'prepare',
       code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
       message: 'Feature dependency preparation failed',
+      correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
       error: privateError,
-      context: { dependencyId: 'ffmpeg-gyan-essentials' },
+      context: {
+        dependencyId: 'ffmpeg-gyan-essentials',
+        durationMs: expect.any(Number),
+      },
     });
+    const event = recordDiagnostic.mock.calls[0][0];
+    expect(event.context.durationMs).toBeGreaterThanOrEqual(0);
+    expect(thrown.context.correlationId).toBe(event.correlationId);
     expect(thrown.message).toContain(APP_ERROR_PREFIX);
     expect(thrown.message).toContain('無法準備這個項目');
     expect(thrown.message).toContain('"diagnosticRecorded":true');
@@ -71,6 +78,22 @@ describe('runDiagnosticIpcOperation', () => {
 
     expect(thrown.message).not.toContain('diagnosticRecorded');
     expect(thrown.message).not.toContain('private failure');
+    expect(thrown.context.correlationId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('issues no id and records nothing when the operation succeeds', async () => {
+    const recordDiagnostic = vi.fn();
+    await expect(
+      runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: { source: 'separation', operation: 'run', code: 'X' },
+          publicError: { code: 'X', message: '公開訊息' },
+        },
+        async () => 'done',
+      ),
+    ).resolves.toBe('done');
+    expect(recordDiagnostic).not.toHaveBeenCalled();
   });
 
   it('keeps an internal classification of the cause without serializing it', async () => {

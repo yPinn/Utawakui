@@ -47,7 +47,7 @@ function recordError(error, options = {}) {
           operation: record.operation || 'unknown',
           code: record.code,
           message: options.diagnosticMessage || 'Renderer operation failed',
-          correlationId: record.id,
+          correlationId: record.context.correlationId ?? record.id,
           context,
         }),
       ).catch(() => {});

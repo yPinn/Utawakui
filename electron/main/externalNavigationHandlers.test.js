@@ -91,7 +91,7 @@ describe('registerExternalNavigationHandlers', () => {
         operation: 'open',
         code: 'EXTERNAL_TARGET_OPEN_FAILED',
         error: privateError,
-        context: { targetId: 'vb-cable' },
+        context: { targetId: 'vb-cable', durationMs: expect.any(Number) },
       }),
     );
     expect(thrown.message).toContain('EXTERNAL_TARGET_OPEN_FAILED');

@@ -95,7 +95,7 @@ describe('registerProviderDiscoveryHandlers', () => {
         operation: 'open-youtube-music-search',
         code: 'PROVIDER_DISCOVERY_OPEN_FAILED',
         error: privateError,
-        context: { provider: 'youtube-music' },
+        context: { provider: 'youtube-music', durationMs: expect.any(Number) },
       }),
     );
     expect(thrown.message).toContain('PROVIDER_DISCOVERY_OPEN_FAILED');

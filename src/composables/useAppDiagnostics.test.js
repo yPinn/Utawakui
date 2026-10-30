@@ -108,6 +108,24 @@ describe('useAppDiagnostics', () => {
     );
   });
 
+  it('reuses the main correlation id when main did not record the failure', async () => {
+    const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
+    vi.stubGlobal('window', { Utawakui: { recordDiagnostic } });
+    const { useAppDiagnostics } = await import('./useAppDiagnostics.js');
+    const error = new Error(
+      'UTAWAKUI_APP_ERROR:{"code":"LIBRARY_LIST_FAILED","message":"請再試一次。","context":{"correlationId":"0f4c8f9e-1d2b-4c3a-9e8f-7a6b5c4d3e2f"}}',
+    );
+
+    useAppDiagnostics().recordError(error, { source: 'library' });
+
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        correlationId: '0f4c8f9e-1d2b-4c3a-9e8f-7a6b5c4d3e2f',
+        context: {},
+      }),
+    );
+  });
+
   it('stays fail-open when persistent recording throws or rejects', async () => {
     const recordDiagnostic = vi
       .fn()

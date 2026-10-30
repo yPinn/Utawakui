@@ -157,7 +157,7 @@ describe('registerFeatureGateHandlers', () => {
         operation: 'confirm',
         code: 'FEATURE_GATE_CONFIRM_FAILED',
         error: privateError,
-        context: { featureId: PROVIDER_ID },
+        context: { featureId: PROVIDER_ID, durationMs: expect.any(Number) },
       }),
     );
     expect(thrown.message).toContain('FEATURE_GATE_CONFIRM_FAILED');

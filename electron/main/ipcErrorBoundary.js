@@ -1,11 +1,16 @@
 'use strict';
 
+const { randomUUID } = require('node:crypto');
 const { createAppError } = require('../lib/appError');
 
+// Failures get one id shared by the main event and the public error, so a
+// renderer fallback record links to the same failure. Successes stay unlogged.
 async function runDiagnosticIpcOperation(options, operation) {
+  const startedAt = Date.now();
   try {
     return await operation();
   } catch (error) {
+    const correlationId = randomUUID();
     let diagnosticRecorded = false;
     try {
       diagnosticRecorded =
@@ -13,6 +18,11 @@ async function runDiagnosticIpcOperation(options, operation) {
           process: 'main',
           level: 'error',
           ...options.diagnostic,
+          correlationId,
+          context: {
+            ...(options.diagnostic?.context || {}),
+            durationMs: Date.now() - startedAt,
+          },
           error,
         })?.ok === true;
     } catch {
@@ -21,14 +31,13 @@ async function runDiagnosticIpcOperation(options, operation) {
 
     const publicContext = {
       ...(options.publicError.context || {}),
+      correlationId,
       ...(diagnosticRecorded ? { diagnosticRecorded: true } : {}),
     };
     const appError = createAppError({
       severity: 'error',
       ...options.publicError,
-      ...(Object.keys(publicContext).length > 0
-        ? { context: publicContext }
-        : {}),
+      context: publicContext,
     });
     // The public error replaces the cause, so let callers keep an internal
     // classification of it (never serialized to the renderer).

@@ -377,7 +377,10 @@ describe('feature dependency handlers', () => {
         operation: 'prepare',
         code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
         error: privateError,
-        context: { dependencyId: 'ffmpeg-gyan-essentials' },
+        context: {
+          dependencyId: 'ffmpeg-gyan-essentials',
+          durationMs: expect.any(Number),
+        },
       }),
     );
     expect(thrown.message).toContain(APP_ERROR_PREFIX);
@@ -444,7 +447,10 @@ describe('feature dependency handlers', () => {
     expect(recordDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({
         operation: 'set-ffmpeg-source',
-        context: { dependencyId: 'ffmpeg-gyan-essentials' },
+        context: {
+          dependencyId: 'ffmpeg-gyan-essentials',
+          durationMs: expect.any(Number),
+        },
       }),
     );
     expect(thrown.message).toContain(APP_ERROR_PREFIX);
