@@ -121,7 +121,7 @@
   },
   "FEATURE_GATE_UNKNOWN": {
     "title": "無法辨識功能",
-    "message": "指定的功能確認項目不存在。"
+    "message": "找不到這項功能。"
   },
   "FFMPEG_SOURCE_UPDATE_FAILED": {
     "title": "FFmpeg 來源未更新",

@@ -100,7 +100,7 @@
     "sourceLegend": "Tool source",
     "system": "FFmpeg on this computer",
     "managed": "Version managed by Utawakui",
-    "unconfirmed": "Tool settings not confirmed; select Check tools again at the top.",
+    "unconfirmed": "Tool status can't be confirmed. Select Check tools again.",
     "versionAndLicense": "Version and license information",
     "switchFailedTitle": "Couldn't switch the tool source",
     "detectRestart": "System FFmpeg can't be checked. Restart and try again.",

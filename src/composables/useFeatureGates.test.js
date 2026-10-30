@@ -169,9 +169,7 @@ describe('useFeatureGates', () => {
     await expect(gates.ensureFeatureGate(PROVIDER_ID)).resolves.toBe(false);
 
     expect(gates.state.pendingFeatureId).toBeNull();
-    expect(gates.state.error).toBe(
-      '需要重新啟動應用程式才能使用新版功能啟用確認。',
-    );
+    expect(gates.state.error).toBe('請重新啟動 Utawakui。');
   });
 
   it('rejects unknown feature ids before calling the bridge', async () => {

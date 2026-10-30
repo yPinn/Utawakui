@@ -100,7 +100,7 @@
     "sourceLegend": "工具來源",
     "system": "電腦上的 FFmpeg",
     "managed": "Utawakui 管理版本",
-    "unconfirmed": "尚未確認工具設定，請按頂部「重新檢查工具」。",
+    "unconfirmed": "無法確認工具狀態，請按「重新檢查工具」。",
     "versionAndLicense": "版本與授權資訊",
     "switchFailedTitle": "無法切換工具來源",
     "detectRestart": "無法檢查系統 FFmpeg，請重新啟動後再試。",

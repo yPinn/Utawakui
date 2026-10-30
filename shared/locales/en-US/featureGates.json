@@ -35,7 +35,7 @@
   },
   "noticeLabel": "Scope of use for {feature}",
   "access": {
-    "defaultReason": "Turn on this feature in Settings first, then return to what you were doing.",
+    "defaultReason": "Turn on this feature in Settings first.",
     "fallback": "this feature",
     "needEnable": "Turn on {feature} to continue",
     "enable": "Turn on {feature}",
@@ -43,7 +43,7 @@
   },
   "readFailed": "Couldn't read feature status",
   "readFailedMessage": "Feature status can't be read right now. Try again.",
-  "restartRequired": "Restart the app to use the updated feature confirmation.",
+  "restartRequired": "Restart Utawakui.",
   "enableFailed": "Feature not turned on",
   "enableFailedMessage": "This feature can't be turned on right now. Try again."
 }

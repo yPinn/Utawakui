@@ -121,7 +121,7 @@
   },
   "FEATURE_GATE_UNKNOWN": {
     "title": "Unknown feature",
-    "message": "That feature confirmation item doesn't exist."
+    "message": "This feature can't be found."
   },
   "FFMPEG_SOURCE_UPDATE_FAILED": {
     "title": "FFmpeg source not updated",

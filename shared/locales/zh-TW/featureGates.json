@@ -35,7 +35,7 @@
   },
   "noticeLabel": "{feature}的使用範圍說明",
   "access": {
-    "defaultReason": "請先到設定啟用這項進階功能，再回到剛才的工作流程。",
+    "defaultReason": "請先到設定啟用這項功能。",
     "fallback": "進階功能",
     "needEnable": "需要啟用{feature}",
     "enable": "啟用{feature}",
@@ -43,7 +43,7 @@
   },
   "readFailed": "功能狀態讀取失敗",
   "readFailedMessage": "目前無法讀取功能狀態，請再試一次。",
-  "restartRequired": "需要重新啟動應用程式才能使用新版功能啟用確認。",
+  "restartRequired": "請重新啟動 Utawakui。",
   "enableFailed": "功能未啟用",
   "enableFailedMessage": "目前無法啟用這項功能，請再試一次。"
 }
