@@ -35,6 +35,7 @@ const {
 const rendererEntries = require('../../../shared/rendererEntries.json');
 const { getWindowIdentity } = require('./windowIdentity');
 const { getUiLocale } = require('../../lib/uiLocale');
+const { t } = require('../../lib/i18n');
 const UI_DENSITY_COMPACT = 'compact';
 const UI_DENSITY_STANDARD = 'standard';
 const { isDev, openDevTools } = readDeveloperOptions(process.argv, {
@@ -179,13 +180,15 @@ function updateThumbar() {
 
   mainWindow.setThumbarButtons([
     {
-      tooltip: '上一首',
+      tooltip: t('shell.thumbar.previous'),
       icon: getThumbarIcon('prev', systemIsDark),
       flags: ['disabled'],
       click: () => {},
     },
     {
-      tooltip: playbackState.isPlaying ? '暫停' : '播放',
+      tooltip: t(
+        playbackState.isPlaying ? 'shell.thumbar.pause' : 'shell.thumbar.play',
+      ),
       icon: getThumbarIcon(playGlyph, systemIsDark),
       flags: playbackState.hasTrack ? [] : ['disabled'],
       click: () => {
@@ -193,7 +196,7 @@ function updateThumbar() {
       },
     },
     {
-      tooltip: '下一首',
+      tooltip: t('shell.thumbar.next'),
       icon: getThumbarIcon('next', systemIsDark),
       flags: ['disabled'],
       click: () => {},

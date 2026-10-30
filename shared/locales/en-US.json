@@ -4,5 +4,13 @@
     "performance": "Performance",
     "display": "Output",
     "settings": "Settings"
+  },
+  "shell": {
+    "thumbar": {
+      "previous": "Previous",
+      "pause": "Pause",
+      "play": "Play",
+      "next": "Next"
+    }
   }
 }

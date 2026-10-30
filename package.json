@@ -99,6 +99,7 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
+    "@intlify/core-base": "^11.4.16",
     "@napolab/texture-bridge-core": "0.15.0",
     "builder-util-runtime": "9.7.0",
     "electron-updater": "6.8.9",

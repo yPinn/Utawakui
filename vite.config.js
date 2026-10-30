@@ -35,7 +35,7 @@ module.exports = defineConfig({
     vue(),
     // Precompiles UI catalogs; production then bundles the runtime-only build.
     vueI18n({
-      include: path.resolve(__dirname, 'shared/locales/**'),
+      include: path.resolve(__dirname, 'shared/locales/*.json'),
       strictMessage: false,
     }),
     createAppIdentityPlugin(),
