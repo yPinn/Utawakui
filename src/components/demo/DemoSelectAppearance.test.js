@@ -116,8 +116,8 @@ describe('DemoSelectAppearance', () => {
         root,
         (node) => node.type === 'select' && node.props.id === id,
       )[0];
-    const filledId = 'demo-select-candidate-state-filled';
-    const numberId = 'demo-select-candidate-content-number';
+    const filledId = 'demo-select-state-filled';
+    const numberId = 'demo-select-content-number';
     expect(selectById(filledId).props.value).toBe('general');
     trigger(selectById(filledId), 'onChange', {
       target: {
@@ -134,12 +134,8 @@ describe('DemoSelectAppearance', () => {
     });
     await nextTick();
     expect(selectById(numberId).props.value).toBe(88);
-    expect(
-      selectById('demo-select-candidate-state-required').props.required,
-    ).toBe(true);
-    expect(
-      selectById('demo-select-candidate-state-disabled').props.disabled,
-    ).toBe(true);
+    expect(selectById('demo-select-state-required').props.required).toBe(true);
+    expect(selectById('demo-select-state-disabled').props.disabled).toBe(true);
     app.unmount();
   });
   it('demonstrates Hint replacement and complete ARIA relationships', () => {
@@ -149,33 +145,32 @@ describe('DemoSelectAppearance', () => {
         root,
         (node) => node.type === 'select' && node.props.id === id,
       )[0];
-    const hint = selectById('demo-select-candidate-validation-hint');
-    const invalid = selectById('demo-select-candidate-validation-error');
+    const hint = selectById('demo-select-validation-hint');
+    const invalid = selectById('demo-select-validation-error');
     expect(hint.props['aria-describedby']).toBe(
-      'select-external-note demo-select-candidate-validation-hint-hint',
+      'select-external-note demo-select-validation-hint-hint',
     );
     expect(hint.props).toMatchObject({
-      name: 'demo-select-candidate-recipe',
+      name: 'demo-select-recipe',
       autocomplete: 'off',
       'data-contract': 'native-forwarding',
     });
     expect(hint.props['aria-invalid']).toBeUndefined();
     expect(invalid.props['aria-describedby']).toBe(
-      'select-external-note demo-select-candidate-validation-error-error',
+      'select-external-note demo-select-validation-error-error',
     );
     expect(invalid.props['aria-invalid']).toBe(true);
     expect(
       findAll(
         root,
-        (node) =>
-          node.props.id === 'demo-select-candidate-validation-error-hint',
+        (node) => node.props.id === 'demo-select-validation-error-hint',
       ),
     ).toHaveLength(0);
     expect(
       findAll(
         root,
         (node) =>
-          node.props.id === 'demo-select-candidate-validation-error-error' &&
+          node.props.id === 'demo-select-validation-error-error' &&
           node.props.role === 'alert',
       ),
     ).toHaveLength(1);

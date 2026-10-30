@@ -11,7 +11,6 @@ const adoptedCheckboxSource = read('../ui/UiCheckbox.vue');
 const adoptedProgressSource = read('../ui/UiProgress.vue');
 const candidateTabsSource = read('./DemoCandidateTabs.vue');
 const candidateChipSource = read('./DemoCandidateChip.vue');
-const candidateCheckboxSource = read('./DemoCandidateCheckbox.vue');
 const formalRangeSource = read('../ui/UiRange.vue');
 const formalRangeControlSource = read('../ui/range/UiRangeControl.vue');
 const candidateMarqueeSource = read('./DemoCandidateMarqueeText.vue');
@@ -59,9 +58,6 @@ describe('Token v2 Candidate text selection contract', () => {
       '\\.demo-candidate-tabs :deep\\(\\.ui-tabs__tab\\)',
     );
     expectNoneRule(candidateChipSource, '\\.demo-candidate-chip');
-    expect(candidateCheckboxSource).toContain(
-      "import UiCheckbox from '../ui/UiCheckbox.vue';",
-    );
     expectNoneRule(
       adoptedCheckboxSource,
       '\\.ui-checkbox-field:not\\(\\.has-hidden-label\\) :deep\\(\\.ui-field__label--inline\\)',

@@ -7,7 +7,7 @@ import DemoCandidateMarqueeText from './DemoCandidateMarqueeText.vue';
 import DemoMarqueeTextAppearance from './DemoMarqueeTextAppearance.vue';
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
-const primitiveSource = readSource('./DemoMarqueeTextPrimitive.vue');
+const appearanceSource = readSource('./DemoMarqueeTextAppearance.vue');
 const candidateSource = readSource('./DemoCandidateMarqueeText.vue');
 const candidateDescriptor = parse(candidateSource).descriptor;
 const candidateFocusCss = compileStyle({
@@ -177,10 +177,10 @@ describe('DemoMarqueeTextAppearance', () => {
     expect(candidateSource).toMatch(
       /demo-candidate-marquee--selecting\s+\.demo-candidate-marquee__text[\s\S]*?animation-play-state:\s*paused;/u,
     );
-    expect(primitiveSource).toContain('data-marquee-copy="selectable"');
-    expect(primitiveSource).toContain('data-marquee-focus-owner');
-    expect(primitiveSource).toContain('data-marquee-recipe="rtl-focus-owner"');
-    expect(primitiveSource).toMatch(
+    expect(appearanceSource).toContain('data-marquee-copy="selectable"');
+    expect(appearanceSource).toContain('data-marquee-focus-owner');
+    expect(appearanceSource).toContain('data-marquee-recipe="rtl-focus-owner"');
+    expect(appearanceSource).toMatch(
       /\[data-marquee-focus-owner\]\s*\{[\s\S]*?-webkit-user-select:\s*none;[\s\S]*?user-select:\s*none;/u,
     );
   });

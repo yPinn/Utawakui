@@ -7,12 +7,8 @@ const feedbackSource = readFileSync(
   new URL('./DemoFeedback.vue', import.meta.url),
   'utf8',
 );
-const primitiveSource = readFileSync(
-  new URL('./DemoStatusIconPrimitive.vue', import.meta.url),
-  'utf8',
-);
-const candidateSource = readFileSync(
-  new URL('./DemoCandidateStatusIcon.vue', import.meta.url),
+const appearanceSource = readFileSync(
+  new URL('./DemoStatusIconAppearance.vue', import.meta.url),
   'utf8',
 );
 const reviewContract = readFileSync(
@@ -47,28 +43,23 @@ describe('DemoStatusIconAppearance', () => {
       'current',
       'gated',
     ];
-    for (const tone of tones) {
+    for (const tone of [...tones, 'text', 'highlight']) {
       expect(html).toContain(`data-status-icon-tone="${tone}"`);
     }
-    expect(candidateSource).toContain('.demo-candidate-status-icon {');
-    for (const tone of tones.filter((tone) => tone !== 'muted')) {
-      expect(candidateSource).toContain(`.demo-candidate-status-icon--${tone}`);
-    }
+    expect(appearanceSource).toContain(
+      "import UiStatusIcon from '../ui/UiStatusIcon.vue';",
+    );
+    // Candidate appears only inside the single labelled proposal specimen.
+    expect(
+      appearanceSource.match(
+        /<DemoProposalSpecimen[\s\S]*?<\/DemoProposalSpecimen>/u,
+      )?.[0],
+    ).toContain('<DemoCandidateStatusIcon');
+    expect(appearanceSource.split('<DemoCandidateStatusIcon').length).toBe(3);
+    expect(appearanceSource).not.toContain(':deep(.ui-status-icon');
     expect(html).toContain('需確認');
-    expect(html).toContain('圖示、形狀與 concise label 共同傳達狀態');
+    expect(html).toContain('圖示、形狀與 concise label');
     expect(html).not.toContain('permission denied');
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-status-icon--current[\s\S]*?var\(--ui-color-current\) 80%/u,
-    );
-  });
-  it('does not let fixture text selectors override status-icon color', () => {
-    expect(primitiveSource).toContain('class="demo-status-icon-tone__label"');
-    expect(primitiveSource).toContain('class="demo-status-icon-recipe__label"');
-    expect(primitiveSource).not.toContain('.demo-status-icon-tone > span');
-    expect(primitiveSource).not.toContain(
-      '.demo-status-icon-recipe__row > span',
-    );
-    expect(primitiveSource).not.toContain('.demo-status-icon-aria-list span');
   });
   it('distinguishes standalone meaning from decorative duplication', async () => {
     const html = await renderToString(createSSRApp(DemoStatusIconAppearance));

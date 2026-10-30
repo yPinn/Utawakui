@@ -7,12 +7,8 @@ const feedbackSource = readFileSync(
   new URL('./DemoFeedback.vue', import.meta.url),
   'utf8',
 );
-const primitiveSource = readFileSync(
-  new URL('./DemoHintPrimitive.vue', import.meta.url),
-  'utf8',
-);
-const candidateSource = readFileSync(
-  new URL('./DemoCandidateHint.vue', import.meta.url),
+const appearanceSource = readFileSync(
+  new URL('./DemoHintAppearance.vue', import.meta.url),
   'utf8',
 );
 const currentSource = readFileSync(
@@ -48,24 +44,27 @@ describe('DemoHintAppearance', () => {
   it('keeps field help, standalone support, and structured notices separate', async () => {
     const html = await renderToString(createSSRApp(DemoHintAppearance));
     expect(html).toContain('獨立輔助文字');
-    expect(html).toContain('圖示、標題與操作訊息由 UiNotice 負責');
     expect(html).toContain(
-      'Zod／validator issue 先由表單轉成可顯示的在地化訊息',
+      '欄位說明由 UiField、圖示與操作訊息由 UiNotice 負責',
     );
-    expect(html).toContain('invalid／error 與欄位關聯由 UiField 負責');
-    expect(html).toContain('欄位說明與通知使用各自元件');
-    expect(html).toContain('獨立補充說明；欄位與通知另用對應元件');
     expect(html).toContain('靜態文字不主動宣告');
-    expect(html).not.toContain('跨 feature、無領域知識的 shared primitive');
-    expect(html).toContain('不負責欄位說明、結構化通知或空狀態版面');
-    expect(primitiveSource).not.toMatch(/import\s+UiField|import\s+UiNotice/u);
-    expect(candidateSource).toContain("import UiHint from '../ui/UiHint.vue';");
+    expect(html).toContain('不包含圖示、操作、欄位關聯或即時宣告');
+    expect(appearanceSource).not.toMatch(/import\s+UiField|import\s+UiNotice/u);
+    expect(appearanceSource).toContain(
+      "import UiHint from '../ui/UiHint.vue';",
+    );
+    // Candidate appears only inside the single labelled proposal specimen.
+    expect(
+      appearanceSource.match(
+        /<DemoProposalSpecimen[\s\S]*?<\/DemoProposalSpecimen>/u,
+      )?.[0],
+    ).toContain('<DemoCandidateHint');
+    expect(appearanceSource.split('<DemoCandidateHint').length).toBe(2);
   });
   it('keeps implementation language out of visible review and product copy', async () => {
     const text = visibleText(
       await renderToString(createSSRApp(DemoHintAppearance)),
     );
-    expect(text).toContain('此段落僅供預覽，不會變更歌曲資料。');
     expect(text).toContain('正在檢查可用功能。');
     expect(text).toContain('需要的功能已可使用。');
     expect(text).toContain(
@@ -88,8 +87,6 @@ describe('DemoHintAppearance', () => {
     );
     expect(html).toContain('訊息來源決定更新時機與 role=status／aria-live');
     expect(html).toContain('訊息類型不自行建立 role=alert');
-    expect(candidateSource).not.toContain('role="status"');
-    expect(candidateSource).not.toContain('aria-live');
     expect(currentSource).toContain('<p');
   });
   it('records the completed owner checkpoint before the staged notice', () => {

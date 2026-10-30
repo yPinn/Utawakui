@@ -37,7 +37,7 @@ attachClientRender(
 );
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
-const primitiveSource = readSource('./DemoCollageThumbPrimitive.vue');
+const appearanceSource = readSource('./DemoCollageThumbAppearance.vue');
 const candidateSource = readSource('./DemoCandidateCollageThumb.vue');
 const trackArtworkSource = readSource('./DemoCandidateTrackArtwork.vue');
 const artworkEmptySource = readSource('./DemoCandidateArtworkEmpty.vue');
@@ -95,10 +95,10 @@ describe('DemoCollageThumbAppearance', () => {
   it('states collection ownership without absorbing single-track or row behavior', async () => {
     const html = await renderToString(createSSRApp(DemoCollageThumbAppearance));
     expect(html).toContain('自訂封面、單曲、四格拼貼與空集合');
-    expect(html).toContain('缺圖與壞圖共用相同的預設封面選擇');
+    expect(html).toContain('缺圖與壞圖改用預設封面');
     expect(html).toContain('選取、播放與導覽由所在區域負責');
-    expect(primitiveSource).not.toMatch(/import\s+UiTrackThumb/u);
-    expect(primitiveSource).not.toMatch(/import\s+UiTrackRow/u);
+    expect(appearanceSource).not.toMatch(/import\s+UiTrackThumb/u);
+    expect(appearanceSource).not.toMatch(/import\s+UiTrackRow/u);
     expect(candidateSource).toContain(
       "import DemoCandidateTrackArtwork from './DemoCandidateTrackArtwork.vue';",
     );
@@ -259,8 +259,8 @@ describe('DemoCollageThumbAppearance', () => {
     expect(artworkEmptySource).toContain('aria-hidden="true"');
     expect(candidateSource).not.toMatch(/cellIconSize|singleIconSize/u);
     expect(candidateSource).toContain('grid-area: 1 / 1 / -1 / -1;');
-    expect(primitiveSource).toContain('一首使用完整方形');
-    expect(primitiveSource).toContain('空格不重複顯示音符');
+    expect(appearanceSource).toContain('一首使用完整方形');
+    expect(appearanceSource).toContain('保留安靜空格');
     trackEmpty.app.unmount();
     collectionEmpty.app.unmount();
   });
@@ -350,11 +350,8 @@ describe('DemoCollageThumbAppearance', () => {
     expect(trackArtworkSource).toContain('draggable="false"');
     expect(candidateSource).not.toMatch(/tabindex|@click|@keydown/u);
   });
-  it('shows caller-owned density contexts and the approved current size snapshot', async () => {
+  it('shows the approved current size snapshot', async () => {
     const html = await renderToString(createSSRApp(DemoCollageThumbAppearance));
-    for (const density of ['standard', 'compact']) {
-      expect(html).toContain(`data-collage-density="${density}"`);
-    }
     for (const recipe of ['40', '88', '120', '136', '160', '280']) {
       expect(html).toContain(`data-collage-size="${recipe}"`);
     }
@@ -423,10 +420,6 @@ describe('DemoCollageThumbAppearance', () => {
     );
     expect(currentSource).toContain(
       'grid-template-rows: repeat(2, minmax(0, 1fr));',
-    );
-    expect(primitiveSource).toContain('class="demo-collage-thumb-count-meta"');
-    expect(primitiveSource).not.toContain(
-      '.demo-collage-thumb-count-list article > span',
     );
     expect(reviewContract).toContain('每個 2×2 member cell 都是外框邊長的一半');
   });

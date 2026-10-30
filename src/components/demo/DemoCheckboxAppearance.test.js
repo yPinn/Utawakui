@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiField from '../ui/UiField.vue';
 import { attachClientRender, findAll, mount } from '../ui/uiTestHost.js';
-import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
 import DemoCheckboxAppearance from './DemoCheckboxAppearance.vue';
 const demoInputsSource = readFileSync(
   new URL('./DemoInputs.vue', import.meta.url),
@@ -15,13 +14,12 @@ const componentSource = readFileSync(
   new URL('./DemoCheckboxAppearance.vue', import.meta.url),
   'utf8',
 );
-const candidateSource = readFileSync(
-  new URL('./DemoCandidateCheckbox.vue', import.meta.url),
+const specimenStyles = readFileSync(
+  new URL('../../styles/demoSpecimens.css', import.meta.url),
   'utf8',
 );
 for (const [component, filename] of [
   [DemoCheckboxAppearance, './DemoCheckboxAppearance.vue'],
-  [DemoCandidateCheckbox, './DemoCandidateCheckbox.vue'],
   [UiField, '../ui/UiField.vue'],
   [UiCheckbox, '../ui/UiCheckbox.vue'],
 ]) {
@@ -42,7 +40,7 @@ describe('DemoCheckboxAppearance', () => {
       '<DemoRangeAppearance v-else-if="section.key === \'range\'" />',
     );
   });
-  it('visualizes the approved 36 and 32 CSS px targets in Candidate and production', async () => {
+  it('visualizes the approved 36 and 32 CSS px targets with the formal UiCheckbox', async () => {
     const html = await renderToString(createSSRApp(DemoCheckboxAppearance));
     for (const size of ['standard', 'compact']) {
       expect(html).toContain(`data-checkbox-size="${size}"`);
@@ -52,25 +50,23 @@ describe('DemoCheckboxAppearance', () => {
     expect(html).toContain('Visual indicator · 16 CSS px');
     expect(html).toContain('Target · full label row');
     expect(html).toContain('Width · content／parent-owned');
-    expect(componentSource).toContain(
-      '.demo-checkbox-size--standard {\n  --ui-control-height: 2.25rem;',
+    expect(specimenStyles).toContain(
+      '.demo-specimens__density--standard {\n  --ui-control-height: 2.25rem;',
+    );
+    expect(specimenStyles).toContain(
+      '.demo-specimens__density--compact {\n  --ui-control-height: 2rem;',
     );
     expect(componentSource).toContain(
-      '.demo-checkbox-size--compact {\n  --ui-control-height: 2rem;',
-    );
-    expect(candidateSource).toContain(
       "import UiCheckbox from '../ui/UiCheckbox.vue';",
     );
-    expect(candidateSource).toContain('v-bind="$attrs"');
-    expect(candidateSource).not.toContain('type="checkbox"');
-    expect(candidateSource).not.toContain('<style');
+    expect(componentSource).not.toContain('DemoCandidateCheckbox');
     expect(componentSource).toContain(
       ":not(:checked):not([aria-checked='mixed'])",
     );
   });
   it('keeps an accessible square target when a compound owner hides the visible label', async () => {
     const html = await renderToString(
-      createSSRApp(DemoCandidateCheckbox, {
+      createSSRApp(UiCheckbox, {
         id: 'track-row-selection',
         label: '選取音樂分析候選',
         labelHidden: true,
@@ -88,26 +84,26 @@ describe('DemoCheckboxAppearance', () => {
     const { app, root } = mount(DemoCheckboxAppearance);
     const inputById = (id) =>
       findAll(root, (node) => node.type === 'input' && node.props.id === id)[0];
-    const hint = inputById('demo-checkbox-candidate-validation-hint');
-    const invalid = inputById('demo-checkbox-candidate-validation-error');
+    const hint = inputById('demo-checkbox-validation-hint');
+    const invalid = inputById('demo-checkbox-validation-error');
     expect(hint.props['aria-describedby']).toBe(
-      'checkbox-external-note demo-checkbox-candidate-validation-hint-hint',
+      'checkbox-external-note demo-checkbox-validation-hint-hint',
     );
     expect(hint.props).toMatchObject({
-      name: 'demo-checkbox-candidate-consent',
+      name: 'demo-checkbox-consent',
       value: 'accepted',
       'data-contract': 'native-forwarding',
     });
     expect(hint.props['aria-invalid']).toBeUndefined();
     expect(invalid.props['aria-describedby']).toBe(
-      'checkbox-external-note demo-checkbox-candidate-validation-error-error',
+      'checkbox-external-note demo-checkbox-validation-error-error',
     );
     expect(invalid.props['aria-invalid']).toBe(true);
     expect(
       findAll(
         root,
         (node) =>
-          node.props.id === 'demo-checkbox-candidate-validation-error-error' &&
+          node.props.id === 'demo-checkbox-validation-error-error' &&
           node.props.role === 'alert',
       ),
     ).toHaveLength(1);

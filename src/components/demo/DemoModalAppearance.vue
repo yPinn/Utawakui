@@ -1,94 +1,27 @@
 <script setup>
 import DemoModalLayer from './DemoModalLayer.vue';
 import DemoModalProduction from './DemoModalProduction.vue';
+import DemoProposalSpecimen from './DemoProposalSpecimen.vue';
+import '../../styles/demoSpecimens.css';
 
-const LAYERS = Object.freeze([
-  {
-    key: 'candidate',
-    title: '未採用提案 · 對話框',
-    note: '固定標題與操作列，僅內容區捲動。',
-  },
-]);
+const PROPOSAL = Object.freeze({ key: 'candidate' });
 </script>
 
 <template>
-  <div class="demo-modal-appearance">
-    <section
-      class="demo-modal-layer"
-      data-modal-source="production"
-      aria-labelledby="demo-modal-production-title"
-    >
-      <header class="demo-modal-layer__header">
-        <h4 id="demo-modal-production-title">正式 UiModal</h4>
-        <p>關閉限制與焦點恢復；下方另列未採用提案。</p>
-      </header>
+  <div class="demo-specimens" data-modal-source="production">
+    <p class="demo-specimens__copy">
+      正式 UiModal：關閉限制與焦點恢復；內容由使用畫面組成。
+    </p>
+
+    <section class="demo-specimens__section">
+      <h4>關閉、焦點與尺寸</h4>
       <DemoModalProduction />
     </section>
-    <section
-      v-for="layer in LAYERS"
-      :key="layer.key"
-      class="demo-modal-layer"
-      :class="`demo-modal-layer--${layer.key}`"
-      :data-modal-source="layer.key"
-      :aria-labelledby="`demo-modal-${layer.key}-title`"
+
+    <DemoProposalSpecimen
+      note="Small／Medium／Large 中性 shell，固定標題與操作列，只有內容區捲動；內容案例不綁定尺寸。owner 保留現行 default／notice／wide 與整面捲動。"
     >
-      <header class="demo-modal-layer__header">
-        <h4 :id="`demo-modal-${layer.key}-title`">{{ layer.title }}</h4>
-        <p>{{ layer.note }}</p>
-      </header>
-      <DemoModalLayer :layer="layer" />
-    </section>
+      <DemoModalLayer :layer="PROPOSAL" />
+    </DemoProposalSpecimen>
   </div>
 </template>
-
-<style scoped>
-.demo-modal-appearance,
-.demo-modal-layer {
-  min-inline-size: 0;
-  display: grid;
-}
-
-.demo-modal-appearance {
-  gap: var(--ui-space-6);
-}
-
-.demo-modal-layer {
-  gap: var(--ui-space-5);
-  padding-block-start: var(--ui-space-4);
-  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.demo-modal-layer__header {
-  min-inline-size: 0;
-  display: grid;
-  grid-template-columns: minmax(12rem, 0.42fr) minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--ui-space-4);
-}
-
-.demo-modal-layer__header h4,
-.demo-modal-layer__header p {
-  margin: 0;
-}
-
-.demo-modal-layer__header h4 {
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-title-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
-}
-
-.demo-modal-layer__header p {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 48rem) {
-  .demo-modal-layer__header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--ui-space-1);
-  }
-}
-</style>

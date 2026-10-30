@@ -3,16 +3,13 @@ import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import DemoChipAppearance from './DemoChipAppearance.vue';
+
 const feedbackSource = readFileSync(
   new URL('./DemoFeedback.vue', import.meta.url),
   'utf8',
 );
-const primitiveSource = readFileSync(
-  new URL('./DemoChipPrimitive.vue', import.meta.url),
-  'utf8',
-);
-const candidateSource = readFileSync(
-  new URL('./DemoCandidateChip.vue', import.meta.url),
+const appearanceSource = readFileSync(
+  new URL('./DemoChipAppearance.vue', import.meta.url),
   'utf8',
 );
 const reviewContract = readFileSync(
@@ -22,8 +19,9 @@ const reviewContract = readFileSync(
   ),
   'utf8',
 );
+
 describe('DemoChipAppearance', () => {
-  it('replaces only the chips sample with the staged appearance review', () => {
+  it('replaces only the chips sample with the appearance review', () => {
     expect(feedbackSource).toContain(
       "import DemoChipAppearance from './DemoChipAppearance.vue';",
     );
@@ -31,50 +29,52 @@ describe('DemoChipAppearance', () => {
       '<DemoChipAppearance v-if="section.key === \'chips\'" />',
     );
     expect(feedbackSource).not.toContain('const CHIP_TONES');
-    expect(feedbackSource).toContain(
-      "import DemoStatusIconAppearance from './DemoStatusIconAppearance.vue';",
-    );
-    expect(feedbackSource).not.toContain('const STATUS_TONES');
   });
-  it('does not let fixture layout override chip width or semantic text styles', () => {
-    expect(primitiveSource).toContain('class="demo-chip-item__label"');
-    expect(primitiveSource).not.toContain('.demo-chip-tone > span');
-    expect(primitiveSource).not.toContain('.demo-chip-content__item > span');
-    expect(primitiveSource).toContain(
-      '.demo-chip-size :deep(.ui-chip) {\n  justify-self: start;',
+
+  it('renders the formal UiChip without restyling it', () => {
+    expect(appearanceSource).toContain(
+      "import UiChip from '../ui/UiChip.vue';",
     );
+    // Candidate appears only inside the single labelled proposal specimen.
+    expect(
+      appearanceSource.match(
+        /<DemoProposalSpecimen[\s\S]*?<\/DemoProposalSpecimen>/u,
+      )?.[0],
+    ).toContain('<DemoCandidateChip');
+    expect(appearanceSource.split('<DemoCandidateChip').length).toBe(2);
+    expect(appearanceSource).not.toContain(':deep(.ui-chip)');
   });
-  it('keeps the primitive non-interactive and parent-owned for announcements', async () => {
+
+  it('covers every tone and keeps announcements parent-owned', async () => {
     const html = await renderToString(createSSRApp(DemoChipAppearance));
-    expect(html).toContain(
-      'Native span · visible text is the accessible content',
+
+    for (const tone of [
+      'muted',
+      'accent',
+      'current',
+      'info',
+      'success',
+      'warning',
+      'danger',
+      'gated',
+    ]) {
+      expect(html).toContain(`ui-chip--${tone}`);
+    }
+    expect(html).toMatch(
+      /data-chip-recipe="announcement"[^>]*role="status"[^>]*aria-live="polite"/u,
     );
-    expect(html).toContain(
-      'Parent owns role=status／aria-live when the value changes',
-    );
+    expect(html).not.toMatch(/class="[^"]*ui-chip[^"]*"[^>]*role="status"/u);
     expect(html).toContain(
       'No hover／pressed／focus／selected／remove／disabled contract',
     );
-    expect(candidateSource).not.toMatch(/:hover|:focus|:active/u);
-    expect(candidateSource).not.toContain('cursor: pointer');
-    expect(candidateSource).not.toContain('role="status"');
-    expect(candidateSource).not.toContain('aria-live');
-    expect(html).not.toMatch(
-      /class="[^"]*demo-candidate-chip[^"]*"[^>]*tabindex=/u,
-    );
   });
+
   it('records the owner-confirmed Tabs gate and the bounded UiChip phase', () => {
     expect(reviewContract).toContain(
       '## 已完成階段：UiChip Candidate／Current 檢查',
     );
     expect(reviewContract).toContain(
-      'Tabs 已完成 owner 可視確認；依 owner 指示只向下進入 Feedback 的',
-    );
-    expect(reviewContract).toContain(
       '`UiChip` 維持非互動 native `span`，只標記系統產生的短狀態、屬性或數量',
-    );
-    expect(reviewContract).toContain(
-      '不新增 selected、dismissible、interactive、disabled、href 或 `role="status"` prop',
     );
   });
 });

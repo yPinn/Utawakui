@@ -1,0 +1,113 @@
+/* Shared F8 specimen layout; sections own only their specimens. */
+/* Long CJK／Latin copy wraps at word boundaries; components keep their own nowrap. */
+.demo-specimens {
+  overflow-wrap: break-word;
+  word-break: normal;
+  line-break: strict;
+}
+
+.demo-specimens,
+.demo-specimens__section,
+.demo-specimens__case {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--ui-space-3);
+}
+
+.demo-specimens {
+  gap: var(--ui-space-6);
+}
+
+.demo-specimens__section + .demo-specimens__section {
+  padding-block-start: var(--ui-space-4);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.demo-specimens__grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  align-items: start;
+  gap: var(--ui-space-3);
+}
+
+.demo-specimens__case {
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+}
+
+.demo-specimens__row {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.demo-specimens h4,
+.demo-specimens h5,
+.demo-specimens p {
+  margin: 0;
+}
+
+.demo-specimens h4 {
+  font-size: var(--ui-type-title-size);
+  font-weight: var(--ui-type-title-weight);
+  line-height: var(--ui-type-title-line-height);
+}
+
+.demo-specimens h5 {
+  font-weight: var(--ui-type-label-weight);
+}
+
+.demo-specimens h5,
+.demo-specimens__copy,
+.demo-specimens output {
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+}
+
+.demo-specimens h4,
+.demo-specimens h5,
+.demo-specimens__copy {
+  max-width: 72ch;
+  text-wrap: pretty;
+}
+
+.demo-specimens__copy,
+.demo-specimens output {
+  color: var(--ui-color-text-muted);
+}
+
+.demo-specimens__contract {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  list-style: none;
+}
+
+.demo-specimens__contract li {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--ui-space-1) var(--ui-space-2);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+}
+
+/* Static density previews; the global density setting still owns production. */
+.demo-specimens__density--standard {
+  --ui-control-height: 2.25rem;
+}
+
+.demo-specimens__density--compact {
+  --ui-control-height: 2rem;
+}

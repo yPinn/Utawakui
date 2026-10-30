@@ -3,8 +3,8 @@ import { computed, shallowRef } from 'vue';
 import UiButton from '../ui/UiButton.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
-import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
-import DemoCandidateHint from './DemoCandidateHint.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiHint from '../ui/UiHint.vue';
 import DemoCandidateModal from './DemoCandidateModal.vue';
 import DemoCandidateSelect from './DemoCandidateSelect.vue';
 
@@ -161,14 +161,6 @@ function finishAction() {
     </dl>
 
     <section class="demo-modal-specimen__preview">
-      <header class="demo-modal-specimen__intro">
-        <h5>開啟尺寸標本</h5>
-        <p>
-          Neutral shell 只定義尺寸、間距與 overflow，不綁定 production
-          情境；實際內容仍由 caller 組成。
-        </p>
-      </header>
-
       <div class="demo-modal-specimen__controls">
         <div class="demo-modal-specimen__axis">
           <span class="demo-modal-specimen__axis-label">尺寸</span>
@@ -206,7 +198,7 @@ function finishAction() {
         <div class="demo-modal-specimen__axis">
           <span class="demo-modal-specimen__axis-label">結構</span>
           <div class="demo-modal-specimen__options" aria-label="Modal 標本選項">
-            <DemoCandidateCheckbox
+            <UiCheckbox
               :id="`demo-modal-${layer.key}-footer`"
               v-model="showFooter"
               label="顯示 Footer"
@@ -214,11 +206,6 @@ function finishAction() {
           </div>
         </div>
       </div>
-
-      <DemoCandidateHint class="demo-modal-specimen__caption">
-        案例只改變 caller content，不會指定 Modal size；可檢查 body-only
-        scroll、重新開啟回頂、文字選取與固定 header／footer。
-      </DemoCandidateHint>
     </section>
 
     <p class="demo-modal-specimen__result" aria-live="polite">
@@ -241,9 +228,9 @@ function finishAction() {
             選擇會套用到目前的本機顯示設定。請確認內容後再完成操作。
           </p>
 
-          <DemoCandidateHint class="demo-modal-sample__hint">
+          <UiHint class="demo-modal-sample__hint">
             短內容不應為了對齊最大高度而留下固定空間。
-          </DemoCandidateHint>
+          </UiHint>
         </template>
 
         <div
@@ -275,9 +262,7 @@ function finishAction() {
               :rows="6"
             />
           </div>
-          <DemoCandidateHint>
-            這些控制項不會送出資料；操作結果只留在元件型錄。
-          </DemoCandidateHint>
+          <UiHint> 這些控制項不會送出資料；操作結果只留在元件型錄。 </UiHint>
         </div>
 
         <article v-else class="demo-modal-case-reading">

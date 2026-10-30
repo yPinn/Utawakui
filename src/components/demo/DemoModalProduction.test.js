@@ -13,8 +13,8 @@ describe('formal modal catalogue entry', () => {
     expect(source).toContain('<DemoModalProduction');
     expect(source).toContain('data-modal-source="production"');
     expect(source.indexOf('data-modal-source="production"')).toBeLessThan(
-      source.indexOf('v-for="layer in LAYERS"'),
+      source.indexOf('<DemoProposalSpecimen'),
     );
-    expect(source).toContain('<DemoModalLayer :layer="layer"');
+    expect(source).toContain('<DemoModalLayer :layer="PROPOSAL"');
   });
 });

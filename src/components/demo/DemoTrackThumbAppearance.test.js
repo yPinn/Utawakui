@@ -31,7 +31,7 @@ attachClientRender(
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 const contentSource = readSource('./DemoContent.vue');
-const primitiveSource = readSource('./DemoTrackThumbPrimitive.vue');
+const appearanceSource = readSource('./DemoTrackThumbAppearance.vue');
 const candidateSource = readSource('./DemoCandidateTrackThumb.vue');
 const trackArtworkSource = readSource('./DemoCandidateTrackArtwork.vue');
 const tokenSource = readSource('../../styles/tokens.css');
@@ -66,11 +66,13 @@ describe('DemoTrackThumbAppearance', () => {
   });
   it('keeps single-track identity separate from collection and row ownership', async () => {
     const html = await renderToString(createSSRApp(DemoTrackThumbAppearance));
-    expect(html).toContain('單曲封面、替代圖片與載入狀態');
-    expect(html).toContain('集合封面與拼貼由 UiCollageThumb 負責');
-    expect(html).toContain('操作、播放狀態與資料列排版由所在區域負責');
-    expect(primitiveSource).not.toMatch(/import\s+UiCollageThumb/u);
-    expect(primitiveSource).not.toMatch(/import\s+UiTrackRow/u);
+    expect(html).toContain('單曲封面');
+    expect(html).toContain('集合封面由 UiCollageThumb 負責');
+    expect(appearanceSource).toContain(
+      "import UiTrackThumb from '../ui/UiTrackThumb.vue';",
+    );
+    expect(appearanceSource).not.toMatch(/import\s+UiCollageThumb/u);
+    expect(appearanceSource).not.toMatch(/import\s+UiTrackRow/u);
     expect(candidateSource).not.toMatch(/playlist|queue|player|album/iu);
     // Formal overlay primitives share this entry; the thumbnail itself keeps its name.
     expect(html).not.toMatch(
@@ -173,9 +175,8 @@ describe('DemoTrackThumbAppearance', () => {
     expect(candidateSource).toContain('<DemoCandidateArtworkEmpty />');
     expect(candidateSource).toContain('<DemoCandidateTrackArtwork');
     expect(candidateSource).toContain('<slot name="overlay" />');
-    expect(html).toContain('未使用的外觀覆寫與 overlay slot 保留相容');
     expect(html).toContain('互動操作應由外層控制項提供');
-    expect(primitiveSource).not.toMatch(
+    expect(appearanceSource).not.toMatch(
       /#overlay|v-slot:overlay|<template\s+#overlay/u,
     );
   });
@@ -216,8 +217,8 @@ describe('DemoTrackThumbAppearance', () => {
       await renderToString(createSSRApp(DemoTrackThumbAppearance)),
     );
     expect(text).toContain('有封面時顯示圖片');
-    expect(text).toContain('沒有可用封面時顯示預設圖片');
-    expect(text).toContain('封面無法顯示時改用預設圖片');
+    expect(text).toContain('沒有時以曲名首字維持位置');
+    expect(text).toContain('缺圖或載入失敗時改用固定的預設封面組');
     expect(text).toContain('封面本身不能操作');
     expect(text).not.toMatch(
       /runtime|sidecar|adapter|consumer count|hydration|Math\.random|\bhost\b|\bparent\b|\bcaller\b|\bprimitive\b|\bproduction\b|\blifecycle\b|\banatomy\b|\bwrapper\b/iu,

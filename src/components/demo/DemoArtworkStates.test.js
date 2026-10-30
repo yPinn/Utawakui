@@ -10,6 +10,6 @@ describe('formal artwork state catalogue entry', () => {
     const source = read('./DemoTrackThumbAppearance.vue');
     expect(source).toContain('data-artwork-source="production"');
     expect(source).toContain('<DemoArtworkStates');
-    expect(source).toContain('<DemoTrackThumbPrimitive :layer="layer"');
+    expect(source).toContain('<UiTrackThumb');
   });
 });

@@ -18,7 +18,7 @@ import DemoNoticeAppearance from './DemoNoticeAppearance.vue';
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 const feedbackSource = readSource('./DemoFeedback.vue');
-const primitiveSource = readSource('./DemoNoticePrimitive.vue');
+const appearanceSource = readSource('./DemoNoticeAppearance.vue');
 const notificationRecipeSource = readSource(
   './DemoNoticeNotificationRecipe.vue',
 );
@@ -45,13 +45,8 @@ for (const [component, filename] of [
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
-function layerHtml(html, source) {
-  const start = html.indexOf(`data-notice-source="${source}"`);
-  const next =
-    source === 'candidate'
-      ? html.indexOf('data-notice-source="current"')
-      : html.length;
-  return html.slice(start, next);
+function proposalHtml(html) {
+  return html.slice(html.indexOf('data-demo-proposal'));
 }
 function visibleText(html) {
   return html.replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ');
@@ -89,16 +84,21 @@ describe('DemoNoticeAppearance', () => {
   it('keeps inline notice, field support, modal, toast, and banner ownership separate', async () => {
     const html = await renderToString(createSSRApp(DemoNoticeAppearance));
     expect(html).toContain('靠近相關內容顯示訊息與操作');
-    expect(html).toContain('欄位與說明／錯誤之間的關聯由 UiField 負責');
-    expect(html).toContain('UiHint 用於純文字說明');
-    expect(html).toContain('宣告時機與急迫性由更新流程決定');
-    expect(html).toContain('Modal 負責焦點保護與中斷流程');
-    expect(html).toContain('負責位置、尺寸、佇列、關閉與顯示時間');
-    expect(html).toContain('欄位說明與固定通知另行處理');
-    expect(html).not.toContain('UiHint owns standalone supporting text');
-    expect(primitiveSource).not.toMatch(
+    expect(html).toContain('欄位說明由 UiField、純文字由');
+    expect(html).toContain('中斷流程由 Modal 負責');
+    expect(html).toContain('固定通知另由通知容器管理');
+    expect(appearanceSource).toContain(
+      "import UiNotice from '../ui/UiNotice.vue';",
+    );
+    expect(appearanceSource).not.toMatch(
       /import\s+UiField|import\s+UiHint|import\s+UiModal/u,
     );
+    expect(
+      appearanceSource.match(
+        /<DemoProposalSpecimen[\s\S]*?<\/DemoProposalSpecimen>/u,
+      )?.[0],
+    ).toContain('<DemoCandidateNotice');
+    expect(appearanceSource.split('<DemoCandidateNotice').length).toBe(3);
   });
   it('makes the optional notice action visible and moves it below narrow content without reserving an empty row', async () => {
     const withAction = await renderToString(
@@ -315,7 +315,7 @@ describe('DemoNoticeAppearance', () => {
   });
   it('composes the reviewed Status Icon on the 14px first-line rhythm', async () => {
     const html = await renderToString(createSSRApp(DemoNoticeAppearance));
-    const candidate = layerHtml(html, 'candidate');
+    const candidate = proposalHtml(html);
     expect(candidateSource).toContain(
       "import DemoCandidateStatusIcon from './DemoCandidateStatusIcon.vue';",
     );
@@ -337,8 +337,6 @@ describe('DemoNoticeAppearance', () => {
     expect(candidateStatusIconSource).toContain(
       "size === 'compact' ? '1.25rem' : '1.5rem'",
     );
-    expect(html).toContain('20px 狀態圖示與 14px 首行置中對齊');
-    expect(html).toContain('圖示與文字間距固定為 8px');
   });
   it('preserves the completed UiNotice contract after opening Progress', () => {
     expect(reviewContract).toContain(

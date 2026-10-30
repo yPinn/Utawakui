@@ -29,8 +29,7 @@ vi.stubGlobal('cancelAnimationFrame', vi.fn());
 vi.stubGlobal('document', {});
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
-const primitiveSource = readSource('./DemoTrackRowPrimitive.vue');
-const candidateCheckboxSource = readSource('./DemoCandidateCheckbox.vue');
+const appearanceSource = readSource('./DemoTrackRowAppearance.vue');
 const checkboxSource = readSource('../ui/UiCheckbox.vue');
 const candidateSource = readSource('./DemoCandidateTrackRow.vue');
 const candidateMarqueeSource = readSource('./DemoCandidateMarqueeText.vue');
@@ -63,18 +62,16 @@ describe('DemoTrackRowAppearance', () => {
     expect(candidateSource).not.toContain('Volume2');
     expect(candidateSource).not.toMatch(/from ['"]\.\.\/ui\//u);
     for (const component of [
-      'DemoCandidateCheckbox',
-      'DemoCandidateChip',
-      'DemoCandidateStatusIcon',
+      'UiTrackRow',
       'UiCheckbox',
       'UiChip',
       'UiStatusIcon',
       'UiIconButton',
     ]) {
-      expect(primitiveSource).toContain(component);
+      expect(appearanceSource).toContain(component);
     }
-    expect(primitiveSource).not.toContain('DemoCandidateIconButton');
-    expect(primitiveSource).not.toMatch(
+    expect(appearanceSource).not.toContain('DemoCandidateIconButton');
+    expect(appearanceSource).not.toMatch(
       /demo-track-row-(?:checkbox|chip|status|delete)__drawn/u,
     );
   });
@@ -105,8 +102,7 @@ describe('DemoTrackRowAppearance', () => {
     expect(action.props['aria-label']).toBe('播放群青日和');
     expect(action.props['aria-pressed']).toBeUndefined();
     expect(candidateSource).not.toContain('actionPressed');
-    expect(primitiveSource).not.toContain('selectionAction');
-    expect(primitiveSource).toContain('`播放${sample.track.title}`');
+    expect(appearanceSource).not.toContain('selectionAction');
     trigger(action, 'onClick', {
       type: 'click',
     });
@@ -247,20 +243,14 @@ describe('DemoTrackRowAppearance', () => {
   });
   it('uses caller-owned inline bounds and a square hidden-label Candidate checkbox target', async () => {
     const html = await renderToString(createSSRApp(DemoTrackRowAppearance));
-    const candidateLayer = html.slice(
-      html.indexOf('data-track-row-source="candidate"'),
-      html.indexOf('data-track-row-source="current"'),
-    );
+    const candidateLayer = html.slice(html.indexOf('data-demo-proposal'));
     expect(candidateSource).toMatch(
       /\.demo-candidate-track-row\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-height:\s*var\(--ui-track-row-min-height\);/u,
     );
     expect(candidateSource).not.toContain('max-height:');
-    expect(visibleText(html)).toContain(
-      '填滿 caller；52／44px 是高度 floor，不設硬 max-height',
-    );
+    expect(visibleText(html)).toContain('填滿外層寬度');
     expect(candidateLayer).toContain('ui-field__label--hidden');
     expect(candidateLayer).toContain('選取音樂分析候選');
-    expect(candidateCheckboxSource).toContain('v-bind="$attrs"');
     expect(checkboxSource).toContain(
       'labelHidden: { type: Boolean, default: false }',
     );
@@ -268,25 +258,18 @@ describe('DemoTrackRowAppearance', () => {
     expect(checkboxSource).toMatch(
       /\.ui-checkbox-field\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--ui-checkbox-resolved-target-size\);/u,
     );
-    expect(primitiveSource).toContain(
-      "labelHidden: layer.key === 'candidate' || undefined",
-    );
+    expect(appearanceSource).toContain('label="選取音樂分析候選"');
   });
   it('keeps the Candidate checkbox on an icon-width optical lane without shrinking its hit target', async () => {
     const html = await renderToString(createSSRApp(DemoTrackRowAppearance));
-    const candidateLayer = html.slice(
-      html.indexOf('data-track-row-source="candidate"'),
-      html.indexOf('data-track-row-source="current"'),
-    );
-    const currentLayer = html.slice(
-      html.indexOf('data-track-row-source="current"'),
-    );
+    const candidateLayer = html.slice(html.indexOf('data-demo-proposal'));
+    const currentLayer = html.slice(0, html.indexOf('data-demo-proposal'));
     expect(candidateLayer).toContain('demo-track-row-selection-lane');
     expect(currentLayer).not.toContain('demo-track-row-selection-lane');
-    expect(primitiveSource).toMatch(
+    expect(appearanceSource).toMatch(
       /\.demo-track-row-selection-lane\s*\{[\s\S]*?position:\s*relative;[\s\S]*?width:\s*var\(--ui-checkbox-size\);[\s\S]*?height:\s*var\(--ui-control-height\);[\s\S]*?flex:\s*0 0 var\(--ui-checkbox-size\);/u,
     );
-    expect(primitiveSource).toMatch(
+    expect(appearanceSource).toMatch(
       /\.demo-track-row-selection-lane__control\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset-block-start:\s*50%;[\s\S]*?inset-inline-start:\s*50%;[\s\S]*?transform:\s*translate\(-50%, -50%\);/u,
     );
     expect(checkboxSource).toMatch(
@@ -310,10 +293,10 @@ describe('DemoTrackRowAppearance', () => {
     expect(candidateSource).toMatch(
       /class="demo-candidate-track-row__trail"[\s\S]*?@click="activateFromRowContent"/u,
     );
-    expect(primitiveSource).toContain("reportOperation('整列播放')");
-    expect(primitiveSource).toContain("reportOperation('縮圖前往專輯')");
-    expect(primitiveSource).toContain('@click.stop');
-    expect(primitiveSource).toContain('最近操作：');
+    expect(appearanceSource).toContain("reportOperation('整列播放')");
+    expect(appearanceSource).toContain("reportOperation('曲名前往專輯')");
+    expect(appearanceSource).toContain('@click.stop');
+    expect(appearanceSource).toContain('最近操作：');
   });
   it('documents the UiTrackRow owner checkpoint and bounded Queue adoption', () => {
     expect(reviewContract).toContain(

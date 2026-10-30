@@ -1,148 +1,175 @@
 <script setup>
-import DemoCandidateTrackThumb from './DemoCandidateTrackThumb.vue';
-import DemoTrackThumbPrimitive from './DemoTrackThumbPrimitive.vue';
+import trackThumbCropSquare from '../../assets/demo/track-thumb/track-thumb-crop-square.jpg';
+import trackThumbCropWide from '../../assets/demo/track-thumb/track-thumb-crop-wide.jpg';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import {
+  getTrackThumbFallbackArtwork,
+  TRACK_THUMB_FALLBACK_ARTWORK,
+} from '../ui/trackThumbFallback.js';
+import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';
 import DemoArtworkStates from './DemoArtworkStates.vue';
+import DemoCandidateTrackThumb from './DemoCandidateTrackThumb.vue';
+import DemoProposalSpecimen from './DemoProposalSpecimen.vue';
+import '../../styles/demoSpecimens.css';
 
-const LAYERS = [
+const SIZES = [
   {
-    key: 'candidate',
-    title: '未採用提案 · 單曲封面',
-    note: '有效封面優先，缺圖時使用預設圖片。',
-    component: DemoCandidateTrackThumb,
-    densities: [
-      {
-        id: 'standard',
-        label: 'Standard · 40 CSS px',
-        size: 'var(--ui-track-artwork-size-standard)',
-      },
-      {
-        id: 'compact',
-        label: 'Compact · 36 CSS px',
-        size: 'var(--ui-track-artwork-size-dense)',
-      },
-    ],
-    recipeSummary:
-      '四個尺寸依閱讀距離與所在區域分工；48px 只用於左下 PlayerBar。',
-    recipes: [
-      {
-        id: 'dense-selection-36',
-        label: '密集選擇 · 36px',
-        size: 'var(--ui-track-artwork-size-dense)',
-        note: '匯入候選：56px 選擇列內同時保留來源、版本與摘要。',
-      },
-      {
-        id: 'track-row-40',
-        label: '標準曲目列 · 40px',
-        size: 'var(--ui-track-artwork-size-standard)',
-        note: '曲目列：52px 最小列高內與歌名、歌手及操作並列。',
-      },
-      {
-        id: 'playback-48',
-        label: '播放操作 · 48px',
-        size: 'var(--ui-track-artwork-size-prominent)',
-        note: '左下 PlayerBar 專用；Queue 改用 40px 標準曲目列。',
-      },
-      {
-        id: 'metadata-64',
-        label: '封面檢查 · 64px',
-        size: 'var(--ui-track-artwork-size-preview)',
-        note: '編輯資訊時提供較大的預覽，旁邊保留選擇與移除操作。',
-      },
-    ],
+    id: 'dense-selection-36',
+    label: '密集選擇 · 36px',
+    size: 'var(--ui-track-artwork-size-dense)',
   },
+  {
+    id: 'track-row-40',
+    label: '標準曲目列 · 40px',
+    size: 'var(--ui-track-artwork-size-standard)',
+  },
+  {
+    id: 'playback-48',
+    label: 'PlayerBar · 48px',
+    size: 'var(--ui-track-artwork-size-prominent)',
+  },
+  {
+    id: 'metadata-64',
+    label: '封面檢查 · 64px',
+    size: 'var(--ui-track-artwork-size-preview)',
+  },
+];
+
+const STATES = [
+  {
+    id: 'image',
+    label: '有效封面',
+    track: {
+      id: 'image',
+      title: '正常顯示',
+      thumbnailUrl: trackThumbCropSquare,
+    },
+  },
+  {
+    id: 'crop-wide',
+    label: '寬圖置中裁切',
+    track: { id: 'crop-wide', title: '寬圖', thumbnailUrl: trackThumbCropWide },
+  },
+  {
+    id: 'missing',
+    label: '沒有封面 · 曲名首字',
+    track: { id: 'initial', title: '夏日練習曲' },
+  },
+  {
+    id: 'latin',
+    label: 'Latin 首字',
+    track: { id: 'latin', title: 'Summer Live Session' },
+  },
+  {
+    id: 'broken',
+    label: '封面無法顯示',
+    track: {
+      id: 'broken',
+      title: '失敗回退',
+      thumbnailUrl: BROKEN_IMAGE_FIXTURE_URL,
+    },
+  },
+];
+
+const FALLBACKS = TRACK_THUMB_FALLBACK_ARTWORK.map((_, index) => {
+  const track = {
+    id: `fallback-example-${index}`,
+    title: `預設封面 ${index + 1}`,
+  };
+  return { id: getTrackThumbFallbackArtwork(track).id, track };
+});
+
+const CONTRACT = [
+  'track · optional single-track data',
+  'size · required square length',
+  'decorative · default true；獨立表意時改 false 並提供名稱',
+  '集合封面由 UiCollageThumb 負責',
+  '互動操作應由外層控制項提供',
 ];
 </script>
 
 <template>
-  <div class="demo-track-thumb-appearance">
-    <p class="demo-track-thumb-appearance__intro">
-      單曲封面、替代圖片與載入狀態。
+  <div class="demo-specimens" data-track-thumb-source="production">
+    <p class="demo-specimens__copy">
+      單曲封面：有封面時顯示圖片，沒有時以曲名首字維持位置；封面本身不能操作。
     </p>
 
-    <section class="demo-track-thumb-layer" data-artwork-source="production">
-      <header class="demo-track-thumb-layer__header">
-        <h4>正式 UiArtworkLoading／UiArtworkReveal</h4>
-        <p>正式載入與操作揭露；下方為未採用提案。</p>
-      </header>
+    <section class="demo-specimens__section">
+      <h4>尺寸與使用情境</h4>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="item in SIZES"
+          :key="item.id"
+          class="demo-specimens__case"
+          :data-track-thumb-recipe="item.id"
+        >
+          <h5>{{ item.label }}</h5>
+          <UiTrackThumb
+            :track="{ id: item.id, title: item.label }"
+            :size="item.size"
+          />
+        </article>
+      </div>
+    </section>
+
+    <section class="demo-specimens__section">
+      <h4>裁切與失敗狀態</h4>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="state in STATES"
+          :key="state.id"
+          class="demo-specimens__case"
+          :data-track-thumb-state="state.id"
+        >
+          <h5>{{ state.label }}</h5>
+          <UiTrackThumb :track="state.track" :size="48" />
+        </article>
+        <article class="demo-specimens__case" data-track-thumb-aria="named">
+          <h5>獨立封面 · 有名稱</h5>
+          <UiTrackThumb
+            :track="{
+              id: 'named',
+              title: '目前封面',
+              thumbnailUrl: trackThumbCropSquare,
+            }"
+            :size="64"
+            :decorative="false"
+            aria-label="目前封面"
+          />
+        </article>
+      </div>
+    </section>
+
+    <section class="demo-specimens__section" data-artwork-source="production">
+      <h4>載入與操作揭露 · UiArtworkLoading／UiArtworkReveal</h4>
       <DemoArtworkStates />
     </section>
-    <section
-      v-for="layer in LAYERS"
-      :key="layer.key"
-      class="demo-track-thumb-layer"
-      :class="`demo-track-thumb-layer--${layer.key}`"
-      :data-track-thumb-source="layer.key"
-    >
-      <header class="demo-track-thumb-layer__header">
-        <h4>{{ layer.title }}</h4>
-        <p>{{ layer.note }}</p>
-      </header>
 
-      <DemoTrackThumbPrimitive :layer="layer" />
-    </section>
+    <DemoProposalSpecimen
+      note="缺圖或載入失敗時改用固定的預設封面組，最後才回到曲名首字；owner 保留現行首字與失敗圖片位置。"
+    >
+      <DemoCandidateTrackThumb
+        v-for="item in FALLBACKS"
+        :key="item.id"
+        :track="item.track"
+        :size="48"
+        :data-track-thumb-fallback="item.id"
+      />
+      <DemoCandidateTrackThumb
+        :track="{
+          id: 'broken',
+          title: '失敗回退',
+          thumbnailUrl: BROKEN_IMAGE_FIXTURE_URL,
+        }"
+        :size="48"
+      />
+    </DemoProposalSpecimen>
+
+    <ul
+      class="demo-specimens__contract"
+      aria-label="UiTrackThumb public contract"
+    >
+      <li v-for="rule in CONTRACT" :key="rule">{{ rule }}</li>
+    </ul>
   </div>
 </template>
-
-<style scoped>
-.demo-track-thumb-appearance,
-.demo-track-thumb-layer {
-  min-width: 0;
-  display: grid;
-}
-
-.demo-track-thumb-appearance {
-  gap: var(--ui-space-5);
-  container-type: inline-size;
-}
-
-.demo-track-thumb-appearance__intro,
-.demo-track-thumb-layer__header h4,
-.demo-track-thumb-layer__header p {
-  margin: 0;
-}
-
-.demo-track-thumb-appearance__intro {
-  max-width: 72ch;
-  color: var(--ui-color-text-muted);
-  line-height: var(--ui-line-height-body);
-}
-
-.demo-track-thumb-appearance__intro strong {
-  color: var(--ui-color-text);
-}
-
-.demo-track-thumb-layer {
-  gap: var(--ui-space-5);
-  padding-block-start: var(--ui-space-4);
-  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.demo-track-thumb-layer__header {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(12rem, 0.42fr) minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--ui-space-4);
-}
-
-.demo-track-thumb-layer__header h4 {
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-title-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
-}
-
-.demo-track-thumb-layer__header p {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  overflow-wrap: anywhere;
-}
-
-@container (max-width: 48rem) {
-  .demo-track-thumb-layer__header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--ui-space-1);
-  }
-}
-</style>

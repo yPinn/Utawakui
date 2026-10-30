@@ -9,6 +9,6 @@ describe('formal collage catalogue entry', () => {
     );
     expect(source).toContain('<DemoCollageThumbProduction');
     expect(source).toContain('data-collage-thumb-source="production"');
-    expect(source).toContain('<DemoCollageThumbPrimitive :layer="layer"');
+    expect(source).toContain('<DemoProposalSpecimen');
   });
 });
