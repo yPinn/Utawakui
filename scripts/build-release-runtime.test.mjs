@@ -186,6 +186,8 @@ describe('application release entries', () => {
       },
     );
     expect(apis[apiName].initialUiTheme).toBe('dark');
+    expect(apis[apiName]).not.toHaveProperty('beginMicrophoneResearch');
+    expect(apis[apiName]).not.toHaveProperty('endMicrophoneResearch');
     expect(invoke).not.toHaveBeenCalled();
   });
 

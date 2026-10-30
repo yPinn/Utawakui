@@ -21,6 +21,15 @@ const operations = Object.freeze([
 
 const evaluation = Object.freeze([
   Object.freeze({
+    id: 'microphone-research',
+    route: 'microphone-research',
+    label: 'Mic Level R02',
+    description: '明確選擇單一輸入，檢查本機電平、噪聲門檻與失訊復原。',
+    lifecycle: '研究原型',
+    tone: 'warning',
+    shortcut: '',
+  }),
+  Object.freeze({
     id: 'music-analysis-evaluation',
     route: 'music-analysis-evaluation',
     label: 'Music M2',

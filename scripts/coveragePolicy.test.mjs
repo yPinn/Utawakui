@@ -56,6 +56,8 @@ describe('coverage policy', () => {
 
   it('measures ordinary domain logic instead of deferring low coverage', () => {
     for (const file of [
+      'src/microphone/level.js',
+      'src/microphone/researchRuntime.js',
       'electron/lib/downloader.js',
       'electron/lib/releases/schema.js',
       'electron/lib/releases/runtime.js',

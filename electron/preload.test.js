@@ -1060,11 +1060,32 @@ describe('main preload bridge', () => {
     expect(bridge).not.toHaveProperty('saveLyricsProviderReviewDecision');
     expect(bridge).not.toHaveProperty('exportLyricsProviderReviewCorpus');
     expect(bridge).not.toHaveProperty('runLyricsProviderReviewLookupAction');
+    expect(bridge).not.toHaveProperty('beginMicrophoneResearch');
+    expect(bridge).not.toHaveProperty('endMicrophoneResearch');
 
     for (const cleanup of cleanups) cleanup();
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledTimes(
       MAIN_EVENT_CHANNELS.length,
     );
+  });
+
+  it('bounds microphone research access to fixed development-only intents', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui', [
+      '--internal-workbenches-enabled=1',
+    ]);
+    await bridge.beginMicrophoneResearch({
+      url: 'untrusted',
+      deviceId: 'untrusted',
+    });
+    await bridge.endMicrophoneResearch('lease-1', { rawAudio: true });
+    await bridge.endMicrophoneResearch({ lease: 'wrong-shape' });
+    await bridge.endMicrophoneResearch('x'.repeat(129));
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['microphone-research:begin'],
+      ['microphone-research:end', 'lease-1'],
+      ['microphone-research:end', null],
+      ['microphone-research:end', null],
+    ]);
   });
 
   it('adds only the fixed lyrics review intents for the internal development preload', async () => {

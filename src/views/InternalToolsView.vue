@@ -22,6 +22,9 @@ const props = defineProps({
 });
 
 const TOOL_COMPONENTS = Object.freeze({
+  'microphone-research': defineAsyncComponent(
+    () => import('../components/microphone/MicrophoneResearchWorkbench.vue'),
+  ),
   'music-analysis': defineAsyncComponent(
     () => import('../components/analysis/MusicAnalysisWorkbench.vue'),
   ),

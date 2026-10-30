@@ -4,7 +4,7 @@ import { registerAudioOutputPermissions } from './audioOutputPermissions.js';
 describe('audio output permissions', () => {
   const appUrl = 'http://localhost:5173/';
 
-  function createHarness() {
+  function createHarness(options = {}) {
     const allowedSender = { getURL: vi.fn(() => appUrl) };
     const session = {
       setPermissionRequestHandler: vi.fn(),
@@ -12,6 +12,7 @@ describe('audio output permissions', () => {
     };
     registerAudioOutputPermissions(session, {
       getAllowedSender: () => allowedSender,
+      ...options,
     });
     return {
       allowedSender,
@@ -114,5 +115,48 @@ describe('audio output permissions', () => {
     expect(checkHandler(allowedSender, 'notifications', '', details)).toBe(
       false,
     );
+  });
+
+  it('allows only explicitly armed research audio in both permission paths', () => {
+    let armed = false;
+    const { allowedSender, requestHandler, checkHandler } = createHarness({
+      isMicrophoneAllowed: () => armed,
+    });
+    const details = { isMainFrame: true, requestingUrl: appUrl };
+    const request = (mediaTypes, extra = {}) => {
+      const callback = vi.fn();
+      requestHandler(allowedSender, 'media', callback, {
+        ...details,
+        mediaTypes,
+        ...extra,
+      });
+      return callback.mock.calls[0][0];
+    };
+    expect(request(['audio'])).toBe(false);
+    armed = true;
+    expect(request(['audio'])).toBe(true);
+    for (const types of [
+      undefined,
+      [],
+      ['video'],
+      ['audio', 'video'],
+      ['unknown'],
+    ]) {
+      expect(request(types)).toBe(false);
+    }
+    expect(request(['audio'], { isMainFrame: false })).toBe(false);
+    expect(
+      checkHandler(allowedSender, 'media', appUrl, {
+        ...details,
+        mediaType: 'audio',
+      }),
+    ).toBe(true);
+    expect(
+      checkHandler(allowedSender, 'media', appUrl, {
+        ...details,
+        mediaType: 'video',
+      }),
+    ).toBe(false);
+    expect(checkHandler(allowedSender, 'media', appUrl, details)).toBe(false);
   });
 });

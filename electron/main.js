@@ -531,12 +531,19 @@ if (!gotSingleInstanceLock) {
     void preparePreviewSession(session.defaultSession);
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
-    // Narrow exception for the main renderer's output picker and Web Audio
-    // capture sink. Both Electron permission paths allow speaker selection
-    // only for that trusted main frame; media capture and every unrelated
-    // permission remain denied.
+    const {
+      createMicrophoneResearchAccess,
+    } = require('./main/microphoneResearchAccess');
+    const microphoneResearchAccess = createMicrophoneResearchAccess({
+      enabled: windowState.isDev,
+      getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
+    });
+    if (windowState.isDev) microphoneResearchAccess.register(ipcMain);
+    // Output/font permissions stay unchanged; only an explicit, short dev
+    // research lease can additionally authorize audio input in the main frame.
     registerAudioOutputPermissions(session.defaultSession, {
       getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
+      isMicrophoneAllowed: microphoneResearchAccess.isAllowed,
     });
     configState.loadInitialConfig();
     windowCloseDecisionBridge = createWindowCloseDecisionBridge({

@@ -8,6 +8,13 @@ This is the live packaging inventory, not the product roadmap. Product status
 belongs in [spec.md](../spec.md), and release operations belong in
 [release-runbook.md](release-runbook.md).
 
+The R02 Mic research renderer is development-only and is omitted from the
+production renderer bundle. Its Main permission policy is included in
+`runtime/main.cjs`, defaults closed in production, and has no production IPC
+registration or preload API. It adds no native binary, model, resource or
+runtime dependency; [the research contract](../contracts/microphone-level-research.md)
+owns its input and permission boundaries.
+
 ## Current Build Shape
 
 Windows packaging is configured in `electron-builder.yml`.
@@ -697,3 +704,5 @@ readable with the provider gate disabled. See the [contract](../contracts/releas
 ## 歌詞手動聲部標註
 
 `electron/lib/library/lyricsVocalRoles.js` 編譯進 Main bundle；相鄰測試排除。`tracks/<trackId>/lyrics/vocal-roles/<sourceFilename>.json` 是本機使用者資料，不是安裝資產。Main 依目前來源計算 fingerprint，檢查來源 document identity、聲部意圖與儲存 revision；不封裝使用者標註、來源歌詞或模型。新增的 renderer 聲部控制由 Vite 既有 bundle 發布。
+
+Mic 研究授權工廠依用途命名為 `electron/main/microphoneResearchAccess.js`，既有 Main bundle closure 交付，測試排除；IPC／權限生命週期與開發限定門檻不變，builder 沒有新增資產規則。

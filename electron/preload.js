@@ -505,6 +505,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
   },
   ...(internalWorkbenchesEnabled
     ? {
+        beginMicrophoneResearch: () =>
+          ipcRenderer.invoke('microphone-research:begin'),
+        endMicrophoneResearch: (lease) =>
+          ipcRenderer.invoke(
+            'microphone-research:end',
+            typeof lease === 'string' && lease.length <= 128 ? lease : null,
+          ),
         loadLyricsProviderReview: () =>
           ipcRenderer.invoke('lyrics-provider-review:load'),
         saveLyricsProviderReviewDecision: (intent) =>

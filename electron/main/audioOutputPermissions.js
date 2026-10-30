@@ -28,8 +28,12 @@ function isAudioOutputPermissionAllowed(
 
 function registerAudioOutputPermissions(
   targetSession,
-  { getAllowedSender } = {},
+  { getAllowedSender, isMicrophoneAllowed = () => false } = {},
 ) {
+  const allowMicrophone = (webContents, permission, details) =>
+    permission === 'media' &&
+    isTrustedMainFrame(webContents, details, getAllowedSender) &&
+    isMicrophoneAllowed(webContents) === true;
   targetSession.setPermissionRequestHandler(
     (webContents, permission, callback, details) => {
       callback(
@@ -38,7 +42,11 @@ function registerAudioOutputPermissions(
           permission,
           details,
           getAllowedSender,
-        ),
+        ) ||
+          (allowMicrophone(webContents, permission, details) &&
+            Array.isArray(details?.mediaTypes) &&
+            details.mediaTypes.length === 1 &&
+            details.mediaTypes[0] === 'audio'),
       );
     },
   );
@@ -49,7 +57,9 @@ function registerAudioOutputPermissions(
         permission,
         details,
         getAllowedSender,
-      ),
+      ) ||
+      (allowMicrophone(webContents, permission, details) &&
+        details?.mediaType === 'audio'),
   );
 }
 

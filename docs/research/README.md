@@ -30,6 +30,8 @@
 
 ## 音訊處理與分析
 
+- [Mic 輸入原型首輪驗證](audio/microphone-input-r02-2026-10-30.md)（10-30）：開發原型的原生權限、合成輸入與停止清理；保留初始裝置底限與後續 B1 有聲重試，完整品質待驗。
+
 - [R01 衍生四聲道音訊減量](audio/derived-audio-reduction-r01-2026-10-30.md)（10-30）：格式比較、FIFO／DSP 分流與獨立複核；FLAC 5 維持候選，不代表正式採用或遷移。
 
 - [播放偶發失真實驗方案](engineering/playback-distortion-investigation-2026-10-26.md)與[第一階段診斷結果](engineering/playback-distortion-diagnostics-2026-10-26.md)（10-26）：隔離時間線／25 秒 PCM、三種編碼原曲對照與 capture pitch 初始化競態修正；電子音根因仍未定位，真實裝置／OBS 未驗。

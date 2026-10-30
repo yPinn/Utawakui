@@ -15,7 +15,14 @@ describe('internal tools registry', () => {
       ]),
     ).toEqual([
       ['operations', ['music-analysis', 'diagnostics-workbench']],
-      ['evaluation', ['music-analysis-evaluation', 'lyrics-provider-review']],
+      [
+        'evaluation',
+        [
+          'microphone-research',
+          'music-analysis-evaluation',
+          'lyrics-provider-review',
+        ],
+      ],
     ]);
   });
 

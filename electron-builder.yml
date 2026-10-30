@@ -51,6 +51,8 @@ publish:
 
 files:
   # App-owned Main/preloads/workers are built independently from the renderer.
+  # R02 Mic policy is bundled in Main but remains closed in production; its
+  # development-only renderer adds no packaged asset or external dependency.
   # beforePack regenerates these seven minified CJS entries from current source.
   - runtime/*.cjs
   - runtime/keyboard-helper.json

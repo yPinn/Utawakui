@@ -108,6 +108,9 @@ const PreparationDockPanel = defineAsyncComponent(
 const internalWorkbenchesEnabled = import.meta.env.DEV;
 const internalViews = internalWorkbenchesEnabled
   ? {
+      'microphone-research': defineAsyncComponent(
+        () => import('./views/MicrophoneResearchView.vue'),
+      ),
       'music-analysis': defineAsyncComponent(
         () => import('./views/MusicAnalysisView.vue'),
       ),
