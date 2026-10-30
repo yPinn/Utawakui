@@ -78,7 +78,7 @@ import {
   artistTrackPreview,
   deriveArtistPage,
 } from '../../utils/artistPage.js';
-import { shufflePreviewTracks } from '../../utils/trackPreviewOrder.js';
+import { orderPreviewTracks } from '../../utils/trackPreviewOrder.js';
 import {
   sortLibraryTracks,
   sortLocalLibraryTracks,
@@ -1005,7 +1005,7 @@ async function resolveCurrentCollectionActionTracks(tracks) {
 }
 
 // The preview starts at the selection and follows the visible (searched)
-// order; artist pages shuffle so they differ from the album view.
+// order; derived views shuffle (trackPreviewOrder.js).
 async function openTrackPreview() {
   if (!previewEligibility.canPreview.value) return;
   const previewScope = previewEligibility.captureScope();
@@ -1024,9 +1024,10 @@ async function openTrackPreview() {
   if (!previewEligibility.confirm(visibleTracks, previewScope)) return;
   const localTracks = visibleTracks.filter(isLocalPreviewTrack);
   if (localTracks.length === 0) return;
-  const tracks = isArtistSelected.value
-    ? shufflePreviewTracks(localTracks, { pinnedId: selectedTrackId.value })
-    : localTracks;
+  const tracks = orderPreviewTracks(localTracks, {
+    mode: mode.value,
+    pinnedId: selectedTrackId.value,
+  });
   const startIndex = Math.max(
     0,
     tracks.findIndex((track) => track.id === selectedTrackId.value),

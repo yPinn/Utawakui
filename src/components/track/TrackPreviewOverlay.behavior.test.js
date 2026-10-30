@@ -413,9 +413,9 @@ describe('TrackPreviewOverlay', () => {
     expect(source).not.toContain('usePlayer');
   });
 
-  it('shuffles only artist previews, keeping the selection first', () => {
+  it('orders previews by page mode, keeping the selection first', () => {
     expect(libraryBrowseSource).toMatch(
-      /isArtistSelected\.value\s*\?\s*shufflePreviewTracks\(localTracks, \{ pinnedId: selectedTrackId\.value \}\)\s*:\s*localTracks/u,
+      /orderPreviewTracks\(localTracks, \{\s*mode: mode\.value,\s*pinnedId: selectedTrackId\.value,\s*\}\)/u,
     );
   });
 });

@@ -1,5 +1,17 @@
-// Artist previews sample the catalogue instead of replaying album order. A
-// selected track still opens first; the rest follow in random order.
+// Authored orders (album source, user playlist) are kept; derived views
+// (artist, all tracks) have no meaningful order, so previews sample them.
+const SHUFFLED_PREVIEW_MODES = new Set(['artist', 'all']);
+
+export function orderPreviewTracks(
+  tracks,
+  { mode, pinnedId = null, random = Math.random } = {},
+) {
+  return SHUFFLED_PREVIEW_MODES.has(mode)
+    ? shufflePreviewTracks(tracks, { pinnedId, random })
+    : tracks;
+}
+
+// A selected track still opens first; the rest follow in random order.
 export function shufflePreviewTracks(
   tracks,
   { pinnedId = null, random = Math.random } = {},

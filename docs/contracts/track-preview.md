@@ -11,7 +11,7 @@
 試聽只接受 Main 提供的 `utawakui-media://track/` 本地音源。來源 metadata、
 未下載位置、缺檔或未通過目前發行音源驗證的曲目不納入序列，不啟動來源串流或下載。
 不要求先完成伴奏處理。專輯沿保存的來源曲序，過濾後保留相對順序；從選取的可用
-曲目開始，未選取時從第一首可用曲目開始。藝人頁維持原有隨機試聽行為。
+曲目開始，未選取時從第一首可用曲目開始。藝人與全部曲目頁隨機試聽（見下方入口）。
 
 `useTrackPreviewEligibility` 只控制入口，不供封面、統計或曲目展示使用。來源專輯
 重用 `LibraryReleaseCatalog` 當頁 Main 投影的全目錄 `availableCount`，不把第一頁
@@ -145,10 +145,11 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
 
 - Owner 是 `src/composables/useTrackPreview.js`（module-scope 單例，自有 audio element）；
   `src/components/track/TrackPreviewOverlay.vue` 只投影狀態並送出意圖，不 import 演唱播放器。
-- 入口：album／artist／playlist 頁 CollectionActionRail 的「試聽」按鈕，位於隨機播放之後。
-  曲目清單是目前可見（套用搜尋後）的順序，從選取中的曲目開始，否則從第一首。
-  Artist 頁與 album 頁區隔：可見曲目每次開啟時隨機排序，選取中的曲目固定為第一首，
-  未選取時整份隨機；album／playlist 維持清單順序。
+- 入口：全部曲目／album／artist／playlist 頁 CollectionActionRail 的「試聽」按鈕，位於隨機播放之後。
+  曲目清單是目前可見（套用搜尋後）的曲目，從選取中的曲目開始，否則從第一首。
+  順序依清單是否經過編排決定（`src/utils/trackPreviewOrder.js`）：album 的來源曲序與
+  playlist 的使用者曲序維持清單順序；artist 與全部曲目是衍生集合，每次開啟時隨機排序，
+  選取中的曲目固定為第一首，未選取時整份隨機。欄位排序只是瀏覽方式，不算編排。
 - 播放曲目原始 `track.url`；`toPlayableTrack()` 會換成分離結果的 stems URL，試聽不使用。
 - 音量在開啟時沿用演唱播放器目前音量，之後不回寫；靜音只作用於試聽 element。
 - 按鍵以 window capture listener 處理，只在焦點位於試聽 dialog 內時作用：↑／↓ 換卡、M 靜音；試聽沒有任何
