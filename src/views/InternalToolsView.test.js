@@ -39,8 +39,8 @@ describe('InternalToolsView', () => {
     expect(viewSource).toContain('<component :is="activeTool.component"');
   });
 
-  it('keeps the existing direct routes and adds a navigation-only M2 route', () => {
-    expect(appSource).toContain("'music-analysis-evaluation'");
+  it('keeps the direct routes and folds evaluation into Music Analysis', () => {
+    expect(appSource).not.toContain("'music-analysis-evaluation'");
     expect(appSource).toContain("f5: 'music-analysis'");
     expect(appSource).toContain("f6: 'diagnostics-workbench'");
     expect(appSource).toContain("f7: 'lyrics-provider-review'");
@@ -54,8 +54,6 @@ describe('InternalToolsView', () => {
     expect(viewSourceFor('LyricsProviderReviewView.vue')).toContain(
       'active-tool-id="lyrics-provider-review"',
     );
-    expect(viewSourceFor('MusicAnalysisEvaluationView.vue')).toContain(
-      'active-tool-id="music-analysis-evaluation"',
-    );
+    expect(viewSource).toContain('MusicAnalysisTools.vue');
   });
 });

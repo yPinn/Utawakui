@@ -121,9 +121,6 @@ const internalViews = internalWorkbenchesEnabled
       'lyrics-provider-review': defineAsyncComponent(
         () => import('./views/LyricsProviderReviewView.vue'),
       ),
-      'music-analysis-evaluation': defineAsyncComponent(
-        () => import('./views/MusicAnalysisEvaluationView.vue'),
-      ),
       // The Visual System is a development-only component catalogue. Adopted
       // product pages are not retained here as alternate implementations.
       'visual-system': defineAsyncComponent(

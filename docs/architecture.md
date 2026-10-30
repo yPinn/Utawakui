@@ -54,7 +54,7 @@
 - `openSettings()` 首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings 目的地；Titlebar、F9、Tray 與依賴設定請求共用此 action。
 - Token：Main 與 Performer 的 `#app` 在 mount 前登記為 v2 surface，兩個 entry 只載入 `src/styles/tokens.css`。Token v1 已全部移除，source gate 禁止回流（[Token v2 替換](archive/token-v2-replacement.md)）。`overlay/` 只用 `--ovl-*`，兩者互不匯入。
 - Modal 內的動作選單由 `UiModal` 提供當前 backdrop 作為局部 floating host；`UiActionMenu` 優先 Teleport 至該 host，保持在 clipped panel 外且屬於同一 dialog 堆疊。非 modal 選單仍使用已登記的 surface overlay host，不以頁面自訂 z-index 修補遮蔽。
-- Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 依 `constants/internalTools.js` 管理 Operations／Evaluation，持有單一 workspace `AppFolderPage` 與固定 header 導覽，一次掛載一個工作台。工作台擁有內容及局部捲動，overlay host 留在紙頁外；`App.vue` 依內部工具 route 清單避免重複包頁，不改 gate 或 IPC 邊界。
+- Dev-only：`VisualSystemView.vue` 只掛載 `DemoView.vue` 元件型錄；`InternalToolsView.vue` 依 `constants/internalTools.js` 的單列工具清單切換（音樂分析／診斷／歌詞來源／Mic 輸入），子模式改為頁內分頁，持有單一 workspace `AppFolderPage` 與固定 header 導覽，一次掛載一個工作台。工作台擁有內容及局部捲動，overlay host 留在紙頁外；`App.vue` 依內部工具 route 清單避免重複包頁，不改 gate 或 IPC 邊界。
 
 第 4 項背景互動沿同一 settings owner／recorder 與註冊 manager 擴充：候選試註冊重用 staging／rollback，不寫檔或執行命令；合法停用在讀檔／CAS 前撤分派，Main 保留未保存的本次停用，普通保存／重讀／喚醒不能解除，只有固定 enable 意圖可重新啟用。正式 renderer singleton 與 Main allowlist 仍閉鎖，隔離工廠驗 App／背景範圍及復原 UI，不新增播放 owner 或平台支援承諾。邊界見[全域契約](contracts/global-keyboard-shortcuts.md#設定交易)。
 

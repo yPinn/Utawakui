@@ -5,8 +5,8 @@ const workbenchSource = fs.readFileSync(
   new URL('./MusicAnalysisWorkbench.vue', import.meta.url),
   'utf8',
 );
-const evaluationWorkbenchSource = fs.readFileSync(
-  new URL('./MusicAnalysisEvaluationWorkbench.vue', import.meta.url),
+const toolsSource = fs.readFileSync(
+  new URL('./MusicAnalysisTools.vue', import.meta.url),
   'utf8',
 );
 const pickerSource = fs.readFileSync(
@@ -76,17 +76,19 @@ describe('Music Analysis scroll layout', () => {
   });
 
   it('keeps operations separate from annotation and benchmark evaluation', () => {
-    expect(workbenchSource).toContain('title="Music Analysis"');
+    expect(workbenchSource).not.toContain('UiPageHeader');
     expect(workbenchSource).not.toContain('MusicAnalysisReferenceAnnotation');
     expect(workbenchSource).not.toContain('MusicAnalysisBenchmarkReview');
     expect(workbenchSource).not.toContain('MusicAnalysisCapabilityModal');
-    expect(evaluationWorkbenchSource).toContain(
+    for (const panel of [
+      '<MusicAnalysisWorkbench',
       '<MusicAnalysisReferenceAnnotation',
-    );
-    expect(evaluationWorkbenchSource).toContain(
       '<MusicAnalysisBenchmarkReview',
-    );
-    expect(evaluationWorkbenchSource).toContain('<UiSegmentedControl');
+    ]) {
+      expect(toolsSource).toContain(panel);
+    }
+    expect(toolsSource).toContain('<UiTabs');
+    expect(toolsSource).toContain('role="tabpanel"');
   });
 
   it('keeps capability lifecycle in Settings and internals out of analysis copy', () => {
@@ -110,7 +112,7 @@ describe('Music Analysis scroll layout', () => {
 
     for (const source of [
       workbenchSource,
-      evaluationWorkbenchSource,
+      toolsSource,
       summarySource,
       benchmarkSource,
       workbenchComposableSource,

@@ -3,7 +3,6 @@ import { onMounted, onUnmounted, shallowRef, watch } from 'vue';
 import { useMusicAnalysisWorkbench } from '../../composables/useMusicAnalysisWorkbench.js';
 import { useAppView } from '../../composables/useAppView.js';
 import UiNotice from '../ui/UiNotice.vue';
-import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStack from '../ui/UiStack.vue';
 import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
@@ -36,8 +35,6 @@ watch(
 
 <template>
   <UiStack class="analysis-workbench" direction="column" :gap="4">
-    <UiPageHeader title="Music Analysis" />
-
     <UiNotice
       v-if="workbench.libraryState.error"
       :notice="workbench.libraryState.error"

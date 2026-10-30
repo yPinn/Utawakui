@@ -40,6 +40,7 @@ describe('UiTabs adoption contract', () => {
       'components/output/ObsOutputWorkspace.vue',
       'components/playback/PlayerToolsPanel.vue',
       'components/queue/QueuePanel.vue',
+      'components/analysis/MusicAnalysisTools.vue',
       'components/demo/DemoCatalogueWorkspace.vue',
     ]) {
       expect(readSource(path), path).toContain('<UiTabs');

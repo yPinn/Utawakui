@@ -105,8 +105,8 @@ npm run analysis:evaluate -- tasks/<m2-real>.json tasks/<m2-report>.json
 - Run config 把不透明 case id 對應到目前曲庫的 trackId 與毫秒長度；runner 只接受內建的 small0／final0 manifest，逐首解碼暫存 WAV 並刪除，cache 綁定音訊、worker、profile 與模型。BPM 計分不接受 `--case`，因為部分結果無法對上整份語料。比較 `final0` 時只改 `outputRoot`、`modelManifestPath`、`modelPath`，結果分開存放。
 - Schema v3 smoke 不含參考 BPM，產出 `evidenceKind: "bpm-runtime-smoke"`，無法通過計分驗證，只量測完成率、缺值與耗時。
 - 輸入上限 8 MiB、500 個 case；報告以原子方式寫入且不能覆蓋輸入。
-- **人工標註**（F5 → Evaluation／Music M2 → 人工標註）：main 擁有 run config 選擇器與不透明 session，只讀寫 `<outputRoot>/reference-worklist.json`，此模式不讀 predictions。只可用相符的 M1 beat 結果當非語意時間輔助（±300 ms 吸附 downbeat）。快捷鍵：`B` 插入邊界、`1`–`7` 指定 role、`Shift+1`–`7` 插入並指定下一段、`Alt+←／→` 移動 100 ms、`N` 下一個未完成、`Ctrl／Cmd+S` 保存；閒置時也自動保存，較舊的保存不覆蓋較新的編輯。草稿不發布 sidecar。
-- **Benchmark Review**：唯讀檢視對應曲目、BPM、耗時、M1／M2 結果、段落時間軸與信心；點段落會讓播放器跳到該處。須先完成並保存盲標再切換，不得把模型輸出當參考答案。
+- **人工標註**（F5 →「人工標註」分頁）：main 擁有 run config 選擇器與不透明 session，只讀寫 `<outputRoot>/reference-worklist.json`，此模式不讀 predictions。只可用相符的 M1 beat 結果當非語意時間輔助（±300 ms 吸附 downbeat）。快捷鍵：`B` 插入邊界、`1`–`7` 指定 role、`Shift+1`–`7` 插入並指定下一段、`Alt+←／→` 移動 100 ms、`N` 下一個未完成、`Ctrl／Cmd+S` 保存；閒置時也自動保存，較舊的保存不覆蓋較新的編輯。草稿不發布 sidecar。
+- **Benchmark Review**（F5 →「Benchmark」分頁）：唯讀檢視對應曲目、BPM、耗時、M1／M2 結果、段落時間軸與信心；點段落會讓播放器跳到該處。須先完成並保存盲標再切換，不得把模型輸出當參考答案。
 
 ## 延後決定
 

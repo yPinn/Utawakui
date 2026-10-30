@@ -1266,7 +1266,7 @@ Component folders are grouped by product role, not by current visual style. Exis
 - `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.
 - `src/components/lyrics/`: lyrics workspace, synced-line display, lyric editing and timing surfaces.
 - `src/components/analysis/`: Music Analysis selection, capability, batch, benchmark, and Music Structure result surfaces.
-- `src/components/internal-tools/`: dev-only Operations／Evaluation navigation and composition shell; domain state remains in each feature owner.
+- `src/components/internal-tools/`: dev-only single-row tool navigation and composition shell; sub-modes are in-page tabs; domain state remains in each feature owner.
 - `src/components/lyrics-provider/`: private provider-corpus review surfaces; not the ordinary Lyrics product workflow.
 - `src/components/output/`: OBS Output Gallery, Workbench, preview, slot, and appearance surfaces.
 - `src/components/performer/`: Performer prompter surface, lyric cue, bounded sync／display controls, and Electron-only window toolbar.

@@ -4,7 +4,7 @@ import InternalToolsNavigation from '../components/internal-tools/InternalToolsN
 import AppFolderPage from '../components/layout/AppFolderPage.vue';
 import { useAppView } from '../composables/useAppView.js';
 import {
-  INTERNAL_TOOL_CATEGORIES,
+  INTERNAL_TOOL_ROUTES,
   internalToolDefinition,
 } from '../constants/internalTools.js';
 import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
@@ -27,13 +27,10 @@ const TOOL_COMPONENTS = Object.freeze({
     () => import('../components/microphone/MicrophoneResearchWorkbench.vue'),
   ),
   'music-analysis': defineAsyncComponent(
-    () => import('../components/analysis/MusicAnalysisWorkbench.vue'),
+    () => import('../components/analysis/MusicAnalysisTools.vue'),
   ),
   'diagnostics-workbench': defineAsyncComponent(
     () => import('../components/settings/DiagnosticsWorkbench.vue'),
-  ),
-  'music-analysis-evaluation': defineAsyncComponent(
-    () => import('../components/analysis/MusicAnalysisEvaluationWorkbench.vue'),
   ),
   'lyrics-provider-review': defineAsyncComponent(
     () =>
@@ -59,7 +56,7 @@ const activeTool = computed(() => {
     <AppFolderPage mode="workspace" body-label="內部工具工作區">
       <template #header>
         <InternalToolsNavigation
-          :categories="INTERNAL_TOOL_CATEGORIES"
+          :tools="INTERNAL_TOOL_ROUTES"
           :active-tool-id="activeToolId"
           @navigate="setActiveView"
         />

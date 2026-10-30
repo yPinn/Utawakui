@@ -57,12 +57,12 @@ describe('Specialist workbench Token v2 cleanup', () => {
     }
   });
 
-  it('preserves the four workbench mounts and categorized navigation', () => {
+  it('preserves the workbench mounts and flat navigation', () => {
     for (const component of [
-      'MusicAnalysisWorkbench',
+      'MusicAnalysisTools',
       'DiagnosticsWorkbench',
-      'MusicAnalysisEvaluationWorkbench',
       'LyricsProviderReviewWorkbench',
+      'MicrophoneResearchWorkbench',
     ]) {
       expect(internalToolsSource, component).toContain(component);
     }
@@ -70,11 +70,9 @@ describe('Specialist workbench Token v2 cleanup', () => {
     expect(internalToolsSource).toContain(
       '<component :is="activeTool.component" v-if="activeTool" />',
     );
-    expect(navigationSource).toContain(':items="categoryItems"');
     expect(navigationSource).toContain(':items="toolItems"');
-    expect(navigationSource).toContain('@update:model-value="selectCategory"');
+    expect(navigationSource).not.toContain('categoryItems');
     expect(navigationSource).toContain('@update:model-value="selectTool"');
-    expect(navigationSource).toContain("emit('navigate', firstTool.route)");
     expect(navigationSource).toContain("emit('navigate', route)");
   });
 
