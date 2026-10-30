@@ -1,6 +1,6 @@
 # 波形 backend 預算與取消實驗
 
-沿[原第 3 項](../../docs/research/product/lyrics-timing-review-detail-2026-10-26.md)的 R15–R17，比較完整 Browser decode 與受控 FFmpeg 分塊 producer；[結果與限制](../../docs/research/engineering/lyrics-waveform-backend-2026-10-28.md)。這是隔離實驗，不由正式 Main／preload／renderer import，不新增 npm 或 app runtime 依賴。
+沿[原第 3 項](../../docs/archive/lyrics-timing-review-detail-2026-10-26.md)的 R15–R17，比較完整 Browser decode 與受控 FFmpeg 分塊 producer；[結果與限制](../../docs/research/engineering/lyrics-waveform-backend-2026-10-28.md)。這是隔離實驗，不由正式 Main／preload／renderer import，不新增 npm 或 app runtime 依賴。
 
 ## 重現
 

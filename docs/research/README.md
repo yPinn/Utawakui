@@ -54,7 +54,7 @@
 
 ## 產品與競品
 
-- [播放器／排練規劃入口](product/player-practice-planning-2026-10-26.md)：四項提案、共用前置與待決策；初始 JSON 僅保存歷史基線。細節由各提案持有，功能狀態只見 spec。
+- [播放器／排練規劃入口](product/player-practice-planning-2026-10-26.md)：四項順序、共用前置與待決策；四份提案已歸檔，行為與驗收案例由各契約持有；初始 JSON 僅保存歷史基線。功能狀態只見 spec。
 - [競品現況](product/competitive-research.md)：2026-10-26 查核 Setlista、聲嶼、歌回救星、KAREOKIE。
 - 受眾與資料：[歡唱／有限雲端](product/audience-and-optional-cloud-2026-10-26.md)、[商業模式／資料架構](product/business-model-and-data-architecture-2026-10-26.md)。研究證據，不是採用承諾。
 - [音源／影片與收藏](product/source-video-osu-collection-2026-10-26.md)：公開 ID metadata 查核、影片前提與正式音源統計資格；不等於播放／同步驗證。

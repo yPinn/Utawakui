@@ -1,6 +1,6 @@
 # A–B 共用 owner 的隔離驗證
 
-沿[原第 2 項](../../docs/research/product/ab-practice-detail-2026-10-26.md)，驗證邊界見[契約](../../docs/contracts/player-ab-practice.md)。量測使用 App 已初始化的同一練習 owner、真 Main／preload 與原 player／DSP／BGM；fixture 是隔離曲庫的合成靜音 WAV。`runtime.mjs` 只重匯出正式 factory，正式 renderer 不 import prototypes。歌詞頁入口同樣消費該 owner。
+沿[原第 2 項](../../docs/archive/ab-practice-detail-2026-10-26.md)，驗證邊界見[契約](../../docs/contracts/player-ab-practice.md)。量測使用 App 已初始化的同一練習 owner、真 Main／preload 與原 player／DSP／BGM；fixture 是隔離曲庫的合成靜音 WAV。`runtime.mjs` 只重匯出正式 factory，正式 renderer 不 import prototypes。歌詞頁入口同樣消費該 owner。
 
 ## 重現
 

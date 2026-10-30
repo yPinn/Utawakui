@@ -1,6 +1,6 @@
 # 播放器音訊設定套用
 
-本契約定義要求值、DSP 結果與播放交接，以及逐曲設定的 Main 保存邊界；產品現況見 [spec](../spec.md)。完整操作與生命週期沿[行為提案](../research/product/track-performance-preferences-detail-2026-10-26.md)，分階段驗證後接入。
+本契約定義要求值、DSP 結果與播放交接，以及逐曲設定的 Main 保存邊界；產品現況見 [spec](../spec.md)。完整操作與生命週期沿[行為提案](../archive/track-performance-preferences-detail-2026-10-26.md)，分階段驗證後接入。
 
 ## Main 逐曲保存
 
@@ -75,3 +75,36 @@ Library URL refresh 也檢查明確的 readiness 結果，不能因 fulfilled �
 相鄰測試覆蓋三組獨立保存／預設與跨組 CAS、移除／ABA、來源與 scope 失效、fresh tag 等價、壞檔保留，以及 DSP 驗證拒絕、整組／部分成功、worklet 回應、晚回、取代、取消、期限、裝置失效、paused restore、library refresh 與原 BGM 交接。Set 交叉情境沿詳細提案 T19–T26，回歸集中於 [owner](../../src/composables/player/usePlayerPerformanceSettings.test.js)、[player 整合](../../src/composables/usePlayer.test.js)及[控制列行為](../../src/components/playback/PlayerPerformanceSettingsControls.behavior.test.js)：包含同曲取消／失敗後恢復、已完成 restart 的提交界線、restore retry 預設組、copy／default／remove 互不代存、保存中的操作鎖與後續編輯，以及 cancelled／歷史成功不改選組。Web Audio／裝置由 mocks 提供；這些測試不等於真實 Windows 裝置、Electron 聽感或 OBS 錄音驗收。
 
 隔離可見 Electron 以正式 Main／preload、production renderer 與合成靜音音源驗保存讀回、各組已存值切換、空組基準及未保存調整捨棄、指定第二組預設與重新載入、批次保持 paused／位置、重設／移除及 machine preferences 隔離。另驗播放中右鍵目前／其他已存及空組、複製至空／已存目標後手動保存、同曲與異曲讀取中取消後保留原組與暫時值、十六分鐘閒置續期及同 revision 外部改檔衝突；未保存操作保持 sidecar bytes，錯誤通知去重、無可見狀態行，刪曲後控制停用。亮暗／960 與 1280 視窗無水平溢出。此證據不包含聲學品質。真實裝置／OBS 仍需驗新開始／resume、非零 pitch 與 capture、裝置失效／重選、快速換曲／取消與 BGM 回復；節拍 drift 與偶發失真根因保持未結案。
+
+## 驗收案例
+
+案例編號沿用[原提案](../archive/track-performance-preferences-detail-2026-10-26.md)；表格列完整情境，不是進度表，現況見 [spec](../spec.md)。
+
+| ID  | 情境與必要結果                                                                   |
+| --- | -------------------------------------------------------------------------------- |
+| T01 | 無設定原曲採基準，不準備 Provider／模型，confirmed playing 才更新進度。          |
+| T02 | 保存後重啟值回來、先 paused，未存臨時值不回來。                                  |
+| T03 | 跨集合共用；同名不同錄音、不同 track／library 不混用。                           |
+| T04 | 缺分離仍存三項，導唱保留／基準，不自動處理或假去人聲。                           |
+| T05 | pending／失敗 DSP 目標不可當已套用快照保存。                                     |
+| T06 | 保存等待中再改值，成功只更新舊快照，新值保持 dirty。                             |
+| T07 | 重設／套用／移除範圍分明；移除不改本次值，machine preferences bytes 不變。       |
+| T08 | pause／seek／repeat／A–B 保留臨時值，無每輪 profile I/O。                        |
+| T09 | restart／上一首 fallback／場次重套且到 0，意圖／occurrence 正確，無額外完成。    |
+| T10 | A→B→A、同 id 換庫、取消拒絕舊讀／DSP／保存，不復活曲目。                         |
+| T11 | metadata／URL／分離切換保留位置、臨時值與 arrangement token。                    |
+| T12 | tag 等價、未知替換、缺檔依 Main 證據處理，保留原設定。                           |
+| T13 | 壞檔／未知版本／I/O／超時可辨，不自動錯 Key 開唱或寫回 defaults。                |
+| T14 | 兩舊 revision、保存－移除－舊寫入，拒 stale／ABA。                               |
+| T15 | 任一路 DSP／裝置失敗結果準確，依原 fail-closed，不假報整體成功。                 |
+| T16 | BGM／預覽交接、失敗／取消無雙 lane、卡 pending 或晚 timer 重開。                 |
+| T17 | restore 中編輯／Play，晚讀不蓋值，開始有一致結果。                               |
+| T18 | 已提交後遺失回應／換庫可重讀確認，不污染新頁或盲重送。                           |
+| T19 | 切已存／空組取各自值；重按同組不重設；離組捨棄未存變更，播放／位置不變。         |
+| T20 | 右鍵目前／其他已存或空組，單次基準批次成功才切組，不先套舊值、不寫檔。           |
+| T21 | 複製取來源已存值、不取暫時值；相同基準仍為草稿，離組捨棄、空來源停用。           |
+| T22 | 複製至已存目標不先覆寫；微調後保存只寫目標，預設／來源保持，晚回不拉回新值。     |
+| T23 | cancelled／歷史 fulfilled DSP 不換組、不誤發失敗通知；真實失敗保留選組並通知。   |
+| T24 | 閒置過期同曲同檔靜默續期；同 revision 改 bytes 仍衝突，scope 撤銷不可復活。      |
+| T25 | 同曲取消／換曲失敗恢復原組與暫時值；restore 重試選預設；已完成 restart 不回滾。  |
+| T26 | 無曲目／忙碌停用，鍵盤選單可用；短 tooltip、框線／底色及 Save 狀態無可見狀態行。 |

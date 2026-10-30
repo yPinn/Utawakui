@@ -1,6 +1,8 @@
 # 可自訂／全域快捷操作：行為提案
 
-本提案固定原第 4 項的十命令、輸入／註冊政策與 S01–S18 分層驗收。功能現況只見 [spec](../../spec.md)，現行 App 行為見[輸入契約](../../contracts/input-bindings.md)，背景交易與平台門檻見[全域契約](../../contracts/global-keyboard-shortcuts.md)。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。設定已保存、OS 已註冊、當下可執行是不同狀態。
+> 已歸檔（2026-10-30）：已實作，行為與驗收案例由[全域契約](../contracts/global-keyboard-shortcuts.md)持有；本文只保留設計推導，其中的階段與待辦不代表現況。
+
+本提案固定原第 4 項的十命令、輸入／註冊政策與 S01–S18 分層驗收。功能現況只見 [spec](../spec.md)，現行 App 行為見[輸入契約](../contracts/input-bindings.md)，背景交易與平台門檻見[全域契約](../contracts/global-keyboard-shortcuts.md)。共用前置見[規劃入口](../research/product/player-practice-planning-2026-10-26.md#共用前置)。設定已保存、OS 已註冊、當下可執行是不同狀態。
 
 ## 十個命令與預設
 
@@ -75,7 +77,7 @@ SMTC play／pause 保持明確意圖，不改成 toggle。Key／offset 跨 await
 
 ## 類型分類與最低設定建議（2026-10-29）
 
-Owner 要求在完整盤點後，先分類、判斷最低設定範圍，再依同定位應用給建議。Owner 已接受十命令與四個局部分類 Tab；原不開音量的範圍在本切片增加音量三命令。下方推薦 Space／切歌配置仍只供建議，不更動現有預設。現行行為仍以[輸入契約](../../contracts/input-bindings.md)為準，本切片沿既有 schema、保存與播放器 owners，沒有註冊 global。
+Owner 要求在完整盤點後，先分類、判斷最低設定範圍，再依同定位應用給建議。Owner 已接受十命令與四個局部分類 Tab；原不開音量的範圍在本切片增加音量三命令。下方推薦 Space／切歌配置仍只供建議，不更動現有預設。現行行為仍以[輸入契約](../contracts/input-bindings.md)為準，本切片沿既有 schema、保存與播放器 owners，沒有註冊 global。
 
 ### 按用途與作用範圍分類
 
@@ -145,7 +147,7 @@ Owner 要求依操作類型參考常見預設，特別是 OBS 與 Adobe 的顯�
 | 置中／適合畫布 | OBS 的 Ctrl+D 置中來源、Ctrl+F 將來源配合畫布；這會修改來源變形。AE 的 Shift＋斜線則只將預覽縮放至適合面板。                                                                                                                                         | 將「置中物件／調整物件尺寸」和「只縮放預覽」分開具名；未有對應功能時不配鍵。Ctrl+F／Ctrl+R／Ctrl+S 不挪用為全 App 顯示命令，避免與搜尋／既有保留語意混淆。                                        |
 | 目的地與工作區 | Premiere 用 Shift＋數字切面板，Alt+Shift＋數字切工作區；不是跨工具統一標準。                                                                                                                                                                         | 本案 F1／F2／F3／F9 已對應正式目的地，維持現有預設，不為套用 Adobe 習慣換鍵；F4 沿 ADR 0023 保留。                                                                                                |
 
-前四項已沿此順序實作：音量方向鍵讓位 handled／IME、互動或明示聚焦區與浮層；PgUp 往開頭、PgDn 往結尾並保留五視窗跨度；波形面板內單次 `=`／`-` 沿原 zoom；Owner 確認主工作區、右側面板與波形共用放大／還原。最近點選或聚焦為目標，單次反引號切換，Escape 先交選單再還原，來源／目的地失效自動解除。共用按鈕沿原 DOM，不重建 owner 或保存寬度。取消與草稿／transport 不變沿[波形契約](../../contracts/lyrics-waveform.md)及[輸入契約](../../contracts/input-bindings.md#固定面板檢視)。畫布平移、置中／適合等新增命令仍留待對應功能決策。畫面檢視、歌曲播放、資料修改分開；顯示操作不能附帶 seek、開始播放或保存歌詞。
+前四項已沿此順序實作：音量方向鍵讓位 handled／IME、互動或明示聚焦區與浮層；PgUp 往開頭、PgDn 往結尾並保留五視窗跨度；波形面板內單次 `=`／`-` 沿原 zoom；Owner 確認主工作區、右側面板與波形共用放大／還原。最近點選或聚焦為目標，單次反引號切換，Escape 先交選單再還原，來源／目的地失效自動解除。共用按鈕沿原 DOM，不重建 owner 或保存寬度。取消與草稿／transport 不變沿[波形契約](../contracts/lyrics-waveform.md)及[輸入契約](../contracts/input-bindings.md#固定面板檢視)。畫布平移、置中／適合等新增命令仍留待對應功能決策。畫面檢視、歌曲播放、資料修改分開；顯示操作不能附帶 seek、開始播放或保存歌詞。
 
 現行 App 錄製子集仍不收 `=`／`-`／斜線／反引號，也只開十個執行命令；`=`／`-` 是波形固定操作，反引號是三種面板共用的固定檢視操作，沒有放寬共享驗證器或冒充可錄製命令。已存在的 Ctrl+↑／↓ 在本案是升降調、在 OBS 是來源排序；維持工具／焦點分層，所有推薦仍不註冊 global，不宣稱能避開使用者自訂 OBS 鍵。
 
@@ -155,7 +157,7 @@ Owner 本階段要求放大先收斂於最低可用：承接各區目前的閱�
 
 Owner 已確認快捷鍵區內依播放控制（3）、音訊調整（5）、歌詞對時（2）、操作說明（唯讀）四個 Tab 排序。沿既有 Settings 文件與 UiTabs，不改整體設定頁導覽；設定方法及共通規則集中於「操作說明 → 設定方式」，功能鍵參考沿同一入口。波形「⋯ → 操作說明」只留局部鍵帽與圖例；完整鍵盤圖不列入本輪交付。
 
-Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與視覺化。現況唯一清單見[輸入綁定契約](../../contracts/input-bindings.md#分層)：17 筆正式預設 App 綁定、內部另 4 筆，另有各元件、表單、錄製與系統入口。本輪沿原第 4 項增加十命令分類設定，不更動既有預設鍵或開放 global；下列鍵盤圖部分維持可選擴充建議。
+Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與視覺化。現況唯一清單見[輸入綁定契約](../contracts/input-bindings.md#分層)：17 筆正式預設 App 綁定、內部另 4 筆，另有各元件、表單、錄製與系統入口。本輪沿原第 4 項增加十命令分類設定，不更動既有預設鍵或開放 global；下列鍵盤圖部分維持可選擴充建議。
 
 主操作建議採可搜尋的「功能／目前按鍵／作用範圍／狀態／操作」清單，搭配可收合的鍵盤圖。功能清單能表達未指派的五個命令、同鍵不同焦點行為與不可自訂項；鍵盤圖用來找鍵、理解修飾鍵層與查占用，兩者共用同一份解析後綁定資料。沿既有 Settings Folder 活頁文件與 disclosure，不新增另一個控制台視覺系統。
 
@@ -172,7 +174,7 @@ Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與�
 
 鍵盤圖首版若採 Windows ANSI 示意，須明說布局僅示意；現有 chord 是邏輯 `event.key`，不能把圖上的固定物理位置或 `code` 當匹配真值。ISO／JIS、中文 IME、numpad、Fn／媒體鍵的外觀與可錄製範圍不同，不應畫成全數可綁。Shift wildcard 要在圖的 Shift 層也揭露，例如 Shift+M 同樣靜音；未設／停用仍由功能清單呈現，不能從鍵盤空位推論功能不存在。
 
-輸入優先序、Shift wildcard／長按與十命令範圍沿[輸入契約](../../contracts/input-bindings.md)，不重新列為未決政策。Custom 讓位於聚焦的普通按鈕；若要改成允許未使用的 modifier chord，仍須另驗 primitives 與 S05–S07，不在清單或鍵盤圖另造分派器。Global 依逐命令 Windows gate，沒有新排程。
+輸入優先序、Shift wildcard／長按與十命令範圍沿[輸入契約](../contracts/input-bindings.md)，不重新列為未決政策。Custom 讓位於聚焦的普通按鈕；若要改成允許未使用的 modifier chord，仍須另驗 primitives 與 S05–S07，不在清單或鍵盤圖另造分派器。Global 依逐命令 Windows gate，沒有新排程。
 
 ## 驗收情境（S01–S18）
 
@@ -199,6 +201,6 @@ Owner 要求在操作檢查階段盤點所有鍵盤行為，再決定設定與�
 
 ## 整合與驗收入口
 
-十命令的 App 保存／錄製與既有 executor 邊界見[輸入契約](../../contracts/input-bindings.md#機器保存與錄製)；背景作用範圍、候選試用、套用／取消及占用／保存失敗復原，見[全域互動契約](../../contracts/global-keyboard-shortcuts.md#第-4-項續接互動設定與候選試註冊)。兩者共用原 settings／recorder 與 player／queue／lyrics owners。
+十命令的 App 保存／錄製與既有 executor 邊界見[輸入契約](../contracts/input-bindings.md#機器保存與錄製)；背景作用範圍、候選試用、套用／取消及占用／保存失敗復原，見[全域互動契約](../contracts/global-keyboard-shortcuts.md#第-4-項續接互動設定與候選試註冊)。兩者共用原 settings／recorder 與 player／queue／lyrics owners。
 
-App、自有可見視窗、stub owners、in-memory 註冊、原生 helper 與真實 Windows／OBS 必須分層驗收；S01–S18 表是完整情境，不是全部待做或全部通過的進度表。歷次數字、modifier-only 推論撤回與實體回報限制集中於[分層驗證紀錄](../engineering/global-keyboard-shortcut-verification-2026-10-29.md)；正式開放條件與現況由 [spec](../../spec.md) 持有，不在提案另列逐輪日誌。
+App、自有可見視窗、stub owners、in-memory 註冊、原生 helper 與真實 Windows／OBS 必須分層驗收；S01–S18 表是完整情境，不是全部待做或全部通過的進度表。歷次數字、modifier-only 推論撤回與實體回報限制集中於[分層驗證紀錄](../research/engineering/global-keyboard-shortcut-verification-2026-10-29.md)；正式開放條件與現況由 [spec](../spec.md) 持有，不在提案另列逐輪日誌。

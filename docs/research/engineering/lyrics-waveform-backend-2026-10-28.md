@@ -1,6 +1,6 @@
 # 歌詞波形 backend：預算與取消驗證
 
-2026-10-28，沿[原第 3 項](../product/lyrics-timing-review-detail-2026-10-26.md)的 R15–R17。結論是保留 Main 分塊 FFmpeg＋隔離 worker 作下一步候選；不採用同一 renderer 的完整 Browser decode 作長曲／硬取消主路徑。本輪沒有接正式波形介面、cache 或新的產品 IPC，產品現況只見 [spec](../../spec.md)。
+2026-10-28，沿[原第 3 項](../../archive/lyrics-timing-review-detail-2026-10-26.md)的 R15–R17。結論是保留 Main 分塊 FFmpeg＋隔離 worker 作下一步候選；不採用同一 renderer 的完整 Browser decode 作長曲／硬取消主路徑。本輪沒有接正式波形介面、cache 或新的產品 IPC，產品現況只見 [spec](../../spec.md)。
 
 ## 方法與分母
 

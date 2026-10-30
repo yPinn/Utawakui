@@ -1,6 +1,6 @@
 # 全域快捷鍵註冊與失敗復原
 
-沿[原第 4 項提案](../research/product/keyboard-shortcuts-detail-2026-10-26.md)，本契約固定 Main 註冊、機器設定交易與單一接收端邊界。App 內設定與命令執行仍見[輸入契約](input-bindings.md)。全域預設關閉；設定已保存、OS 持有按鍵、命令可執行是三個不同狀態。
+沿[原第 4 項提案](../archive/keyboard-shortcuts-detail-2026-10-26.md)，本契約固定 Main 註冊、機器設定交易與單一接收端邊界。App 內設定與命令執行仍見[輸入契約](input-bindings.md)。全域預設關閉；設定已保存、OS 持有按鍵、命令可執行是三個不同狀態。
 
 ## 平台門檻與本階段範圍
 
@@ -106,3 +106,28 @@ Main-frame navigation、frame 更換、crash、destroy 或 unresponsive 撤租�
 [Microsoft RegisterHotKey](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-registerhotkey) 定義 MOD_NOREPEAT、執行緒訊息迴圈與 F12 的 debugger 保留；本輪 Windows 後端與 global chord 已拒絕 F12，不能將現有 App 鍵子集直接當 OS 可註冊集合。[GetAsyncKeyState](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate) 說明高位為取樣當下狀態、低位不可依賴，零也可能是取樣失敗；本輪沒有據此宣稱可靠 keyup 或啟動時必然可確認所有按鍵已放開。
 
 [Microsoft .NET Framework 版本與相依性](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies) 列出 Windows 內建 4.8／4.8.1 的版本差異。本案 helper 以 4.8 為明示前提，不將所有舊 Windows 或被移除的系統元件當成已確認可用，也不自動安裝環境。
+
+## 驗收案例
+
+案例編號沿用[原提案](../archive/keyboard-shortcuts-detail-2026-10-26.md)；表格列完整情境，不是進度表，現況見 [spec](../spec.md)。
+
+| ID  | 情境與必要結果                                                                    |
+| --- | --------------------------------------------------------------------------------- |
+| S01 | schema／command／過量或任意 accelerator／modifier 拒絕，不開任意 IPC。            |
+| S02 | 大小寫／alias／順序／wildcard 正規化與重疊一致。                                  |
+| S03 | 同 scope／跨 scope／保留鍵衝突明示，同 chord 同命令單一 executor。                |
+| S04 | 初始／預設／換庫／重啟不多搶鍵，設定保留、active 重驗。                           |
+| S05 | 原生 editable／widget 讓位，defaultPrevented 保持，不冒稱舊差異已修。             |
+| S06 | IME／AltGr／Dead／鍵盤配置不誤觸、存半組，邏輯對應明確。                          |
+| S07 | modal／menu／popover／錄製／取消失焦不穿透或試鍵真執行。                          |
+| S08 | 主視窗／Performer／失焦／最小化／Tray 按政策，不帶前、不接 Output 控制。          |
+| S09 | DOM＋OS、重送 id／舊 generation 單次，不誤吞合法新按壓。                          |
+| S10 | 短／長／快速重按與 callback 序列實測，不合格就不開該 global 命令。                |
+| S11 | paused／playing／pending／A–B gap／manual 不猜曲、假完成或重啟取消播放。          |
+| S12 | previous／next／場次／Queue 尾端共用 transport／canExecute。                      |
+| S13 | DSP pending／失敗、offset 來源不同／保存中不錯調、排無界隊或假保存。              |
+| S14 | OS／他 App 占用、isRegistered=false 不當空閒，保原 active、可重試。               |
+| S15 | 多鍵中途失敗／映射交換／寫偏好失敗 staging 正確，不假 OS 原子交易。               |
+| S16 | 移除／停用／回復失敗、排程 callback 有 generation 防線，runtime／保存分報。       |
+| S17 | crash／reload／quit／睡眠釋放或重驗，無訂閱累加／補播／假永遠 active。            |
+| S18 | 可見 Windows 與 OBS／瀏覽器、SMTC／taskbar 並行無雙註冊，焦點／長按／衝突可重現。 |

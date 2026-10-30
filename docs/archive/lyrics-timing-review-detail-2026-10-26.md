@@ -1,6 +1,8 @@
 # 歌詞對時確認：行為提案
 
-2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../../spec.md)。R01–R18 仍為完整分層驗收；收據、原音訊波形及句級數值／波形拖曳與明確定位／播放切片不等於人工品質驗收完成。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
+> 已歸檔（2026-10-30）：已實作，行為與驗收案例由[保存與確認契約](../contracts/lyrics-timing-review.md)持有；本文只保留設計推導，其中的階段與待辦不代表現況。
+
+2026-10-26 提案；2026-10-28 沿既有保存路徑接續 source session／CAS／offset barrier 與人工確認收據，行為邊界見[保存與確認契約](../contracts/lyrics-timing-review.md)，功能現況只見 [spec](../spec.md)。R01–R18 仍為完整分層驗收；收據、原音訊波形及句級數值／波形拖曳與明確定位／播放切片不等於人工品質驗收完成。共用前置見[規劃入口](../research/product/player-practice-planning-2026-10-26.md#共用前置)。沿既有 editor 聽辨／修正，記錄對當前來源的人工檢查，不把波形、模型或播放完成當作正確性證明。
 
 ## 範圍與確認含義
 
@@ -34,7 +36,7 @@ offset 後越過 0／duration 要明示，不 clamp 再保存；明確跳最近�
 
 ## 單一草稿與句級操作
 
-句級數值／微調、波形端點把手與句內 tap／nudge 共用同一 editor／Main mutation，當前語意及視覺驗收入口集中於[保存與確認契約](../../contracts/lyrics-timing-review.md)。以下保留完整句級規劃，波形整句平移與明確定位／播放入口沿同一契約接入；真實聽辨仍須後續驗；保留 document／line／segment ids、原文與未改行，草稿僅作者預覽，不發布到 Performer／Output。
+句級數值／微調、波形端點把手與句內 tap／nudge 共用同一 editor／Main mutation，當前語意及視覺驗收入口集中於[保存與確認契約](../contracts/lyrics-timing-review.md)。以下保留完整句級規劃，波形整句平移與明確定位／播放入口沿同一契約接入；真實聽辨仍須後續驗；保留 document／line／segment ids、原文與未改行，草稿僅作者預覽，不發布到 Performer／Output。
 
 | 操作               | 提案規則                                                                             |
 | ------------------ | ------------------------------------------------------------------------------------ |
@@ -72,22 +74,22 @@ source fingerprint 只能防原文變更；同原文仍可有不同時間修訂�
 
 ## 失效矩陣
 
-| 變動                                        | Receipt 規則                                                                                                   |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| canonical 原文／timing／offset 實質保存變更 | 新 revision 過期；改回數值不自動復活已撤銷／過期確認，純 no-op 不造版本。                                      |
-| A→B→A 來源切換                              | 各自查 receipt，未變 A 可讀回；不將 A 借給 B 或因切換抹掉 A。                                                  |
-| 媒體替換／無法驗證                          | 待重確認，不只比 id／檔名／URL。                                                                               |
-| FLAC tag 回寫                               | Main fresh-verify [等價收據](../../contracts/audio-tag-writeback.md)後才依相容規則遷移 binding，否則保守失效。 |
-| label／封面／artist／讀音／繁簡／分頁／外觀 | 未改 canonical timing 則保留，不背書裝置或 OBS 同步。                                                          |
-| Key／tempo／導唱／分離更新                  | 原始座標未變則保留，不代表延遲校準。                                                                           |
-| T1+ 切換／重算                              | base receipt 不變，估計視圖不借其可信標示。                                                                    |
-| waveform 清理／再生                         | 原媒體／timing 未變則保留，cache 不是確認身份。                                                                |
+| 變動                                        | Receipt 規則                                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| canonical 原文／timing／offset 實質保存變更 | 新 revision 過期；改回數值不自動復活已撤銷／過期確認，純 no-op 不造版本。                                   |
+| A→B→A 來源切換                              | 各自查 receipt，未變 A 可讀回；不將 A 借給 B 或因切換抹掉 A。                                               |
+| 媒體替換／無法驗證                          | 待重確認，不只比 id／檔名／URL。                                                                            |
+| FLAC tag 回寫                               | Main fresh-verify [等價收據](../contracts/audio-tag-writeback.md)後才依相容規則遷移 binding，否則保守失效。 |
+| label／封面／artist／讀音／繁簡／分頁／外觀 | 未改 canonical timing 則保留，不背書裝置或 OBS 同步。                                                       |
+| Key／tempo／導唱／分離更新                  | 原始座標未變則保留，不代表延遲校準。                                                                        |
+| T1+ 切換／重算                              | base receipt 不變，估計視圖不借其可信標示。                                                                 |
+| waveform 清理／再生                         | 原媒體／timing 未變則保留，cache 不是確認身份。                                                             |
 
 沿現行 normalizer 相容政策保留權威 v2／v3 文件；不能軟體升級就重算合法已存時間或補人工確認。
 
 ## 有界波形
 
-Main 接入與按需介面的 ownership、固定預算與清理邊界集中在[波形契約](../../contracts/lyrics-waveform.md)；下列仍是完整能力與驗收規劃，不因唯讀振幅交付而完成句級編輯或人工品質驗收。
+Main 接入與按需介面的 ownership、固定預算與清理邊界集中在[波形契約](../contracts/lyrics-waveform.md)；下列仍是完整能力與驗收規劃，不因唯讀振幅交付而完成句級編輯或人工品質驗收。
 
 waveform 綁原始媒體 revision／producer 版本／解析度，不綁歌詞文字或 offset；多來源共用、時間編輯不重解碼、清 cache 不刪 receipt。可評估粗摘要加細 tile，只接有界可見範圍／解析度，回峰值摘要與 opaque identity，不透過 IPC 傳完整 PCM／任意 decoder 參數。
 
@@ -100,7 +102,7 @@ waveform 綁原始媒體 revision／producer 版本／解析度，不綁歌詞�
 | Browser decode | codec、完整 PCM／副本峰值、長曲取消與 UI 阻塞；不能只限壓縮檔 bytes 或最終摘要。超預算明確不生成。 |
 | Main 派生      | 固定 decoder、分塊記憶體、deadline／輸出上限／真正取消；若用 FFmpeg 沿原 gate，不隱式準備。        |
 
-2026-10-28 的[隔離預算與取消實驗](../engineering/lyrics-waveform-backend-2026-10-28.md)選用 Main 分塊 FFmpeg＋隔離 worker；Browser 完整 decode 不作長曲／硬取消主路徑。正式接入與已驗範圍見波形契約，不新增 decoder 準備流程。明確開波形才啟動，同來源去重、取消停止 producer、不在啟動／掃庫全庫生成。來源 generation 提交前重驗，過期不安裝；cache 壞、codec 不支援、容量不足不拖垮原 timing editor。封裝 decoder 版本與真實長曲壓力仍待後續 gate。
+2026-10-28 的[隔離預算與取消實驗](../research/engineering/lyrics-waveform-backend-2026-10-28.md)選用 Main 分塊 FFmpeg＋隔離 worker；Browser 完整 decode 不作長曲／硬取消主路徑。正式接入與已驗範圍見波形契約，不新增 decoder 準備流程。明確開波形才啟動，同來源去重、取消停止 producer、不在啟動／掃庫全庫生成。來源 generation 提交前重驗，過期不安裝；cache 壞、codec 不支援、容量不足不拖垮原 timing editor。封裝 decoder 版本與真實長曲壓力仍待後續 gate。
 
 ## 待執行驗收
 
@@ -129,7 +131,7 @@ waveform 綁原始媒體 revision／producer 版本／解析度，不綁歌詞�
 
 先定 source session／revision／offset barrier／receipt；資料語意可先於波形驗。再比較 backend 的預算與取消，擴充同一 editor 的句級相依，最後按既有視覺節奏與真實音訊驗收，不重建整頁。
 
-當輪依據：[editor](../../../src/composables/useLyricsTimingEditor.js)、[source owner](../../../src/composables/lyrics/useLyricsSourceDocuments.js)、[Main validator](../../../electron/lib/library/lyricsTiming.js)、[timing 契約](../../contracts/lyrics-timing-contract.md)、[T1+ 契約](../../contracts/lyrics-acoustic-estimate-contract.md)。7 份既有測試72 passed：系統 TEMP 首次7 fail／65 pass（rename EPERM），工作區 TEMP／TMP 同組重驗全過，未改程式。原 T01–T09 留[初始證據](player-practice-planning-2026-10-26.json)，不是新增驗收結果。
+當輪依據：[editor](../../src/composables/useLyricsTimingEditor.js)、[source owner](../../src/composables/lyrics/useLyricsSourceDocuments.js)、[Main validator](../../electron/lib/library/lyricsTiming.js)、[timing 契約](../contracts/lyrics-timing-contract.md)、[T1+ 契約](../contracts/lyrics-acoustic-estimate-contract.md)。7 份既有測試72 passed：系統 TEMP 首次7 fail／65 pass（rename EPERM），工作區 TEMP／TMP 同組重驗全過，未改程式。原 T01–T09 留[初始證據](../research/product/player-practice-planning-2026-10-26.json)，不是新增驗收結果。
 
 ## 保存與收據驗證（2026-10-28）
 

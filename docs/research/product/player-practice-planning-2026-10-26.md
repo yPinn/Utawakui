@@ -1,21 +1,21 @@
 # 播放器與排練規劃
 
-本頁保留原四項的順序、共用前置與詳細提案入口，不另立 roadmap。功能現況與投入分類只見 [spec](../../spec.md#3-功能現況)，實作行為與驗收界線由各契約持有；外部需求證據見[競品研究](competitive-research.md)。已接受的切片不等於整項驗收完成，研究候選也不因文件存在就成為交付承諾。
+本頁保留原四項的順序與共用前置，不另立 roadmap。四份詳細提案已實作並歸檔，行為與驗收案例改由對應契約持有。功能現況與投入分類只見 [spec](../../spec.md#3-功能現況)，實作行為與驗收界線由各契約持有；外部需求證據見[競品研究](competitive-research.md)。已接受的切片不等於整項驗收完成，研究候選也不因文件存在就成為交付承諾。
 
 ## 原四項順序
 
-| 順序 | 提案                                                               | 要解決的問題                                       | 整合與驗收前置                                            |
-| ---- | ------------------------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------------- |
-| 1    | [逐曲演唱設定](track-performance-preferences-detail-2026-10-26.md) | 明確保存／套用本曲 Key、微調、速度與監聽導唱。     | 重用既有 DSP 結果與播放交易；固定保存／綁定／CAS 邊界。   |
-| 2    | [區段練習](ab-practice-detail-2026-10-26.md)                       | A–B 返回、重播前等待與取消。                       | EOF 分派前仲裁、BGM 練習占用及實測邊界。                  |
-| 3    | [歌詞對時確認](lyrics-timing-review-detail-2026-10-26.md)          | 在既有 editor 驗聽／修正，保存來源版本的人工確認。 | timing／offset revision、部分保存語意及有界波形 backend。 |
-| 4    | [可自訂／全域快捷操作](keyboard-shortcuts-detail-2026-10-26.md)    | 十命令的 App／背景綁定、焦點與失敗復原。           | App 輸入優先序、Main 交易、候選試用及逐命令平台門檻。     |
+| 順序 | 原提案（已歸檔）                                                                 | 要解決的問題                                       | 整合與驗收前置                                            |
+| ---- | -------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------- |
+| 1    | [逐曲演唱設定](../../archive/track-performance-preferences-detail-2026-10-26.md) | 明確保存／套用本曲 Key、微調、速度與監聽導唱。     | 重用既有 DSP 結果與播放交易；固定保存／綁定／CAS 邊界。   |
+| 2    | [區段練習](../../archive/ab-practice-detail-2026-10-26.md)                       | A–B 返回、重播前等待與取消。                       | EOF 分派前仲裁、BGM 練習占用及實測邊界。                  |
+| 3    | [歌詞對時確認](../../archive/lyrics-timing-review-detail-2026-10-26.md)          | 在既有 editor 驗聽／修正，保存來源版本的人工確認。 | timing／offset revision、部分保存語意及有界波形 backend。 |
+| 4    | [可自訂／全域快捷操作](../../archive/keyboard-shortcuts-detail-2026-10-26.md)    | 十命令的 App／背景綁定、焦點與失敗復原。           | App 輸入優先序、Main 交易、候選試用及逐命令平台門檻。     |
 
 沿此順序分切片接續，不要求四項全部實作後才能交付。App 自訂、背景註冊、候選互動與完整平台操作分層驗證；程式、合成媒體及隔離介面證據都不能取代各項的實機／品質門檻。
 
 ## 共用前置
 
-四份提案共同適用下列規則，各文件只補特有行為：
+四項共同適用下列規則，各契約只補特有行為：
 
 - 沿現有 player／queue／lyrics owners；HTML audio 是時間與播放狀態權威。BGM 仍由唯一 coordinator／pre-start hook 仲裁，Performer／Output 只消費投影。
 - Main 導出路徑、媒體證據與保存位置；Renderer 只傳固定命令、ids、scope／epoch、expected revision 及有界值。不同功能可共用原則，不強制使用同一個 revision 或全能 controller。
@@ -24,7 +24,7 @@
 - 原子保存與 CAS 保護當前資料；缺少、壞檔、未知版本、I/O 與 stale 分開。保留原 bytes，失敗不自動覆寫；提交前失效拒絕，已提交的原 scope 結果不為新 UI 反向撤回。
 - 設定與控制不新增播放／場次完成、章節或上傳；前景／背景、裝置／OBS 聽感與失敗復原須按功能驗證。純資料／mock 測試不是實機驗收。
 
-四份提案的 T／A／R／S 是完整驗收情境，不是全部待做或全部通過的進度表。各輪證據保留其分母與限制，不能加總成完整功能通過數；未決的預設、預算與支援範圍仍須先確認。
+各契約「驗收案例」的 T／A／R／S 是完整情境，不是全部待做或全部通過的進度表。各輪證據保留其分母與限制，不能加總成完整功能通過數；未決的預設、預算與支援範圍仍須先確認。
 
 ## 目前實作核對與分類補正
 
@@ -32,19 +32,19 @@
 
 ## 1. 逐曲演唱設定
 
-三組保存／下次預設、媒體綁定、批次套用及 T01–T26 見[詳細提案](track-performance-preferences-detail-2026-10-26.md)與[音訊設定套用契約](../../contracts/player-audio-controls.md)。切組、保存與播放交接沿原交易，不另建 DSP owner。
+三組保存／下次預設、媒體綁定、批次套用及 T01–T26 見[音訊設定套用契約](../../contracts/player-audio-controls.md)；設計沿革見[原提案](../../archive/track-performance-preferences-detail-2026-10-26.md)。切組、保存與播放交接沿原交易，不另建 DSP owner。
 
 ## 2. 區段練習
 
-區間、等待／取消與 A01–A18 見[詳細提案](ab-practice-detail-2026-10-26.md)；terminal、BGM hold、來源、EOF／history／Output 及品質驗收界線見[區段練習契約](../../contracts/player-ab-practice.md)。不承諾無縫或 sample-accurate loop。
+區間、等待／取消、terminal、BGM hold、來源、EOF／history／Output、品質門檻及 A01–A18 見[區段練習契約](../../contracts/player-ab-practice.md)；設計沿革見[原提案](../../archive/ab-practice-detail-2026-10-26.md)。不承諾無縫或 sample-accurate loop。
 
 ## 3. 歌詞對時確認
 
-來源確認、offset、句級相依、部分成功與 R01–R18 見[詳細提案](lyrics-timing-review-detail-2026-10-26.md)及[保存與確認契約](../../contracts/lyrics-timing-review.md)；按需原音訊摘要、FFmpeg gate、排程與 cache 見[波形契約](../../contracts/lyrics-waveform.md)。人工確認不將 T1+ 升格 T2，波形不代替聽辨品質。
+來源確認、offset、句級相依、部分成功與 R01–R18 見[保存與確認契約](../../contracts/lyrics-timing-review.md)，設計沿革見[原提案](../../archive/lyrics-timing-review-detail-2026-10-26.md)；按需原音訊摘要、FFmpeg gate、排程與 cache 見[波形契約](../../contracts/lyrics-waveform.md)。人工確認不將 T1+ 升格 T2，波形不代替聽辨品質。
 
 ## 4. 可自訂／全域快捷操作
 
-十命令、鍵位／焦點與 S01–S18 見[詳細提案](keyboard-shortcuts-detail-2026-10-26.md)；App 設定／錄製見[輸入契約](../../contracts/input-bindings.md)，背景作用範圍、候選試註冊、套用／取消與失敗復原見[全域契約](../../contracts/global-keyboard-shortcuts.md)。隔離工廠驗證不授予正式命令能力，逐命令平台門檻通過後才可 opt-in。
+App 設定／錄製見[輸入契約](../../contracts/input-bindings.md)；背景作用範圍、候選試註冊、套用／取消、失敗復原與 S01–S18 見[全域契約](../../contracts/global-keyboard-shortcuts.md)；鍵位與設定呈現的沿革見[原提案](../../archive/keyboard-shortcuts-detail-2026-10-26.md)。隔離工廠驗證不授予正式命令能力，逐命令平台門檻通過後才可 opt-in。
 
 ## 5. 無伴奏演出：既有能力覆核
 
@@ -52,7 +52,7 @@
 
 ## 6. 衍生音訊減量：研究方案
 
-R01 尚未執行，codec 未選。以四聲道 WAV 為基線，比較短／長曲、不同 sample rate、原曲型態的容量、編碼耗時、冷暖載入、隨機 seek、CPU／RAM、聲道同步與 DSP 聽感；synthetic tone 只能驗路由，不能代替自然音樂品質。
+R01 的方法、格式比較、採用前驗證與候選建議見[衍生四聲道音訊減量研究](../audio/derived-audio-reduction-r01-2026-10-30.md)，是否採用仍依 spec 的研究分類與前置門檻。以四聲道 WAV 為基線，比較短／長曲、不同 sample rate、原曲型態的容量、編碼耗時、冷暖載入、隨機 seek、CPU／RAM、聲道同步與 DSP 聽感；synthetic 訊號可驗路由與數位定位，不能代替自然音樂品質。
 
 若採用，先對新結果 opt-in；舊結果需 staging、驗證、manifest 原子切換、取消／回復與安全磁碟空間。原始素材、播放／Queue 保護及既有[清理政策](../../contracts/library-storage-management.md)保留；不從單曲外推整庫壓縮率。
 

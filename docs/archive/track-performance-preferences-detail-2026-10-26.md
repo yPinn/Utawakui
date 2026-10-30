@@ -1,6 +1,8 @@
 # 逐曲演唱設定：行為提案
 
-2026-10-26 提案，2026-10-27 補三組保存決策與交叉情境；功能現況由 [spec](../../spec.md) 持有，DSP／保存與播放交易的實作邊界見[現行契約](../../contracts/player-audio-controls.md)。完整 T01–T26 是分層驗收情境，程式或 mock 通過不代替實機驗收。共用 ownership、保存／取消與狀態規則見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。目標是明確保存本曲條件，現場調整仍為暫時值。
+> 已歸檔（2026-10-30）：已實作，行為與驗收案例由[音訊設定套用契約](../contracts/player-audio-controls.md)持有；本文只保留設計推導，其中的階段與待辦不代表現況。
+
+2026-10-26 提案，2026-10-27 補三組保存決策與交叉情境；功能現況由 [spec](../spec.md) 持有，DSP／保存與播放交易的實作邊界見[現行契約](../contracts/player-audio-controls.md)。完整 T01–T26 是分層驗收情境，程式或 mock 通過不代替實機驗收。共用 ownership、保存／取消與狀態規則見[規劃入口](../research/product/player-practice-planning-2026-10-26.md#共用前置)。目標是明確保存本曲條件，現場調整仍為暫時值。
 
 ## 第一版範圍
 
@@ -13,7 +15,7 @@
 
 實作共用 canonical 值域；保存拒絕未知欄位、字串數字、NaN／Infinity、越界及非法步階，不把壞值 clamp 成有效設定。Key／cents 仍由 combinedSemitones 合成。
 
-每個 library／canonical track 最多三組，指定一組作為下次新開始的預設；同曲跨集合共用，不按歌名／artist／作品合併錄音，不跨 track／library remap。2026-10-27 Owner 將原單組範圍調整為三組，保存格式與 IPC 見[套用契約](../../contracts/player-audio-controls.md#main-逐曲保存)。
+每個 library／canonical track 最多三組，指定一組作為下次新開始的預設；同曲跨集合共用，不按歌名／artist／作品合併錄音，不跨 track／library remap。2026-10-27 Owner 將原單組範圍調整為三組，保存格式與 IPC 見[套用契約](../contracts/player-audio-controls.md#main-逐曲保存)。
 
 三個固定位置取代原「尚未保存」文字區；切換位置載入該組已存四欄，空組採基準；離開組未保存的調整直接捨棄，不自動保存或保留跨組草稿。重按目前組不重設；切換沿既有批次即時更新，不 pause／play／seek，保留原播放／暫停狀態與 occurrence，確認成功後才改選取，失敗保留原選取並提供重試。三個獨立 secondary 按鈕均常駐外框，以 active 底色標示目前選組，空組採虛線框、已存組採實線框，不另顯示文字狀態行；需保存時強調 Save、已存且無變更時採 ghost，完整狀態保留 aria，維持手動保存；下次預設保留於 tooltip，選單可將已保存組設為預設；首次保存自動成為預設。移除只清該組；若移除預設組，改採第一個仍已保存的位置，全部移除才回基準。共用垂直分隔線分開組別與保存／更多圖示按鈕，更多永遠位於最右。
 
@@ -70,7 +72,7 @@ restart 呼叫者含上一首 fallback／場次 controller，須保留 occurrenc
 
 ## 媒體綁定與保存復原
 
-metadata／封面／發行關聯、分離結果更新不讓原音源偏好自動失效；原始媒體更換則保留值待確認，不自動 remap。Main 只能在 fresh-verify [tag 等價證據](../../contracts/audio-tag-writeback.md)後遷移 binding；不能單比 trackId、URL 或整檔 hash。現有 contentHash 不等於每次已新鮮驗實體檔，身份驗證與有界 stamp memo 由 Main owner 持有，不暗加每次全檔 hash。
+metadata／封面／發行關聯、分離結果更新不讓原音源偏好自動失效；原始媒體更換則保留值待確認，不自動 remap。Main 只能在 fresh-verify [tag 等價證據](../contracts/audio-tag-writeback.md)後遷移 binding；不能單比 trackId、URL 或整檔 hash。現有 contentHash 不等於每次已新鮮驗實體檔，身份驗證與有界 stamp memo 由 Main owner 持有，不暗加每次全檔 hash。
 
 Main 短提交序列化並重驗 scope／track／revision；刪除後 token 也失效，避免 absent=0 的 ABA 舊寫入。程序重啟重取 token。長時間試唱的十五分鐘 token 到期由 Main 在原提交 lane 靜默重驗及續期，曲目 identity／音源／存檔 bytes 與 revision 未變時直接完成原手動操作，不要求使用者重讀；不是改成自動保存，也不以最新檔案覆蓋衝突。回應遺失先重讀；CAS 衝突保留本次值，讀最新後由使用者重存。invalid／unsupported 不自動覆寫或移除，保留原檔；第一版不提供自動重建或覆寫壞檔。
 
@@ -111,4 +113,4 @@ Main 短提交序列化並重驗 scope／track／revision；刪除後 token 也�
 
 最初切片順序為先固定缺分離保存、批次套用／restart／defaults、sidecar／IPC／revision、媒體等價與損壞復原，再整合既有 batch DSP／BGM／restore，驗證後接保存／套用 UI。此處保留決策脈絡，現行接入與驗證邊界由契約及 spec 持有。
 
-當輪核對 [player](../../../src/composables/usePlayer.js)、[audio graph](../../../src/composables/player/usePlayerAudioGraph.js)、[偏好保存](../../../src/composables/useAudioPreferencesPersistence.js)、[library sync](../../../src/composables/player/usePlayerLibrarySync.js)、[restore](../../../src/composables/usePlaybackResume.js)及[BGM controller](../../../src/bgm/sessionController.js)；既有 5 份測試 93 passed，僅基線。初始 P01–P08 留在[原證據](player-practice-planning-2026-10-26.json)。
+當輪核對 [player](../../src/composables/usePlayer.js)、[audio graph](../../src/composables/player/usePlayerAudioGraph.js)、[偏好保存](../../src/composables/useAudioPreferencesPersistence.js)、[library sync](../../src/composables/player/usePlayerLibrarySync.js)、[restore](../../src/composables/usePlaybackResume.js)及[BGM controller](../../src/bgm/sessionController.js)；既有 5 份測試 93 passed，僅基線。初始 P01–P08 留在[原證據](../research/product/player-practice-planning-2026-10-26.json)。

@@ -1,6 +1,6 @@
 # 區段練習的媒體邊界與歌詞 Loop 工具
 
-沿[原第 2 項提案](../research/product/ab-practice-detail-2026-10-26.md)推進。現況只見 [spec](../spec.md)，本契約固定 terminal 分派、內部 pause 原因、BGM 占用、來源證據及歌詞頁 Loop 工具的驗證邊界；程式／合成媒體通過不代替真實裝置與 OBS 聽感驗收。
+沿[原第 2 項提案](../archive/ab-practice-detail-2026-10-26.md)推進。現況只見 [spec](../spec.md)，本契約固定 terminal 分派、內部 pause 原因、BGM 占用、來源證據及歌詞頁 Loop 工具的驗證邊界；程式／合成媒體通過不代替真實裝置與 OBS 聽感驗收。
 
 ## 現行 owner 邊界
 
@@ -65,3 +65,32 @@ Metadata 未改 URL 時只驗來源，保留本次值。換 URL 時先取消返�
 EOF／近 EOF 已沿短／長 WAV、原曲／四聲道、三種速度與三種整首模式跑可見 Electron；每輪不洩漏到 final-ended 或短曲 history。原 player→實際 Main history 的整合另驗累計真實進度滿十秒至多一次，Output 同步取原生 clock 的 A／paused 與 discontinuity，演出 observer 沿 occurrence 去重。來源分離切換、paused 不重開及實體原檔替換亦走真 Main／preload 驗證。
 
 這些證據仍不等於所有真實音樂／容器、冷暖長循環、CPU／RAM 負載、OS 休眠、實際裝置／capture 或 OBS 聽感通過；背景持續循環不開放承諾。節拍 drift 與偶發失真根因維持原未結案邊界。
+
+## 驗收案例
+
+案例編號沿用[原提案](../archive/ab-practice-detail-2026-10-26.md)；表格列完整情境，不是進度表，現況見 [spec](../spec.md)。
+
+實驗前固定長短曲、容器、sample rate、原曲／四聲道、0.5／1／1.5 倍速、冷暖、前景／最小化與負載分母。Owner 於 2026-10-27 接受原型門檻：B 超出 p95≤100ms／max≤250ms；A 落點誤差 p95≤80ms／max≤150ms，均為媒體座標。原型先驗中段，不能測後挑門檻；500ms 正式支援及 EOF 安全範圍仍需通過後續品質 gates。原型以前景為限，隱藏／最小化暫停、回前景手動 Play；可見失焦不因此停止。
+
+另記 seek 耗時、倒數到 playing 落差、取消誤播、停頓／尾音／click、CPU／RAM與全部失敗。clock／mock 不證 scheduler／seek／monitor／capture 聽感，仍需可見 Electron／裝置／OBS。
+
+| ID  | 情境與必要結果                                                         |
+| --- | ---------------------------------------------------------------------- |
+| A01 | 缺／反向／NaN／越界／不連續 seekable／未知時長拒啟用，不 clamp。       |
+| A02 | paused 內／外啟用均不播，下次 Play 才必要回 A。                        |
+| A03 | playing 內側到 B、外側明確從 A，不誤播舊位置。                         |
+| A04 | 各等待／倍速不改座標，seek 後起算、保留本次演唱值。                    |
+| A05 | 同輪 timeupdate／ended／重複 callback 只返回一次。                     |
+| A06 | gap Pause／Play／停用／改秒數遵守取消、立即播與下輪快照。              |
+| A07 | 內／外 seek、編輯標記不拉回、不晚到重啟。                              |
+| A08 | EOF／近 EOF、repeat-one／list／shuffle 不漏到 BGM／history／Queue。    |
+| A09 | 改模式／結束循環不蓋較新選擇，gap 不自動播。                           |
+| A10 | 下一首、同曲新開始、restart、A→B→A／換庫拒舊 timer。                   |
+| A11 | BGM 交接首次一次，每輪無插播、重複 pre-roll 或雙 lane。                |
+| A12 | BGM／試聽接手及 Live 拒絕遵共同政策，不讓倒數搶回。                    |
+| A13 | 場次／manual 拒啟用；練習轉場次不假完成或另建 occurrence。             |
+| A14 | 進度累計至多一次，短區段多輪 EOF 不觸發短曲捷徑。                      |
+| A15 | Output／提詞器／時間戳真實 seek／phase，無每輪章節。                   |
+| A16 | 來源／分離切換、duration 縮短、缺檔依證據處理，不蓋 Key／縮端點。      |
+| A17 | seek／DSP／超時、緊貼 play 的取消／cleanup 不誤播、卡等待或漏 hold。   |
+| A18 | 最小化／失焦／負載／睡眠／長循環遵政策，保存完整誤差與失敗、不補輪次。 |

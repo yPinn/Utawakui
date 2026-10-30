@@ -1,6 +1,6 @@
 # 歌詞對時確認的來源與保存邊界
 
-沿[原第 3 項提案](../research/product/lyrics-timing-review-detail-2026-10-26.md)的 source session／revision／offset barrier／receipt 順序推進。現況只見 [spec](../spec.md)。確認收據及句級草稿沿既有保存路徑的版本與取消防線；唯讀波形見[波形契約](lyrics-waveform.md)。本契約記錄對當前來源全部已計時內容的人工檢查，不建立聲學品質或裝置同步承諾。
+沿[原第 3 項提案](../archive/lyrics-timing-review-detail-2026-10-26.md)的 source session／revision／offset barrier／receipt 順序推進。現況只見 [spec](../spec.md)。確認收據及句級草稿沿既有保存路徑的版本與取消防線；唯讀波形見[波形契約](lyrics-waveform.md)。本契約記錄對當前來源全部已計時內容的人工檢查，不建立聲學品質或裝置同步承諾。
 
 ## Source session 與 CAS
 
@@ -67,3 +67,28 @@ Label／讀音／聲部／繁簡／外觀／pitch／tempo／導唱不改 canonic
 一般儲存仍只存時間；有合法草稿時可選「儲存並確認」：保存草稿 → 成功後清除同一草稿 → 等待 offset 屏障 → Main fresh-read → 確認。任一 await 期間出現新草稿、offset intent、來源／scope 或視圖離開即停止後續確認；晚成功／失敗／finally 不蓋新操作。
 
 Timing 失敗保留草稿；timing 已存、offset 失敗時保留時間並提示先處理同步調整；兩者已存、確認失敗時明示時間已儲存／確認未完成，只重試確認。回應遺失先 fresh-read 已提交事實，不盲目重送舊 timing。來源已變而無法讀取時，可在沒有草稿後重新載入歌詞與確認狀態。
+
+## 驗收案例
+
+案例編號沿用[原提案](../archive/lyrics-timing-review-detail-2026-10-26.md)；表格列完整情境，不是進度表，現況見 [spec](../spec.md)。
+
+| ID  | 情境與必要結果                                                                           |
+| --- | ---------------------------------------------------------------------------------------- |
+| R01 | T0／T1／partial T2／T1+／混合行範圍正確，不偽造 T2／完整性。                             |
+| R02 | 正負 offset、倍速、ms／s 的標記／seek／tap／保存一致。                                   |
+| R03 | 越界明示，不 clamp 回寫或確認未驗聽內容。                                                |
+| R04 | 同／不同曲、paused／playing、場次／BGM 無 hover 播放、暗換 Queue／中止場次或第二 clock。 |
+| R05 | 平移、句首／尾、segment 保文字／ids，完整驗證，不裁片段／均分造時間。                    |
+| R06 | inferred end、相鄰句、合法重疊／重複行相依正確，不刪／併。                               |
+| R07 | undo／取消只影響草稿，不假回滾已存 offset。                                              |
+| R08 | 同原文的另一次 timing／offset 保存使舊 CAS／確認失效。                                   |
+| R09 | 保存中改稿、A→B→A／同 id 換庫，晚成功／失敗／finally 不蓋新狀態。                        |
+| R10 | 三階段失敗／逾時保部分成功，可重讀／重試，不假確認。                                     |
+| R11 | 來源切換／label 改名各 receipt 隔離，未變 A 可恢復。                                     |
+| R12 | 媒體／tag 等價或未知／缺檔依 fresh evidence 處理。                                       |
+| R13 | 讀音／外觀／tempo／分離／T1+ 依矩陣，原生／估計可信標示不混。                            |
+| R14 | 未確認／過期／不適用／壞檔／撤銷可辨，不清 bytes／時間或自動補確認。                     |
+| R15 | 長曲／codec／rate／聲道／冷暖／縮放記全峰值、取消、耗時與失敗，不因相消假靜音。          |
+| R16 | cache 共用／清理、過期 producer／超 payload 有界，保歌詞／receipt，不傳完整 PCM。        |
+| R17 | 收波形／離開／刪來源／cleanup 可取消清理，不復活或阻塞既有 editor。                      |
+| R18 | 真實音訊與可見 editor／Performer／Output 標記一致、草稿不發布，不當裝置校準。            |

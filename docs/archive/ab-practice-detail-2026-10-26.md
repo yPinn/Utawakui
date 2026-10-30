@@ -1,6 +1,8 @@
 # 區段練習：行為提案
 
-2026-10-26 提案；2026-10-27 固定原型參數。A01–A18 為分層驗收，現況見 [spec](../../spec.md)，前置與量測邊界見[區段練習契約](../../contracts/player-ab-practice.md)。共用前置見[規劃入口](player-practice-planning-2026-10-26.md#共用前置)。以既有主播放器反覆練片段；0 秒等待不承諾無縫或 sample-accurate。
+> 已歸檔（2026-10-30）：已實作，行為與驗收案例由[區段練習契約](../contracts/player-ab-practice.md)持有；本文只保留設計推導，其中的階段與待辦不代表現況。
+
+2026-10-26 提案；2026-10-27 固定原型參數。A01–A18 為分層驗收，現況見 [spec](../spec.md)，前置與量測邊界見[區段練習契約](../contracts/player-ab-practice.md)。共用前置見[規劃入口](../research/product/player-practice-planning-2026-10-26.md#共用前置)。以既有主播放器反覆練片段；0 秒等待不承諾無縫或 sample-accurate。
 
 ## 區間與 session
 
@@ -106,4 +108,4 @@ seek／落點／deadline、媒體／DSP 或觀察長中斷出錯，取消 auto-s
 
 先審操作、前景範圍與品質門檻，再固定 fan-out 前 terminal decision、pause 原因及 practice hold 契約。先驗中段／取消／BGM，EOF／repeat、history／Output、來源切換各過 gate；不加入書籤、筆記、自動選段、逐輪導唱漸退、錄音或分數。
 
-當輪依據：[player](../../../src/composables/usePlayer.js)、[clock](../../../src/utils/playbackClockSample.js)、[transport](../../../src/composables/usePlaybackTransport.js)、[BGM](../../../src/bgm/handoffCoordinator.js)、[history qualification](../../../src/utils/playbackHistoryQualification.js)、[場次](../../../src/composables/usePerformanceSessionPlaybackController.js)。既有 7 份測試 137 passed，僅基線；原 L01–L09 留[初始證據](player-practice-planning-2026-10-26.json)。
+當輪依據：[player](../../src/composables/usePlayer.js)、[clock](../../src/utils/playbackClockSample.js)、[transport](../../src/composables/usePlaybackTransport.js)、[BGM](../../src/bgm/handoffCoordinator.js)、[history qualification](../../src/utils/playbackHistoryQualification.js)、[場次](../../src/composables/usePerformanceSessionPlaybackController.js)。既有 7 份測試 137 passed，僅基線；原 L01–L09 留[初始證據](../research/product/player-practice-planning-2026-10-26.json)。

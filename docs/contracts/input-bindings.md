@@ -22,7 +22,7 @@
 
 只有可編譯的 App 綁定進 registry。暫時面板檢視由同一 dispatcher 先交給 `usePanelView`，不新增 registry 列或可保存命令。Widget 慣例遵循對應 WAI-ARIA 模式，不當作 app 快捷鍵管理。
 
-2026-10-29 依 HEAD `98e8286f` 及當時工作樹逐一核對明示 key handlers、表單與原生控件；本次是程式盤點，不代表已逐鍵完成可見 Electron／裝置驗收。正式版預設 registry 有 17 筆綁定；內部工作台開啟時另加 4 筆。這個分母不含下列區域操作、Esc 層、原生控件及系統媒體入口，也不把十個可自訂命令誤算為全部鍵盤行為。UI 呈現建議沿[原第 4 項提案](../research/product/keyboard-shortcuts-detail-2026-10-26.md#鍵盤設定呈現建議2026-10-29)，不另立 roadmap。
+2026-10-29 依 HEAD `98e8286f` 及當時工作樹逐一核對明示 key handlers、表單與原生控件；本次是程式盤點，不代表已逐鍵完成可見 Electron／裝置驗收。正式版預設 registry 有 17 筆綁定；內部工作台開啟時另加 4 筆。這個分母不含下列區域操作、Esc 層、原生控件及系統媒體入口，也不把十個可自訂命令誤算為全部鍵盤行為。UI 呈現建議沿[原第 4 項提案](../archive/keyboard-shortcuts-detail-2026-10-26.md#鍵盤設定呈現建議2026-10-29)，不另立 roadmap。
 
 ## 自訂快捷鍵契約前置
 
