@@ -123,6 +123,9 @@ describe('useLocalImport', () => {
       tone: 'info',
       lifecycle: 'transient',
     });
+    expect(useAppNotifications().items.value[0]).not.toHaveProperty(
+      'actionLabel',
+    );
     expect(owner.skippedResults.value).toEqual([
       { filename: 'copy.mp3', message: '曲庫已有相同音訊' },
     ]);

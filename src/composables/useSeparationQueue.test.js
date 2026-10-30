@@ -227,9 +227,9 @@ describe('useSeparationQueue', () => {
         title: '伴奏處理完成',
         tone: 'success',
         lifecycle: 'transient',
-        actionLabel: '查看處理清單',
       }),
     );
+    expect(h.notify.mock.calls[0][0]).not.toHaveProperty('action');
   });
 
   it('ignores historical results and reports one mixed summary for the current round', async () => {
@@ -248,6 +248,7 @@ describe('useSeparationQueue', () => {
       tone: 'warning',
       message: '1 首完成，1 首失敗',
       lifecycle: 'persistent',
+      actionLabel: '查看處理清單',
     });
     h.emit({ queue: null });
     expect(h.notify).toHaveBeenCalledOnce();

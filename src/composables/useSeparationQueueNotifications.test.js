@@ -43,6 +43,9 @@ it('opens the preparation list only when the result action is used', async () =>
   const observe = createSeparationQueueNotifications(notifications.notify);
   observe(queue([['a', 'checking']]));
   observe(queue([['a', 'completed']]));
+  expect(notifications.items.value[0]).not.toHaveProperty('actionLabel');
+  observe(queue([['a', 'running']]));
+  observe(queue([['a', 'failed']]));
   await notifications.runAction(notifications.items.value[0].id);
   const dock = useAppRightDock();
   expect(dock.preparationTab.value).toBe('separation');

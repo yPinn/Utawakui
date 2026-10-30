@@ -103,18 +103,22 @@ function notifyResult(conversion = false) {
   let tone = state.statusType === 'idle' ? 'info' : 'success';
   if (needsAttention) tone = 'warning';
   if (error) tone = 'danger';
+  const persistent = Boolean(error || needsAttention);
   notifications.notify({
     key: RESULT_KEY,
     title,
     message: state.message,
     tone,
-    lifecycle: error || needsAttention ? 'persistent' : 'transient',
-    actionLabel: '查看匯入結果',
-    action() {
-      const dock = useAppRightDock();
-      dock.selectPreparationTab('import');
-      dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
-    },
+    lifecycle: persistent ? 'persistent' : 'transient',
+    // Transient results carry no action; the Import tab keeps the details.
+    ...(persistent && {
+      actionLabel: '查看匯入結果',
+      action() {
+        const dock = useAppRightDock();
+        dock.selectPreparationTab('import');
+        dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
+      },
+    }),
   });
   state.summaryNotified = true;
 }

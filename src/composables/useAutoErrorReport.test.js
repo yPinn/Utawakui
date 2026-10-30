@@ -83,6 +83,7 @@ describe('useAutoErrorReport', () => {
 
     const notice = report.notify.mock.calls[0][0];
     expect(notice.actionLabel).toBe('補充說明');
+    expect(notice.lifecycle).toBe('persistent');
     notice.action();
     expect(report.openReport).toHaveBeenCalledWith({
       kind: 'bug',

@@ -75,8 +75,9 @@ it('reports one background batch summary only after collection finalization', as
     title: '下載完成',
     message: '3 首下載完成',
     tone: 'success',
-    actionLabel: '查看下載結果',
+    lifecycle: 'transient',
   });
+  expect(h.notify.mock.calls[0][0]).not.toHaveProperty('action');
 });
 
 it('reports one single download result and does not duplicate a concurrent submission', async () => {

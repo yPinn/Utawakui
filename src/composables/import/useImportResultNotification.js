@@ -51,11 +51,14 @@ function notifyImportResult(batch, notify) {
         : summary,
     tone,
     lifecycle: problems ? 'persistent' : 'transient',
-    actionLabel: '查看下載結果',
-    action() {
-      const dock = useAppRightDock();
-      dock.selectPreparationTab('import');
-      dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
-    },
+    // Transient results carry no action; the Import tab keeps the details.
+    ...(problems && {
+      actionLabel: '查看下載結果',
+      action() {
+        const dock = useAppRightDock();
+        dock.selectPreparationTab('import');
+        dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
+      },
+    }),
   });
 }

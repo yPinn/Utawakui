@@ -64,12 +64,15 @@ export function useSeparationQueueNotifications(notify) {
       message,
       tone,
       lifecycle: failed ? 'persistent' : 'transient',
-      actionLabel: '查看處理清單',
-      action() {
-        const dock = useAppRightDock();
-        dock.selectPreparationTab('separation');
-        dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
-      },
+      // Transient results carry no action; the queue tab keeps the details.
+      ...(failed && {
+        actionLabel: '查看處理清單',
+        action() {
+          const dock = useAppRightDock();
+          dock.selectPreparationTab('separation');
+          dock.showSurface(RIGHT_DOCK_SURFACE_PREPARATION);
+        },
+      }),
     });
   };
 }
