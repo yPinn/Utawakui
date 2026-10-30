@@ -529,6 +529,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   clearDiagnostics: () => ipcRenderer.invoke('diagnostics:clear'),
   openDiagnosticsFolder: () => ipcRenderer.invoke('diagnostics:open-folder'),
   exportDiagnostics: () => ipcRenderer.invoke('diagnostics:export'),
+  openDiagnosticsBundle: () => ipcRenderer.invoke('diagnostics:open-bundle'),
   buildFeedbackPreview: (input) =>
     ipcRenderer.invoke('feedback:build-preview', input),
   submitFeedback: (input) => ipcRenderer.invoke('feedback:submit', input),

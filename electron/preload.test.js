@@ -77,6 +77,7 @@ const MAIN_INVOKE_CHANNELS = [
   'diagnostics:clear',
   'diagnostics:export',
   'diagnostics:list-recent',
+  'diagnostics:open-bundle',
   'diagnostics:open-folder',
   'diagnostics:record-renderer',
   'feature-dependencies:detect-system-ffmpeg',

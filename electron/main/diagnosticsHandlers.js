@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
 const { atomicWriteJson } = require('../lib/atomicWrite');
 const { buildDiagnosticsSupportBundle } = require('../lib/diagnosticsExport');
 
@@ -8,6 +10,14 @@ const MAX_RECENT_LIMIT = 500;
 const DEFAULT_RENDERER_EVENTS_PER_MINUTE = 120;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const MAX_RENDERER_STACK_LENGTH = 4000;
+// Matches the diagnostics log rotation size; larger files are not exports.
+const MAX_BUNDLE_BYTES = 5 * 1024 * 1024;
+
+async function readBoundedText(filePath) {
+  const { size } = await fs.promises.stat(filePath);
+  if (size > MAX_BUNDLE_BYTES) throw new Error('bundle too large');
+  return fs.promises.readFile(filePath, 'utf8');
+}
 
 function boundedRecentLimit(value) {
   if (!Number.isInteger(value)) return DEFAULT_RECENT_LIMIT;
@@ -62,6 +72,7 @@ function registerDiagnosticsHandlers({
   appVersion = '',
   electronVersion = '',
   writeExportFile = (filePath, data) => atomicWriteJson(filePath, data),
+  readBundleFile = readBoundedText,
 }) {
   const rendererEventLimit =
     Number.isSafeInteger(maxRendererEventsPerMinute) &&
@@ -134,6 +145,32 @@ function registerDiagnosticsHandlers({
       return { ok: true, cancelled: false };
     } catch {
       return { ok: false, errorCode: 'DIAGNOSTICS_EXPORT_FAILED' };
+    }
+  });
+
+  // Dev-only triage reads an export chosen in a main-owned open dialog; the
+  // renderer gets the file name and bounded text, never the path.
+  ipcMain.handle('diagnostics:open-bundle', async () => {
+    try {
+      const ownerWindow = getMainWindow();
+      const dialogOptions = {
+        title: '載入錯誤紀錄匯出檔',
+        properties: ['openFile'],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      };
+      const result = ownerWindow
+        ? await dialog.showOpenDialog(ownerWindow, dialogOptions)
+        : await dialog.showOpenDialog(dialogOptions);
+      const [filePath] = result.filePaths ?? [];
+      if (result.canceled || !filePath) return { ok: true, cancelled: true };
+      return {
+        ok: true,
+        cancelled: false,
+        name: path.basename(filePath),
+        text: await readBundleFile(filePath),
+      };
+    } catch {
+      return { ok: false, errorCode: 'DIAGNOSTICS_BUNDLE_READ_FAILED' };
     }
   });
 }

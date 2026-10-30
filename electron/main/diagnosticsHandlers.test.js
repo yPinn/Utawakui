@@ -25,6 +25,7 @@ describe('registerDiagnosticsHandlers', () => {
       'diagnostics:clear',
       'diagnostics:open-folder',
       'diagnostics:export',
+      'diagnostics:open-bundle',
     ]);
   });
 
@@ -366,5 +367,63 @@ describe('diagnostics:export', () => {
     await expect(ipcMain.handlers.get('diagnostics:export')()).resolves.toEqual(
       { ok: false, errorCode: 'DIAGNOSTICS_EXPORT_FAILED' },
     );
+  });
+
+  describe('diagnostics:open-bundle', () => {
+    function register({ dialogResult, readBundleFile = vi.fn() }) {
+      const ipcMain = createIpcMain();
+      const dialog = { showOpenDialog: vi.fn(async () => dialogResult) };
+      registerDiagnosticsHandlers({
+        ipcMain,
+        service: { record: vi.fn(), listRecent: vi.fn(), clear: vi.fn() },
+        openLogsDirectory: vi.fn(),
+        dialog,
+        readBundleFile,
+      });
+      return { open: ipcMain.handlers.get('diagnostics:open-bundle'), dialog };
+    }
+
+    it('returns only the file name and text from the main-owned dialog', async () => {
+      const readBundleFile = vi.fn(async () => '{"events":[]}');
+      const { open, dialog } = register({
+        dialogResult: {
+          canceled: false,
+          filePaths: ['/home/singer/exports/utawakui-diagnostics.json'],
+        },
+        readBundleFile,
+      });
+
+      await expect(open()).resolves.toEqual({
+        ok: true,
+        cancelled: false,
+        name: 'utawakui-diagnostics.json',
+        text: '{"events":[]}',
+      });
+      expect(dialog.showOpenDialog).toHaveBeenCalledWith(
+        expect.objectContaining({ properties: ['openFile'] }),
+      );
+    });
+
+    it('treats a cancelled dialog as expected control flow', async () => {
+      const { open } = register({
+        dialogResult: { canceled: true, filePaths: [] },
+      });
+
+      await expect(open()).resolves.toEqual({ ok: true, cancelled: true });
+    });
+
+    it('hides read failures behind a fixed error code', async () => {
+      const { open } = register({
+        dialogResult: { canceled: false, filePaths: ['big.json'] },
+        readBundleFile: vi.fn(async () => {
+          throw new Error('bundle too large /home/singer/private');
+        }),
+      });
+
+      await expect(open()).resolves.toEqual({
+        ok: false,
+        errorCode: 'DIAGNOSTICS_BUNDLE_READ_FAILED',
+      });
+    });
   });
 });

@@ -26,10 +26,15 @@ their bodies in Settings reactive state. The composition owner is
   a separate, explicit preview-and-send flow defined by
   [ADR 0016](../adr/0016-user-feedback-intake.md).
 
-Development builds expose F6 Live Diagnostics in Internal Tools → Operations.
-`useDiagnosticsWorkbench.js` reads up to 500 events through the same
-`diagnostics:list-recent` public projection: stack and session identifiers are
-removed by main. The workbench is not a private-log reader and does not own export.
+Development builds expose F6 診斷 in Internal Tools. Its 問題 tab groups events
+by process, source, operation and code with counts, first／last seen, version
+and context spread, a per-machine triage mark and a Markdown checklist copy; 事件
+lists the raw events. `useDiagnosticsWorkbench.js` reads up to 500 events through
+the same `diagnostics:list-recent` public projection: stack and session
+identifiers are removed by main, so session counts and the pre-error trail only
+appear for a loaded export. `diagnostics:open-bundle` shows a main-owned open
+dialog and returns only the file name and size-bounded text. The workbench is not
+a private-log reader and does not own export.
 
 Open [the standalone viewer](../../scripts/diagnostics-viewer.html) in a browser
 to inspect an explicitly exported bundle through a file picker or drag and drop.
