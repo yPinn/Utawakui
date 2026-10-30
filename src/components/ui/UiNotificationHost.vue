@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
 import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import { customLengthPixels } from './floatingPosition.js';
@@ -26,7 +27,7 @@ const props = defineProps({
     default: 'standard',
     validator: (value) => ['compact', 'standard'].includes(value),
   },
-  ariaLabel: { type: String, default: '通知' },
+  ariaLabel: { type: String, default: () => t('ui.notification.label') },
   placement: {
     type: String,
     default: 'bottom-end',
@@ -90,7 +91,9 @@ function dismissLabelFor(item) {
   if (typeof item.dismissLabel === 'string' && item.dismissLabel.trim()) {
     return item.dismissLabel;
   }
-  return variantFor(item) === 'confirmation' ? '知道了' : '';
+  return variantFor(item) === 'confirmation'
+    ? t('ui.notification.acknowledge')
+    : '';
 }
 
 function noticeTone(item) {

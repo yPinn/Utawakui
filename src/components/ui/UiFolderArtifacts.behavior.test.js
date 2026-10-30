@@ -115,9 +115,6 @@ describe('UiFolderArtifactCanvas', () => {
     expect(html).toContain('重疊照片，按 Enter 或空白鍵切換照片');
     expect(html).toContain('固定錄音現場照片');
     expect(html).toContain('固定錄製備忘');
-    expect(canvasSource).toContain(
-      ":title=\"isArtifactPinned(artifact.id) ? '取消固定' : '固定'\"",
-    );
     expect(html.match(/aria-pressed="false"/gu)).toHaveLength(3);
   });
 

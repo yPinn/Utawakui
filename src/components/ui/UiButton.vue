@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // `aria-*`/`@click` and other native button attributes still reach the root
 // button. `title` is deliberately owned here so operator-facing hints use the
 // shared app tooltip instead of Chromium's native tooltip.
@@ -38,7 +39,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
   stretch: { type: Boolean, default: false }, // fills a full-cover plane
-  loadingLabel: { type: String, default: '處理中' },
+  loadingLabel: { type: String, default: () => t('ui.button.loading') },
 });
 
 const attrs = useAttrs();

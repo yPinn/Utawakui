@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 import { computed, mergeProps, useAttrs } from 'vue';
 import { ICON_SIZE, Loader2 } from '../../icons/index.js';
 import { nativeButtonAttrs } from './buttonAttrs.js';
@@ -41,7 +42,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
-  loadingLabel: { type: String, default: '處理中' },
+  loadingLabel: { type: String, default: () => t('ui.button.loading') },
   stretch: { type: Boolean, default: false },
   fill: { type: Boolean, default: false },
 });

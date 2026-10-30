@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Track-search input — was duplicated once per Library browse layout branch
 // (playlist toolbar vs. all-tracks page header). v-model owns clearing too,
 // so callers don't need a separate clear handler.
@@ -11,9 +12,9 @@ defineOptions({ inheritAttrs: false });
 
 const props = defineProps({
   id: { type: String, default: '' },
-  label: { type: String, default: '搜尋' },
+  label: { type: String, default: () => t('ui.searchBox.label') },
   modelValue: { type: String, default: '' },
-  placeholder: { type: String, default: '搜尋' },
+  placeholder: { type: String, default: () => t('ui.searchBox.label') },
   disabled: { type: Boolean, default: false },
   // Square divided icon cell, so the glyph can share a caller's artwork column.
   iconCell: { type: Boolean, default: false },
@@ -68,13 +69,13 @@ defineExpose({ focus });
         :disabled="disabled"
         @input="emit('update:modelValue', $event.target.value)"
       />
-      <UiTooltip v-if="modelValue" text="清除搜尋">
+      <UiTooltip v-if="modelValue" :text="t('ui.searchBox.clear')">
         <template #trigger="{ triggerProps }">
           <button
             v-bind="triggerProps"
             type="button"
             class="ui-search-box__clear"
-            aria-label="清除搜尋"
+            :aria-label="t('ui.searchBox.clear')"
             :disabled="disabled"
             @click="clear"
           >

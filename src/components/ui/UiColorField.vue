@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 import { computed, ref, useAttrs, useTemplateRef, watch } from 'vue';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
@@ -16,7 +17,7 @@ const props = defineProps({
   error: { type: String, default: '' },
   invalidMessage: {
     type: String,
-    default: '請輸入 #RRGGBB 六位色碼',
+    default: () => t('ui.colorField.invalid'),
   },
   placeholder: { type: String, default: '#RRGGBB' },
   autocomplete: { type: String, default: 'off' },
@@ -43,7 +44,9 @@ const pickerValue = computed(() => {
   const modelValue = String(props.modelValue);
   return HEX_COLOR_PATTERN.test(modelValue) ? modelValue : DEFAULT_COLOR_VALUE;
 });
-const pickerLabel = computed(() => `${props.label}色票`);
+const pickerLabel = computed(() =>
+  t('ui.colorField.picker', { label: props.label }),
+);
 
 watch(
   () => props.modelValue,

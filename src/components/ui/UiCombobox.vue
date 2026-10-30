@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // This project's first aria-activedescendant / role="listbox" pattern — focus
 // stays on the input the entire time; the listbox is display-only and never
 // receives real DOM focus. Scope is intentionally narrow: pick one value from
@@ -45,7 +46,7 @@ const props = defineProps({
   labelHidden: { type: Boolean, default: false },
   editable: { type: Boolean, default: true },
   closeOnScroll: { type: Boolean, default: true },
-  noResultsText: { type: String, default: '沒有符合的結果' },
+  noResultsText: { type: String, default: () => t('ui.combobox.noResults') },
 });
 
 const emit = defineEmits(['update:modelValue']);

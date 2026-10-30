@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 import {
   computed,
   nextTick,
@@ -99,7 +100,7 @@ const props = defineProps({
   editing: { type: Boolean, default: false },
   // Caps a note on the page; a longer body fades out and reports overflow.
   capped: { type: Boolean, default: false },
-  editLabel: { type: String, default: '便條內容' },
+  editLabel: { type: String, default: () => t('ui.folderArtifact.editLabel') },
   maxLength: { type: Number, default: 2000 },
 });
 
@@ -209,9 +210,13 @@ function stackLayerIntent(layer) {
 function stackLayerLabel(entry) {
   const imageLabel = entry.image.alt?.trim();
   if (entry.layer === 'back') {
-    return imageLabel ? `顯示上一張照片：${imageLabel}` : '顯示上一張照片';
+    return imageLabel
+      ? t('ui.folderArtifact.previousPhotoNamed', { image: imageLabel })
+      : t('ui.folderArtifact.previousPhoto');
   }
-  return imageLabel ? `目前為${imageLabel}，顯示下一張照片` : '顯示下一張照片';
+  return imageLabel
+    ? t('ui.folderArtifact.nextPhotoNamed', { image: imageLabel })
+    : t('ui.folderArtifact.nextPhoto');
 }
 
 function handleStackLayerKeydown(layer, event) {

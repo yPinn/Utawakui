@@ -14,11 +14,11 @@ describe('UiModal appearance contract', () => {
     );
     // Dialog close stays last, after the tools and their separator.
     expect(modalSource).toMatch(
-      /<\/template>\s*<UiIconButton\s+v-if="presentation !== 'media'"\s+:icon="X"\s+label="關閉"\s+variant="ghost"\s+tooltip-placement="top"[\s\S]*?:disabled="closeDisabled"\s+@click="close"\s*\/>/u,
+      /<\/template>\s*<UiIconButton\s+v-if="presentation !== 'media'"\s+:icon="X"\s+:label="t\('ui\.modal\.close'\)"\s+variant="ghost"\s+tooltip-placement="top"[\s\S]*?:disabled="closeDisabled"\s+@click="close"\s*\/>/u,
     );
     // Media close comes before caller actions so visual and Tab order agree.
     expect(modalSource).toMatch(
-      /<UiIconButton\s+v-if="presentation === 'media'"\s+:icon="X"\s+label="關閉"\s+variant="overlay"\s+tooltip-placement="start"[\s\S]*?\/>\s*<template v-if="\$slots\['header-actions'\]">/u,
+      /<UiIconButton\s+v-if="presentation === 'media'"\s+:icon="X"\s+:label="t\('ui\.modal\.close'\)"\s+variant="overlay"\s+tooltip-placement="start"[\s\S]*?\/>\s*<template v-if="\$slots\['header-actions'\]">/u,
     );
   });
 

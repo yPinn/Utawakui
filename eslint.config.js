@@ -5,6 +5,11 @@ const pluginVue = require('eslint-plugin-vue');
 const eslintConfigPrettier = require('eslint-config-prettier');
 const globals = require('globals');
 
+const I18N_MIGRATED = ['src/components/ui/**/*.{js,vue}'];
+const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
+const HARDCODED_UI_TEXT =
+  'Hardcoded UI text: add it to shared/locales and read it with t() (AGENTS.md "UI Text And Locale").';
+
 module.exports = [
   {
     ignores: [
@@ -80,6 +85,26 @@ module.exports = [
     languageOptions: {
       sourceType: 'module',
       globals: globals.worker,
+    },
+  },
+  {
+    // Migrated to shared/locales; scripts/uiLiteralRatchet.js guards the rest.
+    files: I18N_MIGRATED,
+    ignores: ['**/*.test.js'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        { selector: `Literal[value=${CJK_TEXT}]`, message: HARDCODED_UI_TEXT },
+        {
+          selector: `TemplateElement[value.raw=${CJK_TEXT}]`,
+          message: HARDCODED_UI_TEXT,
+        },
+      ],
+      'vue/no-restricted-syntax': [
+        'error',
+        { selector: `VText[value=${CJK_TEXT}]`, message: HARDCODED_UI_TEXT },
+        { selector: `VLiteral[value=${CJK_TEXT}]`, message: HARDCODED_UI_TEXT },
+      ],
     },
   },
   eslintConfigPrettier,

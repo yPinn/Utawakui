@@ -1,0 +1,46 @@
+{
+  "actionMenu": {
+    "label": "操作選單"
+  },
+  "button": {
+    "loading": "處理中"
+  },
+  "colorField": {
+    "invalid": "請輸入 #RRGGBB 六位色碼",
+    "picker": "{label}色票"
+  },
+  "combobox": {
+    "noResults": "沒有符合的結果"
+  },
+  "folderArtifact": {
+    "editLabel": "便條內容",
+    "previousPhoto": "顯示上一張照片",
+    "previousPhotoNamed": "顯示上一張照片：{image}",
+    "nextPhoto": "顯示下一張照片",
+    "nextPhotoNamed": "目前為{image}，顯示下一張照片"
+  },
+  "artifactCanvas": {
+    "label": "可移動物件",
+    "instructions": "未固定時可用方向鍵移動，Shift 加速，Home 回到預設位置",
+    "item": "{label}",
+    "itemPinned": "{label}，已固定",
+    "itemActivatable": "{label}，按 Enter 或空白鍵{action}",
+    "itemPinnedActivatable": "{label}，已固定，按 Enter 或空白鍵{action}",
+    "activate": "啟用",
+    "pin": "固定",
+    "unpin": "取消固定",
+    "pinNamed": "固定{label}",
+    "unpinNamed": "取消固定{label}"
+  },
+  "modal": {
+    "close": "關閉"
+  },
+  "notification": {
+    "label": "通知",
+    "acknowledge": "知道了"
+  },
+  "searchBox": {
+    "label": "搜尋",
+    "clear": "清除搜尋"
+  }
+}

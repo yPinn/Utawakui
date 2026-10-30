@@ -13,6 +13,7 @@ function rebaseOpenModalStack() {
 </script>
 
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Generic modal shell — first one in this app (see docs/spec.md's inline-
 // editing precedent for why one wasn't built sooner: it was only ever one
 // field at a time). Scrollable content lives in the default slot, while an
@@ -338,7 +339,7 @@ onUnmounted(() => {
               <UiIconButton
                 v-if="presentation === 'media'"
                 :icon="X"
-                label="關閉"
+                :label="t('ui.modal.close')"
                 variant="overlay"
                 tooltip-placement="start"
                 :disabled="closeDisabled"
@@ -357,7 +358,7 @@ onUnmounted(() => {
               <UiIconButton
                 v-if="presentation !== 'media'"
                 :icon="X"
-                label="關閉"
+                :label="t('ui.modal.close')"
                 variant="ghost"
                 tooltip-placement="top"
                 :disabled="closeDisabled"

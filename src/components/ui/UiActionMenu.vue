@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 import {
   computed,
   inject,
@@ -45,7 +46,7 @@ const props = defineProps({
     default: 'auto',
     validator: (value) => ['auto', 'ltr', 'rtl'].includes(value),
   },
-  ariaLabel: { type: String, default: '操作選單' },
+  ariaLabel: { type: String, default: () => t('ui.actionMenu.label') },
   content: {
     type: Object,
     default: () => ({ kind: 'actions', groups: [] }),

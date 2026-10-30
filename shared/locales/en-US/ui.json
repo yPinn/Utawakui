@@ -1,0 +1,46 @@
+{
+  "actionMenu": {
+    "label": "Actions"
+  },
+  "button": {
+    "loading": "Working"
+  },
+  "colorField": {
+    "invalid": "Enter a six-digit #RRGGBB color",
+    "picker": "{label} swatch"
+  },
+  "combobox": {
+    "noResults": "No matches"
+  },
+  "folderArtifact": {
+    "editLabel": "Note text",
+    "previousPhoto": "Show previous photo",
+    "previousPhotoNamed": "Show previous photo: {image}",
+    "nextPhoto": "Show next photo",
+    "nextPhotoNamed": "Showing {image}; show next photo"
+  },
+  "artifactCanvas": {
+    "label": "Movable item",
+    "instructions": "When unpinned, move with the arrow keys, Shift for larger steps, Home to reset",
+    "item": "{label}",
+    "itemPinned": "{label}, pinned",
+    "itemActivatable": "{label}, press Enter or Space to {action}",
+    "itemPinnedActivatable": "{label}, pinned, press Enter or Space to {action}",
+    "activate": "activate",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinNamed": "Pin {label}",
+    "unpinNamed": "Unpin {label}"
+  },
+  "modal": {
+    "close": "Close"
+  },
+  "notification": {
+    "label": "Notifications",
+    "acknowledge": "Got it"
+  },
+  "searchBox": {
+    "label": "Search",
+    "clear": "Clear search"
+  }
+}

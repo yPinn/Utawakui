@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 import {
   computed,
   nextTick,
@@ -22,7 +23,7 @@ import UiIconButton from './UiIconButton.vue';
 
 const props = defineProps({
   artifacts: { type: Array, default: () => [] },
-  label: { type: String, default: '可移動物件' },
+  label: { type: String, default: () => t('ui.artifactCanvas.label') },
   minimumVisibleSize: { type: Number, default: 48 },
   material: {
     type: String,
@@ -514,6 +515,26 @@ function scheduleReclamp() {
   }
 }
 
+function artifactLabel(artifact) {
+  const pinned = isArtifactPinned(artifact.id);
+  if (!artifact.activatable)
+    return t(
+      pinned ? 'ui.artifactCanvas.itemPinned' : 'ui.artifactCanvas.item',
+      {
+        label: artifact.label,
+      },
+    );
+  return t(
+    pinned
+      ? 'ui.artifactCanvas.itemPinnedActivatable'
+      : 'ui.artifactCanvas.itemActivatable',
+    {
+      label: artifact.label,
+      action: artifact.activationLabel ?? t('ui.artifactCanvas.activate'),
+    },
+  );
+}
+
 function itemStyle(artifact) {
   const position = positions[artifact.id] ?? { x: 0, y: 0, z: 1 };
   return {
@@ -570,7 +591,7 @@ defineExpose({ reset, togglePinById });
     ></span>
     <div class="ui-folder-artifact-canvas__sheet" aria-hidden="true"></div>
     <p :id="instructionId" class="ui-visually-hidden">
-      未固定時可用方向鍵移動，Shift 加速，Home 回到預設位置
+      {{ t('ui.artifactCanvas.instructions') }}
     </p>
     <div ref="clampBounds" class="ui-folder-artifact-canvas__bounds">
       <div
@@ -589,13 +610,7 @@ defineExpose({ reset, togglePinById });
         :style="itemStyle(artifact)"
         role="group"
         tabindex="0"
-        :aria-label="`${artifact.label}${
-          isArtifactPinned(artifact.id) ? '，已固定' : ''
-        }${
-          artifact.activatable
-            ? `，按 Enter 或空白鍵${artifact.activationLabel ?? '啟用'}`
-            : ''
-        }`"
+        :aria-label="artifactLabel(artifact)"
         :aria-describedby="instructionId"
         @focus.self="focusArtifact(artifact.id)"
         @keydown="handleKeydown(artifact, $event)"
@@ -610,11 +625,20 @@ defineExpose({ reset, togglePinById });
           class="ui-folder-artifact-canvas__pin"
           :icon="Pin"
           :label="
-            isArtifactPinned(artifact.id)
-              ? `取消固定${artifact.label}`
-              : `固定${artifact.label}`
+            t(
+              isArtifactPinned(artifact.id)
+                ? 'ui.artifactCanvas.unpinNamed'
+                : 'ui.artifactCanvas.pinNamed',
+              { label: artifact.label },
+            )
           "
-          :title="isArtifactPinned(artifact.id) ? '取消固定' : '固定'"
+          :title="
+            t(
+              isArtifactPinned(artifact.id)
+                ? 'ui.artifactCanvas.unpin'
+                : 'ui.artifactCanvas.pin',
+            )
+          "
           :active="isArtifactPinned(artifact.id)"
           :fill="isArtifactPinned(artifact.id)"
           :aria-pressed="isArtifactPinned(artifact.id)"
