@@ -301,8 +301,8 @@ describe('DemoNoticeAppearance', () => {
     expect(text).toContain('準備完成後即可繼續。');
     expect(text).toContain('正在檢查可用功能');
     expect(text).toContain('完成後會自動更新。');
-    expect(text).toContain('檢查完成');
-    expect(text).toContain('需要的功能已可使用。');
+    expect(text).toContain('找不到輸出裝置');
+    expect(text).toContain('請改用其他音訊輸出。');
     expect(text).toContain(
       'SummerLiveSessionFinalMixWithoutSpaces20260912.wav',
     );

@@ -3,8 +3,8 @@ import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import DemoProgressAppearance from './DemoProgressAppearance.vue';
-const primitiveSource = readFileSync(
-  new URL('./DemoProgressPrimitive.vue', import.meta.url),
+const appearanceSource = readFileSync(
+  new URL('./DemoProgressAppearance.vue', import.meta.url),
   'utf8',
 );
 const progressSource = readFileSync(
@@ -30,10 +30,10 @@ describe('DemoProgressAppearance', () => {
     expect(
       existsSync(new URL('./DemoCandidateProgress.vue', import.meta.url)),
     ).toBe(false);
-    expect(primitiveSource).toContain(
+    expect(appearanceSource).toContain(
       "import UiProgress from '../ui/UiProgress.vue';",
     );
-    expect(primitiveSource).not.toMatch(
+    expect(appearanceSource).not.toMatch(
       /layer\.component|densityProps|defineProps/u,
     );
     expect(html).not.toMatch(/\sdensity="/u);
@@ -81,7 +81,7 @@ describe('DemoProgressAppearance', () => {
     expect(progressSource).not.toMatch(
       /\b(?:tone|success|warning|danger|action|dismiss|cancel|retry)\s*:/iu,
     );
-    expect(primitiveSource).not.toMatch(
+    expect(appearanceSource).not.toMatch(
       /import\s+UiNotice|import\s+UiHint|import\s+UiField/u,
     );
   });

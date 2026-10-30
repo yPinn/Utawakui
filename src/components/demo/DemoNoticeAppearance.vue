@@ -66,7 +66,7 @@ const STRUCTURED_NOTICE = {
   severity: 'warning',
   title: '匯入尚未完成',
   message: '請確認來源可用後再試一次。',
-  actionLabel: '查看說明',
+  actionLabel: '重試匯入',
 };
 
 const CONTRACT = [
@@ -150,20 +150,20 @@ function recordAction(label) {
         <article class="demo-specimens__case">
           <h5>Compact · 8px inset</h5>
           <UiNotice
-            tone="info"
-            title="檢查完成"
-            message="需要的功能已可使用。"
-            action-label="查看"
+            tone="warning"
+            title="找不到輸出裝置"
+            message="請改用其他音訊輸出。"
+            action-label="選擇裝置"
             compact
-            @action="recordAction('查看')"
+            @action="recordAction('選擇裝置')"
           />
         </article>
         <article class="demo-specimens__case">
           <h5>notice 物件</h5>
           <UiNotice
             :notice="STRUCTURED_NOTICE"
-            data-notice-action="details"
-            @action="recordAction('查看說明')"
+            data-notice-action="retry-import"
+            @action="recordAction('重試匯入')"
           />
         </article>
       </div>
@@ -187,7 +187,7 @@ function recordAction(label) {
           tone="warning"
           title="需確認公開輸出內容"
           message="開始輸出前，請確認本次使用的內容。"
-          action-label="查看"
+          action-label="檢查內容"
         />
       </UiScrollRegion>
       <UiScrollRegion axis="horizontal">

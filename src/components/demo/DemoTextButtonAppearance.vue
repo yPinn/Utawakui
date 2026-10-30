@@ -1,94 +1,222 @@
 <script setup>
 import UiTextButton from '../ui/UiTextButton.vue';
-import DemoTextButtonPrimitive from './DemoTextButtonPrimitive.vue';
-import DemoTextButtonRecipes from './DemoTextButtonRecipes.vue';
+import '../../styles/demoSpecimens.css';
 
-const LAYERS = [
-  {
-    key: 'candidate',
-    title: '正式 UiTextButton',
-    note: '預設無底線；hover／focus-visible 顯示底線。',
-    component: UiTextButton,
-    appearanceContract: '預設無底線 · hover／focus-visible underline',
-    overflowNote: '溢位沿用 UiMarqueeText；reduced motion 回到單行省略。',
-    overflowContract: 'UiMarqueeText owns overflow／tooltip／reduced motion',
-    recipeProps: {},
-    stateNote:
-      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',
-  },
+const CONTENT = [
+  ['short-cjk', 'Short CJK', '前往來源專輯'],
+  ['long-cjk', 'Long CJK', '東京事変／椎名林檎／非常に長い日本語の選択肢'],
+  [
+    'long-latin',
+    'Long Latin',
+    'A deliberately long Latin destination title for overflow inspection',
+  ],
+  ['multilingual', 'Multilingual', '繁體中文／日本語／한국어／English'],
+  ['number', 'Number', '前往第 12 首'],
+];
+
+const STATES = [
+  ['default', 'Default'],
+  ['hover', 'Hover'],
+  ['pressed', 'Pressed'],
+  ['focus', 'Focus-visible'],
+  ['disabled', 'Disabled'],
+];
+
+const CONTRACT = [
+  'native button · visible text 是預設 accessible name',
+  'ariaLabel · 只在需要時補充目的地',
+  'overflow · marquee（預設）／ellipsis／clamp',
+  'click.stop 隔離所在列的主要操作',
+  'Typography 沿用所在區域；獨立 32px 動作使用 UiButton',
 ];
 </script>
 
 <template>
-  <div class="demo-text-button-appearance">
-    <section
-      v-for="layer in LAYERS"
-      :key="layer.key"
-      class="demo-text-button-layer"
-      :class="`demo-text-button-layer--${layer.key}`"
-      :data-text-button-source="layer.key"
-    >
-      <header class="demo-text-button-layer__header">
-        <h4>{{ layer.title }}</h4>
-        <p>{{ layer.note }}</p>
-      </header>
+  <div class="demo-specimens" data-text-button-source="production">
+    <p class="demo-specimens__copy">
+      顯示文字本身就是次要目的地；預設無底線，hover／focus-visible
+      顯示底線，pressed 沿用 hover，disabled 50%。
+    </p>
 
-      <DemoTextButtonPrimitive :layer="layer" />
-      <DemoTextButtonRecipes :layer="layer" />
+    <section class="demo-specimens__section">
+      <h4>沿用所在區域的文字與寬度</h4>
+      <div class="demo-specimens__grid">
+        <article
+          class="demo-specimens__case demo-text-button__label"
+          data-text-button-geometry="label-context"
+        >
+          <h5>Label context · 14／600</h5>
+          <UiTextButton text="前往來源專輯" />
+        </article>
+        <article
+          class="demo-specimens__case demo-text-button__body"
+          data-text-button-geometry="body-context"
+        >
+          <h5>Body context · 16／400</h5>
+          <UiTextButton text="查看完整曲目資料" />
+        </article>
+        <article
+          class="demo-specimens__case"
+          data-text-button-width="constrained"
+        >
+          <h5>Constrained parent · 10rem</h5>
+          <div class="demo-text-button__constrained">
+            <UiTextButton
+              text="很長的可點擊曲目名稱 — 長いタイトルと 한국어 제목"
+            />
+          </div>
+        </article>
+        <article class="demo-specimens__case">
+          <h5>Destination override</h5>
+          <UiTextButton
+            text="海螺記"
+            aria-label="前往專輯：海螺記"
+            name="album-destination"
+          />
+        </article>
+      </div>
     </section>
+
+    <section class="demo-specimens__section">
+      <h4>內容與 overflow</h4>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="[key, label, text] in CONTENT"
+          :key="key"
+          class="demo-specimens__case"
+          :data-text-button-content="key"
+        >
+          <h5>{{ label }}</h5>
+          <UiTextButton :text="text" />
+        </article>
+        <article class="demo-specimens__case">
+          <h5>overflow="ellipsis" · 大量列表</h5>
+          <div class="demo-text-button__constrained">
+            <UiTextButton
+              text="A deliberately long queue title"
+              overflow="ellipsis"
+            />
+          </div>
+        </article>
+        <article class="demo-specimens__case">
+          <h5>overflow="clamp" · 標題兩行</h5>
+          <div class="demo-text-button__constrained">
+            <UiTextButton
+              text="A deliberately long headline title for clamp inspection"
+              overflow="clamp"
+            />
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="demo-specimens__section">
+      <h4>狀態</h4>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="[key, label] in STATES"
+          :key="key"
+          class="demo-specimens__case"
+          :data-text-button-state="key"
+        >
+          <h5>{{ label }}</h5>
+          <UiTextButton text="前往來源專輯" :disabled="key === 'disabled'" />
+        </article>
+      </div>
+    </section>
+
+    <section class="demo-specimens__section">
+      <h4>使用情境</h4>
+      <div class="demo-specimens__grid">
+        <article
+          class="demo-specimens__case"
+          data-text-button-recipe="section-heading-destination"
+        >
+          <h5>前綴靜態、目的地可操作</h5>
+          <div class="demo-text-button__heading">
+            <span>下一首來自：</span>
+            <UiTextButton
+              text="海螺記 — 很長的來源集合名稱"
+              aria-label="前往專輯：海螺記"
+            />
+          </div>
+        </article>
+        <article
+          class="demo-specimens__case"
+          data-text-button-recipe="table-cell-destination"
+        >
+          <h5>表格欄位擁有可用寬度</h5>
+          <div class="demo-text-button__table-row">
+            <span>12</span>
+            <UiTextButton
+              text="東京事変／椎名林檎／非常に長い曲目名稱"
+              aria-label="前往專輯：東京事変／椎名林檎"
+            />
+            <span>4:22</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <ul
+      class="demo-specimens__contract"
+      aria-label="UiTextButton public contract"
+    >
+      <li v-for="rule in CONTRACT" :key="rule">{{ rule }}</li>
+    </ul>
   </div>
 </template>
 
 <style scoped>
-.demo-text-button-appearance,
-.demo-text-button-layer {
+.demo-text-button__label {
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
+}
+
+.demo-text-button__body {
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-type-body-weight);
+  line-height: var(--ui-type-body-line-height);
+}
+
+.demo-text-button__constrained {
+  min-width: 0;
+  width: min(10rem, 100%);
+}
+
+.demo-text-button__heading,
+.demo-text-button__table-row {
   min-width: 0;
   display: grid;
+  align-items: center;
+  gap: var(--ui-space-2);
 }
 
-.demo-text-button-appearance {
-  gap: var(--ui-space-5);
+.demo-text-button__heading {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
-.demo-text-button-layer {
-  gap: var(--ui-space-5);
-  padding: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface-raised);
-  container-type: inline-size;
-}
-
-.demo-text-button-layer__header {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(10rem, 0.42fr) minmax(0, 1fr);
-  align-items: baseline;
-  gap: var(--ui-space-4);
-}
-
-.demo-text-button-layer__header h4,
-.demo-text-button-layer__header p {
-  margin: 0;
-}
-
-.demo-text-button-layer__header h4 {
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-title-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
-}
-
-.demo-text-button-layer__header p {
+.demo-text-button__table-row {
+  grid-template-columns: 2ch minmax(0, 1fr) auto;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
 }
 
-@container (max-width: 48rem) {
-  .demo-text-button-layer__header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--ui-space-1);
-  }
+/* Static previews of pointer and keyboard states. */
+.demo-specimens__case[data-text-button-state='hover']
+  :deep(.ui-text-btn .ui-marquee__text),
+.demo-specimens__case[data-text-button-state='focus']
+  :deep(.ui-text-btn .ui-marquee__text),
+.demo-specimens__case[data-text-button-state='pressed']
+  :deep(.ui-text-btn .ui-marquee__text) {
+  text-decoration: underline;
+  text-decoration-color: currentcolor;
+  text-underline-offset: 0.18em;
+}
+
+.demo-specimens__case[data-text-button-state='focus'] :deep(button) {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+  border-radius: var(--ui-focus-radius);
 }
 </style>

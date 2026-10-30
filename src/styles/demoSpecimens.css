@@ -106,8 +106,10 @@
 /* Static density previews; the global density setting still owns production. */
 .demo-specimens__density--standard {
   --ui-control-height: 2.25rem;
+  --ui-field-height: 2.25rem;
 }
 
 .demo-specimens__density--compact {
   --ui-control-height: 2rem;
+  --ui-field-height: 2rem;
 }

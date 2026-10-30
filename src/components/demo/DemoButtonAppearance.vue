@@ -2,52 +2,27 @@
 import { Download, Repeat } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiButtonGroup from '../ui/UiButtonGroup.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import '../../styles/demoSpecimens.css';
 
-const LAYERS = [
-  {
-    key: 'candidate',
-    title: '正式 UiButton',
-    note: '文字按鈕維持單行；純圖示操作使用 UiIconButton。',
-    overflowNote: '受限寬度採靜態單行 ellipsis；按鈕文案不使用 marquee。',
-    secondaryVariant: 'secondary',
-    secondaryLabel: 'Secondary',
-    statePair: 'Secondary／Accent',
-    appearanceContract: 'variant · secondary／ghost／accent',
-    intentContract: 'intent · neutral／danger',
-    publicNote:
-      '正式元件將可辨識的 Secondary 與 contextual Ghost 分責，但不加入產品領域語意。',
-    iconBoundary: '純圖示操作 → UiIconButton',
-    contractBoundary: 'No size prop · No readonly',
-    component: UiButton,
-    sizes: [
-      ['standard', 'Standard · 36 CSS px'],
-      ['compact', 'Compact · 32 CSS px'],
-    ],
-  },
+const DENSITIES = [
+  ['standard', 'Standard · 36 CSS px'],
+  ['compact', 'Compact · 32 CSS px'],
 ];
 
-const HIERARCHY = {
-  candidate: [
-    ['accent', 'Primary · Accent fill', '主要動作'],
-    ['secondary', 'Secondary · 靜止可辨識', '次要動作'],
-    ['ghost', 'Ghost · 只供 toolbar／tertiary context', '第三層動作'],
-  ],
-  current: [
-    ['accent', 'Primary · Accent fill', '主要動作'],
-    ['secondary', 'Secondary · 靜止可辨識', '次要動作'],
-    ['ghost', 'Ghost · toolbar／tertiary context', '第三層動作'],
-  ],
-};
-
-const WIDTH_CASES = [
-  ['intrinsic', 'Intrinsic · content-sized', '按鈕本身只包住必要內容'],
-  ['constrained', 'Constrained parent · 12rem', '長標籤由可用寬度裁切'],
-  ['fluid', 'Parent-owned full width · 100%', '只有父層明確配置時才填滿'],
+const HIERARCHY = [
+  ['accent', 'Primary · Accent fill', '主要動作'],
+  ['secondary', 'Secondary · 靜止可辨識', '次要動作'],
+  ['ghost', 'Ghost · 只供 toolbar／tertiary context', '第三層動作'],
 ];
 
-const CONTENT_CASES = [
+const WIDTHS = [
+  ['intrinsic', 'Intrinsic · content-sized'],
+  ['constrained', 'Constrained parent · 12rem'],
+  ['fluid', 'Parent-owned full width · 100%'],
+];
+
+const CONTENT = [
   ['short', 'Short CJK', '保存'],
   ['long-cjk', 'Long CJK', '匯出目前演出清單並保留所有導唱與輸出設定'],
   [
@@ -70,36 +45,14 @@ const STATES = [
   ['loading', 'Loading'],
 ];
 
-const COVERAGE = {
-  candidate: [
-    ['default', 'Raised＋subtle border', 'Accent fill', 'Native button'],
-    ['hover', 'Hover＋strong border', 'Accent hover', 'Pointer'],
-    ['pressed', 'Active＋strong border', 'Accent active', ':active'],
-    ['focus-visible', 'Indigo ring', 'Indigo ring', 'Keyboard'],
-    [
-      'active toggle',
-      'Selected＋accent',
-      'Accent fill',
-      'aria-pressed caller-owned',
-    ],
-    ['disabled', '50%', '50% contrast-safe fill', 'disabled'],
-    ['loading', 'Spinner＋label', 'Spinner＋label', 'disabled＋aria-busy'],
-  ],
-  current: [
-    ['default', 'Raised＋subtle border', 'Accent fill', 'Native button'],
-    ['hover', 'Hover＋strong border', 'Accent hover', 'Pointer'],
-    ['pressed', 'Active＋strong border', 'Accent active', ':active'],
-    ['focus-visible', 'Coral ring', 'Coral ring', 'Keyboard'],
-    [
-      'active toggle',
-      'Selected＋accent',
-      'Accent fill',
-      'aria-pressed caller-owned',
-    ],
-    ['disabled', '50%', '50% contrast-safe fill', 'disabled'],
-    ['loading', 'Spinner＋label', 'Spinner＋label', 'disabled＋aria-busy'],
-  ],
-};
+const CONTRACT = [
+  'type · button／submit／reset',
+  'variant · secondary／ghost／accent；intent · neutral／danger',
+  'active · visual state；toggle caller supplies aria-pressed',
+  'loading · native disabled＋aria-busy＋loadingLabel',
+  '文字單行 ellipsis，不用 marquee；純圖示操作 → UiIconButton',
+  'No size prop · No readonly',
+];
 
 function stateProps(state, variant) {
   return {
@@ -116,500 +69,128 @@ function stateProps(state, variant) {
 </script>
 
 <template>
-  <div class="demo-button-appearance">
-    <section
-      v-for="layer in LAYERS"
-      :key="layer.key"
-      class="demo-button-layer"
-      :class="`demo-button-layer--${layer.key}`"
-      :data-button-source="layer.key"
-    >
-      <header class="demo-button-layer__header">
-        <h4>{{ layer.title }}</h4>
-        <p>{{ layer.note }}</p>
-      </header>
+  <div class="demo-specimens" data-button-source="production">
+    <p class="demo-specimens__copy">
+      文字按鈕維持單行，尺寸依密度切換、寬度隨內容；純圖示操作使用
+      UiIconButton。
+    </p>
 
-      <section class="demo-button-subsection">
-        <header class="demo-button-subsection__header">
-          <h5>尺寸與寬度</h5>
-          <p>尺寸依密度切換；預設寬度隨內容。</p>
-        </header>
-        <div class="demo-button-size-grid">
-          <article
-            v-for="size in layer.sizes"
-            :key="size[0]"
-            class="demo-button-size"
-            :class="`demo-button-size--${size[0]}`"
-            :data-button-size="size[0]"
-          >
-            <span>{{ size[1] }}</span>
-            <component :is="layer.component" variant="accent"
-              >保存變更</component
-            >
-          </article>
-        </div>
-        <div class="demo-button-width-grid">
-          <article
-            v-for="widthCase in WIDTH_CASES"
-            :key="widthCase[0]"
-            class="demo-button-width"
-            :class="`demo-button-width--${widthCase[0]}`"
-            :data-button-width="widthCase[0]"
-          >
-            <span>{{ widthCase[1] }}</span>
-            <component
-              :is="layer.component"
-              :variant="layer.secondaryVariant"
-              :icon="Download"
-            >
-              匯出目前演出清單與所有設定
-            </component>
-            <small>{{ widthCase[2] }}</small>
-          </article>
-        </div>
-        <div class="demo-button-hierarchy" data-button-hierarchy-group>
-          <article
-            v-for="action in HIERARCHY[layer.key]"
-            :key="action[0]"
-            :data-button-hierarchy="action[0]"
-          >
-            <span>{{ action[1] }}</span>
-            <component :is="layer.component" :variant="action[0]">
-              {{ action[2] }}
-            </component>
-          </article>
-        </div>
-        <article class="demo-button-intent" data-button-intent="danger">
-          <span>Destructive · Ghost／Secondary／Accent</span>
-          <div>
-            <component :is="layer.component" intent="danger"> 移除 </component>
-            <component
-              :is="layer.component"
-              variant="secondary"
-              intent="danger"
-            >
-              刪除
-            </component>
-            <component :is="layer.component" variant="accent" intent="danger">
-              確認刪除
-            </component>
+    <section class="demo-specimens__section">
+      <h4>階層與意圖</h4>
+      <div class="demo-specimens__grid" data-button-hierarchy-group>
+        <article
+          v-for="[variant, label, text] in HIERARCHY"
+          :key="variant"
+          class="demo-specimens__case"
+          :data-button-hierarchy="variant"
+        >
+          <h5>{{ label }}</h5>
+          <div class="demo-specimens__row">
+            <UiButton :variant="variant">{{ text }}</UiButton>
           </div>
         </article>
-        <article class="demo-button-group" data-button-group>
-          <span>Grouped anatomy · shared outer boundary</span>
+        <article class="demo-specimens__case" data-button-intent="danger">
+          <h5>Destructive · Ghost／Secondary／Accent</h5>
+          <div class="demo-specimens__row">
+            <UiButton intent="danger">移除</UiButton>
+            <UiButton variant="secondary" intent="danger">刪除</UiButton>
+            <UiButton variant="accent" intent="danger">確認刪除</UiButton>
+          </div>
+        </article>
+        <article class="demo-specimens__case" data-button-group>
+          <h5>Button group · 共用外框與分隔</h5>
           <UiButtonGroup label="Button group anatomy">
             <UiButton aria-label="前一項">前一項</UiButton>
             <UiButton aria-label="下一項">下一項</UiButton>
           </UiButtonGroup>
-          <small
-            >Group owns outer border、radius and internal separators.</small
-          >
         </article>
-      </section>
-
-      <section class="demo-button-subsection">
-        <header class="demo-button-subsection__header">
-          <h5>Field composition</h5>
-          <p>同列控制項對齊；隱藏標籤仍保留可存取名稱。</p>
-        </header>
-        <div class="demo-button-field-grid">
-          <article
-            v-for="size in layer.sizes"
-            :key="size[0]"
-            class="demo-button-field-composition"
-          >
-            <span>{{ size[1] }}</span>
-            <div
-              class="demo-button-field-row"
-              :class="`demo-button-field-row--${size[0]}`"
-              :data-button-field-row="size[0]"
-            >
-              <UiTextField
-                :id="`demo-button-field-${layer.key}-${size[0]}`"
-                label="曲目名稱"
-                label-hidden
-                model-value="雨愛"
-              />
-              <component
-                :is="layer.component"
-                :variant="layer.secondaryVariant"
-                :icon="Download"
-              >
-                套用
-              </component>
-            </div>
-            <small>同一 density scope · control boxes 同高</small>
-            <small>Row gap · 8 CSS px</small>
-            <small>Icon／label gap · 4 CSS px</small>
-          </article>
-        </div>
-      </section>
-
-      <section class="demo-button-subsection">
-        <header class="demo-button-subsection__header">
-          <h5>Owned anatomy</h5>
-          <p>可包含前置圖示、文字與載入狀態。</p>
-        </header>
-        <div class="demo-button-anatomy">
-          <div class="demo-button-anatomy__specimens">
-            <component
-              :is="layer.component"
-              :variant="layer.secondaryVariant"
-              :icon="Download"
-              data-button-anatomy="leading-icon"
-            >
-              匯出
-            </component>
-            <component
-              :is="layer.component"
-              data-button-anatomy="label"
-              variant="accent"
-            >
-              保存
-            </component>
-            <component
-              :is="layer.component"
-              data-button-anatomy="loading"
-              :variant="layer.secondaryVariant"
-              loading
-              loading-label="正在保存"
-            >
-              保存
-            </component>
-          </div>
-          <ol class="demo-button-anatomy__map">
-            <li><b>1</b><span>16-unit leading icon · optional</span></li>
-            <li>
-              <b>2</b><span>4px icon／label gap · stable single line</span>
-            </li>
-            <li>
-              <b>3</b><span>Spinner＋loadingLabel replace idle content</span>
-            </li>
-            <li>
-              <b>→</b><span>{{ layer.iconBoundary }}</span>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <section class="demo-button-subsection">
-        <header class="demo-button-subsection__header">
-          <h5>內容與 overflow</h5>
-          <p>{{ layer.overflowNote }}</p>
-        </header>
-        <div class="demo-button-content-grid">
-          <article
-            v-for="contentCase in CONTENT_CASES"
-            :key="contentCase[0]"
-            :data-button-content="contentCase[0]"
-          >
-            <span>{{ contentCase[1] }}</span>
-            <component
-              :is="layer.component"
-              :variant="layer.secondaryVariant"
-              >{{ contentCase[2] }}</component
-            >
-          </article>
-        </div>
-      </section>
-
-      <section class="demo-button-subsection">
-        <header class="demo-button-subsection__header">
-          <h5>狀態外觀與覆蓋</h5>
-          <p>
-            {{ layer.statePair }} 同時檢查；hover、pressed 與 active toggle
-            保持不同語意。
-          </p>
-        </header>
-        <div class="demo-button-state-grid">
-          <article
-            v-for="state in STATES"
-            :key="state[0]"
-            class="demo-button-state"
-            :data-button-state="state[0]"
-          >
-            <span>{{ state[1] }}</span>
-            <div>
-              <component
-                :is="layer.component"
-                v-bind="stateProps(state[0], layer.secondaryVariant)"
-              >
-                次要動作
-              </component>
-              <component
-                :is="layer.component"
-                v-bind="stateProps(state[0], 'accent')"
-              >
-                主要動作
-              </component>
-            </div>
-          </article>
-        </div>
-        <UiScrollRegion
-          class="demo-button-coverage"
-          axis="horizontal"
-          data-button-coverage-matrix
-          tabindex="0"
-          aria-label="Button 狀態覆蓋矩陣"
-        >
-          <table>
-            <thead>
-              <tr>
-                <th>State</th>
-                <th>{{ layer.secondaryLabel }}</th>
-                <th>Accent</th>
-                <th>Native／ARIA</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in COVERAGE[layer.key]" :key="row[0]">
-                <th scope="row">{{ row[0] }}</th>
-                <td>{{ row[1] }}</td>
-                <td>{{ row[2] }}</td>
-                <td>{{ row[3] }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </UiScrollRegion>
-      </section>
-
-      <section class="demo-button-subsection">
-        <header class="demo-button-subsection__header">
-          <h5>Async 與 ARIA</h5>
-          <p>載入時禁止重複操作；切換按鈕需設定 aria-pressed。</p>
-        </header>
-        <div class="demo-button-async-grid">
-          <article>
-            <span>Async action</span>
-            <component
-              :is="layer.component"
-              type="submit"
-              variant="accent"
-              :icon="Download"
-              loading
-              loading-label="正在保存"
-            >
-              保存
-            </component>
-            <small>native disabled · aria-busy="true" · loadingLabel</small>
-          </article>
-          <article>
-            <span>Toggle action</span>
-            <component
-              :is="layer.component"
-              :icon="Repeat"
-              active
-              :aria-pressed="true"
-            >
-              自動重複
-            </component>
-            <small>active visual state · caller-owned aria-pressed</small>
-          </article>
-        </div>
-      </section>
-
-      <section class="demo-button-subsection demo-button-api">
-        <header class="demo-button-subsection__header">
-          <h5>Public contract</h5>
-          <p>{{ layer.publicNote }}</p>
-        </header>
-        <dl>
-          <div>
-            <dt>Native</dt>
-            <dd>type · button／submit／reset</dd>
-          </div>
-          <div>
-            <dt>Appearance</dt>
-            <dd>{{ layer.appearanceContract }}</dd>
-          </div>
-          <div>
-            <dt>Intent</dt>
-            <dd>{{ layer.intentContract }}</dd>
-          </div>
-          <div>
-            <dt>Toggle</dt>
-            <dd>active · visual state；toggle caller supplies aria-pressed</dd>
-          </div>
-          <div>
-            <dt>Async</dt>
-            <dd>disabled · loading · loadingLabel</dd>
-          </div>
-          <div>
-            <dt>Content</dt>
-            <dd>icon · default slot · native attrs／events</dd>
-          </div>
-          <div>
-            <dt>Boundary</dt>
-            <dd>{{ layer.contractBoundary }}</dd>
-          </div>
-        </dl>
-      </section>
+      </div>
     </section>
+
+    <section class="demo-specimens__section">
+      <h4>密度、寬度與欄位同列</h4>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="[key, label] in DENSITIES"
+          :key="key"
+          class="demo-specimens__case"
+          :class="`demo-specimens__density--${key}`"
+          :data-button-size="key"
+        >
+          <h5>{{ label }}</h5>
+          <div class="demo-button__field-row" :data-button-field-row="key">
+            <UiTextField
+              :id="`demo-button-field-${key}`"
+              label="曲目名稱"
+              label-hidden
+              model-value="雨愛"
+            />
+            <UiButton variant="secondary" :icon="Download">套用</UiButton>
+          </div>
+        </article>
+        <article
+          v-for="[key, label] in WIDTHS"
+          :key="key"
+          class="demo-specimens__case"
+          :data-button-width="key"
+        >
+          <h5>{{ label }}</h5>
+          <div :class="`demo-button__width--${key}`">
+            <UiButton variant="secondary" :icon="Download">
+              匯出目前演出清單與所有設定
+            </UiButton>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="demo-specimens__section">
+      <h4>內容與 overflow</h4>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="[key, label, text] in CONTENT"
+          :key="key"
+          class="demo-specimens__case"
+          :data-button-content="key"
+        >
+          <h5>{{ label }}</h5>
+          <div class="demo-specimens__row">
+            <UiButton variant="secondary">{{ text }}</UiButton>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="demo-specimens__section">
+      <h4>狀態</h4>
+      <p class="demo-specimens__copy">
+        Secondary／Accent 同時檢查；hover、pressed 與 active toggle
+        保持不同語意，Hover／Pressed／Focus 為固定預覽。
+      </p>
+      <div class="demo-specimens__grid">
+        <article
+          v-for="[key, label] in STATES"
+          :key="key"
+          class="demo-specimens__case"
+          :data-button-state="key"
+        >
+          <h5>{{ label }}</h5>
+          <div class="demo-specimens__row">
+            <UiButton v-bind="stateProps(key, 'secondary')">次要動作</UiButton>
+            <UiButton v-bind="stateProps(key, 'accent')">主要動作</UiButton>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <ul class="demo-specimens__contract" aria-label="UiButton public contract">
+      <li v-for="rule in CONTRACT" :key="rule">{{ rule }}</li>
+    </ul>
   </div>
 </template>
 
 <style scoped>
-.demo-button-appearance {
-  container-type: inline-size;
-  display: grid;
-  gap: var(--ui-space-6);
-}
-
-.demo-button-layer {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-5);
-}
-
-.demo-button-layer__header,
-.demo-button-subsection__header {
-  display: grid;
-  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
-  gap: var(--ui-space-4);
-  align-items: baseline;
-}
-
-.demo-button-layer__header h4,
-.demo-button-layer__header p,
-.demo-button-subsection__header h5,
-.demo-button-subsection__header p {
-  margin: 0;
-}
-
-.demo-button-layer__header p,
-.demo-button-subsection__header p,
-.demo-button-width small,
-.demo-button-field-composition small,
-.demo-button-async-grid small {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
-.demo-button-group {
-  min-width: 0;
-  display: grid;
-  justify-items: start;
-  gap: var(--ui-space-2);
-  padding-block-start: var(--ui-space-1);
-}
-
-.demo-button-group > span {
-  color: var(--ui-color-text-subtle);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.demo-button-group > small {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-}
-
-.demo-button-subsection {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-3);
-}
-
-.demo-button-size-grid,
-.demo-button-width-grid,
-.demo-button-hierarchy,
-.demo-button-content-grid,
-.demo-button-state-grid,
-.demo-button-async-grid,
-.demo-button-field-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
-  gap: var(--ui-space-3);
-}
-
-.demo-button-size,
-.demo-button-width,
-.demo-button-field-composition,
-.demo-button-content-grid article,
-.demo-button-state,
-.demo-button-async-grid article {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-3);
-  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-md);
-  overflow: hidden;
-}
-
-.demo-button-size > span,
-.demo-button-width > span,
-.demo-button-field-composition > span,
-.demo-button-content-grid article > span,
-.demo-button-state > span,
-.demo-button-async-grid article > span {
-  color: var(--ui-color-text-subtle);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.demo-button-hierarchy {
-  padding-block-start: var(--ui-space-1);
-}
-
-.demo-button-hierarchy article {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: var(--ui-space-2);
-}
-
-.demo-button-hierarchy span {
-  color: var(--ui-color-text-subtle);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.demo-button-intent {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-  padding-block-start: var(--ui-space-1);
-}
-
-.demo-button-intent > span {
-  color: var(--ui-color-text-subtle);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.demo-button-intent > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-}
-
-.demo-button-size--standard {
-  --demo-button-height: 2.25rem;
-  --ui-control-height: 2.25rem;
-}
-
-.demo-button-size--compact {
-  --demo-button-height: 2rem;
-  --ui-control-height: 2rem;
-}
-
-.demo-button-size--active {
-  --demo-button-height: 1.875rem;
-}
-
-.demo-button-field-row {
-  width: 100%;
+.demo-button__field-row {
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -617,187 +198,37 @@ function stateProps(state, variant) {
   gap: var(--ui-space-2);
 }
 
-.demo-button-field-row--standard {
-  --demo-button-height: 2.25rem;
-  --ui-field-height: 2.25rem;
-  --ui-control-height: 2.25rem;
-}
-
-.demo-button-field-row--compact {
-  --demo-button-height: 2rem;
-  --ui-field-height: 2rem;
-  --ui-control-height: 2rem;
-}
-
-.demo-button-field-row--active {
-  --demo-button-height: 1.875rem;
-  --ui-field-height: 1.875rem;
-  --ui-control-height: 1.875rem;
-}
-
-.demo-button-width--constrained {
+.demo-button__width--constrained {
   width: min(12rem, 100%);
 }
 
-.demo-button-width--fluid {
+.demo-button__width--fluid :deep(.ui-btn) {
   width: 100%;
 }
 
-.demo-button-width--fluid :deep(.ui-btn) {
-  width: 100%;
-}
-
-.demo-button-anatomy {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.75fr);
-  gap: var(--ui-space-4);
-}
-
-.demo-button-anatomy__specimens,
-.demo-button-anatomy__map {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: var(--ui-space-3);
-}
-
-.demo-button-anatomy__map {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.demo-button-anatomy__map li {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: var(--ui-space-5) minmax(0, 1fr);
-  gap: var(--ui-space-2);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
-.demo-button-anatomy__map b {
-  color: var(--ui-color-accent);
-}
-
-.demo-button-content-grid article :deep(button) {
-  max-width: 100%;
-}
-
-.demo-button-state > div {
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-}
-
-.demo-button-state[data-button-state='hover'] :deep(.ui-btn--secondary) {
+/* Static previews of pointer and keyboard states. */
+.demo-specimens__case[data-button-state='hover'] :deep(.ui-btn--secondary) {
   border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
 
-.demo-button-state[data-button-state='hover'] :deep(.ui-btn--ghost) {
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-}
-
-.demo-button-state[data-button-state='hover'] :deep(.ui-btn--accent) {
+.demo-specimens__case[data-button-state='hover'] :deep(.ui-btn--accent) {
   background: var(--ui-color-accent-hover);
 }
 
-.demo-button-state[data-button-state='pressed'] :deep(.ui-btn--secondary) {
+.demo-specimens__case[data-button-state='pressed'] :deep(.ui-btn--secondary) {
   border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-active);
   color: var(--ui-color-text);
 }
 
-.demo-button-state[data-button-state='pressed'] :deep(.ui-btn--accent) {
+.demo-specimens__case[data-button-state='pressed'] :deep(.ui-btn--accent) {
   background: var(--ui-color-accent-active);
 }
 
-.demo-button-state[data-button-state='focus'] :deep(button) {
+.demo-specimens__case[data-button-state='focus'] :deep(button) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-}
-
-.demo-button-coverage {
-  min-width: 0;
-  outline: none;
-}
-
-.demo-button-coverage:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.demo-button-coverage table {
-  width: 100%;
-  min-width: 42rem;
-  border-collapse: collapse;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
-.demo-button-coverage th,
-.demo-button-coverage td {
-  padding: var(--ui-space-2);
-  border-block: var(--ui-border-width) solid var(--ui-color-border);
-  text-align: start;
-}
-
-.demo-button-coverage th {
-  color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-semibold);
-}
-
-.demo-button-api dl {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
-  gap: var(--ui-space-2);
-  margin: 0;
-}
-
-.demo-button-api dt {
-  color: var(--ui-color-text-subtle);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-}
-
-.demo-button-api dd {
-  margin: var(--ui-space-1) 0 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
-.demo-button-layer--candidate {
-  --demo-button-height: var(--ui-control-height);
-}
-
-@container (max-width: 48rem) {
-  .demo-button-layer__header,
-  .demo-button-subsection__header,
-  .demo-button-anatomy {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .demo-button-layer__header,
-  .demo-button-subsection__header {
-    gap: var(--ui-space-1);
-  }
-}
-
-@container (max-width: 32rem) {
-  .demo-button-field-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .demo-button-field-row :deep(.ui-btn) {
-    width: 100%;
-  }
 }
 </style>

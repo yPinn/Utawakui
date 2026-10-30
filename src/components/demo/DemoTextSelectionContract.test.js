@@ -17,7 +17,7 @@ const candidateMarqueeSource = read('./DemoCandidateMarqueeText.vue');
 const candidateHintSource = read('./DemoCandidateHint.vue');
 const candidateNoticeSource = read('./DemoCandidateNotice.vue');
 const notificationHostSource = read('./DemoCandidateNotificationHost.vue');
-const progressPrimitiveSource = read('./DemoProgressPrimitive.vue');
+const progressAppearanceSource = read('./DemoProgressAppearance.vue');
 const fieldAppearanceSource = read('./DemoFieldAppearance.vue');
 const uiTextFieldSource = read('../ui/UiTextField.vue');
 const uiTextareaSource = read('../ui/UiTextarea.vue');
@@ -80,7 +80,7 @@ describe('Token v2 Candidate text selection contract', () => {
     );
     expect(candidateHintSource).not.toContain('user-select: none');
     expect(candidateNoticeSource).not.toContain('user-select: none');
-    expect(progressPrimitiveSource).not.toContain('user-select: none');
+    expect(progressAppearanceSource).not.toContain('user-select: none');
     expect(candidateMarqueeSource).not.toContain('user-select: none');
     expect(candidateMarqueeSource).not.toContain('-webkit-user-select: none');
   });
