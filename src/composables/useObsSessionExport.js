@@ -2,6 +2,7 @@ import { computed, reactive } from 'vue';
 import { useObsIntegration } from './useObsIntegration.js';
 import { useClipboardFeedback } from './useClipboardFeedback.js';
 import { projectYoutubeChapters } from '../utils/obsChapters.js';
+import { t } from '../utils/i18n.js';
 
 // A generated chapter list scales with setlist length, not a short label —
 // useClipboardFeedback's own 1024-char default suits URLs/labels, not this.
@@ -61,7 +62,7 @@ async function loadSession(arrangementId = null) {
     }
   } catch {
     if (current !== loadRevision) return;
-    state.error = '目前無法讀取場次紀錄，請再試一次。';
+    state.error = t('obs.export.readFailed');
   } finally {
     if (current === loadRevision) state.isLoading = false;
   }
@@ -85,7 +86,7 @@ const offsetError = computed(() => {
     Number.isSafeInteger(number) &&
     number <= Math.floor(Number.MAX_SAFE_INTEGER / 1000)
     ? ''
-    : '請輸入 0 或正整數秒。';
+    : t('obs.export.offsetInvalid');
 });
 
 const result = computed(() =>
@@ -105,9 +106,9 @@ const canCopy = computed(
 
 async function copyChapters() {
   if (!canCopy.value) return false;
-  return clipboard.copy(result.value.text, 'YouTube 章節文字', {
-    successMessage: '章節已複製',
-    errorMessage: '無法複製章節，請手動選取內容',
+  return clipboard.copy(result.value.text, t('obs.export.clipboardLabel'), {
+    successMessage: t('obs.export.copySuccess'),
+    errorMessage: t('obs.export.copyFailed'),
   });
 }
 

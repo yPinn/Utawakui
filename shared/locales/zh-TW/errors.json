@@ -155,6 +155,10 @@
     "title": "無法儲存播放安排顯示偏好",
     "message": "目前無法儲存播放安排顯示偏好，請再試一次。"
   },
+  "OUTPUT_WINDOW_OPEN_FAILED": {
+    "title": "輸出視窗未開啟",
+    "message": "請確認輸出服務已啟動，再重試開啟視窗。"
+  },
   "RELEASE_METADATA_REFRESH_FAILED": {
     "title": "發行資訊未更新",
     "message": "目前無法更新發行資訊，請稍後再試。"

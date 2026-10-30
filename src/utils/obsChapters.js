@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // Pure projection from a sessionHistoryService.js session file into a
 // YouTube chapter list. No IPC/DOM here — see useObsSessionExport.js for
 // the composable that feeds this real session data.
@@ -41,7 +42,8 @@ export function formatChapterTimestamp(milliseconds) {
 }
 
 function chapterLabel(entry) {
-  if (entry.type === 'marker') return entry.label || '標記';
+  if (entry.type === 'marker')
+    return entry.label || t('obs.export.markerFallback');
   return entry.artist ? `${entry.title} - ${entry.artist}` : entry.title;
 }
 
@@ -72,14 +74,16 @@ export function projectYoutubeChapters(
   if (usable.length < YOUTUBE_MIN_CHAPTERS) {
     issues.push({
       code: 'too-few-chapters',
-      message: `YouTube 章節至少需要 ${YOUTUBE_MIN_CHAPTERS} 段，目前只有 ${usable.length} 段。`,
+      message: t('obs.export.tooFew', {
+        min: YOUTUBE_MIN_CHAPTERS,
+        count: usable.length,
+      }),
     });
   }
   if (usable.length > 0 && usable[0].ms !== 0) {
     issues.push({
       code: 'first-chapter-not-zero',
-      message:
-        '第一段時間戳不是 0:00，YouTube 章節格式要求第一段從 0:00 開始；可以在真正開場時新增一個標記，或調整偏移量。',
+      message: t('obs.export.firstNotZero'),
     });
   }
   for (let i = 1; i < usable.length; i += 1) {
@@ -87,7 +91,7 @@ export function projectYoutubeChapters(
     if (gapMs < YOUTUBE_MIN_GAP_MS) {
       issues.push({
         code: 'chapters-too-close',
-        message: `第 ${i} 與第 ${i + 1} 段間隔不足 10 秒，YouTube 可能拒絕這份章節清單。`,
+        message: t('obs.export.tooClose', { index: i, next: i + 1 }),
         index: i,
       });
     }

@@ -13,6 +13,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 const FRAME_RATE_ITEMS = Object.freeze([
   { id: 'reduced', label: '30 FPS' },
@@ -107,17 +108,21 @@ const runtimeStatus = computed(() =>
 const runtimeFault = computed(
   () =>
     outputState.errors?.runtime ||
-    (outputState.status.error ? '輸出服務發生異常，請檢查連接埠後重試。' : ''),
+    (outputState.status.error ? t('output.fault') : ''),
 );
 const serviceStatus = computed(() => {
   if (outputReadError.value)
     return {
-      label: '無法讀取',
+      label: t('output.unreadable'),
       tone: 'warning',
-      detail: '尚未確認輸出服務狀態。',
+      detail: t('output.unconfirmed'),
     };
   if (runtimeFault.value)
-    return { label: '服務異常', tone: 'danger', detail: runtimeFault.value };
+    return {
+      label: t('output.serviceFault'),
+      tone: 'danger',
+      detail: runtimeFault.value,
+    };
   return runtimeStatus.value;
 });
 
@@ -135,7 +140,11 @@ const spoutSurface = computed(
 );
 const spoutValue = computed(() =>
   spoutSupported.value
-    ? `${spoutSurface.value.senderName} · ${spoutSurface.value.width} × ${spoutSurface.value.height} · 透明背景`
+    ? t('output.spout.surface', {
+        name: spoutSurface.value.senderName,
+        width: spoutSurface.value.width,
+        height: spoutSurface.value.height,
+      })
     : spoutPresentation.value.detail,
 );
 const spoutSending = computed(
@@ -200,18 +209,18 @@ onMounted(() => {
     <div class="output-runtime-settings-block__service">
       <SettingsDocumentItem
         :icon="Cable"
-        title="本機輸出服務"
+        :title="t('output.title')"
         :value="serviceStatus.detail"
         :status="serviceStatus.label"
         :status-tone="serviceStatus.tone"
-        guidance="透過直播或錄影軟體的瀏覽器來源顯示歌詞與曲目。"
+        :guidance="t('output.guidance')"
         variant="nested"
       >
         <template #actions>
           <UiCheckbox
             id="output-runtime-auto-start"
-            label="自動啟動"
-            aria-label="開啟應用程式時自動啟動輸出服務"
+            :label="t('output.autoStart')"
+            :aria-label="t('output.autoStartLabel')"
             :model-value="outputState.settings.autoStart"
             :disabled="busy || Boolean(settingsReadError)"
             @update:model-value="commitSettings({ autoStart: $event })"
@@ -223,7 +232,7 @@ onMounted(() => {
             :disabled="busy || Boolean(settingsReadError)"
             @click="output.start()"
           >
-            啟動
+            {{ t('output.start') }}
           </UiButton>
           <UiButton
             v-else
@@ -232,7 +241,7 @@ onMounted(() => {
             :disabled="busy || Boolean(settingsReadError)"
             @click="output.stop()"
           >
-            停止
+            {{ t('output.stop') }}
           </UiButton>
         </template>
         <template
@@ -249,7 +258,7 @@ onMounted(() => {
             v-if="outputReadError"
             variant="ghost"
             @click="output.refreshStatus()"
-            >重新讀取輸出狀態</UiButton
+            >{{ t('output.reloadStatus') }}</UiButton
           >
           <UiHint
             v-if="serviceError && !hasPortConflict && !runtimeFault"
@@ -263,7 +272,7 @@ onMounted(() => {
       <UiDisclosure
         v-model:open="isSettingsOpen"
         class="settings-section__disclosure"
-        label="Browser Source 連接埠與同步"
+        :label="t('output.portSettings')"
       >
         <div class="output-runtime-settings-block__form">
           <UiHint v-if="settingsReadError" tone="danger" role="alert">{{
@@ -274,7 +283,7 @@ onMounted(() => {
             variant="ghost"
             :loading="outputState.isLoadingSettings"
             @click="output.refreshSettings()"
-            >重新讀取輸出設定</UiButton
+            >{{ t('output.reloadSettings') }}</UiButton
           >
 
           <div class="output-runtime-settings-block__fields">
@@ -282,13 +291,16 @@ onMounted(() => {
               id="output-runtime-port"
               v-model="draftPort"
               class="output-runtime-settings-block__number"
-              label="連接埠"
+              :label="t('output.port')"
               inputmode="numeric"
               :error="
                 !isPortValid
-                  ? `連接埠必須是 ${OUTPUT_RUNTIME_VALUES.minPort} 到 ${OUTPUT_RUNTIME_VALUES.maxPort} 的整數。`
+                  ? t('output.portInvalid', {
+                      min: OUTPUT_RUNTIME_VALUES.minPort,
+                      max: OUTPUT_RUNTIME_VALUES.maxPort,
+                    })
                   : hasPortConflict
-                    ? '此連接埠被占用，請選擇可用連接埠。'
+                    ? t('output.portInUse')
                     : ''
               "
               :disabled="busy || Boolean(settingsReadError)"
@@ -297,19 +309,22 @@ onMounted(() => {
               id="output-display-delay"
               v-model="draftDisplayDelayMs"
               class="output-runtime-settings-block__delay"
-              label="畫面延遲（毫秒）"
-              hint="畫面比聲音快就調大，慢就調小。"
+              :label="t('output.delay')"
+              :hint="t('output.delayHint')"
               inputmode="numeric"
               :error="
                 !isDisplayDelayValid
-                  ? `畫面延遲必須是 ${OUTPUT_RUNTIME_VALUES.minDisplayDelayMs} 到 ${OUTPUT_RUNTIME_VALUES.maxDisplayDelayMs} 的整數毫秒。`
+                  ? t('output.delayInvalid', {
+                      min: OUTPUT_RUNTIME_VALUES.minDisplayDelayMs,
+                      max: OUTPUT_RUNTIME_VALUES.maxDisplayDelayMs,
+                    })
                   : ''
               "
               :disabled="busy || Boolean(settingsReadError)"
             />
           </div>
 
-          <UiHint>儲存後套用；變更連接埠須更新直播軟體的來源網址。</UiHint>
+          <UiHint>{{ t('output.applyHint') }}</UiHint>
 
           <UiHint
             v-if="settingsError && !hasPortConflict"
@@ -321,9 +336,9 @@ onMounted(() => {
             v-if="hasPortConflict"
             class="output-runtime-settings-block__suggestions"
             role="group"
-            aria-label="可用連接埠"
+            :aria-label="t('output.availablePorts')"
           >
-            <span>可用連接埠</span>
+            <span>{{ t('output.availablePorts') }}</span>
             <UiButton
               v-for="port in outputState.suggestedPorts"
               :key="port"
@@ -344,7 +359,7 @@ onMounted(() => {
                 !isDisplayDelayValid
               "
               @click="commitSettings()"
-              >儲存設定</UiButton
+              >{{ t('output.save') }}</UiButton
             >
           </div>
         </div>
@@ -353,18 +368,20 @@ onMounted(() => {
 
     <SettingsDocumentItem
       :icon="MonitorUp"
-      title="Spout2 輸出"
-      :value="spoutReadError ? '尚未確認 Spout2 狀態' : spoutValue"
-      :status="spoutReadError ? '無法讀取' : spoutPresentation.label"
+      :title="t('output.spout.title')"
+      :value="spoutReadError ? t('output.spout.unconfirmed') : spoutValue"
+      :status="
+        spoutReadError ? t('output.unreadable') : spoutPresentation.label
+      "
       :status-tone="spoutReadError ? 'warning' : spoutPresentation.tone"
-      guidance="實驗性透明歌詞輸出，需接收軟體支援 Spout2。"
+      :guidance="t('output.spout.guidance')"
       variant="nested"
     >
       <template #actions>
         <UiSegmentedControl
           :items="FRAME_RATE_ITEMS"
           :model-value="spoutFrameRate"
-          aria-label="Spout2 幀率"
+          :aria-label="t('output.spout.fps')"
           :disabled="
             spoutBusy ||
             spoutActive ||
@@ -380,7 +397,7 @@ onMounted(() => {
           :disabled="spoutBusy || !spoutSupported || Boolean(spoutReadError)"
           @click="spout.start()"
         >
-          啟動
+          {{ t('output.start') }}
         </UiButton>
         <UiButton
           v-else
@@ -389,7 +406,7 @@ onMounted(() => {
           :disabled="spoutBusy"
           @click="spout.stop()"
         >
-          停止
+          {{ t('output.stop') }}
         </UiButton>
       </template>
       <template
@@ -412,7 +429,7 @@ onMounted(() => {
           variant="ghost"
           :loading="spoutState.isRefreshing"
           @click="spout.refresh()"
-          >重新讀取 Spout2 狀態</UiButton
+          >{{ t('output.spout.reload') }}</UiButton
         >
         <UiHint
           v-if="spoutOperationError && spoutPresentation.state !== 'error'"

@@ -29,6 +29,11 @@ const I18N_MIGRATED = [
   'src/components/settings/{SettingsCapabilitiesSection,MusicAnalysisPreferenceRow,YoutubeBrowserCookiesRow,FfmpegSourceModal,MusicAnalysisSettingsRow,SeparationGpuSettingsRow,SettingsFeatureGateRow,SettingsDependencyList,SettingsDependencyActions}.vue',
   'src/composables/{useFeatureGatePresentation,useFeatureDependencies,useFeatureGateAccess,useFeatureGates,useMusicAnalysisSettings,useSeparationSettings,useYoutubeBrowserCookieSettings}.js',
   'electron/main/{featureDependencyHandlers,featureGateHandlers}.js',
+  'src/components/settings/{ObsIntegrationSettingsBlock,OutputRuntimeSettingsBlock,ObsSessionExportModal}.vue',
+  'src/composables/{useObsIntegrationSettings,useObsSessionExport,usePlaybackDockPreference}.js',
+  'src/composables/output/useSpoutOutput.js',
+  'src/utils/{outputRuntimeStatus,spoutOutputStatus,obsChapters}.js',
+  'electron/main/{obsAdapter,spoutOutputRuntime,outputWindowHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

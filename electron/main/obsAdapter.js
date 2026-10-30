@@ -20,22 +20,23 @@ const {
   defaultPort: DEFAULT_OBS_PORT,
   requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
 } = require('../../shared/obsConnectionValues.json');
+const { t } = require('../lib/i18n');
 // obs-websocket protocol WebSocketCloseCode.AuthenticationFailed — the one
 // close code worth distinguishing from a generic connect failure, since it
 // means "check the password" rather than "check the host/port/OBS is open".
 const OBS_WEBSOCKET_AUTH_FAILED_CODE = 4009;
 
-const PUBLIC_ERROR_MESSAGES = Object.freeze({
-  OBS_CONNECT_FAILED: '無法連線。請檢查 OBS 設定。',
-  OBS_CONNECTION_REFUSED: 'OBS 未啟動，或 WebSocket 連接埠不正確。',
-  OBS_HOST_NOT_FOUND: '找不到 OBS 主機。請檢查主機名稱或 IP。',
-  OBS_CONNECT_TIMEOUT: '連線逾時。請檢查 OBS、防火牆或網路。',
-  OBS_AUTH_FAILED: 'OBS 密碼錯誤或未設定。',
-  OBS_INCOMPATIBLE_SERVER: '這不是相容的 OBS WebSocket 5 服務。',
-  OBS_REQUEST_FAILED: '無法讀取 OBS 狀態。',
-  OBS_REQUEST_TIMEOUT: '讀取 OBS 狀態逾時。',
-  OBS_ADAPTER_INTERNAL: 'OBS 連線發生未預期錯誤。',
-});
+const PUBLIC_ERROR_CODES = new Set([
+  'OBS_CONNECT_FAILED',
+  'OBS_CONNECTION_REFUSED',
+  'OBS_HOST_NOT_FOUND',
+  'OBS_CONNECT_TIMEOUT',
+  'OBS_AUTH_FAILED',
+  'OBS_INCOMPATIBLE_SERVER',
+  'OBS_REQUEST_FAILED',
+  'OBS_REQUEST_TIMEOUT',
+  'OBS_ADAPTER_INTERNAL',
+]);
 
 function createInitialStatus() {
   return {
@@ -64,11 +65,8 @@ function cloneStatus(status) {
 }
 
 function toPublicError(code) {
-  return {
-    code,
-    message:
-      PUBLIC_ERROR_MESSAGES[code] ?? PUBLIC_ERROR_MESSAGES.OBS_ADAPTER_INTERNAL,
-  };
+  const known = PUBLIC_ERROR_CODES.has(code) ? code : 'OBS_ADAPTER_INTERNAL';
+  return { code, message: t(`obs.errors.${known}`) };
 }
 
 function collectErrorSignals(error) {
@@ -653,4 +651,4 @@ function createObsAdapter({
   };
 }
 
-module.exports = { createObsAdapter };
+module.exports = { PUBLIC_ERROR_CODES, createObsAdapter };

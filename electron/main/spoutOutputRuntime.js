@@ -11,20 +11,21 @@ const {
   isSpoutFrameRateProfile,
   normalizeSpoutHelperEvent,
 } = require('../../shared/spoutOutputContract');
+const { t } = require('../lib/i18n');
 
 const DEFAULT_START_TIMEOUT_MS = 10_000;
 const DEFAULT_STOP_TIMEOUT_MS = 2_000;
 
-const PUBLIC_ERROR_MESSAGES = Object.freeze({
-  SPOUT_NATIVE_MODULE_UNAVAILABLE: 'Spout2 元件無法載入。',
-  SPOUT_RENDERER_LOAD_FAILED: '透明歌詞畫面無法載入。',
-  SPOUT_RENDERER_FAILED: '透明歌詞畫面已停止。',
-  SPOUT_SENDER_NAME_IN_USE: 'Utawakui.Lyrics 已被使用。',
-  SPOUT_SHARED_TEXTURE_UNAVAILABLE: '無法取得共享畫面。',
-  SPOUT_SURFACE_INVALID: 'Spout2 輸出規格不相容。',
-  SPOUT_TEXTURE_SEND_FAILED: 'Spout2 畫面傳送失敗。',
-  SPOUT_HELPER_INTERNAL: 'Spout2 helper 發生錯誤。',
-});
+const PUBLIC_ERROR_CODES = new Set([
+  'SPOUT_NATIVE_MODULE_UNAVAILABLE',
+  'SPOUT_RENDERER_LOAD_FAILED',
+  'SPOUT_RENDERER_FAILED',
+  'SPOUT_SENDER_NAME_IN_USE',
+  'SPOUT_SHARED_TEXTURE_UNAVAILABLE',
+  'SPOUT_SURFACE_INVALID',
+  'SPOUT_TEXTURE_SEND_FAILED',
+  'SPOUT_HELPER_INTERNAL',
+]);
 
 function createSpoutHelperLaunch({ execPath, appPath, packaged }) {
   return {
@@ -77,12 +78,8 @@ function cloneStatus(status) {
 }
 
 function toPublicError(code) {
-  return {
-    code,
-    message:
-      PUBLIC_ERROR_MESSAGES[code] ??
-      PUBLIC_ERROR_MESSAGES.SPOUT_HELPER_INTERNAL,
-  };
+  const known = PUBLIC_ERROR_CODES.has(code) ? code : 'SPOUT_HELPER_INTERNAL';
+  return { code, message: t(`output.spout.errors.${known}`) };
 }
 
 function createSpoutOutputRuntime({
@@ -362,4 +359,8 @@ function createSpoutOutputRuntime({
   return { getStatus, setFrameRateProfile, start, stop };
 }
 
-module.exports = { createSpoutHelperLaunch, createSpoutOutputRuntime };
+module.exports = {
+  PUBLIC_ERROR_CODES,
+  createSpoutHelperLaunch,
+  createSpoutOutputRuntime,
+};

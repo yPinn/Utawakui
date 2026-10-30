@@ -1,10 +1,11 @@
+import { t } from './i18n.js';
 export function describeSpoutOutputStatus(status = {}) {
   if (status.supported === false) {
     return {
       state: 'unsupported',
-      label: '不支援',
+      label: t('output.spout.unsupported'),
       tone: 'muted',
-      detail: '僅支援 Windows x64。',
+      detail: t('output.spout.unsupportedDetail'),
     };
   }
 
@@ -12,23 +13,23 @@ export function describeSpoutOutputStatus(status = {}) {
   if (lifecycle === 'starting') {
     return {
       state: 'starting',
-      label: '啟動中',
+      label: t('output.spout.starting'),
       tone: 'warning',
-      detail: '正在啟動輸出。',
+      detail: t('output.spout.startingDetail'),
     };
   }
   if (lifecycle === 'stopping') {
     return {
       state: 'stopping',
-      label: '停止中',
+      label: t('output.spout.stopping'),
       tone: 'warning',
-      detail: '正在停止輸出。',
+      detail: t('output.spout.stoppingDetail'),
     };
   }
   if (lifecycle === 'sending') {
     return {
       state: 'sending',
-      label: '輸出中',
+      label: t('output.spout.sending'),
       tone: 'success',
       detail: status.effective?.surface?.senderName ?? 'Utawakui.Lyrics',
     };
@@ -36,14 +37,14 @@ export function describeSpoutOutputStatus(status = {}) {
   if (lifecycle === 'error') {
     return {
       state: 'error',
-      label: '錯誤',
+      label: t('output.spout.error'),
       tone: 'danger',
-      detail: status.error?.message ?? 'Spout2 輸出未啟動。',
+      detail: status.error?.message ?? t('output.spout.errorDetail'),
     };
   }
   return {
     state: 'stopped',
-    label: '未啟動',
+    label: t('output.spout.stopped'),
     tone: 'muted',
     detail: 'Utawakui.Lyrics',
   };

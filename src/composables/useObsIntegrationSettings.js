@@ -13,6 +13,7 @@ import {
   minSkipThresholdMs as SKIP_THRESHOLD_MIN_MS,
   maxSkipThresholdMs as SKIP_THRESHOLD_MAX_MS,
 } from '../../shared/obsSessionValues.json';
+import { t } from '../utils/i18n.js';
 
 const {
   defaultHost: DEFAULT_HOST,
@@ -61,11 +62,11 @@ function createSettingsOwner(obs) {
   const validation = computed(() => ({
     host: isValidObsHost(host.value.trim(), MAX_HOST_LENGTH)
       ? ''
-      : '請輸入有效的主機名稱或 IP。',
+      : t('obs.validation.host'),
     port:
       parseBoundedInteger(port.value, MIN_PORT, MAX_PORT) !== null
         ? ''
-        : `連接埠必須是 ${MIN_PORT} 到 ${MAX_PORT} 的整數。`,
+        : t('obs.validation.port', { min: MIN_PORT, max: MAX_PORT }),
     skipThresholdSeconds:
       parseBoundedInteger(
         skipThresholdSeconds.value,
@@ -73,11 +74,14 @@ function createSettingsOwner(obs) {
         SKIP_THRESHOLD_MAX_MS / 1000,
       ) !== null
         ? ''
-        : `略過門檻必須是 ${SKIP_THRESHOLD_MIN_MS / 1000} 到 ${SKIP_THRESHOLD_MAX_MS / 1000} 的整數秒。`,
+        : t('obs.validation.skipThreshold', {
+            min: SKIP_THRESHOLD_MIN_MS / 1000,
+            max: SKIP_THRESHOLD_MAX_MS / 1000,
+          }),
     password:
       password.value.length <= MAX_PASSWORD_LENGTH
         ? ''
-        : `密碼不可超過 ${MAX_PASSWORD_LENGTH} 個字元。`,
+        : t('obs.validation.password', { max: MAX_PASSWORD_LENGTH }),
   }));
   const fieldErrors = computed(() => (state.validated ? validation.value : {}));
   let settingsGeneration = 0;
@@ -118,7 +122,7 @@ function createSettingsOwner(obs) {
       return settingsGeneration === generation;
     } catch {
       if (settingsGeneration === generation) {
-        state.readError = '無法讀取 OBS 設定，請重新讀取後再修改。';
+        state.readError = t('obs.messages.readFailed');
       }
       return false;
     } finally {
@@ -177,7 +181,7 @@ function createSettingsOwner(obs) {
       state.validated = false;
       return true;
     } catch {
-      state.saveError = '無法儲存設定，請再試一次。';
+      state.saveError = t('obs.messages.saveFailed');
       return false;
     } finally {
       state.isSaving = false;
@@ -196,7 +200,7 @@ function createSettingsOwner(obs) {
     } catch {
       await obs.refreshObsStatus();
       if (!obs.state.error) {
-        state.connectionError = '無法連線。請確認 OBS 已啟動 WebSocket。';
+        state.connectionError = t('obs.messages.connectFailed');
       }
       return false;
     } finally {
@@ -218,7 +222,7 @@ function createSettingsOwner(obs) {
       password.value = '';
       return true;
     } catch {
-      state.passwordError = '無法移除密碼，請再試一次。';
+      state.passwordError = t('obs.messages.removePasswordFailed');
       return false;
     } finally {
       state.isSaving = false;

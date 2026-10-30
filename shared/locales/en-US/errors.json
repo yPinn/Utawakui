@@ -155,6 +155,10 @@
     "title": "Could not save the arrangement display preference",
     "message": "The arrangement display preference cannot be saved right now. Try again later."
   },
+  "OUTPUT_WINDOW_OPEN_FAILED": {
+    "title": "Output window not opened",
+    "message": "Make sure the output service is running, then try opening the window again."
+  },
   "RELEASE_METADATA_REFRESH_FAILED": {
     "title": "Release information not updated",
     "message": "Release information can't be updated right now. Try again later."

@@ -1,9 +1,9 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import gateRegistry from '../../../shared/featureGates.json';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function read(relativeUrl) {
-  return readFileSync(new URL(relativeUrl, import.meta.url), 'utf8');
+  return readCatalogSource(new URL(relativeUrl, import.meta.url));
 }
 
 const sessionExportModal = read('./ObsSessionExportModal.vue');

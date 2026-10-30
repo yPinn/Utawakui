@@ -1,8 +1,9 @@
+import { t } from './i18n.js';
 const UNAVAILABLE_DETAILS = Object.freeze({
-  renderer_loading: '應用程式重新載入中，請稍候。',
-  renderer_crashed: '無法取得播放內容，請重新啟動應用程式。',
-  renderer_destroyed: '無法取得播放內容，請重新啟動應用程式。',
-  renderer_not_connected: '已啟動，正在等待播放內容。',
+  renderer_loading: t('output.status.rendererLoading'),
+  renderer_crashed: t('output.status.rendererCrashed'),
+  renderer_destroyed: t('output.status.rendererCrashed'),
+  renderer_not_connected: t('output.status.rendererNotConnected'),
 });
 
 function clientCount(status) {
@@ -25,9 +26,9 @@ export function describeOutputRuntimeStatus(status = {}) {
   if (status.running !== true) {
     return {
       state: 'stopped',
-      label: '服務已停止',
+      label: t('output.status.stopped'),
       tone: 'muted',
-      detail: '按「啟動」開始輸出。',
+      detail: t('output.status.stoppedDetail'),
     };
   }
 
@@ -37,18 +38,19 @@ export function describeOutputRuntimeStatus(status = {}) {
   if (synchronization === 'unavailable') {
     return {
       state: 'source-unavailable',
-      label: '無法取得播放內容',
+      label: t('output.status.unavailable'),
       tone: 'danger',
-      detail: UNAVAILABLE_DETAILS[reason] ?? '目前無法取得播放內容。',
+      detail:
+        UNAVAILABLE_DETAILS[reason] ?? t('output.status.unavailableDetail'),
     };
   }
 
   if (synchronization === 'syncing') {
     return {
       state: 'source-syncing',
-      label: '同步中',
+      label: t('output.status.syncing'),
       tone: 'warning',
-      detail: '正在讀取播放內容。',
+      detail: t('output.status.syncingDetail'),
     };
   }
 
@@ -57,32 +59,32 @@ export function describeOutputRuntimeStatus(status = {}) {
     if (clients > 0) {
       return {
         state: 'client-connected',
-        label: 'Browser Source 已連線',
+        label: t('output.status.clientConnected'),
         tone: 'success',
-        detail: `${clients} 個 Browser Source 已連線。`,
+        detail: t('output.status.clientsDetail', { count: clients }, clients),
       };
     }
     return {
       state: 'source-ready',
-      label: '等待連線',
+      label: t('output.status.waiting'),
       tone: 'accent',
-      detail: '到「工作台」複製網址，或直接拖進直播軟體。',
+      detail: t('output.status.waitingDetail'),
     };
   }
 
   if (clients > 0) {
     return {
       state: 'client-connected',
-      label: 'Browser Source 已連線',
+      label: t('output.status.clientConnected'),
       tone: 'success',
-      detail: `${clients} 個 Browser Source 已連線。`,
+      detail: t('output.status.clientsDetail', { count: clients }, clients),
     };
   }
 
   return {
     state: 'service-running',
-    label: '已啟動',
+    label: t('output.status.running'),
     tone: 'accent',
-    detail: '等待 Browser Source 連線。',
+    detail: t('output.status.runningDetail'),
   };
 }

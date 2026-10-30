@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../utils/catalogSourceText.js';
 
 const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -17,8 +18,11 @@ const runtimeStatusSource = readSource(
   '../components/output/ObsOutputRuntimeStatus.vue',
 );
 const gallerySource = readSource('../components/output/ObsTemplateGallery.vue');
-const settingsSource = readSource(
-  '../components/settings/OutputRuntimeSettingsBlock.vue',
+const settingsSource = readCatalogSource(
+  new URL(
+    '../components/settings/OutputRuntimeSettingsBlock.vue',
+    import.meta.url,
+  ),
 );
 const tokenSource = readSource('./tokens.css');
 const outputFeaturePath = new URL('./features/output.css', import.meta.url);

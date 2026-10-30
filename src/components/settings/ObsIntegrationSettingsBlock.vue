@@ -18,6 +18,7 @@ import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import obsConnectionValues from '../../../shared/obsConnectionValues.json';
 import obsSessionValues from '../../../shared/obsSessionValues.json';
+import { t } from '../../utils/i18n.js';
 
 const MAX_PASSWORD_LENGTH = obsConnectionValues.maxPasswordLength;
 const DEFAULT_HOST = obsConnectionValues.defaultHost;
@@ -63,15 +64,6 @@ const emit = defineEmits([
   'exportChapters',
 ]);
 
-const LIFECYCLE_LABELS = Object.freeze({
-  disabled: '未啟用',
-  disconnected: '未連線',
-  connecting: '連線中',
-  authenticating: '驗證中',
-  ready: '已連線',
-  degraded: '連線異常',
-  error: '連線失敗',
-});
 const LIFECYCLE_TONES = Object.freeze({
   disabled: 'muted',
   disconnected: 'muted',
@@ -93,8 +85,10 @@ const lifecycle = computed(
 );
 const statusLabel = computed(() =>
   props.status.statusReadError
-    ? '無法讀取'
-    : (LIFECYCLE_LABELS[lifecycle.value] ?? lifecycle.value),
+    ? t('obs.unreadable')
+    : LIFECYCLE_TONES[lifecycle.value]
+      ? t(`obs.lifecycle.${lifecycle.value}`)
+      : lifecycle.value,
 );
 const statusTone = computed(() =>
   props.status.statusReadError
@@ -111,15 +105,14 @@ const canRetry = computed(
 
 const outputSummary = computed(() => {
   if (!CONNECTED_LIFECYCLES.includes(lifecycle.value)) {
-    return '連線後顯示直播與錄影狀態';
+    return t('obs.summaryIdle');
   }
   const streaming = props.status?.observed?.streaming;
   const recording = props.status?.observed?.recording;
-  const parts = [
-    streaming?.active ? '直播中' : '未直播',
-    recording?.active ? '錄影中' : '未錄影',
-  ];
-  return parts.join('・');
+  return t('obs.summary', {
+    streaming: t(streaming?.active ? 'obs.streaming' : 'obs.notStreaming'),
+    recording: t(recording?.active ? 'obs.recording' : 'obs.notRecording'),
+  });
 });
 
 const fieldRefs = {};
@@ -163,11 +156,11 @@ watch(
   <div class="obs-integration-settings-block">
     <SettingsDocumentItem
       :icon="Video"
-      title="OBS 連線狀態"
+      :title="t('obs.title')"
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
-      guidance="讀取直播／錄影與時間標記，不變更場景。"
+      :guidance="t('obs.guidance')"
       variant="nested"
     >
       <template #actions>
@@ -176,10 +169,12 @@ watch(
           id="obs-integration-enabled"
           :icon="isEnabled ? Power : Play"
           :variant="isEnabled ? 'secondary' : 'accent'"
-          :aria-label="isEnabled ? '停止 OBS 連線' : '連線至 OBS'"
+          :aria-label="
+            t(isEnabled ? 'obs.disconnectLabel' : 'obs.connectLabel')
+          "
           :disabled="isSaving || isLoading || Boolean(readError)"
           @click="emit('save', { enabled: !isEnabled })"
-          >{{ isEnabled ? '停止' : '連線' }}</UiButton
+          >{{ t(isEnabled ? 'obs.disconnect' : 'obs.connect') }}</UiButton
         >
         <UiButton
           v-if="canRetry"
@@ -187,7 +182,7 @@ watch(
           variant="accent"
           :disabled="isSaving || isLoading"
           @click="emit('retryConnect')"
-          >重試連線</UiButton
+          >{{ t('obs.retry') }}</UiButton
         >
       </template>
       <template
@@ -207,7 +202,7 @@ watch(
           v-if="status.statusReadError"
           variant="ghost"
           @click="emit('refreshStatus')"
-          >重新讀取 OBS 狀態</UiButton
+          >{{ t('obs.reloadStatus') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>
@@ -218,21 +213,21 @@ watch(
       variant="ghost"
       :loading="isLoading"
       @click="emit('refreshSettings')"
-      >重新讀取 OBS 設定</UiButton
+      >{{ t('obs.reloadSettings') }}</UiButton
     >
 
     <div
       v-if="(!featureEnabled || !isEnabled) && hasStoredPassword"
       class="obs-integration-settings-block__stored-credential"
     >
-      <span>已儲存 OBS 密碼</span>
+      <span>{{ t('obs.passwordSaved') }}</span>
       <UiButton
         variant="ghost"
         :disabled="isSaving"
         intent="danger"
         @click="emit('clearPassword')"
       >
-        移除密碼
+        {{ t('obs.removePassword') }}
       </UiButton>
     </div>
 
@@ -247,7 +242,7 @@ watch(
       v-if="featureEnabled"
       v-model:open="isConnectionSettingsOpen"
       class="settings-section__disclosure"
-      label="連線與場次紀錄設定"
+      :label="t('obs.settings')"
     >
       <div class="obs-integration-settings-block__form">
         <div class="obs-integration-settings-block__connection">
@@ -260,7 +255,7 @@ watch(
             "
             :error="fieldErrors.host"
             class="obs-integration-settings-block__host"
-            label="主機"
+            :label="t('obs.host')"
             :model-value="host"
             :placeholder="DEFAULT_HOST"
             :disabled="isSaving || isLoading || Boolean(readError)"
@@ -275,7 +270,7 @@ watch(
             "
             :error="fieldErrors.port"
             class="obs-integration-settings-block__port"
-            label="連接埠"
+            :label="t('obs.port')"
             :model-value="port"
             :placeholder="DEFAULT_PORT"
             :disabled="isSaving || isLoading || Boolean(readError)"
@@ -293,10 +288,10 @@ watch(
             "
             :error="fieldErrors.password"
             class="obs-integration-settings-block__password"
-            label="密碼"
+            :label="t('obs.password')"
             type="password"
             :model-value="password"
-            :placeholder="hasStoredPassword ? '已設定；留空不變更' : ''"
+            :placeholder="hasStoredPassword ? t('obs.passwordPlaceholder') : ''"
             :maxlength="MAX_PASSWORD_LENGTH"
             autocomplete="off"
             :disabled="isSaving || isLoading || Boolean(readError)"
@@ -306,7 +301,7 @@ watch(
               <UiIconButton
                 v-if="hasStoredPassword && isEnabled"
                 :icon="Trash2"
-                label="移除密碼"
+                :label="t('obs.removePassword')"
                 variant="ghost"
                 :disabled="isSaving || isLoading || Boolean(readError)"
                 intent="danger"
@@ -328,11 +323,11 @@ watch(
             }
           "
           :error="fieldErrors.skipThresholdSeconds"
-          label="場次紀錄門檻（秒）"
+          :label="t('obs.skipThreshold')"
           :model-value="skipThresholdSeconds"
           placeholder="10"
           class="obs-integration-settings-block__threshold"
-          hint="未滿門檻就切歌不記錄；0 表示不篩選。"
+          :hint="t('obs.skipThresholdHint')"
           :disabled="isSaving || isLoading || Boolean(readError)"
           @update:model-value="emit('update:skipThresholdSeconds', $event)"
         />
@@ -348,7 +343,13 @@ watch(
             @click="emit('save', { enabled: true })"
           >
             {{
-              !isEnabled ? '儲存並連線' : canRetry ? '儲存並重連' : '儲存設定'
+              t(
+                !isEnabled
+                  ? 'obs.saveAndConnect'
+                  : canRetry
+                    ? 'obs.saveAndReconnect'
+                    : 'obs.save',
+              )
             }}
           </UiButton>
         </div>
@@ -356,14 +357,14 @@ watch(
     </UiDisclosure>
 
     <SettingsDocumentItem
-      title="演出待唱側欄"
-      guidance="連線後顯示演出待唱，可切回一般播放；兩份佇列獨立，不會自動播放。"
+      :title="t('obs.dock.title')"
+      :guidance="t('obs.dock.guidance')"
       variant="nested"
     >
       <template #actions>
         <UiCheckbox
           id="obs-auto-arrangement-dock"
-          label="連線後自動顯示"
+          :label="t('obs.dock.auto')"
           :model-value="dockPreference.value.value"
           :disabled="dockPreference.busy.value || dockPreference.reading.value"
           :error="dockPreference.error.value"
@@ -371,21 +372,21 @@ watch(
         />
       </template>
       <template v-if="dockPreference.readError.value" #feedback>
-        <UiButton variant="ghost" @click="dockPreference.refresh"
-          >重新讀取顯示偏好</UiButton
-        >
+        <UiButton variant="ghost" @click="dockPreference.refresh">{{
+          t('obs.dock.reload')
+        }}</UiButton>
       </template>
     </SettingsDocumentItem>
     <SettingsDocumentItem
       v-if="featureEnabled"
-      title="場次時間標記"
-      guidance="匯出直播或錄影的曲目時間，可用於影片章節。"
+      :title="t('obs.markers.title')"
+      :guidance="t('obs.markers.guidance')"
       variant="nested"
     >
       <template #actions>
         <UiIconButton
           :icon="Download"
-          label="匯出時間標記"
+          :label="t('obs.markers.export')"
           @click="emit('exportChapters')"
         />
       </template>

@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue';
 import { useAppDiagnostics } from '../useAppDiagnostics.js';
+import { t } from '../../utils/i18n.js';
 
 const FRAME_RATE_PROFILES = new Set(['reduced', 'standard']);
 
@@ -53,7 +54,7 @@ function setFailure(error, operation, code, message) {
     source: 'spout-output',
     operation,
     code,
-    title: 'Spout2 輸出未完成',
+    title: t('output.spout.failedTitle'),
     message,
     diagnosticMessage: `Spout output ${operation} failed`,
   });
@@ -76,7 +77,7 @@ export function useSpoutOutput() {
         error,
         'refresh',
         'SPOUT_OUTPUT_STATUS_FAILED',
-        '無法讀取 Spout2 輸出狀態。',
+        t('output.spout.readFailed'),
       );
       return false;
     } finally {
@@ -98,7 +99,7 @@ export function useSpoutOutput() {
         error,
         'start',
         'SPOUT_OUTPUT_START_FAILED',
-        'Spout2 輸出未啟動，請再試一次。',
+        t('output.spout.startFailed'),
       );
       return false;
     } finally {
@@ -120,7 +121,7 @@ export function useSpoutOutput() {
         error,
         'stop',
         'SPOUT_OUTPUT_STOP_FAILED',
-        'Spout2 輸出未停止，請再試一次。',
+        t('output.spout.stopFailed'),
       );
       return false;
     } finally {
@@ -151,7 +152,7 @@ export function useSpoutOutput() {
         error,
         'set-frame-rate-profile',
         'SPOUT_OUTPUT_CONFIGURE_FAILED',
-        'Spout2 幀率未更新。',
+        t('output.spout.fpsFailed'),
       );
       return false;
     } finally {

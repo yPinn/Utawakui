@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Self-contained like CaptureDeviceModal.vue/FeedbackReportModal.vue: this
 // modal owns its composable directly rather than SettingsView.vue passing
 // every field down as props, since useObsSessionExport() is a module
@@ -20,9 +21,16 @@ import UiTextarea from '../ui/UiTextarea.vue';
 const exportState = useObsSessionExport();
 
 const SOURCE_ITEMS = Object.freeze([
-  { id: 'stream', label: '直播' },
-  { id: 'record', label: '錄影' },
+  { id: 'stream', label: t('obs.export.stream') },
+  { id: 'record', label: t('obs.export.record') },
 ]);
+
+const missingTimestampCount = computed(
+  () =>
+    exportState.session.value?.entries?.filter(
+      (entry) => !entry[exportState.source.value],
+    ).length ?? 0,
+);
 
 const hasSession = computed(
   () => (exportState.session.value?.entries?.length ?? 0) > 0,
@@ -56,7 +64,7 @@ watch(
 <template>
   <UiModal
     :open="exportState.isOpen.value"
-    title="匯出場次時間軸"
+    :title="t('obs.export.title')"
     size="notice"
     max-block-size="small"
     @close="exportState.close()"
@@ -64,17 +72,21 @@ watch(
     <template #header-actions>
       <UiIconButton
         :icon="RefreshCw"
-        label="重新讀取場次"
+        :label="t('obs.export.reload')"
         :loading="exportState.isLoading.value"
         @click="exportState.reload()"
       />
       <UiButton
         variant="accent"
-        aria-label="複製章節"
+        :aria-label="t('obs.export.copyLabel')"
         :disabled="!exportState.canCopy.value"
         @click="exportState.copyChapters()"
         >{{
-          exportState.copyState.value.tone === 'success' ? '已複製' : '複製'
+          t(
+            exportState.copyState.value.tone === 'success'
+              ? 'obs.export.copied'
+              : 'obs.export.copy',
+          )
         }}</UiButton
       >
     </template>
@@ -93,7 +105,7 @@ watch(
         v-if="exportState.isLoading.value"
         class="obs-session-export-modal__status"
       >
-        正在讀取場次紀錄…
+        {{ t('obs.export.loading') }}
       </p>
 
       <UiNotice
@@ -104,48 +116,41 @@ watch(
       />
 
       <p v-else-if="!hasSession" class="obs-session-export-modal__status">
-        沒有可匯出的紀錄。連線 OBS
-        並開始直播或錄影後，確認開始演出的曲目與標記會自動記錄。
+        {{ t('obs.export.empty') }}
       </p>
 
       <template v-else>
-        <UiHint
-          >場次：{{
-            exportState.session.value.name ||
-            exportState.session.value.id ||
-            exportState.session.value.sessionId
-          }}</UiHint
-        >
-        <UiHint
-          v-if="
-            exportState.session.value.entries.some(
-              (entry) => !entry[exportState.source.value],
-            )
-          "
-          tone="warning"
-          >{{
-            exportState.session.value.entries.filter(
-              (entry) => !entry[exportState.source.value],
-            ).length
-          }}
-          筆缺少所選來源的時間戳，未列入章節；原始場次紀錄仍保留。</UiHint
-        >
+        <UiHint>{{
+          t('obs.export.session', {
+            name:
+              exportState.session.value.name ||
+              exportState.session.value.id ||
+              exportState.session.value.sessionId,
+          })
+        }}</UiHint>
+        <UiHint v-if="missingTimestampCount" tone="warning">{{
+          t(
+            'obs.export.missingTimestamps',
+            { count: missingTimestampCount },
+            missingTimestampCount,
+          )
+        }}</UiHint>
         <div class="obs-session-export-modal__controls">
           <div class="obs-session-export-modal__source">
-            <span class="obs-session-export-modal__label" aria-hidden="true"
-              >時間來源</span
-            >
+            <span class="obs-session-export-modal__label" aria-hidden="true">{{
+              t('obs.export.timeSource')
+            }}</span>
             <UiSegmentedControl
               :model-value="exportState.source.value"
               :items="SOURCE_ITEMS"
-              aria-label="時間來源"
+              :aria-label="t('obs.export.timeSource')"
               @update:model-value="exportState.source.value = $event"
             />
           </div>
           <UiTextField
             id="obs-session-export-offset"
             ref="offsetField"
-            label="偏移量（秒）"
+            :label="t('obs.export.offset')"
             :model-value="exportState.offsetSeconds.value"
             placeholder="0"
             inputmode="numeric"
@@ -154,18 +159,24 @@ watch(
             @update:model-value="exportState.offsetSeconds.value = $event"
           />
         </div>
-        <UiHint id="obs-session-export-offset-hint"
-          >用於校正 VOD 開頭，會從所有時間戳扣除。</UiHint
-        >
+        <UiHint id="obs-session-export-offset-hint">{{
+          t('obs.export.offsetHint')
+        }}</UiHint>
 
         <UiDisclosure
           v-if="
             !exportState.offsetError.value &&
             exportState.result.value.issues.length
           "
-          :label="`章節有 ${exportState.result.value.issues.length} 項需確認`"
+          :label="
+            t(
+              'obs.export.issues',
+              { count: exportState.result.value.issues.length },
+              exportState.result.value.issues.length,
+            )
+          "
         >
-          <UiHint tone="warning">時間戳未自動調整，請確認以下問題。</UiHint>
+          <UiHint tone="warning">{{ t('obs.export.issuesHint') }}</UiHint>
           <ul class="obs-session-export-modal__issues">
             <li
               v-for="(issue, index) in exportState.result.value.issues"
@@ -179,13 +190,13 @@ watch(
         <UiTextarea
           v-if="!exportState.offsetError.value"
           id="obs-session-export-text"
-          label="YouTube 章節"
+          :label="t('obs.export.chapters')"
           :model-value="exportState.result.value.text"
           :rows="7"
           readonly
-          hint="可選取文字後按 Ctrl+C 手動複製。"
+          :hint="t('obs.export.chaptersHint')"
         />
-        <UiHint v-else>輸入有效偏移量後即可預覽及複製章節。</UiHint>
+        <UiHint v-else>{{ t('obs.export.offsetRequired') }}</UiHint>
       </template>
     </div>
   </UiModal>

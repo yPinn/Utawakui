@@ -22,8 +22,6 @@ function registerOutputWindowHandlers({
         },
         publicError: {
           code: 'OUTPUT_WINDOW_OPEN_FAILED',
-          title: '輸出視窗未開啟',
-          message: '請確認輸出服務已啟動，再重試開啟視窗。',
           context: { retryable: true },
         },
       },

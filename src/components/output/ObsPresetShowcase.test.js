@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 import {
   readObsTemplateMockupSource,
   readObsTemplatePreviewSource,
@@ -67,11 +68,8 @@ const outputColorFieldSource = readFileSync(
   fileURLToPath(new URL('./ObsOutputColorField.vue', import.meta.url)),
   'utf8',
 );
-const settingsSource = readFileSync(
-  fileURLToPath(
-    new URL('../settings/OutputRuntimeSettingsBlock.vue', import.meta.url),
-  ),
-  'utf8',
+const settingsSource = readCatalogSource(
+  new URL('../settings/OutputRuntimeSettingsBlock.vue', import.meta.url),
 );
 const settingsViewSource = readFileSync(
   fileURLToPath(new URL('../../views/SettingsView.vue', import.meta.url)),
