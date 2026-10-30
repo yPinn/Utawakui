@@ -1,5 +1,7 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { artistSearchTexts } from '../../utils/artistPage.js';
 import { rangeTrackIds } from '../../utils/musicAnalysisSelection.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -31,6 +33,7 @@ const emit = defineEmits([
   'setBatchSelection',
   'clearBatch',
 ]);
+const { state: artistIndexState } = useArtistIndex();
 const query = shallowRef('');
 const lastBatchAnchorId = shallowRef('');
 
@@ -59,9 +62,12 @@ const visibleTracks = computed(() => {
   const normalized = query.value.trim().toLocaleLowerCase();
   if (!normalized) return props.tracks;
   return props.tracks.filter((track) =>
-    `${track.title ?? ''} ${track.artist ?? ''}`
-      .toLocaleLowerCase()
-      .includes(normalized),
+    [track.title, ...artistSearchTexts(track, artistIndexState.index)].some(
+      (value) =>
+        String(value ?? '')
+          .toLocaleLowerCase()
+          .includes(normalized),
+    ),
   );
 });
 const visibleTrackIds = computed(() => visibleTracks.value.map(({ id }) => id));

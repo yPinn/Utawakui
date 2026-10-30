@@ -26,6 +26,9 @@ vi.mock('../../composables/useBgmStandbyPlan.js', () => ({
 vi.mock('../../composables/useLibrary.js', () => ({
   useLibrary: () => fixture.library,
 }));
+vi.mock('../../composables/useArtistIndex.js', () => ({
+  useArtistIndex: () => ({ state: { index: null } }),
+}));
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => fixture.view,
 }));

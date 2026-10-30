@@ -8,18 +8,21 @@ import {
   Ellipsis,
 } from '../../icons/index.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
 import { useAppRightDock } from '../../composables/useAppRightDock.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
+import { artistSearchTexts } from '../../utils/artistPage.js';
 import { playlistDisplayName } from '../../utils/playlistMenu.js';
 import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import PerformanceSessionCurrent from './PerformanceSessionCurrent.vue';
+import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import PerformanceSessionBoard from './PerformanceSessionBoard.vue';
@@ -28,7 +31,6 @@ import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
-import UiTrackRow from '../ui/UiTrackRow.vue';
 import PerformanceSessionManualItemForm from './PerformanceSessionManualItemForm.vue';
 import PerformanceSessionPlanEditor from './PerformanceSessionPlanEditor.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
@@ -40,6 +42,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 const { confirm: confirmAction } = useAppConfirmation();
+const { state: artistIndexState } = useArtistIndex();
 const {
   state,
   selectedItem,
@@ -90,7 +93,11 @@ const filteredTracks = computed(() => {
   if (!query) return [];
   return props.tracks
     .filter((track) =>
-      [track.title, track.artist, track.id].some((value) =>
+      [
+        track.title,
+        ...artistSearchTexts(track, artistIndexState.index),
+        track.id,
+      ].some((value) =>
         String(value ?? '')
           .toLocaleLowerCase()
           .includes(query),
@@ -437,7 +444,7 @@ async function selectWorkspaceAction(action) {
               content-class="performance-session-workspace__search-results"
               aria-label="曲庫搜尋結果"
             >
-              <UiTrackRow
+              <TrackIdentityRow
                 v-for="track in filteredTracks"
                 :key="track.id"
                 :track="track"

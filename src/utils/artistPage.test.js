@@ -7,6 +7,8 @@ import {
   isArtistSourceId,
   listSidebarArtists,
   orderReferenceItems,
+  trackArtistText,
+  withMergedArtist,
 } from './artistPage.js';
 import { sortPlaylistEntries } from './playlistSort.js';
 import { normalizeTrackCollectionSort } from '../components/track/trackCollectionProfiles.js';
@@ -205,6 +207,48 @@ describe('artistCreditLinks', () => {
     ).toBe(null);
     expect(artistCreditLinks({ id: 'y1', artist: '' }, artistIndex)).toBe(null);
     expect(artistCreditLinks({ id: 'y1', artist: 'YOASOBI' }, null)).toBe(null);
+  });
+});
+
+describe('trackArtistText', () => {
+  it('joins merged artist names and falls back to the source credit', () => {
+    const artistIndex = {
+      artists: [
+        { id: 'artist-bts', name: 'BTS' },
+        { id: 'artist-halsey', name: 'Halsey' },
+      ],
+      trackArtistIds: { boy: ['artist-bts', 'artist-halsey'] },
+    };
+
+    expect(
+      trackArtistText(
+        { id: 'boy', artist: 'BTS (방탄소년단) feat. Halsey' },
+        artistIndex,
+      ),
+    ).toBe('BTS, Halsey');
+    expect(trackArtistText({ id: 'raw', artist: 'Aimer' }, artistIndex)).toBe(
+      'Aimer',
+    );
+    expect(trackArtistText({ id: 'empty' }, artistIndex)).toBe('');
+  });
+});
+
+describe('withMergedArtist', () => {
+  it('copies only tracks whose shown artist changes', () => {
+    const artistIndex = {
+      artists: [{ id: 'artist-bts', name: 'BTS' }],
+      trackArtistIds: { merged: ['artist-bts'], same: ['artist-bts'] },
+    };
+    const merged = { id: 'merged', title: 'Tear', artist: 'BTS (방탄소년단)' };
+    const same = { id: 'same', title: 'Dope', artist: 'BTS' };
+
+    expect(withMergedArtist(merged, artistIndex)).toEqual({
+      ...merged,
+      artist: 'BTS',
+    });
+    expect(merged.artist).toBe('BTS (방탄소년단)');
+    expect(withMergedArtist(same, artistIndex)).toBe(same);
+    expect(withMergedArtist(null, artistIndex)).toBe(null);
   });
 });
 

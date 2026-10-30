@@ -1,6 +1,8 @@
 <script setup>
 import { computed, useId, useTemplateRef } from 'vue';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import { albumArtistName } from '../../utils/artistCollections.js';
 import { formatLongDuration } from '../../utils/format.js';
 import { releaseYearFromDate } from '../../utils/releasePresentation.js';
 import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
@@ -24,10 +26,14 @@ const props = defineProps({
   listLabel: { type: String, default: '曲目' },
 });
 
+const { state: artistIndexState } = useArtistIndex();
 const titleId = useId();
+// Library albums show the merged artist; unindexed import tracks keep the raw credit.
 const artist = computed(() =>
   props.entityKind === 'album'
-    ? deriveAlbumSummary(props.tracks).artist || ''
+    ? albumArtistName(props.tracks, artistIndexState.index) ||
+      deriveAlbumSummary(props.tracks).artist ||
+      ''
     : '',
 );
 const fields = computed(() => {

@@ -1,8 +1,8 @@
 <script setup>
+import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
-import UiTrackRow from '../ui/UiTrackRow.vue';
 
 defineProps({
   searchResults: { type: Array, default: () => [] },
@@ -41,7 +41,7 @@ const emit = defineEmits(['update:searchQuery', 'select']);
       tabindex="0"
     >
       <ul class="bgm-track-picker__results">
-        <UiTrackRow
+        <TrackIdentityRow
           v-for="track in searchResults"
           :key="track.id"
           :track="track"

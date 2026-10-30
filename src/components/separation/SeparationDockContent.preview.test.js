@@ -16,7 +16,7 @@ vi.mock('../../composables/useLibrary.js', () => ({
   useLibrary: () => ({ tracksById: shallowRef(new Map()) }),
 }));
 vi.mock('../../composables/useArtistIndex.js', () => ({
-  useArtistIndex: () => ({ ensureLoaded: vi.fn() }),
+  useArtistIndex: () => ({ ensureLoaded: vi.fn(), state: { index: null } }),
 }));
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => ({ openSettings: vi.fn() }),

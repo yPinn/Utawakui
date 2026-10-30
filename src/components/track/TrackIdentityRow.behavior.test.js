@@ -6,6 +6,11 @@ const navigationHarness = vi.hoisted(() => ({
   album: null,
   calls: [],
 }));
+const artistIndexHarness = vi.hoisted(() => ({ index: null }));
+
+vi.mock('../../composables/useArtistIndex.js', () => ({
+  useArtistIndex: () => ({ state: artistIndexHarness }),
+}));
 
 vi.mock('../../composables/useAlbumNavigation.js', () => ({
   useAlbumNavigation: () => ({
@@ -21,6 +26,7 @@ vi.mock('../ui/UiTrackRow.vue', () => ({
     inheritAttrs: false,
     props: {
       track: { type: Object, required: true },
+      artist: { type: String, default: undefined },
       titleClickable: { type: Boolean, default: false },
       titleAriaLabel: { type: String, default: undefined },
     },
@@ -41,7 +47,11 @@ vi.mock('../ui/UiTrackRow.vue', () => ({
             : h('span', { class: 'plain-title' }, props.track.title),
           slots.artist
             ? slots.artist()
-            : h('span', { class: 'plain-artist' }, props.track.artist),
+            : h(
+                'span',
+                { class: 'plain-artist' },
+                props.artist ?? props.track.artist,
+              ),
           slots.trail?.(),
           h(
             'button',
@@ -106,6 +116,7 @@ function findByClass(root, className) {
 beforeEach(() => {
   navigationHarness.album = { id: 'album-1', name: 'THE BOOK' };
   navigationHarness.calls.length = 0;
+  artistIndexHarness.index = null;
 });
 
 describe('TrackIdentityRow navigation recipe', () => {
@@ -116,6 +127,20 @@ describe('TrackIdentityRow navigation recipe', () => {
     expect(findByClass(root, 'artist-link')).toHaveLength(0);
     expect(findByClass(root, 'plain-title')).toHaveLength(1);
     expect(findByClass(root, 'plain-artist')).toHaveLength(1);
+    app.unmount();
+  });
+
+  it('shows the merged artist name on rows without artist links', () => {
+    artistIndexHarness.index = {
+      artists: [{ id: 'artist-yoasobi', name: 'YOASOBI' }],
+      trackArtistIds: { 'track-1': ['artist-yoasobi'] },
+    };
+    const { app, root } = mountRow({
+      navigation: 'none',
+      track: { id: 'track-1', title: '群青', artist: 'Yoasobi Official' },
+    });
+
+    expect(textContent(findByClass(root, 'plain-artist')[0])).toBe('YOASOBI');
     app.unmount();
   });
 

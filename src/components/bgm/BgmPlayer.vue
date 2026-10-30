@@ -10,7 +10,9 @@ import {
 import { ChevronDown, ChevronUp } from '../../icons/index.js';
 import { useBgmSession } from '../../composables/useBgmSession.js';
 import { useBgmStandbyPlan } from '../../composables/useBgmStandbyPlan.js';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useLibrary } from '../../composables/useLibrary.js';
+import { artistSearchTexts } from '../../utils/artistPage.js';
 import {
   projectBgmOperationalStatus,
   projectBgmPrimaryAction,
@@ -57,6 +59,7 @@ const {
 } = useBgmSession();
 const { state: planState, setTrack } = useBgmStandbyPlan();
 const { state: library } = useLibrary();
+const { state: artistIndexState } = useArtistIndex();
 const sourcePlaybackAction = computed(() =>
   props.variant === 'dock'
     ? projectBgmPrimaryAction({
@@ -116,10 +119,11 @@ const searchResults = computed(() => {
     .filter(
       (track) =>
         track.id !== planState.plan.currentTrackId &&
-        [track.title, track.artist].some((value) =>
-          String(value ?? '')
-            .toLocaleLowerCase()
-            .includes(query),
+        [track.title, ...artistSearchTexts(track, artistIndexState.index)].some(
+          (value) =>
+            String(value ?? '')
+              .toLocaleLowerCase()
+              .includes(query),
         ),
     )
     .slice(0, 8);

@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { trackArtistText } from '../../utils/artistPage.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import TrackArtistCredits from './TrackArtistCredits.vue';
 
@@ -20,6 +22,7 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate']);
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const { state: artistIndexState } = useArtistIndex();
 
 const albumNavigationEnabled = computed(() =>
   ['album', 'identity'].includes(props.navigation),
@@ -31,6 +34,10 @@ const albumDestination = computed(() =>
   albumNavigationEnabled.value ? albumForTrack(props.track) : null,
 );
 const displayTitle = computed(() => props.title ?? props.track?.title ?? '');
+// Rows without artist links still show the merged artist name (ADR 0022).
+const displayArtist = computed(
+  () => props.artist ?? trackArtistText(props.track, artistIndexState.index),
+);
 
 function navigateToAlbum() {
   const album = albumDestination.value;
@@ -49,7 +56,7 @@ function announceArtistNavigation(artistId) {
     v-bind="$attrs"
     :track="track"
     :title="title"
-    :artist="artist"
+    :artist="displayArtist"
     :title-clickable="Boolean(albumDestination)"
     :title-aria-label="
       albumDestination ? `前往專輯：${displayTitle}` : undefined

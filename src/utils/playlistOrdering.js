@@ -1,3 +1,4 @@
+import { albumArtistName } from './artistCollections.js';
 import { deriveAlbumSummary } from './albumSummary.js';
 import { UI_LOCALE } from './uiLocale.js';
 
@@ -7,8 +8,9 @@ import { UI_LOCALE } from './uiLocale.js';
 // then albums by derived artist ascending, newest release first within an
 // artist, album name as the final tiebreak. tracksById (a Map keyed by track id,
 // which both callers already have) is only used to derive each album's
-// artist/releaseYear via deriveAlbumSummary.
-export function orderPlaylistsForDisplay(playlists, tracksById) {
+// artist/releaseYear via deriveAlbumSummary. A loaded artistIndex (ADR 0022)
+// replaces the raw credit with the merged artist's display name.
+export function orderPlaylistsForDisplay(playlists, tracksById, artistIndex) {
   const list = Array.isArray(playlists) ? playlists : [];
   const map = tracksById instanceof Map ? tracksById : new Map();
 
@@ -23,7 +25,8 @@ export function orderPlaylistsForDisplay(playlists, tracksById) {
       const summary = deriveAlbumSummary(memberTracks);
       return {
         playlist,
-        artist: summary.artist || '',
+        artist:
+          albumArtistName(memberTracks, artistIndex) || summary.artist || '',
         releaseYear: summary.releaseYear,
       };
     });

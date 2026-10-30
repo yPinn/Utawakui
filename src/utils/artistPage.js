@@ -138,6 +138,19 @@ export function artistCreditLinks(track, artistIndex) {
   return links.every(Boolean) ? links : null;
 }
 
+// Plain-text form of artistCreditLinks, falling back to the source credit.
+export function trackArtistText(track, artistIndex) {
+  const links = artistCreditLinks(track, artistIndex);
+  return links?.map((link) => link.text).join(', ') || track?.artist || '';
+}
+
+// Track copy carrying the merged artist name; unchanged tracks keep identity.
+export function withMergedArtist(track, artistIndex) {
+  if (!track) return track;
+  const artist = trackArtistText(track, artistIndex);
+  return artist === (track.artist ?? '') ? track : { ...track, artist };
+}
+
 // Search preserves every source credit while also reaching canonical names and
 // the other credit forms grouped into the same artist entity.
 export function artistSearchTexts(track, artistIndex) {

@@ -1,5 +1,7 @@
 <script setup>
 import { computed, shallowRef, useTemplateRef } from 'vue';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { trackArtistText } from '../../utils/artistPage.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
 import TrackContextActions from '../playback/context/TrackContextActions.vue';
@@ -10,10 +12,13 @@ const props = defineProps({
   beforeNavigate: { type: Function, default: null },
 });
 const emit = defineEmits(['play']);
+const { state: artistIndexState } = useArtistIndex();
 const actions = useTemplateRef('actions');
 const menuOpen = shallowRef(false);
 const subtitle = computed(() =>
-  [props.track.artist, props.versionLabel].filter(Boolean).join(' · '),
+  [trackArtistText(props.track, artistIndexState.index), props.versionLabel]
+    .filter(Boolean)
+    .join(' · '),
 );
 </script>
 

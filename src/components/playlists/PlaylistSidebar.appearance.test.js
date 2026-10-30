@@ -316,8 +316,8 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
 
   it('orders only the reference tier by source recency, frozen under the pointer', () => {
     expect(source).toContain('sourceRecency: shownSourceRecency.value,');
-    expect(source).toContain(
-      'orderPlaylistsForDisplay(state.playlists, props.tracksById)',
+    expect(source).toMatch(
+      /orderPlaylistsForDisplay\(\s*state\.playlists,\s*props\.tracksById,\s*artistIndexState\.index,\s*\)/u,
     );
     expect(source).toContain('@pointerenter="pointerInside = true"');
     expect(source).toContain('@pointerleave="pointerInside = false"');

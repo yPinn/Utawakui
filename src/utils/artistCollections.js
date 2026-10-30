@@ -19,6 +19,13 @@ export function albumArtistId(tracks, trackArtistIds) {
   return best;
 }
 
+// Merged display name of the album's artist; empty before the index loads.
+export function albumArtistName(tracks, artistIndex) {
+  const id = albumArtistId(tracks, artistIndex?.trackArtistIds);
+  if (!id) return '';
+  return artistIndex?.artists?.find((artist) => artist.id === id)?.name ?? '';
+}
+
 export function albumsForArtist(artistId, albumEntries, trackArtistIds) {
   if (!artistId) return [];
   return (Array.isArray(albumEntries) ? albumEntries : []).filter(

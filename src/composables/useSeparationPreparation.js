@@ -8,6 +8,7 @@ import {
   DEFAULT_SEPARATION_PRESET_ID,
   SEPARATION_PRESET_OPTIONS,
 } from '../constants/separationPresets.js';
+import { useArtistIndex } from './useArtistIndex.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylistActions } from './usePlaylistActions.js';
@@ -31,6 +32,7 @@ export function useSeparationPreparation({
   playbackQueue = usePlaybackQueue(),
   playlistState = usePlaylists().state,
   tracksById = new Map(),
+  artistIndexState = useArtistIndex().state,
   resolveCollectionTracks = usePlaylistActions().resolvePlaylistTracks,
   featureGateAccess = useFeatureGateAccess(),
 } = {}) {
@@ -41,7 +43,11 @@ export function useSeparationPreparation({
 
   const sourceOptions = computed(() => {
     const { playlistItems, albumItems, albumArtistById } =
-      orderPlaylistsForDisplay(playlistState.playlists, unref(tracksById));
+      orderPlaylistsForDisplay(
+        playlistState.playlists,
+        unref(tracksById),
+        artistIndexState.index,
+      );
     const toOption = (collection) => ({
       value: `${COLLECTION_SOURCE_PREFIX}${collection.id}`,
       label: playlistDisplayName(collection),

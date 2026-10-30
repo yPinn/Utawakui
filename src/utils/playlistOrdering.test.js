@@ -35,6 +35,34 @@ describe('orderPlaylistsForDisplay', () => {
     expect(albumItems.map((a) => a.id)).toEqual(['a2', 'a1', 'a3']);
   });
 
+  it('labels and sorts albums by the merged artist name when indexed', () => {
+    const tracksById = new Map([
+      ['t1', track('t1', 'BTS (방탄소년단)')],
+      ['t2', track('t2', 'BTS')],
+      ['t3', track('t3', 'Aimer')],
+    ]);
+    const playlists = [
+      { id: 'a1', kind: 'album', name: 'Wings', trackIds: ['t1'] },
+      { id: 'a2', kind: 'album', name: 'Tear', trackIds: ['t2'] },
+      { id: 'a3', kind: 'album', name: 'Midnight Sun', trackIds: ['t3'] },
+    ];
+    const artistIndex = {
+      artists: [{ id: 'artist-bts', name: 'BTS' }],
+      trackArtistIds: { t1: ['artist-bts'], t2: ['artist-bts'] },
+    };
+    const { albumItems, albumArtistById } = orderPlaylistsForDisplay(
+      playlists,
+      tracksById,
+      artistIndex,
+    );
+    expect(albumItems.map((a) => a.id)).toEqual(['a3', 'a2', 'a1']);
+    expect([...albumArtistById]).toEqual([
+      ['a3', 'Aimer'],
+      ['a2', 'BTS'],
+      ['a1', 'BTS'],
+    ]);
+  });
+
   it('breaks a tied artist (and tied/missing year) by album name', () => {
     const tracksById = new Map([
       ['t1', track('t1', 'BTS')],

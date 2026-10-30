@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { albumArtistId, albumsForArtist } from './artistCollections.js';
+import {
+  albumArtistId,
+  albumArtistName,
+  albumsForArtist,
+} from './artistCollections.js';
 
 const trackArtistIds = {
   t1: ['artist-yoasobi'],
@@ -49,5 +53,19 @@ describe('albumsForArtist', () => {
     expect(albumsForArtist('artist-midories', entries, trackArtistIds)).toEqual(
       [],
     );
+  });
+});
+
+describe('albumArtistName', () => {
+  it('names the merged album artist and stays empty without the index', () => {
+    const tracks = [{ id: 't1' }, { id: 't2' }, { id: 't4' }];
+    const artistIndex = {
+      artists: [{ id: 'artist-yoasobi', name: 'YOASOBI' }],
+      trackArtistIds,
+    };
+
+    expect(albumArtistName(tracks, artistIndex)).toBe('YOASOBI');
+    expect(albumArtistName(tracks, null)).toBe('');
+    expect(albumArtistName([{ id: 'loose' }], artistIndex)).toBe('');
   });
 });

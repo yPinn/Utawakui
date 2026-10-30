@@ -8,9 +8,11 @@ import {
   Music,
   Music2,
 } from '../../icons/index.js';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useVirtualList } from '../../composables/useVirtualRows.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import { artistSearchTexts } from '../../utils/artistPage.js';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -26,6 +28,7 @@ const emit = defineEmits(['close']);
 
 const { state, currentTrackId, selectTrack, setTrackScope } = useLyrics();
 const { selectedPlaylist } = usePlaylists();
+const { state: artistIndexState } = useArtistIndex();
 
 const query = shallowRef('');
 
@@ -66,7 +69,12 @@ const visibleTracks = computed(() => {
   const needle = normalizedQuery.value;
   if (!needle) return state.tracks;
   return state.tracks.filter((track) =>
-    [track.title, track.artist, track.id, track.filename].some((value) =>
+    [
+      track.title,
+      ...artistSearchTexts(track, artistIndexState.index),
+      track.id,
+      track.filename,
+    ].some((value) =>
       String(value ?? '')
         .toLocaleLowerCase()
         .includes(needle),

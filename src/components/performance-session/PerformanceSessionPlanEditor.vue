@@ -1,5 +1,7 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
+import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { artistSearchTexts, trackArtistText } from '../../utils/artistPage.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -15,6 +17,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['saveDisplay', 'relink', 'close']);
+const { state: artistIndexState } = useArtistIndex();
+const linkedArtist = computed(() =>
+  trackArtistText(props.item?.linkedTrack, artistIndexState.index),
+);
 
 const displayTitle = shallowRef('');
 const displayArtist = shallowRef('');
@@ -50,16 +56,23 @@ const trackOptions = computed(() => {
       (track) =>
         !query ||
         track.id === trackId.value ||
-        [track.title, track.artist, track.id].some((value) =>
+        [
+          track.title,
+          ...artistSearchTexts(track, artistIndexState.index),
+          track.id,
+        ].some((value) =>
           String(value ?? '')
             .toLocaleLowerCase()
             .includes(query),
         ),
     )
-    .map((track) => ({
-      value: track.id,
-      label: track.artist ? `${track.title} — ${track.artist}` : track.title,
-    }));
+    .map((track) => {
+      const artist = trackArtistText(track, artistIndexState.index);
+      return {
+        value: track.id,
+        label: artist ? `${track.title} — ${artist}` : track.title,
+      };
+    });
   if (
     props.item?.trackId &&
     !props.tracks.some((track) => track.id === props.item.trackId)
@@ -183,11 +196,11 @@ function cancelEditing() {
             <dd dir="auto">{{ item.linkedTrack.title }}</dd>
           </div>
           <div
-            v-if="item.linkedTrack.artist"
+            v-if="linkedArtist"
             class="performance-session-editor__source-row"
           >
             <dt>歌手／藝人</dt>
-            <dd dir="auto">{{ item.linkedTrack.artist }}</dd>
+            <dd dir="auto">{{ linkedArtist }}</dd>
           </div>
         </dl>
       </div>
