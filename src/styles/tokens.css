@@ -789,7 +789,7 @@
     var(--ui-player-bar-height) + var(--ui-shell-content-inset-block)
   );
   --ui-notification-stack-gap: var(--ui-space-2);
-  --ui-notification-motion-offset: var(--ui-space-4);
+  --ui-notification-motion-offset: var(--ui-space-2);
   --ui-notification-swipe-dismiss-distance: 4.5rem;
   --ui-notification-swipe-intent-distance: var(--ui-space-3);
   --ui-icon-button-size-md: var(--ui-control-height);

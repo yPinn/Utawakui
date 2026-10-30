@@ -11,6 +11,11 @@ import UiNotificationHost from '../ui/UiNotificationHost.vue';
 const previewId = `notice-preview-${useId()}`;
 provide(UI_OVERLAY_HOST_KEY, `#${previewId}`);
 const width = shallowRef(RIGHT_DOCK_WIDTH_MAX);
+const placement = shallowRef('top-end');
+const PLACEMENTS = [
+  { id: 'bottom-end', label: '右下' },
+  { id: 'top-end', label: '右上' },
+];
 const items = shallowRef([]);
 const outcome = shallowRef('');
 let sequence = 0;
@@ -54,8 +59,10 @@ const examples = [
   },
 ];
 
+// One row past the host's 3-row limit, so overflow handling is visible.
 function show(example) {
   items.value = [
+    ...items.value.slice(-3),
     {
       ...example,
       id: `notice-example-${++sequence}`,
@@ -83,7 +90,20 @@ function act() {
 <template>
   <section class="demo-notification-recipe" data-notification-recipe="fixed">
     <h5>正式固定通知</h5>
-    <p>與右側區塊共用寬度，右側及播放器上方保留相同邊距。</p>
+    <p>
+      與右側區塊共用寬度並對齊其邊界；右下貼齊播放器上方，右上貼齊標題列下方。
+    </p>
+    <div class="demo-notification-recipe__controls" aria-label="固定通知位置">
+      <UiButton
+        v-for="option in PLACEMENTS"
+        :key="option.id"
+        variant="secondary"
+        :active="placement === option.id"
+        :aria-pressed="placement === option.id"
+        @click="placement = option.id"
+        >{{ option.label }}</UiButton
+      >
+    </div>
     <div class="demo-notification-recipe__controls" aria-label="固定通知寬度">
       <UiButton
         v-for="size in [RIGHT_DOCK_WIDTH_MIN, RIGHT_DOCK_WIDTH_MAX]"
@@ -118,8 +138,14 @@ function act() {
       並放開才關閉，途中可拉回取消。通知只在原框內移動，不會甩入其他操作區。
     </p>
     <div class="demo-notification-recipe__viewport" :style="stageStyle">
+      <div class="demo-notification-recipe__titlebar" aria-hidden="true">
+        標題列
+      </div>
       <div class="demo-notification-recipe__dock" aria-hidden="true">
-        右側區塊對齊範圍
+        <span class="demo-notification-recipe__dock-header">
+          右側區塊標題與分頁
+        </span>
+        <span class="demo-notification-recipe__dock-footer"> 清單底部 </span>
       </div>
       <div class="demo-notification-recipe__player" aria-hidden="true">
         播放器範圍
@@ -128,6 +154,7 @@ function act() {
       <UiNotificationHost
         :items="items"
         :inline-size="width"
+        :placement="placement"
         @dismiss="dismiss"
         @action="act"
       />
@@ -170,20 +197,45 @@ function act() {
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-canvas);
 }
+.demo-notification-recipe__titlebar {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: var(--ui-window-titlebar-block-size);
+  display: grid;
+  place-items: center;
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+}
 .demo-notification-recipe__dock {
   position: absolute;
   inset-inline-end: var(--ui-shell-edge-inset-inline);
-  inset-block-start: var(--ui-shell-content-inset-block);
+  inset-block-start: calc(
+    var(--ui-window-titlebar-block-size) + var(--ui-shell-content-inset-block)
+  );
   inset-block-end: var(--ui-notification-block-end-offset);
   inline-size: min(
     var(--demo-notification-width),
     calc(100% - 2 * var(--ui-shell-edge-inset-inline))
   );
-  padding: var(--ui-space-2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   border: var(--ui-border-width) dashed var(--ui-color-border-strong);
   border-radius: var(--ui-radius-lg);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
+}
+.demo-notification-recipe__dock-header,
+.demo-notification-recipe__dock-footer {
+  padding: var(--ui-space-2);
+}
+.demo-notification-recipe__dock-header {
+  border-block-end: var(--ui-border-width) dashed var(--ui-color-border);
+}
+.demo-notification-recipe__dock-footer {
+  border-block-start: var(--ui-border-width) dashed var(--ui-color-border);
 }
 .demo-notification-recipe__player {
   position: absolute;

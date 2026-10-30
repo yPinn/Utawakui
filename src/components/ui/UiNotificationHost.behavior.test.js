@@ -856,15 +856,22 @@ describe('UiNotificationHost', () => {
     expect(dismiss).toHaveBeenCalledOnce();
     app.unmount();
   });
-  it('keeps entry and exit opaque while retaining translation motion', () => {
+  it('fades entry and exit and keeps moving rows above them', () => {
     const source = readFileSync(
       new URL('./UiNotificationHost.vue', import.meta.url),
       'utf8',
     );
-    expect(source).not.toMatch(/opacity:\s*0\s*;/u);
-    expect(source).not.toMatch(/opacity\s+var\(--ui-motion/u);
-    expect(source).toContain(
-      '--ui-notification-motion-y: var(--ui-notification-motion-offset)',
+    expect(source).toMatch(
+      /\.ui-notification-enter-from,\s*\.ui-notification-leave-to\s*\{[^}]*--ui-notification-motion-y: var\(--ui-notification-motion-offset\);[^}]*opacity: 0;/u,
+    );
+    expect(source).toMatch(
+      /\.ui-notification-enter-active\s*\{[^}]*z-index: var\(--ui-layer-base\);[^}]*opacity var\(--ui-motion-duration-standard\)/u,
+    );
+    expect(source).toMatch(
+      /\.ui-notification-leave-active\s*\{[^}]*z-index: var\(--ui-layer-base\);[^}]*opacity var\(--ui-motion-duration-fast\)/u,
+    );
+    expect(source).toMatch(
+      /\.ui-notification-host__item\s*\{[^}]*z-index: var\(--ui-layer-raised\);/u,
     );
   });
 
@@ -873,13 +880,16 @@ describe('UiNotificationHost', () => {
     const { app } = mount(AppNotificationHost);
     owner.notify({ key: 'geometry', title: '錯誤紀錄已清除' });
     await nextTick();
-    const host = findAll(
-      body,
-      (node) => String(node.props.class ?? '') === 'ui-notification-host',
+    const host = findAll(body, (node) =>
+      String(node.props.class ?? '')
+        .split(' ')
+        .includes('ui-notification-host'),
     )[0];
     expect(host.props.style['--ui-notification-preferred-inline-size']).toBe(
       `${RIGHT_DOCK_WIDTH_MAX}px`,
     );
+    // The shell shelf sits at the Dock's top edge, clear of PlayerBar popovers.
+    expect(String(host.props.class)).toContain('ui-notification-host--top-end');
     useAppRightDockWidth().setWidth(RIGHT_DOCK_WIDTH_MIN);
     await nextTick();
     for (const role of ['preferred', 'min', 'max']) {
@@ -948,13 +958,14 @@ describe('UiNotificationHost', () => {
   it('does not spend a queued notification timeout before it becomes visible', async () => {
     const owner = useAppNotifications();
     const { app } = mount(AppNotificationHost);
+    // Top-end overflow hides the oldest row, so newer failures push it out.
+    owner.notify({ key: 'success', title: '已完成' });
     for (let i = 0; i < 3; i++)
       owner.notify({ key: `failure-${i}`, title: '待處理', tone: 'danger' });
-    owner.notify({ key: 'success', title: '已完成' });
     await nextTick();
     await vi.advanceTimersByTimeAsync(7000);
     expect(owner.items.value).toHaveLength(4);
-    owner.dismiss(owner.items.value[0].id);
+    owner.dismiss(owner.items.value[1].id);
     await nextTick();
     await vi.advanceTimersByTimeAsync(6000);
     expect(owner.items.value.map(({ title }) => title)).toEqual([
@@ -1047,7 +1058,8 @@ describe('UiNotificationHost', () => {
     );
     for (const tokens of [activeTokens, candidateTokens]) {
       expect(tokens).toContain(
-        '--ui-notification-motion-offset: var(--ui-space-4);',
+        // Never travels past the shell inset into Player or titlebar chrome.
+        '--ui-notification-motion-offset: var(--ui-space-2);',
       );
     }
   });
@@ -1077,6 +1089,37 @@ describe('UiNotificationHost', () => {
         /--ui-notification-block-end-offset:\s*calc\([\s\S]*?--ui-player-bar-height[\s\S]*?--ui-shell-content-inset-block[\s\S]*?\);/u,
       );
     }
+  });
+
+  it('mirrors the shelf below the titlebar for top-end placement', async () => {
+    const source = readFileSync(
+      new URL('./UiNotificationHost.vue', import.meta.url),
+      'utf8',
+    );
+    expect(source).toMatch(
+      /\.ui-notification-host--top-end\s*\{[^}]*inset-block: calc\([^;]*--ui-window-titlebar-block-size[^;]*--ui-shell-content-inset-block[^;]*\)\s*auto;/u,
+    );
+    expect(source).toMatch(
+      /\.ui-notification-host--top-end \.ui-notification-enter-from\s*\{[^}]*--ui-notification-motion-x: calc\(100% \+ var\(--ui-notification-safe-inset\)\);[^}]*--ui-notification-motion-y: 0;/u,
+    );
+    expect(source).toMatch(
+      /\.ui-notification-host--top-end \.ui-notification-enter-active\s*\{[^}]*transition-delay: var\(--ui-motion-duration-feedback\);/u,
+    );
+    const html = await renderToString(
+      createSSRApp(UiNotificationHost, {
+        placement: 'top-end',
+        maxVisible: 2,
+        items: [
+          { id: 'old', title: '最舊', lifecycle: 'persistent' },
+          { id: 'mid', title: '中間', lifecycle: 'persistent' },
+          { id: 'new', title: '最新', lifecycle: 'persistent' },
+        ],
+      }),
+    );
+    expect(html).toContain('ui-notification-host--top-end');
+    // Newest first at the edge; the oldest overflows out of the shelf.
+    expect(html.indexOf('最新')).toBeLessThan(html.indexOf('中間'));
+    expect(html).not.toContain('最舊');
   });
 
   it('derives the swipe threshold from a shared component token', () => {

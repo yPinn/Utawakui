@@ -27,6 +27,11 @@ const props = defineProps({
     validator: (value) => ['compact', 'standard'].includes(value),
   },
   ariaLabel: { type: String, default: '通知' },
+  placement: {
+    type: String,
+    default: 'bottom-end',
+    validator: (value) => ['bottom-end', 'top-end'].includes(value),
+  },
   inlineSize: {
     type: Number,
     default: null,
@@ -48,18 +53,20 @@ const emit = defineEmits(['action', 'dismiss']);
 const timerState = new Map();
 const swipeState = reactive(new Map());
 const leavingSwipes = new Map();
-const visibleItems = computed(() =>
-  (props.suspended ? [] : props.items)
-    .filter(
-      (item) =>
-        item &&
-        item.id !== undefined &&
-        item.id !== null &&
-        (item.title || item.message),
-    )
+const visibleItems = computed(() => {
+  const candidates = (props.suspended ? [] : props.items).filter(
+    (item) =>
+      item &&
+      item.id !== undefined &&
+      item.id !== null &&
+      (item.title || item.message),
+  );
+  // Top-end inserts the newest row at the edge and lets the oldest overflow.
+  if (props.placement === 'top-end') candidates.reverse();
+  return candidates
     .toSorted((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
-    .slice(0, props.maxVisible),
-);
+    .slice(0, props.maxVisible);
+});
 let mounted = false;
 
 function lifecycleFor(item) {
@@ -366,15 +373,18 @@ function itemStyle(item) {
 }
 
 function freezeLeavePosition(element) {
-  // The shelf is bottom-anchored and shrinks as a row leaves. Preserve its
-  // layout distance from that bottom so the exiting row cannot jump into Player.
-  const inset = Math.max(
-    0,
-    (element.parentNode?.clientHeight ?? 0) -
-      (element.offsetTop ?? 0) -
-      (element.offsetHeight ?? 0),
-  );
-  element.style.insetBlockEnd = `${inset}px`;
+  // The shelf is edge-anchored and shrinks as a row leaves. Preserve its
+  // layout distance from that edge so the exiting row cannot jump.
+  if (props.placement === 'top-end') {
+    element.style.insetBlockStart = `${Math.max(0, element.offsetTop ?? 0)}px`;
+  } else {
+    element.style.insetBlockEnd = `${Math.max(
+      0,
+      (element.parentNode?.clientHeight ?? 0) -
+        (element.offsetTop ?? 0) -
+        (element.offsetHeight ?? 0),
+    )}px`;
+  }
   const swipe = leavingSwipes.get(element.dataset?.notificationId);
   if (swipe) {
     element.classList.add('ui-notification-host__item--swipe-dismissed');
@@ -387,6 +397,7 @@ function freezeLeavePosition(element) {
 }
 
 function cancelLeavePosition(element) {
+  element.style.insetBlockStart = '';
   element.style.insetBlockEnd = '';
   element.classList.remove('ui-notification-host__item--swipe-dismissed');
   element.style.removeProperty?.('--ui-notification-swipe-exit-x');
@@ -438,6 +449,7 @@ onBeforeUnmount(() => {
       name="ui-notification"
       appear
       class="ui-notification-host"
+      :class="`ui-notification-host--${placement}`"
       :style="hostStyle"
       :hidden="suspended || undefined"
       :aria-label="visibleItems.length ? props.ariaLabel : undefined"
@@ -571,11 +583,21 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
+.ui-notification-host--top-end {
+  inset-block: calc(
+      var(--ui-window-titlebar-block-size) + var(--ui-shell-content-inset-block)
+    )
+    auto;
+}
+
 .ui-notification-host__item {
+  --ui-notification-motion-x: 0;
   --ui-notification-motion-y: 0;
   --ui-notification-swipe-exit-x: 0;
 
+  /* Settled rows paint above entering and leaving rows. */
   position: relative;
+  z-index: var(--ui-layer-raised);
   min-inline-size: 0;
   max-inline-size: 100%;
   border-radius: var(--ui-radius-lg);
@@ -584,7 +606,11 @@ onBeforeUnmount(() => {
   pointer-events: auto;
   -webkit-user-select: none;
   user-select: none;
-  transform: translate3d(0, var(--ui-notification-motion-y), 0);
+  transform: translate3d(
+    var(--ui-notification-motion-x),
+    var(--ui-notification-motion-y),
+    0
+  );
   transition: transform var(--ui-motion-duration-feedback)
     var(--ui-motion-easing-standard);
 }
@@ -619,23 +645,27 @@ onBeforeUnmount(() => {
 }
 
 .ui-notification-enter-active {
-  will-change: transform;
-  transition: transform var(--ui-motion-duration-feedback)
-    var(--ui-motion-easing-standard);
+  z-index: var(--ui-layer-base);
+  will-change: transform, opacity;
+  transition:
+    transform var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter);
 }
 
 .ui-notification-leave-active {
   position: absolute;
+  z-index: var(--ui-layer-base);
   inline-size: 100%;
   pointer-events: none;
-  will-change: transform;
-  transition: transform var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
+  will-change: transform, opacity;
+  transition:
+    transform var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit);
 }
 
 .ui-notification-leave-active .ui-notification-host__card {
   transition: transform var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
+    var(--ui-motion-easing-exit);
 }
 
 .ui-notification-host__item--swipe-dismissed.ui-notification-leave-to {
@@ -648,16 +678,32 @@ onBeforeUnmount(() => {
 }
 
 .ui-notification-move {
-  transition: transform var(--ui-motion-duration-feedback)
+  transition: transform var(--ui-motion-duration-standard)
     var(--ui-motion-easing-standard);
 }
 
+/* Both placements leave downward, fading out. */
 .ui-notification-enter-from,
 .ui-notification-leave-to {
   --ui-notification-motion-y: var(--ui-notification-motion-offset);
+
+  opacity: 0;
+}
+
+/* Top-end enters like a message: the stack makes room, then the row slides
+   in from the window edge. */
+.ui-notification-host--top-end .ui-notification-enter-from {
+  --ui-notification-motion-x: calc(100% + var(--ui-notification-safe-inset));
+  --ui-notification-motion-y: 0;
+}
+
+.ui-notification-host--top-end .ui-notification-enter-active {
+  transition-duration: var(--ui-motion-duration-slow);
+  transition-delay: var(--ui-motion-duration-feedback);
 }
 
 :global(:root[data-ui-motion='reduced'] .ui-notification-host__item) {
+  --ui-notification-motion-x: 0;
   --ui-notification-motion-y: 0;
 
   opacity: 1;
@@ -670,6 +716,7 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .ui-notification-host__item {
+    --ui-notification-motion-x: 0;
     --ui-notification-motion-y: 0;
 
     opacity: 1;

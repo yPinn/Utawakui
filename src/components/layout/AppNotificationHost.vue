@@ -12,6 +12,7 @@ const { width } = useAppRightDockWidth();
   <UiNotificationHost
     :items="items"
     :inline-size="width"
+    placement="top-end"
     :suspended="hasOpenModal"
     @dismiss="dismiss($event.id)"
     @action="runAction"
