@@ -39,4 +39,4 @@
 
 實際從 NSIS 解讀兩個交付檔並與 win-unpacked 逐 byte 比對：NOTICES.txt 為 596,262 bytes，SHA-256 `2f13b901b80334afd1f9233d8a9c910af793a10dfdc3813804f219a3f760e299`；manifest.json 為 58,292 bytes，SHA-256 `5e5bc30fbe54c6ae8bbead47c82d9a5cdd47d6640f87056338e6edbb479463e5`。授權集合仍涵蓋 93 個 package entries 與 2 個額外元件，未變更 renderer payload。
 
-本機產物的 `evidence/` 保存 JSON、可重現測試 scripts、fixture 原始碼 hashes 與畫面。相關四個測試檔共 17 項通過；獨立程式碼 review APPROVE。原有服務／模型及 Signalsmith native provenance 的限制仍以[授權補正紀錄](../governance/packaged-notices-repair-2026-10-18.md)為準。
+本機產物的 `evidence/` 保存 JSON、可重現測試 scripts、fixture 原始碼 hashes 與畫面。相關四個測試檔共 17 項通過；獨立程式碼 review APPROVE。原有服務／模型及 Signalsmith native provenance 的限制仍以[授權補正紀錄](../archive/packaged-notices-repair-2026-10-18.md)為準。

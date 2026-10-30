@@ -205,7 +205,7 @@ The `electron.exe` filename is intentional. See
 
 ## Complete Third-Party Texts
 
-`third-party/NOTICES.txt` and its `manifest.json` ship through explicit extraResources at `resources/third-party/`, outside ASAR for direct reading. `npm run license:write` generates them offline from the Windows production/browser-root closure and checksum-pinned reviewed sources. `npm run license:verify` rejects stale output or unreviewed source/version changes. The afterPack hook and unsigned-package verifier also check actual ASAR dependency versions, preserved Electron/font files and covered ONNX/DirectML binary hashes. Original upstream license text is retained; this does not clear optional download or external service obligations. See the [repair evidence](../governance/packaged-notices-repair-2026-10-18.md).
+`third-party/NOTICES.txt` and its `manifest.json` ship through explicit extraResources at `resources/third-party/`, outside ASAR for direct reading. `npm run license:write` generates them offline from the Windows production/browser-root closure and checksum-pinned reviewed sources. `npm run license:verify` rejects stale output or unreviewed source/version changes. The afterPack hook and unsigned-package verifier also check actual ASAR dependency versions, preserved Electron/font files and covered ONNX/DirectML binary hashes. Original upstream license text is retained; this does not clear optional download or external service obligations. See the [repair evidence](../archive/packaged-notices-repair-2026-10-18.md).
 
 ## Application Update Boundary
 

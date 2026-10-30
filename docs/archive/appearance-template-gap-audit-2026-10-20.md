@@ -1,8 +1,8 @@
 # 現有八模板完成度與架構責任盤點
 
-本文件保留當輪盤點證據；共用架構、預覽一致性與驗收基礎的分階段工作，統一維護於[現行計畫](appearance-sets-plan.md#實作階段與依賴順序)。
+本文件保留當輪盤點證據；共用架構、預覽一致性與驗收基礎的分階段工作，統一維護於[現行計畫](../governance/appearance-sets-plan.md#實作階段與依賴順序)。
 
-日期：2026-10-20。範圍：目前工作目錄中的八個正式 Gallery 模板，對照[外觀 set 標準草案](appearance-sets-plan.md)。
+日期：2026-10-20。範圍：目前工作目錄中的八個正式 Gallery 模板，對照[外觀 set 標準草案](../governance/appearance-sets-plan.md)。
 本輪只讀程式、測試、契約與既有證據，查看八張縮圖並執行既有測試；不修改產品程式、圖片、gate、schema 或付費權限。
 
 結論：八個模板都有實作基礎，但沒有任何一個能據此認定通過完整 set 交付標準。
@@ -22,7 +22,7 @@
 
 本輪兩組測試去重後共 73 份檔案、757 項通過，包含 Overlay、shared presentation、appearance／capture／registry、Gallery／Workbench 元件與預覽。
 它們多為純函式、DOM mocks 或 source／CSS 契約，不能單獨證明 OBS 可讀性、alpha、實際字型載入、GPU 負載或長時間穩定性。
-模板身份、capture、外觀欄位、timing capabilities、縮圖尺寸／大小／SHA-256 與測試統計保存在[快照 JSON](data/appearance-template-audit-2026-10-20.json)。
+模板身份、capture、外觀欄位、timing capabilities、縮圖尺寸／大小／SHA-256 與測試統計保存在[快照 JSON](../governance/data/appearance-template-audit-2026-10-20.json)。
 
 未啟動使用者 App／OBS、未連線外部素材服務、未進行新一輪動態視覺或實機驗收；所有相關結論保留待驗證。
 本輪確認的是原始碼與靜態交付缺口，不是八模板的最終美術評分。
@@ -73,7 +73,7 @@ Gallery registry 以檔名直接打包引用以下資產，並非只存在研究
 | art-card      | 星空室內唱盤插畫，1194×669                                          | 與 runtime 實際封套／唱盤構圖不同；未見該圖逐項來源證據，不因看起來像插畫推定其生成方式或權利                                  |
 | 其餘四張      | queue-board、kinetic-pop、ornate-vertical、cover-player 均 1280×720 | 圖像與模板呈現相符，README 有程式生成描述；仍未記錄與目前 runtime commit／參數的同步關係，不能作完整視覺驗收                   |
 
-來源：[縮圖規格](../../src/assets/output-template-thumbnails/README.md)、[實際打包 registry](../../src/utils/outputTemplateThumbnails.js)、[尺寸與 hash 快照](data/appearance-template-audit-2026-10-20.json)。
+來源：[縮圖規格](../../src/assets/output-template-thumbnails/README.md)、[實際打包 registry](../../src/utils/outputTemplateThumbnails.js)、[尺寸與 hash 快照](../governance/data/appearance-template-audit-2026-10-20.json)。
 縮圖可用性／檔名單元測試會通過，不代表內容準確或素材權利已確認；後續驗收需加入人工內容核對與來源紀錄。
 
 ## 哪些責任放哪一層

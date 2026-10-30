@@ -90,7 +90,7 @@ Electron／Chromium 與 DLL 的內嵌元件，另需保留完整附文，不只�
 | `signalsmith-stretch`          | 1.3.2    | renderer pitch／tempo JS／WASM，位於 devDependencies      | MIT                     | MIT＋embedded 補充附文，build provenance 保留限制   |
 
 完整附文已由 `npm run license:verify` 核對至 93 個 package entries 與 2 個額外項目。
-這不等於所有模型、API 或 native build provenance 已完成核准；Signalsmith 嵌入 runtime 的編譯器版本證據仍依[先前補正紀錄](packaged-notices-repair-2026-10-18.md)保留限制。
+這不等於所有模型、API 或 native build provenance 已完成核准；Signalsmith 嵌入 runtime 的編譯器版本證據仍依[先前補正紀錄](../archive/packaged-notices-repair-2026-10-18.md)保留限制。
 
 ## 選用 Provider 依賴
 

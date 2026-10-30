@@ -61,4 +61,3 @@
 - osu!：[本機工作流](product/osu-local-first-interaction-and-capabilities-2026-10-26.md)、[單人／多人映射](product/osu-play-modes-and-product-mapping-2026-10-26.md)。本機互動供提案參考，多人僅遠期備忘。
 - [本輪文件與路線整理](product/product-and-documentation-review-2026-10-26.md)及[證據 JSON](product/product-and-documentation-review-2026-10-26.json)：全量文件分類／連結盤點、來源識別與修改界線；不作為第二份 roadmap。
 - [外觀贊助模式研究](product/appearance-support-models-market-plan-2026-10-20.md)（10-20）：市場選項與成本；現行交付原則見 governance，付款／帳號仍待決策。
-- [v0.4.0 公開網站稿](product/public-site-content-v0.4.0.md)（10-17）：指定版本的歷史內容稿，不能用作目前公開版或工作樹現況。

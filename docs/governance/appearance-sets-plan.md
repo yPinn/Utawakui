@@ -2,7 +2,7 @@
 
 本文件維護額外外觀作品的取得方向、範圍與品質標準；產品現況見[規格](../spec.md)，元素工作區的實作順序見[ADR 0027](../adr/0027-output-template-elements-and-property-workspace.md#phases)，Pack 技術邊界見[契約](../contracts/overlay-pack.md)。目前沒有定價、收款或上架安排；既有模板不因共用基礎完成而取得商品驗收。
 
-2026-10-20 的[八模板盤點](appearance-template-gap-audit-2026-10-20.md)與[原始資料](data/appearance-template-audit-2026-10-20.json)保留當時範圍。之後的模板數量、缺省值與可調項以[Output 外觀契約](../contracts/output-appearance.md)為準，不以舊盤點覆蓋現況。
+2026-10-20 的[八模板盤點](../archive/appearance-template-gap-audit-2026-10-20.md)與[原始資料](data/appearance-template-audit-2026-10-20.json)保留當時範圍。之後的模板數量、缺省值與可調項以[Output 外觀契約](../contracts/output-appearance.md)為準，不以舊盤點覆蓋現況。
 
 ## 已確認的取得方向
 
