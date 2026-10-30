@@ -30,6 +30,8 @@
 
 ## 音訊處理與分析
 
+- [R01 衍生四聲道音訊減量](audio/derived-audio-reduction-r01-2026-10-30.md)（10-30）：格式比較、FIFO／DSP 分流與獨立複核；FLAC 5 維持候選，不代表正式採用或遷移。
+
 - [播放偶發失真實驗方案](engineering/playback-distortion-investigation-2026-10-26.md)與[第一階段診斷結果](engineering/playback-distortion-diagnostics-2026-10-26.md)（10-26）：隔離時間線／25 秒 PCM、三種編碼原曲對照與 capture pitch 初始化競態修正；電子音根因仍未定位，真實裝置／OBS 未驗。
 - [HubertFA CPU／DirectML 對照](audio/lyrics-hubertfa-directml-2026-10-21.md)（10-21）：四案實測完成，未接產品
 - [Whisper small GPU 容量與投入](audio/whisper-small-gpu-cost-2026-10-21.md)（10-21）：成本評估完成，GPU 實測暫緩
