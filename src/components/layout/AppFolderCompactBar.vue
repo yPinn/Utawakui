@@ -52,16 +52,6 @@ defineProps({
     var(--ui-motion-easing-standard);
 }
 
-/* The bar casts the scroll-edge shadow; a stuck table header below covers it. */
-.app-folder-compact-bar__surface::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  box-shadow: var(--ui-scroll-edge-shadow-start);
-  clip-path: inset(100% 0 calc(-1 * var(--ui-scroll-edge-band-size)) 0);
-  pointer-events: none;
-}
-
 .app-folder-compact-bar__surface--visible {
   opacity: 1;
   pointer-events: auto;

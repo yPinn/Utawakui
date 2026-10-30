@@ -48,7 +48,6 @@ watch(
       ref="scrollLayout"
       class="app-folder-page__scroll"
       axis="vertical"
-      edge-shadow="end"
       viewport-class="app-folder-page__viewport"
       content-class="app-folder-page__document"
       role="region"
@@ -103,6 +102,10 @@ watch(
 
 <style scoped>
 .app-folder-page {
+  /* Main-area paper stays flat; overlays outside the page keep their cues. */
+  --ui-scroll-edge-shadow-start: none;
+  --ui-scroll-edge-shadow-end: none;
+
   /* Contains page-local layers; overlay hosts stay outside as siblings. */
   isolation: isolate;
   min-width: 0;
