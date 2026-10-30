@@ -1,6 +1,6 @@
 <script setup>
 import { shallowRef } from 'vue';
-import { ListMusic } from '../../icons/index.js';
+import { UnfoldVertical } from '../../icons/index.js';
 import { TRACK_LIST_DENSITIES } from '../../composables/useTrackListDensity.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
@@ -43,7 +43,7 @@ function updateDensity(value) {
     <template #trigger="{ triggerProps }">
       <UiIconButton
         v-bind="triggerProps"
-        :icon="ListMusic"
+        :icon="UnfoldVertical"
         label="調整曲目顯示密度"
         tooltip-placement="bottom"
         :active="open"

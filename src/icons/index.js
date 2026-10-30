@@ -90,6 +90,7 @@ export {
   Tickets,
   Trash2,
   Type,
+  UnfoldVertical,
   UserRound,
   UserRoundPlus,
   Video,
