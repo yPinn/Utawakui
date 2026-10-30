@@ -4,6 +4,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -21,10 +22,12 @@ const hasActiveSeparation = computed(() => props.activeWork === 'separation');
 const isErrorPresentation = computed(() => props.presentation === 'error');
 const modalTitle = computed(() =>
   isErrorPresentation.value
-    ? props.errorTitle || '關閉操作未完成'
-    : hasActiveSeparation.value
-      ? '伴奏處理中'
-      : '關閉 Utawakui',
+    ? props.errorTitle || t('windowClose.errorTitle')
+    : t(
+        hasActiveSeparation.value
+          ? 'windowClose.separationTitle'
+          : 'windowClose.title',
+      ),
 );
 </script>
 
@@ -47,14 +50,20 @@ const modalTitle = computed(() =>
       <div v-else class="window-close-decision__copy">
         <p class="window-close-decision__question">
           {{
-            hasActiveSeparation ? '要繼續在背景處理嗎？' : '要改為背景執行嗎？'
+            t(
+              hasActiveSeparation
+                ? 'windowClose.modal.separationQuestion'
+                : 'windowClose.modal.backgroundQuestion',
+            )
           }}
         </p>
         <p class="window-close-decision__detail">
           {{
-            hasActiveSeparation
-              ? '結束會取消目前歌曲，其他排程也不會保留。'
-              : '播放、OBS 連線與輸出會繼續，可從系統匣重新開啟或結束。'
+            t(
+              hasActiveSeparation
+                ? 'windowClose.modal.separationDetail'
+                : 'windowClose.modal.backgroundDetail',
+            )
           }}
         </p>
       </div>
@@ -63,7 +72,7 @@ const modalTitle = computed(() =>
         v-if="!isErrorPresentation && !hasActiveSeparation"
         id="window-close-remember"
         :model-value="remember"
-        label="記住選擇"
+        :label="t('windowClose.remember')"
         :disabled="isResponding"
         @update:model-value="emit('update:remember', $event)"
       />
@@ -71,7 +80,7 @@ const modalTitle = computed(() =>
       <UiNotice
         v-if="!isErrorPresentation && error"
         tone="danger"
-        title="關閉操作未完成"
+        :title="t('windowClose.errorTitle')"
         :message="error"
         compact
       />
@@ -82,34 +91,46 @@ const modalTitle = computed(() =>
           variant="accent"
           @click="emit('close')"
         >
-          關閉
+          {{ t('common.close') }}
         </UiButton>
         <UiButton
           v-if="!isErrorPresentation"
           :disabled="isResponding"
           @click="emit('close')"
         >
-          取消
+          {{ t('common.cancel') }}
         </UiButton>
         <UiButton
           v-if="!isErrorPresentation"
           :intent="hasActiveSeparation ? 'danger' : 'neutral'"
           :disabled="isResponding"
           :loading="pendingAction === 'quit'"
-          loading-label="結束中"
+          :loading-label="t('windowClose.modal.quitting')"
           @click="emit('decision', 'quit')"
         >
-          {{ hasActiveSeparation ? '停止並結束' : '結束' }}
+          {{
+            t(
+              hasActiveSeparation
+                ? 'windowClose.modal.stopAndQuit'
+                : 'windowClose.modal.quit',
+            )
+          }}
         </UiButton>
         <UiButton
           v-if="!isErrorPresentation"
           variant="accent"
           :disabled="isResponding"
           :loading="pendingAction === 'tray'"
-          loading-label="處理中"
+          :loading-label="t('ui.button.loading')"
           @click="emit('decision', 'tray')"
         >
-          {{ hasActiveSeparation ? '繼續處理' : '背景執行' }}
+          {{
+            t(
+              hasActiveSeparation
+                ? 'windowClose.modal.continueProcessing'
+                : 'windowClose.modal.background',
+            )
+          }}
         </UiButton>
       </div>
     </div>

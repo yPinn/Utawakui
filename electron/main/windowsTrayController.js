@@ -3,6 +3,7 @@
 const {
   isWindowCloseBehavior,
 } = require('../../shared/windowCloseBehaviorContract.mjs');
+const { t } = require('../lib/i18n');
 
 const CLOSE_RESPONSE = Object.freeze({
   TRAY: 0,
@@ -75,11 +76,11 @@ function createWindowsTrayController({
     try {
       nextTray = new Tray(iconPath);
       const contextMenu = Menu.buildFromTemplate([
-        { label: `開啟 ${appName}`, click: showWindow },
-        { label: '設定', click: showSettings },
+        { label: t('shell.tray.open', { app: appName }), click: showWindow },
+        { label: t('shell.tray.settings'), click: showSettings },
         { type: 'separator' },
         {
-          label: `結束 ${appName}`,
+          label: t('shell.tray.quit', { app: appName }),
           click: () => {
             beginQuit();
             app.quit();
@@ -127,8 +128,8 @@ function createWindowsTrayController({
       error,
       operation = 'remember-close-behavior',
       code = 'WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED',
-      message = '無法儲存關閉行為',
-      detail = '視窗仍保持開啟，請稍後再試，或在設定頁重新選擇。',
+      message = t('windowClose.native.saveFailed'),
+      detail = t('windowClose.native.saveFailedDetail'),
     },
   ) {
     recordDiagnostic({
@@ -156,7 +157,7 @@ function createWindowsTrayController({
         title: appName,
         message,
         detail,
-        buttons: ['確定'],
+        buttons: [t('common.ok')],
         defaultId: 0,
         cancelId: 0,
         noLink: true,
@@ -187,16 +188,32 @@ function createWindowsTrayController({
       const result = await dialog.showMessageBox(sourceWindow, {
         type: 'question',
         title: appName,
-        message: hasActiveSeparation ? '伴奏處理中' : '要在背景繼續執行嗎？',
-        detail: hasActiveSeparation
-          ? '停止會取消目前歌曲，其餘排程不保留。'
-          : '播放、OBS 連線與輸出會保留，可從系統匣開啟或結束。',
+        message: t(
+          hasActiveSeparation
+            ? 'windowClose.separationTitle'
+            : 'windowClose.native.backgroundQuestion',
+        ),
+        detail: t(
+          hasActiveSeparation
+            ? 'windowClose.native.separationDetail'
+            : 'windowClose.native.backgroundDetail',
+        ),
         buttons: hasActiveSeparation
-          ? ['在背景繼續', '停止並結束', '取消']
-          : ['背景執行', '結束', '取消'],
+          ? [
+              t('windowClose.native.continueBackground'),
+              t('windowClose.native.stopAndQuit'),
+              t('common.cancel'),
+            ]
+          : [
+              t('windowClose.native.background'),
+              t('windowClose.native.quit'),
+              t('common.cancel'),
+            ],
         defaultId: CLOSE_RESPONSE.TRAY,
         cancelId: CLOSE_RESPONSE.CANCEL,
-        checkboxLabel: hasActiveSeparation ? undefined : '記住選擇',
+        checkboxLabel: hasActiveSeparation
+          ? undefined
+          : t('windowClose.remember'),
         checkboxChecked: false,
         noLink: true,
       });
@@ -261,8 +278,8 @@ function createWindowsTrayController({
           error,
           operation: 'create-tray',
           code: 'WINDOW_TRAY_CREATE_FAILED',
-          message: '無法在背景執行',
-          detail: '系統匣目前無法建立，視窗會保持開啟。請稍後再試。',
+          message: t('windowClose.native.trayUnavailable'),
+          detail: t('windowClose.native.trayUnavailableDetail'),
         });
         return;
       }

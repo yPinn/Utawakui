@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { t } from '../../utils/i18n.js';
 
 const source = fs.readFileSync(
   new URL('./AppTitleBar.vue', import.meta.url),
@@ -75,8 +76,9 @@ describe('AppTitleBar', () => {
       "preparationStatusLabel: { type: String, default: '' }",
     );
     expect(source).toContain(
-      "preparationActionLabel: { type: String, default: '展開匯入' }",
+      "default: () => t('shell.rightDock.expandImport')",
     );
+    expect(t('shell.rightDock.expandImport')).toBe('展開匯入');
     expect(source).toContain('const preparationTooltipSuffix = computed(');
     expect(source).toContain(':label="preparationActionLabel"');
     expect(source).not.toContain('title="曲目準備"');
@@ -135,7 +137,10 @@ describe('AppTitleBar', () => {
   it('exposes Performer and Settings as controlled toggles', () => {
     expect(source).toContain('PictureInPicture2,');
     expect(source).not.toContain('Captions,');
-    expect(source).toContain("performerActive ? '關閉提詞器' : '開啟提詞器'");
+    expect(source).toContain("? 'shell.titleBar.performerClose'");
+    expect(source).toContain(": 'shell.titleBar.performerOpen'");
+    expect(t('shell.titleBar.performerClose')).toBe('關閉提詞器');
+    expect(t('shell.titleBar.performerOpen')).toBe('開啟提詞器');
     expect(source).not.toContain('提詞視窗');
     expect(source).not.toContain('MonitorUp,');
     expect(source).not.toContain('表演者畫面');
@@ -174,7 +179,8 @@ describe('AppTitleBar', () => {
     expect(source).toContain('v-if="updateAvailable"');
     expect(source).toContain('class="app-title-bar__settings-marker"');
     expect(source).toContain('aria-hidden="true"');
-    expect(source).toContain('設定（有可用更新）');
+    expect(source).toContain("? 'shell.titleBar.settingsUpdate'");
+    expect(t('shell.titleBar.settingsUpdate')).toBe('設定（有可用更新）');
     const settingsTriggerStart = source.indexOf('data-app-settings-trigger');
     const settingsTriggerEnd = source.indexOf('/>', settingsTriggerStart);
     expect(

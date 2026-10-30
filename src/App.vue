@@ -84,6 +84,7 @@ import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
 import { focusAppDestinationTrigger } from './utils/appDestinationFocus.js';
 import { preparationActivityIndicator } from './components/preparation/preparationActivityPresentation.js';
+import { t } from './utils/i18n.js';
 
 provideUiOverlayHost('app-shell');
 const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
@@ -151,7 +152,7 @@ const feedbackReport = useFeedbackReport();
 // Every error notice in the main window offers a prefilled bug report;
 // feedback's own failures are excluded so a report never reports itself.
 provideNoticeReporter({
-  label: '回報這個問題',
+  label: t('shell.app.reportIssue'),
   canReport: (notice) =>
     notice.severity === 'error' && notice.source !== 'feedback',
   report: (notice) =>
@@ -331,12 +332,14 @@ const restorableDockSurface = computed(
 );
 const rightDockLabel = computed(() => {
   if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_PREPARATION)
-    return '曲目準備';
+    return t('shell.rightDock.preparation');
   if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE)
-    return '播放佇列';
-  return '播放資訊';
+    return t('shell.rightDock.queue');
+  return t('shell.rightDock.nowPlaying');
 });
-const rightDockExpandLabel = computed(() => `展開${rightDockLabel.value}`);
+const rightDockExpandLabel = computed(() =>
+  t('shell.rightDock.expandNamed', { panel: rightDockLabel.value }),
+);
 
 let returnFocusTarget = null;
 
@@ -457,7 +460,7 @@ const dockPanel = useTemplateRef('dockPanel');
 usePanelViewTarget({
   id: 'workspace',
   element: workspacePanel,
-  label: '主工作區',
+  label: t('shell.app.mainWorkspace'),
   context: activeView,
 });
 usePanelViewTarget({

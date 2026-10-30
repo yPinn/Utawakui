@@ -4,5 +4,80 @@
     "pause": "暫停",
     "play": "播放",
     "next": "下一首"
+  },
+  "app": {
+    "reportIssue": "回報這個問題",
+    "mainWorkspace": "主工作區"
+  },
+  "rightDock": {
+    "preparation": "曲目準備",
+    "queue": "播放佇列",
+    "nowPlaying": "播放資訊",
+    "expandNamed": "展開{panel}",
+    "label": "右側區塊",
+    "expand": "展開右側區塊",
+    "collapsedNamed": "{label}（已摺疊）",
+    "width": "{width} 像素",
+    "resizeHint": "調整右側區塊寬度；方向鍵調整，Enter、空白鍵或雙擊收合",
+    "expandImport": "展開匯入",
+    "switchSeparation": "切換伴奏處理",
+    "collapsePreparation": "折疊曲目準備"
+  },
+  "titleBar": {
+    "themeDark": "切換為深色主題",
+    "themeLight": "切換為淺色主題",
+    "performerOpen": "開啟提詞器",
+    "performerClose": "關閉提詞器",
+    "settings": "設定",
+    "settingsUpdate": "設定（有可用更新）",
+    "resources": "Utawakui 的資源用量",
+    "resourcesLabel": "Utawakui 資源使用率；僅含自身程序",
+    "obsStatus": "OBS 直播／錄影狀態"
+  },
+  "sidebar": {
+    "label": "播放清單",
+    "expandedValue": "已展開，{width} 像素",
+    "collapsedValue": "已摺疊，{width} 像素",
+    "collapse": "摺疊播放清單側欄；拖曳、Enter、空白鍵或雙擊",
+    "expand": "展開播放清單側欄；拖曳、Enter、空白鍵或雙擊"
+  },
+  "panel": {
+    "fallback": "面板",
+    "restore": "還原面板",
+    "maximize": "放大面板"
+  },
+  "announcement": {
+    "title": "本次更新",
+    "releaseNotes": "查看發行說明"
+  },
+  "confirmation": {
+    "title": "確認操作"
+  },
+  "featureNotice": {
+    "title": "功能啟用說明",
+    "disabledTitle": "功能未啟用",
+    "decline": "暫不啟用",
+    "enabling": "啟用中…",
+    "confirm": "確認並啟用"
+  },
+  "notifications": {
+    "incompleteTitle": "操作未完成",
+    "incompleteMessage": "請回到原操作位置再試一次。"
+  },
+  "recovery": {
+    "title": "Utawakui 需要重新啟動",
+    "message": "主畫面無法繼續運作",
+    "rendererCrashed": "主畫面程序意外停止，請重新啟動以恢復操作。",
+    "rendererUnresponsive": "主畫面沒有回應，請重新啟動以恢復操作。",
+    "rendererLoadFailed": "主畫面載入失敗，請重新啟動以恢復操作。",
+    "rendererPreloadFailed": "主畫面安全橋接載入失敗，請重新啟動以恢復操作。",
+    "unknown": "主畫面發生無法恢復的錯誤，請重新啟動。",
+    "restart": "重新啟動 Utawakui",
+    "quit": "退出"
+  },
+  "tray": {
+    "open": "開啟 {app}",
+    "settings": "設定",
+    "quit": "結束 {app}"
   }
 }

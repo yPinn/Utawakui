@@ -1,10 +1,12 @@
 'use strict';
 
-const RECOVERY_DETAILS = Object.freeze({
-  'renderer-crashed': '主畫面程序意外停止，請重新啟動以恢復操作。',
-  'renderer-unresponsive': '主畫面沒有回應，請重新啟動以恢復操作。',
-  'renderer-load-failed': '主畫面載入失敗，請重新啟動以恢復操作。',
-  'renderer-preload-failed': '主畫面安全橋接載入失敗，請重新啟動以恢復操作。',
+const { t } = require('../lib/i18n');
+
+const RECOVERY_DETAIL_KEYS = Object.freeze({
+  'renderer-crashed': 'shell.recovery.rendererCrashed',
+  'renderer-unresponsive': 'shell.recovery.rendererUnresponsive',
+  'renderer-load-failed': 'shell.recovery.rendererLoadFailed',
+  'renderer-preload-failed': 'shell.recovery.rendererPreloadFailed',
 });
 
 function createRendererRecoveryController({
@@ -36,11 +38,10 @@ function createRendererRecoveryController({
     recoveryPromise = Promise.resolve().then(async () => {
       const options = {
         type: 'error',
-        title: 'Utawakui 需要重新啟動',
-        message: '主畫面無法繼續運作',
-        detail:
-          RECOVERY_DETAILS[reason] ?? '主畫面發生無法恢復的錯誤，請重新啟動。',
-        buttons: ['重新啟動 Utawakui', '退出'],
+        title: t('shell.recovery.title'),
+        message: t('shell.recovery.message'),
+        detail: t(RECOVERY_DETAIL_KEYS[reason] ?? 'shell.recovery.unknown'),
+        buttons: [t('shell.recovery.restart'), t('shell.recovery.quit')],
         defaultId: 0,
         cancelId: 1,
         noLink: true,

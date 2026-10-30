@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Reads a long Folder note on a letter-sized sheet of its own paper. Text
 // that outgrows the sheet flows into pages; editing stays in the editor.
 import {
@@ -109,7 +110,7 @@ onBeforeUnmount(() => {
 <template>
   <UiModal
     :open="open"
-    :title="title || '頁面便條'"
+    :title="title || t('folder.note.fallbackTitle')"
     presentation="media"
     dismiss-on-backdrop
     :close-disabled="removing"
@@ -119,7 +120,7 @@ onBeforeUnmount(() => {
     <template v-if="note" #header-actions>
       <UiIconButton
         :icon="Pencil"
-        label="編輯便條"
+        :label="t('folder.note.edit')"
         variant="overlay"
         tooltip-placement="start"
         :disabled="removing"
@@ -127,7 +128,7 @@ onBeforeUnmount(() => {
       />
       <UiIconButton
         :icon="Trash2"
-        label="刪除便條"
+        :label="t('folder.note.delete')"
         variant="overlay"
         intent="danger"
         tooltip-placement="start"
@@ -168,11 +169,11 @@ onBeforeUnmount(() => {
       <nav
         v-if="pageCount > 1"
         class="app-folder-note-reader__pager"
-        aria-label="便條頁次"
+        :aria-label="t('folder.note.pages')"
       >
         <UiIconButton
           :icon="ChevronLeft"
-          label="上一頁"
+          :label="t('folder.note.previousPage')"
           :disabled="page === 0"
           @click="turn(-1)"
         />
@@ -181,7 +182,7 @@ onBeforeUnmount(() => {
         </span>
         <UiIconButton
           :icon="ChevronRight"
-          label="下一頁"
+          :label="t('folder.note.nextPage')"
           :disabled="page === pageCount - 1"
           @click="turn(1)"
         />

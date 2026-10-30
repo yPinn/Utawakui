@@ -19,10 +19,14 @@ import { useElapsedClock } from '../../composables/useElapsedClock.js';
 import { useAppUsage } from '../../composables/useAppUsage.js';
 import { useTheme } from '../../composables/useTheme.js';
 import { formatElapsedClock } from '../../utils/format.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   preparationActive: { type: Boolean, default: false },
-  preparationActionLabel: { type: String, default: '展開匯入' },
+  preparationActionLabel: {
+    type: String,
+    default: () => t('shell.rightDock.expandImport'),
+  },
   preparationControls: { type: String, default: '' },
   preparationStatus: { type: String, default: 'idle' },
   preparationStatusLabel: { type: String, default: '' },
@@ -79,13 +83,21 @@ const recordElapsedLabel = computed(
 
 const isLight = computed(() => theme.value === 'light');
 const label = computed(() =>
-  isLight.value ? '切換為深色主題' : '切換為淺色主題',
+  t(isLight.value ? 'shell.titleBar.themeDark' : 'shell.titleBar.themeLight'),
 );
 const performerLabel = computed(() =>
-  props.performerActive ? '關閉提詞器' : '開啟提詞器',
+  t(
+    props.performerActive
+      ? 'shell.titleBar.performerClose'
+      : 'shell.titleBar.performerOpen',
+  ),
 );
 const settingsLabel = computed(() =>
-  props.updateAvailable ? '設定（有可用更新）' : '設定',
+  t(
+    props.updateAvailable
+      ? 'shell.titleBar.settingsUpdate'
+      : 'shell.titleBar.settings',
+  ),
 );
 const preparationTooltipSuffix = computed(() =>
   props.preparationStatusLabel ? ` · ${props.preparationStatusLabel}` : '',
@@ -142,13 +154,13 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
          presentation-location decision this row implements — PlayerBar had
          no room left, so this moved to the titlebar instead. -->
     <div class="app-title-bar__status">
-      <UiTooltip text="Utawakui 的資源用量" placement="bottom">
+      <UiTooltip :text="t('shell.titleBar.resources')" placement="bottom">
         <template #trigger="{ triggerProps }">
           <div
             v-bind="triggerProps"
             class="app-title-bar__resources"
             role="group"
-            aria-label="Utawakui 資源使用率；僅含自身程序"
+            :aria-label="t('shell.titleBar.resourcesLabel')"
           >
             <span class="app-title-bar__resource">
               <Cpu
@@ -203,7 +215,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
         v-if="isObsConnected"
         class="app-title-bar__obs"
         role="group"
-        aria-label="OBS 直播／錄影狀態"
+        :aria-label="t('shell.titleBar.obsStatus')"
       >
         <span
           class="app-title-bar__obs-badge"

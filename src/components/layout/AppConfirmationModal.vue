@@ -3,11 +3,14 @@ import { computed } from 'vue';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import UiButton from '../ui/UiButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const confirmation = useAppConfirmation();
 const request = computed(() => confirmation.state.request);
 const isOpen = computed(() => Boolean(request.value));
-const title = computed(() => request.value?.title || '確認操作');
+const title = computed(
+  () => request.value?.title || t('shell.confirmation.title'),
+);
 </script>
 
 <template>

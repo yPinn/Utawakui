@@ -1,0 +1,31 @@
+{
+  "title": "Close Utawakui",
+  "separationTitle": "Vocal removal in progress",
+  "errorTitle": "Could not close",
+  "responseError": "The close action could not be completed. Try again.",
+  "remember": "Remember my choice",
+  "modal": {
+    "backgroundQuestion": "Keep running in the background?",
+    "separationQuestion": "Keep processing in the background?",
+    "backgroundDetail": "Playback, the OBS connection and output continue. Reopen or quit from the system tray.",
+    "separationDetail": "Quitting cancels the current song and does not keep the rest of the queue.",
+    "quit": "Quit",
+    "stopAndQuit": "Stop and quit",
+    "quitting": "Quitting",
+    "background": "Run in background",
+    "continueProcessing": "Keep processing"
+  },
+  "native": {
+    "backgroundQuestion": "Keep running in the background?",
+    "backgroundDetail": "Playback, the OBS connection and output stay on. Open or quit from the system tray.",
+    "separationDetail": "Stopping cancels the current song; the rest of the queue is not kept.",
+    "continueBackground": "Continue in background",
+    "background": "Run in background",
+    "quit": "Quit",
+    "stopAndQuit": "Stop and quit",
+    "saveFailed": "Could not save the close behavior",
+    "saveFailedDetail": "The window stays open. Try again later, or choose again in Settings.",
+    "trayUnavailable": "Cannot run in the background",
+    "trayUnavailableDetail": "The system tray is unavailable, so the window stays open. Try again later."
+  }
+}

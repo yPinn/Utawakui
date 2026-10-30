@@ -1,6 +1,7 @@
 import { readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { normalizeAppError } from '../utils/appErrors.js';
+import { t } from '../utils/i18n.js';
 
 const items = shallowRef([]);
 const actions = new Map();
@@ -146,8 +147,8 @@ async function runAction(id) {
       code: 'NOTIFICATION_ACTION_FAILED',
       source: 'notifications',
       operation: 'action',
-      title: '操作未完成',
-      message: '請回到原操作位置再試一次。',
+      title: t('shell.notifications.incompleteTitle'),
+      message: t('shell.notifications.incompleteMessage'),
     });
     if (latestByKey.get(item.key) !== id) return false;
     if (
@@ -158,8 +159,8 @@ async function runAction(id) {
     notify({
       key: item.key,
       tone: 'danger',
-      title: '操作未完成',
-      message: '請回到原操作位置再試一次。',
+      title: t('shell.notifications.incompleteTitle'),
+      message: t('shell.notifications.incompleteMessage'),
     });
     return false;
   }

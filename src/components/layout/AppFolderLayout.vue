@@ -2,6 +2,7 @@
 import { computed, useId } from 'vue';
 import { APP_DESTINATIONS } from '../../utils/appDestinationRegistry.js';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   activeDestination: { type: String, required: true },
@@ -60,7 +61,7 @@ function navigate(destinationId, event) {
       scrollbar-visibility="hidden"
       viewport-tag="nav"
       viewport-class="app-folder-layout__navigation-viewport"
-      aria-label="Folder 頁面"
+      :aria-label="t('folder.layout.navigation')"
     >
       <button
         v-for="destination in APP_DESTINATIONS"

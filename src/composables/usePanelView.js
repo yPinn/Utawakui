@@ -7,6 +7,7 @@ import {
   watch,
 } from 'vue';
 import { isEditableTarget } from '../utils/dom.js';
+import { t } from '../utils/i18n.js';
 
 // Temporary renderer view state only; never writes layout preferences or remounts content.
 export function createPanelViewState() {
@@ -97,8 +98,12 @@ export function createPanelViewState() {
   return {
     currentId: readonly(currentId),
     maximizedId: readonly(maximizedId),
-    currentLabel: computed(() => toValue(target()?.label) ?? '面板'),
-    actionLabel: computed(() => (maximizedId.value ? '還原面板' : '放大面板')),
+    currentLabel: computed(
+      () => toValue(target()?.label) ?? t('shell.panel.fallback'),
+    ),
+    actionLabel: computed(() =>
+      t(maximizedId.value ? 'shell.panel.restore' : 'shell.panel.maximize'),
+    ),
     select,
     hasTarget: (id = currentId.value) => {
       revision.value;

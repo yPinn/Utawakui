@@ -6,13 +6,14 @@ import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import AppFeatureNoticeDocument from './AppFeatureNoticeDocument.vue';
 import { useFeatureGates } from '../../composables/useFeatureGates.js';
+import { t } from '../../utils/i18n.js';
 
 const { state, pendingFeature, confirmPendingFeature, cancelPendingFeature } =
   useFeatureGates();
 
 const isOpen = computed(() => Boolean(pendingFeature.value));
 const title = computed(
-  () => pendingFeature.value?.documentTitle || '功能啟用說明',
+  () => pendingFeature.value?.documentTitle || t('shell.featureNotice.title'),
 );
 </script>
 
@@ -30,14 +31,14 @@ const title = computed(
       <UiNotice
         v-if="state.confirmError"
         tone="danger"
-        title="功能未啟用"
+        :title="t('shell.featureNotice.disabledTitle')"
         :message="state.confirmError"
         compact
       />
     </AppFeatureNoticeDocument>
     <template v-if="pendingFeature" #footer>
       <UiButton :disabled="state.isSaving" @click="cancelPendingFeature">
-        暫不啟用
+        {{ t('shell.featureNotice.decline') }}
       </UiButton>
       <UiButton
         :icon="SquareCheckBig"
@@ -45,7 +46,13 @@ const title = computed(
         :disabled="state.isSaving"
         @click="confirmPendingFeature"
       >
-        {{ state.isSaving ? '啟用中…' : '確認並啟用' }}
+        {{
+          t(
+            state.isSaving
+              ? 'shell.featureNotice.enabling'
+              : 'shell.featureNotice.confirm',
+          )
+        }}
       </UiButton>
     </template>
   </UiModal>

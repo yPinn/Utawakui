@@ -1,7 +1,8 @@
 import { reactive, readonly } from 'vue';
+import { t } from '../utils/i18n.js';
 
 const CLOSE_ACTIONS = new Set(['tray', 'quit', 'cancel']);
-const RESPONSE_ERROR = '目前無法完成關閉操作，請再試一次。';
+const RESPONSE_ERROR = t('windowClose.responseError');
 
 export function useWindowCloseDecision() {
   const state = reactive({

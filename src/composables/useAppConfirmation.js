@@ -1,7 +1,8 @@
 import { reactive, readonly } from 'vue';
+import { t } from '../utils/i18n.js';
 
-const DEFAULT_CONFIRM_LABEL = '確認';
-const DEFAULT_CANCEL_LABEL = '取消';
+const DEFAULT_CONFIRM_LABEL = t('common.confirm');
+const DEFAULT_CANCEL_LABEL = t('common.cancel');
 const COPY_LIMITS = Object.freeze({
   title: 120,
   subject: 200,

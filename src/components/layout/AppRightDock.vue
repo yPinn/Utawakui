@@ -8,13 +8,14 @@ import {
 } from '../../composables/useAppRightDockWidth.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   expanded: { type: Boolean, required: true },
   maximized: { type: Boolean, default: false },
   performance: { type: Boolean, default: false },
-  label: { type: String, default: '右側區塊' },
-  expandLabel: { type: String, default: '展開右側區塊' },
+  label: { type: String, default: () => t('shell.rightDock.label') },
+  expandLabel: { type: String, default: () => t('shell.rightDock.expand') },
   contentId: { type: String, required: true },
   motionOrigin: {
     type: String,
@@ -71,7 +72,9 @@ function handleResizeKeydown(event) {
     radius="lg"
     stroke="inset"
     :style="rootStyle"
-    :aria-label="expanded ? label : `${label}（已摺疊）`"
+    :aria-label="
+      expanded ? label : t('shell.rightDock.collapsedNamed', { label })
+    "
   >
     <div
       :id="contentId"
@@ -109,10 +112,12 @@ function handleResizeKeydown(event) {
       :aria-valuemin="RIGHT_DOCK_WIDTH_MIN"
       :aria-valuemax="dockWidth.maximum.value"
       :aria-valuenow="dockWidth.width.value"
-      :aria-valuetext="`${dockWidth.width.value} 像素`"
+      :aria-valuetext="
+        t('shell.rightDock.width', { width: dockWidth.width.value })
+      "
       :aria-controls="contentId"
       :aria-expanded="true"
-      aria-label="調整右側區塊寬度；方向鍵調整，Enter、空白鍵或雙擊收合"
+      :aria-label="t('shell.rightDock.resizeHint')"
       @pointerdown="dockWidth.startResize($event)"
       @dblclick="emit('toggleExpanded')"
       @keydown="handleResizeKeydown"

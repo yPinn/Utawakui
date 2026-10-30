@@ -2,6 +2,7 @@
 import UiButton from '../ui/UiButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import { useAppAnnouncement } from '../../composables/useAppAnnouncement.js';
+import { t } from '../../utils/i18n.js';
 
 const { state, version, summary, dismiss } = useAppAnnouncement();
 
@@ -11,16 +12,23 @@ function openReleaseNotes() {
 </script>
 
 <template>
-  <UiModal :open="state.open" title="本次更新" size="notice" @close="dismiss">
+  <UiModal
+    :open="state.open"
+    :title="t('shell.announcement.title')"
+    size="notice"
+    @close="dismiss"
+  >
     <div class="announcement-notice">
       <p class="announcement-notice__version">v{{ version }}</p>
       <p class="announcement-notice__summary">{{ summary }}</p>
 
       <div class="announcement-notice__actions">
         <UiButton variant="ghost" @click="openReleaseNotes">
-          查看發行說明
+          {{ t('shell.announcement.releaseNotes') }}
         </UiButton>
-        <UiButton variant="accent" @click="dismiss">關閉</UiButton>
+        <UiButton variant="accent" @click="dismiss">{{
+          t('common.close')
+        }}</UiButton>
       </div>
     </div>
   </UiModal>

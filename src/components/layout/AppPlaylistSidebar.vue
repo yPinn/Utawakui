@@ -7,6 +7,7 @@ import { useResizeDrag } from '../../composables/useResizeDrag.js';
 import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
+import { t } from '../../utils/i18n.js';
 
 const { tracksById, state: libraryState } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
@@ -68,7 +69,7 @@ function handleResizeKeydown(event) {
   <nav
     class="app-playlist-sidebar"
     data-ui-region="chrome"
-    aria-label="播放清單"
+    :aria-label="t('shell.sidebar.label')"
   >
     <PlaylistSidebar
       id="app-playlist-sidebar-content"
@@ -93,13 +94,18 @@ function handleResizeKeydown(event) {
       :aria-valuemin="64"
       :aria-valuemax="256"
       :aria-valuenow="props.expanded ? 256 : 64"
-      :aria-valuetext="props.expanded ? '已展開，256 像素' : '已摺疊，64 像素'"
+      :aria-valuetext="
+        t(
+          props.expanded
+            ? 'shell.sidebar.expandedValue'
+            : 'shell.sidebar.collapsedValue',
+          { width: props.expanded ? 256 : 64 },
+        )
+      "
       :aria-expanded="props.expanded"
       aria-controls="app-playlist-sidebar-content"
       :aria-label="
-        props.expanded
-          ? '摺疊播放清單側欄；拖曳、Enter、空白鍵或雙擊'
-          : '展開播放清單側欄；拖曳、Enter、空白鍵或雙擊'
+        t(props.expanded ? 'shell.sidebar.collapse' : 'shell.sidebar.expand')
       "
       @pointerdown="startResize"
       @dblclick="emit('toggleExpanded')"

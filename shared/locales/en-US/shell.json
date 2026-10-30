@@ -4,5 +4,80 @@
     "pause": "Pause",
     "play": "Play",
     "next": "Next"
+  },
+  "app": {
+    "reportIssue": "Report this problem",
+    "mainWorkspace": "Main workspace"
+  },
+  "rightDock": {
+    "preparation": "Track prep",
+    "queue": "Play queue",
+    "nowPlaying": "Now playing",
+    "expandNamed": "Expand {panel}",
+    "label": "Side panel",
+    "expand": "Expand side panel",
+    "collapsedNamed": "{label} (collapsed)",
+    "width": "{width} pixels",
+    "resizeHint": "Resize the side panel; arrow keys adjust, Enter, Space or double-click collapse",
+    "expandImport": "Open import",
+    "switchSeparation": "Switch to vocal removal",
+    "collapsePreparation": "Collapse track prep"
+  },
+  "titleBar": {
+    "themeDark": "Switch to dark theme",
+    "themeLight": "Switch to light theme",
+    "performerOpen": "Open prompter",
+    "performerClose": "Close prompter",
+    "settings": "Settings",
+    "settingsUpdate": "Settings (update available)",
+    "resources": "Utawakui resource usage",
+    "resourcesLabel": "Utawakui resource usage; its own processes only",
+    "obsStatus": "OBS streaming/recording status"
+  },
+  "sidebar": {
+    "label": "Playlists",
+    "expandedValue": "Expanded, {width} pixels",
+    "collapsedValue": "Collapsed, {width} pixels",
+    "collapse": "Collapse the playlist sidebar; drag, Enter, Space or double-click",
+    "expand": "Expand the playlist sidebar; drag, Enter, Space or double-click"
+  },
+  "panel": {
+    "fallback": "Panel",
+    "restore": "Restore panel",
+    "maximize": "Maximize panel"
+  },
+  "announcement": {
+    "title": "What's new",
+    "releaseNotes": "View release notes"
+  },
+  "confirmation": {
+    "title": "Confirm"
+  },
+  "featureNotice": {
+    "title": "About this feature",
+    "disabledTitle": "Feature not enabled",
+    "decline": "Not now",
+    "enabling": "Enabling…",
+    "confirm": "Confirm and enable"
+  },
+  "notifications": {
+    "incompleteTitle": "Action not completed",
+    "incompleteMessage": "Go back to where you started and try again."
+  },
+  "recovery": {
+    "title": "Utawakui needs to restart",
+    "message": "The main window cannot continue",
+    "rendererCrashed": "The main window process stopped unexpectedly. Restart to continue.",
+    "rendererUnresponsive": "The main window is not responding. Restart to continue.",
+    "rendererLoadFailed": "The main window failed to load. Restart to continue.",
+    "rendererPreloadFailed": "The main window's secure bridge failed to load. Restart to continue.",
+    "unknown": "The main window hit an unrecoverable error. Restart to continue.",
+    "restart": "Restart Utawakui",
+    "quit": "Quit"
+  },
+  "tray": {
+    "open": "Open {app}",
+    "settings": "Settings",
+    "quit": "Quit {app}"
   }
 }

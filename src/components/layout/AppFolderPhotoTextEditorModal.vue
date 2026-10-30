@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Edits a photo's instant-film line and its caption note, which takes a
 // note's title and body. Drafts commit only on Save; clearing removes text.
 import { computed, shallowRef, watch } from 'vue';
@@ -95,7 +96,7 @@ function cancel() {
 <template>
   <UiModal
     :open="open"
-    title="編輯照片說明"
+    :title="t('folder.photo.editTitle')"
     size="notice"
     :close-disabled="saving"
     @close="cancel"
@@ -135,7 +136,11 @@ function cancel() {
           <UiIconButton
             class="app-folder-photo-text__caption-paper-switch"
             :icon="Palette"
-            :label="`切換說明便條紙色（目前：${captionPaper.label}）`"
+            :label="
+              t('folder.photo.switchCaptionPaper', {
+                paper: captionPaper.label,
+              })
+            "
             variant="overlay"
             tooltip-placement="bottom"
             :disabled="saving"
@@ -149,9 +154,11 @@ function cancel() {
           v-if="isInstant"
           id="app-folder-photo-text-label"
           v-model="labelDraft"
-          label="相框文字"
-          :hint="`顯示在相框下緣，最多 ${PHOTO_LABEL_MAX_LENGTH} 字。`"
-          placeholder="例如：2024 夏・台北"
+          :label="t('folder.photo.frameText')"
+          :hint="
+            t('folder.photo.frameTextHint', { max: PHOTO_LABEL_MAX_LENGTH })
+          "
+          :placeholder="t('folder.photo.frameTextPlaceholder')"
           :maxlength="PHOTO_LABEL_MAX_LENGTH"
           :disabled="saving"
           @keydown.enter="save"
@@ -159,9 +166,9 @@ function cancel() {
         <UiTextField
           id="app-folder-photo-text-caption-title"
           v-model="captionTitleDraft"
-          label="便條標題"
+          :label="t('folder.photo.captionTitle')"
           text-role="title"
-          placeholder="標題（選填）"
+          :placeholder="t('folder.note.titlePlaceholder')"
           :maxlength="PHOTO_CAPTION_TITLE_MAX_LENGTH"
           :disabled="saving"
           @keydown.enter="save"
@@ -170,11 +177,11 @@ function cancel() {
           id="app-folder-photo-text-caption"
           v-model="captionDraft"
           class="app-folder-photo-text__caption"
-          label="便條內容"
+          :label="t('folder.photo.caption')"
           label-hidden
           fill
           resize="none"
-          placeholder="展開照片時顯示在右側。"
+          :placeholder="t('folder.photo.captionPlaceholder')"
           :rows="3"
           :maxlength="PHOTO_CAPTION_MAX_LENGTH"
           :disabled="saving"
@@ -185,19 +192,19 @@ function cancel() {
     <UiNotice v-if="error" :message="error" tone="danger" compact />
     <template #footer>
       <UiHint class="app-folder-photo-text__footnote">
-        清空欄位即可移除文字。
+        {{ t('folder.photo.hint') }}
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
-        取消
+        {{ t('common.cancel') }}
       </UiButton>
       <UiButton
         variant="accent"
         :loading="saving"
-        loading-label="儲存中"
+        :loading-label="t('common.saving')"
         :disabled="saving || !changed"
         @click="save"
       >
-        儲存
+        {{ t('common.save') }}
       </UiButton>
     </template>
   </UiModal>

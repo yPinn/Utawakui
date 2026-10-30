@@ -1,0 +1,33 @@
+{
+  "layout": {
+    "navigation": "Folder 頁面"
+  },
+  "page": {
+    "body": "頁面內容"
+  },
+  "note": {
+    "create": "新增便條",
+    "edit": "編輯便條",
+    "delete": "刪除便條",
+    "fallbackTitle": "頁面便條",
+    "switchPaper": "切換紙色（目前：{paper}）",
+    "title": "標題",
+    "titlePlaceholder": "標題（選填）",
+    "body": "內文",
+    "hint": "標題可留空，右下角可換紙色。",
+    "pages": "便條頁次",
+    "previousPage": "上一頁",
+    "nextPage": "下一頁"
+  },
+  "photo": {
+    "editTitle": "編輯照片說明",
+    "switchCaptionPaper": "切換說明便條紙色（目前：{paper}）",
+    "frameText": "相框文字",
+    "frameTextHint": "顯示在相框下緣，最多 {max} 字。",
+    "frameTextPlaceholder": "例如：2024 夏・台北",
+    "captionTitle": "便條標題",
+    "caption": "便條內容",
+    "captionPlaceholder": "展開照片時顯示在右側。",
+    "hint": "清空欄位即可移除文字。"
+  }
+}

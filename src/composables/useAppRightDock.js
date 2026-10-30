@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
+import { t } from '../utils/i18n.js';
 
 export const RIGHT_DOCK_SURFACE_METADATA = 'metadata';
 export const RIGHT_DOCK_SURFACE_QUEUE = 'queue';
@@ -55,8 +56,12 @@ const topSurface = computed(() => {
 });
 const preparationActionLabel = computed(() => {
   if (!isExpanded.value || topSurface.value !== RIGHT_DOCK_SURFACE_PREPARATION)
-    return '展開匯入';
-  return preparationTab.value === 'import' ? '切換伴奏處理' : '折疊曲目準備';
+    return t('shell.rightDock.expandImport');
+  return t(
+    preparationTab.value === 'import'
+      ? 'shell.rightDock.switchSeparation'
+      : 'shell.rightDock.collapsePreparation',
+  );
 });
 
 function selectPreparationTab(tab) {

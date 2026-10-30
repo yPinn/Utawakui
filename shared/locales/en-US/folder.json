@@ -1,0 +1,33 @@
+{
+  "layout": {
+    "navigation": "Folder pages"
+  },
+  "page": {
+    "body": "Page content"
+  },
+  "note": {
+    "create": "New note",
+    "edit": "Edit note",
+    "delete": "Delete note",
+    "fallbackTitle": "Page note",
+    "switchPaper": "Change paper (current: {paper})",
+    "title": "Title",
+    "titlePlaceholder": "Title (optional)",
+    "body": "Text",
+    "hint": "The title is optional. Change the paper at the bottom right.",
+    "pages": "Note pages",
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
+  },
+  "photo": {
+    "editTitle": "Edit photo text",
+    "switchCaptionPaper": "Change caption paper (current: {paper})",
+    "frameText": "Frame text",
+    "frameTextHint": "Shown along the bottom of the frame, up to {max} characters.",
+    "frameTextPlaceholder": "For example: Summer 2024, Taipei",
+    "captionTitle": "Note title",
+    "caption": "Note text",
+    "captionPlaceholder": "Shown on the right when the photo opens.",
+    "hint": "Clear a field to remove its text."
+  }
+}

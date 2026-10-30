@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Creates or edits one Folder note. Content is drafted locally and committed
 // only on Save, so an overlapping note can never be edited by a stray click.
 import { computed, shallowRef, watch } from 'vue';
@@ -49,7 +50,7 @@ const previewStyle = Object.freeze({
 });
 
 const modalTitle = computed(() =>
-  props.mode === 'create' ? '新增便條' : '編輯便條',
+  t(props.mode === 'create' ? 'folder.note.create' : 'folder.note.edit'),
 );
 const canSave = computed(
   () =>
@@ -113,7 +114,7 @@ function cancel() {
         <UiIconButton
           class="app-folder-note-editor__paper-switch"
           :icon="Palette"
-          :label="`切換紙色（目前：${paperDraft.label}）`"
+          :label="t('folder.note.switchPaper', { paper: paperDraft.label })"
           variant="overlay"
           tooltip-placement="bottom"
           :disabled="saving"
@@ -126,10 +127,10 @@ function cancel() {
           id="app-folder-note-editor-title"
           v-model="titleDraft"
           class="app-folder-note-editor__title-field"
-          label="標題"
+          :label="t('folder.note.title')"
           label-hidden
           text-role="title"
-          placeholder="標題（選填）"
+          :placeholder="t('folder.note.titlePlaceholder')"
           :maxlength="NOTE_TITLE_MAX_LENGTH"
           :disabled="saving"
           @keydown.enter="save"
@@ -138,11 +139,11 @@ function cancel() {
           id="app-folder-note-editor-text"
           v-model="textDraft"
           class="app-folder-note-editor__text-field"
-          label="內文"
+          :label="t('folder.note.body')"
           label-hidden
           fill
           resize="none"
-          placeholder="內文"
+          :placeholder="t('folder.note.body')"
           :rows="3"
           :maxlength="NOTE_TEXT_MAX_LENGTH"
           :disabled="saving"
@@ -153,19 +154,19 @@ function cancel() {
     <UiNotice v-if="error" :message="error" tone="danger" compact />
     <template #footer>
       <UiHint class="app-folder-note-editor__footnote">
-        標題可留空，右下角可換紙色。
+        {{ t('folder.note.hint') }}
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
-        取消
+        {{ t('common.cancel') }}
       </UiButton>
       <UiButton
         variant="accent"
         :loading="saving"
-        loading-label="儲存中"
+        :loading-label="t('common.saving')"
         :disabled="!canSave"
         @click="save"
       >
-        儲存
+        {{ t('common.save') }}
       </UiButton>
     </template>
   </UiModal>

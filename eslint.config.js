@@ -5,7 +5,14 @@ const pluginVue = require('eslint-plugin-vue');
 const eslintConfigPrettier = require('eslint-config-prettier');
 const globals = require('globals');
 
-const I18N_MIGRATED = ['src/components/ui/**/*.{js,vue}'];
+const I18N_MIGRATED = [
+  'src/components/ui/**/*.{js,vue}',
+  'src/components/layout/**/*.{js,vue}',
+  'src/App.vue',
+  'src/composables/{useAppConfirmation,useAppNotifications,useAppRightDock,usePanelView,useWindowCloseDecision}.js',
+  'electron/main/{rendererRecovery,windowsTrayController}.js',
+  'electron/main/windows/mainWindow.js',
+];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =
   'Hardcoded UI text: add it to shared/locales and read it with t() (AGENTS.md "UI Text And Locale").';
@@ -102,7 +109,11 @@ module.exports = [
       ],
       'vue/no-restricted-syntax': [
         'error',
-        { selector: `VText[value=${CJK_TEXT}]`, message: HARDCODED_UI_TEXT },
+        {
+          // Template text only; <script> and <style> bodies are not UI text.
+          selector: `VElement[name!=/^(?:script|style)$/] > VText[value=${CJK_TEXT}]`,
+          message: HARDCODED_UI_TEXT,
+        },
         { selector: `VLiteral[value=${CJK_TEXT}]`, message: HARDCODED_UI_TEXT },
       ],
     },

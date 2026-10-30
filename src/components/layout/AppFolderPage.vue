@@ -2,6 +2,7 @@
 import { nextTick, useTemplateRef, watch } from 'vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import AppLooseLeafEdge from './AppLooseLeafEdge.vue';
+import { t } from '../../utils/i18n.js';
 
 defineOptions({ inheritAttrs: false });
 
@@ -16,7 +17,7 @@ const props = defineProps({
     default: 'document',
     validator: (value) => ['document', 'workspace'].includes(value),
   },
-  bodyLabel: { type: String, default: '頁面內容' },
+  bodyLabel: { type: String, default: () => t('folder.page.body') },
   documentKey: { type: [String, Number], default: undefined },
 });
 
