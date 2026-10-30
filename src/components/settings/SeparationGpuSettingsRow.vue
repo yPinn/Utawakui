@@ -4,6 +4,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   gpuAcceleration: { type: Boolean, default: true },
@@ -21,15 +22,15 @@ const emit = defineEmits(['setGpuAcceleration', 'refreshPreference']);
   <div class="separation-gpu-settings-row">
     <SettingsDocumentItem
       :icon="Cpu"
-      title="人聲分離"
-      guidance="優先使用顯示卡加速；無法使用時改用處理器。"
+      :title="t('capabilities.gpu.title')"
+      :guidance="t('capabilities.gpu.guidance')"
       variant="nested"
     >
       <template #actions>
         <UiCheckbox
           id="separation-gpu-acceleration"
-          label="顯示卡加速（GPU）"
-          aria-label="使用 GPU 加速人聲分離"
+          :label="t('capabilities.gpu.toggle')"
+          :aria-label="t('capabilities.gpu.toggleLabel')"
           :model-value="loaded ? gpuAcceleration : false"
           :disabled="preferenceBusy || reading || !loaded"
           :error="preferenceError"
@@ -38,14 +39,14 @@ const emit = defineEmits(['setGpuAcceleration', 'refreshPreference']);
       </template>
       <template v-if="readError || !loaded" #feedback>
         <UiHint :tone="readError ? 'danger' : 'muted'" role="status">{{
-          readError || '讀取中；尚未確認已儲存設定。'
+          readError || t('capabilities.unconfirmed')
         }}</UiHint>
         <UiButton
           v-if="readError"
           variant="ghost"
           :loading="reading"
           @click="emit('refreshPreference')"
-          >重新讀取</UiButton
+          >{{ t('capabilities.reload') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>

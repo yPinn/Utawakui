@@ -1,6 +1,7 @@
 import { computed, reactive, readonly } from 'vue';
 import { getFeatureGate } from '../constants/featureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 const { recordError } = useAppDiagnostics();
 
@@ -59,7 +60,7 @@ function isFeatureEnabled(featureId) {
 
 async function refreshConfirmations() {
   if (!hasBridge()) {
-    state.readError = '需要重新啟動應用程式才能使用新版功能啟用確認。';
+    state.readError = t('featureGates.restartRequired');
     return state.confirmations;
   }
 
@@ -74,8 +75,8 @@ async function refreshConfirmations() {
       .catch((err) => {
         state.readError = recordError(err, {
           code: 'FEATURE_GATE_LIST_FAILED',
-          title: '功能狀態讀取失敗',
-          message: '目前無法讀取功能狀態，請再試一次。',
+          title: t('featureGates.readFailed'),
+          message: t('featureGates.readFailedMessage'),
           source: 'feature-gates',
           operation: 'list',
           context: { retryable: true },
@@ -146,8 +147,8 @@ function confirmPendingFeature() {
     } catch (err) {
       state.confirmError = recordError(err, {
         code: 'FEATURE_GATE_CONFIRM_FAILED',
-        title: '功能未啟用',
-        message: '目前無法啟用這項功能，請再試一次。',
+        title: t('featureGates.enableFailed'),
+        message: t('featureGates.enableFailedMessage'),
         source: 'feature-gates',
         operation: 'confirm',
         context: { featureId, retryable: true },

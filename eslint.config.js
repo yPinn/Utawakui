@@ -26,6 +26,9 @@ const I18N_MIGRATED = [
   'src/composables/{useLibraryReconciliation,useLibraryTagWriteback,useLibraryMetadataMaintenance,useLibraryStorage,usePlaybackHistory}.js',
   'src/utils/{libraryReconciliation,format}.js',
   'electron/main/{libraryStorageHandlers,libraryMetadataHandlers}.js',
+  'src/components/settings/{SettingsCapabilitiesSection,MusicAnalysisPreferenceRow,YoutubeBrowserCookiesRow,FfmpegSourceModal,MusicAnalysisSettingsRow,SeparationGpuSettingsRow,SettingsFeatureGateRow,SettingsDependencyList,SettingsDependencyActions}.vue',
+  'src/composables/{useFeatureGatePresentation,useFeatureDependencies,useFeatureGateAccess,useFeatureGates,useMusicAnalysisSettings,useSeparationSettings,useYoutubeBrowserCookieSettings}.js',
+  'electron/main/{featureDependencyHandlers,featureGateHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

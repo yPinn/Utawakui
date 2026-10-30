@@ -12,5 +12,11 @@
   "back": "返回",
   "stopping": "停止中",
   "previousPage": "上一頁",
-  "nextPage": "下一頁"
+  "nextPage": "下一頁",
+  "missingDependency": {
+    "providerTitle": "尚未準備外部來源工具",
+    "audioTitle": "尚未準備音訊處理項目",
+    "message": "請到設定準備「{name}」。",
+    "action": "前往設定"
+  }
 }

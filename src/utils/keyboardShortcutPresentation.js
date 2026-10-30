@@ -3,7 +3,7 @@ import {
   SHORTCUT_COMMANDS,
 } from '../../shared/keyboardShortcutContract.mjs';
 import { LEGACY_KEYBOARD_BINDINGS } from '../../shared/keyboardBindingDefinitions.mjs';
-import { t } from './i18n.js';
+import { catalogKey, t } from './i18n.js';
 
 const labels = {
   arrowup: '↑',
@@ -47,11 +47,8 @@ export function shortcutConflictMessage(error, command) {
   return t('shortcuts.conflict.invalid');
 }
 
-// Command and binding ids map to camelCase catalog keys (player.play-pause →
-// playerPlayPause); shared contracts carry ids only, never display copy.
-export function shortcutCatalogKey(id) {
-  return id.replace(/[.-]+(\w)/gu, (_, letter) => letter.toUpperCase());
-}
+// Shared contracts carry ids only, never display copy.
+export const shortcutCatalogKey = catalogKey;
 
 export function shortcutCommandLabel(id) {
   return t(`shortcuts.commands.${shortcutCatalogKey(id)}.label`);

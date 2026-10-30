@@ -1,0 +1,49 @@
+{
+  "gates": {
+    "providerFlow": {
+      "title": "外部來源",
+      "description": "搜尋外部素材並保存至曲庫。"
+    },
+    "lyricsFlow": {
+      "title": "歌詞來源",
+      "description": "查詢外部歌詞／字幕，選擇後保存。"
+    },
+    "audioProcessingFlow": {
+      "title": "音訊處理",
+      "description": "本機分析、轉檔與人聲分離。"
+    },
+    "publicOutputFlow": {
+      "title": "對外輸出",
+      "description": "輸出曲目、歌詞與封面。"
+    },
+    "obsIntegration": {
+      "title": "OBS 連線",
+      "description": "讀取直播／錄影狀態並記錄場次。"
+    }
+  },
+  "status": {
+    "unreadable": "無法讀取",
+    "enabled": "已啟用",
+    "disabled": "未啟用"
+  },
+  "action": {
+    "enabled": "已啟用",
+    "pending": "等待確認",
+    "busy": "處理中",
+    "enable": "查看並啟用",
+    "named": "{action}{feature}"
+  },
+  "noticeLabel": "{feature}的使用範圍說明",
+  "access": {
+    "defaultReason": "請先到設定啟用這項進階功能，再回到剛才的工作流程。",
+    "fallback": "進階功能",
+    "needEnable": "需要啟用{feature}",
+    "enable": "啟用{feature}",
+    "viewSetup": "查看準備項目"
+  },
+  "readFailed": "功能狀態讀取失敗",
+  "readFailedMessage": "目前無法讀取功能狀態，請再試一次。",
+  "restartRequired": "需要重新啟動應用程式才能使用新版功能啟用確認。",
+  "enableFailed": "功能未啟用",
+  "enableFailedMessage": "目前無法啟用這項功能，請再試一次。"
+}

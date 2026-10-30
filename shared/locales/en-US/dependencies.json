@@ -1,0 +1,123 @@
+{
+  "title": {
+    "ffmpeg": "Audio conversion tool",
+    "ytdlp": "Online source download tool"
+  },
+  "description": {
+    "ffmpeg": "Used for local audio processing.",
+    "ytdlp": "Saves chosen sources to the local library.",
+    "model": "Used for local vocal separation.",
+    "other": "Download it first."
+  },
+  "value": {
+    "systemFfmpeg": "Using the system-installed version",
+    "ytdlp": "Saves external sources to the local library",
+    "ffmpeg": "Supports audio conversion and format reading",
+    "model": "Used when creating vocal separation results"
+  },
+  "status": {
+    "updateAvailable": "Update available",
+    "available": "Available",
+    "usingSystem": "Using system version",
+    "prepared": "Ready",
+    "preparing": "Preparing",
+    "systemAvailable": "System version available",
+    "needsMigration": "Needs tidying",
+    "missing": "Not set up",
+    "unreadable": "Unavailable"
+  },
+  "progress": {
+    "starting": "Preparing",
+    "downloading": "Downloading",
+    "verifying": "Verifying",
+    "installing": "Installing",
+    "ready": "Done",
+    "confirmed": "Confirmed",
+    "downloadPercent": "Downloading {percent}%",
+    "working": "Working"
+  },
+  "actions": {
+    "refresh": "Check again",
+    "redownload": "Download again",
+    "redownloading": "Downloading again",
+    "repair": "Repair",
+    "repairing": "Repairing",
+    "remove": "Remove",
+    "removing": "Removing",
+    "ffmpegSource": "FFmpeg source settings",
+    "updateYtdlp": "Update download tool",
+    "ytdlpReady": "Download tool ready",
+    "prepareNamed": "Set up {name}",
+    "updateNamed": "Update {name}",
+    "preparedNamed": "{name} ready",
+    "preparingNamed": "Setting up {name}",
+    "menuNamed": "Options for {name}",
+    "noActions": "No advanced actions available",
+    "retry": "Retry"
+  },
+  "summary": {
+    "busy": "{count} working",
+    "attention": "{count} need attention",
+    "unavailable": "{count} not available yet",
+    "ready": "Ready",
+    "loading": "Loading",
+    "line": "Tools and models · {count} items · {status}"
+  },
+  "notify": {
+    "fallbackName": "Component",
+    "prepare": {
+      "running": "Setting up {name}",
+      "failed": "{name} setup not completed",
+      "done": "{name} ready"
+    },
+    "repair": {
+      "running": "Repairing {name}",
+      "failed": "{name} repair not completed",
+      "done": "{name} repaired"
+    },
+    "remove": {
+      "running": "Removing {name}",
+      "failed": "{name} removal not completed",
+      "done": "{name} removed"
+    },
+    "viewSettings": "View settings",
+    "retry": "Retry",
+    "restartTitle": "Restart required",
+    "restartMessage": "Restart Utawakui and try again.",
+    "readFailed": "Couldn't read setup status",
+    "reload": "Reload",
+    "tryAgain": "Try again.",
+    "prepareFailed": "Setup failed",
+    "removeFailed": "Couldn't remove the item",
+    "repairFailed": "Couldn't repair the item"
+  },
+  "ffmpeg": {
+    "title": "Audio conversion tool",
+    "recheck": "Check tools again",
+    "useSystem": "Use this version",
+    "prepareAndUse": "Set up and use",
+    "intro": "Choose a tool source, then select Use this version or Set up and use.",
+    "sourceLegend": "Tool source",
+    "system": "FFmpeg on this computer",
+    "managed": "Version managed by Utawakui",
+    "unconfirmed": "Tool settings not confirmed; select Check tools again at the top.",
+    "versionAndLicense": "Version and license information",
+    "switchFailedTitle": "Couldn't switch the tool source",
+    "detectRestart": "System FFmpeg can't be checked. Restart and try again.",
+    "detectRetry": "System FFmpeg can't be checked. Check again.",
+    "downloading": "Downloading {percent}%",
+    "preparing": "Preparing…",
+    "unreadable": "Unavailable",
+    "checking": "Checking",
+    "applied": "In use",
+    "available": "Available",
+    "notFound": "No usable version found",
+    "notChecked": "Not checked yet",
+    "systemNotChecked": "System FFmpeg not checked yet",
+    "managedNotDownloaded": "Not downloaded yet; select Set up and use to download it.",
+    "managedDefault": "Downloaded and managed by Utawakui; downloads first if not installed.",
+    "switchFailed": "Couldn't switch the FFmpeg source",
+    "tryAgain": "Try again.",
+    "errorNamed": "{title}: {message}"
+  }
+}

@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // FFmpeg source picker — system-installed vs the app-managed Gyan download.
 // Native choices share UiRadioGroup with the device picker. Selection edits
 // the local draft; only the explicit apply action may change or download tools.
@@ -66,13 +67,13 @@ async function redetect() {
   try {
     await refreshDependencies?.();
     if (!hasDetectBridge()) {
-      detectionError.value = '無法檢查系統 FFmpeg，請重新啟動後再試。';
+      detectionError.value = t('dependencies.ffmpeg.detectRestart');
       return;
     }
     detection.value = await window.Utawakui.detectSystemFfmpeg();
     detectionError.value = '';
   } catch {
-    detectionError.value = '無法檢查系統 FFmpeg，請重新檢查。';
+    detectionError.value = t('dependencies.ffmpeg.detectRetry');
   } finally {
     isDetecting.value = false;
   }
@@ -114,24 +115,24 @@ const managedProgressLabel = computed(() => {
   const value = progress.value;
   if (!value) return '';
   if (value.stage === 'downloading' && Number.isFinite(value.percent)) {
-    return `下載中 ${value.percent}%`;
+    return t('dependencies.ffmpeg.downloading', { percent: value.percent });
   }
-  return '準備中…';
+  return t('dependencies.ffmpeg.preparing');
 });
 const systemSourceCaption = computed(() => {
-  if (detectionError.value) return '無法讀取';
-  if (isDetecting.value) return '檢查中';
+  if (detectionError.value) return t('dependencies.ffmpeg.unreadable');
+  if (isDetecting.value) return t('dependencies.ffmpeg.checking');
   if (detection.value?.ok)
     return currentSource.value === 'system' &&
       currentDependency.value?.installed
-      ? '已套用'
-      : '可使用';
-  if (detection.value) return '未找到可用版本';
-  return '尚未檢查';
+      ? t('dependencies.ffmpeg.applied')
+      : t('dependencies.ffmpeg.available');
+  if (detection.value) return t('dependencies.ffmpeg.notFound');
+  return t('dependencies.ffmpeg.notChecked');
 });
 const systemSourceDetail = computed(() => {
-  if (!detection.value) return '尚未檢查系統 FFmpeg';
-  if (!detection.value.ok) return '未找到可用版本';
+  if (!detection.value) return t('dependencies.ffmpeg.systemNotChecked');
+  if (!detection.value.ok) return t('dependencies.ffmpeg.notFound');
   return [
     detection.value.path,
     detection.value.version && `v${detection.value.version}`,
@@ -142,13 +143,13 @@ const systemSourceDetail = computed(() => {
 const managedSourceCaption = computed(() => {
   if (managedProgressLabel.value) return managedProgressLabel.value;
   if (currentSource.value === 'managed' && currentDependency.value?.installed)
-    return '已套用';
+    return t('dependencies.ffmpeg.applied');
   if (
     currentSource.value === 'managed' &&
     currentDependency.value?.installed === false
   )
-    return '尚未下載；按「準備並使用」後下載。';
-  return '由 Utawakui 下載並管理；尚未安裝時會先下載。';
+    return t('dependencies.ffmpeg.managedNotDownloaded');
+  return t('dependencies.ffmpeg.managedDefault');
 });
 const managedSourceDetail = computed(() =>
   [
@@ -182,8 +183,8 @@ async function chooseSystem() {
   } catch (err) {
     switchError.value = recordError(err, {
       code: 'FFMPEG_SOURCE_SWITCH_FAILED',
-      title: '無法切換 FFmpeg 來源',
-      message: '請再試一次。',
+      title: t('dependencies.ffmpeg.switchFailed'),
+      message: t('dependencies.ffmpeg.tryAgain'),
       source: 'settings',
       operation: 'set-ffmpeg-source',
       context: { retryable: true },
@@ -206,8 +207,8 @@ async function chooseManaged() {
   } catch (err) {
     switchError.value = recordError(err, {
       code: 'FFMPEG_SOURCE_SWITCH_FAILED',
-      title: '無法切換 FFmpeg 來源',
-      message: '請再試一次。',
+      title: t('dependencies.ffmpeg.switchFailed'),
+      message: t('dependencies.ffmpeg.tryAgain'),
       source: 'settings',
       operation: 'set-ffmpeg-source',
       context: { retryable: true },
@@ -221,7 +222,7 @@ async function chooseManaged() {
 <template>
   <UiModal
     :open="open"
-    title="音訊轉換工具"
+    :title="t('dependencies.ffmpeg.title')"
     size="notice"
     max-block-size="small"
     @close="emit('close')"
@@ -229,7 +230,7 @@ async function chooseManaged() {
     <template #header-actions>
       <UiIconButton
         :icon="RefreshCw"
-        label="重新檢查工具"
+        :label="t('dependencies.ffmpeg.recheck')"
         :loading="isDetecting"
         :disabled="isBusy"
         @click="redetect"
@@ -244,31 +245,33 @@ async function chooseManaged() {
         "
         @click="selectedSource === 'system' ? chooseSystem() : chooseManaged()"
         >{{
-          selectedSource === 'system' ? '使用此版本' : '準備並使用'
+          selectedSource === 'system'
+            ? t('dependencies.ffmpeg.useSystem')
+            : t('dependencies.ffmpeg.prepareAndUse')
         }}</UiButton
       >
     </template>
     <div ref="content" class="ffmpeg-source-modal" tabindex="-1">
       <p class="ffmpeg-source-modal__description">
-        選擇工具來源，再按「使用此版本」或「準備並使用」套用。
+        {{ t('dependencies.ffmpeg.intro') }}
       </p>
       <UiRadioGroup
         v-model="selectedSource"
         name="ffmpeg-source"
-        legend="工具來源"
+        :legend="t('dependencies.ffmpeg.sourceLegend')"
         legend-hidden
         :disabled="isBusy || !currentSource"
         :items="[
           {
             id: 'system',
-            label: '電腦上的 FFmpeg',
+            label: t('dependencies.ffmpeg.system'),
             description: systemSourceCaption,
             icon: Settings,
             disabled: !isSystemSelectable,
           },
           {
             id: 'managed',
-            label: 'Utawakui 管理版本',
+            label: t('dependencies.ffmpeg.managed'),
             description: managedSourceCaption,
             icon: Download,
           },
@@ -284,10 +287,10 @@ async function chooseManaged() {
           >
         </template>
       </UiRadioGroup>
-      <UiHint v-if="!currentSource" tone="warning"
-        >尚未確認工具設定，請按頂部「重新檢查工具」。</UiHint
-      >
-      <UiDisclosure label="版本與授權資訊">
+      <UiHint v-if="!currentSource" tone="warning">{{
+        t('dependencies.ffmpeg.unconfirmed')
+      }}</UiHint>
+      <UiDisclosure :label="t('dependencies.ffmpeg.versionAndLicense')">
         <UiHint>{{
           selectedSource === 'system' ? systemSourceDetail : managedSourceDetail
         }}</UiHint>
@@ -306,7 +309,7 @@ async function chooseManaged() {
       <UiNotice
         v-if="switchError"
         tone="danger"
-        title="無法切換工具來源"
+        :title="t('dependencies.ffmpeg.switchFailedTitle')"
         :message="switchError"
         compact
       />

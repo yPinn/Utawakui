@@ -4,6 +4,7 @@ import { FEATURE_DEPENDENCIES } from '../constants/featureDependencies.js';
 import { useTaskNotification } from './useTaskNotification.js';
 import { useAppView } from './useAppView.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 const { recordError } = useAppDiagnostics();
 
@@ -20,13 +21,14 @@ const state = reactive({
 
 const taskFeedback = new Map();
 const STAGES = {
-  starting: '準備中',
-  downloading: '下載中',
-  verifying: '驗證中',
-  installing: '安裝中',
-  ready: '確認完成',
+  starting: t('dependencies.progress.starting'),
+  downloading: t('dependencies.progress.downloading'),
+  verifying: t('dependencies.progress.verifying'),
+  installing: t('dependencies.progress.installing'),
+  ready: t('dependencies.progress.confirmed'),
 };
-const OPERATIONS = { prepare: '準備', repair: '修復', remove: '移除' };
+const dependencyNotice = (operation, outcome, name) =>
+  t(`dependencies.notify.${operation}.${outcome}`, { name });
 function isDependencyBusy(id) {
   return (
     state.preparingIds.has(id) ||
@@ -35,13 +37,13 @@ function isDependencyBusy(id) {
 }
 function beginFeedback(dependencyId, operation) {
   const dependency = FEATURE_DEPENDENCIES.find(({ id }) => id === dependencyId);
-  const name = dependency?.name || '功能元件';
+  const name = dependency?.name || t('dependencies.notify.fallbackName');
   const section =
     dependency?.featureId === 'provider-flow' ? 'sources' : 'processing';
   const openSettings = () => useAppView().openSettings(section);
   const feedback = useTaskNotification({
     key: notificationKey.taskDependency(dependencyId),
-    title: `${name}${OPERATIONS[operation]}中`,
+    title: dependencyNotice(operation, 'running', name),
     action: openSettings,
   });
   taskFeedback.set(dependencyId, feedback);
@@ -50,10 +52,13 @@ function beginFeedback(dependencyId, operation) {
       feedback.finish(
         error
           ? {
-              title: `${name}${OPERATIONS[operation]}未完成`,
+              title: dependencyNotice(operation, 'failed', name),
               message: error.message,
               tone: 'danger',
-              actionLabel: operation === 'remove' ? '查看設定' : '重試',
+              actionLabel:
+                operation === 'remove'
+                  ? t('dependencies.notify.viewSettings')
+                  : t('dependencies.notify.retry'),
               action:
                 operation === 'remove'
                   ? openSettings
@@ -62,7 +67,7 @@ function beginFeedback(dependencyId, operation) {
                         ? repairDependency(dependencyId)
                         : prepareDependency(dependencyId),
             }
-          : { title: `${name}已${OPERATIONS[operation]}` },
+          : { title: dependencyNotice(operation, 'done', name) },
       );
       if (taskFeedback.get(dependencyId) === feedback)
         taskFeedback.delete(dependencyId);
@@ -110,7 +115,7 @@ function applyDependencyProgress(payload = {}) {
   taskFeedback
     .get(payload.dependencyId)
     ?.progress(
-      STAGES[payload.stage] || '處理中',
+      STAGES[payload.stage] || t('dependencies.progress.working'),
       Number.isFinite(payload.percent) ? payload.percent : null,
     );
   state.progressById = {
@@ -130,14 +135,17 @@ async function refreshDependencies() {
   if (state.preparingIds.size || state.actionIds.size) return;
   const current = ++readRevision;
   if (!hasBridge()) {
-    state.error = recordDependencyFailure('請重新啟動 Utawakui 後再試。', {
-      code: 'BRIDGE_UNAVAILABLE',
-      severity: 'warning',
-      title: '需要重新啟動',
-      source: 'feature-dependencies',
-      operation: 'refresh',
-      message: '請重新啟動 Utawakui 後再試。',
-    });
+    state.error = recordDependencyFailure(
+      t('dependencies.notify.restartMessage'),
+      {
+        code: 'BRIDGE_UNAVAILABLE',
+        severity: 'warning',
+        title: t('dependencies.notify.restartTitle'),
+        source: 'feature-dependencies',
+        operation: 'refresh',
+        message: t('dependencies.notify.restartMessage'),
+      },
+    );
     return;
   }
 
@@ -152,11 +160,11 @@ async function refreshDependencies() {
     if (current !== readRevision) return;
     state.error = recordDependencyFailure(err, {
       code: 'FEATURE_DEPENDENCY_STATUS_FAILED',
-      title: '無法讀取準備狀態',
+      title: t('dependencies.notify.readFailed'),
       source: 'feature-dependencies',
       operation: 'refresh',
-      actionLabel: '重新讀取',
-      message: '請再試一次。',
+      actionLabel: t('dependencies.notify.reload'),
+      message: t('dependencies.notify.tryAgain'),
     });
   } finally {
     if (current === readRevision) state.isLoading = false;
@@ -183,12 +191,12 @@ async function prepareDependency(dependencyId) {
   } catch (err) {
     state.error = recordDependencyFailure(err, {
       code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
-      title: '準備失敗',
+      title: t('dependencies.notify.prepareFailed'),
       source: 'feature-dependencies',
       operation: 'prepare',
-      actionLabel: '重試',
+      actionLabel: t('dependencies.notify.retry'),
       context: { dependencyId },
-      message: '請再試一次。',
+      message: t('dependencies.notify.tryAgain'),
     });
     feedback.finish(state.errorsById[dependencyId]);
   } finally {
@@ -206,15 +214,18 @@ async function runDependencyAction({
   actionLabel,
 }) {
   if (!hasDependencyActionBridge(bridgeMethod)) {
-    state.error = recordDependencyFailure('請重新啟動 Utawakui 後再試。', {
-      code: 'BRIDGE_UNAVAILABLE',
-      severity: 'warning',
-      title: '需要重新啟動',
-      source: 'feature-dependencies',
-      operation,
-      context: { dependencyId },
-      message: '請重新啟動 Utawakui 後再試。',
-    });
+    state.error = recordDependencyFailure(
+      t('dependencies.notify.restartMessage'),
+      {
+        code: 'BRIDGE_UNAVAILABLE',
+        severity: 'warning',
+        title: t('dependencies.notify.restartTitle'),
+        source: 'feature-dependencies',
+        operation,
+        context: { dependencyId },
+        message: t('dependencies.notify.restartMessage'),
+      },
+    );
     return;
   }
 
@@ -242,7 +253,7 @@ async function runDependencyAction({
       operation,
       actionLabel,
       context: { dependencyId },
-      message: '請再試一次。',
+      message: t('dependencies.notify.tryAgain'),
     });
     feedback.finish(state.errorsById[dependencyId]);
   } finally {
@@ -257,8 +268,8 @@ async function removeDependency(dependencyId) {
     actionKey: `remove:${dependencyId}`,
     bridgeMethod: 'removeFeatureDependency',
     operation: 'remove',
-    title: '移除項目失敗',
-    actionLabel: '重新讀取',
+    title: t('dependencies.notify.removeFailed'),
+    actionLabel: t('dependencies.notify.reload'),
   });
 }
 
@@ -268,8 +279,8 @@ async function repairDependency(dependencyId) {
     actionKey: `repair:${dependencyId}`,
     bridgeMethod: 'repairFeatureDependency',
     operation: 'repair',
-    title: '修復項目失敗',
-    actionLabel: '重試',
+    title: t('dependencies.notify.repairFailed'),
+    actionLabel: t('dependencies.notify.retry'),
   });
 }
 

@@ -9,6 +9,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import AppFeatureNoticeDocument from '../layout/AppFeatureNoticeDocument.vue';
 import { getFeatureGate } from '../../constants/featureGates.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   gate: { type: Object, required: true },
@@ -50,7 +51,9 @@ const showTools = computed(
 const isNoticeOpen = shallowRef(false);
 const noticeFeature = computed(() => getFeatureGate(props.gate.id));
 const hasNotice = computed(() => Boolean(noticeFeature.value));
-const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
+const noticeLabel = computed(() =>
+  t('featureGates.noticeLabel', { feature: props.gate.title }),
+);
 </script>
 
 <template>
@@ -97,8 +100,18 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
           :icon="gate.isBusy ? Loader2 : Plus"
           variant="accent"
           :disabled="disableEnableAction"
-          :aria-label="`${actionLabel}${gate.title}`"
-          :title="`${actionLabel}${gate.title}`"
+          :aria-label="
+            t('featureGates.action.named', {
+              action: actionLabel,
+              feature: gate.title,
+            })
+          "
+          :title="
+            t('featureGates.action.named', {
+              action: actionLabel,
+              feature: gate.title,
+            })
+          "
           @click="emit('enable', gate.id)"
         >
           {{ actionLabel }}

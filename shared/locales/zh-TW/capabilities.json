@@ -1,0 +1,64 @@
+{
+  "groups": {
+    "sources": "外部來源與歌詞",
+    "processing": "本機音訊處理",
+    "output": "公開輸出與 OBS"
+  },
+  "unreadableTitle": "功能狀態無法讀取",
+  "reload": "重新讀取",
+  "unconfirmed": "讀取中；尚未確認已儲存設定。",
+  "confirm": {
+    "removeBpmTitle": "移除 BPM 分析元件？",
+    "removeBpmMessage": "BPM 分析元件會被移除。",
+    "removeBpmDetail": "歌曲與既有分析資料都會保留，之後可以重新準備。",
+    "removeAcousticTitle": "移除歌詞音訊輔助元件？",
+    "removeAcousticMessage": "只移除此能力的運算元件。",
+    "removeAcousticDetail": "歌曲、歌詞、人工校時與既有輔助資料都會保留。",
+    "removeObsPasswordTitle": "移除 OBS 密碼？",
+    "removeObsPasswordMessage": "已儲存的 OBS 密碼會被移除。",
+    "removeObsPasswordDetail": "下次連線時需要重新輸入密碼。",
+    "removePassword": "移除密碼",
+    "removeItemTitle": "移除「{name}」？",
+    "removeItemMessage": "移除後，此功能會暫時無法使用。",
+    "removeItemDetail": "需要時可以重新準備。",
+    "removeComponent": "移除元件"
+  },
+  "bpm": {
+    "title": "歌曲速度與節拍（BPM）",
+    "guidance": "匯入後在本機分析，不上傳歌曲。",
+    "auto": "自動分析",
+    "autoLabel": "匯入歌曲後自動分析 BPM 與節拍",
+    "readFailed": "目前無法讀取自動分析設定，請重新讀取。",
+    "saveFailed": "目前無法儲存自動分析設定，已恢復原設定。",
+    "componentTitle": "BPM 分析元件",
+    "componentDescription": "分析歌曲速度與節拍所需的工具。",
+    "reloadStatus": "重新讀取 BPM 狀態",
+    "name": "BPM 分析",
+    "unreadable": "無法讀取",
+    "preparing": "準備中",
+    "progressNamed": "{stage} {percent}%",
+    "available": "可使用",
+    "needsRepair": "需要修復",
+    "missing": "未準備",
+    "repairNamed": "修復 BPM 分析",
+    "prepareNamed": "準備 BPM 分析",
+    "repair": "修復",
+    "remove": "移除"
+  },
+  "cookies": {
+    "title": "瀏覽器登入資料",
+    "guidance": "部分影片需要登入才能下載。開啟後，下載失敗時會讀取本機 Chrome、Edge 或 Firefox 的登入資料，以你的 YouTube 帳號重試。",
+    "allow": "允許使用",
+    "allowLabel": "下載失敗時使用瀏覽器的 YouTube 登入資料重試",
+    "readFailed": "目前無法讀取登入資料設定，請重新讀取。",
+    "saveFailed": "目前無法儲存登入資料設定，已恢復原設定。"
+  },
+  "gpu": {
+    "title": "人聲分離",
+    "guidance": "優先使用顯示卡加速；無法使用時改用處理器。",
+    "toggle": "顯示卡加速（GPU）",
+    "toggleLabel": "使用 GPU 加速人聲分離",
+    "readFailed": "目前無法讀取 GPU 加速設定，請重新讀取。",
+    "saveFailed": "目前無法儲存 GPU 加速設定，已恢復原設定。"
+  }
+}

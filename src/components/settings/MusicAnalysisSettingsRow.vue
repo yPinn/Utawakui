@@ -5,6 +5,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   capability: { type: Object, default: null },
@@ -20,13 +21,20 @@ const emit = defineEmits(['prepare', 'repair', 'remove', 'refreshCapability']);
 const installed = computed(() => props.capability?.installed === true);
 const damaged = computed(() => props.capability?.status === 'damaged');
 const status = computed(() => {
-  if (props.capabilityReadError) return '無法讀取';
+  if (props.capabilityReadError) return t('capabilities.bpm.unreadable');
   if (props.capabilityBusy)
-    return `${props.stageLabel || '準備中'}${Number.isFinite(props.progressPercent) ? ` ${Math.round(props.progressPercent)}%` : ''}`;
-  if (props.capability?.status === 'ready') return '可使用';
-  if (damaged.value) return '需要修復';
-  if (props.capability?.status === 'missing') return '未準備';
-  return '無法讀取';
+    return Number.isFinite(props.progressPercent)
+      ? t('capabilities.bpm.progressNamed', {
+          stage: props.stageLabel || t('capabilities.bpm.preparing'),
+          percent: Math.round(props.progressPercent),
+        })
+      : props.stageLabel || t('capabilities.bpm.preparing');
+  if (props.capability?.status === 'ready')
+    return t('capabilities.bpm.available');
+  if (damaged.value) return t('capabilities.bpm.needsRepair');
+  if (props.capability?.status === 'missing')
+    return t('capabilities.bpm.missing');
+  return t('capabilities.bpm.unreadable');
 });
 const statusTone = computed(() => {
   if (props.capabilityReadError) return 'warning';
@@ -41,23 +49,30 @@ const actionItem = computed(() => {
   const canRemove = props.capability?.canRemove === true;
   const primaryAction = damaged.value
     ? canRepair
-      ? { icon: Wrench, label: '修復 BPM 分析' }
+      ? { icon: Wrench, label: t('capabilities.bpm.repairNamed') }
       : null
     : !installed.value && canPrepare
-      ? { icon: Download, label: '準備 BPM 分析' }
+      ? { icon: Download, label: t('capabilities.bpm.prepareNamed') }
       : null;
   const advancedActions = [
     ...(!damaged.value && installed.value && canRepair
-      ? [{ id: 'repair', icon: Wrench, label: '修復' }]
+      ? [{ id: 'repair', icon: Wrench, label: t('capabilities.bpm.repair') }]
       : []),
     ...(installed.value && canRemove
-      ? [{ id: 'remove', icon: Trash2, label: '移除', intent: 'danger' }]
+      ? [
+          {
+            id: 'remove',
+            icon: Trash2,
+            label: t('capabilities.bpm.remove'),
+            intent: 'danger',
+          },
+        ]
       : []),
   ].map((action) => ({ ...action, disabled: props.capabilityBusy }));
 
   return {
     id: 'music-analysis',
-    title: 'BPM 分析',
+    title: t('capabilities.bpm.name'),
     actionIcon: primaryAction?.icon ?? null,
     actionLabel: primaryAction?.label ?? '',
     actionDisabled: props.capabilityBusy,
@@ -83,8 +98,8 @@ function handleAdvancedAction({ action }) {
   <div class="music-analysis-settings-row">
     <SettingsDocumentItem
       :icon="Cpu"
-      title="BPM 分析元件"
-      description="分析歌曲速度與節拍所需的工具。"
+      :title="t('capabilities.bpm.componentTitle')"
+      :description="t('capabilities.bpm.componentDescription')"
       :status="status"
       :status-tone="statusTone"
       variant="nested"
@@ -109,7 +124,7 @@ function handleAdvancedAction({ action }) {
           variant="ghost"
           :disabled="capabilityBusy"
           @click="emit('refreshCapability')"
-          >重新讀取 BPM 狀態</UiButton
+          >{{ t('capabilities.bpm.reloadStatus') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>

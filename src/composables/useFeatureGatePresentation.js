@@ -17,6 +17,7 @@ import { FEATURE_GATES } from '../constants/featureGates.js';
 import { useFeatureDependencies } from './useFeatureDependencies.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
+import { catalogKey, t } from '../utils/i18n.js';
 
 // Feature-gate/dependency row presentation for SettingsCapabilitiesSection.vue: pure
 // data-shaping (labels, status/tone, workflow items) with no template ref or
@@ -37,28 +38,9 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
 
   const enablingFeatureId = shallowRef(null);
 
-  const FEATURE_GATE_COPY = {
-    'provider-flow': {
-      title: '外部來源',
-      description: '搜尋外部素材並保存至曲庫。',
-    },
-    'lyrics-flow': {
-      title: '歌詞來源',
-      description: '查詢外部歌詞／字幕，選擇後保存。',
-    },
-    'audio-processing-flow': {
-      title: '音訊處理',
-      description: '本機分析、轉檔與人聲分離。',
-    },
-    'public-output-flow': {
-      title: '對外輸出',
-      description: '輸出曲目、歌詞與封面。',
-    },
-    'obs-integration': {
-      title: 'OBS 連線',
-      description: '讀取直播／錄影狀態並記錄場次。',
-    },
-  };
+  // Settings summary copy per gate; notice bodies stay in shared/featureGates.json.
+  const gateCopy = (gateId, field) =>
+    t(`featureGates.gates.${catalogKey(gateId)}.${field}`);
 
   const DEPENDENCY_ADVANCED_ACTIONS = Object.freeze({
     REFRESH: 'refresh',
@@ -67,11 +49,11 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
   });
 
   const DEPENDENCY_PROGRESS_LABELS = Object.freeze({
-    starting: '準備中',
-    downloading: '下載中',
-    verifying: '驗證中',
-    installing: '安裝中',
-    ready: '完成',
+    starting: t('dependencies.progress.starting'),
+    downloading: t('dependencies.progress.downloading'),
+    verifying: t('dependencies.progress.verifying'),
+    installing: t('dependencies.progress.installing'),
+    ready: t('dependencies.progress.ready'),
   });
 
   function isDependencyActionRunning(dependencyId, action) {
@@ -83,15 +65,15 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
       dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS &&
       dependency.source === 'system'
     ) {
-      return '使用系統安裝版本';
+      return t('dependencies.value.systemFfmpeg');
     }
     if (dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL) {
-      return '保存外部來源到本機曲庫';
+      return t('dependencies.value.ytdlp');
     }
     if (dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS) {
-      return '支援音訊轉換與格式讀取';
+      return t('dependencies.value.ffmpeg');
     }
-    if (dependency.kind === 'model') return '產生人聲分離結果時使用';
+    if (dependency.kind === 'model') return t('dependencies.value.model');
     return dependency.name || '';
   }
 
@@ -112,7 +94,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
       {
         id: DEPENDENCY_ADVANCED_ACTIONS.REFRESH,
         icon: RefreshCw,
-        label: '重新檢查',
+        label: t('dependencies.actions.refresh'),
         disabled: featureDependencyState.isLoading || isBusy,
       },
       ...(installed
@@ -122,17 +104,19 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
               icon: isYtdlp ? Download : Wrench,
               label: isRepairing
                 ? isYtdlp
-                  ? '重新下載中'
-                  : '修復中'
+                  ? t('dependencies.actions.redownloading')
+                  : t('dependencies.actions.repairing')
                 : isYtdlp
-                  ? '重新下載'
-                  : '修復',
+                  ? t('dependencies.actions.redownload')
+                  : t('dependencies.actions.repair'),
               disabled: isBusy,
             },
             {
               id: DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
               icon: Trash2,
-              label: isRemoving ? '移除中' : '移除',
+              label: isRemoving
+                ? t('dependencies.actions.removing')
+                : t('dependencies.actions.remove'),
               intent: 'danger',
               disabled: isBusy,
             },
@@ -144,9 +128,14 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
   function dependencyProgressLabel(progress) {
     if (!progress) return '';
     if (progress.stage === 'downloading' && Number.isFinite(progress.percent)) {
-      return `下載 ${progress.percent}%`;
+      return t('dependencies.progress.downloadPercent', {
+        percent: progress.percent,
+      });
     }
-    return DEPENDENCY_PROGRESS_LABELS[progress.stage] || '準備中';
+    return (
+      DEPENDENCY_PROGRESS_LABELS[progress.stage] ||
+      t('dependencies.progress.starting')
+    );
   }
 
   function dependencyWorkflowItem(dependency) {
@@ -176,27 +165,32 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
     );
     const isBusy = preparing || isRemoving || isRepairing || Boolean(progress);
     const title = isFfmpeg
-      ? '音訊轉換工具'
+      ? t('dependencies.title.ffmpeg')
       : isYtdlp
-        ? '線上來源下載工具'
+        ? t('dependencies.title.ytdlp')
         : dependency.name;
-    const status = progress
-      ? dependencyProgressLabel(progress)
+    // Codes drive ordering; labels are derived from them.
+    const statusCode = progress
+      ? 'progress'
       : updateAvailable
-        ? '可更新'
+        ? 'updateAvailable'
         : installed
           ? isYtdlp
-            ? '可使用'
+            ? 'available'
             : usingSystemFfmpeg
-              ? '使用系統版本'
-              : '已準備'
+              ? 'usingSystem'
+              : 'prepared'
           : preparing
-            ? '準備中'
+            ? 'preparing'
             : systemFfmpegAvailable
-              ? '可用系統版本'
+              ? 'systemAvailable'
               : current.canMigrate
-                ? '待整理'
-                : '未準備';
+                ? 'needsMigration'
+                : 'missing';
+    const status =
+      statusCode === 'progress'
+        ? dependencyProgressLabel(progress)
+        : t(`dependencies.status.${statusCode}`);
     return {
       ...dependency,
       notice: featureDependencyState.errorsById?.[dependency.id] ?? null,
@@ -210,14 +204,17 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
           (updateAvailable || (!installed && !systemFfmpegAvailable))),
       title,
       description: isFfmpeg
-        ? '供本機音訊處理使用。'
+        ? t('dependencies.description.ffmpeg')
         : isYtdlp
-          ? '將選定來源儲存到本機曲庫。'
+          ? t('dependencies.description.ytdlp')
           : isModel
-            ? '供本機人聲分離使用。'
-            : '需先下載。',
+            ? t('dependencies.description.model')
+            : t('dependencies.description.other'),
       value: dependencyValueLabel(current),
-      status: featureDependencyState.readError ? '無法讀取' : status,
+      status: featureDependencyState.readError
+        ? t('dependencies.status.unreadable')
+        : status,
+      statusCode,
       statusTone: featureDependencyState.readError
         ? 'warning'
         : progress
@@ -247,19 +244,19 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
       actionDisabled: isBusy || Boolean(featureDependencyState.readError),
       actionLabel: isFfmpeg
         ? installed
-          ? 'FFmpeg 來源設定'
-          : `準備${title}`
+          ? t('dependencies.actions.ffmpegSource')
+          : t('dependencies.actions.prepareNamed', { name: title })
         : updateAvailable
           ? isYtdlp
-            ? '更新下載工具'
-            : `更新${title}`
+            ? t('dependencies.actions.updateYtdlp')
+            : t('dependencies.actions.updateNamed', { name: title })
           : installed
             ? isYtdlp
-              ? '下載工具已可使用'
-              : `${title}已準備`
+              ? t('dependencies.actions.ytdlpReady')
+              : t('dependencies.actions.preparedNamed', { name: title })
             : preparing
-              ? `準備${title}中`
-              : `準備${title}`,
+              ? t('dependencies.actions.preparingNamed', { name: title })
+              : t('dependencies.actions.prepareNamed', { name: title }),
       advancedActions: dependencyAdvancedActions({
         dependency,
         installed,
@@ -270,7 +267,10 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
 
   function workflowItemSortRank(item) {
     if (item.statusTone === 'info') return 0;
-    if (['未準備', '待整理', '可用系統版本'].includes(item.status)) return 1;
+    if (
+      ['missing', 'needsMigration', 'systemAvailable'].includes(item.statusCode)
+    )
+      return 1;
     if (item.statusTone === 'warning' || item.statusTone === 'gated') return 2;
     if (item.statusTone === 'success') return 4;
     return 3;
@@ -291,17 +291,17 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
         enablingFeatureId.value === gate.id;
       return {
         id: gate.id,
-        title: FEATURE_GATE_COPY[gate.id]?.title ?? gate.title,
+        title: gateCopy(gate.id, 'title'),
         // No separate "value" line here — a gate's value would just be a
         // second, slightly longer restatement of `title` (e.g. "音訊處理" /
         // "人聲分離與音訊處理"). description already carries the one sentence
         // that adds real information.
-        description: FEATURE_GATE_COPY[gate.id]?.description ?? gate.summary,
+        description: gateCopy(gate.id, 'description'),
         status: featureGateState.readError
-          ? '無法讀取'
+          ? t('featureGates.status.unreadable')
           : enabled
-            ? '已啟用'
-            : '未啟用',
+            ? t('featureGates.status.enabled')
+            : t('featureGates.status.disabled'),
         tone: featureGateState.readError
           ? 'warning'
           : enabled
@@ -336,12 +336,13 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
   }
 
   function gateActionLabel(gate) {
-    if (gate.enabled) return '已啟用';
-    if (featureGateState.pendingFeatureId === gate.id) return '等待確認';
+    if (gate.enabled) return t('featureGates.status.enabled');
+    if (featureGateState.pendingFeatureId === gate.id)
+      return t('featureGates.action.pending');
     if (enablingFeatureId.value === gate.id || featureGateState.isSaving) {
-      return '處理中';
+      return t('featureGates.action.busy');
     }
-    return '查看並啟用';
+    return t('featureGates.action.enable');
   }
 
   function isGateActionDisabled(gate) {

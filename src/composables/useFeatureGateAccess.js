@@ -2,22 +2,29 @@ import { reactive, readonly } from 'vue';
 import { getFeatureGate } from '../constants/featureGates.js';
 import { useAppView } from './useAppView.js';
 import { useFeatureGates } from './useFeatureGates.js';
+import { catalogKey, t } from '../utils/i18n.js';
 
 const state = reactive({
   request: null,
 });
 
-const DEFAULT_REASON = '請先到設定啟用這項進階功能，再回到剛才的工作流程。';
+const DEFAULT_REASON = t('featureGates.access.defaultReason');
 
 function buildRequest(featureId, options = {}) {
   const gate = getFeatureGate(featureId);
   const label =
-    options.label || gate?.title?.replace(/^啟用/, '') || '進階功能';
+    options.label ||
+    (gate
+      ? t(`featureGates.gates.${catalogKey(gate.id)}.title`)
+      : t('featureGates.access.fallback'));
   return {
     featureId,
-    title: options.title || `需要啟用${label}`,
+    title:
+      options.title || t('featureGates.access.needEnable', { feature: label }),
     message: options.message || DEFAULT_REASON,
-    actionLabel: options.actionLabel || `啟用${label}`,
+    actionLabel:
+      options.actionLabel ||
+      t('featureGates.access.enable', { feature: label }),
     kind: options.kind || 'enable',
     source: options.source || '',
     operation: options.operation || '',
@@ -48,7 +55,7 @@ function requestFeatureSetup(featureId, options = {}) {
   state.request = buildRequest(featureId, {
     ...options,
     kind: 'setup',
-    actionLabel: options.actionLabel || '查看準備項目',
+    actionLabel: options.actionLabel || t('featureGates.access.viewSetup'),
   });
   useAppView().openSettings();
 }

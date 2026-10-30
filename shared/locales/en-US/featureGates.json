@@ -1,0 +1,49 @@
+{
+  "gates": {
+    "providerFlow": {
+      "title": "External sources",
+      "description": "Search external material and save it to the library."
+    },
+    "lyricsFlow": {
+      "title": "Lyrics sources",
+      "description": "Look up external lyrics or subtitles and save the one you choose."
+    },
+    "audioProcessingFlow": {
+      "title": "Audio processing",
+      "description": "Local analysis, conversion and vocal separation."
+    },
+    "publicOutputFlow": {
+      "title": "Public output",
+      "description": "Output songs, lyrics and covers."
+    },
+    "obsIntegration": {
+      "title": "OBS connection",
+      "description": "Read streaming/recording status and log sessions."
+    }
+  },
+  "status": {
+    "unreadable": "Unavailable",
+    "enabled": "On",
+    "disabled": "Off"
+  },
+  "action": {
+    "enabled": "On",
+    "pending": "Awaiting confirmation",
+    "busy": "Working",
+    "enable": "Review and turn on",
+    "named": "{action}: {feature}"
+  },
+  "noticeLabel": "Scope of use for {feature}",
+  "access": {
+    "defaultReason": "Turn on this feature in Settings first, then return to what you were doing.",
+    "fallback": "this feature",
+    "needEnable": "Turn on {feature} to continue",
+    "enable": "Turn on {feature}",
+    "viewSetup": "View setup items"
+  },
+  "readFailed": "Couldn't read feature status",
+  "readFailedMessage": "Feature status can't be read right now. Try again.",
+  "restartRequired": "Restart the app to use the updated feature confirmation.",
+  "enableFailed": "Feature not turned on",
+  "enableFailedMessage": "This feature can't be turned on right now. Try again."
+}

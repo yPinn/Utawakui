@@ -87,6 +87,46 @@
     "title": "Could not reset the download location",
     "message": "The download location cannot be reset right now. Try again later."
   },
+  "FEATURE_DEPENDENCY_LIST_FAILED": {
+    "title": "Couldn't read setup status",
+    "message": "Try again."
+  },
+  "FEATURE_DEPENDENCY_PREPARE_FAILED": {
+    "title": "Setup failed",
+    "message": "Try again."
+  },
+  "FEATURE_DEPENDENCY_REMOVE_FAILED": {
+    "title": "Removal failed",
+    "message": "Try again."
+  },
+  "FEATURE_DEPENDENCY_REPAIR_FAILED": {
+    "title": "Repair failed",
+    "message": "Try again."
+  },
+  "FEATURE_DEPENDENCY_UNKNOWN": {
+    "title": "Unknown feature item",
+    "message": "This feature item doesn't exist or is no longer supported."
+  },
+  "FEATURE_GATE_CONFIRM_FAILED": {
+    "title": "Couldn't save the feature confirmation",
+    "message": "The feature confirmation can't be saved right now. Try again later."
+  },
+  "FEATURE_GATE_LIST_FAILED": {
+    "title": "Couldn't read feature confirmations",
+    "message": "Feature confirmations can't be read right now. Try again later."
+  },
+  "FEATURE_GATE_NOTICE_STALE": {
+    "title": "Feature notice updated",
+    "message": "The feature notice was updated. Read it again before confirming."
+  },
+  "FEATURE_GATE_UNKNOWN": {
+    "title": "Unknown feature",
+    "message": "That feature confirmation item doesn't exist."
+  },
+  "FFMPEG_SOURCE_UPDATE_FAILED": {
+    "title": "FFmpeg source not updated",
+    "message": "Try again."
+  },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
     "title": "Library cleanup not completed",
     "message": "Vocal-removed versions can't be cleaned up right now. Try again."
@@ -142,6 +182,10 @@
   "SIDEBAR_WIDTH_UPDATE_FAILED": {
     "title": "Could not apply the sidebar width",
     "message": "The sidebar width cannot be applied right now. Try again later."
+  },
+  "SYSTEM_FFMPEG_DETECTION_FAILED": {
+    "title": "Detection failed",
+    "message": "Try again."
   },
   "UI_THEME_INVALID": {
     "title": "Could not apply the theme",

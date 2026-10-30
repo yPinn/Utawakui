@@ -1,4 +1,5 @@
 import { useSettingsPreference } from './useSettingsPreference.js';
+import { t } from '../utils/i18n.js';
 
 export function useYoutubeBrowserCookieSettings(options = {}) {
   const bridge = options.bridge ?? globalThis.window?.Utawakui;
@@ -9,8 +10,8 @@ export function useYoutubeBrowserCookieSettings(options = {}) {
     read: () => bridge.getYoutubeBrowserCookies(),
     write: (value) => bridge.setYoutubeBrowserCookies(value),
     validate: (value) => typeof value === 'boolean',
-    readMessage: '目前無法讀取登入資料設定，請重新讀取。',
-    saveMessage: '目前無法儲存登入資料設定，已恢復原設定。',
+    readMessage: t('capabilities.cookies.readFailed'),
+    saveMessage: t('capabilities.cookies.saveFailed'),
   });
   return {
     allowBrowserCookies: preference.value,

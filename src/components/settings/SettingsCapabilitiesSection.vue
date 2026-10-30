@@ -30,21 +30,22 @@ import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 import OutputRuntimeSettingsBlock from './OutputRuntimeSettingsBlock.vue';
 import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
+import { t } from '../../utils/i18n.js';
 
 const OPTIONAL_FEATURE_GROUPS = Object.freeze([
   {
     id: 'sources',
-    title: '外部來源與歌詞',
+    title: t('capabilities.groups.sources'),
     featureIds: [FEATURE_IDS.PROVIDER_FLOW, FEATURE_IDS.LYRICS_FLOW],
   },
   {
     id: 'processing',
-    title: '本機音訊處理',
+    title: t('capabilities.groups.processing'),
     featureIds: [FEATURE_IDS.AUDIO_PROCESSING_FLOW],
   },
   {
     id: 'output',
-    title: '公開輸出與 OBS',
+    title: t('capabilities.groups.output'),
     featureIds: [FEATURE_IDS.OBS_INTEGRATION, FEATURE_IDS.PUBLIC_OUTPUT_FLOW],
   },
 ]);
@@ -207,10 +208,10 @@ async function detectSystemFfmpeg() {
 
 async function handleRemoveMusicAnalysis() {
   const confirmed = await confirmAction({
-    title: '移除 BPM 分析元件？',
-    message: 'BPM 分析元件會被移除。',
-    detail: '歌曲與既有分析資料都會保留，之後可以重新準備。',
-    confirmLabel: '移除元件',
+    title: t('capabilities.confirm.removeBpmTitle'),
+    message: t('capabilities.confirm.removeBpmMessage'),
+    detail: t('capabilities.confirm.removeBpmDetail'),
+    confirmLabel: t('capabilities.confirm.removeComponent'),
     intent: 'danger',
   });
   if (!confirmed) return;
@@ -220,10 +221,10 @@ async function handleRemoveMusicAnalysis() {
 
 async function handleRemoveLyricsAcoustic() {
   const confirmed = await confirmAction({
-    title: '移除歌詞音訊輔助元件？',
-    message: '只移除此能力的運算元件。',
-    detail: '歌曲、歌詞、人工校時與既有輔助資料都會保留。',
-    confirmLabel: '移除元件',
+    title: t('capabilities.confirm.removeAcousticTitle'),
+    message: t('capabilities.confirm.removeAcousticMessage'),
+    detail: t('capabilities.confirm.removeAcousticDetail'),
+    confirmLabel: t('capabilities.confirm.removeComponent'),
     intent: 'danger',
   });
   if (confirmed) await lyricsAcousticCapability.remove();
@@ -231,10 +232,10 @@ async function handleRemoveLyricsAcoustic() {
 
 async function handleClearObsPassword() {
   const confirmed = await confirmAction({
-    title: '移除 OBS 密碼？',
-    message: '已儲存的 OBS 密碼會被移除。',
-    detail: '下次連線時需要重新輸入密碼。',
-    confirmLabel: '移除密碼',
+    title: t('capabilities.confirm.removeObsPasswordTitle'),
+    message: t('capabilities.confirm.removeObsPasswordMessage'),
+    detail: t('capabilities.confirm.removeObsPasswordDetail'),
+    confirmLabel: t('capabilities.confirm.removePassword'),
     intent: 'danger',
   });
   if (confirmed) await obsIntegrationSettings.clearPassword();
@@ -282,10 +283,10 @@ async function handleWorkflowItemAdvancedAction({ item, action }) {
   if (action === DEPENDENCY_ADVANCED_ACTIONS.REMOVE) {
     const itemTitle = item.title || item.name;
     const confirmed = await confirmAction({
-      title: `移除「${itemTitle}」？`,
-      message: '移除後，此功能會暫時無法使用。',
-      detail: '需要時可以重新準備。',
-      confirmLabel: '移除元件',
+      title: t('capabilities.confirm.removeItemTitle', { name: itemTitle }),
+      message: t('capabilities.confirm.removeItemMessage'),
+      detail: t('capabilities.confirm.removeItemDetail'),
+      confirmLabel: t('capabilities.confirm.removeComponent'),
       intent: 'danger',
     });
     if (!confirmed) return;
@@ -327,9 +328,9 @@ onMounted(() => {
     <UiNotice
       v-if="featureGateState.readError"
       tone="danger"
-      title="功能狀態無法讀取"
+      :title="t('capabilities.unreadableTitle')"
       :message="featureGateState.readError"
-      action-label="重新讀取"
+      :action-label="t('capabilities.reload')"
       compact
       @action="refreshConfirmations"
     />

@@ -133,13 +133,19 @@ function isDependencyUpdateAvailable(dependency, installedVersion) {
 }
 
 function createMissingDependencyError(dependency) {
+  // Loaded lazily: workers import this module without the UI catalogs.
+  const { t } = require('../i18n');
   const isProviderTool = dependency.featureId === FEATURE_IDS.PROVIDER_FLOW;
   return createAppError({
     code: 'FEATURE_DEPENDENCY_MISSING',
     severity: 'warning',
-    title: isProviderTool ? '尚未準備外部來源工具' : '尚未準備音訊處理項目',
-    message: `請到設定準備「${dependency.name}」。`,
-    actionLabel: '前往設定',
+    title: t(
+      isProviderTool
+        ? 'common.missingDependency.providerTitle'
+        : 'common.missingDependency.audioTitle',
+    ),
+    message: t('common.missingDependency.message', { name: dependency.name }),
+    actionLabel: t('common.missingDependency.action'),
     context: {
       featureId: dependency.featureId,
       dependencyId: dependency.id,

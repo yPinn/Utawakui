@@ -1,4 +1,5 @@
 import { useSettingsPreference } from './useSettingsPreference.js';
+import { t } from '../utils/i18n.js';
 
 export function useSeparationSettings(options = {}) {
   const bridge = options.bridge ?? globalThis.window?.Utawakui;
@@ -9,8 +10,8 @@ export function useSeparationSettings(options = {}) {
     read: () => bridge.getSeparationGpuAcceleration(),
     write: (value) => bridge.setSeparationGpuAcceleration(value),
     validate: (value) => typeof value === 'boolean',
-    readMessage: '目前無法讀取 GPU 加速設定，請重新讀取。',
-    saveMessage: '目前無法儲存 GPU 加速設定，已恢復原設定。',
+    readMessage: t('capabilities.gpu.readFailed'),
+    saveMessage: t('capabilities.gpu.saveFailed'),
   });
   return {
     gpuAcceleration: preference.value,

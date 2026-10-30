@@ -1,0 +1,64 @@
+{
+  "groups": {
+    "sources": "External sources and lyrics",
+    "processing": "Local audio processing",
+    "output": "Public output and OBS"
+  },
+  "unreadableTitle": "Feature status can't be read",
+  "reload": "Reload",
+  "unconfirmed": "Loading; the saved setting is not confirmed yet.",
+  "confirm": {
+    "removeBpmTitle": "Remove the BPM analysis component?",
+    "removeBpmMessage": "The BPM analysis component will be removed.",
+    "removeBpmDetail": "Songs and existing analysis data are kept, and you can set it up again later.",
+    "removeAcousticTitle": "Remove the lyrics audio assist component?",
+    "removeAcousticMessage": "Only this feature's processing component is removed.",
+    "removeAcousticDetail": "Songs, lyrics, manual timing and existing assist data are kept.",
+    "removeObsPasswordTitle": "Remove the OBS password?",
+    "removeObsPasswordMessage": "The saved OBS password will be removed.",
+    "removeObsPasswordDetail": "You'll need to enter the password again next time you connect.",
+    "removePassword": "Remove password",
+    "removeItemTitle": "Remove “{name}”?",
+    "removeItemMessage": "After removal, this feature is unavailable until you set it up again.",
+    "removeItemDetail": "You can set it up again when needed.",
+    "removeComponent": "Remove component"
+  },
+  "bpm": {
+    "title": "Song tempo and beats (BPM)",
+    "guidance": "Analyzed locally after import; songs are not uploaded.",
+    "auto": "Analyze automatically",
+    "autoLabel": "Analyze BPM and beats automatically after importing songs",
+    "readFailed": "The automatic analysis setting can't be read. Reload it.",
+    "saveFailed": "The automatic analysis setting can't be saved and has been restored.",
+    "componentTitle": "BPM analysis component",
+    "componentDescription": "The tool needed to analyze song tempo and beats.",
+    "reloadStatus": "Reload BPM status",
+    "name": "BPM analysis",
+    "unreadable": "Unavailable",
+    "preparing": "Preparing",
+    "progressNamed": "{stage} {percent}%",
+    "available": "Available",
+    "needsRepair": "Needs repair",
+    "missing": "Not set up",
+    "repairNamed": "Repair BPM analysis",
+    "prepareNamed": "Set up BPM analysis",
+    "repair": "Repair",
+    "remove": "Remove"
+  },
+  "cookies": {
+    "title": "Browser sign-in data",
+    "guidance": "Some videos need you to be signed in to download. When on, a failed download reads the sign-in data from Chrome, Edge or Firefox on this computer and retries with your YouTube account.",
+    "allow": "Allow",
+    "allowLabel": "Retry failed downloads with the browser's YouTube sign-in data",
+    "readFailed": "The sign-in data setting can't be read. Reload it.",
+    "saveFailed": "The sign-in data setting can't be saved and has been restored."
+  },
+  "gpu": {
+    "title": "Vocal separation",
+    "guidance": "Uses graphics card acceleration first and switches to the processor when it isn't available.",
+    "toggle": "Graphics card acceleration (GPU)",
+    "toggleLabel": "Use GPU acceleration for vocal separation",
+    "readFailed": "The GPU acceleration setting can't be read. Reload it.",
+    "saveFailed": "The GPU acceleration setting can't be saved and has been restored."
+  }
+}

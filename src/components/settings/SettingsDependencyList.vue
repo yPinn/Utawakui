@@ -5,6 +5,7 @@ import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -30,15 +31,27 @@ const attentionCount = computed(
 const summary = computed(() => {
   const status =
     [
-      busyCount.value ? `${busyCount.value} 項處理中` : '',
-      attentionCount.value ? `${attentionCount.value} 項待處理` : '',
+      busyCount.value
+        ? t('dependencies.summary.busy', { count: busyCount.value })
+        : '',
+      attentionCount.value
+        ? t('dependencies.summary.attention', { count: attentionCount.value })
+        : '',
       props.additionalUnavailable
-        ? `${props.additionalUnavailable} 項未開放`
+        ? t('dependencies.summary.unavailable', {
+            count: props.additionalUnavailable,
+          })
         : '',
     ]
       .filter(Boolean)
-      .join(' · ') || (props.additionalLoaded ? '已就緒' : '讀取中');
-  return `工具與模型 · ${props.items.length + props.additionalCount} 項 · ${status}`;
+      .join(' · ') ||
+    (props.additionalLoaded
+      ? t('dependencies.summary.ready')
+      : t('dependencies.summary.loading'));
+  return t('dependencies.summary.line', {
+    count: props.items.length + props.additionalCount,
+    status,
+  });
 });
 watch(
   () => props.highlighted || attentionCount.value > 0 || busyCount.value > 0,
@@ -82,7 +95,7 @@ watch(
             variant="ghost"
             :disabled="item.actionDisabled"
             @click="emit('noticeAction', item.notice)"
-            >重試</UiButton
+            >{{ t('dependencies.actions.retry') }}</UiButton
           >
         </template>
       </SettingsDocumentItem>

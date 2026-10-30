@@ -1,9 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./FfmpegSourceModal.vue', import.meta.url),
-  'utf8',
 );
 
 describe('FfmpegSourceModal copy', () => {

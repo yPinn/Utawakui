@@ -16,33 +16,21 @@ const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const OPERATION_PUBLIC_ERRORS = Object.freeze({
   list: Object.freeze({
     code: 'FEATURE_DEPENDENCY_LIST_FAILED',
-    title: '無法讀取準備狀態',
-    message: '請再試一次。',
   }),
   prepare: Object.freeze({
     code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
-    title: '準備失敗',
-    message: '請再試一次。',
   }),
   remove: Object.freeze({
     code: 'FEATURE_DEPENDENCY_REMOVE_FAILED',
-    title: '移除失敗',
-    message: '請再試一次。',
   }),
   repair: Object.freeze({
     code: 'FEATURE_DEPENDENCY_REPAIR_FAILED',
-    title: '修復失敗',
-    message: '請再試一次。',
   }),
   detect: Object.freeze({
     code: 'SYSTEM_FFMPEG_DETECTION_FAILED',
-    title: '偵測失敗',
-    message: '請再試一次。',
   }),
   'set-ffmpeg-source': Object.freeze({
     code: 'FFMPEG_SOURCE_UPDATE_FAILED',
-    title: 'FFmpeg 來源未更新',
-    message: '請再試一次。',
   }),
 });
 
@@ -61,8 +49,6 @@ function getDependencyStatusOrThrow(
     throw createAppError({
       code: 'FEATURE_DEPENDENCY_UNKNOWN',
       severity: 'warning',
-      title: '無法辨識功能項目',
-      message: '這個功能項目不存在或已不再支援。',
     });
   }
   return currentStatus;

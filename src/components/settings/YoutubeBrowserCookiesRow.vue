@@ -3,6 +3,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   allowBrowserCookies: { type: Boolean, default: false },
@@ -17,15 +18,15 @@ const emit = defineEmits(['setAllowBrowserCookies', 'refreshPreference']);
 
 <template>
   <SettingsDocumentItem
-    title="瀏覽器登入資料"
-    guidance="部分影片需要登入才能下載。開啟後，下載失敗時會讀取本機 Chrome、Edge 或 Firefox 的登入資料，以你的 YouTube 帳號重試。"
+    :title="t('capabilities.cookies.title')"
+    :guidance="t('capabilities.cookies.guidance')"
     variant="nested"
   >
     <template #actions>
       <UiCheckbox
         id="youtube-browser-cookies"
-        label="允許使用"
-        aria-label="下載失敗時使用瀏覽器的 YouTube 登入資料重試"
+        :label="t('capabilities.cookies.allow')"
+        :aria-label="t('capabilities.cookies.allowLabel')"
         :model-value="loaded && allowBrowserCookies"
         :disabled="busy || reading || !loaded"
         :error="error"
@@ -34,14 +35,14 @@ const emit = defineEmits(['setAllowBrowserCookies', 'refreshPreference']);
     </template>
     <template v-if="readError || !loaded" #feedback>
       <UiHint :tone="readError ? 'danger' : 'muted'" role="status">{{
-        readError || '讀取中；尚未確認已儲存設定。'
+        readError || t('capabilities.unconfirmed')
       }}</UiHint>
       <UiButton
         v-if="readError"
         variant="ghost"
         :loading="reading"
         @click="emit('refreshPreference')"
-        >重新讀取</UiButton
+        >{{ t('capabilities.reload') }}</UiButton
       >
     </template>
   </SettingsDocumentItem>

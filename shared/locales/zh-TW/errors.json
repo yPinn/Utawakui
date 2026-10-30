@@ -87,6 +87,46 @@
     "title": "無法重設下載位置",
     "message": "目前無法重設下載位置，請稍後再試。"
   },
+  "FEATURE_DEPENDENCY_LIST_FAILED": {
+    "title": "無法讀取準備狀態",
+    "message": "請再試一次。"
+  },
+  "FEATURE_DEPENDENCY_PREPARE_FAILED": {
+    "title": "準備失敗",
+    "message": "請再試一次。"
+  },
+  "FEATURE_DEPENDENCY_REMOVE_FAILED": {
+    "title": "移除失敗",
+    "message": "請再試一次。"
+  },
+  "FEATURE_DEPENDENCY_REPAIR_FAILED": {
+    "title": "修復失敗",
+    "message": "請再試一次。"
+  },
+  "FEATURE_DEPENDENCY_UNKNOWN": {
+    "title": "無法辨識功能項目",
+    "message": "這個功能項目不存在或已不再支援。"
+  },
+  "FEATURE_GATE_CONFIRM_FAILED": {
+    "title": "無法儲存功能確認",
+    "message": "目前無法儲存功能確認，請稍後再試。"
+  },
+  "FEATURE_GATE_LIST_FAILED": {
+    "title": "無法讀取功能確認狀態",
+    "message": "目前無法讀取功能確認狀態，請稍後再試。"
+  },
+  "FEATURE_GATE_NOTICE_STALE": {
+    "title": "功能說明已更新",
+    "message": "功能說明已更新，請重新閱讀後再確認。"
+  },
+  "FEATURE_GATE_UNKNOWN": {
+    "title": "無法辨識功能",
+    "message": "指定的功能確認項目不存在。"
+  },
+  "FFMPEG_SOURCE_UPDATE_FAILED": {
+    "title": "FFmpeg 來源未更新",
+    "message": "請再試一次。"
+  },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
     "title": "曲庫清理未完成",
     "message": "目前無法清理去人聲版本，請再試一次。"
@@ -142,6 +182,10 @@
   "SIDEBAR_WIDTH_UPDATE_FAILED": {
     "title": "無法調整側欄寬度",
     "message": "目前無法調整側欄寬度，請稍後再試。"
+  },
+  "SYSTEM_FFMPEG_DETECTION_FAILED": {
+    "title": "偵測失敗",
+    "message": "請再試一次。"
   },
   "UI_THEME_INVALID": {
     "title": "無法套用介面主題",

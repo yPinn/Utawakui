@@ -1,0 +1,123 @@
+{
+  "title": {
+    "ffmpeg": "音訊轉換工具",
+    "ytdlp": "線上來源下載工具"
+  },
+  "description": {
+    "ffmpeg": "供本機音訊處理使用。",
+    "ytdlp": "將選定來源儲存到本機曲庫。",
+    "model": "供本機人聲分離使用。",
+    "other": "需先下載。"
+  },
+  "value": {
+    "systemFfmpeg": "使用系統安裝版本",
+    "ytdlp": "保存外部來源到本機曲庫",
+    "ffmpeg": "支援音訊轉換與格式讀取",
+    "model": "產生人聲分離結果時使用"
+  },
+  "status": {
+    "updateAvailable": "可更新",
+    "available": "可使用",
+    "usingSystem": "使用系統版本",
+    "prepared": "已準備",
+    "preparing": "準備中",
+    "systemAvailable": "可用系統版本",
+    "needsMigration": "待整理",
+    "missing": "未準備",
+    "unreadable": "無法讀取"
+  },
+  "progress": {
+    "starting": "準備中",
+    "downloading": "下載中",
+    "verifying": "驗證中",
+    "installing": "安裝中",
+    "ready": "完成",
+    "confirmed": "確認完成",
+    "downloadPercent": "下載 {percent}%",
+    "working": "處理中"
+  },
+  "actions": {
+    "refresh": "重新檢查",
+    "redownload": "重新下載",
+    "redownloading": "重新下載中",
+    "repair": "修復",
+    "repairing": "修復中",
+    "remove": "移除",
+    "removing": "移除中",
+    "ffmpegSource": "FFmpeg 來源設定",
+    "updateYtdlp": "更新下載工具",
+    "ytdlpReady": "下載工具已可使用",
+    "prepareNamed": "準備{name}",
+    "updateNamed": "更新{name}",
+    "preparedNamed": "{name}已準備",
+    "preparingNamed": "準備{name}中",
+    "menuNamed": "{name}選項",
+    "noActions": "沒有可用的進階操作",
+    "retry": "重試"
+  },
+  "summary": {
+    "busy": "{count} 項處理中",
+    "attention": "{count} 項待處理",
+    "unavailable": "{count} 項未開放",
+    "ready": "已就緒",
+    "loading": "讀取中",
+    "line": "工具與模型 · {count} 項 · {status}"
+  },
+  "notify": {
+    "fallbackName": "功能元件",
+    "prepare": {
+      "running": "{name}準備中",
+      "failed": "{name}準備未完成",
+      "done": "{name}已準備"
+    },
+    "repair": {
+      "running": "{name}修復中",
+      "failed": "{name}修復未完成",
+      "done": "{name}已修復"
+    },
+    "remove": {
+      "running": "{name}移除中",
+      "failed": "{name}移除未完成",
+      "done": "{name}已移除"
+    },
+    "viewSettings": "查看設定",
+    "retry": "重試",
+    "restartTitle": "需要重新啟動",
+    "restartMessage": "請重新啟動 Utawakui 後再試。",
+    "readFailed": "無法讀取準備狀態",
+    "reload": "重新讀取",
+    "tryAgain": "請再試一次。",
+    "prepareFailed": "準備失敗",
+    "removeFailed": "移除項目失敗",
+    "repairFailed": "修復項目失敗"
+  },
+  "ffmpeg": {
+    "title": "音訊轉換工具",
+    "recheck": "重新檢查工具",
+    "useSystem": "使用此版本",
+    "prepareAndUse": "準備並使用",
+    "intro": "選擇工具來源，再按「使用此版本」或「準備並使用」套用。",
+    "sourceLegend": "工具來源",
+    "system": "電腦上的 FFmpeg",
+    "managed": "Utawakui 管理版本",
+    "unconfirmed": "尚未確認工具設定，請按頂部「重新檢查工具」。",
+    "versionAndLicense": "版本與授權資訊",
+    "switchFailedTitle": "無法切換工具來源",
+    "detectRestart": "無法檢查系統 FFmpeg，請重新啟動後再試。",
+    "detectRetry": "無法檢查系統 FFmpeg，請重新檢查。",
+    "downloading": "下載中 {percent}%",
+    "preparing": "準備中…",
+    "unreadable": "無法讀取",
+    "checking": "檢查中",
+    "applied": "已套用",
+    "available": "可使用",
+    "notFound": "未找到可用版本",
+    "notChecked": "尚未檢查",
+    "systemNotChecked": "尚未檢查系統 FFmpeg",
+    "managedNotDownloaded": "尚未下載；按「準備並使用」後下載。",
+    "managedDefault": "由 Utawakui 下載並管理；尚未安裝時會先下載。",
+    "switchFailed": "無法切換 FFmpeg 來源",
+    "tryAgain": "請再試一次。",
+    "errorNamed": "{title}：{message}"
+  }
+}

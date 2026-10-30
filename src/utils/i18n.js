@@ -23,3 +23,8 @@ export const i18n = createI18n({
 });
 
 export const t = i18n.global.t;
+
+// Dotted or dashed ids become camelCase keys (player.play-pause → playerPlayPause).
+export function catalogKey(id) {
+  return id.replace(/[.-]+(\w)/gu, (_, letter) => letter.toUpperCase());
+}

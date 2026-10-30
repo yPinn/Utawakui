@@ -12,5 +12,11 @@
   "back": "Back",
   "stopping": "Stopping",
   "previousPage": "Previous",
-  "nextPage": "Next"
+  "nextPage": "Next",
+  "missingDependency": {
+    "providerTitle": "External source tool not set up",
+    "audioTitle": "Audio processing item not set up",
+    "message": "Set up “{name}” in Settings.",
+    "action": "Go to Settings"
+  }
 }

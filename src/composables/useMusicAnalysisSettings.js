@@ -1,4 +1,5 @@
 import { useMusicAnalysisCapabilitySession } from './analysis/useMusicAnalysisCapabilitySession.js';
+import { t } from '../utils/i18n.js';
 
 import { useSettingsPreference } from './useSettingsPreference.js';
 
@@ -19,8 +20,8 @@ export function useMusicAnalysisSettings(options = {}) {
     read: () => bridge.getAutoMusicAnalysis(),
     write: (value) => bridge.setAutoMusicAnalysis(value),
     validate: (value) => typeof value === 'boolean',
-    readMessage: '目前無法讀取自動分析設定，請重新讀取。',
-    saveMessage: '目前無法儲存自動分析設定，已恢復原設定。',
+    readMessage: t('capabilities.bpm.readFailed'),
+    saveMessage: t('capabilities.bpm.saveFailed'),
   });
   let initialized = false;
 

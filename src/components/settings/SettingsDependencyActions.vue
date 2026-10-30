@@ -3,6 +3,7 @@ import { computed, shallowRef } from 'vue';
 import { Download, Ellipsis } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -29,14 +30,18 @@ const menuContent = computed(() => ({
       })),
     },
   ],
-  emptyText: '沒有可用的進階操作',
+  emptyText: t('dependencies.actions.noActions'),
 }));
 
 const hasMenuItems = computed(
   () => menuContent.value.groups[0].items.length > 0,
 );
 const primaryIcon = computed(() => props.item.actionIcon || Download);
-const menuLabel = computed(() => `${props.item.title || props.item.name}選項`);
+const menuLabel = computed(() =>
+  t('dependencies.actions.menuNamed', {
+    name: props.item.title || props.item.name,
+  }),
+);
 
 function openMenu(event) {
   event.stopPropagation();

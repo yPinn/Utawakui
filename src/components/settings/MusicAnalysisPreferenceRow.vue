@@ -3,6 +3,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   autoAnalyze: { type: Boolean, default: true },
@@ -17,15 +18,15 @@ const emit = defineEmits(['setAutoAnalyze', 'refreshPreference']);
 
 <template>
   <SettingsDocumentItem
-    title="歌曲速度與節拍（BPM）"
-    guidance="匯入後在本機分析，不上傳歌曲。"
+    :title="t('capabilities.bpm.title')"
+    :guidance="t('capabilities.bpm.guidance')"
     variant="nested"
   >
     <template #actions>
       <UiCheckbox
         id="auto-music-analysis"
-        label="自動分析"
-        aria-label="匯入歌曲後自動分析 BPM 與節拍"
+        :label="t('capabilities.bpm.auto')"
+        :aria-label="t('capabilities.bpm.autoLabel')"
         :model-value="loaded && autoAnalyze"
         :disabled="busy || reading || !loaded"
         :error="error"
@@ -34,14 +35,14 @@ const emit = defineEmits(['setAutoAnalyze', 'refreshPreference']);
     </template>
     <template v-if="readError || !loaded" #feedback>
       <UiHint :tone="readError ? 'danger' : 'muted'" role="status">{{
-        readError || '讀取中；尚未確認已儲存設定。'
+        readError || t('capabilities.unconfirmed')
       }}</UiHint>
       <UiButton
         v-if="readError"
         variant="ghost"
         :loading="reading"
         @click="emit('refreshPreference')"
-        >重新讀取</UiButton
+        >{{ t('capabilities.reload') }}</UiButton
       >
     </template>
   </SettingsDocumentItem>
