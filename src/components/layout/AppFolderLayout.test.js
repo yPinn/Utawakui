@@ -87,7 +87,7 @@ describe('AppFolderLayout', () => {
     );
     expect(source).toContain('@container app-folder-layout (max-width: 36rem)');
     expect(source).toContain('@media (forced-colors: active)');
-    expect(source).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(source).not.toContain('@media (prefers-reduced-motion: reduce)');
     expect(source).not.toContain('candidateView');
     expect(source).not.toContain('data-ui-candidate-view');
     expect(source).not.toContain('Archive');

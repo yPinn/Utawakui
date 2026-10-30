@@ -425,9 +425,7 @@ describe('QueuePanel shared Dock content', () => {
       /transition:\s*opacity var\(--ui-motion-duration-fast\)/u,
     );
     expect(artworkRevealSource).not.toContain('--ui-motion-duration-feedback');
-    expect(menuButtonCss).toMatch(
-      /:root\[data-ui-motion=['"]reduced['"]\]\s+\.right-dock-track__menu/u,
-    );
+    expect(menuButtonCss).not.toContain("data-ui-motion='reduced'");
   });
 
   it('keeps the menu tooltip action phrase intact instead of splitting 選項', () => {

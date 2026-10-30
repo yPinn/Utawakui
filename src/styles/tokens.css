@@ -859,6 +859,7 @@
 /* A manual preference may only reduce motion; it cannot override the OS choice. */
 :root[data-ui-motion='reduced']
   [data-ui-system='v2'][data-ui-surface-root='true'] {
+  --ui-motion-duration-feedback: 0ms;
   --ui-motion-duration-fast: 0ms;
   --ui-motion-duration-standard: 0ms;
   --ui-motion-duration-slow: 0ms;
@@ -866,6 +867,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-ui-system='v2'][data-ui-surface-root='true'] {
+    --ui-motion-duration-feedback: 0ms;
     --ui-motion-duration-fast: 0ms;
     --ui-motion-duration-standard: 0ms;
     --ui-motion-duration-slow: 0ms;

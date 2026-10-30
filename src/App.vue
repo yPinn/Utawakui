@@ -806,16 +806,6 @@ useKeyboardShortcuts({
   }
 }
 
-:global(:root[data-ui-motion='reduced'] .shell__dock-surface) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shell__dock-surface {
-    transition: none;
-  }
-}
-
 .shell__player {
   grid-area: player;
 }

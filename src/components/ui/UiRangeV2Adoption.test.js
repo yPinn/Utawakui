@@ -98,6 +98,8 @@ describe('Token v2 Range formal adoption', () => {
       /:hover:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
     );
     expect(controlSource).toContain('@media (forced-colors: active)');
-    expect(controlSource).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(controlSource).not.toContain(
+      '@media (prefers-reduced-motion: reduce)',
+    );
   });
 });

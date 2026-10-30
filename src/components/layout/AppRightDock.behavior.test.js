@@ -272,8 +272,8 @@ describe('AppRightDock', () => {
     expect(source).toContain('height 0s linear var(--ui-motion-duration-fast)');
     expect(source).toContain('--ui-motion-easing-enter');
     expect(source).toContain('--ui-motion-easing-exit');
-    expect(source).toContain("data-ui-motion='reduced'");
-    expect(source).toContain('prefers-reduced-motion: reduce');
+    expect(source).not.toContain("data-ui-motion='reduced'");
+    expect(source).not.toContain('prefers-reduced-motion: reduce');
   });
 
   it('lets a bottom-origin surface own motion without adding a parent displacement', () => {

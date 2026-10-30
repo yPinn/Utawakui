@@ -260,12 +260,9 @@ describe('DemoNoticeAppearance', () => {
     expect(candidateNotificationHostSource).not.toMatch(
       /\.demo-candidate-notification-host\s*\{[^}]*touch-action:\s*pan-y;/u,
     );
-    // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
-    expect(candidateNotificationHostSource).toContain(
-      ":global(:root[data-ui-motion='reduced'] .demo-candidate-notification-host)",
-    );
-    expect(candidateNotificationHostSource).toContain(
-      '@media (prefers-reduced-motion: reduce)',
+    // Zeroed motion tokens cover reduced motion; no local rule is needed.
+    expect(candidateNotificationHostSource).not.toContain(
+      "data-ui-motion='reduced'",
     );
     expect(candidateNotificationHostSource).toContain('label="關閉通知"');
   });

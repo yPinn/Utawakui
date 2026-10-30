@@ -307,13 +307,9 @@ describe('UiFolderArtifactCanvas', () => {
     expect(canvasSource).toMatch(
       /\.ui-folder-artifact-canvas__item--active\s*\{[^}]*z-index:\s*var\(--ui-folder-artifact-z-active\);/su,
     );
-    expect(canvasSource).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*transition:\s*none;/u,
-    );
-    // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
-    expect(canvasSource).toContain(
-      ":global(:root[data-ui-motion='reduced'] .ui-folder-artifact-canvas__item)",
-    );
+    // Lift motion uses the motion tokens, which reduced motion zeroes.
+    expect(canvasSource).toContain('var(--ui-motion-duration-feedback)');
+    expect(canvasSource).not.toContain("data-ui-motion='reduced'");
   });
 
   it('keeps release positioning exact instead of animating positional inertia', () => {
@@ -578,13 +574,7 @@ describe('UiFolderArtifact', () => {
     expect(artifactSource).toMatch(
       /\.ui-folder-artifact__stack-layer\s*\{[^}]*transition:[^}]*transform\s+var\(--ui-motion-duration-standard\)\s+var\(--ui-motion-easing-enter\)[^}]*opacity\s+var\(--ui-motion-duration-fast\)/su,
     );
-    expect(artifactSource).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*transition:\s*none;/u,
-    );
-    // The whole selector sits inside :global(); `:global(x) .y` compiles to x.
-    expect(artifactSource).toContain(
-      ":global(:root[data-ui-motion='reduced'] .ui-folder-artifact__stack-layer)",
-    );
+    expect(artifactSource).not.toContain("data-ui-motion='reduced'");
     expect(artifactSource).toMatch(
       /\.ui-folder-artifact__stack-position\s*\{[^}]*inset:\s*var\(--ui-space-2\) var\(--ui-space-2\) auto auto;/su,
     );

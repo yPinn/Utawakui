@@ -211,10 +211,4 @@ function handleResizeKeydown(event) {
   user-select: none;
   pointer-events: auto;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .app-playlist-sidebar__handle::after {
-    transition: none;
-  }
-}
 </style>

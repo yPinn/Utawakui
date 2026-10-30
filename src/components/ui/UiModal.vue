@@ -696,15 +696,6 @@ onUnmounted(() => {
   clip-path: inset(4%);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ui-modal-media-enter-active,
-  .ui-modal-media-leave-active,
-  .ui-modal-media-enter-active .ui-modal--media,
-  .ui-modal-media-leave-active .ui-modal--media {
-    transition: none;
-  }
-}
-
 @container (max-width: 22.5rem) {
   .ui-modal__footer {
     display: grid;

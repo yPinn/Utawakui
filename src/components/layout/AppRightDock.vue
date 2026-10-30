@@ -401,18 +401,4 @@ function handleResizeKeydown(event) {
 .app-right-dock__handle:focus-visible::after {
   background: var(--ui-color-focus);
 }
-
-:global(:root[data-ui-motion='reduced'] .app-right-dock--bottom),
-:global(:root[data-ui-motion='reduced'] .app-right-dock__content),
-:global(:root[data-ui-motion='reduced'] .app-right-dock__handle::after) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-right-dock--bottom,
-  .app-right-dock__content,
-  .app-right-dock__handle::after {
-    transition: none;
-  }
-}
 </style>

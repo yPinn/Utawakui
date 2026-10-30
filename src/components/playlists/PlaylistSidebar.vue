@@ -1110,20 +1110,4 @@ function startDrag(playlist, event) {
       visibility 0s linear 0s;
   }
 }
-
-:global(:root[data-ui-motion='reduced'] .playlist-sidebar__toolbar-expanded),
-:global(
-  :root[data-ui-motion='reduced'] .playlist-sidebar__toolbar-action--compact
-),
-:global(:root[data-ui-motion='reduced'] .playlist-sidebar__info) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .playlist-sidebar__toolbar-expanded,
-  .playlist-sidebar__toolbar-action--compact,
-  .playlist-sidebar__info {
-    transition: none;
-  }
-}
 </style>

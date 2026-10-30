@@ -420,14 +420,4 @@ function toggleFromArtwork(event) {
     box-shadow: 0 0 0 var(--ui-border-width) var(--ui-color-surface);
   }
 }
-
-:global(:root[data-ui-motion='reduced'] .playlist-sidebar-row__info) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .playlist-sidebar-row__info {
-    transition: none;
-  }
-}
 </style>

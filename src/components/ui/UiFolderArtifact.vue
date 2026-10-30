@@ -826,18 +826,6 @@ function handleStackLayerKeydown(layer, event) {
   transform: translate3d(38%, 12%, 0) rotate(9deg) scale(0.98);
 }
 
-:global(:root[data-ui-motion='reduced'] .ui-folder-artifact__stack-layer),
-:global(:root[data-ui-motion='reduced'] .ui-folder-artifact__stack-position) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-folder-artifact__stack-layer,
-  .ui-folder-artifact__stack-position {
-    transition: none;
-  }
-}
-
 @media (forced-colors: active) {
   .ui-folder-artifact--note,
   .ui-folder-artifact__stack-layer {

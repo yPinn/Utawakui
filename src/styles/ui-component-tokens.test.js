@@ -463,17 +463,50 @@ describe('shared UI component token contract', () => {
     expect(violations).toEqual([]);
   });
 
+  it('zeroes every motion duration so transitions need no reduced-motion rule', () => {
+    const reducedBlocks = tokens.match(
+      /(?:data-ui-motion='reduced'\][^{]*|prefers-reduced-motion: reduce\)\s*\{[^{]*)\{[^}]*\}/gu,
+    );
+    expect(reducedBlocks).toHaveLength(2);
+    for (const block of reducedBlocks) {
+      for (const role of ['feedback', 'fast', 'standard', 'slow']) {
+        expect(block).toContain(`--ui-motion-duration-${role}: 0ms;`);
+      }
+    }
+    // Loops still opt out with `animation: none`; transitions never do.
+    // Output previews follow the separate --ovl motion contract.
+    const offenders = [
+      new URL('../App.vue', import.meta.url),
+      ...filesUnder(new URL('../components/', import.meta.url)),
+    ]
+      .filter(
+        (file) =>
+          /\.(?:vue|css)$/u.test(file.pathname) &&
+          !file.pathname.includes('/components/output/'),
+      )
+      .map((file) => ({
+        name: file.pathname,
+        source: fs.readFileSync(file, 'utf8'),
+      }))
+      .filter(({ source }) =>
+        /(?:prefers-reduced-motion: reduce|data-ui-motion='reduced')[\s\S]*?transition:\s*none;/u.test(
+          source,
+        ),
+      )
+      .map(({ name }) => name);
+    expect(offenders).toEqual([]);
+  });
+
   it('gives every continuously animated component OS and manual reduced-motion paths', () => {
     for (const name of [
+      'UiArtworkLoading.vue',
       'UiButton.vue',
       'UiIconButton.vue',
-      'UiDisclosure.vue',
       'UiMarqueeText.vue',
       'UiNotificationHost.vue',
-      'UiRadioGroup.vue',
+      'UiProgress.vue',
       'UiSkeleton.vue',
       'UiStatusIcon.vue',
-      'UiSwitch.vue',
     ]) {
       const source = componentFiles.find((file) =>
         file.name.endsWith(`/${name}`),

@@ -167,16 +167,4 @@ defineExpose({ focus });
 .ui-switch__native:disabled {
   cursor: not-allowed;
 }
-
-:global(:root[data-ui-motion='reduced'] .ui-switch__thumb),
-:global(:root[data-ui-motion='reduced'] .ui-switch__track) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-switch__thumb,
-  .ui-switch__track {
-    transition: none;
-  }
-}
 </style>

@@ -76,7 +76,9 @@ describe('production scrollbar catalogue specimen', () => {
     }
     expect(regionSource).not.toMatch(/accent|success|warning|danger|live/u);
     expect(regionSource).toContain('@media (forced-colors: active)');
-    expect(regionSource).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(regionSource).not.toContain(
+      '@media (prefers-reduced-motion: reduce)',
+    );
   });
 
   it('reflows from the specimen width without native scrollbar paint', () => {

@@ -288,14 +288,4 @@ function select(item) {
   line-height: var(--ui-type-caption-line-height);
   overflow-wrap: anywhere;
 }
-
-:global(:root[data-ui-motion='reduced'] .ui-radio-group__indicator::after) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-radio-group__indicator::after {
-    transition: none;
-  }
-}
 </style>

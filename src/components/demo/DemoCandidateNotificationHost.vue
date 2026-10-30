@@ -253,14 +253,4 @@ onBeforeUnmount(() => {
     var(--ui-space-2) + var(--ui-icon-button-size-md) + var(--ui-space-2)
   );
 }
-
-:global(:root[data-ui-motion='reduced'] .demo-candidate-notification-host) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .demo-candidate-notification-host {
-    transition: none;
-  }
-}
 </style>

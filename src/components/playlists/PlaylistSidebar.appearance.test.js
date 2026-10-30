@@ -153,10 +153,11 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
   });
 
-  it('removes motion for both manual and OS reduced-motion preferences', () => {
+  it('relies on the zeroed motion tokens for reduced motion', () => {
     for (const componentSource of [source, rowSource]) {
-      expect(componentSource).toContain("data-ui-motion='reduced'");
-      expect(componentSource).toContain('prefers-reduced-motion: reduce');
+      expect(componentSource).toContain('var(--ui-motion-duration-');
+      expect(componentSource).not.toContain("data-ui-motion='reduced'");
+      expect(componentSource).not.toContain('prefers-reduced-motion: reduce');
     }
   });
 

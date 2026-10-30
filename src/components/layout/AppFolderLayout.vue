@@ -330,12 +330,4 @@ function navigate(destinationId, event) {
     background: Highlight;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .app-folder-layout__destination,
-  .app-folder-layout__destination::before,
-  .app-folder-layout__destination-label {
-    transition: none;
-  }
-}
 </style>

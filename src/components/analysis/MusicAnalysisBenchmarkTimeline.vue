@@ -307,10 +307,4 @@ function seekTo(section) {
     display: none;
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .benchmark-timeline__segment {
-    transition: none;
-  }
-}
 </style>

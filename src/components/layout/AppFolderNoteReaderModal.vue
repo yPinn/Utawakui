@@ -267,10 +267,4 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
   line-height: var(--ui-type-caption-line-height);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .app-folder-note-reader__pages {
-    transition: none;
-  }
-}
 </style>

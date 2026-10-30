@@ -167,7 +167,7 @@ describe('UiScrollRegion production contract', () => {
     );
     expect(componentSource).not.toContain('scrollbar-gutter');
     expect(componentSource).not.toMatch(/accent|success|warning|danger|live/u);
-    expect(componentSource).toContain(
+    expect(componentSource).not.toContain(
       '@media (prefers-reduced-motion: reduce)',
     );
     expect(componentSource).toContain('@media (forced-colors: active)');

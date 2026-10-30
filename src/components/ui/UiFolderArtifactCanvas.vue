@@ -751,16 +751,6 @@ defineExpose({ reset, togglePinById });
   outline-offset: var(--ui-focus-offset);
 }
 
-:global(:root[data-ui-motion='reduced'] .ui-folder-artifact-canvas__item) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-folder-artifact-canvas__item {
-    transition: none;
-  }
-}
-
 @media (forced-colors: active) {
   .ui-folder-artifact-canvas__sheet,
   .ui-folder-artifact-canvas__item:focus-visible {

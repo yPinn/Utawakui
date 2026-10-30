@@ -201,19 +201,11 @@ watch(ratio, (next, previous) => {
   background-position: 50% 0;
 }
 
-:global(:root[data-ui-motion='reduced'] .ui-progress__fill) {
-  transition: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .ui-progress__track:indeterminate,
   .ui-progress__track:indeterminate::-webkit-progress-bar {
     animation: none;
     background-position: 50% 0;
-  }
-
-  .ui-progress__fill {
-    transition: none;
   }
 }
 </style>

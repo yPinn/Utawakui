@@ -662,12 +662,10 @@ onBeforeUnmount(() => {
 
   opacity: 1;
   will-change: auto;
-  transition: none;
 }
 
 :global(:root[data-ui-motion='reduced'] .ui-notification-host__card) {
   will-change: auto;
-  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -676,12 +674,10 @@ onBeforeUnmount(() => {
 
     opacity: 1;
     will-change: auto;
-    transition: none;
   }
 
   .ui-notification-host__item .ui-notification-host__card {
     will-change: auto;
-    transition: none;
   }
 }
 </style>

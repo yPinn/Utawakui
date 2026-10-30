@@ -167,8 +167,8 @@ describe('UiSwitch', () => {
     ]) {
       expect(source).toContain(`var(${token})`);
     }
-    expect(source).toContain("data-ui-motion='reduced'");
-    expect(source).toContain('prefers-reduced-motion: reduce');
+    expect(source).not.toContain("data-ui-motion='reduced'");
+    expect(source).not.toContain('prefers-reduced-motion: reduce');
     expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(|hsla?\(/iu);
   });
 });

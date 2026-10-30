@@ -41,14 +41,4 @@ defineEmits(['open']);
   visibility: visible;
   pointer-events: auto;
 }
-
-:global(:root[data-ui-motion='reduced'] .right-dock-track__menu) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .right-dock-track__menu {
-    transition: none;
-  }
-}
 </style>

@@ -569,18 +569,6 @@ watch(
   cursor: grabbing;
 }
 
-:global(:root[data-ui-motion='reduced'] .ui-scroll-region__edge) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-scroll-region__edge,
-  .ui-scroll-region__rail,
-  .ui-scroll-region__thumb {
-    transition: none;
-  }
-}
-
 @media (forced-colors: active) {
   .ui-scroll-region__rail,
   .ui-scroll-region__thumb {

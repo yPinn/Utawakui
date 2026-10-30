@@ -1040,10 +1040,10 @@ describe('UiNotificationHost', () => {
       '--ui-notification-motion-y: var(--ui-notification-motion-offset);',
     );
     expect(source).toMatch(
-      /data-ui-motion='reduced'[\s\S]*?--ui-notification-motion-y: 0;[\s\S]*?opacity: 1;[\s\S]*?transition: none;/u,
+      /data-ui-motion='reduced'[\s\S]*?--ui-notification-motion-y: 0;[\s\S]*?opacity: 1;/u,
     );
     expect(source).toMatch(
-      /prefers-reduced-motion: reduce[\s\S]*?--ui-notification-motion-y: 0;[\s\S]*?opacity: 1;[\s\S]*?transition: none;/u,
+      /prefers-reduced-motion: reduce[\s\S]*?--ui-notification-motion-y: 0;[\s\S]*?opacity: 1;/u,
     );
     for (const tokens of [activeTokens, candidateTokens]) {
       expect(tokens).toContain(

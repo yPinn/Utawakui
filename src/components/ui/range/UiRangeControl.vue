@@ -434,12 +434,5 @@ defineExpose({ focus });
       border-color: Canvas;
     }
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    .ui-range-control__fill,
-    .ui-range-control__native::-webkit-slider-thumb {
-      transition: none;
-    }
-  }
 }
 </style>

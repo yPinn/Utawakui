@@ -117,14 +117,4 @@ function handleToggle(event) {
   -webkit-user-select: text;
   user-select: text;
 }
-
-:global(:root[data-ui-motion='reduced'] .ui-disclosure__indicator) {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-disclosure__indicator {
-    transition: none;
-  }
-}
 </style>

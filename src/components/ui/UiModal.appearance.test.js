@@ -166,9 +166,7 @@ describe('UiModal appearance contract', () => {
     expect(modalSource).not.toMatch(
       /ui-modal-media-(?:enter|leave)-active[\s\S]*?transition:[^;]*(?:width|height|top|left)/u,
     );
-    expect(modalSource).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?ui-modal-media-enter-active[\s\S]*?transition:\s*none;/u,
-    );
+    expect(modalSource).not.toContain('prefers-reduced-motion: reduce');
   });
 
   it('reserves a complete focus ring inside the body scrollport without changing section rhythm', () => {
