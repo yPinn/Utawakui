@@ -48,4 +48,13 @@ describe('AppFolderCompactBar', () => {
       'transform: translateY(var(--ui-folder-compact-bar-title-optical-offset));',
     );
   });
+
+  it('switches its surface in step with the sticky header and fades only content', () => {
+    expect(source).toMatch(
+      /\.app-folder-compact-bar__surface \{(?![^}]*transition)[^}]*visibility: hidden;/su,
+    );
+    expect(source).toMatch(
+      /\.app-folder-compact-bar__surface--visible \.app-folder-compact-bar__content \{[^}]*opacity: 1;[^}]*transition: opacity/su,
+    );
+  });
 });

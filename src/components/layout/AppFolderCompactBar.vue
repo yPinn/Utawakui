@@ -16,10 +16,12 @@ defineProps({
       :class="{ 'app-folder-compact-bar__surface--visible': visible }"
       :aria-hidden="!visible"
     >
-      <slot name="action" />
-      <span class="app-folder-compact-bar__title" :lang="titleLang">
-        {{ title }}
-      </span>
+      <div class="app-folder-compact-bar__content">
+        <slot name="action" />
+        <span class="app-folder-compact-bar__title" :lang="titleLang">
+          {{ title }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -38,23 +40,34 @@ defineProps({
   inset-block-start: 0;
   box-sizing: border-box;
   block-size: var(--ui-folder-compact-bar-block-size);
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-3);
   /* Block inset only; Play stays on the rail Play's inline edge. */
   padding-block: var(--ui-space-2);
   border-bottom: var(--ui-border-width) solid
     var(--ui-folder-ledger-rule-strong, var(--ui-color-border));
   background: var(--ui-folder-page-background);
-  opacity: 0;
+  /* Toggles in step with the table header's sticky offset; only content fades. */
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
 }
 
 .app-folder-compact-bar__surface--visible {
-  opacity: 1;
+  visibility: visible;
   pointer-events: auto;
+}
+
+.app-folder-compact-bar__content {
+  block-size: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  opacity: 0;
+}
+
+.app-folder-compact-bar__surface--visible .app-folder-compact-bar__content {
+  opacity: 1;
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .app-folder-compact-bar__title {
