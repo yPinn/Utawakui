@@ -138,6 +138,7 @@ watch(
 
 .analysis-workbench__tracks,
 .analysis-workbench__detail {
+  container: analysis-pane / inline-size;
   min-width: 0;
   min-height: 0;
 }
@@ -158,7 +159,8 @@ watch(
   user-select: text;
 }
 
-@media (max-width: 840px) {
+/* Stack the panes once the windowed page is too narrow for both. */
+@container app-folder-layout (max-width: 44rem) {
   .analysis-workbench__layout {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(11rem, 38%) minmax(0, 1fr);

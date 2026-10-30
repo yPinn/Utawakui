@@ -710,7 +710,7 @@ function submitApproval() {
   white-space: nowrap;
 }
 
-@media (max-width: 1180px) {
+@container lyrics-review (max-width: 42rem) {
   .review-form__lookup-row {
     grid-template-columns: 1fr;
     gap: var(--ui-space-1);

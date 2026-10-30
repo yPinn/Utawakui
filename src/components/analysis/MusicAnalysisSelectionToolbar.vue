@@ -65,7 +65,7 @@ function toggleVisible() {
   user-select: none;
 }
 
-@media (max-width: 520px) {
+@container app-folder-layout (max-width: 32rem) {
   .analysis-selection-toolbar {
     align-items: flex-start;
     flex-wrap: wrap;

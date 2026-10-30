@@ -155,7 +155,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
 
 <style scoped>
 .lyrics-review {
-  container-type: inline-size;
+  container: lyrics-review / inline-size;
   min-width: 0;
   min-height: 0;
   height: 100%;
@@ -219,7 +219,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   grid-template-columns: minmax(18rem, 38%) minmax(24rem, 1fr);
 }
 
-@container (max-width: 900px) {
+@container lyrics-review (max-width: 56rem) {
   .lyrics-review__title-block,
   .lyrics-review__progress {
     align-items: flex-start;

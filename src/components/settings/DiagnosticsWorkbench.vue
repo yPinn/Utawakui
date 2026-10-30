@@ -566,7 +566,7 @@ onUnmounted(clipboard.dispose);
   text-align: center;
 }
 
-@media (max-width: 720px) {
+@container app-folder-layout (max-width: 36rem) {
   .diagnostics__summary {
     grid-template-columns: 3.5rem minmax(0, 1fr) 3rem;
     grid-template-areas:

@@ -339,7 +339,7 @@ function sectionLabel(role) {
   text-align: end;
 }
 
-@media (max-width: 620px) {
+@container analysis-pane (max-width: 30rem) {
   .structure-summary__metrics {
     grid-template-columns: 1fr;
   }

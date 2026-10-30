@@ -294,7 +294,7 @@ function batchStatus(trackId) {
   list-style: none;
 }
 
-@media (max-width: 520px) {
+@container app-folder-layout (max-width: 32rem) {
   .analysis-picker__heading-row {
     align-items: flex-start;
     flex-direction: column;

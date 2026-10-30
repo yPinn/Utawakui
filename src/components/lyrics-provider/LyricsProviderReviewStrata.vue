@@ -136,7 +136,7 @@ const stratumOptions = computed(() =>
   width: 100%;
 }
 
-@media (max-width: 1120px) {
+@container lyrics-review (max-width: 39rem) {
   .review-strata__filters {
     grid-template-columns: 1fr 1fr;
   }

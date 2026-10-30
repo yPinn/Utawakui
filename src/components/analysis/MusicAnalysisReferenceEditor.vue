@@ -493,7 +493,7 @@ onUnmounted(() => {
   width: 100%;
 }
 
-@media (max-width: 720px) {
+@container analysis-pane (max-width: 32rem) {
   .reference-editor__sections li {
     grid-template-columns: minmax(6rem, 1fr) minmax(8rem, 2fr);
   }

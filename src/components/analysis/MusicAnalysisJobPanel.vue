@@ -224,7 +224,7 @@ function runPrimaryAction() {
   flex-wrap: wrap;
 }
 
-@media (max-width: 720px) {
+@container analysis-pane (max-width: 24rem) {
   .analysis-job__heading-row {
     flex-direction: column;
   }

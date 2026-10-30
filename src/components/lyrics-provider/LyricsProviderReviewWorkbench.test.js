@@ -120,8 +120,8 @@ describe('lyrics provider corpus review workbench contract', () => {
     const list = source('./LyricsProviderReviewCandidateList.vue');
     const form = source('./LyricsProviderReviewForm.vue');
 
-    expect(workbench).toContain('container-type: inline-size');
-    expect(workbench).toContain('@container (max-width: 900px)');
+    expect(workbench).toContain('container: lyrics-review / inline-size;');
+    expect(workbench).toContain('@container lyrics-review (max-width: 56rem)');
     expect(workbench).toMatch(/grid-template-columns:\s*minmax\(18rem, 38%\)/);
     expect(list).toContain('<UiScrollRegion');
     expect(list).toContain('viewport-tag="ol"');

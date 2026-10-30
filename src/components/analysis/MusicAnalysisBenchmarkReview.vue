@@ -315,6 +315,7 @@ onMounted(library.initialize);
 
 .benchmark-review__cases,
 .benchmark-review__detail {
+  container: analysis-pane / inline-size;
   min-width: 0;
   min-height: 0;
 }
@@ -437,7 +438,8 @@ onMounted(library.initialize);
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 840px) {
+/* Stack the panes once the windowed page is too narrow for both. */
+@container app-folder-layout (max-width: 44rem) {
   .benchmark-review__workspace {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(11rem, 38%) minmax(0, 1fr);

@@ -297,7 +297,7 @@ function seekTo(section) {
   text-align: end;
 }
 
-@media (max-width: 720px) {
+@container analysis-pane (max-width: 28rem) {
   .benchmark-timeline__row :deep(.ui-btn__label) {
     grid-template-columns: minmax(0, 1fr) auto;
   }
