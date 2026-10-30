@@ -250,6 +250,7 @@ watch(
     <UiScrollLayout
       class="performance-session-plan-list__body-scroll"
       axis="vertical"
+      edge-shadow="end"
       :scrollbar-reserve="history ? 'overflow' : 'stable'"
       content-class="performance-session-plan-list"
       :aria-label="history ? '播放結果' : '待唱順序'"

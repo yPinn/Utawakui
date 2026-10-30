@@ -370,7 +370,6 @@ onUnmounted(() => {
             class="ui-modal__body"
             axis="vertical"
             viewport-class="ui-modal__body-viewport"
-            :edge-shadow="$slots.footer ? 'both' : 'start'"
           >
             <slot />
           </UiScrollRegion>

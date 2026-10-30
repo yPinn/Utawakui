@@ -48,6 +48,7 @@ watch(
       ref="scrollLayout"
       class="app-folder-page__scroll"
       axis="vertical"
+      edge-shadow="end"
       viewport-class="app-folder-page__viewport"
       content-class="app-folder-page__document"
       role="region"

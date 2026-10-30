@@ -135,7 +135,15 @@ describe('UiScrollRegion production contract', () => {
 
     expect(html).toContain('class="ui-scroll-region__viewport"');
     expect(html).not.toContain('ui-scroll-region__rail');
-    expect(html).not.toContain('ui-scroll-region__edge');
+    // Edge cues are on by default; an opted-out edge renders no element.
+    expect(html).toContain('ui-scroll-region__edge--start');
+    const endOnly = await renderToString(
+      createSSRApp({
+        render: () => h(UiScrollRegion, { edgeShadow: 'end' }, () => 'Body'),
+      }),
+    );
+    expect(endOnly).not.toContain('ui-scroll-region__edge--start');
+    expect(endOnly).toContain('ui-scroll-region__edge--end');
   });
 
   it('owns a zero-gutter overlay appearance with platform accessibility fallbacks', () => {

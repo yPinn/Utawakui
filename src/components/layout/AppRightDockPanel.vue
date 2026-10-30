@@ -51,7 +51,6 @@ defineExpose({ scrollTo });
       ref="scrollRegion"
       class="app-right-dock-panel__scroll"
       axis="vertical"
-      edge-shadow="both"
     >
       <div class="app-right-dock-panel__body">
         <slot />

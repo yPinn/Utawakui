@@ -40,11 +40,11 @@ const props = defineProps({
     default: 'auto',
     validator: (value) => ['auto', 'hidden'].includes(value),
   },
-  // Block edges that sit against fixed chrome; each casts a shadow only while
-  // content is hidden behind it.
+  // Block edges that cue hidden content; each shows only while content is
+  // hidden there. Opt an edge out where sticky chrome casts its own shadow.
   edgeShadow: {
     type: String,
-    default: 'none',
+    default: 'both',
     validator: (value) => ['none', 'start', 'end', 'both'].includes(value),
   },
 });

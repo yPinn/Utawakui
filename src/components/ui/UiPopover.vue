@@ -6,7 +6,6 @@ import {
   onMounted,
   shallowRef,
   useId,
-  useSlots,
   useTemplateRef,
   watch,
 } from 'vue';
@@ -255,16 +254,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll, true);
   window.removeEventListener('resize', updatePosition);
 });
-
-// Only edges that border a fixed header／footer cast a scroll-edge shadow.
-const slots = useSlots();
-const popoverEdgeShadow = computed(() => {
-  const start = Boolean(slots.header);
-  const end = Boolean(slots.footer);
-  if (start && end) return 'both';
-  if (start) return 'start';
-  return end ? 'end' : 'none';
-});
 </script>
 
 <template>
@@ -305,7 +294,6 @@ const popoverEdgeShadow = computed(() => {
       <UiScrollRegion
         v-if="$slots.default"
         class="ui-popover__scroll"
-        :edge-shadow="popoverEdgeShadow"
         :axis="props.scrollAxis"
         :aria-label="props.scrollAriaLabel || undefined"
         :tabindex="props.scrollAriaLabel ? 0 : undefined"

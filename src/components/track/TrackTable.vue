@@ -603,6 +603,26 @@ function reorderHeaderFromKeyboard(column, event) {
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
   line-height: var(--ui-type-label-line-height);
+  container-type: scroll-state;
+}
+
+/* Once stuck, the header casts the scroll-edge shadow onto the rows below. */
+.library-track-table__header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: var(--ui-scroll-edge-shadow-start);
+  clip-path: inset(100% 0 calc(-1 * var(--ui-scroll-edge-band-size)) 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
+}
+
+@container scroll-state(stuck: top) {
+  .library-track-table__header::after {
+    opacity: 1;
+  }
 }
 
 .library-track-table__header > [data-track-column] {

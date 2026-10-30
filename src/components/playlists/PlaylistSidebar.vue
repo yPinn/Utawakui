@@ -595,7 +595,6 @@ function startDrag(playlist, event) {
     <UiScrollLayout
       class="playlist-sidebar__scroll"
       axis="vertical"
-      edge-shadow="start"
       :scrollbar-visibility="compact ? 'hidden' : 'auto'"
       tabindex="0"
       aria-label="播放清單與參照內容"
