@@ -22,7 +22,7 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(workbench).toContain(':approval-field="review.approvalField.value"');
     expect(workbench).toContain('onMounted(review.load)');
     expect(workbench).toContain('aria-live="polite"');
-    expect(workbench).toContain('title="Lyrics Provider Corpus"');
+    expect(workbench).toContain('title="語料審核"');
     expect(workbench).not.toContain('研究評估 · F7');
     expect(workbench).toContain('<UiProgress');
     expect(workbench).not.toContain('lyrics-review__progress-track');

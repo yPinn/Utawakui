@@ -52,10 +52,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
 <template>
   <section class="lyrics-review" aria-labelledby="lyrics-review-title">
     <header class="lyrics-review__header">
-      <UiPageHeader
-        title="Lyrics Provider Corpus"
-        title-id="lyrics-review-title"
-      >
+      <UiPageHeader title="語料審核" title-id="lyrics-review-title">
         <template #actions>
           <UiButton
             v-if="review.dataset.value"
@@ -65,7 +62,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
             "
             @click="review.exportCorpus"
           >
-            {{ review.exporting.value ? '匯出中…' : '匯出 corpus' }}
+            {{ review.exporting.value ? '匯出中…' : '匯出語料' }}
           </UiButton>
         </template>
       </UiPageHeader>
@@ -99,10 +96,10 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
       class="lyrics-review__loading"
       role="status"
     >
-      正在驗證候選與審核 manifest…
+      正在讀取候選資料…
     </div>
     <div v-else-if="!review.dataset.value" class="lyrics-review__loading">
-      <p>尚未載入私有歌詞候選資料。</p>
+      <p>尚未載入候選資料。</p>
       <UiButton variant="accent" @click="review.load">重新讀取</UiButton>
     </div>
     <template v-else>

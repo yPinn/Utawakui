@@ -320,7 +320,7 @@ export function useLyricsProviderCorpusReview(
       notifications.notify({
         key: NOTIFICATION_KEYS.LYRICS_PROVIDER_CORPUS_EXPORT,
         title: '語料已匯出',
-        message: '固定 corpus 已寫入私有評估目錄。',
+        message: '語料已寫入私有評估目錄。',
       });
       return true;
     } catch {
