@@ -62889,5 +62889,4650 @@
     ],
     "productImplementationChanged": false,
     "gateChanged": false
+  },
+  "observerAndOutputBinControls": {
+    "date": "2026-10-30",
+    "method": {
+      "observerCases": 8,
+      "repeatsPerCondition": 2,
+      "secondsRequestedEach": 8,
+      "order": "four conditions then reversed; one isolated process, fresh contexts per case",
+      "sampleRate": 48000,
+      "outputGain": 0,
+      "nativeMonoAnalyserFrames": 32768,
+      "analyserPresentAllCases": true,
+      "observerFactor": "AudioWorklet nodes only; native analyser remains",
+      "thresholdFrames": 16
+    },
+    "observerCases": [
+      {
+        "id": 0,
+        "traceEnabled": true,
+        "audioWorklet": true,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [
+          {
+            "role": "source",
+            "stableZeroRuns": [],
+            "pcmSha256": [
+              "643b8659469fa69665f7e742a507edba7ceb95d5d47edff8e78ed30a8ad151be",
+              "65ec6cf5fbc0d9ac9c984aa7bfe188b941dc65c6162186a7d8ef7eaf11c12c75"
+            ],
+            "completeInternalPcmAgreement": true
+          },
+          {
+            "role": "dest",
+            "stableZeroRuns": [
+              {
+                "start": 117600,
+                "end": 118080
+              },
+              {
+                "start": 148320,
+                "end": 148800
+              },
+              {
+                "start": 179040,
+                "end": 179520
+              },
+              {
+                "start": 209760,
+                "end": 210240
+              },
+              {
+                "start": 240480,
+                "end": 240960
+              },
+              {
+                "start": 271200,
+                "end": 271680
+              },
+              {
+                "start": 301920,
+                "end": 302400
+              },
+              {
+                "start": 332640,
+                "end": 333120
+              }
+            ],
+            "pcmSha256": [
+              "5bbfbd56b5abbe9c114ae9d4a1e24ced71fae612038c9e90db19e3001d60d42a",
+              "911af964364cd7cc46aced08a9c266d7ec8c3c0d265da1b72bfaf2f268cf41d9"
+            ],
+            "completeInternalPcmAgreement": true
+          }
+        ],
+        "traceSummary": {
+          "sha256": "ee97af069aa617b967d3c9d730c78fbf9c37431017cf09714da6765b16c0631d",
+          "totalUnderruns": 27,
+          "stableUnderruns": 8,
+          "outerFrames": 389760,
+          "finalMarkedFrame": 389760,
+          "frameMapping": "suspended zero epoch + 128-frame outer ordinal + converter delay; no offset fitted"
+        },
+        "workletRunnerEvents": 4
+      },
+      {
+        "id": 1,
+        "traceEnabled": false,
+        "audioWorklet": true,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "3a3f31eef8050ea85ff7d23e631f636579d2b91021a6c43e0d936712c828904f",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 8288,
+              "end": 8768
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [
+          {
+            "role": "source",
+            "stableZeroRuns": [],
+            "pcmSha256": [
+              "643b8659469fa69665f7e742a507edba7ceb95d5d47edff8e78ed30a8ad151be",
+              "65ec6cf5fbc0d9ac9c984aa7bfe188b941dc65c6162186a7d8ef7eaf11c12c75"
+            ],
+            "completeInternalPcmAgreement": true
+          },
+          {
+            "role": "dest",
+            "stableZeroRuns": [
+              {
+                "start": 117600,
+                "end": 118080
+              },
+              {
+                "start": 148320,
+                "end": 148800
+              },
+              {
+                "start": 179040,
+                "end": 179520
+              },
+              {
+                "start": 209760,
+                "end": 210240
+              },
+              {
+                "start": 240480,
+                "end": 240960
+              },
+              {
+                "start": 271200,
+                "end": 271680
+              },
+              {
+                "start": 301920,
+                "end": 302400
+              },
+              {
+                "start": 332640,
+                "end": 333120
+              }
+            ],
+            "pcmSha256": [
+              "5bbfbd56b5abbe9c114ae9d4a1e24ced71fae612038c9e90db19e3001d60d42a",
+              "911af964364cd7cc46aced08a9c266d7ec8c3c0d265da1b72bfaf2f268cf41d9"
+            ],
+            "completeInternalPcmAgreement": true
+          }
+        ],
+        "traceSummary": null,
+        "workletRunnerEvents": null
+      },
+      {
+        "id": 2,
+        "traceEnabled": false,
+        "audioWorklet": false,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [],
+        "traceSummary": null,
+        "workletRunnerEvents": null
+      },
+      {
+        "id": 3,
+        "traceEnabled": true,
+        "audioWorklet": false,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [],
+        "traceSummary": {
+          "sha256": "ed676dfd67cbc5bb997e36dfd15201419257f6436d0cd4d385712aef1df8f9d8",
+          "totalUnderruns": 38,
+          "stableUnderruns": 16,
+          "outerFrames": 389760,
+          "finalMarkedFrame": 389760,
+          "frameMapping": "suspended zero epoch + 128-frame outer ordinal + converter delay; no offset fitted"
+        },
+        "workletRunnerEvents": 0
+      },
+      {
+        "id": 4,
+        "traceEnabled": true,
+        "audioWorklet": false,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [],
+        "traceSummary": {
+          "sha256": "0d7cbf2f60fb0c62091ab05496bb9fa36dff93650ad690d61f78ec03e31e7ed2",
+          "totalUnderruns": 27,
+          "stableUnderruns": 8,
+          "outerFrames": 389760,
+          "finalMarkedFrame": 389760,
+          "frameMapping": "suspended zero epoch + 128-frame outer ordinal + converter delay; no offset fitted"
+        },
+        "workletRunnerEvents": 0
+      },
+      {
+        "id": 5,
+        "traceEnabled": false,
+        "audioWorklet": false,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [],
+        "traceSummary": null,
+        "workletRunnerEvents": null
+      },
+      {
+        "id": 6,
+        "traceEnabled": false,
+        "audioWorklet": true,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [
+          {
+            "role": "source",
+            "stableZeroRuns": [],
+            "pcmSha256": [
+              "643b8659469fa69665f7e742a507edba7ceb95d5d47edff8e78ed30a8ad151be",
+              "65ec6cf5fbc0d9ac9c984aa7bfe188b941dc65c6162186a7d8ef7eaf11c12c75"
+            ],
+            "completeInternalPcmAgreement": true
+          },
+          {
+            "role": "dest",
+            "stableZeroRuns": [
+              {
+                "start": 117600,
+                "end": 118080
+              },
+              {
+                "start": 148320,
+                "end": 148800
+              },
+              {
+                "start": 179040,
+                "end": 179520
+              },
+              {
+                "start": 209760,
+                "end": 210240
+              },
+              {
+                "start": 240480,
+                "end": 240960
+              },
+              {
+                "start": 271200,
+                "end": 271680
+              },
+              {
+                "start": 301920,
+                "end": 302400
+              },
+              {
+                "start": 332640,
+                "end": 333120
+              }
+            ],
+            "pcmSha256": [
+              "5bbfbd56b5abbe9c114ae9d4a1e24ced71fae612038c9e90db19e3001d60d42a",
+              "911af964364cd7cc46aced08a9c266d7ec8c3c0d265da1b72bfaf2f268cf41d9"
+            ],
+            "completeInternalPcmAgreement": true
+          }
+        ],
+        "traceSummary": null,
+        "workletRunnerEvents": null
+      },
+      {
+        "id": 7,
+        "traceEnabled": true,
+        "audioWorklet": true,
+        "nativeWindow": {
+          "sampleCount": 32768,
+          "sha256": "8a1f7a06b54ee33f19096d52ed9ae4603f623e28d201107b12264933713cb2e8",
+          "frameBracketWidth": 0,
+          "monoZeroRuns": [
+            {
+              "start": 6368,
+              "end": 6848
+            }
+          ],
+          "peak": 0.29997673630714417
+        },
+        "lanes": [
+          {
+            "role": "source",
+            "stableZeroRuns": [],
+            "pcmSha256": [
+              "643b8659469fa69665f7e742a507edba7ceb95d5d47edff8e78ed30a8ad151be",
+              "65ec6cf5fbc0d9ac9c984aa7bfe188b941dc65c6162186a7d8ef7eaf11c12c75"
+            ],
+            "completeInternalPcmAgreement": true
+          },
+          {
+            "role": "dest",
+            "stableZeroRuns": [
+              {
+                "start": 117600,
+                "end": 118080
+              },
+              {
+                "start": 148320,
+                "end": 148800
+              },
+              {
+                "start": 179040,
+                "end": 179520
+              },
+              {
+                "start": 209760,
+                "end": 210240
+              },
+              {
+                "start": 240480,
+                "end": 240960
+              },
+              {
+                "start": 271200,
+                "end": 271680
+              },
+              {
+                "start": 301920,
+                "end": 302400
+              },
+              {
+                "start": 332640,
+                "end": 333120
+              }
+            ],
+            "pcmSha256": [
+              "5bbfbd56b5abbe9c114ae9d4a1e24ced71fae612038c9e90db19e3001d60d42a",
+              "911af964364cd7cc46aced08a9c266d7ec8c3c0d265da1b72bfaf2f268cf41d9"
+            ],
+            "completeInternalPcmAgreement": true
+          }
+        ],
+        "traceSummary": {
+          "sha256": "b9b89575d4f26a0f97d6a06682adbfb5495b402b9b9d3c0b4008aea3fd332e30",
+          "totalUnderruns": 27,
+          "stableUnderruns": 8,
+          "outerFrames": 389760,
+          "finalMarkedFrame": 389760,
+          "frameMapping": "suspended zero epoch + 128-frame outer ordinal + converter delay; no offset fitted"
+        },
+        "workletRunnerEvents": 4
+      }
+    ],
+    "observerLimitations": [
+      "two local repeats do not estimate incidence or equivalence",
+      "native mono snapshot only final 32768 samples; not stereo or full-run coverage",
+      "all cases include native analyser, so not an observer-free baseline",
+      "no raw WASAPI, ETW or driver timing",
+      "trace-only no-AW outcomes have no stereo PCM validation"
+    ],
+    "dsp": {
+      "moduleSha256": "97530b11d5bc01015af4cde40d6aa55ff10c40aa1294ca4c8c5762027d517a46",
+      "channels": 1,
+      "sampleRate": 48000,
+      "blockMs": 120,
+      "intervalMs": 30,
+      "key": 2,
+      "rows": [
+        {
+          "frequencyHz": 311,
+          "targetHz": 349.085697024215,
+          "targetBin": 44.18296921909952,
+          "inputBin": 39.308,
+          "filesSha256": {
+            "input": "0c056bf727943cda3c67bbe52f3537bf38882df2be09697ff0b058b645ca660b",
+            "output": "d3ae0c64a6e226172195ce84b94d6ebd235698a194efc1a6ef5570e0a20f0219"
+          },
+          "traceSha256": "330eeb0dfe7cf956f8d6539893cfc1fb3e72ccf8304420d8bf02acb92f331da4",
+          "byteEqualControl": true,
+          "outputByteEqualPrevious311": true,
+          "windows": [
+            {
+              "startSeconds": 2,
+              "fftPeakHz": 349.8391617418142,
+              "bandPhaseSlopeHz": 349.84013032905506,
+              "crossingFitHz": 349.83916358748803,
+              "fftErrorHz": 0.7534647175992291,
+              "phaseErrorHz": 0.7544333048400631,
+              "crossingErrorHz": 0.7534665632730366,
+              "crossingCount": 1050,
+              "crossingResidualRmsFrames": 0.0337843356377458
+            },
+            {
+              "startSeconds": 3,
+              "fftPeakHz": 349.83916204045767,
+              "bandPhaseSlopeHz": 349.84013035927194,
+              "crossingFitHz": 349.839162840406,
+              "fftErrorHz": 0.7534650162426715,
+              "phaseErrorHz": 0.7544333350569445,
+              "crossingErrorHz": 0.7534658161910102,
+              "crossingCount": 1050,
+              "crossingResidualRmsFrames": 0.03379348418080114
+            },
+            {
+              "startSeconds": 6,
+              "fftPeakHz": 349.8391620530322,
+              "bandPhaseSlopeHz": 349.84013026749983,
+              "crossingFitHz": 349.8391632122282,
+              "fftErrorHz": 0.7534650288172315,
+              "phaseErrorHz": 0.7544332432848364,
+              "crossingErrorHz": 0.7534661880131921,
+              "crossingCount": 1049,
+              "crossingResidualRmsFrames": 0.03370527899253247
+            }
+          ],
+          "phaseSummary": {
+            "peakInputBin": {
+              "min": 39.37865447998047,
+              "max": 39.378944396972656,
+              "mean": 39.378799995127665
+            },
+            "peakOutputBin": {
+              "min": 44.26227569580078,
+              "max": 44.26259994506836,
+              "mean": 44.262439072899554
+            },
+            "peakInputHz": {
+              "min": 311.5519881248474,
+              "max": 311.5542531013489,
+              "mean": 311.5531249619349
+            },
+            "peakInputErrorHz": {
+              "min": 0.5519881248474121,
+              "max": 0.554253101348877,
+              "mean": 0.5531249619348878
+            },
+            "peakOutputHz": {
+              "min": 349.7052788734436,
+              "max": 349.70781207084656,
+              "mean": 349.70655525702773
+            },
+            "mainMapInputBin": {
+              "min": 39.1163444519043,
+              "max": 39.11638259887695,
+              "mean": 39.11636092222811
+            },
+            "mainMapGradient": {
+              "min": 1,
+              "max": 1,
+              "mean": 1
+            },
+            "temporalEquivalentHz": {
+              "min": 349.5258160069272,
+              "max": 349.52827011569514,
+              "mean": 349.52703627847205
+            },
+            "finalPhaseEquivalentHz": {
+              "min": 349.83819077075844,
+              "max": 349.840169095724,
+              "mean": 349.83916129913035
+            }
+          },
+          "phaseReplayMaxErrorRadians": 1.573461471924068e-7,
+          "allEstimatorsPassAllWindows": false
+        },
+        {
+          "frequencyHz": 309.72650747847734,
+          "targetHz": 347.65625,
+          "targetBin": 44,
+          "inputBin": 39.1449929572451,
+          "filesSha256": {
+            "input": "3844f600fa177eabc987f462e7db3622c1f5bc9cf652232cb685d05f6e87f6ac",
+            "output": "c829bfae6dce60c1a9f732f07d2c6fda1abe123d6ac9490998c518043c978f66"
+          },
+          "traceSha256": "56bbc07f5f05a71f2d3d4e18a14370b897dcb72a9b895ff64d8fa3db5f0281c0",
+          "byteEqualControl": true,
+          "outputByteEqualPrevious311": null,
+          "windows": [
+            {
+              "startSeconds": 2,
+              "fftPeakHz": 348.4635925080962,
+              "bandPhaseSlopeHz": 348.46456706316354,
+              "crossingFitHz": 348.4635910570806,
+              "fftErrorHz": 0.8073425080962124,
+              "phaseErrorHz": 0.8083170631635426,
+              "crossingErrorHz": 0.8073410570805777,
+              "crossingCount": 1045,
+              "crossingResidualRmsFrames": 0.017445361608175305
+            },
+            {
+              "startSeconds": 3,
+              "fftPeakHz": 348.46358873724,
+              "bandPhaseSlopeHz": 348.46456332935986,
+              "crossingFitHz": 348.4635913293856,
+              "fftErrorHz": 0.807338737240002,
+              "phaseErrorHz": 0.8083133293598621,
+              "crossingErrorHz": 0.807341329385622,
+              "crossingCount": 1046,
+              "crossingResidualRmsFrames": 0.017536862649336654
+            },
+            {
+              "startSeconds": 6,
+              "fftPeakHz": 348.46359069072724,
+              "bandPhaseSlopeHz": 348.4645676167365,
+              "crossingFitHz": 348.46359200999103,
+              "fftErrorHz": 0.8073406907272442,
+              "phaseErrorHz": 0.8083176167364741,
+              "crossingErrorHz": 0.8073420099910322,
+              "crossingCount": 1045,
+              "crossingResidualRmsFrames": 0.01748848456068472
+            }
+          ],
+          "phaseSummary": {
+            "peakInputBin": {
+              "min": 39.140953063964844,
+              "max": 39.140987396240234,
+              "mean": 39.1409704020095
+            },
+            "peakOutputBin": {
+              "min": 43.99546432495117,
+              "max": 43.99550247192383,
+              "mean": 43.99548397146069
+            },
+            "peakInputHz": {
+              "min": 309.69494581222534,
+              "max": 309.69521403312683,
+              "mean": 309.6950812656992
+            },
+            "peakInputErrorHz": {
+              "min": -0.03156166625200285,
+              "max": -0.03129344535051359,
+              "mean": -0.03142621277814633
+            },
+            "peakOutputHz": {
+              "min": 347.62081503868103,
+              "max": 347.6211130619049,
+              "mean": 347.62096852703667
+            },
+            "mainMapInputBin": {
+              "min": 39.145484924316406,
+              "max": 39.14548873901367,
+              "mean": 39.1454864305488
+            },
+            "mainMapGradient": {
+              "min": 0.9999487996101379,
+              "max": 0.9999520778656006,
+              "mean": 0.9999507299820241
+            },
+            "temporalEquivalentHz": {
+              "min": 348.23015597555286,
+              "max": 348.23175300703156,
+              "mean": 348.23095606553426
+            },
+            "finalPhaseEquivalentHz": {
+              "min": 348.46287683311135,
+              "max": 348.4642913961874,
+              "mean": 348.46359173684294
+            }
+          },
+          "phaseReplayMaxErrorRadians": 1.6573907375840109e-7,
+          "allEstimatorsPassAllWindows": false
+        }
+      ],
+      "conclusion": "Ideal output-bin center is insufficient to eliminate the measured bias; no unique algorithm bug or repair established."
+    },
+    "receipts": [
+      {
+        "role": "observerResults",
+        "sha256": "3814326351ede27cbc405bfc4fdb6c76c5d07e2621cff41515c1c43a4e86da5c"
+      },
+      {
+        "role": "observerAnalysis",
+        "sha256": "a0b36a0e80e5d075885f659935695a56e2c477f99bdf7d2f75f08399dd2e5688"
+      },
+      {
+        "role": "observerRuntime",
+        "sha256": "083e6c0fd7d23b7ea70fc61abeb05b61ec2f10e3618e8b7a1764bf4c7e8f9f15"
+      },
+      {
+        "role": "dspRenders",
+        "sha256": "dbbfc28a33db663baa94f81b4708420bbf787f21ff68f6b8a923b02f8aaf40f8"
+      },
+      {
+        "role": "dspAnalysis",
+        "sha256": "8ea3d95afe73b849424ef02666b836f822f7fd866edfcf6e9b85ccfaa261c040"
+      },
+      {
+        "role": "dspTools",
+        "sha256": "952398044641529ef9c4f013eba428e4d533b9da393c0eb9c654a2e2940aa4a4"
+      }
+    ],
+    "productImplementationChanged": false,
+    "gateChanged": false,
+    "existingAudioMigrated": false
+  },
+  "controlledOutputCrashAndModelValidation": {
+    "date": "2026-10-30",
+    "formalFlacEnabled": false,
+    "existingAudioMigrated": false,
+    "recovery": {
+      "scope": "owned versioned per-track transactions only; lazy controlled-job entry",
+      "hardStopWindows": [
+        "worker",
+        "before-manifest",
+        "after-manifest-before-receipt",
+        "independent-live-process-control"
+      ],
+      "preserved": [
+        "registered or positively published audio",
+        "old audio and manifest bytes",
+        "unknown files, links or malformed metadata",
+        "live/uncertain/reused PIDs",
+        "spawn-to-PID-journal uncertainty",
+        "unmarked legacy staging"
+      ],
+      "killsRecordedPids": false,
+      "wholeLibraryStartupScan": false,
+      "powerLossDurabilityProven": false
+    },
+    "models": {
+      "kara2": {
+        "bytes": 52786726,
+        "sha256": "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4"
+      },
+      "inst-hq4": {
+        "bytes": 59074342,
+        "sha256": "3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8"
+      }
+    },
+    "integration": {
+      "runtime": {
+        "electron": "43.8.3",
+        "chromium": "150.0.7871.250",
+        "node": "24.22.0"
+      },
+      "inputKind": "one-second generated stereo signal",
+      "inputSha256": "2a2db81f288a7f0aed392b7419ff5f0bd45a22c0f22a0b9a43a49b06a2f4371d",
+      "cpuPreference": true,
+      "inferenceStub": false,
+      "workerStub": false,
+      "ffmpegStub": false,
+      "modelDownload": false,
+      "audioDeviceOrObs": false,
+      "cases": [
+        {
+          "recipeId": "quick",
+          "profileId": "mdx-kara2-v1",
+          "modelId": "kara2",
+          "intentionalCorruption": false,
+          "outputFormat": "flac5",
+          "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+          "finalPcm": {
+            "bytes": 352800,
+            "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+          },
+          "verifiedPcm": {
+            "bytes": 352800,
+            "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+          },
+          "oldAudioUnchanged": true,
+          "diagnosticCodes": [],
+          "ok": true
+        },
+        {
+          "recipeId": "general",
+          "profileId": "mdx-inst-hq4-v1",
+          "modelId": "inst-hq4",
+          "intentionalCorruption": false,
+          "outputFormat": "flac5",
+          "artifactSha256": "c0ec3e57e711dc6a99a26c2b08f7019f639cda6572539db04a362bf515d14b45",
+          "finalPcm": {
+            "bytes": 352800,
+            "sha256": "92bbda9fb41cac498a664b914bd9ad668ef7572809675ccd5721659d56a27dc5"
+          },
+          "verifiedPcm": {
+            "bytes": 352800,
+            "sha256": "92bbda9fb41cac498a664b914bd9ad668ef7572809675ccd5721659d56a27dc5"
+          },
+          "oldAudioUnchanged": true,
+          "diagnosticCodes": [],
+          "ok": true
+        },
+        {
+          "recipeId": "quick",
+          "profileId": "mdx-kara2-v1",
+          "modelId": "kara2",
+          "intentionalCorruption": true,
+          "outputFormat": "wav",
+          "artifactSha256": "ab81fa8f4de5f6dadcc9e0f34a3c953b3e4f66b110408c9e3aea0a6245547e26",
+          "finalPcm": {
+            "bytes": 352800,
+            "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+          },
+          "verifiedPcm": null,
+          "oldAudioUnchanged": true,
+          "diagnosticCodes": ["SEPARATION_FLAC_FALLBACK"],
+          "ok": true
+        }
+      ],
+      "scope": "source Main factory under isolated Electron profile; not packaged installer, full app UI, DML, natural-music quality or endurance acceptance"
+    },
+    "receipts": [
+      {
+        "role": "reviewedElectron",
+        "sha256": "0a5a68b3d9129ac0dd7d1f8909fc8f3cd099be032e7dee3f39fd38f6e7396502"
+      },
+      {
+        "role": "sourceSnapshot",
+        "sha256": "dcd5d017fb054a8220b73a73b92a90a0a50f92df9d2fa10ac3effda1b0e9d74e"
+      },
+      {
+        "role": "originalNode",
+        "sha256": "9af6d906db807162c338ad7c54cbeef96ef90a8ba7bdc605c5afd037e6e27728"
+      },
+      {
+        "role": "firstElectron",
+        "sha256": "34f9dd9da82b01cafdb4c42ebc4077ff872b16c0d6a078c8056b8a40b2d11e24"
+      },
+      {
+        "role": "hardStopInitialFailure",
+        "sha256": "43f1e5c6b22fc4398e897e64bea6433a62cc860a4960a7056fe5d092eec807d5"
+      },
+      {
+        "role": "hardStopRecheck",
+        "sha256": "0f2ed4f43451d6dfb54e55af60ce4b9457dc64b053826811976773dba6c69a3d"
+      },
+      {
+        "role": "fullRegression",
+        "sha256": "6a074100b227bce450b69fe4c86b48a3160c5b9db0ce971765ff4e9a12b7b95e"
+      }
+    ],
+    "fullRegression": {
+      "filesPassed": 1205,
+      "filesFailed": 2,
+      "testsPassed": 12389,
+      "testsFailed": 2,
+      "skipped": 1,
+      "maxWorkers": 2,
+      "failures": [
+        "parallel microphone handler naming",
+        "parallel src/microphone coverage classification"
+      ],
+      "allGreen": false
+    }
+  },
+  "controlledOutputIndependentReview": {
+    "date": "2026-10-30",
+    "initialFindings": {
+      "high": 2,
+      "medium": 1,
+      "unresolvedAfterRepair": 0
+    },
+    "repairs": [
+      "adopt child before fallible PID journal and await actual close on failure",
+      "PID-bearing error or settled result does not acknowledge close, including repeated cancel",
+      "cleanup failure records deferred without replacing committed success or original failure"
+    ],
+    "focused": {
+      "filesPassed": 5,
+      "testsPassed": 72
+    },
+    "mic": {
+      "namingAndCoverageFailuresResolved": true,
+      "behaviorOrGateChanged": false
+    },
+    "firstFullRegression": {
+      "filesPassed": 1209,
+      "filesFailed": 1,
+      "testsPassed": 12412,
+      "testsFailed": 1,
+      "skipped": 1,
+      "failure": "concurrent playlist merged artist label; current isolated recheck 10 passed",
+      "failurePreserved": true
+    },
+    "finalFullRegression": {
+      "filesPassed": 1210,
+      "testsPassed": 12412,
+      "skipped": 1,
+      "maxWorkers": 2,
+      "allGreen": true
+    },
+    "modelEvidenceScope": "historical one-second CPU isolated Main factory: real quick/general workers and FFmpeg, two FLAC outputs and one intentionally corrupted FLAC WAV fallback; Map, gate and paths injected; not formal root, IPC sender, UI, DML, natural music, endurance, device or OBS acceptance",
+    "independentModelAuditScope": "container SHA and STREAMINFO recomputed; complete FLAC PCM equivalence relies on historical runtime receipts, not independent decode; fallback WAV PCM recomputed; old-audio pre-run hashes were runner assertions without saved baseline receipts",
+    "historicalModelSnapshotReusedForCurrentSoftware": false,
+    "currentFixEvidence": "fault, cancel, close and cleanup tests plus independent VM/API probes; models not rerun after repairs",
+    "formalFlacGateOpen": false,
+    "audioMigrated": false,
+    "receipts": [
+      {
+        "role": "independentInitialFindings",
+        "sha256": "a914655b13c34a4db48c13c90612f072087fdb5f4a9faeae57a040f43f3e58fe"
+      },
+      {
+        "role": "independentRepairProbes",
+        "sha256": "c474f1b191a340c6b134944f6e4253021414ebf16e4f6407515cd1b2847cfbf4"
+      },
+      {
+        "role": "independentApiProbes",
+        "sha256": "3fe21238d64dfa8a60d49cf6795185a427f7ec39fb76b7b0ccddd93758096d06"
+      },
+      {
+        "role": "independentFormattedRepairProbes",
+        "sha256": "afc90898bedcfc4a399da4bd8282b4c1db369ab071acdff5b70975b9d8596335"
+      },
+      {
+        "role": "independentFormattedApiProbes",
+        "sha256": "c6e813f3cffb801bbfe277b3dd3197de7273b6645b0eadfa28761ab6029185e1"
+      },
+      {
+        "role": "initialRed",
+        "sha256": "606ef36b5b060872aa00b935e2fa1598eae846f8bc6e0abe271039af14e6ab1d"
+      },
+      {
+        "role": "focusedFixes",
+        "sha256": "34819eb9317792a248e1757fea24fbfdc6c335dc614d03537816e3a39f8c3276"
+      },
+      {
+        "role": "initialMicFailures",
+        "sha256": "7d9b4460b2cbb50d31717e277dd79ef3f038b9917a4ef2a7881a6df0ebd9148b"
+      },
+      {
+        "role": "firstFullRegressionWithConcurrentPlaylistFailure",
+        "sha256": "65175ddd9b3cbca025a596f1517b74ab09ac6a65b15e7a0d6bb0cffd86ba9cb0"
+      },
+      {
+        "role": "currentPlaylistRecheck",
+        "sha256": "c48ed2bfa910f3ebdd75ef60a74660f154dc4c030b384fb7b0cfb8d33a0e0b0b"
+      },
+      {
+        "role": "finalFullRegression",
+        "sha256": "d79962b1dab78c4ba219c98c3b1e4037faee8bcdeeda2a9fdc4a6a833713a36b"
+      }
+    ]
+  },
+  "controlledOutputCurrentModelIntegration": {
+    "date": "2026-10-30",
+    "runtime": {
+      "electron": "43.8.3",
+      "chromium": "150.0.7871.250",
+      "node": "24.22.0"
+    },
+    "sourceSnapshotCount": 17,
+    "currentCriticalSourcesMatchAcrossBothRunsAndFinalCheck": true,
+    "modelInvocations": 16,
+    "stimulus": "same one-second synthetic stereo source, CPU preference; 16 executions are not independent songs or quality samples",
+    "summary": {
+      "flac": 9,
+      "wavFallback": 2,
+      "expectedFailures": 5,
+      "allCasesPassed": true,
+      "completeArtifactDecodesComparedByteForByteWithSavedStagedWav": 11
+    },
+    "rows": [
+      {
+        "name": "quick-flac",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "success",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "general-flac",
+        "recipeId": "general",
+        "mode": "success",
+        "label": "success",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "c0ec3e57e711dc6a99a26c2b08f7019f639cda6572539db04a362bf515d14b45",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "92bbda9fb41cac498a664b914bd9ad668ef7572809675ccd5721659d56a27dc5"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-verify-fallback",
+        "recipeId": "quick",
+        "mode": "verify-fallback",
+        "label": "verify-fallback",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "wav",
+        "artifactSha256": "ab81fa8f4de5f6dadcc9e0f34a3c953b3e4f66b110408c9e3aea0a6245547e26",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "general-encode-fallback",
+        "recipeId": "general",
+        "mode": "encode-fallback",
+        "label": "encode-fallback",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "wav",
+        "artifactSha256": "ae2eb125a217e71300695e458aa9327a24a9d0461919b4f6d3a825b25211e4b7",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "92bbda9fb41cac498a664b914bd9ad668ef7572809675ccd5721659d56a27dc5"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-save-failure",
+        "recipeId": "quick",
+        "mode": "save-failure",
+        "label": "save-failure",
+        "expectedFailure": true,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "priorManifestPreserved": true
+      },
+      {
+        "name": "quick-save-failure",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "retry",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-encoding-journal",
+        "recipeId": "quick",
+        "mode": "encoding-journal",
+        "label": "encoding-journal",
+        "expectedFailure": true,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "priorManifestPreserved": true
+      },
+      {
+        "name": "quick-encoding-journal",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "retry",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-verifying-journal",
+        "recipeId": "quick",
+        "mode": "verifying-journal",
+        "label": "verifying-journal",
+        "expectedFailure": true,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "priorManifestPreserved": true
+      },
+      {
+        "name": "quick-verifying-journal",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "retry",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-cancel-encoding",
+        "recipeId": "quick",
+        "mode": "cancel-encoding",
+        "label": "cancel-encoding",
+        "expectedFailure": true,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "priorManifestPreserved": true
+      },
+      {
+        "name": "quick-cancel-encoding",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "retry",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-committed-cleanup",
+        "recipeId": "quick",
+        "mode": "committed-cleanup",
+        "label": "committed-cleanup",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true
+      },
+      {
+        "name": "quick-failed-cleanup",
+        "recipeId": "quick",
+        "mode": "failed-cleanup",
+        "label": "failed-cleanup",
+        "expectedFailure": true,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "priorManifestPreserved": true
+      },
+      {
+        "name": "quick-committed-cleanup",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "restart-retry",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true,
+        "deadOwnerConfirmed": true,
+        "previousPublishedPreserved": true
+      },
+      {
+        "name": "quick-failed-cleanup",
+        "recipeId": "quick",
+        "mode": "success",
+        "label": "restart-retry",
+        "expectedFailure": false,
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "outputFormat": "flac5",
+        "artifactSha256": "49f0f090412a45452a0b62affa50d302e5609c3c533268c5dc6d391dc5f14820",
+        "finalPcm": {
+          "bytes": 352800,
+          "sha256": "259c6f0f610beb382bb8b95135b1b4a9bd72e2aea24b467812253aad63cfb03b"
+        },
+        "rangeBytesAndHeaders": true,
+        "deadOwnerConfirmed": true,
+        "previousPublishedPreserved": true
+      }
+    ],
+    "faults": "only synthetic per-track paths: manifest rename EACCES; encoding/verifying PID journal rename ENOSPC; cancel after real encoder spawn; staging cleanup EACCES; real encoder output path failure; real FLAC truncated to 42 bytes",
+    "recoveryScope": "normal first-process exit followed by second Electron process; dead owner confirmed, next real-model job clears recognized staging and preserves previously published audio; not a new hard-kill or power-loss trial",
+    "injectionScope": "direct Main factory, Map IPC registration, no-op feature gate and prepared path/config injection; default ONNX worker and existing installed models; not formal root/sender/UI, DML, natural music, long duration, device or OBS quality acceptance",
+    "tool": {
+      "bytes": 222248960,
+      "sha256": "05f4251bce9293c2ab492cb17ca7724a0ffd0d06c881ba2ee83b82a89c2fc740",
+      "version": "ffmpeg version 9.0-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+    },
+    "models": [
+      {
+        "id": "kara2",
+        "bytes": 52786726,
+        "sha256": "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4"
+      },
+      {
+        "id": "inst-hq4",
+        "bytes": 59074342,
+        "sha256": "3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8"
+      }
+    ],
+    "formalFlacGateOpen": false,
+    "audioMigrated": false,
+    "receipts": [
+      {
+        "role": "primary-results-private-json",
+        "sha256": "1813831cd739aec257e3c957b2900130b38c887025942e8a299a50d37af838ca"
+      },
+      {
+        "role": "primary-source-snapshot-json",
+        "sha256": "eeb3f60e6e96bcd5924965897b0a38595601666b0c33dad49c4c1928ce6b0e1f"
+      },
+      {
+        "role": "primary-exit-json",
+        "sha256": "d49575234a50aff48f244f2e3e2e5c96b959a1653e1b4a8e11547a427d8bf4b2"
+      },
+      {
+        "role": "recovery-results-private-json",
+        "sha256": "c8eb819eb25a573bcd9e789f1ed673b3fed096b56ff50cb16c0bf5dcce98e3cf"
+      },
+      {
+        "role": "recovery-source-snapshot-json",
+        "sha256": "eeb3f60e6e96bcd5924965897b0a38595601666b0c33dad49c4c1928ce6b0e1f"
+      },
+      {
+        "role": "recovery-exit-json",
+        "sha256": "48c0f332ac66ae1d4c444f31b79f280d9601ce926173f95590c16c93b2d35648"
+      },
+      {
+        "role": "verification-json",
+        "sha256": "f73bef14ff2648fedb6b85451c2ec38c7f7f4254a6762c3ba54186987db30cbe"
+      },
+      {
+        "role": "sandbox-primary-exit-json",
+        "sha256": "5750e26a15695d9a53eacf3881297b473ac0defb850c5fb7ba52fd69ce662283"
+      },
+      {
+        "role": "sandbox-launch-log",
+        "sha256": "886ed9f2d5be06759c25b2a796ffe9ba196b1e496f7662f8f7dadd01335b74fc"
+      }
+    ],
+    "independentArtifactAudit": {
+      "successfulArtifactsDecoded": 11,
+      "equalToSavedStagedPcm": true,
+      "receiptSha256": "4586fdf6140792cec1804af2f0c4f650309645734290d0d9767bbd0d28379675"
+    }
+  },
+  "controlledOutputNaturalMusicIntegration": {
+    "date": "2026-10-30",
+    "runtime": "43.8.3",
+    "corpus": [
+      {
+        "id": "natural-short",
+        "bytes": 2487985,
+        "sha256": "b2d2a7b6992c26cacafc00846ba484df84cd8ac0e7cf2d9f7f1cb0346946eee9"
+      },
+      {
+        "id": "natural-long",
+        "bytes": 6151841,
+        "sha256": "baca602142172870697ed4897f1fa9cc07fe0ee1132452c059cab1161bed09d7"
+      }
+    ],
+    "productionSnapshotCount": 14,
+    "allCasesPassed": true,
+    "rows": [
+      {
+        "name": "short-quick",
+        "label": "complete",
+        "recipeId": "quick",
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "duration": 147.55709750566893,
+        "artifactBytes": 33813434,
+        "artifactSha256": "8077e390e9712982c9006fa683355e5caa2446c80a2ef19a75247dbc8b54eef8",
+        "pcm": {
+          "bytes": 52058144,
+          "sha256": "e3c4998bda5fb8d5b1146e7dce3a4058fe3a4458d7b29df37051524a3c70d8eb"
+        },
+        "caseElapsedMs": 129654
+      },
+      {
+        "name": "short-general",
+        "label": "complete",
+        "recipeId": "general",
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "duration": 147.55709750566893,
+        "artifactBytes": 32553114,
+        "artifactSha256": "0cc6c37ecb06e2f167bb3b46bf10fa40d33f44064791189a7e98ebc8454e95f0",
+        "pcm": {
+          "bytes": 52058144,
+          "sha256": "184068cad0838f1d30f00f446d8615ab6ab1ac3f86796736453d189baee507a6"
+        },
+        "caseElapsedMs": 208176
+      },
+      {
+        "name": "long-quick",
+        "label": "cancel-inference",
+        "recipeId": "quick",
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "cancelAtPercent": 1,
+        "workerTerminatedBeforeMainSettled": true,
+        "priorManifestPreserved": true,
+        "sameFactoryRegisterCount": 1,
+        "schedulerReleased": true,
+        "queueStatus": "idle",
+        "caseElapsedMs": 20000
+      },
+      {
+        "name": "long-quick",
+        "label": "complete",
+        "recipeId": "quick",
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "duration": 371.4266666666667,
+        "artifactBytes": 81559567,
+        "artifactSha256": "4bd7acbee047e54be47a66f2fd236964c5abcc79fd5fb62bd62160dbda9af957",
+        "pcm": {
+          "bytes": 131039328,
+          "sha256": "841ef60afc6cb830aa991f6437385b74a8e9e744c4bda90723c10cc2e0439267"
+        },
+        "sameFactoryRegisterCount": 1,
+        "schedulerReleased": true,
+        "queueStatus": "idle",
+        "caseElapsedMs": 455760
+      },
+      {
+        "name": "long-general",
+        "label": "cancel-inference",
+        "recipeId": "general",
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "cancelAtPercent": 1,
+        "workerTerminatedBeforeMainSettled": true,
+        "priorManifestPreserved": true,
+        "sameFactoryRegisterCount": 1,
+        "schedulerReleased": true,
+        "queueStatus": "idle",
+        "caseElapsedMs": 46852
+      },
+      {
+        "name": "long-general",
+        "label": "complete",
+        "recipeId": "general",
+        "ok": true,
+        "oldAudioUnchanged": true,
+        "childrenClosedAtMainSettle": true,
+        "duration": 371.4266666666667,
+        "artifactBytes": 79252412,
+        "artifactSha256": "52490295a05d826633f9d88c4069c6cfe81629db6867f0492e8c1309eacd44b4",
+        "pcm": {
+          "bytes": 131039328,
+          "sha256": "69cc45186a528c8f05a28b89a49d89fe8728323982debce9c08bcab7934ba1f0"
+        },
+        "sameFactoryRegisterCount": 1,
+        "schedulerReleased": true,
+        "queueStatus": "idle",
+        "caseElapsedMs": 657531
+      }
+    ],
+    "playback": {
+      "owner": "real usePlayer/native media element and graph; native Audio constructor observed with proxy and restored; no mocked clock",
+      "artifactsShaAndManifestSelectionCheckedBeforeAndAfter": true,
+      "muted": true,
+      "autoplayPolicyInjected": true,
+      "completeArtifacts": 4,
+      "pausedSeeks": 16,
+      "playingSeeks": 12,
+      "ended": 4
+    },
+    "modelScope": "two original natural-music read-only copies, full duration quick/general, CPU preference, real default ONNX worker and installed FFmpeg; direct Main factory with Map IPC, no-op gate/config/prepared paths injected; no formal root/sender/UI/DML or packaged acceptance",
+    "cancelScope": "long quick/general use same single Main factory/queue/heavy scheduler across real partial-inference cancellation then new separation:run; not queue retry API",
+    "playbackScope": "paused/playing state, native events/currentTime, identity and EOF only; no audible quality, DSP, decoded PCM position, physical device, OBS, cold-cache or uninterrupted endurance claim; timings include probe holds and are not seek performance gates",
+    "formalFlacGateOpen": false,
+    "audioMigrated": false,
+    "receipts": [
+      {
+        "role": "short-quick-results-private-json",
+        "sha256": "0d6c5b62eaadbefc0e652751bdef04af5437b849a3f4c226a88ec02ea772ab9b"
+      },
+      {
+        "role": "short-quick-source-snapshot-json",
+        "sha256": "67a29fad36c88e0a74dc4afb6e18d7e676fa47b34bd8ef4c19cb760c15277636"
+      },
+      {
+        "role": "short-quick-before-json",
+        "sha256": "c239bf23c126b0972ddd3070365fd57aa6bf32b534593be0ed64f82a77a43362"
+      },
+      {
+        "role": "short-quick-exit-json",
+        "sha256": "5835b4d54c44be61952a45d009e0c96bc9f3a94b4b62ad86cd7543fdf19b94fd"
+      },
+      {
+        "role": "short-general-results-private-json",
+        "sha256": "7c7d9cfccd8de09ee85f080b824a609d00adba3670f30dd58ba4087975999690"
+      },
+      {
+        "role": "short-general-source-snapshot-json",
+        "sha256": "67a29fad36c88e0a74dc4afb6e18d7e676fa47b34bd8ef4c19cb760c15277636"
+      },
+      {
+        "role": "short-general-before-json",
+        "sha256": "a2c5ba139b10de6b959cf8568bb2860beed077a9f7d3ea0b3c60817316b525ed"
+      },
+      {
+        "role": "short-general-exit-json",
+        "sha256": "80d3fccaedf7465a2cc9d70056abdc05ac433b7fcc4ae500b3b6c692524ffd2e"
+      },
+      {
+        "role": "long-quick-results-private-json",
+        "sha256": "314ca091ca46b65c14cd43b2c5231e3c703ab32ace1fed6ccf85be33a1e87d0a"
+      },
+      {
+        "role": "long-quick-source-snapshot-json",
+        "sha256": "5033ae32bb815c9b99a9aabfc12ae7ab68ccea1ee5ad10490f36385a91bb602f"
+      },
+      {
+        "role": "long-quick-before-json",
+        "sha256": "9af71aa2c5f5e32b8a37171e496a832cc63badddd50fa209f8b2cd8dc8be413e"
+      },
+      {
+        "role": "long-quick-exit-json",
+        "sha256": "4cabd4a448c2d10fbb6ffbc159e342cf1fb3077e0afef25f9ffc74986c6a4c69"
+      },
+      {
+        "role": "long-general-results-private-json",
+        "sha256": "be551b27a960d75692a38d887aebd86880cd09f952a656bdc3f8952bd005d04b"
+      },
+      {
+        "role": "long-general-source-snapshot-json",
+        "sha256": "5033ae32bb815c9b99a9aabfc12ae7ab68ccea1ee5ad10490f36385a91bb602f"
+      },
+      {
+        "role": "long-general-before-json",
+        "sha256": "c98a3a429a2d58f5155be30a98a9f71004bd2a969b1dc1d92a883264724d8f1b"
+      },
+      {
+        "role": "long-general-exit-json",
+        "sha256": "43b038ae0c7cd402d64ab86f41407e71238fdeb1404b86f7f01c43eb952ae0ed"
+      },
+      {
+        "role": "playback-results-json",
+        "sha256": "e252d5a81624146d617247f8cfca5e27ba8d10a0d90383a3133882bde31c5905"
+      },
+      {
+        "role": "playback-source-snapshot-json",
+        "sha256": "6bb758a2a1f310d23ce2918b7c27d43d19bade4cea14141649866dcf6d053650"
+      },
+      {
+        "role": "playback-exit-json",
+        "sha256": "58bf701c57a85456f31e17a6f52ed8c942909e70ae907023a4af6075d80fdfda"
+      }
+    ],
+    "independentArtifactAudit": {
+      "completeArtifactsDecoded": 4,
+      "pcmShaAndLengthMatchSavedStagedWav": true,
+      "receiptSha256": "ad8e756d413f0f168b78eb5ed05bb86697ad0c1b97527210f8bc68c8a53f75ba"
+    }
+  },
+  "controlledOutputNaturalDeviceValidation": {
+    "date": "2026-10-30",
+    "scope": "two natural tracks, four true-model products; dedicated real-player Electron and isolated OBS process audio capture",
+    "route": {
+      "endpoint": "Turtle Beach Stealth 700 G2",
+      "monitorGain": 0,
+      "captureGain": 0.1,
+      "captureGuide": false,
+      "obsGain": 1,
+      "obsMonitoring": "none",
+      "desktopAndMicInputs": false,
+      "windowMatch": "unique title, priority 1",
+      "recordedCodec": "pcm_s16le",
+      "rate": 48000,
+      "channels": 2
+    },
+    "shortMatrix": {
+      "smokeCount": 1,
+      "matrixCount": 16,
+      "playingSeeks": 16,
+      "rows": [
+        {
+          "name": "short-quick",
+          "format": "flac",
+          "plan": "smoke",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 443392,
+          "duration": 9.237333333333334,
+          "peak": 0.02532958984375,
+          "rms": 0.0061835197400463135,
+          "clippedFrames": 0,
+          "nonzeroFrames": 386268,
+          "nonzeroRatio": 0.8711659209006929,
+          "pcmSha256": "9ac107b75aaaba7b15ebf5892b7fc69e3b8e0313ba50384fa1dc133c3c8b05f0",
+          "recordingSha256": "373d79cce9fbc48789241d03e425c799d844de76a2bde697bb1a5dea15e12550",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 8.237333333333334]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 3,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "short-quick",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 539648,
+          "duration": 11.242666666666667,
+          "peak": 0.02545166015625,
+          "rms": 0.006192925984658594,
+          "clippedFrames": 0,
+          "nonzeroFrames": 483749,
+          "nonzeroRatio": 0.896415811788425,
+          "pcmSha256": "f3e9d195cb9d075416a3b25b36bcc58846d24a1582224ad75817f5b6d27ec553",
+          "recordingSha256": "4141bb32d87de718d752c2097ee9389d856e0b3b8aabe35094e4dbd814b0f85f",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.242666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 2,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "short-quick",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 544768,
+          "duration": 11.349333333333334,
+          "peak": 0.025634765625,
+          "rms": 0.006177613619301184,
+          "clippedFrames": 0,
+          "nonzeroFrames": 486018,
+          "nonzeroRatio": 0.8921559269266918,
+          "pcmSha256": "f7e61e090ea1b4821148cfb8cb7dc486ab5f4678e5e1fcc56c71ee47f7d12e56",
+          "recordingSha256": "7c1bebc54ac19bc02adcafdcd3b002bfebeaa3a7369cb9bdbc61893e7d0669ab",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.349333333333334]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 3,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "short-quick",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.0357666015625,
+          "rms": 0.005877806076513046,
+          "clippedFrames": 0,
+          "nonzeroFrames": 486184,
+          "nonzeroRatio": 0.8958284198113208,
+          "pcmSha256": "8ea60b3ff1823ef09cb51d637a5cbaa1aadf2d834adc9b76062e889d9db4c5d5",
+          "recordingSha256": "5aca911051c916b93aff18427c2c95a0ed94f17566084392464b268b96407304",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 16,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "short-quick",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.035247802734375,
+          "rms": 0.005871230502302349,
+          "clippedFrames": 0,
+          "nonzeroFrames": 486143,
+          "nonzeroRatio": 0.8957528744103773,
+          "pcmSha256": "b6b6a7a077efb8289e1da24a2821a8d6e7b044a9d1958366f044b78cd25fa40e",
+          "recordingSha256": "9d117732672a1a578a8e365f1fac73a0871d4e315eecacbf2253d44f4203f9e1",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 22,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "short-general",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 540672,
+          "duration": 11.264,
+          "peak": 0.025421142578125,
+          "rms": 0.0056425884304262056,
+          "clippedFrames": 0,
+          "nonzeroFrames": 406029,
+          "nonzeroRatio": 0.7509710138494318,
+          "pcmSha256": "59b5e0ec3054b89886067bcd919e8cd0288b45faa61a8e39cc75b02227213e74",
+          "recordingSha256": "72fc48c52d695c6073036a60fb76c6396ac37e03834789e16d84d02a78329909",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.264]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 107,
+          "interiorZeroRunCount": 73,
+          "maxInteriorZeroFrames": 1920
+        },
+        {
+          "name": "short-general",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 540672,
+          "duration": 11.264,
+          "peak": 0.02532958984375,
+          "rms": 0.005197573012394129,
+          "clippedFrames": 0,
+          "nonzeroFrames": 310198,
+          "nonzeroRatio": 0.5737267696496212,
+          "pcmSha256": "434720f06f2b202bc059b3912328384b8b63ae321ff36bbf5818aead4146b764",
+          "recordingSha256": "5553023fa42550a4dc57899ec38502e4829bd610f8585707d81915bfd50b1eae",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.264]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 233,
+          "interiorZeroRunCount": 107,
+          "maxInteriorZeroFrames": 1920
+        },
+        {
+          "name": "short-general",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 541696,
+          "duration": 11.285333333333334,
+          "peak": 0.035980224609375,
+          "rms": 0.004870602628533671,
+          "clippedFrames": 0,
+          "nonzeroFrames": 475975,
+          "nonzeroRatio": 0.8786754932655955,
+          "pcmSha256": "325eb3c47f18447b680c980b4c517cae992e66cbec30a2c800b1bfb8538caa49",
+          "recordingSha256": "8920e45b4f6bdfa72b18e63b3e8b213f5af9a2d84ef53effbf693c6ce311164d",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.285333333333334]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 87,
+          "interiorZeroRunCount": 17,
+          "maxInteriorZeroFrames": 81
+        },
+        {
+          "name": "short-general",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.03778076171875,
+          "rms": 0.004810621837226749,
+          "clippedFrames": 0,
+          "nonzeroFrames": 479775,
+          "nonzeroRatio": 0.8840193838443396,
+          "pcmSha256": "e8745d41effe930bfba0cbfbdc49197830412d556953d848c03081b682a00e2d",
+          "recordingSha256": "ab331695c3215138b32b339b524ad35b70e944f6968cbc21c2a398abe607dc70",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 51,
+          "interiorZeroRunCount": 2,
+          "maxInteriorZeroFrames": 20
+        },
+        {
+          "name": "long-quick",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.02337646484375,
+          "rms": 0.004250225327011513,
+          "clippedFrames": 0,
+          "nonzeroFrames": 319190,
+          "nonzeroRatio": 0.5881301591981132,
+          "pcmSha256": "4dff7bdadaf20030eb3ad48ee759fdfc92a607bf52a58d55d8735e2d88918c57",
+          "recordingSha256": "90c8f80a59e9c0bfdce9fcbc27c8d3114267d9cce5c874662ab8dd07de67b6c3",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 228,
+          "interiorZeroRunCount": 102,
+          "maxInteriorZeroFrames": 1440
+        },
+        {
+          "name": "long-quick",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.02337646484375,
+          "rms": 0.004235463152914264,
+          "clippedFrames": 0,
+          "nonzeroFrames": 317263,
+          "nonzeroRatio": 0.5845795253537736,
+          "pcmSha256": "20bf2d58996aadd2e71774b58b9bdea31558ae47e13da9af92260883830682d5",
+          "recordingSha256": "433953a1035792c46f47f22db2a495816fd40d3c79996bd3fa499012b6d6ec2c",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 229,
+          "interiorZeroRunCount": 106,
+          "maxInteriorZeroFrames": 1440
+        },
+        {
+          "name": "long-quick",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 543744,
+          "duration": 11.328,
+          "peak": 0.0289306640625,
+          "rms": 0.004017475198871088,
+          "clippedFrames": 0,
+          "nonzeroFrames": 486714,
+          "nonzeroRatio": 0.895116084039548,
+          "pcmSha256": "db2ccf2e8b9db9e7c25b5f671f0dcf136353b6920e3831288c929d175a93bd4d",
+          "recordingSha256": "d7fd9686fdfdce8fa1d5fec3075ad2cea5df514ca44a8703a20550e888d9c056",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.328]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 15,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "long-quick",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 540672,
+          "duration": 11.264,
+          "peak": 0.028076171875,
+          "rms": 0.004028255382052543,
+          "clippedFrames": 0,
+          "nonzeroFrames": 485198,
+          "nonzeroRatio": 0.8973980527935606,
+          "pcmSha256": "497b6081abbf4ece422442bd38052559a4eb936239a13ef39e5fb3e948da7842",
+          "recordingSha256": "dd6de75dba39853efe515ebc935fb35a1c65e61bf17811e2b47c5e633f2b1385",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.264]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 17,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "long-general",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.02398681640625,
+          "rms": 0.004417874799165688,
+          "clippedFrames": 0,
+          "nonzeroFrames": 317379,
+          "nonzeroRatio": 0.5847932635613208,
+          "pcmSha256": "c53691bb32ff5831824b56fd28f2d8e9c9c65cfa19e13ed045820b23d08aeadd",
+          "recordingSha256": "15ba14c83c0ad12ad910703e0ed5fdd0c8cd9aca33b8de1329c1b8d846cff769",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 226,
+          "interiorZeroRunCount": 103,
+          "maxInteriorZeroFrames": 1440
+        },
+        {
+          "name": "long-general",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 543744,
+          "duration": 11.328,
+          "peak": 0.024017333984375,
+          "rms": 0.004415133604883761,
+          "clippedFrames": 0,
+          "nonzeroFrames": 317821,
+          "nonzeroRatio": 0.5845048405131826,
+          "pcmSha256": "8dfdbd0ea7d9d9dfb8073bffad7dba96b1ede4791ea4b545e05145a4aa076bc1",
+          "recordingSha256": "d86d3b3b3281c49a1ce37f4cd381fbe57d34968106c4b63c9f153c85378cc598",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.328]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 225,
+          "interiorZeroRunCount": 106,
+          "maxInteriorZeroFrames": 1440
+        },
+        {
+          "name": "long-general",
+          "format": "flac",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 542720,
+          "duration": 11.306666666666667,
+          "peak": 0.02801513671875,
+          "rms": 0.004148283800381243,
+          "clippedFrames": 0,
+          "nonzeroFrames": 487019,
+          "nonzeroRatio": 0.8973669663915095,
+          "pcmSha256": "df376ba0160c5f48883dd8fe4f78dc252b3a8e89e6509f4d96fd141c6bb9663b",
+          "recordingSha256": "4bcf3b7337fcee50a4ddb1f50f6703e347018efb27a441f31266089f655e36e0",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.306666666666667]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 11,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        },
+        {
+          "name": "long-general",
+          "format": "wav",
+          "plan": "matrix",
+          "dsp": true,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 543744,
+          "duration": 11.328,
+          "peak": 0.025848388671875,
+          "rms": 0.004192436177573142,
+          "clippedFrames": 0,
+          "nonzeroFrames": 487529,
+          "nonzeroRatio": 0.896614951153484,
+          "pcmSha256": "98c14cd2999bfd6da73af8fe9b23346111a1d7679614a2cbbc7278976567562b",
+          "recordingSha256": "21f4a06cf49a8ccbdbca89ec3bfa5a19807027533c5b5c8e2cd8c74c3d029b8b",
+          "interiorWindows": [
+            [2, 3.5],
+            [7, 10.328]
+          ],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 17,
+          "interiorZeroRunCount": 0,
+          "maxInteriorZeroFrames": 0
+        }
+      ],
+      "order": "each product dry WAV/FLAC then DSP FLAC/WAV; same owner; DSP playback history differs by case"
+    },
+    "longComparison": {
+      "rows": [
+        {
+          "name": "long-quick",
+          "format": "flac",
+          "plan": "long",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 17888256,
+          "duration": 372.672,
+          "peak": 0.025970458984375,
+          "rms": 0.0052820633280804925,
+          "clippedFrames": 0,
+          "nonzeroFrames": 17338624,
+          "nonzeroRatio": 0.9692741427671876,
+          "pcmSha256": "95ac9fdb64b430c1ca1589da2763cf45bd3d5459912c730d2146986455ac740f",
+          "recordingSha256": "c2a972cdf1a7df1f417b8019f6288e423bfa7fae8c32e16a66a19b607a3e4b9f",
+          "interiorWindows": [[2, 370.672]],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 2418,
+          "interiorZeroRunCount": 1683,
+          "maxInteriorZeroFrames": 1109
+        },
+        {
+          "name": "long-quick",
+          "format": "wav",
+          "plan": "long",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 17912832,
+          "duration": 373.184,
+          "peak": 0.02557373046875,
+          "rms": 0.005277373799621554,
+          "clippedFrames": 0,
+          "nonzeroFrames": 17343268,
+          "nonzeroRatio": 0.9682035760732864,
+          "pcmSha256": "967224ba97995e9e18e41a6c20d17cc58a40ed29cc4ffc1486a13bd39edead9f",
+          "recordingSha256": "a49d854c255c095f4064a13918e0ccb15007efe3a4f0b225543c92fb55d46727",
+          "interiorWindows": [[2, 371.184]],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 2406,
+          "interiorZeroRunCount": 1859,
+          "maxInteriorZeroFrames": 997
+        },
+        {
+          "name": "long-general",
+          "format": "wav",
+          "plan": "long",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 17927168,
+          "duration": 373.48266666666666,
+          "peak": 0.02587890625,
+          "rms": 0.0054783815431988766,
+          "clippedFrames": 0,
+          "nonzeroFrames": 17331514,
+          "nonzeroRatio": 0.9667736699962872,
+          "pcmSha256": "d393ce8a4055ac376b46680cb20a85f067b3080a76ddffb4fed042a1e1f4adad",
+          "recordingSha256": "58460d021ec44ec427753756fd217e6fea2614006768fda572705b2f2ea85b58",
+          "interiorWindows": [[2, 371.48266666666666]],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 1064,
+          "interiorZeroRunCount": 1050,
+          "maxInteriorZeroFrames": 4576
+        },
+        {
+          "name": "long-general",
+          "format": "flac",
+          "plan": "long",
+          "dsp": false,
+          "codec": "pcm_s16le",
+          "rate": 48000,
+          "channels": 2,
+          "frames": 17885184,
+          "duration": 372.608,
+          "peak": 0.0260009765625,
+          "rms": 0.0054852495170192766,
+          "clippedFrames": 0,
+          "nonzeroFrames": 17309921,
+          "nonzeroRatio": 0.9678357796039448,
+          "pcmSha256": "d5ed1eccb220e05e60c18a0016ddee000c4ca3c9984c9c0cbd54c794460e5698",
+          "recordingSha256": "7510bc55486c797b6131c98487050aaf4b9e11ad3274c4f1b1f82f6a7d96f494",
+          "interiorWindows": [[2, 370.608]],
+          "sourceAligned": false,
+          "controlOk": true,
+          "signalPresent": true,
+          "recordingValid": true,
+          "totalZeroRuns": 1103,
+          "interiorZeroRunCount": 1088,
+          "maxInteriorZeroFrames": 4096
+        }
+      ],
+      "controls": [
+        {
+          "name": "long-quick",
+          "format": "flac",
+          "startedAt": 0,
+          "endedAt": 371.426667,
+          "playedWallSeconds": 371.504,
+          "checkpointCount": 38,
+          "endedEvent": true,
+          "finalization": true
+        },
+        {
+          "name": "long-quick",
+          "format": "wav",
+          "startedAt": 0,
+          "endedAt": 371.426667,
+          "playedWallSeconds": 371.967,
+          "checkpointCount": 36,
+          "endedEvent": true,
+          "finalization": true
+        },
+        {
+          "name": "long-general",
+          "format": "wav",
+          "startedAt": 0,
+          "endedAt": 371.426667,
+          "playedWallSeconds": 372.283,
+          "checkpointCount": 38,
+          "endedEvent": true,
+          "finalization": true
+        },
+        {
+          "name": "long-general",
+          "format": "flac",
+          "startedAt": 0,
+          "endedAt": 371.426667,
+          "playedWallSeconds": 371.438,
+          "checkpointCount": 38,
+          "endedEvent": true,
+          "finalization": true
+        }
+      ],
+      "initialization": {
+        "newOwner": true,
+        "pausedDspApplied": {
+          "transposeSemitones": -2,
+          "pitchCents": 0,
+          "tempoRate": 1.1,
+          "monitorGuideVocalEnabled": false
+        },
+        "played": false,
+        "equivalentToMatrixLifecycle": false
+      }
+    },
+    "hearing": {
+      "replayId": "1793361066980",
+      "assetSha256": "8077e390e9712982c9006fa683355e5caa2446c80a2ef19a75247dbc8b54eef8",
+      "sourceSeconds": 40,
+      "requestedSeconds": 8,
+      "sinkLabel": "喇叭 (Turtle Beach Stealth 700 G2) (10f5:218c)",
+      "captureGain": 0.1,
+      "firstPrompt": "not completed; user away and requested replay",
+      "response": "耳機有聲，未聽出明顯異常",
+      "scope": "direct fresh real-player replay only; not an OBS recording listening or entire long-run acceptance",
+      "fullRunAnomaly": {
+        "recordedAt": "2026-10-30T20:21:10.3557176+08:00",
+        "firstReport": "當前撥放過程中會有偶發的電流音效",
+        "clarification": "前面幾段也有",
+        "latestConfigAtReport": {
+          "format": "wav",
+          "dsp": false,
+          "name": "long-general"
+        },
+        "limits": "specific prior formats and exact onset not identified; do not assign individual-event timestamps or a unique cause",
+        "directEightSecondReplyPreserved": true,
+        "qualityAcceptance": "audible anomaly reported; not passed"
+      },
+      "fullRunQualityAccepted": false,
+      "obsRecordingListening": "uncertain; initially no obvious electric noise, possible excessive distortion; original comparison requested",
+      "obsListeningReply": "乍聽之下好像沒有 但也有可能是過度失真 給我原曲對照",
+      "sourceComparison": {
+        "sourceSeconds": [150, 170],
+        "gain": 0.1,
+        "loudnessNormalized": false,
+        "obsSampleAligned": false,
+        "clips": [
+          {
+            "role": "original",
+            "sha256": "2e1b5db5b53ce530b9b48a2f6a846aba616c107652d374da87e35408e58fc6bd",
+            "frames": 960000,
+            "peak": 0.114227294921875,
+            "clippedSamples": 0
+          },
+          {
+            "role": "separated-direct",
+            "sha256": "59a97474df12770c6e0f87fe648c43bd84027d7fac79d3764c3bb113d55adb5d",
+            "frames": 960000,
+            "peak": 0.100189208984375,
+            "clippedSamples": 0
+          }
+        ]
+      }
+    },
+    "preservation": {
+      "historicalRootsUnchanged": 20,
+      "artifactPairsUnchanged": 4,
+      "originalAudioUnchanged": 2,
+      "labCopiesUnchanged": 8,
+      "modelsUnchanged": 2,
+      "ffmpegUnchanged": true,
+      "settingsUnchanged": true,
+      "settingsScope": "only keys recorded in the starting baseline; additional current keys were not snapshotted and have no before/after conclusion",
+      "obsConfigUnchanged": true,
+      "protectedObsUnchanged": true,
+      "runtimeSnapshotCount": 15,
+      "changed": [],
+      "formalFlacGate": false
+    },
+    "failuresPreserved": [
+      {
+        "description": "initial settings preservation comparison failed because current obsIntegration contained an additional key absent from the starting subset; subsequent comparison checks only recorded keys; no before/after conclusion for unrecorded keys",
+        "initialReceiptSha256": "b9aedd7ed311ef069aef7649a1784a89af73c3647df9adeaa520b335d9876abd"
+      },
+      {
+        "attempt": 1,
+        "description": "recording inactive after StartRecord; no playback; later owner exit cause unknown; initial FirstRun configuration is a supported mechanism, not uniquely proven cause"
+      },
+      {
+        "attempt": 2,
+        "description": "SHA changed after StopRecord acknowledgement; completion was not awaited; exact cause of historical mutation not independently observed; original hash and strict rejection retained"
+      },
+      {
+        "attempt": 3,
+        "description": "full long-quick FLAC interrupted at about 61 seconds by user-confirmed window close; private recorder stopped safely; incomplete, not codec/model failure"
+      },
+      {
+        "attempt": 4,
+        "description": "deliberate window close during playback; expected abort, STOPPED stable SHA and exit 3 independently verified; not full-track success"
+      },
+      {
+        "description": "immediate RemoveInput list assertion failed; later retry observed empty inputs; exact removal delay unmeasured"
+      }
+    ],
+    "interpretation": {
+      "controlPassIsAudioQualityPass": false,
+      "zeroMinimumFrames": 16,
+      "zeroMinimumMs": 0.3333333333333333,
+      "zeroDefinition": "both PCM16 channels exactly zero, complete run inside file-relative interior window",
+      "sourceAligned": false,
+      "formatFailureRateComparison": false,
+      "dspFixClaim": false,
+      "rootCauseInvestigationExpanded": false
+    },
+    "remaining": [
+      "OBS recording A/B listening",
+      "complete real-user routing including existing OBS/Voicemeeter mix",
+      "acoustic timing and broader repertoire/session/device-interruption quality"
+    ],
+    "formalFlacGate": false,
+    "migration": false,
+    "preservationAfterCleanup": {
+      "historicalRootsUnchanged": 20,
+      "artifactPairsUnchanged": 4,
+      "originalAudioUnchanged": 2,
+      "labCopiesUnchanged": 8,
+      "modelsUnchanged": 2,
+      "ffmpegUnchanged": true,
+      "settingsUnchanged": false,
+      "settingsScope": "only keys recorded in the starting baseline; additional current keys were not snapshotted and have no before/after conclusion",
+      "obsConfigUnchanged": true,
+      "protectedObsUnchanged": true,
+      "runtimeSnapshotCount": 15,
+      "changed": [],
+      "formalFlacGate": false
+    },
+    "lateSettingsObservation": {
+      "field": "audioPreferences.performanceVolume",
+      "initial": 0.03,
+      "observed": 0.23,
+      "actor": "not established",
+      "restored": false,
+      "scope": "observed after recording/first preservation check and owned cleanup; isolated test gains remained monitor 0 and capture 0.1"
+    }
+  },
+  "alignedLevelMatchedComparison": {
+    "date": "2026-10-30",
+    "sourceSeconds": [150, 170],
+    "rate": 48000,
+    "channels": 2,
+    "frames": 960000,
+    "inputHashes": [
+      {
+        "role": "original",
+        "sha256": "baca602142172870697ed4897f1fa9cc07fe0ee1132452c059cab1161bed09d7"
+      },
+      {
+        "role": "direct",
+        "sha256": "c164bfbe564475ea2572da5a1e8d91b5a75f3d83065dd3dde8688a9244da8f93"
+      },
+      {
+        "role": "obs-wav",
+        "sha256": "58460d021ec44ec427753756fd217e6fea2614006768fda572705b2f2ea85b58"
+      },
+      {
+        "role": "obs-flac",
+        "sha256": "7510bc55486c797b6131c98487050aaf4b9e11ad3274c4f1b1f82f6a7d96f494"
+      }
+    ],
+    "alignmentMethod": "stereo per-channel demeaned normalized cross-correlation; all integer lags searched at 48 kHz; no timewarp",
+    "originalToDirect": {
+      "position": 480000,
+      "offsetFrames": 0,
+      "ncc": 0.8255908740494009,
+      "atSearchBoundary": false,
+      "allIntegerLagsSearched": true,
+      "bestAlternativeNccOutsideFiveMs": 0.2378507400144692,
+      "peakMarginOutsideFiveMs": 0.5877401340349317
+    },
+    "originalVsDirect": {
+      "leastSquaresGain": 0.5822815882910123,
+      "correlation": 0.8255908544833848,
+      "gainFitResidualDbRelativeToFittedSignal": -3.305570306524385,
+      "residualRms": 0.1276303155538058,
+      "channels": [
+        {
+          "gain": 0.5816661764675088,
+          "correlation": 0.8250920627603161
+        },
+        {
+          "gain": 0.5828936873876857,
+          "correlation": 0.8260867202420455
+        }
+      ],
+      "limits": "descriptive reconstruction residual, includes resampling/time mismatch/quantization; not THD or perceptual quality",
+      "interpretation": "intentional vocal removal/content changes; not a distortion score"
+    },
+    "obs": {
+      "obs-wav": {
+        "alignment": {
+          "position": 517905,
+          "offsetFrames": 37905,
+          "ncc": 0.645321936287555,
+          "atSearchBoundary": false,
+          "allIntegerLagsSearched": true,
+          "bestAlternativeNccOutsideFiveMs": 0.27085878036378225,
+          "peakMarginOutsideFiveMs": 0.3744631559237727
+        },
+        "globalFileContentOffsetSeconds": 0.7896875,
+        "localOffsetRangeFrames": [-480, 0],
+        "sampleGridAlignmentStableDiagnostic": false,
+        "localTwoSecondMatches": [
+          {
+            "referenceSeconds": [150, 152],
+            "position": 517905,
+            "offsetFrames": 0,
+            "ncc": 0.7458431113427657,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.3262172467637499,
+            "peakMarginOutsideFiveMs": 0.4196258645790158
+          },
+          {
+            "referenceSeconds": [152, 154],
+            "position": 613905,
+            "offsetFrames": 0,
+            "ncc": 0.8432127963189903,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.2666992113675844,
+            "peakMarginOutsideFiveMs": 0.5765135849514058
+          },
+          {
+            "referenceSeconds": [154, 156],
+            "position": 709905,
+            "offsetFrames": 0,
+            "ncc": 0.6182364814627535,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.34458512855492107,
+            "peakMarginOutsideFiveMs": 0.2736513529078324
+          },
+          {
+            "referenceSeconds": [156, 158],
+            "position": 805905,
+            "offsetFrames": 0,
+            "ncc": 0.5551820449028965,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.3056618053256043,
+            "peakMarginOutsideFiveMs": 0.2495202395772922
+          },
+          {
+            "referenceSeconds": [158, 160],
+            "position": 901425,
+            "offsetFrames": -480,
+            "ncc": 0.7192952326830843,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.3788554175441927,
+            "peakMarginOutsideFiveMs": 0.34043981513889154
+          },
+          {
+            "referenceSeconds": [160, 162],
+            "position": 997905,
+            "offsetFrames": 0,
+            "ncc": 0.8096453274896706,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.42561030990792026,
+            "peakMarginOutsideFiveMs": 0.3840350175817503
+          },
+          {
+            "referenceSeconds": [162, 164],
+            "position": 1093905,
+            "offsetFrames": 0,
+            "ncc": 0.705527958608068,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.25981482837046,
+            "peakMarginOutsideFiveMs": 0.44571313023760806
+          },
+          {
+            "referenceSeconds": [164, 166],
+            "position": 1189905,
+            "offsetFrames": 0,
+            "ncc": 0.8720097530195313,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.5924162875155062,
+            "peakMarginOutsideFiveMs": 0.2795934655040251
+          },
+          {
+            "referenceSeconds": [166, 168],
+            "position": 1285904,
+            "offsetFrames": -1,
+            "ncc": 0.5699926693744424,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.37777233222074275,
+            "peakMarginOutsideFiveMs": 0.19222033715369963
+          },
+          {
+            "referenceSeconds": [168, 170],
+            "position": 1381425,
+            "offsetFrames": -480,
+            "ncc": 0.8634614133756962,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.5698159438467308,
+            "peakMarginOutsideFiveMs": 0.2936454695289653
+          }
+        ],
+        "comparison": {
+          "leastSquaresGain": 0.01601484403124185,
+          "correlation": 0.6453219363831662,
+          "gainFitResidualDbRelativeToFittedSignal": 1.4653238567310152,
+          "residualRms": 0.004288015956992822,
+          "channels": [
+            {
+              "gain": 0.016218028291856288,
+              "correlation": 0.6533388443517167
+            },
+            {
+              "gain": 0.015813118293370846,
+              "correlation": 0.637358479714822
+            }
+          ],
+          "limits": "descriptive reconstruction residual, includes resampling/time mismatch/quantization; not THD or perceptual quality"
+        },
+        "completeInternalZeroRuns": 28,
+        "edgeTruncatedZeroRuns": 0,
+        "maxInternalZeroFrames": 480,
+        "zeroAttribution": "not established; global alignment differs from local peaks; eight-LSB raw diagnostic is not event-level proof"
+      },
+      "obs-flac": {
+        "alignment": {
+          "position": 516874,
+          "offsetFrames": 36874,
+          "ncc": 0.5455672840988633,
+          "atSearchBoundary": false,
+          "allIntegerLagsSearched": true,
+          "bestAlternativeNccOutsideFiveMs": 0.3538441979757865,
+          "peakMarginOutsideFiveMs": 0.19172308612307687
+        },
+        "globalFileContentOffsetSeconds": 0.7682083333333334,
+        "localOffsetRangeFrames": [0, 480],
+        "sampleGridAlignmentStableDiagnostic": false,
+        "localTwoSecondMatches": [
+          {
+            "referenceSeconds": [150, 152],
+            "position": 516874,
+            "offsetFrames": 0,
+            "ncc": 0.6533013980982515,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.30636432281962583,
+            "peakMarginOutsideFiveMs": 0.34693707527862566
+          },
+          {
+            "referenceSeconds": [152, 154],
+            "position": 612874,
+            "offsetFrames": 0,
+            "ncc": 0.5546617133746425,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.40430571117814934,
+            "peakMarginOutsideFiveMs": 0.1503560021964932
+          },
+          {
+            "referenceSeconds": [154, 156],
+            "position": 708874,
+            "offsetFrames": 0,
+            "ncc": 0.5942415107289759,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.3180813254904469,
+            "peakMarginOutsideFiveMs": 0.27616018523852903
+          },
+          {
+            "referenceSeconds": [156, 158],
+            "position": 804874,
+            "offsetFrames": 0,
+            "ncc": 0.6128780056231997,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.439395880966178,
+            "peakMarginOutsideFiveMs": 0.17348212465702173
+          },
+          {
+            "referenceSeconds": [158, 160],
+            "position": 901354,
+            "offsetFrames": 480,
+            "ncc": 0.7039932110247462,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.37921039600883194,
+            "peakMarginOutsideFiveMs": 0.3247828150159143
+          },
+          {
+            "referenceSeconds": [160, 162],
+            "position": 996874,
+            "offsetFrames": 0,
+            "ncc": 0.5198537712692858,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.428065051101514,
+            "peakMarginOutsideFiveMs": 0.09178872016777179
+          },
+          {
+            "referenceSeconds": [162, 164],
+            "position": 1092874,
+            "offsetFrames": 0,
+            "ncc": 0.5760619232537741,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.3483892956287354,
+            "peakMarginOutsideFiveMs": 0.22767262762503876
+          },
+          {
+            "referenceSeconds": [164, 166],
+            "position": 1188874,
+            "offsetFrames": 0,
+            "ncc": 0.8670575412209406,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.6220011110141225,
+            "peakMarginOutsideFiveMs": 0.2450564302068181
+          },
+          {
+            "referenceSeconds": [166, 168],
+            "position": 1284875,
+            "offsetFrames": 1,
+            "ncc": 0.9002379932277831,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.31055438043811534,
+            "peakMarginOutsideFiveMs": 0.5896836127896677
+          },
+          {
+            "referenceSeconds": [168, 170],
+            "position": 1380874,
+            "offsetFrames": 0,
+            "ncc": 0.49842696489821703,
+            "atSearchBoundary": false,
+            "allIntegerLagsSearched": true,
+            "bestAlternativeNccOutsideFiveMs": 0.40491852705467896,
+            "peakMarginOutsideFiveMs": 0.09350843784353807
+          }
+        ],
+        "comparison": {
+          "leastSquaresGain": 0.013568814788857651,
+          "correlation": 0.5455672845115908,
+          "gainFitResidualDbRelativeToFittedSignal": 3.7286228919565607,
+          "residualRms": 0.004714553253035758,
+          "channels": [
+            {
+              "gain": 0.01361562668916006,
+              "correlation": 0.5474448362504232
+            },
+            {
+              "gain": 0.013522338919609116,
+              "correlation": 0.5437031778108881
+            }
+          ],
+          "limits": "descriptive reconstruction residual, includes resampling/time mismatch/quantization; not THD or perceptual quality"
+        },
+        "completeInternalZeroRuns": 16,
+        "edgeTruncatedZeroRuns": 0,
+        "maxInternalZeroFrames": 480,
+        "zeroAttribution": "not established; global alignment differs from local peaks; eight-LSB raw diagnostic is not event-level proof"
+      }
+    },
+    "listening": {
+      "method": "loudnorm input measurement only, output discarded; listening render uses volume fixed gain only, no compression/limiter/EQ/fades/gap fill/timewarp",
+      "targetLufs": -23,
+      "toleranceLu": 0.1,
+      "rows": [
+        {
+          "role": "original",
+          "inputLufs": -6.52,
+          "gainDb": -16.48,
+          "outputLufs": -23,
+          "truePeakDb": -15.22,
+          "frames": 960000,
+          "fixedGainMaxAbsoluteError": 1.2076702327057376e-7,
+          "outputSha256": "391481daf16065afd3046e040e8cb3252df1e760f4f62b74bb5c14f03b2461b6",
+          "independentEbur128IntegratedLufsRounded01": -22.9
+        },
+        {
+          "role": "direct",
+          "inputLufs": -9.78,
+          "gainDb": -13.22,
+          "outputLufs": -23,
+          "truePeakDb": -13.07,
+          "frames": 960000,
+          "fixedGainMaxAbsoluteError": 1.1949032638347568e-7,
+          "outputSha256": "70f8d35b5f7aeaf34cc50e2b229e1e4db8da9880e30483b0dd6c2be88bc78a23",
+          "independentEbur128IntegratedLufsRounded01": -22.7
+        },
+        {
+          "role": "obs-wav",
+          "inputLufs": -41.84,
+          "gainDb": 18.840000000000003,
+          "outputLufs": -22.99,
+          "truePeakDb": -13.04,
+          "frames": 960000,
+          "fixedGainMaxAbsoluteError": 1.188337834254552e-7,
+          "outputSha256": "5fd7102c8c6e1aa4ffc0dc3861668d76a293aeecbb4a9d01e8e32606ef4521c7",
+          "independentEbur128IntegratedLufsRounded01": -22.8
+        },
+        {
+          "role": "obs-flac",
+          "inputLufs": -41.82,
+          "gainDb": 18.82,
+          "outputLufs": -23.05,
+          "truePeakDb": -13.07,
+          "frames": 960000,
+          "fixedGainMaxAbsoluteError": 1.1828001969527158e-7,
+          "outputSha256": "759fe5d51be14f753c1be41b35c0cab5b8ec2dbc1b0ed8f872965f8494bf8430",
+          "independentEbur128IntegratedLufsRounded01": -22.8
+        }
+      ],
+      "crossMethodWithinPointOneLuConfirmed": false,
+      "crossMethodLimit": "separate ebur128 measurements differ from loudnorm by 0.1–0.3 LU; ebur128 output spread 0.2 LU at displayed 0.1 precision; initial independent stricter assertion failure retained",
+      "initialIndependentFailureReceiptSha256": "8d4115004c736cb37348f63d136cff3e59cf45d2b7c05e16ccbae0075a87c4c2"
+    },
+    "hearing": {
+      "matchedVersion": "v1, same loudnorm measurement method, fixed gain, PCM24",
+      "previousFullRun": "occasional electric noise in several sections; retained",
+      "previousUnmatchedObsExcerpts": "initially seems absent, possible excessive distortion; retained as uncertain",
+      "matchedListeningReply": "OBS 錄音才明顯",
+      "additionalReply": "有點音訊延遲的感覺",
+      "outputHashes": [
+        {
+          "role": "original",
+          "sha256": "391481daf16065afd3046e040e8cb3252df1e760f4f62b74bb5c14f03b2461b6"
+        },
+        {
+          "role": "direct",
+          "sha256": "70f8d35b5f7aeaf34cc50e2b229e1e4db8da9880e30483b0dd6c2be88bc78a23"
+        },
+        {
+          "role": "obs-wav",
+          "sha256": "5fd7102c8c6e1aa4ffc0dc3861668d76a293aeecbb4a9d01e8e32606ef4521c7"
+        },
+        {
+          "role": "obs-flac",
+          "sha256": "759fe5d51be14f753c1be41b35c0cab5b8ec2dbc1b0ed8f872965f8494bf8430"
+        }
+      ],
+      "qualityAccepted": false,
+      "limits": "subjective report for provided excerpts, not a measured acoustic latency or sole-component diagnosis",
+      "delayClarification": {
+        "question": "延遲感較像哪一種",
+        "response": "聲音斷續、卡頓",
+        "interpretation": "reported discontinuity/stuttering, not a measured start or acoustic latency",
+        "matchedVersion": "v1, same loudnorm measurement method, fixed gain, PCM24",
+        "outputHashes": [
+          {
+            "role": "original",
+            "sha256": "391481daf16065afd3046e040e8cb3252df1e760f4f62b74bb5c14f03b2461b6"
+          },
+          {
+            "role": "direct",
+            "sha256": "70f8d35b5f7aeaf34cc50e2b229e1e4db8da9880e30483b0dd6c2be88bc78a23"
+          },
+          {
+            "role": "obs-wav",
+            "sha256": "5fd7102c8c6e1aa4ffc0dc3861668d76a293aeecbb4a9d01e8e32606ef4521c7"
+          },
+          {
+            "role": "obs-flac",
+            "sha256": "759fe5d51be14f753c1be41b35c0cab5b8ec2dbc1b0ed8f872965f8494bf8430"
+          }
+        ],
+        "qualityAccepted": false
+      }
+    },
+    "interpretation": "observed additional timing/waveform differences between direct accompaniment and recorded path, beyond a single constant gain/offset; cannot isolate player/capture/Windows/OBS, identify physical latency, or blame FLAC alone",
+    "earlierCoarseMethodPreserved": "attempt1; full-lag search confirmed the same global maxima; coarse basin alone did not establish global maximality",
+    "verification": {
+      "independentAuditSha256": "fb490cd14711775f7d0987fc1ee116bf4de3837021f4ea5a9e3f3a2760d1497f",
+      "mathAuditSha256": "dfaa6de18077f7f14abc0f8d9d678f1574f1ffbac8f1e0fcb8db0b1f14443fff",
+      "toolHashes": [
+        {
+          "name": "analyze.py",
+          "sha256": "5aef0977a7add39e11e20a92348250dee11ad73977861ee5091586be0bec5b57"
+        },
+        {
+          "name": "loudness.cjs",
+          "sha256": "d5dbd9aec575ffcdcee25ec2e411e4f9d255f90b5b00afd4f48fbd7b18fc0788"
+        },
+        {
+          "name": "finalize.cjs",
+          "sha256": "e3a7ba0c08a27c2d377b5f2d57db4dc7bfb1899dafa8830380ea1c78bbc36161"
+        }
+      ],
+      "historicalRootsUnchanged": 21,
+      "sourceAndRenderedHashesUnchanged": true
+    },
+    "productChanged": false,
+    "existingAudioMigrated": false,
+    "formalFlacGate": false,
+    "recordingsRerun": false,
+    "newDeviceOrNativeSchedulingExperiment": false
+  },
+  "samePlaybackBoundaryComparison": {
+    "date": "2026-10-30",
+    "scope": "same-playback real usePlayer; source four channels/accompaniment before bridge/after bridge/pre-DSP mix/post-gain and isolated OBS process recording",
+    "referenceSourceSeconds": [150, 170],
+    "probeSeconds": 30,
+    "playbackRequestedSeconds": 36,
+    "clockScope": "shared frame start within each context; never subtract absolute frames across contexts; content matching used across contexts",
+    "conversion": [
+      {
+        "format": "wav",
+        "inputSha256": "c164bfbe564475ea2572da5a1e8d91b5a75f3d83065dd3dde8688a9244da8f93",
+        "pcmBytes": 131039328,
+        "pcmSha256": "69cc45186a528c8f05a28b89a49d89fe8728323982debce9c08bcab7934ba1f0"
+      },
+      {
+        "format": "flac",
+        "inputSha256": "52490295a05d826633f9d88c4069c6cfe81629db6867f0492e8c1309eacd44b4",
+        "pcmBytes": 131039328,
+        "pcmSha256": "69cc45186a528c8f05a28b89a49d89fe8728323982debce9c08bcab7934ba1f0"
+      }
+    ],
+    "rows": [
+      {
+        "config": {
+          "id": "wav-probes-obs",
+          "format": "wav",
+          "probes": true,
+          "obs": true
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.2775138186642896,
+          "systemCpuBusyMax": 0.7414055369637969,
+          "sumReportedOwnedCpuMean": 0.42381267790346283,
+          "sumReportedOwnedCpuMax": 2.0484710663444177,
+          "freeMemoryMinBytes": 34578898944,
+          "mainCallbackGapMsP50P95Max": [
+            109.20514999999978, 111.55369499999907, 260.4899000000005
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "sameContext": {
+          "sourceAccompEqualsPreBridge": true,
+          "postBridgeEqualsPreDspMix": true,
+          "postBridgeAndPostGainZeroMasksEqual": true,
+          "preDspToPostGain": {
+            "gain": 0.10000000171785908,
+            "correlation": 0.9999999999999972,
+            "maxAbsoluteGainFitResidual": 3.396681005907176e-9,
+            "residualDbRelativeToFittedSignal": -152.02717753829947,
+            "notThdOrPerceptualScore": true
+          }
+        },
+        "continuousCapture": {
+          "checkpoints": 36,
+          "recordStatusMatchedAtEveryCheckpoint": true,
+          "guideGainZero": true,
+          "externalInputCount": 0,
+          "dryGain": 1,
+          "wetGain": 0,
+          "captureGain": 0.1,
+          "monitorGain": 0,
+          "pausedDspInitialization": true,
+          "capturePitchNodePresent": false,
+          "monitorPitchNodePresenceMeasured": false
+        },
+        "stages": {
+          "source4": {
+            "context": "monitor",
+            "channels": 4,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 228864,
+            "endFrame": 1668864,
+            "sha256": "6ff7ffedd85abb155b067c9710cb76086db98d91de68ea6c34cf26ab44528374",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286757,
+              "ncc": 0.9960560077831828,
+              "alternativeOutsideFiveMs": 0.2970473653793549,
+              "peakMarginOutsideFiveMs": 0.699008642403828,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "preBridgeAccomp": {
+            "context": "monitor",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 228864,
+            "endFrame": 1668864,
+            "sha256": "039ed4080cd2716144ebdf311aea0c9573a3e4d07f58cbc28e86ede4b53639cb",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286757,
+              "ncc": 0.9960560077831828,
+              "alternativeOutsideFiveMs": 0.2970473653793549,
+              "peakMarginOutsideFiveMs": 0.699008642403828,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "postBridgeAccomp": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 234240,
+            "endFrame": 1674240,
+            "sha256": "7551847b1d069870dcaf5afb29cd0215184722a5bb39d583512c8e1635e44450",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 13,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 288581,
+              "ncc": 0.9948530045769838,
+              "alternativeOutsideFiveMs": 0.2963860554762055,
+              "peakMarginOutsideFiveMs": 0.6984669491007782,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 3,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            }
+          },
+          "preDspMix": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 234240,
+            "endFrame": 1674240,
+            "sha256": "7551847b1d069870dcaf5afb29cd0215184722a5bb39d583512c8e1635e44450",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 13,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 288581,
+              "ncc": 0.9948530045769838,
+              "alternativeOutsideFiveMs": 0.2963860554762055,
+              "peakMarginOutsideFiveMs": 0.6984669491007782,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 3,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            }
+          },
+          "postGain": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 234240,
+            "endFrame": 1674240,
+            "sha256": "3508126fa355cfa82a2c0ffa8cbfe2df55558745a8875781f04e20f5fcbcc49a",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 13,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 288581,
+              "ncc": 0.9948530045769838,
+              "alternativeOutsideFiveMs": 0.2963860554762055,
+              "peakMarginOutsideFiveMs": 0.6984669491007782,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 3,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            }
+          }
+        },
+        "obs": {
+          "recordingSha256": "cd62daa2c8981c776472442e74ab28ae12c994d10ecc7a1c7372566d8312fe3d",
+          "stopConfirmed": true,
+          "fileRelativeStableBoundsSeconds": [2, 35.48266666666667],
+          "recordingInteriorZeros": {
+            "internalCount": 16,
+            "edgeTruncatedCount": 1,
+            "maxInternalFrames": 480,
+            "minimumFrames": 16
+          },
+          "selectedTwentySecondZeros": {
+            "internalCount": 3,
+            "edgeTruncatedCount": 0,
+            "maxInternalFrames": 480,
+            "minimumFrames": 16
+          },
+          "selectedReference": "same-playback postGain",
+          "selectedMatch": {
+            "position": 516798,
+            "ncc": 0.9999984467748818,
+            "alternativeOutsideFiveMs": 0.296738633551791,
+            "peakMarginOutsideFiveMs": 0.7032598132230908,
+            "allIntegerLagsSearched": true
+          },
+          "selectedLocalOffsetRangeFrames": [0, 0],
+          "samePlaybackThirtySeconds": {
+            "alignment": {
+              "position": 228217,
+              "ncc": 0.9999985886152415,
+              "alternativeOutsideFiveMs": 0.2301974373853486,
+              "peakMarginOutsideFiveMs": 0.7698011512298929,
+              "allIntegerLagsSearched": true
+            },
+            "comparison": {
+              "gain": 0.24987750574790446,
+              "correlation": 0.9999985886152252,
+              "maxAbsoluteGainFitResidual": 0.000026150182506130826,
+              "residualDbRelativeToFittedSignal": -55.4932175215214,
+              "notThdOrPerceptualScore": true
+            },
+            "localOffsetRangeFrames": [0, 0],
+            "postGainZeros": {
+              "internalCount": 13,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "obsZeros": {
+              "internalCount": 13,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "matchedWithinTwoFramesCount": 13,
+            "toleranceFramesStart": 2,
+            "toleranceFramesLength": 4
+          }
+        }
+      },
+      {
+        "config": {
+          "id": "flac-probes-obs",
+          "format": "flac",
+          "probes": true,
+          "obs": true
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.273249758006455,
+          "systemCpuBusyMax": 0.6074910526965321,
+          "sumReportedOwnedCpuMean": 0.3528085977478572,
+          "sumReportedOwnedCpuMax": 0.5280554729166747,
+          "freeMemoryMinBytes": 35246030848,
+          "mainCallbackGapMsP50P95Max": [
+            109.36199999999371, 111.51174000000083, 113.02010000000018
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "sameContext": {
+          "sourceAccompEqualsPreBridge": true,
+          "postBridgeEqualsPreDspMix": true,
+          "postBridgeAndPostGainZeroMasksEqual": true,
+          "preDspToPostGain": {
+            "gain": 0.10000000171843394,
+            "correlation": 1,
+            "maxAbsoluteGainFitResidual": 3.3963222234589807e-9,
+            "residualDbRelativeToFittedSignal": -152.01655194751928,
+            "notThdOrPerceptualScore": true
+          }
+        },
+        "continuousCapture": {
+          "checkpoints": 36,
+          "recordStatusMatchedAtEveryCheckpoint": true,
+          "guideGainZero": true,
+          "externalInputCount": 0,
+          "dryGain": 1,
+          "wetGain": 0,
+          "captureGain": 0.1,
+          "monitorGain": 0,
+          "pausedDspInitialization": true,
+          "capturePitchNodePresent": false,
+          "monitorPitchNodePresenceMeasured": false
+        },
+        "stages": {
+          "source4": {
+            "context": "monitor",
+            "channels": 4,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 226688,
+            "endFrame": 1666688,
+            "sha256": "05cb1b801c6d5978598035ff4029c803d4d7ecc37b713c5604d1554256702128",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286470,
+              "ncc": 0.9997389078792803,
+              "alternativeOutsideFiveMs": 0.2970509280721249,
+              "peakMarginOutsideFiveMs": 0.7026879798071555,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "preBridgeAccomp": {
+            "context": "monitor",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 226688,
+            "endFrame": 1666688,
+            "sha256": "7125a56ace11066846a025e7677b95e18fa403c83adcfccba47c608d21a6c73e",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286470,
+              "ncc": 0.9997389078792803,
+              "alternativeOutsideFiveMs": 0.2970509280721249,
+              "peakMarginOutsideFiveMs": 0.7026879798071555,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "postBridgeAccomp": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 235776,
+            "endFrame": 1675776,
+            "sha256": "d86919578a3a9abdb21534cb1446801655a307da799dc9c61c8f648d3e4fc5a4",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 287398,
+              "ncc": 0.9997389078792812,
+              "alternativeOutsideFiveMs": 0.2970509280721252,
+              "peakMarginOutsideFiveMs": 0.702687979807156,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "preDspMix": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 235776,
+            "endFrame": 1675776,
+            "sha256": "d86919578a3a9abdb21534cb1446801655a307da799dc9c61c8f648d3e4fc5a4",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 287398,
+              "ncc": 0.9997389078792812,
+              "alternativeOutsideFiveMs": 0.2970509280721252,
+              "peakMarginOutsideFiveMs": 0.702687979807156,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "postGain": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 235776,
+            "endFrame": 1675776,
+            "sha256": "45c2bc5f840a75ae010abae5de499343c25e80fd973f4909a58f98edc908f2c6",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 287398,
+              "ncc": 0.9997389078792812,
+              "alternativeOutsideFiveMs": 0.2970509280721252,
+              "peakMarginOutsideFiveMs": 0.702687979807156,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          }
+        },
+        "obs": {
+          "recordingSha256": "a209e5c4dbeca89a435cc2ad1d54576b6d7913d792e5e0dd2bbbfa7c04a11a55",
+          "stopConfirmed": true,
+          "fileRelativeStableBoundsSeconds": [2, 35.632],
+          "recordingInteriorZeros": {
+            "internalCount": 0,
+            "edgeTruncatedCount": 1,
+            "maxInternalFrames": 0,
+            "minimumFrames": 16
+          },
+          "selectedTwentySecondZeros": {
+            "internalCount": 0,
+            "edgeTruncatedCount": 0,
+            "maxInternalFrames": 0,
+            "minimumFrames": 16
+          },
+          "selectedReference": "same-playback postGain",
+          "selectedMatch": {
+            "position": 518428,
+            "ncc": 0.9999984431255325,
+            "alternativeOutsideFiveMs": 0.29703672067168546,
+            "peakMarginOutsideFiveMs": 0.7029617224538471,
+            "allIntegerLagsSearched": true
+          },
+          "selectedLocalOffsetRangeFrames": [0, 0],
+          "samePlaybackThirtySeconds": {
+            "alignment": {
+              "position": 231030,
+              "ncc": 0.9999985885086565,
+              "alternativeOutsideFiveMs": 0.22891841062402732,
+              "peakMarginOutsideFiveMs": 0.7710801778846292,
+              "allIntegerLagsSearched": true
+            },
+            "comparison": {
+              "gain": 0.2498772372733415,
+              "correlation": 0.9999985885083656,
+              "maxAbsoluteGainFitResidual": 0.000026366875823968794,
+              "residualDbRelativeToFittedSignal": -55.49284765545461,
+              "notThdOrPerceptualScore": true
+            },
+            "localOffsetRangeFrames": [0, 0],
+            "postGainZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "obsZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "matchedWithinTwoFramesCount": 0,
+            "toleranceFramesStart": 2,
+            "toleranceFramesLength": 4
+          }
+        }
+      },
+      {
+        "config": {
+          "id": "wav-probes-no-obs",
+          "format": "wav",
+          "probes": true,
+          "obs": false
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.30332239091401614,
+          "systemCpuBusyMax": 0.729358649267116,
+          "sumReportedOwnedCpuMean": 0.46384372108364896,
+          "sumReportedOwnedCpuMax": 1.9388627625398187,
+          "freeMemoryMinBytes": 34662031360,
+          "mainCallbackGapMsP50P95Max": [
+            109.52390000000014, 111.77494999999999, 337.07610000000204
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "sameContext": {
+          "sourceAccompEqualsPreBridge": true,
+          "postBridgeEqualsPreDspMix": true,
+          "postBridgeAndPostGainZeroMasksEqual": true,
+          "preDspToPostGain": {
+            "gain": 0.1000000017237473,
+            "correlation": 0.9999999999999967,
+            "maxAbsoluteGainFitResidual": 3.3930008525029365e-9,
+            "residualDbRelativeToFittedSignal": -152.0212354145998,
+            "notThdOrPerceptualScore": true
+          }
+        },
+        "continuousCapture": {
+          "checkpoints": 36,
+          "recordStatusMatchedAtEveryCheckpoint": true,
+          "guideGainZero": true,
+          "externalInputCount": 0,
+          "dryGain": 1,
+          "wetGain": 0,
+          "captureGain": 0.1,
+          "monitorGain": 0,
+          "pausedDspInitialization": true,
+          "capturePitchNodePresent": false,
+          "monitorPitchNodePresenceMeasured": false
+        },
+        "stages": {
+          "source4": {
+            "context": "monitor",
+            "channels": 4,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 195456,
+            "endFrame": 1635456,
+            "sha256": "4b2059fbf3e3075bb67a6d41a57a04a7eca618adb7637c2abbb8b0abef2d178a",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286216,
+              "ncc": 0.9994651332246955,
+              "alternativeOutsideFiveMs": 0.2970181720048884,
+              "peakMarginOutsideFiveMs": 0.7024469612198072,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "preBridgeAccomp": {
+            "context": "monitor",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 195456,
+            "endFrame": 1635456,
+            "sha256": "cf92126390823bfdac47f4e778a02ce3764588c78f5c2d1fe66c630bb9a7c890",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286216,
+              "ncc": 0.9994651332246955,
+              "alternativeOutsideFiveMs": 0.2970181720048884,
+              "peakMarginOutsideFiveMs": 0.7024469612198072,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 0,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 0,
+              "minimumFrames": 16
+            }
+          },
+          "postBridgeAccomp": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 205056,
+            "endFrame": 1645056,
+            "sha256": "f6f1b05410553b6ba01e719a266133f3134c4467aa4181f6b410b9470bb0a117",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 8,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286696,
+              "ncc": 0.9461094231311511,
+              "alternativeOutsideFiveMs": 0.27852925357044633,
+              "peakMarginOutsideFiveMs": 0.6675801695607048,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 6,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            }
+          },
+          "preDspMix": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 205056,
+            "endFrame": 1645056,
+            "sha256": "f6f1b05410553b6ba01e719a266133f3134c4467aa4181f6b410b9470bb0a117",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 8,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286696,
+              "ncc": 0.9461094231311511,
+              "alternativeOutsideFiveMs": 0.27852925357044633,
+              "peakMarginOutsideFiveMs": 0.6675801695607048,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 6,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            }
+          },
+          "postGain": {
+            "context": "capture",
+            "channels": 2,
+            "frames": 1440000,
+            "rate": 48000,
+            "startFrame": 205056,
+            "endFrame": 1645056,
+            "sha256": "74e36cfeba739c6a9f844969662d1c3833ff780ad72aff30545b421cb94c1f98",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "fullThirtySecondZerosAccomp": {
+              "internalCount": 8,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            },
+            "referenceContentMatch": {
+              "position": 286696,
+              "ncc": 0.9461094231311511,
+              "alternativeOutsideFiveMs": 0.27852925357044633,
+              "peakMarginOutsideFiveMs": 0.6675801695607048,
+              "allIntegerLagsSearched": true
+            },
+            "selectedTwentySecondZeros": {
+              "internalCount": 6,
+              "edgeTruncatedCount": 0,
+              "maxInternalFrames": 480,
+              "minimumFrames": 16
+            }
+          }
+        }
+      },
+      {
+        "config": {
+          "id": "wav-no-probes-obs",
+          "format": "wav",
+          "probes": false,
+          "obs": true
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.9967369916978837,
+          "systemCpuBusyMax": 1,
+          "sumReportedOwnedCpuMean": 0.46697829490613846,
+          "sumReportedOwnedCpuMax": 2.3581362692244987,
+          "freeMemoryMinBytes": 31899721728,
+          "mainCallbackGapMsP50P95Max": [
+            110.85870000000068, 127.56636000000061, 399.7537000000011
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "sameContext": null,
+        "continuousCapture": {
+          "checkpoints": 36,
+          "recordStatusMatchedAtEveryCheckpoint": true,
+          "guideGainZero": true,
+          "externalInputCount": 0,
+          "dryGain": 1,
+          "wetGain": 0,
+          "captureGain": 0.1,
+          "monitorGain": 0,
+          "pausedDspInitialization": true,
+          "capturePitchNodePresent": false,
+          "monitorPitchNodePresenceMeasured": false
+        },
+        "stages": {},
+        "obs": {
+          "recordingSha256": "5e9ad57ff805977d1c7e32eca167d2fdea7a4c1ccef211ff4b0672ed6dcc5fd4",
+          "stopConfirmed": true,
+          "fileRelativeStableBoundsSeconds": [2, 35.888],
+          "recordingInteriorZeros": {
+            "internalCount": 200,
+            "edgeTruncatedCount": 1,
+            "maxInternalFrames": 1920,
+            "minimumFrames": 16
+          },
+          "selectedTwentySecondZeros": {
+            "internalCount": 68,
+            "edgeTruncatedCount": 2,
+            "maxInternalFrames": 1920,
+            "minimumFrames": 16
+          },
+          "selectedReference": "offline direct accompaniment",
+          "selectedMatch": {
+            "position": 517652,
+            "ncc": 0.7595992390958779,
+            "alternativeOutsideFiveMs": 0.21867343648397697,
+            "peakMarginOutsideFiveMs": 0.5409258026119009,
+            "allIntegerLagsSearched": true
+          },
+          "selectedLocalOffsetRangeFrames": [0, 480]
+        }
+      },
+      {
+        "config": {
+          "id": "wav-no-probes-obs-repeat",
+          "format": "wav",
+          "probes": false,
+          "obs": true,
+          "reason": "bounded repeat because first probe-off case coincided with near-100% system CPU; no induced load"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.64541938344193,
+          "systemCpuBusyMax": 1,
+          "sumReportedOwnedCpuMean": 0.43107140691169316,
+          "sumReportedOwnedCpuMax": 2.6846936511185193,
+          "freeMemoryMinBytes": 32902799360,
+          "mainCallbackGapMsP50P95Max": [
+            109.70930000000044, 124.19657999999983, 368.299500000001
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "sameContext": null,
+        "continuousCapture": {
+          "checkpoints": 36,
+          "recordStatusMatchedAtEveryCheckpoint": true,
+          "guideGainZero": true,
+          "externalInputCount": 0,
+          "dryGain": 1,
+          "wetGain": 0,
+          "captureGain": 0.1,
+          "monitorGain": 0,
+          "pausedDspInitialization": true,
+          "capturePitchNodePresent": false,
+          "monitorPitchNodePresenceMeasured": false
+        },
+        "stages": {},
+        "obs": {
+          "recordingSha256": "c1c803bf1167e04ddae304b45f94a0daf2f5b4b835d8431359275d0e954a675a",
+          "stopConfirmed": true,
+          "fileRelativeStableBoundsSeconds": [2, 35.717333333333336],
+          "recordingInteriorZeros": {
+            "internalCount": 73,
+            "edgeTruncatedCount": 1,
+            "maxInternalFrames": 480,
+            "minimumFrames": 16
+          },
+          "selectedTwentySecondZeros": {
+            "internalCount": 49,
+            "edgeTruncatedCount": 0,
+            "maxInternalFrames": 480,
+            "minimumFrames": 16
+          },
+          "selectedReference": "offline direct accompaniment",
+          "selectedMatch": {
+            "position": 518632,
+            "ncc": 0.4729936202186675,
+            "alternativeOutsideFiveMs": 0.40265912712227964,
+            "peakMarginOutsideFiveMs": 0.07033449309638784,
+            "allIntegerLagsSearched": true
+          },
+          "selectedLocalOffsetRangeFrames": [0, 480]
+        }
+      }
+    ],
+    "primaryObservedBoundary": "for reproduced exact common-zero runs in these windows, first observed after monitor MediaStreamDestination to capture MediaStreamSource bridge; not a FIFO or unique scheduling diagnosis",
+    "hypothesisAssessment": {
+      "fileTranscoding": "WAV/FLAC complete four-channel PCM identical; WAV also reproduced, so FLAC encoding is not necessary for this batch symptom; all resampling/decode issues are not universally ruled out",
+      "captureMethod": "source and preBridge match; postBridge and preDsp match; output applies fixed gain; same-run postGain and OBS mapped for full saved 30 seconds. Removing OBS still reproduced postBridge zeros",
+      "resourceCompetition": "possible contributor, unproven; total CPU near 27–30% already had zero runs, probe-off case averaged 99.67%, repeat averaged 64.54% with peak 100%; not balanced load controls, no pressure induced or unrelated apps stopped",
+      "observer": "custom PCM probes absent in two recorded reproductions. Every dry capture graph reports pitchNode absent; monitor-side node may persist after paused initialization according to owner lifecycle but its presence was not directly exported. Not a fully AudioWorklet-free control; resource conditions differ and no zero-cost or equivalent-observer claim"
+    },
+    "listening": {
+      "version": "same-playback WAV case, globally content-aligned fixed-gain PCM24",
+      "method": "loudnorm input measurement only, output discarded; listening render uses volume fixed gain only, no compression/limiter/EQ/fades/gap fill/timewarp",
+      "targetLufs": -23,
+      "rows": [
+        {
+          "role": "source-accomp",
+          "outputSha256": "076f0214b0deef52c916de107056373bc2d054a2b31af214f87d29ad0a0375bc",
+          "frames": 960000,
+          "outputLufs": -23,
+          "truePeakDb": -13.06,
+          "gainDb": -13.22,
+          "fixedGainMaxAbsoluteError": 1.1948487808888242e-7
+        },
+        {
+          "role": "post-bridge",
+          "outputSha256": "589d562ba77817ae53471adf57ca6f5f0599ae24cc6fd6cfa8f2f67f1eb550a2",
+          "frames": 960000,
+          "outputLufs": -23,
+          "truePeakDb": -13.11,
+          "gainDb": -13.27,
+          "fixedGainMaxAbsoluteError": 1.1910537425167261e-7
+        },
+        {
+          "role": "post-gain",
+          "outputSha256": "c701b5eb6863c62ebf9bbdcf16007819e0b95708b3b1cebc606be109d087fc49",
+          "frames": 960000,
+          "outputLufs": -23,
+          "truePeakDb": -13.11,
+          "gainDb": 6.73,
+          "fixedGainMaxAbsoluteError": 1.2106067281969501e-7
+        },
+        {
+          "role": "obs-wav",
+          "outputSha256": "547a9ab934ab9f5d44968943a775d8fa00df3e3c6a69c009787d75423bcebeb2",
+          "frames": 960000,
+          "outputLufs": -23,
+          "truePeakDb": -13.1,
+          "gainDb": 18.78,
+          "fixedGainMaxAbsoluteError": 1.203684127093485e-7
+        }
+      ],
+      "crossMethodAgreementNotAssumed": true,
+      "qualityAccepted": false
+    },
+    "previousHearingPreserved": "earlier matched excerpts reported OBS-only obvious discontinuity/stuttering; no new acceptance inferred from these objective results",
+    "qualification": "exact stereo zeros >=16 frames only; no-zero case does not establish full signal integrity. Each condition is a local example, not a format failure-rate comparison. 30-second mapped zeros differ from whole-recording stable-window counts",
+    "safety": {
+      "expectedAbortExit": 3,
+      "stopConfirmed": true,
+      "cleanupComplete": true,
+      "watcherWarningsPreserved": "safety default watcher logged locked profile files; watcher disabled for all five formal cases; no claim of historical audio cause"
+    },
+    "preservation": {
+      "knownSettingsEqual": false,
+      "originalObsUnchanged": true,
+      "snapshotChecks": [
+        {
+          "caseId": "safety",
+          "count": 19,
+          "shaMatch": true
+        },
+        {
+          "caseId": "wav-probes-obs",
+          "count": 19,
+          "shaMatch": true
+        },
+        {
+          "caseId": "flac-probes-obs",
+          "count": 19,
+          "shaMatch": true
+        },
+        {
+          "caseId": "wav-probes-no-obs",
+          "count": 19,
+          "shaMatch": true
+        },
+        {
+          "caseId": "wav-no-probes-obs",
+          "count": 19,
+          "shaMatch": true
+        },
+        {
+          "caseId": "wav-no-probes-obs-repeat",
+          "count": 19,
+          "shaMatch": true
+        }
+      ],
+      "assetsAndManifestsUnchanged": 2,
+      "historicalRootsUnchanged": 22,
+      "formalFlacGate": false,
+      "productFilesChangedBySlice": false,
+      "ownedObsInactiveAndInputsRetired": true,
+      "observedSettingsChanges": [
+        {
+          "field": "audioPreferences.performanceVolume",
+          "before": 0.35,
+          "after": 0.5
+        }
+      ],
+      "settingsRestored": false,
+      "settingsChangeActor": "not established",
+      "ownedObsStopped": true
+    },
+    "verification": {
+      "independentAuditSha256": "46bbd5771a1481ae12aea9f5e272ce55bec904cb53be15c6d0880728ef472ebd",
+      "listeningSourceAuditSha256": "582a70ab6fd8426b529991323515d8a0eaa7d35e2bca694654691e9c991b822d",
+      "probeAuditSha256": "e24a899f68a9d109ca0dddb8aa0f88d4894f49387eaac1d341a2a9ed9952217c",
+      "toolHashes": [
+        {
+          "name": "main.cjs",
+          "sha256": "04430ba691e14ffe809e14810f23b0a968bcbe2bc2090f039afd434b2088d5a5"
+        },
+        {
+          "name": "obs.cjs",
+          "sha256": "f97b1084208e627adcedfbb9ea1933a03f77e0aa94bf4e256fb9e87130a9bfc6"
+        },
+        {
+          "name": "probe.js",
+          "sha256": "0cc13b23f4c2b6dcb230e7a00699f60b1e8d3a1dab01660beb4b53f2d7366ca7"
+        },
+        {
+          "name": "renderer.js",
+          "sha256": "836497441dfae1e355e2e30f5b435af55bde84f677c7095472d2cca84885c0e2"
+        },
+        {
+          "name": "launch.mjs",
+          "sha256": "b119cba7311627422beb2096394aedabd1aa630f87f66f33dfa0e90a431346c3"
+        },
+        {
+          "name": "analyze.py",
+          "sha256": "fdd8ec342b0f289191b4d2e7d3e91245cd908210bbb5be79f4ad529c61b3eb1a"
+        },
+        {
+          "name": "obs-full-link.py",
+          "sha256": "6cb374649c16b7ace5f32244d03b4cce1591d4e497e0f5f5c762001873243cb4"
+        },
+        {
+          "name": "loudness.cjs",
+          "sha256": "b2144bbfc1652a8d3386b489dabfbab4b4bdd86511eb883be917f3bdc8f7b35e"
+        },
+        {
+          "name": "finalize.cjs",
+          "sha256": "db64af5cf1bf514ec0438586bf2a606aabf7aa5e00541f77c651ec30d4169b81"
+        }
+      ],
+      "initialCasebookSha256": "ea701b35123db9dc56cbef86e55073df20b32d052695a0b64f6a5e2d3279ef2c",
+      "currentCasebookSha256": "50fa06cfcfe246f89e0686308339661f5431f50450f77308f2b4cdb04d2a6de2",
+      "priorRootsUnchanged": 22,
+      "initialFinalizerBeforeObserverClarificationSha256": "5b83acc8c59e3dac66615f0702e1380050473b58d6bef246810f7658281aede4"
+    },
+    "productChanged": false,
+    "existingAudioMigrated": false,
+    "formalFlacGate": false,
+    "commitCreated": false
+  },
+  "relatedCaptureSourceReview": {
+    "date": "2026-10-30",
+    "sources": [
+      {
+        "id": "obs8064",
+        "kind": "project-confirmed report and maintainer discussion",
+        "link": "https://github.com/obsproject/obs-studio/issues/8064",
+        "summary": "Application capture noise report; original issue resolved/completed 2025-10-25. Maintainer distinguishes remaining similar edge cases as potentially separate.",
+        "notEstablished": "same root cause on this machine or guaranteed OS upgrade remedy"
+      },
+      {
+        "id": "obs8086",
+        "kind": "report and maintainer clarification",
+        "link": "https://github.com/obsproject/obs-studio/issues/8086",
+        "summary": "Crackle/drift report; maintainer says alternate win-capture-audio plugin uses the same Windows APIs. Closed as likely duplicate.",
+        "notEstablished": "independent capture path merely by changing plugin"
+      },
+      {
+        "id": "obs8309",
+        "kind": "user report in official tracker",
+        "link": "https://github.com/obsproject/obs-studio/issues/8309",
+        "summary": "Delay/crackle report with a sound-card/Voicemeeter contrast; reporter observation, not a validated remedy for this setup.",
+        "notEstablished": "virtual mixer universally fixes crackling"
+      },
+      {
+        "id": "obs-guide",
+        "kind": "official guide",
+        "link": "https://obsproject.com/kb/application-audio-capture-guide",
+        "summary": "Documents virtual cable plus OBS Audio Input Capture as an alternative for incompatible applications.",
+        "notEstablished": "repair of an upstream WebAudio bridge or availability of an unused local bus"
+      },
+      {
+        "id": "ms-process-api",
+        "kind": "official API sample explanation",
+        "link": "https://learn.microsoft.com/en-us/samples/microsoft/windows-classic-samples/applicationloopbackaudio-sample/",
+        "summary": "Process loopback selects a process tree and is not tied to one physical output endpoint.",
+        "notEstablished": "a process-loopback bug is active locally"
+      },
+      {
+        "id": "obs32-code",
+        "kind": "pinned upstream implementation",
+        "link": "https://raw.githubusercontent.com/obsproject/obs-studio/32.2.2/plugins/win-wasapi/win-wasapi.cpp",
+        "summary": "ProcessOutput uses ActivateAudioInterfaceAsync process loopback; device/input use a selected IMMDevice activation.",
+        "notEstablished": "all Windows capture paths are identical or OBS is universally fault-free"
+      },
+      {
+        "id": "electron-deps",
+        "kind": "pinned upstream dependencies",
+        "link": "https://raw.githubusercontent.com/electron/electron/v43.8.3/DEPS",
+        "summary": "Electron 43.8.3 base Chromium is 150.0.7871.250.",
+        "notEstablished": "complete executed binary reconstruction including all downstream patches"
+      },
+      {
+        "id": "chromium-sink",
+        "kind": "pinned base-Chromium source",
+        "link": "https://raw.githubusercontent.com/chromium/chromium/150.0.7871.250/third_party/blink/renderer/modules/mediastream/webaudio_media_stream_audio_sink.cc",
+        "summary": "Audio conversion pulls can arrive in batches; FIFO buffers delivery and consumption. The underrun branch writes zero output.",
+        "notEstablished": "every local gap executed this branch or a specific FIFO capacity fix"
+      },
+      {
+        "id": "chromium-destination",
+        "kind": "pinned base-Chromium source",
+        "link": "https://raw.githubusercontent.com/chromium/chromium/150.0.7871.250/third_party/blink/renderer/modules/webaudio/media_stream_audio_destination_handler.cc",
+        "summary": "ConsumeAudio forwards only when the consumer try-lock is acquired and the consumer exists.",
+        "notEstablished": "local lock contention or its timing actually caused a gap"
+      },
+      {
+        "id": "chrome-sink-selection",
+        "kind": "official API guidance",
+        "link": "https://developer.chrome.com/blog/audiocontext-setsinkid",
+        "summary": "AudioContext can select a permitted native output sink; supports an isolated direct-output diagnostic control.",
+        "notEstablished": "one context can replace the product dual independent outputs without redesign"
+      }
+    ],
+    "hearing": {
+      "response": "當前透過obs 擷取後 就能很明顯的復刻出先前obs 的電流音 問題",
+      "interpretation": "subjective confirmation of reproduced sound; historical causes are not assumed identical",
+      "qualityAccepted": false
+    },
+    "localVersionContext": {
+      "electronPackage": "43.8.3",
+      "baseChromium": "150.0.7871.250",
+      "lastObservedObs": "32.2.2",
+      "registryDisplayVersion": "26H2",
+      "registryBuild": "26300",
+      "registryUbr": 9711,
+      "scope": "registry fields and upstream DEPS; no product-brand or patch-causality inference"
+    },
+    "synthesis": "Two distinct candidate layers: Chromium cross-context delivery before OBS, and Windows per-process loopback. Existing no-OBS reproduction and same-playback postGain mapping keep the upstream bridge prioritized; similar online symptoms do not identify this machine as OBS8064.",
+    "proposedControls": [
+      {
+        "kind": "upstream delivery",
+        "comparison": "isolated original cross-context bridge versus single-context direct output to the same permitted endpoint",
+        "scope": "diagnostic baseline only; does not redesign formal dual-output ownership"
+      },
+      {
+        "kind": "downstream capture API",
+        "comparison": "same confirmed isolated virtual bus and application output, compare process loopback and Audio Input Capture on separate tracks",
+        "scope": "confirm bus isolation first; do not repurpose the existing Mic-only B1; changing sink may itself alter scheduling/resampling and cannot guarantee bridge repair"
+      }
+    ],
+    "lookupLimits": [
+      "GoogleSource tag fetch failed, official Chromium GitHub mirror used instead",
+      "No exact same-version Electron issue with independently confirmed local cause established",
+      "Generic Reddit tips, unrelated Safari/Linux bugs, and unverified issue URLs were not used as a fix basis"
+    ],
+    "executedChanges": {
+      "newAudioTest": false,
+      "productCode": false,
+      "audioMigration": false,
+      "deviceOrObsRouting": false,
+      "newRuntimeOrHelper": false,
+      "formalFlacGate": false,
+      "commit": false
+    },
+    "preservedHistoricalRoots": 23
+  },
+  "bridgeAndCapturePathComparison": {
+    "date": "2026-10-30",
+    "scope": "Isolated real usePlayer owner, dry path only. No product, settings, audio migration or formal gate change. One natural general WAV reused read-only.",
+    "design": {
+      "firstOrder": ["bridge-a", "direct-a", "direct-b", "bridge-b"],
+      "secondOrder": [
+        "aux-input-a",
+        "aux-process-a",
+        "aux-process-b",
+        "aux-input-b"
+      ],
+      "playStartSeconds": 140,
+      "playSeconds": 36,
+      "savedPcmSeconds": 30,
+      "commonContentSeconds": [150, 170],
+      "rate": 48000,
+      "outputGain": 0.1,
+      "firstEndpoint": "Turtle Beach headset",
+      "secondEndpoint": "Voicemeeter AUX routed only to B2 in three sequential snapshots; B2 normal, unity, EQ off",
+      "micRouting": "No mixer setters; B1 route unchanged. Creating the input source with empty settings briefly opened default B1 before B2 selection. Both baseline and formal recording started after B2 selection; not a claim that B1 endpoint was never opened.",
+      "direct": "Existing monitor context explicitly selects endpoint; no second capture context or MediaStreamSource consumer. Unused MediaStreamDestination producers still exist.",
+      "bridge": "Unmodified production graph plus served read-only references, silent default VM monitor output and explicit Turtle capture output.",
+      "probeCounts": {
+        "bridge": 5,
+        "direct": 3
+      },
+      "dsp": "No warmup; both pitch-node presence flags false at every checkpoint"
+    },
+    "cases": [
+      {
+        "id": "bridge-a",
+        "mode": "bridge",
+        "captureApi": "process",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": 116,
+          "postGainZeroRuns": 116,
+          "postGainMaximumZeroFrames": 1920,
+          "obsZeroRuns": 116,
+          "obsMaximumZeroFrames": 1920,
+          "obsNcc": 0.9999985426292098,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 116,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 18,
+          "obsZeroRuns": 18,
+          "outputToObsCorrelation": 0.9999984608035517,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.4692548015507509,
+          "systemCpuBusyMax": 1,
+          "sumReportedOwnedCpuMean": 0.4435538317833179,
+          "sumReportedOwnedCpuMax": 0.8441575157233705,
+          "freeMemoryMinBytes": 35339620352,
+          "mainCallbackGapMsP50P95Max": [
+            109.66200000000299, 117.20929500000003, 157.23980000000302
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": null
+      },
+      {
+        "id": "direct-a",
+        "mode": "direct",
+        "captureApi": "process",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": null,
+          "postGainZeroRuns": 0,
+          "postGainMaximumZeroFrames": 0,
+          "obsZeroRuns": 0,
+          "obsMaximumZeroFrames": 0,
+          "obsNcc": 0.9999985900112123,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 0,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "outputToObsCorrelation": 0.9999984448330157,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.5084925721677284,
+          "systemCpuBusyMax": 1,
+          "sumReportedOwnedCpuMean": 0.27498968576769844,
+          "sumReportedOwnedCpuMax": 0.8197357099944115,
+          "freeMemoryMinBytes": 35201429504,
+          "mainCallbackGapMsP50P95Max": [
+            109.71840000000157, 116.73099999999813, 695.6093000000001
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": null
+      },
+      {
+        "id": "direct-b",
+        "mode": "direct",
+        "captureApi": "process",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": null,
+          "postGainZeroRuns": 0,
+          "postGainMaximumZeroFrames": 0,
+          "obsZeroRuns": 0,
+          "obsMaximumZeroFrames": 0,
+          "obsNcc": 0.9999985900112122,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 0,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "outputToObsCorrelation": 0.9999984448330157,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.16002127482118536,
+          "systemCpuBusyMax": 0.30881272949816396,
+          "sumReportedOwnedCpuMean": 0.240722095201402,
+          "sumReportedOwnedCpuMax": 0.6499324519357425,
+          "freeMemoryMinBytes": 36599263232,
+          "mainCallbackGapMsP50P95Max": [
+            109.21639999999752, 111.46588000000001, 112.64730000000054
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": null
+      },
+      {
+        "id": "bridge-b",
+        "mode": "bridge",
+        "captureApi": "process",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": 1,
+          "postGainZeroRuns": 1,
+          "postGainMaximumZeroFrames": 480,
+          "obsZeroRuns": 1,
+          "obsMaximumZeroFrames": 480,
+          "obsNcc": 0.9999985907633651,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 1,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 1,
+          "obsZeroRuns": 1,
+          "outputToObsCorrelation": 0.999998447127913,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.18285696226963116,
+          "systemCpuBusyMax": 0.3578060102614219,
+          "sumReportedOwnedCpuMean": 0.3679186498819805,
+          "sumReportedOwnedCpuMax": 0.7873752599147653,
+          "freeMemoryMinBytes": 36641824768,
+          "mainCallbackGapMsP50P95Max": [
+            109.35384999999997, 111.48540999999823, 113.51199999999972
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": null
+      },
+      {
+        "id": "aux-input-a",
+        "mode": "direct",
+        "captureApi": "input",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": null,
+          "postGainZeroRuns": 0,
+          "postGainMaximumZeroFrames": 0,
+          "obsZeroRuns": 0,
+          "obsMaximumZeroFrames": 0,
+          "obsNcc": 0.9999966849999107,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 0,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "outputToObsCorrelation": 0.9999963623242237,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.1396678556597858,
+          "systemCpuBusyMax": 0.2502139102799169,
+          "sumReportedOwnedCpuMean": 0.2939502625025297,
+          "sumReportedOwnedCpuMax": 0.691949926663274,
+          "freeMemoryMinBytes": 36651233280,
+          "mainCallbackGapMsP50P95Max": [
+            109.65139999999974, 111.56277500000006, 112.76629999999932
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": {
+          "samples": 280576,
+          "peak": 0,
+          "rms": 0
+        }
+      },
+      {
+        "id": "aux-process-a",
+        "mode": "direct",
+        "captureApi": "process",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": null,
+          "postGainZeroRuns": 0,
+          "postGainMaximumZeroFrames": 0,
+          "obsZeroRuns": 1,
+          "obsMaximumZeroFrames": 1504,
+          "obsNcc": 0.9939607917381872,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 0,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "outputToObsCorrelation": 0.9999987872275898,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.19167218571428654,
+          "systemCpuBusyMax": 0.3368453672141307,
+          "sumReportedOwnedCpuMean": 0.31570640694628466,
+          "sumReportedOwnedCpuMax": 0.7576151609274329,
+          "freeMemoryMinBytes": 36611088384,
+          "mainCallbackGapMsP50P95Max": [
+            109.50350000000071, 111.50085999999901, 123.15660000000025
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": null
+      },
+      {
+        "id": "aux-process-b",
+        "mode": "direct",
+        "captureApi": "process",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": null,
+          "postGainZeroRuns": 0,
+          "postGainMaximumZeroFrames": 0,
+          "obsZeroRuns": 1,
+          "obsMaximumZeroFrames": 1504,
+          "obsNcc": 0.9902373313018278,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 0,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "outputToObsCorrelation": 0.999998786923355,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.1690155774975731,
+          "systemCpuBusyMax": 0.3230175266576787,
+          "sumReportedOwnedCpuMean": 0.27421574493027534,
+          "sumReportedOwnedCpuMax": 0.6524469184559109,
+          "freeMemoryMinBytes": 36711182336,
+          "mainCallbackGapMsP50P95Max": [
+            109.68559999999707, 111.98000000000138, 113.91170000000056
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": null
+      },
+      {
+        "id": "aux-input-b",
+        "mode": "direct",
+        "captureApi": "input",
+        "saved30s": {
+          "sourceFirst2ZeroRuns": 0,
+          "preBridgeZeroRuns": 0,
+          "postBridgeZeroRuns": null,
+          "postGainZeroRuns": 0,
+          "postGainMaximumZeroFrames": 0,
+          "obsZeroRuns": 0,
+          "obsMaximumZeroFrames": 0,
+          "obsNcc": 0.9999966852335513,
+          "validAlignment": true,
+          "matchedUpstreamZeroRuns": 0,
+          "local2sOffsetsFrames": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        },
+        "common20s": {
+          "postGainZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "outputToObsCorrelation": 0.9999963623242237,
+          "scope": "FFmpeg stereo first2 resampled48k content NCC; no clock subtraction/timewarp"
+        },
+        "resources": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.21553272492009856,
+          "systemCpuBusyMax": 0.3539308657081677,
+          "sumReportedOwnedCpuMean": 0.29753778023550503,
+          "sumReportedOwnedCpuMax": 0.6659828962938923,
+          "freeMemoryMinBytes": 35994980352,
+          "mainCallbackGapMsP50P95Max": [
+            109.36435000000165, 111.37188000000242, 112.41569999999774
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "baseline": {
+          "samples": 280576,
+          "peak": 0,
+          "rms": 0
+        }
+      }
+    ],
+    "evidence": {
+      "safeCancellationCases": 1,
+      "formalCases": 8,
+      "pcmFiles": 28,
+      "framesPerPcm": 1440000,
+      "allSourceFirst2EqualsPre": true,
+      "sameContextStartFramesChecked": true,
+      "sameContextOutputIsGainOnly": true,
+      "recordingStopAndStableShaChecked": true,
+      "originalObsAndUtaSettingsUnchanged": true,
+      "mixerSnapshotsUnchanged": true,
+      "assetsAndManifestsUnchanged": true,
+      "ownedProcessesRemaining": 0,
+      "historicalRootsPreserved": 24
+    },
+    "feedback": {
+      "wallMs": 1793368185764,
+      "userText": "我在執行過程中有看到工作管理員 nodejs JS runtime 同時高度cpu 占用後 同時出現音訊問題",
+      "scope": "Subjective temporal association; no exact PCM event time or originating process PID supplied; causality unconfirmed",
+      "qualityAccepted": false
+    },
+    "findings": [
+      "Turtle bridge saved30s output/OBS zero runs116 and1; direct0 and0. Common150–170s bridge18 and1, direct0 and0; source first2/pre zeros0 throughout. Supports whole-path sensitivity, not FIFO as unique cause.",
+      "Both virtual capture APIs had no exact stereo zero runs in common150–170s. Process capture each had one1504frame zero near the start of saved30s, localized to its first second with extra nonzero residual; startup/reinitialization is a confound, not a proven steady-state or42ms buffering diagnosis.",
+      "Bridge/direct first pair both experienced system CPU100% samples, later pair lower. Direct remained free of this zero criterion in both. Load could aggravate a sensitive path, but neither exclusive CPU cause nor originating Node PID is established. Per-process sampling began after user report; no retrospective identification."
+    ],
+    "zeroCriterion": "Exact common stereo zeros >=16frames; only complete internal segments count. Not general signal integrity, click, repeated-content or perceptual acceptance.",
+    "limits": [
+      "Whole-route contrast changes context and custom probe counts and source output endpoint; not a fully single-variable FIFO experiment.",
+      "Separate cases use their own saved30s positions; common150–170s uses independent integer content alignment, not context-clock subtraction or physical latency.",
+      "Two repetitions per condition on one machine/file are not incidence estimates.",
+      "Mixer snapshots are sequential and not an exclusive bus lock.",
+      "Process load uses coarse top20 retained CPU samples, missing rows not zero; no thread/DPC/driver causal trace.",
+      "OBS input transient default B1 opening retained as a harness limitation; future creation must supply an explicit inert or verified B2 device before initialization.",
+      "No new human listening acceptance or production dual-output redesign."
+    ],
+    "qualityAccepted": false,
+    "formalFlacGateOpened": false,
+    "productChanged": false,
+    "audioMigrated": false,
+    "committed": false
+  },
+  "finalBoundedRoutingComparison": {
+    "date": "2026-10-30",
+    "scope": "Final fixed8 dry natural-WAV cases; same explicit Turtle source/final sink and3 probes4/2/2. No additional matrix permitted.",
+    "sourceStartSeconds": 140,
+    "playSeconds": 36,
+    "savedPcmSeconds": 30,
+    "rate": 48000,
+    "gain": 0.1,
+    "load": {
+      "low": "same owned Node process with0 synthetic workers",
+      "high": "owned Node process with4 worker threads and75% duty",
+      "parentStopRequestSeconds": 65,
+      "workerSelfLimitSeconds": 70,
+      "limits": "bounded process CPU intervention; not full-machine saturation, native audio scheduling/DPC or retrospective identification of earlier Node processes"
+    },
+    "cases": [
+      {
+        "id": "1-bridge-low",
+        "mode": "bridge",
+        "load": "low",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 8,
+        "saved30sObsZeroRuns": 8,
+        "maximumOutputZeroFrames": 960,
+        "obsNcc": 0.999998587089846,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 8,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.27001005643947273,
+          "systemCpuBusyMax": 0.5679313074721393,
+          "sumReportedOwnedCpuMean": 0.3455137999131084,
+          "sumReportedOwnedCpuMax": 0.8577928318357947,
+          "freeMemoryMinBytes": 36365271040,
+          "mainCallbackGapMsP50P95Max": [
+            109.23159999999825, 111.41447000000099, 142.195499999998
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0,
+          "maxWholeMachineFraction": 0,
+          "workers": 0,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 7,
+          "obsZeroRuns": 7,
+          "templateNcc": 0.4445636594263596,
+          "validContentMatch": false,
+          "scope": "diagnostic integer-aligned window only; common-content pairing not accepted"
+        }
+      },
+      {
+        "id": "2-direct-low",
+        "mode": "direct",
+        "load": "low",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 0,
+        "saved30sObsZeroRuns": 0,
+        "maximumOutputZeroFrames": 0,
+        "obsNcc": 0.9999985890948416,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 0,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.9646547736602366,
+          "systemCpuBusyMax": 1,
+          "sumReportedOwnedCpuMean": 0.3141147247923759,
+          "sumReportedOwnedCpuMax": 0.9420905471808301,
+          "freeMemoryMinBytes": 33986244608,
+          "mainCallbackGapMsP50P95Max": [
+            110.33100000000013, 129.4669700000013, 195.15669999999955
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.00005428652059980018,
+          "maxWholeMachineFraction": 0.0009926371142053821,
+          "workers": 0,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "templateNcc": 0.9999483522566939,
+          "validContentMatch": true,
+          "scope": "content-matched20s; no physical latency claim"
+        }
+      },
+      {
+        "id": "3-direct-high",
+        "mode": "direct",
+        "load": "high",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 0,
+        "saved30sObsZeroRuns": 0,
+        "maximumOutputZeroFrames": 0,
+        "obsNcc": 0.9999985891937704,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 0,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.5092395992791052,
+          "systemCpuBusyMax": 1,
+          "sumReportedOwnedCpuMean": 0.2852320651270037,
+          "sumReportedOwnedCpuMax": 0.8241159754215873,
+          "freeMemoryMinBytes": 35455705088,
+          "mainCallbackGapMsP50P95Max": [
+            109.42250000000058, 113.74775000000045, 138.50269999999728
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.15951036407112204,
+          "maxWholeMachineFraction": 0.18138486585449717,
+          "workers": 4,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "templateNcc": 0.9979469063045197,
+          "validContentMatch": true,
+          "scope": "content-matched20s; no physical latency claim"
+        }
+      },
+      {
+        "id": "4-bridge-high",
+        "mode": "bridge",
+        "load": "high",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 98,
+        "saved30sObsZeroRuns": 98,
+        "maximumOutputZeroFrames": 1440,
+        "obsNcc": 0.9999985872260819,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 98,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.3830188598611612,
+          "systemCpuBusyMax": 0.5608091337800943,
+          "sumReportedOwnedCpuMean": 0.3487507799934023,
+          "sumReportedOwnedCpuMax": 0.8611246650570598,
+          "freeMemoryMinBytes": 36743053312,
+          "mainCallbackGapMsP50P95Max": [
+            109.13150000000314, 111.20964000000095, 112.59320000000116
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.1728302781447425,
+          "maxWholeMachineFraction": 0.1809436839675688,
+          "workers": 4,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 58,
+          "obsZeroRuns": 58,
+          "templateNcc": 0.49377910545319126,
+          "validContentMatch": false,
+          "scope": "diagnostic integer-aligned window only; common-content pairing not accepted"
+        }
+      },
+      {
+        "id": "5-bridge-high",
+        "mode": "bridge",
+        "load": "high",
+        "validCase": false,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "failure": "source4 incomplete at fixed playback end; no rerun",
+        "pcmReceipts": [
+          {
+            "label": "source4",
+            "frames": 1421312,
+            "complete": false,
+            "sha256": "704bb9ccb7e2217e2ff5e7b6456f556dbb341029865d1bcd0ea780d9ab055357",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "frameDiscontinuities": []
+          },
+          {
+            "label": "preBridgeAccomp",
+            "frames": 1440000,
+            "complete": true,
+            "sha256": "000c4c047bd246aa0987dc503ec71fe0fb5af671761c9f7f0d2ed51af60782e3",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "frameDiscontinuities": []
+          },
+          {
+            "label": "postGain",
+            "frames": 1440000,
+            "complete": true,
+            "sha256": "2ac54507076a9ec4d173a61d7bfe03f8e5ba9c91588d0bdc84f3374ffd4a59a8",
+            "missingFrames": 0,
+            "channelMismatchFrames": 0,
+            "frameDiscontinuities": []
+          }
+        ],
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.37922125920430605,
+          "systemCpuBusyMax": 0.5314813681698587,
+          "sumReportedOwnedCpuMean": 0.35815181725100365,
+          "sumReportedOwnedCpuMax": 0.788796418022778,
+          "freeMemoryMinBytes": 36972146688,
+          "mainCallbackGapMsP50P95Max": [
+            109.3289999999979, 111.55667000000066, 115.1369999999988
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.17214181152116587,
+          "maxWholeMachineFraction": 0.1816734413890917,
+          "workers": 4,
+          "closed": true
+        }
+      },
+      {
+        "id": "6-direct-high",
+        "mode": "direct",
+        "load": "high",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 0,
+        "saved30sObsZeroRuns": 0,
+        "maximumOutputZeroFrames": 0,
+        "obsNcc": 0.9999985907495008,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 0,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.38867237107438946,
+          "systemCpuBusyMax": 0.6096097953125966,
+          "sumReportedOwnedCpuMean": 0.259189364590001,
+          "sumReportedOwnedCpuMax": 0.7106151268227031,
+          "freeMemoryMinBytes": 37183897600,
+          "mainCallbackGapMsP50P95Max": [
+            109.196899999999, 111.4363599999997, 113.39909999999873
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.161545260568854,
+          "maxWholeMachineFraction": 0.17525267947353848,
+          "workers": 4,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "templateNcc": 0.997357085754383,
+          "validContentMatch": true,
+          "scope": "content-matched20s; no physical latency claim"
+        }
+      },
+      {
+        "id": "7-direct-low",
+        "mode": "direct",
+        "load": "low",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 0,
+        "saved30sObsZeroRuns": 0,
+        "maximumOutputZeroFrames": 0,
+        "obsNcc": 0.9999985907495009,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 0,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.18375066799386608,
+          "systemCpuBusyMax": 0.30482928329744696,
+          "sumReportedOwnedCpuMean": 0.26773217199826826,
+          "sumReportedOwnedCpuMax": 0.6888468922127204,
+          "freeMemoryMinBytes": 37456867328,
+          "mainCallbackGapMsP50P95Max": [
+            109.1643999999942, 111.34014000000097, 112.60819999999967
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.000027637657617423214,
+          "maxWholeMachineFraction": 0.0009949556742272357,
+          "workers": 0,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 0,
+          "obsZeroRuns": 0,
+          "templateNcc": 0.997357085754383,
+          "validContentMatch": true,
+          "scope": "content-matched20s; no physical latency claim"
+        }
+      },
+      {
+        "id": "8-bridge-low",
+        "mode": "bridge",
+        "load": "low",
+        "validCase": true,
+        "probes": 3,
+        "channels": [4, 2, 2],
+        "sourcePreZeroRuns": 0,
+        "saved30sOutputZeroRuns": 100,
+        "saved30sObsZeroRuns": 100,
+        "maximumOutputZeroFrames": 1920,
+        "obsNcc": 0.9999985846684737,
+        "validObsAlignment": true,
+        "mappedOutputZeroRuns": 100,
+        "systemCpu": {
+          "samples": 36,
+          "systemCpuBusyMean": 0.24145695478460918,
+          "systemCpuBusyMax": 0.4476160990712075,
+          "sumReportedOwnedCpuMean": 0.3400777821392059,
+          "sumReportedOwnedCpuMax": 0.7945235833639552,
+          "freeMemoryMinBytes": 37388234752,
+          "mainCallbackGapMsP50P95Max": [
+            109.16769999999815, 111.30559999999932, 113.35540000000037
+          ],
+          "limits": "passive coarse samples; first owned CPU API call returns zero; main callback gaps are not audio-thread scheduling/xrun or causal proof"
+        },
+        "nodeLoad": {
+          "samples": 36,
+          "meanWholeMachineFraction": 0.000053452305792474054,
+          "maxWholeMachineFraction": 0.000988730548085971,
+          "workers": 0,
+          "closed": true
+        },
+        "diagnostic20s": {
+          "outputZeroRuns": 77,
+          "obsZeroRuns": 77,
+          "templateNcc": 0.8343121736466926,
+          "validContentMatch": false,
+          "scope": "diagnostic integer-aligned window only; common-content pairing not accepted"
+        }
+      }
+    ],
+    "balance": {
+      "criteria": "predeclared group means over full playback: path system gaps<=.08 both loads; high path Node gap<=.03; high-low overall system exposure>=.08; valid PCM for both repetitions required",
+      "groups": {
+        "bridge-low": {
+          "validCases": 2,
+          "systemCpuMean": 0.25573350561204095,
+          "nodeCpuMean": 0.000026726152896237027
+        },
+        "bridge-high": {
+          "validCases": 1,
+          "systemCpuMean": 0.38112005953273365,
+          "nodeCpuMean": 0.17248604483295418
+        },
+        "direct-low": {
+          "validCases": 2,
+          "systemCpuMean": 0.5742027208270513,
+          "nodeCpuMean": 0.000040962089108611696
+        },
+        "direct-high": {
+          "validCases": 2,
+          "systemCpuMean": 0.44895598517674734,
+          "nodeCpuMean": 0.16052781231998803
+        }
+      },
+      "systemPathGaps": {
+        "low": 0.3184692152150103,
+        "high": 0.0678359256440137
+      },
+      "highNodePathGap": 0.011958232512966155,
+      "highMinusLowSystemExposure": 0.00006990913519444586,
+      "cpuMetricsMet": false,
+      "cohortComplete": false,
+      "met": false
+    },
+    "b2Factory": {
+      "explicitIdAtCreation": true,
+      "mockTests": 6,
+      "privateNativeReceipt": true,
+      "baselinePeak": 0,
+      "stopConfirmed": true,
+      "earlierDefaultB1OpeningRetained": true
+    },
+    "evidence": {
+      "pcmFiles": 24,
+      "sameContextFramesChecked": true,
+      "stoppedStableSha": true,
+      "ownedNodeChildrenClosed": true,
+      "historicalRootsPreserved": 25,
+      "sameContextFramesCheckedScope": "valid complete cases only",
+      "nominalFramesEach": 1440000,
+      "completePcmFiles": 23,
+      "validCases": 7,
+      "incompleteCases": 1,
+      "sourceFirst2EqualsPreScope": "valid cases only; incomplete source receipt retained and excluded"
+    },
+    "stopDecision": "stop after fixed8; no expansion irrespective of balance or zeros",
+    "qualityAccepted": false,
+    "formalFlacGateOpened": false,
+    "audioMigrated": false,
+    "productRuntimeChangedThisSlice": false,
+    "requestedContentSeconds": [150, 170]
   }
 }

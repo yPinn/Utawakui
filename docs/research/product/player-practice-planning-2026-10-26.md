@@ -52,7 +52,7 @@ App 設定／錄製見[輸入契約](../../contracts/input-bindings.md)；背景
 
 ## 6. 衍生音訊減量：研究方案
 
-R01 的方法、格式比較、採用前驗證與候選建議見[衍生四聲道音訊減量研究](../audio/derived-audio-reduction-r01-2026-10-30.md)，是否採用仍依 spec 的研究分類與前置門檻。以四聲道 WAV 為基線，比較短／長曲、不同 sample rate、原曲型態的容量、編碼耗時、冷暖載入、隨機 seek、CPU／RAM、聲道同步與 DSP 聽感；synthetic 訊號可驗路由與數位定位，不能代替自然音樂品質。
+R01 的格式比較、有限對照與改善建議見[衍生四聲道音訊減量研究](../audio/derived-audio-reduction-r01-2026-10-30.md)，研究已收斂、不再擴大根因矩陣；新分離結果的受控 FLAC 5／WAV 回退沿[輸出格式契約](../../contracts/separation-output-format.md)，正式開放及前置門檻仍以 spec 為準。歷史量測與失敗留在研究附錄，synthetic 路由／數位定位不代替自然音樂品質。
 
 若採用，先對新結果 opt-in；舊結果需 staging、驗證、manifest 原子切換、取消／回復與安全磁碟空間。原始素材、播放／Queue 保護及既有[清理政策](../../contracts/library-storage-management.md)保留；不從單曲外推整庫壓縮率。
 

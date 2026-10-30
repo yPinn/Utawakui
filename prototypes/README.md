@@ -10,6 +10,8 @@
 
 ## 共用 Capture 入口
 
+音訊輸入研究的安全初建與獨立測試見[音訊擷取工廠](audio-routing/README.md)；它不屬於下列視覺 capture profiles。
+
 波形 backend 的 Node／Electron 隔離量測另見[歌詞波形實驗](lyrics-waveform/README.md)，不使用下列兩個視覺 capture profiles。
 
 在專案根目錄執行：
