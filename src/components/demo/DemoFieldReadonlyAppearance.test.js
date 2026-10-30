@@ -57,7 +57,7 @@ describe('DemoFieldReadonlyAppearance', () => {
         ],
       }),
     );
-    const fieldIndex = html.indexOf('data-field-source="candidate"');
+    const fieldIndex = html.indexOf('data-field-source="production"');
     const readonlyIndex = html.indexOf('data-field-readonly-review');
     expect(fieldIndex).toBeGreaterThanOrEqual(0);
     expect(readonlyIndex).toBeGreaterThan(fieldIndex);

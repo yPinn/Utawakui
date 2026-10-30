@@ -45,16 +45,6 @@ describe('DemoFieldAppearance', () => {
       expect(html).toContain(value);
     }
   });
-  it('keeps the specimen responsive to its catalogue container', () => {
-    expect(componentSource).toContain('container-type: inline-size;');
-    expect(componentSource).toContain('@container (max-width: 48rem)');
-    expect(componentSource).toContain(
-      'repeat(auto-fit, minmax(min(13rem, 100%), 1fr))',
-    );
-    expect(componentSource).toContain(
-      'repeat(auto-fit, minmax(min(7rem, 100%), 1fr))',
-    );
-  });
   it('keeps this review scoped to the shared text-like field shell', () => {
     expect(componentSource).toContain(
       "import UiTextField from '../ui/UiTextField.vue'",

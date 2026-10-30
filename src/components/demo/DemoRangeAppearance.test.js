@@ -84,8 +84,8 @@ describe('DemoRangeAppearance', () => {
   it('clears both invalid specimens at 120 and restores their error at 121', async () => {
     const { app, root } = mount(DemoRangeAppearance);
     for (const id of [
-      'demo-range-candidate-state-invalid',
-      'demo-range-candidate-validation-error',
+      'demo-range-state-invalid',
+      'demo-range-validation-error',
     ]) {
       const input = () =>
         findAll(
@@ -290,7 +290,7 @@ describe('DemoRangeAppearance', () => {
     const { app, root } = mount(DemoRangeAppearance);
     const inputById = (id) =>
       findAll(root, (node) => node.type === 'input' && node.props.id === id)[0];
-    const id = 'demo-range-candidate-content-fractional';
+    const id = 'demo-range-content-fractional';
     expect(inputById(id).props).toMatchObject({
       value: 0.65,
       min: 0.5,
@@ -315,7 +315,7 @@ describe('DemoRangeAppearance', () => {
         )[0],
       ),
     ).toBe('0.70×');
-    const nativeFallbackId = 'demo-range-candidate-content-native-value';
+    const nativeFallbackId = 'demo-range-content-native-value';
     trigger(inputById(nativeFallbackId), 'onInput', {
       target: {
         valueAsNumber: Number.NaN,
@@ -324,45 +324,40 @@ describe('DemoRangeAppearance', () => {
     });
     await nextTick();
     expect(inputById(nativeFallbackId).props.value).toBe(64);
-    expect(
-      inputById('demo-range-candidate-validation-hint').props,
-    ).toMatchObject({
-      name: 'demo-range-candidate-level',
+    expect(inputById('demo-range-validation-hint').props).toMatchObject({
+      name: 'demo-range-level',
       'data-contract': 'native-forwarding',
     });
-    expect(
-      inputById('demo-range-candidate-state-disabled').props.disabled,
-    ).toBe(true);
+    expect(inputById('demo-range-state-disabled').props.disabled).toBe(true);
     app.unmount();
   });
   it('demonstrates value text, Hint replacement, and merged ARIA descriptions', () => {
     const { app, root } = mount(DemoRangeAppearance);
     const inputById = (id) =>
       findAll(root, (node) => node.type === 'input' && node.props.id === id)[0];
-    const hint = inputById('demo-range-candidate-validation-hint');
-    const invalid = inputById('demo-range-candidate-validation-error');
+    const hint = inputById('demo-range-validation-hint');
+    const invalid = inputById('demo-range-validation-error');
     expect(hint.props['aria-describedby']).toBe(
-      'range-external-note demo-range-candidate-validation-hint-hint',
+      'range-external-note demo-range-validation-hint-hint',
     );
     expect(hint.props['aria-valuetext']).toBe('72%');
     expect(hint.props['aria-invalid']).toBeUndefined();
     expect(invalid.props['aria-describedby']).toBe(
-      'range-external-note demo-range-candidate-validation-error-error',
+      'range-external-note demo-range-validation-error-error',
     );
     expect(invalid.props['aria-invalid']).toBe(true);
     expect(invalid.props['aria-valuetext']).toBe('超過建議值：140%');
     expect(
       findAll(
         root,
-        (node) =>
-          node.props.id === 'demo-range-candidate-validation-error-hint',
+        (node) => node.props.id === 'demo-range-validation-error-hint',
       ),
     ).toHaveLength(0);
     expect(
       findAll(
         root,
         (node) =>
-          node.props.id === 'demo-range-candidate-validation-error-error' &&
+          node.props.id === 'demo-range-validation-error-error' &&
           node.props.role === 'alert',
       ),
     ).toHaveLength(1);

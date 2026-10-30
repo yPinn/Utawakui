@@ -40,7 +40,7 @@ describe('DemoTextareaAppearance', () => {
         root,
         (node) => node.type === 'textarea' && node.props.id === id,
       )[0];
-    const filledId = 'demo-textarea-candidate-state-filled';
+    const filledId = 'demo-textarea-state-filled';
     expect(textareaById(filledId).props.value).toContain('第二段');
     trigger(textareaById(filledId), 'onInput', {
       target: {
@@ -49,16 +49,14 @@ describe('DemoTextareaAppearance', () => {
     });
     await nextTick();
     expect(textareaById(filledId).props.value).toBe('更新後\n仍保留換行');
+    expect(textareaById('demo-textarea-state-readonly').props.readonly).toBe(
+      true,
+    );
+    expect(textareaById('demo-textarea-state-disabled').props.disabled).toBe(
+      true,
+    );
     expect(
-      textareaById('demo-textarea-candidate-state-readonly').props.readonly,
-    ).toBe(true);
-    expect(
-      textareaById('demo-textarea-candidate-state-disabled').props.disabled,
-    ).toBe(true);
-    expect(
-      textareaById('demo-textarea-candidate-state-invalid').props[
-        'aria-invalid'
-      ],
+      textareaById('demo-textarea-state-invalid').props['aria-invalid'],
     ).toBe(true);
     app.unmount();
   });

@@ -45,7 +45,7 @@ describe('DemoSearchBoxAppearance', () => {
         root,
         (node) =>
           node.type === 'input' &&
-          node.props.id === 'demo-search-candidate-state-clear-hover',
+          node.props.id === 'demo-search-state-clear-hover',
       )[0];
     expect(findInput().props.value).toBe('Hover Clear');
     const clear = findAll(

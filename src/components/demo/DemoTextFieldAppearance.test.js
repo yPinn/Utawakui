@@ -37,7 +37,7 @@ describe('DemoTextFieldAppearance', () => {
     const { app, root } = mount(DemoTextFieldAppearance);
     const inputById = (id) =>
       findAll(root, (node) => node.type === 'input' && node.props.id === id)[0];
-    const filledId = 'demo-text-field-candidate-state-filled';
+    const filledId = 'demo-text-field-state-filled';
     const filled = inputById(filledId);
     expect(filled.props.value).toBe('雨愛');
     trigger(filled, 'onInput', {
@@ -47,16 +47,14 @@ describe('DemoTextFieldAppearance', () => {
     });
     await nextTick();
     expect(inputById(filledId).props.value).toBe('新しい曲名');
+    expect(inputById('demo-text-field-state-readonly').props.readonly).toBe(
+      true,
+    );
+    expect(inputById('demo-text-field-state-disabled').props.disabled).toBe(
+      true,
+    );
     expect(
-      inputById('demo-text-field-candidate-state-readonly').props.readonly,
-    ).toBe(true);
-    expect(
-      inputById('demo-text-field-candidate-state-disabled').props.disabled,
-    ).toBe(true);
-    expect(
-      inputById('demo-text-field-candidate-state-invalid').props[
-        'aria-invalid'
-      ],
+      inputById('demo-text-field-state-invalid').props['aria-invalid'],
     ).toBe(true);
     app.unmount();
   });
