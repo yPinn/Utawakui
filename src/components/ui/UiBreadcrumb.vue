@@ -73,6 +73,8 @@ function isCurrent(index) {
 .ui-breadcrumb {
   min-width: 0;
   max-width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .ui-breadcrumb__scroll {

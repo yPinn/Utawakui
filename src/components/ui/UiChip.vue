@@ -60,6 +60,8 @@ defineProps({
   font-weight: var(--ui-type-label-weight);
   line-height: var(--ui-type-label-line-height);
   white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .ui-chip__label {

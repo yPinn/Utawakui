@@ -109,11 +109,14 @@ const fieldDescribedBy = computed(() =>
   gap: var(--ui-space-2);
 }
 
+/* Control labels are interface chrome; hint and error stay selectable. */
 .ui-field__label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
   line-height: var(--ui-type-label-line-height);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .ui-field__label--inline {

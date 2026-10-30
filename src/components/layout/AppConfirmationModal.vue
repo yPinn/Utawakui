@@ -76,6 +76,8 @@ const title = computed(() => request.value?.title || '確認操作');
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
   font-variant-numeric: tabular-nums;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .app-confirmation__copy {

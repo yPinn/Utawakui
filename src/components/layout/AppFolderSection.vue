@@ -70,6 +70,8 @@ const titleId = `app-folder-section-${useId()}`;
   font-size: var(--ui-type-body-compact-size);
   font-variant-numeric: tabular-nums;
   line-height: var(--ui-type-body-compact-line-height);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .app-folder-section__actions {

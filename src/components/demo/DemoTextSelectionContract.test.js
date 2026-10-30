@@ -95,11 +95,13 @@ describe('Token v2 Candidate text selection contract', () => {
     expect(adoptedTextButtonSource).not.toContain('pointer-events: none');
   });
 
-  it('leaves non-adopted production components as active truth', () => {
-    for (const source of currentSources) {
-      expect(source).not.toContain('-webkit-user-select: none;');
-      expect(source).not.toContain('user-select: none;');
+  it('adopts the selection contract in production Tabs and Chip', () => {
+    const [tabsSource, chipSource, marqueeSource] = currentSources;
+    for (const source of [tabsSource, chipSource]) {
+      expect(source).toContain('-webkit-user-select: none;');
+      expect(source).toContain('user-select: none;');
     }
+    expect(marqueeSource).not.toContain('user-select: none;');
   });
 
   it('records selection independently from semantic color', () => {

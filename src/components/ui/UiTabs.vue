@@ -233,6 +233,8 @@ function moveFocus(item, event) {
   line-height: var(--ui-type-label-line-height);
   white-space: nowrap;
   cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
   transition:
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),

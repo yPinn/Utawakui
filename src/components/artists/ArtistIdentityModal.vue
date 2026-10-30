@@ -337,6 +337,8 @@ function applyCatalog() {
   color: var(--ui-color-text);
   font-size: var(--ui-type-body-compact-size);
   line-height: var(--ui-type-body-compact-line-height);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .artist-identity-modal__section--catalog {

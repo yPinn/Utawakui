@@ -61,6 +61,8 @@ function toggleVisible() {
   font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @media (max-width: 520px) {

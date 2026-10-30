@@ -238,6 +238,8 @@ function batchStatus(trackId) {
 .analysis-picker__heading,
 .analysis-picker__count {
   margin: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .analysis-picker__heading {

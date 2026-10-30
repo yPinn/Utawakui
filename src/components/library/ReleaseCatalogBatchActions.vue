@@ -89,5 +89,7 @@ watch(
 .release-batch-actions__status {
   font-size: var(--ui-type-caption-size);
   color: var(--ui-color-text-muted);
+  -webkit-user-select: none;
+  user-select: none;
 }
 </style>

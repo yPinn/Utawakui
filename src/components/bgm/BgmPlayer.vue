@@ -331,6 +331,8 @@ async function changeTrack(trackId) {
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
   white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .bgm-player__status > span {

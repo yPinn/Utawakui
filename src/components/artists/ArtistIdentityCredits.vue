@@ -79,5 +79,7 @@ const emit = defineEmits(['split']);
   font-size: var(--ui-type-caption-size);
   font-variant-numeric: tabular-nums;
   line-height: var(--ui-type-caption-line-height);
+  -webkit-user-select: none;
+  user-select: none;
 }
 </style>

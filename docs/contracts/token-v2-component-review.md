@@ -45,6 +45,7 @@ F8 的 ARIA、尺寸與元件責任屬 owner 檢查所需資訊，必須與產�
 - 正式 `UiProgress` 已採用核准 Candidate contract：8px track、`--ui-radius-xs`、Info activity role、自然換行 copy，以及 reduced-motion-safe indeterminate segment。Native progress 保留 name／value；region busy 與 milestone announcement 仍由流程 owner 負責。Determinate fill 由 `aria-hidden` 圖層繪製，數值增加時以 `--ui-motion-duration-slow` 平移、減少時直接跳回，reduced motion 不補間；更新間隔小於 200ms 視為連續串流（例如播放位置），由元件自行改為直接跟隨，不提供 caller 端覆寫。可見數值與 native value 一律即時呈現真實值。`labelHidden` 沿用 Field／Checkbox 慣例，只移除可見 copy lane，native progress 仍以 `label` 作 accessible name。
 - 正式 `UiCheckbox` 已採用核准 Candidate contract：Standard／Compact 36／32px full-row target、16px project-owned Check／Minus、`--ui-radius-sm` indicator、多行首行對齊與整列 disabled。單一 native input 繼續擁有互動、focus、required、disabled、Boolean／mixed 與 ARIA 語意；consumer public props／events 未變。
 - 歷史 Candidate／Current 判斷只保存在本文件的日期快照；F8 runtime 不再投影凍結的 Current layer。正式 adoption 由實際 `Ui*` 標本驗證，未採用差距另以單一提案標本呈現。
+- 2026-10-30 文字選取邊界採用至正式元件：`UiChip`、`UiTabs` tab、`UiField` label 與 `UiBreadcrumb` 不可選取；`UiHint`、`UiNotice`、`UiField` message、輸入值與 `UiMarqueeText` 維持可選取。功能頁的計數、短狀態與 meta 依同一矩陣補齊，`UiTextSelectionContract.test.js` 固定清單。
 - Control-panel 與 public Overlay 仍維持不同 token namespace。Live Stage artwork card 的既有 raw radius 已映射至 `--ovl-primitive-radius-md`，沒有引入 `--ui-*` 依賴。
 - Playlist／Album 詳細資料以 Medium modal 承載 120px artwork 與雙欄編輯 anatomy；Small 保留給短訊息／確認，不因單一 feature 放大其全域 contract。窄 viewport 由 modal cap 與 details container query 降為單欄。
 

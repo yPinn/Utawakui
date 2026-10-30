@@ -53,6 +53,8 @@ const { open, position, setTooltip, tooltipId, triggerProps } = useTooltip({
 .track-capability-matrix__content,
 .track-capability-matrix__copy {
   min-inline-size: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .track-capability-matrix__content,
