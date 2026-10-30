@@ -111,9 +111,10 @@ small and stable:
   and total serialized size. Unknown keys are dropped.
 - Error name, code, and a bounded redacted stack may be retained locally.
   Stack and internal message never cross back to renderer as the public error.
-- An operation correlation id follows renderer intent through IPC, main, and a
-  worker where applicable. High-frequency playback time updates and output
-  snapshots are not logged.
+- A failed wrapped IPC operation gets one main-issued correlation id, shared
+  by its diagnostic event and public error; a renderer fallback record reuses
+  it. Renderer-local failures keep their own record id. High-frequency
+  playback time updates and output snapshots are not logged.
 
 ### Privacy and redaction
 
@@ -188,8 +189,9 @@ Redaction is centralized and defense-in-depth:
 ### IPC error wrapper rollout
 
 Do not replace all domain handlers in one change. Introduce a small wrapper
-that records channel, operation, duration, correlation id, and normalized
-failure, then migrate domain-by-domain.
+that records source, operation, duration, a failure-only correlation id, and
+normalized failure, then migrate domain-by-domain. Successful calls are not
+logged and get no id.
 
 The wrapper must preserve each handler's return value and Electron invocation
 semantics. It never forwards the private logged error. Unknown failures become
@@ -280,6 +282,11 @@ an explicit diagnostics consent and privacy contract.
   [ADR 0029](0029-consented-automatic-error-reports.md) later adds that
   contract for one bounded, consented severe-error report; general log upload
   remains rejected.
+- **Renderer-issued correlation ids on every invoke:** named preload intents
+  would become a generic envelope across 200+ channels. Renderer failures
+  before IPC already have their own record. Linking a feedback report to one
+  record waits until the relay receives real reports
+  ([proposal](../research/engineering/diagnostics-correlation-proposal-2026-10-29.md)).
 - **Install an `uncaughtException` handler and continue:** an uncaught fatal
   error leaves process state undefined; diagnostics must not masquerade as
   recovery.
