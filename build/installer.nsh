@@ -54,7 +54,7 @@
   LangString utaWelcomeTitle ${LANG_ENGLISH} "Install Utawakui"
 
   LangString utaWelcomeText ${LANG_TRADCHINESE} "Utawakui 提供本機曲庫管理與播放控制。$\r$\n$\r$\n外部來源、線上歌詞、音訊處理與對外輸出，可在設定中另行啟用；所需工具與模型可依需求下載。$\r$\n$\r$\n解除安裝時，預設保留設定、已下載的工具與曲庫。"
-  LangString utaWelcomeText ${LANG_ENGLISH} "Utawakui manages and plays your local music library.$\r$\n$\r$\nExternal sources, online lyrics, audio processing and public output can be enabled in Settings. Download their tools and models as needed.$\r$\nUninstalling keeps your settings, downloaded tools and library by default."
+  LangString utaWelcomeText ${LANG_ENGLISH} "Utawakui manages and plays your local music library.$\r$\n$\r$\nExternal sources, online lyrics, audio processing and public output can be enabled in Settings. Download their tools and models as needed.$\r$\n$\r$\nUninstalling keeps your settings, downloaded tools and library by default."
 
   LangString utaUnWelcomeTitle ${LANG_TRADCHINESE} "解除安裝 Utawakui"
   LangString utaUnWelcomeTitle ${LANG_ENGLISH} "Uninstall Utawakui"
