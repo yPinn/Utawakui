@@ -25,4 +25,10 @@ describe('scroll-edge cue scope', () => {
       read('../performance-session/PerformanceSessionPlanList.vue'),
     ).toContain('edge-shadow="end"');
   });
+
+  it('slides a pushed-up table header under the compact bar', () => {
+    expect(read('../track/TrackTable.vue')).toMatch(
+      /\.library-track-table\s*\{[^}]*isolation:\s*isolate;/su,
+    );
+  });
 });

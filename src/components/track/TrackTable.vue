@@ -578,6 +578,8 @@ function reorderHeaderFromKeyboard(column, event) {
 <style scoped>
 .library-track-table {
   position: relative;
+  /* Local layers stay inside; page chrome like the compact bar covers the table. */
+  isolation: isolate;
   min-width: 0;
   max-width: 100%;
   margin-block-start: var(--ui-space-2);
