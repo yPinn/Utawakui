@@ -279,7 +279,11 @@ const {
   reportPlayerError,
   notifyStopped,
 });
-usePlayerErrorNotice({ state, retry: () => toggle() });
+usePlayerErrorNotice({
+  state,
+  retry: () => toggle(),
+  retryMonitorOutput: audioGraph.retryMonitorOutput,
+});
 const performanceSettings = usePlayerPerformanceSettings({
   playerState: state,
   graph: audioGraph,

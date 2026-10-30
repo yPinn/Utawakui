@@ -70,6 +70,30 @@ metadata、封面及分離結果不改原音源 binding。原音檔 hash 改變�
 
 Library URL refresh 也檢查明確的 readiness 結果，不能因 fulfilled 就再次 play；過期 refresh 不能覆蓋新 occurrence。播放進度、history／arrangement 完成與 Output 仍由既有 audio events／owners 持有，不由設定成功產生。
 
+## Capture-only 輸出路徑
+
+原 `usePlayerAudioGraph` 在既有 Play／resume 準備交易中，只有 monitor 明確靜音或音量恰為 0、capture 已選、平台支援 source context sink 切換，且所有 programme input gates 都關閉時，才採 capture-only 直接分支。來源仍是同一 HTML audio／MediaElementSource，四聲道與原曲分支保持；在來源 context 內建立 capture 自己的導唱、mix、pitch、總音量與終端 gate，演唱不再經 inst／voc MediaStream bridge。Monitor 與 capture 的 logical DSP 確認仍各自成立，不合併節點或混音。Capture 音量 0 不等於停用；同裝置、微小 monitor 音量或暫時內容靜音都不構成合併條件。Monitor-only 延後建立不需要的 bridge。
+
+開始準備時就需要 monitor／capture 的兩路場景，保留原來源 default＋獨立 capture context，即使裝置相同也不合併混音。播放中把 monitor 拉到 0 不立即進入 capture-only 模式；切換／關閉 capture 或 BGM 準備先退休 monitor relay、關閉受影響終端 gate，經來源 sink 串行重綁與就緒檢查回到原路徑，再允許輸出。不 pause／play／seek 或改 occurrence；paused 不自動播放。明確路徑切換可能有短暫缺口，未承諾無縫。
+
+從健康 capture-only 開回 monitor 時，預設保持原 capture graph／gate／sink 直出，另將 monitor 自己的 dry／wet 合流（已套用 monitor 音量、導唱與 DSP，位於舊 terminal 前）以單一 stereo MediaStream bridge 送往新的 default context。新 context 只有 stream source 與終端 gate，不重複套用音量或 pitch；來源 context 的 monitor terminal 維持 0，沒有第二份 capture。單純開 monitor 不 setSinkId、不拆 capture 或重建 element source；普通非零音量拖動合併同一準備，mute／volume=0 只退休自有 relay。
+
+候選 relay 終端 gate 為 0，確認 resume、必要兩路 DSP ACK、來源／裝置／控制世代與 source／relay 資源仍有效才開 gate；ACK 不等於首份真 PCM ready。路徑 readiness 明確區分初始 direct eligibility 與「capture direct＋default monitor relay」，不把 sourceAtDefault 假報為 true。準備／取消不使用 source native lane 的失效清理；失敗／取消只拆自有 relay nodes／listeners／stream tracks、close 自有 default context，不關健康 capture 或借用來源 context。完整 cleanup 先拆自有 targeted edges，再由原 owner 清 shared nodes。
+
+relay 與其父套用操作沿用 10 秒期限；只有對應父 revision 的取消／逾時能撤銷其候選，不能以舊 DSP job 結果撤銷新裝置／BGM／monitor 交易。每個必要 await 後重驗操作 scope，取消的 capture DSP 初始化／ACK 晚回不能 schedule 舊控制或改 gain；現役 graph 的 worklet factory 仍由 graph 生命週期持有，供最新有效操作共享。新裝置、BGM prepare、來源／控制變更、mute、取消或 teardown 使不適用候選失效，不由晚回重試或播放。
+
+監聽獨有失敗以 graph-owned `monitorOutputError` 的有界 code／message，經既有 player 通知 owner 投影；「重試監聽」只重試當前仍有效的 relay，不 toggle／pause／play 演唱，不清健康 capture 偏好，也不假報 capture 失效。新的來源／裝置／mute／成功或 cleanup 會撤銷過期錯誤；一般 playback error 保留原錯誤重試行為。
+
+內部建構選項 `monitorBridgeReturn=false` 保留前一版 staged legacy 回退：先準備綁 capture sink 的靜音候選，再進來源 native lane 關舊 gate、恢復來源 default、接 inst／voc bridge 並升級。此路徑前置不接來源／input，失敗保留健康原 capture／偏好；提交後失敗則關閘，native lane 仍等實際呼叫 settle，再由最新有效交易復原，不退成未確認 dry。裝置／BGM 準備仍沿原雙路交易，relay 準備或 close 晚回不占該 lane。
+
+relay 將 bridge 的 buffering／sample-rate／時鐘及短零風險放到 monitor，未消除 bridge 風險，不保證監聽零延遲或品質。此路徑的 monitor 品質未通過；有限實機與人工驗收紀錄另行保存，實體聲學延遲尚未量測。
+
+BGM 保留自己的 audio、混音與 post-gain bridge；既有 `prepareCaptureOutput()` 確認回到原 capture context 後才回 true，包含尚在排隊的直接準備。Lease 仍在最後 capture 總音量前、繞過演唱控制；未經準備不能在直接分支啟用 input。Mic 研究、試聽、節拍器與其 owners 不接入此路徑。
+
+取消／期限結束的是邏輯等待，不能取消已發出的 native sink 呼叫。原生操作仍持有串行 lane 至完成；晚回僅靜音清理／重驗最新目標，不開舊 gate 或再次 play。回到原雙路路徑須來源 default sink 已恢復、必要 capture／DSP 仍有效；裝置遺失沿原失效與偏好清除流程，不把 default 當 capture 替代。直接 graph 借用來源 context，capture teardown 只拆自己的 edges／nodes／listeners；完整 owner cleanup 才 close 來源 context。`captureOnlyDirect=false` 可停用整體 direct 優化，沒有新增設定 UI、IPC 或持久化偏好。
+
+上述為程式路由契約；真實 Electron／裝置／OBS 連續性與人工聽感需另驗，不覆蓋 R01 歷史失敗或其 CPU、內容對齊限制。
+
 ## 驗證邊界
 
 相鄰測試覆蓋三組獨立保存／預設與跨組 CAS、移除／ABA、來源與 scope 失效、fresh tag 等價、壞檔保留，以及 DSP 驗證拒絕、整組／部分成功、worklet 回應、晚回、取代、取消、期限、裝置失效、paused restore、library refresh 與原 BGM 交接。Set 交叉情境沿詳細提案 T19–T26，回歸集中於 [owner](../../src/composables/player/usePlayerPerformanceSettings.test.js)、[player 整合](../../src/composables/usePlayer.test.js)及[控制列行為](../../src/components/playback/PlayerPerformanceSettingsControls.behavior.test.js)：包含同曲取消／失敗後恢復、已完成 restart 的提交界線、restore retry 預設組、copy／default／remove 互不代存、保存中的操作鎖與後續編輯，以及 cancelled／歷史成功不改選組。Web Audio／裝置由 mocks 提供；這些測試不等於真實 Windows 裝置、Electron 聽感或 OBS 錄音驗收。

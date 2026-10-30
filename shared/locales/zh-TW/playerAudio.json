@@ -1,0 +1,5 @@
+{
+  "monitorOutputUnavailable": "監聽無法開啟。原擷取輸出仍保留，請重試監聽或重新選擇輸出裝置。",
+  "monitorOutputTitle": "監聽未開啟",
+  "retryMonitorOutput": "重試監聽"
+}

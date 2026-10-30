@@ -183,6 +183,7 @@ class MockAudioContext {
   static resumeDeferredBySinkId = new Map();
   static workletDeferredBySinkId = new Map();
   static closeDeferredBySinkId = new Map();
+  static sinkDeferredById = new Map();
 
   constructor(options = {}) {
     this.options = options;
@@ -216,6 +217,7 @@ class MockAudioContext {
     });
     this.setSinkId = vi.fn(async (deviceId) => {
       if (this.failSetSinkId) throw new Error('sink unavailable');
+      await MockAudioContext.sinkDeferredById.get(deviceId)?.promise;
       this.sinkId = deviceId;
     });
     this.createdGains = [];
@@ -266,15 +268,17 @@ class MockAudioContext {
   }
 
   addEventListener(type, listener) {
-    this.listeners.set(type, listener);
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type).add(listener);
   }
 
-  removeEventListener(type) {
-    this.listeners.delete(type);
+  removeEventListener(type, listener) {
+    this.listeners.get(type)?.delete(listener);
+    if (!this.listeners.get(type)?.size) this.listeners.delete(type);
   }
 
   dispatch(type) {
-    this.listeners.get(type)?.();
+    this.listeners.get(type)?.forEach((listener) => listener());
   }
 }
 
@@ -326,6 +330,7 @@ beforeEach(() => {
   MockAudioContext.resumeDeferredBySinkId = new Map();
   MockAudioContext.workletDeferredBySinkId = new Map();
   MockAudioContext.closeDeferredBySinkId = new Map();
+  MockAudioContext.sinkDeferredById = new Map();
   MockAudio.latest = null;
   vi.stubGlobal('Audio', MockAudio);
   vi.stubGlobal('AudioContext', MockAudioContext);
@@ -928,7 +933,9 @@ describe('guide vocal defaults', () => {
     const capture = MockAudioContext.instances.at(-1);
     const master = capture.createdGains.find((gain) => gain.gain.value === 0.3);
     expect(master).toBeDefined();
-    expect(master.connect).toHaveBeenCalledWith(capture.destination);
+    const terminal = master.connect.mock.calls[0][0];
+    expect(terminal.connect).toHaveBeenCalledWith(capture.destination);
+    expect(terminal.gain.value).toBe(1);
     const stream = {};
     player.registerCaptureInput(stream);
     const inputSource = capture.createdStreamSources.find(
@@ -2175,6 +2182,134 @@ describe('playback persistence events', () => {
 });
 
 describe('capture device lifecycle', () => {
+  it('retries a monitor-only output failure through the real notice without pausing or replaying capture', async () => {
+    const player = await loadPlayer();
+    player.setVolume(0);
+    player.prepareCaptureDevice('capture');
+    await player.playTrack({
+      id: 'one',
+      url: 'utawakui-media://track/one/audio.wav',
+    });
+    const revision = player.state.playbackRevision;
+    const plays = MockAudio.latest.play.mock.calls.length;
+    const pauses = MockAudio.latest.pause.mock.calls.length;
+    MockAudioContext.failNextDefaultResume = true;
+    player.setVolume(0.4);
+    await vi.waitFor(() =>
+      expect(player.state.monitorOutputError).toBeTruthy(),
+    );
+    expect(player.state.error).toBeNull();
+    expect(player.state.captureError).toBeNull();
+    expect(player.state.isPlaying).toBe(true);
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    const notice = notifications.items.value.find(
+      (x) => x.key === 'player-playback',
+    );
+    expect(notice.actionLabel).toBe('重試監聽');
+    await notifications.runAction(notice.id);
+    expect(player.state.monitorOutputError).toBeNull();
+    expect(player.state.isPlaying).toBe(true);
+    expect(player.state.playbackRevision).toBe(revision);
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(plays);
+    expect(MockAudio.latest.pause).toHaveBeenCalledTimes(pauses);
+    expect(MockAudioContext.instances[0].sinkId).toBe('capture');
+    expect(MockAudioContext.instances.at(-1).sinkId).toBe('');
+  });
+
+  it('starts capture-only through the real start owner without changing its element clock or queue identity', async () => {
+    const player = await loadPlayer();
+    player.setVolume(0);
+    player.prepareCaptureDevice('capture');
+    expect(
+      await player.playTrack({
+        id: 'one',
+        url: 'utawakui-media://track/one/audio.wav',
+      }),
+    ).toBe(true);
+    expect(MockAudioContext.instances).toHaveLength(1);
+    expect(MockAudioContext.instances[0].sinkId).toBe('capture');
+    const identity = player.state.playbackRevision;
+    player.pause();
+    MockAudio.latest.currentTime = 12.5;
+    const url = MockAudio.latest.src;
+    const plays = MockAudio.latest.play.mock.calls.length;
+    const prepared = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('', prepared);
+    player.setVolume(0.4);
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
+    expect(MockAudioContext.instances[0].sinkId).toBe('capture');
+    expect(player.state.captureDeviceId).toBe('capture');
+    prepared.resolve();
+    await vi.waitFor(() =>
+      expect(MockAudioContext.instances[1].state).toBe('running'),
+    );
+    expect(MockAudioContext.instances[0].sinkId).toBe('capture');
+    expect(MockAudioContext.instances[1].sinkId).toBe('');
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(plays);
+    expect(MockAudio.latest.currentTime).toBe(12.5);
+    expect(MockAudio.latest.src).toBe(url);
+    expect(player.state.isPlaying).toBe(false);
+    expect(player.state.playbackRevision).toBe(identity);
+  });
+
+  it('cancels a pending resume that joined monitor preparation without a late play or promotion', async () => {
+    const player = await loadPlayer();
+    player.setVolume(0);
+    player.prepareCaptureDevice('capture');
+    await player.playTrack({
+      id: 'one',
+      url: 'utawakui-media://track/one/audio.wav',
+    });
+    player.pause();
+    const revision = player.state.playbackRevision;
+    const plays = MockAudio.latest.play.mock.calls.length;
+    const prepared = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('', prepared);
+    player.setVolume(0.4);
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
+    const resume = player.toggle();
+    player.cancelPendingStart();
+    expect(await resume).toBe(false);
+    prepared.resolve();
+    await vi.waitFor(() =>
+      expect(MockAudioContext.instances[1].close).toHaveBeenCalledOnce(),
+    );
+    expect(MockAudio.latest.play).toHaveBeenCalledTimes(plays);
+    expect(MockAudioContext.instances[0].sinkId).toBe('capture');
+    expect(player.state.isPlaying).toBe(false);
+    expect(player.state.playbackRevision).toBe(revision);
+    expect(player.state.pendingStartTrackId).toBeNull();
+  });
+
+  it('releases a cancelled capture-only pending start before its native binding completes, without late playback', async () => {
+    const player = await loadPlayer();
+    const native = createDeferred();
+    MockAudioContext.sinkDeferredById.set('capture', native);
+    player.toggleMute();
+    player.prepareCaptureDevice('capture');
+    const stopped = vi.fn();
+    player.onStopped(stopped);
+    const start = player.playTrack({
+      id: 'one',
+      url: 'utawakui-media://track/one/audio.wav',
+    });
+    await vi.waitFor(() =>
+      expect(MockAudioContext.instances[0]?.setSinkId).toHaveBeenCalledWith(
+        'capture',
+      ),
+    );
+    player.cancelPendingStart();
+    expect(await start).toBe(false);
+    expect(player.state.pendingStartTrackId).toBeNull();
+    expect(stopped).toHaveBeenCalled();
+    native.resolve();
+    await vi.waitFor(() =>
+      expect(MockAudioContext.instances[0].setSinkId).toHaveBeenCalledWith(''),
+    );
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+  });
+
   it('prepares a restored capture device and activates it only on first playback', async () => {
     const player = await loadPlayer();
 

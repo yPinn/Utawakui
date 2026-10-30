@@ -83,9 +83,9 @@ watch(
   { immediate: true },
 );
 
-// The monitor (headphone) chain in usePlayer.js never calls setSinkId() —
-// it always plays through whatever the OS's current default output device
-// is, unlike the capture chain above which the user explicitly targets.
+// Audible monitor output follows the OS default. Capture-only may borrow the
+// source context while its monitor terminal is closed; returning monitor output
+// uses a default-context relay or restores the source default sink in legacy mode.
 // This resolves that device's real name so UI referring to "no capture
 // device selected" can say what it actually plays through instead of
 // assuming headphones. Falls back to a generic label before enumeration

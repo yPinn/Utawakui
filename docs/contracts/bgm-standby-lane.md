@@ -289,6 +289,8 @@ capture 已由使用者確認採用 `shared-capture`；獨立裝置 profile 保�
 gate 接入，不經演唱音量、靜音、導唱或 pitch；pause／cut／fade-out 完成時同步關閉 gate，
 避免 bridge 緩衝尾音跨越 lane。開始前等待既有裝置選擇完成，重連保留 gate 狀態。
 
+演唱的 capture-only 直接分支不改 BGM 路由：原 `prepareCaptureOutput()` 需等來源 sink 恢復並確認原獨立 capture context，才允許 BGM lease 啟用；排隊中的直接準備也須重驗／退出，不能只等待 fulfilled 就視為 BGM ready。詳見[播放器路徑契約](player-audio-controls.md#capture-only-輸出路徑)。
+
 演唱與 BGM 在 capture 最後共用「直播擷取總音量」，範圍 0–100%、預設 50%（−6.02 dB），
 由 config audio preferences 保存；舊設定補 50%，不改既有監聽或導唱值。此控制不影響
 monitor，亦不提供 limiter 或 normalization。BGM 本身仍預設 25%；兩個 gain 相乘。

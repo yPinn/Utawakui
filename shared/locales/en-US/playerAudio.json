@@ -1,0 +1,5 @@
+{
+  "monitorOutputUnavailable": "Monitor output could not be opened. The existing capture output is retained. Retry monitoring or select an output device again.",
+  "monitorOutputTitle": "Monitor output unavailable",
+  "retryMonitorOutput": "Retry monitor output"
+}
