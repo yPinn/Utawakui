@@ -98,8 +98,6 @@ export const SHORTCUT_CATEGORIES = Object.freeze(
 export const SHORTCUT_USAGE_NOTES = Object.freeze([
   t('shortcuts.usage.configure'),
   t('shortcuts.usage.typing'),
-  t('shortcuts.usage.controls'),
-  t('shortcuts.usage.arrows'),
   t('shortcuts.usage.hold'),
 ]);
 const titles = {

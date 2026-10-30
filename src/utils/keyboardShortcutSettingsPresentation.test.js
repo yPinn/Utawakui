@@ -44,7 +44,7 @@ it('presents bounded runtime status without treating held or desired keys as exe
       eligibleCommands: ['player.mute'],
       active: [binding],
     }),
-  ).toMatchObject({ status: '已註冊' });
+  ).toMatchObject({ status: '已啟用' });
   for (const active of [
     [{ ...binding, command: 'unknown.command' }],
     [{ ...binding, chord: { key: 'f11' } }],
@@ -88,7 +88,7 @@ it('never displays failed reads or disabled bindings as active, and distinguishe
   };
   rows = shortcutSettingsRows(configuration, 'audio', true);
   expect(rows[0]).toMatchObject({ keys: ['Ctrl', 'J'], status: '自訂' });
-  expect(rows[0].scope).toContain('按鈕、選單、滑桿');
+  expect(rows[0].scope).toContain('其他控制項');
   expect(rows[1].scope).toContain('Shift');
   expect(rows[2]).toMatchObject({ keys: [], status: '已停用' });
   expect(shortcutSettingsRows(configuration, 'reference', true)).toEqual([]);

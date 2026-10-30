@@ -40,14 +40,14 @@
     }
   },
   "bindings": {
-    "playerTransposeUp": "移調 +1",
-    "playerTransposeDown": "移調 −1",
+    "playerTransposeUp": "升調 1 半音",
+    "playerTransposeDown": "降調 1 半音",
     "playerTempoUp": "加快速度",
     "playerTempoDown": "放慢速度",
-    "playerMute": "靜音切換",
+    "playerMute": "歌曲靜音",
     "playerGuideVocal": "導引人聲切換",
-    "playerVolumeUp": "音量 +10%",
-    "playerVolumeDown": "音量 −10%",
+    "playerVolumeUp": "歌曲音量 +10%",
+    "playerVolumeDown": "歌曲音量 −10%",
     "obsMarker": "新增 OBS 標記",
     "historyBack": "上一頁",
     "historyForward": "下一頁",
@@ -63,7 +63,7 @@
     "paused": "暫停使用",
     "notAvailable": "尚未開放",
     "sessionDisabled": "本次已停用",
-    "registered": "已註冊",
+    "registered": "已啟用",
     "inactive": "未啟用",
     "notLoaded": "尚未讀取",
     "unset": "未設定",
@@ -93,18 +93,16 @@
   "usage": {
     "configure": "按功能旁的「設定」，按下想用的按鍵，再按「套用」儲存。「⋯」可停用或恢復該功能的預設鍵。",
     "typing": "輸入文字時，快捷鍵不會生效。",
-    "controls": "操作按鈕、選單或滑桿時，自訂快捷鍵暫不生效；每次按下只執行一次。",
-    "arrows": "方向鍵操作清單、面板或歌詞時，不會同時調整音量。",
     "hold": "預設快捷鍵可長按連續操作。"
   },
   "scope": {
-    "global": "切到其他程式時仍可使用；每次按下只執行一次。",
-    "custom": "輸入文字或操作按鈕、選單、滑桿時不生效；每次按下只執行一次。",
-    "defaultVolume": "輸入文字或操作按鈕、選單、面板時不觸發；可長按。",
-    "defaultVolumeShift": "輸入文字或操作按鈕、選單、面板時不觸發；可長按，也接受 Shift。",
-    "default": "輸入欄位內不觸發；可長按。",
-    "defaultShift": "輸入欄位內不觸發；可長按，也接受 Shift。",
-    "unset": "只在主視窗內使用；請先設定按鍵。"
+    "global": "切到其他程式時也能用。",
+    "custom": "打字或操作其他控制項時不會觸發。",
+    "defaultVolume": "打字時不會觸發；可長按連續調整。",
+    "defaultVolumeShift": "打字時不會觸發；可長按連續調整；按住 Shift 也可以。",
+    "default": "打字時不會觸發；可長按連續調整。",
+    "defaultShift": "打字時不會觸發；可長按連續調整；按住 Shift 也可以。",
+    "unset": "請先設定按鍵。"
   },
   "reference": {
     "sections": {
@@ -187,7 +185,7 @@
       "viewZoom": "只調整檢視。",
       "saveAfter": "調整後請按「儲存」。",
       "panelView": "主工作區、右側與波形面板共用；先點選面板。",
-      "restorePanel": "僅面板放大時；輸入欄與選單優先。",
+      "restorePanel": "面板放大時可用。",
       "trackRow": "依所在清單的操作。",
       "sliderReset": "部分鍵盤或系統可能不支援。",
       "photoStack": "後層翻上一張，前／中層翻下一張。",
@@ -226,7 +224,7 @@
     "scopeLabel": "快捷鍵作用範圍",
     "scopeApp": "App 內",
     "scopeGlobal": "背景",
-    "globalHint": "背景按鍵需含 Ctrl 或 Alt。先試用，再套用；不會執行功能。",
+    "globalHint": "背景按鍵需包含 Ctrl 或 Alt，先試用再套用。",
     "currentKeys": "{command}目前快捷鍵",
     "configure": "設定{command}快捷鍵",
     "configureShort": "設定",
@@ -240,7 +238,7 @@
     "cancel": "取消{command}快捷鍵",
     "cancelShort": "取消",
     "cancelThenReload": "先按「取消」，再重新讀取。",
-    "recordingPrompt": "按下想用的按鍵；此時不會執行功能。",
+    "recordingPrompt": "按下想用的按鍵。",
     "testing": "正在確認按鍵…",
     "testPassed": "目前可用；按「套用」儲存。",
     "testFirst": "先試用按鍵，再按「套用」儲存。",
@@ -257,7 +255,7 @@
     "disableShort": "停用",
     "enableShort": "啟用",
     "reloadGlobal": "重新讀取背景快捷鍵狀態",
-    "sessionOnly": "本次已停用；下次啟動的設定尚未儲存。請重試停用或重新讀取。",
+    "sessionOnly": "本次已停用，但設定還沒存好，請再試一次。",
     "retryDisable": "重試停用",
     "restoreAll": "恢復全部快捷鍵預設",
     "restoreAllShort": "恢復全部預設",
@@ -273,7 +271,7 @@
   },
   "errors": {
     "invalid": "快捷鍵設定已損壞，原檔已保留。",
-    "unsupportedFormat": "快捷鍵設定格式尚未支援，原檔已保留。",
+    "unsupportedFormat": "這份快捷鍵設定無法使用，已保留原檔。",
     "conflict": "快捷鍵已在其他操作中變更，請重新讀取。",
     "occupied": "這組按鍵已被其他程式使用，請換一組或重試。",
     "keysHeld": "請放開所有按鍵，再試一次。",
@@ -283,11 +281,11 @@
     "readFailed": "無法讀取快捷鍵，請重新讀取。",
     "runtimeReadFailed": "無法讀取背景快捷鍵狀態，請重新讀取。",
     "unusable": "這組快捷鍵無法使用，請重新設定。",
-    "saveUnconfirmed": "快捷鍵尚未確認儲存，請重新讀取後再試。",
+    "saveUnconfirmed": "快捷鍵還沒存好，請重新讀取後再試。",
     "testFailed": "無法確認按鍵是否可用，請重試。",
     "testFailedReload": "無法確認按鍵是否可用，請重新讀取後再試。",
     "recordUnusable": "無法使用這組按鍵，請換一組。",
-    "recordUnconfirmed": "快捷鍵尚未確認儲存，請再試一次或取消。"
+    "recordUnconfirmed": "快捷鍵還沒存好，請再試一次或取消。"
   },
   "mainErrors": {
     "settingsTitle": "快捷鍵設定未完成",

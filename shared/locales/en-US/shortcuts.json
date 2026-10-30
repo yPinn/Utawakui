@@ -40,14 +40,14 @@
     }
   },
   "bindings": {
-    "playerTransposeUp": "Transpose +1",
-    "playerTransposeDown": "Transpose −1",
+    "playerTransposeUp": "Transpose up a semitone",
+    "playerTransposeDown": "Transpose down a semitone",
     "playerTempoUp": "Speed up",
     "playerTempoDown": "Slow down",
-    "playerMute": "Toggle mute",
+    "playerMute": "Mute song",
     "playerGuideVocal": "Toggle guide vocal",
-    "playerVolumeUp": "Volume +10%",
-    "playerVolumeDown": "Volume −10%",
+    "playerVolumeUp": "Song volume +10%",
+    "playerVolumeDown": "Song volume −10%",
     "obsMarker": "Add OBS marker",
     "historyBack": "Back",
     "historyForward": "Forward",
@@ -63,7 +63,7 @@
     "paused": "Paused",
     "notAvailable": "Not available yet",
     "sessionDisabled": "Off for this session",
-    "registered": "Registered",
+    "registered": "On",
     "inactive": "Off",
     "notLoaded": "Not loaded",
     "unset": "Not set",
@@ -93,18 +93,16 @@
   "usage": {
     "configure": "Select Set next to a feature, press the keys you want, then select Apply. Use ⋯ to disable a feature or restore its default keys.",
     "typing": "Shortcuts don't work while you type.",
-    "controls": "Custom shortcuts pause while you use buttons, menus or sliders; each press runs once.",
-    "arrows": "Arrow keys in lists, panels or lyrics don't change the volume at the same time.",
     "hold": "Hold a default shortcut to repeat it."
   },
   "scope": {
-    "global": "Works while other apps are in front; each press runs once.",
-    "custom": "Doesn't work while you type or use buttons, menus or sliders; each press runs once.",
-    "defaultVolume": "Doesn't fire while you type or use buttons, menus or panels; hold to repeat.",
-    "defaultVolumeShift": "Doesn't fire while you type or use buttons, menus or panels; hold to repeat; Shift also works.",
-    "default": "Doesn't fire in text fields; hold to repeat.",
-    "defaultShift": "Doesn't fire in text fields; hold to repeat; Shift also works.",
-    "unset": "Works in the main window only; set the keys first."
+    "global": "Works while other apps are in front.",
+    "custom": "Doesn't fire while you type or use other controls.",
+    "defaultVolume": "Doesn't fire while you type; hold to repeat.",
+    "defaultVolumeShift": "Doesn't fire while you type; hold to repeat; works with Shift too.",
+    "default": "Doesn't fire while you type; hold to repeat.",
+    "defaultShift": "Doesn't fire while you type; hold to repeat; works with Shift too.",
+    "unset": "Set the keys first."
   },
   "reference": {
     "sections": {
@@ -187,7 +185,7 @@
       "viewZoom": "Changes the view only.",
       "saveAfter": "Select Save afterwards.",
       "panelView": "Shared by the main workspace, side panel and waveform panel; select a panel first.",
-      "restorePanel": "Only while a panel is maximized; text fields and menus come first.",
+      "restorePanel": "Works while a panel is maximized.",
       "trackRow": "Follows the action of the list it is in.",
       "sliderReset": "Some keyboards or systems may not support this.",
       "photoStack": "The back photo flips backward; the front and middle photos flip forward.",
@@ -226,7 +224,7 @@
     "scopeLabel": "Shortcut scope",
     "scopeApp": "In app",
     "scopeGlobal": "Background",
-    "globalHint": "Background keys need Ctrl or Alt. Test them, then apply; testing doesn't run the feature.",
+    "globalHint": "Background keys need Ctrl or Alt. Test them, then apply.",
     "currentKeys": "Current shortcut for {command}",
     "configure": "Set the shortcut for {command}",
     "configureShort": "Set",
@@ -240,7 +238,7 @@
     "cancel": "Cancel the shortcut for {command}",
     "cancelShort": "Cancel",
     "cancelThenReload": "Select Cancel, then reload.",
-    "recordingPrompt": "Press the keys you want; the feature won't run now.",
+    "recordingPrompt": "Press the keys you want.",
     "testing": "Checking the keys…",
     "testPassed": "Available; select Apply to save.",
     "testFirst": "Test the keys, then select Apply to save.",
@@ -257,7 +255,7 @@
     "disableShort": "Turn off",
     "enableShort": "Turn on",
     "reloadGlobal": "Reload background shortcut status",
-    "sessionOnly": "Off for this session; the setting for next launch isn't saved yet. Retry or reload.",
+    "sessionOnly": "Off for this session, but the setting isn't saved yet. Try again.",
     "retryDisable": "Retry turning off",
     "restoreAll": "Restore all default shortcuts",
     "restoreAllShort": "Restore all defaults",
@@ -273,7 +271,7 @@
   },
   "errors": {
     "invalid": "The shortcut settings are damaged; the original file was kept.",
-    "unsupportedFormat": "This shortcut settings format isn't supported yet; the original file was kept.",
+    "unsupportedFormat": "These shortcut settings can't be used; the original file was kept.",
     "conflict": "Shortcuts were changed elsewhere. Reload them.",
     "occupied": "Another app is using these keys. Choose another combination or retry.",
     "keysHeld": "Release all keys and try again.",
@@ -283,11 +281,11 @@
     "readFailed": "Shortcuts could not be read. Reload them.",
     "runtimeReadFailed": "Background shortcut status could not be read. Reload it.",
     "unusable": "This shortcut can't be used. Set it again.",
-    "saveUnconfirmed": "The shortcut save isn't confirmed. Reload and try again.",
+    "saveUnconfirmed": "Shortcuts aren't saved yet. Reload and try again.",
     "testFailed": "Couldn't check whether the keys are available. Retry.",
     "testFailedReload": "Couldn't check whether the keys are available. Reload and try again.",
     "recordUnusable": "These keys can't be used. Choose another combination.",
-    "recordUnconfirmed": "The shortcut save isn't confirmed. Try again or cancel."
+    "recordUnconfirmed": "The shortcut isn't saved yet. Try again or cancel."
   },
   "mainErrors": {
     "settingsTitle": "Shortcut settings not completed",
