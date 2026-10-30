@@ -8,6 +8,8 @@ import {
   projectMusicStructureOutputDocument,
   projectQueueOutputDocument,
 } from '../../utils/outputStreamProjection.js';
+import { withMergedArtist } from '../../utils/artistPage.js';
+import { useArtistIndex } from '../useArtistIndex.js';
 import { useLibrary } from '../useLibrary.js';
 import { useLyrics } from '../useLyrics.js';
 import { useLyricsReading } from '../useLyricsReading.js';
@@ -51,6 +53,11 @@ export function useOutputProjectionPublisher({
       : null,
   );
   const { tracksById: libraryTracksById } = useLibrary();
+  // Library playback shows merged artists; arrangement items keep their own
+  // display names (performance-session-preparation contract).
+  const { state: artistIndexState } = useArtistIndex();
+  const mergedTrack = (track) =>
+    withMergedArtist(track, artistIndexState.index);
   const {
     state: lyricsState,
     selectedTrack: lyricsTrack,
@@ -88,9 +95,12 @@ export function useOutputProjectionPublisher({
   function queueInput() {
     if (arrangementProjection.value) return arrangementProjection.value.queue;
     return {
-      historyEntries: queueState.historyEntries,
-      currentTrack: queueState.currentTrack,
-      upcomingTracks: upcomingTracks.value,
+      historyEntries: (queueState.historyEntries ?? []).map((entry) => ({
+        ...entry,
+        track: mergedTrack(entry?.track),
+      })),
+      currentTrack: mergedTrack(queueState.currentTrack),
+      upcomingTracks: (upcomingTracks.value ?? []).map(mergedTrack),
       sourceName: queueState.sourceName,
     };
   }
@@ -129,9 +139,9 @@ export function useOutputProjectionPublisher({
       ? arrangementProjection.value.player
       : {
           ...playerState,
-          ...(arrangementProjection.value
-            ? { track: arrangementProjection.value.queue.currentTrack }
-            : {}),
+          track: arrangementProjection.value
+            ? arrangementProjection.value.queue.currentTrack
+            : mergedTrack(playerState.track),
           ...(sample
             ? {
                 currentTime: sample.positionMs / 1000,

@@ -46,6 +46,7 @@ let hiddenCreditIds;
 let textProcessingOverride;
 let mediaPositionMs;
 let samplePlaybackClock;
+let artistIndexState;
 
 beforeEach(() => {
   hiddenCreditIds = shallowRef([]);
@@ -60,6 +61,7 @@ beforeEach(() => {
     sampledAt: now(),
   }));
   experimentalLyrics = { outputDocument: shallowRef(null) };
+  artistIndexState = reactive({ index: null });
   vi.resetModules();
   arrangementActive = shallowRef(false);
   arrangementCurrent = shallowRef(null);
@@ -204,6 +206,9 @@ beforeEach(() => {
       ownsPlayback: arrangementActive,
       currentItem: arrangementCurrent,
     }),
+  }));
+  vi.doMock('./useArtistIndex.js', () => ({
+    useArtistIndex: () => ({ state: artistIndexState }),
   }));
   vi.doMock('./usePerformanceSessionPlan.js', () => ({
     usePerformanceSessionPlan: () => ({ state: arrangementPlanState }),
@@ -800,8 +805,17 @@ describe('output source handshake', () => {
   });
   it('publishes arrangement labels and confirmed results, then returns to ordinary playback without modifying either owner', async () => {
     const runtime = await loadRuntime();
-    playerState.track = { id: 'track-1', title: 'Canonical', url: 'private' };
+    playerState.track = {
+      id: 'track-1',
+      title: 'Canonical',
+      artist: 'Raw credit',
+      url: 'private',
+    };
     playerState.playbackPhase = 'paused';
+    artistIndexState.index = {
+      artists: [{ id: 'artist-merged', name: 'Merged artist' }],
+      trackArtistIds: { 'track-1': ['artist-merged'] },
+    };
     arrangementPlanState.plan = {
       source: { name: 'Tonight' },
       items: [
@@ -815,6 +829,7 @@ describe('output source handshake', () => {
           itemId: 'now',
           trackId: 'track-1',
           displayTitle: 'Live version',
+          displayArtist: 'Stage name',
           progress: 'playing',
         },
         {
@@ -847,7 +862,7 @@ describe('output source handshake', () => {
     });
     expect(envelopes().at(-1).payload.playback).toMatchObject({
       status: 'paused',
-      track: { id: 'track-1', title: 'Live version' },
+      track: { id: 'track-1', title: 'Live version', artist: 'Stage name' },
     });
     const documentsBeforeClock = envelopes().filter(
       (e) => e.stream === 'queue.document',
@@ -868,8 +883,18 @@ describe('output source handshake', () => {
     await flushMicrotasks();
     expect(document()).toMatchObject({
       sourceName: 'Album',
-      items: [{ state: 'current', track: { title: 'Canonical' } }],
+      items: [
+        {
+          state: 'current',
+          track: { title: 'Canonical', artist: 'Merged artist' },
+        },
+      ],
     });
+    expect(envelopes().at(-1).payload.playback.track).toMatchObject({
+      title: 'Canonical',
+      artist: 'Merged artist',
+    });
+    expect(playerState.track.artist).toBe('Raw credit');
     expect(playerState.track.title).toBe('Canonical');
     expect(arrangementPlanState.plan.items[0].progress).toBe('completed');
   });

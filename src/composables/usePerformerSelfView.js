@@ -15,6 +15,8 @@ import {
 } from '../utils/performerOffsetIntent.js';
 import { useLyricsDisplay } from './useLyricsDisplay.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
+import { withMergedArtist } from '../utils/artistPage.js';
+import { useArtistIndex } from './useArtistIndex.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
@@ -25,6 +27,8 @@ const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 const { state: playerState, play, pause, samplePlaybackClock } = usePlayer();
 const { state: queueState, upcomingTracks } = usePlaybackQueue();
+const { state: artistIndexState } = useArtistIndex();
+const mergedTrack = (track) => withMergedArtist(track, artistIndexState.index);
 const {
   state: lyricsState,
   selectedTrack: lyricsTrack,
@@ -140,11 +144,14 @@ const alignedReadings = computed(() => {
 
 function projectionInput() {
   return {
-    player: playerState,
+    player: { ...playerState, track: mergedTrack(playerState.track) },
     queue: {
-      historyEntries: queueState.historyEntries,
-      currentTrack: queueState.currentTrack,
-      upcomingTracks: upcomingTracks.value,
+      historyEntries: (queueState.historyEntries ?? []).map((entry) => ({
+        ...entry,
+        track: mergedTrack(entry?.track),
+      })),
+      currentTrack: mergedTrack(queueState.currentTrack),
+      upcomingTracks: (upcomingTracks.value ?? []).map(mergedTrack),
       sourceName: queueState.sourceName,
     },
     lyrics: {

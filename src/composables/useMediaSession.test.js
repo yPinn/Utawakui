@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const lifecycle = vi.hoisted(() => ({ unmounted: [] }));
 const playerHarness = vi.hoisted(() => ({ current: null, calls: 0 }));
+const artistIndexHarness = vi.hoisted(() => ({ state: null }));
 
 vi.mock('vue', async () => {
   const actual = await vi.importActual('vue');
@@ -28,6 +29,9 @@ const transport = vi.hoisted(() => ({
 }));
 vi.mock('./usePlaybackTransport.js', () => ({
   usePlaybackTransport: () => transport,
+}));
+vi.mock('./useArtistIndex.js', () => ({
+  useArtistIndex: () => ({ state: artistIndexHarness.state }),
 }));
 
 import { useMediaSession } from './useMediaSession.js';
@@ -64,6 +68,7 @@ describe('useMediaSession', () => {
       play: vi.fn(),
       pause: vi.fn(),
     };
+    artistIndexHarness.state = reactive({ index: null });
     scope = effectScope();
   });
 
@@ -121,6 +126,24 @@ describe('useMediaSession', () => {
     await nextTick();
     expect(mediaSession.metadata).toBeNull();
     expect(mediaSession.playbackState).toBe('none');
+  });
+
+  it('shows the merged artist name once the artist index loads', async () => {
+    scope.run(() => useMediaSession());
+    playerHarness.current.state.track = {
+      id: 'track-1',
+      title: 'Tear',
+      artist: 'BTS (방탄소년단)',
+    };
+    await nextTick();
+    expect(mediaSession.metadata.artist).toBe('BTS (방탄소년단)');
+
+    artistIndexHarness.state.index = {
+      artists: [{ id: 'artist-bts', name: 'BTS' }],
+      trackArtistIds: { 'track-1': ['artist-bts'] },
+    };
+    await nextTick();
+    expect(mediaSession.metadata.artist).toBe('BTS');
   });
 
   it('routes play, pause and track skipping and releases them on unmount', () => {

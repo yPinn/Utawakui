@@ -1,4 +1,6 @@
 import { onUnmounted, watchEffect } from 'vue';
+import { trackArtistText } from '../utils/artistPage.js';
+import { useArtistIndex } from './useArtistIndex.js';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackTransport } from './usePlaybackTransport.js';
 
@@ -9,13 +11,14 @@ export function useMediaSession() {
 
   const { state, play, pause } = usePlayer();
   const { playPrevious, playNext } = usePlaybackTransport();
+  const { state: artistIndexState } = useArtistIndex();
 
   watchEffect(() => {
     const track = state.track;
     navigator.mediaSession.metadata = track
       ? new MediaMetadata({
           title: track.title,
-          artist: track.artist || '',
+          artist: trackArtistText(track, artistIndexState.index),
           // App icon placeholder until per-track SMTC artwork is wired.
           artwork: [
             {
