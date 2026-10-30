@@ -10,7 +10,7 @@ const {
   LYRICS_DIRNAME,
   SEPARATIONS_DIRNAME,
 } = require('./constants');
-const { uiLocale } = require('../../../shared/uiLocaleValues.json');
+const { getUiLocale } = require('../uiLocale');
 const {
   isSafeTrackId,
   isStructuredAudioFilename,
@@ -228,7 +228,7 @@ function compareOptionalStrings(a, b) {
   if (hasA && !hasB) return -1;
   if (!hasA && hasB) return 1;
   if (!hasA && !hasB) return 0;
-  return a.localeCompare(b, uiLocale, { sensitivity: 'base' });
+  return a.localeCompare(b, getUiLocale(), { sensitivity: 'base' });
 }
 
 function compareTracks(a, b) {

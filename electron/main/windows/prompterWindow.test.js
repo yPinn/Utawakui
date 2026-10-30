@@ -96,6 +96,7 @@ describe('performer window manager', () => {
     });
     expect(window.options.webPreferences.additionalArguments).toEqual([
       '--ui-theme=dark',
+      '--ui-locale=zh-TW',
     ]);
     window.webContents.emit('did-finish-load');
     expect(window.webContents.send).toHaveBeenCalledWith(
@@ -230,7 +231,7 @@ describe('performer window manager', () => {
     });
     expect(
       FakeWindow.instances[0].options.webPreferences.additionalArguments,
-    ).toEqual(['--ui-theme=light']);
+    ).toEqual(['--ui-theme=light', '--ui-locale=zh-TW']);
   });
 
   it('defaults an unconfigured performer window to the light theme', () => {
@@ -250,7 +251,7 @@ describe('performer window manager', () => {
     });
     expect(
       FakeWindow.instances[0].options.webPreferences.additionalArguments,
-    ).toEqual(['--ui-theme=light']);
+    ).toEqual(['--ui-theme=light', '--ui-locale=zh-TW']);
   });
 
   it('applies a live theme to the native substrate and renderer', () => {

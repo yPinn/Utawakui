@@ -24,6 +24,13 @@ function readInitialUiTheme() {
   return theme === 'dark' ? 'dark' : 'light';
 }
 
+// Resolved by main per launch; the renderer checks it against the supported list.
+function readInitialUiLocale() {
+  const arg = process.argv.find((value) => value.startsWith('--ui-locale='));
+  const locale = arg?.slice('--ui-locale='.length) ?? '';
+  return /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(locale) ? locale : '';
+}
+
 function releaseFieldsIntent(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
   return Object.fromEntries(
@@ -558,6 +565,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     return () => ipcRenderer.removeListener('app-usage:status', listener);
   },
   initialUiTheme: readInitialUiTheme(),
+  initialUiLocale: readInitialUiLocale(),
   initialUiDensity: readInitialUiDensity(),
   onMainWindowVisibilityChanged: (callback) => {
     const listener = (_event, visible) => {

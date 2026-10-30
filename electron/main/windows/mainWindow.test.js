@@ -158,6 +158,7 @@ describe('windowState security boundary', () => {
         devTools: false,
         additionalArguments: [
           '--ui-theme=light',
+          '--ui-locale=zh-TW',
           '--ui-density=compact',
           '--sidebar-width=320',
           '--capture-device-id=capture-device',

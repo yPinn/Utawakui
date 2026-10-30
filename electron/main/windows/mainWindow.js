@@ -34,6 +34,7 @@ const {
 } = require('../../../shared/appIdentity.json');
 const rendererEntries = require('../../../shared/rendererEntries.json');
 const { getWindowIdentity } = require('./windowIdentity');
+const { getUiLocale } = require('../../lib/uiLocale');
 const UI_DENSITY_COMPACT = 'compact';
 const UI_DENSITY_STANDARD = 'standard';
 const { isDev, openDevTools } = readDeveloperOptions(process.argv, {
@@ -265,6 +266,7 @@ function createMainWindow(
       // trip. New windows always begin restored.
       additionalArguments: [
         `--ui-theme=${initialTheme}`,
+        `--ui-locale=${getUiLocale()}`,
         `--ui-density=${UI_DENSITY_COMPACT}`,
         `--sidebar-width=${initialSidebarWidth}`,
         `--capture-device-id=${initialCaptureDeviceId ?? ''}`,

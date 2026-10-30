@@ -147,8 +147,8 @@ describe('Performer renderer Token v2 cutover', () => {
     expect(performerWindowSource).toContain(
       "backgroundColor: initialTheme === 'light' ? '#dad7d0' : '#191a1e'",
     );
-    expect(performerWindowSource).toContain(
-      'additionalArguments: [`--ui-theme=${initialTheme}`]',
+    expect(performerWindowSource).toMatch(
+      /additionalArguments: \[\s*`--ui-theme=\$\{initialTheme\}`,/u,
     );
   });
 

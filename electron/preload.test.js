@@ -733,6 +733,7 @@ describe('main preload bridge', () => {
   it('parses only bounded initial renderer arguments', async () => {
     const defaults = await loadBridge('./preload.js', 'Utawakui', [
       '--ui-theme=unknown',
+      '--ui-locale=zh-TW;rm',
       '--ui-density=dense',
       '--sidebar-width=Infinity',
       '--capture-device-id=',
@@ -743,6 +744,7 @@ describe('main preload bridge', () => {
     ]);
     expect(defaults).toMatchObject({
       initialUiTheme: 'light',
+      initialUiLocale: '',
       initialUiDensity: 'compact',
       initialSidebarWidth: 64,
       initialCaptureDeviceId: null,
@@ -759,6 +761,7 @@ describe('main preload bridge', () => {
 
     const configured = await loadBridge('./preload.js', 'Utawakui', [
       '--ui-theme=light',
+      '--ui-locale=en-US',
       '--ui-density=standard',
       '--sidebar-width=320',
       '--capture-device-id=device-1',
@@ -771,6 +774,7 @@ describe('main preload bridge', () => {
     ]);
     expect(configured).toMatchObject({
       initialUiTheme: 'light',
+      initialUiLocale: 'en-US',
       initialUiDensity: 'standard',
       initialSidebarWidth: 320,
       initialCaptureDeviceId: 'device-1',
@@ -2297,9 +2301,10 @@ describe('performer preload bridge', () => {
     const bridge = await loadBridge(
       './performerPreload.js',
       'UtawakuiPerformer',
-      ['--ui-theme=light'],
+      ['--ui-theme=light', '--ui-locale=zh-TW'],
     );
     expect(bridge.initialUiTheme).toBe('light');
+    expect(bridge.initialUiLocale).toBe('zh-TW');
 
     const darkThemeBridge = await loadBridge(
       './performerPreload.js',
@@ -2349,6 +2354,7 @@ describe('performer preload bridge', () => {
       ['--ui-theme=blue'],
     );
     expect(bridge.initialUiTheme).toBe('light');
+    expect(bridge.initialUiLocale).toBe('');
 
     const callback = vi.fn();
     const cleanup = bridge.onSnapshot(callback);

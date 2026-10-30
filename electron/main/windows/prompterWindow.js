@@ -15,6 +15,7 @@ const {
   tagWebContentsRole,
 } = require('../webContentsRoles');
 const { getWindowIdentity } = require('./windowIdentity');
+const { getUiLocale } = require('../../lib/uiLocale');
 
 const BOUNDS_PERSIST_DEBOUNCE_MS = 300;
 
@@ -171,7 +172,10 @@ function createPerformerWindowManager(options) {
         allowRunningInsecureContent: false,
         webviewTag: false,
         devTools: isDev,
-        additionalArguments: [`--ui-theme=${initialTheme}`],
+        additionalArguments: [
+          `--ui-theme=${initialTheme}`,
+          `--ui-locale=${getUiLocale()}`,
+        ],
       },
     });
     performerWindow = window;

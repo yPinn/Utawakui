@@ -7,6 +7,13 @@ function readInitialUiTheme() {
   return arg?.slice('--ui-theme='.length) === 'dark' ? 'dark' : 'light';
 }
 
+// Resolved by main per launch; the renderer checks it against the supported list.
+function readInitialUiLocale() {
+  const arg = process.argv.find((value) => value.startsWith('--ui-locale='));
+  const locale = arg?.slice('--ui-locale='.length) ?? '';
+  return /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(locale) ? locale : '';
+}
+
 function isUiTheme(value) {
   return value === 'light' || value === 'dark';
 }
@@ -23,6 +30,7 @@ contextBridge.exposeInMainWorld('UtawakuiPerformer', {
   recordDiagnostic: (event) =>
     ipcRenderer.invoke('diagnostics:record-renderer', event),
   initialUiTheme: readInitialUiTheme(),
+  initialUiLocale: readInitialUiLocale(),
   getSnapshot: () => ipcRenderer.invoke('performer-view:get-snapshot'),
   getWindowState: () => ipcRenderer.invoke('performer-view:get-status'),
   control: (intent) =>

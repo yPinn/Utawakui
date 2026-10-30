@@ -35,6 +35,7 @@ const {
 const { normalizePerformerWindowBounds } = require('./performerWindowBounds');
 const storageValues = require('../../shared/libraryStorageValues.json');
 const audioControlValues = require('../../shared/audioControlValues.json');
+const { UI_LANGUAGE_PREFERENCES } = require('./uiLocale');
 
 const CURRENT_VERSION = 4;
 const UI_THEMES = ['light', 'dark'];
@@ -62,6 +63,8 @@ const DEFAULTS = {
   downloadDir: null,
   featureConfirmations: {},
   uiTheme: 'light',
+  // 'system' or a supported UI locale; applied on the next launch.
+  uiLanguage: 'system',
   autoShowArrangementOnObs: false,
   performerReadingScale: 'desk',
   performerWindowBounds: null,
@@ -364,6 +367,7 @@ function loadConfigSnapshot(configPath) {
       uiTheme: UI_THEMES.includes(data.uiTheme)
         ? data.uiTheme
         : DEFAULTS.uiTheme,
+      uiLanguage: normalizeUiLanguage(data.uiLanguage),
       autoShowArrangementOnObs: data.autoShowArrangementOnObs === true,
       performerReadingScale: normalizePerformerReadingScale(
         data.performerReadingScale,
@@ -420,6 +424,21 @@ function loadConfigSnapshot(configPath) {
 
 // Keep existing consumers on the settings-only contract; startup also needs
 // provenance so legacy audio migration can distinguish absence from defaults.
+function normalizeUiLanguage(value) {
+  return UI_LANGUAGE_PREFERENCES.includes(value) ? value : DEFAULTS.uiLanguage;
+}
+
+// Read before app ready to pick Chromium's --lang; no corruption backup here.
+function readUiLanguagePreference(configPath) {
+  try {
+    return normalizeUiLanguage(
+      JSON.parse(fs.readFileSync(configPath, 'utf8'))?.uiLanguage,
+    );
+  } catch {
+    return DEFAULTS.uiLanguage;
+  }
+}
+
 function loadConfig(configPath) {
   return loadConfigSnapshot(configPath).config;
 }
@@ -438,6 +457,7 @@ module.exports = {
   AUTO_ERROR_REPORTING_VALUES,
   loadConfig,
   loadConfigSnapshot,
+  readUiLanguagePreference,
   saveConfig,
   DEFAULTS,
   DEFAULT_AUDIO_PREFERENCES,

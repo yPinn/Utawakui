@@ -1,3 +1,4 @@
 {
-  "uiLocale": "zh-TW"
+  "fallbackLocale": "zh-TW",
+  "supportedLocales": ["zh-TW"]
 }

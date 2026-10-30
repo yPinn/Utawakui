@@ -26,7 +26,6 @@ const {
 } = require('electron');
 
 const { productName: APP_NAME } = require('../shared/appIdentity.json');
-const { uiLocale: UI_LOCALE } = require('../shared/uiLocaleValues.json');
 // Apply Chromium sandboxing before ready and before any BrowserWindow can be
 // created. The helper process repeats the same invariant in its own bootstrap.
 app.enableSandbox();
@@ -35,8 +34,17 @@ app.enableSandbox();
 // default app name instead of ours.
 app.setName(APP_NAME);
 app.setAppLogsPath();
-// UI copy is fixed zh-TW; pin Chromium's own strings and navigator.language to it.
-app.commandLine.appendSwitch('lang', UI_LOCALE);
+// Resolve the UI language once per launch; Chromium's strings and
+// navigator.language follow it, and changing it takes a relaunch.
+const { readUiLanguagePreference } = require('./lib/config');
+const { resolveUiLocale, setUiLocale, getUiLocale } = require('./lib/uiLocale');
+setUiLocale(
+  resolveUiLocale(
+    readUiLanguagePreference(path.join(app.getPath('userData'), 'config.json')),
+    app.getPreferredSystemLanguages(),
+  ),
+);
+app.commandLine.appendSwitch('lang', getUiLocale());
 
 const {
   applyPackagedRuntimeRestrictions,

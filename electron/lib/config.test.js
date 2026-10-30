@@ -9,6 +9,7 @@ import {
   SIDEBAR_WIDTH_MIN,
   isValidObsHost,
   loadConfig,
+  readUiLanguagePreference,
   saveConfig,
 } from './config.js';
 import storageValues from '../../shared/libraryStorageValues.json';
@@ -33,6 +34,7 @@ describe('config', () => {
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'light',
+      uiLanguage: 'system',
       autoShowArrangementOnObs: false,
       performerReadingScale: 'desk',
       performerWindowBounds: null,
@@ -155,6 +157,7 @@ describe('config', () => {
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'light',
+      uiLanguage: 'system',
       autoShowArrangementOnObs: false,
       performerReadingScale: 'desk',
       performerWindowBounds: null,
@@ -240,6 +243,26 @@ describe('config', () => {
     saveConfig(configPath, { downloadDir: '/first' });
     saveConfig(configPath, {});
     expect(loadConfig(configPath).downloadDir).toBe('/first');
+  });
+
+  it('keeps a supported uiLanguage and resets unknown values to system', () => {
+    saveConfig(configPath, { uiLanguage: 'zh-TW' });
+    expect(loadConfig(configPath).uiLanguage).toBe('zh-TW');
+    fs.writeFileSync(configPath, JSON.stringify({ uiLanguage: 'fr-FR' }));
+    expect(loadConfig(configPath).uiLanguage).toBe('system');
+  });
+
+  it('reads uiLanguage before ready without backing up a corrupt file', () => {
+    saveConfig(configPath, { uiLanguage: 'zh-TW' });
+    expect(readUiLanguagePreference(configPath)).toBe('zh-TW');
+    fs.writeFileSync(configPath, '{not json');
+    expect(readUiLanguagePreference(configPath)).toBe('system');
+    expect(fs.readdirSync(path.dirname(configPath))).toEqual([
+      path.basename(configPath),
+    ]);
+    expect(readUiLanguagePreference(path.join(dir, 'missing.json'))).toBe(
+      'system',
+    );
   });
 
   it('round-trips uiTheme through save/load', () => {
