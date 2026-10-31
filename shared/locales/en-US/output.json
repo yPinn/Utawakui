@@ -68,7 +68,7 @@
       "SPOUT_SHARED_TEXTURE_UNAVAILABLE": "The shared picture can't be obtained.",
       "SPOUT_SURFACE_INVALID": "The Spout2 output format is incompatible.",
       "SPOUT_TEXTURE_SEND_FAILED": "The Spout2 picture couldn't be sent.",
-      "SPOUT_HELPER_INTERNAL": "The Spout2 helper hit an error."
+      "SPOUT_HELPER_INTERNAL": "Spout2 output hit an error."
     }
   }
 }

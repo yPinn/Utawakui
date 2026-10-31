@@ -38,11 +38,11 @@
   "save": "Save settings",
   "dock": {
     "title": "Performance queue sidebar",
-    "guidance": "Shows the performance queue once connected, and you can switch back to normal playback; the two queues are separate and don't play automatically.",
+    "guidance": "Shows the performance queue once OBS is connected; it's separate from normal playback and doesn't play automatically.",
     "auto": "Show automatically when connected",
     "reload": "Reload display preference",
-    "readFailed": "The arrangement display preference can't be read. Try again.",
-    "saveFailed": "The arrangement display preference can't be saved and has been restored."
+    "readFailed": "The display preference can't be read. Try again.",
+    "saveFailed": "The display preference can't be saved and has been restored."
   },
   "markers": {
     "title": "Session time markers",
@@ -56,7 +56,7 @@
     "password": "The password can be at most {max} characters."
   },
   "messages": {
-    "readFailed": "OBS settings can't be read. Reload before changing them.",
+    "readFailed": "OBS settings can't be read. Reload them.",
     "saveFailed": "Settings can't be saved. Try again.",
     "connectFailed": "Can't connect. Make sure OBS has WebSocket turned on.",
     "removePasswordFailed": "The password can't be removed. Try again."
@@ -81,17 +81,17 @@
     "copied": "Copied",
     "copy": "Copy",
     "loading": "Loading session log…",
-    "empty": "Nothing to export yet. Connect OBS and start streaming or recording; songs confirmed as started and markers are logged automatically.",
+    "empty": "No records yet. Connect OBS and start streaming or recording; performed songs and markers are logged automatically.",
     "session": "Session: {name}",
-    "missingTimestamps": "{count} entry lacks a timestamp from the chosen source and isn't in the chapters; the original session log is kept. | {count} entries lack a timestamp from the chosen source and aren't in the chapters; the original session log is kept.",
+    "missingTimestamps": "{count} entry has no time from this source and isn't in the chapters (the record is kept). | {count} entries have no time from this source and aren't in the chapters (the records are kept).",
     "timeSource": "Time source",
     "offset": "Offset (seconds)",
-    "offsetHint": "Corrects the start of the VOD; subtracted from every timestamp.",
+    "offsetHint": "Subtracted from every time to line up with the start of the video.",
     "issues": "{count} chapter issue to check | {count} chapter issues to check",
-    "issuesHint": "Timestamps weren't adjusted automatically; check the issues below.",
+    "issuesHint": "Times aren't adjusted automatically; check the items below.",
     "chapters": "YouTube chapters",
     "chaptersHint": "Select the text and press Ctrl+C to copy it manually.",
-    "offsetRequired": "Enter a valid offset to preview and copy chapters.",
+    "offsetRequired": "Enter a valid offset to preview and copy.",
     "readFailed": "The session log can't be read right now. Try again.",
     "offsetInvalid": "Enter 0 or a positive whole number of seconds.",
     "clipboardLabel": "YouTube chapter text",
@@ -99,7 +99,7 @@
     "copyFailed": "Chapters couldn't be copied; select the text manually",
     "markerFallback": "Marker",
     "tooFew": "YouTube chapters need at least {min} parts; there are only {count}.",
-    "firstNotZero": "The first timestamp isn't 0:00, and YouTube chapters must start at 0:00; add a marker at the real start or adjust the offset.",
-    "tooClose": "Parts {index} and {next} are less than 10 seconds apart; YouTube may reject this chapter list."
+    "firstNotZero": "The first part doesn't start at 0:00, so YouTube won't accept it; add a marker at the start or adjust the offset.",
+    "tooClose": "Parts {index} and {next} are less than 10 seconds apart; YouTube may not accept this."
   }
 }

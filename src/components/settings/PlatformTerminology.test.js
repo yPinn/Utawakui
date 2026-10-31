@@ -21,7 +21,7 @@ describe('platform terminology', () => {
     expect(sessionExportModal).toContain('title="匯出場次時間軸"');
     expect(sessionExportModal).toContain('label="YouTube 章節"');
     expect(sessionExportModal).toContain('複製章節');
-    expect(sessionExportModal).toContain('確認開始演出的曲目與標記會自動記錄');
+    expect(sessionExportModal).toContain('演出曲目與標記會自動記錄');
     expect(sessionExportModal).not.toContain('title="匯出 YouTube 章節"');
   });
 

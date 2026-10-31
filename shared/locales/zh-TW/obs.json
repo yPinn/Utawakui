@@ -38,11 +38,11 @@
   "save": "儲存設定",
   "dock": {
     "title": "演出待唱側欄",
-    "guidance": "連線後顯示演出待唱，可切回一般播放；兩份佇列獨立，不會自動播放。",
+    "guidance": "連線 OBS 後顯示演出待唱；與一般播放分開，不會自動播放。",
     "auto": "連線後自動顯示",
     "reload": "重新讀取顯示偏好",
-    "readFailed": "無法讀取播放安排顯示偏好，請再試一次。",
-    "saveFailed": "無法儲存播放安排顯示偏好，已恢復原設定。"
+    "readFailed": "無法讀取顯示偏好，請再試一次。",
+    "saveFailed": "無法儲存顯示偏好，已恢復原設定。"
   },
   "markers": {
     "title": "場次時間標記",
@@ -56,7 +56,7 @@
     "password": "密碼不可超過 {max} 個字元。"
   },
   "messages": {
-    "readFailed": "無法讀取 OBS 設定，請重新讀取後再修改。",
+    "readFailed": "無法讀取 OBS 設定，請重新讀取。",
     "saveFailed": "無法儲存設定，請再試一次。",
     "connectFailed": "無法連線。請確認 OBS 已啟動 WebSocket。",
     "removePasswordFailed": "無法移除密碼，請再試一次。"
@@ -81,17 +81,17 @@
     "copied": "已複製",
     "copy": "複製",
     "loading": "正在讀取場次紀錄…",
-    "empty": "沒有可匯出的紀錄。連線 OBS 並開始直播或錄影後，確認開始演出的曲目與標記會自動記錄。",
+    "empty": "尚無紀錄。連線 OBS 並開始直播或錄影後，演出曲目與標記會自動記錄。",
     "session": "場次：{name}",
-    "missingTimestamps": "{count} 筆缺少所選來源的時間戳，未列入章節；原始場次紀錄仍保留。",
+    "missingTimestamps": "{count} 筆沒有此來源的時間，未列入章節（紀錄仍保留）。",
     "timeSource": "時間來源",
     "offset": "偏移量（秒）",
-    "offsetHint": "用於校正 VOD 開頭，會從所有時間戳扣除。",
+    "offsetHint": "從所有時間扣除，用來對齊影片開頭。",
     "issues": "章節有 {count} 項需確認",
-    "issuesHint": "時間戳未自動調整，請確認以下問題。",
+    "issuesHint": "時間不會自動調整，請確認以下項目。",
     "chapters": "YouTube 章節",
     "chaptersHint": "可選取文字後按 Ctrl+C 手動複製。",
-    "offsetRequired": "輸入有效偏移量後即可預覽及複製章節。",
+    "offsetRequired": "輸入有效偏移量後即可預覽與複製。",
     "readFailed": "目前無法讀取場次紀錄，請再試一次。",
     "offsetInvalid": "請輸入 0 或正整數秒。",
     "clipboardLabel": "YouTube 章節文字",
@@ -99,7 +99,7 @@
     "copyFailed": "無法複製章節，請手動選取內容",
     "markerFallback": "標記",
     "tooFew": "YouTube 章節至少需要 {min} 段，目前只有 {count} 段。",
-    "firstNotZero": "第一段時間戳不是 0:00，YouTube 章節格式要求第一段從 0:00 開始；可以在真正開場時新增一個標記，或調整偏移量。",
-    "tooClose": "第 {index} 與第 {next} 段間隔不足 10 秒，YouTube 可能拒絕這份章節清單。"
+    "firstNotZero": "第一段不是從 0:00 開始，YouTube 不會接受；請在開場時新增標記，或調整偏移量。",
+    "tooClose": "第 {index} 與第 {next} 段相隔不到 10 秒，YouTube 可能不接受。"
   }
 }

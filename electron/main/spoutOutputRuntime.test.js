@@ -348,7 +348,7 @@ describe('Spout output runtime', () => {
       observed: { lifecycle: 'error' },
       error: {
         code: 'SPOUT_HELPER_INTERNAL',
-        message: 'Spout2 helper 發生錯誤。',
+        message: 'Spout2 輸出發生錯誤。',
       },
     });
     expect(JSON.stringify(runtime.getStatus())).not.toContain('private');

@@ -68,7 +68,7 @@
       "SPOUT_SHARED_TEXTURE_UNAVAILABLE": "無法取得共享畫面。",
       "SPOUT_SURFACE_INVALID": "Spout2 輸出規格不相容。",
       "SPOUT_TEXTURE_SEND_FAILED": "Spout2 畫面傳送失敗。",
-      "SPOUT_HELPER_INTERNAL": "Spout2 helper 發生錯誤。"
+      "SPOUT_HELPER_INTERNAL": "Spout2 輸出發生錯誤。"
     }
   }
 }

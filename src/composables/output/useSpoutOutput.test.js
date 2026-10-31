@@ -97,7 +97,7 @@ describe('useSpoutOutput', () => {
       ...stoppedStatus,
       desired: { running: false },
       observed: { lifecycle: 'error' },
-      error: { message: 'Spout2 helper 發生錯誤。' },
+      error: { message: 'Spout2 輸出發生錯誤。' },
     });
 
     expect(spout.state.status.observed.lifecycle).toBe('error');
