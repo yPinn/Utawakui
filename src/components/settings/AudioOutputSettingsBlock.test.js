@@ -22,7 +22,7 @@ describe('AudioOutputSettingsBlock', () => {
     const html = await renderBlock();
     expect(html).toContain('直播擷取總音量');
     expect(html).toContain('50%');
-    expect(html).toContain('套用演唱與 BGM');
+    expect(html).toContain('演唱與 BGM 音量');
     expect(html).toContain('id="capture-master-volume"');
     expect(await renderBlock({ captureVolume: 0 })).toContain('0%');
   });

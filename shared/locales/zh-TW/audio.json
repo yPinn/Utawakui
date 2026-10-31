@@ -10,12 +10,12 @@
     "guidance": "供直播或錄影擷取；與本機聆聽分開設定。",
     "select": "選擇擷取輸出裝置",
     "volume": "直播擷取總音量",
-    "volumeHint": "套用演唱與 BGM；預設 50% 保留餘裕，不影響監聽或導唱比例。"
+    "volumeHint": "調整直播收到的演唱與 BGM 音量，不影響監聽。"
   },
   "modal": {
     "title": "選擇擷取輸出裝置",
     "help": "如何選擇擷取裝置",
-    "description": "選擇直播或錄影軟體要擷取的輸出裝置，選擇後立即套用。",
+    "description": "選擇讓直播或錄影軟體擷取的裝置，立即生效。",
     "offOption": "關閉擷取（仍從 {device} 播放）",
     "groupCapture": "擷取音訊",
     "groupVirtual": "虛擬音效裝置",

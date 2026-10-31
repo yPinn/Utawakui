@@ -20,7 +20,7 @@ describe('Settings modal workspace composition', () => {
     expect(text).toContain('size="wide"');
     expect(text).toContain('body-mode="workspace"');
     expect(text).toContain('#header-actions');
-    expect(text).toContain('選擇後立即套用');
+    expect(text).toContain('立即生效');
     expect(text.match(/<UiScrollLayout\b/gu)).toHaveLength(1);
   });
 });

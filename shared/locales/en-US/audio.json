@@ -10,12 +10,12 @@
     "guidance": "For capture by streaming or recording software; set separately from local listening.",
     "select": "Choose capture output device",
     "volume": "Stream capture master volume",
-    "volumeHint": "Applies to vocals and BGM; the 50% default leaves headroom and doesn't change monitor or guide levels."
+    "volumeHint": "Adjusts the vocal and BGM volume your stream receives; doesn't affect monitoring."
   },
   "modal": {
     "title": "Choose capture output device",
     "help": "How to choose a capture device",
-    "description": "Choose the output device your streaming or recording software captures. It applies right away.",
+    "description": "Choose the device your streaming or recording software captures. Takes effect right away.",
     "offOption": "Capture off (still plays through {device})",
     "groupCapture": "Capture audio",
     "groupVirtual": "Virtual audio devices",
