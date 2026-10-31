@@ -878,12 +878,17 @@ describe('output source handshake', () => {
     await flushMicrotasks();
     expect(document().items.map((i) => i.state)).toEqual(['played', 'played']);
     queueState.sourceName = 'Album';
+    queueState.historyEntries = [{ track: { ...playerState.track } }];
     queueState.currentTrack = playerState.track;
     arrangementActive.value = false;
     await flushMicrotasks();
     expect(document()).toMatchObject({
       sourceName: 'Album',
       items: [
+        {
+          state: 'played',
+          track: { title: 'Canonical', artist: 'Merged artist' },
+        },
         {
           state: 'current',
           track: { title: 'Canonical', artist: 'Merged artist' },

@@ -107,6 +107,32 @@ describe('lyrics timing IPC', () => {
     expect(recordDiagnostic).not.toHaveBeenCalled();
   });
 
+  it('cancels a timing review token so it can no longer confirm', async () => {
+    const a = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    const ready = await ipcMain.handlers.get('lyrics:get-timing-review')(
+      null,
+      'track-a',
+      'main.lrc',
+      a.sourceSession,
+    );
+    await expect(
+      ipcMain.handlers.get('lyrics:cancel-timing-review')(null, ready.token),
+    ).resolves.toEqual({ status: 'cancelled' });
+    await expect(
+      ipcMain.handlers.get('lyrics:confirm-timing-review')(
+        null,
+        'track-a',
+        'main.lrc',
+        a.sourceSession,
+        ready.token,
+      ),
+    ).rejects.toThrow();
+  });
+
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-ipc-'));
     trackDir = path.join(dir, 'tracks', 'track-a');
@@ -1060,6 +1086,17 @@ describe('lyrics timing IPC', () => {
     });
     expect(fs.existsSync(artifactPath)).toBe(false);
     expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+  });
+
+  it('rejects deleting a source that is not in the manifest', async () => {
+    await expect(
+      ipcMain.handlers.get('lyrics:delete-source')(
+        null,
+        'track-a',
+        'missing.lrc',
+      ),
+    ).rejects.toThrow('unable to delete lyrics source: missing.lrc');
+    expect(notifyLibraryUpdated).not.toHaveBeenCalled();
   });
 
   it('deletes a retired source as local lyrics while retaining its migration backup', async () => {

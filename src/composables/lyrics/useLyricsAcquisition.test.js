@@ -347,3 +347,18 @@ describe('candidate save lifetime', () => {
     expect(h.state.manualSave.error).not.toContain('private');
   });
 });
+
+describe('source label backfill', () => {
+  it('reports a disabled lyrics flow on the source action without calling IPC', async () => {
+    const h = harness({ gate: vi.fn().mockResolvedValue(false) });
+    h.state.sourceAction = { operation: null, attempt: 0, error: null };
+    window.Utawakui.backfillLyricsSourceLabels = vi.fn();
+    expect(await h.backfillSourceLabels()).toBeNull();
+    expect(h.state.sourceAction).toEqual({
+      operation: 'backfill-labels',
+      attempt: 1,
+      error: '請先到設定啟用歌詞來源',
+    });
+    expect(window.Utawakui.backfillLyricsSourceLabels).not.toHaveBeenCalled();
+  });
+});

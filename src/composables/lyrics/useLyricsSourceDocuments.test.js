@@ -259,6 +259,35 @@ describe('lyrics source preparation boundary', () => {
     expect(await f.owner.saveTimingDocument({}, old)).toBeNull();
     expect(window.Utawakui.saveLyricsTiming).not.toHaveBeenCalled();
   });
+  it('ignores a rejected source-session cancel when reloading', async () => {
+    const f = setup();
+    window.Utawakui.cancelLyricsSourceSession = vi.fn(() =>
+      Promise.reject(Error('closed')),
+    );
+    await f.owner.loadSelectedLyrics();
+    await f.owner.loadSelectedLyrics();
+    expect(window.Utawakui.cancelLyricsSourceSession).toHaveBeenCalledOnce();
+    expect(f.owner.sourceSession.value.id).toBe('a-2');
+  });
+  it('revokes timing review against the current source session', async () => {
+    const f = setup();
+    f.state.offsetSeconds = 0;
+    window.Utawakui.getLyricsTimingReview = vi.fn(async () => ({
+      status: 'confirmed',
+      token: 'review-token',
+    }));
+    window.Utawakui.revokeLyricsTimingReview = vi.fn(async () => ({
+      status: 'revoked',
+    }));
+    await f.owner.loadSelectedLyrics();
+    expect(await f.owner.timingReview.revoke()).toBe(true);
+    expect(window.Utawakui.revokeLyricsTimingReview).toHaveBeenCalledWith(
+      'a',
+      'zh.vtt',
+      f.owner.sourceSession.value,
+      'review-token',
+    );
+  });
   it('does not let old offset failure or success change a newer source queue', async () => {
     const f = setup();
     await f.owner.loadSelectedLyrics();

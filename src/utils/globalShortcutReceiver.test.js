@@ -8,7 +8,7 @@ const active = [
     chord: { key: 'k', ctrl: true, alt: false, shift: true },
   },
 ];
-function fixture() {
+function fixture({ defaults = false } = {}) {
   let stateListener,
     commandListener,
     blocked = false;
@@ -54,8 +54,9 @@ function fixture() {
   const receiver = createGlobalShortcutReceiver({
     bridge,
     commands,
-    isBlocked: () => blocked,
-    getRegistryRevision: () => 1,
+    ...(defaults
+      ? {}
+      : { isBlocked: () => blocked, getRegistryRevision: () => 1 }),
   });
   const envelope = (sequence = 1) => ({
     version: 1,
@@ -103,7 +104,35 @@ it('subscribes before install ACK, suppresses exact DOM repeats and executes one
     'player.next',
     expect.objectContaining({ scope: 'global' }),
   );
+  expect(f.commands.execute.mock.calls[0][1].isCurrent()).toBe(true);
   await f.receiver.dispose();
+});
+it('executes with the default block and registry guards', async () => {
+  const f = fixture({ defaults: true });
+  await f.receiver.ready;
+  await f.receiver.receive(f.envelope());
+  expect(f.commands.execute).toHaveBeenCalledOnce();
+  await f.receiver.dispose();
+});
+it('releases an offer that arrives after unmount even if release fails', async () => {
+  const f = fixture();
+  let reply;
+  f.bridge.connectKeyboardShortcutReceiver.mockImplementationOnce(
+    () =>
+      new Promise((r) => {
+        reply = r;
+      }),
+  );
+  f.bridge.releaseKeyboardShortcutReceiver.mockRejectedValue(Error('gone'));
+  await vi.waitFor(() => expect(reply).toBeTypeOf('function'));
+  await f.receiver.dispose();
+  reply({ status: 'offered', offer: f.offer });
+  await f.receiver.ready;
+  await vi.waitFor(() =>
+    expect(f.bridge.releaseKeyboardShortcutReceiver).toHaveBeenCalledWith({
+      receiverId: f.offer.receiverId,
+    }),
+  );
 });
 it('does not revive an old packet after a blocked context enters and exits during admission', async () => {
   const f = fixture();

@@ -1410,6 +1410,26 @@ describe('mix and transport controls', () => {
     expect(player.state.pendingStartTrackId).toBeNull();
   });
 
+  it('retries a playback failure through the real notice action', async () => {
+    const player = await loadPlayer();
+    MockAudioContext.failNextDefaultResume = true;
+    await player.playTrack({
+      id: 'track-retry',
+      title: 'Track Retry',
+      url: 'utawakui-media://track/track-retry/audio.wav',
+    });
+    expect(player.state.error).toBe('目前無法播放這首曲目，請再試一次。');
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    const notifications = useAppNotifications();
+    const notice = notifications.items.value.find(
+      (x) => x.key === 'player-playback',
+    );
+    expect(notice.actionLabel).toBe('重試');
+    await notifications.runAction(notice.id);
+    await vi.waitFor(() => expect(player.state.isPlaying).toBe(true));
+    expect(player.state.error).toBeNull();
+  });
+
   it('notifies ended listeners and supports explicit unsubscription', async () => {
     const player = await loadPlayer();
     const listener = vi.fn();

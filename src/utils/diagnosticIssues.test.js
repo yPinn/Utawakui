@@ -4,6 +4,7 @@ import {
   groupDiagnosticIssues,
   issueFingerprint,
   issueToMarkdown,
+  issuesToMarkdown,
   parseDiagnosticsBundle,
   sessionTrail,
 } from './diagnosticIssues.js';
@@ -87,6 +88,7 @@ describe('sessionTrail', () => {
     const events = [
       event({ id: 'later', timestamp: '2026-10-30T12:10:00.000Z' }),
       event({ id: 'target', timestamp: '2026-10-30T12:05:00.000Z' }),
+      event({ id: 'second', timestamp: '2026-10-30T12:03:00.000Z' }),
       event({ id: 'first', timestamp: '2026-10-30T12:01:00.000Z' }),
       event({
         id: 'other',
@@ -97,6 +99,7 @@ describe('sessionTrail', () => {
 
     expect(sessionTrail(events, events[1]).map((item) => item.id)).toEqual([
       'first',
+      'second',
     ]);
   });
 });
@@ -150,5 +153,20 @@ describe('issueToMarkdown', () => {
         '  - 附帶資訊：errno: ENOENT×2',
       ].join('\n'),
     );
+  });
+});
+
+describe('issuesToMarkdown', () => {
+  it('joins issues and lists the most frequent versions first', () => {
+    const issues = groupDiagnosticIssues([
+      event({ id: 'a', context: { appVersion: '0.5.1' } }),
+      event({ id: 'b', context: { appVersion: '0.5.2' } }),
+      event({ id: 'c', context: { appVersion: '0.5.2' } }),
+      event({ id: 'd', level: 'warn', code: 'OTHER', context: {} }),
+    ]);
+
+    const markdown = issuesToMarkdown(issues);
+    expect(markdown.match(/^- \[ \]/gm)).toHaveLength(2);
+    expect(markdown).toContain('  - 版本：0.5.2×2、0.5.1×1');
   });
 });
