@@ -286,7 +286,10 @@ describe('record and offline replay through production clients', () => {
         scheduler,
         now,
       }).getExact(query);
-      expect(wait).toHaveBeenCalledExactlyOnceWith(1000);
+      expect(wait).toHaveBeenCalledExactlyOnceWith(
+        1000,
+        expect.any(AbortSignal),
+      );
       return result;
     };
     expect(await run(recorder.fetch)).toMatchObject({ status: 'ok' });

@@ -375,10 +375,10 @@ export function createLrclibEvaluationProbe(options = {}) {
     } finally {
       clearTimeout(timeout);
     }
-    const result = acquisitionResult(
-      acquisition,
-      boundedDuration(now() - startedAt),
-    );
+    // Acquisition reports any caller abort as cancelled; only this deadline aborts it.
+    const result = controller.signal.aborted
+      ? requestFailure('timeout', boundedDuration(now() - startedAt))
+      : acquisitionResult(acquisition, boundedDuration(now() - startedAt));
     try {
       return toLrclibEvaluationObservation(
         result,

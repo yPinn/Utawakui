@@ -102,7 +102,7 @@ describe('NetEase evaluation runtime contract', () => {
     });
     expect(FIXED_LYRICS_PROVIDER_DESCRIPTORS.map(({ id }) => id)).toEqual([
       'lrclib',
-      'amll',
+      'kugou',
     ]);
 
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));

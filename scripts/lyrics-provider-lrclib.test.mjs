@@ -453,12 +453,12 @@ describe('LRCLIB evaluation probe', () => {
 });
 
 describe('fixed lyrics provider probe registry', () => {
-  it('returns a frozen LRCLIB/AMLL registry with no dynamic provider surface', () => {
+  it('returns a frozen LRCLIB/Kugou registry with no dynamic provider surface', () => {
     const lrclib = vi.fn();
-    const amll = vi.fn();
-    const registry = createLyricsProviderProbeRegistry({ lrclib, amll });
+    const kugou = vi.fn();
+    const registry = createLyricsProviderProbeRegistry({ lrclib, kugou });
 
-    expect(registry).toEqual({ lrclib, amll });
+    expect(registry).toEqual({ lrclib, kugou });
     expect(Object.isFrozen(registry)).toBe(true);
     expect(FIXED_LYRICS_PROVIDER_DESCRIPTORS.map(({ id }) => id)).toEqual(
       Object.keys(registry),
@@ -470,7 +470,7 @@ describe('fixed lyrics provider probe registry', () => {
     const privateCorpus = JSON.parse(
       fs.readFileSync(
         new URL(
-          './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+          './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
           import.meta.url,
         ),
         'utf8',
@@ -485,8 +485,8 @@ describe('fixed lyrics provider probe registry', () => {
         invalidRecordCount: 0,
       }),
     });
-    const amll = async () => ({
-      providerId: 'amll',
+    const kugou = async () => ({
+      providerId: 'kugou',
       request: { status: 'ok', durationMs: 10, failureCode: null },
       catalogStatus: 'miss',
       matchBand: null,
@@ -497,7 +497,7 @@ describe('fixed lyrics provider probe registry', () => {
 
     const result = await runPrivateLyricsCorpus(privateCorpus, {
       requiredCaseCount: 2,
-      probes: createLyricsProviderProbeRegistry({ lrclib, amll }),
+      probes: createLyricsProviderProbeRegistry({ lrclib, kugou }),
     });
 
     expect(result.report.providers.lrclib.summary).toMatchObject({
@@ -511,8 +511,8 @@ describe('fixed lyrics provider probe registry', () => {
     null,
     {},
     { lrclib: vi.fn() },
-    { lrclib: vi.fn(), amll: vi.fn(), dynamic: vi.fn() },
-    { lrclib: null, amll: vi.fn() },
+    { lrclib: vi.fn(), kugou: vi.fn(), dynamic: vi.fn() },
+    { lrclib: null, kugou: vi.fn() },
   ])('rejects invalid or dynamic registry input %#', (value) => {
     expect(() => createLyricsProviderProbeRegistry(value)).toThrow(
       /fixed lyrics provider probe registry/i,

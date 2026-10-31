@@ -478,7 +478,7 @@ describe('NetEase isolated evaluation probe', () => {
     });
     expect(FIXED_LYRICS_PROVIDER_DESCRIPTORS.map(({ id }) => id)).toEqual([
       'lrclib',
-      'amll',
+      'kugou',
     ]);
   });
 

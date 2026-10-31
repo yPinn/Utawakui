@@ -11,7 +11,7 @@ renderer behavior.
 
 The executable validator and runner are
 `scripts/lyrics-provider-corpus-runner.mjs`. The committed synthetic fixture is
-`scripts/fixtures/lyrics-provider-corpus/synthetic-two-case.json`.
+`scripts/fixtures/lyrics-provider-corpus/synthetic-active-two-case.json`.
 
 ## Private Input
 
