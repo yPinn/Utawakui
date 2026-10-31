@@ -22,6 +22,14 @@ const LYRICS_PROVIDER_POLICIES = Object.freeze({
     automaticSave: false,
     automaticMatchBand: null,
   }),
+  kugou: Object.freeze({
+    id: 'kugou',
+    manualSearch: true,
+    fallbackOnly: true,
+    automaticDiscovery: false,
+    automaticSave: false,
+    automaticMatchBand: null,
+  }),
 });
 
 const MANUAL_LYRICS_PROVIDER_IDS = Object.freeze(

@@ -2,6 +2,7 @@ import fs from 'fs';
 import { compile } from '@vue/compiler-dom';
 import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
+import { renderToString } from '@vue/server-renderer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
@@ -183,6 +184,130 @@ afterEach(() => {
 });
 
 describe('LyricsLrclibSearchWorkspace behavior', () => {
+  it('offers more search after useful matches and keeps the visible choice while loading', async () => {
+    vi.stubGlobal('Document', class Document {});
+    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+    const candidates = [1, 2].map((id) => ({
+      id,
+      providerId: 'lrclib',
+      candidateKey: `lrclib:${id}`,
+      trackName: `Choice ${id}`,
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T1', partial: false },
+      compatibility: { t0: true, t1: true },
+      previewLines: [{ start: 1, text: `Preview ${id}` }],
+    }));
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: 'ok',
+        error: null,
+        candidates,
+        groups: { best: candidates, related: [] },
+        providerStatuses: [],
+      },
+      manualSave: { error: null },
+    });
+    let finishMore;
+    const clear = vi.fn();
+    const search = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 'ok', candidates })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishMore = resolve;
+          }),
+      );
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
+        clearCandidateSearch: clear,
+        searchLyricsProviderCandidates: search,
+        saveLyricsProviderCandidate: vi.fn(),
+      }),
+    }));
+    const { app, root } = mount(await loadWorkspaceComponent(), {
+      providerId: 'all',
+    });
+    await vi.waitFor(() => expect(nodeText(root)).toContain('Preview 1'));
+    findByProp(root, 'aria-label', '展開 Choice 2，Artist').props.onClick();
+    await nextTick();
+    const more = findButtonByText(root, '擴大搜尋');
+    expect(more.props.disabled).toBe(false);
+    more.props.onClick();
+    await nextTick();
+    expect(nodeText(root)).toContain('Preview 2');
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(
+      findByProp(root, 'aria-label', '儲存 Choice 2，Artist').props.disabled,
+    ).toBe(true);
+    finishMore({ status: 'ok', candidates });
+    await vi.waitFor(() =>
+      expect(
+        findByProp(root, 'aria-label', '收合 Choice 2，Artist'),
+      ).toBeDefined(),
+    );
+    app.unmount();
+  });
+  it('renders retained-result warnings and a committed-save refresh error through the compiled template', async () => {
+    const candidate = {
+      id: 42,
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:42',
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      previewLines: [],
+      capability: { level: 'T1', partial: false },
+    };
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: 'ok',
+        error: null,
+        candidates: [candidate],
+        groups: { best: [candidate], related: [] },
+        providerStatuses: [
+          {
+            provider: 'lrclib',
+            status: 'ok',
+            partial: true,
+            reason: 'rate-limited',
+          },
+        ],
+        partial: true,
+        invalidRecordCount: 0,
+      },
+      manualSave: {
+        error: '歌詞已儲存，但清單更新未完成。請重新開啟歌詞清單。',
+      },
+    });
+    const search = vi.fn();
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsProviderCandidates: search,
+        saveLyricsProviderCandidate: vi.fn(),
+      }),
+    }));
+    const Workspace = (await import('./LyricsLrclibSearchWorkspace.vue'))
+      .default;
+    const html = await renderToString(
+      Vue.createSSRApp(Workspace, { providerId: 'all' }),
+    );
+    expect(html).toContain('歌詞操作未完成');
+    expect(html).toContain('歌詞已儲存，但清單更新未完成');
+    expect(html).not.toContain('歌詞未儲存');
+    expect(html).toContain('部分線上結果未載入');
+    expect(html).toContain('LRCLIB 暫時限制請求');
+    expect(html).not.toContain('httpStatus');
+    expect(search).not.toHaveBeenCalled();
+  });
   it('shows three recording groups, discloses the remaining matches, and resets on search', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});
@@ -623,82 +748,110 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).toContain('Better Lyrics 回應逾時');
     expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
+    state.candidateSearch.providerStatuses.push({
+      provider: 'kugou',
+      status: 'ok',
+    });
+    await nextTick();
+    expect(nodeText(root)).toContain('酷狗備援未取得符合條件的歌詞');
+    expect(nodeText(root)).toContain('原文曲名或已知別名');
 
     app.unmount();
   });
 
-  it('merges partial-source and invalid-record details without promising unusable results can be saved', async () => {
-    vi.stubGlobal('Document', class Document {});
-    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
-    const candidate = {
-      id: 42,
-      providerId: 'netease',
-      candidateKey: 'netease:42',
-      trackName: 'Song',
-      artistName: 'Artist',
-      matchBand: 'exact',
-      capability: { level: 'unsupported', partial: false },
-      compatibility: { t0: false, t1: false, t2: false },
-      previewLines: [],
-      warnings: ['invalid-lyricsfile'],
-      saveState: 'unsaved',
-      alreadySaved: false,
-    };
-    const state = reactive({
-      candidateSearch: {
-        isLoading: false,
-        status: null,
-        error: null,
-        candidates: [],
-        groups: { best: [], related: [] },
-        recordingGroups: { best: [], related: [] },
-        providerStatuses: [],
-        partial: false,
-        invalidRecordCount: 0,
-      },
-      manualSave: { error: null },
-    });
-    const searchLyricsProviderCandidates = vi.fn(async () => {
-      state.candidateSearch.status = 'ok';
-      state.candidateSearch.candidates = [candidate];
-      state.candidateSearch.groups.best = [candidate];
-      state.candidateSearch.partial = true;
-      state.candidateSearch.invalidRecordCount = 1;
-      state.candidateSearch.providerStatuses = [
-        { provider: 'netease', status: 'ok' },
-        { provider: 'lrclib', status: 'error', reason: 'offline' },
-      ];
-      return { status: 'ok', candidates: [candidate] };
-    });
-    vi.doMock('../../composables/useLyrics.js', () => ({
-      useLyrics: () => ({
-        state,
-        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
-        clearCandidateSearch: vi.fn(),
-        searchLyricsProviderCandidates,
-        saveLyricsProviderCandidate: vi.fn(),
-      }),
-    }));
+  it.each([
+    ['error', false, 'offline', 'LRCLIB 無法連線'],
+    ['ok', true, 'service-unavailable', 'LRCLIB 服務暫時無法使用'],
+    ['error', false, 'invalid-ttml', 'Better Lyrics 的歌詞格式無法解析'],
+    ['ok', true, 'request-budget-exhausted', 'LRCLIB 已達本次查詢上限'],
+  ])(
+    'merges %s source failures (%s, %s) with invalid-record details',
+    async (status, partial, reason, message) => {
+      vi.stubGlobal('Document', class Document {});
+      vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+      const candidate = {
+        id: 42,
+        providerId: 'netease',
+        candidateKey: 'netease:42',
+        trackName: 'Song',
+        artistName: 'Artist',
+        matchBand: 'exact',
+        capability: { level: 'unsupported', partial: false },
+        compatibility: { t0: false, t1: false, t2: false },
+        previewLines: [],
+        warnings: ['invalid-lyricsfile'],
+        saveState: 'unsaved',
+        alreadySaved: false,
+      };
+      const state = reactive({
+        candidateSearch: {
+          isLoading: false,
+          status: null,
+          error: null,
+          candidates: [],
+          groups: { best: [], related: [] },
+          recordingGroups: { best: [], related: [] },
+          providerStatuses: [],
+          partial: false,
+          invalidRecordCount: 0,
+        },
+        manualSave: { error: null },
+      });
+      const searchLyricsProviderCandidates = vi.fn(async () => {
+        state.candidateSearch.status = 'ok';
+        state.candidateSearch.candidates = [candidate];
+        state.candidateSearch.groups.best = [candidate];
+        state.candidateSearch.partial = true;
+        state.candidateSearch.invalidRecordCount = 1;
+        state.candidateSearch.providerStatuses = [
+          { provider: 'netease', status: 'ok' },
+          {
+            provider: reason === 'invalid-ttml' ? 'betterlyrics' : 'lrclib',
+            status,
+            partial,
+            reason,
+          },
+        ];
+        return { status: 'ok', candidates: [candidate] };
+      });
+      vi.doMock('../../composables/useLyrics.js', () => ({
+        useLyrics: () => ({
+          state,
+          selectedTrack: ref({
+            id: 'track-a',
+            title: 'Song',
+            artist: 'Artist',
+          }),
+          clearCandidateSearch: vi.fn(),
+          searchLyricsProviderCandidates,
+          saveLyricsProviderCandidate: vi.fn(),
+        }),
+      }));
 
-    const Workspace = await loadWorkspaceComponent();
-    const { app, root } = mount(Workspace, {
-      providerId: 'all',
-      providerLabel: '所有線上來源',
-    });
-    await vi.waitFor(() =>
-      expect(nodeText(root)).toContain('部分線上結果未載入'),
-    );
+      const Workspace = await loadWorkspaceComponent();
+      const { app, root } = mount(Workspace, {
+        providerId: 'all',
+        providerLabel: '所有線上來源',
+      });
+      await vi.waitFor(() =>
+        expect(nodeText(root)).toContain('部分線上結果未載入'),
+      );
 
-    expect(nodeText(root)).toContain('LRCLIB 無法連線');
-    expect(nodeText(root)).toContain('另有 1 筆結果缺少必要資料');
-    expect(nodeText(root)).toContain('已載入的結果仍可檢視與儲存');
-    expect(findByProp(root, 'aria-label', '儲存 Song，Artist')).toBeUndefined();
-    expect(nodeText(root).match(/部分線上結果未載入/g)).toHaveLength(1);
-    expect(nodeText(root)).not.toContain('部分候選未顯示');
-    expect(nodeText(root)).not.toContain('部分來源未完成');
-    expect(nodeText(root)).not.toContain('歌詞搜尋未完成');
-    app.unmount();
-  });
+      expect(nodeText(root)).toContain(message);
+      if (reason === 'request-budget-exhausted')
+        expect(findButtonByText(root, '擴大搜尋').props.disabled).toBe(false);
+      expect(nodeText(root)).toContain('另有 1 筆結果無法使用');
+      expect(nodeText(root)).toContain('已載入的結果仍可檢視與儲存');
+      expect(
+        findByProp(root, 'aria-label', '儲存 Song，Artist'),
+      ).toBeUndefined();
+      expect(nodeText(root).match(/部分線上結果未載入/g)).toHaveLength(1);
+      expect(nodeText(root)).not.toContain('部分候選未顯示');
+      expect(nodeText(root)).not.toContain('部分來源未完成');
+      expect(nodeText(root)).not.toContain('歌詞搜尋未完成');
+      app.unmount();
+    },
+  );
 
   it('shows only the global error when every provider fails', async () => {
     vi.stubGlobal('Document', class Document {});

@@ -34,30 +34,6 @@ function lrclibRecord(title, artist, album, id) {
   };
 }
 
-function amllItem(title, artist, album, id, includeLyrics = false) {
-  return {
-    id,
-    filename: `synthetic-${id}.ttml`,
-    musicNames: [title],
-    artistNames: [artist],
-    albumNames: album ? [album] : [],
-    ncmMusicIds: [],
-    qqMusicIds: [],
-    appleMusicIds: [],
-    spotifyIds: [],
-    isrcs: [],
-    authorIds: ['42'],
-    authorUsernames: ['synthetic-author'],
-    format: 'ttml',
-    ...(includeLyrics
-      ? {
-          lyrics:
-            '<?xml version="1.0"?><tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://itunes.apple.com/lyric-ttml-extensions" itunes:timing="Word"><body dur="10s"><p begin="1s" end="3s"><span begin="1s" end="3s">PRIVATE AMLL TEXT</span></p></body></tt>',
-        }
-      : {}),
-  };
-}
-
 function fixedProviderFetch() {
   return vi.fn(async (requestUrl) => {
     const url = new URL(requestUrl);
@@ -77,34 +53,48 @@ function fixedProviderFetch() {
         JSON.stringify(url.pathname === '/api/get' ? record : [record]),
       );
     }
-    if (url.origin === 'https://api.amll.dev') {
-      const isSearch = url.pathname.endsWith('/search');
-      const title = isSearch
-        ? url.searchParams.get('musicName')
-        : url.searchParams.get('id') === '201'
-          ? 'Synthetic Private Title One'
-          : '合成私有標題二';
-      const first = title.includes('One');
-      const item = amllItem(
-        title,
-        first ? 'Synthetic Private Artist' : '合成私有歌手',
-        first ? 'Synthetic Private Album' : null,
-        first ? 201 : 202,
-        !isSearch,
+    if (url.origin === 'https://mobileservice.kugou.com') {
+      const first = url.searchParams.get('keyword').includes('One');
+      return new Response(
+        JSON.stringify({
+          data: {
+            info: [
+              {
+                hash: (first ? 'a' : 'b').repeat(32),
+                songname: first
+                  ? 'Synthetic Private Title One'
+                  : '合成私有標題二',
+                singername: first ? 'Synthetic Private Artist' : '合成私有歌手',
+                duration: first ? 180 : 220,
+              },
+            ],
+          },
+        }),
       );
-      const data = isSearch
-        ? {
-            items: [item],
-            pagination: {
-              page: 1,
-              pageSize: 10,
-              total: 1,
-              totalPages: 1,
-              hasMore: false,
+    }
+    if (url.origin === 'https://krcs.kugou.com') {
+      const first = url.searchParams.get('hash').startsWith('a');
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              id: first ? '201' : '202',
+              accesskey: 'private-access',
+              duration: first ? 180000 : 220000,
+              lrcid: 0,
             },
-          }
-        : item;
-      return new Response(JSON.stringify({ status: 200, data }));
+          ],
+        }),
+      );
+    }
+    if (url.origin === 'https://lyrics.kugou.com') {
+      return new Response(
+        JSON.stringify({
+          content: Buffer.from(
+            '[00:01]PRIVATE Kugou TEXT\n[00:03]Second synthetic line',
+          ).toString('base64'),
+        }),
+      );
     }
     throw new Error('unexpected provider origin');
   });
@@ -153,9 +143,9 @@ describe('fixed lyrics provider corpus CLI arguments', () => {
 });
 
 describe('fixed lyrics provider corpus CLI', () => {
-  it('constructs only the frozen LRCLIB/AMLL registry', () => {
+  it('constructs only the frozen LRCLIB/Kugou registry', () => {
     const registry = createDefaultLyricsProviderProbeRegistry();
-    expect(Object.keys(registry)).toEqual(['lrclib', 'amll']);
+    expect(Object.keys(registry)).toEqual(['lrclib', 'kugou']);
     expect(Object.isFrozen(registry)).toBe(true);
   });
 
@@ -166,7 +156,7 @@ describe('fixed lyrics provider corpus CLI', () => {
     const outputPath = path.join(directory, 'report.json');
     fs.copyFileSync(
       new URL(
-        './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+        './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
         import.meta.url,
       ),
       inputPath,
@@ -187,7 +177,7 @@ describe('fixed lyrics provider corpus CLI', () => {
     expect(serialized).not.toContain('Synthetic Private Title');
     expect(serialized).not.toContain('合成私有標題');
     expect(serialized).not.toContain('PRIVATE LRCLIB TEXT');
-    expect(serialized).not.toContain('PRIVATE AMLL TEXT');
+    expect(serialized).not.toContain('PRIVATE Kugou TEXT');
     expect(serialized).not.toContain('synthetic-201.ttml');
 
     await expect(
@@ -202,7 +192,7 @@ describe('fixed lyrics provider corpus CLI', () => {
     const regular = JSON.parse(
       fs.readFileSync(
         new URL(
-          './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+          './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
           import.meta.url,
         ),
         'utf8',
@@ -228,7 +218,7 @@ describe('fixed lyrics provider corpus CLI', () => {
     const outputPath = path.join(directory, 'hard-linked-report.json');
     fs.copyFileSync(
       new URL(
-        './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+        './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
         import.meta.url,
       ),
       inputPath,
@@ -293,7 +283,7 @@ describe('fixed lyrics provider corpus CLI', () => {
     const outputPath = path.join(directory, 'report.json');
     fs.copyFileSync(
       new URL(
-        './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+        './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
         import.meta.url,
       ),
       inputPath,
@@ -317,7 +307,7 @@ describe('fixed lyrics provider corpus CLI', () => {
     const outputPath = path.join(directory, 'report.json');
     fs.copyFileSync(
       new URL(
-        './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+        './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
         import.meta.url,
       ),
       inputPath,

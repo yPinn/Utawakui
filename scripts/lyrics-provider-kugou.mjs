@@ -1,11 +1,22 @@
 import { inflateSync } from 'node:zlib';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import OpenCCSimplified from 'opencc-js/t2cn';
 import OpenCCTraditional from 'opencc-js/cn2t';
 import { normalizeProbeOutcome } from './lyrics-provider-evaluation.mjs';
+import {
+  buildKugouLineQueryPlan,
+  evaluateKugouLineIdentity,
+  evaluateKugouLineLyricsIdentity,
+} from './lyrics-provider-kugou-query.mjs';
 
 const require = createRequire(import.meta.url);
 const { readBoundedText } = require('../electron/lib/lrclib/client.js');
+const { classifyKugouLrc } = require('../electron/lib/kugou/lrc.js');
+const { parseLrcLines } = require('../electron/lib/lrclib/lrc.js');
+const {
+  createProviderRequestGuard,
+} = require('../electron/lib/providerServiceCooldown.js');
 const {
   durationDelta,
   textMatchScore,
@@ -50,7 +61,7 @@ const VERSIONS = new Set([
 const toSimplified = OpenCCSimplified.Converter({ from: 'tw', to: 'cn' });
 const toTraditional = OpenCCTraditional.Converter({ from: 'cn', to: 'tw' });
 const sharedKugouRequestScheduler = createLrclibRequestScheduler({
-  intervalMs: 500,
+  intervalMs: 1000,
 });
 
 function isPlainObject(value) {
@@ -230,36 +241,46 @@ function responseFailure(response) {
 }
 
 function createRequest(fetchFn, timeoutMs, scheduler) {
-  return async function request(url) {
+  const guardedFetch = createProviderRequestGuard(fetchFn).fetch;
+  return async function request(url, options = {}) {
     if (typeof fetchFn !== 'function') {
       return { status: 'error', reason: 'fetch-unavailable' };
     }
     if (!ALLOWED_ORIGINS.has(url.origin) || url.protocol !== 'https:') {
       return { status: 'error', reason: 'invalid-request' };
     }
-    const signal = AbortSignal.timeout(timeoutMs);
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
+    const signal = options.signal
+      ? AbortSignal.any([timeoutSignal, options.signal])
+      : timeoutSignal;
     let response;
     try {
       response = await scheduler.schedule(
         () =>
-          fetchFn(url, {
-            method: 'GET',
-            redirect: 'error',
-            headers: {
-              Accept: 'application/json',
-              'User-Agent': 'UtawakuiLyricsEvaluation/0.1',
+          guardedFetch(
+            url,
+            {
+              method: 'GET',
+              redirect: 'error',
+              headers: {
+                Accept: 'application/json',
+                'User-Agent': 'UtawakuiLyricsEvaluation/0.1',
+              },
+              signal,
             },
-            signal,
-          }),
+            options.beforeRequest,
+          ),
         { signal },
       );
     } catch (error) {
       return {
         status: 'error',
         reason:
-          error?.name === 'TimeoutError' || error?.name === 'AbortError'
-            ? 'timeout'
-            : 'offline',
+          error?.reason === 'request-budget-exhausted'
+            ? error.reason
+            : error?.name === 'TimeoutError' || error?.name === 'AbortError'
+              ? 'timeout'
+              : 'offline',
       };
     }
     if (!response.ok) {
@@ -455,7 +476,7 @@ function candidatesFrom(value) {
   return value.candidates.map(normalizeLyricCandidate).filter(Boolean);
 }
 
-export function createKugouEvaluationProbe(options = {}) {
+function evaluationContext(options) {
   if (
     !isPlainObject(options) ||
     Object.keys(options).some(
@@ -482,6 +503,11 @@ export function createKugouEvaluationProbe(options = {}) {
     throw new TypeError('invalid Kugou evaluation probe options');
   }
   const request = createRequest(fetchFn, timeoutMs, scheduler);
+  return { request, now };
+}
+
+export function createKugouEvaluationProbe(options = {}) {
+  const { request, now } = evaluationContext(options);
 
   return async function probe(input) {
     const validInput =
@@ -580,8 +606,260 @@ export function createKugouEvaluationProbe(options = {}) {
   };
 }
 
+export { classifyKugouLrc } from '../electron/lib/kugou/lrc.js';
+
+// Research-only: metadata identity is mandatory, and no keyword-only fallback
+// may manufacture recording evidence. Nothing here registers a product provider.
+export function createKugouLineEvaluationProbe(options = {}) {
+  if (!isPlainObject(options))
+    throw new TypeError('invalid Kugou line options');
+  const { onEvidence, ...contextOptions } = options;
+  if (onEvidence !== undefined && typeof onEvidence !== 'function')
+    throw new TypeError('invalid Kugou evidence callback');
+  const { request, now } = evaluationContext(contextOptions);
+  return async function probe(input) {
+    if (
+      !isPlainObject(input) ||
+      input.providerId !== 'kugou' ||
+      !validReference(input.reference)
+    )
+      return failureObservation('invalid-request', 0);
+    const startedAt = now();
+    const elapsed = () => boundedDuration(now() - startedAt);
+    try {
+      let plan;
+      try {
+        plan = buildKugouLineQueryPlan(input);
+      } catch {
+        return failureObservation('invalid-request', elapsed());
+      }
+      const query = input.query ?? plan[0];
+      if (
+        !isPlainObject(query) ||
+        !validText(query.title) ||
+        !validText(query.artist) ||
+        Object.keys(query).some(
+          (key) => !['title', 'artist', 'reason'].includes(key),
+        ) ||
+        (input.budget !== undefined &&
+          (typeof input.budget?.consume !== 'function' || !input.budget.signal))
+      )
+        return failureObservation('invalid-request', elapsed());
+      const requestOptions = input.budget
+        ? {
+            signal: input.budget.signal,
+            beforeRequest: () => input.budget.consume(),
+          }
+        : {};
+      const searchUrl = new URL('/api/v3/search/song', MOBILE_ORIGIN);
+      searchUrl.searchParams.set('keyword', `${query.artist} ${query.title}`);
+      searchUrl.searchParams.set('page', '1');
+      searchUrl.searchParams.set('pagesize', String(MAX_RECORDS));
+      const catalog = await request(searchUrl, requestOptions);
+      if (catalog.status !== 'ok')
+        return failureObservation(catalog.reason, elapsed());
+      const songs = catalog.value?.data?.info;
+      if (!Array.isArray(songs) || songs.length > MAX_RECORDS)
+        return failureObservation('invalid-record', elapsed());
+      const selected = songs
+        .map(normalizeSong)
+        .filter(Boolean)
+        .map((song) => ({
+          song,
+          evidence: evaluateKugouLineIdentity(input, song),
+        }))
+        .filter(({ evidence }) => evidence.accepted)
+        .sort((a, b) => a.evidence.durationDelta - b.evidence.durationDelta)
+        .map(({ song, evidence }) => ({
+          song,
+          matchBand: evidence.matchBand,
+          delta: evidence.durationDelta,
+        }))[0];
+      if (!selected) return missObservation(elapsed());
+      const lyricUrl = new URL('/search', KRCS_ORIGIN);
+      for (const [key, value] of Object.entries({
+        ver: '1',
+        man: 'yes',
+        client: 'pc',
+        hash: selected.song.hash,
+        album_audio_id: '0',
+      }))
+        lyricUrl.searchParams.set(key, value);
+      const lyrics = await request(lyricUrl, requestOptions);
+      if (lyrics.status !== 'ok')
+        return failureObservation(lyrics.reason, elapsed());
+      const candidates = candidatesFrom(lyrics.value);
+      if (candidates === null)
+        return failureObservation('invalid-record', elapsed());
+      const matching = candidates.filter(
+        (candidate) =>
+          Math.abs(candidate.duration / 1000 - selected.song.durationSeconds) <=
+          4,
+      );
+      if (!matching.length) return missObservation(elapsed());
+      const candidate = selectLyricCandidate(
+        matching,
+        selected.song.durationSeconds,
+      );
+      const downloadUrl = new URL('/download', LYRICS_ORIGIN);
+      for (const [key, value] of Object.entries({
+        ver: '1',
+        client: 'pc',
+        id: candidate.id,
+        accesskey: candidate.accesskey,
+        fmt: 'lrc',
+        lrcid: String(candidate.lrcid),
+      }))
+        downloadUrl.searchParams.set(key, value);
+      const downloaded = await request(downloadUrl, requestOptions);
+      if (downloaded.status !== 'ok')
+        return failureObservation(downloaded.reason, elapsed());
+      const content = downloaded.value?.content;
+      if (
+        typeof content !== 'string' ||
+        content.length > MAX_RESPONSE_BYTES ||
+        !BASE64_RE.test(content)
+      )
+        return failureObservation('invalid-record', elapsed());
+      const bytes = Buffer.from(content, 'base64');
+      if (bytes.length > MAX_KRC_BYTES)
+        return failureObservation('response-too-large', elapsed());
+      let text;
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      } catch {
+        return failureObservation('invalid-record', elapsed());
+      }
+      const assessment = classifyKugouLrc(text, selected.song.durationSeconds);
+      if (assessment.status !== 'ok')
+        return failureObservation(assessment.reason, elapsed());
+      const { tags } = assessment;
+      if (!evaluateKugouLineLyricsIdentity(input, tags, selected.song))
+        return failureObservation('invalid-record', elapsed());
+      const lines = parseLrcLines(text);
+      onEvidence?.({
+        trackName: selected.song.title,
+        artistName: selected.song.artist,
+        duration: selected.song.durationSeconds,
+        durationDelta: selected.delta,
+        lineCount: assessment.lineCount,
+        lineTimingValidation: 'valid',
+        offsetMs: assessment.offsetMs,
+        lyricTitle: tags.ti || null,
+        lyricArtist: tags.ar || null,
+        firstStart: lines[0].start,
+        lastStart: lines.at(-1).start,
+        textSha256: createHash('sha256').update(text).digest('hex'),
+        previewLines: [
+          ...lines.slice(0, 3),
+          ...lines.slice(
+            Math.floor(lines.length / 2),
+            Math.floor(lines.length / 2) + 2,
+          ),
+        ].map(({ start, text }) => ({ start, text: text.slice(0, 160) })),
+      });
+      return normalizeProbeOutcome({
+        providerId: 'kugou',
+        request: { status: 'ok', durationMs: elapsed(), failureCode: null },
+        catalogStatus: 'match',
+        matchBand: selected.matchBand,
+        reviewVerdict: 'unreviewed',
+        capability: 'T1',
+        timingValidation: 'not-applicable',
+      });
+    } catch {
+      return failureObservation('probe-error', elapsed());
+    }
+  };
+}
+
+export function createKugouLineVariantEvaluationProbe(options = {}) {
+  if (!isPlainObject(options))
+    throw new TypeError('invalid Kugou variant options');
+  const { maxAttempts = 5, deadlineMs = 25000, ...probeOptions } = options;
+  if (
+    !Number.isSafeInteger(maxAttempts) ||
+    maxAttempts < 1 ||
+    maxAttempts > 8 ||
+    !Number.isSafeInteger(deadlineMs) ||
+    deadlineMs < 1 ||
+    deadlineMs > 60000
+  )
+    throw new TypeError('invalid Kugou variant budget');
+  const probe = createKugouLineEvaluationProbe(probeOptions);
+  return async (input) => {
+    const phases = [];
+    let attempts = 0;
+    const controller = new AbortController();
+    const timer = setTimeout(
+      () =>
+        controller.abort(
+          new DOMException('Kugou evaluation deadline', 'TimeoutError'),
+        ),
+      deadlineMs,
+    );
+    timer.unref?.();
+    const budget = {
+      signal: controller.signal,
+      consume() {
+        controller.signal.throwIfAborted();
+        if (attempts >= maxAttempts) {
+          const error = new Error('Kugou request budget');
+          error.reason = 'request-budget-exhausted';
+          throw error;
+        }
+        attempts += 1;
+      },
+    };
+    const finish = () => {
+      const baseline =
+        phases[0]?.observation || failureObservation('invalid-request', 0);
+      const result = phases.at(-1)?.observation || baseline;
+      return {
+        baseline,
+        result,
+        autoRescued:
+          phases.length > 1 &&
+          baseline.catalogStatus === 'miss' &&
+          result.catalogStatus === 'match',
+        httpAttempts: attempts,
+        queryCount: phases.length,
+        phases,
+      };
+    };
+    try {
+      let queries;
+      try {
+        queries = buildKugouLineQueryPlan(input);
+      } catch {
+        return finish();
+      }
+      for (const { reason, ...query } of queries) {
+        const observation = await probe({ ...input, query, budget });
+        phases.push({ reason, observation });
+        if (
+          observation.request.status === 'failed' ||
+          observation.catalogStatus === 'match'
+        )
+          break;
+      }
+      return finish();
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
+
 export const KUGOU_EVALUATION_PROFILE = Object.freeze({
   profileId: 'kugou-direct-krc-evaluation-v1',
+  mode: 'isolated-research',
+  accessMode: 'none',
+  tokenRefresh: 'not-required',
+  boundedPayload: true,
+});
+
+export const KUGOU_LINE_EVALUATION_PROFILE = Object.freeze({
+  profileId: 'kugou-direct-lrc-evaluation-v1',
   mode: 'isolated-research',
   accessMode: 'none',
   tokenRefresh: 'not-required',

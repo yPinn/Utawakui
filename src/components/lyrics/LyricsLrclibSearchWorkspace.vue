@@ -8,6 +8,7 @@ import {
   watch,
 } from 'vue';
 import { Search } from '../../icons/index.js';
+import { t } from '../../utils/i18n.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import { buildLyricsIssueReport } from '../../utils/lyricsIssueReport.js';
@@ -130,11 +131,12 @@ const canBroaden = computed(
   () =>
     hasSearched.value &&
     !isSearchPending.value &&
-    activeMode.value === 'structured' &&
+    (activeMode.value === 'structured' ||
+      (state.candidateSearch.providerStatuses || []).some(
+        (status) => status.status === 'error' || status.partial === true,
+      )) &&
     state.candidateSearch.status === 'ok' &&
     !state.candidateSearch.error &&
-    providerFailureMessages.value.length === 0 &&
-    state.candidateSearch.groups.best.length === 0 &&
     !draftDiffersFromResults.value,
 );
 const draftDiffersFromResults = computed(() => {
@@ -146,19 +148,39 @@ const draftDiffersFromResults = computed(() => {
 });
 const providerFailureMessages = computed(() =>
   (state.candidateSearch.providerStatuses || [])
-    .filter((providerStatus) => providerStatus.status === 'error')
+    .filter(
+      (providerStatus) =>
+        providerStatus.status === 'error' || providerStatus.partial === true,
+    )
     .map(providerFailureMessage),
 );
+const fallbackCompletedWithoutResults = computed(
+  () =>
+    !hasResults.value &&
+    (state.candidateSearch.providerStatuses || []).some(
+      (status) =>
+        status.provider === 'kugou' &&
+        status.status === 'ok' &&
+        status.partial !== true,
+    ),
+);
+const noResultsFailureMessage = computed(() =>
+  t(
+    `lyricsAcquisition.${fallbackCompletedWithoutResults.value ? 'providersFailedAfterFallback' : 'providersFailedWithoutResults'}`,
+    { failures: providerFailureMessages.value.join('；') },
+  ),
+);
 const partialResultsMessage = computed(() => {
-  const details = [...providerFailureMessages.value];
+  const failures = providerFailureMessages.value.join('；');
   const invalidCount = state.candidateSearch.invalidRecordCount || 0;
-  if (invalidCount > 0) {
-    details.push(
-      `${providerFailureMessages.value.length ? '另有 ' : ''}${invalidCount} 筆結果缺少必要資料`,
-    );
-  }
-  return details.length
-    ? `${details.join('；')}。已載入的結果仍可檢視與儲存。`
+  if (failures && invalidCount > 0)
+    return t('lyricsAcquisition.partialFailuresAndInvalid', {
+      failures,
+      count: invalidCount,
+    });
+  if (failures) return t('lyricsAcquisition.partialFailures', { failures });
+  return invalidCount > 0
+    ? t('lyricsAcquisition.partialInvalid', { count: invalidCount })
     : '';
 });
 const showPartialResultsWarning = computed(
@@ -189,6 +211,7 @@ const resultAnnouncement = computed(() => {
 });
 
 function providerNameFor(providerId) {
+  if (providerId === 'kugou') return t('lyricsAcquisition.kugou');
   if (providerId === 'betterlyrics') return 'Better Lyrics';
   if (providerId === 'netease') return '網易雲音樂';
   if (providerId === 'lrclib') return 'LRCLIB';
@@ -196,16 +219,20 @@ function providerNameFor(providerId) {
 }
 
 function providerFailureMessage(providerStatus) {
-  const providerName = providerNameFor(providerStatus.provider);
-  if (providerStatus.reason === 'timeout') return `${providerName} 回應逾時`;
-  if (providerStatus.reason === 'offline') return `${providerName} 無法連線`;
-  if (providerStatus.reason === 'rate-limited') {
-    return `${providerName} 暫時限制請求`;
-  }
-  if (providerStatus.reason === 'service-unavailable') {
-    return `${providerName} 服務暫時無法使用`;
-  }
-  return `${providerName} 搜尋失敗`;
+  const messages = {
+    'request-budget-exhausted': 'providerBudgetReached',
+    timeout: 'providerTimeout',
+    offline: 'providerOffline',
+    'rate-limited': 'providerRateLimited',
+    'service-unavailable': 'providerUnavailable',
+    'invalid-ttml': 'providerInvalidTtml',
+    'invalid-json': 'providerInvalidData',
+    'invalid-record': 'providerInvalidData',
+  };
+  return t(
+    `lyricsAcquisition.${messages[providerStatus.reason] || 'providerSearchFailed'}`,
+    { provider: providerNameFor(providerStatus.provider) },
+  );
 }
 
 function candidateKey(candidate) {
@@ -237,12 +264,17 @@ async function handleSearch(mode = 'structured') {
   if (!query.title) return;
 
   submissionPending.value = true;
-  remainingBestOpen.value = false;
-  clearCandidateSearch();
+  const append =
+    mode === 'broaden' && hasSearched.value && !draftDiffersFromResults.value;
+  const previousExpandedKey = expandedKey.value;
+  if (!append) {
+    remainingBestOpen.value = false;
+    clearCandidateSearch();
+  }
   try {
     activeMode.value = mode;
     submittedQuery.value = query;
-    changedCandidates.value = new Map();
+    if (!append) changedCandidates.value = new Map();
     const result = await searchLyricsProviderCandidates(
       props.providerId,
       {
@@ -253,20 +285,53 @@ async function handleSearch(mode = 'structured') {
     );
     if (!result) return;
 
+    if (append) {
+      const currentByKey = new Map(
+        state.candidateSearch.candidates.map((candidate) => [
+          candidateKey(candidate),
+          candidate,
+        ]),
+      );
+      changedCandidates.value = new Map(
+        [...changedCandidates.value].filter(
+          ([key, changed]) =>
+            currentByKey.has(key) &&
+            currentByKey.get(key).previewFingerprint !==
+              changed.previewFingerprint,
+        ),
+      );
+    }
+
     hasSearched.value = true;
-    expandedKey.value =
-      state.candidateSearch.recordingGroups?.best?.[0]
-        ?.recommendedCandidateKey ||
-      state.candidateSearch.recordingGroups?.related?.[0]
-        ?.recommendedCandidateKey ||
-      (result.candidates?.[0] ? candidateKey(result.candidates[0]) : null);
+    if (
+      append &&
+      state.candidateSearch.candidates.some(
+        (candidate) => candidateKey(candidate) === previousExpandedKey,
+      )
+    ) {
+      expandedKey.value = previousExpandedKey;
+      remainingBestOpen.value =
+        remainingBestGroups.value.length > 0 || remainingBestOpen.value;
+    } else
+      expandedKey.value =
+        state.candidateSearch.recordingGroups?.best?.[0]
+          ?.recommendedCandidateKey ||
+        state.candidateSearch.recordingGroups?.related?.[0]
+          ?.recommendedCandidateKey ||
+        (result.candidates?.[0] ? candidateKey(result.candidates[0]) : null);
   } finally {
     submissionPending.value = false;
   }
 }
 
 async function handleSave(candidate) {
-  if (!candidate || savingKey.value !== null || !trackContext) return;
+  if (
+    !candidate ||
+    savingKey.value !== null ||
+    isSearchPending.value ||
+    !trackContext
+  )
+    return;
   const key = candidateKey(candidate);
   const candidateProviderId = candidate.providerId || props.providerId;
   const candidateForSave =
@@ -396,7 +461,7 @@ function reportCandidate(candidate) {
       <UiNotice
         v-if="state.manualSave.error"
         tone="danger"
-        title="歌詞未儲存"
+        :title="t('lyricsAcquisition.operationIncompleteTitle')"
         :message="state.manualSave.error"
         compact
       />
@@ -417,7 +482,7 @@ function reportCandidate(candidate) {
         @action="handleSearch(activeMode)"
       />
       <UiSurface
-        v-else-if="isSearchPending"
+        v-else-if="isSearchPending && !hasResults"
         radius="lg"
         class="lyrics-lrclib-search__skeleton"
         role="status"
@@ -439,7 +504,7 @@ function reportCandidate(candidate) {
         v-else-if="showProviderFailureWithoutResults"
         tone="warning"
         title="歌詞搜尋未完成"
-        :message="`${providerFailureMessages.join('；')}。請稍後重試。`"
+        :message="noResultsFailureMessage"
         action-label="重試"
         compact
         @action="handleSearch(activeMode)"
@@ -452,7 +517,11 @@ function reportCandidate(candidate) {
         compact
       />
       <UiHint v-else-if="!hasResults" role="status" padded>
-        找不到歌詞。試試其他關鍵字。
+        {{
+          fallbackCompletedWithoutResults
+            ? t('lyricsAcquisition.noResultsAfterFallback')
+            : '找不到歌詞。試試其他關鍵字。'
+        }}
       </UiHint>
 
       <template v-else>
@@ -476,7 +545,7 @@ function reportCandidate(candidate) {
               :group="group"
               :expanded-key="expandedKey"
               :saving-key="savingKey"
-              :save-disabled="savingKey !== null"
+              :save-disabled="savingKey !== null || isSearchPending"
               :changed-candidates="changedCandidates"
               :show-provider="providerId === 'all'"
               @toggle="toggleCandidate"
@@ -504,7 +573,7 @@ function reportCandidate(candidate) {
                 :group="group"
                 :expanded-key="expandedKey"
                 :saving-key="savingKey"
-                :save-disabled="savingKey !== null"
+                :save-disabled="savingKey !== null || isSearchPending"
                 :changed-candidates="changedCandidates"
                 :show-provider="providerId === 'all'"
                 @toggle="toggleCandidate"
@@ -533,7 +602,7 @@ function reportCandidate(candidate) {
               :group="group"
               :expanded-key="expandedKey"
               :saving-key="savingKey"
-              :save-disabled="savingKey !== null"
+              :save-disabled="savingKey !== null || isSearchPending"
               :changed-candidates="changedCandidates"
               :show-provider="providerId === 'all'"
               @toggle="toggleCandidate"

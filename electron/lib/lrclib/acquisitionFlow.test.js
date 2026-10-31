@@ -43,6 +43,232 @@ function client(overrides = {}) {
 }
 
 describe('structured LRCLIB acquisition flow', () => {
+  it('tries one alias when the primary has only one usable candidate to offer a choice', async () => {
+    const provider = client({
+      search: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [record({ trackName: '月面着陸計画', artistName: 'tuki.' })],
+          invalidRecordCount: 0,
+        })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [
+            record({
+              id: 43,
+              trackName: '月面着陸計画',
+              artistName: 'tuki.',
+              albumName: 'Another Album',
+            }),
+            record({
+              id: 44,
+              trackName: '月面着陸計画',
+              artistName: 'tuki.',
+              duration: 182,
+            }),
+          ],
+          invalidRecordCount: 0,
+        }),
+    });
+    const result = await searchLrclibCandidates(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        duration: 180,
+      },
+      { client: provider },
+    );
+    expect(provider.search).toHaveBeenCalledTimes(2);
+    expect(result.candidates).toHaveLength(3);
+  });
+
+  it('stops when the primary already supplies three usable alternatives without truncating the response', async () => {
+    const records = [1, 2, 3, 4].map((id) =>
+      record({ id, trackName: '月面着陸計画', artistName: 'tuki.' }),
+    );
+    const provider = client({
+      search: vi
+        .fn()
+        .mockResolvedValue({ status: 'ok', records, invalidRecordCount: 0 }),
+    });
+    const result = await searchLrclibCandidates(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        duration: 180,
+      },
+      { client: provider },
+    );
+    expect(provider.search).toHaveBeenCalledOnce();
+    expect(result.candidates).toHaveLength(4);
+  });
+  it('keeps the usable result when the alias does not add alternatives', async () => {
+    const provider = client({
+      search: vi.fn().mockResolvedValue({
+        status: 'ok',
+        records: [record({ trackName: '月面着陸計画', artistName: 'tuki.' })],
+        invalidRecordCount: 0,
+      }),
+    });
+    const result = await searchLrclibCandidates(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        duration: 180,
+      },
+      { client: provider },
+    );
+    expect(result.candidates).toHaveLength(1);
+    expect(provider.getExact).not.toHaveBeenCalled();
+    expect(provider.search).toHaveBeenCalledTimes(2);
+    expect(provider.search.mock.calls[0][1].budget).toBeDefined();
+  });
+
+  it('defers title-only recovery to explicit broaden and bounds broaden queries', async () => {
+    const initial = client();
+    const broad = client();
+    await searchLrclibCandidates(track, { client: initial });
+    await searchLrclibCandidates(track, { client: broad, mode: 'broaden' });
+    expect(initial.search.mock.calls.map(([query]) => query)).toEqual([
+      { trackName: 'Song', artistName: 'Artist' },
+    ]);
+    expect(broad.search.mock.calls.map(([query]) => query)).toEqual([
+      { trackName: 'Song', artistName: 'Artist' },
+      { trackName: 'Song' },
+    ]);
+  });
+  it('does not issue requests when already cancelled or publish a late successful reply', async () => {
+    const cancelled = new AbortController();
+    cancelled.abort();
+    const idleClient = client();
+    await expect(
+      searchLrclibCandidates(track, {
+        client: idleClient,
+        signal: cancelled.signal,
+      }),
+    ).resolves.toMatchObject({ reason: 'cancelled', candidates: [] });
+    expect(idleClient.getExact).not.toHaveBeenCalled();
+    const controller = new AbortController();
+    const provider = client({
+      search: vi.fn(async () => {
+        controller.abort();
+        return { status: 'ok', records: [record()], invalidRecordCount: 0 };
+      }),
+    });
+    await expect(
+      searchLrclibCandidates(track, {
+        client: provider,
+        signal: controller.signal,
+      }),
+    ).resolves.toMatchObject({ reason: 'cancelled', candidates: [] });
+    expect(provider.search).toHaveBeenCalledOnce();
+  });
+  it.each(['rate-limited', 'service-unavailable', 'timeout'])(
+    'retains validated candidates when a broaden query later fails with %s',
+    async (reason) => {
+      const provider = client({
+        getExact: vi.fn().mockResolvedValue({ status: 'ok', record: record() }),
+        search: vi
+          .fn()
+          .mockResolvedValueOnce({
+            status: 'ok',
+            records: [record()],
+            invalidRecordCount: 0,
+          })
+          .mockResolvedValue({ status: 'error', reason }),
+      });
+      const result = await searchLrclibCandidates(track, {
+        client: provider,
+        mode: 'broaden',
+      });
+      expect(result).toMatchObject({ status: 'ok', partial: true, reason });
+      expect(result.candidates.map((candidate) => candidate.id)).toEqual([42]);
+      expect(provider.search).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('retains earlier structured candidates when a subsequent title variant fails', async () => {
+    const provider = client({
+      search: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [record({ trackName: '月面着陸計画', artistName: 'tuki.' })],
+          invalidRecordCount: 2,
+        })
+        .mockResolvedValue({
+          status: 'error',
+          reason: 'service-unavailable',
+          httpStatus: 503,
+          requestSource: 'network',
+        }),
+    });
+    const result = await searchLrclibCandidates(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        duration: 180,
+      },
+      { client: provider, mode: 'broaden' },
+    );
+    expect(result).toMatchObject({
+      status: 'ok',
+      partial: true,
+      reason: 'service-unavailable',
+      httpStatus: 503,
+      invalidRecordCount: 2,
+    });
+    expect(result.candidates).toHaveLength(1);
+    expect(provider.search).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains related candidates if recovery fails without issuing more requests', async () => {
+    const provider = client({
+      search: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [record({ artistName: 'Nova' })],
+          invalidRecordCount: 0,
+        })
+        .mockResolvedValue({
+          status: 'error',
+          reason: 'rate-limited',
+          httpStatus: 429,
+        }),
+    });
+    const result = await searchLrclibCandidates(track, {
+      client: provider,
+      mode: 'broaden',
+    });
+    expect(result).toMatchObject({
+      status: 'ok',
+      partial: true,
+      reason: 'rate-limited',
+    });
+    expect(result.groups.related).toHaveLength(1);
+    expect(provider.search).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not publish partial success after cancellation', async () => {
+    const controller = new AbortController();
+    const provider = client({
+      getExact: vi.fn().mockResolvedValue({ status: 'ok', record: record() }),
+      search: vi.fn(async () => {
+        controller.abort();
+        return { status: 'error', reason: 'timeout' };
+      }),
+    });
+    const result = await searchLrclibCandidates(track, {
+      client: provider,
+      signal: controller.signal,
+    });
+    expect(result.status).toBe('error');
+    expect(result.candidates).toEqual([]);
+    expect(result.partial).not.toBe(true);
+  });
+
   it('limits automatic search to exact plus one structured request without title-only recovery', async () => {
     const provider = client();
     await searchLrclibCandidates(
@@ -64,7 +290,7 @@ describe('structured LRCLIB acquisition flow', () => {
     expect(provider.searchBroad).not.toHaveBeenCalled();
   });
 
-  it('searches exact then one structured request and returns grouped candidates', async () => {
+  it('uses one primary structured request and returns grouped candidates', async () => {
     const provider = client({
       getExact: vi.fn().mockResolvedValue({ status: 'ok', record: record() }),
       search: vi.fn().mockResolvedValue({
@@ -76,12 +302,18 @@ describe('structured LRCLIB acquisition flow', () => {
 
     const result = await searchLrclibCandidates(track, { client: provider });
 
-    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.getExact).not.toHaveBeenCalled();
     expect(provider.search).toHaveBeenCalledOnce();
-    expect(provider.search).toHaveBeenCalledWith({
-      trackName: 'Song',
-      artistName: 'Artist',
-    });
+    expect(provider.search).toHaveBeenCalledWith(
+      {
+        trackName: 'Song',
+        artistName: 'Artist',
+      },
+      expect.objectContaining({
+        budget: expect.any(Object),
+        signal: expect.any(AbortSignal),
+      }),
+    );
     expect(provider.searchBroad).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       status: 'ok',
@@ -136,14 +368,13 @@ describe('structured LRCLIB acquisition flow', () => {
       },
     );
 
-    expect(provider.search).toHaveBeenCalledTimes(3);
+    expect(provider.search).toHaveBeenCalledTimes(2);
     expect(provider.search.mock.calls.map(([query]) => query)).toEqual([
       {
         trackName: '月面着陸計画 - Moon Landing Plan',
         artistName: 'tuki.',
       },
       { trackName: '月面着陸計画', artistName: 'tuki.' },
-      { trackName: 'Moon Landing Plan', artistName: 'tuki.' },
     ]);
     expect(result.groups.best.map((candidate) => candidate.id)).toEqual([2, 1]);
     expect(result.candidates).toHaveLength(2);
@@ -182,6 +413,7 @@ describe('structured LRCLIB acquisition flow', () => {
       {
         client: provider,
         query: { title: 'Kakurenbo', artist: 'Yuuri' },
+        mode: 'broaden',
       },
     );
 
@@ -195,7 +427,7 @@ describe('structured LRCLIB acquisition flow', () => {
     ]);
   });
 
-  it('uses the same constrained and recovery plan for automatic and explicit broaden searches', async () => {
+  it('keeps title-only recovery out of the initial search and allows it on broaden', async () => {
     const automaticProvider = client();
     const explicitProvider = client();
 
@@ -209,10 +441,9 @@ describe('structured LRCLIB acquisition flow', () => {
       query: { title: 'Edited Song', artist: 'Edited Artist' },
     });
 
-    expect(explicitProvider.getExact).toHaveBeenCalledOnce();
-    expect(explicitProvider.search.mock.calls.map(([query]) => query)).toEqual(
-      automaticProvider.search.mock.calls.map(([query]) => query),
-    );
+    expect(explicitProvider.getExact).not.toHaveBeenCalled();
+    expect(explicitProvider.search).toHaveBeenCalledTimes(2);
+    expect(automaticProvider.search).toHaveBeenCalledOnce();
     expect(explicitProvider.searchBroad).not.toHaveBeenCalled();
   });
 
@@ -267,7 +498,6 @@ describe('structured LRCLIB acquisition flow', () => {
         artistName: 'tuki.',
       },
       { trackName: '月面着陸計画', artistName: 'tuki.' },
-      { trackName: 'Moon Landing Plan', artistName: 'tuki.' },
     ]);
     expect(
       provider.search.mock.calls.every(([query]) => query.artistName),
@@ -322,7 +552,7 @@ plain: Hello
     expect(provider.search).toHaveBeenCalledOnce();
   });
 
-  it('continues after an invalid exact record and reports the bounded count', async () => {
+  it('does not expand automatic queries after invalid exact data', async () => {
     const provider = client({
       getExact: vi.fn().mockResolvedValue({
         status: 'error',
@@ -331,8 +561,9 @@ plain: Hello
     });
 
     await expect(
-      searchLrclibCandidates(track, { client: provider }),
-    ).resolves.toMatchObject({ status: 'ok', invalidRecordCount: 1 });
+      searchLrclibCandidates(track, { client: provider, automatic: true }),
+    ).resolves.toMatchObject({ status: 'error', reason: 'invalid-record' });
+    expect(provider.search).not.toHaveBeenCalled();
   });
 
   it('returns typed failures from exact, structured, and broadened requests', async () => {

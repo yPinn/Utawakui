@@ -18,13 +18,13 @@ const OPAQUE_CORPUS_ID_RE = /^lyrics-provider-private-(?:synthetic-)?v\d+$/u;
 const OPAQUE_CASE_ID_RE = /^case-\d{3}$/u;
 const EVALUATION_PROVIDER_IDS = new Set([
   'lrclib',
-  'amll',
+  'kugou',
   'netease',
   'musixmatch',
 ]);
 const EVALUATION_PROFILE_IDS = new Set([
   'lrclib-http-v1',
-  'amll-http-v1',
+  'kugou-direct-lrc-evaluation-v1',
   'netease-yrc-reverse-v1',
   'musixmatch-desktop-reverse-v1',
 ]);

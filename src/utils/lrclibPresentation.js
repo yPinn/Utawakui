@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 const CAPABILITY_LABELS = Object.freeze({
   T2: '逐字同步',
   T1: '逐行同步',
@@ -89,6 +91,7 @@ export function candidateTimelineDifference(
   )
     return null;
   const labels = {
+    kugou: t('lyricsAcquisition.kugou'),
     lrclib: 'LRCLIB',
     netease: '網易雲音樂',
     betterlyrics: 'Better Lyrics',

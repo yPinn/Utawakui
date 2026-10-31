@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 import {
   FEEDBACK_KINDS,
   MAX_TRACK_LABEL_LENGTH,
@@ -30,10 +31,10 @@ export function buildLyricsIssueReport({
 } = {}) {
   const provider = candidate ? candidate.providerId : source?.kind;
   const names = {
+    kugou: t('lyricsAcquisition.kugou'),
     lrclib: 'LRCLIB',
     netease: '網易雲音樂',
     betterlyrics: 'Better Lyrics',
-    amll: '既有 AMLL',
   };
   const name = Object.hasOwn(names, provider)
     ? names[provider]

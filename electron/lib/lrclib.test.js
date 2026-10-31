@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   fetchLrclibRecord,
-  findLrclibSyncedLyrics,
+  findLrclibSyncedLyrics as findSyncedLyrics,
   searchLrclibCandidates,
 } from './lrclib/acquisition.js';
 import { parseLrcLines } from './lrclib/lrc.js';
@@ -20,6 +20,15 @@ import { looksLikeChannelArtist, stripTrackDecorations } from './musicTitle.js';
 const fadedTitle = '\u892A\u8272';
 const labelUploader = '\u6dfb\u7ffc\u97f3\u6a02 TEAM EAR MUSIC';
 const decoratedFadedTitle = `VH (Vast & Hazy)\u3010${fadedTitle}\u3011 Official Music Video`;
+
+// Matching fixtures use a deterministic transport; sustained timing is covered
+// by requestPolicy/client tests rather than real five-second background waits.
+function findLrclibSyncedLyrics(track, options = {}) {
+  return findSyncedLyrics(track, {
+    scheduler: { schedule: (start) => start() },
+    ...options,
+  });
+}
 
 describe('stripTrackDecorations', () => {
   it('removes common music video decorations without removing the title', () => {
@@ -558,7 +567,11 @@ describe('searchLrclibCandidates', () => {
 
     const result = await searchLrclibCandidates(
       { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
-      { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
+      {
+        fetch: fetchMock,
+        baseUrl: 'https://lrclib.example.test',
+        mode: 'broaden',
+      },
     );
 
     // Multiple queries score the same pooled candidate — without id-based

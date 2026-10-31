@@ -2,7 +2,7 @@
 import { computed, onScopeDispose, shallowRef, useId, watch } from 'vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useExperimentalLyricsQueue } from '../../composables/lyrics/useExperimentalLyricsQueue.js';
-import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
+import { formatLyricsSourceLabel } from '../../utils/lyricsSourcePresentation.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiProgress from '../ui/UiProgress.vue';

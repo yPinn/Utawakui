@@ -21,6 +21,52 @@ function response(body, options = {}) {
 }
 
 describe('Better Lyrics cache-first client', () => {
+  it.each([-0.01, 1.01, 95, null, '0.97'])(
+    'rejects out-of-profile score %s',
+    async (score) => {
+      const client = createBetterLyricsClient({
+        fetch: async () => response({ ttml: TTML, score }),
+        scheduler: { schedule: (task) => task() },
+      });
+      await expect(
+        client.getLyrics({
+          trackName: 'Song',
+          artistName: 'Singer',
+          duration: 5,
+        }),
+      ).resolves.toEqual({ status: 'error', reason: 'invalid-record' });
+    },
+  );
+  it('starts the HTTP timeout after waiting in the shared queue', async () => {
+    const client = createBetterLyricsClient({
+      fetch: async () => response({ ttml: TTML }),
+      timeoutMs: 2,
+      scheduler: {
+        schedule: async (task) => {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          return task();
+        },
+      },
+    });
+    await expect(
+      client.getLyrics({
+        trackName: 'Song',
+        artistName: 'Singer',
+        duration: 5,
+      }),
+    ).resolves.toMatchObject({ status: 'ok' });
+  });
+  it('coalesces matching queries across clients and always revalidates fresh saves', async () => {
+    const fetch = vi.fn(async () => response({ ttml: TTML }));
+    const options = { fetch, scheduler: { schedule: (task) => task() } };
+    const one = createBetterLyricsClient(options);
+    const two = createBetterLyricsClient(options);
+    const query = { trackName: 'Song', artistName: 'Singer', duration: 5 };
+    await Promise.all([one.getLyrics(query), two.getLyrics(query)]);
+    expect(fetch).toHaveBeenCalledOnce();
+    await two.getLyrics(query, { fresh: true });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
   it('builds the documented fixed-origin query without credentials', () => {
     expect(
       String(
@@ -37,7 +83,7 @@ describe('Better Lyrics cache-first client', () => {
   });
 
   it('normalizes a bounded cache hit and never sends an API key', async () => {
-    const fetch = vi.fn(async () => response({ ttml: TTML, score: 95 }));
+    const fetch = vi.fn(async () => response({ ttml: TTML, score: 0.95 }));
     const client = createBetterLyricsClient({
       fetch,
       scheduler: { schedule: (task) => task() },
@@ -56,7 +102,7 @@ describe('Better Lyrics cache-first client', () => {
         artistName: 'Singer',
         duration: 5,
         ttml: TTML,
-        score: 95,
+        score: 0.95,
         cacheStatus: 'HIT',
       },
     });
@@ -171,9 +217,9 @@ describe('Better Lyrics cache-first client', () => {
   it('fails closed for malformed payloads, provider headers, and oversized bodies', async () => {
     const responses = [
       new Response('{', { status: 200 }),
-      response({ ttml: TTML, score: 101 }),
+      response({ ttml: TTML, score: 1.01 }),
       response(
-        { ttml: TTML, score: 95 },
+        { ttml: TTML, score: 0.95 },
         { headers: { 'x-provider': 'other' } },
       ),
       new Response('{}', {

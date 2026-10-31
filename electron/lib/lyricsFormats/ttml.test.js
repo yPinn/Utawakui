@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { analyzeAmllTtml, parseTtmlTime } from './ttml.js';
+import { analyzeTtml, parseTtmlTime } from './ttml.js';
 
 function wordTtml(body = '') {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -15,7 +15,7 @@ function wordTtml(body = '') {
 </tt>`;
 }
 
-describe('AMLL TTML normalization', () => {
+describe('provider-neutral TTML normalization golden behavior', () => {
   it.each([
     ['1.25s', 1250],
     ['01:02.003', 62003],
@@ -29,7 +29,7 @@ describe('AMLL TTML normalization', () => {
   });
 
   it('preserves inter-span whitespace and emits complete canonical T2 timing', () => {
-    expect(analyzeAmllTtml(wordTtml())).toMatchObject({
+    expect(analyzeTtml(wordTtml())).toMatchObject({
       status: 'ok',
       capability: { level: 'T2', partial: false },
       compatibility: { t0: true, t1: true, t2: true },
@@ -57,7 +57,7 @@ describe('AMLL TTML normalization', () => {
         '<span begin="1s" end="1.5s">Hello</span> <span begin="1.5s" end="3s">world</span>',
         'Hello world',
       );
-    const result = analyzeAmllTtml(value);
+    const result = analyzeTtml(value);
     expect(result).toMatchObject({
       status: 'ok',
       capability: { level: 'T1', partial: false },
@@ -71,7 +71,7 @@ describe('AMLL TTML normalization', () => {
       '</span></p>',
       '</span><span ttm:role="x-bg"><span begin="1.2s" end="2.2s">Backing</span></span><span ttm:role="x-translation">翻譯</span></p>',
     );
-    expect(analyzeAmllTtml(value)).toMatchObject({
+    expect(analyzeTtml(value)).toMatchObject({
       status: 'ok',
       capability: { level: 'T2', partial: false },
       sourceText: '[00:01.000]Hello world\n',
@@ -83,7 +83,7 @@ describe('AMLL TTML normalization', () => {
     const value = wordTtml(
       '<p begin="4s" end="6s"><span begin="4s" end="5s">Part</span> missing</p>',
     );
-    expect(analyzeAmllTtml(value)).toMatchObject({
+    expect(analyzeTtml(value)).toMatchObject({
       status: 'ok',
       capability: { level: 'T1', partial: true },
       compatibility: { t0: true, t1: true, t2: false },
@@ -96,7 +96,7 @@ describe('AMLL TTML normalization', () => {
       'begin="1.5s" end="3s"',
       'begin="1.499s" end="3s"',
     );
-    const result = analyzeAmllTtml(value);
+    const result = analyzeTtml(value);
     expect(result).toMatchObject({
       status: 'ok',
       capability: { level: 'T2', partial: false },
@@ -114,7 +114,7 @@ describe('AMLL TTML normalization', () => {
       '<span begin="1s" end="1.5s">Hello</span> <span begin="1.5s" end="3s">world</span>',
       `<span begin="1s" end="3s">${text}</span>`,
     );
-    expect(analyzeAmllTtml(value)).toEqual({
+    expect(analyzeTtml(value)).toEqual({
       status: 'error',
       reason: 'invalid-ttml',
     });
@@ -135,7 +135,7 @@ describe('AMLL TTML normalization', () => {
         '<p begin="1s" end="3s"><span begin="1s" end="1.5s">Hello</span> <span begin="1.5s" end="3s">world</span></p>',
         `<p begin="0s" end="1.001s">${spans}</p>`,
       );
-    expect(analyzeAmllTtml(value)).toEqual({
+    expect(analyzeTtml(value)).toEqual({
       status: 'error',
       reason: 'invalid-ttml',
     });
@@ -145,7 +145,7 @@ describe('AMLL TTML normalization', () => {
     const value = wordTtml(
       '<p begin="0.1s" end="0.9s"><span begin="0.1s" end="0.9s">Earlier</span></p>',
     );
-    expect(analyzeAmllTtml(value)).toEqual({
+    expect(analyzeTtml(value)).toEqual({
       status: 'error',
       reason: 'invalid-ttml',
     });
@@ -173,6 +173,6 @@ describe('AMLL TTML normalization', () => {
       'invalid-ttml',
     ],
   ])('rejects %s', (_label, value, reason) => {
-    expect(analyzeAmllTtml(value)).toEqual({ status: 'error', reason });
+    expect(analyzeTtml(value)).toEqual({ status: 'error', reason });
   });
 });

@@ -2,6 +2,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const {
+  migrateRetiredLyricsSources,
+  isRetiredLyricsSource,
+  asLocalLyricsSource,
+} = require('./retiredLyricsSources.js');
 const { atomicWriteJson, atomicWriteText } = require('../atomicWrite');
 const {
   LYRICS_DIRNAME,
@@ -67,7 +72,7 @@ function getLyricsDirFromTrackDir(trackDir) {
 
 const MAX_LYRICS_SOURCE_OFFSET_MS = 3_600_000;
 const PROVIDER_ARTIFACT_PATTERNS = Object.freeze({
-  amll: /^amll-[1-9]\d*\.json$/,
+  kugou: /^kugou-[1-9]\d*\.json$/,
   betterlyrics: /^betterlyrics-[1-9]\d*\.json$/,
   lrclib: /^lrclib-[1-9]\d*\.json$/,
   netease: /^netease-[1-9]\d*\.json$/,
@@ -116,6 +121,11 @@ function normalizeLyricsSourcePreference(value, sources) {
 
 function loadTrackLyricsManifest(trackDir) {
   try {
+    migrateRetiredLyricsSources(trackDir);
+  } catch {
+    /* A failed migration cannot make existing local lyrics unreadable. */
+  }
+  try {
     const manifest = JSON.parse(
       fs.readFileSync(
         path.join(getLyricsDirFromTrackDir(trackDir), LYRICS_MANIFEST_FILENAME),
@@ -137,8 +147,11 @@ function loadTrackLyricsManifest(trackDir) {
           typeof source.language === 'string',
       )
       .map((source) => {
+        if (isRetiredLyricsSource(source)) source = asLocalLyricsSource(source);
         const provider = normalizeLyricsProvider(source.provider);
-        return { ...source, ...(provider ? { provider } : {}) };
+        const rest = { ...source };
+        delete rest.provider;
+        return { ...rest, ...(provider ? { provider } : {}) };
       });
     const preference = normalizeLyricsSourcePreference(
       manifest.preference,

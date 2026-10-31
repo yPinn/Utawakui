@@ -2,7 +2,10 @@
 
 const { appUserAgent } = require('../userAgent.js');
 const { readBoundedText } = require('../lrclib/client.js');
-const { createLrclibRequestScheduler } = require('../lrclib/scheduler.js');
+const {
+  getLyricsRequestPolicy,
+  requestFailure,
+} = require('../lyricsProviders/requestPolicy.js');
 const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
 
 const NETEASE_API_BASE_URL = 'https://interface.music.163.com';
@@ -12,9 +15,6 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 const MAX_QUERY_CHARS = 256;
 const MAX_SEARCH_RECORDS = 10;
-const sharedNeteaseRequestScheduler = createLrclibRequestScheduler({
-  intervalMs: 500,
-});
 
 function containsControlCharacter(value) {
   for (const character of value) {
@@ -142,7 +142,8 @@ function createNeteaseClient(options = {}) {
     ? options.fetch
     : globalThis.fetch;
   const requestGuard = createProviderRequestGuard(fetchFn, options);
-  const scheduler = options.scheduler || sharedNeteaseRequestScheduler;
+  const policy = getLyricsRequestPolicy('netease', fetchFn, options);
+  const scheduler = policy.scheduler;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
@@ -160,28 +161,26 @@ function createNeteaseClient(options = {}) {
           signal = requestOptions.signal
             ? AbortSignal.any([requestOptions.signal, timeoutSignal])
             : timeoutSignal;
-          return requestGuard.fetch(new URL(pathname, NETEASE_API_BASE_URL), {
-            method: 'POST',
-            redirect: 'error',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              Referer: 'https://music.163.com/',
-              'User-Agent': appUserAgent(),
+          return requestGuard.fetch(
+            new URL(pathname, NETEASE_API_BASE_URL),
+            {
+              method: 'POST',
+              redirect: 'error',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Referer: 'https://music.163.com/',
+                'User-Agent': appUserAgent(),
+              },
+              body: new URLSearchParams(fields),
+              signal,
             },
-            body: new URLSearchParams(fields),
-            signal,
-          });
+            requestOptions.charge,
+          );
         },
-        { signal: requestOptions.signal },
+        { signal: requestOptions.signal, priority: requestOptions.priority },
       );
     } catch (error) {
-      return {
-        status: 'error',
-        reason:
-          error?.name === 'TimeoutError' || error?.name === 'AbortError'
-            ? 'timeout'
-            : 'offline',
-      };
+      return requestFailure(error);
     }
     if (!response.ok) {
       await response.body?.cancel().catch(() => undefined);
@@ -200,7 +199,7 @@ function createNeteaseClient(options = {}) {
     return parsed;
   }
 
-  async function search(query, requestOptions) {
+  async function readSearch(query, requestOptions) {
     if (
       !query ||
       typeof query !== 'object' ||
@@ -244,7 +243,7 @@ function createNeteaseClient(options = {}) {
     return { status: 'ok', records, invalidRecordCount };
   }
 
-  async function getLyrics(recordId, requestOptions) {
+  async function readLyrics(recordId, requestOptions) {
     if (!Number.isSafeInteger(recordId) || recordId <= 0) {
       return { status: 'error', reason: 'invalid-request' };
     }
@@ -274,7 +273,49 @@ function createNeteaseClient(options = {}) {
     return { status: 'ok', record: { id: recordId, yrcLyrics, lrcLyrics } };
   }
 
-  return { getLyrics, search };
+  async function run(identity, read, requestOptions = {}) {
+    try {
+      return await policy.run(
+        [identity, maxResponseBytes],
+        (context) => read({ ...requestOptions, ...context }),
+        requestOptions,
+      );
+    } catch (error) {
+      return requestFailure(error);
+    }
+  }
+  function search(query, requestOptions) {
+    if (
+      !query ||
+      typeof query !== 'object' ||
+      Array.isArray(query) ||
+      !validQueryText(query.trackName, true) ||
+      !validQueryText(query.artistName)
+    )
+      return Promise.resolve({ status: 'error', reason: 'invalid-request' });
+    const keywords = [query.trackName.trim(), query.artistName?.trim()]
+      .filter(Boolean)
+      .join(' ');
+    const snapshot = {
+      trackName: query.trackName.trim(),
+      artistName: query.artistName?.trim(),
+    };
+    return run(
+      [NETEASE_SEARCH_PATH, keywords],
+      (context) => readSearch(snapshot, context),
+      requestOptions,
+    );
+  }
+  function getLyrics(recordId, requestOptions) {
+    if (!Number.isSafeInteger(recordId) || recordId <= 0)
+      return Promise.resolve({ status: 'error', reason: 'invalid-request' });
+    return run(
+      [NETEASE_LYRICS_PATH, recordId],
+      (context) => readLyrics(recordId, context),
+      requestOptions,
+    );
+  }
+  return { search, getLyrics, invalidateDiscovery: policy.invalidate };
 }
 
 module.exports = {

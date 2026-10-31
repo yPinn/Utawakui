@@ -169,6 +169,9 @@ const {
 const {
   createLyricsAcquisitionService,
 } = require('./main/lyricsAcquisitionService');
+const {
+  createLyricsIdentityResolver,
+} = require('./lib/lyricsProviders/identityResolver.js');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
 const {
   createWorkOrganizationHost,
@@ -1021,6 +1024,9 @@ if (!gotSingleInstanceLock) {
       logger: runtimeDiagnosticsLogger,
     });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
+      identityResolver: createLyricsIdentityResolver({
+        cacheDirectory: path.join(app.getPath('userData'), 'lyrics-identity'),
+      }),
       requireFeatureGate,
       featureId: FEATURE_IDS.LYRICS_FLOW,
       logger: runtimeDiagnosticsLogger,

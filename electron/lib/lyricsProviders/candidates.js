@@ -178,6 +178,7 @@ function boundedProviderStatus(result) {
   return {
     provider: result.provider,
     status: result.status,
+    ...(result.partial === true ? { partial: true } : {}),
     ...(typeof result.reason === 'string' ? { reason: result.reason } : {}),
   };
 }
@@ -271,7 +272,8 @@ function aggregateLyricsProviderResults(track, providerResults) {
   const flattened = grouped.flatMap((group) => group.candidates);
   const status = aggregateStatus(results);
   const partial =
-    status.status === 'ok' && results.some((result) => result.status !== 'ok');
+    status.status === 'ok' &&
+    results.some((result) => result.status !== 'ok' || result.partial === true);
   const invalidRecordCount = Math.min(
     MAX_INVALID_RECORD_COUNT,
     results.reduce(
@@ -304,7 +306,49 @@ function aggregateLyricsProviderResults(track, providerResults) {
   };
 }
 
+function mergeLyricsProviderSearchResults(previous, current) {
+  if (!previous?.candidates?.length || current?.reason === 'cancelled')
+    return current;
+  const nextCandidates = Array.isArray(current?.candidates)
+    ? current.candidates
+    : [];
+  const nextById = new Map(
+    nextCandidates.map((candidate) => [candidate.id, candidate]),
+  );
+  const candidates = [
+    ...nextCandidates,
+    ...previous.candidates.filter((candidate) => !nextById.has(candidate.id)),
+  ].slice(0, 20);
+  const timelineEvidenceById = {};
+  for (const candidate of candidates) {
+    const old = previous.candidates.find((item) => item.id === candidate.id);
+    const evidence =
+      current?.timelineEvidenceById?.[candidate.id] ||
+      (old?.previewFingerprint === candidate.previewFingerprint
+        ? previous.timelineEvidenceById?.[candidate.id]
+        : null);
+    if (evidence) timelineEvidenceById[candidate.id] = evidence;
+  }
+  return {
+    ...current,
+    provider: current?.provider || previous.provider,
+    status: 'ok',
+    partial: current?.status === 'error' || current?.partial === true,
+    candidates,
+    groups: {
+      best: candidates.filter((candidate) => candidate.matchBand !== 'related'),
+      related: candidates.filter(
+        (candidate) => candidate.matchBand === 'related',
+      ),
+    },
+    invalidRecordCount:
+      current?.invalidRecordCount ?? previous.invalidRecordCount ?? 0,
+    timelineEvidenceById,
+  };
+}
+
 module.exports = {
+  mergeLyricsProviderSearchResults,
   aggregateLyricsProviderResults,
   compareUnifiedLyricsCandidates,
   selectAutomaticLyricsCandidate,

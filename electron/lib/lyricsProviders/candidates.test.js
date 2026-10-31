@@ -1,5 +1,6 @@
 import {
   aggregateLyricsProviderResults,
+  mergeLyricsProviderSearchResults,
   compareUnifiedLyricsCandidates,
   selectAutomaticLyricsCandidate,
 } from './candidates.js';
@@ -44,6 +45,65 @@ const track = {
   album: 'Album',
   duration: 180,
 };
+
+it('merges more-search choices by id and drops outdated timeline evidence for changed fingerprints', () => {
+  const first = candidate({ id: 1 });
+  const second = candidate({ id: 2 });
+  const previous = result('lrclib', [first, second], {
+    timelineEvidenceById: {
+      1: { marker: 'old-first' },
+      2: { marker: 'second' },
+    },
+  });
+  const updated = { ...first, previewFingerprint: 'b'.repeat(64) };
+  const combined = mergeLyricsProviderSearchResults(
+    previous,
+    result('lrclib', [updated, candidate({ id: 3 })]),
+  );
+  expect(combined.candidates.map((value) => value.id)).toEqual([1, 3, 2]);
+  expect(combined.timelineEvidenceById[1]).toBeUndefined();
+  expect(combined.timelineEvidenceById[2]).toEqual({ marker: 'second' });
+  expect(combined.candidates[0].previewFingerprint).toBe(
+    updated.previewFingerprint,
+  );
+  expect(
+    mergeLyricsProviderSearchResults(previous, {
+      provider: 'lrclib',
+      status: 'error',
+      reason: 'cancelled',
+      candidates: [],
+    }).candidates,
+  ).toEqual([]);
+});
+
+it('preserves partial-success warnings even when every provider returns ok', () => {
+  const aggregated = aggregateLyricsProviderResults(track, [
+    result('lrclib', [candidate()], {
+      partial: true,
+      reason: 'rate-limited',
+      httpStatus: 429,
+      requestSource: 'network',
+    }),
+    result('netease', []),
+  ]);
+  expect(aggregated).toMatchObject({
+    status: 'ok',
+    partial: true,
+    candidates: [expect.objectContaining({ providerId: 'lrclib' })],
+    providerStatuses: [
+      {
+        provider: 'lrclib',
+        status: 'ok',
+        partial: true,
+        reason: 'rate-limited',
+      },
+      { provider: 'netease', status: 'ok' },
+    ],
+  });
+  expect(JSON.stringify(aggregated.providerStatuses)).not.toContain(
+    'requestSource',
+  );
+});
 
 describe('same-recording timeline notices', () => {
   function timed(provider, offset, overrides = {}) {

@@ -18,7 +18,10 @@ const {
   saveTrackLyricsTiming,
   timingSidecarPath,
 } = require('../library/lyricsTiming.js');
-const { analyzeAmllTtml, buildTtmlTimingDocument } = require('../amll/ttml.js');
+const {
+  analyzeTtml,
+  buildTtmlTimingDocument,
+} = require('../lyricsFormats/ttml.js');
 const { fingerprintBetterLyricsRecord } = require('./candidate.js');
 
 const PROVIDER_ARTIFACT_SCHEMA_VERSION = 1;
@@ -72,7 +75,7 @@ function allocateFilename(trackDir, recordId) {
 }
 
 function saveBetterLyricsRecord(trackDir, record, options = {}) {
-  const analysis = analyzeAmllTtml(record?.ttml, { recordId: record?.id });
+  const analysis = analyzeTtml(record?.ttml, { recordId: record?.id });
   if (
     !record ||
     !Number.isSafeInteger(record.id) ||

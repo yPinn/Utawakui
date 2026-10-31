@@ -25,6 +25,17 @@ function immediateScheduler() {
 }
 
 describe('createNeteaseClient', () => {
+  it('coalesces lyric hydration across instances but bypasses it for fresh saves', async () => {
+    const fetch = vi.fn(async () =>
+      responseBody({ code: 200, lrc: { lyric: '[00:01]Hello' } }),
+    );
+    const one = createNeteaseClient({ fetch, scheduler: immediateScheduler() });
+    const two = createNeteaseClient({ fetch, scheduler: immediateScheduler() });
+    await Promise.all([one.getLyrics(42), two.getLyrics(42)]);
+    expect(fetch).toHaveBeenCalledOnce();
+    await two.getLyrics(42, { fresh: true });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
   it('uses only fixed HTTPS POST routes without cookies or redirects', async () => {
     const fetch = vi
       .fn()

@@ -111,6 +111,17 @@ function isDelivered(file) {
 }
 
 describe('packaged dependency boundary', () => {
+  it('bundles the microphone access factory under its role-based name', () => {
+    expect(bundledSources).toContain(
+      'electron/main/microphoneResearchAccess.js',
+    );
+    expect(bundledSources).not.toContain(
+      'electron/main/microphoneResearchHandlers.js',
+    );
+    expect(isDelivered('electron/main/microphoneResearchAccess.test.js')).toBe(
+      false,
+    );
+  });
   it('bundles the closed controlled-output path without shipping its tests', () => {
     expect(isDelivered('scripts/fixtures/separationCrashChild.cjs')).toBe(
       false,
@@ -310,6 +321,53 @@ describe('packaged dependency boundary', () => {
       require('./electron/lib/providerServiceCooldown.js')
         .createProviderRequestGuard,
     ).toBeTypeOf('function');
+  });
+  it('bundles the controlled native-LRC backup without research probes or fixtures', () => {
+    expect(bundledSources).toContain('electron/lib/lyricsFormats/ttml.js');
+    expect(
+      [...bundledSources].some(
+        (file) =>
+          file === 'electron/lib/amll.js' ||
+          file.startsWith('electron/lib/amll/'),
+      ),
+    ).toBe(false);
+    for (const name of ['querySession', 'identityResolver', 'requestExecutor'])
+      expect(bundledSources).toContain(
+        `electron/lib/lyricsProviders/${name}.js`,
+      );
+    expect(bundledSources).toContain(
+      'electron/lib/library/retiredLyricsSources.js',
+    );
+    for (const name of [
+      'acquisition',
+      'client',
+      'identity',
+      'lrc',
+      'record',
+      'storage',
+    ]) {
+      expect(bundledSources).toContain(`electron/lib/kugou/${name}.js`);
+      expect(isDelivered(`electron/lib/kugou/${name}.test.js`)).toBe(false);
+    }
+    expect(bundledSources).not.toContain('scripts/lyrics-provider-kugou.mjs');
+    expect(
+      isDelivered(
+        'scripts/fixtures/lyrics-provider-evaluation/kugou-multilingual.json',
+      ),
+    ).toBe(false);
+  });
+  it('bundles the lyrics request policy without shipping its regression fixtures', () => {
+    const helper = 'electron/lib/lyricsProviders/requestPolicy.js';
+    expect(bundledSources.has(helper)).toBe(true);
+    expect(isDelivered(helper)).toBe(true);
+    expect(
+      isDelivered('electron/lib/lyricsProviders/requestPolicy.test.js'),
+    ).toBe(false);
+    expect(
+      isDelivered(
+        'electron/lib/lyricsProviders/requestPolicy.integration.test.js',
+      ),
+    ).toBe(false);
   });
   it('ships the optional lyrics environment probe/catalog without private research assets', () => {
     for (const filename of [

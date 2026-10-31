@@ -1,4 +1,5 @@
 import { FEATURE_IDS } from '../../constants/featureGates.js';
+import { t } from '../../utils/i18n.js';
 
 const LRCLIB_FAILURE_MESSAGES = Object.freeze({
   'rate-limited': 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
@@ -54,16 +55,48 @@ const PROVIDER_FAILURE_MESSAGES = Object.freeze({
 
 const BETTER_LYRICS_SAVE_FAILURE_MESSAGES = Object.freeze({
   'cache-miss': '這首歌已不在 Better Lyrics 公開快取中，請重新搜尋。',
-  offline: '保存時無法連線至 Better Lyrics，請檢查網路後再試。',
-  'fetch-unavailable': '保存時無法連線至 Better Lyrics，請稍後再試。',
-  timeout: 'Better Lyrics 保存驗證逾時，請稍後再試。',
-  'service-unavailable': 'Better Lyrics 服務暫時無法完成保存驗證。',
   'stale-search': 'Better Lyrics 搜尋結果已過期，請重新搜尋。',
   'record-mismatch': 'Better Lyrics 的歌詞已不再符合目前曲目，請重新搜尋。',
   busy: '已有一筆歌詞正在儲存，請稍候。',
 });
 
 function providerSaveFailureMessage(providerId, reason) {
+  if (providerId === 'kugou') {
+    const messages = {
+      'stale-search': 'verificationStaleSearch',
+      'record-mismatch': 'verificationMismatch',
+      'missing-track-identity': 'missingIdentity',
+      'invalid-record': 'providerInvalidData',
+      'invalid-json': 'providerInvalidData',
+      'response-too-large': 'providerInvalidData',
+    };
+    if (messages[reason])
+      return t(`lyricsAcquisition.${messages[reason]}`, {
+        provider: t('lyricsAcquisition.kugou'),
+      });
+  }
+  if (reason === 'request-budget-exhausted')
+    return t('lyricsAcquisition.budgetReached');
+  const networkKeys = {
+    offline: 'verificationOffline',
+    'fetch-unavailable': 'verificationOffline',
+    timeout: 'verificationTimeout',
+    'rate-limited': 'verificationRateLimited',
+    'service-unavailable': 'verificationUnavailable',
+    'http-error': 'verificationUnavailable',
+  };
+  if (networkKeys[reason]) {
+    return t(`lyricsAcquisition.${networkKeys[reason]}`, {
+      provider:
+        providerId === 'netease'
+          ? t('lyricsAcquisition.netease')
+          : providerId === 'kugou'
+            ? t('lyricsAcquisition.kugou')
+            : providerId === 'betterlyrics'
+              ? 'Better Lyrics'
+              : 'LRCLIB',
+    });
+  }
   return (
     (providerId === 'betterlyrics'
       ? BETTER_LYRICS_SAVE_FAILURE_MESSAGES[reason]
@@ -145,6 +178,16 @@ export function useLyricsAcquisition({
 }) {
   let musixmatchProbeRequestId = 0;
   let candidateSearchRequestId = 0;
+  let candidateSearchQueryKey = null;
+  let activeCandidateSave = null;
+
+  function invalidateCandidateSave() {
+    if (activeCandidateSave !== null) {
+      activeCandidateSave = null;
+      state.manualSave.isSaving = false;
+    }
+    state.manualSave.error = null;
+  }
 
   function clearMusixmatchProbe() {
     musixmatchProbeRequestId += 1;
@@ -156,6 +199,7 @@ export function useLyricsAcquisition({
 
   function clearCandidateSearch() {
     candidateSearchRequestId += 1;
+    candidateSearchQueryKey = null;
     state.candidateSearch.isLoading = false;
     state.candidateSearch.trackId = null;
     state.candidateSearch.providerId = null;
@@ -168,7 +212,7 @@ export function useLyricsAcquisition({
     state.candidateSearch.partial = false;
     state.candidateSearch.invalidRecordCount = 0;
     state.candidateSearch.error = null;
-    state.manualSave.error = null;
+    invalidateCandidateSave();
   }
 
   function replaceCandidate(candidate) {
@@ -216,6 +260,7 @@ export function useLyricsAcquisition({
       operation: options.operation || 'external-source',
       message: '請先到設定啟用歌詞來源，才能搜尋、保存或整理線上歌詞。',
     });
+    if (options.isCurrent && !options.isCurrent()) return false;
     if (!enabled) {
       const message = '請先到設定啟用歌詞來源';
       if (options.errorTarget === 'musixmatchProbe') {
@@ -281,7 +326,25 @@ export function useLyricsAcquisition({
   ) {
     const track = state.tracks.find((candidate) => candidate.id === trackId);
     if (!track) return;
+    const queryKey = JSON.stringify([
+      options?.query?.title ?? '',
+      options?.query?.artist ?? '',
+    ]);
+    const retained =
+      options?.mode === 'broaden' &&
+      candidateSearchQueryKey === queryKey &&
+      state.candidateSearch.trackId === track.id &&
+      state.candidateSearch.providerId === providerId &&
+      state.candidateSearch.candidates.length > 0
+        ? {
+            candidates: state.candidateSearch.candidates,
+            groups: state.candidateSearch.groups,
+            recordingGroups: state.candidateSearch.recordingGroups,
+          }
+        : null;
+    candidateSearchQueryKey = queryKey;
     candidateSearchRequestId += 1;
+    invalidateCandidateSave();
     const requestId = candidateSearchRequestId;
     if (!(await ensureLyricsFlow())) return;
     if (requestId !== candidateSearchRequestId) return;
@@ -306,11 +369,30 @@ export function useLyricsAcquisition({
     }
 
     try {
-      const result =
+      let result =
         typeof genericSearch === 'function'
           ? await genericSearch(providerId, track.id, options)
           : await legacySearch(track.id, options);
       if (requestId !== candidateSearchRequestId) return;
+      if (retained && !result?.candidates?.length) {
+        result = {
+          ...result,
+          ...retained,
+          status: 'ok',
+          partial: result?.status === 'error' || result?.partial === true,
+          providerStatuses: result?.providerStatuses?.length
+            ? result.providerStatuses
+            : result?.status === 'error'
+              ? [
+                  {
+                    provider: providerId,
+                    status: 'error',
+                    reason: result.reason,
+                  },
+                ]
+              : [],
+        };
+      }
       state.candidateSearch.status = result?.status ?? null;
       state.candidateSearch.reason = result?.reason ?? null;
       state.candidateSearch.candidates = Array.isArray(result?.candidates)
@@ -322,7 +404,16 @@ export function useLyricsAcquisition({
         result?.providerStatuses,
       )
         ? result.providerStatuses
-        : [];
+        : result?.partial === true
+          ? [
+              {
+                provider: providerId,
+                status: result.status,
+                partial: true,
+                reason: result.reason,
+              },
+            ]
+          : [];
       state.candidateSearch.partial = result?.partial === true;
       state.candidateSearch.invalidRecordCount = Number.isSafeInteger(
         result?.invalidRecordCount,
@@ -335,7 +426,9 @@ export function useLyricsAcquisition({
             `${providerId} search failed: ${result.reason || 'unknown'}`,
           ),
           'search',
-          PROVIDER_FAILURE_MESSAGES[providerId]?.[result.reason] ||
+          (result.reason === 'request-budget-exhausted'
+            ? t('lyricsAcquisition.budgetReached')
+            : PROVIDER_FAILURE_MESSAGES[providerId]?.[result.reason]) ||
             '目前無法搜尋歌詞，請稍後再試。',
           { persist: false },
         );
@@ -343,6 +436,24 @@ export function useLyricsAcquisition({
       return result;
     } catch (error) {
       if (requestId !== candidateSearchRequestId) return;
+      if (retained) {
+        const result = {
+          provider: providerId,
+          status: 'ok',
+          partial: true,
+          reason: 'request-failed',
+          ...retained,
+          providerStatuses: [
+            { provider: providerId, status: 'error', reason: 'request-failed' },
+          ],
+        };
+        state.candidateSearch.status = result.status;
+        state.candidateSearch.partial = true;
+        state.candidateSearch.reason = result.reason;
+        state.candidateSearch.providerStatuses = result.providerStatuses;
+        state.candidateSearch.error = null;
+        return result;
+      }
       state.candidateSearch.error = reportLyricsError(
         error,
         'search',
@@ -373,37 +484,56 @@ export function useLyricsAcquisition({
     const track = state.tracks.find((item) => item.id === trackId);
     if (!track) return null;
     const searchRequestId = candidateSearchRequestId;
-    if (!(await ensureLyricsFlow())) return null;
-
-    const genericSave = preferLegacyBridge
-      ? null
-      : window.Utawakui?.saveLyricsProviderCandidate;
-    const legacySave =
-      providerId === 'lrclib' ? window.Utawakui?.saveLyricsCandidate : null;
-    if (typeof genericSave !== 'function' && typeof legacySave !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再試。';
-      return null;
-    }
-
+    const selectedTrackId = state.selectedTrackId;
+    const submittedCandidate = { ...candidate };
+    const attempt = {};
+    activeCandidateSave = attempt;
+    const isCurrent = () =>
+      activeCandidateSave === attempt &&
+      searchRequestId === candidateSearchRequestId &&
+      state.selectedTrackId === selectedTrackId;
+    const saveOptions = candidateSaveOptions(query);
+    let committed = false;
     state.manualSave.isSaving = true;
     state.manualSave.error = null;
     try {
+      if (!(await ensureLyricsFlow({ errorTarget: 'manualSave', isCurrent })))
+        return null;
+      const genericSave = preferLegacyBridge
+        ? null
+        : window.Utawakui?.saveLyricsProviderCandidate;
+      const legacySave =
+        providerId === 'lrclib' ? window.Utawakui?.saveLyricsCandidate : null;
+      if (
+        typeof genericSave !== 'function' &&
+        typeof legacySave !== 'function'
+      ) {
+        state.manualSave.error = t('lyricsAcquisition.restartToSave');
+        return null;
+      }
       const args = [
         track.id,
-        candidate.id,
-        candidate.previewFingerprint,
-        candidateSaveOptions(query),
+        submittedCandidate.id,
+        submittedCandidate.previewFingerprint,
+        saveOptions,
       ];
       const result =
         typeof genericSave === 'function'
           ? await genericSave(providerId, ...args)
           : await legacySave(...args);
+      // A completed Main transaction still needs a library refresh even if its
+      // preview was dismissed. Only the current preview may consume its result.
+      if (result?.status === 'saved' && result.source) {
+        committed = true;
+        await refreshLibrary();
+      }
+      if (!isCurrent()) return null;
       if (result?.status === 'record-changed') {
         if (
           searchRequestId === candidateSearchRequestId &&
           state.candidateSearch.trackId === track.id
         ) {
-          const key = candidateKey(candidate, providerId);
+          const key = candidateKey(submittedCandidate, providerId);
           for (const group of [
             ...state.candidateSearch.recordingGroups.best,
             ...state.candidateSearch.recordingGroups.related,
@@ -428,16 +558,16 @@ export function useLyricsAcquisition({
         );
         return null;
       }
-      await refreshLibrary();
       const keepProviderIdentity =
-        Boolean(candidate.providerId || candidate.candidateKey) ||
-        state.candidateSearch.providerId === 'all';
+        Boolean(
+          submittedCandidate.providerId || submittedCandidate.candidateKey,
+        ) || state.candidateSearch.providerId === 'all';
       replaceCandidate({
-        ...candidate,
+        ...submittedCandidate,
         ...(keepProviderIdentity
           ? {
-              providerId: candidate.providerId || providerId,
-              candidateKey: candidateKey(candidate, providerId),
+              providerId: submittedCandidate.providerId || providerId,
+              candidateKey: candidateKey(submittedCandidate, providerId),
             }
           : {}),
         alreadySaved: true,
@@ -449,15 +579,21 @@ export function useLyricsAcquisition({
       }
       return result;
     } catch (error) {
+      if (!isCurrent()) return null;
       state.manualSave.error = reportLyricsError(
         error,
         'save-candidate',
-        '請再試一次。',
+        committed
+          ? t('lyricsAcquisition.savedRefreshFailed')
+          : t('lyricsAcquisition.saveIncomplete'),
         { persist: false },
       );
       return null;
     } finally {
-      state.manualSave.isSaving = false;
+      if (activeCandidateSave === attempt) {
+        activeCandidateSave = null;
+        state.manualSave.isSaving = false;
+      }
     }
   }
 

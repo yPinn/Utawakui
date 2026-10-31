@@ -1,0 +1,18 @@
+{
+  "version": 8,
+  "checked": true,
+  "checkedAt": "2026-10-31T05:15:04.765Z",
+  "sources": [
+    {
+      "filename": "amll-43.lrc",
+      "language": "und",
+      "kind": "amll",
+      "label": "Album",
+      "provider": {
+        "name": "amll",
+        "recordId": 43,
+        "artifactFilename": "amll-43.json"
+      }
+    }
+  ]
+}

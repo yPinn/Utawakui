@@ -178,9 +178,6 @@ describe('coverage policy', () => {
     expect(coveragePolicy.include).toEqual(
       expect.arrayContaining([
         'scripts/audio-separator-roformer-wheel-patch.mjs',
-        'scripts/lyrics-provider-amll.mjs',
-        'scripts/lyrics-provider-amll-probe.mjs',
-        'scripts/lyrics-provider-amll-ttml.mjs',
         'scripts/lyrics-provider-corpus-candidates.mjs',
         'scripts/lyrics-provider-corpus-runner.mjs',
         'scripts/lyrics-provider-corpus-cli.mjs',

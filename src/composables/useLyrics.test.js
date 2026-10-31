@@ -2026,7 +2026,10 @@ describe('useLyrics', () => {
 
   it.each([
     ['cache-miss', '這首歌已不在 Better Lyrics 公開快取中，請重新搜尋。'],
-    ['offline', '保存時無法連線至 Better Lyrics，請檢查網路後再試。'],
+    [
+      'offline',
+      '無法連線至 Better Lyrics 完成版本驗證，歌詞尚未儲存。請檢查網路後再試。',
+    ],
     ['stale-search', 'Better Lyrics 搜尋結果已過期，請重新搜尋。'],
   ])(
     'preserves the bounded Better Lyrics %s save failure reason',

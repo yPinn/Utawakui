@@ -11,10 +11,10 @@ const {
   setLyricsSourceLabel,
   setLyricsSourcePreference,
 } = require('../../lib/library');
-const { deleteStoredAmllSource } = require('../../lib/amll');
 const { deleteStoredBetterLyricsSource } = require('../../lib/betterlyrics');
 const { deleteStoredLrclibSource } = require('../../lib/lrclib');
 const { deleteStoredNeteaseSource } = require('../../lib/netease');
+const { deleteStoredKugouSource } = require('../../lib/kugou/storage.js');
 const {
   loadTrackVocalRoles,
   saveTrackVocalRoles,
@@ -219,9 +219,9 @@ function registerLyricsDocumentHandlers({
     );
     const deleteSource =
       {
-        amll: deleteStoredAmllSource,
         betterlyrics: deleteStoredBetterLyricsSource,
         netease: deleteStoredNeteaseSource,
+        kugou: deleteStoredKugouSource,
       }[source?.provider?.name] || deleteStoredLrclibSource;
     if (!deleteSource(trackDir, filename)) {
       throw new Error(`unable to delete lyrics source: ${filename}`);

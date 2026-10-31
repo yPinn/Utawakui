@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  assessBetterLyricsCandidate,
   evaluateBetterLyricsCandidate,
   fingerprintBetterLyricsRecord,
   summarizeBetterLyricsCandidate,
@@ -15,7 +16,7 @@ function record(overrides = {}) {
     artistName: 'Singer',
     albumName: 'Album',
     duration: 5,
-    score: 95,
+    score: 0.95,
     cacheStatus: 'HIT',
     ttml: TTML,
     ...overrides,
@@ -23,6 +24,33 @@ function record(overrides = {}) {
 }
 
 describe('Better Lyrics candidate validation', () => {
+  it.each([0.8, 0.97, 1])('accepts the documented unit score %s', (score) => {
+    expect(
+      assessBetterLyricsCandidate(
+        { title: 'Song', artist: 'Singer', duration: 5 },
+        record({ score }),
+      ),
+    ).toMatchObject({ status: 'ok' });
+  });
+  it.each([0, 0.799999])('keeps the 80 percent threshold for %s', (score) => {
+    expect(
+      assessBetterLyricsCandidate(
+        { title: 'Song', artist: 'Singer', duration: 5 },
+        record({ score }),
+      ),
+    ).toEqual({ status: 'unavailable', reason: 'low-confidence-match' });
+  });
+  it.each([-0.01, 1.01, 95, NaN, Infinity, '0.97', null, undefined])(
+    'rejects an invalid present score %s without inferring its scale',
+    (score) => {
+      expect(
+        assessBetterLyricsCandidate(
+          { title: 'Song', artist: 'Singer', duration: 5 },
+          record({ score }),
+        ),
+      ).toEqual({ status: 'error', reason: 'invalid-record' });
+    },
+  );
   it('summarizes an exact complete T2 match without provider-native ranking data', () => {
     const match = evaluateBetterLyricsCandidate(
       { title: 'Song', artist: 'Singer', album: 'Album', duration: 5 },
@@ -55,7 +83,7 @@ describe('Better Lyrics candidate validation', () => {
 
   it.each([
     ['missing record', null],
-    ['low score', record({ score: 79 })],
+    ['low score', record({ score: 0.79 })],
     ['wrong title', record({ trackName: 'Different' })],
     ['wrong artist', record({ artistName: 'Other' })],
     ['wrong duration', record({ duration: 15 })],
@@ -73,7 +101,7 @@ describe('Better Lyrics candidate validation', () => {
   it('fingerprints stable query identity and TTML, not transient cache metadata', () => {
     expect(
       fingerprintBetterLyricsRecord(
-        record({ score: 80, cacheStatus: 'STALE' }),
+        record({ score: 0.8, cacheStatus: 'STALE' }),
       ),
     ).toBe(fingerprintBetterLyricsRecord(record()));
     expect(

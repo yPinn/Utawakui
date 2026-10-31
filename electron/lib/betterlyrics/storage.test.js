@@ -20,7 +20,7 @@ function record(overrides = {}) {
     artistName: 'Singer',
     albumName: 'Album',
     duration: 5,
-    score: 95,
+    score: 0.95,
     cacheStatus: 'HIT',
     ttml: TTML,
     ...overrides,

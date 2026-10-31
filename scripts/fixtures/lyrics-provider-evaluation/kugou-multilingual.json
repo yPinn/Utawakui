@@ -1,0 +1,508 @@
+{
+  "schemaVersion": 1,
+  "frozenDate": "2026-10-31",
+  "scope": "Public reference conditions; 12 songs, 24 paired conditions, 2 no-alias controls. Gold is review-only, never provided to query planning. No population coverage claim.",
+  "limits": {
+    "maxAttemptsPerCase": 5,
+    "maxQueriesPerCase": 3,
+    "totalHttp": 140,
+    "intervalMs": 1000,
+    "deadlineMs": 25000
+  },
+  "cases": [
+    {
+      "id": "zh-qingtian-canonical",
+      "songId": "zh-qingtian",
+      "language": "zh",
+      "group": "canonical",
+      "reference": {
+        "title": "晴天",
+        "artist": "周杰倫",
+        "album": null,
+        "durationSeconds": 269,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "晴天",
+        "artist": "周杰倫",
+        "durationSeconds": 269,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "zh-qingtian-challenge",
+      "songId": "zh-qingtian",
+      "language": "zh",
+      "group": "challenge",
+      "reference": {
+        "title": "晴天",
+        "artist": "周杰倫 (Jay Chou)",
+        "album": null,
+        "durationSeconds": 269,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "晴天",
+        "artist": "周杰倫",
+        "durationSeconds": 269,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "zh-qilixiang-canonical",
+      "songId": "zh-qilixiang",
+      "language": "zh",
+      "group": "canonical",
+      "reference": {
+        "title": "七里香",
+        "artist": "周杰倫",
+        "album": null,
+        "durationSeconds": 297,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "七里香",
+        "artist": "周杰倫",
+        "durationSeconds": 297,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "zh-qilixiang-challenge",
+      "songId": "zh-qilixiang",
+      "language": "zh",
+      "group": "challenge",
+      "reference": {
+        "title": "Qi Li Xiang (七里香)",
+        "artist": "周杰倫 (Jay Chou)",
+        "album": null,
+        "durationSeconds": 297,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "七里香",
+        "artist": "周杰倫",
+        "durationSeconds": 297,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "zh-fuji-canonical",
+      "songId": "zh-fuji",
+      "language": "zh",
+      "group": "canonical",
+      "reference": {
+        "title": "富士山下",
+        "artist": "陳奕迅",
+        "album": null,
+        "durationSeconds": 259,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "富士山下",
+        "artist": "陳奕迅",
+        "durationSeconds": 259,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "zh-fuji-challenge",
+      "songId": "zh-fuji",
+      "language": "zh",
+      "group": "challenge",
+      "reference": {
+        "title": "富士山下",
+        "artist": "陳奕迅 (Eason Chan)",
+        "album": null,
+        "durationSeconds": 259,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "富士山下",
+        "artist": "陳奕迅",
+        "durationSeconds": 259,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ja-hana-canonical",
+      "songId": "ja-hana",
+      "language": "ja",
+      "group": "canonical",
+      "reference": {
+        "title": "花の唄",
+        "artist": "Aimer",
+        "album": null,
+        "durationSeconds": 371,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "花の唄",
+        "artist": "Aimer",
+        "durationSeconds": 371,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ja-hana-challenge",
+      "songId": "ja-hana",
+      "language": "ja",
+      "group": "challenge",
+      "reference": {
+        "title": "Hana No Uta (花の唄)",
+        "artist": "Aimer (エメ)",
+        "album": null,
+        "durationSeconds": 371,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "花の唄",
+        "artist": "Aimer",
+        "durationSeconds": 371,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ja-yoru-canonical",
+      "songId": "ja-yoru",
+      "language": "ja",
+      "group": "canonical",
+      "reference": {
+        "title": "夜に駆ける",
+        "artist": "YOASOBI",
+        "album": null,
+        "durationSeconds": 261,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "夜に駆ける",
+        "artist": "YOASOBI",
+        "durationSeconds": 261,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ja-yoru-challenge",
+      "songId": "ja-yoru",
+      "language": "ja",
+      "group": "challenge",
+      "reference": {
+        "title": "Yoru ni Kakeru (夜に駆ける)",
+        "artist": "YOASOBI (ヨアソビ)",
+        "album": null,
+        "durationSeconds": 261,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "夜に駆ける",
+        "artist": "YOASOBI",
+        "durationSeconds": 261,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ja-idol-canonical",
+      "songId": "ja-idol",
+      "language": "ja",
+      "group": "canonical",
+      "reference": {
+        "title": "アイドル",
+        "artist": "YOASOBI",
+        "album": null,
+        "durationSeconds": 213,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "アイドル",
+        "artist": "YOASOBI",
+        "durationSeconds": 213,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ja-idol-challenge",
+      "songId": "ja-idol",
+      "language": "ja",
+      "group": "challenge",
+      "reference": {
+        "title": "Idol (アイドル)",
+        "artist": "YOASOBI (ヨアソビ)",
+        "album": null,
+        "durationSeconds": 213,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "アイドル",
+        "artist": "YOASOBI",
+        "durationSeconds": 213,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ko-spring-canonical",
+      "songId": "ko-spring",
+      "language": "ko",
+      "group": "canonical",
+      "reference": {
+        "title": "봄날",
+        "artist": "BTS",
+        "album": null,
+        "durationSeconds": 274,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "봄날",
+        "artist": "BTS",
+        "durationSeconds": 274,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ko-spring-challenge",
+      "songId": "ko-spring",
+      "language": "ko",
+      "group": "challenge",
+      "reference": {
+        "title": "Spring Day (봄날)",
+        "artist": "방탄소년단 (BTS)",
+        "album": null,
+        "durationSeconds": 274,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "봄날",
+        "artist": "BTS",
+        "durationSeconds": 274,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ko-ddu-canonical",
+      "songId": "ko-ddu",
+      "language": "ko",
+      "group": "canonical",
+      "reference": {
+        "title": "뚜두뚜두",
+        "artist": "BLACKPINK",
+        "album": null,
+        "durationSeconds": 209,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "뚜두뚜두",
+        "artist": "BLACKPINK",
+        "durationSeconds": 209,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ko-ddu-challenge",
+      "songId": "ko-ddu",
+      "language": "ko",
+      "group": "challenge",
+      "reference": {
+        "title": "DDU-DU DDU-DU (뚜두뚜두)",
+        "artist": "블랙핑크 (BLACKPINK)",
+        "album": null,
+        "durationSeconds": 209,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "뚜두뚜두",
+        "artist": "BLACKPINK",
+        "durationSeconds": 209,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ko-night-canonical",
+      "songId": "ko-night",
+      "language": "ko",
+      "group": "canonical",
+      "reference": {
+        "title": "밤편지",
+        "artist": "IU",
+        "album": null,
+        "durationSeconds": 253,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "밤편지",
+        "artist": "IU",
+        "durationSeconds": 253,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "ko-night-challenge",
+      "songId": "ko-night",
+      "language": "ko",
+      "group": "challenge",
+      "reference": {
+        "title": "Through the Night (밤편지)",
+        "artist": "아이유 (IU)",
+        "album": null,
+        "durationSeconds": 253,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "밤편지",
+        "artist": "IU",
+        "durationSeconds": 253,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "en-closer-canonical",
+      "songId": "en-closer",
+      "language": "en",
+      "group": "canonical",
+      "reference": {
+        "title": "Closer to You",
+        "artist": "Jung Kook, Major Lazer",
+        "album": null,
+        "durationSeconds": 171,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "Closer to You",
+        "artist": "Jung Kook, Major Lazer",
+        "durationSeconds": 171,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "en-closer-challenge",
+      "songId": "en-closer",
+      "language": "en",
+      "group": "challenge",
+      "reference": {
+        "title": "Closer to You (feat. Major Lazer)",
+        "artist": "정국 (Jung Kook), Major Lazer",
+        "album": null,
+        "durationSeconds": 171,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "Closer to You",
+        "artist": "Jung Kook, Major Lazer",
+        "durationSeconds": 171,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "en-shape-canonical",
+      "songId": "en-shape",
+      "language": "en",
+      "group": "canonical",
+      "reference": {
+        "title": "Shape of You",
+        "artist": "Ed Sheeran",
+        "album": null,
+        "durationSeconds": 234,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "Shape of You",
+        "artist": "Ed Sheeran",
+        "durationSeconds": 234,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "en-shape-challenge",
+      "songId": "en-shape",
+      "language": "en",
+      "group": "challenge",
+      "reference": {
+        "title": "Shape of You",
+        "artist": "Ed Sheeran (艾德·希兰)",
+        "album": null,
+        "durationSeconds": 234,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "Shape of You",
+        "artist": "Ed Sheeran",
+        "durationSeconds": 234,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "en-talk-canonical",
+      "songId": "en-talk",
+      "language": "en",
+      "group": "canonical",
+      "reference": {
+        "title": "We Don't Talk Anymore",
+        "artist": "Charlie Puth, Selena Gomez",
+        "album": null,
+        "durationSeconds": 218,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "We Don't Talk Anymore",
+        "artist": "Charlie Puth, Selena Gomez",
+        "durationSeconds": 218,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "en-talk-challenge",
+      "songId": "en-talk",
+      "language": "en",
+      "group": "challenge",
+      "reference": {
+        "title": "We Don't Talk Anymore (feat. Selena Gomez)",
+        "artist": "Charlie Puth、Selena Gomez",
+        "album": null,
+        "durationSeconds": 218,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "We Don't Talk Anymore",
+        "artist": "Charlie Puth, Selena Gomez",
+        "durationSeconds": 218,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "nohint-hana",
+      "songId": "nohint-hana",
+      "language": "ja",
+      "group": "no-alias-control",
+      "reference": {
+        "title": "Hana No Uta",
+        "artist": "Aimer",
+        "album": null,
+        "durationSeconds": 371,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "花の唄",
+        "artist": "Aimer",
+        "durationSeconds": 371,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "nohint-yoru",
+      "songId": "nohint-yoru",
+      "language": "ja",
+      "group": "no-alias-control",
+      "reference": {
+        "title": "Yoru ni Kakeru",
+        "artist": "YOASOBI",
+        "album": null,
+        "durationSeconds": 261,
+        "version": "studio"
+      },
+      "gold": {
+        "title": "夜に駆ける",
+        "artist": "YOASOBI",
+        "durationSeconds": 261,
+        "version": "studio"
+      }
+    }
+  ]
+}

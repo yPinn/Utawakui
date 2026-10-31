@@ -6,6 +6,60 @@ import runtimeDiagnosticsLoggerModule from './runtimeDiagnosticsLogger.js';
 const { EVENT_DEFINITIONS, createRuntimeDiagnosticsLogger } =
   runtimeDiagnosticsLoggerModule;
 
+it('records bounded physical request counts without private query data', () => {
+  const service = { record: vi.fn() };
+  const logger = createRuntimeDiagnosticsLogger({ service, consoleTarget: {} });
+  logger.debug('[lyrics] background acquisition timing', {
+    httpAttempts: 7,
+    durationMs: 999999,
+    query: 'private',
+    lyrics: 'private',
+  });
+  expect(service.record).toHaveBeenCalledWith(
+    expect.objectContaining({
+      operation: 'background-acquisition-summary',
+      context: { count: 7, durationMs: 60000, status: 'background' },
+    }),
+  );
+  expect(JSON.stringify(service.record.mock.calls)).not.toContain('private');
+  logger.debug('[lyrics] query timing', { httpAttempts: 13 });
+  expect(service.record).toHaveBeenCalledTimes(1);
+});
+
+it('records only bounded lyrics provider summaries, including clean misses', () => {
+  const service = { record: vi.fn() };
+  const logger = createRuntimeDiagnosticsLogger({ service, consoleTarget: {} });
+  logger.debug('[lyrics] provider search timing', {
+    provider: 'kugou',
+    cacheHit: false,
+    durationMs: 4000,
+    candidateCount: 0,
+    status: 'ok',
+    query: 'private',
+    accesskey: 'private',
+  });
+  expect(service.record).toHaveBeenCalledWith({
+    process: 'main',
+    level: 'debug',
+    source: 'lyrics',
+    operation: 'kugou-search-summary',
+    code: 'LYRICS_KUGOU_SEARCH_SUMMARY',
+    message: 'Lyrics provider search completed',
+    context: {
+      durationMs: 4000,
+      candidateCount: 0,
+      status: 'ok',
+      stage: 'discovery',
+    },
+  });
+  logger.debug('arbitrary', { provider: 'kugou', status: 'ok' });
+  logger.debug('[lyrics] provider search timing', {
+    provider: 'private',
+    status: 'ok',
+  });
+  expect(service.record).toHaveBeenCalledTimes(1);
+});
+
 function electronSources(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(directory, entry.name);

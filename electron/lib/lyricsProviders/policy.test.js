@@ -13,8 +13,15 @@ describe('lyrics provider policy', () => {
       'lrclib',
       'netease',
       'betterlyrics',
+      'kugou',
     ]);
     expect(AUTOMATIC_LYRICS_PROVIDER_IDS).toEqual(['lrclib', 'netease']);
+    expect(lyricsProviderPolicy('kugou')).toMatchObject({
+      fallbackOnly: true,
+      manualSearch: true,
+      automaticDiscovery: false,
+      automaticSave: false,
+    });
     expect(lyricsProviderPolicy('betterlyrics')).toMatchObject({
       manualSearch: true,
       automaticDiscovery: false,

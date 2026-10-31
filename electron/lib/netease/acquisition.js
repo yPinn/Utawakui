@@ -11,12 +11,15 @@ const { createNeteaseClient } = require('./client.js');
 const { saveNeteaseRecord } = require('./storage.js');
 const { parseLrcLines } = require('../lrclib/lrc.js');
 const {
+  createLyricsRequestBudget,
+  requestFailure,
+} = require('../lyricsProviders/requestPolicy.js');
+const {
   buildLyricsTimelineEvidence,
 } = require('../lyricsProviders/timelineComparison.js');
 
 const SHA256_RE = /^[a-f0-9]{64}$/u;
 const TARGET_USABLE_CANDIDATES = 3;
-const MAX_HYDRATION_BATCH_SIZE = 3;
 const MAX_CACHED_IDENTITIES = 32;
 
 function identityCacheKey(identity) {
@@ -42,7 +45,9 @@ function searchQueries(plan, mode, retainCached) {
   const { identity } = plan;
   const queries = [];
   if (mode !== 'broaden' || !retainCached) {
-    queries.push(...plan.structuredQueries);
+    queries.push(
+      ...plan.structuredQueries.slice(0, mode === 'broaden' ? 3 : 2),
+    );
   }
   if (mode === 'broaden') {
     queries.push({ trackName: broadenedTitle(identity.trackName) });
@@ -124,7 +129,7 @@ function createNeteaseAcquisitionProvider(options = {}) {
     return records;
   }
 
-  async function searchCandidates(track, searchOptions = {}) {
+  async function runSearch(track, searchOptions) {
     const plan = buildLrclibQueryPlan(track, searchOptions.query);
     if (!plan.identity.trackName) {
       return providerFailure(
@@ -137,80 +142,118 @@ function createNeteaseAcquisitionProvider(options = {}) {
       searchOptions.mode === 'broaden' &&
       cachedRecordsByIdentity.has(identityKey);
     const cachedRecords = recordsForSearch(identityKey, retainCached);
+    const targetCandidateCount = Math.min(
+      20,
+      TARGET_USABLE_CANDIDATES +
+        (retainCached
+          ? rankNeteaseCandidates(plan.identity, [...cachedRecords.values()])
+              .length
+          : 0),
+    );
 
-    const metadataById = new Map();
+    const requestOptions = {
+      signal: AbortSignal.any([
+        searchOptions.budget.signal,
+        ...[searchOptions.signal].filter(Boolean),
+      ]),
+      budget: searchOptions.budget,
+      ...(searchOptions.automatic ? { priority: 'background' } : {}),
+    };
+    const seenMetadata = new Set();
+    let hydrationAttempts = 0;
+    const maxHydrations = searchOptions.mode === 'broaden' ? 7 : 5;
     let invalidRecordCount = 0;
     let firstFailure = null;
     for (const query of searchQueries(plan, searchOptions.mode, retainCached)) {
-      const search = searchOptions.signal
-        ? await client.search(query, { signal: searchOptions.signal })
-        : await client.search(query);
-      if (search.status !== 'ok') {
-        firstFailure ||= search;
-        continue;
+      if (requestOptions.signal.aborted) {
+        firstFailure = requestFailure(requestOptions.signal.reason);
+        break;
       }
+      const search = await client.search(query, requestOptions);
+      if (search.status !== 'ok') {
+        if (search.status === 'error') firstFailure = search;
+        break;
+      }
+      if (searchOptions.signal?.aborted) break;
       invalidRecordCount += Number.isSafeInteger(search.invalidRecordCount)
         ? search.invalidRecordCount
         : 0;
-      for (const metadata of search.records) {
-        if (!cachedRecords.has(metadata.id))
-          metadataById.set(metadata.id, metadata);
-      }
-    }
-    const rankedMetadata = rankNeteaseMetadata(plan.identity, [
-      ...metadataById.values(),
-    ]);
-    let usableCandidateCount = rankNeteaseCandidates(plan.identity, [
-      ...cachedRecords.values(),
-    ]).length;
-    let nextMetadataIndex = 0;
-    while (
-      usableCandidateCount < TARGET_USABLE_CANDIDATES &&
-      nextMetadataIndex < rankedMetadata.length
-    ) {
-      const batchSize = Math.min(
-        MAX_HYDRATION_BATCH_SIZE,
-        TARGET_USABLE_CANDIDATES - usableCandidateCount,
-        rankedMetadata.length - nextMetadataIndex,
-      );
-      const batch = rankedMetadata.slice(
-        nextMetadataIndex,
-        nextMetadataIndex + batchSize,
-      );
-      nextMetadataIndex += batch.length;
-      const hydrated = await Promise.all(
-        batch.map(async ({ record: metadata }) => ({
-          metadata,
-          lyrics: searchOptions.signal
-            ? await client.getLyrics(metadata.id, {
-                signal: searchOptions.signal,
-              })
-            : await client.getLyrics(metadata.id),
-        })),
-      );
-      for (const { metadata, lyrics } of hydrated) {
+      const rankedMetadata = rankNeteaseMetadata(plan.identity, search.records);
+      for (const { record: metadata } of rankedMetadata) {
+        if (cachedRecords.has(metadata.id) || seenMetadata.has(metadata.id))
+          continue;
+        if (
+          rankNeteaseCandidates(plan.identity, [...cachedRecords.values()])
+            .length >= targetCandidateCount
+        )
+          break;
+        if (hydrationAttempts >= maxHydrations) {
+          firstFailure = {
+            status: 'error',
+            reason: 'request-budget-exhausted',
+          };
+          break;
+        }
+        if (requestOptions.signal.aborted) {
+          firstFailure = requestFailure(requestOptions.signal.reason);
+          break;
+        }
+        seenMetadata.add(metadata.id);
+        hydrationAttempts += 1;
+        const lyrics = await client.getLyrics(metadata.id, requestOptions);
+        if (searchOptions.signal?.aborted) break;
         if (lyrics.status !== 'ok') {
-          firstFailure ||= lyrics;
           invalidRecordCount += 1;
+          if (lyrics.status === 'error') {
+            firstFailure = lyrics;
+            break;
+          }
           continue;
         }
         const record = { ...metadata, ...lyrics.record };
         cachedRecords.set(record.id, record);
       }
-      usableCandidateCount = rankNeteaseCandidates(plan.identity, [
-        ...cachedRecords.values(),
-      ]).length;
+      const current = buildCandidateResult(
+        plan.identity,
+        [...cachedRecords.values()],
+        invalidRecordCount,
+      );
+      if (firstFailure || searchOptions.signal?.aborted) break;
+      if (
+        searchOptions.mode !== 'broaden' &&
+        current.groups.best.length >=
+          (searchOptions.automatic ? 1 : TARGET_USABLE_CANDIDATES)
+      )
+        break;
     }
+    if (searchOptions.signal?.aborted)
+      return providerFailure(
+        { status: 'error', reason: 'cancelled' },
+        { candidates: [], groups: null },
+      );
     const records = [...cachedRecords.values()];
-    if (records.length === 0 && firstFailure) {
-      return providerFailure(firstFailure, { candidates: [], groups: null });
-    }
-    return buildCandidateResult(
+    const result = buildCandidateResult(
       plan.identity,
       records,
       invalidRecordCount,
       searchOptions.includeTimelineEvidence,
     );
+    if (result.candidates.length === 0 && firstFailure) {
+      return providerFailure(firstFailure, { candidates: [], groups: null });
+    }
+    if (firstFailure && result.candidates.length > 0)
+      return { ...result, partial: true, reason: firstFailure.reason };
+    return result;
+  }
+
+  async function searchCandidates(track, options = {}) {
+    const budget =
+      options.budget || createLyricsRequestBudget('netease', options);
+    try {
+      return await runSearch(track, { ...options, budget });
+    } finally {
+      if (!options.budget) budget.dispose();
+    }
   }
 
   async function saveCandidate({
@@ -220,6 +263,9 @@ function createNeteaseAcquisitionProvider(options = {}) {
     expectedFingerprint,
     query,
     validateCommit,
+    budget,
+    signal,
+    automatic,
   }) {
     if (!Number.isSafeInteger(candidateId) || candidateId <= 0) {
       throw new Error('netease candidate id is invalid');
@@ -238,7 +284,12 @@ function createNeteaseAcquisitionProvider(options = {}) {
         reason: 'stale-search',
       };
     }
-    const fetched = await client.getLyrics(candidateId);
+    const fetched = await client.getLyrics(candidateId, {
+      fresh: true,
+      budget,
+      signal,
+      ...(automatic ? { priority: 'background' } : {}),
+    });
     if (fetched.status !== 'ok') return providerFailure(fetched);
     const record = { ...metadata, ...fetched.record };
     const currentFingerprint = fingerprintNeteaseRecord(record);
@@ -253,6 +304,15 @@ function createNeteaseAcquisitionProvider(options = {}) {
       }
       // Detach older hydration writers while retaining other candidate metadata
       // and the changed preview for an explicit confirm/save or broaden search.
+      for (const [key, records] of cachedRecordsByIdentity) {
+        if (key === identityKey || !records.has(candidateId)) continue;
+        const updated = new Map(records);
+        updated.set(candidateId, {
+          ...records.get(candidateId),
+          ...fetched.record,
+        });
+        cachedRecordsByIdentity.set(key, updated);
+      }
       const refreshedRecords = new Map([
         ...cachedRecords,
         ...(cachedRecordsByIdentity.get(identityKey) || []),

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { t } from '../../utils/i18n.js';
 import LyricsLrclibCandidateRow from './LyricsLrclibCandidateRow.vue';
 import { candidateTimelineDifference } from '../../utils/lrclibPresentation.js';
 
@@ -30,6 +31,7 @@ const orderedCandidates = computed(() => {
 const hasAlternatives = computed(() => orderedCandidates.value.length > 1);
 
 function providerLabel(candidate) {
+  if (candidate?.providerId === 'kugou') return t('lyricsAcquisition.kugou');
   if (candidate?.providerId === 'betterlyrics') return 'Better Lyrics';
   if (candidate?.providerId === 'netease') return '網易雲音樂';
   if (candidate?.providerId === 'lrclib') return 'LRCLIB';

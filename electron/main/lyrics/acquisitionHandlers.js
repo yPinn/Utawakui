@@ -14,9 +14,17 @@ const {
 const { probeMusixmatchLyrics } = require('../../lib/musixmatch');
 const { loadStoredLrclibArtifactSummary } = require('../../lib/lrclib');
 const { loadStoredNeteaseArtifactSummary } = require('../../lib/netease');
+const {
+  loadStoredKugouArtifactSummary,
+} = require('../../lib/kugou/storage.js');
 
 const MAX_LRCLIB_QUERY_CHARS = 256;
-const LYRICS_PROVIDER_IDS = new Set(['lrclib', 'netease', 'betterlyrics']);
+const LYRICS_PROVIDER_IDS = new Set([
+  'lrclib',
+  'netease',
+  'betterlyrics',
+  'kugou',
+]);
 const LYRICS_SEARCH_PROVIDER_IDS = new Set(['all', ...LYRICS_PROVIDER_IDS]);
 
 function normalizeLyricsProviderId(value, options = {}) {
@@ -30,6 +38,8 @@ function normalizeLyricsProviderId(value, options = {}) {
 }
 
 function storedArtifactSummary(trackDir, providerId, provider) {
+  if (providerId === 'kugou')
+    return loadStoredKugouArtifactSummary(trackDir, provider);
   if (providerId === 'betterlyrics') {
     return loadStoredBetterLyricsArtifactSummary(trackDir, provider);
   }

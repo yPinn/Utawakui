@@ -159,7 +159,7 @@ describe('private lyrics corpus review', () => {
       baselineProviderId: 'lrclib',
       providers: [
         expect.objectContaining({ id: 'lrclib', mode: 'baseline' }),
-        expect.objectContaining({ id: 'amll', mode: 'candidate' }),
+        expect.objectContaining({ id: 'kugou', mode: 'candidate' }),
       ],
       acceptance: {
         minimumCases: 40,

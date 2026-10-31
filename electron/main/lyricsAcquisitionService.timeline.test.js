@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createLyricsAcquisitionService } from './lyricsAcquisitionService.js';
+import { createLyricsAcquisitionService as createService } from './lyricsAcquisitionService.js';
 import { createNeteaseAcquisitionProvider } from '../lib/netease/acquisition.js';
 
 describe('timeline information in the existing acquisition service', () => {
@@ -115,9 +115,13 @@ describe('timeline information in the existing acquisition service', () => {
     };
     let finishOld, finishFresh;
     const client = {
-      getExact: vi
+      search: vi
         .fn()
-        .mockResolvedValueOnce({ status: 'ok', record: oldRecord })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [oldRecord],
+          invalidRecordCount: 0,
+        })
         .mockImplementationOnce(
           () =>
             new Promise((resolve) => {
@@ -129,12 +133,12 @@ describe('timeline information in the existing acquisition service', () => {
             new Promise((resolve) => {
               finishFresh = resolve;
             }),
-        ),
-      search: vi.fn(async () => ({
-        status: 'ok',
-        records: [],
-        invalidRecordCount: 0,
-      })),
+        )
+        .mockResolvedValue({
+          status: 'ok',
+          records: [],
+          invalidRecordCount: 0,
+        }),
       getById: vi.fn(async () => ({ status: 'ok', record: newRecord })),
     };
     const persistRecord = vi.fn();
@@ -157,11 +161,13 @@ describe('timeline information in the existing acquisition service', () => {
     ).resolves.toMatchObject({ status: 'record-changed' });
     const fresh = service.searchCandidates(track, { mode: 'broaden' });
     await vi.waitFor(() => expect(finishFresh).toBeTypeOf('function'));
-    finishOld({ status: 'ok', record: oldRecord });
+    finishOld({ status: 'ok', records: [oldRecord], invalidRecordCount: 0 });
     await stale;
     const duplicate = service.searchCandidates(track, { mode: 'broaden' });
-    expect(client.getExact).toHaveBeenCalledTimes(3);
-    finishFresh({ status: 'ok', record: newRecord });
+    expect(
+      client.search.mock.calls.filter(([query]) => query.artistName).length,
+    ).toBe(3);
+    finishFresh({ status: 'ok', records: [newRecord], invalidRecordCount: 0 });
     const result = await fresh;
     expect(await duplicate).toEqual(result);
     expect(await service.searchCandidates(track, { mode: 'broaden' })).toEqual(
@@ -170,7 +176,9 @@ describe('timeline information in the existing acquisition service', () => {
     expect(result.candidates[0].previewFingerprint).not.toBe(
       original.candidates[0].previewFingerprint,
     );
-    expect(client.getExact).toHaveBeenCalledTimes(3);
+    expect(
+      client.search.mock.calls.filter(([query]) => query.artistName).length,
+    ).toBe(3);
     expect(persistRecord).not.toHaveBeenCalled();
   });
 
@@ -430,3 +438,22 @@ describe('timeline information in the existing acquisition service', () => {
     expect(track).toEqual(original);
   });
 });
+
+// Older primary-provider regressions never perform live fallback traffic.
+function createLyricsAcquisitionService(options) {
+  return createService({
+    automaticIntervalMs: 0,
+    identityResolver: {
+      resolve: async () => ({ aliases: { title: [] }, evidence: [] }),
+    },
+    kugouProvider: {
+      searchCandidates: async () => ({
+        provider: 'kugou',
+        status: 'ok',
+        candidates: [],
+        groups: { best: [], related: [] },
+      }),
+    },
+    ...options,
+  });
+}

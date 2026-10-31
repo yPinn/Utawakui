@@ -42,9 +42,9 @@ function corpus() {
         boundedPayload: true,
       },
       {
-        id: 'amll',
+        id: 'kugou',
         mode: 'candidate',
-        profileId: 'amll-http-v1',
+        profileId: 'kugou-direct-lrc-evaluation-v1',
         accessMode: 'none',
         tokenRefresh: 'not-required',
         boundedPayload: true,
@@ -140,7 +140,7 @@ describe('private lyrics corpus validation', () => {
     const fixture = JSON.parse(
       fs.readFileSync(
         new URL(
-          './fixtures/lyrics-provider-corpus/synthetic-two-case.json',
+          './fixtures/lyrics-provider-corpus/synthetic-active-two-case.json',
           import.meta.url,
         ),
         'utf8',
@@ -259,7 +259,7 @@ describe('private lyrics corpus validation', () => {
     ],
     [
       (value) => {
-        value.baselineProviderId = 'amll';
+        value.baselineProviderId = 'kugou';
         value.providers[0].mode = 'candidate';
         value.providers[1].mode = 'baseline';
       },
@@ -293,7 +293,7 @@ describe('private lyrics corpus runner', () => {
     const result = await runPrivateLyricsCorpus(fullCorpus(), {
       probes: {
         lrclib: async () => observation('lrclib'),
-        amll: async () => observation('amll'),
+        kugou: async () => observation('kugou'),
       },
     });
 
@@ -315,9 +315,9 @@ describe('private lyrics corpus runner', () => {
           seen.push(structuredClone(input));
           return observation('lrclib');
         },
-        amll: async (input) => {
+        kugou: async (input) => {
           seen.push(structuredClone(input));
-          return observation('amll', {
+          return observation('kugou', {
             capability: 'T2',
             timingValidation: 'valid',
           });
@@ -376,7 +376,7 @@ describe('private lyrics corpus runner', () => {
     const result = await runPrivateLyricsCorpus(corpus(), {
       requiredCaseCount: 2,
       concurrency: 2,
-      probes: { lrclib: probe, amll: probe },
+      probes: { lrclib: probe, kugou: probe },
     });
 
     expect(maximumActive).toBe(2);
@@ -385,7 +385,7 @@ describe('private lyrics corpus runner', () => {
       result.cases.flatMap(({ observations }) =>
         observations.map(({ providerId }) => providerId),
       ),
-    ).toEqual(['lrclib', 'amll', 'lrclib', 'amll']);
+    ).toEqual(['lrclib', 'kugou', 'lrclib', 'kugou']);
   });
 
   it('isolates thrown, malformed, and provider-timed-out probes without exposing error text', async () => {
@@ -397,10 +397,10 @@ describe('private lyrics corpus runner', () => {
           .fn()
           .mockRejectedValueOnce(new Error(`failed for ${secret}`))
           .mockResolvedValueOnce(observation('wrong-provider')),
-        amll: vi
+        kugou: vi
           .fn()
           .mockResolvedValueOnce(
-            observation('amll', {
+            observation('kugou', {
               requestStatus: 'failed',
               failureCode: 'timeout',
               catalogStatus: 'not-evaluated',
@@ -410,7 +410,7 @@ describe('private lyrics corpus runner', () => {
             }),
           )
           .mockResolvedValueOnce(
-            observation('amll', {
+            observation('kugou', {
               catalogStatus: 'miss',
               matchBand: null,
               reviewVerdict: null,
@@ -430,7 +430,7 @@ describe('private lyrics corpus runner', () => {
       requestFailureCount: 2,
       catalogMissCount: 0,
     });
-    expect(thrown.report.providers.amll.summary).toMatchObject({
+    expect(thrown.report.providers.kugou.summary).toMatchObject({
       requestFailureCount: 1,
       catalogMissCount: 1,
     });
@@ -450,7 +450,7 @@ describe('private lyrics corpus runner', () => {
             reviewVerdict: null,
             capability: null,
           }),
-        amll: async () => observation('amll'),
+        kugou: async () => observation('kugou'),
       },
     });
 
@@ -478,7 +478,7 @@ describe('private lyrics corpus runner', () => {
         requiredCaseCount: 2,
         probes: {
           lrclib: async () => observation('lrclib'),
-          amll: async () => observation('amll'),
+          kugou: async () => observation('kugou'),
           extra: async () => observation('extra'),
         },
       }),
@@ -486,7 +486,7 @@ describe('private lyrics corpus runner', () => {
     await expect(
       runPrivateLyricsCorpus(corpus(), {
         requiredCaseCount: 2,
-        probes: { lrclib: null, amll: async () => observation('amll') },
+        probes: { lrclib: null, kugou: async () => observation('kugou') },
       }),
     ).rejects.toThrow(/provider probes/i);
   });
@@ -502,7 +502,7 @@ describe('private lyrics corpus runner', () => {
         requiredCaseCount: 2,
         probes: {
           lrclib: async () => observation('lrclib'),
-          amll: async () => observation('amll'),
+          kugou: async () => observation('kugou'),
         },
         [key]: value,
       }),
@@ -516,7 +516,7 @@ describe('private lyrics corpus runner', () => {
         concurrency: 1,
         probes: {
           lrclib: async () => observation('lrclib'),
-          amll: async () => observation('amll'),
+          kugou: async () => observation('kugou'),
         },
         probeTimeoutMs: 20,
       }),

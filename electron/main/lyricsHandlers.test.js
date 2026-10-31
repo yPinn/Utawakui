@@ -3,11 +3,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../lib/appError.js';
-import { saveAmllRecord } from '../lib/amll.js';
+
 import { saveLrclibRecord } from '../lib/lrclib.js';
 import { saveTrackLyricsText } from '../lib/library/lyrics.js';
 import { saveIndexEntry } from '../lib/library/metadataIndex.js';
 import { saveNeteaseRecord } from '../lib/netease.js';
+import { saveKugouRecord } from '../lib/kugou/storage.js';
 import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
 import documentHandlersModule from './lyrics/documentHandlers.js';
 import readingHandlersModule from './lyrics/readingHandlers.js';
@@ -671,6 +672,51 @@ describe('lyrics timing IPC', () => {
       query: { title: 'Song', artist: 'Artist' },
     });
   });
+  it('recognizes persisted Kugou provenance through the all-provider IPC and deletes both files', async () => {
+    const saved = saveKugouRecord(trackDir, {
+      id: 123,
+      trackName: 'Song',
+      artistName: 'Artist',
+      duration: 180,
+      lrcLyrics: '[ti:Song]\n[ar:Artist]\n[00:01]One\n[00:02]Two',
+    });
+    const candidate = {
+      id: 123,
+      providerId: 'kugou',
+      candidateKey: 'kugou:123',
+      trackName: 'Song',
+      artistName: 'Artist',
+      previewFingerprint: saved.recordFingerprint,
+      matchBand: 'exact',
+      capability: { level: 'T1' },
+    };
+    lyricsAcquisitionService.searchProviderCandidates.mockResolvedValue({
+      provider: 'all',
+      status: 'ok',
+      candidates: [candidate],
+      groups: { best: [candidate], related: [] },
+    });
+    const result = await ipcMain.handlers.get(
+      'lyrics:search-provider-candidates',
+    )(null, 'all', 'track-a');
+    expect(result.candidates[0]).toMatchObject({
+      providerId: 'kugou',
+      saveState: 'current',
+      alreadySaved: true,
+    });
+    expect(result.candidates[0].retrievedAt).toBeTypeOf('string');
+    await ipcMain.handlers.get('lyrics:delete-source')(
+      null,
+      'track-a',
+      saved.source.filename,
+    );
+    expect(
+      fs.existsSync(path.join(trackDir, 'lyrics/providers/kugou-123.json')),
+    ).toBe(false);
+    expect(
+      fs.existsSync(path.join(trackDir, 'lyrics', saved.source.filename)),
+    ).toBe(false);
+  });
 
   it('passes NetEase save through main-owned track and query resolution', async () => {
     lyricsAcquisitionService.saveProviderCandidate.mockResolvedValue({
@@ -1016,47 +1062,33 @@ describe('lyrics timing IPC', () => {
     expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 
-  it('deletes an AMLL source through its provider-owned storage', async () => {
-    const saved = saveAmllRecord(trackDir, {
-      id: 43,
-      filename: '1700000000000-1-song.ttml',
-      trackName: 'Song',
-      artistName: 'Artist',
-      albumName: 'Album',
-      musicNames: ['Song'],
-      artistNames: ['Artist'],
-      albumNames: ['Album'],
-      ncmMusicIds: [],
-      qqMusicIds: [],
-      appleMusicIds: [],
-      spotifyIds: [],
-      isrcs: [],
-      authorIds: ['1'],
-      authorUsernames: ['author'],
-      ttml: '<?xml version="1.0"?><tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://itunes.apple.com/lyric-ttml-extensions" itunes:timing="Word"><body><p begin="1s" end="2s"><span begin="1s" end="2s">Hello</span></p></body></tt>',
-    });
-    const artifactPath = path.join(
+  it('deletes a retired source as local lyrics while retaining its migration backup', async () => {
+    fs.cpSync(
+      new URL('../lib/library/fixtures/retired-source', import.meta.url),
       trackDir,
-      'lyrics',
-      'providers',
-      'amll-43.json',
+      { recursive: true },
     );
-    expect(fs.existsSync(artifactPath)).toBe(true);
-
+    const filename = 'amll-43.lrc';
     await expect(
-      ipcMain.handlers.get('lyrics:delete-source')(
-        null,
-        'track-a',
-        saved.source.filename,
-      ),
+      ipcMain.handlers.get('lyrics:delete-source')(null, 'track-a', filename),
     ).resolves.toMatchObject({
       sources: expect.not.arrayContaining([
-        expect.objectContaining({ filename: saved.source.filename }),
+        expect.objectContaining({ filename }),
       ]),
     });
-    expect(fs.existsSync(artifactPath)).toBe(false);
+    expect(fs.existsSync(path.join(trackDir, 'lyrics', filename))).toBe(false);
+    expect(
+      fs.existsSync(path.join(trackDir, 'lyrics/providers/amll-43.json')),
+    ).toBe(false);
+    expect(
+      fs.existsSync(
+        path.join(
+          trackDir,
+          'lyrics/migrations/retired-providers-v1/providers/amll-43.json',
+        ),
+      ),
+    ).toBe(true);
   });
-
   it('generates, edits, reports progress for, and deletes a reading document', async () => {
     const loaded = await ipcMain.handlers.get('lyrics:get-track')(
       null,

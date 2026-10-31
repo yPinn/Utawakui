@@ -8,6 +8,10 @@ const { createLrclibClient } = require('./client.js');
 const { buildLrclibQueryPlan } = require('./query.js');
 const { createLrclibRequestScheduler } = require('./scheduler.js');
 const {
+  createLyricsRequestBudget,
+  requestFailure,
+} = require('../lyricsProviders/requestPolicy.js');
+const {
   buildLyricsTimelineEvidence,
 } = require('../lyricsProviders/timelineComparison.js');
 
@@ -137,13 +141,21 @@ function buildCandidateResult(
   };
 }
 
-async function findLrclibSyncedLyrics(track, options = {}) {
+async function runSyncedLookup(track, options) {
   const plan = buildLrclibQueryPlan(track, options.query);
   if (!plan.structured) return unavailable('missing-track-title');
   const client = clientForOptions(options);
+  const requestOptions = {
+    signal: AbortSignal.any([
+      options.budget.signal,
+      ...[options.signal].filter(Boolean),
+    ]),
+    budget: options.budget,
+    priority: 'background',
+  };
 
   if (plan.exact) {
-    const exact = await client.getExact(plan.exact);
+    const exact = await client.getExact(plan.exact, requestOptions);
     if (exact.status === 'ok') {
       const [match] = rankLrclibCandidateMatches(plan.identity, [exact.record]);
       if (match && isCurrentAutoSaveCompatible(match)) {
@@ -156,9 +168,13 @@ async function findLrclibSyncedLyrics(track, options = {}) {
 
   const records = [];
   for (const query of plan.structuredQueries || [plan.structured]) {
-    const page = await client.search(query);
+    const page = await client.search(query, requestOptions);
     if (page.status === 'error') return providerFailure(page);
     records.push(...page.records);
+    const best = rankLrclibCandidateMatches(plan.identity, records).find(
+      isCurrentAutoSaveCompatible,
+    );
+    if (best) return buildAvailableResult(best);
   }
   const best = rankLrclibCandidateMatches(plan.identity, records).find(
     isCurrentAutoSaveCompatible,
@@ -168,71 +184,111 @@ async function findLrclibSyncedLyrics(track, options = {}) {
     : unavailable('no-safe-synced-match');
 }
 
-async function searchLrclibCandidates(track, options = {}) {
+async function findLrclibSyncedLyrics(track, options = {}) {
+  const budget =
+    options.budget ||
+    createLyricsRequestBudget('lrclib', { ...options, automatic: true });
+  try {
+    return await runSyncedLookup(track, { ...options, budget });
+  } finally {
+    if (!options.budget) budget.dispose();
+  }
+}
+
+async function runCandidateSearch(track, options) {
   const plan = buildLrclibQueryPlan(track, options.query);
   if (!plan.structured) {
     return unavailable('missing-track-title', { candidates: [], groups: null });
   }
   const client = clientForOptions(options);
-  const requestOptions =
-    options.signal || options.automatic
-      ? {
-          ...(options.signal ? { signal: options.signal } : {}),
-          ...(options.automatic ? { priority: 'background' } : {}),
-        }
-      : null;
+  const requestOptions = {
+    signal: AbortSignal.any([
+      options.budget.signal,
+      ...[options.signal].filter(Boolean),
+    ]),
+    budget: options.budget,
+    allowRetry: options.allowRetry,
+    ...(options.automatic ? { priority: 'background' } : {}),
+  };
 
   const records = [];
   let invalidRecordCount = 0;
-  if (plan.exact) {
-    const exact = requestOptions
-      ? await client.getExact(plan.exact, requestOptions)
-      : await client.getExact(plan.exact);
-    if (exact.status === 'ok') records.push(exact.record);
-    else if (exact.reason === 'invalid-record') invalidRecordCount += 1;
-    else if (!canContinueAfterExact(exact)) {
-      return providerFailure(exact, { candidates: [], groups: null });
+  function finish(failure) {
+    // A superseded request cannot publish earlier successful records or refill cache.
+    if (options.signal?.aborted) {
+      return providerFailure(
+        { reason: 'cancelled' },
+        { candidates: [], groups: null },
+      );
     }
+    const result = buildCandidateResult(
+      plan.identity,
+      records,
+      invalidRecordCount,
+      options.includeTimelineEvidence,
+    );
+    if (!failure) return result;
+    if (result.candidates.length === 0) {
+      return providerFailure(failure, { candidates: [], groups: null });
+    }
+    return {
+      ...result,
+      partial: true,
+      reason: failure.reason,
+      ...(failure.httpStatus ? { httpStatus: failure.httpStatus } : {}),
+      ...(failure.requestSource
+        ? { requestSource: failure.requestSource }
+        : {}),
+    };
+  }
+  if (options.signal?.aborted) return finish();
+  if (options.automatic && plan.exact) {
+    const exact = await client.getExact(plan.exact, requestOptions);
+    if (exact.status === 'ok') {
+      records.push(exact.record);
+      return finish();
+    }
+    if (exact.reason !== 'not-found') return finish(exact);
   }
 
+  const broaden = options.mode === 'broaden';
   const queries = options.automatic
     ? [plan.structured]
-    : plan.structuredQueries || [plan.structured];
+    : broaden
+      ? [
+          ...plan.structuredQueries.slice(0, 3),
+          ...plan.recoveryQueries.slice(0, 1),
+        ]
+      : plan.structuredQueries.slice(0, 2);
   for (const query of queries) {
-    const structured = requestOptions
-      ? await client.search(query, requestOptions)
-      : await client.search(query);
+    if (options.budget.signal.aborted)
+      return finish(requestFailure(options.budget.signal.reason));
+    const structured = await client.search(query, requestOptions);
     if (structured.status === 'error') {
-      return providerFailure(structured, { candidates: [], groups: null });
+      return finish(structured);
     }
+    if (options.signal?.aborted) return finish();
     records.push(...structured.records);
-    invalidRecordCount += structured.invalidRecordCount;
+    invalidRecordCount += structured.invalidRecordCount || 0;
+    if (
+      !broaden &&
+      finish().groups?.best.filter(
+        (candidate) =>
+          candidate.compatibility?.t1 || candidate.compatibility?.t2,
+      ).length >= 3
+    )
+      return finish();
   }
+  return finish();
+}
 
-  const constrained = buildCandidateResult(
-    plan.identity,
-    records,
-    invalidRecordCount,
-    options.includeTimelineEvidence,
-  );
-  if (!options.automatic && constrained.groups.best.length === 0) {
-    for (const query of plan.recoveryQueries || []) {
-      const recovered = requestOptions
-        ? await client.search(query, requestOptions)
-        : await client.search(query);
-      if (recovered.status === 'error') {
-        return providerFailure(recovered, { candidates: [], groups: null });
-      }
-      records.push(...recovered.records);
-      invalidRecordCount += recovered.invalidRecordCount;
-    }
+async function searchLrclibCandidates(track, options = {}) {
+  const budget = options.budget || createLyricsRequestBudget('lrclib', options);
+  try {
+    return await runCandidateSearch(track, { ...options, budget });
+  } finally {
+    if (!options.budget) budget.dispose();
   }
-  return buildCandidateResult(
-    plan.identity,
-    records,
-    invalidRecordCount,
-    options.includeTimelineEvidence,
-  );
 }
 
 async function fetchLrclibRecord(recordId, options = {}) {

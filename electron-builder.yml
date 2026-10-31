@@ -1,4 +1,7 @@
 # electron-builder config for Windows packaging.
+# Controlled Kugou, query budgets/executor/alias resolver, neutral TTML and
+# retired-source migration join the Main bundle. No AMLL provider ships; research probes,
+# evaluation corpora and adjacent regression tests never ship.
 #
 # YAML, not electron-builder.config.js — electron/**/*.js in this repo is
 # CommonJS and src/**/*.js is ESM; YAML sidesteps
@@ -54,6 +57,7 @@ files:
   # R02 Mic policy is bundled in Main but remains closed in production; its
   # development-only renderer adds no packaged asset or external dependency.
   # beforePack regenerates these seven minified CJS entries from current source.
+  # Lyrics request budgets/rate/cache policy is included in the Main closure.
   - runtime/*.cjs
   - runtime/keyboard-helper.json
   - scripts/research/lyricsAcoustic/assets.cjs

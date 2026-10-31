@@ -1,9 +1,17 @@
 'use strict';
 
 const { buildLrclibQueryPlan } = require('../lrclib/query.js');
+const { looksLikeChannelArtist } = require('../musicTitle.js');
+const { collectVersionTerms } = require('../musicIdentity/recordingSignals.js');
 const {
-  MINIMUM_MATCH_SCORE,
-  evaluateBetterLyricsCandidate,
+  crossScriptTitleVariants,
+} = require('../musicIdentity/queryVariants.js');
+const {
+  normalizeForCompare,
+  normalizeText,
+} = require('../musicIdentity/text.js');
+const {
+  assessBetterLyricsCandidate,
   fingerprintBetterLyricsRecord,
   summarizeBetterLyricsCandidate,
 } = require('./candidate.js');
@@ -39,11 +47,67 @@ function providerFailure(result, extra = {}) {
   };
 }
 
-function queryFromIdentity(identity, mode) {
+function canonicalArtistCredit(value) {
+  // Replace only an explicit cross-script parenthetical alias. Keep every
+  // collaborator and delimiter; slashes/ampersands may belong to band names.
+  return normalizeText(value)
+    .split(/([,，、;；])/u)
+    .map((part) => {
+      if (!/^.+?\s*[(（][^()（）]+[)）]\s*$/u.test(part)) return part;
+      const variants = crossScriptTitleVariants(part);
+      const latin = variants.find(
+        ({ value }) =>
+          /\p{Script=Latin}/u.test(value) &&
+          !/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(
+            value,
+          ),
+      );
+      return latin &&
+        !looksLikeChannelArtist(latin.value) &&
+        collectVersionTerms(latin.value).size === 0
+        ? part.replace(part.trim(), latin.value)
+        : part;
+    })
+    .join('');
+}
+
+function canonicalQueryNames(identity) {
+  const artistName = canonicalArtistCredit(identity.artistName);
+  const credited = artistName.split(/[,，、;；]/u).map(normalizeForCompare);
+  const trackName = normalizeText(identity.trackName)
+    .replace(
+      /\s*[(（](?:feat\.?|ft\.?|featuring)\s+([^()（）]+)[)）]/giu,
+      (original, guest) =>
+        credited.includes(normalizeForCompare(guest)) ? '' : original,
+    )
+    .trim();
   return {
-    trackName: identity.trackName,
-    artistName: identity.artistName,
-    ...(identity.albumName && mode !== 'broaden'
+    trackName: trackName || normalizeText(identity.trackName),
+    artistName,
+  };
+}
+
+function queryFromIdentity(identity, track, searchOptions) {
+  const names = canonicalQueryNames(identity);
+  const manual =
+    searchOptions.query &&
+    (Object.hasOwn(searchOptions.query, 'title') ||
+      Object.hasOwn(searchOptions.query, 'artist'));
+  const original = canonicalQueryNames({
+    trackName: track?.title,
+    artistName: track?.artist,
+  });
+  // An edited identity can legitimately target another song; its old library
+  // album is not evidence for the new request. Do not guess replacement albums.
+  const sameIdentity =
+    !manual ||
+    (normalizeForCompare(names.trackName) ===
+      normalizeForCompare(original.trackName) &&
+      normalizeForCompare(names.artistName) ===
+        normalizeForCompare(original.artistName));
+  return {
+    ...names,
+    ...(identity.albumName && sameIdentity
       ? { albumName: identity.albumName }
       : {}),
     duration: identity.duration,
@@ -80,29 +144,27 @@ function createBetterLyricsAcquisitionProvider(options = {}) {
         { candidates: [], groups: null },
       );
     }
-    const query = queryFromIdentity(plan.identity, searchOptions.mode);
+    const query = queryFromIdentity(plan.identity, track, searchOptions);
     const result = await client.getLyrics(query, {
       signal: searchOptions.signal,
+      budget: searchOptions.budget,
     });
     if (result.status !== 'ok') {
       return providerFailure(result, { candidates: [], groups: null });
     }
-    if (
-      Number.isFinite(result.record.score) &&
-      result.record.score < MINIMUM_MATCH_SCORE
-    ) {
-      return providerFailure(
-        { status: 'unavailable', reason: 'low-confidence-match' },
-        { candidates: [], groups: null },
-      );
+    const assessment = assessBetterLyricsCandidate(
+      plan.identity,
+      result.record,
+    );
+    if (assessment.status !== 'ok') {
+      if (assessment.status === 'error') client.invalidateDiscovery?.();
+      return providerFailure(assessment, {
+        candidates: [],
+        groups: null,
+        ...(assessment.status === 'error' ? { invalidRecordCount: 1 } : {}),
+      });
     }
-    const match = evaluateBetterLyricsCandidate(plan.identity, result.record);
-    if (!match) {
-      return providerFailure(
-        { status: 'error', reason: 'invalid-ttml' },
-        { candidates: [], groups: null, invalidRecordCount: 1 },
-      );
-    }
+    const { match } = assessment;
     const candidate = {
       ...summarizeBetterLyricsCandidate(match),
       saveState: 'unsaved',
@@ -123,6 +185,9 @@ function createBetterLyricsAcquisitionProvider(options = {}) {
     trackDir,
     candidateId,
     expectedFingerprint,
+    budget,
+    signal,
+    validateCommit,
   }) {
     if (!Number.isSafeInteger(candidateId) || candidateId <= 0) {
       throw new Error('better lyrics candidate id is invalid');
@@ -140,19 +205,25 @@ function createBetterLyricsAcquisitionProvider(options = {}) {
         reason: 'stale-search',
       };
     }
-    const fetched = await client.getLyrics(authorization.query);
+    const fetched = await client.getLyrics(authorization.query, {
+      fresh: true,
+      budget,
+      signal,
+    });
     if (fetched.status !== 'ok') return providerFailure(fetched);
-    const match = evaluateBetterLyricsCandidate(
+    const assessment = assessBetterLyricsCandidate(
       authorization.query,
       fetched.record,
     );
-    if (!match) {
+    if (assessment.status === 'error') return providerFailure(assessment);
+    if (assessment.status !== 'ok') {
       return {
         provider: 'betterlyrics',
         status: 'unavailable',
         reason: 'record-mismatch',
       };
     }
+    const { match } = assessment;
     const currentFingerprint = fingerprintBetterLyricsRecord(fetched.record);
     if (currentFingerprint !== expectedFingerprint) {
       const candidate = summarizeBetterLyricsCandidate(match);
@@ -163,6 +234,13 @@ function createBetterLyricsAcquisitionProvider(options = {}) {
         candidate,
       };
     }
+    const denial = validateCommit?.();
+    if (denial)
+      return {
+        provider: 'betterlyrics',
+        status: 'unavailable',
+        reason: denial,
+      };
     return {
       provider: 'betterlyrics',
       ...persistRecord(trackDir, fetched.record),

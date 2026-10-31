@@ -8,7 +8,7 @@ const {
   validateLyricsTimingDocument,
 } = require('../library/lyricsTiming.js');
 
-const DEFAULT_AMLL_TTML_RESPONSE_BYTES = 2 * 1024 * 1024;
+const DEFAULT_TTML_RESPONSE_BYTES = 2 * 1024 * 1024;
 const TTML_NAMESPACE = 'http://www.w3.org/ns/ttml';
 const TTML_METADATA_NAMESPACE = 'http://www.w3.org/ns/ttml#metadata';
 const ITUNES_NAMESPACE = 'http://itunes.apple.com/lyric-ttml-extensions';
@@ -18,7 +18,7 @@ const MAX_XML_DEPTH = 128;
 const MAX_LYRIC_LINES = timingValues.maxLines;
 const MAX_LYRIC_SEGMENTS = timingValues.maxTotalSegments;
 const MAX_BOUNDARY_JITTER_MS = 1;
-const LIMIT_ABORT = Symbol('AMLL_TTML_LIMIT');
+const LIMIT_ABORT = Symbol('TTML_LIMIT');
 
 function parseSeconds(value, allowOverMinute) {
   const match = /^(\d+)(?:\.(\d{1,3}))?$/u.exec(value);
@@ -405,43 +405,32 @@ function buildTtmlTimingDocument(
   );
 }
 
-function buildAmllTimingDocument(
-  recordId,
-  sourceFilename,
-  sourceSha256,
-  document,
-) {
-  return buildTtmlTimingDocument(
-    'amll',
-    recordId,
-    sourceFilename,
-    sourceSha256,
-    document,
-  );
-}
-
 function validateCanonicalT2(lines, recordId) {
   const boundedRecordId =
     Number.isSafeInteger(recordId) && recordId > 0
       ? recordId
       : Number.MAX_SAFE_INTEGER;
-  const sourceFilename = `amll-${boundedRecordId}-99.lrc`;
+  const sourceFilename = `ttml-${boundedRecordId}-99.lrc`;
   const sourceSha256 = '0'.repeat(64);
   try {
-    buildAmllTimingDocument(boundedRecordId, sourceFilename, sourceSha256, {
-      lines,
-    });
+    buildTtmlTimingDocument(
+      'ttml',
+      boundedRecordId,
+      sourceFilename,
+      sourceSha256,
+      { lines },
+    );
     return true;
   } catch {
     return false;
   }
 }
 
-function analyzeAmllTtml(value, options = {}) {
+function analyzeTtml(value, options = {}) {
   if (typeof value !== 'string' || value.length === 0) {
     return { status: 'error', reason: 'invalid-ttml' };
   }
-  if (Buffer.byteLength(value, 'utf8') > DEFAULT_AMLL_TTML_RESPONSE_BYTES) {
+  if (Buffer.byteLength(value, 'utf8') > DEFAULT_TTML_RESPONSE_BYTES) {
     return { status: 'error', reason: 'ttml-too-large' };
   }
   if (value.charCodeAt(0) === 0xfeff) {
@@ -499,9 +488,8 @@ function analyzeAmllTtml(value, options = {}) {
 }
 
 module.exports = {
-  DEFAULT_AMLL_TTML_RESPONSE_BYTES,
-  analyzeAmllTtml,
-  buildAmllTimingDocument,
+  DEFAULT_TTML_RESPONSE_BYTES,
+  analyzeTtml,
   buildTtmlTimingDocument,
   parseTtmlTime,
 };

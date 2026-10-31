@@ -4,7 +4,11 @@ const crypto = require('crypto');
 const { setTimeout: sleepFor } = require('node:timers/promises');
 const { appUserAgent } = require('../userAgent.js');
 const { createProviderRequestGuard } = require('../providerServiceCooldown.js');
-const { DEFAULT_AMLL_TTML_RESPONSE_BYTES } = require('../amll/ttml.js');
+const { DEFAULT_TTML_RESPONSE_BYTES } = require('../lyricsFormats/ttml.js');
+const {
+  getLyricsRequestPolicy,
+  requestFailure,
+} = require('../lyricsProviders/requestPolicy.js');
 
 const BETTER_LYRICS_API_BASE_URL = 'https://lyrics-api.boidu.dev';
 const MAX_QUERY_CHARS = 256;
@@ -152,45 +156,44 @@ function createBetterLyricsScheduler(options = {}) {
   return { schedule };
 }
 
-const sharedScheduler = createBetterLyricsScheduler();
-
 function createBetterLyricsClient(options = {}) {
   const fetchFn = Object.hasOwn(options, 'fetch')
     ? options.fetch
     : globalThis.fetch;
   const requestGuard = createProviderRequestGuard(fetchFn, options);
-  const scheduler = options.scheduler || sharedScheduler;
+  const policy = getLyricsRequestPolicy('betterlyrics', fetchFn, options);
+  const scheduler = policy.scheduler;
   const timeoutMs = Math.min(60_000, Math.max(1, options.timeoutMs ?? 12_000));
 
-  async function getLyrics(query, requestOptions = {}) {
+  async function readLyrics(query, requestOptions = {}) {
     const normalized = normalizeQuery(query);
     if (!normalized) return { status: 'error', reason: 'invalid-request' };
     if (typeof fetchFn !== 'function') {
       return { status: 'error', reason: 'fetch-unavailable' };
     }
-    const timeoutSignal = AbortSignal.timeout(timeoutMs);
-    const signal = requestOptions.signal
-      ? AbortSignal.any([requestOptions.signal, timeoutSignal])
-      : timeoutSignal;
+    let signal;
     let response;
     try {
       response = await scheduler.schedule(
-        () =>
-          requestGuard.fetch(buildBetterLyricsUrl(normalized), {
-            headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
-            redirect: 'error',
-            signal,
-          }),
-        { signal: requestOptions.signal },
+        () => {
+          const timeoutSignal = AbortSignal.timeout(timeoutMs);
+          signal = requestOptions.signal
+            ? AbortSignal.any([requestOptions.signal, timeoutSignal])
+            : timeoutSignal;
+          return requestGuard.fetch(
+            buildBetterLyricsUrl(normalized),
+            {
+              headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
+              redirect: 'error',
+              signal,
+            },
+            requestOptions.charge,
+          );
+        },
+        { signal: requestOptions.signal, priority: requestOptions.priority },
       );
     } catch (error) {
-      return {
-        status: 'error',
-        reason:
-          error?.name === 'AbortError' || error?.name === 'TimeoutError'
-            ? 'timeout'
-            : 'offline',
-      };
+      return requestFailure(error);
     }
     if (!response.ok) {
       await response.body?.cancel().catch(() => undefined);
@@ -198,18 +201,9 @@ function createBetterLyricsClient(options = {}) {
     }
     let bounded;
     try {
-      bounded = await readBoundedText(
-        response,
-        DEFAULT_AMLL_TTML_RESPONSE_BYTES,
-      );
+      bounded = await readBoundedText(response, DEFAULT_TTML_RESPONSE_BYTES);
     } catch (error) {
-      return {
-        status: 'error',
-        reason:
-          error?.name === 'AbortError' || error?.name === 'TimeoutError'
-            ? 'timeout'
-            : 'offline',
-      };
+      return requestFailure(error);
     }
     if (bounded.status !== 'ok') return bounded;
     let value;
@@ -230,7 +224,7 @@ function createBetterLyricsClient(options = {}) {
       (hasScore &&
         (!Number.isFinite(value.score) ||
           value.score < 0 ||
-          value.score > 100)) ||
+          value.score > 1)) ||
       !CACHE_STATUSES.has(cacheStatus) ||
       (responseProvider !== null && responseProvider !== 'ttml')
     ) {
@@ -248,7 +242,20 @@ function createBetterLyricsClient(options = {}) {
     };
   }
 
-  return { getLyrics };
+  async function getLyrics(query, requestOptions = {}) {
+    const normalized = normalizeQuery(query);
+    if (!normalized) return { status: 'error', reason: 'invalid-request' };
+    try {
+      return await policy.run(
+        [normalized, DEFAULT_TTML_RESPONSE_BYTES],
+        (context) => readLyrics(normalized, { ...requestOptions, ...context }),
+        requestOptions,
+      );
+    } catch (error) {
+      return requestFailure(error);
+    }
+  }
+  return { getLyrics, invalidateDiscovery: policy.invalidate };
 }
 
 module.exports = {

@@ -25,6 +25,10 @@
 
 ## 歌詞來源
 
+- [查詢預算與跨語別名改善方案](lyrics-providers/query-budget-alias-provider-refactor-proposal-2026-10-31.md)（10-31）：父查詢session、全域額度／deadline、同目錄ID的跨商店別名、provider分層與AMLL完整移除範圍；Hana No Uta／Aimer原字串隔離鏈6次HTTP取得T1，未接正式流程，未宣稱一般覆蓋率。
+- [Kugou多語自動別名隔離驗證](lyrics-providers/kugou-multilingual-automatic-validation-2026-10-31.md)（10-31）：12首／26組固定條件，區分單次自動query救回、格式相容救回、缺別名與Live衝突；首批和選擇性複核分開報，未接正式流程，未做完整音訊驗收。
+- [Better契約修正與Kugou逐行隔離結果](lyrics-providers/better-contract-kugou-line-validation-2026-10-31.md)（10-31）：修正0～1分數與有界查詢條件；兩個已回報案例在研究指定標準條件後取得T1候選，原字串仍miss，未做整首播放驗收，Kugou未接正式流程。
+- [首次查詢與備援來源評估](lyrics-providers/lyrics-first-search-backup-assessment-2026-10-31.md)（10-31）：Better分數契約誤拒的離線重現、匿名快取與部署差異、Kugou原生LRC有限實測、商業候選及首次成功率驗收方案；未改產品流程或接入新來源，未宣稱覆蓋率已達標。
 - [來源與使用邊界](lyrics-providers/lyrics-provider-commercial-evaluation-2026-08-31.md)（08-31）、[NetEase／Kugou 對照](lyrics-providers/lyrics-provider-technical-evaluation-2026-09-01.md)（09-01）
 - [LRCLIB 逐字驗證](lyrics-providers/lrclib-t2-live-validation-2026-08-24.md)（08-24）、[NetEase 隔離驗證](lyrics-providers/netease-isolated-technical-validation-2026-08-28.md)（08-28）
 

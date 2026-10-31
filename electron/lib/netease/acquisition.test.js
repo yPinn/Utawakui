@@ -38,6 +38,158 @@ function client(overrides = {}) {
 }
 
 describe('createNeteaseAcquisitionProvider', () => {
+  it('continues to an alias for more comparison choices when the first phase yields one usable match', async () => {
+    const api = client({
+      search: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [
+            metadata({
+              trackName: '月面着陸計画',
+              artistName: 'tuki.',
+              artists: ['tuki.'],
+            }),
+          ],
+          invalidRecordCount: 0,
+        })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [
+            metadata({
+              id: 43,
+              trackName: '月面着陸計画',
+              artistName: 'tuki.',
+              artists: ['tuki.'],
+              duration: 182,
+            }),
+          ],
+          invalidRecordCount: 0,
+        }),
+      getLyrics: vi.fn(async (id) => ({
+        status: 'ok',
+        record: { id, lrcLyrics: '[00:01]Hello', yrcLyrics: '' },
+      })),
+    });
+    const result = await createNeteaseAcquisitionProvider({
+      client: api,
+    }).searchCandidates({
+      title: '月面着陸計画 - Moon Landing Plan',
+      artist: 'tuki.',
+      duration: 180,
+    });
+    expect(api.search).toHaveBeenCalledTimes(2);
+    expect(result.candidates).toHaveLength(2);
+  });
+
+  it('adds another small batch on broaden after three candidates were already found', async () => {
+    const make = (id) => metadata({ id, duration: 180 + id });
+    const api = client({
+      search: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [1, 2, 3].map(make),
+          invalidRecordCount: 0,
+        })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [1, 2, 3, 4, 5, 6].map(make),
+          invalidRecordCount: 0,
+        }),
+      getLyrics: vi.fn(async (id) => ({
+        status: 'ok',
+        record: { id, lrcLyrics: `[00:01]Version ${id}`, yrcLyrics: '' },
+      })),
+    });
+    const provider = createNeteaseAcquisitionProvider({ client: api });
+    const track = { title: 'Song', artist: 'Artist', duration: 180 };
+    expect((await provider.searchCandidates(track)).candidates).toHaveLength(3);
+    const more = await provider.searchCandidates(track, { mode: 'broaden' });
+    expect(more.candidates).toHaveLength(6);
+    expect(api.getLyrics).toHaveBeenCalledTimes(6);
+  });
+  it('reports budget exhaustion rather than a complete miss when all hydrated lyrics are unusable', async () => {
+    const api = client({
+      search: vi.fn().mockResolvedValue({
+        status: 'ok',
+        records: Array.from({ length: 10 }, (_, i) => metadata({ id: i + 1 })),
+        invalidRecordCount: 0,
+      }),
+      getLyrics: vi.fn(async (id) => ({
+        status: 'ok',
+        record: { id, lrcLyrics: '', yrcLyrics: '' },
+      })),
+    });
+    const provider = createNeteaseAcquisitionProvider({ client: api });
+    await expect(
+      provider.searchCandidates({
+        title: 'Song',
+        artist: 'Artist',
+        duration: 180,
+      }),
+    ).resolves.toMatchObject({
+      status: 'error',
+      reason: 'request-budget-exhausted',
+      candidates: [],
+    });
+    expect(api.getLyrics).toHaveBeenCalledTimes(5);
+  });
+  it('refreshes known changed lyrics in other cached query identities without another detail request', async () => {
+    const api = client();
+    const provider = createNeteaseAcquisitionProvider({ client: api });
+    const one = {
+      id: 'one',
+      title: 'Song',
+      artist: 'Artist',
+      album: 'One',
+      duration: 180,
+    };
+    const two = { ...one, id: 'two', album: 'Two' };
+    const first = await provider.searchCandidates(one);
+    await provider.searchCandidates(two);
+    api.getLyrics.mockResolvedValue({
+      status: 'ok',
+      record: { id: 42, yrcLyrics: '', lrcLyrics: '[00:03]Updated line' },
+    });
+    const changed = await provider.saveCandidate({
+      track: one,
+      trackDir: 'unused',
+      candidateId: 42,
+      expectedFingerprint: first.candidates[0].previewFingerprint,
+    });
+    expect(changed.status).toBe('record-changed');
+    const next = await provider.searchCandidates(two, { mode: 'broaden' });
+    expect(next.candidates[0].previewFingerprint).toBe(
+      changed.candidate.previewFingerprint,
+    );
+    expect(api.getLyrics).toHaveBeenCalledTimes(3);
+  });
+  it('checks an alias without rehydrating duplicate metadata when only one choice is available', async () => {
+    const api = client({
+      search: vi.fn().mockResolvedValue({
+        status: 'ok',
+        records: [
+          metadata({
+            trackName: '月面着陸計画',
+            artistName: 'tuki.',
+            artists: ['tuki.'],
+          }),
+        ],
+        invalidRecordCount: 0,
+      }),
+    });
+    const provider = createNeteaseAcquisitionProvider({ client: api });
+    const result = await provider.searchCandidates({
+      title: '月面着陸計画 - Moon Landing Plan',
+      artist: 'tuki.',
+      duration: 180,
+    });
+    expect(result.candidates).toHaveLength(1);
+    expect(api.search).toHaveBeenCalledTimes(2);
+    expect(api.getLyrics).toHaveBeenCalledOnce();
+    expect(api.search.mock.calls[0][1].budget).toBeDefined();
+  });
   let rootDir;
   let trackDir;
 
@@ -60,11 +212,17 @@ describe('createNeteaseAcquisitionProvider', () => {
       duration: 180,
     });
 
-    expect(api.search).toHaveBeenCalledWith({
-      trackName: 'Song',
-      artistName: 'Artist',
-    });
-    expect(api.getLyrics).toHaveBeenCalledWith(42);
+    expect(api.search).toHaveBeenCalledWith(
+      {
+        trackName: 'Song',
+        artistName: 'Artist',
+      },
+      expect.objectContaining({ budget: expect.any(Object) }),
+    );
+    expect(api.getLyrics).toHaveBeenCalledWith(
+      42,
+      expect.objectContaining({ budget: expect.any(Object) }),
+    );
     expect(result).toMatchObject({
       provider: 'netease',
       status: 'ok',
@@ -182,9 +340,9 @@ describe('createNeteaseAcquisitionProvider', () => {
       },
     );
 
-    expect(api.search.mock.calls).toEqual([
-      [{ trackName: 'Song', artistName: 'Artist' }],
-      [{ trackName: 'Song' }],
+    expect(api.search.mock.calls.map(([query]) => query)).toEqual([
+      { trackName: 'Song', artistName: 'Artist' },
+      { trackName: 'Song' },
     ]);
   });
 
@@ -223,17 +381,17 @@ describe('createNeteaseAcquisitionProvider', () => {
       duration: 261,
     });
 
-    expect(api.search.mock.calls).toEqual([
-      [
-        {
-          trackName: '夜に駆ける - Racing into the Night',
-          artistName: 'YOASOBI',
-        },
-      ],
-      [{ trackName: '夜に駆ける', artistName: 'YOASOBI' }],
-      [{ trackName: 'Racing into the Night', artistName: 'YOASOBI' }],
+    expect(api.search.mock.calls.map(([query]) => query)).toEqual([
+      {
+        trackName: '夜に駆ける - Racing into the Night',
+        artistName: 'YOASOBI',
+      },
+      { trackName: '夜に駆ける', artistName: 'YOASOBI' },
     ]);
-    expect(api.getLyrics).toHaveBeenCalledWith(42);
+    expect(api.getLyrics).toHaveBeenCalledWith(
+      42,
+      expect.objectContaining({ budget: expect.any(Object) }),
+    );
     expect(result).toMatchObject({
       status: 'ok',
       candidates: [
@@ -281,7 +439,11 @@ describe('createNeteaseAcquisitionProvider', () => {
     });
 
     expect(structured.candidates).toHaveLength(1);
-    expect(api.search).toHaveBeenNthCalledWith(2, { trackName: '锁链' });
+    expect(api.search).toHaveBeenNthCalledWith(
+      2,
+      { trackName: '锁链' },
+      expect.objectContaining({ budget: expect.any(Object) }),
+    );
     expect(api.getLyrics).toHaveBeenCalledTimes(1);
     expect(broadened.candidates).toEqual(structured.candidates);
   });

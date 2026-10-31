@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createLyricsAcquisitionService } from './lyricsAcquisitionService.js';
+import { createLyricsAcquisitionService as createService } from './lyricsAcquisitionService.js';
 import { saveTrackLyricsText } from '../lib/library/lyrics.js';
 import {
   computeLyricsSourceFingerprint,
@@ -27,6 +27,176 @@ function record(overrides = {}) {
 }
 
 const track = { id: 'track', title: 'Song', artist: 'Artist', duration: 180 };
+
+it('retains initial candidates when explicit broaden returns new candidates or a transient failure', async () => {
+  const provider = client({
+    search: vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 'ok',
+        records: [record()],
+        invalidRecordCount: 0,
+      })
+      .mockResolvedValueOnce({
+        status: 'ok',
+        records: [record({ id: 43, duration: 182 })],
+        invalidRecordCount: 0,
+      })
+      .mockResolvedValueOnce({ status: 'error', reason: 'rate-limited' }),
+  });
+  const service = createLyricsAcquisitionService({
+    requireFeatureGate: vi.fn(),
+    featureId: 'lyrics-flow',
+    client: provider,
+    logger: { debug() {}, warn() {} },
+  });
+  await service.searchCandidates(track);
+  const more = await service.searchCandidates(track, { mode: 'broaden' });
+  expect(more.candidates.map((candidate) => candidate.id).sort()).toEqual([
+    42, 43,
+  ]);
+  expect(more).toMatchObject({
+    status: 'ok',
+    partial: true,
+    reason: 'rate-limited',
+  });
+});
+
+it('invalidates the same provider discovery across tracks after a known record change', async () => {
+  const original = record();
+  const changed = record({ syncedLyrics: '[00:02]Changed' });
+  const provider = client({
+    search: vi.fn().mockResolvedValue({
+      status: 'ok',
+      records: [original],
+      invalidRecordCount: 0,
+    }),
+    getById: vi.fn().mockResolvedValue({ status: 'ok', record: changed }),
+  });
+  const service = createLyricsAcquisitionService({
+    requireFeatureGate: vi.fn(),
+    featureId: 'lyrics-flow',
+    client: provider,
+    logger: { debug() {} },
+  });
+  const other = { ...track, id: 'other' };
+  await service.searchCandidates(track);
+  await service.searchCandidates(other);
+  await expect(
+    service.saveCandidate({
+      track,
+      trackDir: 'unused',
+      candidateId: 42,
+      expectedFingerprint: fingerprintLrclibRecord(original),
+    }),
+  ).resolves.toMatchObject({ status: 'record-changed' });
+  provider.search.mockResolvedValue({
+    status: 'ok',
+    records: [changed],
+    invalidRecordCount: 0,
+  });
+  const refreshed = await service.searchCandidates(other);
+  expect(provider.search).toHaveBeenCalledTimes(3);
+  expect(refreshed.candidates[0].previewFingerprint).toBe(
+    fingerprintLrclibRecord(changed),
+  );
+});
+
+it('exposes partial provider failures with retained candidates and retries discovery instead of caching them', async () => {
+  const provider = client({
+    getExact: vi.fn().mockResolvedValue({ status: 'ok', record: record() }),
+    search: vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 'ok',
+        records: [record()],
+        invalidRecordCount: 0,
+      })
+      .mockResolvedValue({
+        status: 'error',
+        reason: 'service-unavailable',
+        httpStatus: 503,
+        requestSource: 'network',
+      }),
+  });
+  const logger = { warn: vi.fn(), debug: vi.fn() };
+  const service = createLyricsAcquisitionService({
+    requireFeatureGate: vi.fn(),
+    featureId: 'lyrics-flow',
+    client: provider,
+    logger,
+    neteaseProvider: unavailableNeteaseProvider(),
+    betterLyricsProvider: {
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'betterlyrics',
+        status: 'unavailable',
+        reason: 'cache-miss',
+        candidates: [],
+      }),
+    },
+  });
+  const result = await service.searchProviderCandidates('all', track, {
+    mode: 'broaden',
+  });
+  expect(result).toMatchObject({
+    status: 'ok',
+    partial: true,
+    providerStatuses: expect.arrayContaining([
+      {
+        provider: 'lrclib',
+        status: 'ok',
+        partial: true,
+        reason: 'service-unavailable',
+      },
+    ]),
+  });
+  expect(result.candidates).toHaveLength(1);
+  expect(logger.warn).toHaveBeenCalledWith(
+    '[lyrics] LRCLIB search failed',
+    expect.any(Error),
+    expect.objectContaining({
+      reason: 'service-unavailable',
+      httpStatus: 503,
+      stage: 'network',
+    }),
+  );
+  provider.search.mockResolvedValue({
+    status: 'ok',
+    records: [record()],
+    invalidRecordCount: 0,
+  });
+  const retried = await service.searchProviderCandidates('all', track, {
+    mode: 'broaden',
+  });
+  expect(provider.search).toHaveBeenCalledTimes(4);
+  expect(
+    retried.providerStatuses.find((status) => status.provider === 'lrclib')
+      .partial,
+  ).not.toBe(true);
+});
+
+it('classifies invalid TTML as non-retryable in Main diagnostics', async () => {
+  const logger = { warn: vi.fn(), debug: vi.fn() };
+  const service = createLyricsAcquisitionService({
+    requireFeatureGate: vi.fn(),
+    featureId: 'lyrics-flow',
+    logger,
+    betterLyricsProvider: {
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'betterlyrics',
+        status: 'error',
+        reason: 'invalid-ttml',
+        candidates: [],
+      }),
+    },
+  });
+  await service.searchProviderCandidates('betterlyrics', track);
+  expect(logger.warn).toHaveBeenCalledWith(
+    '[lyrics] Better Lyrics search failed',
+    expect.any(Error),
+    expect.objectContaining({ reason: 'invalid-ttml', retryable: false }),
+  );
+});
 
 it('classifies combined manual results against the submitted query identity', async () => {
   const provider = client({
@@ -138,7 +308,7 @@ describe('createLyricsAcquisitionService', () => {
     await service.acquireBestIfNeeded(track, trackDir);
     expect(provider.search).toHaveBeenCalledOnce();
     await service.searchCandidates(track);
-    expect(provider.getExact).toHaveBeenCalledTimes(2);
+    expect(provider.getExact).toHaveBeenCalledOnce();
     expect(provider.search.mock.calls.length).toBeGreaterThan(1);
   });
   it('deduplicates recent automatic failures without blocking interactive searches or track invalidation', async () => {
@@ -160,13 +330,14 @@ describe('createLyricsAcquisitionService', () => {
     await service.acquireBestIfNeeded(track, trackDir);
     expect(provider.getExact).toHaveBeenCalledOnce();
     await service.searchCandidates(track);
-    expect(provider.getExact).toHaveBeenCalledTimes(2);
+    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.search).toHaveBeenCalledOnce();
     service.invalidateAutomaticAcquisition(track.id);
     await service.acquireBestIfNeeded(track, trackDir);
-    expect(provider.getExact).toHaveBeenCalledTimes(3);
+    expect(provider.getExact).toHaveBeenCalledTimes(2);
     time += 300_001;
     await service.acquireBestIfNeeded(track, trackDir);
-    expect(provider.getExact).toHaveBeenCalledTimes(4);
+    expect(provider.getExact).toHaveBeenCalledTimes(3);
   });
 
   let rootDir;
@@ -199,7 +370,7 @@ describe('createLyricsAcquisitionService', () => {
 
     expect(requireFeatureGate).toHaveBeenCalledTimes(2);
     expect(requireFeatureGate).toHaveBeenNthCalledWith(1, 'lyrics-flow');
-    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.search).toHaveBeenCalledOnce();
     expect(provider.getById).toHaveBeenCalledOnce();
   });
 
@@ -257,21 +428,29 @@ describe('createLyricsAcquisitionService', () => {
       signal: expect.any(AbortSignal),
       includeTimelineEvidence: true,
     });
-    expect(neteaseProvider.saveCandidate).toHaveBeenCalledWith({
-      track,
-      trackDir,
-      candidateId: 42,
-      expectedFingerprint: 'a'.repeat(64),
-    });
+    expect(neteaseProvider.saveCandidate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        track,
+        trackDir,
+        candidateId: 42,
+        expectedFingerprint: 'a'.repeat(64),
+        budget: expect.any(Object),
+        signal: expect.any(AbortSignal),
+      }),
+    );
     expect(betterLyricsProvider.searchCandidates).toHaveBeenCalledWith(track, {
       signal: expect.any(AbortSignal),
     });
-    expect(betterLyricsProvider.saveCandidate).toHaveBeenCalledWith({
-      track,
-      trackDir,
-      candidateId: 44,
-      expectedFingerprint: 'c'.repeat(64),
-    });
+    expect(betterLyricsProvider.saveCandidate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        track,
+        trackDir,
+        candidateId: 44,
+        expectedFingerprint: 'c'.repeat(64),
+        budget: expect.any(Object),
+        signal: expect.any(AbortSignal),
+      }),
+    );
     await expect(
       service.searchProviderCandidates('amll', track),
     ).rejects.toThrow(/provider is invalid/i);
@@ -291,7 +470,7 @@ describe('createLyricsAcquisitionService', () => {
   it('deduplicates identical concurrent manual searches', async () => {
     let resolveExact;
     const provider = client({
-      getExact: vi.fn(
+      search: vi.fn(
         () =>
           new Promise((resolve) => {
             resolveExact = resolve;
@@ -307,11 +486,11 @@ describe('createLyricsAcquisitionService', () => {
     });
 
     const first = service.searchCandidates(track);
-    await vi.waitFor(() => expect(provider.getExact).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(provider.search).toHaveBeenCalledOnce());
     const second = service.searchCandidates(track);
-    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.search).toHaveBeenCalledOnce();
 
-    resolveExact({ status: 'ok', record: record() });
+    resolveExact({ status: 'ok', records: [record()], invalidRecordCount: 0 });
     const [firstResult, secondResult] = await Promise.all([first, second]);
     expect(secondResult).toEqual(firstResult);
     expect(provider.search).toHaveBeenCalledOnce();
@@ -323,7 +502,7 @@ describe('createLyricsAcquisitionService', () => {
     let resolveExact;
     let resolveNetease;
     const provider = client({
-      getExact: vi.fn(
+      search: vi.fn(
         () =>
           new Promise((resolve) => {
             resolveExact = resolve;
@@ -358,11 +537,11 @@ describe('createLyricsAcquisitionService', () => {
 
     const pending = service.searchProviderCandidates('all', track);
     await vi.waitFor(() => {
-      expect(provider.getExact).toHaveBeenCalledOnce();
+      expect(provider.search).toHaveBeenCalledOnce();
       expect(neteaseProvider.searchCandidates).toHaveBeenCalledOnce();
       expect(betterLyricsProvider.searchCandidates).toHaveBeenCalledOnce();
     });
-    resolveExact({ status: 'unavailable', reason: 'not-found' });
+    resolveExact({ status: 'ok', records: [], invalidRecordCount: 0 });
     resolveNetease({
       provider: 'netease',
       status: 'ok',
@@ -456,14 +635,15 @@ describe('createLyricsAcquisitionService', () => {
     });
 
     expect(second).toEqual(first);
-    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.getExact).not.toHaveBeenCalled();
+    expect(searchCallsAfterFirst).toBe(1);
     expect(provider.search).toHaveBeenCalledTimes(searchCallsAfterFirst);
   });
 
   it('aborts a superseded provider query while preserving the newer search', async () => {
     let firstSignal;
     const provider = client({
-      getExact: vi
+      search: vi
         .fn()
         .mockImplementationOnce(
           (_query, options) =>
@@ -477,8 +657,9 @@ describe('createLyricsAcquisitionService', () => {
             }),
         )
         .mockResolvedValueOnce({
-          status: 'unavailable',
-          reason: 'not-found',
+          status: 'ok',
+          records: [],
+          invalidRecordCount: 0,
         }),
     });
     const service = createLyricsAcquisitionService({
@@ -495,17 +676,17 @@ describe('createLyricsAcquisitionService', () => {
       query: { title: 'Second', artist: 'Artist' },
     });
 
-    expect(firstSignal.aborted).toBe(true);
+    await vi.waitFor(() => expect(firstSignal.aborted).toBe(true));
     await expect(first).resolves.toMatchObject({
       status: 'error',
-      reason: 'timeout',
+      reason: 'cancelled',
     });
     await expect(second).resolves.toMatchObject({ status: 'ok' });
   });
 
   it('logs typed provider failures once without exposing track metadata', async () => {
     const provider = client({
-      getExact: vi.fn().mockResolvedValue({
+      search: vi.fn().mockResolvedValue({
         status: 'error',
         reason: 'http-error',
         httpStatus: 503,
@@ -544,7 +725,7 @@ describe('createLyricsAcquisitionService', () => {
   it('logs unexpected provider exceptions once and rethrows them', async () => {
     const failure = new Error('socket closed');
     const provider = client({
-      getExact: vi.fn().mockRejectedValue(failure),
+      search: vi.fn().mockRejectedValue(failure),
     });
     const logger = { warn: vi.fn(), error: vi.fn() };
     const service = createLyricsAcquisitionService({
@@ -975,12 +1156,12 @@ describe('createLyricsAcquisitionService', () => {
 
     await service.searchCandidates(track);
     await service.searchCandidates(otherTrack);
-    const callsAfterWarmup = provider.getExact.mock.calls.length;
+    const callsAfterWarmup = provider.search.mock.calls.length;
 
     expect(service.invalidateAutomaticAcquisition(track.id)).toBe(true);
     await service.searchCandidates(otherTrack);
 
-    expect(provider.getExact).toHaveBeenCalledTimes(callsAfterWarmup);
+    expect(provider.search).toHaveBeenCalledTimes(callsAfterWarmup);
   });
 
   it('deduplicates concurrent automatic acquisition for the same track', async () => {
@@ -1120,3 +1301,22 @@ describe('createLyricsAcquisitionService', () => {
     await expect(first).resolves.toMatchObject({ status: 'saved' });
   });
 });
+
+// Older primary-provider regressions never perform live fallback traffic.
+function createLyricsAcquisitionService(options) {
+  return createService({
+    automaticIntervalMs: 0,
+    identityResolver: {
+      resolve: async () => ({ aliases: { title: [] }, evidence: [] }),
+    },
+    kugouProvider: {
+      searchCandidates: async () => ({
+        provider: 'kugou',
+        status: 'ok',
+        candidates: [],
+        groups: { best: [], related: [] },
+      }),
+    },
+    ...options,
+  });
+}

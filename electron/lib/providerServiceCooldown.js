@@ -58,7 +58,7 @@ function createProviderRequestGuard(fetchFn, options = {}) {
     state.revision += 1;
   }
 
-  async function guardedFetch(input, init = {}) {
+  async function guardedFetch(input, init = {}, beforeRequest) {
     init.signal?.throwIfAborted();
     const state = stateFor(input);
     if (state.until > now()) {
@@ -69,6 +69,7 @@ function createProviderRequestGuard(fetchFn, options = {}) {
       return response;
     }
     const revision = state.revision;
+    beforeRequest?.();
     const response = await fetchFn(input, init);
     if (
       response.status === 429 ||
@@ -90,7 +91,11 @@ function createProviderRequestGuard(fetchFn, options = {}) {
     return response;
   }
 
-  return { fetch: guardedFetch, recordFailure };
+  function cooldownStatus(input) {
+    const state = stateFor(input);
+    return state.until > now() ? state.status : null;
+  }
+  return { fetch: guardedFetch, recordFailure, cooldownStatus };
 }
 
 function isProviderCooldownResponse(response) {

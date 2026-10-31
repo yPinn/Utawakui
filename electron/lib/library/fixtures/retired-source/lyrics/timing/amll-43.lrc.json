@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "documentId": "amll:43",
+  "normalizerProfileId": "lyrics-source-v3",
+  "source": {
+    "filename": "amll-43.lrc",
+    "sha256": "e444ec9f3826168a7c6ba5b584f31673b717c18224707f9668f25398c01d4362"
+  },
+  "granularity": "T2",
+  "lines": [
+    {
+      "lineId": "line:0",
+      "text": "Hello",
+      "startMs": 1000,
+      "endMs": 2000,
+      "segments": [
+        {
+          "segmentId": "line:0:word:0",
+          "text": "Hello",
+          "startMs": 1000,
+          "endMs": 2000
+        }
+      ]
+    }
+  ]
+}

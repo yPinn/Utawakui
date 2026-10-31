@@ -2,7 +2,10 @@
 
 const { PROJECT_URL, appUserAgent } = require('../userAgent.js');
 const { normalizeLrclibRecord } = require('./record.js');
-const { sharedLrclibRequestScheduler } = require('./scheduler.js');
+const {
+  getLyricsRequestPolicy,
+  requestFailure,
+} = require('../lyricsProviders/requestPolicy.js');
 const {
   createProviderRequestGuard,
   parseRetryAfterMs,
@@ -30,10 +33,7 @@ function buildUrl(endpoint, params, baseUrl) {
 }
 
 function classifyTransportFailure(error) {
-  if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
-    return { status: 'error', reason: 'timeout' };
-  }
-  return { status: 'error', reason: 'offline' };
+  return requestFailure(error);
 }
 
 async function readBoundedText(response, maxResponseBytes, signal) {
@@ -124,7 +124,8 @@ function createLrclibClient(options = {}) {
   );
   const fetchFn = hasInjectedFetch ? options.fetch : globalThis.fetch;
   const requestGuard = createProviderRequestGuard(fetchFn, options);
-  const scheduler = options.scheduler || sharedLrclibRequestScheduler;
+  const policy = getLyricsRequestPolicy('lrclib', fetchFn, options);
+  const scheduler = policy.scheduler;
   const baseUrl = options.baseUrl || LRCLIB_API_BASE_URL;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
@@ -150,22 +151,24 @@ function createLrclibClient(options = {}) {
         response = await scheduler.schedule(
           async () => {
             const requestTimeoutSignal = AbortSignal.timeout(timeoutMs);
-            const externalSignals = [
-              acquisitionSignal,
-              requestOptions.signal,
-            ].filter(Boolean);
+            const externalSignals = [requestOptions.signal].filter(Boolean);
             requestSignal =
               externalSignals.length > 0
                 ? AbortSignal.any([...externalSignals, requestTimeoutSignal])
                 : requestTimeoutSignal;
-            const fetched = await requestGuard.fetch(url, {
-              headers: { 'User-Agent': userAgent },
-              signal: requestSignal,
-            });
+            const fetched = await requestGuard.fetch(
+              url,
+              {
+                headers: { 'User-Agent': userAgent },
+                signal: requestSignal,
+              },
+              requestOptions.charge,
+            );
             const delayMs = parseRetryAfterMs(
               fetched.headers.get('retry-after'),
             );
             retryAllowed =
+              requestOptions.allowRetry !== false &&
               attempt === 0 &&
               fetched.status === 503 &&
               delayMs > 0 &&
@@ -226,7 +229,7 @@ function createLrclibClient(options = {}) {
     return { status: 'error', reason: 'http-error' };
   }
 
-  async function getById(recordId, requestOptions) {
+  async function readById(recordId, requestOptions) {
     if (!Number.isSafeInteger(recordId) || recordId <= 0) {
       return { status: 'error', reason: 'invalid-request' };
     }
@@ -239,7 +242,7 @@ function createLrclibClient(options = {}) {
     return normalizeLrclibRecord(result.value);
   }
 
-  async function getExact(query, requestOptions) {
+  async function readExact(query, requestOptions) {
     if (!validIdentityQuery(query)) {
       return { status: 'error', reason: 'invalid-request' };
     }
@@ -259,7 +262,7 @@ function createLrclibClient(options = {}) {
     return normalizeLrclibRecord(result.value);
   }
 
-  async function search(query, requestOptions) {
+  async function readSearch(query, requestOptions) {
     if (!validTitleQuery(query)) {
       return { status: 'error', reason: 'invalid-request' };
     }
@@ -279,7 +282,7 @@ function createLrclibClient(options = {}) {
     return normalizeSearchRecords(result.value);
   }
 
-  async function searchBroad(query, requestOptions) {
+  async function readBroad(query, requestOptions) {
     if (!query || typeof query.q !== 'string' || query.q.trim().length === 0) {
       return { status: 'error', reason: 'invalid-request' };
     }
@@ -288,7 +291,73 @@ function createLrclibClient(options = {}) {
     return normalizeSearchRecords(result.value);
   }
 
-  return { getById, getExact, search, searchBroad };
+  async function run(endpoint, params, read, requestOptions = {}) {
+    try {
+      return await policy.run(
+        [baseUrl, endpoint, params, maxResponseBytes],
+        (context) => read({ ...requestOptions, ...context }),
+        {
+          ...requestOptions,
+          signal:
+            acquisitionSignal && requestOptions.signal
+              ? AbortSignal.any([acquisitionSignal, requestOptions.signal])
+              : requestOptions.signal || acquisitionSignal,
+        },
+      );
+    } catch (error) {
+      return requestFailure(error);
+    }
+  }
+  function getById(recordId, requestOptions = {}) {
+    if (!Number.isSafeInteger(recordId) || recordId <= 0)
+      return Promise.resolve({ status: 'error', reason: 'invalid-request' });
+    return run(
+      `/api/get/${recordId}`,
+      {},
+      (context) => readById(recordId, context),
+      { ...requestOptions, fresh: true },
+    );
+  }
+  function getExact(query, requestOptions) {
+    if (!validIdentityQuery(query))
+      return Promise.resolve({ status: 'error', reason: 'invalid-request' });
+    const snapshot = { ...query };
+    return run(
+      '/api/get',
+      structuredParams(snapshot),
+      (context) => readExact(snapshot, context),
+      requestOptions,
+    );
+  }
+  function search(query, requestOptions) {
+    if (!validTitleQuery(query))
+      return Promise.resolve({ status: 'error', reason: 'invalid-request' });
+    const snapshot = { ...query };
+    return run(
+      '/api/search',
+      structuredParams(snapshot),
+      (context) => readSearch(snapshot, context),
+      requestOptions,
+    );
+  }
+  function searchBroad(query, requestOptions) {
+    if (!query || typeof query.q !== 'string' || !query.q.trim())
+      return Promise.resolve({ status: 'error', reason: 'invalid-request' });
+    const snapshot = { q: query.q };
+    return run(
+      '/api/search',
+      snapshot,
+      (context) => readBroad(snapshot, context),
+      requestOptions,
+    );
+  }
+  return {
+    getById,
+    getExact,
+    search,
+    searchBroad,
+    invalidateDiscovery: policy.invalidate,
+  };
 }
 
 module.exports = {

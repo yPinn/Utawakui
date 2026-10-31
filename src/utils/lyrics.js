@@ -474,7 +474,6 @@ export function pickPreferredLyricsSource(
 
 const LYRICS_SOURCE_KIND_LABELS = {
   'youtube-cc': 'YouTube CC',
-  amll: 'AMLL TTML',
   betterlyrics: 'Better Lyrics',
   lrclib: 'LRCLIB',
   netease: '網易雲音樂',
@@ -488,8 +487,9 @@ const LYRICS_SOURCE_KIND_LABELS = {
 // all, so every lrclib source is stamped 'und' and showing that would just
 // be noise. label (see saveTrackLyricsManifest) fills the same slot when
 // language isn't real.
-export function formatLyricsSourceLabel(source) {
-  const kindLabel = LYRICS_SOURCE_KIND_LABELS[source.kind] || source.kind;
+export function formatLyricsSourceLabel(source, providerLabel) {
+  const kindLabel =
+    providerLabel || LYRICS_SOURCE_KIND_LABELS[source.kind] || source.kind;
   const languagePart =
     source.language && source.language !== 'und'
       ? source.language.toUpperCase()

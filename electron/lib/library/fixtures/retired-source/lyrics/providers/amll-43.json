@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "provider": "amll",
+  "providerProfileId": "amll-http-v1",
+  "providerRecordId": 43,
+  "retrievedAt": "2026-10-31T00:00:00.000Z",
+  "capability": {
+    "level": "T2",
+    "partial": false
+  },
+  "compatibility": {
+    "t0": true,
+    "t1": true,
+    "t2": true
+  },
+  "warnings": [],
+  "hashes": {
+    "record": "3d676941130b105118d10eaec7aa7ce08fae7d633ee98f38ad525111d924387a",
+    "ttml": "26219d7bac5edb731407fac89a159f9103616212378e278d5ced73ced79f3ceb",
+    "compatibilitySource": "e444ec9f3826168a7c6ba5b584f31673b717c18224707f9668f25398c01d4362"
+  },
+  "record": {
+    "id": 43,
+    "filename": "1700000000000-1-song.ttml",
+    "trackName": "Song",
+    "artistName": "Artist",
+    "albumName": "Album",
+    "musicNames": ["Song"],
+    "artistNames": ["Artist"],
+    "albumNames": ["Album"],
+    "ncmMusicIds": [],
+    "qqMusicIds": [],
+    "appleMusicIds": [],
+    "spotifyIds": [],
+    "isrcs": [],
+    "authorIds": ["1"],
+    "authorUsernames": ["synthetic"],
+    "ttml": "<?xml version=\"1.0\"?><tt xmlns=\"http://www.w3.org/ns/ttml\" xmlns:itunes=\"http://itunes.apple.com/lyric-ttml-extensions\" itunes:timing=\"Word\"><body><p begin=\"1s\" end=\"2s\"><span begin=\"1s\" end=\"2s\">Hello</span></p></body></tt>"
+  }
+}

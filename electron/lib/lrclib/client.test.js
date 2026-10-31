@@ -34,6 +34,27 @@ function immediateScheduler() {
 }
 
 describe('buildLrclibUserAgent', () => {
+  it('shares discovery across client instances while saving always refetches', async () => {
+    const fetch = vi.fn(
+      async () => new Response(JSON.stringify(completeRecord())),
+    );
+    const first = createLrclibClient({
+      fetch,
+      scheduler: immediateScheduler(),
+    });
+    const second = createLrclibClient({
+      fetch,
+      scheduler: immediateScheduler(),
+    });
+    const query = { trackName: 'Espresso', artistName: 'Sabrina Carpenter' };
+    await Promise.all([first.getExact(query), second.getExact(query)]);
+    expect(fetch).toHaveBeenCalledOnce();
+    await first.getById(42);
+    await first.getById(42);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    await second.getExact(query);
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
   it('identifies the package version and project URL', () => {
     expect(buildLrclibUserAgent()).toBe(
       `Utawakui/${packageMetadata.version} (https://github.com/yPinn/Utawakui)`,
@@ -70,7 +91,7 @@ describe('createLrclibClient', () => {
     expect(fetch).toHaveBeenCalledOnce();
     expect(scheduler.schedule.mock.calls[0][1]).toMatchObject({
       priority: 'background',
-      minIntervalMs: 1000,
+      minIntervalMs: 5000,
     });
   });
 
@@ -430,9 +451,7 @@ describe('createLrclibClient', () => {
       reason: 'timeout',
     });
     expect(fetch).not.toHaveBeenCalled();
-    expect(scheduler.schedule).toHaveBeenCalledWith(expect.any(Function), {
-      signal: controller.signal,
-    });
+    expect(scheduler.schedule).not.toHaveBeenCalled();
   });
 
   it('starts the per-request timeout after scheduler queueing', async () => {

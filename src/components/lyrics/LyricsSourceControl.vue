@@ -1,7 +1,7 @@
 <script setup>
+import { formatLyricsSourceLabel } from '../../utils/lyricsSourcePresentation.js';
 import { computed, useId } from 'vue';
 import {
-  formatLyricsSourceLabel,
   formatLyricsSourceTier,
   lyricsSourceDisplayTier,
   sortLyricsSources,

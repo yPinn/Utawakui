@@ -241,6 +241,76 @@ function createRuntimeDiagnosticsLogger({
   }
 
   return {
+    debug(message, metric) {
+      if (
+        [
+          '[lyrics] background acquisition timing',
+          '[lyrics] query timing',
+        ].includes(message) &&
+        Number.isSafeInteger(metric?.httpAttempts) &&
+        metric.httpAttempts >= 0 &&
+        metric.httpAttempts <= 12
+      ) {
+        const background = message === '[lyrics] background acquisition timing';
+        try {
+          service?.record?.({
+            process: 'main',
+            level: 'debug',
+            source: 'lyrics',
+            operation: background
+              ? 'background-acquisition-summary'
+              : 'query-summary',
+            code: background
+              ? 'LYRICS_BACKGROUND_ACQUISITION_SUMMARY'
+              : 'LYRICS_QUERY_SUMMARY',
+            message: 'Lyrics request budget summary',
+            context: {
+              count: metric.httpAttempts,
+              durationMs: Number.isFinite(metric.durationMs)
+                ? Math.max(0, Math.min(60000, Math.round(metric.durationMs)))
+                : 0,
+              status: background ? 'background' : 'interactive',
+            },
+          });
+        } catch {
+          /* Metrics cannot affect requests. */
+        }
+        return;
+      }
+      // A clean provider miss is operational evidence, not a warning. Only
+      // this fixed summary is accepted; never serialize caller metadata.
+      if (
+        message !== '[lyrics] provider search timing' ||
+        !['lrclib', 'netease', 'betterlyrics', 'kugou'].includes(
+          metric?.provider,
+        ) ||
+        !['ok', 'error', 'unavailable'].includes(metric.status)
+      )
+        return;
+      const context = {
+        durationMs: Number.isFinite(metric.durationMs)
+          ? Math.max(0, Math.min(60000, Math.round(metric.durationMs)))
+          : 0,
+        candidateCount: Number.isSafeInteger(metric.candidateCount)
+          ? Math.max(0, Math.min(20, metric.candidateCount))
+          : 0,
+        status: metric.status,
+        stage: metric.cacheHit === true ? 'cache' : 'discovery',
+      };
+      try {
+        service?.record?.({
+          process: 'main',
+          level: 'debug',
+          source: 'lyrics',
+          operation: `${metric.provider}-search-summary`,
+          code: `LYRICS_${metric.provider.toUpperCase()}_SEARCH_SUMMARY`,
+          message: 'Lyrics provider search completed',
+          context,
+        });
+      } catch {
+        // Diagnostics must never affect acquisition.
+      }
+    },
     error: (message, error, context) => log('error', message, error, context),
     warn: (message, error, context) => log('warn', message, error, context),
   };

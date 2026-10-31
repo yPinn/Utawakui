@@ -6,9 +6,9 @@ const {
   compareLyricsRecordingIdentity,
   lyricsTextMatchScore,
 } = require('../lyricsProviders/recordingPolicy.js');
-const { analyzeAmllTtml } = require('../amll/ttml.js');
+const { analyzeTtml } = require('../lyricsFormats/ttml.js');
 
-const MINIMUM_MATCH_SCORE = 80;
+const MINIMUM_MATCH_SCORE = 0.8;
 const BETTER_LYRICS_MATCH_RULES = Object.freeze({
   exact: {
     title: 1,
@@ -43,12 +43,16 @@ function fingerprintBetterLyricsRecord(record) {
     .digest('hex');
 }
 
-function evaluateBetterLyricsCandidate(track, record) {
+function assessBetterLyricsCandidate(track, record) {
+  if (!record) return { status: 'error', reason: 'invalid-record' };
   if (
-    !record ||
-    (Number.isFinite(record.score) && record.score < MINIMUM_MATCH_SCORE)
+    Object.hasOwn(record, 'score') &&
+    (!Number.isFinite(record.score) || record.score < 0 || record.score > 1)
   ) {
-    return null;
+    return { status: 'error', reason: 'invalid-record' };
+  }
+  if (Number.isFinite(record.score) && record.score < MINIMUM_MATCH_SCORE) {
+    return { status: 'unavailable', reason: 'low-confidence-match' };
   }
   const titleScore = lyricsTextMatchScore(
     track?.title ?? track?.trackName ?? '',
@@ -71,11 +75,12 @@ function evaluateBetterLyricsCandidate(track, record) {
     delta > 4 ||
     recordingEvidence.versionMismatch
   ) {
-    return null;
+    return { status: 'unavailable', reason: 'low-confidence-match' };
   }
-  const analysis = analyzeAmllTtml(record.ttml, { recordId: record.id });
-  if (analysis.status !== 'ok') return null;
-  return {
+  const analysis = analyzeTtml(record.ttml, { recordId: record.id });
+  if (analysis.status !== 'ok')
+    return { status: 'error', reason: 'invalid-ttml' };
+  const match = {
     record,
     analysis,
     matchBand: classifyLyricsMatch(
@@ -92,6 +97,11 @@ function evaluateBetterLyricsCandidate(track, record) {
     durationDelta: delta,
     durationDeltaSigned: recordingEvidence.duration.signedDelta,
   };
+  return { status: 'ok', match };
+}
+
+function evaluateBetterLyricsCandidate(track, record) {
+  return assessBetterLyricsCandidate(track, record).match || null;
 }
 
 function summarizeBetterLyricsCandidate(match) {
@@ -122,6 +132,7 @@ function summarizeBetterLyricsCandidate(match) {
 
 module.exports = {
   MINIMUM_MATCH_SCORE,
+  assessBetterLyricsCandidate,
   evaluateBetterLyricsCandidate,
   fingerprintBetterLyricsRecord,
   summarizeBetterLyricsCandidate,

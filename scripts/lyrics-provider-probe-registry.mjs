@@ -17,9 +17,9 @@ export const FIXED_LYRICS_PROVIDER_DESCRIPTORS = Object.freeze([
     boundedPayload: true,
   }),
   Object.freeze({
-    id: 'amll',
+    id: 'kugou',
     mode: 'candidate',
-    profileId: 'amll-http-v1',
+    profileId: 'kugou-direct-lrc-evaluation-v1',
     accessMode: 'none',
     tokenRefresh: 'not-required',
     boundedPayload: true,
@@ -31,18 +31,18 @@ export function createLyricsProviderProbeRegistry(value) {
     !isPlainObject(value) ||
     Object.keys(value).length !== 2 ||
     typeof value.lrclib !== 'function' ||
-    typeof value.amll !== 'function'
+    typeof value.kugou !== 'function'
   ) {
     throw new TypeError('fixed lyrics provider probe registry is invalid');
   }
-  return Object.freeze({ lrclib: value.lrclib, amll: value.amll });
+  return Object.freeze({ lrclib: value.lrclib, kugou: value.kugou });
 }
 
 export function createDefaultLyricsProviderProbeRegistry() {
   return createLyricsProviderProbeRegistry({
     lrclib: createLrclibEvaluationProbe(),
-    amll: createAmllEvaluationProbe(),
+    kugou: createKugouLineEvaluationProbe(),
   });
 }
-import { createAmllEvaluationProbe } from './lyrics-provider-amll.mjs';
+import { createKugouLineEvaluationProbe } from './lyrics-provider-kugou.mjs';
 import { createLrclibEvaluationProbe } from './lyrics-provider-lrclib.mjs';

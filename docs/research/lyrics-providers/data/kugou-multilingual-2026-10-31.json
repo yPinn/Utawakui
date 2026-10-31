@@ -1,0 +1,689 @@
+{
+  "schemaVersion": 1,
+  "scope": "Public targeted smoke. Paired input conditions are not independent songs. Original cohort remains immutable; selective follow-up is not a new complete benchmark. No full-content/playback correctness claim.",
+  "corpusPath": "scripts/fixtures/lyrics-provider-evaluation/kugou-multilingual.json",
+  "corpusSha256": "7b6113264f7433735fc0074b9941b95407f5a8f12cdd356419b02c9a5b2f694d",
+  "initial": {
+    "startedAt": "2026-10-30T19:54:07.197Z",
+    "finishedAt": "2026-10-30T19:55:19.251Z",
+    "sourceHashes": {
+      "scripts/lyrics-provider-kugou.mjs": "6508a055fde71c61ccdf1de2a78e6f79d9db922a1ec2841142a9787a9fb6731e",
+      "scripts/lyrics-provider-kugou-query.mjs": "2513028fb3ee4267e11823cfd973f7bebf4615b13255dafe0587a8c7471812fe",
+      "scripts/fixtures/lyrics-provider-evaluation/kugou-multilingual.json": "7b6113264f7433735fc0074b9941b95407f5a8f12cdd356419b02c9a5b2f694d"
+    },
+    "httpAttempts": 72,
+    "pairedConditions": 24,
+    "rawAccepted": 12,
+    "finalAccepted": 13,
+    "autoQueryRescues": ["en-closer-challenge"],
+    "results": [
+      {
+        "caseId": "zh-qingtian-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2782,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "晴天",
+          "artist": "周杰伦",
+          "duration": 269
+        },
+        "lrc": {
+          "title": "晴天",
+          "artist": "周杰伦",
+          "lineCount": 54,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "zh-qingtian-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2313,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "晴天",
+          "artist": "周杰伦",
+          "duration": 269
+        },
+        "lrc": {
+          "title": "晴天",
+          "artist": "周杰伦",
+          "lineCount": 54,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "zh-qilixiang-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3462,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "七里香",
+          "artist": "周杰伦",
+          "duration": 299
+        },
+        "lrc": {
+          "title": "七里香",
+          "artist": "周杰伦",
+          "lineCount": 38,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "zh-qilixiang-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2624,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "七里香",
+          "artist": "周杰伦",
+          "duration": 299
+        },
+        "lrc": {
+          "title": "七里香",
+          "artist": "周杰伦",
+          "lineCount": 38,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "zh-fuji-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3532,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "富士山下",
+          "artist": "陈奕迅",
+          "duration": 259
+        },
+        "lrc": {
+          "title": "富士山下 (《爱情转移》粤语版)",
+          "artist": "陈奕迅",
+          "lineCount": 73,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "zh-fuji-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2552,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "富士山下",
+          "artist": "陈奕迅",
+          "duration": 259
+        },
+        "lrc": {
+          "title": "富士山下 (《爱情转移》粤语版)",
+          "artist": "陈奕迅",
+          "lineCount": 73,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ja-hana-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3036,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "花の唄",
+          "artist": "Aimer",
+          "duration": 373
+        },
+        "lrc": {
+          "title": "花の唄 (花之歌) (《命运之夜——天之杯：恶兆之花》剧场版主题曲)",
+          "artist": "Aimer (エメ)",
+          "lineCount": 64,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ja-hana-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3021,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "花の唄",
+          "artist": "Aimer",
+          "duration": 373
+        },
+        "lrc": {
+          "title": "花の唄 (花之歌) (《命运之夜——天之杯：恶兆之花》剧场版主题曲)",
+          "artist": "Aimer (エメ)",
+          "lineCount": 64,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ja-yoru-canonical",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3495,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ja-yoru-challenge",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2589,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ja-idol-canonical",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3527,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ja-idol-challenge",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2545,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-spring-canonical",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3457,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-spring-challenge",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2618,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-ddu-canonical",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3464,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-ddu-challenge",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2798,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-night-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3056,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "밤편지",
+          "artist": "IU",
+          "duration": 253
+        },
+        "lrc": {
+          "title": "밤편지 (夜信)",
+          "artist": "아이유 (IU)",
+          "lineCount": 31,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ko-night-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2510,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "밤편지",
+          "artist": "IU",
+          "duration": 253
+        },
+        "lrc": {
+          "title": "밤편지 (夜信)",
+          "artist": "아이유 (IU)",
+          "lineCount": 31,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "en-closer-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2911,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "Closer to You",
+          "artist": "Jung Kook、Major Lazer",
+          "duration": 170
+        },
+        "lrc": {
+          "title": "Closer to You (feat. Major Lazer)",
+          "artist": "Jung Kook",
+          "lineCount": 58,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "en-closer-challenge",
+        "raw": "miss",
+        "result": "match",
+        "failure": null,
+        "autoRescued": true,
+        "httpAttempts": 4,
+        "queryCount": 2,
+        "durationMs": 4042,
+        "queryReasons": ["original", "canonical-credit"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "Closer to You",
+          "artist": "Jung Kook、Major Lazer",
+          "duration": 170
+        },
+        "lrc": {
+          "title": "Closer to You (feat. Major Lazer)",
+          "artist": "Jung Kook",
+          "lineCount": 58,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "en-shape-canonical",
+        "raw": "miss",
+        "result": "miss",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 1,
+        "queryCount": 1,
+        "durationMs": 1150,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "en-shape-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3347,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "Shape of You",
+          "artist": "Ed Sheeran",
+          "duration": 233
+        },
+        "lrc": {
+          "title": "Shape of You",
+          "artist": "Ed Sheeran",
+          "lineCount": 92,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "en-talk-canonical",
+        "raw": "miss",
+        "result": "miss",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 2,
+        "queryCount": 2,
+        "durationMs": 1714,
+        "queryReasons": ["original", "lead-credit"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "en-talk-challenge",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3492,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "nohint-hana",
+        "raw": "miss",
+        "result": "miss",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 1,
+        "queryCount": 1,
+        "durationMs": 486,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "nohint-yoru",
+        "raw": "miss",
+        "result": "miss",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 1,
+        "queryCount": 1,
+        "durationMs": 1093,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      }
+    ]
+  },
+  "followup": {
+    "scope": "Only original validation rejections; metadata allowlist and proved-credit slash support changed",
+    "startedAt": "2026-10-30T20:02:08.621Z",
+    "finishedAt": "2026-10-30T20:02:35.069Z",
+    "sourceHashes": {
+      "scripts/lyrics-provider-kugou.mjs": "8eb7537e3c664f880a4505b82dc4253adf3f79e1e87f0c6e03da49da2def562a",
+      "scripts/lyrics-provider-kugou-query.mjs": "1ffacf14f63c91fe780fb60cc83a078e811fdff5e953cae893fa95baf53c694a",
+      "scripts/fixtures/lyrics-provider-evaluation/kugou-multilingual.json": "7b6113264f7433735fc0074b9941b95407f5a8f12cdd356419b02c9a5b2f694d"
+    },
+    "httpAttempts": 27,
+    "accepted": 6,
+    "results": [
+      {
+        "caseId": "ja-yoru-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2147,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "夜に駆ける",
+          "artist": "YOASOBI",
+          "duration": 261
+        },
+        "lrc": {
+          "title": "夜に駆ける",
+          "artist": "YOASOBI",
+          "lineCount": 64,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ja-yoru-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2925,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "夜に駆ける",
+          "artist": "YOASOBI",
+          "duration": 261
+        },
+        "lrc": {
+          "title": "夜に駆ける",
+          "artist": "YOASOBI",
+          "lineCount": 64,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ja-idol-canonical",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3030,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "アイドル",
+          "artist": "YOASOBI",
+          "duration": 213
+        },
+        "lrc": {
+          "title": "アイドル (偶像)",
+          "artist": "YOASOBI",
+          "lineCount": 79,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ja-idol-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3018,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "アイドル",
+          "artist": "YOASOBI",
+          "duration": 213
+        },
+        "lrc": {
+          "title": "アイドル (偶像)",
+          "artist": "YOASOBI",
+          "lineCount": 79,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ko-spring-canonical",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3025,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-spring-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3057,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "봄날",
+          "artist": "BTS (防弹少年团)",
+          "duration": 274
+        },
+        "lrc": {
+          "title": "Spring Day",
+          "artist": "BTS (防弹少年团)",
+          "lineCount": 87,
+          "offsetMs": 0
+        }
+      },
+      {
+        "caseId": "ko-ddu-canonical",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3149,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "ko-ddu-challenge",
+        "raw": "not-evaluated",
+        "result": "not-evaluated",
+        "failure": "invalid-record",
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 2970,
+        "queryReasons": ["original"],
+        "staticReview": "not-accepted"
+      },
+      {
+        "caseId": "en-talk-challenge",
+        "raw": "match",
+        "result": "match",
+        "failure": null,
+        "autoRescued": false,
+        "httpAttempts": 3,
+        "queryCount": 1,
+        "durationMs": 3105,
+        "queryReasons": ["original"],
+        "staticReview": "metadata-consistent",
+        "catalog": {
+          "title": "We Don't Talk Anymore",
+          "artist": "Charlie Puth、Selena Gomez",
+          "duration": 217
+        },
+        "lrc": {
+          "title": "We Don't Talk Anymore",
+          "artist": "Charlie Puth/Selena Gomez",
+          "lineCount": 79,
+          "offsetMs": 0
+        }
+      }
+    ]
+  },
+  "diagnosticHttp": 15,
+  "totalHttp": 114,
+  "staticReview": {
+    "scope": "Assistant review of catalog title/artist/duration and LRC tags; all observations retain unreviewed full-content status",
+    "acceptedConditions": 19,
+    "songsWithAtLeastOneAcceptedCondition": 11,
+    "observedMetadataMismatches": 0,
+    "fullLyricsReviewed": false,
+    "playbackReviewed": false,
+    "remainingRejects": [
+      {
+        "caseId": "ko-spring-canonical",
+        "reason": "LRC title Spring Day is not declared by the lone Korean title input"
+      },
+      {
+        "caseId": "ko-ddu-canonical",
+        "reason": "LRC title introduces Live after studio catalog identity"
+      },
+      {
+        "caseId": "ko-ddu-challenge",
+        "reason": "LRC title introduces Live after studio catalog identity"
+      }
+    ]
+  }
+}

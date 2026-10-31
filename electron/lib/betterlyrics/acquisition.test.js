@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createBetterLyricsAcquisitionProvider } from './acquisition.js';
 import { fingerprintBetterLyricsRecord } from './candidate.js';
+import { createBetterLyricsClient } from './client.js';
 
 const TTML = `<?xml version="1.0"?><tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://itunes.apple.com/lyric-ttml-extensions" itunes:timing="Word"><body dur="5s"><p begin="1s" end="3s"><span begin="1s" end="3s">Song</span></p></body></tt>`;
 
@@ -12,7 +13,7 @@ function record(overrides = {}) {
     artistName: 'Singer',
     albumName: 'Album',
     duration: 5,
-    score: 95,
+    score: 0.95,
     cacheStatus: 'HIT',
     ttml: TTML,
     ...overrides,
@@ -20,6 +21,263 @@ function record(overrides = {}) {
 }
 
 describe('Better Lyrics acquisition provider', () => {
+  it('accepts a real-client fractional fresh score and refetches a scoreless cache hit before saving', async () => {
+    let attempts = 0;
+    const fetch = vi.fn(async () => {
+      attempts += 1;
+      return new Response(
+        JSON.stringify({
+          ttml: TTML,
+          ...(attempts === 1 ? { score: 0.97 } : {}),
+        }),
+        {
+          headers: { 'x-cache-status': attempts === 1 ? 'MISS' : 'HIT' },
+        },
+      );
+    });
+    const client = createBetterLyricsClient({
+      fetch,
+      scheduler: { schedule: (task) => task() },
+    });
+    const persistRecord = vi.fn(() => ({ status: 'saved' }));
+    const provider = createBetterLyricsAcquisitionProvider({
+      client,
+      persistRecord,
+    });
+    const track = {
+      id: 'fractional',
+      title: 'Song',
+      artist: 'Singer',
+      album: 'Album',
+      duration: 5,
+    };
+    const search = await provider.searchCandidates(track);
+    expect(search.status).toBe('ok');
+    const [candidate] = search.candidates;
+    await expect(
+      provider.saveCandidate({
+        track,
+        trackDir: 'ignored',
+        candidateId: candidate.id,
+        expectedFingerprint: candidate.previewFingerprint,
+      }),
+    ).resolves.toMatchObject({ status: 'saved' });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[0][0].toString()).toBe(
+      fetch.mock.calls[1][0].toString(),
+    );
+    expect(persistRecord).toHaveBeenCalledWith(
+      'ignored',
+      expect.not.objectContaining({ score: expect.anything() }),
+    );
+  });
+  it('keeps a known album when broadening and does not retry a cache miss', async () => {
+    const client = {
+      getLyrics: vi.fn(async () => ({
+        status: 'unavailable',
+        reason: 'cache-miss',
+      })),
+    };
+    await createBetterLyricsAcquisitionProvider({ client }).searchCandidates(
+      { title: 'Song', artist: 'Singer', album: 'Album', duration: 5 },
+      { mode: 'broaden' },
+    );
+    expect(client.getLyrics).toHaveBeenCalledOnce();
+    expect(client.getLyrics).toHaveBeenCalledWith(
+      {
+        trackName: 'Song',
+        artistName: 'Singer',
+        albumName: 'Album',
+        duration: 5,
+      },
+      expect.any(Object),
+    );
+  });
+  it('uses only explicit cross-script aliases and credited features, preserving the save query', async () => {
+    const track = {
+      id: 'canonical',
+      title: 'Closer to You (feat. Major Lazer)',
+      artist: '정국 (Jung Kook), Major Lazer',
+      album: 'GOLDEN',
+      duration: 5,
+    };
+    const snapshot = structuredClone(track);
+    const client = {
+      getLyrics: vi.fn(async (query) => ({
+        status: 'ok',
+        record: record({ ...query, score: 0.97 }),
+      })),
+    };
+    const persistRecord = vi.fn(() => ({ status: 'saved' }));
+    const provider = createBetterLyricsAcquisitionProvider({
+      client,
+      persistRecord,
+    });
+    const search = await provider.searchCandidates(track, {
+      query: { title: track.title, artist: track.artist },
+    });
+    expect(search.status).toBe('ok');
+    const canonical = {
+      trackName: 'Closer to You',
+      artistName: 'Jung Kook, Major Lazer',
+      albumName: 'GOLDEN',
+      duration: 5,
+    };
+    expect(client.getLyrics).toHaveBeenCalledWith(
+      canonical,
+      expect.any(Object),
+    );
+    expect(client.getLyrics).toHaveBeenCalledOnce();
+    const [candidate] = search.candidates;
+    await expect(
+      provider.saveCandidate({
+        track,
+        trackDir: 'ignored',
+        candidateId: candidate.id,
+        expectedFingerprint: candidate.previewFingerprint,
+      }),
+    ).resolves.toMatchObject({ status: 'saved' });
+    expect(client.getLyrics).toHaveBeenLastCalledWith(canonical, {
+      fresh: true,
+    });
+    expect(track).toEqual(snapshot);
+  });
+  it.each([
+    [
+      'Song (feat. Guest) (Live)',
+      'Singer, Guest',
+      'Song (Live)',
+      'Singer, Guest',
+    ],
+    ['Song (Remix)', 'Singer', 'Song (Remix)', 'Singer'],
+    ['Song (feat. Uncredited)', 'Singer', 'Song (feat. Uncredited)', 'Singer'],
+    ['Song', 'Singer (Guest)', 'Song', 'Singer (Guest)'],
+    ['Song', 'AC/DC', 'Song', 'AC/DC'],
+    ['Song', 'Aimer (エメ)', 'Song', 'Aimer'],
+    ['Song', '不詳 (別人)', 'Song', '不詳 (別人)'],
+    ['Song', '정국 (Official)', 'Song', '정국 (Official)'],
+    ['Song', '정국 (Live)', 'Song', '정국 (Live)'],
+  ])(
+    'preserves version and ambiguous credits for %s / %s',
+    async (title, artist, expectedTitle, expectedArtist) => {
+      const client = {
+        getLyrics: vi.fn(async () => ({
+          status: 'unavailable',
+          reason: 'cache-miss',
+        })),
+      };
+      await createBetterLyricsAcquisitionProvider({ client }).searchCandidates({
+        title,
+        artist,
+        duration: 5,
+      });
+      expect(client.getLyrics).toHaveBeenCalledWith(
+        { trackName: expectedTitle, artistName: expectedArtist, duration: 5 },
+        expect.any(Object),
+      );
+    },
+  );
+  it('does not carry an unrelated library album into an edited song query', async () => {
+    const client = {
+      getLyrics: vi.fn(async () => ({
+        status: 'unavailable',
+        reason: 'cache-miss',
+      })),
+    };
+    await createBetterLyricsAcquisitionProvider({ client }).searchCandidates(
+      {
+        title: 'Original',
+        artist: 'Original Artist',
+        album: 'Original Album',
+        duration: 5,
+      },
+      { query: { title: 'Song', artist: 'Singer' } },
+    );
+    expect(client.getLyrics).toHaveBeenCalledWith(
+      { trackName: 'Song', artistName: 'Singer', duration: 5 },
+      expect.any(Object),
+    );
+  });
+  it('classifies identity rejection separately from malformed TTML', async () => {
+    const client = {
+      getLyrics: vi.fn(async () => ({
+        status: 'ok',
+        record: record({ artistName: 'Nova' }),
+      })),
+    };
+    const provider = createBetterLyricsAcquisitionProvider({ client });
+    await expect(
+      provider.searchCandidates({
+        title: 'Song',
+        artist: 'Singer',
+        duration: 5,
+      }),
+    ).resolves.toMatchObject({
+      status: 'unavailable',
+      reason: 'low-confidence-match',
+      candidates: [],
+    });
+  });
+
+  it('reports malformed save-time TTML without misclassifying it as changed identity', async () => {
+    const client = {
+      getLyrics: vi
+        .fn()
+        .mockResolvedValueOnce({ status: 'ok', record: record() })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          record: record({ ttml: '<tt />' }),
+        }),
+    };
+    const persistRecord = vi.fn();
+    const provider = createBetterLyricsAcquisitionProvider({
+      client,
+      persistRecord,
+    });
+    const track = { title: 'Song', artist: 'Singer', duration: 5 };
+    const search = await provider.searchCandidates(track);
+    await expect(
+      provider.saveCandidate({
+        track,
+        trackDir: 'ignored',
+        candidateId: search.candidates[0].id,
+        expectedFingerprint: search.candidates[0].previewFingerprint,
+      }),
+    ).resolves.toMatchObject({ status: 'error', reason: 'invalid-ttml' });
+    expect(persistRecord).not.toHaveBeenCalled();
+  });
+
+  it('rejects save-time identity changes without classifying them as invalid TTML', async () => {
+    const client = {
+      getLyrics: vi
+        .fn()
+        .mockResolvedValueOnce({ status: 'ok', record: record() })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          record: record({ duration: 15 }),
+        }),
+    };
+    const persistRecord = vi.fn();
+    const provider = createBetterLyricsAcquisitionProvider({
+      client,
+      persistRecord,
+    });
+    const track = { title: 'Song', artist: 'Singer', duration: 5 };
+    const search = await provider.searchCandidates(track);
+    await expect(
+      provider.saveCandidate({
+        track,
+        trackDir: 'ignored',
+        candidateId: search.candidates[0].id,
+        expectedFingerprint: search.candidates[0].previewFingerprint,
+      }),
+    ).resolves.toMatchObject({
+      status: 'unavailable',
+      reason: 'record-mismatch',
+    });
+    expect(persistRecord).not.toHaveBeenCalled();
+  });
+
   it('requires title, artist, and duration before a network request', async () => {
     const client = { getLyrics: vi.fn() };
     const provider = createBetterLyricsAcquisitionProvider({ client });
@@ -69,7 +327,10 @@ describe('Better Lyrics acquisition provider', () => {
       getLyrics: vi
         .fn()
         .mockResolvedValueOnce({ status: 'unavailable', reason: 'cache-miss' })
-        .mockResolvedValueOnce({ status: 'ok', record: record({ score: 60 }) }),
+        .mockResolvedValueOnce({
+          status: 'ok',
+          record: record({ score: 0.6 }),
+        }),
     };
     const provider = createBetterLyricsAcquisitionProvider({ client });
     const track = { title: 'Song', artist: 'Singer', duration: 5 };
@@ -173,6 +434,7 @@ describe('Better Lyrics acquisition provider', () => {
         artistName: 'Singer',
         duration: 5,
       }),
+      { fresh: true },
     );
     expect(persistRecord).not.toHaveBeenCalled();
   });

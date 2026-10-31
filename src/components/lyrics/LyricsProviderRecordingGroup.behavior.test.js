@@ -78,6 +78,26 @@ function setup(offsetMs = 2000) {
 }
 
 describe('timeline information within the existing candidate flow', () => {
+  it('keeps Kugou as an individually selectable source and saves only on a click', async () => {
+    const { root, props, onSave } = setup();
+    props.showProvider = true;
+    props.group.candidates[1] = {
+      ...props.group.candidates[1],
+      providerId: 'kugou',
+      candidateKey: 'kugou:1',
+    };
+    props.expandedKey = 'kugou:1';
+    await nextTick();
+    expect(textContent(root)).toContain('酷狗音樂');
+    expect(onSave).not.toHaveBeenCalled();
+    const button = findAll(
+      root,
+      (node) => node.type === 'button' && textContent(node).includes('儲存'),
+    )[0];
+    expect(button).toBeTruthy();
+    trigger(button, 'onClick');
+    expect(onSave).toHaveBeenCalledWith(props.group.candidates[1]);
+  });
   it('reports the currently previewed candidate without saving or adopting an update', async () => {
     const { root, props, onSave, onToggle } = setup();
     const onReport = vi.fn();
