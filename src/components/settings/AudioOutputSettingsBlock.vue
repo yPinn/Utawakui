@@ -5,10 +5,11 @@ import UiNotice from '../ui/UiNotice.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import UiRange from '../ui/UiRange.vue';
 import { AUDIO_CONTROL_VALUES } from '../../utils/audioPreferences.js';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   enabled: { type: Boolean, default: false },
-  deviceLabel: { type: String, default: '未選擇' },
+  deviceLabel: { type: String, default: () => t('audio.notSelected') },
   errorNotice: { type: Object, default: null },
   captureVolume: {
     type: Number,
@@ -23,16 +24,16 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
   <div class="audio-output-settings-block">
     <SettingsDocumentItem
       :icon="Headphones"
-      title="擷取輸出裝置"
+      :title="t('audio.capture.title')"
       :value="deviceLabel"
-      :status="enabled ? '已啟用' : '未啟用'"
+      :status="t(enabled ? 'audio.capture.enabled' : 'audio.capture.disabled')"
       :status-tone="enabled ? 'success' : 'muted'"
-      guidance="供直播或錄影擷取；與本機聆聽分開設定。"
+      :guidance="t('audio.capture.guidance')"
     >
       <template #actions>
         <UiIconButton
           :icon="Headphones"
-          label="選擇擷取輸出裝置"
+          :label="t('audio.capture.select')"
           aria-haspopup="dialog"
           @click="emit('selectDevice')"
         />
@@ -42,14 +43,14 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
     <UiRange
       id="capture-master-volume"
       class="audio-output-settings-block__volume"
-      label="直播擷取總音量"
+      :label="t('audio.capture.volume')"
       :model-value="captureVolume"
       :min="AUDIO_CONTROL_VALUES.captureVolume.min"
       :max="AUDIO_CONTROL_VALUES.captureVolume.max"
       :step="AUDIO_CONTROL_VALUES.captureVolume.step"
       :default-value="AUDIO_CONTROL_VALUES.captureVolume.defaultValue"
       :value-text="`${Math.round(captureVolume * 100)}%`"
-      hint="套用演唱與 BGM；預設 50% 保留餘裕，不影響監聽或導唱比例。"
+      :hint="t('audio.capture.volumeHint')"
       @update:model-value="emit('update:captureVolume', $event)"
     />
 

@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 const source = (name) =>
-  readFileSync(new URL(`./${name}.vue`, import.meta.url), 'utf8');
+  readCatalogSource(new URL(`./${name}.vue`, import.meta.url));
 describe('Settings modal workspace composition', () => {
   it.each([
     'FfmpegSourceModal',

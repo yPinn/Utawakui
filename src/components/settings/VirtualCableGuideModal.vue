@@ -3,6 +3,7 @@ import { ExternalLink, Info } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import { t } from '../../utils/i18n.js';
 
 // Informational only — no selection state here, unlike CaptureDeviceModal.
 // Content is verified against each vendor's own site (see the plan this
@@ -17,12 +18,12 @@ const TOOLS = [
   {
     id: 'vb-cable',
     name: 'VB-CABLE',
-    description: '將一個應用程式的聲音傳送至另一個，適合單一音源。',
+    description: t('audio.guide.tools.vbCable'),
   },
   {
     id: 'voicemeeter',
     name: 'VoiceMeeter',
-    description: '混合麥克風、伴奏等多個聲音來源後再輸出。',
+    description: t('audio.guide.tools.voicemeeter'),
   },
 ];
 
@@ -34,7 +35,7 @@ function openDownload(targetId) {
 <template>
   <UiModal
     :open="open"
-    title="虛擬音效工具"
+    :title="t('audio.guide.title')"
     size="notice"
     max-block-size="small"
     @close="emit('close')"
@@ -42,13 +43,13 @@ function openDownload(targetId) {
     <template #header-actions>
       <UiIconButton
         :icon="Info"
-        label="查看官方授權說明"
+        :label="t('audio.guide.licensing')"
         @click="openDownload('vb-audio-licensing')"
       />
     </template>
     <div class="virtual-cable-guide">
       <p class="virtual-cable-guide__intro">
-        讓 Utawakui 將伴奏直接送到直播或錄影軟體，不需實體接線。
+        {{ t('audio.guide.intro') }}
       </p>
 
       <ul class="virtual-cable-guide__list">
@@ -66,13 +67,12 @@ function openDownload(targetId) {
             </p>
           </div>
           <UiButton :icon="ExternalLink" @click="openDownload(tool.id)">
-            前往下載
+            {{ t('audio.guide.download') }}
           </UiButton>
         </li>
       </ul>
       <p class="virtual-cable-guide__description">
-        兩者均採 Donationware
-        授權，可依使用情況自主定價贊助；專業或組織使用另有付費授權要求，請先確認官方條件。
+        {{ t('audio.guide.license') }}
       </p>
     </div>
   </UiModal>

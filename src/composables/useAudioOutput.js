@@ -2,6 +2,7 @@ import { computed, shallowRef, watch } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlayer } from './usePlayer.js';
 import { shortenDeviceLabel } from '../utils/audioDeviceLabel.js';
+import { t } from '../utils/i18n.js';
 
 // Module-scope singleton, same pattern as useTheme.js/useSidebarWidth.js —
 // one capture output device applies to the whole app, not per-component
@@ -25,9 +26,9 @@ function recordCaptureUnavailable(error) {
   return recordError(technicalError, {
     code: 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE',
     severity: 'error',
-    title: '擷取輸出已關閉',
-    message: '先前的裝置無法使用。',
-    actionLabel: '選擇裝置',
+    title: t('audio.notify.closedTitle'),
+    message: t('audio.notify.closedMessage'),
+    actionLabel: t('audio.notify.selectDevice'),
     source: 'audio-output',
     operation: 'apply-capture-device',
     context: { retryable: true },
@@ -42,9 +43,9 @@ async function clearPersistedCaptureDevice() {
     captureErrorNotice.value = recordError(error, {
       code: 'AUDIO_OUTPUT_SAVE_FAILED',
       severity: 'error',
-      title: '裝置設定未清除',
-      message: '擷取已停止。請選擇其他裝置。',
-      actionLabel: '選擇裝置',
+      title: t('audio.notify.clearFailedTitle'),
+      message: t('audio.notify.clearFailedMessage'),
+      actionLabel: t('audio.notify.selectDevice'),
       source: 'audio-output',
       operation: 'clear-device',
       context: { retryable: true },
@@ -69,9 +70,9 @@ watch(
       : recordError(technicalError, {
           code: 'AUDIO_OUTPUT_PROCESSING_FAILED',
           severity: 'error',
-          title: '擷取輸出中斷',
-          message: '請選擇其他裝置。',
-          actionLabel: '選擇裝置',
+          title: t('audio.notify.interruptedTitle'),
+          message: t('audio.notify.chooseOther'),
+          actionLabel: t('audio.notify.selectDevice'),
           source: 'audio-output',
           operation: 'apply-capture-device',
           context: { retryable: true },
@@ -92,7 +93,7 @@ watch(
 // resolves or if the platform never surfaces a 'default' entry.
 const monitorDeviceLabel = computed(() => {
   const device = devices.value.find((d) => d.deviceId === 'default');
-  return shortenDeviceLabel(device?.label) || '系統預設輸出';
+  return shortenDeviceLabel(device?.label) || t('audio.systemDefault');
 });
 
 async function refreshDevices() {
@@ -104,9 +105,9 @@ async function refreshDevices() {
   } catch (error) {
     captureErrorNotice.value = recordError(error, {
       code: 'AUDIO_OUTPUT_LIST_FAILED',
-      title: '無法讀取輸出裝置',
-      message: '請再試一次。',
-      actionLabel: '重試',
+      title: t('audio.notify.listFailedTitle'),
+      message: t('audio.notify.tryAgain'),
+      actionLabel: t('audio.notify.retry'),
       source: 'audio-output',
       operation: 'list-devices',
       context: { retryable: true },
@@ -138,9 +139,9 @@ async function selectDevice(deviceId) {
   } catch (error) {
     captureErrorNotice.value = recordError(error, {
       code: 'AUDIO_OUTPUT_SAVE_FAILED',
-      title: '裝置未儲存',
-      message: '請重新選擇。',
-      actionLabel: '選擇裝置',
+      title: t('audio.notify.saveFailedTitle'),
+      message: t('audio.notify.saveFailedMessage'),
+      actionLabel: t('audio.notify.selectDevice'),
       source: 'audio-output',
       operation: 'save-device',
       context: { retryable: true },
@@ -175,9 +176,9 @@ async function restoreInitialDevice() {
   } catch (error) {
     captureErrorNotice.value = recordError(error, {
       code: 'AUDIO_OUTPUT_RESTORE_FAILED',
-      title: '先前的裝置無法使用',
-      message: '請選擇其他裝置。',
-      actionLabel: '選擇裝置',
+      title: t('audio.notify.unavailableTitle'),
+      message: t('audio.notify.chooseOther'),
+      actionLabel: t('audio.notify.selectDevice'),
       source: 'audio-output',
       operation: 'restore-device',
       context: { retryable: true },

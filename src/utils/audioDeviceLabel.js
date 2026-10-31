@@ -1,4 +1,5 @@
 import { UI_LOCALE } from './uiLocale.js';
+import { t } from './i18n.js';
 
 // Pure string classification for MediaDeviceInfo labels; no DOM/Electron access,
 // so it is plain-Node testable (sole caller: CaptureDeviceModal.vue).
@@ -50,10 +51,10 @@ export function stripDeviceRolePrefix(label) {
 // compareAudioDevices) — a safer badge-text source than re-matching the
 // label prefix, which is already being stripped from display by the time a
 // caller would want to know which badge to show.
-const ROLE_DEVICE_BADGE_LABELS = { default: '預設', communications: '通訊' };
+const ROLE_DEVICE_IDS = new Set(['default', 'communications']);
 
 export function deviceRoleBadgeLabel(deviceId) {
-  return ROLE_DEVICE_BADGE_LABELS[deviceId] ?? null;
+  return ROLE_DEVICE_IDS.has(deviceId) ? t(`audio.roles.${deviceId}`) : null;
 }
 
 // enumerateDevices() order is OS/driver enumeration order, not meaningful

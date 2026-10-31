@@ -5,17 +5,18 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import SettingsSection from './SettingsSection.vue';
 import AudioOutputSettingsBlock from './AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from './CaptureDeviceModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const { state: playerState, setCaptureVolume } = usePlayer();
 const { devices: captureOutputDevices, captureErrorNotice } = useAudioOutput();
 const isCaptureDeviceModalOpen = shallowRef(false);
 
 const captureDeviceLabel = computed(() => {
-  if (!playerState.captureDeviceId) return '未選擇';
+  if (!playerState.captureDeviceId) return t('audio.notSelected');
   const device = captureOutputDevices.value.find(
     (entry) => entry.deviceId === playerState.captureDeviceId,
   );
-  return device?.label || '裝置名稱無法讀取';
+  return device?.label || t('audio.deviceNameUnreadable');
 });
 </script>
 
@@ -23,7 +24,7 @@ const captureDeviceLabel = computed(() => {
   <SettingsSection
     id="settings-audio"
     class="settings-audio-section"
-    title="音訊輸出"
+    :title="t('audio.section')"
     tabindex="-1"
   >
     <AudioOutputSettingsBlock

@@ -1,0 +1,56 @@
+{
+  "section": "Audio output",
+  "notSelected": "Not selected",
+  "deviceNameUnreadable": "Device name can't be read",
+  "systemDefault": "System default output",
+  "capture": {
+    "title": "Capture output device",
+    "enabled": "On",
+    "disabled": "Off",
+    "guidance": "For capture by streaming or recording software; set separately from local listening.",
+    "select": "Choose capture output device",
+    "volume": "Stream capture master volume",
+    "volumeHint": "Applies to vocals and BGM; the 50% default leaves headroom and doesn't change monitor or guide levels."
+  },
+  "modal": {
+    "title": "Choose capture output device",
+    "help": "How to choose a capture device",
+    "description": "Choose the output device your streaming or recording software captures. It applies right away.",
+    "offOption": "Capture off (still plays through {device})",
+    "groupCapture": "Capture audio",
+    "groupVirtual": "Virtual audio devices",
+    "groupOther": "Other output devices",
+    "unnamed": "Unnamed output device",
+    "empty": "No available devices. Install a virtual audio device first."
+  },
+  "roles": {
+    "default": "Default",
+    "communications": "Communications"
+  },
+  "guide": {
+    "title": "Virtual audio tools",
+    "licensing": "View official licensing terms",
+    "intro": "Lets Utawakui send the backing track straight to your streaming or recording software, without physical cables.",
+    "download": "Go to download",
+    "license": "Both are licensed as Donationware: you choose what to contribute based on your use. Professional or organizational use has separate paid licensing requirements, so check the official terms first.",
+    "tools": {
+      "vbCable": "Sends one app's sound to another; suited to a single source.",
+      "voicemeeter": "Mixes several sources, such as a microphone and backing track, before output."
+    }
+  },
+  "notify": {
+    "selectDevice": "Choose device",
+    "retry": "Retry",
+    "tryAgain": "Try again.",
+    "chooseOther": "Choose another device.",
+    "closedTitle": "Capture output turned off",
+    "closedMessage": "The previous device isn't available.",
+    "clearFailedTitle": "Device setting not cleared",
+    "clearFailedMessage": "Capture stopped. Choose another device.",
+    "interruptedTitle": "Capture output interrupted",
+    "listFailedTitle": "Output devices can't be read",
+    "saveFailedTitle": "Device not saved",
+    "saveFailedMessage": "Choose it again.",
+    "unavailableTitle": "The previous device isn't available"
+  }
+}

@@ -16,6 +16,7 @@ import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import VirtualCableGuideModal from './VirtualCableGuideModal.vue';
+import { t } from '../../utils/i18n.js';
 
 // A dedicated modal rather than a UiActionMenu row list — real Windows
 // audio device names run long ("喇叭 (Turtle Beach Stream Mic 2 Chat)"),
@@ -37,8 +38,8 @@ const { devices, monitorDeviceLabel, captureErrorNotice, selectDevice } =
 // plays through the OS's current default device regardless of any capture
 // selection here. Naming it explicitly (not a hardcoded "耳機" guess, which
 // isn't always true) tells the user what they'll actually hear through.
-const offOptionLabel = computed(
-  () => `關閉擷取（仍從 ${monitorDeviceLabel.value} 播放）`,
+const offOptionLabel = computed(() =>
+  t('audio.modal.offOption', { device: monitorDeviceLabel.value }),
 );
 
 const isGuideOpen = shallowRef(false);
@@ -98,13 +99,13 @@ const deviceGroups = computed(() => {
   return [
     {
       id: 'off',
-      label: '擷取音訊',
+      label: t('audio.modal.groupCapture'),
       hideHeading: true,
       items: [{ id: 0, label: offOptionLabel.value, roleBadges: [] }],
     },
     ...[
-      { id: 'virtual', label: '虛擬音效裝置', rows: virtual },
-      { id: 'other', label: '其他輸出裝置', rows: other },
+      { id: 'virtual', label: t('audio.modal.groupVirtual'), rows: virtual },
+      { id: 'other', label: t('audio.modal.groupOther'), rows: other },
     ]
       .filter((group) => group.rows.length)
       .map((group) => ({
@@ -113,7 +114,7 @@ const deviceGroups = computed(() => {
         items: group.rows.map((row) => ({
           ...row,
           id: row.canonicalDeviceId,
-          label: row.label || '未命名的輸出裝置',
+          label: row.label || t('audio.modal.unnamed'),
         })),
       })),
   ];
@@ -126,7 +127,7 @@ function choose(deviceId) {
 <template>
   <UiModal
     :open="open"
-    title="選擇擷取輸出裝置"
+    :title="t('audio.modal.title')"
     size="wide"
     max-block-size="small"
     body-mode="workspace"
@@ -135,13 +136,13 @@ function choose(deviceId) {
     <template #header-actions>
       <UiIconButton
         :icon="Info"
-        label="如何選擇擷取裝置"
+        :label="t('audio.modal.help')"
         @click="isGuideOpen = true"
       />
     </template>
     <div class="capture-device-modal">
       <p class="capture-device-modal__description">
-        選擇直播或錄影軟體要擷取的輸出裝置，選擇後立即套用。
+        {{ t('audio.modal.description') }}
       </p>
       <UiScrollLayout
         class="capture-device-modal__list"
@@ -177,9 +178,7 @@ function choose(deviceId) {
           </template>
         </UiRadioGroup>
       </UiScrollLayout>
-      <UiHint v-if="devices.length === 0"
-        >找不到可用裝置。請先安裝虛擬音效裝置。</UiHint
-      >
+      <UiHint v-if="devices.length === 0">{{ t('audio.modal.empty') }}</UiHint>
       <UiNotice
         v-if="captureErrorNotice"
         :notice="captureErrorNotice"

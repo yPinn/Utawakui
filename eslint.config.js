@@ -34,6 +34,9 @@ const I18N_MIGRATED = [
   'src/composables/output/useSpoutOutput.js',
   'src/utils/{outputRuntimeStatus,spoutOutputStatus,obsChapters}.js',
   'electron/main/{obsAdapter,spoutOutputRuntime,outputWindowHandlers}.js',
+  'src/components/settings/{SettingsAudioSection,AudioOutputSettingsBlock,CaptureDeviceModal,VirtualCableGuideModal}.vue',
+  'src/composables/useAudioOutput.js',
+  'src/utils/audioDeviceLabel.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

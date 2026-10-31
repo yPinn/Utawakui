@@ -1,0 +1,56 @@
+{
+  "section": "音訊輸出",
+  "notSelected": "未選擇",
+  "deviceNameUnreadable": "裝置名稱無法讀取",
+  "systemDefault": "系統預設輸出",
+  "capture": {
+    "title": "擷取輸出裝置",
+    "enabled": "已啟用",
+    "disabled": "未啟用",
+    "guidance": "供直播或錄影擷取；與本機聆聽分開設定。",
+    "select": "選擇擷取輸出裝置",
+    "volume": "直播擷取總音量",
+    "volumeHint": "套用演唱與 BGM；預設 50% 保留餘裕，不影響監聽或導唱比例。"
+  },
+  "modal": {
+    "title": "選擇擷取輸出裝置",
+    "help": "如何選擇擷取裝置",
+    "description": "選擇直播或錄影軟體要擷取的輸出裝置，選擇後立即套用。",
+    "offOption": "關閉擷取（仍從 {device} 播放）",
+    "groupCapture": "擷取音訊",
+    "groupVirtual": "虛擬音效裝置",
+    "groupOther": "其他輸出裝置",
+    "unnamed": "未命名的輸出裝置",
+    "empty": "找不到可用裝置。請先安裝虛擬音效裝置。"
+  },
+  "roles": {
+    "default": "預設",
+    "communications": "通訊"
+  },
+  "guide": {
+    "title": "虛擬音效工具",
+    "licensing": "查看官方授權說明",
+    "intro": "讓 Utawakui 將伴奏直接送到直播或錄影軟體，不需實體接線。",
+    "download": "前往下載",
+    "license": "兩者均採 Donationware 授權，可依使用情況自主定價贊助；專業或組織使用另有付費授權要求，請先確認官方條件。",
+    "tools": {
+      "vbCable": "將一個應用程式的聲音傳送至另一個，適合單一音源。",
+      "voicemeeter": "混合麥克風、伴奏等多個聲音來源後再輸出。"
+    }
+  },
+  "notify": {
+    "selectDevice": "選擇裝置",
+    "retry": "重試",
+    "tryAgain": "請再試一次。",
+    "chooseOther": "請選擇其他裝置。",
+    "closedTitle": "擷取輸出已關閉",
+    "closedMessage": "先前的裝置無法使用。",
+    "clearFailedTitle": "裝置設定未清除",
+    "clearFailedMessage": "擷取已停止。請選擇其他裝置。",
+    "interruptedTitle": "擷取輸出中斷",
+    "listFailedTitle": "無法讀取輸出裝置",
+    "saveFailedTitle": "裝置未儲存",
+    "saveFailedMessage": "請重新選擇。",
+    "unavailableTitle": "先前的裝置無法使用"
+  }
+}
