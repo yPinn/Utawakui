@@ -291,9 +291,9 @@ describe('ReleaseInfoEditor mounted operations', () => {
       chips().map((node) => [textContent(node), String(node.props.class)]),
     ).toEqual([
       ['已確認', expect.stringContaining('ui-chip--success')],
-      ['音源已變更', expect.stringContaining('ui-chip--warning')],
-      ['待確認音源', expect.stringContaining('ui-chip--warning')],
-      ['音源不存在', expect.stringContaining('ui-chip--danger')],
+      ['音檔已變更', expect.stringContaining('ui-chip--warning')],
+      ['音檔待確認', expect.stringContaining('ui-chip--warning')],
+      ['找不到音檔', expect.stringContaining('ui-chip--danger')],
       ['尚未確認', expect.stringContaining('ui-chip--muted')],
       ['尚未確認', expect.stringContaining('ui-chip--muted')],
     ]);
@@ -392,7 +392,7 @@ describe('ReleaseInfoEditor mounted operations', () => {
         (node) => node.type === 'input' && node.props.type === 'checkbox',
       ),
     ).toHaveLength(0);
-    trigger(button('確認音源並儲存'), 'onClick');
+    trigger(button('確認音檔並儲存'), 'onClick');
     await settle();
     expect(bridge.saveReleaseInfo.mock.calls[0][0]).toMatchObject({
       initializeBindings: true,

@@ -53,7 +53,7 @@ it('preserves paged choices, accepts only explicit positions and disposes subscr
   const session = createReleaseCatalogSession(bridge);
   session.open({ id: 'local', title: 'Song' });
   await session.search();
-  expect(session.state.message).toContain('沒有找到');
+  expect(session.state.message).toContain('找不到符合的專輯');
   await session.preview('opaque');
   session.setPosition(1);
   await session.preview('opaque', 100);
@@ -71,7 +71,7 @@ it('preserves paged choices, accepts only explicit positions and disposes subscr
     updated: 0,
   });
   await session.refresh();
-  expect(session.state.message).toContain('尚未取得');
+  expect(session.state.message).toContain('未自動找到專輯');
   changed({ libraryEpoch: 2 });
   expect(session.state.error).toContain('曲庫位置已變更');
   session.close();

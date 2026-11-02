@@ -79,7 +79,7 @@ describe('Single detail presentation', () => {
       tracks: [track('b')],
     });
     expect(result.fields).toEqual(['已收錄 2／3 首，本機曲長 3 分']);
-    expect(result.message).toContain('本機可見 1 首');
+    expect(result.message).toContain('本機有 1 首');
     expect(result.canStart).toBe(true);
     expect(result.canShuffle).toBe(false);
   });
@@ -117,7 +117,7 @@ describe('Single detail presentation', () => {
       expect(result.fields).toEqual(['已收錄 2／3 首，本機曲長 3 分']);
       expect(result.localTrackCount).toBe(1);
       expect(result.message).toContain(
-        state === 'error' ? '讀取未完成' : '本機可見',
+        state === 'error' ? '讀取未完成' : '本機有',
       );
     },
   );
@@ -153,7 +153,7 @@ describe('Single detail presentation', () => {
       collection: input,
       tracks: [track()],
     });
-    expect(missing.message).toContain('本機可見 1 首');
+    expect(missing.message).toContain('本機有 1 首');
     expect(missing.message).not.toContain('主打');
   });
   it('does not invent a lead for missing, invalid or pending designations', () => {
@@ -176,7 +176,7 @@ describe('Single detail presentation', () => {
       collection: input,
       tracks: [{ ...track(), releaseYear: 1999 }],
     });
-    expect(result.conflictMessage).toContain('發行資料');
+    expect(result.conflictMessage).toContain('專輯資料');
     expect(result.fields.join(' ')).not.toContain('1999');
   });
   it('keeps empty releases distinct from failed media verification', () => {
