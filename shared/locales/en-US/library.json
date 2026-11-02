@@ -58,8 +58,7 @@
     "artistFallback": "Artist",
     "removePhoto": {
       "title": "Remove artist photo?",
-      "message": "The current artist photo is removed; tracks and artist details are kept.",
-      "detail": "You'll need to choose or search for a photo again.",
+      "message": "Tracks and artist details are kept.",
       "confirm": "Remove photo"
     },
     "organizeArtist": "Organize artist",
@@ -68,7 +67,7 @@
     "noSearchMatch": "No tracks match your search.",
     "noTracks": "No tracks.",
     "albumEmpty": "This album has no local tracks yet.",
-    "playlistEmpty": "This playlist has no tracks yet. In All tracks, add them from a track's menu.",
+    "playlistEmpty": "This playlist has no tracks yet. Add them from a track's menu in All tracks.",
     "deleteTrack": {
       "title": "Delete track?",
       "message": "It's removed from the library and every playlist.",
@@ -82,8 +81,7 @@
     "removeFromPlaylist": {
       "title": "Remove track from playlist?",
       "playlistFallback": "Playlist",
-      "message": "Only its place in this playlist is removed; the library song and audio file are kept.",
-      "detail": "You can add it back later.",
+      "message": "The library song and audio file are kept.",
       "confirm": "Remove track"
     },
     "previewBlockedSession": "Unavailable while recording or streaming",
@@ -142,15 +140,15 @@
     "editNote": "Edit note",
     "removeFromPage": "Remove from page",
     "deleteNote": "Delete note",
-    "layerLabel": "Folder page items",
+    "layerLabel": "Page items",
     "menuLabel": "Page item actions",
     "previewTitle": "Page photo",
     "editCaption": "Edit photo caption",
     "expanded": "Expanded page photo"
   },
   "sourceTracks": {
-    "untitled": "No title from source",
-    "label": "Full source track order",
+    "untitled": "No title",
+    "label": "Full album track order",
     "include": "Include local track: {title}",
     "download": "Download {title}",
     "including": "Adding to album",
@@ -185,13 +183,13 @@
       "title": "Merge artists?",
       "subject": "{current} + {target}",
       "message": "Tracks from both are gathered on one artist page; the original track credits aren't rewritten.",
-      "detail": "You can undo the last change or split the credit again if needed.",
+      "detail": "You can undo or split them again later.",
       "confirm": "Merge artists"
     },
     "split": {
       "title": "Split artist credit?",
       "message": "This credit and its tracks return to their own artist page.",
-      "detail": "Other credits aren't affected, and you can undo the last change if needed.",
+      "detail": "Other credits aren't affected, and you can undo this later.",
       "confirm": "Split credit"
     }
   },

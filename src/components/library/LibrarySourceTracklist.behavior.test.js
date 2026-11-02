@@ -177,8 +177,8 @@ it('labels an untitled source slot without changing its raw download intent', ()
     tracksById,
     onDownload,
   });
-  expect(textContent(view.root)).toContain('來源未提供曲名');
-  const download = buttons(view.root, '下載 來源未提供曲名')[0];
+  expect(textContent(view.root)).toContain('未提供曲名');
+  const download = buttons(view.root, '下載 未提供曲名')[0];
   expect(download).toBeTruthy();
   trigger(download, 'onClick', { stopPropagation() {} });
   expect(onDownload).toHaveBeenCalledWith(
@@ -310,7 +310,7 @@ it('offers explicit local inclusion for excluded audio and never turns it into a
     onDownload,
     onPlay,
   });
-  const include = buttons(view.root, '納入本地曲目：Not imported')[0];
+  const include = buttons(view.root, '納入本機曲目：Not imported')[0];
   expect(include).toBeTruthy();
   expect(buttons(view.root, '下載 Not imported')).toHaveLength(0);
   trigger(include, 'onClick', { stopPropagation() {} });

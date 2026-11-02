@@ -58,8 +58,7 @@
     "artistFallback": "藝人",
     "removePhoto": {
       "title": "移除藝人照片？",
-      "message": "目前的藝人照片會被移除，曲目與藝人資料會保留。",
-      "detail": "移除後需重新選擇或搜尋照片。",
+      "message": "曲目與藝人資料會保留。",
       "confirm": "移除照片"
     },
     "organizeArtist": "整理藝人",
@@ -68,7 +67,7 @@
     "noSearchMatch": "找不到符合搜尋的曲目。",
     "noTracks": "沒有曲目。",
     "albumEmpty": "這張專輯目前沒有本機曲目。",
-    "playlistEmpty": "播放清單還沒有曲目。到「全部曲目」，從曲目選單加入播放清單。",
+    "playlistEmpty": "播放清單還沒有曲目。可在「全部曲目」從曲目選單加入。",
     "deleteTrack": {
       "title": "刪除曲目？",
       "message": "會從曲庫與所有播放清單移除。",
@@ -82,8 +81,7 @@
     "removeFromPlaylist": {
       "title": "從播放清單移除曲目？",
       "playlistFallback": "播放清單",
-      "message": "只會移除此清單中的曲目安排，曲庫歌曲與音檔會保留。",
-      "detail": "之後可重新加入清單。",
+      "message": "曲庫中的歌曲與音檔會保留。",
       "confirm": "移除曲目"
     },
     "previewBlockedSession": "錄影或直播中無法使用",
@@ -142,20 +140,20 @@
     "editNote": "編輯便條",
     "removeFromPage": "從頁面移除",
     "deleteNote": "刪除便條",
-    "layerLabel": "Folder 頁面物件",
+    "layerLabel": "頁面物件",
     "menuLabel": "頁面物件操作",
     "previewTitle": "頁面照片",
     "editCaption": "編輯照片說明",
     "expanded": "展開的頁面照片"
   },
   "sourceTracks": {
-    "untitled": "來源未提供曲名",
-    "label": "專輯完整來源曲序",
-    "include": "納入本地曲目：{title}",
+    "untitled": "未提供曲名",
+    "label": "專輯完整曲序",
+    "include": "納入本機曲目：{title}",
     "download": "下載 {title}",
     "including": "正在納入專輯",
     "downloading": "下載中",
-    "unmatched": "未對應的本地收錄"
+    "unmatched": "未對應的本機曲目"
   },
   "supporting": {
     "all": "全部",
@@ -185,13 +183,13 @@
       "title": "合併藝人？",
       "subject": "{current} ＋ {target}",
       "message": "兩邊的曲目會整理到同一個藝人頁，原始曲目標示不會改寫。",
-      "detail": "需要時可復原上一次整理，或再拆分標示。",
+      "detail": "之後可以復原或再拆分。",
       "confirm": "合併藝人"
     },
     "split": {
       "title": "拆分藝人標示？",
       "message": "這個標示及其曲目會回到獨立的藝人頁。",
-      "detail": "其他標示不受影響，需要時可復原上一次整理。",
+      "detail": "其他標示不受影響，之後可以復原。",
       "confirm": "拆分標示"
     }
   },

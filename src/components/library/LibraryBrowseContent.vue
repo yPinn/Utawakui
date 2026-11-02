@@ -565,7 +565,6 @@ async function confirmClearArtistPhoto() {
     title: t('library.browse.removePhoto.title'),
     subject: artist.name,
     message: t('library.browse.removePhoto.message'),
-    detail: t('library.browse.removePhoto.detail'),
     confirmLabel: t('library.browse.removePhoto.confirm'),
     intent: 'danger',
   });
@@ -942,7 +941,6 @@ async function confirmRemovePlaylistTrack(track, playlistId) {
     meta:
       playlist.name || t('library.browse.removeFromPlaylist.playlistFallback'),
     message: t('library.browse.removeFromPlaylist.message'),
-    detail: t('library.browse.removeFromPlaylist.detail'),
     confirmLabel: t('library.browse.removeFromPlaylist.confirm'),
     intent: 'danger',
   });
