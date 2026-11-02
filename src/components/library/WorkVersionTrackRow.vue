@@ -5,6 +5,7 @@ import { trackArtistText } from '../../utils/artistPage.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
 import TrackContextActions from '../playback/context/TrackContextActions.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -30,7 +31,7 @@ const subtitle = computed(() =>
     overflow="ellipsis"
     hide-duration
     artwork-clickable
-    :artwork-label="`播放 ${track.title}`"
+    :artwork-label="t('work.trackRow.play', { title: track.title })"
     state-surface
     :state-surface-active="menuOpen"
     data-artwork-reveal-scope="focus-within"

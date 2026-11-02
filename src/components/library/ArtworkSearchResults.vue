@@ -5,6 +5,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   candidates: { type: Array, default: () => [] },
@@ -71,7 +72,7 @@ function handleRadioKeydown(event, index) {
     ref="group"
     class="artwork-results"
     role="radiogroup"
-    aria-label="線上封面候選"
+    :aria-label="t('work.artwork.candidates')"
   >
     <article
       v-for="({ candidate, display, track }, index) in displayCandidates"
@@ -99,10 +100,12 @@ function handleRadioKeydown(event, index) {
           :decorative="false"
           loading="lazy"
           decoding="async"
-          :aria-label="`${display.title}封面`"
+          :aria-label="t('work.artwork.named', { title: display.title })"
         >
           <template v-if="candidate.previewLoading" #overlay>
-            <UiArtworkLoading :label="`${display.title}封面載入中`" />
+            <UiArtworkLoading
+              :label="t('work.artwork.namedLoading', { title: display.title })"
+            />
           </template>
         </UiTrackThumb>
 

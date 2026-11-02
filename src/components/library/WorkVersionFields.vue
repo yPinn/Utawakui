@@ -4,6 +4,7 @@ import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   versionInfo: { type: Object, required: true },
@@ -14,31 +15,31 @@ const detailsOpen = shallowRef(false);
 const fields = [
   {
     key: 'performance',
-    label: '錄製形式',
+    label: t('work.fields.performance'),
     options: [
-      ['unspecified', '未設定'],
-      ['studio', '錄音室'],
-      ['live', '現場'],
+      ['unspecified', t('work.fields.unspecified')],
+      ['studio', t('work.fields.studio')],
+      ['live', t('work.fields.live')],
       ['demo', 'Demo'],
     ],
   },
   {
     key: 'arrangement',
-    label: '編曲',
+    label: t('work.fields.arrangement'),
     options: [
-      ['unspecified', '未設定'],
+      ['unspecified', t('work.fields.unspecified')],
       ['acoustic', 'Acoustic'],
       ['remix', 'Remix'],
-      ['other', '其他'],
+      ['other', t('work.fields.other')],
     ],
   },
   {
     key: 'vocal',
-    label: '人聲',
+    label: t('work.fields.vocal'),
     options: [
-      ['unspecified', '未設定'],
-      ['vocal', '有人聲'],
-      ['instrumental', '純伴奏'],
+      ['unspecified', t('work.fields.unspecified')],
+      ['vocal', t('work.fields.hasVocal')],
+      ['instrumental', t('work.fields.instrumental')],
     ],
   },
 ].map((field) => ({
@@ -50,19 +51,19 @@ const fields = [
 <template>
   <section class="work-version-fields" aria-labelledby="work-version-heading">
     <h3 id="work-version-heading" class="work-version-fields__title">
-      版本設定
+      {{ t('work.fields.heading') }}
     </h3>
     <UiTextField
       id="work-version-label"
-      label="版本名稱（選填）"
+      :label="t('work.fields.name')"
       :model-value="versionInfo.label"
       :maxlength="120"
       :disabled="disabled"
-      placeholder="例：合作錄音版、台北場 Live"
+      :placeholder="t('work.fields.namePlaceholder')"
       @update:model-value="emit('update', 'label', $event)"
     />
     <slot name="relationship" />
-    <UiDisclosure v-model:open="detailsOpen" label="更多設定">
+    <UiDisclosure v-model:open="detailsOpen" :label="t('work.fields.more')">
       <div class="work-version-fields__details">
         <div class="work-version-fields__dimensions">
           <UiSelect
@@ -78,7 +79,7 @@ const fields = [
         </div>
         <UiTextarea
           id="work-version-note"
-          label="備註（選填）"
+          :label="t('work.fields.note')"
           :model-value="versionInfo.note"
           :maxlength="500"
           :rows="3"

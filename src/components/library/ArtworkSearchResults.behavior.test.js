@@ -1,9 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./ArtworkSearchResults.vue', import.meta.url),
-  'utf8',
 );
 
 describe('ArtworkSearchResults behavior contract', () => {
@@ -17,7 +16,7 @@ describe('ArtworkSearchResults behavior contract', () => {
       '<template v-if="candidate.previewLoading" #overlay>',
     );
     expect(source).toContain(
-      '<UiArtworkLoading :label="`${display.title}封面載入中`" />',
+      `:label="t('work.artwork.namedLoading', { title: display.title })"`,
     );
     expect(source).not.toMatch(/@keyframes|artwork-results__loading/u);
     expect(source).not.toContain('UiSkeleton');

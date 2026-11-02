@@ -1,0 +1,112 @@
+{
+  "editor": {
+    "tabs": {
+      "metadata": "歌曲資訊",
+      "organization": "版本與連結"
+    },
+    "relationship": {
+      "unknown": "未設定",
+      "original": "原唱",
+      "cover": "翻唱"
+    },
+    "unlinkPending": "儲存後解除，保留版本資料。",
+    "untitled": "未命名",
+    "pending": "{title}（待儲存）",
+    "pendingLinked": "{title}（待儲存，連結兩首）",
+    "selectedTrack": "已選曲目",
+    "selectedSong": "已選擇歌曲",
+    "notLinked": "尚未連結歌曲",
+    "dimensions": {
+      "other": "其他編曲",
+      "studio": "錄音室",
+      "live": "現場",
+      "instrumental": "純伴奏"
+    },
+    "title": "整理歌曲",
+    "label": "歌曲整理",
+    "loading": "讀取中…",
+    "relationshipLabel": "演唱類別",
+    "linkTracks": "連結曲目",
+    "undo": "復原變更",
+    "linkedVersions": "已連結版本",
+    "noVersions": "尚無其他版本。",
+    "loadingMore": "載入中",
+    "loadMore": "載入更多",
+    "notices": "歌曲整理提示",
+    "reload": "重新載入",
+    "audioChanged": "音源已變更，請確認版本資料。",
+    "sourceManaged": "歌曲資訊由來源管理。版本與連結仍可編輯。",
+    "close": "關閉",
+    "saving": "儲存中",
+    "confirmAndSave": "確認音源並儲存",
+    "save": "儲存"
+  },
+  "fields": {
+    "performance": "錄製形式",
+    "arrangement": "編曲",
+    "vocal": "人聲",
+    "unspecified": "未設定",
+    "studio": "錄音室",
+    "live": "現場",
+    "other": "其他",
+    "hasVocal": "有人聲",
+    "instrumental": "純伴奏",
+    "heading": "版本設定",
+    "name": "版本名稱（選填）",
+    "namePlaceholder": "例：合作錄音版、台北場 Live",
+    "more": "更多設定",
+    "note": "備註（選填）"
+  },
+  "trackRow": {
+    "play": "播放 {title}"
+  },
+  "metadata": {
+    "basics": "基本資料",
+    "title": "歌名",
+    "artist": "演唱者",
+    "searchArtwork": "搜尋封面",
+    "previewHint": "選取後預覽，儲存後套用。",
+    "albumFilter": "設定專輯篩選",
+    "collapse": "收合線上搜尋",
+    "searching": "搜尋中",
+    "search": "搜尋",
+    "albumFilterLabel": "專輯篩選",
+    "album": "專輯（選填）",
+    "searchByAlbum": "以專輯條件搜尋",
+    "closeAlbumFilter": "關閉專輯篩選",
+    "findingArtwork": "正在尋找封面…",
+    "noArtwork": "找不到封面。請確認歌名與演唱者，或加入專輯名稱後再搜尋。",
+    "failed": "操作未完成"
+  },
+  "linkSearch": {
+    "label": "連結曲目",
+    "searchTitle": "搜尋歌名",
+    "search": "搜尋",
+    "searching": "搜尋中",
+    "searchingStatus": "搜尋中…",
+    "selectedNamed": "已選擇 {title}（{artist}）",
+    "linkNamed": "連結 {title}（{artist}）",
+    "unknownArtist": "未知演唱者",
+    "selected": "已選擇",
+    "link": "連結",
+    "noResults": "找不到曲目。試試其他關鍵字。"
+  },
+  "artwork": {
+    "preview": "封面預覽",
+    "current": "目前封面",
+    "artwork": "封面",
+    "pending": "待儲存",
+    "candidatePreview": "候選封面預覽",
+    "none": "尚未設定封面",
+    "candidateLoading": "候選封面載入中",
+    "actions": "封面操作",
+    "change": "更換封面",
+    "choose": "選擇封面",
+    "preparing": "準備預覽中",
+    "searchOnline": "線上搜尋",
+    "remove": "移除封面",
+    "candidates": "線上封面候選",
+    "named": "{title}封面",
+    "namedLoading": "{title}封面載入中"
+  }
+}

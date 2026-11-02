@@ -20,6 +20,12 @@ describe('expandCatalogText', () => {
     );
   });
 
+  it('expands keys chosen by a ternary inside t()', () => {
+    expect(
+      expandCatalogText(`t(saving ? 'common.saving' : 'common.save')`),
+    ).toBe(`t(saving ? '儲存中' : '儲存')`);
+  });
+
   it('leaves parameterized calls and unknown keys untouched', () => {
     const source = `t('ui.colorField.picker', { label }) t('common.missing')`;
     expect(expandCatalogText(source)).toBe(source);

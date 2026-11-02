@@ -25,14 +25,15 @@ import UiSelect from '../ui/UiSelect.vue';
 import WorkLinkSearch from './WorkLinkSearch.vue';
 import WorkVersionFields from './WorkVersionFields.vue';
 import WorkVersionTrackRow from './WorkVersionTrackRow.vue';
+import { t } from '../../utils/i18n.js';
 
 const songEditor = useSongEditor();
 const editor = songEditor.work;
 const metadata = songEditor.metadata;
 const sourceActions = useTemplateRef('sourceActions');
 const tabs = [
-  { id: 'metadata', label: '歌曲資訊' },
-  { id: 'organization', label: '版本與連結' },
+  { id: 'metadata', label: t('work.editor.tabs.metadata') },
+  { id: 'organization', label: t('work.editor.tabs.organization') },
 ];
 const { state } = editor;
 const { tracksById, initialize: initializeLibrary } = useLibrary();
@@ -50,19 +51,35 @@ const hasWork = computed(
     (state.selection.kind === 'keep' && Boolean(state.snapshot?.work)),
 );
 const relationshipOptions = [
-  { value: 'unknown', label: '未設定' },
-  { value: 'original', label: '原唱' },
-  { value: 'cover', label: '翻唱' },
+  { value: 'unknown', label: t('work.editor.relationship.unknown') },
+  { value: 'original', label: t('work.editor.relationship.original') },
+  { value: 'cover', label: t('work.editor.relationship.cover') },
 ];
 const selectionLabel = computed(() => {
-  if (state.selection.kind === 'none') return '儲存後解除，保留版本資料。';
+  if (state.selection.kind === 'none') return t('work.editor.unlinkPending');
   if (state.selection.kind === 'new')
-    return `${state.selection.title || '未命名'}（待儲存${state.selection.targetTrackId ? '，連結兩首' : ''}）`;
+    return t(
+      state.selection.targetTrackId
+        ? 'work.editor.pendingLinked'
+        : 'work.editor.pending',
+      { title: state.selection.title || t('work.editor.untitled') },
+    );
   if (state.selection.kind === 'track')
-    return `${tracksById.value.get(state.selection.targetTrackId)?.title || state.results.tracks.find((track) => track.id === state.selection.targetTrackId)?.title || '已選曲目'}（待儲存）`;
+    return t('work.editor.pending', {
+      title:
+        tracksById.value.get(state.selection.targetTrackId)?.title ||
+        state.results.tracks.find(
+          (track) => track.id === state.selection.targetTrackId,
+        )?.title ||
+        t('work.editor.selectedTrack'),
+    });
   if (state.selection.kind === 'existing')
-    return `${state.results.works.find((work) => work.id === state.selection.workId)?.title || '已選擇歌曲'}（待儲存）`;
-  return state.snapshot?.work?.title || '尚未連結歌曲';
+    return t('work.editor.pending', {
+      title:
+        state.results.works.find((work) => work.id === state.selection.workId)
+          ?.title || t('work.editor.selectedSong'),
+    });
+  return state.snapshot?.work?.title || t('work.editor.notLinked');
 });
 const related = computed(() =>
   (state.snapshot?.relatedVersions || []).flatMap((version) => {
@@ -103,11 +120,11 @@ function relatedLabel(version) {
   const dimensions = {
     acoustic: 'Acoustic',
     remix: 'Remix',
-    other: '其他編曲',
-    studio: '錄音室',
-    live: '現場',
+    other: t('work.editor.dimensions.other'),
+    studio: t('work.editor.dimensions.studio'),
+    live: t('work.editor.dimensions.live'),
     demo: 'Demo',
-    instrumental: '純伴奏',
+    instrumental: t('work.editor.dimensions.instrumental'),
   };
   const labels = version.versionInfo?.label
     ? [version.versionInfo.label]
@@ -139,7 +156,7 @@ onUnmounted(songEditor.dispose);
 <template>
   <UiModal
     :open="songEditor.isOpen.value"
-    title="整理歌曲"
+    :title="t('work.editor.title')"
     size="wide"
     max-block-size="large"
     body-mode="workspace"
@@ -176,7 +193,7 @@ onUnmounted(songEditor.dispose);
         <UiTabs
           :items="tabs"
           :active-id="songEditor.state.section"
-          aria-label="歌曲整理"
+          :aria-label="t('work.editor.label')"
           tab-id-prefix="song-editor"
           panel-id-prefix="song-editor"
           variant="bar"
@@ -229,7 +246,9 @@ onUnmounted(songEditor.dispose);
           aria-labelledby="song-editor-organization-tab"
           class="work-version-editor__organization"
         >
-          <p v-if="state.loading" role="status">讀取中…</p>
+          <p v-if="state.loading" role="status">
+            {{ t('work.editor.loading') }}
+          </p>
           <template v-if="state.snapshot">
             <div class="work-version-editor__layout">
               <div class="work-version-editor__version-pane">
@@ -242,7 +261,7 @@ onUnmounted(songEditor.dispose);
                     <UiSelect
                       v-if="hasWork"
                       id="work-relationship"
-                      label="演唱類別"
+                      :label="t('work.editor.relationshipLabel')"
                       :options="relationshipOptions"
                       :model-value="state.relationship"
                       :disabled="disabled"
@@ -258,7 +277,7 @@ onUnmounted(songEditor.dispose);
                   aria-labelledby="work-link-heading"
                 >
                   <h3 id="work-link-heading" class="work-version-editor__title">
-                    連結曲目
+                    {{ t('work.editor.linkTracks') }}
                   </h3>
                   <WorkLinkSearch
                     :key="state.track.id"
@@ -287,7 +306,7 @@ onUnmounted(songEditor.dispose);
                     <UiIconButton
                       data-work-undo
                       :icon="RotateCcw"
-                      label="復原變更"
+                      :label="t('work.editor.undo')"
                       :disabled="disabled"
                       @click="select({ kind: 'keep' })"
                     />
@@ -302,10 +321,10 @@ onUnmounted(songEditor.dispose);
                     id="work-related-heading"
                     class="work-version-editor__title"
                   >
-                    已連結版本
+                    {{ t('work.editor.linkedVersions') }}
                   </h3>
                   <p v-if="!related.length" class="work-version-editor__hint">
-                    尚無其他版本。
+                    {{ t('work.editor.noVersions') }}
                   </p>
                   <ul v-else class="work-version-editor__tracks">
                     <WorkVersionTrackRow
@@ -321,10 +340,10 @@ onUnmounted(songEditor.dispose);
                     v-if="state.snapshot.hasMore"
                     variant="secondary"
                     :loading="state.loadingMore"
-                    loading-label="載入中"
+                    :loading-label="t('work.editor.loadingMore')"
                     :disabled="disabled"
                     @click="editor.loadMore"
-                    >載入更多</UiButton
+                    >{{ t('work.editor.loadMore') }}</UiButton
                   >
                 </section>
               </div>
@@ -335,7 +354,10 @@ onUnmounted(songEditor.dispose);
     </template>
     <template #footer>
       <div class="work-version-editor__footer">
-        <div class="work-version-editor__notices" aria-label="歌曲整理提示">
+        <div
+          class="work-version-editor__notices"
+          :aria-label="t('work.editor.notices')"
+        >
           <UiNotice
             v-if="metadata.state.error"
             compact
@@ -347,7 +369,7 @@ onUnmounted(songEditor.dispose);
             compact
             tone="danger"
             :message="state.error"
-            action-label="重新載入"
+            :action-label="t('work.editor.reload')"
             :action-disabled="songEditor.busy.value || state.loading"
             @action="editor.reload"
           />
@@ -361,7 +383,7 @@ onUnmounted(songEditor.dispose);
             v-if="state.snapshot?.bindingStatus === 'changed'"
             compact
             tone="warning"
-            message="音源已變更，請確認版本資料。"
+            :message="t('work.editor.audioChanged')"
           />
           <UiNotice
             v-if="
@@ -370,7 +392,7 @@ onUnmounted(songEditor.dispose);
             "
             compact
             tone="info"
-            message="歌曲資訊由來源管理。版本與連結仍可編輯。"
+            :message="t('work.editor.sourceManaged')"
           />
         </div>
         <div class="work-version-editor__actions">
@@ -378,25 +400,25 @@ onUnmounted(songEditor.dispose);
             variant="secondary"
             :disabled="songEditor.busy.value"
             @click="songEditor.close"
-            >關閉</UiButton
+            >{{ t('work.editor.close') }}</UiButton
           >
           <UiButton
             v-if="state.snapshot?.bindingStatus === 'changed'"
             variant="accent"
             :disabled="disabled"
             :loading="songEditor.state.saving"
-            loading-label="儲存中"
+            :loading-label="t('work.editor.saving')"
             @click="songEditor.save({ reconfirm: true })"
-            >確認音源並儲存</UiButton
+            >{{ t('work.editor.confirmAndSave') }}</UiButton
           >
           <UiButton
             v-else
             variant="accent"
             :disabled="songEditor.busy.value || !songEditor.isDirty.value"
             :loading="songEditor.state.saving"
-            loading-label="儲存中"
+            :loading-label="t('work.editor.saving')"
             @click="songEditor.save"
-            >儲存</UiButton
+            >{{ t('work.editor.save') }}</UiButton
           >
         </div>
       </div>

@@ -1,26 +1,21 @@
-import { readFileSync } from 'node:fs';
 import { compileScript, compileTemplate, parse } from '@vue/compiler-sfc';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const modalSource = readFileSync(
+const modalSource = readCatalogSource(
   new URL('./TrackMetadataFields.vue', import.meta.url),
-  'utf8',
 );
-const editorSource = readFileSync(
+const editorSource = readCatalogSource(
   new URL('./WorkVersionEditor.vue', import.meta.url),
-  'utf8',
 );
-const libraryBrowseSource = readFileSync(
+const libraryBrowseSource = readCatalogSource(
   new URL('./LibraryBrowseContent.vue', import.meta.url),
-  'utf8',
 );
-const queueSource = readFileSync(
+const queueSource = readCatalogSource(
   new URL('../queue/QueuePanel.vue', import.meta.url),
-  'utf8',
 );
-const appHtml = readFileSync(
+const appHtml = readCatalogSource(
   new URL('../../../index.html', import.meta.url),
-  'utf8',
 );
 
 describe('TrackMetadataFields artwork discovery contract', () => {

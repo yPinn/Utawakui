@@ -8,6 +8,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -147,13 +148,16 @@ watch(searchOptionsOpen, (open) => {
     </div>
 
     <div class="track-metadata__workspace">
-      <section class="track-metadata__section" aria-label="基本資料">
+      <section
+        class="track-metadata__section"
+        :aria-label="t('work.metadata.basics')"
+      >
         <div class="track-metadata__fields">
           <UiTextField
             id="track-metadata-title"
             ref="titleField"
             :model-value="title"
-            label="歌名"
+            :label="t('work.metadata.title')"
             :error="titleError"
             maxlength="200"
             required
@@ -164,7 +168,7 @@ watch(searchOptionsOpen, (open) => {
           <UiTextField
             id="track-metadata-artist"
             :model-value="artist"
-            label="演唱者"
+            :label="t('work.metadata.artist')"
             maxlength="200"
             :disabled="fieldsDisabled"
             @update:model-value="emit('updateArtist', $event)"
@@ -186,15 +190,15 @@ watch(searchOptionsOpen, (open) => {
               class="track-metadata__section-title"
               tabindex="-1"
             >
-              搜尋封面
+              {{ t('work.metadata.searchArtwork') }}
             </h3>
-            <UiHint>選取後預覽，儲存後套用。</UiHint>
+            <UiHint>{{ t('work.metadata.previewHint') }}</UiHint>
           </div>
           <div class="track-metadata__search-actions">
             <UiIconButton
               ref="albumFilterTrigger"
               :icon="SlidersHorizontal"
-              label="設定專輯篩選"
+              :label="t('work.metadata.albumFilter')"
               :active="searchOptionsOpen"
               :aria-pressed="searchOptionsOpen"
               :aria-expanded="searchOptionsOpen"
@@ -204,7 +208,7 @@ watch(searchOptionsOpen, (open) => {
             />
             <UiIconButton
               :icon="ChevronUp"
-              label="收合線上搜尋"
+              :label="t('work.metadata.collapse')"
               :disabled="readOnly || artworkSearching || artworkPreparing"
               @click="emit('closeArtworkSearch')"
             />
@@ -212,13 +216,13 @@ watch(searchOptionsOpen, (open) => {
               variant="secondary"
               :icon="Search"
               :loading="artworkSearching"
-              loading-label="搜尋中"
+              :loading-label="t('work.metadata.searching')"
               :disabled="
                 saving || artworkPreparing || !String(title || '').trim()
               "
               @click="emit('searchArtwork')"
             >
-              搜尋
+              {{ t('work.metadata.search') }}
             </UiButton>
           </div>
         </div>
@@ -228,7 +232,7 @@ watch(searchOptionsOpen, (open) => {
           id="track-artwork-search-options"
           class="track-metadata__search-options"
           role="search"
-          aria-label="專輯篩選"
+          :aria-label="t('work.metadata.albumFilterLabel')"
           @submit.prevent="emit('searchArtwork')"
           @keydown.escape.stop.prevent="
             closeAlbumFilter({ restoreFocus: true })
@@ -238,8 +242,8 @@ watch(searchOptionsOpen, (open) => {
             id="track-artwork-album-filter"
             ref="albumFilterField"
             :model-value="artworkQuery.album"
-            label="專輯（選填）"
-            placeholder="專輯（選填）"
+            :label="t('work.metadata.album')"
+            :placeholder="t('work.metadata.album')"
             label-hidden
             maxlength="200"
             :disabled="searchControlsDisabled"
@@ -247,9 +251,9 @@ watch(searchOptionsOpen, (open) => {
           />
           <UiIconButton
             :icon="Search"
-            label="以專輯條件搜尋"
+            :label="t('work.metadata.searchByAlbum')"
             :loading="artworkSearching"
-            loading-label="搜尋中"
+            :loading-label="t('work.metadata.searching')"
             :disabled="
               saving || artworkPreparing || !String(title || '').trim()
             "
@@ -257,13 +261,15 @@ watch(searchOptionsOpen, (open) => {
           />
           <UiIconButton
             :icon="X"
-            label="關閉專輯篩選"
+            :label="t('work.metadata.closeAlbumFilter')"
             :disabled="saving || artworkPreparing"
             @click="closeAlbumFilter({ restoreFocus: true })"
           />
         </form>
 
-        <UiHint v-if="artworkSearching" role="status"> 正在尋找封面… </UiHint>
+        <UiHint v-if="artworkSearching" role="status">
+          {{ t('work.metadata.findingArtwork') }}
+        </UiHint>
 
         <ArtworkSearchResults
           v-if="artworkCandidates.length > 0"
@@ -278,14 +284,14 @@ watch(searchOptionsOpen, (open) => {
           class="track-metadata__empty"
           role="status"
         >
-          找不到封面。請確認歌名與演唱者，或加入專輯名稱後再搜尋。
+          {{ t('work.metadata.noArtwork') }}
         </UiHint>
       </section>
 
       <UiNotice
         v-if="generalError"
         tone="danger"
-        title="操作未完成"
+        :title="t('work.metadata.failed')"
         :message="generalError"
         compact
       />

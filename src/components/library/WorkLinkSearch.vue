@@ -4,6 +4,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   query: { type: String, default: '' },
@@ -22,7 +23,7 @@ function search() {
 </script>
 
 <template>
-  <section class="work-link-search" aria-label="連結曲目">
+  <section class="work-link-search" :aria-label="t('work.linkSearch.label')">
     <form
       class="work-link-search__query"
       role="search"
@@ -30,9 +31,9 @@ function search() {
     >
       <UiTextField
         id="work-search-query"
-        label="搜尋歌名"
+        :label="t('work.linkSearch.searchTitle')"
         label-hidden
-        placeholder="搜尋歌名"
+        :placeholder="t('work.linkSearch.searchTitle')"
         :model-value="query"
         :maxlength="200"
         :disabled="disabled"
@@ -41,15 +42,17 @@ function search() {
       <UiButton
         type="submit"
         :icon="Search"
-        title="搜尋"
-        aria-label="搜尋"
+        :title="t('work.linkSearch.search')"
+        :aria-label="t('work.linkSearch.search')"
         :disabled="disabled"
         :loading="searching"
-        loading-label="搜尋中"
+        :loading-label="t('work.linkSearch.searching')"
       />
     </form>
     <UiNotice v-if="error" tone="danger" :message="error" />
-    <p v-if="searching" class="work-link-search__hint" role="status">搜尋中…</p>
+    <p v-if="searching" class="work-link-search__hint" role="status">
+      {{ t('work.linkSearch.searchingStatus') }}
+    </p>
     <template v-else-if="searched && !error">
       <template v-if="results.tracks.length">
         <ul class="work-link-search__tracks">
@@ -63,13 +66,28 @@ function search() {
             <template #trail
               ><UiButton
                 variant="secondary"
-                :aria-label="`${selectedTrackId === track.id ? '已選擇' : '連結'} ${track.title}（${track.artist || '未知演唱者'}）`"
+                :aria-label="
+                  t(
+                    selectedTrackId === track.id
+                      ? 'work.linkSearch.selectedNamed'
+                      : 'work.linkSearch.linkNamed',
+                    {
+                      title: track.title,
+                      artist:
+                        track.artist || t('work.linkSearch.unknownArtist'),
+                    },
+                  )
+                "
                 :disabled="disabled || selectedTrackId === track.id"
                 @click="
                   emit('select', { kind: 'track', targetTrackId: track.id })
                 "
                 >{{
-                  selectedTrackId === track.id ? '已選擇' : '連結'
+                  t(
+                    selectedTrackId === track.id
+                      ? 'work.linkSearch.selected'
+                      : 'work.linkSearch.link',
+                  )
                 }}</UiButton
               ></template
             >
@@ -81,7 +99,7 @@ function search() {
         class="work-link-search__hint"
         role="status"
       >
-        找不到曲目。試試其他關鍵字。
+        {{ t('work.linkSearch.noResults') }}
       </p>
     </template>
   </section>

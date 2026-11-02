@@ -44,6 +44,7 @@ const I18N_MIGRATED = [
   'src/utils/{releasePresentation,releaseDetailPresentation}.js',
   'src/components/library/{ReleaseInfoEditor,ReleaseInfoFields,ReleaseMembersPanel,ReleaseCatalogModal,ReleaseCatalogBatchActions,LibraryReleaseCatalog}.vue',
   'src/composables/{useReleaseOrganization,useReleaseCatalogDownloads,useReleaseCatalog,useReleaseCatalogBatchDownloads,useReleaseMembers}.js',
+  'src/components/library/{WorkVersionEditor,WorkVersionFields,WorkVersionTrackRow,TrackMetadataFields,WorkLinkSearch,ArtworkPreviewPane,ArtworkSearchResults}.vue',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -28,18 +28,24 @@ const catalog = readdirSync(CATALOG_DIR)
 const KEY = "t\\(\\s*'([\\w.]+)'\\s*\\)";
 
 export function expandCatalogText(source) {
-  return source
-    .replace(
-      new RegExp(`:([\\w-]+)="\\s*${KEY}\\s*"`, 'gu'),
-      (match, attribute, key) =>
-        catalog.has(key) ? `${attribute}="${catalog.get(key)}"` : match,
-    )
-    .replace(new RegExp(`\\{\\{\\s*${KEY}\\s*\\}\\}`, 'gu'), (match, key) =>
-      catalog.has(key) ? catalog.get(key) : match,
-    )
-    .replace(new RegExp(`\\b${KEY}`, 'gu'), (match, key) =>
-      catalog.has(key) ? `'${catalog.get(key)}'` : match,
-    );
+  return (
+    source
+      .replace(
+        new RegExp(`:([\\w-]+)="\\s*${KEY}\\s*"`, 'gu'),
+        (match, attribute, key) =>
+          catalog.has(key) ? `${attribute}="${catalog.get(key)}"` : match,
+      )
+      .replace(new RegExp(`\\{\\{\\s*${KEY}\\s*\\}\\}`, 'gu'), (match, key) =>
+        catalog.has(key) ? catalog.get(key) : match,
+      )
+      .replace(new RegExp(`\\b${KEY}`, 'gu'), (match, key) =>
+        catalog.has(key) ? `'${catalog.get(key)}'` : match,
+      )
+      // Keys picked by a ternary inside t(...) stay bare quoted strings.
+      .replace(/([?:]\s*)'([a-zA-Z]+(?:[.][\w-]+)+)'/gu, (match, lead, key) =>
+        catalog.has(key) ? `${lead}'${catalog.get(key)}'` : match,
+      )
+  );
 }
 
 export function readCatalogSource(url) {

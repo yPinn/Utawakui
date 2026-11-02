@@ -5,6 +5,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiArtworkLoading from '../ui/UiArtworkLoading.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   currentTrack: { type: Object, required: true },
@@ -34,10 +35,18 @@ const previewTrack = computed(() =>
     <div class="artwork-preview__heading">
       <h3 id="artwork-preview-title">
         {{
-          staged ? '封面預覽' : currentTrack.thumbnailUrl ? '目前封面' : '封面'
+          t(
+            staged
+              ? 'work.artwork.preview'
+              : currentTrack.thumbnailUrl
+                ? 'work.artwork.current'
+                : 'work.artwork.artwork',
+          )
         }}
       </h3>
-      <UiChip v-if="staged" tone="warning">待儲存</UiChip>
+      <UiChip v-if="staged" tone="warning">{{
+        t('work.artwork.pending')
+      }}</UiChip>
     </div>
 
     <UiTrackThumb
@@ -47,25 +56,37 @@ const previewTrack = computed(() =>
       size="var(--track-metadata-preview-size)"
       :decorative="false"
       :aria-label="
-        candidate
-          ? '候選封面預覽'
-          : currentTrack.thumbnailUrl
-            ? '目前封面'
-            : '尚未設定封面'
+        t(
+          candidate
+            ? 'work.artwork.candidatePreview'
+            : currentTrack.thumbnailUrl
+              ? 'work.artwork.current'
+              : 'work.artwork.none',
+        )
       "
     >
       <template v-if="candidate?.previewLoading" #overlay>
-        <UiArtworkLoading label="候選封面載入中" />
+        <UiArtworkLoading :label="t('work.artwork.candidateLoading')" />
       </template>
     </UiTrackThumb>
 
-    <div class="artwork-preview__actions" role="group" aria-label="封面操作">
+    <div
+      class="artwork-preview__actions"
+      role="group"
+      :aria-label="t('work.artwork.actions')"
+    >
       <UiIconButton
         :icon="ImagePlus"
-        :label="currentTrack.thumbnailUrl ? '更換封面' : '選擇封面'"
+        :label="
+          t(
+            currentTrack.thumbnailUrl
+              ? 'work.artwork.change'
+              : 'work.artwork.choose',
+          )
+        "
         variant="command"
         :loading="artworkPreparing"
-        loading-label="準備預覽中"
+        :loading-label="t('work.artwork.preparing')"
         :disabled="disabled || artworkSearching"
         @click="emit('choose')"
       />
@@ -73,14 +94,14 @@ const previewTrack = computed(() =>
         v-if="!searchOpen"
         data-artwork-search-trigger
         :icon="Search"
-        label="線上搜尋"
+        :label="t('work.artwork.searchOnline')"
         :disabled="disabled || artworkSearching"
         @click="emit('openSearch')"
       />
       <UiIconButton
         v-if="currentTrack.thumbnailUrl"
         :icon="Trash2"
-        label="移除封面"
+        :label="t('work.artwork.remove')"
         :disabled="disabled"
         @click="emit('clear')"
       />

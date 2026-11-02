@@ -1,0 +1,112 @@
+{
+  "editor": {
+    "tabs": {
+      "metadata": "Song info",
+      "organization": "Versions and links"
+    },
+    "relationship": {
+      "unknown": "Not set",
+      "original": "Original",
+      "cover": "Cover"
+    },
+    "unlinkPending": "Unlinks after saving; version details are kept.",
+    "untitled": "Untitled",
+    "pending": "{title} (unsaved)",
+    "pendingLinked": "{title} (unsaved, links both tracks)",
+    "selectedTrack": "Selected track",
+    "selectedSong": "Selected song",
+    "notLinked": "Not linked to a song",
+    "dimensions": {
+      "other": "Other arrangement",
+      "studio": "Studio",
+      "live": "Live",
+      "instrumental": "Instrumental"
+    },
+    "title": "Organize song",
+    "label": "Song organizing",
+    "loading": "Loading…",
+    "relationshipLabel": "Performance type",
+    "linkTracks": "Link tracks",
+    "undo": "Undo changes",
+    "linkedVersions": "Linked versions",
+    "noVersions": "No other versions yet.",
+    "loadingMore": "Loading",
+    "loadMore": "Load more",
+    "notices": "Song organizing notices",
+    "reload": "Reload",
+    "audioChanged": "The audio changed. Check the version details.",
+    "sourceManaged": "Song info is managed by the source. Versions and links can still be edited.",
+    "close": "Close",
+    "saving": "Saving",
+    "confirmAndSave": "Confirm audio and save",
+    "save": "Save"
+  },
+  "fields": {
+    "performance": "Recording",
+    "arrangement": "Arrangement",
+    "vocal": "Vocals",
+    "unspecified": "Not set",
+    "studio": "Studio",
+    "live": "Live",
+    "other": "Other",
+    "hasVocal": "With vocals",
+    "instrumental": "Instrumental",
+    "heading": "Version settings",
+    "name": "Version name (optional)",
+    "namePlaceholder": "e.g. Duet version, Taipei live",
+    "more": "More settings",
+    "note": "Note (optional)"
+  },
+  "trackRow": {
+    "play": "Play {title}"
+  },
+  "metadata": {
+    "basics": "Basic details",
+    "title": "Title",
+    "artist": "Artist",
+    "searchArtwork": "Search artwork",
+    "previewHint": "Preview after choosing; applies after saving.",
+    "albumFilter": "Set album filter",
+    "collapse": "Collapse online search",
+    "searching": "Searching",
+    "search": "Search",
+    "albumFilterLabel": "Album filter",
+    "album": "Album (optional)",
+    "searchByAlbum": "Search with album",
+    "closeAlbumFilter": "Close album filter",
+    "findingArtwork": "Finding artwork…",
+    "noArtwork": "No artwork found. Check the title and artist, or add the album name and search again.",
+    "failed": "Action not completed"
+  },
+  "linkSearch": {
+    "label": "Link tracks",
+    "searchTitle": "Search titles",
+    "search": "Search",
+    "searching": "Searching",
+    "searchingStatus": "Searching…",
+    "selectedNamed": "Selected {title} ({artist})",
+    "linkNamed": "Link {title} ({artist})",
+    "unknownArtist": "Unknown artist",
+    "selected": "Selected",
+    "link": "Link",
+    "noResults": "No tracks found. Try other keywords."
+  },
+  "artwork": {
+    "preview": "Artwork preview",
+    "current": "Current artwork",
+    "artwork": "Artwork",
+    "pending": "Unsaved",
+    "candidatePreview": "Candidate artwork preview",
+    "none": "No artwork set",
+    "candidateLoading": "Loading candidate artwork",
+    "actions": "Artwork actions",
+    "change": "Change artwork",
+    "choose": "Choose artwork",
+    "preparing": "Preparing preview",
+    "searchOnline": "Search online",
+    "remove": "Remove artwork",
+    "candidates": "Online artwork candidates",
+    "named": "{title} artwork",
+    "namedLoading": "Loading {title} artwork"
+  }
+}
