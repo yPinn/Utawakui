@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { t } from '../utils/i18n.js';
 
 export function createReleaseCatalogSession(
   bridge,
@@ -27,7 +28,7 @@ export function createReleaseCatalogSession(
       state.busy = false;
       state.candidates = [];
       state.preview = null;
-      state.error = '曲庫位置已變更，請重新開啟專輯整理。';
+      state.error = t('release.catalog.libraryMoved');
     }
     epoch = event.libraryEpoch;
   });
@@ -59,9 +60,7 @@ export function createReleaseCatalogSession(
         throw Error('Unavailable');
       apply(result);
     } catch {
-      if (request === token)
-        state.error =
-          '專輯資料未完成，可能已變更或來源暫時不可用。請重新查詢後再試。';
+      if (request === token) state.error = t('release.catalog.incomplete');
     } finally {
       if (request === token) state.busy = false;
     }
@@ -77,8 +76,7 @@ export function createReleaseCatalogSession(
         epoch = result.libraryEpoch ?? epoch;
         state.candidates = result.candidates;
         if (!result.candidates.length)
-          state.message =
-            '沒有找到可確認的專輯，請先檢查歌曲的藝人與專輯資訊。';
+          state.message = t('release.catalog.noneFound');
       },
     );
   }
@@ -120,8 +118,8 @@ export function createReleaseCatalogSession(
       (result) => {
         state.message =
           result.updated > 0
-            ? '已補齊專輯資料。'
-            : '尚未取得可靠的專輯關聯，可選擇候選專輯與曲目位置。';
+            ? t('release.catalog.completed')
+            : t('release.catalog.chooseCandidate');
         state.revision++;
       },
     );
@@ -165,7 +163,7 @@ export function useReleaseCatalog() {
       access.requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
         source: 'library-metadata',
         operation: 'release-catalog',
-        message: '啟用外部來源後，即可查詢並補齊專輯資料。',
+        message: t('release.catalog.needsProvider'),
       }),
     );
     sessions.set(bridge, session);

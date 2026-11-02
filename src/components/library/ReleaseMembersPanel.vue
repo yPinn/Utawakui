@@ -5,6 +5,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   release: { type: Object, required: true },
   tracksById: { type: Map, required: true },
@@ -14,11 +15,14 @@ const props = defineProps({
 const emit = defineEmits(['repair', 'initialize', 'loadMore']);
 const selected = shallowRef([]);
 const statuses = {
-  current: { label: '已確認', tone: 'success' },
-  changed: { label: '音源已變更', tone: 'warning' },
-  unresolved: { label: '待確認音源', tone: 'warning' },
-  missing: { label: '音源不存在', tone: 'danger' },
-  unverified: { label: '尚未確認', tone: 'muted' },
+  current: { label: t('release.members.status.current'), tone: 'success' },
+  changed: { label: t('release.members.status.changed'), tone: 'warning' },
+  unresolved: {
+    label: t('release.members.status.unresolved'),
+    tone: 'warning',
+  },
+  missing: { label: t('release.members.status.missing'), tone: 'danger' },
+  unverified: { label: t('release.members.status.unverified'), tone: 'muted' },
 };
 const members = computed(() =>
   (props.release.members ?? []).map((member, index) => {
@@ -33,7 +37,9 @@ const members = computed(() =>
       track: {
         ...track,
         id: member.trackId,
-        title: track?.title || `無法使用的曲目 ${index + 1}`,
+        title:
+          track?.title ||
+          t('release.members.unavailableTrack', { index: index + 1 }),
       },
     };
   }),
@@ -60,13 +66,21 @@ watch([() => props.release.id, () => props.release.revision], () => {
     aria-labelledby="release-members-heading"
   >
     <h3 id="release-members-heading" class="release-members-panel__title">
-      收錄曲目
+      {{ t('release.members.title') }}
     </h3>
-    <UiHint v-if="release.memberCount > 0">{{ release.memberCount }} 首</UiHint>
+    <UiHint v-if="release.memberCount > 0">{{
+      t(
+        'release.members.count',
+        { count: release.memberCount },
+        release.memberCount,
+      )
+    }}</UiHint>
     <UiHint v-if="release.canInitializeBindings">
-      首次儲存需確認本地音源。
+      {{ t('release.members.firstSaveHint') }}
     </UiHint>
-    <UiHint v-if="!members.length && !release.hasMore">尚無收錄曲目。</UiHint>
+    <UiHint v-if="!members.length && !release.hasMore">{{
+      t('release.members.empty')
+    }}</UiHint>
     <ul v-else class="release-members-panel__list">
       <TrackIdentityRow
         v-for="member in members"
@@ -78,7 +92,9 @@ watch([() => props.release.id, () => props.release.revision], () => {
         <template v-if="member.canReconfirm" #lead>
           <UiCheckbox
             :id="`release-reconfirm-${member.trackId}`"
-            :label="`確認 ${member.track.title} 的目前音源`"
+            :label="
+              t('release.members.confirmTrack', { title: member.track.title })
+            "
             label-hidden
             :model-value="selected.includes(member.trackId)"
             :disabled="
@@ -91,7 +107,9 @@ watch([() => props.release.id, () => props.release.revision], () => {
         <template #trail>
           <UiChip
             :tone="member.status.tone"
-            :aria-label="`音源狀態：${member.status.label}`"
+            :aria-label="
+              t('release.members.statusLabel', { status: member.status.label })
+            "
             >{{ member.status.label }}</UiChip
           >
         </template>
@@ -103,23 +121,23 @@ watch([() => props.release.id, () => props.release.revision], () => {
         variant="secondary"
         :disabled="disabled"
         :loading="loadingMore"
-        loading-label="載入中"
+        :loading-label="t('release.members.loading')"
         @click="emit('loadMore')"
-        >載入更多</UiButton
+        >{{ t('release.members.loadMore') }}</UiButton
       >
       <UiButton
         v-if="!release.sourceBacked && release.canInitializeBindings"
         variant="secondary"
         :disabled="disabled"
         @click="emit('initialize')"
-        >確認音源並儲存</UiButton
+        >{{ t('release.members.confirmAndSave') }}</UiButton
       >
       <UiButton
         v-if="!release.sourceBacked && selected.length"
         variant="secondary"
         :disabled="disabled"
         @click="emit('repair', selected)"
-        >確認選取並儲存</UiButton
+        >{{ t('release.members.confirmSelectedAndSave') }}</UiButton
       >
     </div>
   </section>

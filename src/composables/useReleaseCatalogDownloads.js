@@ -5,6 +5,7 @@ import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { notificationKey } from '../constants/notificationKeys.js';
+import { t } from '../utils/i18n.js';
 
 const sessions = new WeakMap();
 const unavailable = {};
@@ -48,7 +49,7 @@ export function createReleaseCatalogDownloads({
             !(await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
               source: 'library',
               operation: 'download-release-track',
-              message: '啟用外部來源後，即可下載這首專輯曲目。',
+              message: t('release.download.needsProvider'),
             }))
           )
             return false;
@@ -64,22 +65,24 @@ export function createReleaseCatalogDownloads({
             refreshFailed = true;
           }
           if (result.status !== 'ok') {
-            const message = '音檔已下載，專輯關聯尚未更新，請重新讀取後校對。';
+            const message = t('release.download.linkPending');
             state.errors.set(scope, message);
             notify({
               key: trackNotice,
-              title: '曲目已下載',
+              title: t('release.download.downloadedTitle'),
               message,
               tone: 'warning',
             });
             return false;
           }
           if (refreshFailed) {
-            const message = '曲目已納入專輯，畫面更新失敗，請重新讀取。';
+            const message = t('release.download.refreshFailed');
             state.errors.set(scope, message);
             notify({
               key: trackNotice,
-              title: local ? '已納入專輯' : '下載完成',
+              title: local
+                ? t('release.download.includedTitle')
+                : t('release.download.doneTitle'),
               message,
               tone: 'warning',
             });
@@ -88,8 +91,10 @@ export function createReleaseCatalogDownloads({
           clearNotice(trackNotice);
           notify({
             key: albumNotice,
-            title: local ? '已納入專輯' : '下載完成',
-            message: row.title || '來源未提供曲名',
+            title: local
+              ? t('release.download.includedTitle')
+              : t('release.download.doneTitle'),
+            message: row.title || t('release.download.untitled'),
             tone: 'success',
           });
           return true;
@@ -97,15 +102,17 @@ export function createReleaseCatalogDownloads({
           state.errors.set(
             scope,
             local
-              ? '目前無法納入本地曲目，請重新讀取後再試。'
-              : '曲目下載未完成，請確認外部來源工具後再試。',
+              ? t('release.download.includeFailed')
+              : t('release.download.downloadFailed'),
           );
           notifyFailure({
             key: trackNotice,
-            title: local ? '專輯關聯未更新' : '下載未完成',
+            title: local
+              ? t('release.download.linkFailedTitle')
+              : t('release.download.failedTitle'),
             message: local
-              ? '請重新讀取後再試。'
-              : '請確認外部來源工具後再試。',
+              ? t('release.download.reloadRetry')
+              : t('release.download.checkTool'),
             error,
             code: local
               ? 'RELEASE_TRACK_LINK_FAILED'

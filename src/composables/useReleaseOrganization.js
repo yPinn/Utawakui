@@ -7,6 +7,7 @@ import { useAppConfirmation } from './useAppConfirmation.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useReleaseMembers } from './useReleaseMembers.js';
+import { t } from '../utils/i18n.js';
 
 const state = reactive({
   mode: 'edit',
@@ -75,24 +76,23 @@ function expected(result) {
     return;
   }
   const messages = {
-    conflict: '資料已變更，草稿仍保留。請重新載入後再編輯。',
-    'not-found': '找不到這份發行，請重新載入曲庫。',
-    'binding-mismatch': '音源已變更，請確認成員後再儲存。',
-    'recovery-pending': '曲庫正在恢復資料，請稍後重試。',
-    'invalid-intent': '發行資料格式無效，請確認欄位內容。',
-    'limit-reached': '已達曲庫集合數量上限，請先移除不需要的集合。',
+    conflict: t('release.organize.conflict'),
+    'not-found': t('release.organize.notFound'),
+    'binding-mismatch': t('release.organize.bindingMismatch'),
+    'recovery-pending': t('release.organize.recoveryPending'),
+    'invalid-intent': t('release.organize.invalidIntent'),
+    'limit-reached': t('release.organize.limitReached'),
   };
   state.needsReload = ['conflict', 'not-found'].includes(result?.status);
-  state.error =
-    messages[result?.status] || '目前無法讀取或儲存發行資料，請再試一次。';
+  state.error = messages[result?.status] || t('release.organize.failed');
 }
 function report(error, operation) {
   return recordError(error, {
     code: 'RELEASE_ORGANIZATION_FAILED',
     source: 'release-organization',
     operation,
-    title: '發行資料未更新',
-    message: '目前無法讀取或儲存發行資料，請再試一次。',
+    title: t('release.organize.failedTitle'),
+    message: t('release.organize.failed'),
     context: { retryable: true },
   }).message;
 }
@@ -102,10 +102,10 @@ async function close() {
   if (
     isDirty.value &&
     !(await confirm({
-      title: '捨棄發行資料變更？',
+      title: t('release.organize.discardTitle'),
       subject: state.release?.name || state.track?.title,
-      message: '尚未儲存的變更將會捨棄。',
-      confirmLabel: '捨棄變更',
+      message: t('release.organize.discardMessage'),
+      confirmLabel: t('release.organize.discardConfirm'),
     }))
   )
     return false;
@@ -219,7 +219,7 @@ async function create() {
     return false;
   const name = state.name.trim();
   if (!name) {
-    state.error = '請輸入發行名稱。';
+    state.error = t('release.organize.nameRequired');
     return false;
   }
   const current = generation;

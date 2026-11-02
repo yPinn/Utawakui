@@ -3,6 +3,7 @@ import { computed, watch } from 'vue';
 import { Download, RotateCcw, Square } from '../../icons/index.js';
 import { useReleaseCatalogBatchDownloads } from '../../composables/useReleaseCatalogBatchDownloads.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({ collection: { type: Object, required: true } });
 const batches = useReleaseCatalogBatchDownloads();
@@ -26,20 +27,26 @@ watch(
 </script>
 
 <template>
-  <div class="release-batch-actions" aria-label="專輯批次下載">
+  <div class="release-batch-actions" :aria-label="t('release.batch.label')">
     <UiIconButton
       v-if="!snapshot?.active"
       :icon="Download"
       :disabled="busy || !snapshot?.downloadableCount"
       :loading="busy && !snapshot"
-      loading-label="正在確認未下載曲目"
-      :label="`下載未下載曲目${snapshot ? `（${snapshot.downloadableCount}）` : ''}`"
+      :loading-label="t('release.batch.checking')"
+      :label="
+        snapshot
+          ? t('release.batch.downloadCount', {
+              count: snapshot.downloadableCount,
+            })
+          : t('release.batch.download')
+      "
       @click="batches.start(collection)"
     />
     <UiIconButton
       v-else
       :icon="Square"
-      label="停止尚未開始的專輯下載"
+      :label="t('release.batch.stop')"
       :disabled="busy || snapshot.phase === 'stopping'"
       @click="batches.stop(collection)"
     />
@@ -47,7 +54,7 @@ watch(
       v-if="!snapshot?.active && failures"
       :icon="RotateCcw"
       :disabled="busy"
-      :label="`重試失敗項目（${failures}）`"
+      :label="t('release.batch.retry', { count: failures })"
       @click="batches.retry(collection)"
     />
     <span
@@ -57,23 +64,27 @@ watch(
       aria-live="polite"
     >
       {{
-        snapshot.phase === 'stopping'
-          ? '停止排隊中'
-          : snapshot.active
-            ? '下載中'
-            : snapshot.phase === 'stopped'
-              ? '已停止排隊'
-              : '已完成'
+        t(
+          snapshot.phase === 'stopping'
+            ? 'release.batch.stopping'
+            : snapshot.active
+              ? 'release.batch.downloading'
+              : snapshot.phase === 'stopped'
+                ? 'release.batch.stopped'
+                : 'release.batch.done',
+        )
       }}
       {{ snapshot.completed }} / {{ snapshot.total
-      }}<template v-if="failures"> · {{ failures }} 首待處理</template>
+      }}<template v-if="failures">
+        · {{ t('release.batch.pending', { count: failures }) }}</template
+      >
     </span>
     <UiIconButton
       v-if="error"
       :icon="RotateCcw"
       intent="danger"
       :disabled="busy"
-      :label="`${error} 重新讀取專輯下載狀態`"
+      :label="t('release.batch.reloadWithError', { error })"
       @click="batches.inspect(collection)"
     />
     <span v-if="error" class="ui-visually-hidden" role="alert">{{

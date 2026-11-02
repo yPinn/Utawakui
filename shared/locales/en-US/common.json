@@ -18,5 +18,6 @@
     "audioTitle": "Audio processing item not set up",
     "message": "Set up “{name}” in Settings.",
     "action": "Go to Settings"
-  }
+  },
+  "clauseSeparator": ", "
 }

@@ -6,6 +6,7 @@ import UiModal from '../ui/UiModal.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
+import { t } from '../../utils/i18n.js';
 const catalog = useReleaseCatalog();
 const { state } = catalog;
 const candidates = computed(() =>
@@ -18,7 +19,10 @@ const candidates = computed(() =>
 const slots = computed(() =>
   (state.preview?.rows ?? []).map((row) => ({
     id: row.position,
-    label: `${row.position}. ${row.title || '來源未提供曲名'}`,
+    label: t('release.catalog.slot', {
+      position: row.position,
+      title: row.title || t('release.catalog.untitled'),
+    }),
     description: row.artist,
   })),
 );
@@ -27,7 +31,7 @@ const slots = computed(() =>
 <template>
   <UiModal
     :open="state.open"
-    title="補齊專輯資料"
+    :title="t('release.catalog.title')"
     size="wide"
     max-block-size="medium"
     :close-disabled="state.busy"
@@ -35,15 +39,15 @@ const slots = computed(() =>
   >
     <div class="release-catalog-modal">
       <p>{{ state.track?.title }}</p>
-      <UiHint
-        >查詢候選專輯，再選擇所屬發行與這份本地音源對應的曲目位置。</UiHint
-      >
+      <UiHint>{{ t('release.catalog.intro') }}</UiHint>
       <div class="release-catalog-modal__actions">
-        <UiButton :disabled="state.busy" @click="catalog.search"
-          >查詢候選專輯</UiButton
-        >
+        <UiButton :disabled="state.busy" @click="catalog.search">{{
+          t('release.catalog.search')
+        }}</UiButton>
       </div>
-      <UiHint v-if="state.busy" role="status">正在查詢專輯資料…</UiHint>
+      <UiHint v-if="state.busy" role="status">{{
+        t('release.catalog.searching')
+      }}</UiHint>
       <UiHint v-if="state.error" tone="danger" role="alert">{{
         state.error
       }}</UiHint>
@@ -51,7 +55,7 @@ const slots = computed(() =>
       <UiRadioGroup
         v-if="candidates.length"
         name="release-candidate"
-        legend="選擇所屬發行"
+        :legend="t('release.catalog.chooseRelease')"
         :items="candidates"
         :model-value="state.candidateId"
         :disabled="state.busy"
@@ -64,12 +68,12 @@ const slots = computed(() =>
             · {{ state.preview.year }}</template
           >
         </p>
-        <UiHint v-if="state.preview.completeness !== 'complete'"
-          >來源曲目表未完整，僅能確認已取得的位置。</UiHint
-        >
+        <UiHint v-if="state.preview.completeness !== 'complete'">{{
+          t('release.catalog.partialTracklist')
+        }}</UiHint>
         <UiRadioGroup
           name="release-slot"
-          legend="這份本地音源對應哪一首？"
+          :legend="t('release.catalog.chooseSlot')"
           :items="slots"
           :model-value="state.position ?? ''"
           :disabled="state.busy"
@@ -79,17 +83,19 @@ const slots = computed(() =>
           v-if="state.preview.hasMore"
           :disabled="state.busy"
           @click="catalog.preview(state.candidateId, state.preview.nextOffset)"
-          >顯示更多曲目</UiButton
+          >{{ t('release.catalog.showMore') }}</UiButton
         >
       </template>
     </div>
     <template #footer>
-      <UiButton :disabled="state.busy" @click="catalog.close">關閉</UiButton>
+      <UiButton :disabled="state.busy" @click="catalog.close">{{
+        t('release.catalog.close')
+      }}</UiButton>
       <UiButton
         variant="primary"
         :disabled="state.busy || !Number.isInteger(state.position)"
         @click="catalog.accept"
-        >確認曲目關聯</UiButton
+        >{{ t('release.catalog.confirm') }}</UiButton
       >
     </template>
   </UiModal>

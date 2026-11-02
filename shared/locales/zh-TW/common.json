@@ -18,5 +18,6 @@
     "audioTitle": "尚未準備音訊處理項目",
     "message": "請到設定準備「{name}」。",
     "action": "前往設定"
-  }
+  },
+  "clauseSeparator": "，"
 }

@@ -7,6 +7,7 @@ import {
   releaseMembershipKey as keyFor,
   projectAdmittedReleaseTrackIds,
 } from './useReleaseMembershipProjection.js';
+import { t } from '../utils/i18n.js';
 
 // Verification belongs to explicit collection entry/actions, never list hydration.
 // Private media bindings stay in Main; this cache holds public admission only.
@@ -88,7 +89,7 @@ export function createReleaseMemberResolver({
         ) {
           state.cache.delete(key);
           state.admitted.delete(key);
-          state.error = '發行成員已變更，請重新讀取後再操作。';
+          state.error = t('release.members.changed');
           state.errors.set(key, state.error);
           return [];
         }
@@ -101,7 +102,7 @@ export function createReleaseMemberResolver({
         ) {
           state.cache.delete(key);
           state.admitted.delete(key);
-          state.error = '發行成員未完整讀取，請再試一次。';
+          state.error = t('release.members.incomplete');
           state.errors.set(key, state.error);
           return [];
         }
@@ -116,7 +117,7 @@ export function createReleaseMemberResolver({
       if (current(collection, key, currentGeneration, token)) {
         state.cache.delete(key);
         state.admitted.delete(key);
-        state.error = '目前無法確認發行成員，請再試一次。';
+        state.error = t('release.members.failed');
         state.errors.set(key, state.error);
       }
       return [];

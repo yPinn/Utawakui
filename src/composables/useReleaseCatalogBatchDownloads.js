@@ -5,6 +5,7 @@ import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 const keyOf = (collection) =>
   JSON.stringify([collection.releaseLibraryEpoch, collection.id]);
@@ -102,7 +103,7 @@ export function createReleaseCatalogBatchDownloads({
           !(await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
             source: 'library',
             operation: 'download-release-batch',
-            message: '啟用外部來源後，即可下載專輯尚未持有的曲目。',
+            message: t('release.batch.needsProvider'),
           }))
         )
           return false;
@@ -133,13 +134,25 @@ export function createReleaseCatalogBatchDownloads({
             if (reported.size > 128)
               reported.delete(reported.values().next().value);
             const problems = snapshot.failed + snapshot.unlinked;
-            const message = `${snapshot.succeeded} 首完成${problems ? `，${problems} 首待重試或校對` : ''}${snapshot.cancelled ? `，${snapshot.cancelled} 首已停止排隊` : ''}${snapshot.skipped ? `，${snapshot.skipped} 首已在其他下載中` : ''}${refreshFailed ? '；畫面更新失敗，請重新讀取。' : ''}`;
+            const summary = [
+              t('release.batch.succeeded', { count: snapshot.succeeded }),
+              problems && t('release.batch.problems', { count: problems }),
+              snapshot.cancelled &&
+                t('release.batch.cancelled', { count: snapshot.cancelled }),
+              snapshot.skipped &&
+                t('release.batch.skipped', { count: snapshot.skipped }),
+            ]
+              .filter(Boolean)
+              .join(t('common.clauseSeparator'));
+            const message = refreshFailed
+              ? t('release.batch.refreshFailed', { summary })
+              : summary;
             notify({
               key: notificationKey.releaseBatch(receipt),
               title:
                 snapshot.phase === 'stopped'
-                  ? '專輯下載已停止排隊'
-                  : '專輯下載完成',
+                  ? t('release.batch.stoppedTitle')
+                  : t('release.batch.doneTitle'),
               message,
               tone: problems || refreshFailed ? 'warning' : 'success',
             });
@@ -149,7 +162,7 @@ export function createReleaseCatalogBatchDownloads({
       })
       .catch(() => {
         if (disposed || versions.get(key) !== version) return false;
-        state.errors.set(key, '專輯下載狀態未完成，請重新讀取後再試。');
+        state.errors.set(key, t('release.batch.inspectFailed'));
         const attempts = (retries.get(key) ?? 0) + 1;
         retries.set(key, attempts);
         if (state.snapshots.get(key)?.active && attempts <= 3)

@@ -7,6 +7,7 @@ import { usePlaylists } from '../../composables/usePlaylists.js';
 import LibrarySourceTracklist from './LibrarySourceTracklist.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   collection: { type: Object, required: true },
   tracksById: { type: Map, required: true },
@@ -171,7 +172,7 @@ async function load(offset = 0, { forceFull = false } = {}) {
   } catch {
     if (request === generation) {
       catalog.value = null;
-      error.value = '專輯曲目確認未完成，請重新讀取。';
+      error.value = t('release.catalog.verifyFailed');
       previewAvailability('error');
     }
   } finally {
@@ -198,12 +199,12 @@ function download(row) {
 <template>
   <section
     class="library-release-catalog"
-    aria-label="專輯來源曲目"
+    :aria-label="t('release.catalog.tracklistLabel')"
     :aria-busy="busy"
   >
-    <UiHint v-if="busy && !catalog" role="status"
-      >正在確認本地音源與來源曲目…</UiHint
-    >
+    <UiHint v-if="busy && !catalog" role="status">{{
+      t('release.catalog.verifying')
+    }}</UiHint>
     <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
     <UiHint v-if="downloads.errorFor(collection)" tone="danger" role="alert">{{
       downloads.errorFor(collection)
@@ -236,7 +237,7 @@ function download(row) {
         v-if="catalog.hasMore"
         :disabled="busy"
         @click="load(catalog.nextOffset)"
-        >顯示更多曲目</UiButton
+        >{{ t('release.catalog.showMore') }}</UiButton
       >
     </template>
   </section>

@@ -11,6 +11,7 @@ import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import ReleaseInfoFields from './ReleaseInfoFields.vue';
 import ReleaseMembersPanel from './ReleaseMembersPanel.vue';
+import { t } from '../../utils/i18n.js';
 const editor = useReleaseOrganization();
 const { state } = editor;
 const { tracksById } = useLibrary();
@@ -23,7 +24,13 @@ onUnmounted(editor.dispose);
 <template>
   <UiModal
     :open="editor.isOpen.value"
-    :title="state.mode === 'create' ? '建立本機單曲' : '發行資訊'"
+    :title="
+      t(
+        state.mode === 'create'
+          ? 'release.editor.createTitle'
+          : 'release.editor.title',
+      )
+    "
     :size="state.mode === 'create' ? 'default' : 'wide'"
     max-block-size="small"
     :fixed-height="state.mode === 'edit'"
@@ -37,11 +44,13 @@ onUnmounted(editor.dispose);
           v-if="state.mode === 'create'"
           class="release-info-editor__pane"
           content-class="release-info-editor__content"
-          aria-label="建立本機單曲"
+          :aria-label="t('release.editor.createTitle')"
           role="region"
           tabindex="0"
         >
-          <UiHint v-if="state.loading" role="status">讀取中…</UiHint>
+          <UiHint v-if="state.loading" role="status">{{
+            t('release.editor.loading')
+          }}</UiHint>
           <UiNotice v-if="state.error" tone="danger" :message="state.error" />
           <template v-if="state.mode === 'create'">
             <ul v-if="state.track" class="release-info-editor__tracks">
@@ -49,24 +58,26 @@ onUnmounted(editor.dispose);
             </ul>
             <UiTextField
               id="release-create-name"
-              label="發行名稱"
+              :label="t('release.editor.name')"
               :maxlength="200"
               :model-value="state.name"
               :disabled="disabled"
               required
               @update:model-value="editor.setName"
             />
-            <UiHint>建立單曲發行，保留音檔與作品關聯。</UiHint>
+            <UiHint>{{ t('release.editor.createHint') }}</UiHint>
           </template>
         </UiScrollLayout>
         <template v-else>
           <div class="release-info-editor__status">
-            <UiHint v-if="state.loading" role="status">讀取中…</UiHint>
+            <UiHint v-if="state.loading" role="status">{{
+              t('release.editor.loading')
+            }}</UiHint>
             <UiNotice
               v-if="state.error"
               tone="danger"
               :message="state.error"
-              action-label="重新載入"
+              :action-label="t('release.editor.reload')"
               :action-disabled="state.saving || state.loading"
               @action="editor.reload"
             />
@@ -78,18 +89,18 @@ onUnmounted(editor.dispose);
             <UiScrollLayout
               class="release-info-editor__pane"
               content-class="release-info-editor__content"
-              aria-label="發行資料"
+              :aria-label="t('release.editor.dataLabel')"
               role="region"
               tabindex="0"
             >
               <strong class="release-info-editor__name">{{
                 state.release.name
               }}</strong>
-              <UiHint>手動值優先；設為未知則不採用來源。</UiHint>
+              <UiHint>{{ t('release.editor.manualHint') }}</UiHint>
               <UiNotice
                 v-if="state.release.effective.conflicts?.length"
                 tone="warning"
-                message="總曲數少於已收錄曲目，請校正。"
+                :message="t('release.editor.countBelowMembers')"
               />
               <ReleaseInfoFields
                 :release="state.release"
@@ -101,7 +112,7 @@ onUnmounted(editor.dispose);
             <UiScrollLayout
               class="release-info-editor__pane"
               content-class="release-info-editor__content"
-              aria-label="收錄曲目"
+              :aria-label="t('release.editor.membersLabel')"
               role="region"
               tabindex="0"
             >
@@ -124,33 +135,33 @@ onUnmounted(editor.dispose);
         variant="secondary"
         :disabled="state.saving"
         @click="editor.close"
-        >關閉</UiButton
+        >{{ t('release.editor.close') }}</UiButton
       >
       <UiButton
         v-if="state.mode === 'create'"
         variant="accent"
-        aria-label="建立本機單曲"
+        :aria-label="t('release.editor.createTitle')"
         :disabled="
           disabled || !state.name.trim() || state.libraryEpoch === null
         "
         :loading="state.saving"
-        loading-label="建立中"
+        :loading-label="t('release.editor.creating')"
         @click="editor.create"
-        >建立</UiButton
+        >{{ t('release.editor.create') }}</UiButton
       >
       <UiButton
         v-else
         variant="accent"
-        aria-label="儲存發行資訊"
+        :aria-label="t('release.editor.saveLabel')"
         :disabled="
           disabled ||
           state.release?.canInitializeBindings ||
           !editor.isDirty.value
         "
         :loading="state.saving"
-        loading-label="儲存中"
+        :loading-label="t('release.editor.saving')"
         @click="editor.save"
-        >儲存</UiButton
+        >{{ t('release.editor.save') }}</UiButton
       >
     </template>
   </UiModal>

@@ -1,4 +1,5 @@
 import { formatLongDuration } from './format.js';
+import { t } from './i18n.js';
 
 export function formatReleaseDate(date) {
   const patterns = {
@@ -42,8 +43,8 @@ export function deriveReleaseDetail({
   const available = [...byId.values()];
   const partial = total !== null && total > ids.length;
   const countLabel = partial
-    ? `已收錄 ${ids.length}／${total} 首`
-    : `${ids.length} 首曲目`;
+    ? t('release.detail.partialCount', { count: ids.length, total })
+    : t('library.browse.trackTotal', { count: ids.length }, ids.length);
   const duration = formatLongDuration(
     available.reduce(
       (sum, track) =>
@@ -60,24 +61,32 @@ export function deriveReleaseDetail({
   const durationLabel = !duration
     ? ''
     : !durationsKnown
-      ? `已知曲長 ${duration}`
+      ? t('release.detail.knownDuration', { duration })
       : available.length < ids.length
-        ? `本機曲長 ${duration}`
+        ? t('release.detail.localDuration', { duration })
         : partial
-          ? `已收錄曲長 ${duration}`
+          ? t('release.detail.includedDuration', { duration })
           : duration;
   const fields = [
     formatReleaseDate(release.date),
-    [countLabel, durationLabel].filter(Boolean).join('，'),
+    durationLabel
+      ? t('release.detail.countAndDuration', {
+          count: countLabel,
+          duration: durationLabel,
+        })
+      : countLabel,
   ];
   let message = '';
   if (verification.state === 'error')
-    message = verification.error || '發行曲目確認未完成，請再試一次。';
-  else if (!ids.length) message = '這份單曲發行尚未收錄本機曲目。';
-  else if (!available.length)
-    message = '目前找不到本機曲目，請檢查曲庫或在發行資訊中確認。';
+    message = verification.error || t('release.detail.verifyFailed');
+  else if (!ids.length) message = t('release.detail.noMembers');
+  else if (!available.length) message = t('release.detail.noLocal');
   else if (available.length < ids.length)
-    message = `目前本機可見 ${available.length} 首，其餘音源請在「發行資訊」中確認。`;
+    message = t(
+      'release.detail.partialLocal',
+      { count: available.length },
+      available.length,
+    );
   return {
     isSingle: true,
     layout: 'album',
@@ -91,7 +100,7 @@ export function deriveReleaseDetail({
     canStart: verification.state !== 'pending' && available.length > 0,
     canShuffle: verification.state !== 'pending' && available.length > 1,
     conflictMessage: release.conflicts?.length
-      ? '來源發行資料與已收錄內容不一致，請在發行資訊中確認。'
+      ? t('release.detail.conflict')
       : '',
   };
 }
