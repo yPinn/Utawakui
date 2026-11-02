@@ -8,6 +8,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPhotoFrame from '../ui/UiPhotoFrame.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -26,9 +27,9 @@ const hasCaption = computed(() => Boolean(captionTitle.value || caption.value));
 async function requestRemoval() {
   if (!props.asset || props.removing) return;
   const confirmed = await confirmation.confirm({
-    title: '從頁面移除照片？',
-    message: '原始檔案會保留。',
-    confirmLabel: '移除照片',
+    title: t('library.workspace.removePhoto.title'),
+    message: t('library.workspace.removePhoto.message'),
+    confirmLabel: t('library.workspace.removePhoto.confirm'),
     intent: 'danger',
   });
   if (confirmed) emit('remove', props.asset.key);
@@ -38,7 +39,7 @@ async function requestRemoval() {
 <template>
   <UiModal
     :open="open"
-    title="頁面照片"
+    :title="t('library.folder.previewTitle')"
     presentation="media"
     dismiss-on-backdrop
     :close-disabled="removing"
@@ -49,7 +50,7 @@ async function requestRemoval() {
     <template v-if="asset" #header-actions>
       <UiIconButton
         :icon="Pencil"
-        label="編輯照片說明"
+        :label="t('library.folder.editCaption')"
         variant="overlay"
         tooltip-placement="start"
         :disabled="removing"
@@ -57,7 +58,7 @@ async function requestRemoval() {
       />
       <UiIconButton
         :icon="Trash2"
-        label="從頁面移除"
+        :label="t('library.folder.removeFromPage')"
         variant="overlay"
         intent="danger"
         tooltip-placement="start"
@@ -74,7 +75,7 @@ async function requestRemoval() {
     >
       <UiPhotoFrame
         :src="asset.imageUrl"
-        alt="展開的頁面照片"
+        :alt="t('library.folder.expanded')"
         fit="contain"
         filtered
         intrinsic

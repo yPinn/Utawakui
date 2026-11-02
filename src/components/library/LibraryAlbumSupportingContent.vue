@@ -8,6 +8,7 @@ import { filterReleases } from '../../utils/releasePresentation.js';
 import UiTabs from '../ui/UiTabs.vue';
 import UiHint from '../ui/UiHint.vue';
 import '../../styles/loading.css';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   artist: { type: String, required: true },
@@ -23,9 +24,9 @@ const emit = defineEmits(['selectAlbum', 'playAlbum']);
 const filter = shallowRef('all');
 const filterTabsId = `music-releases-${useId()}`;
 const filterItems = [
-  { id: 'all', label: '全部' },
-  { id: 'albums', label: '專輯' },
-  { id: 'singles-ep', label: '單曲與迷你專輯' },
+  { id: 'all', label: t('library.supporting.all') },
+  { id: 'albums', label: t('library.supporting.albums') },
+  { id: 'singles-ep', label: t('library.supporting.singlesEp') },
 ];
 const visibleAlbums = computed(() =>
   props.releaseFilters
@@ -52,26 +53,36 @@ const { skeletonVisible, revealContent, finishReveal } = useDeferredLoading(
   },
 );
 const sectionTitle = computed(
-  () => props.albumsTitle || `更多來自 ${props.artist} 的內容`,
+  () =>
+    props.albumsTitle ||
+    t('library.supporting.moreFrom', { artist: props.artist }),
 );
 // Only the default title embeds the artist name, which is user content.
 const sectionTitleLang = computed(() =>
   props.albumsTitle ? undefined : contentLangAttribute(props.artist),
 );
 const albumCountLabel = computed(() =>
-  initialLoading.value ? '' : `${visibleAlbums.value.length} 張`,
+  initialLoading.value
+    ? ''
+    : t('library.supporting.count', { count: visibleAlbums.value.length }),
 );
 </script>
 
 <template>
   <div
     class="library-album-supporting"
-    :aria-label="releaseFilters ? '音樂作品' : '發行延伸內容'"
+    :aria-label="
+      t(
+        releaseFilters
+          ? 'library.supporting.discography'
+          : 'library.supporting.extended',
+      )
+    "
     :aria-busy="initialLoading || undefined"
   >
-    <span v-if="initialLoading" role="status" class="ui-visually-hidden"
-      >正在讀取專輯</span
-    >
+    <span v-if="initialLoading" role="status" class="ui-visually-hidden">{{
+      t('library.supporting.loading')
+    }}</span>
     <AppFolderSection
       v-if="initialLoading || relatedAlbums.length > 0"
       :title="sectionTitle"
@@ -84,7 +95,7 @@ const albumCountLabel = computed(() =>
           :items="filterTabs"
           variant="bar"
           distribution="content"
-          aria-label="發行分類"
+          :aria-label="t('library.supporting.filterLabel')"
           :tab-id-prefix="filterTabsId"
           :panel-id-prefix="filterTabsId"
         />
@@ -131,9 +142,9 @@ const albumCountLabel = computed(() =>
             />
           </li>
         </ul>
-        <UiHint v-if="!initialLoading && !visibleAlbums.length" role="status"
-          >目前沒有符合分類的發行。</UiHint
-        >
+        <UiHint v-if="!initialLoading && !visibleAlbums.length" role="status">{{
+          t('library.supporting.noMatch')
+        }}</UiHint>
       </div>
     </AppFolderSection>
   </div>

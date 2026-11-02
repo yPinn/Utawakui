@@ -37,6 +37,11 @@ const I18N_MIGRATED = [
   'src/components/settings/{SettingsAudioSection,AudioOutputSettingsBlock,CaptureDeviceModal,VirtualCableGuideModal}.vue',
   'src/composables/useAudioOutput.js',
   'src/utils/audioDeviceLabel.js',
+  'src/components/library/{LibraryBrowseContent,LibraryBrowseWorkspace,LibraryCollectionHeader,CollectionActionRail,LibraryFolderArtifactLayer,FolderAssetPreviewModal,LibrarySourceTracklist,LibraryAlbumCard,LibraryAlbumSupportingContent,LibraryEntityDossier,LibraryArtistIdentityController}.vue',
+  'src/{pages/LibraryPage,views/StudioLibraryContextView}.vue',
+  'src/composables/{useLibraryFolderObjects,useLibrary}.js',
+  'src/composables/player/usePlayerLibrarySync.js',
+  'src/utils/releasePresentation.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -9,7 +9,10 @@ import {
   watch,
 } from 'vue';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
-import { useLibraryFolderObjects } from '../../composables/useLibraryFolderObjects.js';
+import {
+  LIBRARY_FOLDER_USER_OBJECT_LIMIT,
+  useLibraryFolderObjects,
+} from '../../composables/useLibraryFolderObjects.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
@@ -23,6 +26,7 @@ import AppFolderNoteReaderModal from '../layout/AppFolderNoteReaderModal.vue';
 import AppFolderPhotoTextEditorModal from '../layout/AppFolderPhotoTextEditorModal.vue';
 import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
+import { t } from '../../utils/i18n.js';
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();
 const { albumSupportingContent } = useLibraryAlbumContext();
@@ -49,14 +53,14 @@ const ADD_MENU_CONTENT = Object.freeze({
         Object.freeze({
           id: 'photo',
           kind: 'action',
-          label: '照片',
+          label: t('library.workspace.photo'),
           value: 'photo',
           icon: ImagePlus,
         }),
         Object.freeze({
           id: 'note',
           kind: 'action',
-          label: '便條',
+          label: t('library.workspace.note'),
           value: 'note',
           icon: StickyNote,
         }),
@@ -119,10 +123,12 @@ const showFolderArtifacts = computed(
       folderObjects.objects.value.some((object) => object.source === 'user')),
 );
 const addObjectLabel = computed(() => {
-  if (folderObjects.adding.value) return '正在新增頁面物件';
+  if (folderObjects.adding.value) return t('library.workspace.adding');
   return folderObjects.limitReached.value
-    ? '頁面物件已達 12 個上限'
-    : '新增頁面物件';
+    ? t('library.workspace.limitReached', {
+        max: LIBRARY_FOLDER_USER_OBJECT_LIMIT,
+      })
+    : t('library.workspace.add');
 });
 
 watch(
@@ -291,15 +297,15 @@ async function confirmRemoveObject(key, feedback) {
   const confirmed = await confirmation.confirm(
     object.type === 'photo'
       ? {
-          title: '從頁面移除照片？',
-          message: '原始檔案會保留。',
-          confirmLabel: '移除照片',
+          title: t('library.workspace.removePhoto.title'),
+          message: t('library.workspace.removePhoto.message'),
+          confirmLabel: t('library.workspace.removePhoto.confirm'),
           intent: 'danger',
         }
       : {
-          title: '刪除便條？',
-          message: '便條內容會被刪除，且無法復原。',
-          confirmLabel: '刪除便條',
+          title: t('library.workspace.deleteNote.title'),
+          message: t('library.workspace.deleteNote.message'),
+          confirmLabel: t('library.workspace.deleteNote.confirm'),
           intent: 'danger',
         },
   );
@@ -360,14 +366,14 @@ onBeforeUnmount(() => {
   <AppFolderPage
     mode="document"
     :document-key="documentKey"
-    body-label="曲目內容"
+    :body-label="t('library.workspace.bodyLabel')"
   >
     <UiNotice
       v-if="folderPageIdentity && folderObjects.readError.value"
       tone="danger"
-      title="頁面物件讀取未完成"
+      :title="t('library.workspace.readFailed')"
       :message="folderObjects.readError.value"
-      action-label="重試讀取"
+      :action-label="t('library.workspace.retry')"
       compact
       @action="retryFolderAssets"
     />
@@ -408,7 +414,7 @@ onBeforeUnmount(() => {
         :open="addMenuOpen"
         :anchor="addMenuAnchor"
         size="sm"
-        aria-label="新增頁面物件"
+        :aria-label="t('library.workspace.add')"
         :content="ADD_MENU_CONTENT"
         @select="selectAddAction"
         @close="addMenuOpen = false"

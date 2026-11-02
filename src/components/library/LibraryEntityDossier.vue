@@ -10,6 +10,7 @@ import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import AppFolderDossier from '../layout/AppFolderDossier.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   entityKind: {
@@ -39,18 +40,11 @@ const props = defineProps({
 
 const emit = defineEmits(['selectArtist']);
 
-const MARKER_BY_KIND = Object.freeze({
-  album: '專輯',
-  artist: '藝人',
-  library: '曲庫',
-  playlist: '播放清單',
-});
-
 const isLibrary = computed(() => props.entityKind === 'library');
 const marker = computed(() =>
   props.entityKind === 'album'
     ? releaseTypeLabel(props.releaseType || 'album')
-    : MARKER_BY_KIND[props.entityKind],
+    : t(`library.markers.${props.entityKind}`),
 );
 const libraryIcon = computed(() =>
   props.libraryView === 'local' ? FolderOpen : Library,

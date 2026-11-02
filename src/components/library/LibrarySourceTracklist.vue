@@ -5,6 +5,7 @@ import { projectSourceCatalogRows } from '../../utils/sourceCatalog.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import TrackTable from '../track/TrackTable.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   catalog: { type: Object, required: true },
@@ -37,7 +38,7 @@ const entries = computed(() =>
     sourceRow: row,
     track: row.track,
     displayTrack: {
-      title: row.title || '來源未提供曲名',
+      title: row.title || t('library.sourceTracks.untitled'),
       artist: row.artist,
       duration: row.duration,
     },
@@ -64,7 +65,7 @@ const unmatchedEntries = computed(() =>
   <TrackTable
     :entries="entries"
     collection-kind="album"
-    label="專輯完整來源曲序"
+    :label="t('library.sourceTracks.label')"
     :column-preferences="columnPreferences"
     :density="density"
     :selected-track-id="selectedTrackId"
@@ -90,12 +91,20 @@ const unmatchedEntries = computed(() =>
         :icon="entry.sourceRow.localCandidateTrackId ? ListPlus : Download"
         :label="
           entry.sourceRow.localCandidateTrackId
-            ? `納入本地曲目：${entry.displayTrack.title}`
-            : `下載 ${entry.displayTrack.title}`
+            ? t('library.sourceTracks.include', {
+                title: entry.displayTrack.title,
+              })
+            : t('library.sourceTracks.download', {
+                title: entry.displayTrack.title,
+              })
         "
         :loading="downloadPendingSlots.has(entry.key)"
         :loading-label="
-          entry.sourceRow.localCandidateTrackId ? '正在納入專輯' : '下載中'
+          t(
+            entry.sourceRow.localCandidateTrackId
+              ? 'library.sourceTracks.including'
+              : 'library.sourceTracks.downloading',
+          )
         "
         :disabled="busy || downloadDisabled"
         :aria-disabled="busy || downloadDisabled ? 'true' : 'false'"
@@ -105,11 +114,13 @@ const unmatchedEntries = computed(() =>
     </template>
   </TrackTable>
   <template v-if="unmatchedEntries.length">
-    <h3 class="library-source-tracks__heading">未對應的本地收錄</h3>
+    <h3 class="library-source-tracks__heading">
+      {{ t('library.sourceTracks.unmatched') }}
+    </h3>
     <TrackTable
       :entries="unmatchedEntries"
       collection-kind="album"
-      label="未對應的本地收錄"
+      :label="t('library.sourceTracks.unmatched')"
       :column-preferences="columnPreferences"
       :density="density"
       :selected-track-id="selectedTrackId"

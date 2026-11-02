@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { FOLDER_DOSSIER_GLYPH_SIZE } from '../../constants/ui.js';
-import { releaseTypeLabel } from '../../utils/releasePresentation.js';
+import { releaseEntityKey } from '../../utils/releasePresentation.js';
 import {
   ImagePlus,
   ListPlus,
@@ -15,6 +15,7 @@ import { useTooltip } from '../ui/useTooltip.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import CollectionActionRail from './CollectionActionRail.vue';
 import LibraryEntityDossier from './LibraryEntityDossier.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   entityKind: {
@@ -80,27 +81,20 @@ const {
   tooltipId: photoTooltipId,
   triggerProps: photoTooltipTriggerProps,
 } = useTooltip({
-  text: '選擇藝人照片',
+  text: t('library.choosePhoto'),
   placement: 'top',
   disabled: computed(() => Boolean(props.coverUrl)),
   describedBy: false,
 });
 
-const ENTITY_LABEL_BY_KIND = Object.freeze({
-  album: '此專輯',
-  library: '這些曲目',
-  artist: '此藝人',
-  playlist: '此播放清單',
-});
-const isSingle = computed(
-  () => props.entityKind === 'album' && props.releaseType === 'single',
-);
 const entityLabel = computed(() =>
-  isSingle.value
-    ? '此單曲發行'
-    : props.entityKind === 'album'
-      ? `此${props.releaseType === 'unknown' ? '發行' : releaseTypeLabel(props.releaseType || 'album')}`
-      : ENTITY_LABEL_BY_KIND[props.entityKind],
+  t(
+    `library.entity.${
+      props.entityKind === 'album'
+        ? releaseEntityKey(props.releaseType)
+        : props.entityKind
+    }`,
+  ),
 );
 // Artist pages are read-only references with no entity-specific action.
 const entityAction = computed(() => {
@@ -111,16 +105,16 @@ const entityAction = computed(() => {
   if (props.entityKind === 'album') {
     return {
       icon: ListPlus,
-      label: isSingle.value
-        ? '將單曲發行新增至播放清單'
-        : `將${props.releaseType === 'unknown' ? '發行' : releaseTypeLabel(props.releaseType || 'album')}新增至播放清單`,
+      label: t(
+        `library.addEntityToPlaylist.${releaseEntityKey(props.releaseType)}`,
+      ),
       disabled: !props.canAddToPlaylist || !props.addToPlaylistContent,
       menuContent: props.addToPlaylistContent,
     };
   }
   return {
     icon: Pencil,
-    label: '編輯播放清單詳細資料',
+    label: t('library.editPlaylistDetails'),
     disabled: false,
   };
 });
@@ -154,7 +148,7 @@ function handleMenuAction(value) {
         <UiArtworkReveal class="library-collection-header__cover-edit">
           <UiIconButton
             :icon="Pencil"
-            label="編輯播放清單詳細資料"
+            :label="t('library.editPlaylistDetails')"
             variant="overlay"
             @click="emit('openEditDetails')"
           />
@@ -175,7 +169,7 @@ function handleMenuAction(value) {
             stretch
             @click="emit('choosePhoto')"
           >
-            更換照片
+            {{ t('library.changePhoto') }}
           </UiButton>
           <!-- The add glyph stands in for the avatar placeholder, so it keeps
                the dossier glyph size rather than a control icon size. -->
@@ -184,7 +178,7 @@ function handleMenuAction(value) {
             v-bind="photoTooltipTriggerProps"
             type="button"
             class="library-collection-header__photo-action library-collection-header__photo-action--empty"
-            aria-label="選擇藝人照片"
+            :aria-label="t('library.choosePhoto')"
             @click="emit('choosePhoto')"
           >
             <UserRoundPlus
@@ -195,7 +189,7 @@ function handleMenuAction(value) {
         </component>
         <UiTooltipSurface
           :open="photoTooltipOpen"
-          text="選擇藝人照片"
+          :text="t('library.choosePhoto')"
           :tooltip-id="photoTooltipId"
           :position="photoTooltipPosition"
           placement="top"

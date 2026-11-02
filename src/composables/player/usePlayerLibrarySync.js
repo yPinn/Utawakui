@@ -1,4 +1,5 @@
 import { toPlayableTrack } from '../../utils/playableTrack.js';
+import { t } from '../../utils/i18n.js';
 
 // Refresh metadata within the current playback occurrence, never create one.
 export function usePlayerLibrarySync({
@@ -111,7 +112,7 @@ export function usePlayerLibrarySync({
         state.error = reportPlayerError(
           error,
           'reload',
-          '播放版本已更新，請重新播放。',
+          t('library.playbackVersionUpdated'),
         );
         state.isPlaying = false;
         state.playbackPhase = 'error';

@@ -8,6 +8,7 @@ import AppFolderPage from '../components/layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
+import { t } from '../utils/i18n.js';
 
 const LyricsAuthoringWorkspace = defineAsyncComponent(
   () => import('../components/lyrics/LyricsAuthoringWorkspace.vue'),
@@ -18,9 +19,9 @@ const { libraryWorkspace, returnFromLyricsAuthoring } = useAppView();
 const workspaceDefinition = computed(() => ({
   component: LyricsAuthoringWorkspace,
   surfaceId: 'lyrics',
-  title: '歌詞編輯',
-  description: '編輯歌詞、讀音與顯示時間。',
-  bodyLabel: '歌詞編輯工作區',
+  title: t('library.lyricsWorkspace.title'),
+  description: t('library.lyricsWorkspace.description'),
+  bodyLabel: t('library.lyricsWorkspace.bodyLabel'),
   pageMode: 'workspace',
 }));
 
@@ -52,7 +53,7 @@ async function returnToLiveLyrics() {
             </template>
             <template #actions>
               <UiButton :icon="ArrowLeft" @click="returnToLiveLyrics">
-                返回歌詞
+                {{ t('library.lyricsWorkspace.back') }}
               </UiButton>
             </template>
           </UiPageHeader>

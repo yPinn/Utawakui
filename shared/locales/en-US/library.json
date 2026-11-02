@@ -1,0 +1,227 @@
+{
+  "releaseTypes": {
+    "unknown": "Uncategorized",
+    "album": "Album",
+    "single": "Single",
+    "ep": "EP"
+  },
+  "release": {
+    "unnamed": "(Untitled release)",
+    "errors": {
+      "sourceMode": "Check each field's data source.",
+      "type": "Choose a release type.",
+      "date": "Enter a valid release date for the chosen precision.",
+      "totalTrackCount": "The total track count can't be less than the tracks already included."
+    }
+  },
+  "entity": {
+    "album": "this album",
+    "ep": "this EP",
+    "single": "this single",
+    "release": "this release",
+    "library": "these tracks",
+    "artist": "this artist",
+    "playlist": "this playlist"
+  },
+  "addEntityToPlaylist": {
+    "album": "Add album to playlist",
+    "ep": "Add EP to playlist",
+    "single": "Add single to playlist",
+    "release": "Add release to playlist"
+  },
+  "addReleaseToPlaylist": {
+    "album": "Add album to a playlist",
+    "ep": "Add EP to a playlist",
+    "single": "Add single to a playlist",
+    "release": "Add release to a playlist"
+  },
+  "addToOtherPlaylist": "Add to another playlist",
+  "editPlaylistDetails": "Edit playlist details",
+  "choosePhoto": "Choose artist photo",
+  "changePhoto": "Change photo",
+  "rail": {
+    "actions": "Actions for {entity}",
+    "play": "Play {entity}",
+    "pause": "Pause {entity}",
+    "preview": "Preview {entity}",
+    "previewBlocked": "Preview {entity} ({reason})",
+    "shuffle": "Shuffle {entity}",
+    "queue": "Add {entity} to queue",
+    "more": "More actions for {entity}",
+    "search": "Search tracks"
+  },
+  "browse": {
+    "trackTotal": "{count} track | {count} tracks",
+    "countDuration": "{count} track, {duration} | {count} tracks, {duration}",
+    "releaseCount": "{count} release | {count} releases",
+    "goToArtist": "Go to artist: {name}",
+    "artistFallback": "Artist",
+    "removePhoto": {
+      "title": "Remove artist photo?",
+      "message": "The current artist photo is removed; tracks and artist details are kept.",
+      "detail": "You'll need to choose or search for a photo again.",
+      "confirm": "Remove photo"
+    },
+    "organizeArtist": "Organize artist",
+    "searchPhoto": "Search online for an artist photo",
+    "removePhotoAction": "Remove artist photo",
+    "noSearchMatch": "No tracks match your search.",
+    "noTracks": "No tracks.",
+    "albumEmpty": "This album has no local tracks yet.",
+    "playlistEmpty": "This playlist has no tracks yet. In All tracks, add them from a track's menu.",
+    "deleteTrack": {
+      "title": "Delete track?",
+      "message": "It's removed from the library and every playlist.",
+      "detail": "The original audio file and vocal-removed version are deleted too, and this can't be undone.",
+      "confirm": "Delete track",
+      "notFoundTitle": "Track not deleted",
+      "notFoundMessage": "This track can't be found; the library may have been updated.",
+      "failedTitle": "Can't delete track",
+      "failedMessage": "The track can't be deleted right now. Try again."
+    },
+    "removeFromPlaylist": {
+      "title": "Remove track from playlist?",
+      "playlistFallback": "Playlist",
+      "message": "Only its place in this playlist is removed; the library song and audio file are kept.",
+      "detail": "You can add it back later.",
+      "confirm": "Remove track"
+    },
+    "previewBlockedSession": "Unavailable while recording or streaming",
+    "playNamed": "Play {name}",
+    "pauseNamed": "Pause {name}",
+    "tracklistStatus": "Track list and status",
+    "recheck": "Check again",
+    "libraryEmpty": "The library has no tracks yet. Open Import at the top to add audio files.",
+    "playlistReadFailed": "The playlist didn't finish loading",
+    "retryRead": "Retry",
+    "loadingArtist": "Loading artist details…",
+    "tracksNamed": "{name} tracks",
+    "relatedReleases": "Related releases",
+    "relatedAlbums": "Related albums",
+    "discography": "Discography"
+  },
+  "workspace": {
+    "photo": "Photo",
+    "note": "Note",
+    "adding": "Adding page item",
+    "limitReached": "Page items are at the limit of {max}",
+    "add": "Add page item",
+    "removePhoto": {
+      "title": "Remove photo from page?",
+      "message": "The original file is kept.",
+      "confirm": "Remove photo"
+    },
+    "deleteNote": {
+      "title": "Delete note?",
+      "message": "The note is deleted, and this can't be undone.",
+      "confirm": "Delete note"
+    },
+    "bodyLabel": "Track content",
+    "readFailed": "Page items didn't finish loading",
+    "retry": "Retry"
+  },
+  "folder": {
+    "photo": "Page photo",
+    "expandPhoto": "Expand photo",
+    "photoThumb": "Page photo thumbnail",
+    "noteHeading": "{eyebrow}: {title}",
+    "noteNamed": "Page note: {title}",
+    "note": "Page note",
+    "summary": {
+      "tracks": "Tracks",
+      "trackCount": "{count}",
+      "works": "Releases",
+      "workCount": "{count}",
+      "years": "Years",
+      "eyebrow": "Artist details"
+    },
+    "readNote": "Read note",
+    "unpin": "Unpin",
+    "pin": "Pin",
+    "editPhotoText": "Edit photo text",
+    "editNote": "Edit note",
+    "removeFromPage": "Remove from page",
+    "deleteNote": "Delete note",
+    "layerLabel": "Folder page items",
+    "menuLabel": "Page item actions",
+    "previewTitle": "Page photo",
+    "editCaption": "Edit photo caption",
+    "expanded": "Expanded page photo"
+  },
+  "sourceTracks": {
+    "untitled": "No title from source",
+    "label": "Full source track order",
+    "include": "Include local track: {title}",
+    "download": "Download {title}",
+    "including": "Adding to album",
+    "downloading": "Downloading",
+    "unmatched": "Unmatched local tracks"
+  },
+  "supporting": {
+    "all": "All",
+    "albums": "Albums",
+    "singlesEp": "Singles & EPs",
+    "moreFrom": "More from {artist}",
+    "count": "{count}",
+    "discography": "Discography",
+    "extended": "More from this release",
+    "loading": "Loading albums",
+    "filterLabel": "Release type",
+    "noMatch": "No releases in this category."
+  },
+  "albumCard": {
+    "open": "Open release: {name}",
+    "play": "Play release: {name}",
+    "pause": "Pause release: {name}"
+  },
+  "markers": {
+    "album": "Album",
+    "artist": "Artist",
+    "library": "Library",
+    "playlist": "Playlist"
+  },
+  "artistIdentity": {
+    "merge": {
+      "title": "Merge artists?",
+      "subject": "{current} + {target}",
+      "message": "Tracks from both are gathered on one artist page; the original track credits aren't rewritten.",
+      "detail": "You can undo the last change or split the credit again if needed.",
+      "confirm": "Merge artists"
+    },
+    "split": {
+      "title": "Split artist credit?",
+      "message": "This credit and its tracks return to their own artist page.",
+      "detail": "Other credits aren't affected, and you can undo the last change if needed.",
+      "confirm": "Split credit"
+    }
+  },
+  "lyricsWorkspace": {
+    "title": "Lyrics editor",
+    "description": "Edit lyrics, readings and display timing.",
+    "bodyLabel": "Lyrics editing workspace",
+    "back": "Back to lyrics"
+  },
+  "queueSource": {
+    "album": "Go to album: {name}",
+    "playlist": "Go to playlist: {name}",
+    "artist": "Go to artist: {name}"
+  },
+  "folderObjects": {
+    "layoutFailed": "Page layout not saved",
+    "operationFailed": "Page item action not completed",
+    "retrySave": "Retry save",
+    "saveLayout": "The page item layout can't be saved right now.",
+    "read": "Page items can't be read right now.",
+    "addPhoto": "A page photo can't be added right now.",
+    "addNote": "A page note can't be added right now.",
+    "saveNote": "The page note can't be saved right now.",
+    "savePhotoText": "The photo text can't be saved right now.",
+    "remove": "The page item can't be removed right now."
+  },
+  "load": {
+    "failedTitle": "The library didn't load",
+    "failedMessage": "The library can't be read right now. Try again.",
+    "retry": "Retry"
+  },
+  "playbackVersionUpdated": "The playback version was updated. Play it again."
+}

@@ -1,13 +1,14 @@
-const TYPE_LABELS = {
-  unknown: '未分類',
-  album: '專輯',
-  single: '單曲',
-  ep: '迷你專輯',
-};
+import { t } from './i18n.js';
+const RELEASE_TYPES = Object.freeze(['unknown', 'album', 'single', 'ep']);
 export function releaseTypeLabel(type) {
-  return Object.hasOwn(TYPE_LABELS, type)
-    ? TYPE_LABELS[type]
-    : TYPE_LABELS.unknown;
+  return t(
+    `library.releaseTypes.${RELEASE_TYPES.includes(type) ? type : 'unknown'}`,
+  );
+}
+// Sentence variant for a release: singles read 單曲發行, unclassified ones 發行.
+export function releaseEntityKey(type) {
+  if (!type) return 'album';
+  return ['album', 'single', 'ep'].includes(type) ? type : 'release';
 }
 export function releaseYearFromDate(date) {
   return typeof date?.value === 'string' &&
@@ -30,7 +31,7 @@ export function releaseCard(collection, tracks) {
   const year = releaseYearFromDate(date);
   return {
     id: collection.id,
-    name: collection.name || '(未命名發行)',
+    name: collection.name || t('library.release.unnamed'),
     coverUrl: collection.coverUrl ?? '',
     tracks,
     releaseType: effective?.type || 'unknown',
@@ -107,15 +108,16 @@ export function releaseDraftIntent(release, draft) {
       set[field] = null;
       continue;
     }
-    if (entry.mode !== 'manual') throw new Error('請確認欄位的資料來源。');
+    if (entry.mode !== 'manual')
+      throw new Error(t('library.release.errors.sourceMode'));
     if (field === 'type') {
-      if (!Object.hasOwn(TYPE_LABELS, entry.value))
-        throw new Error('請選擇發行類型。');
+      if (!RELEASE_TYPES.includes(entry.value))
+        throw new Error(t('library.release.errors.type'));
       set.type = entry.value;
     }
     if (field === 'date') {
       if (!validDate(entry.value, entry.precision))
-        throw new Error('請依精度輸入有效的發行日期。');
+        throw new Error(t('library.release.errors.date'));
       set.date = { value: entry.value, precision: entry.precision };
     }
     if (field === 'totalTrackCount') {
@@ -125,7 +127,7 @@ export function releaseDraftIntent(release, draft) {
         !Number.isSafeInteger(count) ||
         count < Math.max(1, release.memberCount || 0)
       )
-        throw new Error('總曲數不得少於目前的收錄曲目數。');
+        throw new Error(t('library.release.errors.totalTrackCount'));
       set.totalTrackCount = count;
     }
   }

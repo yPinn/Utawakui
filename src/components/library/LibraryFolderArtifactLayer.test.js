@@ -1,13 +1,12 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 import { deriveAlbumSupportingContent } from '../../utils/albumSupportingContent.js';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./LibraryFolderArtifactLayer.vue', import.meta.url),
-  'utf8',
 );
 
 function photo(overrides = {}) {
@@ -212,8 +211,8 @@ describe('LibraryFolderArtifactLayer', () => {
       /function handleActivate\(id\) \{\s*const item = findItem\(id\);\s*if \(item\?\.type === 'photo'\) emit\('activate', id\);\s*else if \(isReadableNote\(item\)\) emit\('readNote', id\);\s*\}/u,
     );
     expect(source).toContain('capped: true,');
-    expect(source).toContain(
-      "...(readable ? { activatable: true, activationLabel: '閱讀便條' } : {}),",
+    expect(source).toMatch(
+      /\.\.\.\(readable\s*\?\s*\{ activatable: true, activationLabel: '閱讀便條' \}\s*:\s*\{\}\),/u,
     );
     expect(source).toContain(
       '@overflow-change="setNoteOverflow(artifact.id, $event)"',
@@ -225,10 +224,10 @@ describe('LibraryFolderArtifactLayer', () => {
       "else if (action === 'edit') emit('editNote', id);",
     );
     expect(source).toMatch(
-      /item\.type === 'photo'[\s\S]*?label: '展開照片'[\s\S]*?label: item\.type === 'photo' \? '從頁面移除' : '刪除便條'[\s\S]*?intent: 'danger'/u,
+      /item\.type === 'photo'[\s\S]*?label: '展開照片'[\s\S]*?label:\s*item\.type === 'photo'\s*\?\s*'從頁面移除'\s*:\s*'刪除便條'[\s\S]*?intent: 'danger'/u,
     );
     expect(source).toMatch(
-      /isUserNote\(item\)[\s\S]*?label: '編輯便條'[\s\S]*?label: item\.type === 'photo' \? '從頁面移除' : '刪除便條'[\s\S]*?intent: 'danger'/u,
+      /isUserNote\(item\)[\s\S]*?label: '編輯便條'[\s\S]*?label:\s*item\.type === 'photo'\s*\?\s*'從頁面移除'\s*:\s*'刪除便條'[\s\S]*?intent: 'danger'/u,
     );
     expect(source).toContain("groups.push({ id: 'object', items: [pin] });");
     expect(html).toContain('ui-folder-artifact--translucent');

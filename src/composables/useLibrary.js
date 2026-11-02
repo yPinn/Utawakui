@@ -2,6 +2,7 @@ import { computed, reactive, readonly, ref } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 import { collectionDisplayTrackIds } from '../utils/albumMembership.js';
+import { t } from '../utils/i18n.js';
 
 // Module-scope singleton — LibraryBrowseContent.vue and useLyrics.js (for
 // LyricsAuthoringWorkspace.vue) both need the raw track pool with metadata
@@ -89,9 +90,9 @@ async function refresh(options) {
     if (revision !== readRevision) return;
     state.error = recordError(err, {
       code: 'LIBRARY_LIST_FAILED',
-      title: '曲庫讀取失敗',
-      message: '目前無法讀取曲庫，請再試一次。',
-      actionLabel: '重試',
+      title: t('library.load.failedTitle'),
+      message: t('library.load.failedMessage'),
+      actionLabel: t('library.load.retry'),
       source: 'library',
       operation: 'list',
       context: { retryable: true },

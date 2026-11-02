@@ -18,6 +18,7 @@ import {
   createTrackReadiness,
 } from '../utils/trackContextPresentation.js';
 import TrackContextPanel from '../components/playback/context/TrackContextPanel.vue';
+import { t } from '../utils/i18n.js';
 
 const emit = defineEmits(['collapse', 'openQueue']);
 
@@ -94,19 +95,20 @@ const queueSourceDestination = computed(() => {
   if (queueSourcePlaylist.value) {
     return {
       id: queueSourcePlaylist.value.id,
-      kindLabel:
-        queueSourcePlaylist.value.kind === 'album' ? '專輯' : '播放清單',
+      kind: queueSourcePlaylist.value.kind === 'album' ? 'album' : 'playlist',
     };
   }
   if (isArtistSourceId(queueState.sourceId)) {
-    return { id: queueState.sourceId, kindLabel: '藝人' };
+    return { id: queueState.sourceId, kind: 'artist' };
   }
   return null;
 });
 
 const queueSourceLinkLabel = computed(() => {
   if (!queueSourceDestination.value) return '';
-  return `前往${queueSourceDestination.value.kindLabel}：${queueSourceName.value}`;
+  return t(`library.queueSource.${queueSourceDestination.value.kind}`, {
+    name: queueSourceName.value,
+  });
 });
 
 function navigateToQueueSource() {

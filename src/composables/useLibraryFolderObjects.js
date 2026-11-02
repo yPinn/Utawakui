@@ -1,6 +1,7 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
 import { notificationKey } from '../constants/notificationKeys.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 export const LIBRARY_FOLDER_USER_OBJECT_LIMIT = 12;
 export const LIBRARY_FOLDER_LAYOUT_SAVE_DELAY_MS = 300;
@@ -99,14 +100,18 @@ export function createLibraryFolderObjects(options = {}) {
       return;
     notifications.notifyFailure({
       key: notificationKey.folderObjects(operation, pageKey(targetPage)),
-      title: operation === 'layout' ? '頁面配置未儲存' : '頁面物件操作未完成',
+      title: t(
+        operation === 'layout'
+          ? 'library.folderObjects.layoutFailed'
+          : 'library.folderObjects.operationFailed',
+      ),
       message,
       error,
       code: `FOLDER_OBJECTS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
       source: 'library',
       operation: `folder-${operation}`,
       context: { retryable: true },
-      actionLabel: action ? '重試儲存' : '',
+      actionLabel: action ? t('library.folderObjects.retrySave') : '',
       action,
     });
   }
@@ -175,7 +180,7 @@ export function createLibraryFolderObjects(options = {}) {
         failure(
           'layout',
           batchPage,
-          '目前無法儲存頁面物件配置。',
+          t('library.folderObjects.saveLayout'),
           {},
           () => {
             if (disposed || !layoutBatches.has(key)) return false;
@@ -259,7 +264,7 @@ export function createLibraryFolderObjects(options = {}) {
       return true;
     } catch {
       if (revision === loadRevision) {
-        state.readError = '目前無法讀取頁面物件。';
+        state.readError = t('library.folderObjects.read');
         state.error = state.readError;
       }
       return false;
@@ -293,7 +298,7 @@ export function createLibraryFolderObjects(options = {}) {
       failure(
         'add-photo',
         activePage,
-        '目前無法新增頁面照片。',
+        t('library.folderObjects.addPhoto'),
         {},
         null,
         error,
@@ -333,7 +338,7 @@ export function createLibraryFolderObjects(options = {}) {
       failure(
         'add-note',
         activePage,
-        '目前無法新增頁面便條。',
+        t('library.folderObjects.addNote'),
         feedback,
         null,
         error,
@@ -377,7 +382,7 @@ export function createLibraryFolderObjects(options = {}) {
       failure(
         'update-note',
         activePage,
-        '目前無法儲存頁面便條。',
+        t('library.folderObjects.saveNote'),
         feedback,
         null,
         error,
@@ -421,7 +426,7 @@ export function createLibraryFolderObjects(options = {}) {
       failure(
         'photo-text',
         activePage,
-        '目前無法儲存照片文字。',
+        t('library.folderObjects.savePhotoText'),
         feedback,
         null,
         error,
@@ -463,7 +468,7 @@ export function createLibraryFolderObjects(options = {}) {
       failure(
         'remove',
         activePage,
-        '目前無法移除頁面物件。',
+        t('library.folderObjects.remove'),
         feedback,
         null,
         error,

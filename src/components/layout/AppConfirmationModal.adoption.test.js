@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function source(relativePath) {
-  return readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+  return readCatalogSource(new URL(relativePath, import.meta.url));
 }
 
 const GLOBAL_CONFIRMATION_OWNERS = [

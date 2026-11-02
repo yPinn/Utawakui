@@ -1,10 +1,9 @@
-import { readFileSync } from 'node:fs';
 import { compileScript, parse } from '@vue/compiler-sfc';
 import { describe, expect, it, vi } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./LibraryBrowseContent.vue', import.meta.url),
-  'utf8',
 );
 const { descriptor } = parse(source);
 const { scriptSetupAst } = compileScript(descriptor, {

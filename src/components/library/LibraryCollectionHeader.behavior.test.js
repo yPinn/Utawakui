@@ -1,12 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import LibraryCollectionHeader from './LibraryCollectionHeader.vue';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./LibraryCollectionHeader.vue', import.meta.url),
-  'utf8',
 );
 
 async function renderHeader(overrides = {}) {
@@ -178,9 +177,8 @@ describe('LibraryCollectionHeader', () => {
   });
 
   it('keeps the dossier hairline outside the artwork so it stays centered', () => {
-    const dossierSource = readFileSync(
+    const dossierSource = readCatalogSource(
       new URL('../layout/AppFolderDossier.vue', import.meta.url),
-      'utf8',
     );
     expect(dossierSource).toMatch(
       /\.app-folder-dossier__artwork\s*\{[^}]*box-sizing:\s*content-box;/su,

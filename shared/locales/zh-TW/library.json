@@ -1,0 +1,227 @@
+{
+  "releaseTypes": {
+    "unknown": "未分類",
+    "album": "專輯",
+    "single": "單曲",
+    "ep": "迷你專輯"
+  },
+  "release": {
+    "unnamed": "(未命名發行)",
+    "errors": {
+      "sourceMode": "請確認欄位的資料來源。",
+      "type": "請選擇發行類型。",
+      "date": "請依精度輸入有效的發行日期。",
+      "totalTrackCount": "總曲數不得少於目前的收錄曲目數。"
+    }
+  },
+  "entity": {
+    "album": "此專輯",
+    "ep": "此迷你專輯",
+    "single": "此單曲發行",
+    "release": "此發行",
+    "library": "這些曲目",
+    "artist": "此藝人",
+    "playlist": "此播放清單"
+  },
+  "addEntityToPlaylist": {
+    "album": "將專輯新增至播放清單",
+    "ep": "將迷你專輯新增至播放清單",
+    "single": "將單曲發行新增至播放清單",
+    "release": "將發行新增至播放清單"
+  },
+  "addReleaseToPlaylist": {
+    "album": "新增專輯至播放清單",
+    "ep": "新增迷你專輯至播放清單",
+    "single": "新增單曲發行至播放清單",
+    "release": "新增發行至播放清單"
+  },
+  "addToOtherPlaylist": "新增至別的播放清單",
+  "editPlaylistDetails": "編輯播放清單詳細資料",
+  "choosePhoto": "選擇藝人照片",
+  "changePhoto": "更換照片",
+  "rail": {
+    "actions": "{entity}操作",
+    "play": "播放{entity}",
+    "pause": "暫停{entity}",
+    "preview": "試聽{entity}",
+    "previewBlocked": "試聽{entity}（{reason}）",
+    "shuffle": "隨機播放{entity}",
+    "queue": "將{entity}新增至佇列",
+    "more": "{entity}的更多操作",
+    "search": "搜尋曲目"
+  },
+  "browse": {
+    "trackTotal": "{count} 首曲目",
+    "countDuration": "{count} 首曲目，{duration}",
+    "releaseCount": "{count} 張發行",
+    "goToArtist": "前往藝人：{name}",
+    "artistFallback": "藝人",
+    "removePhoto": {
+      "title": "移除藝人照片？",
+      "message": "目前的藝人照片會被移除，曲目與藝人資料會保留。",
+      "detail": "移除後需重新選擇或搜尋照片。",
+      "confirm": "移除照片"
+    },
+    "organizeArtist": "整理藝人",
+    "searchPhoto": "搜尋線上藝人照片",
+    "removePhotoAction": "移除藝人照片",
+    "noSearchMatch": "找不到符合搜尋的曲目。",
+    "noTracks": "沒有曲目。",
+    "albumEmpty": "這張專輯目前沒有本機曲目。",
+    "playlistEmpty": "播放清單還沒有曲目。到「全部曲目」，從曲目選單加入播放清單。",
+    "deleteTrack": {
+      "title": "刪除曲目？",
+      "message": "會從曲庫與所有播放清單移除。",
+      "detail": "原始音檔與去人聲版本也會刪除，且無法復原。",
+      "confirm": "刪除曲目",
+      "notFoundTitle": "曲目未刪除",
+      "notFoundMessage": "找不到這首曲目，曲庫可能已更新。",
+      "failedTitle": "無法刪除曲目",
+      "failedMessage": "目前無法刪除曲目，請再試一次。"
+    },
+    "removeFromPlaylist": {
+      "title": "從播放清單移除曲目？",
+      "playlistFallback": "播放清單",
+      "message": "只會移除此清單中的曲目安排，曲庫歌曲與音檔會保留。",
+      "detail": "之後可重新加入清單。",
+      "confirm": "移除曲目"
+    },
+    "previewBlockedSession": "錄影或直播中無法使用",
+    "playNamed": "播放{name}",
+    "pauseNamed": "暫停{name}",
+    "tracklistStatus": "曲目清單與狀態",
+    "recheck": "重新確認",
+    "libraryEmpty": "曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。",
+    "playlistReadFailed": "播放清單讀取未完成",
+    "retryRead": "重試讀取",
+    "loadingArtist": "正在讀取藝人資料…",
+    "tracksNamed": "{name}曲目",
+    "relatedReleases": "相關發行",
+    "relatedAlbums": "相關專輯",
+    "discography": "音樂作品"
+  },
+  "workspace": {
+    "photo": "照片",
+    "note": "便條",
+    "adding": "正在新增頁面物件",
+    "limitReached": "頁面物件已達 {max} 個上限",
+    "add": "新增頁面物件",
+    "removePhoto": {
+      "title": "從頁面移除照片？",
+      "message": "原始檔案會保留。",
+      "confirm": "移除照片"
+    },
+    "deleteNote": {
+      "title": "刪除便條？",
+      "message": "便條內容會被刪除，且無法復原。",
+      "confirm": "刪除便條"
+    },
+    "bodyLabel": "曲目內容",
+    "readFailed": "頁面物件讀取未完成",
+    "retry": "重試讀取"
+  },
+  "folder": {
+    "photo": "頁面照片",
+    "expandPhoto": "展開照片",
+    "photoThumb": "頁面照片縮圖",
+    "noteHeading": "{eyebrow}：{title}",
+    "noteNamed": "頁面便條：{title}",
+    "note": "頁面便條",
+    "summary": {
+      "tracks": "曲目",
+      "trackCount": "{count} 首",
+      "works": "作品",
+      "workCount": "{count} 張",
+      "years": "年份",
+      "eyebrow": "藝人資料"
+    },
+    "readNote": "閱讀便條",
+    "unpin": "取消固定",
+    "pin": "固定",
+    "editPhotoText": "編輯照片文字",
+    "editNote": "編輯便條",
+    "removeFromPage": "從頁面移除",
+    "deleteNote": "刪除便條",
+    "layerLabel": "Folder 頁面物件",
+    "menuLabel": "頁面物件操作",
+    "previewTitle": "頁面照片",
+    "editCaption": "編輯照片說明",
+    "expanded": "展開的頁面照片"
+  },
+  "sourceTracks": {
+    "untitled": "來源未提供曲名",
+    "label": "專輯完整來源曲序",
+    "include": "納入本地曲目：{title}",
+    "download": "下載 {title}",
+    "including": "正在納入專輯",
+    "downloading": "下載中",
+    "unmatched": "未對應的本地收錄"
+  },
+  "supporting": {
+    "all": "全部",
+    "albums": "專輯",
+    "singlesEp": "單曲與迷你專輯",
+    "moreFrom": "更多來自 {artist} 的內容",
+    "count": "{count} 張",
+    "discography": "音樂作品",
+    "extended": "發行延伸內容",
+    "loading": "正在讀取專輯",
+    "filterLabel": "發行分類",
+    "noMatch": "目前沒有符合分類的發行。"
+  },
+  "albumCard": {
+    "open": "開啟發行：{name}",
+    "play": "播放發行：{name}",
+    "pause": "暫停發行：{name}"
+  },
+  "markers": {
+    "album": "專輯",
+    "artist": "藝人",
+    "library": "曲庫",
+    "playlist": "播放清單"
+  },
+  "artistIdentity": {
+    "merge": {
+      "title": "合併藝人？",
+      "subject": "{current} ＋ {target}",
+      "message": "兩邊的曲目會整理到同一個藝人頁，原始曲目標示不會改寫。",
+      "detail": "需要時可復原上一次整理，或再拆分標示。",
+      "confirm": "合併藝人"
+    },
+    "split": {
+      "title": "拆分藝人標示？",
+      "message": "這個標示及其曲目會回到獨立的藝人頁。",
+      "detail": "其他標示不受影響，需要時可復原上一次整理。",
+      "confirm": "拆分標示"
+    }
+  },
+  "lyricsWorkspace": {
+    "title": "歌詞編輯",
+    "description": "編輯歌詞、讀音與顯示時間。",
+    "bodyLabel": "歌詞編輯工作區",
+    "back": "返回歌詞"
+  },
+  "queueSource": {
+    "album": "前往專輯：{name}",
+    "playlist": "前往播放清單：{name}",
+    "artist": "前往藝人：{name}"
+  },
+  "folderObjects": {
+    "layoutFailed": "頁面配置未儲存",
+    "operationFailed": "頁面物件操作未完成",
+    "retrySave": "重試儲存",
+    "saveLayout": "目前無法儲存頁面物件配置。",
+    "read": "目前無法讀取頁面物件。",
+    "addPhoto": "目前無法新增頁面照片。",
+    "addNote": "目前無法新增頁面便條。",
+    "saveNote": "目前無法儲存頁面便條。",
+    "savePhotoText": "目前無法儲存照片文字。",
+    "remove": "目前無法移除頁面物件。"
+  },
+  "load": {
+    "failedTitle": "曲庫讀取失敗",
+    "failedMessage": "目前無法讀取曲庫，請再試一次。",
+    "retry": "重試"
+  },
+  "playbackVersionUpdated": "播放版本已更新，請重新播放。"
+}

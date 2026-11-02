@@ -70,7 +70,7 @@ import { deriveAlbumSummary } from '../../utils/albumSummary.js';
 import { deriveReleaseDetail } from '../../utils/releaseDetailPresentation.js';
 import {
   releaseYearFromDate,
-  releaseTypeLabel,
+  releaseEntityKey,
 } from '../../utils/releasePresentation.js';
 import { deriveAlbumReference } from '../../utils/albumReference.js';
 import {
@@ -83,6 +83,7 @@ import {
   sortLibraryTracks,
   sortLocalLibraryTracks,
 } from '../../utils/trackSourceDisplay.js';
+import { t } from '../../utils/i18n.js';
 
 const {
   state,
@@ -456,19 +457,28 @@ const headerFields = computed(() => {
     const total = selectedPlaylist.value.resolvedRelease?.totalTrackCount;
     return [
       year ? String(year) : '',
-      Number.isInteger(total) ? `${total} 首曲目` : '',
+      Number.isInteger(total)
+        ? t('library.browse.trackTotal', { count: total }, total)
+        : '',
     ].filter(Boolean);
   }
   if (singleDetail.value.isSingle) return singleDetail.value.fields;
   const count = headerTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);
   const countLine = duration
-    ? `${count} 首曲目，${duration}`
-    : `${count} 首曲目`;
+    ? t('library.browse.countDuration', { count, duration }, count)
+    : t('library.browse.trackTotal', { count }, count);
   if (isArtistSelected.value) {
     const page = artistPage.value;
     const fields = [countLine];
-    if (page?.albums.length) fields.push(`${page.albums.length} 張發行`);
+    if (page?.albums.length)
+      fields.push(
+        t(
+          'library.browse.releaseCount',
+          { count: page.albums.length },
+          page.albums.length,
+        ),
+      );
     if (page?.yearStart) {
       fields.push(
         page.yearEnd && page.yearEnd !== page.yearStart
@@ -489,7 +499,9 @@ const playlistArtist = computed(
 );
 const playlistArtistLinkLabel = computed(() =>
   albumSupportingContent.value
-    ? `前往藝人：${albumSupportingContent.value.artist}`
+    ? t('library.browse.goToArtist', {
+        name: albumSupportingContent.value.artist,
+      })
     : '',
 );
 
@@ -499,7 +511,8 @@ const pageTitle = computed(() => {
   if (isAlbumReferenceSelected.value) {
     return albumReference.value?.name ?? playlistState.selectedAlbumReference;
   }
-  if (isArtistSelected.value) return artistPage.value?.name ?? '藝人';
+  if (isArtistSelected.value)
+    return artistPage.value?.name ?? t('library.browse.artistFallback');
   return libraryViewTitle(playlistState.libraryView);
 });
 
@@ -549,11 +562,11 @@ async function confirmClearArtistPhoto() {
   if (!artist?.photoUrl) return;
   const { id, photoUrl } = artist;
   const confirmed = await confirmAction({
-    title: '移除藝人照片？',
+    title: t('library.browse.removePhoto.title'),
     subject: artist.name,
-    message: '目前的藝人照片會被移除，曲目與藝人資料會保留。',
-    detail: '移除後需重新選擇或搜尋照片。',
-    confirmLabel: '移除照片',
+    message: t('library.browse.removePhoto.message'),
+    detail: t('library.browse.removePhoto.detail'),
+    confirmLabel: t('library.browse.removePhoto.confirm'),
     intent: 'danger',
   });
   if (
@@ -608,7 +621,7 @@ const collectionMoreContent = computed(() => {
             {
               id: ARTIST_IDENTITY_ACTIONS.manage,
               kind: 'action',
-              label: '整理藝人',
+              label: t('library.browse.organizeArtist'),
               icon: UserRound,
               value: { action: ARTIST_IDENTITY_ACTIONS.manage },
             },
@@ -620,7 +633,7 @@ const collectionMoreContent = computed(() => {
             {
               id: ARTIST_PHOTO_ACTIONS.choose,
               kind: 'action',
-              label: '選擇藝人照片',
+              label: t('library.choosePhoto'),
               icon: ImagePlus,
               value: { action: ARTIST_PHOTO_ACTIONS.choose },
             },
@@ -629,7 +642,7 @@ const collectionMoreContent = computed(() => {
                   {
                     id: ARTIST_PHOTO_ACTIONS.searchOnline,
                     kind: 'action',
-                    label: '搜尋線上藝人照片',
+                    label: t('library.browse.searchPhoto'),
                     icon: Search,
                     value: { action: ARTIST_PHOTO_ACTIONS.searchOnline },
                   },
@@ -638,7 +651,7 @@ const collectionMoreContent = computed(() => {
                   {
                     id: ARTIST_PHOTO_ACTIONS.clear,
                     kind: 'action',
-                    label: '移除藝人照片',
+                    label: t('library.browse.removePhotoAction'),
                     icon: Trash2,
                     intent: 'danger',
                     value: { action: ARTIST_PHOTO_ACTIONS.clear },
@@ -667,10 +680,10 @@ const collectionMoreContent = computed(() => {
   if (playlistTracks.value.length > 0) {
     const addLabel =
       playlist.kind === 'album'
-        ? singleDetail.value.isSingle
-          ? '新增單曲發行至播放清單'
-          : `新增${playlist.resolvedRelease?.type === 'unknown' ? '發行' : releaseTypeLabel(playlist.resolvedRelease?.type || 'album')}至播放清單`
-        : '新增至別的播放清單';
+        ? t(
+            `library.addReleaseToPlaylist.${releaseEntityKey(playlist.resolvedRelease?.type)}`,
+          )
+        : t('library.addToOtherPlaylist');
     groups.push({
       id: 'destinations',
       items: [
@@ -711,14 +724,16 @@ const addMenuOptions = computed(() => trackMenuOptions(addMenu.value?.track));
 
 const pageError = computed(() => playlistState.error);
 const visibleTracksEmptyText = computed(() =>
-  normalizedSearchQuery.value ? '找不到符合搜尋的曲目。' : '沒有曲目。',
+  normalizedSearchQuery.value
+    ? t('library.browse.noSearchMatch')
+    : t('library.browse.noTracks'),
 );
 const tableEmptyText = computed(() => {
   if (mode.value === 'all') return visibleTracksEmptyText.value;
-  if (playlistTracks.value.length > 0) return '找不到符合搜尋的曲目。';
-  if (isArtistSelected.value) return '沒有曲目。';
-  if (isAlbumSelected.value) return '這張專輯目前沒有本機曲目。';
-  return '播放清單還沒有曲目。到「全部曲目」，從曲目選單加入播放清單。';
+  if (playlistTracks.value.length > 0) return t('library.browse.noSearchMatch');
+  if (isArtistSelected.value) return t('library.browse.noTracks');
+  if (isAlbumSelected.value) return t('library.browse.albumEmpty');
+  return t('library.browse.playlistEmpty');
 });
 const contentFieldVariant = computed(() => {
   if (
@@ -844,11 +859,11 @@ function toggleTrackRowSort(key) {
 // manual reload here.
 async function removeTrack(track) {
   const confirmed = await confirmAction({
-    title: '刪除曲目？',
+    title: t('library.browse.deleteTrack.title'),
     subject: track.title,
-    message: '會從曲庫與所有播放清單移除。',
-    detail: '原始音檔與去人聲版本也會刪除，且無法復原。',
-    confirmLabel: '刪除曲目',
+    message: t('library.browse.deleteTrack.message'),
+    detail: t('library.browse.deleteTrack.detail'),
+    confirmLabel: t('library.browse.deleteTrack.confirm'),
     intent: 'danger',
   });
   if (!confirmed) return;
@@ -859,8 +874,8 @@ async function removeTrack(track) {
     if (!deleted) {
       notifications.notify({
         key: NOTIFICATION_KEYS.LIBRARY_DELETE_TRACK,
-        title: '曲目未刪除',
-        message: '找不到這首曲目，曲庫可能已更新。',
+        title: t('library.browse.deleteTrack.notFoundTitle'),
+        message: t('library.browse.deleteTrack.notFoundMessage'),
         tone: 'warning',
       });
       return;
@@ -870,8 +885,8 @@ async function removeTrack(track) {
   } catch (err) {
     const notice = recordError(err, {
       code: 'LIBRARY_DELETE_FAILED',
-      title: '無法刪除曲目',
-      message: '目前無法刪除曲目，請再試一次。',
+      title: t('library.browse.deleteTrack.failedTitle'),
+      message: t('library.browse.deleteTrack.failedMessage'),
       source: 'library',
       operation: 'delete',
       context: { retryable: true },
@@ -922,12 +937,13 @@ async function confirmRemovePlaylistTrack(track, playlistId) {
   )
     return;
   const confirmed = await confirmAction({
-    title: '從播放清單移除曲目？',
+    title: t('library.browse.removeFromPlaylist.title'),
     subject: track.title,
-    meta: playlist.name || '播放清單',
-    message: '只會移除此清單中的曲目安排，曲庫歌曲與音檔會保留。',
-    detail: '之後可重新加入清單。',
-    confirmLabel: '移除曲目',
+    meta:
+      playlist.name || t('library.browse.removeFromPlaylist.playlistFallback'),
+    message: t('library.browse.removeFromPlaylist.message'),
+    detail: t('library.browse.removeFromPlaylist.detail'),
+    confirmLabel: t('library.browse.removeFromPlaylist.confirm'),
     intent: 'danger',
   });
   if (!confirmed) return;
@@ -1039,7 +1055,7 @@ async function openTrackPreview() {
 const previewBlockedReason = computed(() =>
   bgmHandoffState.sessionMode === 'inactive'
     ? previewEligibility.blockedReason.value
-    : '錄影或直播中無法使用',
+    : t('library.browse.previewBlockedSession'),
 );
 
 function playFromPreview(track) {
@@ -1204,8 +1220,8 @@ onMounted(async () => {
           <PlaybackPrimaryButton
             :playing="selectedCollectionIsPlaying"
             :disabled="!canPlayCollection"
-            :play-label="`播放${pageTitle}`"
-            :pause-label="`暫停${pageTitle}`"
+            :play-label="t('library.browse.playNamed', { name: pageTitle })"
+            :pause-label="t('library.browse.pauseNamed', { name: pageTitle })"
             @click="toggleSelectedCollectionPlayback"
           />
         </template>
@@ -1269,7 +1285,7 @@ onMounted(async () => {
 
       <AppFolderContentField
         :variant="contentFieldVariant"
-        aria-label="曲目清單與狀態"
+        :aria-label="t('library.browse.tracklistStatus')"
       >
         <template v-if="singleDetail.isSingle">
           <UiHint
@@ -1284,7 +1300,9 @@ onMounted(async () => {
             v-else-if="singleDetail.message"
             :tone="singleDetail.memberCount === 0 ? 'info' : 'warning'"
             :message="singleDetail.message"
-            :action-label="singleDetail.state === 'error' ? '重新確認' : ''"
+            :action-label="
+              singleDetail.state === 'error' ? t('library.browse.recheck') : ''
+            "
             compact
             @action="retrySelectedRelease?.()"
           />
@@ -1319,7 +1337,7 @@ onMounted(async () => {
             libraryState.tracks.length === 0
           "
         >
-          曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。
+          {{ t('library.browse.libraryEmpty') }}
         </UiHint>
 
         <template v-else>
@@ -1332,9 +1350,9 @@ onMounted(async () => {
           <UiNotice
             v-if="pageError"
             tone="danger"
-            title="播放清單讀取未完成"
+            :title="t('library.browse.playlistReadFailed')"
             :message="pageError"
-            action-label="重試讀取"
+            :action-label="t('library.browse.retryRead')"
             compact
             @action="refreshPlaylists"
           />
@@ -1343,7 +1361,7 @@ onMounted(async () => {
             v-if="!initialCollectionLoading && isArtistSelected && !artistPage"
             role="status"
           >
-            正在讀取藝人資料…
+            {{ t('library.browse.loadingArtist') }}
           </UiHint>
           <UiHint
             v-else-if="
@@ -1387,7 +1405,7 @@ onMounted(async () => {
             :virtualize-above="300"
             :collection-kind="tableCollectionKind"
             :column-preferences="currentTableColumnPreferences"
-            :label="`${pageTitle}曲目`"
+            :label="t('library.browse.tracksNamed', { name: pageTitle })"
             :sort="effectiveTrackRowSort"
             :can-reorder-playlist-tracks="canReorderPlaylistTracks"
             :selected-track-id="selectedTrackId"
@@ -1428,8 +1446,8 @@ onMounted(async () => {
           albumSupportingContent?.artist
             ? ''
             : singleDetail.isSingle
-              ? '相關發行'
-              : '相關專輯'
+              ? t('library.browse.relatedReleases')
+              : t('library.browse.relatedAlbums')
         "
         :related-albums="albumSupportingContent?.relatedAlbums ?? []"
         :loading="albumGridLoading"
@@ -1449,7 +1467,7 @@ onMounted(async () => {
         :loading="albumGridLoading"
         :content-key="collectionContentKey"
         :playing-album-id="playingSupportingAlbumId"
-        albums-title="音樂作品"
+        :albums-title="t('library.browse.discography')"
         release-filters
         @select-album="selectPlaylistAction"
         @play-album="toggleSupportingAlbumPlayback"

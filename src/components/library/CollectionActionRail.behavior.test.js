@@ -1,9 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./CollectionActionRail.vue', import.meta.url),
-  'utf8',
 );
 
 describe('CollectionActionRail', () => {
@@ -52,7 +51,8 @@ describe('CollectionActionRail', () => {
     expect(source).toContain(
       ':disabled="!canPreview || Boolean(previewBlockedReason)"',
     );
-    expect(source).toContain('（${previewBlockedReason}）');
+    expect(source).toContain("t('library.rail.previewBlocked', {");
+    expect(source).toContain('reason: previewBlockedReason,');
   });
 
   it('keeps Folder asset tools out of the stable collection command and search rail', () => {

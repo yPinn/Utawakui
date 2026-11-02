@@ -11,6 +11,7 @@ import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import TrackListDensityMenu from '../track/TrackListDensityMenu.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   entityLabel: { type: String, required: true },
@@ -92,14 +93,17 @@ function selectMenuAction(value) {
 </script>
 
 <template>
-  <section class="collection-action-rail" :aria-label="`${entityLabel}操作`">
+  <section
+    class="collection-action-rail"
+    :aria-label="t('library.rail.actions', { entity: entityLabel })"
+  >
     <div class="collection-action-rail__actions">
       <slot name="actions">
         <PlaybackPrimaryButton
           :playing="playing"
           :disabled="!canPlay"
-          :play-label="`播放${entityLabel}`"
-          :pause-label="`暫停${entityLabel}`"
+          :play-label="t('library.rail.play', { entity: entityLabel })"
+          :pause-label="t('library.rail.pause', { entity: entityLabel })"
           @click="emit('togglePlayback')"
         />
         <UiIconButton
@@ -107,8 +111,11 @@ function selectMenuAction(value) {
           :disabled="!canPreview || Boolean(previewBlockedReason)"
           :label="
             previewBlockedReason
-              ? `試聽${entityLabel}（${previewBlockedReason}）`
-              : `試聽${entityLabel}`
+              ? t('library.rail.previewBlocked', {
+                  entity: entityLabel,
+                  reason: previewBlockedReason,
+                })
+              : t('library.rail.preview', { entity: entityLabel })
           "
           @click="emit('preview')"
         />
@@ -117,14 +124,14 @@ function selectMenuAction(value) {
           :icon="Shuffle"
           :active="shuffleActive"
           :disabled="!canShuffle"
-          :label="`隨機播放${entityLabel}`"
+          :label="t('library.rail.shuffle', { entity: entityLabel })"
           :aria-pressed="shuffleActive"
           @click="emit('toggleShuffle')"
         />
         <UiIconButton
           :icon="ListEnd"
           :disabled="!canAddToQueue"
-          :label="`將${entityLabel}新增至佇列`"
+          :label="t('library.rail.queue', { entity: entityLabel })"
           @click="emit('addToQueue')"
         />
         <UiIconButton
@@ -147,7 +154,7 @@ function selectMenuAction(value) {
         <UiIconButton
           v-if="hasMoreActions"
           :icon="Ellipsis"
-          :label="`${entityLabel}的更多操作`"
+          :label="t('library.rail.more', { entity: entityLabel })"
           aria-haspopup="menu"
           :aria-expanded="activeMenu === 'more' ? 'true' : 'false'"
           @click="openMenu($event, 'more')"
@@ -160,8 +167,8 @@ function selectMenuAction(value) {
         v-if="showSearch"
         :model-value="searchQuery"
         class="collection-action-rail__search"
-        label="搜尋曲目"
-        placeholder="搜尋曲目"
+        :label="t('library.rail.search')"
+        :placeholder="t('library.rail.search')"
         @update:model-value="emit('update:searchQuery', $event)"
       />
       <TrackListDensityMenu
@@ -176,7 +183,7 @@ function selectMenuAction(value) {
       :open="Boolean(activeMenu)"
       :anchor="menuAnchor"
       size="md"
-      :aria-label="`${entityLabel}操作`"
+      :aria-label="t('library.rail.actions', { entity: entityLabel })"
       :content="activeContent"
       @select="selectMenuAction"
       @close="closeMenu"

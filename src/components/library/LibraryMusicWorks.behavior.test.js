@@ -1,5 +1,4 @@
 import { h, nextTick } from 'vue';
-import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   attachClientRender,
@@ -44,6 +43,7 @@ vi.mock('./LibraryAlbumCard.vue', () => ({
 import LibraryAlbumSupportingContent from './LibraryAlbumSupportingContent.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiHint from '../ui/UiHint.vue';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 for (const [component, path] of [
   [LibraryAlbumSupportingContent, './LibraryAlbumSupportingContent.vue'],
   [UiTabs, '../ui/UiTabs.vue'],
@@ -52,9 +52,8 @@ for (const [component, path] of [
   attachClientRender(component, path, import.meta.url);
 describe('artist music works shared section', () => {
   it('uses a content-width category control and plain Chinese release labels', () => {
-    const source = readFileSync(
+    const source = readCatalogSource(
       new URL('./LibraryAlbumSupportingContent.vue', import.meta.url),
-      'utf8',
     );
     expect(source).toContain("label: '單曲與迷你專輯'");
     expect(source).toContain('class="library-album-supporting__filters"');

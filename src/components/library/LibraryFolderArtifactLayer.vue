@@ -13,6 +13,7 @@ import { folderStationeryFor } from '../../utils/folderStationery.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
+import { t } from '../../utils/i18n.js';
 
 const ARTIST_SUMMARY_KEY = 'derived:artist-summary';
 const ARTIST_SUMMARY_PLACEMENT = Object.freeze({
@@ -42,12 +43,12 @@ function noteTexture(key) {
 const OBJECT_RENDERERS = Object.freeze({
   photo: (item) => ({
     kind: 'photo',
-    label: '頁面照片',
+    label: t('library.folder.photo'),
     activatable: true,
-    activationLabel: '展開照片',
+    activationLabel: t('library.folder.expandPhoto'),
     props: {
       src: item.imageUrl,
-      alt: '頁面照片縮圖',
+      alt: t('library.folder.photoThumb'),
       frame: item.frame ?? 'print',
       ratio: item.ratio ?? 'landscape',
       label: item.label ?? '',
@@ -63,9 +64,13 @@ const OBJECT_RENDERERS = Object.freeze({
     item.content
       ? {
           kind: 'note',
-          label: [item.content.eyebrow, item.content.title]
-            .filter(Boolean)
-            .join('：'),
+          label:
+            item.content.eyebrow && item.content.title
+              ? t('library.folder.noteHeading', {
+                  eyebrow: item.content.eyebrow,
+                  title: item.content.title,
+                })
+              : item.content.eyebrow || item.content.title || '',
           props: {
             ...item.content,
             material: NOTE_MATERIAL,
@@ -76,7 +81,9 @@ const OBJECT_RENDERERS = Object.freeze({
           // Editing opens from the context menu only, so a click on an
           // overlapping note never starts an edit by accident.
           kind: 'note',
-          label: item.title ? `頁面便條：${item.title}` : '頁面便條',
+          label: item.title
+            ? t('library.folder.noteNamed', { title: item.title })
+            : t('library.folder.note'),
           props: {
             title: item.title ?? '',
             titleLang: contentLangAttribute(item.title ?? ''),
@@ -113,12 +120,18 @@ const summaryFields = computed(() => {
   if (!props.summary || typeof props.summary.text === 'string') return [];
   const { trackCount = 0, albumCount = 0, yearStart, yearEnd } = props.summary;
   const fields = [
-    { label: '曲目', value: `${trackCount} 首` },
-    { label: '作品', value: `${albumCount} 張` },
+    {
+      label: t('library.folder.summary.tracks'),
+      value: t('library.folder.summary.trackCount', { count: trackCount }),
+    },
+    {
+      label: t('library.folder.summary.works'),
+      value: t('library.folder.summary.workCount', { count: albumCount }),
+    },
   ];
   if (yearStart) {
     fields.push({
-      label: '年份',
+      label: t('library.folder.summary.years'),
       value:
         yearEnd && yearEnd !== yearStart
           ? `${yearStart}–${yearEnd}`
@@ -140,7 +153,7 @@ const derivedItems = computed(() =>
           rotation: ARTIST_SUMMARY_ROTATION,
           order: 0,
           content: {
-            eyebrow: '藝人資料',
+            eyebrow: t('library.folder.summary.eyebrow'),
             title: props.summary.artist,
             titleLang: contentLangAttribute(props.summary.artist),
             body:
@@ -189,7 +202,9 @@ const artifacts = computed(() =>
     return {
       id: item.key,
       ...rendered,
-      ...(readable ? { activatable: true, activationLabel: '閱讀便條' } : {}),
+      ...(readable
+        ? { activatable: true, activationLabel: t('library.folder.readNote') }
+        : {}),
       props: { ...rendered.props, ...folderStationeryFor(item) },
       initialPlacement: item.placement,
       initialPinned: item.pinned === true,
@@ -259,14 +274,14 @@ const menuContent = computed(() => {
     ? {
         id: 'pin',
         kind: 'action',
-        label: '取消固定',
+        label: t('library.folder.unpin'),
         value: 'pin',
         icon: PinOff,
       }
     : {
         id: 'pin',
         kind: 'action',
-        label: '固定',
+        label: t('library.folder.pin'),
         value: 'pin',
         icon: Pin,
       };
@@ -278,14 +293,14 @@ const menuContent = computed(() => {
         {
           id: 'open',
           kind: 'action',
-          label: '展開照片',
+          label: t('library.folder.expandPhoto'),
           value: 'open',
           icon: Maximize2,
         },
         {
           id: 'text',
           kind: 'action',
-          label: '編輯照片文字',
+          label: t('library.folder.editPhotoText'),
           value: 'text',
           icon: Pencil,
         },
@@ -301,7 +316,7 @@ const menuContent = computed(() => {
               {
                 id: 'read',
                 kind: 'action',
-                label: '閱讀便條',
+                label: t('library.folder.readNote'),
                 value: 'read',
                 icon: BookOpen,
               },
@@ -310,7 +325,7 @@ const menuContent = computed(() => {
         {
           id: 'edit',
           kind: 'action',
-          label: '編輯便條',
+          label: t('library.folder.editNote'),
           value: 'edit',
           icon: Pencil,
         },
@@ -327,7 +342,10 @@ const menuContent = computed(() => {
         {
           id: 'remove',
           kind: 'action',
-          label: item.type === 'photo' ? '從頁面移除' : '刪除便條',
+          label:
+            item.type === 'photo'
+              ? t('library.folder.removeFromPage')
+              : t('library.folder.deleteNote'),
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -364,7 +382,7 @@ function selectMenuAction(action) {
     ref="canvas"
     :artifacts="artifacts"
     material="folder"
-    label="Folder 頁面物件"
+    :label="t('library.folder.layerLabel')"
     @layout-change="handleLayoutChange"
     @pin-change="handlePinChange"
     @stack-change="handleStackChange"
@@ -383,7 +401,7 @@ function selectMenuAction(action) {
     :open="Boolean(menu)"
     :anchor="menu?.anchor"
     size="md"
-    aria-label="頁面物件操作"
+    :aria-label="t('library.folder.menuLabel')"
     :content="menuContent"
     @select="selectMenuAction"
     @close="closeMenu"

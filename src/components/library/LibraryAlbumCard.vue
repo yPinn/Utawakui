@@ -6,6 +6,7 @@ import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
+import { t } from '../../utils/i18n.js';
 
 const ALBUM_ARTWORK_SIZE = ARTWORK_SIZE.xl;
 
@@ -45,7 +46,7 @@ function playAlbum(event) {
       <button
         type="button"
         class="library-album-card__open"
-        :aria-label="`開啟發行：${album.name}`"
+        :aria-label="t('library.albumCard.open', { name: album.name })"
         @click="selectAlbum"
       />
       <UiCollageThumb
@@ -58,8 +59,8 @@ function playAlbum(event) {
       <UiArtworkReveal class="library-album-card__play">
         <PlaybackPrimaryButton
           :playing="playing"
-          :play-label="`播放發行：${album.name}`"
-          :pause-label="`暫停發行：${album.name}`"
+          :play-label="t('library.albumCard.play', { name: album.name })"
+          :pause-label="t('library.albumCard.pause', { name: album.name })"
           @click="playAlbum"
         />
       </UiArtworkReveal>

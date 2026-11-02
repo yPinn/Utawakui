@@ -4,6 +4,7 @@ import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import ArtistIdentityModal from '../artists/ArtistIdentityModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -71,11 +72,14 @@ async function handleArtistMerge(targetArtistId) {
   );
   if (!current || !target) return;
   const confirmed = await confirmAction({
-    title: '合併藝人？',
-    subject: `${current.name} ＋ ${target.name}`,
-    message: '兩邊的曲目會整理到同一個藝人頁，原始曲目標示不會改寫。',
-    detail: '需要時可復原上一次整理，或再拆分標示。',
-    confirmLabel: '合併藝人',
+    title: t('library.artistIdentity.merge.title'),
+    subject: t('library.artistIdentity.merge.subject', {
+      current: current.name,
+      target: target.name,
+    }),
+    message: t('library.artistIdentity.merge.message'),
+    detail: t('library.artistIdentity.merge.detail'),
+    confirmLabel: t('library.artistIdentity.merge.confirm'),
   });
   if (!confirmed) return;
   const result = await mergeArtists([current.id, target.id]);
@@ -98,11 +102,11 @@ async function handleArtistSplit(creditId) {
   const credit = current?.credits?.find((entry) => entry.id === creditId);
   if (!current || !credit) return;
   const confirmed = await confirmAction({
-    title: '拆分藝人標示？',
+    title: t('library.artistIdentity.split.title'),
     subject: credit.name,
-    message: '這個標示及其曲目會回到獨立的藝人頁。',
-    detail: '其他標示不受影響，需要時可復原上一次整理。',
-    confirmLabel: '拆分標示',
+    message: t('library.artistIdentity.split.message'),
+    detail: t('library.artistIdentity.split.detail'),
+    confirmLabel: t('library.artistIdentity.split.confirm'),
   });
   if (!confirmed) return;
   const result = await splitArtistCredit(current.id, credit.id);
