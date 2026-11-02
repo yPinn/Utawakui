@@ -9,7 +9,7 @@
       "original": "原唱",
       "cover": "翻唱"
     },
-    "unlinkPending": "儲存後解除，保留版本資料。",
+    "unlinkPending": "儲存後取消連結，版本資料會保留。",
     "untitled": "未命名",
     "pending": "{title}（待儲存）",
     "pendingLinked": "{title}（待儲存，連結兩首）",
@@ -34,11 +34,11 @@
     "loadMore": "載入更多",
     "notices": "歌曲整理提示",
     "reload": "重新載入",
-    "audioChanged": "音源已變更，請確認版本資料。",
-    "sourceManaged": "歌曲資訊由來源管理。版本與連結仍可編輯。",
+    "audioChanged": "音檔已變更，請確認版本資料。",
+    "sourceManaged": "歌曲資訊無法在此修改，版本與連結仍可編輯。",
     "close": "關閉",
     "saving": "儲存中",
-    "confirmAndSave": "確認音源並儲存",
+    "confirmAndSave": "確認音檔並儲存",
     "save": "儲存"
   },
   "fields": {

@@ -287,12 +287,12 @@ describe('WorkVersionEditor mounted workflow', () => {
       mounted.root,
       (node) => node.props?.['aria-label'] === '歌曲整理提示',
     )[0];
-    expect(textContent(notices)).toContain('歌曲資訊由來源管理');
+    expect(textContent(notices)).toContain('歌曲資訊無法在此修改');
     const panel = findAll(
       mounted.root,
       (node) => node.props?.id === 'song-editor-metadata-panel',
     )[0];
-    expect(textContent(panel)).not.toContain('歌曲資訊由來源管理');
+    expect(textContent(panel)).not.toContain('歌曲資訊無法在此修改');
     expect(button('關閉')).toBeTruthy();
   });
   it.each([false, true])(
@@ -622,7 +622,7 @@ describe('WorkVersionEditor mounted workflow', () => {
     await settle();
     trigger(button('解除連結'), 'onClick');
     await settle();
-    expect(textContent(mounted.root)).toContain('保留版本資料');
+    expect(textContent(mounted.root)).toContain('版本資料會保留');
     trigger(button('儲存'), 'onClick');
     await settle();
     expect(bridge.saveWorkOrganization.mock.calls[0][0]).toMatchObject({
@@ -659,10 +659,10 @@ describe('WorkVersionEditor mounted workflow', () => {
     );
     await owner.reload();
     await settle();
-    expect(textContent(mounted.root)).toContain('音源已變更');
+    expect(textContent(mounted.root)).toContain('音檔已變更');
     expect(button('儲存')).toBeUndefined();
     expect(bridge.saveWorkOrganization).not.toHaveBeenCalled();
-    trigger(button('確認音源並儲存'), 'onClick');
+    trigger(button('確認音檔並儲存'), 'onClick');
     await settle();
     expect(bridge.saveWorkOrganization.mock.calls[0][0].reconfirm).toBe(true);
   });

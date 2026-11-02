@@ -34,11 +34,11 @@
     "loadMore": "Load more",
     "notices": "Song organizing notices",
     "reload": "Reload",
-    "audioChanged": "The audio changed. Check the version details.",
-    "sourceManaged": "Song info is managed by the source. Versions and links can still be edited.",
+    "audioChanged": "The audio file changed. Check the version details.",
+    "sourceManaged": "Song info can't be changed here; versions and links can still be edited.",
     "close": "Close",
     "saving": "Saving",
-    "confirmAndSave": "Confirm audio and save",
+    "confirmAndSave": "Confirm audio files and save",
     "save": "Save"
   },
   "fields": {
