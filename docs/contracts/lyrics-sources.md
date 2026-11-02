@@ -24,6 +24,10 @@
 
 「所有線上來源」是手動搜尋主入口：main 對 LRCLIB、NetEase、Better Lyrics 平行 fan-out，在主要階段deadline內等待完成；沒有非related的T1／T2同步候選時，才解析有證據的跨語別名並串接Kugou受控備援，最後合併。T0仍可選但不阻擋T1備援。任一成功即保留其結果，其他來源失敗只形成 bounded partial status。各來源仍可單獨篩選與重試。目前不提供逐來源進度交付。
 
+搜尋通知只呈現使用者可採取行動的結果，不列舉供應商錯誤、HTTP、解析問題、無效筆數或請求預算。有結果時直接呈現列表；正常搜尋完成但零結果使用中性未命中提示，搜尋未完成且零結果才顯示一則可重試警告。明確擴搜整體失敗且保留舊結果時，以中性提示說明現有歌詞仍可使用；單一來源失敗或正常達預算不產生此提示。來源明細及原始失敗分類仍留在Main診斷與搜尋狀態，不因文案簡化刪除。
+
+通知區同時最多一則，儲存結果優先於搜尋／條件變更提示。尚未儲存與Main已完成交易但清單刷新失敗由acquisition owner的固定狀態區分，不解析顯示文字；後者明示已儲存，避免誤導再次提交。新保存、搜尋清除與本機匯入重設該狀態；過期操作不能污染新通知。需要重新搜尋或啟用功能時，仍保留對應的下一步。
+
 Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marker 與 duration 重新分級：
 
 1. `exact` > `strong` > `related`。
@@ -100,6 +104,7 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 - 回應沒有命中的 metadata，無法證明錄音身份，所以只能手動預覽與保存，不參與自動取得。
 - 身份／信心不足為安靜的 `low-confidence-match`；TTML 解析不通過才回 `invalid-ttml`，並標示為不可重試。保存重驗的身份拒絕為 `record-mismatch`，解析拒絕仍為 `invalid-ttml`；不以更改 validator 提高命中率。
 - 共用 bounded TTML parser；完整 primary spans 才是 T2，否則如實降為 T1。候選 id 是查詢 identity 的 deterministic hash，保存時以相同查詢重抓比對。Provenance 標為 Better Lyrics，不標示為 Apple Music；歌詞內容授權須另行確認。
+- 明確宣告Line的TTML（包含Apple internal／extensions兩種namespace）若body dur偏短，只在Main已知曲目長度內容納超出的段落／句子，並記錄`inconsistent-body-duration` warning。曲目長度未知、非法body dur、超出曲目或明確段落邊界仍拒絕；Word或未宣告的文件維持嚴格body邊界。預覽與fresh保存共用同規則，保留原始TTML及fingerprint，不搬移時間、不補造逐字資料，也不代表錄音身份或同步品質已驗收。
 
 ### 跨語別名解析
 

@@ -77,7 +77,10 @@ function assessBetterLyricsCandidate(track, record) {
   ) {
     return { status: 'unavailable', reason: 'low-confidence-match' };
   }
-  const analysis = analyzeTtml(record.ttml, { recordId: record.id });
+  const analysis = analyzeTtml(record.ttml, {
+    recordId: record.id,
+    trackDurationMs: Math.round(record.duration * 1000),
+  });
   if (analysis.status !== 'ok')
     return { status: 'error', reason: 'invalid-ttml' };
   const match = {

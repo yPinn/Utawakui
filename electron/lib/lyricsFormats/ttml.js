@@ -12,6 +12,7 @@ const DEFAULT_TTML_RESPONSE_BYTES = 2 * 1024 * 1024;
 const TTML_NAMESPACE = 'http://www.w3.org/ns/ttml';
 const TTML_METADATA_NAMESPACE = 'http://www.w3.org/ns/ttml#metadata';
 const ITUNES_NAMESPACE = 'http://itunes.apple.com/lyric-ttml-extensions';
+const ITUNES_INTERNAL_NAMESPACE = 'http://music.apple.com/lyric-ttml-internal';
 const AUXILIARY_ROLES = new Set(['x-bg', 'x-translation', 'x-roman']);
 const MAX_XML_ELEMENTS = 50_000;
 const MAX_XML_DEPTH = 128;
@@ -155,13 +156,22 @@ function normalizedWordParts(children) {
   };
 }
 
-function createState() {
+function createState(options) {
+  const trackDurationMs = options.trackDurationMs;
   return {
     failed: false,
     rootSeen: false,
     timingMode: 'auto',
     bodyDepth: 0,
     bodyDuration: Infinity,
+    declaredBodyDuration: Infinity,
+    bodyDurationMismatch: false,
+    trackDurationMs:
+      Number.isSafeInteger(trackDurationMs) &&
+      trackDurationMs > 0 &&
+      trackDurationMs <= 86_400_000
+        ? trackDurationMs
+        : 0,
     elementCount: 0,
     elementStack: [],
     divStack: [],
@@ -186,7 +196,9 @@ function openElement(state, node) {
       state.failed = true;
       return;
     }
-    const declared = attribute(node, 'timing', ITUNES_NAMESPACE);
+    const declared =
+      attribute(node, 'timing', ITUNES_NAMESPACE) ??
+      attribute(node, 'timing', ITUNES_INTERNAL_NAMESPACE);
     if (declared !== undefined) {
       const mode = declared.toLowerCase();
       if (!new Set(['word', 'line']).has(mode)) state.failed = true;
@@ -201,8 +213,17 @@ function openElement(state, node) {
     const duration = attribute(node, 'dur');
     if (duration !== undefined) {
       const parsed = parseTtmlTime(duration);
-      if (parsed === null) state.failed = true;
-      else state.bodyDuration = parsed;
+      if (parsed === null || parsed <= 0) state.failed = true;
+      else {
+        state.declaredBodyDuration = parsed;
+        // Some line-only provider documents understate body duration. Main's
+        // known track length may bound that container; authored child bounds
+        // and all word-timing validation remain unchanged.
+        state.bodyDuration =
+          state.timingMode === 'line'
+            ? Math.max(parsed, state.trackDurationMs)
+            : parsed;
+      }
     }
     return;
   }
@@ -218,6 +239,8 @@ function openElement(state, node) {
     if (explicit && !validInterval(begin, end, parentBegin, parentEnd)) {
       state.failed = true;
     }
+    if (explicit && end > state.declaredBodyDuration)
+      state.bodyDurationMismatch = true;
     state.divStack.push({ begin, end });
     return;
   }
@@ -269,8 +292,8 @@ function closeElement(state) {
   if (node.local === 'body') state.bodyDepth -= 1;
 }
 
-function parseXml(value) {
-  const state = createState();
+function parseXml(value, options) {
+  const state = createState(options);
   const parser = sax.parser(true, {
     xmlns: true,
     position: false,
@@ -439,7 +462,7 @@ function analyzeTtml(value, options = {}) {
   if (/<!\s*(?:DOCTYPE|ENTITY)\b/iu.test(value)) {
     return { status: 'error', reason: 'unsafe-ttml' };
   }
-  const state = parseXml(value);
+  const state = parseXml(value, options);
   if (
     state.failed ||
     !state.rootSeen ||
@@ -460,6 +483,12 @@ function analyzeTtml(value, options = {}) {
     .map((line) => `[${formatTimestamp(line.startMs)}]${line.text}`)
     .join('\n')}\n`;
   const warnings = [];
+  if (
+    state.bodyDurationMismatch ||
+    normalized.lines.some((line) => line.endMs > state.declaredBodyDuration)
+  ) {
+    warnings.push('inconsistent-body-duration');
+  }
   if (normalized.normalizedBoundaryJitter) {
     warnings.push('normalized-boundary-jitter');
   }

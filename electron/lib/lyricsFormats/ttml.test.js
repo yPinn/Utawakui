@@ -66,6 +66,70 @@ describe('provider-neutral TTML normalization golden behavior', () => {
     expect(result.document.lines[0].words).toEqual([]);
   });
 
+  it('accepts a short body duration only for declared line timing within a known track', () => {
+    const value = `<tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Line"><body dur="5:40.376"><div begin="5:11.814" end="5:46.961"><p begin="5:40.000" end="5:46.961">Final line</p></div></body></tt>`;
+    expect(analyzeTtml(value, { trackDurationMs: 371000 })).toMatchObject({
+      status: 'ok',
+      capability: { level: 'T1', partial: false },
+      warnings: ['inconsistent-body-duration'],
+      document: {
+        lines: [
+          { startMs: 340000, endMs: 346961, text: 'Final line', words: [] },
+        ],
+      },
+    });
+    expect(analyzeTtml(value).status).toBe('error');
+    expect(analyzeTtml(value, { trackDurationMs: 345000 }).status).toBe(
+      'error',
+    );
+  });
+
+  it('keeps strict nested bounds, malformed durations and word timing despite a known track', () => {
+    const value = `<tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://itunes.apple.com/lyric-ttml-extensions" itunes:timing="Line"><body dur="2s"><div begin="1s" end="4s"><p begin="1s" end="3s">Line</p></div></body></tt>`;
+    for (const invalid of [
+      value.replace('end="3s"', 'end="4.001s"'),
+      value.replace('dur="2s"', 'dur="nope"'),
+      value.replace('dur="2s"', 'dur="0s"'),
+      value.replace('timing="Line"', 'timing="Word"'),
+      value.replace('itunes:timing="Line"', ''),
+    ]) {
+      expect(analyzeTtml(invalid, { trackDurationMs: 5000 }).status).toBe(
+        'error',
+      );
+    }
+    for (const trackDurationMs of [
+      0,
+      -1,
+      NaN,
+      Infinity,
+      1.5,
+      '5000',
+      86400001,
+    ]) {
+      expect(analyzeTtml(value, { trackDurationMs }).status).toBe('error');
+    }
+  });
+
+  it('bounds direct line timing by the track without warning for consistent body timing', () => {
+    const value = wordTtml().replace('timing="Word"', 'timing="Line"');
+    expect(analyzeTtml(value, { trackDurationMs: 15000 }).warnings).toEqual([]);
+    expect(
+      analyzeTtml(
+        value
+          .replace('<body dur="10s">', '<body dur="10s"><div>')
+          .replace('</body>', '</div></body>'),
+        {
+          trackDurationMs: 15000,
+        },
+      ).warnings,
+    ).toEqual([]);
+    expect(
+      analyzeTtml(value.replace('dur="10s"', 'dur="2s"'), {
+        trackDurationMs: 5000,
+      }),
+    ).toMatchObject({ status: 'ok', warnings: ['inconsistent-body-duration'] });
+  });
+
   it('keeps the primary T2 lane when auxiliary background and translation lanes overlap', () => {
     const value = wordTtml().replace(
       '</span></p>',

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useLyricsAcquisition } from './useLyricsAcquisition.js';
+import { mergeLyricsProviderSearchResults } from '../../../electron/lib/lyricsProviders/candidates.js';
 
 function deferred() {
   let resolve;
@@ -61,7 +62,7 @@ const candidate = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('candidate save lifetime', () => {
-  it('uses the Kugou source label for fresh verification failures and retains choices', async () => {
+  it('keeps save failures source-neutral while retaining choices', async () => {
     const h = harness();
     h.state.candidateSearch.providerId = 'all';
     const choice = {
@@ -76,7 +77,7 @@ describe('candidate save lifetime', () => {
       reason: 'rate-limited',
     });
     await h.saveLyricsProviderCandidate('kugou', choice, 'track');
-    expect(h.state.manualSave.error).toContain('酷狗音樂');
+    expect(h.state.manualSave.error).toBe('歌詞尚未儲存，請再試一次。');
     expect(h.state.candidateSearch.candidates).toEqual([choice]);
     expect(h.selectSource).not.toHaveBeenCalled();
   });
@@ -137,6 +138,7 @@ describe('candidate save lifetime', () => {
       expect(h.state.candidateSearch).toMatchObject({
         status: 'ok',
         partial: true,
+        extensionFailed: true,
         error: null,
         candidates: [candidate],
       });
@@ -153,6 +155,95 @@ describe('candidate save lifetime', () => {
     expect(h.save).not.toHaveBeenCalled();
     expect(h.state.manualSave.isSaving).toBe(false);
   });
+
+  it('does not turn the normal extension request limit into a failed extension notice', async () => {
+    const h = harness();
+    const query = { title: 'Song', artist: 'Artist' };
+    h.search.mockResolvedValueOnce({ status: 'ok', candidates: [candidate] });
+    await h.searchLyricsProviderCandidates('lrclib', { query });
+    h.search.mockResolvedValueOnce({
+      status: 'error',
+      reason: 'request-budget-exhausted',
+      candidates: [],
+    });
+    await h.searchLyricsProviderCandidates('lrclib', {
+      query,
+      mode: 'broaden',
+    });
+    expect(h.state.candidateSearch.extensionFailed).toBe(false);
+    expect(h.state.candidateSearch.candidates).toEqual([candidate]);
+    expect(h.state.candidateSearch.providerStatuses[0].reason).toBe(
+      'request-budget-exhausted',
+    );
+  });
+
+  it('recognizes a failed extension after Main has already merged retained choices', async () => {
+    const h = harness();
+    const query = { title: 'Song', artist: 'Artist' };
+    const previous = {
+      provider: 'lrclib',
+      status: 'ok',
+      candidates: [candidate],
+    };
+    h.search.mockResolvedValueOnce(previous);
+    await h.searchLyricsProviderCandidates('lrclib', { query });
+    h.search.mockResolvedValueOnce(
+      mergeLyricsProviderSearchResults(previous, {
+        provider: 'lrclib',
+        status: 'error',
+        reason: 'service-unavailable',
+        candidates: [],
+      }),
+    );
+    await h.searchLyricsProviderCandidates('lrclib', {
+      query,
+      mode: 'broaden',
+    });
+    expect(h.state.candidateSearch.extensionFailed).toBe(true);
+    expect(h.state.candidateSearch.candidates).toEqual([candidate]);
+    expect(h.state.candidateSearch.error).toBeNull();
+  });
+
+  it.each(['healthy-source', 'new-choice', 'budget'])(
+    'keeps an extension quiet when Main returns a %s outcome',
+    async (kind) => {
+      const h = harness();
+      const query = { title: 'Song', artist: 'Artist' };
+      h.search.mockResolvedValueOnce({ status: 'ok', candidates: [candidate] });
+      await h.searchLyricsProviderCandidates('all', { query });
+      h.search.mockResolvedValueOnce({
+        status: 'ok',
+        partial: true,
+        candidates:
+          kind === 'new-choice'
+            ? [candidate, { ...candidate, id: 99 }]
+            : [candidate],
+        providerStatuses:
+          kind === 'budget'
+            ? [
+                {
+                  provider: 'lrclib',
+                  status: 'ok',
+                  partial: true,
+                  reason: 'request-budget-exhausted',
+                },
+              ]
+            : [
+                {
+                  provider: 'lrclib',
+                  status: 'ok',
+                  partial: true,
+                  reason: 'offline',
+                },
+                ...(kind === 'healthy-source'
+                  ? [{ provider: 'netease', status: 'ok' }]
+                  : []),
+              ],
+      });
+      await h.searchLyricsProviderCandidates('all', { query, mode: 'broaden' });
+      expect(h.state.candidateSearch.extensionFailed).toBe(false);
+    },
+  );
 
   it('pins the submitted query before the asynchronous feature gate', async () => {
     const gate = deferred();
@@ -187,10 +278,9 @@ describe('candidate save lifetime', () => {
     });
     h.refreshLibrary.mockRejectedValue(new Error('private list read path'));
     await h.saveLyricsProviderCandidate('lrclib', candidate);
-    expect(h.state.manualSave.error).toBe(
-      '歌詞已儲存，但清單更新未完成。請重新開啟歌詞清單。',
-    );
+    expect(h.state.manualSave.error).toBe('歌詞已儲存，請重新開啟歌詞清單。');
     expect(h.selectSource).not.toHaveBeenCalled();
+    expect(h.state.manualSave.committed).toBe(true);
   });
 
   it('does not publish a late refresh failure into a newer save', async () => {
@@ -333,17 +423,17 @@ describe('candidate save lifetime', () => {
     expect(h.state.candidateSearch.error).toBeNull();
   });
 
-  it('distinguishes a save-time network verification failure from a persistence failure', async () => {
+  it('uses the same unsaved message for network and persistence failures', async () => {
     const h = harness();
     h.save.mockResolvedValue({
       status: 'error',
       reason: 'service-unavailable',
     });
     await h.saveLyricsProviderCandidate('lrclib', candidate);
-    expect(h.state.manualSave.error).toContain('驗證');
+    expect(h.state.manualSave.error).toBe('歌詞尚未儲存，請再試一次。');
     h.save.mockRejectedValue(new Error('private filesystem path'));
     await h.saveLyricsProviderCandidate('lrclib', candidate);
-    expect(h.state.manualSave.error).toBe('歌詞儲存未完成，請再試一次。');
+    expect(h.state.manualSave.error).toBe('歌詞尚未儲存，請再試一次。');
     expect(h.state.manualSave.error).not.toContain('private');
   });
 });

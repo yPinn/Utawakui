@@ -740,7 +740,7 @@ describe('useLyrics', () => {
     expect(lyrics.state.candidateSearch).toMatchObject({
       status: 'error',
       reason: 'rate-limited',
-      error: 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
+      error: '暫時無法搜尋歌詞，請稍後再試。',
       groups: { best: [], related: [] },
     });
     await flushPromises();
@@ -2005,7 +2005,7 @@ describe('useLyrics', () => {
 
     await lyrics.searchLyricsCandidates({ title: 'Track A' });
     expect(lyrics.state.candidateSearch.error).toBe(
-      '目前無法搜尋歌詞，請再試一次。',
+      '暫時無法搜尋歌詞，請稍後再試。',
     );
 
     await expect(
@@ -2014,23 +2014,20 @@ describe('useLyrics', () => {
         previewFingerprint: 'b'.repeat(64),
       }),
     ).resolves.toBe(null);
-    expect(lyrics.state.manualSave.error).toBe('請再試一次。');
+    expect(lyrics.state.manualSave.error).toBe('歌詞尚未儲存，請再試一次。');
 
     await expect(lyrics.backfillSourceLabels()).resolves.toBe(null);
     expect(lyrics.state.sourceAction).toMatchObject({
       operation: 'backfill-labels',
       error: '請再試一次。',
     });
-    expect(lyrics.state.manualSave.error).toBe('請再試一次。');
+    expect(lyrics.state.manualSave.error).toBe('歌詞尚未儲存，請再試一次。');
   });
 
   it.each([
-    ['cache-miss', '這首歌已不在 Better Lyrics 公開快取中，請重新搜尋。'],
-    [
-      'offline',
-      '無法連線至 Better Lyrics 完成版本驗證，歌詞尚未儲存。請檢查網路後再試。',
-    ],
-    ['stale-search', 'Better Lyrics 搜尋結果已過期，請重新搜尋。'],
+    ['cache-miss', '歌詞尚未儲存，請重新搜尋後再試。'],
+    ['offline', '歌詞尚未儲存，請再試一次。'],
+    ['stale-search', '歌詞尚未儲存，請重新搜尋後再試。'],
   ])(
     'preserves the bounded Better Lyrics %s save failure reason',
     async (reason, expectedMessage) => {

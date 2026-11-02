@@ -9,8 +9,9 @@ MusicBrainz 的既有專屬 scheduler／短重試政策見 [music identity contr
 `electron/lib/providerServiceCooldown.js` 只保存相同 fetch transport 下各 origin 的失敗狀態，不保存 path、query、credential、body 或內容快取。
 每個 request 在真正發送前重查，包含 client scheduler 中已排隊的操作。
 HTTP 429／5xx 會記錄失敗；NetEase JSON code 與 Musixmatch API status code 同樣可記錄。
-有效 `Retry-After` 秒數／HTTP date 優先，長期限不截短，也不建立對應長 timer。
-無有效提示時，429 從 30 秒、5xx 從 5 秒倍增，fallback 最多 5 分鐘。
+第一次失敗採有效 `Retry-After` 秒數／HTTP date；連續失敗取服務提示與本機倍增冷卻的較大值，避免持續的短提示讓新操作反覆撞上過載。
+無有效提示時亦採本機冷卻：429 從 30 秒、5xx 從 5 秒倍增，本機部分最多 5 分鐘；服務指定的更長期限不截短，也不建立對應長 timer。
+例如持續回傳503及`Retry-After: 1`時，第一回冷卻1秒，後續為10、20、40秒，直到本機5分鐘上限；成功才重設連續失敗計數。此冷卻不會自行發出重試。
 
 冷卻中的 request 不送網路，提供僅含 HTTP status 的空 response，交給各 client 原有的 bounded error mapping，避免更改 IPC error 格式。
 LRCLIB 的 Main 診斷另保留固定分類：`stage` 為 `network`／`cooldown`，`status` 為 `background`／`interactive`，並保留實際或冷卻來源的 HTTP status；冷卻攔截不視為另一筆送到網站的請求。此標記由本機 guard 的 WeakSet 判定，不信任回應 headers 提供的分類。

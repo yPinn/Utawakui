@@ -5,6 +5,58 @@ import {
 } from './providerServiceCooldown.js';
 
 describe('provider service cooldown', () => {
+  it('extends repeated overload cooldowns even when the server keeps asking for one second', async () => {
+    let currentTime = 0;
+    const fetch = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(
+          new Response(null, { status: 503, headers: { 'Retry-After': '1' } }),
+        ),
+      );
+    const guard = createProviderRequestGuard(fetch, { now: () => currentTime });
+    for (const delay of [
+      1000, 10000, 20000, 40000, 80000, 160000, 300000, 300000,
+    ]) {
+      const count = fetch.mock.calls.length;
+      await guard.fetch('https://one.test/');
+      currentTime += delay - 1;
+      await guard.fetch('https://one.test/');
+      expect(fetch).toHaveBeenCalledTimes(count + 1);
+      currentTime += 1;
+    }
+    fetch.mockResolvedValueOnce(new Response('ok'));
+    await guard.fetch('https://one.test/');
+    await guard.fetch('https://one.test/');
+    const count = fetch.mock.calls.length;
+    currentTime += 999;
+    await guard.fetch('https://one.test/');
+    expect(fetch).toHaveBeenCalledTimes(count);
+    currentTime += 1;
+    await guard.fetch('https://one.test/');
+    expect(fetch).toHaveBeenCalledTimes(count + 1);
+  });
+
+  it('preserves a longer server delay on repeated failures', async () => {
+    let currentTime = 0;
+    const fetch = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(
+          new Response(null, { status: 503, headers: { 'Retry-After': '60' } }),
+        ),
+      );
+    const guard = createProviderRequestGuard(fetch, { now: () => currentTime });
+    await guard.fetch('https://one.test/');
+    currentTime = 60000;
+    await guard.fetch('https://one.test/');
+    currentTime += 59999;
+    await guard.fetch('https://one.test/');
+    expect(fetch).toHaveBeenCalledTimes(2);
+    currentTime += 1;
+    await guard.fetch('https://one.test/');
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
   it('isolates origins while sharing a transport across guard instances', async () => {
     let currentTime = 1000;
     const fetch = vi

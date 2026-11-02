@@ -24,6 +24,26 @@ function record(overrides = {}) {
 }
 
 describe('Better Lyrics candidate validation', () => {
+  it('previews declared T1 with an inconsistent body duration inside the query duration', () => {
+    const ttml = TTML.replace('timing="Word"', 'timing="Line"').replace(
+      'dur="5s"',
+      'dur="2s"',
+    );
+    expect(
+      assessBetterLyricsCandidate(
+        { title: 'Song', artist: 'Singer', duration: 5 },
+        record({ ttml }),
+      ),
+    ).toMatchObject({
+      status: 'ok',
+      match: {
+        analysis: {
+          capability: { level: 'T1' },
+          warnings: ['inconsistent-body-duration'],
+        },
+      },
+    });
+  });
   it.each([0.8, 0.97, 1])('accepts the documented unit score %s', (score) => {
     expect(
       assessBetterLyricsCandidate(

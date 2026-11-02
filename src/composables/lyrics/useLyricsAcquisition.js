@@ -1,108 +1,11 @@
 import { FEATURE_IDS } from '../../constants/featureGates.js';
 import { t } from '../../utils/i18n.js';
 
-const LRCLIB_FAILURE_MESSAGES = Object.freeze({
-  'rate-limited': 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
-  offline: '目前無法連線至 LRCLIB，請檢查網路後再試。',
-  'fetch-unavailable': '目前無法連線至 LRCLIB，請稍後再試。',
-  timeout: 'LRCLIB 回應逾時，請稍後再試。',
-  'service-unavailable': 'LRCLIB 服務暫時無法使用，請稍後再試。',
-  'invalid-json': 'LRCLIB 回傳了無法讀取的資料，請稍後再試。',
-  'invalid-record': 'LRCLIB 回傳的候選資料不完整，請調整條件後再試。',
-  'response-too-large': 'LRCLIB 回傳資料超出安全限制，請縮小搜尋範圍。',
-  busy: '已有一筆 LRCLIB 搜尋正在進行，請稍候。',
-});
-
-const NETEASE_FAILURE_MESSAGES = Object.freeze({
-  'rate-limited': '網易雲音樂暫時限制搜尋請求，請稍後再試。',
-  offline: '目前無法連線至網易雲音樂，請檢查網路後再試。',
-  'fetch-unavailable': '目前無法連線至網易雲音樂，請稍後再試。',
-  timeout: '網易雲音樂回應逾時，請稍後再試。',
-  'service-unavailable': '網易雲音樂服務暫時無法使用，請稍後再試。',
-  'invalid-json': '網易雲音樂回傳了無法讀取的資料，請稍後再試。',
-  'invalid-record': '網易雲音樂回傳的候選資料不完整，請調整條件後再試。',
-  'response-too-large': '網易雲音樂回傳資料超出安全限制，請縮小搜尋範圍。',
-  busy: '已有一筆網易雲音樂搜尋正在進行，請稍候。',
-});
-
-const BETTER_LYRICS_FAILURE_MESSAGES = Object.freeze({
-  'cache-miss': '這首歌目前不在 Better Lyrics 公開快取中。',
-  'not-found': 'Better Lyrics 找不到這首歌的歌詞。',
-  'low-confidence-match': 'Better Lyrics 的符合度不足，已略過可能錯配的歌詞。',
-  'missing-track-identity':
-    'Better Lyrics 需要歌曲名稱、歌手與長度才能安全搜尋。',
-  'rate-limited': 'Better Lyrics 暫時限制搜尋請求，請稍後再試。',
-  offline: '目前無法連線至 Better Lyrics，請檢查網路後再試。',
-  'fetch-unavailable': '目前無法連線至 Better Lyrics，請稍後再試。',
-  timeout: 'Better Lyrics 回應逾時，請稍後再試。',
-  'service-unavailable': 'Better Lyrics 服務暫時無法使用，請稍後再試。',
-  'invalid-json': 'Better Lyrics 回傳了無法讀取的資料，請稍後再試。',
-  'invalid-record': 'Better Lyrics 回傳的資料不完整，已停止使用。',
-  'invalid-ttml': 'Better Lyrics 歌詞不符合安全的逐字格式。',
-  'response-too-large': 'Better Lyrics 回傳資料超出安全限制。',
-  busy: '已有一筆 Better Lyrics 搜尋正在進行，請稍候。',
-});
-
-const PROVIDER_FAILURE_MESSAGES = Object.freeze({
-  all: Object.freeze({
-    'all-providers-failed': '目前無法搜尋任何線上歌詞來源，請稍後再試。',
-    'all-providers-unavailable': '目前沒有可用的線上歌詞來源。',
-  }),
-  lrclib: LRCLIB_FAILURE_MESSAGES,
-  netease: NETEASE_FAILURE_MESSAGES,
-  betterlyrics: BETTER_LYRICS_FAILURE_MESSAGES,
-});
-
-const BETTER_LYRICS_SAVE_FAILURE_MESSAGES = Object.freeze({
-  'cache-miss': '這首歌已不在 Better Lyrics 公開快取中，請重新搜尋。',
-  'stale-search': 'Better Lyrics 搜尋結果已過期，請重新搜尋。',
-  'record-mismatch': 'Better Lyrics 的歌詞已不再符合目前曲目，請重新搜尋。',
-  busy: '已有一筆歌詞正在儲存，請稍候。',
-});
-
-function providerSaveFailureMessage(providerId, reason) {
-  if (providerId === 'kugou') {
-    const messages = {
-      'stale-search': 'verificationStaleSearch',
-      'record-mismatch': 'verificationMismatch',
-      'missing-track-identity': 'missingIdentity',
-      'invalid-record': 'providerInvalidData',
-      'invalid-json': 'providerInvalidData',
-      'response-too-large': 'providerInvalidData',
-    };
-    if (messages[reason])
-      return t(`lyricsAcquisition.${messages[reason]}`, {
-        provider: t('lyricsAcquisition.kugou'),
-      });
-  }
-  if (reason === 'request-budget-exhausted')
-    return t('lyricsAcquisition.budgetReached');
-  const networkKeys = {
-    offline: 'verificationOffline',
-    'fetch-unavailable': 'verificationOffline',
-    timeout: 'verificationTimeout',
-    'rate-limited': 'verificationRateLimited',
-    'service-unavailable': 'verificationUnavailable',
-    'http-error': 'verificationUnavailable',
-  };
-  if (networkKeys[reason]) {
-    return t(`lyricsAcquisition.${networkKeys[reason]}`, {
-      provider:
-        providerId === 'netease'
-          ? t('lyricsAcquisition.netease')
-          : providerId === 'kugou'
-            ? t('lyricsAcquisition.kugou')
-            : providerId === 'betterlyrics'
-              ? 'Better Lyrics'
-              : 'LRCLIB',
-    });
-  }
-  return (
-    (providerId === 'betterlyrics'
-      ? BETTER_LYRICS_SAVE_FAILURE_MESSAGES[reason]
-      : null) ||
-    PROVIDER_FAILURE_MESSAGES[providerId]?.[reason] ||
-    '請再試一次。'
+function providerSaveFailureMessage(reason) {
+  return t(
+    ['cache-miss', 'stale-search', 'record-mismatch'].includes(reason)
+      ? 'lyricsAcquisition.saveSearchAgain'
+      : 'lyricsAcquisition.saveIncomplete',
   );
 }
 
@@ -176,6 +79,8 @@ export function useLyricsAcquisition({
   refreshLibrary,
   selectSource,
 }) {
+  state.candidateSearch.extensionFailed = false;
+  state.manualSave.committed = false;
   let musixmatchProbeRequestId = 0;
   let candidateSearchRequestId = 0;
   let candidateSearchQueryKey = null;
@@ -187,6 +92,7 @@ export function useLyricsAcquisition({
       state.manualSave.isSaving = false;
     }
     state.manualSave.error = null;
+    state.manualSave.committed = false;
   }
 
   function clearMusixmatchProbe() {
@@ -209,6 +115,7 @@ export function useLyricsAcquisition({
     state.candidateSearch.groups = { best: [], related: [] };
     state.candidateSearch.recordingGroups = { best: [], related: [] };
     state.candidateSearch.providerStatuses = [];
+    state.candidateSearch.extensionFailed = false;
     state.candidateSearch.partial = false;
     state.candidateSearch.invalidRecordCount = 0;
     state.candidateSearch.error = null;
@@ -346,6 +253,7 @@ export function useLyricsAcquisition({
     candidateSearchRequestId += 1;
     invalidateCandidateSave();
     const requestId = candidateSearchRequestId;
+    state.candidateSearch.extensionFailed = false;
     if (!(await ensureLyricsFlow())) return;
     if (requestId !== candidateSearchRequestId) return;
 
@@ -364,7 +272,7 @@ export function useLyricsAcquisition({
       typeof legacySearch !== 'function'
     ) {
       state.candidateSearch.isLoading = false;
-      state.candidateSearch.error = '請重新啟動應用程式後再搜尋歌詞。';
+      state.candidateSearch.error = t('lyricsAcquisition.searchRestart');
       return;
     }
 
@@ -374,6 +282,35 @@ export function useLyricsAcquisition({
           ? await genericSearch(providerId, track.id, options)
           : await legacySearch(track.id, options);
       if (requestId !== candidateSearchRequestId) return;
+      if (retained) {
+        const outcomes = result?.providerStatuses?.length
+          ? result.providerStatuses
+          : [result];
+        // Main can already have merged the old choices into a partial result.
+        // Only an entirely failed extension without new content needs a notice.
+        const hasNewContent = (result?.candidates || []).some(
+          (next) =>
+            !retained.candidates.some(
+              (previous) =>
+                candidateKey(previous, providerId) ===
+                  candidateKey(next, providerId) &&
+                previous.previewFingerprint === next.previewFingerprint,
+            ),
+        );
+        state.candidateSearch.extensionFailed =
+          !hasNewContent &&
+          outcomes.every(
+            (outcome) =>
+              (outcome?.status === 'error' || outcome?.partial === true) &&
+              ![
+                'request-budget-exhausted',
+                'cancelled',
+                'cache-miss',
+                'not-found',
+                'low-confidence-match',
+              ].includes(outcome.reason),
+          );
+      }
       if (retained && !result?.candidates?.length) {
         result = {
           ...result,
@@ -426,10 +363,7 @@ export function useLyricsAcquisition({
             `${providerId} search failed: ${result.reason || 'unknown'}`,
           ),
           'search',
-          (result.reason === 'request-budget-exhausted'
-            ? t('lyricsAcquisition.budgetReached')
-            : PROVIDER_FAILURE_MESSAGES[providerId]?.[result.reason]) ||
-            '目前無法搜尋歌詞，請稍後再試。',
+          t('lyricsAcquisition.searchUnavailable'),
           { persist: false },
         );
       }
@@ -437,6 +371,7 @@ export function useLyricsAcquisition({
     } catch (error) {
       if (requestId !== candidateSearchRequestId) return;
       if (retained) {
+        state.candidateSearch.extensionFailed = true;
         const result = {
           provider: providerId,
           status: 'ok',
@@ -457,7 +392,7 @@ export function useLyricsAcquisition({
       state.candidateSearch.error = reportLyricsError(
         error,
         'search',
-        '目前無法搜尋歌詞，請再試一次。',
+        t('lyricsAcquisition.searchUnavailable'),
         { persist: false },
       );
     } finally {
@@ -496,6 +431,7 @@ export function useLyricsAcquisition({
     let committed = false;
     state.manualSave.isSaving = true;
     state.manualSave.error = null;
+    state.manualSave.committed = false;
     try {
       if (!(await ensureLyricsFlow({ errorTarget: 'manualSave', isCurrent })))
         return null;
@@ -525,6 +461,7 @@ export function useLyricsAcquisition({
       // preview was dismissed. Only the current preview may consume its result.
       if (result?.status === 'saved' && result.source) {
         committed = true;
+        if (isCurrent()) state.manualSave.committed = true;
         await refreshLibrary();
       }
       if (!isCurrent()) return null;
@@ -553,7 +490,7 @@ export function useLyricsAcquisition({
         state.manualSave.error = reportLyricsError(
           new Error(`${providerId} save unavailable: ${reason}`),
           'save-candidate',
-          providerSaveFailureMessage(providerId, reason),
+          providerSaveFailureMessage(reason),
           { persist: false },
         );
         return null;

@@ -114,19 +114,6 @@ const sourceResultCount = computed(
   () => state.candidateSearch.candidates.length,
 );
 const hasResults = computed(() => sourceResultCount.value > 0);
-const SILENT_PROVIDER_MISS_REASONS = new Set([
-  'cache-miss',
-  'not-found',
-  'low-confidence-match',
-]);
-const silentProviderMiss = computed(
-  () =>
-    props.providerId === 'betterlyrics' &&
-    state.candidateSearch.status === 'unavailable' &&
-    SILENT_PROVIDER_MISS_REASONS.has(state.candidateSearch.reason) &&
-    !hasResults.value &&
-    !state.candidateSearch.error,
-);
 const canBroaden = computed(
   () =>
     hasSearched.value &&
@@ -146,56 +133,47 @@ const draftDiffersFromResults = computed(() => {
     artistDraft.value.trim() !== submittedQuery.value.artist
   );
 });
-const providerFailureMessages = computed(() =>
-  (state.candidateSearch.providerStatuses || [])
-    .filter(
-      (providerStatus) =>
-        providerStatus.status === 'error' || providerStatus.partial === true,
-    )
-    .map(providerFailureMessage),
-);
-const fallbackCompletedWithoutResults = computed(
+const searchIncomplete = computed(
   () =>
-    !hasResults.value &&
+    Boolean(state.candidateSearch.error) ||
+    state.candidateSearch.status === 'error' ||
     (state.candidateSearch.providerStatuses || []).some(
       (status) =>
-        status.provider === 'kugou' &&
-        status.status === 'ok' &&
-        status.partial !== true,
+        status.status === 'error' ||
+        (status.partial === true &&
+          !['cache-miss', 'not-found', 'low-confidence-match'].includes(
+            status.reason,
+          )),
     ),
 );
-const noResultsFailureMessage = computed(() =>
-  t(
-    `lyricsAcquisition.${fallbackCompletedWithoutResults.value ? 'providersFailedAfterFallback' : 'providersFailedWithoutResults'}`,
-    { failures: providerFailureMessages.value.join('；') },
-  ),
-);
-const partialResultsMessage = computed(() => {
-  const failures = providerFailureMessages.value.join('；');
-  const invalidCount = state.candidateSearch.invalidRecordCount || 0;
-  if (failures && invalidCount > 0)
-    return t('lyricsAcquisition.partialFailuresAndInvalid', {
-      failures,
-      count: invalidCount,
-    });
-  if (failures) return t('lyricsAcquisition.partialFailures', { failures });
-  return invalidCount > 0
-    ? t('lyricsAcquisition.partialInvalid', { count: invalidCount })
-    : '';
+const workspaceNotice = computed(() => {
+  if (state.manualSave.error)
+    return {
+      tone: state.manualSave.committed ? 'warning' : 'danger',
+      message: state.manualSave.error,
+    };
+  if (draftDiffersFromResults.value)
+    return {
+      tone: 'info',
+      title: t('lyricsAcquisition.queryChangedTitle'),
+      message: t('lyricsAcquisition.queryChangedMessage'),
+    };
+  if (isSearchPending.value) return null;
+  if (hasResults.value)
+    return state.candidateSearch.extensionFailed
+      ? { tone: 'info', message: t('lyricsAcquisition.moreUnavailable') }
+      : null;
+  return (hasSearched.value || state.candidateSearch.error) &&
+    searchIncomplete.value
+    ? {
+        tone: 'warning',
+        message:
+          state.candidateSearch.error ||
+          t('lyricsAcquisition.searchUnavailable'),
+        actionLabel: t('lyricsAcquisition.retry'),
+      }
+    : null;
 });
-const showPartialResultsWarning = computed(
-  () =>
-    hasResults.value &&
-    !state.candidateSearch.error &&
-    partialResultsMessage.value.length > 0,
-);
-const showProviderFailureWithoutResults = computed(
-  () =>
-    hasSearched.value &&
-    !hasResults.value &&
-    !state.candidateSearch.error &&
-    providerFailureMessages.value.length > 0,
-);
 const resultAnnouncement = computed(() => {
   if (
     isSearchPending.value ||
@@ -206,34 +184,14 @@ const resultAnnouncement = computed(() => {
     return '';
   }
   return props.providerId === 'all'
-    ? `找到 ${resultCount.value} 個版本、${sourceResultCount.value} 個歌詞來源`
-    : `找到 ${sourceResultCount.value} 筆候選歌詞`;
+    ? t('lyricsAcquisition.resultsAnnouncement', {
+        versions: resultCount.value,
+        count: sourceResultCount.value,
+      })
+    : t('lyricsAcquisition.candidateAnnouncement', {
+        count: sourceResultCount.value,
+      });
 });
-
-function providerNameFor(providerId) {
-  if (providerId === 'kugou') return t('lyricsAcquisition.kugou');
-  if (providerId === 'betterlyrics') return 'Better Lyrics';
-  if (providerId === 'netease') return '網易雲音樂';
-  if (providerId === 'lrclib') return 'LRCLIB';
-  return '線上來源';
-}
-
-function providerFailureMessage(providerStatus) {
-  const messages = {
-    'request-budget-exhausted': 'providerBudgetReached',
-    timeout: 'providerTimeout',
-    offline: 'providerOffline',
-    'rate-limited': 'providerRateLimited',
-    'service-unavailable': 'providerUnavailable',
-    'invalid-ttml': 'providerInvalidTtml',
-    'invalid-json': 'providerInvalidData',
-    'invalid-record': 'providerInvalidData',
-  };
-  return t(
-    `lyricsAcquisition.${messages[providerStatus.reason] || 'providerSearchFailed'}`,
-    { provider: providerNameFor(providerStatus.provider) },
-  );
-}
 
 function candidateKey(candidate) {
   return (
@@ -452,37 +410,13 @@ function reportCandidate(candidate) {
       content-class="lyrics-lrclib-search__results-content"
     >
       <UiNotice
-        v-if="draftDiffersFromResults"
-        tone="info"
-        title="搜尋條件已變更"
-        message="再次搜尋即可使用新的歌曲名稱與演唱者。"
-        compact
-      />
-      <UiNotice
-        v-if="state.manualSave.error"
-        tone="danger"
-        :title="t('lyricsAcquisition.operationIncompleteTitle')"
-        :message="state.manualSave.error"
-        compact
-      />
-      <UiNotice
-        v-if="showPartialResultsWarning"
-        tone="warning"
-        title="部分線上結果未載入"
-        :message="partialResultsMessage"
-        compact
-      />
-      <UiNotice
-        v-if="state.candidateSearch.error"
-        tone="danger"
-        title="歌詞搜尋未完成"
-        :message="state.candidateSearch.error"
-        action-label="重試"
+        v-if="workspaceNotice"
+        v-bind="workspaceNotice"
         compact
         @action="handleSearch(activeMode)"
       />
       <UiSurface
-        v-else-if="isSearchPending && !hasResults"
+        v-if="isSearchPending && !hasResults"
         radius="lg"
         class="lyrics-lrclib-search__skeleton"
         role="status"
@@ -496,35 +430,14 @@ function reportCandidate(candidate) {
         />
       </UiSurface>
 
-      <UiHint v-else-if="!hasSearched" padded>輸入歌名開始搜尋。</UiHint>
-      <template v-else-if="silentProviderMiss">
-        <!-- A normal Better Lyrics miss is intentionally silent. -->
-      </template>
-      <UiNotice
-        v-else-if="showProviderFailureWithoutResults"
-        tone="warning"
-        title="歌詞搜尋未完成"
-        :message="noResultsFailureMessage"
-        action-label="重試"
-        compact
-        @action="handleSearch(activeMode)"
-      />
-      <UiNotice
-        v-else-if="state.candidateSearch.invalidRecordCount > 0 && !hasResults"
-        tone="warning"
-        title="沒有可用的歌詞結果"
-        :message="`${state.candidateSearch.invalidRecordCount} 筆結果資料不完整，請調整搜尋條件後再試。`"
-        compact
-      />
-      <UiHint v-else-if="!hasResults" role="status" padded>
-        {{
-          fallbackCompletedWithoutResults
-            ? t('lyricsAcquisition.noResultsAfterFallback')
-            : '找不到歌詞。試試其他關鍵字。'
-        }}
+      <UiHint v-else-if="!hasSearched && !workspaceNotice" padded>{{
+        t('lyricsAcquisition.searchStart')
+      }}</UiHint>
+      <UiHint v-else-if="!hasResults && !workspaceNotice" role="status" padded>
+        {{ t('lyricsAcquisition.noResults') }}
       </UiHint>
 
-      <template v-else>
+      <template v-else-if="hasResults">
         <UiHint v-if="resultRecordingGroups.best.length === 0" padded>
           以下可能是不同版本，請先確認。
         </UiHint>

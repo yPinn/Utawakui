@@ -252,7 +252,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     );
     app.unmount();
   });
-  it('renders retained-result warnings and a committed-save refresh error through the compiled template', async () => {
+  it('shows only the committed-save warning and keeps retained source failures quiet', async () => {
     const candidate = {
       id: 42,
       providerId: 'lrclib',
@@ -282,7 +282,8 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
         invalidRecordCount: 0,
       },
       manualSave: {
-        error: '歌詞已儲存，但清單更新未完成。請重新開啟歌詞清單。',
+        committed: true,
+        error: '歌詞已儲存，請重新開啟歌詞清單。',
       },
     });
     const search = vi.fn();
@@ -300,11 +301,12 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const html = await renderToString(
       Vue.createSSRApp(Workspace, { providerId: 'all' }),
     );
-    expect(html).toContain('歌詞操作未完成');
-    expect(html).toContain('歌詞已儲存，但清單更新未完成');
+    expect(html).toContain('歌詞已儲存，請重新開啟歌詞清單。');
+    expect(html).toContain('ui-notice--warning');
+    expect(html.match(/class="ui-notice /g)).toHaveLength(1);
     expect(html).not.toContain('歌詞未儲存');
-    expect(html).toContain('部分線上結果未載入');
-    expect(html).toContain('LRCLIB 暫時限制請求');
+    expect(html).not.toContain('部分線上結果未載入');
+    expect(html).not.toContain('LRCLIB 暫時限制請求');
     expect(html).not.toContain('httpStatus');
     expect(search).not.toHaveBeenCalled();
   });
@@ -625,7 +627,9 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       expect(searchLyricsProviderCandidates).toHaveBeenCalledOnce(),
     );
     await vi.waitFor(() =>
-      expect(nodeText(root)).toContain('找不到歌詞。試試其他關鍵字。'),
+      expect(nodeText(root)).toContain(
+        '找不到符合的歌詞。試試原文曲名或其他名稱。',
+      ),
     );
 
     expect(nodeText(root)).not.toContain('部分來源沒有結果');
@@ -633,14 +637,14 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).not.toContain('Better Lyrics 公開快取');
     expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('找到 0 個版本');
-    expect(nodeText(root).match(/找不到歌詞。試試其他關鍵字。/g)).toHaveLength(
-      1,
-    );
+    expect(
+      nodeText(root).match(/找不到符合的歌詞。試試原文曲名或其他名稱。/g),
+    ).toHaveLength(1);
 
     app.unmount();
   });
 
-  it('renders no empty-state prompt for a normal Better Lyrics miss', async () => {
+  it('shows the same neutral empty state for a normal single-provider miss', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});
     const state = reactive({
@@ -694,6 +698,9 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).not.toContain('目前找不到可用的候選歌詞');
     expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     expect(nodeText(root)).not.toContain('公開快取');
+    expect(nodeText(root)).toContain(
+      '找不到符合的歌詞。試試原文曲名或其他名稱。',
+    );
 
     app.unmount();
   });
@@ -743,9 +750,15 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       providerId: 'all',
       providerLabel: '所有線上來源',
     });
-    await vi.waitFor(() => expect(nodeText(root)).toContain('歌詞搜尋未完成'));
+    await vi.waitFor(() =>
+      expect(nodeText(root)).toContain('暫時無法搜尋歌詞，請稍後再試。'),
+    );
 
-    expect(nodeText(root)).toContain('Better Lyrics 回應逾時');
+    expect(nodeText(root)).not.toContain('Better Lyrics 回應逾時');
+    expect(
+      nodeText(root).match(/暫時無法搜尋歌詞，請稍後再試。/g),
+    ).toHaveLength(1);
+    expect(findButtonByText(root, '重試')).toBeDefined();
     expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     state.candidateSearch.providerStatuses.push({
@@ -753,8 +766,8 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       status: 'ok',
     });
     await nextTick();
-    expect(nodeText(root)).toContain('酷狗備援未取得符合條件的歌詞');
-    expect(nodeText(root)).toContain('原文曲名或已知別名');
+    expect(nodeText(root)).not.toContain('酷狗備援');
+    expect(nodeText(root)).not.toContain('找不到符合的歌詞');
 
     app.unmount();
   });
@@ -765,7 +778,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     ['error', false, 'invalid-ttml', 'Better Lyrics 的歌詞格式無法解析'],
     ['ok', true, 'request-budget-exhausted', 'LRCLIB 已達本次查詢上限'],
   ])(
-    'merges %s source failures (%s, %s) with invalid-record details',
+    'keeps usable results quiet despite %s source failures (%s, %s)',
     async (status, partial, reason, message) => {
       vi.stubGlobal('Document', class Document {});
       vi.stubGlobal('ShadowRoot', class ShadowRoot {});
@@ -776,10 +789,10 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
         trackName: 'Song',
         artistName: 'Artist',
         matchBand: 'exact',
-        capability: { level: 'unsupported', partial: false },
-        compatibility: { t0: false, t1: false, t2: false },
-        previewLines: [],
-        warnings: ['invalid-lyricsfile'],
+        capability: { level: 'T1', partial: false },
+        compatibility: { t0: true, t1: true, t2: false },
+        previewLines: [{ start: 1, text: 'Lyrics' }],
+        warnings: [],
         saveState: 'unsaved',
         alreadySaved: false,
       };
@@ -834,18 +847,31 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
         providerLabel: '所有線上來源',
       });
       await vi.waitFor(() =>
-        expect(nodeText(root)).toContain('部分線上結果未載入'),
+        expect(searchLyricsProviderCandidates).toHaveBeenCalledOnce(),
       );
+      await nextTick();
 
-      expect(nodeText(root)).toContain(message);
+      expect(nodeText(root)).not.toContain(message);
       if (reason === 'request-budget-exhausted')
         expect(findButtonByText(root, '擴大搜尋').props.disabled).toBe(false);
-      expect(nodeText(root)).toContain('另有 1 筆結果無法使用');
-      expect(nodeText(root)).toContain('已載入的結果仍可檢視與儲存');
+      expect(nodeText(root)).not.toContain('結果無法使用');
+      expect(nodeText(root)).not.toContain('已載入的結果仍可檢視與儲存');
+      expect(findByProp(root, 'aria-label', '儲存 Song，Artist')).toBeDefined();
+      expect(nodeText(root)).not.toContain('部分線上結果未載入');
       expect(
-        findByProp(root, 'aria-label', '儲存 Song，Artist'),
-      ).toBeUndefined();
-      expect(nodeText(root).match(/部分線上結果未載入/g)).toHaveLength(1);
+        findAll(root, (n) => n.props?.class?.includes?.('ui-notice--warning')),
+      ).toHaveLength(0);
+      // An actual failed extension is distinct from an incidental source failure.
+      state.candidateSearch.extensionFailed = true;
+      await findButtonByText(root, '擴大搜尋').props.onClick();
+      await nextTick();
+      expect(nodeText(root)).toContain(
+        '暫時無法取得更多結果，已找到的歌詞仍可使用。',
+      );
+      state.manualSave.error = '歌詞尚未儲存，請再試一次。';
+      await nextTick();
+      expect(nodeText(root)).not.toContain('暫時無法取得更多結果');
+      expect(nodeText(root)).toContain('歌詞尚未儲存，請再試一次。');
       expect(nodeText(root)).not.toContain('部分候選未顯示');
       expect(nodeText(root)).not.toContain('部分來源未完成');
       expect(nodeText(root)).not.toContain('歌詞搜尋未完成');
@@ -872,8 +898,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     });
     const searchLyricsProviderCandidates = vi.fn(async () => {
       state.candidateSearch.status = 'error';
-      state.candidateSearch.error =
-        '目前無法搜尋任何線上歌詞來源，請稍後再試。';
+      state.candidateSearch.error = '暫時無法搜尋歌詞，請稍後再試。';
       state.candidateSearch.providerStatuses = [
         { provider: 'lrclib', status: 'error', reason: 'offline' },
         { provider: 'netease', status: 'error', reason: 'timeout' },
@@ -895,12 +920,44 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       providerId: 'all',
       providerLabel: '所有線上來源',
     });
-    await vi.waitFor(() => expect(nodeText(root)).toContain('歌詞搜尋未完成'));
+    await vi.waitFor(() =>
+      expect(nodeText(root)).toContain('暫時無法搜尋歌詞，請稍後再試。'),
+    );
 
-    expect(nodeText(root).match(/歌詞搜尋未完成/g)).toHaveLength(1);
+    expect(
+      nodeText(root).match(/暫時無法搜尋歌詞，請稍後再試。/g),
+    ).toHaveLength(1);
+    expect(nodeText(root)).not.toContain('任何線上歌詞來源');
     expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     app.unmount();
+  });
+
+  it('keeps pre-search gate and restart failures visible without inventing a completed search', async () => {
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        error: '請先到設定啟用歌詞來源',
+        candidates: [],
+        groups: { best: [], related: [] },
+      },
+      manualSave: { error: null },
+    });
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsProviderCandidates: vi.fn(),
+        saveLyricsProviderCandidate: vi.fn(),
+      }),
+    }));
+    const Workspace = (await import('./LyricsLrclibSearchWorkspace.vue'))
+      .default;
+    const html = await renderToString(Vue.createSSRApp(Workspace));
+    expect(html).toContain('請先到設定啟用歌詞來源');
+    expect(html).not.toContain('找不到符合的歌詞');
+    expect(html.match(/class="ui-notice /g)).toHaveLength(1);
   });
 
   it('searches prefilled metadata once, then submits edited fields only on demand', async () => {
@@ -1212,7 +1269,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     app.unmount();
   });
 
-  it('shows the invalid-only state without also rendering the generic empty state', async () => {
+  it('shows the neutral empty state without invalid-result counts', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});
     const state = reactive({
@@ -1242,10 +1299,12 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const Workspace = await loadWorkspaceComponent();
     const { app, root } = mount(Workspace);
     await vi.waitFor(() =>
-      expect(nodeText(root)).toContain('沒有可用的歌詞結果'),
+      expect(nodeText(root)).toContain(
+        '找不到符合的歌詞。試試原文曲名或其他名稱。',
+      ),
     );
 
-    expect(nodeText(root)).toContain('沒有可用的歌詞結果');
+    expect(nodeText(root)).not.toContain('筆結果');
     expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     app.unmount();
   });

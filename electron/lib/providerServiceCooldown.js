@@ -49,10 +49,14 @@ function createProviderRequestGuard(fetchFn, options = {}) {
       MAX_BACKOFF_MS,
       (status === 429 ? 30_000 : 5_000) * 2 ** (state.failures - 1),
     );
-    const delay =
-      requested > 0 && Number.isSafeInteger(Math.ceil(currentTime + requested))
-        ? requested
-        : fallback;
+    const hasServerDelay =
+      requested > 0 && Number.isSafeInteger(Math.ceil(currentTime + requested));
+    // Keep the first short server hint (including a client's bounded retry).
+    // Repeated failures still back off; Retry-After is a minimum, not a reason
+    // to probe an overloaded service once a second indefinitely.
+    const delay = hasServerDelay
+      ? Math.max(requested, state.failures > 1 ? fallback : 0)
+      : fallback;
     state.until = Math.max(state.until, currentTime + delay);
     state.status = status;
     state.revision += 1;

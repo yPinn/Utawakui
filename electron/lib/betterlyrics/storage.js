@@ -75,7 +75,10 @@ function allocateFilename(trackDir, recordId) {
 }
 
 function saveBetterLyricsRecord(trackDir, record, options = {}) {
-  const analysis = analyzeTtml(record?.ttml, { recordId: record?.id });
+  const analysis = analyzeTtml(record?.ttml, {
+    recordId: record?.id,
+    trackDurationMs: Math.round(record?.duration * 1000),
+  });
   if (
     !record ||
     !Number.isSafeInteger(record.id) ||

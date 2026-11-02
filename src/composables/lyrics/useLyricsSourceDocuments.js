@@ -412,6 +412,7 @@ export function useLyricsSourceDocuments({
     const track = selectedTrack.value;
     if (!track) return null;
 
+    state.manualSave.committed = false;
     if (typeof window.Utawakui?.importLyricsText !== 'function') {
       state.manualSave.error = '請重新啟動應用程式後再試。';
       return null;
@@ -440,6 +441,7 @@ export function useLyricsSourceDocuments({
     const track = selectedTrack.value;
     if (!track) return null;
 
+    state.manualSave.committed = false;
     if (typeof window.Utawakui?.importLyricsFile !== 'function') {
       state.manualSave.error = '請重新啟動應用程式後再試。';
       return null;

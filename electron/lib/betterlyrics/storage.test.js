@@ -39,6 +39,36 @@ describe('Better Lyrics storage', () => {
 
   afterEach(() => fs.rmSync(rootDir, { recursive: true, force: true }));
 
+  it('saves the same bounded T1 compatibility as preview while retaining raw TTML', () => {
+    const ttml = TTML.replace('timing="Word"', 'timing="Line"').replace(
+      'dur="5s"',
+      'dur="2s"',
+    );
+    const result = saveBetterLyricsRecord(trackDir, record({ ttml }));
+    expect(result).toMatchObject({
+      status: 'saved',
+      capability: { level: 'T1' },
+      warnings: ['inconsistent-body-duration'],
+    });
+    const artifact = JSON.parse(
+      fs.readFileSync(
+        path.join(trackDir, 'lyrics', 'providers', 'betterlyrics-42.json'),
+        'utf8',
+      ),
+    );
+    expect(artifact.record.ttml).toBe(ttml);
+    expect(artifact.warnings).toEqual(['inconsistent-body-duration']);
+    expect(
+      fs.readFileSync(
+        path.join(trackDir, 'lyrics', result.source.filename),
+        'utf8',
+      ),
+    ).toBe('[00:01.000]Hello world\n');
+    expect(loadTrackLyricsTiming(trackDir, result.source.filename).status).toBe(
+      'missing',
+    );
+  });
+
   it('atomically saves raw TTML provenance, compatibility LRC, and T2 timing', () => {
     const result = saveBetterLyricsRecord(trackDir, record(), {
       retrievedAt: '2026-08-31T00:00:00.000Z',
