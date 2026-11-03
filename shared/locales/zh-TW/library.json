@@ -221,5 +221,13 @@
     "failedMessage": "目前無法讀取曲庫，請再試一次。",
     "retry": "重試"
   },
-  "playbackVersionUpdated": "播放版本已更新，請重新播放。"
+  "playbackVersionUpdated": "播放版本已更新，請重新播放。",
+  "import": {
+    "unknownFile": "未知檔案",
+    "untitledTrack": "未命名曲目"
+  },
+  "dialog": {
+    "audioFiles": "音訊檔",
+    "images": "圖片"
+  }
 }

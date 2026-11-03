@@ -41,8 +41,6 @@ function registerLibraryArtistOrganizationHandlers({
         },
         publicError: {
           code: 'ARTIST_ORGANIZATION_FAILED',
-          title: '藝人整理未完成',
-          message: '目前無法儲存藝人整理，請再試一次。',
           context: { retryable: true },
         },
       },
@@ -147,8 +145,6 @@ function registerLibraryArtistOrganizationHandlers({
         },
         publicError: {
           code: 'ARTIST_IDENTITY_LOOKUP_FAILED',
-          title: '無法查詢藝人資料',
-          message: 'MusicBrainz 目前無法使用，仍可手動整理藝人。',
           context: { retryable: true },
         },
       },

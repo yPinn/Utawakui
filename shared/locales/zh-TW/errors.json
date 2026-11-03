@@ -23,6 +23,34 @@
     "title": "無法套用自動檢查更新設定",
     "message": "目前無法套用自動檢查更新設定，請稍後再試。"
   },
+  "ARTIST_IDENTITY_LOOKUP_FAILED": {
+    "title": "無法查詢藝人資料",
+    "message": "MusicBrainz 目前無法使用，仍可手動整理藝人。"
+  },
+  "ARTIST_ORGANIZATION_FAILED": {
+    "title": "藝人整理未完成",
+    "message": "目前無法儲存藝人整理，請再試一次。"
+  },
+  "ARTIST_PHOTO_CHOOSE_FAILED": {
+    "title": "藝人照片無法更新",
+    "message": "這張圖片無法作為藝人照片，請換一張再試。"
+  },
+  "ARTIST_PHOTO_CLEAR_FAILED": {
+    "title": "藝人照片無法移除",
+    "message": "目前無法移除這張藝人照片，請再試一次。"
+  },
+  "ARTWORK_PREVIEW_FAILED": {
+    "title": "封面預覽無法載入",
+    "message": "封面預覽無法載入，請再試一次。"
+  },
+  "ARTWORK_SEARCH_FAILED": {
+    "title": "無法搜尋線上封面",
+    "message": "目前無法搜尋線上封面，請稍後再試。"
+  },
+  "ARTWORK_SOURCE_OPEN_FAILED": {
+    "title": "無法開啟 MusicBrainz",
+    "message": "目前無法開啟來源頁面，請稍後再試。"
+  },
   "AUDIO_PREFERENCES_INVALID": {
     "title": "無法保存音量設定",
     "message": "音量設定超出可用範圍。"
@@ -127,6 +155,30 @@
     "title": "FFmpeg 來源未更新",
     "message": "請再試一次。"
   },
+  "LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED": {
+    "title": "封面無法預覽",
+    "message": "這張圖片無法預覽，請選擇其他圖片。"
+  },
+  "LIBRARY_CONVERT_AUDIO_FAILED": {
+    "title": "相容轉檔未完成",
+    "message": "音訊轉檔未完成，請重新選擇檔案後再試一次。"
+  },
+  "LIBRARY_DELETE_TRACK_FAILED": {
+    "title": "歌曲無法刪除",
+    "message": "這首歌曲無法刪除，請再試一次。"
+  },
+  "LIBRARY_IMPORT_AUDIO_FAILED": {
+    "title": "本機匯入未完成",
+    "message": "本機匯入未完成，請再試一次。"
+  },
+  "LIBRARY_LOCATION_UNAVAILABLE": {
+    "title": "曲庫位置無法使用",
+    "message": "無法使用已設定的曲庫位置。請重新連接磁碟，或到設定選擇其他位置。"
+  },
+  "LIBRARY_SAVE_TRACK_EDITS_FAILED": {
+    "title": "歌曲變更無法儲存",
+    "message": "歌曲變更無法儲存，請再試一次。"
+  },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
     "title": "曲庫清理未完成",
     "message": "目前無法清理去人聲版本，請再試一次。"
@@ -142,6 +194,10 @@
   "LIBRARY_STORAGE_READ_FAILED": {
     "title": "無法讀取曲庫空間",
     "message": "目前無法讀取曲庫空間。"
+  },
+  "LOCAL_IMPORT_REVIEW_EXPIRED": {
+    "title": "需要重新選擇檔案",
+    "message": "這次轉檔確認已失效，請重新選擇檔案。"
   },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
     "title": "無法儲存播放安排顯示偏好",
@@ -162,6 +218,10 @@
   "RELEASE_METADATA_REFRESH_FAILED": {
     "title": "發行資訊未更新",
     "message": "目前無法更新發行資訊，請稍後再試。"
+  },
+  "RELEASE_ORGANIZATION_FAILED": {
+    "title": "發行資料未完成",
+    "message": "目前無法讀取或儲存發行資料，請再試一次。"
   },
   "SEPARATION_GPU_ACCELERATION_INVALID": {
     "title": "無法套用 GPU 加速設定",
@@ -218,6 +278,10 @@
   "WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED": {
     "title": "無法套用關閉行為",
     "message": "目前無法套用關閉行為，請稍後再試。"
+  },
+  "WORK_ORGANIZATION_FAILED": {
+    "title": "歌曲整理未完成",
+    "message": "目前無法讀取或儲存歌曲資料，請再試一次。"
   },
   "YOUTUBE_BROWSER_COOKIES_INVALID": {
     "title": "無法套用登入資料設定",

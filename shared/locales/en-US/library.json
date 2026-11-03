@@ -221,5 +221,13 @@
     "failedMessage": "The library can't be read right now. Try again.",
     "retry": "Retry"
   },
-  "playbackVersionUpdated": "The playback version was updated. Play it again."
+  "playbackVersionUpdated": "The playback version was updated. Play it again.",
+  "import": {
+    "unknownFile": "Unknown file",
+    "untitledTrack": "Untitled track"
+  },
+  "dialog": {
+    "audioFiles": "Audio files",
+    "images": "Images"
+  }
 }

@@ -45,6 +45,9 @@ const I18N_MIGRATED = [
   'src/components/library/{ReleaseInfoEditor,ReleaseInfoFields,ReleaseMembersPanel,ReleaseCatalogModal,ReleaseCatalogBatchActions,LibraryReleaseCatalog}.vue',
   'src/composables/{useReleaseOrganization,useReleaseCatalogDownloads,useReleaseCatalog,useReleaseCatalogBatchDownloads,useReleaseMembers}.js',
   'src/components/library/{WorkVersionEditor,WorkVersionFields,WorkVersionTrackRow,TrackMetadataFields,WorkLinkSearch,ArtworkPreviewPane,ArtworkSearchResults}.vue',
+  'electron/main/libraryHandlers.js',
+  'electron/main/library/{trackArtworkHandlers,artistPhotoHandlers,artistOrganizationHandlers,releaseHandlers,workOrganizationHandlers}.js',
+  'electron/lib/{libraryLocation,library/importLocal}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

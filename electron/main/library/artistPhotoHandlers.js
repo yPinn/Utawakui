@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../../lib/i18n');
 const { isFeatureGateEnabled } = require('../../lib/featureGates');
 const { isArtistId } = require('../../lib/artists/artistPhotos');
 const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
@@ -162,7 +163,12 @@ function registerLibraryArtistPhotoHandlers({
     const dir = resolveDownloadDir(getConfig());
     const result = await dialog.showOpenDialog(getMainWindow(), {
       properties: ['openFile'],
-      filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+      filters: [
+        {
+          name: t('library.dialog.images'),
+          extensions: ['jpg', 'jpeg', 'png', 'webp'],
+        },
+      ],
     });
     if (result.canceled || !result.filePaths[0]) return { status: 'cancelled' };
     return runDiagnosticIpcOperation(
@@ -175,8 +181,6 @@ function registerLibraryArtistPhotoHandlers({
         },
         publicError: {
           code: 'ARTIST_PHOTO_CHOOSE_FAILED',
-          title: '藝人照片無法更新',
-          message: '這張圖片無法作為藝人照片，請換一張再試。',
           context: { retryable: true },
         },
       },
@@ -199,8 +203,6 @@ function registerLibraryArtistPhotoHandlers({
         },
         publicError: {
           code: 'ARTIST_PHOTO_CLEAR_FAILED',
-          title: '藝人照片無法移除',
-          message: '目前無法移除這張藝人照片，請再試一次。',
           context: { retryable: true },
         },
       },

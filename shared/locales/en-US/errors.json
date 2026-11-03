@@ -23,6 +23,34 @@
     "title": "Could not apply the automatic update check setting",
     "message": "The automatic update check setting cannot be applied right now. Try again later."
   },
+  "ARTIST_IDENTITY_LOOKUP_FAILED": {
+    "title": "Can't look up artist details",
+    "message": "MusicBrainz isn't available right now; you can still organize artists manually."
+  },
+  "ARTIST_ORGANIZATION_FAILED": {
+    "title": "Artist organizing not completed",
+    "message": "Artist organizing can't be saved right now. Try again."
+  },
+  "ARTIST_PHOTO_CHOOSE_FAILED": {
+    "title": "Artist photo can't be updated",
+    "message": "This image can't be used as an artist photo. Try another one."
+  },
+  "ARTIST_PHOTO_CLEAR_FAILED": {
+    "title": "Artist photo can't be removed",
+    "message": "This artist photo can't be removed right now. Try again."
+  },
+  "ARTWORK_PREVIEW_FAILED": {
+    "title": "Artwork preview can't load",
+    "message": "The artwork preview can't load. Try again."
+  },
+  "ARTWORK_SEARCH_FAILED": {
+    "title": "Can't search online artwork",
+    "message": "Online artwork can't be searched right now. Try again later."
+  },
+  "ARTWORK_SOURCE_OPEN_FAILED": {
+    "title": "Can't open MusicBrainz",
+    "message": "The source page can't be opened right now. Try again later."
+  },
   "AUDIO_PREFERENCES_INVALID": {
     "title": "Could not save volume settings",
     "message": "The volume settings are outside the available range."
@@ -127,6 +155,30 @@
     "title": "FFmpeg source not updated",
     "message": "Try again."
   },
+  "LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED": {
+    "title": "Artwork can't be previewed",
+    "message": "This image can't be previewed. Choose another image."
+  },
+  "LIBRARY_CONVERT_AUDIO_FAILED": {
+    "title": "Compatible conversion not completed",
+    "message": "The audio conversion didn't finish. Choose the files again and retry."
+  },
+  "LIBRARY_DELETE_TRACK_FAILED": {
+    "title": "Song can't be deleted",
+    "message": "This song can't be deleted. Try again."
+  },
+  "LIBRARY_IMPORT_AUDIO_FAILED": {
+    "title": "Local import not completed",
+    "message": "The local import didn't finish. Try again."
+  },
+  "LIBRARY_LOCATION_UNAVAILABLE": {
+    "title": "Library location unavailable",
+    "message": "The set library location can't be used. Reconnect the drive, or choose another location in Settings."
+  },
+  "LIBRARY_SAVE_TRACK_EDITS_FAILED": {
+    "title": "Song changes can't be saved",
+    "message": "The song changes can't be saved. Try again."
+  },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
     "title": "Library cleanup not completed",
     "message": "Vocal-removed versions can't be cleaned up right now. Try again."
@@ -142,6 +194,10 @@
   "LIBRARY_STORAGE_READ_FAILED": {
     "title": "Could not read library storage",
     "message": "Library storage can't be read right now."
+  },
+  "LOCAL_IMPORT_REVIEW_EXPIRED": {
+    "title": "Choose the files again",
+    "message": "This conversion confirmation expired. Choose the files again."
   },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
     "title": "Could not save the arrangement display preference",
@@ -162,6 +218,10 @@
   "RELEASE_METADATA_REFRESH_FAILED": {
     "title": "Release information not updated",
     "message": "Release information can't be updated right now. Try again later."
+  },
+  "RELEASE_ORGANIZATION_FAILED": {
+    "title": "Release details not completed",
+    "message": "Release details can't be read or saved right now. Try again."
   },
   "SEPARATION_GPU_ACCELERATION_INVALID": {
     "title": "Could not apply the GPU acceleration setting",
@@ -218,6 +278,10 @@
   "WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED": {
     "title": "Could not apply the close behavior",
     "message": "The close behavior cannot be applied right now. Try again later."
+  },
+  "WORK_ORGANIZATION_FAILED": {
+    "title": "Song organizing not completed",
+    "message": "Song details can't be read or saved right now. Try again."
   },
   "YOUTUBE_BROWSER_COOKIES_INVALID": {
     "title": "Could not apply the browser sign-in setting",

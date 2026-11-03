@@ -19,5 +19,6 @@
     "message": "Set up “{name}” in Settings.",
     "action": "Go to Settings"
   },
-  "clauseSeparator": ", "
+  "clauseSeparator": ", ",
+  "goToSettings": "Go to Settings"
 }

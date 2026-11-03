@@ -172,7 +172,7 @@ async function buildContentHashTrackMap(
 
 function publicFilename(sourcePath) {
   if (typeof sourcePath !== 'string' || sourcePath.length === 0) {
-    return '未知檔案';
+    return require('../i18n').t('library.import.unknownFile');
   }
   return path.basename(sourcePath);
 }
@@ -205,7 +205,8 @@ function indexMetadataForImport(
   provenance = {},
 ) {
   const filenameTitle =
-    path.basename(sourcePath, path.extname(sourcePath)).trim() || '未命名曲目';
+    path.basename(sourcePath, path.extname(sourcePath)).trim() ||
+    require('../i18n').t('library.import.untitledTrack');
   const title = metadata.title || filenameTitle;
   return {
     title,

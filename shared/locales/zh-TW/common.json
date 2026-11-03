@@ -19,5 +19,6 @@
     "message": "請到設定準備「{name}」。",
     "action": "前往設定"
   },
-  "clauseSeparator": "，"
+  "clauseSeparator": "，",
+  "goToSettings": "前往設定"
 }

@@ -33,9 +33,7 @@ function createLibraryLocationUnavailableError(reason) {
   return createAppError({
     code: 'LIBRARY_LOCATION_UNAVAILABLE',
     severity: 'error',
-    title: '曲庫位置無法使用',
-    message: '無法使用已設定的曲庫位置。請重新連接磁碟，或到設定選擇其他位置。',
-    actionLabel: '前往設定',
+    actionLabel: require('./i18n').t('common.goToSettings'),
     context: { reason, retryable: true },
   });
 }

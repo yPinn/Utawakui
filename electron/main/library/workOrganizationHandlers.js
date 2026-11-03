@@ -230,8 +230,6 @@ function registerLibraryWorkOrganizationHandlers({
           },
           publicError: {
             code: 'WORK_ORGANIZATION_FAILED',
-            title: '歌曲整理未完成',
-            message: '目前無法讀取或儲存歌曲資料，請再試一次。',
             context: { retryable: true },
           },
         },

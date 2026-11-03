@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const {
   backfillTrackInfo,
   readTrackInfoMaintenanceFields,
@@ -279,7 +280,7 @@ function registerLibraryHandlers({
       properties: ['openFile', 'multiSelections'],
       filters: [
         {
-          name: '音訊檔',
+          name: t('library.dialog.audioFiles'),
           extensions: AUDIO_PICKER_EXTENSIONS,
         },
       ],
@@ -300,8 +301,6 @@ function registerLibraryHandlers({
         },
         publicError: {
           code: 'LIBRARY_IMPORT_AUDIO_FAILED',
-          title: '本機匯入未完成',
-          message: '本機匯入未完成，請再試一次。',
           context: { retryable: true },
         },
       },
@@ -341,8 +340,6 @@ function registerLibraryHandlers({
         throw createAppError({
           code: 'LOCAL_IMPORT_REVIEW_EXPIRED',
           severity: 'warning',
-          title: '需要重新選擇檔案',
-          message: '這次轉檔確認已失效，請重新選擇檔案。',
           context: { retryable: true },
         });
       }
@@ -361,8 +358,6 @@ function registerLibraryHandlers({
         throw createAppError({
           code: 'LOCAL_IMPORT_REVIEW_EXPIRED',
           severity: 'warning',
-          title: '需要重新選擇檔案',
-          message: '這次轉檔確認已失效，請重新選擇檔案。',
           context: { retryable: true },
         });
       }
@@ -377,8 +372,6 @@ function registerLibraryHandlers({
           },
           publicError: {
             code: 'LIBRARY_CONVERT_AUDIO_FAILED',
-            title: '相容轉檔未完成',
-            message: '音訊轉檔未完成，請重新選擇檔案後再試一次。',
             context: { retryable: true },
           },
         },
@@ -410,8 +403,6 @@ function registerLibraryHandlers({
         },
         publicError: {
           code: 'LIBRARY_DELETE_TRACK_FAILED',
-          title: '歌曲無法刪除',
-          message: '這首歌曲無法刪除，請再試一次。',
           context: { retryable: true },
         },
       },

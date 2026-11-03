@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../../lib/i18n');
 const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
 const {
   isMusicBrainzSourcePage,
@@ -99,7 +100,12 @@ function registerLibraryTrackArtworkHandlers({
 
       const result = await dialog.showOpenDialog(getMainWindow(), {
         properties: ['openFile'],
-        filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+        filters: [
+          {
+            name: t('library.dialog.images'),
+            extensions: ['jpg', 'jpeg', 'png', 'webp'],
+          },
+        ],
       });
       if (result.canceled || !result.filePaths[0]) {
         return { status: 'cancelled' };
@@ -115,8 +121,6 @@ function registerLibraryTrackArtworkHandlers({
           },
           publicError: {
             code: 'LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED',
-            title: '封面無法預覽',
-            message: '這張圖片無法預覽，請選擇其他圖片。',
             context: { retryable: true },
           },
         },
@@ -172,8 +176,6 @@ function registerLibraryTrackArtworkHandlers({
         },
         publicError: {
           code: 'LIBRARY_SAVE_TRACK_EDITS_FAILED',
-          title: '歌曲變更無法儲存',
-          message: '歌曲變更無法儲存，請再試一次。',
           context: { retryable: true },
         },
       },
@@ -273,8 +275,6 @@ function registerLibraryTrackArtworkHandlers({
           },
           publicError: {
             code: 'ARTWORK_SEARCH_FAILED',
-            title: '無法搜尋線上封面',
-            message: '目前無法搜尋線上封面，請稍後再試。',
             context: { retryable: true },
           },
         },
@@ -320,8 +320,6 @@ function registerLibraryTrackArtworkHandlers({
           },
           publicError: {
             code: 'ARTWORK_PREVIEW_FAILED',
-            title: '封面預覽無法載入',
-            message: '封面預覽無法載入，請再試一次。',
             context: { retryable: true },
           },
         },
@@ -363,8 +361,6 @@ function registerLibraryTrackArtworkHandlers({
           },
           publicError: {
             code: 'ARTWORK_SOURCE_OPEN_FAILED',
-            title: '無法開啟 MusicBrainz',
-            message: '目前無法開啟來源頁面，請稍後再試。',
           },
         },
         () => openExternal(sourcePage),

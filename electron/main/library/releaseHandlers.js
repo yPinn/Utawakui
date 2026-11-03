@@ -269,8 +269,6 @@ function registerLibraryReleaseHandlers({
           },
           publicError: {
             code: 'RELEASE_ORGANIZATION_FAILED',
-            title: '發行資料未完成',
-            message: '目前無法讀取或儲存發行資料，請再試一次。',
             context: { retryable: true },
           },
         },
