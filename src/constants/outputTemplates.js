@@ -522,61 +522,6 @@ export const OUTPUT_TEMPLATES = Object.freeze(
   }),
 );
 
-export const OUTPUT_STYLE_SETS = Object.freeze([
-  {
-    id: 'runtime-source',
-    kind: 'layout',
-    name: '輸出來源',
-    status: 'Base',
-    tone: 'accent',
-    summary: 'Browser Source、透明背景與本機 URL 的第一版輸出契約。',
-    tokens: [
-      { label: '路徑', value: 'Local HTTP' },
-      { label: '狀態', value: '手動接入' },
-      { label: '背景', value: 'transparent' },
-    ],
-  },
-  {
-    id: 'lyrics-type',
-    kind: 'typography',
-    name: '歌詞字體',
-    status: 'Base',
-    tone: 'accent',
-    summary: '目前行、前後行、讀音輔助行的字級與字重。',
-    tokens: [
-      { label: '焦點', value: 'xl / heavy' },
-      { label: '前後', value: 'md / muted' },
-      { label: '讀音', value: 'sm' },
-    ],
-  },
-  {
-    id: 'lyrics-surface',
-    kind: 'surface',
-    name: '描邊與陰影',
-    status: 'Draft',
-    tone: 'muted',
-    summary: '透明背景上保持可讀性的 stroke、shadow 與遮罩。',
-    tokens: [
-      { label: '描邊', value: 'strong' },
-      { label: '陰影', value: 'soft' },
-      { label: '遮罩', value: 'none / soft' },
-    ],
-  },
-  {
-    id: 'setlist-layout',
-    kind: 'layout',
-    name: '排列與密度',
-    status: 'Draft',
-    tone: 'muted',
-    summary: 'Simple Black B 以目前歌曲焦點區與彈性已唱紀錄構成。',
-    tokens: [
-      { label: '目前', value: '約 20%' },
-      { label: '間隔', value: '語意留白' },
-      { label: '歷史', value: '彈性填滿' },
-    ],
-  },
-]);
-
 export const OUTPUT_SLOT_DEFINITIONS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
     id: slot.id,
@@ -655,7 +600,6 @@ export function getOutputWorkbenchData() {
     templates: orderOutputTemplates(OUTPUT_TEMPLATES),
     templateGroups: groupOutputTemplatesByKind(OUTPUT_TEMPLATES),
     previewScene: structuredClone(OUTPUT_PREVIEW_SCENE),
-    styleSets: [...OUTPUT_STYLE_SETS],
     slotDefinitions: [...OUTPUT_SLOT_DEFINITIONS],
     slotDefaults: structuredClone(OUTPUT_SLOT_DEFAULTS),
   };

@@ -402,9 +402,9 @@
     "failedTitle": "輸出操作未完成"
   },
   "split": {
-    "back": "返回主區",
-    "collapse": "收合副區",
-    "expand": "展開副區",
+    "back": "返回",
+    "collapse": "收合側欄",
+    "expand": "展開側欄",
     "resize": "調整副區寬度"
   },
   "workspace": {
@@ -454,8 +454,8 @@
     "retry": "重試",
     "notUpdated": "輸出未更新",
     "target": "調整對象",
-    "presentationHint": "只調整此模板的歌詞呈現。製作資訊請在歌詞的「共用文字處理」逐行確認；來源、對唱與和聲不會在此處改寫。",
-    "conciseHint": "轉播精簡會省略部分重複詞與語助詞。需要保留實唱與和聲文字時，請選擇平衡分行或忠實原文。",
+    "presentationHint": "只影響此模板的歌詞顯示，不會改動歌詞本身。",
+    "conciseHint": "「轉播精簡」會省略部分重複詞；要保留完整文字請選「平衡分行」或「忠實原文」。",
     "resetTemplate": "恢復模板預設",
     "wholeTemplate": "整個模板"
   },
@@ -490,7 +490,7 @@
     "liveNamed": "{label}型 Browser Source 即時預覽"
   },
   "runtime": {
-    "restart": "輸出功能需要重新啟動應用程式才能載入新版橋接 API。",
+    "restart": "請重新啟動應用程式後再使用輸出功能。",
     "savedColorsNotSaved": "常用色票未儲存，重新開啟後可能不會保留。",
     "recentColorsNotSaved": "最近色票未儲存，重新開啟後可能不會保留。",
     "displayNotUpdated": "輸出畫面未更新，請再試一次。",
@@ -510,7 +510,7 @@
   },
   "clipboard": {
     "copiedNamed": "{label}網址已複製",
-    "pasteHint": "可貼到 OBS 的瀏覽器來源。",
+    "pasteHint": "可貼到直播軟體的瀏覽器來源。",
     "failedNamed": "無法複製{label}網址",
     "tryAgain": "請再試一次。",
     "retry": "重試"

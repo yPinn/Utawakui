@@ -402,9 +402,9 @@
     "failedTitle": "Output action not completed"
   },
   "split": {
-    "back": "Back to main",
-    "collapse": "Collapse side panel",
-    "expand": "Expand side panel",
+    "back": "Back",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
     "resize": "Resize side panel"
   },
   "workspace": {
@@ -454,8 +454,8 @@
     "retry": "Retry",
     "notUpdated": "Output not updated",
     "target": "Adjust",
-    "presentationHint": "Adjusts lyrics presentation for this template only. Check credits line by line in the lyrics' Shared text processing; sources, duets and harmonies aren't rewritten here.",
-    "conciseHint": "Broadcast concise drops some repeated words and fillers. To keep sung and harmony text, choose Balanced lines or Faithful to original.",
+    "presentationHint": "Affects how lyrics show in this template only; the lyrics themselves aren't changed.",
+    "conciseHint": "Broadcast concise drops some repeated words; to keep the full text, choose Balanced lines or Faithful to original.",
     "resetTemplate": "Reset template defaults",
     "wholeTemplate": "Whole template"
   },
@@ -490,7 +490,7 @@
     "liveNamed": "{label} Browser Source live preview"
   },
   "runtime": {
-    "restart": "Restart the app to load output.",
+    "restart": "Restart the app to use output.",
     "savedColorsNotSaved": "Saved swatches weren't saved and may be lost after reopening.",
     "recentColorsNotSaved": "Recent swatches weren't saved and may be lost after reopening.",
     "displayNotUpdated": "The output display wasn't updated. Try again.",
@@ -510,7 +510,7 @@
   },
   "clipboard": {
     "copiedNamed": "{label} URL copied",
-    "pasteHint": "Paste it into OBS's browser source.",
+    "pasteHint": "Paste it into your streaming software's browser source.",
     "failedNamed": "Couldn't copy the {label} URL",
     "tryAgain": "Try again.",
     "retry": "Retry"

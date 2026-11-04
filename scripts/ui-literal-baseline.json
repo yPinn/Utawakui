@@ -161,7 +161,6 @@
   "src/composables/useWindowsIntegrationSettings.js": 2,
   "src/composables/useWorkOrganization.js": 14,
   "src/constants/internalTools.js": 4,
-  "src/constants/outputTemplates.js": 20,
   "src/constants/uiDemoPalette.js": 12,
   "src/constants/uiDemoSections.js": 67,
   "src/microphone/measurement.js": 14,

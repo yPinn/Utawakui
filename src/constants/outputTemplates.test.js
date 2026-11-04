@@ -214,22 +214,6 @@ describe('output template registry', () => {
         (slot) => slot.settings.kineticArrangement,
       ),
     ).toEqual(['straight', 'straight', 'straight']);
-    expect(data.styleSets.length).toBeGreaterThan(0);
-  });
-
-  it('describes Setlist as a two-region layout without a dedicated spacer row', () => {
-    const styleSet = getOutputWorkbenchData().styleSets.find(
-      ({ id }) => id === 'setlist-layout',
-    );
-
-    expect(styleSet).toMatchObject({
-      summary: 'Simple Black B 以目前歌曲焦點區與彈性已唱紀錄構成。',
-      tokens: [
-        { label: '目前', value: '約 20%' },
-        { label: '間隔', value: '語意留白' },
-        { label: '歷史', value: '彈性填滿' },
-      ],
-    });
   });
 
   it('projects every template appearance contract into Workbench metadata', () => {

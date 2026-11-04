@@ -78,7 +78,7 @@ const I18N_MIGRATED = [
   'src/components/output/*.vue',
   'src/composables/{useOutputRuntime,useObsIntegration}.js',
   'src/composables/output/{useLocalFonts,useOutputClipboard,useOutputElementTarget,useOutputRuntimeStatus}.js',
-  'src/constants/outputPreviewLimitations.js',
+  'src/constants/{outputPreviewLimitations,outputTemplates}.js',
   'src/utils/{outputPanelCopy,outputRoutes}.js',
   'electron/main/windows/outputWindow.js',
 ];
