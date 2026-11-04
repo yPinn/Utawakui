@@ -7,6 +7,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   variant: {
@@ -43,21 +44,27 @@ const playbackDisabled = computed(
 );
 const phaseLabel = computed(() => {
   const label = manual.value
-    ? '手動進行中'
+    ? t('session.current.manualActive')
     : ({
-        playing: '播放中',
-        paused: '已暫停',
-        buffering: '載入中',
-        seeking: '定位中',
-        ended: '播放結束',
-        error: '播放失敗',
-        idle: '準備播放',
-      }[props.phase] ?? '準備播放');
-  return !props.current && props.playerTrack ? `一般播放 · ${label}` : label;
+        playing: t('session.current.phases.playing'),
+        paused: t('session.current.phases.paused'),
+        buffering: t('session.current.phases.buffering'),
+        seeking: t('session.current.phases.seeking'),
+        ended: t('session.current.phases.ended'),
+        error: t('session.current.phases.error'),
+        idle: t('session.current.phases.idle'),
+      }[props.phase] ?? t('session.current.phases.idle'));
+  return !props.current && props.playerTrack
+    ? t('session.current.generalPlayback', { phase: label })
+    : label;
 });
-const playbackLabel = computed(
-  () =>
-    `${props.phase === 'playing' ? '暫停' : '播放'}：${track.value?.title ?? ''}`,
+const playbackLabel = computed(() =>
+  t(
+    props.phase === 'playing'
+      ? 'session.current.pauseNamed'
+      : 'session.current.playNamed',
+    { title: track.value?.title ?? '' },
+  ),
 );
 const menuContent = computed(() => ({
   kind: 'actions',
@@ -71,7 +78,10 @@ const menuContent = computed(() => ({
                 id: 'toggle',
                 kind: 'action',
                 value: 'toggle',
-                label: props.phase === 'playing' ? '暫停' : '播放',
+                label:
+                  props.phase === 'playing'
+                    ? t('session.current.pause')
+                    : t('session.current.play'),
                 icon: props.phase === 'playing' ? Pause : Play,
                 disabled: playbackDisabled.value,
               },
@@ -83,7 +93,7 @@ const menuContent = computed(() => ({
                 id: 'complete',
                 kind: 'action',
                 value: 'complete',
-                label: '標記完成',
+                label: t('session.current.complete'),
                 icon: Check,
                 disabled: props.busy || !props.confirmed,
               },
@@ -91,7 +101,7 @@ const menuContent = computed(() => ({
                 id: 'stop',
                 kind: 'action',
                 value: 'stop',
-                label: '停止',
+                label: t('session.current.stop'),
                 icon: Square,
               },
             ]
@@ -138,7 +148,7 @@ watch(
     <section
       v-if="variant === 'workspace'"
       class="performance-session-current__workspace"
-      aria-label="目前項目"
+      :aria-label="t('session.current.label')"
     >
       <ul v-if="track" class="performance-session-current__identity">
         <UiTrackRow
@@ -159,13 +169,13 @@ watch(
           </template>
         </UiTrackRow>
       </ul>
-      <UiHint v-else>尚未開始播放</UiHint>
+      <UiHint v-else>{{ t('session.current.notStarted') }}</UiHint>
     </section>
     <QueueSection
       v-else
-      title="現正播放"
+      :title="t('session.current.nowPlaying')"
       menu-context="arrangement-current"
-      empty-text="尚未開始播放"
+      :empty-text="t('session.current.notStarted')"
       :tracks="track ? [track] : []"
       :artist-text="current ? current.displayArtist : undefined"
       :selected-track-id="selectedTrackId"
@@ -201,22 +211,30 @@ watch(
         :icon="phase === 'playing' ? Pause : Play"
         :disabled="playbackDisabled"
         @click="toggle"
-        >{{ phase === 'playing' ? '暫停' : '播放' }}</UiButton
+        >{{
+          t(
+            phase === 'playing'
+              ? 'session.current.pause'
+              : 'session.current.play',
+          )
+        }}</UiButton
       >
       <template v-if="current">
         <UiIconButton
           v-if="variant === 'dock'"
           :icon="Square"
-          label="停止"
+          :label="t('session.current.stop')"
           @click="emit('stop')"
         />
-        <UiButton v-else :icon="Square" @click="emit('stop')">停止</UiButton>
+        <UiButton v-else :icon="Square" @click="emit('stop')">{{
+          t('session.current.stop')
+        }}</UiButton>
         <UiButton
           :icon="Check"
           variant="accent"
           :disabled="busy || !confirmed"
           @click="emit('complete')"
-          >標記完成</UiButton
+          >{{ t('session.current.complete') }}</UiButton
         >
       </template>
       <UiIconButton
@@ -224,7 +242,7 @@ watch(
         :icon="Play"
         variant="accent"
         :disabled="busy || !canStart"
-        label="開始播放"
+        :label="t('session.current.start')"
         @click="emit('startFirst')"
       />
       <UiButton
@@ -233,7 +251,7 @@ watch(
         variant="accent"
         :disabled="busy || !canStart"
         @click="emit('startFirst')"
-        >開始播放</UiButton
+        >{{ t('session.current.start') }}</UiButton
       >
       <slot name="options" />
     </div>
@@ -241,7 +259,7 @@ watch(
       :open="!!menuAnchor"
       :anchor="menuAnchor"
       :content="menuContent"
-      aria-label="目前播放操作"
+      :aria-label="t('session.current.actions')"
       @select="selectAction"
       @close="menuAnchor = null"
     />

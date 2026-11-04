@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useObsIntegration } from '../../composables/useObsIntegration.js';
+import { t } from '../../utils/i18n.js';
 
 const { state } = useObsIntegration();
 const connected = computed(
@@ -19,7 +20,7 @@ const recording = computed(
     v-if="live || recording"
     class="performance-broadcast-status"
     role="status"
-    aria-label="OBS 輸出狀態"
+    :aria-label="t('session.broadcast.label')"
   >
     <span v-if="live">LIVE</span>
     <span v-if="recording">REC</span>

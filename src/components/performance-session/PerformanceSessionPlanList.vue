@@ -13,6 +13,7 @@ import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import TrackTable from '../track/TrackTable.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -38,14 +39,29 @@ const menuItemId = shallowRef(null);
 
 const STATUS_PRESENTATION = Object.freeze({
   ready: null,
-  manual: { label: '手動', tone: 'muted' },
-  'needs-link': { label: '需處理', tone: 'warning' },
-  unavailable: { label: '音檔缺少', tone: 'danger' },
-  'source-changed': { label: '資料已變更', tone: 'warning' },
-  'needs-attention': { label: '需處理', tone: 'warning' },
-  completed: { label: '已完成', tone: 'success' },
-  skipped: { label: '已略過', tone: 'muted' },
-  interrupted: { label: '已中止', tone: 'warning' },
+  manual: { label: t('session.planList.status.manual'), tone: 'muted' },
+  'needs-link': {
+    label: t('session.planList.status.needsAttention'),
+    tone: 'warning',
+  },
+  unavailable: {
+    label: t('session.planList.status.unavailable'),
+    tone: 'danger',
+  },
+  'source-changed': {
+    label: t('session.planList.status.sourceChanged'),
+    tone: 'warning',
+  },
+  'needs-attention': {
+    label: t('session.planList.status.needsAttention'),
+    tone: 'warning',
+  },
+  completed: { label: t('session.planList.status.completed'), tone: 'success' },
+  skipped: { label: t('session.planList.status.skipped'), tone: 'muted' },
+  interrupted: {
+    label: t('session.planList.status.interrupted'),
+    tone: 'warning',
+  },
 });
 
 const tracksById = computed(
@@ -89,9 +105,12 @@ const tableEntries = computed(() =>
     visibleIndex: row.index,
     interactive: !props.history && props.reviewable,
     disabled: props.saving,
-    actionLabel: `檢查第 ${row.position} 首：${row.item.displayTitle}`,
-    actionDescription: '單擊選取；Alt 加上下方向鍵調整順序；選單可複製或移除',
-    performanceStatusText: row.status?.label || '待唱',
+    actionLabel: t('session.planList.checkNamed', {
+      position: row.position,
+      title: row.item.displayTitle,
+    }),
+    actionDescription: t('session.planList.rowDescription'),
+    performanceStatusText: row.status?.label || t('session.planList.queued'),
     track: {
       ...row.track,
       title: row.item.displayTitle,
@@ -128,7 +147,7 @@ const menuContent = computed(() => ({
               {
                 id: 'skip',
                 kind: 'action',
-                label: '略過這首',
+                label: t('session.planList.skip'),
                 value: 'skip',
                 icon: SkipForward,
                 disabled: props.saving,
@@ -143,7 +162,7 @@ const menuContent = computed(() => ({
         {
           id: 'move-up',
           kind: 'action',
-          label: '上移一位',
+          label: t('session.planList.moveUp'),
           value: 'move-up',
           icon: ChevronUp,
           shortcut: 'Alt+↑',
@@ -152,7 +171,7 @@ const menuContent = computed(() => ({
         {
           id: 'move-down',
           kind: 'action',
-          label: '下移一位',
+          label: t('session.planList.moveDown'),
           value: 'move-down',
           icon: ChevronDown,
           shortcut: 'Alt+↓',
@@ -169,7 +188,9 @@ const menuContent = computed(() => ({
         {
           id: 'duplicate',
           kind: 'action',
-          label: props.history ? '再次加入待唱' : '複製待唱項目',
+          label: props.history
+            ? t('session.planList.requeue')
+            : t('session.planList.duplicate'),
           value: 'duplicate',
           icon: Copy,
           disabled: props.saving || !activeMenuItem.value,
@@ -177,7 +198,9 @@ const menuContent = computed(() => ({
         {
           id: 'remove',
           kind: 'action',
-          label: props.history ? '移除紀錄' : '從待唱移除',
+          label: props.history
+            ? t('session.planList.removeRecord')
+            : t('session.planList.removeQueued'),
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -253,13 +276,17 @@ watch(
       edge-shadow="end"
       :scrollbar-reserve="history ? 'overflow' : 'stable'"
       content-class="performance-session-plan-list"
-      :aria-label="history ? '播放結果' : '待唱順序'"
+      :aria-label="
+        t(history ? 'session.planList.results' : 'session.planList.order')
+      "
     >
       <TrackTable
         collection-kind="performance-session"
         :entries="tableEntries"
         :selected-entry-key="selectedItemId || ''"
-        :label="history ? '演出紀錄' : '待唱順序'"
+        :label="
+          t(history ? 'session.planList.records' : 'session.planList.order')
+        "
         @select-entry="emit('select', $event.item.itemId)"
         @entry-keydown="
           (entry, event) => handleRowKeydown(event, entry.item, entry.index)
@@ -271,13 +298,22 @@ watch(
           <UiIconButton
             v-if="!history"
             :icon="Play"
-            :label="`播放：${entry.item.displayTitle}`"
+            :label="
+              t('session.planList.playNamed', {
+                title: entry.item.displayTitle,
+              })
+            "
             :disabled="saving || entry.item.ready === false"
             @click.stop="emit('play', entry.item.itemId)"
           />
           <UiIconButton
             :icon="Ellipsis"
-            :label="`第 ${entry.position} 首「${entry.item.displayTitle}」的更多操作`"
+            :label="
+              t('session.planList.moreNamed', {
+                position: entry.position,
+                title: entry.item.displayTitle,
+              })
+            "
             :disabled="saving"
             aria-haspopup="menu"
             :aria-expanded="
@@ -294,7 +330,9 @@ watch(
       :anchor="menuAnchor"
       size="md"
       :aria-label="
-        activeMenuIndex >= 0 ? `第 ${activeMenuIndex + 1} 首操作` : '待唱操作'
+        activeMenuIndex >= 0
+          ? t('session.planList.itemActions', { position: activeMenuIndex + 1 })
+          : t('session.planList.queueActions')
       "
       :content="menuContent"
       @select="handleMenuSelect"

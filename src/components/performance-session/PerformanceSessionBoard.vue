@@ -6,6 +6,7 @@ import UiTabs from '../ui/UiTabs.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 import PerformanceSessionHistoryTools from './PerformanceSessionHistoryTools.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
   pendingCount: { type: Number, default: 0 },
@@ -15,8 +16,16 @@ const props = defineProps({
 defineEmits(['duplicate', 'remove']);
 const activeTab = shallowRef('pending');
 const tabs = computed(() => [
-  { id: 'pending', label: '待唱', count: props.pendingCount },
-  { id: 'history', label: '演出紀錄', count: props.historyItems.length },
+  {
+    id: 'pending',
+    label: t('session.board.pending'),
+    count: props.pendingCount,
+  },
+  {
+    id: 'history',
+    label: t('session.board.history'),
+    count: props.historyItems.length,
+  },
 ]);
 </script>
 <template>
@@ -25,7 +34,7 @@ const tabs = computed(() => [
       class="performance-session-board__tabs"
       :items="tabs"
       :active-id="activeTab"
-      aria-label="演出安排內容"
+      :aria-label="t('session.board.label')"
       tab-id-prefix="session-board"
       panel-id-prefix="session-board"
       variant="bar"
@@ -53,7 +62,7 @@ const tabs = computed(() => [
     >
       <UiScrollLayout
         class="performance-session-board__history-scroll"
-        aria-label="演出紀錄與封存場次"
+        :aria-label="t('session.board.historyLabel')"
       >
         <PerformanceSessionHistoryTools>
           <PerformanceSessionPlanList
@@ -65,7 +74,7 @@ const tabs = computed(() => [
             @duplicate="$emit('duplicate', $event)"
             @remove="$emit('remove', $event)"
           />
-          <UiHint v-else>完成、略過與中止的項目會留在這裡。</UiHint>
+          <UiHint v-else>{{ t('session.board.historyHint') }}</UiHint>
         </PerformanceSessionHistoryTools>
       </UiScrollLayout>
     </section>

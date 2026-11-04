@@ -12,6 +12,7 @@ import UiHint from '../ui/UiHint.vue';
 import { Info } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
+import { t } from '../../utils/i18n.js';
 const detailsOpen = shallowRef(false);
 
 const props = defineProps({
@@ -53,22 +54,36 @@ const compactSummaryLabel = computed(() =>
 <template>
   <section
     class="performance-session-summary"
-    :aria-label="scope === 'completed' ? '演出紀錄統計' : '演出安排統計'"
+    :aria-label="
+      t(
+        scope === 'completed'
+          ? 'session.summary.completedLabel'
+          : 'session.summary.planLabel',
+      )
+    "
   >
     <UiHint
       v-if="!compact && showSource && plan.state.plan.source?.name"
       class="performance-session-summary__source"
       >{{ plan.state.plan.source.name }}</UiHint
     >
-    <UiHint v-if="plan.state.error" tone="warning">統計未更新</UiHint>
-    <UiHint v-else-if="!plan.state.isInitialized">讀取安排統計…</UiHint>
+    <UiHint v-if="plan.state.error" tone="warning">{{
+      t('session.summary.stale')
+    }}</UiHint>
+    <UiHint v-else-if="!plan.state.isInitialized">{{
+      t('session.summary.loading')
+    }}</UiHint>
     <template v-else>
       <UiHint v-if="compact" class="performance-session-summary__compact">{{
         compactSummaryLabel
       }}</UiHint>
       <p v-else class="performance-session-summary__totals">
-        <span>共 {{ summary.total }} 項</span>
-        <span>已知總長 {{ durationLabel }}</span>
+        <span>{{
+          t('session.summary.total', { count: summary.total }, summary.total)
+        }}</span>
+        <span>{{
+          t('session.summary.knownDuration', { duration: durationLabel })
+        }}</span>
       </p>
       <UiPopover
         v-if="
@@ -77,7 +92,7 @@ const compactSummaryLabel = computed(() =>
             summary.skipped ||
             summary.interrupted)
         "
-        aria-label="安排明細"
+        :aria-label="t('session.summary.details')"
         focus-on-open
         placement="bottom-start"
         :open="detailsOpen"
@@ -87,17 +102,23 @@ const compactSummaryLabel = computed(() =>
           <UiIconButton
             v-bind="triggerProps"
             :icon="Info"
-            label="安排明細"
+            :label="t('session.summary.details')"
             :active="detailsOpen"
             @click="detailsOpen = !detailsOpen"
           />
         </template>
         <UiHint class="performance-session-summary__detail-content">
-          <span v-if="summary.unknownDurationCount"
-            >另 {{ summary.unknownDurationCount }} 項時長未知</span
-          >
-          <span v-if="summary.skipped">略過 {{ summary.skipped }}</span>
-          <span v-if="summary.interrupted">中止 {{ summary.interrupted }}</span>
+          <span v-if="summary.unknownDurationCount">{{
+            t('session.summary.unknownDurations', {
+              count: summary.unknownDurationCount,
+            })
+          }}</span>
+          <span v-if="summary.skipped">{{
+            t('session.summary.skipped', { count: summary.skipped })
+          }}</span>
+          <span v-if="summary.interrupted">{{
+            t('session.summary.interrupted', { count: summary.interrupted })
+          }}</span>
         </UiHint></UiPopover
       >
     </template>

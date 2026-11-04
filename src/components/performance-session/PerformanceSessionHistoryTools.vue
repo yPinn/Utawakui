@@ -25,6 +25,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import PerformanceSessionPlaylistExportModal from './PerformanceSessionPlaylistExportModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({ dock: Boolean });
 const plan = usePerformanceSessionPlan();
@@ -66,7 +67,7 @@ const menuContent = computed(() => ({
               {
                 id: 'pending',
                 kind: 'action',
-                label: '加入演出待唱',
+                label: t('session.history.addToQueue'),
                 value: 'pending',
                 icon: Tickets,
                 disabled: busy.value || !menu.value.itemCount,
@@ -78,7 +79,7 @@ const menuContent = computed(() => ({
               {
                 id: 'archive',
                 kind: 'action',
-                label: '結束並封存場次',
+                label: t('session.history.finishAndArchive'),
                 value: 'archive',
                 icon: FolderPlus,
                 disabled: busy.value,
@@ -88,7 +89,7 @@ const menuContent = computed(() => ({
         {
           id: 'playlist',
           kind: 'action',
-          label: '另存演出歌單',
+          label: t('session.history.saveAsPlaylist'),
           value: 'playlist',
           icon: Copy,
           disabled: busy.value,
@@ -96,7 +97,7 @@ const menuContent = computed(() => ({
         {
           id: 'timeline',
           kind: 'action',
-          label: '匯出場次時間軸',
+          label: t('session.history.exportTimeline'),
           value: 'timeline',
           icon: Download,
           disabled: busy.value,
@@ -144,24 +145,24 @@ async function archive() {
     // Stop through the existing owner, including a pending audio start. Main
     // still rejects a playing item if that transition did not commit.
     if (!(await playback.stop())) {
-      error.value = '目前曲目尚未停止，請再試一次。';
+      error.value = t('session.history.stopFailed');
       return;
     }
     if (!(await plan.archiveSession(name.value.trim(), finish.value.id))) {
       error.value =
         plan.state.validationError?.message ||
         plan.state.error ||
-        '場次尚未封存，原安排仍保留。';
+        t('session.history.notArchived');
       return;
     }
     finish.value = null;
     notifications.notify({
       key: NOTIFICATION_KEYS.PERFORMANCE_SESSION_ARCHIVE,
-      title: '場次已封存',
-      message: '可在已封存場次中查看。',
+      title: t('session.history.archivedTitle'),
+      message: t('session.history.archivedMessage'),
     });
   } catch {
-    error.value = '場次尚未封存，請再試一次；原安排仍保留。';
+    error.value = t('session.history.archiveFailed');
   } finally {
     archiving.value = false;
   }
@@ -177,7 +178,7 @@ async function archive() {
     :tabindex="dock ? 0 : undefined"
   >
     <AppRightDockSection
-      heading="目前場次"
+      :heading="t('session.history.current')"
       class="session-history-tools__current"
     >
       <template #trailing>
@@ -185,13 +186,15 @@ async function archive() {
           <slot name="current-status" />
           <UiIconButton
             :icon="Ellipsis"
-            label="目前場次操作"
+            :label="t('session.history.currentActions')"
             :disabled="busy || !plan.state.plan.sessionId"
             @click="
               openMenu(
                 {
                   id: plan.state.plan.sessionId,
-                  name: plan.state.plan.source?.name || '演出場次',
+                  name:
+                    plan.state.plan.source?.name ||
+                    t('session.history.sessionFallback'),
                   current: true,
                 },
                 $event,
@@ -205,7 +208,7 @@ async function archive() {
     <AppRightDockSection
       v-if="archives.length"
       class="session-history-tools__archives"
-      heading="已封存場次"
+      :heading="t('session.history.archived')"
     >
       <div class="session-history-tools__collections">
         <PlaylistSidebarRow
@@ -221,7 +224,7 @@ async function archive() {
           :subtitle="
             dock
               ? performanceArchiveDate(session.endedAt, { includeTime: false })
-              : '演出歌單'
+              : t('session.history.setlist')
           "
           :playback-enabled="false"
           :active="
@@ -234,7 +237,9 @@ async function archive() {
             <UiIconButton
               class="session-history-tools__collection-menu"
               :icon="Ellipsis"
-              :label="`場次操作：${session.name}`"
+              :label="
+                t('session.history.sessionActionsNamed', { name: session.name })
+              "
               :disabled="busy"
               aria-haspopup="menu"
               :aria-expanded="menu?.id === session.id"
@@ -248,13 +253,13 @@ async function archive() {
       :open="Boolean(menu)"
       :anchor="anchor"
       :content="menuContent"
-      aria-label="場次操作"
+      :aria-label="t('session.history.sessionActions')"
       @select="selectAction"
       @close="closeMenu"
     />
     <UiModal
       :open="Boolean(finish)"
-      title="結束並封存場次"
+      :title="t('session.history.finishAndArchive')"
       :close-disabled="archiving"
       @close="finish = null"
     >
@@ -262,25 +267,27 @@ async function archive() {
         <UiTextField
           id="archive-session-name"
           v-model="name"
-          label="場次名稱"
+          :label="t('session.history.nameLabel')"
           :maxlength="200"
           :disabled="archiving"
         />
         <UiNotice
           compact
           tone="info"
-          message="會停止目前演出，保存完整安排、每次重唱與時間軸，再開啟空白新場次。未演出項目也會保留在封存內；封存後可另存歌單供下次使用。"
+          :message="t('session.history.finishMessage')"
         />
         <UiNotice v-if="error" compact tone="warning" :message="error" />
       </div>
       <template #footer>
-        <UiButton :disabled="archiving" @click="finish = null">取消</UiButton>
+        <UiButton :disabled="archiving" @click="finish = null">{{
+          t('session.history.cancel')
+        }}</UiButton>
         <UiButton
           variant="accent"
           :disabled="!name.trim() || name.trim().length > 200 || archiving"
           :loading="archiving"
           @click="archive"
-          >結束並封存</UiButton
+          >{{ t('session.history.finishConfirm') }}</UiButton
         >
       </template>
     </UiModal>

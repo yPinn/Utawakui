@@ -14,6 +14,7 @@ import PerformanceSessionHistoryTools from './PerformanceSessionHistoryTools.vue
 import PerformanceBroadcastStatus from './PerformanceBroadcastStatus.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 const plan = usePerformanceSessionPlan();
 const playback = usePerformanceSessionPlayback();
@@ -39,9 +40,9 @@ const busy = computed(() => plan.state.isSaving || playback.state.busy);
 async function remove(itemId) {
   if (
     await confirm({
-      title: '移除安排項目？',
-      message: '只移除這次安排的項目，不會刪除曲庫歌曲。',
-      confirmLabel: '移除',
+      title: t('session.dock.removeTitle'),
+      message: t('session.dock.removeMessage'),
+      confirmLabel: t('session.dock.remove'),
       intent: 'danger',
     })
   )
@@ -68,7 +69,7 @@ onMounted(plan.initialize);
       "
       compact
       tone="warning"
-      title="演出安排未更新"
+      :title="t('session.dock.notUpdated')"
       :message="
         plan.state.error ||
         (!plan.state.validationError?.field &&
@@ -80,11 +81,13 @@ onMounted(plan.initialize);
       <UiCheckbox
         v-if="!mainPageVisible"
         id="dock-arrangement-continuous"
-        label="連續播放"
+        :label="t('session.dock.continuous')"
         :model-value="playback.state.continuous"
         @update:model-value="playback.setContinuous"
       />
-      <h3 v-else class="performance-session-dock__heading">待唱順序</h3>
+      <h3 v-else class="performance-session-dock__heading">
+        {{ t('session.dock.order') }}
+      </h3>
       <PerformanceBroadcastStatus />
     </div>
     <div

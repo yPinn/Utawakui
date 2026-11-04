@@ -4,6 +4,7 @@ import { useAppView } from '../composables/useAppView.js';
 import PerformanceWorkspace from '../components/performance/PerformanceWorkspace.vue';
 import AppFolderPage from '../components/layout/AppFolderPage.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
+import { t } from '../utils/i18n.js';
 const PerformanceSessionArchive = defineAsyncComponent(
   () =>
     import('../components/performance-session/PerformanceSessionArchive.vue'),
@@ -19,11 +20,15 @@ const { performanceArchiveId } = useAppView();
     <AppFolderPage
       v-if="performanceArchiveId"
       :document-key="performanceArchiveId"
-      body-label="封存場次內容"
+      :body-label="t('session.page.archiveBody')"
     >
       <PerformanceSessionArchive :session-id="performanceArchiveId" />
     </AppFolderPage>
-    <AppFolderPage v-else mode="workspace" body-label="演唱工作區">
+    <AppFolderPage
+      v-else
+      mode="workspace"
+      :body-label="t('session.page.workspaceBody')"
+    >
       <PerformanceWorkspace />
     </AppFolderPage>
   </AppSurfaceBoundary>

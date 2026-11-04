@@ -26,6 +26,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import PerformanceSessionPlaylistExportModal from './PerformanceSessionPlaylistExportModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({ sessionId: { type: String, required: true } });
 const { session, loading, error, refresh } = usePerformanceArchive(
@@ -67,7 +68,9 @@ const fields = computed(() =>
     ? [
         {
           key: 'ended',
-          text: `封存於 ${performanceArchiveDate(session.value.endedAt)}`,
+          text: t('session.archive.archivedAt', {
+            date: performanceArchiveDate(session.value.endedAt),
+          }),
         },
         {
           key: 'summary',
@@ -83,21 +86,21 @@ const fields = computed(() =>
 
 <template>
   <section class="performance-archive" :aria-busy="loading">
-    <UiButton :icon="ArrowLeft" @click="openPerformancePreparation"
-      >返回演出安排</UiButton
-    >
+    <UiButton :icon="ArrowLeft" @click="openPerformancePreparation">{{
+      t('session.archive.back')
+    }}</UiButton>
     <UiSkeleton
       v-if="loading && !session"
       :lines="4"
-      aria-label="讀取封存場次…"
+      :aria-label="t('session.archive.loading')"
     />
     <UiNotice v-if="error" compact tone="warning" :message="error" />
-    <UiButton v-if="error" :disabled="loading" @click="refresh"
-      >重新讀取場次</UiButton
-    >
+    <UiButton v-if="error" :disabled="loading" @click="refresh">{{
+      t('session.archive.reload')
+    }}</UiButton>
     <template v-if="session">
       <AppFolderDossier
-        marker="演出歌單"
+        :marker="t('session.archive.marker')"
         :title="session.name"
         title-id="performance-archive-title"
         :fields="fields"
@@ -110,33 +113,31 @@ const fields = computed(() =>
         /></template>
       </AppFolderDossier>
       <CollectionActionRail
-        entity-label="此演出歌單"
+        :entity-label="t('session.archive.entity')"
         :show-search="false"
         :show-density="false"
       >
         <template #actions>
           <UiIconButton
             :icon="Tickets"
-            label="加入演出待唱"
+            :label="t('session.archive.addToQueue')"
             :disabled="!session.items.length || performanceQueue.state.isSaving"
             @click="performanceQueue.addArchive(session.id)"
           />
           <UiIconButton
             :icon="Copy"
-            label="另存演出歌單"
+            :label="t('session.archive.saveAsPlaylist')"
             @click="playlist = { id: session.id, name: session.name }"
           />
           <UiIconButton
             :icon="Download"
-            label="匯出場次時間軸"
+            :label="t('session.archive.exportTimeline')"
             @click="timeline.openForArrangement(session.id)"
           />
         </template>
       </CollectionActionRail>
-      <AppFolderContentField aria-label="封存場次曲目">
-        <UiHint v-if="!rows.length"
-          >此場次沒有安排曲目；標記可在時間軸中查看。</UiHint
-        >
+      <AppFolderContentField :aria-label="t('session.archive.tracksLabel')">
+        <UiHint v-if="!rows.length">{{ t('session.archive.empty') }}</UiHint>
         <TrackTable
           v-else
           collection-kind="performance-archive"

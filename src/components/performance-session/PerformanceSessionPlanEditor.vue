@@ -8,6 +8,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import PerformanceSessionReviewPane from './PerformanceSessionReviewPane.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   item: { type: Object, default: null },
@@ -79,11 +80,11 @@ const trackOptions = computed(() => {
   ) {
     options.unshift({
       value: props.item.trackId,
-      label: `原連結已不存在（${props.item.trackId}）`,
+      label: t('session.editor.missingLink', { id: props.item.trackId }),
       disabled: true,
     });
   }
-  options.unshift({ value: '', label: '選擇曲庫歌曲' });
+  options.unshift({ value: '', label: t('session.editor.chooseTrack') });
   return options;
 });
 
@@ -127,16 +128,22 @@ function cancelEditing() {
 <template>
   <PerformanceSessionReviewPane
     class="performance-session-editor"
-    title="曲目設定"
+    :title="t('session.editor.title')"
     :saving="saving"
     aria-labelledby="performance-session-editor-title"
-    body-label="待唱項目設定內容"
+    :body-label="t('session.editor.bodyLabel')"
     @close="emit('close')"
   >
     <div v-if="item" class="performance-session-editor__body">
       <header class="performance-session-editor__header">
         <p class="performance-session-editor__eyebrow">
-          {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
+          {{
+            t(
+              item.mode === 'manual'
+                ? 'session.editor.manualItem'
+                : 'session.editor.queuedTrack',
+            )
+          }}
         </p>
         <h2
           id="performance-session-editor-title"
@@ -157,28 +164,28 @@ function cancelEditing() {
       <UiNotice
         v-if="item.status === 'unavailable'"
         tone="danger"
-        title="音檔已不存在"
-        message="請重新選擇一首曲庫歌曲。"
+        :title="t('session.editor.audioMissingTitle')"
+        :message="t('session.editor.audioMissingMessage')"
         compact
       />
       <UiNotice
         v-else-if="item.status === 'needs-link'"
         tone="warning"
-        title="需要連結曲庫歌曲"
-        message="這是舊版文字項目；選擇音檔後即可演出。"
+        :title="t('session.editor.needsLinkTitle')"
+        :message="t('session.editor.needsLinkMessage')"
         compact
       />
       <UiNotice
         v-else-if="item.status === 'source-changed'"
         tone="warning"
-        title="曲庫資料已變更"
-        message="場次顯示文字仍保留，可視需要調整。"
+        :title="t('session.editor.libraryChangedTitle')"
+        :message="t('session.editor.libraryChangedMessage')"
         compact
       />
       <UiNotice
         v-if="validationError"
         tone="warning"
-        title="尚未儲存"
+        :title="t('session.editor.unsaved')"
         :message="validationError.message"
         compact
       />
@@ -187,19 +194,19 @@ function cancelEditing() {
         v-if="item.linkedTrack && !showForm"
         class="performance-session-editor__source"
       >
-        <span class="performance-session-editor__source-label"
-          >曲庫資料（唯讀）</span
-        >
+        <span class="performance-session-editor__source-label">{{
+          t('session.editor.libraryReadOnly')
+        }}</span>
         <dl class="performance-session-editor__source-details">
           <div class="performance-session-editor__source-row">
-            <dt>曲庫曲名</dt>
+            <dt>{{ t('session.editor.libraryTitle') }}</dt>
             <dd dir="auto">{{ item.linkedTrack.title }}</dd>
           </div>
           <div
             v-if="linkedArtist"
             class="performance-session-editor__source-row"
           >
-            <dt>歌手／藝人</dt>
+            <dt>{{ t('session.editor.libraryArtist') }}</dt>
             <dd dir="auto">{{ linkedArtist }}</dd>
           </div>
         </dl>
@@ -213,40 +220,40 @@ function cancelEditing() {
         <UiTextField
           id="performance-session-display-title"
           v-model="displayTitle"
-          label="顯示曲名"
-          hint="只用於這份安排，不會修改曲庫曲名。"
+          :label="t('session.editor.displayTitle')"
+          :hint="t('session.editor.displayTitleHint')"
           :maxlength="200"
           required
         />
         <UiTextField
           id="performance-session-display-artist"
           v-model="displayArtist"
-          label="第二行（選填）"
-          hint="可填原唱、演出者或版本資訊；留空則不顯示。"
+          :label="t('session.editor.secondLine')"
+          :hint="t('session.editor.secondLineHint')"
           :maxlength="200"
         />
         <template v-if="needsTrackRecovery">
           <UiTextField
             id="performance-session-track-filter"
             v-model="trackFilter"
-            label="搜尋曲庫"
-            placeholder="搜尋曲名或演出者"
+            :label="t('session.editor.searchLabel')"
+            :placeholder="t('session.editor.searchPlaceholder')"
           />
           <UiSelect
             id="performance-session-track-link"
             v-model="trackId"
-            label="曲庫歌曲"
+            :label="t('session.editor.trackLabel')"
             :options="trackOptions"
           />
           <UiHint v-if="trackOptions.length === 1 && trackFilter.trim()">
-            找不到符合的歌曲。
+            {{ t('session.editor.noMatch') }}
           </UiHint>
         </template>
       </form>
     </div>
 
     <UiHint v-else id="performance-session-editor-title" padded center>
-      選擇一首曲目查看設定。
+      {{ t('session.editor.chooseHint') }}
     </UiHint>
     <template v-if="item" #actions>
       <template v-if="showForm">
@@ -255,19 +262,25 @@ function cancelEditing() {
           :disabled="saving"
           @click="cancelEditing"
         >
-          取消
+          {{ t('session.editor.cancel') }}
         </UiButton>
         <UiButton
           variant="accent"
           :disabled="saving || !canSave"
           @click="submit"
         >
-          {{ needsTrackRecovery ? '連結既有歌曲' : '儲存顯示名稱' }}
+          {{
+            t(
+              needsTrackRecovery
+                ? 'session.editor.linkExisting'
+                : 'session.editor.saveDisplay',
+            )
+          }}
         </UiButton>
       </template>
       <template v-else>
         <UiButton variant="secondary" :disabled="saving" @click="startEditing">
-          調整顯示名稱
+          {{ t('session.editor.editDisplay') }}
         </UiButton>
       </template>
     </template>

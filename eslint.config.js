@@ -53,6 +53,9 @@ const I18N_MIGRATED = [
   'src/utils/{downloadFailureDisplay,importCandidateDisplay,importBatch,importPlaylist}.js',
   'src/components/import/{ImportDockContent,ImportActivityMonitor,ImportCollectionExecutionList,ImportCollectionSelectionList,ImportReviewModal,ImportSourceField,ImportBatchReview,ImportCollectionTrackStatus,ImportSourceRow,ImportCollectionReview}.vue',
   'electron/main/importHandlers.js',
+  'src/components/performance-session/*.vue',
+  'src/components/performance/PerformanceWorkspace.vue',
+  'src/pages/PerformancePage.vue',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

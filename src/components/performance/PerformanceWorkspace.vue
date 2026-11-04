@@ -7,10 +7,14 @@ import PerformanceLyricsWorkspace from '../lyrics/PerformanceLyricsWorkspace.vue
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import PerformanceSessionWorkspace from '../performance-session/PerformanceSessionWorkspace.vue';
 import UiTabs from '../ui/UiTabs.vue';
+import { t } from '../../utils/i18n.js';
 
 const PERFORMANCE_TOOLS = Object.freeze([
-  Object.freeze({ id: 'live-lyrics', label: '歌詞' }),
-  Object.freeze({ id: 'session', label: '演出安排' }),
+  Object.freeze({
+    id: 'live-lyrics',
+    label: t('session.workspaceTabs.liveLyrics'),
+  }),
+  Object.freeze({ id: 'session', label: t('session.workspaceTabs.session') }),
 ]);
 
 const { performanceTool, selectPerformanceTool } = useAppView();
@@ -21,11 +25,14 @@ onMounted(initializeLibrary);
 </script>
 
 <template>
-  <section class="performance-workspace" aria-label="演唱工作區">
+  <section
+    class="performance-workspace"
+    :aria-label="t('session.workspaceTabs.label')"
+  >
     <UiTabs
       :active-id="performanceTool"
       :items="PERFORMANCE_TOOLS"
-      aria-label="演唱工具"
+      :aria-label="t('session.workspaceTabs.tools')"
       tab-id-prefix="performance-tool"
       panel-id-prefix="performance-tool"
       variant="bar"

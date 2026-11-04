@@ -1,10 +1,10 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import PerformanceSessionReviewPane from './PerformanceSessionReviewPane.vue';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const read = (file) => readFileSync(new URL(file, import.meta.url), 'utf8');
+const read = (file) => readCatalogSource(new URL(file, import.meta.url));
 
 describe('Performance Session Folder composition', () => {
   it('preserves the shared reserve on both ordered and search lists', () => {

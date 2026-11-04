@@ -34,6 +34,7 @@ import UiSearchBox from '../ui/UiSearchBox.vue';
 import PerformanceSessionManualItemForm from './PerformanceSessionManualItemForm.vue';
 import PerformanceSessionPlanEditor from './PerformanceSessionPlanEditor.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
@@ -131,10 +132,12 @@ const selectedCollectionLabel = computed(() =>
 );
 const collectionActionLabel = computed(() =>
   hasItems.value
-    ? `從${selectedCollectionLabel.value}取代安排`
+    ? t('session.workspace.replaceFrom', {
+        name: selectedCollectionLabel.value,
+      })
     : selectedPlaylist.value?.kind === 'album'
-      ? '從專輯建立'
-      : '從清單建立',
+      ? t('session.workspace.fromAlbum')
+      : t('session.workspace.fromList'),
 );
 
 onMounted(initialize);
@@ -188,10 +191,12 @@ async function confirmRemoveItem(itemId) {
   if (!item) return;
   const confirmed = await confirmAction({
     title:
-      item.progress === 'queued' ? '從待唱移除歌曲？' : '移除這筆播放紀錄？',
+      item.progress === 'queued'
+        ? t('session.workspace.removeQueuedTitle')
+        : t('session.workspace.removeHistoryTitle'),
     subject: item.displayTitle,
-    message: '只會移出這份安排，曲庫歌曲會保留。',
-    confirmLabel: '移除歌曲',
+    message: t('session.workspace.removeMessage'),
+    confirmLabel: t('session.workspace.removeConfirm'),
     intent: 'danger',
   });
   if (confirmed) removeItem(itemId);
@@ -200,10 +205,10 @@ async function confirmRemoveItem(itemId) {
 async function clearDraft() {
   if (!hasItems.value) return;
   const confirmed = await confirmAction({
-    title: '清除演出安排？',
-    message: '待唱、演出紀錄與手動調整都會清除；安排中正在播放的曲目也會停止。',
-    detail: '曲庫歌曲與播放清單會保留。',
-    confirmLabel: '清除安排',
+    title: t('session.workspace.clearTitle'),
+    message: t('session.workspace.clearMessage'),
+    detail: t('session.workspace.clearDetail'),
+    confirmLabel: t('session.workspace.clearConfirm'),
     intent: 'danger',
   });
   if (confirmed && (await playback.stop())) clear();
@@ -217,11 +222,13 @@ async function prepareSelectedCollection() {
   let replaceCurrent = hasItems.value;
   if (replaceCurrent) {
     replaceCurrent = await confirmAction({
-      title: '取代待唱安排？',
+      title: t('session.workspace.replaceTitle'),
       subject: selectedCollectionLabel.value,
-      meta: sourceLabel.value ? `目前：${sourceLabel.value}` : undefined,
-      message: '現有安排與手動調整會被取代。',
-      confirmLabel: '取代安排',
+      meta: sourceLabel.value
+        ? t('session.workspace.currentSource', { name: sourceLabel.value })
+        : undefined,
+      message: t('session.workspace.replaceMessage'),
+      confirmLabel: t('session.workspace.replaceConfirm'),
       intent: 'danger',
     });
     if (!replaceCurrent) return;
@@ -235,9 +242,9 @@ async function prepareSelectedCollection() {
     state.validationError?.code === 'SESSION_PLAN_REPLACE_REQUIRED'
   ) {
     const confirmed = await confirmAction({
-      title: '取代待唱安排？',
-      message: '目前已有其他安排，取代後手動調整會遺失。',
-      confirmLabel: '取代安排',
+      title: t('session.workspace.replaceTitle'),
+      message: t('session.workspace.replaceOtherMessage'),
+      confirmLabel: t('session.workspace.replaceConfirm'),
       intent: 'danger',
     });
     if (confirmed && (await playback.stop()))
@@ -261,7 +268,7 @@ const workspaceMenu = computed(() => ({
           id: 'bgm',
           kind: 'action',
           value: 'bgm',
-          label: '顯示 BGM',
+          label: t('session.workspace.showBgm'),
         },
         ...(selectedPlaylist.value
           ? [
@@ -280,7 +287,7 @@ const workspaceMenu = computed(() => ({
           id: 'clear',
           kind: 'action',
           value: 'clear',
-          label: '清除安排',
+          label: t('session.workspace.clearConfirm'),
           icon: Trash2,
           intent: 'danger',
           disabled: !hasItems.value || state.isSaving || playback.state.busy,
@@ -303,12 +310,15 @@ async function selectWorkspaceAction(action) {
 </script>
 
 <template>
-  <section class="performance-session-workspace" aria-label="演出安排">
+  <section
+    class="performance-session-workspace"
+    :aria-label="t('session.workspace.label')"
+  >
     <UiScrollLayout
       class="performance-session-workspace__viewport"
       content-class="performance-session-workspace__content"
       scrollbar-reserve="overflow"
-      aria-label="演出安排工作區內容"
+      :aria-label="t('session.workspace.contentLabel')"
     >
       <AppFolderWorkspaceToolbar
         class="performance-session-workspace__toolbar"
@@ -317,35 +327,52 @@ async function selectWorkspaceAction(action) {
       >
         <template #status>
           <PerformanceSessionSummary :show-source="false" />
-          <UiChip v-if="pendingAttention" tone="warning"
-            >{{ pendingAttention }} 項需處理</UiChip
-          >
+          <UiChip v-if="pendingAttention" tone="warning">{{
+            t(
+              'session.workspace.attention',
+              { count: pendingAttention },
+              pendingAttention,
+            )
+          }}</UiChip>
           <span
             v-if="state.isSaving"
             class="performance-session-workspace__saving"
             role="status"
-            >儲存中…</span
+            >{{ t('session.workspace.saving') }}</span
           >
         </template>
         <template #actions>
           <UiButton
             :aria-pressed="arrangementDockVisible"
             :aria-label="
-              arrangementDockVisible ? '收合演出安排側欄' : '顯示演出安排側欄'
+              t(
+                arrangementDockVisible
+                  ? 'session.workspace.hideDockLabel'
+                  : 'session.workspace.showDockLabel',
+              )
             "
             @click="
               arrangementDockVisible
                 ? dock.setExpanded(false)
                 : dock.showQueueVariant('arrangement')
             "
-            >{{ arrangementDockVisible ? '收合側欄' : '顯示側欄' }}</UiButton
+            >{{
+              t(
+                arrangementDockVisible
+                  ? 'session.workspace.hideDock'
+                  : 'session.workspace.showDock',
+              )
+            }}</UiButton
           >
-          <UiButton v-if="showReturn" :icon="ArrowLeft" @click="emit('close')"
-            >返回</UiButton
+          <UiButton
+            v-if="showReturn"
+            :icon="ArrowLeft"
+            @click="emit('close')"
+            >{{ t('session.workspace.back') }}</UiButton
           >
           <UiIconButton
             :icon="Ellipsis"
-            label="演出安排的更多選項"
+            :label="t('session.workspace.moreOptions')"
             aria-haspopup="menu"
             :aria-expanded="Boolean(menuAnchor)"
             @click="
@@ -359,21 +386,21 @@ async function selectWorkspaceAction(action) {
       <UiNotice
         v-if="state.error"
         tone="danger"
-        title="演出安排未完成"
+        :title="t('session.workspace.arrangementFailed')"
         :message="state.error"
         compact
       />
       <UiNotice
         v-if="playback.state.error"
         tone="danger"
-        title="演出播放未完成"
+        :title="t('session.workspace.playbackFailed')"
         :message="playback.state.error"
         compact
       />
       <UiNotice
         v-if="!state.error && !playback.state.error && workspaceValidationError"
         tone="warning"
-        title="尚未完成"
+        :title="t('session.workspace.notCompleted')"
         :message="workspaceValidationError.message"
         compact
       />
@@ -396,7 +423,7 @@ async function selectWorkspaceAction(action) {
           <template #options>
             <UiCheckbox
               id="arrangement-continuous"
-              label="連續播放"
+              :label="t('session.workspace.continuous')"
               :model-value="playback.state.continuous"
               @update:model-value="playback.setContinuous"
             />
@@ -416,8 +443,8 @@ async function selectWorkspaceAction(action) {
           <div class="performance-session-workspace__add">
             <UiSearchBox
               v-model="librarySearchQuery"
-              label="搜尋曲庫並加入演出待唱"
-              placeholder="搜尋曲名或歌手…"
+              :label="t('session.workspace.searchLabel')"
+              :placeholder="t('session.workspace.searchPlaceholder')"
               :disabled="state.isSaving"
             />
             <UiButton
@@ -425,24 +452,28 @@ async function selectWorkspaceAction(action) {
               variant="secondary"
               :disabled="state.isSaving"
               @click="openManualItem"
-              >新增手動項目</UiButton
+              >{{ t('session.workspace.addManual') }}</UiButton
             >
           </div>
           <UiNotice
             v-if="libraryAddValidationError"
             tone="warning"
-            title="無法加入這首歌曲"
+            :title="t('session.workspace.addFailed')"
             :message="libraryAddValidationError.message"
             compact
           />
           <template v-if="isSearching">
-            <UiHint>曲庫搜尋結果 {{ filteredTracks.length }}</UiHint>
+            <UiHint>{{
+              t('session.workspace.resultsCount', {
+                count: filteredTracks.length,
+              })
+            }}</UiHint>
             <UiScrollLayout
               v-if="filteredTracks.length"
               class="performance-session-workspace__list-scroll"
               content-tag="ul"
               content-class="performance-session-workspace__search-results"
-              aria-label="曲庫搜尋結果"
+              :aria-label="t('session.workspace.resultsLabel')"
             >
               <TrackIdentityRow
                 v-for="track in filteredTracks"
@@ -450,11 +481,15 @@ async function selectWorkspaceAction(action) {
                 :track="track"
                 interactive
                 hide-duration
-                :action-label="'加入待唱：' + (track.title ?? track.id)"
+                :action-label="
+                  t('session.workspace.addNamed', {
+                    title: track.title ?? track.id,
+                  })
+                "
                 @row-click="addLibraryTrack(track.id)"
               />
             </UiScrollLayout>
-            <UiHint v-else>找不到符合的曲目。</UiHint>
+            <UiHint v-else>{{ t('session.workspace.noMatch') }}</UiHint>
           </template>
         </template>
         <template #pending>
@@ -473,9 +508,9 @@ async function selectWorkspaceAction(action) {
             @play="playback.start"
             @skip="playback.skip"
           />
-          <UiHint v-else padded center
-            >搜尋並加入待唱；從待唱播放才會留下演出紀錄。自行伴奏或外部播放可用「新增手動項目」。</UiHint
-          >
+          <UiHint v-else padded center>{{
+            t('session.workspace.hint')
+          }}</UiHint>
         </template>
       </PerformanceSessionBoard>
     </UiScrollLayout>
@@ -483,7 +518,7 @@ async function selectWorkspaceAction(action) {
       :open="Boolean(menuAnchor)"
       :anchor="menuAnchor ?? { kind: 'point', x: 0, y: 0 }"
       :content="workspaceMenu"
-      aria-label="演出安排操作"
+      :aria-label="t('session.workspace.actions')"
       @select="selectWorkspaceAction"
       @close="menuAnchor = null"
     />

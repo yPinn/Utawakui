@@ -1,25 +1,20 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const workspaceSource = readFileSync(
+const workspaceSource = readCatalogSource(
   new URL('./PerformanceSessionWorkspace.vue', import.meta.url),
-  'utf8',
 );
-const reviewSource = readFileSync(
+const reviewSource = readCatalogSource(
   new URL('./PerformanceSessionPlanEditor.vue', import.meta.url),
-  'utf8',
 );
-const manualSource = readFileSync(
+const manualSource = readCatalogSource(
   new URL('./PerformanceSessionManualItemForm.vue', import.meta.url),
-  'utf8',
 );
-const planListSource = readFileSync(
+const planListSource = readCatalogSource(
   new URL('./PerformanceSessionPlanList.vue', import.meta.url),
-  'utf8',
 );
-const performanceSource = readFileSync(
+const performanceSource = readCatalogSource(
   new URL('../performance/PerformanceWorkspace.vue', import.meta.url),
-  'utf8',
 );
 
 describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
@@ -78,9 +73,8 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).toContain(
       'container-name: performance-session-workspace;',
     );
-    const boardSource = readFileSync(
+    const boardSource = readCatalogSource(
       new URL('./PerformanceSessionBoard.vue', import.meta.url),
-      'utf8',
     );
     expect(boardSource).not.toContain('ResizeObserver');
     expect(boardSource).toContain('grid-template-columns: minmax(0, 1fr);');
@@ -113,9 +107,8 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   });
 
   it('keeps review actions outside the scrolling details body and removes mandatory verification copy', () => {
-    const paneSource = readFileSync(
+    const paneSource = readCatalogSource(
       new URL('./PerformanceSessionReviewPane.vue', import.meta.url),
-      'utf8',
     );
     expect(reviewSource).toContain('PerformanceSessionReviewPane');
     expect(reviewSource).toContain('#actions');
@@ -172,7 +165,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).toContain('pendingAttention');
     expect(workspaceSource).toContain('playback.pendingItems.value');
     expect(workspaceSource).not.toContain('全部可演出');
-    expect(workspaceSource).toContain('項需處理');
+    expect(workspaceSource).toContain("'session.workspace.attention'");
     expect(workspaceSource).not.toContain('待確認');
     expect(workspaceSource).not.toContain('待連結');
     expect(workspaceSource).not.toContain('曲庫資料已變更 {{');

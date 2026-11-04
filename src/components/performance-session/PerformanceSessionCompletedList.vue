@@ -7,6 +7,7 @@ import { usePerformanceSessionPlayback } from '../../composables/usePerformanceS
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import RecentPlaybackList from '../queue/RecentPlaybackList.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import { t } from '../../utils/i18n.js';
 
 const plan = usePerformanceSessionPlan();
 const playback = usePerformanceSessionPlayback();
@@ -34,7 +35,12 @@ const entries = computed(() => {
       artistText: item.displayArtist,
       playbackDisabled:
         !item.ready || (item.mode !== 'manual' && !canonical?.url),
-      playbackLabel: `${item.mode === 'manual' ? '開始' : '播放'}：${item.displayTitle}`,
+      playbackLabel: t(
+        item.mode === 'manual'
+          ? 'session.queueList.startNamed'
+          : 'session.queueList.playNamed',
+        { title: item.displayTitle },
+      ),
     };
   });
 });
@@ -57,7 +63,7 @@ const menuContent = computed(() => ({
         {
           id: 'requeue',
           kind: 'action',
-          label: '再次加入待唱',
+          label: t('session.completed.requeue'),
           value: 'requeue',
           icon: Copy,
           disabled: busy.value || !menuEntry.value,
@@ -65,7 +71,7 @@ const menuContent = computed(() => ({
         {
           id: 'remove',
           kind: 'action',
-          label: '移除紀錄',
+          label: t('session.completed.removeRecord'),
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -97,10 +103,10 @@ async function selectAction(action) {
   if (
     action === 'remove' &&
     (await confirm({
-      title: '移除這筆播放紀錄？',
+      title: t('session.completed.removeTitle'),
       subject: entry.track.title,
-      message: '只移除這次完成紀錄，不會刪除曲庫歌曲。',
-      confirmLabel: '移除紀錄',
+      message: t('session.completed.removeMessage'),
+      confirmLabel: t('session.completed.removeRecord'),
       intent: 'danger',
     }))
   )
@@ -117,9 +123,9 @@ watch([busy, menuEntry], ([saving, entry]) => {
       :entries="entries"
       :loading="!plan.state.isInitialized"
       :error="error"
-      error-title="演出紀錄未更新"
-      loading-message="讀取演出紀錄…"
-      empty-message="還沒有完成紀錄。從演出待唱播放並完成的曲目會顯示在這裡。"
+      :error-title="t('session.completed.errorTitle')"
+      :loading-message="t('session.completed.loading')"
+      :empty-message="t('session.completed.empty')"
       menu-context="completed"
       :busy="busy"
       :playback-actions="false"
@@ -132,7 +138,7 @@ watch([busy, menuEntry], ([saving, entry]) => {
       :open="Boolean(menuEntry)"
       :anchor="menuAnchor"
       :content="menuContent"
-      aria-label="演出紀錄操作"
+      :aria-label="t('session.completed.actions')"
       @select="selectAction"
       @close="closeMenu"
     />

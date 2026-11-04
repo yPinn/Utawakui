@@ -12,6 +12,7 @@ import QueueTrackButton from '../queue/QueueTrackButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -40,16 +41,21 @@ const rows = computed(() => {
         item.displayArtist,
         disabled
           ? item.status === 'needs-link'
-            ? '需連結曲目'
-            : '音檔無法使用'
+            ? t('session.queueList.needsLink')
+            : t('session.queueList.audioUnavailable')
           : item.mode === 'manual'
-            ? '手動項目'
+            ? t('session.queueList.manualItem')
             : '',
       ]
         .filter(Boolean)
         .join(' · '),
       disabled,
-      playbackLabel: `${item.mode === 'manual' ? '開始' : '播放'}：${item.displayTitle}`,
+      playbackLabel: t(
+        item.mode === 'manual'
+          ? 'session.queueList.startNamed'
+          : 'session.queueList.playNamed',
+        { title: item.displayTitle },
+      ),
     };
   });
 });
@@ -86,7 +92,7 @@ const menuContent = computed(() => ({
         {
           id: 'up',
           kind: 'action',
-          label: '上移一位',
+          label: t('session.queueList.moveUp'),
           value: 'up',
           icon: ChevronUp,
           disabled: props.saving || menuIndex.value <= 0,
@@ -94,7 +100,7 @@ const menuContent = computed(() => ({
         {
           id: 'down',
           kind: 'action',
-          label: '下移一位',
+          label: t('session.queueList.moveDown'),
           value: 'down',
           icon: ChevronDown,
           disabled:
@@ -110,7 +116,7 @@ const menuContent = computed(() => ({
         {
           id: 'skip',
           kind: 'action',
-          label: '略過這首',
+          label: t('session.queueList.skip'),
           value: 'skip',
           icon: SkipForward,
           disabled: props.saving,
@@ -118,7 +124,7 @@ const menuContent = computed(() => ({
         {
           id: 'duplicate',
           kind: 'action',
-          label: '複製待唱項目',
+          label: t('session.queueList.duplicate'),
           value: 'duplicate',
           icon: Copy,
           disabled: props.saving,
@@ -126,7 +132,7 @@ const menuContent = computed(() => ({
         {
           id: 'remove',
           kind: 'action',
-          label: '從待唱移除',
+          label: t('session.queueList.remove'),
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
@@ -172,7 +178,7 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
     class="performance-session-queue-scroll"
     content-tag="ul"
     content-class="performance-session-queue-list"
-    aria-label="待唱順序"
+    :aria-label="t('session.queueList.order')"
   >
     <QueueTrackButton
       v-for="row in rows"
@@ -202,14 +208,14 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
       @drag-end="clearDragState"
     />
     <li v-if="!rows.length">
-      <UiHint>沒有待唱曲目。可在「演唱工具 → 演出安排」搜尋並加入。</UiHint>
+      <UiHint>{{ t('session.queueList.empty') }}</UiHint>
     </li>
   </UiScrollLayout>
   <UiActionMenu
     :open="menuIndex >= 0"
     :anchor="menuAnchor"
     :content="menuContent"
-    aria-label="待唱曲目操作"
+    :aria-label="t('session.queueList.actions')"
     @select="selectAction"
     @close="closeMenu"
   />
