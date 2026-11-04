@@ -257,7 +257,7 @@ onBeforeUnmount(() => {
             v-if="!inspectionUrl"
             class="obs-widget-capture-preview__fallback"
           >
-            {{ preset?.preview?.title ?? 'Preview' }}
+            {{ preset?.preview?.title ?? t('common.preview') }}
           </span>
         </span>
       </span>

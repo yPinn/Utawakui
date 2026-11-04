@@ -3,6 +3,7 @@ import { computed, useId } from 'vue';
 import { ICON_SIZE } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   icon: { type: [Object, Function], default: null },
@@ -30,7 +31,9 @@ const resolvedTitleTag = computed(
   () => props.titleTag || (props.variant === 'nested' ? 'h4' : 'h3'),
 );
 const supportingCopy = computed(() =>
-  [props.description, props.guidance].filter(Boolean).join(' '),
+  [props.description, props.guidance]
+    .filter(Boolean)
+    .join(t('common.sentenceJoin')),
 );
 </script>
 

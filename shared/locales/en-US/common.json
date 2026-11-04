@@ -21,6 +21,7 @@
   },
   "clauseSeparator": ", ",
   "metaSeparator": " · ",
+  "preview": "Preview",
   "goToSettings": "Go to Settings",
   "tryAgain": "Try again.",
   "retry": "Retry",

@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
           />
           <div v-else class="obs-overlay-preview__fallback">
             <span class="obs-overlay-preview__fallback-title">
-              {{ preset?.preview?.title ?? 'Preview' }}
+              {{ preset?.preview?.title ?? t('common.preview') }}
             </span>
             <span
               v-for="line in preset?.preview?.lines ?? []"

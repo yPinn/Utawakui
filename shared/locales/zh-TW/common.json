@@ -21,6 +21,7 @@
   },
   "clauseSeparator": "，",
   "metaSeparator": "・",
+  "preview": "預覽",
   "goToSettings": "前往設定",
   "tryAgain": "請再試一次。",
   "retry": "重試",

@@ -191,7 +191,7 @@ onBeforeUnmount(stopPreview);
     <span
       class="obs-template-preview-stage__motion obs-template-preview-stage__limitations"
       role="note"
-      >{{ limitations.join('') }}</span
+      >{{ limitations.join(t('common.sentenceJoin')) }}</span
     >
     <span
       v-if="previewFailed"

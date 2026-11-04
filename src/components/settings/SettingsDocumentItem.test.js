@@ -66,7 +66,7 @@ describe('SettingsDocumentItem', () => {
       html.match(/settings-document-item__supporting-copy/gu),
     ).toHaveLength(1);
     expect(html).toMatch(
-      /<p[^>]*settings-document-item__supporting-copy[^>]*>下載與匯入的曲目會存放在這裡。 切換位置不會搬移既有曲目。<\/p>/u,
+      /<p[^>]*settings-document-item__supporting-copy[^>]*>下載與匯入的曲目會存放在這裡。切換位置不會搬移既有曲目。<\/p>/u,
     );
     expect(html).not.toContain('settings-document-item__description');
     expect(html).not.toContain('settings-document-item__guidance');
