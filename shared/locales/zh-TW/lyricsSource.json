@@ -1,0 +1,88 @@
+{
+  "loadRestart": "請重新啟動應用程式後再讀取歌詞。",
+  "loadFailed": "目前無法讀取歌詞，請再試一次。",
+  "offsetFailed": "同步調整未儲存，請再試一次。",
+  "noFingerprint": "目前歌詞來源缺少可驗證的版本資訊。",
+  "timingRestart": "請重新啟動應用程式後再儲存歌詞時間。",
+  "draftStale": "這份時間草稿的來源版本已變更，請重新讀取後再試一次。",
+  "timingFailed": "歌詞時間未儲存，請再試一次。",
+  "errorTitle": "歌詞操作未完成",
+  "preferenceFailed": "歌詞來源偏好未儲存。",
+  "backfillPartial": "部分曲目資訊未更新。",
+  "tier": {
+    "t0": "T0 文字",
+    "t1": "T1 逐行",
+    "t1Plus": "T1+ 估計",
+    "t2": "T2 逐字",
+    "unknown": "待確認"
+  },
+  "tierHelp": {
+    "t0": "沒有同步時間，無法跟隨播放。",
+    "t1": "歌詞可逐行跟隨播放。",
+    "t1Plus": "依逐行時間分析的句內估計，尚未人工確認；未涵蓋部分沿用逐行時間。",
+    "t2": "含歌詞分段時間，部分句子可能仍按整句顯示。",
+    "unknown": "尚未確認同步方式。"
+  },
+  "capability": {
+    "t2": "逐字同步",
+    "t2Partial": "部分逐字同步",
+    "t1": "逐行同步",
+    "t0": "純文字歌詞",
+    "instrumental": "純音樂",
+    "unsupported": "格式不支援",
+    "unknown": "時間資訊未知"
+  },
+  "importInstrumental": "這筆來源標示為純音樂，沒有可匯入的歌詞。",
+  "importUnsupported": "這筆來源格式目前不支援，無法安全匯入。",
+  "fallback": {
+    "t1": "逐行同步歌詞",
+    "t0": "純文字歌詞",
+    "other": "其他可用歌詞"
+  },
+  "warnings": {
+    "partialWordTiming": "部分歌詞缺少逐字時間",
+    "overlappingLines": "逐行時間有重疊，將保留來源但不直接套用",
+    "overlappingWords": "逐字時間有重疊，將保留來源但不直接套用",
+    "unsupportedLyricsfileVersion": "逐字格式版本尚未支援",
+    "invalidLyricsfile": "逐字同步資料無法使用",
+    "normalizedBoundaryJitter": "來源有 1ms 邊界誤差，已對齊相鄰逐字時間",
+    "versionMismatch": "可能是不同版本",
+    "instrumentalRecord": "這筆資料標示為純音樂",
+    "versionFallback": "逐字格式版本尚未支援；仍可儲存{fallback}",
+    "invalidFallback": "逐字同步資料無法使用；仍可儲存{fallback}",
+    "invalidYrc": "網易逐字同步資料無法使用；仍可儲存{fallback}"
+  },
+  "timeline": {
+    "later": "比 {reference} 的來源時間晚約 {seconds} 秒（比對 {count} 行）。可展開其他來源的預覽比較；這不代表哪份較準。",
+    "earlier": "比 {reference} 的來源時間早約 {seconds} 秒（比對 {count} 行）。可展開其他來源的預覽比較；這不代表哪份較準。",
+    "reference": "同組參考來源"
+  },
+  "issue": {
+    "online": "線上來源",
+    "local": "本機來源",
+    "partial": "{level}（部分）",
+    "unconfirmed": "未確認",
+    "heading": "歌詞問題（待確認）",
+    "location": "位置：{value}",
+    "candidate": "搜尋候選",
+    "saved": "已保存來源",
+    "source": "來源：{value}",
+    "song": "候選歌曲：{value}",
+    "level": "同步層級：{value}",
+    "offset": "本機時間偏移：{value} ms（只供說明）",
+    "where": "發生位置／時間：",
+    "actual": "實際情況：",
+    "expected": "預期結果：",
+    "steps": "重現步驟："
+  },
+  "reading": {
+    "loadTitle": "讀取讀音資料失敗",
+    "load": "目前無法讀取讀音資料，請再試一次。",
+    "generateTitle": "產生讀音失敗",
+    "generate": "讀音未產生，請再試一次。",
+    "setLineTitle": "修改讀音失敗",
+    "setLine": "讀音未儲存，請再試一次。",
+    "deleteTitle": "刪除讀音失敗",
+    "delete": "目前無法刪除讀音，請再試一次。"
+  }
+}

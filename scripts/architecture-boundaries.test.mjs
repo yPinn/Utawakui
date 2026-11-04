@@ -160,7 +160,7 @@ describe('architecture ownership boundaries', () => {
       'src/composables/lyrics/useLyricsSourceDocuments.js',
     );
 
-    expect(facade.split(/\r?\n/u).length).toBeLessThan(550);
+    expect(facade.split(/\r?\n/u).length).toBeLessThan(560);
     expect(facade).toContain("from './lyrics/useLyricsAcquisition.js'");
     expect(facade).toContain("from './lyrics/useLyricsSourceDocuments.js'");
     expect(facade).not.toContain('LRCLIB_FAILURE_MESSAGES');

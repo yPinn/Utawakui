@@ -165,11 +165,11 @@ export function useLyricsAcquisition({
     const enabled = await requireFeatureGate(FEATURE_IDS.LYRICS_FLOW, {
       source: 'lyrics',
       operation: options.operation || 'external-source',
-      message: '請先到設定啟用歌詞來源，才能搜尋、保存或整理線上歌詞。',
+      message: t('lyricsAcquisition.flowRequired'),
     });
     if (options.isCurrent && !options.isCurrent()) return false;
     if (!enabled) {
-      const message = '請先到設定啟用歌詞來源';
+      const message = t('lyricsAcquisition.flowRequiredShort');
       if (options.errorTarget === 'musixmatchProbe') {
         state.musixmatchProbe.error = message;
       } else if (options.errorTarget === 'manualSave') {
@@ -201,7 +201,7 @@ export function useLyricsAcquisition({
 
     if (typeof window.Utawakui?.probeMusixmatchLyrics !== 'function') {
       state.musixmatchProbe.isLoading = false;
-      state.musixmatchProbe.error = '請重新啟動應用程式後再檢查歌詞來源。';
+      state.musixmatchProbe.error = t('lyricsAcquisition.probeRestart');
       return null;
     }
 
@@ -215,7 +215,7 @@ export function useLyricsAcquisition({
       state.musixmatchProbe.error = reportLyricsError(
         error,
         'probe-source',
-        '目前無法檢查歌詞來源，請再試一次。',
+        t('lyricsAcquisition.probeFailed'),
       );
       return null;
     } finally {
@@ -563,7 +563,7 @@ export function useLyricsAcquisition({
     action.operation = 'backfill-labels';
     action.attempt += 1;
     if (typeof window.Utawakui?.backfillLyricsSourceLabels !== 'function') {
-      action.error = '請重新啟動應用程式後再試。';
+      action.error = t('lyricsAcquisition.restartToSave');
       return null;
     }
 
@@ -577,7 +577,7 @@ export function useLyricsAcquisition({
       action.error = reportLyricsError(
         error,
         'backfill-labels',
-        '請再試一次。',
+        t('common.tryAgain'),
       );
       return null;
     } finally {

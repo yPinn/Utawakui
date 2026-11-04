@@ -20,5 +20,6 @@
     "action": "Go to Settings"
   },
   "clauseSeparator": ", ",
-  "goToSettings": "Go to Settings"
+  "goToSettings": "Go to Settings",
+  "tryAgain": "Try again."
 }

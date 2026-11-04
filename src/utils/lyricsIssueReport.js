@@ -33,14 +33,14 @@ export function buildLyricsIssueReport({
   const names = {
     kugou: t('lyricsAcquisition.kugou'),
     lrclib: 'LRCLIB',
-    netease: '網易雲音樂',
+    netease: t('lyricsAcquisition.netease'),
     betterlyrics: 'Better Lyrics',
   };
   const name = Object.hasOwn(names, provider)
     ? names[provider]
     : candidate
-      ? '線上來源'
-      : '本機來源';
+      ? t('lyricsSource.issue.online')
+      : t('lyricsSource.issue.local');
   const recordId = candidate ? candidate.id : source?.provider?.recordId;
   const id =
     ['lrclib', 'netease'].includes(provider) &&
@@ -50,28 +50,42 @@ export function buildLyricsIssueReport({
       : '';
   const level = candidate ? candidate.capability?.level : tier;
   const capability = ['T0', 'T1', 'T2'].includes(level)
-    ? `${level}${candidate?.capability?.partial ? '（部分）' : ''}`
-    : '未確認';
+    ? candidate?.capability?.partial
+      ? t('lyricsSource.issue.partial', { level })
+      : level
+    : t('lyricsSource.issue.unconfirmed');
   const lines = [
-    '歌詞問題（待確認）',
-    `位置：${candidate ? '搜尋候選' : '已保存來源'}`,
-    `來源：${name}${id}`,
+    t('lyricsSource.issue.heading'),
+    t('lyricsSource.issue.location', {
+      value: candidate
+        ? t('lyricsSource.issue.candidate')
+        : t('lyricsSource.issue.saved'),
+    }),
+    t('lyricsSource.issue.source', { value: `${name}${id}` }),
     ...(candidate
       ? [
-          `候選歌曲：${identity(candidate.artistName, candidate.trackName) || '未提供'}`,
+          t('lyricsSource.issue.song', {
+            value:
+              identity(candidate.artistName, candidate.trackName) ||
+              t('common.none'),
+          }),
         ]
       : []),
-    `同步層級：${capability}`,
+    t('lyricsSource.issue.level', { value: capability }),
     ...(!candidate &&
     Number.isSafeInteger(offsetMs) &&
     Math.abs(offsetMs) <= 86400000
-      ? [`本機時間偏移：${offsetMs > 0 ? '+' : ''}${offsetMs} ms（只供說明）`]
+      ? [
+          t('lyricsSource.issue.offset', {
+            value: `${offsetMs > 0 ? '+' : ''}${offsetMs}`,
+          }),
+        ]
       : []),
     '',
-    '發生位置／時間：',
-    '實際情況：',
-    '預期結果：',
-    '重現步驟：',
+    t('lyricsSource.issue.where'),
+    t('lyricsSource.issue.actual'),
+    t('lyricsSource.issue.expected'),
+    t('lyricsSource.issue.steps'),
   ];
   return {
     kind: FEEDBACK_KINDS.CONTENT,

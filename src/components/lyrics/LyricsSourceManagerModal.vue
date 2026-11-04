@@ -1,5 +1,9 @@
 <script setup>
-import { formatLyricsSourceLabel } from '../../utils/lyricsSourcePresentation.js';
+import {
+  formatLyricsSourceLabel,
+  formatLyricsSourceTier,
+  describeLyricsSourceTier,
+} from '../../utils/lyricsSourcePresentation.js';
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
 import {
   ArrowLeft,
@@ -14,9 +18,7 @@ import { useLyrics } from '../../composables/useLyrics.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import { buildLyricsIssueReport } from '../../utils/lyricsIssueReport.js';
 import {
-  describeLyricsSourceTier,
   formatLyricsSourceOffset,
-  formatLyricsSourceTier,
   lyricsSourceDisplayTier,
 } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';

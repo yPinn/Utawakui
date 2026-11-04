@@ -98,6 +98,10 @@ const I18N_MIGRATED = [
   'src/components/lyrics/{LyricsSegmentEditor,LyricsLineTimingEditor,LyricsTimingToolbar,LyricsDocumentPanel,LyricsPhrasePreview,LyricsTextProcessing,LyricsAcousticPreview,LyricsExperimentalEstimate,LyricsPreparationBar,LyricsWorkspaceHeader}.vue',
   'src/composables/lyrics/{useLyricsTimingReview,useLyricsWaveform,useLyricsVocalRoles}.js',
   'src/composables/useLyricsTimingEditor.js',
+  'src/composables/lyrics/{useLyricsAcquisition,useLyricsSourceDocuments}.js',
+  'src/composables/{useLyrics,useLyricsReading}.js',
+  'src/utils/{lrclibPresentation,lyricsIssueReport,lyricsSourcePresentation}.js',
+  'electron/main/lyrics/{readingHandlers,documentHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

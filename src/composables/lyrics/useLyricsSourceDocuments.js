@@ -1,5 +1,6 @@
 import { readonly, shallowRef } from 'vue';
 import { useLyricsTimingReview } from './useLyricsTimingReview.js';
+import { t } from '../../utils/i18n.js';
 
 const EMPTY_TIMING = Object.freeze({
   status: 'missing',
@@ -121,7 +122,7 @@ export function useLyricsSourceDocuments({
     }
 
     if (typeof window.Utawakui?.getTrackLyrics !== 'function') {
-      state.error = '請重新啟動應用程式後再讀取歌詞。';
+      state.error = t('lyricsSource.loadRestart');
       return;
     }
 
@@ -189,7 +190,7 @@ export function useLyricsSourceDocuments({
       state.error = reportLyricsError(
         error,
         'load',
-        '目前無法讀取歌詞，請再試一次。',
+        t('lyricsSource.loadFailed'),
       );
     } finally {
       if (requestId === lyricsRequestId) state.isLoadingLyrics = false;
@@ -250,7 +251,7 @@ export function useLyricsSourceDocuments({
           state.offsetSave.error = reportLyricsError(
             error,
             'offset-save',
-            '同步調整未儲存，請再試一次。',
+            t('lyricsSource.offsetFailed'),
           );
         }
         return null;
@@ -287,11 +288,11 @@ export function useLyricsSourceDocuments({
     const sourceFilename = state.selectedSourceFilename;
     const sourceFingerprint = lyricsTiming.value.sourceFingerprint;
     if (!trackId || !sourceFilename || !sourceFingerprint) {
-      state.timingSave.error = '目前歌詞來源缺少可驗證的版本資訊。';
+      state.timingSave.error = t('lyricsSource.noFingerprint');
       return null;
     }
     if (typeof window.Utawakui?.saveLyricsTiming !== 'function') {
-      state.timingSave.error = '請重新啟動應用程式後再儲存歌詞時間。';
+      state.timingSave.error = t('lyricsSource.timingRestart');
       return null;
     }
     if (
@@ -300,8 +301,7 @@ export function useLyricsSourceDocuments({
       baseline.id !== sourceSession.value.id
     ) {
       if (!state.timingSave.isSaving)
-        state.timingSave.error =
-          '這份時間草稿的來源版本已變更，請重新讀取後再試一次。';
+        state.timingSave.error = t('lyricsSource.draftStale');
       return null;
     }
     const generation = lyricsRequestId,
@@ -350,7 +350,7 @@ export function useLyricsSourceDocuments({
         state.timingSave.error = reportLyricsError(
           error,
           'save-timing',
-          '歌詞時間未儲存，請再試一次。',
+          t('lyricsSource.timingFailed'),
         );
       return null;
     } finally {
@@ -364,7 +364,7 @@ export function useLyricsSourceDocuments({
     action.operation = operation;
     action.attempt += 1;
     if (typeof window.Utawakui?.[bridgeName] !== 'function') {
-      action.error = '請重新啟動應用程式後再試。';
+      action.error = t('lyricsAcquisition.restartToSave');
       return null;
     }
     action.isSaving = true;
@@ -372,7 +372,7 @@ export function useLyricsSourceDocuments({
     try {
       return await work(window.Utawakui[bridgeName], selectedTrack.value);
     } catch (error) {
-      action.error = reportLyricsError(error, operation, '請再試一次。');
+      action.error = reportLyricsError(error, operation, t('common.tryAgain'));
       return null;
     } finally {
       action.isSaving = false;
@@ -414,7 +414,7 @@ export function useLyricsSourceDocuments({
 
     state.manualSave.committed = false;
     if (typeof window.Utawakui?.importLyricsText !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再試。';
+      state.manualSave.error = t('lyricsAcquisition.restartToSave');
       return null;
     }
 
@@ -429,7 +429,7 @@ export function useLyricsSourceDocuments({
       state.manualSave.error = reportLyricsError(
         error,
         'import-text',
-        '請再試一次。',
+        t('common.tryAgain'),
       );
       return null;
     } finally {
@@ -443,7 +443,7 @@ export function useLyricsSourceDocuments({
 
     state.manualSave.committed = false;
     if (typeof window.Utawakui?.importLyricsFile !== 'function') {
-      state.manualSave.error = '請重新啟動應用程式後再試。';
+      state.manualSave.error = t('lyricsAcquisition.restartToSave');
       return null;
     }
 
@@ -459,7 +459,7 @@ export function useLyricsSourceDocuments({
       state.manualSave.error = reportLyricsError(
         error,
         'import-file',
-        '請再試一次。',
+        t('common.tryAgain'),
       );
       return null;
     } finally {

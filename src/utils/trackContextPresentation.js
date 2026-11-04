@@ -1,4 +1,4 @@
-import { formatLyricsSourceLabel } from './lyrics.js';
+import { formatLyricsSourceLabel } from './lyricsSourcePresentation.js';
 import { t } from './i18n.js';
 
 function normalizedArtist(value) {

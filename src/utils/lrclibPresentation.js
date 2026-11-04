@@ -1,59 +1,64 @@
-import { t } from './i18n.js';
+import { catalogKey, t } from './i18n.js';
 
-const CAPABILITY_LABELS = Object.freeze({
-  T2: '逐字同步',
-  T1: '逐行同步',
-  T0: '純文字歌詞',
-  instrumental: '純音樂',
-  unsupported: '格式不支援',
+const CAPABILITY_KEYS = Object.freeze({
+  T2: 't2',
+  T1: 't1',
+  T0: 't0',
+  instrumental: 'instrumental',
+  unsupported: 'unsupported',
 });
 
-const WARNING_LABELS = Object.freeze({
-  'partial-word-timing': '部分歌詞缺少逐字時間',
-  'overlapping-lines': '逐行時間有重疊，將保留來源但不直接套用',
-  'overlapping-words': '逐字時間有重疊，將保留來源但不直接套用',
-  'unsupported-lyricsfile-version': '逐字格式版本尚未支援',
-  'invalid-lyricsfile': '逐字同步資料無法使用',
-  'normalized-boundary-jitter': '來源有 1ms 邊界誤差，已對齊相鄰逐字時間',
-  'version-mismatch': '可能是不同版本',
-  'instrumental-record': '這筆資料標示為純音樂',
-});
+const WARNINGS = new Set([
+  'partial-word-timing',
+  'overlapping-lines',
+  'overlapping-words',
+  'unsupported-lyricsfile-version',
+  'invalid-lyricsfile',
+  'normalized-boundary-jitter',
+  'version-mismatch',
+  'instrumental-record',
+]);
 
 export function capabilityLabel(candidate) {
   const level = candidate?.capability?.level;
-  if (level === 'T2' && candidate.capability.partial) return '部分逐字同步';
-  return CAPABILITY_LABELS[level] || '時間資訊未知';
+  if (level === 'T2' && candidate.capability.partial)
+    return t('lyricsSource.capability.t2Partial');
+  return t(
+    `lyricsSource.capability.${Object.hasOwn(CAPABILITY_KEYS, level) ? CAPABILITY_KEYS[level] : 'unknown'}`,
+  );
 }
 
 export function candidateImportMessage(candidate) {
   const level = candidate?.capability?.level;
   if (level === 'instrumental') {
-    return '這筆來源標示為純音樂，沒有可匯入的歌詞。';
+    return t('lyricsSource.importInstrumental');
   }
   if (level === 'unsupported') {
-    return '這筆來源格式目前不支援，無法安全匯入。';
+    return t('lyricsSource.importUnsupported');
   }
   return null;
 }
 
 function fallbackCapabilityLabel(capability) {
-  if (capability?.level === 'T1') return '逐行同步歌詞';
-  if (capability?.level === 'T0') return '純文字歌詞';
-  return '其他可用歌詞';
+  if (capability?.level === 'T1') return t('lyricsSource.fallback.t1');
+  if (capability?.level === 'T0') return t('lyricsSource.fallback.t0');
+  return t('lyricsSource.fallback.other');
 }
 
 function warningLabel(warning, capability) {
   const fallback = fallbackCapabilityLabel(capability);
   if (warning === 'unsupported-lyricsfile-version-fallback') {
-    return `逐字格式版本尚未支援；仍可儲存${fallback}`;
+    return t('lyricsSource.warnings.versionFallback', { fallback });
   }
   if (warning === 'invalid-lyricsfile-fallback') {
-    return `逐字同步資料無法使用；仍可儲存${fallback}`;
+    return t('lyricsSource.warnings.invalidFallback', { fallback });
   }
   if (warning === 'invalid-yrc') {
-    return `網易逐字同步資料無法使用；仍可儲存${fallback}`;
+    return t('lyricsSource.warnings.invalidYrc', { fallback });
   }
-  return WARNING_LABELS[warning];
+  return WARNINGS.has(warning)
+    ? t(`lyricsSource.warnings.${catalogKey(warning)}`)
+    : undefined;
 }
 
 export function warningLabels(warnings, capability = null) {
@@ -93,7 +98,7 @@ export function candidateTimelineDifference(
   const labels = {
     kugou: t('lyricsAcquisition.kugou'),
     lrclib: 'LRCLIB',
-    netease: '網易雲音樂',
+    netease: t('lyricsAcquisition.netease'),
     betterlyrics: 'Better Lyrics',
   };
   const { offsetMs, matchedLineCount } = comparison;
@@ -107,5 +112,15 @@ export function candidateTimelineDifference(
   )
     return null;
   const seconds = Number((Math.abs(offsetMs) / 1000).toFixed(1));
-  return `比 ${labels[reference.providerId] || '同組參考來源'} 的來源時間${offsetMs > 0 ? '晚' : '早'}約 ${seconds} 秒（比對 ${matchedLineCount} 行）。可展開其他來源的預覽比較；這不代表哪份較準。`;
+  return t(
+    offsetMs > 0
+      ? 'lyricsSource.timeline.later'
+      : 'lyricsSource.timeline.earlier',
+    {
+      reference:
+        labels[reference.providerId] || t('lyricsSource.timeline.reference'),
+      seconds,
+      count: matchedLineCount,
+    },
+  );
 }

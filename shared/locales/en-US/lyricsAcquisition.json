@@ -13,5 +13,12 @@
   "searchStart": "Enter a song title to search.",
   "saveSearchAgain": "Lyrics have not been saved. Search again and retry.",
   "resultsAnnouncement": "Found {versions} versions from {count} lyrics sources",
-  "candidateAnnouncement": "Found {count} lyrics candidates"
+  "candidateAnnouncement": "Found {count} lyrics candidates",
+  "flowRequired": "Turn on lyrics sources in Settings to search, save or organize online lyrics.",
+  "flowRequiredShort": "Turn on lyrics sources in Settings first",
+  "probeRestart": "Restart the app, then check lyrics sources again.",
+  "probeFailed": "Couldn't check lyrics sources. Try again.",
+  "netease": "NetEase Cloud Music",
+  "manual": "Manual import",
+  "importFileTitle": "Import lyrics file"
 }

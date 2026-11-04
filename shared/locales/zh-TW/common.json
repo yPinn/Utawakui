@@ -20,5 +20,6 @@
     "action": "前往設定"
   },
   "clauseSeparator": "，",
-  "goToSettings": "前往設定"
+  "goToSettings": "前往設定",
+  "tryAgain": "請再試一次。"
 }

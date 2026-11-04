@@ -26,6 +26,7 @@ import {
 import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
 import { projectNativeLyricsFrame } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { useLyricsPlaybackNavigation } from './lyrics/useLyricsPlaybackNavigation.js';
+import { t } from '../utils/i18n.js';
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
 const lyricsTextVariant = shallowRef(DEFAULT_LYRICS_TEXT_VARIANT);
 const player = usePlayer();
@@ -45,7 +46,7 @@ const {
 function reportLyricsError(error, operation, message, options = {}) {
   return recordError(error, {
     code: `LYRICS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-    title: '歌詞操作未完成',
+    title: t('lyricsSource.errorTitle'),
     message,
     source: 'lyrics',
     operation,
@@ -394,7 +395,7 @@ function selectSource(filename, options = {}) {
       reportLyricsError(
         error,
         'set-source-preference',
-        '歌詞來源偏好未儲存。',
+        t('lyricsSource.preferenceFailed'),
         { persist: false },
       );
     });
@@ -412,7 +413,7 @@ function applyBackfillStatus(payload = {}) {
   state.backfillStatus.currentTrackId = payload.trackId ?? null;
   state.backfillStatus.currentTitle = payload.title ?? null;
   state.backfillStatus.error =
-    payload.stage === 'error' ? '部分曲目資訊未更新。' : null;
+    payload.stage === 'error' ? t('lyricsSource.backfillPartial') : null;
 
   if (payload.stage === 'idle') {
     state.backfillStatus.total = 0;

@@ -431,5 +431,57 @@
   "YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED": {
     "title": "Could not apply the browser sign-in setting",
     "message": "The browser sign-in setting cannot be applied right now. Try again later."
+  },
+  "LYRICS_READING_IDENTITY_STALE": {
+    "title": "Reading data is out of date",
+    "message": "The reading data for these lyrics is out of date. Refresh and try again."
+  },
+  "LYRICS_READING_UNKNOWN_TRACK": {
+    "title": "Track not found",
+    "message": "This track isn't available right now."
+  },
+  "LYRICS_READING_LOAD_FAILED": {
+    "title": "Couldn't load readings",
+    "message": "Couldn't load readings. Try again later."
+  },
+  "LYRICS_READING_UNSUPPORTED_SCRIPT": {
+    "title": "Reading not supported",
+    "message": "Readings can't be created for this script yet."
+  },
+  "LYRICS_READING_UNKNOWN_SOURCE": {
+    "title": "Lyrics not found",
+    "message": "These lyrics aren't available right now."
+  },
+  "LYRICS_READING_IN_PROGRESS": {
+    "title": "Creating readings",
+    "message": "Readings are already being created for these lyrics. Please wait."
+  },
+  "LYRICS_READING_GENERATE_FAILED": {
+    "title": "Readings didn't finish",
+    "message": "Creating readings didn't finish. Try again."
+  },
+  "LYRICS_READING_SAVE_FAILED": {
+    "title": "Readings can't be saved",
+    "message": "The readings couldn't be saved. Try again."
+  },
+  "LYRICS_READING_SET_LINE_FAILED": {
+    "title": "Reading can't be updated",
+    "message": "This line's reading couldn't be updated. Try again."
+  },
+  "LYRICS_READING_DELETE_FAILED": {
+    "title": "Readings can't be deleted",
+    "message": "These readings couldn't be deleted. Try again."
+  },
+  "LYRICS_SOURCE_INVALID": {
+    "message": "This lyrics source action can't be run."
+  },
+  "LYRICS_SOURCE_UNUSABLE": {
+    "message": "This lyrics timing can't be saved. Check the source version first."
+  },
+  "LYRICS_SOURCE_STALE": {
+    "message": "The lyrics source or saved version changed. Reload and try again."
+  },
+  "LYRICS_SOURCE_FAILED": {
+    "message": "The lyrics source action didn't finish. Try again."
   }
 }

@@ -70,8 +70,6 @@ function assertReadingIdentityFresh(currentLyrics, identity) {
     throw createAppError({
       code: 'LYRICS_READING_IDENTITY_STALE',
       severity: 'warning',
-      title: '讀音資料已過期',
-      message: '這份歌詞的讀音資料已過期，請重新整理後再試一次。',
     });
   }
 }
@@ -82,8 +80,6 @@ function requireTrackDir(dir, trackId, resolveDir) {
     throw createAppError({
       code: 'LYRICS_READING_UNKNOWN_TRACK',
       severity: 'warning',
-      title: '找不到這首歌曲',
-      message: '這首歌曲目前無法使用。',
     });
   }
   return trackDir;
@@ -152,8 +148,6 @@ function registerLyricsReadingHandlers({
           },
           publicError: {
             code: 'LYRICS_READING_LOAD_FAILED',
-            title: '無法讀取讀音',
-            message: '目前無法讀取讀音，請稍後再試。',
           },
         },
         () => loadReadingForIdentity(trackDir, sourceFilename, identity),
@@ -168,8 +162,6 @@ function registerLyricsReadingHandlers({
         throw createAppError({
           code: 'LYRICS_READING_UNSUPPORTED_SCRIPT',
           severity: 'warning',
-          title: '不支援這種讀音',
-          message: '目前不支援為這種文字產生讀音。',
         });
       }
 
@@ -181,8 +173,6 @@ function registerLyricsReadingHandlers({
         throw createAppError({
           code: 'LYRICS_READING_UNKNOWN_SOURCE',
           severity: 'warning',
-          title: '找不到這份歌詞',
-          message: '這份歌詞目前無法使用。',
         });
       }
       assertReadingIdentityFresh(
@@ -195,8 +185,6 @@ function registerLyricsReadingHandlers({
         throw createAppError({
           code: 'LYRICS_READING_IN_PROGRESS',
           severity: 'warning',
-          title: '正在產生讀音',
-          message: '已經在為這份歌詞產生讀音，請稍候。',
         });
       }
       readingInProgress.add(key);
@@ -211,8 +199,6 @@ function registerLyricsReadingHandlers({
             },
             publicError: {
               code: 'LYRICS_READING_GENERATE_FAILED',
-              title: '讀音產生未完成',
-              message: '讀音產生未完成，請再試一次。',
               context: { retryable: true },
             },
           },
@@ -257,8 +243,6 @@ function registerLyricsReadingHandlers({
             },
             publicError: {
               code: 'LYRICS_READING_SAVE_FAILED',
-              title: '讀音無法儲存',
-              message: '讀音無法儲存，請再試一次。',
               context: { retryable: true },
             },
           },
@@ -303,8 +287,6 @@ function registerLyricsReadingHandlers({
           },
           publicError: {
             code: 'LYRICS_READING_SET_LINE_FAILED',
-            title: '讀音無法更新',
-            message: '這一行讀音無法更新，請再試一次。',
             context: { retryable: true },
           },
         },
@@ -341,8 +323,6 @@ function registerLyricsReadingHandlers({
           },
           publicError: {
             code: 'LYRICS_READING_DELETE_FAILED',
-            title: '讀音無法刪除',
-            message: '這份讀音無法刪除，請再試一次。',
             context: { retryable: true },
           },
         },

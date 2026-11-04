@@ -1,0 +1,88 @@
+{
+  "loadRestart": "Restart the app, then load the lyrics again.",
+  "loadFailed": "Couldn't load the lyrics. Try again.",
+  "offsetFailed": "The sync offset wasn't saved. Try again.",
+  "noFingerprint": "This lyrics source has no version information to check.",
+  "timingRestart": "Restart the app, then save the lyrics timing again.",
+  "draftStale": "The source of this timing draft changed. Reload it and try again.",
+  "timingFailed": "The lyrics timing wasn't saved. Try again.",
+  "errorTitle": "Lyrics action didn't finish",
+  "preferenceFailed": "The lyrics source choice wasn't saved.",
+  "backfillPartial": "Some track details weren't updated.",
+  "tier": {
+    "t0": "T0 Text",
+    "t1": "T1 Line",
+    "t1Plus": "T1+ Estimated",
+    "t2": "T2 Word",
+    "unknown": "To be checked"
+  },
+  "tierHelp": {
+    "t0": "No sync timing, so it can't follow playback.",
+    "t1": "Lyrics follow playback line by line.",
+    "t1Plus": "Estimated within lines from the line timing and not reviewed yet. Parts it doesn't cover use the line timing.",
+    "t2": "Includes part timing. Some lines may still show as whole lines.",
+    "unknown": "Sync type not checked yet."
+  },
+  "capability": {
+    "t2": "Word sync",
+    "t2Partial": "Partial word sync",
+    "t1": "Line sync",
+    "t0": "Plain lyrics",
+    "instrumental": "Instrumental",
+    "unsupported": "Unsupported format",
+    "unknown": "Timing unknown"
+  },
+  "importInstrumental": "This source is marked instrumental and has no lyrics to import.",
+  "importUnsupported": "This source's format isn't supported, so it can't be imported safely.",
+  "fallback": {
+    "t1": "line-synced lyrics",
+    "t0": "plain lyrics",
+    "other": "other usable lyrics"
+  },
+  "warnings": {
+    "partialWordTiming": "Some lyrics have no word timing",
+    "overlappingLines": "Line times overlap. The source is kept but not applied directly",
+    "overlappingWords": "Word times overlap. The source is kept but not applied directly",
+    "unsupportedLyricsfileVersion": "This word-timing format version isn't supported yet",
+    "invalidLyricsfile": "The word sync data can't be used",
+    "normalizedBoundaryJitter": "The source had 1 ms boundary gaps; nearby word times were aligned",
+    "versionMismatch": "May be a different version",
+    "instrumentalRecord": "This entry is marked instrumental",
+    "versionFallback": "This word-timing format version isn't supported yet; you can still save {fallback}",
+    "invalidFallback": "The word sync data can't be used; you can still save {fallback}",
+    "invalidYrc": "The NetEase word sync data can't be used; you can still save {fallback}"
+  },
+  "timeline": {
+    "later": "About {seconds} s later than {reference} (compared {count} lines). Expand other sources to compare previews; this doesn't mean either is more accurate.",
+    "earlier": "About {seconds} s earlier than {reference} (compared {count} lines). Expand other sources to compare previews; this doesn't mean either is more accurate.",
+    "reference": "the reference source in this group"
+  },
+  "issue": {
+    "online": "Online source",
+    "local": "Local source",
+    "partial": "{level} (partial)",
+    "unconfirmed": "Not confirmed",
+    "heading": "Lyrics issue (to be checked)",
+    "location": "Location: {value}",
+    "candidate": "Search result",
+    "saved": "Saved source",
+    "source": "Source: {value}",
+    "song": "Result song: {value}",
+    "level": "Sync level: {value}",
+    "offset": "Local time offset: {value} ms (for reference only)",
+    "where": "Where / when:",
+    "actual": "What happened:",
+    "expected": "Expected:",
+    "steps": "Steps to reproduce:"
+  },
+  "reading": {
+    "loadTitle": "Couldn't load readings",
+    "load": "Couldn't load the reading data. Try again.",
+    "generateTitle": "Couldn't create readings",
+    "generate": "Readings weren't created. Try again.",
+    "setLineTitle": "Couldn't change the reading",
+    "setLine": "The reading wasn't saved. Try again.",
+    "deleteTitle": "Couldn't delete readings",
+    "delete": "Couldn't delete the readings. Try again."
+  }
+}

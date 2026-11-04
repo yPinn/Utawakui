@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../../lib/i18n');
 const {
   findTrackRecord,
   getTrackLyricsState,
@@ -56,7 +57,7 @@ function registerLyricsDocumentHandlers({
     )
       throw createAppError({
         code: 'LYRICS_SOURCE_INVALID',
-        message: '無法執行這個歌詞來源操作。',
+        message: t('errors.LYRICS_SOURCE_INVALID.message'),
       });
     try {
       return await run();
@@ -74,8 +75,8 @@ function registerLyricsDocumentHandlers({
           severity: 'warning',
           message:
             error.code === 'LYRICS_SOURCE_UNUSABLE'
-              ? '這份歌詞時間資料無法保存，請先檢查來源版本。'
-              : '歌詞來源或保存版本已變更，請重新讀取後再試一次。',
+              ? t('errors.LYRICS_SOURCE_UNUSABLE.message')
+              : t('errors.LYRICS_SOURCE_STALE.message'),
         });
       return runDiagnosticIpcOperation(
         {
@@ -87,7 +88,7 @@ function registerLyricsDocumentHandlers({
           },
           publicError: {
             code: 'LYRICS_SOURCE_FAILED',
-            message: '歌詞來源操作未完成，請再試一次。',
+            message: t('errors.LYRICS_SOURCE_FAILED.message'),
             context: { retryable: true },
           },
         },
@@ -252,7 +253,7 @@ function registerLyricsDocumentHandlers({
     if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 
     const picked = await dialog.showOpenDialog(getMainWindow() ?? undefined, {
-      title: '匯入歌詞檔',
+      title: t('lyricsAcquisition.importFileTitle'),
       properties: ['openFile'],
       filters: [
         { name: 'Lyrics', extensions: ['lrc', 'vtt', 'txt'] },

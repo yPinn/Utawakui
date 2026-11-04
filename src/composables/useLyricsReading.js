@@ -1,5 +1,6 @@
 import { reactive, readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 // Single shared instance (module scope, not per-component), same as
 // usePlayer.js: LyricsAuthoringWorkspace unmounts on every tab
@@ -89,8 +90,8 @@ async function loadReading(trackId, sourceFilename, document) {
       if (loadRevisions.get(key) !== revision) return undefined;
       state.docs.delete(key);
       const appError = recordError(err, {
-        title: '讀取讀音資料失敗',
-        message: '目前無法讀取讀音資料，請再試一次。',
+        title: t('lyricsSource.reading.loadTitle'),
+        message: t('lyricsSource.reading.load'),
         source: 'lyrics-reading',
         operation: 'get',
         context: { trackId, sourceFilename },
@@ -173,8 +174,8 @@ async function generateReading(trackId, sourceFilename, document, script) {
     state.docs.set(key, doc);
   } catch (err) {
     const appError = recordError(err, {
-      title: '產生讀音失敗',
-      message: '讀音未產生，請再試一次。',
+      title: t('lyricsSource.reading.generateTitle'),
+      message: t('lyricsSource.reading.generate'),
       source: 'lyrics-reading',
       operation: 'generate',
       context: { trackId, sourceFilename },
@@ -207,8 +208,8 @@ async function setReadingLine(
     state.errors.delete(key);
   } catch (err) {
     const appError = recordError(err, {
-      title: '修改讀音失敗',
-      message: '讀音未儲存，請再試一次。',
+      title: t('lyricsSource.reading.setLineTitle'),
+      message: t('lyricsSource.reading.setLine'),
       source: 'lyrics-reading',
       operation: 'set-line',
       context: { trackId, sourceFilename, lineId },
@@ -226,8 +227,8 @@ async function deleteReading(trackId, sourceFilename) {
     state.errors.delete(key);
   } catch (err) {
     recordError(err, {
-      title: '刪除讀音失敗',
-      message: '目前無法刪除讀音，請再試一次。',
+      title: t('lyricsSource.reading.deleteTitle'),
+      message: t('lyricsSource.reading.delete'),
       source: 'lyrics-reading',
       operation: 'delete',
       context: { trackId, sourceFilename },

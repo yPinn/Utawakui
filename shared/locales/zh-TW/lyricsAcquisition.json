@@ -13,5 +13,12 @@
   "searchStart": "輸入歌名開始搜尋。",
   "saveSearchAgain": "歌詞尚未儲存，請重新搜尋後再試。",
   "resultsAnnouncement": "找到 {versions} 個版本、{count} 個歌詞來源",
-  "candidateAnnouncement": "找到 {count} 筆候選歌詞"
+  "candidateAnnouncement": "找到 {count} 筆候選歌詞",
+  "flowRequired": "請先到設定啟用歌詞來源，才能搜尋、保存或整理線上歌詞。",
+  "flowRequiredShort": "請先到設定啟用歌詞來源",
+  "probeRestart": "請重新啟動應用程式後再檢查歌詞來源。",
+  "probeFailed": "目前無法檢查歌詞來源，請再試一次。",
+  "netease": "網易雲音樂",
+  "manual": "手動匯入",
+  "importFileTitle": "匯入歌詞檔"
 }
