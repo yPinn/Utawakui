@@ -40,7 +40,7 @@
     "edit": "Edit lyrics",
     "editTitle": "Edit this song's lyrics, sources and readings in the library",
     "selectionHint": "Play a track from the library to see its lyrics.",
-    "uncheckedHint": "Press Edit lyrics, then rescan from Edit."
+    "uncheckedHint": "Press Edit lyrics, then rescan the lyrics."
   },
   "preview": {
     "heading": "Lyrics preview",

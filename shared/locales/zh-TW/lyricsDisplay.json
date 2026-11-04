@@ -8,7 +8,7 @@
   "reading": {
     "off": "關閉",
     "furigana": "假名",
-    "romaji": "羅馬字"
+    "romaji": "羅馬拼音"
   },
   "text": {
     "original": "原文",
@@ -40,7 +40,7 @@
     "edit": "編輯歌詞",
     "editTitle": "在曲庫編輯這首歌的歌詞、來源與讀音",
     "selectionHint": "從曲庫播放曲目，即可查看歌詞。",
-    "uncheckedHint": "按「編輯歌詞」，從「編輯」重新掃描。"
+    "uncheckedHint": "按「編輯歌詞」後重新掃描歌詞。"
   },
   "preview": {
     "heading": "歌詞預覽",
