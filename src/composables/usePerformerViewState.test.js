@@ -207,7 +207,7 @@ describe('usePerformerViewState', () => {
     expect(state.controlPending.value).toBe(false);
     bridge.control.mockResolvedValueOnce(false);
     expect(await state.control('reading-romaji')).toBe(false);
-    expect(state.error.value).toBe('主控制台目前無法完成操作，請再試一次。');
+    expect(state.error.value).toBe('主視窗目前無法完成操作，請再試一次。');
   });
 
   it('normalizes command state and clears an earlier public error', async () => {
@@ -310,9 +310,7 @@ describe('usePerformerViewState', () => {
     });
     bridge.adjustLyricsOffset.mockResolvedValueOnce(false);
     expect(await state.adjustLyricsOffset('advance')).toBe(false);
-    expect(state.error.value).toBe(
-      '主控制台目前無法套用同步調整，請再試一次。',
-    );
+    expect(state.error.value).toBe('主視窗目前無法套用同步調整，請再試一次。');
   });
 
   it('refreshes the projected frame at the next lyrics boundary', async () => {
@@ -352,7 +350,7 @@ describe('usePerformerViewState', () => {
 
     await lifecycle.mounted[0]();
 
-    expect(state.error.value).toBe('表演者畫面初始化未完成，請重新開啟。');
+    expect(state.error.value).toBe('提詞器初始化未完成，請重新開啟。');
   });
 
   it('unsubscribes both bridge event streams on unmount', async () => {

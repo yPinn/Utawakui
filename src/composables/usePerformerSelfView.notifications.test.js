@@ -49,7 +49,7 @@ describe('performer shell notification integration', () => {
     const owner = usePerformerSelfView();
     await owner.refreshStatus();
     expect(useAppNotifications().items.value[0]).toMatchObject({
-      title: '表演者畫面操作未完成',
+      title: '提詞器操作未完成',
       tone: 'danger',
       actionLabel: '重試',
     });

@@ -31,14 +31,14 @@
     "distanceLabel": "閱讀距離"
   },
   "selfView": {
-    "restart": "表演者畫面需要重新啟動應用程式才能載入新版橋接 API。",
-    "failedTitle": "表演者畫面操作未完成",
+    "restart": "請重新啟動應用程式後再開啟提詞器。",
+    "failedTitle": "提詞器操作未完成",
     "retry": "重試",
     "controlFailed": "提詞器操作未完成，請再試一次。",
     "tryAgain": "請再試一次。",
-    "readFailed": "目前無法讀取表演者畫面狀態。",
-    "openFailed": "目前無法開啟表演者畫面，請再試一次。",
-    "closeFailed": "目前無法關閉表演者畫面，請再試一次。"
+    "readFailed": "目前無法讀取提詞器狀態。",
+    "openFailed": "目前無法開啟提詞器，請再試一次。",
+    "closeFailed": "目前無法關閉提詞器，請再試一次。"
   },
   "track": {
     "status": {
@@ -53,12 +53,12 @@
     "next": "接下來"
   },
   "viewState": {
-    "bridgeMissing": "表演者畫面橋接 API 尚未載入。",
+    "bridgeMissing": "提詞器尚未載入完成。",
     "windowFailed": "目前無法完成視窗操作，請再試一次。",
     "distanceNotSaved": "閱讀距離設定未儲存，請再試一次。",
-    "syncFailed": "主控制台目前無法套用同步調整，請再試一次。",
-    "controlFailed": "主控制台目前無法完成操作，請再試一次。",
-    "initFailed": "表演者畫面初始化未完成，請重新開啟。"
+    "syncFailed": "主視窗目前無法套用同步調整，請再試一次。",
+    "controlFailed": "主視窗目前無法完成操作，請再試一次。",
+    "initFailed": "提詞器初始化未完成，請重新開啟。"
   },
   "actionBar": {
     "label": "提詞器操作列",

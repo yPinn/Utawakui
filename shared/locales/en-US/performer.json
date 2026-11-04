@@ -31,14 +31,14 @@
     "distanceLabel": "Reading distance"
   },
   "selfView": {
-    "restart": "Restart the app to load the performer view.",
-    "failedTitle": "Performer view action not completed",
+    "restart": "Restart the app, then open the teleprompter again.",
+    "failedTitle": "Teleprompter action not completed",
     "retry": "Retry",
     "controlFailed": "The teleprompter action didn't finish. Try again.",
     "tryAgain": "Try again.",
-    "readFailed": "The performer view status can't be read right now.",
-    "openFailed": "The performer view can't be opened right now. Try again.",
-    "closeFailed": "The performer view can't be closed right now. Try again."
+    "readFailed": "The teleprompter status can't be read right now.",
+    "openFailed": "The teleprompter can't be opened right now. Try again.",
+    "closeFailed": "The teleprompter can't be closed right now. Try again."
   },
   "track": {
     "status": {
@@ -53,12 +53,12 @@
     "next": "Up next"
   },
   "viewState": {
-    "bridgeMissing": "The performer view hasn't loaded yet.",
+    "bridgeMissing": "The teleprompter hasn't finished loading.",
     "windowFailed": "The window action can't be completed right now. Try again.",
     "distanceNotSaved": "The reading distance wasn't saved. Try again.",
     "syncFailed": "The main window can't apply the sync adjustment right now. Try again.",
     "controlFailed": "The main window can't complete the action right now. Try again.",
-    "initFailed": "The performer view didn't finish starting. Reopen it."
+    "initFailed": "The teleprompter didn't finish starting. Reopen it."
   },
   "actionBar": {
     "label": "Teleprompter actions",
