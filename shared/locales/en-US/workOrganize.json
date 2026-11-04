@@ -1,0 +1,14 @@
+{
+  "reload": "The data changed. Reload before editing.",
+  "failedTitle": "Song organizing not completed",
+  "failed": "Song details can't be read or saved right now. Try again.",
+  "targetChanged": "The selected track's audio changed. Check that track or choose another.",
+  "audioChanged": "The audio changed. Check this track's song and version, then save again.",
+  "conflict": "The data changed; your draft is kept. Reload before editing.",
+  "discardTitle": "Discard song organizing changes?",
+  "discardMessage": "Unsaved changes will be discarded.",
+  "discardConfirm": "Discard changes",
+  "searchFailed": "Songs can't be searched right now. Try again.",
+  "versionsReload": "The data changed. Reload the version list.",
+  "nameRequired": "Enter a work name."
+}

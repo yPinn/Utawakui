@@ -1,13 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./PlaylistSidebar.vue', import.meta.url),
-  'utf8',
 );
-const rowSource = readFileSync(
+const rowSource = readCatalogSource(
   new URL('./PlaylistSidebarRow.vue', import.meta.url),
-  'utf8',
 );
 
 describe('PlaylistSidebar compact-to-expanded stability', () => {
@@ -242,9 +240,8 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
   });
 
   it('uses neutral row selection and preserves keyboard focus without a plate ring', () => {
-    const tokens = readFileSync(
+    const tokens = readCatalogSource(
       new URL('../../styles/tokens.css', import.meta.url),
-      'utf8',
     );
     expect(
       tokens.match(

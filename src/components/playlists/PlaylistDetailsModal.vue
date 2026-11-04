@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // The single collection-details editor. Name and description are drafted locally
 // and committed only on Save, instead of relying on Enter/blur. A cover change
 // (choose/clear) still commits immediately, since it is an independent async IPC
@@ -36,7 +37,9 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save', 'chooseCover', 'clearCover']);
 
 const modalTitle = computed(() =>
-  props.isAlbum ? '編輯專輯' : '編輯播放清單',
+  props.isAlbum
+    ? t('playlist.details.editAlbum')
+    : t('playlist.details.editPlaylist'),
 );
 
 const nameDraft = shallowRef('');
@@ -96,7 +99,7 @@ function cancel() {
                 :disabled="saving"
                 @click="emit('chooseCover')"
               >
-                選擇封面
+                {{ t('playlist.details.chooseCover') }}
               </UiButton>
             </UiArtworkReveal>
           </template>
@@ -108,7 +111,7 @@ function cancel() {
           >
             <UiIconButton
               :icon="X"
-              label="移除封面"
+              :label="t('playlist.details.removeCover')"
               variant="overlay"
               intent="danger"
               :disabled="saving"
@@ -123,7 +126,7 @@ function cancel() {
           id="playlist-details-name"
           v-model="nameDraft"
           class="playlist-details__name-field"
-          label="名稱"
+          :label="t('playlist.details.name')"
           label-hidden
           text-role="title"
           :maxlength="200"
@@ -136,14 +139,14 @@ function cancel() {
           id="playlist-details-description"
           v-model="descriptionDraft"
           class="playlist-details__description-field"
-          label="說明"
+          :label="t('playlist.details.description')"
           label-hidden
           fill
           resize="none"
           :rows="3"
           :maxlength="500"
           :disabled="saving"
-          placeholder="新增說明"
+          :placeholder="t('playlist.details.descriptionPlaceholder')"
         />
         <p
           v-else-if="description"
@@ -158,19 +161,19 @@ function cancel() {
     <template #footer>
       <!-- Footnote sits on the action row so the fields keep the cover's height. -->
       <UiHint v-if="!isAlbum" class="playlist-details__footnote">
-        封面會立即套用；其他變更需儲存。
+        {{ t('playlist.details.coverHint') }}
       </UiHint>
       <UiButton variant="secondary" :disabled="saving" @click="cancel">
-        取消
+        {{ t('playlist.details.cancel') }}
       </UiButton>
       <UiButton
         variant="accent"
         :loading="saving"
-        loading-label="儲存中"
+        :loading-label="t('playlist.details.saving')"
         :disabled="saving"
         @click="save"
       >
-        儲存
+        {{ t('playlist.details.save') }}
       </UiButton>
     </template>
   </UiModal>

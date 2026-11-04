@@ -1,31 +1,32 @@
 import { onScopeDispose, reactive, readonly } from 'vue';
+import { t } from '../utils/i18n.js';
 
 const SEARCH_FAILURE_MESSAGES = Object.freeze({
-  disabled: '請先在設定啟用並準備外部來源工具。',
-  'rate-limited': '外部來源暫時限制了搜尋，請稍後再試。',
-  'circuit-open': '外部來源暫時限制了搜尋，請稍後再試。',
-  'provider-rejected': '外部來源目前無法使用，請稍後再試。',
-  'schema-error': '外部來源目前無法使用，請稍後再試。',
-  busy: '搜尋要求較多，請稍後再試。',
+  disabled: t('artist.photo.needsProvider'),
+  'rate-limited': t('artist.photo.rateLimited'),
+  'circuit-open': t('artist.photo.rateLimited'),
+  'provider-rejected': t('artist.photo.providerUnavailable'),
+  'schema-error': t('artist.photo.providerUnavailable'),
+  busy: t('artist.photo.busy'),
 });
 
 const APPLY_FAILURE_MESSAGES = Object.freeze({
-  'candidate-stale': '候選照片已過期，請重新搜尋。',
-  'candidate-unavailable': '候選照片已過期，請重新搜尋。',
-  disabled: '請先在設定啟用並準備外部來源工具。',
+  'candidate-stale': t('artist.photo.stale'),
+  'candidate-unavailable': t('artist.photo.stale'),
+  disabled: t('artist.photo.needsProvider'),
 });
 
 function searchFailureMessage(result) {
   return (
     SEARCH_FAILURE_MESSAGES[result?.reason ?? result?.status] ??
-    '目前無法搜尋藝人照片，請稍後再試。'
+    t('artist.photo.searchFailed')
   );
 }
 
 function applyFailureMessage(result) {
   return (
     APPLY_FAILURE_MESSAGES[result?.reason ?? result?.status] ??
-    '藝人照片未套用，請再試一次。'
+    t('artist.photo.applyFailed')
   );
 }
 
@@ -140,7 +141,7 @@ export function useArtistPhotoCandidates({
     if (!state.open || !state.artistId) return null;
     if (typeof api?.searchArtistPhotoCandidates !== 'function') {
       state.status = 'error';
-      state.error = '需要重新啟動應用程式。';
+      state.error = t('artist.photo.restart');
       return null;
     }
 

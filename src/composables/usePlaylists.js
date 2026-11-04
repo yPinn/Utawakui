@@ -3,6 +3,7 @@ import { notificationKey } from '../constants/notificationKeys.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { normalizeAlbumReferenceTitle } from '../utils/albumReference.js';
+import { t } from '../utils/i18n.js';
 
 // Module-scope singleton preserves selection across tab unmounts.
 // Keep playback out so this stays testable under plain Node.
@@ -30,28 +31,49 @@ const notifications = useAppNotifications();
 
 const ERROR_PRESENTATION = Object.freeze({
   list: {
-    title: '讀取歌單失敗',
-    message: '目前無法讀取播放清單，請再試一次。',
+    title: t('playlist.notify.readTitle'),
+    message: t('playlist.notify.readMessage'),
   },
-  create: { title: '建立歌單失敗', message: '無法建立播放清單，請再試一次。' },
-  rename: { title: '重新命名歌單失敗', message: '變更未儲存，請再試一次。' },
-  delete: { title: '刪除歌單失敗', message: '無法刪除播放清單，請再試一次。' },
+  create: {
+    title: t('playlist.notify.createTitle'),
+    message: t('playlist.notify.createMessage'),
+  },
+  rename: {
+    title: t('playlist.notify.renameTitle'),
+    message: t('playlist.notify.notSaved'),
+  },
+  delete: {
+    title: t('playlist.notify.deleteTitle'),
+    message: t('playlist.notify.deleteMessage'),
+  },
   'set-kind': {
-    title: '轉換歌單類型失敗',
-    message: '變更未儲存，請再試一次。',
+    title: t('playlist.notify.kindTitle'),
+    message: t('playlist.notify.notSaved'),
   },
   'set-description': {
-    title: '更新歌單說明失敗',
-    message: '變更未儲存，請再試一次。',
+    title: t('playlist.notify.descriptionTitle'),
+    message: t('playlist.notify.notSaved'),
   },
-  'set-cover': { title: '設定封面失敗', message: '封面未更新，請再試一次。' },
-  'clear-cover': { title: '移除封面失敗', message: '封面未更新，請再試一次。' },
+  'set-cover': {
+    title: t('playlist.notify.setCoverTitle'),
+    message: t('playlist.notify.coverNotUpdated'),
+  },
+  'clear-cover': {
+    title: t('playlist.notify.clearCoverTitle'),
+    message: t('playlist.notify.coverNotUpdated'),
+  },
   'upsert-album': {
-    title: '建立專輯歌單失敗',
-    message: '專輯未儲存，請再試一次。',
+    title: t('playlist.notify.albumTitle'),
+    message: t('playlist.notify.albumNotSaved'),
   },
-  reorder: { title: '歌單排序儲存失敗', message: '排序未儲存，請再試一次。' },
-  'set-tracks': { title: '歌單儲存失敗', message: '變更未儲存，請再試一次。' },
+  reorder: {
+    title: t('playlist.notify.reorderTitle'),
+    message: t('playlist.notify.orderNotSaved'),
+  },
+  'set-tracks': {
+    title: t('playlist.notify.saveTitle'),
+    message: t('playlist.notify.notSaved'),
+  },
 });
 
 // Serialize mutations so rapid actions cannot overwrite each other.
@@ -75,8 +97,8 @@ function applyPlaylists(playlists) {
 }
 
 const UNKNOWN_ERROR = Object.freeze({
-  title: '歌單操作失敗',
-  message: '操作未完成，請再試一次。',
+  title: t('playlist.notify.operationTitle'),
+  message: t('playlist.notify.operationMessage'),
 });
 
 function formatError(operation, err) {
@@ -122,7 +144,7 @@ function enqueue(
           notifications.notify({
             key: notificationKey.playlists(errorOperation),
             title: (ERROR_PRESENTATION[errorOperation] ?? UNKNOWN_ERROR).title,
-            message: '請再試一次。',
+            message: t('playlist.notify.tryAgain'),
             tone: 'danger',
           });
       }
@@ -304,10 +326,10 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
     !window.Utawakui ||
     typeof window.Utawakui.reorderPlaylist !== 'function'
   ) {
-    state.actionError = '請重新啟動應用程式後再調整播放清單順序。';
+    state.actionError = t('playlist.notify.restartToReorder');
     notifications.notify({
       key: notificationKey.playlists('reorder'),
-      title: '歌單排序未儲存',
+      title: t('playlist.notify.reorderNotSavedTitle'),
       message: state.actionError,
       tone: 'danger',
     });

@@ -4,6 +4,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   query: { type: String, default: '' },
@@ -18,8 +19,8 @@ const emit = defineEmits(['update:query', 'update:selectedId', 'merge']);
 <template>
   <div class="artist-identity-merge">
     <UiSearchBox
-      label="搜尋要合併的藝人"
-      placeholder="搜尋藝人"
+      :label="t('artist.merge.searchLabel')"
+      :placeholder="t('artist.merge.search')"
       :model-value="query"
       :disabled="busy"
       @update:model-value="emit('update:query', $event)"
@@ -27,14 +28,14 @@ const emit = defineEmits(['update:query', 'update:selectedId', 'merge']);
     <UiRadioGroup
       v-if="items.length"
       name="artist-merge-target"
-      legend="選擇合併目標"
+      :legend="t('artist.merge.target')"
       :items="items"
       :model-value="selectedId"
       :disabled="busy"
       @update:model-value="emit('update:selectedId', $event)"
     />
     <UiHint v-else padded center role="status">
-      {{ query.trim() ? '找不到符合的藝人。' : '請先輸入藝人名稱。' }}
+      {{ t(query.trim() ? 'artist.merge.noMatch' : 'artist.merge.enterName') }}
     </UiHint>
     <div class="artist-identity-merge__action">
       <UiButton
@@ -44,7 +45,7 @@ const emit = defineEmits(['update:query', 'update:selectedId', 'merge']);
         :loading="busy"
         @click="emit('merge')"
       >
-        合併藝人
+        {{ t('artist.merge.merge') }}
       </UiButton>
     </div>
   </div>

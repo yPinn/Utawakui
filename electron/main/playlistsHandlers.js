@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const {
   deletePlaylistCoverDir,
   writePlaylistCoverFile,
@@ -110,23 +111,19 @@ function registerPlaylistsHandlers({
     if (current.epoch !== scope.epoch || current.dir !== scope.dir) {
       throw createAppError({
         code: 'PLAYLISTS_SCOPE_CHANGED',
-        title: '曲庫位置已變更',
-        message: '曲庫位置已變更，請重新載入後再操作。',
       });
     }
   }
   // Shared shape for every playlists:* diagnostic wrap below — keeps the
   // 11 handlers from repeating the same recordDiagnostic/publicError
   // boilerplate.
-  function withBoundary(operation, code, title, message, work) {
+  function withBoundary(operation, code, work) {
     return runDiagnosticIpcOperation(
       {
         recordDiagnostic,
         diagnostic: { source: 'playlists', operation, code },
         publicError: {
           code,
-          title,
-          message,
           context: { retryable: true },
         },
       },
@@ -170,88 +167,59 @@ function registerPlaylistsHandlers({
   // Every mutation resolves to the full playlist array so the renderer
   // can replace its state directly instead of a separate refetch.
   ipcMain.handle('playlists:list', async () =>
-    withBoundary(
-      'list',
-      'PLAYLISTS_LIST_FAILED',
-      '無法讀取歌單',
-      '目前無法讀取歌單，請稍後再試。',
-      async (assertCurrent) => {
-        await organizeSavedReleaseMetadata();
-        assertCurrent();
-        return withCoverUrls(
-          loadPlaylistsList(resolveDownloadDir(getConfig())),
-        );
-      },
-    ),
+    withBoundary('list', 'PLAYLISTS_LIST_FAILED', async (assertCurrent) => {
+      await organizeSavedReleaseMetadata();
+      assertCurrent();
+      return withCoverUrls(loadPlaylistsList(resolveDownloadDir(getConfig())));
+    }),
   );
 
   ipcMain.handle('playlists:create', async (event, name) =>
-    withBoundary(
-      'create',
-      'PLAYLISTS_CREATE_FAILED',
-      '無法建立歌單',
-      '目前無法建立歌單，請再試一次。',
-      () =>
-        withCoverUrls(
-          createPlaylistRecord(resolveDownloadDir(getConfig()), name),
-        ),
+    withBoundary('create', 'PLAYLISTS_CREATE_FAILED', () =>
+      withCoverUrls(
+        createPlaylistRecord(resolveDownloadDir(getConfig()), name),
+      ),
     ),
   );
 
   ipcMain.handle('playlists:rename', async (event, id, name) =>
-    withBoundary(
-      'rename',
-      'PLAYLISTS_RENAME_FAILED',
-      '歌單無法重新命名',
-      '這個歌單無法重新命名，請再試一次。',
-      () =>
-        withCoverUrls(
-          renamePlaylistRecord(resolveDownloadDir(getConfig()), id, name),
-        ),
+    withBoundary('rename', 'PLAYLISTS_RENAME_FAILED', () =>
+      withCoverUrls(
+        renamePlaylistRecord(resolveDownloadDir(getConfig()), id, name),
+      ),
     ),
   );
 
   ipcMain.handle('playlists:delete', async (event, id) =>
-    withBoundary(
-      'delete',
-      'PLAYLISTS_DELETE_FAILED',
-      '歌單無法刪除',
-      '這個歌單無法刪除，請再試一次。',
-      () => {
-        const dir = resolveDownloadDir(getConfig());
-        const target = loadPlaylistsList(dir).find(
-          (playlist) => playlist.id === id,
-        );
-        deletePlaylistCoverDirectory(dir, id);
-        const playlists = deletePlaylistRecord(dir, id);
-        if (target && ['playlist', 'album'].includes(target.kind)) {
-          deleteFolderPageObjectsForPage(dir, {
-            kind: target.kind,
-            id: target.id,
-          });
-        }
-        return withCoverUrls(playlists);
-      },
-    ),
+    withBoundary('delete', 'PLAYLISTS_DELETE_FAILED', () => {
+      const dir = resolveDownloadDir(getConfig());
+      const target = loadPlaylistsList(dir).find(
+        (playlist) => playlist.id === id,
+      );
+      deletePlaylistCoverDirectory(dir, id);
+      const playlists = deletePlaylistRecord(dir, id);
+      if (target && ['playlist', 'album'].includes(target.kind)) {
+        deleteFolderPageObjectsForPage(dir, {
+          kind: target.kind,
+          id: target.id,
+        });
+      }
+      return withCoverUrls(playlists);
+    }),
   );
 
   ipcMain.handle(
     'playlists:reorder',
     async (event, draggedId, targetId, position) =>
-      withBoundary(
-        'reorder',
-        'PLAYLISTS_REORDER_FAILED',
-        '歌單順序無法更新',
-        '歌單順序無法更新，請再試一次。',
-        () =>
-          withCoverUrls(
-            reorderPlaylistsList(
-              resolveDownloadDir(getConfig()),
-              draggedId,
-              targetId,
-              position,
-            ),
+      withBoundary('reorder', 'PLAYLISTS_REORDER_FAILED', () =>
+        withCoverUrls(
+          reorderPlaylistsList(
+            resolveDownloadDir(getConfig()),
+            draggedId,
+            targetId,
+            position,
           ),
+        ),
       ),
   );
 
@@ -261,19 +229,13 @@ function registerPlaylistsHandlers({
   // intent, same trust-boundary role importHandlers.js's extractVideoId()
   // plays for untrusted video ids.
   ipcMain.handle('playlists:set-tracks', async (event, id, trackIds) =>
-    withBoundary(
-      'set-tracks',
-      'PLAYLISTS_SET_TRACKS_FAILED',
-      '歌單曲目無法更新',
-      '這個歌單的曲目無法更新，請再試一次。',
-      () => {
-        const dir = resolveDownloadDir(getConfig());
-        const playlists = loadPlaylistsList(dir);
-        const target = playlists.find((p) => p.id === id);
-        if (target?.kind === 'album') return withCoverUrls(playlists);
-        return withCoverUrls(setPlaylistTrackIds(dir, id, trackIds));
-      },
-    ),
+    withBoundary('set-tracks', 'PLAYLISTS_SET_TRACKS_FAILED', () => {
+      const dir = resolveDownloadDir(getConfig());
+      const playlists = loadPlaylistsList(dir);
+      const target = playlists.find((p) => p.id === id);
+      if (target?.kind === 'album') return withCoverUrls(playlists);
+      return withCoverUrls(setPlaylistTrackIds(dir, id, trackIds));
+    }),
   );
 
   ipcMain.handle('playlists:upsert-album', async (event, payload) => {
@@ -281,8 +243,6 @@ function registerPlaylistsHandlers({
     return withBoundary(
       'upsert-album',
       'PLAYLISTS_UPSERT_ALBUM_FAILED',
-      '專輯無法同步',
-      '這張專輯目前無法同步，請再試一次。',
       async (assertCurrent) => {
         const dir = resolveDownloadDir(getConfig());
         let release = getProviderRelease(payload?.source);
@@ -346,32 +306,22 @@ function registerPlaylistsHandlers({
   });
 
   ipcMain.handle('playlists:set-kind', async (event, id, kind) =>
-    withBoundary(
-      'set-kind',
-      'PLAYLISTS_SET_KIND_FAILED',
-      '歌單類型無法更新',
-      '這個歌單的類型無法更新，請再試一次。',
-      () =>
-        withCoverUrls(
-          setPlaylistKindValue(resolveDownloadDir(getConfig()), id, kind),
-        ),
+    withBoundary('set-kind', 'PLAYLISTS_SET_KIND_FAILED', () =>
+      withCoverUrls(
+        setPlaylistKindValue(resolveDownloadDir(getConfig()), id, kind),
+      ),
     ),
   );
 
   ipcMain.handle('playlists:set-description', async (event, id, description) =>
-    withBoundary(
-      'set-description',
-      'PLAYLISTS_SET_DESCRIPTION_FAILED',
-      '歌單說明無法更新',
-      '這個歌單的說明無法更新，請再試一次。',
-      () =>
-        withCoverUrls(
-          setPlaylistDescriptionText(
-            resolveDownloadDir(getConfig()),
-            id,
-            description,
-          ),
+    withBoundary('set-description', 'PLAYLISTS_SET_DESCRIPTION_FAILED', () =>
+      withCoverUrls(
+        setPlaylistDescriptionText(
+          resolveDownloadDir(getConfig()),
+          id,
+          description,
         ),
+      ),
     ),
   );
 
@@ -381,8 +331,6 @@ function registerPlaylistsHandlers({
     return withBoundary(
       'choose-cover',
       'PLAYLISTS_CHOOSE_COVER_FAILED',
-      '封面無法更新',
-      '這個歌單的封面無法更新，請再試一次。',
       async (assertCurrent) => {
         const dir = resolveDownloadDir(getConfig());
         const playlists = loadPlaylistsList(dir);
@@ -391,7 +339,10 @@ function registerPlaylistsHandlers({
         const result = await dialog.showOpenDialog(getMainWindow(), {
           properties: ['openFile'],
           filters: [
-            { name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] },
+            {
+              name: t('library.dialog.images'),
+              extensions: ['jpg', 'jpeg', 'png', 'webp'],
+            },
           ],
         });
         assertCurrent();
@@ -409,17 +360,11 @@ function registerPlaylistsHandlers({
   });
 
   ipcMain.handle('playlists:clear-cover', async (event, id) =>
-    withBoundary(
-      'clear-cover',
-      'PLAYLISTS_CLEAR_COVER_FAILED',
-      '封面無法移除',
-      '這個歌單的封面無法移除，請再試一次。',
-      () => {
-        const dir = resolveDownloadDir(getConfig());
-        deletePlaylistCoverDirectory(dir, id);
-        return withCoverUrls(setPlaylistCoverFilename(dir, id, null));
-      },
-    ),
+    withBoundary('clear-cover', 'PLAYLISTS_CLEAR_COVER_FAILED', () => {
+      const dir = resolveDownloadDir(getConfig());
+      deletePlaylistCoverDirectory(dir, id);
+      return withCoverUrls(setPlaylistCoverFilename(dir, id, null));
+    }),
   );
 }
 

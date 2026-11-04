@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const { createAppError } = require('../lib/appError');
 const { createArtistIndexCache } = require('../lib/artists/artistIndex');
 const {
@@ -20,33 +21,21 @@ const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const OPERATION_ERRORS = Object.freeze({
   list: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_LIST_FAILED',
-    title: '無法讀取頁面物件',
-    message: '目前無法讀取這個頁面的物件，請稍後再試。',
   }),
   add: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_ADD_FAILED',
-    title: '無法新增頁面照片',
-    message: '這張照片目前無法加入頁面，請檢查格式或大小後再試。',
   }),
   note: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_NOTE_FAILED',
-    title: '無法儲存頁面便條',
-    message: '這張便條目前無法新增或儲存，請再試一次。',
   }),
   photo: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_PHOTO_TEXT_FAILED',
-    title: '無法儲存照片文字',
-    message: '這張照片的文字目前無法儲存，請再試一次。',
   }),
   layout: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_LAYOUT_FAILED',
-    title: '無法儲存頁面配置',
-    message: '物件的位置、固定狀態或層次目前無法儲存，請再試一次。',
   }),
   remove: Object.freeze({
     code: 'FOLDER_PAGE_OBJECT_REMOVE_FAILED',
-    title: '無法移除頁面物件',
-    message: '這個物件目前無法從頁面移除，請再試一次。',
   }),
 });
 
@@ -101,8 +90,6 @@ async function resolveArtistFolderPages(
 function pageInvalidError() {
   return createAppError({
     code: 'FOLDER_PAGE_OBJECT_PAGE_INVALID',
-    title: '無法使用這個頁面',
-    message: '目前頁面已不存在，請重新選擇播放清單、專輯或藝人。',
     context: { retryable: false },
   });
 }
@@ -241,7 +228,10 @@ function registerFolderPageObjectHandlers({
         const result = await dialog.showOpenDialog(getMainWindow(), {
           properties: ['openFile'],
           filters: [
-            { name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] },
+            {
+              name: t('library.dialog.images'),
+              extensions: ['jpg', 'jpeg', 'png', 'webp'],
+            },
           ],
         });
         if (result.canceled || !result.filePaths?.[0]) {

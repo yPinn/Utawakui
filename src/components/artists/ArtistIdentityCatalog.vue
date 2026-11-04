@@ -4,6 +4,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   status: { type: String, default: 'idle' },
@@ -24,26 +25,26 @@ const emit = defineEmits(['search', 'update:selectedId', 'apply']);
         :icon="Search"
         :disabled="busy"
         :loading="status === 'searching'"
-        loading-label="查詢中"
+        :loading-label="t('artist.catalog.searching')"
         @click="emit('search')"
       >
-        重新辨識
+        {{ t('artist.catalog.reidentify') }}
       </UiButton>
     </div>
     <UiNotice
       v-if="error"
       tone="warning"
-      title="MusicBrainz 查詢未完成"
+      :title="t('artist.catalog.failed')"
       :message="error"
       compact
     />
     <UiHint v-else-if="status === 'empty'" padded center role="status">
-      MusicBrainz 找不到相符的藝人資料。
+      {{ t('artist.catalog.noMatch') }}
     </UiHint>
     <UiRadioGroup
       v-if="items.length"
       name="artist-catalog-candidate"
-      legend="選擇 MusicBrainz 藝人資料"
+      :legend="t('artist.catalog.choose')"
       :items="items"
       :model-value="selectedId"
       :disabled="busy || status === 'searching'"
@@ -57,7 +58,7 @@ const emit = defineEmits(['search', 'update:selectedId', 'apply']);
         :loading="busy"
         @click="emit('apply')"
       >
-        套用資料
+        {{ t('artist.catalog.apply') }}
       </UiButton>
     </div>
   </div>

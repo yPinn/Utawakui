@@ -10,6 +10,7 @@ import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
+import { t } from '../../utils/i18n.js';
 
 const CANDIDATE_PHOTO_SIZE = ARTWORK_SIZE.xl;
 
@@ -32,7 +33,9 @@ const props = defineProps({
 const emit = defineEmits(['close', 'retry', 'selectCandidate', 'confirm']);
 
 const title = computed(() =>
-  props.artistName ? `選擇 ${props.artistName} 的照片` : '選擇藝人照片',
+  props.artistName
+    ? t('artist.photo.titleNamed', { name: props.artistName })
+    : t('artist.photo.title'),
 );
 const showsCandidates = computed(() =>
   ['ready', 'applying'].includes(props.status),
@@ -66,8 +69,7 @@ function selectCandidate(candidateId) {
   <UiModal :open="open" :title="title" size="wide" @close="emit('close')">
     <div class="artist-photo-candidate-modal">
       <UiHint tone="text">
-        從 YouTube Music 搜尋藝人圖片，套用後儲存到本機；Utawakui
-        不會登入你的帳號。
+        {{ t('artist.photo.privacy') }}
       </UiHint>
 
       <div
@@ -81,19 +83,19 @@ function selectCandidate(candidateId) {
           class="artist-photo-candidate-modal__search-skeleton"
           shape="circle"
         />
-        <UiHint center>正在搜尋藝人照片…</UiHint>
+        <UiHint center>{{ t('artist.photo.searching') }}</UiHint>
       </div>
 
       <UiHint v-else-if="status === 'empty'" padded center role="status">
-        找不到合適的藝人照片。
+        {{ t('artist.photo.none') }}
       </UiHint>
 
       <UiNotice
         v-if="error"
         tone="warning"
-        title="線上照片暫時不可用"
+        :title="t('artist.photo.unavailable')"
         :message="error"
-        action-label="重新搜尋"
+        :action-label="t('artist.photo.searchAgain')"
         @action="emit('retry')"
       />
 
@@ -101,7 +103,7 @@ function selectCandidate(candidateId) {
         v-if="showsCandidates && candidates.length"
         class="artist-photo-candidate-modal__candidates"
         name="artist-photo-candidate"
-        legend="選擇一張照片"
+        :legend="t('artist.photo.choose')"
         :items="candidateItems"
         :model-value="selectedCandidateId"
         appearance="tiles"
@@ -124,7 +126,9 @@ function selectCandidate(candidateId) {
             >
               <template v-if="candidate.previewStatus === 'loading'" #overlay>
                 <UiArtworkLoading
-                  :label="`正在載入 ${candidate.name} 的候選照片`"
+                  :label="
+                    t('artist.photo.loadingNamed', { name: candidate.name })
+                  "
                 />
               </template>
               <template
@@ -132,7 +136,7 @@ function selectCandidate(candidateId) {
                 #overlay
               >
                 <span class="artist-photo-candidate-modal__preview-error">
-                  <UiHint center>預覽無法載入</UiHint>
+                  <UiHint center>{{ t('artist.photo.previewFailed') }}</UiHint>
                 </span>
               </template>
             </UiCollageThumb>
@@ -145,15 +149,17 @@ function selectCandidate(candidateId) {
     </div>
 
     <template #footer>
-      <UiButton variant="secondary" @click="emit('close')">取消</UiButton>
+      <UiButton variant="secondary" @click="emit('close')">{{
+        t('artist.photo.cancel')
+      }}</UiButton>
       <UiButton
         variant="accent"
         :disabled="!canConfirm"
         :loading="status === 'applying'"
-        loading-label="套用中"
+        :loading-label="t('artist.photo.applying')"
         @click="confirm"
       >
-        套用照片
+        {{ t('artist.photo.apply') }}
       </UiButton>
     </template>
   </UiModal>

@@ -1,6 +1,7 @@
 import { computed, reactive, readonly } from 'vue';
 import { useAppConfirmation } from './useAppConfirmation.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 const emptyVersion = () => ({
   arrangement: 'unspecified',
@@ -77,7 +78,7 @@ function applySnapshot(snapshot) {
   state.relationship = snapshot.relationship || 'unknown';
   state.selection = { kind: 'keep' };
   state.needsReload = observedRevision > snapshot.revision;
-  state.error = state.needsReload ? '資料已變更，請重新載入後再編輯。' : '';
+  state.error = state.needsReload ? t('workOrganize.reload') : '';
   observedRevision = Math.max(observedRevision, snapshot.revision);
   baseline = draftKey();
 }
@@ -87,8 +88,8 @@ function report(error, operation) {
     code: 'WORK_ORGANIZATION_FAILED',
     source: 'work-organization',
     operation,
-    title: '歌曲整理未完成',
-    message: '目前無法讀取或儲存歌曲資料，請再試一次。',
+    title: t('workOrganize.failedTitle'),
+    message: t('workOrganize.failed'),
     context: { retryable: true },
   }).message;
 }
@@ -100,14 +101,14 @@ function expectedFailure(result) {
   }
   state.needsReload = ['conflict', 'not-found'].includes(result?.status);
   if (result?.status === 'target-changed') {
-    state.error = '所選曲目的音源已變更，請先確認該曲或選擇其他曲目。';
+    state.error = t('workOrganize.targetChanged');
   } else if (result?.status === 'binding-mismatch') {
     if (state.snapshot)
       state.snapshot = { ...state.snapshot, bindingStatus: 'changed' };
-    state.error = '音源已變更，請確認這首曲目的歌曲與版本後重新儲存。';
+    state.error = t('workOrganize.audioChanged');
   } else if (state.needsReload) {
-    state.error = '資料已變更，草稿仍保留。請重新載入後再編輯。';
-  } else state.error = '目前無法讀取或儲存歌曲資料，請再試一次。';
+    state.error = t('workOrganize.conflict');
+  } else state.error = t('workOrganize.failed');
 }
 
 async function reload() {
@@ -156,10 +157,10 @@ async function close({ discardChanges = false } = {}) {
     !discardChanges &&
     isDirty.value &&
     !(await confirm({
-      title: '捨棄歌曲整理變更？',
+      title: t('workOrganize.discardTitle'),
       subject: state.track?.title,
-      message: '尚未儲存的變更將會捨棄。',
-      confirmLabel: '捨棄變更',
+      message: t('workOrganize.discardMessage'),
+      confirmLabel: t('workOrganize.discardConfirm'),
     }))
   )
     return false;
@@ -193,7 +194,7 @@ async function search(query) {
     });
     if (current !== generation || request !== searchGeneration) return false;
     if (result?.status !== 'ok') {
-      state.searchError = '目前無法搜尋歌曲，請再試一次。';
+      state.searchError = t('workOrganize.searchFailed');
       return false;
     }
     if (result.libraryEpoch !== state.snapshot.libraryEpoch) {
@@ -252,7 +253,7 @@ async function loadMore() {
     }
     if (result.revision !== revision || state.snapshot.revision !== revision) {
       state.needsReload = true;
-      state.error = '資料已變更，請重新載入版本清單。';
+      state.error = t('workOrganize.versionsReload');
       return false;
     }
     const byId = new Map(
@@ -298,7 +299,7 @@ async function save({ reconfirm = false } = {}) {
     state.selection.kind === 'new' &&
     !String(state.selection.title || '').trim()
   ) {
-    state.error = '請輸入作品名稱。';
+    state.error = t('workOrganize.nameRequired');
     return false;
   }
   const current = generation;
@@ -350,7 +351,7 @@ function initialize() {
     if (event.revision <= state.snapshot.revision || state.saving) return;
     if (isDirty.value) {
       state.needsReload = true;
-      state.error = '資料已變更，草稿仍保留。請重新載入後再編輯。';
+      state.error = t('workOrganize.conflict');
     } else void reload();
   });
 }

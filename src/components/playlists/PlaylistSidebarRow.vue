@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Shared by PlaylistSidebar.vue's two v-for loops (playlists, albums) — the
 // row markup was identical between them before this extraction; drag/drop
 // is playlist-only, so those props/events simply go unused (default false)
@@ -41,13 +42,19 @@ const emit = defineEmits([
   'dragEnd',
 ]);
 
-const playlistDisplayName = computed(() => props.playlist.name || '未命名歌單');
+const playlistDisplayName = computed(
+  () => props.playlist.name || t('playlist.row.untitled'),
+);
 // Artist rows (ADR 0022) use a round single cover so the collapsed rail still
 // tells them apart from square album covers.
 const isArtist = computed(() => props.playlist.kind === 'artist');
-const selectLabel = computed(() => `選取 ${playlistDisplayName.value}`);
-const playbackLabel = computed(
-  () => `${props.playing ? '暫停' : '播放'} ${playlistDisplayName.value}`,
+const selectLabel = computed(() =>
+  t('playlist.row.selectNamed', { name: playlistDisplayName.value }),
+);
+const playbackLabel = computed(() =>
+  t(props.playing ? 'playlist.row.pauseNamed' : 'playlist.row.playNamed', {
+    name: playlistDisplayName.value,
+  }),
 );
 const dropPosition = computed(() => {
   if (props.dropBefore) return 'before';
@@ -174,7 +181,7 @@ function toggleFromArtwork(event) {
         class="playlist-sidebar-row__name"
         :lang="contentLangAttribute(playlist.name, playlist.artist)"
       >
-        {{ playlist.name || '(未命名歌單)' }}
+        {{ playlist.name || t('playlist.row.untitledParens') }}
       </span>
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>

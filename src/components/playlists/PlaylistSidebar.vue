@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Nav rows are bespoke; UiButton semantics do not match this full-row list.
 import {
   FolderOpen,
@@ -74,7 +75,7 @@ const {
   tooltipId: allTracksTooltipId,
   triggerProps: allTracksTooltipTriggerProps,
 } = useTooltip({
-  text: '全部曲目',
+  text: t('playlist.sidebar.all'),
   placement: 'end',
   disabled: computed(() => !props.compact),
   describedBy: false,
@@ -87,7 +88,7 @@ const {
   tooltipId: localTracksTooltipId,
   triggerProps: localTracksTooltipTriggerProps,
 } = useTooltip({
-  text: '本機檔案',
+  text: t('playlist.sidebar.local'),
   placement: 'end',
   disabled: computed(() => !props.compact),
   describedBy: false,
@@ -156,7 +157,7 @@ const initialLoading = computed(
 
 // Album subtitle uses derived artist; mixed playlists show kind only.
 function subtitleFor(playlist) {
-  if (playlist.kind !== 'album') return '播放清單';
+  if (playlist.kind !== 'album') return t('playlist.sidebar.playlist');
   const artist = orderedPlaylists.value.albumArtistById.get(playlist.id);
   const label = releaseTypeLabel(playlist.resolvedRelease?.type || 'album');
   return artist ? `${label}・${artist}` : label;
@@ -260,7 +261,7 @@ const visibleReferenceEntries = computed(() =>
 );
 
 function referenceSubtitle(entry) {
-  if (entry.kind === 'artist') return '藝人';
+  if (entry.kind === 'artist') return t('playlist.sidebar.artist');
   const label = releaseTypeLabel(entry.item?.resolvedRelease?.type || 'album');
   return entry.groupName ? `${label}・${entry.groupName}` : label;
 }
@@ -326,16 +327,16 @@ function createCollectionItems() {
     {
       id: 'create-playlist',
       kind: 'action',
-      label: '建立播放清單',
+      label: t('playlist.sidebar.create'),
       icon: ListPlus,
       value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
     },
     {
       id: 'create-folder',
       kind: 'action',
-      label: '建立資料夾',
+      label: t('playlist.sidebar.createFolder'),
       icon: FolderPlus,
-      disabledReason: '尚未支援',
+      disabledReason: t('playlist.sidebar.notSupported'),
       disabled: true,
       value: { action: PLAYLIST_MENU_ACTIONS.createFolder },
     },
@@ -361,7 +362,7 @@ const menuContent = computed(() => {
     {
       id: 'add-to-queue',
       kind: 'action',
-      label: '加入一般佇列',
+      label: t('playlist.sidebar.addToQueue'),
       icon: ListEnd,
       disabled: playlist.trackIds.length === 0,
       value: {
@@ -378,7 +379,11 @@ const menuContent = computed(() => {
   // no tracks to another playlist.
   if (playlist.trackIds.length > 0) {
     primaryItems.push(
-      addToPlaylistMenuItem(state.playlists, playlist, '新增至別的播放清單'),
+      addToPlaylistMenuItem(
+        state.playlists,
+        playlist,
+        t('playlist.sidebar.addToOther'),
+      ),
     );
   }
 
@@ -488,7 +493,7 @@ function startDrag(playlist, event) {
 <template>
   <nav
     class="playlist-sidebar"
-    aria-label="播放清單篩選與集合"
+    :aria-label="t('playlist.sidebar.filters')"
     @pointerenter="pointerInside = true"
     @pointerleave="pointerInside = false"
   >
@@ -497,14 +502,14 @@ function startDrag(playlist, event) {
         <UiSearchBox
           v-model="searchQuery"
           class="playlist-sidebar__search"
-          label="搜尋播放清單、專輯或曲目"
-          placeholder="搜尋"
+          :label="t('playlist.sidebar.searchLabel')"
+          :placeholder="t('playlist.sidebar.search')"
           icon-cell
         />
         <UiIconButton
           class="playlist-sidebar__toolbar-action"
           :icon="Plus"
-          label="新增播放清單"
+          :label="t('playlist.sidebar.new')"
           variant="command"
           @click="createPlaylist"
         />
@@ -512,7 +517,7 @@ function startDrag(playlist, event) {
       <UiIconButton
         class="playlist-sidebar__toolbar-action playlist-sidebar__toolbar-action--compact"
         :icon="Plus"
-        label="新增播放清單"
+        :label="t('playlist.sidebar.new')"
         variant="command"
         @click="createPlaylist"
       />
@@ -523,7 +528,7 @@ function startDrag(playlist, event) {
         v-bind="allTracksTooltipTriggerProps"
         type="button"
         class="playlist-sidebar__item"
-        aria-label="全部曲目"
+        :aria-label="t('playlist.sidebar.all')"
         :class="{
           'playlist-sidebar__item--active': isLibraryViewActive('all'),
         }"
@@ -542,11 +547,13 @@ function startDrag(playlist, event) {
           <Library :size="ICON_SIZE" aria-hidden="true" />
         </span>
         <span class="playlist-sidebar__info">
-          <span class="playlist-sidebar__label">全部曲目</span>
+          <span class="playlist-sidebar__label">{{
+            t('playlist.sidebar.all')
+          }}</span>
         </span>
         <UiTooltipSurface
           :open="allTracksTooltipOpen"
-          text="全部曲目"
+          :text="t('playlist.sidebar.all')"
           :tooltip-id="allTracksTooltipId"
           :position="allTracksTooltipPosition"
           placement="end"
@@ -558,7 +565,7 @@ function startDrag(playlist, event) {
         v-bind="localTracksTooltipTriggerProps"
         type="button"
         class="playlist-sidebar__item"
-        aria-label="本機檔案"
+        :aria-label="t('playlist.sidebar.local')"
         :class="{
           'playlist-sidebar__item--active': isLibraryViewActive('local'),
         }"
@@ -577,11 +584,13 @@ function startDrag(playlist, event) {
           <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
         </span>
         <span class="playlist-sidebar__info">
-          <span class="playlist-sidebar__label">本機檔案</span>
+          <span class="playlist-sidebar__label">{{
+            t('playlist.sidebar.local')
+          }}</span>
         </span>
         <UiTooltipSurface
           :open="localTracksTooltipOpen"
-          text="本機檔案"
+          :text="t('playlist.sidebar.local')"
           :tooltip-id="localTracksTooltipId"
           :position="localTracksTooltipPosition"
           placement="end"
@@ -601,7 +610,7 @@ function startDrag(playlist, event) {
       axis="vertical"
       :scrollbar-visibility="compact ? 'hidden' : 'auto'"
       tabindex="0"
-      aria-label="播放清單與參照內容"
+      :aria-label="t('playlist.sidebar.collections')"
       :aria-busy="initialLoading || undefined"
       @contextmenu="openGlobalMenu"
     >
@@ -610,9 +619,9 @@ function startDrag(playlist, event) {
         :class="{ 'ui-loading-content-enter': revealContent }"
         @animationend.self="finishReveal"
       >
-        <span v-if="initialLoading" class="ui-visually-hidden" role="status"
-          >正在讀取播放清單與參照內容</span
-        >
+        <span v-if="initialLoading" class="ui-visually-hidden" role="status">{{
+          t('playlist.sidebar.loading')
+        }}</span>
         <div
           v-if="initialLoading"
           :class="{ 'playlist-sidebar__skeleton--waiting': !skeletonVisible }"
@@ -637,22 +646,22 @@ function startDrag(playlist, event) {
         </div>
         <template v-else-if="state.error && !state.hasLoaded">
           <template v-if="compact">
-            <span class="ui-visually-hidden" role="status"
-              >播放清單讀取未完成</span
-            >
+            <span class="ui-visually-hidden" role="status">{{
+              t('playlist.sidebar.readFailed')
+            }}</span>
             <UiIconButton
               class="playlist-sidebar__retry"
               :icon="RefreshCw"
-              label="重試讀取播放清單"
+              :label="t('playlist.sidebar.retryRead')"
               @click="refresh"
             />
           </template>
           <UiNotice
             v-else
             tone="danger"
-            title="播放清單讀取未完成"
+            :title="t('playlist.sidebar.readFailed')"
             :message="state.error"
-            action-label="重試"
+            :action-label="t('playlist.sidebar.retry')"
             compact
             @action="refresh"
           />
@@ -731,7 +740,7 @@ function startDrag(playlist, event) {
           v-if="!initialLoading && hasSearchQuery && !hasVisibleCollectionItems"
           class="playlist-sidebar__empty"
         >
-          找不到符合的項目。
+          {{ t('playlist.sidebar.noMatch') }}
         </p>
       </div>
     </UiScrollLayout>

@@ -2,6 +2,7 @@
 import { ListMinus } from '../../icons/index.js';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   credits: { type: Array, default: () => [] },
@@ -23,20 +24,26 @@ const emit = defineEmits(['split']);
           {{ credit.name }}
         </strong>
         <span class="artist-identity-credits__count">
-          {{ credit.trackCount ?? 0 }} 首曲目
+          {{
+            t(
+              'artist.credits.trackCount',
+              { count: credit.trackCount ?? 0 },
+              credit.trackCount ?? 0,
+            )
+          }}
         </span>
       </span>
       <UiIconButton
         v-if="credits.length > 1"
         :icon="ListMinus"
-        :label="`拆分 ${credit.name}`"
+        :label="t('artist.credits.splitNamed', { name: credit.name })"
         tooltip-placement="start"
         :disabled="busy"
         @click="emit('split', credit.id)"
       />
     </li>
   </ul>
-  <UiHint v-else padded>目前沒有可整理的藝人標示。</UiHint>
+  <UiHint v-else padded>{{ t('artist.credits.empty') }}</UiHint>
 </template>
 
 <style scoped>

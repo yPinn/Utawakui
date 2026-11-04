@@ -1,17 +1,14 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const modalSource = readFileSync(
+const modalSource = readCatalogSource(
   new URL('./PlaylistDetailsModal.vue', import.meta.url),
-  'utf8',
 );
-const actionSource = readFileSync(
+const actionSource = readCatalogSource(
   new URL('../../composables/usePlaylistActions.js', import.meta.url),
-  'utf8',
 );
-const sidebarSource = readFileSync(
+const sidebarSource = readCatalogSource(
   new URL('../layout/AppPlaylistSidebar.vue', import.meta.url),
-  'utf8',
 );
 
 describe('PlaylistDetailsModal component contract', () => {

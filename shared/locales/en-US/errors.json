@@ -155,6 +155,34 @@
     "title": "FFmpeg source not updated",
     "message": "Try again."
   },
+  "FOLDER_PAGE_OBJECT_ADD_FAILED": {
+    "title": "Can't add page photo",
+    "message": "This photo can't be added to the page. Check its format or size and try again."
+  },
+  "FOLDER_PAGE_OBJECT_LAYOUT_FAILED": {
+    "title": "Can't save page layout",
+    "message": "Item positions, pins or layering can't be saved right now. Try again."
+  },
+  "FOLDER_PAGE_OBJECT_LIST_FAILED": {
+    "title": "Can't read page items",
+    "message": "This page's items can't be read right now. Try again later."
+  },
+  "FOLDER_PAGE_OBJECT_NOTE_FAILED": {
+    "title": "Can't save page note",
+    "message": "This note can't be added or saved right now. Try again."
+  },
+  "FOLDER_PAGE_OBJECT_PAGE_INVALID": {
+    "title": "Can't use this page",
+    "message": "This page no longer exists. Choose a playlist, album or artist again."
+  },
+  "FOLDER_PAGE_OBJECT_PHOTO_TEXT_FAILED": {
+    "title": "Can't save photo text",
+    "message": "This photo's text can't be saved right now. Try again."
+  },
+  "FOLDER_PAGE_OBJECT_REMOVE_FAILED": {
+    "title": "Can't remove page item",
+    "message": "This item can't be removed from the page right now. Try again."
+  },
   "IMPORT_DOWNLOAD_CANCELLED": {
     "title": "Import stopped",
     "message": "This track stopped downloading."
@@ -271,6 +299,54 @@
   "PERFORMANCE_SESSION_PLAN_UPDATE_FAILED": {
     "title": "Session track can't be updated",
     "message": "This session track can't be updated right now. Try again."
+  },
+  "PLAYLISTS_CHOOSE_COVER_FAILED": {
+    "title": "Artwork can't be updated",
+    "message": "This playlist's artwork can't be updated. Try again."
+  },
+  "PLAYLISTS_CLEAR_COVER_FAILED": {
+    "title": "Artwork can't be removed",
+    "message": "This playlist's artwork can't be removed. Try again."
+  },
+  "PLAYLISTS_CREATE_FAILED": {
+    "title": "Can't create playlist",
+    "message": "The playlist can't be created right now. Try again."
+  },
+  "PLAYLISTS_DELETE_FAILED": {
+    "title": "Playlist can't be deleted",
+    "message": "This playlist can't be deleted. Try again."
+  },
+  "PLAYLISTS_LIST_FAILED": {
+    "title": "Can't read playlists",
+    "message": "Playlists can't be read right now. Try again later."
+  },
+  "PLAYLISTS_RENAME_FAILED": {
+    "title": "Playlist can't be renamed",
+    "message": "This playlist can't be renamed. Try again."
+  },
+  "PLAYLISTS_REORDER_FAILED": {
+    "title": "Playlist order can't be updated",
+    "message": "The playlist order can't be updated. Try again."
+  },
+  "PLAYLISTS_SCOPE_CHANGED": {
+    "title": "Library location changed",
+    "message": "The library location changed. Reload and try again."
+  },
+  "PLAYLISTS_SET_DESCRIPTION_FAILED": {
+    "title": "Playlist description can't be updated",
+    "message": "This playlist's description can't be updated. Try again."
+  },
+  "PLAYLISTS_SET_KIND_FAILED": {
+    "title": "Playlist type can't be updated",
+    "message": "This playlist's type can't be updated. Try again."
+  },
+  "PLAYLISTS_SET_TRACKS_FAILED": {
+    "title": "Playlist tracks can't be updated",
+    "message": "This playlist's tracks can't be updated. Try again."
+  },
+  "PLAYLISTS_UPSERT_ALBUM_FAILED": {
+    "title": "Album can't be synced",
+    "message": "This album can't be synced right now. Try again."
   },
   "PROVIDER_SEARCH_FAILED": {
     "title": "YT Music / YouTube search not completed",

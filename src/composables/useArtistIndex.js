@@ -3,6 +3,7 @@ import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGates } from './useFeatureGates.js';
 import { useLibrary } from './useLibrary.js';
+import { t } from '../utils/i18n.js';
 
 // Module-scope, read-only projection of main's derived artist index (ADR 0022).
 // Requested lazily by the first artist-aware surface, then refetched whenever
@@ -82,8 +83,8 @@ async function refresh() {
     if (revision !== requestRevision) return;
     state.error = recordError(err, {
       code: 'ARTIST_INDEX_FAILED',
-      title: '藝人整理失敗',
-      message: '目前無法整理藝人，請稍後再試。',
+      title: t('artist.index.organizeFailedTitle'),
+      message: t('artist.index.organizeFailed'),
       source: 'library',
       operation: 'artist-index',
       context: { retryable: true },
@@ -166,8 +167,8 @@ async function changePhoto(action, artistId, errorOptions) {
 function choosePhoto(artistId) {
   return changePhoto('chooseArtistPhoto', artistId, {
     code: 'ARTIST_PHOTO_CHOOSE_FAILED',
-    title: '藝人照片無法更新',
-    message: '這張圖片無法作為藝人照片，請換一張再試。',
+    title: t('artist.index.photoUpdateTitle'),
+    message: t('artist.index.photoUpdate'),
     operation: 'choose',
   });
 }
@@ -175,21 +176,21 @@ function choosePhoto(artistId) {
 function clearPhoto(artistId) {
   return changePhoto('clearArtistPhoto', artistId, {
     code: 'ARTIST_PHOTO_CLEAR_FAILED',
-    title: '藝人照片無法移除',
-    message: '目前無法移除這張藝人照片，請再試一次。',
+    title: t('artist.index.photoRemoveTitle'),
+    message: t('artist.index.photoRemove'),
     operation: 'clear',
   });
 }
 
 const ORGANIZATION_CONFLICT_NOTICE = Object.freeze({
   code: 'ARTIST_ORGANIZATION_CONFLICT',
-  title: '藝人資料已更新',
-  message: '藝人資料已更新，請確認最新內容後再試一次。',
+  title: t('artist.index.changedTitle'),
+  message: t('artist.index.changed'),
 });
 const ORGANIZATION_ERROR_NOTICE = Object.freeze({
   code: 'ARTIST_ORGANIZATION_FAILED',
-  title: '藝人整理未完成',
-  message: '目前無法更新藝人整理，請稍後再試。',
+  title: t('artist.index.updateFailedTitle'),
+  message: t('artist.index.updateFailed'),
 });
 
 async function mutateOrganization(apiAction, args) {
@@ -272,7 +273,7 @@ async function searchCatalog(artistId) {
         status: 'disabled',
         artistId,
         candidates: [],
-        error: '請先在設定中啟用外部來源，再查詢 MusicBrainz。',
+        error: t('artist.index.needsProvider'),
       };
       return result;
     }
@@ -281,7 +282,7 @@ async function searchCatalog(artistId) {
         status: 'error',
         artistId,
         candidates: [],
-        error: 'MusicBrainz 目前無法使用，仍可手動整理藝人。',
+        error: t('artist.index.musicbrainzDown'),
       };
       return result ?? null;
     }
@@ -299,8 +300,8 @@ async function searchCatalog(artistId) {
     if (revision !== identityRequestRevision) return null;
     const notice = recordError(err, {
       code: 'ARTIST_IDENTITY_LOOKUP_FAILED',
-      title: '無法查詢藝人資料',
-      message: 'MusicBrainz 目前無法使用，仍可手動整理藝人。',
+      title: t('artist.index.lookupFailedTitle'),
+      message: t('artist.index.musicbrainzDown'),
       source: 'artist-identity',
       operation: 'search',
       context: { retryable: true },

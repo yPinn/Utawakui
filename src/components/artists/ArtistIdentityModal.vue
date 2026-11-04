@@ -9,6 +9,7 @@ import UiTextField from '../ui/UiTextField.vue';
 import ArtistIdentityCatalog from './ArtistIdentityCatalog.vue';
 import ArtistIdentityCredits from './ArtistIdentityCredits.vue';
 import ArtistIdentityMerge from './ArtistIdentityMerge.vue';
+import { t } from '../../utils/i18n.js';
 
 const MAX_DISPLAY_NAME_CHARS = 200;
 
@@ -41,7 +42,9 @@ const selectedCatalogCandidateId = shallowRef('');
 const advancedOpen = shallowRef(false);
 
 const title = computed(() =>
-  props.artist?.name ? `整理藝人：${props.artist.name}` : '整理藝人',
+  props.artist?.name
+    ? t('artist.modal.titleNamed', { name: props.artist.name })
+    : t('artist.modal.title'),
 );
 const credits = computed(() =>
   Array.isArray(props.artist?.credits) ? props.artist.credits : [],
@@ -59,7 +62,11 @@ const mergeTargets = computed(() => {
     .map((artist) => ({
       id: artist.id,
       label: artist.name,
-      description: `${artist.trackIds?.length ?? 0} 首曲目`,
+      description: t(
+        'artist.modal.trackCount',
+        { count: artist.trackIds?.length ?? 0 },
+        artist.trackIds?.length ?? 0,
+      ),
     }));
 });
 const canApplyDisplayName = computed(
@@ -71,17 +78,19 @@ const catalogCandidateItems = computed(() =>
   props.catalogCandidates.map((candidate) => {
     const evidence =
       candidate.evidence === 'exact-recording'
-        ? '名稱與曲目相符'
+        ? t('artist.modal.exactRecording')
         : candidate.evidence === 'exact'
-          ? '名稱相符，請確認'
-          : '可能相符，請確認';
+          ? t('artist.modal.exact')
+          : t('artist.modal.possible');
     const aliases = Array.isArray(candidate.aliases)
-      ? candidate.aliases.slice(0, 3).join('、')
+      ? candidate.aliases.slice(0, 3).join(t('common.listSeparator'))
       : '';
     return {
       id: candidate.candidateId,
       label: candidate.name,
-      description: aliases ? `${evidence}；別名：${aliases}` : evidence,
+      description: aliases
+        ? t('artist.modal.evidenceAliases', { evidence, aliases })
+        : evidence,
     };
   }),
 );
@@ -143,12 +152,12 @@ function applyCatalog() {
     @close="close"
   >
     <div class="artist-identity-modal">
-      <UiHint tone="text"> 曲目會統一顯示此名稱；原始標示仍可搜尋。 </UiHint>
+      <UiHint tone="text"> {{ t('artist.modal.displayHint') }} </UiHint>
 
       <UiNotice
         v-if="error"
         tone="warning"
-        title="藝人整理未完成"
+        :title="t('artist.modal.failed')"
         :message="error"
         compact
       />
@@ -156,8 +165,10 @@ function applyCatalog() {
       <div class="artist-identity-modal__workflow">
         <section class="artist-identity-modal__section">
           <div class="artist-identity-modal__section-heading">
-            <h3 class="artist-identity-modal__section-title">目前組合</h3>
-            <UiHint>若組合有誤，可拆回個別藝人。</UiHint>
+            <h3 class="artist-identity-modal__section-title">
+              {{ t('artist.modal.currentGroup') }}
+            </h3>
+            <UiHint>{{ t('artist.modal.splitHint') }}</UiHint>
           </div>
           <ArtistIdentityCredits
             :credits="credits"
@@ -168,18 +179,20 @@ function applyCatalog() {
 
         <section class="artist-identity-modal__section">
           <div class="artist-identity-modal__section-heading">
-            <h3 class="artist-identity-modal__section-title">整理狀態</h3>
+            <h3 class="artist-identity-modal__section-title">
+              {{ t('artist.modal.status') }}
+            </h3>
             <template v-if="artist?.identityResolved">
               <strong class="artist-identity-modal__status">
-                已自動整理
+                {{ t('artist.modal.auto') }}
               </strong>
-              <UiHint>若組合有誤，可拆分標示。</UiHint>
+              <UiHint>{{ t('artist.modal.splitCreditsHint') }}</UiHint>
             </template>
             <template v-else>
               <strong class="artist-identity-modal__status">
-                等待自動整理
+                {{ t('artist.modal.waiting') }}
               </strong>
-              <UiHint>找到相符資料後會自動整理。</UiHint>
+              <UiHint>{{ t('artist.modal.waitingHint') }}</UiHint>
             </template>
           </div>
         </section>
@@ -194,7 +207,13 @@ function applyCatalog() {
           aria-controls="artist-identity-advanced"
           @click="advancedOpen = !advancedOpen"
         >
-          {{ advancedOpen ? '收起修正' : '手動修正' }}
+          {{
+            t(
+              advancedOpen
+                ? 'artist.modal.collapseManual'
+                : 'artist.modal.manual',
+            )
+          }}
         </UiButton>
       </div>
 
@@ -205,14 +224,16 @@ function applyCatalog() {
       >
         <section class="artist-identity-modal__section">
           <div class="artist-identity-modal__section-heading">
-            <h3 class="artist-identity-modal__section-title">顯示名稱</h3>
-            <UiHint>套用於藝人頁與曲目。</UiHint>
+            <h3 class="artist-identity-modal__section-title">
+              {{ t('artist.modal.displayName') }}
+            </h3>
+            <UiHint>{{ t('artist.modal.displayNameHint') }}</UiHint>
           </div>
           <div class="artist-identity-modal__inline-action">
             <UiTextField
               id="artist-display-name"
               class="artist-identity-modal__display-name"
-              label="顯示名稱"
+              :label="t('artist.modal.displayName')"
               :model-value="displayNameDraft"
               :maxlength="MAX_DISPLAY_NAME_CHARS"
               :disabled="busy"
@@ -226,15 +247,17 @@ function applyCatalog() {
               :loading="busy"
               @click="applyDisplayName"
             >
-              儲存
+              {{ t('artist.modal.save') }}
             </UiButton>
           </div>
         </section>
 
         <section class="artist-identity-modal__section">
           <div class="artist-identity-modal__section-heading">
-            <h3 class="artist-identity-modal__section-title">合併藝人</h3>
-            <UiHint>只合併確定為同一人的項目。</UiHint>
+            <h3 class="artist-identity-modal__section-title">
+              {{ t('artist.modal.mergeTitle') }}
+            </h3>
+            <UiHint>{{ t('artist.modal.mergeHint') }}</UiHint>
           </div>
           <ArtistIdentityMerge
             :query="searchQuery"
@@ -251,8 +274,10 @@ function applyCatalog() {
           class="artist-identity-modal__section artist-identity-modal__section--catalog"
         >
           <div class="artist-identity-modal__section-heading">
-            <h3 class="artist-identity-modal__section-title">重新辨識</h3>
-            <UiHint>需要其他結果時，可選擇 MusicBrainz 資料。</UiHint>
+            <h3 class="artist-identity-modal__section-title">
+              {{ t('artist.modal.reidentify') }}
+            </h3>
+            <UiHint>{{ t('artist.modal.reidentifyHint') }}</UiHint>
           </div>
           <ArtistIdentityCatalog
             :status="lookupStatus"
@@ -276,10 +301,10 @@ function applyCatalog() {
         :loading="busy"
         @click="emit('undo')"
       >
-        復原
+        {{ t('artist.modal.undo') }}
       </UiButton>
       <UiButton variant="secondary" :disabled="busy" @click="close">
-        關閉
+        {{ t('artist.modal.close') }}
       </UiButton>
     </template>
   </UiModal>
