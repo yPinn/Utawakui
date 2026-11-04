@@ -483,5 +483,25 @@
   },
   "LYRICS_SOURCE_FAILED": {
     "message": "The lyrics source action didn't finish. Try again."
+  },
+  "LYRICS_ENV_INVALID_INTENT": {
+    "message": "The lyrics audio assist action didn't finish."
+  },
+  "LYRICS_ENV_OPERATION_FAILED": {
+    "title": "Lyrics audio assist",
+    "message": "The lyrics audio assist action didn't finish."
+  },
+  "LYRICS_RESEARCH_INVALID_INTENT": {
+    "message": "The research action request is invalid."
+  },
+  "LYRICS_RESEARCH_FAILED": {
+    "title": "Local lyrics research trial",
+    "message": "The research action didn't finish. Make sure FFmpeg is prepared, or download the research tools again to repair them. Your lyrics still work."
+  },
+  "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
+    "message": "The analysis request is invalid."
+  },
+  "LYRICS_EXPERIMENTAL_FAILED": {
+    "message": "Analysis didn't finish. Your accompaniment and lyrics still work."
   }
 }

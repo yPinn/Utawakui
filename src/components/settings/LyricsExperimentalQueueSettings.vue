@@ -6,6 +6,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import { Captions } from '../../icons/index.js';
+import { t } from '../../utils/i18n.js';
 
 const queue = useExperimentalLyricsQueue();
 const id = `lyrics-experimental-${useId()}`;
@@ -33,14 +34,14 @@ onUnmounted(() => clearInterval(timer));
 <template>
   <SettingsDocumentItem
     :icon="Captions"
-    title="伴奏完成後分析歌詞"
-    guidance="分析新完成的伴奏；結果、重試與套用請至歌詞頁。不會自動下載工具或改寫原歌詞。"
+    :title="t('lyricsResearch.queue.title')"
+    :guidance="t('lyricsResearch.queue.guidance')"
   >
     <template #actions>
       <UiCheckbox
         :id="id"
-        label="自動分析"
-        aria-label="伴奏完成後自動分析歌詞"
+        :label="t('lyricsResearch.queue.auto')"
+        :aria-label="t('lyricsResearch.queue.autoLabel')"
         :model-value="queue.state.value?.enabled === true"
         :disabled="
           saving ||
@@ -56,9 +57,9 @@ onUnmounted(() => clearInterval(timer));
       "
       #feedback
     >
-      <UiHint v-if="queue.state.value && !queue.state.value.allowed"
-        >請先啟用音訊處理功能。</UiHint
-      >
+      <UiHint v-if="queue.state.value && !queue.state.value.allowed">{{
+        t('lyricsResearch.queue.enableProcessing')
+      }}</UiHint>
       <UiHint v-if="queue.error.value" tone="danger" role="alert">{{
         queue.error.value
       }}</UiHint>
@@ -70,14 +71,14 @@ onUnmounted(() => clearInterval(timer));
         role="alert"
         >{{ queue.readError.value }}</UiHint
       >
-      <UiHint v-if="!queue.state.value && !queue.error.value" role="status"
-        >讀取中；尚未確認自動分析設定。</UiHint
-      >
+      <UiHint v-if="!queue.state.value && !queue.error.value" role="status">{{
+        t('lyricsResearch.queue.loading')
+      }}</UiHint>
       <UiButton
         v-if="queue.readError.value"
         variant="ghost"
         @click="queue.refresh"
-        >重新讀取</UiButton
+        >{{ t('lyricsResearch.settings.actions.refresh') }}</UiButton
       >
     </template>
   </SettingsDocumentItem>

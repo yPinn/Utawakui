@@ -1,0 +1,162 @@
+{
+  "languages": {
+    "auto": "自動辨識",
+    "zh": "中文",
+    "ja": "日文",
+    "en": "英文"
+  },
+  "settings": {
+    "title": "歌詞時間分析（實驗）",
+    "notice": "僅供本機研究試用。時間精度尚待人工驗證；模型權重及字典之使用與散布授權範圍尚待釐清。",
+    "tool": "歌詞分析工具",
+    "toolDescription": "估算中、日、英文歌詞分段時間；需使用 Utawakui 管理的音訊轉換工具。",
+    "size": "下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 空間。",
+    "cancelLabel": "取消操作並等待清理",
+    "previewTitle": "片段預覽（進階）",
+    "previewRequirement": "需在「本機音訊處理 → 工具與模型 → 音訊轉換工具」選用「Utawakui 管理版本」。分析使用 HubertFA 與 Whisper small；正式歌詞音訊輔助仍未開放。",
+    "previewLimit": "每次分析約 30 秒、最多 10 句歌詞，結果僅在此預覽。",
+    "stage": {
+      "download": "下載工具中",
+      "prepare": "準備中",
+      "verify": "檢查工具中",
+      "extract": "解壓縮中",
+      "preview": "等待分析",
+      "analyze": "分析歌詞中",
+      "hubertfa": "分析分段時間中",
+      "small": "檢查歌詞內容中",
+      "remove": "移除中",
+      "other": "處理中"
+    },
+    "status": {
+      "missing": "未下載",
+      "unverified": "待檢查",
+      "ready": "可使用",
+      "damaged": "需要修復",
+      "unknown": "尚未讀取"
+    },
+    "actions": {
+      "download": "下載工具",
+      "check": "檢查工具",
+      "repair": "重新下載修復",
+      "refresh": "重新讀取",
+      "remove": "移除工具"
+    }
+  },
+  "preview": {
+    "track": "曲庫歌曲",
+    "trackPlaceholder": "選擇已有歌詞的歌曲",
+    "language": "分析語言",
+    "line": "從哪句開始試算",
+    "linePlaceholder": "選擇有時間的歌詞句",
+    "source": "歌詞來源：{source}。優先使用你選擇的來源，未選擇時依語言挑選。",
+    "generate": "產生預覽",
+    "label": "獨立詞塊預覽",
+    "hint": "優先使用原有的逐字時間；分析結果不適用時，仍按整句顯示。此處僅供預覽，不會套用至歌詞或演出畫面。",
+    "modeResearch": "分析分段",
+    "playLine": "從本句播放",
+    "contradiction": "分析與歌詞內容不一致，已改為整句顯示。",
+    "missing": "可能有缺漏歌詞，請播放確認。"
+  },
+  "acoustic": {
+    "status": {
+      "blocked": "尚未開放準備",
+      "missing": "未準備",
+      "ready": "環境可用",
+      "unverified": "待驗證載入",
+      "damaged": "需要修復",
+      "removePending": "移除尚未完成",
+      "preparing": "準備中",
+      "verifying": "驗證載入中",
+      "removing": "移除中",
+      "unknown": "無法讀取"
+    },
+    "title": "歌詞音訊輔助",
+    "prepare": "準備歌詞音訊輔助環境",
+    "repair": "修復",
+    "remove": "移除",
+    "itemTitle": "歌詞音訊輔助元件",
+    "description": "正式歌詞分析所需工具，與實驗功能分開管理。",
+    "busy": "環境操作中",
+    "verify": "驗證載入",
+    "cancel": "取消操作",
+    "removePendingHint": "上次移除未完成，請再次移除以清理剩餘元件。原有歌詞仍可使用。",
+    "blockedNotice": "模型使用與分發資料確認中，暫不提供下載。",
+    "refresh": "重新讀取環境狀態",
+    "errors": {
+      "status": "目前無法讀取歌詞音訊輔助環境，請重新讀取。",
+      "operation": "歌詞音訊輔助環境操作未完成，原有歌詞仍可使用。",
+      "cancel": "取消未完成，請稍後重新讀取環境狀態。"
+    }
+  },
+  "queue": {
+    "title": "伴奏完成後分析歌詞",
+    "guidance": "分析新完成的伴奏；結果、重試與套用請至歌詞頁。不會自動下載工具或改寫原歌詞。",
+    "auto": "自動分析",
+    "autoLabel": "伴奏完成後自動分析歌詞",
+    "enableProcessing": "請先啟用音訊處理功能。",
+    "loading": "讀取中；尚未確認自動分析設定。",
+    "errors": {
+      "read": "無法讀取詞塊分析狀態，請再試一次。",
+      "operation": "操作未完成，伴奏與原有歌詞仍可使用。"
+    }
+  },
+  "research": {
+    "errors": {
+      "status": "目前無法讀取研究環境，請重新啟動 App 或重試。",
+      "inspect": "無法讀取這首歌的時間歌詞，請先確認曲庫、歌詞來源與曲長。",
+      "cancelled": "已取消研究操作，原有歌詞仍可使用。",
+      "failed": "研究操作未完成。請先準備 FFmpeg，或重新下載修復研究環境；原有歌詞仍可使用。",
+      "cancel": "取消尚未完成，請重新讀取狀態。"
+    }
+  },
+  "analysis": {
+    "noSource": "尚未選用",
+    "nativeOnly": "已有逐字時間，不需分析。",
+    "needsTimed": "請先加入含同步時間的歌詞。",
+    "checking": "正在確認分析設定。",
+    "needsProcessing": "請先至設定啟用音訊處理功能。",
+    "needsExperiment": "請先至設定啟用實驗性歌詞分析；不會自動下載工具。",
+    "needsTools": "請先至設定準備或修復歌詞分析工具。",
+    "savingOffset": "正在儲存校時，完成後才能分析。",
+    "offsetFailed": "請先重試儲存校時，再分析。",
+    "failed": "分析失敗；原有歌詞與伴奏仍可使用，可重新分析。",
+    "cancelled": "分析已取消；原有歌詞與伴奏仍可使用。",
+    "skipped": {
+      "sourceChanged": "歌詞來源已變更，請重新分析。",
+      "languageUnknown": "無法確認語言。請選擇主要語言後重試；混合語言的句子保留原有逐行時間。",
+      "languageUnsupported": "支援中文、日文與英文。請選擇分析語言。",
+      "lyricsMissing": "請先加入含同步時間的歌詞。",
+      "untimedLyrics": "這份歌詞沒有可分析的逐行時間。",
+      "nativeT2": "沿用原有逐字時間。",
+      "unsupportedLyrics": "沒有可分析的單一語言句子，保留原有逐行時間。",
+      "environmentMissing": "請先至設定準備歌詞分析工具。",
+      "other": "無法分析，請確認歌詞語言與同步時間。"
+    },
+    "stage": {
+      "verify": "檢查環境",
+      "load": "載入模型",
+      "alignment": "分析歌詞時間",
+      "content": "查核歌詞內容",
+      "small": "載入內容檢查"
+    },
+    "pending": "等待分析",
+    "preparing": "準備分析",
+    "reanalyze": "校時已變更，請重新分析；目前沿用來源時間。",
+    "applied": "分析已套用",
+    "notApplied": "分析未套用",
+    "summary": "{state} · {lines}；未涵蓋部分沿用原歌詞。",
+    "reused": "沿用既有分析，時間未變。",
+    "missingLyrics": "疑似漏詞 {count} 句，套用前請確認。",
+    "noUsable": "沒有可套用的分段時間，保留原有時間；可重新分析。",
+    "label": "目前來源的詞塊分析",
+    "currentSource": "目前來源：{source}",
+    "progress": "{done} / {total} 段音訊",
+    "mainLanguage": "主要語言",
+    "cancel": "取消分析",
+    "again": "重新分析",
+    "analyze": "分析歌詞",
+    "afterHint": "分析完成後，可開啟「分析顯示」。",
+    "detailsTitle": "分析說明",
+    "details": "分析中文、日文或英文歌詞，優先沿用原有逐字時間；無法分析的句子保留逐行時間。 更換來源或校時後需重新分析，結果請播放確認。閱讀畫面以底線提示目前分段；Focus 與卡拉 OK 支援連續填色。"
+  }
+}

@@ -10,6 +10,7 @@ import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import LyricsPhrasePreview from './LyricsPhrasePreview.vue';
 import { summarizeAcousticPreview } from '../../../shared/presentation/lyricsAcousticPreview.mjs';
+import { catalogKey, t } from '../../utils/i18n.js';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -23,15 +24,15 @@ const language = shallowRef('auto'),
   detailsOpen = shallowRef(false);
 const languageId = `lyrics-source-analysis-${useId()}`;
 const languageOptions = [
-  { value: 'auto', label: '自動辨識' },
-  { value: 'zh', label: '中文' },
-  { value: 'ja', label: '日文' },
-  { value: 'en', label: '英文' },
+  { value: 'auto', label: t('lyricsResearch.languages.auto') },
+  { value: 'zh', label: t('lyricsResearch.languages.zh') },
+  { value: 'ja', label: t('lyricsResearch.languages.ja') },
+  { value: 'en', label: t('lyricsResearch.languages.en') },
 ];
 const sourceLabel = computed(() =>
   lyrics.selectedSource.value
     ? formatLyricsSourceLabel(lyrics.selectedSource.value)
-    : '尚未選用',
+    : t('lyricsResearch.analysis.noSource'),
 );
 const lines = computed(() => lyrics.lyricsDocument.value?.lines ?? []);
 const hasT1 = computed(() =>
@@ -66,8 +67,8 @@ const readyCount = computed(() =>
 );
 const displayActionDescription = computed(() =>
   experiment.applied.value
-    ? '關閉分析顯示，恢復原歌詞時間。'
-    : '開啟分析顯示，使用已產生的歌詞時間提示。',
+    ? t('lyricsEditor.experiment.turnOff')
+    : t('lyricsEditor.experiment.turnOn'),
 );
 const blocked = computed(() =>
   Boolean(
@@ -92,84 +93,102 @@ const summary = computed(() =>
   summarizeAcousticPreview(experiment.prepared.value),
 );
 const availability = computed(() => {
-  if (nativeOnly.value) return '已有逐字時間，不需分析。';
-  if (!hasT1.value) return '請先加入含同步時間的歌詞。';
-  if (!queue.state.value) return '正在確認分析設定。';
-  if (!queue.state.value.allowed) return '請先至設定啟用音訊處理功能。';
+  if (nativeOnly.value) return t('lyricsResearch.analysis.nativeOnly');
+  if (!hasT1.value) return t('lyricsResearch.analysis.needsTimed');
+  if (!queue.state.value) return t('lyricsResearch.analysis.checking');
+  if (!queue.state.value.allowed)
+    return t('lyricsResearch.analysis.needsProcessing');
   if (!queue.state.value.enabled)
-    return '請先至設定啟用實驗性歌詞分析；不會自動下載工具。';
+    return t('lyricsResearch.analysis.needsExperiment');
   if (['missing', 'damaged'].includes(queue.state.value.environmentStatus))
-    return '請先至設定準備或修復歌詞分析工具。';
+    return t('lyricsResearch.analysis.needsTools');
   if (lyrics.state.offsetSave?.isSaving)
-    return '正在儲存校時，完成後才能分析。';
-  if (lyrics.state.offsetSave?.error) return '請先重試儲存校時，再分析。';
+    return t('lyricsResearch.analysis.savingOffset');
+  if (lyrics.state.offsetSave?.error)
+    return t('lyricsResearch.analysis.offsetFailed');
   return '';
 });
 const jobDescription = computed(() => {
   if (busy.value) return '';
   if (currentItem.value?.status === 'failed')
-    return '分析失敗；原有歌詞與伴奏仍可使用，可重新分析。';
+    return t('lyricsResearch.analysis.failed');
   if (currentItem.value?.status === 'cancelled')
-    return '分析已取消；原有歌詞與伴奏仍可使用。';
+    return t('lyricsResearch.analysis.cancelled');
   if (currentItem.value?.status !== 'skipped') return '';
-  return (
-    {
-      'source-changed': '歌詞來源已變更，請重新分析。',
-      'language-unknown':
-        '無法確認語言。請選擇主要語言後重試；混合語言的句子保留原有逐行時間。',
-      'language-unsupported': '支援中文、日文與英文。請選擇分析語言。',
-      'lyrics-missing': '請先加入含同步時間的歌詞。',
-      'untimed-lyrics': '這份歌詞沒有可分析的逐行時間。',
-      'native-t2': '沿用原有逐字時間。',
-      'unsupported-lyrics': '沒有可分析的單一語言句子，保留原有逐行時間。',
-      'environment-missing': '請先至設定準備歌詞分析工具。',
-    }[currentItem.value.reason] ?? '無法分析，請確認歌詞語言與同步時間。'
+  const reason = currentItem.value.reason;
+  return t(
+    `lyricsResearch.analysis.skipped.${SKIP_REASONS.has(reason) ? catalogKey(reason) : 'other'}`,
   );
 });
-const stageLabels = {
-  verify: '檢查環境',
-  load: '載入模型',
-  alignment: '分析歌詞時間',
-  hubertfa: '分析歌詞時間',
-  content: '查核歌詞內容',
-  small: '載入內容檢查',
+const SKIP_REASONS = new Set([
+  'source-changed',
+  'language-unknown',
+  'language-unsupported',
+  'lyrics-missing',
+  'untimed-lyrics',
+  'native-t2',
+  'unsupported-lyrics',
+  'environment-missing',
+]);
+const STAGE_KEYS = {
+  verify: 'verify',
+  load: 'load',
+  alignment: 'alignment',
+  hubertfa: 'alignment',
+  content: 'content',
+  small: 'small',
 };
+const stageLabel = (stage) =>
+  Object.hasOwn(STAGE_KEYS, stage)
+    ? t(`lyricsResearch.analysis.stage.${STAGE_KEYS[stage]}`)
+    : undefined;
 const progress = computed(() =>
   busy.value && item.value.status === 'running' ? item.value.progress : null,
 );
 const progressLabel = computed(() =>
   item.value?.status === 'pending'
-    ? '等待分析'
-    : (stageLabels[progress.value?.stage ?? queue.state.value?.stage] ??
-      '準備分析'),
+    ? t('lyricsResearch.analysis.pending')
+    : (stageLabel(progress.value?.stage ?? queue.state.value?.stage) ??
+      t('lyricsResearch.analysis.preparing')),
 );
 const statusMessage = computed(() => {
   if (!busy.value && experiment.needsReanalysis.value)
-    return '校時已變更，請重新分析；目前沿用來源時間。';
+    return t('lyricsResearch.analysis.reanalyze');
   if (jobDescription.value) return jobDescription.value;
   if (availability.value) return availability.value;
   if (busy.value) return '';
-  if (readyCount.value)
-    return (
-      '分析' +
-      (experiment.applied.value ? '已套用' : '未套用') +
-      ' · ' +
-      (summary.value.fineLines
-        ? `${summary.value.fineLines} 句有分段時間`
-        : '僅分段提示') +
-      '；未涵蓋部分沿用原歌詞。' +
-      (experiment.estimate.value.compatibility?.rule ===
-      'normalizer-v2-v3-exact-v1'
-        ? ' 沿用既有分析，時間未變。'
-        : '') +
-      (experiment.estimate.value.validation?.missingLyrics
-        ? ` 疑似漏詞 ${experiment.estimate.value.validation.missingLyrics} 句，套用前請確認。`
-        : '')
-    );
+  if (readyCount.value) return statusSummary();
   if (!['missing', 'disabled'].includes(experiment.estimate.value.status))
-    return '沒有可套用的分段時間，保留原有時間；可重新分析。';
+    return t('lyricsResearch.analysis.noUsable');
   return '';
 });
+function statusSummary() {
+  const fineLines = summary.value.fineLines;
+  const missing = experiment.estimate.value.validation?.missingLyrics;
+  return [
+    t('lyricsResearch.analysis.summary', {
+      state: experiment.applied.value
+        ? t('lyricsResearch.analysis.applied')
+        : t('lyricsResearch.analysis.notApplied'),
+      lines: fineLines
+        ? t(
+            'lyricsEditor.experiment.fineLines',
+            { count: fineLines },
+            fineLines,
+          )
+        : t('lyricsEditor.experiment.hintsOnly'),
+    }),
+    experiment.estimate.value.compatibility?.rule ===
+    'normalizer-v2-v3-exact-v1'
+      ? t('lyricsResearch.analysis.reused')
+      : '',
+    missing
+      ? t('lyricsResearch.analysis.missingLyrics', { count: missing }, missing)
+      : '',
+  ]
+    .filter(Boolean)
+    .join(t('common.sentenceJoin'));
+}
 const hasPrevious = computed(
   () =>
     experiment.needsReanalysis.value ||
@@ -225,11 +244,13 @@ onScopeDispose(() => clearInterval(timer));
   <section
     v-if="active"
     class="lyrics-source-analysis"
-    aria-label="目前來源的詞塊分析"
+    :aria-label="t('lyricsResearch.analysis.label')"
   >
     <div class="lyrics-source-analysis__heading">
-      <strong>歌詞時間分析（實驗）</strong>
-      <span>目前來源：{{ sourceLabel }}</span>
+      <strong>{{ t('lyricsResearch.settings.title') }}</strong>
+      <span>{{
+        t('lyricsResearch.analysis.currentSource', { source: sourceLabel })
+      }}</span>
     </div>
     <UiHint v-if="queue.error.value" tone="danger" role="alert">{{
       queue.error.value
@@ -242,7 +263,12 @@ onScopeDispose(() => clearInterval(timer));
       :value="progress?.completed ?? 0"
       :max="progress?.total ?? 1"
       :value-text="
-        progress ? progress.completed + ' / ' + progress.total + ' 段音訊' : ''
+        progress
+          ? t('lyricsResearch.analysis.progress', {
+              done: progress.completed,
+              total: progress.total,
+            })
+          : ''
       "
     />
     <div class="lyrics-source-analysis__actions">
@@ -250,7 +276,7 @@ onScopeDispose(() => clearInterval(timer));
         v-if="hasT1"
         :id="languageId"
         v-model="language"
-        label="主要語言"
+        :label="t('lyricsResearch.analysis.mainLanguage')"
         :options="languageOptions"
         :disabled="blocked || busy"
       />
@@ -260,14 +286,18 @@ onScopeDispose(() => clearInterval(timer));
           :disabled="saving"
           variant="secondary"
           @click="cancel"
-          >取消分析</UiButton
+          >{{ t('lyricsResearch.analysis.cancel') }}</UiButton
         >
         <UiButton
           v-else-if="hasT1"
           :disabled="!canAnalyze"
           variant="secondary"
           @click="analyze"
-          >{{ hasPrevious ? '重新分析' : '分析歌詞' }}</UiButton
+          >{{
+            hasPrevious
+              ? t('lyricsResearch.analysis.again')
+              : t('lyricsResearch.analysis.analyze')
+          }}</UiButton
         >
         <UiButton
           v-if="readyCount"
@@ -282,17 +312,17 @@ onScopeDispose(() => clearInterval(timer));
           :title="displayActionDescription"
           :aria-description="displayActionDescription"
           @click="experiment.setApplied(!experiment.applied.value)"
-          >分析顯示</UiButton
+          >{{ t('lyricsEditor.experiment.button') }}</UiButton
         >
       </div>
     </div>
-    <UiHint v-if="hasT1">分析完成後，可開啟「分析顯示」。</UiHint>
-    <UiDisclosure v-if="hasT1" v-model:open="detailsOpen" label="分析說明">
-      <UiHint
-        >分析中文、日文或英文歌詞，優先沿用原有逐字時間；無法分析的句子保留逐行時間。
-        更換來源或校時後需重新分析，結果請播放確認。閱讀畫面以底線提示目前分段；Focus
-        與卡拉 OK 支援連續填色。</UiHint
-      >
+    <UiHint v-if="hasT1">{{ t('lyricsResearch.analysis.afterHint') }}</UiHint>
+    <UiDisclosure
+      v-if="hasT1"
+      v-model:open="detailsOpen"
+      :label="t('lyricsResearch.analysis.detailsTitle')"
+    >
+      <UiHint>{{ t('lyricsResearch.analysis.details') }}</UiHint>
     </UiDisclosure>
     <LyricsPhrasePreview
       :document="

@@ -1,4 +1,5 @@
 'use strict';
+const { t } = require('../../lib/i18n');
 const { createAppError } = require('../../lib/appError');
 const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
 const { validateIntent } = require('../../lib/lyricsResearch/service');
@@ -25,7 +26,7 @@ function registerLyricsResearchHandlers({
       } catch {
         throw createAppError({
           code: 'LYRICS_RESEARCH_INVALID_INTENT',
-          message: '研究試用操作格式不正確。',
+          message: t('errors.LYRICS_RESEARCH_INVALID_INTENT.message'),
           source: 'lyrics-research',
         });
       }
@@ -39,9 +40,6 @@ function registerLyricsResearchHandlers({
           },
           publicError: {
             code: 'LYRICS_RESEARCH_FAILED',
-            title: '本機歌詞研究試用',
-            message:
-              '研究操作未完成；請確認 FFmpeg 已準備，或重新下載修復研究環境。原有歌詞仍可使用。',
             source: 'lyrics-research',
             context: { retryable: true },
           },

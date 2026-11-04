@@ -300,7 +300,7 @@ describe('selected source analysis in available lyrics', () => {
     expect(owner.setApplied).not.toHaveBeenCalled();
     expect(button('分析顯示').props['aria-pressed']).toBe(false);
     expect(button('分析顯示').props['aria-description']).toContain(
-      '開啟分析顯示',
+      '開啟後使用分析出的歌詞時間',
     );
     trigger(button('分析顯示'), 'onClick');
     await flush();

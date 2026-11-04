@@ -1,4 +1,5 @@
 'use strict';
+const { t } = require('../../lib/i18n');
 const { createAppError } = require('../../lib/appError');
 const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
 const unavailable = () => ({
@@ -33,7 +34,7 @@ function registerLyricsAcousticCapabilityHandlers({
       if (args.length)
         throw createAppError({
           code: 'LYRICS_ENV_INVALID_INTENT',
-          message: '歌詞音訊輔助環境操作未完成。',
+          message: t('errors.LYRICS_ENV_INVALID_INTENT.message'),
           source: 'lyrics-acoustic-environment',
         });
       if (operation === 'status')
@@ -51,8 +52,6 @@ function registerLyricsAcousticCapabilityHandlers({
           },
           publicError: {
             code: 'LYRICS_ENV_OPERATION_FAILED',
-            title: '歌詞音訊輔助',
-            message: '歌詞音訊輔助環境操作未完成。',
             source: 'lyrics-acoustic-environment',
             context: { retryable: true },
           },

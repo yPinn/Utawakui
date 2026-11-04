@@ -1,0 +1,162 @@
+{
+  "languages": {
+    "auto": "Detect automatically",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "en": "English"
+  },
+  "settings": {
+    "title": "Lyrics timing analysis (experimental)",
+    "notice": "For local research trials only. Timing accuracy hasn't been checked by people yet, and the licensing scope for using and distributing the model weights and dictionaries is still being clarified.",
+    "tool": "Lyrics analysis tools",
+    "toolDescription": "Estimates part timing for Chinese, Japanese and English lyrics. Requires the Utawakui-managed audio conversion tool.",
+    "size": "About 0.78 GB to download and 1.00 GB installed. Keep 4 GB free.",
+    "cancelLabel": "Cancel and wait for cleanup",
+    "previewTitle": "Part preview (advanced)",
+    "previewRequirement": "Choose “Utawakui managed version” under Local audio processing → Tools and models → Audio conversion tool. Analysis uses HubertFA and Whisper small; lyrics audio assist isn't available yet.",
+    "previewLimit": "Each analysis covers about 30 seconds and up to 10 lines. Results are previewed here only.",
+    "stage": {
+      "download": "Downloading tools",
+      "prepare": "Preparing",
+      "verify": "Checking tools",
+      "extract": "Extracting",
+      "preview": "Waiting to analyze",
+      "analyze": "Analyzing lyrics",
+      "hubertfa": "Analyzing part timing",
+      "small": "Checking lyrics content",
+      "remove": "Removing",
+      "other": "Working"
+    },
+    "status": {
+      "missing": "Not downloaded",
+      "unverified": "Needs check",
+      "ready": "Ready",
+      "damaged": "Needs repair",
+      "unknown": "Not loaded yet"
+    },
+    "actions": {
+      "download": "Download tools",
+      "check": "Check tools",
+      "repair": "Download again to repair",
+      "refresh": "Reload",
+      "remove": "Remove tools"
+    }
+  },
+  "preview": {
+    "track": "Library song",
+    "trackPlaceholder": "Choose a song with lyrics",
+    "language": "Analysis language",
+    "line": "Start from line",
+    "linePlaceholder": "Choose a timed line",
+    "source": "Lyrics source: {source}. Your chosen source is used first; otherwise one is picked by language.",
+    "generate": "Create preview",
+    "label": "Standalone chunk preview",
+    "hint": "Original word timing is used first; when the analysis doesn't fit, the whole line is shown. This is a preview only and isn't applied to the lyrics or performance screen.",
+    "modeResearch": "Analyzed parts",
+    "playLine": "Play from this line",
+    "contradiction": "The analysis doesn't match the lyrics, so the whole line is shown.",
+    "missing": "Some lyrics may be missing. Play to check."
+  },
+  "acoustic": {
+    "status": {
+      "blocked": "Not available to prepare yet",
+      "missing": "Not prepared",
+      "ready": "Ready",
+      "unverified": "Needs load check",
+      "damaged": "Needs repair",
+      "removePending": "Removal didn't finish",
+      "preparing": "Preparing",
+      "verifying": "Checking load",
+      "removing": "Removing",
+      "unknown": "Can't load"
+    },
+    "title": "Lyrics audio assist",
+    "prepare": "Prepare lyrics audio assist",
+    "repair": "Repair",
+    "remove": "Remove",
+    "itemTitle": "Lyrics audio assist components",
+    "description": "Tools needed for lyrics analysis, managed separately from experimental features.",
+    "busy": "Working",
+    "verify": "Check load",
+    "cancel": "Cancel",
+    "removePendingHint": "The last removal didn't finish. Remove again to clean up what's left. Your lyrics still work.",
+    "blockedNotice": "Model use and distribution terms are being confirmed, so downloads aren't offered yet.",
+    "refresh": "Reload status",
+    "errors": {
+      "status": "Couldn't read lyrics audio assist. Reload.",
+      "operation": "The lyrics audio assist action didn't finish. Your lyrics still work.",
+      "cancel": "Cancelling didn't finish. Reload the status later."
+    }
+  },
+  "queue": {
+    "title": "Analyze lyrics after accompaniment finishes",
+    "guidance": "Analyzes newly finished accompaniments. Check results, retry and apply on the lyrics page. Tools aren't downloaded and the original lyrics aren't changed automatically.",
+    "auto": "Analyze automatically",
+    "autoLabel": "Automatically analyze lyrics after accompaniment finishes",
+    "enableProcessing": "Turn on audio processing first.",
+    "loading": "Loading the automatic analysis setting…",
+    "errors": {
+      "read": "Couldn't read the analysis status. Try again.",
+      "operation": "The action didn't finish. Your accompaniment and lyrics still work."
+    }
+  },
+  "research": {
+    "errors": {
+      "status": "Couldn't read the research tools. Restart the app or try again.",
+      "inspect": "Couldn't read this song's timed lyrics. Check the library, lyrics source and track length.",
+      "cancelled": "Research action cancelled. Your lyrics still work.",
+      "failed": "The research action didn't finish. Prepare FFmpeg, or download the research tools again to repair them. Your lyrics still work.",
+      "cancel": "Cancelling didn't finish. Reload the status."
+    }
+  },
+  "analysis": {
+    "noSource": "None selected",
+    "nativeOnly": "Word timing already exists; no analysis needed.",
+    "needsTimed": "Add lyrics with sync timing first.",
+    "checking": "Checking analysis settings.",
+    "needsProcessing": "Turn on audio processing in Settings first.",
+    "needsExperiment": "Turn on experimental lyrics analysis in Settings first. Tools aren't downloaded automatically.",
+    "needsTools": "Prepare or repair the lyrics analysis tools in Settings first.",
+    "savingOffset": "Saving the timing; analysis can start when it finishes.",
+    "offsetFailed": "Retry saving the timing before analyzing.",
+    "failed": "Analysis failed. Your lyrics and accompaniment still work; you can analyze again.",
+    "cancelled": "Analysis cancelled. Your lyrics and accompaniment still work.",
+    "skipped": {
+      "sourceChanged": "The lyrics source changed. Analyze again.",
+      "languageUnknown": "Couldn't detect the language. Choose the main language and retry; mixed-language lines keep their line timing.",
+      "languageUnsupported": "Chinese, Japanese and English are supported. Choose an analysis language.",
+      "lyricsMissing": "Add lyrics with sync timing first.",
+      "untimedLyrics": "These lyrics have no line timing to analyze.",
+      "nativeT2": "Using the original word timing.",
+      "unsupportedLyrics": "No single-language lines to analyze; line timing is kept.",
+      "environmentMissing": "Prepare the lyrics analysis tools in Settings first.",
+      "other": "Can't analyze. Check the lyrics language and sync timing."
+    },
+    "stage": {
+      "verify": "Checking environment",
+      "load": "Loading model",
+      "alignment": "Analyzing lyrics timing",
+      "content": "Checking lyrics content",
+      "small": "Loading content check"
+    },
+    "pending": "Waiting to analyze",
+    "preparing": "Preparing analysis",
+    "reanalyze": "Timing changed. Analyze again; source timing is used for now.",
+    "applied": "Analysis applied",
+    "notApplied": "Analysis not applied",
+    "summary": "{state} · {lines}. Uncovered parts use the original lyrics.",
+    "reused": "Reuses the earlier analysis; timing unchanged.",
+    "missingLyrics": "{count} line may be missing words. Check before applying. | {count} lines may be missing words. Check before applying.",
+    "noUsable": "No part timing to apply; the original timing is kept. You can analyze again.",
+    "label": "Chunk analysis for the current source",
+    "currentSource": "Current source: {source}",
+    "progress": "{done} / {total} audio parts",
+    "mainLanguage": "Main language",
+    "cancel": "Cancel analysis",
+    "again": "Analyze again",
+    "analyze": "Analyze lyrics",
+    "afterHint": "After analysis, turn on Analysis display.",
+    "detailsTitle": "About analysis",
+    "details": "Analyzes Chinese, Japanese or English lyrics, using original word timing first; lines that can't be analyzed keep line timing. Analyze again after changing the source or timing, and play to check the results. The reading view underlines the current part; Focus and Karaoke support continuous fill."
+  }
+}

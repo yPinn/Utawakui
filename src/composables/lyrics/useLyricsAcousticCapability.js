@@ -1,4 +1,5 @@
 import { computed, readonly, shallowRef } from 'vue';
+import { t } from '../../utils/i18n.js';
 
 export function createLyricsAcousticCapabilityOwner(getBridge) {
   const capability = shallowRef(null),
@@ -25,7 +26,7 @@ export function createLyricsAcousticCapabilityOwner(getBridge) {
       }
     } catch {
       if (request === revision)
-        error.value = '目前無法讀取歌詞音訊輔助環境，請重新讀取。';
+        error.value = t('lyricsResearch.acoustic.errors.status');
     }
     return capability.value;
   }
@@ -33,7 +34,7 @@ export function createLyricsAcousticCapabilityOwner(getBridge) {
     if (busy.value) return null;
     const bridge = getBridge();
     if (typeof bridge?.[methods[name]] !== 'function') {
-      error.value = '請重新啟動應用程式後再試。';
+      error.value = t('lyricsAcquisition.restartToSave');
       return null;
     }
     busy.value = true;
@@ -47,7 +48,7 @@ export function createLyricsAcousticCapabilityOwner(getBridge) {
       capability.value = value;
       return value;
     } catch {
-      error.value = '歌詞音訊輔助環境操作未完成，原有歌詞仍可使用。';
+      error.value = t('lyricsResearch.acoustic.errors.operation');
       try {
         const value = await bridge.getLyricsAcousticCapabilityStatus?.();
         if (value && typeof value.status === 'string') capability.value = value;
@@ -64,7 +65,7 @@ export function createLyricsAcousticCapabilityOwner(getBridge) {
     try {
       await getBridge()?.cancelLyricsAcousticCapability?.();
     } catch {
-      error.value = '取消未完成，請稍後重新讀取環境狀態。';
+      error.value = t('lyricsResearch.acoustic.errors.cancel');
     }
   }
   return {

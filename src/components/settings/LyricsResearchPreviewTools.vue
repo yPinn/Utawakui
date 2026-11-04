@@ -13,6 +13,7 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import { t } from '../../utils/i18n.js';
 const research = useLyricsResearch();
 const library = useLibrary();
 const player = usePlayer();
@@ -105,8 +106,8 @@ async function playLine(line) {
         :id="`${prefix}-track`"
         v-model="trackId"
         class="lyrics-research__track"
-        label="曲庫歌曲"
-        placeholder="選擇已有歌詞的歌曲"
+        :label="t('lyricsResearch.preview.track')"
+        :placeholder="t('lyricsResearch.preview.trackPlaceholder')"
         :options="tracks"
         :disabled="research.busy.value"
       />
@@ -114,11 +115,11 @@ async function playLine(line) {
         :id="`${prefix}-language`"
         v-model="language"
         class="lyrics-research__language"
-        label="分析語言"
+        :label="t('lyricsResearch.preview.language')"
         :options="[
-          { value: 'zh', label: '中文' },
-          { value: 'ja', label: '日文' },
-          { value: 'en', label: '英文' },
+          { value: 'zh', label: t('lyricsResearch.languages.zh') },
+          { value: 'ja', label: t('lyricsResearch.languages.ja') },
+          { value: 'en', label: t('lyricsResearch.languages.en') },
         ]"
         :disabled="research.busy.value"
       />
@@ -127,16 +128,16 @@ async function playLine(line) {
       :id="`${prefix}-line`"
       v-model="lineIndex"
       class="lyrics-research__line-select"
-      label="從哪句開始試算"
-      placeholder="選擇有時間的歌詞句"
+      :label="t('lyricsResearch.preview.line')"
+      :placeholder="t('lyricsResearch.preview.linePlaceholder')"
       :options="lines"
       :disabled="research.busy.value || !lines.length"
     />
-    <UiHint v-if="trackId && research.inspection.value"
-      >歌詞來源：{{
-        research.inspection.value.sourceLabel
-      }}。優先使用你選擇的來源，未選擇時依語言挑選。</UiHint
-    >
+    <UiHint v-if="trackId && research.inspection.value">{{
+      t('lyricsResearch.preview.source', {
+        source: research.inspection.value.sourceLabel,
+      })
+    }}</UiHint>
     <UiButton
       class="lyrics-research__generate"
       variant="accent"
@@ -147,16 +148,14 @@ async function playLine(line) {
         !lines.length
       "
       @click="research.action('preview', intent())"
-      >產生預覽</UiButton
+      >{{ t('lyricsResearch.preview.generate') }}</UiButton
     >
     <div
       v-if="research.preview.value"
       class="lyrics-research__preview"
-      aria-label="獨立詞塊預覽"
+      :aria-label="t('lyricsResearch.preview.label')"
     >
-      <UiHint
-        >優先使用原有的逐字時間；分析結果不適用時，仍按整句顯示。此處僅供預覽，不會套用至歌詞或演出畫面。</UiHint
-      >
+      <UiHint>{{ t('lyricsResearch.preview.hint') }}</UiHint>
       <article
         v-for="line in research.preview.value.lines"
         :key="line.lineId"
@@ -167,12 +166,14 @@ async function playLine(line) {
             >{{ seconds(line.startMs) }} ·
             {{
               line.mode === 'research'
-                ? '分析分段'
+                ? t('lyricsResearch.preview.modeResearch')
                 : line.mode === 'T2'
-                  ? '原有逐字時間'
-                  : '整句顯示'
+                  ? t('lyricsEditor.phrase.timingWord')
+                  : t('lyricsEditor.acoustic.timingPlain')
             }}</span
-          ><UiButton @click="playLine(line)">從本句播放</UiButton>
+          ><UiButton @click="playLine(line)">{{
+            t('lyricsResearch.preview.playLine')
+          }}</UiButton>
         </div>
         <p v-if="!pieces(line).length" class="lyrics-research__text">
           {{ line.text }}
@@ -194,12 +195,12 @@ async function playLine(line) {
             }}</span></span
           >
         </p>
-        <UiHint v-if="line.content === 'contradiction'"
-          >分析與歌詞內容不一致，已改為整句顯示。</UiHint
-        >
-        <UiHint v-if="line.content === 'possible-missing-lyrics'"
-          >可能有缺漏歌詞，請播放確認。</UiHint
-        >
+        <UiHint v-if="line.content === 'contradiction'">{{
+          t('lyricsResearch.preview.contradiction')
+        }}</UiHint>
+        <UiHint v-if="line.content === 'possible-missing-lyrics'">{{
+          t('lyricsResearch.preview.missing')
+        }}</UiHint>
       </article>
     </div>
   </div>

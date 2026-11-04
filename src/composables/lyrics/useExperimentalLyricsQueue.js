@@ -1,4 +1,5 @@
 import { computed, readonly, shallowRef } from 'vue';
+import { t } from '../../utils/i18n.js';
 const state = shallowRef(null),
   readError = shallowRef(''),
   operationError = shallowRef(''),
@@ -30,7 +31,7 @@ export function useExperimentalLyricsQueue() {
       }
     } catch {
       if (current === read)
-        readError.value = '無法讀取詞塊分析狀態，請再試一次。';
+        readError.value = t('lyricsResearch.queue.errors.read');
     }
   }
   async function action(name, value, ...extra) {
@@ -43,7 +44,7 @@ export function useExperimentalLyricsQueue() {
       if (name === 'retry' && result?.queued === false)
         throw Error('analysis not queued');
     } catch {
-      operationError.value = '操作未完成，伴奏與原有歌詞仍可使用。';
+      operationError.value = t('lyricsResearch.queue.errors.operation');
     }
     await refresh();
   }

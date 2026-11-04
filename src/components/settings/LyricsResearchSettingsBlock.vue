@@ -16,6 +16,7 @@ import LyricsResearchPreviewTools from './LyricsResearchPreviewTools.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 
 const research = useLyricsResearch();
 const toolsOpen = shallowRef(false);
@@ -24,27 +25,28 @@ const status = computed(() => research.status.value?.status);
 const statusLabel = computed(() => {
   if (research.busy.value) {
     const stage = research.status.value?.stage ?? '';
-    if (stage.startsWith('download:')) return '下載工具中';
+    if (stage.startsWith('download:'))
+      return t('lyricsResearch.settings.stage.download');
     return (
       {
-        prepare: '準備中',
-        verify: '檢查工具中',
-        extract: '解壓縮中',
-        preview: '等待分析',
-        analyze: '分析歌詞中',
-        hubertfa: '分析分段時間中',
-        small: '檢查歌詞內容中',
-        remove: '移除中',
-      }[stage] || '處理中'
+        prepare: t('lyricsResearch.settings.stage.prepare'),
+        verify: t('lyricsResearch.settings.stage.verify'),
+        extract: t('lyricsResearch.settings.stage.extract'),
+        preview: t('lyricsResearch.settings.stage.preview'),
+        analyze: t('lyricsResearch.settings.stage.analyze'),
+        hubertfa: t('lyricsResearch.settings.stage.hubertfa'),
+        small: t('lyricsResearch.settings.stage.small'),
+        remove: t('lyricsResearch.settings.stage.remove'),
+      }[stage] || t('lyricsResearch.settings.stage.other')
     );
   }
   return (
     {
-      missing: '未下載',
-      unverified: '待檢查',
-      ready: '可使用',
-      damaged: '需要修復',
-    }[status.value] || '尚未讀取'
+      missing: t('lyricsResearch.settings.status.missing'),
+      unverified: t('lyricsResearch.settings.status.unverified'),
+      ready: t('lyricsResearch.settings.status.ready'),
+      damaged: t('lyricsResearch.settings.status.damaged'),
+    }[status.value] || t('lyricsResearch.settings.status.unknown')
   );
 });
 const statusTone = computed(() =>
@@ -59,26 +61,58 @@ const statusTone = computed(() =>
 const primary = computed(
   () =>
     ({
-      missing: { label: '下載工具', action: 'prepare' },
-      unverified: { label: '檢查工具', action: 'verify' },
-      damaged: { label: '重新下載修復', action: 'prepare' },
+      missing: {
+        label: t('lyricsResearch.settings.actions.download'),
+        action: 'prepare',
+      },
+      unverified: {
+        label: t('lyricsResearch.settings.actions.check'),
+        action: 'verify',
+      },
+      damaged: {
+        label: t('lyricsResearch.settings.actions.repair'),
+        action: 'prepare',
+      },
     })[status.value],
 );
 const installed = computed(() =>
   Boolean(status.value && status.value !== 'missing'),
 );
 const managementItem = computed(() => ({
-  title: '歌詞分析工具',
+  title: t('lyricsResearch.settings.tool'),
   advancedActions: [
-    { id: 'refresh', label: '重新讀取', icon: RefreshCw },
+    {
+      id: 'refresh',
+      label: t('lyricsResearch.settings.actions.refresh'),
+      icon: RefreshCw,
+    },
     ...(status.value === 'ready'
-      ? [{ id: 'verify', label: '檢查工具', icon: Check }]
+      ? [
+          {
+            id: 'verify',
+            label: t('lyricsResearch.settings.actions.check'),
+            icon: Check,
+          },
+        ]
       : []),
     ...(installed.value && status.value !== 'damaged'
-      ? [{ id: 'prepare', label: '重新下載修復', icon: Wrench }]
+      ? [
+          {
+            id: 'prepare',
+            label: t('lyricsResearch.settings.actions.repair'),
+            icon: Wrench,
+          },
+        ]
       : []),
     ...(installed.value
-      ? [{ id: 'remove', label: '移除工具', icon: Trash2, intent: 'danger' }]
+      ? [
+          {
+            id: 'remove',
+            label: t('lyricsResearch.settings.actions.remove'),
+            icon: Trash2,
+            intent: 'danger',
+          },
+        ]
       : []),
   ].map((action) => ({ ...action, disabled: research.busy.value })),
 }));
@@ -98,19 +132,15 @@ onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
-  <SettingsSection title="歌詞時間分析（實驗）">
+  <SettingsSection :title="t('lyricsResearch.settings.title')">
     <UiHint class="lyrics-settings__notice">
-      僅供本機研究試用。時間精度尚待人工驗證；模型權重及字典之使用與散布授權範圍尚待釐清。
+      {{ t('lyricsResearch.settings.notice') }}
     </UiHint>
     <SettingsDocumentItem
       :icon="Captions"
-      title="歌詞分析工具"
-      description="估算中、日、英文歌詞分段時間；需使用 Utawakui 管理的音訊轉換工具。"
-      :guidance="
-        status === 'ready'
-          ? ''
-          : '下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 空間。'
-      "
+      :title="t('lyricsResearch.settings.tool')"
+      :description="t('lyricsResearch.settings.toolDescription')"
+      :guidance="status === 'ready' ? '' : t('lyricsResearch.settings.size')"
       :status="statusLabel"
       :status-tone="statusTone"
       status-live
@@ -127,14 +157,14 @@ onUnmounted(() => clearInterval(timer));
           variant="ghost"
           :disabled="research.busy.value"
           @click="research.refresh"
-          >重新讀取</UiButton
+          >{{ t('lyricsResearch.settings.actions.refresh') }}</UiButton
         >
         <UiButton
           v-if="research.busy.value"
           variant="secondary"
-          aria-label="取消操作並等待清理"
+          :aria-label="t('lyricsResearch.settings.cancelLabel')"
           @click="research.cancel"
-          >取消</UiButton
+          >{{ t('common.cancel') }}</UiButton
         >
         <SettingsDependencyActions
           :item="managementItem"
@@ -151,15 +181,11 @@ onUnmounted(() => clearInterval(timer));
     <UiDisclosure
       v-model:open="toolsOpen"
       class="settings-section__disclosure"
-      label="片段預覽（進階）"
+      :label="t('lyricsResearch.settings.previewTitle')"
     >
       <div v-if="toolsOpen" class="lyrics-settings__details">
-        <UiHint
-          >需在「本機音訊處理 → 工具與模型 → 音訊轉換工具」選用「Utawakui
-          管理版本」。分析使用 HubertFA 與 Whisper
-          small；正式歌詞音訊輔助仍未開放。</UiHint
-        >
-        <UiHint>每次分析約 30 秒、最多 10 句歌詞，結果僅在此預覽。</UiHint>
+        <UiHint>{{ t('lyricsResearch.settings.previewRequirement') }}</UiHint>
+        <UiHint>{{ t('lyricsResearch.settings.previewLimit') }}</UiHint>
         <LyricsResearchPreviewTools />
       </div>
     </UiDisclosure>

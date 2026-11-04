@@ -106,6 +106,10 @@ const I18N_MIGRATED = [
   'src/components/lyrics/{PerformanceLyricsWorkspace,LyricsDisplayControls,LyricsLiveControls,LyricsLiveTool}.vue',
   'src/components/playback/context/TrackLyricsPreview.vue',
   'src/composables/{useLyricsDisplay,lyrics/useLyricsPlaybackNavigation}.js',
+  'src/components/settings/{LyricsResearchSettingsBlock,LyricsResearchPreviewTools,LyricsAcousticSettingsRow,LyricsExperimentalQueueSettings}.vue',
+  'src/components/lyrics/LyricsSourceAnalysis.vue',
+  'src/composables/lyrics/{useLyricsResearch,useLyricsAcousticCapability,useExperimentalLyricsQueue}.js',
+  'electron/main/lyrics/{acousticCapabilityHandlers,researchHandlers,experimentalHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

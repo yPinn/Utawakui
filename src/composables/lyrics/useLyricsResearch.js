@@ -1,4 +1,5 @@
 import { computed, readonly, shallowRef } from 'vue';
+import { t } from '../../utils/i18n.js';
 export function createLyricsResearchOwner(getBridge) {
   const status = shallowRef(null),
     working = shallowRef(false),
@@ -21,7 +22,7 @@ export function createLyricsResearchOwner(getBridge) {
       if (revision === readRevision) status.value = result;
     } catch {
       if (revision === readRevision)
-        error.value = '目前無法讀取研究環境，請重新啟動 App 或重試。';
+        error.value = t('lyricsResearch.research.errors.status');
     }
   }
   async function inspect(intent) {
@@ -35,8 +36,7 @@ export function createLyricsResearchOwner(getBridge) {
       if (revision === selectionRevision) inspection.value = result;
     } catch {
       if (revision === selectionRevision)
-        error.value =
-          '無法讀取這首歌的時間歌詞，請先確認曲庫、歌詞來源與曲長。';
+        error.value = t('lyricsResearch.research.errors.inspect');
     }
   }
   async function action(name, intent) {
@@ -51,12 +51,12 @@ export function createLyricsResearchOwner(getBridge) {
       const result = await bridge[`${name}LyricsResearch`](
         ...(intent ? [intent] : []),
       );
-      if (result?.cancelled) error.value = '已取消研究操作，原有歌詞仍可使用。';
+      if (result?.cancelled)
+        error.value = t('lyricsResearch.research.errors.cancelled');
       else if (name === 'preview' && revision === selectionRevision)
         preview.value = result;
     } catch {
-      error.value =
-        '研究操作未完成。請先準備 FFmpeg，或重新下載修復研究環境；原有歌詞仍可使用。';
+      error.value = t('lyricsResearch.research.errors.failed');
     } finally {
       working.value = false;
       await refresh();
@@ -68,7 +68,7 @@ export function createLyricsResearchOwner(getBridge) {
       await getBridge()?.cancelLyricsResearch();
       await refresh();
     } catch {
-      error.value = '取消尚未完成，請重新讀取狀態。';
+      error.value = t('lyricsResearch.research.errors.cancel');
     }
   }
   return {

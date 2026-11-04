@@ -483,5 +483,25 @@
   },
   "LYRICS_SOURCE_FAILED": {
     "message": "歌詞來源操作未完成，請再試一次。"
+  },
+  "LYRICS_ENV_INVALID_INTENT": {
+    "message": "歌詞音訊輔助環境操作未完成。"
+  },
+  "LYRICS_ENV_OPERATION_FAILED": {
+    "title": "歌詞音訊輔助",
+    "message": "歌詞音訊輔助環境操作未完成。"
+  },
+  "LYRICS_RESEARCH_INVALID_INTENT": {
+    "message": "研究試用操作格式不正確。"
+  },
+  "LYRICS_RESEARCH_FAILED": {
+    "title": "本機歌詞研究試用",
+    "message": "研究操作未完成；請確認 FFmpeg 已準備，或重新下載修復研究環境。原有歌詞仍可使用。"
+  },
+  "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
+    "message": "詞塊分析操作格式不正確。"
+  },
+  "LYRICS_EXPERIMENTAL_FAILED": {
+    "message": "詞塊分析未完成；伴奏與原有歌詞仍可使用。"
   }
 }

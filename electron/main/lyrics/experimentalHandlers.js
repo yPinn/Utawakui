@@ -1,4 +1,5 @@
 'use strict';
+const { t } = require('../../lib/i18n');
 const {
   isBoundedTrackId,
   isLyricsSubtitleFilename,
@@ -45,7 +46,7 @@ function registerLyricsExperimentalHandlers({
         if (!valid)
           throw createAppError({
             code: 'LYRICS_EXPERIMENTAL_INVALID_INTENT',
-            message: '詞塊分析操作格式不正確。',
+            message: t('errors.LYRICS_EXPERIMENTAL_INVALID_INTENT.message'),
             source: 'lyrics-experimental',
           });
         return runDiagnosticIpcOperation(
@@ -58,7 +59,7 @@ function registerLyricsExperimentalHandlers({
             },
             publicError: {
               code: 'LYRICS_EXPERIMENTAL_FAILED',
-              message: '詞塊分析未完成；伴奏與原有歌詞仍可使用。',
+              message: t('errors.LYRICS_EXPERIMENTAL_FAILED.message'),
               source: 'lyrics-experimental',
             },
           },

@@ -5,6 +5,7 @@ import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   capability: { type: Object, default: null },
@@ -24,29 +25,42 @@ const busy = computed(() => props.busy || props.capability?.busy === true);
 const status = computed(
   () =>
     ({
-      blocked: '尚未開放準備',
-      missing: '未準備',
-      ready: '環境可用',
-      unverified: '待驗證載入',
-      damaged: '需要修復',
-      'remove-pending': '移除尚未完成',
-      preparing: '準備中',
-      verifying: '驗證載入中',
-      removing: '移除中',
-    })[props.capability?.status] ?? '無法讀取',
+      blocked: t('lyricsResearch.acoustic.status.blocked'),
+      missing: t('lyricsResearch.acoustic.status.missing'),
+      ready: t('lyricsResearch.acoustic.status.ready'),
+      unverified: t('lyricsResearch.acoustic.status.unverified'),
+      damaged: t('lyricsResearch.acoustic.status.damaged'),
+      'remove-pending': t('lyricsResearch.acoustic.status.removePending'),
+      preparing: t('lyricsResearch.acoustic.status.preparing'),
+      verifying: t('lyricsResearch.acoustic.status.verifying'),
+      removing: t('lyricsResearch.acoustic.status.removing'),
+    })[props.capability?.status] ?? t('lyricsResearch.acoustic.status.unknown'),
 );
 const actions = computed(() => ({
   id: 'lyrics-acoustic',
-  title: '歌詞音訊輔助',
+  title: t('lyricsResearch.acoustic.title'),
   actionIcon: props.capability?.canPrepare ? Download : null,
-  actionLabel: '準備歌詞音訊輔助環境',
+  actionLabel: t('lyricsResearch.acoustic.prepare'),
   actionDisabled: busy.value,
   advancedActions: [
     ...(props.capability?.canRepair
-      ? [{ id: 'repair', label: '修復', icon: Wrench }]
+      ? [
+          {
+            id: 'repair',
+            label: t('lyricsResearch.acoustic.repair'),
+            icon: Wrench,
+          },
+        ]
       : []),
     ...(props.capability?.canRemove
-      ? [{ id: 'remove', label: '移除', icon: Trash2, intent: 'danger' }]
+      ? [
+          {
+            id: 'remove',
+            label: t('lyricsResearch.acoustic.remove'),
+            icon: Trash2,
+            intent: 'danger',
+          },
+        ]
       : []),
   ].map((item) => ({ ...item, disabled: busy.value })),
 }));
@@ -57,9 +71,9 @@ function advanced({ action }) {
 
 <template>
   <SettingsDocumentItem
-    title="歌詞音訊輔助元件"
-    description="正式歌詞分析所需工具，與實驗功能分開管理。"
-    :status="busy ? '環境操作中' : status"
+    :title="t('lyricsResearch.acoustic.itemTitle')"
+    :description="t('lyricsResearch.acoustic.description')"
+    :status="busy ? t('lyricsResearch.acoustic.busy') : status"
     :status-tone="capability?.status === 'ready' ? 'success' : 'muted'"
     variant="nested"
   >
@@ -69,7 +83,7 @@ function advanced({ action }) {
         variant="accent"
         :disabled="busy"
         @click="emit('verify')"
-        >驗證載入</UiButton
+        >{{ t('lyricsResearch.acoustic.verify') }}</UiButton
       >
       <UiButton
         v-if="
@@ -77,7 +91,7 @@ function advanced({ action }) {
         "
         variant="secondary"
         @click="emit('cancel')"
-        >取消操作</UiButton
+        >{{ t('lyricsResearch.acoustic.cancel') }}</UiButton
       >
       <SettingsDependencyActions
         v-if="actions.actionIcon || actions.advancedActions.length"
@@ -87,19 +101,19 @@ function advanced({ action }) {
       />
     </template>
     <template #feedback>
-      <UiHint v-if="capability?.status === 'remove-pending'"
-        >上次移除未完成，請再次移除以清理剩餘元件。原有歌詞仍可使用。</UiHint
-      >
-      <UiHint v-if="capability?.status === 'blocked'"
-        >模型使用與分發資料確認中，暫不提供下載。</UiHint
-      >
+      <UiHint v-if="capability?.status === 'remove-pending'">{{
+        t('lyricsResearch.acoustic.removePendingHint')
+      }}</UiHint>
+      <UiHint v-if="capability?.status === 'blocked'">{{
+        t('lyricsResearch.acoustic.blockedNotice')
+      }}</UiHint>
       <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
       <UiButton
         v-if="error || !capability || capability.status === 'unavailable'"
         variant="ghost"
         :disabled="busy"
         @click="emit('refresh')"
-        >重新讀取環境狀態</UiButton
+        >{{ t('lyricsResearch.acoustic.refresh') }}</UiButton
       >
     </template>
   </SettingsDocumentItem>
