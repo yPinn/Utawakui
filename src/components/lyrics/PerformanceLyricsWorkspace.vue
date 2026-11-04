@@ -15,6 +15,7 @@ import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import LyricsLoopTool from './LyricsLoopTool.vue';
+import { t } from '../../utils/i18n.js';
 
 const lyrics = useLyrics();
 const reading = useLyricsReading();
@@ -102,9 +103,12 @@ onMounted(initialize);
 </script>
 
 <template>
-  <section class="performance-lyrics-workspace" aria-label="歌詞">
+  <section
+    class="performance-lyrics-workspace"
+    :aria-label="t('lyricsDisplay.title')"
+  >
     <AppFolderWorkspaceToolbar
-      :context="selectedTrack?.title || '尚未選擇曲目'"
+      :context="selectedTrack?.title || t('lyricsEditor.header.noTrack')"
       :context-lang="trackLang"
       :meta="selectedTrack?.artist ?? ''"
       :meta-lang="trackLang"
@@ -113,7 +117,7 @@ onMounted(initialize);
         <LyricsLoopTool :context-track-id="selectedTrack?.id ?? ''" />
         <UiPopover
           v-model:open="displayMenuOpen"
-          aria-label="歌詞顯示設定"
+          :aria-label="t('lyricsEditor.header.displayLabel')"
           placement="bottom-end"
           :close-on-scroll="false"
           focus-on-open
@@ -122,7 +126,7 @@ onMounted(initialize);
             <UiIconButton
               v-bind="triggerProps"
               :icon="SlidersHorizontal"
-              label="歌詞顯示設定"
+              :label="t('lyricsEditor.header.displayLabel')"
               :active="displayMenuOpen"
               @click="toggleDisplayMenu"
             />
@@ -158,8 +162,8 @@ onMounted(initialize);
         <UiIconButton
           v-if="selectedTrack"
           :icon="Pencil"
-          label="編輯歌詞"
-          title="在曲庫編輯這首歌的歌詞、來源與讀音"
+          :label="t('lyricsDisplay.performance.edit')"
+          :title="t('lyricsDisplay.performance.editTitle')"
           @click="openLyricsAuthoring"
         />
       </template>
@@ -176,8 +180,8 @@ onMounted(initialize);
       :is-loading-lyrics="state.isLoadingLyrics"
       :track-count="state.tracks.length"
       :has-selected-track="Boolean(selectedTrack)"
-      selection-hint="從曲庫播放曲目，即可查看歌詞。"
-      unchecked-hint="按「編輯歌詞」，從「編輯」重新掃描。"
+      :selection-hint="t('lyricsDisplay.performance.selectionHint')"
+      :unchecked-hint="t('lyricsDisplay.performance.uncheckedHint')"
       :lyrics-status="selectedLyrics.status"
       :has-selected-source="Boolean(selectedSource)"
       :lines="lyricLines"

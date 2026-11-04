@@ -1,13 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const controls = readFileSync(
+const controls = readCatalogSource(
   new URL('./LyricsDisplayControls.vue', import.meta.url),
-  'utf8',
 );
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./PerformanceLyricsWorkspace.vue', import.meta.url),
-  'utf8',
 );
 
 describe('PerformanceLyricsWorkspace live controls', () => {
@@ -15,9 +13,8 @@ describe('PerformanceLyricsWorkspace live controls', () => {
     expect(source).toContain(
       '<LyricsLoopTool :context-track-id="selectedTrack?.id',
     );
-    const bar = readFileSync(
+    const bar = readCatalogSource(
       new URL('../playback/PlayerBar.vue', import.meta.url),
-      'utf8',
     );
     expect(bar).not.toContain('LoopTool');
   });

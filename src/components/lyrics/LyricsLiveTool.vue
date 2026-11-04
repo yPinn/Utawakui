@@ -2,6 +2,7 @@
 import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
 import LyricsLiveControls from './LyricsLiveControls.vue';
 import '../../styles/features/lyrics.css';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   experimentalFrame: { type: Object, default: null },
@@ -11,8 +12,14 @@ defineProps({
   isLoadingLyrics: { type: Boolean, default: false },
   trackCount: { type: Number, default: 0 },
   hasSelectedTrack: { type: Boolean, default: false },
-  selectionHint: { type: String, default: '請先選擇曲目。' },
-  uncheckedHint: { type: String, default: '尚未檢查歌詞。' },
+  selectionHint: {
+    type: String,
+    default: () => t('lyricsEditor.document.selectTrack'),
+  },
+  uncheckedHint: {
+    type: String,
+    default: () => t('lyricsEditor.document.unchecked'),
+  },
   lyricsStatus: { type: String, default: 'unchecked' },
   hasSelectedSource: { type: Boolean, default: false },
   lines: { type: Array, default: () => [] },
@@ -54,7 +61,7 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <section class="lyrics-live-tool" aria-label="演唱歌詞工具">
+  <section class="lyrics-live-tool" :aria-label="t('lyricsDisplay.live.tool')">
     <LyricsDocumentPanel
       :experimental-frame="experimentalFrame"
       :document-id="documentId"

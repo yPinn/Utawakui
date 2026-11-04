@@ -1,12 +1,13 @@
 import { computed, shallowRef, watch, onScopeDispose } from 'vue';
 import { alignReadings, detectLyricsScript } from '../utils/lyrics.js';
+import { t } from '../utils/i18n.js';
 const SUPPORTED_READING_SCRIPTS = new Set(['ja', 'ko']);
 const LYRICS_FONT_SIZE_CLASSES = [
   'lyrics-preview--font-compact',
   'lyrics-preview--font-default',
   'lyrics-preview--font-large',
 ];
-const LYRICS_FONT_SIZE_LABELS = ['小', '標準', '大'];
+const LYRICS_FONT_SIZE_KEYS = ['compact', 'default', 'large'];
 
 // Session-only display preference survives switching between contextual readers.
 const lyricsFontSizeIndex = shallowRef(1);
@@ -37,15 +38,15 @@ export function useLyricsDisplay({ lyrics, reading }) {
   const readingOptions = computed(() => {
     if (lyricsScript.value === 'ja') {
       return [
-        { id: 'off', label: '關閉' },
-        { id: 'furigana', label: '假名' },
-        { id: 'romaji', label: '羅馬字' },
+        { id: 'off', label: t('lyricsDisplay.reading.off') },
+        { id: 'furigana', label: t('lyricsDisplay.reading.furigana') },
+        { id: 'romaji', label: t('lyricsDisplay.reading.romaji') },
       ];
     }
     if (lyricsScript.value === 'ko') {
       return [
-        { id: 'off', label: '關閉' },
-        { id: 'romaji', label: '羅馬字' },
+        { id: 'off', label: t('lyricsDisplay.reading.off') },
+        { id: 'romaji', label: t('lyricsDisplay.reading.romaji') },
       ];
     }
     return [];
@@ -61,8 +62,10 @@ export function useLyricsDisplay({ lyrics, reading }) {
   const lyricsFontSizeClass = computed(
     () => LYRICS_FONT_SIZE_CLASSES[lyricsFontSizeIndex.value],
   );
-  const lyricsFontSizeLabel = computed(
-    () => LYRICS_FONT_SIZE_LABELS[lyricsFontSizeIndex.value],
+  const lyricsFontSizeLabel = computed(() =>
+    t(
+      `lyricsDisplay.fontSize.${LYRICS_FONT_SIZE_KEYS[lyricsFontSizeIndex.value]}`,
+    ),
   );
   const canDecreaseLyricsFontSize = computed(
     () => lyricsFontSizeIndex.value > 0,

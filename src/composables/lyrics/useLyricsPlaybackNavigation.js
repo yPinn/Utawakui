@@ -1,4 +1,5 @@
 import { toPlayableTrack } from '../../utils/playableTrack.js';
+import { t } from '../../utils/i18n.js';
 
 // Coordinates existing lyrics, queue and player owners; owns no playback state.
 export function useLyricsPlaybackNavigation({
@@ -21,7 +22,7 @@ export function useLyricsPlaybackNavigation({
     const targetTime = Math.max(0, line.start - state.offsetSeconds);
     if (playerState.track?.id !== selectedTrack.value.id) {
       setQueue(state.tracks, selectedTrack.value.id, {
-        sourceName: '歌詞',
+        sourceName: t('lyricsDisplay.title'),
         sourceId: 'lyrics-workspace',
       });
       await playTrack(toPlayableTrack(selectedTrack.value));

@@ -3,6 +3,7 @@ import { Minus, Plus } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   offsetLabel: { type: String, required: true },
@@ -26,36 +27,39 @@ function resetLyricsOffset() {
 </script>
 
 <template>
-  <aside class="lyrics-live-controls" aria-label="即時同步">
+  <aside
+    class="lyrics-live-controls"
+    :aria-label="t('lyricsDisplay.live.label')"
+  >
     <UiNotice
       v-if="error"
       class="lyrics-live-controls__error"
       tone="danger"
       :message="error"
-      action-label="重試"
+      :action-label="t('lyricsAcquisition.retry')"
       compact
       @action="emit('retryOffset')"
     />
     <UiButtonGroup
       class="lyrics-live-controls__panel"
-      label="歌詞時間偏移"
+      :label="t('lyricsDisplay.live.offset')"
       radius="lg"
       raised
     >
       <UiButton
         class="lyrics-live-controls__adjust"
         :icon="Minus"
-        title="延後歌詞 0.1 秒"
-        aria-label="延後 0.1 秒"
+        :title="t('lyricsDisplay.live.laterTitle')"
+        :aria-label="t('lyricsEditor.segment.later')"
         @click="delayLyrics"
       >
-        延後
+        {{ t('lyricsDisplay.live.later') }}
       </UiButton>
       <UiButton
         class="lyrics-live-controls__value"
         :disabled="!canReset"
-        title="重設歌詞時間偏移"
-        aria-label="重設歌詞時間偏移"
+        :title="t('lyricsDisplay.live.reset')"
+        :aria-label="t('lyricsDisplay.live.reset')"
         @click="resetLyricsOffset"
       >
         {{ offsetLabel }}
@@ -63,11 +67,11 @@ function resetLyricsOffset() {
       <UiButton
         class="lyrics-live-controls__adjust"
         :icon="Plus"
-        title="提前歌詞 0.1 秒"
-        aria-label="提前 0.1 秒"
+        :title="t('lyricsDisplay.live.earlierTitle')"
+        :aria-label="t('lyricsEditor.segment.earlier')"
         @click="advanceLyrics"
       >
-        提前
+        {{ t('lyricsDisplay.live.earlier') }}
       </UiButton>
     </UiButtonGroup>
   </aside>

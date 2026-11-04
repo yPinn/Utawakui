@@ -3,6 +3,7 @@ import { computed, shallowRef, watch } from 'vue';
 import { loadArtworkTone } from '../../../utils/artworkTone.js';
 import AppRightDockSection from '../../layout/AppRightDockSection.vue';
 import UiButton from '../../ui/UiButton.vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   preview: { type: Object, default: null },
@@ -36,12 +37,14 @@ watch(
     class="track-lyrics-preview"
     :class="{ 'track-lyrics-preview--themed': tone }"
     :style="tone ? { '--track-lyrics-preview-tone': tone } : undefined"
-    heading="歌詞預覽"
+    :heading="t('lyricsDisplay.preview.heading')"
     appearance="contained"
     :aria-busy="loading ? 'true' : undefined"
   >
     <template #trailing>
-      <UiButton variant="ghost" @click="emit('open')">開啟歌詞</UiButton>
+      <UiButton variant="ghost" @click="emit('open')">{{
+        t('lyricsDisplay.preview.open')
+      }}</UiButton>
     </template>
 
     <div class="track-lyrics-preview__lines">

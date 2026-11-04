@@ -1,0 +1,49 @@
+{
+  "title": "Lyrics",
+  "fontSize": {
+    "compact": "Small",
+    "default": "Standard",
+    "large": "Large"
+  },
+  "reading": {
+    "off": "Off",
+    "furigana": "Furigana",
+    "romaji": "Romanization"
+  },
+  "text": {
+    "original": "Original",
+    "traditionalTw": "Traditional Chinese"
+  },
+  "controls": {
+    "text": "Text",
+    "textLabel": "Lyrics text display",
+    "reading": "Reading",
+    "readingLabel": "Lyrics reading display",
+    "generating": "Creating readings…",
+    "loading": "Loading readings…",
+    "fontSize": "Text size",
+    "fontSizeLabel": "Lyrics text size",
+    "smaller": "Smaller lyrics",
+    "larger": "Larger lyrics"
+  },
+  "live": {
+    "label": "Live sync",
+    "offset": "Lyrics time offset",
+    "laterTitle": "Delay lyrics 0.1 s",
+    "later": "Later",
+    "reset": "Reset lyrics time offset",
+    "earlierTitle": "Advance lyrics 0.1 s",
+    "earlier": "Earlier",
+    "tool": "Performance lyrics tools"
+  },
+  "performance": {
+    "edit": "Edit lyrics",
+    "editTitle": "Edit this song's lyrics, sources and readings in the library",
+    "selectionHint": "Play a track from the library to see its lyrics.",
+    "uncheckedHint": "Press Edit lyrics, then rescan from Edit."
+  },
+  "preview": {
+    "heading": "Lyrics preview",
+    "open": "Open lyrics"
+  }
+}

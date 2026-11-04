@@ -9,6 +9,7 @@ import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiField from '../ui/UiField.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   layout: {
@@ -27,7 +28,10 @@ defineProps({
   isGeneratingReading: { type: Boolean, default: false },
   showsLyricsTextVariant: { type: Boolean, default: false },
   lyricsTextVariant: { type: String, default: 'traditional-tw' },
-  fontSizeLabel: { type: String, default: '標準' },
+  fontSizeLabel: {
+    type: String,
+    default: () => t('lyricsDisplay.fontSize.default'),
+  },
   canDecreaseFontSize: { type: Boolean, default: false },
   canIncreaseFontSize: { type: Boolean, default: false },
 });
@@ -45,8 +49,8 @@ const textSelectId = `lyrics-text-${useId()}`;
 const readingId = `lyrics-reading-${useId()}`;
 const fontSizeId = `lyrics-font-size-${useId()}`;
 const textOptions = [
-  { value: 'original', label: '原文' },
-  { value: 'traditional-tw', label: '繁體中文' },
+  { value: 'original', label: t('lyricsDisplay.text.original') },
+  { value: 'traditional-tw', label: t('lyricsDisplay.text.traditionalTw') },
 ];
 function selectReadingVariant(value) {
   emit('readingVariantChange', value);
@@ -85,19 +89,24 @@ function increaseFontSize() {
     <UiSelect
       v-if="showsLyricsTextVariant"
       :id="textSelectId"
-      label="文字"
-      aria-label="歌詞文字顯示"
+      :label="t('lyricsDisplay.controls.text')"
+      :aria-label="t('lyricsDisplay.controls.textLabel')"
       :model-value="lyricsTextVariant"
       :options="textOptions"
       :disabled="isLoadingSources"
       @update:model-value="changeTextVariant"
     />
-    <UiField v-if="readingOptions.length" :id="readingId" label="讀音" group>
+    <UiField
+      v-if="readingOptions.length"
+      :id="readingId"
+      :label="t('lyricsDisplay.controls.reading')"
+      group
+    >
       <div class="lyrics-display-controls__reading">
         <UiSegmentedControl
           :model-value="readingVariant"
           :items="readingOptions"
-          aria-label="歌詞讀音顯示"
+          :aria-label="t('lyricsDisplay.controls.readingLabel')"
           :disabled="isLoadingSources || !hasSelectedTrack"
           :aria-busy="isPreparingReading || isGeneratingReading"
           @update:model-value="selectReadingVariant"
@@ -116,26 +125,34 @@ function increaseFontSize() {
           "
           role="status"
         >
-          {{ isGeneratingReading ? '正在產生讀音…' : '正在讀取讀音…' }}
+          {{
+            isGeneratingReading
+              ? t('lyricsDisplay.controls.generating')
+              : t('lyricsDisplay.controls.loading')
+          }}
         </UiHint>
       </div>
     </UiField>
     <div class="lyrics-display-controls__footer">
-      <UiField :id="fontSizeId" label="字級" group>
+      <UiField
+        :id="fontSizeId"
+        :label="t('lyricsDisplay.controls.fontSize')"
+        group
+      >
         <UiButtonGroup
           class="lyrics-display-controls__font-size"
-          label="歌詞字級"
+          :label="t('lyricsDisplay.controls.fontSizeLabel')"
         >
           <UiIconButton
             :icon="Minus"
-            label="縮小歌詞"
+            :label="t('lyricsDisplay.controls.smaller')"
             :disabled="!canDecreaseFontSize"
             @click="decreaseFontSize"
           />
           <span aria-live="polite">{{ fontSizeLabel }}</span>
           <UiIconButton
             :icon="Plus"
-            label="放大歌詞"
+            :label="t('lyricsDisplay.controls.larger')"
             :disabled="!canIncreaseFontSize"
             @click="increaseFontSize"
           />

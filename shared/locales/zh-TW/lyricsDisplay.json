@@ -1,0 +1,49 @@
+{
+  "title": "歌詞",
+  "fontSize": {
+    "compact": "小",
+    "default": "標準",
+    "large": "大"
+  },
+  "reading": {
+    "off": "關閉",
+    "furigana": "假名",
+    "romaji": "羅馬字"
+  },
+  "text": {
+    "original": "原文",
+    "traditionalTw": "繁體中文"
+  },
+  "controls": {
+    "text": "文字",
+    "textLabel": "歌詞文字顯示",
+    "reading": "讀音",
+    "readingLabel": "歌詞讀音顯示",
+    "generating": "正在產生讀音…",
+    "loading": "正在讀取讀音…",
+    "fontSize": "字級",
+    "fontSizeLabel": "歌詞字級",
+    "smaller": "縮小歌詞",
+    "larger": "放大歌詞"
+  },
+  "live": {
+    "label": "即時同步",
+    "offset": "歌詞時間偏移",
+    "laterTitle": "延後歌詞 0.1 秒",
+    "later": "延後",
+    "reset": "重設歌詞時間偏移",
+    "earlierTitle": "提前歌詞 0.1 秒",
+    "earlier": "提前",
+    "tool": "演唱歌詞工具"
+  },
+  "performance": {
+    "edit": "編輯歌詞",
+    "editTitle": "在曲庫編輯這首歌的歌詞、來源與讀音",
+    "selectionHint": "從曲庫播放曲目，即可查看歌詞。",
+    "uncheckedHint": "按「編輯歌詞」，從「編輯」重新掃描。"
+  },
+  "preview": {
+    "heading": "歌詞預覽",
+    "open": "開啟歌詞"
+  }
+}
