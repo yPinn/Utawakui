@@ -49,6 +49,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 | 領域                      | 現況                  | 已具備                                                                                                                                                                                   | 驗收／邊界                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Desktop shell             | 已實作                | Secure preload、single instance、tray 背景執行與關閉選擇。                                                                                                                               | 不含登入自啟動與 tray 播放控制。                                                                                                                                                                                                                                                                                                                                                 |
+| 介面與 Output 語言        | 已實作                | 繁中／English 介面（跟隨系統、重新啟動套用）、獨立的 Output 語言（即時套用）、中英功能告知與更新公告。                                                                                   | 英文介面的對話框、選單與右側面板尚待人工逐頁檢查（`npm run dev:pseudo`）。[ADR 0032](adr/0032-ui-and-output-languages.md)。                                                                                                                                                                                                                                                      |
 | 資源監視                  | 已實作                | App CPU／RAM 與 heavy job 子程序投影。                                                                                                                                                   | 不含整機、GPU 與 yt-dlp 程序。                                                                                                                                                                                                                                                                                                                                                   |
 | 曲庫與資訊                | 已實作                | 本機匯入／明示相容轉檔、作品／版本／發行、資訊校對與復原；native FLAC 文字 tags 回寫。                                                                                                   | 封裝版轉檔矩陣待驗；其他 tags 格式、音檔封面回寫與整庫同步未開放。[校對](contracts/library-reconciliation.md)、[作品與版本](contracts/works-versions-and-releases.md)、[回寫](contracts/audio-tag-writeback.md)、[ADR 0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)。                                                                                        |
 | 集合、藝人與空間          | 已實作                | Playlists、來源專輯完整曲序／本地持有、專輯批次下載／停止／重試、藝人整理／照片、試聽與 Folder 頁面物件；分離結果安全清理。                                                              | 弱 alias、本機藝人 tags 與試聽歌詞／音量控制未完成；視覺待驗。[來源曲序](contracts/release-source-catalog.md)、[藝人](adr/0022-artist-identity-and-organization.md)、[照片](contracts/artist-photo-provider.md)、[試聽](contracts/track-preview.md)、[頁面物件](contracts/folder-page-objects.md)、[空間](contracts/library-storage-management.md)。                             |
@@ -182,11 +183,10 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 ### 7.2 系統與環境
 
 1. 直播期間是否抑制 App 或系統通知？
-2. 何時啟動 i18n 與應用內語言切換（即時套用或重啟）？目前 UI 語系固定 zh-TW，格式化不依 OS，見[架構](architecture.md#視窗)。
-3. 偵測系統字型供 Lyrics／Overlay，並檢查 CJK 缺字？
-4. 控制台主題是否跟隨 Windows 深淺色？
-5. Per-monitor DPI 與提詞器／Workbench 跨螢幕重算？
-6. 是否投影 Windows 減少動態效果設定？
+2. 偵測系統字型供 Lyrics／Overlay，並檢查 CJK 缺字？
+3. 控制台主題是否跟隨 Windows 深淺色？
+4. Per-monitor DPI 與提詞器／Workbench 跨螢幕重算？
+5. 是否投影 Windows 減少動態效果設定？
 
 ### 7.3 研究候選：尚未接受為開發路線
 
