@@ -45,5 +45,113 @@
   "readFailedMessage": "Feature status can't be read right now. Try again.",
   "restartRequired": "Restart Utawakui.",
   "enableFailed": "Feature not turned on",
-  "enableFailedMessage": "This feature can't be turned on right now. Try again."
+  "enableFailedMessage": "This feature can't be turned on right now. Try again.",
+  "notices": {
+    "providerFlow": {
+      "documentTitle": "About turning on external sources",
+      "summary": "Search for external material, download it to your library and organize its details.",
+      "sections": {
+        "query": {
+          "title": "Searches and data use",
+          "body": "When you search for material, your search terms and the track details it needs are sent to external services. Once this is on, artist names are also sent to MusicBrainz when your library loads or updates, to help organize artist information."
+        },
+        "saving": {
+          "title": "Getting and saving",
+          "body": "Before downloading audio, cover art or other material, follow the source platform's terms and access restrictions, and make sure getting and saving it this time is within what the material's license or applicable law allows."
+        },
+        "laterUse": {
+          "title": "Later use",
+          "body": "Being able to search for or download material doesn't mean you can use it in streams, recordings or republishing. Check separately that you have the rights this use requires."
+        },
+        "consent": {
+          "title": "Confirmation",
+          "body": "This setting is stored only on this computer and records that you've read this notice and chose to turn it on. Utawakui doesn't obtain or verify material licenses for you."
+        }
+      }
+    },
+    "lyricsFlow": {
+      "documentTitle": "About turning on lyrics sources",
+      "summary": "Look up external lyrics or subtitles and save the one you choose to your library.",
+      "sections": {
+        "query": {
+          "title": "What's looked up",
+          "body": "When you look up lyrics, track details such as the title and artist name are sent to external lyrics services. What's available, and the terms for using it, vary by source."
+        },
+        "saving": {
+          "title": "Saving and editing",
+          "body": "Lyrics and subtitles may be protected by copyright. When you save, edit or translate them, make sure this use is within what the material's license or applicable law allows."
+        },
+        "publicUse": {
+          "title": "Public use",
+          "body": "Before using them in streams, recordings or replay videos, check separately that you have the right to display them publicly, and follow the platform's rules. Being able to get lyrics doesn't mean you can display them publicly."
+        },
+        "consent": {
+          "title": "Confirmation",
+          "body": "This setting is stored only on this computer and records that you've read this notice and chose to turn it on. Utawakui doesn't obtain or verify material licenses for you."
+        }
+      }
+    },
+    "audioProcessingFlow": {
+      "documentTitle": "About turning on audio processing",
+      "summary": "Analyze songs, convert formats and separate vocals on this computer.",
+      "sections": {
+        "local": {
+          "title": "Local processing",
+          "body": "Analysis, conversion and vocal separation run on this computer, and songs aren't uploaded for them. Results are saved on this computer, and some actions create new audio files."
+        },
+        "scope": {
+          "title": "Scope of use",
+          "body": "Process material only within what its license or applicable law allows. Separating vocals or altering audio doesn't mean you have the rights to use the original material or the results."
+        },
+        "publicUse": {
+          "title": "Public use",
+          "body": "Before using the results in streams, recordings or republishing, check separately the rights needed for the original audio, the lyrics and music, and this use, and follow the platform's rules."
+        },
+        "components": {
+          "title": "Required components",
+          "body": "Some features need to download processing components, and each one's license terms still apply when you use it. This setting is stored only on this computer and doesn't mean you have a license for the material."
+        }
+      }
+    },
+    "publicOutputFlow": {
+      "documentTitle": "About turning on public output",
+      "summary": "Use track details, lyrics and covers in your performance display.",
+      "sections": {
+        "sharing": {
+          "title": "Sharing the display",
+          "body": "Once started, apps such as OBS can receive the performance display. When you add it to a stream or recording, the lyrics, cover art and track details shown may also be made public or saved."
+        },
+        "beforeUse": {
+          "title": "Before you use it",
+          "body": "Before displaying, transmitting or recording publicly, make sure this use is within what the related material's license or applicable law allows, and follow the rules of the platform you use."
+        },
+        "streams": {
+          "title": "Streams and replays",
+          "body": "Streams, recordings and replay videos may fall under different license terms. A platform not restricting or allowing monetization doesn't mean you have all the necessary rights."
+        },
+        "consent": {
+          "title": "Confirmation",
+          "body": "This setting is stored only on this computer and records that you've read this notice and chose to turn it on. Utawakui doesn't obtain or verify material licenses for you."
+        }
+      }
+    },
+    "obsIntegration": {
+      "documentTitle": "About turning on OBS connection",
+      "summary": "Read OBS streaming and recording status to help log sessions.",
+      "sections": {
+        "setup": {
+          "title": "Before connecting",
+          "body": "First turn on WebSocket in OBS and set a password, and connect only to an OBS you're allowed to use. The saved connection password is encrypted and stored on this computer."
+        },
+        "scope": {
+          "title": "What it does",
+          "body": "Utawakui only reads streaming and recording status and logs time markers. It doesn't start or stop streams or recordings for you, and doesn't change scenes."
+        },
+        "sharing": {
+          "title": "Logs and sharing",
+          "body": "Session logs and this setting are stored on this computer. Before exporting or sharing logs, check the track titles, time markers and notes in them, and confirm who will receive them and how widely they're shared."
+        }
+      }
+    }
+  }
 }

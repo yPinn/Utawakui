@@ -9,7 +9,8 @@ import {
 } from './featureGates.js';
 import { readLocaleCatalogs } from './localeCatalogs.js';
 
-const notices = readLocaleCatalogs()['zh-TW'].featureGates.notices;
+const catalogs = readLocaleCatalogs();
+const notices = catalogs['zh-TW'].featureGates.notices;
 
 function noticeCopy(gate) {
   const copy = notices[gate.id.replace(/-(\w)/gu, (_, c) => c.toUpperCase())];
@@ -163,5 +164,24 @@ describe('featureGates', () => {
     expect(obs.body.join('')).toContain('密碼會加密保存在本機');
     expect(obs.body.join('')).toContain('匯出或分享記錄前');
     expect(obs.body.join('')).not.toContain('不會驗證素材授權');
+  });
+
+  it('gives every UI language the same notice sections under one notice version', () => {
+    for (const [locale, catalog] of Object.entries(catalogs)) {
+      const copies = catalog.featureGates.notices;
+      expect(Object.keys(copies), locale).toHaveLength(5);
+      for (const gate of Object.values(FEATURE_GATES)) {
+        const copy =
+          copies[gate.id.replace(/-(\w)/gu, (_, c) => c.toUpperCase())];
+        const label = `${locale} ${gate.id}`;
+        expect(copy.documentTitle, label).toBeTruthy();
+        expect(copy.summary, label).toBeTruthy();
+        expect(Object.keys(copy.sections), label).toEqual(gate.sections);
+        for (const section of Object.values(copy.sections)) {
+          expect(section.title, label).toBeTruthy();
+          expect(section.body, label).toBeTruthy();
+        }
+      }
+    }
   });
 });

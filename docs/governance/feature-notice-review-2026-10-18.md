@@ -8,7 +8,7 @@
 
 ## 文件分工與寫作規則
 
-- `shared/featureGates.json` 定義五份使用者說明的代號、版本與段落順序；文字在各語言的 `featureGates.notices`。初次確認與設定頁重新閱讀繼續共用 `AppFeatureNoticeDocument`。
+- `shared/featureGates.json` 定義五份使用者說明的代號、版本與段落順序；文字在各語言的 `featureGates.notices`。各語言是同一份說明的等價譯文，共用同一個 `noticeVersion`：切換語言不需重新確認；任一語言有實質內容變更時一起升版，各語言段落須一致。初次確認與設定頁重新閱讀繼續共用 `AppFeatureNoticeDocument`。
 - 使用者文件只回答功能影響、會傳送或保存的資料、使用者應確認的權利，以及需要遵守的條件。
 - 操作說明保留必要的產品名稱，例如 OBS 的 WebSocket 設定與對外接收者 MusicBrainz；API 路徑、演算法、執行檔、hash、元件授權代號留在內部文件及元件清單。
 - 以「授權或適用法律允許範圍」保留法律例外，不把所有使用都寫成必須另外申請授權，也不替個案判定合理使用。
