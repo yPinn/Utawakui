@@ -612,7 +612,7 @@ describe('useFeatureGatePresentation', () => {
       'ffmpeg-gyan-essentials',
     );
 
-    expect(item.actionLabel).toBe('準備音訊轉換工具');
+    expect(item.actionLabel).toBe('準備音訊轉換工具（FFmpeg）');
 
     updatedCallback([
       {

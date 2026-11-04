@@ -7,7 +7,7 @@ const render = (props) =>
   renderToString(
     createSSRApp({
       render: () =>
-        h(SettingsDependencyList, props, () => h('div', 'BPM 分析元件')),
+        h(SettingsDependencyList, props, () => h('div', 'BPM 分析工具')),
     }),
   );
 it('counts the BPM component alongside the dependency models and stays collapsed when ready', async () => {

@@ -485,11 +485,11 @@
     "message": "The lyrics source action didn't finish. Try again."
   },
   "LYRICS_ENV_INVALID_INTENT": {
-    "message": "The lyrics audio assist action didn't finish."
+    "message": "The lyrics timing estimate tool action didn't finish."
   },
   "LYRICS_ENV_OPERATION_FAILED": {
-    "title": "Lyrics audio assist",
-    "message": "The lyrics audio assist action didn't finish."
+    "title": "Lyrics timing estimate",
+    "message": "The lyrics timing estimate tool action didn't finish."
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
     "message": "The lyrics analysis request is invalid."

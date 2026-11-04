@@ -90,7 +90,7 @@ describe('optional lyrics environment IPC', () => {
       .get('lyrics-acoustic:prepare')()
       .catch((error) => error);
     expect(error).toMatchObject({
-      publicMessage: '歌詞音訊輔助環境操作未完成。',
+      publicMessage: '歌詞時間估計工具操作未完成。',
       context: { diagnosticRecorded: true },
     });
     expect(error.message).not.toContain('private');

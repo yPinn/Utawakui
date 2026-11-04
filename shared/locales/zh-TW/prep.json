@@ -1,9 +1,9 @@
 {
   "analysis": {
     "starting": "準備下載",
-    "downloading": "下載分析元件",
-    "installing": "安裝分析元件",
-    "verifying": "確認分析元件",
+    "downloading": "下載分析工具",
+    "installing": "安裝分析工具",
+    "verifying": "確認分析工具",
     "activating": "完成分析功能設定",
     "ready": "分析功能已就緒",
     "repairFailed": "分析功能修復未完成，請再試一次。",

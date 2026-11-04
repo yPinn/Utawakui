@@ -210,7 +210,7 @@ describe('SettingsView behavior wiring', () => {
   it('retains destructive confirmations and protected credentials', () => {
     expect(source).toContain("title: '清除錯誤紀錄？'");
     expect(source).toContain("confirmLabel: '清除紀錄'");
-    expect(source).toContain("title: '移除 BPM 分析元件？'");
+    expect(source).toContain("title: '移除 BPM 分析工具？'");
     expect(source).toContain('歌曲與既有分析資料都會保留');
     expect(source).toContain('@remove="handleRemoveMusicAnalysis"');
     expect(source).toContain("title: '移除 OBS 密碼？'");

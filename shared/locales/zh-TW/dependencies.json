@@ -1,6 +1,6 @@
 {
   "title": {
-    "ffmpeg": "音訊轉換工具",
+    "ffmpeg": "音訊轉換工具（FFmpeg）",
     "ytdlp": "線上來源下載工具"
   },
   "description": {
@@ -92,7 +92,7 @@
     "repairFailed": "修復項目失敗"
   },
   "ffmpeg": {
-    "title": "音訊轉換工具",
+    "title": "音訊轉換工具（FFmpeg）",
     "recheck": "重新檢查工具",
     "useSystem": "使用此版本",
     "prepareAndUse": "準備並使用",

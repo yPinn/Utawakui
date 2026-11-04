@@ -485,11 +485,11 @@
     "message": "歌詞來源操作未完成，請再試一次。"
   },
   "LYRICS_ENV_INVALID_INTENT": {
-    "message": "歌詞音訊輔助環境操作未完成。"
+    "message": "歌詞時間估計工具操作未完成。"
   },
   "LYRICS_ENV_OPERATION_FAILED": {
-    "title": "歌詞音訊輔助",
-    "message": "歌詞音訊輔助環境操作未完成。"
+    "title": "歌詞時間估計",
+    "message": "歌詞時間估計工具操作未完成。"
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
     "message": "歌詞分析操作格式不正確。"

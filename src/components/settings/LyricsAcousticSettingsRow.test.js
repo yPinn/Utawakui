@@ -12,7 +12,7 @@ describe('optional lyrics environment settings', () => {
       canPrepare: false,
       blockReason: 'weights-evidence-pending',
     });
-    expect(html).toContain('歌詞音訊輔助');
+    expect(html).toContain('歌詞時間估計');
     expect(html).toContain('尚未開放準備');
     expect(html).not.toContain('準備環境</button>');
   });
@@ -26,7 +26,7 @@ describe('optional lyrics environment settings', () => {
     });
     expect(html).toContain('待檢查');
     expect(html).toMatch(/>檢查(?:<!--[^>]*-->|<\/?span[^>]*>)*<\/button>/u);
-    expect(html).toContain('歌詞音訊輔助選項');
+    expect(html).toContain('歌詞時間估計選項');
     const busy = await render({
       status: 'preparing',
       installed: false,

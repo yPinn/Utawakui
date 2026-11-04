@@ -1,9 +1,9 @@
 {
   "analysis": {
     "starting": "Preparing download",
-    "downloading": "Downloading analysis component",
-    "installing": "Installing analysis component",
-    "verifying": "Checking analysis component",
+    "downloading": "Downloading analysis tool",
+    "installing": "Installing analysis tool",
+    "verifying": "Checking analysis tool",
     "activating": "Finishing analysis setup",
     "ready": "Analysis is ready",
     "repairFailed": "Analysis repair didn't finish. Try again.",

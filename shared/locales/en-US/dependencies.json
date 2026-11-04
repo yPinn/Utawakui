@@ -1,6 +1,6 @@
 {
   "title": {
-    "ffmpeg": "Audio conversion tool",
+    "ffmpeg": "Audio conversion tool (FFmpeg)",
     "ytdlp": "Online source download tool"
   },
   "description": {
@@ -92,7 +92,7 @@
     "repairFailed": "Couldn't repair the item"
   },
   "ffmpeg": {
-    "title": "Audio conversion tool",
+    "title": "Audio conversion tool (FFmpeg)",
     "recheck": "Check tools again",
     "useSystem": "Use this version",
     "prepareAndUse": "Set up and use",
