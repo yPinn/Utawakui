@@ -6,6 +6,7 @@ import {
   hasControlCharacters,
   safeId,
 } from '../utils/ipcPayloadGuards.js';
+import { t } from '../utils/i18n.js';
 
 const MAX_QUEUE_ITEMS = 500;
 const QUEUE_STATUSES = new Set(['idle', 'running', 'pausing', 'paused']);
@@ -160,7 +161,7 @@ export function useSeparationQueue({
       observeCompletion(queue.value);
       return queue.value;
     } catch {
-      error.value = '處理清單暫時無法讀取，請重新開啟後再試。';
+      error.value = t('queue.separation.readFailedReopen');
       return null;
     }
   }
@@ -176,7 +177,7 @@ export function useSeparationQueue({
         : queue.value;
     } catch {
       if (!disposed && current === revision)
-        error.value = '處理清單暫時無法讀取，請稍後再試。';
+        error.value = t('queue.separation.readFailed');
       return null;
     }
   }
@@ -221,7 +222,7 @@ export function useSeparationQueue({
         : queue.value;
     } catch {
       if (!disposed && current === revision)
-        error.value = '歌曲目前無法加入，請到設定完成準備後再試。';
+        error.value = t('queue.separation.addFailed');
       return null;
     }
   }
@@ -236,7 +237,7 @@ export function useSeparationQueue({
         : queue.value;
     } catch {
       if (!disposed && current === revision)
-        error.value = '目前無法更新處理清單，請再試一次。';
+        error.value = t('queue.separation.updateFailed');
       return null;
     }
   }
@@ -250,7 +251,7 @@ export function useSeparationQueue({
       return result;
     } catch {
       if (!disposed && current === revision)
-        error.value = '目前無法更新處理清單，請再試一次。';
+        error.value = t('queue.separation.updateFailed');
       return false;
     }
   }

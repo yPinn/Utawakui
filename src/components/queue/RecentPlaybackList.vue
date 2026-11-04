@@ -3,6 +3,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   entries: { type: Array, default: () => [] },
@@ -16,9 +17,9 @@ const props = defineProps({
   busy: { type: Boolean, default: false },
   playbackActions: { type: Boolean, default: true },
   menuContext: { type: String, default: 'recent' },
-  emptyMessage: { type: String, default: '尚無最近播放紀錄' },
-  loadingMessage: { type: String, default: '讀取最近播放…' },
-  errorTitle: { type: String, default: '最近播放未更新' },
+  emptyMessage: { type: String, default: () => t('queue.recent.empty') },
+  loadingMessage: { type: String, default: () => t('queue.recent.loading') },
+  errorTitle: { type: String, default: () => t('queue.recent.errorTitle') },
 });
 
 const emit = defineEmits([

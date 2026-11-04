@@ -1,6 +1,7 @@
 <script setup>
 import { Ellipsis } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   trackTitle: { type: String, required: true },
@@ -14,9 +15,9 @@ defineEmits(['open']);
   <UiIconButton
     class="right-dock-track__menu"
     :icon="Ellipsis"
-    :label="`${trackTitle}的更多選項`"
+    :label="t('queue.track.moreNamed', { title: trackTitle })"
     :title="trackTitle"
-    tooltip-suffix="的更多選項"
+    :tooltip-suffix="t('queue.track.moreSuffix')"
     aria-haspopup="menu"
     :aria-expanded="menuOpen ? 'true' : 'false'"
     @click.stop="$emit('open', $event)"

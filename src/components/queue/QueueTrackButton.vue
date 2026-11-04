@@ -5,6 +5,7 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
 import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -48,7 +49,9 @@ const emit = defineEmits([
 const artworkActionLabel = computed(
   () =>
     props.playbackLabel ??
-    `${props.playing ? '暫停' : '播放'}：${props.track.title}`,
+    t(props.playing ? 'queue.track.pauseNamed' : 'queue.track.playNamed', {
+      title: props.track.title,
+    }),
 );
 const canPlay = computed(
   () => props.playbackActions && !props.playbackDisabled,
@@ -98,7 +101,11 @@ function handleDragEnd(event) {
     state-surface
     :state-surface-active="menuOpen"
     :activate-on-enter="interactive && canPlay"
-    :action-label="interactive ? `選取：${track.title}` : undefined"
+    :action-label="
+      interactive
+        ? t('queue.track.selectNamed', { title: track.title })
+        : undefined
+    "
     :artwork-clickable="canPlay"
     :artwork-label="artworkActionLabel"
     hide-duration
@@ -123,7 +130,9 @@ function handleDragEnd(event) {
     <template v-if="ordinal !== null" #lead>
       <span
         class="queue-track__ordinal"
-        :aria-label="ordinalLabel || `第 ${ordinal} 首`"
+        :aria-label="
+          ordinalLabel || t('queue.track.ordinal', { position: ordinal })
+        "
         >{{ ordinal }}</span
       >
     </template>

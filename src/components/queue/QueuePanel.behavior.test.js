@@ -1,38 +1,28 @@
-import { readFileSync } from 'node:fs';
 import { compileStyle, parse } from '@vue/compiler-sfc';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
-  new URL('./QueuePanel.vue', import.meta.url),
-  'utf8',
-);
-const dockPanelSource = readFileSync(
+const source = readCatalogSource(new URL('./QueuePanel.vue', import.meta.url));
+const dockPanelSource = readCatalogSource(
   new URL('../layout/AppRightDockPanel.vue', import.meta.url),
-  'utf8',
 );
-const rowSource = readFileSync(
+const rowSource = readCatalogSource(
   new URL('./QueueTrackButton.vue', import.meta.url),
-  'utf8',
 );
-const recentSource = readFileSync(
+const recentSource = readCatalogSource(
   new URL('./RecentPlaybackList.vue', import.meta.url),
-  'utf8',
 );
-const artworkCueSource = readFileSync(
+const artworkCueSource = readCatalogSource(
   new URL('./RightDockTrackArtworkCue.vue', import.meta.url),
-  'utf8',
 );
-const menuButtonSource = readFileSync(
+const menuButtonSource = readCatalogSource(
   new URL('./RightDockTrackMenuButton.vue', import.meta.url),
-  'utf8',
 );
-const sectionSource = readFileSync(
+const sectionSource = readCatalogSource(
   new URL('./QueueSection.vue', import.meta.url),
-  'utf8',
 );
-const trackRowSource = readFileSync(
+const trackRowSource = readCatalogSource(
   new URL('../ui/UiTrackRow.vue', import.meta.url),
-  'utf8',
 );
 
 function compileScopedStyles(sourceText, filename) {
@@ -52,9 +42,8 @@ function compileScopedStyles(sourceText, filename) {
     .join('\n');
 }
 
-const artworkRevealSource = readFileSync(
+const artworkRevealSource = readCatalogSource(
   new URL('../ui/UiArtworkReveal.vue', import.meta.url),
-  'utf8',
 );
 const artworkRevealCss = compileScopedStyles(
   artworkRevealSource,
@@ -431,7 +420,9 @@ describe('QueuePanel shared Dock content', () => {
   it('keeps the menu tooltip action phrase intact instead of splitting 選項', () => {
     expect(menuButtonSource).toContain(':title="trackTitle"');
     expect(menuButtonSource).toContain('tooltip-suffix="的更多選項"');
-    expect(menuButtonSource).toContain(':label="`${trackTitle}的更多選項`"');
+    expect(menuButtonSource).toContain(
+      ':label="t(\'queue.track.moreNamed\', { title: trackTitle })"',
+    );
   });
 
   it('keeps whole-row Queue drag, aligned drop guidance, and a separate menu action', () => {

@@ -4,6 +4,7 @@ import { useVirtualList } from '../../composables/useVirtualRows.js';
 import UiHint from '../ui/UiHint.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -100,7 +101,9 @@ function openTrackMenu(track, payload) {
             v-if="titleJumpable"
             class="queue-section__source-link"
             :text="title"
-            :aria-label="titleLinkAriaLabel || `前往：${title}`"
+            :aria-label="
+              titleLinkAriaLabel || t('queue.track.goToNamed', { title })
+            "
             overflow="ellipsis"
             @click="emit('sectionTitleClick')"
           />

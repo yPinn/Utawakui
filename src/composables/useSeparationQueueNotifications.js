@@ -3,6 +3,7 @@ import {
   useAppRightDock,
 } from './useAppRightDock.js';
 import { NOTIFICATION_KEYS } from '../constants/notificationKeys.js';
+import { t } from '../utils/i18n.js';
 
 const OPEN = new Set(['pending', 'checking', 'running']);
 const emptyCounts = () => ({
@@ -46,27 +47,31 @@ export function useSeparationQueueNotifications(notify) {
         ? 'info'
         : 'success';
     const message = [
-      completed ? `${completed} 首完成` : '',
-      skipped ? `${skipped} 首已有伴奏` : '',
-      failed ? `${failed} 首失敗` : '',
-      cancelled ? `${cancelled} 首已停止` : '',
+      completed
+        ? t('queue.separation.notifyCompleted', { count: completed })
+        : '',
+      skipped ? t('queue.separation.notifySkipped', { count: skipped }) : '',
+      failed ? t('queue.separation.notifyFailed', { count: failed }) : '',
+      cancelled
+        ? t('queue.separation.notifyCancelled', { count: cancelled })
+        : '',
     ]
       .filter(Boolean)
-      .join('，');
+      .join(t('common.clauseSeparator'));
     notify({
       key: NOTIFICATION_KEYS.SEPARATION_QUEUE_RESULT,
       title:
         failed && !completed && !skipped
-          ? '伴奏處理未完成'
+          ? t('queue.separation.incompleteTitle')
           : cancelled
-            ? '伴奏處理已停止'
-            : '伴奏處理完成',
+            ? t('queue.separation.stoppedTitle')
+            : t('queue.separation.doneTitle'),
       message,
       tone,
       lifecycle: failed ? 'persistent' : 'transient',
       // Transient results carry no action; the queue tab keeps the details.
       ...(failed && {
-        actionLabel: '查看處理清單',
+        actionLabel: t('queue.separation.viewList'),
         action() {
           const dock = useAppRightDock();
           dock.selectPreparationTab('separation');

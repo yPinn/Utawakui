@@ -1,0 +1,84 @@
+{
+  "panel": {
+    "pending": "待唱清單",
+    "history": "演出紀錄",
+    "queue": "佇列",
+    "recent": "最近播放",
+    "currentQueue": "目前佇列",
+    "goToAlbum": "前往專輯：{name}",
+    "goToPlaylist": "前往歌單：{name}",
+    "title": "播放清單",
+    "collapse": "摺疊播放佇列",
+    "generalLabel": "一般播放佇列與最近播放",
+    "arrangementLabel": "演出安排紀錄",
+    "toGeneral": "切換一般佇列",
+    "toArrangement": "切換演出待唱",
+    "toGeneralHint": "目前為演出待唱。切換至一般播放佇列；兩份佇列各自安排。",
+    "toArrangementHint": "目前為一般播放佇列。切換至演出待唱；從待唱開始播放才會留下演出紀錄。",
+    "empty": "一般佇列尚無歌曲。從曲庫播放，或選擇「加入一般佇列」。",
+    "nowPlaying": "現正播放",
+    "nextUp": "佇列中下一首",
+    "clear": "清除佇列",
+    "nextFrom": "下一首來自：",
+    "noNext": "沒有下一首"
+  },
+  "track": {
+    "pauseNamed": "暫停：{title}",
+    "playNamed": "播放：{title}",
+    "selectNamed": "選取：{title}",
+    "ordinal": "第 {position} 首",
+    "moreNamed": "{title}的更多選項",
+    "moreSuffix": "的更多選項",
+    "goToNamed": "前往：{title}"
+  },
+  "recent": {
+    "empty": "尚無最近播放紀錄",
+    "loading": "讀取最近播放…",
+    "errorTitle": "最近播放未更新"
+  },
+  "separation": {
+    "aboutGb": "約 {size} GB",
+    "aboutMb": "約 {size} MB",
+    "trackCount": "{count} 首",
+    "planWithEstimate": "{count} · 最多新增{size}",
+    "source": {
+      "pending": "待處理",
+      "completed": "已完成",
+      "attention": "未完成"
+    },
+    "item": {
+      "pending": "等候中",
+      "checking": "準備中",
+      "running": "處理中",
+      "completed": "已完成",
+      "skipped": "已有伴奏",
+      "failed": "未完成",
+      "cancelled": "已停止"
+    },
+    "idle": "依播放順序準備",
+    "pausing": "這首完成後暫停",
+    "paused": "已暫停 · {count} 首待處理",
+    "running": "已處理 {done} / {total} 首",
+    "finishedWithUnfinished": "{finished} 首完成 · {unfinished} 首未完成",
+    "finished": "{count} 首完成",
+    "indicatorRunning": "處理中 {done}/{total}",
+    "indicatorPausing": "即將暫停",
+    "indicatorPaused": "已暫停",
+    "indicatorUnfinished": "{count} 首未完成",
+    "notifyCompleted": "{count} 首完成",
+    "notifySkipped": "{count} 首已有伴奏",
+    "notifyFailed": "{count} 首失敗",
+    "notifyCancelled": "{count} 首已停止",
+    "incompleteTitle": "伴奏處理未完成",
+    "stoppedTitle": "伴奏處理已停止",
+    "doneTitle": "伴奏處理完成",
+    "viewList": "查看處理清單",
+    "readFailedReopen": "處理清單暫時無法讀取，請重新開啟後再試。",
+    "readFailed": "處理清單暫時無法讀取，請稍後再試。",
+    "addFailed": "歌曲目前無法加入，請到設定完成準備後再試。",
+    "updateFailed": "目前無法更新處理清單，請再試一次。"
+  },
+  "outputPreview": {
+    "sungRecord": "已唱紀錄"
+  }
+}

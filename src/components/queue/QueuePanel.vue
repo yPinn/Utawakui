@@ -26,6 +26,7 @@ import PerformanceSessionDockContent from '../performance-session/PerformanceSes
 import PerformanceSessionSummary from '../performance-session/PerformanceSessionSummary.vue';
 import BgmPlayer from '../bgm/BgmPlayer.vue';
 import { useAppRightDock } from '../../composables/useAppRightDock.js';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   active: { type: Boolean, default: false },
@@ -35,8 +36,8 @@ const emit = defineEmits(['close', 'collapse']);
 const dock = useAppRightDock();
 const performanceQueue = usePerformanceQueueActions();
 const arrangementTabs = [
-  { id: 'pending', label: '待唱清單' },
-  { id: 'history', label: '演出紀錄' },
+  { id: 'pending', label: t('queue.panel.pending') },
+  { id: 'history', label: t('queue.panel.history') },
 ];
 
 const {
@@ -67,8 +68,8 @@ const releaseOrganization = useReleaseOrganization();
 const { state: playbackHistoryState, recentItems } = usePlaybackHistory();
 const { activateRecentEntry } = useRecentPlaybackActivation();
 const tabs = [
-  { id: 'queue', label: '佇列' },
-  { id: 'recent', label: '最近播放' },
+  { id: 'queue', label: t('queue.panel.queue') },
+  { id: 'recent', label: t('queue.panel.recent') },
 ];
 const activeTab = shallowRef('queue');
 const selectedTrackId = shallowRef(null);
@@ -87,7 +88,9 @@ const hasQueue = computed(
     queuedTracks.value.length > 0 ||
     sourceUpcomingTracks.value.length > 0,
 );
-const upcomingSourceLabel = computed(() => state.sourceName || '目前佇列');
+const upcomingSourceLabel = computed(
+  () => state.sourceName || t('queue.panel.currentQueue'),
+);
 // null for a non-playlist source (e.g. useLyrics.js's 'lyrics-workspace'
 // marker, or no source at all) — only a real, still-existing playlist/album
 // entry is worth making the section title jump to.
@@ -96,9 +99,12 @@ const upcomingSourcePlaylist = computed(() => {
   return collectionForSource(playlistState.playlists, state.sourceId) ?? null;
 });
 const upcomingSourceLinkLabel = computed(() => {
-  const kindLabel =
-    upcomingSourcePlaylist.value?.kind === 'album' ? '專輯' : '歌單';
-  return `前往${kindLabel}：${upcomingSourceLabel.value}`;
+  return t(
+    upcomingSourcePlaylist.value?.kind === 'album'
+      ? 'queue.panel.goToAlbum'
+      : 'queue.panel.goToPlaylist',
+    { name: upcomingSourceLabel.value },
+  );
 });
 const openTrackMenuKey = computed(() => trackMenu.value?.key ?? '');
 const queuedTrackIds = computed(() =>
@@ -260,13 +266,13 @@ const {
   <AppRightDockPanel
     ref="dockPanel"
     class="queue-panel"
-    title="播放清單"
+    :title="t('queue.panel.title')"
     :workspace="
       dock.queueVariant.value === 'arrangement' &&
       dock.arrangementTab.value !== 'history'
     "
-    collapse-label="摺疊播放佇列"
-    aria-label="播放清單"
+    :collapse-label="t('queue.panel.collapse')"
+    :aria-label="t('queue.panel.title')"
     @collapse="emit('collapse')"
   >
     <template #overlay>
@@ -293,7 +299,7 @@ const {
           v-if="dock.queueVariant.value === 'queue'"
           :items="tabs"
           :active-id="activeTab"
-          aria-label="一般播放佇列與最近播放"
+          :aria-label="t('queue.panel.generalLabel')"
           tab-id-prefix="queue-panel"
           panel-id-prefix="queue-panel"
           variant="bar"
@@ -303,7 +309,7 @@ const {
           v-else
           :items="arrangementTabs"
           :active-id="dock.arrangementTab.value"
-          aria-label="演出安排紀錄"
+          :aria-label="t('queue.panel.arrangementLabel')"
           tab-id-prefix="arrangement-dock"
           panel-id-prefix="arrangement-dock"
           variant="bar"
@@ -317,14 +323,18 @@ const {
         :icon="Tickets"
         size="md"
         :label="
-          dock.queueVariant.value === 'arrangement'
-            ? '切換一般佇列'
-            : '切換演出待唱'
+          t(
+            dock.queueVariant.value === 'arrangement'
+              ? 'queue.panel.toGeneral'
+              : 'queue.panel.toArrangement',
+          )
         "
         :title="
-          dock.queueVariant.value === 'arrangement'
-            ? '目前為演出待唱。切換至一般播放佇列；兩份佇列各自安排。'
-            : '目前為一般播放佇列。切換至演出待唱；從待唱開始播放才會留下演出紀錄。'
+          t(
+            dock.queueVariant.value === 'arrangement'
+              ? 'queue.panel.toGeneralHint'
+              : 'queue.panel.toArrangementHint',
+          )
         "
         :active="dock.queueVariant.value === 'arrangement'"
         :aria-pressed="dock.queueVariant.value === 'arrangement'"
@@ -365,13 +375,11 @@ const {
       aria-labelledby="queue-panel-queue-tab"
       tabindex="0"
     >
-      <UiHint v-if="!hasQueue"
-        >一般佇列尚無歌曲。從曲庫播放，或選擇「加入一般佇列」。</UiHint
-      >
+      <UiHint v-if="!hasQueue">{{ t('queue.panel.empty') }}</UiHint>
 
       <div v-else class="queue-panel__sections">
         <QueueSection
-          title="現正播放"
+          :title="t('queue.panel.nowPlaying')"
           menu-context="current"
           :tracks="currentTracks"
           :selected-track-id="selectedTrackId"
@@ -388,7 +396,7 @@ const {
 
         <QueueSection
           v-if="queuedTracks.length > 0"
-          title="佇列中下一首"
+          :title="t('queue.panel.nextUp')"
           menu-context="queued"
           :tracks="queuedTracks"
           :virtualize-above="QUEUE_VIRTUALIZE_ABOVE"
@@ -414,12 +422,14 @@ const {
           @track-drag-end="clearQueuedDragState"
         >
           <template #actions>
-            <UiButton @click="clearQueuedTracks">清除佇列</UiButton>
+            <UiButton @click="clearQueuedTracks">{{
+              t('queue.panel.clear')
+            }}</UiButton>
           </template>
         </QueueSection>
 
         <QueueSection
-          title-prefix="下一首來自："
+          :title-prefix="t('queue.panel.nextFrom')"
           :title="upcomingSourceLabel"
           menu-context="source"
           :tracks="sourceUpcomingTracks"
@@ -434,7 +444,7 @@ const {
           :drop-position="sourceDropPosition"
           :title-jumpable="Boolean(upcomingSourcePlaylist)"
           :title-link-aria-label="upcomingSourceLinkLabel"
-          empty-text="沒有下一首"
+          :empty-text="t('queue.panel.noNext')"
           @select-track="selectQueueTrack"
           @activate-track="playQueuedTrack($event, { source: true })"
           @toggle-track-playback="

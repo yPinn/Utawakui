@@ -68,6 +68,10 @@ const I18N_MIGRATED = [
   'src/composables/player/{usePlayerPerformanceSettings,usePlayerAudioStart}.js',
   'src/composables/{usePlayerPractice,usePlaybackResume,usePlayer}.js',
   'src/composables/analysis/useMusicAnalysisCapabilitySession.js',
+  'src/components/queue/{QueuePanel,QueueTrackButton,RecentPlaybackList,RightDockTrackMenuButton,QueueSection}.vue',
+  'src/components/output/previews/QueueBoardPreview.vue',
+  'src/components/separation/separationQueuePresentation.js',
+  'src/composables/{useSeparationQueueNotifications,useSeparationQueue}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

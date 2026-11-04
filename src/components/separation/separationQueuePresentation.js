@@ -1,3 +1,4 @@
+import { t } from '../../utils/i18n.js';
 const OUTPUT_BYTES_PER_SECOND = 44_100 * 4 * 2;
 
 export function buildSeparationPlan({
@@ -28,8 +29,10 @@ export function estimateSeparationOutput(tracks = []) {
   const mebibytes = bytes / 1024 ** 2;
   const label =
     mebibytes >= 1024
-      ? `約 ${(mebibytes / 1024).toFixed(1)} GB`
-      : `約 ${Math.max(1, Math.round(mebibytes))} MB`;
+      ? t('queue.separation.aboutGb', { size: (mebibytes / 1024).toFixed(1) })
+      : t('queue.separation.aboutMb', {
+          size: Math.max(1, Math.round(mebibytes)),
+        });
   return {
     knownTracks: durations.length,
     totalTracks: tracks.length,
@@ -38,13 +41,20 @@ export function estimateSeparationOutput(tracks = []) {
 }
 
 export function separationPlanSummary(tracks = []) {
-  const count = `${tracks.length} 首`;
+  const count = t(
+    'queue.separation.trackCount',
+    { count: tracks.length },
+    tracks.length,
+  );
   if (tracks.length === 0) return count;
   const estimate = estimateSeparationOutput(tracks);
   if (!estimate.label || estimate.knownTracks !== estimate.totalTracks) {
     return count;
   }
-  return `${count} · 最多新增${estimate.label}`;
+  return t('queue.separation.planWithEstimate', {
+    count,
+    size: estimate.label,
+  });
 }
 
 export function separationSourceStatus(tracks = [], items = [], recipeId) {
@@ -75,9 +85,9 @@ export function separationSourceStatus(tracks = [], items = [], recipeId) {
     else counts.pending++;
   }
   return [
-    ['pending', '待處理'],
-    ['completed', '已完成'],
-    ['attention', '未完成'],
+    ['pending', t('queue.separation.source.pending')],
+    ['completed', t('queue.separation.item.completed')],
+    ['attention', t('queue.separation.item.failed')],
   ]
     .filter(([id]) => counts[id] > 0)
     .map(([id, label]) => ({ id, label, count: counts[id] }));
@@ -86,40 +96,43 @@ export function separationSourceStatus(tracks = [], items = [], recipeId) {
 export function separationItemLabel(item) {
   switch (item?.status) {
     case 'pending':
-      return '等候中';
+      return t('queue.separation.item.pending');
     case 'checking':
-      return '準備中';
+      return t('queue.separation.item.checking');
     case 'running':
       return Number.isFinite(item.percent)
         ? `${Math.round(item.percent)}%`
-        : '處理中';
+        : t('queue.separation.item.running');
     case 'completed':
-      return '已完成';
+      return t('queue.separation.item.completed');
     case 'skipped':
-      return '已有伴奏';
+      return t('queue.separation.item.skipped');
     case 'failed':
-      return '未完成';
+      return t('queue.separation.item.failed');
     case 'cancelled':
-      return '已停止';
+      return t('queue.separation.item.cancelled');
     default:
       return '';
   }
 }
 
 export function separationQueueSummary(queue) {
-  if (!queue) return '依播放順序準備';
-  if (queue.status === 'pausing') return '這首完成後暫停';
+  if (!queue) return t('queue.separation.idle');
+  if (queue.status === 'pausing') return t('queue.separation.pausing');
   if (queue.status === 'paused') {
-    return `已暫停 · ${queue.pending ?? 0} 首待處理`;
+    return t('queue.separation.paused', { count: queue.pending ?? 0 });
   }
   if (queue.status === 'running') {
-    return `已處理 ${queue.done} / ${queue.total} 首`;
+    return t('queue.separation.running', {
+      done: queue.done,
+      total: queue.total,
+    });
   }
   const unfinished = (queue.failed ?? 0) + (queue.cancelled ?? 0);
   const finished = Math.max(0, queue.total - unfinished);
   return unfinished > 0
-    ? `${finished} 首完成 · ${unfinished} 首未完成`
-    : `${finished} 首完成`;
+    ? t('queue.separation.finishedWithUnfinished', { finished, unfinished })
+    : t('queue.separation.finished', { count: finished });
 }
 
 export function separationQueueIndicator(queue) {
@@ -127,18 +140,24 @@ export function separationQueueIndicator(queue) {
   if (queue.status === 'running') {
     return {
       state: 'running',
-      label: `處理中 ${queue.done ?? 0}/${queue.total ?? 0}`,
+      label: t('queue.separation.indicatorRunning', {
+        done: queue.done ?? 0,
+        total: queue.total ?? 0,
+      }),
     };
   }
   if (queue.status === 'pausing') {
-    return { state: 'pausing', label: '即將暫停' };
+    return { state: 'pausing', label: t('queue.separation.indicatorPausing') };
   }
   if (queue.status === 'paused') {
-    return { state: 'paused', label: '已暫停' };
+    return { state: 'paused', label: t('queue.separation.indicatorPaused') };
   }
   const unfinished = (queue.failed ?? 0) + (queue.cancelled ?? 0);
   if (unfinished > 0) {
-    return { state: 'attention', label: `${unfinished} 首未完成` };
+    return {
+      state: 'attention',
+      label: t('queue.separation.indicatorUnfinished', { count: unfinished }),
+    };
   }
   return { state: 'idle', label: '' };
 }

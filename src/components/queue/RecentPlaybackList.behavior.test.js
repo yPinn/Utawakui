@@ -1,12 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import RecentPlaybackList from './RecentPlaybackList.vue';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./RecentPlaybackList.vue', import.meta.url),
-  'utf8',
 );
 
 describe('RecentPlaybackList', () => {

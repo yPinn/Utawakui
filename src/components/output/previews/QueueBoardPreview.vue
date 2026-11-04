@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   scene: { type: Object, default: () => ({}) },
@@ -91,7 +92,9 @@ watch([completedTracks, () => props.size], async () => {
     <span class="obs-template-mockup__setlist-history">
       <span class="obs-template-mockup__setlist-header">
         <span class="obs-template-mockup__setlist-label">Set List</span>
-        <span class="obs-template-mockup__setlist-caption">已唱紀錄</span>
+        <span class="obs-template-mockup__setlist-caption">{{
+          t('queue.outputPreview.sungRecord')
+        }}</span>
       </span>
       <span
         ref="setlistHistoryViewport"
