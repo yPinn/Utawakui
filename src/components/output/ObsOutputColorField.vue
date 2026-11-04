@@ -8,6 +8,7 @@ import {
 import ObsColorSwatchRail from './ObsColorSwatchRail.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiColorField from '../ui/UiColorField.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -35,17 +36,18 @@ const savedPaletteIsFull = computed(
     !currentIsSaved.value,
 );
 const savedActionLabel = computed(() => {
-  if (currentIsSaved.value) return '移除常用';
-  if (savedPaletteIsFull.value) return '常用已滿';
-  return '加入常用';
+  if (currentIsSaved.value) return t('outputPanel.color.removeSaved');
+  if (savedPaletteIsFull.value) return t('outputPanel.color.savedFull');
+  return t('outputPanel.color.addSaved');
 });
 const savedActionAriaLabel = computed(() => {
   const color = normalizedValue.value.toUpperCase();
-  if (currentIsSaved.value) return `從常用色移除 ${color}`;
+  if (currentIsSaved.value)
+    return t('outputPanel.color.removeNamed', { color });
   if (savedPaletteIsFull.value) {
-    return `常用色已滿（最多 ${MAX_OUTPUT_SAVED_COLORS} 色）`;
+    return t('outputPanel.color.fullNamed', { max: MAX_OUTPUT_SAVED_COLORS });
   }
-  return `加入常用色 ${color}`;
+  return t('outputPanel.color.addNamed', { color });
 });
 
 function selectColor(color) {
@@ -73,10 +75,12 @@ function toggleSavedColor() {
     <div
       class="obs-output-color-field__shelf"
       role="group"
-      aria-label="Output 色票"
+      :aria-label="t('outputPanel.color.swatches')"
     >
       <div class="obs-output-color-field__shelf-header">
-        <span class="obs-output-color-field__shelf-title">色票</span>
+        <span class="obs-output-color-field__shelf-title">{{
+          t('outputPanel.color.swatchesTitle')
+        }}</span>
         <UiButton
           class="obs-output-color-field__shelf-action"
           variant="ghost"
@@ -91,21 +95,21 @@ function toggleSavedColor() {
       </div>
 
       <ObsColorSwatchRail
-        label="常用"
-        selection-label="常用色票"
-        aria-label="Output 常用色票"
+        :label="t('outputPanel.color.saved')"
+        :selection-label="t('outputPanel.color.savedSelection')"
+        :aria-label="t('outputPanel.color.savedLabel')"
         source="saved"
         :colors="normalizedSavedColors"
         :model-value="normalizedValue"
-        empty-label="尚未加入"
+        :empty-label="t('outputPanel.color.empty')"
         @select="selectColor"
       />
 
       <ObsColorSwatchRail
         v-if="normalizedRecentColors.length > 0"
-        label="最近"
-        selection-label="最近色票"
-        aria-label="最近使用色票"
+        :label="t('outputPanel.color.recent')"
+        :selection-label="t('outputPanel.color.recentSelection')"
+        :aria-label="t('outputPanel.color.recentLabel')"
         source="recent"
         :colors="normalizedRecentColors"
         :model-value="normalizedValue"

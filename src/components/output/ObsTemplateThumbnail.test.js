@@ -1,10 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
-  fileURLToPath(new URL('./ObsTemplateThumbnail.vue', import.meta.url)),
-  'utf8',
+const source = readCatalogSource(
+  new URL('./ObsTemplateThumbnail.vue', import.meta.url),
 );
 
 describe('output template thumbnail', () => {

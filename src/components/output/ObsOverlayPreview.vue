@@ -29,6 +29,7 @@ import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   toolsTarget: { type: Object, default: null },
@@ -157,7 +158,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="obs-overlay-preview" aria-label="Browser Source 預覽">
+  <section
+    class="obs-overlay-preview"
+    :aria-label="t('outputPanel.overlay.label')"
+  >
     <div ref="previewStage" class="obs-overlay-preview__stage">
       <div v-if="isLyrics" class="obs-overlay-preview__canvas-group">
         <div
@@ -177,7 +181,7 @@ onBeforeUnmount(() => {
             :style="previewCanvasStyle"
             :width="PREVIEW_CANVAS_WIDTH"
             :height="PREVIEW_CANVAS_HEIGHT"
-            title="Browser Source 即時預覽"
+            :title="t('outputPanel.overlay.live')"
             sandbox="allow-scripts allow-same-origin"
             referrerpolicy="no-referrer"
             @load="handlePreviewLoad"
@@ -227,7 +231,7 @@ onBeforeUnmount(() => {
           <ObsPreviewCaption
             v-if="isLyrics"
             class="obs-overlay-preview__capture-meta"
-            label="固定"
+            :label="t('outputPanel.overlay.fixed')"
             :width="PREVIEW_CANVAS_WIDTH"
             :height="PREVIEW_CANVAS_HEIGHT"
           />
@@ -236,7 +240,13 @@ onBeforeUnmount(() => {
           <UiIconButton
             v-if="isLyrics"
             :icon="UserRound"
-            :label="showLyricsGuide ? '隱藏人物參考' : '顯示人物參考'"
+            :label="
+              t(
+                showLyricsGuide
+                  ? 'outputPanel.overlay.hideGuide'
+                  : 'outputPanel.overlay.showGuide',
+              )
+            "
             :active="showLyricsGuide"
             :aria-pressed="showLyricsGuide"
             @click="emit('update:showLyricsGuide', !showLyricsGuide)"
@@ -248,8 +258,8 @@ onBeforeUnmount(() => {
           <UiIconButton
             v-if="obsUrl"
             :icon="Copy"
-            label="複製網址"
-            title="複製網址，或直接拖進直播軟體"
+            :label="t('outputPanel.overlay.copyUrl')"
+            :title="t('outputPanel.overlay.copyUrlHint')"
             :draggable="dropUrl ? 'true' : undefined"
             @click="copyObsUrl"
             @dragstart="startUrlDrag"

@@ -10,6 +10,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   sideWidth: { type: Number, default: null },
@@ -96,11 +97,14 @@ function applyPreset(preset) {
 </script>
 
 <template>
-  <section class="obs-template-gallery" aria-label="模板庫">
+  <section
+    class="obs-template-gallery"
+    :aria-label="t('outputPanel.gallery.label')"
+  >
     <ObsOutputSplitLayout
-      aria-label="模板庫"
+      :aria-label="t('outputPanel.gallery.label')"
       main-variant="gallery"
-      side-label="模板展示預覽"
+      :side-label="t('outputPanel.gallery.side')"
       side-variant="detail"
       :side-width="sideWidth"
       :side-collapsed="sideCollapsed"
@@ -113,11 +117,14 @@ function applyPreset(preset) {
         ><UiSearchBox
           v-model="search"
           class="obs-template-gallery__search"
-          label="搜尋模板"
-          placeholder="搜尋模板"
+          :label="t('outputPanel.gallery.search')"
+          :placeholder="t('outputPanel.gallery.search')"
       /></template>
       <template #main>
-        <div class="obs-template-gallery__catalog" aria-label="模板縮圖">
+        <div
+          class="obs-template-gallery__catalog"
+          :aria-label="t('outputPanel.gallery.thumbnails')"
+        >
           <UiScrollLayout
             v-if="activeGroup"
             :key="activeGroup.kind"
@@ -127,12 +134,12 @@ function applyPreset(preset) {
             viewport-class="obs-template-gallery__group-viewport"
             content-class="obs-template-gallery__grid"
             tabindex="0"
-            aria-label="模板縮圖"
+            :aria-label="t('outputPanel.gallery.thumbnails')"
           >
             <UiTooltip
               v-for="preset in filteredTemplates"
               :key="preset.id"
-              text="查看模板預覽"
+              :text="t('outputPanel.gallery.viewPreview')"
             >
               <template #trigger="{ triggerProps }">
                 <button
@@ -155,7 +162,7 @@ function applyPreset(preset) {
                     <Check
                       v-if="preset.id === appliedPresetIds[preset.kind]"
                       :size="ICON_SIZE"
-                      aria-label="已套用"
+                      :aria-label="t('outputPanel.gallery.applied')"
                     />
                   </div>
                 </button>
@@ -166,11 +173,11 @@ function applyPreset(preset) {
               class="obs-template-gallery__empty"
               role="status"
             >
-              找不到符合的模板。
+              {{ t('outputPanel.gallery.noMatch') }}
             </UiHint>
           </UiScrollLayout>
           <UiHint v-else class="obs-template-gallery__empty" role="status">
-            目前沒有可用模板。
+            {{ t('outputPanel.gallery.none') }}
           </UiHint>
         </div>
       </template>
@@ -183,7 +190,9 @@ function applyPreset(preset) {
             </h2>
           </div>
         </div>
-        <UiHint v-else class="obs-template-gallery__empty">請選擇模板。</UiHint>
+        <UiHint v-else class="obs-template-gallery__empty">{{
+          t('outputPanel.gallery.choose')
+        }}</UiHint>
       </template>
 
       <template #side>
@@ -202,7 +211,10 @@ function applyPreset(preset) {
           >
             {{ selectedAvailabilitySummary }}
           </p>
-          <div class="obs-template-gallery__tags" aria-label="模板特性">
+          <div
+            class="obs-template-gallery__tags"
+            :aria-label="t('outputPanel.gallery.features')"
+          >
             <UiChip v-for="tag in selectedPreset.tags" :key="tag" tone="muted">
               {{ tag }}
             </UiChip>
@@ -218,11 +230,13 @@ function applyPreset(preset) {
             @click="applyPreset(selectedPreset)"
           >
             {{
-              !isSelectedPresetAvailable
-                ? '尚未提供'
-                : isApplied
-                  ? '已套用'
-                  : '套用模板'
+              t(
+                !isSelectedPresetAvailable
+                  ? 'outputPanel.gallery.unavailable'
+                  : isApplied
+                    ? 'outputPanel.gallery.applied'
+                    : 'outputPanel.gallery.apply',
+              )
             }}
           </UiButton>
         </div>

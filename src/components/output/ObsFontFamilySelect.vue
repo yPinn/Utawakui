@@ -6,6 +6,7 @@ import { isOutputLocalFontAvailable } from '../../utils/outputLocalFonts.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -15,6 +16,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+// eslint-disable-next-line no-restricted-syntax -- multilingual font preview sample, not UI copy
 const SAMPLE = '舞台 · 무대 · ステージ · Stage 123';
 const PRESET_FONT_FAMILIES = Object.freeze({
   sans: 'var(--ui-font-family-base)',
@@ -68,7 +70,7 @@ const items = computed(() => {
   const presets = props.options.map((option) => ({
     value: option.id,
     label: option.label,
-    searchText: `${option.label} ${option.id} 預設`,
+    searchText: `${option.label} ${option.id} ${t('outputPanel.font.presetWord')}`,
     source: 'preset',
   }));
   const localFonts = [...catalog.fonts.value];
@@ -81,7 +83,7 @@ const items = computed(() => {
   const local = localFonts.map((font) => ({
     value: localFontValue(font),
     label: font.family,
-    searchText: `${font.family} ${font.postscriptName} ${font.style} 本機`,
+    searchText: `${font.family} ${font.postscriptName} ${font.style} ${t('outputPanel.font.localWord')}`,
     source:
       selectedLocalFontMissing.value &&
       font.postscriptName === savedLocalFont.value?.postscriptName
@@ -113,26 +115,34 @@ const selectedPreviewStyle = computed(() =>
   ),
 );
 const loadLabel = computed(() =>
-  catalog.status.value === 'idle' ? '載入本機字體' : '重新載入本機字體',
+  catalog.status.value === 'idle'
+    ? t('outputPanel.font.load')
+    : t('outputPanel.font.reload'),
 );
 const catalogMessage = computed(() => {
-  if (catalog.status.value === 'idle') return '按下後才會讀取本機字體清單';
-  if (catalog.status.value === 'loading') return '正在讀取本機字體…';
+  if (catalog.status.value === 'idle') return t('outputPanel.font.idle');
+  if (catalog.status.value === 'loading') return t('outputPanel.font.loading');
   if (catalog.status.value === 'ready') {
     return catalog.fonts.value.length
-      ? `已載入 ${catalog.fonts.value.length} 個字體家族`
-      : '未找到可用的本機字體';
+      ? t(
+          'outputPanel.font.loaded',
+          { count: catalog.fonts.value.length },
+          catalog.fonts.value.length,
+        )
+      : t('outputPanel.font.none');
   }
   if (catalog.status.value === 'unsupported') {
-    return '目前環境不支援本機字體存取';
+    return t('outputPanel.font.unsupported');
   }
-  if (catalog.status.value === 'denied') return '未允許本機字體存取';
+  if (catalog.status.value === 'denied') return t('outputPanel.font.denied');
   return catalog.error.value;
 });
 
 function optionBadge(item) {
-  if (item.source === 'missing') return '不可用';
-  return item.source === 'local' ? '本機' : '預設';
+  if (item.source === 'missing') return t('outputPanel.font.unavailable');
+  return item.source === 'local'
+    ? t('outputPanel.font.localWord')
+    : t('outputPanel.font.presetWord');
 }
 
 function updateValue(value) {
@@ -153,7 +163,7 @@ function updateValue(value) {
       :model-value="selectedValue"
       :items="items"
       label-hidden
-      placeholder="搜尋字體"
+      :placeholder="t('outputPanel.font.search')"
       @update:model-value="updateValue"
     >
       <template #option="{ item }">
@@ -191,7 +201,7 @@ function updateValue(value) {
       <UiButton
         variant="secondary"
         :loading="catalog.status.value === 'loading'"
-        loading-label="讀取本機字體"
+        :loading-label="t('outputPanel.font.reading')"
         @click="catalog.load"
       >
         {{ loadLabel }}
@@ -207,10 +217,10 @@ function updateValue(value) {
       class="obs-font-family-select__warning"
       role="status"
     >
-      本機字體不可用，輸出會使用預設字體
+      {{ t('outputPanel.font.missing') }}
     </UiHint>
     <UiHint v-if="savedLocalFont" class="obs-font-family-select__license">
-      本機字體會用於公開輸出；請確認直播、錄影、VOD、剪輯及商用所需權利。
+      {{ t('outputPanel.font.rightsNotice') }}
     </UiHint>
   </div>
 </template>

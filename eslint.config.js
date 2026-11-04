@@ -75,6 +75,10 @@ const I18N_MIGRATED = [
   'src/components/performer/*.vue',
   'src/composables/{usePerformerSelfView,usePerformerViewState}.js',
   'src/performer/PerformerApp.vue',
+  'src/components/output/*.vue',
+  'src/composables/{useOutputRuntime,useObsIntegration}.js',
+  'src/composables/output/{useLocalFonts,useOutputClipboard,useOutputElementTarget,useOutputRuntimeStatus}.js',
+  'src/constants/outputPreviewLimitations.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

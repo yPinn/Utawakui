@@ -1,0 +1,535 @@
+{
+  "templates": {
+    "receiptSetlist": {
+      "name": "票據歌單",
+      "availability": {
+        "summary": "演出安排顯示已唱明細，一般播放顯示紀錄。"
+      },
+      "summary": "熱感小票風格的曲目與已唱紀錄。",
+      "detail": "唱完自動出紙，可切換方向並定時回顧已唱明細。",
+      "preview": {
+        "layoutLabel": "連續小票",
+        "motionLabel": "送紙與回顧"
+      },
+      "tags": {
+        "0": "熱感小票",
+        "1": "雙向出紙",
+        "2": "歷史回顧"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "目前曲目、已唱明細"
+        },
+        "1": {
+          "label": "方向",
+          "value": "預設向下，可選向上"
+        },
+        "2": {
+          "label": "曲名",
+          "value": "最多兩行，超長省略"
+        },
+        "3": {
+          "label": "回顧",
+          "value": "定時回顧，可關閉"
+        }
+      }
+    },
+    "queueBoard": {
+      "name": "夜色歌單",
+      "availability": {
+        "summary": "使用目前曲目與已唱紀錄。"
+      },
+      "summary": "黑底細線風格的演唱紀錄。",
+      "detail": "目前曲目置頂，已唱紀錄向下累積並平順滾動。",
+      "preview": {
+        "layoutLabel": "目前＋已唱",
+        "motionLabel": "溢位滾動"
+      },
+      "tags": {
+        "0": "黑底細線",
+        "1": "演唱紀錄",
+        "2": "幕間畫面"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "目前曲目、已唱紀錄"
+        },
+        "1": {
+          "label": "密度",
+          "value": "易讀"
+        },
+        "2": {
+          "label": "紀錄",
+          "value": "最近八首"
+        },
+        "3": {
+          "label": "動態",
+          "value": "超出時滾動"
+        }
+      }
+    },
+    "karaokeStack": {
+      "name": "經典字幕",
+      "availability": {
+        "summary": "支援逐字掃色，無逐字資料時依行長估算。"
+      },
+      "summary": "雙行交替、倒數與逐字掃色。",
+      "detail": "雙行交替接唱，提示點先行倒數，文字隨進度掃色。",
+      "preview": {
+        "layoutLabel": "錯位雙行",
+        "motionLabel": "逐字掃色"
+      },
+      "tags": {
+        "0": "經典伴唱",
+        "1": "錯位雙行",
+        "2": "進度掃色"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "上列靠左、下列靠右"
+        },
+        "1": {
+          "label": "倒數",
+          "value": "依歌曲節拍對齊"
+        },
+        "2": {
+          "label": "換詞",
+          "value": "唱完保留零點六秒"
+        },
+        "3": {
+          "label": "外觀",
+          "value": "白字藍框、角色色掃字"
+        },
+        "4": {
+          "label": "進度",
+          "value": "逐行估算／逐字精確"
+        },
+        "5": {
+          "label": "背景",
+          "value": "透明"
+        }
+      }
+    },
+    "mangaFrame": {
+      "name": "分格對白",
+      "availability": {
+        "summary": "使用目前行，可顯示已有的日文讀音。"
+      },
+      "summary": "左右交替的漫畫直書對白。",
+      "detail": "歌詞分成一至三個直書對話框，隨句左右交替。",
+      "preview": {
+        "layoutLabel": "直書對白",
+        "motionLabel": "整框淡入"
+      },
+      "tags": {
+        "0": "黑白漫畫",
+        "1": "左右對白",
+        "2": "直書歌詞"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "一至三個歌詞斷句"
+        },
+        "1": {
+          "label": "排版",
+          "value": "直書置中、左右交替"
+        },
+        "2": {
+          "label": "分句",
+          "value": "空格與括號分框"
+        },
+        "3": {
+          "label": "切換",
+          "value": "整框淡入淡出"
+        },
+        "4": {
+          "label": "假名",
+          "value": "有資料時顯示"
+        }
+      }
+    },
+    "kineticPop": {
+      "name": "躍動字幕",
+      "availability": {
+        "summary": "使用逐行歌詞。"
+      },
+      "summary": "漸層粗體字，逐字交錯跳入。",
+      "detail": "文字定點交錯跳入，可固定或輪替三款材質。",
+      "preview": {
+        "layoutLabel": "底部跳字",
+        "motionLabel": "定點交錯"
+      },
+      "tags": {
+        "0": "日系字卡",
+        "1": "材質可選",
+        "2": "交錯跳字"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "目前行"
+        },
+        "1": {
+          "label": "材質",
+          "value": "預設漸層白框，可固定或輪替"
+        },
+        "2": {
+          "label": "排列",
+          "value": "可選端正或些微偏移"
+        },
+        "3": {
+          "label": "切換",
+          "value": "逐字定點交錯跳入"
+        },
+        "4": {
+          "label": "字型",
+          "value": "日文圓體粗字"
+        },
+        "5": {
+          "label": "背景",
+          "value": "透明"
+        }
+      }
+    },
+    "ornateVertical": {
+      "name": "和風直書",
+      "availability": {
+        "summary": "使用逐行歌詞，自動組合日文漢字。"
+      },
+      "summary": "明朝直書，漢字成組、假名逐字呈現。",
+      "detail": "明朝體直書，長句自動分欄；可調字色、大小與位置。",
+      "preview": {
+        "layoutLabel": "華麗直書",
+        "motionLabel": "群字綴現"
+      },
+      "tags": {
+        "0": "日文直書",
+        "1": "漢字群組",
+        "2": "墨色殘影"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "目前行"
+        },
+        "1": {
+          "label": "排版",
+          "value": "直書、固定右側"
+        },
+        "2": {
+          "label": "長句",
+          "value": "自動拆成至多兩欄"
+        },
+        "3": {
+          "label": "切換",
+          "value": "漢字成組、假名逐字"
+        },
+        "4": {
+          "label": "藝術字",
+          "value": "同尺寸輕墨層"
+        },
+        "5": {
+          "label": "字型",
+          "value": "日文明朝體"
+        },
+        "6": {
+          "label": "背景",
+          "value": "透明"
+        }
+      }
+    },
+    "liveStage": {
+      "name": "舞台字幕",
+      "availability": {
+        "summary": "需逐行時間，開場字卡使用曲目資訊。"
+      },
+      "summary": "轉播風格的歌詞與開場字卡。",
+      "detail": "歌詞置於左下、開場字卡置於右下，中央留給表演者。",
+      "preview": {
+        "layoutLabel": "舞台雙行",
+        "motionLabel": "字卡進場"
+      },
+      "tags": {
+        "0": "轉播字幕",
+        "1": "開場字卡",
+        "2": "舞台識別"
+      },
+      "settings": {
+        "0": {
+          "label": "歌詞",
+          "value": "左下寬幅、最多兩行"
+        },
+        "1": {
+          "label": "呈現",
+          "value": "精簡、平衡或忠實原文"
+        },
+        "2": {
+          "label": "字卡",
+          "value": "右下精簡、播放後四至八秒"
+        },
+        "3": {
+          "label": "成員",
+          "value": "解析但不顯示"
+        },
+        "4": {
+          "label": "品牌",
+          "value": "上方低干擾舞台識別"
+        }
+      }
+    },
+    "artCard": {
+      "name": "星空黑膠",
+      "availability": {
+        "summary": "使用本機封面，缺圖時顯示曲名首字。"
+      },
+      "summary": "專輯封面搭配星染黑膠。",
+      "detail": "左側封面、右側星染唱盤，隨播放緩慢旋轉。",
+      "preview": {
+        "layoutLabel": "封面＋唱盤",
+        "motionLabel": "星塵旋轉"
+      },
+      "tags": {
+        "0": "專輯封面",
+        "1": "星染黑膠",
+        "2": "播放狀態"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "封面、唱盤、歌名、歌手"
+        },
+        "1": {
+          "label": "動態",
+          "value": "播放旋轉、暫停靜止"
+        },
+        "2": {
+          "label": "缺圖",
+          "value": "曲名首字替代"
+        }
+      }
+    },
+    "coverPlayer": {
+      "name": "封面電台",
+      "availability": {
+        "summary": "使用本機封面，缺圖時顯示曲名首字。"
+      },
+      "summary": "大幅封面搭配取色背景與播放進度。",
+      "detail": "直式播放器，呈現封面、曲目、進度與音量。",
+      "preview": {
+        "layoutLabel": "直式封面卡",
+        "motionLabel": "進度同步"
+      },
+      "tags": {
+        "0": "大幅封面",
+        "1": "播放進度",
+        "2": "播放狀態"
+      },
+      "settings": {
+        "0": {
+          "label": "顯示",
+          "value": "封面、歌名、歌手、進度"
+        },
+        "1": {
+          "label": "控制列",
+          "value": "僅顯示播放狀態"
+        },
+        "2": {
+          "label": "缺圖",
+          "value": "曲名首字替代"
+        }
+      }
+    }
+  },
+  "presentationGroup": "模板進階顯示",
+  "presentationPolicy": "歌詞呈現策略",
+  "availability": {
+    "unavailable": "尚未提供",
+    "recommended": "建議",
+    "available": "可用"
+  },
+  "field": {
+    "modified": "（已修改）",
+    "chooseLookFirst": "選擇配色風格後可調整",
+    "chooseLook": "選擇配色風格",
+    "resetNamed": "恢復「{title}」預設"
+  },
+  "swatch": {
+    "applyNamed": "套用{label} {color}"
+  },
+  "font": {
+    "presetWord": "預設",
+    "localWord": "本機",
+    "unavailable": "不可用",
+    "load": "載入本機字體",
+    "reload": "重新載入本機字體",
+    "idle": "按下後才會讀取本機字體清單",
+    "loading": "正在讀取本機字體…",
+    "loaded": "已載入 {count} 個字體家族",
+    "none": "未找到可用的本機字體",
+    "unsupported": "目前環境不支援本機字體存取",
+    "denied": "未允許本機字體存取",
+    "search": "搜尋字體",
+    "reading": "讀取本機字體",
+    "missing": "本機字體不可用，輸出會使用預設字體",
+    "rightsNotice": "本機字體會用於公開輸出；請確認直播、錄影、VOD、剪輯及商用所需權利。",
+    "readFailed": "目前無法讀取本機字體，請再試一次。"
+  },
+  "color": {
+    "removeSaved": "移除常用",
+    "savedFull": "常用已滿",
+    "addSaved": "加入常用",
+    "removeNamed": "從常用色移除 {color}",
+    "fullNamed": "常用色已滿（最多 {max} 色）",
+    "addNamed": "加入常用色 {color}",
+    "swatches": "Output 色票",
+    "swatchesTitle": "色票",
+    "saved": "常用",
+    "savedSelection": "常用色票",
+    "savedLabel": "Output 常用色票",
+    "empty": "尚未加入",
+    "recent": "最近",
+    "recentSelection": "最近色票",
+    "recentLabel": "最近使用色票"
+  },
+  "runtimeStatus": {
+    "label": "輸出狀態",
+    "start": "啟動",
+    "stop": "停止",
+    "failedTitle": "輸出操作未完成"
+  },
+  "split": {
+    "back": "返回主區",
+    "collapse": "收合副區",
+    "expand": "展開副區",
+    "resize": "調整副區寬度"
+  },
+  "workspace": {
+    "workbench": "工作臺",
+    "gallery": "模板庫",
+    "body": "輸出工作區",
+    "switch": "工作臺或模板庫",
+    "surface": "輸出畫面",
+    "controls": "輸出控制",
+    "openWindow": "開啟輸出視窗",
+    "settings": "輸出設定"
+  },
+  "overlay": {
+    "label": "Browser Source 預覽",
+    "live": "Browser Source 即時預覽",
+    "fixed": "固定",
+    "hideGuide": "隱藏人物參考",
+    "showGuide": "顯示人物參考",
+    "copyUrl": "複製網址",
+    "copyUrlHint": "複製網址，或直接拖進直播軟體"
+  },
+  "position": {
+    "topLeft": "左上",
+    "topCenter": "中上",
+    "topRight": "右上",
+    "centerLeft": "左中",
+    "center": "正中",
+    "centerRight": "右中",
+    "bottomLeft": "左下",
+    "bottomCenter": "中下",
+    "bottomRight": "右下"
+  },
+  "backdrop": {
+    "dark": "暗色背景",
+    "light": "亮色背景",
+    "checker": "透明背景",
+    "toggle": "預覽背景：{current}，切換為{next}"
+  },
+  "workbench": {
+    "appearance": "外觀",
+    "saveFailed": "儲存失敗",
+    "saving": "儲存中…",
+    "saved": "已儲存",
+    "label": "輸出工作台",
+    "side": "輸出設定",
+    "noTemplate": "未選擇模板",
+    "retry": "重試",
+    "notUpdated": "輸出未更新",
+    "target": "調整對象",
+    "presentationHint": "只調整此模板的歌詞呈現。製作資訊請在歌詞的「共用文字處理」逐行確認；來源、對唱與和聲不會在此處改寫。",
+    "conciseHint": "轉播精簡會省略部分重複詞與語助詞。需要保留實唱與和聲文字時，請選擇平衡分行或忠實原文。",
+    "resetTemplate": "恢復模板預設",
+    "wholeTemplate": "整個模板"
+  },
+  "gallery": {
+    "label": "模板庫",
+    "side": "模板展示預覽",
+    "search": "搜尋模板",
+    "thumbnails": "模板縮圖",
+    "viewPreview": "查看模板預覽",
+    "applied": "已套用",
+    "noMatch": "找不到符合的模板。",
+    "none": "目前沒有可用模板。",
+    "choose": "請選擇模板。",
+    "features": "模板特性",
+    "unavailable": "尚未提供",
+    "apply": "套用模板",
+    "noThumbnail": "暫無縮圖"
+  },
+  "stage": {
+    "pauseMotion": "暫停動態預覽",
+    "playMotion": "播放動態預覽",
+    "label": "選中模板預覽",
+    "fixed": "固定",
+    "motionSample": "動態示例",
+    "reference": "參考圖",
+    "static": "靜態",
+    "motionFailed": "動態預覽載入失敗，請再試一次"
+  },
+  "widget": {
+    "sizes": "Widget 擷取尺寸",
+    "sizeNamed": "{label}型，{width} × {height}",
+    "liveNamed": "{label}型 Browser Source 即時預覽"
+  },
+  "runtime": {
+    "restart": "輸出功能需要重新啟動應用程式才能載入新版橋接 API。",
+    "savedColorsNotSaved": "常用色票未儲存，重新開啟後可能不會保留。",
+    "recentColorsNotSaved": "最近色票未儲存，重新開啟後可能不會保留。",
+    "displayNotUpdated": "輸出畫面未更新，請再試一次。",
+    "notStartedCheckPort": "輸出服務未啟動，請檢查連接埠後再試一次。",
+    "statusReadFailed": "目前無法讀取輸出狀態，請再試一次。",
+    "settingsReadFailed": "目前無法讀取輸出設定，請再試一次。",
+    "serviceFault": "輸出服務發生異常，請檢查連接埠。",
+    "settingsNotSaved": "輸出設定未儲存，請再試一次。",
+    "enableToStart": "請先到設定啟用對外輸出，再啟動 Browser Source 輸出。",
+    "notStartedPort": "輸出服務未啟動，請檢查連接埠。",
+    "notStarted": "輸出服務未啟動，請再試一次。",
+    "notStopped": "輸出服務未停止，請再試一次。",
+    "enableToOpen": "請先到設定啟用對外輸出，再開啟輸出視窗。",
+    "windowNotOpened": "輸出視窗未開啟，請確認服務已啟動後重試。",
+    "styleNotSaved": "輸出樣式未儲存，請再試一次。",
+    "initFailed": "輸出初始化未完成，請再試一次。"
+  },
+  "clipboard": {
+    "copiedNamed": "{label}網址已複製",
+    "pasteHint": "可貼到 OBS 的瀏覽器來源。",
+    "failedNamed": "無法複製{label}網址",
+    "tryAgain": "請再試一次。",
+    "retry": "重試"
+  },
+  "previewLimits": {
+    "common": "預設外觀示意，實際輸出請至工作臺確認。",
+    "queueBoard": "捲動示意，正式輸出採逐頁顯示。",
+    "receiptSetlist": "使用示例紀錄，正式回顧最多一百筆。",
+    "karaokeStack": "掃色示意，非實際逐字同步。",
+    "kineticPop": "固定句段示意，未呈現整首換句。",
+    "ornateVertical": "兩句循環示意，未呈現完整換詞。",
+    "liveStage": "字卡與字幕為固定時間點示意。",
+    "mangaFrame": "對白同時展示，未呈現交接與逐字同步。",
+    "artCard": "文字封面示意，旋轉不對應播放位置。",
+    "coverPlayer": "封面與進度僅供示意。",
+    "fallback": "僅供風格參考。"
+  },
+  "obs": {
+    "statusReadRestart": "無法讀取 OBS 連線狀態，請重新啟動後再試。",
+    "statusReadReload": "無法讀取 OBS 連線狀態，請重新讀取。"
+  }
+}

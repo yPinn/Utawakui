@@ -5,6 +5,7 @@ import {
   MAX_OUTPUT_SAVED_COLORS,
 } from '../../../shared/outputColorPreferences.mjs';
 import UiTooltip from '../ui/UiTooltip.vue';
+import { t } from '../../utils/i18n.js';
 
 const COLOR_LIMIT_BY_SOURCE = Object.freeze({
   recent: MAX_OUTPUT_RECENT_COLORS,
@@ -58,7 +59,12 @@ const visibleColors = computed(() =>
             :style="{ '--obs-output-swatch-color': color }"
             :data-color="color"
             :data-color-source="source"
-            :aria-label="`套用${selectionLabel || label} ${color.toUpperCase()}`"
+            :aria-label="
+              t('outputPanel.swatch.applyNamed', {
+                label: selectionLabel || label,
+                color: color.toUpperCase(),
+              })
+            "
             :aria-pressed="color === modelValue"
             @click="emit('select', color)"
           ></button>

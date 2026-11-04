@@ -1,13 +1,11 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const componentSource = readFileSync(
-  fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
-  'utf8',
+const componentSource = readCatalogSource(
+  new URL('./ObsOverlayPreview.vue', import.meta.url),
 );
 
 function renderPreview(props = {}) {
@@ -166,9 +164,8 @@ describe('ObsOverlayPreview', () => {
     for (const [source, selector] of [
       [componentSource, 'obs-overlay-preview__iframe'],
       [
-        readFileSync(
+        readCatalogSource(
           new URL('./ObsWidgetCapturePreview.vue', import.meta.url),
-          'utf8',
         ),
         'obs-widget-capture-preview__iframe',
       ],
@@ -181,7 +178,7 @@ describe('ObsOverlayPreview', () => {
   });
 
   it('keeps checker cells in display space outside the transformed capture canvas', () => {
-    const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
+    const read = (path) => readCatalogSource(new URL(path, import.meta.url));
     const tokens = read('../../styles/features/output.css');
     expect(tokens).toContain('--ui-output-preview-checker-cell: 8px');
     expect(tokens).toContain('var(--ui-output-preview-checker-cell) * 2');

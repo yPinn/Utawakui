@@ -1,5 +1,6 @@
 import OUTPUT_RUNTIME_VALUES from '../../../shared/outputRuntimeValues.json';
 import { isOutputPortConflict } from '../../utils/outputRuntimeError.js';
+import { t } from '../../utils/i18n.js';
 
 export const INITIAL_OUTPUT_STATUS = Object.freeze({
   running: false,
@@ -32,7 +33,7 @@ export function useOutputRuntimeStatus({ state, recordError, suggestPorts }) {
   function reportOutputError(error, operation, message, key = operation) {
     const notice = recordError(error, {
       code: `OUTPUT_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-      title: '輸出操作未完成',
+      title: t('outputPanel.runtimeStatus.failedTitle'),
       message,
       source: 'output',
       operation,

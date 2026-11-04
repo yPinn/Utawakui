@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { readCatalogSource } from '../../utils/catalogSourceText.js';
 import {
@@ -7,83 +5,63 @@ import {
   readObsTemplatePreviewSource,
 } from './obsTemplateMockupSource.mjs';
 
-const componentSource = readFileSync(
-  fileURLToPath(new URL('./ObsTemplateGallery.vue', import.meta.url)),
-  'utf8',
+const componentSource = readCatalogSource(
+  new URL('./ObsTemplateGallery.vue', import.meta.url),
 );
-const splitLayoutSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputSplitLayout.vue', import.meta.url)),
-  'utf8',
+const splitLayoutSource = readCatalogSource(
+  new URL('./ObsOutputSplitLayout.vue', import.meta.url),
 );
-const tokenSource = readFileSync(
-  fileURLToPath(new URL('../../styles/tokens.css', import.meta.url)),
-  'utf8',
+const tokenSource = readCatalogSource(
+  new URL('../../styles/tokens.css', import.meta.url),
 );
-const previewTokenSource = readFileSync(
-  fileURLToPath(new URL('../../styles/features/output.css', import.meta.url)),
-  'utf8',
+const previewTokenSource = readCatalogSource(
+  new URL('../../styles/features/output.css', import.meta.url),
 );
-const previewSource = readFileSync(
-  fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
-  'utf8',
+const previewSource = readCatalogSource(
+  new URL('./ObsOverlayPreview.vue', import.meta.url),
 );
-const widgetCapturePreviewSource = readFileSync(
-  fileURLToPath(new URL('./ObsWidgetCapturePreview.vue', import.meta.url)),
-  'utf8',
+const widgetCapturePreviewSource = readCatalogSource(
+  new URL('./ObsWidgetCapturePreview.vue', import.meta.url),
 );
 const mockupSource = readObsTemplateMockupSource();
-const thumbnailSource = readFileSync(
-  fileURLToPath(new URL('./ObsTemplateThumbnail.vue', import.meta.url)),
-  'utf8',
+const thumbnailSource = readCatalogSource(
+  new URL('./ObsTemplateThumbnail.vue', import.meta.url),
 );
-const backdropToggleSource = readFileSync(
-  fileURLToPath(new URL('./ObsPreviewBackdropToggle.vue', import.meta.url)),
-  'utf8',
+const backdropToggleSource = readCatalogSource(
+  new URL('./ObsPreviewBackdropToggle.vue', import.meta.url),
 );
-const previewStageSource = readFileSync(
-  fileURLToPath(new URL('./ObsTemplatePreviewStage.vue', import.meta.url)),
-  'utf8',
+const previewStageSource = readCatalogSource(
+  new URL('./ObsTemplatePreviewStage.vue', import.meta.url),
 );
-const workbenchSource = readFileSync(
-  fileURLToPath(new URL('./ObsSlotWorkbench.vue', import.meta.url)),
-  'utf8',
+const workbenchSource = readCatalogSource(
+  new URL('./ObsSlotWorkbench.vue', import.meta.url),
 );
-const runtimeStatusSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputRuntimeStatus.vue', import.meta.url)),
-  'utf8',
+const runtimeStatusSource = readCatalogSource(
+  new URL('./ObsOutputRuntimeStatus.vue', import.meta.url),
 );
-const preloadSource = readFileSync(
-  fileURLToPath(new URL('../../../electron/preload.js', import.meta.url)),
-  'utf8',
+const preloadSource = readCatalogSource(
+  new URL('../../../electron/preload.js', import.meta.url),
 );
-const appearanceControlRowSource = readFileSync(
-  fileURLToPath(new URL('./ObsAppearanceControlRow.vue', import.meta.url)),
-  'utf8',
+const appearanceControlRowSource = readCatalogSource(
+  new URL('./ObsAppearanceControlRow.vue', import.meta.url),
 );
-const appearanceFieldSource = readFileSync(
-  fileURLToPath(new URL('./ObsAppearanceField.vue', import.meta.url)),
-  'utf8',
+const appearanceFieldSource = readCatalogSource(
+  new URL('./ObsAppearanceField.vue', import.meta.url),
 );
-const outputColorFieldSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputColorField.vue', import.meta.url)),
-  'utf8',
+const outputColorFieldSource = readCatalogSource(
+  new URL('./ObsOutputColorField.vue', import.meta.url),
 );
 const settingsSource = readCatalogSource(
   new URL('../settings/OutputRuntimeSettingsBlock.vue', import.meta.url),
 );
-const settingsViewSource = readFileSync(
-  fileURLToPath(new URL('../../views/SettingsView.vue', import.meta.url)),
-  'utf8',
+const settingsViewSource = readCatalogSource(
+  new URL('../../views/SettingsView.vue', import.meta.url),
 );
-const settingsCapabilitiesSource = readFileSync(
-  fileURLToPath(
-    new URL('../settings/SettingsCapabilitiesSection.vue', import.meta.url),
-  ),
-  'utf8',
+const settingsCapabilitiesSource = readCatalogSource(
+  new URL('../settings/SettingsCapabilitiesSection.vue', import.meta.url),
 );
-const workspaceSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputWorkspace.vue', import.meta.url)),
-  'utf8',
+const workspaceSource = readCatalogSource(
+  new URL('./ObsOutputWorkspace.vue', import.meta.url),
 );
 
 function compactWhitespace(source) {
@@ -355,7 +333,7 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain(
       'v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"',
     );
-    expect(previewSource).toContain("'隱藏人物參考' : '顯示人物參考'");
+    expect(previewSource).toMatch(/'隱藏人物參考'\s*:\s*'顯示人物參考'/u);
     expect(previewSource).toContain(':src="streamerPreviewImage"');
     expect(widgetCapturePreviewSource).toContain('gridTemplateColumns');
     expect(widgetCapturePreviewSource).toContain('supportedCaptureSizes');

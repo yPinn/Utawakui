@@ -14,6 +14,7 @@ import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemp
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 import { UI_LOCALE } from '../utils/uiLocale.js';
+import { t } from '../utils/i18n.js';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
@@ -42,200 +43,378 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'receipt-setlist',
     kind: 'setlist',
     order: 10,
-    name: '票據歌單',
-    availability: { summary: '演出安排顯示已唱明細，一般播放顯示紀錄。' },
-    summary: '熱感小票風格的曲目與已唱紀錄。',
-    detail: '唱完自動出紙，可切換方向並定時回顧已唱明細。',
-    preview: { layoutLabel: '連續小票', motionLabel: '送紙與回顧' },
-    tags: ['熱感小票', '雙向出紙', '歷史回顧'],
+    name: t('outputPanel.templates.receiptSetlist.name'),
+    availability: {
+      summary: t('outputPanel.templates.receiptSetlist.availability.summary'),
+    },
+    summary: t('outputPanel.templates.receiptSetlist.summary'),
+    detail: t('outputPanel.templates.receiptSetlist.detail'),
+    preview: {
+      layoutLabel: t(
+        'outputPanel.templates.receiptSetlist.preview.layoutLabel',
+      ),
+      motionLabel: t(
+        'outputPanel.templates.receiptSetlist.preview.motionLabel',
+      ),
+    },
+    tags: [
+      t('outputPanel.templates.receiptSetlist.tags.0'),
+      t('outputPanel.templates.receiptSetlist.tags.1'),
+      t('outputPanel.templates.receiptSetlist.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '目前曲目、已唱明細' },
-      { label: '方向', value: '預設向下，可選向上' },
-      { label: '曲名', value: '最多兩行，超長省略' },
-      { label: '回顧', value: '定時回顧，可關閉' },
+      {
+        label: t('outputPanel.templates.receiptSetlist.settings.0.label'),
+        value: t('outputPanel.templates.receiptSetlist.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.receiptSetlist.settings.1.label'),
+        value: t('outputPanel.templates.receiptSetlist.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.receiptSetlist.settings.2.label'),
+        value: t('outputPanel.templates.receiptSetlist.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.receiptSetlist.settings.3.label'),
+        value: t('outputPanel.templates.receiptSetlist.settings.3.value'),
+      },
     ],
   },
   {
     id: 'queue-board',
     kind: 'setlist',
     order: 20,
-    name: '夜色歌單',
+    name: t('outputPanel.templates.queueBoard.name'),
     availability: {
-      summary: '使用目前曲目與已唱紀錄。',
+      summary: t('outputPanel.templates.queueBoard.availability.summary'),
     },
-    summary: '黑底細線風格的演唱紀錄。',
-    detail: '目前曲目置頂，已唱紀錄向下累積並平順滾動。',
+    summary: t('outputPanel.templates.queueBoard.summary'),
+    detail: t('outputPanel.templates.queueBoard.detail'),
     preview: {
-      layoutLabel: '目前＋已唱',
-      motionLabel: '溢位滾動',
+      layoutLabel: t('outputPanel.templates.queueBoard.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.queueBoard.preview.motionLabel'),
     },
-    tags: ['黑底細線', '演唱紀錄', '幕間畫面'],
+    tags: [
+      t('outputPanel.templates.queueBoard.tags.0'),
+      t('outputPanel.templates.queueBoard.tags.1'),
+      t('outputPanel.templates.queueBoard.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '目前曲目、已唱紀錄' },
-      { label: '密度', value: '易讀' },
-      { label: '紀錄', value: '最近八首' },
-      { label: '動態', value: '超出時滾動' },
+      {
+        label: t('outputPanel.templates.queueBoard.settings.0.label'),
+        value: t('outputPanel.templates.queueBoard.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.queueBoard.settings.1.label'),
+        value: t('outputPanel.templates.queueBoard.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.queueBoard.settings.2.label'),
+        value: t('outputPanel.templates.queueBoard.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.queueBoard.settings.3.label'),
+        value: t('outputPanel.templates.queueBoard.settings.3.value'),
+      },
     ],
   },
   {
     id: 'karaoke-stack',
     kind: 'lyrics',
     order: 10,
-    name: '經典字幕',
+    name: t('outputPanel.templates.karaokeStack.name'),
     availability: {
-      summary: '支援逐字掃色，無逐字資料時依行長估算。',
+      summary: t('outputPanel.templates.karaokeStack.availability.summary'),
     },
-    summary: '雙行交替、倒數與逐字掃色。',
-    detail: '雙行交替接唱，提示點先行倒數，文字隨進度掃色。',
+    summary: t('outputPanel.templates.karaokeStack.summary'),
+    detail: t('outputPanel.templates.karaokeStack.detail'),
     preview: {
-      layoutLabel: '錯位雙行',
-      motionLabel: '逐字掃色',
+      layoutLabel: t('outputPanel.templates.karaokeStack.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.karaokeStack.preview.motionLabel'),
     },
-    tags: ['經典伴唱', '錯位雙行', '進度掃色'],
+    tags: [
+      t('outputPanel.templates.karaokeStack.tags.0'),
+      t('outputPanel.templates.karaokeStack.tags.1'),
+      t('outputPanel.templates.karaokeStack.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '上列靠左、下列靠右' },
-      { label: '倒數', value: '依歌曲節拍對齊' },
-      { label: '換詞', value: '唱完保留零點六秒' },
-      { label: '外觀', value: '白字藍框、角色色掃字' },
-      { label: '進度', value: '逐行估算／逐字精確' },
-      { label: '背景', value: '透明' },
+      {
+        label: t('outputPanel.templates.karaokeStack.settings.0.label'),
+        value: t('outputPanel.templates.karaokeStack.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.karaokeStack.settings.1.label'),
+        value: t('outputPanel.templates.karaokeStack.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.karaokeStack.settings.2.label'),
+        value: t('outputPanel.templates.karaokeStack.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.karaokeStack.settings.3.label'),
+        value: t('outputPanel.templates.karaokeStack.settings.3.value'),
+      },
+      {
+        label: t('outputPanel.templates.karaokeStack.settings.4.label'),
+        value: t('outputPanel.templates.karaokeStack.settings.4.value'),
+      },
+      {
+        label: t('outputPanel.templates.karaokeStack.settings.5.label'),
+        value: t('outputPanel.templates.karaokeStack.settings.5.value'),
+      },
     ],
   },
   {
     id: 'manga-frame',
     kind: 'lyrics',
     order: 30,
-    name: '分格對白',
+    name: t('outputPanel.templates.mangaFrame.name'),
     availability: {
-      summary: '使用目前行，可顯示已有的日文讀音。',
+      summary: t('outputPanel.templates.mangaFrame.availability.summary'),
     },
-    summary: '左右交替的漫畫直書對白。',
-    detail: '歌詞分成一至三個直書對話框，隨句左右交替。',
+    summary: t('outputPanel.templates.mangaFrame.summary'),
+    detail: t('outputPanel.templates.mangaFrame.detail'),
     preview: {
-      layoutLabel: '直書對白',
-      motionLabel: '整框淡入',
+      layoutLabel: t('outputPanel.templates.mangaFrame.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.mangaFrame.preview.motionLabel'),
     },
-    tags: ['黑白漫畫', '左右對白', '直書歌詞'],
+    tags: [
+      t('outputPanel.templates.mangaFrame.tags.0'),
+      t('outputPanel.templates.mangaFrame.tags.1'),
+      t('outputPanel.templates.mangaFrame.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '一至三個歌詞斷句' },
-      { label: '排版', value: '直書置中、左右交替' },
-      { label: '分句', value: '空格與括號分框' },
-      { label: '切換', value: '整框淡入淡出' },
-      { label: '假名', value: '有資料時顯示' },
+      {
+        label: t('outputPanel.templates.mangaFrame.settings.0.label'),
+        value: t('outputPanel.templates.mangaFrame.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.mangaFrame.settings.1.label'),
+        value: t('outputPanel.templates.mangaFrame.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.mangaFrame.settings.2.label'),
+        value: t('outputPanel.templates.mangaFrame.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.mangaFrame.settings.3.label'),
+        value: t('outputPanel.templates.mangaFrame.settings.3.value'),
+      },
+      {
+        label: t('outputPanel.templates.mangaFrame.settings.4.label'),
+        value: t('outputPanel.templates.mangaFrame.settings.4.value'),
+      },
     ],
   },
   {
     id: 'kinetic-pop',
     kind: 'lyrics',
     order: 25,
-    name: '躍動字幕',
+    name: t('outputPanel.templates.kineticPop.name'),
     availability: {
-      summary: '使用逐行歌詞。',
+      summary: t('outputPanel.templates.kineticPop.availability.summary'),
     },
-    summary: '漸層粗體字，逐字交錯跳入。',
-    detail: '文字定點交錯跳入，可固定或輪替三款材質。',
+    summary: t('outputPanel.templates.kineticPop.summary'),
+    detail: t('outputPanel.templates.kineticPop.detail'),
     preview: {
-      layoutLabel: '底部跳字',
-      motionLabel: '定點交錯',
+      layoutLabel: t('outputPanel.templates.kineticPop.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.kineticPop.preview.motionLabel'),
     },
-    tags: ['日系字卡', '材質可選', '交錯跳字'],
+    tags: [
+      t('outputPanel.templates.kineticPop.tags.0'),
+      t('outputPanel.templates.kineticPop.tags.1'),
+      t('outputPanel.templates.kineticPop.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '目前行' },
-      { label: '材質', value: '預設漸層白框，可固定或輪替' },
-      { label: '排列', value: '可選端正或些微偏移' },
-      { label: '切換', value: '逐字定點交錯跳入' },
-      { label: '字型', value: '日文圓體粗字' },
-      { label: '背景', value: '透明' },
+      {
+        label: t('outputPanel.templates.kineticPop.settings.0.label'),
+        value: t('outputPanel.templates.kineticPop.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.kineticPop.settings.1.label'),
+        value: t('outputPanel.templates.kineticPop.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.kineticPop.settings.2.label'),
+        value: t('outputPanel.templates.kineticPop.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.kineticPop.settings.3.label'),
+        value: t('outputPanel.templates.kineticPop.settings.3.value'),
+      },
+      {
+        label: t('outputPanel.templates.kineticPop.settings.4.label'),
+        value: t('outputPanel.templates.kineticPop.settings.4.value'),
+      },
+      {
+        label: t('outputPanel.templates.kineticPop.settings.5.label'),
+        value: t('outputPanel.templates.kineticPop.settings.5.value'),
+      },
     ],
   },
   {
     id: 'ornate-vertical',
     kind: 'lyrics',
     order: 28,
-    name: '和風直書',
+    name: t('outputPanel.templates.ornateVertical.name'),
     availability: {
-      summary: '使用逐行歌詞，自動組合日文漢字。',
+      summary: t('outputPanel.templates.ornateVertical.availability.summary'),
     },
-    summary: '明朝直書，漢字成組、假名逐字呈現。',
-    detail: '明朝體直書，長句自動分欄；可調字色、大小與位置。',
+    summary: t('outputPanel.templates.ornateVertical.summary'),
+    detail: t('outputPanel.templates.ornateVertical.detail'),
     preview: {
-      layoutLabel: '華麗直書',
-      motionLabel: '群字綴現',
+      layoutLabel: t(
+        'outputPanel.templates.ornateVertical.preview.layoutLabel',
+      ),
+      motionLabel: t(
+        'outputPanel.templates.ornateVertical.preview.motionLabel',
+      ),
     },
-    tags: ['日文直書', '漢字群組', '墨色殘影'],
+    tags: [
+      t('outputPanel.templates.ornateVertical.tags.0'),
+      t('outputPanel.templates.ornateVertical.tags.1'),
+      t('outputPanel.templates.ornateVertical.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '目前行' },
-      { label: '排版', value: '直書、固定右側' },
-      { label: '長句', value: '自動拆成至多兩欄' },
-      { label: '切換', value: '漢字成組、假名逐字' },
-      { label: '藝術字', value: '同尺寸輕墨層' },
-      { label: '字型', value: '日文明朝體' },
-      { label: '背景', value: '透明' },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.0.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.1.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.2.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.3.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.3.value'),
+      },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.4.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.4.value'),
+      },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.5.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.5.value'),
+      },
+      {
+        label: t('outputPanel.templates.ornateVertical.settings.6.label'),
+        value: t('outputPanel.templates.ornateVertical.settings.6.value'),
+      },
     ],
   },
   {
     id: 'live-stage',
     kind: 'lyrics',
     order: 20,
-    name: '舞台字幕',
+    name: t('outputPanel.templates.liveStage.name'),
     availability: {
-      summary: '需逐行時間，開場字卡使用曲目資訊。',
+      summary: t('outputPanel.templates.liveStage.availability.summary'),
     },
-    summary: '轉播風格的歌詞與開場字卡。',
-    detail: '歌詞置於左下、開場字卡置於右下，中央留給表演者。',
+    summary: t('outputPanel.templates.liveStage.summary'),
+    detail: t('outputPanel.templates.liveStage.detail'),
     preview: {
-      layoutLabel: '舞台雙行',
-      motionLabel: '字卡進場',
+      layoutLabel: t('outputPanel.templates.liveStage.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.liveStage.preview.motionLabel'),
     },
-    tags: ['轉播字幕', '開場字卡', '舞台識別'],
+    tags: [
+      t('outputPanel.templates.liveStage.tags.0'),
+      t('outputPanel.templates.liveStage.tags.1'),
+      t('outputPanel.templates.liveStage.tags.2'),
+    ],
     settings: [
-      { label: '歌詞', value: '左下寬幅、最多兩行' },
-      { label: '呈現', value: '精簡、平衡或忠實原文' },
-      { label: '字卡', value: '右下精簡、播放後四至八秒' },
-      { label: '成員', value: '解析但不顯示' },
-      { label: '品牌', value: '上方低干擾舞台識別' },
+      {
+        label: t('outputPanel.templates.liveStage.settings.0.label'),
+        value: t('outputPanel.templates.liveStage.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.liveStage.settings.1.label'),
+        value: t('outputPanel.templates.liveStage.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.liveStage.settings.2.label'),
+        value: t('outputPanel.templates.liveStage.settings.2.value'),
+      },
+      {
+        label: t('outputPanel.templates.liveStage.settings.3.label'),
+        value: t('outputPanel.templates.liveStage.settings.3.value'),
+      },
+      {
+        label: t('outputPanel.templates.liveStage.settings.4.label'),
+        value: t('outputPanel.templates.liveStage.settings.4.value'),
+      },
     ],
   },
   {
     id: 'art-card',
     kind: 'now-playing',
     order: 10,
-    name: '星空黑膠',
+    name: t('outputPanel.templates.artCard.name'),
     availability: {
-      summary: '使用本機封面，缺圖時顯示曲名首字。',
+      summary: t('outputPanel.templates.artCard.availability.summary'),
     },
-    summary: '專輯封面搭配星染黑膠。',
-    detail: '左側封面、右側星染唱盤，隨播放緩慢旋轉。',
+    summary: t('outputPanel.templates.artCard.summary'),
+    detail: t('outputPanel.templates.artCard.detail'),
     preview: {
-      layoutLabel: '封面＋唱盤',
-      motionLabel: '星塵旋轉',
+      layoutLabel: t('outputPanel.templates.artCard.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.artCard.preview.motionLabel'),
     },
-    tags: ['專輯封面', '星染黑膠', '播放狀態'],
+    tags: [
+      t('outputPanel.templates.artCard.tags.0'),
+      t('outputPanel.templates.artCard.tags.1'),
+      t('outputPanel.templates.artCard.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '封面、唱盤、歌名、歌手' },
-      { label: '動態', value: '播放旋轉、暫停靜止' },
-      { label: '缺圖', value: '曲名首字替代' },
+      {
+        label: t('outputPanel.templates.artCard.settings.0.label'),
+        value: t('outputPanel.templates.artCard.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.artCard.settings.1.label'),
+        value: t('outputPanel.templates.artCard.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.artCard.settings.2.label'),
+        value: t('outputPanel.templates.artCard.settings.2.value'),
+      },
     ],
   },
   {
     id: 'cover-player',
     kind: 'now-playing',
     order: 30,
-    name: '封面電台',
+    name: t('outputPanel.templates.coverPlayer.name'),
     availability: {
-      summary: '使用本機封面，缺圖時顯示曲名首字。',
+      summary: t('outputPanel.templates.coverPlayer.availability.summary'),
     },
-    summary: '大幅封面搭配取色背景與播放進度。',
-    detail: '直式播放器，呈現封面、曲目、進度與音量。',
+    summary: t('outputPanel.templates.coverPlayer.summary'),
+    detail: t('outputPanel.templates.coverPlayer.detail'),
     preview: {
-      layoutLabel: '直式封面卡',
-      motionLabel: '進度同步',
+      layoutLabel: t('outputPanel.templates.coverPlayer.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.coverPlayer.preview.motionLabel'),
     },
-    tags: ['大幅封面', '播放進度', '播放狀態'],
+    tags: [
+      t('outputPanel.templates.coverPlayer.tags.0'),
+      t('outputPanel.templates.coverPlayer.tags.1'),
+      t('outputPanel.templates.coverPlayer.tags.2'),
+    ],
     settings: [
-      { label: '顯示', value: '封面、歌名、歌手、進度' },
-      { label: '控制列', value: '僅顯示播放狀態' },
-      { label: '缺圖', value: '曲名首字替代' },
+      {
+        label: t('outputPanel.templates.coverPlayer.settings.0.label'),
+        value: t('outputPanel.templates.coverPlayer.settings.0.value'),
+      },
+      {
+        label: t('outputPanel.templates.coverPlayer.settings.1.label'),
+        value: t('outputPanel.templates.coverPlayer.settings.1.value'),
+      },
+      {
+        label: t('outputPanel.templates.coverPlayer.settings.2.label'),
+        value: t('outputPanel.templates.coverPlayer.settings.2.value'),
+      },
     ],
   },
 ];
@@ -243,7 +422,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
 const EMPTY_PRESENTATION_FIELDS = Object.freeze([]);
 const CONTENT_CONFIGURATION_GROUP = Object.freeze({
   id: 'template-presentation',
-  label: '模板進階顯示',
+  label: t('outputPanel.presentationGroup'),
   order: 90,
 });
 
@@ -253,7 +432,7 @@ function presentationFieldsForTemplate(templateId) {
   return Object.freeze([
     Object.freeze({
       key: 'lyricsPresentationPolicyId',
-      label: '歌詞呈現策略',
+      label: t('outputPanel.presentationPolicy'),
       control: 'select',
       settingKind: 'lyrics-presentation',
       family: 'document',
@@ -277,10 +456,22 @@ const DEFAULT_TEMPLATE_IDS = new Set(
 // Labels follow state: each slot's default is 建議, the rest are 可用.
 function availabilityForTemplate(template, available = true) {
   const status = !available
-    ? { status: 'unavailable', label: '尚未提供', tone: 'warning' }
+    ? {
+        status: 'unavailable',
+        label: t('outputPanel.availability.unavailable'),
+        tone: 'warning',
+      }
     : DEFAULT_TEMPLATE_IDS.has(template.id)
-      ? { status: 'recommended', label: '建議', tone: 'accent' }
-      : { status: 'available', label: '可用', tone: 'muted' };
+      ? {
+          status: 'recommended',
+          label: t('outputPanel.availability.recommended'),
+          tone: 'accent',
+        }
+      : {
+          status: 'available',
+          label: t('outputPanel.availability.available'),
+          tone: 'muted',
+        };
   return Object.freeze({ ...template.availability, ...status, available });
 }
 

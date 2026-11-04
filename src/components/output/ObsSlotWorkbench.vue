@@ -29,6 +29,7 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   sideWidth: { type: Number, default: null },
@@ -123,7 +124,7 @@ const configurationFieldGroups = computed(() => {
     if (!groups.has(id)) {
       groups.set(id, {
         id,
-        label: field.groupLabel ?? '外觀',
+        label: field.groupLabel ?? t('outputPanel.workbench.appearance'),
         fields: [],
       });
     }
@@ -135,11 +136,12 @@ const supportedCaptureSizes = computed(() =>
   supportedCaptureSizeIdsForTemplate(templateId.value, props.activeKind),
 );
 const saveStatusLabel = computed(() => {
-  if (props.saveStatus === 'error') return '儲存失敗';
+  if (props.saveStatus === 'error')
+    return t('outputPanel.workbench.saveFailed');
   if (props.saveStatus === 'pending' || props.saveStatus === 'saving') {
-    return '儲存中…';
+    return t('outputPanel.workbench.saving');
   }
-  return '已儲存';
+  return t('outputPanel.workbench.saved');
 });
 const saveStatusIcon = computed(() => {
   if (props.saveStatus === 'error') return CircleAlert;
@@ -277,8 +279,8 @@ function resetAppearance() {
 
 <template>
   <ObsOutputSplitLayout
-    aria-label="輸出工作台"
-    side-label="輸出設定"
+    :aria-label="t('outputPanel.workbench.label')"
+    :side-label="t('outputPanel.workbench.side')"
     side-variant="inspector"
     :side-width="sideWidth"
     :side-collapsed="sideCollapsed"
@@ -322,7 +324,7 @@ function resetAppearance() {
     <template #side-header>
       <header class="obs-slot-workbench__inspector-header">
         <h2 class="obs-slot-workbench__title">
-          {{ preset?.name ?? '未選擇模板' }}
+          {{ preset?.name ?? t('outputPanel.workbench.noTemplate') }}
         </h2>
         <div
           v-if="showSaveStatus"
@@ -338,7 +340,7 @@ function resetAppearance() {
             />
           </span>
           <UiButton v-if="saveStatus === 'error'" @click="emit('retrySave')">
-            重試
+            {{ t('outputPanel.workbench.retry') }}
           </UiButton>
         </div>
       </header>
@@ -349,7 +351,7 @@ function resetAppearance() {
         v-if="outputError"
         class="obs-slot-workbench__notice"
         tone="danger"
-        title="輸出未更新"
+        :title="t('outputPanel.workbench.notUpdated')"
         :message="outputError"
         compact
       />
@@ -357,12 +359,12 @@ function resetAppearance() {
       <div v-if="elementTargets.length" class="obs-slot-workbench__target">
         <ObsAppearanceControlRow
           control-id="output-appearance-target"
-          label="調整對象"
+          :label="t('outputPanel.workbench.target')"
           :labels-control="false"
         >
           <UiSelect
             id="output-appearance-target"
-            label="調整對象"
+            :label="t('outputPanel.workbench.target')"
             :model-value="selectedTargetId"
             :options="targetOptions"
             label-hidden
@@ -380,7 +382,7 @@ function resetAppearance() {
       >
         <template #description>
           <UiHint v-if="group.id === 'template-presentation'">
-            只調整此模板的歌詞呈現。製作資訊請在歌詞的「共用文字處理」逐行確認；來源、對唱與和聲不會在此處改寫。
+            {{ t('outputPanel.workbench.presentationHint') }}
           </UiHint>
           <UiHint
             v-if="
@@ -388,7 +390,7 @@ function resetAppearance() {
               draft.lyricsPresentationPolicyId === 'broadcast-compact'
             "
           >
-            轉播精簡會省略部分重複詞與語助詞。需要保留實唱與和聲文字時，請選擇平衡分行或忠實原文。
+            {{ t('outputPanel.workbench.conciseHint') }}
           </UiHint>
         </template>
         <ObsAppearanceField
@@ -417,7 +419,7 @@ function resetAppearance() {
         :disabled="isConfigurationAtDefaults"
         @click="resetAppearance"
       >
-        恢復模板預設
+        {{ t('outputPanel.workbench.resetTemplate') }}
       </UiButton>
     </template>
   </ObsOutputSplitLayout>

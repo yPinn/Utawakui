@@ -13,6 +13,7 @@ import { useResizeDrag } from '../../composables/useResizeDrag.js';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   sideWidth: { type: Number, default: null },
@@ -188,7 +189,15 @@ onBeforeUnmount(() => {
         :aria-expanded="sideOpen"
         @click="toggleSide"
       >
-        {{ sideOpen ? (compact ? '返回主區' : '收合副區') : '展開副區' }}
+        {{
+          t(
+            sideOpen
+              ? compact
+                ? 'outputPanel.split.back'
+                : 'outputPanel.split.collapse'
+              : 'outputPanel.split.expand',
+          )
+        }}
       </UiButton>
     </div>
     <div
@@ -204,7 +213,7 @@ onBeforeUnmount(() => {
       class="obs-output-split-layout__separator"
       role="separator"
       tabindex="0"
-      aria-label="調整副區寬度"
+      :aria-label="t('outputPanel.split.resize')"
       aria-orientation="vertical"
       :aria-controls="sideId"
       :aria-valuemin="geometry?.min"

@@ -15,6 +15,7 @@ import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
 import { usePlaylists } from './usePlaylists.js';
+import { t } from '../utils/i18n.js';
 
 const { initialize: initializeLibrary } = useLibrary();
 const { initialize: initializePlaylists } = usePlaylists();
@@ -56,7 +57,7 @@ function bridgeMethod(name) {
   const method =
     typeof window !== 'undefined' ? window.Utawakui?.[name] : undefined;
   if (typeof method !== 'function') {
-    throw new Error('輸出功能需要重新啟動應用程式才能載入新版橋接 API。');
+    throw new Error(t('outputPanel.runtime.restart'));
   }
   return method;
 }
@@ -93,8 +94,8 @@ const preferencesController = createOutputPreferencesController({
       error,
       preference === 'saved' ? 'save-color-palette' : 'save-color-history',
       preference === 'saved'
-        ? '常用色票未儲存，重新開啟後可能不會保留。'
-        : '最近色票未儲存，重新開啟後可能不會保留。',
+        ? t('outputPanel.runtime.savedColorsNotSaved')
+        : t('outputPanel.runtime.recentColorsNotSaved'),
     ),
 });
 
@@ -118,7 +119,7 @@ const projectionPublisher = useOutputProjectionPublisher({
     state.error = reportOutputError(
       error,
       'publish',
-      '輸出畫面未更新，請再試一次。',
+      t('outputPanel.runtime.displayNotUpdated'),
     );
   },
 });
@@ -130,14 +131,14 @@ async function refreshStatus() {
     clearOutputFailure('status');
     await surfaceStatusError(status, {
       operation: 'status',
-      message: '輸出服務未啟動，請檢查連接埠後再試一次。',
+      message: t('outputPanel.runtime.notStartedCheckPort'),
     });
     return state.status;
   } catch (error) {
     state.error = reportOutputError(
       error,
       'status',
-      '目前無法讀取輸出狀態，請再試一次。',
+      t('outputPanel.runtime.statusReadFailed'),
     );
     state.suggestedPorts = [];
     return state.status;
@@ -164,7 +165,7 @@ async function refreshSettings() {
     state.error = reportOutputError(
       error,
       'load-settings',
-      '目前無法讀取輸出設定，請再試一次。',
+      t('outputPanel.runtime.settingsReadFailed'),
     );
     return state.settings;
   } finally {
@@ -216,7 +217,7 @@ async function updateSettings(settings) {
     clearOutputFailure('load-settings');
     await surfaceStatusError(result.status, {
       operation: 'save-settings',
-      message: '輸出服務發生異常，請檢查連接埠。',
+      message: t('outputPanel.runtime.serviceFault'),
     });
     return true;
   } catch (error) {
@@ -224,7 +225,7 @@ async function updateSettings(settings) {
     state.error = reportOutputError(
       error,
       'save-settings',
-      '輸出設定未儲存，請再試一次。',
+      t('outputPanel.runtime.settingsNotSaved'),
     );
     if (isOutputPortConflict(technicalMessage)) await suggestPorts();
     else state.suggestedPorts = [];
@@ -238,7 +239,7 @@ async function start() {
   const enabled = await requireFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW, {
     source: 'output',
     operation: 'start',
-    message: '請先到設定啟用對外輸出，再啟動 Browser Source 輸出。',
+    message: t('outputPanel.runtime.enableToStart'),
   });
   if (!enabled) return false;
 
@@ -250,7 +251,7 @@ async function start() {
     if (
       await surfaceStatusError(state.status, {
         operation: 'start',
-        message: '輸出服務未啟動，請檢查連接埠。',
+        message: t('outputPanel.runtime.notStartedPort'),
       })
     )
       return false;
@@ -264,7 +265,7 @@ async function start() {
     state.error = reportOutputError(
       error,
       'start',
-      '輸出服務未啟動，請再試一次。',
+      t('outputPanel.runtime.notStarted'),
     );
     if (isOutputPortConflict(technicalMessage)) await suggestPorts();
     else state.suggestedPorts = [];
@@ -283,7 +284,7 @@ async function stop() {
     if (
       await surfaceStatusError(state.status, {
         operation: 'stop',
-        message: '輸出服務未停止，請再試一次。',
+        message: t('outputPanel.runtime.notStopped'),
       })
     )
       return false;
@@ -293,7 +294,7 @@ async function stop() {
     state.error = reportOutputError(
       error,
       'stop',
-      '輸出服務未停止，請再試一次。',
+      t('outputPanel.runtime.notStopped'),
     );
     return false;
   } finally {
@@ -306,7 +307,7 @@ async function openWindow(kind) {
   const enabled = await requireFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW, {
     source: 'output',
     operation: 'open-window',
-    message: '請先到設定啟用對外輸出，再開啟輸出視窗。',
+    message: t('outputPanel.runtime.enableToOpen'),
   });
   if (!enabled || state.isOpeningWindow) return false;
   state.isOpeningWindow = true;
@@ -319,7 +320,7 @@ async function openWindow(kind) {
     state.error = reportOutputError(
       error,
       'open-window',
-      '輸出視窗未開啟，請確認服務已啟動後重試。',
+      t('outputPanel.runtime.windowNotOpened'),
     );
     return false;
   } finally {
@@ -345,7 +346,7 @@ async function loadSlots(seedSlots = {}) {
     state.error = reportOutputError(
       error,
       'load-slots',
-      '目前無法讀取輸出設定，請再試一次。',
+      t('outputPanel.runtime.settingsReadFailed'),
     );
   } finally {
     state.isLoadingSlots = false;
@@ -367,7 +368,7 @@ async function saveOutputSlot(kind, changes, seedSlot = null) {
     state.error = reportOutputError(
       error,
       'save-slot',
-      '輸出樣式未儲存，請再試一次。',
+      t('outputPanel.runtime.styleNotSaved'),
     );
     return false;
   } finally {
@@ -397,7 +398,7 @@ function initialize() {
       applyStatus(initialStatus);
       await surfaceStatusError(initialStatus, {
         operation: 'automatic-start',
-        message: '輸出服務未啟動，請檢查連接埠後再試一次。',
+        message: t('outputPanel.runtime.notStartedCheckPort'),
         clearWhenHealthy: false,
       });
       await Promise.all([
@@ -416,7 +417,7 @@ function initialize() {
       state.error = reportOutputError(
         error,
         'initialize',
-        '輸出初始化未完成，請再試一次。',
+        t('outputPanel.runtime.initFailed'),
       );
       return false;
     }

@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 defineProps({
   controlId: { type: String, required: true },
   label: { type: String, required: true },
@@ -24,7 +25,9 @@ defineProps({
         class="obs-appearance-control-row__modified"
         data-modified
       >
-        <span class="ui-visually-hidden">（已修改）</span>
+        <span class="ui-visually-hidden">{{
+          t('outputPanel.field.modified')
+        }}</span>
       </span>
     </label>
     <span v-else class="obs-appearance-control-row__label" aria-hidden="true">

@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../utils/catalogSourceText.js';
 
-const readSource = (path) =>
-  readFileSync(new URL(path, import.meta.url), 'utf8');
+const readSource = (path) => readCatalogSource(new URL(path, import.meta.url));
 const workspaceSource = readSource(
   '../components/output/ObsOutputWorkspace.vue',
 );
@@ -26,8 +25,8 @@ describe('Display page composition contract', () => {
     expect(workspaceSource).toContain(
       "import AppFolderPage from '../layout/AppFolderPage.vue';",
     );
-    expect(workspaceSource).toContain(
-      '<AppFolderPage mode="workspace" surface="canvas" body-label="輸出工作區">',
+    expect(workspaceSource).toMatch(
+      /<AppFolderPage\s+mode="workspace"\s+surface="canvas"\s+body-label="輸出工作區"\s*>/u,
     );
     expect(workspaceSource).toMatch(
       /<template\s+#header>[\s\S]*?<UiSegmentedControl[\s\S]*?@update:model-value="selectPage"/u,

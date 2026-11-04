@@ -9,6 +9,7 @@ import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 import { outputPreviewLimitations } from '../../constants/outputPreviewLimitations.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -28,7 +29,9 @@ let previewRequest = 0;
 const livePreview = shallowRef(null);
 const motionIcon = computed(() => (isMotionPlaying.value ? Pause : Play));
 const motionLabel = computed(() =>
-  isMotionPlaying.value ? '暫停動態預覽' : '播放動態預覽',
+  isMotionPlaying.value
+    ? t('outputPanel.stage.pauseMotion')
+    : t('outputPanel.stage.playMotion'),
 );
 const limitations = computed(() => outputPreviewLimitations(props.preset?.id));
 
@@ -108,13 +111,20 @@ onBeforeUnmount(stopPreview);
 </script>
 
 <template>
-  <section class="obs-template-preview-stage" aria-label="選中模板預覽">
+  <section
+    class="obs-template-preview-stage"
+    :aria-label="t('outputPanel.stage.label')"
+  >
     <header
       class="obs-template-preview-stage__toolbar"
       data-output-preview-info
     >
       <ObsPreviewCaption
-        :label="preset?.kind === 'lyrics' ? '固定' : captureSize.label"
+        :label="
+          preset?.kind === 'lyrics'
+            ? t('outputPanel.stage.fixed')
+            : captureSize.label
+        "
         :width="captureSize.width"
         :height="captureSize.height"
       />
@@ -141,10 +151,14 @@ onBeforeUnmount(stopPreview);
         :gap="2"
       >
         <UiChip tone="muted">{{
-          isMotionPlaying ? '動態示例' : '參考圖'
+          t(
+            isMotionPlaying
+              ? 'outputPanel.stage.motionSample'
+              : 'outputPanel.stage.reference',
+          )
         }}</UiChip>
         <span class="obs-template-preview-stage__motion">
-          {{ preset?.preview?.motionLabel ?? '靜態' }}
+          {{ preset?.preview?.motionLabel ?? t('outputPanel.stage.static') }}
         </span>
       </UiStack>
     </header>
@@ -183,7 +197,7 @@ onBeforeUnmount(stopPreview);
       v-if="previewFailed"
       class="obs-template-preview-stage__motion"
       role="status"
-      >動態預覽載入失敗，請再試一次</span
+      >{{ t('outputPanel.stage.motionFailed') }}</span
     >
   </section>
 </template>

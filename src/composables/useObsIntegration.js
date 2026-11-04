@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue';
 import OBS_CONNECTION_VALUES from '../../shared/obsConnectionValues.json';
+import { t } from '../utils/i18n.js';
 
 // Module-scope singleton, same pattern as useSystemUsage.js — one OBS
 // connection applies to the whole app, not per-component. Mirrors
@@ -54,7 +55,7 @@ function ensureSubscription() {
 async function refreshObsStatus() {
   ensureSubscription();
   if (!hasBridge('getObsStatus')) {
-    state.statusReadError = '無法讀取 OBS 連線狀態，請重新啟動後再試。';
+    state.statusReadError = t('outputPanel.obs.statusReadRestart');
     return;
   }
   const current = statusRevision;
@@ -65,7 +66,7 @@ async function refreshObsStatus() {
     applyStatus(status);
   } catch {
     if (current !== statusRevision) return;
-    state.statusReadError = '無法讀取 OBS 連線狀態，請重新讀取。';
+    state.statusReadError = t('outputPanel.obs.statusReadReload');
   }
 }
 

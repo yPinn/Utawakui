@@ -2,12 +2,13 @@
 import { computed } from 'vue';
 import { Grid2X2, Moon, Sun } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 // Default first, then its contrast, then the transparency check.
 const PREVIEW_BACKDROPS = Object.freeze([
-  { id: 'dark', label: '暗色背景', icon: Moon },
-  { id: 'light', label: '亮色背景', icon: Sun },
-  { id: 'checker', label: '透明背景', icon: Grid2X2 },
+  { id: 'dark', label: t('outputPanel.backdrop.dark'), icon: Moon },
+  { id: 'light', label: t('outputPanel.backdrop.light'), icon: Sun },
+  { id: 'checker', label: t('outputPanel.backdrop.checker'), icon: Grid2X2 },
 ]);
 
 const props = defineProps({
@@ -26,8 +27,11 @@ const current = computed(() => PREVIEW_BACKDROPS[currentIndex.value]);
 const next = computed(
   () => PREVIEW_BACKDROPS[(currentIndex.value + 1) % PREVIEW_BACKDROPS.length],
 );
-const label = computed(
-  () => `預覽背景：${current.value.label}，切換為${next.value.label}`,
+const label = computed(() =>
+  t('outputPanel.backdrop.toggle', {
+    current: current.value.label,
+    next: next.value.label,
+  }),
 );
 </script>
 

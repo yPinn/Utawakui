@@ -1,0 +1,535 @@
+{
+  "templates": {
+    "receiptSetlist": {
+      "name": "Receipt Setlist",
+      "availability": {
+        "summary": "Shows sung details from the arrangement, or records during general playback."
+      },
+      "summary": "Thermal-receipt style tracks and sung records.",
+      "detail": "Prints a slip after each song; switch direction and review sung details on a timer.",
+      "preview": {
+        "layoutLabel": "Continuous receipt",
+        "motionLabel": "Feed and review"
+      },
+      "tags": {
+        "0": "Thermal receipt",
+        "1": "Two-way feed",
+        "2": "History review"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Current track, sung details"
+        },
+        "1": {
+          "label": "Direction",
+          "value": "Down by default, up optional"
+        },
+        "2": {
+          "label": "Title",
+          "value": "Up to two lines, long titles truncated"
+        },
+        "3": {
+          "label": "Review",
+          "value": "Timed review, can be turned off"
+        }
+      }
+    },
+    "queueBoard": {
+      "name": "Night Setlist",
+      "availability": {
+        "summary": "Uses the current track and sung records."
+      },
+      "summary": "Black-and-hairline style performance record.",
+      "detail": "The current track stays on top; sung records stack below and scroll smoothly.",
+      "preview": {
+        "layoutLabel": "Current + sung",
+        "motionLabel": "Overflow scroll"
+      },
+      "tags": {
+        "0": "Black hairline",
+        "1": "Performance record",
+        "2": "Interlude screen"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Current track, sung records"
+        },
+        "1": {
+          "label": "Density",
+          "value": "Readable"
+        },
+        "2": {
+          "label": "Records",
+          "value": "Last eight songs"
+        },
+        "3": {
+          "label": "Motion",
+          "value": "Scrolls when it overflows"
+        }
+      }
+    },
+    "karaokeStack": {
+      "name": "Classic Karaoke",
+      "availability": {
+        "summary": "Supports per-character wipe; estimates by line length without per-character timing."
+      },
+      "summary": "Alternating two lines, countdown and per-character wipe.",
+      "detail": "Two lines alternate, cues count down ahead and text wipes with progress.",
+      "preview": {
+        "layoutLabel": "Staggered two lines",
+        "motionLabel": "Per-character wipe"
+      },
+      "tags": {
+        "0": "Classic karaoke",
+        "1": "Staggered lines",
+        "2": "Progress wipe"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Top line left, bottom line right"
+        },
+        "1": {
+          "label": "Countdown",
+          "value": "Aligned to the song's beat"
+        },
+        "2": {
+          "label": "Line change",
+          "value": "Holds 0.6 seconds after singing"
+        },
+        "3": {
+          "label": "Look",
+          "value": "White text, blue outline, role-colored wipe"
+        },
+        "4": {
+          "label": "Progress",
+          "value": "Estimated per line / exact per character"
+        },
+        "5": {
+          "label": "Background",
+          "value": "Transparent"
+        }
+      }
+    },
+    "mangaFrame": {
+      "name": "Manga Panels",
+      "availability": {
+        "summary": "Uses the current line and can show available Japanese readings."
+      },
+      "summary": "Vertical manga dialogue alternating left and right.",
+      "detail": "Lyrics split into one to three vertical speech panels that alternate sides each line.",
+      "preview": {
+        "layoutLabel": "Vertical dialogue",
+        "motionLabel": "Panel fade-in"
+      },
+      "tags": {
+        "0": "Black-and-white manga",
+        "1": "Left-right dialogue",
+        "2": "Vertical lyrics"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "One to three lyric phrases"
+        },
+        "1": {
+          "label": "Layout",
+          "value": "Vertical, centered, alternating sides"
+        },
+        "2": {
+          "label": "Phrasing",
+          "value": "Split into panels at spaces and brackets"
+        },
+        "3": {
+          "label": "Transition",
+          "value": "Panels fade in and out"
+        },
+        "4": {
+          "label": "Readings",
+          "value": "Shown when available"
+        }
+      }
+    },
+    "kineticPop": {
+      "name": "Kinetic Pop",
+      "availability": {
+        "summary": "Uses line-timed lyrics."
+      },
+      "summary": "Bold gradient text that pops in character by character.",
+      "detail": "Characters pop in at fixed points; keep one of three textures or rotate them.",
+      "preview": {
+        "layoutLabel": "Bottom pop text",
+        "motionLabel": "Staggered pop"
+      },
+      "tags": {
+        "0": "Japanese caption card",
+        "1": "Choosable texture",
+        "2": "Staggered pop"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Current line"
+        },
+        "1": {
+          "label": "Texture",
+          "value": "Gradient with white outline by default; fixed or rotating"
+        },
+        "2": {
+          "label": "Arrangement",
+          "value": "Straight or slightly offset"
+        },
+        "3": {
+          "label": "Transition",
+          "value": "Characters pop in at fixed points"
+        },
+        "4": {
+          "label": "Font",
+          "value": "Bold rounded Japanese"
+        },
+        "5": {
+          "label": "Background",
+          "value": "Transparent"
+        }
+      }
+    },
+    "ornateVertical": {
+      "name": "Japanese Vertical",
+      "availability": {
+        "summary": "Uses line-timed lyrics and groups Japanese kanji automatically."
+      },
+      "summary": "Vertical Mincho; kanji appear in groups, kana one by one.",
+      "detail": "Vertical Mincho text; long lines split into columns automatically. Color, size and position are adjustable.",
+      "preview": {
+        "layoutLabel": "Ornate vertical",
+        "motionLabel": "Grouped reveal"
+      },
+      "tags": {
+        "0": "Japanese vertical",
+        "1": "Kanji groups",
+        "2": "Ink afterimage"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Current line"
+        },
+        "1": {
+          "label": "Layout",
+          "value": "Vertical, fixed on the right"
+        },
+        "2": {
+          "label": "Long lines",
+          "value": "Split into up to two columns"
+        },
+        "3": {
+          "label": "Transition",
+          "value": "Kanji in groups, kana one by one"
+        },
+        "4": {
+          "label": "Art text",
+          "value": "Same-size light ink layer"
+        },
+        "5": {
+          "label": "Font",
+          "value": "Japanese Mincho"
+        },
+        "6": {
+          "label": "Background",
+          "value": "Transparent"
+        }
+      }
+    },
+    "liveStage": {
+      "name": "Stage Captions",
+      "availability": {
+        "summary": "Needs line timing; the opening card uses track info."
+      },
+      "summary": "Broadcast-style lyrics and an opening card.",
+      "detail": "Lyrics at the lower left and the opening card at the lower right, leaving the center for the performer.",
+      "preview": {
+        "layoutLabel": "Stage two lines",
+        "motionLabel": "Card entrance"
+      },
+      "tags": {
+        "0": "Broadcast captions",
+        "1": "Opening card",
+        "2": "Stage branding"
+      },
+      "settings": {
+        "0": {
+          "label": "Lyrics",
+          "value": "Wide at lower left, up to two lines"
+        },
+        "1": {
+          "label": "Presentation",
+          "value": "Concise, balanced or faithful to the original"
+        },
+        "2": {
+          "label": "Card",
+          "value": "Compact at lower right, 4–8 seconds after playback starts"
+        },
+        "3": {
+          "label": "Members",
+          "value": "Parsed but not shown"
+        },
+        "4": {
+          "label": "Branding",
+          "value": "Low-key stage branding at the top"
+        }
+      }
+    },
+    "artCard": {
+      "name": "Starlit Vinyl",
+      "availability": {
+        "summary": "Uses local artwork; shows the first character of the title when missing."
+      },
+      "summary": "Album artwork with a star-dyed vinyl record.",
+      "detail": "Artwork on the left and a star-dyed record on the right that turns slowly while playing.",
+      "preview": {
+        "layoutLabel": "Artwork + record",
+        "motionLabel": "Stardust spin"
+      },
+      "tags": {
+        "0": "Album artwork",
+        "1": "Star-dyed vinyl",
+        "2": "Playback status"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Artwork, record, title, artist"
+        },
+        "1": {
+          "label": "Motion",
+          "value": "Spins while playing, still when paused"
+        },
+        "2": {
+          "label": "Missing artwork",
+          "value": "First character of the title"
+        }
+      }
+    },
+    "coverPlayer": {
+      "name": "Cover Radio",
+      "availability": {
+        "summary": "Uses local artwork; shows the first character of the title when missing."
+      },
+      "summary": "Large artwork with a color-matched background and playback progress.",
+      "detail": "Vertical player showing artwork, track, progress and volume.",
+      "preview": {
+        "layoutLabel": "Vertical artwork card",
+        "motionLabel": "Progress sync"
+      },
+      "tags": {
+        "0": "Large artwork",
+        "1": "Playback progress",
+        "2": "Playback status"
+      },
+      "settings": {
+        "0": {
+          "label": "Shows",
+          "value": "Artwork, title, artist, progress"
+        },
+        "1": {
+          "label": "Control bar",
+          "value": "Playback status only"
+        },
+        "2": {
+          "label": "Missing artwork",
+          "value": "First character of the title"
+        }
+      }
+    }
+  },
+  "presentationGroup": "Advanced template display",
+  "presentationPolicy": "Lyrics presentation",
+  "availability": {
+    "unavailable": "Not available yet",
+    "recommended": "Recommended",
+    "available": "Available"
+  },
+  "field": {
+    "modified": "(modified)",
+    "chooseLookFirst": "Choose a color style to adjust",
+    "chooseLook": "Choose a color style",
+    "resetNamed": "Reset \"{title}\" to default"
+  },
+  "swatch": {
+    "applyNamed": "Apply {label} {color}"
+  },
+  "font": {
+    "presetWord": "Default",
+    "localWord": "Local",
+    "unavailable": "Unavailable",
+    "load": "Load local fonts",
+    "reload": "Reload local fonts",
+    "idle": "Local fonts are read only after you press this",
+    "loading": "Reading local fonts…",
+    "loaded": "{count} font family loaded | {count} font families loaded",
+    "none": "No usable local fonts found",
+    "unsupported": "Local font access isn't supported here",
+    "denied": "Local font access wasn't allowed",
+    "search": "Search fonts",
+    "reading": "Reading local fonts",
+    "missing": "The local font isn't available; output uses the default font",
+    "rightsNotice": "Local fonts are used in public output. Make sure you have the rights needed for streaming, recording, VOD, editing and commercial use.",
+    "readFailed": "Local fonts can't be read right now. Try again."
+  },
+  "color": {
+    "removeSaved": "Remove saved",
+    "savedFull": "Saved is full",
+    "addSaved": "Save color",
+    "removeNamed": "Remove {color} from saved colors",
+    "fullNamed": "Saved colors are full (up to {max})",
+    "addNamed": "Save color {color}",
+    "swatches": "Output swatches",
+    "swatchesTitle": "Swatches",
+    "saved": "Saved",
+    "savedSelection": "Saved swatches",
+    "savedLabel": "Output saved swatches",
+    "empty": "None yet",
+    "recent": "Recent",
+    "recentSelection": "Recent swatches",
+    "recentLabel": "Recently used swatches"
+  },
+  "runtimeStatus": {
+    "label": "Output status",
+    "start": "Start",
+    "stop": "Stop",
+    "failedTitle": "Output action not completed"
+  },
+  "split": {
+    "back": "Back to main",
+    "collapse": "Collapse side panel",
+    "expand": "Expand side panel",
+    "resize": "Resize side panel"
+  },
+  "workspace": {
+    "workbench": "Workbench",
+    "gallery": "Templates",
+    "body": "Output workspace",
+    "switch": "Workbench or templates",
+    "surface": "Output display",
+    "controls": "Output controls",
+    "openWindow": "Open output window",
+    "settings": "Output settings"
+  },
+  "overlay": {
+    "label": "Browser Source preview",
+    "live": "Browser Source live preview",
+    "fixed": "Fixed",
+    "hideGuide": "Hide performer guide",
+    "showGuide": "Show performer guide",
+    "copyUrl": "Copy URL",
+    "copyUrlHint": "Copy the URL, or drag it into your streaming software"
+  },
+  "position": {
+    "topLeft": "Top left",
+    "topCenter": "Top center",
+    "topRight": "Top right",
+    "centerLeft": "Center left",
+    "center": "Center",
+    "centerRight": "Center right",
+    "bottomLeft": "Bottom left",
+    "bottomCenter": "Bottom center",
+    "bottomRight": "Bottom right"
+  },
+  "backdrop": {
+    "dark": "Dark background",
+    "light": "Light background",
+    "checker": "Transparent background",
+    "toggle": "Preview background: {current}; switch to {next}"
+  },
+  "workbench": {
+    "appearance": "Appearance",
+    "saveFailed": "Save failed",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "label": "Output workbench",
+    "side": "Output settings",
+    "noTemplate": "No template selected",
+    "retry": "Retry",
+    "notUpdated": "Output not updated",
+    "target": "Adjust",
+    "presentationHint": "Adjusts lyrics presentation for this template only. Check credits line by line in the lyrics' Shared text processing; sources, duets and harmonies aren't rewritten here.",
+    "conciseHint": "Broadcast concise drops some repeated words and fillers. To keep sung and harmony text, choose Balanced lines or Faithful to original.",
+    "resetTemplate": "Reset template defaults",
+    "wholeTemplate": "Whole template"
+  },
+  "gallery": {
+    "label": "Templates",
+    "side": "Template preview",
+    "search": "Search templates",
+    "thumbnails": "Template thumbnails",
+    "viewPreview": "View template preview",
+    "applied": "Applied",
+    "noMatch": "No matching templates.",
+    "none": "No templates available.",
+    "choose": "Choose a template.",
+    "features": "Template features",
+    "unavailable": "Not available yet",
+    "apply": "Apply template",
+    "noThumbnail": "No thumbnail"
+  },
+  "stage": {
+    "pauseMotion": "Pause motion preview",
+    "playMotion": "Play motion preview",
+    "label": "Selected template preview",
+    "fixed": "Fixed",
+    "motionSample": "Motion sample",
+    "reference": "Reference",
+    "static": "Static",
+    "motionFailed": "The motion preview didn't load. Try again"
+  },
+  "widget": {
+    "sizes": "Widget capture size",
+    "sizeNamed": "{label}, {width} × {height}",
+    "liveNamed": "{label} Browser Source live preview"
+  },
+  "runtime": {
+    "restart": "Restart the app to load output.",
+    "savedColorsNotSaved": "Saved swatches weren't saved and may be lost after reopening.",
+    "recentColorsNotSaved": "Recent swatches weren't saved and may be lost after reopening.",
+    "displayNotUpdated": "The output display wasn't updated. Try again.",
+    "notStartedCheckPort": "The output service didn't start. Check the port and try again.",
+    "statusReadFailed": "Output status can't be read right now. Try again.",
+    "settingsReadFailed": "Output settings can't be read right now. Try again.",
+    "serviceFault": "The output service hit a problem. Check the port.",
+    "settingsNotSaved": "Output settings weren't saved. Try again.",
+    "enableToStart": "Turn on public output in Settings, then start Browser Source output.",
+    "notStartedPort": "The output service didn't start. Check the port.",
+    "notStarted": "The output service didn't start. Try again.",
+    "notStopped": "The output service didn't stop. Try again.",
+    "enableToOpen": "Turn on public output in Settings, then open the output window.",
+    "windowNotOpened": "The output window didn't open. Make sure the service is running and retry.",
+    "styleNotSaved": "The output style wasn't saved. Try again.",
+    "initFailed": "Output didn't finish starting. Try again."
+  },
+  "clipboard": {
+    "copiedNamed": "{label} URL copied",
+    "pasteHint": "Paste it into OBS's browser source.",
+    "failedNamed": "Couldn't copy the {label} URL",
+    "tryAgain": "Try again.",
+    "retry": "Retry"
+  },
+  "previewLimits": {
+    "common": "Default look only; check the actual output in the workbench.",
+    "queueBoard": "Scrolling sample; actual output shows page by page.",
+    "receiptSetlist": "Uses sample records; the real review shows up to 100.",
+    "karaokeStack": "Wipe sample, not actual per-character sync.",
+    "kineticPop": "Fixed phrase sample; doesn't show line changes across the song.",
+    "ornateVertical": "Two-line loop sample; doesn't show full line changes.",
+    "liveStage": "Card and captions are shown at fixed sample times.",
+    "mangaFrame": "Panels shown together; doesn't show handoffs or per-character sync.",
+    "artCard": "Text artwork sample; the spin doesn't follow playback position.",
+    "coverPlayer": "Artwork and progress are for illustration only.",
+    "fallback": "Style reference only."
+  },
+  "obs": {
+    "statusReadRestart": "The OBS connection status can't be read. Restart and try again.",
+    "statusReadReload": "The OBS connection status can't be read. Reload."
+  }
+}

@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import UiCombobox from '../ui/UiCombobox.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -36,7 +37,7 @@ function updateValue(value) {
     :disabled="disabled"
     :editable="false"
     label-hidden
-    placeholder="選擇配色風格"
+    :placeholder="t('outputPanel.field.chooseLook')"
     @update:model-value="updateValue"
   >
     <template #value="{ item, placeholder }">

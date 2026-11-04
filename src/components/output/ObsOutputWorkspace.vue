@@ -14,6 +14,7 @@ import AppFolderPage from '../layout/AppFolderPage.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTabs from '../ui/UiTabs.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
@@ -32,8 +33,8 @@ function orderPresets(presets) {
 
 const orderedPresets = computed(() => orderPresets(props.presets));
 const modeItems = [
-  { id: 'workbench', label: '工作臺' },
-  { id: 'gallery', label: '模板庫' },
+  { id: 'workbench', label: t('outputPanel.workspace.workbench') },
+  { id: 'gallery', label: t('outputPanel.workspace.gallery') },
 ];
 const kindTabs = computed(() =>
   props.slotDefinitions.map((definition) => ({
@@ -211,20 +212,24 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppFolderPage mode="workspace" surface="canvas" body-label="輸出工作區">
+  <AppFolderPage
+    mode="workspace"
+    surface="canvas"
+    :body-label="t('outputPanel.workspace.body')"
+  >
     <template #header>
       <div class="obs-output-workspace__header">
         <UiSegmentedControl
           :items="modeItems"
           :model-value="activePage"
-          aria-label="工作臺或模板庫"
+          :aria-label="t('outputPanel.workspace.switch')"
           @update:model-value="selectPage"
         />
         <UiTabs
           class="obs-output-workspace__kinds"
           :items="kindTabs"
           :active-id="activeKind"
-          aria-label="輸出畫面"
+          :aria-label="t('outputPanel.workspace.surface')"
           tab-id-prefix="output-kind"
           panel-id-prefix="output-kind"
           variant="bar"
@@ -234,7 +239,7 @@ onBeforeUnmount(() => {
           <div
             class="obs-output-workspace__commands"
             role="group"
-            aria-label="輸出控制"
+            :aria-label="t('outputPanel.workspace.controls')"
           >
             <ObsOutputRuntimeStatus
               :output-status="outputState.status"
@@ -244,13 +249,13 @@ onBeforeUnmount(() => {
             >
               <UiIconButton
                 :icon="MonitorUp"
-                label="開啟輸出視窗"
+                :label="t('outputPanel.workspace.openWindow')"
                 :disabled="!outputState.status.running || runtimeBusy"
                 @click="openCaptureWindow"
               />
               <UiIconButton
                 :icon="Settings"
-                label="輸出設定"
+                :label="t('outputPanel.workspace.settings')"
                 @click="openSettings('output')"
               />
             </ObsOutputRuntimeStatus>

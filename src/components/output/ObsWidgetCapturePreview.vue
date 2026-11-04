@@ -16,6 +16,7 @@ import {
   OUTPUT_WIDGET_CAPTURE_SIZES,
 } from '../../constants/outputCaptureSizes.js';
 import { useOutputElementBoxes } from '../../composables/output/useOutputElementBoxes.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   metadataTarget: { type: Object, default: null },
@@ -170,7 +171,7 @@ onBeforeUnmount(() => {
     class="obs-widget-capture-preview"
     :class="{ 'obs-widget-capture-preview--external-info': metadataTarget }"
     :style="previewGridStyle"
-    aria-label="Widget 擷取尺寸"
+    :aria-label="t('outputPanel.widget.sizes')"
   >
     <button
       v-for="option in captureOptions"
@@ -182,7 +183,13 @@ onBeforeUnmount(() => {
         'obs-widget-capture-preview__option--selected':
           selectedSize === option.id,
       }"
-      :aria-label="`${option.label}型，${option.width} × ${option.height}`"
+      :aria-label="
+        t('outputPanel.widget.sizeNamed', {
+          label: option.label,
+          width: option.width,
+          height: option.height,
+        })
+      "
       :aria-pressed="selectedSize === option.id"
       @click="emit('selectSize', option.id)"
     >
@@ -233,7 +240,7 @@ onBeforeUnmount(() => {
             :style="option.canvasStyle"
             :width="option.width"
             :height="option.height"
-            :title="`${option.label}型 Browser Source 即時預覽`"
+            :title="t('outputPanel.widget.liveNamed', { label: option.label })"
             tabindex="-1"
             aria-hidden="true"
             sandbox="allow-scripts allow-same-origin"

@@ -1,16 +1,17 @@
 <script setup>
 import { computed, nextTick, useTemplateRef } from 'vue';
+import { t } from '../../utils/i18n.js';
 
 const POSITION_CHOICES = Object.freeze([
-  { id: 'top-left', label: '左上' },
-  { id: 'top-center', label: '中上' },
-  { id: 'top-right', label: '右上' },
-  { id: 'center-left', label: '左中' },
-  { id: 'center', label: '正中' },
-  { id: 'center-right', label: '右中' },
-  { id: 'bottom-left', label: '左下' },
-  { id: 'bottom-center', label: '中下' },
-  { id: 'bottom-right', label: '右下' },
+  { id: 'top-left', label: t('outputPanel.position.topLeft') },
+  { id: 'top-center', label: t('outputPanel.position.topCenter') },
+  { id: 'top-right', label: t('outputPanel.position.topRight') },
+  { id: 'center-left', label: t('outputPanel.position.centerLeft') },
+  { id: 'center', label: t('outputPanel.position.center') },
+  { id: 'center-right', label: t('outputPanel.position.centerRight') },
+  { id: 'bottom-left', label: t('outputPanel.position.bottomLeft') },
+  { id: 'bottom-center', label: t('outputPanel.position.bottomCenter') },
+  { id: 'bottom-right', label: t('outputPanel.position.bottomRight') },
 ]);
 
 const props = defineProps({

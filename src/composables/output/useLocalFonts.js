@@ -1,5 +1,6 @@
 import { shallowRef } from 'vue';
 import { normalizeOutputLocalFonts } from '../../utils/outputLocalFonts.js';
+import { t } from '../../utils/i18n.js';
 
 function browserLocalFontQuery() {
   return typeof window === 'undefined' ||
@@ -36,7 +37,7 @@ export function createLocalFontsCatalog({
         return;
       }
       status.value = 'error';
-      error.value = '目前無法讀取本機字體，請再試一次。';
+      error.value = t('outputPanel.font.readFailed');
     }
   }
 

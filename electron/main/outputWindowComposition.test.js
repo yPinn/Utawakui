@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../src/utils/catalogSourceText.js';
 
-const read = (file) => readFileSync(new URL(file, import.meta.url), 'utf8');
+const read = (file) => readCatalogSource(new URL(file, import.meta.url));
 describe('output capture composition', () => {
   it('cleans windows before stopping the service and keeps Tray hiding separate', () => {
     const main = read('../main.js');

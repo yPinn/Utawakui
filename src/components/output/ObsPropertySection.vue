@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { RotateCcw } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -10,7 +11,9 @@ const props = defineProps({
 
 const emit = defineEmits(['reset']);
 
-const resetLabel = computed(() => `恢復「${props.title}」預設`);
+const resetLabel = computed(() =>
+  t('outputPanel.field.resetNamed', { title: props.title }),
+);
 </script>
 
 <template>

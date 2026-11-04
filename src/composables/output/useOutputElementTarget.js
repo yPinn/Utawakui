@@ -1,4 +1,5 @@
 import { computed, shallowRef, watch } from 'vue';
+import { t } from '../../utils/i18n.js';
 
 // One adjustment target shared by the inspector select and canvas selection.
 export function useOutputElementTarget({ elementTargets, templateId }) {
@@ -8,7 +9,7 @@ export function useOutputElementTarget({ elementTargets, templateId }) {
   );
   const elementIds = computed(() => elementTargets.value.map(({ id }) => id));
   const targetOptions = computed(() => [
-    { value: 'template', label: '整個模板' },
+    { value: 'template', label: t('outputPanel.workbench.wholeTemplate') },
     ...elementTargets.value.map(({ id, label }) => ({ value: id, label })),
   ]);
 

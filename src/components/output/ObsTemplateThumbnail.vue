@@ -1,6 +1,7 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { getOutputTemplateThumbnail } from '../../utils/outputTemplateThumbnails.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -40,7 +41,9 @@ function markThumbnailFailed() {
       draggable="false"
       @error="markThumbnailFailed"
     />
-    <span v-else class="obs-template-thumbnail__unavailable">暫無縮圖</span>
+    <span v-else class="obs-template-thumbnail__unavailable">{{
+      t('outputPanel.gallery.noThumbnail')
+    }}</span>
   </div>
 </template>
 

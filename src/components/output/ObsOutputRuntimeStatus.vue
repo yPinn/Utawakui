@@ -4,6 +4,7 @@ import { Play, Power } from '../../icons/index.js';
 import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
 import UiButton from '../ui/UiButton.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   outputStatus: { type: Object, default: () => ({ running: false }) },
@@ -18,7 +19,10 @@ const runtimeStatus = computed(() =>
 </script>
 
 <template>
-  <section class="obs-output-runtime-status" aria-label="輸出狀態">
+  <section
+    class="obs-output-runtime-status"
+    :aria-label="t('outputPanel.runtimeStatus.label')"
+  >
     <UiTooltip
       :text="`${runtimeStatus.label}：${runtimeStatus.detail}`"
       placement="bottom"
@@ -45,7 +49,7 @@ const runtimeStatus = computed(() =>
       :disabled="busy"
       @click="emit('start')"
     >
-      啟動
+      {{ t('outputPanel.runtimeStatus.start') }}
     </UiButton>
     <UiButton
       v-else
@@ -55,7 +59,7 @@ const runtimeStatus = computed(() =>
       :disabled="busy"
       @click="emit('stop')"
     >
-      停止
+      {{ t('outputPanel.runtimeStatus.stop') }}
     </UiButton>
   </section>
 </template>

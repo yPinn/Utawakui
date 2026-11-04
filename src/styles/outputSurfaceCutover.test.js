@@ -2,8 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readCatalogSource } from '../utils/catalogSourceText.js';
 
-const readSource = (path) =>
-  readFileSync(new URL(path, import.meta.url), 'utf8');
+const readSource = (path) => readCatalogSource(new URL(path, import.meta.url));
 
 const appSource = readSource('../App.vue');
 const displayPageSource = readSource('../pages/DisplayPage.vue');
@@ -114,8 +113,8 @@ describe('Output Token v2 surface cutover', () => {
     expect(displayPageSource).toContain('<ObsOutputWorkspace');
     expect(displayPageSource).not.toContain('OutputPage');
     expect(displayPageSource).not.toContain('OutputView');
-    expect(workspaceSource).toContain(
-      '<AppFolderPage mode="workspace" surface="canvas" body-label="輸出工作區">',
+    expect(workspaceSource).toMatch(
+      /<AppFolderPage\s+mode="workspace"\s+surface="canvas"\s+body-label="輸出工作區"\s*>/u,
     );
     expect(workspaceSource).toMatch(
       /\.obs-output-workspace\s*\{(?=[^}]*height:\s*100%)(?=[^}]*min-height:\s*0)(?=[^}]*grid-template-rows:\s*minmax\(0, 1fr\))[^}]*\}/su,

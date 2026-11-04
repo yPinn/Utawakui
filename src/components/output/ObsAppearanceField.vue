@@ -9,6 +9,7 @@ import ObsSegmentedAppearanceChoice from './ObsSegmentedAppearanceChoice.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   field: { type: Object, required: true },
@@ -31,7 +32,7 @@ const controlHintId = computed(() => `${controlId.value}-hint`);
 const editor = computed(() => props.field.editor ?? props.field.control);
 const disabledHint = computed(() =>
   props.disabled && props.field.key === 'lookAmount'
-    ? '選擇配色風格後可調整'
+    ? t('outputPanel.field.chooseLookFirst')
     : '',
 );
 const selectOptions = computed(() =>
