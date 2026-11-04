@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // Shared between LibraryBrowseContent.vue (dispatches these actions from its own
 // track/playlist context menus) and PlaylistSidebar.vue (emits them from its
 // row context menu) — a single source keeps the action-string vocabulary
@@ -35,12 +36,14 @@ export const TRACK_MENU_ACTIONS = {
 };
 
 export function playlistDisplayName(playlist) {
-  return playlist?.name || '(未命名歌單)';
+  return playlist?.name || t('playlist.row.untitledParens');
 }
 
 // Title of the library destination shown when no collection is selected.
 export function libraryViewTitle(libraryView) {
-  return libraryView === 'local' ? '本機檔案' : '全部曲目';
+  return libraryView === 'local'
+    ? t('playlist.sidebar.local')
+    : t('playlist.sidebar.all');
 }
 
 // Playlists selectable as an "add to X" target: albums are always excluded

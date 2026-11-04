@@ -34,35 +34,35 @@
     "save": "儲存"
   },
   "row": {
-    "untitled": "未命名歌單",
-    "untitledParens": "(未命名歌單)",
+    "untitled": "未命名播放清單",
+    "untitledParens": "(未命名播放清單)",
     "selectNamed": "選取 {name}",
     "pauseNamed": "暫停 {name}",
     "playNamed": "播放 {name}"
   },
   "notify": {
-    "readTitle": "讀取歌單失敗",
+    "readTitle": "讀取播放清單失敗",
     "readMessage": "目前無法讀取播放清單，請再試一次。",
-    "createTitle": "建立歌單失敗",
+    "createTitle": "建立播放清單失敗",
     "createMessage": "無法建立播放清單，請再試一次。",
-    "renameTitle": "重新命名歌單失敗",
+    "renameTitle": "重新命名播放清單失敗",
     "notSaved": "變更未儲存，請再試一次。",
-    "deleteTitle": "刪除歌單失敗",
+    "deleteTitle": "刪除播放清單失敗",
     "deleteMessage": "無法刪除播放清單，請再試一次。",
-    "kindTitle": "轉換歌單類型失敗",
-    "descriptionTitle": "更新歌單說明失敗",
+    "kindTitle": "轉換播放清單類型失敗",
+    "descriptionTitle": "更新播放清單說明失敗",
     "setCoverTitle": "設定封面失敗",
     "coverNotUpdated": "封面未更新，請再試一次。",
     "clearCoverTitle": "移除封面失敗",
-    "albumTitle": "建立專輯歌單失敗",
+    "albumTitle": "建立專輯播放清單失敗",
     "albumNotSaved": "專輯未儲存，請再試一次。",
-    "reorderTitle": "歌單排序儲存失敗",
+    "reorderTitle": "播放清單排序儲存失敗",
     "orderNotSaved": "排序未儲存，請再試一次。",
-    "saveTitle": "歌單儲存失敗",
-    "operationTitle": "歌單操作失敗",
+    "saveTitle": "播放清單儲存失敗",
+    "operationTitle": "播放清單操作失敗",
     "operationMessage": "操作未完成，請再試一次。",
     "tryAgain": "請再試一次。",
     "restartToReorder": "請重新啟動應用程式後再調整播放清單順序。",
-    "reorderNotSavedTitle": "歌單排序未儲存"
+    "reorderNotSavedTitle": "播放清單排序未儲存"
   }
 }

@@ -161,7 +161,7 @@
   },
   "FOLDER_PAGE_OBJECT_LAYOUT_FAILED": {
     "title": "Can't save page layout",
-    "message": "Item positions, pins or layering can't be saved right now. Try again."
+    "message": "The page item layout can't be saved right now. Try again."
   },
   "FOLDER_PAGE_OBJECT_LIST_FAILED": {
     "title": "Can't read page items",

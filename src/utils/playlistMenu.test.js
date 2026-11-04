@@ -20,13 +20,13 @@ describe('playlistDisplayName', () => {
   });
 
   it('falls back for an empty or missing name', () => {
-    expect(playlistDisplayName({ name: '' })).toBe('(未命名歌單)');
-    expect(playlistDisplayName({})).toBe('(未命名歌單)');
+    expect(playlistDisplayName({ name: '' })).toBe('(未命名播放清單)');
+    expect(playlistDisplayName({})).toBe('(未命名播放清單)');
   });
 
   it('falls back for a null/undefined playlist', () => {
-    expect(playlistDisplayName(null)).toBe('(未命名歌單)');
-    expect(playlistDisplayName(undefined)).toBe('(未命名歌單)');
+    expect(playlistDisplayName(null)).toBe('(未命名播放清單)');
+    expect(playlistDisplayName(undefined)).toBe('(未命名播放清單)');
   });
 });
 

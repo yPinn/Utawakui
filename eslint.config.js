@@ -86,6 +86,7 @@ const I18N_MIGRATED = [
   'src/composables/useTrackMetadataEditor.js',
   'src/components/{playlists,artists}/*.vue',
   'src/composables/{usePlaylists,useArtistIndex,useArtistPhotoCandidates,useWorkOrganization}.js',
+  'src/utils/playlistMenu.js',
   'electron/main/{playlistsHandlers,folderPageObjectHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';

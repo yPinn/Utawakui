@@ -126,7 +126,7 @@ describe('operation feedback ownership', () => {
     const { useAppNotifications } = await import('./useAppNotifications.js');
     expect(useAppNotifications().items.value[0]).toMatchObject({
       tone: 'danger',
-      title: '重新命名歌單失敗',
+      title: '重新命名播放清單失敗',
       message: '請再試一次。',
     });
     expect(owner.state.actionError).toBe('變更未儲存，請再試一次。');
@@ -146,7 +146,7 @@ describe('operation feedback ownership', () => {
     expect(notifications.items.value).toHaveLength(1);
     expect(notifications.items.value[0]).toMatchObject({
       tone: 'danger',
-      title: '刪除歌單失敗',
+      title: '刪除播放清單失敗',
       message: '請再試一次。',
     });
     deletePlaylistMock.mockResolvedValueOnce([]);

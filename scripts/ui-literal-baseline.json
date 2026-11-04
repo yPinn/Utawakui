@@ -156,7 +156,6 @@
   "src/utils/musicAnalysisBenchmark.js": 22,
   "src/utils/musicAnalysisReferenceAnnotation.js": 8,
   "src/utils/notePapers.js": 5,
-  "src/utils/playlistMenu.js": 2,
   "src/utils/rubyLayout.js": 1,
   "src/utils/sourceCatalog.js": 7,
   "src/views/DemoView.vue": 3,

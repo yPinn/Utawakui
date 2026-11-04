@@ -161,7 +161,7 @@
   },
   "FOLDER_PAGE_OBJECT_LAYOUT_FAILED": {
     "title": "無法儲存頁面配置",
-    "message": "物件的位置、固定狀態或層次目前無法儲存，請再試一次。"
+    "message": "頁面物件的配置目前無法儲存，請再試一次。"
   },
   "FOLDER_PAGE_OBJECT_LIST_FAILED": {
     "title": "無法讀取頁面物件",
@@ -302,47 +302,47 @@
   },
   "PLAYLISTS_CHOOSE_COVER_FAILED": {
     "title": "封面無法更新",
-    "message": "這個歌單的封面無法更新，請再試一次。"
+    "message": "這個播放清單的封面無法更新，請再試一次。"
   },
   "PLAYLISTS_CLEAR_COVER_FAILED": {
     "title": "封面無法移除",
-    "message": "這個歌單的封面無法移除，請再試一次。"
+    "message": "這個播放清單的封面無法移除，請再試一次。"
   },
   "PLAYLISTS_CREATE_FAILED": {
-    "title": "無法建立歌單",
-    "message": "目前無法建立歌單，請再試一次。"
+    "title": "無法建立播放清單",
+    "message": "目前無法建立播放清單，請再試一次。"
   },
   "PLAYLISTS_DELETE_FAILED": {
-    "title": "歌單無法刪除",
-    "message": "這個歌單無法刪除，請再試一次。"
+    "title": "播放清單無法刪除",
+    "message": "這個播放清單無法刪除，請再試一次。"
   },
   "PLAYLISTS_LIST_FAILED": {
-    "title": "無法讀取歌單",
-    "message": "目前無法讀取歌單，請稍後再試。"
+    "title": "無法讀取播放清單",
+    "message": "目前無法讀取播放清單，請稍後再試。"
   },
   "PLAYLISTS_RENAME_FAILED": {
-    "title": "歌單無法重新命名",
-    "message": "這個歌單無法重新命名，請再試一次。"
+    "title": "播放清單無法重新命名",
+    "message": "這個播放清單無法重新命名，請再試一次。"
   },
   "PLAYLISTS_REORDER_FAILED": {
-    "title": "歌單順序無法更新",
-    "message": "歌單順序無法更新，請再試一次。"
+    "title": "播放清單順序無法更新",
+    "message": "播放清單順序無法更新，請再試一次。"
   },
   "PLAYLISTS_SCOPE_CHANGED": {
     "title": "曲庫位置已變更",
     "message": "曲庫位置已變更，請重新載入後再操作。"
   },
   "PLAYLISTS_SET_DESCRIPTION_FAILED": {
-    "title": "歌單說明無法更新",
-    "message": "這個歌單的說明無法更新，請再試一次。"
+    "title": "播放清單說明無法更新",
+    "message": "這個播放清單的說明無法更新，請再試一次。"
   },
   "PLAYLISTS_SET_KIND_FAILED": {
-    "title": "歌單類型無法更新",
-    "message": "這個歌單的類型無法更新，請再試一次。"
+    "title": "播放清單類型無法更新",
+    "message": "這個播放清單的類型無法更新，請再試一次。"
   },
   "PLAYLISTS_SET_TRACKS_FAILED": {
-    "title": "歌單曲目無法更新",
-    "message": "這個歌單的曲目無法更新，請再試一次。"
+    "title": "播放清單曲目無法更新",
+    "message": "這個播放清單的曲目無法更新，請再試一次。"
   },
   "PLAYLISTS_UPSERT_ALBUM_FAILED": {
     "title": "專輯無法同步",
