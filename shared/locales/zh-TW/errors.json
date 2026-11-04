@@ -155,6 +155,15 @@
     "title": "FFmpeg 來源未更新",
     "message": "請再試一次。"
   },
+  "IMPORT_DOWNLOAD_CANCELLED": {
+    "title": "匯入已停止",
+    "message": "這首曲目已停止下載。"
+  },
+  "IMPORT_LIBRARY_CHANGED": {
+    "title": "曲庫位置已變更",
+    "message": "請重新開始下載。",
+    "waitMessage": "請等候原下載完成後再試。"
+  },
   "LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED": {
     "title": "封面無法預覽",
     "message": "這張圖片無法預覽，請選擇其他圖片。"
@@ -214,6 +223,10 @@
   "OUTPUT_WINDOW_OPEN_FAILED": {
     "title": "輸出視窗未開啟",
     "message": "請確認輸出服務已啟動，再重試開啟視窗。"
+  },
+  "PROVIDER_SEARCH_FAILED": {
+    "title": "YT Music／YouTube 搜尋未完成",
+    "message": "目前無法完成 YT Music／YouTube 搜尋，請稍後再試。"
   },
   "RELEASE_METADATA_REFRESH_FAILED": {
     "title": "發行資訊未更新",

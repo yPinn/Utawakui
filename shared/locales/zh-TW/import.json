@@ -211,5 +211,110 @@
       "label": "下載失敗",
       "hint": "請稍後重試；若持續失敗，可改用上方的「本機音訊」匯入。"
     }
+  },
+  "dock": {
+    "playlist": "播放清單",
+    "collectionMeta": "{kind} · {count} 首",
+    "thisSong": "這首歌曲",
+    "stopNamed": "停止下載 {title}",
+    "downloadNamed": "下載 {title}",
+    "retryNamed": "重試 {title}",
+    "reviewNamed": "檢視 {title}",
+    "localAudio": "本機音訊",
+    "chooseFiles": "選擇音訊檔",
+    "needsConversion": "需要轉換格式",
+    "convertAndImport": "轉成 FLAC 並匯入",
+    "localFailed": "本機匯入未完成",
+    "retry": "重試",
+    "skippedFiles": "略過的本機檔案",
+    "localResults": "本機匯入結果",
+    "external": "外部來源",
+    "moreOnYtMusic": "到 YT Music 尋找更多結果",
+    "externalFailed": "外部來源操作未完成",
+    "candidates": "可下載的音源",
+    "pendingList": "待確認的匯入清單"
+  },
+  "monitor": {
+    "single": "單曲",
+    "meta": "{kind} · {phase}",
+    "jobNamed": "匯入工作：{title}",
+    "reviewNamed": "檢視匯入工作：{title}",
+    "stopNamed": "停止匯入 {title}",
+    "retryNamed": "重試匯入 {title}",
+    "done": "匯入完成",
+    "clearNamed": "清除匯入記錄 {title}",
+    "progressLabel": "下載件數",
+    "processed": "已處理 {processed}／{total} 首",
+    "active": "下載中 {count}",
+    "pending": "等待 {count}",
+    "failed": "失敗 {count}",
+    "completed": "完成 {count}",
+    "cancelled": "已停止 {count}",
+    "notSaved": "清單尚未儲存",
+    "cancelFailed": "停止下載未完成，工作仍在執行。請再試一次。"
+  },
+  "collection": {
+    "sectionHeading": "{label} · {count} 首",
+    "sections": {
+      "active": "處理中",
+      "next": "接下來",
+      "failed": "未完成",
+      "done": "已完成",
+      "cancelled": "已停止",
+      "local": "已在曲庫",
+      "missing": "待下載"
+    },
+    "missingEmpty": "沒有待下載的曲目",
+    "localEmpty": "沒有已在曲庫的曲目",
+    "downloadIncomplete": "下載未完成",
+    "failureDetail": "{label}｜{hint}",
+    "retryFailed": "重試未完成曲目",
+    "stopNamed": "停止下載 {title}",
+    "stopped": "已停止",
+    "deselectAll": "取消全選",
+    "selectAllMissing": "全選待下載曲目",
+    "selectNamed": "選取 {title}",
+    "listLabel": "匯入曲目",
+    "reviewLabel": "匯入曲目確認",
+    "backToSelection": "返回選取曲目",
+    "viewProgress": "檢視下載進度"
+  },
+  "review": {
+    "titles": {
+      "song": "匯入歌曲",
+      "single": "匯入單曲",
+      "ep": "匯入迷你專輯",
+      "album": "匯入專輯",
+      "work": "匯入作品",
+      "playlist": "匯入播放清單"
+    },
+    "finalizing": "正在整理清單",
+    "stopBatch": "停止這批",
+    "retryUnfinished": "重試未完成工作",
+    "adding": "加入中"
+  },
+  "batchReview": {
+    "progress": "{phase} · 已處理 {processed}／{total} 首",
+    "listLabel": "已確認的匯入曲目",
+    "cancelFailed": "停止下載未完成，工作仍在執行。請再試一次。",
+    "saveFailed": "曲目已下載，但清單未儲存。請再試一次；已完成的歌曲不會再次下載。",
+    "providerNotReady": "外部來源尚未準備完成，請到設定完成準備後重試。"
+  },
+  "trackStatus": {
+    "done": "完成",
+    "downloaded": "已存在",
+    "downloading": "下載中",
+    "error": "失敗",
+    "pending": "待下載",
+    "local": "已在曲庫",
+    "failed": "下載失敗"
+  },
+  "sourceField": {
+    "label": "歌曲名稱或外部來源連結",
+    "placeholder": "搜尋歌名、歌手或貼上連結",
+    "search": "搜尋外部來源",
+    "clipboardDetected": "偵測到剪貼簿有支援的來源連結",
+    "skip": "略過",
+    "paste": "貼上連結"
   }
 }

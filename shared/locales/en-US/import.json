@@ -211,5 +211,110 @@
       "label": "Download failed",
       "hint": "Retry later; if it keeps failing, import with Local audio above."
     }
+  },
+  "dock": {
+    "playlist": "Playlist",
+    "collectionMeta": "{kind} · {count} track | {kind} · {count} tracks",
+    "thisSong": "this song",
+    "stopNamed": "Stop downloading {title}",
+    "downloadNamed": "Download {title}",
+    "retryNamed": "Retry {title}",
+    "reviewNamed": "Review {title}",
+    "localAudio": "Local audio",
+    "chooseFiles": "Choose audio files",
+    "needsConversion": "Format conversion needed",
+    "convertAndImport": "Convert to FLAC and import",
+    "localFailed": "Local import not completed",
+    "retry": "Retry",
+    "skippedFiles": "Skipped local files",
+    "localResults": "Local import results",
+    "external": "External sources",
+    "moreOnYtMusic": "Find more results on YT Music",
+    "externalFailed": "External source action not completed",
+    "candidates": "Downloadable sources",
+    "pendingList": "Import list to review"
+  },
+  "monitor": {
+    "single": "Single",
+    "meta": "{kind} · {phase}",
+    "jobNamed": "Import job: {title}",
+    "reviewNamed": "Review import job: {title}",
+    "stopNamed": "Stop import {title}",
+    "retryNamed": "Retry import {title}",
+    "done": "Import finished",
+    "clearNamed": "Clear import record {title}",
+    "progressLabel": "Downloads",
+    "processed": "{processed} of {total} processed",
+    "active": "Downloading {count}",
+    "pending": "Waiting {count}",
+    "failed": "Failed {count}",
+    "completed": "Done {count}",
+    "cancelled": "Stopped {count}",
+    "notSaved": "List not saved yet",
+    "cancelFailed": "Stopping the download didn't finish; the job is still running. Try again."
+  },
+  "collection": {
+    "sectionHeading": "{label} · {count} track | {label} · {count} tracks",
+    "sections": {
+      "active": "In progress",
+      "next": "Up next",
+      "failed": "Not completed",
+      "done": "Done",
+      "cancelled": "Stopped",
+      "local": "Already in library",
+      "missing": "To download"
+    },
+    "missingEmpty": "No tracks to download",
+    "localEmpty": "No tracks already in the library",
+    "downloadIncomplete": "Download not completed",
+    "failureDetail": "{label} | {hint}",
+    "retryFailed": "Retry unfinished tracks",
+    "stopNamed": "Stop downloading {title}",
+    "stopped": "Stopped",
+    "deselectAll": "Deselect all",
+    "selectAllMissing": "Select all tracks to download",
+    "selectNamed": "Select {title}",
+    "listLabel": "Import tracks",
+    "reviewLabel": "Import track review",
+    "backToSelection": "Back to track selection",
+    "viewProgress": "View download progress"
+  },
+  "review": {
+    "titles": {
+      "song": "Import song",
+      "single": "Import single",
+      "ep": "Import EP",
+      "album": "Import album",
+      "work": "Import release",
+      "playlist": "Import playlist"
+    },
+    "finalizing": "Finishing the list",
+    "stopBatch": "Stop this batch",
+    "retryUnfinished": "Retry unfinished work",
+    "adding": "Adding"
+  },
+  "batchReview": {
+    "progress": "{phase} · {processed} of {total} processed",
+    "listLabel": "Confirmed import tracks",
+    "cancelFailed": "Stopping the download didn't finish; the job is still running. Try again.",
+    "saveFailed": "The tracks were downloaded, but the list wasn't saved. Try again; finished songs won't download again.",
+    "providerNotReady": "External sources aren't ready. Finish preparing them in Settings, then retry."
+  },
+  "trackStatus": {
+    "done": "Done",
+    "downloaded": "Already added",
+    "downloading": "Downloading",
+    "error": "Failed",
+    "pending": "To download",
+    "local": "Already in library",
+    "failed": "Download failed"
+  },
+  "sourceField": {
+    "label": "Song name or external source link",
+    "placeholder": "Search a song or artist, or paste a link",
+    "search": "Search external sources",
+    "clipboardDetected": "A supported source link is on the clipboard",
+    "skip": "Skip",
+    "paste": "Paste link"
   }
 }

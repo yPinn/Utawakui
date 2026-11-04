@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function readSource(path) {
-  return readFileSync(new URL(path, import.meta.url), 'utf8');
+  return readCatalogSource(new URL(path, import.meta.url));
 }
 
 const queueSource = readSource('../queue/QueuePanel.vue');

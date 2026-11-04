@@ -11,6 +11,7 @@ import {
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -33,21 +34,29 @@ const STATUS_PRESENTATION = Object.freeze({
   pending: Object.freeze({
     icon: ArrowDownToLine,
     tone: 'muted',
-    label: '待下載',
+    label: t('import.trackStatus.pending'),
   }),
   downloading: Object.freeze({
     icon: Loader2,
     tone: 'info',
-    label: '下載中',
+    label: t('import.trackStatus.downloading'),
     spinning: true,
   }),
-  done: Object.freeze({ icon: Check, tone: 'success', label: '完成' }),
+  done: Object.freeze({
+    icon: Check,
+    tone: 'success',
+    label: t('import.trackStatus.done'),
+  }),
   downloaded: Object.freeze({
     icon: Library,
     tone: 'muted',
-    label: '已在曲庫',
+    label: t('import.trackStatus.local'),
   }),
-  error: Object.freeze({ icon: CircleX, tone: 'danger', label: '下載失敗' }),
+  error: Object.freeze({
+    icon: CircleX,
+    tone: 'danger',
+    label: t('import.trackStatus.failed'),
+  }),
 });
 
 const statusPresentation = computed(

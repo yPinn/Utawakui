@@ -155,6 +155,15 @@
     "title": "FFmpeg source not updated",
     "message": "Try again."
   },
+  "IMPORT_DOWNLOAD_CANCELLED": {
+    "title": "Import stopped",
+    "message": "This track stopped downloading."
+  },
+  "IMPORT_LIBRARY_CHANGED": {
+    "title": "Library location changed",
+    "message": "Start the download again.",
+    "waitMessage": "Wait for the earlier download to finish, then try again."
+  },
   "LIBRARY_CHOOSE_ARTWORK_DRAFT_FAILED": {
     "title": "Artwork can't be previewed",
     "message": "This image can't be previewed. Choose another image."
@@ -214,6 +223,10 @@
   "OUTPUT_WINDOW_OPEN_FAILED": {
     "title": "Output window not opened",
     "message": "Make sure the output service is running, then try opening the window again."
+  },
+  "PROVIDER_SEARCH_FAILED": {
+    "title": "YT Music / YouTube search not completed",
+    "message": "The YT Music / YouTube search can't finish right now. Try again later."
   },
   "RELEASE_METADATA_REFRESH_FAILED": {
     "title": "Release information not updated",

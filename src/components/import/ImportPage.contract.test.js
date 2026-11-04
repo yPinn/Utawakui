@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const readSource = (path) =>
-  readFileSync(new URL(path, import.meta.url), 'utf8');
+const readSource = (path) => readCatalogSource(new URL(path, import.meta.url));
 
 describe('Import preparation composition contract', () => {
   it('mounts Import inside the retained Preparation Dock instead of a Library page', () => {
@@ -55,7 +54,7 @@ describe('Import preparation composition contract', () => {
     expect(dock).toContain('reviewOpen.value = false');
     expect(dock).toContain("candidate.status || 'pending'");
     expect(dock).toContain("status === 'downloading'");
-    expect(dock).toContain('label: `停止下載');
+    expect(dock).toContain("label: t('import.dock.stopNamed', {");
     expect(dock).toContain(
       ':action-disabled="candidateActionDisabled(entry.source)"',
     );

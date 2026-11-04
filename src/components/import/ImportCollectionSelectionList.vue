@@ -12,6 +12,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import ImportCollectionTrackStatus from './ImportCollectionTrackStatus.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
@@ -41,15 +42,15 @@ const sections = computed(() => {
   return [
     {
       id: 'missing',
-      label: '待下載',
+      label: t('import.collection.sections.missing'),
       entries: missing,
-      empty: '沒有待下載的曲目',
+      empty: t('import.collection.missingEmpty'),
     },
     {
       id: 'local',
-      label: '已在曲庫',
+      label: t('import.collection.sections.local'),
       entries: local,
-      empty: '沒有已在曲庫的曲目',
+      empty: t('import.collection.localEmpty'),
     },
   ];
 });
@@ -64,12 +65,24 @@ function checkboxId(trackId) {
     <AppRightDockSection
       v-for="section in sections"
       :key="section.id"
-      :heading="`${section.label} · ${section.entries.length} 首`"
+      :heading="
+        t(
+          'import.collection.sectionHeading',
+          { label: section.label, count: section.entries.length },
+          section.entries.length,
+        )
+      "
     >
       <template v-if="section.id === 'missing'" #trailing>
         <UiIconButton
           :icon="SquareCheckBig"
-          :label="allSelected ? '取消全選' : '全選待下載曲目'"
+          :label="
+            t(
+              allSelected
+                ? 'import.collection.deselectAll'
+                : 'import.collection.selectAllMissing',
+            )
+          "
           :active="allSelected"
           :aria-pressed="allSelected"
           :disabled="busy || section.entries.length === 0"
@@ -94,7 +107,9 @@ function checkboxId(trackId) {
             <UiCheckbox
               :id="checkboxId(entry.source.id)"
               :model-value="entry.source.selected"
-              :label="`選取 ${entry.track.title}`"
+              :label="
+                t('import.collection.selectNamed', { title: entry.track.title })
+              "
               label-hidden
               :disabled="busy"
               @update:model-value="emit('selectTrack', entry.source.id, $event)"

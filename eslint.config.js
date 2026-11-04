@@ -51,6 +51,8 @@ const I18N_MIGRATED = [
   'src/composables/{useLocalImport,useImportSession}.js',
   'src/composables/import/{useImportExecution,useImportSourceResolution,useImportResultNotification}.js',
   'src/utils/{downloadFailureDisplay,importCandidateDisplay,importBatch,importPlaylist}.js',
+  'src/components/import/{ImportDockContent,ImportActivityMonitor,ImportCollectionExecutionList,ImportCollectionSelectionList,ImportReviewModal,ImportSourceField,ImportBatchReview,ImportCollectionTrackStatus,ImportSourceRow,ImportCollectionReview}.vue',
+  'electron/main/importHandlers.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -18,6 +18,7 @@ import {
   downloadFailureLabel,
 } from '../../utils/downloadFailureDisplay.js';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -58,11 +59,12 @@ const statusLabel = computed(() => {
   if (props.track.status === 'error' && props.track.errorCode) {
     return `${downloadFailureLabel(props.track.errorCode)}｜${downloadFailureHint(props.track.errorCode)}`;
   }
-  if (status.value === 'done') return '完成';
-  if (status.value === 'downloaded') return '已存在';
-  if (status.value === 'downloading') return '下載中';
-  if (status.value === 'error') return '失敗';
-  return '待下載';
+  if (status.value === 'done') return t('import.trackStatus.done');
+  if (status.value === 'downloaded') return t('import.trackStatus.downloaded');
+  if (status.value === 'downloading')
+    return t('import.trackStatus.downloading');
+  if (status.value === 'error') return t('import.trackStatus.error');
+  return t('import.trackStatus.pending');
 });
 </script>
 

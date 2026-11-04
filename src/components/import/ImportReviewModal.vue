@@ -1,6 +1,5 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
-import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import { Download, RefreshCw, Square } from '../../icons/index.js';
 import { useImportSession } from '../../composables/useImportSession.js';
 import { isImportBatchRunning } from '../../utils/importBatch.js';
@@ -8,6 +7,7 @@ import ImportCollectionReview from './ImportCollectionReview.vue';
 import ImportBatchReview from './ImportBatchReview.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -23,21 +23,25 @@ const {
   retryBatch,
 } = useImportSession();
 const submitting = shallowRef(false);
+const albumTitleKey = computed(() => {
+  const type = props.batch?.releaseType || state.collectionReleaseType;
+  return ['single', 'ep', 'album'].includes(type) ? type : 'work';
+});
 const modalTitle = computed(() =>
   props.batch?.kind === 'single'
-    ? '匯入歌曲'
+    ? t('import.review.titles.song')
     : (props.batch?.collectionKind || state.collectionKind) === 'album'
-      ? `匯入${['single', 'ep', 'album'].includes(props.batch?.releaseType || state.collectionReleaseType) ? releaseTypeLabel(props.batch?.releaseType || state.collectionReleaseType) : '作品'}`
-      : '匯入播放清單',
+      ? t(`import.review.titles.${albumTitleKey.value}`)
+      : t('import.review.titles.playlist'),
 );
 const running = computed(() => isImportBatchRunning(props.batch));
 const actionLabel = computed(() =>
   props.batch
     ? props.batch.phase === 'finalizing'
-      ? '正在整理清單'
+      ? t('import.review.finalizing')
       : running.value
-        ? '停止這批'
-        : '重試未完成工作'
+        ? t('import.review.stopBatch')
+        : t('import.review.retryUnfinished')
     : confirmImportLabel.value,
 );
 const actionIcon = computed(() =>
@@ -85,7 +89,7 @@ async function confirm() {
         variant="accent"
         :disabled="disabled"
         :loading="submitting"
-        loading-label="加入中"
+        :loading-label="t('import.review.adding')"
         @click="confirm"
         >{{ actionLabel }}</UiButton
       >

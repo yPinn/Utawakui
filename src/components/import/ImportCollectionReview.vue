@@ -11,6 +11,7 @@ import ImportCollectionExecutionList from './ImportCollectionExecutionList.vue';
 import ImportCollectionSelectionList from './ImportCollectionSelectionList.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const {
   state,
@@ -57,20 +58,26 @@ watch(
 <template>
   <PreparationReviewLayout
     ref="reviewLayout"
-    :source="state.playlistTitle || '未命名清單'"
+    :source="state.playlistTitle || t('import.execution.untitledList')"
     :count="playlistStats.total"
     :entity-kind="state.collectionKind === 'album' ? 'album' : 'playlist'"
     :release-type="state.collectionReleaseType || 'unknown'"
     :release-date="state.collectionReleaseDate"
     :cover-url="state.collectionThumbnailUrl || ''"
     :tracks="state.playlistTracks || []"
-    list-label="匯入曲目"
-    aria-label="匯入曲目確認"
+    :list-label="t('import.collection.listLabel')"
+    :aria-label="t('import.collection.reviewLabel')"
   >
     <template v-if="hasExecution && !state.isImporting" #actions>
       <UiIconButton
         :icon="executionMode ? ArrowLeft : ListChecks"
-        :label="executionMode ? '返回選取曲目' : '檢視下載進度'"
+        :label="
+          t(
+            executionMode
+              ? 'import.collection.backToSelection'
+              : 'import.collection.viewProgress',
+          )
+        "
         @click="selectionOpen = !selectionOpen"
       />
     </template>

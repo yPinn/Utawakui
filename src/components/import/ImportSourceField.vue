@@ -7,6 +7,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiStack from '../ui/UiStack.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -41,15 +42,15 @@ function resolve() {
       <UiSearchBox
         ref="field"
         :model-value="modelValue"
-        label="歌曲名稱或外部來源連結"
-        placeholder="搜尋歌名、歌手或貼上連結"
+        :label="t('import.sourceField.label')"
+        :placeholder="t('import.sourceField.placeholder')"
         :disabled="busy"
         @focus="check"
         @update:model-value="emit('update:modelValue', $event)"
       />
       <UiIconButton
         :icon="Search"
-        label="搜尋外部來源"
+        :label="t('import.sourceField.search')"
         variant="accent"
         :disabled="!modelValue.trim() || busy"
         :aria-busy="resolving"
@@ -57,10 +58,14 @@ function resolve() {
       />
     </form>
     <div v-if="url" class="import-source-field__suggestion">
-      <UiHint role="status">偵測到剪貼簿有支援的來源連結</UiHint>
+      <UiHint role="status">{{
+        t('import.sourceField.clipboardDetected')
+      }}</UiHint>
       <UiStack :gap="2" justify="end">
-        <UiButton @click="skip">略過</UiButton>
-        <UiButton variant="accent" @click="paste">貼上連結</UiButton>
+        <UiButton @click="skip">{{ t('import.sourceField.skip') }}</UiButton>
+        <UiButton variant="accent" @click="paste">{{
+          t('import.sourceField.paste')
+        }}</UiButton>
       </UiStack>
     </div>
   </div>

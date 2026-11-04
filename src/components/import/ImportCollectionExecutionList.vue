@@ -15,6 +15,7 @@ import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import ImportCollectionTrackStatus from './ImportCollectionTrackStatus.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
@@ -39,48 +40,51 @@ const sections = computed(() =>
   [
     {
       id: 'active',
-      label: '處理中',
+      label: t('import.collection.sections.active'),
       tracks: selectedTracks.value.filter(
         (track) => track.status === 'downloading',
       ),
     },
     {
       id: 'pending',
-      label: '接下來',
+      label: t('import.collection.sections.next'),
       tracks: selectedTracks.value.filter(
         (track) => !track.alreadyDownloaded && track.status === 'pending',
       ),
     },
     {
       id: 'failed',
-      label: '未完成',
+      label: t('import.collection.sections.failed'),
       tracks: selectedTracks.value.filter((track) => track.status === 'error'),
     },
     {
       id: 'completed',
-      label: '已完成',
+      label: t('import.collection.sections.done'),
       tracks: selectedTracks.value.filter(
         (track) => !track.alreadyDownloaded && track.status === 'done',
       ),
     },
     {
       id: 'cancelled',
-      label: '已停止',
+      label: t('import.collection.sections.cancelled'),
       tracks: selectedTracks.value.filter(
         (track) => track.status === 'cancelled',
       ),
     },
     {
       id: 'local',
-      label: '已在曲庫',
+      label: t('import.collection.sections.local'),
       tracks: selectedTracks.value.filter((track) => track.alreadyDownloaded),
     },
   ].filter((section) => section.tracks.length > 0),
 );
 
 function failureLabel(track) {
-  if (!track.errorCode) return '下載未完成';
-  return `${downloadFailureLabel(track.errorCode)}｜${downloadFailureHint(track.errorCode)}`;
+  if (!track.errorCode) return t('import.collection.downloadIncomplete');
+  return t('import.collection.failureDetail', {
+    label: downloadFailureLabel(track.errorCode),
+    hint: downloadFailureHint(track.errorCode),
+  });
 }
 </script>
 
@@ -90,12 +94,18 @@ function failureLabel(track) {
       v-for="section in sections"
       :key="section.id"
       class="import-execution-list__section"
-      :heading="`${section.label} · ${section.tracks.length} 首`"
+      :heading="
+        t(
+          'import.collection.sectionHeading',
+          { label: section.label, count: section.tracks.length },
+          section.tracks.length,
+        )
+      "
     >
       <template v-if="section.id === 'failed'" #trailing>
         <UiIconButton
           :icon="RefreshCw"
-          label="重試未完成曲目"
+          :label="t('import.collection.retryFailed')"
           :disabled="retryDisabled"
           @click="emit('retryFailed')"
         />
@@ -116,7 +126,11 @@ function failureLabel(track) {
           <template v-if="section.id === 'active'" #trail>
             <UiIconButton
               :icon="Square"
-              :label="`停止下載 ${executionTrack(source).title}`"
+              :label="
+                t('import.collection.stopNamed', {
+                  title: executionTrack(source).title,
+                })
+              "
               @click="emit('cancel', source.id)"
             />
           </template>
@@ -128,7 +142,11 @@ function failureLabel(track) {
             />
           </template>
           <template v-else-if="section.id === 'cancelled'" #trail>
-            <UiStatusIcon :icon="Square" tone="muted" label="已停止" />
+            <UiStatusIcon
+              :icon="Square"
+              tone="muted"
+              :label="t('import.collection.sections.cancelled')"
+            />
           </template>
           <template
             v-else-if="['completed', 'local'].includes(section.id)"

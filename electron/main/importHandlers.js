@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const {
   downloadAudio,
   fetchMetadata,
@@ -58,8 +59,6 @@ async function classifyingFailures(run, { recordDiagnostic } = {}) {
       throw createAppError({
         code: 'IMPORT_DOWNLOAD_CANCELLED',
         severity: 'info',
-        title: '匯入已停止',
-        message: '這首曲目已停止下載。',
       });
     if (
       typeof err?.publicMessage === 'string' &&
@@ -139,8 +138,6 @@ async function classifyingProviderSearchFailures(run, { recordDiagnostic }) {
     throw createAppError({
       code: 'PROVIDER_SEARCH_FAILED',
       severity: 'error',
-      title: 'YT Music／YouTube 搜尋未完成',
-      message: '目前無法完成 YT Music／YouTube 搜尋，請稍後再試。',
       context: {
         reason,
         retryable,
@@ -296,8 +293,6 @@ function registerImportHandlers({
       )
         throw createAppError({
           code: 'IMPORT_LIBRARY_CHANGED',
-          title: '曲庫位置已變更',
-          message: '請重新開始下載。',
         });
     };
     const existing = providerDownloadTasks.get(videoId);
@@ -305,8 +300,8 @@ function registerImportHandlers({
       if (existing.dir !== destDir || existing.epoch !== releaseScope?.epoch)
         throw createAppError({
           code: 'IMPORT_LIBRARY_CHANGED',
-          title: '曲庫位置已變更',
-          message: '請等候原下載完成後再試。',
+          title: t('errors.IMPORT_LIBRARY_CHANGED.title'),
+          message: t('errors.IMPORT_LIBRARY_CHANGED.waitMessage'),
         });
       return existing.promise;
     }
@@ -633,8 +628,6 @@ function registerImportHandlers({
           throw createAppError({
             code: 'IMPORT_DOWNLOAD_CANCELLED',
             severity: 'info',
-            title: '匯入已停止',
-            message: '這首曲目已停止下載。',
           });
         }
       },

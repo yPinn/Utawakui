@@ -16,6 +16,7 @@ import UiProgress from '../ui/UiProgress.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({ batch: { type: Object, required: true } });
 const emit = defineEmits(['review', 'cancel', 'retry', 'dismiss']);
@@ -38,20 +39,53 @@ const track = computed(() => {
   const row = {
     id: props.batch.id,
     title: props.batch.title,
-    artist: `${props.batch.kind === 'single' ? '單曲' : props.batch.collectionKind === 'album' ? releaseMetadataLabel(props.batch.releaseType, releaseYearFromDate(props.batch.releaseDate)) : '播放清單'} · ${progress.value.phaseLabel}`,
+    artist: t('import.monitor.meta', {
+      kind:
+        props.batch.kind === 'single'
+          ? t('import.monitor.single')
+          : props.batch.collectionKind === 'album'
+            ? releaseMetadataLabel(
+                props.batch.releaseType,
+                releaseYearFromDate(props.batch.releaseDate),
+              )
+            : t('import.dock.playlist'),
+      phase: progress.value.phaseLabel,
+    }),
     thumbnailUrl: props.batch.thumbnailUrl,
   };
   return props.batch.kind === 'single'
     ? trackArtwork({ ...row, id: props.batch.tracks[0]?.id || row.id })
     : collectionArtwork(row, props.batch.source);
 });
+const runningSummary = computed(() =>
+  [
+    t('import.monitor.active', { count: progress.value.active }),
+    t('import.monitor.pending', { count: progress.value.pending }),
+    progress.value.failed &&
+      t('import.monitor.failed', { count: progress.value.failed }),
+  ]
+    .filter(Boolean)
+    .join(' · '),
+);
+const doneSummary = computed(() =>
+  [
+    t('import.monitor.completed', { count: progress.value.completed }),
+    progress.value.failed &&
+      t('import.monitor.failed', { count: progress.value.failed }),
+    progress.value.cancelled &&
+      t('import.monitor.cancelled', { count: progress.value.cancelled }),
+    props.batch.saveError && t('import.monitor.notSaved'),
+  ]
+    .filter(Boolean)
+    .join(' · '),
+);
 </script>
 
 <template>
   <section
     v-if="visible"
     class="import-activity-monitor"
-    :aria-label="`匯入工作：${batch.title}`"
+    :aria-label="t('import.monitor.jobNamed', { title: batch.title })"
   >
     <ul class="import-activity-monitor__rows">
       <UiTrackRow
@@ -62,14 +96,14 @@ const track = computed(() => {
         overflow="ellipsis"
         thumb-loading="lazy"
         thumb-decoding="async"
-        :action-label="`檢視匯入工作：${batch.title}`"
+        :action-label="t('import.monitor.reviewNamed', { title: batch.title })"
         @row-click="emit('review', batch.id)"
       >
         <template #trail>
           <UiIconButton
             v-if="running && batch.phase !== 'finalizing'"
             :icon="Square"
-            :label="`停止匯入 ${batch.title}`"
+            :label="t('import.monitor.stopNamed', { title: batch.title })"
             :disabled="batch.cancelRequested"
             @click.stop="emit('cancel', batch.id)"
             @dblclick.stop
@@ -77,7 +111,7 @@ const track = computed(() => {
           <UiIconButton
             v-else-if="['failed', 'cancelled'].includes(batch.phase)"
             :icon="RefreshCw"
-            :label="`重試匯入 ${batch.title}`"
+            :label="t('import.monitor.retryNamed', { title: batch.title })"
             @click.stop="emit('retry', batch.id)"
             @dblclick.stop
           />
@@ -85,12 +119,12 @@ const track = computed(() => {
             v-else-if="batch.phase === 'completed'"
             :icon="Check"
             tone="success"
-            label="匯入完成"
+            :label="t('import.monitor.done')"
           />
           <UiIconButton
             v-if="!running"
             :icon="X"
-            :label="`清除匯入記錄 ${batch.title}`"
+            :label="t('import.monitor.clearNamed', { title: batch.title })"
             @click.stop="emit('dismiss', batch.id)"
             @dblclick.stop
           />
@@ -99,20 +133,20 @@ const track = computed(() => {
     </ul>
     <UiProgress
       v-if="running && progress.total > 0"
-      label="下載件數"
+      :label="t('import.monitor.progressLabel')"
       :value="progress.processed"
       :max="progress.total"
-      :value-text="`已處理 ${progress.processed}／${progress.total} 首`"
+      :value-text="
+        t('import.monitor.processed', {
+          processed: progress.processed,
+          total: progress.total,
+        })
+      "
     />
-    <UiHint v-if="running" role="status"
-      >下載中 {{ progress.active }} · 等待 {{ progress.pending
-      }}<template v-if="progress.failed">
-        · 失敗 {{ progress.failed }}</template
-      ></UiHint
-    >
-    <UiHint v-if="batch.cancelError" tone="warning" role="status"
-      >停止下載未完成，工作仍在執行。請再試一次。</UiHint
-    >
+    <UiHint v-if="running" role="status">{{ runningSummary }}</UiHint>
+    <UiHint v-if="batch.cancelError" tone="warning" role="status">{{
+      t('import.monitor.cancelFailed')
+    }}</UiHint>
     <UiHint
       v-if="
         !running && (progress.failed || progress.cancelled || batch.saveError)
@@ -120,11 +154,7 @@ const track = computed(() => {
       tone="warning"
       role="status"
     >
-      完成 {{ progress.completed
-      }}<template v-if="progress.failed"> · 失敗 {{ progress.failed }}</template
-      ><template v-if="progress.cancelled">
-        · 已停止 {{ progress.cancelled }}</template
-      ><template v-if="batch.saveError"> · 清單尚未儲存</template>
+      {{ doneSummary }}
     </UiHint>
   </section>
 </template>

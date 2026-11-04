@@ -26,6 +26,7 @@ import ImportSourceField from './ImportSourceField.vue';
 import ImportReviewModal from './ImportReviewModal.vue';
 import ImportSourceRow from './ImportSourceRow.vue';
 import ImportActivityMonitor from './ImportActivityMonitor.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -89,7 +90,10 @@ const candidateRows = computed(() => {
       source: candidate,
       track: {
         id: candidateId(candidate) || state.singleTrack?.id || state.input,
-        title: candidate.title || state.singleTrack?.title || '未命名歌曲',
+        title:
+          candidate.title ||
+          state.singleTrack?.title ||
+          t('import.execution.untitledSong'),
         artist: [candidate.artist || state.singleTrack?.artist, version]
           .filter(Boolean)
           .join(' · '),
@@ -104,8 +108,21 @@ const collectionSummary = computed(() =>
   collectionArtwork(
     {
       id: state.collectionSource?.id || 'import-collection',
-      title: state.playlistTitle || '未命名清單',
-      artist: `${state.collectionKind === 'album' ? releaseMetadataLabel(state.collectionReleaseType, releaseYearFromDate(state.collectionReleaseDate)) : '播放清單'} · ${playlistStats.value.total} 首`,
+      title: state.playlistTitle || t('import.execution.untitledList'),
+      artist: t(
+        'import.dock.collectionMeta',
+        {
+          kind:
+            state.collectionKind === 'album'
+              ? releaseMetadataLabel(
+                  state.collectionReleaseType,
+                  releaseYearFromDate(state.collectionReleaseDate),
+                )
+              : t('import.dock.playlist'),
+          count: playlistStats.value.total,
+        },
+        playlistStats.value.total,
+      ),
       thumbnailUrl: state.collectionThumbnailUrl || '',
     },
     state.collectionSource,
@@ -148,19 +165,25 @@ function actionForCandidate(candidate) {
   if (status === 'downloading') {
     return {
       icon: Square,
-      label: `停止下載 ${candidate.title || '這首歌曲'}`,
+      label: t('import.dock.stopNamed', {
+        title: candidate.title || t('import.dock.thisSong'),
+      }),
     };
   }
   if (status === 'pending') {
     return {
       icon: Download,
-      label: `下載 ${candidate.title || '這首歌曲'}`,
+      label: t('import.dock.downloadNamed', {
+        title: candidate.title || t('import.dock.thisSong'),
+      }),
     };
   }
   if (status === 'error') {
     return {
       icon: RefreshCw,
-      label: `重試 ${candidate.title || '這首歌曲'}`,
+      label: t('import.dock.retryNamed', {
+        title: candidate.title || t('import.dock.thisSong'),
+      }),
     };
   }
   return { icon: null, label: '' };
@@ -217,11 +240,11 @@ watch(
       @submitted="handleSubmitted"
     />
 
-    <AppRightDockSection heading="本機音訊">
+    <AppRightDockSection :heading="t('import.dock.localAudio')">
       <template #trailing>
         <UiIconButton
           :icon="FolderPlus"
-          label="選擇音訊檔"
+          :label="t('import.dock.chooseFiles')"
           :disabled="
             localImportState.isImporting || localImportState.isConverting
           "
@@ -235,9 +258,9 @@ watch(
       <UiNotice
         v-if="localImportState.conversionReview"
         tone="warning"
-        title="需要轉換格式"
+        :title="t('import.dock.needsConversion')"
         :message="conversionReviewMessage"
-        action-label="轉成 FLAC 並匯入"
+        :action-label="t('import.dock.convertAndImport')"
         :action-disabled="localImportState.isConverting"
         compact
         @action="convertPendingFiles"
@@ -246,9 +269,9 @@ watch(
       <UiNotice
         v-if="showLocalStatus && localImportState.statusType === 'error'"
         tone="danger"
-        title="本機匯入未完成"
+        :title="t('import.dock.localFailed')"
         :message="localImportState.message"
-        action-label="重試"
+        :action-label="t('import.dock.retry')"
         compact
         @action="importFiles"
       />
@@ -263,7 +286,7 @@ watch(
       <ul
         v-if="skippedResults?.length"
         class="import-dock-content__rows"
-        aria-label="略過的本機檔案"
+        :aria-label="t('import.dock.skippedFiles')"
       >
         <li v-for="(item, index) in skippedResults" :key="index">
           <UiHint>{{ item.filename }} · {{ item.message }}</UiHint>
@@ -273,7 +296,7 @@ watch(
       <ul
         v-if="localImportState.imported.length"
         class="import-dock-content__rows"
-        aria-label="本機匯入結果"
+        :aria-label="t('import.dock.localResults')"
       >
         <ImportSourceRow
           v-for="track in localImportState.imported"
@@ -284,11 +307,11 @@ watch(
       </ul>
     </AppRightDockSection>
 
-    <AppRightDockSection heading="外部來源" divided>
+    <AppRightDockSection :heading="t('import.dock.external')" divided>
       <template #trailing>
         <UiIconButton
           :icon="ExternalLink"
-          label="到 YT Music 尋找更多結果"
+          :label="t('import.dock.moreOnYtMusic')"
           :disabled="!state.input.trim() || sourceBusy"
           @click="openYoutubeMusicSearch"
         />
@@ -305,7 +328,7 @@ watch(
       <UiNotice
         v-if="showExternalStatus && state.statusType === 'error'"
         tone="danger"
-        title="外部來源操作未完成"
+        :title="t('import.dock.externalFailed')"
         :message="state.status"
         compact
       />
@@ -323,7 +346,7 @@ watch(
       <ul
         v-if="state.sourceKind === 'single' && candidateRows.length"
         class="import-dock-content__rows"
-        aria-label="可下載的音源"
+        :aria-label="t('import.dock.candidates')"
       >
         <ImportSourceRow
           v-for="entry in candidateRows"
@@ -340,13 +363,15 @@ watch(
       <ul
         v-else-if="state.sourceKind === 'playlist'"
         class="import-dock-content__rows"
-        aria-label="待確認的匯入清單"
+        :aria-label="t('import.dock.pendingList')"
       >
         <ImportSourceRow
           :track="collectionSummary"
           :status="collectionStatus"
           row-action
-          :action-label="`檢視 ${collectionSummary.title}`"
+          :action-label="
+            t('import.dock.reviewNamed', { title: collectionSummary.title })
+          "
           @action="openCollectionReview"
         />
       </ul>
