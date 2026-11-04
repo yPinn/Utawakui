@@ -492,16 +492,16 @@
     "message": "The lyrics audio assist action didn't finish."
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
-    "message": "The research action request is invalid."
+    "message": "The lyrics analysis request is invalid."
   },
   "LYRICS_RESEARCH_FAILED": {
-    "title": "Local lyrics research trial",
-    "message": "The research action didn't finish. Make sure FFmpeg is prepared, or download the research tools again to repair them. Your lyrics still work."
+    "title": "Lyrics timing analysis",
+    "message": "Analysis didn't finish. Make sure FFmpeg is prepared, or download the lyrics analysis tools again to repair them. Your lyrics still work."
   },
   "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
-    "message": "The analysis request is invalid."
+    "message": "The lyrics analysis request is invalid."
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
-    "message": "Analysis didn't finish. Your accompaniment and lyrics still work."
+    "message": "Lyrics analysis didn't finish. Your accompaniment and lyrics still work."
   }
 }

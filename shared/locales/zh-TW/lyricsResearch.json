@@ -50,7 +50,7 @@
     "linePlaceholder": "選擇有時間的歌詞句",
     "source": "歌詞來源：{source}。優先使用你選擇的來源，未選擇時依語言挑選。",
     "generate": "產生預覽",
-    "label": "獨立詞塊預覽",
+    "label": "分析結果預覽",
     "hint": "優先使用原有的逐字時間；分析結果不適用時，仍按整句顯示。此處僅供預覽，不會套用至歌詞或演出畫面。",
     "modeResearch": "分析分段",
     "playLine": "從本句播放",
@@ -62,11 +62,11 @@
       "blocked": "尚未開放準備",
       "missing": "未準備",
       "ready": "環境可用",
-      "unverified": "待驗證載入",
+      "unverified": "待檢查",
       "damaged": "需要修復",
       "removePending": "移除尚未完成",
       "preparing": "準備中",
-      "verifying": "驗證載入中",
+      "verifying": "檢查中",
       "removing": "移除中",
       "unknown": "無法讀取"
     },
@@ -75,9 +75,9 @@
     "repair": "修復",
     "remove": "移除",
     "itemTitle": "歌詞音訊輔助元件",
-    "description": "正式歌詞分析所需工具，與實驗功能分開管理。",
+    "description": "歌詞分析所需的工具，與實驗功能分開管理。",
     "busy": "環境操作中",
-    "verify": "驗證載入",
+    "verify": "檢查",
     "cancel": "取消操作",
     "removePendingHint": "上次移除未完成，請再次移除以清理剩餘元件。原有歌詞仍可使用。",
     "blockedNotice": "模型使用與分發資料確認中，暫不提供下載。",
@@ -96,16 +96,16 @@
     "enableProcessing": "請先啟用音訊處理功能。",
     "loading": "讀取中；尚未確認自動分析設定。",
     "errors": {
-      "read": "無法讀取詞塊分析狀態，請再試一次。",
+      "read": "無法讀取分析狀態，請再試一次。",
       "operation": "操作未完成，伴奏與原有歌詞仍可使用。"
     }
   },
   "research": {
     "errors": {
-      "status": "目前無法讀取研究環境，請重新啟動 App 或重試。",
+      "status": "目前無法讀取歌詞分析工具，請重新啟動應用程式或重試。",
       "inspect": "無法讀取這首歌的時間歌詞，請先確認曲庫、歌詞來源與曲長。",
-      "cancelled": "已取消研究操作，原有歌詞仍可使用。",
-      "failed": "研究操作未完成。請先準備 FFmpeg，或重新下載修復研究環境；原有歌詞仍可使用。",
+      "cancelled": "已取消分析，原有歌詞仍可使用。",
+      "failed": "分析未完成。請先準備 FFmpeg，或重新下載修復歌詞分析工具；原有歌詞仍可使用。",
       "cancel": "取消尚未完成，請重新讀取狀態。"
     }
   },
@@ -148,7 +148,7 @@
     "reused": "沿用既有分析，時間未變。",
     "missingLyrics": "疑似漏詞 {count} 句，套用前請確認。",
     "noUsable": "沒有可套用的分段時間，保留原有時間；可重新分析。",
-    "label": "目前來源的詞塊分析",
+    "label": "目前來源的歌詞分析",
     "currentSource": "目前來源：{source}",
     "progress": "{done} / {total} 段音訊",
     "mainLanguage": "主要語言",

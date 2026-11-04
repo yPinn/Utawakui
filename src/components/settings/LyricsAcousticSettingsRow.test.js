@@ -24,7 +24,8 @@ describe('optional lyrics environment settings', () => {
       canRepair: true,
       canRemove: true,
     });
-    expect(html).toContain('驗證載入');
+    expect(html).toContain('待檢查');
+    expect(html).toMatch(/>檢查(?:<!--[^>]*-->|<\/?span[^>]*>)*<\/button>/u);
     expect(html).toContain('歌詞音訊輔助選項');
     const busy = await render({
       status: 'preparing',
