@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import announcement from '../../shared/releaseAnnouncement.json';
+import { announcementSummary } from './useAppAnnouncement.js';
 
 afterEach(() => {
   vi.resetModules();
@@ -25,7 +26,7 @@ describe('useAppAnnouncement', () => {
 
     expect(appAnnouncement.state.open).toBe(true);
     expect(appAnnouncement.version).toBe(announcement.version);
-    expect(appAnnouncement.summary).toBe(announcement.summary);
+    expect(appAnnouncement.summary).toBe(announcement.summary['zh-TW']);
   });
 
   it('stays closed when the seen version already matches', async () => {
@@ -87,5 +88,12 @@ describe('useAppAnnouncement', () => {
     expect(appAnnouncement.state.open).toBe(false);
 
     expect(() => appAnnouncement.dismiss()).not.toThrow();
+  });
+
+  it('picks the summary for the UI language', () => {
+    expect(announcementSummary('en-US')).toBe(announcement.summary['en-US']);
+    expect(announcementSummary('en-XA')).toBe(announcement.summary['en-US']);
+    expect(announcementSummary('zh-TW')).toBe(announcement.summary['zh-TW']);
+    expect(announcementSummary('fr-FR')).toBe(announcement.summary['zh-TW']);
   });
 });

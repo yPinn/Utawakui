@@ -26,7 +26,7 @@ describe('AppAnnouncementModal', () => {
 
     expect(html).toContain('本次更新');
     expect(html).toContain(announcement.version);
-    expect(html).toContain(announcement.summary);
+    expect(html).toContain(announcement.summary['zh-TW']);
     expect(html).toContain('ui-modal--notice');
   });
 });

@@ -1,4 +1,7 @@
 {
   "version": "0.5.2",
-  "summary": "本次更新加入練唱與對時工具：可在歌詞頁反覆練習指定段落、用原曲波形調整每句時間，並為每首歌保存三組演唱設定；同時新增 App 內快捷鍵，BGM 也會優先播放伴奏。"
+  "summary": {
+    "zh-TW": "本次更新加入練唱與對時工具：可在歌詞頁反覆練習指定段落、用原曲波形調整每句時間，並為每首歌保存三組演唱設定；同時新增 App 內快捷鍵，BGM 也會優先播放伴奏。",
+    "en-US": "This update adds practice and timing tools: loop a chosen section from the lyrics page, adjust each line's timing against the original audio waveform, and save three performance setting sets per song. It also adds in-app keyboard shortcuts, and BGM now prefers the accompaniment."
+  }
 }

@@ -1,5 +1,17 @@
 import { reactive, readonly } from 'vue';
 import announcement from '../../shared/releaseAnnouncement.json';
+import uiLocaleValues from '../../shared/uiLocaleValues.json';
+import { PSEUDO_LOCALE } from '../../shared/pseudoLocale.mjs';
+import { UI_LOCALE } from '../utils/uiLocale.js';
+
+// The summary follows the UI language; the pseudo locale reads the English one.
+export function announcementSummary(locale = UI_LOCALE) {
+  const key = locale === PSEUDO_LOCALE ? 'en-US' : locale;
+  return (
+    announcement.summary[key] ??
+    announcement.summary[uiLocaleValues.fallbackLocale]
+  );
+}
 
 // Module-level singleton (same shape as useFeedbackReport.js) so the
 // root-level modal and the Settings "重看公告" row share one instance —
@@ -50,7 +62,7 @@ export function useAppAnnouncement() {
   return {
     state: readonly(state),
     version: announcement.version,
-    summary: announcement.summary,
+    summary: announcementSummary(),
     initialize,
     dismiss,
     reopen,

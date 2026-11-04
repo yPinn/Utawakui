@@ -10,15 +10,22 @@ describe('release announcement', () => {
     expect(announcement.version).toBe(packageJson.version);
   });
 
-  it('keeps the summary a short, bounded plain-text sentence', () => {
-    expect(typeof announcement.summary).toBe('string');
-    expect(announcement.summary.trim().length).toBeGreaterThan(0);
+  it('keeps each summary a short, bounded plain-text paragraph', () => {
+    expect(Object.keys(announcement.summary)).toEqual(['zh-TW', 'en-US']);
     // One or two sentences, matching release-notes-template.md's guidance —
     // never a rendered list or markdown, just a short line for the modal.
-    expect(announcement.summary.length).toBeLessThanOrEqual(120);
+    for (const [locale, limit] of [
+      ['zh-TW', 120],
+      ['en-US', 320],
+    ]) {
+      const summary = announcement.summary[locale];
+      expect(typeof summary).toBe('string');
+      expect(summary.trim().length).toBeGreaterThan(0);
+      expect(summary.length).toBeLessThanOrEqual(limit);
+    }
   });
 
-  it('uses the Chinese release-note introduction as the bundled summary', () => {
+  it('uses the release-note introductions as the bundled summaries', () => {
     const releaseNotes = fs.readFileSync(
       new URL(`../docs/releases/v${announcement.version}.md`, import.meta.url),
       'utf8',
@@ -31,7 +38,17 @@ describe('release announcement', () => {
     )?.[1];
 
     expect(introduction?.replace(/\s+/gu, ' ').trim()).toBe(
-      announcement.summary,
+      announcement.summary['zh-TW'],
+    );
+
+    const englishIntroduction = releaseNotes.match(
+      new RegExp(
+        `^## Utawakui v${versionPattern} Public Test\\r?\\n\\r?\\n([\\s\\S]*?)\\r?\\n\\r?\\n## `,
+        'mu',
+      ),
+    )?.[1];
+    expect(englishIntroduction?.replace(/\s+/gu, ' ').trim()).toBe(
+      announcement.summary['en-US'],
     );
   });
 });

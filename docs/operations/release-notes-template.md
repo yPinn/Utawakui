@@ -14,13 +14,14 @@ copying the commit log or describing how the software is built.
   retain accurate user-facing known limitations in the notes.
 - The versioned Chinese and English titles, their short summaries, and both
   installation sections are required.
-- Copy the Chinese short summary verbatim into `shared/releaseAnnouncement.json`'s
-  `summary` field, and bump its `version` to match. That file drives the in-app
+- Copy the Chinese and English short summaries verbatim into
+  `shared/releaseAnnouncement.json`'s `summary` (keyed `zh-TW` and `en-US`), and
+  bump its `version` to match. The modal shows the one for the UI language. That file drives the in-app
   "what's new" modal (see `src/composables/useAppAnnouncement.js`), so the first
   thing a user reads after updating must match the top of this document — not a
   second, independently drifting sentence. `shared/releaseAnnouncement.test.js`
-  checks both the package version and exact agreement with the Chinese
-  introduction. Run that test when changing the introduction or its layout,
+  checks both the package version and exact agreement with both
+  introductions. Run that test when changing the introduction or its layout,
   together with the release-contract and release-workflow tests.
 - Prefer everyday language and short sentences. Avoid internal library, model,
   format, component, pipeline, lifecycle, and protocol names unless the term is
