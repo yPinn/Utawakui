@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 export function isImportBatchRunning(batch) {
   return ['queued', 'running', 'finalizing'].includes(batch?.phase);
 }
@@ -20,16 +21,16 @@ export function importBatchProgress(batch) {
     pending: count('pending'),
     processed: completed + failed + cancelled,
     phaseLabel: batch?.cancelError
-      ? '停止未完成'
+      ? t('import.batch.stopFailed')
       : batch?.saveError
-        ? '清單尚未儲存'
+        ? t('import.batch.notSaved')
         : {
-            queued: '等待下載',
-            running: '下載中',
-            finalizing: '正在整理清單',
-            completed: '已完成',
-            failed: '未完成',
-            cancelled: '已停止',
+            queued: t('import.batch.phases.queued'),
+            running: t('import.batch.phases.running'),
+            finalizing: t('import.batch.phases.finalizing'),
+            completed: t('import.batch.phases.completed'),
+            failed: t('import.batch.phases.failed'),
+            cancelled: t('import.batch.phases.cancelled'),
           }[batch?.phase] || '',
   };
 }

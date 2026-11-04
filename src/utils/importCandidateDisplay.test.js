@@ -28,8 +28,8 @@ describe('import candidate display helpers', () => {
     expect(formatViewCount(undefined)).toBe('');
     expect(formatViewCount(-1)).toBe('');
     expect(formatViewCount(9876)).toBe('9,876 次觀看');
-    expect(formatViewCount(123456)).toBe('12.3 萬次觀看');
-    expect(formatViewCount(123456789)).toBe('1.2 億次觀看');
+    expect(formatViewCount(123456)).toBe('12.3萬次觀看');
+    expect(formatViewCount(123456789)).toBe('1.2億次觀看');
   });
 
   it('formats track identity display for import rows', () => {

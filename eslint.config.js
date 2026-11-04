@@ -48,6 +48,9 @@ const I18N_MIGRATED = [
   'electron/main/libraryHandlers.js',
   'electron/main/library/{trackArtworkHandlers,artistPhotoHandlers,artistOrganizationHandlers,releaseHandlers,workOrganizationHandlers}.js',
   'electron/lib/{libraryLocation,library/importLocal}.js',
+  'src/composables/{useLocalImport,useImportSession}.js',
+  'src/composables/import/{useImportExecution,useImportSourceResolution,useImportResultNotification}.js',
+  'src/utils/{downloadFailureDisplay,importCandidateDisplay,importBatch,importPlaylist}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

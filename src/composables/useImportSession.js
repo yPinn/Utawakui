@@ -15,6 +15,7 @@ import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { registerProviderImportActivity } from './usePreparationActivity.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 const notifications = useAppNotifications();
 const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
@@ -108,18 +109,21 @@ const filterOptions = computed(() =>
 
 const confirmImportLabel = computed(() => {
   if (state.isImporting) {
-    return state.sourceKind === 'playlist' ? '停止' : '下載中';
+    return state.sourceKind === 'playlist'
+      ? t('import.session.stop')
+      : t('import.session.downloading');
   }
   if (state.sourceKind === 'single') {
-    if (state.singleTrack?.alreadyDownloaded) return '已存在';
-    return '下載這首';
+    if (state.singleTrack?.alreadyDownloaded) return t('import.session.exists');
+    return t('import.session.downloadThis');
   }
   const { downloadableSelected, selected } = playlistStats.value;
-  if (downloadableSelected > 0) return `下載 ${downloadableSelected} 首`;
+  if (downloadableSelected > 0)
+    return t('import.session.downloadCount', { count: downloadableSelected });
   // Everything selected is already local — nothing to download, but
   // confirming still syncs them into the playlist/album's trackIds.
-  if (selected > 0) return `加入 ${selected} 首`;
-  return '沒有選取的曲目';
+  if (selected > 0) return t('import.session.addCount', { count: selected });
+  return t('import.session.noneSelected');
 });
 
 const canUseConfirmButton = computed(() =>
@@ -137,7 +141,7 @@ function setStatus(message = '', type = 'idle', scope = 'surface') {
 
 function reportImportError(error, operation, message) {
   return recordError(error, {
-    title: '匯入操作未完成',
+    title: t('import.session.failedTitle'),
     message,
     source: 'import',
     operation,
@@ -151,14 +155,14 @@ function handleProviderSetupError(err) {
   });
   if (appError.code !== 'FEATURE_DEPENDENCY_MISSING') return false;
   const notice = recordError(err, {
-    title: '外部來源尚未準備完成',
-    message: '請到設定完成外部來源準備。',
+    title: t('import.session.providerNotReadyTitle'),
+    message: t('import.session.providerSetupMessage'),
     source: 'import',
     operation: 'provider-tool',
   });
   requestFeatureSetup(FEATURE_IDS.PROVIDER_FLOW, {
-    title: '需要準備外部來源工具',
-    message: '請到設定完成外部來源準備。',
+    title: t('import.session.providerToolTitle'),
+    message: t('import.session.providerSetupMessage'),
     source: 'import',
     operation: 'provider-tool',
     context: {
@@ -166,13 +170,13 @@ function handleProviderSetupError(err) {
     },
   });
   setStatus(notice.message, 'pending');
-  state.failureHint = '請在設定的「進階功能」中準備外部來源工具。';
+  state.failureHint = t('import.session.providerToolHint');
   return true;
 }
 
 async function ensureProviderFlow({
   operation = 'resolve-source',
-  message = '請先到設定啟用外部來源，才能解析或下載線上歌曲。',
+  message = t('import.session.providerRequired'),
 } = {}) {
   const revision = draftRevision.value;
   const enabled = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
@@ -181,7 +185,7 @@ async function ensureProviderFlow({
     message,
   });
   if (!enabled && revision === draftRevision.value) {
-    setStatus('請先到設定啟用外部來源', 'pending');
+    setStatus(t('import.session.providerRequiredStatus'), 'pending');
   }
   return enabled;
 }
@@ -296,11 +300,11 @@ function reportDirectoryFailure(
       key: notificationKey.libraryDirectory(operation),
       title:
         operation === 'read-settings'
-          ? '曲庫位置無法讀取'
-          : '曲庫資料夾操作未完成',
+          ? t('import.session.libraryUnreadableTitle')
+          : t('import.session.folderFailedTitle'),
       message,
       tone: 'danger',
-      actionLabel: '重試',
+      actionLabel: t('import.session.retry'),
       action,
     });
   } else {
@@ -319,11 +323,11 @@ async function refreshConfig({ notifyFailure = false } = {}) {
     notifications.clear(notificationKey.libraryDirectory('read-settings'));
     return true;
   } catch (error) {
-    state.configError = '目前無法讀取曲庫位置，請再試一次。';
+    state.configError = t('import.session.libraryUnreadable');
     reportDirectoryFailure(
       error,
       'read-settings',
-      '目前無法讀取匯入設定，請再試一次。',
+      t('import.session.settingsUnreadable'),
       notifyFailure,
       () => refreshConfig({ notifyFailure: true }),
     );
@@ -340,7 +344,7 @@ async function chooseDownloadDir({ notifyFailure = false } = {}) {
     reportDirectoryFailure(
       error,
       'choose-folder',
-      '下載資料夾未變更，請再試一次。',
+      t('import.session.folderUnchanged'),
       notifyFailure,
       () => chooseDownloadDir({ notifyFailure: true }),
     );
@@ -357,7 +361,7 @@ async function resetDownloadDir({ notifyFailure = false } = {}) {
     reportDirectoryFailure(
       error,
       'reset-folder',
-      '下載資料夾未重設，請再試一次。',
+      t('import.session.folderNotReset'),
       notifyFailure,
       () => resetDownloadDir({ notifyFailure: true }),
     );
@@ -374,7 +378,7 @@ async function openDownloadDir({ notifyFailure = false } = {}) {
     reportDirectoryFailure(
       error,
       'open-folder',
-      '目前無法開啟下載資料夾，請再試一次。',
+      t('import.session.folderOpenFailed'),
       notifyFailure,
       () => openDownloadDir({ notifyFailure: true }),
     );

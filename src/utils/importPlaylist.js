@@ -1,13 +1,14 @@
+import { t } from './i18n.js';
 // 'selected' isn't a filter tab — checkbox state is already visible per-row
 // in the list, and the toolbar's 選取未下載/全選/重試未完成曲目 actions already
 // manipulate + auto-switch to the relevant status filter (see
 // useImportSession.js's selectMissingTracks/selectFailedTracks). A separate
 // tab for it would just duplicate what's below.
 export const IMPORT_FILTERS = Object.freeze([
-  { key: 'all', label: '全部' },
-  { key: 'missing', label: '未下載' },
-  { key: 'downloaded', label: '已下載' },
-  { key: 'failed', label: '失敗' },
+  { key: 'all', label: t('import.filters.all') },
+  { key: 'missing', label: t('import.filters.missing') },
+  { key: 'downloaded', label: t('import.filters.downloaded') },
+  { key: 'failed', label: t('import.filters.failed') },
 ]);
 
 function isDone(track) {

@@ -3,6 +3,7 @@ import {
   useAppRightDock,
 } from '../useAppRightDock.js';
 import { notificationKey } from '../../constants/notificationKeys.js';
+import { t } from '../../utils/i18n.js';
 
 export function useImportResultNotification(notify) {
   return (batch) => notifyImportResult(batch, notify);
@@ -25,35 +26,34 @@ function notifyImportResult(batch, notify) {
       ? 'info'
       : 'success';
   const summary = [
-    `${completed} 首下載完成`,
-    failed ? `${failed} 首失敗` : '',
-    cancelled ? `${cancelled} 首已停止` : '',
-    local ? `${local} 首已在曲庫` : '',
-    batch.saveError ? '播放清單未儲存，請再試一次' : '',
+    t('import.result.completed', { count: completed }),
+    failed ? t('import.result.failed', { count: failed }) : '',
+    cancelled ? t('import.result.cancelled', { count: cancelled }) : '',
+    local ? t('import.result.local', { count: local }) : '',
+    batch.saveError ? t('import.result.saveError') : '',
   ]
     .filter(Boolean)
-    .join('，');
+    .join(t('common.clauseSeparator'));
   notify({
     key: notificationKey.providerImport(batch.id),
     title: problems
-      ? '下載未完成'
+      ? t('import.result.incomplete')
       : stopped
-        ? '下載已停止'
+        ? t('import.result.stopped')
         : work.length
-          ? '下載完成'
-          : '匯入完成',
+          ? t('import.result.done')
+          : t('import.result.imported'),
     message:
       batch.kind === 'single' && !problems && !stopped
-        ? String(batch.resultTitle || batch.title || '歌曲已加入曲庫').slice(
-            0,
-            200,
-          )
+        ? String(
+            batch.resultTitle || batch.title || t('import.result.songAdded'),
+          ).slice(0, 200)
         : summary,
     tone,
     lifecycle: problems ? 'persistent' : 'transient',
     // Transient results carry no action; the Import tab keeps the details.
     ...(problems && {
-      actionLabel: '查看下載結果',
+      actionLabel: t('import.result.viewResults'),
       action() {
         const dock = useAppRightDock();
         dock.selectPreparationTab('import');

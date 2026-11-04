@@ -8,6 +8,7 @@ import { normalizeAppError } from '../../utils/appErrors.js';
 import { usePlaylists } from '../usePlaylists.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 import { useImportResultNotification } from './useImportResultNotification.js';
+import { t } from '../../utils/i18n.js';
 
 const CONCURRENCY = 2;
 const ACTIVE_PHASES = new Set(['queued', 'running', 'finalizing']);
@@ -19,7 +20,7 @@ function copyTrack(track) {
   return {
     id: track.id,
     downloadKey: track.downloadInput || track.playbackVideoId || track.id,
-    title: track.title || '未命名歌曲',
+    title: track.title || t('import.execution.untitledSong'),
     artist: track.artist || '',
     duration: track.duration,
     thumbnailUrl: track.thumbnailUrl || '',
@@ -118,7 +119,11 @@ export function useImportExecution({
     const cancelled = appError?.code === 'IMPORT_DOWNLOAD_CANCELLED';
     const setup = appError?.code === 'FEATURE_DEPENDENCY_MISSING';
     if (error && !cancelled && !setup)
-      reportImportError(error, 'download-track', '下載未完成，請再試一次。');
+      reportImportError(
+        error,
+        'download-track',
+        t('import.execution.downloadFailed'),
+      );
     for (const consumer of job.consumers) {
       const { batch, track, resolve } = consumer;
       if (error) {
@@ -235,38 +240,50 @@ export function useImportExecution({
     const failed = batch.tracks.filter((t) => t.status === 'error');
     const dominant = failed.find((t) => t.errorCode)?.errorCode;
     if (batch.saveError)
-      setStatus('曲目已下載，但播放清單未儲存。請再試一次。', 'error');
+      setStatus(t('import.execution.playlistNotSaved'), 'error');
     else if (
       batch.cancelRequested ||
       batch.tracks.some((t) => t.status === 'cancelled')
     )
       setStatus(
         batch.kind === 'single'
-          ? '已停止下載'
-          : '已停止，未完成的曲目仍留在預覽中',
+          ? t('import.execution.stoppedSingle')
+          : t('import.execution.stoppedBatch'),
         'pending',
       );
     else if (failed.length) {
       setStatus(
         batch.kind === 'single'
-          ? `下載失敗：${downloadFailureLabel(dominant)}`
+          ? t('import.execution.singleFailed', {
+              reason: downloadFailureLabel(dominant),
+            })
           : dominant
-            ? `下載完成，${failed.length} 首失敗（${downloadFailureLabel(dominant)}）`
-            : `下載完成，${failed.length} 首失敗`,
+            ? t('import.execution.batchFailedReason', {
+                count: failed.length,
+                reason: downloadFailureLabel(dominant),
+              })
+            : t('import.execution.batchFailed', { count: failed.length }),
         'error',
       );
       if (dominant) state.failureHint = downloadFailureHint(dominant);
     } else if (batch.kind === 'single')
       setStatus(
-        batch.resultTitle ? `已下載：${batch.resultTitle}` : '歌曲已下載',
+        batch.resultTitle
+          ? t('import.execution.downloadedNamed', { title: batch.resultTitle })
+          : t('import.execution.downloadedSong'),
         'success',
         'object',
       );
     else
       setStatus(
         batch.collectionSaved
-          ? `已加入${batch.collectionKind === 'album' ? '專輯' : '播放清單'}「${batch.title}」`
-          : '下載完成',
+          ? t(
+              batch.collectionKind === 'album'
+                ? 'import.execution.addedToAlbum'
+                : 'import.execution.addedToPlaylist',
+              { title: batch.title },
+            )
+          : t('import.execution.done'),
         'success',
       );
   }
@@ -311,7 +328,7 @@ export function useImportExecution({
       reportImportError(
         error,
         'save-import-collection',
-        '曲目已下載，但播放清單未儲存。請再試一次。',
+        t('import.execution.playlistNotSaved'),
       );
     } finally {
       batch.cancelError = false;
@@ -325,7 +342,7 @@ export function useImportExecution({
     while (internal.batches.length >= MAX_BATCHES) {
       const index = internal.batches.findIndex((b) => b.phase === 'completed');
       if (index < 0) {
-        setStatus('匯入工作已滿，請先完成或清除既有工作。', 'pending');
+        setStatus(t('import.execution.queueFull'), 'pending');
         return null;
       }
       records.delete(internal.batches[index].id);
@@ -349,7 +366,7 @@ export function useImportExecution({
       ).values(),
     ];
     if (tracks.length > MAX_DOWNLOADS) {
-      setStatus('這批曲目過多，請分批匯入。', 'pending');
+      setStatus(t('import.execution.batchTooLarge'), 'pending');
       return null;
     }
     const id = `import-${++nextId}`;
@@ -370,7 +387,7 @@ export function useImportExecution({
       kind: single ? 'single' : 'playlist',
       title: single
         ? state.singleTrack.title
-        : state.playlistTitle || '未命名清單',
+        : state.playlistTitle || t('import.execution.untitledList'),
       collectionKind: state.collectionKind,
       releaseType: state.collectionReleaseType || 'unknown',
       releaseDate: state.collectionReleaseDate
@@ -399,7 +416,12 @@ export function useImportExecution({
     });
     if (current(batch)) {
       state.isImporting = true;
-      setStatus(single ? '下載中...' : '下載選取曲目中...', 'pending');
+      setStatus(
+        single
+          ? t('import.execution.downloadingSingle')
+          : t('import.execution.downloadingSelected'),
+        'pending',
+      );
     }
     records.get(id).completion = runBatch(batch);
     return id;
@@ -446,7 +468,7 @@ export function useImportExecution({
         reportImportError(
           error,
           'cancel-import-download',
-          '停止下載未完成，請再試一次。',
+          t('import.execution.stopFailed'),
         );
       }
       if (!cancellationAccepted && job.state !== 'settled') {

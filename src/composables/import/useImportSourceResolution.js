@@ -5,6 +5,7 @@ import {
   downloadFailureLabel,
 } from '../../utils/downloadFailureDisplay.js';
 import { normalizeAppError } from '../../utils/appErrors.js';
+import { t } from '../../utils/i18n.js';
 
 function createPreviewTrack(entry) {
   return {
@@ -48,7 +49,7 @@ function createSingleTrackFromResolution(resolution, selectedCandidate = null) {
 function deferredPlatformLabel(platform) {
   if (platform === 'spotify') return 'Spotify';
   if (platform === 'apple-music') return 'Apple Music';
-  return '未知平台';
+  return t('import.resolution.unknownPlatform');
 }
 
 export function useImportSourceResolution({
@@ -104,7 +105,9 @@ export function useImportSourceResolution({
         if (!isCurrent()) return;
         if (result?.kind === 'deferred') {
           setStatus(
-            `${deferredPlatformLabel(result.platform)} 連結轉換尚未開放`,
+            t('import.resolution.deferred', {
+              platform: deferredPlatformLabel(result.platform),
+            }),
             'pending',
           );
           return;
@@ -112,15 +115,15 @@ export function useImportSourceResolution({
         if (result?.kind === 'unsupported') {
           const message =
             result.reason === 'query-too-long'
-              ? '搜尋文字過長，請縮短歌曲名稱或歌手名稱'
-              : '目前只支援歌曲名稱、YouTube 與 YouTube Music 連結';
+              ? t('import.resolution.queryTooLong')
+              : t('import.resolution.unsupported');
           setStatus(message, 'error');
           return;
         }
         if (result?.kind === 'playlist') {
           const entries = result.entries || [];
           if (entries.length === 0) {
-            setStatus('這個播放清單沒有可匯入的曲目', 'empty');
+            setStatus(t('import.resolution.emptyPlaylist'), 'empty');
             return;
           }
           state.sourceKind = 'playlist';
@@ -129,7 +132,7 @@ export function useImportSourceResolution({
           state.playlistTitle =
             (state.collectionKind === 'album'
               ? stripAlbumTitlePrefix(result.title)
-              : result.title) || '未命名播放清單';
+              : result.title) || t('import.resolution.untitledPlaylist');
           state.collectionSource = result.source
             ? markRaw(result.source)
             : null;
@@ -146,7 +149,7 @@ export function useImportSourceResolution({
             resolution.recommendedCandidate || resolution.source || null;
           const candidateCount = resolution.candidates?.length || 0;
           if (!selectedCandidate && candidateCount === 0) {
-            setStatus('沒有找到可用音源', 'empty');
+            setStatus(t('import.resolution.noSource'), 'empty');
             return;
           }
           state.sourceKind = 'single';
@@ -169,7 +172,7 @@ export function useImportSourceResolution({
         state.playlistTitle =
           (state.collectionKind === 'album'
             ? stripAlbumTitlePrefix(playlistResult.title)
-            : playlistResult.title) || '未命名播放清單';
+            : playlistResult.title) || t('import.resolution.untitledPlaylist');
         state.collectionSource = playlistResult.source
           ? markRaw(playlistResult.source)
           : null;
@@ -201,10 +204,7 @@ export function useImportSourceResolution({
           title: input,
           alreadyDownloaded: false,
         });
-        setStatus(
-          '需要重新啟動應用程式才能使用新版單曲預覽；目前仍可下載。',
-          'pending',
-        );
+        setStatus(t('import.resolution.restartPreview'), 'pending');
         return;
       }
 
@@ -225,16 +225,26 @@ export function useImportSourceResolution({
         const reason = appError.context.reason || 'unknown';
         const label =
           reason === 'unknown'
-            ? '外部來源暫時無法回應'
+            ? t('import.resolution.providerUnresponsive')
             : downloadFailureLabel(reason);
         reportImportError(error, 'resolve-source', appError.message);
-        setStatus(`搜尋 YT Music／YouTube 失敗：${label}`, 'error');
+        setStatus(
+          t('import.resolution.searchFailed', { reason: label }),
+          'error',
+        );
         state.failureHint = downloadFailureHint(reason);
         return;
       }
       const failure = describeDownloadFailure(error);
-      reportImportError(error, 'resolve-source', '目前無法檢查這個來源。');
-      setStatus(`找不到來源：${failure.label}`, 'error');
+      reportImportError(
+        error,
+        'resolve-source',
+        t('import.resolution.checkFailed'),
+      );
+      setStatus(
+        t('import.resolution.notFound', { reason: failure.label }),
+        'error',
+      );
       state.failureHint = failure.hint;
     } finally {
       state.isResolving = false;
@@ -253,23 +263,20 @@ export function useImportSourceResolution({
     try {
       const enabled = await ensureProviderFlow({
         operation: 'open-youtube-music-search',
-        message: '請先到設定啟用外部來源，才能前往 YT Music 尋找來源。',
+        message: t('import.resolution.providerRequiredYtMusic'),
       });
       if (!enabled) return false;
 
       await window.Utawakui.openYoutubeMusicSearch(query);
-      setStatus(
-        '已在系統瀏覽器開啟 YT Music，找到來源後請複製連結貼回此處。',
-        'success',
-      );
+      setStatus(t('import.resolution.ytMusicOpened'), 'success');
       return true;
     } catch (error) {
       reportImportError(
         error,
         'open-youtube-music-search',
-        '目前無法開啟 YT Music。',
+        t('import.resolution.ytMusicOpenFailed'),
       );
-      setStatus('目前無法開啟 YT Music，請稍後再試。', 'error');
+      setStatus(t('import.resolution.ytMusicOpenFailedStatus'), 'error');
       return false;
     } finally {
       state.isOpeningDiscovery = false;

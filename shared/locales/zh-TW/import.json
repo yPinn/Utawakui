@@ -1,0 +1,215 @@
+{
+  "local": {
+    "skipReasons": {
+      "duplicateContent": "曲庫已有相同音訊",
+      "unsupportedExtension": "不支援此檔案格式",
+      "unsupportedCodec": "目前無法直接播放此編碼",
+      "unsupportedMedia": "包含不支援的媒體串流",
+      "missingFile": "找不到檔案",
+      "notAFile": "不是音訊檔案",
+      "invalidPath": "無法讀取檔案",
+      "invalidAudio": "無法讀取音訊內容",
+      "formatMismatch": "檔案格式與內容不符",
+      "sourceChanged": "來源檔案已變更，請重新選取",
+      "conversionFailed": "相容轉檔未完成",
+      "importFailed": "匯入未完成"
+    },
+    "skipUnknown": "無法匯入此檔案",
+    "titles": {
+      "needsConversion": "需要相容轉檔",
+      "conversionDone": "相容轉檔完成",
+      "conversionFailed": "相容轉檔未完成",
+      "importDone": "本機匯入完成",
+      "importFailed": "本機匯入未完成"
+    },
+    "viewResults": "查看匯入結果",
+    "conversionReview": "{count} 個 {formats} 檔案需要轉成 FLAC；原檔不會修改，轉換副本可能使用較多空間。",
+    "skipped": {
+      "duplicates": "略過 {count} 個重複檔案",
+      "duplicatesAndOthers": "略過 {duplicates} 個重複、{others} 個檔案",
+      "any": "略過 {count} 個檔案"
+    },
+    "codecOnly": "沒有可匯入的音訊檔；{count} 個檔案使用目前無法直接播放的編碼。",
+    "mediaOnly": "沒有可匯入的音訊檔；{count} 個檔案包含影片或其他不支援的媒體串流。",
+    "copiedNeedsConversion": "已複製 {count} 首；另有 {files} 個檔案需要相容轉檔",
+    "needsConversionCount": "{count} 個檔案需要相容轉檔",
+    "noneSelected": "沒有選取音訊檔",
+    "copiedWithSkipped": "已複製 {count} 首，{skipped}",
+    "copied": "已複製 {count} 首",
+    "noneAddedSkipped": "沒有新增曲目，{skipped}",
+    "noneImportableSkipped": "沒有可匯入的音訊檔，{skipped}",
+    "convertedWithSkipped": "已轉換並匯入 {count} 首，{skipped}",
+    "converted": "已轉換並匯入 {count} 首",
+    "conversionNoneSkipped": "沒有完成相容轉檔，{skipped}",
+    "conversionNone": "沒有完成相容轉檔，請重新選擇檔案。",
+    "restartImport": "需要重新啟動應用程式才能使用本機音訊匯入。",
+    "failedTitle": "本機匯入失敗",
+    "failedMessage": "目前無法匯入音訊檔，請再試一次。",
+    "restartConversion": "需要重新啟動應用程式才能使用相容轉檔。",
+    "needsAudioTitle": "需要啟用音訊處理",
+    "needsAudioMessage": "相容轉檔會在本機建立 FLAC 副本，請先查看並啟用音訊處理。",
+    "needsAudioStatus": "請先在設定啟用音訊處理，再回來執行相容轉檔。",
+    "converting": "正在建立 FLAC 相容副本…",
+    "needsFfmpegTitle": "需要準備 FFmpeg",
+    "needsFfmpegMessage": "請先在設定準備 FFmpeg，再回來執行相容轉檔。",
+    "conversionFailedTitle": "相容轉檔失敗",
+    "conversionFailedMessage": "相容轉檔未完成，請重新選擇檔案後再試一次。"
+  },
+  "session": {
+    "stop": "停止",
+    "downloading": "下載中",
+    "exists": "已存在",
+    "downloadThis": "下載這首",
+    "downloadCount": "下載 {count} 首",
+    "addCount": "加入 {count} 首",
+    "noneSelected": "沒有選取的曲目",
+    "failedTitle": "匯入操作未完成",
+    "providerNotReadyTitle": "外部來源尚未準備完成",
+    "providerSetupMessage": "請到設定完成外部來源準備。",
+    "providerToolTitle": "需要準備外部來源工具",
+    "providerToolHint": "請在設定的「進階功能」中準備外部來源工具。",
+    "providerRequired": "請先到設定啟用外部來源，才能解析或下載線上歌曲。",
+    "providerRequiredStatus": "請先到設定啟用外部來源",
+    "libraryUnreadableTitle": "曲庫位置無法讀取",
+    "folderFailedTitle": "曲庫資料夾操作未完成",
+    "retry": "重試",
+    "libraryUnreadable": "目前無法讀取曲庫位置，請再試一次。",
+    "settingsUnreadable": "目前無法讀取匯入設定，請再試一次。",
+    "folderUnchanged": "下載資料夾未變更，請再試一次。",
+    "folderNotReset": "下載資料夾未重設，請再試一次。",
+    "folderOpenFailed": "目前無法開啟下載資料夾，請再試一次。"
+  },
+  "execution": {
+    "untitledSong": "未命名歌曲",
+    "untitledList": "未命名清單",
+    "downloadFailed": "下載未完成，請再試一次。",
+    "playlistNotSaved": "曲目已下載，但播放清單未儲存。請再試一次。",
+    "stoppedSingle": "已停止下載",
+    "stoppedBatch": "已停止，未完成的曲目仍留在預覽中",
+    "singleFailed": "下載失敗：{reason}",
+    "batchFailedReason": "下載完成，{count} 首失敗（{reason}）",
+    "batchFailed": "下載完成，{count} 首失敗",
+    "downloadedNamed": "已下載：{title}",
+    "downloadedSong": "歌曲已下載",
+    "addedToAlbum": "已加入專輯「{title}」",
+    "addedToPlaylist": "已加入播放清單「{title}」",
+    "done": "下載完成",
+    "queueFull": "匯入工作已滿，請先完成或清除既有工作。",
+    "batchTooLarge": "這批曲目過多，請分批匯入。",
+    "downloadingSingle": "下載中...",
+    "downloadingSelected": "下載選取曲目中...",
+    "stopFailed": "停止下載未完成，請再試一次。"
+  },
+  "resolution": {
+    "unknownPlatform": "未知平台",
+    "deferred": "{platform} 連結轉換尚未開放",
+    "queryTooLong": "搜尋文字過長，請縮短歌曲名稱或歌手名稱",
+    "unsupported": "目前只支援歌曲名稱、YouTube 與 YouTube Music 連結",
+    "emptyPlaylist": "這個播放清單沒有可匯入的曲目",
+    "untitledPlaylist": "未命名播放清單",
+    "noSource": "沒有找到可用音源",
+    "restartPreview": "需要重新啟動應用程式才能使用新版單曲預覽；目前仍可下載。",
+    "providerUnresponsive": "外部來源暫時無法回應",
+    "searchFailed": "搜尋 YT Music／YouTube 失敗：{reason}",
+    "checkFailed": "目前無法檢查這個來源。",
+    "notFound": "找不到來源：{reason}",
+    "providerRequiredYtMusic": "請先到設定啟用外部來源，才能前往 YT Music 尋找來源。",
+    "ytMusicOpened": "已在系統瀏覽器開啟 YT Music，找到來源後請複製連結貼回此處。",
+    "ytMusicOpenFailed": "目前無法開啟 YT Music。",
+    "ytMusicOpenFailedStatus": "目前無法開啟 YT Music，請稍後再試。"
+  },
+  "result": {
+    "completed": "{count} 首下載完成",
+    "failed": "{count} 首失敗",
+    "cancelled": "{count} 首已停止",
+    "local": "{count} 首已在曲庫",
+    "saveError": "播放清單未儲存，請再試一次",
+    "incomplete": "下載未完成",
+    "stopped": "下載已停止",
+    "done": "下載完成",
+    "imported": "匯入完成",
+    "songAdded": "歌曲已加入曲庫",
+    "viewResults": "查看下載結果"
+  },
+  "candidate": {
+    "kinds": {
+      "ytMusicSong": "音樂版",
+      "youtubeTopicAudio": "官方音源",
+      "youtubeOfficialAudio": "官方音源",
+      "ytMusicSource": "YT Music 來源",
+      "youtubeLyricVideo": "歌詞影片",
+      "youtubeOfficialMv": "MV",
+      "youtubeLive": "Live",
+      "youtubeVariant": "其他版本",
+      "youtubeOther": "影片"
+    },
+    "kindFallback": "來源",
+    "views": "{count} 次觀看",
+    "viewsCompact": "{count}次觀看",
+    "identity": {
+      "pending": "待辨識",
+      "review": "需確認",
+      "identified": "已辨識"
+    }
+  },
+  "batch": {
+    "stopFailed": "停止未完成",
+    "notSaved": "清單尚未儲存",
+    "phases": {
+      "queued": "等待下載",
+      "running": "下載中",
+      "finalizing": "正在整理清單",
+      "completed": "已完成",
+      "failed": "未完成",
+      "cancelled": "已停止"
+    }
+  },
+  "filters": {
+    "all": "全部",
+    "missing": "未下載",
+    "downloaded": "已下載",
+    "failed": "失敗"
+  },
+  "failures": {
+    "invalidInput": {
+      "label": "連結無法辨識",
+      "hint": "請貼上 YouTube 或 YouTube Music 的歌曲／播放清單連結。"
+    },
+    "membersOnly": {
+      "label": "會員限定",
+      "hint": "這是頻道會員專屬內容，無法下載。"
+    },
+    "ageRestricted": {
+      "label": "需要年齡驗證",
+      "hint": "請先在 Firefox 登入 YouTube，再重試一次。"
+    },
+    "regionRestricted": {
+      "label": "地區限制",
+      "hint": "這部影片在你的地區被封鎖，可改用上方的「本機音訊」匯入。"
+    },
+    "videoUnavailable": {
+      "label": "影片無法取得",
+      "hint": "影片已刪除或設為私人，請改用其他版本的連結。"
+    },
+    "rateLimited": {
+      "label": "下載次數受限",
+      "hint": "YouTube 暫時限制了下載，請等幾分鐘再重試。"
+    },
+    "networkError": {
+      "label": "網路連線失敗",
+      "hint": "請確認網路連線後再重試。"
+    },
+    "diskFull": {
+      "label": "儲存空間不足",
+      "hint": "請清出空間，或到設定改用其他下載資料夾。"
+    },
+    "botProtected": {
+      "label": "反機器人驗證",
+      "hint": "這首暫時無法從 YouTube 下載。可改用上方的「本機音訊」匯入已有的檔案。"
+    },
+    "unknown": {
+      "label": "下載失敗",
+      "hint": "請稍後重試；若持續失敗，可改用上方的「本機音訊」匯入。"
+    }
+  }
+}

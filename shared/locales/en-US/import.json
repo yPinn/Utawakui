@@ -1,0 +1,215 @@
+{
+  "local": {
+    "skipReasons": {
+      "duplicateContent": "The library already has the same audio",
+      "unsupportedExtension": "This file format isn't supported",
+      "unsupportedCodec": "This encoding can't be played directly",
+      "unsupportedMedia": "Contains an unsupported media stream",
+      "missingFile": "File not found",
+      "notAFile": "Not an audio file",
+      "invalidPath": "The file can't be read",
+      "invalidAudio": "The audio can't be read",
+      "formatMismatch": "The file format doesn't match its content",
+      "sourceChanged": "The source file changed. Choose it again",
+      "conversionFailed": "Compatible conversion not completed",
+      "importFailed": "Import not completed"
+    },
+    "skipUnknown": "This file can't be imported",
+    "titles": {
+      "needsConversion": "Compatible conversion needed",
+      "conversionDone": "Compatible conversion finished",
+      "conversionFailed": "Compatible conversion not completed",
+      "importDone": "Local import finished",
+      "importFailed": "Local import not completed"
+    },
+    "viewResults": "View import results",
+    "conversionReview": "{count} {formats} file needs converting to FLAC; the original isn't changed, and the converted copy may use more space. | {count} {formats} files need converting to FLAC; the originals aren't changed, and the converted copies may use more space.",
+    "skipped": {
+      "duplicates": "skipped {count} duplicate file | skipped {count} duplicate files",
+      "duplicatesAndOthers": "skipped {duplicates} duplicate and {others} other files",
+      "any": "skipped {count} file | skipped {count} files"
+    },
+    "codecOnly": "No audio files to import; {count} file uses an encoding that can't be played directly. | No audio files to import; {count} files use an encoding that can't be played directly.",
+    "mediaOnly": "No audio files to import; {count} file contains video or another unsupported media stream. | No audio files to import; {count} files contain video or other unsupported media streams.",
+    "copiedNeedsConversion": "Copied {count}; {files} more files need compatible conversion",
+    "needsConversionCount": "{count} file needs compatible conversion | {count} files need compatible conversion",
+    "noneSelected": "No audio files selected",
+    "copiedWithSkipped": "Copied {count}; {skipped}",
+    "copied": "Copied {count} | Copied {count}",
+    "noneAddedSkipped": "No tracks added; {skipped}",
+    "noneImportableSkipped": "No audio files to import; {skipped}",
+    "convertedWithSkipped": "Converted and imported {count}; {skipped}",
+    "converted": "Converted and imported {count}",
+    "conversionNoneSkipped": "No compatible conversion finished; {skipped}",
+    "conversionNone": "No compatible conversion finished. Choose the files again.",
+    "restartImport": "Restart the app to use local audio import.",
+    "failedTitle": "Local import failed",
+    "failedMessage": "Audio files can't be imported right now. Try again.",
+    "restartConversion": "Restart the app to use compatible conversion.",
+    "needsAudioTitle": "Audio processing needs to be on",
+    "needsAudioMessage": "Compatible conversion creates a local FLAC copy. Review and turn on audio processing first.",
+    "needsAudioStatus": "Turn on audio processing in Settings, then come back to convert.",
+    "converting": "Creating a compatible FLAC copy…",
+    "needsFfmpegTitle": "FFmpeg needs to be prepared",
+    "needsFfmpegMessage": "Prepare FFmpeg in Settings, then come back to convert.",
+    "conversionFailedTitle": "Compatible conversion failed",
+    "conversionFailedMessage": "The compatible conversion didn't finish. Choose the files again and retry."
+  },
+  "session": {
+    "stop": "Stop",
+    "downloading": "Downloading",
+    "exists": "Already added",
+    "downloadThis": "Download this song",
+    "downloadCount": "Download {count}",
+    "addCount": "Add {count}",
+    "noneSelected": "No tracks selected",
+    "failedTitle": "Import action not completed",
+    "providerNotReadyTitle": "External sources aren't ready",
+    "providerSetupMessage": "Finish preparing external sources in Settings.",
+    "providerToolTitle": "External source tool needs to be prepared",
+    "providerToolHint": "Prepare the external source tool under Advanced features in Settings.",
+    "providerRequired": "Turn on external sources in Settings to look up or download online songs.",
+    "providerRequiredStatus": "Turn on external sources in Settings first",
+    "libraryUnreadableTitle": "The library location can't be read",
+    "folderFailedTitle": "Library folder action not completed",
+    "retry": "Retry",
+    "libraryUnreadable": "The library location can't be read right now. Try again.",
+    "settingsUnreadable": "Import settings can't be read right now. Try again.",
+    "folderUnchanged": "The download folder wasn't changed. Try again.",
+    "folderNotReset": "The download folder wasn't reset. Try again.",
+    "folderOpenFailed": "The download folder can't be opened right now. Try again."
+  },
+  "execution": {
+    "untitledSong": "Untitled song",
+    "untitledList": "Untitled list",
+    "downloadFailed": "The download didn't finish. Try again.",
+    "playlistNotSaved": "The tracks were downloaded, but the playlist wasn't saved. Try again.",
+    "stoppedSingle": "Download stopped",
+    "stoppedBatch": "Stopped; unfinished tracks stay in the preview",
+    "singleFailed": "Download failed: {reason}",
+    "batchFailedReason": "Download finished; {count} failed ({reason})",
+    "batchFailed": "Download finished; {count} failed",
+    "downloadedNamed": "Downloaded: {title}",
+    "downloadedSong": "Song downloaded",
+    "addedToAlbum": "Added to album \"{title}\"",
+    "addedToPlaylist": "Added to playlist \"{title}\"",
+    "done": "Download finished",
+    "queueFull": "The import queue is full. Finish or clear existing work first.",
+    "batchTooLarge": "Too many tracks in this batch. Import them in smaller batches.",
+    "downloadingSingle": "Downloading...",
+    "downloadingSelected": "Downloading selected tracks...",
+    "stopFailed": "Stopping the download didn't finish. Try again."
+  },
+  "resolution": {
+    "unknownPlatform": "Unknown platform",
+    "deferred": "{platform} link conversion isn't available yet",
+    "queryTooLong": "The search text is too long. Shorten the song or artist name",
+    "unsupported": "Only song names, YouTube and YouTube Music links are supported",
+    "emptyPlaylist": "This playlist has no tracks to import",
+    "untitledPlaylist": "Untitled playlist",
+    "noSource": "No usable source found",
+    "restartPreview": "Restart the app to use the new single preview; you can still download now.",
+    "providerUnresponsive": "External sources aren't responding right now",
+    "searchFailed": "YT Music / YouTube search failed: {reason}",
+    "checkFailed": "This source can't be checked right now.",
+    "notFound": "Source not found: {reason}",
+    "providerRequiredYtMusic": "Turn on external sources in Settings to look for a source on YT Music.",
+    "ytMusicOpened": "YT Music opened in your browser. Copy the link back here once you find the source.",
+    "ytMusicOpenFailed": "YT Music can't be opened right now.",
+    "ytMusicOpenFailedStatus": "YT Music can't be opened right now. Try again later."
+  },
+  "result": {
+    "completed": "{count} downloaded",
+    "failed": "{count} failed",
+    "cancelled": "{count} stopped",
+    "local": "{count} already in the library",
+    "saveError": "The playlist wasn't saved. Try again",
+    "incomplete": "Download not completed",
+    "stopped": "Download stopped",
+    "done": "Download finished",
+    "imported": "Import finished",
+    "songAdded": "Song added to the library",
+    "viewResults": "View download results"
+  },
+  "candidate": {
+    "kinds": {
+      "ytMusicSong": "Song",
+      "youtubeTopicAudio": "Official audio",
+      "youtubeOfficialAudio": "Official audio",
+      "ytMusicSource": "YT Music source",
+      "youtubeLyricVideo": "Lyric video",
+      "youtubeOfficialMv": "MV",
+      "youtubeLive": "Live",
+      "youtubeVariant": "Other version",
+      "youtubeOther": "Video"
+    },
+    "kindFallback": "Source",
+    "views": "{count} view | {count} views",
+    "viewsCompact": "{count} views",
+    "identity": {
+      "pending": "Not identified",
+      "review": "Needs review",
+      "identified": "Identified"
+    }
+  },
+  "batch": {
+    "stopFailed": "Stop not completed",
+    "notSaved": "List not saved yet",
+    "phases": {
+      "queued": "Waiting to download",
+      "running": "Downloading",
+      "finalizing": "Finishing the list",
+      "completed": "Done",
+      "failed": "Not completed",
+      "cancelled": "Stopped"
+    }
+  },
+  "filters": {
+    "all": "All",
+    "missing": "Not downloaded",
+    "downloaded": "Downloaded",
+    "failed": "Failed"
+  },
+  "failures": {
+    "invalidInput": {
+      "label": "Link not recognized",
+      "hint": "Paste a YouTube or YouTube Music song or playlist link."
+    },
+    "membersOnly": {
+      "label": "Members only",
+      "hint": "This is channel members-only content and can't be downloaded."
+    },
+    "ageRestricted": {
+      "label": "Age verification needed",
+      "hint": "Sign in to YouTube in Firefox first, then retry."
+    },
+    "regionRestricted": {
+      "label": "Region restricted",
+      "hint": "This video is blocked in your region. You can import with Local audio above instead."
+    },
+    "videoUnavailable": {
+      "label": "Video unavailable",
+      "hint": "The video was deleted or made private. Use a link to another version."
+    },
+    "rateLimited": {
+      "label": "Download limit reached",
+      "hint": "YouTube is temporarily limiting downloads. Wait a few minutes and retry."
+    },
+    "networkError": {
+      "label": "Network connection failed",
+      "hint": "Check your network connection and retry."
+    },
+    "diskFull": {
+      "label": "Not enough storage",
+      "hint": "Free up space, or choose another download folder in Settings."
+    },
+    "botProtected": {
+      "label": "Bot check",
+      "hint": "This song can't be downloaded from YouTube right now. You can import a file you already have with Local audio above."
+    },
+    "unknown": {
+      "label": "Download failed",
+      "hint": "Retry later; if it keeps failing, import with Local audio above."
+    }
+  }
+}

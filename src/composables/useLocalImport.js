@@ -11,6 +11,7 @@ import {
   RIGHT_DOCK_SURFACE_PREPARATION,
   useAppRightDock,
 } from './useAppRightDock.js';
+import { t } from '../utils/i18n.js';
 
 const CONVERSION_FORMAT_LABELS = Object.freeze({
   aiff: 'AIFF',
@@ -42,23 +43,23 @@ const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const notifications = useAppNotifications();
 const RESULT_KEY = NOTIFICATION_KEYS.LOCAL_IMPORT_RESULT;
 const SKIP_REASONS = Object.freeze({
-  'duplicate-content': '曲庫已有相同音訊',
-  'unsupported-extension': '不支援此檔案格式',
-  'unsupported-codec': '目前無法直接播放此編碼',
-  'unsupported-media': '包含不支援的媒體串流',
-  'missing-file': '找不到檔案',
-  'not-a-file': '不是音訊檔案',
-  'invalid-path': '無法讀取檔案',
-  'invalid-audio': '無法讀取音訊內容',
-  'format-mismatch': '檔案格式與內容不符',
-  'source-changed': '來源檔案已變更，請重新選取',
-  'conversion-failed': '相容轉檔未完成',
-  'import-failed': '匯入未完成',
+  'duplicate-content': t('import.local.skipReasons.duplicateContent'),
+  'unsupported-extension': t('import.local.skipReasons.unsupportedExtension'),
+  'unsupported-codec': t('import.local.skipReasons.unsupportedCodec'),
+  'unsupported-media': t('import.local.skipReasons.unsupportedMedia'),
+  'missing-file': t('import.local.skipReasons.missingFile'),
+  'not-a-file': t('import.local.skipReasons.notAFile'),
+  'invalid-path': t('import.local.skipReasons.invalidPath'),
+  'invalid-audio': t('import.local.skipReasons.invalidAudio'),
+  'format-mismatch': t('import.local.skipReasons.formatMismatch'),
+  'source-changed': t('import.local.skipReasons.sourceChanged'),
+  'conversion-failed': t('import.local.skipReasons.conversionFailed'),
+  'import-failed': t('import.local.skipReasons.importFailed'),
 });
 const skippedResults = computed(() =>
   state.skipped.map((item) => ({
     filename: item.filename,
-    message: SKIP_REASONS[item.reason] ?? '無法匯入此檔案',
+    message: SKIP_REASONS[item.reason] ?? t('import.local.skipUnknown'),
   })),
 );
 
@@ -95,11 +96,17 @@ function notifyResult(conversion = false) {
   const needsAttention =
     state.skipped.some((item) => item.reason !== 'duplicate-content') ||
     Boolean(state.conversionReview);
-  const taskLabel = conversion ? '相容轉檔' : '本機匯入';
-  const title =
+  const title = t(
     !conversion && state.conversionReview
-      ? '需要相容轉檔'
-      : `${taskLabel}${error ? '未完成' : '完成'}`;
+      ? 'import.local.titles.needsConversion'
+      : conversion
+        ? error
+          ? 'import.local.titles.conversionFailed'
+          : 'import.local.titles.conversionDone'
+        : error
+          ? 'import.local.titles.importFailed'
+          : 'import.local.titles.importDone',
+  );
   let tone = state.statusType === 'idle' ? 'info' : 'success';
   if (needsAttention) tone = 'warning';
   if (error) tone = 'danger';
@@ -112,7 +119,7 @@ function notifyResult(conversion = false) {
     lifecycle: persistent ? 'persistent' : 'transient',
     // Transient results carry no action; the Import tab keeps the details.
     ...(persistent && {
-      actionLabel: '查看匯入結果',
+      actionLabel: t('import.local.viewResults'),
       action() {
         const dock = useAppRightDock();
         dock.selectPreparationTab('import');
@@ -133,7 +140,11 @@ const conversionReviewMessage = computed(() => {
         .filter(Boolean),
     ),
   ];
-  return `${files.length} 個 ${labels.join('、')} 檔案需要轉成 FLAC；原檔不會修改，轉換副本可能使用較多空間。`;
+  return t(
+    'import.local.conversionReview',
+    { count: files.length, formats: labels.join(t('common.listSeparator')) },
+    files.length,
+  );
 });
 
 function normalizedConversionReview(review) {
@@ -167,20 +178,39 @@ function skippedLabel(skipped) {
   const duplicateCount = duplicateSkipCount(skipped);
   const otherCount = skipped.length - duplicateCount;
   if (duplicateCount > 0 && otherCount === 0) {
-    return `略過 ${duplicateCount} 個重複檔案`;
+    return t(
+      'import.local.skipped.duplicates',
+      { count: duplicateCount },
+      duplicateCount,
+    );
   }
   if (duplicateCount > 0) {
-    return `略過 ${duplicateCount} 個重複、${otherCount} 個檔案`;
+    return t('import.local.skipped.duplicatesAndOthers', {
+      duplicates: duplicateCount,
+      others: otherCount,
+    });
   }
-  return `略過 ${skipped.length} 個檔案`;
+  return t(
+    'import.local.skipped.any',
+    { count: skipped.length },
+    skipped.length,
+  );
 }
 
 function compatibilityFailureMessage(skipped) {
   if (skipped.every((item) => item?.reason === 'unsupported-codec')) {
-    return `沒有可匯入的音訊檔；${skipped.length} 個檔案使用目前無法直接播放的編碼。`;
+    return t(
+      'import.local.codecOnly',
+      { count: skipped.length },
+      skipped.length,
+    );
   }
   if (skipped.every((item) => item?.reason === 'unsupported-media')) {
-    return `沒有可匯入的音訊檔；${skipped.length} 個檔案包含影片或其他不支援的媒體串流。`;
+    return t(
+      'import.local.mediaOnly',
+      { count: skipped.length },
+      skipped.length,
+    );
   }
   return '';
 }
@@ -196,14 +226,21 @@ function setResult(result) {
   if (conversionReview) {
     state.statusType = imported.length > 0 ? 'success' : 'pending';
     state.message = imported.length
-      ? `已複製 ${imported.length} 首；另有 ${conversionReview.files.length} 個檔案需要相容轉檔`
-      : `${conversionReview.files.length} 個檔案需要相容轉檔`;
+      ? t('import.local.copiedNeedsConversion', {
+          count: imported.length,
+          files: conversionReview.files.length,
+        })
+      : t(
+          'import.local.needsConversionCount',
+          { count: conversionReview.files.length },
+          conversionReview.files.length,
+        );
     return;
   }
 
   if (imported.length === 0 && skipped.length === 0) {
     state.statusType = 'idle';
-    state.message = '沒有選取音訊檔';
+    state.message = t('import.local.noneSelected');
     return;
   }
 
@@ -211,21 +248,26 @@ function setResult(result) {
     state.statusType = 'success';
     state.message =
       skipped.length > 0
-        ? `已複製 ${imported.length} 首，${skippedLabel(skipped)}`
-        : `已複製 ${imported.length} 首`;
+        ? t('import.local.copiedWithSkipped', {
+            count: imported.length,
+            skipped: skippedLabel(skipped),
+          })
+        : t('import.local.copied', { count: imported.length }, imported.length);
     return;
   }
 
   if (skipped.length === duplicateSkipCount(skipped)) {
     state.statusType = 'idle';
-    state.message = `沒有新增曲目，${skippedLabel(skipped)}`;
+    state.message = t('import.local.noneAddedSkipped', {
+      skipped: skippedLabel(skipped),
+    });
     return;
   }
 
   state.statusType = 'error';
   state.message =
     compatibilityFailureMessage(skipped) ||
-    `沒有可匯入的音訊檔，${skippedLabel(skipped)}`;
+    t('import.local.noneImportableSkipped', { skipped: skippedLabel(skipped) });
 }
 
 function setConversionResult(result) {
@@ -238,19 +280,26 @@ function setConversionResult(result) {
   if (imported.length > 0) {
     state.statusType = 'success';
     state.message = skipped.length
-      ? `已轉換並匯入 ${imported.length} 首，${skippedLabel(skipped)}`
-      : `已轉換並匯入 ${imported.length} 首`;
+      ? t('import.local.convertedWithSkipped', {
+          count: imported.length,
+          skipped: skippedLabel(skipped),
+        })
+      : t('import.local.converted', { count: imported.length });
     return;
   }
   if (skipped.length > 0 && skipped.length === duplicateSkipCount(skipped)) {
     state.statusType = 'idle';
-    state.message = `沒有新增曲目，${skippedLabel(skipped)}`;
+    state.message = t('import.local.noneAddedSkipped', {
+      skipped: skippedLabel(skipped),
+    });
     return;
   }
   state.statusType = 'error';
   state.message = skipped.length
-    ? `沒有完成相容轉檔，${skippedLabel(skipped)}`
-    : '沒有完成相容轉檔，請重新選擇檔案。';
+    ? t('import.local.conversionNoneSkipped', {
+        skipped: skippedLabel(skipped),
+      })
+    : t('import.local.conversionNone');
 }
 
 async function importFiles() {
@@ -260,7 +309,7 @@ async function importFiles() {
     typeof window.Utawakui?.importLocalAudioFiles !== 'function'
   ) {
     state.statusType = 'error';
-    state.message = '需要重新啟動應用程式才能使用本機音訊匯入。';
+    state.message = t('import.local.restartImport');
     notifyResult();
     return;
   }
@@ -279,8 +328,8 @@ async function importFiles() {
     state.statusType = 'error';
     state.message = recordError(err, {
       code: 'LOCAL_IMPORT_FAILED',
-      title: '本機匯入失敗',
-      message: '目前無法匯入音訊檔，請再試一次。',
+      title: t('import.local.failedTitle'),
+      message: t('import.local.failedMessage'),
       source: 'local-import',
       operation: 'import',
       context: { retryable: true },
@@ -299,7 +348,7 @@ async function convertPendingFiles() {
     typeof window.Utawakui?.convertLocalAudioFiles !== 'function'
   ) {
     state.statusType = 'error';
-    state.message = '需要重新啟動應用程式才能使用相容轉檔。';
+    state.message = t('import.local.restartConversion');
     notifyResult(true);
     return;
   }
@@ -309,22 +358,22 @@ async function convertPendingFiles() {
     const enabled = await requireFeatureGate(
       FEATURE_IDS.AUDIO_PROCESSING_FLOW,
       {
-        title: '需要啟用音訊處理',
-        message: '相容轉檔會在本機建立 FLAC 副本，請先查看並啟用音訊處理。',
+        title: t('import.local.needsAudioTitle'),
+        message: t('import.local.needsAudioMessage'),
         source: 'local-import',
         operation: 'compatibility-conversion',
       },
     );
     if (!enabled) {
       state.statusType = 'pending';
-      state.message = '請先在設定啟用音訊處理，再回來執行相容轉檔。';
+      state.message = t('import.local.needsAudioStatus');
       return;
     }
 
     state.summaryNotified = false;
     notifications.clear(RESULT_KEY);
     state.statusType = 'pending';
-    state.message = '正在建立 FLAC 相容副本…';
+    state.message = t('import.local.converting');
     const result = await window.Utawakui.convertLocalAudioFiles(
       state.conversionReview.sessionId,
     );
@@ -340,8 +389,8 @@ async function convertPendingFiles() {
     });
     if (appError.code === 'FEATURE_DEPENDENCY_MISSING') {
       requestFeatureSetup(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
-        title: '需要準備 FFmpeg',
-        message: '請先在設定準備 FFmpeg，再回來執行相容轉檔。',
+        title: t('import.local.needsFfmpegTitle'),
+        message: t('import.local.needsFfmpegMessage'),
         source: 'local-import',
         operation: 'compatibility-conversion',
         context: {
@@ -349,7 +398,7 @@ async function convertPendingFiles() {
         },
       });
       state.statusType = 'pending';
-      state.message = '請先在設定準備 FFmpeg，再回來執行相容轉檔。';
+      state.message = t('import.local.needsFfmpegMessage');
       return;
     }
 
@@ -357,8 +406,8 @@ async function convertPendingFiles() {
     state.statusType = 'error';
     state.message = recordError(err, {
       code: 'LOCAL_IMPORT_CONVERSION_FAILED',
-      title: '相容轉檔失敗',
-      message: '相容轉檔未完成，請重新選擇檔案後再試一次。',
+      title: t('import.local.conversionFailedTitle'),
+      message: t('import.local.conversionFailedMessage'),
       source: 'local-import',
       operation: 'compatibility-conversion',
       context: { retryable: true },
