@@ -11,8 +11,7 @@ describe('browser sign-in preference', () => {
   it('discloses the browser data it reads and starts unchecked', async () => {
     const html = await render({});
     expect(html).toContain('瀏覽器登入資料');
-    expect(html).toContain('Chrome、Edge 或 Firefox');
-    expect(html).toContain('YouTube 帳號');
+    expect(html).toContain('讀取本機瀏覽器的 YouTube 登入資料');
     expect(html).not.toContain('checked');
   });
   it('reflects an explicit opt-in', async () => {
