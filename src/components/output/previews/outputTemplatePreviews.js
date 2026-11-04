@@ -1,6 +1,8 @@
 // Shared canvas rules must precede every preview's own rules.
 import '../ObsTemplateMockup.base.css';
 import ArtCardPreview from './ArtCardPreview.vue';
+import ChalkboardVerticalPreview from './ChalkboardVerticalPreview.vue';
+import CenteredVerticalPreview from './CenteredVerticalPreview.vue';
 import CoverPlayerPreview from './CoverPlayerPreview.vue';
 import KaraokeStackPreview from './KaraokeStackPreview.vue';
 import KineticPopPreview from './KineticPopPreview.vue';
@@ -18,6 +20,8 @@ const TEMPLATE_PREVIEWS = Object.freeze({
   'karaoke-stack': KaraokeStackPreview,
   'kinetic-pop': KineticPopPreview,
   'ornate-vertical': OrnateVerticalPreview,
+  'chalkboard-vertical': ChalkboardVerticalPreview,
+  'centered-vertical': CenteredVerticalPreview,
   'manga-frame': MangaFramePreview,
   'live-stage': LiveStagePreview,
   'art-card': ArtCardPreview,

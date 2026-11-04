@@ -2,6 +2,10 @@ import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
+  clearChalkboardVertical,
+  renderChalkboardVertical,
+} from './chalkboardVertical.mjs';
+import {
   applyOverlayAppearance,
   normalizeOverlayAppearance,
 } from '../shared/appearance.mjs';
@@ -1595,6 +1599,7 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearLiveStagePresentation(elements, options);
   clearKineticPopPresentation(elements, options);
   clearOrnateVerticalPresentation(elements, options);
+  clearChalkboardVertical(elements);
 }
 
 let performanceRenderId = 0;
@@ -1666,7 +1671,16 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isLiveStage = templateId === 'live-stage';
   const isKineticPop = templateId === 'kinetic-pop';
   const isOrnateVertical = templateId === 'ornate-vertical';
-  if (isLiveStage || isKineticPop || isOrnateVertical) {
+  const isChalkboard = templateId === 'chalkboard-vertical';
+  const isCenteredVertical = templateId === 'centered-vertical';
+  if (!isChalkboard) clearChalkboardVertical(elements);
+  if (
+    isLiveStage ||
+    isKineticPop ||
+    isOrnateVertical ||
+    isChalkboard ||
+    isCenteredVertical
+  ) {
     entranceAnimations.get(elements.current)?.cancel?.();
     entranceAnimations.delete(elements.current);
   }
@@ -1703,14 +1717,35 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     return;
   }
   clearKineticPopPresentation(elements, renderOptions);
-  if (isOrnateVertical) {
+  if (isOrnateVertical || isChalkboard || isCenteredVertical) {
     stopMangaAnimations(elements, renderOptions, true);
     clearMangaLyrics(elements);
     clearLyricsRenderState(elements.current, renderOptions);
     clearLyricsRenderState(elements.next, renderOptions);
     clearKtvLanePresentation(elements.root);
-    renderOrnateVerticalPresentation(elements, frame, renderOptions);
-    elements.root.hidden = !frame.visible;
+    if (isChalkboard) {
+      clearOrnateVerticalPresentation(elements, renderOptions);
+      renderChalkboardVertical(elements, frame, renderOptions);
+    } else if (isCenteredVertical) {
+      clearOrnateVerticalPresentation(elements, renderOptions);
+      const text = frame.visible
+        ? String(frame.currentText ?? '').trimEnd()
+        : '';
+      if (
+        elements.current.children.length ||
+        elements.current.textContent !== text
+      )
+        elements.current.textContent = text;
+      elements.current.dataset.currentText = text;
+      delete elements.current.dataset.segmented;
+      elements.current.removeAttribute('aria-label');
+      elements.current.hidden = false;
+      elements.next.textContent = '';
+      elements.root.hidden = !text;
+    } else {
+      renderOrnateVerticalPresentation(elements, frame, renderOptions);
+      elements.root.hidden = !frame.visible;
+    }
     elements.root.setAttribute('lang', frame.language || 'und');
     elements.root.dataset.revision = String(frame.revision);
     return;

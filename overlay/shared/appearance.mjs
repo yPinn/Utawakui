@@ -119,6 +119,10 @@ export function applyOverlayAppearance(document, slot) {
     `${appearance.positionOffsetX}%`,
   );
   root.style?.setProperty?.(
+    '--ovl-user-position-x-viewport',
+    `${appearance.positionOffsetX}vw`,
+  );
+  root.style?.setProperty?.(
     '--ovl-user-position-y',
     `${appearance.positionOffsetY}%`,
   );

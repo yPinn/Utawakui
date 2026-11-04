@@ -55,7 +55,12 @@ function createMeasurement(
   fineSource,
   literalPrefixes = false,
 ) {
-  const vertical = ['manga-frame', 'ornate-vertical'].includes(templateId);
+  const chalkboard = templateId === 'chalkboard-vertical';
+  const centered = templateId === 'centered-vertical';
+  const vertical =
+    centered ||
+    chalkboard ||
+    ['manga-frame', 'ornate-vertical'].includes(templateId);
   const target =
     templateId === 'manga-frame'
       ? elements.mangaBubbles?.querySelector('.lyrics-overlay__manga-text')
@@ -78,7 +83,9 @@ function createMeasurement(
   }
   if (
     (rootRect.width <= 0 || rootRect.height <= 0) &&
-    templateId !== 'karaoke-stack'
+    templateId !== 'karaoke-stack' &&
+    !chalkboard &&
+    !centered
   )
     return null;
   const targetRect = target.getBoundingClientRect();
@@ -95,7 +102,7 @@ function createMeasurement(
     ) -
     padding * 2;
   let height = Math.min(
-    window.innerHeight * 0.65,
+    window.innerHeight * (centered ? 0.68 : chalkboard ? 0.44 : 0.65),
     window.innerHeight - padding * 2,
   );
   if (templateId === 'live-stage') {
@@ -112,7 +119,7 @@ function createMeasurement(
   if (!vertical) width = Math.min(width, size * 18);
   // Every physical row/vertical column is an active sequential batch. Other
   // template lanes remain previews rather than extra simultaneous current rows.
-  const rows = 1;
+  const rows = chalkboard ? 3 : 1;
   if (width <= 0 || height <= 0) return null;
   const probe = document.createElement('span');
   probe.setAttribute('aria-hidden', 'true');
@@ -157,7 +164,7 @@ function createMeasurement(
     if (counters) counters.probeCount++;
     const rect = probe.getBoundingClientRect();
     const fits =
-      rect.width <= width &&
+      rect.width <= (chalkboard || centered ? lineHeight * 1.2 : width) &&
       rect.height <= (vertical ? height : lineHeight * 1.2);
     measured.set(text, fits);
     return fits;
@@ -187,6 +194,11 @@ function createMeasurement(
           (vertical ? height : width) * rows * 1.25
       )
         return false;
+      if (chalkboard) {
+        const columns = layout(text);
+        return columns !== null && columns.length <= rows;
+      }
+      if (centered) return fitsLine(inkText);
       // Reject oversized probes with one browser layout before tokenizing rows.
       // This avoids recursively laying out every row of a 2,000-glyph candidate.
       const at = counters ? measureNow() : 0;
@@ -510,7 +522,13 @@ export function createLyricsFitController(options = {}) {
       // On same-source invalidation the complete committed batch already owns
       // the live DOM. Measuring the unsplit source here would reset its entrance
       // identity (and briefly replace its ink) before the scheduler can commit.
-      if (lastPrepared?.key !== key || !lastPrepared.batched) {
+      const chalkboard = settings.templateId === 'chalkboard-vertical';
+      const centered = settings.templateId === 'centered-vertical';
+      if (
+        !chalkboard &&
+        !centered &&
+        (lastPrepared?.key !== key || !lastPrepared.batched)
+      ) {
         options.renderForMeasurement?.(
           settings.templateId === 'manga-frame'
             ? { ...frame, mangaFit: true }
@@ -536,13 +554,24 @@ export function createLyricsFitController(options = {}) {
       if (!measurement) return { frame, delayMs: null };
       try {
         const planAt = counters ? measureNow() : 0;
-        const plan = planLyricsDisplay(line, {
+        const layoutOptions = {
           fits: measurement.fits,
           rate,
-          sequentialRows: true,
-          phraseRows: true,
+          sequentialRows: !chalkboard,
+          phraseRows: !chalkboard && !centered,
+          keepLatinRuns: centered,
           language: base.language,
-        });
+          ...(chalkboard || centered ? { minimumDwellMs: 800 } : {}),
+        };
+        let plan = planLyricsDisplay(line, layoutOptions);
+        if ((chalkboard || centered) && plan.reason === 'duration-capacity') {
+          // Preserve the entire source line when its cue is too short for the
+          // preferred dwell. The renderer cuts the reveal for very short pages.
+          plan = planLyricsDisplay(line, {
+            ...layoutOptions,
+            minimumDwellMs: 0,
+          });
+        }
         const multiline = [];
         entry = {
           plan,
@@ -599,6 +628,8 @@ export function createLyricsFitController(options = {}) {
         'manga-frame',
         'kinetic-pop',
         'ornate-vertical',
+        'chalkboard-vertical',
+        'centered-vertical',
       ].includes(settings.templateId);
     const projected = projectLyricsDisplayFrame(frame, line, entry.plan, at, {
       ...settings,

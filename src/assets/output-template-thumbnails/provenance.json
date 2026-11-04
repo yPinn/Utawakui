@@ -32,6 +32,24 @@
       "delivery": "pending-current-runtime-review",
       "humanReview": "not-tested"
     },
+    "centered-vertical": {
+      "file": "centered-vertical.jpg",
+      "sha256": "2a2272166e40ec6b61fdac957929081b46fb72e4673ccb9f18ddc4ec3528f1c4",
+      "content": "current-runtime-capture",
+      "rights": "project-owned-synthetic-artwork",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "OBS 32.2.2, 1920×1080 /overlay/lyrics, synthetic lyric at 5400 ms, default settings, 1280×720 JPEG"
+    },
+    "chalkboard-vertical": {
+      "file": "chalkboard-vertical.jpg",
+      "sha256": "545f853d2dca794fbebbb956675fd996f5cb6e64f60a1938c19db00770c2a3bc",
+      "content": "current-runtime-capture",
+      "rights": "project-owned-synthetic-artwork",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "OBS 32.2.2, 1920×1080 /overlay/lyrics, synthetic lyric at 5400 ms, default settings, 1280×720 JPEG"
+    },
     "ornate-vertical": {
       "file": "ornate-vertical.jpg",
       "sha256": "e2255408ec2aaf7160f481de33059c388279d82b1f17deed6ea671f5de8abdba",

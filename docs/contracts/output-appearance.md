@@ -1,6 +1,6 @@
 # Output 外觀契約
 
-三個 slot、九個模板的可調欄位、本機來源與預覽一致性。分階段計畫見[外觀 set 計畫](../governance/appearance-sets-plan.md)；傳輸與頁面生命週期見 [Output runtime](output-runtime.md)；可見驗收見[驗收清單](../operations/output-appearance-acceptance.md)。
+三個 slot 的模板可調欄位、本機來源與預覽一致性。分階段計畫見[外觀 set 計畫](../governance/appearance-sets-plan.md)；傳輸與頁面生命週期見 [Output runtime](output-runtime.md)；可見驗收見[驗收清單](../operations/output-appearance-acceptance.md)。
 
 ## 權威
 
@@ -33,7 +33,7 @@
 | lyricsPresentationPolicyId                       | opt；balanced                     | Live Stage 的 broadcast-compact／balanced／literal，獨立列在模板進階顯示              |
 | captureSize                                      | 依 registry                       | 只開放各模板支援的尺寸                                                                |
 
-`alignment`、`contentWidth` 存在於 schema，但九個模板都未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
+`alignment`、`contentWidth` 存在於 schema，但模板未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
 
 每個欄位另宣告 [ADR 0027](../adr/0027-output-template-elements-and-property-workspace.md) 的定義屬性；`group` 仍只決定 Inspector 分組，畫面與儲存不受這些屬性影響。
 
@@ -64,7 +64,7 @@
 - Workbench 有元素的模板在 Inspector 頂端提供「調整對象」，預設「整個模板」；選元素時只顯示該元素的屬性群組，底部「恢復模板預設」一併重設元素設定。
 - 畫布點選：Workbench 預覽 iframe 帶 `workbench=1`（複製給 OBS 的 URL 不帶），Output 頁面依 `data-ovl-element` 回報目前模板已宣告元素的矩形；同一元素多個節點取聯集，隱藏者不回報。控制台只在目前選中的擷取尺寸上疊選取層：點元素矩形選該元素（重疊時取面積最小者），點其他區域（含封面）選「整個模板」，與「調整對象」共用同一選取。選取層只處理指標，鍵盤與輔助技術使用「調整對象」。
 
-## 九模板
+## 模板清單
 
 歌單slot預設為receipt-setlist，並排列於歌單模板首位；既存合法模板選擇維持原值。共同預設為 original Look、強度 100、medium 字級；下表只列差異。
 
@@ -75,6 +75,8 @@
 | karaoke-stack／1920×1080       | 只有共用 Look／字級                                         | 雙 lane、count-in、timing mask、字型角色                     |
 | kinetic-pop／1920×1080         | 材料 candy-rim、排列 straight                               | 三層 paint order、phrase source boundaries                   |
 | ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                        | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
+| chalkboard-vertical／1920×1080 | 左區預設／右區可選、字級、X／Y 微調                         | 當前句右至左直書、每頁至多三欄、逐字分向擦除                 |
+| centered-vertical／1920×1080   | 字級                                                        | 中央單欄、固定起讀點、長句分頁、直接換句                     |
 | live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 balanced       | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
 | manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto | Ruby atomicity、框內安全版面、bubble timing                  |
 | art-card／480×270              | 字型 sans、字重 bold                                        | 唱片 playhead、封套交換、驗證過的 artwork route              |
@@ -97,7 +99,9 @@ Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，�
 - **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1）；唯一消費 beat phase 與段落的模板（見[音樂分析](music-analysis.md)）。
 - **live-stage**：轉播精簡（移除可判定的 filler、連續重複與 CJK 顯示標點）、平衡分行、忠實原文三個 policy，都保留 canonical `sourceText` 與 line／segment identity。Caption 先列出 1／2、2／1、2／2 候選，依容量、作者與跨語邊界、附著性與幾何選解，不為個別歌曲加例外。多頁且有 T2 時以 `lyricsSourceMapping.mjs` 映回來源區間插值，失敗才用 T1 權重。
 - **manga-frame**：依 document language、實際假名或既有讀音投影 `ja`／`other`。預設封裝 GenEi Antique 6.0a，可改 sans／serif／rounded；ruby 繼承對話框字體。可從 `lyrics.document` 取得已存在且 identity 相符的日文讀音；publisher 只讀 sidecar，不為 OBS 啟動讀音 worker。
-- **ornate-vertical**：以 grapheme 保留原文，連續漢字為一個 reveal 單元、假名逐字、標點附著前一單元、拉丁字母與數字成詞；整份文件最多一個漢字群組成為同尺寸藝術詞。長句依原文斷點、標點與日文詞邊界拆成至多兩欄，不切連續漢字、不建立新 timing。`ornateVerticalMotion.mjs` 提供 Browser Source 與 Gallery 共用的 stagger／裁切揭示，不用位移旋轉縮放；換句時舊句完整淡出後新句才進場，seek、來源中斷與 reduced motion 直接 commit。字型為封裝的 Hina Mincho 與 GenEi Antique。
+- **ornate-vertical**：以 grapheme 保留原文，連續漢字為一個 reveal 單元、假名逐字、標點附著前一單元、拉丁字母與數字成詞；整份文件最多一個漢字群組成為同尺寸藝術詞。長句依原文斷點、標點與日文詞邊界拆成至多兩欄，不切連續漢字、不建立新 timing。`ornateVerticalMotion.mjs` 提供 Browser Source 與 Gallery 共用的 stagger／裁切揭示，不用位移旋轉縮放；連續批次換句時新舊句在同一位置重疊進退場，seek、來源中斷與 reduced motion 直接 commit。字型為封裝的 Hina Mincho 與 GenEi Antique。
+- **chalkboard-vertical**：畫布橫向等分，預設左區，可切右區。每頁至多三欄，欄序固定由右到左。每欄的文字與右線由上向下逐字寫入，退場時文字由下向上、右線由上向下按字距收回。暫停、seek、重連及 reduced motion 直接就位。沿用 Open Huninn、字級和 X ±12%、Y ±25% 微調，水平位置受所選區邊界約束。見[第一版驗收](../research/design/lyrics-overlays/chalkboard-vertical-build-spec.md)。
+- **centered-vertical** 在中央固定軸線顯示當前頁。欄位從畫布高度 15% 起讀，長句按高度分頁，換句與換頁直接替換。以 Open Huninn 直排文字，混語中的英文側轉。[中央直書首版](../research/design/lyrics-overlays/centered-vertical-build-spec.md)
 - **kinetic-pop**：依 source line index 輪替三種材質；每個計時行任一時刻只有一列，行內作者空白編譯成依字重分配 `lineProgress` 的連續 phrases，有 T2 時以 source mapping 對齊起點。無空白的過長內容須由上游斷行，模板不以第二列掩蓋。Glyph 以輸出畫布為中心，超寬內容向兩側等量溢出。`kineticPopMotion.mjs` 共用 28ms 內重複的 burst delay 與可選的八相位 rest pose（「端正」為零偏移，「些微偏移」才保留傾斜、基線與尺寸差）；三個材質 track 共用每字姿態，fill 先畫、細白 stroke 後畫。字型為 M PLUS Rounded 1c 與 Keifont。
 - **混語長句**：`lyricsPhraseBreaks.mjs` 提供最多兩段的顯示候選，只在來源 T2 或已套用 T1+ 的精確起點切換；無時間、粗詞塊或過快切換保留整句，不插值。Kinetic Pop 與來源視窗的預覽共用同一組時間。
 
@@ -146,7 +150,7 @@ Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.jso
 
 ## 驗證
 
-相鄰測試比較九模板 canonical frame、設定正規化、V3 讀音 document、空態、Vue reactive prop 與 URL 隔離。`createAcceptanceMatrix()` 產生逐模板的適用 case 與證據層級；純投影通過不代表 runtime 或人工驗收完成，也不代表作品可上架。全模板的 Browser Source／透明合成與長時間效能仍待驗；W3 的有限視窗擷取結果見[驗收紀錄](../operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。
+相鄰測試比較模板 canonical frame、設定正規化、V3 讀音 document、空態、Vue reactive prop 與 URL 隔離。`createAcceptanceMatrix()` 產生逐模板的適用 case 與證據層級；純投影通過不代表 runtime 或人工驗收完成，也不代表作品可上架。全模板的 Browser Source／透明合成與長時間效能仍待驗；W3 的有限視窗擷取結果見[驗收紀錄](../operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。
 
 ## 收據歌單
 

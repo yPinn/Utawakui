@@ -39,6 +39,10 @@ function createFixtureRoots() {
     path.join(overlayRoot, 'lyrics', 'ornateVertical.mjs'),
     'export const ornateRenderer = true;',
   );
+  fs.copyFileSync(
+    path.resolve('overlay/lyrics/chalkboardVertical.mjs'),
+    path.join(overlayRoot, 'lyrics', 'chalkboardVertical.mjs'),
+  );
   fs.writeFileSync(
     path.join(sharedRoot, 'presentation', 'state.mjs'),
     'export const state = true;',
@@ -226,6 +230,11 @@ describe('output HTTP delivery', () => {
     const ornateRenderer = await fetch(
       `${baseUrl}/overlay/lyrics/ornateVertical.mjs`,
     );
+    const chalkboard = await fetch(
+      `${baseUrl}/overlay/lyrics/chalkboardVertical.mjs`,
+    );
+    expect(chalkboard.status).toBe(200);
+    expect(await chalkboard.text()).toContain('renderChalkboardVertical');
     const ornateMotion = await fetch(
       `${baseUrl}/shared/presentation/ornateVerticalMotion.mjs`,
     );

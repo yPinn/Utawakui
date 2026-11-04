@@ -3,6 +3,51 @@ import { createLyricsFitController } from './lyricsFit.mjs';
 import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
 
 describe('lyric fit controller lifecycle', () => {
+  it('paginates a long mixed line into a single vertical column without losing source text', () => {
+    const templateId = 'centered-vertical';
+    const { controller, elements, snapshot } = surface(templateId);
+    const text = '夜が明けるまで，stay with me，陪我走過這條街'.repeat(2);
+    snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 7000 }];
+    const frame = { visible: true, lineIndex: 0, currentText: text };
+    let position = 1000;
+    const pages = [];
+    while (position < 7000) {
+      snapshot.playback.positionMs = position;
+      const result = controller.prepare(snapshot, frame, { templateId });
+      pages.push(result.frame.currentText);
+      const end = Number(elements.root.dataset.fitPageEndMs);
+      expect(end).toBeGreaterThan(position);
+      position = end;
+    }
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.filter((page) => page.includes('stay with me'))).toHaveLength(
+      2,
+    );
+    expect(
+      pages.every((page) => page.trimEnd().length * 16 <= 540 * 0.68),
+    ).toBe(true);
+    expect(pages.join('')).toBe(text);
+  });
+
+  it('keeps every Chalkboard column when the cue is shorter than the preferred page dwell', () => {
+    const templateId = 'chalkboard-vertical';
+    const { controller, elements, snapshot } = surface(templateId);
+    const text = '夜明け前の街を歩く'.repeat(7);
+    snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 1950 }];
+    const frame = { visible: true, lineIndex: 0, currentText: text };
+    const first = controller.prepare(snapshot, frame, { templateId }).frame;
+    snapshot.playback.positionMs = 1949;
+    const last = controller.prepare(snapshot, frame, { templateId }).frame;
+
+    expect(elements.root.dataset.fitStatus).toBe('ready');
+    expect(first.displayFit.pageCount).toBe(2);
+    expect(first.chalkboardColumns.length).toBeLessThanOrEqual(3);
+    expect(last.chalkboardColumns.length).toBeLessThanOrEqual(3);
+    expect(
+      [...first.chalkboardColumns, ...last.chalkboardColumns].join(''),
+    ).toBe(text);
+  });
+
   it('prepares empty template styles once per invalidation without writing future lyrics', () => {
     const s = surface('focus-line');
     const jobs = [];

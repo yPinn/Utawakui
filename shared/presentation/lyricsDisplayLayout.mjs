@@ -67,6 +67,7 @@ function partition(
   language,
   vocalEnds = [],
   literalPrefixes = false,
+  keepLatinRuns = phraseRows,
 ) {
   const boundaries = [...glyphs.segment(text)]
     .map((p) => p.index)
@@ -82,7 +83,7 @@ function partition(
     authoredEnds.push(...lyricsAuthoredPhraseBreaks(text, { language }));
   authoredEnds.push(...vocalEnds.filter((at) => boundaries.includes(at)));
   authoredEnds.sort((a, b) => a - b);
-  const fittingRuns = phraseRows
+  const fittingRuns = keepLatinRuns
     ? lyricsLatinRuns(text).filter((run) => {
         const sourceEnd =
           run.sourceEnd +
@@ -215,7 +216,10 @@ export function planLyricsDisplay(line, options = {}) {
     return unsupported;
   const rate =
     Number.isFinite(options.rate) && options.rate > 0 ? options.rate : 1;
-  const minimumMs = MIN_DWELL_MS * rate;
+  const minimumMs =
+    (Number.isFinite(options.minimumDwellMs)
+      ? Math.max(0, options.minimumDwellMs)
+      : MIN_DWELL_MS) * rate;
   const start = line.startMs,
     end = options.endMs ?? line.endMs;
   const timing = timingMap({ ...line, endMs: end });
@@ -260,6 +264,7 @@ export function planLyricsDisplay(line, options = {}) {
           options.language,
           vocalEnds,
           line.vocalParts !== undefined,
+          options.phraseRows === true || options.keepLatinRuns === true,
         )
     : [];
   if (!pages)
@@ -290,6 +295,7 @@ export function planLyricsDisplay(line, options = {}) {
       options.language,
       vocalEnds,
       line.vocalParts !== undefined,
+      options.phraseRows === true || options.keepLatinRuns === true,
     );
   const base = { sourceTiming: timing.source, pages, pageTiming: null };
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start)

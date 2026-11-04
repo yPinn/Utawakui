@@ -22,6 +22,21 @@ describe('output appearance schema', () => {
     style: 'Regular',
   };
 
+  it('defaults Chalkboard to the left third and preserves the saved right third', () => {
+    const options = { templateId: 'chalkboard-vertical' };
+    expect(normalizeOutputAppearance({}, options).positionAnchor).toBe(
+      'center-left',
+    );
+    expect(
+      normalizeOutputAppearance({ positionAnchor: 'center' }, options)
+        .positionAnchor,
+    ).toBe('center-left');
+    expect(
+      normalizeOutputAppearance({ positionAnchor: 'center-right' }, options)
+        .positionAnchor,
+    ).toBe('center-right');
+  });
+
   it('defines the inspector hierarchy once in common-to-specific order', () => {
     expect(OUTPUT_APPEARANCE_GROUPS).toEqual([
       { id: 'color-treatment', order: 10 },

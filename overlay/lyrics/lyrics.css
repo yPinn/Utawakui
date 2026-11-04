@@ -672,6 +672,148 @@
     -webkit-text-stroke: 0.045em var(--ovl-color-kinetic-ink);
   }
 
+  :root[data-ovl-template='centered-vertical'],
+  :root[data-ovl-template='centered-vertical'] body,
+  :root[data-ovl-template='chalkboard-vertical'],
+  :root[data-ovl-template='chalkboard-vertical'] body {
+    background: transparent;
+  }
+
+  :root[data-ovl-template='centered-vertical'] .lyrics-overlay,
+  :root[data-ovl-template='chalkboard-vertical'] .lyrics-overlay {
+    inset: 0;
+    inline-size: auto;
+    transform: none;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  :root[data-ovl-template='centered-vertical'] .lyrics-overlay {
+    padding-block: 15vh;
+    grid-template-rows: minmax(0, 1fr);
+    place-items: start center;
+  }
+
+  :root[data-ovl-template='centered-vertical'] .lyrics-overlay__current {
+    font:
+      400 4.5vh / 1.16 'Utawakui Open Huninn',
+      sans-serif;
+    letter-spacing: 0.08em;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    white-space: pre;
+    text-align: start;
+    max-inline-size: 70vh;
+    overflow: clip;
+    color: var(--ovl-primitive-color-paper);
+    text-shadow: 0 0 0.08em var(--ovl-primitive-color-ink);
+  }
+
+  :root[data-ovl-template='centered-vertical'][data-ovl-scale='small']
+    .lyrics-overlay__current {
+    font-size: 3.8vh;
+  }
+
+  :root[data-ovl-template='centered-vertical'][data-ovl-scale='large']
+    .lyrics-overlay__current {
+    font-size: 5.2vh;
+  }
+
+  :root[data-ovl-template='centered-vertical']
+    :is(.lyrics-overlay__next, .lyrics-overlay__ktv-count-in) {
+    display: none;
+  }
+
+  :root[data-ovl-template='chalkboard-vertical'] .lyrics-overlay__current {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    place-items: center;
+    inline-size: 100%;
+    block-size: 100%;
+    max-inline-size: none;
+    font-family: 'Utawakui Open Huninn', sans-serif;
+    font-size: 4.5vh;
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: 0.075em;
+    text-align: start;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+  }
+
+  :root[data-ovl-template='chalkboard-vertical'][data-ovl-scale='small']
+    .lyrics-overlay__current {
+    font-size: 3.8vh;
+  }
+
+  :root[data-ovl-template='chalkboard-vertical'][data-ovl-scale='large']
+    .lyrics-overlay__current {
+    font-size: 5.2vh;
+  }
+
+  :root[data-ovl-template='chalkboard-vertical']
+    :is(.lyrics-overlay__next, .lyrics-overlay__ktv-count-in) {
+    display: none;
+  }
+
+  .lyrics-overlay__chalkboard-group {
+    position: relative;
+    grid-area: 1 / 1;
+    inset-block-start: var(--ovl-user-position-y);
+    transform: translateX(
+      clamp(
+        calc(-50vw / 3 + 50% + 8px),
+        var(--ovl-user-position-x-viewport, 0px),
+        calc(50vw / 3 - 50% - 8px)
+      )
+    );
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    gap: 0.52em;
+    direction: ltr;
+  }
+
+  :root[data-ovl-position='center-right'] .lyrics-overlay__chalkboard-group {
+    grid-column: 3;
+  }
+
+  .lyrics-overlay__chalkboard-column {
+    display: flex;
+    gap: 0.18em;
+    color: var(--ovl-primitive-color-paper);
+    filter: drop-shadow(0 0 1px var(--ovl-primitive-color-ink))
+      drop-shadow(0 0 2px var(--ovl-primitive-color-ink))
+      drop-shadow(0 1px 1px var(--ovl-primitive-color-ink));
+  }
+
+  .lyrics-overlay__chalkboard-ink {
+    display: block;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    white-space: pre;
+    max-inline-size: 44vh;
+    overflow: clip;
+    background: radial-gradient(
+        circle at 30% 25%,
+        color-mix(in srgb, currentColor 62%, transparent) 17%,
+        currentColor 35%
+      )
+      0 0 / 3px 5px;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .lyrics-overlay__chalkboard-rule {
+    inline-size: max(1px, 0.03em);
+    background: currentColor;
+    opacity: 0.78;
+  }
+
   :root[data-ovl-template='ornate-vertical'],
   :root[data-ovl-template='ornate-vertical'] body {
     background: transparent;
@@ -1218,7 +1360,9 @@
 /* Capacity pages retain each template's typography; their text is already
    measured at this font size. No ellipsis or font shrinking is used. */
 @layer components {
-  .lyrics-overlay[data-fit-active='true'] .lyrics-overlay__current {
+  :root:not([data-ovl-template='centered-vertical'])
+    .lyrics-overlay[data-fit-active='true']
+    .lyrics-overlay__current {
     overflow: visible;
     white-space: pre-wrap;
     overflow-wrap: anywhere;

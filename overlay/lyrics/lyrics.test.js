@@ -34,6 +34,10 @@ function gsapHarness() {
           this.tweens.push({ position, target, vars });
           return this;
         },
+        fromTo(target, from, vars, position) {
+          this.tweens.push({ position, target, from, vars });
+          return this;
+        },
         add(callback, position) {
           this.additions.push(callback);
           this.additionPositions.push(position);
@@ -53,6 +57,9 @@ function element(ownerDocument = null, localName = '') {
   const value = {
     ownerDocument,
     children: [],
+    get lastElementChild() {
+      return this.children.at(-1) ?? null;
+    },
     hidden: false,
     dataset: {},
     attributes: {},
@@ -146,6 +153,88 @@ function domElements() {
 function kineticLineTracks(line) {
   return line.children.flatMap((row) => row.children);
 }
+
+it('replaces the Centered Vertical caption immediately and hides it between cues', () => {
+  const elements = domElements();
+  const options = { templateId: 'centered-vertical' };
+  renderLyricsFrame(
+    elements,
+    { visible: true, currentText: '夜色亮起' },
+    options,
+  );
+  expect(elements.current.textContent).toBe('夜色亮起');
+  renderLyricsFrame(
+    elements,
+    { visible: true, currentText: 'stay with me，陪我走' },
+    options,
+  );
+  expect(elements.current.textContent).toBe('stay with me，陪我走');
+  expect(elements.current.animate).not.toHaveBeenCalled();
+  renderLyricsFrame(elements, { visible: false }, options);
+  expect(elements.root.hidden).toBe(true);
+  expect(elements.current.textContent).toBe('');
+});
+
+it('writes Chalkboard characters right to left, erases in opposite directions, and settles on seek', () => {
+  const elements = domElements();
+  const { gsap, timelines } = gsapHarness();
+  const options = { templateId: 'chalkboard-vertical', gsap };
+  const frame = {
+    visible: true,
+    chalkboardPlaying: true,
+    chalkboardRemainingMs: 800,
+    displayBatchId: 'old',
+    currentText: '夜色亮起',
+    chalkboardColumns: ['夜色', '亮起'],
+  };
+  renderLyricsFrame(elements, frame, options);
+  const oldLine = elements.current.children[0];
+  expect(oldLine.children.map((column) => column.textContent)).toEqual([
+    '夜色',
+    '亮起',
+  ]);
+  expect(timelines[0].tweens).toHaveLength(4);
+  expect(timelines[0].tweens[1].target).toEqual(oldLine.children[0].children);
+  expect(timelines[0].tweens[2].target).toEqual(oldLine.children[1].children);
+  expect(timelines[0].tweens[2].position).toBeGreaterThan(
+    timelines[0].tweens[1].position,
+  );
+  expect(timelines[0].tweens[0].target).toEqual(oldLine.children[0].children);
+  expect(timelines[0].tweens[0].from.clipPath).toBe('inset(0% 0% 100% 0%)');
+  expect(timelines[0].tweens[0].vars.clipPath).toBe('inset(0% 0% 50% 0%)');
+
+  const next = {
+    ...frame,
+    displayBatchId: 'new',
+    currentText: 'stay with me',
+    chalkboardColumns: ['stay with me'],
+  };
+  renderLyricsFrame(elements, next, options);
+  expect(timelines[0].kill).toHaveBeenCalledOnce();
+  expect(
+    timelines[1].tweens.slice(0, 2).map(({ vars }) => vars.clipPath),
+  ).toEqual(['inset(0% 0% 50% 0%)', 'inset(50% 0% 0% 0%)']);
+  expect(
+    timelines[1].tweens.slice(2, 4).map(({ vars }) => vars.clipPath),
+  ).toEqual(['inset(0% 0% 100% 0%)', 'inset(100% 0% 0% 0%)']);
+  renderLyricsFrame(
+    elements,
+    { ...next, timelineDiscontinuity: true },
+    options,
+  );
+  expect(timelines[1].kill).toHaveBeenCalledOnce();
+  timelines[0].options.onComplete();
+  timelines[1].options.onComplete();
+  expect(elements.current.children).toHaveLength(1);
+  expect(elements.current.textContent).toBe('stay with me');
+  expect(elements.next.hidden).toBe(true);
+
+  renderLyricsFrame(elements, { ...next, visible: false }, options);
+  expect(elements.root.hidden).toBe(false);
+  timelines[2].options.onComplete();
+  expect(elements.root.hidden).toBe(true);
+  expect(elements.current.children).toHaveLength(0);
+});
 
 it.each([
   'focus-line',

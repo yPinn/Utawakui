@@ -6,6 +6,8 @@ const DETAILS = Object.freeze({
   'karaoke-stack': t('outputPanel.previewLimits.karaokeStack'),
   'kinetic-pop': t('outputPanel.previewLimits.kineticPop'),
   'ornate-vertical': t('outputPanel.previewLimits.ornateVertical'),
+  'chalkboard-vertical': t('outputPanel.previewLimits.chalkboardVertical'),
+  'centered-vertical': t('outputPanel.previewLimits.centeredVertical'),
   'live-stage': t('outputPanel.previewLimits.liveStage'),
   'manga-frame': t('outputPanel.previewLimits.mangaFrame'),
   'art-card': t('outputPanel.previewLimits.artCard'),

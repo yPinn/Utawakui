@@ -242,6 +242,28 @@
         }
       }
     },
+    "centeredVertical": {
+      "name": "Centered Vertical",
+      "availability": "Uses line-synced lyrics.",
+      "summary": "One centered vertical column with a fixed starting point.",
+      "detail": "Read from top to bottom. Lyrics cut directly to the next line, and long lines flow across pages on the same axis.",
+      "layoutLabel": "Centered column",
+      "motionLabel": "Direct cut",
+      "columnTag": "Single column",
+      "anchorTag": "Fixed start",
+      "surfaceTag": "Transparent"
+    },
+    "chalkboardVertical": {
+      "name": "Chalkboard Vertical",
+      "availability": "Uses line-synced lyrics.",
+      "summary": "White chalk and rules reveal one character at a time.",
+      "detail": "Choose the left or right third. Columns read from right to left, while text and rules erase in opposite directions.",
+      "layoutLabel": "Side columns",
+      "motionLabel": "Opposing wipes",
+      "chalkTag": "White chalk",
+      "columnTag": "Character reveal",
+      "sideTag": "Side placement"
+    },
     "liveStage": {
       "name": "Stage Captions",
       "availability": {
@@ -522,6 +544,8 @@
     "karaokeStack": "Wipe sample, not actual per-character sync.",
     "kineticPop": "Fixed phrase sample; doesn't show line changes across the song.",
     "ornateVertical": "Two-line loop sample; doesn't show full line changes.",
+    "chalkboardVertical": "Still preview. Use the Workbench to see line changes and column fitting.",
+    "centeredVertical": "Still preview. Use the Workbench to see pagination and line changes.",
     "liveStage": "Card and captions are shown at fixed sample times.",
     "mangaFrame": "Panels shown together; doesn't show handoffs or per-character sync.",
     "artCard": "Text artwork sample; the spin doesn't follow playback position.",

@@ -456,6 +456,18 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'kineticArrangement',
     ],
   },
+  'centered-vertical': {
+    keys: ['fontScale'],
+  },
+  'chalkboard-vertical': {
+    keys: ['fontScale', 'positionAnchor', 'positionOffsetX', 'positionOffsetY'],
+    fields: {
+      positionAnchor: {
+        defaultValue: 'center-left',
+        optionIds: ['center-left', 'center-right'],
+      },
+    },
+  },
   'ornate-vertical': {
     keys: [
       'paletteId',

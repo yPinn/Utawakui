@@ -25,6 +25,8 @@
     "karaoke-stack": "lyrics",
     "kinetic-pop": "lyrics",
     "ornate-vertical": "lyrics",
+    "chalkboard-vertical": "lyrics",
+    "centered-vertical": "lyrics",
     "live-stage": "lyrics",
     "manga-frame": "lyrics",
     "art-card": "now-playing",
@@ -49,6 +51,14 @@
       "supported": ["full"]
     },
     "ornate-vertical": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "centered-vertical": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "chalkboard-vertical": {
       "default": "full",
       "supported": ["full"]
     },

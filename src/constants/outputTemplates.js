@@ -314,6 +314,48 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ],
   },
   {
+    id: 'centered-vertical',
+    kind: 'lyrics',
+    order: 31,
+    name: t('outputPanel.templates.centeredVertical.name'),
+    availability: {
+      summary: t('outputPanel.templates.centeredVertical.availability'),
+    },
+    summary: t('outputPanel.templates.centeredVertical.summary'),
+    detail: t('outputPanel.templates.centeredVertical.detail'),
+    preview: {
+      layoutLabel: t('outputPanel.templates.centeredVertical.layoutLabel'),
+      motionLabel: t('outputPanel.templates.centeredVertical.motionLabel'),
+    },
+    tags: [
+      t('outputPanel.templates.centeredVertical.columnTag'),
+      t('outputPanel.templates.centeredVertical.anchorTag'),
+      t('outputPanel.templates.centeredVertical.surfaceTag'),
+    ],
+    settings: [],
+  },
+  {
+    id: 'chalkboard-vertical',
+    kind: 'lyrics',
+    order: 29,
+    name: t('outputPanel.templates.chalkboardVertical.name'),
+    availability: {
+      summary: t('outputPanel.templates.chalkboardVertical.availability'),
+    },
+    summary: t('outputPanel.templates.chalkboardVertical.summary'),
+    detail: t('outputPanel.templates.chalkboardVertical.detail'),
+    preview: {
+      layoutLabel: t('outputPanel.templates.chalkboardVertical.layoutLabel'),
+      motionLabel: t('outputPanel.templates.chalkboardVertical.motionLabel'),
+    },
+    tags: [
+      t('outputPanel.templates.chalkboardVertical.chalkTag'),
+      t('outputPanel.templates.chalkboardVertical.columnTag'),
+      t('outputPanel.templates.chalkboardVertical.sideTag'),
+    ],
+    settings: [],
+  },
+  {
     id: 'live-stage',
     kind: 'lyrics',
     order: 20,

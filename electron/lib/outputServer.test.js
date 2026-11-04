@@ -607,6 +607,7 @@ describe('outputServer', () => {
         '/shared/browser/lyricsFinePaint.mjs',
         '/overlay/lyrics/lyricsFine.mjs',
         '/overlay/lyrics/lyricsFit.mjs',
+        '/overlay/lyrics/chalkboardVertical.mjs',
         '/overlay/lyrics/ktvDisplayFit.mjs',
       ]),
     );

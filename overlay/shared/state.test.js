@@ -66,6 +66,18 @@ function snapshot(overrides = {}) {
 }
 
 describe('overlay state selectors', () => {
+  it('keeps Chalkboard Vertical transparent for unsynced lyrics with an active line', () => {
+    const value = snapshot();
+    value.lyrics.synced = false;
+    value.lyrics.lines = [{ text: '夜色亮起', startMs: null, endMs: null }];
+    value.lyrics.activeLineIndex = 0;
+    const frame = selectLyricsOverlayFrame(value, {
+      templateId: 'chalkboard-vertical',
+      nowMs: Date.parse(value.generatedAt),
+    });
+    expect(frame).toMatchObject({ visible: false, currentText: '' });
+  });
+
   it('selects the current and next non-empty lyric lines', () => {
     const value = snapshot();
     const frame = selectLyricsFrame(value, {

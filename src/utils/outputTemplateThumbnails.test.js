@@ -31,7 +31,14 @@ describe('bundled output template thumbnails', () => {
         blocked.push(preset.id);
         expect(record.delivery).toBe('blocked-G01');
         expect(record.rights).toBe('unverified');
-      } else if (['receipt-setlist', 'cover-player'].includes(preset.id)) {
+      } else if (
+        [
+          'receipt-setlist',
+          'cover-player',
+          'chalkboard-vertical',
+          'centered-vertical',
+        ].includes(preset.id)
+      ) {
         expect(record.content).toBe('current-runtime-capture');
         expect(record.delivery).toBe('pending-user-visual-acceptance');
         expect(record.rights).toBe(

@@ -47,6 +47,10 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/liveStage.mjs': ['lyrics', 'liveStage.mjs'],
   '/overlay/lyrics/mangaFrame.mjs': ['lyrics', 'mangaFrame.mjs'],
   '/overlay/lyrics/ornateVertical.mjs': ['lyrics', 'ornateVertical.mjs'],
+  '/overlay/lyrics/chalkboardVertical.mjs': [
+    'lyrics',
+    'chalkboardVertical.mjs',
+  ],
   '/overlay/now-playing': ['now-playing', 'index.html'],
   '/overlay/now-playing/': ['now-playing', 'index.html'],
   '/overlay/now-playing/now-playing.mjs': ['now-playing', 'now-playing.mjs'],

@@ -258,6 +258,22 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
       outputAppearanceFieldKeysForTemplate('ornate-vertical'),
     ),
   }),
+  'centered-vertical': Object.freeze({
+    id: 'centered-vertical',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('centered-vertical'),
+    ),
+  }),
+  'chalkboard-vertical': Object.freeze({
+    id: 'chalkboard-vertical',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('chalkboard-vertical'),
+    ),
+  }),
   'manga-frame': Object.freeze({
     id: 'manga-frame',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
@@ -280,6 +296,8 @@ const TEMPLATE_PROFILE_IDS = Object.freeze({
   'karaoke-stack': 'classic-ktv',
   'kinetic-pop': 'kinetic-pop',
   'ornate-vertical': 'ornate-vertical',
+  'chalkboard-vertical': 'chalkboard-vertical',
+  'centered-vertical': 'centered-vertical',
   'manga-frame': 'manga-frame',
   'live-stage': 'live-stage',
 });
@@ -2005,6 +2023,8 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         'generic-caption',
         'kinetic-pop',
         'ornate-vertical',
+        'chalkboard-vertical',
+        'centered-vertical',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
         ? analyzeLyricsSource(sourceText, {

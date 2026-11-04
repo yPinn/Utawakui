@@ -7,7 +7,7 @@
 
 ## 選定三模板的 Browser Source 短輪次
 
-這組基線固定使用 Queue Board、Karaoke Stack、Art Card。現行歌單 slot 預設已改為 Receipt Setlist；本節不表示目前的全部 default，也不把這組結果套用到 Receipt Setlist、Cover Player 或其後版本。新一輪驗收依[現行模板與設定](../contracts/output-appearance.md#九模板)另記版本、尺寸及結果。
+這組基線固定使用 Queue Board、Karaoke Stack、Art Card。現行歌單 slot 預設已改為 Receipt Setlist；本節不表示目前的全部 default，也不把這組結果套用到 Receipt Setlist、Cover Player 或其後版本。新一輪驗收依[現行模板與設定](../contracts/output-appearance.md#模板清單)另記版本、尺寸及結果。
 
 目標約10–15分鐘，先單模板再三者並用，不開直播、不做耐久測試。只使用目前版本的既有設定與正常動態；不修改模板、CSS、動畫配方或付款機制。OBS內移動來源只為避免互相遮擋，不當作模板排版修正。
 

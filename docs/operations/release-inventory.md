@@ -499,6 +499,13 @@ separate display-time provenance and local font/container measurement, with no
 new model, dependency or unpacked payload. Co-located tests remain excluded;
 the closed module-graph delivery test covers all three routes.
 
+Chalkboard Vertical adds `overlay/lyrics/chalkboardVertical.mjs` under the
+existing overlay package rule and one exact Browser Source route. It reuses the
+bundled Open Huninn font and GSAP runtime. Its CSS grain adds no external
+artwork or unpacked payload.
+The Gallery JPEG is a derived capture of the synthetic test scene. Vite bundles
+the image into `dist/` and leaves the source provenance catalog outside the package.
+
 Shared text annotations add `shared/presentation/lyricsTextProcessing.mjs`
 under the existing `shared/**/*` package rule and an exact HTTP module route.
 The route is included in the closed Browser Source graph test; adjacent tests

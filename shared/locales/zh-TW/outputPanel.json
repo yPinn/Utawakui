@@ -242,6 +242,28 @@
         }
       }
     },
+    "centeredVertical": {
+      "name": "中央直書",
+      "availability": "使用逐行歌詞。",
+      "summary": "中央單欄直書，固定起讀點。",
+      "detail": "歌詞由上往下讀，換句直接切換，長句沿中央單欄分頁。",
+      "layoutLabel": "中央單欄",
+      "motionLabel": "直接切換",
+      "columnTag": "單欄直書",
+      "anchorTag": "固定起點",
+      "surfaceTag": "透明背景"
+    },
+    "chalkboardVertical": {
+      "name": "黑板直書",
+      "availability": "使用逐行歌詞。",
+      "summary": "粉筆白字與直線逐字寫入。",
+      "detail": "字幕可放在左區或右區，由右至左讀，文字與右線逐字分向擦除。",
+      "layoutLabel": "偏側直欄",
+      "motionLabel": "分向擦除",
+      "chalkTag": "粉筆白字",
+      "columnTag": "逐字書寫",
+      "sideTag": "左右構圖"
+    },
     "liveStage": {
       "name": "轉播字卡",
       "availability": {
@@ -522,6 +544,8 @@
     "karaokeStack": "掃色示意，非實際逐字同步。",
     "kineticPop": "固定句段示意，未呈現整首換句。",
     "ornateVertical": "兩句循環示意，未呈現完整換詞。",
+    "chalkboardVertical": "定格示意，實際分欄和換句請看工作台。",
+    "centeredVertical": "定格示意，實際分頁和換句請看工作台。",
     "liveStage": "字卡與字幕為固定時間點示意。",
     "mangaFrame": "對白同時展示，未呈現交接與逐字同步。",
     "artCard": "文字封面示意，旋轉不對應播放位置。",

@@ -231,6 +231,13 @@ export function projectLyricsDisplayFrame(
   }
   if (options.templateId === 'manga-frame') projected.mangaFit = true;
   const rows = options.rows ?? [{ text: page.text }];
+  if (options.templateId === 'chalkboard-vertical') {
+    projected.chalkboardColumns = rows.map((row) => row.text);
+    if (Number.isFinite(page.endMs)) {
+      projected.chalkboardRemainingMs =
+        Math.max(0, page.endMs - positionMs) / (options.rate || 1);
+    }
+  }
   if (options.templateId === 'kinetic-pop') {
     const presentation = adaptKineticPopLyricsPresentation(page.text, {
       lineIndex: base.lineIndex,

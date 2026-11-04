@@ -59,6 +59,22 @@ export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
     music: { cadence: false, beatPhase: false, sections: false },
     scheduler: ['lyrics-lines'],
   }),
+  'centered-vertical': freezeCapabilities({
+    minimumTimingTier: 'T1',
+    t1Progress: 'weighted-pages',
+    t2Progress: 'source-mapped-pages',
+    usesSourceMappedTiming: true,
+    music: { cadence: false, beatPhase: false, sections: false },
+    scheduler: ['lyrics-lines'],
+  }),
+  'chalkboard-vertical': freezeCapabilities({
+    minimumTimingTier: 'T1',
+    t1Progress: 'weighted-pages',
+    t2Progress: 'source-mapped-pages',
+    usesSourceMappedTiming: true,
+    music: { cadence: false, beatPhase: false, sections: false },
+    scheduler: ['lyrics-lines'],
+  }),
   'live-stage': freezeCapabilities({
     minimumTimingTier: 'T1',
     t1Progress: 'weighted-pages',

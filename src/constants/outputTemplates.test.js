@@ -18,6 +18,8 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'live-stage': '轉播字卡',
   'kinetic-pop': '躍動字幕',
   'ornate-vertical': '和風直書',
+  'chalkboard-vertical': '黑板直書',
+  'centered-vertical': '中央直書',
   'manga-frame': '分格對白',
   'art-card': '星空黑膠',
   'cover-player': '封面電台',
@@ -40,6 +42,13 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'spacingDensity',
   ],
   'karaoke-stack': ['paletteId', 'lookAmount', 'fontScale'],
+  'centered-vertical': ['fontScale'],
+  'chalkboard-vertical': [
+    'fontScale',
+    'positionAnchor',
+    'positionOffsetX',
+    'positionOffsetY',
+  ],
   'live-stage': [
     'paletteId',
     'lookAmount',
@@ -361,7 +370,9 @@ describe('output template registry', () => {
       'live-stage',
       'kinetic-pop',
       'ornate-vertical',
+      'chalkboard-vertical',
       'manga-frame',
+      'centered-vertical',
     ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
@@ -423,6 +434,16 @@ describe('output template registry', () => {
         available: true,
       },
       'manga-frame': { id: 'manga-frame', version: 1, available: true },
+      'centered-vertical': {
+        id: 'centered-vertical',
+        version: 1,
+        available: true,
+      },
+      'chalkboard-vertical': {
+        id: 'chalkboard-vertical',
+        version: 1,
+        available: true,
+      },
       'live-stage': { id: 'live-stage', version: 1, available: true },
     });
     for (const template of lyricsGroup.templates) {

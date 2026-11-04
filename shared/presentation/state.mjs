@@ -2009,13 +2009,18 @@ export function selectLyricsFrame(snapshot, options = {}) {
 }
 
 export function selectLyricsOverlayFrame(snapshot, options = {}) {
+  const templateId =
+    typeof options.templateId === 'string' ? options.templateId : null;
+  if (
+    ['chalkboard-vertical', 'centered-vertical'].includes(templateId) &&
+    snapshot?.lyrics?.synced !== true
+  )
+    return hiddenLyricsFrame(snapshot);
   const frame = selectLyricsFrame(snapshot, options);
   const lines = Array.isArray(snapshot?.lyrics?.lines)
     ? snapshot.lyrics.lines
     : [];
   const nowMs = options.nowMs ?? Date.now();
-  const templateId =
-    typeof options.templateId === 'string' ? options.templateId : null;
   const lyricsPresentationPolicyId =
     templateId === 'live-stage'
       ? normalizeLyricsPresentationPolicyId(
@@ -2114,8 +2119,24 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
             lineIndex: frame.lineIndex,
           })
       : null;
+  const chalkboardLineEndMs =
+    templateId === 'chalkboard-vertical'
+      ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
+      : null;
   return {
     ...frame,
+    ...(templateId === 'chalkboard-vertical'
+      ? {
+          chalkboardPlaying: snapshot?.playback?.status === 'playing',
+          chalkboardRemainingMs: Number.isFinite(chalkboardLineEndMs)
+            ? Math.max(
+                0,
+                (chalkboardLineEndMs - lyricsPositionMs(snapshot, nowMs)) /
+                  playbackRate(snapshot),
+              )
+            : null,
+        }
+      : {}),
     ...(snapshot?.playback?.status === 'seeking'
       ? { timelineDiscontinuity: true }
       : {}),

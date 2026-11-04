@@ -88,6 +88,7 @@ files:
   # Includes lyricsFit/ktvDisplayFit local geometry adapters; shared owns display planners.
   # Fine text paint includes lyricsFine.mjs, shared/browser/lyricsFinePaint.mjs,
   # shared/lyricsFineTiming.mjs with browser-safe, versioned bounds.
+  # Includes the exact-route Chalkboard Vertical renderer.
   - overlay/**/*
   - '!overlay/**/*.test.js'
   - shared/**/*
