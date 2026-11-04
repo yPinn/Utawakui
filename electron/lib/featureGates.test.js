@@ -7,6 +7,20 @@ import {
   isFeatureGateEnabled,
   normalizeFeatureConfirmations,
 } from './featureGates.js';
+import { readLocaleCatalogs } from './localeCatalogs.js';
+
+const notices = readLocaleCatalogs()['zh-TW'].featureGates.notices;
+
+function noticeCopy(gate) {
+  const copy = notices[gate.id.replace(/-(\w)/gu, (_, c) => c.toUpperCase())];
+  const sections = gate.sections.map((key) => copy.sections[key]);
+  return {
+    ...gate,
+    summary: copy.summary,
+    body: sections.map((section) => section.body),
+    bodyTitles: sections.map((section) => section.title),
+  };
+}
 
 describe('featureGates', () => {
   it('builds a provider-flow confirmation record with the current notice version', () => {
@@ -102,10 +116,9 @@ describe('featureGates', () => {
   });
 
   it('keeps user copy bounded, source-specific and free of internal implementation details', () => {
-    const gates = Object.values(FEATURE_GATES);
+    const gates = Object.values(FEATURE_GATES).map(noticeCopy);
     expect(gates).toHaveLength(5);
     for (const gate of gates) {
-      expect(gate.cancelLabel).toBe('取消');
       expect(gate.summary.length).toBeLessThanOrEqual(28);
       expect(gate.summary.endsWith('。')).toBe(true);
       expect(gate.body.length).toBeGreaterThanOrEqual(3);
@@ -123,11 +136,11 @@ describe('featureGates', () => {
         expect(gate.body.join('')).toContain('授權');
       }
     }
-    const provider = getFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-    const lyrics = getFeatureGate(FEATURE_IDS.LYRICS_FLOW);
-    const audio = getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW);
-    const output = getFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW);
-    const obs = getFeatureGate(FEATURE_IDS.OBS_INTEGRATION);
+    const provider = noticeCopy(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW));
+    const lyrics = noticeCopy(getFeatureGate(FEATURE_IDS.LYRICS_FLOW));
+    const audio = noticeCopy(getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW));
+    const output = noticeCopy(getFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW));
+    const obs = noticeCopy(getFeatureGate(FEATURE_IDS.OBS_INTEGRATION));
     expect(provider.noticeVersion).toBe('provider-flow-notice-v5');
     expect(lyrics.noticeVersion).toBe('lyrics-flow-notice-v4');
     expect([audio, output, obs].map((gate) => gate.noticeVersion)).toEqual([

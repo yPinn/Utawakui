@@ -38,7 +38,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
 
   const enablingFeatureId = shallowRef(null);
 
-  // Settings summary copy per gate; notice bodies stay in shared/featureGates.json.
+  // Settings summary copy per gate; notice bodies live under featureGates.notices.
   const gateCopy = (gateId, field) =>
     t(`featureGates.gates.${catalogKey(gateId)}.${field}`);
 

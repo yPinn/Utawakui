@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import gateRegistry from '../../../shared/featureGates.json';
+import { getFeatureGate } from '../../constants/featureGates.js';
 import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function read(relativeUrl) {
@@ -13,7 +13,7 @@ const outputWorkspace = read('../output/ObsOutputWorkspace.vue');
 const outputRuntime = read('../../composables/useOutputRuntime.js');
 
 function feature(id) {
-  return gateRegistry.features.find((entry) => entry.id === id);
+  return getFeatureGate(id);
 }
 
 describe('platform terminology', () => {
@@ -51,7 +51,7 @@ describe('platform terminology', () => {
     expect(publicOutput.summary).toContain('演出畫面');
     expect(publicOutput.summary).not.toContain('Browser Source');
     expect(publicOutput.summary).not.toContain('OBS');
-    expect(obs.title).toContain('OBS');
+    expect(obs.documentTitle).toContain('OBS');
     expect(obs.summary).toContain('OBS');
   });
 });
