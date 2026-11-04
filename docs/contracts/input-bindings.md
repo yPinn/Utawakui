@@ -213,7 +213,7 @@ Main 端的 `app-command`（`browser-backward`、`browser-forward`）由
 | [波形句首／句尾／整句把手](../../src/composables/lyrics/useLyricsWaveformBoundaryDrag.js)       | ←／→                                     | 提前／延後 100ms；合法才修改同一 editor 草稿，每次按鍵沿原復原流程，仍需手動保存。                                                                       |
 | 波形句首／句尾／整句把手                                                                        | Esc                                      | 把手收到 Esc 且有拖曳 gesture 時取消預覽。不是 window 全域取消監聽。                                                                                     |
 
-演出安排主列表與待唱側欄共用待唱順序。聚焦曲目列主按鈕後，用 Alt+↑／↓ 移動同一筆項目一位並儲存。兩處也可拖曳排序。
+演出安排主列表與待唱側欄共用待唱順序。聚焦曲目列主按鈕後，用 Alt+↑／↓ 移動同一筆項目一位並儲存。兩處也可拖曳排序。快捷鍵列在「設定 → 快捷鍵」的情境操作，屬固定按鍵。排序後若曲目列主按鈕在更新時失去焦點，且使用者未移往其他控制，焦點會回到同一筆曲目。
 
 概覽的所有鍵盤平移都只改檢視，不 seek、不播放、不改歌詞。句級數值欄是原生 number input，沿 `change` 提交及驗證；沒有額外 Enter 保存整份歌詞或 Ctrl+Z 的 editor shortcut。
 
