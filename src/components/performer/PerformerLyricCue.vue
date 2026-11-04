@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { lyricsCueTextGroups } from '../../utils/lyricsCueText.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   line: { type: Object, default: null },
@@ -48,7 +49,9 @@ const groups = computed(() => {
       </component>
     </p>
     <p v-if="reading?.romaji" class="performer-lyric-cue__reading">
-      <span v-if="reading.romajiScope === 'line'">整句讀音：</span
+      <span v-if="reading.romajiScope === 'line'">{{
+        t('performer.cue.lineReading')
+      }}</span
       >{{ reading.romaji }}
     </p>
   </div>

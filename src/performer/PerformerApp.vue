@@ -6,6 +6,7 @@ import { usePerformerViewState } from '../composables/usePerformerViewState.js';
 import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from '../utils/rendererSurfaceRegistry.js';
 import '../styles/features/performer.css';
+import { t } from '../utils/i18n.js';
 
 provideUiOverlayHost('performer');
 const performerOverlayHostAttributes =
@@ -53,7 +54,7 @@ const {
       v-if="error"
       class="performer-app__error"
       tone="danger"
-      title="表演者畫面操作未完成"
+      :title="t('performer.selfView.failedTitle')"
       :message="error"
       compact
     />

@@ -6,6 +6,7 @@ import {
 import { normalizePerformerReadingScale } from '../../shared/performerViewContract.mjs';
 import { selectPerformerFrame } from '../../shared/presentation/performerFrame.mjs';
 import { normalizeAppError } from '../utils/appErrors.js';
+import { t } from '../utils/i18n.js';
 
 export function usePerformerViewState() {
   const snapshot = shallowRef(null);
@@ -47,7 +48,7 @@ export function usePerformerViewState() {
   function bridgeMethod(name) {
     const method = window.UtawakuiPerformer?.[name];
     if (typeof method !== 'function') {
-      throw new Error('表演者畫面橋接 API 尚未載入。');
+      throw new Error(t('performer.viewState.bridgeMissing'));
     }
     return method;
   }
@@ -55,7 +56,7 @@ export function usePerformerViewState() {
   function reportError(cause, operation, message) {
     const notice = normalizeAppError(cause, {
       code: `PERFORMER_WINDOW_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-      title: '表演者畫面操作未完成',
+      title: t('performer.selfView.failedTitle'),
       message,
       source: 'performer-window',
       operation,
@@ -135,7 +136,7 @@ export function usePerformerViewState() {
       error.value = reportError(
         cause,
         name,
-        '目前無法完成視窗操作，請再試一次。',
+        t('performer.viewState.windowFailed'),
       );
     }
   }
@@ -155,7 +156,7 @@ export function usePerformerViewState() {
       error.value = reportError(
         cause,
         'set-reading-scale',
-        '閱讀距離設定未儲存，請再試一次。',
+        t('performer.viewState.distanceNotSaved'),
       );
       return false;
     }
@@ -179,7 +180,7 @@ export function usePerformerViewState() {
       error.value = reportError(
         cause,
         'adjust-lyrics-offset',
-        '主控制台目前無法套用同步調整，請再試一次。',
+        t('performer.viewState.syncFailed'),
       );
       return false;
     }
@@ -207,7 +208,7 @@ export function usePerformerViewState() {
       error.value = reportError(
         cause,
         'control',
-        '主控制台目前無法完成操作，請再試一次。',
+        t('performer.viewState.controlFailed'),
       );
       return false;
     } finally {
@@ -230,7 +231,7 @@ export function usePerformerViewState() {
       error.value = reportError(
         cause,
         'initialize',
-        '表演者畫面初始化未完成，請重新開啟。',
+        t('performer.viewState.initFailed'),
       );
     }
   });

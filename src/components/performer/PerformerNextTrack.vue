@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 defineProps({
   track: { type: Object, default: null },
 });
@@ -6,7 +7,7 @@ defineProps({
 
 <template>
   <footer v-if="track" class="performer-next-track">
-    <span>接下來</span>
+    <span>{{ t('performer.track.next') }}</span>
     <strong>{{ track.title }}</strong>
     <small v-if="track?.artist">{{ track.artist }}</small>
   </footer>

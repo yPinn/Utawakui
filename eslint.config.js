@@ -72,6 +72,9 @@ const I18N_MIGRATED = [
   'src/components/output/previews/QueueBoardPreview.vue',
   'src/components/separation/separationQueuePresentation.js',
   'src/composables/{useSeparationQueueNotifications,useSeparationQueue}.js',
+  'src/components/performer/*.vue',
+  'src/composables/{usePerformerSelfView,usePerformerViewState}.js',
+  'src/performer/PerformerApp.vue',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

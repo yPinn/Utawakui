@@ -1,25 +1,21 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import PerformerSurface from './PerformerSurface.vue';
 import { selectPerformerFrame } from '../../../shared/presentation/performerFrame.mjs';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const surfaceSource = readFileSync(
+const surfaceSource = readCatalogSource(
   new URL('./PerformerSurface.vue', import.meta.url),
-  'utf8',
 );
-const cueSource = readFileSync(
+const cueSource = readCatalogSource(
   new URL('./PerformerLyricCue.vue', import.meta.url),
-  'utf8',
 );
-const trackContextSource = readFileSync(
+const trackContextSource = readCatalogSource(
   new URL('./PerformerTrackContext.vue', import.meta.url),
-  'utf8',
 );
-const tokenSource = readFileSync(
+const tokenSource = readCatalogSource(
   new URL('../../styles/features/performer.css', import.meta.url),
-  'utf8',
 );
 
 function frame(overrides = {}) {

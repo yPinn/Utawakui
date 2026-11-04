@@ -3,6 +3,7 @@ import PerformerCueStack from './PerformerCueStack.vue';
 import PerformerActionBar from './PerformerActionBar.vue';
 import PerformerNextTrack from './PerformerNextTrack.vue';
 import PerformerTrackContext from './PerformerTrackContext.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   frame: { type: Object, required: true },
@@ -42,7 +43,10 @@ defineEmits([
           @display-boundary="$emit('display-boundary', $event)"
         />
       </div>
-      <section class="performer-surface__utility-rail" aria-label="提詞工具">
+      <section
+        class="performer-surface__utility-rail"
+        :aria-label="t('performer.surface.tools')"
+      >
         <PerformerNextTrack
           v-if="frame.nextTrack"
           class="performer-surface__next"

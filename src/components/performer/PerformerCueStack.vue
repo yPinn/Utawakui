@@ -2,6 +2,7 @@
 import { computed, useTemplateRef } from 'vue';
 import { usePerformerLyricsFit } from '../../composables/usePerformerLyricsFit.js';
 import PerformerLyricCue from './PerformerLyricCue.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   frame: { type: Object, required: true },
@@ -18,9 +19,9 @@ const display = usePerformerLyricsFit(
 const fittedFrame = computed(() => display.frame.value);
 
 const modeMessages = {
-  idle: '尚未播放曲目',
-  'no-lyrics': '目前曲目沒有可顯示的歌詞',
-  unsynced: '目前歌詞沒有時間軸',
+  idle: t('performer.cue.idle'),
+  'no-lyrics': t('performer.cue.noLyrics'),
+  unsynced: t('performer.cue.unsynced'),
 };
 </script>
 
@@ -43,7 +44,7 @@ const modeMessages = {
       v-if="display.plan.value?.status === 'unfit'"
       class="performer-cue-stack__reading-status"
     >
-      請放大視窗或調整閱讀距離，以完整顯示此句。
+      {{ t('performer.cue.overflow') }}
     </p>
     <p
       v-if="
@@ -53,7 +54,7 @@ const modeMessages = {
       "
       class="performer-cue-stack__reading-status"
     >
-      無讀音資料
+      {{ t('performer.cue.noReading') }}
     </p>
   </section>
 </template>

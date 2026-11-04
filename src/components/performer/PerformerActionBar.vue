@@ -7,6 +7,7 @@ import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import PerformerSyncControls from './PerformerSyncControls.vue';
 import PerformerDisplayControls from './PerformerDisplayControls.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   frame: { type: Object, required: true },
@@ -21,12 +22,18 @@ const playing = computed(() =>
 </script>
 
 <template>
-  <div class="performer-action-bar" role="group" aria-label="提詞器操作列">
-    <UiButtonGroup label="播放控制">
+  <div
+    class="performer-action-bar"
+    role="group"
+    :aria-label="t('performer.actionBar.label')"
+  >
+    <UiButtonGroup :label="t('performer.actionBar.playback')">
       <UiIconButton
         class="performer-action-bar__playback"
         :icon="playing ? Pause : Play"
-        :label="playing ? '暫停' : '播放'"
+        :label="
+          t(playing ? 'performer.actionBar.pause' : 'performer.actionBar.play')
+        "
         :disabled="!frame.trackId"
         :aria-busy="pending || undefined"
         @click="$emit('control', playing ? 'pause' : 'play')"
@@ -40,7 +47,7 @@ const playing = computed(() =>
     <UiSeparator orientation="vertical" />
     <UiPopover
       v-model:open="displayOpen"
-      aria-label="提詞器顯示設定"
+      :aria-label="t('performer.actionBar.displayLabel')"
       placement="top-end"
       :close-on-scroll="false"
       focus-on-open
@@ -50,11 +57,11 @@ const playing = computed(() =>
       }"
     >
       <template #trigger="{ triggerProps }">
-        <UiButtonGroup label="顯示工具">
+        <UiButtonGroup :label="t('performer.actionBar.tools')">
           <UiIconButton
             v-bind="triggerProps"
             :icon="SlidersHorizontal"
-            label="顯示設定"
+            :label="t('performer.actionBar.display')"
             :active="displayOpen"
             @click="displayOpen = !displayOpen"
           />

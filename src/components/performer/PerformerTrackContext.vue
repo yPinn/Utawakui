@@ -1,15 +1,16 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 defineProps({
   frame: { type: Object, required: true },
 });
 
 const statusLabels = {
-  buffering: '緩衝中',
-  ended: '已結束',
-  error: '播放異常',
-  paused: '已暫停',
-  playing: '播放中',
-  seeking: '定位中',
+  buffering: t('performer.track.status.buffering'),
+  ended: t('performer.track.status.ended'),
+  error: t('performer.track.status.error'),
+  paused: t('performer.track.status.paused'),
+  playing: t('performer.track.status.playing'),
+  seeking: t('performer.track.status.seeking'),
 };
 </script>
 
@@ -25,7 +26,7 @@ const statusLabels = {
           class="performer-track-context__playback-indicator"
           aria-hidden="true"
         />
-        {{ statusLabels[frame.playbackStatus] || '待命' }}
+        {{ statusLabels[frame.playbackStatus] || t('performer.track.standby') }}
       </span>
       <span>{{ frame.keyLabel }}</span>
       <span>Tempo {{ frame.tempoLabel }}</span>

@@ -22,6 +22,7 @@ import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
+import { t } from '../utils/i18n.js';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -72,7 +73,7 @@ function bridgeMethod(name) {
   const method =
     typeof window !== 'undefined' ? window.Utawakui?.[name] : undefined;
   if (typeof method !== 'function') {
-    throw new Error('表演者畫面需要重新啟動應用程式才能載入新版橋接 API。');
+    throw new Error(t('performer.selfView.restart'));
   }
   return method;
 }
@@ -81,14 +82,14 @@ function reportPerformerError(error, operation, message) {
   errorOperation = operation;
   return notifications.notifyFailure({
     key: NOTIFICATION_KEYS.PERFORMER_VIEW,
-    title: '表演者畫面操作未完成',
+    title: t('performer.selfView.failedTitle'),
     message,
     error,
     code: `PERFORMER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
     source: 'performer',
     operation,
     context: { retryable: true },
-    actionLabel: '重試',
+    actionLabel: t('performer.selfView.retry'),
     action: toggle,
   });
 }
@@ -235,7 +236,11 @@ function handleControlIntent(intent) {
       availableReadingVariants.value.includes(variant),
     selectReadingVariant,
   }).catch((error) => {
-    reportPerformerError(error, 'control', '提詞器操作未完成，請再試一次。');
+    reportPerformerError(
+      error,
+      'control',
+      t('performer.selfView.controlFailed'),
+    );
     return false;
   });
 }
@@ -247,7 +252,11 @@ const publisher = createLatestAsyncPublisher(
     // streak is recorded and shown, and the next success withdraws it.
     onError: (error) => {
       if (errorOperation === 'publish') return;
-      state.error = reportPerformerError(error, 'publish', '請再試一次。');
+      state.error = reportPerformerError(
+        error,
+        'publish',
+        t('performer.selfView.tryAgain'),
+      );
     },
     onSuccess: () => clearPerformerError('publish'),
   },
@@ -262,7 +271,7 @@ async function refreshStatus() {
     state.error = reportPerformerError(
       error,
       'status',
-      '目前無法讀取表演者畫面狀態。',
+      t('performer.selfView.readFailed'),
     );
     return false;
   }
@@ -278,7 +287,7 @@ async function open() {
     state.error = reportPerformerError(
       error,
       'open',
-      '目前無法開啟表演者畫面，請再試一次。',
+      t('performer.selfView.openFailed'),
     );
     return false;
   } finally {
@@ -296,7 +305,7 @@ async function close() {
     state.error = reportPerformerError(
       error,
       'close',
-      '目前無法關閉表演者畫面，請再試一次。',
+      t('performer.selfView.closeFailed'),
     );
     return false;
   } finally {

@@ -1,6 +1,7 @@
 <script setup>
 import UiIconButton from '../ui/UiIconButton.vue';
 import { Maximize2, Minimize2, Minus, Pin, X } from '../../icons/index.js';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   fullScreen: { type: Boolean, default: false },
@@ -19,29 +20,42 @@ defineEmits([
   <header class="performer-toolbar">
     <div class="performer-toolbar__identity">
       <span class="performer-toolbar__mark" aria-hidden="true" />
-      <span>提詞器</span>
+      <span>{{ t('performer.toolbar.title') }}</span>
     </div>
     <div class="performer-toolbar__controls">
       <UiIconButton
         :icon="Pin"
-        :label="alwaysOnTop ? '取消置頂' : '保持置頂'"
+        :label="
+          t(alwaysOnTop ? 'performer.toolbar.unpin' : 'performer.toolbar.pin')
+        "
         :active="alwaysOnTop"
         size="md"
         @click="$emit('toggle-always-on-top')"
       />
       <UiIconButton
         :icon="Minus"
-        label="最小化"
+        :label="t('performer.toolbar.minimize')"
         size="md"
         @click="$emit('minimize')"
       />
       <UiIconButton
         :icon="fullScreen ? Minimize2 : Maximize2"
-        :label="fullScreen ? '離開全螢幕' : '全螢幕'"
+        :label="
+          t(
+            fullScreen
+              ? 'performer.toolbar.exitFullScreen'
+              : 'performer.toolbar.fullScreen',
+          )
+        "
         size="md"
         @click="$emit('toggle-full-screen')"
       />
-      <UiIconButton :icon="X" label="關閉" size="md" @click="$emit('close')" />
+      <UiIconButton
+        :icon="X"
+        :label="t('performer.toolbar.close')"
+        size="md"
+        @click="$emit('close')"
+      />
     </div>
   </header>
 </template>

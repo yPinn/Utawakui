@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   readingVariant: { type: String, default: 'off' },
@@ -18,40 +19,53 @@ const props = defineProps({
 });
 
 defineEmits(['update:readingScale', 'update:readingVariant']);
-const labels = { off: '關閉', furigana: '假名', romaji: '羅馬字' };
+const labels = {
+  off: t('performer.display.readings.off'),
+  furigana: t('performer.display.readings.furigana'),
+  romaji: t('performer.display.readings.romaji'),
+};
 const readingItems = computed(() =>
   props.readingVariants.map((id) => ({ id, label: labels[id] })),
 );
 
 const readingScaleItems = [
-  { id: 'near', label: '近' },
-  { id: 'desk', label: '桌面' },
-  { id: 'stage', label: '舞台' },
+  { id: 'near', label: t('performer.display.distance.near') },
+  { id: 'desk', label: t('performer.display.distance.desk') },
+  { id: 'stage', label: t('performer.display.distance.stage') },
 ];
 </script>
 
 <template>
-  <section class="performer-display-controls" aria-label="顯示設定">
+  <section
+    class="performer-display-controls"
+    :aria-label="t('performer.display.label')"
+  >
     <div v-if="readingItems.length" class="performer-display-controls__group">
-      <span class="performer-display-controls__label">讀音</span>
+      <span class="performer-display-controls__label">{{
+        t('performer.display.reading')
+      }}</span>
       <UiSegmentedControl
         :items="readingItems"
         :model-value="readingVariant"
-        aria-label="歌詞讀音顯示"
+        :aria-label="t('performer.display.readingLabel')"
         :disabled="disabled"
         :aria-busy="preparing"
         @update:model-value="$emit('update:readingVariant', $event)"
         @reselect="$emit('update:readingVariant', $event)"
       />
       <UiNotice v-if="error" :message="error" tone="danger" compact />
-      <UiHint v-else-if="preparing" role="status">正在準備讀音…</UiHint>
+      <UiHint v-else-if="preparing" role="status">{{
+        t('performer.display.preparing')
+      }}</UiHint>
     </div>
     <div class="performer-display-controls__group">
-      <span class="performer-display-controls__label">閱讀</span>
+      <span class="performer-display-controls__label">{{
+        t('performer.display.distanceTitle')
+      }}</span>
       <UiSegmentedControl
         :items="readingScaleItems"
         :model-value="readingScale"
-        aria-label="閱讀距離"
+        :aria-label="t('performer.display.distanceLabel')"
         @update:model-value="$emit('update:readingScale', $event)"
       />
     </div>

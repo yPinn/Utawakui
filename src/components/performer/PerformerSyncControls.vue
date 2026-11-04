@@ -4,6 +4,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import { Minus, Plus, RotateCcw } from '../../icons/index.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   offset: {
@@ -28,30 +29,35 @@ const offsetLabel = computed(() => {
     ? props.offset.milliseconds / 1000
     : 0;
   const sign = seconds > 0 ? '+' : '';
-  return `${sign}${seconds.toFixed(1)} 秒`;
+  return t('performer.sync.seconds', { value: `${sign}${seconds.toFixed(1)}` });
 });
 </script>
 
 <template>
-  <section class="performer-sync-controls" aria-label="歌詞同步微調">
+  <section
+    class="performer-sync-controls"
+    :aria-label="t('performer.sync.label')"
+  >
     <div class="performer-sync-controls__status">
-      <span>同步</span>
+      <span>{{ t('performer.sync.sync') }}</span>
       <output
         v-if="offset.available"
-        :aria-label="`目前歌詞同步 ${offsetLabel}`"
+        :aria-label="t('performer.sync.current', { offset: offsetLabel })"
         >{{ offsetLabel }}</output
       >
-      <span v-else role="status">無同步歌詞</span>
-      <span v-if="offset.saving" role="status">儲存中</span>
+      <span v-else role="status">{{ t('performer.sync.unsynced') }}</span>
+      <span v-if="offset.saving" role="status">{{
+        t('performer.sync.saving')
+      }}</span>
     </div>
     <UiButtonGroup
       class="performer-sync-controls__actions"
-      label="歌詞時間偏移"
+      :label="t('performer.sync.offset')"
     >
       <UiIconButton
         class="performer-sync-controls__button"
         :icon="Minus"
-        label="延後 0.1 秒"
+        :label="t('performer.sync.later')"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'delay')"
@@ -59,7 +65,7 @@ const offsetLabel = computed(() => {
       <UiIconButton
         class="performer-sync-controls__button"
         :icon="RotateCcw"
-        label="歸零"
+        :label="t('performer.sync.reset')"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'reset')"
@@ -67,7 +73,7 @@ const offsetLabel = computed(() => {
       <UiIconButton
         class="performer-sync-controls__button"
         :icon="Plus"
-        label="提前 0.1 秒"
+        :label="t('performer.sync.earlier')"
         variant="ghost"
         :disabled="controlsDisabled"
         @click="$emit('action', 'advance')"
@@ -78,7 +84,7 @@ const offsetLabel = computed(() => {
       class="performer-sync-controls__error"
       :message="offset.error"
       tone="danger"
-      action-label="重試"
+      :action-label="t('performer.sync.retry')"
       compact
       @action="$emit('action', 'retry')"
     />
