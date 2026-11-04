@@ -44,6 +44,7 @@ import {
 } from '../../utils/waveformPresentation.js';
 import { formatDuration } from '../../utils/format.js';
 import { isEditableTarget } from '../../utils/dom.js';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   trackId: { type: String, default: '' },
   sourceKey: { type: String, default: '' },
@@ -77,7 +78,7 @@ const { position: playbackPosition, active: referenceActive } =
 const { maximized: panelMaximized } = usePanelViewTarget({
   id: 'waveform',
   element: () => waveformPanel.value?.closest('.ui-popover'),
-  label: '原音訊波形',
+  label: t('lyricsEditor.waveform.title'),
   overlay: true,
   enabled: () => open.value && referenceActive.value,
   context: () => props.sourceKey,
@@ -335,12 +336,12 @@ const playbackLabel = computed(() =>
 );
 const playbackStateLabel = computed(() =>
   playbackPosition.value === null
-    ? '未連結播放'
+    ? t('lyricsEditor.waveform.unlinked')
     : cursor.value === null
-      ? '檢視範圍外'
+      ? t('lyricsEditor.waveform.outOfView')
       : props.isPlaying
-        ? '播放中'
-        : '已暫停',
+        ? t('lyricsEditor.waveform.playing')
+        : t('lyricsEditor.waveform.paused'),
 );
 function playheadHead(x) {
   const left = Math.max(0, Math.min(616, x - 12));
@@ -431,7 +432,11 @@ const boundaryHandles = computed(() =>
           {
             kind,
             label:
-              kind === 'move' ? '平移整句' : kind === 'start' ? '句首' : '句尾',
+              kind === 'move'
+                ? t('lyricsEditor.waveform.moveLine')
+                : kind === 'start'
+                  ? t('lyricsEditor.waveform.lineStart')
+                  : t('lyricsEditor.waveform.lineEnd'),
             left: `clamp(0px, calc(${((position - fromMs.value) / (toMs.value - fromMs.value)) * 100}% - 12px), calc(100% - 24px))`,
           },
         ];
@@ -450,14 +455,14 @@ const menuContent = computed(() => ({
         {
           id: 'reload',
           kind: 'action',
-          label: '重新讀取波形',
+          label: t('lyricsEditor.waveform.reload'),
           icon: RefreshCw,
           disabled: clearing.value,
         },
         {
           id: 'clear',
           kind: 'action',
-          label: '清除波形快取',
+          label: t('lyricsEditor.waveform.clearCache'),
           icon: Trash2,
           disabled: clearing.value,
         },
@@ -469,7 +474,9 @@ const menuContent = computed(() => ({
         {
           id: 'help',
           kind: 'action',
-          label: showsHelp.value ? '收起操作說明' : '操作說明',
+          label: showsHelp.value
+            ? t('lyricsEditor.waveform.hideHelp')
+            : t('lyricsEditor.waveform.help'),
           icon: Info,
         },
       ],
@@ -501,42 +508,52 @@ const statusLabel = computed(() =>
   status.value === 'loading' && hasDetail.value
     ? ''
     : ({
-        idle: '尚未建立波形',
-        loading: '讀取波形…',
-        'gate-disabled': '請先在設定啟用音訊處理功能。',
-        'decoder-unavailable': '請先在設定準備 FFmpeg。',
-        'source-stale': '曲庫或原媒體已更新，請重新讀取。',
-        unsupported: '此媒體超出波形支援範圍。',
-        busy: '音訊工作正在收尾，請稍後再試。',
-        cancelled: '讀取已取消',
-        unavailable: '波形目前無法使用',
-        timeout: '讀取逾時，請再試一次。',
+        idle: t('lyricsEditor.waveform.status.idle'),
+        loading: t('lyricsEditor.waveform.status.loading'),
+        'gate-disabled': t('lyricsEditor.waveform.status.gateDisabled'),
+        'decoder-unavailable': t(
+          'lyricsEditor.waveform.status.decoderUnavailable',
+        ),
+        'source-stale': t('lyricsEditor.waveform.status.sourceStale'),
+        unsupported: t('lyricsEditor.waveform.status.unsupported'),
+        busy: t('lyricsEditor.waveform.status.busy'),
+        cancelled: t('lyricsEditor.waveform.status.cancelled'),
+        unavailable: t('lyricsEditor.waveform.status.unavailable'),
+        timeout: t('lyricsEditor.waveform.status.timeout'),
       }[status.value] ?? ''),
 );
 const noticeLabel = computed(
   () =>
-    (boundaryInvalid.value ? '此落點超出媒體或破壞句級範圍，未套用。' : '') ||
+    (boundaryInvalid.value ? t('lyricsEditor.waveform.boundaryInvalid') : '') ||
     (previewPath.value
       ? status.value === 'loading'
-        ? '概覽預覽，正在讀取細節…'
-        : ['概覽預覽', statusLabel.value].filter(Boolean).join('；')
+        ? t('lyricsEditor.waveform.previewLoading')
+        : statusLabel.value
+          ? t('lyricsEditor.waveform.previewWithStatus', {
+              status: statusLabel.value,
+            })
+          : t('lyricsEditor.waveform.preview')
       : statusLabel.value) ||
     [
       markers.value.outside
-        ? `${markers.value.outside} 個句首在原媒體範圍外，未移動或改寫。`
+        ? t(
+            'lyricsEditor.waveform.outsideCount',
+            { count: markers.value.outside },
+            markers.value.outside,
+          )
         : '',
       playbackPosition.value === null || cursor.value === null
         ? playbackStateLabel.value
         : '',
     ]
       .filter(Boolean)
-      .join('；'),
+      .join(t('common.clauseSeparator')),
 );
 </script>
 <template>
   <UiPopover
     :open="open"
-    aria-label="原音訊波形"
+    :aria-label="t('lyricsEditor.waveform.title')"
     placement="bottom-end"
     focus-on-open
     :close-on-scroll="false"
@@ -553,7 +570,7 @@ const noticeLabel = computed(
       <UiIconButton
         v-bind="triggerProps"
         :icon="AudioWaveform"
-        label="原音訊波形"
+        :label="t('lyricsEditor.waveform.title')"
         :active="open"
         :disabled="!trackId"
         @click="waveform.setOpen(!open)"
@@ -567,11 +584,11 @@ const noticeLabel = computed(
       @keydown="zoomWithKey"
     >
       <div class="lyrics-waveform__heading">
-        <strong>原音訊波形</strong>
+        <strong>{{ t('lyricsEditor.waveform.title') }}</strong>
         <UiIconButton
           class="lyrics-waveform__move"
           :icon="GripVertical"
-          label="移動波形面板"
+          :label="t('lyricsEditor.waveform.move')"
           :disabled="panelMaximized"
           @pointerdown="beginPanelDrag"
           @pointermove="movePanel"
@@ -583,12 +600,12 @@ const noticeLabel = computed(
         <PanelViewButton panel-id="waveform" />
         <UiIconButton
           :icon="X"
-          label="關閉原音訊波形"
+          :label="t('lyricsEditor.waveform.close')"
           @click="waveform.setOpen(false)"
         />
         <UiIconButton
           :icon="Ellipsis"
-          label="更多波形操作"
+          :label="t('lyricsEditor.waveform.more')"
           aria-haspopup="menu"
           :aria-expanded="menuOpen"
           @click="openMenu"
@@ -600,8 +617,8 @@ const noticeLabel = computed(
         preserveAspectRatio="none"
         role="slider"
         :tabindex="controlsUnavailable ? -1 : 0"
-        aria-label="全曲波形檢視區間"
-        aria-description="左右拖曳移動檢視；方向鍵逐視窗，Home／End 到兩端，PgUp 往開頭、PgDn 往結尾跨五個視窗；= 放大、- 縮小。不更動播放位置。"
+        :aria-label="t('lyricsEditor.waveform.overviewRange')"
+        :aria-description="t('lyricsEditor.waveform.overviewHint')"
         :aria-valuemin="0"
         :aria-valuemax="Math.max(0, durationMs - (toMs - fromMs))"
         :aria-valuenow="fromMs"
@@ -669,31 +686,31 @@ const noticeLabel = computed(
         <div class="lyrics-waveform__playback">
           <UiIconButton
             :icon="ChevronLeft"
-            label="前一段波形"
+            :label="t('lyricsEditor.waveform.previous')"
             :disabled="controlsUnavailable || fromMs === 0"
             @click="navigate(-1)"
           />
           <output
             role="timer"
             aria-live="off"
-            aria-label="目前播放位置"
+            :aria-label="t('lyricsEditor.waveform.position')"
             :aria-description="playbackStateLabel"
             >{{ playbackLabel }}</output
           >
           <UiIconButton
             :icon="ChevronRight"
-            label="下一段波形"
+            :label="t('lyricsEditor.waveform.next')"
             :disabled="controlsUnavailable || toMs >= durationMs"
             @click="navigate(1)"
           />
         </div>
         <UiIconButton
           :icon="LocateFixed"
-          label="跟隨播放"
+          :label="t('lyricsEditor.waveform.follow')"
           :title="
             following && cursor !== null
-              ? '跟隨已啟用；按一下固定檢視'
-              : '回到目前位置並跟隨播放'
+              ? t('lyricsEditor.waveform.followOn')
+              : t('lyricsEditor.waveform.followOff')
           "
           :active="following && playbackPosition !== null"
           :aria-pressed="following"
@@ -702,17 +719,17 @@ const noticeLabel = computed(
         />
         <UiIconButton
           :icon="Minus"
-          label="縮小波形"
+          :label="t('lyricsEditor.waveform.zoomOut')"
           aria-keyshortcuts="-"
           :disabled="controlsUnavailable || zoomIndex === 0"
           @click="zoom(-1)"
         />
-        <output aria-label="波形放大倍率"
+        <output :aria-label="t('lyricsEditor.waveform.zoom')"
           >{{ 10000 / zoomSpans[zoomIndex] }}×</output
         >
         <UiIconButton
           :icon="Plus"
-          label="放大波形"
+          :label="t('lyricsEditor.waveform.zoomIn')"
           aria-keyshortcuts="="
           :disabled="controlsUnavailable || zoomIndex === zoomSpans.length - 1"
           @click="zoom(1)"
@@ -721,12 +738,18 @@ const noticeLabel = computed(
       <div class="lyrics-waveform__plot">
         <div class="lyrics-waveform__sentence">
           <template v-if="lineFocus">
-            <span v-if="lineFocus.changed" class="lyrics-waveform__draft-label"
-              >草稿</span
+            <span
+              v-if="lineFocus.changed"
+              class="lyrics-waveform__draft-label"
+              >{{ t('lyricsEditor.waveform.draft') }}</span
             >
             <UiTooltip
               :text="lineFocus.text"
-              :detail="focusedRange.inferredEnd ? '句尾由下一句起點推定。' : ''"
+              :detail="
+                focusedRange.inferredEnd
+                  ? t('lyricsEditor.waveform.inferredEnd')
+                  : ''
+              "
             >
               <template #trigger="{ triggerProps }">
                 <span
@@ -737,21 +760,43 @@ const noticeLabel = computed(
                 >
               </template>
             </UiTooltip>
-            <span v-if="focusedRange.unknownEnd">句尾未定</span>
-            <span v-if="focusedRange.outside">超出原媒體</span>
+            <span v-if="focusedRange.unknownEnd">{{
+              t('lyricsEditor.waveform.unknownEnd')
+            }}</span>
+            <span v-if="focusedRange.outside">{{
+              t('lyricsEditor.waveform.outside')
+            }}</span>
           </template>
-          <span v-if="playbackTarget?.usesSeparatedAudio">目前混音</span>
+          <span v-if="playbackTarget?.usesSeparatedAudio">{{
+            t('lyricsEditor.waveform.mixed')
+          }}</span>
           <UiIconButton
             :icon="LocateFixed"
-            label="定位句首"
-            :title="`${draftLine ? '草稿' : '已存'}句首：保留播放／暫停狀態`"
+            :label="t('lyricsEditor.waveform.seekStart')"
+            :title="
+              t(
+                draftLine
+                  ? 'lyricsEditor.waveform.seekDraftTitle'
+                  : 'lyricsEditor.waveform.seekSavedTitle',
+              )
+            "
             :disabled="!canNavigateLine"
             @click="navigateLine('seek')"
           />
           <UiIconButton
             :icon="Play"
-            label="從句首播放"
-            :title="`從${draftLine ? '草稿' : '已存'}句首播放：${playbackTarget?.usesSeparatedAudio ? '目前伴奏／導唱混音，波形仍是原音訊' : '目前原音訊'}`"
+            :label="t('lyricsEditor.waveform.playFromStart')"
+            :title="
+              t(
+                draftLine
+                  ? playbackTarget?.usesSeparatedAudio
+                    ? 'lyricsEditor.waveform.playDraftMix'
+                    : 'lyricsEditor.waveform.playDraftOriginal'
+                  : playbackTarget?.usesSeparatedAudio
+                    ? 'lyricsEditor.waveform.playSavedMix'
+                    : 'lyricsEditor.waveform.playSavedOriginal',
+              )
+            "
             :disabled="!canNavigateLine"
             @click="navigateLine('play')"
           />
@@ -780,10 +825,10 @@ const noticeLabel = computed(
             role="img"
             :aria-label="
               overview
-                ? `${rangeLabel} 原音訊峰值、能量與句級範圍`
-                : '原音訊波形，尚無可用摘要'
+                ? t('lyricsEditor.waveform.detailNamed', { range: rangeLabel })
+                : t('lyricsEditor.waveform.detailEmpty')
             "
-            aria-description="拖移波形可瀏覽；編輯中以起／迄把手調整端點，以移把手平移整句草稿，不修改播放位置。"
+            :aria-description="t('lyricsEditor.waveform.detailHint')"
             :class="{ 'lyrics-waveform__dragging': dragKind === 'detail' }"
             @pointerdown="startDrag($event, 'detail')"
             @pointermove="moveDrag"
@@ -921,9 +966,13 @@ const noticeLabel = computed(
             class="lyrics-waveform__boundary"
             :class="`lyrics-waveform__boundary--${handle.kind}`"
             :style="{ left: handle.left }"
-            :aria-label="`拖曳${handle.label}`"
+            :aria-label="
+              t('lyricsEditor.waveform.dragNamed', { label: handle.label })
+            "
             :title="
-              boundaryDragging ? '' : `${handle.label}：拖曳或左右鍵微調 0.1 秒`
+              boundaryDragging
+                ? ''
+                : t('lyricsEditor.waveform.handleHint', { label: handle.label })
             "
             @pointerdown.stop="boundaryDrag.begin($event, handle.kind)"
             @pointermove.stop="boundaryDrag.move"
@@ -932,11 +981,13 @@ const noticeLabel = computed(
             @lostpointercapture.stop="boundaryDrag.cancel"
             @keydown="boundaryDrag.key($event, handle.kind)"
             >{{
-              handle.kind === 'move'
-                ? '移'
-                : handle.kind === 'start'
-                  ? '起'
-                  : '迄'
+              t(
+                handle.kind === 'move'
+                  ? 'lyricsEditor.waveform.handleMove'
+                  : handle.kind === 'start'
+                    ? 'lyricsEditor.waveform.handleStart'
+                    : 'lyricsEditor.waveform.handleEnd',
+              )
             }}</UiButton
           >
         </div>
@@ -955,22 +1006,32 @@ const noticeLabel = computed(
           <UiIconButton
             v-if="canRetry"
             :icon="RefreshCw"
-            label="重新讀取波形"
+            :label="t('lyricsEditor.waveform.reload')"
             @click="waveform.reload"
           />
         </div>
       </div>
       <div v-if="showsHelp" class="lyrics-waveform__help">
         <UiHint class="lyrics-waveform__shortcuts">
-          <span>波形面板內：</span><UiKbd>=</UiKbd><span>放大</span>
-          <UiKbd>-</UiKbd><span>縮小</span>
-          <UiKbd aria-label="反引號鍵">`</UiKbd><span>放大／還原面板</span>
+          <span>{{ t('lyricsEditor.waveform.panelKeys') }}</span
+          ><UiKbd>=</UiKbd
+          ><span>{{ t('lyricsEditor.waveform.zoomInKey') }}</span>
+          <UiKbd>-</UiKbd
+          ><span>{{ t('lyricsEditor.waveform.zoomOutKey') }}</span>
+          <UiKbd :aria-label="t('lyricsEditor.waveform.backquote')">`</UiKbd
+          ><span>{{ t('lyricsEditor.waveform.maximize') }}</span>
         </UiHint>
-        <UiHint>波形只供參考，請搭配原音訊確認歌詞時間。</UiHint>
+        <UiHint>{{ t('lyricsEditor.waveform.referenceOnly') }}</UiHint>
         <div class="lyrics-waveform__legend">
-          <span class="lyrics-waveform__legend-marker">已存句界</span>
-          <span class="lyrics-waveform__legend-draft">草稿句界</span>
-          <span class="lyrics-waveform__legend-cursor">播放位置</span>
+          <span class="lyrics-waveform__legend-marker">{{
+            t('lyricsEditor.waveform.savedBoundary')
+          }}</span>
+          <span class="lyrics-waveform__legend-draft">{{
+            t('lyricsEditor.waveform.draftBoundary')
+          }}</span>
+          <span class="lyrics-waveform__legend-cursor">{{
+            t('lyricsEditor.waveform.cursor')
+          }}</span>
         </div>
       </div>
     </div>
@@ -979,7 +1040,7 @@ const noticeLabel = computed(
     :open="menuOpen"
     :anchor="{ kind: 'element', element: menuElement }"
     :content="menuContent"
-    aria-label="波形操作"
+    :aria-label="t('lyricsEditor.waveform.actions')"
     @select="selectAction"
     @close="menuOpen = false"
   />

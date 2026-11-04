@@ -7,6 +7,7 @@ import { useAppRightDockWidth } from '../../composables/useAppRightDockWidth.js'
 import { usePlayerPractice } from '../../composables/usePlayerPractice.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import LyricsLoopControls from './LyricsLoopControls.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({ contextTrackId: { type: String, default: '' } });
 const owner = usePlayerPractice(),
   player = usePlayer();
@@ -16,7 +17,7 @@ const practice = computed(() => ({
   running: owner.running.value,
   unavailableReason:
     props.contextTrackId !== player.state.track?.id
-      ? '請先播放這首曲目。'
+      ? t('lyricsEditor.loop.playFirst')
       : owner.unavailableReason.value,
 }));
 function action(value) {
@@ -35,7 +36,7 @@ const panelStyle = computed(() => ({ inlineSize: `${width.value}px` }));
   <span class="player-practice-loop">
     <UiPopover
       v-model:open="open"
-      aria-label="片段練習"
+      :aria-label="t('lyricsEditor.loop.label')"
       placement="bottom-end"
       :close-on-scroll="false"
       :panel-style="panelStyle"
@@ -45,14 +46,14 @@ const panelStyle = computed(() => ({ inlineSize: `${width.value}px` }));
         ><UiIconButton
           v-bind="triggerProps"
           :icon="Repeat"
-          label="片段練習"
+          :label="t('lyricsEditor.loop.label')"
           :active="open || practice.enabled"
           :disabled="Boolean(practice.unavailableReason)"
-          :title="practice.unavailableReason || '片段練習：選一段反覆練唱'"
+          :title="practice.unavailableReason || t('lyricsEditor.loop.hint')"
           @click="open = !open"
       /></template>
       <template #header>
-        <strong>片段練習</strong>
+        <strong>{{ t('lyricsEditor.loop.label') }}</strong>
       </template>
       <LyricsLoopControls :practice="practice" @action="action" />
     </UiPopover>

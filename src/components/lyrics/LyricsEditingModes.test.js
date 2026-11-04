@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
+const read = (name) => readCatalogSource(new URL(name, import.meta.url));
 describe('minimal lyrics authoring entry points', () => {
   it('keeps display in a popover and editing in one action menu, not permanent mode tabs', () => {
     const header = read('./LyricsWorkspaceHeader.vue');

@@ -12,38 +12,50 @@ import UiTextField from '../ui/UiTextField.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiHint from '../ui/UiHint.vue';
 import { formatDuration } from '../../utils/format.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({ practice: { type: Object, required: true } });
 const emit = defineEmits(['action']);
 const detailsOpen = ref(false);
-const pointLabel = (point) => (point === 'a' ? '起點' : '終點');
+const pointLabel = (point) =>
+  t(point === 'a' ? 'lyricsEditor.loop.pointA' : 'lyricsEditor.loop.pointB');
 const time = (value) =>
-  Number.isFinite(value) ? formatDuration(value).padStart(5, '0') : '未設定';
+  Number.isFinite(value)
+    ? formatDuration(value).padStart(5, '0')
+    : t('lyricsEditor.loop.unset');
 const gaps = [0, 1, 2, 4].map((value) => ({
   value,
-  label: value === 0 ? '不等待' : `${value} 秒`,
+  label:
+    value === 0
+      ? t('lyricsEditor.loop.noWait')
+      : t('lyricsEditor.loop.seconds', { value }),
 }));
 const errors = {
-  'source-or-range': '音源或區間已變更，請重新選曲或設定起點與終點。',
-  seek: '返回位置未確認，請重新設定區間。',
-  play: '音訊尚未就緒，請確認後按播放重試。',
-  interrupted: '播放觀察已中斷，請按播放繼續。',
-  media: '音訊無法播放，請重新選曲。',
-  busy: '音訊工具正在使用中，請稍後重試。',
+  'source-or-range': t('lyricsEditor.loop.errors.sourceOrRange'),
+  seek: t('lyricsEditor.loop.errors.seek'),
+  play: t('lyricsEditor.loop.errors.play'),
+  interrupted: t('lyricsEditor.loop.errors.interrupted'),
+  media: t('lyricsEditor.loop.errors.media'),
+  busy: t('lyricsEditor.loop.errors.busy'),
 };
 const status = computed(() => {
   const p = props.practice;
   if (p.unavailableReason) return p.unavailableReason;
-  if (p.error) return errors[p.error] ?? '練習已暫停，請重新設定區間。';
-  if (p.loading) return '正在確認音源…';
-  if (p.phase === 'source-changing') return '正在更新音訊來源…';
-  if (p.phase === 'returning') return '正在返回起點…';
-  if (p.phase === 'gap') return `等待 ${p.waitingSeconds} 秒後續唱`;
-  const rest = p.gapSeconds ? `每輪休息 ${p.gapSeconds} 秒` : '每輪不等待';
-  if (p.running) return `練習中 · ${rest}`;
-  if (p.enabled) return `已暫停 · ${rest}`;
-  if (p.a === null || p.b === null) return `標記起點與終點 · ${rest}`;
-  return p.canEnable ? rest : '起點與終點至少間隔 0.5 秒';
+  if (p.error) return errors[p.error] ?? t('lyricsEditor.loop.pausedError');
+  if (p.loading) return t('lyricsEditor.loop.loading');
+  if (p.phase === 'source-changing')
+    return t('lyricsEditor.loop.sourceChanging');
+  if (p.phase === 'returning') return t('lyricsEditor.loop.returning');
+  if (p.phase === 'gap')
+    return t('lyricsEditor.loop.waiting', { seconds: p.waitingSeconds });
+  const rest = p.gapSeconds
+    ? t('lyricsEditor.loop.rest', { seconds: p.gapSeconds })
+    : t('lyricsEditor.loop.noRest');
+  if (p.running) return t('lyricsEditor.loop.running', { rest });
+  if (p.enabled) return t('lyricsEditor.loop.enabled', { rest });
+  if (p.a === null || p.b === null)
+    return t('lyricsEditor.loop.markPoints', { rest });
+  return p.canEnable ? rest : t('lyricsEditor.loop.tooShort');
 });
 </script>
 
@@ -55,18 +67,29 @@ const status = computed(() => {
         :key="point"
         variant="secondary"
         :disabled="Boolean(practice.unavailableReason) || practice.loading"
-        :title="`將目前位置設為${pointLabel(point)}`"
-        :aria-label="`將目前位置設為${pointLabel(point)}，${time(practice[point])}`"
+        :title="t('lyricsEditor.loop.setNamed', { point: pointLabel(point) })"
+        :aria-label="
+          t('lyricsEditor.loop.setWithTime', {
+            point: pointLabel(point),
+            time: time(practice[point]),
+          })
+        "
         @click="emit('action', { kind: 'capture', point })"
         ><span class="player-practice__mark"
-          ><span>標{{ pointLabel(point) }}</span
+          ><span>{{
+            t(
+              point === 'a'
+                ? 'lyricsEditor.loop.markA'
+                : 'lyricsEditor.loop.markB',
+            )
+          }}</span
           ><small>{{ time(practice[point]) }}</small></span
         ></UiButton
       >
       <UiIconButton
         :icon="RotateCcw"
-        label="清除練習區間"
-        title="清除標記與循環"
+        :label="t('lyricsEditor.loop.clear')"
+        :title="t('lyricsEditor.loop.clearHint')"
         :disabled="
           Boolean(practice.unavailableReason) ||
           (practice.a === null && practice.b === null)
@@ -76,18 +99,24 @@ const status = computed(() => {
       <UiIconButton
         :icon="practice.running ? Pause : Play"
         :active="practice.running"
-        :label="practice.running ? '暫停片段練習' : '開始片段練習'"
+        :label="
+          t(
+            practice.running
+              ? 'lyricsEditor.loop.pause'
+              : 'lyricsEditor.loop.start',
+          )
+        "
         :disabled="
           Boolean(practice.unavailableReason) ||
           (!practice.running && !practice.canEnable)
         "
         :loading="practice.loading"
-        loading-label="正在確認音源"
+        :loading-label="t('lyricsEditor.loop.confirming')"
         @click="emit('action', { kind: 'toggle' })"
       />
       <UiIconButton
         :icon="SlidersHorizontal"
-        label="進階設定"
+        :label="t('lyricsEditor.loop.advanced')"
         :active="detailsOpen"
         :aria-expanded="detailsOpen"
         aria-controls="practice-details"
@@ -107,7 +136,9 @@ const status = computed(() => {
           v-for="point in ['a', 'b']"
           :id="`practice-${point}`"
           :key="point"
-          :label="`${pointLabel(point)}（秒）`"
+          :label="
+            t('lyricsEditor.loop.pointSeconds', { point: pointLabel(point) })
+          "
           type="number"
           :model-value="practice[point] ?? ''"
           min="0"
@@ -120,7 +151,7 @@ const status = computed(() => {
       </div>
       <UiSelect
         id="practice-gap"
-        label="每輪休息"
+        :label="t('lyricsEditor.loop.restLabel')"
         :model-value="practice.gapSeconds"
         :options="gaps"
         :disabled="Boolean(practice.unavailableReason)"

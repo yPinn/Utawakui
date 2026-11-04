@@ -1,9 +1,10 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function readComponent(filename) {
   const url = new URL(filename, import.meta.url);
-  return existsSync(url) ? readFileSync(url, 'utf8') : '';
+  return existsSync(url) ? readCatalogSource(url) : '';
 }
 
 describe('lyrics contextual compositions', () => {

@@ -94,6 +94,7 @@ const I18N_MIGRATED = [
   'src/components/bgm/{bgmPresentation.js,BgmTrackPicker.vue,BgmCurrentSource.vue}',
   'src/composables/useSeparationPreparation.js',
   'src/bgm/{audioDeck,handoffCoordinator}.js',
+  'src/components/lyrics/{LyricsAuthoringWorkspace,LyricsWaveformTool,LyricsTimingReviewTool,LyricsLoopControls,LyricsLoopTool}.vue',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

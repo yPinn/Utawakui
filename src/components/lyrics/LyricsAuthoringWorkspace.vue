@@ -26,6 +26,7 @@ import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
 import LyricsTimingReviewTool from './LyricsTimingReviewTool.vue';
 import LyricsWaveformTool from './LyricsWaveformTool.vue';
+import { t } from '../../utils/i18n.js';
 
 const lyrics = useLyrics();
 const reading = useLyricsReading();
@@ -126,10 +127,10 @@ const vocalSectionLineIds = computed(() =>
     .map((line) => line.lineId),
 );
 const VOCAL_PENS = [
-  { id: 'male', label: '男' },
-  { id: 'female', label: '女' },
-  { id: 'group', label: '合' },
-  { id: 'auto', label: '清除' },
+  { id: 'male', label: t('lyricsEditor.workspace.roles.male') },
+  { id: 'female', label: t('lyricsEditor.workspace.roles.female') },
+  { id: 'group', label: t('lyricsEditor.workspace.roles.group') },
+  { id: 'auto', label: t('lyricsEditor.workspace.roles.auto') },
 ];
 const vocalPen = ref('male');
 let lastPaintedLineId = null;
@@ -199,15 +200,13 @@ function navigateWaveformLine(mode) {
   else if (mode === 'play') void lyrics.playTimingPosition(position, session);
 }
 const editingHelp = computed(() => {
-  if (hasEditingDraft.value)
-    return '儲存或取消這行編輯後，可繼續選擇其他歌詞。';
+  if (hasEditingDraft.value) return t('lyricsEditor.workspace.helpDraft');
   if (editMode.value === 'timing')
-    return '選擇歌詞行的時鐘調整句級或逐字時間。';
-  if (editMode.value === 'vocal')
-    return '點歌詞行標註，Shift＋點標一段；人名行沿用至下一位。';
+    return t('lyricsEditor.workspace.helpTiming');
+  if (editMode.value === 'vocal') return t('lyricsEditor.workspace.helpVocal');
   return isGeneratingReading.value || isPreparingReading.value
-    ? '正在準備讀音…'
-    : '選擇歌詞行的鉛筆修正讀音。';
+    ? t('lyricsEditor.workspace.helpPreparingReading')
+    : t('lyricsEditor.workspace.helpReading');
 });
 function setEditMode(mode) {
   if (
@@ -270,9 +269,9 @@ const reloadStatusLabel = computed(() => {
     const total = state.backfillStatus.total;
     const completed = state.backfillStatus.completed;
     if (Number.isFinite(total) && total > 0) {
-      return `掃描歌詞 ${completed}/${total}`;
+      return t('lyricsEditor.workspace.scanProgress', { completed, total });
     }
-    return '掃描歌詞中';
+    return t('lyricsEditor.workspace.scanning');
   }
   return '';
 });
@@ -484,7 +483,10 @@ async function confirmTimingReview() {
 
 <template>
   <div class="lyrics-workspace">
-    <section class="lyrics-stage" aria-label="歌詞工作區">
+    <section
+      class="lyrics-stage"
+      :aria-label="t('lyricsEditor.workspace.label')"
+    >
       <LyricsWorkspaceHeader
         :track="selectedTrack"
         :track-meta="selectedMeta"
@@ -588,11 +590,11 @@ async function confirmTimingReview() {
           v-if="editMode === 'vocal'"
           v-model="vocalPen"
           :items="VOCAL_PENS"
-          aria-label="聲部筆色"
+          :aria-label="t('lyricsEditor.workspace.roleColors')"
         />
-        <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')"
-          >結束編輯</UiButton
-        >
+        <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')">{{
+          t('lyricsEditor.workspace.finish')
+        }}</UiButton>
         <UiNotice
           v-if="editMode === 'reading' && readingError"
           tone="danger"
@@ -608,7 +610,7 @@ async function confirmTimingReview() {
         <UiButton
           v-if="editMode === 'vocal' && vocalRoles?.error.value"
           @click="vocalRoles.reload()"
-          >重新載入</UiButton
+          >{{ t('lyricsEditor.workspace.reload') }}</UiButton
         >
       </div>
       <div
@@ -641,7 +643,7 @@ async function confirmTimingReview() {
           v-if="timingDraft"
           class="lyrics-timing-stack__editor"
           axis="vertical"
-          aria-label="對時草稿工具"
+          :aria-label="t('lyricsEditor.workspace.draftTools')"
         >
           <LyricsLineTimingEditor
             v-if="timingDraft"
@@ -682,8 +684,8 @@ async function confirmTimingReview() {
         :is-loading-lyrics="state.isLoadingLyrics"
         :track-count="state.tracks.length"
         :has-selected-track="Boolean(selectedTrack)"
-        selection-hint="從「編輯 → 選擇曲目」開始。"
-        unchecked-hint="從「編輯 → 重新掃描歌詞」檢查歌詞。"
+        :selection-hint="t('lyricsEditor.workspace.selectionHint')"
+        :unchecked-hint="t('lyricsEditor.workspace.uncheckedHint')"
         :lyrics-status="selectedLyrics.status"
         :has-selected-source="Boolean(selectedSource)"
         :lines="lyricLines"

@@ -8,6 +8,7 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   review: { type: Object, required: true },
@@ -37,7 +38,7 @@ const menuContent = computed(() => ({
               {
                 id: 'revoke',
                 kind: 'action',
-                label: '撤銷確認',
+                label: t('lyricsEditor.review.revoke'),
                 disabled:
                   state.value.isBusy ||
                   props.blocked ||
@@ -52,8 +53,8 @@ const menuContent = computed(() => ({
           kind: 'action',
           label:
             state.value.status === 'unavailable'
-              ? '重新載入歌詞與確認狀態'
-              : '重新讀取確認狀態',
+              ? t('lyricsEditor.review.reloadAll')
+              : t('lyricsEditor.review.reloadStatus'),
           disabled:
             state.value.isBusy ||
             state.value.isLoading ||
@@ -81,22 +82,22 @@ watch(open, (value) => {
   if (!value) menuOpen.value = false;
 });
 const statusText = computed(() => {
-  if (props.estimated) return '分析顯示不適用，請先切回原歌詞。';
-  if (props.offsetPending) return '同步調整尚未儲存';
-  if (props.hasDraft) return '有未儲存的時間修改';
+  if (props.estimated) return t('lyricsEditor.review.estimated');
+  if (props.offsetPending) return t('lyricsEditor.review.offsetPending');
+  if (props.hasDraft) return t('lyricsEditor.review.draft');
   return (
     {
-      loading: '讀取確認狀態…',
-      unconfirmed: '尚未確認',
-      confirmed: '對時已確認',
-      expired: '版本已變更，需重新確認',
-      revoked: '已撤銷確認',
-      'not-applicable': '沒有可確認的計時內容',
-      unusable: '時間資料無法使用，請檢查來源',
-      corrupt: '確認資料損壞，已保留原檔',
-      unsupported: '確認資料版本不支援',
-      unavailable: '確認狀態無法讀取',
-    }[state.value.status] ?? '尚未確認'
+      loading: t('lyricsEditor.review.status.loading'),
+      unconfirmed: t('lyricsEditor.review.status.unconfirmed'),
+      confirmed: t('lyricsEditor.review.status.confirmed'),
+      expired: t('lyricsEditor.review.status.expired'),
+      revoked: t('lyricsEditor.review.status.revoked'),
+      'not-applicable': t('lyricsEditor.review.status.notApplicable'),
+      unusable: t('lyricsEditor.review.status.unusable'),
+      corrupt: t('lyricsEditor.review.status.corrupt'),
+      unsupported: t('lyricsEditor.review.status.unsupported'),
+      unavailable: t('lyricsEditor.review.status.unavailable'),
+    }[state.value.status] ?? t('lyricsEditor.review.status.unconfirmed')
   );
 });
 const eligible = computed(
@@ -145,7 +146,7 @@ function confirm() {
 <template>
   <UiPopover
     v-model:open="open"
-    aria-label="歌詞對時確認"
+    :aria-label="t('lyricsEditor.review.label')"
     placement="bottom-end"
     :close-on-scroll="false"
     focus-on-open
@@ -154,7 +155,7 @@ function confirm() {
       <UiIconButton
         v-bind="triggerProps"
         :icon="BadgeCheck"
-        label="對時確認"
+        :label="t('lyricsEditor.review.title')"
         :active="
           state.status === 'confirmed' &&
           !hasDraft &&
@@ -168,10 +169,18 @@ function confirm() {
     <div class="lyrics-review">
       <strong role="status">{{ statusText }}</strong>
       <UiHint v-if="state.coverage">
-        確認範圍：已計時 {{ state.coverage.timed }} /
-        {{ state.coverage.total }} 行<span v-if="state.coverage.segmented">
-          · 逐字 {{ state.coverage.segmented }} 行</span
-        >
+        {{
+          t(
+            state.coverage.segmented
+              ? 'lyricsEditor.review.coverageSegmented'
+              : 'lyricsEditor.review.coverage',
+            {
+              timed: state.coverage.timed,
+              total: state.coverage.total,
+              segmented: state.coverage.segmented,
+            },
+          )
+        }}
       </UiHint>
       <UiCheckbox
         v-if="
@@ -180,7 +189,7 @@ function confirm() {
         "
         :id="acknowledgementId"
         v-model="checked"
-        label="已檢查全部已計時內容"
+        :label="t('lyricsEditor.review.checkedAll')"
       />
       <UiNotice
         v-if="state.error"
@@ -195,13 +204,19 @@ function confirm() {
           variant="accent"
           :disabled="!canConfirm"
           :loading="state.isBusy"
-          loading-label="確認中"
+          :loading-label="t('lyricsEditor.review.confirming')"
           @click="confirm"
-          >{{ hasDraft ? '儲存並確認' : '確認對時' }}</UiButton
+          >{{
+            t(
+              hasDraft
+                ? 'lyricsEditor.review.saveAndConfirm'
+                : 'lyricsEditor.review.confirm',
+            )
+          }}</UiButton
         >
         <UiIconButton
           :icon="Ellipsis"
-          label="更多對時操作"
+          :label="t('lyricsEditor.review.more')"
           aria-haspopup="menu"
           :aria-expanded="menuOpen"
           @click="openMenu"
@@ -213,7 +228,7 @@ function confirm() {
     :open="menuOpen"
     :anchor="{ kind: 'element', element: menuElement }"
     :content="menuContent"
-    aria-label="對時確認操作"
+    :aria-label="t('lyricsEditor.review.actions')"
     @select="selectAction"
     @close="menuOpen = false"
   />
