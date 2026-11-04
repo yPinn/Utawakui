@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson } = require('../lib/atomicWrite');
@@ -122,7 +123,7 @@ function registerDiagnosticsHandlers({
     try {
       const ownerWindow = getMainWindow();
       const dialogOptions = {
-        title: '匯出錯誤紀錄',
+        title: t('settings.diagnostics.export'),
         defaultPath: `utawakui-diagnostics-${new Date(now())
           .toISOString()
           .replace(/[:.]/g, '-')}.json`,
@@ -154,7 +155,7 @@ function registerDiagnosticsHandlers({
     try {
       const ownerWindow = getMainWindow();
       const dialogOptions = {
-        title: '載入錯誤紀錄匯出檔',
+        title: t('settings.diagnostics.importTitle'),
         properties: ['openFile'],
         filters: [{ name: 'JSON', extensions: ['json'] }],
       };

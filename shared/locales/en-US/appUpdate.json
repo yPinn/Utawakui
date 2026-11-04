@@ -63,5 +63,9 @@
   },
   "statusReadFailedRestart": "Update status could not be read. Restart and try again.",
   "statusReadFailed": "Update status could not be read. Reload it.",
-  "restartRequired": "Restart Utawakui and try again."
+  "restartRequired": "Restart Utawakui and try again.",
+  "errors": {
+    "manifest": "Update verification failed. Try again.",
+    "failed": "Update failed. Try again."
+  }
 }

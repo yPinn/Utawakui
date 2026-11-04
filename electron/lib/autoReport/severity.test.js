@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import severityModule from './severity.js';
+import i18n from '../i18n.js';
 
 const { appFramesOf, classifyDiagnosticEvent, fingerprintOf } = severityModule;
 
@@ -76,5 +77,19 @@ describe('auto report severity', () => {
       fingerprintOf(unresponsive('main')),
     );
     expect(fingerprintOf(unresponsive())).toBe('RENDERER_UNRESPONSIVE|');
+  });
+});
+
+// Prompt titles are looked up by code at runtime, out of the static catalog test's sight.
+describe('auto report label catalog coverage', () => {
+  it('words every classified code and the unknown fallback', () => {
+    for (const code of [
+      ...Object.keys(severityModule.SEVERITY_BY_CODE),
+      'unknown',
+    ])
+      expect(i18n.hasMessage(`autoReport.events.${code}`), code).toBe(true);
+    expect(severityModule.labelOf('NOT_A_CODE')).toBe(
+      i18n.t('autoReport.events.unknown'),
+    );
   });
 });

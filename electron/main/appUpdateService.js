@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const { createUpdateManifestClient } = require('../lib/updateManifestClient');
 const {
   createUpdateDescriptor,
@@ -7,8 +8,6 @@ const {
   verifyManifest,
 } = require('../lib/updateManifestVerification');
 const DEFAULT_TRUSTED_KEY_REGISTRY = require('../../shared/updateSigningKeys.json');
-
-const MANIFEST_ERROR_MESSAGE = '更新驗證失敗，請再試一次。';
 
 const UPDATE_PHASES = new Set([
   'disabled',
@@ -209,7 +208,7 @@ function createAppUpdateService({
     return getStatus();
   }
 
-  function fail(operation, error, message = '更新失敗，請再試一次。') {
+  function fail(operation, error, message = t('appUpdate.errors.failed')) {
     logger.error?.(`[update] ${operation} failed`, error);
     return setStatus({
       phase: 'error',
@@ -379,7 +378,7 @@ function createAppUpdateService({
         return fail(
           'Manifest verification',
           new Error(`update manifest check failed: ${verification.reason}`),
-          MANIFEST_ERROR_MESSAGE,
+          t('appUpdate.errors.manifest'),
         );
       }
     }

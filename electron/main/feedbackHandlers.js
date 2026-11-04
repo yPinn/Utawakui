@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const crypto = require('node:crypto');
 const { atomicWriteJson } = require('../lib/atomicWrite');
 const { buildFeedbackPayload } = require('../lib/feedback/payload');
@@ -169,7 +170,7 @@ function registerFeedbackHandlers({
       }
       const ownerWindow = getMainWindow();
       const dialogOptions = {
-        title: '另存意見回饋',
+        title: t('feedback.saveDialogTitle'),
         defaultPath: `utawakui-feedback-${new Date(now())
           .toISOString()
           .replace(/[:.]/g, '-')}.json`,

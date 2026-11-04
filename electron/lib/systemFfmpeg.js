@@ -169,13 +169,13 @@ async function runSmokeTestDecode(ffmpegPath, options = {}) {
       options.processTimeoutMs,
     );
     if (!result.ok) {
-      return { ok: false, reason: 'FFmpeg 解碼測試失敗' };
+      return { ok: false, reason: 'FFmpeg decode smoke test failed' };
     }
     const expectedBytes = SMOKE_TEST_FRAMES * CHANNELS * 4; // f32le
     if (result.stdout.length !== expectedBytes) {
       return {
         ok: false,
-        reason: `FFmpeg 解碼測試輸出長度不符(預期 ${expectedBytes} bytes,實際 ${result.stdout.length} bytes)`,
+        reason: `FFmpeg decode smoke test output length mismatch (expected ${expectedBytes} bytes, got ${result.stdout.length} bytes)`,
       };
     }
     return { ok: true };
@@ -195,7 +195,7 @@ async function detectSystemFfmpeg(options = {}) {
       path: null,
       version: null,
       ok: false,
-      reason: '系統 FFmpeg 偵測目前僅支援 Windows',
+      reason: 'system FFmpeg detection is Windows-only',
     };
   }
 
@@ -206,7 +206,7 @@ async function detectSystemFfmpeg(options = {}) {
       path: null,
       version: null,
       ok: false,
-      reason: '在系統 PATH 中找不到 FFmpeg',
+      reason: 'FFmpeg not found on the system PATH',
     };
   }
 
@@ -217,7 +217,7 @@ async function detectSystemFfmpeg(options = {}) {
       path: ffmpegPath,
       version: null,
       ok: false,
-      reason: '無法讀取 FFmpeg 版本資訊',
+      reason: 'unable to read FFmpeg version',
     };
   }
 

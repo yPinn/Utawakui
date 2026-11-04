@@ -295,7 +295,8 @@
     "archiveFull": "封存場次已達保存上限；目前場次仍保留。",
     "scopeRequired": "請選擇完整安排或完成曲目。",
     "previewStale": "曲目或可用性已變更，請重新檢視合併與排除預覽。",
-    "nothingToSave": "沒有可保存的本機曲目。"
+    "nothingToSave": "沒有可保存的本機曲目。",
+    "playlistInvalid": "無法保存演出歌單，請檢查名稱與曲目預覽。"
   },
   "playback": {
     "progressNotUpdated": "曲目進度未更新，請再試一次。",

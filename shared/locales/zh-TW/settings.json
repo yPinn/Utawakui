@@ -35,7 +35,8 @@
     "export": "匯出錯誤紀錄",
     "options": "錯誤紀錄選項",
     "openFolder": "開啟資料夾",
-    "clear": "清除紀錄"
+    "clear": "清除紀錄",
+    "importTitle": "載入錯誤紀錄匯出檔"
   },
   "autoReport": {
     "title": "嚴重錯誤回報",

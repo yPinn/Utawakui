@@ -63,5 +63,9 @@
   },
   "statusReadFailedRestart": "無法讀取更新狀態，請重新啟動後再試。",
   "statusReadFailed": "無法讀取更新狀態，請重新讀取。",
-  "restartRequired": "請重新啟動 Utawakui 後再試。"
+  "restartRequired": "請重新啟動 Utawakui 後再試。",
+  "errors": {
+    "manifest": "更新驗證失敗，請再試一次。",
+    "failed": "更新失敗，請再試一次。"
+  }
 }

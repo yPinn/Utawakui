@@ -572,9 +572,12 @@ function writeWavAtomic(filePath, channels, sampleRate) {
     // Per-preset filenames avoid EPERM when switching presets, but not
     // when regenerating the SAME preset that's open for playback.
     if (err.code === 'EPERM') {
-      throw new Error('此結果正在播放中,請先停止播放再重新產生。', {
-        cause: err,
-      });
+      throw new Error(
+        'result file is open for playback; stop playback before regenerating',
+        {
+          cause: err,
+        },
+      );
     }
     throw err;
   }

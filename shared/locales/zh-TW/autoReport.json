@@ -12,5 +12,19 @@
   "addDetails": "補充說明",
   "followUpPrefill": "補充自動回報（回報碼 {reference}）：",
   "readFailed": "目前無法讀取自動回報設定，請重新讀取。",
-  "saveFailed": "目前無法儲存自動回報設定，已恢復原設定。"
+  "saveFailed": "目前無法儲存自動回報設定，已恢復原設定。",
+  "events": {
+    "UNCAUGHT_EXCEPTION": "主程序未捕捉的例外",
+    "RENDER_PROCESS_GONE": "畫面程序異常結束",
+    "PRELOAD_FAILED": "安全橋接載入失敗",
+    "STARTUP_DEFERRED_MIGRATION_FAILED": "啟動資料遷移失敗",
+    "UNHANDLED_REJECTION": "未處理的非同步錯誤",
+    "RENDERER_UNRESPONSIVE": "畫面沒有回應",
+    "RENDERER_LOAD_FAILED": "畫面載入失敗",
+    "CHILD_PROCESS_GONE": "子程序異常結束",
+    "VUE_UNHANDLED_ERROR": "介面元件錯誤",
+    "WINDOW_ERROR": "畫面腳本錯誤",
+    "OUTPUT_AUTOMATIC_START_FAILED": "Output 自動啟動失敗",
+    "unknown": "未分類錯誤"
+  }
 }

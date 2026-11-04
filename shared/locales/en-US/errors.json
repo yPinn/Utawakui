@@ -503,5 +503,41 @@
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
     "message": "Lyrics analysis didn't finish. Your accompaniment and lyrics still work."
+  },
+  "BGM_STANDBY_GET_FAILED": {
+    "title": "BGM can't be loaded",
+    "message": "Couldn't load the BGM. Try again."
+  },
+  "BGM_STANDBY_UPDATE_FAILED": {
+    "title": "BGM can't be updated",
+    "message": "Couldn't update the BGM. Try again."
+  },
+  "EXTERNAL_TARGET_UNKNOWN": {
+    "title": "Can't open the page",
+    "message": "This page isn't supported."
+  },
+  "EXTERNAL_TARGET_OPEN_FAILED": {
+    "title": "Can't open the page",
+    "message": "Couldn't open the page. Try again later."
+  },
+  "PROVIDER_DISCOVERY_QUERY_INVALID": {
+    "title": "Can't open YT Music",
+    "message": "Enter a shorter song or artist name and try again."
+  },
+  "PROVIDER_DISCOVERY_OPEN_FAILED": {
+    "title": "Can't open YT Music",
+    "message": "Couldn't open YT Music. Try again later."
+  },
+  "SEPARATION_RUN_FAILED": {
+    "title": "Accompaniment isn't ready",
+    "message": "The accompaniment isn't ready yet. Try again."
+  },
+  "SEPARATION_INVALID_TRACK": {
+    "title": "Track not found",
+    "message": "This track's accompaniment isn't available right now."
+  },
+  "SEPARATION_RESULT_MISSING": {
+    "title": "Accompaniment version not found",
+    "message": "This accompaniment version isn't available. Prepare it again."
   }
 }

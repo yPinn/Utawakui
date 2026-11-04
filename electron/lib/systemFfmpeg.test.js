@@ -109,7 +109,7 @@ describe('detectSystemFfmpeg', () => {
       path: null,
       version: null,
       ok: false,
-      reason: '在系統 PATH 中找不到 FFmpeg',
+      reason: 'FFmpeg not found on the system PATH',
     });
   });
 
@@ -143,7 +143,7 @@ describe('detectSystemFfmpeg', () => {
     expect(result.available).toBe(true);
     expect(result.version).toBe('7.1-full_build-www.gyan.dev');
     expect(result.ok).toBe(false);
-    expect(result.reason).toMatch(/解碼測試輸出長度不符/);
+    expect(result.reason).toMatch(/output length mismatch/);
   });
 
   it('returns path, version, and ok:true on the happy path', async () => {

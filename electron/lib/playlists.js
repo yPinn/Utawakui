@@ -1,5 +1,7 @@
 'use strict';
 
+// Lazy so the catalog loads only when a message is built.
+const t = (key, named) => require('./i18n').t(key, named);
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
@@ -34,7 +36,6 @@ const MAX_NAME_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_PLAYLISTS = 500;
 const MAX_TRACKS_PER_PLAYLIST = 5000;
-const DEFAULT_PLAYLIST_NAME_PREFIX = '播放清單 #';
 
 // Album membership/order is source-owned; other management actions still apply.
 const PLAYLIST_KINDS = new Set(['playlist', 'album']);
@@ -334,9 +335,12 @@ function writeReleaseCatalog(dir, collection, expectedRevision) {
   return collection;
 }
 
+// Default names use the language active when the playlist is created.
 function nextDefaultPlaylistName(playlists) {
+  const prefix = t('playlist.defaultNamePrefix');
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   const used = new Set();
-  const pattern = new RegExp(`^${DEFAULT_PLAYLIST_NAME_PREFIX}(\\d+)$`);
+  const pattern = new RegExp(`^${escapedPrefix}(\\d+)$`);
   for (const playlist of playlists) {
     const match = pattern.exec(playlist.name);
     if (!match) continue;
@@ -348,7 +352,7 @@ function nextDefaultPlaylistName(playlists) {
 
   let index = 1;
   while (used.has(index)) index += 1;
-  return `${DEFAULT_PLAYLIST_NAME_PREFIX}${index}`;
+  return `${prefix}${index}`;
 }
 
 function createPlaylist(dir, name, options = {}) {
@@ -678,7 +682,7 @@ function reorderPlaylists(dir, draggedId, targetId, position = 'before') {
 // a lost IPC reply retry safe without creating another empty user playlist.
 function savePerformancePlaylist(dir, { name, trackIds, exportKey } = {}) {
   const fail = () =>
-    Object.assign(new Error('無法保存演出歌單，請檢查名稱與曲目預覽。'), {
+    Object.assign(new Error(t('session.main.playlistInvalid')), {
       code: 'SESSION_PLAYLIST_INVALID',
       field: null,
       publicValidation: true,

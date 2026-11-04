@@ -1,5 +1,7 @@
 'use strict';
 
+// Lazy so the catalog loads only when a message is built.
+const t = (key, named) => require('./i18n').t(key, named);
 const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
@@ -78,17 +80,19 @@ const SETTING_RULES = Object.freeze({
   postRollSeconds: { type: 'number', min: 0.5, max: 10 },
 });
 
-const VALIDATION_MESSAGES = Object.freeze({
-  BGM_INTENT_INVALID: 'BGM 操作無效，請重新整理後再試。',
-  BGM_TRACK_UNAVAILABLE: '這首本機曲目目前無法作為 BGM。',
-  BGM_TRACK_NOT_FOUND: '找不到這個 BGM 項目，請重新整理後再試。',
-  BGM_SETTING_OUT_OF_RANGE: 'BGM 設定超出允許範圍。',
-  BGM_POSITION_INVALID: 'BGM 播放位置無效。',
-});
+const VALIDATION_CODES = new Set([
+  'BGM_INTENT_INVALID',
+  'BGM_TRACK_UNAVAILABLE',
+  'BGM_TRACK_NOT_FOUND',
+  'BGM_SETTING_OUT_OF_RANGE',
+  'BGM_POSITION_INVALID',
+]);
+const validationMessage = (code) =>
+  t(`bgm.validation.${VALIDATION_CODES.has(code) ? code : 'fallback'}`);
 
 class BgmStandbyPlanValidationError extends Error {
   constructor({ code, message, field = null }) {
-    super(message || VALIDATION_MESSAGES[code] || 'BGM 操作無效。');
+    super(message || validationMessage(code));
     this.name = 'BgmStandbyPlanValidationError';
     this.code = code;
     this.field = field;
@@ -150,11 +154,12 @@ function sanitizeSetting(key, value, { strict = false } = {}) {
     (!Number.isFinite(value) || value < rule.min || value > rule.max)
   ) {
     if (strict) {
-      const label = key === 'fadeOutSeconds' ? 'BGM 淡出時間' : 'BGM 設定';
       throw validationError(
         'BGM_SETTING_OUT_OF_RANGE',
         key,
-        `${label}超出允許範圍。`,
+        key === 'fadeOutSeconds'
+          ? t('bgm.validation.fadeOutOutOfRange')
+          : validationMessage('BGM_SETTING_OUT_OF_RANGE'),
       );
     }
     return BGM_STANDBY_DEFAULT_SETTINGS[key];
@@ -459,6 +464,7 @@ module.exports = {
   BGM_STANDBY_PLAN_FILENAME,
   BGM_STANDBY_PLAN_VERSION,
   BgmStandbyPlanValidationError,
+  VALIDATION_CODES,
   createBgmStandbyPlanStore,
   isBgmStandbyPlanValidationError,
 };

@@ -64,5 +64,6 @@
     "tryAgain": "Try again.",
     "restartToReorder": "Restart the app before reordering playlists.",
     "reorderNotSavedTitle": "Playlist order not saved"
-  }
+  },
+  "defaultNamePrefix": "Playlist #"
 }

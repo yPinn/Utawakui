@@ -27,5 +27,14 @@
   "none": "尚未選擇場間音樂",
   "captureInterrupted": "BGM 擷取輸出中斷，請重新選擇輸出裝置。",
   "cantPlay": "BGM 音訊無法播放。",
-  "noneSelected": "尚未選擇可播放的 BGM。"
+  "noneSelected": "尚未選擇可播放的 BGM。",
+  "validation": {
+    "BGM_INTENT_INVALID": "BGM 操作無效，請重新整理後再試。",
+    "BGM_TRACK_UNAVAILABLE": "這首本機曲目目前無法作為 BGM。",
+    "BGM_TRACK_NOT_FOUND": "找不到這個 BGM 項目，請重新整理後再試。",
+    "BGM_SETTING_OUT_OF_RANGE": "BGM 設定超出允許範圍。",
+    "BGM_POSITION_INVALID": "BGM 播放位置無效。",
+    "fallback": "BGM 操作無效。",
+    "fadeOutOutOfRange": "BGM 淡出時間超出允許範圍。"
+  }
 }

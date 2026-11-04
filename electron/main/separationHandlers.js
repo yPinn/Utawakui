@@ -246,8 +246,6 @@ function registerSeparationHandlers({
               : undefined,
           publicError: {
             code: 'SEPARATION_RUN_FAILED',
-            title: '伴奏準備未完成',
-            message: '伴奏還沒準備好，請再試一次。',
             context: { presetId: recipeId, retryable: true },
           },
         },
@@ -402,8 +400,6 @@ function registerSeparationHandlers({
       throw createAppError({
         code: 'SEPARATION_INVALID_TRACK',
         severity: 'warning',
-        title: '找不到這首歌曲',
-        message: '這首歌曲的伴奏目前無法使用。',
       });
     }
 
@@ -412,8 +408,6 @@ function registerSeparationHandlers({
       throw createAppError({
         code: 'SEPARATION_RESULT_MISSING',
         severity: 'warning',
-        title: '找不到這個伴奏版本',
-        message: '這個伴奏版本目前無法使用，請重新準備。',
       });
     }
 

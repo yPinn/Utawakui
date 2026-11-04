@@ -79,5 +79,9 @@
     "open": "開啟 {app}",
     "settings": "設定",
     "quit": "結束 {app}"
+  },
+  "devDialogs": {
+    "benchmarkRun": "開啟 M2 Benchmark Run",
+    "referenceAnnotation": "開啟 M2 人工標註工作集"
   }
 }

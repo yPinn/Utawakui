@@ -110,6 +110,9 @@ const I18N_MIGRATED = [
   'src/components/lyrics/LyricsSourceAnalysis.vue',
   'src/composables/lyrics/{useLyricsResearch,useLyricsAcousticCapability,useExperimentalLyricsQueue}.js',
   'electron/main/lyrics/{acousticCapabilityHandlers,researchHandlers,experimentalHandlers}.js',
+  'electron/lib/{bgmStandbyPlan,playlists,systemFfmpeg,vocalSeparation}.js',
+  'electron/lib/autoReport/severity.js',
+  'electron/main/{appUpdateService,bgmStandbyPlanHandlers,diagnosticsHandlers,externalNavigationHandlers,feedbackHandlers,musicStructureHandlers,providerDiscoveryHandlers,separationHandlers}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

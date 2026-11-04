@@ -295,7 +295,8 @@
     "archiveFull": "The archive is full; the current session is kept.",
     "scopeRequired": "Choose the full arrangement or completed tracks.",
     "previewStale": "Tracks or availability changed. Review the merge and exclusion preview again.",
-    "nothingToSave": "No local tracks to save."
+    "nothingToSave": "No local tracks to save.",
+    "playlistInvalid": "Couldn't save the performance playlist. Check the name and track preview."
   },
   "playback": {
     "progressNotUpdated": "The track progress wasn't updated. Try again.",

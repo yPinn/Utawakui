@@ -22,6 +22,9 @@ const DEV_ONLY = [
   /^src\/utils\/(?:musicAnalysisBenchmark|musicAnalysisReferenceAnnotation|diagnosticIssues)\.js$/u,
   /^electron\/(?:main\/lyricsProviderCorpusReviewHandlers|lib\/lyricsProviderCorpusReview)\.js$/u,
 ];
+// Report payload wording stays zh-TW so every report the developer receives
+// reads the same; on-screen labels inside it still follow the UI catalog.
+const FIXED_LANGUAGE = [/^electron\/lib\/autoReport\/payload\.js$/u];
 const CJK = /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/u;
 const COMMENT_LINE = /^\s*(?:\/\/|\/\*|\*|<!--)/u;
 
@@ -33,7 +36,9 @@ function sourceFiles(directory, root = ROOT) {
     const relative = path.relative(root, file).replaceAll('\\', '/');
     return SOURCE_PATTERN.test(entry.name) &&
       !EXCLUDED.test(relative) &&
-      !DEV_ONLY.some((pattern) => pattern.test(relative))
+      ![...DEV_ONLY, ...FIXED_LANGUAGE].some((pattern) =>
+        pattern.test(relative),
+      )
       ? [relative]
       : [];
   });

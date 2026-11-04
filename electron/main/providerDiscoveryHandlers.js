@@ -19,8 +19,6 @@ function registerProviderDiscoveryHandlers({
         throw createAppError({
           code: 'PROVIDER_DISCOVERY_QUERY_INVALID',
           severity: 'warning',
-          title: '無法開啟 YT Music',
-          message: '請輸入較短的歌曲或歌手名稱後再試一次。',
         });
       }
 
@@ -36,8 +34,6 @@ function registerProviderDiscoveryHandlers({
           },
           publicError: {
             code: 'PROVIDER_DISCOVERY_OPEN_FAILED',
-            title: '無法開啟 YT Music',
-            message: '目前無法開啟 YT Music，請稍後再試。',
           },
         },
         () => openExternal(targetUrl),

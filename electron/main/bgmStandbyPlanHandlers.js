@@ -10,13 +10,9 @@ const { createPlanIpcRunner } = require('./ipcErrorBoundary');
 const OPERATION_ERRORS = Object.freeze({
   get: {
     code: 'BGM_STANDBY_GET_FAILED',
-    title: 'BGM 無法讀取',
-    message: '目前無法讀取 BGM，請再試一次。',
   },
   mutate: {
     code: 'BGM_STANDBY_UPDATE_FAILED',
-    title: 'BGM 無法更新',
-    message: '目前無法更新 BGM，請再試一次。',
   },
 });
 

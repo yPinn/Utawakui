@@ -35,7 +35,8 @@
     "export": "Export error log",
     "options": "Error log options",
     "openFolder": "Open folder",
-    "clear": "Clear log"
+    "clear": "Clear log",
+    "importTitle": "Load an error log export"
   },
   "autoReport": {
     "title": "Critical error reports",

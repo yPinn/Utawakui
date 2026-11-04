@@ -79,5 +79,9 @@
     "open": "Open {app}",
     "settings": "Settings",
     "quit": "Quit {app}"
+  },
+  "devDialogs": {
+    "benchmarkRun": "Open M2 benchmark run",
+    "referenceAnnotation": "Open M2 reference annotation set"
   }
 }

@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const { loadTrackMusicStructure } = require('../lib/library');
 const {
   loadMusicAnalysisBenchmarkReview,
@@ -64,7 +65,7 @@ const UNEXPECTED_FAILURES = new Set([
 
 function benchmarkDialogOptions() {
   return {
-    title: '開啟 M2 Benchmark Run',
+    title: t('shell.devDialogs.benchmarkRun'),
     properties: ['openFile'],
     filters: [{ name: 'Benchmark run config', extensions: ['json'] }],
   };
@@ -72,7 +73,7 @@ function benchmarkDialogOptions() {
 
 function referenceAnnotationDialogOptions() {
   return {
-    title: '開啟 M2 人工標註工作集',
+    title: t('shell.devDialogs.referenceAnnotation'),
     properties: ['openFile'],
     filters: [{ name: 'Benchmark run config', extensions: ['json'] }],
   };

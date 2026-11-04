@@ -1,5 +1,7 @@
 'use strict';
 
+// Lazy so the catalog loads only when a message is built.
+const t = (key, named) => require('../i18n').t(key, named);
 // S1 reports on first occurrence; S2 only after repeating within the
 // escalation window; anything unlisted stays local (fail closed). Each code
 // counts only from the process that owns it, so a renderer cannot raise a
@@ -9,53 +11,43 @@ const RENDERER = Object.freeze(['renderer']);
 const SEVERITY_BY_CODE = Object.freeze({
   UNCAUGHT_EXCEPTION: {
     severity: 'S1',
-    label: '主程序未捕捉的例外',
     processes: MAIN,
   },
   RENDER_PROCESS_GONE: {
     severity: 'S1',
-    label: '畫面程序異常結束',
     processes: MAIN,
   },
   PRELOAD_FAILED: {
     severity: 'S1',
-    label: '安全橋接載入失敗',
     processes: MAIN,
   },
   STARTUP_DEFERRED_MIGRATION_FAILED: {
     severity: 'S1',
-    label: '啟動資料遷移失敗',
     processes: MAIN,
   },
   UNHANDLED_REJECTION: {
     severity: 'S2',
-    label: '未處理的非同步錯誤',
     processes: Object.freeze(['main', 'renderer']),
   },
   RENDERER_UNRESPONSIVE: {
     severity: 'S2',
-    label: '畫面沒有回應',
     processes: MAIN,
   },
   RENDERER_LOAD_FAILED: {
     severity: 'S2',
-    label: '畫面載入失敗',
     processes: MAIN,
   },
   CHILD_PROCESS_GONE: {
     severity: 'S2',
-    label: '子程序異常結束',
     processes: MAIN,
   },
   VUE_UNHANDLED_ERROR: {
     severity: 'S2',
-    label: '介面元件錯誤',
     processes: RENDERER,
   },
-  WINDOW_ERROR: { severity: 'S2', label: '畫面腳本錯誤', processes: RENDERER },
+  WINDOW_ERROR: { severity: 'S2', processes: RENDERER },
   OUTPUT_AUTOMATIC_START_FAILED: {
     severity: 'S2',
-    label: 'Output 自動啟動失敗',
     processes: MAIN,
   },
 });
@@ -82,7 +74,9 @@ function classifyDiagnosticEvent(event) {
 }
 
 function labelOf(code) {
-  return SEVERITY_BY_CODE[code]?.label ?? '未分類錯誤';
+  return t(
+    `autoReport.events.${Object.hasOwn(SEVERITY_BY_CODE, code) ? code : 'unknown'}`,
+  );
 }
 
 // App-bundle frames only (diagnostics already rewrote them to app:<path>);

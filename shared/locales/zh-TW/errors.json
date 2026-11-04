@@ -503,5 +503,41 @@
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
     "message": "歌詞分析未完成；伴奏與原有歌詞仍可使用。"
+  },
+  "BGM_STANDBY_GET_FAILED": {
+    "title": "BGM 無法讀取",
+    "message": "目前無法讀取 BGM，請再試一次。"
+  },
+  "BGM_STANDBY_UPDATE_FAILED": {
+    "title": "BGM 無法更新",
+    "message": "目前無法更新 BGM，請再試一次。"
+  },
+  "EXTERNAL_TARGET_UNKNOWN": {
+    "title": "無法開啟外部頁面",
+    "message": "指定的外部頁面不受支援。"
+  },
+  "EXTERNAL_TARGET_OPEN_FAILED": {
+    "title": "無法開啟外部頁面",
+    "message": "目前無法開啟外部頁面，請稍後再試。"
+  },
+  "PROVIDER_DISCOVERY_QUERY_INVALID": {
+    "title": "無法開啟 YT Music",
+    "message": "請輸入較短的歌曲或歌手名稱後再試一次。"
+  },
+  "PROVIDER_DISCOVERY_OPEN_FAILED": {
+    "title": "無法開啟 YT Music",
+    "message": "目前無法開啟 YT Music，請稍後再試。"
+  },
+  "SEPARATION_RUN_FAILED": {
+    "title": "伴奏準備未完成",
+    "message": "伴奏還沒準備好，請再試一次。"
+  },
+  "SEPARATION_INVALID_TRACK": {
+    "title": "找不到這首歌曲",
+    "message": "這首歌曲的伴奏目前無法使用。"
+  },
+  "SEPARATION_RESULT_MISSING": {
+    "title": "找不到這個伴奏版本",
+    "message": "這個伴奏版本目前無法使用，請重新準備。"
   }
 }

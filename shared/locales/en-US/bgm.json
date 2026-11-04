@@ -27,5 +27,14 @@
   "none": "No interlude music selected",
   "captureInterrupted": "BGM capture output was interrupted. Choose the output device again.",
   "cantPlay": "The BGM audio can't be played.",
-  "noneSelected": "No playable BGM selected."
+  "noneSelected": "No playable BGM selected.",
+  "validation": {
+    "BGM_INTENT_INVALID": "The BGM action isn't valid. Refresh and try again.",
+    "BGM_TRACK_UNAVAILABLE": "This local track can't be used as BGM right now.",
+    "BGM_TRACK_NOT_FOUND": "This BGM item wasn't found. Refresh and try again.",
+    "BGM_SETTING_OUT_OF_RANGE": "The BGM setting is out of range.",
+    "BGM_POSITION_INVALID": "The BGM playback position isn't valid.",
+    "fallback": "The BGM action isn't valid.",
+    "fadeOutOutOfRange": "The BGM fade-out time is out of range."
+  }
 }
