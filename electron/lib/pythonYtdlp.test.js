@@ -42,6 +42,7 @@ describe('buildPythonYtdlpArgs', () => {
         subLangs: 'ja',
         subFormat: 'vtt',
         cookiesFromBrowser: 'firefox',
+        cookies: 'C:/Temp/login.txt',
         impersonate: 'chrome',
       }),
     ).toEqual([
@@ -78,6 +79,8 @@ describe('buildPythonYtdlpArgs', () => {
       'vtt',
       '--cookies-from-browser',
       'firefox',
+      '--cookies',
+      'C:/Temp/login.txt',
       '--impersonate',
       'chrome',
       '--',

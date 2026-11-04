@@ -196,6 +196,7 @@ function createSerialTaskLane() {
 function registerImportHandlers({
   ipcMain,
   getConfig,
+  youtubeLoginStore = null,
   resolveDownloadDir,
   requireFeatureGate,
   featureIds,
@@ -349,7 +350,8 @@ function registerImportHandlers({
           return downloadTrackAudio(videoId, destDir, {
             runner,
             signal,
-            allowBrowserCookies: getConfig().youtubeBrowserCookies === true,
+            loginSource: getConfig().youtubeLoginSource ?? 'none',
+            withLoginFile: youtubeLoginStore?.withCookieFile,
             ...(runImport
               ? { runImport, onTrackCommitted: commitMetadata }
               : {}),

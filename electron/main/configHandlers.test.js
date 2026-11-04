@@ -597,7 +597,7 @@ describe('registerConfigHandlers', () => {
         ),
       ).resolves.toBe(enabled);
       expect(updateConfig).toHaveBeenCalledWith({
-        youtubeBrowserCookies: enabled,
+        youtubeLoginSource: enabled ? 'firefox' : 'none',
       });
     },
   );

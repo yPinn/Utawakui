@@ -100,10 +100,10 @@ describe('downloadAudio cancellation', () => {
 
   it.each([
     [undefined, false],
-    [true, true],
+    ['firefox', true],
   ])(
-    'reads browser cookies only after opt-in (allowBrowserCookies=%s)',
-    async (allowBrowserCookies, expectsCookies) => {
+    'reads Firefox sign-in only when chosen (loginSource=%s)',
+    async (loginSource, expectsCookies) => {
       const forbidden = Object.assign(new Error('403'), {
         stderr:
           'ERROR: unable to download video data: HTTP Error 403: Forbidden',
@@ -116,14 +116,43 @@ describe('downloadAudio cancellation', () => {
       });
 
       await expect(
-        downloadAudio('abc12345678', dir, { runner, allowBrowserCookies }),
+        downloadAudio('abc12345678', dir, { runner, loginSource }),
       ).rejects.toThrow('403');
 
       expect(
-        attempts.some((options) => Boolean(options.cookiesFromBrowser)),
+        attempts.some((options) => options.cookiesFromBrowser === 'firefox'),
       ).toBe(expectsCookies);
     },
   );
+
+  it('passes an imported sign-in file to every attempt of one run', async () => {
+    const forbidden = Object.assign(new Error('403'), {
+      stderr: 'ERROR: unable to download video data: HTTP Error 403: Forbidden',
+    });
+    const attempts = [];
+    const runner = vi.fn(async (_url, options) => {
+      attempts.push(options);
+      if (options.skipDownload) return {};
+      throw forbidden;
+    });
+    const withLoginFile = vi.fn((run) => run('C:/tmp/login.txt'));
+
+    await expect(
+      downloadAudio('abc12345678', dir, {
+        runner,
+        loginSource: 'file',
+        withLoginFile,
+      }),
+    ).rejects.toThrow('403');
+
+    expect(withLoginFile).toHaveBeenCalledOnce();
+    const signed = attempts.filter((options) => options.cookies);
+    expect(signed.length).toBeGreaterThan(0);
+    expect(
+      signed.every((options) => options.cookies === 'C:/tmp/login.txt'),
+    ).toBe(true);
+    expect(attempts.some((options) => options.cookiesFromBrowser)).toBe(false);
+  });
 });
 
 describe('applySubtitleOptions', () => {
@@ -173,7 +202,7 @@ describe('buildAudioDownloadOptionAttempts', () => {
           subtitles: { ja: [{ ext: 'vtt' }] },
         },
         getAuthenticatedYoutubePhases(process.env, {
-          allowBrowserCookies: true,
+          loginSource: 'firefox',
         }),
       ),
     ).toEqual([
@@ -237,32 +266,6 @@ describe('buildAudioDownloadOptionAttempts', () => {
         writeInfoJson: true,
         format: 'bestaudio[ext=m4a]/bestaudio/best',
         extractorArgs: 'youtube:player_client=mweb;player_js_version=actual',
-      },
-      {
-        jsRuntimes: 'node',
-        writeSubs: true,
-        writeAutoSubs: false,
-        subLangs: 'ja',
-        subFormat: 'vtt',
-        output: 'audio.%(ext)s',
-        noPlaylist: true,
-        writeInfoJson: true,
-        format: 'bestaudio[ext=m4a]/bestaudio/best',
-        extractorArgs: 'youtube:player_js_version=actual',
-        cookiesFromBrowser: 'chrome',
-      },
-      {
-        jsRuntimes: 'node',
-        writeSubs: true,
-        writeAutoSubs: false,
-        subLangs: 'ja',
-        subFormat: 'vtt',
-        output: 'audio.%(ext)s',
-        noPlaylist: true,
-        writeInfoJson: true,
-        format: 'bestaudio[ext=m4a]/bestaudio/best',
-        extractorArgs: 'youtube:player_js_version=actual',
-        cookiesFromBrowser: 'edge',
       },
       {
         jsRuntimes: 'node',

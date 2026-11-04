@@ -236,6 +236,7 @@ const {
   registerBgmStandbyPlanHandlers,
 } = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
+const { createYoutubeLoginStore } = require('./lib/youtubeLoginStore');
 const {
   createReleaseCatalogService,
 } = require('./lib/releases/catalogRuntime');
@@ -1508,8 +1509,14 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
+    // Imported YouTube sign-in stays encrypted under userData.
+    const youtubeLoginStore = createYoutubeLoginStore({
+      safeStorage,
+      filePath: path.join(app.getPath('userData'), 'youtube-login.bin'),
+    });
     const importHandlerRuntime = registerImportHandlers({
       ipcMain,
+      youtubeLoginStore,
       prepareReleaseDownload: releaseCatalogService.prepareDownload,
       validateReleaseDownload: releaseCatalogService.validateDownload,
       attachReleaseDownload: releaseCatalogService.attachDownload,

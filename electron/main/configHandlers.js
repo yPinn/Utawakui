@@ -321,7 +321,7 @@ function registerConfigHandlers({
         operation: 'get-youtube-browser-cookies',
         code: 'YOUTUBE_BROWSER_COOKIES_READ_FAILED',
       },
-      () => getConfig().youtubeBrowserCookies,
+      () => getConfig().youtubeLoginSource !== 'none',
     ),
   );
 
@@ -338,8 +338,9 @@ function registerConfigHandlers({
           code: 'YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED',
         },
         () => {
-          updateConfig({ youtubeBrowserCookies: enabled });
-          return getConfig().youtubeBrowserCookies;
+          // Interim on/off bridge until Settings offers the sign-in choice.
+          updateConfig({ youtubeLoginSource: enabled ? 'firefox' : 'none' });
+          return getConfig().youtubeLoginSource !== 'none';
         },
       );
     },

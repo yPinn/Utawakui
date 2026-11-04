@@ -26,6 +26,7 @@ const OPTION_FLAGS = Object.freeze([
   ['subLangs', '--sub-langs', 'value'],
   ['subFormat', '--sub-format', 'value'],
   ['cookiesFromBrowser', '--cookies-from-browser', 'value'],
+  ['cookies', '--cookies', 'value'],
   ['impersonate', '--impersonate', 'value'],
 ]);
 

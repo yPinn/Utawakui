@@ -43,7 +43,7 @@ describe('config', () => {
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
-      youtubeBrowserCookies: false,
+      youtubeLoginSource: 'none',
       autoErrorReporting: 'ask',
       experimentalLyricsAfterSeparation: false,
       separationGpuAcceleration: true,
@@ -167,7 +167,7 @@ describe('config', () => {
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
-      youtubeBrowserCookies: false,
+      youtubeLoginSource: 'none',
       autoErrorReporting: 'ask',
       separationGpuAcceleration: true,
       experimentalLyricsAfterSeparation: false,
@@ -245,6 +245,26 @@ describe('config', () => {
     saveConfig(configPath, { downloadDir: '/first' });
     saveConfig(configPath, {});
     expect(loadConfig(configPath).downloadDir).toBe('/first');
+  });
+
+  it('migrates the old browser opt-in to the Firefox sign-in source', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ youtubeBrowserCookies: true }),
+    );
+    expect(loadConfig(configPath).youtubeLoginSource).toBe('firefox');
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ youtubeBrowserCookies: false }),
+    );
+    expect(loadConfig(configPath).youtubeLoginSource).toBe('none');
+    saveConfig(configPath, { youtubeLoginSource: 'file' });
+    expect(loadConfig(configPath).youtubeLoginSource).toBe('file');
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ youtubeLoginSource: 'chrome' }),
+    );
+    expect(loadConfig(configPath).youtubeLoginSource).toBe('none');
   });
 
   it('keeps a supported uiLanguage and resets unknown values to system', () => {

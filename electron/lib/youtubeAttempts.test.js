@@ -143,15 +143,15 @@ describe('buildPhaseAttempts', () => {
 
   it('retries a cookie phase on its own cookie-unavailable failure', () => {
     const attempts = buildPhaseAttempts(
-      AUTHENTICATED_YOUTUBE_PHASES,
+      getAuthenticatedYoutubePhases({}, { loginSource: 'firefox' }),
       {},
       isForbiddenAudioDownloadError,
     );
-    const chromePhase = attempts.find(
-      (attempt) => attempt.id === 'cookies-chrome',
+    const firefoxPhase = attempts.find(
+      (attempt) => attempt.id === 'cookies-firefox',
     );
     expect(
-      chromePhase.shouldRetry({
+      firefoxPhase.shouldRetry({
         stderr: 'ERROR: could not find chrome cookies database',
       }),
     ).toBe(true);
@@ -203,48 +203,60 @@ describe('CLIENT_FALLBACK_YOUTUBE_PHASES', () => {
     );
   });
 
-  it('is spliced into AUTHENTICATED_YOUTUBE_PHASES before the cookie phases', () => {
+  it('keeps every anonymous route ahead of sign-in and impersonation', () => {
     const ids = AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id);
-    const cookieIndex = ids.indexOf('cookies-chrome');
-    expect(ids.slice(0, cookieIndex)).toEqual(
-      CLIENT_FALLBACK_YOUTUBE_PHASES.map((phase) => phase.id),
-    );
+    expect(ids).toEqual([
+      ...CLIENT_FALLBACK_YOUTUBE_PHASES.map((phase) => phase.id),
+      'impersonate',
+    ]);
   });
 });
 
 describe('getAuthenticatedYoutubePhases', () => {
-  it('omits browser-cookie phases unless the user opted in', () => {
+  it('adds no sign-in unless the user chose a source', () => {
     const ids = getAuthenticatedYoutubePhases({}).map((phase) => phase.id);
-    expect(ids).toEqual(
-      AUTHENTICATED_YOUTUBE_PHASES.filter(
-        (phase) => !phase.options.cookiesFromBrowser,
-      ).map((phase) => phase.id),
-    );
+    expect(ids).toEqual(AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id));
     expect(ids.some((id) => id.startsWith('cookies-'))).toBe(false);
-    expect(ids).toContain('impersonate');
   });
 
-  it('matches the default authenticated phases when no PO token env is configured', () => {
+  it('places the chosen sign-in after every anonymous route and before impersonation', () => {
+    const firefox = getAuthenticatedYoutubePhases(
+      {},
+      { loginSource: 'firefox' },
+    ).map((phase) => phase.id);
+    expect(firefox.slice(-2)).toEqual(['cookies-firefox', 'impersonate']);
+    expect(firefox).not.toContain('cookies-chrome');
+    expect(firefox).not.toContain('cookies-edge');
+
+    const file = getAuthenticatedYoutubePhases(
+      {},
+      { loginSource: 'file', cookiesFile: 'C:/tmp/login.txt' },
+    );
+    expect(file.at(-2)).toMatchObject({
+      id: 'cookies-file',
+      options: { cookies: 'C:/tmp/login.txt' },
+    });
+    // A file source without a decrypted file adds nothing.
     expect(
-      getAuthenticatedYoutubePhases({}, { allowBrowserCookies: true }).map(
+      getAuthenticatedYoutubePhases({}, { loginSource: 'file' }).map(
         (phase) => phase.id,
       ),
     ).toEqual(AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id));
   });
 
-  it('adds one redacted manual PO-token phase before browser-cookie phases', () => {
+  it('adds one redacted manual PO-token phase before the sign-in phase', () => {
     const phases = getAuthenticatedYoutubePhases(
       {
         UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN_VALUE',
         UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
       },
-      { allowBrowserCookies: true },
+      { loginSource: 'firefox' },
     );
     const ids = phases.map((phase) => phase.id);
     const poTokenIndex = ids.indexOf('po-token-mweb-gvs');
 
     expect(poTokenIndex).toBeGreaterThan(ids.indexOf('client-mweb'));
-    expect(poTokenIndex).toBeLessThan(ids.indexOf('cookies-chrome'));
+    expect(poTokenIndex).toBeLessThan(ids.indexOf('cookies-firefox'));
     expect(ids).not.toContain('TOKEN_VALUE');
     expect(phases[poTokenIndex].options.extractorArgs).toBe(
       'youtube:player_client=mweb;po_token=mweb.gvs+TOKEN_VALUE;visitor_data=VISITOR_DATA;player_js_version=actual',
@@ -273,7 +285,7 @@ describe('getAuthenticatedYoutubePhases', () => {
         UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN;player_client=all',
         UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
       },
-      { allowBrowserCookies: true },
+      {},
     );
 
     expect(phases.map((phase) => phase.id)).toEqual(

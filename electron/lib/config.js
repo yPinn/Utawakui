@@ -39,6 +39,7 @@ const {
   OUTPUT_LANGUAGE_PREFERENCES,
   UI_LANGUAGE_PREFERENCES,
 } = require('./uiLocale');
+const { YOUTUBE_LOGIN_SOURCES } = require('./youtubeAttempts');
 
 const CURRENT_VERSION = 4;
 const UI_THEMES = ['light', 'dark'];
@@ -84,9 +85,9 @@ const DEFAULTS = {
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
-  // Explicit opt-in: a failed provider download may retry with the YouTube
-  // sign-in of a local browser profile (yt-dlp --cookies-from-browser).
-  youtubeBrowserCookies: false,
+  // Last-resort sign-in for a failed provider download: 'none', 'firefox'
+  // (yt-dlp --cookies-from-browser) or 'file' (an imported cookies.txt).
+  youtubeLoginSource: 'none',
   // ADR 0029: ask before the first severe-error report, then remember.
   autoErrorReporting: 'ask',
   experimentalLyricsAfterSeparation: false,
@@ -395,7 +396,7 @@ function loadConfigSnapshot(configPath) {
         typeof data.autoAnalyzeMusicStructure === 'boolean'
           ? data.autoAnalyzeMusicStructure
           : DEFAULTS.autoAnalyzeMusicStructure,
-      youtubeBrowserCookies: data.youtubeBrowserCookies === true,
+      youtubeLoginSource: normalizeYoutubeLoginSource(data),
       autoErrorReporting: AUTO_ERROR_REPORTING_VALUES.has(
         data.autoErrorReporting,
       )
@@ -432,6 +433,16 @@ function loadConfigSnapshot(configPath) {
 
 // Keep existing consumers on the settings-only contract; startup also needs
 // provenance so legacy audio migration can distinguish absence from defaults.
+// The old on/off browser opt-in only ever worked through Firefox on Windows.
+function normalizeYoutubeLoginSource(data) {
+  if (YOUTUBE_LOGIN_SOURCES.includes(data.youtubeLoginSource)) {
+    return data.youtubeLoginSource;
+  }
+  return data.youtubeBrowserCookies === true
+    ? 'firefox'
+    : DEFAULTS.youtubeLoginSource;
+}
+
 function normalizeUiLanguage(value) {
   return UI_LANGUAGE_PREFERENCES.includes(value) ? value : DEFAULTS.uiLanguage;
 }

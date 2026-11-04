@@ -10,11 +10,10 @@ const YTDLP_PO_TOKEN_CONTEXT_ENV = 'UTAWAKUI_YTDLP_PO_TOKEN_CONTEXT';
 const YTDLP_VISITOR_DATA_ENV = 'UTAWAKUI_YTDLP_VISITOR_DATA';
 const DEFAULT_PO_TOKEN_CLIENT = 'mweb';
 const DEFAULT_PO_TOKEN_CONTEXT = 'gvs';
-// firefox last: Chrome 127+ and current Edge both use App-Bound Encryption,
-// which makes their cookies structurally undecryptable by any external tool
-// on Windows (confirmed via yt-dlp's own DPAPI failure) — firefox isn't
-// affected, so it's the fallback actually likely to work when it applies.
-const YOUTUBE_COOKIE_FALLBACK_BROWSERS = ['chrome', 'edge', 'firefox'];
+// Where a last-resort sign-in comes from. Chrome 127+ and current Edge use
+// App-Bound Encryption on Windows, so external tools cannot read them; Firefox
+// still can, and a user-exported cookies.txt covers everyone else.
+const YOUTUBE_LOGIN_SOURCES = Object.freeze(['none', 'firefox', 'file']);
 
 function applyYoutubeRuntimeOptions(options) {
   return {
@@ -109,24 +108,46 @@ const CLIENT_FALLBACK_YOUTUBE_PHASES = [
   ...PLAYER_CLIENT_YOUTUBE_PHASES,
 ];
 
+const IMPERSONATE_YOUTUBE_PHASE = {
+  id: 'impersonate',
+  options: {
+    extractorArgs: FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
+    impersonate: 'chrome',
+  },
+};
+
+// Every anonymous route first; sign-in is never part of the default ladder.
 const AUTHENTICATED_YOUTUBE_PHASES = [
   ...CLIENT_FALLBACK_YOUTUBE_PHASES,
-  ...YOUTUBE_COOKIE_FALLBACK_BROWSERS.map((browser) => ({
-    id: `cookies-${browser}`,
-    options: {
-      extractorArgs: FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
-      cookiesFromBrowser: browser,
-    },
-    retriesOwnFailure: isUnavailableBrowserCookieError,
-  })),
-  {
-    id: 'impersonate',
-    options: {
-      extractorArgs: FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
-      impersonate: 'chrome',
-    },
-  },
+  IMPERSONATE_YOUTUBE_PHASE,
 ];
+
+function youtubeLoginPhases(loginSource, cookiesFile) {
+  if (loginSource === 'firefox') {
+    return [
+      {
+        id: 'cookies-firefox',
+        options: {
+          extractorArgs: FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
+          cookiesFromBrowser: 'firefox',
+        },
+        retriesOwnFailure: isUnavailableBrowserCookieError,
+      },
+    ];
+  }
+  if (loginSource === 'file' && cookiesFile) {
+    return [
+      {
+        id: 'cookies-file',
+        options: {
+          extractorArgs: FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
+          cookies: cookiesFile,
+        },
+      },
+    ];
+  }
+  return [];
+}
 
 function hasExtractorArgUnsafeCharacters(value) {
   return /[;\s]/.test(String(value || ''));
@@ -169,27 +190,19 @@ function buildManualPoTokenPhase(env = process.env) {
   };
 }
 
-// Browser-cookie phases read the user's signed-in browser profile, so they
-// run only when the user has opted in (config youtubeBrowserCookies).
+// Sign-in phases run only for user-initiated calls, after every anonymous
+// route has failed, and only with the sign-in source the user chose.
 function getAuthenticatedYoutubePhases(
   env = process.env,
-  { allowBrowserCookies = false } = {},
+  { loginSource = 'none', cookiesFile = null } = {},
 ) {
   const poTokenPhase = buildManualPoTokenPhase(env);
-  const cookieIndex = AUTHENTICATED_YOUTUBE_PHASES.findIndex((phase) =>
-    phase.id.startsWith('cookies-'),
-  );
-  const phases =
-    !poTokenPhase || cookieIndex === -1
-      ? AUTHENTICATED_YOUTUBE_PHASES.slice()
-      : [
-          ...AUTHENTICATED_YOUTUBE_PHASES.slice(0, cookieIndex),
-          poTokenPhase,
-          ...AUTHENTICATED_YOUTUBE_PHASES.slice(cookieIndex),
-        ];
-  return allowBrowserCookies
-    ? phases
-    : phases.filter((phase) => !phase.options.cookiesFromBrowser);
+  return [
+    ...CLIENT_FALLBACK_YOUTUBE_PHASES,
+    ...(poTokenPhase ? [poTokenPhase] : []),
+    ...youtubeLoginPhases(loginSource, cookiesFile),
+    IMPERSONATE_YOUTUBE_PHASE,
+  ];
 }
 
 // Splits "worth escalating" (caller-supplied) from "did this phase's own
@@ -237,6 +250,7 @@ module.exports = {
   CLIENT_FALLBACK_YOUTUBE_PHASES,
   FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
   YOUTUBE_FALLBACK_PLAYER_CLIENTS,
+  YOUTUBE_LOGIN_SOURCES,
   applyYoutubeRuntimeOptions,
   buildPhaseAttempts,
   downloadErrorText,

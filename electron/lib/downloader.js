@@ -446,16 +446,12 @@ async function downloadAudio(videoId, destDir, options = {}) {
   const trackDir = fs.mkdtempSync(path.join(stagingRoot, 'track-'));
   try {
     const outputTemplate = path.join(trackDir, 'audio.%(ext)s');
-    const phases = getAuthenticatedYoutubePhases(process.env, {
-      allowBrowserCookies: options.allowBrowserCookies === true,
-    });
-    // Same phases the download attempts below use — a transient failure
-    // here used to permanently record "no lyrics found".
-    const info = await fetchVideoInfo(videoId, {
-      phases,
-      runner,
-      signal: options.signal,
-    });
+    const loginSource = options.loginSource ?? 'none';
+    // A sign-in file is decrypted once for this run and removed afterwards.
+    const withLoginFile =
+      loginSource === 'file' && options.withLoginFile
+        ? options.withLoginFile
+        : (run) => run(null);
     const resetLyrics = lyricsManifestNeedsRescan(trackDir);
 
     // Verified per attempt, not once after the whole ladder — some clients let
@@ -468,20 +464,33 @@ async function downloadAudio(videoId, destDir, options = {}) {
       return result;
     }
 
-    await runPhasedYoutubeAttempts(
-      watchUrl(videoId),
-      buildAudioDownloadAttempts(
-        {
-          output: outputTemplate,
-          noPlaylist: true,
-          writeInfoJson: true,
-          writeThumbnail: true,
-        },
-        info,
+    await withLoginFile(async (cookiesFile) => {
+      const phases = getAuthenticatedYoutubePhases(process.env, {
+        loginSource,
+        cookiesFile,
+      });
+      // Same phases the download attempts below use — a transient failure
+      // here used to permanently record "no lyrics found".
+      const info = await fetchVideoInfo(videoId, {
         phases,
-      ),
-      runAndVerifyAudioOutput,
-    );
+        runner,
+        signal: options.signal,
+      });
+      await runPhasedYoutubeAttempts(
+        watchUrl(videoId),
+        buildAudioDownloadAttempts(
+          {
+            output: outputTemplate,
+            noPlaylist: true,
+            writeInfoJson: true,
+            writeThumbnail: true,
+          },
+          info,
+          phases,
+        ),
+        runAndVerifyAudioOutput,
+      );
+    });
 
     const { audioFilename } = finalizeDownloadedTrackFiles(trackDir, {
       resetLyrics,

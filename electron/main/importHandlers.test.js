@@ -306,10 +306,11 @@ describe('import clipboard suggestion boundary', () => {
     }
   });
   it.each([
-    [{}, false],
-    [{ youtubeBrowserCookies: true }, true],
+    [{}, 'none'],
+    [{ youtubeLoginSource: 'firefox' }, 'firefox'],
+    [{ youtubeLoginSource: 'file' }, 'file'],
   ])(
-    'passes the browser-cookie opt-in from %j to provider downloads',
+    'passes the sign-in source from %j to provider downloads',
     async (config, expected) => {
       const downloadTrackAudio = vi.fn().mockResolvedValue({ title: 'Song' });
       const view = registerDownload({
@@ -317,9 +318,7 @@ describe('import clipboard suggestion boundary', () => {
         downloadTrackAudio,
       });
       await view.handlers.get('yt:download-audio')({}, 'abcdefghijk');
-      expect(downloadTrackAudio.mock.calls[0][2].allowBrowserCookies).toBe(
-        expected,
-      );
+      expect(downloadTrackAudio.mock.calls[0][2].loginSource).toBe(expected);
     },
   );
   function clipboardHarness(value) {
