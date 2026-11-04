@@ -6,6 +6,7 @@ import AppRightDockSection from '../../layout/AppRightDockSection.vue';
 import UiButton from '../../ui/UiButton.vue';
 import UiCollageThumb from '../../ui/UiCollageThumb.vue';
 import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   summary: { type: Object, required: true },
@@ -14,20 +15,29 @@ const props = defineProps({
 const emit = defineEmits(['open']);
 
 const summaryText = computed(() => {
-  const album =
-    props.summary.albumCount > 0 ? ` · ${props.summary.albumCount} 張專輯` : '';
-  return `本機 ${props.summary.trackCount} 首${album}`;
+  return props.summary.albumCount > 0
+    ? t('player.context.artistLocalAlbums', {
+        count: props.summary.trackCount,
+        albums: props.summary.albumCount,
+      })
+    : t(
+        'player.context.artistLocal',
+        { count: props.summary.trackCount },
+        props.summary.trackCount,
+      );
 });
 </script>
 
 <template>
   <AppRightDockSection
     class="track-artist-preview"
-    heading="藝人"
+    :heading="t('player.context.artist')"
     appearance="contained"
   >
     <template v-if="summary.artistId" #trailing>
-      <UiButton variant="ghost" @click="emit('open')">前往藝人</UiButton>
+      <UiButton variant="ghost" @click="emit('open')">{{
+        t('player.context.goToArtist')
+      }}</UiButton>
     </template>
 
     <div class="track-artist-preview__summary">

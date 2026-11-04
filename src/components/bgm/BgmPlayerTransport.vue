@@ -12,6 +12,7 @@ import { formatDuration } from '../../utils/format.js';
 import audioControlValues from '../../../shared/audioControlValues.json';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   compact: { type: Boolean, default: false },
@@ -64,17 +65,17 @@ const dimReductionDb = computed(() =>
 );
 const dimActionLabel = computed(() =>
   props.isDimmed
-    ? '壓低 BGM（按下恢復 BGM 音量）'
-    : `壓低 BGM（降低 ${dimReductionDb.value} dB）`,
+    ? t('player.bgm.restore')
+    : t('player.bgm.dim', { db: dimReductionDb.value }),
 );
 const guideActionLabel = computed(() =>
   !props.currentTrack
-    ? '請先選擇 BGM'
+    ? t('player.bgm.chooseFirst')
     : !props.hasGuideVocal
-      ? 'BGM 原曲播放，需先準備伴奏才能切換導唱'
+      ? t('player.bgm.guideUnavailable')
       : props.guideVocalOn
-        ? '關閉 BGM 導唱'
-        : '開啟 BGM 導唱',
+        ? t('player.bgm.guideOff')
+        : t('player.bgm.guideOn'),
 );
 const primaryAction = computed(() =>
   projectBgmPrimaryAction({
@@ -101,7 +102,7 @@ function updatePosition(value) {
   <section
     class="bgm-transport"
     :class="`bgm-transport--${variant}`"
-    aria-label="BGM 播放控制"
+    :aria-label="t('player.bgm.controls')"
   >
     <div class="bgm-transport__progress">
       <span class="bgm-transport__time">{{
@@ -116,7 +117,7 @@ function updatePosition(value) {
         :disabled="!currentTrack || duration <= 0"
         :value-text="formatDuration(currentTime, '0:00')"
         :format-value="(value) => formatDuration(value, '0:00')"
-        aria-label="BGM 進度"
+        :aria-label="t('player.bgm.progress')"
         @update:model-value="updatePosition"
         @change="emit('commitPosition')"
       />
@@ -129,7 +130,7 @@ function updatePosition(value) {
       <UiIconButton
         class="bgm-transport__cut"
         :icon="Square"
-        label="立即停止 BGM（不淡出）"
+        :label="t('player.bgm.stopNow')"
         intent="danger"
         :disabled="!canCutBgm"
         @click="emit('cut')"
@@ -164,10 +165,14 @@ function updatePosition(value) {
         @click="emit('setDimmed', !isDimmed)"
       />
 
-      <div class="bgm-transport__audio" role="group" aria-label="BGM 音量">
+      <div
+        class="bgm-transport__audio"
+        role="group"
+        :aria-label="t('player.bgm.volume')"
+      >
         <UiIconButton
           :icon="isMuted ? VolumeX : Volume2"
-          :label="isMuted ? '取消 BGM 靜音' : 'BGM 靜音'"
+          :label="t(isMuted ? 'player.bgm.unmute' : 'player.bgm.mute')"
           :active="isMuted"
           :aria-pressed="isMuted"
           @click="emit('setMuted', !isMuted)"
@@ -180,7 +185,7 @@ function updatePosition(value) {
           :step="audioControlValues.bgmVolume.step"
           :value-text="`${Math.round(volumeDraft * 100)}%`"
           :format-value="(value) => `${Math.round(value * 100)}%`"
-          aria-label="BGM 音量"
+          :aria-label="t('player.bgm.volume')"
           @update:model-value="updateVolume"
           @change="emit('commitVolume', volumeDraft)"
         />

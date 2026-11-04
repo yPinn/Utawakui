@@ -1,7 +1,7 @@
-import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
+const read = (path) => readCatalogSource(new URL(path, import.meta.url));
 
 describe('audio range context-menu reset contract', () => {
   it('keeps progress and live transport volume free of right-click reset defaults', () => {

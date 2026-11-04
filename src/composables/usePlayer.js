@@ -17,6 +17,7 @@ import {
 } from './player/usePlayerAudioGraph.js';
 import { normalizeAudioPreferences } from '../utils/audioPreferences.js';
 import { createPlaybackClockSampler } from '../utils/playbackClockSample.js';
+import { t } from '../utils/i18n.js';
 
 export {
   GUIDE_VOCAL_LEVEL_RANGE,
@@ -50,7 +51,7 @@ const initialAudioPreferences = normalizeAudioPreferences(
 function reportPlayerError(error, operation, message) {
   return recordError(error, {
     code: `PLAYER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-    title: '播放操作未完成',
+    title: t('player.start.failedTitle'),
     message,
     source: 'player',
     operation,
@@ -237,7 +238,7 @@ function handleError() {
   state.error = reportPlayerError(
     audio.error,
     'media',
-    '目前無法播放這首曲目，請再試一次。',
+    t('player.start.playFailed'),
   );
   state.isPlaying = false;
   state.playbackPhase = 'error';

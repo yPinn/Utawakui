@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
+const read = (p) => readCatalogSource(new URL(p, import.meta.url));
 const sources = [
   'BgmPlayer',
   'BgmPlayerTransport',

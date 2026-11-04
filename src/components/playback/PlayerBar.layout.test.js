@@ -1,22 +1,17 @@
-import { readFileSync } from 'node:fs';
-
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const componentSource = readFileSync(
+const componentSource = readCatalogSource(
   new URL('./PlayerBar.vue', import.meta.url),
-  'utf8',
 );
-const panelSource = readFileSync(
+const panelSource = readCatalogSource(
   new URL('../ui/UiPopover.vue', import.meta.url),
-  'utf8',
 );
-const tokenSource = readFileSync(
+const tokenSource = readCatalogSource(
   new URL('../../styles/tokens.css', import.meta.url),
-  'utf8',
 );
-const identitySource = readFileSync(
+const identitySource = readCatalogSource(
   new URL('../track/PlaybackTrackIdentity.vue', import.meta.url),
-  'utf8',
 );
 
 function cssRule(source, selector) {

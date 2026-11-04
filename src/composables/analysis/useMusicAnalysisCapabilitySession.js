@@ -3,11 +3,15 @@ import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useMusicAnalysisCapability } from './useMusicAnalysisCapability.js';
 import { useTaskNotification } from '../useTaskNotification.js';
 import { useAppView } from '../useAppView.js';
+import { t } from '../../utils/i18n.js';
 
 const sessions = new WeakMap();
 const owners = new Set();
 const unavailableBridge = {};
-const OPERATIONS = { prepare: '準備', repair: '修復', remove: '移除' };
+const capabilityNotice = (operation, outcome) =>
+  t(`dependencies.notify.${operation}.${outcome}`, {
+    name: t('capabilities.bpm.componentTitle'),
+  });
 
 // Settings and Workbench share the same main-owned capability projection. Its
 // subscription lives for the renderer lifetime; analysis jobs keep their owners.
@@ -29,7 +33,7 @@ export function useMusicAnalysisCapabilitySession({ bridge } = {}) {
     onActionStart(operation) {
       feedback = useTaskNotification({
         key: NOTIFICATION_KEYS.TASK_MUSIC_ANALYSIS_CAPABILITY,
-        title: `BPM 分析元件${OPERATIONS[operation]}中`,
+        title: capabilityNotice(operation, 'running'),
         action: openSettings,
       });
     },
@@ -37,15 +41,19 @@ export function useMusicAnalysisCapabilitySession({ bridge } = {}) {
       feedback?.progress(owner.stageLabel.value, owner.progressPercent.value);
     },
     onActionComplete(operation) {
-      feedback?.finish({ title: `BPM 分析元件已${OPERATIONS[operation]}` });
+      feedback?.finish({ title: capabilityNotice(operation, 'done') });
       feedback = null;
     },
     onActionError(operation, message) {
       feedback?.finish({
-        title: `BPM 分析元件${OPERATIONS[operation]}未完成`,
+        title: capabilityNotice(operation, 'failed'),
         message,
         tone: 'danger',
-        actionLabel: operation === 'remove' ? '查看設定' : '重試',
+        actionLabel: t(
+          operation === 'remove'
+            ? 'player.analysis.viewSettings'
+            : 'player.analysis.retry',
+        ),
         action:
           operation === 'remove' ? openSettings : () => owner[operation](),
       });

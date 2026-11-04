@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, shallowRef, watch } from 'vue';
+import { t } from '../utils/i18n.js';
 
 export function createBgmSessionController({
   plan,
@@ -177,7 +178,7 @@ export function createBgmSessionController({
       state.error = null;
       return true;
     })().catch(() => {
-      state.error = 'BGM 現場控制初始化失敗。';
+      state.error = t('player.bgm.initFailed');
       return false;
     });
     return initializationPromise;

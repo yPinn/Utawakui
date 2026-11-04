@@ -31,6 +31,7 @@ import UiTooltip from '../ui/UiTooltip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import PlayerPerformanceSettingsControls from './PlayerPerformanceSettingsControls.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   open: { type: Boolean, default: false },
@@ -73,9 +74,9 @@ function formatMetronomeVolume(value) {
 }
 
 const tabItems = [
-  { id: 'adjust', label: '調整' },
-  { id: 'guide', label: '導唱' },
-  { id: 'live', label: '節拍器' },
+  { id: 'adjust', label: t('player.toolsPanel.adjust') },
+  { id: 'guide', label: t('player.toolsPanel.guide') },
+  { id: 'live', label: t('player.toolsPanel.live') },
 ];
 
 function formatConfidence(value) {
@@ -83,7 +84,9 @@ function formatConfidence(value) {
 }
 const trackTempoHint = computed(() =>
   metronome.bpmSource === 'track-estimate'
-    ? `已套用曲目估算 BPM · 節拍信心 ${formatConfidence(metronome.bpmSourceConfidence)}`
+    ? t('player.toolsPanel.bpmApplied', {
+        confidence: formatConfidence(metronome.bpmSourceConfidence),
+      })
     : '',
 );
 function setActiveTab(key) {
@@ -96,10 +99,10 @@ function setActiveTab(key) {
     :open="open"
     :close-on-scroll="false"
     :panel-style="panelStyle"
-    aria-label="演出工具"
+    :aria-label="t('player.toolsPanel.label')"
     placement="top-end"
     scroll-axis="vertical"
-    scroll-aria-label="演出工具內容"
+    :scroll-aria-label="t('player.toolsPanel.contentLabel')"
     focus-on-open
     @update:open="emit('update:open', $event)"
   >
@@ -108,10 +111,10 @@ function setActiveTab(key) {
     </template>
     <template #header>
       <div class="player-tools__heading">
-        <h2>演出工具</h2>
+        <h2>{{ t('player.toolsPanel.label') }}</h2>
         <UiIconButton
           :icon="X"
-          label="關閉演出工具"
+          :label="t('player.toolsPanel.close')"
           @click="emit('update:open', false)"
         />
       </div>
@@ -120,7 +123,7 @@ function setActiveTab(key) {
       class="player-tools__tabs"
       :items="tabItems"
       :active-id="activeTab"
-      aria-label="工具分組"
+      :aria-label="t('player.toolsPanel.groups')"
       tab-id-prefix="player-tools"
       panel-id-prefix="player-tools"
       variant="bar"
@@ -141,10 +144,10 @@ function setActiveTab(key) {
             <span class="player-tools__stepper-label" aria-hidden="true"
               >BPM</span
             >
-            <UiButtonGroup label="節拍器速度">
+            <UiButtonGroup :label="t('player.toolsPanel.tempo')">
               <UiIconButton
                 :icon="Minus"
-                label="降低 BPM"
+                :label="t('player.toolsPanel.bpmDown')"
                 :disabled="metronome.bpm <= METRONOME_BPM_RANGE.min"
                 @click="adjustBpm(-1)"
               />
@@ -153,31 +156,41 @@ function setActiveTab(key) {
               </span>
               <UiIconButton
                 :icon="Plus"
-                label="提高 BPM"
+                :label="t('player.toolsPanel.bpmUp')"
                 :disabled="metronome.bpm >= METRONOME_BPM_RANGE.max"
                 @click="adjustBpm(1)"
               />
             </UiButtonGroup>
           </div>
           <div class="player-tools__metro-actions">
-            <UiIconButton :icon="RotateCcw" label="重設節拍器" @click="reset" />
+            <UiIconButton
+              :icon="RotateCcw"
+              :label="t('player.toolsPanel.reset')"
+              @click="reset"
+            />
 
             <UiIconButton
               :icon="metronome.isRunning ? Pause : Play"
               :active="metronome.isRunning"
-              :label="metronome.isRunning ? '停止節拍器' : '啟動節拍器'"
+              :label="
+                t(
+                  metronome.isRunning
+                    ? 'player.toolsPanel.stop'
+                    : 'player.toolsPanel.start',
+                )
+              "
               :aria-pressed="metronome.isRunning"
               @click="toggle"
             />
           </div>
           <div class="player-tools__stepper">
-            <span class="player-tools__stepper-label" aria-hidden="true"
-              >拍數</span
-            >
-            <UiButtonGroup label="每小節拍數">
+            <span class="player-tools__stepper-label" aria-hidden="true">{{
+              t('player.toolsPanel.beats')
+            }}</span>
+            <UiButtonGroup :label="t('player.toolsPanel.beatsPerBar')">
               <UiIconButton
                 :icon="Minus"
-                label="減少拍數"
+                :label="t('player.toolsPanel.fewerBeats')"
                 :disabled="metronome.beatsPerBar <= METRONOME_BEATS_RANGE.min"
                 @click="adjustBeatsPerBar(-1)"
               />
@@ -186,7 +199,7 @@ function setActiveTab(key) {
               </span>
               <UiIconButton
                 :icon="Plus"
-                label="增加拍數"
+                :label="t('player.toolsPanel.moreBeats')"
                 :disabled="metronome.beatsPerBar >= METRONOME_BEATS_RANGE.max"
                 @click="adjustBeatsPerBar(1)"
               />
@@ -195,7 +208,9 @@ function setActiveTab(key) {
           <div
             class="player-tools__metro-beats"
             role="img"
-            :aria-label="`拍點 ${currentBeatLabel}`"
+            :aria-label="
+              t('player.toolsPanel.beatNamed', { beat: currentBeatLabel })
+            "
           >
             <span class="player-tools__description">{{
               currentBeatLabel
@@ -225,13 +240,17 @@ function setActiveTab(key) {
         <div
           class="player-tools__metro-volume"
           role="group"
-          aria-label="節拍音量"
+          :aria-label="t('player.toolsPanel.beatVolume')"
         >
           <UiIconButton
             :icon="metronome.soundEnabled ? Volume2 : VolumeX"
             :active="metronome.soundEnabled"
             :label="
-              metronome.soundEnabled ? '關閉節拍器音效' : '開啟節拍器音效'
+              t(
+                metronome.soundEnabled
+                  ? 'player.toolsPanel.soundOff'
+                  : 'player.toolsPanel.soundOn',
+              )
             "
             :aria-pressed="metronome.soundEnabled"
             @click="toggleSound"
@@ -244,7 +263,7 @@ function setActiveTab(key) {
             :step="0.05"
             :value-text="formatMetronomeVolume(metronome.volume)"
             :format-value="formatMetronomeVolume"
-            aria-label="節拍音量"
+            :aria-label="t('player.toolsPanel.beatVolume')"
             @update:model-value="setVolume"
           />
         </div>
@@ -253,20 +272,22 @@ function setActiveTab(key) {
           <span
             class="player-tools__description player-tools__tap-hint"
             role="status"
-            >{{ metronome.tapCount === 1 ? '再點一下' : '' }}</span
+            >{{
+              metronome.tapCount === 1 ? t('player.toolsPanel.tapAgain') : ''
+            }}</span
           >
           <UiIconButton
             :icon="RotateCcw"
             :disabled="metronome.tapCount === 0"
-            label="清除點擊記錄"
+            :label="t('player.toolsPanel.clearTaps')"
             @click="resetTaps"
           />
           <UiButton
             :icon="Metronome"
             variant="secondary"
-            title="連續點擊 2 次以上估算 BPM"
+            :title="t('player.toolsPanel.tapHint')"
             @click="tapTempo()"
-            >點擊測速</UiButton
+            >{{ t('player.toolsPanel.tap') }}</UiButton
           >
         </div>
         <p
@@ -354,7 +375,7 @@ function setActiveTab(key) {
           tone="info"
           spinning
           decorative
-          label="伴奏處理中"
+          :label="t('player.toolsPanel.accompanimentBusy')"
         />
         <span class="player-tools__accompaniment-message">{{
           guideAccompaniment.message
@@ -369,14 +390,14 @@ function setActiveTab(key) {
           :icon="MicAudioLines"
           variant="secondary"
           :loading="guideAccompaniment.loading"
-          loading-label="正在加入伴奏處理佇列"
+          :loading-label="t('player.toolsPanel.enqueueing')"
           @click="guideAccompaniment.onAction"
           >{{ guideAccompaniment.actionLabel }}</UiButton
         >
       </div>
-      <UiHint v-else-if="!guideVocalVisible"
-        >使用伴奏音訊後可調整導唱比例。</UiHint
-      >
+      <UiHint v-else-if="!guideVocalVisible">{{
+        t('player.toolsPanel.guideNeedsAccompaniment')
+      }}</UiHint>
       <div class="player-tools__group">
         <template v-for="(row, index) in guideVocalRows" :key="row.key">
           <UiSeparator v-if="index > 0" />

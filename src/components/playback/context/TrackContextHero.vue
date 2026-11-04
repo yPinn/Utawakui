@@ -7,6 +7,7 @@ import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
 import UiTextButton from '../../ui/UiTextButton.vue';
 import UiTrackThumb from '../../ui/UiTrackThumb.vue';
 import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -14,16 +15,24 @@ const props = defineProps({
 
 const { state: artistIndexState } = useArtistIndex();
 const artistName = computed(
-  () => trackArtistText(props.track, artistIndexState.index) || '未知演唱者',
+  () =>
+    trackArtistText(props.track, artistIndexState.index) ||
+    t('player.context.unknownArtist'),
 );
-const accessibleLabel = computed(
-  () => `目前歌曲：${props.track?.title || '未命名曲目'}，${artistName.value}`,
+const accessibleLabel = computed(() =>
+  t('player.context.currentSongNamed', {
+    title: props.track?.title || t('player.context.untitledTrack'),
+    artist: artistName.value,
+  }),
 );
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const trackAlbum = computed(() => albumForTrack(props.track));
 const albumCtaLabel = computed(() =>
   trackAlbum.value
-    ? `${props.track?.title || '未命名曲目'}，前往專輯：${trackAlbum.value.name || '未命名專輯'}`
+    ? t('player.context.goToAlbumNamed', {
+        title: props.track?.title || t('player.context.untitledTrack'),
+        album: trackAlbum.value.name || t('player.context.untitledAlbum'),
+      })
     : '',
 );
 
@@ -51,7 +60,7 @@ function openAlbum() {
               <UiTextButton
                 v-if="trackAlbum"
                 class="track-context-hero__title"
-                :text="track.title || '未命名曲目'"
+                :text="track.title || t('player.context.untitledTrack')"
                 :aria-label="albumCtaLabel"
                 overflow="clamp"
                 @click="openAlbum"
@@ -60,9 +69,9 @@ function openAlbum() {
                 v-else
                 as="p"
                 class="track-context-hero__title track-context-hero__title-text"
-                :text="track.title || '未命名曲目'"
+                :text="track.title || t('player.context.untitledTrack')"
               >
-                {{ track.title || '未命名曲目' }}
+                {{ track.title || t('player.context.untitledTrack') }}
               </UiOverflowTooltip>
               <TrackArtistCredits
                 v-if="track.artist"

@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -13,7 +14,9 @@ const props = defineProps({
 
 const emit = defineEmits(['activate']);
 const actionLabel = computed(() =>
-  props.expanded ? '摺疊目前歌曲資料' : '展開目前歌曲資料',
+  props.expanded
+    ? t('player.context.collapseDetails')
+    : t('player.context.expandDetails'),
 );
 </script>
 

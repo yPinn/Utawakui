@@ -4,6 +4,7 @@ import { useBgmSession } from './useBgmSession.js';
 import { usePerformanceSessionPlayback } from './usePerformanceSessionPlayback.js';
 import { usePlayerPracticeRuntime } from './player/usePlayerPracticeRuntime.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
+import { t } from '../utils/i18n.js';
 
 let instance;
 export function usePlayerPractice() {
@@ -20,13 +21,13 @@ export function usePlayerPractice() {
   });
   const unavailableReason = computed(() =>
     arrangement.ownsPlayback.value
-      ? '請先離開演出安排控制。'
+      ? t('player.practice.leaveSession')
       : player.state.pendingStartTrackId && !runtime.state.enabled
-        ? '正在準備曲目…'
+        ? t('player.practice.preparing')
         : !player.state.track
-          ? '請先選擇曲目。'
+          ? t('player.practice.chooseTrack')
           : !(player.state.duration > 0)
-            ? '等候音訊就緒…'
+            ? t('player.practice.waitingAudio')
             : '',
   );
   const canEnable = computed(() => {

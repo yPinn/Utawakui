@@ -1,13 +1,12 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import TrackContextActions from './TrackContextActions.vue';
+import { readCatalogSource } from '../../../utils/catalogSourceText.js';
 
 describe('TrackContextActions', () => {
   it('bridges the hero More action to the established track menu and metadata modal', () => {
     expect(TrackContextActions).toBeTruthy();
-    const source = readFileSync(
+    const source = readCatalogSource(
       new URL('./TrackContextActions.vue', import.meta.url),
-      'utf8',
     );
 
     expect(source).toContain(
@@ -26,9 +25,8 @@ describe('TrackContextActions', () => {
   });
 
   it('adapts the same menu controller to overlay and Right Dock row triggers', () => {
-    const source = readFileSync(
+    const source = readCatalogSource(
       new URL('./TrackContextActions.vue', import.meta.url),
-      'utf8',
     );
 
     expect(source).toContain(
@@ -49,9 +47,8 @@ describe('TrackContextActions', () => {
   });
 
   it('reuses current queue, playlist, album, and metadata authorities without adding transport controls', () => {
-    const source = readFileSync(
+    const source = readCatalogSource(
       new URL('./TrackContextActions.vue', import.meta.url),
-      'utf8',
     );
 
     for (const action of [
@@ -73,9 +70,8 @@ describe('TrackContextActions', () => {
   });
 
   it('routes editing to the shared workspace and exposes context-specific unlink intent', () => {
-    const source = readFileSync(
+    const source = readCatalogSource(
       new URL('./TrackContextActions.vue', import.meta.url),
-      'utf8',
     );
     expect(source).not.toContain('<TrackMetadataModal');
     expect(source).toContain('await songEditor.open(track)');

@@ -8,6 +8,7 @@ import TrackArtistCredits from './TrackArtistCredits.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   track: { type: Object, default: null },
   artworkSize: { type: [Number, String], default: PLAYER_BAR_ARTWORK_SIZE },
@@ -17,7 +18,10 @@ const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const currentTrackAlbum = computed(() => albumForTrack(props.track));
 const currentTrackAlbumCtaLabel = computed(() => {
   if (!currentTrackAlbum.value) return '';
-  return `${props.track?.title || '目前歌曲'}，前往專輯：${currentTrackAlbum.value.name || '未命名專輯'}`;
+  return t('player.context.goToAlbumNamed', {
+    title: props.track?.title || t('player.context.currentSongFallback'),
+    album: currentTrackAlbum.value.name || t('player.context.untitledAlbum'),
+  });
 });
 function jumpToCurrentTrackAlbum() {
   if (currentTrackAlbum.value) jumpToAlbum(props.track);

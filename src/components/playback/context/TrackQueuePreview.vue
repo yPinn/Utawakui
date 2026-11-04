@@ -4,6 +4,7 @@ import AppRightDockSection from '../../layout/AppRightDockSection.vue';
 import QueueTrackButton from '../../queue/QueueTrackButton.vue';
 import UiButton from '../../ui/UiButton.vue';
 import TrackContextActions from './TrackContextActions.vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   tracks: { type: Array, required: true },
@@ -21,7 +22,9 @@ const nextTrackContext = computed(() =>
   props.queuedTrackIds.includes(nextTrack.value?.id) ? 'queued' : 'source',
 );
 const listLabel = computed(() =>
-  nextTrack.value ? `下一首：${nextTrack.value.title}` : '沒有下一首',
+  nextTrack.value
+    ? t('player.context.nextNamed', { title: nextTrack.value.title })
+    : t('player.context.noNext'),
 );
 
 function openTrackActions(payload) {
@@ -32,11 +35,13 @@ function openTrackActions(payload) {
 <template>
   <AppRightDockSection
     class="track-queue-preview"
-    heading="下一首"
+    :heading="t('player.context.next')"
     appearance="contained"
   >
     <template #trailing>
-      <UiButton variant="ghost" @click="emit('open')">開啟佇列</UiButton>
+      <UiButton variant="ghost" @click="emit('open')">{{
+        t('player.context.openQueue')
+      }}</UiButton>
     </template>
 
     <ol class="track-queue-preview__list" :aria-label="listLabel">

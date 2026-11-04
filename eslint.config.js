@@ -60,6 +60,14 @@ const I18N_MIGRATED = [
   'electron/lib/{performanceSessionPlan,performanceSessionArchive}.js',
   'src/composables/{usePerformanceSessionPlaybackController,usePerformanceSessionPlan,usePerformanceArchive,usePerformanceHistoryObserver}.js',
   'src/utils/{performanceArchivePresentation,performanceSessionSummary,performanceSessionOutput}.js',
+  'src/components/playback/{PlayerBar,PlayerToolsPanel,PlayerPerformanceSettingsControls,PlayerBarArtwork,PlaybackPrimaryButton}.vue',
+  'src/components/playback/context/{TrackContextPanel,TrackContextHero,TrackArtistPreview,TrackQueuePreview,TrackContextActions,TrackCapabilityMatrix}.vue',
+  'src/components/bgm/{BgmPlayer,BgmPlayerTransport}.vue',
+  'src/components/track/PlaybackTrackIdentity.vue',
+  'src/bgm/sessionController.js',
+  'src/composables/player/{usePlayerPerformanceSettings,usePlayerAudioStart}.js',
+  'src/composables/{usePlayerPractice,usePlaybackResume,usePlayer}.js',
+  'src/composables/analysis/useMusicAnalysisCapabilitySession.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

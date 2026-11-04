@@ -24,6 +24,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   active: { type: Boolean, default: true },
   variant: {
@@ -103,9 +104,9 @@ const sourceModeLabel = computed(() =>
     ? ''
     : deckState.usesSeparatedAudio
       ? deckState.guideVocalOn
-        ? '伴奏＋導唱'
-        : '伴奏'
-      : '原曲',
+        ? t('player.bgm.accompanimentWithGuide')
+        : t('player.bgm.accompaniment')
+      : t('player.bgm.original'),
 );
 const statusAccessibleLabel = computed(() =>
   [operationalStatus.value.accessibleLabel, sourceModeLabel.value]
@@ -152,7 +153,9 @@ async function changeTrack(trackId) {
       'bgm-player--dock': variant === 'dock',
       'bgm-player--compact': compact,
     }"
-    :aria-label="variant === 'dock' ? '場間音樂快捷' : '場間音樂'"
+    :aria-label="
+      t(variant === 'dock' ? 'player.bgm.shortcutLabel' : 'player.bgm.label')
+    "
   >
     <div :id="controlsId" class="bgm-player__main">
       <BgmCurrentSource
@@ -212,7 +215,7 @@ async function changeTrack(trackId) {
           </UiTooltip>
           <UiPopover
             v-model:open="pickerExpanded"
-            aria-label="更換場間音樂"
+            :aria-label="t('player.bgm.change')"
             placement="top-end"
             focus-on-open
             :panel-style="{ inlineSize: 'var(--ui-bgm-player-inline-size)' }"
@@ -225,7 +228,13 @@ async function changeTrack(trackId) {
                 class="bgm-current-source__change"
                 :active="pickerExpanded"
                 @click="pickerExpanded = !pickerExpanded"
-                >{{ currentTrack ? '更換' : '選擇' }}</UiButton
+                >{{
+                  t(
+                    currentTrack
+                      ? 'player.bgm.changeShort'
+                      : 'player.bgm.choose',
+                  )
+                }}</UiButton
               >
             </template>
             <BgmTrackPicker
@@ -251,8 +260,12 @@ async function changeTrack(trackId) {
       :icon="compact ? ChevronUp : ChevronDown"
       :label="
         compact
-          ? `展開場間音樂${error ? `：${operationalStatus.accessibleLabel}` : ''}`
-          : '收合場間音樂'
+          ? error
+            ? t('player.bgm.expandWithError', {
+                status: operationalStatus.accessibleLabel,
+              })
+            : t('player.bgm.expand')
+          : t('player.bgm.collapse')
       "
       :intent="error ? 'danger' : 'neutral'"
       :aria-expanded="!compact"

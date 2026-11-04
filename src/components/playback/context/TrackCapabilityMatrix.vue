@@ -1,6 +1,7 @@
 <script setup>
 import { useId } from 'vue';
 import TrackCapabilityItem from './TrackCapabilityItem.vue';
+import { t } from '../../../utils/i18n.js';
 
 defineProps({
   items: { type: Array, required: true },
@@ -11,7 +12,7 @@ const headingId = `track-capability-heading-${useId()}`;
 
 <template>
   <section class="track-capability-matrix" :aria-labelledby="headingId">
-    <h4 :id="headingId">素材狀態</h4>
+    <h4 :id="headingId">{{ t('player.context.materials') }}</h4>
     <ul class="track-capability-matrix__list">
       <TrackCapabilityItem v-for="item in items" :key="item.id" :item="item" />
     </ul>

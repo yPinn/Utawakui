@@ -1,12 +1,13 @@
 <script setup>
 import { Pause, Play } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   playing: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
-  playLabel: { type: String, default: '播放' },
-  pauseLabel: { type: String, default: '暫停' },
+  playLabel: { type: String, default: () => t('player.primary.play') },
+  pauseLabel: { type: String, default: () => t('player.primary.pause') },
 });
 
 defineEmits(['click']);

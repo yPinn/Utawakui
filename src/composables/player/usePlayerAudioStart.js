@@ -1,3 +1,4 @@
+import { t } from '../../utils/i18n.js';
 // Own the asynchronous graph-to-play transaction; audio events in usePlayer
 // remain the only authority for actual playback timing and play state.
 export function usePlayerAudioStart({
@@ -45,7 +46,7 @@ export function usePlayerAudioStart({
         state.error = reportPlayerError(
           error,
           'pre-start',
-          '曲目開始前的音訊交接未完成，請再試一次。',
+          t('player.start.handoffFailed'),
         );
         notifyStopped('error');
       }
@@ -67,7 +68,7 @@ export function usePlayerAudioStart({
               : `Audio preparation ${result?.status}`,
           ),
           'audio-preparation',
-          '必要的音訊設定未完成，請確認輸出裝置後再試一次。',
+          t('player.start.setupFailed'),
         );
         state.playbackPhase = 'error';
         notifyStopped('error');
@@ -81,8 +82,8 @@ export function usePlayerAudioStart({
           error,
           operation,
           operation === 'resume'
-            ? '目前無法繼續播放，請再試一次。'
-            : '目前無法播放這首曲目，請再試一次。',
+            ? t('player.start.resumeFailed')
+            : t('player.start.playFailed'),
         );
         state.playbackPhase = 'error';
         notifyStopped('error');

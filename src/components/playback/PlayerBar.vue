@@ -43,6 +43,7 @@ import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   artworkExpandable: { type: Boolean, default: false },
@@ -150,12 +151,12 @@ const playbackModeIcon = computed(() =>
 );
 const playbackModeActionLabel = computed(() => {
   if (state.playbackMode === PLAYBACK_MODES.repeatList) {
-    return '啟用單曲循環';
+    return t('player.bar.repeatOne');
   }
   if (state.playbackMode === PLAYBACK_MODES.repeatOne) {
-    return '停用重複播放';
+    return t('player.bar.repeatOff');
   }
-  return '啟用重複播放';
+  return t('player.bar.repeatOn');
 });
 const playbackModeActive = computed(
   () => state.playbackMode !== PLAYBACK_MODES.sequence,
@@ -180,7 +181,7 @@ const guideAccompaniment = computed(() => {
     track.hasSeparation ||
     Object.values(track.separation?.results ?? {}).some(Boolean)
   ) {
-    return { message: '伴奏已就緒' };
+    return { message: t('player.bar.accompanimentReady') };
   }
   const items = (unref(separationController.queue)?.items ?? []).filter(
     (item) => item.trackId === trackId,
@@ -190,15 +191,19 @@ const guideAccompaniment = computed(() => {
     items.at(-1);
   if (item && OPEN_SEPARATION_STATUSES.has(item.status)) {
     return {
-      message: '伴奏處理中',
+      message: t('player.bar.accompanimentBusy'),
       detail: separationItemLabel(item),
       busy: true,
     };
   }
   const attention = item?.status === 'failed' || item?.status === 'cancelled';
   return {
-    message: attention ? '伴奏未完成' : '這首歌還沒有伴奏',
-    actionLabel: attention ? '重新產生' : '產生伴奏',
+    message: attention
+      ? t('player.bar.accompanimentIncomplete')
+      : t('player.bar.noAccompaniment'),
+    actionLabel: attention
+      ? t('player.bar.regenerate')
+      : t('player.bar.generate'),
     loading: enqueueingTrackId.value === trackId,
     onAction: () => queueTrackForSeparation(track),
   };
@@ -219,16 +224,16 @@ const captureDeviceLabel = computed(() => {
   const device = audioOutputDevices.value.find(
     (d) => d.deviceId === state.captureDeviceId,
   );
-  return shortenDeviceLabel(device?.label) || '擷取裝置';
+  return shortenDeviceLabel(device?.label) || t('player.bar.captureDevice');
 });
 
-const transposeLabel = computed(
-  () =>
-    `${state.transposeSemitones > 0 ? '+' : ''}${state.transposeSemitones} 半音`,
+const signed = (value) => `${value > 0 ? '+' : ''}${value}`;
+const transposeLabel = computed(() =>
+  t('player.bar.semitones', { value: signed(state.transposeSemitones) }),
 );
 // Spelled out as 音分, not "¢" — reads unambiguously as a pitch unit.
-const pitchCentsLabel = computed(
-  () => `${state.pitchCents > 0 ? '+' : ''}${state.pitchCents} 音分`,
+const pitchCentsLabel = computed(() =>
+  t('player.bar.cents', { value: signed(state.pitchCents) }),
 );
 // A4 (440Hz) shifted by the cents offset — the reference tuning musicians
 // actually tune to. Reflects pitchCents only; Transpose has its own row.
@@ -251,15 +256,15 @@ const playerToolsEngaged = computed(
     metronomeState.isRunning,
 );
 const playerToolsLabel = computed(() => {
-  if (isPlayerToolsOpen.value) return '關閉演出工具';
+  if (isPlayerToolsOpen.value) return t('player.bar.closeTools');
   return playerToolsEngaged.value
-    ? '開啟演出工具（功能啟用中）'
-    : '開啟演出工具';
+    ? t('player.bar.openToolsEngaged')
+    : t('player.bar.openTools');
 });
 const playerToolsTitle = computed(() =>
   playerToolsEngaged.value && !isPlayerToolsOpen.value
-    ? '演出工具 · 啟用中'
-    : '演出工具',
+    ? t('player.bar.toolsEngaged')
+    : t('player.bar.tools'),
 );
 function adjustTranspose(delta) {
   setTransposeSemitones(state.transposeSemitones + delta);
@@ -321,7 +326,7 @@ const guideVocalRows = computed(() => {
       // distinction; the real device name lives in deviceName (row title
       // tooltip) instead of being crammed into the visible label.
       icon: Headphones,
-      label: '監聽',
+      label: t('player.bar.monitor'),
       deviceName: monitorDeviceLabel.value,
       // Always the calibrated value, regardless of on/off — on/off has its
       // own dedicated speaker icon (onIcon/onToggle below) now, so the
@@ -329,7 +334,11 @@ const guideVocalRows = computed(() => {
       value: `${Math.round(state.guideVocalValue * 100)}%`,
       on: state.guideVocalOn,
       onIcon: state.guideVocalOn ? Volume2 : VolumeX,
-      onLabel: state.guideVocalOn ? '關閉導唱(監聽)' : '開啟導唱(監聽)',
+      onLabel: t(
+        state.guideVocalOn
+          ? 'player.bar.guideMonitorOff'
+          : 'player.bar.guideMonitorOn',
+      ),
       onToggle: () => setGuideVocalOn(!state.guideVocalOn),
       marks: GUIDE_VOCAL_MARKS,
       sliderValue: state.guideVocalValue,
@@ -337,7 +346,7 @@ const guideVocalRows = computed(() => {
       min: 0,
       max: 1,
       step: GUIDE_VOCAL_STEP,
-      sliderLabel: '導唱比例(監聽)',
+      sliderLabel: t('player.bar.guideMonitorLevel'),
       formatSliderValue: formatVolumePercent,
       onSliderInput: throttledSetGuideVocalLevel,
     },
@@ -346,12 +355,16 @@ const guideVocalRows = computed(() => {
     rows.push({
       key: 'guide-vocal-capture',
       icon: Cable,
-      label: '擷取',
+      label: t('player.bar.capture'),
       deviceName: captureDeviceLabel.value,
       value: `${Math.round(state.captureGuideVocalValue * 100)}%`,
       on: state.captureGuideVocalOn,
       onIcon: state.captureGuideVocalOn ? Volume2 : VolumeX,
-      onLabel: state.captureGuideVocalOn ? '關閉導唱(擷取)' : '開啟導唱(擷取)',
+      onLabel: t(
+        state.captureGuideVocalOn
+          ? 'player.bar.guideCaptureOff'
+          : 'player.bar.guideCaptureOn',
+      ),
       onToggle: toggleCaptureGuideVocal,
       marks: GUIDE_VOCAL_MARKS,
       sliderValue: state.captureGuideVocalValue,
@@ -359,7 +372,7 @@ const guideVocalRows = computed(() => {
       min: 0,
       max: 1,
       step: GUIDE_VOCAL_STEP,
-      sliderLabel: '導唱比例(擷取)',
+      sliderLabel: t('player.bar.guideCaptureLevel'),
       formatSliderValue: formatVolumePercent,
       onSliderInput: throttledSetCaptureGuideVocalLevel,
     });
@@ -370,72 +383,84 @@ const guideVocalRows = computed(() => {
 const pitchTempoRows = computed(() => [
   {
     key: 'transpose',
-    label: '變調',
+    label: t('player.bar.transpose'),
     value: transposeLabel.value,
     secondaryValue: null,
     minusDisabled:
       !state.track || state.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.min,
-    minusLabel: '降半音',
-    minusTitle: '降半音 (Ctrl+↓)',
+    minusLabel: t('player.bar.semitoneDown'),
+    minusTitle: t('player.bar.withShortcut', {
+      label: t('player.bar.semitoneDown'),
+      shortcut: 'Ctrl+↓',
+    }),
     onMinus: () => adjustTranspose(-1),
     sliderValue: state.transposeSemitones,
     defaultValue: PLAYER_AUDIO_DEFAULTS.transposeSemitones,
     min: TRANSPOSE_SEMITONES_RANGE.min,
     max: TRANSPOSE_SEMITONES_RANGE.max,
     step: 1,
-    sliderLabel: '變調(半音)',
+    sliderLabel: t('player.bar.transposeSlider'),
     formatSliderValue: (value) =>
-      `${Number(value) > 0 ? '+' : ''}${Number(value)} 半音`,
+      t('player.bar.semitones', { value: signed(Number(value)) }),
     onSliderInput: (value) => setTransposeSemitones(Number(value)),
     plusDisabled:
       !state.track || state.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.max,
-    plusLabel: '升半音',
-    plusTitle: '升半音 (Ctrl+↑)',
+    plusLabel: t('player.bar.semitoneUp'),
+    plusTitle: t('player.bar.withShortcut', {
+      label: t('player.bar.semitoneUp'),
+      shortcut: 'Ctrl+↑',
+    }),
     onPlus: () => adjustTranspose(1),
   },
   {
     key: 'pitch',
-    label: '音高微調',
+    label: t('player.bar.pitch'),
     value: pitchCentsLabel.value,
     secondaryValue: `${pitchReferenceHz.value} Hz`,
     minusDisabled: !state.track || state.pitchCents <= PITCH_CENTS_RANGE.min,
-    minusLabel: '音高微調降低',
-    minusTitle: '音高微調降低',
+    minusLabel: t('player.bar.pitchDown'),
+    minusTitle: t('player.bar.pitchDown'),
     onMinus: () => adjustPitchCents(-1),
     sliderValue: state.pitchCents,
     defaultValue: PLAYER_AUDIO_DEFAULTS.pitchCents,
     min: PITCH_CENTS_RANGE.min,
     max: PITCH_CENTS_RANGE.max,
     step: 1,
-    sliderLabel: '音高(音分微調)',
+    sliderLabel: t('player.bar.pitchSlider'),
     formatSliderValue: (value) =>
-      `${Number(value) > 0 ? '+' : ''}${Number(value)} 音分`,
+      t('player.bar.cents', { value: signed(Number(value)) }),
     onSliderInput: (value) => setPitchCents(Number(value)),
     plusDisabled: !state.track || state.pitchCents >= PITCH_CENTS_RANGE.max,
-    plusLabel: '音高微調提高',
-    plusTitle: '音高微調提高',
+    plusLabel: t('player.bar.pitchUp'),
+    plusTitle: t('player.bar.pitchUp'),
     onPlus: () => adjustPitchCents(1),
   },
   {
     key: 'tempo',
-    label: '變速',
+    label: t('player.bar.tempo'),
     value: tempoLabel.value,
     secondaryValue: null,
     minusDisabled: !state.track || state.tempoRate <= TEMPO_RATE_RANGE.min,
-    minusLabel: '放慢',
-    minusTitle: '放慢 (Ctrl+Shift+↓)',
+    minusLabel: t('player.bar.slower'),
+    minusTitle: t('player.bar.withShortcut', {
+      label: t('player.bar.slower'),
+      shortcut: 'Ctrl+Shift+↓',
+    }),
     onMinus: () => adjustTempo(-0.05),
     sliderValue: state.tempoRate,
     defaultValue: PLAYER_AUDIO_DEFAULTS.tempoRate,
     min: TEMPO_RATE_RANGE.min,
     max: TEMPO_RATE_RANGE.max,
     step: 0.05,
-    sliderLabel: '變速',
+    sliderLabel: t('player.bar.tempo'),
     formatSliderValue: (value) => `${Number(value).toFixed(2)}x`,
     onSliderInput: (value) => setTempoRate(Number(value)),
     plusDisabled: !state.track || state.tempoRate >= TEMPO_RATE_RANGE.max,
-    plusLabel: '加快',
-    plusTitle: '加快 (Ctrl+Shift+↑)',
+    plusLabel: t('player.bar.faster'),
+    plusTitle: t('player.bar.withShortcut', {
+      label: t('player.bar.faster'),
+      shortcut: 'Ctrl+Shift+↑',
+    }),
     onPlus: () => adjustTempo(0.05),
   },
 ]);
@@ -471,7 +496,7 @@ onUnmounted(() => {
     class="player-bar"
     data-ui-region="chrome"
     role="region"
-    aria-label="播放控制列"
+    :aria-label="t('player.bar.controls')"
   >
     <PlaybackTrackIdentity class="player-bar__track" :track="state.track">
       <template #artwork>
@@ -492,16 +517,16 @@ onUnmounted(() => {
           :icon="Shuffle"
           :active="queueState.isShuffle"
           :disabled="!canShuffle || arrangementActive"
-          aria-label="隨機播放"
+          :aria-label="t('player.bar.shuffle')"
           :aria-pressed="queueState.isShuffle"
-          title="隨機播放"
+          :title="t('player.bar.shuffle')"
           @click="toggleShuffle"
         />
         <UiButton
           :icon="SkipBack"
           :disabled="!state.track"
-          aria-label="上一首"
-          title="上一首"
+          :aria-label="t('player.bar.previous')"
+          :title="t('player.bar.previous')"
           @click="playPrevious"
         />
         <PlaybackPrimaryButton
@@ -512,8 +537,8 @@ onUnmounted(() => {
         <UiButton
           :icon="SkipForward"
           :disabled="!canPlayNext"
-          aria-label="下一首"
-          title="下一首"
+          :aria-label="t('player.bar.next')"
+          :title="t('player.bar.next')"
           @click="playNext"
         />
         <UiButton
@@ -540,7 +565,7 @@ onUnmounted(() => {
           :disabled="!state.track"
           :format-value="formatDuration"
           :value-text="`${formatDuration(state.currentTime)} / ${formatDuration(state.duration)}`"
-          aria-label="播放進度"
+          :aria-label="t('player.bar.progress')"
         />
         <span class="player-bar__time player-bar__time--end">{{
           formatDuration(state.duration)
@@ -557,9 +582,15 @@ onUnmounted(() => {
           'player-bar__extras-slot--hidden': !canQuickToggleCaptureGuideVocal,
         }"
         :aria-hidden="!canQuickToggleCaptureGuideVocal"
-        :label="state.captureGuideVocalOn ? '關閉導唱輸出' : '開啟導唱輸出'"
+        :label="
+          t(
+            state.captureGuideVocalOn
+              ? 'player.bar.guideOutputOff'
+              : 'player.bar.guideOutputOn',
+          )
+        "
         :aria-pressed="state.captureGuideVocalOn"
-        title="導唱輸出"
+        :title="t('player.bar.guideOutput')"
         tooltip-suffix=" (G)"
         @click="toggleCaptureGuideVocal"
       />
@@ -567,13 +598,13 @@ onUnmounted(() => {
       <div
         class="player-bar__context-actions"
         role="group"
-        aria-label="播放資訊"
+        :aria-label="t('player.bar.info')"
       >
         <UiIconButton
           :icon="MicVocal"
           :disabled="!state.track"
-          label="查看目前歌曲歌詞"
-          title="歌詞"
+          :label="t('player.bar.viewLyrics')"
+          :title="t('player.bar.lyrics')"
           :active="
             activeView === 'performance' && performanceTool === 'live-lyrics'
           "
@@ -588,10 +619,12 @@ onUnmounted(() => {
         <UiIconButton
           :icon="ListMusic"
           :active="queueExpanded"
-          :label="queueExpanded ? '關閉播放佇列' : '開啟播放佇列'"
+          :label="
+            t(queueExpanded ? 'player.bar.closeQueue' : 'player.bar.openQueue')
+          "
           :aria-expanded="queueExpanded"
           :aria-controls="queueControls"
-          title="播放佇列"
+          :title="t('player.bar.queue')"
           @click="toggleQueuePanel"
         />
       </div>
@@ -629,9 +662,9 @@ onUnmounted(() => {
       <div class="player-bar__volume">
         <UiIconButton
           :icon="state.isMuted || state.volume === 0 ? VolumeX : Volume2"
-          :label="state.isMuted ? '取消靜音' : '靜音'"
+          :label="t(state.isMuted ? 'player.bar.unmute' : 'player.bar.mute')"
           :aria-pressed="state.isMuted"
-          :title="state.isMuted ? '取消靜音' : '靜音'"
+          :title="t(state.isMuted ? 'player.bar.unmute' : 'player.bar.mute')"
           tooltip-suffix=" (M)"
           @click="toggleMute"
         />
@@ -643,7 +676,7 @@ onUnmounted(() => {
           :step="PLAYER_VOLUME_RANGE.step"
           :format-value="formatVolumePercent"
           :value-text="`${volumePercent}%`"
-          aria-label="音量"
+          :aria-label="t('player.bar.volume')"
         />
       </div>
     </div>

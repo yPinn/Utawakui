@@ -1,10 +1,10 @@
-import { readFileSync } from 'node:fs';
 import { baseParse } from '@vue/compiler-dom';
 import { parse } from '@vue/compiler-sfc';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function source(relativePath) {
-  return readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+  return readCatalogSource(new URL(relativePath, import.meta.url));
 }
 
 function actionControl(component, action) {

@@ -7,6 +7,7 @@ import {
 import { useLibrary } from './useLibrary.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
+import { t } from '../utils/i18n.js';
 
 const SAVE_INTERVAL_MS = 2_000;
 
@@ -39,7 +40,7 @@ async function persistNow() {
     await window.Utawakui.savePlaybackResumeSnapshot(currentIntent());
     state.error = null;
   } catch {
-    state.error = '播放進度暫時無法保存。';
+    state.error = t('player.resume.saveFailed');
   }
 }
 
@@ -90,7 +91,7 @@ function initialize() {
         }
         state.error = null;
       } catch {
-        state.error = '上次播放狀態暫時無法恢復。';
+        state.error = t('player.resume.restoreFailed');
       }
     }
     isHydrating = false;

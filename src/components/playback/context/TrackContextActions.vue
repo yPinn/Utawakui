@@ -11,6 +11,7 @@ import { TRACK_MENU_ACTIONS } from '../../../utils/playlistMenu.js';
 import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';
 import TrackActionMenu from '../../track/TrackActionMenu.vue';
 import UiIconButton from '../../ui/UiIconButton.vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -142,7 +143,7 @@ async function handleTrackMenuSelect(value) {
     <UiIconButton
       v-if="trigger === 'overlay'"
       :icon="Ellipsis"
-      label="歌曲選項"
+      :label="t('player.context.songOptions')"
       variant="overlay"
       tooltip-placement="start"
       aria-haspopup="menu"
@@ -152,7 +153,7 @@ async function handleTrackMenuSelect(value) {
     <UiIconButton
       v-else-if="trigger === 'inline'"
       :icon="Ellipsis"
-      :label="`${track.title}的更多選項`"
+      :label="t('player.context.moreNamed', { title: track.title })"
       aria-haspopup="menu"
       :aria-expanded="Boolean(trackMenu)"
       @click="openTrackMenu"

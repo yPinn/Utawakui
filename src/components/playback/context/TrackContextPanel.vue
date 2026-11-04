@@ -12,6 +12,7 @@ import TrackQueuePreview from './TrackQueuePreview.vue';
 import UiHint from '../../ui/UiHint.vue';
 import UiSeparator from '../../ui/UiSeparator.vue';
 import UiTextButton from '../../ui/UiTextButton.vue';
+import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
   currentTrack: { type: Object, default: null },
@@ -39,8 +40,9 @@ const emit = defineEmits([
 
 const queueContextLabel = computed(() => {
   if (props.queueSourceName) return props.queueSourceName;
-  if (props.currentTrack || props.upcomingTracks.length > 0) return '目前佇列';
-  return '尚未建立播放佇列';
+  if (props.currentTrack || props.upcomingTracks.length > 0)
+    return t('player.context.currentQueue');
+  return t('player.context.noQueue');
 });
 
 const currentTrackFacts = computed(() => {
@@ -48,19 +50,23 @@ const currentTrackFacts = computed(() => {
 
   const facts = [];
   if (props.currentTrack.album) {
-    facts.push({ id: 'album', label: '專輯', value: props.currentTrack.album });
+    facts.push({
+      id: 'album',
+      label: t('player.context.album'),
+      value: props.currentTrack.album,
+    });
   }
   if (props.currentTrack.releaseYear) {
     facts.push({
       id: 'release-year',
-      label: '年份',
+      label: t('player.context.year'),
       value: String(props.currentTrack.releaseYear),
     });
   }
   if (Number.isFinite(props.currentTrack.duration)) {
     facts.push({
       id: 'duration',
-      label: '長度',
+      label: t('player.context.length'),
       value: formatDuration(props.currentTrack.duration),
     });
   }
@@ -71,9 +77,9 @@ const currentTrackFacts = computed(() => {
 <template>
   <AppRightDockPanel
     class="studio-context-inspector"
-    title="播放資訊"
-    collapse-label="摺疊播放資訊"
-    aria-label="播放資訊"
+    :title="t('player.context.title')"
+    :collapse-label="t('player.context.collapse')"
+    :aria-label="t('player.context.title')"
     @collapse="emit('collapse')"
   >
     <template #identity>
@@ -101,11 +107,11 @@ const currentTrackFacts = computed(() => {
     <AppRightDockSection
       v-else
       class="studio-context-inspector__section studio-context-inspector__now"
-      heading="目前歌曲"
+      :heading="t('player.context.currentSong')"
       appearance="contained"
     >
       <UiHint class="studio-context-inspector__hint">
-        目前沒有播放中的歌曲
+        {{ t('player.context.nothingPlaying') }}
       </UiHint>
     </AppRightDockSection>
 
@@ -136,7 +142,7 @@ const currentTrackFacts = computed(() => {
     <AppRightDockSection
       v-if="currentTrackFacts.length > 0 || readiness.length > 0"
       class="studio-context-inspector__section studio-context-inspector__details"
-      heading="曲目資訊"
+      :heading="t('player.context.trackInfo')"
       appearance="contained"
     >
       <dl v-if="currentTrackFacts.length > 0">

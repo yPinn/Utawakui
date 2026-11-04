@@ -6,15 +6,16 @@ import {
   validPerformanceSettings,
   validPerformanceSlot,
 } from '../../../shared/performanceSettings.mjs';
+import { t } from '../../utils/i18n.js';
 
 const messages = {
-  invalid: '歌曲設定已損壞，原檔已保留。',
-  unsupported: '歌曲設定來自較新版本，請更新應用程式。',
-  'source-stale': '歌曲音源已變更，已保存的設定需要重新確認。',
-  conflict: '歌曲設定已變更，請重新讀取後再保存。',
-  stale: '歌曲情境已變更，請重新讀取。',
-  'not-found': '目前找不到這首歌的音訊。',
-  timeout: '歌曲設定處理逾時，請重新讀取確認結果。',
+  invalid: t('player.settings.invalid'),
+  unsupported: t('player.settings.unsupported'),
+  'source-stale': t('player.settings.sourceStale'),
+  conflict: t('player.settings.conflict'),
+  stale: t('player.settings.stale'),
+  'not-found': t('player.settings.notFound'),
+  timeout: t('player.settings.timeout'),
 };
 const same = (left, right, guide = true) =>
   Object.keys(defaults).every(
@@ -105,16 +106,14 @@ export function usePlayerPerformanceSettings({
     state.error = message;
     notifications.notify({
       key: NOTIFICATION_KEYS.PLAYER_PERFORMANCE_SETTINGS,
-      title: '歌曲設定未完成',
+      title: t('player.settings.failedTitle'),
       message,
       tone: 'danger',
       lifecycle: 'persistent',
     });
   }
   function error(result) {
-    setError(
-      messages[result?.status] ?? '歌曲設定暫時無法讀取或保存，請再試一次。',
-    );
+    setError(messages[result?.status] ?? t('player.settings.failed'));
   }
   function cancelPreparation() {
     readRevision++;
@@ -388,13 +387,13 @@ export function usePlayerPerformanceSettings({
       )
         return true;
       if (!result?.ok) {
-        setError('本次演唱設定尚未確認套用，請確認輸出裝置後重試。');
+        setError(t('player.settings.applyUnconfirmed'));
         return false;
       }
       return true;
     } catch {
       if (generation === currentGeneration)
-        setError('本次演唱設定尚未完成，請再試一次。');
+        setError(t('player.settings.applyFailed'));
       return false;
     } finally {
       if (generation === currentGeneration) state.applying = false;
