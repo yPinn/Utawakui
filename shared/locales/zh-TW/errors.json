@@ -241,20 +241,20 @@
     "message": "目前無法加入這些曲目，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_CLEAR_FAILED": {
-    "title": "場次草稿無法清除",
-    "message": "目前無法清除場次草稿，請再試一次。"
+    "title": "演出安排無法清除",
+    "message": "目前無法清除演出安排，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_CURSOR_FAILED": {
-    "title": "檢查位置無法更新",
-    "message": "目前無法切換檢查曲目，請再試一次。"
+    "title": "無法選取曲目",
+    "message": "目前無法選取這首曲目，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_DUPLICATE_FAILED": {
     "title": "場次曲目無法複製",
     "message": "目前無法複製這首場次曲目，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_GET_FAILED": {
-    "title": "場次草稿無法讀取",
-    "message": "目前無法讀取場次草稿，請再試一次。"
+    "title": "演出安排無法讀取",
+    "message": "目前無法讀取演出安排，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_MOVE_FAILED": {
     "title": "場次順序無法更新",
@@ -265,8 +265,8 @@
     "message": "目前無法移除這首場次曲目，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_REPLACE_FAILED": {
-    "title": "場次草稿無法建立",
-    "message": "目前無法從播放清單建立場次草稿，請再試一次。"
+    "title": "演出安排無法建立",
+    "message": "目前無法從播放清單建立演出安排，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_UPDATE_FAILED": {
     "title": "場次曲目無法更新",

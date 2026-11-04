@@ -241,20 +241,20 @@
     "message": "These tracks can't be added right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_CLEAR_FAILED": {
-    "title": "Session draft can't be cleared",
-    "message": "The session draft can't be cleared right now. Try again."
+    "title": "Arrangement can't be cleared",
+    "message": "The arrangement can't be cleared right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_CURSOR_FAILED": {
-    "title": "Selection can't be updated",
-    "message": "The selected track can't be changed right now. Try again."
+    "title": "Can't select track",
+    "message": "This track can't be selected right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_DUPLICATE_FAILED": {
     "title": "Session track can't be duplicated",
     "message": "This session track can't be duplicated right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_GET_FAILED": {
-    "title": "Session draft can't be read",
-    "message": "The session draft can't be read right now. Try again."
+    "title": "Arrangement can't be read",
+    "message": "The arrangement can't be read right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_MOVE_FAILED": {
     "title": "Session order can't be updated",
@@ -265,8 +265,8 @@
     "message": "This session track can't be removed right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_REPLACE_FAILED": {
-    "title": "Session draft can't be created",
-    "message": "A session draft can't be created from the playlist right now. Try again."
+    "title": "Arrangement can't be created",
+    "message": "An arrangement can't be created from the playlist right now. Try again."
   },
   "PERFORMANCE_SESSION_PLAN_UPDATE_FAILED": {
     "title": "Session track can't be updated",

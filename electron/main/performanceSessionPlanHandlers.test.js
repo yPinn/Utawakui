@@ -392,7 +392,7 @@ describe('registerPerformanceSessionPlanHandlers', () => {
 
     expect(payload).toMatchObject({
       code: 'PERFORMANCE_SESSION_PLAN_GET_FAILED',
-      message: '目前無法讀取場次草稿，請再試一次。',
+      message: '目前無法讀取演出安排，請再試一次。',
       context: { diagnosticRecorded: true, retryable: true },
     });
     expect(JSON.stringify(payload)).not.toContain('Users/private');

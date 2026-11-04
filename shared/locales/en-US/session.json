@@ -262,9 +262,9 @@
   },
   "validation": {
     "SESSION_PLAN_CURRENT_ITEM": "Finish or stop the current track before changing this arrangement.",
-    "SESSION_PLAN_HISTORY_ITEM": "Played records can't be changed directly. Add the song to the queue again, then adjust it.",
-    "SESSION_PLAN_REPLACE_REQUIRED": "A session draft already exists. Confirm whether to replace it first.",
-    "SESSION_PLAN_ITEM_LIMIT_EXCEEDED": "A session draft can hold at most 500 tracks.",
+    "SESSION_PLAN_HISTORY_ITEM": "Played records can't be changed. Add the song to the queue again, then adjust it.",
+    "SESSION_PLAN_REPLACE_REQUIRED": "An arrangement already exists. Confirm whether to replace it first.",
+    "SESSION_PLAN_ITEM_LIMIT_EXCEEDED": "An arrangement can hold at most 500 tracks.",
     "SESSION_PLAN_DISPLAY_TITLE_REQUIRED": "Enter a display title or item name.",
     "SESSION_PLAN_DISPLAY_TITLE_TOO_LONG": "The display title or item name can be at most 200 characters.",
     "SESSION_PLAN_DISPLAY_ARTIST_TOO_LONG": "The second line can be at most 200 characters.",
@@ -273,10 +273,10 @@
     "SESSION_PLAN_TRACK_UNAVAILABLE": "The linked local track isn't available right now.",
     "SESSION_PLAN_ITEM_NOT_FOUND": "This session item can't be found. Refresh and try again.",
     "SESSION_PLAN_STALE_REVISION": "This track was updated by another action. Check it again.",
-    "SESSION_PLAN_SOURCE_INVALID": "A session draft can't be created from this playlist right now.",
+    "SESSION_PLAN_SOURCE_INVALID": "An arrangement can't be created from this playlist right now.",
     "SESSION_PLAN_ARCHIVE_NOT_FOUND": "This archived session can't be found. Reload.",
-    "SESSION_PLAN_INTENT_INVALID": "This session action is invalid. Refresh and try again.",
-    "fallback": "This session action is invalid."
+    "SESSION_PLAN_INTENT_INVALID": "This action is invalid. Refresh and try again.",
+    "fallback": "This action is invalid."
   },
   "main": {
     "sourceNotFound": "This playlist can't be found; the library may have been updated.",
@@ -303,13 +303,13 @@
     "progressNotSaved": "The track progress wasn't saved. Try again.",
     "audioMissing": "No playable audio file found. Link the track again.",
     "startFailed": "This track didn't start. Try again or check the audio file.",
-    "startUnconfirmed": "This track wasn't confirmed as started and stays in the queue.",
+    "startUnconfirmed": "This track didn't start and stays in the queue.",
     "changedBeforeStart": "The track changed before it started. Add or play it again.",
     "interrupted": "Playback was interrupted. Check the audio file and add it to the queue again."
   },
   "plan": {
-    "notUpdatedTitle": "Session draft not updated",
-    "notUpdatedMessage": "The session draft wasn't updated. Try again.",
+    "notUpdatedTitle": "Arrangement not updated",
+    "notUpdatedMessage": "The arrangement wasn't updated. Try again.",
     "moveFailed": "Item not moved",
     "duplicateFailed": "Item not duplicated",
     "reorderFailed": "Order not updated",

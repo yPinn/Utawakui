@@ -253,17 +253,17 @@ describe('usePerformanceSessionPlan', () => {
       displayTitle: 'draft',
       displayArtist: '',
     });
-    expect(session.state.error).toContain('場次草稿未更新');
+    expect(session.state.error).toContain('演出安排未更新');
     api.archivePerformanceSession = vi
       .fn()
       .mockRejectedValue(new Error('private'));
     await session.archiveSession('show', 'session-1');
-    expect(session.state.error).toContain('場次草稿未更新');
+    expect(session.state.error).toContain('演出安排未更新');
     api.setPerformanceSessionPlanProgress.mockRejectedValue(
       new Error('private'),
     );
     await session.setProgress('item-1', 'completed');
-    expect(session.state.error).toContain('場次草稿未更新');
+    expect(session.state.error).toContain('演出安排未更新');
     expect(notifications.items.value).toHaveLength(0);
   });
 
@@ -542,7 +542,7 @@ describe('usePerformanceSessionPlan', () => {
     const validationError = {
       code: 'SESSION_PLAN_REPLACE_REQUIRED',
       field: 'replaceCurrent',
-      message: '目前已有場次草稿，請先確認是否取代。',
+      message: '目前已有演出安排，請先確認是否取代。',
       context: { currentSourceName: 'Previous', itemCount: 3 },
     };
     api.replacePerformanceSessionPlanFromCollection.mockResolvedValue({
@@ -566,7 +566,7 @@ describe('usePerformanceSessionPlan', () => {
     const sessionPlan = await importSessionPlan();
 
     await expect(sessionPlan.appendPlaceholders('Song')).resolves.toBe(false);
-    expect(sessionPlan.state.error).toBe('場次草稿未更新，請再試一次。');
+    expect(sessionPlan.state.error).toBe('演出安排未更新，請再試一次。');
     expect(api.recordDiagnostic).toHaveBeenCalledWith(
       expect.objectContaining({
         source: 'performance-session-plan',
