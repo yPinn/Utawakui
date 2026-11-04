@@ -48,6 +48,90 @@ describe('lyric fit controller lifecycle', () => {
     ).toBe(text);
   });
 
+  it('places authored Chalkboard line breaks in separate columns within one page', () => {
+    const templateId = 'chalkboard-vertical';
+    const { controller, snapshot } = surface(templateId);
+    const text = '夜色亮起\nstay with me\n走過這條街';
+    snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 5000 }];
+    const { frame } = controller.prepare(
+      snapshot,
+      { visible: true, lineIndex: 0, currentText: text },
+      { templateId },
+    );
+
+    expect(frame.displayFit.pageCount).toBe(1);
+    expect(frame.chalkboardColumns).toEqual([
+      '夜色亮起\n',
+      'stay with me\n',
+      '走過這條街',
+    ]);
+  });
+
+  it('anchors each Chalkboard column to its source start at the current playback rate', () => {
+    const templateId = 'chalkboard-vertical';
+    const { controller, snapshot } = surface(templateId);
+    const text = '夜色亮起\n走過這條街';
+    const line = { text, startMs: 1000, endMs: 5000 };
+    snapshot.lyrics.lines = [line];
+    snapshot.playback.positionMs = 1000;
+    snapshot.playback.rate = 2;
+    const frame = { visible: true, lineIndex: 0, currentText: text };
+    const estimated = controller.prepare(snapshot, frame, { templateId }).frame;
+    expect(estimated.chalkboardColumnDelaysMs[0]).toBe(0);
+    expect(estimated.chalkboardColumnDelaysMs[1]).toBeCloseTo((2000 * 4) / 9);
+
+    line.segments = [
+      { text: '夜色亮起\n', startMs: 1100, endMs: 3400 },
+      { text: '走過這條街', startMs: 3400, endMs: 5000 },
+    ];
+    const timed = controller.prepare(snapshot, frame, { templateId }).frame;
+    expect(timed.chalkboardColumnDelaysMs).toEqual([0, 1200]);
+    snapshot.playback.positionMs = 3400;
+    const second = controller.prepare(snapshot, frame, { templateId }).frame;
+    expect(second.chalkboardColumnDelaysMs).toEqual([-1200, 0]);
+  });
+
+  it.each([
+    ['夜色亮起 繼續往前', ['夜色亮起 ', '繼續往前']],
+    ['夜が明ける　風が吹く', ['夜が明ける　', '風が吹く']],
+    [
+      '夜色亮起 stay with me 繼續往前',
+      ['夜色亮起 ', 'stay with me ', '繼續往前'],
+    ],
+    ['stay with me', ['stay with me']],
+  ])(
+    'preserves authored phrase spacing in Chalkboard cue %s',
+    (text, columns) => {
+      const templateId = 'chalkboard-vertical';
+      const { controller, snapshot } = surface(templateId);
+      snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 5000 }];
+      const { frame } = controller.prepare(
+        snapshot,
+        { visible: true, lineIndex: 0, currentText: text },
+        { templateId },
+      );
+
+      expect(frame.displayFit.pageCount).toBe(1);
+      expect(frame.chalkboardColumns).toEqual(columns);
+      expect(frame.chalkboardColumns.join('')).toBe(text);
+    },
+  );
+
+  it('moves a fitting Japanese contracted verb to the next Chalkboard column as a unit', () => {
+    const templateId = 'chalkboard-vertical';
+    const { controller, snapshot, window } = surface(templateId);
+    window.innerHeight = 300;
+    const text = 'しゃかりきじみちゃう';
+    snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 5000 }];
+    const { frame } = controller.prepare(
+      snapshot,
+      { visible: true, lineIndex: 0, currentText: text },
+      { templateId },
+    );
+
+    expect(frame.chalkboardColumns).toEqual(['しゃかりき', 'じみちゃう']);
+  });
+
   it('prepares empty template styles once per invalidation without writing future lyrics', () => {
     const s = surface('focus-line');
     const jobs = [];

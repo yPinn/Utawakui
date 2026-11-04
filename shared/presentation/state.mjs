@@ -2123,11 +2123,18 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     templateId === 'chalkboard-vertical'
       ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
       : null;
+  const chalkboardLineStartMs = lines[frame.lineIndex]?.startMs;
   return {
     ...frame,
     ...(templateId === 'chalkboard-vertical'
       ? {
           chalkboardPlaying: snapshot?.playback?.status === 'playing',
+          chalkboardDurationMs:
+            Number.isFinite(chalkboardLineEndMs) &&
+            Number.isFinite(chalkboardLineStartMs)
+              ? (chalkboardLineEndMs - chalkboardLineStartMs) /
+                playbackRate(snapshot)
+              : null,
           chalkboardRemainingMs: Number.isFinite(chalkboardLineEndMs)
             ? Math.max(
                 0,

@@ -2,9 +2,54 @@ import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFr
 
 const transitions = new WeakMap();
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+const columnEraseMs = 240;
+const columnStaggerMs = 80;
+
+function eraseWindowMs(frame) {
+  const duration = frame.chalkboardDurationMs;
+  if (!Number.isFinite(duration) || duration < 180) return 0;
+  const lastDelay = frame.chalkboardColumnDelaysMs?.at(-1);
+  const tail = Number.isFinite(lastDelay)
+    ? Math.max(0, frame.chalkboardRemainingMs - lastDelay)
+    : duration;
+  const columnCount = frame.chalkboardColumns?.length || 1;
+  return Math.min(
+    columnEraseMs + (columnCount - 1) * columnStaggerMs,
+    duration * 0.3,
+    tail * 0.7,
+  );
+}
+
+export function nextChalkboardTransitionDelayMs(frame) {
+  if (
+    !frame.visible ||
+    !frame.currentText ||
+    !frame.chalkboardPlaying ||
+    frame.timelineDiscontinuity
+  )
+    return null;
+  const windowMs = eraseWindowMs(frame);
+  const eraseDelay = frame.chalkboardRemainingMs - windowMs;
+  const nextColumn = frame.chalkboardColumnDelaysMs?.find((delay) => delay > 0);
+  const delay = Math.min(
+    windowMs && eraseDelay > 0 ? eraseDelay : Infinity,
+    nextColumn ?? Infinity,
+  );
+  return Number.isFinite(delay) ? Math.ceil(delay) : null;
+}
 
 function mask(top, bottom) {
   return `inset(${top}% 0% ${100 - bottom}% 0%)`;
+}
+
+function eraseMask(edge, direction, bias) {
+  if (!bias) return direction === 'up' ? mask(0, edge) : mask(edge, 100);
+  const skew =
+    Math.sin((edge / 100) * Math.PI * 2 + Math.PI / 4) *
+    Math.min(bias, edge / 4, (100 - edge) / 4);
+  const center = 50 + 12 * Math.sin((edge / 100) * Math.PI);
+  const anchor = direction === 'up' ? 0 : 100;
+  return `polygon(0% ${anchor}%, 100% ${anchor}%, 100% ${edge - skew}%, ${center}% ${edge}%, 0% ${edge + skew}%)`;
 }
 
 function characterStops(ink) {
@@ -59,25 +104,89 @@ function buildLine(document, identity, columns) {
     column.className = 'lyrics-overlay__chalkboard-column';
     ink.className = 'lyrics-overlay__chalkboard-ink';
     rule.className = 'lyrics-overlay__chalkboard-rule';
-    ink.textContent = text;
+    ink.textContent = text.trimEnd();
     column.append(ink, rule);
     group.append(column);
   }
   return group;
 }
 
-function settle(elements, line) {
+function settle(elements, line, delays) {
   const transition = transitions.get(elements.root);
   transitions.delete(elements.root);
-  transition?.timeline.kill();
+  transition?.timeline?.kill();
   if (line) {
-    for (const column of line.children) {
-      for (const part of column.children)
-        part.style.removeProperty('clip-path');
+    for (const [index, column] of Array.from(line.children).entries()) {
+      for (const part of column.children) {
+        if (delays?.[index] > 0)
+          part.style.setProperty('clip-path', mask(0, 0));
+        else part.style.removeProperty('clip-path');
+      }
     }
     elements.current.replaceChildren(line);
   } else elements.current.replaceChildren();
   elements.root.hidden = !line;
+}
+
+function writeLine(elements, incoming, frame, remaining, windowMs, gsap) {
+  const delays = frame.chalkboardColumnDelaysMs;
+  settle(elements, incoming, delays);
+  if (!incoming) return;
+  const columns = columnSteps(incoming);
+  const token = { incoming, timeline: null, rate: frame.chalkboardRate };
+  const timeline = gsap.timeline({
+    onComplete() {
+      if (transitions.get(elements.root) === token) settle(elements, incoming);
+    },
+  });
+  token.timeline = timeline;
+  transitions.set(elements.root, token);
+  let cursorMs = 0;
+  let scheduled = false;
+  for (const [column, { ink, rule, stops }] of columns.entries()) {
+    const delay = delays?.[column] ?? cursorMs;
+    // A late join or seek should settle previously started columns immediately.
+    if (delay < -35 || stops.length < 2) continue;
+    const at = Math.max(0, delay);
+    const until = Math.min(
+      remaining - windowMs,
+      delays?.[column + 1] ?? Infinity,
+    );
+    const span = Math.max(0, until - at);
+    const step = Math.min(
+      55,
+      720 / (stops.length - 1),
+      (span * 0.7) / (stops.length - 1),
+    );
+    if (step < 1) {
+      if (at > 0) {
+        scheduled = true;
+        timeline.add(() => {
+          for (const target of [ink, rule])
+            target.style.removeProperty('clip-path');
+        }, at / 1000);
+      }
+      continue;
+    }
+    scheduled = true;
+    for (const target of [ink, rule])
+      target.style.setProperty('clip-path', mask(0, 0));
+    for (let index = 1; index < stops.length; index++) {
+      scheduleMask(
+        timeline,
+        [ink, rule],
+        mask(0, stops[index - 1]),
+        mask(0, stops[index]),
+        (at + (index - 1) * step) / 1000,
+        step / 1000,
+      );
+    }
+    cursorMs = at + (stops.length - 1) * step;
+  }
+  if (!scheduled) {
+    transitions.delete(elements.root);
+    timeline.kill();
+  }
 }
 
 export function clearChalkboardVertical(elements) {
@@ -97,15 +206,22 @@ export function renderChalkboardVertical(elements, frame, options) {
     ? JSON.stringify([lyricsDisplayBatchKey(frame), columns])
     : '';
   const active = transitions.get(root);
-  const candidate = active ? active.incoming : current.lastElementChild;
-  const previous = candidate?.dataset.chalkboardIdentity ? candidate : null;
-  const matching = identity === (previous?.dataset.chalkboardIdentity ?? '');
+  const previous = current.lastElementChild?.dataset.chalkboardIdentity
+    ? current.lastElementChild
+    : null;
+  const candidate = active ? active.incoming : previous;
+  const matching = identity === (candidate?.dataset.chalkboardIdentity ?? '');
   const gsap = options.gsap ?? globalThis.gsap;
   const animate =
     frame.chalkboardPlaying === true &&
     !frame.timelineDiscontinuity &&
     !options.reducedMotion &&
     typeof gsap?.timeline === 'function';
+  const remaining = Number.isFinite(frame.chalkboardRemainingMs)
+    ? frame.chalkboardRemainingMs
+    : Infinity;
+  const windowMs = eraseWindowMs(frame);
+  const delays = frame.chalkboardColumnDelaysMs;
 
   root.dataset.chalkboard = 'true';
   current.dataset.currentText = text;
@@ -113,79 +229,92 @@ export function renderChalkboardVertical(elements, frame, options) {
   next.hidden = true;
   next.textContent = '';
   if (matching) {
-    if (!animate && active) settle(elements, previous);
-    else if (!active) root.hidden = !previous;
+    if (!animate && previous) {
+      settle(elements, previous, delays);
+      if (delays?.some((delay) => delay > 0))
+        transitions.set(root, { incoming: previous, static: true });
+    } else if (
+      active?.static ||
+      (active && !active.erasing && active.rate !== frame.chalkboardRate)
+    ) {
+      writeLine(elements, candidate, frame, remaining, windowMs, gsap);
+    } else if (active?.erasing && remaining > windowMs) {
+      settle(elements, candidate, delays);
+    } else if (animate && previous && remaining > 0 && remaining <= windowMs) {
+      if (!active?.erasing) eraseLine(elements, previous, remaining, gsap);
+    } else if (!active) root.hidden = !previous;
     return;
   }
 
   const incoming = text
     ? buildLine(current.ownerDocument, identity, columns)
     : null;
-  const remaining = frame.chalkboardRemainingMs;
-  const reveal = !Number.isFinite(remaining) || remaining >= 180;
-  settle(elements, previous);
-  if (!animate || (!previous && !reveal)) {
-    settle(elements, incoming);
-    return;
+  // The cue boundary owns the handoff, even if the previous erase is late.
+  if (animate) writeLine(elements, incoming, frame, remaining, windowMs, gsap);
+  else {
+    settle(elements, incoming, delays);
+    if (incoming && delays?.some((delay) => delay > 0))
+      transitions.set(root, { incoming, static: true });
   }
+}
 
-  if (incoming) current.append(incoming);
-  root.hidden = false;
+function eraseLine(elements, previous, remaining, gsap) {
+  settle(elements, previous);
+  const { root } = elements;
   const outgoingColumns = columnSteps(previous);
-  const incomingColumns = reveal ? columnSteps(incoming) : [];
-  const token = { incoming, timeline: null };
+  const view = root.ownerDocument?.defaultView;
+  const edge = Number.parseFloat(
+    view
+      ?.getComputedStyle(root)
+      .getPropertyValue('--ovl-chalkboard-erase-edge'),
+  );
+  const edgePx = Number.isFinite(edge) ? Math.max(0, Math.min(4, edge)) : 0;
+  const scale = Math.min(
+    1,
+    remaining /
+      (columnEraseMs + (outgoingColumns.length - 1) * columnStaggerMs),
+  );
+  const token = { incoming: previous, timeline: null, erasing: true };
   const timeline = gsap.timeline({
     onComplete() {
-      if (transitions.get(root) === token) settle(elements, incoming);
+      if (transitions.get(root) === token) root.hidden = true;
     },
   });
   token.timeline = timeline;
   transitions.set(root, token);
   for (const [column, { ink, rule, stops }] of outgoingColumns.entries()) {
     const count = stops.length - 1;
-    const step = Math.min(0.045, 0.24 / count);
+    const step = Math.min(0.045, columnEraseMs / 1000 / count) * scale;
+    const height = edgePx ? ink.getBoundingClientRect().height : 0;
+    const bias = height ? (edgePx / height) * 100 : 0;
+    const startsAt = (column * columnStaggerMs * scale) / 1000;
     for (let index = 0; index < count; index++) {
-      const at = column * 0.025 + index * step;
       scheduleMask(
         timeline,
         ink,
-        mask(0, stops[count - index]),
-        mask(0, stops[count - index - 1]),
-        at,
-        step,
-      );
-      scheduleMask(
-        timeline,
-        rule,
-        mask(stops[index], 100),
-        mask(stops[index + 1], 100),
-        at,
+        eraseMask(stops[count - index], 'up', bias),
+        eraseMask(stops[count - index - 1], 'up', bias),
+        startsAt + index * step,
         step,
       );
     }
-  }
-  const characterCount = incomingColumns.reduce(
-    (total, { stops }) => total + stops.length - 1,
-    0,
-  );
-  const budget = Number.isFinite(remaining)
-    ? Math.min(720, remaining * 0.7)
-    : 720;
-  const step = Math.min(0.055, budget / 1000 / characterCount);
-  let cursor = 0;
-  for (const { ink, rule, stops } of incomingColumns) {
-    for (const target of [ink, rule])
-      target.style.setProperty('clip-path', mask(0, 0));
-    for (let index = 1; index < stops.length; index++) {
-      scheduleMask(
-        timeline,
-        [ink, rule],
-        mask(0, stops[index - 1]),
-        mask(0, stops[index]),
-        cursor * step,
-        step,
-      );
-      cursor++;
+    // The shortened rail keeps moving downward while the ink erases in steps.
+    if (count) {
+      const edges = bias ? [0, 50, 100] : [0, 100];
+      const duration = ((count - 0.28) * step) / (edges.length - 1);
+      for (let index = 1; index < edges.length; index++) {
+        timeline.fromTo(
+          rule,
+          { clipPath: eraseMask(edges[index - 1], 'down', bias) },
+          {
+            clipPath: eraseMask(edges[index], 'down', bias),
+            duration,
+            ease: 'none',
+            immediateRender: false,
+          },
+          startsAt + (index - 1) * duration,
+        );
+      }
     }
   }
 }

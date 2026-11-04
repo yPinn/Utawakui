@@ -5,6 +5,7 @@ import {
 import { adaptOrnateVerticalLyricsPresentation } from './ornateVerticalPresentation.mjs';
 import { sliceLyricsVocalParts } from './lyricsTextProcessing.mjs';
 import {
+  chalkboardColumnStarts,
   selectLyricsDisplayPage,
   sliceLyricsReading,
 } from './lyricsDisplayLayout.mjs';
@@ -234,8 +235,18 @@ export function projectLyricsDisplayFrame(
   if (options.templateId === 'chalkboard-vertical') {
     projected.chalkboardColumns = rows.map((row) => row.text);
     if (Number.isFinite(page.endMs)) {
+      const rate = options.rate || 1;
+      const starts = chalkboardColumnStarts(line, page, rows);
+      if (starts)
+        projected.chalkboardColumnDelaysMs = starts.map(
+          (start) => (start - positionMs) / rate,
+        );
+      projected.chalkboardRate = rate;
       projected.chalkboardRemainingMs =
-        Math.max(0, page.endMs - positionMs) / (options.rate || 1);
+        Math.max(0, page.endMs - positionMs) / rate;
+      if (Number.isFinite(page.startMs))
+        projected.chalkboardDurationMs =
+          (page.endMs - (starts?.[0] ?? page.startMs)) / rate;
     }
   }
   if (options.templateId === 'kinetic-pop') {

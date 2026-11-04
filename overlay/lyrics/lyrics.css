@@ -731,6 +731,7 @@
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
     place-items: center;
     inline-size: 100%;
     block-size: 100%;
@@ -761,9 +762,23 @@
   }
 
   .lyrics-overlay__chalkboard-group {
+    --ovl-chalkboard-ink-width: 1.12em;
+    --ovl-chalkboard-rule-width: max(1px, 0.045em);
+    --ovl-chalkboard-rule-gap: 0.18em;
+    --ovl-chalkboard-column-gap: 0.52em;
     position: relative;
     grid-area: 1 / 1;
-    inset-block-start: var(--ovl-user-position-y);
+    align-self: start;
+    /* Reserve three columns and the 44vh writing area for every batch. */
+    inline-size: calc(
+      3 *
+        (
+          var(--ovl-chalkboard-ink-width) + var(--ovl-chalkboard-rule-gap) +
+            var(--ovl-chalkboard-rule-width)
+        ) +
+        2 * var(--ovl-chalkboard-column-gap)
+    );
+    inset-block-start: calc(28% + var(--ovl-user-position-y, 0%));
     transform: translateX(
       clamp(
         calc(-50vw / 3 + 50% + 8px),
@@ -774,7 +789,7 @@
     display: flex;
     flex-direction: row-reverse;
     align-items: flex-start;
-    gap: 0.52em;
+    gap: var(--ovl-chalkboard-column-gap);
     direction: ltr;
   }
 
@@ -784,7 +799,8 @@
 
   .lyrics-overlay__chalkboard-column {
     display: flex;
-    gap: 0.18em;
+    flex: none;
+    gap: var(--ovl-chalkboard-rule-gap);
     color: var(--ovl-primitive-color-paper);
     filter: drop-shadow(0 0 1px var(--ovl-primitive-color-ink))
       drop-shadow(0 0 2px var(--ovl-primitive-color-ink))
@@ -796,6 +812,7 @@
     writing-mode: vertical-rl;
     text-orientation: mixed;
     white-space: pre;
+    block-size: var(--ovl-chalkboard-ink-width);
     max-inline-size: 44vh;
     overflow: clip;
     background: radial-gradient(
@@ -809,9 +826,11 @@
   }
 
   .lyrics-overlay__chalkboard-rule {
-    inline-size: max(1px, 0.03em);
+    inline-size: var(--ovl-chalkboard-rule-width);
     background: currentColor;
-    opacity: 0.78;
+    opacity: 0.9;
+    transform: scaleY(0.85);
+    transform-origin: top;
   }
 
   :root[data-ovl-template='ornate-vertical'],

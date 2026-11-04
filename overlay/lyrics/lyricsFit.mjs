@@ -175,7 +175,13 @@ function createMeasurement(
       const at = counters ? measureNow() : 0;
       layouts.set(
         text,
-        splitLyricsDisplayRows(text, fitsLine, rows, { literalPrefixes }),
+        splitLyricsDisplayRows(text, fitsLine, rows, {
+          literalPrefixes,
+          authoredLineBreaks: chalkboard,
+          authoredPhraseSpaces: chalkboard,
+          keepLatinRuns: chalkboard,
+          keepJapaneseContractions: chalkboard,
+        }),
       );
       if (counters) counters.fitRowsMs += measureNow() - at;
     }
@@ -559,6 +565,7 @@ export function createLyricsFitController(options = {}) {
           sequentialRows: !chalkboard,
           phraseRows: !chalkboard && !centered,
           keepLatinRuns: centered,
+          keepJapaneseContractions: chalkboard,
           language: base.language,
           ...(chalkboard || centered ? { minimumDwellMs: 800 } : {}),
         };

@@ -14,6 +14,25 @@ const glyphs =
   typeof Intl?.Segmenter === 'function'
     ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
     : null;
+const japaneseWords = glyphs
+  ? new Intl.Segmenter('ja', { granularity: 'word' })
+  : null;
+
+function japaneseContractionRanges(text) {
+  const endings = [
+    ...text.matchAll(
+      /(?<=[\p{Script=Hiragana}\p{Script=Han}])[ちじ]ゃ(?:った|って|えば|おう|う)/gu,
+    ),
+  ];
+  if (!endings.length) return [];
+  const words = [...japaneseWords.segment(text)];
+  return endings.flatMap(({ index, 0: ending }) => {
+    const stem = words.findLast(({ index: start }) => start < index);
+    return stem?.isWordLike
+      ? [{ sourceStart: stem.index, sourceEnd: index + ending.length }]
+      : [];
+  });
+}
 
 function timingMap(line) {
   const native = Array.isArray(line.segments) && line.segments.length > 0;
@@ -54,6 +73,38 @@ function timingMap(line) {
   return { source, starts: cursor === line.text.length ? starts : new Map() };
 }
 
+export function chalkboardColumnStarts(line, page, rows) {
+  const { sourceStart, sourceEnd, startMs, endMs } = page;
+  const start = sourceStart === 0 ? line.startMs : startMs;
+  if (!Number.isFinite(start) || !Number.isFinite(endMs) || endMs <= start)
+    return null;
+
+  const anchors = [
+    [sourceStart, start],
+    ...[...timingMap(line).starts].filter(
+      ([offset, at]) =>
+        offset > sourceStart && offset < sourceEnd && at > start && at < endMs,
+    ),
+    [sourceEnd, endMs],
+  ];
+  const weight = (from, to) =>
+    [...glyphs.segment(line.text.slice(from, to).replace(/\s/gu, ''))].length;
+  let offset = sourceStart;
+  let anchor = 0;
+  return rows.map((row, index) => {
+    const from =
+      row.sourceStart === undefined ? offset : sourceStart + row.sourceStart;
+    offset = from + row.text.length;
+    if (index === 0) return start;
+    while (anchor + 1 < anchors.length - 1 && anchors[anchor + 1][0] <= from)
+      anchor++;
+    const [left, at] = anchors[anchor];
+    const [right, next] = anchors[anchor + 1];
+    const fraction = weight(left, from) / Math.max(1, weight(left, right));
+    return at + (next - at) * fraction;
+  });
+}
+
 function partition(
   text,
   fits,
@@ -68,6 +119,8 @@ function partition(
   vocalEnds = [],
   literalPrefixes = false,
   keepLatinRuns = phraseRows,
+  keepJapaneseContractions = false,
+  phraseText = null,
 ) {
   const boundaries = [...glyphs.segment(text)]
     .map((p) => p.index)
@@ -79,22 +132,25 @@ function partition(
         boundaries.find((offset) => offset >= m.index + m[0].length),
       )
     : [];
-  if (phraseRows)
-    authoredEnds.push(...lyricsAuthoredPhraseBreaks(text, { language }));
+  if (phraseRows || phraseText !== null)
+    authoredEnds.push(
+      ...lyricsAuthoredPhraseBreaks(phraseText ?? text, { language }),
+    );
   authoredEnds.push(...vocalEnds.filter((at) => boundaries.includes(at)));
   authoredEnds.sort((a, b) => a - b);
-  const fittingRuns = keepLatinRuns
-    ? lyricsLatinRuns(text).filter((run) => {
-        const sourceEnd =
-          run.sourceEnd +
-          (text.slice(run.sourceEnd).match(/^[.,!?;:，。！？、；：…]+/u)?.[0]
-            .length ?? 0);
-        return fits(text.slice(run.sourceStart, sourceEnd), {
-          sourceStart: run.sourceStart,
-          sourceEnd,
-        });
-      })
-    : [];
+  const fittingRuns = [
+    ...(keepLatinRuns ? lyricsLatinRuns(phraseText ?? text) : []),
+    ...(keepJapaneseContractions ? japaneseContractionRanges(text) : []),
+  ].filter((run) => {
+    const sourceEnd =
+      run.sourceEnd +
+      (text.slice(run.sourceEnd).match(/^[.,!?;:，。！？、；：…]+/u)?.[0]
+        .length ?? 0);
+    return fits(text.slice(run.sourceStart, sourceEnd), {
+      sourceStart: run.sourceStart,
+      sourceEnd,
+    });
+  });
   const safeBreak = (offset) =>
     vocalEnds.includes(offset) ||
     (isSafeLyricsBreak(text, offset) &&
@@ -265,6 +321,7 @@ export function planLyricsDisplay(line, options = {}) {
           vocalEnds,
           line.vocalParts !== undefined,
           options.phraseRows === true || options.keepLatinRuns === true,
+          options.keepJapaneseContractions === true,
         )
     : [];
   if (!pages)
@@ -296,6 +353,7 @@ export function planLyricsDisplay(line, options = {}) {
       vocalEnds,
       line.vocalParts !== undefined,
       options.phraseRows === true || options.keepLatinRuns === true,
+      options.keepJapaneseContractions === true,
     );
   const base = { sourceTiming: timing.source, pages, pageTiming: null };
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start)
@@ -353,11 +411,17 @@ export function splitLyricsDisplayRows(
     true,
     Infinity,
     maximumRows,
-    false,
+    options.authoredLineBreaks === true,
     false,
     undefined,
     [],
     options.literalPrefixes === true,
+    options.keepLatinRuns === true,
+    options.keepJapaneseContractions === true,
+    // Detect full-width spaces without changing source offsets or text.
+    options.authoredPhraseSpaces === true
+      ? text.replaceAll('\u3000', ' ')
+      : null,
   );
 }
 

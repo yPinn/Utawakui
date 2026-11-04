@@ -3,6 +3,7 @@ import { createLyricsFitController } from './lyricsFit.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   clearChalkboardVertical,
+  nextChalkboardTransitionDelayMs,
   renderChalkboardVertical,
 } from './chalkboardVertical.mjs';
 import {
@@ -2007,17 +2008,23 @@ export function createLyricsFrameScheduler(options = {}) {
         pass,
       });
       if (!isCurrent()) return;
-      const delay = Number.isFinite(display?.delayMs)
-        ? Math.min(boundaryDelay ?? Infinity, display.delayMs)
-        : boundaryDelay;
-      const targetMs = delay === null ? null : nowMs + delay;
+      const visibleFrame = display?.frame ?? frame;
+      const chalkboardDelay =
+        templateId === 'chalkboard-vertical'
+          ? nextChalkboardTransitionDelayMs(visibleFrame)
+          : null;
+      const delay = Math.min(
+        boundaryDelay ?? Infinity,
+        display?.delayMs ?? Infinity,
+        chalkboardDelay ?? Infinity,
+      );
+      const targetMs = Number.isFinite(delay) ? nowMs + delay : null;
       if (targetMs !== null && now() >= targetMs) {
         if (pass === 0) continue;
         arm(now(), currentGeneration, cycle);
         return;
       }
       stageAt = onTrace ? measureNow() : 0;
-      const visibleFrame = display?.frame ?? frame;
       onTrace?.('commit-start', { lineIndex: frame.lineIndex, pass });
       onFrame(visibleFrame, projectionOptions.traceContext);
       onTrace?.('commit', {

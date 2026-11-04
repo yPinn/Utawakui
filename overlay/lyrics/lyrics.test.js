@@ -182,10 +182,12 @@ it('writes Chalkboard characters right to left, erases in opposite directions, a
   const frame = {
     visible: true,
     chalkboardPlaying: true,
+    chalkboardDurationMs: 1000,
     chalkboardRemainingMs: 800,
     displayBatchId: 'old',
     currentText: '夜色亮起',
     chalkboardColumns: ['夜色', '亮起'],
+    chalkboardColumnDelaysMs: [0, 300],
   };
   renderLyricsFrame(elements, frame, options);
   const oldLine = elements.current.children[0];
@@ -196,44 +198,185 @@ it('writes Chalkboard characters right to left, erases in opposite directions, a
   expect(timelines[0].tweens).toHaveLength(4);
   expect(timelines[0].tweens[1].target).toEqual(oldLine.children[0].children);
   expect(timelines[0].tweens[2].target).toEqual(oldLine.children[1].children);
-  expect(timelines[0].tweens[2].position).toBeGreaterThan(
-    timelines[0].tweens[1].position,
+  expect(timelines[0].tweens[2].position).toBe(0.3);
+  expect(oldLine.children[1].children[0].style.values['clip-path']).toBe(
+    'inset(0% 0% 100% 0%)',
   );
   expect(timelines[0].tweens[0].target).toEqual(oldLine.children[0].children);
   expect(timelines[0].tweens[0].from.clipPath).toBe('inset(0% 0% 100% 0%)');
   expect(timelines[0].tweens[0].vars.clipPath).toBe('inset(0% 0% 50% 0%)');
+  timelines[0].options.onComplete();
 
   const next = {
     ...frame,
     displayBatchId: 'new',
     currentText: 'stay with me',
     chalkboardColumns: ['stay with me'],
+    chalkboardColumnDelaysMs: [0],
   };
-  renderLyricsFrame(elements, next, options);
+  const tail = {
+    ...frame,
+    chalkboardRemainingMs: 300,
+    chalkboardColumnDelaysMs: [-500, -200],
+  };
+  renderLyricsFrame(elements, tail, options);
   expect(timelines[0].kill).toHaveBeenCalledOnce();
-  expect(
-    timelines[1].tweens.slice(0, 2).map(({ vars }) => vars.clipPath),
-  ).toEqual(['inset(0% 0% 50% 0%)', 'inset(50% 0% 0% 0%)']);
-  expect(
-    timelines[1].tweens.slice(2, 4).map(({ vars }) => vars.clipPath),
-  ).toEqual(['inset(0% 0% 100% 0%)', 'inset(100% 0% 0% 0%)']);
+  const [firstInk, lastInk, firstRule, secondInk, , secondRule] =
+    timelines[1].tweens;
+  expect(firstInk.vars.clipPath).toBe('inset(0% 0% 50% 0%)');
+  expect(lastInk.vars.clipPath).toBe('inset(0% 0% 100% 0%)');
+  expect(firstRule.from.clipPath).toBe('inset(0% 0% 0% 0%)');
+  expect(firstRule.vars.clipPath).toBe('inset(100% 0% 0% 0%)');
+  expect(firstRule.vars.duration).toBeCloseTo(
+    lastInk.position + lastInk.vars.duration,
+  );
+  expect([secondInk.target, secondRule.target]).toEqual(
+    oldLine.children[1].children,
+  );
+  expect(secondInk.position).toBeGreaterThan(timelines[1].tweens[0].position);
+  expect(secondRule.position).toBe(secondInk.position);
+  expect(elements.current.children).toEqual([oldLine]);
+  renderLyricsFrame(elements, tail, options);
+  expect(timelines).toHaveLength(2);
+  expect(elements.current.children).toEqual([oldLine]);
+  renderLyricsFrame(elements, next, options);
+  expect(timelines[1].kill).toHaveBeenCalledOnce();
+  expect(elements.current.children).toHaveLength(1);
+  expect(elements.current.textContent).toBe('stay with me');
+  expect(timelines[2].tweens[0].from.clipPath).toBe('inset(0% 0% 100% 0%)');
   renderLyricsFrame(
     elements,
     { ...next, timelineDiscontinuity: true },
     options,
   );
   expect(timelines[1].kill).toHaveBeenCalledOnce();
+  expect(timelines[2].kill).toHaveBeenCalledOnce();
   timelines[0].options.onComplete();
   timelines[1].options.onComplete();
   expect(elements.current.children).toHaveLength(1);
   expect(elements.current.textContent).toBe('stay with me');
   expect(elements.next.hidden).toBe(true);
 
+  renderLyricsFrame(
+    elements,
+    { ...frame, timelineDiscontinuity: true },
+    options,
+  );
+  expect(
+    elements.current.children[0].children[1].children[0].style.values[
+      'clip-path'
+    ],
+  ).toBe('inset(0% 0% 100% 0%)');
+  renderLyricsFrame(
+    elements,
+    { ...next, timelineDiscontinuity: true },
+    options,
+  );
+
+  const nextTail = {
+    ...next,
+    chalkboardRemainingMs: 240,
+    chalkboardColumnDelaysMs: [-560],
+  };
+  renderLyricsFrame(elements, nextTail, options);
+  timelines[3].options.onComplete();
+  expect(elements.root.hidden).toBe(true);
+  renderLyricsFrame(elements, nextTail, options);
+  expect(elements.root.hidden).toBe(true);
   renderLyricsFrame(elements, { ...next, visible: false }, options);
-  expect(elements.root.hidden).toBe(false);
-  timelines[2].options.onComplete();
   expect(elements.root.hidden).toBe(true);
   expect(elements.current.children).toHaveLength(0);
+});
+
+it('wakes for Chalkboard erase and begins the next write on the original cue boundary', () => {
+  const elements = domElements();
+  const { gsap, timelines } = gsapHarness();
+  const options = { templateId: 'chalkboard-vertical', gsap };
+  const epoch = Date.parse('2026-08-22T00:00:00.000Z');
+  let now = epoch;
+  const jobs = [];
+  const scheduler = createLyricsFrameScheduler({
+    templateId: options.templateId,
+    now: () => now,
+    schedule: (callback, delay) => jobs.push({ callback, delay }),
+    cancelSchedule: () => {},
+    onFrame: (frame) => renderLyricsFrame(elements, frame, options),
+  });
+  scheduler.update({
+    version: 2,
+    revision: 1,
+    generatedAt: new Date(epoch).toISOString(),
+    playback: {
+      status: 'playing',
+      positionMs: 0,
+      durationMs: 3000,
+      rate: 1,
+      track: { id: 'track-1' },
+    },
+    lyrics: {
+      trackId: 'track-1',
+      synced: true,
+      lines: [
+        { text: '夜色', startMs: 0, endMs: 1000 },
+        { text: '亮起', startMs: 1000, endMs: 2000 },
+      ],
+    },
+  });
+  timelines[0].options.onComplete();
+  expect(jobs[0].delay).toBe(760);
+  now += 760;
+  jobs[0].callback();
+  expect(elements.current.textContent).toBe('夜色');
+  expect(timelines).toHaveLength(2);
+  expect(jobs[1].delay).toBe(240);
+  now += 240;
+  jobs[1].callback();
+  expect(timelines[1].kill).toHaveBeenCalledOnce();
+  expect(elements.current.textContent).toBe('亮起');
+  expect(timelines).toHaveLength(3);
+  scheduler.stop();
+});
+
+it('keeps the Chalkboard erase bias on the mask edge and off the write animation', () => {
+  const elements = domElements();
+  const { gsap, timelines } = gsapHarness();
+  const options = { templateId: 'chalkboard-vertical', gsap };
+  elements.root.ownerDocument.defaultView = {
+    getComputedStyle: () => ({ getPropertyValue: () => '3px' }),
+  };
+  renderLyricsFrame(elements, { visible: true, currentText: '夜色' }, options);
+  const [ink, rule] = elements.current.children[0].children[0].children;
+  ink.getBoundingClientRect = () => ({ height: 100 });
+  renderLyricsFrame(
+    elements,
+    {
+      visible: true,
+      currentText: '夜色',
+      chalkboardPlaying: true,
+      chalkboardDurationMs: 1000,
+      chalkboardRemainingMs: 240,
+    },
+    options,
+  );
+
+  const [eraseInk, , eraseRule] = timelines[0].tweens;
+  expect(eraseInk.target).toBe(ink);
+  expect(eraseRule.target).toBe(rule);
+  for (const [tween, anchor] of [
+    [eraseInk, 0],
+    [eraseRule, 100],
+  ]) {
+    const vertices = tween.vars.clipPath.slice(8, -1).split(', ');
+    expect(vertices.slice(0, 2)).toEqual([`0% ${anchor}%`, `100% ${anchor}%`]);
+    expect(vertices[2].split(' ')[1]).not.toBe(vertices[4].split(' ')[1]);
+  }
+  timelines[0].options.onComplete();
+  renderLyricsFrame(
+    elements,
+    { visible: true, currentText: '亮起', chalkboardPlaying: true },
+    options,
+  );
+  expect(timelines[1].tweens[0].from.clipPath).toBe('inset(0% 0% 100% 0%)');
 });
 
 it.each([
