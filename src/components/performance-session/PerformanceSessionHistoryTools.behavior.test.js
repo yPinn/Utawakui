@@ -307,7 +307,7 @@ describe('shared performance history actions', () => {
     await click(view.root, '目前場次操作');
     await click(view.root, '結束並封存場次');
     expect(fixture.playback.stop).not.toHaveBeenCalled();
-    expect(textContent(view.root)).toContain('會停止目前演出');
+    expect(textContent(view.root)).toContain('停止目前演出並保存完整紀錄');
     await click(view.root, '結束並封存');
     expect(fixture.playback.stop).toHaveBeenCalledOnce();
     expect(fixture.plan.archiveSession).toHaveBeenCalledWith(

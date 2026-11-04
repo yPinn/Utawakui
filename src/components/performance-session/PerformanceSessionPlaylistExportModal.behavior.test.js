@@ -182,9 +182,9 @@ describe('save performance playlist confirmation', () => {
     });
     await settle();
     const text = textContent(view.root);
-    expect(text).toContain('合併 1 項');
+    expect(text).toContain('合併重複曲目 1 項');
     expect(text).toContain('手動項目 1 項');
-    expect(text).toContain('失連項目 1 項');
+    expect(text).toContain('找不到音檔 1 項');
     expect(window.Utawakui.savePerformancePlaylist).not.toHaveBeenCalled();
     trigger(saveButton(view.root), 'onClick');
     await settle();
