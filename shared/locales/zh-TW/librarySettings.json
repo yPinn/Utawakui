@@ -22,7 +22,7 @@
   },
   "history": {
     "title": "播放紀錄",
-    "guidance": "自動保存；清除不影響佇列或歌單。",
+    "guidance": "自動保存；清除不影響佇列或播放清單。",
     "options": "播放紀錄選項",
     "actions": "播放紀錄操作",
     "unconfirmed": "暫時無法讀取",
@@ -38,7 +38,7 @@
     "updateFailed": "最近播放紀錄暫時無法更新。",
     "readFailed": "最近播放紀錄暫時無法讀取。",
     "cleared": "播放紀錄已清除",
-    "clearedMessage": "播放佇列與歌單已保留。",
+    "clearedMessage": "播放佇列與播放清單已保留。",
     "notCleared": "播放紀錄未清除",
     "retry": "請再試一次。"
   },

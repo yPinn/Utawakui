@@ -76,7 +76,7 @@
     "repair": "Repair",
     "remove": "Remove",
     "itemTitle": "Lyrics timing estimate tool",
-    "description": "The tool needed to estimate lyrics timing, managed separately from experimental features.",
+    "description": "The tool needed to estimate lyrics timing.",
     "busy": "Working",
     "verify": "Check",
     "cancel": "Cancel",

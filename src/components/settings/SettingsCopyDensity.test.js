@@ -50,7 +50,7 @@ describe('Settings copy density', () => {
     );
     expect(metadataSource).not.toContain('value="啟動時補齊曲目與發行資訊"');
     expect(metadataSource).not.toContain('<UiHint>從來源更新會連線');
-    expect(historySource).toContain('自動保存；清除不影響佇列或歌單。');
+    expect(historySource).toContain('自動保存；清除不影響佇列或播放清單。');
     expect(windowsSource).toContain('背景執行時，播放、OBS 與輸出會繼續。');
     expect(obsSource).toContain('讀取直播／錄影與時間標記，不變更場景。');
   });

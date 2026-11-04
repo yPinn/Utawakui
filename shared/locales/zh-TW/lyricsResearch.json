@@ -76,7 +76,7 @@
     "repair": "修復",
     "remove": "移除",
     "itemTitle": "歌詞時間估計工具",
-    "description": "估計歌詞時間所需的工具，與實驗功能分開管理。",
+    "description": "估計歌詞時間所需的工具。",
     "busy": "環境操作中",
     "verify": "檢查",
     "cancel": "取消操作",

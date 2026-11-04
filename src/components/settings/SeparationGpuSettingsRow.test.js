@@ -19,7 +19,7 @@ describe('SeparationGpuSettingsRow', () => {
   it('keeps the GPU option on one line and moves fallback detail to the tooltip', async () => {
     const html = await renderRow();
 
-    expect(html).toContain('人聲分離');
+    expect(html).toContain('顯示卡加速');
     expect(html.replace(/<!--[\s\S]*?-->/g, '')).toContain(
       '>顯示卡加速（GPU） </label>',
     );
