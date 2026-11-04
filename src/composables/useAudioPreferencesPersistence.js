@@ -1,5 +1,6 @@
 import { reactive, readonly, watch } from 'vue';
 import { projectAudioPreferences } from '../utils/audioPreferences.js';
+import { t } from '../utils/i18n.js';
 
 const DEFAULT_SAVE_DELAY_MS = 200;
 
@@ -36,7 +37,7 @@ export function createAudioPreferencesPersistence({
           state.error = null;
         },
         () => {
-          state.error = '音量設定暫時無法保存。';
+          state.error = t('playerAudio.volumeSaveFailed');
         },
       );
     return writeChain;

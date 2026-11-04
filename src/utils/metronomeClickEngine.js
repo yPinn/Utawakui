@@ -31,7 +31,7 @@ export function createMetronomeClickEngine({
   function ensureContext() {
     if (audioCtx) return audioCtx;
     if (typeof AudioContextImpl !== 'function') {
-      throw new Error('目前環境不支援音訊播放，節拍器發聲已停用。');
+      throw new Error('Web Audio is unavailable; metronome sound disabled');
     }
     const ctx = new AudioContextImpl();
     audioCtx = ctx;
@@ -60,13 +60,13 @@ export function createMetronomeClickEngine({
         ctx.resume(),
         new Promise((_resolve, reject) => {
           timer = setTimeout(
-            () => reject(new Error('節拍音效啟動逾時。')),
+            () => reject(new Error('metronome audio start timed out')),
             5000,
           );
         }),
       ]);
       if (ctx !== audioCtx || (ctx.state && ctx.state !== 'running')) {
-        throw new Error('節拍音效無法啟動，請確認系統預設輸出。');
+        throw new Error('metronome audio failed to start');
       }
     } finally {
       clearTimeout(timer);

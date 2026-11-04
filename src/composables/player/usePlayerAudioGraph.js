@@ -445,7 +445,7 @@ export function usePlayerAudioGraph({
       const currentSinkId =
         typeof context.sinkId === 'string' ? context.sinkId : null;
       if (currentSinkId !== graph.deviceId) {
-        invalidateCaptureGraph(graph, '選擇的輸出裝置已中斷連線。');
+        invalidateCaptureGraph(graph, t('playerAudio.captureDisconnected'));
       }
     };
     graph.handleStateChange = () => {
@@ -458,7 +458,7 @@ export function usePlayerAudioGraph({
             status: context.state,
           });
         }
-        invalidateCaptureGraph(graph, '擷取輸出已停止，請重新選擇裝置。');
+        invalidateCaptureGraph(graph, t('playerAudio.captureStopped'));
       }
     };
     context.addEventListener('sinkchange', graph.handleSinkChange);
@@ -656,7 +656,7 @@ export function usePlayerAudioGraph({
     pitchProcessingError = reportPlayerError(
       error,
       'pitch-processing',
-      '音高調整暫時無法使用。',
+      t('playerAudio.pitchUnavailable'),
     );
     state.error = pitchProcessingError;
   }
@@ -672,7 +672,7 @@ export function usePlayerAudioGraph({
     capturePitchProcessingError = reportPlayerError(
       error,
       'capture-pitch-processing',
-      '擷取輸出的音高調整暫時無法使用。',
+      t('playerAudio.capturePitchUnavailable'),
     );
     state.captureError = capturePitchProcessingError;
   }
@@ -1400,7 +1400,7 @@ export function usePlayerAudioGraph({
       desiredCaptureDeviceId = null;
       state.captureDeviceId = null;
     }
-    state.captureError = '擷取輸出裝置無法使用。';
+    state.captureError = t('playerAudio.captureUnavailable');
     if (clearSelection) notifyCaptureUnavailable();
   }
 
@@ -1489,7 +1489,7 @@ export function usePlayerAudioGraph({
           !state.captureError
         ) {
           desiredCaptureDeviceId = null;
-          state.captureError = '擷取輸出裝置無法使用。';
+          state.captureError = t('playerAudio.captureUnavailable');
           notifyCaptureUnavailable();
         }
         return;
@@ -1622,8 +1622,8 @@ export function usePlayerAudioGraph({
             error,
             operation,
             operation === 'resume'
-              ? '目前無法繼續播放，請再試一次。'
-              : '目前無法播放這首曲目，請再試一次。',
+              ? t('playerAudio.resumeFailed')
+              : t('playerAudio.playFailed'),
           );
           job.lane('monitor', 'failed');
           return false;

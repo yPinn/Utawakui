@@ -65,5 +65,32 @@
     "restartToReorder": "Restart the app before reordering playlists.",
     "reorderNotSavedTitle": "Playlist order not saved"
   },
-  "defaultNamePrefix": "Playlist #"
+  "defaultNamePrefix": "Playlist #",
+  "actions": {
+    "removeCoverTitle": "Remove playlist cover?",
+    "removeCoverMessage": "The custom cover will be removed; songs and other details are kept.",
+    "removeCoverDetail": "Choose a cover again to restore it.",
+    "removeCover": "Remove cover",
+    "removeAlbum": "Remove album",
+    "removeAlbumTitle": "Remove album?",
+    "deletePlaylist": "Delete playlist",
+    "deletePlaylistTitle": "Delete playlist?",
+    "trackCount": "{count} track | {count} tracks",
+    "albumKeepsAudio": "Only the album is removed; audio files are kept.",
+    "playlistKeepsAudio": "Only the playlist is removed; audio files are kept.",
+    "irreversible": "This can't be undone."
+  },
+  "menu": {
+    "addToSession": "Add to performance queue",
+    "search": "Search playlists",
+    "create": "Create playlist",
+    "empty": "No playlists to add to",
+    "noResults": "No playlists found",
+    "editRelease": "Edit release info",
+    "editDetails": "Edit details",
+    "toPlaylist": "Convert to playlist",
+    "toAlbum": "Convert to album",
+    "remove": "Remove",
+    "delete": "Delete"
+  }
 }

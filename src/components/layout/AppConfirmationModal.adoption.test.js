@@ -50,10 +50,8 @@ describe('App confirmation adoption', () => {
     const actions = source('../../composables/usePlaylistActions.js');
 
     expect(actions).toContain('subject: name');
-    expect(actions).toContain('meta: `${playlist.trackIds.length} 首曲目`');
-    expect(actions).toContain(
-      'message: `只會移除${collectionType}，音檔會保留。`',
-    );
+    expect(actions).toContain("meta: t('playlist.actions.trackCount'");
+    expect(actions).toContain('只會移除播放清單，音檔會保留。');
     expect(actions).not.toContain('「${name}」包含');
   });
 

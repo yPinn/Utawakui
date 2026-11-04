@@ -1,5 +1,14 @@
 {
   "monitorOutputUnavailable": "Monitor output could not be opened. The existing capture output is retained. Retry monitoring or select an output device again.",
   "monitorOutputTitle": "Monitor output unavailable",
-  "retryMonitorOutput": "Retry monitor output"
+  "retryMonitorOutput": "Retry monitor output",
+  "captureDisconnected": "The selected output device was disconnected.",
+  "captureStopped": "Capture output stopped. Choose the device again.",
+  "pitchUnavailable": "Pitch adjustment isn't available right now.",
+  "capturePitchUnavailable": "Pitch adjustment for capture output isn't available right now.",
+  "captureUnavailable": "The capture output device can't be used.",
+  "resumeFailed": "Couldn't resume playback. Try again.",
+  "playFailed": "Couldn't play this track. Try again.",
+  "playbackFailedTitle": "Playback didn't finish",
+  "volumeSaveFailed": "The volume setting couldn't be saved right now."
 }

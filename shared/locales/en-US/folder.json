@@ -29,5 +29,12 @@
     "caption": "Note text",
     "captionPlaceholder": "Shown on the right when the photo opens.",
     "hint": "Clear a field to remove its text."
+  },
+  "papers": {
+    "periwinkle": "Periwinkle",
+    "rose": "Rose",
+    "canary": "Canary",
+    "kraft": "Kraft",
+    "ruled": "Ruled"
   }
 }

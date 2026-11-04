@@ -27,5 +27,9 @@
     "saveFailedDetail": "The window stays open. Try again later.",
     "trayUnavailable": "Cannot run in the background",
     "trayUnavailableDetail": "The system tray is unavailable, so the window stays open."
+  },
+  "settings": {
+    "readFailed": "Couldn't read the close behavior. Reload.",
+    "saveFailed": "Couldn't save the close behavior; the previous setting was restored."
   }
 }

@@ -11,6 +11,7 @@ import {
   PLAYLIST_MENU_ACTIONS,
   playlistDisplayName,
 } from '../utils/playlistMenu.js';
+import { t } from '../utils/i18n.js';
 
 // Module-scope singleton, same pattern as usePlaylists.js — the edit-details
 // modal and its target must be shared state, not per-caller, since both the
@@ -182,11 +183,11 @@ async function clearCover() {
   editDetailsError.value = '';
   try {
     const confirmed = await confirmAction({
-      title: '移除播放清單封面？',
+      title: t('playlist.actions.removeCoverTitle'),
       subject: playlistDisplayName(playlist),
-      message: '目前的自訂封面會被移除，歌曲與其他資訊會保留。',
-      detail: '移除後需重新選擇封面才能恢復。',
-      confirmLabel: '移除封面',
+      message: t('playlist.actions.removeCoverMessage'),
+      detail: t('playlist.actions.removeCoverDetail'),
+      confirmLabel: t('playlist.actions.removeCover'),
       intent: 'danger',
     });
     if (
@@ -207,15 +208,20 @@ async function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
   if (!playlist) return;
   const isAlbum = playlist.kind === 'album';
   const name = playlistDisplayName(playlist);
-  const collectionType = isAlbum ? '專輯' : '播放清單';
-  const action = isAlbum ? '移除專輯' : '刪除播放清單';
+  const count = playlist.trackIds.length;
   const confirmed = await confirmAction({
-    title: `${action}？`,
+    title: isAlbum
+      ? t('playlist.actions.removeAlbumTitle')
+      : t('playlist.actions.deletePlaylistTitle'),
     subject: name,
-    meta: `${playlist.trackIds.length} 首曲目`,
-    message: `只會移除${collectionType}，音檔會保留。`,
-    detail: '此動作無法復原。',
-    confirmLabel: action,
+    meta: t('playlist.actions.trackCount', { count }, count),
+    message: isAlbum
+      ? t('playlist.actions.albumKeepsAudio')
+      : t('playlist.actions.playlistKeepsAudio'),
+    detail: t('playlist.actions.irreversible'),
+    confirmLabel: isAlbum
+      ? t('playlist.actions.removeAlbum')
+      : t('playlist.actions.deletePlaylist'),
     intent: 'danger',
   });
   if (!confirmed) return;

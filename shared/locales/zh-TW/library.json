@@ -229,5 +229,13 @@
   "dialog": {
     "audioFiles": "音訊檔",
     "images": "圖片"
+  },
+  "sourceStates": {
+    "available": "本地可用",
+    "notImported": "未匯入",
+    "missing": "檔案遺失",
+    "needsConfirmation": "待確認",
+    "excluded": "已排除此專輯",
+    "unlinked": "尚未納入專輯"
   }
 }

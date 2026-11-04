@@ -209,5 +209,10 @@
   "analysis": {
     "viewSettings": "查看設定",
     "retry": "重試"
+  },
+  "metronome": {
+    "soundFailed": "請確認系統預設輸出後再重新啟動。",
+    "stoppedTitle": "節拍器已停止",
+    "restart": "重新啟動"
   }
 }

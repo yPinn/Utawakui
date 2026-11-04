@@ -10,5 +10,6 @@
   "discardConfirm": "捨棄變更",
   "searchFailed": "目前無法搜尋歌曲，請再試一次。",
   "versionsReload": "資料已變更，請重新載入版本清單。",
-  "nameRequired": "請輸入作品名稱。"
+  "nameRequired": "請輸入作品名稱。",
+  "partialSaved": "歌曲資訊已儲存；版本與連結尚未儲存。"
 }

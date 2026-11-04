@@ -1,6 +1,7 @@
 import { computed, shallowRef, watch } from 'vue';
 import { releaseMembershipKey } from './useReleaseMembershipProjection.js';
 import { isLocalPreviewTrack } from '../utils/trackPreviewSource.js';
+import { t } from '../utils/i18n.js';
 
 // This only owns the preview control. It must never drive album presentation.
 export function useTrackPreviewEligibility({
@@ -121,10 +122,11 @@ export function useTrackPreviewEligibility({
         !current(verification.value) ||
         verification.value.status === 'pending'
       )
-        return '正在確認本地音檔';
-      if (verification.value.status === 'error') return '無法確認本地音檔';
+        return t('track.previewNotice.checking');
+      if (verification.value.status === 'error')
+        return t('track.previewNotice.checkFailed');
     }
-    return '沒有可用的本地音檔';
+    return t('track.previewNotice.noAudio');
   });
   return {
     canPreview,

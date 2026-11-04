@@ -36,5 +36,7 @@
     "BGM_POSITION_INVALID": "BGM 播放位置無效。",
     "fallback": "BGM 操作無效。",
     "fadeOutOutOfRange": "BGM 淡出時間超出允許範圍。"
-  }
+  },
+  "updateFailedTitle": "BGM 未更新",
+  "updateFailed": "BGM 未更新，請再試一次。"
 }

@@ -10,5 +10,6 @@
   "discardConfirm": "Discard changes",
   "searchFailed": "Songs can't be searched right now. Try again.",
   "versionsReload": "The data changed. Reload the version list.",
-  "nameRequired": "Enter a work name."
+  "nameRequired": "Enter a work name.",
+  "partialSaved": "Song info saved; versions and links weren't saved yet."
 }

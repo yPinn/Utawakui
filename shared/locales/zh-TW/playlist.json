@@ -65,5 +65,32 @@
     "restartToReorder": "請重新啟動應用程式後再調整播放清單順序。",
     "reorderNotSavedTitle": "播放清單排序未儲存"
   },
-  "defaultNamePrefix": "播放清單 #"
+  "defaultNamePrefix": "播放清單 #",
+  "actions": {
+    "removeCoverTitle": "移除播放清單封面？",
+    "removeCoverMessage": "目前的自訂封面會被移除，歌曲與其他資訊會保留。",
+    "removeCoverDetail": "移除後需重新選擇封面才能恢復。",
+    "removeCover": "移除封面",
+    "removeAlbum": "移除專輯",
+    "removeAlbumTitle": "移除專輯？",
+    "deletePlaylist": "刪除播放清單",
+    "deletePlaylistTitle": "刪除播放清單？",
+    "trackCount": "{count} 首曲目",
+    "albumKeepsAudio": "只會移除專輯，音檔會保留。",
+    "playlistKeepsAudio": "只會移除播放清單，音檔會保留。",
+    "irreversible": "此動作無法復原。"
+  },
+  "menu": {
+    "addToSession": "加入演出待唱",
+    "search": "搜尋播放清單",
+    "create": "建立新播放清單",
+    "empty": "沒有可加入的播放清單",
+    "noResults": "找不到播放清單",
+    "editRelease": "編輯發行資訊",
+    "editDetails": "編輯詳細資料",
+    "toPlaylist": "轉為播放清單",
+    "toAlbum": "轉為專輯",
+    "remove": "移除",
+    "delete": "刪除"
+  }
 }

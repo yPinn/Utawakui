@@ -21,5 +21,16 @@
   },
   "clauseSeparator": "，",
   "goToSettings": "前往設定",
-  "tryAgain": "請再試一次。"
+  "tryAgain": "請再試一次。",
+  "retry": "重試",
+  "viewSettings": "查看設定",
+  "copiedNamed": "已複製 {label}",
+  "copyFailedNamed": "無法複製{label}，請手動選取文字",
+  "appError": {
+    "info": "需要注意",
+    "success": "已完成",
+    "warning": "需要確認",
+    "error": "發生錯誤",
+    "message": "操作未完成，請稍後再試。"
+  }
 }

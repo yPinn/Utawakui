@@ -12,6 +12,7 @@ import {
   addToPlaylistTargets,
   playlistDisplayName,
 } from './playlistMenu.js';
+import { t } from './i18n.js';
 
 // Presentational menu items shared by the Library collection header and the
 // Sidebar row menu, so labels, icons and action payloads cannot drift.
@@ -23,7 +24,7 @@ export function addToPerformanceQueueMenuItem(
   return {
     id: 'add-to-performance-queue',
     kind: 'action',
-    label: '加入演出待唱',
+    label: t('playlist.menu.addToSession'),
     icon: Tickets,
     disabled,
     value: {
@@ -40,14 +41,14 @@ export function addToPlaylistContent(playlists, sourcePlaylistId) {
   return {
     kind: 'filterable-actions',
     search: {
-      label: '搜尋播放清單',
-      placeholder: '搜尋播放清單',
+      label: t('playlist.menu.search'),
+      placeholder: t('playlist.menu.search'),
     },
     pinnedItems: [
       {
         id: 'create-playlist',
         kind: 'action',
-        label: '建立新播放清單',
+        label: t('playlist.menu.create'),
         icon: Plus,
         value: {
           action: PLAYLIST_MENU_ACTIONS.createPlaylist,
@@ -71,8 +72,8 @@ export function addToPlaylistContent(playlists, sourcePlaylistId) {
         })),
       },
     ],
-    emptyText: '沒有可加入的播放清單',
-    noResultsText: '找不到播放清單',
+    emptyText: t('playlist.menu.empty'),
+    noResultsText: t('playlist.menu.noResults'),
   };
 }
 
@@ -95,7 +96,7 @@ export function collectionManageMenuItems(playlist) {
           {
             id: 'edit-release-info',
             kind: 'action',
-            label: '編輯發行資訊',
+            label: t('playlist.menu.editRelease'),
             icon: Disc3,
             value: {
               action: PLAYLIST_MENU_ACTIONS.editReleaseInfo,
@@ -107,7 +108,7 @@ export function collectionManageMenuItems(playlist) {
     {
       id: 'edit-details',
       kind: 'action',
-      label: '編輯詳細資料',
+      label: t('playlist.menu.editDetails'),
       icon: Pencil,
       value: {
         action: PLAYLIST_MENU_ACTIONS.editDetails,
@@ -117,7 +118,9 @@ export function collectionManageMenuItems(playlist) {
     {
       id: 'convert-kind',
       kind: 'action',
-      label: isAlbum ? '轉為播放清單' : '轉為專輯',
+      label: isAlbum
+        ? t('playlist.menu.toPlaylist')
+        : t('playlist.menu.toAlbum'),
       icon: isAlbum ? ListMusic : Disc3,
       value: {
         action: PLAYLIST_MENU_ACTIONS.convertKind,
@@ -129,7 +132,7 @@ export function collectionManageMenuItems(playlist) {
       kind: 'action',
       // An album isn't something the user authored: "移除" (remove from the
       // library) rather than "刪除" (delete).
-      label: isAlbum ? '移除' : '刪除',
+      label: isAlbum ? t('playlist.menu.remove') : t('playlist.menu.delete'),
       icon: Trash2,
       intent: 'danger',
       value: {

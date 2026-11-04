@@ -1,5 +1,6 @@
 import { isWindowCloseBehavior } from '../../shared/windowCloseBehaviorContract.mjs';
 import { useSettingsPreference } from './useSettingsPreference.js';
+import { t } from '../utils/i18n.js';
 
 export function useWindowsIntegrationSettings(options = {}) {
   const bridge = options.bridge ?? globalThis.window?.Utawakui;
@@ -10,8 +11,8 @@ export function useWindowsIntegrationSettings(options = {}) {
     read: () => bridge.getWindowCloseBehavior(),
     write: (value) => bridge.setWindowCloseBehavior(value),
     validate: isWindowCloseBehavior,
-    readMessage: '目前無法讀取關閉行為，請重新讀取。',
-    saveMessage: '目前無法儲存關閉行為，已恢復原設定。',
+    readMessage: t('windowClose.settings.readFailed'),
+    saveMessage: t('windowClose.settings.saveFailed'),
   });
   return {
     windowCloseBehavior: preference.value,

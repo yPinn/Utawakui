@@ -1,4 +1,5 @@
 import { readonly, shallowRef } from 'vue';
+import { t } from '../utils/i18n.js';
 
 const MAX_COPY_LENGTH = 1024;
 const IDLE_STATE = Object.freeze({ tone: 'idle', message: '' });
@@ -32,9 +33,10 @@ export function useClipboardFeedback({
 
   async function copy(value, label, messages = {}) {
     const current = ++revision;
-    const successMessage = messages.successMessage ?? `已複製 ${label}`;
+    const successMessage =
+      messages.successMessage ?? t('common.copiedNamed', { label });
     const errorMessage =
-      messages.errorMessage ?? `無法複製${label}，請手動選取文字`;
+      messages.errorMessage ?? t('common.copyFailedNamed', { label });
     clearPendingReset();
     if (
       typeof value !== 'string' ||

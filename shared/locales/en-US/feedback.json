@@ -57,5 +57,11 @@
     "exportedMessage": "The file is saved. Pass it to the developer yourself."
   },
   "eventMeta": "{time} · {level}",
-  "saveDialogTitle": "Save feedback"
+  "saveDialogTitle": "Save feedback",
+  "levels": {
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "debug": "Debug"
+  }
 }

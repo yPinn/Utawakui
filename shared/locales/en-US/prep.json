@@ -80,5 +80,12 @@
   },
   "review": {
     "tracks": "Tracks"
+  },
+  "enqueue": {
+    "gateLabel": "Accompaniment processing",
+    "gateTitle": "Finish setup first",
+    "gateMessage": "Turn on accompaniment processing in Settings first.",
+    "failed": "This song can't be added to the accompaniment queue right now.",
+    "failedTitle": "Accompaniment processing wasn't added"
   }
 }

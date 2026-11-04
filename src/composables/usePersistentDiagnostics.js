@@ -2,6 +2,7 @@ import { reactive, readonly } from 'vue';
 import { notificationKey } from '../constants/notificationKeys.js';
 import { normalizeAppError } from '../utils/appErrors.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 const notifications = useAppNotifications();
 
@@ -27,12 +28,12 @@ function bridgeMethod(name) {
   return typeof method === 'function' ? method : null;
 }
 
-function failureNotice({ title, message = '請再試一次。', operation }) {
+function failureNotice({ title, message = t('common.tryAgain'), operation }) {
   return normalizeAppError(null, {
     code: `DIAGNOSTICS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
     title,
     message,
-    actionLabel: '重試',
+    actionLabel: t('common.retry'),
     source: 'diagnostics',
     operation,
   });
@@ -42,9 +43,9 @@ function notifyFailure(title, operation, action = null) {
   notifications.notify({
     key: notificationKey.diagnostics(operation),
     title,
-    message: '請再試一次。',
+    message: t('common.tryAgain'),
     tone: 'danger',
-    actionLabel: '重試',
+    actionLabel: t('common.retry'),
     action,
   });
 }
@@ -55,8 +56,8 @@ async function refresh() {
   const listRecent = bridgeMethod('listRecentDiagnostics');
   if (!listRecent) {
     state.notice = failureNotice({
-      title: '需要重新啟動',
-      message: '重新啟動後即可讀取錯誤紀錄。',
+      title: t('settings.diagnosticsNotices.restartTitle'),
+      message: t('settings.diagnosticsNotices.restartMessage'),
       operation: 'list',
     });
     return false;
@@ -74,7 +75,7 @@ async function refresh() {
   } catch {
     if (current !== readRevision) return false;
     state.notice = failureNotice({
-      title: '無法讀取錯誤紀錄',
+      title: t('settings.diagnosticsNotices.readFailed'),
       operation: 'list',
     });
     return false;
@@ -90,7 +91,7 @@ async function clear() {
   if (clearing) return false;
   const clearDiagnostics = bridgeMethod('clearDiagnostics');
   if (!clearDiagnostics) {
-    notifyFailure('無法清除錯誤紀錄', 'clear');
+    notifyFailure(t('settings.diagnosticsNotices.clearFailed'), 'clear');
     return false;
   }
 
@@ -105,12 +106,12 @@ async function clear() {
     state.notice = null;
     notifications.notify({
       key: notificationKey.diagnostics('clear'),
-      title: '錯誤紀錄已清除',
-      message: '已移除這台電腦上的錯誤紀錄。',
+      title: t('settings.diagnosticsNotices.cleared'),
+      message: t('settings.diagnosticsNotices.clearedMessage'),
     });
     return true;
   } catch {
-    notifyFailure('無法清除錯誤紀錄', 'clear');
+    notifyFailure(t('settings.diagnosticsNotices.clearFailed'), 'clear');
     return false;
   } finally {
     clearing = false;
@@ -122,7 +123,11 @@ async function openFolder() {
   if (openingFolder) return false;
   const openDiagnosticsFolder = bridgeMethod('openDiagnosticsFolder');
   if (!openDiagnosticsFolder) {
-    notifyFailure('無法開啟錯誤紀錄資料夾', 'open-folder', openFolder);
+    notifyFailure(
+      t('settings.diagnosticsNotices.openFolderFailed'),
+      'open-folder',
+      openFolder,
+    );
     return false;
   }
 
@@ -133,7 +138,11 @@ async function openFolder() {
     notifications.clear(notificationKey.diagnostics('open-folder'));
     return true;
   } catch {
-    notifyFailure('無法開啟錯誤紀錄資料夾', 'open-folder', openFolder);
+    notifyFailure(
+      t('settings.diagnosticsNotices.openFolderFailed'),
+      'open-folder',
+      openFolder,
+    );
     return false;
   } finally {
     openingFolder = false;
@@ -144,7 +153,11 @@ async function exportBundle() {
   if (exporting) return false;
   const exportDiagnostics = bridgeMethod('exportDiagnostics');
   if (!exportDiagnostics) {
-    notifyFailure('無法匯出錯誤紀錄', 'export', exportBundle);
+    notifyFailure(
+      t('settings.diagnosticsNotices.exportFailed'),
+      'export',
+      exportBundle,
+    );
     return false;
   }
 
@@ -158,12 +171,16 @@ async function exportBundle() {
     if (!result?.ok) throw new Error('diagnostics export failed');
     notifications.notify({
       key: notificationKey.diagnostics('export'),
-      title: '已匯出錯誤紀錄',
-      message: '檔案已儲存在你選擇的位置。',
+      title: t('settings.diagnosticsNotices.exported'),
+      message: t('settings.diagnosticsNotices.exportedMessage'),
     });
     return true;
   } catch {
-    notifyFailure('無法匯出錯誤紀錄', 'export', exportBundle);
+    notifyFailure(
+      t('settings.diagnosticsNotices.exportFailed'),
+      'export',
+      exportBundle,
+    );
     return false;
   } finally {
     exporting = false;

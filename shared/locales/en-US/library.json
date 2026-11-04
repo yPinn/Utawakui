@@ -229,5 +229,13 @@
   "dialog": {
     "audioFiles": "Audio files",
     "images": "Images"
+  },
+  "sourceStates": {
+    "available": "Available locally",
+    "notImported": "Not imported",
+    "missing": "File missing",
+    "needsConfirmation": "Needs confirmation",
+    "excluded": "Excluded from this album",
+    "unlinked": "Not in the album yet"
   }
 }

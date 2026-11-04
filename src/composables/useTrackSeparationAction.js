@@ -4,6 +4,7 @@ import { FEATURE_IDS } from '../constants/featureGates.js';
 import { DEFAULT_SEPARATION_PRESET_ID } from '../constants/separationPresets.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 const OPEN_SEPARATION_STATUSES = new Set(['pending', 'checking', 'running']);
 
@@ -50,9 +51,9 @@ export function useTrackSeparationAction({
       const enabled = await featureGateAccess.requireFeatureGate(
         FEATURE_IDS.AUDIO_PROCESSING_FLOW,
         {
-          label: '伴奏處理',
-          title: '先完成初次設定',
-          message: '請先到設定啟用伴奏處理。',
+          label: t('prep.enqueue.gateLabel'),
+          title: t('prep.enqueue.gateTitle'),
+          message: t('prep.enqueue.gateMessage'),
           source: 'library',
           operation: 'enqueue-track',
         },
@@ -68,10 +69,10 @@ export function useTrackSeparationAction({
       );
       if (!result) {
         error.value =
-          unref(separationController.error) || '歌曲目前無法加入伴奏處理佇列。';
+          unref(separationController.error) || t('prep.enqueue.failed');
         notifications.notify({
           key: NOTIFICATION_KEYS.LIBRARY_SEPARATION_ENQUEUE,
-          title: '伴奏處理未加入',
+          title: t('prep.enqueue.failedTitle'),
           message: error.value,
           tone: 'danger',
         });

@@ -6,6 +6,7 @@ import { usePlayer } from './usePlayer.js';
 import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
 import { resolvePreviewSegment } from '../utils/trackPreviewSegment.js';
 import { isLocalPreviewTrack } from '../utils/trackPreviewSource.js';
+import { t } from '../utils/i18n.js';
 
 async function settle(load) {
   try {
@@ -329,8 +330,8 @@ export function createTrackPreview({
     const track = currentTrack();
     recordError(error ?? audio.error, {
       code: 'TRACK_PREVIEW_PLAYBACK_FAILED',
-      title: '無法試聽曲目',
-      message: '這首曲目目前無法試聽。',
+      title: t('track.previewNotice.failedTitle'),
+      message: t('track.previewNotice.failed'),
       source: 'track-preview',
       operation: 'play',
       context: { trackId: track?.id, retryable: true },

@@ -209,5 +209,10 @@
   "analysis": {
     "viewSettings": "View settings",
     "retry": "Retry"
+  },
+  "metronome": {
+    "soundFailed": "Check the system default output, then restart.",
+    "stoppedTitle": "Metronome stopped",
+    "restart": "Restart"
   }
 }

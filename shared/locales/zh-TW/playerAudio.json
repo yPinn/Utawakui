@@ -1,5 +1,14 @@
 {
   "monitorOutputUnavailable": "監聽無法開啟。原擷取輸出仍保留，請重試監聽或重新選擇輸出裝置。",
   "monitorOutputTitle": "監聽未開啟",
-  "retryMonitorOutput": "重試監聽"
+  "retryMonitorOutput": "重試監聽",
+  "captureDisconnected": "選擇的輸出裝置已中斷連線。",
+  "captureStopped": "擷取輸出已停止，請重新選擇裝置。",
+  "pitchUnavailable": "音高調整暫時無法使用。",
+  "capturePitchUnavailable": "擷取輸出的音高調整暫時無法使用。",
+  "captureUnavailable": "擷取輸出裝置無法使用。",
+  "resumeFailed": "目前無法繼續播放，請再試一次。",
+  "playFailed": "目前無法播放這首曲目，請再試一次。",
+  "playbackFailedTitle": "播放未完成",
+  "volumeSaveFailed": "音量設定暫時無法保存。"
 }

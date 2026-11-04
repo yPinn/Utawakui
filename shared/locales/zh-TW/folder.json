@@ -29,5 +29,12 @@
     "caption": "便條內容",
     "captionPlaceholder": "展開照片時顯示在右側。",
     "hint": "清空欄位即可移除文字。"
+  },
+  "papers": {
+    "periwinkle": "藍紫",
+    "rose": "粉紅",
+    "canary": "鵝黃",
+    "kraft": "牛皮紙",
+    "ruled": "橫線紙"
   }
 }

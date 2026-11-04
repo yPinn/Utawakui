@@ -7,6 +7,7 @@ import {
   nextBeatNumber,
 } from '../utils/metronomeSchedule.js';
 import { createMetronomeClickEngine } from '../utils/metronomeClickEngine.js';
+import { t } from '../utils/i18n.js';
 
 export const METRONOME_BPM_RANGE = Object.freeze({ min: 40, max: 240 });
 export const METRONOME_BEATS_RANGE = Object.freeze({ min: 2, max: 8 });
@@ -88,12 +89,12 @@ function setVolume(value) {
 function failSound(error) {
   stop();
   state.soundEnabled = false;
-  state.soundError = '請確認系統預設輸出後再重新啟動。';
+  state.soundError = t('player.metronome.soundFailed');
   void Promise.resolve(engine?.close()).catch(() => {});
   // The tools panel may be closed mid-performance, so the shell owns this.
   useAppNotifications().notifyFailure({
     key: NOTIFICATION_KEYS.METRONOME_SOUND,
-    title: '節拍器已停止',
+    title: t('player.metronome.stoppedTitle'),
     message: state.soundError,
     tone: 'warning',
     error,
@@ -101,7 +102,7 @@ function failSound(error) {
     source: 'metronome',
     operation: 'resume-audio',
     context: { retryable: true },
-    actionLabel: '重新啟動',
+    actionLabel: t('player.metronome.restart'),
     action: restartWithSound,
   });
 }

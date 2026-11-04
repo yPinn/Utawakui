@@ -1,9 +1,5 @@
-const LEVEL_LABELS = Object.freeze({
-  error: '錯誤',
-  warning: '警告',
-  info: '資訊',
-  debug: '偵錯',
-});
+import { t } from './i18n.js';
+const LEVELS = new Set(['error', 'warning', 'info', 'debug']);
 
 function minuteOf(timestamp) {
   const date = new Date(timestamp);
@@ -19,7 +15,9 @@ export function summarizeFeedbackDiagnostics(diagnostics) {
   return events.map((event, index) => ({
     key: typeof event?.id === 'string' ? event.id : `event-${index}`,
     time: minuteOf(event?.timestamp),
-    level: LEVEL_LABELS[event?.level] ?? LEVEL_LABELS.error,
+    level: t(
+      `feedback.levels.${LEVELS.has(event?.level) ? event.level : 'error'}`,
+    ),
     message: typeof event?.message === 'string' ? event.message : '',
   }));
 }

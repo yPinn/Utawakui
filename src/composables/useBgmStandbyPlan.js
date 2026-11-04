@@ -2,6 +2,7 @@ import { computed, readonly } from 'vue';
 import { useSerializedPlanStore } from './useSerializedPlanStore.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import audioControlValues from '../../shared/audioControlValues.json';
+import { t } from '../utils/i18n.js';
 
 export const BGM_STANDBY_DEFAULT_SETTINGS = Object.freeze({
   volume: audioControlValues.bgmVolume.defaultValue,
@@ -43,8 +44,8 @@ const { state, enqueue, refresh, initialize, dispose } = useSerializedPlanStore(
     invalidResponseMessage: 'invalid BGM standby response',
     errorPresentation: {
       code: 'BGM_STANDBY_RENDERER_FAILED',
-      title: 'BGM 未更新',
-      message: 'BGM 未更新，請再試一次。',
+      title: t('bgm.updateFailedTitle'),
+      message: t('bgm.updateFailed'),
       source: 'bgm-standby',
     },
     recordError: useAppDiagnostics().recordError,

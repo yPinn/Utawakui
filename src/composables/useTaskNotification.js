@@ -1,11 +1,12 @@
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 // A per-attempt projection handle, never a task registry. Domain owners own
 // requests, progress, busy flags and cancellation. Closing this view cancels none.
 export function useTaskNotification({
   key,
   title,
-  actionLabel = '查看設定',
+  actionLabel = t('common.viewSettings'),
   action,
 }) {
   const notifications = useAppNotifications();

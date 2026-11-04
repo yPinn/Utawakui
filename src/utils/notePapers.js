@@ -1,11 +1,15 @@
+import { t } from './i18n.js';
 // The user note stocks, in the order the editors' paper switch cycles them.
-export const NOTE_PAPERS = Object.freeze([
-  Object.freeze({ id: 'periwinkle', label: '藍紫' }),
-  Object.freeze({ id: 'rose', label: '粉紅' }),
-  Object.freeze({ id: 'canary', label: '鵝黃' }),
-  Object.freeze({ id: 'kraft', label: '牛皮紙' }),
-  Object.freeze({ id: 'ruled', label: '橫線紙' }),
-]);
+export const NOTE_PAPERS = Object.freeze(
+  ['periwinkle', 'rose', 'canary', 'kraft', 'ruled'].map((id) =>
+    Object.freeze({
+      id,
+      get label() {
+        return t(`folder.papers.${id}`);
+      },
+    }),
+  ),
+);
 
 // Index of a saved stock, or a random one when the note has none yet.
 export function notePaperIndex(id, random = Math.random) {

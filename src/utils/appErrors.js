@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 export const APP_ERROR_PREFIX = 'UTAWAKUI_APP_ERROR:';
 
 export const APP_ERROR_SEVERITIES = Object.freeze([
@@ -7,14 +8,6 @@ export const APP_ERROR_SEVERITIES = Object.freeze([
   'error',
 ]);
 
-const DEFAULT_TITLES = Object.freeze({
-  info: '需要注意',
-  success: '已完成',
-  warning: '需要確認',
-  error: '發生錯誤',
-});
-
-const DEFAULT_PUBLIC_MESSAGE = '操作未完成，請稍後再試。';
 const PUBLIC_CONTEXT_KEYS = new Set([
   'count',
   'correlationId',
@@ -98,12 +91,14 @@ export function normalizeAppError(error, options = {}) {
   const message = boundedPublicText(
     options.message || parsed?.message,
     PUBLIC_TEXT_LIMITS.message,
-    DEFAULT_PUBLIC_MESSAGE,
+    t('common.appError.message'),
   );
   const title = boundedPublicText(
     options.title || parsed?.title,
     PUBLIC_TEXT_LIMITS.title,
-    DEFAULT_TITLES[severity] || '發生錯誤',
+    t(
+      `common.appError.${APP_ERROR_SEVERITIES.includes(severity) ? severity : 'error'}`,
+    ),
   );
 
   return {

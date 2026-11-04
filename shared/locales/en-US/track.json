@@ -174,5 +174,12 @@
     "columns": "Columns",
     "chooseColumns": "Choose columns",
     "hiddenForSpace": "Hidden for lack of space"
+  },
+  "previewNotice": {
+    "failedTitle": "Can't preview track",
+    "failed": "This track can't be previewed right now.",
+    "checking": "Checking local audio",
+    "checkFailed": "Couldn't check local audio",
+    "noAudio": "No local audio available"
   }
 }

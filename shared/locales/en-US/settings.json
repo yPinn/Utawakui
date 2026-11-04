@@ -49,5 +49,27 @@
     "title": "Feedback and suggestions",
     "guidance": "Report a problem or suggest an idea.",
     "open": "Open feedback and suggestions"
+  },
+  "appInfo": {
+    "restart": "Restart the app to read the version info.",
+    "failedTitle": "Couldn't read version info",
+    "failed": "Couldn't read the version info. Try again later."
+  },
+  "page": {
+    "bodyLabel": "Settings document",
+    "title": "Settings",
+    "description": "Manage the library, audio, app and optional features."
+  },
+  "diagnosticsNotices": {
+    "restartTitle": "Restart required",
+    "restartMessage": "Restart to read the error log.",
+    "readFailed": "Couldn't read the error log",
+    "clearFailed": "Couldn't clear the error log",
+    "cleared": "Error log cleared",
+    "clearedMessage": "The error log on this computer was removed.",
+    "openFolderFailed": "Couldn't open the error log folder",
+    "exportFailed": "Couldn't export the error log",
+    "exported": "Error log exported",
+    "exportedMessage": "The file was saved where you chose."
   }
 }

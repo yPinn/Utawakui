@@ -57,5 +57,11 @@
     "exportedMessage": "檔案已儲存，請自行傳給開發者。"
   },
   "eventMeta": "{time}・{level}",
-  "saveDialogTitle": "另存意見回饋"
+  "saveDialogTitle": "另存意見回饋",
+  "levels": {
+    "error": "錯誤",
+    "warning": "警告",
+    "info": "資訊",
+    "debug": "偵錯"
+  }
 }

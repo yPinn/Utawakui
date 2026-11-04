@@ -21,5 +21,16 @@
   },
   "clauseSeparator": ", ",
   "goToSettings": "Go to Settings",
-  "tryAgain": "Try again."
+  "tryAgain": "Try again.",
+  "retry": "Retry",
+  "viewSettings": "View settings",
+  "copiedNamed": "Copied {label}",
+  "copyFailedNamed": "Couldn't copy {label}. Select the text manually.",
+  "appError": {
+    "info": "Heads up",
+    "success": "Done",
+    "warning": "Needs attention",
+    "error": "Something went wrong",
+    "message": "The action didn't finish. Try again later."
+  }
 }

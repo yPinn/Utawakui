@@ -49,5 +49,27 @@
     "title": "回報與建議",
     "guidance": "回報問題或提出建議。",
     "open": "開啟回報與建議"
+  },
+  "appInfo": {
+    "restart": "需要重新啟動應用程式才能讀取版本資訊。",
+    "failedTitle": "版本資訊讀取失敗",
+    "failed": "目前無法讀取版本資訊，請稍後再試。"
+  },
+  "page": {
+    "bodyLabel": "設定文件",
+    "title": "設定",
+    "description": "管理曲庫、音訊、應用程式與選用功能。"
+  },
+  "diagnosticsNotices": {
+    "restartTitle": "需要重新啟動",
+    "restartMessage": "重新啟動後即可讀取錯誤紀錄。",
+    "readFailed": "無法讀取錯誤紀錄",
+    "clearFailed": "無法清除錯誤紀錄",
+    "cleared": "錯誤紀錄已清除",
+    "clearedMessage": "已移除這台電腦上的錯誤紀錄。",
+    "openFolderFailed": "無法開啟錯誤紀錄資料夾",
+    "exportFailed": "無法匯出錯誤紀錄",
+    "exported": "已匯出錯誤紀錄",
+    "exportedMessage": "檔案已儲存在你選擇的位置。"
   }
 }

@@ -27,13 +27,13 @@ export function usePlayerErrorNotice({
         key: NOTICE_KEY,
         title: isMonitorError
           ? t('playerAudio.monitorOutputTitle')
-          : '播放未完成',
+          : t('playerAudio.playbackFailedTitle'),
         message,
         tone: 'danger',
         lifecycle: 'persistent',
         actionLabel: isMonitorError
           ? t('playerAudio.retryMonitorOutput')
-          : '重試',
+          : t('common.retry'),
         action: isMonitorError ? retryMonitorOutput : retry,
       });
     },

@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 const { recordError } = useAppDiagnostics();
 
@@ -18,7 +19,7 @@ function hasBridge() {
 
 async function refreshAppInfo() {
   if (!hasBridge()) {
-    state.error = '需要重新啟動應用程式才能讀取版本資訊。';
+    state.error = t('settings.appInfo.restart');
     return;
   }
 
@@ -26,15 +27,15 @@ async function refreshAppInfo() {
   try {
     const version = await window.Utawakui.getAppVersion();
     if (typeof version !== 'string' || version.length === 0) {
-      throw new Error('版本資訊格式不正確');
+      throw new Error('invalid app version');
     }
     state.currentVersion = version;
     state.error = null;
   } catch (error) {
     state.error = recordError(error, {
       code: 'APP_INFO_READ_FAILED',
-      title: '版本資訊讀取失敗',
-      message: '目前無法讀取版本資訊，請稍後再試。',
+      title: t('settings.appInfo.failedTitle'),
+      message: t('settings.appInfo.failed'),
       source: 'app-info',
       operation: 'refresh',
     }).message;

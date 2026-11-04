@@ -3,6 +3,7 @@ import { useAppConfirmation } from './useAppConfirmation.js';
 import { useLibrary } from './useLibrary.js';
 import { useTrackMetadataEditor } from './useTrackMetadataEditor.js';
 import { useWorkOrganization } from './useWorkOrganization.js';
+import { t } from '../utils/i18n.js';
 
 const work = useWorkOrganization();
 const { refresh } = useLibrary();
@@ -46,10 +47,10 @@ async function close() {
   if (
     isDirty.value &&
     !(await confirm({
-      title: '捨棄歌曲整理變更？',
+      title: t('workOrganize.discardTitle'),
       subject: work.state.track?.title,
-      message: '尚未儲存的變更將會捨棄。',
-      confirmLabel: '捨棄變更',
+      message: t('workOrganize.discardMessage'),
+      confirmLabel: t('workOrganize.discardConfirm'),
     }))
   )
     return false;
@@ -104,7 +105,7 @@ async function save({ reconfirm = false } = {}) {
         if (stillCurrent()) {
           setSection('organization');
           if (metadataSaved)
-            state.partialMessage = '歌曲資訊已儲存；版本與連結尚未儲存。';
+            state.partialMessage = t('workOrganize.partialSaved');
         }
         return false;
       }

@@ -36,5 +36,7 @@
     "BGM_POSITION_INVALID": "The BGM playback position isn't valid.",
     "fallback": "The BGM action isn't valid.",
     "fadeOutOutOfRange": "The BGM fade-out time is out of range."
-  }
+  },
+  "updateFailedTitle": "BGM wasn't updated",
+  "updateFailed": "BGM wasn't updated. Try again."
 }
