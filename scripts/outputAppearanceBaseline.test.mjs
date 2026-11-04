@@ -25,6 +25,8 @@ const ids = [
   'karaoke-stack',
   'kinetic-pop',
   'ornate-vertical',
+  'chalkboard-vertical',
+  'centered-vertical',
   'live-stage',
   'manga-frame',
   'art-card',
@@ -144,7 +146,7 @@ describe('Output F1 acceptance foundation', () => {
 
   it('does not imply executing reconnect, font or image loading from pure projections', () => {
     const matrix = createAcceptanceMatrix();
-    expect(matrix).toHaveLength(9);
+    expect(matrix.map(({ id }) => id)).toEqual(ids);
     for (const template of matrix) {
       expect(
         template.cases.find(({ id }) => id === 'font-denied'),
@@ -395,7 +397,7 @@ describe('Output F1 acceptance foundation', () => {
     );
     expect(JSON.parse(output)).toMatchObject({
       ok: true,
-      templates: 9,
+      templates: ids.length,
       implementationPhase: 'F1',
     });
   });

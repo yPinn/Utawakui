@@ -876,6 +876,205 @@
       "localSourceLimitations": ["no-local-font-enumeration-for-template"]
     },
     {
+      "id": "chalkboard-vertical",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "scope": "template",
+          "key": "fontScale",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small"
+            },
+            {
+              "id": "medium"
+            },
+            {
+              "id": "large"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "positionAnchor",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "select",
+          "editor": "position-grid",
+          "defaultValue": "center-left",
+          "options": [
+            {
+              "id": "center-left"
+            },
+            {
+              "id": "center-right"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "positionOffsetX",
+          "family": "layout",
+          "tier": "advanced",
+          "reflow": false,
+          "order": 40,
+          "control": "range",
+          "signed": true,
+          "defaultValue": 0,
+          "min": -12,
+          "max": 12,
+          "step": 1,
+          "unit": "%",
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "positionOffsetY",
+          "family": "layout",
+          "tier": "advanced",
+          "reflow": false,
+          "order": 50,
+          "control": "range",
+          "signed": true,
+          "defaultValue": 0,
+          "min": -25,
+          "max": 25,
+          "step": 1,
+          "unit": "%",
+          "group": "layout",
+          "groupOrder": 60
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "weighted-pages",
+        "t2Progress": "source-mapped-pages",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "vertical-rl",
+        "three-column-maximum",
+        "right-to-left-reading",
+        "opposed-character-and-rule-exit"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "bounded",
+          "reason": "Left or right third with bounded X and Y offsets only"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Fixed text treatment with no custom color control"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
+      "id": "centered-vertical",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "scope": "template",
+          "key": "fontScale",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small"
+            },
+            {
+              "id": "medium"
+            },
+            {
+              "id": "large"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "weighted-pages",
+        "t2Progress": "source-mapped-pages",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "vertical-rl",
+        "single-column",
+        "fixed-upper-anchor",
+        "direct-line-replacement"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "No template appearance image-file selection capability"
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Future verified asset store is not installed-font enumeration"
+        },
+        "position": {
+          "status": "not-exposed",
+          "reason": "No verified adjustable position consumer in current field schema"
+        },
+        "customColors": {
+          "status": "not-exposed",
+          "reason": "Fixed text treatment with no custom color control"
+        }
+      },
+      "localSourceLimitations": ["no-local-font-enumeration-for-template"]
+    },
+    {
       "id": "live-stage",
       "kind": "lyrics",
       "capture": {
