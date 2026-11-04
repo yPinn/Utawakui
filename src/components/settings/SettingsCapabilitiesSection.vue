@@ -50,7 +50,9 @@ const OPTIONAL_FEATURE_GROUPS = Object.freeze([
   },
 ]);
 
+// Gates whose #settings slot holds rows; a slot outside this set never shows.
 const SETTINGS_FEATURES = new Set([
+  FEATURE_IDS.PROVIDER_FLOW,
   FEATURE_IDS.AUDIO_PROCESSING_FLOW,
   FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
   FEATURE_IDS.OBS_INTEGRATION,

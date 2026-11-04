@@ -100,6 +100,22 @@ describe('SettingsView document composition', () => {
     expect(optionalSource).toContain('tabindex="-1"');
   });
 
+  it('shows every gate that hosts settings rows', () => {
+    const settingsSet = optionalSource.match(
+      /const SETTINGS_FEATURES = new Set\(\[([\s\S]*?)\]\)/u,
+    )[1];
+    const hosted = new Set(
+      [
+        ...optionalSource.matchAll(
+          /gate\.id === FEATURE_IDS\.(\w+) &&\s+(?:\(?gate\.enabled)/gu,
+        ),
+      ].map((match) => match[1]),
+    );
+    expect(hosted.size).toBeGreaterThan(0);
+    for (const featureId of hosted)
+      expect(settingsSet, featureId).toContain(`FEATURE_IDS.${featureId}`);
+  });
+
   it('groups optional gates by user-facing purpose without a redundant introduction', () => {
     expect(source).not.toContain('使用前請閱讀各功能說明，再選擇是否啟用。');
     expect(source).toContain("title: '外部來源與歌詞'");
