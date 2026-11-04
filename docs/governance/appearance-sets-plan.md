@@ -4,6 +4,8 @@
 
 2026-10-20 的[八模板盤點](../archive/appearance-template-gap-audit-2026-10-20.md)與[原始資料](data/appearance-template-audit-2026-10-20.json)保留當時範圍。之後的模板數量、缺省值與可調項以[Output 外觀契約](../contracts/output-appearance.md)為準，不以舊盤點覆蓋現況。
 
+字幕視覺候選與 Proposal／Build Spec 格式由[字幕提案入口](../research/design/lyrics-overlays/README.md)持有；採用狀態只見 spec 第 7.3 節。候選整理不改本文件的作品取得或交付安排。
+
 ## 已確認的取得方向
 
 未來每個額外 set 個別單次取得，新作品另計，已取得作品範圍內的修復不另收；純自願支持與作品取得分開。現有模板都只是待改善素材，不安排當期合集、定價或上架。

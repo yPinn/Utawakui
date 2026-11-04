@@ -94,6 +94,8 @@ Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，�
 
 ## 歌詞模板呈現
 
+五款正式字幕的構圖、位置限制與左中右人物佔位研究見[VTuber 佔位回看](../research/design/lyrics-overlays/production-vtuber-placement-review.md)。
+
 歌詞呈現分兩層：`lyricsTimingUnits.mjs` 只把 T1 fallback 切成無語意的 `{ text, weight }` 單元，原文換行、空白與標點無損附著；`lyricsPresentation.mjs` 再依版本化的 Generic／KTV／Kinetic Pop／Ornate Vertical／Manga／Live Stage profile 解讀為 phrase、role、bubble 或 caption page。Browser Source 依 document id、revision、language 與 profile 快取靜態結果，`state.mjs` 投影動態 frame 與下一個 boundary。`lyricsTemplateCapabilities.mjs` 是各模板 T1／T2、source mapping、music cue 與 scheduler wake 的唯一宣告。模板分句不回寫 canonical timing，T2 永遠優先；raw LRC／VTT parser 不進模板。
 
 - **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1）；唯一消費 beat phase 與段落的模板（見[音樂分析](music-analysis.md)）。

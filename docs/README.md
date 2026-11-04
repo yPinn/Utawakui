@@ -4,19 +4,20 @@
 
 先讀 README 了解用途，再依 PRODUCT → spec → architecture／contracts 查定位、現況與行為。研究結果與契約存在都不代表功能已交付；功能路線分為既有能力驗收、已接受方向、等待條件與尚未接受的研究候選，統一由 spec 第 6／7 節管理。
 
-| 要查什麼          | 入口                                                                                     |
-| ----------------- | ---------------------------------------------------------------------------------------- |
-| 定位與非目標      | [PRODUCT](../PRODUCT.md)                                                                 |
-| 功能現況與待決策  | [產品規格](spec.md)                                                                      |
-| Runtime ownership | [架構圖](architecture.md)                                                                |
-| 共用契約與呈現    | [Shared 邊界](architecture.md#shared-boundary)                                           |
-| 視覺與元件規則    | [DESIGN](../DESIGN.md)                                                                   |
-| 決策原因          | [ADR](adr/README.md)                                                                     |
-| 可驗證的行為邊界  | [契約](contracts/README.md)                                                              |
-| 當輪研究與證據    | [研究](research/README.md)                                                               |
-| 封裝內容          | [release inventory](operations/release-inventory.md)、[資源導覽](../resources/README.md) |
+| 要查什麼           | 入口                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| 定位與非目標       | [PRODUCT](../PRODUCT.md)                                                                 |
+| 功能現況與待決策   | [產品規格](spec.md)                                                                      |
+| Runtime ownership  | [架構圖](architecture.md)                                                                |
+| 共用契約與呈現     | [Shared 邊界](architecture.md#shared-boundary)                                           |
+| 視覺與元件規則     | [DESIGN](../DESIGN.md)                                                                   |
+| 決策原因           | [ADR](adr/README.md)                                                                     |
+| 可驗證的行為邊界   | [契約](contracts/README.md)                                                              |
+| 當輪研究與證據     | [研究](research/README.md)                                                               |
+| 字幕候選與建立格式 | [字幕風格提案入口](research/design/lyrics-overlays/README.md)                            |
+| 封裝內容           | [release inventory](operations/release-inventory.md)、[資源導覽](../resources/README.md) |
 
-意圖以規格與有效 ADR 為準；實際行為以程式、registry 與測試核對。 規劃閱讀從[播放器／排練入口](research/product/player-practice-planning-2026-10-26.md)進入；索引不重述四份提案或另立 roadmap。
+意圖以規格與有效 ADR 為準；實際行為以程式、registry 與測試核對。 規劃閱讀從[播放器／排練入口](research/product/player-practice-planning-2026-10-26.md)進入；字幕候選由上表所列的提案入口索引。
 
 ## 操作手冊（operations/）
 
