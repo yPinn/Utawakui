@@ -589,7 +589,7 @@
       "paletteId": {
         "label": "Color style",
         "options": {
-          "original": "Template colors",
+          "original": "Original",
           "warm": "Warm stage",
           "cool": "Cool stage",
           "monochrome": "Black and white",
