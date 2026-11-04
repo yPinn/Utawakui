@@ -12,21 +12,18 @@ describe('lyrics presentation policies', () => {
       literal: {
         id: 'literal',
         version: 1,
-        label: '忠實原文',
         contentMode: 'literal',
         automaticLayout: false,
       },
       balanced: {
         id: 'balanced',
         version: 1,
-        label: '平衡分行',
         contentMode: 'preserve',
         automaticLayout: true,
       },
       'broadcast-compact': {
         id: 'broadcast-compact',
         version: 1,
-        label: '轉播精簡',
         contentMode: 'compact',
         automaticLayout: true,
       },
@@ -35,9 +32,9 @@ describe('lyrics presentation policies', () => {
 
   it('exposes selectable policies only for templates that support them', () => {
     expect(lyricsPresentationPolicyOptionsForTemplate('live-stage')).toEqual([
-      { id: 'broadcast-compact', label: '轉播精簡' },
-      { id: 'balanced', label: '平衡分行' },
-      { id: 'literal', label: '忠實原文' },
+      { id: 'broadcast-compact' },
+      { id: 'balanced' },
+      { id: 'literal' },
     ]);
     expect(lyricsPresentationPolicyOptionsForTemplate('focus-line')).toEqual(
       [],

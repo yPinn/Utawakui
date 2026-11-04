@@ -13,13 +13,19 @@ import {
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
+import {
+  localizeAppearanceField,
+  localizeElementTarget,
+  lyricsPolicyLabel,
+  outputSlotLabel,
+} from '../utils/outputPanelCopy.js';
 import { UI_LOCALE } from '../utils/uiLocale.js';
 import { t } from '../utils/i18n.js';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
     id: slot.id,
-    label: slot.label,
+    label: outputSlotLabel(slot.id),
   })),
 );
 
@@ -444,7 +450,11 @@ function presentationFieldsForTemplate(templateId) {
       groupOrder: CONTENT_CONFIGURATION_GROUP.order,
       order: 20,
       defaultValue: normalizeLyricsPresentationPolicyId(templateId),
-      options: Object.freeze(options.map((option) => Object.freeze(option))),
+      options: Object.freeze(
+        options.map((option) =>
+          Object.freeze({ ...option, label: lyricsPolicyLabel(option.id) }),
+        ),
+      ),
     }),
   ]);
 }
@@ -477,9 +487,13 @@ function availabilityForTemplate(template, available = true) {
 
 export const OUTPUT_TEMPLATES = Object.freeze(
   OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
-    const appearanceFields = outputAppearanceFieldsForTemplate(template.id);
+    const appearanceFields = outputAppearanceFieldsForTemplate(template.id).map(
+      localizeAppearanceField,
+    );
     const presentationFields = presentationFieldsForTemplate(template.id);
-    const elementTargets = outputElementTargetsForTemplate(template.id);
+    const elementTargets = outputElementTargetsForTemplate(template.id).map(
+      localizeElementTarget,
+    );
     if (template.kind !== 'lyrics') {
       return Object.freeze({
         ...template,
@@ -566,7 +580,7 @@ export const OUTPUT_STYLE_SETS = Object.freeze([
 export const OUTPUT_SLOT_DEFINITIONS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
     id: slot.id,
-    label: slot.label,
+    label: outputSlotLabel(slot.id),
     path: slot.path,
   })),
 );

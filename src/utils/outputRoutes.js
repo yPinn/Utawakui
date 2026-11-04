@@ -1,5 +1,6 @@
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import { captureSizeById } from '../constants/outputCaptureSizes.js';
+import { outputSlotLabel } from './outputPanelCopy.js';
 
 const OUTPUT_PATH_BY_KIND = Object.freeze(
   Object.fromEntries(
@@ -9,7 +10,10 @@ const OUTPUT_PATH_BY_KIND = Object.freeze(
 
 const OUTPUT_LABEL_BY_KIND = Object.freeze(
   Object.fromEntries(
-    OUTPUT_TEMPLATE_VALUES.slots.map((slot) => [slot.id, slot.label]),
+    OUTPUT_TEMPLATE_VALUES.slots.map((slot) => [
+      slot.id,
+      outputSlotLabel(slot.id),
+    ]),
   ),
 );
 

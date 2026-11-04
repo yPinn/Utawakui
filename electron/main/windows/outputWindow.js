@@ -1,5 +1,8 @@
 'use strict';
 
+const { t } = require('../../lib/i18n');
+const slotCatalogKey = (id) =>
+  id.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 const { slots } = require('../../../shared/outputTemplateValues.json');
 const capture = require('../../../shared/outputCaptureValues.json');
 const { host } = require('../../../shared/outputRuntimeValues.json');
@@ -41,7 +44,7 @@ function resolveOutputWindowSurface(kind, status, slot) {
   const size = sizes.get(normalized.settings.captureSize);
   return {
     kind,
-    title: `${getWindowIdentity('output').title}｜${definition.label}`,
+    title: `${getWindowIdentity('output').title}｜${t(`outputPanel.slots.${slotCatalogKey(kind)}`)}`,
     width: size.width,
     height: size.height,
     url: `http://${host}:${status.port}${definition.path}`,

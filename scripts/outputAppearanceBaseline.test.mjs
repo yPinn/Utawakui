@@ -18,6 +18,7 @@ import { isAudioOutputPermissionAllowed } from '../electron/main/audioOutputPerm
 import { normalizeOverlayAppearance } from '../overlay/shared/appearance.mjs';
 import { getOutputWorkbenchData } from '../src/constants/outputTemplates.js';
 import { buildOutputSlotPayload } from '../src/utils/outputSlotPayload.js';
+import { localizeAppearanceField } from '../src/utils/outputPanelCopy.js';
 
 const ids = [
   'queue-board',
@@ -190,7 +191,7 @@ describe('Output F1 acceptance foundation', () => {
         templateId: id,
       });
       expect(template.appearanceFields).toEqual(
-        outputAppearanceFieldsForTemplate(id),
+        outputAppearanceFieldsForTemplate(id).map(localizeAppearanceField),
       );
       for (const field of template.appearanceFields) {
         expect(rendered[field.key]).toEqual(field.defaultValue);

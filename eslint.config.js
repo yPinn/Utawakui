@@ -79,6 +79,8 @@ const I18N_MIGRATED = [
   'src/composables/{useOutputRuntime,useObsIntegration}.js',
   'src/composables/output/{useLocalFonts,useOutputClipboard,useOutputElementTarget,useOutputRuntimeStatus}.js',
   'src/constants/outputPreviewLimitations.js',
+  'src/utils/{outputPanelCopy,outputRoutes}.js',
+  'electron/main/windows/outputWindow.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

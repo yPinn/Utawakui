@@ -9,19 +9,16 @@ function freezePolicy(policy) {
 export const LYRICS_PRESENTATION_POLICIES = Object.freeze({
   literal: freezePolicy({
     id: 'literal',
-    label: '忠實原文',
     contentMode: 'literal',
     automaticLayout: false,
   }),
   balanced: freezePolicy({
     id: 'balanced',
-    label: '平衡分行',
     contentMode: 'preserve',
     automaticLayout: true,
   }),
   'broadcast-compact': freezePolicy({
     id: 'broadcast-compact',
-    label: '轉播精簡',
     contentMode: 'compact',
     automaticLayout: true,
   }),
@@ -52,8 +49,5 @@ export function lyricsPresentationPolicyForTemplate(templateId, value) {
 export function lyricsPresentationPolicyOptionsForTemplate(templateId) {
   const policyIds =
     lyricsTemplateCapabilities(templateId).presentationPolicyIds;
-  return policyIds.map((id) => ({
-    id,
-    label: LYRICS_PRESENTATION_POLICIES[id].label,
-  }));
+  return policyIds.map((id) => ({ id }));
 }

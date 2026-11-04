@@ -2,8 +2,13 @@ import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppearance.mjs';
+import { localizeAppearanceField } from '../../utils/outputPanelCopy.js';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
+
+// Production fields reach the workbench localized (outputTemplates.js).
+const fieldsFor = (templateId) =>
+  outputAppearanceFieldsForTemplate(templateId).map(localizeAppearanceField);
 
 async function renderRegisteredTemplate(
   templateId,
@@ -156,9 +161,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
   });
 
   it('sorts configuration groups and fields by product order, not input order', async () => {
-    const appearanceFields = [
-      ...outputAppearanceFieldsForTemplate('focus-line'),
-    ].reverse();
+    const appearanceFields = [...fieldsFor('focus-line')].reverse();
     const html = await renderToString(
       createSSRApp({
         render: () =>
@@ -206,7 +209,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               id: 'focus-line',
               name: '聚焦歌詞',
               kind: 'lyrics',
-              appearanceFields: outputAppearanceFieldsForTemplate('focus-line'),
+              appearanceFields: fieldsFor('focus-line'),
             },
             activeKind: 'lyrics',
             saveStatus: 'saved',
@@ -229,7 +232,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               id: 'focus-line',
               name: '聚焦歌詞',
               kind: 'lyrics',
-              appearanceFields: outputAppearanceFieldsForTemplate('focus-line'),
+              appearanceFields: fieldsFor('focus-line'),
             },
             activeKind: 'lyrics',
             saveStatus: 'error',
@@ -250,7 +253,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               id: 'focus-line',
               name: '聚焦歌詞',
               kind: 'lyrics',
-              appearanceFields: outputAppearanceFieldsForTemplate('focus-line'),
+              appearanceFields: fieldsFor('focus-line'),
             },
             activeKind: 'lyrics',
             outputSlot: {
@@ -283,8 +286,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               name: 'Classic KTV',
               kind: 'lyrics',
               editableAppearanceKeys: ['fontScale'],
-              appearanceFields:
-                outputAppearanceFieldsForTemplate('karaoke-stack'),
+              appearanceFields: fieldsFor('karaoke-stack'),
             },
             activeKind: 'lyrics',
             outputSlot: {
@@ -324,8 +326,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 'fontWeight',
                 'furigana',
               ],
-              appearanceFields:
-                outputAppearanceFieldsForTemplate('manga-frame'),
+              appearanceFields: fieldsFor('manga-frame'),
             },
             activeKind: 'lyrics',
             outputSlot: {
@@ -354,8 +355,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 'kineticMaterial',
                 'kineticArrangement',
               ],
-              appearanceFields:
-                outputAppearanceFieldsForTemplate('kinetic-pop'),
+              appearanceFields: fieldsFor('kinetic-pop'),
             },
             activeKind: 'lyrics',
             outputSlot: {
@@ -403,8 +403,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                   'kineticMaterial',
                   'kineticArrangement',
                 ],
-                appearanceFields:
-                  outputAppearanceFieldsForTemplate('kinetic-pop'),
+                appearanceFields: fieldsFor('kinetic-pop'),
               },
               activeKind: 'lyrics',
               outputSlot: {
@@ -438,8 +437,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 name: 'Kinetic Pop',
                 kind: 'lyrics',
                 editableAppearanceKeys: ['fontScale', 'kineticMaterial'],
-                appearanceFields:
-                  outputAppearanceFieldsForTemplate('kinetic-pop'),
+                appearanceFields: fieldsFor('kinetic-pop'),
               },
               activeKind: 'lyrics',
               outputSlot: {
@@ -469,8 +467,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               id: 'ornate-vertical',
               name: '和風直書',
               kind: 'lyrics',
-              appearanceFields:
-                outputAppearanceFieldsForTemplate('ornate-vertical'),
+              appearanceFields: fieldsFor('ornate-vertical'),
             },
             activeKind: 'lyrics',
             recentColors: ['#112233', '#aabbcc'],

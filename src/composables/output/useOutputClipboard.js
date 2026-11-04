@@ -2,8 +2,11 @@ import outputValues from '../../../shared/outputTemplateValues.json';
 import { notificationKey } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
 import { t } from '../../utils/i18n.js';
+import { outputSlotLabel } from '../../utils/outputPanelCopy.js';
 
-const labels = new Map(outputValues.slots.map(({ id, label }) => [id, label]));
+const labels = new Map(
+  outputValues.slots.map(({ id }) => [id, outputSlotLabel(id)]),
+);
 const attempts = new WeakMap();
 
 export function useOutputClipboard({

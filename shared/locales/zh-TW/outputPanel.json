@@ -531,5 +531,202 @@
   "obs": {
     "statusReadRestart": "無法讀取 OBS 連線狀態，請重新啟動後再試。",
     "statusReadReload": "無法讀取 OBS 連線狀態，請重新讀取。"
+  },
+  "appearance": {
+    "groups": {
+      "colorTreatment": "色彩處理",
+      "customColor": "自訂色彩",
+      "typography": "文字",
+      "readability": "可讀性",
+      "surface": "背景",
+      "layout": "版面",
+      "motion": "動態",
+      "content": "內容顯示"
+    },
+    "fields": {
+      "receiptDirection": {
+        "label": "出紙方向",
+        "options": {
+          "down": "向下出紙",
+          "up": "向上出紙"
+        }
+      },
+      "receiptReview": {
+        "label": "定時回顧歷史",
+        "options": {
+          "on": "開啟",
+          "off": "關閉"
+        }
+      },
+      "receiptReviewInterval": {
+        "label": "回顧間隔",
+        "unit": " 秒"
+      },
+      "paletteId": {
+        "label": "配色風格",
+        "options": {
+          "original": "模板原色",
+          "warm": "暖色舞台",
+          "cool": "冷色舞台",
+          "monochrome": "黑白",
+          "highContrast": "高對比"
+        }
+      },
+      "lookAmount": {
+        "label": "強度"
+      },
+      "fontFamily": {
+        "label": "字型",
+        "options": {
+          "sans": "無襯線",
+          "serif": "襯線",
+          "rounded": "圓體",
+          "ornate": "華麗明朝（Hina Mincho）",
+          "antique": "古典明朝（GenEi Antique）"
+        }
+      },
+      "fontScale": {
+        "label": "字級",
+        "options": {
+          "small": "小",
+          "medium": "標準",
+          "large": "大"
+        }
+      },
+      "fontWeight": {
+        "label": "字重",
+        "options": {
+          "regular": "一般",
+          "semibold": "中粗",
+          "bold": "粗體"
+        }
+      },
+      "contrastStyle": {
+        "label": "文字對比",
+        "options": {
+          "clean": "無描邊",
+          "balanced": "標準描邊",
+          "strongOutline": "強描邊"
+        }
+      },
+      "alignment": {
+        "label": "對齊",
+        "options": {
+          "left": "靠左",
+          "center": "置中",
+          "right": "靠右"
+        }
+      },
+      "surface": {
+        "label": "背景透明度",
+        "options": {
+          "transparent": "透明",
+          "soft": "半透明",
+          "solid": "實底"
+        }
+      },
+      "furigana": {
+        "label": "假名標音",
+        "options": {
+          "auto": "有資料時顯示",
+          "off": "關閉"
+        }
+      },
+      "kineticMaterial": {
+        "label": "文字材質",
+        "options": {
+          "solidOutline": "樣式 1｜單色黑框",
+          "candyRim": "樣式 2｜漸層白框",
+          "chromaticDepth": "樣式 3｜右下錯位",
+          "cycle": "三款依句序切換"
+        }
+      },
+      "kineticArrangement": {
+        "label": "文字排列",
+        "options": {
+          "straight": "端正",
+          "subtleOffset": "些微偏移"
+        }
+      },
+      "textColor": {
+        "label": "文字色"
+      },
+      "accentColor": {
+        "label": "藝術墨影"
+      },
+      "positionAnchor": {
+        "label": "顯示位置",
+        "options": {
+          "topLeft": "左上",
+          "topCenter": "中上",
+          "topRight": "右上",
+          "centerLeft": "左中",
+          "center": "正中",
+          "centerRight": "右中",
+          "bottomLeft": "左下",
+          "bottomCenter": "中下",
+          "bottomRight": "右下"
+        }
+      },
+      "positionOffsetX": {
+        "label": "水平微調"
+      },
+      "positionOffsetY": {
+        "label": "垂直微調"
+      },
+      "spacingDensity": {
+        "label": "間距",
+        "options": {
+          "compact": "緊湊",
+          "normal": "標準",
+          "relaxed": "寬鬆"
+        }
+      },
+      "contentWidth": {
+        "label": "內容寬度",
+        "options": {
+          "narrow": "窄",
+          "standard": "標準",
+          "wide": "寬"
+        }
+      }
+    },
+    "elementFields": {
+      "fontWeight": {
+        "label": "字重",
+        "options": {
+          "inherit": "跟隨模板",
+          "regular": "一般",
+          "semibold": "中粗",
+          "bold": "粗體"
+        }
+      },
+      "fontSizeScale": {
+        "label": "字級"
+      },
+      "visible": {
+        "label": "顯示",
+        "options": {
+          "shown": "顯示",
+          "hidden": "隱藏"
+        }
+      }
+    },
+    "elements": {
+      "title": "曲名",
+      "artist": "藝人",
+      "progress": "進度",
+      "transport": "播放控制"
+    }
+  },
+  "policies": {
+    "literal": "忠實原文",
+    "balanced": "平衡分行",
+    "broadcastCompact": "轉播精簡"
+  },
+  "slots": {
+    "lyrics": "歌詞",
+    "setlist": "歌單",
+    "nowPlaying": "播放中"
   }
 }

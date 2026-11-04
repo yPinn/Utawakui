@@ -24,14 +24,14 @@ describe('output appearance schema', () => {
 
   it('defines the inspector hierarchy once in common-to-specific order', () => {
     expect(OUTPUT_APPEARANCE_GROUPS).toEqual([
-      { id: 'color-treatment', label: '色彩處理', order: 10 },
-      { id: 'custom-color', label: '自訂色彩', order: 20 },
-      { id: 'typography', label: '文字', order: 30 },
-      { id: 'readability', label: '可讀性', order: 40 },
-      { id: 'surface', label: '背景', order: 50 },
-      { id: 'layout', label: '版面', order: 60 },
-      { id: 'motion', label: '動態', order: 70 },
-      { id: 'content', label: '內容顯示', order: 80 },
+      { id: 'color-treatment', order: 10 },
+      { id: 'custom-color', order: 20 },
+      { id: 'typography', order: 30 },
+      { id: 'readability', order: 40 },
+      { id: 'surface', order: 50 },
+      { id: 'layout', order: 60 },
+      { id: 'motion', order: 70 },
+      { id: 'content', order: 80 },
     ]);
   });
 
@@ -91,10 +91,7 @@ describe('output appearance schema', () => {
     expect(fields.find((field) => field.key === 'fontFamily')).toMatchObject({
       control: 'select',
       defaultValue: 'ornate',
-      options: [
-        { id: 'ornate', label: '華麗明朝（Hina Mincho）' },
-        { id: 'antique', label: '古典明朝（GenEi Antique）' },
-      ],
+      options: [{ id: 'ornate' }, { id: 'antique' }],
     });
     expect(fields.find((field) => field.key === 'fontScale')).toMatchObject({
       control: 'select',
@@ -280,11 +277,7 @@ describe('output appearance schema', () => {
     expect(liveStageFont).toMatchObject({
       editor: 'font-family',
       allowLocalFonts: true,
-      options: [
-        { id: 'sans', label: '無襯線' },
-        { id: 'serif', label: '襯線' },
-        { id: 'rounded', label: '圓體' },
-      ],
+      options: [{ id: 'sans' }, { id: 'serif' }, { id: 'rounded' }],
     });
     expect(focusLineFont).not.toHaveProperty('allowLocalFonts', true);
     expect(focusLineFont.editor).not.toBe('font-family');
@@ -406,15 +399,13 @@ describe('output appearance schema', () => {
       control: 'select',
       editor: 'look',
       group: 'color-treatment',
-      groupLabel: '色彩處理',
-      label: '配色風格',
       defaultValue: 'original',
       options: [
-        { id: 'original', label: '模板原色' },
-        { id: 'warm', label: '暖色舞台' },
-        { id: 'cool', label: '冷色舞台' },
-        { id: 'monochrome', label: '黑白' },
-        { id: 'high-contrast', label: '高對比' },
+        { id: 'original' },
+        { id: 'warm' },
+        { id: 'cool' },
+        { id: 'monochrome' },
+        { id: 'high-contrast' },
       ],
     });
   });

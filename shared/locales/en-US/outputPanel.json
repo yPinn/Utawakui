@@ -531,5 +531,202 @@
   "obs": {
     "statusReadRestart": "The OBS connection status can't be read. Restart and try again.",
     "statusReadReload": "The OBS connection status can't be read. Reload."
+  },
+  "appearance": {
+    "groups": {
+      "colorTreatment": "Color treatment",
+      "customColor": "Custom colors",
+      "typography": "Text",
+      "readability": "Readability",
+      "surface": "Background",
+      "layout": "Layout",
+      "motion": "Motion",
+      "content": "Content"
+    },
+    "fields": {
+      "receiptDirection": {
+        "label": "Feed direction",
+        "options": {
+          "down": "Feed down",
+          "up": "Feed up"
+        }
+      },
+      "receiptReview": {
+        "label": "Timed history review",
+        "options": {
+          "on": "On",
+          "off": "Off"
+        }
+      },
+      "receiptReviewInterval": {
+        "label": "Review interval",
+        "unit": " s"
+      },
+      "paletteId": {
+        "label": "Color style",
+        "options": {
+          "original": "Template colors",
+          "warm": "Warm stage",
+          "cool": "Cool stage",
+          "monochrome": "Black and white",
+          "highContrast": "High contrast"
+        }
+      },
+      "lookAmount": {
+        "label": "Intensity"
+      },
+      "fontFamily": {
+        "label": "Font",
+        "options": {
+          "sans": "Sans serif",
+          "serif": "Serif",
+          "rounded": "Rounded",
+          "ornate": "Ornate Mincho (Hina Mincho)",
+          "antique": "Antique Mincho (GenEi Antique)"
+        }
+      },
+      "fontScale": {
+        "label": "Font size",
+        "options": {
+          "small": "Small",
+          "medium": "Standard",
+          "large": "Large"
+        }
+      },
+      "fontWeight": {
+        "label": "Font weight",
+        "options": {
+          "regular": "Regular",
+          "semibold": "Semibold",
+          "bold": "Bold"
+        }
+      },
+      "contrastStyle": {
+        "label": "Text contrast",
+        "options": {
+          "clean": "No outline",
+          "balanced": "Standard outline",
+          "strongOutline": "Strong outline"
+        }
+      },
+      "alignment": {
+        "label": "Alignment",
+        "options": {
+          "left": "Left",
+          "center": "Center",
+          "right": "Right"
+        }
+      },
+      "surface": {
+        "label": "Background opacity",
+        "options": {
+          "transparent": "Transparent",
+          "soft": "Translucent",
+          "solid": "Solid"
+        }
+      },
+      "furigana": {
+        "label": "Furigana",
+        "options": {
+          "auto": "Show when available",
+          "off": "Off"
+        }
+      },
+      "kineticMaterial": {
+        "label": "Text texture",
+        "options": {
+          "solidOutline": "Style 1 | Solid with black outline",
+          "candyRim": "Style 2 | Gradient with white outline",
+          "chromaticDepth": "Style 3 | Offset lower right",
+          "cycle": "Rotate the three by line"
+        }
+      },
+      "kineticArrangement": {
+        "label": "Text arrangement",
+        "options": {
+          "straight": "Straight",
+          "subtleOffset": "Slight offset"
+        }
+      },
+      "textColor": {
+        "label": "Text color"
+      },
+      "accentColor": {
+        "label": "Ink shadow"
+      },
+      "positionAnchor": {
+        "label": "Position",
+        "options": {
+          "topLeft": "Top left",
+          "topCenter": "Top center",
+          "topRight": "Top right",
+          "centerLeft": "Center left",
+          "center": "Center",
+          "centerRight": "Center right",
+          "bottomLeft": "Bottom left",
+          "bottomCenter": "Bottom center",
+          "bottomRight": "Bottom right"
+        }
+      },
+      "positionOffsetX": {
+        "label": "Horizontal offset"
+      },
+      "positionOffsetY": {
+        "label": "Vertical offset"
+      },
+      "spacingDensity": {
+        "label": "Spacing",
+        "options": {
+          "compact": "Compact",
+          "normal": "Standard",
+          "relaxed": "Relaxed"
+        }
+      },
+      "contentWidth": {
+        "label": "Content width",
+        "options": {
+          "narrow": "Narrow",
+          "standard": "Standard",
+          "wide": "Wide"
+        }
+      }
+    },
+    "elementFields": {
+      "fontWeight": {
+        "label": "Font weight",
+        "options": {
+          "inherit": "Follow template",
+          "regular": "Regular",
+          "semibold": "Semibold",
+          "bold": "Bold"
+        }
+      },
+      "fontSizeScale": {
+        "label": "Font size"
+      },
+      "visible": {
+        "label": "Show",
+        "options": {
+          "shown": "Shown",
+          "hidden": "Hidden"
+        }
+      }
+    },
+    "elements": {
+      "title": "Title",
+      "artist": "Artist",
+      "progress": "Progress",
+      "transport": "Playback controls"
+    }
+  },
+  "policies": {
+    "literal": "Faithful to original",
+    "balanced": "Balanced lines",
+    "broadcastCompact": "Broadcast concise"
+  },
+  "slots": {
+    "lyrics": "Lyrics",
+    "setlist": "Setlist",
+    "nowPlaying": "Now playing"
   }
 }

@@ -189,34 +189,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -226,7 +219,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -234,7 +226,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -244,25 +235,20 @@
         {
           "key": "fontFamily",
           "order": 10,
-          "label": "字型",
           "control": "select",
           "defaultValue": "sans",
           "options": [
             {
-              "id": "sans",
-              "label": "無襯線"
+              "id": "sans"
             },
             {
-              "id": "serif",
-              "label": "襯線"
+              "id": "serif"
             },
             {
-              "id": "rounded",
-              "label": "圓體"
+              "id": "rounded"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -272,26 +258,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -301,25 +282,20 @@
         {
           "key": "fontWeight",
           "order": 30,
-          "label": "字重",
           "control": "select",
           "defaultValue": "semibold",
           "options": [
             {
-              "id": "regular",
-              "label": "一般"
+              "id": "regular"
             },
             {
-              "id": "semibold",
-              "label": "中粗"
+              "id": "semibold"
             },
             {
-              "id": "bold",
-              "label": "粗體"
+              "id": "bold"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -329,25 +305,20 @@
         {
           "key": "surface",
           "order": 10,
-          "label": "背景透明度",
           "control": "select",
           "defaultValue": "solid",
           "options": [
             {
-              "id": "transparent",
-              "label": "透明"
+              "id": "transparent"
             },
             {
-              "id": "soft",
-              "label": "半透明"
+              "id": "soft"
             },
             {
-              "id": "solid",
-              "label": "實底"
+              "id": "solid"
             }
           ],
           "group": "surface",
-          "groupLabel": "背景",
           "groupOrder": 50,
           "family": "fill",
           "tier": "basic",
@@ -357,25 +328,20 @@
         {
           "key": "spacingDensity",
           "order": 60,
-          "label": "間距",
           "control": "select",
           "defaultValue": "normal",
           "options": [
             {
-              "id": "compact",
-              "label": "緊湊"
+              "id": "compact"
             },
             {
-              "id": "normal",
-              "label": "標準"
+              "id": "normal"
             },
             {
-              "id": "relaxed",
-              "label": "寬鬆"
+              "id": "relaxed"
             }
           ],
           "group": "layout",
-          "groupLabel": "版面",
           "groupOrder": 60,
           "family": "layout",
           "tier": "basic",
@@ -419,34 +385,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -456,7 +415,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -464,7 +422,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -474,26 +431,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -551,34 +503,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -588,7 +533,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -596,7 +540,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -606,26 +549,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -635,29 +573,23 @@
         {
           "key": "kineticMaterial",
           "order": 20,
-          "label": "文字材質",
           "control": "select",
           "defaultValue": "candy-rim",
           "options": [
             {
-              "id": "solid-outline",
-              "label": "樣式 1｜單色黑框"
+              "id": "solid-outline"
             },
             {
-              "id": "candy-rim",
-              "label": "樣式 2｜漸層白框"
+              "id": "candy-rim"
             },
             {
-              "id": "chromatic-depth",
-              "label": "樣式 3｜右下錯位"
+              "id": "chromatic-depth"
             },
             {
-              "id": "cycle",
-              "label": "三款依句序切換"
+              "id": "cycle"
             }
           ],
           "group": "readability",
-          "groupLabel": "可讀性",
           "groupOrder": 40,
           "family": "legibility",
           "tier": "basic",
@@ -667,21 +599,17 @@
         {
           "key": "kineticArrangement",
           "order": 20,
-          "label": "文字排列",
           "control": "select",
           "defaultValue": "straight",
           "options": [
             {
-              "id": "straight",
-              "label": "端正"
+              "id": "straight"
             },
             {
-              "id": "subtle-offset",
-              "label": "些微偏移"
+              "id": "subtle-offset"
             }
           ],
           "group": "layout",
-          "groupLabel": "版面",
           "groupOrder": 60,
           "family": "layout",
           "tier": "basic",
@@ -738,34 +666,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -775,7 +696,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -783,7 +703,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -793,11 +712,9 @@
         {
           "key": "textColor",
           "order": 10,
-          "label": "文字色",
           "control": "color",
           "defaultValue": "#fff8ec",
           "group": "custom-color",
-          "groupLabel": "自訂色彩",
           "groupOrder": 20,
           "family": "swatch",
           "tier": "advanced",
@@ -807,11 +724,9 @@
         {
           "key": "accentColor",
           "order": 20,
-          "label": "藝術墨影",
           "control": "color",
           "defaultValue": "#ffffff",
           "group": "custom-color",
-          "groupLabel": "自訂色彩",
           "groupOrder": 20,
           "family": "swatch",
           "tier": "advanced",
@@ -821,21 +736,17 @@
         {
           "key": "fontFamily",
           "order": 10,
-          "label": "字型",
           "control": "select",
           "defaultValue": "ornate",
           "options": [
             {
-              "id": "ornate",
-              "label": "華麗明朝（Hina Mincho）"
+              "id": "ornate"
             },
             {
-              "id": "antique",
-              "label": "古典明朝（GenEi Antique）"
+              "id": "antique"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -845,26 +756,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -874,26 +780,21 @@
         {
           "key": "positionAnchor",
           "order": 30,
-          "label": "顯示位置",
           "control": "select",
           "editor": "position-grid",
           "defaultValue": "center-right",
           "options": [
             {
-              "id": "top-right",
-              "label": "右上"
+              "id": "top-right"
             },
             {
-              "id": "center-right",
-              "label": "右中"
+              "id": "center-right"
             },
             {
-              "id": "bottom-right",
-              "label": "右下"
+              "id": "bottom-right"
             }
           ],
           "group": "layout",
-          "groupLabel": "版面",
           "groupOrder": 60,
           "family": "layout",
           "tier": "basic",
@@ -903,7 +804,6 @@
         {
           "key": "positionOffsetX",
           "order": 40,
-          "label": "水平微調",
           "control": "range",
           "signed": true,
           "defaultValue": 0,
@@ -912,7 +812,6 @@
           "step": 1,
           "unit": "%",
           "group": "layout",
-          "groupLabel": "版面",
           "groupOrder": 60,
           "family": "layout",
           "tier": "advanced",
@@ -922,7 +821,6 @@
         {
           "key": "positionOffsetY",
           "order": 50,
-          "label": "垂直微調",
           "control": "range",
           "signed": true,
           "defaultValue": 0,
@@ -931,7 +829,6 @@
           "step": 1,
           "unit": "%",
           "group": "layout",
-          "groupLabel": "版面",
           "groupOrder": 60,
           "family": "layout",
           "tier": "advanced",
@@ -989,34 +886,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1026,7 +916,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -1034,7 +923,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1044,25 +932,20 @@
         {
           "key": "fontFamily",
           "order": 10,
-          "label": "字型",
           "control": "select",
           "defaultValue": "sans",
           "options": [
             {
-              "id": "sans",
-              "label": "無襯線"
+              "id": "sans"
             },
             {
-              "id": "serif",
-              "label": "襯線"
+              "id": "serif"
             },
             {
-              "id": "rounded",
-              "label": "圓體"
+              "id": "rounded"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "editor": "font-family",
           "allowLocalFonts": true,
@@ -1074,26 +957,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -1103,25 +981,20 @@
         {
           "key": "contrastStyle",
           "order": 10,
-          "label": "文字對比",
           "control": "select",
           "defaultValue": "balanced",
           "options": [
             {
-              "id": "clean",
-              "label": "無描邊"
+              "id": "clean"
             },
             {
-              "id": "balanced",
-              "label": "標準描邊"
+              "id": "balanced"
             },
             {
-              "id": "strong-outline",
-              "label": "強描邊"
+              "id": "strong-outline"
             }
           ],
           "group": "readability",
-          "groupLabel": "可讀性",
           "groupOrder": 40,
           "family": "legibility",
           "tier": "basic",
@@ -1182,34 +1055,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1219,7 +1085,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -1227,7 +1092,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1237,29 +1101,23 @@
         {
           "key": "fontFamily",
           "order": 10,
-          "label": "字型",
           "control": "select",
           "defaultValue": "antique",
           "options": [
             {
-              "id": "sans",
-              "label": "無襯線"
+              "id": "sans"
             },
             {
-              "id": "serif",
-              "label": "襯線"
+              "id": "serif"
             },
             {
-              "id": "rounded",
-              "label": "圓體"
+              "id": "rounded"
             },
             {
-              "id": "antique",
-              "label": "古典明朝（GenEi Antique）"
+              "id": "antique"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -1269,26 +1127,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -1298,25 +1151,20 @@
         {
           "key": "fontWeight",
           "order": 30,
-          "label": "字重",
           "control": "select",
           "defaultValue": "bold",
           "options": [
             {
-              "id": "regular",
-              "label": "一般"
+              "id": "regular"
             },
             {
-              "id": "semibold",
-              "label": "中粗"
+              "id": "semibold"
             },
             {
-              "id": "bold",
-              "label": "粗體"
+              "id": "bold"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -1326,21 +1174,17 @@
         {
           "key": "furigana",
           "order": 10,
-          "label": "假名標音",
           "control": "select",
           "defaultValue": "auto",
           "options": [
             {
-              "id": "auto",
-              "label": "有資料時顯示"
+              "id": "auto"
             },
             {
-              "id": "off",
-              "label": "關閉"
+              "id": "off"
             }
           ],
           "group": "content",
-          "groupLabel": "內容顯示",
           "groupOrder": 80,
           "family": "document",
           "tier": "basic",
@@ -1397,34 +1241,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1434,7 +1271,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -1442,7 +1278,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1452,25 +1287,20 @@
         {
           "key": "fontFamily",
           "order": 10,
-          "label": "字型",
           "control": "select",
           "defaultValue": "sans",
           "options": [
             {
-              "id": "sans",
-              "label": "無襯線"
+              "id": "sans"
             },
             {
-              "id": "serif",
-              "label": "襯線"
+              "id": "serif"
             },
             {
-              "id": "rounded",
-              "label": "圓體"
+              "id": "rounded"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -1480,26 +1310,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -1509,25 +1334,20 @@
         {
           "key": "fontWeight",
           "order": 30,
-          "label": "字重",
           "control": "select",
           "defaultValue": "bold",
           "options": [
             {
-              "id": "regular",
-              "label": "一般"
+              "id": "regular"
             },
             {
-              "id": "semibold",
-              "label": "中粗"
+              "id": "semibold"
             },
             {
-              "id": "bold",
-              "label": "粗體"
+              "id": "bold"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -1572,34 +1392,27 @@
         {
           "key": "paletteId",
           "order": 10,
-          "label": "配色風格",
           "control": "select",
           "editor": "look",
           "defaultValue": "original",
           "options": [
             {
-              "id": "original",
-              "label": "模板原色"
+              "id": "original"
             },
             {
-              "id": "warm",
-              "label": "暖色舞台"
+              "id": "warm"
             },
             {
-              "id": "cool",
-              "label": "冷色舞台"
+              "id": "cool"
             },
             {
-              "id": "monochrome",
-              "label": "黑白"
+              "id": "monochrome"
             },
             {
-              "id": "high-contrast",
-              "label": "高對比"
+              "id": "high-contrast"
             }
           ],
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1609,7 +1422,6 @@
         {
           "key": "lookAmount",
           "order": 20,
-          "label": "強度",
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -1617,7 +1429,6 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupLabel": "色彩處理",
           "groupOrder": 10,
           "family": "document",
           "tier": "basic",
@@ -1627,26 +1438,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -1656,25 +1462,20 @@
         {
           "key": "fontWeight",
           "order": 30,
-          "label": "字重",
           "control": "select",
           "defaultValue": "bold",
           "options": [
             {
-              "id": "regular",
-              "label": "一般"
+              "id": "regular"
             },
             {
-              "id": "semibold",
-              "label": "中粗"
+              "id": "semibold"
             },
             {
-              "id": "bold",
-              "label": "粗體"
+              "id": "bold"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "character",
           "tier": "basic",
@@ -1684,25 +1485,20 @@
         {
           "key": "surface",
           "order": 10,
-          "label": "背景透明度",
           "control": "select",
           "defaultValue": "solid",
           "options": [
             {
-              "id": "transparent",
-              "label": "透明"
+              "id": "transparent"
             },
             {
-              "id": "soft",
-              "label": "半透明"
+              "id": "soft"
             },
             {
-              "id": "solid",
-              "label": "實底"
+              "id": "solid"
             }
           ],
           "group": "surface",
-          "groupLabel": "背景",
           "groupOrder": 50,
           "family": "fill",
           "tier": "basic",
@@ -1746,26 +1542,21 @@
         {
           "key": "fontScale",
           "order": 20,
-          "label": "字級",
           "control": "select",
           "editor": "font-scale",
           "defaultValue": "medium",
           "options": [
             {
-              "id": "small",
-              "label": "小"
+              "id": "small"
             },
             {
-              "id": "medium",
-              "label": "標準"
+              "id": "medium"
             },
             {
-              "id": "large",
-              "label": "大"
+              "id": "large"
             }
           ],
           "group": "typography",
-          "groupLabel": "文字",
           "groupOrder": 30,
           "family": "document",
           "tier": "basic",
@@ -1775,21 +1566,17 @@
         {
           "key": "receiptDirection",
           "order": 80,
-          "label": "出紙方向",
           "control": "select",
           "defaultValue": "down",
           "options": [
             {
-              "id": "down",
-              "label": "向下出紙"
+              "id": "down"
             },
             {
-              "id": "up",
-              "label": "向上出紙"
+              "id": "up"
             }
           ],
           "group": "layout",
-          "groupLabel": "版面",
           "groupOrder": 60,
           "family": "layout",
           "tier": "basic",
@@ -1799,21 +1586,17 @@
         {
           "key": "receiptReview",
           "order": 10,
-          "label": "定時回顧歷史",
           "control": "select",
           "defaultValue": "on",
           "options": [
             {
-              "id": "on",
-              "label": "開啟"
+              "id": "on"
             },
             {
-              "id": "off",
-              "label": "關閉"
+              "id": "off"
             }
           ],
           "group": "motion",
-          "groupLabel": "動態",
           "groupOrder": 70,
           "family": "motion",
           "tier": "basic",
@@ -1823,15 +1606,12 @@
         {
           "key": "receiptReviewInterval",
           "order": 20,
-          "label": "回顧間隔",
           "control": "range",
           "defaultValue": 15,
           "min": 5,
           "max": 60,
           "step": 5,
-          "unit": " 秒",
           "group": "motion",
-          "groupLabel": "動態",
           "groupOrder": 70,
           "family": "motion",
           "tier": "basic",

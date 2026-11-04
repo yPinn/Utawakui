@@ -3,21 +3,18 @@
   "slots": [
     {
       "id": "lyrics",
-      "label": "歌詞",
       "path": "/overlay/lyrics",
       "defaultTemplateId": "karaoke-stack",
       "defaultStyleSetIds": ["runtime-source", "lyrics-type"]
     },
     {
       "id": "setlist",
-      "label": "歌單",
       "path": "/overlay/setlist",
       "defaultTemplateId": "receipt-setlist",
       "defaultStyleSetIds": ["runtime-source", "setlist-layout"]
     },
     {
       "id": "now-playing",
-      "label": "播放中",
       "path": "/overlay/now-playing",
       "defaultTemplateId": "art-card",
       "defaultStyleSetIds": ["runtime-source"]
