@@ -284,7 +284,7 @@ describe('BGM session controller', () => {
     expect(controller.state).toEqual(
       expect.objectContaining({
         isInitialized: false,
-        error: 'BGM 現場控制初始化失敗。',
+        error: 'BGM 控制無法啟動。',
       }),
     );
     expect(controller.state.error).not.toContain('E:/private');

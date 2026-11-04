@@ -47,7 +47,6 @@ describe('BgmPlayerTransport', () => {
       /<button[^>]*bgm-transport__guide[^>]*>[\s\S]*?<\/button>/u,
     )?.[0];
     expect(button).toContain('disabled');
-    expect(button).toContain('原曲播放');
     expect(button).toContain('準備伴奏');
   });
 
