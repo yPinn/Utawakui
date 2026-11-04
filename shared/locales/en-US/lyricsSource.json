@@ -2,9 +2,9 @@
   "loadRestart": "Restart the app, then load the lyrics again.",
   "loadFailed": "Couldn't load the lyrics. Try again.",
   "offsetFailed": "The sync offset wasn't saved. Try again.",
-  "noFingerprint": "This lyrics source has no version information to check.",
+  "noFingerprint": "Couldn't confirm this lyrics version. Reload and try again.",
   "timingRestart": "Restart the app, then save the lyrics timing again.",
-  "draftStale": "The source of this timing draft changed. Reload it and try again.",
+  "draftStale": "The lyrics source changed. Reload and try again.",
   "timingFailed": "The lyrics timing wasn't saved. Try again.",
   "errorTitle": "Lyrics action didn't finish",
   "preferenceFailed": "The lyrics source choice wasn't saved.",
@@ -12,14 +12,14 @@
   "tier": {
     "t0": "T0 Text",
     "t1": "T1 Line",
-    "t1Plus": "T1+ Estimated",
+    "t1Plus": "T1+ Estimated line",
     "t2": "T2 Word",
     "unknown": "To be checked"
   },
   "tierHelp": {
     "t0": "No sync timing, so it can't follow playback.",
     "t1": "Lyrics follow playback line by line.",
-    "t1Plus": "Estimated within lines from the line timing and not reviewed yet. Parts it doesn't cover use the line timing.",
+    "t1Plus": "Times within lines are estimated and not checked yet.",
     "t2": "Includes part timing. Some lines may still show as whole lines.",
     "unknown": "Sync type not checked yet."
   },
@@ -41,11 +41,11 @@
   },
   "warnings": {
     "partialWordTiming": "Some lyrics have no word timing",
-    "overlappingLines": "Line times overlap. The source is kept but not applied directly",
-    "overlappingWords": "Word times overlap. The source is kept but not applied directly",
+    "overlappingLines": "Line times overlap. They'll be saved but not used directly",
+    "overlappingWords": "Word times overlap. They'll be saved but not used directly",
     "unsupportedLyricsfileVersion": "This word-timing format version isn't supported yet",
     "invalidLyricsfile": "The word sync data can't be used",
-    "normalizedBoundaryJitter": "The source had 1 ms boundary gaps; nearby word times were aligned",
+    "normalizedBoundaryJitter": "Small word timing gaps were corrected automatically",
     "versionMismatch": "May be a different version",
     "instrumentalRecord": "This entry is marked instrumental",
     "versionFallback": "This word-timing format version isn't supported yet; you can still save {fallback}",
@@ -53,8 +53,8 @@
     "invalidYrc": "The NetEase word sync data can't be used; you can still save {fallback}"
   },
   "timeline": {
-    "later": "About {seconds} s later than {reference} (compared {count} lines). Expand other sources to compare previews; this doesn't mean either is more accurate.",
-    "earlier": "About {seconds} s earlier than {reference} (compared {count} lines). Expand other sources to compare previews; this doesn't mean either is more accurate.",
+    "later": "About {seconds} s later than {reference}. Expand other sources to compare; this doesn't mean either is more accurate.",
+    "earlier": "About {seconds} s earlier than {reference}. Expand other sources to compare; this doesn't mean either is more accurate.",
     "reference": "the reference source in this group"
   },
   "issue": {

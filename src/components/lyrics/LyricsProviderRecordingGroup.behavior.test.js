@@ -138,8 +138,8 @@ describe('timeline information within the existing candidate flow', () => {
     expect(onSave).not.toHaveBeenCalled();
     props.expandedKey = 'netease:1';
     await nextTick();
-    expect(textContent(root)).toContain('比 LRCLIB 的來源時間晚約 2 秒');
-    expect(textContent(root)).toContain('比對 8 行');
+    expect(textContent(root)).toContain('比 LRCLIB 晚約 2 秒');
+    expect(textContent(root)).not.toContain('比對');
     expect(textContent(root)).toContain('不代表哪份較準');
     expect(onSave).not.toHaveBeenCalled();
     const save = findAll(

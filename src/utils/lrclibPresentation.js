@@ -120,7 +120,6 @@ export function candidateTimelineDifference(
       reference:
         labels[reference.providerId] || t('lyricsSource.timeline.reference'),
       seconds,
-      count: matchedLineCount,
     },
   );
 }

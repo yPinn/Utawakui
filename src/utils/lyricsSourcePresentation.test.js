@@ -25,9 +25,9 @@ describe('renderer source labels', () => {
 
 describe('formatLyricsSourceTier', () => {
   it.each([
-    ['T0', 'T0 文字'],
+    ['T0', 'T0 純文字'],
     ['T1', 'T1 逐行'],
-    ['T1+', 'T1+ 估計'],
+    ['T1+', 'T1+ 逐行估計'],
     ['T2', 'T2 逐字'],
     [undefined, '待確認'],
     ['unsupported', '待確認'],

@@ -2124,7 +2124,7 @@ describe('useLyrics', () => {
 
     await expect(lyrics.saveTimingDocument({ lines: [] })).resolves.toBe(null);
     expect(lyrics.state.timingSave.error).toBe(
-      '目前歌詞來源缺少可驗證的版本資訊。',
+      '無法確認這份歌詞的版本，請重新讀取後再試。',
     );
 
     await expect(lyrics.retryOffsetSave()).resolves.toBe(null);

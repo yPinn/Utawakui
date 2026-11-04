@@ -182,7 +182,7 @@ describe('local lyrics collection modal navigation', () => {
     await nextTick();
     await nextTick();
     await nextTick();
-    expect(textContent(root)).toContain('T1+ 估計');
+    expect(textContent(root)).toContain('T1+ 逐行估計');
     expect(textContent(root)).toContain('T2 逐字');
     const rows = findAll(root, (node) => node.type === 'li');
     expect(textContent(rows[0])).toContain('T2 逐字');
