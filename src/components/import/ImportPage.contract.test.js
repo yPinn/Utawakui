@@ -45,7 +45,7 @@ describe('Import preparation composition contract', () => {
     expect(dock).not.toContain('subtitle="本機與外部來源"');
     expect(dock).toContain('const showLocalStatus = computed(');
     expect(dock).toContain('localImportState.conversionReview');
-    expect(dock).toContain('title="需要相容轉檔"');
+    expect(dock).toContain('title="需要轉換格式"');
     expect(dock).toContain('action-label="轉成 FLAC 並匯入"');
     expect(dock).toContain('@action="convertPendingFiles"');
     expect(dock).toContain(':action-disabled="localImportState.isConverting"');

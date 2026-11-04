@@ -69,7 +69,7 @@ describe('useLocalImport', () => {
     const notices = useAppNotifications().items;
     expect(notices.value).toHaveLength(1);
     expect(notices.value[0]).toMatchObject({
-      title: '需要相容轉檔',
+      title: '需要轉換格式',
       tone: 'warning',
     });
     const id = notices.value[0].id;
@@ -107,7 +107,7 @@ describe('useLocalImport', () => {
     });
     await owner.importFiles();
     expect(useAppNotifications().items.value[0]).toMatchObject({
-      title: '需要相容轉檔',
+      title: '需要轉換格式',
     });
   });
 
@@ -194,7 +194,7 @@ describe('useLocalImport', () => {
     const { useAppNotifications } = await import('./useAppNotifications.js');
     expect(useAppNotifications().items.value).toHaveLength(1);
     expect(useAppNotifications().items.value[0]).toMatchObject({
-      title: '相容轉檔完成',
+      title: '格式轉換完成',
       message: '已轉換並匯入 1 首',
       tone: 'success',
     });
@@ -271,7 +271,7 @@ describe('useLocalImport', () => {
       '2 個 WMA、ALAC 檔案需要轉成 FLAC；原檔不會修改，轉換副本可能使用較多空間。',
     );
     expect(localImport.state.message).toBe(
-      '已複製 1 首；另有 2 個檔案需要相容轉檔',
+      '已複製 1 首；另有 2 個檔案需要轉換格式',
     );
   });
 
@@ -329,7 +329,7 @@ describe('useLocalImport', () => {
     expect(localImport.state.conversionReview).not.toBeNull();
     expect(localImport.state.statusType).toBe('pending');
     expect(localImport.state.message).toBe(
-      '請先在設定準備 FFmpeg，再回來執行相容轉檔。',
+      '請先在設定準備 FFmpeg，再回來轉換格式。',
     );
   });
 
@@ -359,7 +359,7 @@ describe('useLocalImport', () => {
     ],
     [
       'unsupported-media',
-      '沒有可匯入的音訊檔；1 個檔案包含影片或其他不支援的媒體串流。',
+      '沒有可匯入的音訊檔；1 個檔案包含影片或其他不支援的內容。',
     ],
   ])(
     'explains the bounded %s compatibility failure',
@@ -435,7 +435,7 @@ describe('useLocalImport', () => {
 
     expect(localImport.state.statusType).toBe('error');
     expect(localImport.state.message).toBe(
-      '需要重新啟動應用程式才能使用相容轉檔。',
+      '需要重新啟動應用程式才能使用格式轉換。',
     );
   });
 });

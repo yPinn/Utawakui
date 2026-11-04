@@ -160,7 +160,7 @@
     "message": "This image can't be previewed. Choose another image."
   },
   "LIBRARY_CONVERT_AUDIO_FAILED": {
-    "title": "Audio conversion not completed",
+    "title": "Format conversion not completed",
     "message": "Choose the files again and retry."
   },
   "LIBRARY_DELETE_TRACK_FAILED": {

@@ -235,7 +235,7 @@ watch(
       <UiNotice
         v-if="localImportState.conversionReview"
         tone="warning"
-        title="需要相容轉檔"
+        title="需要轉換格式"
         :message="conversionReviewMessage"
         action-label="轉成 FLAC 並匯入"
         :action-disabled="localImportState.isConverting"

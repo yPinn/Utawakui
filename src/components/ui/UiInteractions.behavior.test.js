@@ -115,7 +115,7 @@ describe('shared UI interaction contracts', () => {
   it('can disable an in-progress notice action', () => {
     const { app, root } = mount(UiNotice, {
       tone: 'warning',
-      title: '需要相容轉檔',
+      title: '需要轉換格式',
       message: '正在建立 FLAC 副本。',
       actionLabel: '轉檔中…',
       actionDisabled: true,

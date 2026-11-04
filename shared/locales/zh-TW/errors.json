@@ -160,7 +160,7 @@
     "message": "這張圖片無法預覽，請選擇其他圖片。"
   },
   "LIBRARY_CONVERT_AUDIO_FAILED": {
-    "title": "音訊轉檔未完成",
+    "title": "格式轉換未完成",
     "message": "請重新選擇檔案後再試一次。"
   },
   "LIBRARY_DELETE_TRACK_FAILED": {
