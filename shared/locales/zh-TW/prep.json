@@ -17,7 +17,7 @@
     "readFailed": "目前無法讀取分析功能狀態，請重新讀取。"
   },
   "dock": {
-    "storageHint": "最多新增{size}",
+    "storageHint": "最多佔用{size}",
     "missingTrack": "找不到歌曲",
     "maybeRemoved": "可能已從曲庫移除",
     "title": "伴奏處理",
@@ -56,7 +56,7 @@
     "actions": "伴奏處理操作"
   },
   "list": {
-    "unprepared": "尚未產生 · {count} 首",
+    "unprepared": "尚無伴奏 · {count} 首",
     "noneToAdd": "沒有可加入處理的曲目。",
     "enqueueNamed": "加入伴奏處理佇列：{title}",
     "prepared": "已有伴奏 · {count} 首",

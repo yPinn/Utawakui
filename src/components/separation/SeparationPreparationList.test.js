@@ -22,7 +22,7 @@ describe('SeparationPreparationList', () => {
           h(SeparationPreparationList, { unpreparedTracks: tracks }),
       }),
     );
-    expect(html).toContain('尚未產生 · 8 首');
+    expect(html).toContain('尚無伴奏 · 8 首');
     expect(html).toContain('已有伴奏 · 0 首');
     expect(html).toContain('沒有可重新產生的伴奏。');
     expect(html.match(/class="ui-track /gu)).toHaveLength(8);

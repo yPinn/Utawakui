@@ -56,7 +56,7 @@
     "actions": "Accompaniment actions"
   },
   "list": {
-    "unprepared": "Not generated · {count}",
+    "unprepared": "No accompaniment · {count}",
     "noneToAdd": "No tracks to add.",
     "enqueueNamed": "Add to accompaniment queue: {title}",
     "prepared": "Has accompaniment · {count}",

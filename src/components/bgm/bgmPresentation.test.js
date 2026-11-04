@@ -55,7 +55,7 @@ describe('BGM presentation projection', () => {
         restorePending: true,
       }),
     ).toMatchObject({
-      label: '演唱中 · 曲後回復',
+      label: '演唱中 · 曲後恢復',
       accessibleLabel: '演唱曲目播放中，曲後恢復 BGM',
     });
   });

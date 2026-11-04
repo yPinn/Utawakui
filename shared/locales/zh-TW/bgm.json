@@ -14,7 +14,7 @@
   "paused": "BGM 暫停",
   "pausedLabel": "BGM 已暫停",
   "failedNamed": "BGM 操作失敗：{error}",
-  "restoreAfter": "{status} · 曲後回復",
+  "restoreAfter": "{status} · 曲後恢復",
   "restoreAfterLabel": "{status}，曲後恢復 BGM",
   "picker": "更換場間音樂",
   "search": "搜尋場間音樂",

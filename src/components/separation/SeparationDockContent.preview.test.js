@@ -190,14 +190,14 @@ describe('accompaniment source preview', () => {
     expect(dialog.props['data-selectable']).toBe(false);
     expect(textContent(dialog)).toContain('我的歌單');
     expect(textContent(dialog)).toContain('20 首曲目');
-    expect(textContent(dialog)).toContain('最多新增約 61 MB');
-    expect(textContent(dialog)).not.toContain('1 首 · 最多新增');
+    expect(textContent(dialog)).toContain('最多佔用約 61 MB');
+    expect(textContent(dialog)).not.toContain('1 首 · 最多佔用');
     fixture.preparation.unpreparedTracks.value = [
       { id: 'one', duration: 180 },
       { id: 'unknown' },
     ];
     await nextTick();
-    expect(textContent(dialogs(root)[0])).not.toContain('最多新增');
+    expect(textContent(dialogs(root)[0])).not.toContain('最多佔用');
     app.unmount();
   });
   it('uses the canonical album identity instead of the combined selector label', async () => {
