@@ -205,7 +205,7 @@ it('uses the shared album table, no repeated cover, unlink or footer, and preser
   ).toHaveLength(0);
   expect(textContent(view.root)).toContain('播放次數');
   expect(textContent(view.root)).not.toMatch(
-    /解除關聯|解除連結|曲序依來源|本地可用/,
+    /解除關聯|解除連結|曲序依來源|本機可用/,
   );
   view.app.unmount();
 });

@@ -97,7 +97,7 @@
     "stopFailed": "目前無法停止，請稍後再試。",
     "progressQuerying": "查詢中 · {completed} / {total} 個來源 · 已補齊 {updated} 張",
     "progressStopping": "停止中 · {completed} / {total} 個來源 · 已補齊 {updated} 張",
-    "reloaded": "已重新讀取本地曲庫。",
+    "reloaded": "已重新讀取本機曲庫。",
     "reloadFailed": "目前無法重新讀取曲庫，請稍後再試。"
   }
 }

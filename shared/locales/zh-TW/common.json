@@ -20,6 +20,7 @@
     "action": "前往設定"
   },
   "clauseSeparator": "，",
+  "metaSeparator": "・",
   "goToSettings": "前往設定",
   "tryAgain": "請再試一次。",
   "retry": "重試",

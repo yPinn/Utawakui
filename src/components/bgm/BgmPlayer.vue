@@ -207,7 +207,8 @@ async function changeTrack(trackId) {
                 <span
                   >{{ operationalStatus.label
                   }}<template v-if="sourceModeLabel"
-                    >・{{ sourceModeLabel }}</template
+                    >{{ t('common.metaSeparator')
+                    }}{{ sourceModeLabel }}</template
                   ></span
                 >
               </span>

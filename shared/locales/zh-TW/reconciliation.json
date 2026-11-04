@@ -63,7 +63,7 @@
     "methodNamed": "{field}的合併方式",
     "after": "合併後：{value}",
     "movedObjects": "保留另一頁的 {count} 個物件。",
-    "tracks": "{count} 首本地曲目，音檔不變。"
+    "tracks": "{count} 首本機曲目，音檔不變。"
   },
   "labels": {
     "title": "曲名",

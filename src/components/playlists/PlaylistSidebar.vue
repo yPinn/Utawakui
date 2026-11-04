@@ -160,7 +160,7 @@ function subtitleFor(playlist) {
   if (playlist.kind !== 'album') return t('playlist.sidebar.playlist');
   const artist = orderedPlaylists.value.albumArtistById.get(playlist.id);
   const label = releaseTypeLabel(playlist.resolvedRelease?.type || 'album');
-  return artist ? `${label}・${artist}` : label;
+  return artist ? `${label}${t('common.metaSeparator')}${artist}` : label;
 }
 
 function searchableText(value) {
@@ -263,7 +263,9 @@ const visibleReferenceEntries = computed(() =>
 function referenceSubtitle(entry) {
   if (entry.kind === 'artist') return t('playlist.sidebar.artist');
   const label = releaseTypeLabel(entry.item?.resolvedRelease?.type || 'album');
-  return entry.groupName ? `${label}・${entry.groupName}` : label;
+  return entry.groupName
+    ? `${label}${t('common.metaSeparator')}${entry.groupName}`
+    : label;
 }
 
 function artistTracksFor(artist) {

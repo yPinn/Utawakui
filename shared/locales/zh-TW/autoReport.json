@@ -16,7 +16,7 @@
   "events": {
     "UNCAUGHT_EXCEPTION": "主程序未捕捉的例外",
     "RENDER_PROCESS_GONE": "畫面程序異常結束",
-    "PRELOAD_FAILED": "安全橋接載入失敗",
+    "PRELOAD_FAILED": "應用程式初始化失敗",
     "STARTUP_DEFERRED_MIGRATION_FAILED": "啟動資料遷移失敗",
     "UNHANDLED_REJECTION": "未處理的非同步錯誤",
     "RENDERER_UNRESPONSIVE": "畫面沒有回應",

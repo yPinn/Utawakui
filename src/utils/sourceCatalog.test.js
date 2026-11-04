@@ -13,7 +13,7 @@ it('keeps source positions and admits only current canonical local tracks', () =
       new Map(),
     ).map((row) => [row.track, row.stateLabel]),
   ).toEqual([
-    [null, '本地可用'],
+    [null, '本機可用'],
     [null, '待確認'],
   ]);
   const local = {

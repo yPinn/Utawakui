@@ -16,7 +16,7 @@
   "events": {
     "UNCAUGHT_EXCEPTION": "Uncaught main process exception",
     "RENDER_PROCESS_GONE": "Window process ended unexpectedly",
-    "PRELOAD_FAILED": "Secure bridge didn't load",
+    "PRELOAD_FAILED": "App didn't initialize",
     "STARTUP_DEFERRED_MIGRATION_FAILED": "Startup data migration failed",
     "UNHANDLED_REJECTION": "Unhandled async error",
     "RENDERER_UNRESPONSIVE": "Window not responding",

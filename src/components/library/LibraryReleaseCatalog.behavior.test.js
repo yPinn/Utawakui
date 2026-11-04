@@ -210,7 +210,7 @@ it('routes an exact album row to direct download without touching import search 
   });
   await flush();
   expect(textContent(view.root)).not.toMatch(
-    /從來源更新|重新讀取|本地可用|曲序依來源|解除關聯/,
+    /從來源更新|重新讀取|本機可用|曲序依來源|解除關聯/,
   );
   trigger(
     findAll(view.root, (node) => node.props['data-download'])[0],

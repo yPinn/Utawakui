@@ -20,6 +20,7 @@
     "action": "Go to Settings"
   },
   "clauseSeparator": ", ",
+  "metaSeparator": " · ",
   "goToSettings": "Go to Settings",
   "tryAgain": "Try again.",
   "retry": "Retry",

@@ -51,7 +51,7 @@ describe('useLibraryMetadataMaintenance', () => {
       reloadLibrary,
     });
     expect(await session.reload()).toBe(true);
-    expect(session.feedback.value).toBe('已重新讀取本地曲庫。');
+    expect(session.feedback.value).toBe('已重新讀取本機曲庫。');
     expect(requireFeatureGate).not.toHaveBeenCalled();
     reloadLibrary.mockRejectedValueOnce(Error('disk unavailable'));
     expect(await session.reload()).toBe(false);

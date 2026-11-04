@@ -178,8 +178,8 @@
   "previewNotice": {
     "failedTitle": "無法試聽曲目",
     "failed": "這首曲目目前無法試聽。",
-    "checking": "正在確認本地音檔",
-    "checkFailed": "無法確認本地音檔",
-    "noAudio": "沒有可用的本地音檔"
+    "checking": "正在確認本機音檔",
+    "checkFailed": "無法確認本機音檔",
+    "noAudio": "沒有可用的本機音檔"
   }
 }
