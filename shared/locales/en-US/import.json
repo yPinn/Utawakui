@@ -181,7 +181,7 @@
     },
     "ageRestricted": {
       "label": "Age verification needed",
-      "hint": "Sign in to YouTube in Firefox first, then retry."
+      "hint": "This needs an age-verified YouTube account. Turn on Browser sign-in data in Settings, then retry."
     },
     "regionRestricted": {
       "label": "Region restricted",

@@ -47,7 +47,7 @@
   },
   "cookies": {
     "title": "瀏覽器登入資料",
-    "guidance": "部分影片需要登入才能下載。開啟後，下載失敗時會讀取本機 Chrome、Edge 或 Firefox 的登入資料，以你的 YouTube 帳號重試。",
+    "guidance": "部分影片需要登入才能下載。開啟後，下載失敗時會讀取本機瀏覽器的 YouTube 登入資料重試。",
     "allow": "允許使用",
     "allowLabel": "下載失敗時使用瀏覽器的 YouTube 登入資料重試",
     "readFailed": "目前無法讀取登入資料設定，請重新讀取。",

@@ -47,7 +47,7 @@
   },
   "cookies": {
     "title": "Browser sign-in data",
-    "guidance": "Some videos need you to be signed in to download. When on, a failed download reads the sign-in data from Chrome, Edge or Firefox on this computer and retries with your YouTube account.",
+    "guidance": "Some videos need a signed-in account to download. When on, a failed download retries with the YouTube sign-in data from your local browser.",
     "allow": "Allow",
     "allowLabel": "Retry failed downloads with the browser's YouTube sign-in data",
     "readFailed": "The sign-in data setting can't be read. Reload it.",

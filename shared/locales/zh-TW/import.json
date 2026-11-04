@@ -181,7 +181,7 @@
     },
     "ageRestricted": {
       "label": "需要年齡驗證",
-      "hint": "請先在 Firefox 登入 YouTube，再重試一次。"
+      "hint": "需要已驗證年齡的 YouTube 帳號。請在設定開啟「瀏覽器登入資料」後重試。"
     },
     "regionRestricted": {
       "label": "地區限制",
