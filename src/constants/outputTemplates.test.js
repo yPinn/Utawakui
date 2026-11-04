@@ -15,7 +15,7 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'receipt-setlist': '票據歌單',
   'queue-board': '夜色歌單',
   'karaoke-stack': '經典字幕',
-  'live-stage': '舞台字幕',
+  'live-stage': '轉播字卡',
   'kinetic-pop': '躍動字幕',
   'ornate-vertical': '和風直書',
   'manga-frame': '分格對白',

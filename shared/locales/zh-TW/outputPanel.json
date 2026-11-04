@@ -243,7 +243,7 @@
       }
     },
     "liveStage": {
-      "name": "舞台字幕",
+      "name": "轉播字卡",
       "availability": {
         "summary": "需逐行時間，開場字卡使用曲目資訊。"
       },
