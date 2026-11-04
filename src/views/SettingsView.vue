@@ -1,7 +1,7 @@
 <script setup>
 import SettingsApplicationSection from '../components/settings/SettingsApplicationSection.vue';
-import SettingsAudioSection from '../components/settings/SettingsAudioSection.vue';
 import SettingsCapabilitiesSection from '../components/settings/SettingsCapabilitiesSection.vue';
+import CaptureOutputSettings from '../components/settings/CaptureOutputSettings.vue';
 import LyricsResearchSettingsBlock from '../components/settings/LyricsResearchSettingsBlock.vue';
 import SettingsLibrarySection from '../components/settings/SettingsLibrarySection.vue';
 import SettingsSupportSection from '../components/settings/SettingsSupportSection.vue';
@@ -9,12 +9,12 @@ import SettingsSupportSection from '../components/settings/SettingsSupportSectio
 
 <template>
   <div class="settings-view">
+    <SettingsApplicationSection />
     <SettingsLibrarySection />
-    <SettingsAudioSection />
     <SettingsCapabilitiesSection>
       <template #after-processing><LyricsResearchSettingsBlock /></template>
+      <template #output-end><CaptureOutputSettings /></template>
     </SettingsCapabilitiesSection>
-    <SettingsApplicationSection />
     <SettingsSupportSection />
   </div>
 </template>

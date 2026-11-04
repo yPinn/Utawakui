@@ -10,8 +10,8 @@ const settingsViewSource = readSource('../views/SettingsView.vue');
 const settingsLibrarySectionSource = readSource(
   '../components/settings/SettingsLibrarySection.vue',
 );
-const settingsAudioSectionSource = readSource(
-  '../components/settings/SettingsAudioSection.vue',
+const captureOutputSettingsSource = readSource(
+  '../components/settings/CaptureOutputSettings.vue',
 );
 const settingsApplicationSectionSource = readSource(
   '../components/settings/SettingsApplicationSection.vue',
@@ -22,11 +22,12 @@ const settingsCapabilitiesSectionSource = readSource(
 const settingsSupportSectionSource = readSource(
   '../components/settings/SettingsSupportSection.vue',
 );
+// Page order: application, library, capability groups, support.
 const settingsDocumentSource = [
-  settingsLibrarySectionSource,
-  settingsAudioSectionSource,
   settingsApplicationSectionSource,
+  settingsLibrarySectionSource,
   settingsCapabilitiesSectionSource,
+  captureOutputSettingsSource,
   settingsSupportSectionSource,
 ].join('\n');
 const folderLayoutSource = readSource(
@@ -55,7 +56,7 @@ const settingsRenderGraphPaths = [
   '../components/settings/FfmpegSourceModal.vue',
   '../components/settings/LibraryStorageSettingsRow.vue',
   '../components/settings/SettingsApplicationSection.vue',
-  '../components/settings/SettingsAudioSection.vue',
+  '../components/settings/CaptureOutputSettings.vue',
   '../components/settings/SettingsCapabilitiesSection.vue',
   '../components/settings/SettingsDocumentItem.vue',
   '../components/settings/SettingsFeatureGateRow.vue',
@@ -226,7 +227,7 @@ describe('Settings Folder surface cutover', () => {
   });
 
   it('rebuilds Settings as seven functional sections while preserving its actions and modal flows', () => {
-    const sectionTitles = ['曲庫與儲存', '音訊輸出', '應用程式', '支援與維護'];
+    const sectionTitles = ['應用程式', '曲庫與儲存', '支援與維護'];
     let previousPosition = -1;
     for (const title of sectionTitles) {
       const position = settingsDocumentSource.indexOf(`title="${title}"`);
@@ -239,7 +240,7 @@ describe('Settings Folder surface cutover', () => {
     expect(settingsCapabilitiesSectionSource).not.toContain('title="選用功能"');
     for (const component of [
       'SettingsLibrarySection',
-      'SettingsAudioSection',
+      'CaptureOutputSettings',
       'SettingsApplicationSection',
       'SettingsCapabilitiesSection',
       'SettingsSupportSection',

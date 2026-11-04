@@ -2,7 +2,6 @@
 import { computed, shallowRef } from 'vue';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { usePlayer } from '../../composables/usePlayer.js';
-import SettingsSection from './SettingsSection.vue';
 import AudioOutputSettingsBlock from './AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from './CaptureDeviceModal.vue';
 import { t } from '../../utils/i18n.js';
@@ -21,12 +20,7 @@ const captureDeviceLabel = computed(() => {
 </script>
 
 <template>
-  <SettingsSection
-    id="settings-audio"
-    class="settings-audio-section"
-    :title="t('audio.section')"
-    tabindex="-1"
-  >
+  <div id="settings-capture-output" class="capture-output-settings">
     <AudioOutputSettingsBlock
       :enabled="Boolean(playerState.captureDeviceId)"
       :device-label="captureDeviceLabel"
@@ -40,5 +34,5 @@ const captureDeviceLabel = computed(() => {
       :open="isCaptureDeviceModalOpen"
       @close="isCaptureDeviceModalOpen = false"
     />
-  </SettingsSection>
+  </div>
 </template>

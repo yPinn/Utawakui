@@ -86,7 +86,7 @@ describe('useAppUpdate', () => {
     expect(installAppUpdate).not.toHaveBeenCalled();
     expect(
       (await import('./useAppView.js')).useAppView().settingsSection.value,
-    ).toBe('application');
+    ).toBe('support');
   });
   it('keeps an action failure visible independently of a successful status read', async () => {
     vi.stubGlobal('window', {

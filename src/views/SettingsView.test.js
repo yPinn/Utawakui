@@ -7,8 +7,8 @@ const viewSource = readSource('./SettingsView.vue');
 const librarySource = readSource(
   '../components/settings/SettingsLibrarySection.vue',
 );
-const audioSource = readSource(
-  '../components/settings/SettingsAudioSection.vue',
+const captureSource = readSource(
+  '../components/settings/CaptureOutputSettings.vue',
 );
 const applicationSource = readSource(
   '../components/settings/SettingsApplicationSection.vue',
@@ -24,22 +24,22 @@ const researchSource = readSource(
 );
 const sectionSources = [
   librarySource,
-  audioSource,
   applicationSource,
   optionalSource,
   researchSource,
   supportSource,
 ];
-const source = [viewSource, ...sectionSources].join('\n');
+const source = [viewSource, ...sectionSources, captureSource].join('\n');
 
 describe('SettingsView document composition', () => {
   it('composes independent core, optional, research and support sections without legacy tabs or an inner page scroll', () => {
+    // Workflow order: app, library, sources, processing, output, support.
     const sectionComponents = [
+      'SettingsApplicationSection',
       'SettingsLibrarySection',
-      'SettingsAudioSection',
       'SettingsCapabilitiesSection',
       'LyricsResearchSettingsBlock',
-      'SettingsApplicationSection',
+      'CaptureOutputSettings',
       'SettingsSupportSection',
     ];
     let previousStart = -1;
@@ -70,11 +70,15 @@ describe('SettingsView document composition', () => {
     expect(librarySource).toContain('<LibraryStorageSettingsRow');
     expect(librarySource).toContain('<LibraryMetadataSettingsRow');
     expect(librarySource).toContain('<PlaybackHistorySettingsRow');
-    expect(audioSource).toContain('title="音訊輸出"');
-    expect(audioSource).toContain('<AudioOutputSettingsBlock');
+    expect(captureSource).toContain('<AudioOutputSettingsBlock');
+    expect(viewSource).toContain(
+      '<template #output-end><CaptureOutputSettings /></template>',
+    );
+    expect(optionalSource).toContain('<slot :name="`${group.id}-end`" />');
     expect(applicationSource).toContain('title="應用程式"');
     expect(applicationSource).toContain('<WindowsBackgroundSettingsRow');
-    expect(applicationSource).toContain('<AppUpdateSettingsRow');
+    expect(applicationSource).not.toContain('<AppUpdateSettingsRow');
+    expect(supportSource).toContain('<AppUpdateSettingsRow');
     expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
     expect(optionalSource).not.toContain('LyricsResearchSettingsBlock');
@@ -182,19 +186,17 @@ describe('SettingsView behavior wiring', () => {
     expect(supportSource).toContain('@click="announcement.reopen"');
   });
 
-  it('wires application update telemetry and Windows close behavior', () => {
-    expect(applicationSource).toContain(
+  it('wires update telemetry in support and Windows close behavior in application', () => {
+    expect(supportSource).toContain(
       ':download-bytes-per-second="appUpdateState.downloadBytesPerSecond"',
     );
-    expect(applicationSource).toContain(
+    expect(supportSource).toContain(
       ':download-eta-seconds="appUpdateState.downloadEtaSeconds"',
     );
-    expect(applicationSource).toContain(
+    expect(supportSource).toContain(
       ':auto-check-enabled="appUpdateState.autoCheckEnabled"',
     );
-    expect(applicationSource).toContain(
-      '@set-auto-check="setAppUpdateAutoCheck"',
-    );
+    expect(supportSource).toContain('@set-auto-check="setAppUpdateAutoCheck"');
     expect(applicationSource).toContain(
       ':behavior="windowsIntegrationSettings.windowCloseBehavior.value"',
     );

@@ -391,7 +391,7 @@ vi.mock('./CaptureDeviceModal.vue', async () => {
 import { useFeatureGateAccess } from '../../composables/useFeatureGateAccess.js';
 import { useAppView } from '../../composables/useAppView.js';
 import SettingsApplicationSection from './SettingsApplicationSection.vue';
-import SettingsAudioSection from './SettingsAudioSection.vue';
+import CaptureOutputSettings from './CaptureOutputSettings.vue';
 import SettingsCapabilitiesSection from './SettingsCapabilitiesSection.vue';
 import SettingsLibrarySection from './SettingsLibrarySection.vue';
 import SettingsSupportSection from './SettingsSupportSection.vue';
@@ -410,7 +410,7 @@ function attachClientRender(component, filename) {
   component.render = new Function('Vue', code)(Vue);
 }
 
-attachClientRender(SettingsAudioSection, './SettingsAudioSection.vue');
+attachClientRender(CaptureOutputSettings, './CaptureOutputSettings.vue');
 
 function hostNode(type, text = '') {
   return { type, text, props: {}, children: [], parent: null };
@@ -540,7 +540,7 @@ describe('Settings document section behavior', () => {
 
   it('derives the capture-device label and owns modal open and close events', async () => {
     const root = hostNode('root');
-    const app = renderer.createApp(SettingsAudioSection);
+    const app = renderer.createApp(CaptureOutputSettings);
     app.provide(Vue.ssrContextKey, { modules: new Set() });
     app.mount(root);
 

@@ -80,7 +80,7 @@ function beginDownloadFeedback() {
   downloadFeedback = useTaskNotification({
     key: NOTIFICATION_KEYS.TASK_APP_UPDATE,
     title: t('appUpdate.notify.downloading'),
-    action: () => useAppView().openSettings('application'),
+    action: () => useAppView().openSettings('support'),
   });
 }
 function finishDownloadFeedback(failed = false) {
@@ -98,7 +98,7 @@ function finishDownloadFeedback(failed = false) {
           title: t('appUpdate.notify.downloaded'),
           message: t('appUpdate.notify.downloadedMessage'),
           actionLabel: t('appUpdate.notify.viewUpdate'),
-          action: () => useAppView().openSettings('application'),
+          action: () => useAppView().openSettings('support'),
         },
   );
   downloadFeedback = null;

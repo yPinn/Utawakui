@@ -46,7 +46,7 @@ const OPTIONAL_FEATURE_GROUPS = Object.freeze([
   {
     id: 'output',
     title: t('capabilities.groups.output'),
-    featureIds: [FEATURE_IDS.OBS_INTEGRATION, FEATURE_IDS.PUBLIC_OUTPUT_FLOW],
+    featureIds: [FEATURE_IDS.PUBLIC_OUTPUT_FLOW, FEATURE_IDS.OBS_INTEGRATION],
   },
 ]);
 
@@ -135,8 +135,8 @@ watch(
     if (!section) return;
     clearSettingsSection();
     await revealSettingsTarget(
-      section === 'application'
-        ? 'settings-application'
+      ['application', 'support'].includes(section)
+        ? `settings-${section}`
         : `settings-group-${section}`,
     );
   },
@@ -537,6 +537,7 @@ onMounted(() => {
               />
             </template>
           </SettingsFeatureGateRow>
+          <slot :name="`${group.id}-end`" />
         </SettingsSection>
         <slot v-if="group.id === 'processing'" name="after-processing" />
       </template>

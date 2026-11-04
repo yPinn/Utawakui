@@ -5,7 +5,7 @@ const readSource = (path) => readCatalogSource(new URL(path, import.meta.url));
 
 const viewSource = readSource('../../views/SettingsView.vue');
 const librarySource = readSource('./SettingsLibrarySection.vue');
-const audioSource = readSource('./SettingsAudioSection.vue');
+const captureSource = readSource('./CaptureOutputSettings.vue');
 const applicationSource = readSource('./SettingsApplicationSection.vue');
 const capabilitiesSource = readSource('./SettingsCapabilitiesSection.vue');
 const supportSource = readSource('./SettingsSupportSection.vue');
@@ -13,10 +13,10 @@ const supportSource = readSource('./SettingsSupportSection.vue');
 describe('Settings document section ownership', () => {
   it('keeps SettingsView as the ordered document composer', () => {
     const sectionComponents = [
-      'SettingsLibrarySection',
-      'SettingsAudioSection',
-      'SettingsCapabilitiesSection',
       'SettingsApplicationSection',
+      'SettingsLibrarySection',
+      'SettingsCapabilitiesSection',
+      'CaptureOutputSettings',
       'SettingsSupportSection',
     ];
     let previousPosition = -1;
@@ -44,21 +44,23 @@ describe('Settings document section ownership', () => {
     expect(librarySource).toContain("title: '清除最近播放紀錄？'");
   });
 
-  it('keeps capture-device selection and its dialog with the audio section', () => {
-    expect(audioSource).toContain('title="音訊輸出"');
-    expect(audioSource).toContain('usePlayer');
-    expect(audioSource).toContain('useAudioOutput');
-    expect(audioSource).toContain('<AudioOutputSettingsBlock');
-    expect(audioSource).toContain('<CaptureDeviceModal');
+  it('keeps capture-device selection and its dialog in the Output group', () => {
+    expect(captureSource).not.toContain('<SettingsSection');
+    expect(captureSource).toContain('usePlayer');
+    expect(captureSource).toContain('useAudioOutput');
+    expect(captureSource).toContain('<AudioOutputSettingsBlock');
+    expect(captureSource).toContain('<CaptureDeviceModal');
+    expect(capabilitiesSource).toContain('<slot :name="`${group.id}-end`" />');
   });
 
-  it('keeps update and Windows behavior lifecycle with the application section', () => {
+  it('keeps Windows behavior with application and updates with support', () => {
     expect(applicationSource).toContain('title="應用程式"');
-    expect(applicationSource).toContain('useAppInfo');
-    expect(applicationSource).toContain('useAppUpdate');
     expect(applicationSource).toContain('useWindowsIntegrationSettings');
     expect(applicationSource).toContain('<WindowsBackgroundSettingsRow');
-    expect(applicationSource).toContain('<AppUpdateSettingsRow');
+    expect(applicationSource).not.toContain('useAppUpdate');
+    expect(supportSource).toContain('useAppInfo');
+    expect(supportSource).toContain('useAppUpdate');
+    expect(supportSource).toContain('<AppUpdateSettingsRow');
   });
 
   it('keeps gate, dependency, optional-tool, and deep-link behavior together', () => {
