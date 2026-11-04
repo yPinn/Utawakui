@@ -24,9 +24,7 @@ const { enabled, prepared, frame, setEnabled } = useLyricsAcousticPreview({
 });
 const statusLabel = computed(() => {
   if (prepared.value.status === 'ready')
-    return props.estimate.preview?.methodKind === 'model'
-      ? t('lyricsEditor.acoustic.model')
-      : t('lyricsEditor.acoustic.synthetic');
+    return t('lyricsEditor.acoustic.estimate');
   if (prepared.value.status === 'stale')
     return t('lyricsEditor.acoustic.stale');
   return t('lyricsEditor.acoustic.unavailable');

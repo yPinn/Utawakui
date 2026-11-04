@@ -217,10 +217,10 @@
     "shiftEarlier": "整句提前 0.1 秒",
     "shiftLater": "整句延後 0.1 秒",
     "step": "0.1 秒",
-    "wordUnavailable": "需要可分段的文字與完整起訖時間",
+    "wordUnavailable": "需要先設定句首和句尾，且這行能分成多個字詞",
     "dependency": "前一句「{text}」推定句尾將同步為 {seconds} 秒。",
-    "outsideMedia": "含原媒體範圍外的時間，未自動修正；請先檢查句首／句尾或同步調整。",
-    "invalid": "時間調整會超出片段或破壞相鄰句順序，未套用。"
+    "outsideMedia": "有時間超出音檔長度，請檢查句首、句尾或同步調整。",
+    "invalid": "這個時間會超出範圍或跟前後句順序衝突，未套用。"
   },
   "toolbar": {
     "label": "歌詞時間工具",
@@ -251,10 +251,9 @@
     "restore": "全部還原"
   },
   "acoustic": {
-    "model": "研究模型估計 · 原文 · 僅供本機預覽",
-    "synthetic": "合成驗證資料 · 原文 · 僅供本機預覽",
-    "stale": "輔助資料已過期，沿用原歌詞時間",
-    "unavailable": "輔助資料目前無法使用，沿用原歌詞時間",
+    "estimate": "預估時間 · 僅供預覽",
+    "stale": "預估已過期，使用原歌詞時間",
+    "unavailable": "預估目前無法使用，使用原歌詞時間",
     "timingWord": "正式逐詞時間",
     "timingLine": "整句時間估算",
     "timingChunk": "詞塊起點估計",
@@ -265,10 +264,10 @@
     "playHint": "播放所選歌曲可檢查詞塊切換。"
   },
   "experiment": {
-    "intro": "實驗性歌詞時間提示。",
+    "intro": "實驗功能。",
     "reanalyze": "校時已變更，請重新分析；目前沿用原歌詞。",
     "turnOff": "關閉分析顯示，恢復原歌詞時間。",
-    "turnOn": "開啟分析顯示，使用已產生的歌詞時間提示。",
+    "turnOn": "開啟後使用分析出的歌詞時間。",
     "fineLines": "{count} 句有分段時間",
     "hintsOnly": "僅分段提示",
     "reused": "沿用既有分析，時間未變",

@@ -46,9 +46,8 @@ describe('compact experimental estimate provenance', () => {
     expect(findAll(mounted.root, (n) => n.type === 'button')).toHaveLength(1);
     expect(textContent(mounted.root).trim()).toBe('分析顯示');
     expect(button().props['aria-pressed']).toBe(false);
-    expect(button().props['aria-description']).toContain('開啟分析顯示');
     expect(button().props['aria-description']).toContain(
-      '已產生的歌詞時間提示',
+      '開啟後使用分析出的歌詞時間',
     );
     expect(button().props['aria-description']).toContain('實驗');
     expect(button().props['aria-description']).toContain('1 句有分段時間');
@@ -125,7 +124,7 @@ describe('compact experimental estimate provenance', () => {
       createSSRApp({ render: () => h(Component) }),
     );
     expect(html).toContain('沿用既有分析，時間未變');
-    expect(html).toContain('開啟分析顯示');
+    expect(html).toContain('開啟後使用分析出的歌詞時間');
     expect(html).toContain('分析顯示');
     expect(owner.setApplied).not.toHaveBeenCalled();
   });

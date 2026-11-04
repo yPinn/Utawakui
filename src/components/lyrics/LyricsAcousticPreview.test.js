@@ -58,13 +58,16 @@ function fixture() {
   });
 }
 describe('local lyric chunk preview', () => {
-  it('identifies private model results separately from synthetic validation data', () => {
-    const props = fixture();
-    props.estimate.preview.methodKind = 'model';
-    const view = mount(LyricsAcousticPreview, props);
-    expect(textContent(view.root)).toContain('研究模型估計');
-    expect(textContent(view.root)).not.toContain('合成驗證資料');
-    view.app.unmount();
+  it('shows one outcome label without naming the estimate source', () => {
+    for (const methodKind of ['model', 'fixture']) {
+      const props = fixture();
+      props.estimate.preview.methodKind = methodKind;
+      const view = mount(LyricsAcousticPreview, props);
+      expect(textContent(view.root)).toContain('預估時間');
+      expect(textContent(view.root)).not.toContain('研究模型');
+      expect(textContent(view.root)).not.toContain('合成驗證');
+      view.app.unmount();
+    }
   });
   it('has an explicit reversible toggle and updates start emphasis from the existing clock', async () => {
     const props = fixture();
@@ -78,7 +81,7 @@ describe('local lyric chunk preview', () => {
     await nextTick();
     expect(button().props['aria-pressed']).toBe(true);
     expect(button().props.class).toContain('ui-btn--active');
-    expect(textContent(view.root)).toContain('合成驗證資料');
+    expect(textContent(view.root)).toContain('預估時間');
     expect(
       findAll(view.root, (n) => n.props?.['data-chunk-state'] === 'active').map(
         textContent,

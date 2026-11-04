@@ -217,10 +217,10 @@
     "shiftEarlier": "Move line 0.1 s earlier",
     "shiftLater": "Move line 0.1 s later",
     "step": "0.1 s",
-    "wordUnavailable": "Needs splittable text and both a start and end time",
+    "wordUnavailable": "Set the line start and end first, and the line must split into words",
     "dependency": "The estimated end of the previous line “{text}” will change to {seconds} s.",
-    "outsideMedia": "Some times are outside the original media and weren't corrected. Check the line start and end, or the sync offset.",
-    "invalid": "This change would leave the part or break the order of nearby lines, so it wasn't applied."
+    "outsideMedia": "Some times go past the end of the audio. Check the line start, line end or sync offset.",
+    "invalid": "This time is out of range or out of order with nearby lines, so it wasn't applied."
   },
   "toolbar": {
     "label": "Lyrics timing tools",
@@ -251,10 +251,9 @@
     "restore": "Restore all"
   },
   "acoustic": {
-    "model": "Research model estimate · Original text · Local preview only",
-    "synthetic": "Synthetic test data · Original text · Local preview only",
-    "stale": "Helper data is out of date; using the original lyrics timing",
-    "unavailable": "Helper data isn't available; using the original lyrics timing",
+    "estimate": "Estimated timing · Preview only",
+    "stale": "The estimate is out of date; using the original lyrics timing",
+    "unavailable": "The estimate isn't available; using the original lyrics timing",
     "timingWord": "Word timing",
     "timingLine": "Estimated line timing",
     "timingChunk": "Estimated chunk starts",
@@ -265,10 +264,10 @@
     "playHint": "Play the selected song to check chunk changes."
   },
   "experiment": {
-    "intro": "Experimental lyrics timing hints.",
+    "intro": "Experimental.",
     "reanalyze": "Timing changed. Analyze again; the original lyrics are used for now.",
     "turnOff": "Turn off to restore the original lyrics timing.",
-    "turnOn": "Turn on to use the generated timing hints.",
+    "turnOn": "Turn on to use the analyzed lyrics timing.",
     "fineLines": "{count} line has part timing | {count} lines have part timing",
     "hintsOnly": "Part hints only",
     "reused": "Reuses the earlier analysis; timing unchanged",
