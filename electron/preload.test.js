@@ -38,6 +38,7 @@ const MAIN_INVOKE_CHANNELS = [
   'app-usage:get-status',
   'app:get-version',
   'app:relaunch',
+  'app:get-restart-impact',
   'waveform:read',
   'waveform:cancel',
   'waveform:clear',

@@ -53,7 +53,7 @@ onMounted(() => {
       :relaunch-error="uiLanguageSettings.relaunchError.value"
       @refresh-preference="uiLanguageSettings.refresh"
       @set-preference="uiLanguageSettings.setPreference"
-      @relaunch="uiLanguageSettings.relaunch"
+      @relaunch="uiLanguageSettings.offerRestart"
     />
     <KeyboardShortcutSettingsBlock />
     <WindowsBackgroundSettingsRow

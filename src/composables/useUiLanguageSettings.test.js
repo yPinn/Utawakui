@@ -4,7 +4,12 @@ import {
   useUiLanguageSettings,
 } from './useUiLanguageSettings.js';
 
-function setup({ saved = 'system', target = 'zh-TW', confirmed = true } = {}) {
+function setup({
+  saved = 'system',
+  target = 'zh-TW',
+  confirmed = true,
+  impact = { separation: false, output: 'none' },
+} = {}) {
   const state = { saved, target };
   const bridge = {
     getUiLanguage: vi.fn(async () => state.saved),
@@ -15,6 +20,7 @@ function setup({ saved = 'system', target = 'zh-TW', confirmed = true } = {}) {
     }),
     getUiLanguageTarget: vi.fn(async () => state.target),
     relaunchApp: vi.fn(async () => true),
+    getRestartImpact: vi.fn(async () => impact),
   };
   const confirm = vi.fn(async () => confirmed);
   const settings = useUiLanguageSettings({
@@ -71,10 +77,24 @@ describe('useUiLanguageSettings', () => {
     const { bridge, settings } = setup({ target: 'en-US' });
     bridge.relaunchApp.mockRejectedValueOnce(new Error('denied'));
     await settings.refresh();
-    await settings.relaunch();
+    await settings.offerRestart();
     expect(settings.relaunchError.value).toBe(
       '無法重新啟動，請手動關閉後再開啟 Utawakui。',
     );
     expect(settings.relaunching.value).toBe(false);
+  });
+
+  it('warns about running separation and output before restarting', async () => {
+    const { confirm, settings } = setup({
+      target: 'en-US',
+      impact: { separation: true, output: 'resumes' },
+    });
+    await settings.refresh();
+    await settings.offerRestart();
+    expect(confirm.mock.calls[0][0].detail).toBe(
+      'Utawakui 會關閉後重新開啟，尚未保存的修改不會保留。' +
+        '伴奏處理會停止，目前歌曲與其餘排程都會取消。' +
+        '畫面輸出會中斷，重新開啟後自動恢復。',
+    );
   });
 });

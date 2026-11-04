@@ -537,6 +537,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('feedback:export-fallback', input),
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
   relaunchApp: () => ipcRenderer.invoke('app:relaunch'),
+  getRestartImpact: () => ipcRenderer.invoke('app:get-restart-impact'),
   getRecentPlaybackHistory: () => ipcRenderer.invoke('playback-history:get'),
   recordRecentPlayback: (trackId, sourceContext) =>
     ipcRenderer.invoke(

@@ -28,4 +28,22 @@ describe('registerAppInfoHandlers', () => {
     expect(await handlers.get('app:relaunch')()).toBe(true);
     expect(relaunch).toHaveBeenCalledOnce();
   });
+
+  it('reports only the bounded restart impact', async () => {
+    const handlers = new Map();
+    registerAppInfoHandlers({
+      ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
+      getVersion: () => '0.1.0',
+      relaunch: vi.fn(),
+      getRestartImpact: () => ({
+        separation: true,
+        output: 'resumes',
+        extra: 1,
+      }),
+    });
+    expect(await handlers.get('app:get-restart-impact')()).toEqual({
+      separation: true,
+      output: 'resumes',
+    });
+  });
 });

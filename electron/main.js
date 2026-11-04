@@ -1246,6 +1246,17 @@ if (!gotSingleInstanceLock) {
         app.relaunch();
         app.quit();
       },
+      getRestartImpact: () => {
+        const output = outputRuntimeController?.getStatus();
+        return {
+          separation: windowState.getActiveBackgroundWork() === 'separation',
+          output: !output?.running
+            ? 'none'
+            : output.desired?.running
+              ? 'resumes'
+              : 'stops',
+        };
+      },
     });
     registerDiagnosticsHandlers({
       ipcMain,

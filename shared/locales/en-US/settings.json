@@ -89,6 +89,9 @@
     "later": "Later",
     "readFailed": "Couldn't read the display language setting.",
     "saveFailed": "The display language wasn't changed. Try again.",
-    "relaunchFailed": "Couldn't restart. Close and reopen Utawakui."
+    "relaunchFailed": "Couldn't restart. Close and reopen Utawakui.",
+    "restartSeparation": "Accompaniment processing will stop, canceling the current song and the rest of the queue.",
+    "restartOutputResumes": "Output will be interrupted and resumes automatically after reopening.",
+    "restartOutputStops": "Output will stop and needs to be started again after reopening."
   }
 }

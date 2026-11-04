@@ -89,6 +89,9 @@
     "later": "稍後",
     "readFailed": "無法讀取介面語言設定。",
     "saveFailed": "介面語言未變更，請再試一次。",
-    "relaunchFailed": "無法重新啟動，請手動關閉後再開啟 Utawakui。"
+    "relaunchFailed": "無法重新啟動，請手動關閉後再開啟 Utawakui。",
+    "restartSeparation": "伴奏處理會停止，目前歌曲與其餘排程都會取消。",
+    "restartOutputResumes": "畫面輸出會中斷，重新開啟後自動恢復。",
+    "restartOutputStops": "畫面輸出會停止，重新開啟後需要再次啟動。"
   }
 }

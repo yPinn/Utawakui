@@ -63,20 +63,46 @@ export function useUiLanguageSettings(options = {}) {
     }
   }
 
-  async function setPreference(next) {
-    if (!(await preference.save(next))) return false;
-    await refreshTarget();
-    if (targetLocale.value === currentLocale) return true;
+  async function restartDetail() {
+    let impact = {};
+    try {
+      impact = (await bridge.getRestartImpact()) ?? {};
+    } catch {
+      // Without the impact the generic warning still applies.
+    }
+    return [
+      t('settings.language.restartDetail'),
+      impact.separation ? t('settings.language.restartSeparation') : '',
+      impact.output === 'resumes'
+        ? t('settings.language.restartOutputResumes')
+        : '',
+      impact.output === 'stops'
+        ? t('settings.language.restartOutputStops')
+        : '',
+    ]
+      .filter(Boolean)
+      .join(t('common.sentenceJoin'));
+  }
+
+  // Always asks first: a restart drops unsaved edits and running work.
+  async function offerRestart() {
+    if (relaunching.value) return;
     const confirmed = await confirm({
       title: t('settings.language.restartTitle'),
       message: t('settings.language.restartMessage', {
         language: uiLanguageName(targetLocale.value),
       }),
-      detail: t('settings.language.restartDetail'),
+      detail: await restartDetail(),
       confirmLabel: t('settings.language.restartNow'),
       cancelLabel: t('settings.language.later'),
     });
     if (confirmed) await relaunch();
+  }
+
+  async function setPreference(next) {
+    if (!(await preference.save(next))) return false;
+    await refreshTarget();
+    if (targetLocale.value !== currentLocale) await offerRestart();
     return true;
   }
 
@@ -107,6 +133,6 @@ export function useUiLanguageSettings(options = {}) {
     relaunchError,
     refresh,
     setPreference,
-    relaunch,
+    offerRestart,
   };
 }
