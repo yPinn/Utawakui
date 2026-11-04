@@ -34,6 +34,7 @@ missing runtime instead of substituting another package manager.
 ```bash
 npm run dev
 npm run dev:tools
+npm run dev:pseudo
 npm run build
 npm start
 npm run dist:dir
@@ -183,6 +184,10 @@ migrate feature by feature, so new or edited text follows these rules now:
   that production starts importing must leave that list and use the catalog.
 - Feature-gate notices change only with a `noticeVersion` bump and owner review of
   every locale.
+- `npm run dev:pseudo` starts the dev app in the `en-XA` pseudo locale (en-US
+  text accented, padded about 40% and wrapped in `⟦⟧`). Text without brackets is
+  hard-coded, two brackets in one phrase are concatenated fragments, and clipped
+  brackets show truncation. Packaged builds ignore it.
 
 ## Markdown Conventions
 

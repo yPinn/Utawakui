@@ -1,6 +1,7 @@
 import { createI18n } from 'vue-i18n';
 import uiLocaleValues from '../../shared/uiLocaleValues.json';
 import { UI_LOCALE } from './uiLocale.js';
+import { PSEUDO_LOCALE, pseudoText } from '../../shared/pseudoLocale.mjs';
 
 // shared/locales/<locale>/<namespace>.json, precompiled by the Vite plugin.
 const catalogFiles = import.meta.glob('../../shared/locales/*/*.json', {
@@ -12,6 +13,8 @@ for (const [file, catalog] of Object.entries(catalogFiles)) {
   const [, locale, namespace] = file.match(/([^/]+)\/([^/]+)\.json$/u);
   (messages[locale] ??= {})[namespace] = catalog;
 }
+const pseudo = import.meta.env.DEV && UI_LOCALE === PSEUDO_LOCALE;
+if (pseudo) messages[PSEUDO_LOCALE] = messages['en-US'];
 
 // One global composer: the locale is fixed per launch, so modules and SSR
 // tests call t() directly without installing the plugin on each app.
@@ -20,6 +23,7 @@ export const i18n = createI18n({
   locale: UI_LOCALE,
   fallbackLocale: uiLocaleValues.fallbackLocale,
   messages,
+  ...(pseudo ? { postTranslation: pseudoText } : {}),
 });
 
 export const t = i18n.global.t;

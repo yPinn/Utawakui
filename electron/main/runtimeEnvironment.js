@@ -49,6 +49,7 @@ function readDeveloperOptions(argv = [], { isPackagedRuntime = false } = {}) {
   return {
     isDev,
     openDevTools: isDev && values.includes('--devtools'),
+    pseudoLocale: isDev && values.includes('--pseudo-locale'),
   };
 }
 

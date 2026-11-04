@@ -95,25 +95,43 @@ describe('developer options', () => {
     expect(readDeveloperOptions(['electron', '.', '--dev'])).toEqual({
       isDev: true,
       openDevTools: false,
+      pseudoLocale: false,
     });
     expect(
       readDeveloperOptions(['electron', '.', '--dev', '--devtools']),
     ).toEqual({
       isDev: true,
       openDevTools: true,
+      pseudoLocale: false,
     });
     expect(readDeveloperOptions(['electron', '.', '--devtools'])).toEqual({
       isDev: false,
       openDevTools: false,
+      pseudoLocale: false,
     });
   });
 
   it('ignores development flags in a packaged runtime', () => {
     expect(
-      readDeveloperOptions(['electron.exe', '--dev', '--devtools'], {
+      readDeveloperOptions(
+        ['electron.exe', '--dev', '--devtools', '--pseudo-locale'],
+        {
+          isPackagedRuntime: true,
+        },
+      ),
+    ).toEqual({ isDev: false, openDevTools: false, pseudoLocale: false });
+  });
+
+  it('enables the pseudo locale only with the development command', () => {
+    const read = (argv, options) =>
+      readDeveloperOptions(argv, options).pseudoLocale;
+    expect(read(['electron', '.', '--dev', '--pseudo-locale'])).toBe(true);
+    expect(read(['electron', '.', '--pseudo-locale'])).toBe(false);
+    expect(
+      read(['electron.exe', '--dev', '--pseudo-locale'], {
         isPackagedRuntime: true,
       }),
-    ).toEqual({ isDev: false, openDevTools: false });
+    ).toBe(false);
   });
 });
 

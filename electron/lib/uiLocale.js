@@ -4,6 +4,7 @@ const {
   fallbackLocale,
   supportedLocales,
 } = require('../../shared/uiLocaleValues.json');
+const { PSEUDO_LOCALE } = require('../../shared/pseudoLocale.mjs');
 
 const UI_LANGUAGE_PREFERENCES = Object.freeze(['system', ...supportedLocales]);
 const TRADITIONAL_CHINESE_REGIONS = new Set(['tw', 'hk', 'mo']);
@@ -47,8 +48,11 @@ function resolveUiLocale(
 // Resolved once before app ready; the UI language changes only on relaunch.
 let currentUiLocale = fallbackLocale;
 
-function setUiLocale(locale) {
-  currentUiLocale = supportedLocales.includes(locale) ? locale : fallbackLocale;
+function setUiLocale(locale, { allowPseudo = false } = {}) {
+  const allowed =
+    supportedLocales.includes(locale) ||
+    (allowPseudo && locale === PSEUDO_LOCALE);
+  currentUiLocale = allowed ? locale : fallbackLocale;
 }
 
 function getUiLocale() {

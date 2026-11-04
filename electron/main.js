@@ -34,21 +34,11 @@ app.enableSandbox();
 // default app name instead of ours.
 app.setName(APP_NAME);
 app.setAppLogsPath();
-// Resolve the UI language once per launch; Chromium's strings and
-// navigator.language follow it, and changing it takes a relaunch.
-const { readUiLanguagePreference } = require('./lib/config');
-const { resolveUiLocale, setUiLocale, getUiLocale } = require('./lib/uiLocale');
-setUiLocale(
-  resolveUiLocale(
-    readUiLanguagePreference(path.join(app.getPath('userData'), 'config.json')),
-    app.getPreferredSystemLanguages(),
-  ),
-);
-app.commandLine.appendSwitch('lang', getUiLocale());
 
 const {
   applyPackagedRuntimeRestrictions,
   detectPackagedRuntime,
+  readDeveloperOptions,
   resolvePackagedUpdateConfigPath,
 } = require('./main/runtimeEnvironment');
 const isPackagedRuntime = detectPackagedRuntime({
@@ -66,6 +56,27 @@ if (!runtimeRestriction.allowed) {
   );
   process.exit(1);
 }
+// Resolve the UI language once per launch; Chromium's strings and
+// navigator.language follow it, and changing it takes a relaunch.
+const { readUiLanguagePreference } = require('./lib/config');
+const { resolveUiLocale, setUiLocale, getUiLocale } = require('./lib/uiLocale');
+const { PSEUDO_LOCALE } = require('../shared/pseudoLocale.mjs');
+const usePseudoLocale = readDeveloperOptions(process.argv, {
+  isPackagedRuntime,
+}).pseudoLocale;
+setUiLocale(
+  usePseudoLocale
+    ? PSEUDO_LOCALE
+    : resolveUiLocale(
+        readUiLanguagePreference(
+          path.join(app.getPath('userData'), 'config.json'),
+        ),
+        app.getPreferredSystemLanguages(),
+      ),
+  { allowPseudo: usePseudoLocale },
+);
+app.commandLine.appendSwitch('lang', usePseudoLocale ? 'en-US' : getUiLocale());
+
 const packagedUpdateConfigPath = resolvePackagedUpdateConfigPath({
   isPackagedRuntime,
   isElectronPackaged: app.isPackaged,
