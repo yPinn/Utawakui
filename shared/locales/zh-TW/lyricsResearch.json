@@ -7,13 +7,13 @@
   },
   "settings": {
     "title": "歌詞時間分析（實驗）",
-    "notice": "僅供本機研究試用。時間精度尚待人工驗證；模型權重及字典之使用與散布授權範圍尚待釐清。",
+    "notice": "僅供本機研究試用。時間精度尚待人工驗證；模型權重（HubertFA、Whisper small）及字典之使用與散布授權範圍尚待釐清。",
     "tool": "歌詞分析工具",
     "toolDescription": "估算中、日、英文歌詞分段時間；需使用 Utawakui 管理的音訊轉換工具。",
     "size": "下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 空間。",
     "cancelLabel": "取消操作並等待清理",
     "previewTitle": "片段預覽（進階）",
-    "previewRequirement": "需在「本機音訊處理 → 工具與模型 → 音訊轉換工具」選用「Utawakui 管理版本」。分析使用 HubertFA 與 Whisper small；正式歌詞音訊輔助仍未開放。",
+    "previewRequirement": "需在「本機音訊處理 → 工具與模型 → 音訊轉換工具」選用「Utawakui 管理版本」。",
     "previewLimit": "每次分析約 30 秒、最多 10 句歌詞，結果僅在此預覽。",
     "stage": {
       "download": "下載工具中",

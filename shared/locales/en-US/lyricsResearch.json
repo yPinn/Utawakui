@@ -7,13 +7,13 @@
   },
   "settings": {
     "title": "Lyrics timing analysis (experimental)",
-    "notice": "For local research trials only. Timing accuracy hasn't been checked by people yet, and the licensing scope for using and distributing the model weights and dictionaries is still being clarified.",
+    "notice": "For local research trials only. Timing accuracy hasn't been checked by people yet, and the licensing scope for using and distributing the model weights (HubertFA, Whisper small) and dictionaries is still being clarified.",
     "tool": "Lyrics analysis tools",
     "toolDescription": "Estimates part timing for Chinese, Japanese and English lyrics. Requires the Utawakui-managed audio conversion tool.",
     "size": "About 0.78 GB to download and 1.00 GB installed. Keep 4 GB free.",
     "cancelLabel": "Cancel and wait for cleanup",
     "previewTitle": "Part preview (advanced)",
-    "previewRequirement": "Choose “Utawakui managed version” under Local audio processing → Tools and models → Audio conversion tool. Analysis uses HubertFA and Whisper small; lyrics audio assist isn't available yet.",
+    "previewRequirement": "Choose “Utawakui managed version” under Local audio processing → Tools and models → Audio conversion tool.",
     "previewLimit": "Each analysis covers about 30 seconds and up to 10 lines. Results are previewed here only.",
     "stage": {
       "download": "Downloading tools",
