@@ -39,7 +39,12 @@
             class="setlist-overlay__current-artist"
           ></span>
         </div>
-        <p id="setlist-current-empty" class="setlist-overlay__empty" hidden>
+        <p
+          id="setlist-current-empty"
+          class="setlist-overlay__empty"
+          data-ovl-text="currentEmpty"
+          hidden
+        >
           目前無演唱曲目
         </p>
       </section>
@@ -55,7 +60,11 @@
           >
             Set List
           </span>
-          <span class="setlist-overlay__history-caption">已唱紀錄</span>
+          <span
+            class="setlist-overlay__history-caption"
+            data-ovl-text="historyCaption"
+            >已唱紀錄</span
+          >
         </header>
         <div
           id="setlist-history-viewport"
@@ -63,7 +72,12 @@
         >
           <ol id="setlist-history" class="setlist-overlay__history-list"></ol>
         </div>
-        <p id="setlist-history-empty" class="setlist-overlay__empty" hidden>
+        <p
+          id="setlist-history-empty"
+          class="setlist-overlay__empty"
+          data-ovl-text="historyEmpty"
+          hidden
+        >
           尚無已唱歌曲
         </p>
       </section>

@@ -1,4 +1,5 @@
 import { createOverlayConnection } from './runtime.mjs';
+import { setOverlayLanguage } from './messages.mjs';
 import { createOverlayFontObserver } from './appearance.mjs';
 
 // Page-level subscriptions only. Identity, revision and retry policy stay in runtime.
@@ -51,8 +52,10 @@ export function createOverlayHost(options = {}) {
 
   const connection = (options.createConnection ?? createOverlayConnection)({
     kind: options.kind,
-    onConfig(slot) {
-      if (!disposed) options.onConfig?.(slot);
+    onConfig(slot, language) {
+      if (disposed) return;
+      setOverlayLanguage(document, language);
+      options.onConfig?.(slot);
     },
     onSnapshot(snapshot) {
       if (disposed) return;

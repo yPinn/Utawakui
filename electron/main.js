@@ -59,7 +59,12 @@ if (!runtimeRestriction.allowed) {
 // Resolve the UI language once per launch; Chromium's strings and
 // navigator.language follow it, and changing it takes a relaunch.
 const { readUiLanguagePreference } = require('./lib/config');
-const { resolveUiLocale, setUiLocale, getUiLocale } = require('./lib/uiLocale');
+const {
+  resolveOutputLocale,
+  resolveUiLocale,
+  setUiLocale,
+  getUiLocale,
+} = require('./lib/uiLocale');
 const { PSEUDO_LOCALE } = require('../shared/pseudoLocale.mjs');
 const usePseudoLocale = readDeveloperOptions(process.argv, {
   isPackagedRuntime,
@@ -1126,6 +1131,8 @@ if (!gotSingleInstanceLock) {
         await spoutOutputRuntimeController?.stop();
       },
       onOverlaySlotsChange: () => outputWindowManager?.syncSlots(),
+      getOverlayLanguage: () =>
+        resolveOutputLocale(configState.getConfig().outputLanguage),
       logger: runtimeDiagnosticsLogger,
     });
     outputWindowManager = createOutputWindowManager({
@@ -1581,6 +1588,8 @@ if (!gotSingleInstanceLock) {
       validateDownloadDir: configState.validateDownloadDir,
       getMainWindow: windowState.getMainWindow,
       getPreferredSystemLanguages: () => app.getPreferredSystemLanguages(),
+      applyOutputLanguage: () =>
+        outputRuntimeController?.refreshOverlayLanguage(),
       notifyLibraryUpdated,
       recordDiagnostic,
       titlebarColors: windowState.TITLEBAR_COLORS,

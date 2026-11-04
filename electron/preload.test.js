@@ -72,6 +72,8 @@ const MAIN_INVOKE_CHANNELS = [
   'config:get-ui-language',
   'config:set-ui-language',
   'config:get-ui-language-target',
+  'config:get-output-language',
+  'config:set-output-language',
   'config:set-auto-music-analysis',
   'config:set-youtube-browser-cookies',
   'config:set-auto-error-reporting',

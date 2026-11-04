@@ -5,6 +5,8 @@ import {
   matchSupportedLocale,
   resolveUiLocale,
   setUiLocale,
+  OUTPUT_LANGUAGE_PREFERENCES,
+  resolveOutputLocale,
 } from './uiLocale.js';
 
 const WITH_ENGLISH = ['zh-TW', 'en-US'];
@@ -66,5 +68,15 @@ describe('setUiLocale', () => {
   it('rejects unsupported locales', () => {
     setUiLocale('fr-FR');
     expect(getUiLocale()).toBe('zh-TW');
+  });
+});
+
+describe('resolveOutputLocale', () => {
+  it('uses a chosen Output language or follows the UI language', () => {
+    expect(OUTPUT_LANGUAGE_PREFERENCES).toEqual(['ui', 'zh-TW', 'en-US']);
+    expect(resolveOutputLocale('en-US', 'zh-TW')).toBe('en-US');
+    expect(resolveOutputLocale('ui', 'en-US')).toBe('en-US');
+    expect(resolveOutputLocale('ui', 'en-XA')).toBe('en-US');
+    expect(resolveOutputLocale('ui', 'fr-FR')).toBe('zh-TW');
   });
 });

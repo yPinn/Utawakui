@@ -551,5 +551,17 @@
   "UI_LANGUAGE_UPDATE_FAILED": {
     "title": "無法變更介面語言",
     "message": "目前無法變更介面語言，請稍後再試。"
+  },
+  "OUTPUT_LANGUAGE_INVALID": {
+    "title": "無法變更畫面輸出語言",
+    "message": "這個設定無效，請重新選擇。"
+  },
+  "OUTPUT_LANGUAGE_READ_FAILED": {
+    "title": "無法讀取畫面輸出語言",
+    "message": "目前無法讀取畫面輸出語言。"
+  },
+  "OUTPUT_LANGUAGE_UPDATE_FAILED": {
+    "title": "無法變更畫面輸出語言",
+    "message": "目前無法變更畫面輸出語言，請稍後再試。"
   }
 }

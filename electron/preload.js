@@ -603,6 +603,9 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:set-ui-language', preference),
   getUiLanguageTarget: () =>
     ipcRenderer.invoke('config:get-ui-language-target'),
+  getOutputLanguage: () => ipcRenderer.invoke('config:get-output-language'),
+  setOutputLanguage: (preference) =>
+    ipcRenderer.invoke('config:set-output-language', preference),
   initialSidebarWidth: readInitialSidebarWidth(),
   getSidebarWidth: () => ipcRenderer.invoke('config:get-sidebar-width'),
   setSidebarWidth: (width) =>

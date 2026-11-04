@@ -156,6 +156,10 @@ function parseOverlayConfig(value) {
   return value;
 }
 
+function configLanguage(config) {
+  return typeof config?.language === 'string' ? config.language : '';
+}
+
 function slotFromConfig(config, kind) {
   if (!config) return null;
   if (!kind) return config.slots;
@@ -472,7 +476,10 @@ export function createOverlayConnection(options = {}) {
       if (!message) return;
       if (message.type === 'overlay.config.snapshot') {
         lastConfigRevision = message.overlayConfig.revision;
-        onConfig(slotFromConfig(message.overlayConfig, options.kind));
+        onConfig(
+          slotFromConfig(message.overlayConfig, options.kind),
+          configLanguage(message.overlayConfig),
+        );
         return;
       }
       if (message.type === 'lyrics.document') {
@@ -556,7 +563,10 @@ export function createOverlayConnection(options = {}) {
           message.overlayConfig.revision > lastConfigRevision
         ) {
           lastConfigRevision = message.overlayConfig.revision;
-          onConfig(slotFromConfig(message.overlayConfig, options.kind));
+          onConfig(
+            slotFromConfig(message.overlayConfig, options.kind),
+            configLanguage(message.overlayConfig),
+          );
         }
       }
     });

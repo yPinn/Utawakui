@@ -13,7 +13,11 @@ const {
   isWindowCloseBehavior,
 } = require('../../shared/windowCloseBehaviorContract.mjs');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
-const { UI_LANGUAGE_PREFERENCES, resolveUiLocale } = require('../lib/uiLocale');
+const {
+  OUTPUT_LANGUAGE_PREFERENCES,
+  UI_LANGUAGE_PREFERENCES,
+  resolveUiLocale,
+} = require('../lib/uiLocale');
 
 // Copy comes from errors.<CODE> in the UI catalog.
 function createValidationError(code) {
@@ -54,6 +58,7 @@ function registerConfigHandlers({
   applyAppUpdateAutoCheck = () => undefined,
   applyWindowCloseBehavior = () => undefined,
   getPreferredSystemLanguages = () => [],
+  applyOutputLanguage = () => undefined,
 }) {
   ipcMain.handle('config:get-obs-arrangement-dock', async () =>
     runConfigOperation(
@@ -554,6 +559,35 @@ function registerConfigHandlers({
         resolveUiLocale(getConfig().uiLanguage, getPreferredSystemLanguages()),
     ),
   );
+
+  ipcMain.handle('config:get-output-language', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-output-language',
+        code: 'OUTPUT_LANGUAGE_READ_FAILED',
+      },
+      () => getConfig().outputLanguage,
+    ),
+  );
+
+  ipcMain.handle('config:set-output-language', async (_event, preference) => {
+    if (!OUTPUT_LANGUAGE_PREFERENCES.includes(preference)) {
+      throw createValidationError('OUTPUT_LANGUAGE_INVALID');
+    }
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-output-language',
+        code: 'OUTPUT_LANGUAGE_UPDATE_FAILED',
+      },
+      () => {
+        updateConfig({ outputLanguage: preference });
+        applyOutputLanguage();
+        return getConfig().outputLanguage;
+      },
+    );
+  });
 }
 
 module.exports = { registerConfigHandlers };

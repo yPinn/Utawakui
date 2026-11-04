@@ -93,5 +93,13 @@
     "restartSeparation": "Accompaniment processing will stop, canceling the current song and the rest of the queue.",
     "restartOutputResumes": "Output will be interrupted and resumes automatically after reopening.",
     "restartOutputStops": "Output will stop and needs to be started again after reopening."
+  },
+  "outputLanguage": {
+    "title": "Output language",
+    "guidance": "For text shown on the stream output. Applies right away.",
+    "label": "Output language",
+    "ui": "Same as display language",
+    "readFailed": "Couldn't read the Output language setting.",
+    "saveFailed": "The Output language wasn't changed. Try again."
   }
 }

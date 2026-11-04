@@ -177,7 +177,8 @@ migrate feature by feature, so new or edited text follows these rules now:
 - Main public errors resolve `errors.<CODE>` keys; the IPC error shape is
   unchanged.
 - Not catalog text: data rules (lyrics role markers, regex, matching), user or
-  source content, OBS Output and overlay text (a separate Output language), demo
+  source content, OBS Output and overlay text (a separate Output language in
+  `overlay/shared/messages.mjs`), demo
   components, test fixtures, and dev-only workbenches (built only under
   `import.meta.env.DEV` or registered only when `windowState.isDev`). The UI
   literal ratchet lists those workbench paths in `DEV_ONLY`; a workbench file

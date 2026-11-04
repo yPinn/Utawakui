@@ -36,6 +36,7 @@ function register(overrides = {}) {
     windowCloseBehavior: 'ask',
     lastSeenAnnouncementVersion: null,
     uiLanguage: 'system',
+    outputLanguage: 'ui',
   };
   const getConfig = vi.fn(() => config);
   const updateConfig = vi.fn((patch) => {
@@ -169,6 +170,8 @@ describe('registerConfigHandlers', () => {
       'config:get-ui-language',
       'config:set-ui-language',
       'config:get-ui-language-target',
+      'config:get-output-language',
+      'config:set-output-language',
     ]);
   });
 
@@ -937,5 +940,22 @@ describe('registerConfigHandlers', () => {
       uiLanguage: 'zh-TW',
     });
     expect(await target()).toBe('zh-TW');
+  });
+
+  it('persists a supported Output language and applies it live', async () => {
+    const applyOutputLanguage = vi.fn();
+    const { ipcMain, updateConfig } = register({ applyOutputLanguage });
+    const get = ipcMain.handlers.get('config:get-output-language');
+    const set = ipcMain.handlers.get('config:set-output-language');
+
+    expect(await get()).toBe('ui');
+    for (const invalid of ['system', 'fr-FR', '', null])
+      await expect(set({}, invalid)).rejects.toThrow();
+    expect(applyOutputLanguage).not.toHaveBeenCalled();
+    expect(await set({}, 'en-US')).toBe('en-US');
+    expect(updateConfig).toHaveBeenCalledExactlyOnceWith({
+      outputLanguage: 'en-US',
+    });
+    expect(applyOutputLanguage).toHaveBeenCalledOnce();
   });
 });

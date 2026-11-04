@@ -7,6 +7,8 @@ const {
 const { PSEUDO_LOCALE } = require('../../shared/pseudoLocale.mjs');
 
 const UI_LANGUAGE_PREFERENCES = Object.freeze(['system', ...supportedLocales]);
+// 'ui' follows the UI language; Output can be set apart for viewers.
+const OUTPUT_LANGUAGE_PREFERENCES = Object.freeze(['ui', ...supportedLocales]);
 const TRADITIONAL_CHINESE_REGIONS = new Set(['tw', 'hk', 'mo']);
 
 // Maps an OS language tag to a supported UI locale, or null.
@@ -59,10 +61,19 @@ function getUiLocale() {
   return currentUiLocale;
 }
 
+// The pseudo locale is a dev aid for the control panel; OBS gets English.
+function resolveOutputLocale(preference, uiLocale = currentUiLocale) {
+  if (supportedLocales.includes(preference)) return preference;
+  if (supportedLocales.includes(uiLocale)) return uiLocale;
+  return uiLocale === PSEUDO_LOCALE ? 'en-US' : fallbackLocale;
+}
+
 module.exports = {
+  OUTPUT_LANGUAGE_PREFERENCES,
   UI_LANGUAGE_PREFERENCES,
   getUiLocale,
   matchSupportedLocale,
+  resolveOutputLocale,
   resolveUiLocale,
   setUiLocale,
 };

@@ -52,6 +52,7 @@ function createOutputRuntime({
   recordOverlayMilestone = null,
   beforeStop = () => undefined,
   onOverlaySlotsChange = () => undefined,
+  getOverlayLanguage = () => 'zh-TW',
   logger = console,
 } = {}) {
   let server = null;
@@ -122,6 +123,7 @@ function createOutputRuntime({
     server = serverFactory({
       port,
       overlaySlots,
+      overlayLanguage: getOverlayLanguage(),
       resolveArtworkAsset,
       devFrameOrigin,
       initialProjection: projectionHub.getProjection(),
@@ -299,6 +301,11 @@ function createOutputRuntime({
     onOverlaySlotsChange();
   }
 
+  // Applies a changed Output language to connected overlays right away.
+  function refreshOverlayLanguage() {
+    server?.setOverlayLanguage?.(getOverlayLanguage());
+  }
+
   return {
     attachRenderer,
     connectSource,
@@ -308,6 +315,7 @@ function createOutputRuntime({
     publish,
     reconcileConfigured,
     reconfigure,
+    refreshOverlayLanguage,
     setOverlaySlots,
     start,
     startConfigured,

@@ -1,6 +1,7 @@
 import { createReceiptMotionController } from './receiptMotion.mjs';
 import { createSetlistCurrentMotionController } from './setlistMotion.mjs';
 import { receiptPageLayout } from '../../shared/presentation/receiptSetlist.mjs';
+import { overlayText } from '../shared/messages.mjs';
 
 // This DOM adapter is shared by the Browser Source and the Vue Gallery preview.
 export function createReceiptView(host, { gsap = null } = {}) {
@@ -10,10 +11,10 @@ export function createReceiptView(host, { gsap = null } = {}) {
     <div class="receipt-setlist__body">
       <header class="receipt-setlist__header"><h1 class="receipt-setlist__heading">SETLIST</h1>
       </header>
-      <section class="receipt-setlist__current" aria-label="目前演唱曲目">
+      <section class="receipt-setlist__current" data-ovl-label="currentLabel" aria-label="${overlayText('currentLabel')}">
         <h2 class="receipt-setlist__label">NOW PLAYING</h2><strong class="receipt-setlist__current-title"></strong><span class="receipt-setlist__current-artist"></span>
       </section>
-      <section class="receipt-setlist__history" aria-label="已唱紀錄">
+      <section class="receipt-setlist__history" data-ovl-label="historyCaption" aria-label="${overlayText('historyCaption')}">
         <div class="receipt-setlist__viewport"><ol class="receipt-setlist__list"></ol></div>
       </section>
     </div>
@@ -55,7 +56,8 @@ export function createReceiptView(host, { gsap = null } = {}) {
     lastFrame = frame;
     host.hidden = !visible || !frame.visible;
     root.dataset.direction = settings.receiptDirection;
-    currentTitle.textContent = frame.current?.title || '等待下一首';
+    currentTitle.textContent =
+      frame.current?.title || overlayText('waitingNext');
     currentTitle.title = frame.current?.title || '';
     currentArtist.textContent = frame.current?.artist || '';
     if (rows !== null) {

@@ -93,6 +93,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   ],
   '/overlay/shared/preview.mjs': ['shared', 'preview.mjs'],
   '/overlay/shared/runtime.mjs': ['shared', 'runtime.mjs'],
+  '/overlay/shared/messages.mjs': ['shared', 'messages.mjs'],
   '/overlay/shared/state.mjs': ['shared', 'state.mjs'],
   '/overlay/shared/tokens.css': ['shared', 'tokens.css'],
   '/overlay/assets/streamer-guide.png': ['assets', 'streamer-guide.png'],

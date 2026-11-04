@@ -35,7 +35,10 @@ const {
 const { normalizePerformerWindowBounds } = require('./performerWindowBounds');
 const storageValues = require('../../shared/libraryStorageValues.json');
 const audioControlValues = require('../../shared/audioControlValues.json');
-const { UI_LANGUAGE_PREFERENCES } = require('./uiLocale');
+const {
+  OUTPUT_LANGUAGE_PREFERENCES,
+  UI_LANGUAGE_PREFERENCES,
+} = require('./uiLocale');
 
 const CURRENT_VERSION = 4;
 const UI_THEMES = ['light', 'dark'];
@@ -65,6 +68,8 @@ const DEFAULTS = {
   uiTheme: 'light',
   // 'system' or a supported UI locale; applied on the next launch.
   uiLanguage: 'system',
+  // 'ui' or a supported locale for text OBS viewers see; applies live.
+  outputLanguage: 'ui',
   autoShowArrangementOnObs: false,
   performerReadingScale: 'desk',
   performerWindowBounds: null,
@@ -368,6 +373,9 @@ function loadConfigSnapshot(configPath) {
         ? data.uiTheme
         : DEFAULTS.uiTheme,
       uiLanguage: normalizeUiLanguage(data.uiLanguage),
+      outputLanguage: OUTPUT_LANGUAGE_PREFERENCES.includes(data.outputLanguage)
+        ? data.outputLanguage
+        : DEFAULTS.outputLanguage,
       autoShowArrangementOnObs: data.autoShowArrangementOnObs === true,
       performerReadingScale: normalizePerformerReadingScale(
         data.performerReadingScale,

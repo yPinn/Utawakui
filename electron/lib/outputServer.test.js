@@ -987,6 +987,27 @@ describe('outputServer', () => {
     socket.close();
   });
 
+  it('pushes a changed Output language with the overlay config', async () => {
+    const server = createServer({ overlayLanguage: 'zh-TW' });
+    const status = await server.start();
+    const socket = connect(status);
+    const initialMessage = waitForMessage(socket);
+    await waitForOpen(socket);
+    expect(await initialMessage).toMatchObject({
+      overlayConfig: { revision: 0, language: 'zh-TW' },
+    });
+
+    const configMessage = waitForMessage(socket);
+    server.setOverlayLanguage('en-US');
+    expect(await configMessage).toMatchObject({
+      type: 'overlay.config.changed',
+      overlayConfig: { revision: 1, language: 'en-US' },
+    });
+    server.setOverlayLanguage('en-US');
+    expect(server.getOverlayConfig().revision).toBe(1);
+    socket.close();
+  });
+
   it('canonicalizes published state and rejects malformed snapshots', async () => {
     const server = createServer();
     await server.start();

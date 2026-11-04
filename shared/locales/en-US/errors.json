@@ -551,5 +551,17 @@
   "UI_LANGUAGE_UPDATE_FAILED": {
     "title": "Could not change the display language",
     "message": "The display language cannot be changed right now. Try again later."
+  },
+  "OUTPUT_LANGUAGE_INVALID": {
+    "title": "Could not change the Output language",
+    "message": "This setting is not valid. Choose again."
+  },
+  "OUTPUT_LANGUAGE_READ_FAILED": {
+    "title": "Could not read the Output language",
+    "message": "The Output language cannot be read right now."
+  },
+  "OUTPUT_LANGUAGE_UPDATE_FAILED": {
+    "title": "Could not change the Output language",
+    "message": "The Output language cannot be changed right now. Try again later."
   }
 }

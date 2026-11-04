@@ -4,10 +4,12 @@ import { useAppInfo } from '../../composables/useAppInfo.js';
 import { useAppUpdate } from '../../composables/useAppUpdate.js';
 import { useWindowsIntegrationSettings } from '../../composables/useWindowsIntegrationSettings.js';
 import { useUiLanguageSettings } from '../../composables/useUiLanguageSettings.js';
+import { useOutputLanguageSettings } from '../../composables/useOutputLanguageSettings.js';
 import SettingsSection from './SettingsSection.vue';
 import AppUpdateSettingsRow from './AppUpdateSettingsRow.vue';
 import WindowsBackgroundSettingsRow from './WindowsBackgroundSettingsRow.vue';
 import UiLanguageSettingsRow from './UiLanguageSettingsRow.vue';
+import OutputLanguageSettingsRow from './OutputLanguageSettingsRow.vue';
 import KeyboardShortcutSettingsBlock from './KeyboardShortcutSettingsBlock.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -23,6 +25,7 @@ const {
 } = useAppUpdate();
 const windowsIntegrationSettings = useWindowsIntegrationSettings();
 const uiLanguageSettings = useUiLanguageSettings();
+const outputLanguageSettings = useOutputLanguageSettings();
 
 onMounted(() => {
   refreshAppInfo();
@@ -30,6 +33,7 @@ onMounted(() => {
   refreshAppUpdateAutoCheck();
   windowsIntegrationSettings.refreshPreference();
   uiLanguageSettings.refresh();
+  outputLanguageSettings.refresh();
 });
 </script>
 
@@ -54,6 +58,17 @@ onMounted(() => {
       @refresh-preference="uiLanguageSettings.refresh"
       @set-preference="uiLanguageSettings.setPreference"
       @relaunch="uiLanguageSettings.offerRestart"
+    />
+    <OutputLanguageSettingsRow
+      :preference="outputLanguageSettings.preference.value"
+      :items="outputLanguageSettings.items"
+      :busy="outputLanguageSettings.busy.value"
+      :reading="outputLanguageSettings.reading.value"
+      :loaded="outputLanguageSettings.loaded.value"
+      :error="outputLanguageSettings.saveError.value"
+      :read-error="outputLanguageSettings.readError.value"
+      @refresh-preference="outputLanguageSettings.refresh"
+      @set-preference="outputLanguageSettings.setPreference"
     />
     <KeyboardShortcutSettingsBlock />
     <WindowsBackgroundSettingsRow

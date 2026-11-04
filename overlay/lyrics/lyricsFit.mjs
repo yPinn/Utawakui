@@ -1,3 +1,4 @@
+import { overlayText } from '../shared/messages.mjs';
 import { playbackPositionMs } from '../../shared/presentation/state.mjs';
 import {
   adaptLiveStageLyricsPresentation,
@@ -399,9 +400,7 @@ export function createLyricsFitController(options = {}) {
       const fit = ktv.displayFit;
       if (notice) {
         notice.hidden = fit?.status !== 'unfit';
-        notice.textContent = notice.hidden
-          ? ''
-          : '目前尺寸無法完整顯示此句，請放大來源範圍或調整字級。';
+        notice.textContent = notice.hidden ? '' : overlayText('lineUnfit');
       }
       if (elements)
         Object.assign(elements.root.dataset, {
@@ -614,9 +613,7 @@ export function createLyricsFitController(options = {}) {
     const selected = selectLyricsDisplayPage(entry.plan, at);
     if (notice) {
       notice.hidden = entry.plan.status !== 'unfit';
-      notice.textContent = notice.hidden
-        ? ''
-        : '目前尺寸無法完整顯示此句，請放大來源範圍或調整字級。';
+      notice.textContent = notice.hidden ? '' : overlayText('lineUnfit');
     }
     const rows = entry.rows[selected.index];
     const active =

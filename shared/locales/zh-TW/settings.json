@@ -93,5 +93,13 @@
     "restartSeparation": "伴奏處理會停止，目前歌曲與其餘排程都會取消。",
     "restartOutputResumes": "畫面輸出會中斷，重新開啟後自動恢復。",
     "restartOutputStops": "畫面輸出會停止，重新開啟後需要再次啟動。"
+  },
+  "outputLanguage": {
+    "title": "畫面輸出語言",
+    "guidance": "直播畫面上提示文字的語言，立即套用。",
+    "label": "畫面輸出語言",
+    "ui": "跟隨介面語言",
+    "readFailed": "無法讀取畫面輸出語言設定。",
+    "saveFailed": "畫面輸出語言未變更，請再試一次。"
   }
 }
