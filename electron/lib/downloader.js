@@ -28,6 +28,7 @@ const {
   runPhasedYoutubeAttempts,
   shouldRetryForPhase,
   watchUrl,
+  downloadErrorText,
 } = require('./youtubeAttempts');
 const {
   extractMetadataFields,
@@ -431,6 +432,10 @@ async function inferAlbumTitleFromFirstEntry(entries, { runner } = {}) {
   }
 }
 
+// Still asked to sign in although an imported sign-in file was offered.
+const SIGN_IN_REJECTED_RE =
+  /sign in to confirm|confirm you(?:'|’)?re not a bot|cookies are no longer valid|confirm your age/i;
+
 async function downloadAudio(videoId, destDir, options = {}) {
   const runner = requireYoutubeRunner(options.runner);
   const execute = options.signal
@@ -465,6 +470,17 @@ async function downloadAudio(videoId, destDir, options = {}) {
     }
 
     await withLoginFile(async (cookiesFile) => {
+      try {
+        await runDownloadPhases(cookiesFile);
+      } catch (error) {
+        if (cookiesFile && SIGN_IN_REJECTED_RE.test(downloadErrorText(error))) {
+          error.youtubeLoginRejected = true;
+        }
+        throw error;
+      }
+    });
+
+    async function runDownloadPhases(cookiesFile) {
       const phases = getAuthenticatedYoutubePhases(process.env, {
         loginSource,
         cookiesFile,
@@ -490,7 +506,7 @@ async function downloadAudio(videoId, destDir, options = {}) {
         ),
         runAndVerifyAudioOutput,
       );
-    });
+    }
 
     const { audioFilename } = finalizeDownloadedTrackFiles(trackDir, {
       resetLyrics,

@@ -48,7 +48,7 @@
 
 ## 其他
 
-- [YouTube 登入資料相容性](engineering/youtube-login-cookies-2026-11-05.md)（11-05）：Windows 的 Chrome／Edge 讀不到、內嵌登入被 Google 擋；建議保留 Firefox 自動讀取並新增 cookies.txt 匯入與精簡引導，未實作。
+- [YouTube 登入資料相容性](engineering/youtube-login-cookies-2026-11-05.md)（11-05）：Windows 的 Chrome／Edge 讀不到、內嵌登入被 Google 擋；保留 Firefox 自動讀取並新增 cookies.txt 匯入與精簡引導，11-05 已實作（見 ADR 0005 修訂）。
 - [全域快捷操作的分層驗證](engineering/global-keyboard-shortcut-verification-2026-10-29.md)（10-29，10-30 集中整理）：原生探針、modifier-only 推論撤回、helper／接收端及隔離互動的原始分母與限制；不解除正式平台 gate。
 - [歌詞波形 backend 預算與取消](engineering/lyrics-waveform-backend-2026-10-28.md)（10-28）：16 個 Main／9 個 Browser 合成 cases；採用 Main 分塊 producer，Browser close 後 decode 仍完成。實驗分母與限制見報告；後續 Main／cache／唯讀介面驗收見[波形契約](../contracts/lyrics-waveform.md)。
 

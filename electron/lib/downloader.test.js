@@ -125,6 +125,27 @@ describe('downloadAudio cancellation', () => {
     },
   );
 
+  it.each([
+    ['file', true],
+    ['none', false],
+  ])(
+    'flags a sign-in demand that survives the imported file (source=%s)',
+    async (loginSource, flagged) => {
+      const signIn = Object.assign(new Error('sign in'), {
+        stderr: "ERROR: [youtube] abc: Sign in to confirm you're not a bot",
+      });
+      const runner = vi.fn(async () => {
+        throw signIn;
+      });
+      const error = await downloadAudio('abc12345678', dir, {
+        runner,
+        loginSource,
+        withLoginFile: (run) => run('C:/tmp/login.txt'),
+      }).catch((caught) => caught);
+      expect(error.youtubeLoginRejected === true).toBe(flagged);
+    },
+  );
+
   it('passes an imported sign-in file to every attempt of one run', async () => {
     const forbidden = Object.assign(new Error('403'), {
       stderr: 'ERROR: unable to download video data: HTTP Error 403: Forbidden',

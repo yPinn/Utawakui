@@ -181,7 +181,7 @@
     },
     "ageRestricted": {
       "label": "Age verification needed",
-      "hint": "This needs an age-verified YouTube account. Turn on Browser sign-in data in Settings, then retry."
+      "hint": "This video needs a signed-in, age-verified account. Choose a sign-in under \"YouTube sign-in\" in Settings, then try again."
     },
     "regionRestricted": {
       "label": "Region restricted",
@@ -210,6 +210,10 @@
     "unknown": {
       "label": "Download failed",
       "hint": "Retry later; if it keeps failing, import with Local audio above."
+    },
+    "loginExpired": {
+      "label": "Sign-in may have expired",
+      "hint": "Your sign-in may have expired. Import it again."
     }
   },
   "dock": {

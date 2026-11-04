@@ -34,6 +34,7 @@ const CLASSIFICATION_RULES = [
 ];
 
 function classifyDownloadFailure(error) {
+  if (error?.youtubeLoginRejected === true) return 'login-expired';
   const text = downloadErrorText(error);
   for (const [code, pattern] of CLASSIFICATION_RULES) {
     if (pattern.test(text)) return code;

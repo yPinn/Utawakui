@@ -27,6 +27,7 @@ const FAILURE_COPY_CODES = new Set([
   'network-error',
   'disk-full',
   'bot-protected',
+  'login-expired',
   'unknown',
 ]);
 const failureCopy = (code, field) =>

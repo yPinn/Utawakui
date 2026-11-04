@@ -21,6 +21,13 @@ describe('classifyDownloadFailure', () => {
     ).toBe('members-only');
   });
 
+  it('reports a rejected imported sign-in before any text rule', () => {
+    const error = Object.assign(new Error('Sign in to confirm your age'), {
+      youtubeLoginRejected: true,
+    });
+    expect(classifyDownloadFailure(error)).toBe('login-expired');
+  });
+
   it('classifies age-restricted content', () => {
     expect(
       classifyDownloadFailure({

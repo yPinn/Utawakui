@@ -81,6 +81,16 @@ Edge or Firefox profile and act with their YouTube account, so they run only
 after an explicit opt-in (`youtubeBrowserCookies`, default `false`, shown under
 the enabled external-source feature in Settings).
 
+Amendment (2026-11-05): Chrome 127+ and current Edge keep cookies under
+App-Bound Encryption on Windows, so the sign-in phase now has one source the
+user picks (`youtubeLoginSource`: `none`, `firefox` or `file`). `file` is a
+user-exported cookies.txt reduced to YouTube/Google cookies, encrypted with
+`safeStorage`, decrypted to a temp file for one user-initiated download and
+written back with yt-dlp's rotated cookies. Every anonymous route still runs
+first, background work never signs in, and a first import shows its own notice
+(`youtubeLoginNoticeVersion`). The old opt-in migrates to `firefox`. See the
+[compatibility review](../research/engineering/youtube-login-cookies-2026-11-05.md).
+
 ### Provider work admission
 
 Provider acquisition uses bounded work lanes rather than a user-configurable
