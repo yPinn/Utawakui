@@ -16,6 +16,8 @@ const props = defineProps({
   hasSettings: { type: Boolean, default: false },
   retainSettings: { type: Boolean, default: false },
   additionalToolCount: { type: Number, default: 0 },
+  // The #tools slot lays out its own tool groups instead of one list.
+  customTools: { type: Boolean, default: false },
   additionalToolBusy: { type: [Boolean, Number], default: false },
   additionalToolAttention: { type: [Boolean, Number], default: false },
   additionalToolUnavailable: { type: Number, default: 0 },
@@ -41,7 +43,9 @@ const showSettings = computed(
 const showTools = computed(
   () =>
     props.gate.enabled &&
-    (props.items.length > 0 || props.additionalToolCount > 0),
+    (props.customTools ||
+      props.items.length > 0 ||
+      props.additionalToolCount > 0),
 );
 // Available whether the gate is enabled or not — the declaration is what
 // enabling it means, which is exactly what someone deciding whether to
@@ -144,11 +148,9 @@ const noticeLabel = computed(() =>
       v-if="showSettings || showTools"
       class="settings-feature-gate-row__body"
     >
-      <div v-if="showSettings" class="settings-feature-gate-row__settings">
-        <slot name="settings" />
-      </div>
+      <slot v-if="showTools && customTools" name="tools" />
       <SettingsDependencyList
-        v-if="showTools"
+        v-else-if="showTools"
         :items="items"
         :additional-count="additionalToolCount"
         :additional-busy="additionalToolBusy"
@@ -162,6 +164,9 @@ const noticeLabel = computed(() =>
       >
         <slot name="tools" />
       </SettingsDependencyList>
+      <div v-if="showSettings" class="settings-feature-gate-row__settings">
+        <slot name="settings" />
+      </div>
     </div>
   </article>
 </template>

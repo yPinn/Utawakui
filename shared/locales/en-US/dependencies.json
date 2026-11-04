@@ -61,7 +61,8 @@
     "unavailable": "{count} not available yet",
     "ready": "Ready",
     "loading": "Loading",
-    "line": "Tools and models · {count} items · {status}"
+    "line": "Tools and models · {count} items · {status}",
+    "group": "{title} · {status}"
   },
   "notify": {
     "fallbackName": "Component",

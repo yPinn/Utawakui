@@ -113,11 +113,6 @@ onMounted(() => {
       @download="downloadAppUpdate"
       @install="installAppUpdate"
       @set-auto-check="setAppUpdateAutoCheck"
-    />
-    <SettingsDocumentItem
-      :icon="Info"
-      :title="t('settings.support.announcements')"
-      :value="`v${announcement.version}`"
     >
       <template #actions>
         <UiIconButton
@@ -126,9 +121,22 @@ onMounted(() => {
           @click="announcement.reopen"
         />
       </template>
-    </SettingsDocumentItem>
+    </AppUpdateSettingsRow>
 
     <FeedbackReportSettingsRow @open="feedback.openReport()" />
+    <SettingsDocumentItem
+      :icon="ExternalLink"
+      :title="t('settings.support.discord')"
+      :guidance="t('settings.support.discordGuidance')"
+    >
+      <template #actions>
+        <UiIconButton
+          :icon="ExternalLink"
+          :label="t('settings.support.openDiscord')"
+          @click="openCommunityDiscord"
+        />
+      </template>
+    </SettingsDocumentItem>
     <AutoErrorReportingSettingsRow
       :reporting="autoErrorReporting.reporting.value"
       :busy="autoErrorReporting.preferenceBusy.value"
@@ -149,19 +157,5 @@ onMounted(() => {
       @export="exportDiagnostics"
       @notice-action="handleDiagnosticsNoticeAction"
     />
-
-    <SettingsDocumentItem
-      :icon="ExternalLink"
-      :title="t('settings.support.discord')"
-      :guidance="t('settings.support.discordGuidance')"
-    >
-      <template #actions>
-        <UiIconButton
-          :icon="ExternalLink"
-          :label="t('settings.support.openDiscord')"
-          @click="openCommunityDiscord"
-        />
-      </template>
-    </SettingsDocumentItem>
   </SettingsSection>
 </template>

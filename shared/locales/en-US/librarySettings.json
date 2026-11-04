@@ -20,7 +20,6 @@
     "reset": "Restore default folder",
     "noActions": "No actions available"
   },
-  "details": "Song information and play history",
   "history": {
     "title": "Play history",
     "guidance": "Saved automatically; clearing it doesn't affect the queue or playlists.",

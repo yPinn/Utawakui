@@ -61,7 +61,8 @@
     "unavailable": "{count} 項未開放",
     "ready": "已就緒",
     "loading": "讀取中",
-    "line": "工具與模型 · {count} 項 · {status}"
+    "line": "工具與模型 · {count} 項 · {status}",
+    "group": "{title} · {status}"
   },
   "notify": {
     "fallbackName": "功能元件",

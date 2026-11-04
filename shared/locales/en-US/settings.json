@@ -20,7 +20,6 @@
     "clearMessage": "The saved error log will be cleared.",
     "clearDetail": "This cannot be undone.",
     "clearConfirm": "Clear log",
-    "announcements": "Release announcements",
     "viewAnnouncements": "View release announcements",
     "discord": "Community Discord",
     "discordGuidance": "Announcements, discussion and developer contact.",
@@ -73,8 +72,6 @@
     "exportedMessage": "The file was saved where you chose."
   },
   "language": {
-    "title": "Display language",
-    "guidance": "Applies after restarting.",
     "label": "Display language",
     "system": "Use system language",
     "names": {
@@ -92,11 +89,11 @@
     "relaunchFailed": "Couldn't restart. Close and reopen Utawakui.",
     "restartSeparation": "Accompaniment processing will stop, canceling the current song and the rest of the queue.",
     "restartOutputResumes": "Output will be interrupted and resumes automatically after reopening.",
-    "restartOutputStops": "Output will stop and needs to be started again after reopening."
+    "restartOutputStops": "Output will stop and needs to be started again after reopening.",
+    "groupTitle": "Language",
+    "groupGuidance": "The display language applies after restarting; the Output language applies right away."
   },
   "outputLanguage": {
-    "title": "Output language",
-    "guidance": "For text shown on the stream output. Applies right away.",
     "label": "Output language",
     "ui": "Same as display language",
     "readFailed": "Couldn't read the Output language setting.",

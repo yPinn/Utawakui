@@ -14,7 +14,6 @@ import { useFeatureGatePresentation } from '../../composables/useFeatureGatePres
 import { useFeatureGates } from '../../composables/useFeatureGates.js';
 import { useMusicAnalysisSettings } from '../../composables/useMusicAnalysisSettings.js';
 import { useObsIntegrationSettings } from '../../composables/useObsIntegrationSettings.js';
-import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
 import { useYoutubeBrowserCookieSettings } from '../../composables/useYoutubeBrowserCookieSettings.js';
 import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
@@ -30,6 +29,7 @@ import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 import OutputRuntimeSettingsBlock from './OutputRuntimeSettingsBlock.vue';
 import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
+import SettingsDependencyList from './SettingsDependencyList.vue';
 import { t } from '../../utils/i18n.js';
 
 const OPTIONAL_FEATURE_GROUPS = Object.freeze([
@@ -53,7 +53,6 @@ const OPTIONAL_FEATURE_GROUPS = Object.freeze([
 // Gates whose #settings slot holds rows; a slot outside this set never shows.
 const SETTINGS_FEATURES = new Set([
   FEATURE_IDS.PROVIDER_FLOW,
-  FEATURE_IDS.AUDIO_PROCESSING_FLOW,
   FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
   FEATURE_IDS.OBS_INTEGRATION,
 ]);
@@ -83,18 +82,9 @@ const {
 } = useFeatureDependencies();
 const musicAnalysisSettings = useMusicAnalysisSettings();
 const lyricsAcousticCapability = useLyricsAcousticCapability();
-const lyricsToolNeedsAttention = computed(() =>
-  Boolean(
-    lyricsAcousticCapability.error.value ||
-    ['damaged', 'remove-pending', 'unavailable', 'unverified'].includes(
-      lyricsAcousticCapability.capability.value?.status,
-    ),
-  ),
-);
 const separationSettings = useSeparationSettings();
 const youtubeBrowserCookieSettings = useYoutubeBrowserCookieSettings();
 const obsIntegrationSettings = useObsIntegrationSettings();
-const obsSessionExport = useObsSessionExport();
 const { confirm: confirmAction } = useAppConfirmation();
 const systemFfmpegDetection = shallowRef(null);
 const isFfmpegSourceModalOpen = shallowRef(false);
@@ -121,6 +111,22 @@ const optionalFeatureGroups = computed(() => {
       .filter(Boolean),
   }));
 });
+
+// Processing tools in setup order: FFmpeg first, then each feature with its switches.
+const SEPARATION_MODEL_ORDER = Object.freeze([
+  'uvr-mdxnet-inst-hq-4',
+  'uvr-mdxnet-kara-2',
+  'uvr-mdxnet-inst-hq-3',
+]);
+function processingToolGroups(items = []) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  return {
+    ffmpeg: items.filter((item) => item.id === 'ffmpeg-gyan-essentials'),
+    separation: SEPARATION_MODEL_ORDER.map((id) => byId.get(id)).filter(
+      Boolean,
+    ),
+  };
+}
 
 const { settingsSection, clearSettingsSection } = useAppView();
 
@@ -368,35 +374,7 @@ onMounted(() => {
               gate.id === FEATURE_IDS.OBS_INTEGRATION &&
               obsIntegrationSettings.hasStoredPassword.value
             "
-            :additional-tool-count="
-              gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW ? 2 : 0
-            "
-            :additional-tool-loaded="
-              gate.id !== FEATURE_IDS.AUDIO_PROCESSING_FLOW ||
-              (Boolean(
-                musicAnalysisSettings.capability.value ||
-                musicAnalysisSettings.capabilityReadError.value,
-              ) &&
-                Boolean(
-                  lyricsAcousticCapability.capability.value ||
-                  lyricsAcousticCapability.error.value,
-                ))
-            "
-            :additional-tool-busy="
-              gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
-              Number(musicAnalysisSettings.capabilityBusy.value) +
-                Number(lyricsAcousticCapability.busy.value)
-            "
-            :additional-tool-attention="
-              gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
-              Number(musicToolNeedsAttention) + Number(lyricsToolNeedsAttention)
-            "
-            :additional-tool-unavailable="
-              gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
-              lyricsAcousticCapability.capability.value?.status === 'blocked'
-                ? 1
-                : 0
-            "
+            :custom-tools="gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW"
             :highlighted="
               featureGateAccessState.request?.featureId === gate.id &&
               (featureGateAccessState.request?.kind === 'setup' ||
@@ -429,32 +407,6 @@ onMounted(() => {
                 @set-allow-browser-cookies="
                   youtubeBrowserCookieSettings.setAllowBrowserCookies
                 "
-              />
-              <MusicAnalysisPreferenceRow
-                v-if="
-                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
-                "
-                :auto-analyze="musicAnalysisSettings.autoAnalyze.value"
-                :busy="musicAnalysisSettings.preferenceBusy.value"
-                :reading="musicAnalysisSettings.preferenceReading.value"
-                :loaded="musicAnalysisSettings.preferenceLoaded.value"
-                :error="musicAnalysisSettings.preferenceSaveError.value"
-                :read-error="musicAnalysisSettings.preferenceReadError.value"
-                @refresh-preference="musicAnalysisSettings.refreshPreference"
-                @set-auto-analyze="musicAnalysisSettings.setAutoAnalyze"
-              />
-              <SeparationGpuSettingsRow
-                v-if="
-                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
-                "
-                :gpu-acceleration="separationSettings.gpuAcceleration.value"
-                :preference-busy="separationSettings.preferenceBusy.value"
-                :preference-error="separationSettings.preferenceSaveError.value"
-                :read-error="separationSettings.preferenceReadError.value"
-                :reading="separationSettings.preferenceReading.value"
-                :loaded="separationSettings.preferenceLoaded.value"
-                @refresh-preference="separationSettings.refreshPreference"
-                @set-gpu-acceleration="separationSettings.setGpuAcceleration"
               />
               <OutputRuntimeSettingsBlock
                 v-if="
@@ -501,47 +453,113 @@ onMounted(() => {
                 @save="obsIntegrationSettings.save"
                 @clear-password="handleClearObsPassword"
                 @retry-connect="obsIntegrationSettings.retryConnect"
-                @export-chapters="obsSessionExport.open()"
               />
             </template>
             <template #tools>
-              <MusicAnalysisSettingsRow
-                v-if="
-                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
-                "
-                :capability="musicAnalysisSettings.capability.value"
-                :capability-busy="musicAnalysisSettings.capabilityBusy.value"
-                :stage-label="musicAnalysisSettings.stageLabel.value"
-                :progress-percent="musicAnalysisSettings.progressPercent.value"
-                :capability-error="musicAnalysisSettings.capabilityError.value"
-                :capability-read-error="
-                  musicAnalysisSettings.capabilityReadError.value
-                "
-                @refresh-capability="musicAnalysisSettings.refreshCapability"
-                @prepare="musicAnalysisSettings.prepare"
-                @repair="musicAnalysisSettings.repair"
-                @remove="handleRemoveMusicAnalysis"
-              />
-              <LyricsAcousticSettingsRow
-                v-if="
-                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
-                "
-                :capability="lyricsAcousticCapability.capability.value"
-                :busy="lyricsAcousticCapability.busy.value"
-                :operation="lyricsAcousticCapability.operation.value"
-                :error="lyricsAcousticCapability.error.value"
-                @refresh="lyricsAcousticCapability.refresh"
-                @prepare="lyricsAcousticCapability.prepare"
-                @verify="lyricsAcousticCapability.verify"
-                @repair="lyricsAcousticCapability.repair"
-                @remove="handleRemoveLyricsAcoustic"
-                @cancel="lyricsAcousticCapability.cancel"
-              />
+              <template v-if="gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW">
+                <SettingsDependencyList
+                  bare
+                  :items="processingToolGroups(gate.items).ffmpeg"
+                  @item-action="handleWorkflowItemAction"
+                  @item-advanced-action="handleWorkflowItemAdvancedAction"
+                  @notice-action="handleFeatureDependencyNoticeAction"
+                />
+                <SettingsDependencyList
+                  :title="t('capabilities.toolGroups.separation')"
+                  :items="processingToolGroups(gate.items).separation"
+                  @item-action="handleWorkflowItemAction"
+                  @item-advanced-action="handleWorkflowItemAdvancedAction"
+                  @notice-action="handleFeatureDependencyNoticeAction"
+                >
+                  <template #after>
+                    <SeparationGpuSettingsRow
+                      :gpu-acceleration="
+                        separationSettings.gpuAcceleration.value
+                      "
+                      :preference-busy="separationSettings.preferenceBusy.value"
+                      :preference-error="
+                        separationSettings.preferenceSaveError.value
+                      "
+                      :read-error="separationSettings.preferenceReadError.value"
+                      :reading="separationSettings.preferenceReading.value"
+                      :loaded="separationSettings.preferenceLoaded.value"
+                      @refresh-preference="separationSettings.refreshPreference"
+                      @set-gpu-acceleration="
+                        separationSettings.setGpuAcceleration
+                      "
+                    />
+                  </template>
+                </SettingsDependencyList>
+                <SettingsDependencyList
+                  :title="t('capabilities.toolGroups.bpm')"
+                  :additional-count="1"
+                  :additional-busy="musicAnalysisSettings.capabilityBusy.value"
+                  :additional-attention="musicToolNeedsAttention"
+                  :additional-loaded="
+                    Boolean(
+                      musicAnalysisSettings.capability.value ||
+                      musicAnalysisSettings.capabilityReadError.value,
+                    )
+                  "
+                >
+                  <MusicAnalysisSettingsRow
+                    :capability="musicAnalysisSettings.capability.value"
+                    :capability-busy="
+                      musicAnalysisSettings.capabilityBusy.value
+                    "
+                    :stage-label="musicAnalysisSettings.stageLabel.value"
+                    :progress-percent="
+                      musicAnalysisSettings.progressPercent.value
+                    "
+                    :capability-error="
+                      musicAnalysisSettings.capabilityError.value
+                    "
+                    :capability-read-error="
+                      musicAnalysisSettings.capabilityReadError.value
+                    "
+                    @refresh-capability="
+                      musicAnalysisSettings.refreshCapability
+                    "
+                    @prepare="musicAnalysisSettings.prepare"
+                    @repair="musicAnalysisSettings.repair"
+                    @remove="handleRemoveMusicAnalysis"
+                  />
+                  <template #after>
+                    <MusicAnalysisPreferenceRow
+                      :auto-analyze="musicAnalysisSettings.autoAnalyze.value"
+                      :busy="musicAnalysisSettings.preferenceBusy.value"
+                      :reading="musicAnalysisSettings.preferenceReading.value"
+                      :loaded="musicAnalysisSettings.preferenceLoaded.value"
+                      :error="musicAnalysisSettings.preferenceSaveError.value"
+                      :read-error="
+                        musicAnalysisSettings.preferenceReadError.value
+                      "
+                      @refresh-preference="
+                        musicAnalysisSettings.refreshPreference
+                      "
+                      @set-auto-analyze="musicAnalysisSettings.setAutoAnalyze"
+                    />
+                  </template>
+                </SettingsDependencyList>
+                <SettingsDependencyList bare>
+                  <LyricsAcousticSettingsRow
+                    :capability="lyricsAcousticCapability.capability.value"
+                    :busy="lyricsAcousticCapability.busy.value"
+                    :operation="lyricsAcousticCapability.operation.value"
+                    :error="lyricsAcousticCapability.error.value"
+                    @refresh="lyricsAcousticCapability.refresh"
+                    @prepare="lyricsAcousticCapability.prepare"
+                    @verify="lyricsAcousticCapability.verify"
+                    @repair="lyricsAcousticCapability.repair"
+                    @remove="handleRemoveLyricsAcoustic"
+                    @cancel="lyricsAcousticCapability.cancel"
+                  />
+                </SettingsDependencyList>
+              </template>
             </template>
           </SettingsFeatureGateRow>
           <slot :name="`${group.id}-end`" />
         </SettingsSection>
-        <slot v-if="group.id === 'processing'" name="after-processing" />
       </template>
     </div>
 

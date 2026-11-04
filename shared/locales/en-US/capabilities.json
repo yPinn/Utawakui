@@ -60,5 +60,9 @@
     "toggleLabel": "Use GPU acceleration for vocal separation",
     "readFailed": "The GPU acceleration setting can't be read. Reload it.",
     "saveFailed": "The GPU acceleration setting can't be saved and has been restored."
+  },
+  "toolGroups": {
+    "separation": "Vocal separation",
+    "bpm": "BPM analysis"
   }
 }

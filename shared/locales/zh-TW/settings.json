@@ -20,7 +20,6 @@
     "clearMessage": "已儲存的錯誤紀錄會被清除。",
     "clearDetail": "此動作無法復原。",
     "clearConfirm": "清除紀錄",
-    "announcements": "版本公告",
     "viewAnnouncements": "查看版本公告",
     "discord": "社群 Discord",
     "discordGuidance": "公告、交流與開發者聯絡。",
@@ -73,8 +72,6 @@
     "exportedMessage": "檔案已儲存在你選擇的位置。"
   },
   "language": {
-    "title": "介面語言",
-    "guidance": "重新啟動後套用。",
     "label": "介面語言",
     "system": "跟隨系統",
     "names": {
@@ -92,11 +89,11 @@
     "relaunchFailed": "無法重新啟動，請手動關閉後再開啟 Utawakui。",
     "restartSeparation": "伴奏處理會停止，目前歌曲與其餘排程都會取消。",
     "restartOutputResumes": "畫面輸出會中斷，重新開啟後自動恢復。",
-    "restartOutputStops": "畫面輸出會停止，重新開啟後需要再次啟動。"
+    "restartOutputStops": "畫面輸出會停止，重新開啟後需要再次啟動。",
+    "groupTitle": "語言",
+    "groupGuidance": "介面語言重新啟動後套用；畫面輸出語言立即套用。"
   },
   "outputLanguage": {
-    "title": "畫面輸出語言",
-    "guidance": "直播畫面上提示文字的語言，立即套用。",
     "label": "畫面輸出語言",
     "ui": "跟隨介面語言",
     "readFailed": "無法讀取畫面輸出語言設定。",

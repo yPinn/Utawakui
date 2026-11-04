@@ -40,7 +40,8 @@
       "repair": "Download again to repair",
       "refresh": "Reload",
       "remove": "Remove tools"
-    }
+    },
+    "disclosure": "Experimental: lyrics timing analysis"
   },
   "preview": {
     "track": "Library song",

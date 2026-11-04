@@ -8,7 +8,6 @@ import {
   Wrench,
   Check,
 } from '../../icons/index.js';
-import SettingsSection from './SettingsSection.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import LyricsExperimentalQueueSettings from './LyricsExperimentalQueueSettings.vue';
@@ -20,6 +19,7 @@ import { t } from '../../utils/i18n.js';
 
 const research = useLyricsResearch();
 const toolsOpen = shallowRef(false);
+const experimentOpen = shallowRef(false);
 let timer;
 const status = computed(() => research.status.value?.status);
 const statusLabel = computed(() => {
@@ -132,64 +132,71 @@ onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
-  <SettingsSection :title="t('lyricsResearch.settings.title')">
+  <!-- The rights notice stays outside the collapsed experiment. -->
+  <div class="lyrics-settings">
     <UiHint class="lyrics-settings__notice">
       {{ t('lyricsResearch.settings.notice') }}
     </UiHint>
-    <SettingsDocumentItem
-      :icon="Captions"
-      :title="t('lyricsResearch.settings.tool')"
-      :description="t('lyricsResearch.settings.toolDescription')"
-      :guidance="status === 'ready' ? '' : t('lyricsResearch.settings.size')"
-      :status="statusLabel"
-      :status-tone="statusTone"
-      status-live
-    >
-      <template #actions>
-        <UiButton
-          v-if="primary && !research.busy.value"
-          variant="accent"
-          @click="research.action(primary.action)"
-          >{{ primary.label }}</UiButton
-        >
-        <UiButton
-          v-else-if="!status"
-          variant="ghost"
-          :disabled="research.busy.value"
-          @click="research.refresh"
-          >{{ t('lyricsResearch.settings.actions.refresh') }}</UiButton
-        >
-        <UiButton
-          v-if="research.busy.value"
-          variant="secondary"
-          :aria-label="t('lyricsResearch.settings.cancelLabel')"
-          @click="research.cancel"
-          >{{ t('common.cancel') }}</UiButton
-        >
-        <SettingsDependencyActions
-          :item="managementItem"
-          @advanced-action="manage"
-        />
-      </template>
-      <template v-if="research.error.value" #feedback>
-        <UiHint tone="danger" role="alert">{{ research.error.value }}</UiHint>
-      </template>
-    </SettingsDocumentItem>
-
-    <LyricsExperimentalQueueSettings />
-
     <UiDisclosure
-      v-model:open="toolsOpen"
+      v-model:open="experimentOpen"
       class="settings-section__disclosure"
-      :label="t('lyricsResearch.settings.previewTitle')"
+      :label="t('lyricsResearch.settings.disclosure')"
     >
-      <div v-if="toolsOpen" class="lyrics-settings__details">
-        <UiHint>{{ t('lyricsResearch.settings.previewRequirement') }}</UiHint>
-        <UiHint>{{ t('lyricsResearch.settings.previewLimit') }}</UiHint>
-        <LyricsResearchPreviewTools />
-      </div>
+      <SettingsDocumentItem
+        :icon="Captions"
+        :title="t('lyricsResearch.settings.tool')"
+        :description="t('lyricsResearch.settings.toolDescription')"
+        :guidance="status === 'ready' ? '' : t('lyricsResearch.settings.size')"
+        :status="statusLabel"
+        :status-tone="statusTone"
+        status-live
+      >
+        <template #actions>
+          <UiButton
+            v-if="primary && !research.busy.value"
+            variant="accent"
+            @click="research.action(primary.action)"
+            >{{ primary.label }}</UiButton
+          >
+          <UiButton
+            v-else-if="!status"
+            variant="ghost"
+            :disabled="research.busy.value"
+            @click="research.refresh"
+            >{{ t('lyricsResearch.settings.actions.refresh') }}</UiButton
+          >
+          <UiButton
+            v-if="research.busy.value"
+            variant="secondary"
+            :aria-label="t('lyricsResearch.settings.cancelLabel')"
+            @click="research.cancel"
+            >{{ t('common.cancel') }}</UiButton
+          >
+          <SettingsDependencyActions
+            :item="managementItem"
+            @advanced-action="manage"
+          />
+        </template>
+        <template v-if="research.error.value" #feedback>
+          <UiHint tone="danger" role="alert">{{ research.error.value }}</UiHint>
+        </template>
+      </SettingsDocumentItem>
+
+      <LyricsExperimentalQueueSettings />
+
+      <UiDisclosure
+        v-model:open="toolsOpen"
+        class="settings-section__disclosure"
+        :label="t('lyricsResearch.settings.previewTitle')"
+      >
+        <div v-if="toolsOpen" class="lyrics-settings__details">
+          <UiHint>{{ t('lyricsResearch.settings.previewRequirement') }}</UiHint>
+          <UiHint>{{ t('lyricsResearch.settings.previewLimit') }}</UiHint>
+          <LyricsResearchPreviewTools />
+        </div>
+      </UiDisclosure>
     </UiDisclosure>
-  </SettingsSection>
+  </div>
 </template>
 
 <style scoped>

@@ -178,25 +178,17 @@ describe('Settings progressive disclosure', () => {
     app.unmount();
   });
 
-  it('keeps status, export and recovery outside the collapsed OBS form', async () => {
+  it('keeps status and recovery outside the collapsed OBS form', async () => {
     const props = obsProps();
-    const onExportChapters = vi.fn();
     const onRetryConnect = vi.fn();
     const { app, root } = mount(ObsIntegrationSettingsBlock, {
       ...props,
       status: props.status,
-      onExportChapters,
       onRetryConnect,
     });
     const details = find(root, 'details');
-    expect(textContent(details)).not.toContain('匯出時間標記');
-    const exportButton = findAll(
-      root,
-      (node) =>
-        node.type === 'button' && textContent(node).includes('匯出時間標記'),
-    )[0];
-    trigger(exportButton, 'onClick');
-    expect(onExportChapters).toHaveBeenCalledOnce();
+    // Session export lives with performance history, not in Settings.
+    expect(textContent(root)).not.toContain('匯出時間標記');
     props.status.observed.lifecycle = 'error';
     props.status.error = { message: '請檢查 OBS 密碼。' };
     await nextTick();

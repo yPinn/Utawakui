@@ -40,7 +40,8 @@
       "repair": "重新下載修復",
       "refresh": "重新讀取",
       "remove": "移除工具"
-    }
+    },
+    "disclosure": "實驗功能：歌詞時間分析"
   },
   "preview": {
     "track": "曲庫歌曲",

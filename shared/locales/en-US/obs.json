@@ -44,11 +44,6 @@
     "readFailed": "The display preference can't be read. Try again.",
     "saveFailed": "The display preference can't be saved and has been restored."
   },
-  "markers": {
-    "title": "Session time markers",
-    "guidance": "Export song times from a stream or recording for video chapters.",
-    "export": "Export time markers"
-  },
   "validation": {
     "host": "Enter a valid host name or IP.",
     "port": "The port must be a whole number from {min} to {max}.",

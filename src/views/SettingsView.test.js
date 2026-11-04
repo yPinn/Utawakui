@@ -26,10 +26,14 @@ const sectionSources = [
   librarySource,
   applicationSource,
   optionalSource,
-  researchSource,
   supportSource,
 ];
-const source = [viewSource, ...sectionSources, captureSource].join('\n');
+const source = [
+  viewSource,
+  ...sectionSources,
+  captureSource,
+  researchSource,
+].join('\n');
 
 describe('SettingsView document composition', () => {
   it('composes independent core, optional, research and support sections without legacy tabs or an inner page scroll', () => {
@@ -82,7 +86,11 @@ describe('SettingsView document composition', () => {
     expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
     expect(optionalSource).not.toContain('LyricsResearchSettingsBlock');
-    expect(researchSource).toContain('title="歌詞時間分析（實驗）"');
+    expect(researchSource).toContain('實驗功能：歌詞時間分析');
+    expect(researchSource).not.toContain('<SettingsSection');
+    expect(viewSource).toContain(
+      '<template #processing-end><LyricsResearchSettingsBlock /></template>',
+    );
     expect(researchSource).toContain('<LyricsExperimentalQueueSettings />');
     expect(viewSource).not.toContain('LyricsExperimentalQueueSettings');
     expect(supportSource).toContain('title="支援與維護"');
@@ -104,9 +112,13 @@ describe('SettingsView document composition', () => {
     const settingsSet = optionalSource.match(
       /const SETTINGS_FEATURES = new Set\(\[([\s\S]*?)\]\)/u,
     )[1];
+    const settingsSlot = optionalSource.slice(
+      optionalSource.indexOf('<template #settings>'),
+      optionalSource.indexOf('<template #tools>'),
+    );
     const hosted = new Set(
       [
-        ...optionalSource.matchAll(
+        ...settingsSlot.matchAll(
           /gate\.id === FEATURE_IDS\.(\w+) &&\s+(?:\(?gate\.enabled)/gu,
         ),
       ].map((match) => match[1]),
@@ -163,32 +175,32 @@ describe('SettingsView behavior wiring', () => {
     expect(source).not.toContain('useLibraryMetadataMaintenance');
   });
 
-  it('nests BPM and GPU controls inside the audio-processing capability', () => {
-    const gateRowStart = optionalSource.indexOf('<SettingsFeatureGateRow');
-    const bpmRow = optionalSource.indexOf(
-      '<MusicAnalysisSettingsRow',
-      gateRowStart,
+  it('groups each processing switch with its tools in setup order', () => {
+    const tools = optionalSource.slice(
+      optionalSource.indexOf('<template #tools>'),
+      optionalSource.indexOf('</SettingsFeatureGateRow>'),
     );
-    const gpuRow = optionalSource.indexOf(
+    const at = (marker) => tools.indexOf(marker);
+    expect(tools).toMatch(
+      /v-if="gate\.id === FEATURE_IDS\.AUDIO_PROCESSING_FLOW"/u,
+    );
+    // FFmpeg, then separation (models + GPU), BPM (tool + switch), lyrics timing.
+    const order = [
+      'processingToolGroups(gate.items).ffmpeg',
+      '人聲分離',
       '<SeparationGpuSettingsRow',
-      gateRowStart,
-    );
-    const gateRowEnd = optionalSource.indexOf(
-      '</SettingsFeatureGateRow>',
-      gateRowStart,
-    );
-
-    expect(gateRowStart).toBeGreaterThan(-1);
-    expect(bpmRow).toBeGreaterThan(gateRowStart);
-    expect(
-      optionalSource.indexOf('<MusicAnalysisPreferenceRow', gateRowStart),
-    ).toBeLessThan(gpuRow);
-    expect(bpmRow).toBeGreaterThan(
-      optionalSource.indexOf('<template #tools>', gateRowStart),
-    );
-    expect(gateRowEnd).toBeGreaterThan(gpuRow);
-    expect(optionalSource.slice(bpmRow, gateRowEnd)).toMatch(
-      /gate\.id\s*===\s*FEATURE_IDS\.AUDIO_PROCESSING_FLOW\s*&&\s*gate\.enabled/u,
+      'BPM 分析',
+      '<MusicAnalysisSettingsRow',
+      '<MusicAnalysisPreferenceRow',
+      '<LyricsAcousticSettingsRow',
+    ];
+    for (let index = 1; index < order.length; index += 1) {
+      expect(at(order[index]), order[index]).toBeGreaterThan(
+        at(order[index - 1]),
+      );
+    }
+    expect(optionalSource).toContain(
+      ':custom-tools="gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW"',
     );
   });
 
@@ -197,7 +209,6 @@ describe('SettingsView behavior wiring', () => {
     expect(supportSource).toContain('openCommunityDiscord');
     expect(supportSource).toContain('<FeedbackReportSettingsRow');
     expect(supportSource).toContain('<DiagnosticsSettingsRow');
-    expect(supportSource).toContain(':value="`v${announcement.version}`"');
     expect(supportSource).not.toContain('announcement.summary');
     expect(supportSource).toContain('@click="announcement.reopen"');
   });

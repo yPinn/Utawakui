@@ -20,7 +20,6 @@
     "reset": "還原預設資料夾",
     "noActions": "沒有可用的操作"
   },
-  "details": "曲目資訊與播放紀錄",
   "history": {
     "title": "播放紀錄",
     "guidance": "自動保存；清除不影響佇列或歌單。",

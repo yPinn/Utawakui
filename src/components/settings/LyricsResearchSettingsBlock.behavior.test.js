@@ -188,6 +188,7 @@ async function disclose(text, open) {
 }
 async function open() {
   mounted = mount(Component);
+  await disclose('實驗功能', true);
   await disclose('片段預覽', true);
   await nextTick();
   await nextTick();
@@ -197,7 +198,8 @@ describe('integrated experimental lyrics settings', () => {
     mounted = mount(Component);
     await nextTick();
     const details = findAll(mounted.root, (n) => n.type === 'details');
-    expect(details).toHaveLength(1);
+    // The experiment and its preview tools both start collapsed.
+    expect(details).toHaveLength(2);
     expect(details.every((n) => !n.props.open)).toBe(true);
     const notice = findAll(
       mounted.root,
@@ -215,6 +217,7 @@ describe('integrated experimental lyrics settings', () => {
   });
   it('reads environment status without downloads or inference and collapses advanced tools', async () => {
     mounted = mount(Component);
+    await disclose('實驗功能', true);
     await nextTick();
     expect(state.owner.refresh).toHaveBeenCalledTimes(1);
     expect(state.owner.action).not.toHaveBeenCalled();
@@ -232,6 +235,7 @@ describe('integrated experimental lyrics settings', () => {
   ])('offers the correct next action for %s', async (status, label, action) => {
     state.owner.status.value = { status };
     mounted = mount(Component);
+    await disclose('實驗功能', true);
     await nextTick();
     trigger(button(label), 'onClick');
     expect(state.owner.action).toHaveBeenCalledWith(action);
@@ -240,6 +244,7 @@ describe('integrated experimental lyrics settings', () => {
   it('keeps cancellation visible with advanced tools closed', async () => {
     state.owner.busy.value = true;
     mounted = mount(Component);
+    await disclose('實驗功能', true);
     await nextTick();
     trigger(button('取消'), 'onClick');
     expect(state.owner.cancel).toHaveBeenCalled();
@@ -248,6 +253,7 @@ describe('integrated experimental lyrics settings', () => {
   it('keeps maintenance in the overflow menu and dispatches each original intent', async () => {
     state.owner.status.value = { status: 'ready' };
     mounted = mount(Component);
+    await disclose('實驗功能', true);
     await nextTick();
     expect(textContent(mounted.root)).toContain('可使用');
     expect(textContent(mounted.root)).toContain('伴奏完成後自動產生詞塊');
@@ -273,6 +279,7 @@ describe('integrated experimental lyrics settings', () => {
   it('blocks a maintenance menu selection if a background operation starts while open', async () => {
     state.owner.status.value = { status: 'ready' };
     mounted = mount(Component);
+    await disclose('實驗功能', true);
     await nextTick();
     trigger(button('歌詞分析工具選項'), 'onClick', {
       stopPropagation() {},
@@ -289,6 +296,7 @@ describe('integrated experimental lyrics settings', () => {
   });
   it('refreshes status even with research tools closed and stops polling when unmounted', async () => {
     mounted = mount(Component);
+    await disclose('實驗功能', true);
     await nextTick();
     await vi.advanceTimersByTimeAsync(1000);
     expect(state.owner.refresh).toHaveBeenCalledTimes(2);
@@ -305,7 +313,7 @@ describe('integrated experimental lyrics settings', () => {
     state.owner.clearPreview.mockClear();
     await disclose(
       '片段預覽',
-      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
+      !findAll(mounted.root, (n) => n.type === 'details').at(-1).props.open,
     );
     await nextTick();
     expect(state.owner.clearPreview).toHaveBeenCalled();
@@ -327,12 +335,12 @@ describe('integrated experimental lyrics settings', () => {
     expect(button('產生預覽').props.disabled).toBe(false);
     await disclose(
       '片段預覽',
-      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
+      !findAll(mounted.root, (n) => n.type === 'details').at(-1).props.open,
     );
     await nextTick();
     await disclose(
       '片段預覽',
-      !findAll(mounted.root, (n) => n.type === 'details')[0].props.open,
+      !findAll(mounted.root, (n) => n.type === 'details').at(-1).props.open,
     );
     await nextTick();
     expect(button('產生預覽').props.disabled).toBe(true);

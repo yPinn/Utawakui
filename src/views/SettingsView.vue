@@ -12,7 +12,7 @@ import SettingsSupportSection from '../components/settings/SettingsSupportSectio
     <SettingsApplicationSection />
     <SettingsLibrarySection />
     <SettingsCapabilitiesSection>
-      <template #after-processing><LyricsResearchSettingsBlock /></template>
+      <template #processing-end><LyricsResearchSettingsBlock /></template>
       <template #output-end><CaptureOutputSettings /></template>
     </SettingsCapabilitiesSection>
     <SettingsSupportSection />

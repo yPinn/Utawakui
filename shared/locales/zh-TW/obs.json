@@ -44,11 +44,6 @@
     "readFailed": "無法讀取顯示偏好，請再試一次。",
     "saveFailed": "無法儲存顯示偏好，已恢復原設定。"
   },
-  "markers": {
-    "title": "場次時間標記",
-    "guidance": "匯出直播或錄影的曲目時間，可用於影片章節。",
-    "export": "匯出時間標記"
-  },
   "validation": {
     "host": "請輸入有效的主機名稱或 IP。",
     "port": "連接埠必須是 {min} 到 {max} 的整數。",

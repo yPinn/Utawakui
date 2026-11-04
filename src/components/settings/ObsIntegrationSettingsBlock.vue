@@ -1,13 +1,6 @@
 <script setup>
 import { computed, nextTick, shallowRef, watch } from 'vue';
-import {
-  Download,
-  Play,
-  Power,
-  RefreshCw,
-  Trash2,
-  Video,
-} from '../../icons/index.js';
+import { Play, Power, RefreshCw, Trash2, Video } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -61,7 +54,6 @@ const emit = defineEmits([
   'save',
   'clearPassword',
   'retryConnect',
-  'exportChapters',
 ]);
 
 const LIFECYCLE_TONES = Object.freeze({
@@ -375,20 +367,6 @@ watch(
         <UiButton variant="ghost" @click="dockPreference.refresh">{{
           t('obs.dock.reload')
         }}</UiButton>
-      </template>
-    </SettingsDocumentItem>
-    <SettingsDocumentItem
-      v-if="featureEnabled"
-      :title="t('obs.markers.title')"
-      :guidance="t('obs.markers.guidance')"
-      variant="nested"
-    >
-      <template #actions>
-        <UiIconButton
-          :icon="Download"
-          :label="t('obs.markers.export')"
-          @click="emit('exportChapters')"
-        />
       </template>
     </SettingsDocumentItem>
 

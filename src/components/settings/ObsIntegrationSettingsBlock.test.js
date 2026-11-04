@@ -60,10 +60,10 @@ describe('ObsIntegrationSettingsBlock', () => {
     expect(html.split('OBS 驗證失敗')).toHaveLength(2);
     expect(html.indexOf('OBS 驗證失敗')).toBeLessThan(html.indexOf('<details'));
   });
-  it('names the reusable session export by its time-marker data, not one destination format', async () => {
+  it('keeps the queue dock and leaves session export to performance history', async () => {
     const html = await renderBlock();
 
-    expect(html).toContain('匯出時間標記');
+    expect(html).not.toContain('匯出時間標記');
     expect(html).toContain('演出待唱側欄');
     expect(html).toContain('與一般播放分開，不會自動播放');
     expect(html).not.toContain('匯出 YouTube 章節');

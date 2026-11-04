@@ -223,6 +223,7 @@ function handleAction() {
             {{ actionLabel }}
           </UiButton>
         </template>
+        <slot name="actions" />
       </template>
       <template
         v-if="

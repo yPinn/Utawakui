@@ -7,7 +7,6 @@ import { useLibraryStorage } from '../../composables/useLibraryStorage.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
 import SettingsSection from './SettingsSection.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
-import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import LibraryMetadataSettingsRow from './LibraryMetadataSettingsRow.vue';
@@ -220,24 +219,18 @@ onUnmounted(() => libraryStorage.dispose());
       @cleanup="handleCleanupLibraryStorage"
     />
 
-    <UiDisclosure
-      class="settings-section__disclosure"
-      :label="t('librarySettings.details')"
-      :open="Boolean(playbackHistoryState.error)"
-    >
-      <LibraryMetadataSettingsRow />
+    <LibraryMetadataSettingsRow />
 
-      <PlaybackHistorySettingsRow
-        :record-count="recentItems.length"
-        :is-loading="
-          !playbackHistoryState.isInitialized || playbackHistoryState.isReading
-        "
-        :is-clearing="playbackHistoryState.isClearing"
-        :error="playbackHistoryState.error || ''"
-        :read-error="playbackHistoryState.readError || ''"
-        @clear="handleClearPlaybackHistory"
-        @refresh="refreshPlaybackHistory"
-      />
-    </UiDisclosure>
+    <PlaybackHistorySettingsRow
+      :record-count="recentItems.length"
+      :is-loading="
+        !playbackHistoryState.isInitialized || playbackHistoryState.isReading
+      "
+      :is-clearing="playbackHistoryState.isClearing"
+      :error="playbackHistoryState.error || ''"
+      :read-error="playbackHistoryState.readError || ''"
+      @clear="handleClearPlaybackHistory"
+      @refresh="refreshPlaybackHistory"
+    />
   </SettingsSection>
 </template>

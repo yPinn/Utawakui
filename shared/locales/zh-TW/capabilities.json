@@ -60,5 +60,9 @@
     "toggleLabel": "使用 GPU 加速人聲分離",
     "readFailed": "目前無法讀取 GPU 加速設定，請重新讀取。",
     "saveFailed": "目前無法儲存 GPU 加速設定，已恢復原設定。"
+  },
+  "toolGroups": {
+    "separation": "人聲分離",
+    "bpm": "BPM 分析"
   }
 }
