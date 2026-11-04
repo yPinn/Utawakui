@@ -140,7 +140,7 @@ describe('useSeparationPreparation', () => {
     expect(preparation.preparedTracks.value.map(({ id }) => id)).toEqual([
       'manual',
     ]);
-    expect(preparation.planHint.value).toBe('2 首 · 最多新增約 81 MB');
+    expect(preparation.planHint.value).toBe('2 首 · 最多佔用約 81 MB');
     expect(preparation.selectedMode.value).toBe(DEFAULT_SEPARATION_PRESET_ID);
     expect(preparation.modeOptions).toEqual(
       SEPARATION_PRESET_OPTIONS.map(({ id, label }) => ({

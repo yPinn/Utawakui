@@ -7,7 +7,7 @@
     "currentQueue": "Current queue",
     "goToAlbum": "Go to album: {name}",
     "goToPlaylist": "Go to playlist: {name}",
-    "title": "Play list",
+    "title": "Play queue",
     "collapse": "Collapse play queue",
     "generalLabel": "Play queue and recently played",
     "arrangementLabel": "Arrangement records",
@@ -40,7 +40,7 @@
     "aboutGb": "About {size} GB",
     "aboutMb": "About {size} MB",
     "trackCount": "{count} track | {count} tracks",
-    "planWithEstimate": "{count} · up to {size} more",
+    "planWithEstimate": "{count} · uses up to {size}",
     "source": {
       "pending": "Pending",
       "completed": "Done",

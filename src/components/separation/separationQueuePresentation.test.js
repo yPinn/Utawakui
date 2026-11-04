@@ -121,7 +121,7 @@ describe('separation queue presentation', () => {
         { id: 'one', duration: 60 },
         { id: 'two', duration: 120 },
       ]),
-    ).toBe('2 首 · 最多新增約 61 MB');
+    ).toBe('2 首 · 最多佔用約 61 MB');
     expect(
       separationPlanSummary([{ id: 'one', duration: 60 }, { id: 'unknown' }]),
     ).toBe('2 首');
