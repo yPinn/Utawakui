@@ -1,6 +1,7 @@
 import { onScopeDispose, readonly, shallowRef, toValue, watch } from 'vue';
 import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { useAppNotifications } from '../useAppNotifications.js';
+import { t } from '../../utils/i18n.js';
 
 export function useLyricsWaveform({
   trackId,
@@ -33,8 +34,8 @@ export function useLyricsWaveform({
     notify({
       key: NOTIFICATION_KEYS.LYRICS_WAVEFORM,
       tone: 'danger',
-      title: '波形快取未清除',
-      message: '請再試一次；歌詞與已保存的對時不受影響。',
+      title: t('lyricsEditor.waveform.clearFailedTitle'),
+      message: t('lyricsEditor.waveform.clearFailedMessage'),
     });
   async function cancelPending() {
     const ids = [...pending];

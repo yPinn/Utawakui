@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import { useLyricsAcousticPreview } from '../../composables/lyrics/useLyricsAcousticPreview.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   document: { type: Object, required: true },
@@ -24,28 +25,31 @@ const { enabled, prepared, frame, setEnabled } = useLyricsAcousticPreview({
 const statusLabel = computed(() => {
   if (prepared.value.status === 'ready')
     return props.estimate.preview?.methodKind === 'model'
-      ? '研究模型估計 · 原文 · 僅供本機預覽'
-      : '合成驗證資料 · 原文 · 僅供本機預覽';
+      ? t('lyricsEditor.acoustic.model')
+      : t('lyricsEditor.acoustic.synthetic');
   if (prepared.value.status === 'stale')
-    return '輔助資料已過期，沿用原歌詞時間';
-  return '輔助資料目前無法使用，沿用原歌詞時間';
+    return t('lyricsEditor.acoustic.stale');
+  return t('lyricsEditor.acoustic.unavailable');
 });
 const timingLabel = computed(
   () =>
     ({
-      t2: '正式逐詞時間',
-      'line-estimate': '整句時間估算',
-      'acoustic-estimate': '詞塊起點估計',
-      plain: '整句顯示',
-    })[frame.value?.timingSource] ?? '整句顯示',
+      t2: t('lyricsEditor.acoustic.timingWord'),
+      'line-estimate': t('lyricsEditor.acoustic.timingLine'),
+      'acoustic-estimate': t('lyricsEditor.acoustic.timingChunk'),
+      plain: t('lyricsEditor.acoustic.timingPlain'),
+    })[frame.value?.timingSource] ?? t('lyricsEditor.acoustic.timingPlain'),
 );
 </script>
 
 <template>
-  <section class="lyrics-acoustic-preview" aria-label="詞塊預覽">
+  <section
+    class="lyrics-acoustic-preview"
+    :aria-label="t('lyricsEditor.acoustic.title')"
+  >
     <div class="lyrics-acoustic-preview__header">
       <div>
-        <strong>詞塊預覽</strong>
+        <strong>{{ t('lyricsEditor.acoustic.title') }}</strong>
         <UiHint>{{ statusLabel }}</UiHint>
       </div>
       <UiButton
@@ -54,11 +58,15 @@ const timingLabel = computed(
         :aria-pressed="enabled"
         :disabled="disabled || prepared.status !== 'ready'"
         @click="setEnabled(!enabled)"
-        >音訊輔助</UiButton
+        >{{ t('lyricsEditor.acoustic.assist') }}</UiButton
       >
     </div>
     <UiHint>{{ timingLabel }}</UiHint>
-    <p v-if="frame" class="lyrics-acoustic-preview__text" aria-label="歌詞詞塊">
+    <p
+      v-if="frame"
+      class="lyrics-acoustic-preview__text"
+      :aria-label="t('lyricsEditor.acoustic.chunks')"
+    >
       <span
         v-for="chunk in frame.chunks"
         :key="chunk.chunkId"
@@ -66,7 +74,9 @@ const timingLabel = computed(
         >{{ chunk.text }}</span
       >
     </p>
-    <UiHint v-if="positionMs === null">播放所選歌曲可檢查詞塊切換。</UiHint>
+    <UiHint v-if="positionMs === null">{{
+      t('lyricsEditor.acoustic.playHint')
+    }}</UiHint>
   </section>
 </template>
 

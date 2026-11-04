@@ -95,7 +95,9 @@
     "savedBoundary": "已存句界",
     "draftBoundary": "草稿句界",
     "cursor": "播放位置",
-    "actions": "波形操作"
+    "actions": "波形操作",
+    "clearFailedTitle": "波形快取未清除",
+    "clearFailedMessage": "請再試一次；歌詞與已保存的對時不受影響。"
   },
   "review": {
     "revoke": "撤銷確認",
@@ -125,7 +127,14 @@
     "saveAndConfirm": "儲存並確認",
     "confirm": "確認對時",
     "more": "更多對時操作",
-    "actions": "對時確認操作"
+    "actions": "對時確認操作",
+    "errors": {
+      "load": "無法讀取確認狀態，請再試一次。",
+      "offsetAfterSave": "時間已儲存；同步調整未儲存，處理後再確認。",
+      "offset": "同步調整未儲存，請重新儲存後再確認。",
+      "confirmAfterSave": "時間已儲存；確認未完成，請再確認一次。",
+      "confirm": "確認操作未完成，請再試一次。"
+    }
   },
   "loop": {
     "pointA": "起點",
@@ -167,5 +176,148 @@
     "playFirst": "請先播放這首曲目。",
     "label": "片段練習",
     "hint": "片段練習：選一段反覆練唱"
+  },
+  "modes": {
+    "line": "句級對時",
+    "word": "逐字校時"
+  },
+  "segment": {
+    "seconds": "{value} 秒",
+    "lineStartNamed": "「{label}」為本行起點",
+    "selectNamed": "選取「{label}」的起點 {time}",
+    "nextNamed": "「{label}」是下一個待記錄起點",
+    "pendingNamed": "「{label}」尚待記錄",
+    "label": "逐字片段編輯器",
+    "order": "逐字起點順序",
+    "lineStart": "本行起點",
+    "next": "下一個",
+    "pending": "待記錄",
+    "nextStart": "下一個起點：",
+    "quoted": "「{label}」",
+    "recordNamed": "記錄「{label}」起點",
+    "recordTitle": "以目前播放位置記錄「{label}」起點",
+    "record": "記錄位置",
+    "complete": "起點已全部記錄；選取上方詞語可微調時間。",
+    "adjustLabel": "微調已記錄起點",
+    "adjust": "微調起點",
+    "selected": "「{label}」 {time}",
+    "earlierNamed": "將「{label}」提前 0.1 秒",
+    "laterNamed": "將「{label}」延後 0.1 秒",
+    "earlier": "提前 0.1 秒",
+    "later": "延後 0.1 秒"
+  },
+  "lineTiming": {
+    "start": "句首（秒）",
+    "setStartNow": "句首設為目前位置",
+    "endInferred": "句尾（推定，秒）",
+    "end": "句尾（秒）",
+    "unset": "尚未設定",
+    "pinEnd": "固定目前句尾",
+    "setEndNow": "句尾設為目前位置",
+    "shiftEarlier": "整句提前 0.1 秒",
+    "shiftLater": "整句延後 0.1 秒",
+    "step": "0.1 秒",
+    "wordUnavailable": "需要可分段的文字與完整起訖時間",
+    "dependency": "前一句「{text}」推定句尾將同步為 {seconds} 秒。",
+    "outsideMedia": "含原媒體範圍外的時間，未自動修正；請先檢查句首／句尾或同步調整。",
+    "invalid": "時間調整會超出片段或破壞相鄰句順序，未套用。"
+  },
+  "toolbar": {
+    "label": "歌詞時間工具",
+    "recorded": "已記錄 {done} / {total}",
+    "undoLabel": "復原歌詞時間",
+    "undo": "復原",
+    "saveLabel": "儲存歌詞時間",
+    "cancelLabel": "取消對時編輯"
+  },
+  "phrase": {
+    "title": "長句預覽",
+    "select": "預覽句子（最多 20 句）",
+    "timingWord": "原有逐字時間",
+    "timingModel": "已套用分析時間",
+    "timingEstimate": "顯示時間估計",
+    "page": "第 {current} / {total} 段",
+    "waiting": "播放此句時切換",
+    "layoutHint": "僅示意換行與分頁，實際顯示依模板尺寸調整。",
+    "noTiming": "目前沒有可用的分頁時間；以下僅為文字分組。"
+  },
+  "textProcessing": {
+    "part": "片段",
+    "line": "整行",
+    "candidate": "第 {line} 行 · {action}：{text}",
+    "title": "共用文字處理",
+    "hint": "勾選項目只在 Output 隱藏，原歌詞與時間不變。",
+    "empty": "沒有待處理項目。",
+    "restore": "全部還原"
+  },
+  "acoustic": {
+    "model": "研究模型估計 · 原文 · 僅供本機預覽",
+    "synthetic": "合成驗證資料 · 原文 · 僅供本機預覽",
+    "stale": "輔助資料已過期，沿用原歌詞時間",
+    "unavailable": "輔助資料目前無法使用，沿用原歌詞時間",
+    "timingWord": "正式逐詞時間",
+    "timingLine": "整句時間估算",
+    "timingChunk": "詞塊起點估計",
+    "timingPlain": "整句顯示",
+    "title": "詞塊預覽",
+    "assist": "音訊輔助",
+    "chunks": "歌詞詞塊",
+    "playHint": "播放所選歌曲可檢查詞塊切換。"
+  },
+  "experiment": {
+    "intro": "實驗性歌詞時間提示。",
+    "reanalyze": "校時已變更，請重新分析；目前沿用原歌詞。",
+    "turnOff": "關閉分析顯示，恢復原歌詞時間。",
+    "turnOn": "開啟分析顯示，使用已產生的歌詞時間提示。",
+    "fineLines": "{count} 句有分段時間",
+    "hintsOnly": "僅分段提示",
+    "reused": "沿用既有分析，時間未變",
+    "unavailable": "分析目前不可用，沿用原歌詞。",
+    "finishEditing": "請先結束編輯，再切換分析顯示。",
+    "button": "分析顯示"
+  },
+  "preparation": {
+    "label": "閱讀與預先設定"
+  },
+  "header": {
+    "reading": "修正讀音",
+    "timing": "調整對時",
+    "timingUnavailable": "需要已有句首時間的歌詞",
+    "vocal": "標註聲部",
+    "selectTrack": "選擇曲目",
+    "rescan": "重新掃描歌詞",
+    "noTrack": "尚未選擇曲目",
+    "displayLabel": "歌詞顯示設定",
+    "display": "顯示",
+    "edit": "編輯",
+    "actions": "歌詞編輯操作"
+  },
+  "document": {
+    "selectTrack": "請先選擇曲目。",
+    "unchecked": "尚未檢查歌詞。",
+    "section": "{role} · 段落",
+    "sectionStart": "段落起點",
+    "content": "歌詞內容",
+    "loadFailed": "歌詞讀取未完成",
+    "loadingLibrary": "正在讀取曲庫…",
+    "emptyLibrary": "曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。",
+    "loadingLyrics": "正在讀取歌詞…",
+    "missing": "還沒有歌詞。從「顯示 → 管理來源」搜尋或匯入。",
+    "emptyText": "這份歌詞沒有文字。從「顯示 → 管理來源」更換歌詞。",
+    "reading": "這行的讀音",
+    "readingRomaja": "輸入這行的羅馬拼音",
+    "readingKana": "輸入這行的假名讀音",
+    "markNamed": "標註聲部：{text}",
+    "playFrom": "從 {time} 播放",
+    "unsynced": "未同步歌詞",
+    "editTimingNamed": "編輯歌詞時間：{text}",
+    "fixReading": "修正這行讀音",
+    "returnToCurrent": "回到目前歌詞"
+  },
+  "vocal": {
+    "errors": {
+      "load": "聲部標註讀取失敗，請再試一次。",
+      "save": "聲部標註未儲存，請重新載入後再試。"
+    }
   }
 }

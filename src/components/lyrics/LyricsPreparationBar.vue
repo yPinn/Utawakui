@@ -1,10 +1,14 @@
 <script setup>
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
+import { t } from '../../utils/i18n.js';
 defineOptions({ inheritAttrs: false });
 </script>
 
 <template>
-  <section class="lyrics-preparation" aria-label="閱讀與預先設定">
+  <section
+    class="lyrics-preparation"
+    :aria-label="t('lyricsEditor.preparation.label')"
+  >
     <LyricsDisplayControls v-bind="$attrs">
       <template #font-actions><slot name="font-actions" /></template>
       <template #text-processing><slot name="text-processing" /></template>

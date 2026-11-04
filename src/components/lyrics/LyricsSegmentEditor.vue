@@ -3,6 +3,7 @@ import { computed, shallowRef, watch } from 'vue';
 import { Clock, Minus, Plus } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   draft: { type: Object, required: true },
@@ -52,12 +53,14 @@ watch(
 );
 
 function segmentLabel(segment) {
-  return String(segment?.text ?? '').trim() || '空白';
+  return String(segment?.text ?? '').trim() || t('common.blank');
 }
 
 function timeLabel(milliseconds) {
   return Number.isFinite(milliseconds)
-    ? `${(milliseconds / 1000).toFixed(2)} 秒`
+    ? t('lyricsEditor.segment.seconds', {
+        value: (milliseconds / 1000).toFixed(2),
+      })
     : '--';
 }
 
@@ -70,13 +73,16 @@ function segmentState(index) {
 
 function segmentAriaLabel(segment, index) {
   const label = segmentLabel(segment);
-  if (index === 0) return `「${label}」為本行起點`;
+  if (index === 0) return t('lyricsEditor.segment.lineStartNamed', { label });
   if (Number.isFinite(segment.startMs)) {
-    return `選取「${label}」的起點 ${timeLabel(segment.startMs)}`;
+    return t('lyricsEditor.segment.selectNamed', {
+      label,
+      time: timeLabel(segment.startMs),
+    });
   }
   return index === nextBoundaryIndex.value
-    ? `「${label}」是下一個待記錄起點`
-    : `「${label}」尚待記錄`;
+    ? t('lyricsEditor.segment.nextNamed', { label })
+    : t('lyricsEditor.segment.pendingNamed', { label });
 }
 
 function selectBoundary(index) {
@@ -92,13 +98,16 @@ function nudgeSelected(deltaMs) {
 </script>
 
 <template>
-  <div class="lyrics-segment-editor" aria-label="逐字片段編輯器">
+  <div
+    class="lyrics-segment-editor"
+    :aria-label="t('lyricsEditor.segment.label')"
+  >
     <UiScrollRegion
       class="lyrics-segment-editor__sequence"
       axis="horizontal"
       viewport-tag="ol"
       viewport-class="lyrics-segment-editor__sequence-viewport"
-      aria-label="逐字起點順序"
+      :aria-label="t('lyricsEditor.segment.order')"
     >
       <li
         v-for="(segment, index) in draft.segments"
@@ -126,12 +135,12 @@ function nudgeSelected(deltaMs) {
           <span class="lyrics-segment-editor__word-time">
             {{
               index === 0
-                ? '本行起點'
+                ? t('lyricsEditor.segment.lineStart')
                 : Number.isFinite(segment.startMs)
                   ? timeLabel(segment.startMs)
                   : index === nextBoundaryIndex
-                    ? '下一個'
-                    : '待記錄'
+                    ? t('lyricsEditor.segment.next')
+                    : t('lyricsEditor.segment.pending')
             }}
           </span>
         </button>
@@ -140,55 +149,75 @@ function nudgeSelected(deltaMs) {
 
     <div v-if="nextBoundaryIndex > 0" class="lyrics-segment-editor__workflow">
       <div class="lyrics-segment-editor__workflow-copy">
-        <span class="lyrics-segment-editor__eyebrow">下一個起點：</span>
-        <strong>「{{ nextSegmentLabel }}」</strong>
+        <span class="lyrics-segment-editor__eyebrow">{{
+          t('lyricsEditor.segment.nextStart')
+        }}</span>
+        <strong>{{
+          t('lyricsEditor.segment.quoted', { label: nextSegmentLabel })
+        }}</strong>
       </div>
       <UiButton
         class="lyrics-segment-editor__record-button"
         :icon="Clock"
         variant="accent"
         :disabled="!canTap || isSaving"
-        :aria-label="`記錄「${nextSegmentLabel}」起點`"
-        :title="`以目前播放位置記錄「${nextSegmentLabel}」起點`"
+        :aria-label="
+          t('lyricsEditor.segment.recordNamed', { label: nextSegmentLabel })
+        "
+        :title="
+          t('lyricsEditor.segment.recordTitle', { label: nextSegmentLabel })
+        "
         @click="emit('tap')"
       >
-        記錄位置
+        {{ t('lyricsEditor.segment.record') }}
       </UiButton>
     </div>
     <div v-else class="lyrics-segment-editor__complete" role="status">
-      起點已全部記錄；選取上方詞語可微調時間。
+      {{ t('lyricsEditor.segment.complete') }}
     </div>
 
     <div
       v-if="selectedBoundary"
       class="lyrics-segment-editor__adjustment"
-      aria-label="微調已記錄起點"
+      :aria-label="t('lyricsEditor.segment.adjustLabel')"
     >
       <div class="lyrics-segment-editor__adjustment-copy">
-        <span class="lyrics-segment-editor__eyebrow">微調起點</span>
-        <strong>
-          「{{ segmentLabel(selectedBoundary.segment) }}」
-          {{ timeLabel(selectedBoundary.segment.startMs) }}
-        </strong>
+        <span class="lyrics-segment-editor__eyebrow">{{
+          t('lyricsEditor.segment.adjust')
+        }}</span>
+        <strong>{{
+          t('lyricsEditor.segment.selected', {
+            label: segmentLabel(selectedBoundary.segment),
+            time: timeLabel(selectedBoundary.segment.startMs),
+          })
+        }}</strong>
       </div>
       <div class="lyrics-segment-editor__adjustment-actions">
         <UiButton
           :icon="Minus"
           :disabled="isSaving"
-          :aria-label="`將「${segmentLabel(selectedBoundary.segment)}」提前 0.1 秒`"
-          title="提前 0.1 秒"
+          :aria-label="
+            t('lyricsEditor.segment.earlierNamed', {
+              label: segmentLabel(selectedBoundary.segment),
+            })
+          "
+          :title="t('lyricsEditor.segment.earlier')"
           @click="nudgeSelected(-100)"
         >
-          提前 0.1 秒
+          {{ t('lyricsEditor.segment.earlier') }}
         </UiButton>
         <UiButton
           :icon="Plus"
           :disabled="isSaving"
-          :aria-label="`將「${segmentLabel(selectedBoundary.segment)}」延後 0.1 秒`"
-          title="延後 0.1 秒"
+          :aria-label="
+            t('lyricsEditor.segment.laterNamed', {
+              label: segmentLabel(selectedBoundary.segment),
+            })
+          "
+          :title="t('lyricsEditor.segment.later')"
           @click="nudgeSelected(100)"
         >
-          延後 0.1 秒
+          {{ t('lyricsEditor.segment.later') }}
         </UiButton>
       </div>
     </div>

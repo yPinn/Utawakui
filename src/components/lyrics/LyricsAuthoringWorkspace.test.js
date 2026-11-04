@@ -1,30 +1,26 @@
 import fs from 'fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const workspaceSource = fs.readFileSync(
+const workspaceSource = readCatalogSource(
   new URL('./LyricsAuthoringWorkspace.vue', import.meta.url),
-  'utf8',
 );
-const liveToolSource = fs.readFileSync(
+const liveToolSource = readCatalogSource(
   new URL('./LyricsLiveTool.vue', import.meta.url),
-  'utf8',
 );
-const documentPanelSource = fs.readFileSync(
+const documentPanelSource = readCatalogSource(
   new URL('./LyricsDocumentPanel.vue', import.meta.url),
-  'utf8',
 );
-const timingToolbarSource = fs.readFileSync(
+const timingToolbarSource = readCatalogSource(
   new URL('./LyricsTimingToolbar.vue', import.meta.url),
-  'utf8',
 );
-const segmentEditorSource = fs.readFileSync(
+const segmentEditorSource = readCatalogSource(
   new URL('./LyricsSegmentEditor.vue', import.meta.url),
-  'utf8',
 );
 
 function readComponent(filename) {
   const url = new URL(filename, import.meta.url);
-  return fs.existsSync(url) ? fs.readFileSync(url, 'utf8') : '';
+  return fs.existsSync(url) ? readCatalogSource(url) : '';
 }
 
 describe('LyricsAuthoringWorkspace information hierarchy', () => {
@@ -132,7 +128,7 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
       /<div\s+v-if="timingDraft \|\| showsAcousticPreview"\s+class="lyrics-timing-stack"\s*>/u,
     );
     expect(timingToolbarSource).toContain('逐字校時');
-    expect(timingToolbarSource).toContain('已記錄');
+    expect(timingToolbarSource).toContain("'lyricsEditor.toolbar.recorded'");
     expect(timingToolbarSource).not.toContain('記錄目前播放位置');
     expect(timingToolbarSource).toMatch(/>\s*復原\s*</);
     expect(timingToolbarSource).toMatch(/>\s*儲存\s*</);

@@ -4,6 +4,7 @@ import { planLyricsDisplay } from '../../../shared/presentation/lyricsDisplayLay
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   document: { type: Object, default: null },
@@ -57,38 +58,45 @@ watch(
 </script>
 
 <template>
-  <UiDisclosure v-if="candidates.length" v-model:open="open" label="長句預覽">
+  <UiDisclosure
+    v-if="candidates.length"
+    v-model:open="open"
+    :label="t('lyricsEditor.phrase.title')"
+  >
     <div v-if="open" class="lyrics-phrase-preview">
       <UiSelect
         v-if="candidates.length > 1"
         :id="selectId"
         v-model="selection"
-        label="預覽句子（最多 20 句）"
+        :label="t('lyricsEditor.phrase.select')"
         :options="candidates"
       />
       <template v-if="candidate.plan.status === 'ready'">
         <UiHint
           >{{
             candidate.plan.pageTiming === 't2'
-              ? '原有逐字時間'
+              ? t('lyricsEditor.phrase.timingWord')
               : candidate.plan.pageTiming === 'model-starts'
-                ? '已套用分析時間'
-                : '顯示時間估計'
+                ? t('lyricsEditor.phrase.timingModel')
+                : t('lyricsEditor.phrase.timingEstimate')
           }}
           ·
           {{
             active
-              ? `第 ${activeIndex + 1} / ${candidate.plan.pages.length} 段`
-              : '播放此句時切換'
+              ? t('lyricsEditor.phrase.page', {
+                  current: activeIndex + 1,
+                  total: candidate.plan.pages.length,
+                })
+              : t('lyricsEditor.phrase.waiting')
           }}</UiHint
         >
         <p class="lyrics-phrase-preview__text">
           {{ active?.text ?? candidate.plan.pages[0].text }}
         </p>
-        <UiHint>僅示意換行與分頁，實際顯示依模板尺寸調整。</UiHint>
+        <UiHint>{{ t('lyricsEditor.phrase.layoutHint') }}</UiHint>
       </template>
       <template v-else>
-        <UiHint>目前沒有可用的分頁時間；以下僅為文字分組。</UiHint>
+        <UiHint>{{ t('lyricsEditor.phrase.noTiming') }}</UiHint>
         <ol class="lyrics-phrase-preview__candidates">
           <li v-for="phrase in candidate.plan.pages" :key="phrase.sourceStart">
             {{ phrase.text }}

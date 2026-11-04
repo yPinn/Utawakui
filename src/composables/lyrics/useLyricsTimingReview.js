@@ -1,4 +1,5 @@
 import { reactive, readonly, watch, nextTick } from 'vue';
+import { t } from '../../utils/i18n.js';
 
 // Source documents own saved data. This coordinator only sequences the explicit
 // human intent; a receipt never changes the canonical document or transport.
@@ -89,7 +90,7 @@ export function useLyricsTimingReview({
         review.error = report(
           error,
           'review-load',
-          '無法讀取確認狀態，請再試一次。',
+          t('lyricsEditor.review.errors.load'),
         );
       }
     } finally {
@@ -138,8 +139,8 @@ export function useLyricsTimingReview({
       if (!(await waitForSavedOffset())) {
         if (current())
           review.error = review.timingSaved
-            ? '時間已儲存；同步調整未儲存，處理後再確認。'
-            : '同步調整未儲存，請重新儲存後再確認。';
+            ? t('lyricsEditor.review.errors.offsetAfterSave')
+            : t('lyricsEditor.review.errors.offset');
         return false;
       }
       if (!current()) return false;
@@ -188,8 +189,8 @@ export function useLyricsTimingReview({
           error,
           `review-${kind}`,
           review.timingSaved
-            ? '時間已儲存；確認未完成，請再確認一次。'
-            : '確認操作未完成，請再試一次。',
+            ? t('lyricsEditor.review.errors.confirmAfterSave')
+            : t('lyricsEditor.review.errors.confirm'),
         );
       }
       return false;

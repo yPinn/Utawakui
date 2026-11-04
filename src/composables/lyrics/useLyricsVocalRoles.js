@@ -8,6 +8,7 @@ import {
   watch,
 } from 'vue';
 import { isLyricsVocalSection } from '../../../shared/presentation/lyricsTextProcessing.mjs';
+import { t } from '../../utils/i18n.js';
 // One source owns saved role choices. Filtering remains a separate session choice.
 export function useLyricsVocalRoles({
   document,
@@ -74,7 +75,7 @@ export function useLyricsVocalRoles({
     } catch (e) {
       if (disposed || ticket !== generation) return;
       status.value = 'error';
-      error.value = '聲部標註讀取失敗，請再試一次。';
+      error.value = t('lyricsEditor.vocal.errors.load');
       reportError(e, 'load-vocal-roles', error.value);
     }
   }
@@ -133,7 +134,7 @@ export function useLyricsVocalRoles({
       if (disposed || ticket !== generation) return false;
       pending = null;
       assignments.value = saved;
-      error.value = '聲部標註未儲存，請重新載入後再試。';
+      error.value = t('lyricsEditor.vocal.errors.save');
       reportError(e, 'save-vocal-roles', error.value);
       return false;
     } finally {

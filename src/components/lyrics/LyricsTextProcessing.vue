@@ -5,13 +5,20 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
+import { t } from '../../utils/i18n.js';
 
 const { lyricsTextProcessing, selectedSource, state } = useLyrics();
 const { candidates, hiddenLineIds, setHidden, restore } = lyricsTextProcessing;
 const id = useId();
 function candidateLabel(line) {
-  const action = line.outputLabelRanges?.length ? '片段' : '整行';
-  return `第 ${line.sourceLineIndex + 1} 行 · ${action}：${line.text}`;
+  const action = line.outputLabelRanges?.length
+    ? t('lyricsEditor.textProcessing.part')
+    : t('lyricsEditor.textProcessing.line');
+  return t('lyricsEditor.textProcessing.candidate', {
+    line: line.sourceLineIndex + 1,
+    action,
+    text: line.text,
+  });
 }
 </script>
 
@@ -19,11 +26,13 @@ function candidateLabel(line) {
   <UiDisclosure
     v-if="selectedSource"
     class="lyrics-text-processing"
-    label="共用文字處理"
+    :label="t('lyricsEditor.textProcessing.title')"
   >
     <div class="lyrics-text-processing__body">
-      <UiHint>勾選項目只在 Output 隱藏，原歌詞與時間不變。</UiHint>
-      <UiHint v-if="!candidates.length">沒有待處理項目。</UiHint>
+      <UiHint>{{ t('lyricsEditor.textProcessing.hint') }}</UiHint>
+      <UiHint v-if="!candidates.length">{{
+        t('lyricsEditor.textProcessing.empty')
+      }}</UiHint>
       <UiCheckbox
         v-for="(line, index) in candidates"
         :id="`${id}-credit-${index}`"
@@ -34,7 +43,9 @@ function candidateLabel(line) {
         @update:model-value="setHidden(line.lineId, $event)"
       />
       <div v-if="hiddenLineIds.length" class="lyrics-text-processing__actions">
-        <UiButton variant="accent" @click="restore">全部還原</UiButton>
+        <UiButton variant="accent" @click="restore">{{
+          t('lyricsEditor.textProcessing.restore')
+        }}</UiButton>
       </div>
     </div>
   </UiDisclosure>

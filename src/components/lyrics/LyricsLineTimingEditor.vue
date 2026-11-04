@@ -5,6 +5,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   draft: { type: Object, required: true },
   positionMs: { type: Number, default: null },
@@ -57,13 +58,16 @@ function record(which) {
 }
 </script>
 <template>
-  <section class="lyrics-line-timing" aria-label="句級對時">
+  <section
+    class="lyrics-line-timing"
+    :aria-label="t('lyricsEditor.modes.line')"
+  >
     <p class="lyrics-line-timing__text">{{ draft.text }}</p>
     <div class="lyrics-line-timing__fields">
       <UiTextField
         :id="`${id}-start`"
         v-model="startText"
-        label="句首（秒）"
+        :label="t('lyricsEditor.lineTiming.start')"
         type="number"
         min="0"
         step="0.001"
@@ -73,7 +77,7 @@ function record(which) {
         <template #action
           ><UiIconButton
             :icon="Clock"
-            label="句首設為目前位置"
+            :label="t('lyricsEditor.lineTiming.setStartNow')"
             :disabled="!canRecord"
             @click="record('start')"
         /></template>
@@ -81,11 +85,15 @@ function record(which) {
       <UiTextField
         :id="`${id}-end`"
         v-model="endText"
-        :label="draft.endInferred ? '句尾（推定，秒）' : '句尾（秒）'"
+        :label="
+          draft.endInferred
+            ? t('lyricsEditor.lineTiming.endInferred')
+            : t('lyricsEditor.lineTiming.end')
+        "
         type="number"
         min="0"
         step="0.001"
-        placeholder="尚未設定"
+        :placeholder="t('lyricsEditor.lineTiming.unset')"
         :disabled="disabled"
         @change="commit('end')"
       >
@@ -93,13 +101,13 @@ function record(which) {
           <UiIconButton
             v-if="draft.endInferred"
             :icon="Pin"
-            label="固定目前句尾"
+            :label="t('lyricsEditor.lineTiming.pinEnd')"
             :disabled="disabled"
             @click="emit('set-end', draft.endMs)"
           />
           <UiIconButton
             :icon="Clock"
-            label="句尾設為目前位置"
+            :label="t('lyricsEditor.lineTiming.setEndNow')"
             :disabled="!canRecord"
             @click="record('end')"
           />
@@ -109,35 +117,39 @@ function record(which) {
     <div class="lyrics-line-timing__actions">
       <UiButton
         :icon="ChevronLeft"
-        aria-label="整句提前 0.1 秒"
-        title="整句提前 0.1 秒"
+        :aria-label="t('lyricsEditor.lineTiming.shiftEarlier')"
+        :title="t('lyricsEditor.lineTiming.shiftEarlier')"
         :disabled="disabled"
         @click="emit('shift', -100)"
-        >0.1 秒</UiButton
+        >{{ t('lyricsEditor.lineTiming.step') }}</UiButton
       >
       <UiButton
         :icon="ChevronRight"
-        aria-label="整句延後 0.1 秒"
-        title="整句延後 0.1 秒"
+        :aria-label="t('lyricsEditor.lineTiming.shiftLater')"
+        :title="t('lyricsEditor.lineTiming.shiftLater')"
         :disabled="disabled"
         @click="emit('shift', 100)"
-        >0.1 秒</UiButton
+        >{{ t('lyricsEditor.lineTiming.step') }}</UiButton
       >
       <UiButton
         v-if="!draft.segments?.length"
         :disabled="disabled || !canEnableSegments"
-        :title="canEnableSegments ? '' : '需要可分段的文字與完整起訖時間'"
+        :title="
+          canEnableSegments ? '' : t('lyricsEditor.lineTiming.wordUnavailable')
+        "
         @click="emit('enable-segments')"
-        >逐字校時</UiButton
+        >{{ t('lyricsEditor.modes.word') }}</UiButton
       >
     </div>
-    <UiHint v-for="line in dependencies" :key="line.lineId"
-      >前一句「{{ line.text }}」推定句尾將同步為
-      {{ seconds(line.endMs) }} 秒。</UiHint
-    >
-    <UiHint v-if="outsideMedia"
-      >含原媒體範圍外的時間，未自動修正；請先檢查句首／句尾或同步調整。</UiHint
-    >
+    <UiHint v-for="line in dependencies" :key="line.lineId">{{
+      t('lyricsEditor.lineTiming.dependency', {
+        text: line.text,
+        seconds: seconds(line.endMs),
+      })
+    }}</UiHint>
+    <UiHint v-if="outsideMedia">{{
+      t('lyricsEditor.lineTiming.outsideMedia')
+    }}</UiHint>
     <UiHint v-if="error" role="status">{{ error }}</UiHint>
   </section>
 </template>

@@ -9,6 +9,7 @@ import {
   editLineTiming,
   validTimingDraft,
 } from '../utils/lyricsLineTiming.js';
+import { t } from '../utils/i18n.js';
 export { suggestSplitOffsets } from '../utils/lyricsTiming.js';
 
 const baseDocument = shallowRef(null),
@@ -97,7 +98,7 @@ function changeLine(kind, value) {
     value,
   );
   validationError.value = result.reason
-    ? '時間調整會超出片段或破壞相鄰句順序，未套用。'
+    ? t('lyricsEditor.lineTiming.invalid')
     : '';
   return result.document ? replaceDocument(result.document) : false;
 }

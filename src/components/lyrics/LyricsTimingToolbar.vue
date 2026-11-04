@@ -2,6 +2,7 @@
 import { Check, RotateCcw, X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   canUndo: { type: Boolean, default: false },
@@ -16,45 +17,52 @@ defineEmits(['undo', 'save', 'cancel']);
 </script>
 
 <template>
-  <div class="lyrics-timing" aria-label="歌詞時間工具">
+  <div class="lyrics-timing" :aria-label="t('lyricsEditor.toolbar.label')">
     <div class="lyrics-timing__copy">
       <strong class="lyrics-timing__title">{{
-        totalBoundaries > 0 ? '逐字校時' : '句級對時'
+        totalBoundaries > 0
+          ? t('lyricsEditor.modes.word')
+          : t('lyricsEditor.modes.line')
       }}</strong>
       <span v-if="totalBoundaries > 0" class="lyrics-timing__progress">
-        已記錄 {{ completedBoundaries }} / {{ totalBoundaries }}
+        {{
+          t('lyricsEditor.toolbar.recorded', {
+            done: completedBoundaries,
+            total: totalBoundaries,
+          })
+        }}
       </span>
     </div>
     <div class="lyrics-timing__actions">
       <UiButton
         :icon="RotateCcw"
         :disabled="!canUndo || isSaving"
-        aria-label="復原歌詞時間"
-        title="復原歌詞時間"
+        :aria-label="t('lyricsEditor.toolbar.undoLabel')"
+        :title="t('lyricsEditor.toolbar.undoLabel')"
         @click="$emit('undo')"
       >
-        復原
+        {{ t('lyricsEditor.toolbar.undo') }}
       </UiButton>
       <UiButton
         :icon="Check"
         variant="accent"
         :disabled="!canSave || isSaving"
         :loading="isSaving"
-        loading-label="儲存中"
-        aria-label="儲存歌詞時間"
-        title="儲存歌詞時間"
+        :loading-label="t('common.saving')"
+        :aria-label="t('lyricsEditor.toolbar.saveLabel')"
+        :title="t('lyricsEditor.toolbar.saveLabel')"
         @click="$emit('save')"
       >
-        儲存
+        {{ t('common.save') }}
       </UiButton>
       <UiButton
         :icon="X"
         :disabled="isSaving"
-        aria-label="取消對時編輯"
-        title="取消對時編輯"
+        :aria-label="t('lyricsEditor.toolbar.cancelLabel')"
+        :title="t('lyricsEditor.toolbar.cancelLabel')"
         @click="$emit('cancel')"
       >
-        取消
+        {{ t('common.cancel') }}
       </UiButton>
     </div>
     <UiNotice

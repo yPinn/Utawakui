@@ -18,6 +18,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import LyricsFineText from './LyricsFineText.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   experimentalFrame: { type: Object, default: null },
@@ -27,8 +28,14 @@ const props = defineProps({
   isLoadingLyrics: { type: Boolean, default: false },
   trackCount: { type: Number, default: 0 },
   hasSelectedTrack: { type: Boolean, default: false },
-  selectionHint: { type: String, default: '請先選擇曲目。' },
-  uncheckedHint: { type: String, default: '尚未檢查歌詞。' },
+  selectionHint: {
+    type: String,
+    default: () => t('lyricsEditor.document.selectTrack'),
+  },
+  uncheckedHint: {
+    type: String,
+    default: () => t('lyricsEditor.document.unchecked'),
+  },
   lyricsStatus: { type: String, default: 'unchecked' },
   hasSelectedSource: { type: Boolean, default: false },
   lines: { type: Array, default: () => [] },
@@ -101,11 +108,16 @@ const editableTimingIds = computed(() =>
     : new Set(props.editableTimingLineIds),
 );
 const vocalSections = computed(() => new Set(props.vocalSectionLineIds));
-const VOCAL_ROLE_LABELS = { male: '男', female: '女', group: '合' };
+const VOCAL_ROLES = new Set(['male', 'female', 'group']);
 function vocalRoleLabel(line) {
-  const role = VOCAL_ROLE_LABELS[props.vocalRoles[line.lineId]];
+  const roleId = props.vocalRoles[line.lineId];
+  const role = VOCAL_ROLES.has(roleId)
+    ? t(`lyricsEditor.workspace.roles.${roleId}`)
+    : null;
   if (!vocalSections.value.has(line.lineId)) return role ?? '';
-  return role ? `${role} · 段落` : '段落起點';
+  return role
+    ? t('lyricsEditor.document.section', { role })
+    : t('lyricsEditor.document.sectionStart');
 }
 function clickLine(line, event) {
   if (props.isPaintingVocals) emit('paint-line', line.lineId, event.shiftKey);
@@ -317,7 +329,7 @@ watch(
       axis="both"
       viewport-class="lyrics-preview__viewport"
       role="region"
-      aria-label="歌詞內容"
+      :aria-label="t('lyricsEditor.document.content')"
       tabindex="0"
       @wheel.passive="pauseActiveLineFollowing"
       @touchmove.passive="pauseActiveLineFollowing"
@@ -330,24 +342,28 @@ watch(
       <UiNotice
         v-if="error"
         tone="danger"
-        title="歌詞讀取未完成"
+        :title="t('lyricsEditor.document.loadFailed')"
         :message="error"
         compact
       />
-      <UiHint v-else-if="isLoading" padded>正在讀取曲庫…</UiHint>
+      <UiHint v-else-if="isLoading" padded>{{
+        t('lyricsEditor.document.loadingLibrary')
+      }}</UiHint>
       <UiHint v-else-if="trackCount === 0" padded>
-        曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。
+        {{ t('lyricsEditor.document.emptyLibrary') }}
       </UiHint>
       <UiHint v-else-if="!hasSelectedTrack" padded>{{ selectionHint }}</UiHint>
-      <UiHint v-else-if="isLoadingLyrics" padded>正在讀取歌詞…</UiHint>
+      <UiHint v-else-if="isLoadingLyrics" padded>{{
+        t('lyricsEditor.document.loadingLyrics')
+      }}</UiHint>
       <UiHint v-else-if="lyricsStatus === 'missing'" padded>
-        還沒有歌詞。從「顯示 → 管理來源」搜尋或匯入。
+        {{ t('lyricsEditor.document.missing') }}
       </UiHint>
       <UiHint v-else-if="lyricsStatus === 'unchecked'" padded>
         {{ uncheckedHint }}
       </UiHint>
       <UiHint v-else-if="hasSelectedSource && lines.length === 0" padded>
-        這份歌詞沒有文字。從「顯示 → 管理來源」更換歌詞。
+        {{ t('lyricsEditor.document.emptyText') }}
       </UiHint>
       <ol
         v-else
@@ -376,14 +392,14 @@ watch(
               <UiTextField
                 :id="`lyrics-reading-line-${index}`"
                 :model-value="readingLineDraft"
-                label="這行的讀音"
+                :label="t('lyricsEditor.document.reading')"
                 label-hidden
                 autofocus
                 :disabled="isSavingReading"
                 :placeholder="
                   lyricsScript === 'ko'
-                    ? '輸入這行的羅馬拼音'
-                    : '輸入這行的假名讀音'
+                    ? t('lyricsEditor.document.readingRomaja')
+                    : t('lyricsEditor.document.readingKana')
                 "
                 @update:model-value="emit('update-reading-draft', $event)"
                 @keydown.enter="emit('commit-reading-edit', index)"
@@ -392,15 +408,15 @@ watch(
             </span>
             <UiButton
               :icon="Check"
-              title="儲存"
-              aria-label="儲存"
+              :title="t('common.save')"
+              :aria-label="t('common.save')"
               :loading="isSavingReading"
               @click="emit('commit-reading-edit', index)"
             />
             <UiButton
               :icon="X"
-              title="取消"
-              aria-label="取消"
+              :title="t('common.cancel')"
+              :aria-label="t('common.cancel')"
               :disabled="isSavingReading"
               @click="emit('cancel-reading-edit')"
             />
@@ -412,10 +428,12 @@ watch(
               :disabled="!isPaintingVocals && !canSeekLine(line)"
               :aria-label="
                 isPaintingVocals
-                  ? `標註聲部：${line.text}`
+                  ? t('lyricsEditor.document.markNamed', { text: line.text })
                   : canSeekLine(line)
-                    ? `從 ${formatLyricTime(line.start)} 播放`
-                    : '未同步歌詞'
+                    ? t('lyricsEditor.document.playFrom', {
+                        time: formatLyricTime(line.start),
+                      })
+                    : t('lyricsEditor.document.unsynced')
               "
               @click="clickLine(line, $event)"
             >
@@ -483,16 +501,20 @@ watch(
               "
               class="lyrics-line__edit"
               :icon="Clock"
-              :title="`編輯歌詞時間：${line.text}`"
-              :aria-label="`編輯歌詞時間：${line.text}`"
+              :title="
+                t('lyricsEditor.document.editTimingNamed', { text: line.text })
+              "
+              :aria-label="
+                t('lyricsEditor.document.editTimingNamed', { text: line.text })
+              "
               @click="emit('edit-timing', line.lineId)"
             />
             <UiButton
               v-if="showsReadingAid && hasReadingDocument"
               class="lyrics-line__edit"
               :icon="Pencil"
-              title="修正這行讀音"
-              aria-label="修正這行讀音"
+              :title="t('lyricsEditor.document.fixReading')"
+              :aria-label="t('lyricsEditor.document.fixReading')"
               @click="emit('start-reading-edit', index)"
             />
           </div>
@@ -507,7 +529,7 @@ watch(
       size="lg"
       shape="circle"
       :icon="LocateFixed"
-      label="回到目前歌詞"
+      :label="t('lyricsEditor.document.returnToCurrent')"
       aria-controls="lyrics-document-reader"
       @click="resumeActiveLineFollowing"
     />

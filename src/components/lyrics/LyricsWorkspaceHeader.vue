@@ -6,6 +6,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiHint from '../ui/UiHint.vue';
+import { t } from '../../utils/i18n.js';
 const props = defineProps({
   track: { type: Object, default: null },
   trackMeta: { type: String, default: '' },
@@ -35,20 +36,22 @@ const menuContent = computed(() => ({
         {
           id: 'reading',
           kind: 'action',
-          label: '修正讀音',
+          label: t('lyricsEditor.header.reading'),
           disabled: !props.canEditReadings || props.isLocked,
         },
         {
           id: 'timing',
           kind: 'action',
-          label: '調整對時',
+          label: t('lyricsEditor.header.timing'),
           disabled: !props.canEditTiming || props.isLocked,
-          disabledReason: !props.canEditTiming ? '需要已有句首時間的歌詞' : '',
+          disabledReason: !props.canEditTiming
+            ? t('lyricsEditor.header.timingUnavailable')
+            : '',
         },
         {
           id: 'vocal',
           kind: 'action',
-          label: '標註聲部',
+          label: t('lyricsEditor.header.vocal'),
           disabled: !props.canEditVocals || props.isLocked,
         },
       ],
@@ -59,13 +62,13 @@ const menuContent = computed(() => ({
         {
           id: 'selectTrack',
           kind: 'action',
-          label: '選擇曲目',
+          label: t('lyricsEditor.header.selectTrack'),
           disabled: props.isLocked,
         },
         {
           id: 'refresh',
           kind: 'action',
-          label: '重新掃描歌詞',
+          label: t('lyricsEditor.header.rescan'),
           disabled: props.isLocked || props.isReloading || !props.track,
         },
       ],
@@ -104,14 +107,14 @@ function selectAction(item) {
 <template>
   <div class="lyrics-workspace-header">
     <AppFolderWorkspaceToolbar
-      :context="track?.title || '尚未選擇曲目'"
+      :context="track?.title || t('lyricsEditor.header.noTrack')"
       :meta="trackMeta"
     >
       <template #actions>
         <slot name="review" />
         <UiPopover
           v-model:open="displayOpen"
-          aria-label="歌詞顯示設定"
+          :aria-label="t('lyricsEditor.header.displayLabel')"
           placement="bottom-end"
           :close-on-scroll="false"
           focus-on-open
@@ -123,7 +126,7 @@ function selectAction(item) {
               :active="displayOpen"
               :disabled="isLocked"
               @click="toggleDisplay"
-              >顯示</UiButton
+              >{{ t('lyricsEditor.header.display') }}</UiButton
             >
           </template>
           <slot
@@ -139,7 +142,7 @@ function selectAction(item) {
           aria-haspopup="menu"
           :aria-expanded="menuOpen"
           @click="openMenu"
-          >編輯</UiButton
+          >{{ t('lyricsEditor.header.edit') }}</UiButton
         >
       </template>
     </AppFolderWorkspaceToolbar>
@@ -147,7 +150,7 @@ function selectAction(item) {
     <UiActionMenu
       :open="menuOpen"
       :anchor="menuAnchor"
-      aria-label="歌詞編輯操作"
+      :aria-label="t('lyricsEditor.header.actions')"
       :content="menuContent"
       @select="selectAction"
       @close="menuOpen = false"

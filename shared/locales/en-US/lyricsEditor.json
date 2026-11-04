@@ -46,7 +46,7 @@
       "unavailable": "The waveform is unavailable right now",
       "timeout": "Loading timed out. Try again."
     },
-    "boundaryInvalid": "This point is outside the media or breaks the line range, so it wasn't applied.",
+    "boundaryInvalid": "This point is outside the usable range, so it wasn't applied.",
     "previewLoading": "Overview preview; loading details…",
     "preview": "Overview preview",
     "previewWithStatus": "Overview preview; {status}",
@@ -95,7 +95,9 @@
     "savedBoundary": "Saved boundary",
     "draftBoundary": "Draft boundary",
     "cursor": "Playback position",
-    "actions": "Waveform actions"
+    "actions": "Waveform actions",
+    "clearFailedTitle": "Waveform cache wasn't cleared",
+    "clearFailedMessage": "Try again. Your lyrics and saved timing aren't affected."
   },
   "review": {
     "revoke": "Revoke confirmation",
@@ -125,7 +127,14 @@
     "saveAndConfirm": "Save and confirm",
     "confirm": "Confirm timing",
     "more": "More timing actions",
-    "actions": "Timing confirmation actions"
+    "actions": "Timing confirmation actions",
+    "errors": {
+      "load": "Couldn't read the confirmation status. Try again.",
+      "offsetAfterSave": "Timing saved, but the sync offset wasn't. Fix it, then confirm.",
+      "offset": "The sync offset wasn't saved. Save again, then confirm.",
+      "confirmAfterSave": "Timing saved, but confirmation didn't finish. Confirm again.",
+      "confirm": "Confirmation didn't finish. Try again."
+    }
   },
   "loop": {
     "pointA": "start",
@@ -167,5 +176,148 @@
     "playFirst": "Play this track first.",
     "label": "Section practice",
     "hint": "Section practice: pick a section to sing repeatedly"
+  },
+  "modes": {
+    "line": "Line timing",
+    "word": "Word timing"
+  },
+  "segment": {
+    "seconds": "{value} s",
+    "lineStartNamed": "“{label}” starts the line",
+    "selectNamed": "Select the start of “{label}” at {time}",
+    "nextNamed": "“{label}” is the next start to record",
+    "pendingNamed": "“{label}” isn't recorded yet",
+    "label": "Word segment editor",
+    "order": "Word start order",
+    "lineStart": "Line start",
+    "next": "Next",
+    "pending": "Pending",
+    "nextStart": "Next start:",
+    "quoted": "“{label}”",
+    "recordNamed": "Record the start of “{label}”",
+    "recordTitle": "Record the start of “{label}” at the current position",
+    "record": "Record position",
+    "complete": "All starts are recorded. Select a word above to fine-tune it.",
+    "adjustLabel": "Fine-tune recorded starts",
+    "adjust": "Fine-tune start",
+    "selected": "“{label}” {time}",
+    "earlierNamed": "Move “{label}” 0.1 s earlier",
+    "laterNamed": "Move “{label}” 0.1 s later",
+    "earlier": "0.1 s earlier",
+    "later": "0.1 s later"
+  },
+  "lineTiming": {
+    "start": "Line start (s)",
+    "setStartNow": "Set line start to current position",
+    "endInferred": "Line end (estimated, s)",
+    "end": "Line end (s)",
+    "unset": "Not set",
+    "pinEnd": "Keep current line end",
+    "setEndNow": "Set line end to current position",
+    "shiftEarlier": "Move line 0.1 s earlier",
+    "shiftLater": "Move line 0.1 s later",
+    "step": "0.1 s",
+    "wordUnavailable": "Needs splittable text and both a start and end time",
+    "dependency": "The estimated end of the previous line “{text}” will change to {seconds} s.",
+    "outsideMedia": "Some times are outside the original media and weren't corrected. Check the line start and end, or the sync offset.",
+    "invalid": "This change would leave the part or break the order of nearby lines, so it wasn't applied."
+  },
+  "toolbar": {
+    "label": "Lyrics timing tools",
+    "recorded": "Recorded {done} / {total}",
+    "undoLabel": "Undo lyrics timing",
+    "undo": "Undo",
+    "saveLabel": "Save lyrics timing",
+    "cancelLabel": "Cancel timing edit"
+  },
+  "phrase": {
+    "title": "Long line preview",
+    "select": "Preview line (up to 20)",
+    "timingWord": "Original word timing",
+    "timingModel": "Analysis timing applied",
+    "timingEstimate": "Estimated display timing",
+    "page": "Part {current} / {total}",
+    "waiting": "Changes while this line plays",
+    "layoutHint": "Shows line breaks and pages only. The actual display follows the template size.",
+    "noTiming": "No page timing yet. Below is text grouping only."
+  },
+  "textProcessing": {
+    "part": "Part",
+    "line": "Whole line",
+    "candidate": "Line {line} · {action}: {text}",
+    "title": "Shared text cleanup",
+    "hint": "Checked items are hidden only in Output. The lyrics and timing stay the same.",
+    "empty": "Nothing to clean up.",
+    "restore": "Restore all"
+  },
+  "acoustic": {
+    "model": "Research model estimate · Original text · Local preview only",
+    "synthetic": "Synthetic test data · Original text · Local preview only",
+    "stale": "Helper data is out of date; using the original lyrics timing",
+    "unavailable": "Helper data isn't available; using the original lyrics timing",
+    "timingWord": "Word timing",
+    "timingLine": "Estimated line timing",
+    "timingChunk": "Estimated chunk starts",
+    "timingPlain": "Whole line",
+    "title": "Chunk preview",
+    "assist": "Audio assist",
+    "chunks": "Lyrics chunks",
+    "playHint": "Play the selected song to check chunk changes."
+  },
+  "experiment": {
+    "intro": "Experimental lyrics timing hints.",
+    "reanalyze": "Timing changed. Analyze again; the original lyrics are used for now.",
+    "turnOff": "Turn off to restore the original lyrics timing.",
+    "turnOn": "Turn on to use the generated timing hints.",
+    "fineLines": "{count} line has part timing | {count} lines have part timing",
+    "hintsOnly": "Part hints only",
+    "reused": "Reuses the earlier analysis; timing unchanged",
+    "unavailable": "Analysis isn't available; using the original lyrics.",
+    "finishEditing": "Finish editing before switching the analysis display.",
+    "button": "Analysis display"
+  },
+  "preparation": {
+    "label": "Reading and setup"
+  },
+  "header": {
+    "reading": "Fix readings",
+    "timing": "Adjust timing",
+    "timingUnavailable": "Needs lyrics with line start times",
+    "vocal": "Mark vocal parts",
+    "selectTrack": "Choose track",
+    "rescan": "Rescan lyrics",
+    "noTrack": "No track selected",
+    "displayLabel": "Lyrics display settings",
+    "display": "Display",
+    "edit": "Edit",
+    "actions": "Lyrics edit actions"
+  },
+  "document": {
+    "selectTrack": "Choose a track first.",
+    "unchecked": "Lyrics haven't been checked yet.",
+    "section": "{role} · Section",
+    "sectionStart": "Section start",
+    "content": "Lyrics",
+    "loadFailed": "Lyrics didn't load",
+    "loadingLibrary": "Loading library…",
+    "emptyLibrary": "The library has no tracks yet. Open Import at the top to add audio files.",
+    "loadingLyrics": "Loading lyrics…",
+    "missing": "No lyrics yet. Search or import from Display → Manage sources.",
+    "emptyText": "These lyrics have no text. Replace them from Display → Manage sources.",
+    "reading": "Reading for this line",
+    "readingRomaja": "Enter the romanization for this line",
+    "readingKana": "Enter the kana reading for this line",
+    "markNamed": "Mark vocal part: {text}",
+    "playFrom": "Play from {time}",
+    "unsynced": "Unsynced lyrics",
+    "editTimingNamed": "Edit lyrics timing: {text}",
+    "fixReading": "Fix this line's reading",
+    "returnToCurrent": "Back to current line"
+  },
+  "vocal": {
+    "errors": {
+      "load": "Couldn't load vocal parts. Try again.",
+      "save": "Vocal parts weren't saved. Reload and try again."
+    }
   }
 }
