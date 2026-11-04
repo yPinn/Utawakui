@@ -20,6 +20,7 @@ import UiModal from '../ui/UiModal.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   open: { type: Boolean, default: false },
@@ -35,30 +36,32 @@ const query = shallowRef('');
 const scopeOptions = computed(() => [
   {
     value: 'all',
-    label: '全部曲目',
+    label: t('lyricsSource.picker.all'),
     icon: Library,
   },
   {
     value: 'current-playlist',
     label: selectedPlaylist.value
-      ? `目前歌單：${selectedPlaylist.value.name}`
-      : '目前歌單',
+      ? t('lyricsSource.picker.playlistNamed', {
+          name: selectedPlaylist.value.name,
+        })
+      : t('lyricsSource.picker.playlist'),
     icon: ListMusic,
     disabled: !selectedPlaylist.value,
   },
   {
     value: 'local',
-    label: '本機檔案',
+    label: t('lyricsSource.picker.local'),
     icon: Music,
   },
   {
     value: 'missing-lyrics',
-    label: '缺歌詞',
+    label: t('lyricsSource.picker.missing'),
     icon: Captions,
   },
   {
     value: 'available-lyrics',
-    label: '有歌詞',
+    label: t('lyricsSource.picker.available'),
     icon: Music2,
   },
 ]);
@@ -101,14 +104,14 @@ const {
 const selectedScopeLabel = computed(
   () =>
     scopeOptions.value.find((option) => option.value === state.trackScope)
-      ?.label ?? '全部曲目',
+      ?.label ?? t('lyricsSource.picker.all'),
 );
 
 function lyricsStatusLabel(track) {
   const status = track.lyrics?.status;
-  if (status === 'available') return '有歌詞';
-  if (status === 'missing') return '無歌詞';
-  return '未掃描歌詞';
+  if (status === 'available') return t('lyricsSource.picker.available');
+  if (status === 'missing') return t('lyricsSource.picker.statusMissing');
+  return t('lyricsSource.picker.statusUnscanned');
 }
 
 function lyricsStatusIconTone(track) {
@@ -130,12 +133,17 @@ function handleTrackSelect(track) {
 </script>
 
 <template>
-  <UiModal :open="open" title="選擇歌詞曲目" size="wide" @close="emit('close')">
+  <UiModal
+    :open="open"
+    :title="t('lyricsSource.picker.title')"
+    size="wide"
+    @close="emit('close')"
+  >
     <div class="lyrics-track-picker">
       <div
         class="lyrics-track-picker__scope"
         role="group"
-        aria-label="曲目範圍"
+        :aria-label="t('lyricsSource.picker.scope')"
       >
         <UiButton
           v-for="option in scopeOptions"
@@ -152,23 +160,29 @@ function handleTrackSelect(track) {
 
       <UiSearchBox
         v-model="query"
-        label="搜尋曲目"
-        placeholder="搜尋歌名或歌手"
+        :label="t('lyricsSource.picker.search')"
+        :placeholder="t('lyricsSource.picker.searchPlaceholder')"
       />
 
       <div class="lyrics-track-picker__summary">
         <span>{{ selectedScopeLabel }}</span>
-        <span>{{ visibleTracks.length }} 首</span>
+        <span>{{
+          t(
+            'lyricsSource.picker.count',
+            { count: visibleTracks.length },
+            visibleTracks.length,
+          )
+        }}</span>
       </div>
 
       <UiHint
         v-if="state.trackScope === 'current-playlist' && !selectedPlaylist"
         padded
       >
-        尚未選擇播放清單。
+        {{ t('lyricsSource.picker.noPlaylist') }}
       </UiHint>
       <UiHint v-else-if="visibleTracks.length === 0" padded>
-        找不到符合的曲目。
+        {{ t('lyricsSource.picker.noMatch') }}
       </UiHint>
 
       <UiScrollRegion
@@ -191,7 +205,9 @@ function handleTrackSelect(track) {
             :active="track.id === state.selectedTrackId"
             :current="track.id === currentTrackId"
             interactive
-            :action-label="`選取 ${track.title}`"
+            :action-label="
+              t('lyricsSource.picker.selectNamed', { title: track.title })
+            "
             hide-duration
             navigation="album"
             @row-click="handleTrackSelect(track)"
@@ -203,7 +219,7 @@ function handleTrackSelect(track) {
                   v-if="track.id === state.selectedTrackId"
                   :icon="Check"
                   tone="accent"
-                  label="已選取"
+                  :label="t('lyricsSource.picker.selected')"
                 />
                 <UiStatusIcon
                   :icon="Captions"

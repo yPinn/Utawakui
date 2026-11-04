@@ -8,6 +8,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import { t } from '../../utils/i18n.js';
 
 const emit = defineEmits(['cancel', 'saved']);
 
@@ -62,17 +63,25 @@ async function handleFileImport() {
   >
     <div class="lyrics-manual-import-panel__header">
       <div>
-        <h4 id="lyrics-manual-import-title">手動匯入</h4>
-        <p>貼上 LRC 或純文字，或選擇本機歌詞檔。</p>
+        <h4 id="lyrics-manual-import-title">
+          {{ t('lyricsAcquisition.manual') }}
+        </h4>
+        <p>{{ t('lyricsSource.manual.hint') }}</p>
       </div>
-      <UiButton title="收合手動匯入" @click="emit('cancel')">收合</UiButton>
+      <UiButton
+        :title="t('lyricsSource.manual.collapseTitle')"
+        @click="emit('cancel')"
+        >{{ t('lyricsSource.manual.collapse') }}</UiButton
+      >
     </div>
 
-    <UiHint v-if="!selectedTrack" padded>請先選擇曲目。</UiHint>
+    <UiHint v-if="!selectedTrack" padded>{{
+      t('lyricsEditor.document.selectTrack')
+    }}</UiHint>
     <UiNotice
       v-if="state.manualSave.error"
       tone="danger"
-      title="歌詞未匯入"
+      :title="t('lyricsSource.manual.failed')"
       :message="state.manualSave.error"
       compact
     />
@@ -80,35 +89,39 @@ async function handleFileImport() {
     <UiTextField
       :id="`${fieldId}-label`"
       v-model="labelDraft"
-      label="標籤"
+      :label="t('lyricsSource.manual.label')"
       :maxlength="32"
-      placeholder="可留空"
+      :placeholder="t('lyricsSource.manual.optional')"
     />
 
     <UiTextarea
       :id="`${fieldId}-text`"
       v-model="textDraft"
-      label="歌詞內容"
+      :label="t('lyricsSource.manual.text')"
       :rows="8"
-      placeholder="貼上 LRC 或純文字歌詞"
+      :placeholder="t('lyricsSource.manual.placeholder')"
     />
 
     <div class="lyrics-manual-import-panel__actions">
       <UiButton
         :icon="FolderOpen"
         :disabled="state.manualSave.isSaving || isImportingFile"
-        title="選擇 LRC、VTT 或文字檔"
+        :title="t('lyricsSource.manual.fileTitle')"
         @click="handleFileImport"
       >
-        選擇檔案
+        {{ t('lyricsSource.manual.file') }}
       </UiButton>
       <UiButton
         variant="accent"
         :disabled="!canImportText"
-        title="儲存貼上的歌詞"
+        :title="t('lyricsSource.manual.saveTitle')"
         @click="handleTextSubmit"
       >
-        {{ state.manualSave.isSaving ? '儲存中…' : '儲存' }}
+        {{
+          state.manualSave.isSaving
+            ? t('lyricsSource.saving')
+            : t('common.save')
+        }}
       </UiButton>
     </div>
   </UiSurface>

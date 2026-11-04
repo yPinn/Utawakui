@@ -33,6 +33,7 @@ import UiTextField from '../ui/UiTextField.vue';
 import LyricsLrclibSearchWorkspace from './LyricsLrclibSearchWorkspace.vue';
 import LyricsManualImportPanel from './LyricsManualImportPanel.vue';
 import LyricsSourceAnalysis from './LyricsSourceAnalysis.vue';
+import { catalogKey, t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -70,14 +71,17 @@ const isDeletingSource = ref(false);
 const displaySources = computed(
   () => availableSources?.value ?? selectedLyrics.value.sources,
 );
-const SOURCE_ACTION_TITLES = Object.freeze({
-  'set-label': '標籤未更新',
-  'delete-source': '歌詞來源未刪除',
-  'backfill-labels': '標籤未補齊',
+const SOURCE_ACTIONS = new Set([
+  'set-label',
+  'delete-source',
+  'backfill-labels',
+]);
+const sourceActionTitle = computed(() => {
+  const operation = state.sourceAction?.operation;
+  return t(
+    `lyricsSource.manager.actionFailed.${SOURCE_ACTIONS.has(operation) ? catalogKey(operation) : 'other'}`,
+  );
 });
-const sourceActionTitle = computed(
-  () => SOURCE_ACTION_TITLES[state.sourceAction?.operation] ?? '操作未完成',
-);
 // Cancel/close hides only the shown attempt; the domain clears it on the
 // next action or track change.
 const dismissedAttempt = ref(null);
@@ -90,7 +94,9 @@ function dismissSourceActionError() {
   dismissedAttempt.value = state.sourceAction?.attempt ?? null;
 }
 const modalTitle = computed(() =>
-  activeView.value === 'search' ? '搜尋歌詞' : '可用歌詞',
+  activeView.value === 'search'
+    ? t('lyricsSource.manager.searchTitle')
+    : t('lyricsSource.manager.sourcesTitle'),
 );
 
 watch(
@@ -191,7 +197,13 @@ function sourceTierDescription(source) {
   const tier = lyricsSourceDisplayTier(source);
   const description = describeLyricsSourceTier(tier);
   return tier === 'T1+'
-    ? `${description} ${source.filename === state.selectedSourceFilename && experimentalLyrics?.applied.value ? '已套用' : '未套用'}。`
+    ? [
+        description,
+        source.filename === state.selectedSourceFilename &&
+        experimentalLyrics?.applied.value
+          ? t('lyricsSource.manager.applied')
+          : t('lyricsSource.manager.notApplied'),
+      ].join(t('common.sentenceJoin'))
     : description;
 }
 
@@ -225,7 +237,7 @@ function reportSource(source) {
       <UiIconButton
         v-if="activeView === 'search'"
         :icon="ArrowLeft"
-        label="返回可用歌詞"
+        :label="t('lyricsSource.manager.back')"
         @click="returnToSources"
       />
       <template v-else>
@@ -233,21 +245,25 @@ function reportSource(source) {
           v-if="hasUnlabeledLrclibSources"
           :icon="Tag"
           :disabled="isBackfilling"
-          :label="isBackfilling ? '補齊標籤中…' : '補齊標籤'"
+          :label="
+            isBackfilling
+              ? t('lyricsSource.manager.backfilling')
+              : t('lyricsSource.manager.backfill')
+          "
           @click="handleBackfill"
         />
         <UiIconButton
           :icon="Plus"
           :active="isManualImportOpen"
           :aria-expanded="isManualImportOpen"
-          label="手動匯入歌詞"
+          :label="t('lyricsSource.manager.manualImport')"
           @click="isManualImportOpen = !isManualImportOpen"
         />
         <UiIconButton
           ref="searchTrigger"
           :icon="Search"
           variant="accent"
-          label="搜尋歌詞"
+          :label="t('lyricsSource.manager.searchTitle')"
           @click="openSearch"
         />
       </template>
@@ -255,11 +271,11 @@ function reportSource(source) {
     <LyricsLrclibSearchWorkspace
       v-if="activeView === 'search'"
       provider-id="all"
-      provider-label="所有線上來源"
+      :provider-label="t('lyricsSource.manager.allOnline')"
       @back="returnToSources"
     />
     <div v-else class="lyrics-source-manager">
-      <section aria-label="可使用的歌詞">
+      <section :aria-label="t('lyricsSource.manager.listLabel')">
         <UiNotice
           v-if="sourceActionError"
           class="lyrics-source-manager__action-error"
@@ -269,7 +285,7 @@ function reportSource(source) {
           :message="sourceActionError"
         />
         <UiHint v-if="selectedLyrics.sources.length === 0">
-          尚無可用歌詞，可搜尋歌詞或手動匯入。
+          {{ t('lyricsSource.manager.empty') }}
         </UiHint>
         <ul v-else class="lyrics-source-manager__list">
           <UiSurface
@@ -281,27 +297,28 @@ function reportSource(source) {
           >
             <template v-if="pendingDeleteSource?.filename === source.filename">
               <div class="lyrics-source-manager__delete-copy">
-                <strong>刪除歌詞來源？</strong>
-                <span>
-                  {{ formatLyricsSourceLabel(source) }}
-                  會被刪除，且無法復原。
-                </span>
+                <strong>{{ t('lyricsSource.manager.deleteTitle') }}</strong>
+                <span>{{
+                  t('lyricsSource.manager.deleteMessage', {
+                    name: formatLyricsSourceLabel(source),
+                  })
+                }}</span>
               </div>
               <UiButton
                 variant="secondary"
                 :disabled="isDeletingSource"
                 @click="cancelDelete"
               >
-                取消
+                {{ t('common.cancel') }}
               </UiButton>
               <UiButton
                 variant="accent"
                 intent="danger"
                 :loading="isDeletingSource"
-                loading-label="刪除中"
+                :loading-label="t('lyricsSource.manager.deleting')"
                 @click="confirmDelete"
               >
-                刪除來源
+                {{ t('lyricsSource.manager.delete') }}
               </UiButton>
             </template>
             <template v-else-if="editingFilename === source.filename">
@@ -310,16 +327,23 @@ function reportSource(source) {
                 v-model="labelDraft"
                 class="lyrics-source-manager__label-field"
                 :maxlength="32"
-                label="歌詞來源標籤"
+                :label="t('lyricsSource.manager.labelField')"
                 label-hidden
-                placeholder="標籤（留空清除）"
+                :placeholder="t('lyricsSource.manager.labelPlaceholder')"
                 @keydown.enter="commitEdit(source.filename)"
                 @keydown.esc="cancelEdit"
               />
-              <UiButton title="儲存標籤" @click="commitEdit(source.filename)">
-                儲存
+              <UiButton
+                :title="t('lyricsSource.manager.saveLabel')"
+                @click="commitEdit(source.filename)"
+              >
+                {{ t('common.save') }}
               </UiButton>
-              <UiButton title="取消編輯" @click="cancelEdit">取消</UiButton>
+              <UiButton
+                :title="t('lyricsSource.manager.cancelEdit')"
+                @click="cancelEdit"
+                >{{ t('common.cancel') }}</UiButton
+              >
             </template>
             <template v-else>
               <span class="lyrics-source-manager__row-label">
@@ -332,12 +356,19 @@ function reportSource(source) {
                   class="lyrics-source-manager__row-status"
                   tone="current"
                 >
-                  使用中
+                  {{ t('lyricsSource.manager.current') }}
                 </UiChip>
               </span>
               <span
                 class="lyrics-source-manager__row-meta"
-                :aria-label="`${sourceTierDescription(source)}，時間偏移 ${formatLyricsSourceOffset(sourceOffsetMs(source))}`"
+                :aria-label="
+                  [
+                    sourceTierDescription(source),
+                    t('lyricsSource.manager.offsetNamed', {
+                      offset: formatLyricsSourceOffset(sourceOffsetMs(source)),
+                    }),
+                  ].join(t('common.clauseSeparator'))
+                "
               >
                 <UiOverflowTooltip
                   class="lyrics-source-manager__row-tier"
@@ -352,18 +383,18 @@ function reportSource(source) {
               <div class="lyrics-source-manager__row-actions">
                 <UiIconButton
                   :icon="MessageSquare"
-                  label="回報歌詞問題"
+                  :label="t('lyricsSource.candidate.report')"
                   @click="reportSource(source)"
                 />
                 <UiIconButton
                   :icon="Pencil"
-                  label="編輯標籤"
+                  :label="t('lyricsSource.manager.editLabel')"
                   @click="startEdit(source)"
                 />
                 <UiIconButton
                   :icon="Trash2"
                   intent="danger"
-                  label="刪除這個歌詞來源"
+                  :label="t('lyricsSource.manager.deleteNamed')"
                   @click="handleDelete(source)"
                 />
               </div>

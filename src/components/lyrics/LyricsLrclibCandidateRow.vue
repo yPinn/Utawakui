@@ -13,6 +13,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiStack from '../ui/UiStack.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   candidate: { type: Object, required: true },
@@ -60,12 +61,14 @@ const capabilityTone = computed(() => {
 const accessibleIdentity = computed(() =>
   [presentedCandidate.value.trackName, presentedCandidate.value.artistName]
     .filter(Boolean)
-    .join('，'),
+    .join(t('common.clauseSeparator')),
 );
 
 function formatDurationDifference(delta) {
-  if (delta === 0) return '相同';
-  return delta > 0 ? `多 ${delta} 秒` : `少 ${Math.abs(delta)} 秒`;
+  if (delta === 0) return t('lyricsSource.candidate.same');
+  return delta > 0
+    ? t('lyricsSource.candidate.longer', { seconds: delta })
+    : t('lyricsSource.candidate.shorter', { seconds: Math.abs(delta) });
 }
 
 function durationLabel(candidate) {
@@ -75,6 +78,21 @@ function durationLabel(candidate) {
     : '';
   return `${formatDuration(candidate.duration)}${delta}`;
 }
+
+const toggleLabel = computed(() =>
+  [
+    t(
+      props.expanded
+        ? 'lyricsSource.candidate.collapseNamed'
+        : 'lyricsSource.candidate.expandNamed',
+      { name: accessibleIdentity.value },
+    ),
+    props.recommended ? t('lyricsSource.candidate.recommended') : '',
+    props.timelineMessage ? t('lyricsSource.candidate.timelineDiffers') : '',
+  ]
+    .filter(Boolean)
+    .join(t('common.clauseSeparator')),
+);
 
 function previewLineHasTiming(line) {
   return Number.isFinite(line?.start);
@@ -89,7 +107,7 @@ function previewLineHasTiming(line) {
         class="lyrics-lrclib-candidate-row__toggle"
         :aria-expanded="expanded"
         :aria-controls="previewId"
-        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，建議來源' : ''}${timelineMessage ? '，來源時間有差異' : ''}`"
+        :aria-label="toggleLabel"
         @click="emit('toggle')"
       >
         <span class="lyrics-lrclib-candidate-row__info">
@@ -103,14 +121,16 @@ function previewLineHasTiming(line) {
               tone="accent"
               aria-hidden="true"
             >
-              建議來源
+              {{ t('lyricsSource.candidate.recommended') }}
             </UiChip>
           </span>
           <span class="lyrics-lrclib-candidate-row__subtitle" dir="auto">
             {{ presentedCandidate.artistName }}
-            <template v-if="presentedCandidate.albumName"
-              >・{{ presentedCandidate.albumName }}</template
-            >
+            <template v-if="presentedCandidate.albumName">{{
+              t('lyricsSource.candidate.album', {
+                album: presentedCandidate.albumName,
+              })
+            }}</template>
           </span>
         </span>
       </UiButton>
@@ -136,18 +156,22 @@ function previewLineHasTiming(line) {
           </span>
         </span>
         <div class="lyrics-lrclib-candidate-row__metadata">
-          <UiChip v-if="timelineMessage" tone="info">時間有差異</UiChip>
+          <UiChip v-if="timelineMessage" tone="info">{{
+            t('lyricsSource.candidate.timeDiff')
+          }}</UiChip>
           <div
             v-if="candidate.alreadySaved"
             class="lyrics-lrclib-candidate-row__saved-status"
           >
-            <UiChip tone="success">已儲存</UiChip>
+            <UiChip tone="success">{{
+              t('lyricsSource.candidate.saved')
+            }}</UiChip>
           </div>
           <UiChip
             v-if="candidate.saveState === 'update-available'"
             tone="warning"
           >
-            有更新
+            {{ t('lyricsSource.candidate.updateAvailable') }}
           </UiChip>
           <UiChip :tone="capabilityTone">{{
             capabilityLabel(presentedCandidate)
@@ -167,7 +191,7 @@ function previewLineHasTiming(line) {
         tone="canvas"
         radius="sm"
         class="lyrics-lrclib-candidate-preview__lines"
-        aria-label="歌詞預覽"
+        :aria-label="t('lyricsSource.candidate.preview')"
       >
         <li
           v-for="(line, index) in presentedCandidate.previewLines"
@@ -198,8 +222,12 @@ function previewLineHasTiming(line) {
       <UiNotice
         v-if="changedCandidate"
         tone="warning"
-        title="來源內容已更新"
-        :message="`${providerLabel} 的內容與預覽時不同。請先確認，再決定是否改用更新後內容。`"
+        :title="t('lyricsSource.candidate.changedTitle')"
+        :message="
+          t('lyricsSource.candidate.changedMessage', {
+            provider: providerLabel,
+          })
+        "
         compact
       />
 
@@ -225,35 +253,48 @@ function previewLineHasTiming(line) {
           :disabled="saveDisabled"
           @click="emit('report')"
         >
-          回報歌詞問題
+          {{ t('lyricsSource.candidate.report') }}
         </UiButton>
         <div
           v-if="!importMessage && (changedCandidate || !candidate.alreadySaved)"
           class="lyrics-lrclib-candidate-row__footer"
         >
           <template v-if="changedCandidate">
-            <UiButton @click="emit('cancelChanged')">取消</UiButton>
+            <UiButton @click="emit('cancelChanged')">{{
+              t('common.cancel')
+            }}</UiButton>
             <UiButton
               variant="accent"
               :disabled="saveDisabled"
               @click="emit('confirmChanged')"
             >
-              {{ saving ? '儲存中…' : '改用更新內容' }}
+              {{
+                saving
+                  ? t('lyricsSource.saving')
+                  : t('lyricsSource.candidate.useUpdated')
+              }}
             </UiButton>
           </template>
           <UiButton
             v-else
             variant="accent"
             :disabled="saveDisabled"
-            :aria-label="`${candidate.saveState === 'update-available' ? '更新' : '儲存'} ${accessibleIdentity}`"
+            :aria-label="
+              t(
+                candidate.saveState === 'update-available'
+                  ? 'lyricsSource.candidate.updateNamed'
+                  : 'lyricsSource.candidate.saveNamed',
+                { name: accessibleIdentity },
+              )
+            "
             @click="emit('save')"
           >
             {{
               saving
-                ? '儲存中…'
+                ? t('lyricsSource.saving')
                 : candidate.saveState === 'update-available'
-                  ? '更新'
-                  : '儲存'
+                  ? t('lyricsSource.candidate.update')
+                  : t('common.save')
             }}
           </UiButton>
         </div>

@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -42,9 +43,8 @@ describe('production UI primitive adoption', () => {
   });
 
   it('uses UiSearchBox for the lyrics track query', () => {
-    const source = readFileSync(
+    const source = readCatalogSource(
       path.join(SRC_ROOT, 'components/lyrics/LyricsTrackPickerModal.vue'),
-      'utf8',
     );
 
     expect(source).toContain("import UiSearchBox from '../ui/UiSearchBox.vue'");

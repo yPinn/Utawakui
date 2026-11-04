@@ -1,8 +1,8 @@
-import fs from 'fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 function source(filename) {
-  return fs.readFileSync(new URL(filename, import.meta.url), 'utf8');
+  return readCatalogSource(new URL(filename, import.meta.url));
 }
 
 describe('online lyrics search modal contract', () => {
@@ -241,7 +241,7 @@ describe('online lyrics search modal contract', () => {
     expect(row).toContain('class="lyrics-lrclib-candidate-row__saved-status"');
     expect(row).toContain('<UiChip tone="success">已儲存</UiChip>');
     expect(row).toContain('class="lyrics-lrclib-candidate-row__metadata"');
-    expect(row).toContain("recommended ? '，建議來源' : ''");
+    expect(row).toMatch(/props\.recommended\s*\?\s*'建議來源'/u);
     expect(row).toContain('建議來源');
     expect(row).not.toMatch(/>\s*推薦\s*</);
     expect(row).toContain('aria-hidden="true"');

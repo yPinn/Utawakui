@@ -33,9 +33,10 @@ const hasAlternatives = computed(() => orderedCandidates.value.length > 1);
 function providerLabel(candidate) {
   if (candidate?.providerId === 'kugou') return t('lyricsAcquisition.kugou');
   if (candidate?.providerId === 'betterlyrics') return 'Better Lyrics';
-  if (candidate?.providerId === 'netease') return '網易雲音樂';
+  if (candidate?.providerId === 'netease')
+    return t('lyricsAcquisition.netease');
   if (candidate?.providerId === 'lrclib') return 'LRCLIB';
-  return '線上來源';
+  return t('lyricsSource.issue.online');
 }
 
 function changedCandidate(candidate) {

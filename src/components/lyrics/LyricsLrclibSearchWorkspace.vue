@@ -351,7 +351,7 @@ function reportCandidate(candidate) {
         :id="`${providerId}-track-title`"
         ref="titleInput"
         v-model="titleDraft"
-        label="歌曲名稱"
+        :label="t('lyricsSource.search.title')"
         :aria-describedby="`${providerId}-query-help`"
         :maxlength="256"
         required
@@ -359,7 +359,7 @@ function reportCandidate(candidate) {
       <UiTextField
         :id="`${providerId}-artist-name`"
         v-model="artistDraft"
-        label="演唱者（選填）"
+        :label="t('lyricsSource.search.artist')"
         :aria-describedby="`${providerId}-query-help`"
         :maxlength="256"
       />
@@ -369,7 +369,7 @@ function reportCandidate(candidate) {
         align="center"
         justify="end"
         role="group"
-        aria-label="搜尋操作"
+        :aria-label="t('lyricsSource.search.actions')"
       >
         <UiButton
           class="lyrics-lrclib-search__broaden"
@@ -378,24 +378,24 @@ function reportCandidate(candidate) {
           :aria-hidden="!canBroaden || undefined"
           @click="handleSearch('broaden')"
         >
-          擴大搜尋
+          {{ t('lyricsSource.search.broaden') }}
         </UiButton>
         <UiButton
           :icon="Search"
           variant="accent"
           type="submit"
           :loading="isSearchPending"
-          loading-label="搜尋"
+          :loading-label="t('lyricsSource.search.search')"
           :disabled="titleIsMissing || isSearchDisabled"
         >
-          搜尋
+          {{ t('lyricsSource.search.search') }}
         </UiButton>
       </UiStack>
       <p
         :id="`${providerId}-query-help`"
         class="lyrics-lrclib-search__query-help"
       >
-        可輸入原文、羅馬字或常用譯名，只用於本次搜尋。
+        {{ t('lyricsSource.search.queryHelp') }}
       </p>
     </UiSurface>
 
@@ -420,7 +420,7 @@ function reportCandidate(candidate) {
         radius="lg"
         class="lyrics-lrclib-search__skeleton"
         role="status"
-        aria-label="正在載入候選歌詞"
+        :aria-label="t('lyricsSource.search.loading')"
       >
         <UiSkeleton
           v-for="index in 3"
@@ -439,7 +439,7 @@ function reportCandidate(candidate) {
 
       <template v-else-if="hasResults">
         <UiHint v-if="resultRecordingGroups.best.length === 0" padded>
-          以下可能是不同版本，請先確認。
+          {{ t('lyricsSource.search.versionsHint') }}
         </UiHint>
 
         <section
@@ -448,7 +448,7 @@ function reportCandidate(candidate) {
           :aria-labelledby="`${providerId}-best-results`"
         >
           <h3 :id="`${providerId}-best-results`">
-            較符合的錄音版本
+            {{ t('lyricsSource.search.best') }}
             <span>{{ resultRecordingGroups.best.length }}</span>
           </h3>
           <UiSurface tag="ul" radius="lg" class="lyrics-lrclib-search__list">
@@ -471,7 +471,11 @@ function reportCandidate(candidate) {
           <UiDisclosure
             v-if="remainingBestGroups.length"
             v-model:open="remainingBestOpen"
-            :label="`其餘符合版本（${remainingBestGroups.length}）`"
+            :label="
+              t('lyricsSource.search.remaining', {
+                count: remainingBestGroups.length,
+              })
+            "
             class="lyrics-lrclib-search__more"
           >
             <UiSurface
@@ -505,7 +509,7 @@ function reportCandidate(candidate) {
           :aria-labelledby="`${providerId}-related-results`"
         >
           <h3 :id="`${providerId}-related-results`">
-            其他可能版本
+            {{ t('lyricsSource.search.other') }}
             <span>{{ resultRecordingGroups.related.length }}</span>
           </h3>
           <UiSurface tag="ul" radius="lg" class="lyrics-lrclib-search__list">

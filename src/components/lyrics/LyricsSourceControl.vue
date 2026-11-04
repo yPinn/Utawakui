@@ -10,6 +10,7 @@ import {
 } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   sources: { type: Array, default: () => [] },
@@ -21,7 +22,12 @@ const props = defineProps({
 const emit = defineEmits(['sourceChange', 'manageSources']);
 const selectId = `lyrics-source-${useId()}`;
 const options = computed(() => [
-  { value: '', label: props.sources.length ? '不顯示歌詞' : '尚無歌詞來源' },
+  {
+    value: '',
+    label: props.sources.length
+      ? t('lyricsSource.control.hide')
+      : t('lyricsSource.control.none'),
+  },
   ...sortLyricsSources(props.sources).map((source) => ({
     value: source.filename,
     label: formatLyricsSourceLabel(source),
@@ -43,8 +49,8 @@ function manageSources() {
     <UiCombobox
       :id="selectId"
       class="lyrics-source-control__select"
-      label="歌詞來源"
-      aria-label="歌詞來源"
+      :label="t('lyricsSource.control.label')"
+      :aria-label="t('lyricsSource.control.label')"
       :label-hidden="labelHidden"
       :model-value="selectedSourceFilename"
       :items="options"
@@ -62,11 +68,11 @@ function manageSources() {
       class="lyrics-source-control__manage"
       variant="secondary"
       :disabled="!hasSelectedTrack"
-      title="搜尋、匯入與管理歌詞來源"
-      aria-label="管理歌詞來源"
+      :title="t('lyricsSource.control.manageTitle')"
+      :aria-label="t('lyricsSource.control.manageLabel')"
       @click="manageSources"
     >
-      管理來源
+      {{ t('lyricsSource.control.manage') }}
     </UiButton>
   </div>
 </template>
