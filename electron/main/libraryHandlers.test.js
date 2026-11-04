@@ -1688,7 +1688,7 @@ describe('local import automatic music analysis', () => {
 
     expect(parseAppError(error)).toMatchObject({
       code: 'LOCAL_IMPORT_REVIEW_EXPIRED',
-      message: '這次轉檔確認已失效，請重新選擇檔案。',
+      message: '確認已逾時，請重新選擇檔案。',
     });
     expect(harness.convertAudioFiles).not.toHaveBeenCalled();
   });

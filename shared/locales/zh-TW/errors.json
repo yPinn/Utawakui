@@ -41,7 +41,7 @@
   },
   "ARTWORK_PREVIEW_FAILED": {
     "title": "封面預覽無法載入",
-    "message": "封面預覽無法載入，請再試一次。"
+    "message": "請再試一次。"
   },
   "ARTWORK_SEARCH_FAILED": {
     "title": "無法搜尋線上封面",
@@ -49,7 +49,7 @@
   },
   "ARTWORK_SOURCE_OPEN_FAILED": {
     "title": "無法開啟 MusicBrainz",
-    "message": "目前無法開啟來源頁面，請稍後再試。"
+    "message": "目前無法開啟網頁，請稍後再試。"
   },
   "AUDIO_PREFERENCES_INVALID": {
     "title": "無法保存音量設定",
@@ -160,8 +160,8 @@
     "message": "這張圖片無法預覽，請選擇其他圖片。"
   },
   "LIBRARY_CONVERT_AUDIO_FAILED": {
-    "title": "相容轉檔未完成",
-    "message": "音訊轉檔未完成，請重新選擇檔案後再試一次。"
+    "title": "音訊轉檔未完成",
+    "message": "請重新選擇檔案後再試一次。"
   },
   "LIBRARY_DELETE_TRACK_FAILED": {
     "title": "歌曲無法刪除",
@@ -169,7 +169,7 @@
   },
   "LIBRARY_IMPORT_AUDIO_FAILED": {
     "title": "本機匯入未完成",
-    "message": "本機匯入未完成，請再試一次。"
+    "message": "請再試一次。"
   },
   "LIBRARY_LOCATION_UNAVAILABLE": {
     "title": "曲庫位置無法使用",
@@ -177,7 +177,7 @@
   },
   "LIBRARY_SAVE_TRACK_EDITS_FAILED": {
     "title": "歌曲變更無法儲存",
-    "message": "歌曲變更無法儲存，請再試一次。"
+    "message": "請再試一次。"
   },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
     "title": "曲庫清理未完成",
@@ -197,7 +197,7 @@
   },
   "LOCAL_IMPORT_REVIEW_EXPIRED": {
     "title": "需要重新選擇檔案",
-    "message": "這次轉檔確認已失效，請重新選擇檔案。"
+    "message": "確認已逾時，請重新選擇檔案。"
   },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
     "title": "無法儲存播放安排顯示偏好",
