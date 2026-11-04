@@ -1242,6 +1242,10 @@ if (!gotSingleInstanceLock) {
     registerAppInfoHandlers({
       ipcMain,
       getVersion: () => app.getVersion(),
+      relaunch: () => {
+        app.relaunch();
+        app.quit();
+      },
     });
     registerDiagnosticsHandlers({
       ipcMain,
@@ -1565,6 +1569,7 @@ if (!gotSingleInstanceLock) {
       getDownloadDirStatus: configState.getDownloadDirStatus,
       validateDownloadDir: configState.validateDownloadDir,
       getMainWindow: windowState.getMainWindow,
+      getPreferredSystemLanguages: () => app.getPreferredSystemLanguages(),
       notifyLibraryUpdated,
       recordDiagnostic,
       titlebarColors: windowState.TITLEBAR_COLORS,

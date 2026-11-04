@@ -13,6 +13,7 @@ const {
   isWindowCloseBehavior,
 } = require('../../shared/windowCloseBehaviorContract.mjs');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const { UI_LANGUAGE_PREFERENCES, resolveUiLocale } = require('../lib/uiLocale');
 
 // Copy comes from errors.<CODE> in the UI catalog.
 function createValidationError(code) {
@@ -52,6 +53,7 @@ function registerConfigHandlers({
   applyPerformerUiTheme = () => undefined,
   applyAppUpdateAutoCheck = () => undefined,
   applyWindowCloseBehavior = () => undefined,
+  getPreferredSystemLanguages = () => [],
 }) {
   ipcMain.handle('config:get-obs-arrangement-dock', async () =>
     runConfigOperation(
@@ -510,6 +512,47 @@ function registerConfigHandlers({
         },
       );
     },
+  );
+
+  ipcMain.handle('config:get-ui-language', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-ui-language',
+        code: 'UI_LANGUAGE_READ_FAILED',
+      },
+      () => getConfig().uiLanguage,
+    ),
+  );
+
+  ipcMain.handle('config:set-ui-language', async (_event, preference) => {
+    if (!UI_LANGUAGE_PREFERENCES.includes(preference)) {
+      throw createValidationError('UI_LANGUAGE_INVALID');
+    }
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-ui-language',
+        code: 'UI_LANGUAGE_UPDATE_FAILED',
+      },
+      () => {
+        updateConfig({ uiLanguage: preference });
+        return getConfig().uiLanguage;
+      },
+    );
+  });
+
+  // The UI locale the next launch will use; the current one stays fixed.
+  ipcMain.handle('config:get-ui-language-target', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-ui-language-target',
+        code: 'UI_LANGUAGE_READ_FAILED',
+      },
+      () =>
+        resolveUiLocale(getConfig().uiLanguage, getPreferredSystemLanguages()),
+    ),
   );
 }
 

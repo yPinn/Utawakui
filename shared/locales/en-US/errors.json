@@ -539,5 +539,17 @@
   "SEPARATION_RESULT_MISSING": {
     "title": "Accompaniment version not found",
     "message": "This accompaniment version isn't available. Prepare it again."
+  },
+  "UI_LANGUAGE_INVALID": {
+    "title": "Could not change the display language",
+    "message": "This setting is not valid. Choose again."
+  },
+  "UI_LANGUAGE_READ_FAILED": {
+    "title": "Could not read the display language",
+    "message": "The display language cannot be read right now."
+  },
+  "UI_LANGUAGE_UPDATE_FAILED": {
+    "title": "Could not change the display language",
+    "message": "The display language cannot be changed right now. Try again later."
   }
 }

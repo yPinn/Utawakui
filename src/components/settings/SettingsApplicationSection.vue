@@ -3,9 +3,11 @@ import { onMounted } from 'vue';
 import { useAppInfo } from '../../composables/useAppInfo.js';
 import { useAppUpdate } from '../../composables/useAppUpdate.js';
 import { useWindowsIntegrationSettings } from '../../composables/useWindowsIntegrationSettings.js';
+import { useUiLanguageSettings } from '../../composables/useUiLanguageSettings.js';
 import SettingsSection from './SettingsSection.vue';
 import AppUpdateSettingsRow from './AppUpdateSettingsRow.vue';
 import WindowsBackgroundSettingsRow from './WindowsBackgroundSettingsRow.vue';
+import UiLanguageSettingsRow from './UiLanguageSettingsRow.vue';
 import KeyboardShortcutSettingsBlock from './KeyboardShortcutSettingsBlock.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -20,12 +22,14 @@ const {
   setAppUpdateAutoCheck,
 } = useAppUpdate();
 const windowsIntegrationSettings = useWindowsIntegrationSettings();
+const uiLanguageSettings = useUiLanguageSettings();
 
 onMounted(() => {
   refreshAppInfo();
   refreshAppUpdateStatus();
   refreshAppUpdateAutoCheck();
   windowsIntegrationSettings.refreshPreference();
+  uiLanguageSettings.refresh();
 });
 </script>
 
@@ -36,6 +40,21 @@ onMounted(() => {
     :title="t('settings.sections.application')"
     tabindex="-1"
   >
+    <UiLanguageSettingsRow
+      :preference="uiLanguageSettings.preference.value"
+      :items="uiLanguageSettings.items"
+      :busy="uiLanguageSettings.busy.value"
+      :reading="uiLanguageSettings.reading.value"
+      :loaded="uiLanguageSettings.loaded.value"
+      :error="uiLanguageSettings.saveError.value"
+      :read-error="uiLanguageSettings.readError.value"
+      :pending-message="uiLanguageSettings.pendingMessage.value"
+      :relaunching="uiLanguageSettings.relaunching.value"
+      :relaunch-error="uiLanguageSettings.relaunchError.value"
+      @refresh-preference="uiLanguageSettings.refresh"
+      @set-preference="uiLanguageSettings.setPreference"
+      @relaunch="uiLanguageSettings.relaunch"
+    />
     <KeyboardShortcutSettingsBlock />
     <WindowsBackgroundSettingsRow
       :behavior="windowsIntegrationSettings.windowCloseBehavior.value"

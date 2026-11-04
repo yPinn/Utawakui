@@ -52,9 +52,11 @@ describe('resolveUiLocale', () => {
     expect(resolveUiLocale('en-US', ['ja-JP'], ['zh-TW'])).toBe('zh-TW');
   });
 
-  it('stays zh-TW on an English OS until English is shipped', () => {
-    expect(UI_LANGUAGE_PREFERENCES).toEqual(['system', 'zh-TW']);
-    expect(resolveUiLocale('system', ['en-US'])).toBe('zh-TW');
+  it('follows an English OS once English ships', () => {
+    expect(UI_LANGUAGE_PREFERENCES).toEqual(['system', 'zh-TW', 'en-US']);
+    expect(resolveUiLocale('system', ['en-GB'])).toBe('en-US');
+    expect(resolveUiLocale('system', ['fr-FR'])).toBe('zh-TW');
+    expect(resolveUiLocale('zh-TW', ['en-US'])).toBe('zh-TW');
   });
 });
 

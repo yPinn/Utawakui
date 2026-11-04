@@ -1,4 +1,4 @@
 {
   "fallbackLocale": "zh-TW",
-  "supportedLocales": ["zh-TW"]
+  "supportedLocales": ["zh-TW", "en-US"]
 }

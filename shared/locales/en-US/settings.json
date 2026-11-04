@@ -71,5 +71,24 @@
     "exportFailed": "Couldn't export the error log",
     "exported": "Error log exported",
     "exportedMessage": "The file was saved where you chose."
+  },
+  "language": {
+    "title": "Display language",
+    "guidance": "Applies after restarting.",
+    "label": "Display language",
+    "system": "Use system language",
+    "names": {
+      "zhTW": "繁體中文",
+      "enUS": "English"
+    },
+    "pending": "Switches to {language} after restarting.",
+    "restartNow": "Restart now",
+    "restartTitle": "Restart now?",
+    "restartMessage": "After restarting, the display language changes to {language}.",
+    "restartDetail": "Utawakui will close and reopen. Unsaved changes won't be kept.",
+    "later": "Later",
+    "readFailed": "Couldn't read the display language setting.",
+    "saveFailed": "The display language wasn't changed. Try again.",
+    "relaunchFailed": "Couldn't restart. Close and reopen Utawakui."
   }
 }

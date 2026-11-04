@@ -536,6 +536,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   exportFeedbackFallback: (input) =>
     ipcRenderer.invoke('feedback:export-fallback', input),
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+  relaunchApp: () => ipcRenderer.invoke('app:relaunch'),
   getRecentPlaybackHistory: () => ipcRenderer.invoke('playback-history:get'),
   recordRecentPlayback: (trackId, sourceContext) =>
     ipcRenderer.invoke(
@@ -596,6 +597,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
   setObsArrangementDock: (enabled) =>
     ipcRenderer.invoke('config:set-obs-arrangement-dock', enabled),
   setUiTheme: (theme) => ipcRenderer.invoke('config:set-ui-theme', theme),
+  getUiLanguage: () => ipcRenderer.invoke('config:get-ui-language'),
+  setUiLanguage: (preference) =>
+    ipcRenderer.invoke('config:set-ui-language', preference),
+  getUiLanguageTarget: () =>
+    ipcRenderer.invoke('config:get-ui-language-target'),
   initialSidebarWidth: readInitialSidebarWidth(),
   getSidebarWidth: () => ipcRenderer.invoke('config:get-sidebar-width'),
   setSidebarWidth: (width) =>

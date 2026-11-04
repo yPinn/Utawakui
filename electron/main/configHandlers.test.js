@@ -35,6 +35,7 @@ function register(overrides = {}) {
     autoCheckAppUpdates: true,
     windowCloseBehavior: 'ask',
     lastSeenAnnouncementVersion: null,
+    uiLanguage: 'system',
   };
   const getConfig = vi.fn(() => config);
   const updateConfig = vi.fn((patch) => {
@@ -165,6 +166,9 @@ describe('registerConfigHandlers', () => {
       'config:set-window-close-behavior',
       'config:get-announcement-seen-version',
       'config:set-announcement-seen-version',
+      'config:get-ui-language',
+      'config:set-ui-language',
+      'config:get-ui-language-target',
     ]);
   });
 
@@ -913,5 +917,25 @@ describe('registerConfigHandlers', () => {
     );
     expect(thrown.message).toContain('SIDEBAR_WIDTH_UPDATE_FAILED');
     expect(thrown.message).not.toContain('config.json');
+  });
+
+  it('persists a supported UI language and reports the locale for the next launch', async () => {
+    const { ipcMain, updateConfig } = register({
+      getPreferredSystemLanguages: () => ['en-GB'],
+    });
+    const get = ipcMain.handlers.get('config:get-ui-language');
+    const set = ipcMain.handlers.get('config:set-ui-language');
+    const target = ipcMain.handlers.get('config:get-ui-language-target');
+
+    expect(await get()).toBe('system');
+    expect(await target()).toBe('en-US');
+    for (const invalid of ['fr-FR', 'en-XA', '', null, 1])
+      await expect(set({}, invalid)).rejects.toThrow();
+    expect(updateConfig).not.toHaveBeenCalled();
+    expect(await set({}, 'zh-TW')).toBe('zh-TW');
+    expect(updateConfig).toHaveBeenCalledExactlyOnceWith({
+      uiLanguage: 'zh-TW',
+    });
+    expect(await target()).toBe('zh-TW');
   });
 });

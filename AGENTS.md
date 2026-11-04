@@ -168,7 +168,7 @@ migrate feature by feature, so new or edited text follows these rules now:
 - User-visible control-panel, prompter and shell text lives in
   `shared/locales/zh-TW/<namespace>.json`, one namespace per feature, and is read
   with `t()` from `src/utils/i18n.js` (renderer) or `electron/lib/i18n.js` (main).
-  zh-TW is the source catalog; `en-US` keys may lag and fall back to zh-TW.
+  zh-TW is the source catalog; every key also needs an `en-US` entry.
 - Write whole sentences with named parameters. Do not build a sentence by
   concatenating fragments, and never compare, branch on or key by display text;
   use codes and derive the label.

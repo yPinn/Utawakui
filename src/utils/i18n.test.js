@@ -23,10 +23,10 @@ describe('i18n', () => {
     expect(t('destination.library', {}, { locale: 'en-US' })).toBe('Library');
   });
 
-  it('keeps every English key backed by the zh-TW source catalog', () => {
+  it('keeps the zh-TW and English catalogs on the same keys', () => {
     const source = new Set(messageKeys(catalogs['zh-TW']));
-    expect(
-      messageKeys(catalogs['en-US']).filter((key) => !source.has(key)),
-    ).toEqual([]);
+    const english = new Set(messageKeys(catalogs['en-US']));
+    expect([...english].filter((key) => !source.has(key))).toEqual([]);
+    expect([...source].filter((key) => !english.has(key))).toEqual([]);
   });
 });

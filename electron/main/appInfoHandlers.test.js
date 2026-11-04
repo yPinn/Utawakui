@@ -15,4 +15,17 @@ describe('registerAppInfoHandlers', () => {
     expect(await handlers.get('app:get-version')()).toBe('0.1.0');
     expect(getVersion).toHaveBeenCalledOnce();
   });
+
+  it('relaunches through the injected quit path', async () => {
+    const handlers = new Map();
+    const relaunch = vi.fn();
+    registerAppInfoHandlers({
+      ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
+      getVersion: () => '0.1.0',
+      relaunch,
+    });
+
+    expect(await handlers.get('app:relaunch')()).toBe(true);
+    expect(relaunch).toHaveBeenCalledOnce();
+  });
 });

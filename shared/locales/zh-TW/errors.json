@@ -539,5 +539,17 @@
   "SEPARATION_RESULT_MISSING": {
     "title": "找不到這個伴奏版本",
     "message": "這個伴奏版本目前無法使用，請重新準備。"
+  },
+  "UI_LANGUAGE_INVALID": {
+    "title": "無法變更介面語言",
+    "message": "這個設定無效，請重新選擇。"
+  },
+  "UI_LANGUAGE_READ_FAILED": {
+    "title": "無法讀取介面語言",
+    "message": "目前無法讀取介面語言。"
+  },
+  "UI_LANGUAGE_UPDATE_FAILED": {
+    "title": "無法變更介面語言",
+    "message": "目前無法變更介面語言，請稍後再試。"
   }
 }
