@@ -752,5 +752,13 @@
     "lyrics": "歌詞",
     "setlist": "歌單",
     "nowPlaying": "播放中"
+  },
+  "captureSizes": {
+    "small": "小",
+    "medium": "中",
+    "large": "大",
+    "portrait": "標準",
+    "portraitLarge": "大",
+    "full": "FHD"
   }
 }

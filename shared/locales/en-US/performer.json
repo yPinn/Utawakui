@@ -50,7 +50,8 @@
       "seeking": "Seeking"
     },
     "standby": "Standby",
-    "next": "Up next"
+    "next": "Up next",
+    "originalKey": "Original key"
   },
   "viewState": {
     "bridgeMissing": "The teleprompter hasn't finished loading.",

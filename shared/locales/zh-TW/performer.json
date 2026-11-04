@@ -50,7 +50,8 @@
       "seeking": "定位中"
     },
     "standby": "待命",
-    "next": "接下來"
+    "next": "接下來",
+    "originalKey": "原調"
   },
   "viewState": {
     "bridgeMissing": "提詞器尚未載入完成。",

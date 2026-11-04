@@ -27,7 +27,8 @@ function keyLabel(adjustments = {}) {
   const cents = Number.isFinite(adjustments.pitchCents)
     ? adjustments.pitchCents
     : 0;
-  if (semitones === 0 && cents === 0) return '原調';
+  // Empty means the original key; the UI language names it.
+  if (semitones === 0 && cents === 0) return '';
   const parts = [];
   if (semitones !== 0) {
     parts.push(`Key ${semitones > 0 ? '+' : ''}${semitones}`);

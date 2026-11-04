@@ -1,8 +1,12 @@
 import OUTPUT_CAPTURE_VALUES from '../../shared/outputCaptureValues.json';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import { catalogKey, t } from '../utils/i18n.js';
 
 function freezeCaptureSize(size) {
-  return Object.freeze({ ...size });
+  return Object.freeze({
+    ...size,
+    label: t(`outputPanel.captureSizes.${catalogKey(size.id)}`),
+  });
 }
 
 export const OUTPUT_REFERENCE_CANVAS = Object.freeze({

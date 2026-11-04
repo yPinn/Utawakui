@@ -28,7 +28,7 @@ const statusLabels = {
         />
         {{ statusLabels[frame.playbackStatus] || t('performer.track.standby') }}
       </span>
-      <span>{{ frame.keyLabel }}</span>
+      <span>{{ frame.keyLabel || t('performer.track.originalKey') }}</span>
       <span>Tempo {{ frame.tempoLabel }}</span>
     </div>
   </header>

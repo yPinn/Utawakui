@@ -71,7 +71,7 @@ describe('selectPerformerFrame', () => {
       currentReading: null,
       nextReading: null,
       readingExpected: false,
-      keyLabel: '原調',
+      keyLabel: '',
       tempoLabel: '100%',
       nextTrack: null,
     });

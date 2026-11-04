@@ -752,5 +752,13 @@
     "lyrics": "Lyrics",
     "setlist": "Setlist",
     "nowPlaying": "Now playing"
+  },
+  "captureSizes": {
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "portrait": "Standard",
+    "portraitLarge": "Large",
+    "full": "FHD"
   }
 }
