@@ -64,6 +64,7 @@
     "noPlaylists": "No playlists to add to",
     "noPlaylistMatch": "No playlists found",
     "noActions": "No actions available",
+    "deleteTrack": "Delete track",
     "removeFromQueue": "Remove from play queue",
     "addToQueue": "Add to play queue",
     "nowPlaying": "Now playing",

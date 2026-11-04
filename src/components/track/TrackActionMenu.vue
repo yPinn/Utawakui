@@ -136,27 +136,23 @@ const content = computed(() => {
     {
       id: 'queue',
       items: [
-        props.context === 'queued'
-          ? {
-              id: 'remove-from-queue',
-              kind: 'action',
-              label: t('track.menu.removeFromQueue'),
-              icon: ListMinus,
-              value: { action: TRACK_MENU_ACTIONS.removeFromQueue },
-            }
-          : {
-              id: 'add-to-queue',
-              kind: 'action',
-              label: t('track.menu.addToQueue'),
-              icon: ListEnd,
-              disabled: isCurrent || isQueued,
-              disabledReason: isCurrent
-                ? t('track.menu.nowPlaying')
-                : isQueued
-                  ? t('track.menu.inQueue')
-                  : '',
-              value: { action: TRACK_MENU_ACTIONS.addToQueue },
-            },
+        ...(props.context === 'queued'
+          ? []
+          : [
+              {
+                id: 'add-to-queue',
+                kind: 'action',
+                label: t('track.menu.addToQueue'),
+                icon: ListEnd,
+                disabled: isCurrent || isQueued,
+                disabledReason: isCurrent
+                  ? t('track.menu.nowPlaying')
+                  : isQueued
+                    ? t('track.menu.inQueue')
+                    : '',
+                value: { action: TRACK_MENU_ACTIONS.addToQueue },
+              },
+            ]),
         {
           id: 'add-to-performance-queue',
           kind: 'action',
@@ -208,27 +204,6 @@ const content = computed(() => {
       label: t('track.menu.createSingle'),
       icon: Plus,
       value: { action: TRACK_MENU_ACTIONS.createLocalRelease },
-    });
-  }
-  if (props.canUnlinkWork)
-    metadataItems.push({
-      id: 'unlink-work',
-      kind: 'action',
-      label: t('track.menu.unlink'),
-      icon: ListMinus,
-      value: { action: TRACK_MENU_ACTIONS.unlinkWork },
-    });
-  if (props.removeFromPlaylistId) {
-    metadataItems.push({
-      id: 'remove-from-playlist',
-      kind: 'action',
-      label: t('track.menu.removeFromPlaylist'),
-      icon: ListMinus,
-      intent: 'danger',
-      value: {
-        action: TRACK_MENU_ACTIONS.removeFromPlaylist,
-        playlistId: props.removeFromPlaylistId,
-      },
     });
   }
   if (metadataItems.length > 0) {
@@ -300,20 +275,49 @@ const content = computed(() => {
       ],
     });
   }
-  if (props.canDelete) {
-    groups.push({
-      id: 'destructive',
-      items: [
-        {
-          id: 'delete-track',
-          kind: 'action',
-          label: t('track.menu.delete'),
-          icon: Trash2,
-          intent: 'danger',
-          value: { action: TRACK_MENU_ACTIONS.deleteTrack },
-        },
-      ],
+  const removalItems = [];
+  if (props.context === 'queued') {
+    removalItems.push({
+      id: 'remove-from-queue',
+      kind: 'action',
+      label: t('track.menu.removeFromQueue'),
+      icon: ListMinus,
+      value: { action: TRACK_MENU_ACTIONS.removeFromQueue },
     });
+  }
+  if (props.canUnlinkWork)
+    removalItems.push({
+      id: 'unlink-work',
+      kind: 'action',
+      label: t('track.menu.unlink'),
+      icon: ListMinus,
+      value: { action: TRACK_MENU_ACTIONS.unlinkWork },
+    });
+  if (props.removeFromPlaylistId) {
+    removalItems.push({
+      id: 'remove-from-playlist',
+      kind: 'action',
+      label: t('track.menu.removeFromPlaylist'),
+      icon: ListMinus,
+      intent: 'danger',
+      value: {
+        action: TRACK_MENU_ACTIONS.removeFromPlaylist,
+        playlistId: props.removeFromPlaylistId,
+      },
+    });
+  }
+  if (props.canDelete) {
+    removalItems.push({
+      id: 'delete-track',
+      kind: 'action',
+      label: t('track.menu.deleteTrack'),
+      icon: Trash2,
+      intent: 'danger',
+      value: { action: TRACK_MENU_ACTIONS.deleteTrack },
+    });
+  }
+  if (removalItems.length) {
+    groups.push({ id: 'destructive', items: removalItems });
   }
 
   return { kind: 'actions', groups, emptyText: t('track.menu.noActions') };

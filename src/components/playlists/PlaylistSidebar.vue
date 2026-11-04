@@ -6,7 +6,6 @@ import {
   FolderPlus,
   ICON_SIZE,
   Library,
-  ListEnd,
   ListPlus,
   Plus,
   RefreshCw,
@@ -30,11 +29,7 @@ import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
 import { collectionDisplayTrackIds } from '../../utils/albumMembership.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
-import {
-  addToPlaylistMenuItem,
-  addToPerformanceQueueMenuItem,
-  collectionManageMenuItems,
-} from '../../utils/collectionMenuItems.js';
+import { collectionActionMenu } from '../../utils/collectionMenuItems.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
@@ -357,51 +352,9 @@ const menuContent = computed(() => {
     };
   }
 
-  const playlist = context.playlist;
-  const isAlbum = playlist.kind === 'album';
-
-  const primaryItems = [
-    {
-      id: 'add-to-queue',
-      kind: 'action',
-      label: t('playlist.sidebar.addToQueue'),
-      icon: ListEnd,
-      disabled: playlist.trackIds.length === 0,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.addToQueue,
-        playlistId: playlist.id,
-      },
-    },
-    addToPerformanceQueueMenuItem(playlist, {
-      disabled: playlist.trackIds.length === 0 || performancePlan.isSaving,
-    }),
-  ];
-
-  // Empty collections omit the destination submenu because they contribute
-  // no tracks to another playlist.
-  if (playlist.trackIds.length > 0) {
-    primaryItems.push(
-      addToPlaylistMenuItem(
-        state.playlists,
-        playlist,
-        t('playlist.sidebar.addToOther'),
-      ),
-    );
-  }
-
-  const groups = [
-    { id: 'primary', items: primaryItems },
-    { id: 'manage', items: collectionManageMenuItems(playlist) },
-  ];
-
-  // Global "create a new one" actions, unrelated to the specific row being
-  // right-clicked — scoped to playlists only, matching the Spotify
-  // reference (its album menu doesn't offer these either).
-  if (!isAlbum) {
-    groups.push({ id: 'create', items: createCollectionItems() });
-  }
-
-  return { kind: 'actions', groups };
+  return collectionActionMenu(state.playlists, context.playlist, {
+    performanceQueueBusy: performancePlan.isSaving,
+  });
 });
 
 function openMenuAt(event, context) {

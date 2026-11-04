@@ -39,9 +39,7 @@ import TrackTable from '../track/TrackTable.vue';
 import { normalizeTrackCollectionSort } from '../track/trackCollectionProfiles.js';
 import {
   addToPlaylistContent,
-  addToPlaylistMenuItem,
-  addToPerformanceQueueMenuItem,
-  collectionManageMenuItems,
+  collectionActionMenu,
 } from '../../utils/collectionMenuItems.js';
 import AppFolderCompactBar from '../layout/AppFolderCompactBar.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
@@ -68,10 +66,7 @@ import {
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
 import { deriveReleaseDetail } from '../../utils/releaseDetailPresentation.js';
-import {
-  releaseYearFromDate,
-  releaseEntityKey,
-} from '../../utils/releasePresentation.js';
+import { releaseYearFromDate } from '../../utils/releasePresentation.js';
 import { deriveAlbumReference } from '../../utils/albumReference.js';
 import {
   artistSearchTexts,
@@ -663,35 +658,9 @@ const collectionMoreContent = computed(() => {
   }
   const playlist = selectedPlaylist.value;
   if (!playlist) return { kind: 'actions', groups: [] };
-  const manageItems = collectionManageMenuItems(playlist);
-  const groups = [
-    {
-      id: 'performance-queue',
-      items: [
-        addToPerformanceQueueMenuItem(playlist, {
-          disabled:
-            playlistTracks.value.length === 0 ||
-            performanceQueue.state.isSaving,
-        }),
-      ],
-    },
-  ];
-  if (playlistTracks.value.length > 0) {
-    const addLabel =
-      playlist.kind === 'album'
-        ? t(
-            `library.addReleaseToPlaylist.${releaseEntityKey(playlist.resolvedRelease?.type)}`,
-          )
-        : t('library.addToOtherPlaylist');
-    groups.push({
-      id: 'destinations',
-      items: [
-        addToPlaylistMenuItem(playlistState.playlists, playlist, addLabel),
-      ],
-    });
-  }
-  groups.push({ id: 'manage', items: manageItems });
-  return { kind: 'actions', groups };
+  return collectionActionMenu(playlistState.playlists, playlist, {
+    performanceQueueBusy: performanceQueue.state.isSaving,
+  });
 });
 
 const canReorderPlaylistTracks = computed(
@@ -716,6 +685,7 @@ function trackMenuOptions(track) {
     canGoToAlbum: Boolean(
       track && !isAlbumSelected.value && canJumpToAlbum(track),
     ),
+    releaseContextId: selectedPlaylist.value?.id ?? '',
     canDelete: Boolean(track) && mode.value === 'all',
   };
 }
@@ -1063,6 +1033,7 @@ function playFromPreview(track) {
 
 // Editing or leaving for an album needs the page underneath, not the preview.
 const PREVIEW_CLOSING_ACTIONS = new Set([
+  TRACK_MENU_ACTIONS.deleteTrack,
   TRACK_MENU_ACTIONS.createLocalRelease,
   TRACK_MENU_ACTIONS.goToRelease,
   TRACK_MENU_ACTIONS.workOrganization,
@@ -1472,17 +1443,13 @@ onMounted(async () => {
       />
 
       <TrackActionMenu
-        :release-context-id="selectedPlaylist?.id ?? ''"
         :open="Boolean(addMenu)"
         :anchor="addMenu?.anchor"
         :track="addMenu?.track ?? null"
         :playlists="playlistState.playlists"
         :current-track-id="state.track?.id ?? ''"
         :queued-track-ids="queuedTrackIds"
-        :remove-from-playlist-id="addMenuOptions.removeFromPlaylistId"
-        :can-go-to-album="addMenuOptions.canGoToAlbum"
-        :can-delete="addMenuOptions.canDelete"
-        :performance-queue-busy="performanceQueue.state.isSaving"
+        v-bind="addMenuOptions"
         @select="handleTrackMenuSelect"
         @close="closeAddMenu"
       />

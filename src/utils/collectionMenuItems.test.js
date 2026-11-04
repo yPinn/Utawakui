@@ -3,6 +3,7 @@ import {
   addToPlaylistContent,
   addToPerformanceQueueMenuItem,
   addToPlaylistMenuItem,
+  collectionActionMenu,
   collectionManageMenuItems,
 } from './collectionMenuItems.js';
 
@@ -49,6 +50,20 @@ describe('collection menu items', () => {
       emptyText: '沒有可加入的播放清單',
       noResultsText: '找不到播放清單',
     });
+  });
+
+  it('keeps collection destinations and destructive actions in stable groups', () => {
+    const groups = collectionActionMenu(playlists, playlists[0], {
+      performanceQueueBusy: true,
+    }).groups;
+    expect(groups.map(({ items }) => items.map(({ id }) => id))).toEqual([
+      ['add-to-queue', 'add-to-performance-queue', 'add-to-playlist'],
+      ['edit-details', 'convert-kind'],
+      ['delete'],
+    ]);
+    expect(groups[0].items[1].disabled).toBe(true);
+    const empty = collectionActionMenu(playlists, playlists[1]).groups[0];
+    expect(empty.items.map(({ disabled }) => disabled)).toEqual([true, true]);
   });
 
   it('labels album removal differently from playlist deletion', () => {

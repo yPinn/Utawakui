@@ -1,6 +1,7 @@
 import {
   Disc3,
   ListMusic,
+  ListEnd,
   ListPlus,
   Pencil,
   Plus,
@@ -13,6 +14,7 @@ import {
   playlistDisplayName,
 } from './playlistMenu.js';
 import { t } from './i18n.js';
+import { releaseEntityKey } from './releasePresentation.js';
 
 // Presentational menu items shared by the Library collection header and the
 // Sidebar row menu, so labels, icons and action payloads cannot drift.
@@ -141,4 +143,47 @@ export function collectionManageMenuItems(playlist) {
       },
     },
   ];
+}
+
+export function collectionActionMenu(
+  playlists,
+  playlist,
+  { performanceQueueBusy = false } = {},
+) {
+  const isEmpty = playlist.trackIds.length === 0;
+  const primary = [
+    {
+      id: 'add-to-queue',
+      kind: 'action',
+      label: t('playlist.sidebar.addToQueue'),
+      icon: ListEnd,
+      disabled: isEmpty,
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.addToQueue,
+        playlistId: playlist.id,
+      },
+    },
+    addToPerformanceQueueMenuItem(playlist, {
+      disabled: isEmpty || performanceQueueBusy,
+    }),
+  ];
+  if (!isEmpty) {
+    const label =
+      playlist.kind === 'album'
+        ? t(
+            `library.addReleaseToPlaylist.${releaseEntityKey(playlist.resolvedRelease?.type)}`,
+          )
+        : t('library.addToOtherPlaylist');
+    primary.push(addToPlaylistMenuItem(playlists, playlist, label));
+  }
+  const manage = collectionManageMenuItems(playlist);
+  const remove = manage.pop();
+  return {
+    kind: 'actions',
+    groups: [
+      { id: 'primary', items: primary },
+      { id: 'manage', items: manage },
+      { id: 'destructive', items: [remove] },
+    ],
+  };
 }

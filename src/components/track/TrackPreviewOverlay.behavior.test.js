@@ -136,10 +136,8 @@ describe('TrackPreviewOverlay', () => {
     const done = await renderOverlay({ queuedTrackIds: ['b'] });
     expect(done).toContain('已在一般佇列');
     // The menu gets the same per-track options as the row right-click.
-    expect(source).toContain(
-      ':remove-from-playlist-id="menuOptions.removeFromPlaylistId"',
-    );
-    expect(source).toContain(':can-go-to-album="menuOptions.canGoToAlbum"');
+    expect(source).toContain('v-bind="menuOptions"');
+    expect(libraryBrowseSource).toContain('v-bind="addMenuOptions"');
     expect(libraryBrowseSource).toContain(
       'const addMenuOptions = computed(() => trackMenuOptions(addMenu.value?.track));',
     );

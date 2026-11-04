@@ -64,6 +64,7 @@
     "noPlaylists": "沒有可加入的播放清單",
     "noPlaylistMatch": "找不到播放清單",
     "noActions": "沒有可用的操作",
+    "deleteTrack": "刪除曲目",
     "removeFromQueue": "從一般佇列移除",
     "addToQueue": "加入一般佇列",
     "nowPlaying": "現正播放",

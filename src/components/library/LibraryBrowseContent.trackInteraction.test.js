@@ -24,7 +24,8 @@ describe('LibraryBrowseContent track interaction owner', () => {
   });
 
   it('routes destructive library actions through the shared trailing menu', () => {
-    expect(source).toContain(':can-delete="addMenuOptions.canDelete"');
+    expect(source).toContain('v-bind="addMenuOptions"');
+    expect(source).toContain(':menu-options="previewMenuOptions"');
     expect(source).toContain('TRACK_MENU_ACTIONS.deleteTrack');
     expect(source).not.toContain('@click="removeTrack(track)"');
   });
