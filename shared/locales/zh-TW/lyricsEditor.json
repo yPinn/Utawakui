@@ -46,7 +46,7 @@
       "unavailable": "波形目前無法使用",
       "timeout": "讀取逾時，請再試一次。"
     },
-    "boundaryInvalid": "此落點超出媒體或破壞句級範圍，未套用。",
+    "boundaryInvalid": "這個位置超出可用範圍，未套用。",
     "previewLoading": "概覽預覽，正在讀取細節…",
     "preview": "概覽預覽",
     "previewWithStatus": "概覽預覽；{status}",
@@ -134,7 +134,7 @@
     "noWait": "不等待",
     "seconds": "{value} 秒",
     "errors": {
-      "sourceOrRange": "音源或區間已變更，請重新選曲或設定起點與終點。",
+      "sourceOrRange": "音檔或區間已變更，請重新選曲或設定起點與終點。",
       "seek": "返回位置未確認，請重新設定區間。",
       "play": "音訊尚未就緒，請確認後按播放重試。",
       "interrupted": "播放觀察已中斷，請按播放繼續。",
@@ -142,7 +142,7 @@
       "busy": "音訊工具正在使用中，請稍後重試。"
     },
     "pausedError": "練習已暫停，請重新設定區間。",
-    "loading": "正在確認音源…",
+    "loading": "正在確認音檔…",
     "sourceChanging": "正在更新音訊來源…",
     "returning": "正在返回起點…",
     "waiting": "等待 {seconds} 秒後續唱",
@@ -160,7 +160,7 @@
     "clearHint": "清除標記與循環",
     "pause": "暫停片段練習",
     "start": "開始片段練習",
-    "confirming": "正在確認音源",
+    "confirming": "正在確認音檔",
     "advanced": "進階設定",
     "pointSeconds": "{point}（秒）",
     "restLabel": "每輪休息",
