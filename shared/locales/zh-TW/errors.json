@@ -420,18 +420,6 @@
     "title": "歌曲整理未完成",
     "message": "目前無法讀取或儲存歌曲資料，請再試一次。"
   },
-  "YOUTUBE_BROWSER_COOKIES_INVALID": {
-    "title": "無法套用登入資料設定",
-    "message": "這個設定無效，請重新選擇。"
-  },
-  "YOUTUBE_BROWSER_COOKIES_READ_FAILED": {
-    "title": "無法讀取登入資料設定",
-    "message": "目前無法讀取瀏覽器登入資料設定。"
-  },
-  "YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED": {
-    "title": "無法套用登入資料設定",
-    "message": "目前無法套用瀏覽器登入資料設定，請稍後再試。"
-  },
   "LYRICS_READING_IDENTITY_STALE": {
     "title": "讀音資料已過期",
     "message": "這份歌詞的讀音資料已過期，請重新整理後再試一次。"
@@ -563,5 +551,45 @@
   "OUTPUT_LANGUAGE_UPDATE_FAILED": {
     "title": "無法變更畫面輸出語言",
     "message": "目前無法變更畫面輸出語言，請稍後再試。"
+  },
+  "YOUTUBE_LOGIN_FILE_FORMAT": {
+    "title": "無法匯入登入檔案",
+    "message": "無法使用這個檔案，請照「怎麼取得」的步驟重新匯出。"
+  },
+  "YOUTUBE_LOGIN_FILE_NO_YOUTUBE": {
+    "title": "無法匯入登入檔案",
+    "message": "檔案裡沒有 YouTube 的登入資料。"
+  },
+  "YOUTUBE_LOGIN_STORAGE_UNAVAILABLE": {
+    "title": "無法匯入登入檔案",
+    "message": "這台電腦目前無法加密保存登入檔案。"
+  },
+  "YOUTUBE_LOGIN_IMPORT_FAILED": {
+    "title": "無法匯入登入檔案",
+    "message": "無法匯入檔案，請再試一次。"
+  },
+  "YOUTUBE_LOGIN_REMOVE_FAILED": {
+    "title": "無法移除登入檔案",
+    "message": "無法移除登入檔案，請再試一次。"
+  },
+  "YOUTUBE_LOGIN_STATUS_FAILED": {
+    "title": "無法讀取登入狀態",
+    "message": "目前無法讀取登入檔案狀態。"
+  },
+  "YOUTUBE_LOGIN_NOTICE_REQUIRED": {
+    "title": "尚未確認說明",
+    "message": "請先閱讀並確認使用說明。"
+  },
+  "YOUTUBE_LOGIN_SOURCE_INVALID": {
+    "title": "無法套用登入設定",
+    "message": "這個設定無效，請重新選擇。"
+  },
+  "YOUTUBE_LOGIN_SOURCE_READ_FAILED": {
+    "title": "無法讀取登入設定",
+    "message": "目前無法讀取登入設定。"
+  },
+  "YOUTUBE_LOGIN_SOURCE_UPDATE_FAILED": {
+    "title": "無法套用登入設定",
+    "message": "目前無法套用登入設定，請稍後再試。"
   }
 }

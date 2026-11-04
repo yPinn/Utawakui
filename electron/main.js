@@ -237,6 +237,7 @@ const {
 } = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
 const { createYoutubeLoginStore } = require('./lib/youtubeLoginStore');
+const { registerYoutubeLoginHandlers } = require('./main/youtubeLoginHandlers');
 const {
   createReleaseCatalogService,
 } = require('./lib/releases/catalogRuntime');
@@ -1513,6 +1514,15 @@ if (!gotSingleInstanceLock) {
     const youtubeLoginStore = createYoutubeLoginStore({
       safeStorage,
       filePath: path.join(app.getPath('userData'), 'youtube-login.bin'),
+    });
+    registerYoutubeLoginHandlers({
+      ipcMain,
+      store: youtubeLoginStore,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+      recordDiagnostic,
     });
     const importHandlerRuntime = registerImportHandlers({
       ipcMain,

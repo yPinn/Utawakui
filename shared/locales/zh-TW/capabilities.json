@@ -44,14 +44,6 @@
     "repair": "修復",
     "remove": "移除"
   },
-  "cookies": {
-    "title": "瀏覽器登入資料",
-    "guidance": "部分影片需要登入才能下載。開啟後，下載失敗時會讀取本機瀏覽器的 YouTube 登入資料重試。",
-    "allow": "允許使用",
-    "allowLabel": "下載失敗時使用瀏覽器的 YouTube 登入資料重試",
-    "readFailed": "目前無法讀取登入資料設定，請重新讀取。",
-    "saveFailed": "目前無法儲存登入資料設定，已恢復原設定。"
-  },
   "gpu": {
     "title": "顯示卡加速",
     "guidance": "無法使用時自動改用處理器。",
@@ -63,5 +55,39 @@
   "toolGroups": {
     "separation": "人聲分離",
     "bpm": "BPM 分析"
+  },
+  "youtubeLogin": {
+    "title": "YouTube 登入",
+    "guidance": "有些影片要登入才能下載，下載失敗時才會使用。",
+    "label": "登入方式",
+    "options": {
+      "none": "不使用",
+      "firefox": "用 Firefox 的登入",
+      "file": "用登入檔案"
+    },
+    "firefoxHint": "請先在 Firefox 登入 YouTube。",
+    "imported": "已匯入",
+    "notImported": "尚未匯入",
+    "importFile": "匯入檔案",
+    "remove": "移除",
+    "howTo": "怎麼取得",
+    "readFailed": "目前無法讀取登入設定，請重新讀取。",
+    "saveFailed": "目前無法儲存登入設定，已恢復原設定。",
+    "guide": {
+      "title": "怎麼取得登入檔案",
+      "step1": "在 Chrome 或 Edge 安裝「Get cookies.txt LOCALLY」，並允許它在無痕模式執行。",
+      "step2": "開無痕視窗登入 YouTube，在同一分頁打開 youtube.com/robots.txt，用擴充功能匯出檔案。",
+      "step3": "關閉無痕視窗（這樣登入才不會失效），回到這裡按「匯入檔案」。",
+      "warning": "請認明名稱有「LOCALLY」，名稱相近的舊版有安全疑慮。",
+      "firefox": "平常用 Firefox？直接選「用 Firefox 的登入」，不用匯出。"
+    },
+    "notice": {
+      "title": "使用登入檔案前",
+      "point1": "這個檔案等於你的 YouTube 登入，請勿分享給別人。",
+      "point2": "檔案會加密存在這台電腦，只用來下載，不會上傳；可隨時移除。",
+      "point3": "YouTube 可能限制這樣使用的帳號，建議用另一個帳號，也不要一次大量下載。",
+      "point4": "登入約幾週後過期，到時重新匯入即可。",
+      "confirm": "了解並匯入"
+    }
   }
 }

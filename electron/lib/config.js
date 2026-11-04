@@ -88,6 +88,8 @@ const DEFAULTS = {
   // Last-resort sign-in for a failed provider download: 'none', 'firefox'
   // (yt-dlp --cookies-from-browser) or 'file' (an imported cookies.txt).
   youtubeLoginSource: 'none',
+  // Notice version the user accepted before the first sign-in file import.
+  youtubeLoginNoticeVersion: null,
   // ADR 0029: ask before the first severe-error report, then remember.
   autoErrorReporting: 'ask',
   experimentalLyricsAfterSeparation: false,
@@ -397,6 +399,11 @@ function loadConfigSnapshot(configPath) {
           ? data.autoAnalyzeMusicStructure
           : DEFAULTS.autoAnalyzeMusicStructure,
       youtubeLoginSource: normalizeYoutubeLoginSource(data),
+      youtubeLoginNoticeVersion:
+        typeof data.youtubeLoginNoticeVersion === 'string' &&
+        data.youtubeLoginNoticeVersion.length <= 64
+          ? data.youtubeLoginNoticeVersion
+          : DEFAULTS.youtubeLoginNoticeVersion,
       autoErrorReporting: AUTO_ERROR_REPORTING_VALUES.has(
         data.autoErrorReporting,
       )

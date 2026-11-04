@@ -420,18 +420,6 @@
     "title": "Song organizing not completed",
     "message": "Song details can't be read or saved right now. Try again."
   },
-  "YOUTUBE_BROWSER_COOKIES_INVALID": {
-    "title": "Could not apply the browser sign-in setting",
-    "message": "This setting is not valid. Choose again."
-  },
-  "YOUTUBE_BROWSER_COOKIES_READ_FAILED": {
-    "title": "Could not read the browser sign-in setting",
-    "message": "The browser sign-in setting cannot be read right now."
-  },
-  "YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED": {
-    "title": "Could not apply the browser sign-in setting",
-    "message": "The browser sign-in setting cannot be applied right now. Try again later."
-  },
   "LYRICS_READING_IDENTITY_STALE": {
     "title": "Reading data is out of date",
     "message": "The reading data for these lyrics is out of date. Refresh and try again."
@@ -563,5 +551,45 @@
   "OUTPUT_LANGUAGE_UPDATE_FAILED": {
     "title": "Could not change the Output language",
     "message": "The Output language cannot be changed right now. Try again later."
+  },
+  "YOUTUBE_LOGIN_FILE_FORMAT": {
+    "title": "Couldn't import the sign-in file",
+    "message": "This file can't be used. Export it again using \"How to get it\"."
+  },
+  "YOUTUBE_LOGIN_FILE_NO_YOUTUBE": {
+    "title": "Couldn't import the sign-in file",
+    "message": "The file has no YouTube sign-in."
+  },
+  "YOUTUBE_LOGIN_STORAGE_UNAVAILABLE": {
+    "title": "Couldn't import the sign-in file",
+    "message": "This computer can't store the sign-in file encrypted right now."
+  },
+  "YOUTUBE_LOGIN_IMPORT_FAILED": {
+    "title": "Couldn't import the sign-in file",
+    "message": "The file couldn't be imported. Try again."
+  },
+  "YOUTUBE_LOGIN_REMOVE_FAILED": {
+    "title": "Couldn't remove the sign-in file",
+    "message": "The sign-in file couldn't be removed. Try again."
+  },
+  "YOUTUBE_LOGIN_STATUS_FAILED": {
+    "title": "Couldn't read sign-in status",
+    "message": "The sign-in file status can't be read right now."
+  },
+  "YOUTUBE_LOGIN_NOTICE_REQUIRED": {
+    "title": "Notice not confirmed",
+    "message": "Read and confirm the notice first."
+  },
+  "YOUTUBE_LOGIN_SOURCE_INVALID": {
+    "title": "Couldn't apply the sign-in setting",
+    "message": "This setting is not valid. Choose again."
+  },
+  "YOUTUBE_LOGIN_SOURCE_READ_FAILED": {
+    "title": "Couldn't read the sign-in setting",
+    "message": "The sign-in setting can't be read right now."
+  },
+  "YOUTUBE_LOGIN_SOURCE_UPDATE_FAILED": {
+    "title": "Couldn't apply the sign-in setting",
+    "message": "The sign-in setting can't be applied right now. Try again later."
   }
 }

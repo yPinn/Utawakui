@@ -44,14 +44,6 @@
     "repair": "Repair",
     "remove": "Remove"
   },
-  "cookies": {
-    "title": "Browser sign-in data",
-    "guidance": "Some videos need a signed-in account to download. When on, a failed download retries with the YouTube sign-in data from your local browser.",
-    "allow": "Allow",
-    "allowLabel": "Retry failed downloads with the browser's YouTube sign-in data",
-    "readFailed": "The sign-in data setting can't be read. Reload it.",
-    "saveFailed": "The sign-in data setting can't be saved and has been restored."
-  },
   "gpu": {
     "title": "GPU acceleration",
     "guidance": "Switches to the processor when it isn't available.",
@@ -63,5 +55,39 @@
   "toolGroups": {
     "separation": "Vocal separation",
     "bpm": "BPM analysis"
+  },
+  "youtubeLogin": {
+    "title": "YouTube sign-in",
+    "guidance": "Some videos need sign-in. It's used only when a download fails.",
+    "label": "Sign-in",
+    "options": {
+      "none": "Don't use",
+      "firefox": "Use Firefox sign-in",
+      "file": "Use a sign-in file"
+    },
+    "firefoxHint": "Sign in to YouTube in Firefox first.",
+    "imported": "Imported",
+    "notImported": "Not imported",
+    "importFile": "Import file",
+    "remove": "Remove",
+    "howTo": "How to get it",
+    "readFailed": "The sign-in setting can't be read. Reload it.",
+    "saveFailed": "The sign-in setting couldn't be saved and has been restored.",
+    "guide": {
+      "title": "How to get a sign-in file",
+      "step1": "In Chrome or Edge, install \"Get cookies.txt LOCALLY\" and allow it in private windows.",
+      "step2": "Open a private window, sign in to YouTube, open youtube.com/robots.txt in the same tab and export the file with the extension.",
+      "step3": "Close the private window (so the sign-in stays valid), then come back and select \"Import file\".",
+      "warning": "Make sure the name includes \"LOCALLY\". Older extensions with similar names have security concerns.",
+      "firefox": "Use Firefox? Just choose \"Use Firefox sign-in\"; no export needed."
+    },
+    "notice": {
+      "title": "Before using a sign-in file",
+      "point1": "This file is your YouTube sign-in. Never share it.",
+      "point2": "It's stored encrypted on this computer and used only for downloads, never uploaded. You can remove it anytime.",
+      "point3": "YouTube may restrict accounts used this way. Use a separate account and avoid downloading a lot at once.",
+      "point4": "The sign-in expires after a few weeks. Import it again when it does.",
+      "confirm": "I understand, import"
+    }
   }
 }

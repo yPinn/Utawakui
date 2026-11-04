@@ -314,38 +314,6 @@ function registerConfigHandlers({
     );
   });
 
-  ipcMain.handle('config:get-youtube-browser-cookies', async () =>
-    runConfigOperation(
-      {
-        recordDiagnostic,
-        operation: 'get-youtube-browser-cookies',
-        code: 'YOUTUBE_BROWSER_COOKIES_READ_FAILED',
-      },
-      () => getConfig().youtubeLoginSource !== 'none',
-    ),
-  );
-
-  ipcMain.handle(
-    'config:set-youtube-browser-cookies',
-    async (event, enabled) => {
-      if (typeof enabled !== 'boolean') {
-        throw createValidationError('YOUTUBE_BROWSER_COOKIES_INVALID');
-      }
-      return runConfigOperation(
-        {
-          recordDiagnostic,
-          operation: 'set-youtube-browser-cookies',
-          code: 'YOUTUBE_BROWSER_COOKIES_UPDATE_FAILED',
-        },
-        () => {
-          // Interim on/off bridge until Settings offers the sign-in choice.
-          updateConfig({ youtubeLoginSource: enabled ? 'firefox' : 'none' });
-          return getConfig().youtubeLoginSource !== 'none';
-        },
-      );
-    },
-  );
-
   ipcMain.handle('config:get-auto-error-reporting', async () =>
     runConfigOperation(
       {

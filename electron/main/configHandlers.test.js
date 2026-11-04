@@ -155,8 +155,6 @@ describe('registerConfigHandlers', () => {
       'config:set-audio-preferences',
       'config:get-auto-music-analysis',
       'config:set-auto-music-analysis',
-      'config:get-youtube-browser-cookies',
-      'config:set-youtube-browser-cookies',
       'config:get-auto-error-reporting',
       'config:set-auto-error-reporting',
       'config:get-separation-gpu-acceleration',
@@ -585,55 +583,16 @@ describe('registerConfigHandlers', () => {
     },
   );
 
-  it.each([true, false])(
-    'persists the browser-cookie opt-in as %s',
-    async (enabled) => {
-      const { ipcMain, updateConfig } = register();
-
-      await expect(
-        ipcMain.handlers.get('config:set-youtube-browser-cookies')(
-          null,
-          enabled,
-        ),
-      ).resolves.toBe(enabled);
-      expect(updateConfig).toHaveBeenCalledWith({
-        youtubeLoginSource: enabled ? 'firefox' : 'none',
-      });
-    },
-  );
-
-  it('reads the browser-cookie and automatic error reporting preferences', async () => {
+  it('reads the automatic error reporting preference', async () => {
     const { ipcMain } = register();
-    await ipcMain.handlers.get('config:set-youtube-browser-cookies')(
-      null,
-      true,
-    );
     await ipcMain.handlers.get('config:set-auto-error-reporting')(
       null,
       'never',
     );
-
-    await expect(
-      ipcMain.handlers.get('config:get-youtube-browser-cookies')(),
-    ).resolves.toBe(true);
     await expect(
       ipcMain.handlers.get('config:get-auto-error-reporting')(),
     ).resolves.toBe('never');
   });
-
-  it.each([null, 0, 'true', {}])(
-    'rejects invalid browser-cookie opt-in value %j',
-    async (enabled) => {
-      const { ipcMain, updateConfig } = register();
-
-      const thrown = await ipcMain.handlers
-        .get('config:set-youtube-browser-cookies')(null, enabled)
-        .catch((error) => error);
-
-      expect(thrown.message).toContain('YOUTUBE_BROWSER_COOKIES_INVALID');
-      expect(updateConfig).not.toHaveBeenCalled();
-    },
-  );
 
   it.each(['ask', 'always', 'never'])(
     'persists automatic error reporting as %s',

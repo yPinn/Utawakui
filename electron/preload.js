@@ -625,10 +625,14 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-auto-music-analysis'),
   setAutoMusicAnalysis: (enabled) =>
     ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
-  getYoutubeBrowserCookies: () =>
-    ipcRenderer.invoke('config:get-youtube-browser-cookies'),
-  setYoutubeBrowserCookies: (enabled) =>
-    ipcRenderer.invoke('config:set-youtube-browser-cookies', enabled),
+  getYoutubeLoginSource: () =>
+    ipcRenderer.invoke('config:get-youtube-login-source'),
+  setYoutubeLoginSource: (source) =>
+    ipcRenderer.invoke('config:set-youtube-login-source', source),
+  getYoutubeLoginStatus: () => ipcRenderer.invoke('youtube-login:get-status'),
+  importYoutubeLoginFile: (request) =>
+    ipcRenderer.invoke('youtube-login:import', request),
+  removeYoutubeLoginFile: () => ipcRenderer.invoke('youtube-login:remove'),
   getAutoErrorReporting: () =>
     ipcRenderer.invoke('config:get-auto-error-reporting'),
   setAutoErrorReporting: (value) =>

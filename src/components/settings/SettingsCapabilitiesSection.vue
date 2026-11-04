@@ -15,11 +15,11 @@ import { useFeatureGates } from '../../composables/useFeatureGates.js';
 import { useMusicAnalysisSettings } from '../../composables/useMusicAnalysisSettings.js';
 import { useObsIntegrationSettings } from '../../composables/useObsIntegrationSettings.js';
 import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
-import { useYoutubeBrowserCookieSettings } from '../../composables/useYoutubeBrowserCookieSettings.js';
+import { useYoutubeLoginSettings } from '../../composables/useYoutubeLoginSettings.js';
 import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
 import SettingsSection from './SettingsSection.vue';
 import MusicAnalysisPreferenceRow from './MusicAnalysisPreferenceRow.vue';
-import YoutubeBrowserCookiesRow from './YoutubeBrowserCookiesRow.vue';
+import YoutubeLoginRow from './YoutubeLoginRow.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import FfmpegSourceModal from './FfmpegSourceModal.vue';
 import MusicAnalysisSettingsRow from './MusicAnalysisSettingsRow.vue';
@@ -83,7 +83,19 @@ const {
 const musicAnalysisSettings = useMusicAnalysisSettings();
 const lyricsAcousticCapability = useLyricsAcousticCapability();
 const separationSettings = useSeparationSettings();
-const youtubeBrowserCookieSettings = useYoutubeBrowserCookieSettings();
+const youtubeLoginSettings = useYoutubeLoginSettings();
+const youtubeLogin = computed(() => ({
+  source: youtubeLoginSettings.source.value,
+  loaded: youtubeLoginSettings.loaded.value,
+  reading: youtubeLoginSettings.reading.value,
+  busy: youtubeLoginSettings.busy.value,
+  readError: youtubeLoginSettings.readError.value,
+  saveError: youtubeLoginSettings.saveError.value,
+  status: youtubeLoginSettings.status.value,
+  fileBusy: youtubeLoginSettings.fileBusy.value,
+  fileError: youtubeLoginSettings.fileError.value,
+  items: youtubeLoginSettings.items,
+}));
 const obsIntegrationSettings = useObsIntegrationSettings();
 const { confirm: confirmAction } = useAppConfirmation();
 const systemFfmpegDetection = shallowRef(null);
@@ -326,7 +338,7 @@ onMounted(() => {
   musicAnalysisSettings.initialize();
   lyricsAcousticCapability.refresh();
   separationSettings.refreshPreference();
-  youtubeBrowserCookieSettings.refreshPreference();
+  youtubeLoginSettings.refresh();
   obsIntegrationSettings.refreshSettings();
 });
 </script>
@@ -389,24 +401,13 @@ onMounted(() => {
             @item-advanced-action="handleWorkflowItemAdvancedAction"
           >
             <template #settings>
-              <YoutubeBrowserCookiesRow
+              <YoutubeLoginRow
                 v-if="gate.id === FEATURE_IDS.PROVIDER_FLOW && gate.enabled"
-                :allow-browser-cookies="
-                  youtubeBrowserCookieSettings.allowBrowserCookies.value
-                "
-                :busy="youtubeBrowserCookieSettings.preferenceBusy.value"
-                :reading="youtubeBrowserCookieSettings.preferenceReading.value"
-                :loaded="youtubeBrowserCookieSettings.preferenceLoaded.value"
-                :error="youtubeBrowserCookieSettings.preferenceSaveError.value"
-                :read-error="
-                  youtubeBrowserCookieSettings.preferenceReadError.value
-                "
-                @refresh-preference="
-                  youtubeBrowserCookieSettings.refreshPreference
-                "
-                @set-allow-browser-cookies="
-                  youtubeBrowserCookieSettings.setAllowBrowserCookies
-                "
+                :login="youtubeLogin"
+                @set-source="youtubeLoginSettings.setSource"
+                @import-file="youtubeLoginSettings.importFile"
+                @remove-file="youtubeLoginSettings.removeFile"
+                @refresh="youtubeLoginSettings.refresh"
               />
               <OutputRuntimeSettingsBlock
                 v-if="
