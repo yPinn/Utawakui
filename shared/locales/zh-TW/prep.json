@@ -1,0 +1,84 @@
+{
+  "analysis": {
+    "starting": "準備下載",
+    "downloading": "下載分析元件",
+    "installing": "安裝分析元件",
+    "verifying": "確認分析元件",
+    "activating": "完成分析功能設定",
+    "ready": "分析功能已就緒",
+    "repairFailed": "分析功能修復未完成，請再試一次。",
+    "removeFailed": "分析功能移除未完成，請再試一次。",
+    "installFailed": "分析功能安裝未完成，請檢查網路連線後再試一次。",
+    "preparing": "準備分析功能",
+    "damaged": "分析功能需要修復",
+    "unmanageable": "目前無法管理分析功能",
+    "missing": "尚未安裝分析功能",
+    "readFailedRestart": "目前無法讀取分析功能狀態，請重新啟動後再試。",
+    "readFailed": "目前無法讀取分析功能狀態，請重新讀取。"
+  },
+  "dock": {
+    "storageHint": "最多新增{size}",
+    "missingTrack": "找不到歌曲",
+    "maybeRemoved": "可能已從曲庫移除",
+    "title": "伴奏處理",
+    "listLabel": "伴奏處理曲目",
+    "noTracks": "此來源沒有曲目。",
+    "queued": "曲目已加入處理佇列。",
+    "source": "來源",
+    "mode": "模式",
+    "preview": "預覽處理曲目",
+    "enqueue": "加入處理佇列",
+    "adding": "加入中",
+    "status": "目前來源處理狀態",
+    "updateFailed": "無法更新",
+    "openSettings": "開啟設定",
+    "currentOrder": "目前播放順序",
+    "playlists": "播放清單",
+    "albums": "專輯",
+    "featureLabel": "伴奏功能",
+    "setupTitle": "先完成初次設定",
+    "setupMessage": "請先到設定啟用伴奏功能。"
+  },
+  "toolbar": {
+    "stopThis": "停止這首",
+    "remove": "移除",
+    "retry": "重試",
+    "active": "處理中",
+    "pausing": "等待暫停",
+    "pauseAfter": "完成這首後暫停",
+    "progress": "進度",
+    "next": "接下來",
+    "clearPending": "清除待處理",
+    "resume": "繼續處理",
+    "attention": "未完成",
+    "done": "已完成",
+    "clearDone": "清除紀錄",
+    "actions": "伴奏處理操作"
+  },
+  "list": {
+    "unprepared": "尚未產生 · {count} 首",
+    "noneToAdd": "沒有可加入處理的曲目。",
+    "enqueueNamed": "加入伴奏處理佇列：{title}",
+    "prepared": "已有伴奏 · {count} 首",
+    "regenerate": "重新產生伴奏",
+    "noneToRegenerate": "沒有可重新產生的伴奏。",
+    "hasAccompaniment": "已有伴奏"
+  },
+  "panel": {
+    "import": "匯入",
+    "separation": "伴奏處理",
+    "title": "曲目準備",
+    "collapse": "摺疊曲目準備",
+    "tools": "曲目準備工具"
+  },
+  "activity": {
+    "attention": "有未完成項目",
+    "importFailed": "匯入未完成",
+    "separationFailed": "{count} 首未完成",
+    "multiple": "多項處理中",
+    "importing": "匯入中"
+  },
+  "review": {
+    "tracks": "曲目"
+  }
+}

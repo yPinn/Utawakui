@@ -4,6 +4,7 @@ import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import ImportDockContent from '../import/ImportDockContent.vue';
 import SeparationDockContent from '../separation/SeparationDockContent.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -13,8 +14,8 @@ const props = defineProps({
 
 const emit = defineEmits(['collapse', 'update:activePreparationTab']);
 const preparationTabs = [
-  { id: 'import', label: '匯入' },
-  { id: 'separation', label: '伴奏處理' },
+  { id: 'import', label: t('prep.panel.import') },
+  { id: 'separation', label: t('prep.panel.separation') },
 ];
 
 const dockPanel = useTemplateRef('dockPanel');
@@ -35,16 +36,16 @@ watch(
 <template>
   <AppRightDockPanel
     ref="dockPanel"
-    title="曲目準備"
-    collapse-label="摺疊曲目準備"
-    aria-label="曲目準備"
+    :title="t('prep.panel.title')"
+    :collapse-label="t('prep.panel.collapse')"
+    :aria-label="t('prep.panel.title')"
     @collapse="emit('collapse')"
   >
     <template #identity>
       <UiTabs
         :items="preparationTabs"
         :active-id="activePreparationTab"
-        aria-label="曲目準備工具"
+        :aria-label="t('prep.panel.tools')"
         tab-id-prefix="preparation-dock"
         panel-id-prefix="preparation-dock"
         variant="bar"

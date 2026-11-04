@@ -8,6 +8,7 @@ import { releaseYearFromDate } from '../../utils/releasePresentation.js';
 import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   source: { type: String, required: true },
@@ -23,7 +24,7 @@ const props = defineProps({
   tracks: { type: Array, default: () => [] },
   description: { type: String, default: '' },
   hint: { type: String, default: '' },
-  listLabel: { type: String, default: '曲目' },
+  listLabel: { type: String, default: () => t('prep.review.tracks') },
 });
 
 const { state: artistIndexState } = useArtistIndex();
@@ -48,7 +49,13 @@ const fields = computed(() => {
         props.tracks.reduce((total, track) => total + track.duration, 0),
       )
     : '';
-  const countLine = `${props.count} 首曲目${duration ? `，${duration}` : ''}`;
+  const countLine = duration
+    ? t(
+        'library.browse.countDuration',
+        { count: props.count, duration },
+        props.count,
+      )
+    : t('library.browse.trackTotal', { count: props.count }, props.count);
   const year =
     props.entityKind === 'album'
       ? releaseYearFromDate(props.releaseDate)

@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -12,6 +11,7 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 import SeparationToolbarList from './SeparationToolbarList.vue';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 for (const [component, filename] of [
   [SeparationToolbarList, './SeparationToolbarList.vue'],
@@ -23,9 +23,8 @@ for (const [component, filename] of [
   attachClientRender(component, filename, import.meta.url);
 }
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./SeparationToolbarList.vue', import.meta.url),
-  'utf8',
 );
 
 describe('SeparationToolbarList', () => {
@@ -41,8 +40,12 @@ describe('SeparationToolbarList', () => {
 
   it('lets list position carry pending order and uses shared icons for terminal states', () => {
     const pendingSection = source.slice(
-      source.indexOf('<AppRightDockSection v-if="pendingItems.length > 0"'),
-      source.indexOf('<AppRightDockSection v-if="attentionItems.length > 0"'),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="pendingItems.length > 0"',
+      ),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="attentionItems.length > 0"',
+      ),
     );
 
     expect(source).toContain(
@@ -58,8 +61,12 @@ describe('SeparationToolbarList', () => {
 
   it('shows the active percentage once in the progress copy', () => {
     const activeSection = source.slice(
-      source.indexOf('<AppRightDockSection v-if="activeItems.length > 0"'),
-      source.indexOf('<AppRightDockSection v-if="pendingItems.length > 0"'),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="activeItems.length > 0"',
+      ),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="pendingItems.length > 0"',
+      ),
     );
     const activeTrail = activeSection.slice(
       activeSection.indexOf('<template #trail>'),
@@ -83,12 +90,20 @@ describe('SeparationToolbarList', () => {
 
   it('places pause and resume controls in the queue section headers', () => {
     const activeSection = source.slice(
-      source.indexOf('<AppRightDockSection v-if="activeItems.length > 0"'),
-      source.indexOf('<AppRightDockSection v-if="pendingItems.length > 0"'),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="activeItems.length > 0"',
+      ),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="pendingItems.length > 0"',
+      ),
     );
     const pendingSection = source.slice(
-      source.indexOf('<AppRightDockSection v-if="pendingItems.length > 0"'),
-      source.indexOf('<AppRightDockSection v-if="attentionItems.length > 0"'),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="pendingItems.length > 0"',
+      ),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="attentionItems.length > 0"',
+      ),
     );
 
     expect(source).toContain('paused: { type: Boolean, default: false }');
@@ -120,8 +135,12 @@ describe('SeparationToolbarList', () => {
     expect(source).toContain("emit('clearPending')");
     expect(source).toContain('icon: ListMinus');
     const pendingSection = source.slice(
-      source.indexOf('<AppRightDockSection v-if="pendingItems.length > 0"'),
-      source.indexOf('<AppRightDockSection v-if="attentionItems.length > 0"'),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="pendingItems.length > 0"',
+      ),
+      source.indexOf(
+        '<AppRightDockSection\n      v-if="attentionItems.length > 0"',
+      ),
     );
     const completedSection = source.slice(
       source.indexOf('v-if="completedItemsNewestFirst.length > 0"'),

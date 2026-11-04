@@ -1,12 +1,11 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import SeparationPreparationList from './SeparationPreparationList.vue';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./SeparationPreparationList.vue', import.meta.url),
-  'utf8',
 );
 
 describe('SeparationPreparationList', () => {
@@ -36,10 +35,10 @@ describe('SeparationPreparationList', () => {
 
   it('projects source tracks into concise unprepared and prepared sections', () => {
     expect(source).toContain(
-      ':heading="`尚未產生 · ${unpreparedTracks.length} 首`"',
+      ':heading="t(\'prep.list.unprepared\', { count: unpreparedTracks.length })"',
     );
     expect(source).toContain(
-      ':heading="`已有伴奏 · ${preparedTracks.length} 首`"',
+      ':heading="t(\'prep.list.prepared\', { count: preparedTracks.length })"',
     );
     expect(source).toContain(
       'grid-template-columns: repeat(2, minmax(0, 1fr))',

@@ -1,0 +1,84 @@
+{
+  "analysis": {
+    "starting": "Preparing download",
+    "downloading": "Downloading analysis component",
+    "installing": "Installing analysis component",
+    "verifying": "Checking analysis component",
+    "activating": "Finishing analysis setup",
+    "ready": "Analysis is ready",
+    "repairFailed": "Analysis repair didn't finish. Try again.",
+    "removeFailed": "Analysis removal didn't finish. Try again.",
+    "installFailed": "Analysis installation didn't finish. Check your network and try again.",
+    "preparing": "Preparing analysis",
+    "damaged": "Analysis needs repair",
+    "unmanageable": "Analysis can't be managed right now",
+    "missing": "Analysis not installed",
+    "readFailedRestart": "Analysis status can't be read. Restart and try again.",
+    "readFailed": "Analysis status can't be read. Reload."
+  },
+  "dock": {
+    "storageHint": "Uses up to {size}",
+    "missingTrack": "Song not found",
+    "maybeRemoved": "It may have been removed from the library",
+    "title": "Accompaniment",
+    "listLabel": "Accompaniment tracks",
+    "noTracks": "This source has no tracks.",
+    "queued": "Tracks added to the processing queue.",
+    "source": "Source",
+    "mode": "Mode",
+    "preview": "Preview tracks to process",
+    "enqueue": "Add to processing queue",
+    "adding": "Adding",
+    "status": "Processing status for this source",
+    "updateFailed": "Can't update",
+    "openSettings": "Open Settings",
+    "currentOrder": "Current playback order",
+    "playlists": "Playlists",
+    "albums": "Albums",
+    "featureLabel": "Accompaniment",
+    "setupTitle": "Finish setup first",
+    "setupMessage": "Turn on accompaniment in Settings first."
+  },
+  "toolbar": {
+    "stopThis": "Stop this one",
+    "remove": "Remove",
+    "retry": "Retry",
+    "active": "Processing",
+    "pausing": "Pausing",
+    "pauseAfter": "Pause after this one",
+    "progress": "Progress",
+    "next": "Up next",
+    "clearPending": "Clear pending",
+    "resume": "Resume",
+    "attention": "Not completed",
+    "done": "Done",
+    "clearDone": "Clear records",
+    "actions": "Accompaniment actions"
+  },
+  "list": {
+    "unprepared": "Not generated · {count}",
+    "noneToAdd": "No tracks to add.",
+    "enqueueNamed": "Add to accompaniment queue: {title}",
+    "prepared": "Has accompaniment · {count}",
+    "regenerate": "Generate accompaniment again",
+    "noneToRegenerate": "No accompaniment to generate again.",
+    "hasAccompaniment": "Has accompaniment"
+  },
+  "panel": {
+    "import": "Import",
+    "separation": "Accompaniment",
+    "title": "Track preparation",
+    "collapse": "Collapse track preparation",
+    "tools": "Track preparation tools"
+  },
+  "activity": {
+    "attention": "Some items not completed",
+    "importFailed": "Import not completed",
+    "separationFailed": "{count} not completed",
+    "multiple": "Several in progress",
+    "importing": "Importing"
+  },
+  "review": {
+    "tracks": "Tracks"
+  }
+}

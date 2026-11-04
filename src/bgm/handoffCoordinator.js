@@ -1,3 +1,4 @@
+import { t } from '../utils/i18n.js';
 const ACTIVE_SESSION_MODES = new Set(['live', 'record', 'reconnecting']);
 
 const DEFAULT_SETTINGS = Object.freeze({
@@ -289,7 +290,7 @@ export function createBgmHandoffCoordinator({
     if (!deck.hasSource()) {
       state.bgmRequested = false;
       state.phase = 'error';
-      state.error = '尚未選擇可播放的 BGM。';
+      state.error = t('bgm.noneSelected');
       return false;
     }
 
@@ -500,7 +501,7 @@ export function createBgmHandoffCoordinator({
     state.bgmRequested = false;
     state.restorePending = false;
     state.audibleLane = null;
-    state.error = reason === 'error' ? 'BGM 音訊無法播放。' : null;
+    state.error = reason === 'error' ? t('bgm.cantPlay') : null;
     state.phase = reason === 'error' ? 'error' : 'manual-hold';
     return true;
   }

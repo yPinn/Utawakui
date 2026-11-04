@@ -88,6 +88,12 @@ const I18N_MIGRATED = [
   'src/composables/{usePlaylists,useArtistIndex,useArtistPhotoCandidates,useWorkOrganization}.js',
   'src/utils/playlistMenu.js',
   'electron/main/{playlistsHandlers,folderPageObjectHandlers}.js',
+  'src/composables/analysis/useMusicAnalysisCapability.js',
+  'src/components/separation/{SeparationDockContent,SeparationToolbarList,SeparationPreparationList}.vue',
+  'src/components/preparation/*.{js,vue}',
+  'src/components/bgm/{bgmPresentation.js,BgmTrackPicker.vue,BgmCurrentSource.vue}',
+  'src/composables/useSeparationPreparation.js',
+  'src/bgm/{audioDeck,handoffCoordinator}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -1,4 +1,5 @@
 import audioControlValues from '../../shared/audioControlValues.json';
+import { t } from '../utils/i18n.js';
 
 const DEFAULT_SETTINGS = Object.freeze({
   volume: audioControlValues.bgmVolume.defaultValue,
@@ -127,7 +128,7 @@ export function createBgmAudioDeck({
 
   function failCapture() {
     cut();
-    state.error = 'BGM 擷取輸出中斷，請重新選擇輸出裝置。';
+    state.error = t('bgm.captureInterrupted');
     state.playbackPhase = 'error';
   }
 
@@ -198,7 +199,7 @@ export function createBgmAudioDeck({
     cancelAutomation(0);
     if (!audio.paused) audio.pause();
     state.isPlaying = false;
-    state.error = 'BGM 音訊無法播放。';
+    state.error = t('bgm.cantPlay');
     state.playbackPhase = 'error';
     settlePendingPlaying(false);
   }
@@ -308,7 +309,7 @@ export function createBgmAudioDeck({
       state.playIntentActive = false;
       captureInput?.setEnabled(false);
       state.isPlaying = false;
-      state.error = 'BGM 音訊無法播放。';
+      state.error = t('bgm.cantPlay');
       state.playbackPhase = 'error';
       settlePendingPlaying(false);
       return false;

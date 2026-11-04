@@ -1,16 +1,17 @@
 import { computed, shallowRef } from 'vue';
+import { t } from '../../utils/i18n.js';
 
 const CAPABILITY_STAGE_LABELS = Object.freeze({
-  starting: '準備下載',
-  'downloading-runtime': '下載分析元件',
-  'installing-runtime': '安裝分析元件',
-  'downloading-environment': '下載分析元件',
-  'installing-environment': '安裝分析元件',
-  'verifying-environment': '確認分析元件',
-  'downloading-model': '下載分析元件',
-  'verifying-model': '確認分析元件',
-  activating: '完成分析功能設定',
-  ready: '分析功能已就緒',
+  starting: t('prep.analysis.starting'),
+  'downloading-runtime': t('prep.analysis.downloading'),
+  'installing-runtime': t('prep.analysis.installing'),
+  'downloading-environment': t('prep.analysis.downloading'),
+  'installing-environment': t('prep.analysis.installing'),
+  'verifying-environment': t('prep.analysis.verifying'),
+  'downloading-model': t('prep.analysis.downloading'),
+  'verifying-model': t('prep.analysis.verifying'),
+  activating: t('prep.analysis.activating'),
+  ready: t('prep.analysis.ready'),
 });
 
 function unavailableCapability() {
@@ -29,9 +30,9 @@ function unavailableCapability() {
 }
 
 function capabilityErrorMessage(operation) {
-  if (operation === 'repair') return '分析功能修復未完成，請再試一次。';
-  if (operation === 'remove') return '分析功能移除未完成，請再試一次。';
-  return '分析功能安裝未完成，請檢查網路連線後再試一次。';
+  if (operation === 'repair') return t('prep.analysis.repairFailed');
+  if (operation === 'remove') return t('prep.analysis.removeFailed');
+  return t('prep.analysis.installFailed');
 }
 
 export function useMusicAnalysisCapability(options = {}) {
@@ -55,12 +56,14 @@ export function useMusicAnalysisCapability(options = {}) {
   );
   const stageLabel = computed(() => {
     const stage = state.capabilityProgress?.stage;
-    if (stage) return CAPABILITY_STAGE_LABELS[stage] ?? '準備分析功能';
-    if (capability.value?.status === 'ready') return '分析功能已就緒';
-    if (capability.value?.status === 'damaged') return '分析功能需要修復';
+    if (stage)
+      return CAPABILITY_STAGE_LABELS[stage] ?? t('prep.analysis.preparing');
+    if (capability.value?.status === 'ready') return t('prep.analysis.ready');
+    if (capability.value?.status === 'damaged')
+      return t('prep.analysis.damaged');
     if (capability.value?.status === 'unavailable')
-      return '目前無法管理分析功能';
-    return '尚未安裝分析功能';
+      return t('prep.analysis.unmanageable');
+    return t('prep.analysis.missing');
   });
 
   function handleProgress(payload) {
@@ -92,7 +95,7 @@ export function useMusicAnalysisCapability(options = {}) {
     const current = ++revision;
     if (typeof bridge?.getMusicStructureCapabilityStatus !== 'function') {
       capability.value = unavailableCapability();
-      readError.value = '目前無法讀取分析功能狀態，請重新啟動後再試。';
+      readError.value = t('prep.analysis.readFailedRestart');
       return capability.value;
     }
     try {
@@ -105,7 +108,7 @@ export function useMusicAnalysisCapability(options = {}) {
       if (errorOperation.value === 'read') state.capabilityError = '';
     } catch {
       if (current !== revision) return capability.value;
-      readError.value = '目前無法讀取分析功能狀態，請重新讀取。';
+      readError.value = t('prep.analysis.readFailed');
       if (!state.capabilityError || errorOperation.value === 'read') {
         state.capabilityError = readError.value;
         errorOperation.value = 'read';

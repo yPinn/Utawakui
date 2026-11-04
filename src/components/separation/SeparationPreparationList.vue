@@ -5,6 +5,7 @@ import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   unpreparedTracks: { type: Array, default: () => [] },
@@ -17,10 +18,12 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
 
 <template>
   <div class="separation-preparation-list">
-    <AppRightDockSection :heading="`尚未產生 · ${unpreparedTracks.length} 首`">
-      <UiHint v-if="unpreparedTracks.length === 0"
-        >沒有可加入處理的曲目。</UiHint
-      >
+    <AppRightDockSection
+      :heading="t('prep.list.unprepared', { count: unpreparedTracks.length })"
+    >
+      <UiHint v-if="unpreparedTracks.length === 0">{{
+        t('prep.list.noneToAdd')
+      }}</UiHint>
       <ul v-else class="separation-preparation-list__items">
         <TrackIdentityRow
           v-for="track in unpreparedTracks"
@@ -38,7 +41,7 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
           <template #trail>
             <UiIconButton
               :icon="MicAudioLines"
-              :label="`加入伴奏處理佇列：${track.title}`"
+              :label="t('prep.list.enqueueNamed', { title: track.title })"
               :disabled="busy"
               @click.stop="emit('startTrack', track.id)"
               @dblclick.stop
@@ -48,16 +51,20 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
       </ul>
     </AppRightDockSection>
 
-    <AppRightDockSection :heading="`已有伴奏 · ${preparedTracks.length} 首`">
+    <AppRightDockSection
+      :heading="t('prep.list.prepared', { count: preparedTracks.length })"
+    >
       <template #trailing>
         <UiIconButton
           :icon="RotateCcw"
-          label="重新產生伴奏"
+          :label="t('prep.list.regenerate')"
           :disabled="busy || preparedTracks.length === 0"
           @click="emit('restartPrepared')"
         />
       </template>
-      <UiHint v-if="preparedTracks.length === 0">沒有可重新產生的伴奏。</UiHint>
+      <UiHint v-if="preparedTracks.length === 0">{{
+        t('prep.list.noneToRegenerate')
+      }}</UiHint>
       <ul v-else class="separation-preparation-list__items">
         <TrackIdentityRow
           v-for="track in preparedTracks"
@@ -73,7 +80,11 @@ const emit = defineEmits(['startTrack', 'restartPrepared', 'navigate']);
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
-            <UiStatusIcon :icon="BadgeCheck" tone="muted" label="已有伴奏" />
+            <UiStatusIcon
+              :icon="BadgeCheck"
+              tone="muted"
+              :label="t('prep.list.hasAccompaniment')"
+            />
           </template>
         </TrackIdentityRow>
       </ul>

@@ -15,6 +15,7 @@ import { usePlaylistActions } from './usePlaylistActions.js';
 import { usePlaylists } from './usePlaylists.js';
 import { playlistDisplayName } from '../utils/playlistMenu.js';
 import { orderPlaylistsForDisplay } from '../utils/playlistOrdering.js';
+import { t } from '../utils/i18n.js';
 
 const selectedMode = shallowRef(DEFAULT_SEPARATION_PRESET_ID);
 const PLAYBACK_ORDER_SOURCE_ID = 'playback-order';
@@ -70,11 +71,13 @@ export function useSeparationPreparation({
     });
 
     return [
-      { value: PLAYBACK_ORDER_SOURCE_ID, label: '目前播放順序' },
+      { value: PLAYBACK_ORDER_SOURCE_ID, label: t('prep.dock.currentOrder') },
       ...(playlists.length > 0
-        ? [{ label: '播放清單', options: playlists }]
+        ? [{ label: t('prep.dock.playlists'), options: playlists }]
         : []),
-      ...(albums.length > 0 ? [{ label: '專輯', options: albums }] : []),
+      ...(albums.length > 0
+        ? [{ label: t('prep.dock.albums'), options: albums }]
+        : []),
     ];
   });
   const selectedCollection = computed(() => {
@@ -164,9 +167,9 @@ export function useSeparationPreparation({
       const enabled = await requireFeatureGate(
         FEATURE_IDS.AUDIO_PROCESSING_FLOW,
         {
-          label: '伴奏功能',
-          title: '先完成初次設定',
-          message: '請先到設定啟用伴奏功能。',
+          label: t('prep.dock.featureLabel'),
+          title: t('prep.dock.setupTitle'),
+          message: t('prep.dock.setupMessage'),
           source: 'separation',
           operation: 'enqueue',
         },

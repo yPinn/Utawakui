@@ -2,6 +2,7 @@
 import PlaybackTrackIdentity from '../track/PlaybackTrackIdentity.vue';
 import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   track: { type: Object, default: null },
@@ -13,10 +14,10 @@ const emit = defineEmits(['activate']);
 <template>
   <PlaybackTrackIdentity
     class="bgm-current-source"
-    aria-label="目前場間音樂"
+    :aria-label="t('bgm.current')"
     :track="track"
     artwork-size="var(--ui-track-row-thumb-size)"
-    empty-label="尚未選擇場間音樂"
+    :empty-label="t('bgm.none')"
     data-artwork-reveal-scope="focus-within"
   >
     <template v-if="playbackAction && track" #artwork>

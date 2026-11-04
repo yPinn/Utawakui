@@ -1,4 +1,5 @@
 import { separationQueueIndicator } from '../separation/separationQueuePresentation.js';
+import { t } from '../../utils/i18n.js';
 
 function nonNegativeCount(value) {
   return Number.isSafeInteger(value) && value > 0 ? value : 0;
@@ -35,15 +36,15 @@ export function preparationActivityIndicator({
   ].filter(Boolean).length;
 
   if (attentionDomains > 1) {
-    return { state: 'attention', label: '有未完成項目' };
+    return { state: 'attention', label: t('prep.activity.attention') };
   }
   if (providerFailures > 0 || localFailure) {
-    return { state: 'attention', label: '匯入未完成' };
+    return { state: 'attention', label: t('prep.activity.importFailed') };
   }
   if (separationFailures > 0) {
     return {
       state: 'attention',
-      label: `${separationFailures} 首未完成`,
+      label: t('prep.activity.separationFailed', { count: separationFailures }),
     };
   }
 
@@ -56,10 +57,10 @@ export function preparationActivityIndicator({
   const separationRunning = ['running', 'pausing'].includes(separation.state);
 
   if (importRunning && separationRunning) {
-    return { state: 'running', label: '多項處理中' };
+    return { state: 'running', label: t('prep.activity.multiple') };
   }
   if (importRunning) {
-    return { state: 'running', label: '匯入中' };
+    return { state: 'running', label: t('prep.activity.importing') };
   }
   return separation;
 }

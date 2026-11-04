@@ -18,6 +18,7 @@ import {
   estimateSeparationOutput,
   separationSourceStatus,
 } from './separationQueuePresentation.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -85,7 +86,7 @@ const sourceStatus = computed(() =>
 const storageHint = computed(() => {
   const estimate = estimateSeparationOutput(unpreparedTracks.value);
   return estimate.label && estimate.knownTracks === estimate.totalTracks
-    ? `最多新增${estimate.label}`
+    ? t('prep.dock.storageHint', { size: estimate.label })
     : '';
 });
 
@@ -124,8 +125,8 @@ function trackFor(item) {
   return (
     tracksById.value.get(item.trackId) ?? {
       id: item.trackId,
-      title: '找不到歌曲',
-      artist: '可能已從曲庫移除',
+      title: t('prep.dock.missingTrack'),
+      artist: t('prep.dock.maybeRemoved'),
     }
   );
 }
@@ -135,7 +136,7 @@ function trackFor(item) {
   <div class="separation-dock-content">
     <UiModal
       :open="previewOpen"
-      title="伴奏處理"
+      :title="t('prep.dock.title')"
       size="wide"
       max-block-size="medium"
       body-mode="workspace"
@@ -154,7 +155,7 @@ function trackFor(item) {
         :description="selectedCollection?.description || ''"
         :tracks="sourceTracks"
         :hint="storageHint"
-        list-label="伴奏處理曲目"
+        :list-label="t('prep.dock.listLabel')"
       >
         <SeparationPreparationList
           v-if="unpreparedTracks.length > 0 || preparedTracks.length > 0"
@@ -167,9 +168,11 @@ function trackFor(item) {
         />
         <UiHint v-else padded center>
           {{
-            sourceTracks.length === 0
-              ? '此來源沒有曲目。'
-              : '曲目已加入處理佇列。'
+            t(
+              sourceTracks.length === 0
+                ? 'prep.dock.noTracks'
+                : 'prep.dock.queued',
+            )
           }}
         </UiHint>
       </PreparationReviewLayout>
@@ -179,7 +182,7 @@ function trackFor(item) {
         id="separation-dock-source"
         v-model="selectedSourceId"
         class="separation-dock-content__source"
-        label="來源"
+        :label="t('prep.dock.source')"
         label-hidden
         :items="sourceOptions"
         :editable="false"
@@ -203,24 +206,24 @@ function trackFor(item) {
           id="separation-dock-mode"
           v-model="selectedMode"
           class="separation-dock-content__mode"
-          label="模式"
+          :label="t('prep.dock.mode')"
           label-hidden
           :options="modeOptions"
         />
         <UiIconButton
           :icon="Info"
-          label="預覽處理曲目"
+          :label="t('prep.dock.preview')"
           aria-haspopup="dialog"
           :aria-expanded="previewOpen"
           @click="previewOpen = true"
         />
         <UiIconButton
           :icon="ListPlus"
-          label="加入處理佇列"
+          :label="t('prep.dock.enqueue')"
           variant="accent"
           :disabled="isBusy || unpreparedTracks.length === 0"
           :loading="isStarting"
-          loading-label="加入中"
+          :loading-label="t('prep.dock.adding')"
           @click="startUnpreparedTracks"
         />
       </div>
@@ -228,7 +231,7 @@ function trackFor(item) {
     <UiHint
       v-if="sourceStatus.length > 0"
       class="separation-dock-content__status"
-      aria-label="目前來源處理狀態"
+      :aria-label="t('prep.dock.status')"
       role="status"
     >
       <span v-for="item in sourceStatus" :key="item.id">
@@ -239,15 +242,15 @@ function trackFor(item) {
     <UiNotice
       v-if="error"
       tone="warning"
-      title="無法更新"
+      :title="t('prep.dock.updateFailed')"
       :message="error"
-      action-label="開啟設定"
+      :action-label="t('prep.dock.openSettings')"
       compact
       @action="openSettings"
     />
 
     <UiHint v-if="sourceTracks.length === 0" padded center>
-      此來源沒有曲目。
+      {{ t('prep.dock.noTracks') }}
     </UiHint>
 
     <SeparationToolbarList

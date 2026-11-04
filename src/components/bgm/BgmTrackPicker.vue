@@ -3,6 +3,7 @@ import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   searchResults: { type: Array, default: () => [] },
@@ -18,26 +19,26 @@ const emit = defineEmits(['update:searchQuery', 'select']);
 <template>
   <section
     class="bgm-track-picker"
-    aria-label="更換場間音樂"
+    :aria-label="t('bgm.picker')"
     :aria-busy="isLoading || isSaving"
   >
     <UiSearchBox
       :model-value="searchQuery"
-      label="搜尋場間音樂"
-      placeholder="搜尋本機曲庫"
+      :label="t('bgm.search')"
+      :placeholder="t('bgm.searchPlaceholder')"
       :disabled="isSaving"
       @update:model-value="emit('update:searchQuery', $event)"
     />
 
     <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
-    <UiHint v-if="isLoading" role="status">正在載入本機曲庫…</UiHint>
+    <UiHint v-if="isLoading" role="status">{{ t('bgm.loading') }}</UiHint>
 
     <UiScrollLayout
       v-else-if="searchQuery.trim()"
       class="bgm-track-picker__results-scroll"
       axis="vertical"
       scrollbar-visibility="auto"
-      aria-label="場間音樂搜尋結果"
+      :aria-label="t('bgm.results')"
       tabindex="0"
     >
       <ul class="bgm-track-picker__results">
@@ -46,12 +47,12 @@ const emit = defineEmits(['update:searchQuery', 'select']);
           :key="track.id"
           :track="track"
           :interactive="!isSaving"
-          :action-label="`改用此 BGM：${track.title ?? track.id}`"
+          :action-label="t('bgm.useNamed', { title: track.title ?? track.id })"
           overflow="ellipsis"
           @row-click="emit('select', track.id)"
         />
         <li v-if="searchResults.length === 0">
-          <UiHint center padded>找不到符合搜尋的其他曲目。</UiHint>
+          <UiHint center padded>{{ t('bgm.noMatch') }}</UiHint>
         </li>
       </ul>
     </UiScrollLayout>

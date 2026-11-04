@@ -23,6 +23,7 @@ import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import { separationItemLabel } from './separationQueuePresentation.js';
 import { pendingReorderOffset } from './separationToolbarQueue.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   activeItems: { type: Array, default: () => [] },
@@ -74,7 +75,7 @@ const menuContent = computed(() => {
               id: 'cancel',
               kind: 'action',
               value: 'cancel',
-              label: '停止這首',
+              label: t('prep.toolbar.stopThis'),
               icon: Square,
             },
           ],
@@ -94,7 +95,7 @@ const menuContent = computed(() => {
               id: 'remove',
               kind: 'action',
               value: 'remove',
-              label: '移除',
+              label: t('prep.toolbar.remove'),
               icon: ListMinus,
             },
           ],
@@ -113,7 +114,7 @@ const menuContent = computed(() => {
             id: 'retry',
             kind: 'action',
             value: 'retry',
-            label: '重試',
+            label: t('prep.toolbar.retry'),
             icon: RotateCcw,
           },
         ],
@@ -125,7 +126,7 @@ const menuContent = computed(() => {
             id: 'remove',
             kind: 'action',
             value: 'remove',
-            label: '移除',
+            label: t('prep.toolbar.remove'),
             icon: ListMinus,
           },
         ],
@@ -243,12 +244,17 @@ function dragItem(item) {
 
 <template>
   <div class="separation-toolbar-list">
-    <AppRightDockSection v-if="activeItems.length > 0" heading="處理中">
+    <AppRightDockSection
+      v-if="activeItems.length > 0"
+      :heading="t('prep.toolbar.active')"
+    >
       <template #trailing>
         <UiIconButton
           v-if="pendingItems.length > 0"
           :icon="Pause"
-          :label="pausing ? '等待暫停' : '完成這首後暫停'"
+          :label="
+            t(pausing ? 'prep.toolbar.pausing' : 'prep.toolbar.pauseAfter')
+          "
           :disabled="pausing"
           @click="emit('pause')"
         />
@@ -258,7 +264,7 @@ function dragItem(item) {
           v-for="item in activeItems"
           :key="`${item.itemId}-progress`"
           class="separation-toolbar-list__progress"
-          label="進度"
+          :label="t('prep.toolbar.progress')"
           :value="item.percent ?? 0"
           :value-text="separationItemLabel(item)"
           :indeterminate="!Number.isFinite(item.percent)"
@@ -285,18 +291,21 @@ function dragItem(item) {
       </ul>
     </AppRightDockSection>
 
-    <AppRightDockSection v-if="pendingItems.length > 0" heading="接下來">
+    <AppRightDockSection
+      v-if="pendingItems.length > 0"
+      :heading="t('prep.toolbar.next')"
+    >
       <template #trailing>
         <div class="separation-toolbar-list__section-actions">
           <UiIconButton
             :icon="ListX"
-            label="清除待處理"
+            :label="t('prep.toolbar.clearPending')"
             @click="emit('clearPending')"
           />
           <UiIconButton
             v-if="paused"
             :icon="Play"
-            label="繼續處理"
+            :label="t('prep.toolbar.resume')"
             variant="accent"
             @click="emit('resume')"
           />
@@ -347,7 +356,10 @@ function dragItem(item) {
       </ul>
     </AppRightDockSection>
 
-    <AppRightDockSection v-if="attentionItems.length > 0" heading="未完成">
+    <AppRightDockSection
+      v-if="attentionItems.length > 0"
+      :heading="t('prep.toolbar.attention')"
+    >
       <ul class="separation-toolbar-list__items">
         <TrackIdentityRow
           v-for="item in attentionItems"
@@ -380,10 +392,12 @@ function dragItem(item) {
 
     <AppRightDockSection
       v-if="completedItemsNewestFirst.length > 0"
-      heading="已完成"
+      :heading="t('prep.toolbar.done')"
     >
       <template #trailing>
-        <UiButton @click="emit('clearCompleted')">清除紀錄</UiButton>
+        <UiButton @click="emit('clearCompleted')">{{
+          t('prep.toolbar.clearDone')
+        }}</UiButton>
       </template>
       <ul class="separation-toolbar-list__items">
         <TrackIdentityRow
@@ -412,7 +426,7 @@ function dragItem(item) {
       :open="Boolean(itemMenu)"
       :anchor="itemMenu?.anchor"
       size="sm"
-      aria-label="伴奏處理操作"
+      :aria-label="t('prep.toolbar.actions')"
       :content="menuContent"
       @select="handleMenuSelect"
       @close="closeItemMenu"

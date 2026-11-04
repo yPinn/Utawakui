@@ -1,21 +1,17 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./PreparationDockPanel.vue', import.meta.url),
-  'utf8',
 );
-const importSource = readFileSync(
+const importSource = readCatalogSource(
   new URL('../import/ImportDockContent.vue', import.meta.url),
-  'utf8',
 );
-const separationSource = readFileSync(
+const separationSource = readCatalogSource(
   new URL('../separation/SeparationDockContent.vue', import.meta.url),
-  'utf8',
 );
-const queueSource = readFileSync(
+const queueSource = readCatalogSource(
   new URL('../queue/QueuePanel.vue', import.meta.url),
-  'utf8',
 );
 
 describe('PreparationDockPanel', () => {
