@@ -21,9 +21,9 @@
     "line": "Line sync",
     "lineDetail": "Lyrics have line timing and follow playback.",
     "separationReady": "Ready",
-    "separationReadyDetail": "Accompaniment and guide vocal tracks are ready.",
+    "separationReadyDetail": "Accompaniment and guide vocal are ready.",
     "separationMissing": "Not prepared",
-    "separationMissingDetail": "Accompaniment and guide vocal tracks haven't been generated."
+    "separationMissingDetail": "Accompaniment and guide vocal haven't been generated."
   },
   "columns": {
     "actions": "Actions",
@@ -149,8 +149,8 @@
     "selectNamed": "Select: {title}",
     "pauseNamed": "Pause: {title}",
     "playNamed": "Play: {title}",
-    "noPlays": "No in-app plays recorded yet",
-    "plays": "{count} in-app play | {count} in-app plays",
+    "noPlays": "No plays yet",
+    "plays": "Played {count} time | Played {count} times",
     "goToAlbumNamed": "Go to album: {name}",
     "hasAccompanimentNamed": "Has accompaniment: {title}",
     "accompanimentBusyNamed": "Preparing accompaniment: {title}",

@@ -11,7 +11,7 @@ describe('TrackListDensityMenu', () => {
     expect(source).toContain('<UiPopover');
     expect(source).toContain('<UiRadioGroup');
     expect(source).toContain("id: 'list'");
-    expect(source).toContain("label: '疏散'");
+    expect(source).toContain("label: '寬鬆'");
     expect(source).toContain("id: 'compact'");
     expect(source).toContain("label: '緊密'");
     expect(source).toContain("emit('updateDensity', value)");

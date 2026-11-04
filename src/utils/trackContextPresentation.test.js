@@ -233,7 +233,7 @@ describe('track context presentation', () => {
         label: '人聲分離',
         status: '素材已準備',
         tone: 'success',
-        description: '伴奏與導唱聲道素材已準備。',
+        description: '伴奏與導唱已準備。',
       },
     ]);
 
@@ -248,14 +248,14 @@ describe('track context presentation', () => {
         label: '歌詞',
         status: '尚未取得',
         tone: 'muted',
-        description: '目前沒有可用歌詞素材。',
+        description: '目前沒有可用的歌詞。',
       },
       {
         id: 'separation',
         label: '人聲分離',
         status: '尚未準備',
         tone: 'muted',
-        description: '尚未產生伴奏與導唱聲道素材。',
+        description: '尚未產生伴奏與導唱。',
       },
     ]);
   });
