@@ -1,5 +1,6 @@
 'use strict';
 
+const { t } = require('../lib/i18n');
 const { listTracks } = require('../lib/library');
 const { loadPlaylists } = require('../lib/playlists');
 const {
@@ -18,63 +19,39 @@ const {
 const OPERATION_ERRORS = Object.freeze({
   archive: {
     code: 'PERFORMANCE_SESSION_ARCHIVE_FAILED',
-    title: '場次尚未封存',
-    message: '場次尚未封存，目前資料仍保留，請再試一次。',
   },
   history: {
     code: 'PERFORMANCE_SESSION_HISTORY_FAILED',
-    title: '演出紀錄未更新',
-    message: '目前無法讀取或保存演出紀錄，請再試一次。',
   },
   export: {
     code: 'PERFORMANCE_SESSION_EXPORT_FAILED',
-    title: '演出歌單尚未保存',
-    message: '演出歌單尚未保存，請再試一次。',
   },
   get: {
     code: 'PERFORMANCE_SESSION_PLAN_GET_FAILED',
-    title: '場次草稿無法讀取',
-    message: '目前無法讀取場次草稿，請再試一次。',
   },
   replace: {
     code: 'PERFORMANCE_SESSION_PLAN_REPLACE_FAILED',
-    title: '場次草稿無法建立',
-    message: '目前無法從播放清單建立場次草稿，請再試一次。',
   },
   append: {
     code: 'PERFORMANCE_SESSION_PLAN_APPEND_FAILED',
-    title: '曲目無法加入場次',
-    message: '目前無法加入這些曲目，請再試一次。',
   },
   update: {
     code: 'PERFORMANCE_SESSION_PLAN_UPDATE_FAILED',
-    title: '場次曲目無法更新',
-    message: '這首場次曲目目前無法更新，請再試一次。',
   },
   move: {
     code: 'PERFORMANCE_SESSION_PLAN_MOVE_FAILED',
-    title: '場次順序無法更新',
-    message: '目前無法調整場次順序，請再試一次。',
   },
   duplicate: {
     code: 'PERFORMANCE_SESSION_PLAN_DUPLICATE_FAILED',
-    title: '場次曲目無法複製',
-    message: '目前無法複製這首場次曲目，請再試一次。',
   },
   remove: {
     code: 'PERFORMANCE_SESSION_PLAN_REMOVE_FAILED',
-    title: '場次曲目無法移除',
-    message: '目前無法移除這首場次曲目，請再試一次。',
   },
   cursor: {
     code: 'PERFORMANCE_SESSION_PLAN_CURSOR_FAILED',
-    title: '檢查位置無法更新',
-    message: '目前無法切換檢查曲目，請再試一次。',
   },
   clear: {
     code: 'PERFORMANCE_SESSION_PLAN_CLEAR_FAILED',
-    title: '場次草稿無法清除',
-    message: '目前無法清除場次草稿，請再試一次。',
   },
 });
 
@@ -216,7 +193,7 @@ function registerPerformanceSessionPlanHandlers({
           throw new PerformanceSessionPlanValidationError({
             code: 'SESSION_PLAN_SOURCE_NOT_FOUND',
             field: 'sourceId',
-            message: '找不到這個播放清單，曲庫可能已更新。',
+            message: t('session.main.sourceNotFound'),
           });
         }
         const commit = (currentStore, currentTracks, currentCollection) =>

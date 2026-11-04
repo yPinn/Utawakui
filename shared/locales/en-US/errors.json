@@ -224,6 +224,54 @@
     "title": "Output window not opened",
     "message": "Make sure the output service is running, then try opening the window again."
   },
+  "PERFORMANCE_SESSION_ARCHIVE_FAILED": {
+    "title": "Session not archived",
+    "message": "The session wasn't archived; the current data is kept. Try again."
+  },
+  "PERFORMANCE_SESSION_EXPORT_FAILED": {
+    "title": "Setlist not saved",
+    "message": "The setlist wasn't saved. Try again."
+  },
+  "PERFORMANCE_SESSION_HISTORY_FAILED": {
+    "title": "Performance records not updated",
+    "message": "Performance records can't be read or saved right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_APPEND_FAILED": {
+    "title": "Tracks can't be added to the session",
+    "message": "These tracks can't be added right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_CLEAR_FAILED": {
+    "title": "Session draft can't be cleared",
+    "message": "The session draft can't be cleared right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_CURSOR_FAILED": {
+    "title": "Selection can't be updated",
+    "message": "The selected track can't be changed right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_DUPLICATE_FAILED": {
+    "title": "Session track can't be duplicated",
+    "message": "This session track can't be duplicated right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_GET_FAILED": {
+    "title": "Session draft can't be read",
+    "message": "The session draft can't be read right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_MOVE_FAILED": {
+    "title": "Session order can't be updated",
+    "message": "The session order can't be changed right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_REMOVE_FAILED": {
+    "title": "Session track can't be removed",
+    "message": "This session track can't be removed right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_REPLACE_FAILED": {
+    "title": "Session draft can't be created",
+    "message": "A session draft can't be created from the playlist right now. Try again."
+  },
+  "PERFORMANCE_SESSION_PLAN_UPDATE_FAILED": {
+    "title": "Session track can't be updated",
+    "message": "This session track can't be updated right now. Try again."
+  },
   "PROVIDER_SEARCH_FAILED": {
     "title": "YT Music / YouTube search not completed",
     "message": "The YT Music / YouTube search can't finish right now. Try again later."

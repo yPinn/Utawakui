@@ -1,5 +1,7 @@
 'use strict';
 
+// Lazy so the catalog loads only when a message is built.
+const t = (key, named) => require('./i18n').t(key, named);
 const {
   normalizeSessionFields,
   sessionProjectionFields,
@@ -35,27 +37,31 @@ const PROGRESS_STATES = new Set([
   'interrupted',
 ]);
 
-const VALIDATION_MESSAGES = Object.freeze({
-  SESSION_PLAN_CURRENT_ITEM: '請先完成或停止目前曲目，再修改這份安排。',
-  SESSION_PLAN_HISTORY_ITEM: '已播放的紀錄不能直接修改，請再次加入待播後調整。',
-  SESSION_PLAN_REPLACE_REQUIRED: '目前已有場次草稿，請先確認是否取代。',
-  SESSION_PLAN_ITEM_LIMIT_EXCEEDED: '場次草稿最多可包含 500 首曲目。',
-  SESSION_PLAN_DISPLAY_TITLE_REQUIRED: '請輸入顯示曲名或項目名稱。',
-  SESSION_PLAN_DISPLAY_TITLE_TOO_LONG: '顯示曲名或項目名稱不可超過 200 個字。',
-  SESSION_PLAN_DISPLAY_ARTIST_TOO_LONG: '第二行不可超過 200 個字。',
-  SESSION_PLAN_LABEL_INVALID: '名稱包含無法使用的控制字元。',
-  SESSION_PLAN_TRACK_REQUIRED: '請先連結可播放的本機曲目。',
-  SESSION_PLAN_TRACK_UNAVAILABLE: '連結的本機曲目目前無法使用。',
-  SESSION_PLAN_ITEM_NOT_FOUND: '找不到這個場次項目，請重新整理後再試。',
-  SESSION_PLAN_STALE_REVISION: '這首曲目已在其他操作中更新，請重新確認。',
-  SESSION_PLAN_SOURCE_INVALID: '來源播放清單目前無法建立場次草稿。',
-  SESSION_PLAN_ARCHIVE_NOT_FOUND: '找不到這個封存場次，請重新讀取。',
-  SESSION_PLAN_INTENT_INVALID: '場次準備操作無效，請重新整理後再試。',
-});
+const VALIDATION_CODES = new Set([
+  'SESSION_PLAN_CURRENT_ITEM',
+  'SESSION_PLAN_HISTORY_ITEM',
+  'SESSION_PLAN_REPLACE_REQUIRED',
+  'SESSION_PLAN_ITEM_LIMIT_EXCEEDED',
+  'SESSION_PLAN_DISPLAY_TITLE_REQUIRED',
+  'SESSION_PLAN_DISPLAY_TITLE_TOO_LONG',
+  'SESSION_PLAN_DISPLAY_ARTIST_TOO_LONG',
+  'SESSION_PLAN_LABEL_INVALID',
+  'SESSION_PLAN_TRACK_REQUIRED',
+  'SESSION_PLAN_TRACK_UNAVAILABLE',
+  'SESSION_PLAN_ITEM_NOT_FOUND',
+  'SESSION_PLAN_STALE_REVISION',
+  'SESSION_PLAN_SOURCE_INVALID',
+  'SESSION_PLAN_ARCHIVE_NOT_FOUND',
+  'SESSION_PLAN_INTENT_INVALID',
+]);
+const validationMessage = (code) =>
+  VALIDATION_CODES.has(code)
+    ? t(`session.validation.${code}`)
+    : t('session.validation.fallback');
 
 class PerformanceSessionPlanValidationError extends Error {
   constructor({ code, message, field = null, context = undefined }) {
-    super(message || VALIDATION_MESSAGES[code] || '場次準備操作無效。');
+    super(message || validationMessage(code));
     this.name = 'PerformanceSessionPlanValidationError';
     this.code = code;
     this.field = field;
@@ -74,7 +80,7 @@ function isPerformanceSessionPlanValidationError(error) {
 function validationError(code, field = null, context = undefined) {
   return new PerformanceSessionPlanValidationError({
     code,
-    message: VALIDATION_MESSAGES[code],
+    message: validationMessage(code),
     field,
     context,
   });
@@ -423,14 +429,11 @@ function createPerformanceSessionPlanStore({
           Object.hasOwn(value, key),
         )
       ) {
-        throw Object.assign(
-          new Error('場次資料無法讀取；原檔已保留，請先修復資料。'),
-          {
-            code: 'SESSION_ARCHIVE_INVALID',
-            field: null,
-            publicValidation: true,
-          },
-        );
+        throw Object.assign(new Error(t('session.main.dataUnreadable')), {
+          code: 'SESSION_ARCHIVE_INVALID',
+          field: null,
+          publicValidation: true,
+        });
       }
       backupCorrupted(filePath);
       return emptyDocument();
@@ -1050,6 +1053,7 @@ module.exports = {
   PERFORMANCE_SESSION_PLAN_PASTE_LIMIT,
   PERFORMANCE_SESSION_PLAN_VERSION,
   PerformanceSessionPlanValidationError,
+  VALIDATION_CODES,
   createPerformanceSessionPlanStore,
   isPerformanceSessionPlanValidationError,
 };

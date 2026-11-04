@@ -1,4 +1,6 @@
 'use strict';
+// Lazy so the catalog loads only when a message is built.
+const t = (key, named) => require('./i18n').t(key, named);
 const crypto = require('node:crypto');
 const { hasControlCharacters } = require('./textGuards');
 
@@ -12,7 +14,7 @@ const text = (value, limit = 256) =>
   !hasControlCharacters(value);
 const timestamp = (value) =>
   typeof value === 'string' && Number.isFinite(Date.parse(value));
-function invalid(message = '場次資料無效，請重新讀取。') {
+function invalid(message = t('session.main.archiveInvalid')) {
   return Object.assign(new Error(message), {
     code: 'SESSION_ARCHIVE_INVALID',
     field: null,
@@ -83,7 +85,7 @@ function normalizeSessionFields(value, sanitizeItem, sanitizeSource) {
     !Array.isArray(value.archives) ||
     value.archives.length > ARCHIVE_LIMIT
   )
-    throw invalid('封存資料無法讀取；原檔已保留，請先修復資料。');
+    throw invalid(t('session.main.archiveUnreadable'));
   const archives = value.archives.map((a) => {
     if (
       !safeId(a?.id) ||
@@ -174,7 +176,7 @@ function createSessionOperations({
     const clean = timelineEntry(entry);
     if (draft.timeline.some((e) => e.id === clean.id)) return false;
     if (draft.timeline.length >= TIMELINE_LIMIT)
-      throw invalid('這場的時間軸已達保存上限，請先封存場次。');
+      throw invalid(t('session.main.timelineFull'));
     draft.timeline.push(clean);
     draft.sessionStartedAt ??= clean.occurredAt;
     return true;
@@ -189,7 +191,7 @@ function createSessionOperations({
     if (id === d.sessionId)
       return {
         id,
-        name: d.source?.name ?? '目前場次',
+        name: d.source?.name ?? t('session.main.currentSession'),
         startedAt: d.sessionStartedAt,
         endedAt: null,
         source: d.source,
@@ -197,7 +199,7 @@ function createSessionOperations({
         timeline: d.timeline,
       };
     const a = d.archives?.find((a) => a.id === id);
-    if (!a) throw invalid('找不到這個場次，請重新讀取。');
+    if (!a) throw invalid(t('session.main.sessionNotFound'));
     // The archive stays scalar-only; availability is always resolved afresh.
     return { ...a, items: project({ ...d, items: a.items }, tracks).items };
   }
@@ -207,16 +209,16 @@ function createSessionOperations({
       !text(intent.name, 200) ||
       !intent.name.trim()
     )
-      throw invalid('請輸入場次名稱（最多 200 字）。');
+      throw invalid(t('session.main.nameRequired'));
     const d = mutate((d) => {
       if (d.archives?.some((a) => a.id === intent.sessionId)) return false;
       if (d.sessionId !== intent.sessionId)
-        throw invalid('目前場次已變更，請重新讀取。');
+        throw invalid(t('session.main.sessionChanged'));
       assertNoCurrent(d);
       if (!d.items.length && !d.timeline.length)
-        throw invalid('目前沒有可封存的演出紀錄。');
+        throw invalid(t('session.main.nothingToArchive'));
       if (d.archives.length >= ARCHIVE_LIMIT)
-        throw invalid('封存場次已達保存上限；目前場次仍保留。');
+        throw invalid(t('session.main.archiveFull'));
       d.archives.push({
         id: d.sessionId,
         name: intent.name.trim(),
@@ -239,7 +241,7 @@ function createSessionOperations({
   }
   function previewPlaylist(intent, tracks) {
     if (!['all', 'completed'].includes(intent?.scope))
-      throw invalid('請選擇完整安排或完成曲目。');
+      throw invalid(t('session.main.scopeRequired'));
     const session = getSession(intent.sessionId, tracks);
     let items = session.items;
     if (intent.scope === 'completed')
@@ -298,8 +300,8 @@ function createSessionOperations({
   function verifyPlaylistPreview(intent, tracks) {
     const next = previewPlaylist(intent, tracks);
     if (intent.token !== next.token)
-      throw invalid('曲目或可用性已變更，請重新檢視合併與排除預覽。');
-    if (!next.savedCount) throw invalid('沒有可保存的本機曲目。');
+      throw invalid(t('session.main.previewStale'));
+    if (!next.savedCount) throw invalid(t('session.main.nothingToSave'));
     return next;
   }
   return {

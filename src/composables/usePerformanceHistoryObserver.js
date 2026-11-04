@@ -1,5 +1,6 @@
 import { usePlayer } from './usePlayer.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
+import { t } from '../utils/i18n.js';
 
 // One subscription at the App lifetime boundary. The audio element remains
 // authority; this observer never starts, stops, seeks or owns timing.
@@ -32,8 +33,8 @@ export function usePerformanceHistoryObserver() {
         revision = -1;
         recordError(error, {
           code: 'PERFORMANCE_HISTORY_OBSERVE_FAILED',
-          title: '演出時間軸未更新',
-          message: '這次演出時間戳未能保存，請檢查紀錄後重試。',
+          title: t('session.observer.failedTitle'),
+          message: t('session.observer.failedMessage'),
           source: 'performance-history',
           operation: 'observe-playing',
         });

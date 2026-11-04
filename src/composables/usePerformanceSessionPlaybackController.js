@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, watch } from 'vue';
+import { t } from '../utils/i18n.js';
 
 // Occurrence progress belongs to the arrangement; timing and play state belong
 // exclusively to the existing audio player. No OBS state enters this boundary.
@@ -55,7 +56,7 @@ export function usePerformanceSessionPlaybackController({
       try {
         return await operation();
       } catch {
-        state.error = '曲目進度未更新，請再試一次。';
+        state.error = t('session.playback.progressNotUpdated');
         return false;
       } finally {
         state.busy = false;
@@ -80,7 +81,7 @@ export function usePerformanceSessionPlaybackController({
     active.confirmation = plan.setProgress(active.item.itemId, 'playing');
     const saved = await active.confirmation;
     if (!saved) {
-      state.error = '播放進度未儲存，請停止後再試一次。';
+      state.error = t('session.playback.progressNotSavedStop');
       if (request === active) player.pause();
     }
     return saved;
@@ -105,7 +106,7 @@ export function usePerformanceSessionPlaybackController({
       item?.progress === 'playing' &&
       !(await plan.setProgress(item.itemId, progress))
     ) {
-      state.error = '曲目進度未儲存，請再試一次。';
+      state.error = t('session.playback.progressNotSaved');
       return false;
     }
     release(active);
@@ -129,7 +130,7 @@ export function usePerformanceSessionPlaybackController({
         ? null
         : getTracks().find((track) => track.id === item.trackId);
     if (item.mode !== 'manual' && !track?.url) {
-      state.error = '找不到可播放的音檔，請重新連結曲目。';
+      state.error = t('session.playback.audioMissing');
       return false;
     }
     const active = {
@@ -165,8 +166,7 @@ export function usePerformanceSessionPlaybackController({
     if (!started) {
       if (active.confirmation) await finish(active, 'interrupted');
       else release(active);
-      if (!active.ending)
-        state.error = '這首曲目未能開始，請再試一次或檢查音檔。';
+      if (!active.ending) state.error = t('session.playback.startFailed');
       return false;
     }
     active.playbackRevision = player.state.playbackRevision;
@@ -215,7 +215,7 @@ export function usePerformanceSessionPlaybackController({
     void enqueue(async () => {
       if (!active.confirmation) {
         await finish(active, 'interrupted');
-        state.error = '這首曲目未確認開始播放，已保留在待播。';
+        state.error = t('session.playback.startUnconfirmed');
         return false;
       }
       if (!(await finish(active, 'completed'))) return false;
@@ -246,7 +246,7 @@ export function usePerformanceSessionPlaybackController({
         active.ending = true;
         player.pause();
         void enqueue(() => finish(active, 'interrupted'));
-        state.error = '曲目在開始前已變更，請重新加入或播放。';
+        state.error = t('session.playback.changedBeforeStart');
         return;
       }
       active.playbackRevision ??= event.playbackRevision;
@@ -260,9 +260,7 @@ export function usePerformanceSessionPlaybackController({
       void enqueue(async () => {
         if (!(await finish(active, 'interrupted'))) return;
         state.error =
-          event.reason === 'error'
-            ? '播放中斷，請檢查音檔後重新加入待播。'
-            : null;
+          event.reason === 'error' ? t('session.playback.interrupted') : null;
       });
     }),
     watch(

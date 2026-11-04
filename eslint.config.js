@@ -56,6 +56,10 @@ const I18N_MIGRATED = [
   'src/components/performance-session/*.vue',
   'src/components/performance/PerformanceWorkspace.vue',
   'src/pages/PerformancePage.vue',
+  'electron/main/{performanceSessionPlanHandlers,performanceSessionHistoryHandlers}.js',
+  'electron/lib/{performanceSessionPlan,performanceSessionArchive}.js',
+  'src/composables/{usePerformanceSessionPlaybackController,usePerformanceSessionPlan,usePerformanceArchive,usePerformanceHistoryObserver}.js',
+  'src/utils/{performanceArchivePresentation,performanceSessionSummary,performanceSessionOutput}.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

@@ -259,5 +259,85 @@
   "page": {
     "archiveBody": "Archived session",
     "workspaceBody": "Performance workspace"
-  }
+  },
+  "validation": {
+    "SESSION_PLAN_CURRENT_ITEM": "Finish or stop the current track before changing this arrangement.",
+    "SESSION_PLAN_HISTORY_ITEM": "Played records can't be changed directly. Add the song to the queue again, then adjust it.",
+    "SESSION_PLAN_REPLACE_REQUIRED": "A session draft already exists. Confirm whether to replace it first.",
+    "SESSION_PLAN_ITEM_LIMIT_EXCEEDED": "A session draft can hold at most 500 tracks.",
+    "SESSION_PLAN_DISPLAY_TITLE_REQUIRED": "Enter a display title or item name.",
+    "SESSION_PLAN_DISPLAY_TITLE_TOO_LONG": "The display title or item name can be at most 200 characters.",
+    "SESSION_PLAN_DISPLAY_ARTIST_TOO_LONG": "The second line can be at most 200 characters.",
+    "SESSION_PLAN_LABEL_INVALID": "The name contains control characters that can't be used.",
+    "SESSION_PLAN_TRACK_REQUIRED": "Link a playable local track first.",
+    "SESSION_PLAN_TRACK_UNAVAILABLE": "The linked local track isn't available right now.",
+    "SESSION_PLAN_ITEM_NOT_FOUND": "This session item can't be found. Refresh and try again.",
+    "SESSION_PLAN_STALE_REVISION": "This track was updated by another action. Check it again.",
+    "SESSION_PLAN_SOURCE_INVALID": "A session draft can't be created from this playlist right now.",
+    "SESSION_PLAN_ARCHIVE_NOT_FOUND": "This archived session can't be found. Reload.",
+    "SESSION_PLAN_INTENT_INVALID": "This session action is invalid. Refresh and try again.",
+    "fallback": "This session action is invalid."
+  },
+  "main": {
+    "sourceNotFound": "This playlist can't be found; the library may have been updated.",
+    "dataUnreadable": "The session data can't be read; the original file is kept. Repair the data first.",
+    "performanceInvalid": "The performance ID is invalid.",
+    "performanceTrackMissing": "The local track for this performance can't be found.",
+    "restartToRecord": "Restart the app to keep recording.",
+    "archiveInvalid": "The session data is invalid. Reload.",
+    "archiveUnreadable": "The archive data can't be read; the original file is kept. Repair the data first.",
+    "timelineFull": "This session's timeline is full. Archive the session first.",
+    "currentSession": "Current session",
+    "sessionNotFound": "This session can't be found. Reload.",
+    "nameRequired": "Enter a session name (up to 200 characters).",
+    "sessionChanged": "The current session changed. Reload.",
+    "nothingToArchive": "There are no performance records to archive.",
+    "archiveFull": "The archive is full; the current session is kept.",
+    "scopeRequired": "Choose the full arrangement or completed tracks.",
+    "previewStale": "Tracks or availability changed. Review the merge and exclusion preview again.",
+    "nothingToSave": "No local tracks to save."
+  },
+  "playback": {
+    "progressNotUpdated": "The track progress wasn't updated. Try again.",
+    "progressNotSavedStop": "The playback progress wasn't saved. Stop and try again.",
+    "progressNotSaved": "The track progress wasn't saved. Try again.",
+    "audioMissing": "No playable audio file found. Link the track again.",
+    "startFailed": "This track didn't start. Try again or check the audio file.",
+    "startUnconfirmed": "This track wasn't confirmed as started and stays in the queue.",
+    "changedBeforeStart": "The track changed before it started. Add or play it again.",
+    "interrupted": "Playback was interrupted. Check the audio file and add it to the queue again."
+  },
+  "plan": {
+    "notUpdatedTitle": "Session draft not updated",
+    "notUpdatedMessage": "The session draft wasn't updated. Try again.",
+    "moveFailed": "Item not moved",
+    "duplicateFailed": "Item not duplicated",
+    "reorderFailed": "Order not updated",
+    "removeFailed": "Item not removed",
+    "clearFailed": "Arrangement not cleared"
+  },
+  "archiveLoad": {
+    "failed": "The session can't be read. Try again."
+  },
+  "observer": {
+    "failedTitle": "Performance timeline not updated",
+    "failedMessage": "This performance's timestamps weren't saved. Check the records and retry."
+  },
+  "archiveStatus": {
+    "queued": "Not performed",
+    "playing": "Performing",
+    "completed": "Done",
+    "skipped": "Skipped",
+    "interrupted": "Interrupted",
+    "manualTrack": "Manual track",
+    "noLocalTrack": "No local track"
+  },
+  "summaryLine": {
+    "tracks": "{count} track | {count} tracks",
+    "items": "{count} item | {count} items",
+    "unknownDuration": "Length unknown",
+    "knownPartial": "Known {duration}",
+    "joined": "{count}, {duration}"
+  },
+  "outputSourceFallback": "Arrangement"
 }

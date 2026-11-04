@@ -3,6 +3,7 @@ import { notificationKey } from '../constants/notificationKeys.js';
 import { useSerializedPlanStore } from './useSerializedPlanStore.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { t } from '../utils/i18n.js';
 
 function createEmptyPlan() {
   return {
@@ -37,8 +38,8 @@ const { state, enqueue, refresh, initialize, dispose } = useSerializedPlanStore(
     invalidResponseMessage: 'invalid performance session plan response',
     errorPresentation: {
       code: 'PERFORMANCE_SESSION_PLAN_RENDERER_FAILED',
-      title: '場次草稿未更新',
-      message: '場次草稿未更新，請再試一次。',
+      title: t('session.plan.notUpdatedTitle'),
+      message: t('session.plan.notUpdatedMessage'),
       source: 'performance-session-plan',
     },
     recordError: useAppDiagnostics().recordError,
@@ -154,7 +155,7 @@ function moveItem(itemId, offset) {
   return enqueueMenuMutation(
     () => window.Utawakui.movePerformanceSessionPlanItem({ itemId, offset }),
     'move',
-    '演出項目未移動',
+    t('session.plan.moveFailed'),
   );
 }
 
@@ -162,7 +163,7 @@ function duplicateItem(itemId) {
   return enqueueMenuMutation(
     () => window.Utawakui.duplicatePerformanceSessionPlanItem(itemId),
     'duplicate',
-    '演出項目未複製',
+    t('session.plan.duplicateFailed'),
   );
 }
 function reorderItem(itemId, targetItemId, position) {
@@ -174,7 +175,7 @@ function reorderItem(itemId, targetItemId, position) {
         position,
       }),
     'reorder',
-    '演出排序未更新',
+    t('session.plan.reorderFailed'),
   );
 }
 
@@ -200,7 +201,7 @@ function removeItem(itemId) {
   return enqueueMenuMutation(
     () => window.Utawakui.removePerformanceSessionPlanItem(itemId),
     'remove',
-    '演出項目未移除',
+    t('session.plan.removeFailed'),
   );
 }
 
@@ -214,7 +215,7 @@ function clear() {
   return enqueueMenuMutation(
     () => window.Utawakui.clearPerformanceSessionPlan(),
     'clear',
-    '演出安排未清空',
+    t('session.plan.clearFailed'),
   );
 }
 function archiveSession(name, sessionId = state.plan.sessionId) {

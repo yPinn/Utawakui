@@ -1,4 +1,5 @@
 'use strict';
+const { t } = require('../lib/i18n');
 const crypto = require('node:crypto');
 const { savePerformancePlaylist } = require('../lib/playlists');
 
@@ -74,7 +75,7 @@ function registerPerformanceSessionHistoryHandlers({
         typeof intent.trackId !== 'string' ||
         intent.trackId.length > 256
       )
-        throw Object.assign(new Error('演出識別無效。'), {
+        throw Object.assign(new Error(t('session.main.performanceInvalid')), {
           code: 'SESSION_PERFORMANCE_INVALID',
           publicValidation: true,
         });
@@ -86,12 +87,15 @@ function registerPerformanceSessionHistoryHandlers({
       const { tracksById } = operationContext();
       const track = tracksById.get(intent.trackId);
       if (!track)
-        throw Object.assign(new Error('找不到這次演出的本機曲目。'), {
-          code: 'SESSION_PERFORMANCE_INVALID',
-          publicValidation: true,
-        });
+        throw Object.assign(
+          new Error(t('session.main.performanceTrackMissing')),
+          {
+            code: 'SESSION_PERFORMANCE_INVALID',
+            publicValidation: true,
+          },
+        );
       if (epoch !== intent.epoch && epoch && retired.size >= 32)
-        throw Object.assign(new Error('請重新啟動應用程式後繼續記錄。'), {
+        throw Object.assign(new Error(t('session.main.restartToRecord')), {
           code: 'SESSION_PERFORMANCE_INVALID',
           publicValidation: true,
         });

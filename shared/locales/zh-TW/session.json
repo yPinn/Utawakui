@@ -259,5 +259,85 @@
   "page": {
     "archiveBody": "封存場次內容",
     "workspaceBody": "演唱工作區"
-  }
+  },
+  "validation": {
+    "SESSION_PLAN_CURRENT_ITEM": "請先完成或停止目前曲目，再修改這份安排。",
+    "SESSION_PLAN_HISTORY_ITEM": "已播放的紀錄不能直接修改，請再次加入待播後調整。",
+    "SESSION_PLAN_REPLACE_REQUIRED": "目前已有場次草稿，請先確認是否取代。",
+    "SESSION_PLAN_ITEM_LIMIT_EXCEEDED": "場次草稿最多可包含 500 首曲目。",
+    "SESSION_PLAN_DISPLAY_TITLE_REQUIRED": "請輸入顯示曲名或項目名稱。",
+    "SESSION_PLAN_DISPLAY_TITLE_TOO_LONG": "顯示曲名或項目名稱不可超過 200 個字。",
+    "SESSION_PLAN_DISPLAY_ARTIST_TOO_LONG": "第二行不可超過 200 個字。",
+    "SESSION_PLAN_LABEL_INVALID": "名稱包含無法使用的控制字元。",
+    "SESSION_PLAN_TRACK_REQUIRED": "請先連結可播放的本機曲目。",
+    "SESSION_PLAN_TRACK_UNAVAILABLE": "連結的本機曲目目前無法使用。",
+    "SESSION_PLAN_ITEM_NOT_FOUND": "找不到這個場次項目，請重新整理後再試。",
+    "SESSION_PLAN_STALE_REVISION": "這首曲目已在其他操作中更新，請重新確認。",
+    "SESSION_PLAN_SOURCE_INVALID": "來源播放清單目前無法建立場次草稿。",
+    "SESSION_PLAN_ARCHIVE_NOT_FOUND": "找不到這個封存場次，請重新讀取。",
+    "SESSION_PLAN_INTENT_INVALID": "場次準備操作無效，請重新整理後再試。",
+    "fallback": "場次準備操作無效。"
+  },
+  "main": {
+    "sourceNotFound": "找不到這個播放清單，曲庫可能已更新。",
+    "dataUnreadable": "場次資料無法讀取；原檔已保留，請先修復資料。",
+    "performanceInvalid": "演出識別無效。",
+    "performanceTrackMissing": "找不到這次演出的本機曲目。",
+    "restartToRecord": "請重新啟動應用程式後繼續記錄。",
+    "archiveInvalid": "場次資料無效，請重新讀取。",
+    "archiveUnreadable": "封存資料無法讀取；原檔已保留，請先修復資料。",
+    "timelineFull": "這場的時間軸已達保存上限，請先封存場次。",
+    "currentSession": "目前場次",
+    "sessionNotFound": "找不到這個場次，請重新讀取。",
+    "nameRequired": "請輸入場次名稱（最多 200 字）。",
+    "sessionChanged": "目前場次已變更，請重新讀取。",
+    "nothingToArchive": "目前沒有可封存的演出紀錄。",
+    "archiveFull": "封存場次已達保存上限；目前場次仍保留。",
+    "scopeRequired": "請選擇完整安排或完成曲目。",
+    "previewStale": "曲目或可用性已變更，請重新檢視合併與排除預覽。",
+    "nothingToSave": "沒有可保存的本機曲目。"
+  },
+  "playback": {
+    "progressNotUpdated": "曲目進度未更新，請再試一次。",
+    "progressNotSavedStop": "播放進度未儲存，請停止後再試一次。",
+    "progressNotSaved": "曲目進度未儲存，請再試一次。",
+    "audioMissing": "找不到可播放的音檔，請重新連結曲目。",
+    "startFailed": "這首曲目未能開始，請再試一次或檢查音檔。",
+    "startUnconfirmed": "這首曲目未確認開始播放，已保留在待播。",
+    "changedBeforeStart": "曲目在開始前已變更，請重新加入或播放。",
+    "interrupted": "播放中斷，請檢查音檔後重新加入待播。"
+  },
+  "plan": {
+    "notUpdatedTitle": "場次草稿未更新",
+    "notUpdatedMessage": "場次草稿未更新，請再試一次。",
+    "moveFailed": "演出項目未移動",
+    "duplicateFailed": "演出項目未複製",
+    "reorderFailed": "演出排序未更新",
+    "removeFailed": "演出項目未移除",
+    "clearFailed": "演出安排未清空"
+  },
+  "archiveLoad": {
+    "failed": "場次無法讀取，請再試一次。"
+  },
+  "observer": {
+    "failedTitle": "演出時間軸未更新",
+    "failedMessage": "這次演出時間戳未能保存，請檢查紀錄後重試。"
+  },
+  "archiveStatus": {
+    "queued": "未演出",
+    "playing": "演出中",
+    "completed": "完成",
+    "skipped": "略過",
+    "interrupted": "中止",
+    "manualTrack": "手動曲目",
+    "noLocalTrack": "無本機曲目"
+  },
+  "summaryLine": {
+    "tracks": "{count} 首曲目",
+    "items": "{count} 項",
+    "unknownDuration": "時長未知",
+    "knownPartial": "已知 {duration}",
+    "joined": "{count}，{duration}"
+  },
+  "outputSourceFallback": "播放安排"
 }

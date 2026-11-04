@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // Public presentation consumes committed local progress. It never changes the
 // player, grants a feature gate, or publishes unstarted arrangement drafts.
 export function projectPerformanceSessionOutput({
@@ -26,7 +27,7 @@ export function projectPerformanceSessionOutput({
     .map((item) => ({ track: publicTrack(item) }));
   return {
     queue: {
-      sourceName: plan?.source?.name ?? '播放安排',
+      sourceName: plan?.source?.name ?? t('session.outputSourceFallback'),
       historyEntries: completedEntries,
       completedEntries,
       currentTrack: track,

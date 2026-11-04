@@ -1,4 +1,5 @@
 import { onScopeDispose, readonly, shallowRef, toValue, watch } from 'vue';
+import { t } from '../utils/i18n.js';
 
 // Per-view reader; it never changes the current plan or playback.
 export function usePerformanceArchive(sessionId) {
@@ -16,12 +17,12 @@ export function usePerformanceArchive(sessionId) {
       const result = await window.Utawakui.getPerformanceSession(id);
       if (request !== revision) return;
       if (result?.ok !== true || result.plan?.id !== id) {
-        error.value = result?.error?.message || '場次無法讀取，請再試一次。';
+        error.value = result?.error?.message || t('session.archiveLoad.failed');
         return;
       }
       session.value = result.plan;
     } catch {
-      if (request === revision) error.value = '場次無法讀取，請再試一次。';
+      if (request === revision) error.value = t('session.archiveLoad.failed');
     } finally {
       if (request === revision) loading.value = false;
     }

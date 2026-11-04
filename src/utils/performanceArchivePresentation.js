@@ -1,4 +1,5 @@
 import { UI_LOCALE } from './uiLocale.js';
+import { t } from './i18n.js';
 
 export function performanceArchiveDate(value, { includeTime = true } = {}) {
   const date = new Date(value);
@@ -13,11 +14,11 @@ export function performanceArchiveDate(value, { includeTime = true } = {}) {
 }
 
 const PROGRESS_LABELS = Object.freeze({
-  queued: '未演出',
-  playing: '演出中',
-  completed: '完成',
-  skipped: '略過',
-  interrupted: '中止',
+  queued: t('session.archiveStatus.queued'),
+  playing: t('session.archiveStatus.playing'),
+  completed: t('session.archiveStatus.completed'),
+  skipped: t('session.archiveStatus.skipped'),
+  interrupted: t('session.archiveStatus.interrupted'),
 });
 export function performanceArchiveRows(session, tracks) {
   const canonical = new Map(tracks.map((track) => [track.id, track]));
@@ -29,9 +30,9 @@ export function performanceArchiveRows(session, tracks) {
     track: canonical.get(item.trackId) ?? null,
     status: [
       item.mode === 'manual'
-        ? '手動曲目'
+        ? t('session.archiveStatus.manualTrack')
         : !canonical.has(item.trackId)
-          ? '無本機曲目'
+          ? t('session.archiveStatus.noLocalTrack')
           : '',
       PROGRESS_LABELS[item.progress] ?? '',
     ]
