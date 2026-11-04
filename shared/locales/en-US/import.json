@@ -107,7 +107,7 @@
     "unsupported": "Only song names, YouTube and YouTube Music links are supported",
     "emptyPlaylist": "This playlist has no tracks to import",
     "untitledPlaylist": "Untitled playlist",
-    "noSource": "No usable source found",
+    "noSource": "No downloadable version found",
     "restartPreview": "Restart the app to preview singles; you can still download now.",
     "providerUnresponsive": "External sources aren't responding right now",
     "searchFailed": "YT Music / YouTube search failed: {reason}",
@@ -231,7 +231,7 @@
     "external": "External sources",
     "moreOnYtMusic": "Find more results on YT Music",
     "externalFailed": "External source action not completed",
-    "candidates": "Downloadable sources",
+    "candidates": "Downloadable versions",
     "pendingList": "Import list to review"
   },
   "monitor": {
@@ -310,10 +310,10 @@
     "failed": "Download failed"
   },
   "sourceField": {
-    "label": "Song name or external source link",
+    "label": "Song name or link",
     "placeholder": "Search a song or artist, or paste a link",
-    "search": "Search external sources",
-    "clipboardDetected": "A supported source link is on the clipboard",
+    "search": "Search",
+    "clipboardDetected": "The clipboard has a link you can import",
     "skip": "Skip",
     "paste": "Paste link"
   }

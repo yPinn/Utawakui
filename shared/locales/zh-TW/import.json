@@ -107,7 +107,7 @@
     "unsupported": "目前只支援歌曲名稱、YouTube 與 YouTube Music 連結",
     "emptyPlaylist": "這個播放清單沒有可匯入的曲目",
     "untitledPlaylist": "未命名播放清單",
-    "noSource": "沒有找到可用音源",
+    "noSource": "找不到可下載的版本",
     "restartPreview": "重新啟動應用程式後即可預覽單曲；目前仍可下載。",
     "providerUnresponsive": "外部來源暫時無法回應",
     "searchFailed": "搜尋 YT Music／YouTube 失敗：{reason}",
@@ -231,7 +231,7 @@
     "external": "外部來源",
     "moreOnYtMusic": "到 YT Music 尋找更多結果",
     "externalFailed": "外部來源操作未完成",
-    "candidates": "可下載的音源",
+    "candidates": "可下載的版本",
     "pendingList": "待確認的匯入清單"
   },
   "monitor": {
@@ -310,10 +310,10 @@
     "failed": "下載失敗"
   },
   "sourceField": {
-    "label": "歌曲名稱或外部來源連結",
+    "label": "歌名或連結",
     "placeholder": "搜尋歌名、歌手或貼上連結",
-    "search": "搜尋外部來源",
-    "clipboardDetected": "偵測到剪貼簿有支援的來源連結",
+    "search": "搜尋",
+    "clipboardDetected": "剪貼簿中有可匯入的連結",
     "skip": "略過",
     "paste": "貼上連結"
   }

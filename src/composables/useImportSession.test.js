@@ -1013,7 +1013,7 @@ describe('useImportSession', () => {
     await session.resolveSource();
 
     expect(session.state.sourceKind).toBe('idle');
-    expect(session.state.status).toBe('沒有找到可用音源');
+    expect(session.state.status).toBe('找不到可下載的版本');
     expect(session.state.statusType).toBe('empty');
   });
 
