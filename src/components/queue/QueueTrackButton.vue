@@ -12,6 +12,7 @@ const props = defineProps({
   active: { type: Boolean, default: false },
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: true },
+  reorderHint: { type: String, default: undefined },
   draggable: { type: Boolean, default: false },
   menuOpen: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
@@ -35,6 +36,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'select',
+  'actionKeydown',
   'activate',
   'togglePlayback',
   'navigateArtist',
@@ -113,6 +115,11 @@ function handleDragEnd(event) {
     thumb-loading="lazy"
     thumb-decoding="async"
     :draggable="draggable"
+    :action-description="reorderHint"
+    :action-keyboard-shortcuts="
+      reorderHint ? 'Alt+ArrowUp Alt+ArrowDown' : undefined
+    "
+    @action-keydown="emit('actionKeydown', $event)"
     @row-click="interactive && emit('select', track)"
     @row-dblclick="interactive && canPlay && emit('activate', track)"
     @activate="interactive && canPlay && emit('activate', track)"

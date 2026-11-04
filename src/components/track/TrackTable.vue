@@ -46,6 +46,7 @@ const props = defineProps({
     type: Object,
     default: () => ({ key: null, direction: 'asc' }),
   },
+  canReorderEntries: { type: Boolean, default: false },
   canReorderPlaylistTracks: { type: Boolean, default: false },
   selectedTrackId: { type: String, default: '' },
   selectedEntryKey: { type: String, default: '' },
@@ -127,7 +128,7 @@ const {
   pinnedKeys: () => {
     if (!props.draggingTrackId) return [];
     const dragged = projectedEntries.value.find(
-      (entry) => entry.track?.id === props.draggingTrackId,
+      (entry) => reorderId(entry) === props.draggingTrackId,
     );
     return dragged ? [rowKey(dragged)] : [];
   },
@@ -137,8 +138,17 @@ const {
 
 const dragEnabled = computed(
   () =>
-    profile.value.canReorderPlaylistTracks && props.canReorderPlaylistTracks,
+    (profile.value.managedActions && props.canReorderEntries) ||
+    (profile.value.canReorderPlaylistTracks && props.canReorderPlaylistTracks),
 );
+function reorderId(entry) {
+  return props.canReorderEntries ? entry.key : entry.track?.id;
+}
+
+function reorderTarget(entry, track) {
+  return props.canReorderEntries ? { id: entry.key } : track;
+}
+
 const hasColumnChoices = computed(
   () => trackCollectionColumnChoices(resolvedCollectionKind.value).length > 0,
 );
@@ -546,9 +556,9 @@ function reorderHeaderFromKeyboard(column, event) {
           Boolean(entry.track && playingTrackId === entry.track.id)
         "
         :drag-enabled="dragEnabled"
-        :dragging="dragEnabled && draggingTrackId === entry.track?.id"
+        :dragging="dragEnabled && draggingTrackId === reorderId(entry)"
         :drop-position="
-          dropTargetTrackId === entry.track?.id ? dropPosition : ''
+          dropTargetTrackId === reorderId(entry) ? dropPosition : ''
         "
         @select-track="emit('selectTrack', $event)"
         @select-entry="emit('selectEntry', $event)"
@@ -560,10 +570,21 @@ function reorderHeaderFromKeyboard(column, event) {
         @queue-separation="emit('queueSeparation', $event)"
         @open-menu="forwardOpenMenu"
         @move-track="forwardMoveTrack"
-        @drag-start="forwardTrackDragStart"
-        @drag-over="forwardTrackDragOver"
-        @drag-leave="forwardTrackDragLeave"
-        @drop="forwardTrackDrop"
+        @drag-start="
+          (track, event) =>
+            forwardTrackDragStart(reorderTarget(entry, track), event)
+        "
+        @drag-over="
+          (track, event) =>
+            forwardTrackDragOver(reorderTarget(entry, track), event)
+        "
+        @drag-leave="
+          (track, event) =>
+            forwardTrackDragLeave(reorderTarget(entry, track), event)
+        "
+        @drop="
+          (track, event) => forwardTrackDrop(reorderTarget(entry, track), event)
+        "
         @drag-end="emit('trackDragEnd')"
         ><template v-if="$slots['row-status']" #status="{ entry: statusEntry }"
           ><slot name="row-status" :entry="statusEntry" /></template

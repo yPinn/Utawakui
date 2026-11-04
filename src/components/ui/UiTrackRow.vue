@@ -136,9 +136,14 @@ function handleActionKeydown(event) {
       class="ui-track__action"
       :disabled="disabled"
       :aria-label="resolvedActionLabel"
-      :aria-description="selectionAction ? actionDescription : undefined"
+      :aria-description="
+        selectionAction || actionKeyboardShortcuts
+          ? actionDescription
+          : undefined
+      "
       :aria-pressed="selectionAction ? active : undefined"
       :aria-keyshortcuts="actionKeyboardShortcuts"
+      :title="actionKeyboardShortcuts ? actionDescription : undefined"
       :aria-describedby="titleOverflowOwner?.triggerProps['aria-describedby']"
       @focusin="titleOverflowOwner?.triggerProps.onFocusin($event)"
       @focusout="titleOverflowOwner?.triggerProps.onFocusout($event)"

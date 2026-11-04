@@ -68,6 +68,11 @@ const menuContent = computed(() => ({
           icon: Copy,
           disabled: busy.value || !menuEntry.value,
         },
+      ],
+    },
+    {
+      id: 'destructive',
+      items: [
         {
           id: 'remove',
           kind: 'action',

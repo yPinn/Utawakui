@@ -53,6 +53,7 @@ const {
   saveDisplay,
   relinkItem,
   moveItem,
+  reorderItem,
   duplicateItem,
   removeItem,
   selectItem,
@@ -501,8 +502,9 @@ async function selectWorkspaceAction(action) {
               editorOpen ? state.plan.reviewCursorItemId : null
             "
             :saving="state.isSaving || playback.state.busy"
+            :move-item="moveItem"
             @select="selectForReview"
-            @move="moveItem"
+            @reorder="reorderItem"
             @duplicate="duplicateItem"
             @remove="confirmRemoveItem"
             @play="playback.start"

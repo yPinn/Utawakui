@@ -1,25 +1,24 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import {
-  ChevronUp,
-  ChevronDown,
-  Copy,
-  SkipForward,
-  Trash2,
-} from '../../icons/index.js';
+
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import QueueTrackButton from '../queue/QueueTrackButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiHint from '../ui/UiHint.vue';
 import { t } from '../../utils/i18n.js';
+import {
+  performanceSessionItemMenu,
+  moveFocusedSessionRow,
+} from './performanceSessionItemActions.js';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
   tracks: { type: Array, default: () => [] },
+  moveItem: { type: Function, default: undefined },
   saving: { type: Boolean, default: false },
 });
-const emit = defineEmits(['move', 'reorder', 'skip', 'duplicate', 'remove']);
+const emit = defineEmits(['reorder', 'skip', 'duplicate', 'remove']);
 const selectedItemId = shallowRef(null);
 const menuItemId = shallowRef(null);
 const menuAnchor = shallowRef(null);
@@ -83,65 +82,9 @@ const {
 const menuIndex = computed(() =>
   props.items.findIndex((item) => item.itemId === menuItemId.value),
 );
-const menuContent = computed(() => ({
-  kind: 'actions',
-  groups: [
-    {
-      id: 'order',
-      items: [
-        {
-          id: 'up',
-          kind: 'action',
-          label: t('session.queueList.moveUp'),
-          value: 'up',
-          icon: ChevronUp,
-          disabled: props.saving || menuIndex.value <= 0,
-        },
-        {
-          id: 'down',
-          kind: 'action',
-          label: t('session.queueList.moveDown'),
-          value: 'down',
-          icon: ChevronDown,
-          disabled:
-            props.saving ||
-            menuIndex.value < 0 ||
-            menuIndex.value >= props.items.length - 1,
-        },
-      ],
-    },
-    {
-      id: 'manage',
-      items: [
-        {
-          id: 'skip',
-          kind: 'action',
-          label: t('session.queueList.skip'),
-          value: 'skip',
-          icon: SkipForward,
-          disabled: props.saving,
-        },
-        {
-          id: 'duplicate',
-          kind: 'action',
-          label: t('session.queueList.duplicate'),
-          value: 'duplicate',
-          icon: Copy,
-          disabled: props.saving,
-        },
-        {
-          id: 'remove',
-          kind: 'action',
-          label: t('session.queueList.remove'),
-          value: 'remove',
-          icon: Trash2,
-          intent: 'danger',
-          disabled: props.saving,
-        },
-      ],
-    },
-  ],
-}));
+const menuContent = computed(() =>
+  performanceSessionItemMenu({ disabled: props.saving || menuIndex.value < 0 }),
+);
 function closeMenu() {
   menuItemId.value = null;
   menuAnchor.value = null;
@@ -161,9 +104,17 @@ function selectAction(action) {
   const index = menuIndex.value;
   closeMenu();
   if (!id || index < 0 || props.saving) return;
-  if (action === 'up' && index > 0) emit('move', id, -1);
-  if (action === 'down' && index < props.items.length - 1) emit('move', id, 1);
   if (['skip', 'duplicate', 'remove'].includes(action)) emit(action, id);
+}
+function handleRowKeydown(event, row, index) {
+  if (!props.saving)
+    return moveFocusedSessionRow(
+      event,
+      props.moveItem,
+      row.id,
+      index,
+      rows.value.length,
+    );
 }
 watch([() => props.saving, () => props.items], ([saving, items]) => {
   if (saving || !items.some((item) => item.itemId === menuItemId.value))
@@ -181,7 +132,7 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
     :aria-label="t('session.queueList.order')"
   >
     <QueueTrackButton
-      v-for="row in rows"
+      v-for="(row, index) in rows"
       :key="row.id"
       :data-arrangement-item-id="row.id"
       class="performance-session-queue-list__item"
@@ -198,7 +149,11 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
       :playback-label="row.playbackLabel"
       :menu-open="menuItemId === row.id"
       :draggable="!saving && rows.length > 1"
+      :reorder-hint="
+        !saving && rows.length > 1 ? t('session.reorderHint') : undefined
+      "
       :drop-position="dropTargetId === row.id ? dropPosition : null"
+      @action-keydown="handleRowKeydown($event, row, index)"
       @select="selectedItemId = row.id"
       @open-menu="openMenu(row, $event)"
       @drag-start="startDrag(row, $event)"

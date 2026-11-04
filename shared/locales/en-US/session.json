@@ -1,4 +1,5 @@
 {
+  "reorderHint": "Drag to reorder, or press Alt+↑ / Alt+↓ to move one position",
   "workspace": {
     "replaceFrom": "Replace arrangement from {name}",
     "fromAlbum": "Create from album",
@@ -131,15 +132,9 @@
       "interrupted": "Interrupted"
     },
     "checkNamed": "Check #{position}: {title}",
-    "rowDescription": "Click to select; Alt with Up/Down reorders; the menu copies or removes",
     "queued": "Queued",
-    "skip": "Skip this song",
-    "moveUp": "Move up",
-    "moveDown": "Move down",
     "requeue": "Add to queue again",
-    "duplicate": "Duplicate queue item",
     "removeRecord": "Remove record",
-    "removeQueued": "Remove from queue",
     "results": "Play results",
     "order": "Queue order",
     "records": "Performance records",
@@ -176,11 +171,6 @@
     "manualItem": "Manual item",
     "startNamed": "Start: {title}",
     "playNamed": "Play: {title}",
-    "moveUp": "Move up",
-    "moveDown": "Move down",
-    "skip": "Skip this song",
-    "duplicate": "Duplicate queue item",
-    "remove": "Remove from queue",
     "order": "Queue order",
     "empty": "No queued songs. Search and add them in Performance tools → Arrangement.",
     "actions": "Queued song actions"
@@ -340,5 +330,10 @@
     "knownPartial": "Known {duration}",
     "joined": "{count}, {duration}"
   },
-  "outputSourceFallback": "Arrangement"
+  "outputSourceFallback": "Arrangement",
+  "pendingMenu": {
+    "skip": "Skip this song",
+    "duplicate": "Duplicate queue item",
+    "remove": "Remove from queue"
+  }
 }

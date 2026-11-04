@@ -1,24 +1,22 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import {
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Ellipsis,
-  Trash2,
-  Play,
-  SkipForward,
-} from '../../icons/index.js';
+import { Ellipsis, Play } from '../../icons/index.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import { useDragReorder } from '../../composables/useDragReorder.js';
 import TrackTable from '../track/TrackTable.vue';
 import { t } from '../../utils/i18n.js';
+import {
+  performanceSessionItemMenu,
+  moveFocusedSessionRow,
+} from './performanceSessionItemActions.js';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
   tracks: { type: Array, default: () => [] },
   selectedItemId: { type: String, default: null },
+  moveItem: { type: Function, default: undefined },
   saving: { type: Boolean, default: false },
   history: { type: Boolean, default: false },
   reviewable: { type: Boolean, default: true },
@@ -26,7 +24,7 @@ const props = defineProps({
 
 const emit = defineEmits([
   'select',
-  'move',
+  'reorder',
   'duplicate',
   'remove',
   'play',
@@ -109,7 +107,7 @@ const tableEntries = computed(() =>
       position: row.position,
       title: row.item.displayTitle,
     }),
-    actionDescription: t('session.planList.rowDescription'),
+    actionDescription: canReorder.value ? t('session.reorderHint') : undefined,
     performanceStatusText: row.status?.label || t('session.planList.queued'),
     track: {
       ...row.track,
@@ -126,6 +124,32 @@ const tableEntries = computed(() =>
   })),
 );
 
+const canReorder = computed(
+  () => !props.history && !props.saving && props.items.length > 1,
+);
+const {
+  draggingId,
+  dropTargetId,
+  dropPosition,
+  startDrag,
+  updateDropTarget,
+  leaveDropTarget,
+  drop,
+  clearDragState,
+} = useDragReorder({
+  canDrag: () => canReorder.value,
+  onReorder: (itemId, targetId, position) => {
+    if (
+      canReorder.value &&
+      draggingId.value === itemId &&
+      itemId !== targetId
+    ) {
+      emit('reorder', itemId, targetId, position);
+    }
+  },
+});
+watch([canReorder, () => props.items], clearDragState);
+
 const activeMenuItem = computed(() =>
   props.items.find((item) => item.itemId === menuItemId.value),
 );
@@ -136,80 +160,12 @@ const menuAnchor = computed(() => ({
   kind: 'element',
   element: menuAnchorEl.value,
 }));
-const menuContent = computed(() => ({
-  kind: 'actions',
-  groups: [
-    ...(!props.history
-      ? [
-          {
-            id: 'playback',
-            items: [
-              {
-                id: 'skip',
-                kind: 'action',
-                label: t('session.planList.skip'),
-                value: 'skip',
-                icon: SkipForward,
-                disabled: props.saving,
-              },
-            ],
-          },
-        ]
-      : []),
-    {
-      id: 'reorder',
-      items: [
-        {
-          id: 'move-up',
-          kind: 'action',
-          label: t('session.planList.moveUp'),
-          value: 'move-up',
-          icon: ChevronUp,
-          shortcut: 'Alt+↑',
-          disabled: props.saving || activeMenuIndex.value <= 0,
-        },
-        {
-          id: 'move-down',
-          kind: 'action',
-          label: t('session.planList.moveDown'),
-          value: 'move-down',
-          icon: ChevronDown,
-          shortcut: 'Alt+↓',
-          disabled:
-            props.saving ||
-            activeMenuIndex.value < 0 ||
-            activeMenuIndex.value >= props.items.length - 1,
-        },
-      ],
-    },
-    {
-      id: 'manage',
-      items: [
-        {
-          id: 'duplicate',
-          kind: 'action',
-          label: props.history
-            ? t('session.planList.requeue')
-            : t('session.planList.duplicate'),
-          value: 'duplicate',
-          icon: Copy,
-          disabled: props.saving || !activeMenuItem.value,
-        },
-        {
-          id: 'remove',
-          kind: 'action',
-          label: props.history
-            ? t('session.planList.removeRecord')
-            : t('session.planList.removeQueued'),
-          value: 'remove',
-          icon: Trash2,
-          intent: 'danger',
-          disabled: props.saving || !activeMenuItem.value,
-        },
-      ],
-    },
-  ].filter((group) => !props.history || group.id !== 'reorder'),
-}));
+const menuContent = computed(() =>
+  performanceSessionItemMenu({
+    history: props.history,
+    disabled: props.saving || !activeMenuItem.value,
+  }),
+);
 
 function closeMenu() {
   menuOpen.value = false;
@@ -236,27 +192,20 @@ function handleMenuSelect(action) {
     return;
   }
 
-  if (action === 'move-up') emit('move', item.itemId, -1);
-  if (action === 'move-down') emit('move', item.itemId, 1);
   if (action === 'duplicate') emit('duplicate', item.itemId);
   if (action === 'remove') emit('remove', item.itemId);
   closeMenu();
 }
 
 function handleRowKeydown(event, item, index) {
-  if (!event.altKey || props.saving) return;
-  const offset =
-    event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
-  if (!offset) return;
-  if (
-    (offset < 0 && index === 0) ||
-    (offset > 0 && index === props.items.length - 1)
-  ) {
-    return;
-  }
-  event.preventDefault();
-  event.stopPropagation();
-  emit('move', item.itemId, offset);
+  if (canReorder.value)
+    return moveFocusedSessionRow(
+      event,
+      props.moveItem,
+      item.itemId,
+      index,
+      props.items.length,
+    );
 }
 
 watch(
@@ -283,10 +232,19 @@ watch(
       <TrackTable
         collection-kind="performance-session"
         :entries="tableEntries"
+        :can-reorder-entries="canReorder"
+        :dragging-track-id="draggingId || ''"
+        :drop-target-track-id="dropTargetId || ''"
+        :drop-position="dropPosition || ''"
         :selected-entry-key="selectedItemId || ''"
         :label="
           t(history ? 'session.planList.records' : 'session.planList.order')
         "
+        @track-drag-start="startDrag"
+        @track-drag-over="updateDropTarget"
+        @track-drag-leave="leaveDropTarget"
+        @track-drop="drop"
+        @track-drag-end="clearDragState"
         @select-entry="emit('select', $event.item.itemId)"
         @entry-keydown="
           (entry, event) => handleRowKeydown(event, entry.item, entry.index)

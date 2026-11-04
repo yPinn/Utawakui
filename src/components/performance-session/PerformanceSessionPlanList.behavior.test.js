@@ -295,14 +295,12 @@ describe('PerformanceSessionPlanList', () => {
 
   it('uses one compact opener per occurrence and emits its edit intents', async () => {
     const onSelect = vi.fn();
-    const onMove = vi.fn();
     const onDuplicate = vi.fn();
     const onRemove = vi.fn();
     const mounted = mount(PerformanceSessionPlanList, {
       items,
       selectedItemId: 'item-1',
       onSelect,
-      onMove,
       onDuplicate,
       onRemove,
     });
@@ -311,16 +309,12 @@ describe('PerformanceSessionPlanList', () => {
       stopPropagation: vi.fn(),
     });
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
-    trigger(buttonWithText(body, '下移一位'), 'onClick');
-
-    await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
     trigger(buttonWithText(body, '複製待唱項目'), 'onClick');
 
     await openItemMenu(mounted.root, '第 2 首「找歌中的曲目」的更多操作');
     trigger(buttonWithText(body, '從待唱移除'), 'onClick');
 
     expect(onSelect).toHaveBeenCalledWith('item-2');
-    expect(onMove).toHaveBeenCalledWith('item-2', 1);
     expect(onDuplicate).toHaveBeenCalledWith('item-2');
     expect(onRemove).toHaveBeenCalledWith('item-2');
     expect(
@@ -351,33 +345,45 @@ describe('PerformanceSessionPlanList', () => {
     expect(onDuplicate).toHaveBeenCalledWith('item-1');
     mounted.app.unmount();
   });
-  it('disables impossible boundary moves in the menu', async () => {
-    const mounted = mount(PerformanceSessionPlanList, {
-      items,
-      selectedItemId: 'item-1',
-    });
-
+  it('keeps reorder commands out of the pending row menu', async () => {
+    const mounted = mount(PerformanceSessionPlanList, { items });
     await openItemMenu(mounted.root, '第 1 首「First song」的更多操作');
-    expect(buttonWithText(body, '上移一位').props['aria-disabled']).toBe(
-      'true',
-    );
-    expect(
-      buttonWithText(body, '下移一位').props['aria-disabled'],
-    ).toBeUndefined();
+    expect(textContent(body)).not.toMatch(/上移一位|下移一位/);
+    expect(textContent(body)).toContain('略過這首');
+    expect(textContent(body)).toContain('複製待唱項目');
+    expect(textContent(body)).toContain('從待唱移除');
+    mounted.app.unmount();
+  });
 
-    await openItemMenu(mounted.root, '第 3 首「Missing audio」的更多操作');
-    expect(buttonWithText(body, '下移一位').props['aria-disabled']).toBe(
-      'true',
+  it('reorders repeated songs by the occurrence that was dragged', () => {
+    const onReorder = vi.fn();
+    const mounted = mount(PerformanceSessionPlanList, {
+      items: [items[0], { ...items[0], itemId: 'second-occurrence' }],
+      onReorder,
+    });
+    const [first, second] = findAll(
+      mounted.root,
+      (node) => node.props?.draggable === true,
+    );
+    trigger(second, 'onDragstart', {});
+    trigger(first, 'onDrop', {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    });
+    expect(onReorder).toHaveBeenCalledWith(
+      'second-occurrence',
+      'item-1',
+      'before',
     );
     mounted.app.unmount();
   });
 
-  it('keeps keyboard reordering without making the row draggable', () => {
+  it('supports keyboard and drag reordering on the pending rows', () => {
     const onMove = vi.fn();
     const mounted = mount(PerformanceSessionPlanList, {
       items,
       selectedItemId: 'item-2',
-      onMove,
+      moveItem: onMove,
     });
     const middle = button(mounted.root, '檢查第 2 首：找歌中的曲目');
     const preventDefault = vi.fn();
@@ -396,7 +402,7 @@ describe('PerformanceSessionPlanList', () => {
     expect(middle.props['aria-keyshortcuts']).toBe('Alt+ArrowUp Alt+ArrowDown');
     expect(
       findAll(mounted.root, (node) => node.props?.draggable === true),
-    ).toHaveLength(0);
+    ).toHaveLength(items.length);
     mounted.app.unmount();
   });
 });

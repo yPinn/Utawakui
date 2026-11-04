@@ -47,6 +47,10 @@ describe('arrangement pending uses the existing Queue row recipe', () => {
     expect(html).toContain('https://example.test/art.jpg');
     expect(html).not.toContain('Canonical artist');
     expect(html.match(/draggable="true"/g)).toHaveLength(2);
+    expect(
+      html.match(/aria-keyshortcuts="Alt\+ArrowUp Alt\+ArrowDown"/g),
+    ).toHaveLength(2);
+    expect(html).toContain('拖曳調整順序');
     expect(html.match(/aria-haspopup="menu"/g)).toHaveLength(2);
     expect(html).not.toMatch(/performance-session-plan-entry__ordinal|ui-chip/);
     expect(html).not.toContain('queue-track__ordinal');

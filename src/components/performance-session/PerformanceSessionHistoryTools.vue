@@ -86,6 +86,11 @@ const menuContent = computed(() => ({
               },
             ]
           : []),
+      ],
+    },
+    {
+      id: 'export',
+      items: [
         {
           id: 'playlist',
           kind: 'action',

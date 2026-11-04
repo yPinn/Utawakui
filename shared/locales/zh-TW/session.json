@@ -1,4 +1,5 @@
 {
+  "reorderHint": "拖曳調整順序，或按 Alt+↑／Alt+↓ 移動一位",
   "workspace": {
     "replaceFrom": "從{name}取代安排",
     "fromAlbum": "從專輯建立",
@@ -131,15 +132,9 @@
       "interrupted": "已中止"
     },
     "checkNamed": "檢查第 {position} 首：{title}",
-    "rowDescription": "單擊選取；Alt 加上下方向鍵調整順序；選單可複製或移除",
     "queued": "待唱",
-    "skip": "略過這首",
-    "moveUp": "上移一位",
-    "moveDown": "下移一位",
     "requeue": "再次加入待唱",
-    "duplicate": "複製待唱項目",
     "removeRecord": "移除紀錄",
-    "removeQueued": "從待唱移除",
     "results": "播放結果",
     "order": "待唱順序",
     "records": "演出紀錄",
@@ -176,11 +171,6 @@
     "manualItem": "手動項目",
     "startNamed": "開始：{title}",
     "playNamed": "播放：{title}",
-    "moveUp": "上移一位",
-    "moveDown": "下移一位",
-    "skip": "略過這首",
-    "duplicate": "複製待唱項目",
-    "remove": "從待唱移除",
     "order": "待唱順序",
     "empty": "沒有待唱曲目。可在「演唱工具 → 演出安排」搜尋並加入。",
     "actions": "待唱曲目操作"
@@ -340,5 +330,10 @@
     "knownPartial": "已知 {duration}",
     "joined": "{count}，{duration}"
   },
-  "outputSourceFallback": "播放安排"
+  "outputSourceFallback": "播放安排",
+  "pendingMenu": {
+    "skip": "略過這首",
+    "duplicate": "複製待唱項目",
+    "remove": "從待唱移除"
+  }
 }
