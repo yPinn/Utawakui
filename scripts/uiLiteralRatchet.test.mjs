@@ -32,6 +32,18 @@ describe('UI literal ratchet', () => {
     ).toEqual([{ file: 'new.js', count: 2, allowed: 0 }]);
   });
 
+  it('skips dev-only workbenches but still measures product files', () => {
+    const measured = Object.keys(measureUiLiterals());
+    expect(
+      measured.filter((file) =>
+        /^src\/components\/(?:analysis|microphone|lyrics-provider)\//u.test(
+          file,
+        ),
+      ),
+    ).toEqual([]);
+    expect(measured).toContain('electron/lib/kugou/identity.js');
+  });
+
   it('adds no hardcoded UI text beyond the baseline', () => {
     const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
     // Move new text to shared/locales and read it with t() (AGENTS.md
