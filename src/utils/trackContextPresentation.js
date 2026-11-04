@@ -1,4 +1,5 @@
 import { formatLyricsSourceLabel } from './lyrics.js';
+import { t } from './i18n.js';
 
 function normalizedArtist(value) {
   return String(value ?? '')
@@ -105,37 +106,37 @@ function lyricsCapability(track, state) {
   if (state.isLoading) {
     return {
       id: 'lyrics',
-      label: '歌詞',
-      status: '讀取中',
+      label: t('track.context.lyrics'),
+      status: t('track.context.loading'),
       tone: 'info',
-      description: '正在讀取歌詞素材。',
+      description: t('track.context.loadingDetail'),
     };
   }
   if (state.error) {
     return {
       id: 'lyrics',
-      label: '歌詞',
-      status: '暫時無法讀取',
+      label: t('track.context.lyrics'),
+      status: t('track.context.unreadable'),
       tone: 'danger',
-      description: '歌詞素材暫時無法讀取。',
+      description: t('track.context.unreadableDetail'),
     };
   }
   if (lyricsStatus === 'missing') {
     return {
       id: 'lyrics',
-      label: '歌詞',
-      status: '尚未取得',
+      label: t('track.context.lyrics'),
+      status: t('track.context.missing'),
       tone: 'muted',
-      description: '目前沒有可用歌詞素材。',
+      description: t('track.context.missingDetail'),
     };
   }
   if (lyricsStatus !== 'available') {
     return {
       id: 'lyrics',
-      label: '歌詞',
-      status: '尚未掃描',
+      label: t('track.context.lyrics'),
+      status: t('track.context.notScanned'),
       tone: 'warning',
-      description: '尚未掃描本機歌詞素材。',
+      description: t('track.context.notScannedDetail'),
     };
   }
 
@@ -144,19 +145,19 @@ function lyricsCapability(track, state) {
   if (lines.length === 0) {
     return {
       id: 'lyrics',
-      label: '歌詞',
-      status: '歌詞可用',
+      label: t('track.context.lyrics'),
+      status: t('track.context.available'),
       tone: 'success',
-      description: '歌詞素材已準備，可在歌詞工作區查看。',
+      description: t('track.context.availableDetail'),
     };
   }
   if (document.granularity === 'T0') {
     return {
       id: 'lyrics',
-      label: '歌詞',
-      status: '純文字',
+      label: t('track.context.lyrics'),
+      status: t('track.context.plain'),
       tone: 'success',
-      description: '已有歌詞文字，可在歌詞工作區查看。',
+      description: t('track.context.plainDetail'),
     };
   }
   if (document.granularity === 'T2') {
@@ -166,25 +167,25 @@ function lyricsCapability(track, state) {
     return fullyTimed
       ? {
           id: 'lyrics',
-          label: '歌詞',
-          status: '完整逐字同步',
+          label: t('track.context.lyrics'),
+          status: t('track.context.wordFull'),
           tone: 'success',
-          description: '所有歌詞行都有逐字時間，可逐字跟隨播放。',
+          description: t('track.context.wordFullDetail'),
         }
       : {
           id: 'lyrics',
-          label: '歌詞',
-          status: '部分逐字同步',
+          label: t('track.context.lyrics'),
+          status: t('track.context.wordPartial'),
           tone: 'success',
-          description: '部分歌詞行有逐字時間，其餘仍以逐行同步。',
+          description: t('track.context.wordPartialDetail'),
         };
   }
   return {
     id: 'lyrics',
-    label: '歌詞',
-    status: '逐行同步',
+    label: t('track.context.lyrics'),
+    status: t('track.context.line'),
     tone: 'success',
-    description: '歌詞包含逐行時間，可跟隨播放進度。',
+    description: t('track.context.lineDetail'),
   };
 }
 
@@ -194,17 +195,17 @@ export function createTrackReadiness(track, lyricsState = {}) {
   const separation = track.hasSeparation
     ? {
         id: 'separation',
-        label: '人聲分離',
-        status: '素材已準備',
+        label: t('track.context.separation'),
+        status: t('track.context.separationReady'),
         tone: 'success',
-        description: '伴奏與導唱聲道素材已準備。',
+        description: t('track.context.separationReadyDetail'),
       }
     : {
         id: 'separation',
-        label: '人聲分離',
-        status: '尚未準備',
+        label: t('track.context.separation'),
+        status: t('track.context.separationMissing'),
         tone: 'muted',
-        description: '尚未產生伴奏與導唱聲道素材。',
+        description: t('track.context.separationMissingDetail'),
       };
 
   return [lyrics, separation];

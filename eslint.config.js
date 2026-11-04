@@ -81,6 +81,9 @@ const I18N_MIGRATED = [
   'src/constants/{outputPreviewLimitations,outputTemplates}.js',
   'src/utils/{outputPanelCopy,outputRoutes}.js',
   'electron/main/windows/outputWindow.js',
+  'src/components/track/*.{js,vue}',
+  'src/utils/{trackContextPresentation,artworkCandidateDisplay}.js',
+  'src/composables/useTrackMetadataEditor.js',
 ];
 const CJK_TEXT = '/[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}]/u';
 const HARDCODED_UI_TEXT =

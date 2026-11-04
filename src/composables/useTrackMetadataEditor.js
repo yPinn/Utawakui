@@ -3,29 +3,30 @@ import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
+import { t } from '../utils/i18n.js';
 
-const REQUIRED_TITLE_MESSAGE = '歌名必填';
-const RESTART_REQUIRED_MESSAGE = '需要重新啟動應用程式';
+const REQUIRED_TITLE_MESSAGE = t('track.editor.titleRequired');
+const RESTART_REQUIRED_MESSAGE = t('track.editor.restartRequired');
 const { recordError } = useAppDiagnostics();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { isFeatureEnabled, refreshConfirmations } = useFeatureGates();
 
 const ARTWORK_FAILURE_MESSAGES = Object.freeze({
-  'invalid-query': '請輸入 200 字以內的歌曲名稱、演唱者或專輯。',
-  'provider-unavailable': '目前無法搜尋封面，請稍後再試。',
-  'candidate-expired': '這批封面候選已過期，請重新搜尋。',
-  'draft-unavailable': '封面草稿已失效，請重新選擇封面。',
-  'unsupported-file': '無法使用這張圖片，請選擇 JPG、PNG 或 WebP。',
-  'artwork-unavailable': '目前無法讀取封面，請重新選擇封面。',
-  'invalid-artwork-intent': '封面變更無效，請重新操作。',
-  'invalid-metadata': '歌名或演唱者格式無效，請確認內容長度。',
-  'track-unavailable': '找不到這首歌曲。',
+  'invalid-query': t('track.editor.invalidQuery'),
+  'provider-unavailable': t('track.editor.providerUnavailable'),
+  'candidate-expired': t('track.editor.candidateExpired'),
+  'draft-unavailable': t('track.editor.draftUnavailable'),
+  'unsupported-file': t('track.editor.unsupportedFile'),
+  'artwork-unavailable': t('track.editor.artworkUnavailable'),
+  'invalid-artwork-intent': t('track.editor.invalidArtworkIntent'),
+  'invalid-metadata': t('track.editor.invalidMetadata'),
+  'track-unavailable': t('track.editor.trackUnavailable'),
 });
 
 function reportMetadataError(error, operation, message) {
   return recordError(error, {
     code: `TRACK_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
-    title: '曲目資訊未更新',
+    title: t('track.editor.notUpdatedTitle'),
     message,
     source: 'track-metadata',
     operation,
@@ -384,7 +385,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       return requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
         source: 'artwork',
         operation: 'search',
-        message: '請先到設定啟用外部來源，才能線上搜尋封面。',
+        message: t('track.editor.providerRequired'),
       });
     }
     if (isFeatureEnabled(FEATURE_IDS.PROVIDER_FLOW)) return true;
@@ -431,10 +432,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       const result = await window.Utawakui.searchTrackArtwork(trackId, query);
       if (generation !== artworkPreviewGeneration) return null;
       if (result?.status !== 'ok') {
-        state.error = artworkFailure(
-          result,
-          '目前無法搜尋線上封面，請稍後再試。',
-        );
+        state.error = artworkFailure(result, t('track.editor.searchFailed'));
         return null;
       }
       const canLoadPreviews =
@@ -456,7 +454,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       state.error = reportMetadataError(
         err,
         'search-artwork',
-        '目前無法搜尋線上封面，請稍後再試。',
+        t('track.editor.searchFailed'),
       );
       return null;
     } finally {
@@ -529,7 +527,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
         artwork: { ...state.artworkDraft },
       });
       if (result?.status !== 'ok' || !result.track) {
-        state.error = artworkFailure(result, '歌曲變更未儲存，請再試一次。');
+        state.error = artworkFailure(result, t('track.editor.saveFailed'));
         return null;
       }
       await refresh?.();
@@ -545,7 +543,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       state.error = reportMetadataError(
         err,
         'save',
-        '曲目資訊未儲存，請再試一次。',
+        t('track.editor.infoNotSaved'),
       );
       return null;
     } finally {
@@ -571,12 +569,12 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       );
       if (result?.status === 'cancelled') return null;
       if (result?.status !== 'ok') {
-        state.error = artworkFailure(result, '封面無法預覽，請選擇其他圖片。');
+        state.error = artworkFailure(result, t('track.editor.previewOther'));
         return null;
       }
       const previewUrl = previewObjectUrl(result);
       if (!previewUrl) {
-        state.error = '封面無法預覽，請選擇其他圖片。';
+        state.error = t('track.editor.previewOther');
         return null;
       }
       if (state.artworkDraft.action === 'local-draft') {
@@ -590,7 +588,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       state.error = reportMetadataError(
         err,
         'set-artwork',
-        '封面無法預覽，請再試一次。',
+        t('track.editor.previewRetry'),
       );
       return null;
     } finally {

@@ -5,6 +5,7 @@ import { TRACK_LIST_DENSITIES } from '../../composables/useTrackListDensity.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
+import { t } from '../../utils/i18n.js';
 
 defineProps({
   density: {
@@ -19,11 +20,11 @@ const open = shallowRef(false);
 const densityOptions = Object.freeze([
   Object.freeze({
     id: 'list',
-    label: '疏散',
+    label: t('track.table.spacious'),
   }),
   Object.freeze({
     id: 'compact',
-    label: '緊密',
+    label: t('track.table.compact'),
   }),
 ]);
 
@@ -36,7 +37,7 @@ function updateDensity(value) {
 <template>
   <UiPopover
     v-model:open="open"
-    aria-label="曲目顯示密度"
+    :aria-label="t('track.table.density')"
     placement="bottom-end"
     :close-on-scroll="false"
   >
@@ -44,7 +45,7 @@ function updateDensity(value) {
       <UiIconButton
         v-bind="triggerProps"
         :icon="UnfoldVertical"
-        label="調整曲目顯示密度"
+        :label="t('track.table.adjustDensity')"
         tooltip-placement="bottom"
         :active="open"
         @click="open = !open"
@@ -52,7 +53,7 @@ function updateDensity(value) {
     </template>
     <UiRadioGroup
       name="track-list-density"
-      legend="曲目顯示密度"
+      :legend="t('track.table.density')"
       legend-hidden
       :items="densityOptions"
       :model-value="density"

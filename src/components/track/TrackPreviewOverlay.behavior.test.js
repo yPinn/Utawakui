@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
+import { readCatalogSource } from '../../utils/catalogSourceText.js';
 
 const albums = new Map([['b', { id: 'album-book', name: 'THE BOOK' }]]);
 vi.mock('../../composables/useAlbumNavigation.js', () => ({
@@ -15,17 +15,14 @@ vi.mock('../../composables/useAlbumNavigation.js', () => ({
 const { default: TrackPreviewOverlay } =
   await import('./TrackPreviewOverlay.vue');
 
-const source = readFileSync(
+const source = readCatalogSource(
   new URL('./TrackPreviewOverlay.vue', import.meta.url),
-  'utf8',
 );
-const modalSource = readFileSync(
+const modalSource = readCatalogSource(
   new URL('../ui/UiModal.vue', import.meta.url),
-  'utf8',
 );
-const libraryBrowseSource = readFileSync(
+const libraryBrowseSource = readCatalogSource(
   new URL('../library/LibraryBrowseContent.vue', import.meta.url),
-  'utf8',
 );
 
 const tracks = [

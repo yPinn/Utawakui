@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // A track's artist line where each credited artist opens its artist page
 // (ADR 0022). Unpairable credits stay plain text instead of guessing links.
 import { computed, shallowRef } from 'vue';
@@ -84,7 +85,7 @@ function resetAfterFocus(event) {
           class="track-artist-credits__link"
           :text="link.text"
           overflow="ellipsis"
-          :aria-label="`前往藝人：${link.text}`"
+          :aria-label="t('track.row.goToArtistNamed', { name: link.text })"
           @click="openArtist(link.artistId)"
           @dblclick.stop
         />

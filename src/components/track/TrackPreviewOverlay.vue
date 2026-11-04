@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../../utils/i18n.js';
 // Track preview dialog (docs/contracts/track-preview.md). It renders the
 // preview owner's state and emits intents; it never touches the performance
 // player. Its own overlay host keeps the nested menu above the dialog.
@@ -68,10 +69,10 @@ const WHEEL_STEP_INTERVAL_MS = 450;
 const BLOCKED_NOTICES = Object.freeze({
   'session-active': {
     tone: 'info',
-    message: '錄影或直播中無法試聽，避免試聽聲音進入節目。',
+    message: t('track.preview.blockedSession'),
   },
-  preempted: { tone: 'muted', message: '其他播放器開始播放，試聽已暫停。' },
-  unavailable: { tone: 'muted', message: '目前無法開始試聽。' },
+  preempted: { tone: 'muted', message: t('track.preview.preempted') },
+  unavailable: { tone: 'muted', message: t('track.preview.unavailable') },
 });
 
 const track = computed(() => props.tracks[props.index] ?? null);
@@ -79,7 +80,7 @@ const previousTrack = computed(() => props.tracks[props.index - 1] ?? null);
 const nextTrack = computed(() => props.tracks[props.index + 1] ?? null);
 const statusNotice = computed(() => {
   if (props.status === 'error') {
-    return { tone: 'danger', message: '這些曲目目前都無法試聽。' };
+    return { tone: 'danger', message: t('track.preview.noneAvailable') };
   }
   return BLOCKED_NOTICES[props.blockedReason] ?? null;
 });
@@ -100,7 +101,10 @@ const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const trackAlbum = computed(() => albumForTrack(track.value));
 const albumCtaLabel = computed(() =>
   trackAlbum.value
-    ? `${track.value.title}，前往專輯：${trackAlbum.value.name || '未命名專輯'}`
+    ? t('track.preview.goToAlbumNamed', {
+        title: track.value.title,
+        album: trackAlbum.value.name || t('track.preview.untitledAlbum'),
+      })
     : '',
 );
 
@@ -229,8 +233,8 @@ onUnmounted(() => setKeyboardListener(false));
     <template v-if="track" #header-actions>
       <UiIconButton
         :icon="muted ? VolumeX : Volume2"
-        :label="muted ? '取消試聽靜音' : '試聽靜音'"
-        :title="muted ? '取消試聽靜音' : '試聽靜音'"
+        :label="t(muted ? 'track.preview.unmute' : 'track.preview.mute')"
+        :title="t(muted ? 'track.preview.unmute' : 'track.preview.mute')"
         tooltip-suffix=" (M)"
         tooltip-placement="bottom"
         :aria-pressed="muted"
@@ -273,7 +277,7 @@ onUnmounted(() => setKeyboardListener(false));
           <UiProgress
             v-if="segment"
             class="track-preview__progress"
-            label="試聽進度"
+            :label="t('track.preview.progress')"
             label-hidden
             :value="segmentElapsed"
             :max="segmentLength || 1"
@@ -290,7 +294,7 @@ onUnmounted(() => setKeyboardListener(false));
         <!-- Neighbours peek as fixed slices; the wheel steps through them. -->
         <div
           class="track-preview__stage"
-          aria-label="試聽曲目"
+          :aria-label="t('track.preview.tracks')"
           @wheel="handleWheel"
         >
           <span
@@ -302,7 +306,11 @@ onUnmounted(() => setKeyboardListener(false));
                 :key="previousTrack.id"
                 type="button"
                 class="track-preview__peek"
-                :aria-label="`上一首：${previousTrack.title}`"
+                :aria-label="
+                  t('track.preview.previousNamed', {
+                    title: previousTrack.title,
+                  })
+                "
                 tabindex="-1"
                 @click="select(-1)"
               >
@@ -349,7 +357,7 @@ onUnmounted(() => setKeyboardListener(false));
             </span>
             <UiArtworkReveal class="track-preview__play">
               <PlaybackPrimaryButton
-                play-label="從這首開始播放"
+                :play-label="t('track.preview.playFromHere')"
                 @click="emit('playTrack', track)"
               />
             </UiArtworkReveal>
@@ -361,7 +369,9 @@ onUnmounted(() => setKeyboardListener(false));
                 :key="nextTrack.id"
                 type="button"
                 class="track-preview__peek"
-                :aria-label="`下一首：${nextTrack.title}`"
+                :aria-label="
+                  t('track.preview.nextNamed', { title: nextTrack.title })
+                "
                 tabindex="-1"
                 @click="select(1)"
               >
@@ -383,17 +393,26 @@ onUnmounted(() => setKeyboardListener(false));
         <div class="track-preview__edge">
           <!-- Track actions are the row right-click menu itself plus one
              shortcut taken from it, never a preview-only action. -->
-          <div class="track-preview__rail" aria-label="曲目操作">
+          <div
+            class="track-preview__rail"
+            :aria-label="t('track.preview.actions')"
+          >
             <UiIconButton
               :icon="Ellipsis"
-              label="更多操作"
+              :label="t('track.preview.more')"
               aria-haspopup="menu"
               :aria-expanded="menu?.kind === 'element' ? 'true' : 'false'"
               @click="openMenu"
             />
             <UiIconButton
               :icon="ListEnd"
-              :label="isQueued ? '已在一般佇列' : '加入一般佇列'"
+              :label="
+                t(
+                  isQueued
+                    ? 'track.preview.inQueue'
+                    : 'track.preview.addToQueue',
+                )
+              "
               :disabled="isQueued"
               @click="emit('addToQueue', track)"
             />
@@ -404,7 +423,7 @@ onUnmounted(() => setKeyboardListener(false));
           <div class="track-preview__skips">
             <UiIconButton
               :icon="ChevronUp"
-              label="上一首"
+              :label="t('track.preview.previous')"
               size="lg"
               tooltip-suffix=" (↑)"
               tooltip-placement="start"
@@ -413,7 +432,7 @@ onUnmounted(() => setKeyboardListener(false));
             />
             <UiIconButton
               :icon="ChevronDown"
-              label="下一首"
+              :label="t('track.preview.next')"
               size="lg"
               tooltip-suffix=" (↓)"
               tooltip-placement="start"

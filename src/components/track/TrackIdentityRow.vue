@@ -5,6 +5,7 @@ import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { trackArtistText } from '../../utils/artistPage.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import TrackArtistCredits from './TrackArtistCredits.vue';
+import { t } from '../../utils/i18n.js';
 
 defineOptions({ inheritAttrs: false });
 
@@ -59,7 +60,9 @@ function announceArtistNavigation(artistId) {
     :artist="displayArtist"
     :title-clickable="Boolean(albumDestination)"
     :title-aria-label="
-      albumDestination ? `前往專輯：${displayTitle}` : undefined
+      albumDestination
+        ? t('track.row.goToAlbumNamed', { name: displayTitle })
+        : undefined
     "
     @title-click="navigateToAlbum"
   >

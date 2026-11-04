@@ -17,6 +17,7 @@ import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   entry: { type: Object, required: true },
@@ -72,8 +73,8 @@ const semanticColumns = computed(() =>
 );
 const rowActionDescription = computed(() =>
   props.dragEnabled
-    ? '單擊或空白鍵選取；雙擊或 Enter 播放；方向鍵調整順序'
-    : '單擊或空白鍵選取；雙擊或 Enter 播放',
+    ? t('track.row.descriptionReorder')
+    : t('track.row.description'),
 );
 const displayTrack = computed(
   () => props.entry.track ?? props.entry.displayTrack,
@@ -173,7 +174,7 @@ function openContextMenu(event) {
       type="button"
       class="library-track-row__action"
       :disabled="!canInteract"
-      :aria-label="`選取：${displayTrack.title}`"
+      :aria-label="t('track.row.selectNamed', { title: displayTrack.title })"
       :aria-description="rowActionDescription"
       :aria-pressed="selected"
       @click.stop="canInteract && emit('selectTrack', entry.track)"
@@ -207,7 +208,11 @@ function openContextMenu(event) {
         v-if="!profile.readOnly && !profile.managedActions && canInteract"
         class="library-track-row__playback-control"
         :icon="playing ? Pause : Play"
-        :label="`${playing ? '暫停' : '播放'}：${displayTrack.title}`"
+        :label="
+          t(playing ? 'track.row.pauseNamed' : 'track.row.playNamed', {
+            title: displayTrack.title,
+          })
+        "
         :fill="!playing"
         @click.stop="emit('togglePlayback', entry.track)"
         @dblclick.stop
@@ -251,8 +256,8 @@ function openContextMenu(event) {
         :data-column-numeric="column.numeric ? 'true' : undefined"
         :aria-label="
           entry.playCount === null
-            ? '尚未提供應用內有效播放次數'
-            : `${entry.usageText} 次應用內有效播放`
+            ? t('track.row.noPlays')
+            : t('track.row.plays', { count: entry.usageText }, entry.playCount)
         "
       >
         {{ entry.usageText }}
@@ -271,7 +276,7 @@ function openContextMenu(event) {
         :data-column-numeric="column.numeric ? 'true' : undefined"
         :lang="contentLang"
         :text="entry.releaseText"
-        :aria-label="`前往專輯：${entry.releaseText}`"
+        :aria-label="t('track.row.goToAlbumNamed', { name: entry.releaseText })"
         overflow="ellipsis"
         @click="emit('navigateAlbum', entry.track)"
         @dblclick.stop
@@ -330,22 +335,32 @@ function openContextMenu(event) {
             v-if="canInteract && separationReady"
             :icon="BadgeCheck"
             tone="success"
-            :label="`已有伴奏：${displayTrack.title}`"
+            :label="
+              t('track.row.hasAccompanimentNamed', {
+                title: displayTrack.title,
+              })
+            "
           />
           <UiStatusIcon
             v-else-if="canInteract && vsQueued"
             :icon="CircleDashed"
             tone="info"
             spinning
-            :label="`伴奏處理中：${displayTrack.title}`"
+            :label="
+              t('track.row.accompanimentBusyNamed', {
+                title: displayTrack.title,
+              })
+            "
           />
           <UiIconButton
             v-else-if="canInteract"
             class="library-track-row__separation-action"
             :icon="MicAudioLines"
-            :label="`加入伴奏處理佇列：${displayTrack.title}`"
+            :label="t('track.row.enqueueNamed', { title: displayTrack.title })"
             :loading="vsEnqueuePending"
-            :loading-label="`正在加入伴奏處理佇列：${displayTrack.title}`"
+            :loading-label="
+              t('track.row.enqueueingNamed', { title: displayTrack.title })
+            "
             @click.stop="emit('queueSeparation', entry.track)"
             @dblclick.stop
           />
@@ -379,7 +394,7 @@ function openContextMenu(event) {
         ><UiIconButton
           class="library-track-row__more-action"
           :icon="Ellipsis"
-          :label="`更多：${displayTrack.title}`"
+          :label="t('track.row.moreNamed', { title: displayTrack.title })"
           @click.stop="emit('openMenu', entry.track, $event)"
           @dblclick.stop
       /></slot>

@@ -1,4 +1,5 @@
 import { formatGroupedInteger } from '../../utils/format.js';
+import { t } from '../../utils/i18n.js';
 
 export const TRACK_COLLECTION_KINDS = Object.freeze([
   'library-all',
@@ -23,7 +24,7 @@ const TRACK_ROW_UTILITY_LANE_WIDTH = 24;
 const COLUMN_DEFINITIONS = Object.freeze({
   performanceActions: Object.freeze({
     role: 'performanceActions',
-    label: '操作',
+    label: t('track.columns.actions'),
     sortKey: null,
     priority: 'essential',
     align: 'end',
@@ -35,7 +36,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   performanceStatus: Object.freeze({
     role: 'performanceStatus',
-    label: '演出狀態',
+    label: t('track.columns.performance'),
     textField: 'performanceStatusText',
     sortKey: null,
     priority: 'essential',
@@ -61,7 +62,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   identity: Object.freeze({
     role: 'identity',
-    label: '曲目',
+    label: t('track.columns.track'),
     sortKey: 'title',
     priority: 'essential',
     align: 'start',
@@ -75,7 +76,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   release: Object.freeze({
     role: 'release',
-    label: '專輯',
+    label: t('track.columns.album'),
     sortKey: 'album',
     priority: 'release',
     textField: 'releaseText',
@@ -90,7 +91,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   releaseYear: Object.freeze({
     role: 'releaseYear',
-    label: '發行年份',
+    label: t('track.columns.releaseYear'),
     sortKey: 'releaseYear',
     priority: 'supplemental',
     textField: 'releaseYearText',
@@ -106,7 +107,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   membership: Object.freeze({
     role: 'membership',
-    label: '新增日期',
+    label: t('track.columns.addedAt'),
     sortKey: 'addedAt',
     priority: 'supplemental',
     textField: 'membershipText',
@@ -121,7 +122,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   imported: Object.freeze({
     role: 'imported',
-    label: '匯入日期',
+    label: t('track.columns.importedAt'),
     sortKey: 'importedAt',
     priority: 'advanced',
     textField: 'importedText',
@@ -136,7 +137,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   usage: Object.freeze({
     role: 'usage',
-    label: '播放次數',
+    label: t('track.columns.plays'),
     sortKey: 'playCount',
     priority: 'supplemental',
     textField: 'usageText',
@@ -152,7 +153,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   duration: Object.freeze({
     role: 'duration',
-    label: '時長',
+    label: t('track.columns.duration'),
     sortKey: 'duration',
     priority: 'duration',
     align: 'end',
@@ -166,7 +167,7 @@ const COLUMN_DEFINITIONS = Object.freeze({
   }),
   actions: Object.freeze({
     role: 'actions',
-    label: '操作',
+    label: t('track.columns.actions'),
     sortKey: null,
     priority: 'essential',
     align: 'end',
@@ -185,9 +186,9 @@ function semanticColumns(...roles) {
 const PROFILES = Object.freeze({
   'performance-session': Object.freeze({
     kind: 'performance-session',
-    description: '目前場次曲目，顯示演出狀態與時長。',
-    label: '目前場次',
-    accessibleLabel: '目前場次曲目',
+    description: t('track.profiles.sessionDescription'),
+    label: t('track.profiles.session'),
+    accessibleLabel: t('track.profiles.sessionLabel'),
     managedActions: true,
     fillIdentity: true,
     showArtwork: true,
@@ -206,9 +207,9 @@ const PROFILES = Object.freeze({
   }),
   'performance-archive': Object.freeze({
     kind: 'performance-archive',
-    description: '封存場次曲目，顯示演出狀態與時長。',
-    label: '演出歌單',
-    accessibleLabel: '場次原始順序',
+    description: t('track.profiles.archiveDescription'),
+    label: t('track.profiles.archive'),
+    accessibleLabel: t('track.profiles.archiveLabel'),
     readOnly: true,
     fillIdentity: true,
     showArtwork: true,
@@ -227,9 +228,9 @@ const PROFILES = Object.freeze({
   }),
   'library-all': Object.freeze({
     kind: 'library-all',
-    label: '全部曲目',
-    description: '所有曲目，預設顯示專輯與播放次數。',
-    accessibleLabel: '全部曲目',
+    label: t('track.profiles.all'),
+    description: t('track.profiles.allDescription'),
+    accessibleLabel: t('track.profiles.all'),
     showArtwork: true,
     showArtist: true,
     semanticColumns: semanticColumns('release', 'usage'),
@@ -246,9 +247,9 @@ const PROFILES = Object.freeze({
   }),
   'library-local': Object.freeze({
     kind: 'library-local',
-    label: '本機檔案',
-    description: '本機曲目，預設顯示專輯與播放次數。',
-    accessibleLabel: '本機檔案曲目',
+    label: t('track.profiles.local'),
+    description: t('track.profiles.localDescription'),
+    accessibleLabel: t('track.profiles.localLabel'),
     showArtwork: true,
     showArtist: true,
     semanticColumns: semanticColumns('release', 'usage'),
@@ -265,9 +266,9 @@ const PROFILES = Object.freeze({
   }),
   playlist: Object.freeze({
     kind: 'playlist',
-    label: '播放清單',
-    description: '播放清單曲目，預設只顯示必要欄位。',
-    accessibleLabel: '播放清單曲目',
+    label: t('track.profiles.playlist'),
+    description: t('track.profiles.playlistDescription'),
+    accessibleLabel: t('track.profiles.playlistLabel'),
     showArtwork: true,
     showArtist: true,
     semanticColumns: semanticColumns(),
@@ -289,9 +290,9 @@ const PROFILES = Object.freeze({
   }),
   album: Object.freeze({
     kind: 'album',
-    label: '專輯',
-    description: '專輯曲目，預設顯示播放次數與時長。',
-    accessibleLabel: '專輯曲目',
+    label: t('track.columns.album'),
+    description: t('track.profiles.albumDescription'),
+    accessibleLabel: t('track.profiles.albumLabel'),
     showArtwork: false,
     showArtist: true,
     semanticColumns: semanticColumns('usage'),
@@ -308,9 +309,9 @@ const PROFILES = Object.freeze({
   }),
   artist: Object.freeze({
     kind: 'artist',
-    label: '藝人',
-    description: '藝人曲目，依播放次數由高到低排列，顯示播放次數與時長。',
-    accessibleLabel: '藝人曲目',
+    label: t('track.profiles.artist'),
+    description: t('track.profiles.artistDescription'),
+    accessibleLabel: t('track.profiles.artistLabel'),
     showArtwork: true,
     showArtist: false,
     semanticColumns: semanticColumns('usage'),

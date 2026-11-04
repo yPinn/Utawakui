@@ -15,6 +15,7 @@ import {
   trackCollectionColumnChoices,
   trackCollectionProfile,
 } from './trackCollectionProfiles.js';
+import { t } from '../../utils/i18n.js';
 
 const VARIANT_KIND = Object.freeze({
   library: 'library-all',
@@ -175,8 +176,13 @@ function isSortActive(key) {
 }
 
 function sortLabel(key, label) {
-  if (!isSortActive(key)) return `${label}排序`;
-  return `${label}${props.sort.direction === 'asc' ? '升冪' : '降冪'}排序`;
+  if (!isSortActive(key)) return t('track.table.sortNamed', { label });
+  return t(
+    props.sort.direction === 'asc'
+      ? 'track.table.sortAscNamed'
+      : 'track.table.sortDescNamed',
+    { label },
+  );
 }
 
 function isColumnSortable(column) {
@@ -215,7 +221,7 @@ function isHeaderColumnReorderable(column) {
 
 function headerColumnLabel(column) {
   return isHeaderColumnReorderable(column)
-    ? `${column.label}欄；拖曳，或按 Alt 加左右方向鍵調整順序`
+    ? t('track.table.reorderNamed', { label: column.label })
     : column.role === 'actions'
       ? column.label
       : undefined;
@@ -338,9 +344,9 @@ function reorderHeaderFromKeyboard(column, event) {
     :data-collection-kind="resolvedCollectionKind"
     :aria-busy="initialLoading || undefined"
   >
-    <span v-if="initialLoading" class="ui-visually-hidden" role="status"
-      >正在讀取曲目</span
-    >
+    <span v-if="initialLoading" class="ui-visually-hidden" role="status">{{
+      t('track.table.loading')
+    }}</span>
     <div ref="header" class="library-track-table__header" :style="gridStyle">
       <span
         v-for="column in layout.columns"
@@ -437,11 +443,13 @@ function reorderHeaderFromKeyboard(column, event) {
             class="library-track-table__resize-handle"
             role="separator"
             aria-orientation="vertical"
-            :aria-label="`調整${column.label}欄寬`"
+            :aria-label="t('track.table.resizeNamed', { label: column.label })"
             :aria-valuemin="columnWidthContract(column.role).minWidth"
             :aria-valuenow="columnWidth(column.role)"
             :aria-valuemax="columnResizeBounds(column.role).maxWidth"
-            :aria-valuetext="`${columnWidth(column.role)} 像素`"
+            :aria-valuetext="
+              t('track.table.pixels', { width: columnWidth(column.role) })
+            "
             :data-resize-column="column.role"
             draggable="false"
             @pointerdown="startColumnResize(column, $event)"

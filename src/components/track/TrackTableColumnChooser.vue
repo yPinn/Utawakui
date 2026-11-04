@@ -9,6 +9,7 @@ import {
   normalizeTrackCollectionPreferences,
   trackCollectionColumnChoices,
 } from './trackCollectionProfiles.js';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   collectionKind: {
@@ -73,7 +74,7 @@ function updateColumn(column, visible) {
 <template>
   <UiPopover
     v-model:open="open"
-    aria-label="顯示欄位"
+    :aria-label="t('track.table.columns')"
     placement="bottom-end"
     :close-on-scroll="false"
     scroll-axis="vertical"
@@ -83,14 +84,14 @@ function updateColumn(column, visible) {
         v-bind="triggerProps"
         class="track-table-column-chooser__trigger"
         :icon="Columns3"
-        label="選擇顯示欄位"
+        :label="t('track.table.chooseColumns')"
         tooltip-placement="bottom"
         :active="open"
         @click="open = !open"
       />
     </template>
 
-    <template #header>顯示欄位</template>
+    <template #header>{{ t('track.table.columns') }}</template>
 
     <div class="track-table-column-chooser__options">
       <UiCheckbox
@@ -101,7 +102,7 @@ function updateColumn(column, visible) {
         :disabled="column.locked"
         :hint="
           hiddenForWidth.includes(column.role) && isColumnVisible(column)
-            ? '空間不足，暫時隱藏'
+            ? t('track.table.hiddenForSpace')
             : ''
         "
         :model-value="isColumnVisible(column)"

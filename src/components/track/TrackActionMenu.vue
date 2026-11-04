@@ -18,6 +18,7 @@ import {
   playlistDisplayName,
 } from '../../utils/playlistMenu.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -88,14 +89,14 @@ const eligiblePlaylists = computed(() =>
 const playlistContent = computed(() => ({
   kind: 'filterable-actions',
   search: {
-    label: '搜尋播放清單',
-    placeholder: '搜尋播放清單',
+    label: t('track.menu.searchPlaylists'),
+    placeholder: t('track.menu.searchPlaylists'),
   },
   pinnedItems: [
     {
       id: 'create-playlist',
       kind: 'action',
-      label: '建立新播放清單',
+      label: t('track.menu.newPlaylist'),
       icon: Plus,
       value: { action: TRACK_MENU_ACTIONS.createPlaylist },
     },
@@ -115,8 +116,8 @@ const playlistContent = computed(() => ({
       })),
     },
   ],
-  emptyText: '沒有可加入的播放清單',
-  noResultsText: '找不到播放清單',
+  emptyText: t('track.menu.noPlaylists'),
+  noResultsText: t('track.menu.noPlaylistMatch'),
 }));
 
 const content = computed(() => {
@@ -125,7 +126,7 @@ const content = computed(() => {
     return {
       kind: 'actions',
       groups: [],
-      emptyText: '沒有可用的操作',
+      emptyText: t('track.menu.noActions'),
     };
   }
 
@@ -139,27 +140,27 @@ const content = computed(() => {
           ? {
               id: 'remove-from-queue',
               kind: 'action',
-              label: '從一般佇列移除',
+              label: t('track.menu.removeFromQueue'),
               icon: ListMinus,
               value: { action: TRACK_MENU_ACTIONS.removeFromQueue },
             }
           : {
               id: 'add-to-queue',
               kind: 'action',
-              label: '加入一般佇列',
+              label: t('track.menu.addToQueue'),
               icon: ListEnd,
               disabled: isCurrent || isQueued,
               disabledReason: isCurrent
-                ? '現正播放'
+                ? t('track.menu.nowPlaying')
                 : isQueued
-                  ? '已在一般佇列'
+                  ? t('track.menu.inQueue')
                   : '',
               value: { action: TRACK_MENU_ACTIONS.addToQueue },
             },
         {
           id: 'add-to-performance-queue',
           kind: 'action',
-          label: '加入演出待唱',
+          label: t('track.menu.addToArrangement'),
           icon: Tickets,
           disabled: props.performanceQueueBusy,
           value: { action: TRACK_MENU_ACTIONS.addToPerformanceQueue },
@@ -172,7 +173,7 @@ const content = computed(() => {
         {
           id: 'add-to-playlist',
           kind: 'submenu',
-          label: '加入播放清單',
+          label: t('track.menu.addToPlaylist'),
           icon: ListPlus,
           size: 'lg',
           content: playlistContent.value,
@@ -188,7 +189,7 @@ const content = computed(() => {
           {
             id: 'work-organization',
             kind: 'action',
-            label: '整理歌曲',
+            label: t('track.menu.organize'),
             icon: Disc3,
             value: { action: TRACK_MENU_ACTIONS.workOrganization },
           },
@@ -196,7 +197,7 @@ const content = computed(() => {
   metadataItems.push({
     id: 'supplement-release',
     kind: 'action',
-    label: '補齊專輯資料',
+    label: t('track.menu.completeAlbum'),
     icon: Disc3,
     value: { action: 'supplement-release' },
   });
@@ -204,7 +205,7 @@ const content = computed(() => {
     metadataItems.push({
       id: 'create-local-release',
       kind: 'action',
-      label: '建立本機單曲',
+      label: t('track.menu.createSingle'),
       icon: Plus,
       value: { action: TRACK_MENU_ACTIONS.createLocalRelease },
     });
@@ -213,7 +214,7 @@ const content = computed(() => {
     metadataItems.push({
       id: 'unlink-work',
       kind: 'action',
-      label: '解除連結',
+      label: t('track.menu.unlink'),
       icon: ListMinus,
       value: { action: TRACK_MENU_ACTIONS.unlinkWork },
     });
@@ -221,7 +222,7 @@ const content = computed(() => {
     metadataItems.push({
       id: 'remove-from-playlist',
       kind: 'action',
-      label: '從播放清單移除',
+      label: t('track.menu.removeFromPlaylist'),
       icon: ListMinus,
       intent: 'danger',
       value: {
@@ -241,7 +242,7 @@ const content = computed(() => {
         {
           id: 'containing-releases',
           kind: 'submenu',
-          label: '收錄於',
+          label: t('track.menu.includedIn'),
           icon: Disc3,
           content: {
             kind: 'actions',
@@ -251,7 +252,15 @@ const content = computed(() => {
                 items: containingReleases.value.map((release) => ({
                   id: `release:${release.id}`,
                   kind: 'action',
-                  label: `${release.name} · ${releaseTypeLabel(release.type)}${release.id === props.releaseContextId ? '（目前發行）' : ''}`,
+                  label: t(
+                    release.id === props.releaseContextId
+                      ? 'track.menu.releaseCurrent'
+                      : 'track.menu.release',
+                    {
+                      name: release.name,
+                      type: releaseTypeLabel(release.type),
+                    },
+                  ),
                   value: {
                     action: TRACK_MENU_ACTIONS.goToRelease,
                     collectionId: release.id,
@@ -271,8 +280,8 @@ const content = computed(() => {
           id: 'release-status',
           kind: 'action',
           label: releaseLoading.value
-            ? '確認收錄發行…'
-            : '無法讀取收錄發行，請重新開啟選單',
+            ? t('track.menu.checkingReleases')
+            : t('track.menu.releasesFailed'),
           disabled: true,
         },
       ],
@@ -284,7 +293,7 @@ const content = computed(() => {
         {
           id: 'go-to-album',
           kind: 'action',
-          label: '前往專輯',
+          label: t('track.menu.goToAlbum'),
           icon: Disc3,
           value: { action: TRACK_MENU_ACTIONS.goToAlbum },
         },
@@ -298,7 +307,7 @@ const content = computed(() => {
         {
           id: 'delete-track',
           kind: 'action',
-          label: '刪除曲目',
+          label: t('track.menu.delete'),
           icon: Trash2,
           intent: 'danger',
           value: { action: TRACK_MENU_ACTIONS.deleteTrack },
@@ -307,7 +316,7 @@ const content = computed(() => {
     });
   }
 
-  return { kind: 'actions', groups, emptyText: '沒有可用的操作' };
+  return { kind: 'actions', groups, emptyText: t('track.menu.noActions') };
 });
 
 function forwardSelect(value, item) {
@@ -325,7 +334,7 @@ function forwardSelect(value, item) {
     :open="open"
     :anchor="anchor"
     :content="content"
-    aria-label="曲目操作"
+    :aria-label="t('track.menu.label')"
     @select="forwardSelect"
     @close="emit('close')"
   />
