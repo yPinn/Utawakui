@@ -25,13 +25,12 @@
   },
   "bpm": {
     "title": "匯入後自動分析",
-    "guidance": "在本機分析歌曲速度與節拍，不上傳歌曲。",
+    "guidance": "在本機分析，不上傳歌曲。",
     "auto": "自動分析",
     "autoLabel": "匯入歌曲後自動分析 BPM 與節拍",
     "readFailed": "目前無法讀取自動分析設定，請重新讀取。",
     "saveFailed": "目前無法儲存自動分析設定，已恢復原設定。",
     "componentTitle": "BPM 分析工具",
-    "componentDescription": "分析歌曲速度與節拍所需的工具。",
     "reloadStatus": "重新讀取 BPM 狀態",
     "name": "BPM 分析",
     "unreadable": "無法讀取",
@@ -55,7 +54,7 @@
   },
   "gpu": {
     "title": "顯示卡加速",
-    "guidance": "優先使用顯示卡加速；無法使用時改用處理器。",
+    "guidance": "無法使用時自動改用處理器。",
     "toggle": "顯示卡加速（GPU）",
     "toggleLabel": "使用 GPU 加速人聲分離",
     "readFailed": "目前無法讀取 GPU 加速設定，請重新讀取。",

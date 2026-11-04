@@ -11,7 +11,6 @@ const emit = defineEmits(['open']);
   <SettingsDocumentItem
     :icon="MessageSquare"
     :title="t('settings.feedback.title')"
-    :guidance="t('settings.feedback.guidance')"
   >
     <template #actions>
       <UiIconButton

@@ -99,7 +99,6 @@ function handleAdvancedAction({ action }) {
     <SettingsDocumentItem
       :icon="Cpu"
       :title="t('capabilities.bpm.componentTitle')"
-      :description="t('capabilities.bpm.componentDescription')"
       :status="status"
       :status-tone="statusTone"
       variant="nested"

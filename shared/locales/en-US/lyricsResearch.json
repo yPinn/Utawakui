@@ -76,7 +76,6 @@
     "repair": "Repair",
     "remove": "Remove",
     "itemTitle": "Lyrics timing estimate tool",
-    "description": "The tool needed to estimate lyrics timing.",
     "busy": "Working",
     "verify": "Check",
     "cancel": "Cancel",
@@ -91,7 +90,7 @@
   },
   "queue": {
     "title": "Analyze lyrics after accompaniment finishes",
-    "guidance": "Analyzes newly finished accompaniments. Check results, retry and apply on the lyrics page. Tools aren't downloaded and the original lyrics aren't changed automatically.",
+    "guidance": "Analyzes after accompaniment finishes; view and apply results on the lyrics page. Tools aren't downloaded and the original lyrics aren't changed automatically.",
     "auto": "Analyze automatically",
     "autoLabel": "Automatically analyze lyrics after accompaniment finishes",
     "enableProcessing": "Turn on audio processing first.",

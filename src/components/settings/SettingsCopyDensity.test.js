@@ -45,9 +45,7 @@ describe('Settings copy density', () => {
 
   it('keeps decision-changing consequences while shortening routine guidance', () => {
     expect(librarySource).toContain('切換位置不會搬移既有曲目。');
-    expect(metadataSource).toContain(
-      '可從網路補齊專輯與曲序，不會覆蓋手動編輯。',
-    );
+    expect(metadataSource).toContain('從網路補齊專輯與曲序，不覆蓋手動編輯。');
     expect(metadataSource).not.toContain('value="啟動時補齊曲目與發行資訊"');
     expect(metadataSource).not.toContain('<UiHint>從來源更新會連線');
     expect(historySource).toContain('自動保存；清除不影響佇列或播放清單。');
@@ -65,7 +63,8 @@ describe('Settings copy density', () => {
     expect(outputSource).toContain(
       '實驗性透明歌詞輸出，需接收軟體支援 Spout2。',
     );
-    expect(feedbackSource).toContain('回報問題或提出建議。');
+    // The title alone says what the feedback row does.
+    expect(feedbackSource).not.toContain(':guidance=');
     expect(supportSource).toContain('公告、交流與開發者聯絡。');
   });
 });

@@ -4,10 +4,14 @@
     "ytdlp": "Online source download tool"
   },
   "description": {
-    "ffmpeg": "Used for local audio processing.",
-    "ytdlp": "Saves chosen sources to the local library.",
+    "ffmpeg": "Converts and reads audio formats.",
+    "ytdlp": "Downloads the chosen sources to the library.",
     "model": "Used for local vocal separation.",
-    "other": "Download it first."
+    "other": "Download it first.",
+    "models": {
+      "uvrMdxnetInstHq4": "Used by default; favors quality.",
+      "uvrMdxnetKara2": "Favors speed."
+    }
   },
   "value": {
     "systemFfmpeg": "Using the system-installed version",

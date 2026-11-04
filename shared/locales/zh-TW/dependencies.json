@@ -4,10 +4,14 @@
     "ytdlp": "線上來源下載工具"
   },
   "description": {
-    "ffmpeg": "供本機音訊處理使用。",
-    "ytdlp": "將選定來源儲存到本機曲庫。",
+    "ffmpeg": "轉換與讀取音訊格式。",
+    "ytdlp": "下載選定的來源到曲庫。",
     "model": "供本機人聲分離使用。",
-    "other": "需先下載。"
+    "other": "需先下載。",
+    "models": {
+      "uvrMdxnetInstHq4": "預設使用，品質優先。",
+      "uvrMdxnetKara2": "處理速度優先。"
+    }
   },
   "value": {
     "systemFfmpeg": "使用系統安裝版本",

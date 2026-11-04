@@ -100,7 +100,7 @@ describe('experimental lyrics global preference', () => {
     expect(textContent(mounted.root)).not.toContain('歌曲紀錄');
     expect(textContent(mounted.root)).not.toContain('取消分析');
     expect(textContent(mounted.root)).not.toContain('重試分析');
-    expect(textContent(mounted.root)).toContain('結果、重試與套用請至歌詞頁');
+    expect(textContent(mounted.root)).toContain('到歌詞頁查看與套用結果');
     expect(bridge.cancelExperimentalLyrics).not.toHaveBeenCalled();
     expect(bridge.retryExperimentalLyrics).not.toHaveBeenCalled();
   });

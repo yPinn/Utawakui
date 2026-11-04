@@ -17,7 +17,7 @@ import { FEATURE_GATES } from '../constants/featureGates.js';
 import { useFeatureDependencies } from './useFeatureDependencies.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
-import { catalogKey, t } from '../utils/i18n.js';
+import { catalogKey, i18n, t } from '../utils/i18n.js';
 
 // Feature-gate/dependency row presentation for SettingsCapabilitiesSection.vue: pure
 // data-shaping (labels, status/tone, workflow items) with no template ref or
@@ -208,7 +208,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
         : isYtdlp
           ? t('dependencies.description.ytdlp')
           : isModel
-            ? t('dependencies.description.model')
+            ? modelDescription(dependency.id)
             : t('dependencies.description.other'),
       value: dependencyValueLabel(current),
       status: featureDependencyState.readError
@@ -263,6 +263,12 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
         preparing,
       }),
     };
+  }
+
+  // Each separation model states its trade-off; others share the generic line.
+  function modelDescription(dependencyId) {
+    const key = `dependencies.description.models.${catalogKey(dependencyId)}`;
+    return i18n.global.te(key) ? t(key) : t('dependencies.description.model');
   }
 
   function workflowItemSortRank(item) {

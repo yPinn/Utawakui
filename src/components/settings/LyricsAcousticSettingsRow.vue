@@ -72,7 +72,6 @@ function advanced({ action }) {
 <template>
   <SettingsDocumentItem
     :title="t('lyricsResearch.acoustic.itemTitle')"
-    :description="t('lyricsResearch.acoustic.description')"
     :status="busy ? t('lyricsResearch.acoustic.busy') : status"
     :status-tone="capability?.status === 'ready' ? 'success' : 'muted'"
     variant="nested"

@@ -305,15 +305,19 @@ describe('useFeatureGatePresentation', () => {
     expect(
       findItem(presentation, 'provider-flow', 'yt-dlp-provider-tool')
         .description,
-    ).toBe('將選定來源儲存到本機曲庫。');
+    ).toBe('下載選定的來源到曲庫。');
     expect(
       findItem(presentation, 'audio-processing-flow', 'ffmpeg-gyan-essentials')
         .description,
-    ).toBe('供本機音訊處理使用。');
+    ).toBe('轉換與讀取音訊格式。');
     expect(
       findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-kara-2')
         .description,
-    ).toBe('供本機人聲分離使用。');
+    ).toBe('處理速度優先。');
+    expect(
+      findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-inst-hq-4')
+        .description,
+    ).toBe('預設使用，品質優先。');
   });
 
   it('defaults to a warning tone with only the refresh advanced action when nothing is installed', async () => {
@@ -530,7 +534,7 @@ describe('useFeatureGatePresentation', () => {
       'yt-dlp-provider-tool',
     );
     expect(item.value).not.toMatch(/yt-dlp|GPL|Unlicense|PSF|2026|bgutil/i);
-    expect(item.description).toBe('將選定來源儲存到本機曲庫。');
+    expect(item.description).toBe('下載選定的來源到曲庫。');
   });
 
   it('keeps provider runtime reinstall in the advanced menu once installed', async () => {

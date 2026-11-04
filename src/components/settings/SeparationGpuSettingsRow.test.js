@@ -23,10 +23,8 @@ describe('SeparationGpuSettingsRow', () => {
     expect(html.replace(/<!--[\s\S]*?-->/g, '')).toContain(
       '>顯示卡加速（GPU） </label>',
     );
-    expect(html).toContain('優先使用顯示卡加速；無法使用時改用處理器。');
-    expect(html).not.toContain(
-      'title="優先使用顯示卡加速；無法使用時改用處理器。"',
-    );
+    expect(html).toContain('無法使用時自動改用處理器。');
+    expect(html).not.toContain('title="無法使用時自動改用處理器。"');
     expect(html).toContain('aria-label="使用 GPU 加速人聲分離"');
     expect(html).toContain('checked');
     expect(html).not.toContain('settings-action-row__value');

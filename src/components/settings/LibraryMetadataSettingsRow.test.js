@@ -42,7 +42,7 @@ describe('LibraryMetadataSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('>曲庫資訊</h3>');
-    expect(html).toContain('可從網路補齊專輯與曲序，不會覆蓋手動編輯。');
+    expect(html).toContain('從網路補齊專輯與曲序，不覆蓋手動編輯。');
     expect(html).toContain('線上補齊');
     expect(html).toContain(
       'aria-description="從網路補齊專輯與曲序，不會覆蓋手動編輯。"',
