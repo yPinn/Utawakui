@@ -18,6 +18,22 @@
 }
 
 @font-face {
+  font-family: 'Utawakui ChenYuLuoYan';
+  src: url('/shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Utawakui Klee One';
+  src: url('/shared/assets/fonts/KleeOne-SemiBold.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
   font-family: 'Utawakui M PLUS Rounded 1c';
   src: url('/shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf')
     format('truetype');
@@ -694,7 +710,7 @@
   :root[data-ovl-template='centered-vertical'] .lyrics-overlay {
     padding-block: 15vh;
     grid-template-rows: minmax(0, 1fr);
-    place-items: start center;
+    place-items: center;
   }
 
   :root[data-ovl-template='centered-vertical'] .lyrics-overlay__current {
@@ -704,12 +720,36 @@
     letter-spacing: 0.08em;
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    white-space: pre;
+    white-space: preserve-spaces nowrap;
     text-align: start;
     max-inline-size: 70vh;
     overflow: clip;
     color: var(--ovl-primitive-color-paper);
-    text-shadow: 0 0 0.08em var(--ovl-primitive-color-ink);
+    -webkit-text-stroke: 0.035em
+      color-mix(in srgb, var(--ovl-primitive-color-ink) 82%, transparent);
+    text-shadow:
+      0.025em 0.045em 0 var(--ovl-primitive-color-ink),
+      0.045em 0.075em 0.1em
+        color-mix(in srgb, var(--ovl-primitive-color-ink) 72%, transparent);
+  }
+
+  :root[data-ovl-template='centered-vertical'][data-ovl-font='chen-yu-luo-yan']
+    .lyrics-overlay__current,
+  :root[data-ovl-template='centered-vertical'][data-ovl-font='lyrics-auto']
+    .lyrics-overlay__current:lang(zh):not(
+      :lang(zh-Hans),
+      :lang(zh-CN),
+      :lang(zh-SG)
+    ) {
+    font-family: 'Utawakui ChenYuLuoYan', 'Utawakui Open Huninn', sans-serif;
+  }
+
+  :root[data-ovl-template='centered-vertical'][data-ovl-font='klee-one']
+    .lyrics-overlay__current,
+  :root[data-ovl-template='centered-vertical'][data-ovl-font='lyrics-auto']
+    .lyrics-overlay__current:lang(ja) {
+    font-family: 'Utawakui Klee One', 'Utawakui Open Huninn', sans-serif;
+    font-weight: 600;
   }
 
   :root[data-ovl-template='centered-vertical'][data-ovl-scale='small']
@@ -829,8 +869,6 @@
     inline-size: var(--ovl-chalkboard-rule-width);
     background: currentColor;
     opacity: 0.9;
-    transform: scaleY(0.85);
-    transform-origin: top;
   }
 
   :root[data-ovl-template='ornate-vertical'],
@@ -840,6 +878,8 @@
 
   :root[data-ovl-template='ornate-vertical'] .lyrics-overlay {
     inset: max(var(--ovl-safe-block), 4%) max(var(--ovl-safe-inline), 4%);
+    inset-block-start: max(var(--ovl-safe-block), 18%);
+    inset-inline-end: max(var(--ovl-safe-inline), 8%);
     inline-size: auto;
     transform: none;
     gap: 0;
@@ -850,7 +890,7 @@
   }
 
   :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__current {
-    --ovl-ornate-font-size: 5.8vh;
+    --ovl-ornate-font-size: 4.6vh;
 
     position: relative;
     display: grid;
@@ -870,12 +910,12 @@
 
   :root[data-ovl-template='ornate-vertical'][data-ovl-scale='small']
     .lyrics-overlay__current {
-    --ovl-ornate-font-size: 4.93vh;
+    --ovl-ornate-font-size: 3.91vh;
   }
 
   :root[data-ovl-template='ornate-vertical'][data-ovl-scale='large']
     .lyrics-overlay__current {
-    --ovl-ornate-font-size: 6.96vh;
+    --ovl-ornate-font-size: 5.52vh;
   }
 
   :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__next,
@@ -888,8 +928,8 @@
     grid-area: 1 / 1;
     display: flex;
     flex-direction: row-reverse;
-    align-items: center;
-    gap: 0.62em;
+    align-items: flex-start;
+    gap: 0.2em;
     max-inline-size: 100%;
     align-self: var(--ovl-user-position-block);
     justify-self: var(--ovl-user-position-inline);
@@ -936,9 +976,20 @@
   }
 
   :root[data-ovl-template='ornate-vertical']
+    .lyrics-overlay__ornate-unit[data-ornate-slide='true'] {
+    display: inline-block;
+  }
+
+  :root[data-ovl-template='ornate-vertical']
     [data-ornate-motion='active']
     .lyrics-overlay__ornate-unit {
     will-change: clip-path, opacity;
+  }
+
+  :root[data-ovl-template='ornate-vertical']
+    [data-ornate-motion='active']
+    [data-ornate-slide='true'] {
+    will-change: transform, opacity;
   }
 
   :root[data-ovl-template='live-stage'],

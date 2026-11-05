@@ -538,7 +538,7 @@ export function lyricsAuthoredPhraseBreaks(value, options = {}) {
     )
       breaks.add(offset);
   };
-  for (const match of text.matchAll(/[ \t]+/gu)) {
+  for (const match of text.matchAll(/[ \t\u3000]+/gu)) {
     // Platform spacing beside an enumeration comma is not an authored phrase row.
     if (
       text[match.index - 1] === '、' ||

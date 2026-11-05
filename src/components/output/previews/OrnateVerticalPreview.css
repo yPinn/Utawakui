@@ -1,9 +1,9 @@
 /* Mirrors overlay/lyrics/lyrics.css ornate-vertical; runtime rem -> canvas rem. */
 .obs-template-mockup[data-template-id='ornate-vertical']
   .obs-template-mockup__content--lyrics {
-  /* Runtime 5.8vh on a 1080px canvas: 1vh = 0.675rem. */
+  /* Runtime 4.6vh on a 1080px canvas: 1vh = 0.675rem. */
   --ui-output-preview-ornate-font-size: calc(
-    5.8 * 0.675 * var(--obs-canvas-rem)
+    4.6 * 0.675 * var(--obs-canvas-rem)
   );
 
   position: relative;

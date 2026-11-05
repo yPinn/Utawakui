@@ -264,15 +264,7 @@ export function projectLyricsDisplayFrame(
     };
   }
   if (options.templateId === 'ornate-vertical') {
-    const presentation = adaptOrnateVerticalLyricsPresentation(page.text);
-    projected.ornateVertical = {
-      ...presentation,
-      segments: rows.map((row, index) => ({
-        index,
-        text: row.text,
-        units: adaptOrnateVerticalLyricsPresentation(row.text).units,
-      })),
-    };
+    projected.ornateVertical = adaptOrnateVerticalLyricsPresentation(page.text);
   }
   if (options.templateId === 'live-stage') {
     projected.liveStageDisplayLines = rows.map((row) => row.text);

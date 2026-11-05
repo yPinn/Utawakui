@@ -21,11 +21,11 @@ describe('Ornate Vertical layout contract', () => {
     expect(css).toContain('align-self: var(--ovl-user-position-block)');
     expect(css).toContain('inset-inline-start: var(--ovl-user-position-x)');
     expect(css).toContain('inset-block-start: var(--ovl-user-position-y)');
-    expect(css).toContain('--ovl-ornate-font-size: 5.8vh');
+    expect(css).toContain('--ovl-ornate-font-size: 4.6vh');
     expect(css).toContain("data-ovl-scale='small'");
     expect(css).toContain("data-ovl-scale='large'");
     expect(css).toMatch(
-      /\.lyrics-overlay__ornate-line\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*row-reverse;[^}]*align-items:\s*center;/s,
+      /\.lyrics-overlay__ornate-line\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*row-reverse;[^}]*align-items:\s*flex-start;/s,
     );
     expect(css).toMatch(
       /\.lyrics-overlay__ornate-segment\s*\{[^}]*writing-mode:\s*vertical-rl;/s,

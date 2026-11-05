@@ -89,15 +89,15 @@ ${fs.readFileSync(
       'utf8',
     );
 
-    // Runtime 5.8vh, where one canvas vh is 0.675 canvas rem.
-    expect(runtimeCss).toContain('--ovl-ornate-font-size: 5.8vh;');
+    // Runtime 4.6vh, where one canvas vh is 0.675 canvas rem.
+    expect(runtimeCss).toContain('--ovl-ornate-font-size: 4.6vh;');
     expect(preview).toMatch(
-      /--ui-output-preview-ornate-font-size: calc\(\s*5\.8 \* 0\.675 \* var\(--obs-canvas-rem\)\s*\);/u,
+      /--ui-output-preview-ornate-font-size: calc\(\s*4\.6 \* 0\.675 \* var\(--obs-canvas-rem\)\s*\);/u,
     );
     expect(runtimeCss).toContain(
       'inset: max(var(--ovl-safe-block), 4%) max(var(--ovl-safe-inline), 4%);',
     );
-    expect(preview).toContain('padding: calc(4 * var(--obs-canvas-rem)) 4%;');
+    expect(preview).toContain('inset: 18% 8% 4% 4%;');
     expect(preview).toContain('line-height: 0.96;');
     expect(preview).not.toContain("[data-size='thumbnail']");
   });

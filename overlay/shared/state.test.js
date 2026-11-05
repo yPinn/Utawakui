@@ -1554,6 +1554,52 @@ describe('overlay state selectors', () => {
     });
   });
 
+  it.each([
+    'focus-line',
+    'karaoke-stack',
+    'manga-frame',
+    'kinetic-pop',
+    'ornate-vertical',
+    'centered-vertical',
+    'chalkboard-vertical',
+    'live-stage',
+  ])('shares inferred long-gap clearing with %s', (templateId) => {
+    const lines = [
+      { text: '第一句', startMs: 1000, endMs: 4000, endInferred: true },
+      { text: '間奏前一句', startMs: 4000, endMs: 34000, endInferred: true },
+      { text: '間奏後一句', startMs: 34000, endMs: 37000 },
+    ];
+    const base = snapshot({ lyrics: { ...snapshot().lyrics, lines } });
+    const options = { templateId, nowMs: Date.parse(base.generatedAt) };
+    const read = (positionMs, explicit = false) => {
+      const value = {
+        ...base,
+        playback: { ...base.playback, positionMs },
+        lyrics: {
+          ...base.lyrics,
+          lines: explicit
+            ? [lines[0], { ...lines[1], endInferred: false }, lines[2]]
+            : lines,
+        },
+      };
+      const frame = selectLyricsOverlayFrame(value, options);
+      return templateId === 'karaoke-stack' ? frame.ktv : frame;
+    };
+    expect(read(6500)).toMatchObject({
+      visible: true,
+      currentText: '間奏前一句',
+    });
+    expect(read(18000)).toMatchObject({ visible: false, currentText: '' });
+    expect(read(18000, true)).toMatchObject({
+      visible: true,
+      currentText: '間奏前一句',
+    });
+    expect(read(34000)).toMatchObject({
+      visible: true,
+      currentText: '間奏後一句',
+    });
+  });
+
   it('prefers a confident M2 instrumental boundary over gap estimation', () => {
     const lines = [
       { text: '副歌尾句', startMs: 0, endMs: null },

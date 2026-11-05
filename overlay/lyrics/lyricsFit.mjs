@@ -11,6 +11,7 @@ import {
   selectLyricsDisplayPage,
 } from '../../shared/presentation/lyricsDisplayLayout.mjs';
 import { projectLyricsDisplayFrame } from '../../shared/presentation/lyricsDisplayFrame.mjs';
+import { splitOrnateVerticalSegments } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import { fineTextParts } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { sliceLyricsVocalParts } from '../../shared/presentation/lyricsTextProcessing.mjs';
 import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
@@ -58,6 +59,7 @@ function createMeasurement(
 ) {
   const chalkboard = templateId === 'chalkboard-vertical';
   const centered = templateId === 'centered-vertical';
+  const ornate = templateId === 'ornate-vertical';
   const vertical =
     centered ||
     chalkboard ||
@@ -83,6 +85,7 @@ function createMeasurement(
     phaseAt = counters.fitTargetAtMs = measureNow();
   }
   if (
+    !elements.root.hidden &&
     (rootRect.width <= 0 || rootRect.height <= 0) &&
     templateId !== 'karaoke-stack' &&
     !chalkboard &&
@@ -124,13 +127,14 @@ function createMeasurement(
   if (width <= 0 || height <= 0) return null;
   const probe = document.createElement('span');
   probe.setAttribute('aria-hidden', 'true');
+  if (centered) probe.lang = elements.root.lang;
   Object.assign(probe.style, {
     position: 'fixed',
     left: '-10000px',
     top: '0',
     visibility: 'hidden',
     display: 'block',
-    whiteSpace: 'pre',
+    whiteSpace: centered ? 'preserve-spaces nowrap' : 'pre',
     inlineSize: 'max-content',
     fontFamily: style.fontFamily,
     fontSize: style.fontSize,
@@ -192,6 +196,11 @@ function createMeasurement(
   return {
     fits: (text, range) => {
       const inkText = text.trimEnd();
+      if (ornate) {
+        return splitOrnateVerticalSegments(inkText).every(({ text }) =>
+          fitsLine(text),
+        );
+      }
       // A generous advance budget cheaply rejects obviously excessive text.
       // The actual DOM measurement remains authoritative for every accepted page.
       if (
@@ -496,6 +505,7 @@ export function createLyricsFitController(options = {}) {
       canonical.estimatedFineTiming,
       rate,
       base.currentReading,
+      settings.templateId === 'centered-vertical' ? base.language : null,
       settings.templateId === 'karaoke-stack' ? base.nextText : null,
     ]);
     let entry = cache.get(key);
@@ -529,9 +539,10 @@ export function createLyricsFitController(options = {}) {
       // identity (and briefly replace its ink) before the scheduler can commit.
       const chalkboard = settings.templateId === 'chalkboard-vertical';
       const centered = settings.templateId === 'centered-vertical';
+      const ornate = settings.templateId === 'ornate-vertical';
+      if (centered && elements) elements.root.lang = base.language || 'und';
       if (
-        !chalkboard &&
-        !centered &&
+        ['manga-frame', 'kinetic-pop'].includes(settings.templateId) &&
         (lastPrepared?.key !== key || !lastPrepared.batched)
       ) {
         options.renderForMeasurement?.(
@@ -563,8 +574,9 @@ export function createLyricsFitController(options = {}) {
           fits: measurement.fits,
           rate,
           sequentialRows: !chalkboard,
-          phraseRows: !chalkboard && !centered,
-          keepLatinRuns: centered,
+          phraseRows: !chalkboard && !ornate,
+          keepLatinRuns: ornate || !chalkboard,
+          preserveSourceStarts: centered,
           keepJapaneseContractions: chalkboard,
           language: base.language,
           ...(chalkboard || centered ? { minimumDwellMs: 800 } : {}),
@@ -594,7 +606,7 @@ export function createLyricsFitController(options = {}) {
                   })
                 : undefined;
             const rows =
-              typeof wrapped === 'boolean'
+              ornate || typeof wrapped === 'boolean'
                 ? [{ text: p.text }]
                 : (measurement.rows(p.text) ?? [{ text: p.text }]);
             multiline.push(wrapped ?? rows.length > 1);

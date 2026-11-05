@@ -161,3 +161,17 @@ describe('Ornate Vertical presentation', () => {
     ).toHaveLength(1);
   });
 });
+
+it('preserves a short punctuated opening as the first of three columns', () => {
+  const columns = ['それでも、', '口が別の生き物に', 'なったかのように、'];
+  const text = columns.join('');
+  const segments = splitOrnateVerticalSegments(text);
+
+  expect(segments.map((segment) => segment.text)).toEqual(columns);
+  expect(
+    segments
+      .flatMap((segment) => segment.units)
+      .map((unit) => unit.text)
+      .join(''),
+  ).toBe(text);
+});

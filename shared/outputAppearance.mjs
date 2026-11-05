@@ -132,6 +132,10 @@ const FIELD_DEFINITIONS = [
       { id: 'rounded' },
       { id: 'ornate' },
       { id: 'antique' },
+      { id: 'lyrics-auto' },
+      { id: 'chen-yu-luo-yan' },
+      { id: 'klee-one' },
+      { id: 'open-huninn' },
     ],
   }),
   fieldDefinition('typography', {
@@ -457,7 +461,19 @@ const TEMPLATE_CONFIGS = Object.freeze({
     ],
   },
   'centered-vertical': {
-    keys: ['fontScale'],
+    keys: ['fontFamily', 'fontScale'],
+    fields: {
+      fontScale: { defaultValue: 'small' },
+      fontFamily: {
+        defaultValue: 'lyrics-auto',
+        optionIds: [
+          'lyrics-auto',
+          'chen-yu-luo-yan',
+          'klee-one',
+          'open-huninn',
+        ],
+      },
+    },
   },
   'chalkboard-vertical': {
     keys: ['fontScale', 'positionAnchor', 'positionOffsetX', 'positionOffsetY'],
@@ -483,7 +499,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
     fields: {
       fontFamily: { defaultValue: 'ornate', optionIds: ORNATE_FONT_IDS },
       positionAnchor: {
-        defaultValue: 'center-right',
+        defaultValue: 'top-right',
         optionIds: ORNATE_POSITION_IDS,
       },
     },

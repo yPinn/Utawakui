@@ -222,7 +222,7 @@
         },
         "2": {
           "label": "長句",
-          "value": "自動拆成至多兩欄"
+          "value": "自動拆成至多三欄"
         },
         "3": {
           "label": "切換",
@@ -245,12 +245,12 @@
     "centeredVertical": {
       "name": "中央直書",
       "availability": "使用逐行歌詞。",
-      "summary": "中央單欄直書，固定起讀點。",
-      "detail": "歌詞由上往下讀，換句直接切換，長句沿中央單欄分頁。",
+      "summary": "單欄直書，水平與垂直置中。",
+      "detail": "適合繁體中文、日文等有直排慣例的歌詞。英文為主的歌曲建議使用橫排。歌詞由上往下讀，長句分頁，換句直接切換。",
       "layoutLabel": "中央單欄",
       "motionLabel": "直接切換",
       "columnTag": "單欄直書",
-      "anchorTag": "固定起點",
+      "anchorTag": "畫面正中央",
       "surfaceTag": "透明背景"
     },
     "chalkboardVertical": {
@@ -606,7 +606,11 @@
           "serif": "襯線",
           "rounded": "圓體",
           "ornate": "華麗明朝（Hina Mincho）",
-          "antique": "古典明朝（GenEi Antique）"
+          "antique": "古典明朝（GenEi Antique）",
+          "lyricsAuto": "依歌詞語言",
+          "chenYuLuoYan": "辰宇落雁體",
+          "kleeOne": "Klee One",
+          "openHuninn": "Open Huninn"
         }
       },
       "fontScale": {

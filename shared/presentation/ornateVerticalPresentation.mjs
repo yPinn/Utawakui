@@ -122,32 +122,39 @@ function splitBoundaryStrength(unit, sourceOffset, wordBoundaries, hardSplit) {
   return hardSplit ? 1 : 0;
 }
 
-export function splitOrnateVerticalSegments(value) {
-  const text = String(value ?? '').trim();
-  const units = splitOrnateVerticalUnits(text);
-  const singleSegment = () => [
-    {
-      index: 0,
-      text,
-      units,
-    },
-  ];
-  if (units.length <= 1) return singleSegment();
+function groupOrnateVerticalColumns(text, units, allowThirdColumn) {
+  if (units.length <= 1) return [units];
 
   const weights = units.map(ornateUnitVisualWeight);
   const totalWeight = weights.reduce((total, weight) => total + weight, 0);
-  if (totalWeight < ORNATE_VERTICAL_SPLIT_THRESHOLD) return singleSegment();
+  if (totalWeight < ORNATE_VERTICAL_SPLIT_THRESHOLD) return [units];
 
   const wordBoundaries = wordBoundaryOffsets(text);
   const hardSplit = totalWeight >= ORNATE_VERTICAL_HARD_SPLIT_THRESHOLD;
   let leftWeight = 0;
   let sourceOffset = 0;
   let best = null;
+  let shortOpening = null;
 
   for (let unitIndex = 0; unitIndex < units.length - 1; unitIndex += 1) {
     leftWeight += weights[unitIndex];
     sourceOffset += units[unitIndex].text.length;
     const rightWeight = totalWeight - leftWeight;
+    const strength = splitBoundaryStrength(
+      units[unitIndex],
+      sourceOffset,
+      wordBoundaries,
+      hardSplit,
+    );
+    if (
+      allowThirdColumn &&
+      totalWeight >= 20 &&
+      strength >= 4 &&
+      leftWeight >= ORNATE_VERTICAL_MIN_SEGMENT_WEIGHT &&
+      leftWeight / totalWeight < ORNATE_VERTICAL_MIN_SEGMENT_RATIO
+    ) {
+      shortOpening = { unitIndex, sourceOffset };
+    }
     if (
       leftWeight < ORNATE_VERTICAL_MIN_SEGMENT_WEIGHT ||
       rightWeight < ORNATE_VERTICAL_MIN_SEGMENT_WEIGHT ||
@@ -157,12 +164,6 @@ export function splitOrnateVerticalSegments(value) {
       continue;
     }
 
-    const strength = splitBoundaryStrength(
-      units[unitIndex],
-      sourceOffset,
-      wordBoundaries,
-      hardSplit,
-    );
     if (strength === 0) continue;
     const imbalance = Math.abs(leftWeight - rightWeight);
     if (
@@ -174,12 +175,24 @@ export function splitOrnateVerticalSegments(value) {
     }
   }
 
-  if (!best) return singleSegment();
-  const groupedUnits = [
-    units.slice(0, best.unitIndex + 1),
-    units.slice(best.unitIndex + 1),
-  ];
-  return groupedUnits.map((segmentUnits, index) => ({
+  if (shortOpening) {
+    const boundary = shortOpening.unitIndex + 1;
+    const remainder = groupOrnateVerticalColumns(
+      text.slice(shortOpening.sourceOffset),
+      units.slice(boundary),
+      false,
+    );
+    if (remainder.length === 2) return [units.slice(0, boundary), ...remainder];
+  }
+  if (!best) return [units];
+  return [units.slice(0, best.unitIndex + 1), units.slice(best.unitIndex + 1)];
+}
+
+export function splitOrnateVerticalSegments(value) {
+  const text = String(value ?? '').trim();
+  const units = splitOrnateVerticalUnits(text);
+  const columns = groupOrnateVerticalColumns(text, units, true);
+  return columns.map((segmentUnits, index) => ({
     index,
     text: segmentUnits
       .map((unit) => unit.text)

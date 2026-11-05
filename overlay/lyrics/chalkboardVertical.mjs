@@ -4,6 +4,7 @@ const transitions = new WeakMap();
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 const columnEraseMs = 240;
 const columnStaggerMs = 80;
+const shortCueMs = 1000;
 
 function eraseWindowMs(frame) {
   const duration = frame.chalkboardDurationMs;
@@ -15,8 +16,8 @@ function eraseWindowMs(frame) {
   const columnCount = frame.chalkboardColumns?.length || 1;
   return Math.min(
     columnEraseMs + (columnCount - 1) * columnStaggerMs,
-    duration * 0.3,
-    tail * 0.7,
+    duration * (duration <= shortCueMs ? 0.18 : 0.3),
+    tail * 0.45,
   );
 }
 
@@ -153,10 +154,11 @@ function writeLine(elements, incoming, frame, remaining, windowMs, gsap) {
       delays?.[column + 1] ?? Infinity,
     );
     const span = Math.max(0, until - at);
+    const hold = Math.min(400, span * 0.6);
     const step = Math.min(
       55,
       720 / (stops.length - 1),
-      (span * 0.7) / (stops.length - 1),
+      Math.min(span * 0.7, span - hold) / (stops.length - 1),
     );
     if (step < 1) {
       if (at > 0) {
@@ -298,7 +300,7 @@ function eraseLine(elements, previous, remaining, gsap) {
         step,
       );
     }
-    // The shortened rail keeps moving downward while the ink erases in steps.
+    // The rail keeps moving downward while the ink erases in steps.
     if (count) {
       const edges = bias ? [0, 50, 100] : [0, 100];
       const duration = ((count - 0.28) * step) / (edges.length - 1);

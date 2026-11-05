@@ -2,6 +2,10 @@
 
 Output server、投影傳輸與 Browser Source 頁面生命週期。決策見 [ADR 0012](../adr/0012-state-convergence-and-startup-phases.md)；外觀見 [Output 外觀契約](output-appearance.md)；未來 pack 見 [Overlay pack 規劃](overlay-pack.md)。
 
+## 歌詞間奏清字
+
+歌詞模板共用字幕有效區間。來源明示的句尾及已有細時間的區間照原資料。僅有逐行起點時，優先用高信心的間奏邊界，沒有段落依據的長空檔則按鄰近句距估算清字時間。這個時間只用於輸出顯示，不回寫來源。字幕清空後各模板自行決定舞台畫面，中央直書與黑板直書回到透明。
+
 ## 權威
 
 - Renderer audio element 是播放時間與狀態的權威；Queue 與目前歌詞仍由既有 renderer owner 持有。
@@ -79,7 +83,7 @@ V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount�
 
 - `createOverlayHost()` 在 `start()` 才訂閱與連線；重複 start 無作用，dispose 冪等且不可再 start。Pagehide 依序移除訂閱、執行 route cleanup、停止 connection；cleanup 拋錯仍須停止 connection。換模板不重建 connection。
 - 頁面可見、transport 已連線且收到該連線的新 snapshot 後才 active；不恢復上一條連線的舊內容。隱藏時停止 scheduler 與量測，只保留最後 snapshot，恢復時只交付最新一份，不補播隱藏期間換曲。
-- 曾呈現後的恢復以 `recovering` 交給 adapter：Lyrics 以當下時間靜態收斂一次；Art Card 與 Setlist current 以 settle 跳過舊動畫；Setlist history 依最新幾何重建分頁。
+- 曾呈現後的恢復以 `recovering` 交給 adapter：Lyrics 以當下時間靜態收斂一次，即使準備跨界而延至下一個 task，也要等到正式 commit 才清除恢復狀態；Art Card 與 Setlist current 以 settle 跳過舊動畫；Setlist history 依最新幾何重建分頁。
 - Reduced motion 用原生 `matchMedia`，不依賴 GSAP。字型不等待 ready 才畫首幀，不讀字型 bytes；載入失敗走 CSS fallback。
 - 只接受目前 socket 的事件；已取消的 snapshot／重連 timer 即使已排入佇列也不執行。
 - Source unavailable／syncing 的空態照常投影，不借示範資料填補。

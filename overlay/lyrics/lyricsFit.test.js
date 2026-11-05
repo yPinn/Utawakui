@@ -3,6 +3,128 @@ import { createLyricsFitController } from './lyricsFit.mjs';
 import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
 
 describe('lyric fit controller lifecycle', () => {
+  it.each([
+    { rate: 1, at: 3550, source: 't2' },
+    { rate: 1.5, at: 2900, source: 't2' },
+    { rate: 1, at: 3550, source: 'model-starts' },
+  ])(
+    'keeps a short Centered Vertical phrase at its $source start (rate $rate)',
+    ({ rate, at, source }) => {
+      const templateId = 'centered-vertical';
+      const { controller, snapshot } = surface(templateId);
+      const text = '來人啊救救我吧　來救救我';
+      const segments = [
+        { text: '來人啊救救我吧', startMs: 1000, endMs: at },
+        { text: '　來救救我', startMs: at, endMs: 4000 },
+      ];
+      snapshot.lyrics.lines = [
+        {
+          text,
+          startMs: 1000,
+          endMs: 4000,
+          ...(source === 't2'
+            ? { segments }
+            : { estimatedStarts: { version: 1, segments } }),
+        },
+      ];
+      snapshot.playback.rate = rate;
+      const frame = {
+        visible: true,
+        lineIndex: 0,
+        currentText: text,
+        language: 'zh-TW',
+      };
+      snapshot.playback.positionMs = at - 1;
+      expect(
+        controller
+          .prepare(snapshot, frame, { templateId })
+          .frame.currentText.trimEnd(),
+      ).toBe('來人啊救救我吧');
+      snapshot.playback.positionMs = at;
+      const second = controller.prepare(snapshot, frame, { templateId }).frame;
+      expect(second.currentText).toBe('來救救我');
+      expect(second.displayFit.pageTiming).toBe(source);
+    },
+  );
+
+  it('estimates a Centered Vertical phrase without shifting a later known start', () => {
+    const templateId = 'centered-vertical';
+    const { controller, elements, snapshot } = surface(templateId);
+    const text = '來人啊救救我吧 來救救我 風停了';
+    snapshot.lyrics.lines = [
+      {
+        text,
+        startMs: 1000,
+        endMs: 4300,
+        segments: [
+          { text: '來人啊救救我吧 來', startMs: 1000, endMs: 2700 },
+          { text: '救救我 ', startMs: 2700, endMs: 4050 },
+          { text: '風停了', startMs: 4050, endMs: 4300 },
+        ],
+      },
+    ];
+    const frame = {
+      visible: true,
+      lineIndex: 0,
+      currentText: text,
+      language: 'zh-TW',
+    };
+    snapshot.playback.positionMs = 1000;
+    controller.prepare(snapshot, frame, { templateId });
+    const boundary = Number(elements.root.dataset.fitPageEndMs);
+    expect(boundary).toBeGreaterThan(1000);
+    expect(boundary).toBeLessThan(2700);
+    snapshot.playback.positionMs = 4049;
+    const second = controller.prepare(snapshot, frame, { templateId }).frame;
+    expect(second.currentText.trimEnd()).toBe('來救救我');
+    expect(second.displayFit.pageTiming).toBe('layout-estimate');
+    snapshot.playback.positionMs = 4050;
+    expect(
+      controller.prepare(snapshot, frame, { templateId }).frame.currentText,
+    ).toBe('風停了');
+  });
+  it.each(['  ', '\u3000'])(
+    'keeps the second authored phrase whole in Centered Vertical (separator %j)',
+    (space) => {
+      const templateId = 'centered-vertical';
+      const { controller, elements, snapshot } = surface(templateId);
+      const text = `來人啊救救我吧${space}來救救我`;
+      snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 4000 }];
+      const frame = {
+        visible: true,
+        lineIndex: 0,
+        currentText: text,
+        language: 'zh-TW',
+      };
+      snapshot.playback.positionMs = 1000;
+      const first = controller.prepare(snapshot, frame, { templateId });
+      expect(first.frame.currentText.trimEnd()).toBe('來人啊救救我吧');
+      snapshot.playback.positionMs = Number(elements.root.dataset.fitPageEndMs);
+      const second = controller.prepare(snapshot, frame, { templateId });
+      expect(second.frame.currentText).toBe('來救救我');
+      expect(first.frame.currentText + second.frame.currentText).toBe(text);
+    },
+  );
+  it('recomputes Centered Vertical capacity when the lyric language changes', () => {
+    const templateId = 'centered-vertical';
+    const onTrace = vi.fn();
+    const { controller, elements, snapshot } = surface(templateId, { onTrace });
+    const text = '月明';
+    snapshot.lyrics.lines = [{ text, startMs: 1000, endMs: 3000 }];
+    const frame = { visible: true, lineIndex: 0, currentText: text };
+
+    for (const language of ['zh-TW', 'ja', 'ja']) {
+      controller.prepare(snapshot, { ...frame, language }, { templateId });
+      expect(elements.root.lang).toBe(language);
+    }
+
+    expect(
+      onTrace.mock.calls
+        .filter(([event]) => event === 'fit-hit')
+        .map(([, fields]) => fields.cacheHit),
+    ).toEqual([0, 0, 1]);
+  });
+
   it('paginates a long mixed line into a single vertical column without losing source text', () => {
     const templateId = 'centered-vertical';
     const { controller, elements, snapshot } = surface(templateId);
@@ -67,7 +189,7 @@ describe('lyric fit controller lifecycle', () => {
     ]);
   });
 
-  it('anchors each Chalkboard column to its source start at the current playback rate', () => {
+  it('leads later Chalkboard columns from their source starts at the current playback rate', () => {
     const templateId = 'chalkboard-vertical';
     const { controller, snapshot } = surface(templateId);
     const text = '夜色亮起\n走過這條街';
@@ -78,17 +200,19 @@ describe('lyric fit controller lifecycle', () => {
     const frame = { visible: true, lineIndex: 0, currentText: text };
     const estimated = controller.prepare(snapshot, frame, { templateId }).frame;
     expect(estimated.chalkboardColumnDelaysMs[0]).toBe(0);
-    expect(estimated.chalkboardColumnDelaysMs[1]).toBeCloseTo((2000 * 4) / 9);
+    expect(estimated.chalkboardColumnDelaysMs[1]).toBeCloseTo(
+      (2000 * 4) / 9 - 60,
+    );
 
     line.segments = [
       { text: '夜色亮起\n', startMs: 1100, endMs: 3400 },
       { text: '走過這條街', startMs: 3400, endMs: 5000 },
     ];
     const timed = controller.prepare(snapshot, frame, { templateId }).frame;
-    expect(timed.chalkboardColumnDelaysMs).toEqual([0, 1200]);
+    expect(timed.chalkboardColumnDelaysMs).toEqual([0, 1140]);
     snapshot.playback.positionMs = 3400;
     const second = controller.prepare(snapshot, frame, { templateId }).frame;
-    expect(second.chalkboardColumnDelaysMs).toEqual([-1200, 0]);
+    expect(second.chalkboardColumnDelaysMs).toEqual([-1200, -60]);
   });
 
   it.each([
@@ -1008,6 +1132,41 @@ describe('lyric fit controller lifecycle', () => {
     const reads = s.reads();
     s.controller.prepare(s.snapshot, s.frame, s.settings);
     expect(s.reads()).toBe(reads);
+    s.controller.stop();
+  });
+
+  it.each(['focus-line', 'live-stage'])(
+    'measures %s without precommitting the next lyrics',
+    (templateId) => {
+      const renderForMeasurement = vi.fn();
+      const s = surface(templateId, { renderForMeasurement });
+      s.elements.root.hidden = true;
+      s.elements.root.getBoundingClientRect = () => ({ width: 0, height: 0 });
+      const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+
+      expect(renderForMeasurement).not.toHaveBeenCalled();
+      expect(result.frame.displayFit.pageCount).toBeGreaterThan(1);
+      s.controller.stop();
+    },
+  );
+
+  it('keeps fitted Ornate columns together without a preliminary paint', () => {
+    const renderForMeasurement = vi.fn();
+    const s = surface('ornate-vertical', { renderForMeasurement });
+    const columns = ['それでも、', '口が別の生き物に', 'なったかのように、'];
+    const text = columns.join('');
+    s.window.innerHeight = 300;
+    s.snapshot.lyrics.lines[0].text = text;
+    s.frame.currentText = text;
+    s.frame.language = 'ja';
+
+    const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
+
+    expect(result.frame.displayFit.pageCount).toBe(1);
+    expect(
+      result.frame.ornateVertical.segments.map(({ text }) => text),
+    ).toEqual(columns);
+    expect(renderForMeasurement).not.toHaveBeenCalled();
     s.controller.stop();
   });
 

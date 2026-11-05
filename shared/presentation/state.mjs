@@ -819,6 +819,75 @@ function confidentInstrumentalStartMs(snapshot, lineStartMs, nextStartMs) {
   return section ? section.startMs + offsetMs : null;
 }
 
+function estimatedLongGapEndMs(
+  lineStartMs,
+  boundaryMs,
+  typicalIntervalMs,
+  anchorMs = lineStartMs,
+) {
+  const threshold = Math.max(
+    KTV_LONG_GAP_MIN_MS,
+    typicalIntervalMs * KTV_LONG_GAP_FACTOR,
+  );
+  return boundaryMs - lineStartMs >= threshold
+    ? Math.min(
+        boundaryMs,
+        anchorMs +
+          clamp(
+            typicalIntervalMs,
+            KTV_MIN_LINE_DURATION_MS,
+            KTV_MAX_LINE_DURATION_MS,
+          ),
+      )
+    : boundaryMs;
+}
+
+const preparedLyricsOverlays = new WeakMap();
+
+export function prepareLyricsOverlaySnapshot(snapshot) {
+  if (snapshot?.lyrics?.synced !== true) return snapshot;
+  const cached = preparedLyricsOverlays.get(snapshot);
+  if (cached) return cached;
+  const { lines } = snapshot.lyrics;
+  if (!Array.isArray(lines)) return snapshot;
+  const hasSections = musicStructureDocument(snapshot)?.level === 'M2';
+  let typicalIntervalMs;
+  let displayLines;
+  for (const [index, line] of lines.entries()) {
+    if (
+      !Number.isFinite(line?.startMs) ||
+      (Number.isFinite(line.endMs) && line.endInferred !== true) ||
+      mappedLineSegments(line)?.length
+    )
+      continue;
+    const boundaryMs = Number.isFinite(line.endMs)
+      ? line.endMs
+      : nextFiniteLineStart(lines, index);
+    if (
+      !Number.isFinite(boundaryMs) ||
+      (!hasSections && boundaryMs - line.startMs < KTV_LONG_GAP_MIN_MS)
+    )
+      continue;
+    typicalIntervalMs ??= typicalKtvLineIntervalMs(
+      timedVisibleLyricsLines(lines),
+    );
+    const endMs =
+      confidentInstrumentalStartMs(snapshot, line.startMs, boundaryMs) ??
+      estimatedLongGapEndMs(line.startMs, boundaryMs, typicalIntervalMs);
+    if (endMs >= boundaryMs) continue;
+    displayLines ??= lines.slice();
+    displayLines[index] = { ...line, endMs, endInferred: false };
+  }
+  // These bounds belong to presentation only. Playback and the source cue
+  // retain the original lyric document and offsets.
+  const prepared = displayLines
+    ? { ...snapshot, lyrics: { ...snapshot.lyrics, lines: displayLines } }
+    : snapshot;
+  preparedLyricsOverlays.set(snapshot, prepared);
+  preparedLyricsOverlays.set(prepared, prepared);
+  return prepared;
+}
+
 function resolvedKtvLineEndMs(
   snapshot,
   timedLines,
@@ -884,22 +953,12 @@ function resolvedKtvLineEndMs(
       : Infinity;
     return Math.min(durationEndMs, estimateAnchorMs + estimatedDurationMs);
   }
-  const sourceGapMs = sourceBoundaryMs - line.startMs;
-  const longGapThresholdMs = Math.max(
-    KTV_LONG_GAP_MIN_MS,
-    typicalIntervalMs * KTV_LONG_GAP_FACTOR,
+  return estimatedLongGapEndMs(
+    line.startMs,
+    sourceBoundaryMs,
+    typicalIntervalMs,
+    estimateAnchorMs,
   );
-  return sourceGapMs >= longGapThresholdMs
-    ? Math.min(
-        sourceBoundaryMs,
-        estimateAnchorMs +
-          clamp(
-            typicalIntervalMs,
-            KTV_MIN_LINE_DURATION_MS,
-            KTV_MAX_LINE_DURATION_MS,
-          ),
-      )
-    : sourceBoundaryMs;
 }
 
 function exactKtvPhraseSegments(line, phrase, lineEndMs, contentStart) {
@@ -1780,6 +1839,8 @@ function isConfident(value) {
 
 export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   if (snapshot?.playback?.status !== 'playing') return null;
+  const sourceSnapshot = snapshot;
+  snapshot = prepareLyricsOverlaySnapshot(snapshot);
 
   const nowMs = options.nowMs ?? Date.now();
   const rate = playbackRate(snapshot);
@@ -1824,9 +1885,10 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
     if (kineticPopPhraseDelay !== null) delays.push(kineticPopPhraseDelay);
   }
   if (legacyAllTemplates || schedulerCapabilities.has('ktv')) {
+    const sourceLines = sourceSnapshot.lyrics?.lines;
     const ktvDelay = nextKtvBoundaryDelayMs(
-      snapshot,
-      Array.isArray(snapshot?.lyrics?.lines) ? snapshot.lyrics.lines : [],
+      sourceSnapshot,
+      Array.isArray(sourceLines) ? sourceLines : [],
       nowMs,
       options.presentationDocument,
     );
@@ -2009,6 +2071,8 @@ export function selectLyricsFrame(snapshot, options = {}) {
 }
 
 export function selectLyricsOverlayFrame(snapshot, options = {}) {
+  const sourceSnapshot = snapshot;
+  snapshot = prepareLyricsOverlaySnapshot(snapshot);
   const templateId =
     typeof options.templateId === 'string' ? options.templateId : null;
   if (
@@ -2161,8 +2225,10 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     ...(legacyAllTemplates || templateId === 'karaoke-stack'
       ? {
           ktv: selectKtvLyricsFrame(
-            snapshot,
-            lines,
+            sourceSnapshot,
+            Array.isArray(sourceSnapshot?.lyrics?.lines)
+              ? sourceSnapshot.lyrics.lines
+              : [],
             nowMs,
             options.presentationDocument,
           ),

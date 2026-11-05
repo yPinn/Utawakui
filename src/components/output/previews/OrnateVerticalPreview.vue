@@ -90,15 +90,13 @@ const previewLines = computed(() => {
 
 .ornate-preview {
   position: absolute;
-  inset: 0;
+  inset: 18% 8% 4% 4%;
   isolation: isolate;
   min-inline-size: 0;
   min-block-size: 0;
   display: grid;
   box-sizing: border-box;
   overflow: hidden;
-  /* Runtime inset is max(4rem, 4%) on both axes of a 1920×1080 canvas. */
-  padding: calc(4 * var(--obs-canvas-rem)) 4%;
   color: var(--obs-preview-ink);
   font-family: var(--obs-user-font-family);
   line-height: 0.96;
@@ -106,16 +104,16 @@ const previewLines = computed(() => {
 }
 
 .ornate-preview__line {
-  --ornate-preview-segment-gap: 0.62em;
+  --ornate-preview-segment-gap: 0.2em;
 
   position: relative;
   grid-area: 1 / 1;
-  align-self: center;
+  align-self: start;
   justify-self: end;
   max-inline-size: 100%;
   display: flex;
   flex-direction: row-reverse;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--ornate-preview-segment-gap);
   font-size: var(--ui-output-preview-ornate-font-size);
   opacity: 0;
@@ -165,12 +163,14 @@ const previewLines = computed(() => {
 }
 
 .ornate-preview[data-animated='true'] .ornate-preview__line {
-  animation: ornate-preview-line-cycle 6.4s cubic-bezier(0.16, 1, 0.3, 1)
-    infinite both;
+  animation: ornate-preview-line-cycle 6.4s steps(1, end) infinite both;
   animation-delay: var(--ornate-line-offset);
 }
 
-.ornate-preview[data-animated='true'] .ornate-preview__unit {
+.ornate-preview[data-animated='true']
+  .ornate-preview__unit:not(
+    .ornate-preview__segment:first-child > :first-child
+  ) {
   animation: ornate-preview-unit-cycle 6.4s cubic-bezier(0.16, 1, 0.3, 1)
     infinite both;
   animation-delay: calc(var(--ornate-line-offset) + var(--ornate-unit-delay));
@@ -178,12 +178,11 @@ const previewLines = computed(() => {
 }
 
 @keyframes ornate-preview-line-cycle {
-  0%,
-  48% {
+  0% {
     opacity: 1;
   }
 
-  52%,
+  50%,
   100% {
     opacity: 0;
   }
@@ -196,15 +195,9 @@ const previewLines = computed(() => {
   }
 
   7%,
-  45% {
-    clip-path: inset(0 0 0% 0);
-    opacity: 1;
-  }
-
-  50%,
   100% {
     clip-path: inset(0 0 0% 0);
-    opacity: 0;
+    opacity: 1;
   }
 }
 

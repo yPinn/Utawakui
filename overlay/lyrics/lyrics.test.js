@@ -216,8 +216,8 @@ it('writes Chalkboard characters right to left, erases in opposite directions, a
   };
   const tail = {
     ...frame,
-    chalkboardRemainingMs: 300,
-    chalkboardColumnDelaysMs: [-500, -200],
+    chalkboardRemainingMs: 180,
+    chalkboardColumnDelaysMs: [-620, -320],
   };
   renderLyricsFrame(elements, tail, options);
   expect(timelines[0].kill).toHaveBeenCalledOnce();
@@ -275,8 +275,8 @@ it('writes Chalkboard characters right to left, erases in opposite directions, a
 
   const nextTail = {
     ...next,
-    chalkboardRemainingMs: 240,
-    chalkboardColumnDelaysMs: [-560],
+    chalkboardRemainingMs: 180,
+    chalkboardColumnDelaysMs: [-620],
   };
   renderLyricsFrame(elements, nextTail, options);
   timelines[3].options.onComplete();
@@ -323,13 +323,17 @@ it('wakes for Chalkboard erase and begins the next write on the original cue bou
     },
   });
   timelines[0].options.onComplete();
-  expect(jobs[0].delay).toBe(760);
-  now += 760;
+  expect(jobs[0].delay).toBe(820);
+  const lastWrite = timelines[0].tweens.at(-1);
+  expect(
+    jobs[0].delay - (lastWrite.position + lastWrite.vars.duration) * 1000,
+  ).toBeGreaterThanOrEqual(400);
+  now += 820;
   jobs[0].callback();
   expect(elements.current.textContent).toBe('夜色');
   expect(timelines).toHaveLength(2);
-  expect(jobs[1].delay).toBe(240);
-  now += 240;
+  expect(jobs[1].delay).toBe(180);
+  now += 180;
   jobs[1].callback();
   expect(timelines[1].kill).toHaveBeenCalledOnce();
   expect(elements.current.textContent).toBe('亮起');
@@ -354,7 +358,7 @@ it('keeps the Chalkboard erase bias on the mask edge and off the write animation
       currentText: '夜色',
       chalkboardPlaying: true,
       chalkboardDurationMs: 1000,
-      chalkboardRemainingMs: 240,
+      chalkboardRemainingMs: 180,
     },
     options,
   );
@@ -403,8 +407,7 @@ it.each([
       },
       ornateVertical: {
         text: '同じ',
-        units: [{ text: '同じ' }],
-        segments: [{ text: '同じ', units: [{ text: '同じ' }] }],
+        units: [{ text: '同' }, { text: 'じ' }],
       },
       liveStageDisplayLines: ['同じ'],
     };
@@ -568,13 +571,14 @@ it('retains Focus fine ink and suppresses extra line entrances across cold fit a
         reducedMotion: true,
       }),
   });
+  renderLyricsFrame(elements, frame, { templateId: 'focus-line' });
   for (const reason of [null, 1, 2, 3]) {
     if (reason !== null) controller.invalidate(reason);
     const prepared = controller.prepare(snapshot, frame, {
       templateId: 'focus-line',
       nowMs: 0,
     });
-    // The scheduler can yield here. The original prepared ink must stay present.
+    // The scheduler can yield here. The last committed ink must stay present.
     expect(elements.current.textContent).toBe('今日');
     expect(elements.current.dataset.currentText).toBe('今日');
     expect(
@@ -583,12 +587,12 @@ it('retains Focus fine ink and suppresses extra line entrances across cold fit a
       ],
     ).toBe('50%');
     renderLyricsFrame(elements, prepared.frame, { templateId: 'focus-line' });
-    expect(elements.current.animate).not.toHaveBeenCalled();
+    expect(elements.current.animate).toHaveBeenCalledOnce();
   }
   controller.stop();
 });
 
-it('keeps complete Focus measurement ink when two boundary crossings yield before final commit', () => {
+it('paints Focus only once after two preparation boundary crossings', () => {
   const elements = domElements(),
     jobs = [],
     commits = [];
@@ -658,11 +662,7 @@ it('keeps complete Focus measurement ink when two boundary crossings yield befor
   scheduler.update(snapshot);
   expect(commits).toHaveLength(0);
   expect(jobs[0].delay).toBe(0);
-  expect(elements.current.textContent).toBe('甲乙');
-  expect(
-    elements.current.children.find((n) => n.dataset.segmentState === 'active')
-      ?.textContent,
-  ).toBe('甲');
+  expect(elements.current.textContent).toBe('');
   jobs[0].callback();
   expect(commits).toHaveLength(1);
   expect(elements.current.textContent).toBe('甲乙');
@@ -670,7 +670,7 @@ it('keeps complete Focus measurement ink when two boundary crossings yield befor
     elements.current.children.find((n) => n.dataset.segmentState === 'active')
       ?.textContent,
   ).toBe('乙');
-  expect(elements.current.animate).not.toHaveBeenCalled();
+  expect(elements.current.animate).toHaveBeenCalledOnce();
   scheduler.stop();
   fit.stop();
 });
@@ -1548,7 +1548,7 @@ describe('lyrics overlay renderer', () => {
     ]);
   });
 
-  it('overlaps Ornate Vertical exit and entrance without a blank swap', () => {
+  it('replaces Ornate Vertical without overlap and starts with visible ink', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
     const frame = (text, lineIndex) => ({
@@ -1594,22 +1594,21 @@ describe('lyrics overlay renderer', () => {
     });
 
     expect(timelines).toHaveLength(1);
-    expect(elements.current.children).toHaveLength(2);
-    expect(elements.current.children[0]).toBe(outgoing);
-    expect(gsap.set).toHaveBeenCalled();
-    expect(timelines[0].labelPositions).toEqual([
-      { label: 'swap', position: 0 },
-      {
-        label: 'enter',
-        position: 'swap',
-      },
-    ]);
-    expect(timelines[0].tweens[0].position).toBe('swap');
+    expect(elements.current.children).toHaveLength(1);
+    const incoming = elements.current.children[0];
+    expect(incoming).not.toBe(outgoing);
+    const [firstUnit, secondUnit] = incoming.children[0].children;
     expect(
-      timelines[0].tweens
-        .slice(1)
-        .every((tween) => tween.position.startsWith('enter+=')),
-    ).toBe(true);
+      gsap.set.mock.calls.filter(([, vars]) => vars.autoAlpha === 0),
+    ).toEqual([[secondUnit, expect.any(Object)]]);
+    expect(timelines[0].labelPositions).toEqual([
+      { label: 'enter', position: 0 },
+    ]);
+    expect(timelines[0].tweens).toHaveLength(1);
+    expect(timelines[0].tweens[0].target).toBe(secondUnit);
+    expect(gsap.set.mock.calls.some(([target]) => target === firstUnit)).toBe(
+      false,
+    );
     expect(timelines[0].additionPositions).toEqual([]);
     expect(elements.root.dataset.ornatePlacement).toBe('right');
     for (const [, vars] of gsap.set.mock.calls) {
@@ -1625,13 +1624,57 @@ describe('lyrics overlay renderer', () => {
       expect(tween.vars).not.toHaveProperty('rotation');
       expect(tween.vars).not.toHaveProperty('scale');
     }
-    expect(elements.current.children[1].dataset.ornateText).toBe('後悔だけ');
+    expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
     timelines[0].options.onComplete();
     expect(elements.current.children).toHaveLength(1);
     expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
   });
 
-  it('commits the pending Ornate line before an interrupted handoff', () => {
+  it('reveals trial kana and moves Han from opposite sides without moving the first unit', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const units = [
+      { kind: 'kana', text: 'あ' },
+      { kind: 'han', text: '夜' },
+      { kind: 'han', text: '星' },
+      { kind: 'kana', text: 'が' },
+    ];
+    const frame = {
+      visible: true,
+      language: 'ja',
+      lineIndex: 0,
+      currentText: units.map(({ text }) => text).join(''),
+      ornateScriptMotion: true,
+      ornateVertical: {
+        segments: [
+          { index: 0, text: 'あ夜', units: units.slice(0, 2) },
+          { index: 1, text: '星が', units: units.slice(2) },
+        ],
+        units,
+      },
+    };
+
+    renderLyricsFrame(elements, frame, { gsap, templateId: 'ornate-vertical' });
+    const [right, left] = elements.current.children[0].children;
+    const [first, rightHan] = right.children;
+    const [leftHan, kana] = left.children;
+    const startingPoses = new Map(
+      gsap.set.mock.calls.filter(([, vars]) => vars.autoAlpha === 0),
+    );
+    expect(startingPoses.has(first)).toBe(false);
+    expect(startingPoses.get(rightHan)).toMatchObject({ xPercent: 18 });
+    expect(startingPoses.get(leftHan)).toMatchObject({ xPercent: -18 });
+    expect(startingPoses.get(kana)).toMatchObject({
+      clipPath: 'inset(0 0 100% 0)',
+    });
+    expect(timelines[0].tweens.map(({ vars }) => vars.xPercent)).toEqual([
+      0,
+      0,
+      undefined,
+    ]);
+  });
+
+  it('keeps only the latest Ornate batch during an interrupted reveal', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
     const frame = (text, lineIndex) => ({
@@ -1654,7 +1697,14 @@ describe('lyrics overlay renderer', () => {
               {
                 index: 0,
                 kind: 'kana',
-                text,
+                text: text[0],
+                reveal: 'character',
+                emphasis: 'normal',
+              },
+              {
+                index: 1,
+                kind: 'kana',
+                text: text[1],
                 reveal: 'character',
                 emphasis: 'normal',
               },
@@ -1673,33 +1723,33 @@ describe('lyrics overlay renderer', () => {
       },
     });
 
-    renderLyricsFrame(elements, frame('A', 0), {
+    renderLyricsFrame(elements, frame('AA', 0), {
       gsap,
       reducedMotion: true,
       templateId: 'ornate-vertical',
     });
-    renderLyricsFrame(elements, frame('B', 1), {
+    renderLyricsFrame(elements, frame('BB', 1), {
       gsap,
       templateId: 'ornate-vertical',
     });
-    renderLyricsFrame(elements, frame('C', 2), {
+    renderLyricsFrame(elements, frame('CC', 2), {
       gsap,
       templateId: 'ornate-vertical',
     });
 
     expect(timelines).toHaveLength(2);
     expect(timelines[0].kill).toHaveBeenCalledOnce();
-    expect(elements.current.children).toHaveLength(2);
-    expect(elements.current.children[0].dataset.ornateText).toBe('B');
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.ornateText).toBe('CC');
     expect(gsap.set).toHaveBeenCalledWith(expect.any(Array), {
-      clearProps: 'clipPath,opacity,visibility',
+      clearProps: 'clipPath,opacity,visibility,transform',
     });
 
     timelines[0].options.onComplete();
-    expect(elements.current.children[1].dataset.ornateText).toBe('C');
+    expect(elements.current.children[0].dataset.ornateText).toBe('CC');
     timelines[1].options.onComplete();
     expect(elements.current.children).toHaveLength(1);
-    expect(elements.current.children[0].dataset.ornateText).toBe('C');
+    expect(elements.current.children[0].dataset.ornateText).toBe('CC');
   });
 
   it('commits Ornate Vertical immediately for timeline discontinuity and clears it when switching templates', () => {
@@ -5979,6 +6029,76 @@ describe('lyrics overlay renderer', () => {
     expect(cancelSchedule).toHaveBeenCalledWith(1);
     scheduled[0].callback();
     expect(scheduled).toHaveLength(1);
+  });
+
+  it('settles a deferred recovery once, then animates normal playback boundaries', () => {
+    const start = Date.parse('2026-08-22T00:00:00.000Z');
+    let clock = start;
+    let slow = true;
+    const scheduled = [];
+    const frames = [];
+    const elements = domElements();
+    const scheduler = createLyricsFrameScheduler({
+      now: () => clock,
+      onFrame: (frame) => {
+        frames.push(frame);
+        renderLyricsFrame(elements, frame, { templateId: 'focus-line' });
+      },
+      schedule: (callback) => scheduled.push(callback),
+      cancelSchedule: vi.fn(),
+      prepareFrame() {
+        if (slow) clock += 100;
+      },
+    });
+    scheduler.update(
+      {
+        version: 2,
+        revision: 1,
+        generatedAt: new Date(start).toISOString(),
+        displayDelayMs: 0,
+        playback: {
+          status: 'playing',
+          positionMs: 0,
+          durationMs: 15000,
+          rate: 1,
+          track: { id: 'track' },
+        },
+        lyrics: {
+          trackId: 'track',
+          synced: true,
+          offsetMs: 0,
+          activeLineIndex: 0,
+          lines: [
+            { text: 'first', startMs: 0, endMs: 50 },
+            { text: 'second', startMs: 50, endMs: 150 },
+            { text: 'third', startMs: 150, endMs: 600 },
+            { text: 'after interlude', startMs: 10000, endMs: 12000 },
+          ],
+        },
+      },
+      { recovering: true },
+    );
+
+    expect(frames).toHaveLength(0);
+    slow = false;
+    scheduled.at(-1)();
+    expect(frames.at(-1)).toMatchObject({
+      currentText: 'third',
+      timelineDiscontinuity: true,
+    });
+
+    expect(elements.current.animate).not.toHaveBeenCalled();
+
+    clock = start + 4500;
+    scheduled.at(-1)();
+    expect(frames.at(-1).visible).toBe(false);
+
+    clock = start + 10000;
+    scheduled.at(-1)();
+    expect(frames.at(-1).currentText).toBe('after interlude');
+    expect(frames.at(-1).timelineDiscontinuity).toBeUndefined();
+    expect(elements.current.animate).toHaveBeenCalledOnce();
+    scheduler.stop();
   });
 
   it('can refresh the current frame after a template change', () => {

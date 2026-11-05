@@ -19,9 +19,11 @@ import {
 } from '../shared/preview.mjs';
 import {
   nextPresentationBoundaryDelayMs,
+  prepareLyricsOverlaySnapshot,
   selectLyricsOverlayFrame,
 } from '../shared/state.mjs';
 import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
+import { ornateVerticalScriptMotionEnabled } from '../../shared/presentation/ornateVerticalMotion.mjs';
 import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import {
   adaptKtvLyricsPresentation,
@@ -1878,6 +1880,8 @@ export function createLyricsFrameScheduler(options = {}) {
   let latestSnapshot = null;
   let timer = null;
   let stopped = false;
+  // Keep recovery armed across catch-up passes and deferred timer commits.
+  let settleNextFrame = false;
   let templateId =
     typeof options.templateId === 'string' ? options.templateId : 'focus-line';
   let kineticMaterial = normalizeOverlayAppearance({
@@ -1998,7 +2002,9 @@ export function createLyricsFrameScheduler(options = {}) {
       onTrace?.('boundary', { durationMs: measureNow() - stageAt, pass });
       stageAt = onTrace ? measureNow() : 0;
       const display = options.prepareFrame?.(
-        snapshot,
+        templateId === 'karaoke-stack'
+          ? snapshot
+          : prepareLyricsOverlaySnapshot(snapshot),
         frame,
         projectionOptions,
       );
@@ -2008,7 +2014,20 @@ export function createLyricsFrameScheduler(options = {}) {
         pass,
       });
       if (!isCurrent()) return;
-      const visibleFrame = display?.frame ?? frame;
+      let preparedFrame = display?.frame ?? frame;
+      if (
+        templateId === 'ornate-vertical' &&
+        ornateVerticalScriptMotionEnabled(
+          options.ornateMotionTrackId,
+          snapshot.playback?.track?.id,
+          preparedFrame.language,
+        )
+      ) {
+        preparedFrame = { ...preparedFrame, ornateScriptMotion: true };
+      }
+      const visibleFrame = settleNextFrame
+        ? { ...preparedFrame, timelineDiscontinuity: true }
+        : preparedFrame;
       const chalkboardDelay =
         templateId === 'chalkboard-vertical'
           ? nextChalkboardTransitionDelayMs(visibleFrame)
@@ -2026,6 +2045,7 @@ export function createLyricsFrameScheduler(options = {}) {
       }
       stageAt = onTrace ? measureNow() : 0;
       onTrace?.('commit-start', { lineIndex: frame.lineIndex, pass });
+      settleNextFrame = false;
       onFrame(visibleFrame, projectionOptions.traceContext);
       onTrace?.('commit', {
         durationMs: measureNow() - stageAt,
@@ -2048,6 +2068,7 @@ export function createLyricsFrameScheduler(options = {}) {
   function update(snapshot, context) {
     if (stopped) return;
     generation++;
+    settleNextFrame ||= context?.recovering === true;
     latestSnapshot = snapshot;
     if (traceSink) deliveryId = context?.deliveryId ?? 0;
     clearTimer();
@@ -2099,6 +2120,7 @@ export function createLyricsFrameScheduler(options = {}) {
     ) {
       return;
     }
+    settleNextFrame ||= Boolean(latestSnapshot);
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
     lyricsPresentationPolicyId = normalizedLyricsPresentationPolicyId;
@@ -2152,7 +2174,6 @@ function boot() {
   });
   const onTrace = pagePerformanceTrace?.mark;
   let reducedMotion = false;
-  let settling = false;
   let frameScheduler = null;
   const fit = createLyricsFitController({
     onTrace,
@@ -2198,6 +2219,9 @@ function boot() {
   }
   frameScheduler = createLyricsFrameScheduler({
     onTrace,
+    ornateMotionTrackId: new URLSearchParams(window.location.search).get(
+      'ornateMotionTrack',
+    ),
     templateId: 'karaoke-stack',
     prepareFrame: fit.prepare,
     onFrame: (frame, traceContext) => {
@@ -2209,7 +2233,7 @@ function boot() {
       renderLyricsFrameSafely(elements, visibleFrame, {
         gsap,
         reportError,
-        reducedMotion: reducedMotion || settling,
+        reducedMotion,
         trace,
         onTrace,
         renderPhase: 1,
@@ -2242,6 +2266,7 @@ function boot() {
     onConfig: (slot) => {
       onTrace?.('config');
       previewScene = previewSceneForSlot('lyrics', slot);
+      const { ovlTemplate, ovlFont } = document.documentElement.dataset;
       applyOverlayAppearance(document, slot);
       fit.invalidate(3);
       frameScheduler.setPresentationSettings({
@@ -2250,17 +2275,19 @@ function boot() {
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
         templateId: slot?.templateId ?? 'karaoke-stack',
       });
+      if (
+        ovlTemplate === 'centered-vertical' &&
+        slot?.templateId === ovlTemplate &&
+        ovlFont !== document.documentElement.dataset.ovlFont
+      ) {
+        frameScheduler.refresh();
+      }
       prepareFocusStyles();
     },
     onSnapshot: (snapshot, { recovering }) => {
       const delivery = onTrace ? { deliveryId: ++deliveryId } : undefined;
       onTrace?.('receive', { revision: snapshot.revision, ...delivery });
-      settling = recovering;
-      try {
-        frameScheduler.update(snapshot, delivery);
-      } finally {
-        settling = false;
-      }
+      frameScheduler.update(snapshot, { ...delivery, recovering });
     },
     onDispose: () => {
       fit.stop();

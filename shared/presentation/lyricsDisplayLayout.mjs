@@ -73,6 +73,44 @@ function timingMap(line) {
   return { source, starts: cursor === line.text.length ? starts : new Map() };
 }
 
+function sourceTimedPages(pages, text, timing, start, end) {
+  // Separators stay on the previous page, even when the next timed segment
+  // includes leading whitespace. Prefer a later segment at the same glyph.
+  const visibleStarts = new Map();
+  for (const [offset, at] of timing.starts) {
+    const whitespace = text.slice(offset).match(/^\s+/u)?.[0].length ?? 0;
+    visibleStarts.set(offset + whitespace, at);
+  }
+  const anchors = [[0, start]];
+  for (const [offset, at] of visibleStarts) {
+    if (offset > 0 && offset < text.length && at > anchors.at(-1)[1])
+      anchors.push([offset, at]);
+  }
+  if (anchors.length < 2) return null;
+  anchors.push([text.length, end]);
+
+  let index = 0;
+  let estimated = false;
+  const starts = pages.map(({ sourceStart }) => {
+    while (anchors[index + 1][0] <= sourceStart) index++;
+    const [offset, at] = anchors[index];
+    if (offset === sourceStart) return at;
+    estimated = true;
+    const [nextOffset, nextAt] = anchors[index + 1];
+    return (
+      at + ((nextAt - at) * (sourceStart - offset)) / (nextOffset - offset)
+    );
+  });
+  return {
+    pageTiming: estimated ? 'layout-estimate' : timing.source,
+    pages: pages.map((page, index) => ({
+      ...page,
+      startMs: starts[index],
+      endMs: starts[index + 1] ?? end,
+    })),
+  };
+}
+
 export function chalkboardColumnStarts(line, page, rows) {
   const { sourceStart, sourceEnd, startMs, endMs } = page;
   const start = sourceStart === 0 ? line.startMs : startMs;
@@ -91,6 +129,7 @@ export function chalkboardColumnStarts(line, page, rows) {
     [...glyphs.segment(line.text.slice(from, to).replace(/\s/gu, ''))].length;
   let offset = sourceStart;
   let anchor = 0;
+  let previous = start;
   return rows.map((row, index) => {
     const from =
       row.sourceStart === undefined ? offset : sourceStart + row.sourceStart;
@@ -101,7 +140,10 @@ export function chalkboardColumnStarts(line, page, rows) {
     const [left, at] = anchors[anchor];
     const [right, next] = anchors[anchor + 1];
     const fraction = weight(left, from) / Math.max(1, weight(left, right));
-    return at + (next - at) * fraction;
+    const onset = at + (next - at) * fraction;
+    const lead = Math.min(120, Math.max(0, onset - previous) / 2);
+    previous = onset;
+    return onset - lead;
   });
 }
 
@@ -359,6 +401,10 @@ export function planLyricsDisplay(line, options = {}) {
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start)
     return { ...base, status: 'untimed' };
   if (pages.length === 0) return { ...base, status: 'ready' };
+  if (options.preserveSourceStarts && pages.length > 1) {
+    const timed = sourceTimedPages(pages, text, timing, start, end);
+    if (timed) return { ...base, ...timed, status: 'ready' };
+  }
   const exact = pages.map((p) => timing.starts.get(p.sourceStart));
   const exactUsable = exact.every(
     (at, i) => Number.isFinite(at) && (exact[i + 1] ?? end) - at >= minimumMs,

@@ -74,9 +74,9 @@
 | receipt-setlist／480×810       | 字級medium、向下出紙、回顧開啟／15秒                        | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
 | karaoke-stack／1920×1080       | 只有共用 Look／字級                                         | 雙 lane、count-in、timing mask、字型角色                     |
 | kinetic-pop／1920×1080         | 材料 candy-rim、排列 straight                               | 三層 paint order、phrase source boundaries                   |
-| ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                        | 直書、至多兩欄、grapheme 分組；不消費 T2，行級回退           |
+| ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                        | 直書、至多三欄、grapheme 分組；不消費 T2，行級回退           |
 | chalkboard-vertical／1920×1080 | 左區預設／右區可選、字級、X／Y 微調                         | 當前句右至左直書、每頁至多三欄、逐字分向擦除                 |
-| centered-vertical／1920×1080   | 字級                                                        | 中央單欄、固定起讀點、長句分頁、直接換句                     |
+| centered-vertical／1920×1080   | 字型、字級                                                  | 單欄水平與垂直置中、長句分頁、直接換句                       |
 | live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 balanced       | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
 | manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto | Ruby atomicity、框內安全版面、bubble timing                  |
 | art-card／480×270              | 字型 sans、字重 bold                                        | 唱片 playhead、封套交換、驗證過的 artwork route              |
@@ -101,9 +101,9 @@ Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，�
 - **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1）；唯一消費 beat phase 與段落的模板（見[音樂分析](music-analysis.md)）。
 - **live-stage**：轉播精簡（移除可判定的 filler、連續重複與 CJK 顯示標點）、平衡分行、忠實原文三個 policy，都保留 canonical `sourceText` 與 line／segment identity。Caption 先列出 1／2、2／1、2／2 候選，依容量、作者與跨語邊界、附著性與幾何選解，不為個別歌曲加例外。多頁且有 T2 時以 `lyricsSourceMapping.mjs` 映回來源區間插值，失敗才用 T1 權重。
 - **manga-frame**：依 document language、實際假名或既有讀音投影 `ja`／`other`。預設封裝 GenEi Antique 6.0a，可改 sans／serif／rounded；ruby 繼承對話框字體。可從 `lyrics.document` 取得已存在且 identity 相符的日文讀音；publisher 只讀 sidecar，不為 OBS 啟動讀音 worker。
-- **ornate-vertical**：以 grapheme 保留原文，連續漢字為一個 reveal 單元、假名逐字、標點附著前一單元、拉丁字母與數字成詞；整份文件最多一個漢字群組成為同尺寸藝術詞。長句依原文斷點、標點與日文詞邊界拆成至多兩欄，不切連續漢字、不建立新 timing。`ornateVerticalMotion.mjs` 提供 Browser Source 與 Gallery 共用的 stagger／裁切揭示，不用位移旋轉縮放；連續批次換句時新舊句在同一位置重疊進退場，seek、來源中斷與 reduced motion 直接 commit。字型為封裝的 Hina Mincho 與 GenEi Antique。
-- **chalkboard-vertical**：畫布橫向等分，預設左區，可切右區。每頁至多三欄，共用頂線與右側起點，續欄往左排。首欄在來源句首起筆，後續各欄對應自己的來源起點，缺少細時間時按字量估算。每欄文字與右線由上往下逐字寫入。右線從欄頂起、長度約為欄高的 85%。舊段在自己的時段末端退場，文字由下向上逐字收回，右線在同一時段由上向下連續擦除。換句或分頁時清掉殘留再接新段。暫停、seek、重連及 reduced motion 直接顯示已到起筆點的欄位。沿用 Open Huninn、字級和 X ±12%、Y ±25% 微調，水平位置受所選區邊界約束。見[第一版驗收](../research/design/lyrics-overlays/chalkboard-vertical-build-spec.md)。
-- **centered-vertical** 在中央固定軸線顯示當前頁。欄位從畫布高度 15% 起讀，長句按高度分頁，換句與換頁直接替換。以 Open Huninn 直排文字，混語中的英文側轉。[中央直書首版](../research/design/lyrics-overlays/centered-vertical-build-spec.md)
+- **ornate-vertical**：以 grapheme 保留原文，連續漢字為一個 reveal 單元、假名逐字、標點附著前一單元、拉丁字母與數字成詞；整份文件最多一個漢字群組成為同尺寸藝術詞。長句依原文斷點、標點與日文詞邊界拆成至多三欄，不切連續漢字、不建立新 timing。`ornateVerticalMotion.mjs` 提供 Browser Source 與 Gallery 共用的 stagger／裁切揭示，不用位移旋轉縮放；預設右上側欄頂齊平，依右至左排列。換批時直接替換舊批，新批首個文字單元立即顯示，seek、來源中斷與 reduced motion 直接 commit。字型為封裝的 Hina Mincho 與 GenEi Antique。 試驗可在 Browser Source 網址加入 `ornateMotionTrack=<trackId>`，僅在曲目 ID 相符且歌詞語言為日文時，讓漢字依欄位左右滑入、假名沿欄由上往下揭示。
+- **chalkboard-vertical**：畫布橫向等分，預設左區，可切右區。每頁至多三欄，共用頂線與右側起點，續欄往左排。首欄在來源句首起筆，後續各欄對應自己的來源起點，缺少細時間時按字量估算，後續欄比起點稍早寫入。每欄文字與右線由上往下逐字寫入。右線與同欄文字等高。舊段在自己的時段末端退場，文字由下向上逐字收回，右線在同一時段由上向下連續擦除。換句或分頁時清掉殘留再接新段。暫停、seek、重連及 reduced motion 直接顯示已到起筆點的欄位。沿用 Open Huninn、字級和 X ±12%、Y ±25% 微調，水平位置受所選區邊界約束。見[第一版驗收](../research/design/lyrics-overlays/chalkboard-vertical-build-spec.md)。
+- **centered-vertical** 將當前頁的單欄文字水平與垂直置中。欄內字距為 0.08em，預設小字級，長句按高度分頁，換句與換頁直接替換。字型預設依歌詞語言，繁體中文使用辰宇落雁體，日文使用 Klee One SemiBold，其他或未標記語言使用 Open Huninn。可手動指定其中任一字型。白字帶薄暗邊和右下陰影，適合有直排慣例的歌詞。混語中的英文側轉，英文為主的歌曲建議使用橫排。[中央直書首版](../research/design/lyrics-overlays/centered-vertical-build-spec.md)
 - **kinetic-pop**：依 source line index 輪替三種材質；每個計時行任一時刻只有一列，行內作者空白編譯成依字重分配 `lineProgress` 的連續 phrases，有 T2 時以 source mapping 對齊起點。無空白的過長內容須由上游斷行，模板不以第二列掩蓋。Glyph 以輸出畫布為中心，超寬內容向兩側等量溢出。`kineticPopMotion.mjs` 共用 28ms 內重複的 burst delay 與可選的八相位 rest pose（「端正」為零偏移，「些微偏移」才保留傾斜、基線與尺寸差）；三個材質 track 共用每字姿態，fill 先畫、細白 stroke 後畫。字型為 M PLUS Rounded 1c 與 Keifont。
 - **混語長句**：`lyricsPhraseBreaks.mjs` 提供最多兩段的顯示候選，只在來源 T2 或已套用 T1+ 的精確起點切換；無時間、粗詞塊或過快切換保留整句，不插值。Kinetic Pop 與來源視窗的預覽共用同一組時間。
 

@@ -222,7 +222,7 @@
         },
         "2": {
           "label": "Long lines",
-          "value": "Split into up to two columns"
+          "value": "Split into up to three columns"
         },
         "3": {
           "label": "Transition",
@@ -245,12 +245,12 @@
     "centeredVertical": {
       "name": "Centered Vertical",
       "availability": "Uses line-synced lyrics.",
-      "summary": "One centered vertical column with a fixed starting point.",
-      "detail": "Read from top to bottom. Lyrics cut directly to the next line, and long lines flow across pages on the same axis.",
+      "summary": "One vertical column centered on both axes.",
+      "detail": "Suited to lyrics in languages with vertical writing conventions, such as Traditional Chinese and Japanese. For songs mainly in English, use a horizontal template. Read from top to bottom. Long lines paginate, and each new line appears immediately.",
       "layoutLabel": "Centered column",
       "motionLabel": "Direct cut",
       "columnTag": "Single column",
-      "anchorTag": "Fixed start",
+      "anchorTag": "Canvas center",
       "surfaceTag": "Transparent"
     },
     "chalkboardVertical": {
@@ -606,7 +606,11 @@
           "serif": "Serif",
           "rounded": "Rounded",
           "ornate": "Ornate Mincho (Hina Mincho)",
-          "antique": "Antique Mincho (GenEi Antique)"
+          "antique": "Antique Mincho (GenEi Antique)",
+          "lyricsAuto": "Follow lyric language",
+          "chenYuLuoYan": "ChenYuLuoYan",
+          "kleeOne": "Klee One",
+          "openHuninn": "Open Huninn"
         }
       },
       "fontScale": {

@@ -1,13 +1,12 @@
 import {
   ORNATE_VERTICAL_ENTER_DURATION_SECONDS,
-  ORNATE_VERTICAL_EXIT_DURATION_SECONDS,
   ornateVerticalEnterPose,
   ornateVerticalRevealDelaySeconds,
 } from '../../shared/presentation/ornateVerticalMotion.mjs';
 import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 
 const ornateVerticalTransitions = new WeakMap();
-const FINAL_CLEAR_PROPS = 'clipPath,opacity,visibility';
+const FINAL_CLEAR_PROPS = 'clipPath,opacity,visibility,transform';
 
 function ornateLineUnits(line) {
   return Array.from(line?.children ?? []).flatMap((segment) =>
@@ -58,7 +57,6 @@ export function stopOrnateVerticalTransition(elements, options = {}) {
   let committedIncoming = null;
   if (incomingLine) {
     delete incomingLine.dataset.ornateMotion;
-    elements.current.replaceChildren(incomingLine);
     committedIncoming = incomingLine;
   }
   ornateVerticalTransitions.delete(elements.root);
@@ -118,7 +116,9 @@ export function renderOrnateVerticalPresentation(
         : [];
   const placement = 'right';
   const presentation = { placement, segments, text, units };
+  const scriptMotion = frame.ornateScriptMotion === true;
   const identity = JSON.stringify([
+    scriptMotion,
     lyricsDisplayBatchKey(frame),
     text,
     placement,
@@ -164,61 +164,43 @@ export function renderOrnateVerticalPresentation(
     options.reducedMotion !== true &&
     typeof gsap?.timeline === 'function';
 
-  if (!canAnimate) {
-    elements.current.replaceChildren(incoming.line);
-    return;
-  }
+  elements.current.replaceChildren(incoming.line);
+  if (!canAnimate || incoming.units.length < 2) return;
 
-  if (previousLine) elements.current.append(incoming.line);
-  else elements.current.replaceChildren(incoming.line);
   incoming.line.dataset.ornateMotion = 'active';
-
-  for (const unit of incoming.units) {
-    gsap.set(unit, {
-      autoAlpha: 0,
-      ...ornateVerticalEnterPose(unit.dataset.ornateKind),
+  const entrances = incoming.units.slice(1).map((unit) => {
+    const pose = ornateVerticalEnterPose(unit.dataset.ornateKind, {
+      scriptMotion,
+      columnIndex: Number(unit.parentElement.dataset.ornateSegmentIndex),
     });
-  }
+    if ('xPercent' in pose) unit.dataset.ornateSlide = 'true';
+    gsap.set(unit, { autoAlpha: 0, ...pose });
+    return { unit, slides: 'xPercent' in pose };
+  });
 
   const token = { identity, incoming, timeline: null };
   const timeline = gsap.timeline({
     onComplete: () => {
       if (ornateVerticalTransitions.get(elements.root) !== token) return;
       delete incoming.line.dataset.ornateMotion;
-      elements.current.replaceChildren(incoming.line);
       ornateVerticalTransitions.delete(elements.root);
     },
   });
   token.timeline = timeline;
   ornateVerticalTransitions.set(elements.root, token);
-  timeline.addLabel('swap', 0);
+  timeline.addLabel('enter', 0);
 
-  if (previousLine) {
-    timeline.to(
-      previousLine,
-      {
-        autoAlpha: 0,
-        duration: ORNATE_VERTICAL_EXIT_DURATION_SECONDS,
-        ease: 'power2.in',
-      },
-      'swap',
-    );
-  }
-  // The first incoming unit reveals while the previous line is still visible.
-  // Waiting for the exit to finish creates a fully transparent paint frame.
-  timeline.addLabel('enter', 'swap');
-
-  for (const [index, unit] of incoming.units.entries()) {
+  for (const [index, { unit, slides }] of entrances.entries()) {
     timeline.to(
       unit,
       {
         autoAlpha: 1,
         clearProps: FINAL_CLEAR_PROPS,
-        clipPath: 'inset(0 0 0% 0)',
+        ...(slides ? { xPercent: 0 } : { clipPath: 'inset(0 0 0% 0)' }),
         duration: ORNATE_VERTICAL_ENTER_DURATION_SECONDS,
         ease: 'power4.out',
       },
-      `enter+=${ornateVerticalRevealDelaySeconds(index)}`,
+      `enter+=${ornateVerticalRevealDelaySeconds(index + 1)}`,
     );
   }
 }

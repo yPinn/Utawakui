@@ -15,6 +15,48 @@ import {
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it('defaults Centered Vertical to small and keeps all three size choices', () => {
+    const templateId = 'centered-vertical';
+    const field = outputAppearanceFieldsForTemplate(templateId).find(
+      ({ key }) => key === 'fontScale',
+    );
+    expect(field.defaultValue).toBe('small');
+    expect(field.options.map(({ id }) => id)).toEqual([
+      'small',
+      'medium',
+      'large',
+    ]);
+    expect(normalizeOutputAppearance({}, { templateId }).fontScale).toBe(
+      'small',
+    );
+    expect(
+      normalizeOutputAppearance({ fontScale: 'medium' }, { templateId })
+        .fontScale,
+    ).toBe('medium');
+  });
+  it('lets Centered Vertical choose a bundled font or follow the lyric language', () => {
+    const templateId = 'centered-vertical';
+    const field = outputAppearanceFieldsForTemplate(templateId).find(
+      ({ key }) => key === 'fontFamily',
+    );
+    const options = [
+      'lyrics-auto',
+      'chen-yu-luo-yan',
+      'klee-one',
+      'open-huninn',
+    ];
+    expect(field.defaultValue).toBe('lyrics-auto');
+    expect(field.options.map(({ id }) => id)).toEqual(options);
+    for (const fontFamily of options) {
+      expect(
+        normalizeOutputAppearance({ fontFamily }, { templateId }).fontFamily,
+      ).toBe(fontFamily);
+    }
+    expect(
+      normalizeOutputAppearance({ fontFamily: 'sans' }, { templateId })
+        .fontFamily,
+    ).toBe('lyrics-auto');
+  });
   const localFont = {
     source: 'local',
     family: 'Noto Sans CJK TC',
@@ -161,7 +203,7 @@ describe('output appearance schema', () => {
       fontScale: 'large',
       textColor: '#fff8ec',
       accentColor: '#aabbcc',
-      positionAnchor: 'center-right',
+      positionAnchor: 'top-right',
       positionOffsetX: 12,
       positionOffsetY: -25,
     });
