@@ -21,7 +21,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 以下能力不依賴網路、provider runtime、模型或 Output server：
 
-- 本機音訊匯入、結構化曲庫、metadata、縮圖與 playlists。自建 playlists 可在側欄收進一層資料夾（拖曳或右鍵移入／移出）；刪除資料夾不刪除播放清單。
+- 本機音訊匯入、結構化曲庫、metadata、縮圖與 playlists。側欄可用一層資料夾整理自建 playlists：拖到列中間是加入、列之間是排序；專輯拖進資料夾會建立同名、同封面的播放清單；刪除資料夾會一起刪除裡面的播放清單。
 - 播放、seek、音量、待播、歷史、shuffle、repeat、previous／next。
 - 演出安排：從 playlist／album 或曲庫搜尋建立場次，逐曲記錄完成／略過／中止，可連續播放並在重啟後恢復，不依賴 OBS。
 - BGM 待機播放：與演唱播放器嚴格互斥的獨立單 deck，服務曲間休息；控制整合在演出安排。
