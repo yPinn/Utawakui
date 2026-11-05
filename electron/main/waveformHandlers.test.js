@@ -68,6 +68,10 @@ it('bounds public errors, records private failures once, and permits cancellatio
     diagnosticRecorded: true,
   });
   expect(f.recordDiagnostic).toHaveBeenCalledOnce();
+  f.runtime.read.mockRejectedValue(null);
+  expect(await f.read(f.event, input())).toMatchObject({
+    status: 'unavailable',
+  });
   expect(await f.cancel(f.event, { requestId: input().requestId })).toEqual({
     status: 'done',
   });

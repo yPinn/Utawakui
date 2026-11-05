@@ -29,7 +29,7 @@ function valid(input, operation) {
   );
 }
 function publicStatus(error) {
-  const code = error.code ?? error.message;
+  const code = error?.code ?? error?.message;
   if (/^(FEATURE_GATE_|feature gate required:)/.test(code))
     return 'gate-disabled';
   if (/^(FEATURE_DEPENDENCY_|DECODER_UNAVAILABLE)/.test(code))
@@ -93,7 +93,7 @@ function registerWaveformHandlers({
             source: 'waveform',
             operation,
             code: 'WAVEFORM_FAILED',
-            error: error.privateDiagnostic
+            error: error?.privateDiagnostic
               ? new Error(error.privateDiagnostic, { cause: error })
               : error,
           });
