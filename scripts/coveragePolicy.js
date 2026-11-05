@@ -66,13 +66,7 @@ const coveragePolicy = Object.freeze({
     'src/bgm/**/*.js',
     'src/microphone/**/*.js',
     'src/composables/**/*.js',
-    'src/components/bgm/*.js',
-    'src/components/preparation/*.js',
-    'src/components/separation/*.js',
-    'src/components/track/*.js',
-    'src/components/demo/trackThumbFallback.js',
-    'src/components/output/previews/*.js',
-    'src/components/ui/*.js',
+    'src/components/**/*.js',
     'src/constants/*.js',
     'src/icons/*.js',
     'src/utils/*.js',
@@ -562,13 +556,7 @@ function classifyAppSource(filePath) {
       /^electron\/(?:lib|main)\/.+\.js$/.test(normalized) ||
       /^overlay\/.+\.mjs$/.test(normalized) ||
       /^shared\/.+\.(?:js|mjs)$/.test(normalized) ||
-      /^src\/components\/bgm\/.+\.js$/.test(normalized) ||
-      /^src\/components\/preparation\/.+\.js$/.test(normalized) ||
-      /^src\/components\/separation\/.+\.js$/.test(normalized) ||
-      /^src\/components\/track\/.+\.js$/.test(normalized) ||
-      normalized === 'src/components/demo/trackThumbFallback.js' ||
-      /^src\/components\/output\/previews\/.+\.js$/.test(normalized) ||
-      /^src\/components\/ui\/.+\.js$/.test(normalized) ||
+      /^src\/components\/.+\.js$/.test(normalized) ||
       /^src\/(?:bgm|microphone|composables|constants|icons|utils)\/.+\.js$/.test(
         normalized,
       )) &&

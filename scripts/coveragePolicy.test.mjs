@@ -83,7 +83,7 @@ describe('coverage policy', () => {
       'overlay/now-playing/now-playing.mjs',
       'shared/outputContract.js',
       'src/components/bgm/bgmPresentation.js',
-      'src/components/demo/trackThumbFallback.js',
+      'src/components/performance-session/performanceSessionItemActions.js',
       'src/components/separation/separationQueuePresentation.js',
       'src/components/track/trackCollectionLayout.js',
       'src/components/track/trackCollectionProfiles.js',
