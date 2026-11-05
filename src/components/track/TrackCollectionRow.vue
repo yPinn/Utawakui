@@ -189,7 +189,6 @@ function openContextMenu(event) {
       :aria-label="entry.actionLabel"
       :aria-description="entry.actionDescription"
       :aria-keyshortcuts="dragEnabled ? 'Alt+ArrowUp Alt+ArrowDown' : undefined"
-      :title="dragEnabled ? entry.actionDescription : undefined"
       :aria-pressed="selected"
       @click.stop="!entry.disabled && emit('selectEntry', entry)"
       @keydown="emit('entryKeydown', entry, $event)"

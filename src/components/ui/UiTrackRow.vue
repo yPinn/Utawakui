@@ -143,7 +143,6 @@ function handleActionKeydown(event) {
       "
       :aria-pressed="selectionAction ? active : undefined"
       :aria-keyshortcuts="actionKeyboardShortcuts"
-      :title="actionKeyboardShortcuts ? actionDescription : undefined"
       :aria-describedby="titleOverflowOwner?.triggerProps['aria-describedby']"
       @focusin="titleOverflowOwner?.triggerProps.onFocusin($event)"
       @focusout="titleOverflowOwner?.triggerProps.onFocusout($event)"
