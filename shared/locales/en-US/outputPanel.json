@@ -682,6 +682,9 @@
       "accentColor": {
         "label": "Ink shadow"
       },
+      "chalkboardRuleColor": {
+        "label": "Guide line color"
+      },
       "positionAnchor": {
         "label": "Position",
         "options": {

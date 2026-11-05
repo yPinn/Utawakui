@@ -243,6 +243,15 @@ const FIELD_DEFINITIONS = [
     control: 'color',
     defaultValue: '#ffffff',
   }),
+  fieldDefinition('custom-color', {
+    key: 'chalkboardRuleColor',
+    family: 'swatch',
+    tier: 'advanced',
+    reflow: false,
+    order: 20,
+    control: 'color',
+    defaultValue: '#fffdfa',
+  }),
   fieldDefinition('layout', {
     key: 'positionAnchor',
     family: 'layout',
@@ -461,8 +470,9 @@ const TEMPLATE_CONFIGS = Object.freeze({
     ],
   },
   'centered-vertical': {
-    keys: ['fontFamily', 'fontScale'],
+    keys: ['fontFamily', 'fontScale', 'contrastStyle', 'textColor'],
     fields: {
+      textColor: { defaultValue: '#fffdfa' },
       fontScale: { defaultValue: 'small' },
       fontFamily: {
         defaultValue: 'lyrics-auto',
@@ -476,8 +486,16 @@ const TEMPLATE_CONFIGS = Object.freeze({
     },
   },
   'chalkboard-vertical': {
-    keys: ['fontScale', 'positionAnchor', 'positionOffsetX', 'positionOffsetY'],
+    keys: [
+      'fontScale',
+      'textColor',
+      'chalkboardRuleColor',
+      'positionAnchor',
+      'positionOffsetX',
+      'positionOffsetY',
+    ],
     fields: {
+      textColor: { defaultValue: '#fffdfa' },
       positionAnchor: {
         defaultValue: 'center-left',
         optionIds: ['center-left', 'center-right'],

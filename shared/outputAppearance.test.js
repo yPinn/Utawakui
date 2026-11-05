@@ -15,6 +15,47 @@ import {
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it('keeps the vertical defaults and accepts independent text, contrast and rule choices', () => {
+    const centered = { templateId: 'centered-vertical' };
+    const chalkboard = { templateId: 'chalkboard-vertical' };
+    const defaults = { textColor: '#fffdfa' };
+    expect(normalizeOutputAppearance({}, centered)).toMatchObject({
+      ...defaults,
+      contrastStyle: 'balanced',
+    });
+    expect(normalizeOutputAppearance({}, chalkboard)).toMatchObject({
+      ...defaults,
+      chalkboardRuleColor: '#fffdfa',
+    });
+    expect(
+      normalizeOutputAppearance(
+        { textColor: '#abcdef', contrastStyle: 'clean' },
+        centered,
+      ),
+    ).toMatchObject({
+      textColor: '#abcdef',
+      contrastStyle: 'clean',
+    });
+    expect(
+      normalizeOutputAppearance(
+        { textColor: '#abcdef', chalkboardRuleColor: '#123456' },
+        chalkboard,
+      ),
+    ).toMatchObject({
+      textColor: '#abcdef',
+      chalkboardRuleColor: '#123456',
+    });
+    expect(
+      outputAppearanceFieldsForTemplate(centered.templateId).map(
+        ({ key }) => key,
+      ),
+    ).not.toContain('chalkboardRuleColor');
+    expect(
+      normalizeOutputAppearance({ chalkboardRuleColor: '#123456' }, centered)
+        .chalkboardRuleColor,
+    ).toBe('#fffdfa');
+  });
+
   it('defaults Centered Vertical to small and keeps all three size choices', () => {
     const templateId = 'centered-vertical';
     const field = outputAppearanceFieldsForTemplate(templateId).find(
@@ -106,6 +147,7 @@ describe('output appearance schema', () => {
     ).toEqual([
       'textColor',
       'accentColor',
+      'chalkboardRuleColor',
       'positionOffsetX',
       'positionOffsetY',
     ]);
@@ -243,6 +285,7 @@ describe('output appearance schema', () => {
       kineticArrangement: 'straight',
       textColor: '#fff8ec',
       accentColor: '#ffffff',
+      chalkboardRuleColor: '#fffdfa',
       positionAnchor: 'center-right',
       positionOffsetX: 0,
       positionOffsetY: 0,

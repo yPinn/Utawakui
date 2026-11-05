@@ -724,13 +724,26 @@
     text-align: start;
     max-inline-size: 70vh;
     overflow: clip;
-    color: var(--ovl-primitive-color-paper);
+    color: var(--ovl-user-text-color);
     -webkit-text-stroke: 0.035em
       color-mix(in srgb, var(--ovl-primitive-color-ink) 82%, transparent);
     text-shadow:
       0.025em 0.045em 0 var(--ovl-primitive-color-ink),
       0.045em 0.075em 0.1em
         color-mix(in srgb, var(--ovl-primitive-color-ink) 72%, transparent);
+  }
+
+  :root[data-ovl-template='centered-vertical'][data-ovl-contrast='clean']
+    .lyrics-overlay__current {
+    -webkit-text-stroke-width: 0;
+    text-shadow: none;
+  }
+
+  :root[data-ovl-template='centered-vertical'][data-ovl-contrast='strong-outline']
+    .lyrics-overlay__current {
+    -webkit-text-stroke: var(--ovl-user-current-stroke-width)
+      var(--ovl-primitive-color-ink);
+    text-shadow: var(--ovl-user-text-shadow);
   }
 
   :root[data-ovl-template='centered-vertical'][data-ovl-font='chen-yu-luo-yan']
@@ -849,6 +862,7 @@
 
   .lyrics-overlay__chalkboard-ink {
     display: block;
+    color: var(--ovl-user-text-color);
     writing-mode: vertical-rl;
     text-orientation: mixed;
     white-space: pre;
@@ -867,7 +881,7 @@
 
   .lyrics-overlay__chalkboard-rule {
     inline-size: var(--ovl-chalkboard-rule-width);
-    background: currentColor;
+    background: var(--ovl-user-chalkboard-rule-color);
     opacity: 0.9;
   }
 

@@ -105,6 +105,10 @@ export function applyOverlayAppearance(document, slot) {
 
   root.style?.setProperty?.('--ovl-user-text-color', textColor);
   root.style?.setProperty?.('--ovl-user-accent-color', accentColor);
+  root.style?.setProperty?.(
+    '--ovl-user-chalkboard-rule-color',
+    appearance.chalkboardRuleColor,
+  );
   if (localFont) {
     root.style?.setProperty?.(
       '--ovl-user-local-font-family',

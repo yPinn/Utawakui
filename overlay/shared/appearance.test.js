@@ -93,8 +93,37 @@ describe('overlay appearance', () => {
       ),
     ).toMatchObject({
       fontFamily: 'ornate',
-      positionAnchor: 'center-right',
+      positionAnchor: 'top-right',
     });
+  });
+
+  it('applies distinct Chalkboard ink and guide colors to Browser Source', () => {
+    const setProperty = vi.fn();
+    const document = {
+      documentElement: { dataset: {}, style: { setProperty } },
+    };
+    applyOverlayAppearance(document, {
+      templateId: 'chalkboard-vertical',
+      settings: { textColor: '#ffeeaa', chalkboardRuleColor: '#aabbcc' },
+    });
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-user-text-color',
+      '#ffeeaa',
+    );
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-user-chalkboard-rule-color',
+      '#aabbcc',
+    );
+
+    applyOverlayAppearance(document, {
+      templateId: 'centered-vertical',
+      settings: { textColor: '#bbddee', contrastStyle: 'strong-outline' },
+    });
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-user-text-color',
+      '#bbddee',
+    );
+    expect(document.documentElement.dataset.ovlContrast).toBe('strong-outline');
   });
 
   it('applies only active-template ids and normalized CSS values to the root', () => {
