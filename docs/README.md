@@ -36,7 +36,7 @@
 
 歌詞工程結果集中於[顯示、時鐘與效能](archive/lyrics-display-performance-2026-10.md)及[來源、相容與交接](archive/lyrics-source-and-cues-2026-10.md)；現行操作仍由上列手冊與契約持有。
 
-- 發行紀錄：[v0.5.1](releases/v0.5.1.md)、[v0.5.0](releases/v0.5.0.md)、[v0.4.0](releases/v0.4.0.md)、[v0.3.0](releases/v0.3.0.md)、[v0.2.0](releases/v0.2.0.md)、[v0.1.2](releases/v0.1.2.md)、[v0.1.1](releases/v0.1.1.md)
+- 發行紀錄：[v0.5.2](releases/v0.5.2.md)、[v0.5.1](releases/v0.5.1.md)、[v0.5.0](releases/v0.5.0.md)、[v0.4.0](releases/v0.4.0.md)、[v0.3.0](releases/v0.3.0.md)、[v0.2.0](releases/v0.2.0.md)、[v0.1.2](releases/v0.1.2.md)、[v0.1.1](releases/v0.1.1.md)
 - Release notes 可先於發布準備，內容須可直接公告；GitHub draft 與內部驗收狀態不寫進版本正文。檔案存在不代表已上架；最新公開版本與工作樹差異只維護在 spec，實際資產以官方 Releases 為準。
 - [歷史索引](archive/README.md) 收錄已完成或已取代的計畫與交接快照，並指向現行文件；只供追溯。
 
