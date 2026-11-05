@@ -591,5 +591,21 @@
   "YOUTUBE_LOGIN_SOURCE_UPDATE_FAILED": {
     "title": "Couldn't apply the sign-in setting",
     "message": "The sign-in setting can't be applied right now. Try again later."
+  },
+  "PLAYLIST_FOLDER_CREATE_FAILED": {
+    "title": "Can't create folder",
+    "message": "The folder can't be created. Try again."
+  },
+  "PLAYLIST_FOLDER_DELETE_FAILED": {
+    "title": "Folder can't be deleted",
+    "message": "This folder can't be deleted. Try again."
+  },
+  "PLAYLIST_FOLDER_RENAME_FAILED": {
+    "title": "Folder can't be renamed",
+    "message": "This folder can't be renamed. Try again."
+  },
+  "PLAYLIST_FOLDER_UPDATE_FAILED": {
+    "title": "Folder can't be updated",
+    "message": "This folder can't be updated. Try again."
   }
 }

@@ -36,6 +36,7 @@ const MAX_NAME_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_PLAYLISTS = 500;
 const MAX_TRACKS_PER_PLAYLIST = 5000;
+const MAX_FOLDERS = 200;
 
 // Album membership/order is source-owned; other management actions still apply.
 const PLAYLIST_KINDS = new Set(['playlist', 'album']);
@@ -105,6 +106,11 @@ function sanitizePlaylist(entry) {
 
   const playlist = {
     id: entry.id,
+    ...(kind === 'playlist' &&
+    typeof entry.folderId === 'string' &&
+    entry.folderId.length > 0
+      ? { folderId: entry.folderId }
+      : {}),
     ...(typeof entry.performanceExportKey === 'string' &&
     /^[a-f0-9]{64}$/.test(entry.performanceExportKey)
       ? { performanceExportKey: entry.performanceExportKey }
@@ -194,7 +200,8 @@ function loadCatalogCollections(dir) {
 // be the very first write to a fresh download dir (e.g. creating a
 // playlist before downloading anything), and atomicWriteJson itself does
 // not create parent directories.
-function writePlaylists(dir, playlists, reconciliation) {
+// `layout`: undefined keeps the stored folders, null removes them.
+function writePlaylists(dir, playlists, reconciliation, layout) {
   assertNoTransaction(dir);
   // Every writer must preserve the release schema, including legacy kind and
   // membership paths that do not enter the release editor's CAS helper.
@@ -216,10 +223,13 @@ function writePlaylists(dir, playlists, reconciliation) {
     );
   }
   fs.mkdirSync(dir, { recursive: true });
+  const base = { ...previous?.data };
+  if (layout === null) delete base.layout;
   atomicWriteJson(path.join(dir, PLAYLISTS_FILENAME), {
-    ...previous?.data,
+    ...base,
     version: PLAYLISTS_VERSION,
     ...(reconciliation ? { reconciliation } : {}),
+    ...(layout ? { layout } : {}),
     playlists: playlists.map((entry) => {
       const original = previous?.data.playlists.find(
         (item) => item.id === entry.id,
@@ -235,6 +245,7 @@ function writePlaylists(dir, playlists, reconciliation) {
         'addedAt',
         'releaseInfo',
         'performanceExportKey',
+        'folderId',
       ]);
       return {
         ...Object.fromEntries(
@@ -644,38 +655,235 @@ function deletePlaylist(dir, id) {
   return next;
 }
 
+// Sidebar folders group user playlists one level deep. `layout.order` mixes
+// folder ids and loose playlist ids; order inside a folder is array order.
+// Additive fields, so older builds read the file and keep them untouched.
+function sanitizeFolder(entry) {
+  if (typeof entry !== 'object' || entry === null) return null;
+  if (typeof entry.id !== 'string' || entry.id.length === 0) return null;
+  return {
+    id: entry.id,
+    name:
+      typeof entry.name === 'string'
+        ? entry.name.slice(0, MAX_NAME_LENGTH)
+        : '',
+    collapsed: entry.collapsed === true,
+  };
+}
+
+function resolveLayout(raw, playlists) {
+  const stored = typeof raw === 'object' && raw !== null ? raw : {};
+  const folders = [];
+  const folderIds = new Set();
+  for (const entry of Array.isArray(stored.folders) ? stored.folders : []) {
+    const folder = sanitizeFolder(entry);
+    if (!folder || folderIds.has(folder.id)) continue;
+    if (folders.length >= MAX_FOLDERS) break;
+    folders.push(folder);
+    folderIds.add(folder.id);
+  }
+  const loose = playlists
+    .filter(
+      (playlist) =>
+        playlist.kind === 'playlist' && !folderIds.has(playlist.folderId),
+    )
+    .map((playlist) => playlist.id);
+  const allowed = new Set([...folderIds, ...loose]);
+  const order = [];
+  const seen = new Set();
+  for (const id of Array.isArray(stored.order) ? stored.order : []) {
+    if (!allowed.has(id) || seen.has(id)) continue;
+    order.push(id);
+    seen.add(id);
+  }
+  for (const id of [...loose, ...folderIds]) {
+    if (!seen.has(id)) order.push(id);
+  }
+  return { folders, order };
+}
+
+function loadPlaylistLayout(dir) {
+  const document = readPlaylistDocument(dir);
+  return resolveLayout(document?.data.layout, loadPlaylists(dir));
+}
+
+function readFolderState(dir) {
+  const document = readPlaylistDocument(dir);
+  const playlists = loadPlaylists(dir);
+  const layout = resolveLayout(document?.data.layout, playlists);
+  const children = new Map(layout.folders.map((folder) => [folder.id, []]));
+  for (const playlist of playlists) {
+    if (playlist.kind === 'playlist' && children.has(playlist.folderId)) {
+      children.get(playlist.folderId).push(playlist.id);
+    }
+  }
+  const tree = layout.order.map((id) =>
+    children.has(id) ? { id, children: children.get(id) } : { id },
+  );
+  return { playlists, layout, tree };
+}
+
+// Rewrites user playlist slots in tree order so array order and folder
+// membership never disagree; album slots stay where they are.
+function writeFolderTree(dir, playlists, folders, tree) {
+  const folderOf = new Map();
+  const flat = [];
+  for (const node of tree) {
+    if (!node.children) {
+      flat.push(node.id);
+      continue;
+    }
+    for (const id of node.children) {
+      folderOf.set(id, node.id);
+      flat.push(id);
+    }
+  }
+  const byId = new Map(playlists.map((playlist) => [playlist.id, playlist]));
+  let cursor = 0;
+  const next = playlists.map((playlist) => {
+    if (playlist.kind !== 'playlist') return playlist;
+    const placed = { ...byId.get(flat[cursor]) };
+    cursor += 1;
+    delete placed.folderId;
+    const folderId = folderOf.get(placed.id);
+    return folderId ? { ...placed, folderId } : placed;
+  });
+  const stored = { folders, order: tree.map((node) => node.id) };
+  writePlaylists(dir, next, undefined, folders.length ? stored : null);
+  return { playlists: next, layout: resolveLayout(stored, next) };
+}
+
+function nextDefaultFolderName(folders) {
+  const base = t('playlist.folder.defaultName');
+  const used = new Set(folders.map((folder) => folder.name));
+  if (!used.has(base)) return base;
+  let index = 2;
+  while (used.has(`${base} ${index}`)) index += 1;
+  return `${base} ${index}`;
+}
+
+function createPlaylistFolder(dir, name) {
+  const { playlists, layout, tree } = readFolderState(dir);
+  if (layout.folders.length >= MAX_FOLDERS) return { playlists, layout };
+  const trimmed =
+    typeof name === 'string' ? name.trim().slice(0, MAX_NAME_LENGTH) : '';
+  const folder = {
+    id: crypto.randomUUID(),
+    name: trimmed || nextDefaultFolderName(layout.folders),
+    collapsed: false,
+  };
+  return writeFolderTree(
+    dir,
+    playlists,
+    [...layout.folders, folder],
+    [...tree, { id: folder.id, children: [] }],
+  );
+}
+
+function updatePlaylistFolder(dir, id, patch) {
+  const { playlists, layout, tree } = readFolderState(dir);
+  const index = layout.folders.findIndex((folder) => folder.id === id);
+  if (index === -1) return { playlists, layout };
+  const updated = { ...layout.folders[index], ...patch };
+  if (
+    updated.name === layout.folders[index].name &&
+    updated.collapsed === layout.folders[index].collapsed
+  ) {
+    return { playlists, layout };
+  }
+  const folders = [...layout.folders];
+  folders[index] = updated;
+  return writeFolderTree(dir, playlists, folders, tree);
+}
+
+// A blank name keeps the current one; an unnamed folder row would vanish.
+function renamePlaylistFolder(dir, id, name) {
+  const trimmed =
+    typeof name === 'string' ? name.trim().slice(0, MAX_NAME_LENGTH) : '';
+  if (!trimmed) return readFolderState(dir);
+  return updatePlaylistFolder(dir, id, { name: trimmed });
+}
+
+function setPlaylistFolderCollapsed(dir, id, collapsed) {
+  return updatePlaylistFolder(dir, id, { collapsed: collapsed === true });
+}
+
+// Only the folder goes; its playlists take its place at the top level.
+function deletePlaylistFolder(dir, id) {
+  const { playlists, layout, tree } = readFolderState(dir);
+  if (!layout.folders.some((folder) => folder.id === id)) {
+    return { playlists, layout };
+  }
+  const nextTree = tree.flatMap((node) =>
+    node.id === id ? node.children.map((child) => ({ id: child })) : [node],
+  );
+  return writeFolderTree(
+    dir,
+    playlists,
+    layout.folders.filter((folder) => folder.id !== id),
+    nextTree,
+  );
+}
+
+function locateNode(tree, id) {
+  for (let index = 0; index < tree.length; index += 1) {
+    if (tree[index].id === id) return { index };
+    const child = tree[index].children?.indexOf(id) ?? -1;
+    if (child !== -1) return { index, child };
+  }
+  return null;
+}
+
+// position: 'before' | 'after' a row, or 'inside' (end of) a folder. A
+// playlist dropped next to a folder member joins that folder; folders stay
+// top-level, so a folder dropped on a member lands beside its folder.
+function movePlaylistItem(dir, draggedId, targetId, position = 'before') {
+  const { playlists, layout, tree } = readFolderState(dir);
+  const unchanged = { playlists, layout };
+  if (!draggedId || !targetId || draggedId === targetId) return unchanged;
+  if (!['before', 'after', 'inside'].includes(position)) return unchanged;
+  const from = locateNode(tree, draggedId);
+  const to = locateNode(tree, targetId);
+  if (!from || !to) return unchanged;
+  const targetIsFolder =
+    to.child === undefined && Boolean(tree[to.index].children);
+  const draggingFolder =
+    from.child === undefined && Boolean(tree[from.index].children);
+  if (position === 'inside' && (!targetIsFolder || draggingFolder)) {
+    return unchanged;
+  }
+  if (draggingFolder && tree[to.index].id === draggedId) return unchanged;
+
+  const next = tree.map((node) =>
+    node.children ? { id: node.id, children: [...node.children] } : node,
+  );
+  let moved = { id: draggedId };
+  if (from.child === undefined) [moved] = next.splice(from.index, 1);
+  else next[from.index].children.splice(from.child, 1);
+
+  const offset = position === 'after' ? 1 : 0;
+  if (draggingFolder || to.child === undefined) {
+    const anchorId = draggingFolder ? tree[to.index].id : targetId;
+    if (position === 'inside') {
+      next.find((node) => node.id === targetId).children.push(draggedId);
+    } else {
+      const anchor = next.findIndex((node) => node.id === anchorId);
+      next.splice(anchor + offset, 0, moved);
+    }
+  } else {
+    const folder = next.find((node) => node.id === tree[to.index].id);
+    const anchor = folder.children.indexOf(targetId);
+    folder.children.splice(anchor + offset, 0, draggedId);
+  }
+
+  if (JSON.stringify(next) === JSON.stringify(tree)) return unchanged;
+  return writeFolderTree(dir, playlists, layout.folders, next);
+}
+
 // Single write path. Preserve orphan ids so transient drive failures cannot
 // wipe playlists; missing tracks simply do not render until repaired.
 function reorderPlaylists(dir, draggedId, targetId, position = 'before') {
-  const playlists = loadPlaylists(dir);
-  if (!draggedId || !targetId || draggedId === targetId) return playlists;
-
-  const dragged = playlists.find((playlist) => playlist.id === draggedId);
-  if (!dragged || !playlists.some((playlist) => playlist.id === targetId)) {
-    return playlists;
-  }
-
-  const withoutDragged = playlists.filter(
-    (playlist) => playlist.id !== draggedId,
-  );
-  const targetIndex = withoutDragged.findIndex(
-    (playlist) => playlist.id === targetId,
-  );
-  if (targetIndex === -1) return playlists;
-
-  const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
-  const next = [...withoutDragged];
-  next.splice(insertIndex, 0, dragged);
-
-  if (
-    next.map((playlist) => playlist.id).join('\0') ===
-    playlists.map((playlist) => playlist.id).join('\0')
-  ) {
-    return playlists;
-  }
-
-  writePlaylists(dir, next);
-  return next;
+  return movePlaylistItem(dir, draggedId, targetId, position).playlists;
 }
 
 // Session export is a single populated write. The stable operation key makes
@@ -939,6 +1147,12 @@ function createLocalRelease(dir, { name, trackId, binding } = {}) {
 }
 
 module.exports = {
+  createPlaylistFolder,
+  deletePlaylistFolder,
+  loadPlaylistLayout,
+  movePlaylistItem,
+  renamePlaylistFolder,
+  setPlaylistFolderCollapsed,
   loadCatalogCollections,
   resolvePlaylistId,
   writeReleaseCatalog,

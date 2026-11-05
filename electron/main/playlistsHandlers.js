@@ -10,9 +10,15 @@ const { deleteFolderPageObjects } = require('../lib/library/folderPageObjects');
 const {
   buildPlaylistCoverUrl,
   createPlaylist,
+  createPlaylistFolder,
   deletePlaylist,
+  deletePlaylistFolder,
+  loadPlaylistLayout,
   loadPlaylists,
+  movePlaylistItem,
+  renamePlaylistFolder,
   reorderPlaylists,
+  setPlaylistFolderCollapsed,
   renamePlaylist,
   setPlaylistCover,
   setPlaylistDescription,
@@ -78,6 +84,12 @@ function registerPlaylistsHandlers({
   setPlaylistDescriptionText = setPlaylistDescription,
   writePlaylistCoverFromFile = writePlaylistCoverFile,
   deleteFolderPageObjectsForPage = deleteFolderPageObjects,
+  loadFolderLayout = loadPlaylistLayout,
+  createFolderRecord = createPlaylistFolder,
+  renameFolderRecord = renamePlaylistFolder,
+  deleteFolderRecord = deletePlaylistFolder,
+  setFolderCollapsed = setPlaylistFolderCollapsed,
+  moveFolderItem = movePlaylistItem,
   projectReleaseCollections = null,
   getReleaseScope = null,
   onCollectionsChanged = null,
@@ -153,12 +165,16 @@ function registerPlaylistsHandlers({
             }
           }
         }
-        return scope && Array.isArray(result)
-          ? result.map((entry) =>
-              entry.kind === 'album'
-                ? { ...entry, releaseLibraryEpoch: scope.epoch }
-                : entry,
-            )
+        const withEpoch = (list) =>
+          list.map((entry) =>
+            entry.kind === 'album'
+              ? { ...entry, releaseLibraryEpoch: scope.epoch }
+              : entry,
+          );
+        if (!scope) return result;
+        if (Array.isArray(result)) return withEpoch(result);
+        return Array.isArray(result?.playlists)
+          ? { ...result, playlists: withEpoch(result.playlists) }
           : result;
       },
     );
@@ -221,6 +237,56 @@ function registerPlaylistsHandlers({
           ),
         ),
       ),
+  );
+
+  // Folder intents resolve to { playlists, layout } because a move also
+  // changes playlist membership.
+  const folderResult = ({ playlists, layout }) => ({
+    playlists: withCoverUrls(playlists),
+    layout,
+  });
+  const folderIntent = (channel, operation, code, write) =>
+    ipcMain.handle(channel, async (event, ...args) =>
+      withBoundary(operation, code, () =>
+        folderResult(write(resolveDownloadDir(getConfig()), ...args)),
+      ),
+    );
+
+  ipcMain.handle('playlist-folders:list', async () =>
+    withBoundary('folders-list', 'PLAYLISTS_LIST_FAILED', () =>
+      loadFolderLayout(resolveDownloadDir(getConfig())),
+    ),
+  );
+  folderIntent(
+    'playlist-folders:create',
+    'folder-create',
+    'PLAYLIST_FOLDER_CREATE_FAILED',
+    (dir, name) => createFolderRecord(dir, name),
+  );
+  folderIntent(
+    'playlist-folders:rename',
+    'folder-rename',
+    'PLAYLIST_FOLDER_RENAME_FAILED',
+    (dir, id, name) => renameFolderRecord(dir, id, name),
+  );
+  folderIntent(
+    'playlist-folders:delete',
+    'folder-delete',
+    'PLAYLIST_FOLDER_DELETE_FAILED',
+    (dir, id) => deleteFolderRecord(dir, id),
+  );
+  folderIntent(
+    'playlist-folders:set-collapsed',
+    'folder-set-collapsed',
+    'PLAYLIST_FOLDER_UPDATE_FAILED',
+    (dir, id, collapsed) => setFolderCollapsed(dir, id, collapsed),
+  );
+  folderIntent(
+    'playlist-folders:move',
+    'folder-move',
+    'PLAYLISTS_REORDER_FAILED',
+    (dir, draggedId, targetId, position) =>
+      moveFolderItem(dir, draggedId, targetId, position),
   );
 
   // Album collections are read-only (see docs/spec.md and playlists.js's

@@ -92,5 +92,8 @@
     "toAlbum": "Convert to album",
     "remove": "Remove",
     "delete": "Delete"
+  },
+  "folder": {
+    "defaultName": "New folder"
   }
 }

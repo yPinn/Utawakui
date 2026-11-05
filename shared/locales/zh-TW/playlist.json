@@ -92,5 +92,8 @@
     "toAlbum": "轉為專輯",
     "remove": "移除",
     "delete": "刪除"
+  },
+  "folder": {
+    "defaultName": "新資料夾"
   }
 }

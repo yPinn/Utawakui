@@ -303,7 +303,7 @@ describe('registerPlaylistsHandlers', () => {
     });
   });
 
-  it('registers exactly the eleven playlist intents', () => {
+  it('registers exactly the playlist and folder intents', () => {
     const handlers = register();
     expect([...handlers.keys()]).toEqual([
       'playlists:list',
@@ -311,6 +311,12 @@ describe('registerPlaylistsHandlers', () => {
       'playlists:rename',
       'playlists:delete',
       'playlists:reorder',
+      'playlist-folders:list',
+      'playlist-folders:create',
+      'playlist-folders:rename',
+      'playlist-folders:delete',
+      'playlist-folders:set-collapsed',
+      'playlist-folders:move',
       'playlists:set-tracks',
       'playlists:upsert-album',
       'playlists:set-kind',
@@ -318,6 +324,34 @@ describe('registerPlaylistsHandlers', () => {
       'playlists:choose-cover',
       'playlists:clear-cover',
     ]);
+  });
+
+  it('returns playlists and layout together from folder intents', async () => {
+    const layout = {
+      folders: [{ id: 'f1', name: 'Live', collapsed: false }],
+      order: ['f1'],
+    };
+    const moveFolderItem = vi.fn(() => ({
+      playlists: [playlist({ coverImage: 'c.jpg', folderId: 'f1' })],
+      layout,
+    }));
+    const handlers = register({ moveFolderItem });
+    const result = await handlers.get('playlist-folders:move')(
+      null,
+      'p1',
+      'f1',
+      'inside',
+    );
+    expect(moveFolderItem).toHaveBeenCalledWith(
+      'library-dir',
+      'p1',
+      'f1',
+      'inside',
+    );
+    expect(result.layout).toEqual(layout);
+    expect(result.playlists[0]).toEqual(
+      expect.objectContaining({ folderId: 'f1', coverUrl: expect.any(String) }),
+    );
   });
 
   it('returns the playlist list on success', async () => {
@@ -402,6 +436,41 @@ describe('registerPlaylistsHandlers', () => {
       'PLAYLISTS_REORDER_FAILED',
       'reorder',
       ['p1', 'p2', 'after'],
+    ],
+    [
+      'playlist-folders:create',
+      'createFolderRecord',
+      'PLAYLIST_FOLDER_CREATE_FAILED',
+      'folder-create',
+      ['Live'],
+    ],
+    [
+      'playlist-folders:rename',
+      'renameFolderRecord',
+      'PLAYLIST_FOLDER_RENAME_FAILED',
+      'folder-rename',
+      ['f1', 'Live'],
+    ],
+    [
+      'playlist-folders:delete',
+      'deleteFolderRecord',
+      'PLAYLIST_FOLDER_DELETE_FAILED',
+      'folder-delete',
+      ['f1'],
+    ],
+    [
+      'playlist-folders:set-collapsed',
+      'setFolderCollapsed',
+      'PLAYLIST_FOLDER_UPDATE_FAILED',
+      'folder-set-collapsed',
+      ['f1', true],
+    ],
+    [
+      'playlist-folders:move',
+      'moveFolderItem',
+      'PLAYLISTS_REORDER_FAILED',
+      'folder-move',
+      ['p1', 'f1', 'inside'],
     ],
     [
       'playlists:set-kind',

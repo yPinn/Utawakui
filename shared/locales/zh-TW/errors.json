@@ -591,5 +591,21 @@
   "YOUTUBE_LOGIN_SOURCE_UPDATE_FAILED": {
     "title": "無法套用登入設定",
     "message": "目前無法套用登入設定，請稍後再試。"
+  },
+  "PLAYLIST_FOLDER_CREATE_FAILED": {
+    "title": "無法建立資料夾",
+    "message": "資料夾無法建立，請再試一次。"
+  },
+  "PLAYLIST_FOLDER_DELETE_FAILED": {
+    "title": "資料夾無法刪除",
+    "message": "這個資料夾無法刪除，請再試一次。"
+  },
+  "PLAYLIST_FOLDER_RENAME_FAILED": {
+    "title": "資料夾無法重新命名",
+    "message": "這個資料夾無法重新命名，請再試一次。"
+  },
+  "PLAYLIST_FOLDER_UPDATE_FAILED": {
+    "title": "資料夾無法更新",
+    "message": "這個資料夾無法更新，請再試一次。"
   }
 }
