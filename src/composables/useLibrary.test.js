@@ -365,6 +365,33 @@ describe('album cover override', () => {
     expect(state.tracks[0].thumbnailUrl).toBe('own-thumb.jpg');
   });
 
+  it('keeps the same tracks array when a playlist edit changes no cover', async () => {
+    const album = {
+      id: 'album-1',
+      kind: 'album',
+      coverUrl: 'utawakui-media://playlist-cover/album-1/cover.jpg',
+      trackIds: ['t1'],
+    };
+    listTracksMock.mockResolvedValue([
+      { id: 't1', title: 'Track 1', thumbnailUrl: 'own-thumb.jpg' },
+      { id: 't2', title: 'Track 2' },
+    ]);
+    listPlaylistsMock.mockResolvedValue([album]);
+    const { state } = await loadLibrary();
+    await flushMicrotasks();
+    const before = state.tracks;
+
+    listPlaylistsMock.mockResolvedValue([
+      album,
+      { id: 'p1', kind: 'playlist', name: 'Renamed', trackIds: ['t2'] },
+    ]);
+    const { usePlaylists } = await import('./usePlaylists.js');
+    await usePlaylists().refresh();
+    await flushMicrotasks();
+
+    expect(state.tracks).toBe(before);
+  });
+
   it('tracksById reflects the same enriched thumbnailUrl', async () => {
     listTracksMock.mockResolvedValue([
       { id: 't1', title: 'Track 1', thumbnailUrl: 'own-thumb.jpg' },

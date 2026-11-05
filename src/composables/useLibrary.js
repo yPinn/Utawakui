@@ -38,14 +38,24 @@ const albumCoverByTrackId = computed(() => {
   return map;
 });
 
-const enrichedTracks = computed(() =>
-  rawTracks.value.map((track) => {
+// Reuses unchanged items and the previous array, so playlist edits that touch
+// no album cover do not re-trigger every `state.tracks` watcher.
+const coveredTracks = new WeakMap();
+const enrichedTracks = computed((previous) => {
+  const next = rawTracks.value.map((track) => {
     const albumCoverUrl = albumCoverByTrackId.value.get(track.id);
-    return albumCoverUrl && albumCoverUrl !== track.thumbnailUrl
-      ? { ...track, thumbnailUrl: albumCoverUrl }
-      : track;
-  }),
-);
+    if (!albumCoverUrl || albumCoverUrl === track.thumbnailUrl) return track;
+    const cached = coveredTracks.get(track);
+    if (cached?.thumbnailUrl === albumCoverUrl) return cached;
+    const covered = { ...track, thumbnailUrl: albumCoverUrl };
+    coveredTracks.set(track, covered);
+    return covered;
+  });
+  return previous?.length === next.length &&
+    next.every((track, index) => track === previous[index])
+    ? previous
+    : next;
+});
 
 // `tracks` is a computed ref assigned as a property of this reactive object
 // — Vue auto-unwraps refs/computeds read through a reactive proxy, so every
