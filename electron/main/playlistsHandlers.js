@@ -3,6 +3,8 @@
 const { t } = require('../lib/i18n');
 const {
   deletePlaylistCoverDir,
+  resolvePlaylistCoverPath,
+  resolveTrackArtworkPath,
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
 } = require('../lib/library');
@@ -10,9 +12,11 @@ const { deleteFolderPageObjects } = require('../lib/library/folderPageObjects');
 const {
   buildPlaylistCoverUrl,
   createPlaylist,
+  createPlaylistAt,
   createPlaylistFolder,
   deletePlaylist,
   deletePlaylistFolder,
+  expandPlaylistFolder,
   loadPlaylistLayout,
   loadPlaylists,
   movePlaylistItem,
@@ -86,9 +90,13 @@ function registerPlaylistsHandlers({
   deleteFolderPageObjectsForPage = deleteFolderPageObjects,
   loadFolderLayout = loadPlaylistLayout,
   createFolderRecord = createPlaylistFolder,
+  createPlaylistAtRow = createPlaylistAt,
+  findPlaylistCoverPath = resolvePlaylistCoverPath,
+  findTrackArtworkPath = resolveTrackArtworkPath,
   renameFolderRecord = renamePlaylistFolder,
   deleteFolderRecord = deletePlaylistFolder,
   setFolderCollapsed = setPlaylistFolderCollapsed,
+  expandFolder = expandPlaylistFolder,
   moveFolderItem = movePlaylistItem,
   projectReleaseCollections = null,
   getReleaseScope = null,
@@ -108,6 +116,7 @@ function registerPlaylistsHandlers({
     'set-tracks',
     'set-kind',
     'upsert-album',
+    'folder-delete',
   ]);
   const membershipKey = (entry) =>
     JSON.stringify({
@@ -147,12 +156,13 @@ function registerPlaylistsHandlers({
             : null;
         const result = await work(() => assertScope(scope));
         assertScope(scope);
-        if (before && Array.isArray(result)) {
+        const after = Array.isArray(result) ? result : result?.playlists;
+        if (before && Array.isArray(after)) {
           const old = new Map(
             before.map((entry) => [entry.id, membershipKey(entry)]),
           );
           const next = new Map(
-            result.map((entry) => [entry.id, membershipKey(entry)]),
+            after.map((entry) => [entry.id, membershipKey(entry)]),
           );
           const collectionIds = [
             ...new Set([...old.keys(), ...next.keys()]),
@@ -241,9 +251,10 @@ function registerPlaylistsHandlers({
 
   // Folder intents resolve to { playlists, layout } because a move also
   // changes playlist membership.
-  const folderResult = ({ playlists, layout }) => ({
+  const folderResult = ({ playlists, layout, createdId }) => ({
     playlists: withCoverUrls(playlists),
     layout,
+    ...(createdId ? { createdId } : {}),
   });
   const folderIntent = (channel, operation, code, write) =>
     ipcMain.handle(channel, async (event, ...args) =>
@@ -263,23 +274,83 @@ function registerPlaylistsHandlers({
     'PLAYLIST_FOLDER_CREATE_FAILED',
     (dir, name) => createFolderRecord(dir, name),
   );
+  // The album's own cover, else the first copied track's artwork.
+  function albumCoverPath(dir, album, trackIds) {
+    if (album.coverImage) {
+      const path = findPlaylistCoverPath(dir, album.id, album.coverImage);
+      if (path) return path;
+    }
+    for (const trackId of trackIds) {
+      const path = findTrackArtworkPath(dir, trackId);
+      if (path) return path;
+    }
+    return null;
+  }
+
+  // A playlist that starts beside a sidebar row. An album copied in also
+  // lends its cover, as a custom cover the user can later change.
+  folderIntent(
+    'playlist-folders:create-playlist',
+    'folder-create-playlist',
+    'PLAYLISTS_CREATE_FAILED',
+    (dir, payload) => {
+      const request =
+        typeof payload === 'object' && payload !== null ? payload : {};
+      const result = createPlaylistAtRow(dir, request);
+      const album = request.coverFrom
+        ? loadPlaylistsList(dir).find(
+            (entry) => entry.id === request.coverFrom && entry.kind === 'album',
+          )
+        : null;
+      if (!album || !result.createdId) return result;
+      const created = result.playlists.find(
+        (entry) => entry.id === result.createdId,
+      );
+      const source = albumCoverPath(dir, album, created?.trackIds ?? []);
+      const filename =
+        source && writePlaylistCoverFromFile(dir, result.createdId, source);
+      if (!filename) return result;
+      return {
+        ...result,
+        playlists: setPlaylistCoverFilename(dir, result.createdId, filename),
+      };
+    },
+  );
   folderIntent(
     'playlist-folders:rename',
     'folder-rename',
     'PLAYLIST_FOLDER_RENAME_FAILED',
     (dir, id, name) => renameFolderRecord(dir, id, name),
   );
+  // Deleting a folder deletes its playlists, so their covers and page
+  // photos go as with a single playlist delete.
   folderIntent(
     'playlist-folders:delete',
     'folder-delete',
     'PLAYLIST_FOLDER_DELETE_FAILED',
-    (dir, id) => deleteFolderRecord(dir, id),
+    (dir, id) => {
+      const result = deleteFolderRecord(dir, id);
+      for (const playlistId of result.deletedIds ?? []) {
+        deletePlaylistCoverDirectory(dir, playlistId);
+        deleteFolderPageObjectsForPage(dir, {
+          kind: 'playlist',
+          id: playlistId,
+        });
+      }
+      return result;
+    },
   );
   folderIntent(
     'playlist-folders:set-collapsed',
     'folder-set-collapsed',
     'PLAYLIST_FOLDER_UPDATE_FAILED',
     (dir, id, collapsed) => setFolderCollapsed(dir, id, collapsed),
+  );
+  folderIntent(
+    'playlist-folders:expand',
+    'folder-expand',
+    'PLAYLIST_FOLDER_UPDATE_FAILED',
+    (dir, id) => expandFolder(dir, id),
   );
   folderIntent(
     'playlist-folders:move',

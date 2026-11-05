@@ -4,9 +4,11 @@ import os from 'os';
 import path from 'path';
 import {
   createPlaylist,
+  createPlaylistAt,
   createPlaylistFolder,
   deletePlaylist,
   deletePlaylistFolder,
+  expandPlaylistFolder,
   loadPlaylistLayout,
   loadPlaylists,
   movePlaylistItem,
@@ -33,10 +35,7 @@ function names(dir) {
   return order.map((id) => {
     const folder = folders.find((entry) => entry.id === id);
     if (!folder) return label(id);
-    const members = playlists
-      .filter((playlist) => playlist.folderId === id)
-      .map((playlist) => playlist.name);
-    return [folder.name, members];
+    return [folder.name, folder.items.map(label)];
   });
 }
 
@@ -61,14 +60,14 @@ describe('playlist folders', () => {
     expect(readFile(dir).layout).toBeUndefined();
   });
 
-  it('creates numbered default folders at the end, expanded', () => {
+  it('creates numbered default folders at the end, collapsed', () => {
     createPlaylistFolder(dir);
     const { layout } = createPlaylistFolder(dir, '  ');
     expect(
       layout.folders.map(({ name, collapsed }) => [name, collapsed]),
     ).toEqual([
-      ['新資料夾', false],
-      ['新資料夾 2', false],
+      ['新資料夾', true],
+      ['新資料夾 2', true],
     ]);
     expect(names(dir)).toEqual([
       'First',
@@ -145,43 +144,159 @@ describe('playlist folders', () => {
     renamePlaylistFolder(dir, folderId, '   ');
     const { layout } = setPlaylistFolderCollapsed(dir, folderId, true);
     expect(layout.folders).toEqual([
-      { id: folderId, name: 'Encore', collapsed: true },
+      { id: folderId, name: 'Encore', collapsed: true, color: 0, items: [] },
     ]);
   });
 
-  it('deleting a folder keeps its playlists in its place', () => {
+  it('rotates folder colours and keeps each one through later changes', () => {
+    for (const name of ['A', 'B', 'C', 'D']) createPlaylistFolder(dir, name);
+    const colors = () =>
+      loadPlaylistLayout(dir).folders.map((folder) => folder.color);
+    expect(colors()).toEqual([0, 1, 2, 0]);
+    // Deleting one shifts nobody; the next folder follows the newest.
+    deletePlaylistFolder(dir, loadPlaylistLayout(dir).folders[1].id);
+    createPlaylistFolder(dir, 'E');
+    expect(colors()).toEqual([0, 2, 0, 1]);
+
+    // Folders saved before colours existed take them in order.
+    const document = readFile(dir);
+    for (const folder of document.layout.folders) delete folder.color;
+    fs.writeFileSync(
+      path.join(dir, PLAYLISTS_FILENAME),
+      JSON.stringify(document),
+    );
+    expect(colors()).toEqual([0, 1, 2, 0]);
+  });
+
+  it('keeps at most one folder open and can close them all', () => {
+    const live = createPlaylistFolder(dir, 'Live').layout.folders[0].id;
+    const solo = createPlaylistFolder(dir, 'Solo').layout.folders[1].id;
+    setPlaylistFolderCollapsed(dir, live, false);
+    setPlaylistFolderCollapsed(dir, solo, false);
+    const open = (layout) =>
+      layout.folders.filter((folder) => !folder.collapsed).map((f) => f.name);
+    expect(open(expandPlaylistFolder(dir, solo).layout)).toEqual(['Solo']);
+    expect(open(expandPlaylistFolder(dir, live).layout)).toEqual(['Live']);
+    expect(open(expandPlaylistFolder(dir, null).layout)).toEqual([]);
+    const before = readFile(dir);
+    expandPlaylistFolder(dir, 'missing');
+    expandPlaylistFolder(dir, null);
+    expect(readFile(dir)).toEqual(before);
+  });
+
+  it('deletes a folder together with its playlists', () => {
     const folderId = createPlaylistFolder(dir, 'Live').layout.folders[0].id;
     movePlaylistItem(dir, folderId, second.id, 'before');
     movePlaylistItem(dir, third.id, folderId, 'inside');
     movePlaylistItem(dir, first.id, folderId, 'inside');
     expect(names(dir)).toEqual([['Live', ['Third', 'First']], 'Second']);
 
-    const { playlists, layout } = deletePlaylistFolder(dir, folderId);
-    expect(names(dir)).toEqual(['Third', 'First', 'Second']);
-    expect(playlists).toHaveLength(3);
-    expect(playlists.every((entry) => entry.folderId === undefined)).toBe(true);
+    const { playlists, layout, deletedIds } = deletePlaylistFolder(
+      dir,
+      folderId,
+    );
+    expect(deletedIds).toEqual([third.id, first.id]);
+    expect(playlists.map((entry) => entry.name)).toEqual(['Second']);
+    expect(names(dir)).toEqual(['Second']);
     expect(layout.folders).toEqual([]);
     expect(readFile(dir).layout).toBeUndefined();
+    expect(deletePlaylistFolder(dir, folderId).deletedIds).toEqual([]);
   });
 
-  it('drops stale ids and leaves albums out of folders', () => {
+  it('drops stale ids from the saved order', () => {
     const folderId = createPlaylistFolder(dir, 'Live').layout.folders[0].id;
     movePlaylistItem(dir, second.id, folderId, 'inside');
     deletePlaylist(dir, first.id);
-    upsertAlbum(dir, {
-      name: 'Album',
-      source: { platform: 'youtube', id: 'OLAK5uy_album' },
-      trackIds: [],
-    });
-    const album = loadPlaylists(dir).find((entry) => entry.kind === 'album');
-    expect(movePlaylistItem(dir, album.id, folderId, 'inside').layout).toEqual(
-      loadPlaylistLayout(dir),
-    );
     expect(names(dir)).toEqual(['Third', ['Live', ['Second']]]);
+  });
 
-    // A playlist turned into an album leaves the folder view.
-    setPlaylistKind(dir, second.id, 'album');
-    expect(names(dir)).toEqual(['Third', ['Live', []]]);
+  describe('albums', () => {
+    let album;
+    let folderId;
+
+    beforeEach(() => {
+      upsertAlbum(dir, {
+        name: 'Album',
+        source: { platform: 'youtube', id: 'OLAK5uy_album' },
+        trackIds: [],
+      });
+      album = loadPlaylists(dir).find((entry) => entry.kind === 'album');
+      folderId = createPlaylistFolder(dir, 'Live').layout.folders[0].id;
+    });
+
+    it('never places an album in a folder or at the top level', () => {
+      const before = readFile(dir);
+      movePlaylistItem(dir, album.id, folderId, 'inside');
+      movePlaylistItem(dir, album.id, first.id, 'before');
+      expect(readFile(dir)).toEqual(before);
+      expect(loadPlaylistLayout(dir).order).not.toContain(album.id);
+    });
+
+    it('copies an album into a folder as a new playlist', () => {
+      movePlaylistItem(dir, second.id, folderId, 'inside');
+      const { createdId, layout } = createPlaylistAt(dir, {
+        name: 'Album',
+        trackIds: ['t1', 't2', 't1', ''],
+        target: second.id,
+        position: 'before',
+      });
+      const copy = loadPlaylists(dir).find((entry) => entry.id === createdId);
+      expect(copy).toMatchObject({
+        name: 'Album',
+        kind: 'playlist',
+        trackIds: ['t1', 't2'],
+      });
+      expect(Object.keys(copy.addedAt)).toEqual(['t1', 't2']);
+      expect(layout.folders[0].items).toEqual([createdId, second.id]);
+      // The album itself stays where it was, and copies can repeat.
+      createPlaylistAt(dir, { name: 'Album', target: folderId });
+      expect(names(dir)).toEqual([
+        'First',
+        'Third',
+        ['Live', ['Album', 'Second', 'Album']],
+      ]);
+      expect(
+        loadPlaylists(dir).filter((entry) => entry.kind === 'album'),
+      ).toHaveLength(1);
+    });
+
+    it('leaves a new playlist loose when its target is gone', () => {
+      const { createdId } = createPlaylistAt(dir, { target: 'missing' });
+      expect(names(dir)).toEqual([
+        'First',
+        'Second',
+        'Third',
+        ['Live', []],
+        loadPlaylists(dir).find((entry) => entry.id === createdId).name,
+      ]);
+    });
+
+    it('drops album ids left in a member list and playlists turned albums', () => {
+      const document = readFile(dir);
+      document.layout.folders[0].items = [album.id, second.id];
+      fs.writeFileSync(
+        path.join(dir, PLAYLISTS_FILENAME),
+        JSON.stringify(document),
+      );
+      expect(names(dir)).toEqual(['First', 'Third', ['Live', ['Second']]]);
+      setPlaylistKind(dir, second.id, 'album');
+      expect(names(dir)).toEqual(['First', 'Third', ['Live', []]]);
+    });
+  });
+
+  it('reads the first format, where playlists named their folder', () => {
+    const document = readFile(dir);
+    document.layout = {
+      folders: [{ id: 'legacy', name: 'Old', collapsed: false }],
+      order: ['legacy'],
+    };
+    document.playlists.find((entry) => entry.id === second.id).folderId =
+      'legacy';
+    fs.writeFileSync(
+      path.join(dir, PLAYLISTS_FILENAME),
+      JSON.stringify(document),
+    );
+    expect(names(dir)).toEqual([['Old', ['Second']], 'First', 'Third']);
   });
 
   it('keeps folder data when other writers save the file', () => {

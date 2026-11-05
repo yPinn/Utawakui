@@ -1504,6 +1504,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   reorderPlaylist: (draggedId, targetId, position) =>
     ipcRenderer.invoke('playlists:reorder', draggedId, targetId, position),
   listPlaylistFolders: () => ipcRenderer.invoke('playlist-folders:list'),
+  createPlaylistAt: (payload) =>
+    ipcRenderer.invoke('playlist-folders:create-playlist', payload),
   createPlaylistFolder: (name) =>
     ipcRenderer.invoke('playlist-folders:create', name),
   renamePlaylistFolder: (id, name) =>
@@ -1512,6 +1514,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('playlist-folders:delete', id),
   setPlaylistFolderCollapsed: (id, collapsed) =>
     ipcRenderer.invoke('playlist-folders:set-collapsed', id, collapsed),
+  expandPlaylistFolder: (id) =>
+    ipcRenderer.invoke('playlist-folders:expand', id),
   movePlaylistItem: (draggedId, targetId, position) =>
     ipcRenderer.invoke('playlist-folders:move', draggedId, targetId, position),
   setPlaylistTracks: (id, trackIds) =>

@@ -313,9 +313,11 @@ describe('registerPlaylistsHandlers', () => {
       'playlists:reorder',
       'playlist-folders:list',
       'playlist-folders:create',
+      'playlist-folders:create-playlist',
       'playlist-folders:rename',
       'playlist-folders:delete',
       'playlist-folders:set-collapsed',
+      'playlist-folders:expand',
       'playlist-folders:move',
       'playlists:set-tracks',
       'playlists:upsert-album',
@@ -324,6 +326,74 @@ describe('registerPlaylistsHandlers', () => {
       'playlists:choose-cover',
       'playlists:clear-cover',
     ]);
+  });
+
+  it('gives an album copy the album cover, else its first track artwork', async () => {
+    const created = { id: 'copy', kind: 'playlist', trackIds: ['t1', 't2'] };
+    const album = { id: 'al', kind: 'album', trackIds: ['t1', 't2'] };
+    const setPlaylistCoverFilename = vi.fn(() => [created]);
+    const writePlaylistCoverFromFile = vi.fn(() => 'cover.jpg');
+    const findTrackArtworkPath = vi.fn((dir, id) =>
+      id === 't2' ? 'tracks/t2/artwork.jpg' : null,
+    );
+    const handlers = register({
+      loadPlaylistsList: vi.fn(() => [album, created]),
+      createPlaylistAtRow: vi.fn(() => ({
+        playlists: [album, created],
+        layout: { folders: [], order: [] },
+        createdId: 'copy',
+      })),
+      findPlaylistCoverPath: vi.fn(() => null),
+      findTrackArtworkPath,
+      writePlaylistCoverFromFile,
+      setPlaylistCoverFilename,
+    });
+    await handlers.get('playlist-folders:create-playlist')(null, {
+      name: 'Album',
+      trackIds: ['t1', 't2'],
+      coverFrom: 'al',
+    });
+    expect(writePlaylistCoverFromFile).toHaveBeenCalledWith(
+      'library-dir',
+      'copy',
+      'tracks/t2/artwork.jpg',
+    );
+    expect(setPlaylistCoverFilename).toHaveBeenCalledWith(
+      'library-dir',
+      'copy',
+      'cover.jpg',
+    );
+
+    // A plain new playlist takes no cover.
+    writePlaylistCoverFromFile.mockClear();
+    await handlers.get('playlist-folders:create-playlist')(null, {
+      target: { id: 'f1' },
+    });
+    expect(writePlaylistCoverFromFile).not.toHaveBeenCalled();
+  });
+
+  it('clears the files of playlists deleted with their folder', async () => {
+    const deletePlaylistCoverDirectory = vi.fn();
+    const deleteFolderPageObjectsForPage = vi.fn();
+    const handlers = register({
+      deleteFolderRecord: vi.fn(() => ({
+        playlists: [],
+        layout: { folders: [], order: [] },
+        deletedIds: ['p1', 'p2'],
+      })),
+      deletePlaylistCoverDirectory,
+      deleteFolderPageObjectsForPage,
+    });
+    const result = await handlers.get('playlist-folders:delete')(null, 'f1');
+    expect(deletePlaylistCoverDirectory.mock.calls).toEqual([
+      ['library-dir', 'p1'],
+      ['library-dir', 'p2'],
+    ]);
+    expect(deleteFolderPageObjectsForPage).toHaveBeenCalledWith('library-dir', {
+      kind: 'playlist',
+      id: 'p2',
+    });
+    expect(result.layout).toEqual({ folders: [], order: [] });
   });
 
   it('returns playlists and layout together from folder intents', async () => {
@@ -445,6 +515,13 @@ describe('registerPlaylistsHandlers', () => {
       ['Live'],
     ],
     [
+      'playlist-folders:create-playlist',
+      'createPlaylistAtRow',
+      'PLAYLISTS_CREATE_FAILED',
+      'folder-create-playlist',
+      [{ name: 'Album', trackIds: ['t1'], target: { id: 'f1' } }],
+    ],
+    [
       'playlist-folders:rename',
       'renameFolderRecord',
       'PLAYLIST_FOLDER_RENAME_FAILED',
@@ -464,6 +541,13 @@ describe('registerPlaylistsHandlers', () => {
       'PLAYLIST_FOLDER_UPDATE_FAILED',
       'folder-set-collapsed',
       ['f1', true],
+    ],
+    [
+      'playlist-folders:expand',
+      'expandFolder',
+      'PLAYLIST_FOLDER_UPDATE_FAILED',
+      'folder-expand',
+      ['f1'],
     ],
     [
       'playlist-folders:move',
