@@ -199,6 +199,11 @@
       "targetPath": "THIRD_PARTY_NOTICES.md"
     },
     {
+      "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf"
+    },
+    {
       "sourcePath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf",
       "location": "asar",
       "targetPath": "shared/assets/fonts/GenEiAntiqueNv6-M.ttf"
@@ -207,6 +212,31 @@
       "sourcePath": "shared/assets/fonts/HinaMincho-Regular.ttf",
       "location": "asar",
       "targetPath": "shared/assets/fonts/HinaMincho-Regular.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/KleeOne-SemiBold.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/KleeOne-SemiBold.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-CHEN-YU-LUO-YAN.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-CHEN-YU-LUO-YAN.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-KLEE-ONE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-KLEE-ONE.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-CHEN-YU-LUO-YAN.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-CHEN-YU-LUO-YAN.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-KLEE-ONE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-KLEE-ONE.txt"
     },
     {
       "sourcePath": "shared/assets/fonts/jf-open-huninn-2.1.ttf",

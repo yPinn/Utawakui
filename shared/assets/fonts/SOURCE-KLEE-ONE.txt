@@ -1,0 +1,8 @@
+Klee One SemiBold
+
+Upstream project: https://github.com/fontworks-fonts/Klee
+Source: https://raw.githubusercontent.com/google/fonts/main/ofl/kleeone/KleeOne-SemiBold.ttf
+SHA-256: b031ec426c23ca1143ef1f7d58bee7a79efe119ed654152f121c922202b303fd
+License: SIL Open Font License 1.1; see OFL-KLEE-ONE.txt.
+
+The local family name used by Utawakui CSS is "Utawakui Klee One".

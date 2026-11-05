@@ -87,6 +87,12 @@ function createFixtureRoots() {
     path.join(sharedRoot, 'assets', 'fonts', 'HinaMincho-Regular.ttf'),
     Buffer.from([0, 1, 0, 0]),
   );
+  for (const font of ['ChenYuluoyan-2.0-Thin.ttf', 'KleeOne-SemiBold.ttf']) {
+    fs.writeFileSync(
+      path.join(sharedRoot, 'assets', 'fonts', font),
+      Buffer.from([0, 1, 0, 0]),
+    );
+  }
   return { overlayRoot, root, sharedRoot };
 }
 
@@ -263,6 +269,17 @@ describe('output HTTP delivery', () => {
       `${baseUrl}/shared/assets/fonts/HinaMincho-Regular.ttf`,
     );
     const unknown = await fetch(`${baseUrl}/overlay/lyrics/private.txt`);
+    for (const filename of [
+      'ChenYuluoyan-2.0-Thin.ttf',
+      'KleeOne-SemiBold.ttf',
+    ]) {
+      const font = await fetch(`${baseUrl}/shared/assets/fonts/${filename}`);
+      expect(font.status).toBe(200);
+      expect(font.headers.get('content-type')).toBe('font/ttf');
+      expect(Buffer.from(await font.arrayBuffer())).toEqual(
+        Buffer.from([0, 1, 0, 0]),
+      );
+    }
     const grain = await fetch(`${baseUrl}/overlay/setlist/receipt-grain.png`);
     const privateGrain = await fetch(
       `${baseUrl}/overlay/setlist/receipt-grain-private.png`,

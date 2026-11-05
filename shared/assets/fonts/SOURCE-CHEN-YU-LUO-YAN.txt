@@ -1,0 +1,8 @@
+ChenYuLuoYan 2.0 Thin
+
+Upstream project: https://github.com/Chenyu-otf/chenyuluoyan_thin
+Source: https://raw.githubusercontent.com/Chenyu-otf/chenyuluoyan_thin/main/ChenYuluoyan-2.0-Thin.ttf
+SHA-256: 1289e42a6d1ec995d0cb23aee89efc69fc95749fbd54a610057a3e992dc453db
+License: SIL Open Font License 1.1; see OFL-CHEN-YU-LUO-YAN.txt.
+
+The local family name used by Utawakui CSS is "Utawakui ChenYuLuoYan".

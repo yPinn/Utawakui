@@ -110,6 +110,8 @@ served to OBS only through one exact loopback Output allowlist route.
 | GenEi Antique         | 6.0a                    | SIL Open Font License 1.1                                          | Normal-width Japanese manga-dialogue TTF bundled for Japanese Manga Frame lyrics and ruby; the pinned source, checksum, reserved font name, and complete upstream license ship under `shared/assets/fonts/`.                                                                                                                                                                                              |
 
 | Hina Mincho | Regular | SIL Open Font License 1.1 | Japanese Mincho display TTF bundled for the Ornate Vertical lyrics template; the official source, checksum, and complete upstream license ship under `shared/assets/fonts/`. |
+| ChenYuLuoYan | 2.0 Thin | SIL Open Font License 1.1 | Traditional Chinese handwriting font for Centered Vertical lyrics. The upstream license and source record ship under `shared/assets/fonts/`. |
+| Klee One | SemiBold | SIL Open Font License 1.1 | Japanese handwriting font for Centered Vertical lyrics. The upstream license and source record ship under `shared/assets/fonts/`. |
 
 The renderer dependency closure also includes MIT/BSD/ISC packages such as
 `@babel/*`, `@jridgewell/sourcemap-codec`, `entities`, `estree-walker`,

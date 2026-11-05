@@ -130,6 +130,16 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'MPLUSRounded1c-ExtraBold.ttf',
   ],
   '/shared/assets/fonts/Keifont.ttf': ['assets', 'fonts', 'Keifont.ttf'],
+  '/shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf': [
+    'assets',
+    'fonts',
+    'ChenYuluoyan-2.0-Thin.ttf',
+  ],
+  '/shared/assets/fonts/KleeOne-SemiBold.ttf': [
+    'assets',
+    'fonts',
+    'KleeOne-SemiBold.ttf',
+  ],
   '/shared/assets/fonts/GenEiAntiqueNv6-M.ttf': [
     'assets',
     'fonts',
