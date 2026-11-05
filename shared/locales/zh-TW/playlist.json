@@ -66,7 +66,10 @@
     "createFolderTitle": "建立資料夾失敗",
     "renameFolderTitle": "重新命名資料夾失敗",
     "deleteFolderTitle": "刪除資料夾失敗",
-    "updateFolderTitle": "更新資料夾失敗"
+    "updateFolderTitle": "更新資料夾失敗",
+    "tracksAdded": "已加入 {count} 首到「{name}」",
+    "tracksAlreadyIn": "曲目都已在「{name}」",
+    "copiedToFolder": "已新增至「{name}」"
   },
   "defaultNamePrefix": "播放清單 #",
   "actions": {
@@ -104,9 +107,15 @@
     "name": "名稱",
     "delete": "刪除資料夾",
     "deleteTitle": "刪除資料夾？",
-    "deleteMessage": "裡面的播放清單會移到外面，不會被刪除。",
+    "deleteMessage": "裡面的播放清單會一起刪除，音檔會保留。要保留的請先移出。",
     "moveTo": "移到資料夾",
     "moveOut": "移出資料夾",
-    "empty": "把播放清單拖曳到這裡。"
+    "back": "返回",
+    "expandNamed": "展開「{name}」",
+    "collapseNamed": "收合「{name}」",
+    "play": "播放",
+    "createHere": "在這裡建立播放清單",
+    "emptyView": "還沒有播放清單。",
+    "addTo": "加入資料夾"
   }
 }

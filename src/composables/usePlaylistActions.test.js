@@ -62,6 +62,7 @@ beforeEach(() => {
     remove: vi.fn().mockResolvedValue(true),
     setKind: vi.fn().mockResolvedValue(true),
     addTracks: vi.fn().mockResolvedValue(true),
+    createPlaylistAt: vi.fn().mockResolvedValue({ id: 'copy' }),
   };
 });
 
@@ -321,5 +322,63 @@ describe('collection menu operation targets', () => {
     await actions.confirmDeletePlaylist();
     actions.closeEditDetailsModal();
     expect(actions.editDetailsPlaylist.value).toBeNull();
+  });
+});
+
+describe('adding one collection to another', () => {
+  it('says how many tracks were added, or that none were new', async () => {
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    playlists.state.playlists.push({
+      id: 'src',
+      name: 'Source',
+      kind: 'playlist',
+      trackIds: ['a', 'b', 'c'],
+    });
+    playlists.state.playlists[0].trackIds = ['a'];
+    const actions = await loadActions();
+    const value = {
+      action: 'add-to-playlist',
+      playlistId: 'src',
+      targetPlaylistId: 'p1',
+    };
+    await actions.handlePlaylistMenuAction(value);
+    expect(playlists.addTracks).toHaveBeenCalledWith('p1', ['a', 'b', 'c']);
+    const titles = () =>
+      useAppNotifications().items.value.map((item) => item.title);
+    expect(titles()).toContain('已加入 2 首到「我的歌單」');
+
+    playlists.state.playlists[0].trackIds = ['a', 'b', 'c'];
+    await actions.handlePlaylistMenuAction(value);
+    expect(titles()).toContain('曲目都已在「我的歌單」');
+  });
+});
+
+describe('copying an album into a folder', () => {
+  it('creates a playlist with the album tracks and says where it went', async () => {
+    const { useAppNotifications } = await import('./useAppNotifications.js');
+    playlists.state.playlists.push({
+      id: 'al',
+      name: 'Niche Syndrome',
+      kind: 'album',
+      trackIds: ['t1', 't2'],
+    });
+    const actions = await loadActions();
+    await actions.handlePlaylistMenuAction({
+      action: 'copy-to-folder',
+      playlistId: 'al',
+      folderName: '新資料夾',
+      target: { id: 'f1' },
+      position: 'inside',
+    });
+    expect(playlists.createPlaylistAt).toHaveBeenCalledWith({
+      name: 'Niche Syndrome',
+      trackIds: ['t1', 't2'],
+      target: { id: 'f1' },
+      position: 'inside',
+      coverFrom: 'al',
+    });
+    expect(
+      useAppNotifications().items.value.map((item) => item.title),
+    ).toContain('已新增至「新資料夾」');
   });
 });

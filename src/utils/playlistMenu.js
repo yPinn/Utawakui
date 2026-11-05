@@ -16,6 +16,9 @@ export const PLAYLIST_MENU_ACTIONS = {
   deleteFolder: 'delete-folder',
   moveToFolder: 'move-to-folder',
   moveOutOfFolder: 'move-out-of-folder',
+  copyToFolder: 'copy-to-folder',
+  playFolder: 'play-folder',
+  createPlaylistInFolder: 'create-playlist-in-folder',
   convertKind: 'convert-kind',
   download: 'download',
 };

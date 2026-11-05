@@ -6,12 +6,12 @@ import {
   playlistTreeRows,
 } from './playlistFolders.js';
 
-const a = { id: 'a', name: 'Alpha' };
-const b = { id: 'b', name: 'Beta', folderId: 'f1' };
-const c = { id: 'c', name: 'Gamma', folderId: 'f1' };
-const d = { id: 'd', name: 'Delta', folderId: 'gone' };
-const live = { id: 'f1', name: 'Live', collapsed: false };
-const empty = { id: 'f2', name: 'Empty', collapsed: true };
+const a = { id: 'a', name: 'Alpha', kind: 'playlist' };
+const b = { id: 'b', name: 'Beta', kind: 'playlist' };
+const c = { id: 'c', name: 'Gamma', kind: 'playlist' };
+const d = { id: 'd', name: 'Delta', kind: 'playlist' };
+const live = { id: 'f1', name: 'Live', collapsed: false, items: ['b', 'c'] };
+const empty = { id: 'f2', name: 'Empty', collapsed: true, items: [] };
 
 function shape(nodes) {
   return nodes.map((node) =>
@@ -27,7 +27,6 @@ describe('playlist folder tree', () => {
       folders: [live, empty],
       order: ['f1', 'a', 'missing'],
     });
-    // A member of a missing folder stays visible as a loose playlist.
     expect(shape(tree)).toEqual([['f1', ['b', 'c']], 'a', 'd', ['f2', []]]);
   });
 
@@ -51,7 +50,7 @@ describe('playlist folder tree', () => {
 
   it('flattens rows with members only while expanded', () => {
     const tree = buildPlaylistTree([a, b], {
-      folders: [live, empty],
+      folders: [{ ...live, items: ['b'] }, empty],
       order: ['f1', 'f2', 'a'],
     });
     const rows = playlistTreeRows(tree, (folder) => !folder.collapsed);
@@ -62,28 +61,53 @@ describe('playlist folder tree', () => {
       'playlist:a',
     ]);
     expect(rows[1].folderId).toBe('f1');
+    expect(rows.map((row) => row.key)).toEqual([
+      'folder:f1',
+      'f1:b',
+      'folder:f2',
+      'top:a',
+    ]);
+    // An empty folder shows no placeholder row, even when open.
     const open = playlistTreeRows(tree, () => true);
-    expect(open.map((row) => `${row.kind}:${row.id}`)).toContain('empty:f2');
+    expect(open.map((row) => row.key)).toEqual([
+      'folder:f1',
+      'f1:b',
+      'folder:f2',
+      'top:a',
+    ]);
+  });
+
+  it('never lists library albums in the index', () => {
+    const album = { id: 'al', name: 'Album', kind: 'album' };
+    const tree = buildPlaylistTree([a, album], {
+      folders: [{ ...live, items: [] }],
+      order: ['a', 'f1', 'al'],
+    });
+    expect(shape(tree)).toEqual(['a', ['f1', []]]);
   });
 
   it('chooses drop positions without nesting folders', () => {
     const folder = { kind: 'folder', expanded: false };
     const opened = { kind: 'folder', expanded: true };
-    const member = { kind: 'playlist', folderId: 'f1' };
-    const loose = { kind: 'playlist', folderId: null };
+    const playlistRow = { kind: 'playlist' };
+    const member = { kind: 'playlist', folderId: 'f1', playlist: playlistRow };
+    const loose = { kind: 'playlist', folderId: null, playlist: playlistRow };
     const playlist = { draggingFolder: false };
     const dragFolder = { draggingFolder: true };
+    const dragAlbum = { draggingAlbum: true };
     expect(playlistDropPosition(folder, 0.1, playlist)).toBe('before');
     expect(playlistDropPosition(folder, 0.5, playlist)).toBe('inside');
     expect(playlistDropPosition(folder, 0.9, playlist)).toBe('after');
     expect(playlistDropPosition(opened, 0.9, playlist)).toBe('inside');
     expect(playlistDropPosition(folder, 0.5, dragFolder)).toBe('after');
+    expect(playlistDropPosition(folder, 0.1, dragAlbum)).toBe('inside');
     expect(playlistDropPosition(member, 0.2, playlist)).toBe('before');
+    expect(playlistDropPosition(member, 0.5, playlist)).toBe('add');
+    expect(playlistDropPosition(loose, 0.9, playlist)).toBe('after');
     expect(playlistDropPosition(member, 0.2, dragFolder)).toBe(null);
     expect(playlistDropPosition(loose, 0.8, dragFolder)).toBe('after');
-    expect(playlistDropPosition({ kind: 'empty' }, 0.5, playlist)).toBe(
-      'inside',
-    );
-    expect(playlistDropPosition({ kind: 'empty' }, 0.5, dragFolder)).toBe(null);
+    expect(playlistDropPosition(loose, 0.1, dragAlbum)).toBe(null);
+    expect(playlistDropPosition(loose, 0.5, dragAlbum)).toBe('add');
+    expect(playlistDropPosition(member, 0.1, dragAlbum)).toBe('before');
   });
 });

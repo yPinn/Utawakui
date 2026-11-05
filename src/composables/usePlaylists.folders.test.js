@@ -21,12 +21,26 @@ beforeEach(() => {
     ),
     renamePlaylistFolder: vi.fn(async () => result([live])),
     deletePlaylistFolder: vi.fn(async () => result([])),
+    createPlaylistAt: vi.fn(async () => ({
+      ...result(
+        [{ ...live, items: ['copy'] }],
+        [
+          playlist,
+          { id: 'copy', name: 'Album', kind: 'playlist', trackIds: ['t1'] },
+        ],
+      ),
+      createdId: 'copy',
+    })),
+    expandPlaylistFolder: vi.fn(async () =>
+      result([
+        { ...live, collapsed: true },
+        { id: 'f2', name: 'Solo', collapsed: false },
+      ]),
+    ),
     setPlaylistFolderCollapsed: vi.fn(async () =>
       result([{ ...live, collapsed: true }]),
     ),
-    movePlaylistItem: vi.fn(async () =>
-      result([live], [{ ...playlist, folderId: 'f1' }]),
-    ),
+    movePlaylistItem: vi.fn(async () => result([{ ...live, items: ['p1'] }])),
     onLibraryUpdated: () => {},
   };
   vi.stubGlobal('window', { Utawakui: bridge });
@@ -74,12 +88,48 @@ describe('usePlaylists folders', () => {
     expect(bridge.setPlaylistFolderCollapsed).toHaveBeenCalledWith('f1', true);
   });
 
+  it('opens one folder and closes the rest before the save finishes', async () => {
+    bridge.listPlaylistFolders.mockResolvedValueOnce({
+      folders: [live, { id: 'f2', name: 'Solo', collapsed: true }],
+      order: ['f1', 'f2'],
+    });
+    const playlists = await load();
+    const saved = playlists.expandFolder('f2');
+    expect(
+      playlists.state.folderLayout.folders.map((folder) => folder.collapsed),
+    ).toEqual([true, false]);
+    await expect(saved).resolves.toBe(true);
+    expect(bridge.expandPlaylistFolder).toHaveBeenCalledWith('f2');
+    await expect(playlists.expandFolder('missing')).resolves.toBe(false);
+  });
+
+  it('returns the playlist created beside a row', async () => {
+    const playlists = await load();
+    const request = {
+      name: 'Album',
+      trackIds: ['t1'],
+      target: { id: 'f1' },
+      position: 'inside',
+    };
+    const created = await playlists.createPlaylistAt(request);
+    expect(bridge.createPlaylistAt).toHaveBeenCalledWith(request);
+    expect(created).toMatchObject({ id: 'copy', name: 'Album' });
+    expect(playlists.state.folderLayout.folders[0].items).toEqual(['copy']);
+  });
+
   it('applies membership returned by a move', async () => {
     const playlists = await load();
-    await expect(playlists.moveItem('p1', 'f1', 'inside')).resolves.toBe(true);
-    expect(bridge.movePlaylistItem).toHaveBeenCalledWith('p1', 'f1', 'inside');
-    expect(playlists.state.playlists[0].folderId).toBe('f1');
-    await expect(playlists.moveItem('p1', 'p1')).resolves.toBe(false);
+    const dragged = { id: 'p1', folderId: null };
+    await expect(
+      playlists.moveItem(dragged, { id: 'f1' }, 'inside'),
+    ).resolves.toBe(true);
+    expect(bridge.movePlaylistItem).toHaveBeenCalledWith(
+      dragged,
+      { id: 'f1' },
+      'inside',
+    );
+    expect(playlists.state.folderLayout.folders[0].items).toEqual(['p1']);
+    await expect(playlists.moveItem(null, { id: 'f1' })).resolves.toBe(false);
   });
 
   it('reports a failed delete without dropping the folder', async () => {

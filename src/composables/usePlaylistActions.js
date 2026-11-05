@@ -1,6 +1,8 @@
 import { computed, ref } from 'vue';
 import { useLibrary } from './useLibrary.js';
 import { useAppConfirmation } from './useAppConfirmation.js';
+import { useAppNotifications } from './useAppNotifications.js';
+import { notificationKey } from '../constants/notificationKeys.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylists } from './usePlaylists.js';
 import { usePerformanceQueueActions } from './usePerformanceQueueActions.js';
@@ -28,11 +30,31 @@ const {
   setCover: setPlaylistCoverAction,
   clearCover: clearPlaylistCoverAction,
   addTracks: addTracksToPlaylist,
+  createPlaylistAt,
 } = usePlaylists();
 const { tracksById } = useLibrary();
 const { enqueueTrack } = usePlaybackQueue();
 const performanceQueue = usePerformanceQueueActions();
 const { confirm: confirmAction } = useAppConfirmation();
+const notifications = useAppNotifications();
+
+// Drops and menu picks both land here; say what changed, since a drop can
+// miss its row and duplicates are skipped silently.
+async function addTracksWithFeedback(targetId, trackIds) {
+  const target = playlistState.playlists.find((item) => item.id === targetId);
+  const added = [...new Set(trackIds)].filter(
+    (id) => !target?.trackIds.includes(id),
+  ).length;
+  if (!(await addTracksToPlaylist(targetId, trackIds)) || !target) return;
+  const name = playlistDisplayName(target);
+  notifications.notify({
+    key: notificationKey.playlists('add-tracks'),
+    title: added
+      ? t('playlist.notify.tracksAdded', { count: added, name }, added)
+      : t('playlist.notify.tracksAlreadyIn', { name }),
+    tone: 'success',
+  });
+}
 
 // Independent of selectedPlaylist — editing must not require first
 // navigating into that playlist/album's own page (right-clicking any
@@ -269,10 +291,25 @@ async function handlePlaylistMenuAction(value) {
   } else if (value.action === PLAYLIST_MENU_ACTIONS.editReleaseInfo) {
     await useReleaseOrganization().open(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.addToPlaylist) {
-    addTracksToPlaylist(
+    await addTracksWithFeedback(
       value.targetPlaylistId,
       await resolvePlaylistTrackIdsForCopy(playlist),
     );
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.copyToFolder) {
+    const created = await createPlaylistAt({
+      name: playlist.name,
+      trackIds: await resolvePlaylistTrackIdsForCopy(playlist),
+      target: value.target,
+      position: value.position,
+      coverFrom: playlist.id,
+    });
+    if (created) {
+      notifications.notify({
+        key: notificationKey.playlists('copy-to-folder'),
+        title: t('playlist.notify.copiedToFolder', { name: value.folderName }),
+        tone: 'success',
+      });
+    }
   } else if (value.action === PLAYLIST_MENU_ACTIONS.editDetails) {
     startPlaylistEditDetails(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.delete) {

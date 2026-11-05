@@ -2,15 +2,19 @@
 import { t } from '../../utils/i18n.js';
 // Nav rows are bespoke; UiButton semantics do not match this full-row list.
 import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Ellipsis,
   Folder,
   FolderInput,
   FolderOpen,
   FolderOutput,
   FolderPlus,
-  ICON_SIZE,
   Library,
   ListPlus,
   Pencil,
+  Play,
   Plus,
   RefreshCw,
   Trash2,
@@ -30,7 +34,10 @@ import {
   listSidebarArtists,
   orderReferenceItems,
 } from '../../utils/artistPage.js';
-import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
+import {
+  PLAYLIST_MENU_ACTIONS,
+  playlistDisplayName,
+} from '../../utils/playlistMenu.js';
 import { collectionDisplayTrackIds } from '../../utils/albumMembership.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import {
@@ -40,10 +47,13 @@ import {
   playlistTreeRows,
 } from '../../utils/playlistFolders.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
+import { useCollectionDrag } from '../../composables/useCollectionDrag.js';
 import PlaylistFolderNameModal from './PlaylistFolderNameModal.vue';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import { collectionActionMenu } from '../../utils/collectionMenuItems.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
@@ -70,8 +80,11 @@ const {
   createFolder,
   renameFolder,
   deleteFolder,
-  setFolderCollapsed,
+  expandFolder,
   moveItem,
+  createPlaylistAt,
+  enterFolder,
+  leaveFolder,
 } = usePlaylists();
 const { confirm: confirmAction } = useAppConfirmation();
 const collectionPlayback = useCollectionPlayback();
@@ -210,17 +223,88 @@ function folderMatchesSearch(folder) {
   return searchableText(folder.name).includes(normalizedSearchQuery.value);
 }
 
-// Search opens every folder so matches are never hidden by a collapsed one.
+const openFolder = computed(
+  () =>
+    state.folderLayout.folders.find(
+      (folder) => folder.id === state.openFolderId,
+    ) ?? null,
+);
+
+// The upper tier is the user's playlists and folders; albums stay below.
+const playlistsById = computed(
+  () => new Map(state.playlists.map((playlist) => [playlist.id, playlist])),
+);
+
+function folderMembers(folderId) {
+  const folder = state.folderLayout.folders.find(
+    (entry) => entry.id === folderId,
+  );
+  return (folder?.items ?? [])
+    .map((id) => playlistsById.value.get(id))
+    .filter(Boolean);
+}
+
+function folderHolding(playlistId) {
+  return state.folderLayout.folders.find((folder) =>
+    folder.items?.includes(playlistId),
+  );
+}
+
+// Inside a folder only its members list; search narrows them in place.
+function openFolderRows(folder) {
+  const members = folderMembers(folder.id).filter(playlistMatchesSearch);
+  if (!members.length && !hasSearchQuery.value) {
+    return [{ kind: 'empty-view', id: folder.id }];
+  }
+  return members.map((playlist) => ({
+    kind: 'playlist',
+    key: `${folder.id}:${playlist.id}`,
+    id: playlist.id,
+    playlist,
+    folderId: folder.id,
+  }));
+}
+
+// One folder at most is open in place (older files may mark several; the
+// first wins). Search opens every folder so matches are never hidden, and
+// the narrow rail shows folders only; a click there steps inside instead.
+const expandedFolderId = computed(
+  () => state.folderLayout.folders.find((folder) => !folder.collapsed)?.id,
+);
+
+function isFolderExpanded(folder) {
+  if (props.compact) return false;
+  return hasSearchQuery.value || folder.id === expandedFolderId.value;
+}
+
 const visiblePlaylistRows = computed(() => {
-  const tree = buildPlaylistTree(playlistItems.value, state.folderLayout);
+  if (openFolder.value) return openFolderRows(openFolder.value);
+  const tree = buildPlaylistTree(state.playlists, state.folderLayout);
   const nodes = hasSearchQuery.value
     ? filterPlaylistTree(tree, playlistMatchesSearch, folderMatchesSearch)
     : tree;
-  return playlistTreeRows(
-    nodes,
-    (folder) => hasSearchQuery.value || !folder.collapsed,
-  );
+  return playlistTreeRows(nodes, isFolderExpanded);
 });
+
+// The three folder hues shared with the destination tabs.
+const FOLDER_TONES = [
+  {
+    background: 'var(--ui-color-folder-primary)',
+    color: 'var(--ui-color-folder-primary-foreground)',
+  },
+  {
+    background: 'var(--ui-color-folder-secondary)',
+    color: 'var(--ui-color-folder-secondary-foreground)',
+  },
+  {
+    background: 'var(--ui-color-folder-tertiary)',
+    color: 'var(--ui-color-folder-tertiary-foreground)',
+  },
+];
+
+function folderTone(folder) {
+  return FOLDER_TONES[folder.color] ?? FOLDER_TONES[0];
+}
 
 function folderRowItem(folder) {
   return { id: folder.id, name: folder.name, kind: 'folder' };
@@ -233,7 +317,45 @@ function folderSubtitle(row) {
 function toggleFolder(folder) {
   if (hasSearchQuery.value) return;
   closePlaylistMenu();
-  setFolderCollapsed(folder.id, !folder.collapsed);
+  expandFolder(isFolderExpanded(folder) ? null : folder.id);
+}
+
+function folderToggleLabel(row) {
+  return t(
+    row.expanded
+      ? 'playlist.folder.collapseNamed'
+      : 'playlist.folder.expandNamed',
+    { name: row.folder.name },
+  );
+}
+
+function openFolderView(folder) {
+  closePlaylistMenu();
+  enterFolder(folder.id);
+}
+
+function closeFolderView() {
+  closePlaylistMenu();
+  leaveFolder();
+}
+
+// A folder plays its playlists one after another, in sidebar order.
+function folderTracks(folderId) {
+  return folderMembers(folderId).flatMap(memberTracksFor);
+}
+
+function toggleFolderPlayback(folder, event) {
+  event?.stopPropagation();
+  collectionPlayback.togglePlayback({
+    tracks: folderTracks(folder.id),
+    sourceName: folder.name,
+    sourceId: folder.id,
+  });
+}
+
+function playFolder(folder) {
+  if (collectionPlayback.isPlaying(folder.id)) return;
+  toggleFolderPlayback(folder);
 }
 const visibleAlbumItems = computed(() =>
   albumItems.value.filter(playlistMatchesSearch),
@@ -295,14 +417,16 @@ watch(
 
 // Albums and artists share one read-only reference tier, grouped by artist.
 const visibleReferenceEntries = computed(() =>
-  orderReferenceItems({
-    albumItems: visibleAlbumItems.value,
-    artistItems: visibleArtistItems.value,
-    artistIndex: artistIndexState.index,
-    tracksById: props.tracksById,
-    fallbackAlbumArtistById: orderedPlaylists.value.albumArtistById,
-    sourceRecency: shownSourceRecency.value,
-  }),
+  openFolder.value
+    ? []
+    : orderReferenceItems({
+        albumItems: visibleAlbumItems.value,
+        artistItems: visibleArtistItems.value,
+        artistIndex: artistIndexState.index,
+        tracksById: props.tracksById,
+        fallbackAlbumArtistById: orderedPlaylists.value.albumArtistById,
+        sourceRecency: shownSourceRecency.value,
+      }),
 );
 
 function referenceSubtitle(entry) {
@@ -353,8 +477,7 @@ const isLibraryViewActive = (view) =>
 const hasVisibleCollectionItems = computed(
   () =>
     visiblePlaylistRows.value.length > 0 ||
-    visibleAlbumItems.value.length > 0 ||
-    visibleArtistItems.value.length > 0,
+    visibleReferenceEntries.value.length > 0,
 );
 
 const { skeletonVisible, revealContent, finishReveal } = useDeferredLoading(
@@ -370,14 +493,16 @@ const menuContext = ref(null);
 const isMenuOpen = computed(() => Boolean(menuContext.value));
 
 function createCollectionItems() {
+  const createPlaylistItem = {
+    id: 'create-playlist',
+    kind: 'action',
+    label: t('playlist.sidebar.create'),
+    icon: ListPlus,
+    value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
+  };
+  if (openFolder.value) return [createPlaylistItem];
   return [
-    {
-      id: 'create-playlist',
-      kind: 'action',
-      label: t('playlist.sidebar.create'),
-      icon: ListPlus,
-      value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
-    },
+    createPlaylistItem,
     {
       id: 'create-folder',
       kind: 'action',
@@ -418,9 +543,36 @@ const menuContent = computed(() => {
 });
 
 function folderMenuContent(folder) {
+  const isEmpty = folderTracks(folder.id).length === 0;
   return {
     kind: 'actions',
     groups: [
+      {
+        id: 'primary',
+        items: [
+          {
+            id: 'play-folder',
+            kind: 'action',
+            label: t('playlist.folder.play'),
+            icon: Play,
+            disabled: isEmpty,
+            value: {
+              action: PLAYLIST_MENU_ACTIONS.playFolder,
+              folderId: folder.id,
+            },
+          },
+          {
+            id: 'create-playlist-in-folder',
+            kind: 'action',
+            label: t('playlist.folder.createHere'),
+            icon: ListPlus,
+            value: {
+              action: PLAYLIST_MENU_ACTIONS.createPlaylistInFolder,
+              folderId: folder.id,
+            },
+          },
+        ],
+      },
       {
         id: 'manage',
         items: [
@@ -456,17 +608,19 @@ function folderMenuContent(folder) {
   };
 }
 
-// Only user playlists go into folders; albums are sorted references.
+// A playlist moves between folders. An album gets one shortcut per folder;
+// `fromFolderId` is the folder whose shortcut row opened the menu.
 function folderMoveItems(playlist) {
-  if (playlist.kind !== 'playlist') return [];
+  const isAlbum = playlist.kind === 'album';
   const folders = state.folderLayout.folders;
-  const targets = folders.filter((folder) => folder.id !== playlist.folderId);
+  const holder = isAlbum ? null : folderHolding(playlist.id);
+  const targets = folders.filter((folder) => folder.id !== holder?.id);
   const items = [];
   if (targets.length > 0) {
     items.push({
       id: 'move-to-folder',
       kind: 'submenu',
-      label: t('playlist.folder.moveTo'),
+      label: isAlbum ? t('playlist.folder.addTo') : t('playlist.folder.moveTo'),
       icon: FolderInput,
       content: {
         kind: 'actions',
@@ -478,18 +632,25 @@ function folderMoveItems(playlist) {
               kind: 'action',
               label: folder.name,
               icon: Folder,
-              value: {
-                action: PLAYLIST_MENU_ACTIONS.moveToFolder,
-                playlistId: playlist.id,
-                folderId: folder.id,
-              },
+              value: isAlbum
+                ? copyToFolderValue(
+                    playlist,
+                    folder,
+                    { id: folder.id },
+                    'inside',
+                  )
+                : {
+                    action: PLAYLIST_MENU_ACTIONS.moveToFolder,
+                    playlistId: playlist.id,
+                    folderId: folder.id,
+                  },
             })),
           },
         ],
       },
     });
   }
-  if (folders.some((folder) => folder.id === playlist.folderId)) {
+  if (holder) {
     items.push({
       id: 'move-out-of-folder',
       kind: 'action',
@@ -498,7 +659,7 @@ function folderMoveItems(playlist) {
       value: {
         action: PLAYLIST_MENU_ACTIONS.moveOutOfFolder,
         playlistId: playlist.id,
-        folderId: playlist.folderId,
+        folderId: holder.id,
       },
     });
   }
@@ -518,26 +679,52 @@ function openGlobalMenu(event) {
   openMenuAt(event, { kind: 'global' });
 }
 
-// The toolbar "+" opens the same create menu under the button.
-function openCreateMenu(event) {
+// Button menus open under their button; a second press closes them.
+function openMenuFrom(event, trigger, context) {
   event.stopPropagation();
-  const element = event.currentTarget;
-  if (menuContext.value?.anchor?.element === element) {
+  if (menuContext.value?.trigger === trigger) {
     closePlaylistMenu();
     return;
   }
   menuContext.value = {
-    kind: 'global',
-    anchor: { kind: 'element', element },
+    ...context,
+    trigger,
+    anchor: { kind: 'element', element: event.currentTarget },
   };
 }
 
-const createMenuOpen = computed(
-  () => menuContext.value?.anchor?.kind === 'element',
+// The toolbar "+" opens the same create menu as the blank area.
+function openCreateMenu(event) {
+  openMenuFrom(event, 'create', { kind: 'global' });
+}
+
+// Inside a folder, "..." offers the folder's own context menu.
+function openFolderMoreMenu(event) {
+  openMenuFrom(event, 'folder-more', {
+    kind: 'folder',
+    folder: openFolder.value,
+  });
+}
+
+const createMenuOpen = computed(() => menuContext.value?.trigger === 'create');
+const folderMoreMenuOpen = computed(
+  () => menuContext.value?.trigger === 'folder-more',
 );
 
 function openPlaylistMenu(playlist, event) {
   openMenuAt(event, { kind: 'collection', playlist });
+}
+
+// An album copied into a folder becomes a new playlist with its tracks; the
+// shared action resolves the tracks and reports where it went.
+function copyToFolderValue(album, folder, target, position) {
+  return {
+    action: PLAYLIST_MENU_ACTIONS.copyToFolder,
+    playlistId: album.id,
+    folderName: folder.name,
+    target,
+    position,
+  };
 }
 
 function openFolderMenu(folder, event) {
@@ -559,14 +746,22 @@ async function saveFolderName(name) {
   }
 }
 
+// The folder's playlists are deleted with it, so the dialog counts them.
 async function confirmDeleteFolder(folder) {
-  const confirmed = await confirmAction({
-    title: t('playlist.folder.deleteTitle'),
-    subject: folder.name,
-    message: t('playlist.folder.deleteMessage'),
-    confirmLabel: t('playlist.folder.delete'),
-    intent: 'danger',
-  });
+  const count = folderMembers(folder.id).length;
+  // An empty folder takes nothing with it, so it goes without asking. The
+  // dialog requires a message and would otherwise refuse silently.
+  const confirmed =
+    count === 0 ||
+    (await confirmAction({
+      title: t('playlist.folder.deleteTitle'),
+      subject: folder.name,
+      meta: t('playlist.folder.count', { count }, count),
+      message: t('playlist.folder.deleteMessage'),
+      detail: t('playlist.actions.irreversible'),
+      confirmLabel: t('playlist.folder.delete'),
+      intent: 'danger',
+    }));
   if (confirmed) deleteFolder(folder.id);
 }
 
@@ -584,10 +779,20 @@ function handleFolderAction(value) {
   } else if (value.action === PLAYLIST_MENU_ACTIONS.deleteFolder) {
     confirmDeleteFolder(folder);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.moveToFolder) {
-    moveItem(value.playlistId, folder.id, 'inside');
+    moveItem({ id: value.playlistId }, { id: folder.id }, 'inside');
   } else if (value.action === PLAYLIST_MENU_ACTIONS.moveOutOfFolder) {
-    moveItem(value.playlistId, folder.id, 'after');
+    moveItem({ id: value.playlistId }, { id: folder.id }, 'after');
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.playFolder) {
+    playFolder(folder);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.createPlaylistInFolder) {
+    createPlaylistIn(folder.id);
   }
+}
+
+async function createPlaylistIn(folderId) {
+  emit('activateLibrary');
+  const created = await createPlaylistAt({ target: { id: folderId } });
+  if (created) select(created.id);
 }
 
 const FOLDER_ACTIONS = new Set([
@@ -596,6 +801,8 @@ const FOLDER_ACTIONS = new Set([
   PLAYLIST_MENU_ACTIONS.deleteFolder,
   PLAYLIST_MENU_ACTIONS.moveToFolder,
   PLAYLIST_MENU_ACTIONS.moveOutOfFolder,
+  PLAYLIST_MENU_ACTIONS.playFolder,
+  PLAYLIST_MENU_ACTIONS.createPlaylistInFolder,
 ]);
 
 function closePlaylistMenu() {
@@ -622,6 +829,10 @@ function handleMenuSelect(value) {
     contextKind === 'global' &&
     value.action === PLAYLIST_MENU_ACTIONS.createPlaylist
   ) {
+    if (openFolder.value) {
+      createPlaylistIn(openFolder.value.id);
+      return;
+    }
     emit('activateLibrary');
     create();
     return;
@@ -634,20 +845,83 @@ function handleMenuSelect(value) {
 }
 
 function canDragPlaylistItem() {
+  if (hasSearchQuery.value) return false;
+  if (openFolder.value) return folderMembers(openFolder.value.id).length >= 2;
+  return playlistItems.value.length + state.folderLayout.folders.length >= 2;
+}
+
+// A library album can be dropped on any folder or user playlist.
+function canDragLibraryAlbum() {
   return (
     !hasSearchQuery.value &&
-    playlistItems.value.length + state.folderLayout.folders.length >= 2
+    playlistItems.value.length + state.folderLayout.folders.length > 0
   );
 }
 
-function isDraggingFolder(draggedId) {
-  return state.folderLayout.folders.some((folder) => folder.id === draggedId);
+function libraryAlbumRow(album) {
+  return {
+    kind: 'playlist',
+    key: `library:${album.id}`,
+    id: album.id,
+    playlist: album,
+    folderId: null,
+  };
+}
+
+// The same album can show in several rows, so drags track row keys.
+function dragItem(row) {
+  return { id: row.key, row };
+}
+
+function rowRef(row) {
+  return { id: row.id };
+}
+
+const draggedRow = shallowRef(null);
+
+function dropOnRow(draggedKey, targetKey, position, item) {
+  const dragged = draggedRow.value;
+  const target = item?.row;
+  if (!dragged || !target) return;
+  if (position === 'add') {
+    // Copies the dragged tracks through the shared add-to-playlist action.
+    emit('playlistAction', {
+      action: PLAYLIST_MENU_ACTIONS.addToPlaylist,
+      playlistId: dragged.playlist.id,
+      targetPlaylistId: target.playlist.id,
+    });
+    return;
+  }
+  if (dragged.playlist?.kind === 'album') {
+    const folder = state.folderLayout.folders.find(
+      (entry) =>
+        entry.id === (target.kind === 'folder' ? target.id : target.folderId),
+    );
+    if (folder) {
+      emit(
+        'playlistAction',
+        copyToFolderValue(dragged.playlist, folder, rowRef(target), position),
+      );
+    }
+    return;
+  }
+  moveItem(rowRef(dragged), rowRef(target), position);
 }
 
 function isDropAt(row, position) {
   return (
-    dropTargetPlaylistId.value === row.id && dropPosition.value === position
+    dropTargetPlaylistId.value === row.key && dropPosition.value === position
   );
+}
+
+function dropPositionFor(item, ratio) {
+  const row = item.row;
+  const dragged = draggedRow.value;
+  if (!dragged) return null;
+  return playlistDropPosition(row, ratio, {
+    draggingFolder: dragged.kind === 'folder',
+    draggingAlbum: dragged.playlist?.kind === 'album',
+  });
 }
 
 const {
@@ -660,27 +934,39 @@ const {
   drop: dropPlaylist,
   clearDragState,
 } = useDragReorder({
-  onReorder: moveItem,
-  canDrag: canDragPlaylistItem,
-  positionFor: (row, ratio, draggedId) =>
-    playlistDropPosition(row, ratio, {
-      draggingFolder: isDraggingFolder(draggedId),
-    }),
+  onReorder: dropOnRow,
+  positionFor: dropPositionFor,
 });
 
-// closePlaylistMenu() is a caller-side side effect (dismiss any open
-// context menu before a drag starts) — not part of the drag gesture
-// itself, so it stays here rather than inside the shared composable. Only
-// fires when the drag will actually proceed, matching the original
-// guard-then-side-effect order (closing the menu on a rejected drag start
-// would be an observable behavior change, not a pure refactor).
-function startDrag(playlist, event) {
-  if (!canDragPlaylistItem()) {
+// Everything outside the sidebar dims while a collection is dragged.
+const collectionDrag = useCollectionDrag();
+watch(draggingPlaylistId, (key) => {
+  collectionDrag.setActive(Boolean(key));
+  if (!key) draggedRow.value = null;
+});
+onBeforeUnmount(() => collectionDrag.setActive(false));
+
+// The pointer carries a small name chip instead of a snapshot of the row.
+const dragChip = ref(null);
+
+// closePlaylistMenu() runs only once the drag will proceed; a refused drag
+// start leaves an open menu alone.
+function startDrag(row, event) {
+  const allowed = row.key.startsWith('library:')
+    ? canDragLibraryAlbum()
+    : canDragPlaylistItem();
+  if (!allowed) {
     event.preventDefault();
     return;
   }
   closePlaylistMenu();
-  startDragReorder(playlist, event);
+  draggedRow.value = row;
+  startDragReorder(dragItem(row), event);
+  if (!dragChip.value || !event.dataTransfer?.setDragImage) return;
+  dragChip.value.firstElementChild.textContent =
+    row.kind === 'folder' ? row.folder.name : playlistDisplayName(row.playlist);
+  // The chip's own transparent inset keeps the label clear of the pointer.
+  event.dataTransfer.setDragImage(dragChip.value, 0, 0);
 }
 </script>
 
@@ -722,79 +1008,110 @@ function startDrag(playlist, event) {
     </div>
 
     <div class="playlist-sidebar__fixed-navigation">
-      <button
-        v-bind="allTracksTooltipTriggerProps"
-        type="button"
-        class="playlist-sidebar__item"
-        :aria-label="t('playlist.sidebar.all')"
-        :class="{
-          'playlist-sidebar__item--active': isLibraryViewActive('all'),
-        }"
-        :aria-current="isLibraryViewActive('all') ? 'page' : undefined"
-        @click="selectLibraryView('all')"
-        @contextmenu="openGlobalMenu"
+      <div
+        v-if="openFolder"
+        class="playlist-sidebar__folder-header"
+        @contextmenu="openFolderMenu(openFolder, $event)"
       >
-        <span
-          class="playlist-sidebar__item-state-surface"
-          aria-hidden="true"
-        ></span>
-        <span
-          class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
-          aria-hidden="true"
-        >
-          <Library :size="ICON_SIZE" aria-hidden="true" />
-        </span>
-        <span class="playlist-sidebar__info">
-          <span class="playlist-sidebar__label">{{
-            t('playlist.sidebar.all')
-          }}</span>
-        </span>
-        <UiTooltipSurface
-          :open="allTracksTooltipOpen"
-          :text="t('playlist.sidebar.all')"
-          :tooltip-id="allTracksTooltipId"
-          :position="allTracksTooltipPosition"
-          placement="end"
-          :set-element="setAllTracksTooltip"
+        <UiIconButton
+          class="playlist-sidebar__folder-back"
+          :icon="ChevronLeft"
+          :label="t('playlist.folder.back')"
+          @click="closeFolderView"
         />
-      </button>
+        <span class="playlist-sidebar__label playlist-sidebar__folder-title">{{
+          openFolder.name
+        }}</span>
+        <UiIconButton
+          class="playlist-sidebar__folder-more"
+          :icon="Ellipsis"
+          :label="t('library.rail.more', { entity: openFolder.name })"
+          aria-haspopup="menu"
+          :aria-expanded="folderMoreMenuOpen ? 'true' : 'false'"
+          @click="openFolderMoreMenu"
+        />
+      </div>
+      <template v-else>
+        <button
+          v-bind="allTracksTooltipTriggerProps"
+          type="button"
+          class="playlist-sidebar__item"
+          :aria-label="t('playlist.sidebar.all')"
+          :class="{
+            'playlist-sidebar__item--active': isLibraryViewActive('all'),
+          }"
+          :aria-current="isLibraryViewActive('all') ? 'page' : undefined"
+          @click="selectLibraryView('all')"
+          @contextmenu="openGlobalMenu"
+        >
+          <span
+            class="playlist-sidebar__item-state-surface"
+            aria-hidden="true"
+          ></span>
+          <UiCollageThumb
+            class="playlist-sidebar__thumb"
+            plate
+            :can-collage="false"
+            :empty-icon="Library"
+            :size="PLAYLIST_ROW_THUMB_SIZE"
+            background="var(--ui-color-entry)"
+            color="var(--ui-color-entry-foreground)"
+          />
+          <span class="playlist-sidebar__info">
+            <span class="playlist-sidebar__label">{{
+              t('playlist.sidebar.all')
+            }}</span>
+          </span>
+          <UiTooltipSurface
+            :open="allTracksTooltipOpen"
+            :text="t('playlist.sidebar.all')"
+            :tooltip-id="allTracksTooltipId"
+            :position="allTracksTooltipPosition"
+            placement="end"
+            :set-element="setAllTracksTooltip"
+          />
+        </button>
 
-      <button
-        v-bind="localTracksTooltipTriggerProps"
-        type="button"
-        class="playlist-sidebar__item"
-        :aria-label="t('playlist.sidebar.local')"
-        :class="{
-          'playlist-sidebar__item--active': isLibraryViewActive('local'),
-        }"
-        :aria-current="isLibraryViewActive('local') ? 'page' : undefined"
-        @click="selectLibraryView('local')"
-        @contextmenu="openGlobalMenu"
-      >
-        <span
-          class="playlist-sidebar__item-state-surface"
-          aria-hidden="true"
-        ></span>
-        <span
-          class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
-          aria-hidden="true"
+        <button
+          v-bind="localTracksTooltipTriggerProps"
+          type="button"
+          class="playlist-sidebar__item"
+          :aria-label="t('playlist.sidebar.local')"
+          :class="{
+            'playlist-sidebar__item--active': isLibraryViewActive('local'),
+          }"
+          :aria-current="isLibraryViewActive('local') ? 'page' : undefined"
+          @click="selectLibraryView('local')"
+          @contextmenu="openGlobalMenu"
         >
-          <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
-        </span>
-        <span class="playlist-sidebar__info">
-          <span class="playlist-sidebar__label">{{
-            t('playlist.sidebar.local')
-          }}</span>
-        </span>
-        <UiTooltipSurface
-          :open="localTracksTooltipOpen"
-          :text="t('playlist.sidebar.local')"
-          :tooltip-id="localTracksTooltipId"
-          :position="localTracksTooltipPosition"
-          placement="end"
-          :set-element="setLocalTracksTooltip"
-        />
-      </button>
+          <span
+            class="playlist-sidebar__item-state-surface"
+            aria-hidden="true"
+          ></span>
+          <UiCollageThumb
+            class="playlist-sidebar__thumb"
+            plate
+            :can-collage="false"
+            :empty-icon="FolderOpen"
+            :size="PLAYLIST_ROW_THUMB_SIZE"
+            background="var(--ui-color-entry)"
+            color="var(--ui-color-entry-foreground)"
+          />
+          <span class="playlist-sidebar__info">
+            <span class="playlist-sidebar__label">{{
+              t('playlist.sidebar.local')
+            }}</span>
+          </span>
+          <UiTooltipSurface
+            :open="localTracksTooltipOpen"
+            :text="t('playlist.sidebar.local')"
+            :tooltip-id="localTracksTooltipId"
+            :position="localTracksTooltipPosition"
+            placement="end"
+            :set-element="setLocalTracksTooltip"
+          />
+        </button>
+      </template>
 
       <hr
         v-if="hasVisibleCollectionItems"
@@ -864,44 +1181,52 @@ function startDrag(playlist, event) {
             @action="refresh"
           />
         </template>
-        <template
-          v-for="row in visiblePlaylistRows"
-          :key="`${row.kind}:${row.id}`"
-        >
+        <template v-for="row in visiblePlaylistRows" :key="row.key">
           <PlaylistSidebarRow
             v-if="row.kind === 'folder'"
             :playlist="folderRowItem(row.folder)"
             :empty-icon="row.expanded ? FolderOpen : Folder"
             :subtitle="folderSubtitle(row)"
             :compact="compact"
-            :playback-enabled="false"
-            expandable
-            :expanded="row.expanded"
+            folder
+            :artwork-background="folderTone(row.folder).background"
+            :artwork-color="folderTone(row.folder).color"
+            :active-source="collectionPlayback.isActiveSource(row.id)"
+            :playing="collectionPlayback.isPlaying(row.id)"
             :draggable="canDragPlaylistItem()"
-            :dragging="draggingPlaylistId === row.id"
+            :dragging="draggingPlaylistId === row.key"
             :drop-before="isDropAt(row, 'before')"
             :drop-after="isDropAt(row, 'after')"
             :drop-inside="isDropAt(row, 'inside')"
-            @select="toggleFolder(row.folder)"
+            @select="openFolderView(row.folder)"
             @contextmenu="openFolderMenu(row.folder, $event)"
+            @toggle-playback="toggleFolderPlayback(row.folder, $event)"
             @drag-start="startDrag(row, $event)"
-            @drag-over="updateDropTarget(row, $event)"
-            @drag-leave="leaveDropTarget(row, $event)"
-            @drop="dropPlaylist(row, $event)"
+            @drag-over="updateDropTarget(dragItem(row), $event)"
+            @drag-leave="leaveDropTarget(dragItem(row), $event)"
+            @drop="dropPlaylist(dragItem(row), $event)"
             @drag-end="clearDragState"
-          />
-          <p
-            v-else-if="row.kind === 'empty'"
-            class="playlist-sidebar__empty playlist-sidebar__nested"
-            @dragover="updateDropTarget(row, $event)"
-            @dragleave="leaveDropTarget(row, $event)"
-            @drop="dropPlaylist(row, $event)"
           >
-            {{ t('playlist.folder.empty') }}
+            <template #trailing>
+              <UiIconButton
+                class="playlist-sidebar__folder-toggle"
+                :icon="row.expanded ? ChevronDown : ChevronRight"
+                :label="folderToggleLabel(row)"
+                :aria-expanded="row.expanded ? 'true' : 'false'"
+                :disabled="hasSearchQuery"
+                @click="toggleFolder(row.folder)"
+              />
+            </template>
+          </PlaylistSidebarRow>
+          <p
+            v-else-if="row.kind === 'empty-view'"
+            class="playlist-sidebar__empty"
+          >
+            {{ t('playlist.folder.emptyView') }}
           </p>
           <PlaylistSidebarRow
             v-else
-            :class="{ 'playlist-sidebar__nested': row.folderId }"
+            :class="{ 'playlist-sidebar__nested': row.folderId && !openFolder }"
             :playlist="row.playlist"
             :cover-url="row.playlist.coverUrl"
             :cover-tracks="coverTracksFor(row.playlist)"
@@ -911,16 +1236,17 @@ function startDrag(playlist, event) {
             :active-source="isActiveSource(row.playlist)"
             :playing="isPlayingThis(row.playlist)"
             :draggable="canDragPlaylistItem()"
-            :dragging="draggingPlaylistId === row.id"
+            :dragging="draggingPlaylistId === row.key"
             :drop-before="isDropAt(row, 'before')"
             :drop-after="isDropAt(row, 'after')"
+            :drop-inside="isDropAt(row, 'add')"
             @select="selectPlaylist(row.playlist.id)"
             @contextmenu="openPlaylistMenu(row.playlist, $event)"
             @toggle-playback="togglePlayback(row.playlist, $event)"
             @drag-start="startDrag(row, $event)"
-            @drag-over="updateDropTarget(row, $event)"
-            @drag-leave="leaveDropTarget(row, $event)"
-            @drop="dropPlaylist(row, $event)"
+            @drag-over="updateDropTarget(dragItem(row), $event)"
+            @drag-leave="leaveDropTarget(dragItem(row), $event)"
+            @drop="dropPlaylist(dragItem(row), $event)"
             @drag-end="clearDragState"
           />
         </template>
@@ -959,9 +1285,13 @@ function startDrag(playlist, event) {
             :active="entry.item.id === state.selectedId"
             :active-source="isActiveSource(entry.item)"
             :playing="isPlayingThis(entry.item)"
+            :draggable="canDragLibraryAlbum()"
+            :dragging="draggingPlaylistId === `library:${entry.item.id}`"
             @select="selectPlaylist(entry.item.id)"
             @contextmenu="openPlaylistMenu(entry.item, $event)"
             @toggle-playback="togglePlayback(entry.item, $event)"
+            @drag-start="startDrag(libraryAlbumRow(entry.item), $event)"
+            @drag-end="clearDragState"
           />
         </template>
 
@@ -973,6 +1303,10 @@ function startDrag(playlist, event) {
         </p>
       </div>
     </UiScrollLayout>
+
+    <div ref="dragChip" class="playlist-sidebar__drag-chip" aria-hidden="true">
+      <span class="playlist-sidebar__drag-chip-label"></span>
+    </div>
 
     <PlaylistFolderNameModal
       :open="Boolean(renamingFolder)"
@@ -994,9 +1328,6 @@ function startDrag(playlist, event) {
 
 <style scoped>
 .playlist-sidebar {
-  --ui-playlist-navigation-plate-background: var(--ui-color-entry);
-  --ui-playlist-navigation-plate-foreground: var(--ui-color-entry-foreground);
-
   box-sizing: border-box;
   display: flex;
   min-height: 0;
@@ -1204,52 +1535,11 @@ function startDrag(playlist, event) {
   pointer-events: none;
 }
 
+/* UiCollageThumb draws the plate; the row only lifts it above its state
+   surface, as PlaylistSidebarRow does for its own thumbnails. */
 .playlist-sidebar__thumb {
   position: relative;
   z-index: var(--ui-layer-raised);
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: var(--ui-sidebar-artwork-size);
-  height: var(--ui-sidebar-artwork-size);
-  border-radius: var(--ui-radius-sm);
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface-hover) 88%,
-    var(--ui-color-text)
-  );
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  overflow: hidden;
-}
-
-/* Fixed library functions use a stable filled entry plate. The row owns hover
-   and pressed paint; selection is expressed by the row surface. */
-.playlist-sidebar__thumb--accent {
-  border: var(--ui-border-width) solid
-    color-mix(
-      in srgb,
-      var(--ui-playlist-navigation-plate-foreground) 30%,
-      var(--ui-playlist-navigation-plate-background)
-    );
-  background: var(--ui-playlist-navigation-plate-background);
-  background-image: linear-gradient(
-    145deg,
-    color-mix(
-      in srgb,
-      var(--ui-playlist-navigation-plate-background) 90%,
-      var(--ui-playlist-navigation-plate-foreground)
-    ),
-    var(--ui-playlist-navigation-plate-background) 48%,
-    color-mix(
-      in srgb,
-      var(--ui-playlist-navigation-plate-background) 75%,
-      var(--ui-color-canvas)
-    )
-  );
-  color: var(--ui-playlist-navigation-plate-foreground);
 }
 
 .playlist-sidebar__info {
@@ -1275,11 +1565,62 @@ function startDrag(playlist, event) {
   min-width: 0;
 }
 
-/* Folder members sit one step in from the folder row. */
+.playlist-sidebar__drag-chip {
+  position: fixed;
+  inset-block-start: -100vh;
+  inset-inline-start: 0;
+  padding: var(--ui-space-3) 0 0 var(--ui-space-3);
+  pointer-events: none;
+}
+
+/* The drag label reads as a tooltip, so it reuses the tooltip surface. */
+.playlist-sidebar__drag-chip-label {
+  display: block;
+  max-inline-size: var(--ui-tooltip-max-inline-size);
+  padding: var(--ui-space-1) var(--ui-space-2);
+  overflow: hidden;
+  border: var(--ui-border-width) solid var(--ui-tooltip-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-tooltip-background);
+  color: var(--ui-tooltip-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-tooltip-font-size);
+  font-weight: var(--ui-tooltip-font-weight);
+  line-height: var(--ui-tooltip-line-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-sidebar__folder-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--ui-sidebar-row-gap);
+  block-size: var(--ui-sidebar-row-min-height);
+  padding-inline: var(--ui-sidebar-row-padding-inline);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Same size as the toolbar commands, centred on the artwork column. */
+.playlist-sidebar__folder-back,
+.playlist-sidebar__folder-more {
+  --ui-icon-button-size-override: var(--ui-sidebar-toolbar-control-size);
+}
+
+.playlist-sidebar__folder-more {
+  margin-inline-start: auto;
+}
+
+.playlist-sidebar__folder-title {
+  font-weight: var(--ui-type-label-weight);
+}
+
+/* A folder member is a normal row that starts further in, so its hover and
+   selected plate move with it. */
 .playlist-sidebar__list .playlist-sidebar__nested {
-  padding-inline-start: calc(
-    var(--ui-sidebar-row-padding-inline) + var(--ui-space-4)
-  );
+  width: auto;
+  margin-inline-start: var(--ui-space-4);
 }
 
 .playlist-sidebar__empty {
@@ -1288,6 +1629,8 @@ function startDrag(playlist, event) {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Same compact-sidebar collapse as PlaylistSidebarRow.vue's own
@@ -1337,8 +1680,17 @@ function startDrag(playlist, event) {
     display: none;
   }
 
-  .playlist-sidebar__list .playlist-sidebar__nested {
-    padding-inline-start: var(--ui-sidebar-row-padding-block);
+  /* No room for the inline toggle; the folder opens instead. */
+  .playlist-sidebar__folder-toggle,
+  .playlist-sidebar__folder-title,
+  .playlist-sidebar__folder-more {
+    display: none;
+  }
+
+  .playlist-sidebar__folder-header {
+    align-self: center;
+    justify-content: center;
+    padding-inline: 0;
   }
 
   .playlist-sidebar__toolbar {

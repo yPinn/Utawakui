@@ -25,6 +25,8 @@ const state = reactive({
   selectedAlbumReference: null,
   // Sidebar folders: `order` mixes folder ids and loose playlist ids.
   folderLayout: { folders: [], order: [] },
+  // Folder the sidebar has stepped into; session-only, never saved.
+  openFolderId: null,
   error: null,
   actionError: null,
 });
@@ -121,6 +123,17 @@ function applyPlaylists(playlists) {
 function applyFolderResult(result) {
   applyPlaylists(result.playlists);
   state.folderLayout = result.layout;
+  if (!result.layout.folders.some((folder) => folder.id === state.openFolderId))
+    state.openFolderId = null;
+}
+
+function enterFolder(id) {
+  if (state.folderLayout.folders.some((folder) => folder.id === id))
+    state.openFolderId = id;
+}
+
+function leaveFolder() {
+  state.openFolderId = null;
 }
 
 const UNKNOWN_ERROR = Object.freeze({
@@ -453,15 +466,57 @@ function setFolderCollapsed(id, collapsed) {
   ).then(Boolean);
 }
 
-// position: 'before' | 'after' a sidebar row, or 'inside' a folder.
-function moveItem(draggedId, targetId, position = 'before') {
-  if (!draggedId || !targetId || draggedId === targetId) {
+// Opens one folder in place and closes the others in one save; `null`
+// closes every folder.
+function expandFolder(id) {
+  const folders = state.folderLayout.folders;
+  if (id !== null && !folders.some((folder) => folder.id === id)) {
     return Promise.resolve(false);
   }
+  if (folders.every((folder) => folder.collapsed === (folder.id !== id))) {
+    return Promise.resolve(true);
+  }
+  for (const folder of folders) folder.collapsed = folder.id !== id;
   return folderIntent(
-    () => window.Utawakui.movePlaylistItem(draggedId, targetId, position),
+    () => window.Utawakui.expandPlaylistFolder(id),
+    'folder-update',
+  ).then(Boolean);
+}
+
+// Rows are given as { id }. position: 'before' | 'after' a sidebar row, or
+// 'inside' a folder.
+function moveItem(dragged, target, position = 'before') {
+  if (!dragged || !target) return Promise.resolve(false);
+  return folderIntent(
+    () => window.Utawakui.movePlaylistItem(dragged, target, position),
     'folder-move',
   ).then(Boolean);
+}
+
+// A new playlist beside a sidebar row, optionally already filled.
+async function createPlaylistAt({
+  name,
+  trackIds = [],
+  target,
+  position = 'inside',
+  coverFrom = null,
+} = {}) {
+  // Plain copies: reactive arrays do not survive the IPC bridge intact.
+  const request = {
+    name,
+    trackIds: [...trackIds],
+    target: target ? { id: target.id } : null,
+    position,
+    ...(coverFrom ? { coverFrom } : {}),
+  };
+  const result = await folderIntent(
+    () => window.Utawakui.createPlaylistAt(request),
+    'create',
+  );
+  return (
+    result?.playlists.find((playlist) => playlist.id === result.createdId) ??
+    null
+  );
 }
 
 function findPlaylist(id) {
@@ -584,7 +639,11 @@ export function usePlaylists() {
     renameFolder,
     deleteFolder,
     setFolderCollapsed,
+    expandFolder,
     moveItem,
+    createPlaylistAt,
+    enterFolder,
+    leaveFolder,
     addTrack,
     addTracks,
     removeTrack,

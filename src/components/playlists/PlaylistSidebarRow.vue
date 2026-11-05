@@ -30,9 +30,11 @@ const props = defineProps({
   dropBefore: { type: Boolean, default: false },
   dropAfter: { type: Boolean, default: false },
   dropInside: { type: Boolean, default: false },
-  // Folder rows: the select action toggles members instead of navigating.
-  expandable: { type: Boolean, default: false },
-  expanded: { type: Boolean, default: false },
+  // Folder rows show a folder glyph instead of a track collage.
+  folder: { type: Boolean, default: false },
+  // Plate and glyph colours for an artwork-less row, e.g. a folder's hue.
+  artworkBackground: { type: String, default: undefined },
+  artworkColor: { type: String, default: 'var(--ui-color-text-muted)' },
   emptyIcon: { type: [Object, Function], default: null },
 });
 
@@ -150,7 +152,6 @@ function toggleFromArtwork(event) {
       type="button"
       class="playlist-sidebar-row__select"
       :aria-current="active ? 'page' : undefined"
-      :aria-expanded="expandable ? expanded : undefined"
       @click.stop="emit('select')"
       @dblclick.stop="playbackEnabled && emit('togglePlayback', $event)"
     >
@@ -160,11 +161,13 @@ function toggleFromArtwork(event) {
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
       :tracks="coverTracks"
-      :can-collage="playlist.kind !== 'album' && !isArtist && !expandable"
+      :can-collage="playlist.kind !== 'album' && !isArtist && !folder"
       :radius="isArtist ? 'var(--ui-radius-pill)' : undefined"
       :empty-icon="isArtist ? UserRound : emptyIcon"
       :size="PLAYLIST_ROW_THUMB_SIZE"
-      color="var(--ui-color-text-muted)"
+      :background="artworkBackground"
+      :color="artworkColor"
+      :plate="folder"
       :uppercase="false"
       :decorative="false"
     >
@@ -286,6 +289,7 @@ function toggleFromArtwork(event) {
 .playlist-sidebar-row--drop-inside .playlist-sidebar-row__state-surface {
   border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-hover);
+  box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-accent);
 }
 
 .playlist-sidebar-row__drop-indicator {

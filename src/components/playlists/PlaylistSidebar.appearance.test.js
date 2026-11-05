@@ -203,17 +203,20 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
   });
 
   it('keeps filled functional-entry plates distinct while the row owns interaction state', () => {
-    expect(source).toMatch(
-      /\.playlist-sidebar\s*\{[^}]*--ui-playlist-navigation-plate-background:\s*var\(\s*--ui-color-entry\s*\);[^}]*--ui-playlist-navigation-plate-foreground:\s*var\(\s*--ui-color-entry-foreground\s*\);[^}]*\}/su,
-    );
-    expect(source).toMatch(
-      /\.playlist-sidebar__thumb--accent\s*\{[^}]*background:\s*var\(--ui-playlist-navigation-plate-background\);[^}]*color:\s*var\(--ui-playlist-navigation-plate-foreground\);/su,
-    );
+    // Library entries and folders share the UiCollageThumb plate variant.
+    const plates = source
+      .match(/<UiCollageThumb\b[\s\S]*?\/>/gu)
+      .filter((tag) => /\splate\b/u.test(tag));
+    expect(plates).toHaveLength(2);
+    for (const tag of plates) {
+      expect(tag).toContain('background="var(--ui-color-entry)"');
+      expect(tag).toContain('color="var(--ui-color-entry-foreground)"');
+      expect(tag).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
+    }
+    expect(rowSource).toContain(':plate="folder"');
+    expect(source).not.toContain('--ui-playlist-navigation-plate');
     expect(source).not.toMatch(
-      /\.playlist-sidebar__item:where\(:hover\)\s+\.playlist-sidebar__thumb--accent/u,
-    );
-    expect(source).not.toMatch(
-      /\.playlist-sidebar__item:active\s+\.playlist-sidebar__thumb--accent/u,
+      /\.playlist-sidebar__item:(?:where\(:hover\)|active)\s+\.playlist-sidebar__thumb/u,
     );
   });
 

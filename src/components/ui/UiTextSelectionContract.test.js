@@ -24,6 +24,9 @@ describe('production text selection contract', () => {
     ['../bgm/BgmPlayer.vue', '.bgm-player__status'],
     ['../layout/AppConfirmationModal.vue', '.app-confirmation__meta'],
     ['../layout/AppFolderSection.vue', '.app-folder-section__meta'],
+    ['../playlists/PlaylistSidebar.vue', '.playlist-sidebar__folder-header'],
+    ['../playlists/PlaylistSidebar.vue', '.playlist-sidebar__empty'],
+    ['../playlists/PlaylistSidebarRow.vue', '.playlist-sidebar-row'],
     [
       '../library/ReleaseCatalogBatchActions.vue',
       '.release-batch-actions__status',
