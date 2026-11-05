@@ -1,4 +1,48 @@
 {
+  "PLATFORM_VIDEO_FAILED": {
+    "title": "Action failed",
+    "message": "The video pairing action could not be completed. Try again."
+  },
+  "PLATFORM_VIDEO_NOT_CONFIGURED": {
+    "title": "Authorization not configured",
+    "message": "YouTube authorization is not configured in this build."
+  },
+  "PLATFORM_VIDEO_SECURE_STORAGE": {
+    "title": "Authorization cannot be stored",
+    "message": "YouTube authorization cannot be stored securely."
+  },
+  "PLATFORM_VIDEO_CANCELLED": {
+    "title": "Authorization canceled",
+    "message": "YouTube authorization was canceled."
+  },
+  "PLATFORM_VIDEO_TIMED_OUT": {
+    "title": "Authorization timed out",
+    "message": "Start YouTube authorization again."
+  },
+  "PLATFORM_VIDEO_AUTH_REQUIRED": {
+    "title": "Reconnect YouTube",
+    "message": "YouTube authorization expired. Reconnect in Settings."
+  },
+  "PLATFORM_VIDEO_UNAVAILABLE": {
+    "title": "Unable to read data",
+    "message": "Video or authorization data is unavailable. Try again shortly."
+  },
+  "PLATFORM_VIDEO_INVALID_VIDEO": {
+    "title": "Invalid video link",
+    "message": "Paste an official video link for the selected platform."
+  },
+  "PLATFORM_VIDEO_WRONG_CHANNEL": {
+    "title": "Channel mismatch",
+    "message": "Use the connected YouTube channel and a video it owns."
+  },
+  "PLATFORM_VIDEO_MISSING_SESSION": {
+    "title": "Session not found",
+    "message": "Reopen the saved session record."
+  },
+  "PLATFORM_VIDEO_BUSY": {
+    "title": "Action in progress",
+    "message": "Wait for the current account action to finish."
+  },
   "ANNOUNCEMENT_SEEN_VERSION_INVALID": {
     "title": "Could not save announcement status",
     "message": "This setting is not valid. Choose again."

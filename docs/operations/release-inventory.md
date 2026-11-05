@@ -68,6 +68,7 @@ network install or signed-installer acceptance; see the
   The other five entry bundles and unpack allowlist are unchanged.
   See [ADR 0030](../adr/0030-release-runtime-bundles.md) and
   [ADR 0031](../adr/0031-scoped-release-private-symbols.md).
+- 場次影片配對使用現有 Main／preload／renderer bundle。安裝包無平台憑證，手動配對可直接使用。實測配置見[平台影片配對](../contracts/performance-session-preparation.md#平台影片配對)。
 - Album download batches: `electron/main/releaseDownloadBatches.js` uses the
   Main bundle's dependency closure; its adjacent tests stay excluded.
   The fixed `library:release-download-batch` IPC uses the existing main preload.

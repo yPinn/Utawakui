@@ -1,4 +1,48 @@
 {
+  "PLATFORM_VIDEO_FAILED": {
+    "title": "操作未完成",
+    "message": "目前無法完成影片配對操作，請再試一次。"
+  },
+  "PLATFORM_VIDEO_NOT_CONFIGURED": {
+    "title": "尚未設定授權",
+    "message": "此版本尚未設定 YouTube 授權。"
+  },
+  "PLATFORM_VIDEO_SECURE_STORAGE": {
+    "title": "無法保存授權",
+    "message": "目前無法安全保存 YouTube 授權。"
+  },
+  "PLATFORM_VIDEO_CANCELLED": {
+    "title": "已取消授權",
+    "message": "YouTube 授權已取消。"
+  },
+  "PLATFORM_VIDEO_TIMED_OUT": {
+    "title": "授權逾時",
+    "message": "請重新開始 YouTube 授權。"
+  },
+  "PLATFORM_VIDEO_AUTH_REQUIRED": {
+    "title": "請重新連接",
+    "message": "YouTube 授權已失效，請從設定重新連接。"
+  },
+  "PLATFORM_VIDEO_UNAVAILABLE": {
+    "title": "暫時無法讀取",
+    "message": "目前無法讀取影片或授權資料，請稍後再試。"
+  },
+  "PLATFORM_VIDEO_INVALID_VIDEO": {
+    "title": "影片連結無效",
+    "message": "請貼上所選平台的正式影片連結。"
+  },
+  "PLATFORM_VIDEO_WRONG_CHANNEL": {
+    "title": "頻道不符",
+    "message": "請使用已連接的 YouTube 頻道與該頻道的影片。"
+  },
+  "PLATFORM_VIDEO_MISSING_SESSION": {
+    "title": "找不到場次",
+    "message": "請重新開啟已保存的場次紀錄。"
+  },
+  "PLATFORM_VIDEO_BUSY": {
+    "title": "操作進行中",
+    "message": "請等候目前的帳號操作完成。"
+  },
   "ANNOUNCEMENT_SEEN_VERSION_INVALID": {
     "title": "無法儲存公告狀態",
     "message": "這個設定無效，請重新選擇。"

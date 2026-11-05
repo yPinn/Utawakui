@@ -254,3 +254,14 @@ Sidebar 歌單／專輯選單提供目的地明確的「加入演出待唱」，
 單曲右鍵選單（曲庫、試聽、一般佇列、目前歌曲）及主區歌單／專輯既有更多操作選單也提供明確的「加入演出待唱」。所有入口透過 usePerformanceQueueActions 委派同一個 plan owner：單曲只送 trackId，集合只送 sourceId；不呼叫播放器，不更動一般 queue。單曲即使正在播放或已排入也可再次加入，每次都是新的 queued itemId；新增後依原單曲編輯行為選取新 occurrence，與目前播放 occurrence 分開。保存中入口停用並有 intent guard；失敗由原 plan error owner 呈現。
 
 僅 Right Dock 的目前演出操作以靠右群組排列，主要播放／完成動作在最右側，DOM 與鍵盤順序維持次要到主要。次要停止及開始播放使用 UiIconButton 的既有 tooltip、無障礙名稱、尺寸與間距 tokens；標記完成保留明確文字。主區集合與演出工作區維持原操作順序、按鈕樣式與對齊，只新增明確的加入演出待唱入口。
+
+### 平台影片配對
+
+設定管理 YouTube 帳號連接，場次紀錄管理選片、貼連結、更換、移除與開啟。每場每平台在本機保存一部影片配對。查詢可用時顯示標題、頻道、影片時間與片長。YouTube 選片限已授權頻道，保存前核對歸屬。解除授權會移除已驗證的配對，手動連結仍可查看。Twitch 使用手動 VOD 連結，查詢失敗時仍可保存。配對與媒體下載使用獨立流程及憑證。
+
+桌面版已驗證 Twitch 手動連結的保存、更換與移除，以及場次捲動和匯出／配對視窗的遮蓋。平台查詢已用測試資料驗證，實際平台請求待以下憑證。
+
+- YouTube 在 Google Cloud 啟用 YouTube Data API v3，建立 Desktop app OAuth 用戶端，設定測試使用者及 `https://www.googleapis.com/auth/youtube.readonly`。啟動前設置 `UTAWAKUI_YOUTUBE_OAUTH_CLIENT_ID`，依桌面用戶端設定補 `UTAWAKUI_YOUTUBE_OAUTH_CLIENT_SECRET`。驗證連接、選片和解除連結。[Google 桌面 OAuth](https://developers.google.com/identity/protocols/oauth2/native-app)
+- Twitch 設置同一測試應用程式的 `UTAWAKUI_TWITCH_CLIENT_ID` 和有效的 `UTAWAKUI_TWITCH_APP_ACCESS_TOKEN`，用可查詢的 VOD 驗證影片資訊。[Twitch Get Videos](https://dev.twitch.tv/docs/api/reference/#get-videos)
+
+公開下載版可直接使用手動配對，安裝包無測試憑證。若日後啟用 YouTube 選片，以正式桌面用戶端走 Google 驗證，每位使用者自行授權，API 配額仍由同一專案承擔。需要更多配額時循官方流程申請，勿以多專案分流規避配額。若加入 Twitch 自動查詢，先驗證公開桌面用戶端可用的使用者授權流程，或另評估由伺服器保存應用程式憑證。[YouTube 配額與稽核](https://developers.google.com/youtube/v3/guides/quota_and_compliance_audits) [YouTube 開發者政策](https://developers.google.com/youtube/terms/developer-policies-guide) [Twitch 授權流程](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/)

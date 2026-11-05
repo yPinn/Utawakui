@@ -237,6 +237,12 @@ const {
 } = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
 const { createYoutubeLoginStore } = require('./lib/youtubeLoginStore');
+const { t } = require('./lib/i18n');
+const {
+  createYoutubeDesktopAuthorization,
+} = require('./lib/youtubeDesktopAuthorization');
+const { createSessionPlatformVideos } = require('./lib/sessionPlatformVideos');
+const { createTwitchVodMetadata } = require('./lib/twitchVodMetadata');
 const { registerYoutubeLoginHandlers } = require('./main/youtubeLoginHandlers');
 const {
   createReleaseCatalogService,
@@ -1502,6 +1508,21 @@ if (!gotSingleInstanceLock) {
       sessionHistoryService,
       getReleaseScope,
       withPlayableRelease: releaseOrganizationRuntime.withPlayableCollection,
+      platformVideos: createSessionPlatformVideos({
+        directory: app.getPath('userData'),
+        safeStorage,
+        openExternal: (url) => shell.openExternal(url),
+        getTwitchVod: createTwitchVodMetadata({
+          clientId: process.env.UTAWAKUI_TWITCH_CLIENT_ID,
+          accessToken: process.env.UTAWAKUI_TWITCH_APP_ACCESS_TOKEN,
+        }),
+        youtube: createYoutubeDesktopAuthorization({
+          clientId: process.env.UTAWAKUI_YOUTUBE_OAUTH_CLIENT_ID,
+          clientSecret: process.env.UTAWAKUI_YOUTUBE_OAUTH_CLIENT_SECRET,
+          openExternal: (url) => shell.openExternal(url),
+          t,
+        }),
+      }),
     });
 
     registerBgmStandbyPlanHandlers({

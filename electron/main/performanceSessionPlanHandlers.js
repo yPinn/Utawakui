@@ -10,6 +10,9 @@ const {
 } = require('../lib/performanceSessionPlan');
 const { createPlanIpcRunner } = require('./ipcErrorBoundary');
 const {
+  registerSessionPlatformVideoHandlers,
+} = require('./sessionPlatformVideoHandlers');
+const {
   registerPerformanceSessionHistoryHandlers,
 } = require('./performanceSessionHistoryHandlers');
 const {
@@ -84,6 +87,7 @@ function registerPerformanceSessionPlanHandlers({
   getMainWindow,
   getReleaseScope = null,
   withPlayableRelease = null,
+  platformVideos = null,
 }) {
   let scan = null;
   const recoveredDirectories = new Set();
@@ -290,6 +294,14 @@ function registerPerformanceSessionPlanHandlers({
     dialog,
     getMainWindow,
   });
+  if (platformVideos) {
+    registerSessionPlatformVideoHandlers({
+      ipcMain,
+      service: platformVideos,
+      operationContext,
+      recordDiagnostic,
+    });
+  }
 }
 
 module.exports = { registerPerformanceSessionPlanHandlers };

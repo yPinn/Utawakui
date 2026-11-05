@@ -183,6 +183,14 @@ describe('packaged dependency boundary', () => {
     ).toBe(false);
     expect(bundledSources).toContain('electron/main.js');
     expect(bundledSources).toContain('electron/main/spoutHelperEntry.js');
+    expect(bundledSources).toContain(
+      'electron/main/sessionPlatformVideoHandlers.js',
+    );
+    expect(bundledSources).toContain(
+      'electron/lib/youtubeDesktopAuthorization.js',
+    );
+    expect(bundledSources).toContain('electron/lib/sessionPlatformVideos.js');
+    expect(bundledSources).toContain('electron/lib/twitchVodMetadata.js');
     expect(bundledSources).toContain('shared/sessionExportTimepoints.mjs');
     expect(bundledSources).toContain('shared/sessionPerformedItems.mjs');
     expect([...bundledSources].some((file) => /\.test\./u.test(file))).toBe(

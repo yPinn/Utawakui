@@ -63,6 +63,7 @@ const props = defineProps({
     default: 'list',
     validator: (value) => ['list', 'compact'].includes(value),
   },
+  headerScrollShadow: { type: Boolean, default: true },
   // Window rows once the list is longer than this; 0 renders every row.
   virtualizeAbove: { type: Number, default: 0 },
 });
@@ -357,7 +358,14 @@ function reorderHeaderFromKeyboard(column, event) {
     <span v-if="initialLoading" class="ui-visually-hidden" role="status">{{
       t('track.table.loading')
     }}</span>
-    <div ref="header" class="library-track-table__header" :style="gridStyle">
+    <div
+      ref="header"
+      class="library-track-table__header"
+      :class="{
+        'library-track-table__header--scroll-shadow': headerScrollShadow,
+      }"
+      :style="gridStyle"
+    >
       <span
         v-for="column in layout.columns"
         :key="column.role"
@@ -640,11 +648,14 @@ function reorderHeaderFromKeyboard(column, event) {
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);
   line-height: var(--ui-type-label-line-height);
-  container-type: scroll-state;
 }
 
 /* Once stuck, the header casts the scroll-edge shadow onto the rows below. */
-.library-track-table__header::after {
+.library-track-table__header--scroll-shadow {
+  container-type: scroll-state;
+}
+
+.library-track-table__header--scroll-shadow::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -657,7 +668,7 @@ function reorderHeaderFromKeyboard(column, event) {
 }
 
 @container scroll-state(stuck: top) {
-  .library-track-table__header::after {
+  .library-track-table__header--scroll-shadow::after {
     opacity: 1;
   }
 }

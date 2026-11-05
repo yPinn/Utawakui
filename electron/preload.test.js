@@ -266,6 +266,16 @@ const MAIN_INVOKE_CHANNELS = [
   'performance-session-plan:archive',
   'performance-session-plan:create-archive-playlist',
   'performance-session-plan:get-session',
+  'session-platform-video:status',
+  'session-platform-video:connect',
+  'session-platform-video:cancel',
+  'session-platform-video:disconnect',
+  'session-platform-video:get',
+  'session-platform-video:refresh-metadata',
+  'session-platform-video:candidates',
+  'session-platform-video:save',
+  'session-platform-video:remove',
+  'session-platform-video:open',
   'performance-session-plan:preview-playlist',
   'performance-session-plan:save-playlist',
   'performance-session-plan:save-marker-csv',
@@ -752,6 +762,25 @@ describe('main preload bridge', () => {
         { epoch: 'epoch', playbackRevision: 2, trackId: 'song' },
       ],
     ]);
+  });
+  it('forwards only a local session and selected video to the pairing handler', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.saveSessionPlatformVideo({
+      sessionId: 'show',
+      platform: 'twitch',
+      url: 'https://www.twitch.tv/videos/123',
+      token: 'ignored',
+      path: 'ignored',
+    });
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'session-platform-video:save',
+      {
+        sessionId: 'show',
+        platform: 'twitch',
+        url: 'https://www.twitch.tv/videos/123',
+        candidateId: undefined,
+      },
+    );
   });
   it('requires only Electron, as a sandboxed preload must', () => {
     // Any other require fails at load and leaves the window without a bridge.

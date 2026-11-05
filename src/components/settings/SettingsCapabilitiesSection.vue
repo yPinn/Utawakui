@@ -155,7 +155,7 @@ watch(
     if (!section) return;
     clearSettingsSection();
     await revealSettingsTarget(
-      ['application', 'support'].includes(section)
+      ['application', 'support', 'platform-accounts'].includes(section)
         ? `settings-${section}`
         : `settings-group-${section}`,
     );

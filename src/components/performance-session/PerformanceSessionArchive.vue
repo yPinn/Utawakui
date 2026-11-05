@@ -23,6 +23,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import UiStack from '../ui/UiStack.vue';
 import { t } from '../../utils/i18n.js';
+import PerformanceSessionPlatformVideos from './PerformanceSessionPlatformVideos.vue';
 
 const props = defineProps({
   sessionId: { type: String, required: true },
@@ -185,6 +186,7 @@ const fields = computed(() => [
             @click="timeline.openForArrangement(session.id)"
             >{{ t('obs.export.title') }}</UiButton
           >
+          <PerformanceSessionPlatformVideos :session-id="session.id" />
         </template>
       </CollectionActionRail>
       <UiNotice
@@ -205,6 +207,8 @@ const fields = computed(() => [
           v-else
           collection-kind="performance-archive"
           :density="embedded ? 'compact' : 'list'"
+          :header-scroll-shadow="!embedded"
+          :class="{ 'performance-archive__embedded-table': embedded }"
           :entries="tableEntries"
           :content-key="session.id"
         />
@@ -221,6 +225,10 @@ const fields = computed(() => [
 }
 .performance-archive > .ui-btn {
   justify-self: start;
+}
+.performance-archive__embedded-table {
+  /* Close the modal scrollport's focus inset when the table header sticks. */
+  --ui-folder-sticky-offset: calc(-1 * var(--ui-modal-focus-safe-inset));
 }
 .performance-archive__name {
   margin: 0;

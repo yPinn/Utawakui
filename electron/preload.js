@@ -1537,6 +1537,36 @@ contextBridge.exposeInMainWorld('Utawakui', {
     }),
   getPerformanceSession: (sessionId) =>
     ipcRenderer.invoke('performance-session-plan:get-session', { sessionId }),
+  getPlatformVideoAccount: () =>
+    ipcRenderer.invoke('session-platform-video:status'),
+  connectPlatformVideoAccount: () =>
+    ipcRenderer.invoke('session-platform-video:connect'),
+  cancelPlatformVideoAccount: () =>
+    ipcRenderer.invoke('session-platform-video:cancel'),
+  disconnectPlatformVideoAccount: () =>
+    ipcRenderer.invoke('session-platform-video:disconnect'),
+  getSessionPlatformVideos: (sessionId) =>
+    ipcRenderer.invoke('session-platform-video:get', { sessionId }),
+  refreshSessionPlatformVideo: (sessionId) =>
+    ipcRenderer.invoke('session-platform-video:refresh-metadata', {
+      sessionId,
+    }),
+  listSessionPlatformVideos: (sessionId) =>
+    ipcRenderer.invoke('session-platform-video:candidates', { sessionId }),
+  saveSessionPlatformVideo: (intent) =>
+    ipcRenderer.invoke('session-platform-video:save', {
+      sessionId: intent?.sessionId,
+      platform: intent?.platform,
+      url: intent?.url,
+      candidateId: intent?.candidateId,
+    }),
+  removeSessionPlatformVideo: (sessionId, platform) =>
+    ipcRenderer.invoke('session-platform-video:remove', {
+      sessionId,
+      platform,
+    }),
+  openSessionPlatformVideo: (sessionId, platform) =>
+    ipcRenderer.invoke('session-platform-video:open', { sessionId, platform }),
   createPerformanceArchivePlaylist: (sessionId) =>
     ipcRenderer.invoke('performance-session-plan:create-archive-playlist', {
       sessionId,

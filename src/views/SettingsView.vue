@@ -5,12 +5,14 @@ import CaptureOutputSettings from '../components/settings/CaptureOutputSettings.
 import LyricsResearchSettingsBlock from '../components/settings/LyricsResearchSettingsBlock.vue';
 import SettingsLibrarySection from '../components/settings/SettingsLibrarySection.vue';
 import SettingsSupportSection from '../components/settings/SettingsSupportSection.vue';
+import PlatformVideoAccountsSection from '../components/settings/PlatformVideoAccountsSection.vue';
 </script>
 
 <template>
   <div class="settings-view">
     <SettingsApplicationSection />
     <SettingsLibrarySection />
+    <PlatformVideoAccountsSection />
     <SettingsCapabilitiesSection>
       <template #processing-end><LyricsResearchSettingsBlock /></template>
       <template #output-end><CaptureOutputSettings /></template>

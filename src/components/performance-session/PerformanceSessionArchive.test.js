@@ -98,6 +98,7 @@ describe('archive collection document', () => {
     expect(html).toContain('匯出時間點');
     expect(html).not.toContain('加入演出待唱');
     expect(html).toContain('collection-action-rail__actions');
+    expect(html).toContain('library-track-table__header--scroll-shadow');
     expect(html).not.toContain('collection-action-rail__tools');
     expect(html).not.toContain('播放此封存場次');
     expect(html).not.toContain('performance-archive__actions');
@@ -105,6 +106,9 @@ describe('archive collection document', () => {
     expect(embedded).not.toContain('另存本場歌單');
     expect(embedded).not.toContain('app-folder-dossier');
     expect(embedded).toContain('library-track-table--compact');
+    expect(embedded).not.toContain(
+      'library-track-table__header--scroll-shadow',
+    );
     expect(embedded).toContain('library-track-row--compact-stacked');
     expect(embedded).not.toContain('library-track-row--compact-inline');
     expect(embedded).toContain('Archived show');
@@ -117,6 +121,7 @@ describe('archive collection document', () => {
     expect(embedded).toContain('library-track-row__status-detail');
     expect(embedded).toContain('演出狀態');
     expect(embedded).toContain('匯出時間點');
+    expect(embedded).toContain('配對影片');
   });
   it('retains the marker-only empty state', async () => {
     fixture.archive.session.value = {

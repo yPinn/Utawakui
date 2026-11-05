@@ -195,6 +195,8 @@ FFmpeg單選不下載或切換，按明確使用／準備才執行；已保存�
 
 五份正式功能告知保留wide／medium的閱讀範圍；啟用同意及危險操作確認仍在正文後的固定footer，以取消在前、確認在後。公告沿原notice閱讀殼，不為了使用頂部工作區新增無作用的按鈕。
 
+平台帳號區提供 YouTube 連接、取消授權及解除連結。解除前確認對已驗證配對的影響。Twitch 提示前往場次紀錄貼連結。選片與實測方式見[平台影片配對](performance-session-preparation.md#平台影片配對)。
+
 ## Verification
 
 `useAppNotifications.test.js` 驗證共用 owner、operation 替換、stale callback 與錯誤收斂。

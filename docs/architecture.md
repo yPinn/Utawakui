@@ -216,6 +216,8 @@
 - `performanceSessionArchive.js` 在同一文件保存 sessionId、逐次時間軸與封存，同次 atomic write 封存並輪替空白新場；舊 id 重試不清新場。`performanceSessionHistoryHandlers.js` 序列化 archive／指定場次讀取／預覽與歌單保存；確認時重算 token，`playlists.savePerformancePlaylist` 一次保存完整歌單與冪等 key。收場建立歌單以指定的已封存場次解析原始曲目，沿用歌單原子保存與場次識別去重。兩步的中斷由曲庫無對應歌單的紀錄入口恢復。現有 runtime globs 封裝相關模組。
 - `bgmStandbyPlan.js` 原子保存 `bgm-standby.json`：單一 track id、position 與音量／mute／fade／Dim／pre-roll／post-roll（loop 固定）。Schema v3 預設 fade-out 0.6s、pre-roll 0.75s、post-roll 1.0s、fade-in 1.0s、音量 0.25、Talk −12 dB；Talk 不持久化。
 
+- `sessionPlatformVideos.js` 在 userData 保存配對，YouTube 授權另由 `safeStorage` 加密保存。Main 處理系統瀏覽器 PKCE 回呼、唯讀查詢和官方網址驗證，renderer 只接收帳號狀態與影片摘要。實測和發行邊界見[平台影片配對](contracts/performance-session-preparation.md#平台影片配對)。
+
 ### OBS 與資源監視
 
 - `obsAdapter.js` 只在 `obs-integration` 啟用且期望連線時 lazy 載入 SDK，只讀版本、直播／錄影狀態與時間戳；握手與請求有期限，逾時淘汰 transport 並退避重連，舊連線不得回寫。失敗分類為有限的公開原因，不暴露 endpoint 或例外。密碼只以 `safeStorage` 加密存在獨立檔案，不可用時拒絕設定。
