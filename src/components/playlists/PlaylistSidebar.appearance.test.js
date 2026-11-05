@@ -39,16 +39,19 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     );
     expect(source.match(/@contextmenu="openGlobalMenu"/gu)).toHaveLength(3);
     expect(
-      source.match(/@contextmenu="openPlaylistMenu\(playlist, \$event\)"/gu),
+      source.match(
+        /@contextmenu="openPlaylistMenu\(row\.playlist, \$event\)"/gu,
+      ),
     ).toHaveLength(1);
+    expect(source).toContain(
+      '@contextmenu="openFolderMenu(row.folder, $event)"',
+    );
     expect(source).toContain(
       '@contextmenu="openPlaylistMenu(entry.item, $event)"',
     );
     expect(source).toContain("label: '建立播放清單'");
     expect(source).toContain("label: '建立資料夾'");
-    expect(source).toMatch(
-      /label: '建立資料夾',[\s\S]*?disabledReason: '尚未支援',[\s\S]*?disabled: true,/u,
-    );
+    expect(source).not.toContain('尚未支援');
   });
 
   it('keeps commands and global destinations fixed while only collections own scrolling', () => {
@@ -67,9 +70,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     const allTracksAt = source.indexOf('aria-label="全部曲目"');
     const localTracksAt = source.indexOf('aria-label="本機檔案"');
     const scrollAt = source.indexOf('<UiScrollLayout');
-    const collectionsAt = source.indexOf(
-      'v-for="playlist in visiblePlaylistItems"',
-    );
+    const collectionsAt = source.indexOf('v-for="row in visiblePlaylistRows"');
 
     expect(toolbarAt).toBeLessThan(fixedNavigationAt);
     expect(fixedNavigationAt).toBeLessThan(allTracksAt);
@@ -230,7 +231,8 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source.match(/variant="command"/gu)).toHaveLength(2);
     expect(source).not.toContain('variant="entry"');
     expect(source.match(/:icon="Plus"/gu)).toHaveLength(2);
-    expect(source.match(/label="新增播放清單"/gu)).toHaveLength(2);
+    expect(source.match(/label="新增"/gu)).toHaveLength(2);
+    expect(source.match(/@click="openCreateMenu"/gu)).toHaveLength(2);
     expect(source).not.toMatch(
       /<button[\s\S]*?class="playlist-sidebar__toolbar-action/u,
     );
@@ -292,9 +294,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
   });
 
   it('mixes albums and artists in one reference tier after playlists and loads it after the library', () => {
-    const playlistsAt = source.indexOf(
-      'v-for="playlist in visiblePlaylistItems"',
-    );
+    const playlistsAt = source.indexOf('v-for="row in visiblePlaylistRows"');
     const referenceAt = source.indexOf(
       'v-for="entry in visibleReferenceEntries"',
     );

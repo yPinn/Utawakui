@@ -90,6 +90,10 @@ describe('PLAYLIST_MENU_ACTIONS', () => {
       delete: 'delete',
       createPlaylist: 'create-playlist',
       createFolder: 'create-folder',
+      renameFolder: 'rename-folder',
+      deleteFolder: 'delete-folder',
+      moveToFolder: 'move-to-folder',
+      moveOutOfFolder: 'move-out-of-folder',
       convertKind: 'convert-kind',
       download: 'download',
     });

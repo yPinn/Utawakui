@@ -6,13 +6,12 @@
     "artist": "藝人",
     "create": "建立播放清單",
     "createFolder": "建立資料夾",
-    "notSupported": "尚未支援",
     "addToQueue": "加入一般佇列",
     "addToOther": "新增至別的播放清單",
     "filters": "播放清單篩選與集合",
     "searchLabel": "搜尋播放清單、專輯或曲目",
     "search": "搜尋",
-    "new": "新增播放清單",
+    "new": "新增",
     "collections": "播放清單與參照內容",
     "loading": "正在讀取播放清單與參照內容",
     "readFailed": "播放清單讀取未完成",
@@ -63,7 +62,11 @@
     "operationMessage": "操作未完成，請再試一次。",
     "tryAgain": "請再試一次。",
     "restartToReorder": "請重新啟動應用程式後再調整播放清單順序。",
-    "reorderNotSavedTitle": "播放清單排序未儲存"
+    "reorderNotSavedTitle": "播放清單排序未儲存",
+    "createFolderTitle": "建立資料夾失敗",
+    "renameFolderTitle": "重新命名資料夾失敗",
+    "deleteFolderTitle": "刪除資料夾失敗",
+    "updateFolderTitle": "更新資料夾失敗"
   },
   "defaultNamePrefix": "播放清單 #",
   "actions": {
@@ -94,6 +97,16 @@
     "delete": "刪除"
   },
   "folder": {
-    "defaultName": "新資料夾"
+    "defaultName": "新資料夾",
+    "count": "{count} 個播放清單",
+    "rename": "重新命名",
+    "renameTitle": "重新命名資料夾",
+    "name": "名稱",
+    "delete": "刪除資料夾",
+    "deleteTitle": "刪除資料夾？",
+    "deleteMessage": "裡面的播放清單會移到外面，不會被刪除。",
+    "moveTo": "移到資料夾",
+    "moveOut": "移出資料夾",
+    "empty": "把播放清單拖曳到這裡。"
   }
 }

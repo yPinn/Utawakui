@@ -36,6 +36,7 @@ beforeEach(() => {
   vi.useFakeTimers();
   owners.playlists = reactive({
     playlists: [],
+    folderLayout: { folders: [], order: [] },
     isLoading: true,
     hasLoaded: false,
     selectedId: null,

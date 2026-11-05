@@ -141,7 +141,7 @@ describe('PlaylistSidebarRow aligned collection interaction', () => {
   });
 
   it('falls back to the person glyph instead of an album cover for artists', () => {
-    expect(source).toContain(':empty-icon="isArtist ? UserRound : null"');
+    expect(source).toContain(':empty-icon="isArtist ? UserRound : emptyIcon"');
     const mounted = mount(PlaylistSidebarRow, {
       playlist: { id: 'artist-0123456789abcdef', kind: 'artist', name: 'Eve' },
       subtitle: '藝人',

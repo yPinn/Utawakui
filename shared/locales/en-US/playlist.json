@@ -6,13 +6,12 @@
     "artist": "Artist",
     "create": "Create playlist",
     "createFolder": "Create folder",
-    "notSupported": "Not supported yet",
     "addToQueue": "Add to play queue",
     "addToOther": "Add to another playlist",
     "filters": "Playlist filters and collections",
     "searchLabel": "Search playlists, albums or tracks",
     "search": "Search",
-    "new": "New playlist",
+    "new": "Create",
     "collections": "Playlists and references",
     "loading": "Loading playlists and references",
     "readFailed": "Playlists didn't finish loading",
@@ -63,7 +62,11 @@
     "operationMessage": "The action didn't finish. Try again.",
     "tryAgain": "Try again.",
     "restartToReorder": "Restart the app before reordering playlists.",
-    "reorderNotSavedTitle": "Playlist order not saved"
+    "reorderNotSavedTitle": "Playlist order not saved",
+    "createFolderTitle": "Couldn't create folder",
+    "renameFolderTitle": "Couldn't rename folder",
+    "deleteFolderTitle": "Couldn't delete folder",
+    "updateFolderTitle": "Couldn't update folder"
   },
   "defaultNamePrefix": "Playlist #",
   "actions": {
@@ -94,6 +97,16 @@
     "delete": "Delete"
   },
   "folder": {
-    "defaultName": "New folder"
+    "defaultName": "New folder",
+    "count": "{count} playlist | {count} playlists",
+    "rename": "Rename",
+    "renameTitle": "Rename folder",
+    "name": "Name",
+    "delete": "Delete folder",
+    "deleteTitle": "Delete folder?",
+    "deleteMessage": "Playlists inside move out of the folder and aren't deleted.",
+    "moveTo": "Move to folder",
+    "moveOut": "Remove from folder",
+    "empty": "Drag playlists here."
   }
 }

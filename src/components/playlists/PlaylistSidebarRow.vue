@@ -29,6 +29,11 @@ const props = defineProps({
   dragging: { type: Boolean, default: false },
   dropBefore: { type: Boolean, default: false },
   dropAfter: { type: Boolean, default: false },
+  dropInside: { type: Boolean, default: false },
+  // Folder rows: the select action toggles members instead of navigating.
+  expandable: { type: Boolean, default: false },
+  expanded: { type: Boolean, default: false },
+  emptyIcon: { type: [Object, Function], default: null },
 });
 
 const emit = defineEmits([
@@ -125,6 +130,7 @@ function toggleFromArtwork(event) {
       'playlist-sidebar-row--dragging': dragging,
       'playlist-sidebar-row--drop-before': dropBefore,
       'playlist-sidebar-row--drop-after': dropAfter,
+      'playlist-sidebar-row--drop-inside': dropInside,
     }"
     :draggable="draggable"
     @click="emit('select')"
@@ -144,6 +150,7 @@ function toggleFromArtwork(event) {
       type="button"
       class="playlist-sidebar-row__select"
       :aria-current="active ? 'page' : undefined"
+      :aria-expanded="expandable ? expanded : undefined"
       @click.stop="emit('select')"
       @dblclick.stop="playbackEnabled && emit('togglePlayback', $event)"
     >
@@ -153,9 +160,9 @@ function toggleFromArtwork(event) {
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
       :tracks="coverTracks"
-      :can-collage="playlist.kind !== 'album' && !isArtist"
+      :can-collage="playlist.kind !== 'album' && !isArtist && !expandable"
       :radius="isArtist ? 'var(--ui-radius-pill)' : undefined"
-      :empty-icon="isArtist ? UserRound : null"
+      :empty-icon="isArtist ? UserRound : emptyIcon"
       :size="PLAYLIST_ROW_THUMB_SIZE"
       color="var(--ui-color-text-muted)"
       :uppercase="false"
@@ -273,6 +280,12 @@ function toggleFromArtwork(event) {
 .playlist-sidebar-row--drop-before,
 .playlist-sidebar-row--drop-after {
   z-index: var(--ui-layer-raised);
+}
+
+/* Dropping into a folder outlines the folder row itself. */
+.playlist-sidebar-row--drop-inside .playlist-sidebar-row__state-surface {
+  border-color: var(--ui-color-accent);
+  background: var(--ui-color-surface-hover);
 }
 
 .playlist-sidebar-row__drop-indicator {

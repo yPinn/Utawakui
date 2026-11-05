@@ -2,13 +2,18 @@
 import { t } from '../../utils/i18n.js';
 // Nav rows are bespoke; UiButton semantics do not match this full-row list.
 import {
+  Folder,
+  FolderInput,
   FolderOpen,
+  FolderOutput,
   FolderPlus,
   ICON_SIZE,
   Library,
   ListPlus,
+  Pencil,
   Plus,
   RefreshCw,
+  Trash2,
 } from '../../icons/index.js';
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
@@ -28,6 +33,14 @@ import {
 import { PLAYLIST_MENU_ACTIONS } from '../../utils/playlistMenu.js';
 import { collectionDisplayTrackIds } from '../../utils/albumMembership.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
+import {
+  buildPlaylistTree,
+  filterPlaylistTree,
+  playlistDropPosition,
+  playlistTreeRows,
+} from '../../utils/playlistFolders.js';
+import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
+import PlaylistFolderNameModal from './PlaylistFolderNameModal.vue';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import { collectionActionMenu } from '../../utils/collectionMenuItems.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
@@ -48,8 +61,19 @@ const props = defineProps({
   libraryLoading: { type: Boolean, default: false },
 });
 
-const { state, select, selectArtist, create, reorderPlaylist, refresh } =
-  usePlaylists();
+const {
+  state,
+  select,
+  selectArtist,
+  create,
+  refresh,
+  createFolder,
+  renameFolder,
+  deleteFolder,
+  setFolderCollapsed,
+  moveItem,
+} = usePlaylists();
+const { confirm: confirmAction } = useAppConfirmation();
 const collectionPlayback = useCollectionPlayback();
 const {
   state: artistIndexState,
@@ -182,9 +206,35 @@ function playlistMatchesSearch(playlist) {
   );
 }
 
-const visiblePlaylistItems = computed(() =>
-  playlistItems.value.filter(playlistMatchesSearch),
-);
+function folderMatchesSearch(folder) {
+  return searchableText(folder.name).includes(normalizedSearchQuery.value);
+}
+
+// Search opens every folder so matches are never hidden by a collapsed one.
+const visiblePlaylistRows = computed(() => {
+  const tree = buildPlaylistTree(playlistItems.value, state.folderLayout);
+  const nodes = hasSearchQuery.value
+    ? filterPlaylistTree(tree, playlistMatchesSearch, folderMatchesSearch)
+    : tree;
+  return playlistTreeRows(
+    nodes,
+    (folder) => hasSearchQuery.value || !folder.collapsed,
+  );
+});
+
+function folderRowItem(folder) {
+  return { id: folder.id, name: folder.name, kind: 'folder' };
+}
+
+function folderSubtitle(row) {
+  return t('playlist.folder.count', { count: row.count }, row.count);
+}
+
+function toggleFolder(folder) {
+  if (hasSearchQuery.value) return;
+  closePlaylistMenu();
+  setFolderCollapsed(folder.id, !folder.collapsed);
+}
 const visibleAlbumItems = computed(() =>
   albumItems.value.filter(playlistMatchesSearch),
 );
@@ -302,7 +352,7 @@ const isLibraryViewActive = (view) =>
 
 const hasVisibleCollectionItems = computed(
   () =>
-    visiblePlaylistItems.value.length > 0 ||
+    visiblePlaylistRows.value.length > 0 ||
     visibleAlbumItems.value.length > 0 ||
     visibleArtistItems.value.length > 0,
 );
@@ -333,8 +383,6 @@ function createCollectionItems() {
       kind: 'action',
       label: t('playlist.sidebar.createFolder'),
       icon: FolderPlus,
-      disabledReason: t('playlist.sidebar.notSupported'),
-      disabled: true,
       value: { action: PLAYLIST_MENU_ACTIONS.createFolder },
     },
   ];
@@ -352,10 +400,110 @@ const menuContent = computed(() => {
     };
   }
 
-  return collectionActionMenu(state.playlists, context.playlist, {
+  if (context.kind === 'folder') return folderMenuContent(context.folder);
+
+  const menu = collectionActionMenu(state.playlists, context.playlist, {
     performanceQueueBusy: performancePlan.isSaving,
   });
+  const folderItems = folderMoveItems(context.playlist);
+  if (!folderItems.length) return menu;
+  return {
+    ...menu,
+    groups: menu.groups.map((group) =>
+      group.id === 'manage'
+        ? { ...group, items: [...group.items, ...folderItems] }
+        : group,
+    ),
+  };
 });
+
+function folderMenuContent(folder) {
+  return {
+    kind: 'actions',
+    groups: [
+      {
+        id: 'manage',
+        items: [
+          {
+            id: 'rename-folder',
+            kind: 'action',
+            label: t('playlist.folder.rename'),
+            icon: Pencil,
+            value: {
+              action: PLAYLIST_MENU_ACTIONS.renameFolder,
+              folderId: folder.id,
+            },
+          },
+        ],
+      },
+      {
+        id: 'destructive',
+        items: [
+          {
+            id: 'delete-folder',
+            kind: 'action',
+            label: t('playlist.folder.delete'),
+            icon: Trash2,
+            intent: 'danger',
+            value: {
+              action: PLAYLIST_MENU_ACTIONS.deleteFolder,
+              folderId: folder.id,
+            },
+          },
+        ],
+      },
+    ],
+  };
+}
+
+// Only user playlists go into folders; albums are sorted references.
+function folderMoveItems(playlist) {
+  if (playlist.kind !== 'playlist') return [];
+  const folders = state.folderLayout.folders;
+  const targets = folders.filter((folder) => folder.id !== playlist.folderId);
+  const items = [];
+  if (targets.length > 0) {
+    items.push({
+      id: 'move-to-folder',
+      kind: 'submenu',
+      label: t('playlist.folder.moveTo'),
+      icon: FolderInput,
+      content: {
+        kind: 'actions',
+        groups: [
+          {
+            id: 'folders',
+            items: targets.map((folder) => ({
+              id: `folder:${folder.id}`,
+              kind: 'action',
+              label: folder.name,
+              icon: Folder,
+              value: {
+                action: PLAYLIST_MENU_ACTIONS.moveToFolder,
+                playlistId: playlist.id,
+                folderId: folder.id,
+              },
+            })),
+          },
+        ],
+      },
+    });
+  }
+  if (folders.some((folder) => folder.id === playlist.folderId)) {
+    items.push({
+      id: 'move-out-of-folder',
+      kind: 'action',
+      label: t('playlist.folder.moveOut'),
+      icon: FolderOutput,
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.moveOutOfFolder,
+        playlistId: playlist.id,
+        folderId: playlist.folderId,
+      },
+    });
+  }
+  return items;
+}
 
 function openMenuAt(event, context) {
   event.preventDefault();
@@ -370,9 +518,85 @@ function openGlobalMenu(event) {
   openMenuAt(event, { kind: 'global' });
 }
 
+// The toolbar "+" opens the same create menu under the button.
+function openCreateMenu(event) {
+  event.stopPropagation();
+  const element = event.currentTarget;
+  if (menuContext.value?.anchor?.element === element) {
+    closePlaylistMenu();
+    return;
+  }
+  menuContext.value = {
+    kind: 'global',
+    anchor: { kind: 'element', element },
+  };
+}
+
+const createMenuOpen = computed(
+  () => menuContext.value?.anchor?.kind === 'element',
+);
+
 function openPlaylistMenu(playlist, event) {
   openMenuAt(event, { kind: 'collection', playlist });
 }
+
+function openFolderMenu(folder, event) {
+  openMenuAt(event, { kind: 'folder', folder });
+}
+
+const renamingFolder = shallowRef(null);
+const renamingSaving = shallowRef(false);
+
+async function saveFolderName(name) {
+  const folder = renamingFolder.value;
+  if (!folder) return;
+  renamingSaving.value = true;
+  try {
+    await renameFolder(folder.id, name);
+  } finally {
+    renamingSaving.value = false;
+    renamingFolder.value = null;
+  }
+}
+
+async function confirmDeleteFolder(folder) {
+  const confirmed = await confirmAction({
+    title: t('playlist.folder.deleteTitle'),
+    subject: folder.name,
+    message: t('playlist.folder.deleteMessage'),
+    confirmLabel: t('playlist.folder.delete'),
+    intent: 'danger',
+  });
+  if (confirmed) deleteFolder(folder.id);
+}
+
+// Folder actions stay here: no other surface lists folders.
+function handleFolderAction(value) {
+  const folder = state.folderLayout.folders.find(
+    (entry) => entry.id === value.folderId,
+  );
+  if (value.action === PLAYLIST_MENU_ACTIONS.createFolder) {
+    createFolder();
+  } else if (!folder) {
+    return;
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.renameFolder) {
+    renamingFolder.value = folder;
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.deleteFolder) {
+    confirmDeleteFolder(folder);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.moveToFolder) {
+    moveItem(value.playlistId, folder.id, 'inside');
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.moveOutOfFolder) {
+    moveItem(value.playlistId, folder.id, 'after');
+  }
+}
+
+const FOLDER_ACTIONS = new Set([
+  PLAYLIST_MENU_ACTIONS.createFolder,
+  PLAYLIST_MENU_ACTIONS.renameFolder,
+  PLAYLIST_MENU_ACTIONS.deleteFolder,
+  PLAYLIST_MENU_ACTIONS.moveToFolder,
+  PLAYLIST_MENU_ACTIONS.moveOutOfFolder,
+]);
 
 function closePlaylistMenu() {
   menuContext.value = null;
@@ -391,12 +615,6 @@ function selectLibraryView(view) {
   emit('activateLibrary');
 }
 
-function createPlaylist() {
-  closePlaylistMenu();
-  emit('activateLibrary');
-  create();
-}
-
 function handleMenuSelect(value) {
   const contextKind = menuContext.value?.kind;
   closePlaylistMenu();
@@ -408,11 +626,28 @@ function handleMenuSelect(value) {
     create();
     return;
   }
+  if (FOLDER_ACTIONS.has(value.action)) {
+    handleFolderAction(value);
+    return;
+  }
   emit('playlistAction', value);
 }
 
 function canDragPlaylistItem() {
-  return !hasSearchQuery.value && playlistItems.value.length >= 2;
+  return (
+    !hasSearchQuery.value &&
+    playlistItems.value.length + state.folderLayout.folders.length >= 2
+  );
+}
+
+function isDraggingFolder(draggedId) {
+  return state.folderLayout.folders.some((folder) => folder.id === draggedId);
+}
+
+function isDropAt(row, position) {
+  return (
+    dropTargetPlaylistId.value === row.id && dropPosition.value === position
+  );
 }
 
 const {
@@ -425,8 +660,12 @@ const {
   drop: dropPlaylist,
   clearDragState,
 } = useDragReorder({
-  onReorder: reorderPlaylist,
+  onReorder: moveItem,
   canDrag: canDragPlaylistItem,
+  positionFor: (row, ratio, draggedId) =>
+    playlistDropPosition(row, ratio, {
+      draggingFolder: isDraggingFolder(draggedId),
+    }),
 });
 
 // closePlaylistMenu() is a caller-side side effect (dismiss any open
@@ -466,7 +705,9 @@ function startDrag(playlist, event) {
           :icon="Plus"
           :label="t('playlist.sidebar.new')"
           variant="command"
-          @click="createPlaylist"
+          aria-haspopup="menu"
+          :aria-expanded="createMenuOpen ? 'true' : 'false'"
+          @click="openCreateMenu"
         />
       </div>
       <UiIconButton
@@ -474,7 +715,9 @@ function startDrag(playlist, event) {
         :icon="Plus"
         :label="t('playlist.sidebar.new')"
         variant="command"
-        @click="createPlaylist"
+        aria-haspopup="menu"
+        :aria-expanded="createMenuOpen ? 'true' : 'false'"
+        @click="openCreateMenu"
       />
     </div>
 
@@ -621,39 +864,70 @@ function startDrag(playlist, event) {
             @action="refresh"
           />
         </template>
-        <PlaylistSidebarRow
-          v-for="playlist in visiblePlaylistItems"
-          :key="playlist.id"
-          :playlist="playlist"
-          :cover-url="playlist.coverUrl"
-          :cover-tracks="coverTracksFor(playlist)"
-          :subtitle="subtitleFor(playlist)"
-          :compact="compact"
-          :active="playlist.id === state.selectedId"
-          :active-source="isActiveSource(playlist)"
-          :playing="isPlayingThis(playlist)"
-          :draggable="canDragPlaylistItem()"
-          :dragging="draggingPlaylistId === playlist.id"
-          :drop-before="
-            dropTargetPlaylistId === playlist.id && dropPosition === 'before'
-          "
-          :drop-after="
-            dropTargetPlaylistId === playlist.id && dropPosition === 'after'
-          "
-          @select="selectPlaylist(playlist.id)"
-          @contextmenu="openPlaylistMenu(playlist, $event)"
-          @toggle-playback="togglePlayback(playlist, $event)"
-          @drag-start="startDrag(playlist, $event)"
-          @drag-over="updateDropTarget(playlist, $event)"
-          @drag-leave="leaveDropTarget(playlist, $event)"
-          @drop="dropPlaylist(playlist, $event)"
-          @drag-end="clearDragState"
-        />
+        <template
+          v-for="row in visiblePlaylistRows"
+          :key="`${row.kind}:${row.id}`"
+        >
+          <PlaylistSidebarRow
+            v-if="row.kind === 'folder'"
+            :playlist="folderRowItem(row.folder)"
+            :empty-icon="row.expanded ? FolderOpen : Folder"
+            :subtitle="folderSubtitle(row)"
+            :compact="compact"
+            :playback-enabled="false"
+            expandable
+            :expanded="row.expanded"
+            :draggable="canDragPlaylistItem()"
+            :dragging="draggingPlaylistId === row.id"
+            :drop-before="isDropAt(row, 'before')"
+            :drop-after="isDropAt(row, 'after')"
+            :drop-inside="isDropAt(row, 'inside')"
+            @select="toggleFolder(row.folder)"
+            @contextmenu="openFolderMenu(row.folder, $event)"
+            @drag-start="startDrag(row, $event)"
+            @drag-over="updateDropTarget(row, $event)"
+            @drag-leave="leaveDropTarget(row, $event)"
+            @drop="dropPlaylist(row, $event)"
+            @drag-end="clearDragState"
+          />
+          <p
+            v-else-if="row.kind === 'empty'"
+            class="playlist-sidebar__empty playlist-sidebar__nested"
+            @dragover="updateDropTarget(row, $event)"
+            @dragleave="leaveDropTarget(row, $event)"
+            @drop="dropPlaylist(row, $event)"
+          >
+            {{ t('playlist.folder.empty') }}
+          </p>
+          <PlaylistSidebarRow
+            v-else
+            :class="{ 'playlist-sidebar__nested': row.folderId }"
+            :playlist="row.playlist"
+            :cover-url="row.playlist.coverUrl"
+            :cover-tracks="coverTracksFor(row.playlist)"
+            :subtitle="subtitleFor(row.playlist)"
+            :compact="compact"
+            :active="row.playlist.id === state.selectedId"
+            :active-source="isActiveSource(row.playlist)"
+            :playing="isPlayingThis(row.playlist)"
+            :draggable="canDragPlaylistItem()"
+            :dragging="draggingPlaylistId === row.id"
+            :drop-before="isDropAt(row, 'before')"
+            :drop-after="isDropAt(row, 'after')"
+            @select="selectPlaylist(row.playlist.id)"
+            @contextmenu="openPlaylistMenu(row.playlist, $event)"
+            @toggle-playback="togglePlayback(row.playlist, $event)"
+            @drag-start="startDrag(row, $event)"
+            @drag-over="updateDropTarget(row, $event)"
+            @drag-leave="leaveDropTarget(row, $event)"
+            @drop="dropPlaylist(row, $event)"
+            @drag-end="clearDragState"
+          />
+        </template>
 
         <hr
           v-if="
-            visiblePlaylistItems.length > 0 &&
-            visibleReferenceEntries.length > 0
+            visiblePlaylistRows.length > 0 && visibleReferenceEntries.length > 0
           "
           class="playlist-sidebar__divider"
         />
@@ -699,6 +973,14 @@ function startDrag(playlist, event) {
         </p>
       </div>
     </UiScrollLayout>
+
+    <PlaylistFolderNameModal
+      :open="Boolean(renamingFolder)"
+      :name="renamingFolder?.name ?? ''"
+      :saving="renamingSaving"
+      @close="renamingFolder = null"
+      @save="saveFolderName"
+    />
 
     <UiActionMenu
       :open="isMenuOpen"
@@ -993,6 +1275,13 @@ function startDrag(playlist, event) {
   min-width: 0;
 }
 
+/* Folder members sit one step in from the folder row. */
+.playlist-sidebar__list .playlist-sidebar__nested {
+  padding-inline-start: calc(
+    var(--ui-sidebar-row-padding-inline) + var(--ui-space-4)
+  );
+}
+
 .playlist-sidebar__empty {
   margin: 0;
   padding: var(--ui-space-1) var(--ui-sidebar-row-padding-inline);
@@ -1046,6 +1335,10 @@ function startDrag(playlist, event) {
 
   .playlist-sidebar__empty {
     display: none;
+  }
+
+  .playlist-sidebar__list .playlist-sidebar__nested {
+    padding-inline-start: var(--ui-sidebar-row-padding-block);
   }
 
   .playlist-sidebar__toolbar {

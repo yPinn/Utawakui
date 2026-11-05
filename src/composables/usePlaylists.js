@@ -23,6 +23,8 @@ const state = reactive({
   selectedArtistId: null,
   // Metadata-derived album reference; never persisted as playlist membership.
   selectedAlbumReference: null,
+  // Sidebar folders: `order` mixes folder ids and loose playlist ids.
+  folderLayout: { folders: [], order: [] },
   error: null,
   actionError: null,
 });
@@ -74,6 +76,26 @@ const ERROR_PRESENTATION = Object.freeze({
     title: t('playlist.notify.saveTitle'),
     message: t('playlist.notify.notSaved'),
   },
+  'folder-create': {
+    title: t('playlist.notify.createFolderTitle'),
+    message: t('playlist.notify.notSaved'),
+  },
+  'folder-rename': {
+    title: t('playlist.notify.renameFolderTitle'),
+    message: t('playlist.notify.notSaved'),
+  },
+  'folder-delete': {
+    title: t('playlist.notify.deleteFolderTitle'),
+    message: t('playlist.notify.notSaved'),
+  },
+  'folder-update': {
+    title: t('playlist.notify.updateFolderTitle'),
+    message: t('playlist.notify.notSaved'),
+  },
+  'folder-move': {
+    title: t('playlist.notify.reorderTitle'),
+    message: t('playlist.notify.orderNotSaved'),
+  },
 });
 
 // Serialize mutations so rapid actions cannot overwrite each other.
@@ -96,6 +118,11 @@ function applyPlaylists(playlists) {
   }
 }
 
+function applyFolderResult(result) {
+  applyPlaylists(result.playlists);
+  state.folderLayout = result.layout;
+}
+
 const UNKNOWN_ERROR = Object.freeze({
   title: t('playlist.notify.operationTitle'),
   message: t('playlist.notify.operationMessage'),
@@ -116,7 +143,12 @@ function formatError(operation, err) {
 function enqueue(
   operation,
   errorOperation,
-  { read = false, isCurrent = null, onError = null } = {},
+  {
+    read = false,
+    isCurrent = null,
+    onError = null,
+    apply = applyPlaylists,
+  } = {},
 ) {
   if (typeof window === 'undefined' || !window.Utawakui) {
     return Promise.resolve();
@@ -126,7 +158,7 @@ function enqueue(
     try {
       const playlists = await operation();
       if (isCurrent && !isCurrent()) return null;
-      applyPlaylists(playlists);
+      apply(playlists);
       if (read) state.error = null;
       else {
         state.actionError = null;
@@ -161,16 +193,24 @@ async function refresh() {
   state.isLoading = !state.hasLoaded;
   try {
     const result = await enqueue(
-      () => window.Utawakui.listPlaylists(),
+      async () => ({
+        playlists: await window.Utawakui.listPlaylists(),
+        // Older preloads have no folders; every playlist is then loose.
+        layout:
+          typeof window.Utawakui.listPlaylistFolders === 'function'
+            ? await window.Utawakui.listPlaylistFolders()
+            : { folders: [], order: [] },
+      }),
       'list',
       {
         read: true,
         isCurrent: () => revision === readRevision,
+        apply: applyFolderResult,
       },
     );
-    if (revision === readRevision && Array.isArray(result))
+    if (revision === readRevision && Array.isArray(result?.playlists))
       state.hasLoaded = true;
-    return result;
+    return result?.playlists ?? null;
   } finally {
     if (revision === readRevision) {
       state.isLoading = false;
@@ -370,6 +410,60 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
   );
 }
 
+function folderIntent(operation, errorOperation) {
+  return enqueue(operation, errorOperation, { apply: applyFolderResult });
+}
+
+// Resolves to the new folder, found as the one id the layout did not have.
+async function createFolder(name) {
+  const known = new Set(state.folderLayout.folders.map((folder) => folder.id));
+  const result = await folderIntent(
+    () => window.Utawakui.createPlaylistFolder(name),
+    'folder-create',
+  );
+  return result?.layout.folders.find((folder) => !known.has(folder.id)) ?? null;
+}
+
+async function renameFolder(id, name) {
+  return Boolean(
+    await folderIntent(
+      () => window.Utawakui.renamePlaylistFolder(id, name),
+      'folder-rename',
+    ),
+  );
+}
+
+async function deleteFolder(id) {
+  return Boolean(
+    await folderIntent(
+      () => window.Utawakui.deletePlaylistFolder(id),
+      'folder-delete',
+    ),
+  );
+}
+
+// Applied locally first so the row opens or closes on the click itself.
+function setFolderCollapsed(id, collapsed) {
+  const folder = state.folderLayout.folders.find((entry) => entry.id === id);
+  if (!folder || folder.collapsed === collapsed) return Promise.resolve(true);
+  folder.collapsed = collapsed;
+  return folderIntent(
+    () => window.Utawakui.setPlaylistFolderCollapsed(id, collapsed),
+    'folder-update',
+  ).then(Boolean);
+}
+
+// position: 'before' | 'after' a sidebar row, or 'inside' a folder.
+function moveItem(draggedId, targetId, position = 'before') {
+  if (!draggedId || !targetId || draggedId === targetId) {
+    return Promise.resolve(false);
+  }
+  return folderIntent(
+    () => window.Utawakui.movePlaylistItem(draggedId, targetId, position),
+    'folder-move',
+  ).then(Boolean);
+}
+
 function findPlaylist(id) {
   return state.playlists.find(
     (p) => p.id === id || p.redirectedIds?.includes(id),
@@ -486,6 +580,11 @@ export function usePlaylists() {
     clearCover,
     upsertAlbum,
     reorderPlaylist,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    setFolderCollapsed,
+    moveItem,
     addTrack,
     addTracks,
     removeTrack,
