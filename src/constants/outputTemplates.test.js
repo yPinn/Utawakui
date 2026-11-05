@@ -42,9 +42,16 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'spacingDensity',
   ],
   'karaoke-stack': ['paletteId', 'lookAmount', 'fontScale'],
-  'centered-vertical': ['fontScale'],
+  'centered-vertical': [
+    'fontFamily',
+    'fontScale',
+    'contrastStyle',
+    'textColor',
+  ],
   'chalkboard-vertical': [
     'fontScale',
+    'textColor',
+    'chalkboardRuleColor',
     'positionAnchor',
     'positionOffsetX',
     'positionOffsetY',
@@ -484,7 +491,7 @@ describe('output template registry', () => {
       detail: '明朝體直書，長句自動分欄；可調字色、大小與位置。',
       settings: expect.arrayContaining([
         { label: '排版', value: '直書、固定右側' },
-        { label: '長句', value: '自動拆成至多兩欄' },
+        { label: '長句', value: '自動拆成至多三欄' },
         { label: '藝術字', value: '同尺寸輕墨層' },
       ]),
       editableAppearanceKeys: [

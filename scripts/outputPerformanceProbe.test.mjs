@@ -119,7 +119,7 @@ describe('F5 synthetic workload and resource evidence', () => {
       expect(files).toContain(expected);
     expect(files).not.toContain('shared/performerViewContract.mjs');
     expect(files).not.toContain('shared/presentation/performerFrame.mjs');
-    expect(files.filter((f) => /\.(?:woff2?|ttf)$/.test(f))).toHaveLength(5);
+    expect(files.filter((f) => /\.(?:woff2?|ttf)$/.test(f))).toHaveLength(7);
     expect(files.some((f) => f.includes('.test.'))).toBe(false);
   });
   it('advances the real-time workload without mutating canonical player or fixture data', () => {

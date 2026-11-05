@@ -246,7 +246,7 @@
       "name": "Centered Vertical",
       "availability": "Uses line-synced lyrics.",
       "summary": "One vertical column centered on both axes.",
-      "detail": "Suited to lyrics in languages with vertical writing conventions, such as Traditional Chinese and Japanese. For songs mainly in English, use a horizontal template. Read from top to bottom. Long lines paginate, and each new line appears immediately.",
+      "detail": "For vertical lyrics such as Chinese or Japanese; use a horizontal template for mostly English songs. Reads top to bottom, long lines paginate, and each new line appears immediately.",
       "layoutLabel": "Centered column",
       "motionLabel": "Direct cut",
       "columnTag": "Single column",

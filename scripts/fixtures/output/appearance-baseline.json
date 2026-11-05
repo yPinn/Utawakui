@@ -88,6 +88,11 @@
       "scope": "slot-template",
       "activation": "explicit-selection"
     },
+    "chalkboardRuleColor": {
+      "level": "advanced",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
     "positionAnchor": {
       "level": "opt",
       "scope": "slot-template",
@@ -664,7 +669,11 @@
       },
       "fields": [
         {
+          "scope": "template",
           "key": "paletteId",
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
           "order": 10,
           "control": "select",
           "editor": "look",
@@ -687,14 +696,14 @@
             }
           ],
           "group": "color-treatment",
-          "groupOrder": 10,
+          "groupOrder": 10
+        },
+        {
+          "scope": "template",
+          "key": "lookAmount",
           "family": "document",
           "tier": "basic",
           "reflow": false,
-          "scope": "template"
-        },
-        {
-          "key": "lookAmount",
           "order": 20,
           "control": "range",
           "defaultValue": 100,
@@ -703,38 +712,38 @@
           "step": 5,
           "unit": "%",
           "group": "color-treatment",
-          "groupOrder": 10,
-          "family": "document",
-          "tier": "basic",
-          "reflow": false,
-          "scope": "template"
+          "groupOrder": 10
         },
         {
+          "scope": "template",
           "key": "textColor",
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
           "order": 10,
           "control": "color",
           "defaultValue": "#fff8ec",
           "group": "custom-color",
-          "groupOrder": 20,
+          "groupOrder": 20
+        },
+        {
+          "scope": "template",
+          "key": "accentColor",
           "family": "swatch",
           "tier": "advanced",
           "reflow": false,
-          "scope": "template"
-        },
-        {
-          "key": "accentColor",
           "order": 20,
           "control": "color",
           "defaultValue": "#ffffff",
           "group": "custom-color",
-          "groupOrder": 20,
-          "family": "swatch",
-          "tier": "advanced",
-          "reflow": false,
-          "scope": "template"
+          "groupOrder": 20
         },
         {
+          "scope": "template",
           "key": "fontFamily",
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
           "order": 10,
           "control": "select",
           "defaultValue": "ornate",
@@ -747,14 +756,14 @@
             }
           ],
           "group": "typography",
-          "groupOrder": 30,
-          "family": "character",
-          "tier": "basic",
-          "reflow": true,
-          "scope": "template"
+          "groupOrder": 30
         },
         {
+          "scope": "template",
           "key": "fontScale",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
           "order": 20,
           "control": "select",
           "editor": "font-scale",
@@ -771,18 +780,18 @@
             }
           ],
           "group": "typography",
-          "groupOrder": 30,
-          "family": "document",
-          "tier": "basic",
-          "reflow": true,
-          "scope": "template"
+          "groupOrder": 30
         },
         {
+          "scope": "template",
           "key": "positionAnchor",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": false,
           "order": 30,
           "control": "select",
           "editor": "position-grid",
-          "defaultValue": "center-right",
+          "defaultValue": "top-right",
           "options": [
             {
               "id": "top-right"
@@ -795,14 +804,14 @@
             }
           ],
           "group": "layout",
-          "groupOrder": 60,
-          "family": "layout",
-          "tier": "basic",
-          "reflow": false,
-          "scope": "template"
+          "groupOrder": 60
         },
         {
+          "scope": "template",
           "key": "positionOffsetX",
+          "family": "layout",
+          "tier": "advanced",
+          "reflow": false,
           "order": 40,
           "control": "range",
           "signed": true,
@@ -812,14 +821,14 @@
           "step": 1,
           "unit": "%",
           "group": "layout",
-          "groupOrder": 60,
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "positionOffsetY",
           "family": "layout",
           "tier": "advanced",
           "reflow": false,
-          "scope": "template"
-        },
-        {
-          "key": "positionOffsetY",
           "order": 50,
           "control": "range",
           "signed": true,
@@ -829,11 +838,7 @@
           "step": 1,
           "unit": "%",
           "group": "layout",
-          "groupOrder": 60,
-          "family": "layout",
-          "tier": "advanced",
-          "reflow": false,
-          "scope": "template"
+          "groupOrder": 60
         }
       ],
       "timing": {
@@ -851,7 +856,7 @@
       },
       "lockedInvariants": [
         "vertical-rl",
-        "two-column-maximum",
+        "three-column-maximum",
         "source-line-handoff",
         "grapheme-reveal"
       ],
@@ -906,6 +911,30 @@
           ],
           "group": "typography",
           "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "textColor",
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
+          "order": 10,
+          "control": "color",
+          "defaultValue": "#fffdfa",
+          "group": "custom-color",
+          "groupOrder": 20
+        },
+        {
+          "scope": "template",
+          "key": "chalkboardRuleColor",
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
+          "order": 20,
+          "control": "color",
+          "defaultValue": "#fffdfa",
+          "group": "custom-color",
+          "groupOrder": 20
         },
         {
           "scope": "template",
@@ -996,8 +1025,8 @@
           "reason": "Left or right third with bounded X and Y offsets only"
         },
         "customColors": {
-          "status": "not-exposed",
-          "reason": "Fixed text treatment with no custom color control"
+          "status": "bounded",
+          "reason": "Template text and rule colors only; no universal artistic-role colors"
         }
       },
       "localSourceLimitations": ["no-local-font-enumeration-for-template"]
@@ -1012,6 +1041,32 @@
       "fields": [
         {
           "scope": "template",
+          "key": "fontFamily",
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "order": 10,
+          "control": "select",
+          "defaultValue": "lyrics-auto",
+          "options": [
+            {
+              "id": "lyrics-auto"
+            },
+            {
+              "id": "chen-yu-luo-yan"
+            },
+            {
+              "id": "klee-one"
+            },
+            {
+              "id": "open-huninn"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "fontScale",
           "family": "document",
           "tier": "basic",
@@ -1019,7 +1074,7 @@
           "order": 20,
           "control": "select",
           "editor": "font-scale",
-          "defaultValue": "medium",
+          "defaultValue": "small",
           "options": [
             {
               "id": "small"
@@ -1033,6 +1088,41 @@
           ],
           "group": "typography",
           "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "contrastStyle",
+          "family": "legibility",
+          "tier": "basic",
+          "reflow": false,
+          "order": 10,
+          "control": "select",
+          "defaultValue": "balanced",
+          "options": [
+            {
+              "id": "clean"
+            },
+            {
+              "id": "balanced"
+            },
+            {
+              "id": "strong-outline"
+            }
+          ],
+          "group": "readability",
+          "groupOrder": 40
+        },
+        {
+          "scope": "template",
+          "key": "textColor",
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
+          "order": 10,
+          "control": "color",
+          "defaultValue": "#fffdfa",
+          "group": "custom-color",
+          "groupOrder": 20
         }
       ],
       "timing": {
@@ -1068,8 +1158,8 @@
           "reason": "No verified adjustable position consumer in current field schema"
         },
         "customColors": {
-          "status": "not-exposed",
-          "reason": "Fixed text treatment with no custom color control"
+          "status": "bounded",
+          "reason": "Template text color only; no universal artistic-role colors"
         }
       },
       "localSourceLimitations": ["no-local-font-enumeration-for-template"]

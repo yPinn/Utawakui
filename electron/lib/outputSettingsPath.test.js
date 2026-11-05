@@ -39,6 +39,7 @@ const DATASET_TARGETS = Object.freeze({
 
 const STYLE_TARGETS = Object.freeze({
   accentColor: ['--ovl-user-accent-color', ''],
+  chalkboardRuleColor: ['--ovl-user-chalkboard-rule-color', ''],
   lookAmount: ['--ovl-look-amount', '%'],
   positionOffsetX: ['--ovl-user-position-x', '%'],
   positionOffsetY: ['--ovl-user-position-y', '%'],
