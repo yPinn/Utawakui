@@ -73,6 +73,7 @@ import {
   RIGHT_DOCK_SURFACE_PREPARATION,
   useAppRightDock,
 } from './composables/useAppRightDock.js';
+import { useCollectionDrag } from './composables/useCollectionDrag.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
 import { usePlaybackDockDisplay } from './composables/usePlaybackDockDisplay.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
@@ -207,6 +208,7 @@ const announcement = useAppAnnouncement();
 onMounted(announcement.initialize);
 
 const rightDock = useAppRightDock();
+const collectionDrag = useCollectionDrag();
 const rightDockExpanded = computed(
   () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
 );
@@ -488,6 +490,7 @@ useKeyboardShortcuts({
   <div
     ref="shell"
     class="shell"
+    :class="{ 'shell--collection-drag': collectionDrag.active.value }"
     :style="{
       '--ui-shell-navigation-inline-size': `${shellGeometry.sidebarWidth}px`,
       '--ui-right-dock-width': `${rightDockWidth}px`,
@@ -722,6 +725,19 @@ useKeyboardShortcuts({
   padding-bottom: var(--ui-shell-content-inset-block);
   padding-left: var(--ui-shell-workspace-inline-start);
   padding-right: var(--ui-shell-edge-inset-inline);
+}
+
+/* Only the sidebar takes collection drops; everything else steps back so
+   the lit area shows where a drop can land. */
+.shell__titlebar,
+.shell__main,
+.shell__player {
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-enter);
+}
+
+.shell--collection-drag > :is(.shell__titlebar, .shell__main, .shell__player) {
+  opacity: var(--ui-opacity-disabled);
 }
 
 .shell__main--with-dock {

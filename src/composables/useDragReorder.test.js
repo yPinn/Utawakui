@@ -111,10 +111,28 @@ describe('useDragReorder', () => {
 
     expect(event.preventDefault).toHaveBeenCalled();
     expect(event.stopPropagation).toHaveBeenCalled();
-    expect(onReorder).toHaveBeenCalledWith('a', 'b', 'before');
+    expect(onReorder).toHaveBeenCalledWith('a', 'b', 'before', { id: 'b' });
     expect(draggingId.value).toBeNull();
     expect(dropTargetId.value).toBeNull();
     expect(dropPosition.value).toBeNull();
+  });
+
+  it('asks positionFor for the zone and leaves a refused row undropped', () => {
+    const positionFor = vi.fn((item, ratio) =>
+      item.id === 'locked' ? null : ratio < 0.5 ? 'inside' : 'after',
+    );
+    const { dropTargetId, dropPosition, startDrag, updateDropTarget } =
+      useDragReorder({ onReorder: vi.fn(), positionFor });
+    startDrag({ id: 'a' }, makeEvent());
+
+    updateDropTarget({ id: 'b' }, makeEvent({ clientY: 10 }));
+    expect(positionFor).toHaveBeenCalledWith({ id: 'b' }, 0.25, 'a');
+    expect(dropPosition.value).toBe('inside');
+
+    const refused = makeEvent();
+    updateDropTarget({ id: 'locked' }, refused);
+    expect(refused.preventDefault).not.toHaveBeenCalled();
+    expect(dropTargetId.value).toBe('b');
   });
 
   it('drop falls back to dataTransfer text when draggingId was never set (native DnD across components)', () => {
@@ -126,7 +144,9 @@ describe('useDragReorder', () => {
 
     drop({ id: 'b' }, event);
 
-    expect(onReorder).toHaveBeenCalledWith('external-id', 'b', 'before');
+    expect(onReorder).toHaveBeenCalledWith('external-id', 'b', 'before', {
+      id: 'b',
+    });
   });
 
   it('clearDragState resets all three refs independently of a drop', () => {

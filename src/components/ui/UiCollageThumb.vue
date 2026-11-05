@@ -27,6 +27,9 @@ const props = defineProps({
   decorative: { type: Boolean, default: true },
   // Glyph for an empty single cover, e.g. a person for artists without a photo.
   emptyIcon: { type: [Object, Function], default: null },
+  // Without artwork, a filled icon plate in `background` / `color` (library
+  // entries, folders) instead of the neutral empty cover.
+  plate: { type: Boolean, default: false },
 });
 
 const displayTracks = computed(() =>
@@ -54,7 +57,10 @@ const singleIconSize = computed(() =>
 <template>
   <span
     class="ui-collage-thumb"
-    :class="{ 'ui-collage-thumb--folder': !hasArtwork }"
+    :class="{
+      'ui-collage-thumb--folder': !hasArtwork && !plate,
+      'ui-collage-thumb--plate': !hasArtwork && plate,
+    }"
     :aria-hidden="decorative ? 'true' : undefined"
     :style="{
       width: `${size}px`,
@@ -156,6 +162,38 @@ const singleIconSize = computed(() =>
     var(--ui-color-surface) 100%
   );
   box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
+}
+
+/* Filled icon plate: its ring and sheen are mixed from the plate's own
+   colours, so a hue never picks up a neutral edge. */
+.ui-collage-thumb--plate .ui-collage-thumb__layers {
+  border-radius: inherit;
+  background: var(--ui-collage-thumb-background);
+  background-image: linear-gradient(
+    145deg,
+    color-mix(
+      in srgb,
+      var(--ui-collage-thumb-background) 90%,
+      var(--ui-collage-thumb-color)
+    ),
+    var(--ui-collage-thumb-background) 48%,
+    color-mix(
+      in srgb,
+      var(--ui-collage-thumb-background) 75%,
+      var(--ui-color-canvas)
+    )
+  );
+  box-shadow: inset 0 0 0 var(--ui-border-width)
+    color-mix(
+      in srgb,
+      var(--ui-collage-thumb-color) 30%,
+      var(--ui-collage-thumb-background)
+    );
+}
+
+/* The plate's glyph is its content, not a missing-cover placeholder. */
+.ui-collage-thumb--plate .ui-collage-thumb__single-empty {
+  opacity: 1;
 }
 
 .ui-collage-thumb__custom-image {

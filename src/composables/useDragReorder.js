@@ -4,7 +4,7 @@ import { ref } from 'vue';
  * HTML5 drag-and-drop state for one single-column reorderable list.
  *
  * @param {Object} options
- * @param {(draggedId: string, targetId: string, position: string) => void} options.onReorder
+ * @param {(draggedId: string, targetId: string, position: string, target: Object) => void} options.onReorder
  * @param {() => boolean} [options.canDrag]
  * @param {(item: Object, ratio: number, draggedId: string) => string|null} [options.positionFor]
  *   Drop position from the pointer's 0–1 height ratio; null refuses the drop.
@@ -73,7 +73,12 @@ export function useDragReorder({
     event.stopPropagation();
     const draggedId =
       draggingId.value || event.dataTransfer?.getData('text/plain');
-    onReorder(draggedId, targetItem.id, dropPosition.value || 'before');
+    onReorder(
+      draggedId,
+      targetItem.id,
+      dropPosition.value || 'before',
+      targetItem,
+    );
     clearDragState();
   }
 
