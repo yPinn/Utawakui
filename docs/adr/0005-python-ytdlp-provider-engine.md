@@ -85,8 +85,9 @@ Amendment (2026-11-05): Chrome 127+ and current Edge keep cookies under
 App-Bound Encryption on Windows, so the sign-in phase now has one source the
 user picks (`youtubeLoginSource`: `none`, `firefox` or `file`). `file` is a
 user-exported cookies.txt reduced to YouTube/Google cookies, encrypted with
-`safeStorage`, decrypted to a temp file for one user-initiated download and
-written back with yt-dlp's rotated cookies. Every anonymous route still runs
+`safeStorage`, decrypted to a run file under userData (not the shared temp
+directory; leftovers from a crashed run are removed at startup) for one
+user-initiated download and written back with yt-dlp's rotated cookies. Every anonymous route still runs
 first, background work never signs in, and a first import shows its own notice
 (`youtubeLoginNoticeVersion`). The old opt-in migrates to `firefox`. See the
 [compatibility review](../research/engineering/youtube-login-cookies-2026-11-05.md).

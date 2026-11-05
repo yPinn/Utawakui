@@ -128,6 +128,24 @@ describe('createYoutubeLoginStore', () => {
     });
   });
 
+  it('keeps run copies beside the stored file and clears crash leftovers', async () => {
+    const runs = path.join(dir, 'state', 'youtube-login-runs');
+    fs.mkdirSync(runs, { recursive: true });
+    const leftover = path.join(runs, 'utawakui-login-0123456789abcdef.txt');
+    const unrelated = path.join(runs, 'keep.txt');
+    fs.writeFileSync(leftover, 'plain');
+    fs.writeFileSync(unrelated, 'other');
+
+    const login = store({ tempDir: undefined });
+    expect(fs.existsSync(leftover)).toBe(false);
+    expect(fs.existsSync(unrelated)).toBe(true);
+
+    login.importFile(writeSource(COOKIES));
+    await login.withCookieFile(async (file) => {
+      expect(path.dirname(file)).toBe(runs);
+    });
+  });
+
   it('runs unsigned when nothing is stored', async () => {
     let received = 'unset';
     await store().withCookieFile(async (file) => {

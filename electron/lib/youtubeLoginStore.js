@@ -2,7 +2,6 @@
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 
 // A user-exported Netscape cookies.txt, reduced to YouTube/Google sign-in,
@@ -58,12 +57,28 @@ function filterLoginCookies(text) {
   return `${HEADERS[1]}\n${cookies.join('\n')}\n`;
 }
 
+const RUN_FILE = /^utawakui-login-[0-9a-f]{16}\.txt$/u;
+
+// Plain run copies live beside the encrypted file, not in the shared temp dir.
+function sweepRunFiles(fileSystem, directory) {
+  try {
+    for (const name of fileSystem.readdirSync(directory)) {
+      if (RUN_FILE.test(name))
+        fileSystem.rmSync(path.join(directory, name), { force: true });
+    }
+  } catch {
+    // A missing directory has nothing left over from a crashed run.
+  }
+}
+
 function createYoutubeLoginStore({
   safeStorage,
   filePath,
-  tempDir = os.tmpdir(),
+  tempDir = path.join(path.dirname(filePath), 'youtube-login-runs'),
   fileSystem = fs,
 } = {}) {
+  sweepRunFiles(fileSystem, tempDir);
+
   function assertEncryption() {
     if (!safeStorage?.isEncryptionAvailable?.()) {
       throw loginFileError(LOGIN_FILE_ERRORS.STORAGE_UNAVAILABLE);
@@ -116,6 +131,7 @@ function createYoutubeLoginStore({
       tempDir,
       `utawakui-login-${crypto.randomBytes(8).toString('hex')}.txt`,
     );
+    fileSystem.mkdirSync(tempDir, { recursive: true });
     // yt-dlp on Windows expects CRLF line endings in cookie files.
     fileSystem.writeFileSync(file, cookies.replace(/\n/gu, '\r\n'), {
       mode: 0o600,
