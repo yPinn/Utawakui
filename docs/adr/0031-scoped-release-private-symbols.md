@@ -18,7 +18,7 @@ The Main release build applies a symbols-only pass to exactly
 `electron/lib/importRecordingPolicy.js` and
 `electron/lib/artwork/releasePolicy.js` before bundling. The build-only policy in
 `scripts/runtime-symbol-policy.mjs` reserves the ten existing exported functions
-and CommonJS host identifiers. Rolldown 1.2.15 is an explicit, exact development
+and CommonJS host identifiers. Rolldown 1.3.0 is an explicit, exact development
 dependency; the existing npm lock gains no new transitive packages.
 
 The pass disables compression and property mangling. It renames private bindings

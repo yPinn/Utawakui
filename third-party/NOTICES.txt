@@ -4,11 +4,11 @@ The browser root dependency closure is conservative and can include build-time d
 Upstream aggregate notices may cover additional platforms or components; inclusion does not imply that every named component is shipped.
 This collection does not grant rights to music, lyrics, artwork, or external services.
 
-Package: @babel/helper-string-parser 7.29.11
+Package: @babel/helper-string-parser 7.29.13
 Lock path: node_modules/@babel/helper-string-parser
 License: MIT
 
-Source: https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.11.tgz
+Source: https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.29.13.tgz
 File: node_modules/@babel/helper-string-parser/LICENSE
 SHA-256: 117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76
 
@@ -68,11 +68,11 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @babel/parser 7.29.11
+Package: @babel/parser 7.29.13
 Lock path: node_modules/@babel/parser
 License: MIT
 
-Source: https://registry.npmjs.org/@babel/parser/-/parser-7.29.11.tgz
+Source: https://registry.npmjs.org/@babel/parser/-/parser-7.29.13.tgz
 File: node_modules/@babel/parser/LICENSE
 SHA-256: 2e97627cb278aa7556fb9e8817368302301a595b6c7582512b8d74c57b773652
 
@@ -129,13 +129,13 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @borewit/text-codec 0.2.2
+Package: @borewit/text-codec 0.2.3
 Lock path: node_modules/@borewit/text-codec
 License: MIT
 
-Source: https://registry.npmjs.org/@borewit/text-codec/-/text-codec-0.2.2.tgz
+Source: https://registry.npmjs.org/@borewit/text-codec/-/text-codec-0.2.3.tgz
 File: node_modules/@borewit/text-codec/LICENSE.txt
-SHA-256: 5b3af80f317313a8b8c227b0c8bffae67728cfec1786137b0553e625f2affec9
+SHA-256: d55209d49c97d162829baf379dfcf841e47c98528d2d50baeb922ac2983a1e47
 
 The MIT License (MIT)
 
@@ -148,11 +148,11 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/core-base 11.4.16
+Package: @intlify/core-base 11.4.18
 Lock path: node_modules/@intlify/core-base
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/core-base/-/core-base-11.4.16.tgz
+Source: https://registry.npmjs.org/@intlify/core-base/-/core-base-11.4.18.tgz
 File: node_modules/@intlify/core-base/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -178,11 +178,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/devtools-types 11.4.16
+Package: @intlify/devtools-types 11.4.18
 Lock path: node_modules/@intlify/devtools-types
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/devtools-types/-/devtools-types-11.4.16.tgz
+Source: https://registry.npmjs.org/@intlify/devtools-types/-/devtools-types-11.4.18.tgz
 File: node_modules/@intlify/devtools-types/LICENSE
 SHA-256: 8f431e584baf8dc943c4188a9e3c27cf4b6a5b540b2d0801468023db86345e7d
 
@@ -208,11 +208,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/message-compiler 11.4.16
+Package: @intlify/message-compiler 11.4.18
 Lock path: node_modules/@intlify/message-compiler
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-11.4.16.tgz
+Source: https://registry.npmjs.org/@intlify/message-compiler/-/message-compiler-11.4.18.tgz
 File: node_modules/@intlify/message-compiler/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -238,11 +238,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: @intlify/shared 11.4.16
+Package: @intlify/shared 11.4.18
 Lock path: node_modules/@intlify/shared
 License: MIT
 
-Source: https://registry.npmjs.org/@intlify/shared/-/shared-11.4.16.tgz
+Source: https://registry.npmjs.org/@intlify/shared/-/shared-11.4.18.tgz
 File: node_modules/@intlify/shared/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -297,11 +297,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: @lucide/vue 1.61.0
+Package: @lucide/vue 1.69.0
 Lock path: node_modules/@lucide/vue
 License: ISC
 
-Source: https://registry.npmjs.org/@lucide/vue/-/vue-1.61.0.tgz
+Source: https://registry.npmjs.org/@lucide/vue/-/vue-1.69.0.tgz
 File: node_modules/@lucide/vue/LICENSE
 SHA-256: b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57
 
@@ -544,11 +544,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-Package: @tokenizer/inflate 0.5.1
+Package: @tokenizer/inflate 0.6.0
 Lock path: node_modules/@tokenizer/inflate
 License: MIT
 
-Source: https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.5.1.tgz
+Source: https://registry.npmjs.org/@tokenizer/inflate/-/inflate-0.6.0.tgz
 File: node_modules/@tokenizer/inflate/LICENSE
 SHA-256: 5bb0e8b566dee0e946cafd9bbed359eb0494580df86457876b4f41bba5c77b25
 
@@ -597,11 +597,11 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 
-Package: @vue/compiler-core 3.5.44
+Package: @vue/compiler-core 3.5.45
 Lock path: node_modules/@vue/compiler-core
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.5.45.tgz
 File: node_modules/@vue/compiler-core/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -628,48 +628,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: entities 7.0.1
-Lock path: node_modules/@vue/compiler-core/node_modules/entities
-License: BSD-2-Clause
-
-Source: https://registry.npmjs.org/entities/-/entities-7.0.1.tgz
-File: node_modules/@vue/compiler-core/node_modules/entities/LICENSE
-SHA-256: cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164
-
-Copyright (c) Felix Böhm
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-THIS IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS,
-EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-Package: estree-walker 2.0.2
-Lock path: node_modules/@vue/compiler-core/node_modules/estree-walker
-License: MIT
-
-Source: https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz
-File: node_modules/@vue/compiler-core/node_modules/estree-walker/LICENSE
-SHA-256: 8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e
-
-Copyright (c) 2015-20 [these people](https://github.com/Rich-Harris/estree-walker/graphs/contributors)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Package: @vue/compiler-dom 3.5.44
+Package: @vue/compiler-dom 3.5.45
 Lock path: node_modules/@vue/compiler-dom
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.5.45.tgz
 File: node_modules/@vue/compiler-dom/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -696,11 +659,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/compiler-sfc 3.5.44
+Package: @vue/compiler-sfc 3.5.45
 Lock path: node_modules/@vue/compiler-sfc
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.5.45.tgz
 File: node_modules/@vue/compiler-sfc/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -727,27 +690,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: estree-walker 2.0.2
-Lock path: node_modules/@vue/compiler-sfc/node_modules/estree-walker
-License: MIT
-
-Source: https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz
-File: node_modules/@vue/compiler-sfc/node_modules/estree-walker/LICENSE
-SHA-256: 8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e
-
-Copyright (c) 2015-20 [these people](https://github.com/Rich-Harris/estree-walker/graphs/contributors)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Package: @vue/compiler-ssr 3.5.44
+Package: @vue/compiler-ssr 3.5.45
 Lock path: node_modules/@vue/compiler-ssr
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.5.45.tgz
 File: node_modules/@vue/compiler-ssr/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -805,11 +752,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/reactivity 3.5.44
+Package: @vue/reactivity 3.5.45
 Lock path: node_modules/@vue/reactivity
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.5.45.tgz
 File: node_modules/@vue/reactivity/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -836,11 +783,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/runtime-core 3.5.44
+Package: @vue/runtime-core 3.5.45
 Lock path: node_modules/@vue/runtime-core
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.5.45.tgz
 File: node_modules/@vue/runtime-core/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -867,11 +814,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/runtime-dom 3.5.44
+Package: @vue/runtime-dom 3.5.45
 Lock path: node_modules/@vue/runtime-dom
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.5.45.tgz
 File: node_modules/@vue/runtime-dom/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -898,11 +845,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/server-renderer 3.5.44
+Package: @vue/server-renderer 3.5.45
 Lock path: node_modules/@vue/server-renderer
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.5.45.tgz
 File: node_modules/@vue/server-renderer/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -929,11 +876,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: @vue/shared 3.5.44
+Package: @vue/shared 3.5.45
 Lock path: node_modules/@vue/shared
 License: MIT
 
-Source: https://registry.npmjs.org/@vue/shared/-/shared-3.5.44.tgz
+Source: https://registry.npmjs.org/@vue/shared/-/shared-3.5.45.tgz
 File: node_modules/@vue/shared/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -1504,11 +1451,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: electron-updater 6.8.9
+Package: electron-updater 6.8.11
 Lock path: node_modules/electron-updater
 License: MIT
 
-Source: https://registry.npmjs.org/electron-updater/-/electron-updater-6.8.9.tgz
+Source: https://registry.npmjs.org/electron-updater/-/electron-updater-6.8.11.tgz
 File: node_modules/electron-updater/LICENSE
 SHA-256: bed8d0ab3e6031817f775a641ff37313b0f5591bc8ba0ed79b978dafbd4231ce
 
@@ -1592,6 +1539,27 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
+Package: entities 7.0.1
+Lock path: node_modules/entities
+License: BSD-2-Clause
+
+Source: https://registry.npmjs.org/entities/-/entities-7.0.1.tgz
+File: node_modules/entities/LICENSE
+SHA-256: cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164
+
+Copyright (c) Felix Böhm
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
 Package: es-define-property 1.0.1
 Lock path: node_modules/es-define-property
 License: MIT
@@ -1673,6 +1641,22 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+Package: estree-walker 2.0.2
+Lock path: node_modules/estree-walker
+License: MIT
+
+Source: https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz
+File: node_modules/estree-walker/LICENSE
+SHA-256: 8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e
+
+Copyright (c) 2015-20 [these people](https://github.com/Rich-Harris/estree-walker/graphs/contributors)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 Package: eventemitter3 5.0.4
 Lock path: node_modules/eventemitter3
 License: MIT
@@ -1704,11 +1688,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: file-type 22.2.0
+Package: file-type 22.3.0
 Lock path: node_modules/file-type
 License: MIT
 
-Source: https://registry.npmjs.org/file-type/-/file-type-22.2.0.tgz
+Source: https://registry.npmjs.org/file-type/-/file-type-22.3.0.tgz
 File: node_modules/file-type/license
 SHA-256: 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
 
@@ -1869,7 +1853,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-Package: gsap 3.15.0
+Package: gsap 3.15.1
 Lock path: node_modules/gsap
 License: Standard 'no charge' license: https://gsap.com/standard-license.
 
@@ -2019,11 +2003,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Package: js-yaml 5.4.3
+Package: js-yaml 5.5.0
 Lock path: node_modules/js-yaml
 License: MIT
 
-Source: https://registry.npmjs.org/js-yaml/-/js-yaml-5.4.3.tgz
+Source: https://registry.npmjs.org/js-yaml/-/js-yaml-5.5.0.tgz
 File: node_modules/js-yaml/LICENSE
 SHA-256: a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550
 
@@ -2048,6 +2032,63 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+
+Package: argparse 3.0.4
+Lock path: node_modules/js-yaml/node_modules/argparse
+License: PSF-2.0
+
+Source: https://registry.npmjs.org/argparse/-/argparse-3.0.4.tgz
+File: node_modules/js-yaml/node_modules/argparse/LICENSE
+SHA-256: ab745c5061d1dea43a3885e5b4b6befc7e983954954775c5736debeefcdfd89b
+
+PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
+
+1. This LICENSE AGREEMENT is between the Python Software Foundation
+("PSF"), and the Individual or Organization ("Licensee") accessing and
+otherwise using this software ("Python") in source or binary form and
+its associated documentation.
+
+2. Subject to the terms and conditions of this License Agreement, PSF hereby
+grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
+analyze, test, perform and/or display publicly, prepare derivative works,
+distribute, and otherwise use Python alone or in any derivative version,
+provided, however, that PSF's License Agreement and PSF's notice of copyright,
+i.e., "Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 Python Software Foundation;
+All Rights Reserved" are retained in Python alone or in any derivative version
+prepared by Licensee.
+
+3. In the event Licensee prepares a derivative work that is based on
+or incorporates Python or any part thereof, and wants to make
+the derivative work available to others as provided herein, then
+Licensee hereby agrees to include in any such work a brief summary of
+the changes made to Python.
+
+4. PSF is making Python available to Licensee on an "AS IS"
+basis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
+IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND
+DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
+FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON WILL NOT
+INFRINGE ANY THIRD PARTY RIGHTS.
+
+5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON
+FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS
+A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON,
+OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
+
+6. This License Agreement will automatically terminate upon a material
+breach of its terms and conditions.
+
+7. Nothing in this License Agreement shall be deemed to create any
+relationship of agency, partnership, or joint venture between PSF and
+Licensee.  This License Agreement does not grant permission to use PSF
+trademarks or trade name in a trademark sense to endorse or promote
+products or services of Licensee, or any third party.
+
+8. By copying, installing or otherwise using Python, Licensee
+agrees to be bound by the terms and conditions of this License
+Agreement.
 
 
 Package: jsonfile 6.2.1
@@ -2843,11 +2884,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: music-metadata 12.2.0
+Package: music-metadata 12.3.4
 Lock path: node_modules/music-metadata
 License: MIT
 
-Source: https://registry.npmjs.org/music-metadata/-/music-metadata-12.2.0.tgz
+Source: https://registry.npmjs.org/music-metadata/-/music-metadata-12.3.4.tgz
 File: node_modules/music-metadata/LICENSE.txt
 SHA-256: ab27d7574bc6d292302b0b49c2e1ad6f0d88031822dce486257c085c7d83133c
 
@@ -9677,11 +9718,11 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-Package: postcss 8.5.31
+Package: postcss 8.5.32
 Lock path: node_modules/postcss
 License: MIT
 
-Source: https://registry.npmjs.org/postcss/-/postcss-8.5.31.tgz
+Source: https://registry.npmjs.org/postcss/-/postcss-8.5.32.tgz
 File: node_modules/postcss/LICENSE
 SHA-256: 5be1f3465bba68a626777f984878814aaf35e7ef8e9fd314d469bcf887050fb8
 
@@ -9772,11 +9813,11 @@ will be liable to anyone for any damages related to this
 software or this license, under any kind of legal claim.***
 
 
-Package: semver 7.8.5
+Package: semver 7.8.6
 Lock path: node_modules/semver
 License: ISC
 
-Source: https://registry.npmjs.org/semver/-/semver-7.8.5.tgz
+Source: https://registry.npmjs.org/semver/-/semver-7.8.6.tgz
 File: node_modules/semver/LICENSE
 SHA-256: 4ec3d4c66cd87f5c8d8ad911b10f99bf27cb00cdfcff82621956e379186b016b
 
@@ -9903,11 +9944,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-Package: strtok3 10.6.2
+Package: strtok3 10.7.0
 Lock path: node_modules/strtok3
 License: MIT
 
-Source: https://registry.npmjs.org/strtok3/-/strtok3-10.6.2.tgz
+Source: https://registry.npmjs.org/strtok3/-/strtok3-10.7.0.tgz
 File: node_modules/strtok3/LICENSE.txt
 SHA-256: c33959fabde25a1b6161d8e0fdc6fdcea1fc48095fe0bd51043247bfd214287f
 
@@ -9965,13 +10006,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Package: token-types 6.1.2
+Package: token-types 6.2.0
 Lock path: node_modules/token-types
 License: MIT
 
-Source: https://registry.npmjs.org/token-types/-/token-types-6.1.2.tgz
+Source: https://registry.npmjs.org/token-types/-/token-types-6.2.0.tgz
 File: node_modules/token-types/LICENSE.txt
-SHA-256: eb0bff8faaba4581e0f09c962e0f795f1f8810191c9d616f3f66f36be4b3a5dc
+SHA-256: ab27d7574bc6d292302b0b49c2e1ad6f0d88031822dce486257c085c7d83133c
 
 The MIT License (MIT)
 
@@ -10052,11 +10093,11 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: vue 3.5.44
+Package: vue 3.5.45
 Lock path: node_modules/vue
 License: MIT
 
-Source: https://registry.npmjs.org/vue/-/vue-3.5.44.tgz
+Source: https://registry.npmjs.org/vue/-/vue-3.5.45.tgz
 File: node_modules/vue/LICENSE
 SHA-256: 1bb85cc9b13b81ef41c81c51866172fc345e0503c86726a6755b796590b70175
 
@@ -10083,11 +10124,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-Package: vue-i18n 11.4.16
+Package: vue-i18n 11.4.18
 Lock path: node_modules/vue-i18n
 License: MIT
 
-Source: https://registry.npmjs.org/vue-i18n/-/vue-i18n-11.4.16.tgz
+Source: https://registry.npmjs.org/vue-i18n/-/vue-i18n-11.4.18.tgz
 File: node_modules/vue-i18n/LICENSE
 SHA-256: 403a4d6f9815ae33bd7a613202529f0805045c642f92a169fa673d7fa07dd568
 
@@ -10162,11 +10203,11 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Package: ws 8.22.0
+Package: ws 8.22.1
 Lock path: node_modules/ws
 License: MIT
 
-Source: https://registry.npmjs.org/ws/-/ws-8.22.0.tgz
+Source: https://registry.npmjs.org/ws/-/ws-8.22.1.tgz
 File: node_modules/ws/LICENSE
 SHA-256: 2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef
 

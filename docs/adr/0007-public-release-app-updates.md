@@ -111,7 +111,7 @@ The implementation reports `disabled` when the build is not a packaged Windows
 release or when `shared/appUpdateValues.json` closes the release gate. The gate
 is enabled for the current packaged channel. Disabled builds do not load
 `electron-updater`, schedule a timer, or contact GitHub. The dependency is
-pinned to `electron-updater@6.8.9` to match electron-builder 26.
+pinned to `electron-updater@6.8.11` to match electron-builder 26.
 
 - Update support runs only in a packaged Windows build. Development mode
   returns an explicit unsupported state and never contacts the release server.
