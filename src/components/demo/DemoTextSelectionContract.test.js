@@ -16,7 +16,7 @@ const formalRangeControlSource = read('../ui/range/UiRangeControl.vue');
 const candidateMarqueeSource = read('./DemoCandidateMarqueeText.vue');
 const candidateHintSource = read('./DemoCandidateHint.vue');
 const candidateNoticeSource = read('./DemoCandidateNotice.vue');
-const notificationHostSource = read('./DemoCandidateNotificationHost.vue');
+const notificationHostSource = read('../ui/UiNotificationHost.vue');
 const progressAppearanceSource = read('./DemoProgressAppearance.vue');
 const fieldAppearanceSource = read('./DemoFieldAppearance.vue');
 const uiTextFieldSource = read('../ui/UiTextField.vue');
@@ -86,10 +86,7 @@ describe('Token v2 Candidate text selection contract', () => {
   });
 
   it('keeps the fixed notification exception narrow', () => {
-    expectNoneRule(
-      notificationHostSource,
-      '\\.demo-candidate-notification-host',
-    );
+    expectNoneRule(notificationHostSource, '\\.ui-notification-host__item');
     expect(candidateNoticeSource).not.toContain('user-select: none');
     expect(adoptedButtonSource).not.toContain('pointer-events: none');
     expect(adoptedTextButtonSource).not.toContain('pointer-events: none');

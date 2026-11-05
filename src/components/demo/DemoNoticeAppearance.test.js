@@ -1,13 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { describe, expect, it, vi } from 'vitest';
-import {
-  attachClientRender,
-  findAll,
-  mount,
-  trigger,
-} from '../ui/uiTestHost.js';
+import { describe, expect, it } from 'vitest';
+import { attachClientRender } from '../ui/uiTestHost.js';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
@@ -24,13 +19,6 @@ const notificationRecipeSource = readSource(
 );
 const candidateSource = readSource('./DemoCandidateNotice.vue');
 const candidateStatusIconSource = readSource('./DemoCandidateStatusIcon.vue');
-const candidateNotificationHostUrl = new URL(
-  './DemoCandidateNotificationHost.vue',
-  import.meta.url,
-);
-const candidateNotificationHostSource = existsSync(candidateNotificationHostUrl)
-  ? readFileSync(candidateNotificationHostUrl, 'utf8')
-  : '';
 const currentSource = readSource('../ui/UiNotice.vue');
 const reviewContract = readSource(
   '../../../docs/contracts/token-v2-component-review.md',
@@ -123,153 +111,7 @@ describe('DemoNoticeAppearance', () => {
       /@container \(max-width: 26rem\)[\s\S]*?\.demo-candidate-notice__action\s*\{[\s\S]*?grid-column:\s*2;[\s\S]*?justify-self:\s*end;/u,
     );
   });
-  it('times out only transient notifications and leaves progress or persistent records owner-controlled', async () => {
-    vi.useFakeTimers();
-    try {
-      const { default: DemoCandidateNotificationHost } =
-        await import('./DemoCandidateNotificationHost.vue');
-      attachClientRender(
-        DemoCandidateNotificationHost,
-        './DemoCandidateNotificationHost.vue',
-        import.meta.url,
-      );
-      const transientDismiss = vi.fn();
-      const transient = mount(DemoCandidateNotificationHost, {
-        notificationKey: 'saved-1',
-        lifecycle: 'transient',
-        durationMs: 6000,
-        title: '設定已儲存',
-        message: '下次開啟時會套用。',
-        onDismiss: transientDismiss,
-      });
-      await vi.advanceTimersByTimeAsync(5999);
-      expect(transientDismiss).not.toHaveBeenCalled();
-      await vi.advanceTimersByTimeAsync(1);
-      expect(transientDismiss).toHaveBeenCalledWith('timeout');
-      transient.app.unmount();
-      for (const lifecycle of ['progress', 'persistent']) {
-        const dismiss = vi.fn();
-        const mounted = mount(DemoCandidateNotificationHost, {
-          notificationKey: `${lifecycle}-1`,
-          lifecycle,
-          durationMs: 1,
-          title: '通知仍在畫面上',
-          onDismiss: dismiss,
-        });
-        await vi.advanceTimersByTimeAsync(1000);
-        expect(dismiss).not.toHaveBeenCalled();
-        mounted.app.unmount();
-      }
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-  it('pauses a transient countdown during pointer interaction and resumes the remaining duration', async () => {
-    vi.useFakeTimers();
-    try {
-      const { default: DemoCandidateNotificationHost } =
-        await import('./DemoCandidateNotificationHost.vue');
-      attachClientRender(
-        DemoCandidateNotificationHost,
-        './DemoCandidateNotificationHost.vue',
-        import.meta.url,
-      );
-      const dismiss = vi.fn();
-      const mounted = mount(DemoCandidateNotificationHost, {
-        notificationKey: 'paused-1',
-        lifecycle: 'transient',
-        durationMs: 6000,
-        title: '設定已儲存',
-        onDismiss: dismiss,
-      });
-      const notification = findAll(
-        mounted.root,
-        (node) => node.type === 'article',
-      )[0];
-      await vi.advanceTimersByTimeAsync(3000);
-      trigger(notification, 'onPointerenter');
-      await vi.advanceTimersByTimeAsync(10000);
-      expect(dismiss).not.toHaveBeenCalled();
-      trigger(notification, 'onPointerleave');
-      await vi.advanceTimersByTimeAsync(2999);
-      expect(dismiss).not.toHaveBeenCalled();
-      await vi.advanceTimersByTimeAsync(1);
-      expect(dismiss).toHaveBeenCalledWith('timeout');
-      mounted.app.unmount();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-  it('allows a dismissible fixed notification to be swiped left or right by touch without replacing the close button', async () => {
-    const { default: DemoCandidateNotificationHost } =
-      await import('./DemoCandidateNotificationHost.vue');
-    attachClientRender(
-      DemoCandidateNotificationHost,
-      './DemoCandidateNotificationHost.vue',
-      import.meta.url,
-    );
-    for (const [startX, endX] of [
-      [160, 80],
-      [80, 160],
-    ]) {
-      const dismiss = vi.fn();
-      const mounted = mount(DemoCandidateNotificationHost, {
-        notificationKey: `swipe-${startX}`,
-        lifecycle: 'transient',
-        dismissible: true,
-        title: '設定已儲存',
-        onDismiss: dismiss,
-      });
-      const notification = findAll(
-        mounted.root,
-        (node) => node.type === 'article',
-      )[0];
-      const pointerTarget = {
-        setPointerCapture: vi.fn(),
-      };
-      trigger(notification, 'onPointerdown', {
-        pointerType: 'touch',
-        pointerId: 1,
-        clientX: startX,
-        currentTarget: pointerTarget,
-      });
-      trigger(notification, 'onPointermove', {
-        pointerType: 'touch',
-        pointerId: 1,
-        clientX: endX,
-      });
-      trigger(notification, 'onPointerup', {
-        pointerType: 'touch',
-        pointerId: 1,
-      });
-      expect(dismiss).toHaveBeenCalledWith('swipe');
-      mounted.app.unmount();
-    }
-    expect(candidateNotificationHostSource).toContain(
-      'const SWIPE_DISMISS_DISTANCE = 72;',
-    );
-    expect(candidateNotificationHostSource).toContain(
-      "!['touch', 'pen'].includes(event.pointerType)",
-    );
-    expect(candidateNotificationHostSource).toContain(
-      'Math.abs(dragOffset.value) >= SWIPE_DISMISS_DISTANCE',
-    );
-    expect(candidateNotificationHostSource).toMatch(
-      /\.demo-candidate-notification-host--swipeable\s*\{\s*touch-action:\s*pan-y;/u,
-    );
-    expect(candidateNotificationHostSource).not.toMatch(
-      /\.demo-candidate-notification-host\s*\{[^}]*touch-action:\s*pan-y;/u,
-    );
-    // Zeroed motion tokens cover reduced motion; no local rule is needed.
-    expect(candidateNotificationHostSource).not.toContain(
-      "data-ui-motion='reduced'",
-    );
-    expect(candidateNotificationHostSource).toContain('label="關閉通知"');
-  });
-  it('prevents accidental text selection only on the fixed notification host', () => {
-    expect(candidateNotificationHostSource).toMatch(
-      /\.demo-candidate-notification-host\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
-    );
+  it('keeps text selection available in inline notices', () => {
     expect(candidateSource).not.toContain('user-select: none');
     expect(currentSource).not.toContain('user-select: none');
   });
@@ -280,12 +122,6 @@ describe('DemoNoticeAppearance', () => {
     expect(text).toContain('查看錯誤紀錄');
     expect(text).toContain('可以立即再試時，唯一操作優先使用「重試」');
     expect(text).toContain('沒有更直接的處理方式時，才提供「查看錯誤紀錄」');
-    expect(candidateNotificationHostSource).toContain(
-      ':action-label="actionLabel"',
-    );
-    expect(candidateNotificationHostSource).not.toMatch(
-      /rawError|stderr|filePath|payload|correlationId/u,
-    );
     expect(notificationRecipeSource).not.toMatch(
       /rawError|stderr|filePath|payload|correlationId/u,
     );
