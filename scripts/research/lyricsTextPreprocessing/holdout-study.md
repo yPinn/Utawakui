@@ -1,6 +1,6 @@
 # Synthetic source-block holdout diagnosis
 
-The approved design is in the [validation plan](../../../docs/research/lyrics-text-blind-validation-plan-2026-10-23.md).
+The approved design is in the [validation plan](../../../docs/research/lyrics-text/lyrics-text-blind-validation-plan-2026-10-23.md).
 This run is an agent-authored synthetic holdout diagnosis, not native-speaker
 blind review. Authored alternatives are proxies; human acceptability remains
 pending. It does not import real songs, provider artifacts or audio.

@@ -23,7 +23,6 @@
 
 - 開發工具：[scripts 入口與維護邊界](../scripts/README.md)、[tools 發布維護工具](../tools/README.md)、[原型與隔離檢查](../prototypes/README.md)
 - 發布：[release runbook](operations/release-runbook.md)、[安裝／重裝驗證](operations/installer-maintenance-verification-2026-10-18.md)、[更新驗收範本](operations/update-acceptance-template.md)、[release notes 範本](operations/release-notes-template.md)
-- 版本證據：[v0.5.1 發行範圍與驗收紀錄](operations/v0.5.1-release-scope.md)；規劃文件不列為本版已交付功能。
 - 驗證：[人工驗收](operations/manual-acceptance.md)、[Output 外觀驗收](operations/output-appearance-acceptance.md)、[歌詞逐行批次驗證](operations/lyrics-line-batches-verification-2026-10-24.md)、[CI](operations/ci-usage.md)、[啟動效能基準](operations/startup-performance-baseline.md)
 - 歌詞驗證補充：[製作署名與列舉分批](operations/lyrics-cast-enumeration-verification-2026-10-25.md)；屬當輪驗證紀錄，不取代現行文字／時間契約。
 - 診斷與歌詞：[diagnostics](operations/diagnostics-rollout.md)、[歌詞對齊試用](operations/lyrics-alignment-research.md)、[歌詞問題回報](operations/lyrics-issue-feedback.md)、[provider 契約錄製](operations/lyrics-provider-contracts.md)、[酷狗備援接入驗證](operations/kugou-fallback-validation-2026-10-31.md)、[查詢預算／別名／背景流量驗證](operations/lyrics-query-budget-alias-validation-2026-10-31.md)

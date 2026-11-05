@@ -106,7 +106,7 @@ describe('synthetic holdout scoring and data isolation', () => {
       JSON.parse(
         fs.readFileSync(
           new URL(
-            `../../../docs/research/lyrics-text-holdout/${name}-2026-10-23.json`,
+            `../../../docs/research/lyrics-text/holdout/${name}-2026-10-23.json`,
             import.meta.url,
           ),
           'utf8',

@@ -8,7 +8,7 @@ songs, write lyrics sidecars, rewrite text or assign timestamps.
 ## Fixed scope
 
 The approved protocol is in
-[the feasibility report](../../../docs/research/lyrics-text-preprocessing-feasibility-2026-10-23.md).
+[the feasibility report](../../../docs/research/lyrics-text/lyrics-text-preprocessing-feasibility-2026-10-23.md).
 The dated workspace under `tasks/lyrics-text-qwen-pilot-20261023/` owns assets,
 upstream metadata, requests, SSE responses, results, process samples and failures.
 It is ignored scratch, not a distributable model cache.

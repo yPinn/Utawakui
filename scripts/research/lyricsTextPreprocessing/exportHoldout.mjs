@@ -6,7 +6,7 @@ import { validateCondition } from './ablation.mjs';
 import { describeNumbers } from './score.mjs';
 
 const root = 'tasks/lyrics-text-holdout-20261023',
-  data = 'docs/research/lyrics-text-holdout';
+  data = 'docs/research/lyrics-text/holdout';
 const read = (p) =>
   JSON.parse(fs.readFileSync(p, 'utf8').replace(/^\uFEFF/u, ''));
 const hash = (p) =>
@@ -417,7 +417,7 @@ const result = {
   },
 };
 fs.writeFileSync(
-  'docs/research/lyrics-text-holdout-results-2026-10-23.json',
+  'docs/research/lyrics-text/lyrics-text-holdout-results-2026-10-23.json',
   JSON.stringify(result, null, 2) + '\n',
 );
 console.log(

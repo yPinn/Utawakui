@@ -286,7 +286,7 @@ an explicit diagnostics consent and privacy contract.
   would become a generic envelope across 200+ channels. Renderer failures
   before IPC already have their own record. Linking a feedback report to one
   record waits until the relay receives real reports
-  ([proposal](../research/engineering/diagnostics-correlation-proposal-2026-10-29.md)).
+  ([proposal](../archive/diagnostics-correlation-proposal-2026-10-29.md)).
 - **Install an `uncaughtException` handler and continue:** an uncaught fatal
   error leaves process state undefined; diagnostics must not masquerade as
   recovery.

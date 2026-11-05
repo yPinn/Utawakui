@@ -105,9 +105,9 @@ M1 沒有句間標點時，兩種零模型對照都為 0／15；C 的 14／15 �
 
 ## 驗證與可重現資料
 
-- [輸入 manifest](lyrics-text-holdout/inputs-2026-10-23.json)、[代理答案與不可切範圍](lyrics-text-holdout/answers-2026-10-23.json)、[獨立時間對照](lyrics-text-holdout/time-controls-2026-10-23.json)。機器序列化在鎖定後原樣保留，沒有為格式重排凍結內容。
+- [輸入 manifest](holdout/inputs-2026-10-23.json)、[代理答案與不可切範圍](holdout/answers-2026-10-23.json)、[獨立時間對照](holdout/time-controls-2026-10-23.json)。機器序列化在鎖定後原樣保留，沒有為格式重排凍結內容。
 - [完整結果 JSON](lyrics-text-holdout-results-2026-10-23.json)：120 個排程格、raw／partial／missing、全部參考、候選、payload、角色／和聲及空白對照、主測與共同子集、成本與 hash。
-- [研究程式與方法](../../scripts/research/lyricsTextPreprocessing/holdout-study.md)。原始 SSE、失敗、interface／authorship lock、十四份快照、protocol、clock、telemetry、原生退出核對、TDD 與 verification 在 ignored `tasks/lyrics-text-holdout-20261023/`。
+- [研究程式與方法](../../../scripts/research/lyricsTextPreprocessing/holdout-study.md)。原始 SSE、失敗、interface／authorship lock、十四份快照、protocol、clock、telemetry、原生退出核對、TDD 與 verification 在 ignored `tasks/lyrics-text-holdout-20261023/`。
 
 111 份有結果的輸出逐碼重建原文、hidden 均 false；100 份來源 fixture 與其起訖、答案／時間對照 manifest SHA 不變。沒有新子段時間。20 組時間對照中 18 個有 C 結果可重用、兩個缺測；它們只驗資料隔離，沒有音訊或真正演唱邊界驗收。
 

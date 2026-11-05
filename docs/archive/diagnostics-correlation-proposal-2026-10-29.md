@@ -1,6 +1,6 @@
 # 診斷關聯 ID：現況與決策
 
-日期：2026-10-30（Asia/Taipei）。決策已寫入 [ADR 0008](../../adr/0008-local-diagnostics-and-error-handling.md)。
+日期：2026-10-30（Asia/Taipei）。決策已寫入 [ADR 0008](../adr/0008-local-diagnostics-and-error-handling.md)。
 
 ## 結論
 

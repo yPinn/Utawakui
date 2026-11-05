@@ -4,7 +4,7 @@
 
 ## 查核範圍與定義
 
-沿用[最小方案](lyrics-offset-consensus-plan-2026-10-22.md)的原錄音三等分，不能把 30 秒裁片自身切成三段充當整曲覆蓋。首詞須為 decoder 原始 occurrence index 0；已發布 chunks 的首塊沿用來源 T1，不能當獨立聲學觀測。時間合法、模型相同或 provider 時間都不是人工起音真值。
+沿用[最小方案](../../archive/lyrics-offset-plans-2026-10-22.md#cpu-多段一致歌詞-offset-建議最小方案)的原錄音三等分，不能把 30 秒裁片自身切成三段充當整曲覆蓋。首詞須為 decoder 原始 occurrence index 0；已發布 chunks 的首塊沿用來源 T1，不能當獨立聲學觀測。時間合法、模型相同或 provider 時間都不是人工起音真值。
 
 本輪查核中／日四份正常裁片、舊第二階段四首全曲、英文既有九案十個出現位置與 GPU 對照的英文單句，另查逐句分流 fixture、句內混語及較早短片研究的排除條件。這是指定研究根目錄的有界盤點，沒有重掃私人曲庫或宣稱整台電腦不存在其他快取。完整路徑、歌詞、原始觀測與 SHA 收據保留在 ignored 本機工作區；[摘要資料](data/lyrics-offset-cache-audit-2026-10-22.json)不含私人路徑或歌詞。
 

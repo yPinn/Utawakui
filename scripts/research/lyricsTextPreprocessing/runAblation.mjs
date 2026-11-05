@@ -20,7 +20,7 @@ const streamSha = async (p) => {
 };
 const corpusPath = path.join(
   repo,
-  'docs/research/lyrics-text-preprocessing-corpus-2026-10-23.json',
+  'docs/research/lyrics-text/lyrics-text-preprocessing-corpus-2026-10-23.json',
 );
 const corpus = read(corpusPath).cases,
   prior = read(path.join(previous, 'frozen-protocol.json'));

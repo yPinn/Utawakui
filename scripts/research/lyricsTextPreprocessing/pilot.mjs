@@ -38,7 +38,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const lock = JSON.parse(fs.readFileSync(path.join(dir, 'assets.lock.json')));
 const corpusFile = path.join(
   repo,
-  'docs/research/lyrics-text-preprocessing-corpus-2026-10-23.json',
+  'docs/research/lyrics-text/lyrics-text-preprocessing-corpus-2026-10-23.json',
 );
 const corpus = JSON.parse(fs.readFileSync(corpusFile));
 const languages = ['zh-Hant', 'zh-Hans', 'en', 'ja', 'ko'];

@@ -13,7 +13,7 @@ const sha = (p) =>
   createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const corpusPath = path.join(
   repo,
-  'docs/research/lyrics-text-preprocessing-corpus-2026-10-23.json',
+  'docs/research/lyrics-text/lyrics-text-preprocessing-corpus-2026-10-23.json',
 );
 const corpus = read(corpusPath).cases;
 const protocol = read(path.join(dir, 'frozen-protocol.json'));
@@ -223,7 +223,7 @@ const data = {
 };
 const destination = path.join(
   repo,
-  'docs/research/lyrics-text-qwen-pilot-2026-10-23.json',
+  'docs/research/lyrics-text/lyrics-text-qwen-pilot-2026-10-23.json',
 );
 fs.writeFileSync(destination, JSON.stringify(data, null, 2) + '\n');
 console.log(

@@ -20572,9 +20572,9 @@
     "exporterSha256": "a56135a560de26faa83e774d1265298bbeeeb8110d8b45b4e011669ee76bc00e",
     "protocolSha256": "b4d971746cb559beedb32f7332f9afad0112f2cafc241b9439587f8fbfa9b2c7",
     "authoredHashes": {
-      "docs/research/lyrics-text-holdout/inputs-2026-10-23.json": "c3c2b3d1c7508c1e71917815a7f9efe6455c2555e2c3c94ba9d69f6b1fad5521",
-      "docs/research/lyrics-text-holdout/answers-2026-10-23.json": "b7fbeb458965a262351759e6f6d8dd7cfb4fb3fb5e761acd682fa681f3c0b3d8",
-      "docs/research/lyrics-text-holdout/time-controls-2026-10-23.json": "c9c7c3f4f1093ff659c2e09468fba25794f5e118e67f13a4b74026d40c48725d"
+      "docs/research/lyrics-text/holdout/inputs-2026-10-23.json": "c3c2b3d1c7508c1e71917815a7f9efe6455c2555e2c3c94ba9d69f6b1fad5521",
+      "docs/research/lyrics-text/holdout/answers-2026-10-23.json": "b7fbeb458965a262351759e6f6d8dd7cfb4fb3fb5e761acd682fa681f3c0b3d8",
+      "docs/research/lyrics-text/holdout/time-controls-2026-10-23.json": "c9c7c3f4f1093ff659c2e09468fba25794f5e118e67f13a4b74026d40c48725d"
     },
     "sourceHashes": {
       "scripts/research/lyricsTextPreprocessing/runHoldout.mjs": "f13350d7448d7b9e3b2a73951509436786fcb2ffbe65e16bb51e20dedacc7754",

@@ -95,7 +95,7 @@ C 的完整預覽增加輸入與 prefill 成本，相對 B 的整組 wall 合計
 推論介面只收原文、語言、opaque ID、允許的候選與固定指令，不提供時間、案例分類答案或參考分組。模型只能選候選 ID，主程式按來源 slice 重建；角色落單、不合法 ID、重複／逆序或 schema 不符回退原句。E 沒有斷點或刪除欄位。全輪原始回覆、SSE、拒收原因、請求、process telemetry 和凍結程式快照均留存，沒有刪除失敗。
 
 - [完整數據](lyrics-text-qwen-ablation-2026-10-23.json)：100 筆原始決策、parts、候選與輸入 payload、覆蓋、成本、語系分母與 receipt hash。
-- [方法與執行入口](../../scripts/research/lyricsTextPreprocessing/ablation-study.md)：五組介面、停止限制與匯出方式。研究程式沒有產品呼叫入口。
+- [方法與執行入口](../../../scripts/research/lyricsTextPreprocessing/ablation-study.md)：五組介面、停止限制與匯出方式。研究程式沒有產品呼叫入口。
 - ignored `tasks/lyrics-text-qwen-ablation-20261023/`：protocol、全部原始 request／SSE／result、samples、clock、lifecycle、測試與最終 verification 收據；模型資產留在前輪 ignored 目錄。
 
 逐筆核對 100／100 份輸出 parts 拼回原文，hidden 均為 false；89 份接受、11 份角色落單拒收，皆保留原始回覆。實際 prompt＋output 最多 1162 tokens、output 最多 65、wall 最多 15.345 秒，cache 與 reasoning 均為零；原語料、前輪程式／報告與本輪六份凍結來源／快照 SHA 一致。server 與 sampler 的指定 PID 均已核對不存在，Git HEAD／index 未動。基線其他工作異動另列於 verification 收據，未覆寫。

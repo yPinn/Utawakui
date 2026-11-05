@@ -1,6 +1,6 @@
 # Qwen3.5 歌詞文字預處理 CPU 實測
 
-日期：2026-10-23。接續[可行性與已核准限制](lyrics-text-preprocessing-feasibility-2026-10-23.md)。本輪實跑 Qwen3.5 2B／4B Q4_K_M，各 60 個固定自製案例，另做 8 次獨立診斷。完整[數據與原始回覆](lyrics-text-qwen-pilot-2026-10-23.json)、[凍結語料](lyrics-text-preprocessing-corpus-2026-10-23.json)與[研究 runner](../../scripts/research/lyricsTextPreprocessing/README.md)可追溯。沒有接產品、讀取私有歌曲、改原文、賦予／修改時間或 commit。
+日期：2026-10-23。接續[可行性與已核准限制](lyrics-text-preprocessing-feasibility-2026-10-23.md)。本輪實跑 Qwen3.5 2B／4B Q4_K_M，各 60 個固定自製案例，另做 8 次獨立診斷。完整[數據與原始回覆](lyrics-text-qwen-pilot-2026-10-23.json)、[凍結語料](lyrics-text-preprocessing-corpus-2026-10-23.json)與[研究 runner](../../../scripts/research/lyricsTextPreprocessing/README.md)可追溯。沒有接產品、讀取私有歌曲、改原文、賦予／修改時間或 commit。
 
 ## 結論
 

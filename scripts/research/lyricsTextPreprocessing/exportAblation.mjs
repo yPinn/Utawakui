@@ -14,7 +14,7 @@ const protocol = read(path.join(root, 'protocol.json'));
 const corpus = read(
   path.join(
     repo,
-    'docs/research/lyrics-text-preprocessing-corpus-2026-10-23.json',
+    'docs/research/lyrics-text/lyrics-text-preprocessing-corpus-2026-10-23.json',
   ),
 ).cases;
 if (!fs.existsSync(path.join(root, 'summary.json')))
@@ -233,7 +233,7 @@ const data = {
 };
 const dest = path.join(
   repo,
-  'docs/research/lyrics-text-qwen-ablation-2026-10-23.json',
+  'docs/research/lyrics-text/lyrics-text-qwen-ablation-2026-10-23.json',
 );
 fs.writeFileSync(dest, JSON.stringify(data, null, 2) + '\n');
 console.log(

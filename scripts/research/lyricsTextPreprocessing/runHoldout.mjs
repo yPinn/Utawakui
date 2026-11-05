@@ -11,7 +11,7 @@ import {
 import { runLocalCpu } from './localCpuRun.mjs';
 
 const root = 'tasks/lyrics-text-holdout-20261023';
-const data = 'docs/research/lyrics-text-holdout';
+const data = 'docs/research/lyrics-text/holdout';
 const previous = 'tasks/lyrics-text-qwen-pilot-20261023';
 const read = (p) =>
   JSON.parse(fs.readFileSync(p, 'utf8').replace(/^\uFEFF/u, ''));
@@ -47,7 +47,7 @@ if (process.argv.includes('--freeze')) {
   const answers = read(`${data}/answers-2026-10-23.json`).cases;
   const corpus = validateCorpus(inputs, answers);
   const old = read(
-    'docs/research/lyrics-text-preprocessing-corpus-2026-10-23.json',
+    'docs/research/lyrics-text/lyrics-text-preprocessing-corpus-2026-10-23.json',
   ).cases;
   if (inputs.some((i) => old.some((o) => o.text === i.text)))
     throw Error('old-case-reused');

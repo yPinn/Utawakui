@@ -17,11 +17,11 @@
 
 ## 歌詞文字預處理
 
-- [來源合塊合成留出結果](lyrics-text-holdout-results-2026-10-23.md)（10-23）：100 新 occurrence、固定 120 請求；110 完成／1 超時停止／9 缺測。空白合句有局部訊號，全體未優於標點對照，和聲與混合塊分類仍有風險；代理參考、無母語盲審，未接產品。
-- [來源合併塊盲測計畫](lyrics-text-blind-validation-plan-2026-10-23.md)（10-23）：C 完整預覽與獨立分類的 100 個新案例設計、多答案／日文依附／空白與長區間負例、同字用途歧義及 120 次請求成本提案；尚未製作正式題目或完成母語盲審，未跑模型、未接產品。
-- [4B 任務分離與候選斷點對照](lyrics-text-qwen-ablation-2026-10-23.md)（10-23）：100 次固定離線對照；完整左右預覽改善拆句，幾何縮減候選有退步；獨立分類保留實唱／對唱／和聲。全部失敗與成本保留，未接產品、未改原文或時間。
-- [Qwen3.5 CPU 實測](lyrics-text-qwen-pilot-2026-10-23.md)（10-23）：2B／4B 各 60 案與 8 次獨立診斷；4B 製作資訊分類較佳，語意分組仍過切／角色落單，未達採用證據；原文及時間未改、未接產品。
-- [模型輔助可行性](lyrics-text-preprocessing-feasibility-2026-10-23.md)（10-23）：五語系 60 個自製案例與規則基線、語意斷句／製作資訊候選、文字與時間保真、本機模型成本及離線實驗規格；未下載／執行文字模型、未接產品。
+- [來源合塊合成留出結果](lyrics-text/lyrics-text-holdout-results-2026-10-23.md)（10-23）：100 新 occurrence、固定 120 請求；110 完成／1 超時停止／9 缺測。空白合句有局部訊號，全體未優於標點對照，和聲與混合塊分類仍有風險；代理參考、無母語盲審，未接產品。
+- [來源合併塊盲測計畫](lyrics-text/lyrics-text-blind-validation-plan-2026-10-23.md)（10-23）：C 完整預覽與獨立分類的 100 個新案例設計、多答案／日文依附／空白與長區間負例、同字用途歧義及 120 次請求成本提案；尚未製作正式題目或完成母語盲審，未跑模型、未接產品。
+- [4B 任務分離與候選斷點對照](lyrics-text/lyrics-text-qwen-ablation-2026-10-23.md)（10-23）：100 次固定離線對照；完整左右預覽改善拆句，幾何縮減候選有退步；獨立分類保留實唱／對唱／和聲。全部失敗與成本保留，未接產品、未改原文或時間。
+- [Qwen3.5 CPU 實測](lyrics-text/lyrics-text-qwen-pilot-2026-10-23.md)（10-23）：2B／4B 各 60 案與 8 次獨立診斷；4B 製作資訊分類較佳，語意分組仍過切／角色落單，未達採用證據；原文及時間未改、未接產品。
+- [模型輔助可行性](lyrics-text/lyrics-text-preprocessing-feasibility-2026-10-23.md)（10-23）：五語系 60 個自製案例與規則基線、語意斷句／製作資訊候選、文字與時間保真、本機模型成本及離線實驗規格；未下載／執行文字模型、未接產品。
 
 ## 歌詞來源
 
@@ -54,11 +54,11 @@
 
 - 識別：[封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）
 - 效能與安全：[啟動與 Settings](engineering/startup-settings-profile-2026-10-18.md)、[Output 首幀](engineering/output-first-frame-profile-2026-10-18.md)、[BGM 啟動](engineering/bgm-startup-profile-2026-10-18.md)（10-18）、[依賴安全](engineering/dependency-security-review-2026-10-16.md)（10-16）
-- [診斷關聯 ID 提案](engineering/diagnostics-correlation-proposal-2026-10-29.md)（10-30）：main 為 IPC 失敗發號已實作並寫入 ADR 0008；回報整合與長任務關聯延後及其啟動條件。
+- [診斷關聯 ID 提案](../archive/diagnostics-correlation-proposal-2026-10-29.md)（10-30）：main 為 IPC 失敗發號已實作並寫入 ADR 0008；回報整合與長任務關聯延後及其啟動條件。
 - [防禦編程與發行防護檢查](engineering/defensive-security-review-2026-10-26.md)（10-26）：Windows 名稱／ZIP 邊界、獨立工具修補、fuse 實測及尚未啟用的更新簽章。
 - [正式 runtime 打包驗證](engineering/runtime-packaging-verification-2026-10-26.md)（10-26）：六個壓縮入口、三個自有 unpacked 檔、啟動／播放與四聲道輸出比對。
 - [輕量混淆候選評估](engineering/light-obfuscation-assessment-2026-10-26.md)與[第一批正式驗證](engineering/light-symbols-verification-2026-10-26.md)（10-26）：Main 兩個規則模組的私有符號轉換、實際 ASAR 邊界、播放與四聲道管線、兩輪各十冷／十暖交錯量測；第二批未啟用。
-- 視覺：[Row／Grid 收束](design/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
+- 視覺：[Row／Grid 收束](../archive/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
 
 ## 產品與競品
 

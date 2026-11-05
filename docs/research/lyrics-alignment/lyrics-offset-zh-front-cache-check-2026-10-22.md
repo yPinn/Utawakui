@@ -1,6 +1,6 @@
 # 《雪 Distance》前段兩句：離線快取重判
 
-日期：2026-10-22。依[固定六句計畫](lyrics-offset-zh-six-line-plan-2026-10-22.md)只檢查 W0 的 O1／O2。結果為一支持、一不足，前段無法共同提供足夠的 offset 證據，已停止，不啟動中後段推論。原始細節與來源綁定保留在 ignored 研究目錄；[摘要資料](data/lyrics-offset-zh-front-cache-check-2026-10-22.json)不含私人路徑、歌詞或模型起音。
+日期：2026-10-22。依[固定六句計畫](../../archive/lyrics-offset-plans-2026-10-22.md#純-t1-中文單曲六句-offset-缺測補齊計畫)只檢查 W0 的 O1／O2。結果為一支持、一不足，前段無法共同提供足夠的 offset 證據，已停止，不啟動中後段推論。原始細節與來源綁定保留在 ignored 研究目錄；[摘要資料](data/lyrics-offset-zh-front-cache-check-2026-10-22.json)不含私人路徑、歌詞或模型起音。
 
 ## 身分與配方核對
 

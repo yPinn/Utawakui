@@ -9,9 +9,8 @@ Package contents and dependency locations are documented separately in
 are publication-ready announcement copy, including before manual review. Draft
 state belongs to GitHub Release and internal operations records; do not put it
 in the versioned announcement. A file's existence is not proof of publication.
-Public assets and the current source tree may differ. The v0.5.1 scope and
-verification evidence are recorded in the
-[version scope record](v0.5.1-release-scope.md).
+Public assets and the current source tree may differ. Past version scope
+records are kept in the [archive](../archive/README.md).
 
 ## Current Release Boundary
 

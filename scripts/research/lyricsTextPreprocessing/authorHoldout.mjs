@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { randomBytes, createHash } from 'node:crypto';
 
-const destination = 'docs/research/lyrics-text-holdout';
+const destination = 'docs/research/lyrics-text/holdout';
 fs.mkdirSync(destination, { recursive: true });
 if (fs.existsSync(`${destination}/inputs-2026-10-23.json`))
   throw Error('authored-manifest-already-exists');

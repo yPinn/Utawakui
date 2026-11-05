@@ -2,7 +2,7 @@
 
 查核日期：2026-10-20。Utawakui 目前為單人、未登記、未公開發布且無收入的社群專案。
 本清單協助決定免費核心、選用能力與未來可能的贊助權限；沒有啟用付費分級，也沒有申請或購買商用服務。
-產品功能現況仍以 [spec](../spec.md) 為準，完整授權附文見 [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md)。
+產品功能現況仍以 [spec](../spec.md) 為準，完整授權附文見 [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md)；本輪依賴盤點的機器可讀結果見[依賴清單 JSON](data/community-dependency-inventory-2026-10-20.json)。
 
 ## 分層原則
 
