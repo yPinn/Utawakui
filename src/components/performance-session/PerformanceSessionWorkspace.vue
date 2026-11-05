@@ -1,22 +1,14 @@
 <script setup>
 import { computed, onMounted, shallowRef } from 'vue';
-import {
-  ArrowLeft,
-  ListPlus,
-  Plus,
-  Trash2,
-  Ellipsis,
-} from '../../icons/index.js';
+import { ArrowLeft, Plus, Trash2, Ellipsis } from '../../icons/index.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
 import { useAppRightDock } from '../../composables/useAppRightDock.js';
-import { usePlaylists } from '../../composables/usePlaylists.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import { artistSearchTexts } from '../../utils/artistPage.js';
-import { playlistDisplayName } from '../../utils/playlistMenu.js';
 import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -34,6 +26,7 @@ import UiSearchBox from '../ui/UiSearchBox.vue';
 import PerformanceSessionManualItemForm from './PerformanceSessionManualItemForm.vue';
 import PerformanceSessionPlanEditor from './PerformanceSessionPlanEditor.vue';
 import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
+import { confirmPerformanceSessionItemRemoval } from './performanceSessionItemActions.js';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
@@ -58,9 +51,7 @@ const {
   removeItem,
   selectItem,
   clear,
-  replaceFromCollection,
 } = usePerformanceSessionPlan();
-const { selectedPlaylist } = usePlaylists();
 
 const librarySearchQuery = shallowRef('');
 const editorOpen = shallowRef(false);
@@ -85,7 +76,13 @@ const pendingAttention = computed(
 );
 const creatingManualItem = shallowRef(false);
 const libraryAddValidationError = shallowRef(null);
-const hasItems = computed(() => state.plan.summary.total > 0);
+const canClearPending = computed(
+  () =>
+    playback.pendingItems.value.length > 0 &&
+    !playback.currentItem.value &&
+    !state.isSaving &&
+    !playback.state.busy,
+);
 const normalizedLibrarySearch = computed(() =>
   librarySearchQuery.value.trim().toLocaleLowerCase(),
 );
@@ -128,19 +125,6 @@ const sourceLabel = computed(() => state.plan.source?.name ?? '');
 const sourceLang = computed(() =>
   contentLangAttribute(state.plan.source?.name),
 );
-const selectedCollectionLabel = computed(() =>
-  playlistDisplayName(selectedPlaylist.value),
-);
-const collectionActionLabel = computed(() =>
-  hasItems.value
-    ? t('session.workspace.replaceFrom', {
-        name: selectedCollectionLabel.value,
-      })
-    : selectedPlaylist.value?.kind === 'album'
-      ? t('session.workspace.fromAlbum')
-      : t('session.workspace.fromList'),
-);
-
 onMounted(initialize);
 
 async function addLibraryTrack(trackId) {
@@ -189,75 +173,42 @@ async function confirmRemoveItem(itemId) {
   const item = state.plan.items.find(
     (candidate) => candidate.itemId === itemId,
   );
-  if (!item) return;
-  const confirmed = await confirmAction({
-    title:
-      item.progress === 'queued'
-        ? t('session.workspace.removeQueuedTitle')
-        : t('session.workspace.removeHistoryTitle'),
-    subject: item.displayTitle,
-    message: t('session.workspace.removeMessage'),
-    confirmLabel: t('session.workspace.removeConfirm'),
-    intent: 'danger',
-  });
-  if (confirmed) removeItem(itemId);
+  if (item && (await confirmPerformanceSessionItemRemoval(confirmAction, item)))
+    await removeItem(itemId);
 }
 
-async function clearDraft() {
-  if (!hasItems.value) return;
+async function clearPending() {
+  if (!canClearPending.value) return;
+  const pending = playback.pendingItems.value;
+  const sessionId = state.plan.sessionId;
   const confirmed = await confirmAction({
     title: t('session.workspace.clearTitle'),
-    message: t('session.workspace.clearMessage'),
-    detail: t('session.workspace.clearDetail'),
+    message: t(
+      'session.workspace.clearMessage',
+      { count: pending.length },
+      pending.length,
+    ),
     confirmLabel: t('session.workspace.clearConfirm'),
     intent: 'danger',
   });
-  if (confirmed && (await playback.stop())) clear();
-}
-
-async function prepareSelectedCollection() {
-  const collection = selectedPlaylist.value;
-  if (!collection) return;
-
-  await initialize();
-  let replaceCurrent = hasItems.value;
-  if (replaceCurrent) {
-    replaceCurrent = await confirmAction({
-      title: t('session.workspace.replaceTitle'),
-      subject: selectedCollectionLabel.value,
-      meta: sourceLabel.value
-        ? t('session.workspace.currentSource', { name: sourceLabel.value })
-        : undefined,
-      message: t('session.workspace.replaceMessage'),
-      confirmLabel: t('session.workspace.replaceConfirm'),
-      intent: 'danger',
-    });
-    if (!replaceCurrent) return;
-  }
-
-  if (replaceCurrent && !(await playback.stop())) return;
-  let prepared = await replaceFromCollection(collection.id, replaceCurrent);
   if (
-    !prepared &&
-    !replaceCurrent &&
-    state.validationError?.code === 'SESSION_PLAN_REPLACE_REQUIRED'
-  ) {
-    const confirmed = await confirmAction({
-      title: t('session.workspace.replaceTitle'),
-      message: t('session.workspace.replaceOtherMessage'),
-      confirmLabel: t('session.workspace.replaceConfirm'),
-      intent: 'danger',
-    });
-    if (confirmed && (await playback.stop()))
-      prepared = await replaceFromCollection(collection.id, true);
-  }
-
-  if (prepared) {
-    librarySearchQuery.value = '';
-    creatingManualItem.value = false;
-    editorOpen.value = false;
-  }
+    confirmed &&
+    canClearPending.value &&
+    state.plan.sessionId === sessionId &&
+    playback.pendingItems.value === pending
+  )
+    await clear();
 }
+
+function toggleArrangementDock() {
+  if (arrangementDockVisible.value) {
+    dock.setExpanded(false);
+    return;
+  }
+  dock.selectArrangementTab('pending');
+  dock.showQueueVariant('arrangement');
+}
+
 const menuAnchor = shallowRef(null);
 const workspaceMenu = computed(() => ({
   kind: 'actions',
@@ -266,32 +217,13 @@ const workspaceMenu = computed(() => ({
       id: 'arrangement',
       items: [
         {
-          id: 'bgm',
-          kind: 'action',
-          value: 'bgm',
-          label: t('session.workspace.showBgm'),
-        },
-        ...(selectedPlaylist.value
-          ? [
-              {
-                id: 'prepare',
-                kind: 'action',
-                value: 'prepare',
-                label: collectionActionLabel.value,
-                icon: ListPlus,
-                intent: hasItems.value ? 'danger' : 'default',
-                disabled: state.isSaving || playback.state.busy,
-              },
-            ]
-          : []),
-        {
           id: 'clear',
           kind: 'action',
           value: 'clear',
           label: t('session.workspace.clearConfirm'),
           icon: Trash2,
           intent: 'danger',
-          disabled: !hasItems.value || state.isSaving || playback.state.busy,
+          disabled: !canClearPending.value,
         },
       ],
     },
@@ -299,14 +231,7 @@ const workspaceMenu = computed(() => ({
 }));
 async function selectWorkspaceAction(action) {
   menuAnchor.value = null;
-  if (action === 'bgm') {
-    dock.selectArrangementTab('pending');
-    dock.showQueueVariant('arrangement');
-    return;
-  }
-  if (state.isSaving || playback.state.busy) return;
-  if (action === 'prepare') await prepareSelectedCollection();
-  if (action === 'clear') await clearDraft();
+  if (action === 'clear') await clearPending();
 }
 </script>
 
@@ -352,11 +277,7 @@ async function selectWorkspaceAction(action) {
                   : 'session.workspace.showDockLabel',
               )
             "
-            @click="
-              arrangementDockVisible
-                ? dock.setExpanded(false)
-                : dock.showQueueVariant('arrangement')
-            "
+            @click="toggleArrangementDock"
             >{{
               t(
                 arrangementDockVisible
@@ -415,8 +336,10 @@ async function selectWorkspaceAction(action) {
           :phase="playerState.playbackPhase"
           :confirmed="currentConfirmed"
           :can-start="playback.canStart.value"
+          :next-item="playback.nextReadyItem.value"
+          :has-played="playback.hasPlayed.value"
           :busy="state.isSaving || playback.state.busy"
-          @start-first="playback.next"
+          @start-first="playback.startNext"
           @complete="playback.complete"
           @stop="playback.stop"
           @toggle="togglePlayback"
@@ -426,6 +349,7 @@ async function selectWorkspaceAction(action) {
               id="arrangement-continuous"
               :label="t('session.workspace.continuous')"
               :model-value="playback.state.continuous"
+              :disabled="!state.plan.sessionId"
               @update:model-value="playback.setContinuous"
             />
           </template>

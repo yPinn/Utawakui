@@ -172,8 +172,8 @@ watch(
 }
 
 .app-folder-page__sheet {
+  /* Document chrome shares the floating artifacts' page stacking context. */
   position: relative;
-  z-index: var(--ui-layer-base);
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
@@ -190,6 +190,7 @@ watch(
 
 /* Must follow the sheet rule: workspaces fill the Folder at a fixed height. */
 .app-folder-page__sheet--workspace {
+  z-index: var(--ui-layer-base);
   max-inline-size: none;
   min-block-size: 0;
   block-size: 100%;

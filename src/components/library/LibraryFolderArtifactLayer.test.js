@@ -30,6 +30,14 @@ function render(props) {
 }
 
 describe('LibraryFolderArtifactLayer', () => {
+  it('makes a short performance record note readable directly from the playlist', async () => {
+    const html = await render({
+      performanceRecord: { summary: '2026/11/06 · 完成 2 項' },
+    });
+    expect(html).toContain('場次紀錄');
+    expect(html).toContain('2026/11/06 · 完成 2 項');
+    expect(html).toContain('按 Enter 或空白鍵查看場次紀錄');
+  });
   it('combines the derived artist note and user photos in one folder canvas', async () => {
     const html = await render({
       summary: { artist: 'Aimer', text: 'Artist summary' },
@@ -208,7 +216,7 @@ describe('LibraryFolderArtifactLayer', () => {
     // A click opens a photo, or the reading sheet of a note the cap cut off;
     // it never starts an edit.
     expect(source).toMatch(
-      /function handleActivate\(id\) \{\s*const item = findItem\(id\);\s*if \(item\?\.type === 'photo'\) emit\('activate', id\);\s*else if \(isReadableNote\(item\)\) emit\('readNote', id\);\s*\}/u,
+      /function handleActivate\(id\) \{[^}]*emit\('activate', id\);[^}]*emit\('readNote', id\);\s*\}/u,
     );
     expect(source).toContain('capped: true,');
     expect(source).toMatch(
@@ -260,7 +268,7 @@ describe('LibraryFolderArtifactLayer', () => {
 
   it('routes every layout, pin, and stack change as one entry batch keyed by object', () => {
     expect(source).toMatch(
-      /defineEmits\(\[\s*'layoutChange',\s*'activate',\s*'editNote',\s*'editPhotoText',\s*'readNote',\s*'remove',?\s*\]\)/u,
+      /defineEmits\(\[\s*'layoutChange',\s*'activate',\s*'editNote',\s*'editPhotoText',\s*'readNote',\s*'openPerformanceRecord',\s*'remove',?\s*\]\)/u,
     );
     expect(source).toMatch(
       /function handleLayoutChange[\s\S]*?\{\s*immediate: false,\s*\}/u,

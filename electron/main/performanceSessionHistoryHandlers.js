@@ -1,13 +1,24 @@
 'use strict';
 const { t } = require('../lib/i18n');
 const crypto = require('node:crypto');
-const { savePerformancePlaylist } = require('../lib/playlists');
+const { loadPlaylists, savePerformancePlaylist } = require('../lib/playlists');
+const { atomicWriteText } = require('../lib/atomicWrite');
+const {
+  sessionPerformedItems,
+} = require('../../shared/sessionPerformedItems.mjs');
+const {
+  alignSessionTimepoints,
+  buildSessionMarkerCsv,
+  groupSessionTimepoints,
+} = require('../../shared/sessionExportTimepoints.mjs');
 
 function registerPerformanceSessionHistoryHandlers({
   ipcMain,
   run,
   operationContext,
   sessionHistoryService,
+  dialog,
+  getMainWindow = () => null,
 }) {
   ipcMain.handle(
     'performance-session-plan:append-from-archive',
@@ -23,6 +34,117 @@ function registerPerformanceSessionHistoryHandlers({
       const { store, tracksById } = operationContext();
       return store.archiveSession(intent, tracksById);
     }),
+  );
+  ipcMain.handle(
+    'performance-session-plan:save-marker-csv',
+    async (_event, intent) => {
+      const invalid = () =>
+        Object.assign(new Error(t('obs.export.csvStale')), {
+          code: 'SESSION_MARKER_EXPORT_INVALID',
+          publicValidation: true,
+        });
+      const snapshot = await run('exportMarkers', () => {
+        if (
+          !intent ||
+          !['stream', 'record'].includes(intent.source) ||
+          !Number.isSafeInteger(intent.offsetMs) ||
+          !Number.isSafeInteger(intent.segmentIndex) ||
+          intent.segmentIndex < 0 ||
+          typeof intent.sessionId !== 'string' ||
+          !/^[a-zA-Z0-9_-]{1,128}$/u.test(intent.sessionId) ||
+          typeof intent.digest !== 'string' ||
+          !/^[0-9a-f]{64}$/u.test(intent.digest)
+        )
+          throw invalid();
+        let session;
+        let entries;
+        if (intent.latest === true) {
+          session = sessionHistoryService?.getLatestSession();
+          entries = session?.entries;
+        } else {
+          const { store, tracksById } = operationContext({
+            reuseRecentScan: true,
+          });
+          session = store.getSession(intent.sessionId, tracksById);
+          entries = session?.timeline;
+        }
+        if (session?.id !== intent.sessionId) throw invalid();
+        const { segments } = groupSessionTimepoints(entries, intent.source);
+        const { rows } = alignSessionTimepoints(
+          segments[intent.segmentIndex],
+          intent.offsetMs,
+        );
+        const csv = buildSessionMarkerCsv(rows, intent.source);
+        if (
+          !csv ||
+          Buffer.byteLength(csv) > 2_000_000 ||
+          crypto.createHash('sha256').update(csv).digest('hex') !==
+            intent.digest
+        )
+          throw invalid();
+        const name = (session.name || t('obs.export.latest'))
+          .replace(/[<>:"/\\|?*\p{Cc}]/gu, ' ')
+          .trim()
+          .slice(0, 100);
+        const fileName = `${name || 'Utawakui'} - ${t(`obs.export.${intent.source}`)} - ${intent.segmentIndex + 1}.csv`;
+        return { csv, fileName };
+      });
+      if (!snapshot.ok) return snapshot;
+      try {
+        const owner = getMainWindow();
+        const options = {
+          title: t('obs.export.saveCsv'),
+          defaultPath: snapshot.plan.fileName,
+          filters: [{ name: 'CSV', extensions: ['csv'] }],
+        };
+        const result = owner
+          ? await dialog.showSaveDialog(owner, options)
+          : await dialog.showSaveDialog(options);
+        if (result.canceled || !result.filePath)
+          return { ok: true, plan: { saved: false } };
+        atomicWriteText(result.filePath, snapshot.plan.csv);
+        return { ok: true, plan: { saved: true } };
+      } catch (error) {
+        return run('exportMarkers', () => {
+          throw error;
+        });
+      }
+    },
+  );
+  ipcMain.handle(
+    'performance-session-plan:create-archive-playlist',
+    (_event, intent) =>
+      run('export', () => {
+        const { store, tracksById, directory } = operationContext();
+        const session = store.getSession(intent?.sessionId, tracksById);
+        if (!session.endedAt)
+          throw Object.assign(new Error(t('session.main.archiveInvalid')), {
+            code: 'SESSION_ARCHIVE_INVALID',
+            publicValidation: true,
+          });
+        const existing = loadPlaylists(directory).find(
+          (playlist) => playlist.performanceSessionId === session.id,
+        );
+        if (existing) return { playlistId: existing.id };
+        const trackIds = sessionPerformedItems(session)
+          .filter(
+            (item) =>
+              item.mode === 'library-track' && tracksById.has(item.trackId),
+          )
+          .map((item) => item.trackId);
+        if (!trackIds.length) return { playlistId: null };
+        const exportKey = crypto
+          .createHash('sha256')
+          .update(JSON.stringify(['archive-playlist', session.id]))
+          .digest('hex');
+        const { playlistId } = savePerformancePlaylist(directory, {
+          name: session.name,
+          trackIds,
+          exportKey,
+          sessionId: session.id,
+        });
+        return { playlistId };
+      }),
   );
   for (const [channel, method] of [
     ['get-session', 'getSession'],

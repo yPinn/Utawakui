@@ -1,23 +1,12 @@
 {
   "reorderHint": "Drag to reorder, or press Alt+↑ / Alt+↓ to move one position",
   "workspace": {
-    "replaceFrom": "Replace arrangement from {name}",
-    "fromAlbum": "Create from album",
-    "fromList": "Create from list",
-    "removeQueuedTitle": "Remove song from the queue?",
-    "removeHistoryTitle": "Remove this play record?",
+    "removeQueuedTitle": "Remove this item from the performance queue?",
+    "removeHistoryTitle": "Remove this performance record?",
     "removeMessage": "Only removed from this arrangement; the library song is kept.",
-    "removeConfirm": "Remove song",
-    "clearTitle": "Clear the performance arrangement?",
-    "clearMessage": "The queue, performance records and manual changes are cleared, and a song playing from the arrangement stops.",
-    "clearDetail": "Library songs and playlists are kept.",
-    "clearConfirm": "Clear arrangement",
-    "replaceTitle": "Replace the queue arrangement?",
-    "currentSource": "Current: {name}",
-    "replaceMessage": "The current arrangement and manual changes will be replaced.",
-    "replaceOtherMessage": "Another arrangement already exists; replacing it loses manual changes.",
-    "replaceConfirm": "Replace arrangement",
-    "showBgm": "Show BGM",
+    "clearTitle": "Clear the performance queue?",
+    "clearMessage": "This removes {count} pending item and keeps this session’s performance history. | This removes {count} pending items and keeps this session’s performance history.",
+    "clearConfirm": "Clear performance queue",
     "label": "Performance arrangement",
     "contentLabel": "Performance arrangement workspace",
     "attention": "{count} item to resolve | {count} items to resolve",
@@ -96,29 +85,31 @@
     "notStarted": "Not started yet",
     "nowPlaying": "Now playing",
     "start": "Start playing",
+    "startNext": "Play next song",
+    "startManual": "Start manual item",
     "actions": "Current playback actions"
   },
   "history": {
-    "addToQueue": "Add to performance queue",
-    "finishAndArchive": "End and archive session",
-    "saveAsPlaylist": "Save as setlist playlist",
-    "exportTimeline": "Export session timeline",
+    "finishAndArchive": "End session",
+    "saveAsPlaylist": "Save as playlist",
     "stopFailed": "The current track hasn't stopped. Try again.",
     "notArchived": "The session wasn't archived; the original arrangement is kept.",
-    "archivedTitle": "Session archived",
-    "archivedMessage": "View it under Archived sessions.",
+    "archivedTitle": "Session record saved",
     "archiveFailed": "The session wasn't archived. Try again; the original arrangement is kept.",
     "current": "Current session",
     "currentActions": "Current session actions",
     "sessionFallback": "Performance session",
-    "archived": "Archived sessions",
-    "setlist": "Setlist",
-    "sessionActionsNamed": "Session actions: {name}",
     "sessionActions": "Session actions",
     "nameLabel": "Session name",
-    "finishMessage": "Stops the current performance, saves the full record and starts a blank session. You can save the archive as a playlist later.",
+    "finishMessage": "Saves this performance, makes a playlist from playable tracks that were started, and opens a new session.",
+    "finishPlaying": "The current item will stop and be marked as interrupted.",
+    "viewFull": "View full history",
+    "viewArchived": "View session record",
     "cancel": "Cancel",
-    "finishConfirm": "End and archive"
+    "finishConfirm": "End and save",
+    "playlistCreated": "Playlist saved",
+    "viewPlaylist": "View playlist",
+    "playlistCreationFailed": "The session record was saved. You can retry creating the playlist from the session record."
   },
   "planList": {
     "status": {
@@ -135,9 +126,7 @@
     "queued": "Queued",
     "requeue": "Add to queue again",
     "removeRecord": "Remove record",
-    "results": "Play results",
     "order": "Queue order",
-    "records": "Performance records",
     "playNamed": "Play: {title}",
     "moreNamed": "More actions for #{position} \"{title}\"",
     "itemActions": "Actions for #{position}",
@@ -151,7 +140,6 @@
     "savedTitle": "Setlist saved",
     "savedMessage": "View it in the library playlists.",
     "saveRetry": "The playlist wasn't saved. Try again.",
-    "title": "Save as setlist playlist",
     "name": "Playlist name",
     "scope": "What to save",
     "completed": "Completed tracks",
@@ -162,8 +150,7 @@
     "confirmMessage": "{merged} repeated songs will be merged; {manual} manual items and {unavailable} items with missing audio are excluded. The original records aren't changed.",
     "nothingToSave": "No local tracks to save. Choose another scope or check track links.",
     "cancel": "Cancel",
-    "repreview": "Preview again",
-    "save": "Save playlist"
+    "repreview": "Preview again"
   },
   "queueList": {
     "needsLink": "Needs a linked track",
@@ -171,28 +158,30 @@
     "manualItem": "Manual item",
     "startNamed": "Start: {title}",
     "playNamed": "Play: {title}",
-    "order": "Queue order",
     "empty": "No queued songs. Search and add them in Performance tools → Arrangement.",
     "actions": "Queued song actions"
   },
   "archive": {
-    "archivedAt": "Archived {date}",
-    "back": "Back to arrangement",
+    "startedAt": "First entry {date}",
+    "archivedAt": "Saved {date}",
+    "listEmpty": "No session records without an associated playlist.",
     "loading": "Loading archived session…",
     "reload": "Reload session",
-    "marker": "Setlist",
-    "entity": "this setlist",
-    "addToQueue": "Add to performance queue",
-    "saveAsPlaylist": "Save as setlist playlist",
-    "exportTimeline": "Export session timeline",
-    "tracksLabel": "Archived session tracks",
-    "empty": "This session has no arranged tracks; markers are in the timeline."
+    "marker": "Archived session",
+    "entity": "this archived session",
+    "savePlaylist": "Save session playlist",
+    "tracksLabel": "Tracks performed in this session",
+    "empty": "No track performances were recorded in this session.",
+    "markersOnly": "This session contains markers only.",
+    "record": "Session record",
+    "records": "Session records",
+    "viewRecord": "View session record",
+    "noteSummary": "{timing} · {progress}",
+    "noteBody": "{timing}\n{progress}",
+    "progress": "{performed} started · {completed} completed",
+    "completedOnly": "{completed} completed"
   },
   "completed": {
-    "requeue": "Add to queue again",
-    "removeRecord": "Remove record",
-    "removeTitle": "Remove this play record?",
-    "removeMessage": "Only this completion record is removed; the library song isn't deleted.",
     "errorTitle": "Performance records not updated",
     "loading": "Loading performance records…",
     "empty": "No completed records yet. Songs played and finished from the queue appear here.",
@@ -223,18 +212,12 @@
     "interrupted": "Interrupted {count}"
   },
   "dock": {
-    "removeTitle": "Remove arrangement item?",
-    "removeMessage": "Only this arrangement item is removed; the library song isn't deleted.",
-    "remove": "Remove",
-    "notUpdated": "Arrangement not updated",
-    "continuous": "Continuous play",
-    "order": "Queue order"
+    "notUpdated": "Arrangement not updated"
   },
   "board": {
     "pending": "Queue",
-    "history": "Records",
+    "history": "Performance history",
     "label": "Arrangement content",
-    "historyLabel": "Records and archived sessions",
     "historyHint": "Completed, skipped and interrupted items stay here."
   },
   "broadcast": {
@@ -247,7 +230,6 @@
     "tools": "Performance tools"
   },
   "page": {
-    "archiveBody": "Archived session",
     "workspaceBody": "Performance workspace"
   },
   "validation": {
@@ -305,7 +287,7 @@
     "duplicateFailed": "Item not duplicated",
     "reorderFailed": "Order not updated",
     "removeFailed": "Item not removed",
-    "clearFailed": "Arrangement not cleared"
+    "clearFailed": "Performance queue not cleared"
   },
   "archiveLoad": {
     "failed": "The session can't be read. Try again."
@@ -320,6 +302,7 @@
     "completed": "Done",
     "skipped": "Skipped",
     "interrupted": "Interrupted",
+    "recorded": "Started",
     "manualTrack": "Manual track",
     "noLocalTrack": "No local track"
   },
@@ -332,7 +315,7 @@
   },
   "outputSourceFallback": "Arrangement",
   "pendingMenu": {
-    "skip": "Skip this song",
+    "skip": "Skip",
     "duplicate": "Duplicate queue item",
     "remove": "Remove from queue"
   }

@@ -1,7 +1,5 @@
 {
   "panel": {
-    "pending": "待唱清單",
-    "history": "演出紀錄",
     "queue": "佇列",
     "recent": "最近播放",
     "currentQueue": "目前佇列",
@@ -10,7 +8,6 @@
     "title": "播放佇列",
     "collapse": "摺疊播放佇列",
     "generalLabel": "一般播放佇列與最近播放",
-    "arrangementLabel": "演出安排紀錄",
     "toGeneral": "切換一般佇列",
     "toArrangement": "切換演出待唱",
     "toGeneralHint": "目前為演出待唱。切換至一般播放佇列；兩份佇列各自安排。",

@@ -206,6 +206,8 @@ describe('registerPerformanceSessionPlanHandlers', () => {
       'performance-session-plan:clear',
       'performance-session-plan:append-from-archive',
       'performance-session-plan:archive',
+      'performance-session-plan:save-marker-csv',
+      'performance-session-plan:create-archive-playlist',
       'performance-session-plan:get-session',
       'performance-session-plan:preview-playlist',
       'performance-session-plan:save-playlist',

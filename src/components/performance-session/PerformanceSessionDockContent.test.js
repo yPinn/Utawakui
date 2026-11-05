@@ -23,6 +23,8 @@ vi.mock('../../composables/usePerformanceSessionPlayback.js', () => ({
     pendingItems: { value: [] },
     ownsPlayback: { value: false },
     canStart: { value: true },
+    nextReadyItem: { value: null },
+    hasPlayed: { value: false },
   }),
 }));
 vi.mock('../../composables/useAppRightDock.js', () => ({
@@ -49,7 +51,7 @@ beforeEach(() => {
 });
 describe('Dock control ownership follows the visible session page', () => {
   it('retains current playback controls when the main page shows an archive instead of the active arrangement', async () => {
-    fixture.activeView.value = 'performance';
+    fixture.activeView.value = 'library';
     fixture.performanceTool.value = 'session';
     fixture.performanceArchiveId.value = 'old';
     const html = await render();

@@ -33,6 +33,8 @@ const PLAYLIST_KINDS_VERSION = 2;
 
 // Sanity guard for corrupted files, not a product limit.
 const MAX_NAME_LENGTH = 200;
+const isPerformanceSessionId = (value) =>
+  typeof value === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(value);
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_PLAYLISTS = 500;
 const MAX_TRACKS_PER_PLAYLIST = 5000;
@@ -109,6 +111,9 @@ function sanitizePlaylist(entry) {
     ...(typeof entry.performanceExportKey === 'string' &&
     /^[a-f0-9]{64}$/.test(entry.performanceExportKey)
       ? { performanceExportKey: entry.performanceExportKey }
+      : {}),
+    ...(isPerformanceSessionId(entry.performanceSessionId)
+      ? { performanceSessionId: entry.performanceSessionId }
       : {}),
     name,
     kind,
@@ -240,6 +245,7 @@ function writePlaylists(dir, playlists, reconciliation, layout) {
         'addedAt',
         'releaseInfo',
         'performanceExportKey',
+        'performanceSessionId',
       ]);
       return {
         ...Object.fromEntries(
@@ -969,7 +975,10 @@ function reorderPlaylists(dir, draggedId, targetId, position = 'before') {
 
 // Session export is a single populated write. The stable operation key makes
 // a lost IPC reply retry safe without creating another empty user playlist.
-function savePerformancePlaylist(dir, { name, trackIds, exportKey } = {}) {
+function savePerformancePlaylist(
+  dir,
+  { name, trackIds, exportKey, sessionId } = {},
+) {
   const fail = () =>
     Object.assign(new Error(t('session.main.playlistInvalid')), {
       code: 'SESSION_PLAYLIST_INVALID',
@@ -988,11 +997,16 @@ function savePerformancePlaylist(dir, { name, trackIds, exportKey } = {}) {
       (id) => typeof id === 'string' && id.length > 0 && id.length <= 256,
     ) ||
     typeof exportKey !== 'string' ||
-    !/^[a-f0-9]{64}$/.test(exportKey)
+    !/^[a-f0-9]{64}$/.test(exportKey) ||
+    (sessionId !== undefined && !isPerformanceSessionId(sessionId))
   )
     throw fail();
   const playlists = loadPlaylists(dir);
-  const existing = playlists.find((p) => p.performanceExportKey === exportKey);
+  const existing = playlists.find((p) =>
+    sessionId === undefined
+      ? p.performanceExportKey === exportKey
+      : p.performanceSessionId === sessionId,
+  );
   if (existing) return { playlistId: existing.id, playlists };
   if (playlists.length >= MAX_PLAYLISTS) throw fail();
   const now = new Date().toISOString(),
@@ -1004,6 +1018,7 @@ function savePerformancePlaylist(dir, { name, trackIds, exportKey } = {}) {
     trackIds: ids,
     addedAt: Object.fromEntries(ids.map((id) => [id, now])),
     performanceExportKey: exportKey,
+    ...(sessionId ? { performanceSessionId: sessionId } : {}),
   };
   const next = [...playlists, playlist];
   writePlaylists(dir, next);

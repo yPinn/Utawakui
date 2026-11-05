@@ -9,6 +9,9 @@ const rowSource = readCatalogSource(
 );
 
 describe('PlaylistSidebar compact-to-expanded stability', () => {
+  it('supplies the required subtitle prop on the records entry', () => {
+    expect(source).toMatch(/:playlist="archiveRow"\s+subtitle=""/u);
+  });
   it('searches collection members by every integrated artist form', () => {
     expect(source).toMatch(
       /import\s*\{[\s\S]*?artistSearchTexts[\s\S]*?\}\s*from '\.\.\/\.\.\/utils\/artistPage\.js'/u,

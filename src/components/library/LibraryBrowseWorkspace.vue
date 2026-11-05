@@ -1,7 +1,9 @@
 <script setup>
 import {
   computed,
+  defineAsyncComponent,
   nextTick,
+  onMounted,
   onBeforeUnmount,
   ref,
   shallowRef,
@@ -15,12 +17,15 @@ import {
 } from '../../composables/useLibraryFolderObjects.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
+import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
+import { performanceArchiveSummary } from '../../utils/performanceArchivePresentation.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
 import LibraryBrowseContent from './LibraryBrowseContent.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiModal from '../ui/UiModal.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
 import AppFolderNoteReaderModal from '../layout/AppFolderNoteReaderModal.vue';
 import AppFolderPhotoTextEditorModal from '../layout/AppFolderPhotoTextEditorModal.vue';
@@ -28,7 +33,33 @@ import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 import { t } from '../../utils/i18n.js';
 
+const PerformanceSessionArchive = defineAsyncComponent(
+  () => import('../performance-session/PerformanceSessionArchive.vue'),
+);
+
 const { state: playlistState, selectedPlaylist } = usePlaylists();
+const performancePlan = usePerformanceSessionPlan();
+onMounted(performancePlan.initialize);
+const recordOpenFor = shallowRef(null);
+const performanceRecord = computed(() => {
+  const id = selectedPlaylist.value?.performanceSessionId;
+  if (!id) return null;
+  const archive = performancePlan.state.plan.archives?.find(
+    (entry) => entry.id === id,
+  );
+  return {
+    id,
+    summary: archive
+      ? performanceArchiveSummary(archive, { multiline: true })
+      : '',
+  };
+});
+watch(
+  () => selectedPlaylist.value?.id,
+  () => {
+    recordOpenFor.value = null;
+  },
+);
 const { albumSupportingContent } = useLibraryAlbumContext();
 const folderObjects = useLibraryFolderObjects();
 const confirmation = useAppConfirmation();
@@ -120,6 +151,7 @@ const showFolderArtifacts = computed(
   () =>
     folderArtifactsReady.value &&
     (Boolean(artistSummary.value) ||
+      Boolean(performanceRecord.value) ||
       folderObjects.objects.value.some((object) => object.source === 'user')),
 );
 const addObjectLabel = computed(() => {
@@ -385,12 +417,14 @@ onBeforeUnmount(() => {
         :key="folderPageKey"
         :objects="folderObjects.objects.value"
         :summary="artistSummary"
+        :performance-record="performanceRecord"
         :fresh-keys="folderObjects.freshKeys.value"
         @layout-change="handleArtifactLayout"
         @activate="openAsset"
         @edit-note="openNoteEditor"
         @edit-photo-text="openPhotoTextEditor"
         @read-note="openNoteReader"
+        @open-performance-record="recordOpenFor = performanceRecord?.id ?? null"
         @remove="confirmRemoveObject"
       />
     </template>
@@ -421,6 +455,19 @@ onBeforeUnmount(() => {
       />
     </template>
   </AppFolderPage>
+  <UiModal
+    :open="Boolean(recordOpenFor)"
+    :title="t('session.archive.record')"
+    size="notice"
+    max-block-size="small"
+    @close="recordOpenFor = null"
+  >
+    <PerformanceSessionArchive
+      v-if="recordOpenFor"
+      :session-id="recordOpenFor"
+      embedded
+    />
+  </UiModal>
 
   <AppFolderNoteReaderModal
     :open="Boolean(readNote)"

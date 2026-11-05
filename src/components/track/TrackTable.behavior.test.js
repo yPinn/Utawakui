@@ -737,13 +737,18 @@ describe('TrackTable density and sticky header', () => {
 
     expect(classIncludes(table, 'library-track-table--compact')).toBe(true);
     expect(
+      findAll(root, (node) =>
+        classIncludes(node, 'library-track-row--compact-inline'),
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
       findAll(root, (node) => classIncludes(node, 'library-track-row__thumb')),
     ).toHaveLength(0);
     expect(rowSource).toMatch(
       /\.library-track-row--compact \{\s*min-height: var\(--ui-track-row-compact-min-height\);/u,
     );
     expect(rowSource).toMatch(
-      /\.library-track-row--compact \.library-track-row__copy \{\s*flex-direction: row;/u,
+      /\.library-track-row--compact-inline \.library-track-row__copy \{\s*flex-direction: row;/u,
     );
     app.unmount();
   });

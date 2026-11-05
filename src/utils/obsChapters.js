@@ -1,29 +1,17 @@
 import { t } from './i18n.js';
+import {
+  alignSessionTimepoints,
+  groupSessionTimepoints,
+} from '../../shared/sessionExportTimepoints.mjs';
+export { parseObsTimecode } from '../../shared/sessionExportTimepoints.mjs';
 // Pure projection from a sessionHistoryService.js session file into a
 // YouTube chapter list. No IPC/DOM here — see useObsSessionExport.js for
 // the composable that feeds this real session data.
-
-// obs-websocket's own outputTimecode format, e.g. "01:02:03.456".
-const OBS_TIMECODE_PATTERN = /^(\d+):(\d{2}):(\d{2})(?:\.(\d+))?$/;
 
 // YouTube's own documented chapter requirements: at least 3 timestamps,
 // strictly ascending, each at least 10s apart, and the first must be 0:00.
 const YOUTUBE_MIN_CHAPTERS = 3;
 const YOUTUBE_MIN_GAP_MS = 10_000;
-
-export function parseObsTimecode(timecode) {
-  if (typeof timecode !== 'string') return null;
-  const match = OBS_TIMECODE_PATTERN.exec(timecode);
-  if (!match) return null;
-  const [, hours, minutes, seconds, fraction = '0'] = match;
-  const ms = Number(fraction.padEnd(3, '0').slice(0, 3));
-  return (
-    Number(hours) * 3_600_000 +
-    Number(minutes) * 60_000 +
-    Number(seconds) * 1000 +
-    ms
-  );
-}
 
 // YouTube's chapter format: M:SS below an hour, H:MM:SS past one — leading
 // unit unpadded, matching formatDuration's convention in format.js (a
@@ -32,6 +20,7 @@ export function parseObsTimecode(timecode) {
 // that's the expected shape).
 export function formatChapterTimestamp(milliseconds) {
   const totalSeconds = Math.max(0, Math.round(milliseconds / 1000));
+  if (!totalSeconds) return '00:00';
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = String(totalSeconds % 60).padStart(2, '0');
@@ -41,10 +30,18 @@ export function formatChapterTimestamp(milliseconds) {
   return `${minutes}:${seconds}`;
 }
 
-function chapterLabel(entry) {
-  if (entry.type === 'marker')
-    return entry.label || t('obs.export.markerFallback');
-  return entry.artist ? `${entry.title} - ${entry.artist}` : entry.title;
+export function formatSessionTimepointLabel(entry) {
+  const label =
+    entry.type === 'marker'
+      ? entry.label
+      : entry.artist
+        ? `${entry.title} - ${entry.artist}`
+        : entry.title;
+  return (
+    String(label ?? '')
+      .replace(/[\r\n\u2028\u2029]+/gu, ' ')
+      .trim() || t('obs.export.markerFallback')
+  );
 }
 
 // entries: session.entries from sessionHistoryService.js (track + marker
@@ -61,33 +58,46 @@ export function projectYoutubeChapters(
   entries,
   { offsetMs = 0, source = 'stream' } = {},
 ) {
-  const usable = (Array.isArray(entries) ? entries : [])
-    .map((entry) => {
-      const rawMs = parseObsTimecode(entry?.[source]?.timecode);
-      if (rawMs === null) return null;
-      return { entry, ms: Math.max(0, rawMs - offsetMs) };
-    })
-    .filter((row) => row !== null)
-    .sort((a, b) => a.ms - b.ms);
+  const { segments } = groupSessionTimepoints(entries, source);
+  return formatYoutubeChapters(
+    alignSessionTimepoints(segments.length === 1 ? segments[0] : [], offsetMs)
+      .rows,
+  );
+}
+
+export function formatYoutubeChapters(rows, { includeOpening = false } = {}) {
+  const lines = rows.map(({ entry, ms }) => ({
+    ms,
+    time: formatChapterTimestamp(ms),
+    label: formatSessionTimepointLabel(entry),
+  }));
+  if (includeOpening && lines.length && lines[0].time !== '00:00') {
+    lines.unshift({
+      ms: 0,
+      time: '00:00',
+      label: t('obs.export.openingLabel'),
+    });
+  }
+  const seconds = lines.map(({ ms }) => Math.round(ms / 1000));
 
   const issues = [];
-  if (usable.length < YOUTUBE_MIN_CHAPTERS) {
+  if (lines.length < YOUTUBE_MIN_CHAPTERS) {
     issues.push({
       code: 'too-few-chapters',
       message: t('obs.export.tooFew', {
         min: YOUTUBE_MIN_CHAPTERS,
-        count: usable.length,
+        count: lines.length,
       }),
     });
   }
-  if (usable.length > 0 && usable[0].ms !== 0) {
+  if (lines.length > 0 && seconds[0] !== 0) {
     issues.push({
       code: 'first-chapter-not-zero',
       message: t('obs.export.firstNotZero'),
     });
   }
-  for (let i = 1; i < usable.length; i += 1) {
-    const gapMs = usable[i].ms - usable[i - 1].ms;
+  for (let i = 1; i < lines.length; i += 1) {
+    const gapMs = (seconds[i] - seconds[i - 1]) * 1000;
     if (gapMs < YOUTUBE_MIN_GAP_MS) {
       issues.push({
         code: 'chapters-too-close',
@@ -96,12 +106,6 @@ export function projectYoutubeChapters(
       });
     }
   }
-
-  const lines = usable.map(({ entry, ms }) => ({
-    ms,
-    time: formatChapterTimestamp(ms),
-    label: chapterLabel(entry),
-  }));
 
   return {
     lines,

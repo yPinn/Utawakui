@@ -76,6 +76,8 @@ describe('QueuePanel shared Dock content', () => {
     );
   });
   it('gives arrangement its own header tabs linked to controlled panels', () => {
+    expect(source).toContain("{ id: 'pending', label: '待唱' }");
+    expect(source).toContain("{ id: 'history', label: '演出紀錄' }");
     expect(source).toContain(':items="arrangementTabs"');
     expect(source).toContain(':active-id="dock.arrangementTab.value"');
     expect(source).toContain('tab-id-prefix="arrangement-dock"');

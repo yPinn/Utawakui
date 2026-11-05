@@ -7,7 +7,17 @@ import { registerPerformanceSessionPlanHandlers } from './performanceSessionPlan
 import { createPerformanceSessionPlanStore } from '../lib/performanceSessionPlan.js';
 import { createSessionHistoryService } from './sessionHistoryService.js';
 import { createTrustedIpcMain } from './ipcSenderPolicy.js';
-import { loadPlaylists } from '../lib/playlists.js';
+import {
+  alignSessionTimepoints,
+  buildSessionMarkerCsv,
+  groupSessionTimepoints,
+} from '../../shared/sessionExportTimepoints.mjs';
+import {
+  deletePlaylist,
+  loadPlaylists,
+  renamePlaylist,
+  setPlaylistTracks,
+} from '../lib/playlists.js';
 let directory;
 beforeEach(() => {
   directory = fs.mkdtempSync(path.join(os.tmpdir(), 'session-handlers-'));
@@ -16,7 +26,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   fs.rmSync(directory, { recursive: true, force: true });
 });
-function setup({ trusted = false, service = null } = {}) {
+function setup({ trusted = false, service = null, dialog } = {}) {
   const handlers = new Map(),
     main = { mainFrame: {}, isDestroyed: () => false },
     performer = { mainFrame: {}, isDestroyed: () => false };
@@ -33,7 +43,10 @@ function setup({ trusted = false, service = null } = {}) {
       })
     : raw;
   const store = createPerformanceSessionPlanStore({ directory });
-  const tracks = [{ id: 'song', title: 'Same song', artist: 'Singer' }];
+  const tracks = [
+    { id: 'song', title: 'Same song', artist: 'Singer' },
+    { id: 'unperformed', title: 'Unperformed' },
+  ];
   const adapter = {
     getStatus: () => ({
       observed: {
@@ -67,6 +80,7 @@ function setup({ trusted = false, service = null } = {}) {
     listLibraryTracks: () => tracks,
     recordDiagnostic: vi.fn(),
     sessionHistoryService: history,
+    dialog,
   });
   const call = (method, intent, event) =>
     handlers.get(
@@ -75,6 +89,167 @@ function setup({ trusted = false, service = null } = {}) {
   return { call, store, adapter, history, main, performer };
 }
 describe('performance session history integration', () => {
+  it('saves only the reviewed marker snapshot to the path selected in the native dialog', async () => {
+    const filePath = path.join(directory, 'chosen.csv');
+    const dialog = {
+      showSaveDialog: vi.fn(async () => ({ canceled: false, filePath })),
+    };
+    const { call } = setup({ dialog });
+    await call('get');
+    const { plan } = await call('append-library-track', 'song');
+    const itemId = plan.items[0].itemId;
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 0,
+      progress: 'playing',
+    });
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 1,
+      progress: 'completed',
+    });
+    await call('archive', { sessionId: plan.sessionId, name: 'Show' });
+    const intent = {
+      sessionId: plan.sessionId,
+      source: 'record',
+      offsetMs: 125,
+      segmentIndex: 0,
+      path: 'forged.csv',
+    };
+    const { plan: detail } = await call('get-session', intent);
+    const { segments } = groupSessionTimepoints(detail.timeline, 'record');
+    const csv = buildSessionMarkerCsv(
+      alignSessionTimepoints(segments[0], 125).rows,
+      'record',
+    );
+    expect(csv).toContain('00:00:59.875');
+    expect(
+      (await call('save-marker-csv', { ...intent, digest: 'a'.repeat(64) })).ok,
+    ).toBe(false);
+    expect(dialog.showSaveDialog).not.toHaveBeenCalled();
+    const digest = crypto.createHash('sha256').update(csv).digest('hex');
+    expect(await call('save-marker-csv', { ...intent, digest })).toEqual({
+      ok: true,
+      plan: { saved: true },
+    });
+    expect(fs.readFileSync(filePath, 'utf8')).toBe(csv);
+    expect(dialog.showSaveDialog).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ defaultPath: 'Show - 錄影 - 1.csv' }),
+    );
+  });
+  it('creates a linked playlist once from the performed tracks without including the unsung arrangement', async () => {
+    const { call } = setup();
+    await call('get');
+    await call('append-library-track', 'unperformed');
+    const { plan: scheduled } = await call('append-library-track', 'song');
+    const itemId = scheduled.items[1].itemId;
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 0,
+      progress: 'playing',
+    });
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 1,
+      progress: 'interrupted',
+    });
+    const { plan } = await call('append-manual-item', { displayTitle: 'MC' });
+    const intent = {
+      sessionId: plan.sessionId,
+      trackIds: ['forged'],
+      name: 'forged',
+    };
+    expect((await call('create-archive-playlist', intent)).ok).toBe(false);
+    await call('archive', { sessionId: plan.sessionId, name: '261106 - Show' });
+    const first = await call('create-archive-playlist', intent);
+    const second = await setup().call('create-archive-playlist', intent);
+    expect(first.ok).toBe(true);
+    expect(second.plan.playlistId).toBe(first.plan.playlistId);
+    expect(loadPlaylists(directory)).toMatchObject([
+      {
+        name: '261106 - Show',
+        kind: 'playlist',
+        trackIds: ['song'],
+        performanceSessionId: plan.sessionId,
+      },
+    ]);
+    const result = await call('get-session', { sessionId: plan.sessionId });
+    expect(result.plan.items).toHaveLength(3);
+    renamePlaylist(directory, first.plan.playlistId, 'Edited');
+    setPlaylistTracks(directory, first.plan.playlistId, []);
+    expect(loadPlaylists(directory)[0]).toMatchObject({
+      name: 'Edited',
+      trackIds: [],
+      performanceSessionId: plan.sessionId,
+    });
+    expect(
+      (await call('create-archive-playlist', intent)).plan.playlistId,
+    ).toBe(first.plan.playlistId);
+    expect(loadPlaylists(directory)[0].trackIds).toEqual([]);
+    deletePlaylist(directory, first.plan.playlistId);
+    expect(loadPlaylists(directory)).toEqual([]);
+    expect(
+      (await call('get-session', { sessionId: plan.sessionId })).plan.items,
+    ).toEqual(result.plan.items);
+  });
+
+  it('keeps the archive without creating a playlist when no playable song was performed', async () => {
+    const { call } = setup();
+    await call('get');
+    await call('append-library-track', 'unperformed');
+    const { plan } = await call('append-manual-item', { displayTitle: 'MC' });
+    const itemId = plan.items[1].itemId;
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 0,
+      progress: 'playing',
+    });
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 1,
+      progress: 'completed',
+    });
+    await call('archive', { sessionId: plan.sessionId, name: '261106 - Show' });
+    expect(
+      await call('create-archive-playlist', { sessionId: plan.sessionId }),
+    ).toEqual({
+      ok: true,
+      plan: { playlistId: null },
+    });
+    expect(loadPlaylists(directory)).toEqual([]);
+  });
+
+  it('can retry playlist creation after a write failure without losing the closed session', async () => {
+    const { call } = setup();
+    await call('get');
+    const { plan } = await call('append-library-track', 'song');
+    const itemId = plan.items[0].itemId;
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 0,
+      progress: 'playing',
+    });
+    await call('set-progress', {
+      itemId,
+      expectedProgressRevision: 1,
+      progress: 'completed',
+    });
+    const { plan: next } = await call('archive', {
+      sessionId: plan.sessionId,
+      name: '261106 - Show',
+    });
+    const intent = { sessionId: plan.sessionId };
+    vi.spyOn(fs, 'renameSync').mockImplementationOnce(() => {
+      throw new Error('simulated playlist write failure');
+    });
+    await expect(call('create-archive-playlist', intent)).rejects.toThrow(
+      'PERFORMANCE_SESSION_EXPORT_FAILED',
+    );
+    expect((await call('get')).plan.sessionId).toBe(next.sessionId);
+    expect((await call('get-session', intent)).plan.items).toHaveLength(1);
+    expect((await call('create-archive-playlist', intent)).ok).toBe(true);
+    expect(loadPlaylists(directory)).toHaveLength(1);
+  });
   it('appends only the main-owned archive by id, preserving duplicates and manual rows', async () => {
     const { call } = setup();
     await call('get');

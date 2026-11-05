@@ -6,6 +6,7 @@ const readSource = (path) => readCatalogSource(new URL(path, import.meta.url));
 
 const appSource = readSource('../App.vue');
 const pageSource = readSource('../pages/PerformancePage.vue');
+const libraryPageSource = readSource('../pages/LibraryPage.vue');
 const performanceSource = readSource(
   '../components/performance/PerformanceWorkspace.vue',
 );
@@ -65,10 +66,7 @@ describe('Performance Session Token v2 surface cutover', () => {
   it('composes Session preparation inside the Performance workspace', () => {
     expect(pageSource).toContain('surface-id="performance"');
     expect(pageSource).toMatch(/<AppFolderPage\b[^>]*\bmode="workspace"/u);
-    expect(pageSource).toContain(':document-key="performanceArchiveId"');
-    expect(pageSource).toContain(
-      '<PerformanceSessionArchive :session-id="performanceArchiveId"',
-    );
+    expect(pageSource).not.toContain('<PerformanceSessionArchive');
     expect(performanceSource).toContain(
       'surface-id="performance-session-workspace"',
     );
@@ -79,10 +77,13 @@ describe('Performance Session Token v2 surface cutover', () => {
     expect(appSource).toContain('v-if="activeViewOwnsFolderPage"');
   });
 
-  it('moves collection-source setup into the Performance workspace and removes the parallel Dock', () => {
-    expect(workspaceSource).toContain('replaceFromCollection');
-    expect(workspaceSource).toContain('prepareSelectedCollection');
-    expect(workspaceSource).toContain('從清單建立');
+  it('puts records without playlists in the library without a parallel Dock', () => {
+    expect(libraryPageSource).toContain(
+      "libraryWorkspace === 'performance-records'",
+    );
+    expect(libraryPageSource).toContain('<PerformanceSessionArchiveList');
+    expect(workspaceSource).not.toContain('openPerformanceArchiveIndex');
+    expect(workspaceSource).not.toContain('replaceFromCollection');
     expect(appSource).not.toContain('PerformanceSessionPanel');
     expect(appSource).not.toContain('RIGHT_DOCK_SURFACE_SESSION');
   });

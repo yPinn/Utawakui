@@ -500,9 +500,15 @@ function reorderHeaderFromKeyboard(column, event) {
               class="library-track-table__skeleton-copy"
               :class="{
                 'library-track-table__skeleton-copy--stacked':
-                  density !== 'compact' && profile.showArtist,
+                  profile.showArtist &&
+                  (density !== 'compact' || profile.stackCompactIdentity),
               }"
-              :lines="density === 'compact' || !profile.showArtist ? 1 : 2"
+              :lines="
+                profile.showArtist &&
+                (density !== 'compact' || profile.stackCompactIdentity)
+                  ? 2
+                  : 1
+              "
               pattern="staggered"
             />
           </template>

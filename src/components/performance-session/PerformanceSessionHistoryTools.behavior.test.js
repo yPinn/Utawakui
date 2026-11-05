@@ -1,6 +1,7 @@
 import { h, nextTick, reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Tools from './PerformanceSessionHistoryTools.vue';
+import ArchiveList from './PerformanceSessionArchiveList.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
@@ -20,16 +21,26 @@ const fixture = vi.hoisted(() => ({
   timeline: { openForArrangement: vi.fn() },
   playlist: null,
   openArchive: vi.fn(),
-  addArchive: vi.fn(async () => true),
-}));
-vi.mock('../../composables/usePerformanceQueueActions.js', () => ({
-  usePerformanceQueueActions: () => ({ addArchive: fixture.addArchive }),
+  openLibrary: vi.fn(),
+  selectPlaylist: vi.fn(),
+  createPlaylist: vi.fn(),
+  playlists: null,
+  selectTab: vi.fn(),
 }));
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => ({
     activeView: { value: 'performance' },
     performanceArchiveId: { value: 'old' },
     openPerformanceArchive: fixture.openArchive,
+    openLibraryContent: fixture.openLibrary,
+    selectPerformanceSessionTab: fixture.selectTab,
+  }),
+}));
+vi.mock('../../composables/usePlaylists.js', () => ({
+  usePlaylists: () => ({
+    state: fixture.playlists,
+    select: fixture.selectPlaylist,
+    createFromPerformanceArchive: fixture.createPlaylist,
   }),
 }));
 vi.mock('../playlists/PlaylistSidebarRow.vue', () => ({
@@ -159,6 +170,7 @@ vi.mock('./PerformanceSessionPlaylistExportModal.vue', () => ({
 }));
 for (const [component, file] of [
   [Tools, './PerformanceSessionHistoryTools.vue'],
+  [ArchiveList, './PerformanceSessionArchiveList.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiSkeleton, '../ui/UiSkeleton.vue'],
@@ -178,10 +190,18 @@ async function click(root, text) {
   await settle();
 }
 beforeEach(() => {
+  fixture.playlists = reactive({
+    playlists: [
+      { id: 'created', name: 'Saved playlist', performanceSessionId: 'linked' },
+    ],
+  });
+  fixture.createPlaylist.mockResolvedValue({ playlistId: 'created' });
   fixture.plan = {
     state: reactive({
       plan: {
         sessionId: 'current',
+        canArchive: true,
+        sessionStartedAt: new Date(2026, 10, 6, 23, 30).toISOString(),
         items: [],
         archives: [
           {
@@ -194,12 +214,15 @@ beforeEach(() => {
         ],
       },
       isSaving: false,
+      isInitialized: true,
     }),
     archiveSession: vi.fn(async () => true),
+    initialize: vi.fn(),
   };
   fixture.playback = {
     state: reactive({ busy: false }),
     stop: vi.fn(async () => true),
+    currentItem: reactive({ value: null }),
   };
   vi.stubGlobal('window', {
     Utawakui: {
@@ -233,136 +256,101 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
 });
-describe('shared performance history actions', () => {
-  it('appends the same archive through the shared owner on each Dock menu activation without stopping playback', async () => {
-    const view = mount(Tools, { dock: true });
-    for (let round = 0; round < 2; round++) {
-      await click(view.root, '場次操作：Older show');
-      await click(view.root, '加入演出待唱');
-      expect(button(view.root, '加入演出待唱')).toBeUndefined();
-    }
-    expect(fixture.addArchive.mock.calls).toEqual([['old'], ['old']]);
-    expect(fixture.playback.stop).not.toHaveBeenCalled();
+describe('performance history and archive entry points', () => {
+  it('lists archived sessions only on the archive page, newest first', async () => {
+    const view = mount(Tools);
+    expect(textContent(view.root)).not.toContain('Older show');
+    view.app.unmount();
+
+    fixture.plan.state.plan.archives.push({
+      id: 'recent',
+      name: 'Recent show',
+      endedAt: '2026-10-22T12:00:00Z',
+    });
+    fixture.plan.state.plan.archives.push({
+      id: 'linked',
+      name: 'Linked record',
+      endedAt: '2026-10-23T12:00:00Z',
+    });
+    const index = mount(ArchiveList);
+    const labels = findAll(
+      index.root,
+      (node) => node.type === 'button' && textContent(node).startsWith('選取 '),
+    ).map(textContent);
+    expect(labels).toEqual(['選取 Recent show', '選取 Older show']);
+    expect(textContent(index.root)).toContain('2026/10/20');
+    await click(index.root, '選取 Older show');
+    expect(fixture.openArchive).toHaveBeenCalledWith('old');
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
-    view.app.unmount();
+    index.app.unmount();
   });
-  it('excludes current sessions and non-Dock menus and guards empty or busy archive actions', async () => {
-    const view = mount(Tools, { dock: true });
-    await click(view.root, '目前場次操作');
-    expect(button(view.root, '加入演出待唱')).toBeUndefined();
-    fixture.plan.state.plan.archives[0].itemCount = 0;
-    await settle();
-    await click(view.root, '場次操作：Older show');
-    expect(button(view.root, '加入演出待唱').props.disabled).toBe(true);
-    // Guard stale/forged select events as well as the native disabled button.
-    await click(view.root, '加入演出待唱');
-    fixture.plan.state.plan.archives[0].itemCount = 3;
-    await click(view.root, '場次操作：Older show');
-    fixture.plan.state.isSaving = true;
-    await settle();
-    expect(button(view.root, '加入演出待唱').props.disabled).toBe(true);
-    await click(view.root, '加入演出待唱');
-    expect(fixture.addArchive).not.toHaveBeenCalled();
-    view.app.unmount();
-    fixture.plan.state.isSaving = false;
-    const main = mount(Tools);
-    await click(main.root, '場次操作：Older show');
-    expect(button(main.root, '加入演出待唱')).toBeUndefined();
-    main.app.unmount();
-  });
-  it('places inline status beside current-session actions and outside the track rows', () => {
+
+  it('only stops playback after confirming an explicit archive action', async () => {
+    fixture.playback.currentItem.value = { itemId: 'one' };
     const view = mount(
       Tools,
-      { dock: true },
-      {
-        'current-status': () => h('span', { role: 'status' }, 'LIVEREC'),
-        default: () => h('p', 'Current track'),
-      },
-    );
-    const header = findAll(
-      view.root,
-      (n) => n.type === 'header' && textContent(n).includes('目前場次'),
-    )[0];
-    expect(textContent(header)).toContain('LIVEREC');
-    expect(textContent(header)).toContain('目前場次操作');
-    expect(textContent(header)).not.toContain('Current track');
-    view.app.unmount();
-  });
-  it('keeps ongoing rows and archived collections separate; only explicit confirmation stops and archives the selected current session', async () => {
-    const view = mount(
-      Tools,
-      { dock: true },
+      {},
       { default: () => h('p', 'Ongoing occurrence') },
     );
     expect(textContent(view.root)).toContain('Ongoing occurrence');
-    expect(textContent(view.root)).toContain('已封存場次');
-    expect(textContent(view.root)).toContain('2026/10/20');
-    expect(textContent(view.root)).not.toContain('演出歌單');
-    expect(findAll(view.root, (n) => n.type === 'h3').map(textContent)).toEqual(
-      ['目前場次', '已封存場次'],
-    );
-    expect(findAll(view.root, (n) => n.props.role === 'tabpanel')).toHaveLength(
-      1,
-    );
-    await click(view.root, '目前場次操作');
-    await click(view.root, '結束並封存場次');
+    await click(view.root, '結束場次');
     expect(fixture.playback.stop).not.toHaveBeenCalled();
-    expect(textContent(view.root)).toContain('停止目前演出並保存完整紀錄');
-    await click(view.root, '結束並封存');
+    expect(textContent(view.root)).toContain('目前項目會停止，並記為中止');
+    await click(view.root, '結束並保存');
     expect(fixture.playback.stop).toHaveBeenCalledOnce();
     expect(fixture.plan.archiveSession).toHaveBeenCalledWith(
-      '演出場次',
+      '261106 - 演出歌單',
       'current',
     );
-    expect(notifications.items.value).toHaveLength(1);
+    expect(fixture.selectTab).toHaveBeenCalledWith('pending');
+    expect(fixture.createPlaylist).toHaveBeenCalledExactlyOnceWith('current');
     expect(notifications.items.value[0]).toMatchObject({
-      title: '場次已封存',
-      tone: 'success',
+      title: '歌單已保存',
+      actionLabel: '查看歌單',
       lifecycle: 'transient',
     });
-    expect(
-      findAll(view.root, (n) => n.props['aria-label'] === '結束並封存場次'),
-    ).toHaveLength(0);
     view.app.unmount();
   });
-  it('retains the dialog and original session id after stop or write failure, allowing an idempotent retry', async () => {
+
+  it('disables archive when there are no items or markers', async () => {
+    fixture.plan.state.plan.canArchive = false;
+    const view = mount(Tools);
+    expect(button(view.root, '結束場次').props.disabled).toBe(true);
+    await click(view.root, '結束場次');
+    expect(button(view.root, '結束並保存')).toBeUndefined();
+    expect(fixture.playback.stop).not.toHaveBeenCalled();
+    view.app.unmount();
+  });
+
+  it('retains the dialog and selected session after stop or write failure', async () => {
     fixture.playback.stop.mockResolvedValueOnce(false);
     fixture.plan.archiveSession
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce(true);
-    const view = mount(Tools, { dock: true });
-    await click(view.root, '目前場次操作');
-    await click(view.root, '結束並封存場次');
-    await click(view.root, '結束並封存');
+    const view = mount(Tools);
+    await click(view.root, '結束場次');
+    await click(view.root, '結束並保存');
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
     expect(textContent(view.root)).toContain('尚未停止');
-    expect(notifications.items.value).toHaveLength(0);
-    await click(view.root, '結束並封存');
+    await click(view.root, '結束並保存');
     expect(textContent(view.root)).toContain('原安排仍保留');
-    expect(notifications.items.value).toHaveLength(0);
-    await click(view.root, '結束並封存');
+    await click(view.root, '結束並保存');
     expect(fixture.plan.archiveSession.mock.calls).toEqual([
-      ['演出場次', 'current'],
-      ['演出場次', 'current'],
+      ['261106 - 演出歌單', 'current'],
+      ['261106 - 演出歌單', 'current'],
     ]);
     view.app.unmount();
   });
-  it('targets the chosen archive for both export entries and main-area navigation without loading a modal', async () => {
-    const view = mount(Tools, {});
-    await click(view.root, '場次操作：Older show');
-    await click(view.root, '另存演出歌單');
+
+  it('targets the current session explicitly from both history export entries', async () => {
+    const view = mount(Tools);
+    await click(view.root, '目前場次操作');
+    await click(view.root, '另存歌單');
     expect(fixture.playlist.open).toBe(true);
-    expect(fixture.playlist.sessionId).toBe('old');
-    await click(view.root, '場次操作：Older show');
-    await click(view.root, '匯出場次時間軸');
-    expect(fixture.timeline.openForArrangement).toHaveBeenCalledWith('old');
-    await click(view.root, '選取 Older show');
-    expect(fixture.openArchive).toHaveBeenCalledWith('old');
-    expect(window.Utawakui.getPerformanceSession).not.toHaveBeenCalled();
-    expect(
-      findAll(view.root, (n) => n.props['data-playback-enabled'] === false),
-    ).toHaveLength(1);
-    expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
+    expect(fixture.playlist.sessionId).toBe('current');
+    await click(view.root, '目前場次操作');
+    await click(view.root, '匯出時間點');
+    expect(fixture.timeline.openForArrangement).toHaveBeenCalledWith('current');
     view.app.unmount();
   });
 });

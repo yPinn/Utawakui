@@ -183,6 +183,8 @@ describe('packaged dependency boundary', () => {
     ).toBe(false);
     expect(bundledSources).toContain('electron/main.js');
     expect(bundledSources).toContain('electron/main/spoutHelperEntry.js');
+    expect(bundledSources).toContain('shared/sessionExportTimepoints.mjs');
+    expect(bundledSources).toContain('shared/sessionPerformedItems.mjs');
     expect([...bundledSources].some((file) => /\.test\./u.test(file))).toBe(
       false,
     );

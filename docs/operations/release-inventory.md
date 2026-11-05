@@ -440,7 +440,7 @@ Lyrics inspection route and the renderer's fallback import; Vite emits the
 renderer copy normally. The existing overlay builder glob includes the moved
 asset without any new unpack rule.
 
-`shared/**/*` includes the canonical JSON／JS／MJS contracts, pure presentation
+`shared/**/*` includes `shared/sessionExportTimepoints.mjs` for the Main CSV writer and renderer preview and `shared/sessionPerformedItems.mjs` for the session archive and linked playlist projections. It also includes the canonical JSON／JS／MJS contracts, pure presentation
 modules and font source/license files; `!shared/**/*.test.js` excludes adjacent
 tests. Output appearance uses `shared/outputAppearance.mjs`; the retired
 `outputAppearanceValues.json` marker is not a runtime schema and is no longer

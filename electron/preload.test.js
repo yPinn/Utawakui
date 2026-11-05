@@ -264,9 +264,11 @@ const MAIN_INVOKE_CHANNELS = [
   'performer-view:publish',
   'performance-session-plan:append-placeholders',
   'performance-session-plan:archive',
+  'performance-session-plan:create-archive-playlist',
   'performance-session-plan:get-session',
   'performance-session-plan:preview-playlist',
   'performance-session-plan:save-playlist',
+  'performance-session-plan:save-marker-csv',
   'session-history:confirmed-playing',
   'performance-session-plan:append-library-track',
   'performance-session-plan:append-manual-item',
@@ -692,6 +694,15 @@ describe('main preload bridge', () => {
       ...extra,
     });
     await bridge.getPerformanceSession('show', 'private');
+    await bridge.createPerformanceArchivePlaylist('show', extra);
+    await bridge.savePerformanceMarkerCsv({
+      sessionId: 'show',
+      source: 'record',
+      offsetMs: 125,
+      segmentIndex: 0,
+      digest: 'digest',
+      ...extra,
+    });
     await bridge.previewPerformancePlaylist({
       sessionId: 'show',
       scope: 'completed',
@@ -713,6 +724,21 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
       ['performance-session-plan:archive', { sessionId: 'show', name: 'Show' }],
       ['performance-session-plan:get-session', { sessionId: 'show' }],
+      [
+        'performance-session-plan:create-archive-playlist',
+        { sessionId: 'show' },
+      ],
+      [
+        'performance-session-plan:save-marker-csv',
+        {
+          sessionId: 'show',
+          latest: false,
+          source: 'record',
+          offsetMs: 125,
+          segmentIndex: 0,
+          digest: 'digest',
+        },
+      ],
       [
         'performance-session-plan:preview-playlist',
         { sessionId: 'show', scope: 'completed' },

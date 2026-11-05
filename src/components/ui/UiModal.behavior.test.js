@@ -170,6 +170,71 @@ describe('UiModal behavior', () => {
     app.unmount();
   });
 
+  it('keeps the covered dialog mounted and restores its interaction on close', async () => {
+    const openExport = ref(false);
+    const root = hostNode('root');
+    const app = renderer.createApp({
+      render: () => [
+        h(UiModal, { open: true, title: '場次紀錄' }),
+        h(UiModal, {
+          open: openExport.value,
+          title: '匯出時間點',
+          coversUnderlying: true,
+        }),
+      ],
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.mount(root);
+    await nextTick();
+    const archive = findAll(
+      root,
+      (node) => node.props.class === 'ui-modal-backdrop',
+    )[0];
+    openExport.value = true;
+    await nextTick();
+    expect(archive.props.inert).toBe(true);
+    expect(archive.props.class).toContain('ui-modal-backdrop--covered');
+    openExport.value = false;
+    await nextTick();
+    expect(archive.props.inert).toBe(false);
+    expect(archive.props.class).toBe('ui-modal-backdrop');
+    app.unmount();
+  });
+
+  it('handles Escape once when an earlier listener closes the active dialog', async () => {
+    const openExport = ref(false);
+    const closeArchive = vi.fn();
+    const app = renderer.createApp({
+      render: () => [
+        h(UiModal, {
+          open: openExport.value,
+          title: '匯出時間點',
+          coversUnderlying: true,
+          onClose: () => (openExport.value = false),
+        }),
+        h(UiModal, { open: true, title: '場次紀錄', onClose: closeArchive }),
+      ],
+    });
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.mount(hostNode('root'));
+    await nextTick();
+    openExport.value = true;
+    await nextTick();
+    let consumed = false;
+    const event = {
+      key: 'Escape',
+      stopImmediatePropagation: () => (consumed = true),
+    };
+    for (const listener of listeners.get('keydown')) {
+      if (consumed) break;
+      listener(event);
+      await nextTick();
+    }
+    expect(openExport.value).toBe(false);
+    expect(closeArchive).not.toHaveBeenCalled();
+    app.unmount();
+  });
+
   it('keeps scrolling as the default and lets a workspace own its single inner scroll region', async () => {
     const mode = ref('scroll');
     const app = renderer.createApp({

@@ -6,7 +6,7 @@ const controllers = [];
 afterEach(() =>
   controllers.splice(0).forEach((controller) => controller.dispose()),
 );
-function harness() {
+function harness(continuousStorage) {
   const items = [1, 2, 3].map((n) => ({
     itemId: `i${n}`,
     trackId: 'song',
@@ -16,7 +16,10 @@ function harness() {
     progress: 'queued',
     progressRevision: 0,
   }));
-  const state = reactive({ plan: { items }, error: null });
+  const state = reactive({
+    plan: { sessionId: 'test-session', items },
+    error: null,
+  });
   const plan = {
     state,
     initialize: vi.fn(),
@@ -62,6 +65,7 @@ function harness() {
     queue,
     getTracks: () => tracks,
     toPlayableTrack: (track) => track,
+    continuousStorage,
   });
   controllers.push(controller);
   const event = () => ({
@@ -232,6 +236,7 @@ describe('arrangement playback uses local audio without any OBS dependency', () 
 
   it('advances occurrences of the same song, ignores stale events and never starts twice', async () => {
     const h = harness();
+    h.controller.setContinuous(true);
     await h.controller.start('i1');
     await h.playing();
     const first = h.event();
@@ -249,13 +254,60 @@ describe('arrangement playback uses local audio without any OBS dependency', () 
     ]);
   });
 
+  it('stops after the first song until continuous playback is explicitly enabled', async () => {
+    const h = harness();
+    expect(h.controller.state.continuous).toBe(false);
+    await h.controller.start('i1');
+    await h.playing();
+    h.controller.handleEnded(h.event());
+    await h.controller.settled();
+    expect(h.controller.currentItem.value).toBeNull();
+    expect(h.player.playTrack).toHaveBeenCalledTimes(1);
+    expect(h.controller.nextReadyItem.value.itemId).toBe('i2');
+  });
+
+  it('remembers the same session across controller restarts and resets for a new session', () => {
+    const storage = new Map();
+    const continuousStorage = {
+      getItem: (key) => storage.get(key),
+      setItem: (key, value) => storage.set(key, value),
+      removeItem: (key) => storage.delete(key),
+    };
+    const h = harness(continuousStorage);
+    h.controller.setContinuous(true);
+    expect(harness(continuousStorage).controller.state.continuous).toBe(true);
+    h.plan.state.plan.sessionId = 'new-session';
+    expect(h.controller.state.continuous).toBe(false);
+  });
+
+  it('waits for an explicit start at a manual item even with continuous playback on', async () => {
+    const h = harness();
+    h.controller.setContinuous(true);
+    h.plan.state.plan.items[1].mode = 'manual';
+    h.plan.state.plan.items[1].trackId = null;
+    await h.controller.start('i1');
+    await h.playing();
+    h.controller.handleEnded(h.event());
+    await h.controller.settled();
+    expect(h.controller.currentItem.value).toBeNull();
+    expect(await h.controller.next()).toBe(false);
+    expect(h.plan.state.plan.items[1].progress).toBe('queued');
+    expect(h.player.playTrack).toHaveBeenCalledTimes(1);
+    expect(await h.controller.startNext()).toBe(true);
+    expect(h.controller.currentItem.value.mode).toBe('manual');
+    await h.controller.complete();
+    expect(h.controller.currentItem.value.itemId).toBe('i3');
+  });
+
   it('marks an early next as interrupted, and supports manual start and completion', async () => {
     const h = harness();
     h.plan.state.plan.items[1].mode = 'manual';
     h.plan.state.plan.items[1].trackId = null;
     await h.controller.start('i1');
     await h.playing();
-    await h.controller.next();
+    expect(await h.controller.next()).toBe(false);
+    expect(h.controller.currentItem.value.itemId).toBe('i1');
+    await h.controller.start('i2');
     expect(h.plan.state.plan.items[0].progress).toBe('interrupted');
     expect(h.controller.currentItem.value.mode).toBe('manual');
     h.controller.setContinuous(false);

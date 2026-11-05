@@ -35,12 +35,11 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).not.toContain('appendPlaceholders');
   });
 
-  it('owns the selected playlist or album source action after the global session Dock is removed', () => {
-    expect(workspaceSource).toContain('usePlaylists');
-    expect(workspaceSource).toContain('selectedPlaylist');
-    expect(workspaceSource).toContain('replaceFromCollection');
-    expect(workspaceSource).toContain('從清單建立');
-    expect(workspaceSource).toContain('prepareSelectedCollection');
+  it('leaves collection append at its source and only clears the pending queue', () => {
+    expect(workspaceSource).not.toContain('selectedPlaylist');
+    expect(workspaceSource).not.toContain('replaceFromCollection');
+    expect(workspaceSource).toContain('canClearPending');
+    expect(workspaceSource).toContain('清空待唱');
   });
 
   it('uses a fixed workspace shell with one scrolling body per pane', () => {
@@ -156,7 +155,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(workspaceSource).toContain('aria-label="演出安排"');
     expect(workspaceSource).toContain('<PerformanceSessionBoard');
     expect(workspaceSource).toContain('搜尋曲庫並加入演出待唱');
-    expect(planListSource).toContain("history ? '播放結果' : '待唱順序'");
+    expect(planListSource).toContain("history ? '演出紀錄' : '待唱順序'");
     expect(workspaceSource).not.toContain('title="演唱中"');
     expect(workspaceSource).not.toContain('title="已唱紀錄"');
   });
@@ -174,23 +173,20 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('confirms occurrence removal without offering a library deletion path', () => {
     expect(workspaceSource).toContain('@remove="confirmRemoveItem"');
     expect(workspaceSource).toContain('function confirmRemoveItem(itemId)');
-    expect(workspaceSource).toContain("'從待唱移除歌曲？'");
-    expect(workspaceSource).toContain("'移除這筆播放紀錄？'");
-    expect(workspaceSource).toContain("confirmLabel: '移除歌曲'");
-    expect(workspaceSource).toContain('曲庫歌曲會保留');
+    expect(workspaceSource).toContain('confirmPerformanceSessionItemRemoval');
     expect(workspaceSource).toContain('removeItem(itemId)');
     expect(workspaceSource).not.toContain('deleteTrack');
   });
 
-  it('keeps singing controls above the lists and reveals the single Dock BGM through more options', () => {
+  it('keeps singing controls above the lists and reveals the single Dock BGM through the Dock button', () => {
     expect(workspaceSource).toContain('<PerformanceSessionCurrent');
     expect(workspaceSource).not.toContain('BgmPlayer');
-    expect(workspaceSource).toContain("label: '顯示 BGM'");
+    expect(workspaceSource).not.toContain("label: '顯示 BGM'");
     expect(workspaceSource).toContain("dock.selectArrangementTab('pending')");
     expect(workspaceSource).toContain("dock.showQueueVariant('arrangement')");
     expect(workspaceSource).toContain('<template #pending>');
     expect(workspaceSource).not.toContain('v-else-if="playback.pendingItems');
-    expect(workspaceSource).toContain("label: '清除安排'");
+    expect(workspaceSource).toContain("label: '清空待唱'");
     expect(workspaceSource).toContain('@select="selectWorkspaceAction"');
     expect(workspaceSource).toContain('label="演出安排的更多選項"');
   });

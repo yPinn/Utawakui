@@ -1,23 +1,12 @@
 {
   "reorderHint": "拖曳調整順序，或按 Alt+↑／Alt+↓ 移動一位",
   "workspace": {
-    "replaceFrom": "從{name}取代安排",
-    "fromAlbum": "從專輯建立",
-    "fromList": "從清單建立",
-    "removeQueuedTitle": "從待唱移除歌曲？",
-    "removeHistoryTitle": "移除這筆播放紀錄？",
+    "removeQueuedTitle": "從待唱移除這一項？",
+    "removeHistoryTitle": "移除這筆演出紀錄？",
     "removeMessage": "只會移出這份安排，曲庫歌曲會保留。",
-    "removeConfirm": "移除歌曲",
-    "clearTitle": "清除演出安排？",
-    "clearMessage": "待唱、演出紀錄與手動調整都會清除；安排中正在播放的曲目也會停止。",
-    "clearDetail": "曲庫歌曲與播放清單會保留。",
-    "clearConfirm": "清除安排",
-    "replaceTitle": "取代待唱安排？",
-    "currentSource": "目前：{name}",
-    "replaceMessage": "現有安排與手動調整會被取代。",
-    "replaceOtherMessage": "目前已有其他安排，取代後手動調整會遺失。",
-    "replaceConfirm": "取代安排",
-    "showBgm": "顯示 BGM",
+    "clearTitle": "清空待唱？",
+    "clearMessage": "將移除 {count} 個待唱項目。本場演出紀錄會保留。",
+    "clearConfirm": "清空待唱",
     "label": "演出安排",
     "contentLabel": "演出安排工作區內容",
     "attention": "{count} 項需處理",
@@ -96,29 +85,31 @@
     "notStarted": "尚未開始播放",
     "nowPlaying": "現正播放",
     "start": "開始播放",
+    "startNext": "播放下一首",
+    "startManual": "開始手動項目",
     "actions": "目前播放操作"
   },
   "history": {
-    "addToQueue": "加入演出待唱",
-    "finishAndArchive": "結束並封存場次",
-    "saveAsPlaylist": "另存演出歌單",
-    "exportTimeline": "匯出場次時間軸",
+    "finishAndArchive": "結束場次",
+    "saveAsPlaylist": "另存歌單",
     "stopFailed": "目前曲目尚未停止，請再試一次。",
     "notArchived": "場次尚未封存，原安排仍保留。",
-    "archivedTitle": "場次已封存",
-    "archivedMessage": "可在已封存場次中查看。",
+    "archivedTitle": "場次紀錄已保存",
     "archiveFailed": "場次尚未封存，請再試一次；原安排仍保留。",
     "current": "目前場次",
     "currentActions": "目前場次操作",
     "sessionFallback": "演出場次",
-    "archived": "已封存場次",
-    "setlist": "演出歌單",
-    "sessionActionsNamed": "場次操作：{name}",
     "sessionActions": "場次操作",
     "nameLabel": "場次名稱",
-    "finishMessage": "停止目前演出並保存完整紀錄，再開始新的空白場次。之後可從封存另存歌單。",
+    "finishMessage": "保存本場演出，將唱過且可播放的曲目存成歌單，再開啟新場次。",
+    "finishPlaying": "目前項目會停止，並記為中止。",
+    "viewFull": "查看完整紀錄",
+    "viewArchived": "查看場次紀錄",
     "cancel": "取消",
-    "finishConfirm": "結束並封存"
+    "finishConfirm": "結束並保存",
+    "playlistCreated": "歌單已保存",
+    "viewPlaylist": "查看歌單",
+    "playlistCreationFailed": "場次紀錄已保存，歌單未建立。可從場次紀錄重試。"
   },
   "planList": {
     "status": {
@@ -135,9 +126,7 @@
     "queued": "待唱",
     "requeue": "再次加入待唱",
     "removeRecord": "移除紀錄",
-    "results": "播放結果",
     "order": "待唱順序",
-    "records": "演出紀錄",
     "playNamed": "播放：{title}",
     "moreNamed": "第 {position} 首「{title}」的更多操作",
     "itemActions": "第 {position} 首操作",
@@ -151,7 +140,6 @@
     "savedTitle": "演出歌單已保存",
     "savedMessage": "可在曲庫的播放清單中查看。",
     "saveRetry": "歌單尚未保存，請再試一次。",
-    "title": "另存演出歌單",
     "name": "歌單名稱",
     "scope": "保存範圍",
     "completed": "完成曲目",
@@ -162,8 +150,7 @@
     "confirmMessage": "將合併重複曲目 {merged} 項，排除手動項目 {manual} 項、找不到音檔 {unavailable} 項。原始紀錄不會修改。",
     "nothingToSave": "沒有可保存的本機曲目，請改選範圍或檢查曲目連結。",
     "cancel": "取消",
-    "repreview": "重新預覽",
-    "save": "另存歌單"
+    "repreview": "重新預覽"
   },
   "queueList": {
     "needsLink": "需連結曲目",
@@ -171,28 +158,30 @@
     "manualItem": "手動項目",
     "startNamed": "開始：{title}",
     "playNamed": "播放：{title}",
-    "order": "待唱順序",
     "empty": "沒有待唱曲目。可在「演唱工具 → 演出安排」搜尋並加入。",
     "actions": "待唱曲目操作"
   },
   "archive": {
-    "archivedAt": "封存於 {date}",
-    "back": "返回演出安排",
+    "startedAt": "首筆紀錄 {date}",
+    "archivedAt": "保存於 {date}",
+    "listEmpty": "沒有未附在歌單上的場次紀錄。",
     "loading": "讀取封存場次…",
     "reload": "重新讀取場次",
-    "marker": "演出歌單",
-    "entity": "此演出歌單",
-    "addToQueue": "加入演出待唱",
-    "saveAsPlaylist": "另存演出歌單",
-    "exportTimeline": "匯出場次時間軸",
-    "tracksLabel": "封存場次曲目",
-    "empty": "此場次沒有安排曲目；標記可在時間軸中查看。"
+    "marker": "封存場次",
+    "entity": "此封存場次",
+    "savePlaylist": "另存本場歌單",
+    "tracksLabel": "本場演出曲目",
+    "empty": "本場沒有曲目演出紀錄。",
+    "markersOnly": "本場只有標記紀錄。",
+    "record": "場次紀錄",
+    "records": "場次紀錄",
+    "viewRecord": "查看場次紀錄",
+    "noteSummary": "{timing} · {progress}",
+    "noteBody": "{timing}\n{progress}",
+    "progress": "演出 {performed} 項 · 完成 {completed} 項",
+    "completedOnly": "完成 {completed} 項"
   },
   "completed": {
-    "requeue": "再次加入待唱",
-    "removeRecord": "移除紀錄",
-    "removeTitle": "移除這筆播放紀錄？",
-    "removeMessage": "只移除這次完成紀錄，不會刪除曲庫歌曲。",
     "errorTitle": "演出紀錄未更新",
     "loading": "讀取演出紀錄…",
     "empty": "還沒有完成紀錄。從演出待唱播放並完成的曲目會顯示在這裡。",
@@ -223,18 +212,12 @@
     "interrupted": "中止 {count}"
   },
   "dock": {
-    "removeTitle": "移除安排項目？",
-    "removeMessage": "只移除這次安排的項目，不會刪除曲庫歌曲。",
-    "remove": "移除",
-    "notUpdated": "演出安排未更新",
-    "continuous": "連續播放",
-    "order": "待唱順序"
+    "notUpdated": "演出安排未更新"
   },
   "board": {
     "pending": "待唱",
     "history": "演出紀錄",
     "label": "演出安排內容",
-    "historyLabel": "演出紀錄與封存場次",
     "historyHint": "完成、略過與中止的項目會留在這裡。"
   },
   "broadcast": {
@@ -247,7 +230,6 @@
     "tools": "演唱工具"
   },
   "page": {
-    "archiveBody": "封存場次內容",
     "workspaceBody": "演唱工作區"
   },
   "validation": {
@@ -305,7 +287,7 @@
     "duplicateFailed": "演出項目未複製",
     "reorderFailed": "演出排序未更新",
     "removeFailed": "演出項目未移除",
-    "clearFailed": "演出安排未清空"
+    "clearFailed": "待唱未清空"
   },
   "archiveLoad": {
     "failed": "場次無法讀取，請再試一次。"
@@ -320,6 +302,7 @@
     "completed": "完成",
     "skipped": "略過",
     "interrupted": "中止",
+    "recorded": "已開始",
     "manualTrack": "手動曲目",
     "noLocalTrack": "無本機曲目"
   },
@@ -332,7 +315,7 @@
   },
   "outputSourceFallback": "播放安排",
   "pendingMenu": {
-    "skip": "略過這首",
+    "skip": "略過",
     "duplicate": "複製待唱項目",
     "remove": "從待唱移除"
   }

@@ -26,6 +26,9 @@ const OPERATION_ERRORS = Object.freeze({
   export: {
     code: 'PERFORMANCE_SESSION_EXPORT_FAILED',
   },
+  exportMarkers: {
+    code: 'PERFORMANCE_SESSION_MARKER_EXPORT_FAILED',
+  },
   get: {
     code: 'PERFORMANCE_SESSION_PLAN_GET_FAILED',
   },
@@ -77,6 +80,8 @@ function registerPerformanceSessionPlanHandlers({
     createPerformanceSessionPlanStore({ directory }),
   now = Date.now,
   sessionHistoryService = null,
+  dialog,
+  getMainWindow,
   getReleaseScope = null,
   withPlayableRelease = null,
 }) {
@@ -282,6 +287,8 @@ function registerPerformanceSessionPlanHandlers({
     run,
     operationContext,
     sessionHistoryService,
+    dialog,
+    getMainWindow,
   });
 }
 

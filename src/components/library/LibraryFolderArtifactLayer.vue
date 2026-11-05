@@ -16,6 +16,7 @@ import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
 import { t } from '../../utils/i18n.js';
 
 const ARTIST_SUMMARY_KEY = 'derived:artist-summary';
+const PERFORMANCE_RECORD_KEY = 'derived:performance-record';
 const ARTIST_SUMMARY_PLACEMENT = Object.freeze({
   region: 'paper',
   anchor: Object.freeze({ x: 1, y: 0 }),
@@ -100,6 +101,7 @@ const OBJECT_RENDERERS = Object.freeze({
 const props = defineProps({
   objects: { type: Array, default: () => [] },
   summary: { type: Object, default: null },
+  performanceRecord: { type: Object, default: null },
   // Objects added this session; the canvas cascades them from the top object.
   freshKeys: { type: Array, default: () => [] },
 });
@@ -110,6 +112,7 @@ const emit = defineEmits([
   'editNote',
   'editPhotoText',
   'readNote',
+  'openPerformanceRecord',
   'remove',
 ]);
 const canvas = useTemplateRef('canvas');
@@ -168,7 +171,22 @@ const derivedItems = computed(() =>
 // Unsaved derived objects start behind every persisted object.
 const items = computed(() => {
   const saved = new Map(props.objects.map((object) => [object.key, object]));
-  const derived = derivedItems.value.map((item) =>
+  const defaults = [...derivedItems.value];
+  if (props.performanceRecord) {
+    defaults.push({
+      key: PERFORMANCE_RECORD_KEY,
+      type: 'note',
+      source: 'derived',
+      placement: ARTIST_SUMMARY_PLACEMENT,
+      rotation: ARTIST_SUMMARY_ROTATION,
+      order: 0,
+      content: {
+        title: t('session.archive.record'),
+        body: props.performanceRecord.summary,
+      },
+    });
+  }
+  const derived = defaults.map((item) =>
     saved.has(item.key)
       ? { ...item, ...saved.get(item.key), content: item.content }
       : item,
@@ -204,6 +222,12 @@ const artifacts = computed(() =>
       ...rendered,
       ...(readable
         ? { activatable: true, activationLabel: t('library.folder.readNote') }
+        : {}),
+      ...(item.key === PERFORMANCE_RECORD_KEY
+        ? {
+            activatable: true,
+            activationLabel: t('session.archive.viewRecord'),
+          }
         : {}),
       props: { ...rendered.props, ...folderStationeryFor(item) },
       initialPlacement: item.placement,
@@ -264,6 +288,7 @@ function isUserNote(item) {
 function handleActivate(id) {
   const item = findItem(id);
   if (item?.type === 'photo') emit('activate', id);
+  else if (item?.key === PERFORMANCE_RECORD_KEY) emit('openPerformanceRecord');
   else if (isReadableNote(item)) emit('readNote', id);
 }
 
@@ -332,6 +357,20 @@ const menuContent = computed(() => {
         pin,
       ],
     });
+  } else if (item.key === PERFORMANCE_RECORD_KEY) {
+    groups.push({
+      id: 'object',
+      items: [
+        {
+          id: 'record',
+          kind: 'action',
+          label: t('session.archive.viewRecord'),
+          value: 'record',
+          icon: BookOpen,
+        },
+        pin,
+      ],
+    });
   } else {
     groups.push({ id: 'object', items: [pin] });
   }
@@ -368,6 +407,7 @@ function selectMenuAction(action) {
   const id = menu.value?.id;
   closeMenu();
   if (!id) return;
+  if (action === 'record') handleActivate(id);
   if (action === 'open') emit('activate', id);
   else if (action === 'read') emit('readNote', id);
   else if (action === 'edit') emit('editNote', id);

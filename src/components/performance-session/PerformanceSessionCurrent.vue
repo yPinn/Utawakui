@@ -22,6 +22,8 @@ const props = defineProps({
   confirmed: { type: Boolean, default: false },
   busy: { type: Boolean, default: false },
   canStart: { type: Boolean, default: false },
+  nextItem: { type: Object, default: null },
+  hasPlayed: { type: Boolean, default: false },
 });
 const emit = defineEmits(['startFirst', 'toggle', 'complete', 'stop']);
 const selectedTrackId = shallowRef(null);
@@ -39,6 +41,15 @@ const track = computed(() => {
   };
 });
 const manual = computed(() => props.current?.mode === 'manual');
+const startLabel = computed(() =>
+  t(
+    props.nextItem?.mode === 'manual'
+      ? 'session.current.startManual'
+      : props.hasPlayed
+        ? 'session.current.startNext'
+        : 'session.current.start',
+  ),
+);
 const playbackDisabled = computed(
   () => props.busy || manual.value || props.phase === 'ended',
 );
@@ -203,7 +214,7 @@ watch(
       </template>
     </QueueSection>
     <div
-      v-if="current || !track || variant === 'workspace'"
+      v-if="current || !track || canStart || variant === 'workspace'"
       class="performance-session-current__actions"
     >
       <UiButton
@@ -238,20 +249,20 @@ watch(
         >
       </template>
       <UiIconButton
-        v-else-if="!track && variant === 'dock'"
+        v-else-if="(!track || canStart) && variant === 'dock'"
         :icon="Play"
         variant="accent"
         :disabled="busy || !canStart"
-        :label="t('session.current.start')"
+        :label="startLabel"
         @click="emit('startFirst')"
       />
       <UiButton
-        v-else-if="!track"
+        v-else-if="!track || canStart"
         :icon="Play"
         variant="accent"
         :disabled="busy || !canStart"
         @click="emit('startFirst')"
-        >{{ t('session.current.start') }}</UiButton
+        >{{ startLabel }}</UiButton
       >
       <slot name="options" />
     </div>

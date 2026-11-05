@@ -7,13 +7,20 @@ describe('Settings modal workspace composition', () => {
   it.each([
     'FfmpegSourceModal',
     'FeedbackReportModal',
-    'ObsSessionExportModal',
     'VirtualCableGuideModal',
   ])('%s uses compact shared bounds and the existing header tools', (name) => {
     const text = source(name);
     expect(text).toContain('size="notice"');
     expect(text).toContain('max-block-size="small"');
     expect(text).toMatch(/#header-actions/u);
+  });
+  it('keeps both timestamp export purposes in one bounded modal', () => {
+    const text = source('ObsSessionExportModal');
+    expect(text).toContain('size="notice"');
+    expect(text).toContain('max-block-size="small"');
+    expect(text).toContain('#header-actions');
+    expect(text).toContain('#footer');
+    expect(text).toContain('saveMarkers');
   });
   it('keeps complete device names in a wide single-scroll workspace and moves help to the header', () => {
     const text = source('CaptureDeviceModal');

@@ -226,7 +226,7 @@ watch(
       :scrollbar-reserve="history ? 'overflow' : 'stable'"
       content-class="performance-session-plan-list"
       :aria-label="
-        t(history ? 'session.planList.results' : 'session.planList.order')
+        t(history ? 'session.board.history' : 'session.planList.order')
       "
     >
       <TrackTable
@@ -237,9 +237,7 @@ watch(
         :drop-target-track-id="dropTargetId || ''"
         :drop-position="dropPosition || ''"
         :selected-entry-key="selectedItemId || ''"
-        :label="
-          t(history ? 'session.planList.records' : 'session.planList.order')
-        "
+        :label="t(history ? 'session.board.history' : 'session.planList.order')"
         @track-drag-start="startDrag"
         @track-drag-over="updateDropTarget"
         @track-drag-leave="leaveDropTarget"

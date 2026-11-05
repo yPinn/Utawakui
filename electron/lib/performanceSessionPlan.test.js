@@ -655,12 +655,27 @@ describe('createPerformanceSessionPlanStore', () => {
     expect(store.unlinkTrack('../private.wav')).toBe(false);
     expect(store.unlinkTrack('other-track')).toBe(false);
     expect(store.clear(tracks)).toMatchObject({
-      source: null,
+      source: { name: 'List' },
       reviewCursorItemId: null,
       items: [],
     });
     const clearedAgain = store.clear(tracks);
     expect(clearedAgain.items).toEqual([]);
+  });
+
+  it('clears only pending items and keeps the current session and its results', () => {
+    const tracks = libraryTracks(track('t-1', 'Song'));
+    const first = store.appendLibraryTrack('t-1', tracks);
+    const { itemId } = first.items[0];
+    store.setProgress(
+      { itemId, progress: 'skipped', expectedProgressRevision: 0 },
+      tracks,
+    );
+    store.appendLibraryTrack('t-1', tracks);
+    const cleared = store.clear(tracks);
+    expect(cleared.sessionId).toBe(first.sessionId);
+    expect(cleared.items).toMatchObject([{ itemId, progress: 'skipped' }]);
+    expect(cleared.reviewCursorItemId).toBeNull();
   });
 
   it('backs up a corrupt document and keeps the draft recoverable as empty', () => {

@@ -120,7 +120,7 @@ async function save() {
 <template>
   <UiModal
     :open="open"
-    :title="t('session.export.title')"
+    :title="t('session.history.saveAsPlaylist')"
     :close-disabled="saving"
     @close="!saving && emit('close')"
   >
@@ -184,7 +184,7 @@ async function save() {
         :disabled="!canSave"
         :loading="saving"
         @click="save"
-        >{{ t('session.export.save') }}</UiButton
+        >{{ t('session.history.saveAsPlaylist') }}</UiButton
       >
     </template>
   </UiModal>

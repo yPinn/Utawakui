@@ -260,6 +260,10 @@
     "title": "Setlist not saved",
     "message": "The setlist wasn't saved. Try again."
   },
+  "PERFORMANCE_SESSION_MARKER_EXPORT_FAILED": {
+    "title": "Editing markers not saved",
+    "message": "The editing markers could not be saved. Try again."
+  },
   "PERFORMANCE_SESSION_HISTORY_FAILED": {
     "title": "Performance records not updated",
     "message": "Performance records can't be read or saved right now. Try again."

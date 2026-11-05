@@ -71,6 +71,21 @@ describe('arrangement current uses the Queue current section', () => {
     expect(html).toContain('開始播放');
     expect(html).not.toContain('queue-track right-dock-track');
   });
+  it('makes the next song and manual start explicit when no performance is active', async () => {
+    const next = await render({
+      canStart: true,
+      hasPlayed: true,
+      playerTrack: track,
+    });
+    expect(next).toContain('播放下一首');
+    const manual = await render({
+      canStart: true,
+      hasPlayed: true,
+      nextItem: { mode: 'manual' },
+    });
+    expect(manual).toContain('開始手動項目');
+    expect(manual).not.toContain('播放下一首');
+  });
 });
 
 describe('shared workspace current presentation', () => {

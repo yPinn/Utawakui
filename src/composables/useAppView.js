@@ -7,6 +7,7 @@ const returnView = shallowRef('library');
 const libraryWorkspace = shallowRef('browse');
 const performanceTool = shallowRef('live-lyrics');
 const performanceArchiveId = shallowRef(null);
+const performanceSessionTab = shallowRef('pending');
 const rootEntryRevision = shallowRef(0);
 const isSettingsView = computed(() => activeView.value === 'settings');
 // One-shot section request so other views can open Settings at a block.
@@ -31,17 +32,23 @@ function setActiveView(view) {
     return;
   }
 
-  if (view === 'library') libraryWorkspace.value = 'browse';
+  if (view === 'library') resetLibraryWorkspace();
   if (view === 'performance') {
     performanceTool.value = 'live-lyrics';
     performanceArchiveId.value = null;
+    performanceSessionTab.value = 'pending';
   }
   rootEntryRevision.value += 1;
   commitActiveView(view);
 }
 
-function openLibraryContent() {
+function resetLibraryWorkspace() {
   libraryWorkspace.value = 'browse';
+  performanceArchiveId.value = null;
+}
+
+function openLibraryContent() {
+  resetLibraryWorkspace();
   commitActiveView('library');
 }
 
@@ -62,8 +69,13 @@ function returnFromLyricsAuthoring() {
   openLiveLyrics();
 }
 
-function openPerformancePreparation() {
+function selectPerformanceSessionTab(tab) {
+  if (tab === 'pending' || tab === 'history') performanceSessionTab.value = tab;
+}
+
+function openPerformancePreparation(tab) {
   performanceArchiveId.value = null;
+  selectPerformanceSessionTab(tab);
   performanceTool.value = 'session';
   commitActiveView('performance');
 }
@@ -83,9 +95,15 @@ function clearSettingsSection() {
 function openPerformanceArchive(id) {
   if (typeof id !== 'string' || !id || id.length > 255) return false;
   performanceArchiveId.value = id;
-  performanceTool.value = 'session';
-  commitActiveView('performance');
+  libraryWorkspace.value = 'performance-records';
+  commitActiveView('library');
   return true;
+}
+
+function openPerformanceArchiveIndex() {
+  performanceArchiveId.value = null;
+  libraryWorkspace.value = 'performance-records';
+  commitActiveView('library');
 }
 
 function returnFromSettings() {
@@ -101,10 +119,9 @@ function restoreLocation({
   archiveId,
   returnView: settingsReturnView,
 }) {
-  if (view === 'library') libraryWorkspace.value = workspace ?? 'browse';
-  if (view === 'performance') {
+  if (view === 'library') {
+    libraryWorkspace.value = workspace ?? 'browse';
     performanceArchiveId.value = archiveId ?? null;
-    if (archiveId) performanceTool.value = 'session';
   }
   activeView.value = view;
   returnView.value =
@@ -118,6 +135,7 @@ export function useAppView() {
     libraryWorkspace: readonly(libraryWorkspace),
     performanceTool: readonly(performanceTool),
     performanceArchiveId: readonly(performanceArchiveId),
+    performanceSessionTab: readonly(performanceSessionTab),
     rootEntryRevision: readonly(rootEntryRevision),
     isSettingsView,
     settingsSection: readonly(settingsSection),
@@ -129,6 +147,8 @@ export function useAppView() {
     returnFromLyricsAuthoring,
     openPerformancePreparation,
     openPerformanceArchive,
+    openPerformanceArchiveIndex,
+    selectPerformanceSessionTab,
     selectPerformanceTool,
     openSettings,
     returnFromSettings,

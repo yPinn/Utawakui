@@ -45,6 +45,38 @@ function deferred() {
 }
 
 describe('obsAdapter', () => {
+  it('captures separate recording generations and skips paused output samples', async () => {
+    const client = new FakeObsClient();
+    let paused = false;
+    const originalCall = client.call.getMockImplementation();
+    client.call.mockImplementation((request) =>
+      request === 'GetRecordStatus'
+        ? Promise.resolve({
+            outputActive: true,
+            outputPaused: paused,
+            outputTimecode: '00:01:00.125',
+            outputDuration: 60000,
+          })
+        : originalCall(request),
+    );
+    const adapter = createObsAdapter({ createClient: () => client });
+    await adapter.configure({ enabled: true, host: '127.0.0.1', port: 4455 });
+    const first = await adapter.requestRecordSnapshot({ withSegmentId: true });
+    expect(first).toMatchObject({
+      active: true,
+      segmentId: expect.any(String),
+    });
+    paused = true;
+    expect(
+      await adapter.requestRecordSnapshot({ withSegmentId: true }),
+    ).toMatchObject({ active: false, segmentId: first.segmentId });
+    paused = false;
+    client.emit('RecordStateChanged', { outputActive: false });
+    client.emit('RecordStateChanged', { outputActive: true });
+    const next = await adapter.requestRecordSnapshot({ withSegmentId: true });
+    expect(next.active).toBe(true);
+    expect(next.segmentId).not.toBe(first.segmentId);
+  });
   it('never loads the client and stays disabled while not configured', () => {
     const createClient = vi.fn();
     const adapter = createObsAdapter({ createClient });

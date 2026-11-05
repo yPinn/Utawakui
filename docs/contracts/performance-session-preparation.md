@@ -65,8 +65,8 @@ Renderer 為每次開始建立 request identity，並比對 canonical track id �
 按下播放、BGM pre-roll 或 buffering 不代表 confirmed playing；只有 playing 事件才寫入進度。
 Pause、seek、buffering 與 resume 保持同一 occurrence。重複／過期 ended 不得完成另一首或啟動第二個下一首。
 
-連續播放預設開啟，自然完成或標記完成後接續下一個 ready item；關閉則單首後停止。
-略過或停止本身不自動開始下一首；明確下一首會中止目前項目並開始下一個 ready item。
+連續播放預設關閉。使用者明確開啟後，自然完成或標記完成須先保存結果，再依最新待唱順序接到下一個可用本機項目。缺檔項目留在待唱，遇到手動項目則等使用者明確開始。同一場次的選擇依 sessionId 記住，封存後的新場次回到關閉。
+略過或停止本身不自動開始下一首。播放器與媒體鍵的下一首可中止目前項目並開始下一個可用本機項目，手動項目使用場次內的開始動作。
 播放失敗不記完成、不自動前進；未確認開始的失敗 item 留在待唱。
 保存進度失敗時顯示可恢復錯誤，不冒稱完成或繼續自動前進。
 
@@ -78,7 +78,7 @@ BGM 保持既有明確啟用與音訊互斥流程，OBS 狀態不成為本地播
 
 主頁名為「演出安排」。實際來源（無來源時省略上下文名稱）、總項目數與已知總長由共用工具列集中呈現；未知時長、略過與中止數由同列「安排明細」圖示開啟 UiPopover，不重複分區計數。欄位 validation 留在 Modal，不讓草稿錯誤使主頁／Dock 統計失效。
 
-PerformanceSessionCurrent 同時供主頁與 Dock 使用，共用 occurrence snapshot、phase 與動作 guard。主頁將目前項目與連續播放放在清單之前；場間音樂集中於側欄待唱 footer，主頁更多選項可用「顯示 BGM」直接開啟。空態只顯示提示與開始操作，不增加可見標題。BGM 沿用原音訊 owner，不列入安排項目、時長或紀錄。來源匯入／取代與清除收進最右的 UiActionMenu，保留原確認與 danger 語意。
+PerformanceSessionCurrent 同時供主頁與 Dock 使用，共用 occurrence snapshot、phase 與動作 guard。主頁將目前項目與連續播放放在清單之前；場間音樂集中於側欄待唱 footer，主頁使用「顯示側欄」開啟。空態只顯示提示與開始操作，不增加可見標題。BGM 沿用原音訊 owner，不列入安排項目、時長或紀錄。更多選項保留須確認的「清空待唱」。舊場次從曲庫的歌單便條或「場次紀錄」查閱。
 
 下方是待唱及完整演出紀錄（completed／skipped／interrupted），所有寬度固定使用 UiTabs 與完整寬度表格，優先驗證預設 1280×850 Compact 與 280px Dock。各清單維持自己的 UiScrollLayout，分頁與計數不進清單捲動，切換分頁保留掛載狀態；搜尋與手動新增共用一列，低寬可換行；搜尋結果有獨立標題與數量，不取代待唱清單。紀錄的再次加入在既有選單中，不保留第二個壓縮曲名的行內操作。
 
@@ -89,8 +89,8 @@ PerformanceSessionCurrent 同時供主頁與 Dock 使用，共用 occurrence sna
 Folder 紙面與 ledger rules 提供分區，不複製 track anatomy、不增加一整欄空白設定。
 設定與手動新增透過 UiModal 按需開啟，沿用 PerformanceSessionReviewPane 的 scroll／footer。
 
-搜尋曲庫直接加入 ready item，不強制進入 editor。現有 playlist／album 可經明確取代確認建立安排。
-移除／清除只影響本安排；清除／取代會先停止目前項目，main 也拒絕破壞性修改仍在 playing 的 item。
+搜尋曲庫直接加入 ready item。歌單與專輯從來源選單使用「加入演出待唱」追加，空白場次亦走同一入口。
+移除只影響選定項目。清空待唱只移除 queued，保留本場結果、時間軸和封存。開始、演出或保存期間停用清空，Main 拒絕有 playing 的清空。
 正在播放與已有結果的項目不直接編輯名稱或重新連結；目前顯示使用 start snapshot。
 需要不同名稱時再次加入待唱後調整，避免改寫本次或既有結果。
 
@@ -129,7 +129,7 @@ arrangementTab 由 useAppRightDock 持有，header 與側欄 panels 共用它；
 manual 顯示手動進行中，不提供假音訊操作；載入時停止仍可取消，未確認開始前不能標記完成。
 完成、停止與空狀態的開始播放沿用原 playback owner，不依賴 OBS 或直播／錄製。
 QueueSection 新增可選的歌手文字與播放停用／標籤，普通 Queue 預設行為維持原樣。
-Dock 不為 OBS 狀態建立獨立 summary 空行。LIVE／REC 由同一個 PerformanceBroadcastStatus 投影有效觀察狀態，整合到待唱頁的「連續播放」資訊列（主區已顯示演出安排時改為「待唱順序」標題），或紀錄頁的「目前場次」標題列、場次操作旁。標記沿用 base 字型、完整 label 角色與 spacing／border／radius tokens；既有資訊列始終有實際內容，最小行高容納單行描邊標記，雙開不換行、不遮擋操作、不改變下方內容起點。無有效狀態時不顯示標記或空 status role，頂部分頁及操作仍維持單行。已完成項目的總數與時長放在演出紀錄固定 footer，待唱 footer 保留 BGM。
+Dock 不為 OBS 狀態建立獨立 summary 空行。LIVE／REC 由同一個 PerformanceBroadcastStatus 投影有效觀察狀態，整合到待唱頁的「連續播放」資訊列（主區已顯示演出安排時改為「待唱順序」標題），或紀錄頁的「查看完整紀錄」旁。標記沿用 base 字型、完整 label 角色與 spacing／border／radius tokens；既有資訊列始終有實際內容，最小行高容納單行描邊標記，雙開不換行、不遮擋操作、不改變下方內容起點。無有效狀態時不顯示標記或空 status role，頂部分頁及操作仍維持單行。已完成項目的總數與時長放在演出紀錄固定 footer，待唱 footer 保留 BGM。
 有未知時長時標示「已知」，全未知顯示「時長未知」；來源與各狀態／未知時長數明細在 Folder 主頁呈現。
 兩個 surface 共用 PerformanceSessionSummary 與同一份純投影，不新增播放或統計狀態 owner。
 Dock compact 摘要沿用曲庫 utility caption 與 formatLongDuration；全為曲庫項目顯示「首曲目」，包含手動項目時用「項」。
@@ -198,46 +198,46 @@ OBS 設定提供預設關閉的「OBS 連線後顯示播放安排」，由 main 
 
 ## 紀錄頁封存與雙匯出
 
-主頁與 Dock 紀錄頁共用 PerformanceSessionHistoryTools。目前與已封存場次的更多選項提供另存演出歌單、匯出場次時間軸；目前場次另提供結束並封存。Settings 最新 OBS 場次入口仍保留；紀錄頁固定讀取所選安排場次，不回退到另一場最新資料。
+主頁紀錄使用 PerformanceSessionHistoryTools，透過「結束場次」確認名稱並按「結束並保存」。名稱預填本機演出開始日的 YYMMDD、連字號及來源名，無開始時間用保存日，無來源用「演出歌單」。保存後主區回到新場待唱，通知可開啟新歌單或該場紀錄。Dock 的「查看完整紀錄」仍導向本場紀錄。
 
-目前／封存區塊共用 AppRightDockSection 與 label 文字角色；封存項目直接重用 PlaylistSidebarRow 的52px集合列、40px UiCollageThumb、標題／metadata／選取與鍵盤語意，主區場次封面與列封面消費同一 canonical 曲目圖片。Main 摘要只附最多四個去重的 coverTrackIds，不包含 paths 或完整 items；手動或無圖片場次使用原集合封面 fallback。場次列關閉歌單播放 affordance，尾端更多選項與整列導覽獨立，暖白區重組既有 selection tokens。
+曲庫在一般歌單頁顯示「場次紀錄」衍生便條，紙面顯示首筆紀錄時間及實際演出和完成項目數，缺少首筆時間時顯示保存時間。點擊或鍵盤啟用可在原頁開啟唯讀明細，頂部顯示場次名稱、已知時間及演出摘要。彈窗使用 notice／small 和共用緊湊曲目列，曲名與演出者分行，曲長取自現有素材，演出狀態與手動／無本機曲目的提示分開。沒有歌單對應的場次從曲庫側欄「場次紀錄」查閱，包含舊封存、只有手動項目或標記、歌單建立失敗或已刪除的場次。清單與便條使用同一份摘要。Main 摘要至多附四個去重的演出曲目封面。
 
-點選封存集合由 useAppView.performanceArchiveId 導向主區 PerformanceSessionArchive，支援原本 Back／Forward；返回演出安排或選擇演唱工具會離開封存位置。主區沿用 AppFolderPage document、AppFolderDossier、UiCollageThumb、TrackTable 與共用場次摘要 formatter。每個 row 以 itemId 識別並保持來源順序；同曲連唱、手動、失連、略過與中止均保留，不自動轉為去重的正式 Playlist。兩個匯出入口在主區針對所選場次操作，Dock 更多選項仍保留；播放控制在主區檢視舊場時仍由 Dock 保持可用。
+明細共用 PerformanceSessionArchive 與 TrackTable。曲庫的獨立紀錄沿用 Folder document、AppFolderDossier 和既有 Back／Forward，歌單便條以對話框開啟同一份明細。以本場曲目開始事件的時間排序，保留重唱、手動、失連及已開始後中止的演出。舊場只有演出結果時沿用保存的順序，未開始或開唱前略過的安排不列入明細。「匯出時間點」固定使用該場，待唱 Dock 保持播放控制。
 
 已讀取的空紀錄以精簡空態呈現，沒有固定高度或假曲目；首次讀取無資料時才顯示 UiSkeleton，更新時保留已有內容，錯誤可重試且不混入「尚無紀錄」。usePerformanceArchive 對快速切換與卸載後的回應使用 revision 防護，不讓舊場覆蓋新場，也不讀取另一場最新資料。只有標記的封存明細另提示可在時間軸查看，不製造曲目佔位。
 
-紀錄分頁是這三項工作的共同入口，不另外擴張頂部分頁或常駐工具列：
+待唱與本場演出紀錄維持原分頁。
 
 - **目前場次**：每次演出各一列，依序平鋪，跨日也保持同一清單。主頁維持其完整 completed／skipped／interrupted 結果，Dock 維持 completed 子集，兩者仍各自符合現有 scope。
-- **已封存場次**：只有明確結束／封存後才新增一筆集合項目；Dock 集合列顯示名稱與封存日期（YYYY/MM/DD），主區集合列副標與詳情類型仍為「演出歌單」；比照 Playlist 的簡潔層級，首數／時長／完整結束時間集中在主區摘要。點選可檢視該場的完整逐次演出明細。資料身分仍是場次，不冒充已建立的 Playlist。日期只是集合 metadata，不再將目前曲目按天切段。
-- **場次操作**：Dock 在該場既有更多選項集中「另存演出歌單」與「匯出場次時間軸」，避免新增兩顆常駐頂部按鈕；主區集合詳情顯示這兩個明確入口。結束／封存後可引導另存歌單；沒有合格資料時提供原因，不呈現假成功。
+- **場次紀錄**：明確結束並保存後新增一筆，逐次紀錄維持場次身分和原順序。曲庫清單只顯示無對應歌單的場次，最新保存的在前。
+- **場次操作**：本場的兩項匯出在紀錄的更多選項。舊場明細可匯出時間點。無對應歌單且有可播放的演出曲目時，可從明細另存本場歌單。
 
-| 入口           | 用途及保留資料                                           | 執行前必須呈現                                                                       |
-| -------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 另存演出歌單   | 下次使用的獨立 user playlist；維持選定曲目第一次出現順序 | 可編輯名稱、完整安排／完成曲目範圍、實際保存數、同曲合併數、手動／未連結或失連排除數 |
-| 匯出場次時間軸 | 影片章節；保留每次重唱、標記及對應輸出的真實時間戳       | 明確場次身分、直播／錄影來源、偏移量、章節預覽與缺少時間戳的項目                     |
+| 入口       | 用途及保留資料                                           | 執行前必須呈現                                                                       |
+| ---------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 另存歌單   | 下次使用的獨立 user playlist；維持選定曲目第一次出現順序 | 可編輯名稱、完整安排／完成曲目範圍、實際保存數、同曲合併數、手動／未連結或失連排除數 |
+| 匯出時間點 | YouTube 章節文字或剪輯對照（毫秒文字及 CSV）             | 場次、直播／錄影來源、素材片段、時間校正與預覽                                       |
 
 明確結束／封存是唯一邊界，不依經過多久、日曆跨日、Queue 播完或 OBS 斷線自動封存。確認視窗說明會停止目前演出，經既有 playback.stop 將進行中項目標為 interrupted，不假稱 completed；main 仍拒絕有 playing 的封存。main 在同一 performance-session-plan.json 原子保存完整來源、所有 scalar items、逐次時間軸與 endedAt，再輪替新 sessionId 與空白安排。保存失敗不清目前場次；舊 sessionId 重試不清新場次。舊資料首次讀取只補場次識別，不按日期分場、不回推開始時刻。
 
 Schema version 1 加入 optional sessionId、sessionStartedAt、timeline、archives。封存最多 100 場，每場最多 500 個安排項目、2,000 筆時間軸；達上限拒絕操作而不刪歷史，損壞封存拒絕覆寫。投影只帶封存摘要，明細以 get-session 指定 id 讀取，可用性由 main 曲庫重新解析。
 
-Playlist 是封存資料的一個可重用投影，不是原始演出紀錄的替代品。沿用 playlists.json 唯一 trackIds 與 main 驗證的 canonical ids：重唱依第一次出現位置合併，手動／未連結項目不冒充本機歌曲；保存前明確預覽損失，保存不修改原場紀錄、不開始播放或 OBS。建立與填入需原子化或可續寫同一已建立 id，避免失敗重試產生多份空歌單。若要精確恢復含重唱及手動項目的安排，使用獨立安排快照，而不是修改 Playlist 全域去重契約。
+收場先保存完整原始紀錄並輪替場次，再從實際開始且仍可播放的曲目建立一般歌單。新歌單以 performanceSessionId 綁定已封存場次，同一 ID 重試沿用已建歌單。無合格曲目時只保存場次紀錄。歌單寫入失敗時原始紀錄仍可從曲庫查閱及重試。改名、重排、增刪曲目或刪除歌單都獨立於原始場次。另存副本是可重用投影。沿用 playlists.json 唯一 trackIds 與 main 驗證的 canonical ids：重唱依第一次出現位置合併，手動／未連結項目不冒充本機歌曲；保存不修改原場紀錄、不開始播放或 OBS。建立與填入需原子化或可續寫同一已建立 id，避免失敗重試產生多份空歌單。若要精確恢復含重唱及手動項目的安排，使用獨立安排快照。
 
 逐次識別已改為 confirmed start，production 不再將 Output publication 接到 sessionHistoryService.handleProjectionChange。安排與手動項目經 main 驗證 queued、progressRevision、可用性及唯一 current 後，以 sessionId＋itemId 去重，擷取 OBS 快照並與 progress playing 原子保存。安排外由 App 唯一 usePerformanceHistoryObserver 訂閱 player.onPlaying，送 UUID epoch、playbackRevision、trackId；main 查 canonical metadata 並拒絕同／舊 revision 及已淘汰 epoch。同曲兩次開始各有 main 產生的 occurrence id；pause／resume、seek、buffering 不增加 revision，投影重送不再是紀錄來源。OBS convenience log 保留既有略過門檻；安排逐次時間軸不因此撤回已確認的開始。
 
-時間戳沿用既有 OBS 輸出 snapshot；沒有時碼就明示缺少，不以 progressUpdatedAt、曲目 duration 或目前時鐘回推真正開始。指定封存場次必須讀該場對應的歷史，不能拿 getLatestSession 的另一場最新 OBS 資料默默合併。直播／錄影 clock 各自保留，標記與重唱原樣保存在封存資料；既有章節格式與偏移預覽只做投影，不回寫原時間。
+時間戳沿用既有 OBS 輸出 snapshot；沒有時碼就明示缺少，不以 progressUpdatedAt、曲目 duration 或目前時鐘回推真正開始。指定封存場次必須讀該場對應的歷史，不能拿 getLatestSession 的另一場最新 OBS 資料默默合併。直播／錄影各自保存，重唱和自訂標記維持逐次識別。新擷取附上可觀察的輸出片段識別，已知重開、重新連線及舊紀錄可觀察到的時碼倒退分段。停在錄影暫停期間的項目不取錄影時碼。匯出只投影所選片段，早於校正起點的項目排除並顯示數量。
 
-標記在擷取 OBS 前綁定 main 的 library root 與 sessionId，封存先等待既有擷取完成再輪替，延遲標記不會混入新場。斷線的 stale active flags 不取得快照；缺時碼的 occurrence 仍保存，章節視窗顯示排除數。
+標記在擷取 OBS 前綁定 main 的 library root 與 sessionId，封存先等待既有擷取完成再輪替，延遲標記不會混入新場。斷線的 stale active flags 不取得快照；缺時碼的 occurrence 仍保存，匯出視窗顯示排除數。曲庫「場次紀錄」另有「最近 OBS 紀錄」，與指定場次分開讀取。CSV 供查閱和手動定位，剪輯軟體原生匯入須另驗目標版本。
 
 固定 IPC：archive（sessionId／name）、get-session（sessionId）、preview-playlist（sessionId／scope）、save-playlist（sessionId／scope／token／name）及 session-history:confirmed-playing（epoch／playbackRevision／trackId）。全部限定 main frame sender；preload 刪除額外 path、trackIds、timeline。Main 序列化安排操作；歌單 preview token 綁定場次、範圍、逐項 revision 及可用性，確認時重算。建立與完整 trackIds 同次原子寫入，token＋名稱形成持久化冪等 key，遺失回應後重試不另建歌單。
 
 驗收涵蓋同曲連唱、pause／seek／過期重送、manual、兩套 OBS clock、標記、離線／缺時碼、封存與重啟讀舊場、封存失敗保留、歌單預覽／失效 token／重試，以及 272px 側欄。合成素材／受控 adapter 測試不代表真實 OBS 連線或聽感驗收。
 
-封存演出歌單的主區使用 TrackTable 的 performance-archive 唯讀 profile，依 itemId 保留每次演出及手動項目，欄位為序號、曲目／歌手、時長、演出狀態。停用排序、欄位操作與播放／伴奏處理／曲庫選單，保持原始順序；窄容器沿用表格量測與欄位收斂，先收起時長、必要時收起主區序號，曲目與演出狀態保留。右側完成紀錄不顯示序號，以 ASC 列順序表達先後；待唱清單仍有順位。一般最近播放與其他集合表格不變。
+封存場次的明細使用 TrackTable 的 performance-archive 唯讀 profile，依演出事件 ID 保留每次演出及手動項目，沒有事件的舊結果以 itemId 識別。欄位為序號、曲目／歌手、曲長、演出狀態。停用排序、欄位操作與播放／伴奏處理／曲庫選單；窄容器沿用表格量測與欄位收斂，先收起曲長、必要時收起主區序號，曲目與演出狀態保留。右側完成紀錄不顯示序號，以 ASC 列順序表達先後；待唱清單仍有順位。一般最近播放與其他集合表格不變。
 
-目前場次主區的待唱／演出紀錄沿用 TrackTable 的 performance-session profile；表格只管理資料欄與列幾何，PerformanceSessionPlanList 以 itemId 擁有選取編輯、Alt 上下移動、播放、略過、複製／再次加入與移除的 intent，透過 entry 事件及 row-actions slot 組合，不冒用 trackId 曲庫操作。歷史列維持原本不直接播放／編輯的規則，使用既有再次加入待唱選單。窄容器先收時長、再將狀態移到曲目副標、最後收主區序號，操作欄常駐；右側待唱與完成紀錄仍是原精簡曲目列。主區歷史內容以獨立 UiScrollLayout 包含目前紀錄與封存集合，避免封存區超出工作區底部。
+目前場次主區的待唱／演出紀錄沿用 TrackTable 的 performance-session profile；表格只管理資料欄與列幾何，PerformanceSessionPlanList 以 itemId 擁有選取編輯、Alt 上下移動、播放、略過、複製／再次加入與移除的 intent，透過 entry 事件及 row-actions slot 組合，不冒用 trackId 曲庫操作。歷史列維持原本不直接播放／編輯的規則，使用既有再次加入待唱選單。窄容器先收時長、再將狀態移到曲目副標、最後收主區序號，操作欄常駐；右側待唱與完成紀錄仍是原精簡曲目列。主區歷史內容保留獨立 UiScrollLayout。封存集合在獨立文件中捲動。
 
-場次段落間距由單一 owner 設定：目前與封存段落間 gap 使用 ui-space-3，封存分隔線後 padding 使用同一 token，不再另外疊 margin；集合列間使用 ui-track-list-gap，與現有曲目列表節奏一致。AppRightDockSection 繼續擁有標題與內容間距，表格內部維持原 ledger row padding 與零列間 gap。
+封存清單集合列間使用 ui-track-list-gap，與既有集合列表節奏一致。AppRightDockSection 繼續擁有標題與內容間距，表格內部維持原 ledger row padding 與零列間 gap。
 
 主區目前場次在所有寬度固定使用「待唱／演出紀錄」分頁，單一表格佔滿工作區內容寬度，不再觀察寬度切換並排欄。兩個面板保持掛載，僅切換顯示，保留各自搜尋、選單與捲動 owner。右側待唱與完成紀錄都不顯示序號，仍以 occurrence id 維持實際順序、拖曳與選單移位；主區表格的序號仍依原欄位收斂規則顯示。
 
@@ -247,7 +247,7 @@ Sidebar 歌單／專輯選單提供目的地明確的「加入演出待唱」，
 
 主區紀錄的外層 UiScrollLayout 已保留捲軸空間，內層表格只在真正溢位時保留，避免雙重預留使紀錄表格比待唱少一條捲軸寬度；切頁時右側欄維持共同對齊線。
 
-封存主頁的另存演出歌單／匯出場次時間軸入口，使用 CollectionActionRail 的 actions slot 與 UiIconButton，沿用曲庫操作列的尺寸、間距及 tooltip／無障礙名稱；不新增播放、搜尋或密度工具。曲庫原有操作順序及預設工具不變。封存列更多按鈕可由原生 Enter／Space 開啟，Esc 關閉並將焦點返回原按鈕；focus-within 使按鈕繼續顯示，透明度切換不改變佔位。
+曲庫場次明細的建立歌單／匯出場次時間軸入口，使用 CollectionActionRail 的 actions slot 與 UiIconButton，沿用曲庫操作列的尺寸、間距及 tooltip／無障礙名稱；不新增播放、搜尋或密度工具。曲庫原有操作順序及預設工具不變。封存清單的集合列沿用原生鍵盤操作。
 
 封存主頁的「加入演出待唱」同樣使用此操作列及 usePerformanceQueueActions；renderer只送封存sessionId，main從權威archives取出原始items，一次檢查500項上限並原子追加。保留原順序、重唱、手動／未連結項目與顯示snapshot；每次追加都建立新itemId、queued進度及初始revision，不合併或套用另存Playlist的排除規則。重複點選會再次追加完整場次；原待唱、playing occurrence、source、review cursor、timeline與archives不變，不發出播放／暫停意圖。來源不在archives或容量不足時整批拒絕，原檔不部分寫入。
 

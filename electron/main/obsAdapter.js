@@ -1,5 +1,7 @@
 'use strict';
 
+const { randomUUID } = require('node:crypto');
+
 // Main-owned OBS WebSocket adapter — see ADR 0013 (external integration
 // planes) and docs/contracts/integration-adapter-contract.md's OBS adapter
 // profile. v1 is read-only: version handshake, streaming/recording state,
@@ -159,6 +161,18 @@ function createObsAdapter({
   let cancelPendingConnect = null;
   const pendingRequestCancels = new Set();
   let operationEpoch = 0;
+  const outputSegments = { streaming: null, recording: null };
+
+  function outputSegment(kind, active) {
+    if (!active) {
+      outputSegments[kind] = null;
+      return null;
+    }
+    if (outputSegments[kind]?.client !== client) {
+      outputSegments[kind] = { client, id: randomUUID() };
+    }
+    return outputSegments[kind].id;
+  }
 
   function getStatus() {
     return cloneStatus(status);
@@ -332,6 +346,7 @@ function createObsAdapter({
       return { ok: false, timedOut: true };
     }
     if (streamResult.status === 'fulfilled') {
+      outputSegment('streaming', streamResult.value.outputActive);
       status.observed.streaming = {
         active: streamResult.value.outputActive,
         timecode: streamResult.value.outputTimecode,
@@ -339,6 +354,7 @@ function createObsAdapter({
       };
     }
     if (recordResult.status === 'fulfilled') {
+      outputSegment('recording', recordResult.value.outputActive);
       status.observed.recording = {
         active: recordResult.value.outputActive,
         timecode: recordResult.value.outputTimecode,
@@ -385,11 +401,13 @@ function createObsAdapter({
       });
       nextClient.on('StreamStateChanged', (event) => {
         if (client !== nextClient) return;
+        outputSegment('streaming', event.outputActive);
         status.observed.streaming.active = event.outputActive;
         publishStatus();
       });
       nextClient.on('RecordStateChanged', (event) => {
         if (client !== nextClient) return;
+        outputSegment('recording', event.outputActive);
         status.observed.recording.active = event.outputActive;
         publishStatus();
       });
@@ -565,11 +583,14 @@ function createObsAdapter({
   // not polled — see integration-adapter-contract.md's "clock samples ...
   // reacts to semantic boundaries" principle. Always asks OBS fresh so the
   // result can't drift from a locally-maintained clock.
-  async function requestStreamSnapshot() {
+  async function requestStreamSnapshot({ withSegmentId = false } = {}) {
     requireFeatureGate(featureId);
     requireConnected();
     const activeClient = client;
     const activeEpoch = operationEpoch;
+    const beforeSegment = withSegmentId
+      ? outputSegment('streaming', status.observed.streaming.active)
+      : null;
     let value;
     try {
       value = await callWithDeadline(activeClient, 'GetStreamStatus');
@@ -594,14 +615,24 @@ function createObsAdapter({
       durationMs: value.outputDuration,
     };
     publishStatus();
-    return { ...status.observed.streaming };
+    const segmentId = outputSegment('streaming', value.outputActive);
+    return withSegmentId
+      ? {
+          ...status.observed.streaming,
+          active: Boolean(segmentId && beforeSegment === segmentId),
+          segmentId,
+        }
+      : { ...status.observed.streaming };
   }
 
-  async function requestRecordSnapshot() {
+  async function requestRecordSnapshot({ withSegmentId = false } = {}) {
     requireFeatureGate(featureId);
     requireConnected();
     const activeClient = client;
     const activeEpoch = operationEpoch;
+    const beforeSegment = withSegmentId
+      ? outputSegment('recording', status.observed.recording.active)
+      : null;
     let value;
     try {
       value = await callWithDeadline(activeClient, 'GetRecordStatus');
@@ -626,7 +657,16 @@ function createObsAdapter({
       durationMs: value.outputDuration,
     };
     publishStatus();
-    return { ...status.observed.recording };
+    const segmentId = outputSegment('recording', value.outputActive);
+    return withSegmentId
+      ? {
+          ...status.observed.recording,
+          active: Boolean(
+            segmentId && beforeSegment === segmentId && !value.outputPaused,
+          ),
+          segmentId,
+        }
+      : { ...status.observed.recording };
   }
 
   function destroy() {

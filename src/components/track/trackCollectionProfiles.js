@@ -214,6 +214,8 @@ const PROFILES = Object.freeze({
     fillIdentity: true,
     showArtwork: true,
     showArtist: true,
+    stackCompactIdentity: true,
+    durationLabel: t('track.columns.songDuration'),
     semanticColumns: semanticColumns('performanceStatus'),
     advancedColumns: semanticColumns(),
     lockedDefaultColumns: Object.freeze(['performanceStatus']),
@@ -559,7 +561,13 @@ export function trackCollectionColumns(kind, preferences = {}) {
   return Object.freeze([
     COLUMN_DEFINITIONS.ordinal,
     COLUMN_DEFINITIONS.identity,
-    ...(profile.readOnly ? [COLUMN_DEFINITIONS.duration] : []),
+    ...(profile.readOnly
+      ? [
+          profile.durationLabel
+            ? { ...COLUMN_DEFINITIONS.duration, label: profile.durationLabel }
+            : COLUMN_DEFINITIONS.duration,
+        ]
+      : []),
     ...visibleSemanticColumns,
     ...(!profile.readOnly
       ? [COLUMN_DEFINITIONS.duration, COLUMN_DEFINITIONS.actions]

@@ -129,7 +129,7 @@ watch([() => props.saving, () => props.items], ([saving, items]) => {
     class="performance-session-queue-scroll"
     content-tag="ul"
     content-class="performance-session-queue-list"
-    :aria-label="t('session.queueList.order')"
+    :aria-label="t('session.planList.order')"
   >
     <QueueTrackButton
       v-for="(row, index) in rows"

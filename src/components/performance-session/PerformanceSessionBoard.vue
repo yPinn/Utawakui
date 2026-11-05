@@ -1,5 +1,6 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
+import { computed } from 'vue';
+import { useAppView } from '../../composables/useAppView.js';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiTabs from '../ui/UiTabs.vue';
@@ -14,7 +15,8 @@ const props = defineProps({
   busy: { type: Boolean, default: false },
 });
 defineEmits(['duplicate', 'remove']);
-const activeTab = shallowRef('pending');
+const { performanceSessionTab: activeTab, selectPerformanceSessionTab } =
+  useAppView();
 const tabs = computed(() => [
   {
     id: 'pending',
@@ -38,7 +40,7 @@ const tabs = computed(() => [
       tab-id-prefix="session-board"
       panel-id-prefix="session-board"
       variant="bar"
-      @update:active-id="activeTab = $event"
+      @update:active-id="selectPerformanceSessionTab"
       ><template #after="{ item }"
         ><UiChip tone="muted">{{ item.count }}</UiChip></template
       ></UiTabs
@@ -62,7 +64,7 @@ const tabs = computed(() => [
     >
       <UiScrollLayout
         class="performance-session-board__history-scroll"
-        :aria-label="t('session.board.historyLabel')"
+        :aria-label="t('session.board.history')"
       >
         <PerformanceSessionHistoryTools>
           <PerformanceSessionPlanList

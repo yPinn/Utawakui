@@ -1,7 +1,5 @@
 {
   "panel": {
-    "pending": "Queue",
-    "history": "Records",
     "queue": "Queue",
     "recent": "Recently played",
     "currentQueue": "Current queue",
@@ -10,7 +8,6 @@
     "title": "Play queue",
     "collapse": "Collapse play queue",
     "generalLabel": "Play queue and recently played",
-    "arrangementLabel": "Arrangement records",
     "toGeneral": "Switch to play queue",
     "toArrangement": "Switch to performance queue",
     "toGeneralHint": "Showing the performance queue. Switch to the play queue; the two queues are arranged separately.",

@@ -10,10 +10,11 @@ import { useAppRightDock } from '../../composables/useAppRightDock.js';
 import PerformanceSessionCurrent from './PerformanceSessionCurrent.vue';
 import PerformanceSessionQueueList from './PerformanceSessionQueueList.vue';
 import PerformanceSessionCompletedList from './PerformanceSessionCompletedList.vue';
-import PerformanceSessionHistoryTools from './PerformanceSessionHistoryTools.vue';
 import PerformanceBroadcastStatus from './PerformanceBroadcastStatus.vue';
+import { confirmPerformanceSessionItemRemoval } from './performanceSessionItemActions.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiButton from '../ui/UiButton.vue';
 import { t } from '../../utils/i18n.js';
 
 const plan = usePerformanceSessionPlan();
@@ -29,36 +30,40 @@ const confirmed = computed(() =>
       item.progress === 'playing',
   ),
 );
-const { activeView, performanceTool, performanceArchiveId } = useAppView();
+const { activeView, performanceTool, openPerformancePreparation } =
+  useAppView();
 const mainPageVisible = computed(
   () =>
-    activeView.value === 'performance' &&
-    performanceTool.value === 'session' &&
-    !performanceArchiveId.value,
+    activeView.value === 'performance' && performanceTool.value === 'session',
 );
 const busy = computed(() => plan.state.isSaving || playback.state.busy);
 async function remove(itemId) {
-  if (
-    await confirm({
-      title: t('session.dock.removeTitle'),
-      message: t('session.dock.removeMessage'),
-      confirmLabel: t('session.dock.remove'),
-      intent: 'danger',
-    })
-  )
+  const item = playback.pendingItems.value.find(
+    (item) => item.itemId === itemId,
+  );
+  if (item && (await confirmPerformanceSessionItemRemoval(confirm, item)))
     await plan.removeItem(itemId);
 }
 onMounted(plan.initialize);
 </script>
 
 <template>
-  <PerformanceSessionHistoryTools
+  <div
     v-if="dock.arrangementTab.value === 'history'"
-    dock
+    id="arrangement-dock-history-panel"
+    class="performance-session-dock__history"
+    role="tabpanel"
+    aria-labelledby="arrangement-dock-history-tab"
+    tabindex="0"
   >
-    <template #current-status><PerformanceBroadcastStatus /></template>
+    <div class="performance-session-dock__info">
+      <UiButton @click="openPerformancePreparation('history')">{{
+        t('session.history.viewFull')
+      }}</UiButton>
+      <PerformanceBroadcastStatus />
+    </div>
     <PerformanceSessionCompletedList />
-  </PerformanceSessionHistoryTools>
+  </div>
   <template v-else>
     <UiNotice
       v-if="
@@ -81,12 +86,13 @@ onMounted(plan.initialize);
       <UiCheckbox
         v-if="!mainPageVisible"
         id="dock-arrangement-continuous"
-        :label="t('session.dock.continuous')"
+        :label="t('session.workspace.continuous')"
         :model-value="playback.state.continuous"
+        :disabled="!plan.state.plan.sessionId"
         @update:model-value="playback.setContinuous"
       />
       <h3 v-else class="performance-session-dock__heading">
-        {{ t('session.dock.order') }}
+        {{ t('session.planList.order') }}
       </h3>
       <PerformanceBroadcastStatus />
     </div>
@@ -105,7 +111,9 @@ onMounted(plan.initialize);
         :confirmed="confirmed"
         :busy="busy"
         :can-start="playback.canStart.value"
-        @start-first="playback.next"
+        :next-item="playback.nextReadyItem.value"
+        :has-played="playback.hasPlayed.value"
+        @start-first="playback.startNext"
         @toggle="toggle"
         @complete="playback.complete"
         @stop="playback.stop"
@@ -150,5 +158,10 @@ onMounted(plan.initialize);
   min-block-size: 0;
   min-inline-size: 0;
   gap: var(--ui-side-panel-section-gap);
+}
+.performance-session-dock__history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-right-dock-content-gap);
 }
 </style>

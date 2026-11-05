@@ -14,7 +14,17 @@ const LyricsAuthoringWorkspace = defineAsyncComponent(
   () => import('../components/lyrics/LyricsAuthoringWorkspace.vue'),
 );
 
-const { libraryWorkspace, returnFromLyricsAuthoring } = useAppView();
+const PerformanceSessionArchive = defineAsyncComponent(
+  () =>
+    import('../components/performance-session/PerformanceSessionArchive.vue'),
+);
+const PerformanceSessionArchiveList = defineAsyncComponent(
+  () =>
+    import('../components/performance-session/PerformanceSessionArchiveList.vue'),
+);
+
+const { libraryWorkspace, performanceArchiveId, returnFromLyricsAuthoring } =
+  useAppView();
 
 const workspaceDefinition = computed(() => ({
   component: LyricsAuthoringWorkspace,
@@ -35,6 +45,17 @@ async function returnToLiveLyrics() {
 <template>
   <AppSurfaceBoundary surface-id="library" :child-hosts="['lyrics']">
     <LibraryBrowseWorkspace v-if="libraryWorkspace === 'browse'" />
+    <AppFolderPage
+      v-else-if="libraryWorkspace === 'performance-records'"
+      :document-key="performanceArchiveId ?? 'performance-records'"
+      :body-label="t('session.archive.record')"
+    >
+      <PerformanceSessionArchive
+        v-if="performanceArchiveId"
+        :session-id="performanceArchiveId"
+      />
+      <PerformanceSessionArchiveList v-else />
+    </AppFolderPage>
     <AppSurfaceBoundary
       v-else
       :surface-id="workspaceDefinition.surfaceId"

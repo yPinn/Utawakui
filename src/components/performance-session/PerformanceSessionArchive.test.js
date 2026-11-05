@@ -3,12 +3,6 @@ import { renderToString } from '@vue/server-renderer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Archive from './PerformanceSessionArchive.vue';
 const fixture = vi.hoisted(() => ({ archive: null }));
-vi.mock('../../composables/usePerformanceQueueActions.js', () => ({
-  usePerformanceQueueActions: () => ({
-    state: { isSaving: false },
-    addArchive: vi.fn(),
-  }),
-}));
 vi.mock('../../composables/usePerformanceArchive.js', () => ({
   usePerformanceArchive: () => fixture.archive,
 }));
@@ -34,9 +28,9 @@ beforeEach(() => {
     refresh: vi.fn(),
   };
 });
-const render = () =>
+const render = (props = {}) =>
   renderToString(
-    createSSRApp({ render: () => h(Archive, { sessionId: 'old' }) }),
+    createSSRApp({ render: () => h(Archive, { sessionId: 'old', ...props }) }),
   );
 describe('archive collection document', () => {
   it('uses a real initial skeleton and errors without an empty-track claim', async () => {
@@ -47,19 +41,22 @@ describe('archive collection document', () => {
     const html = await render();
     expect(html).toContain('讀取失敗');
     expect(html).toContain('重新讀取場次');
-    expect(html).not.toContain('此場次沒有安排曲目');
+    expect(html).not.toContain('本場沒有曲目演出紀錄');
   });
   it('renders repeated and manual occurrences under the shared dossier with export entries', async () => {
     fixture.archive.session.value = {
       id: 'old',
       name: 'Archived show',
+      startedAt: '2026-10-20T11:00:00Z',
       endedAt: '2026-10-20T12:00:00Z',
       items: [
         {
           itemId: 'one',
           trackId: 'song',
           mode: 'library-track',
+          ready: true,
           displayTitle: 'First',
+          displayArtist: 'MY FIRST STORY',
           progress: 'completed',
         },
         {
@@ -75,6 +72,12 @@ describe('archive collection document', () => {
           displayTitle: 'Acappella',
           progress: 'completed',
         },
+        {
+          itemId: 'planned',
+          mode: 'manual',
+          displayTitle: 'Not performed',
+          progress: 'queued',
+        },
       ],
     };
     const html = await render();
@@ -87,15 +90,33 @@ describe('archive collection document', () => {
     expect(html).toContain('Archived show');
     for (const key of ['one', 'two', 'manual'])
       expect(html).toContain(`data-occurrence-id="${key}"`);
-    expect(html).toContain('3 項，已知 4 分');
+    expect(html).toMatch(/完成\s3\s項/u);
+    expect(html).not.toContain('Not performed');
     expect(html).toContain('手動曲目');
-    expect(html).toContain('另存演出歌單');
-    expect(html).toContain('匯出場次時間軸');
-    expect(html).toContain('加入演出待唱');
+    expect(html).toMatch(/app-folder-dossier__marker[^>]*>\s*封存場次\s*</u);
+    expect(html).toContain('另存本場歌單');
+    expect(html).toContain('匯出時間點');
+    expect(html).not.toContain('加入演出待唱');
     expect(html).toContain('collection-action-rail__actions');
     expect(html).not.toContain('collection-action-rail__tools');
-    expect(html).not.toContain('播放此演出歌單');
+    expect(html).not.toContain('播放此封存場次');
     expect(html).not.toContain('performance-archive__actions');
+    const embedded = await render({ embedded: true });
+    expect(embedded).not.toContain('另存本場歌單');
+    expect(embedded).not.toContain('app-folder-dossier');
+    expect(embedded).toContain('library-track-table--compact');
+    expect(embedded).toContain('library-track-row--compact-stacked');
+    expect(embedded).not.toContain('library-track-row--compact-inline');
+    expect(embedded).toContain('Archived show');
+    expect(embedded).toContain('首筆紀錄');
+    expect(embedded).toContain('保存於');
+    expect(embedded).toMatch(/完成\s3\s項/u);
+    expect(embedded).toContain('MY FIRST STORY');
+    expect(embedded).toContain('曲長');
+    expect(embedded).toContain('2:05');
+    expect(embedded).toContain('library-track-row__status-detail');
+    expect(embedded).toContain('演出狀態');
+    expect(embedded).toContain('匯出時間點');
   });
   it('retains the marker-only empty state', async () => {
     fixture.archive.session.value = {
@@ -104,8 +125,6 @@ describe('archive collection document', () => {
       items: [],
       timeline: [{ type: 'marker' }],
     };
-    expect(await render()).toContain(
-      '此場次沒有安排曲目；標記可在時間軸中查看。',
-    );
+    expect(await render()).toContain('本場只有標記紀錄。');
   });
 });

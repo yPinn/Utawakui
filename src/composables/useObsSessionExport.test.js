@@ -24,6 +24,63 @@ function trackEntry(overrides = {}) {
 }
 
 describe('useObsSessionExport', () => {
+  it('copies the complete calibrated editing preview with millisecond precision', async () => {
+    const copyObsText = vi.fn(async () => true);
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getObsLatestSession: async () => ({
+          entries: [
+            trackEntry({
+              artist: 'Artist',
+              record: { timecode: '00:00:05.125' },
+            }),
+            {
+              type: 'marker',
+              label: 'First\nline',
+              record: { timecode: '00:00:05.125' },
+            },
+          ],
+        }),
+        copyObsText,
+      },
+    });
+    const owner = await loadExport();
+    await owner.open();
+    owner.mode.value = 'markers';
+    owner.offsetSeconds.value = '0.25';
+    const expected = '00:00:04.875 Song A - Artist\n00:00:04.875 First line';
+    expect(owner.previewText.value).toBe(expected);
+    await expect(owner.copyPreview()).resolves.toBe(true);
+    expect(copyObsText).toHaveBeenCalledWith(expected);
+    owner.close();
+  });
+
+  it('keeps source offsets independent and resets them for the next session', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSession: async (id) => ({
+          ok: true,
+          plan: {
+            id,
+            timeline: [trackEntry({ record: { timecode: '00:00:05.125' } })],
+          },
+        }),
+      },
+    });
+    const owner = await loadExport();
+    await owner.openForArrangement('one');
+    owner.offsetSeconds.value = '-1.25';
+    owner.mode.value = 'markers';
+    expect(owner.source.value).toBe('record');
+    expect(owner.offsetSeconds.value).toBe('0');
+    owner.offsetSeconds.value = '0.125';
+    expect(owner.markerCsv.value).toContain('00:00:05.000');
+    owner.source.value = 'stream';
+    expect(owner.offsetSeconds.value).toBe('-1.25');
+    await owner.openForArrangement('two');
+    expect(owner.offsetSeconds.value).toBe('0');
+    expect(owner.mode.value).toBe('youtube');
+  });
   it('exports and reloads the selected archived session, preserving repeat occurrences, markers and missing output clocks', async () => {
     const entries = [
       trackEntry({ id: 'first' }),
@@ -51,7 +108,7 @@ describe('useObsSessionExport', () => {
     const owner = await loadExport();
     await owner.openForArrangement('old');
     expect(owner.session.value.entries).toHaveLength(4);
-    expect(owner.result.value.text).toBe('0:00 Song A\n0:30 Song A\n1:00 MC');
+    expect(owner.result.value.text).toBe('00:00 Song A\n0:30 Song A\n1:00 MC');
     await owner.reload();
     expect(getPerformanceSession.mock.calls).toEqual([['old'], ['old']]);
     expect(getObsLatestSession).not.toHaveBeenCalled();
@@ -74,7 +131,7 @@ describe('useObsSessionExport', () => {
     });
     const owner = await loadExport();
     await owner.open();
-    const pending = owner.copyChapters();
+    const pending = owner.copyPreview();
     owner.offsetSeconds.value = '30';
     finish();
     expect(await pending).toBe(false);
@@ -82,7 +139,7 @@ describe('useObsSessionExport', () => {
     expect(owner.result.value.text).toBe('0:30 Song A');
     owner.close();
   });
-  it.each(['-1', 'invalid', '1.5', '9007199254740992'])(
+  it.each(['-1.0001', 'invalid', '1.5001', '9007199254740992'])(
     'does not copy chapters with an invalid offset %s',
     async (input) => {
       const copyObsText = vi.fn(async () => true);
@@ -95,9 +152,9 @@ describe('useObsSessionExport', () => {
       const owner = await loadExport();
       await owner.open();
       owner.offsetSeconds.value = input;
-      expect(await owner.copyChapters()).toBe(false);
+      expect(await owner.copyPreview()).toBe(false);
       expect(copyObsText).not.toHaveBeenCalled();
-      expect(owner.offsetError.value).toContain('整數秒');
+      expect(owner.offsetError.value).toContain('小數');
       owner.close();
     },
   );
@@ -117,12 +174,12 @@ describe('useObsSessionExport', () => {
     const owner = await loadExport();
     await owner.open();
     const pending = owner.open();
-    expect(await owner.copyChapters()).toBe(false);
+    expect(await owner.copyPreview()).toBe(false);
     rejectRead(new Error('private'));
     await pending;
-    expect(await owner.copyChapters()).toBe(false);
+    expect(await owner.copyPreview()).toBe(false);
     owner.close();
-    expect(await owner.copyChapters()).toBe(false);
+    expect(await owner.copyPreview()).toBe(false);
     expect(copyObsText).not.toHaveBeenCalled();
   });
   it('retains copy failure until close and ignores a late load from a closed modal', async () => {
@@ -138,7 +195,7 @@ describe('useObsSessionExport', () => {
     });
     const owner = await loadExport();
     await owner.open();
-    await owner.copyChapters();
+    await owner.copyPreview();
     await vi.advanceTimersByTimeAsync(10000);
     expect(owner.copyState.value.tone).toBe('error');
     owner.close();
@@ -188,7 +245,7 @@ describe('useObsSessionExport', () => {
     expect(exportState.isOpen.value).toBe(true);
     expect(exportState.session.value).toEqual(session);
     expect(exportState.result.value.text).toBe(
-      '0:00 Song A\n0:30 Song B\n1:00 Song C',
+      '00:00 Song A\n0:30 Song B\n1:00 Song C',
     );
     expect(exportState.result.value.valid).toBe(true);
   });
@@ -213,7 +270,7 @@ describe('useObsSessionExport', () => {
     expect(exportState.session.value).not.toBe(null);
   });
 
-  it('offsetSeconds shifts the projected chapters, clamping negative/invalid input to zero offset', async () => {
+  it('offsetSeconds accepts signed adjustments and previews invalid input at zero', async () => {
     vi.stubGlobal('window', {
       Utawakui: {
         onObsStatus: vi.fn(() => vi.fn()),
@@ -240,7 +297,7 @@ describe('useObsSessionExport', () => {
     expect(exportState.result.value.text).toBe('1:00 Song A');
 
     exportState.offsetSeconds.value = '-10';
-    expect(exportState.result.value.text).toBe('1:00 Song A');
+    expect(exportState.result.value.text).toBe('1:10 Song A');
   });
 
   it('auto-switches source to record when the session has no stream timecodes', async () => {
@@ -289,11 +346,11 @@ describe('useObsSessionExport', () => {
     const exportState = await loadExport();
     await exportState.open();
 
-    await expect(exportState.copyChapters()).resolves.toBe(true);
+    await expect(exportState.copyPreview()).resolves.toBe(true);
 
-    expect(copyObsText).toHaveBeenCalledWith('0:00 Song A\n0:30 Song B');
+    expect(copyObsText).toHaveBeenCalledWith('00:00 Song A\n0:30 Song B');
     expect(exportState.copyState.value.tone).toBe('success');
-    expect(exportState.copyState.value.message).toBe('章節已複製');
+    expect(exportState.copyState.value.message).toBe('時間點已複製');
   });
 
   it('names the chapter-text recovery when clipboard copying fails', async () => {
@@ -311,11 +368,11 @@ describe('useObsSessionExport', () => {
     const exportState = await loadExport();
     await exportState.open();
 
-    await expect(exportState.copyChapters()).resolves.toBe(false);
+    await expect(exportState.copyPreview()).resolves.toBe(false);
 
     expect(exportState.copyState.value.tone).toBe('error');
     expect(exportState.copyState.value.message).toBe(
-      '無法複製章節，請手動選取內容',
+      '無法複製，請手動選取文字。',
     );
   });
 

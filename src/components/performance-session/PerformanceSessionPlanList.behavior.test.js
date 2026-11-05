@@ -349,7 +349,7 @@ describe('PerformanceSessionPlanList', () => {
     const mounted = mount(PerformanceSessionPlanList, { items });
     await openItemMenu(mounted.root, '第 1 首「First song」的更多操作');
     expect(textContent(body)).not.toMatch(/上移一位|下移一位/);
-    expect(textContent(body)).toContain('略過這首');
+    expect(textContent(body)).toContain('略過');
     expect(textContent(body)).toContain('複製待唱項目');
     expect(textContent(body)).toContain('從待唱移除');
     mounted.app.unmount();

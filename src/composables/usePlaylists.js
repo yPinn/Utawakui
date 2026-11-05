@@ -300,6 +300,14 @@ async function create(name) {
   return created ?? null;
 }
 
+async function createFromPerformanceArchive(sessionId) {
+  const result =
+    await window.Utawakui.createPerformanceArchivePlaylist(sessionId);
+  if (result?.ok !== true) return null;
+  if (result.plan.playlistId) await refresh();
+  return result.plan;
+}
+
 async function rename(id, name, feedback) {
   return Boolean(
     await enqueue(
@@ -627,6 +635,7 @@ export function usePlaylists() {
     selectAlbumReference,
     setLibraryView,
     create,
+    createFromPerformanceArchive,
     rename,
     remove,
     setKind,

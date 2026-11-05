@@ -968,10 +968,12 @@ function createPerformanceSessionPlanStore({
   function clear(tracksById) {
     const document = mutate((draft) => {
       assertNoCurrent(draft);
-      if (draft.items.length === 0 && !draft.source) return false;
-      draft.source = null;
-      draft.reviewCursorItemId = null;
-      draft.items = [];
+      const results = draft.items.filter((item) => item.progress !== 'queued');
+      if (results.length === draft.items.length) return false;
+      if (!results.some((item) => item.itemId === draft.reviewCursorItemId)) {
+        draft.reviewCursorItemId = null;
+      }
+      draft.items = results;
     });
     return projectDocument(document, tracksById);
   }

@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue';
 import OBS_CONNECTION_VALUES from '../../shared/obsConnectionValues.json';
 import { t } from '../utils/i18n.js';
+import { usePerformanceSessionPlan } from './usePerformanceSessionPlan.js';
 
 // Module-scope singleton, same pattern as useSystemUsage.js — one OBS
 // connection applies to the whole app, not per-component. Mirrors
@@ -109,7 +110,11 @@ async function disconnectObs() {
 // touch `state` — a marker doesn't change the connection/streaming status.
 async function addMarker(label) {
   if (!hasBridge('addObsMarker')) return null;
-  return window.Utawakui.addObsMarker(label);
+  const marker = await window.Utawakui.addObsMarker(label);
+  if (marker && hasBridge('getPerformanceSessionPlan')) {
+    await usePerformanceSessionPlan().refresh();
+  }
+  return marker;
 }
 
 // The live session if one is running, otherwise the most recently

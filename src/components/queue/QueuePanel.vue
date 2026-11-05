@@ -36,8 +36,8 @@ const emit = defineEmits(['close', 'collapse']);
 const dock = useAppRightDock();
 const performanceQueue = usePerformanceQueueActions();
 const arrangementTabs = [
-  { id: 'pending', label: t('queue.panel.pending') },
-  { id: 'history', label: t('queue.panel.history') },
+  { id: 'pending', label: t('session.board.pending') },
+  { id: 'history', label: t('session.board.history') },
 ];
 
 const {
@@ -309,7 +309,7 @@ const {
           v-else
           :items="arrangementTabs"
           :active-id="dock.arrangementTab.value"
-          :aria-label="t('queue.panel.arrangementLabel')"
+          :aria-label="t('session.workspace.label')"
           tab-id-prefix="arrangement-dock"
           panel-id-prefix="arrangement-dock"
           variant="bar"
@@ -491,8 +491,7 @@ const {
 
 <style scoped>
 .queue-panel__view-controls,
-.queue-panel__footer-summary,
-.queue-panel :deep(.session-history-tools__archives) {
+.queue-panel__footer-summary {
   -webkit-user-select: none;
   user-select: none;
 }

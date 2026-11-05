@@ -3,6 +3,9 @@
 const t = (key, named) => require('./i18n').t(key, named);
 const crypto = require('node:crypto');
 const { hasControlCharacters } = require('./textGuards');
+const {
+  sessionPerformedItems,
+} = require('../../shared/sessionPerformedItems.mjs');
 
 const ARCHIVE_LIMIT = 100;
 const TIMELINE_LIMIT = 2000;
@@ -27,10 +30,15 @@ function output(value) {
     !text(value.timecode, 32) ||
     !/^\d{2,}:\d{2}:\d{2}(?:\.\d{1,3})?$/.test(value.timecode) ||
     !Number.isFinite(value.durationMs) ||
-    value.durationMs < 0
+    value.durationMs < 0 ||
+    (value.segmentId !== undefined && !safeId(value.segmentId))
   )
     throw invalid();
-  return { timecode: value.timecode, durationMs: value.durationMs };
+  return {
+    timecode: value.timecode,
+    durationMs: value.durationMs,
+    ...(value.segmentId ? { segmentId: value.segmentId } : {}),
+  };
 }
 function timelineEntry(value) {
   if (
@@ -131,24 +139,30 @@ function sessionProjectionFields(document) {
   return {
     sessionId: document.sessionId,
     sessionStartedAt: document.sessionStartedAt,
-    archives: document.archives.map((a) => ({
-      id: a.id,
-      name: a.name,
-      startedAt: a.startedAt,
-      endedAt: a.endedAt,
-      itemCount: a.items.length,
-      completedCount: a.items.filter((i) => i.progress === 'completed').length,
-      completedManualCount: a.items.filter(
-        (i) => i.progress === 'completed' && i.mode === 'manual',
-      ).length,
-      coverTrackIds: [
-        ...new Set(
-          a.items
-            .filter((i) => i.mode === 'library-track' && i.trackId)
-            .map((i) => i.trackId),
-        ),
-      ].slice(0, 4),
-    })),
+    canArchive: document.items.length > 0 || document.timeline.length > 0,
+    archives: document.archives.map((a) => {
+      const performed = sessionPerformedItems(a);
+      return {
+        id: a.id,
+        name: a.name,
+        startedAt: a.startedAt,
+        endedAt: a.endedAt,
+        itemCount: a.items.length,
+        performedCount: performed.length,
+        completedCount: performed.filter((i) => i.progress === 'completed')
+          .length,
+        completedManualCount: performed.filter(
+          (i) => i.progress === 'completed' && i.mode === 'manual',
+        ).length,
+        coverTrackIds: [
+          ...new Set(
+            performed
+              .filter((i) => i.mode === 'library-track' && i.trackId)
+              .map((i) => i.trackId),
+          ),
+        ].slice(0, 4),
+      };
+    }),
   };
 }
 function createSessionOperations({

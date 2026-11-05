@@ -1494,6 +1494,8 @@ if (!gotSingleInstanceLock) {
 
     registerPerformanceSessionPlanHandlers({
       ipcMain,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       recordDiagnostic,

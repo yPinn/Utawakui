@@ -149,6 +149,10 @@ function openContextMenu(event) {
       'library-track-row--readonly': profile.readOnly || profile.managedActions,
       'library-track-row--disabled': !canInteract,
       'library-track-row--compact': density === 'compact',
+      'library-track-row--compact-inline':
+        density === 'compact' && !profile.stackCompactIdentity,
+      'library-track-row--compact-stacked':
+        density === 'compact' && profile.stackCompactIdentity,
       'library-track-row--selected': selected,
       'library-track-row--current': current,
       'library-track-row--dragging': dragEnabled && dragging,
@@ -367,7 +371,12 @@ function openContextMenu(event) {
         </slot>
       </span>
       <span class="library-track-row__duration-text">
-        {{ formatDuration(displayTrack.duration) }}
+        {{
+          formatDuration(
+            displayTrack.duration,
+            profile.durationLabel ? '—' : undefined,
+          )
+        }}
       </span>
     </span>
 
@@ -377,10 +386,17 @@ function openContextMenu(event) {
       data-track-column="performanceStatus"
       data-column-priority="essential"
       :data-column-align="columnAlignment('performanceStatus')"
-      ><UiOverflowTooltip :text="entry.performanceStatusText">{{
-        entry.performanceStatusText || '—'
-      }}</UiOverflowTooltip></span
     >
+      <UiOverflowTooltip :text="entry.performanceStatusText">{{
+        entry.performanceStatusText || '—'
+      }}</UiOverflowTooltip>
+      <UiOverflowTooltip
+        v-if="entry.performanceStatusDetail"
+        class="library-track-row__status-detail"
+        :text="entry.performanceStatusDetail"
+        >{{ entry.performanceStatusDetail }}</UiOverflowTooltip
+      >
+    </span>
 
     <span
       v-if="hasColumn('actions') || hasColumn('performanceActions')"
@@ -633,17 +649,28 @@ function openContextMenu(event) {
   min-height: var(--ui-track-row-compact-min-height);
 }
 
-.library-track-row--compact .library-track-row__copy {
+.library-track-row--compact-stacked .library-track-row__copy {
+  flex: 1;
+}
+
+.library-track-row__status-detail {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: auto;
+}
+
+.library-track-row--compact-inline .library-track-row__copy {
   flex-direction: row;
   align-items: baseline;
   gap: var(--ui-space-2);
 }
 
-.library-track-row--compact .library-track-row__title {
+.library-track-row--compact-inline .library-track-row__title {
   flex: 0 1 auto;
 }
 
-.library-track-row--compact .library-track-row__subtitle {
+.library-track-row--compact-inline .library-track-row__subtitle {
   flex: 1 1 0;
 }
 

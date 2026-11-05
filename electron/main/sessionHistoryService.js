@@ -103,7 +103,12 @@ function createSessionHistoryService({
     if (!active) return null;
     try {
       const value = await request();
-      return { timecode: value.timecode, durationMs: value.durationMs };
+      if (value.active === false) return null;
+      return {
+        timecode: value.timecode,
+        durationMs: value.durationMs,
+        ...(value.segmentId ? { segmentId: value.segmentId } : {}),
+      };
     } catch (error) {
       logger.error?.('[session-history] Snapshot request failed', error);
       return null;
@@ -112,8 +117,12 @@ function createSessionHistoryService({
 
   async function captureBothOutputs(streamActive, recordActive) {
     return Promise.all([
-      snapshotOutput(streamActive, () => obsAdapter.requestStreamSnapshot()),
-      snapshotOutput(recordActive, () => obsAdapter.requestRecordSnapshot()),
+      snapshotOutput(streamActive, () =>
+        obsAdapter.requestStreamSnapshot({ withSegmentId: true }),
+      ),
+      snapshotOutput(recordActive, () =>
+        obsAdapter.requestRecordSnapshot({ withSegmentId: true }),
+      ),
     ]);
   }
 

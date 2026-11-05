@@ -108,10 +108,10 @@
 ### 演出安排
 
 - `usePerformanceSessionPlan.js` 序列化 mutation 並消費 main 回傳的完整 snapshot；`usePerformanceSessionPlaybackController.js` 協調 occurrence、confirmed playing、完成／略過／中止與連續播放；`usePerformanceSessionPlayback.js` 與 `usePlaybackTransport` 共用 PlayerBar／SMTC／ended 的下一首決策。一般 Queue 與安排不各自註冊自動前進。
-- `PerformanceSessionWorkspace.vue` 是主頁組合：目前項目、連續播放、場間音樂、待唱與演出紀錄。`PerformanceSessionCurrent.vue` 供主頁與 Dock 共用（保留封面播放／暫停）；`PerformanceSessionQueueList.vue` 與 `PerformanceSessionCompletedList.vue` 關閉清單播放動作，「再次加入」只建立新 occurrence。`PerformanceSessionSummary.vue` 以 `performanceSessionSummary.js` 投影統計，主頁與 Dock 共用。
+- `PerformanceSessionWorkspace.vue` 是主頁組合：目前項目、連續播放、待唱與演出紀錄，場間音樂集中於待唱 Dock。`PerformanceSessionCurrent.vue` 供主頁與 Dock 共用（保留封面播放／暫停）；`PerformanceSessionQueueList.vue` 與 `PerformanceSessionCompletedList.vue` 關閉清單播放動作，「再次加入」只建立新 occurrence。`PerformanceSessionSummary.vue` 以 `performanceSessionSummary.js` 投影統計，主頁與 Dock 共用。
 - `performanceSessionOutput.js` 在安排持有播放時，從 confirmed current 與 completed progress 產生公開 queue／playback 投影，使用 occurrence 名稱；未開始與略過／中止不冒充完成。
-- `PerformanceSessionHistoryTools.vue` 共用紀錄頁選單、明確封存與封存集合；`PerformanceSessionPlaylistExportModal.vue` 先呈現 main 預覽的合併／排除數再保存。`useObsSessionExport` 指定安排場次後，重讀保持同一身分。
-- 封存集合重用 `PlaylistSidebarRow`／`UiCollageThumb`，main 摘要僅附最多四個去重的 canonical cover ids，不下放整份 items 或路徑。`useAppView.performanceArchiveId` 與既有 navigation history 擁有場次位置；`PerformanceSessionArchive.vue` 在主區重用 Folder document／dossier／Track Row 顯示唯讀 occurrence 原序，`usePerformanceArchive` 隔離載入／重試與切換競態，不改目前安排或播放。
+- `PerformanceSessionHistoryTools.vue` 持有主區本場紀錄的封存與匯出；`PerformanceSessionPlaylistExportModal.vue` 先呈現 main 預覽的合併／排除數再保存。`useObsSessionExport` 指定安排場次後，重讀保持同一身分。
+- `PerformanceSessionArchiveList.vue` 由曲庫側欄入口顯示沒有歌單對應的場次，重用 `PlaylistSidebarRow`／`UiCollageThumb`，main 摘要僅附最多四個去重的 canonical cover ids，不下放整份 items 或路徑。`useAppView` 與既有 navigation history 保存曲庫紀錄清單與指定場次位置；`PerformanceSessionArchive.vue` 在主區重用 Folder document／dossier／Track Row 顯示唯讀演出順序。`sessionPerformedItems.mjs` 提供實際演出明細、摘要與封存歌單共用的投影，原始安排仍由 Main 保存。`usePerformanceArchive` 隔離載入／重試與切換競態。一般歌單從 `performanceSessionId` 衍生紀錄便條，點擊開啟相同的唯讀明細。
 - 見[演出安排契約](contracts/performance-session-preparation.md)。
 
 ### 歌詞
@@ -213,7 +213,7 @@
 ### 演出安排與 BGM 儲存
 
 - `performanceSessionPlan.js` 在 library root 原子保存 `performance-session-plan.json`，只接受 bounded ids、mode、labels、驗證狀態、cursor、revision 與 progress；`performanceSessionPlanHandlers.js` 每次以 main 推導的 playlist 與曲庫驗證順序與可用性。Set-progress 以獨立 `progressRevision` 驗證；每個 library 在 process 首次操作時把殘留 playing 恢復為 interrupted。
-- `performanceSessionArchive.js` 在同一文件保存 sessionId、逐次時間軸與封存，同次 atomic write 封存並輪替空白新場；舊 id 重試不清新場。`performanceSessionHistoryHandlers.js` 序列化 archive／指定場次讀取／預覽與歌單保存；確認時重算 token，`playlists.savePerformancePlaylist` 一次保存完整歌單與冪等 key。現有 runtime globs 封裝新模組，無外部依賴。
+- `performanceSessionArchive.js` 在同一文件保存 sessionId、逐次時間軸與封存，同次 atomic write 封存並輪替空白新場；舊 id 重試不清新場。`performanceSessionHistoryHandlers.js` 序列化 archive／指定場次讀取／預覽與歌單保存；確認時重算 token，`playlists.savePerformancePlaylist` 一次保存完整歌單與冪等 key。收場建立歌單以指定的已封存場次解析原始曲目，沿用歌單原子保存與場次識別去重。兩步的中斷由曲庫無對應歌單的紀錄入口恢復。現有 runtime globs 封裝相關模組。
 - `bgmStandbyPlan.js` 原子保存 `bgm-standby.json`：單一 track id、position 與音量／mute／fade／Dim／pre-roll／post-roll（loop 固定）。Schema v3 預設 fade-out 0.6s、pre-roll 0.75s、post-roll 1.0s、fade-in 1.0s、音量 0.25、Talk −12 dB；Talk 不持久化。
 
 ### OBS 與資源監視

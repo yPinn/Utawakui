@@ -17,11 +17,13 @@ import {
   Play,
   Plus,
   RefreshCw,
+  StickyNote,
   Trash2,
 } from '../../icons/index.js';
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
+import { useAppView } from '../../composables/useAppView.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
@@ -514,6 +516,12 @@ function createCollectionItems() {
 }
 
 const { state: performancePlan } = usePerformanceSessionPlan();
+const { activeView, libraryWorkspace, openPerformanceArchiveIndex } =
+  useAppView();
+const archiveRow = {
+  id: 'performance-records',
+  name: t('session.archive.records'),
+};
 
 const menuContent = computed(() => {
   const context = menuContext.value;
@@ -1181,6 +1189,18 @@ function startDrag(row, event) {
             @action="refresh"
           />
         </template>
+        <PlaylistSidebarRow
+          :playlist="archiveRow"
+          subtitle=""
+          :empty-icon="StickyNote"
+          :active="
+            activeView === 'library' &&
+            libraryWorkspace === 'performance-records'
+          "
+          :compact="compact"
+          :playback-enabled="false"
+          @select="openPerformanceArchiveIndex"
+        />
         <template v-for="row in visiblePlaylistRows" :key="row.key">
           <PlaylistSidebarRow
             v-if="row.kind === 'folder'"

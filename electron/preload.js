@@ -1537,6 +1537,19 @@ contextBridge.exposeInMainWorld('Utawakui', {
     }),
   getPerformanceSession: (sessionId) =>
     ipcRenderer.invoke('performance-session-plan:get-session', { sessionId }),
+  createPerformanceArchivePlaylist: (sessionId) =>
+    ipcRenderer.invoke('performance-session-plan:create-archive-playlist', {
+      sessionId,
+    }),
+  savePerformanceMarkerCsv: (intent) =>
+    ipcRenderer.invoke('performance-session-plan:save-marker-csv', {
+      sessionId: intent?.sessionId,
+      latest: intent?.latest === true,
+      source: intent?.source,
+      offsetMs: intent?.offsetMs,
+      segmentIndex: intent?.segmentIndex,
+      digest: intent?.digest,
+    }),
   previewPerformancePlaylist: (intent) =>
     ipcRenderer.invoke('performance-session-plan:preview-playlist', {
       sessionId: intent?.sessionId,

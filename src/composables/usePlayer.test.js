@@ -1779,6 +1779,7 @@ describe('library synchronization', () => {
     const plan = {
       state: reactive({
         plan: {
+          sessionId: 'performance-metadata-refresh',
           items: ['one', 'two'].map((itemId) => ({
             itemId,
             trackId: 'song',
@@ -1802,6 +1803,7 @@ describe('library synchronization', () => {
       toPlayableTrack: (value) => value,
     });
     try {
+      controller.setContinuous(true);
       await controller.start('one');
       MockAudio.latest.dispatch('playing');
       await controller.settled();

@@ -91,6 +91,7 @@ files:
   # Includes the exact-route Chalkboard Vertical renderer.
   - overlay/**/*
   - '!overlay/**/*.test.js'
+  # Main and renderer use the same session timestamp and CSV projection.
   - shared/**/*
   - '!shared/**/*.test.js'
   - LICENSE.md

@@ -9,12 +9,13 @@ export function usePerformanceSessionPlaybackController({
   queue,
   getTracks,
   toPlayableTrack,
+  continuousStorage,
 }) {
   const state = reactive({
     current: null,
     busy: false,
     error: null,
-    continuous: true,
+    continuous: false,
     engaged: false,
   });
   let request = null;
@@ -42,12 +43,48 @@ export function usePerformanceSessionPlaybackController({
       ),
   );
   const ownsPlayback = computed(() => state.engaged);
-  const canStart = computed(() =>
-    pendingItems.value.some((item) => item.ready),
+  const nextReadyItem = computed(() =>
+    pendingItems.value.find((item) => item.ready),
   );
-  const canNext = computed(
-    () => state.engaged && pendingItems.value.some((item) => item.ready),
+  const canStart = computed(() => Boolean(nextReadyItem.value));
+  const hasPlayed = computed(() =>
+    historyItems.value.some((item) => item.progress !== 'skipped'),
   );
+  const canAdvance = computed(() =>
+    Boolean(nextReadyItem.value && nextReadyItem.value.mode !== 'manual'),
+  );
+  const canNext = computed(() => state.engaged && canAdvance.value);
+  const continuousKey = (sessionId) =>
+    `utawakui.performance-session.continuous.${sessionId}`;
+  const stopWatchingSession = watch(
+    () => plan.state.plan.sessionId,
+    (id) => {
+      state.continuous = false;
+      if (!id) return;
+      try {
+        state.continuous =
+          (continuousStorage ?? globalThis.localStorage)?.getItem(
+            continuousKey(id),
+          ) === 'true';
+      } catch {
+        // An unavailable preference store leaves continuous playback off.
+      }
+    },
+    { immediate: true, flush: 'sync' },
+  );
+
+  function setContinuous(value) {
+    const id = plan.state.plan.sessionId;
+    if (!id) return;
+    state.continuous = value === true;
+    try {
+      const storage = continuousStorage ?? globalThis.localStorage;
+      if (state.continuous) storage?.setItem(continuousKey(id), 'true');
+      else storage?.removeItem(continuousKey(id));
+    } catch {
+      // The choice still applies in the currently open session.
+    }
+  }
 
   function enqueue(operation) {
     const task = actions.then(async () => {
@@ -188,9 +225,10 @@ export function usePerformanceSessionPlaybackController({
     return finish(active, progress);
   }
 
-  function nextItem() {
-    const item = pendingItems.value.find((item) => item.ready);
-    return item ? startItem(item.itemId) : false;
+  function advanceAfterCompletion() {
+    return state.continuous && state.engaged && canAdvance.value
+      ? startItem(nextReadyItem.value.itemId)
+      : true;
   }
 
   function cancelPendingStart() {
@@ -219,7 +257,7 @@ export function usePerformanceSessionPlaybackController({
         return false;
       }
       if (!(await finish(active, 'completed'))) return false;
-      return state.continuous && state.engaged ? nextItem() : true;
+      return advanceAfterCompletion();
     });
     return true;
   }
@@ -297,7 +335,14 @@ export function usePerformanceSessionPlaybackController({
     ownsPlayback,
     canNext,
     canStart,
+    nextReadyItem,
+    hasPlayed,
     start: (itemId) => enqueue(() => startItem(itemId)),
+    startNext: () =>
+      enqueue(() => {
+        const item = nextReadyItem.value;
+        return item && !request ? startItem(item.itemId) : false;
+      }),
     replay: (itemId) =>
       enqueue(async () => {
         const item = plan.state.plan.items.find(
@@ -308,9 +353,12 @@ export function usePerformanceSessionPlaybackController({
         return createdId ? startItem(createdId) : false;
       }),
     next: () => {
-      if (!canStart.value) return Promise.resolve(false);
+      if (!canAdvance.value) return Promise.resolve(false);
       cancelPendingStart();
-      return enqueue(async () => (await stopItem('interrupted')) && nextItem());
+      return enqueue(async () => {
+        if (!canAdvance.value || !(await stopItem('interrupted'))) return false;
+        return canAdvance.value && startItem(nextReadyItem.value.itemId);
+      });
     },
     previous: () => {
       if (request && !request.manual) return player.restartTrack();
@@ -319,7 +367,7 @@ export function usePerformanceSessionPlaybackController({
       enqueue(async () => {
         if (!request?.confirmation) return false;
         if (!(await stopItem('completed'))) return false;
-        return state.continuous && state.engaged ? nextItem() : true;
+        return advanceAfterCompletion();
       }),
     stop: () => {
       cancelPendingStart();
@@ -327,9 +375,7 @@ export function usePerformanceSessionPlaybackController({
     },
     skip: (itemId) => enqueue(() => plan.setProgress(itemId, 'skipped')),
     handleEnded,
-    setContinuous: (value) => {
-      state.continuous = value === true;
-    },
+    setContinuous,
     async settled() {
       let previous;
       do {
@@ -346,6 +392,7 @@ export function usePerformanceSessionPlaybackController({
         void finish(request, 'interrupted');
       }
       disposed = true;
+      stopWatchingSession();
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     },
   };

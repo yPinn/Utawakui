@@ -133,6 +133,7 @@ describe('AppFolderPage', () => {
     expect(source).toMatch(
       /\.app-folder-page__floating\s*\{[^}]*grid-row:\s*1 \/ 3;[^}]*z-index:\s*var\(--ui-layer-raised\);[^}]*overflow:\s*visible;[^}]*pointer-events:\s*none;/su,
     );
+    expect(source).not.toMatch(/\.app-folder-page__sheet\s*\{[^}]*z-index:/su);
     expect(source).toMatch(
       /\.app-folder-page__extension--floating\s*\{[^}]*min-block-size:\s*var\(--ui-folder-artifact-folder-min-height\);/su,
     );

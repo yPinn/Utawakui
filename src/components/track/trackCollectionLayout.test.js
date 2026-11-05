@@ -55,6 +55,23 @@ describe('track collection layout', () => {
     expect(layout.widths.identity).toBeGreaterThanOrEqual(112);
     expect(layout.widths.performanceStatus).toBeGreaterThanOrEqual(112);
   });
+  it('fits all archive columns in the compact dialog content width', () => {
+    const layout = resolveTrackCollectionLayout({
+      kind: 'performance-archive',
+      availableWidth: 478,
+    });
+    expect(roles(layout)).toEqual([
+      'ordinal',
+      'identity',
+      'spacer',
+      'duration',
+      'performanceStatus',
+    ]);
+    expect(layout.requiredWidth).toBeLessThanOrEqual(478);
+    expect(layout.columns.find(({ role }) => role === 'duration').label).toBe(
+      '曲長',
+    );
+  });
   it('uses the same token-equivalent gap budget before and after CSS measurement', () => {
     const firstFrame = resolveTrackCollectionLayout({
       kind: 'playlist',

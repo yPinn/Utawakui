@@ -34,7 +34,8 @@
     "addedAt": "新增日期",
     "importedAt": "匯入日期",
     "plays": "播放次數",
-    "duration": "時長"
+    "duration": "時長",
+    "songDuration": "曲長"
   },
   "profiles": {
     "sessionDescription": "目前場次曲目，顯示演出狀態與時長。",

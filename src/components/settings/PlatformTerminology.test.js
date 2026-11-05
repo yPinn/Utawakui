@@ -18,8 +18,11 @@ function feature(id) {
 
 describe('platform terminology', () => {
   it('treats YouTube chapters as one format of the generic session timeline', () => {
-    expect(sessionExportModal).toContain('title="匯出場次時間軸"');
-    expect(sessionExportModal).toContain('label="YouTube 章節"');
+    expect(sessionExportModal).toContain('title="匯出時間點"');
+    expect(sessionExportModal).toContain(
+      "id: 'youtube', label: 'YouTube 章節'",
+    );
+    expect(sessionExportModal).toContain("id: 'markers', label: '剪輯對照'");
     expect(sessionExportModal).toContain('複製章節');
     expect(sessionExportModal).toContain('演出曲目與標記會自動記錄');
     expect(sessionExportModal).not.toContain('title="匯出 YouTube 章節"');

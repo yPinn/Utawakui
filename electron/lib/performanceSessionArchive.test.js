@@ -157,6 +157,16 @@ describe('explicit performance session archive', () => {
       store.appendLibraryTrack(id, available);
     store.appendManualItem({ displayTitle: 'Manual' }, available);
     const plan = store.ensureSession(available);
+    for (const { itemId } of plan.items.slice(0, 6)) {
+      store.setProgress(
+        { itemId, expectedProgressRevision: 0, progress: 'playing' },
+        available,
+      );
+      store.setProgress(
+        { itemId, expectedProgressRevision: 1, progress: 'completed' },
+        available,
+      );
+    }
     const result = store.archiveSession(
       { sessionId: plan.sessionId, name: 'Cover show' },
       available,
@@ -167,10 +177,16 @@ describe('explicit performance session archive', () => {
       'song-2',
       'song-3',
     ]);
+    expect(result.archives[0]).toMatchObject({
+      itemCount: 7,
+      performedCount: 6,
+      completedCount: 6,
+    });
     expect(store.getSession(plan.sessionId, available).items).toHaveLength(7);
   });
   it('preserves a deliberate opening marker before the first song, even with no arranged tracks yet', () => {
     const plan = store.ensureSession(tracks);
+    expect(plan.canArchive).toBe(false);
     const marker = {
       id: 'opening',
       type: 'marker',
@@ -180,12 +196,14 @@ describe('explicit performance session archive', () => {
       record: null,
     };
     store.recordMarker(marker, plan.sessionId);
+    expect(store.getProjected(tracks).canArchive).toBe(true);
     expect(store.getSession(plan.sessionId, tracks).timeline).toEqual([marker]);
     store.archiveSession(
       { sessionId: plan.sessionId, name: 'Opening' },
       tracks,
     );
     expect(store.getSession(plan.sessionId, tracks).timeline).toEqual([marker]);
+    expect(store.getProjected(tracks).canArchive).toBe(false);
   });
   it('keeps manual occurrences, markers and offline clocks in the selected archive after restarting', () => {
     const plan = prepare(),

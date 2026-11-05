@@ -260,6 +260,10 @@
     "title": "演出歌單尚未保存",
     "message": "演出歌單尚未保存，請再試一次。"
   },
+  "PERFORMANCE_SESSION_MARKER_EXPORT_FAILED": {
+    "title": "剪輯標記尚未儲存",
+    "message": "無法儲存剪輯標記，請再試一次。"
+  },
   "PERFORMANCE_SESSION_HISTORY_FAILED": {
     "title": "演出紀錄未更新",
     "message": "目前無法讀取或保存演出紀錄，請再試一次。"

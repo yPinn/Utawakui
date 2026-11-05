@@ -34,7 +34,8 @@
     "addedAt": "Date added",
     "importedAt": "Date imported",
     "plays": "Plays",
-    "duration": "Length"
+    "duration": "Length",
+    "songDuration": "Track length"
   },
   "profiles": {
     "sessionDescription": "Tracks in the current session, with performance status and length.",

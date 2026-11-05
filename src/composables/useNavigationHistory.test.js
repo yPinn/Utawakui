@@ -47,6 +47,28 @@ async function openPlaylist({ appView, playlists }, id) {
 }
 
 describe('useNavigationHistory', () => {
+  it('restores the archive index between the arrangement and an archived session', async () => {
+    const { appView, history } = await load();
+    appView.openPerformancePreparation('history');
+    await nextTick();
+    appView.openPerformanceArchiveIndex();
+    await nextTick();
+    expect(appView.activeView.value).toBe('library');
+    expect(appView.libraryWorkspace.value).toBe('performance-records');
+    appView.openPerformanceArchive('one');
+    await nextTick();
+    expect(history.back()).toBe(true);
+    await nextTick();
+    expect(appView.libraryWorkspace.value).toBe('performance-records');
+    expect(appView.performanceArchiveId.value).toBeNull();
+    expect(history.back()).toBe(true);
+    await nextTick();
+    expect(appView.activeView.value).toBe('performance');
+    expect(appView.performanceSessionTab.value).toBe('history');
+    expect(history.forward()).toBe(true);
+    await nextTick();
+    expect(appView.libraryWorkspace.value).toBe('performance-records');
+  });
   it('retraces distinct archived sessions without replacing library selection or performance state', async () => {
     const context = await load();
     await openPlaylist(context, 'playlist-a');

@@ -1,45 +1,76 @@
 <script setup>
-import { computed, ref, toRef } from 'vue';
-import { ArrowLeft, Copy, Download, Tickets } from '../../icons/index.js';
+import { computed, onScopeDispose, shallowRef, toRef } from 'vue';
+import { Copy, Download } from '../../icons/index.js';
 import { FOLDER_DOSSIER_ARTWORK_SIZE } from '../../constants/ui.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePerformanceArchive } from '../../composables/usePerformanceArchive.js';
-import { usePerformanceQueueActions } from '../../composables/usePerformanceQueueActions.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
+import { usePlaylists } from '../../composables/usePlaylists.js';
 import {
   performanceArchiveDate,
+  performanceArchiveProgress,
   performanceArchiveRows,
 } from '../../utils/performanceArchivePresentation.js';
-import {
-  performanceSessionSummary,
-  formatPerformanceSessionSummary,
-} from '../../utils/performanceSessionSummary.js';
 import AppFolderDossier from '../layout/AppFolderDossier.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import TrackTable from '../track/TrackTable.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
 import CollectionActionRail from '../library/CollectionActionRail.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
-import PerformanceSessionPlaylistExportModal from './PerformanceSessionPlaylistExportModal.vue';
+import UiStack from '../ui/UiStack.vue';
 import { t } from '../../utils/i18n.js';
 
-const props = defineProps({ sessionId: { type: String, required: true } });
+const props = defineProps({
+  sessionId: { type: String, required: true },
+  embedded: Boolean,
+});
 const { session, loading, error, refresh } = usePerformanceArchive(
   toRef(props, 'sessionId'),
 );
 const { state: library } = useLibrary();
-const { openPerformancePreparation } = useAppView();
+const { openLibraryContent } = useAppView();
+const playlists = usePlaylists();
 const timeline = useObsSessionExport();
-const performanceQueue = usePerformanceQueueActions();
-const playlist = ref(null);
+const saving = shallowRef(false);
+const saveError = shallowRef(false);
+let disposed = false;
+onScopeDispose(() => {
+  disposed = true;
+});
 const rows = computed(() =>
   performanceArchiveRows(session.value, library.tracks),
 );
+const canSave = computed(() =>
+  rows.value.some((row) => row.mode === 'library-track' && row.track),
+);
+
+async function createPlaylist() {
+  if (!canSave.value || saving.value) return;
+  const sessionId = props.sessionId;
+  saving.value = true;
+  saveError.value = false;
+  try {
+    const result = await playlists.createFromPerformanceArchive(sessionId);
+    if (disposed || props.sessionId !== sessionId) return;
+    if (
+      !result?.playlistId ||
+      !playlists.state.playlists.some(({ id }) => id === result.playlistId)
+    ) {
+      saveError.value = true;
+      return;
+    }
+    playlists.select(result.playlistId);
+    openLibraryContent();
+  } catch {
+    saveError.value = true;
+  } finally {
+    saving.value = false;
+  }
+}
 const tableEntries = computed(() =>
   rows.value.map((row, visibleIndex) => ({
     key: row.key,
@@ -51,6 +82,7 @@ const tableEntries = computed(() =>
       artist: row.artist,
     },
     performanceStatusText: row.status,
+    performanceStatusDetail: row.statusDetail,
   })),
 );
 const coverTracks = computed(() => {
@@ -63,32 +95,42 @@ const coverTracks = computed(() => {
       return true;
     });
 });
-const fields = computed(() =>
+const progressText = computed(() =>
+  performanceArchiveProgress(
+    rows.value.filter(({ progress }) => progress === 'completed').length,
+    rows.value.length,
+  ),
+);
+const timingFields = computed(() =>
   session.value
     ? [
+        ...(session.value.startedAt
+          ? [
+              {
+                key: 'started',
+                text: t('session.archive.startedAt', {
+                  date: performanceArchiveDate(session.value.startedAt),
+                }),
+              },
+            ]
+          : []),
         {
           key: 'ended',
           text: t('session.archive.archivedAt', {
             date: performanceArchiveDate(session.value.endedAt),
           }),
         },
-        {
-          key: 'summary',
-          text: formatPerformanceSessionSummary(
-            performanceSessionSummary(session.value.items, library.tracks),
-            session.value.items,
-          ),
-        },
       ]
     : [],
 );
+const fields = computed(() => [
+  ...timingFields.value,
+  { key: 'summary', text: progressText.value },
+]);
 </script>
 
 <template>
   <section class="performance-archive" :aria-busy="loading">
-    <UiButton :icon="ArrowLeft" @click="openPerformancePreparation">{{
-      t('session.archive.back')
-    }}</UiButton>
     <UiSkeleton
       v-if="loading && !session"
       :lines="4"
@@ -100,6 +142,7 @@ const fields = computed(() =>
     }}</UiButton>
     <template v-if="session">
       <AppFolderDossier
+        v-if="!embedded"
         :marker="t('session.archive.marker')"
         :title="session.name"
         title-id="performance-archive-title"
@@ -112,46 +155,61 @@ const fields = computed(() =>
             radius="0"
         /></template>
       </AppFolderDossier>
+      <UiStack v-else direction="column" :gap="1">
+        <UiStack :gap="2" wrap align="baseline">
+          <h3 class="performance-archive__name">{{ session.name }}</h3>
+          <UiHint>{{ progressText }}</UiHint>
+        </UiStack>
+        <UiStack :gap="2" wrap>
+          <UiHint v-for="field in timingFields" :key="field.key">{{
+            field.text
+          }}</UiHint>
+        </UiStack>
+      </UiStack>
       <CollectionActionRail
         :entity-label="t('session.archive.entity')"
         :show-search="false"
         :show-density="false"
       >
         <template #actions>
-          <UiIconButton
-            :icon="Tickets"
-            :label="t('session.archive.addToQueue')"
-            :disabled="!session.items.length || performanceQueue.state.isSaving"
-            @click="performanceQueue.addArchive(session.id)"
-          />
-          <UiIconButton
+          <UiButton
+            v-if="!embedded && canSave"
             :icon="Copy"
-            :label="t('session.archive.saveAsPlaylist')"
-            @click="playlist = { id: session.id, name: session.name }"
-          />
-          <UiIconButton
+            :disabled="saving"
+            @click="createPlaylist"
+            >{{ t('session.archive.savePlaylist') }}</UiButton
+          >
+          <UiButton
             :icon="Download"
-            :label="t('session.archive.exportTimeline')"
+            variant="secondary"
             @click="timeline.openForArrangement(session.id)"
-          />
+            >{{ t('obs.export.title') }}</UiButton
+          >
         </template>
       </CollectionActionRail>
+      <UiNotice
+        v-if="saveError"
+        tone="warning"
+        compact
+        :message="t('session.history.playlistCreationFailed')"
+      />
       <AppFolderContentField :aria-label="t('session.archive.tracksLabel')">
-        <UiHint v-if="!rows.length">{{ t('session.archive.empty') }}</UiHint>
+        <UiHint v-if="!rows.length">{{
+          t(
+            session.timeline?.some(({ type }) => type === 'marker')
+              ? 'session.archive.markersOnly'
+              : 'session.archive.empty',
+          )
+        }}</UiHint>
         <TrackTable
           v-else
           collection-kind="performance-archive"
+          :density="embedded ? 'compact' : 'list'"
           :entries="tableEntries"
           :content-key="session.id"
         />
       </AppFolderContentField>
     </template>
-    <PerformanceSessionPlaylistExportModal
-      :open="Boolean(playlist)"
-      :session-id="playlist?.id"
-      :suggested-name="playlist?.name"
-      @close="playlist = null"
-    />
   </section>
 </template>
 
@@ -163,5 +221,11 @@ const fields = computed(() =>
 }
 .performance-archive > .ui-btn {
   justify-self: start;
+}
+.performance-archive__name {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--ui-type-body-size);
+  font-weight: var(--ui-font-weight-semibold);
 }
 </style>

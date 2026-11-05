@@ -32,6 +32,21 @@ export function createNavigationLocation({
 }) {
   if (!TRACKED_VIEWS.has(view)) return null;
 
+  if (view === 'library' && libraryWorkspace === 'performance-records') {
+    return Object.freeze({
+      key: JSON.stringify([
+        view,
+        libraryWorkspace,
+        performanceArchiveId ?? null,
+      ]),
+      view,
+      workspace: libraryWorkspace,
+      archiveId: performanceArchiveId ?? null,
+      returnView: null,
+      selection: null,
+    });
+  }
+
   if (view === 'library') {
     const workspace = libraryWorkspace ?? 'browse';
     const frozenSelection = librarySelection(selection);
@@ -48,17 +63,6 @@ export function createNavigationLocation({
       workspace,
       returnView: null,
       selection: frozenSelection,
-    });
-  }
-
-  if (view === 'performance' && performanceArchiveId) {
-    return Object.freeze({
-      key: JSON.stringify([view, 'archive', performanceArchiveId]),
-      view,
-      archiveId: performanceArchiveId,
-      workspace: null,
-      returnView: null,
-      selection: null,
     });
   }
 

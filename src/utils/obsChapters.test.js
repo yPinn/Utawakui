@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatChapterTimestamp,
+  formatYoutubeChapters,
   parseObsTimecode,
   projectYoutubeChapters,
 } from './obsChapters.js';
@@ -40,8 +41,8 @@ describe('formatChapterTimestamp', () => {
     expect(formatChapterTimestamp(83_000)).toBe('1:23');
   });
 
-  it('formats zero as 0:00', () => {
-    expect(formatChapterTimestamp(0)).toBe('0:00');
+  it('formats zero as 00:00', () => {
+    expect(formatChapterTimestamp(0)).toBe('00:00');
   });
 
   it('formats past an hour as H:MM:SS', () => {
@@ -123,8 +124,9 @@ describe('projectYoutubeChapters', () => {
     expect(result.lines[0]).toMatchObject({ ms: 0, label: '開場' });
   });
 
-  it('subtracts offsetMs from every timestamp, clamping negative results to zero', () => {
+  it('subtracts offsetMs and excludes points before the video start', () => {
     const entries = [
+      trackEntry({ title: 'Trimmed', stream: { timecode: '00:04:59.999' } }),
       trackEntry({
         trackId: 't1',
         title: 'Song A',
@@ -144,7 +146,26 @@ describe('projectYoutubeChapters', () => {
 
     const result = projectYoutubeChapters(entries, { offsetMs: 300_000 });
 
-    expect(result.text).toBe('0:00 Song A\n0:20 Song B\n0:40 Song C');
+    expect(result.text).toBe('00:00 Song A\n0:20 Song B\n0:40 Song C');
+  });
+
+  it('checks the exact emitted seconds and can add an explicit opening', () => {
+    const rows = [400, 10_100, 20_100].map((ms) => ({
+      entry: trackEntry(),
+      ms,
+    }));
+    expect(formatYoutubeChapters(rows).valid).toBe(true);
+    const later = rows.map((row) => ({ ...row, ms: row.ms + 20_000 }));
+    const preview = formatYoutubeChapters(later, { includeOpening: true });
+    expect(preview.lines[0]).toMatchObject({ time: '00:00', label: '開場' });
+    expect(preview.lines[1].ms).toBe(20_400);
+  });
+
+  it('keeps titles on a single pasted chapter line', () => {
+    const result = formatYoutubeChapters([
+      { entry: trackEntry({ title: 'A\nB', artist: 'C\rD' }), ms: 0 },
+    ]);
+    expect(result.text).toBe('00:00 A B - C D');
   });
 
   it('includes the artist in the label when present', () => {
@@ -265,7 +286,7 @@ describe('projectYoutubeChapters', () => {
       expect.objectContaining({ code: 'too-few-chapters' }),
     ]);
     // Still produces usable text even though it's flagged invalid.
-    expect(result.text).toBe('0:00 Song A\n0:30 Song B');
+    expect(result.text).toBe('00:00 Song A\n0:30 Song B');
   });
 
   it('flags chapters-too-close when two entries are under 10s apart', () => {

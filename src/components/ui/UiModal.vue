@@ -22,6 +22,8 @@ import { t } from '../../utils/i18n.js';
 // backdrop, Escape, focus). The backdrop stays inert by default because modal
 // content can contain drafts; disposable media can opt into outside dismissal.
 import {
+  computed,
+  nextTick,
   onMounted,
   onUnmounted,
   provide,
@@ -79,6 +81,7 @@ const props = defineProps({
     validator: (value) => ['scroll', 'workspace'].includes(value),
   },
   closeDisabled: { type: Boolean, default: false },
+  coversUnderlying: { type: Boolean, default: false },
   dismissOnBackdrop: { type: Boolean, default: false },
   selectable: { type: Boolean, default: true },
   // Optional content colour (e.g. a cover's) washed in from the end edge.
@@ -93,7 +96,15 @@ const modalStackEntry = {
   identity: modalIdentity,
   stackIndex: modalStackIndex,
   contains: (element) => dialogRef.value?.contains(element),
+  coversUnderlying: () => props.coversUnderlying,
 };
+const covered = computed(() => {
+  const index = openModalStack.indexOf(modalStackEntry);
+  return (
+    index >= 0 &&
+    openModalStack.slice(index + 1).some((entry) => entry.coversUnderlying?.())
+  );
+});
 
 // Teleport moves the element elsewhere in the DOM, not out of this
 // component's own template-ref tracking, so this still resolves correctly.
@@ -153,7 +164,8 @@ function restorePendingFocus() {
 }
 
 function handleAfterLeave() {
-  restorePendingFocus();
+  // A covered dialog must leave its inert state before receiving focus.
+  void nextTick(restorePendingFocus);
   emit('afterLeave');
 }
 
@@ -206,6 +218,8 @@ function trapTabFocus(event) {
 function onWindowKeydown(event) {
   if (!props.open || !isTopModal()) return;
   if (event.key === 'Escape') {
+    // A close may expose another dialog before its window listener runs.
+    event.stopImmediatePropagation?.();
     close();
   } else if (event.key === 'Tab') {
     trapTabFocus(event);
@@ -302,6 +316,8 @@ onUnmounted(() => {
         v-if="open"
         ref="backdrop"
         class="ui-modal-backdrop"
+        :class="{ 'ui-modal-backdrop--covered': covered }"
+        :inert="covered"
         :style="{ '--ui-modal-stack-index': modalStackIndex }"
         :onClick="dismissOnBackdrop ? handleBackdropClick : undefined"
       >
@@ -406,6 +422,12 @@ onUnmounted(() => {
   box-sizing: border-box;
   padding: var(--ui-modal-viewport-inset);
   background: var(--ui-color-overlay-scrim);
+}
+
+.ui-modal-backdrop--covered {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ui-modal {

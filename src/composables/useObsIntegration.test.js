@@ -168,8 +168,16 @@ describe('useObsIntegration', () => {
       record: null,
       occurredAt: '2026-09-24T12:00:00.000Z',
     });
+    const getPerformanceSessionPlan = vi.fn().mockResolvedValue({
+      ok: true,
+      plan: { items: [], canArchive: true },
+    });
     vi.stubGlobal('window', {
-      Utawakui: { onObsStatus: vi.fn(() => vi.fn()), addObsMarker },
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        addObsMarker,
+        getPerformanceSessionPlan,
+      },
     });
     const obs = await loadObsIntegration();
     const lifecycleBefore = obs.state.observed.lifecycle;
@@ -177,6 +185,7 @@ describe('useObsIntegration', () => {
     const entry = await obs.addMarker('note');
 
     expect(addObsMarker).toHaveBeenCalledWith('note');
+    expect(getPerformanceSessionPlan).toHaveBeenCalledOnce();
     expect(entry.label).toBe('note');
     expect(obs.state.observed.lifecycle).toBe(lifecycleBefore);
   });

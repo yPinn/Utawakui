@@ -2,6 +2,27 @@ import { nextTick } from 'vue';
 import { Copy, SkipForward, Trash2 } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
 
+function removeLabel(history) {
+  return t(
+    history ? 'session.planList.removeRecord' : 'session.pendingMenu.remove',
+  );
+}
+
+export function confirmPerformanceSessionItemRemoval(confirm, item) {
+  const history = item.progress !== 'queued';
+  return confirm({
+    title: t(
+      history
+        ? 'session.workspace.removeHistoryTitle'
+        : 'session.workspace.removeQueuedTitle',
+    ),
+    subject: item.displayTitle,
+    message: t('session.workspace.removeMessage'),
+    confirmLabel: removeLabel(history),
+    intent: 'danger',
+  });
+}
+
 export function performanceSessionItemMenu({ history = false, disabled }) {
   const groups = [
     {
@@ -27,11 +48,7 @@ export function performanceSessionItemMenu({ history = false, disabled }) {
         {
           id: 'remove',
           kind: 'action',
-          label: t(
-            history
-              ? 'session.planList.removeRecord'
-              : 'session.pendingMenu.remove',
-          ),
+          label: removeLabel(history),
           value: 'remove',
           icon: Trash2,
           intent: 'danger',
