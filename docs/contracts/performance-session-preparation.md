@@ -264,4 +264,15 @@ Sidebar 歌單／專輯選單提供目的地明確的「加入演出待唱」，
 - YouTube 在 Google Cloud 啟用 YouTube Data API v3，建立 Desktop app OAuth 用戶端，設定測試使用者及 `https://www.googleapis.com/auth/youtube.readonly`。啟動前設置 `UTAWAKUI_YOUTUBE_OAUTH_CLIENT_ID`，依桌面用戶端設定補 `UTAWAKUI_YOUTUBE_OAUTH_CLIENT_SECRET`。驗證連接、選片和解除連結。[Google 桌面 OAuth](https://developers.google.com/identity/protocols/oauth2/native-app)
 - Twitch 設置同一測試應用程式的 `UTAWAKUI_TWITCH_CLIENT_ID` 和有效的 `UTAWAKUI_TWITCH_APP_ACCESS_TOKEN`，用可查詢的 VOD 驗證影片資訊。[Twitch Get Videos](https://dev.twitch.tv/docs/api/reference/#get-videos)
 
-公開下載版可直接使用手動配對，安裝包無測試憑證。若日後啟用 YouTube 選片，以正式桌面用戶端走 Google 驗證，每位使用者自行授權，API 配額仍由同一專案承擔。需要更多配額時循官方流程申請，勿以多專案分流規避配額。若加入 Twitch 自動查詢，先驗證公開桌面用戶端可用的使用者授權流程，或另評估由伺服器保存應用程式憑證。[YouTube 配額與稽核](https://developers.google.com/youtube/v3/guides/quota_and_compliance_audits) [YouTube 開發者政策](https://developers.google.com/youtube/terms/developer-policies-guide) [Twitch 授權流程](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/)
+公開下載版維持手動貼連結，安裝包不內建共用憑證。
+
+#### 媒體下載的帳號與流量
+
+單曲與專輯批次由使用者電腦上的 yt-dlp 向 YouTube 取得媒體，寫入本機曲庫。Utawakui 提供的 PO Token 輔助程序也在本機運行。下載不經 Utawakui 轉送，亦不呼叫場次配對的 YouTube Data API 或 Twitch Helix。程式預設不帶登入資料，使用者選擇 Firefox 或匯入登入檔時，才可能在匿名嘗試失敗後使用該登入工作階段。下載程序仍可能受該電腦的代理及 yt-dlp 設定影響。[下載入口](../../electron/main/importHandlers.js) [本機程序](../../electron/lib/pythonYtdlp.js) [yt-dlp 設定](https://github.com/yt-dlp/yt-dlp#configuration)
+
+#### 自動查詢後續驗證
+
+1. YouTube 先用測試帳號驗證桌面 OAuth、唯讀選片、更新及解除授權。只查已授權頻道的直播回放，按場次日期排序，使用者確認後配對。正式開放前完成 Google 驗證，並依實際產品用途確認政策要求。每位使用者獨立授權，同一專案承擔查詢配額，擴額循官方流程。[Google 桌面 OAuth](https://developers.google.com/identity/protocols/oauth2/native-app) [直播查詢](https://developers.google.com/youtube/data/live/reference/rest/v3/liveBroadcasts/list) [配額與稽核](https://developers.google.com/youtube/v3/guides/quota_and_compliance_audits)
+2. Twitch 先驗證公開桌面用戶端的裝置碼授權。用個別使用者權杖測試 `Get Videos` 依 VOD ID 查詢，確認能否在不要求額外權限下完成授權、續期與撤銷。先補手動連結的影片資訊，通過後再評估列出自己的回放。無法用最小權限完成時，公開版維持手動連結。[Twitch 裝置碼授權](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/#device-code-grant-flow) [Get Videos](https://dev.twitch.tv/docs/api/reference/#get-videos) [權杖驗證](https://dev.twitch.tv/docs/authentication/validate-tokens/)
+
+兩平台僅在使用者選片或要求更新時查詢，合併同一請求，短暫快取並依平台限流等待。測試須覆蓋取消授權、影片已失效與配額不足。查詢失敗時仍可貼上、保存和開啟手動連結。設定管理帳號，場次紀錄管理選片與配對。
