@@ -2,6 +2,7 @@
 import { computed, useTemplateRef } from 'vue';
 import { usePerformerLyricsFit } from '../../composables/usePerformerLyricsFit.js';
 import PerformerLyricCue from './PerformerLyricCue.vue';
+import { detectContentLanguage } from '../../utils/contentLanguage.js';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
@@ -18,6 +19,38 @@ const display = usePerformerLyricsFit(
 );
 const fittedFrame = computed(() => display.frame.value);
 
+function cueLanguage(line, reading, source) {
+  const detected = detectContentLanguage(line?.text);
+  const sourceLanguage = /^(?:[a-z]{2,3})(?:-[a-z0-9]{2,8})*$/iu.test(source)
+    ? source
+    : 'und';
+  // A Han-only line can still be Japanese, especially when it has kana ruby.
+  if (detected === 'zh-Hant') {
+    const readingLanguage = detectContentLanguage(
+      ...(reading?.segments ?? []).map(({ reading }) => reading),
+    );
+    if (readingLanguage === 'ja' || /^ja(?:-|$)/iu.test(sourceLanguage)) {
+      return 'ja';
+    }
+  }
+  return detected ?? sourceLanguage;
+}
+
+const currentLanguage = computed(() =>
+  cueLanguage(
+    props.frame.currentLine,
+    props.frame.currentReading,
+    props.frame.lyricsLanguage,
+  ),
+);
+const nextLanguage = computed(() =>
+  cueLanguage(
+    props.frame.nextLine,
+    props.frame.nextReading,
+    props.frame.lyricsLanguage,
+  ),
+);
+
 const modeMessages = {
   idle: t('performer.cue.idle'),
   'no-lyrics': t('performer.cue.noLyrics'),
@@ -33,12 +66,14 @@ const modeMessages = {
     <PerformerLyricCue
       :line="fittedFrame.currentLine"
       :reading="fittedFrame.currentReading"
+      :language="currentLanguage"
       :word-cue="fittedFrame.currentWordCue"
       current
     />
     <PerformerLyricCue
       :line="fittedFrame.nextLine"
       :reading="fittedFrame.nextReading"
+      :language="nextLanguage"
     />
     <p
       v-if="display.plan.value?.status === 'unfit'"

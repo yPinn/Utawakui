@@ -65,6 +65,25 @@ function render(props = {}) {
 }
 
 describe('PerformerSurface', () => {
+  it('marks each cue and romanization independently of the interface locale', async () => {
+    const html = await render({
+      frame: frame({
+        lyricsLanguage: 'en',
+        nextLine: { text: '這是繁體中文' },
+      }),
+    });
+    expect(html).toMatch(/performer-lyric-cue__text[^>]*lang="ja"/u);
+    expect(html).toContain('lang="ja-Latn"');
+    expect(html).toMatch(/performer-lyric-cue__text[^>]*lang="zh-Hant"/u);
+    const english = await render({
+      frame: frame({
+        lyricsLanguage: 'en',
+        currentLine: { text: 'Keep singing' },
+        currentReading: null,
+      }),
+    });
+    expect(english).toMatch(/performer-lyric-cue__text[^>]*lang="en"/u);
+  });
   it('shows actual lyrics before the first cue without a waiting placeholder', async () => {
     const html = await render({
       frame: frame({

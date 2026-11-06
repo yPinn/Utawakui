@@ -6,8 +6,14 @@ import { t } from '../../utils/i18n.js';
 const props = defineProps({
   line: { type: Object, default: null },
   reading: { type: Object, default: null },
+  language: { type: String, default: 'und' },
   current: { type: Boolean, default: false },
   wordCue: { type: Object, default: null },
+});
+
+const romanizationLanguage = computed(() => {
+  const primary = props.language.split('-')[0];
+  return ['ja', 'ko'].includes(primary) ? `${primary}-Latn` : 'und-Latn';
 });
 
 const groups = computed(() => {
@@ -34,7 +40,7 @@ const groups = computed(() => {
     :class="{ 'performer-lyric-cue--current': current }"
     :data-cue-priority="current ? 'primary' : 'secondary'"
   >
-    <p class="performer-lyric-cue__text">
+    <p class="performer-lyric-cue__text" :lang="language">
       <component
         :is="group.reading ? 'ruby' : 'span'"
         v-for="group in groups"
@@ -52,7 +58,7 @@ const groups = computed(() => {
       <span v-if="reading.romajiScope === 'line'">{{
         t('performer.cue.lineReading')
       }}</span
-      >{{ reading.romaji }}
+      ><span :lang="romanizationLanguage">{{ reading.romaji }}</span>
     </p>
   </div>
 </template>

@@ -120,6 +120,7 @@ export function selectPerformerFrame(snapshot, options = {}) {
     revision: Number.isSafeInteger(state.revision) ? state.revision : 0,
     trackId: text(track?.id),
     mode,
+    lyricsLanguage: linked ? text(lyrics.source?.language) : '',
     playbackStatus: text(state.playback?.status),
     lyricPositionMs,
     playbackRate: Number.isFinite(state.playback?.rate)
