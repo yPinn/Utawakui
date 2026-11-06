@@ -28,6 +28,7 @@ const props = defineProps({
   focusOnOpen: { type: Boolean, default: false },
   closeOnScroll: { type: Boolean, default: true },
   closeOnOutsidePointer: { type: Boolean, default: true },
+  relatedPointerRegion: { type: Object, default: null },
   closeOnEscape: { type: Boolean, default: true },
   ariaLabel: { type: String, required: true },
   placement: {
@@ -151,6 +152,7 @@ function handleOutsidePointer(event) {
     !props.closeOnOutsidePointer ||
     anchorRef.value?.contains(event.target) ||
     panelRef.value?.contains(event.target) ||
+    props.relatedPointerRegion?.contains(event.target) ||
     isRelatedFloatingSurface(event.target)
   ) {
     return;

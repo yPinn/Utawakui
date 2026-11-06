@@ -777,6 +777,34 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
     heavyJobScheduler = createHeavyJobScheduler();
+    if (windowState.isDev && !app.isPackaged) {
+      const prototypeRoot = path.join(
+        app.getAppPath(),
+        'prototypes',
+        'reference-pitch',
+      );
+      const { registerReferencePitch } = require(
+        path.join(prototypeRoot, 'register.cjs'),
+      );
+      registerReferencePitch({
+        ipcMain,
+        getMainWindow: windowState.getMainWindow,
+        getScope: () => ({
+          dir: configState.resolveDownloadDir(configState.getConfig()),
+          epoch: workLibraryEpoch,
+        }),
+        requireGate: () =>
+          requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW),
+        getFfmpeg: () =>
+          getPreparedFfmpegPath(
+            app.getPath('userData'),
+            configState.getConfig().systemFfmpegPath,
+          ),
+        modelPath: path.join(prototypeRoot, 'model.onnx'),
+        scheduler: heavyJobScheduler,
+        recordDiagnostic,
+      });
+    }
     const startWaveform = (request) =>
       createStreamingProducer(request, {
         workerPath: resolveRuntimeEntry(app.getAppPath(), 'waveformWorker'),

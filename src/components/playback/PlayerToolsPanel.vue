@@ -41,6 +41,7 @@ defineProps({
     validator: (value) => ['adjust', 'guide', 'live'].includes(value),
   },
   hasTrack: { type: Boolean, default: false },
+  transportRegion: { type: Object, default: null },
   guideVocalVisible: { type: Boolean, default: false },
   guideVocalRows: { type: Array, default: () => [] },
   // { message, detail?, busy?, actionLabel?, loading?, onAction? }
@@ -98,6 +99,7 @@ function setActiveTab(key) {
   <UiPopover
     :open="open"
     :close-on-scroll="false"
+    :related-pointer-region="transportRegion"
     :panel-style="panelStyle"
     :aria-label="t('player.toolsPanel.label')"
     placement="top-end"
@@ -313,14 +315,7 @@ function setActiveTab(key) {
           <div class="player-tools__adjust-row">
             <div class="player-tools__row-header">
               <span class="player-tools__label">{{ row.label }}</span>
-              <span class="player-tools__value">
-                <span
-                  v-if="row.secondaryValue"
-                  class="player-tools__value-secondary"
-                  >{{ row.secondaryValue }} ·</span
-                >
-                <span>{{ row.value }}</span>
-              </span>
+              <span class="player-tools__value">{{ row.value }}</span>
             </div>
             <div class="player-tools__control">
               <UiIconButton
@@ -354,6 +349,7 @@ function setActiveTab(key) {
           </div>
         </template>
       </div>
+      <slot name="reference-pitch" />
     </section>
 
     <section
@@ -627,13 +623,6 @@ function setActiveTab(key) {
   font-size: var(--ui-type-title-size);
   font-weight: var(--ui-type-title-weight);
   line-height: var(--ui-type-title-line-height);
-  font-variant-numeric: tabular-nums;
-}
-
-.player-tools__value-secondary {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: normal;
   font-variant-numeric: tabular-nums;
 }
 

@@ -33,7 +33,7 @@ afterEach(() => {
   app?.unmount();
   vi.unstubAllGlobals();
 });
-function setup(closeOnScroll, closeOnOutsidePointer) {
+function setup(closeOnScroll, closeOnOutsidePointer, relatedPointerRegion) {
   const close = vi.fn();
   const view = mount(
     UiPopover,
@@ -41,6 +41,7 @@ function setup(closeOnScroll, closeOnOutsidePointer) {
       open: true,
       ariaLabel: '歌詞顯示設定',
       onClose: close,
+      relatedPointerRegion,
       ...(closeOnScroll === undefined ? {} : { closeOnScroll }),
       ...(closeOnOutsidePointer === undefined ? {} : { closeOnOutsidePointer }),
     },
@@ -54,6 +55,18 @@ function setup(closeOnScroll, closeOnOutsidePointer) {
 }
 
 describe('Popover dismissal policy', () => {
+  it('keeps the panel open for its related controls and closes for other outside clicks', async () => {
+    const transport = hostNode('transport');
+    const progress = hostNode('input');
+    transport.appendChild(progress);
+    const { close } = setup(false, true, transport);
+    await nextTick();
+    events.get('pointerdown')({ target: progress });
+    expect(close).not.toHaveBeenCalled();
+    events.get('pointerdown')({ target: hostNode('outside') });
+    expect(close).toHaveBeenCalledWith('outside-pointer');
+  });
+
   it('lets a child gesture own Escape while explicitly suspended, then restores dismissal', async () => {
     const { close, app: mounted } = setup(false, false);
     await nextTick();

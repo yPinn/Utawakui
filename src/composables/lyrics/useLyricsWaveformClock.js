@@ -9,6 +9,7 @@ export function useLyricsWaveformClock({
   isPlaying,
   sample,
   frames = globalThis.window,
+  minFrameIntervalMs = 1000 / 30,
 }) {
   const position = shallowRef(null),
     active = shallowRef(false);
@@ -47,7 +48,7 @@ export function useLyricsWaveformClock({
       return;
     frame = frames.requestAnimationFrame((time) => {
       frame = null;
-      if (time - lastPaint >= 1000 / 30) {
+      if (time - lastPaint >= minFrameIntervalMs) {
         lastPaint = time;
         read();
       }

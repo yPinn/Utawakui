@@ -1,5 +1,13 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, unref } from 'vue';
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  onUnmounted,
+  ref,
+  unref,
+  useTemplateRef,
+} from 'vue';
 import {
   Cable,
   Headphones,
@@ -54,6 +62,12 @@ defineProps({
 });
 
 const emit = defineEmits(['artworkActivate', 'queueActivate']);
+const ReferencePitchPreview = import.meta.env.DEV
+  ? defineAsyncComponent(
+      () => import('../internal-tools/ReferencePitchPreview.vue'),
+    )
+  : null;
+const transportRegion = useTemplateRef('transport-region');
 
 const {
   state,
@@ -235,12 +249,6 @@ const transposeLabel = computed(() =>
 const pitchCentsLabel = computed(() =>
   t('player.bar.cents', { value: signed(state.pitchCents) }),
 );
-// A4 (440Hz) shifted by the cents offset — the reference tuning musicians
-// actually tune to. Reflects pitchCents only; Transpose has its own row.
-const A4_REFERENCE_HZ = 440;
-const pitchReferenceHz = computed(() =>
-  (A4_REFERENCE_HZ * 2 ** (state.pitchCents / 1200)).toFixed(1),
-);
 const tempoLabel = computed(() => `${state.tempoRate.toFixed(2)}x`);
 const playerToolsEngaged = computed(
   () =>
@@ -385,7 +393,6 @@ const pitchTempoRows = computed(() => [
     key: 'transpose',
     label: t('player.bar.transpose'),
     value: transposeLabel.value,
-    secondaryValue: null,
     minusDisabled:
       !state.track || state.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.min,
     minusLabel: t('player.bar.semitoneDown'),
@@ -416,7 +423,6 @@ const pitchTempoRows = computed(() => [
     key: 'pitch',
     label: t('player.bar.pitch'),
     value: pitchCentsLabel.value,
-    secondaryValue: `${pitchReferenceHz.value} Hz`,
     minusDisabled: !state.track || state.pitchCents <= PITCH_CENTS_RANGE.min,
     minusLabel: t('player.bar.pitchDown'),
     minusTitle: t('player.bar.pitchDown'),
@@ -439,7 +445,6 @@ const pitchTempoRows = computed(() => [
     key: 'tempo',
     label: t('player.bar.tempo'),
     value: tempoLabel.value,
-    secondaryValue: null,
     minusDisabled: !state.track || state.tempoRate <= TEMPO_RATE_RANGE.min,
     minusLabel: t('player.bar.slower'),
     minusTitle: t('player.bar.withShortcut', {
@@ -511,7 +516,7 @@ onUnmounted(() => {
       </template>
     </PlaybackTrackIdentity>
 
-    <div class="player-bar__center">
+    <div ref="transport-region" class="player-bar__center">
       <div class="player-bar__transport">
         <UiButton
           :icon="Shuffle"
@@ -634,6 +639,7 @@ onUnmounted(() => {
           v-model:open="isPlayerToolsOpen"
           v-model:active-tab="activeToolTab"
           :has-track="Boolean(state.track)"
+          :transport-region="ReferencePitchPreview ? transportRegion : null"
           :guide-vocal-visible="showGuideVocal"
           :guide-vocal-rows="guideVocalRows"
           :guide-accompaniment="guideAccompaniment"
@@ -641,6 +647,9 @@ onUnmounted(() => {
           :performance-settings="performanceSettingsView"
           @settings-action="handleSettingsAction"
         >
+          <template v-if="ReferencePitchPreview" #reference-pitch>
+            <ReferencePitchPreview v-if="isPlayerToolsOpen" />
+          </template>
           <template #trigger="{ triggerProps }">
             <UiIconButton
               v-bind="triggerProps"

@@ -81,6 +81,8 @@ export {
   Repeat1,
   RotateCcw,
   Search,
+  ZoomIn,
+  ZoomOut,
   Shuffle,
   Settings,
   SkipBack,
