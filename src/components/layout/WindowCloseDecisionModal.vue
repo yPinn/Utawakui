@@ -52,8 +52,8 @@ const modalTitle = computed(() =>
           {{
             t(
               hasActiveSeparation
-                ? 'windowClose.modal.separationQuestion'
-                : 'windowClose.modal.backgroundQuestion',
+                ? 'windowClose.decision.separationQuestion'
+                : 'windowClose.decision.backgroundQuestion',
             )
           }}
         </p>
@@ -61,8 +61,8 @@ const modalTitle = computed(() =>
           {{
             t(
               hasActiveSeparation
-                ? 'windowClose.modal.separationDetail'
-                : 'windowClose.modal.backgroundDetail',
+                ? 'windowClose.decision.separationDetail'
+                : 'windowClose.decision.backgroundDetail',
             )
           }}
         </p>
@@ -111,8 +111,8 @@ const modalTitle = computed(() =>
           {{
             t(
               hasActiveSeparation
-                ? 'windowClose.modal.stopAndQuit'
-                : 'windowClose.modal.quit',
+                ? 'windowClose.decision.stopAndQuit'
+                : 'windowClose.decision.quit',
             )
           }}
         </UiButton>
@@ -127,8 +127,8 @@ const modalTitle = computed(() =>
           {{
             t(
               hasActiveSeparation
-                ? 'windowClose.modal.continueProcessing'
-                : 'windowClose.modal.background',
+                ? 'windowClose.decision.continueProcessing'
+                : 'windowClose.decision.background',
             )
           }}
         </UiButton>

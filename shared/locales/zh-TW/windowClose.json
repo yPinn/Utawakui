@@ -4,32 +4,27 @@
   "errorTitle": "關閉操作未完成",
   "responseError": "目前無法完成關閉操作，請再試一次。",
   "remember": "記住選擇",
-  "modal": {
-    "backgroundQuestion": "要改為背景執行嗎？",
+  "settings": {
+    "readFailed": "目前無法讀取關閉行為，請重新讀取。",
+    "saveFailed": "目前無法儲存關閉行為，已恢復原設定。"
+  },
+  "decision": {
+    "backgroundQuestion": "要在背景執行嗎？",
     "separationQuestion": "要繼續在背景處理嗎？",
-    "backgroundDetail": "播放、OBS 連線與輸出會繼續，可從系統匣開啟或結束。",
+    "backgroundDetail": "播放、OBS 連線與輸出會繼續。可從系統匣重新開啟視窗或結束。",
     "separationDetail": "停止會取消目前歌曲與其餘排程。",
     "quit": "結束",
     "stopAndQuit": "停止並結束",
-    "quitting": "結束中",
     "background": "背景執行",
     "continueProcessing": "繼續處理"
   },
+  "modal": {
+    "quitting": "結束中"
+  },
   "native": {
-    "backgroundQuestion": "要改為背景執行嗎？",
-    "backgroundDetail": "播放、OBS 連線與輸出會繼續，可從系統匣開啟或結束。",
-    "separationDetail": "停止會取消目前歌曲與其餘排程。",
-    "continueBackground": "在背景繼續",
-    "background": "背景執行",
-    "quit": "結束",
-    "stopAndQuit": "停止並結束",
     "saveFailed": "無法儲存關閉行為",
     "saveFailedDetail": "視窗會保持開啟，請稍後再試。",
     "trayUnavailable": "無法在背景執行",
     "trayUnavailableDetail": "目前無法使用系統匣，視窗會保持開啟。"
-  },
-  "settings": {
-    "readFailed": "目前無法讀取關閉行為，請重新讀取。",
-    "saveFailed": "目前無法儲存關閉行為，已恢復原設定。"
   }
 }

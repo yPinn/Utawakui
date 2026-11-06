@@ -4,32 +4,27 @@
   "errorTitle": "Could not close",
   "responseError": "The close action could not be completed. Try again.",
   "remember": "Remember my choice",
-  "modal": {
-    "backgroundQuestion": "Keep running in the background?",
+  "settings": {
+    "readFailed": "Couldn't read the close behavior. Reload.",
+    "saveFailed": "Couldn't save the close behavior; the previous setting was restored."
+  },
+  "decision": {
+    "backgroundQuestion": "Run in the background?",
     "separationQuestion": "Keep processing in the background?",
-    "backgroundDetail": "Playback, the OBS connection and output keep running. Open or quit from the system tray.",
+    "backgroundDetail": "Playback, the OBS connection, and output continue. Reopen the window or quit from the system tray.",
     "separationDetail": "Stopping cancels the current song and the rest of the queue.",
     "quit": "Quit",
     "stopAndQuit": "Stop and quit",
-    "quitting": "Quitting",
     "background": "Run in background",
     "continueProcessing": "Keep processing"
   },
+  "modal": {
+    "quitting": "Quitting"
+  },
   "native": {
-    "backgroundQuestion": "Keep running in the background?",
-    "backgroundDetail": "Playback, the OBS connection and output keep running. Open or quit from the system tray.",
-    "separationDetail": "Stopping cancels the current song and the rest of the queue.",
-    "continueBackground": "Continue in background",
-    "background": "Run in background",
-    "quit": "Quit",
-    "stopAndQuit": "Stop and quit",
     "saveFailed": "Could not save the close behavior",
     "saveFailedDetail": "The window stays open. Try again later.",
     "trayUnavailable": "Cannot run in the background",
     "trayUnavailableDetail": "The system tray is unavailable, so the window stays open."
-  },
-  "settings": {
-    "readFailed": "Couldn't read the close behavior. Reload.",
-    "saveFailed": "Couldn't save the close behavior; the previous setting was restored."
   }
 }

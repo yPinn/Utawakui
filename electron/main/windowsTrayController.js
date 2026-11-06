@@ -187,26 +187,30 @@ function createWindowsTrayController({
     try {
       const result = await dialog.showMessageBox(sourceWindow, {
         type: 'question',
-        title: appName,
-        message: t(
+        title: t(
           hasActiveSeparation
             ? 'windowClose.separationTitle'
-            : 'windowClose.native.backgroundQuestion',
+            : 'windowClose.title',
+        ),
+        message: t(
+          hasActiveSeparation
+            ? 'windowClose.decision.separationQuestion'
+            : 'windowClose.decision.backgroundQuestion',
         ),
         detail: t(
           hasActiveSeparation
-            ? 'windowClose.native.separationDetail'
-            : 'windowClose.native.backgroundDetail',
+            ? 'windowClose.decision.separationDetail'
+            : 'windowClose.decision.backgroundDetail',
         ),
         buttons: hasActiveSeparation
           ? [
-              t('windowClose.native.continueBackground'),
-              t('windowClose.native.stopAndQuit'),
+              t('windowClose.decision.continueProcessing'),
+              t('windowClose.decision.stopAndQuit'),
               t('common.cancel'),
             ]
           : [
-              t('windowClose.native.background'),
-              t('windowClose.native.quit'),
+              t('windowClose.decision.background'),
+              t('windowClose.decision.quit'),
               t('common.cancel'),
             ],
         defaultId: CLOSE_RESPONSE.TRAY,

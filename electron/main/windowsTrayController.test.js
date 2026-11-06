@@ -452,8 +452,9 @@ describe('windowsTrayController', () => {
     expect(dialog.showMessageBox).toHaveBeenCalledWith(
       win,
       expect.objectContaining({
-        message: '伴奏處理中',
-        buttons: ['在背景繼續', '停止並結束', '取消'],
+        title: '伴奏處理中',
+        message: '要繼續在背景處理嗎？',
+        buttons: ['繼續處理', '停止並結束', '取消'],
         checkboxLabel: undefined,
       }),
     );
