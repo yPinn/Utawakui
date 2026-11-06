@@ -37,6 +37,7 @@ import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue'
 import LibraryArtistIdentityController from './LibraryArtistIdentityController.vue';
 import TrackTable from '../track/TrackTable.vue';
 import { normalizeTrackCollectionSort } from '../track/trackCollectionProfiles.js';
+import { useTrackTablePreferences } from '../../composables/useTrackTablePreferences.js';
 import {
   addToPlaylistContent,
   collectionActionMenu,
@@ -150,7 +151,6 @@ const searchQuery = defineModel('searchQuery', {
 });
 const addMenu = ref(null);
 const trackRowSort = ref({ key: null, direction: 'asc' });
-const tableColumnPreferencesByKind = shallowRef({});
 
 const songEditor = useSongEditor();
 const releaseOrganization = useReleaseOrganization();
@@ -376,16 +376,10 @@ const previewEligibility = useTrackPreviewEligibility({
       : resolvePlaylistTracks(collection);
   },
 });
-const currentTableColumnPreferences = computed(
-  () => tableColumnPreferencesByKind.value[tableCollectionKind.value] ?? {},
-);
-
-function updateTableColumnPreferences(preferences) {
-  tableColumnPreferencesByKind.value = {
-    ...tableColumnPreferencesByKind.value,
-    [tableCollectionKind.value]: preferences,
-  };
-}
+const {
+  preferences: currentTableColumnPreferences,
+  update: updateTableColumnPreferences,
+} = useTrackTablePreferences(tableCollectionKind);
 // Header actions act on the whole page, independent of the search filter.
 const headerTracks = computed(() =>
   mode.value === 'all' ? libraryViewTracks.value : playlistTracks.value,
