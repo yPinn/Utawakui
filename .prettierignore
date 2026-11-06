@@ -1,14 +1,6 @@
-node_modules
-dist
-/runtime/
-release
-release-*
-tasks
-.tmp
-coverage
+# Prettier also reads .gitignore; list only tracked files it must not format.
 package-lock.json
 .claude
-prototypes/**/.build/
 
 # Canonical generator output; formatting it breaks byte-for-byte freshness checks.
 third-party/manifest.json

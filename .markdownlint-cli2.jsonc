@@ -1,4 +1,6 @@
 {
+  // Skip everything .gitignore excludes (dependencies, builds, local scratch).
+  "gitignore": true,
   "config": {
     "default": true,
     // Long-form project docs are intentionally prose-heavy.

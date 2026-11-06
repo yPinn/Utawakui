@@ -55,6 +55,11 @@ npm run license:inventory
 npm run clean
 ```
 
+ESLint, Prettier and markdownlint all read `.gitignore`; add untracked or
+generated paths there, not per tool. `.prettierignore` lists only tracked files
+Prettier must not format. `lint` and `format*` cache by content under
+`node_modules/.cache/`.
+
 Tests are Vitest and stay next to the production file they cover. `vite.config.js`
 runs them as two projects: `unit`, then `runtime` (child-process CLIs, kuromoji and
 model runtimes, matched by `RUNTIME_TEST_PATTERNS`) with a longer timeout; add new

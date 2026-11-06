@@ -2,6 +2,7 @@ node_modules/
 dist/
 /runtime/
 /native/keyboard-shortcuts/.build/
+/prototypes/**/.build/
 release/
 release-*/
 coverage/

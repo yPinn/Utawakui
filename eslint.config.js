@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('node:path');
+const { includeIgnoreFile } = require('eslint/config');
 const js = require('@eslint/js');
 const pluginVue = require('eslint-plugin-vue');
 const eslintConfigPrettier = require('eslint-config-prettier');
@@ -141,19 +143,8 @@ const HARDCODED_UI_TEXT =
   'Hardcoded UI text: add it to shared/locales and read it with t() (AGENTS.md "UI Text And Locale").';
 
 module.exports = [
-  {
-    ignores: [
-      'coverage/**',
-      'dist/**',
-      'runtime/**',
-      '.tmp/**',
-      'release/**',
-      'release-*/**',
-      'node_modules/**',
-      'tasks/**',
-      'prototypes/**/.build/**',
-    ],
-  },
+  // .gitignore is the single source of untracked and generated paths.
+  includeIgnoreFile(path.join(__dirname, '.gitignore')),
   {
     linterOptions: {
       reportUnusedDisableDirectives: 'warn',
