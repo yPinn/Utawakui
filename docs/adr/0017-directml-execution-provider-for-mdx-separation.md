@@ -8,6 +8,8 @@ verified. Amended same-day: the renderer GPU toggle originally rejected below
 (see "Rejected for this phase") was reconsidered and implemented — see that
 section for the reasoning.
 
+The 2026-11-06 follow-up verified batch separation through the packaged 0.5.2 desktop queue while OBS recorded locally. The results and limits are in [Batch queue and OBS acceptance](#batch-queue-and-obs-acceptance).
+
 ## Context
 
 `onnxruntime-node`'s Windows x64 build already bundles Microsoft's
@@ -93,10 +95,9 @@ after all — see the note after the "Rejected for this phase" bullet below.)
   branch without mocking the `onnxruntime-node` module itself, consistent
   with this codebase's established injectable-override testing convention
   (`separationHandlers.js`).
-- `separateTrack()` threads `preferGpu`/`createSession`/`onGpuFallback`
-  through as an options object that production callers
-  (`vocalSeparationWorker.js`) never pass, so real runs always attempt
-  DirectML first.
+- Main reads the GPU preference when it prepares each queue item. The worker
+  passes `preferGpu` to `separateTrack()`. The session factory and fallback
+  callback can be injected for testing.
 - A Settings checkbox now exposes this as a boolean product-level intent
   (`separationGpuAcceleration` config key, default `true`) — see the amended
   "Rejected for this phase" note below for why this doesn't conflict with
@@ -175,6 +176,66 @@ Windows configuration has been exhaustively certified; incompatible or failed
 DirectML initialization continues to fall back to CPU, and the Settings toggle
 remains the user-facing escape hatch.
 
+### Batch queue and OBS acceptance
+
+On 2026-11-06, an isolated Windows x64 0.5.2 test package built from `32d6276a`
+ran the desktop separation queue on a Ryzen 7 7700 with an RTX 5060 Ti
+(NVIDIA driver 617.14). The test used an isolated OBS 33.0.1 instance with a fixed
+Browser Source, 1080p60 x264 local recording and process audio capture. A separate
+track played normal songs during separation.
+
+Each batch used the same three RWC excerpts (45, 100 and 165 seconds) with both
+`quick` and `general`. Batch time adds the two intervals from submitting each
+recipe's three tracks to publication of its last WAV and manifest. Time spent
+switching recipes was excluded.
+
+| Run                               | CPU batch | DirectML batch | Time saved |
+| --------------------------------- | --------: | -------------: | ---------: |
+| Round 1                           | 444.255 s |      212.808 s |      52.1% |
+| Round 2, single-source comparison | 364.910 s |      159.070 s |      56.4% |
+
+Both rounds exceeded the 20% threshold. In the second comparison, `quick` took
+141.391 s on CPU and 81.031 s on DirectML. `general` took 223.519 s on CPU and
+78.039 s on DirectML. Output hashes matched the corresponding backend's results
+from the separate engine tests.
+
+In the single-source comparison, CPU recorded 4 rendering drops out of 24,052
+frames and 6 encoding drops out of 24,050 frames. DirectML recorded 0 out of
+11,745 and 0 out of 11,743, respectively. The 396 s CPU and 191 s DirectML
+segments aligned to the same song reference at different starting positions.
+Neither segment showed a low-level gap of at least 20 ms, a reference alignment
+jump of at least 10 ms or an audio timestamp gap over 2 ms.
+
+Round 1 CPU recording had missing song audio and a track change. The initial
+round 2 DirectML run took 153.647 s and had 5 rendering drops and 0 encoding
+drops. Its OBS recording mixed in a retained test source, so the audio
+comparison uses the single-source repeat shown above. Short physical listening
+checks reported normal audio for both backends in round 1 and for DirectML in
+round 2. Manual muting was recorded separately from playback interruptions.
+
+The existing DirectML provider is verified for sequential `quick` and `general`
+batches on this setup. The OBS evidence covers the isolated local recording
+configuration above. Live streaming, other encoders and scenes, and other
+GPU or driver combinations are outside the verified scope. Batch separation
+reuses the packaged runtime. Reference-melody research keeps SwiftF0 on CPU
+and uses existing separated accompaniment only for diagnostics.
+
+### CPU fallback and retry
+
+With GPU acceleration enabled, an error returned while creating the DirectML
+session triggers one CPU session creation attempt for that queue item. With GPU
+acceleration disabled, the item starts on CPU. Errors after session creation,
+including inference errors, fail the item. Cancellation terminates the worker.
+A worker exit before it returns a result also fails the item. These paths do
+not automatically retry on CPU. To retry a failed item on CPU, turn off GPU
+acceleration in Settings and retry the item.
+
+Fault injection verified a complete WAV and manifest after initialization
+fallback and no published result after a simulated out-of-memory inference
+error or cancellation. An injected worker exit was reported as a failure and
+a subsequent job completed. The focused separation and queue suite passed
+110 tests.
+
 ## Rejected for this phase
 
 - ~~A renderer-facing GPU on/off setting.~~ **Reconsidered same-day and
@@ -221,10 +282,9 @@ remains the user-facing escape hatch.
 
 ## Consequences
 
-- `quick`/`general` separation now attempts GPU acceleration by default on
-  Windows, with an automatic, silent CPU fallback if DirectML session
-  creation fails for any reason (no compatible GPU, driver issue, or an
-  upstream regression).
+- `quick`/`general` separation attempts GPU acceleration by default on
+  Windows. A returned session-creation error triggers one CPU attempt.
+  The [fallback and retry rules](#cpu-fallback-and-retry) cover later failures.
 - The license and technical-maturity caveats above (DirectML "sustained
   engineering" status, Electron/`worker_threads` risk reports) are now
   documented in one place for future reference, even though none of the
