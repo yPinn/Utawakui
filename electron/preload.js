@@ -514,6 +514,14 @@ contextBridge.exposeInMainWorld('Utawakui', {
           ),
         cancelReferencePitch: (requestId) =>
           ipcRenderer.invoke('reference-pitch:cancel', requestId),
+        compareReferencePitch: (trackId, requestId) =>
+          ipcRenderer.invoke(
+            'reference-pitch:analyze',
+            trackId,
+            requestId,
+            false,
+            true,
+          ),
         beginMicrophoneResearch: () =>
           ipcRenderer.invoke('microphone-research:begin'),
         endMicrophoneResearch: (lease) =>

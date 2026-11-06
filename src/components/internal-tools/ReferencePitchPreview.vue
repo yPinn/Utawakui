@@ -21,6 +21,8 @@ import {
 const { state, samplePlaybackClock } = usePlayer();
 const response = shallowRef(null);
 const pending = shallowRef(null);
+const phaseResponse = shallowRef(null);
+const showPhase = shallowRef(false);
 const windowSeconds = shallowRef(8);
 const nextWindowBySeconds = { 4: 8, 8: 16, 16: 4 };
 const zoomIconBySeconds = { 4: ZoomIn, 8: Search, 16: ZoomOut };
@@ -66,12 +68,14 @@ function reset() {
   const request = pending.value;
   pending.value = null;
   response.value = null;
+  phaseResponse.value = null;
+  showPhase.value = false;
   if (request)
     void window.Utawakui?.cancelReferencePitch?.(request).catch(() => {});
 }
 onBeforeUnmount(reset);
 
-async function prepare(cachedOnly = false) {
+async function prepare() {
   if (!hasGuide.value || pending.value) return;
   const identity = sourceIdentity.value;
   const request = crypto.randomUUID();
@@ -86,13 +90,12 @@ async function prepare(cachedOnly = false) {
       result = await window.Utawakui?.analyzeReferencePitch?.(
         trackId,
         request,
-        cachedOnly,
+        false,
       );
-      if (!cachedOnly || result?.status !== 'busy' || attempt === 5) break;
+      if (result?.status !== 'busy' || attempt === 5) break;
       await new Promise((resolve) => window.setTimeout(resolve, 150));
     }
     if (pending.value === request && sourceIdentity.value === identity) {
-      if (cachedOnly && result?.status !== 'ready') return;
       response.value =
         result?.status === 'ready' &&
         (result.recipeId !== recipe.value ||
@@ -101,8 +104,7 @@ async function prepare(cachedOnly = false) {
           : (result ?? { status: 'unavailable' });
     }
   } catch {
-    if (!cachedOnly && pending.value === request)
-      response.value = { status: 'unavailable' };
+    if (pending.value === request) response.value = { status: 'unavailable' };
   } finally {
     if (pending.value === request) pending.value = null;
   }
@@ -111,7 +113,7 @@ watch(
   sourceIdentity,
   () => {
     reset();
-    void prepare(true);
+    void prepare();
   },
   { immediate: true },
 );
@@ -134,6 +136,47 @@ const result = computed(() => {
     ? value
     : null;
 });
+const displayedPitches = computed(() =>
+  showPhase.value ? phaseResponse.value?.pitches : result.value?.pitches,
+);
+
+async function togglePhase() {
+  if (!result.value?.phaseAvailable || pending.value) return;
+  if (phaseResponse.value?.status === 'ready') {
+    showPhase.value = !showPhase.value;
+    return;
+  }
+
+  const identity = sourceIdentity.value;
+  const request = crypto.randomUUID();
+  pending.value = request;
+  phaseResponse.value = { status: 'pending' };
+  try {
+    const compared = await window.Utawakui?.compareReferencePitch?.(
+      state.track.id,
+      request,
+    );
+    if (pending.value !== request || sourceIdentity.value !== identity) return;
+    if (
+      compared?.status === 'ready' &&
+      compared.recipeId === recipe.value &&
+      compared.completedAtMs === completedAtMs.value &&
+      compared.durationSeconds === result.value?.durationSeconds &&
+      compared.stepSeconds === result.value?.stepSeconds &&
+      compared.pitches?.length === result.value?.pitches.length
+    ) {
+      phaseResponse.value = compared;
+      showPhase.value = true;
+    } else {
+      phaseResponse.value = { status: 'unavailable' };
+    }
+  } catch {
+    if (pending.value === request)
+      phaseResponse.value = { status: 'unavailable' };
+  } finally {
+    if (pending.value === request) pending.value = null;
+  }
+}
 const status = computed(() => {
   if (!hasGuide.value) return '請先準備這首歌的分離導唱。';
   if (pending.value) return '正在準備音高預覽…';
@@ -172,7 +215,7 @@ const plot = computed(
     result.value &&
     pitchOffset.value !== null &&
     pitchPlot(
-      result.value.pitches,
+      displayedPitches.value,
       result.value.stepSeconds,
       page.value,
       span.value,
@@ -185,7 +228,7 @@ const cursor = computed(() =>
 const currentNote = computed(() => {
   if (!result.value || pitchOffset.value === null) return '';
   const pitch = pitchAt(
-    result.value.pitches,
+    displayedPitches.value,
     result.value.stepSeconds,
     state.currentTime,
     pitchOffset.value,
@@ -215,6 +258,26 @@ const currentNote = computed(() => {
       </div>
     </header>
     <template v-if="result">
+      <template v-if="result.phaseAvailable">
+        <UiButton
+          variant="secondary"
+          aria-label="反相對照 B"
+          :aria-pressed="showPhase"
+          :disabled="Boolean(pending)"
+          :loading="phaseResponse?.status === 'pending'"
+          loading-label="正在準備反相對照"
+          @click="togglePhase"
+        >
+          {{ showPhase ? 'B · 反相遮罩' : 'A · 現有曲線' }}
+        </UiButton>
+        <p
+          v-if="phaseResponse?.status === 'unavailable'"
+          class="reference-pitch__hint"
+          role="status"
+        >
+          反相對照暫時無法使用，目前顯示 A。
+        </p>
+      </template>
       <p v-if="!plot" class="reference-pitch__hint" role="status">
         播放音高尚未確認。
       </p>
@@ -289,12 +352,10 @@ const currentNote = computed(() => {
         {{ status }}
       </p>
       <UiButton
-        v-if="hasGuide"
+        v-if="hasGuide && !pending && response?.status !== 'ready'"
         variant="secondary"
-        :loading="Boolean(pending)"
-        loading-label="正在準備音高預覽"
         @click="prepare()"
-        >開啟音高預覽</UiButton
+        >重試音高預覽</UiButton
       >
     </template>
   </section>

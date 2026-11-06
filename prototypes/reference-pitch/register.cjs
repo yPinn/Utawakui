@@ -70,6 +70,7 @@ function sourceFor({ dir, epoch }, trackId) {
       : null;
   return {
     source,
+    phaseAvailable: usesHq4 && !rejectBacking,
     cacheFile:
       path.dirname(source) === fs.realpathSync(directory)
         ? path.join(path.dirname(source), 'reference-pitch-v1.json')
@@ -147,6 +148,55 @@ async function decodePcm(ffmpeg, source, filter, bytesPerSecond, signal) {
   return stdout;
 }
 
+const pairedFilter = ['-af', 'pan=stereo|c0=0.5*c2+0.5*c3|c1=0.5*c0+0.5*c1'];
+
+function runPitchWorker(file, workerData, transferList, signal) {
+  signal.throwIfAborted();
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(path.join(__dirname, file), {
+      workerData,
+      transferList,
+    });
+    let output;
+    const cancel = () => {
+      void worker.terminate();
+    };
+    const deadline = setTimeout(cancel, 45_000);
+    signal.addEventListener('abort', cancel, { once: true });
+    worker.once('message', (pitches) => {
+      output = pitches;
+    });
+    worker.once('error', reject);
+    worker.once('exit', (code) => {
+      clearTimeout(deadline);
+      signal.removeEventListener('abort', cancel);
+      if (code === 0 && output && !signal.aborted) resolve(output);
+      else reject(new Error(`Pitch worker exited (${code})`));
+    });
+  });
+}
+
+async function compareWithBacking(source, ffmpeg, baseline, signal) {
+  const bytesPerSecond = 2 * PCM_BYTES_PER_SECOND;
+  const raw = await decodePcm(
+    ffmpeg,
+    source,
+    pairedFilter,
+    bytesPerSecond,
+    signal,
+  );
+  if (raw.length !== Math.round(baseline.durationSeconds * 16_000) * 4)
+    return null;
+  const pcm = Uint8Array.from(raw);
+  const pitches = baseline.pitches.slice();
+  return runPitchWorker(
+    'phaseComparison.cjs',
+    { pcm, pitches },
+    [pcm.buffer, pitches.buffer],
+    signal,
+  );
+}
+
 async function analyze({
   source,
   original,
@@ -159,12 +209,7 @@ async function analyze({
   const stdout = await decodePcm(
     ffmpeg,
     source,
-    [
-      '-af',
-      rejectBacking
-        ? 'pan=stereo|c0=0.5*c2+0.5*c3|c1=0.5*c0+0.5*c1'
-        : 'pan=mono|c0=0.5*c2+0.5*c3',
-    ],
+    rejectBacking ? pairedFilter : ['-af', 'pan=mono|c0=0.5*c2+0.5*c3'],
     bytesPerSecond,
     signal,
   );
@@ -194,32 +239,13 @@ async function analyze({
       signal.throwIfAborted();
     }
   }
-  signal.throwIfAborted();
   const pcm = Uint8Array.from(stdout);
-  const pitches = await new Promise((resolve, reject) => {
-    const worker = new Worker(path.join(__dirname, 'worker.cjs'), {
-      workerData: { pcm, originalPcm, model, rejectBacking },
-      transferList: originalPcm
-        ? [pcm.buffer, originalPcm.buffer]
-        : [pcm.buffer],
-    });
-    let output;
-    const cancel = () => {
-      void worker.terminate();
-    };
-    const deadline = setTimeout(cancel, 45_000);
-    signal.addEventListener('abort', cancel, { once: true });
-    worker.once('message', (pitches) => {
-      output = pitches;
-    });
-    worker.once('error', reject);
-    worker.once('exit', (code) => {
-      clearTimeout(deadline);
-      signal.removeEventListener('abort', cancel);
-      if (code === 0 && output && !signal.aborted) resolve(output);
-      else reject(new Error(`Pitch worker exited (${code})`));
-    });
-  });
+  const pitches = await runPitchWorker(
+    'worker.cjs',
+    { pcm, originalPcm, model, rejectBacking },
+    originalPcm ? [pcm.buffer, originalPcm.buffer] : [pcm.buffer],
+    signal,
+  );
   return {
     status: 'ready',
     cacheable: !original || Boolean(originalPcm),
@@ -288,13 +314,15 @@ function registerReferencePitch({
   });
   ipcMain.handle(
     'reference-pitch:analyze',
-    async (event, trackId, requestId, cachedOnly = false) => {
+    async (event, trackId, requestId, cachedOnly = false, phase = false) => {
       if (
         !allowed(event) ||
         !isBoundedTrackId(trackId) ||
         typeof requestId !== 'string' ||
         !JOB_ID.test(requestId) ||
-        typeof cachedOnly !== 'boolean'
+        typeof cachedOnly !== 'boolean' ||
+        typeof phase !== 'boolean' ||
+        (cachedOnly && phase)
       )
         return { status: 'unavailable' };
       if (active) return { status: 'busy' };
@@ -312,6 +340,8 @@ function registerReferencePitch({
       try {
         const input = sourceFor(getScope(), trackId);
         if (!input) return { status: 'no-guide' };
+        if (phase && !input.phaseAvailable)
+          return { status: 'comparison-unavailable' };
         let ffmpeg;
         try {
           ffmpeg = getFfmpeg();
@@ -329,20 +359,35 @@ function registerReferencePitch({
         const cached = readPitchCache(input.cacheFile, key);
         if (controller.signal.aborted) return { status: 'cancelled' };
         if (!cached && cachedOnly) return { status: 'cache-miss' };
-        const result =
-          cached ??
-          (await scheduler.schedule({
-            jobId,
-            start: () => ({
-              result: analyze({
-                ...input,
-                ffmpeg,
-                model,
-                signal: controller.signal,
-              }),
-              cancel: () => controller.abort(),
-            }),
-          }));
+        const { baseline, compared } =
+          cached && !phase
+            ? { baseline: cached }
+            : await scheduler.schedule({
+                jobId,
+                start: () => ({
+                  result: (async () => {
+                    const baseline =
+                      cached ??
+                      (await analyze({
+                        ...input,
+                        ffmpeg,
+                        model,
+                        signal: controller.signal,
+                      }));
+                    const compared =
+                      phase && baseline.status === 'ready'
+                        ? await compareWithBacking(
+                            input.source,
+                            ffmpeg,
+                            baseline,
+                            controller.signal,
+                          )
+                        : null;
+                    return { baseline, compared };
+                  })(),
+                  cancel: () => controller.abort(),
+                }),
+              });
         if (controller.signal.aborted) return { status: 'cancelled' };
         try {
           requireGate();
@@ -351,12 +396,15 @@ function registerReferencePitch({
         }
         if (sourceFor(getScope(), trackId)?.stamp !== input.stamp)
           return { status: 'source-changed' };
-        if (result.status !== 'ready') return result;
-        const { cacheable, ...preview } = result;
+        if (baseline.status !== 'ready') return baseline;
+        const { cacheable, ...preview } = baseline;
         if (!cached && cacheable)
           writePitchCache(input.cacheFile, key, preview);
+        if (phase && !compared) return { status: 'comparison-unavailable' };
         return {
           ...preview,
+          pitches: compared ?? preview.pitches,
+          phaseAvailable: input.phaseAvailable,
           cached: Boolean(cached),
           recipeId: input.recipeId,
           completedAtMs: input.completedAtMs,

@@ -21,6 +21,26 @@ function isIsolatedSpike(midi, neighbors) {
   return high - low <= 0.5 && (midi >= high + 5 || midi <= low - 5);
 }
 
+function smoothJitter(midi, neighbors) {
+  if (neighbors.includes(null)) return midi;
+  const [outerBefore, before, after, outerAfter] = neighbors;
+  const window = [...neighbors, midi];
+  if (Math.max(...window) - Math.min(...window) > 0.5) return midi;
+
+  const into = midi - before;
+  const out = after - midi;
+  if (into * out >= 0) return midi;
+
+  // A sustained bend has a single turn. Jitter returns to a flat contour
+  // or turns again in the adjacent frames.
+  const left = before - outerBefore;
+  const right = outerAfter - after;
+  const flat = Math.abs(left) <= 0.05 && Math.abs(right) <= 0.05;
+  if (!flat && left * into >= 0 && out * right >= 0) return midi;
+
+  return midi + Math.min(0.15, Math.max(-0.15, (out - into) / 4));
+}
+
 export function pitchPlot(pitches, step, start, span, semitones = 0) {
   const startIndex = Math.ceil(start / step);
   const endIndex = Math.min(pitches.length, Math.ceil((start + span) / step));
@@ -30,22 +50,17 @@ export function pitchPlot(pitches, step, start, span, semitones = 0) {
   for (let index = startIndex; index < endIndex; index++) {
     const midi = at(index);
     if (midi === null) continue;
-    const before = at(index - 1);
-    const after = at(index + 1);
-    if (isIsolatedSpike(midi, [at(index - 2), before, after, at(index + 2)])) {
+    const neighbors = [
+      at(index - 2),
+      at(index - 1),
+      at(index + 1),
+      at(index + 2),
+    ];
+    if (isIsolatedSpike(midi, neighbors)) {
       spikes.push({ index, midi });
       continue;
     }
-    const canSmooth =
-      before !== null &&
-      after !== null &&
-      Math.abs(before - midi) < 0.8 &&
-      Math.abs(after - midi) < 0.8 &&
-      (before - midi) * (after - midi) > 0;
-    const adjustment = canSmooth
-      ? Math.min(0.15, Math.max(-0.15, (before + after - 2 * midi) / 4))
-      : 0;
-    points.push({ index, midi: midi + adjustment });
+    points.push({ index, midi: smoothJitter(midi, neighbors) });
   }
   if (!points.length && !spikes.length) {
     return { path: '', grid: [], markers: [] };

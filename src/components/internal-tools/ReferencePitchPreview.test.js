@@ -105,16 +105,123 @@ it('marks only a single-frame excursion and keeps gaps and sustained notes', () 
   ).toHaveLength(0);
 });
 
-it('limits a local reversal to 15 cents and keeps a rising contour', () => {
+it('limits supported short jitter to 15 cents without rounding gaps or slides', () => {
   const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
-  const reversal = [69, 69.6, 69].map(hz);
-  const rise = [69, 69.6, 69.7].map(hz);
-  expect(pitchPlot(reversal, 0.016, 0, 8).path).toContain('L0.64,128.25');
-  expect(pitchPlot(rise, 0.016, 0, 8).path).toContain('L0.64,126.00');
-  expect(pitchAt(reversal, 0.016, 0.016)).toBeCloseTo(69.6);
+  const step = 0.016;
+  const jitter = [69, 69, 69.4, 69, 69].map(hz);
+  const zigzag = [69.4, 69, 69.4, 69, 69.4].map(hz);
+  const rise = [69, 69.1, 69.4, 69.45, 69.5].map(hz);
+  const nearGap = [0, ...jitter.slice(1)];
+  expect(pitchPlot(jitter, step, 0, 8).path).toContain('L1.28,131.25');
+  expect(pitchPlot(zigzag, step, 0, 8).path).toContain('L1.28,131.25');
+  expect(pitchPlot(rise, step, 0, 8).path).toContain('L1.28,129.00');
+  expect(pitchPlot(nearGap, step, 0, 8).path).toContain('L1.28,129.00');
+  expect(pitchPlot(jitter, step, 2 * step, 8).path).toContain('M0.00,131.25');
+  expect(pitchAt(jitter, step, 2 * step)).toBeCloseTo(69.4);
 });
 
-it('loads a saved curve by source and projects the applied pitch at each zoom', async () => {
+it('preserves the peaks and troughs of sustained vibrato', () => {
+  const step = 0.016;
+  const notes = Array.from(
+    { length: 40 },
+    (_, index) => 69 + 0.35 * Math.sin(2 * Math.PI * 6 * index * step),
+  );
+  const pitches = notes.map((midi) => 440 * 2 ** ((midi - 69) / 12));
+  const { path } = pitchPlot(pitches, step, 0, 8);
+  const heights = [...path.matchAll(/[ML][\d.]+,([\d.]+)/g)].map((match) =>
+    Number(match[1]),
+  );
+  expect(heights).toEqual(
+    notes.map((midi) => Number(((75 - midi) * 15).toFixed(2))),
+  );
+});
+
+it('defaults to A and switches the preview only after a manual comparison succeeds', async () => {
+  const base = {
+    status: 'ready',
+    durationSeconds: 10,
+    stepSeconds: 0.016,
+    completedAtMs: 0,
+    phaseAvailable: true,
+    pitches: new Float32Array(625).fill(440),
+  };
+  let finishComparison;
+  const api = {
+    analyzeReferencePitch: vi.fn(async () => base),
+    compareReferencePitch: vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finishComparison = resolve;
+        }),
+    ),
+    cancelReferencePitch: vi.fn(async () => {}),
+  };
+  vi.stubGlobal('window', { Utawakui: api });
+  player.state = reactive({
+    track: { id: 'one', url: 'one', usesSeparatedAudio: true },
+    playbackRevision: 1,
+    duration: 10,
+    currentTime: 1,
+  });
+  const view = mount(Preview);
+  const toggle = () =>
+    findAll(view.root, (node) => node.props['aria-label'] === '反相對照 B')[0];
+  const trace = () =>
+    findAll(
+      view.root,
+      (node) => node.props.class === 'reference-pitch__trace',
+    )[0].props.d;
+  await Promise.resolve();
+  await nextTick();
+  const original = trace();
+  expect(toggle().props['aria-pressed']).toBe(false);
+  expect(api.compareReferencePitch).not.toHaveBeenCalled();
+  trigger(toggle(), 'onClick');
+  await nextTick();
+  expect(trace()).toBe(original);
+  expect(api.compareReferencePitch).toHaveBeenCalledWith(
+    'one',
+    expect.any(String),
+  );
+  const pitches = base.pitches.slice();
+  pitches.fill(0, 60, 70);
+  finishComparison({ ...base, pitches });
+  await Promise.resolve();
+  await nextTick();
+  expect(toggle().props['aria-pressed']).toBe(true);
+  expect(trace()).not.toBe(original);
+  trigger(toggle(), 'onClick');
+  await nextTick();
+  expect(trace()).toBe(original);
+  trigger(toggle(), 'onClick');
+  await nextTick();
+  expect(api.compareReferencePitch).toHaveBeenCalledTimes(1);
+  player.state.track = { id: 'two', url: 'two', usesSeparatedAudio: true };
+  await nextTick();
+  await Promise.resolve();
+  await nextTick();
+  expect(toggle().props['aria-pressed']).toBe(false);
+  expect(trace()).toBe(original);
+  trigger(toggle(), 'onClick');
+  const stale = finishComparison;
+  player.state.track = { id: 'three', url: 'three', usesSeparatedAudio: true };
+  await nextTick();
+  await Promise.resolve();
+  stale({ ...base, pitches });
+  await Promise.resolve();
+  await nextTick();
+  expect(api.cancelReferencePitch).toHaveBeenCalledOnce();
+  expect(toggle().props['aria-pressed']).toBe(false);
+  trigger(toggle(), 'onClick');
+  finishComparison({ status: 'comparison-unavailable' });
+  await Promise.resolve();
+  await nextTick();
+  expect(toggle().props['aria-pressed']).toBe(false);
+  expect(trace()).toBe(original);
+  view.app.unmount();
+});
+
+it('automatically requests each source, offers retry, and projects the applied pitch at each zoom', async () => {
   const replies = [];
   const api = {
     analyzeReferencePitch: vi.fn(
@@ -141,7 +248,7 @@ it('loads a saved curve by source and projects the applied pitch at each zoom', 
   expect(api.analyzeReferencePitch).toHaveBeenCalledWith(
     'one',
     expect.any(String),
-    true,
+    false,
   );
   player.state.track = { id: 'two', url: 'two', usesSeparatedAudio: true };
   const response = {
@@ -158,7 +265,12 @@ it('loads a saved curve by source and projects the applied pitch at each zoom', 
   expect(api.cancelReferencePitch).toHaveBeenCalledOnce();
   expect(byType('svg')).toHaveLength(0);
 
-  replies[1]({ status: 'cache-miss' });
+  expect(api.analyzeReferencePitch).toHaveBeenLastCalledWith(
+    'two',
+    expect.any(String),
+    false,
+  );
+  replies[1]({ status: 'unavailable' });
   await Promise.resolve();
   await nextTick();
   trigger(byType('button')[0], 'onClick');

@@ -648,7 +648,9 @@ onUnmounted(() => {
           @settings-action="handleSettingsAction"
         >
           <template v-if="ReferencePitchPreview" #reference-pitch>
-            <ReferencePitchPreview v-if="isPlayerToolsOpen" />
+            <ReferencePitchPreview
+              v-if="isPlayerToolsOpen && activeToolTab === 'adjust'"
+            />
           </template>
           <template #trigger="{ triggerProps }">
             <UiIconButton

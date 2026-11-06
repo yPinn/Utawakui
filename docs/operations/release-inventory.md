@@ -15,6 +15,11 @@ registration or preload API. It adds no native binary, model, resource or
 runtime dependency; [the research contract](../contracts/microphone-level-research.md)
 owns its input and permission boundaries.
 
+The [reference pitch prototype](../../prototypes/reference-pitch/README.md) is
+development-only. The production renderer omits its panel, the packaged Main
+process leaves its IPC handlers disabled, and the packaged preload does not
+expose the pitch API. Its model and workers remain outside the package allowlist.
+
 ## Current Build Shape
 
 Windows packaging is configured in `electron-builder.yml`.

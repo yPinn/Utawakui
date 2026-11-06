@@ -111,6 +111,16 @@ function isDelivered(file) {
 }
 
 describe('packaged dependency boundary', () => {
+  it('excludes reference pitch prototype assets and workers', () => {
+    for (const file of [
+      'model.onnx',
+      'register.cjs',
+      'worker.cjs',
+      'phaseComparison.cjs',
+    ]) {
+      expect(isDelivered(`prototypes/reference-pitch/${file}`)).toBe(false);
+    }
+  });
   it('bundles the microphone access factory under its role-based name', () => {
     expect(bundledSources).toContain(
       'electron/main/microphoneResearchAccess.js',
