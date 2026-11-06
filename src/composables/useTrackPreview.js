@@ -1,9 +1,14 @@
-import { reactive, readonly } from 'vue';
+import { computed, reactive, readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useBgmSession } from './useBgmSession.js';
 import { useMetronome } from './useMetronome.js';
 import { usePlayer } from './usePlayer.js';
-import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
+import { pickPreferredLyricsSource } from '../utils/lyrics.js';
+import {
+  deriveLyricsPlaybackState,
+  normalizeLyricsDocument,
+  projectLegacyLyricLines,
+} from '../utils/lyricsDocument.js';
 import { resolvePreviewSegment } from '../utils/trackPreviewSegment.js';
 import { isLocalPreviewTrack } from '../utils/trackPreviewSource.js';
 import { t } from '../utils/i18n.js';
@@ -25,9 +30,18 @@ async function loadPreviewLyrics(track) {
     source.filename,
   );
   if (!result?.text) return null;
-  const offsetMs = result.source?.offsetMs;
+  const resolvedSource = result.source ?? source;
+  const offsetMs = resolvedSource.offsetMs;
+  const document = normalizeLyricsDocument({
+    text: result.text,
+    source: resolvedSource,
+    timing: result.timing,
+    sourceFingerprint: result.timing?.sourceFingerprint,
+    normalizerProfileId: result.timing?.normalizerProfileId,
+  });
   return {
-    lines: parseLyricsText(result.text, { source: result.source ?? source }),
+    document,
+    lines: projectLegacyLyricLines(document),
     offsetSeconds: Number.isInteger(offsetMs) ? offsetMs / 1000 : 0,
   };
 }
@@ -58,7 +72,19 @@ export function createTrackPreview({
     blockedReason: null,
     segment: null,
     currentTime: 0,
+    volume: 1,
     isMuted: false,
+  });
+  const currentLyrics = shallowRef(null);
+  const lyricText = computed(() => {
+    const lyrics = currentLyrics.value;
+    if (!lyrics || state.blockedReason) return '';
+    const positionMs = (state.currentTime + lyrics.offsetSeconds) * 1000;
+    const { activeLineIndex } = deriveLyricsPlaybackState(
+      lyrics.document,
+      positionMs,
+    );
+    return lyrics.document?.lines[activeLineIndex]?.text ?? '';
   });
 
   let lease = null;
@@ -73,7 +99,7 @@ export function createTrackPreview({
   let failedInRow = 0;
   let frameId = null;
   let fadeFrameId = null;
-  let targetVolume = 1;
+  let fadeProgress = 1;
 
   const currentTrack = () => state.tracks[state.index] ?? null;
   const ownsSource = () => sourceGeneration === trackGeneration;
@@ -140,10 +166,21 @@ export function createTrackPreview({
   }
 
   // Entering mid-song ramps the volume up instead of cutting in.
+  function applyVolume() {
+    audio.volume = state.volume * fadeProgress;
+  }
+
+  function setVolume(volume) {
+    if (!Number.isFinite(volume)) return;
+    state.volume = Math.max(0, Math.min(1, volume));
+    applyVolume();
+  }
+
   function stopFadeIn() {
     if (fadeFrameId !== null) cancelFrame?.(fadeFrameId);
     fadeFrameId = null;
-    audio.volume = targetVolume;
+    fadeProgress = 1;
+    applyVolume();
   }
 
   function fadeIn() {
@@ -151,7 +188,8 @@ export function createTrackPreview({
     const step = (timestamp) => {
       startedAt ??= timestamp;
       const progress = Math.min(1, (timestamp - startedAt) / FADE_IN_MS);
-      audio.volume = targetVolume * progress;
+      fadeProgress = progress;
+      applyVolume();
       fadeFrameId = progress < 1 ? requestFrame(step) : null;
     };
     fadeFrameId = requestFrame(step);
@@ -162,7 +200,8 @@ export function createTrackPreview({
     const fades = Boolean(requestFrame);
     if (fades) {
       stopFadeIn();
-      audio.volume = 0;
+      fadeProgress = 0;
+      applyVolume();
     }
     try {
       await audio.play();
@@ -188,6 +227,7 @@ export function createTrackPreview({
     const track = state.tracks[index];
     if (!track) return;
     audio.pause();
+    currentLyrics.value = null;
     state.index = index;
     state.currentTime = 0;
     state.segment = resolvePreviewSegment({ durationSeconds: track.duration });
@@ -200,6 +240,8 @@ export function createTrackPreview({
       settle(() => autoplay),
     ]);
     if (generation !== trackGeneration) return;
+
+    currentLyrics.value = lyrics?.document ? lyrics : null;
 
     state.segment = resolvePreviewSegment({
       durationSeconds: track.duration,
@@ -231,8 +273,7 @@ export function createTrackPreview({
       segment: null,
       currentTime: 0,
     });
-    targetVolume = getDefaultVolume();
-    audio.volume = targetVolume;
+    setVolume(getDefaultVolume());
     audio.muted = state.isMuted;
     const index = Math.max(
       0,
@@ -259,6 +300,7 @@ export function createTrackPreview({
     lease?.release();
     lease = null;
     pendingSeek = null;
+    currentLyrics.value = null;
     Object.assign(state, {
       isOpen: false,
       title: '',
@@ -390,6 +432,7 @@ export function createTrackPreview({
 
   return {
     state: readonly(state),
+    lyricText,
     open,
     close,
     select,
@@ -397,6 +440,7 @@ export function createTrackPreview({
     previous,
     toggle,
     setMuted,
+    setVolume,
   };
 }
 

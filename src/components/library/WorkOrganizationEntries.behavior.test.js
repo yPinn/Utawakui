@@ -153,6 +153,7 @@ vi.mock('../../composables/useLibraryAlbumContext.js', () => ({
 vi.mock('../../composables/useTrackPreview.js', () => ({
   useTrackPreview: () => ({
     state: { tracks: [] },
+    lyricText: { value: '' },
     close: deps.closePreview,
     open: deps.openPreview,
   }),

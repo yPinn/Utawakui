@@ -25,6 +25,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiProgress from '../ui/UiProgress.vue';
+import UiRangeControl from '../ui/range/UiRangeControl.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
@@ -37,6 +38,8 @@ const props = defineProps({
   blockedReason: { type: String, default: null },
   segment: { type: Object, default: null },
   currentTime: { type: Number, default: 0 },
+  lyricText: { type: String, default: '' },
+  volume: { type: Number, default: 1 },
   muted: { type: Boolean, default: false },
   playlists: { type: Array, default: () => [] },
   currentTrackId: { type: String, default: '' },
@@ -52,6 +55,7 @@ const emit = defineEmits([
   'close',
   'select',
   'mute',
+  'volume',
   'playTrack',
   'addToQueue',
   'menuSelect',
@@ -76,6 +80,7 @@ const BLOCKED_NOTICES = Object.freeze({
 });
 
 const track = computed(() => props.tracks[props.index] ?? null);
+const formatVolume = (value) => `${Math.round(value * 100)}%`;
 const previousTrack = computed(() => props.tracks[props.index - 1] ?? null);
 const nextTrack = computed(() => props.tracks[props.index + 1] ?? null);
 const statusNotice = computed(() => {
@@ -177,6 +182,14 @@ const KEY_ACTIONS = {
   previous: () => select(-1),
   mute: () => emit('mute', !props.muted),
 };
+const RANGE_KEYS =
+  /^(?:Arrow(?:Left|Right|Up|Down)|Home|End|PageUp|PageDown)$/u;
+
+function isRangeKey(event) {
+  return (
+    event.target?.matches?.('input[type="range"]') && RANGE_KEYS.test(event.key)
+  );
+}
 
 // Window capture runs before the global shortcuts, so preview keys never
 // reach the performance player. UiModal still owns Escape, Tab and focus.
@@ -184,6 +197,7 @@ function handleKeydown(event) {
   if (menu.value) return;
   const dialog = contentRef.value?.closest?.('[role="dialog"]');
   if (!dialog?.contains(event.target)) return;
+  if (isRangeKey(event)) return;
   const { intent, isolate } = resolvePreviewKeyIntent(event);
   if (isolate) event.stopPropagation();
   if (!intent) return;
@@ -281,6 +295,20 @@ onUnmounted(() => setKeyboardListener(false));
             label-hidden
             :value="segmentElapsed"
             :max="segmentLength || 1"
+          />
+
+          <p v-if="lyricText" class="track-preview__lyric">{{ lyricText }}</p>
+
+          <UiRangeControl
+            class="track-preview__volume"
+            :model-value="volume"
+            :max="1"
+            :step="0.01"
+            :aria-label="t('track.preview.volume')"
+            :value-text="formatVolume(volume)"
+            :format-value="formatVolume"
+            @keydown="isRangeKey($event) && $event.stopPropagation()"
+            @update:model-value="emit('volume', $event)"
           />
 
           <UiNotice
@@ -657,6 +685,20 @@ onUnmounted(() => setKeyboardListener(false));
   display: grid;
   justify-items: start;
   gap: var(--ui-modal-section-gap);
+}
+
+.track-preview__lyric {
+  justify-self: stretch;
+  margin: 0;
+  min-inline-size: 0;
+  padding: var(--ui-space-2);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface-raised);
+  overflow-wrap: anywhere;
+}
+
+.track-preview__volume {
+  inline-size: 100%;
 }
 
 .track-preview__identity {

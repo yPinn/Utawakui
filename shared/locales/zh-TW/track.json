@@ -95,6 +95,7 @@
     "untitledAlbum": "未命名專輯",
     "unmute": "取消試聽靜音",
     "mute": "試聽靜音",
+    "volume": "試聽音量",
     "progress": "試聽進度",
     "tracks": "試聽曲目",
     "previousNamed": "上一首：{title}",

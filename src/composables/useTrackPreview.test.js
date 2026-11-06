@@ -5,7 +5,10 @@ vi.mock('./useBgmSession.js', () => ({ useBgmSession: vi.fn() }));
 vi.mock('./usePlayer.js', () => ({ usePlayer: vi.fn() }));
 vi.mock('./useMetronome.js', () => ({ useMetronome: vi.fn() }));
 
-import { createTrackPreview } from './useTrackPreview.js';
+import { useBgmSession } from './useBgmSession.js';
+import { useMetronome } from './useMetronome.js';
+import { usePlayer } from './usePlayer.js';
+import { createTrackPreview, useTrackPreview } from './useTrackPreview.js';
 
 function createDeferred() {
   let resolve;
@@ -131,6 +134,94 @@ function createHarness(overrides = {}) {
 }
 
 describe('track preview', () => {
+  it('uses saved timing from the preferred local source through the shared preview', async () => {
+    const audio = new MockAudio();
+    const playerState = { volume: 0.45 };
+    const source = { filename: 'saved.lrc', offsetMs: -1000 };
+    const getTrackLyrics = vi.fn(async () => ({
+      text: '[00:50.00]Source line',
+      timing: {
+        status: 'current',
+        document: {
+          lines: [{ text: 'Corrected line', startMs: 52000, endMs: 54000 }],
+        },
+      },
+    }));
+    usePlayer.mockReturnValue({ state: playerState });
+    useBgmSession.mockReturnValue({
+      handoffState: { sessionMode: 'inactive' },
+      acquirePreviewLane: async () => ({ release: vi.fn() }),
+    });
+    useMetronome.mockReturnValue({ stop: vi.fn() });
+    vi.stubGlobal('Audio', function () {
+      return audio;
+    });
+    vi.stubGlobal('window', { Utawakui: { getTrackLyrics } });
+    const preview = useTrackPreview();
+    try {
+      await preview.open({
+        tracks: [track('a', { lyrics: { sources: [source] } }), track('b')],
+      });
+      expect(getTrackLyrics).toHaveBeenCalledWith('a', 'saved.lrc');
+      audio.dispatch('loadedmetadata');
+      audio.currentTime = 53;
+      audio.dispatch('timeupdate');
+      expect(preview.lyricText.value).toBe('Corrected line');
+      preview.setVolume(0.2);
+      expect(playerState.volume).toBe(0.45);
+      await preview.next();
+      expect(preview.lyricText.value).toBe('');
+      expect(getTrackLyrics).toHaveBeenCalledOnce();
+    } finally {
+      preview.close();
+      vi.unstubAllGlobals();
+    }
+  });
+  it('shows the current timed lyric from the preview clock and clears it on card changes', async () => {
+    const { audio, preview } = createHarness({
+      getLyrics: async ({ id }) =>
+        id === 'a'
+          ? {
+              offsetSeconds: 1,
+              document: {
+                lines: [{ text: 'Preview line', startMs: 36000, endMs: 38000 }],
+              },
+            }
+          : null,
+    });
+    await preview.open({ tracks: [track('a'), track('b')] });
+    audio.dispatch('loadedmetadata');
+    audio.currentTime = 35;
+    audio.dispatch('timeupdate');
+    expect(preview.lyricText.value).toBe('Preview line');
+    audio.currentTime = 37;
+    audio.dispatch('timeupdate');
+    expect(preview.lyricText.value).toBe('');
+    audio.currentTime = 35;
+    audio.dispatch('timeupdate');
+    const switching = preview.next();
+    expect(preview.lyricText.value).toBe('');
+    await switching;
+    expect(preview.lyricText.value).toBe('');
+  });
+
+  it('keeps volume changes within a preview session and clamps invalid input', async () => {
+    const { audio, preview } = createHarness();
+    const tracks = [track('a'), track('b')];
+    await preview.open({ tracks });
+    expect(preview.state.volume).toBe(0.4);
+    preview.setVolume(0.2);
+    preview.setVolume(Number.NaN);
+    expect(audio.volume).toBe(0.2);
+    await preview.next();
+    expect(audio.volume).toBe(0.2);
+    preview.setVolume(2);
+    expect(audio.volume).toBe(1);
+    preview.close();
+    await preview.open({ tracks });
+    expect(audio.volume).toBe(0.4);
+  });
+
   it('acquires the lane, stops the metronome and plays the original audio from the chorus', async () => {
     const { audio, bgm, metronome, preview } = createHarness({
       getMusicStructure: async () => ({
@@ -463,10 +554,12 @@ describe('track preview', () => {
     expect(audio.volume).toBe(0);
     frames.run(1150);
     expect(audio.volume).toBeCloseTo(0.2);
+    preview.setVolume(0.3);
+    expect(audio.volume).toBeCloseTo(0.15);
     frames.run(1300);
-    expect(audio.volume).toBe(0.4);
+    expect(audio.volume).toBe(0.3);
     frames.run(1316);
-    expect(audio.volume).toBe(0.4);
+    expect(audio.volume).toBe(0.3);
   });
 
   it('restores the volume when playback fails to start', async () => {

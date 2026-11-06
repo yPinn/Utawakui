@@ -50,6 +50,19 @@ function renderOverlay(overrides = {}) {
 }
 
 describe('TrackPreviewOverlay', () => {
+  it('renders the preview lyric and an independently labelled volume slider', async () => {
+    const html = await renderOverlay({
+      lyricText: 'Preview lyric',
+      volume: 0.35,
+    });
+    expect(html).toContain('Preview lyric');
+    expect(html).toMatch(
+      /<input(?=[^>]*type="range")(?=[^>]*aria-label="試聽音量")/u,
+    );
+    expect(html).toContain('35%');
+    expect(await renderOverlay()).not.toContain('track-preview__lyric');
+  });
+
   it('renders the current track, its neighbours and segment progress', async () => {
     const html = await renderOverlay();
 

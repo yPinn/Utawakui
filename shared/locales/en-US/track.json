@@ -95,6 +95,7 @@
     "untitledAlbum": "Untitled album",
     "unmute": "Unmute preview",
     "mute": "Mute preview",
+    "volume": "Preview volume",
     "progress": "Preview progress",
     "tracks": "Preview tracks",
     "previousNamed": "Previous: {title}",
