@@ -236,7 +236,11 @@
     "moreOnYtMusic": "Find more results on YT Music",
     "externalFailed": "External source action not completed",
     "candidates": "Downloadable versions",
-    "pendingList": "Import list to review"
+    "pendingList": "Import list to review",
+    "activeBatches": "Importing",
+    "attentionBatches": "Not completed",
+    "completedBatches": "Completed",
+    "clearCompletedBatches": "Clear history"
   },
   "monitor": {
     "single": "Single",
@@ -244,9 +248,10 @@
     "jobNamed": "Import job: {title}",
     "reviewNamed": "Review import job: {title}",
     "stopNamed": "Stop import {title}",
-    "retryNamed": "Retry import {title}",
+    "actions": "Import record actions",
+    "retry": "Retry",
+    "dismiss": "Remove record",
     "done": "Import finished",
-    "clearNamed": "Clear import record {title}",
     "progressLabel": "Downloads",
     "processed": "{processed} of {total} processed",
     "active": "Downloading {count}",

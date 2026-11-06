@@ -19,10 +19,14 @@ vi.mock('../../composables/useLocalImport.js', () => ({
 }));
 vi.mock('../layout/AppRightDockSection.vue', () => ({
   default: {
+    props: ['heading'],
     setup:
-      (_, { slots }) =>
+      (props, { slots }) =>
       () =>
-        h('section', [slots.trailing?.(), slots.default?.()]),
+        h('section', { 'aria-label': props.heading }, [
+          slots.trailing?.(),
+          slots.default?.(),
+        ]),
   },
 }));
 vi.mock('../ui/UiIconButton.vue', () => ({
@@ -36,6 +40,15 @@ vi.mock('../ui/UiIconButton.vue', () => ({
           'aria-label': props.label,
           onClick: () => emit('click'),
         }),
+  },
+}));
+vi.mock('../ui/UiButton.vue', () => ({
+  default: {
+    emits: ['click'],
+    setup:
+      (_, { slots, emit }) =>
+      () =>
+        h('button', { onClick: () => emit('click') }, slots.default?.()),
   },
 }));
 vi.mock('../ui/UiHint.vue', () => ({
@@ -136,6 +149,12 @@ beforeEach(() => {
     cancelBatch: vi.fn(),
     retryBatch: vi.fn(),
     dismissBatch: vi.fn(),
+    clearCompletedBatches: vi.fn(() => {
+      fixture.session.activity.batches =
+        fixture.session.activity.batches.filter(
+          (batch) => batch.phase !== 'completed',
+        );
+    }),
     setInput: vi.fn((value) => {
       state.input = value;
       state.playlistTitle = 'Draft B';
@@ -156,6 +175,35 @@ it('shows the same Chinese year-first release metadata in the import summary', (
   mounted.app.unmount();
 });
 describe('Import Dock accepted work', () => {
+  it('groups batches and clears the completed section without resurfacing older successes', async () => {
+    fixture.session.activity.batches.push(
+      { id: 'older', title: 'Older success', phase: 'completed' },
+      { id: 'failed', title: 'Failed import', phase: 'failed' },
+      { id: 'latest', title: 'Latest success', phase: 'completed' },
+    );
+    const mounted = mount(Dock, { active: true });
+    const section = (label) =>
+      findAll(
+        mounted.root,
+        (n) => n.type === 'section' && n.props['aria-label'] === label,
+      )[0];
+    expect(node(section('匯入中'), 'monitor-accepted')).toBeDefined();
+    expect(node(section('未完成'), 'monitor-failed')).toBeDefined();
+    const done = section('已完成');
+    expect(node(done, 'monitor-latest')).toBeDefined();
+    expect(node(done, 'monitor-older')).toBeUndefined();
+    const clear = findAll(
+      done,
+      (n) => n.type === 'button' && textContent(n) === '清除紀錄',
+    )[0];
+    trigger(clear, 'onClick');
+    await nextTick();
+    expect(fixture.session.clearCompletedBatches).toHaveBeenCalledOnce();
+    expect(section('已完成')).toBeUndefined();
+    expect(node(section('匯入中'), 'monitor-accepted')).toBeDefined();
+    expect(node(section('未完成'), 'monitor-failed')).toBeDefined();
+    mounted.app.unmount();
+  });
   it('closes and reopens the current running batch without cancelling its work', async () => {
     const mounted = mount(Dock, { active: true });
     trigger(node(mounted.root, 'monitor-accepted'), 'onClick');

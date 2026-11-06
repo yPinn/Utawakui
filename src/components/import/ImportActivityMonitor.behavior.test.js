@@ -11,19 +11,47 @@ import Monitor from './ImportActivityMonitor.vue';
 vi.mock('../ui/UiTrackRow.vue', () => ({
   default: {
     props: ['track'],
-    emits: ['rowClick'],
+    emits: ['rowClick', 'actionKeydown'],
     setup:
       (props, { slots, emit }) =>
       () =>
         h('div', [
           h(
             'button',
-            { id: 'review', onClick: () => emit('rowClick') },
+            {
+              id: 'review',
+              onClick: () => emit('rowClick'),
+              onKeydown: (event) => emit('actionKeydown', event),
+            },
             props.track.title,
           ),
           h('span', props.track.artist),
           slots.trail?.(),
         ]),
+  },
+}));
+vi.mock('../ui/UiActionMenu.vue', () => ({
+  default: {
+    props: ['open', 'anchor', 'content'],
+    emits: ['select'],
+    setup:
+      (props, { emit }) =>
+      () =>
+        props.open
+          ? h(
+              'div',
+              { role: 'menu', 'data-anchor': props.anchor.kind },
+              props.content.groups.flatMap((group) =>
+                group.items.map((item) =>
+                  h(
+                    'button',
+                    { onClick: () => emit('select', item.value) },
+                    item.label,
+                  ),
+                ),
+              ),
+            )
+          : null,
   },
 }));
 vi.mock('../ui/UiProgress.vue', () => ({
@@ -72,6 +100,41 @@ const batch = () =>
     ],
   });
 describe('compact import monitoring', () => {
+  it('opens recovery actions from the keyboard and pointer on an unfinished row', async () => {
+    const source = batch();
+    source.phase = 'failed';
+    const onRetry = vi.fn();
+    const onDismiss = vi.fn();
+    const mounted = mount(Monitor, { batch: source, onRetry, onDismiss });
+    const review = findAll(mounted.root, (n) => n.props.id === 'review')[0];
+    const menu = () => findAll(mounted.root, (n) => n.props.role === 'menu')[0];
+    const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() };
+
+    trigger(review, 'onKeydown', {
+      ...event,
+      key: 'F10',
+      shiftKey: true,
+      currentTarget: review,
+    });
+    await nextTick();
+    expect(menu().props['data-anchor']).toBe('element');
+    const action = (label) =>
+      findAll(
+        menu(),
+        (n) => n.type === 'button' && textContent(n) === label,
+      )[0];
+    trigger(action('重試'), 'onClick');
+    expect(onRetry).toHaveBeenCalledWith('one');
+
+    const row = findAll(mounted.root, (n) => n.props.onContextmenu)[0];
+    trigger(row, 'onContextmenu', { ...event, clientX: 20, clientY: 40 });
+    await nextTick();
+    expect(menu().props['data-anchor']).toBe('point');
+    trigger(action('移除紀錄'), 'onClick');
+    expect(onDismiss).toHaveBeenCalledWith('one');
+    expect(event.preventDefault).toHaveBeenCalledTimes(2);
+    mounted.app.unmount();
+  });
   it('keeps accepted release year and Chinese type in completed activity', () => {
     const source = batch();
     Object.assign(source, {

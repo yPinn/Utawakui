@@ -5,13 +5,20 @@ import {
   releaseMetadataLabel,
   releaseYearFromDate,
 } from '../../utils/releasePresentation.js';
-import { Check, RefreshCw, Square, X } from '../../icons/index.js';
+import {
+  Check,
+  CircleX,
+  ListMinus,
+  RefreshCw,
+  Square,
+} from '../../icons/index.js';
 import { useDeferredLoading } from '../../composables/useDeferredLoading.js';
 import {
   importBatchProgress,
   isImportBatchRunning,
 } from '../../utils/importBatch.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiProgress from '../ui/UiProgress.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -21,6 +28,63 @@ import { t } from '../../utils/i18n.js';
 const props = defineProps({ batch: { type: Object, required: true } });
 const emit = defineEmits(['review', 'cancel', 'retry', 'dismiss']);
 const running = computed(() => isImportBatchRunning(props.batch));
+const needsAttention = computed(() =>
+  ['failed', 'cancelled'].includes(props.batch.phase),
+);
+const menuAnchor = shallowRef(null);
+const menuContent = computed(() => ({
+  kind: 'actions',
+  groups: [
+    {
+      id: 'retry',
+      items: [
+        {
+          id: 'retry',
+          kind: 'action',
+          value: 'retry',
+          label: t('import.monitor.retry'),
+          icon: RefreshCw,
+        },
+      ],
+    },
+    {
+      id: 'dismiss',
+      items: [
+        {
+          id: 'dismiss',
+          kind: 'action',
+          value: 'dismiss',
+          label: t('import.monitor.dismiss'),
+          icon: ListMinus,
+        },
+      ],
+    },
+  ],
+}));
+
+function openMenuAtPointer(event) {
+  if (!needsAttention.value) return;
+  event.preventDefault();
+  event.stopPropagation();
+  menuAnchor.value = { kind: 'point', x: event.clientX, y: event.clientY };
+}
+
+function openMenuFromKeyboard(event) {
+  if (!needsAttention.value) return;
+  if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10'))
+    return;
+  event.preventDefault();
+  event.stopPropagation();
+  menuAnchor.value = { kind: 'element', element: event.currentTarget };
+}
+
+function selectMenuAction(action) {
+  menuAnchor.value = null;
+  if (!needsAttention.value) return;
+  if (action === 'retry') emit('retry', props.batch.id);
+  if (action === 'dismiss') emit('dismiss', props.batch.id);
+}
+
 const progress = computed(() => importBatchProgress(props.batch));
 const { skeletonVisible } = useDeferredLoading(running, {
   identity: () => props.batch.id,
@@ -92,11 +156,17 @@ const doneSummary = computed(() =>
         :track="track"
         interactive
         state-surface
+        :state-surface-active="Boolean(menuAnchor)"
         hide-duration
         overflow="ellipsis"
         thumb-loading="lazy"
         thumb-decoding="async"
         :action-label="t('import.monitor.reviewNamed', { title: batch.title })"
+        :action-keyboard-shortcuts="
+          needsAttention ? 'ContextMenu Shift+F10' : undefined
+        "
+        @action-keydown="openMenuFromKeyboard"
+        @contextmenu="openMenuAtPointer"
         @row-click="emit('review', batch.id)"
       >
         <template #trail>
@@ -108,25 +178,17 @@ const doneSummary = computed(() =>
             @click.stop="emit('cancel', batch.id)"
             @dblclick.stop
           />
-          <UiIconButton
-            v-else-if="['failed', 'cancelled'].includes(batch.phase)"
-            :icon="RefreshCw"
-            :label="t('import.monitor.retryNamed', { title: batch.title })"
-            @click.stop="emit('retry', batch.id)"
-            @dblclick.stop
+          <UiStatusIcon
+            v-else-if="needsAttention"
+            :icon="batch.phase === 'failed' ? CircleX : Square"
+            :tone="batch.phase === 'failed' ? 'danger' : 'muted'"
+            :label="progress.phaseLabel"
           />
           <UiStatusIcon
             v-else-if="batch.phase === 'completed'"
             :icon="Check"
             tone="success"
             :label="t('import.monitor.done')"
-          />
-          <UiIconButton
-            v-if="!running"
-            :icon="X"
-            :label="t('import.monitor.clearNamed', { title: batch.title })"
-            @click.stop="emit('dismiss', batch.id)"
-            @dblclick.stop
           />
         </template>
       </UiTrackRow>
@@ -156,6 +218,16 @@ const doneSummary = computed(() =>
     >
       {{ doneSummary }}
     </UiHint>
+    <UiActionMenu
+      v-if="needsAttention"
+      :open="Boolean(menuAnchor)"
+      :anchor="menuAnchor || undefined"
+      size="sm"
+      :aria-label="t('import.monitor.actions')"
+      :content="menuContent"
+      @select="selectMenuAction"
+      @close="menuAnchor = null"
+    />
   </section>
 </template>
 

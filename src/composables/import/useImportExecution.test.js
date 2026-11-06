@@ -100,6 +100,38 @@ it('reports one single download result and does not duplicate a concurrent submi
   });
 });
 
+it('clears all completed batch records while retaining failed and running work', async () => {
+  const h = fixture();
+  const submit = (id) => {
+    h.nextDraft();
+    h.state.playlistTracks = [{ id, selected: true, status: 'pending' }];
+    return h.execution.submitImport();
+  };
+  await submit('first');
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledTimes(1));
+  await submit('second');
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledTimes(2));
+  window.Utawakui.downloadAudio.mockRejectedValueOnce(Error('download failed'));
+  const failed = await submit('failed');
+  await vi.waitFor(() => expect(h.notify).toHaveBeenCalledTimes(3));
+  const download = Promise.withResolvers();
+  window.Utawakui.downloadAudio.mockReturnValueOnce(download.promise);
+  const running = await submit('running');
+
+  h.execution.clearCompletedBatches();
+  h.execution.clearCompletedBatches();
+  expect(h.execution.activity.batches).toMatchObject([
+    { id: failed, phase: 'failed' },
+    { id: running, phase: 'running' },
+  ]);
+  expect(window.Utawakui.cancelAudioDownload).not.toHaveBeenCalled();
+  download.resolve({ title: 'Saved after clear' });
+  await vi.waitFor(() =>
+    expect(h.execution.activity.batches[1].phase).toBe('completed'),
+  );
+  await expect(h.execution.retryBatch(failed)).resolves.toBe(true);
+});
+
 it('reports partial failure once, then replaces that batch result on retry without redownloading successes', async () => {
   window.Utawakui.downloadAudio.mockRejectedValueOnce(
     Error('private provider failure'),

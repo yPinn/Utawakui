@@ -43,9 +43,12 @@ describe('Import Token v2 surface cutover', () => {
     expect(rowSource).not.toContain('UiTrackThumb');
   });
 
-  it('uses shared icon actions and avoids a bespoke full-width Dock button', () => {
+  it('uses shared icon actions and keeps record clearing in the completed heading', () => {
     expect(dockSource).toContain('<UiIconButton');
-    expect(dockSource).not.toContain('<UiButton');
+    expect(dockSource.match(/<UiButton\b/gu)).toHaveLength(1);
+    expect(dockSource).toMatch(
+      /heading="已完成"[^>]*>\s*<template #trailing>\s*<UiButton @click="clearCompletedWork">/u,
+    );
     expect(dockSource).not.toContain('import-dock-panel__full-action');
   });
 

@@ -576,6 +576,7 @@ describe('useImportSession', () => {
       'cancelBatch',
       'cancelTrackDownload',
       'chooseDownloadDir',
+      'clearCompletedBatches',
       'confirmImport',
       'confirmImportLabel',
       'currentBatchId',

@@ -394,6 +394,7 @@ export function useImportSession() {
     cancelBatch: importExecution.cancelBatch,
     retryBatch: importExecution.retryBatch,
     dismissBatch: importExecution.dismissBatch,
+    clearCompletedBatches: importExecution.clearCompletedBatches,
     state: readonlyState,
     playlistStats,
     dominantFailureCode,

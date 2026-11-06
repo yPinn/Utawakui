@@ -18,7 +18,9 @@ import {
   candidateId,
   playbackKindLabel,
 } from '../../utils/importCandidateDisplay.js';
+import { isImportBatchRunning } from '../../utils/importBatch.js';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -45,6 +47,7 @@ const {
   cancelBatch,
   retryBatch,
   dismissBatch,
+  clearCompletedBatches,
   playlistStats,
   setInput,
   resolveSource,
@@ -61,14 +64,17 @@ const reviewBatch = computed(
   () =>
     activity.batches.find((batch) => batch.id === reviewBatchId.value) || null,
 );
-const monitorBatches = computed(() => {
-  const latestComplete = [...activity.batches]
-    .reverse()
-    .find((batch) => batch.phase === 'completed');
-  return activity.batches.filter(
-    (batch) => batch.phase !== 'completed' || batch === latestComplete,
-  );
-});
+const activeBatches = computed(() =>
+  activity.batches.filter(isImportBatchRunning),
+);
+const attentionBatches = computed(() =>
+  activity.batches.filter((batch) =>
+    ['failed', 'cancelled'].includes(batch.phase),
+  ),
+);
+const latestCompletedBatch = computed(() =>
+  activity.batches.findLast((batch) => batch.phase === 'completed'),
+);
 const sourceBusy = computed(
   () => state.isResolving || state.isOpeningDiscovery,
 );
@@ -221,6 +227,11 @@ function handleSubmitted(batchId) {
 function dismissWork(batchId) {
   if (reviewBatchId.value === batchId) reviewOpen.value = false;
   dismissBatch(batchId);
+}
+
+function clearCompletedWork() {
+  if (reviewBatch.value?.phase === 'completed') reviewOpen.value = false;
+  clearCompletedBatches();
 }
 
 watch(
@@ -376,15 +387,50 @@ watch(
         />
       </ul>
     </AppRightDockSection>
-    <ImportActivityMonitor
-      v-for="batch in monitorBatches"
-      :key="batch.id"
-      :batch="batch"
-      @review="openBatchReview"
-      @cancel="cancelBatch"
-      @retry="retryBatch"
-      @dismiss="dismissWork"
-    />
+    <AppRightDockSection
+      v-if="activeBatches.length"
+      class="import-dock-content__active"
+      :heading="t('import.dock.activeBatches')"
+      divided
+    >
+      <ImportActivityMonitor
+        v-for="batch in activeBatches"
+        :key="batch.id"
+        :batch="batch"
+        @review="openBatchReview"
+        @cancel="cancelBatch"
+      />
+    </AppRightDockSection>
+    <AppRightDockSection
+      v-if="attentionBatches.length"
+      :heading="t('import.dock.attentionBatches')"
+      divided
+    >
+      <ImportActivityMonitor
+        v-for="batch in attentionBatches"
+        :key="batch.id"
+        :batch="batch"
+        @review="openBatchReview"
+        @retry="retryBatch"
+        @dismiss="dismissWork"
+      />
+    </AppRightDockSection>
+    <AppRightDockSection
+      v-if="latestCompletedBatch"
+      :heading="t('import.dock.completedBatches')"
+      divided
+    >
+      <template #trailing>
+        <UiButton @click="clearCompletedWork">{{
+          t('import.dock.clearCompletedBatches')
+        }}</UiButton>
+      </template>
+      <ImportActivityMonitor
+        :key="latestCompletedBatch.id"
+        :batch="latestCompletedBatch"
+        @review="openBatchReview"
+      />
+    </AppRightDockSection>
   </div>
 </template>
 
@@ -403,5 +449,10 @@ watch(
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Keep the heading quiet until the first deferred activity row is shown. */
+.import-dock-content__active:not(:has(.import-activity-monitor)) {
+  display: none;
 }
 </style>

@@ -236,7 +236,11 @@
     "moreOnYtMusic": "到 YT Music 尋找更多結果",
     "externalFailed": "外部來源操作未完成",
     "candidates": "可下載的版本",
-    "pendingList": "待確認的匯入清單"
+    "pendingList": "待確認的匯入清單",
+    "activeBatches": "匯入中",
+    "attentionBatches": "未完成",
+    "completedBatches": "已完成",
+    "clearCompletedBatches": "清除紀錄"
   },
   "monitor": {
     "single": "單曲",
@@ -244,9 +248,10 @@
     "jobNamed": "匯入工作：{title}",
     "reviewNamed": "檢視匯入工作：{title}",
     "stopNamed": "停止匯入 {title}",
-    "retryNamed": "重試匯入 {title}",
+    "actions": "匯入紀錄操作",
+    "retry": "重試",
+    "dismiss": "移除紀錄",
     "done": "匯入完成",
-    "clearNamed": "清除匯入記錄 {title}",
     "progressLabel": "下載件數",
     "processed": "已處理 {processed}／{total} 首",
     "active": "下載中 {count}",

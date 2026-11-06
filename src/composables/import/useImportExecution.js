@@ -570,6 +570,12 @@ export function useImportExecution({
     records.delete(id);
     return true;
   }
+  function clearCompletedBatches() {
+    const completed = internal.batches.filter(
+      (batch) => batch.phase === 'completed',
+    );
+    for (const batch of completed) dismissBatch(batch.id);
+  }
   return {
     activity: readonly(internal),
     currentBatchId: () => currentBatch()?.id || null,
@@ -580,5 +586,6 @@ export function useImportExecution({
     retryBatch,
     retryFailedTracks,
     dismissBatch,
+    clearCompletedBatches,
   };
 }

@@ -77,9 +77,16 @@ describe('AppRightDockPanel production adoption', () => {
     expect(importSource).toContain(
       "import AppRightDockSection from '../layout/AppRightDockSection.vue';",
     );
-    expect(importSource.match(/<AppRightDockSection/gu)).toHaveLength(2);
-    expect(importSource).toContain('heading="本機音訊"');
-    expect(importSource).toContain('heading="外部來源"');
+    expect(importSource.match(/<AppRightDockSection/gu)).toHaveLength(5);
+    for (const heading of [
+      '本機音訊',
+      '外部來源',
+      '匯入中',
+      '未完成',
+      '已完成',
+    ]) {
+      expect(importSource).toContain(`heading="${heading}"`);
+    }
     expect(importSource).toContain('divided');
     expect(importSource).not.toContain('UiSeparator');
   });
