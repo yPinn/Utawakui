@@ -15,11 +15,14 @@ describe('scroll-edge cue scope', () => {
 
   it('lets a stuck table header cast the top cue in panels outside Folder', () => {
     const table = read('../track/TrackTable.vue');
-    expect(table).toMatch(
-      /\.library-track-table__header\s*\{[^}]*container-type:\s*scroll-state;/su,
+    expect(table).toContain(
+      "'library-track-table__header--scroll-shadow': headerScrollShadow",
     );
     expect(table).toMatch(
-      /@container scroll-state\(stuck: top\)\s*\{\s*\.library-track-table__header::after\s*\{\s*opacity:\s*1;/su,
+      /\.library-track-table__header--scroll-shadow\s*\{[^}]*container-type:\s*scroll-state;/su,
+    );
+    expect(table).toMatch(
+      /@container scroll-state\(stuck: top\)\s*\{\s*\.library-track-table__header--scroll-shadow::after\s*\{\s*opacity:\s*1;/su,
     );
     expect(
       read('../performance-session/PerformanceSessionPlanList.vue'),

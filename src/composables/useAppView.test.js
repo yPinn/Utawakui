@@ -2,15 +2,21 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { useAppView } from './useAppView.js';
 
 describe('useAppView', () => {
-  it('opens an archive as a contextual performance location and clears it on root or tool navigation', () => {
+  it('opens an archive in Library records and clears it on Library root or Performance tool navigation', () => {
     const view = useAppView();
-    view.openPerformanceArchive('archive-one');
-    expect(view.activeView.value).toBe('performance');
-    expect(view.performanceArchiveId.value).toBe('archive-one');
     view.openPerformancePreparation();
+    view.openPerformanceArchive('archive-one');
+    expect(view.activeView.value).toBe('library');
+    expect(view.libraryWorkspace.value).toBe('performance-records');
+    expect(view.performanceArchiveId.value).toBe('archive-one');
+
+    view.openPerformancePreparation();
+    expect(view.activeView.value).toBe('performance');
     expect(view.performanceArchiveId.value).toBe(null);
+
     view.openPerformanceArchive('archive-two');
-    view.setActiveView('performance');
+    view.setActiveView('library');
+    expect(view.libraryWorkspace.value).toBe('browse');
     expect(view.performanceArchiveId.value).toBe(null);
   });
   beforeEach(() => {
