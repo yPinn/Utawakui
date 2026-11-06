@@ -34,7 +34,7 @@
 
 ## 音訊處理與分析
 
-- [原唱音高與音符條離線研究收斂](audio/reference-pitch-note-boundary-summary-2026-11-06.md)（11-06）：D 保留為離線基線，G 保留為分界對照。記錄抖動、短音、八度、轉音、停唱的量測分母及重開條件。
+- [原唱音高、停唱與音符切段研究收斂](audio/reference-pitch-note-boundary-summary-2026-11-06.md)（11-07）：分離與預覽的 CPU／GPU 量測、平滑與手動反相的採用範圍、離線音符切段與實唱對照的重開條件。
 - [Mic 輸入原型首輪驗證](audio/microphone-input-r02-2026-10-30.md)（10-30）：開發原型的原生權限、合成輸入與停止清理；保留初始裝置底限與後續 B1 有聲重試，完整品質待驗。
 
 - [R01 衍生四聲道音訊減量](audio/derived-audio-reduction-r01-2026-10-30.md)（10-30）：格式比較、FIFO／DSP 分流與獨立複核；FLAC 5 維持候選，不代表正式採用或遷移。

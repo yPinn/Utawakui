@@ -49,16 +49,32 @@ not this UI checklist.
 - [ ] Confirm checker／dark／light inspection backdrops and the performer guide stay
       Workbench-only; copied OBS routes remain transparent and contain neither query.
 
+## Local Performance Pass
+
+- [ ] Fix the tracks, output devices and OBS scene. Compare original and separated
+      playback with capture only and with monitoring enabled. Align the monitor,
+      capture and OBS recording evidence to the same playback events. Record brief
+      silence, stutter or electronic noise by path and timestamp. Use a physical
+      measurement for any acoustic latency claim.
+- [ ] In the same session, verify BGM handoff, confirmed song starts, track changes
+      and Lyrics／Prompter sync. Stop recording, archive the session and verify the
+      chapter and CSV timecodes against the recording. Record BGM levels and the
+      capture profile used for the pass.
+
+Use the [player audio](../contracts/player-audio-controls.md) and
+[session archive](../contracts/performance-session-preparation.md#紀錄頁封存與雙匯出)
+contracts for the individual acceptance criteria.
+
 ## Output And OBS
 
 - [ ] Verify gated auto-start, the four compatibility URLs, initial snapshot,
       reconnect, client count, port conflict recovery, artwork fallback, and URL
       updates in a real OBS Browser Source.
-- [ ] Verify all eight active templates against their declared capture sizes and
-      the [appearance acceptance checklist](output-appearance-acceptance.md):
-      queue-board, karaoke-stack, kinetic-pop, ornate-vertical, live-stage,
-      manga-frame, art-card, and cover-player. Legacy Now／Next and Simple Black B
-      names do not count as additional active templates or universal size support.
+- [ ] Verify active templates in the [Output registry](../../shared/outputAppearance.mjs)
+      at their declared capture sizes using the
+      [appearance acceptance checklist](output-appearance-acceptance.md). Include
+      the current vertical lyrics styles. Legacy aliases follow the size support
+      of the template they resolve to.
 - [ ] When M1／M2 analysis is available, verify Lyrics cues without regressing M0,
       pause, seek, reconnect, or reduced-motion fallback.
 - [ ] Enable the OBS integration against an authenticated OBS WebSocket 5 instance;

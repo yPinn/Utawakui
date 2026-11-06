@@ -66,7 +66,7 @@ R02 的單一輸入／本機電平開發原型沿[研究契約](../../contracts/
 
 ## 8. Mic 音準視覺化：研究方案
 
-R03 即時 Mic 輸入的音高模型仍待驗證與選定。原唱參考旋律研究沿用既有分離導唱與 SwiftF0 CPU。既有分離伴奏只做診斷旁證，供分析停唱誤報、弱聲及短音，參考音高輸出維持原流程。批次分離沿用封裝中的 DirectML，音高研究維持 CPU 環境。[分離驗收](../../adr/0017-directml-execution-provider-for-mdx-separation.md#batch-queue-and-obs-acceptance)。
+R03 即時 Mic 輸入的音高模型仍待驗證與選定。原唱端的預覽、停唱辨識與音符切段採用範圍另見[原唱音高研究收斂](../audio/reference-pitch-note-boundary-summary-2026-11-06.md)。
 
 研究依序驗證輸入音高、可信參考旋律及歌曲時間對照。
 

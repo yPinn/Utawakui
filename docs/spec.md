@@ -142,8 +142,8 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 ### 6.1 既有能力：穩定與驗收優先
 
-- 優先定位偶發播放失真，補真實裝置、擷取與 OBS 的同步證據；不把局部路由修正當成根因已解決。
-- 補齊 BGM 交接／擷取聽感、節拍器 drift、歌詞／提詞器／Workbench／OBS 可見驗收與演出耐久。
+- 先完成一場本機 OBS 錄影驗收。固定曲目、裝置和場景，對照監聽、擷取與 OBS 實收，定位偶發電子音、短暫無聲和卡頓出現在哪條路徑。
+- 同場核對 BGM 交接、換曲、歌詞／提詞器同步、場次封存及時間點匯出。節拍器 drift、Workbench／OBS 可見品質與長時耐久沿各自門檻驗證。[實機清單](operations/manual-acceptance.md#local-performance-pass)
 - 延續 startup、封裝邊界、依賴／資產／授權稽核與 installed-upgrade 驗收；已完成量測作為基線，不反覆列為新功能。
 - 完成缺檔、損壞 sidecar、依賴修復與曲庫維護的復原路徑；擴大 diagnostics 覆蓋。
 - Signed manifest 正式啟用前仍需 active／recovery key、protected environment、signing secrets 與真實升級證據。最新公開版、候選版及已驗證範圍分開記錄。
@@ -167,6 +167,7 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 - BGM 先完成現有單 deck／capture 驗收；loudness policy 需明定，A／B deck 與曲間 crossfade 再依需求評估。
 - Refined 須先通過授權、離線、wheel、容量、失敗復原與品質門檻，才可成為可選 recipe。
 - 句內混語、歌詞分析 GPU 與模型文字預處理維持研究限制；實驗結果不等於正式採用或新下載承諾。
+- 原唱音高、停唱遮罩與音符切段維持開發或離線研究。四語盲測暫擱，續驗條件集中在[原唱音高研究摘要](research/audio/reference-pitch-note-boundary-summary-2026-11-06.md)。
 - Provider 與官方 metadata 整合維持 optional；可選服務失效不擴大到本機核心。
 
 ## 7. 尚待產品決策
