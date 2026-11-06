@@ -65,10 +65,12 @@ function createKeyboardShortcutReceiver({
   }
   function detach() {
     if (!lease) return;
-    for (const [event, listener] of lease.listeners)
-      lease.window.webContents.removeListener(event, listener);
+    const { contents, listeners } = lease;
     lease = null;
     pending.clear();
+    if (contents.isDestroyed()) return;
+    for (const [event, listener] of listeners)
+      contents.removeListener(event, listener);
   }
   function sendState() {
     if (!alive()) return;
@@ -109,6 +111,7 @@ function createKeyboardShortcutReceiver({
     const current = {
       id: randomUUID(),
       window,
+      contents: window.webContents,
       frame: window.webContents.mainFrame,
       armed: false,
       contextRevision: 0,

@@ -49,6 +49,25 @@ function fixture(options = {}) {
     },
   };
 }
+it('revokes the lease after Electron destroys the window and its contents', () => {
+  const f = fixture();
+  const { offer } = f.receiver.connect();
+  f.contents.isDestroyed = () => true;
+  Object.defineProperty(f.window, 'webContents', {
+    get() {
+      throw new TypeError('Object has been destroyed');
+    },
+  });
+  expect(() => f.contents.emit('destroyed')).not.toThrow();
+  expect(
+    f.receiver.admit({
+      receiverId: offer.receiverId,
+      offerId: offer.offerId,
+      sequence: 1,
+    }).status,
+  ).toBe('stale');
+});
+
 it('revokes pending admission and future dispatch when the main renderer becomes unresponsive', async () => {
   const f = fixture(),
     { offer } = f.receiver.connect();
