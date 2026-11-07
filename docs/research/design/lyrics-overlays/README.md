@@ -30,6 +30,8 @@
 | 6    | [中央直書](centered-vertical.md)   | `centered-vertical`   | 單欄、安全邊界與簡易換句                 |
 | 7    | [風擬直書](wind-vertical.md)       | `wind-vertical`       | A 同側雙欄在左、右區選一側，B 保留為對照 |
 
+2026-11-07 依使用者提供的 Instagram 歌詞影片，另收錄[固定起點的片語歌詞](anchored-lyric-phrases.md)（Working ID `anchored-lyric-phrases`）。比較直式錨點、字區容量和片語揭示，保留行級時間回退。
+
 ## 共用格式
 
 五款正式字幕的現況回填、左中右人物佔位與位置調整候選另見[VTuber 佔位回看](production-vtuber-placement-review.md)。
