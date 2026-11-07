@@ -42,6 +42,10 @@ const emit = defineEmits([
   'toggleSettings',
 ]);
 
+const showExperimentalControls =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_TITLE_BAR_EXPERIMENTAL_CONTROLS === 'true';
+
 const { theme, toggleTheme } = useTheme();
 const { state: appUsageState, refreshAppUsage } = useAppUsage();
 const { state: obsState, refreshObsStatus } = useObsIntegration();
@@ -237,7 +241,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
       </div>
 
       <div class="app-title-bar__controls">
-        <PanelViewButton />
+        <PanelViewButton v-if="showExperimentalControls" />
         <UiIconButton
           data-app-preparation-trigger
           class="app-title-bar__preparation"
@@ -264,6 +268,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           @click="emit('togglePerformer')"
         />
         <UiIconButton
+          v-if="showExperimentalControls"
           :icon="isLight ? Moon : Sun"
           :label="label"
           variant="ghost"

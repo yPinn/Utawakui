@@ -1,6 +1,29 @@
 import fs from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { h, ref } from 'vue';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import AppTitleBar from './AppTitleBar.vue';
 import { t } from '../../utils/i18n.js';
+import { attachClientRender, findAll, mount } from '../ui/uiTestHost.js';
+
+vi.mock('../../composables/useTheme.js', () => ({
+  useTheme: () => ({ theme: ref('light'), toggleTheme: vi.fn() }),
+}));
+vi.mock('../ui/UiTooltip.vue', () => ({ default: () => null }));
+vi.mock('../ui/UiIconButton.vue', () => ({
+  default: {
+    props: ['label'],
+    render() {
+      return h('button', { 'aria-label': this.label });
+    },
+  },
+}));
+vi.mock('./PanelViewButton.vue', () => ({
+  default: () => h('button', { 'aria-label': t('shell.panel.maximize') }),
+}));
+
+attachClientRender(AppTitleBar, './AppTitleBar.vue', import.meta.url);
+
+afterEach(() => vi.unstubAllEnvs());
 
 const source = fs.readFileSync(
   new URL('./AppTitleBar.vue', import.meta.url),
@@ -8,6 +31,35 @@ const source = fs.readFileSync(
 );
 
 describe('AppTitleBar', () => {
+  it.each([
+    { dev: true, flag: undefined, enabled: false },
+    { dev: true, flag: 'false', enabled: false },
+    { dev: true, flag: 'true', enabled: true },
+    { dev: false, flag: 'true', enabled: false },
+  ])(
+    'keeps the button order with dev=$dev and flag=$flag',
+    ({ dev, flag, enabled }) => {
+      vi.stubEnv('DEV', dev);
+      vi.stubEnv('VITE_TITLE_BAR_EXPERIMENTAL_CONTROLS', flag);
+
+      const { app, root } = mount(AppTitleBar);
+      try {
+        const labels = findAll(root, (node) => node.type === 'button').map(
+          (button) => button.props['aria-label'],
+        );
+        expect(labels).toEqual([
+          ...(enabled ? [t('shell.panel.maximize')] : []),
+          t('shell.rightDock.expandImport'),
+          t('shell.titleBar.performerOpen'),
+          ...(enabled ? [t('shell.titleBar.themeDark')] : []),
+          t('shell.titleBar.settings'),
+        ]);
+      } finally {
+        app.unmount();
+      }
+    },
+  );
+
   it('uses one controlled preparation disclosure before the other global tools', () => {
     expect(source).not.toContain('SeparationToolbarPopover');
     expect(source).toContain('Download,');
