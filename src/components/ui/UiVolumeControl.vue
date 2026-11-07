@@ -10,6 +10,11 @@ const props = defineProps({
     default: 'expanded',
     validator: (value) => ['expanded', 'reveal'].includes(value),
   },
+  revealSide: {
+    type: String,
+    default: 'start',
+    validator: (value) => ['start', 'end'].includes(value),
+  },
   modelValue: { type: Number, required: true },
   muted: { type: Boolean, default: false },
   active: { type: Boolean, default: false },
@@ -61,7 +66,13 @@ onBeforeUnmount(stopDrag);
 <template>
   <div
     class="ui-volume-control"
-    :class="`ui-volume-control--${variant}`"
+    :class="[
+      `ui-volume-control--${variant}`,
+      {
+        'ui-volume-control--reveal-end':
+          variant === 'reveal' && revealSide === 'end',
+      },
+    ]"
     :data-dragging="dragging || undefined"
     role="group"
     :aria-label="volumeLabel"
@@ -117,7 +128,7 @@ onBeforeUnmount(stopDrag);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ui-volume-control--reveal {
+  .ui-volume-control--reveal:not(.ui-volume-control--reveal-end) {
     position: relative;
     inline-size: max-content;
     margin-inline-start: calc(
@@ -126,7 +137,8 @@ onBeforeUnmount(stopDrag);
     );
   }
 
-  .ui-volume-control--reveal .ui-volume-control__rail {
+  .ui-volume-control--reveal:not(.ui-volume-control--reveal-end)
+    .ui-volume-control__rail {
     position: absolute;
     inset-inline-end: 100%;
     inset-block: 0;
@@ -139,10 +151,59 @@ onBeforeUnmount(stopDrag);
     transition: opacity var(--ui-motion-duration-fast);
   }
 
-  .ui-volume-control--reveal:is(:hover, :focus-within, [data-dragging])
+  .ui-volume-control--reveal:not(.ui-volume-control--reveal-end):is(
+      :hover,
+      :focus-within,
+      [data-dragging]
+    )
     .ui-volume-control__rail {
     visibility: visible;
     opacity: 1;
+  }
+
+  /* Keep the hit area and the neighbouring close button at fixed positions. */
+  .ui-volume-control--reveal-end {
+    --ui-volume-reveal-reserve: calc(
+      var(--ui-volume-control-range-size, var(--ui-space-8)) +
+        var(--ui-volume-control-gap, var(--ui-space-1))
+    );
+    inline-size: calc(
+      var(--ui-icon-button-size-md) + var(--ui-volume-reveal-reserve)
+    );
+    justify-content: flex-end;
+    gap: 0;
+  }
+
+  .ui-volume-control--reveal-end .ui-volume-control__rail {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: none;
+    inline-size: 0;
+    min-inline-size: 0;
+    overflow: clip;
+    pointer-events: none;
+    transition: inline-size var(--ui-motion-duration-standard)
+      var(--ui-motion-easing-standard);
+  }
+
+  .ui-volume-control--reveal-end .ui-volume-control__range {
+    flex: 0 0 var(--ui-volume-control-range-size, var(--ui-space-8));
+  }
+
+  .ui-volume-control--reveal-end:is(
+      :hover,
+      :has(:focus-visible),
+      [data-dragging]
+    )
+    .ui-volume-control__rail {
+    inline-size: var(--ui-volume-reveal-reserve);
+    pointer-events: auto;
+  }
+
+  .ui-volume-control--reveal-end:has(:focus-visible) .ui-volume-control__rail {
+    overflow: visible;
+    transition-duration: 0ms;
   }
 }
 </style>

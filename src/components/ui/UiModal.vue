@@ -57,6 +57,11 @@ const overlayHost = rootSurfaceId
 const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, required: true },
+  initialFocus: {
+    type: String,
+    default: 'field',
+    validator: (value) => ['field', 'dialog'].includes(value),
+  },
   // 'wide' is for row-based/multi-column content that deforms at the
   // 'default' short-form width.
   size: {
@@ -231,11 +236,13 @@ function onWindowKeydown(event) {
 // deliberately excluded: a fallback selector would match the header's close
 // button (first in DOM order), and an Enter right after opening would close the
 // modal and discard the draft, the Enter-driven fragility this modal replaces.
-function focusFirstField() {
+function focusInitialTarget() {
   const dialog = dialogRef.value;
-  const field = Array.from(
-    dialog?.querySelectorAll('input, textarea, select') ?? [],
-  ).find(isAvailableFocusTarget);
+  const field =
+    props.initialFocus === 'field' &&
+    Array.from(dialog?.querySelectorAll('input, textarea, select') ?? []).find(
+      isAvailableFocusTarget,
+    );
   (field || dialog)?.focus();
 }
 
@@ -246,7 +253,7 @@ function openModal() {
   const revision = ++focusRevision;
   window.requestAnimationFrame(() => {
     if (!props.open || !isTopModal() || revision !== focusRevision) return;
-    focusFirstField();
+    focusInitialTarget();
   });
 }
 
@@ -282,7 +289,7 @@ watch(
         document.activeElement !== document.body
       )
         return;
-      focusFirstField();
+      focusInitialTarget();
     });
   },
 );

@@ -1,9 +1,18 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
+import {
+  lyricsAuthoredPhraseBreaks,
+  lyricsDisplayBreakCandidates,
+} from '../../shared/presentation/lyricsPresentation.mjs';
+import { isSafeLyricsBreak } from '../../shared/presentation/lyricsTextProcessing.mjs';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useBgmSession } from './useBgmSession.js';
 import { useMetronome } from './useMetronome.js';
 import { usePlayer } from './usePlayer.js';
-import { pickPreferredLyricsSource } from '../utils/lyrics.js';
+import {
+  detectLyricsScript,
+  pickPreferredLyricsSource,
+} from '../utils/lyrics.js';
+import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
 import {
   deriveLyricsPlaybackState,
   normalizeLyricsDocument,
@@ -39,11 +48,47 @@ async function loadPreviewLyrics(track) {
     sourceFingerprint: result.timing?.sourceFingerprint,
     normalizerProfileId: result.timing?.normalizerProfileId,
   });
+  await settle(() => lyricsTextVariantLoader.prepare(document));
   return {
-    document,
+    document: lyricsTextVariantLoader.project(document),
     lines: projectLegacyLyricLines(document),
     offsetSeconds: Number.isInteger(offsetMs) ? offsetMs / 1000 : 0,
   };
+}
+
+function previewLyricRows(text, language) {
+  return text.split(/\r\n?|\n/u).map((line) => {
+    const breaks = new Set(
+      lyricsAuthoredPhraseBreaks(line, { language }).filter((offset) =>
+        /[ \t\u3000]/u.test(line[offset - 1]),
+      ),
+    );
+    for (const { offset, basis } of lyricsDisplayBreakCandidates(line)) {
+      if (basis === 'punctuation') breaks.add(offset);
+    }
+    for (const match of line.matchAll(
+      /[ \t\u3000]*[\t\u3000][ \t\u3000]*| {2,}/gu,
+    )) {
+      const offset = match.index + match[0].length;
+      if (offset < line.length && isSafeLyricsBreak(line, offset)) {
+        breaks.add(offset);
+      }
+    }
+
+    const boundaries = [0, ...[...breaks].sort((a, b) => a - b), line.length];
+    return boundaries
+      .slice(1)
+      .map((end, index) => {
+        const phrase = line.slice(boundaries[index], end);
+        return {
+          text: phrase
+            .trim()
+            .replace(/[ \t\u3000]+(?=[,，、。！？!?;；:：.…‥])/gu, '\u00a0'),
+          spaceAfter: /\s$/u.test(phrase) && end < line.length,
+        };
+      })
+      .filter((phrase) => phrase.text);
+  });
 }
 
 const FADE_IN_MS = 300;
@@ -76,15 +121,26 @@ export function createTrackPreview({
     isMuted: false,
   });
   const currentLyrics = shallowRef(null);
-  const lyricText = computed(() => {
+  const lyricLanguage = computed(() => {
+    const lines = currentLyrics.value?.document.lines ?? [];
+    const script = detectLyricsScript(lines.map((line) => line.text).join(''));
+    if (script === 'zh') return 'zh-Hant-TW';
+    return script === 'ja' || script === 'ko' ? script : undefined;
+  });
+  const activeLyricIndex = computed(() => {
     const lyrics = currentLyrics.value;
-    if (!lyrics || state.blockedReason) return '';
+    if (!lyrics || state.blockedReason) return -1;
     const positionMs = (state.currentTime + lyrics.offsetSeconds) * 1000;
-    const { activeLineIndex } = deriveLyricsPlaybackState(
-      lyrics.document,
-      positionMs,
-    );
-    return lyrics.document?.lines[activeLineIndex]?.text ?? '';
+    return deriveLyricsPlaybackState(lyrics.document, positionMs)
+      .activeLineIndex;
+  });
+  const activeLyric = computed(() => {
+    const index = activeLyricIndex.value;
+    const text = currentLyrics.value?.document.lines?.[index]?.text;
+    if (!text) return null;
+
+    const lang = lyricLanguage.value;
+    return { rows: previewLyricRows(text, lang), lang };
   });
 
   let lease = null;
@@ -432,7 +488,7 @@ export function createTrackPreview({
 
   return {
     state: readonly(state),
-    lyricText,
+    activeLyric,
     open,
     close,
     select,

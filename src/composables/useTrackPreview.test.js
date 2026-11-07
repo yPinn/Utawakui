@@ -143,7 +143,11 @@ describe('track preview', () => {
       timing: {
         status: 'current',
         document: {
-          lines: [{ text: 'Corrected line', startMs: 52000, endMs: 54000 }],
+          lines: [
+            { text: '远方的云', startMs: 50000, endMs: 52000 },
+            { text: '爱在这里　我听见', startMs: 52000, endMs: 54000 },
+            { text: '听见风声', startMs: 55000, endMs: 57000 },
+          ],
         },
       },
     }));
@@ -164,13 +168,36 @@ describe('track preview', () => {
       });
       expect(getTrackLyrics).toHaveBeenCalledWith('a', 'saved.lrc');
       audio.dispatch('loadedmetadata');
+      audio.currentTime = 51;
+      audio.dispatch('timeupdate');
+      expect(preview.activeLyric.value).toEqual({
+        rows: [[{ text: '遠方的雲', spaceAfter: false }]],
+        lang: 'zh-Hant-TW',
+      });
       audio.currentTime = 53;
       audio.dispatch('timeupdate');
-      expect(preview.lyricText.value).toBe('Corrected line');
+      expect(preview.activeLyric.value).toEqual({
+        rows: [
+          [
+            { text: '愛在這裡', spaceAfter: true },
+            { text: '我聽見', spaceAfter: false },
+          ],
+        ],
+        lang: 'zh-Hant-TW',
+      });
+      audio.currentTime = 55;
+      audio.dispatch('timeupdate');
+      expect(preview.activeLyric.value).toBeNull();
+      audio.currentTime = 56;
+      audio.dispatch('timeupdate');
+      expect(preview.activeLyric.value).toEqual({
+        rows: [[{ text: '聽見風聲', spaceAfter: false }]],
+        lang: 'zh-Hant-TW',
+      });
       preview.setVolume(0.2);
       expect(playerState.volume).toBe(0.45);
       await preview.next();
-      expect(preview.lyricText.value).toBe('');
+      expect(preview.activeLyric.value).toBeNull();
       expect(getTrackLyrics).toHaveBeenCalledOnce();
     } finally {
       preview.close();
@@ -193,17 +220,61 @@ describe('track preview', () => {
     audio.dispatch('loadedmetadata');
     audio.currentTime = 35;
     audio.dispatch('timeupdate');
-    expect(preview.lyricText.value).toBe('Preview line');
+    expect(preview.activeLyric.value).toEqual({
+      rows: [[{ text: 'Preview line', spaceAfter: false }]],
+    });
     audio.currentTime = 37;
     audio.dispatch('timeupdate');
-    expect(preview.lyricText.value).toBe('');
+    expect(preview.activeLyric.value).toBeNull();
     audio.currentTime = 35;
     audio.dispatch('timeupdate');
     const switching = preview.next();
-    expect(preview.lyricText.value).toBe('');
+    expect(preview.activeLyric.value).toBeNull();
     await switching;
-    expect(preview.lyricText.value).toBe('');
+    expect(preview.activeLyric.value).toBeNull();
   });
+
+  it.each([
+    [
+      'ja',
+      '必ず 越えて 泣いて 去って',
+      [['必ず', '越えて', '泣いて', '去って']],
+    ],
+    ['ko', '달빛 아래  같이 걸어요', [['달빛 아래', '같이 걸어요']]],
+    [
+      undefined,
+      'Walk with me\r\nStay with me',
+      [['Walk with me'], ['Stay with me']],
+    ],
+    [
+      undefined,
+      'And I stay alive！ ！ stay alive！ ！',
+      [['And I stay alive！\u00a0！', 'stay alive！\u00a0！']],
+    ],
+  ])(
+    'projects the %s active cue as width-aware phrases',
+    async (lang, text, phrases) => {
+      const { audio, preview } = createHarness({
+        getLyrics: async () => ({
+          offsetSeconds: 0,
+          document: {
+            lines: [{ text, startMs: 37000, endMs: 39000 }],
+          },
+        }),
+      });
+      await preview.open({ tracks: [track('a')] });
+      audio.dispatch('loadedmetadata');
+      audio.currentTime = 38;
+      audio.dispatch('timeupdate');
+      expect(preview.activeLyric.value.lang).toBe(lang);
+      expect(
+        preview.activeLyric.value.rows.map((row) =>
+          row.map((phrase) => phrase.text),
+        ),
+      ).toEqual(phrases);
+      preview.close();
+    },
+  );
 
   it('keeps volume changes within a preview session and clamps invalid input', async () => {
     const { audio, preview } = createHarness();

@@ -27,6 +27,8 @@ import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
+const lyricViewport = useTemplateRef('lyricViewport');
+
 const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, default: '' },
@@ -36,7 +38,7 @@ const props = defineProps({
   blockedReason: { type: String, default: null },
   segment: { type: Object, default: null },
   currentTime: { type: Number, default: 0 },
-  lyricText: { type: String, default: '' },
+  activeLyric: { type: Object, default: null },
   volume: { type: Number, default: 1 },
   muted: { type: Boolean, default: false },
   playlists: { type: Array, default: () => [] },
@@ -195,6 +197,10 @@ function handleKeydown(event) {
   const dialog = contentRef.value?.closest?.('[role="dialog"]');
   if (!dialog?.contains(event.target)) return;
   if (isRangeKey(event)) return;
+  if (event.target === lyricViewport.value && RANGE_KEYS.test(event.key)) {
+    event.stopPropagation();
+    return;
+  }
   const { intent, isolate } = resolvePreviewKeyIntent(event);
   if (isolate) event.stopPropagation();
   if (!intent) return;
@@ -229,6 +235,10 @@ watch(
   },
   { immediate: true },
 );
+watch(
+  () => props.activeLyric,
+  () => lyricViewport.value?.scrollTo(0, 0),
+);
 onUnmounted(() => setKeyboardListener(false));
 </script>
 
@@ -237,6 +247,7 @@ onUnmounted(() => setKeyboardListener(false));
     :open="open"
     :title="title"
     size="wide"
+    initial-focus="dialog"
     :tint="tone"
     @close="emit('close')"
   >
@@ -244,6 +255,7 @@ onUnmounted(() => setKeyboardListener(false));
       <UiVolumeControl
         class="track-preview__volume"
         variant="reveal"
+        reveal-side="end"
         :model-value="volume"
         :muted="muted"
         :volume-label="t('track.preview.volume')"
@@ -265,47 +277,78 @@ onUnmounted(() => setKeyboardListener(false));
         <!-- Conventional feed order: now-playing, media, then one edge
              column; the free width splits into equal spaces between them. -->
         <div class="track-preview__content">
-          <section class="track-preview__identity" aria-live="polite">
-            <!-- Only the title slides; the artist line just updates. -->
-            <div class="track-preview__identity-switch">
-              <Transition :name="switchTransition">
-                <h3 :key="track.id" class="track-preview__title">
-                  <UiTextButton
-                    v-if="trackAlbum"
-                    class="track-preview__title-link"
-                    :text="track.title"
-                    overflow="clamp"
-                    :aria-label="albumCtaLabel"
-                    @click="openAlbum"
-                  />
-                  <span v-else class="track-preview__title-text">
-                    {{ track.title }}
-                  </span>
-                </h3>
-              </Transition>
+          <div class="track-preview__now-playing">
+            <section class="track-preview__identity" aria-live="polite">
+              <!-- Only the title slides; the artist line just updates. -->
+              <div class="track-preview__identity-switch">
+                <Transition :name="switchTransition">
+                  <h3 :key="track.id" class="track-preview__title">
+                    <UiTextButton
+                      v-if="trackAlbum"
+                      class="track-preview__title-link"
+                      :text="track.title"
+                      overflow="clamp"
+                      :aria-label="albumCtaLabel"
+                      @click="openAlbum"
+                    />
+                    <span v-else class="track-preview__title-text">
+                      {{ track.title }}
+                    </span>
+                  </h3>
+                </Transition>
+              </div>
+              <p v-if="track.artist" class="track-preview__meta">
+                <TrackArtistCredits
+                  :track="track"
+                  @navigate="emit('navigate')"
+                />
+              </p>
+            </section>
+
+            <UiProgress
+              v-if="segment"
+              class="track-preview__progress"
+              :label="t('track.preview.progress')"
+              label-hidden
+              :value="segmentElapsed"
+              :max="segmentLength || 1"
+            />
+          </div>
+
+          <div class="track-preview__details">
+            <div
+              v-if="activeLyric"
+              ref="lyricViewport"
+              class="track-preview__lyric"
+              :lang="activeLyric.lang"
+              role="region"
+              :aria-label="t('track.context.lyrics')"
+              tabindex="0"
+            >
+              <p
+                v-for="(row, rowIndex) in activeLyric.rows"
+                :key="rowIndex"
+                class="track-preview__lyric-row"
+              >
+                <template
+                  v-for="(phrase, phraseIndex) in row"
+                  :key="phraseIndex"
+                >
+                  <span class="track-preview__lyric-phrase">{{
+                    phrase.text
+                  }}</span
+                  >{{ phrase.spaceAfter ? ' ' : '' }}
+                </template>
+              </p>
             </div>
-            <p v-if="track.artist" class="track-preview__meta">
-              <TrackArtistCredits :track="track" @navigate="emit('navigate')" />
-            </p>
-          </section>
 
-          <UiProgress
-            v-if="segment"
-            class="track-preview__progress"
-            :label="t('track.preview.progress')"
-            label-hidden
-            :value="segmentElapsed"
-            :max="segmentLength || 1"
-          />
-
-          <p v-if="lyricText" class="track-preview__lyric">{{ lyricText }}</p>
-
-          <UiNotice
-            v-if="statusNotice"
-            :tone="statusNotice.tone"
-            :message="statusNotice.message"
-            compact
-          />
+            <UiNotice
+              v-if="statusNotice"
+              :tone="statusNotice.tone"
+              :message="statusNotice.message"
+              compact
+            />
+          </div>
         </div>
 
         <!-- Neighbours peek as fixed slices; the wheel steps through them. -->
@@ -491,6 +534,16 @@ onUnmounted(() => setKeyboardListener(false));
   --track-preview-peek-size: var(--ui-artwork-size-xs);
   --track-preview-peek-scale: 0.7;
   --track-preview-info-size: 15rem;
+  --track-preview-lyric-offset: var(--ui-space-1);
+  --track-preview-lyric-line: calc(
+    var(--ui-type-subtitle-size) * var(--ui-type-subtitle-line-height)
+  );
+  --track-preview-lyrics-min-size: calc(
+    2 * var(--track-preview-lyric-line) + 2 * var(--ui-space-2)
+  );
+  --track-preview-lyrics-max-size: calc(
+    4 * var(--track-preview-lyric-line) + 2 * var(--ui-space-2)
+  );
 
   min-inline-size: 0;
   display: grid;
@@ -667,23 +720,72 @@ onUnmounted(() => setKeyboardListener(false));
   align-items: start;
 }
 
-/* Now-playing centres against the cover in its fixed info lane. */
+/* Place the song information above the cover centre. Lyrics and notices start
+   below it without contributing their height to the centring grid. */
 .track-preview__content {
   grid-area: info;
+  align-self: stretch;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 3fr) auto minmax(0, 5fr);
+  grid-template-areas: '.' 'now-playing' 'details';
+  gap: var(--ui-modal-section-gap);
+}
+
+.track-preview__now-playing,
+.track-preview__details {
   min-inline-size: 0;
   display: grid;
   justify-items: start;
   gap: var(--ui-modal-section-gap);
 }
 
+.track-preview__now-playing {
+  grid-area: now-playing;
+}
+
+.track-preview__details {
+  grid-area: details;
+  grid-auto-rows: max-content;
+  align-content: start;
+  contain: size;
+}
+
 .track-preview__lyric {
   justify-self: stretch;
-  margin: 0;
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: safe center;
+  box-sizing: border-box;
   min-inline-size: 0;
+  min-block-size: var(--track-preview-lyrics-min-size);
+  max-block-size: var(--track-preview-lyrics-max-size);
+  overflow-y: auto;
+  margin: 0;
+  margin-block-start: var(--track-preview-lyric-offset);
   padding: var(--ui-space-2);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface-raised);
+  color: var(--ui-color-text);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
+  line-break: strict;
   overflow-wrap: anywhere;
+}
+
+.track-preview__lyric:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: calc(-1 * var(--ui-focus-width));
+}
+
+.track-preview__lyric-row {
+  min-block-size: var(--track-preview-lyric-line);
+  margin: 0;
+}
+
+.track-preview__lyric-phrase {
+  display: inline-block;
+  max-inline-size: 100%;
+  vertical-align: top;
 }
 
 .track-preview__volume {
@@ -708,7 +810,12 @@ onUnmounted(() => setKeyboardListener(false));
 .track-preview__identity-switch {
   position: relative;
   min-inline-size: 0;
+  /* A second title line must not push the artist or progress down. */
+  min-block-size: calc(
+    2 * var(--ui-type-heading-size) * var(--ui-type-title-line-height)
+  );
   display: grid;
+  align-content: start;
 }
 
 .track-preview__meta {
@@ -721,7 +828,7 @@ onUnmounted(() => setKeyboardListener(false));
   white-space: nowrap;
 }
 
-/* Cover, then the title one step above the dialog's own title, then a small
+/* Cover, then a consistent song heading, then a small
    artist line: clear tiers. */
 .track-preview__title {
   --track-preview-switch-offset: var(--ui-space-2);
@@ -729,10 +836,9 @@ onUnmounted(() => setKeyboardListener(false));
   min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-display-size);
-  font-weight: var(--ui-type-display-weight);
-  /* Display leading is too tight: the clamp would clip the last line's
-     hover underline. */
+  font-size: var(--ui-type-heading-size);
+  font-weight: var(--ui-type-heading-weight);
+  /* Keep room for the last line's hover underline inside the clamp. */
   line-height: var(--ui-type-title-line-height);
 }
 
@@ -810,6 +916,23 @@ onUnmounted(() => setKeyboardListener(false));
       'media edge'
       'info info';
     gap: var(--ui-modal-section-gap);
+  }
+
+  .track-preview__content {
+    grid-template-rows: auto auto;
+    grid-template-areas: 'now-playing' 'details';
+  }
+
+  /* Keep long titles from widening the cover and action columns. */
+  .track-preview__now-playing {
+    contain: inline-size;
+  }
+
+  /* Keep the centred dialog the same height when lyrics appear or clear. */
+  .track-preview__details {
+    min-block-size: calc(
+      var(--track-preview-lyrics-min-size) + var(--track-preview-lyric-offset)
+    );
   }
 
   .track-preview__stage {

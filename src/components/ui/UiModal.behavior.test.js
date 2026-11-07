@@ -312,28 +312,37 @@ describe('UiModal behavior', () => {
     expect(dialog.focus).toHaveBeenCalledOnce();
   });
 
-  it('skips hidden and disabled fields when choosing initial focus', async () => {
-    const open = ref(false);
-    const app = renderer.createApp({
-      setup: () => () => h(UiModal, { open: open.value, title: '編輯內容' }),
-    });
-    app.provide(ssrContextKey, { modules: new Set() });
-    app.provide(UI_OVERLAY_HOST_KEY, body);
-    app.mount(hostNode('root'));
-    open.value = true;
-    await nextTick();
-    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
-    const disabled = { disabled: true, focus: vi.fn() };
-    const hidden = { getClientRects: () => [], focus: vi.fn() };
-    const field = { focus: vi.fn() };
-    dialog.querySelector.mockReturnValue(disabled);
-    dialog.querySelectorAll.mockReturnValue([disabled, hidden, field]);
-    animationFrames.splice(0).forEach((callback) => callback());
-    app.unmount();
-    expect(disabled.focus).not.toHaveBeenCalled();
-    expect(hidden.focus).not.toHaveBeenCalled();
-    expect(field.focus).toHaveBeenCalledOnce();
-  });
+  it.each([undefined, 'dialog'])(
+    'respects initial focus mode %s',
+    async (initialFocus) => {
+      const open = ref(false);
+      const app = renderer.createApp({
+        setup: () => () =>
+          h(UiModal, { open: open.value, title: '編輯內容', initialFocus }),
+      });
+      app.provide(ssrContextKey, { modules: new Set() });
+      app.provide(UI_OVERLAY_HOST_KEY, body);
+      app.mount(hostNode('root'));
+      open.value = true;
+      await nextTick();
+      const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+      const disabled = { disabled: true, focus: vi.fn() };
+      const hidden = { getClientRects: () => [], focus: vi.fn() };
+      const field = { focus: vi.fn() };
+      dialog.querySelector.mockReturnValue(disabled);
+      dialog.querySelectorAll.mockReturnValue([disabled, hidden, field]);
+      animationFrames.splice(0).forEach((callback) => callback());
+      app.unmount();
+      expect(disabled.focus).not.toHaveBeenCalled();
+      expect(hidden.focus).not.toHaveBeenCalled();
+      expect(field.focus).toHaveBeenCalledTimes(
+        initialFocus === 'dialog' ? 0 : 1,
+      );
+      expect(dialog.focus).toHaveBeenCalledTimes(
+        initialFocus === 'dialog' ? 1 : 0,
+      );
+    },
+  );
 
   it('does not restore page focus when a lower modal unmounts beneath a dialog', async () => {
     const lowerMounted = ref(true);

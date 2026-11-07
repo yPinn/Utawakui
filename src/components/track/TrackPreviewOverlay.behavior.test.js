@@ -50,17 +50,31 @@ function renderOverlay(overrides = {}) {
 }
 
 describe('TrackPreviewOverlay', () => {
-  it('renders the preview lyric and an independently labelled volume slider', async () => {
+  it('renders a single active lyric with authored line breaks and an independently labelled volume slider', async () => {
     const html = await renderOverlay({
-      lyricText: 'Preview lyric',
+      activeLyric: {
+        rows: [[{ text: '夜が明ける' }], [{ text: '明日' }]],
+        lang: 'ja',
+      },
       volume: 0.35,
     });
-    expect(html).toContain('Preview lyric');
+    expect(html).toMatch(/class="track-preview__lyric" lang="ja"/u);
+    expect(html.match(/class="track-preview__lyric-row"/gu)).toHaveLength(2);
+    expect(html).toMatch(
+      /class="track-preview__lyric-phrase"[^>]*>夜が明ける<\/span>/u,
+    );
+    expect(html).toMatch(
+      /class="track-preview__lyric-phrase"[^>]*>明日<\/span>/u,
+    );
+    expect(source).toMatch(
+      /\.track-preview__lyric\s*\{[^}]*max-block-size:\s*var\(--track-preview-lyrics-max-size\);/u,
+    );
     expect(html).toMatch(
       /<input(?=[^>]*type="range")(?=[^>]*aria-label="試聽音量")/u,
     );
     expect(html).toContain('35%');
     expect(html).toContain('ui-volume-control--reveal');
+    expect(html).toContain('ui-volume-control--reveal-end');
     expect(await renderOverlay()).not.toContain('track-preview__lyric');
   });
 
@@ -304,6 +318,39 @@ describe('TrackPreviewOverlay', () => {
     );
   });
 
+  it('groups title, artist and progress independently from lyrics and notices', async () => {
+    const html = await renderOverlay({
+      activeLyric: { rows: [[{ text: 'Preview lyric' }]] },
+      status: 'error',
+    });
+    const detailsStart = html.indexOf('class="track-preview__details"');
+    const information = html.slice(
+      html.indexOf('class="track-preview__now-playing"'),
+      detailsStart,
+    );
+    const details = html.slice(detailsStart);
+
+    expect(information).toContain('class="track-preview__title"');
+    expect(information).toContain('class="track-preview__meta"');
+    expect(information).toContain('aria-label="試聽進度"');
+    expect(information).not.toContain('Preview lyric');
+    expect(information).not.toContain('這些曲目目前都無法試聽');
+    expect(details).toContain('Preview lyric');
+    expect(details).toContain('這些曲目目前都無法試聽');
+    expect(source).toMatch(
+      /\.track-preview__details\s*\{[^}]*contain:\s*size;/u,
+    );
+  });
+
+  it('reserves two title lines and separates the lyric from progress', () => {
+    expect(source).toMatch(
+      /\.track-preview__identity-switch\s*\{[^}]*min-block-size:\s*calc\(\s*2 \* var\(--ui-type-heading-size\) \* var\(--ui-type-title-line-height\)\s*\);/u,
+    );
+    expect(source).toMatch(
+      /\.track-preview__lyric\s*\{[^}]*margin-block-start:\s*var\(--track-preview-lyric-offset\);/u,
+    );
+  });
+
   it('bounds the bar by the info lane, not by restyling it', () => {
     const styles = source.slice(source.indexOf('<style scoped>'));
     // A fixed info lane narrower than the cover leaves spare width for the
@@ -368,15 +415,18 @@ describe('TrackPreviewOverlay', () => {
     expect(styles).toMatch(/overflow-x: visible;\s*overflow-y: clip;/u);
   });
 
-  it('tiers cover, display title and a small artist line', () => {
+  it('tiers cover, song heading and a small artist line', () => {
     const styles = source.slice(source.indexOf('<style scoped>'));
     expect(styles).toMatch(
-      /\.track-preview__title\s*\{[^}]*font-size:\s*var\(--ui-type-display-size\);/u,
+      /\.track-preview__title\s*\{[^}]*font-size:\s*var\(--ui-type-heading-size\);/u,
     );
     expect(styles).toMatch(
       /\.track-preview__meta\s*\{[^}]*font-size:\s*var\(--ui-type-caption-size\);/u,
     );
-    // Display leading clips the clamped title's last-line hover underline.
+    expect(styles).toMatch(
+      /\.track-preview__now-playing\s*\{\s*contain:\s*inline-size;\s*\}/u,
+    );
+    // Keep the clamped title's last-line hover underline visible.
     expect(styles).toMatch(
       /\.track-preview__title\s*\{[^}]*line-height:\s*var\(--ui-type-title-line-height\);/u,
     );
