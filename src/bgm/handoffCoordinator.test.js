@@ -627,7 +627,7 @@ describe('BGM handoff coordinator', () => {
         audibleLane: null,
         bgmRequested: false,
         restorePending: false,
-        error: 'BGM 音訊無法播放。',
+        error: '場間音樂音訊無法播放。',
       }),
     );
 

@@ -154,7 +154,7 @@ describe('UiButton destructive consumers', () => {
       'void confirmClearArtistPhoto()',
     );
     expect(source('../bgm/BgmPlayerTransport.vue')).toMatch(
-      /label="立即停止 BGM（不淡出）"\s*intent="danger"/u,
+      /label="立即停止場間音樂（不淡出）"\s*intent="danger"/u,
     );
   });
   it.each([

@@ -27,8 +27,8 @@ describe('integrated BGM layout contract', () => {
     expect(sources[0]).toContain('<UiPopover');
     expect(sources[1]).not.toContain('<UiPopover');
     expect(sources[1]).toContain('bgm-transport__context');
-    expect(sources[1]).toContain('BGM 進度');
-    expect(sources[1]).toContain('BGM 音量');
-    expect(sources[1]).toContain('立即停止 BGM');
+    expect(sources[1]).toContain('場間音樂進度');
+    expect(sources[1]).toContain('場間音樂音量');
+    expect(sources[1]).toContain('立即停止場間音樂');
   });
 });

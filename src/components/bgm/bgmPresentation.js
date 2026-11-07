@@ -2,7 +2,6 @@ import {
   CircleAlert,
   CircleDashed,
   Clock,
-  Loader2,
   MicVocal,
   Pause,
   Play,
@@ -42,12 +41,6 @@ const OPERATIONAL_STATUS = Object.freeze({
     icon: Volume2,
     tone: 'current',
   },
-  'stopping-bgm': {
-    label: t('bgm.fading'),
-    accessibleLabel: t('bgm.fading'),
-    icon: Loader2,
-    tone: 'warning',
-  },
   'track-preroll': {
     label: t('bgm.preRoll'),
     accessibleLabel: t('bgm.preRollLabel'),
@@ -84,6 +77,7 @@ export function projectBgmOperationalStatus({
   phase = 'idle',
   restorePending = false,
   error = '',
+  exceptionsOnly = false,
 } = {}) {
   if (error) {
     return {
@@ -92,6 +86,24 @@ export function projectBgmOperationalStatus({
       icon: CircleAlert,
       tone: 'danger',
     };
+  }
+
+  if (phase === 'stopping-bgm') {
+    return restorePending
+      ? {
+          label: t('bgm.restorePending'),
+          accessibleLabel: t('bgm.restorePendingLabel'),
+          tone: 'muted',
+        }
+      : null;
+  }
+
+  if (
+    exceptionsOnly &&
+    !restorePending &&
+    !['track-preroll', 'postroll-silence'].includes(phase)
+  ) {
+    return null;
   }
 
   const status = OPERATIONAL_STATUS[phase] ?? OPERATIONAL_STATUS.idle;

@@ -80,7 +80,7 @@
     },
     "audio": {
       "label": "Audio",
-      "guidance": "Volume and mute don't affect background music; save after transposing."
+      "guidance": "Volume and mute don't affect interlude music; save after transposing."
     },
     "lyrics": {
       "label": "Lyrics timing",

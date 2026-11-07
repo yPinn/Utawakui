@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { createSSRApp } from 'vue';
+import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 
@@ -27,9 +27,7 @@ describe('BgmPlayerTransport', () => {
       )?.[0];
       expect(button).toContain('ui-icon-btn');
       expect(button).toContain(`aria-pressed="${guideVocalOn}"`);
-      expect(button).toContain(
-        guideVocalOn ? '關閉 BGM 導唱' : '開啟 BGM 導唱',
-      );
+      expect(button).toContain(guideVocalOn ? '只播伴奏' : '加入人聲');
       expect(button).not.toContain('disabled');
       expect(source).toContain("emit('setGuideVocalOn', !guideVocalOn)");
     },
@@ -62,12 +60,12 @@ describe('BgmPlayerTransport', () => {
       }),
     );
 
-    expect(html).toContain('aria-label="BGM 播放控制"');
+    expect(html).toContain('aria-label="場間音樂播放控制"');
     expect(html).not.toContain('>失敗<');
-    expect(html).not.toContain('目前可聽：BGM');
-    expect(html).toContain('暫停 BGM');
-    expect(html).toContain('壓低 BGM（降低 12 dB）');
-    expect(source).not.toMatch(/>\s*壓低 BGM\s*<\/UiButton>/u);
+    expect(html).not.toContain('目前可聽：場間音樂');
+    expect(html).toContain('暫停場間音樂');
+    expect(html).toContain('壓低場間音樂（降低 12 dB）');
+    expect(source).not.toMatch(/>\s*壓低場間音樂\s*<\/UiButton>/u);
     const dimButton = html.match(
       /<button[^>]*bgm-transport__talk[^>]*>[\s\S]*?<\/button>/u,
     )?.[0];
@@ -75,8 +73,8 @@ describe('BgmPlayerTransport', () => {
     expect(dimButton).toContain('<svg');
     expect(dimButton).toContain('volume-1');
     expect(dimButton).toContain('ui-icon-btn');
-    expect(html).toContain('立即停止 BGM（不淡出）');
-    expect(html).toContain('aria-label="BGM 進度"');
+    expect(html).toContain('立即停止場間音樂（不淡出）');
+    expect(html).toContain('aria-label="場間音樂進度"');
     expect(html).toContain('0:42');
     expect(html).toContain('3:00');
     expect(source).not.toContain('UiChip');
@@ -95,14 +93,13 @@ describe('BgmPlayerTransport', () => {
       }),
     );
 
-    expect(html).toContain('恢復 BGM 音量');
+    expect(html).toContain('恢復場間音樂音量');
     const dimButton = html.match(
       /<button[^>]*bgm-transport__talk[^>]*>[\s\S]*?<\/button>/u,
     )?.[0];
     expect(dimButton).toContain('aria-pressed="true"');
     expect(dimButton).toContain('ui-visually-hidden');
-    expect(dimButton).toContain('壓低 BGM（按下恢復 BGM 音量）');
-    expect(dimButton).toContain('壓低 BGM');
+    expect(dimButton).toContain('恢復場間音樂音量');
     expect(dimButton).toContain('volume-1');
     expect(html).not.toContain('Talk／Dim');
     expect(html).not.toContain('Dim：25%');
@@ -118,10 +115,10 @@ describe('BgmPlayerTransport', () => {
     );
 
     expect(html).not.toContain('目前可聽：演唱曲目');
-    expect(html).toContain('播放 BGM');
+    expect(html).toContain('播放場間音樂');
     expect(html).toContain('disabled');
-    expect(html).not.toContain('暫停 BGM');
-    expect(html).toContain('立即停止 BGM（不淡出）');
+    expect(html).not.toContain('暫停場間音樂');
+    expect(html).toContain('立即停止場間音樂（不淡出）');
     expect(source).not.toContain('bgmRequested:');
   });
 
@@ -134,7 +131,7 @@ describe('BgmPlayerTransport', () => {
       }),
     );
     const primaryButton = html.match(
-      /<button(?:(?!<\/button>)[\s\S])*播放 BGM(?:(?!<\/button>)[\s\S])*<\/button>/u,
+      /<button(?:(?!<\/button>)[\s\S])*播放場間音樂(?:(?!<\/button>)[\s\S])*<\/button>/u,
     )?.[0];
 
     expect(primaryButton).toBeDefined();
@@ -163,9 +160,9 @@ describe('BgmPlayerTransport', () => {
       /<button[^>]*bgm-transport__cut[^>]*>/u,
     )?.[0];
 
-    expect(idleHtml).toContain('立即停止 BGM（不淡出）');
+    expect(idleHtml).toContain('立即停止場間音樂（不淡出）');
     expect(idleCut).toContain('disabled');
-    expect(playingHtml).toContain('立即停止 BGM（不淡出）');
+    expect(playingHtml).toContain('立即停止場間音樂（不淡出）');
     expect(playingCut).not.toContain('disabled');
     expect(source).toContain(':disabled="!canCutBgm"');
     expect(source).not.toContain('v-if="canCutBgm"');
@@ -215,7 +212,6 @@ describe('session and Dock reuse one BGM safety transport', () => {
     );
     const context = source.slice(
       source.indexOf('class="bgm-transport__context"'),
-      source.indexOf('class="bgm-transport__controls"'),
     );
     expect(context).toContain('class="bgm-transport__cut"');
     expect(source).not.toContain('@container');
@@ -229,22 +225,57 @@ describe('session and Dock reuse one BGM safety transport', () => {
         currentTrack: { id: 'a', title: 'BGM' },
       }),
     );
-    expect(html).toContain('壓低 BGM');
-    expect(html).toContain('立即停止 BGM（不淡出）');
-    expect(html).toContain('BGM 進度');
-    expect(html).toContain('BGM 音量');
-    expect(html).not.toContain('BGM 音量與進度');
+    expect(html).toContain('壓低場間音樂');
+    expect(html).toContain('立即停止場間音樂（不淡出）');
+    expect(html).toContain('場間音樂進度');
+    expect(html).toContain('場間音樂音量');
+    expect(html).not.toContain('場間音樂音量與進度');
     expect(source).not.toContain('UiPopover');
     expect(source).not.toContain('SlidersHorizontal');
     expect(source).not.toContain('detailsOpen');
     expect(source.match(/<UiRangeControl/gu)).toHaveLength(1);
-    expect(html).toContain('ui-volume-control--expanded');
-    expect(html).not.toContain('暫停 BGM');
+    expect(html).toContain('ui-volume-control--reveal-end');
+    expect(html).toContain('ui-volume-control--inline');
+    const order = [
+      'ui-volume-control__mute',
+      'ui-volume-control__range',
+      'bgm-transport__guide',
+      'bgm-transport__talk',
+      'bgm-transport__cut',
+    ].map((marker) => html.indexOf(marker));
+    expect(order[0]).toBeGreaterThanOrEqual(0);
+    expect(order).toEqual([...order].sort((left, right) => left - right));
+    expect(html).not.toContain('暫停場間音樂');
     expect(source).toContain('v-if="variant !== \'dock\'"');
   });
 });
 
 describe('compact track information', () => {
+  it('keeps progress visible when the selected standby footer is folded', async () => {
+    const html = await renderToString(
+      createSSRApp(BgmPlayerTransport, {
+        variant: 'dock',
+        standby: true,
+        folded: true,
+        combinedTools: true,
+        footerId: 'bgm-footer',
+        phase: 'idle',
+        currentTrack: { id: 'bgm' },
+        currentTime: 53,
+        duration: 147,
+      }),
+    );
+    const seekRow = html.indexOf('bgm-transport__progress');
+    const contextRow = html.indexOf('bgm-transport__context');
+    expect(html.slice(seekRow, contextRow)).toContain('0:53');
+    expect(html.slice(seekRow, contextRow)).toContain('2:27');
+    expect(html).toMatch(
+      /id="bgm-footer"[^>]*class="[^"]*bgm-transport__fold--closed[^"]*"[^>]*inert/u,
+    );
+    expect(html).not.toContain('bgm-transport__audio-toggle');
+    expect(html).toContain('aria-label="場間音樂音量"');
+  });
+
   it('keeps one progress control while hiding the context and mixer tools', async () => {
     const html = await renderToString(
       createSSRApp(BgmPlayerTransport, {
@@ -258,14 +289,40 @@ describe('compact track information', () => {
     );
     expect(html).toContain('1:17');
     expect(html).toContain('3:55');
-    expect(html).toContain('aria-label="BGM 進度"');
-    for (const name of ['context', 'controls'])
-      expect(html).toMatch(
-        new RegExp(
-          `<div[^>]*class="bgm-transport__${name}"[^>]*style="display:none;"`,
-        ),
-      );
-    expect(html).not.toContain('播放 BGM');
-    expect(html.match(/aria-label="BGM 進度"/g)).toHaveLength(1);
+    expect(html).toContain('aria-label="場間音樂進度"');
+    expect(html).toMatch(
+      /<div[^>]*class="bgm-transport__context[^"]*"[^>]*style="display:none;"/u,
+    );
+    expect(html).not.toContain('播放場間音樂');
+    expect(html.match(/aria-label="場間音樂進度"/g)).toHaveLength(1);
+  });
+
+  it('keeps an exception hint and immediate stop outside the folded mixer', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            BgmPlayerTransport,
+            {
+              variant: 'dock',
+              phase: 'bgm-playing',
+              audibleLane: 'bgm',
+              currentTrack: { id: 'bgm' },
+              combinedTools: true,
+              statusVisible: true,
+              folded: true,
+              footerId: 'bgm-mixer',
+            },
+            { status: () => h('span', '含人聲') },
+          ),
+      }),
+    );
+    expect(html.indexOf('含人聲')).toBeLessThan(html.indexOf('id="bgm-mixer"'));
+    expect(html).toMatch(/id="bgm-mixer"[^>]*\binert\b/u);
+    const stop = html.match(
+      /<button[^>]*class="[^"]*bgm-transport__cut[^"]*"[^>]*>/u,
+    )?.[0];
+    expect(stop).toBeDefined();
+    expect(stop).not.toMatch(/disabled|display:none/u);
   });
 });

@@ -1,6 +1,8 @@
 // Project-owned icon boundary. Components import icons from here instead of
 // reaching into @lucide/vue directly, so future icon swaps, aliases, or sizing
 // conventions have one place to land.
+import { createLucideIcon } from '@lucide/vue';
+
 export { ICON_SIZE } from '../constants/ui.js';
 
 export {
@@ -107,3 +109,15 @@ export {
   Wrench,
   X,
 } from '@lucide/vue';
+
+export const MicSignal = createLucideIcon('mic-signal', [
+  ['rect', { x: 10, y: 6, width: 4, height: 8, rx: 2, key: 'mic' }],
+  ['path', { d: 'M8 13a4 4 0 0 0 8 0M12 17v4m-3 0h6', key: 'stand' }],
+  [
+    'path',
+    {
+      d: 'M6.5 6.5a7.8 7.8 0 0 0-2 5.5m13-5.5a7.8 7.8 0 0 1 2 5.5M4 4a11 11 0 0 0-3 8m19-8a11 11 0 0 1 3 8',
+      key: 'signal',
+    },
+  ],
+]);

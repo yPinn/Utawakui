@@ -541,12 +541,12 @@
     "message": "Lyrics analysis didn't finish. Your accompaniment and lyrics still work."
   },
   "BGM_STANDBY_GET_FAILED": {
-    "title": "BGM can't be loaded",
-    "message": "Couldn't load the BGM. Try again."
+    "title": "Interlude music can't be loaded",
+    "message": "Couldn't load the interlude music. Try again."
   },
   "BGM_STANDBY_UPDATE_FAILED": {
-    "title": "BGM can't be updated",
-    "message": "Couldn't update the BGM. Try again."
+    "title": "Interlude music can't be updated",
+    "message": "Couldn't update the interlude music. Try again."
   },
   "EXTERNAL_TARGET_UNKNOWN": {
     "title": "Can't open the page",

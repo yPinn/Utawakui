@@ -64,9 +64,9 @@ describe('BGM transport user intents', () => {
     });
     const view = mount(BgmPlayerTransport, props);
     try {
-      trigger(button(view.root, '開啟 BGM 導唱'), 'onClick');
-      trigger(button(view.root, '壓低 BGM（降低 12 dB）'), 'onClick');
-      trigger(button(view.root, 'BGM 靜音'), 'onClick');
+      trigger(button(view.root, '加入人聲'), 'onClick');
+      trigger(button(view.root, '壓低場間音樂（降低 12 dB）'), 'onClick');
+      trigger(button(view.root, '場間音樂靜音'), 'onClick');
       expect(guide).toHaveBeenCalledExactlyOnceWith(true);
       expect(dim).toHaveBeenCalledExactlyOnceWith(true);
       expect(mute).toHaveBeenCalledExactlyOnceWith(true);
@@ -77,9 +77,9 @@ describe('BGM transport user intents', () => {
         isMuted: true,
       });
       await nextTick();
-      trigger(button(view.root, '關閉 BGM 導唱'), 'onClick');
-      trigger(button(view.root, '壓低 BGM（按下恢復 BGM 音量）'), 'onClick');
-      trigger(button(view.root, '取消 BGM 靜音'), 'onClick');
+      trigger(button(view.root, '只播伴奏'), 'onClick');
+      trigger(button(view.root, '恢復場間音樂音量'), 'onClick');
+      trigger(button(view.root, '取消場間音樂靜音'), 'onClick');
       expect(guide).toHaveBeenLastCalledWith(false);
       expect(dim).toHaveBeenLastCalledWith(false);
       expect(mute).toHaveBeenLastCalledWith(false);
@@ -111,15 +111,15 @@ describe('BGM transport user intents', () => {
     });
     const view = mount(BgmPlayerTransport, props);
     try {
-      trigger(button(view.root, '播放 BGM'), 'onClick');
+      trigger(button(view.root, '播放場間音樂'), 'onClick');
       expect(play).toHaveBeenCalledOnce();
       props.phase = 'track-active';
       await nextTick();
-      trigger(button(view.root, '播放 BGM'), 'onClick');
+      trigger(button(view.root, '播放場間音樂'), 'onClick');
       expect(play).toHaveBeenCalledOnce();
       props.phase = 'bgm-playing';
       await nextTick();
-      trigger(button(view.root, '暫停 BGM'), 'onClick');
+      trigger(button(view.root, '暫停場間音樂'), 'onClick');
       expect(pause).toHaveBeenCalledOnce();
       fixture.ranges[1].emit('update:modelValue', 0.35);
       await nextTick();
@@ -133,7 +133,7 @@ describe('BGM transport user intents', () => {
       fixture.ranges[0].emit('change');
       expect(seek).toHaveBeenCalledWith(12);
       expect(position).toHaveBeenCalledOnce();
-      trigger(button(view.root, '立即停止 BGM（不淡出）'), 'onClick');
+      trigger(button(view.root, '立即停止場間音樂（不淡出）'), 'onClick');
       expect(cut).toHaveBeenCalledOnce();
     } finally {
       view.app.unmount();

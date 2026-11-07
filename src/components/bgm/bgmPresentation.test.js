@@ -14,7 +14,7 @@ describe('shared BGM primary action', () => {
   ])('locks artwork and transport during %s', (phase) => {
     expect(projectBgmPrimaryAction({ phase, hasTrack: true })).toMatchObject({
       intent: 'play',
-      label: '播放 BGM',
+      label: '播放場間音樂',
       disabled: true,
     });
   });
@@ -24,7 +24,7 @@ describe('shared BGM primary action', () => {
     ).toMatchObject({ intent: 'play', disabled: false });
     expect(projectBgmPrimaryAction({ phase: 'bgm-playing' })).toMatchObject({
       intent: 'pause',
-      label: '暫停 BGM',
+      label: '暫停場間音樂',
       disabled: false,
     });
     expect(projectBgmPrimaryAction()).toMatchObject({
@@ -36,17 +36,31 @@ describe('shared BGM primary action', () => {
 
 describe('BGM presentation projection', () => {
   it.each([
-    ['idle', 'BGM 待命'],
-    ['bgm-playing', 'BGM 播放中'],
-    ['stopping-bgm', 'BGM 淡出中'],
+    ['idle', '場間音樂待命'],
+    ['bgm-playing', '場間音樂播放中'],
     ['track-preroll', '曲前留白'],
     ['track-active', '演唱中'],
     ['track-paused', '演唱暫停'],
     ['postroll-silence', '曲後留白'],
-    ['manual-hold', 'BGM 暫停'],
+    ['manual-hold', '場間音樂暫停'],
   ])('keeps %s visibly distinct as %s', (phase, label) => {
     expect(projectBgmOperationalStatus({ phase }).label).toBe(label);
   });
+
+  it.each([false, true])(
+    'hides fade feedback while retaining pending handoff (exceptions only: %s)',
+    (exceptionsOnly) => {
+      const fade = { phase: 'stopping-bgm', exceptionsOnly };
+      expect(projectBgmOperationalStatus(fade)).toBeNull();
+      expect(
+        projectBgmOperationalStatus({ ...fade, restorePending: true }),
+      ).toEqual({
+        label: '曲後恢復',
+        accessibleLabel: '曲後恢復場間音樂',
+        tone: 'muted',
+      });
+    },
+  );
 
   it('folds deferred restore into the operational sentence', () => {
     expect(
@@ -56,7 +70,7 @@ describe('BGM presentation projection', () => {
       }),
     ).toMatchObject({
       label: '演唱中 · 曲後恢復',
-      accessibleLabel: '演唱曲目播放中，曲後恢復 BGM',
+      accessibleLabel: '演唱曲目播放中，曲後恢復場間音樂',
     });
   });
 
@@ -64,11 +78,11 @@ describe('BGM presentation projection', () => {
     expect(
       projectBgmOperationalStatus({
         phase: 'bgm-playing',
-        error: 'BGM 音訊輸出暫時無法使用。',
+        error: '場間音樂音訊輸出暫時無法使用。',
       }),
     ).toMatchObject({
-      label: 'BGM 音訊輸出暫時無法使用。',
-      accessibleLabel: 'BGM 操作失敗：BGM 音訊輸出暫時無法使用。',
+      label: '場間音樂音訊輸出暫時無法使用。',
+      accessibleLabel: '場間音樂操作失敗：場間音樂音訊輸出暫時無法使用。',
       tone: 'danger',
     });
   });

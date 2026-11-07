@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, shallowRef, watch } from 'vue';
+import { hasPlayableAccompaniment } from '../utils/playableTrack.js';
 import { t } from '../utils/i18n.js';
 
 export function createBgmSessionController({
@@ -26,7 +27,7 @@ export function createBgmSessionController({
   const settings = computed(() => plan.state.plan.settings);
   const currentSource = computed(() => {
     const track = currentTrack.value;
-    const usesSeparatedAudio = Boolean(track?.hasSeparation && track?.stemsUrl);
+    const usesSeparatedAudio = hasPlayableAccompaniment(track);
     return {
       url: usesSeparatedAudio ? track.stemsUrl : (track?.url ?? ''),
       usesSeparatedAudio,
@@ -244,10 +245,11 @@ export function createBgmSessionController({
     return updated;
   }
 
+  const isCurrentSourceLoaded = computed(
+    () => loadedTrackId.value === currentTrack.value?.id,
+  );
   const canToggleGuideVocal = computed(
-    () =>
-      loadedTrackId.value === currentTrack.value?.id &&
-      deck.state.usesSeparatedAudio === true,
+    () => isCurrentSourceLoaded.value && deck.state.usesSeparatedAudio === true,
   );
   function setGuideVocalOn(on) {
     if (!canToggleGuideVocal.value) return false;
@@ -266,6 +268,7 @@ export function createBgmSessionController({
     handoffState: readonly(coordinator.state),
     deckState: readonly(deck.state),
     currentTrack,
+    isCurrentSourceLoaded,
     canToggleGuideVocal,
     sourceTrackIds: computed(() => [
       ...new Set([loadedTrackId.value, requestedTrackId.value].filter(Boolean)),

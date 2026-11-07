@@ -53,7 +53,7 @@ async function loadPlanOwner(overrides = {}) {
   vi.stubGlobal('window', { Utawakui: bridge });
   vi.doMock('./useAppDiagnostics.js', () => ({
     useAppDiagnostics: () => ({
-      recordError: vi.fn(() => ({ message: 'BGM 未更新。' })),
+      recordError: vi.fn(() => ({ message: '場間音樂未更新。' })),
     }),
   }));
   const { useBgmStandbyPlan } = await import('./useBgmStandbyPlan.js');
@@ -68,7 +68,7 @@ describe('useBgmStandbyPlan', () => {
   it('keeps base volume and Talk attenuation as independent defaults', async () => {
     vi.doMock('./useAppDiagnostics.js', () => ({
       useAppDiagnostics: () => ({
-        recordError: vi.fn(() => ({ message: 'BGM 未更新。' })),
+        recordError: vi.fn(() => ({ message: '場間音樂未更新。' })),
       }),
     }));
     const { BGM_STANDBY_DEFAULT_SETTINGS } =
@@ -132,7 +132,7 @@ describe('useBgmStandbyPlan', () => {
         error: {
           code: 'BGM_TRACK_UNAVAILABLE',
           field: 'trackId',
-          message: '這首本機曲目目前無法作為 BGM。',
+          message: '這首本機曲目目前無法作為場間音樂。',
         },
       }),
     });
@@ -142,7 +142,7 @@ describe('useBgmStandbyPlan', () => {
     expect(owner.state.validationError).toEqual({
       code: 'BGM_TRACK_UNAVAILABLE',
       field: 'trackId',
-      message: '這首本機曲目目前無法作為 BGM。',
+      message: '這首本機曲目目前無法作為場間音樂。',
     });
     expect(owner.state.error).toBeNull();
   });

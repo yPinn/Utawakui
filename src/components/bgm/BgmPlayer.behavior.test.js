@@ -32,7 +32,7 @@ describe('BGM feature ownership', () => {
     expect(source).not.toContain('useAppView');
     expect(source).not.toContain("variant === 'session' && pickerExpanded");
     expect(source).toContain('<UiPopover');
-    expect(source).toContain('v-model:open="pickerExpanded"');
+    expect(source).toContain(':open="drawerOpen"');
     expect(source).toContain('placement="top-end"');
     expect(source).toContain('focus-on-open');
     expect(source).not.toContain('setExpanded');

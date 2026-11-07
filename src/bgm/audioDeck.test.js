@@ -207,7 +207,7 @@ describe('BGM audio deck', () => {
     h.deck.load('utawakui-media://track/bgm/audio.wav');
     expect(await h.deck.startSilent()).toBe(false);
     expect(h.audio.play).not.toHaveBeenCalled();
-    expect(h.deck.state.error).toBe('BGM 音訊無法播放。');
+    expect(h.deck.state.error).toBe('場間音樂音訊無法播放。');
     const start = h.deck.startSilent();
     await vi.waitFor(() => expect(h.audio.play).toHaveBeenCalledOnce());
     h.audio.dispatch('playing');
@@ -452,7 +452,7 @@ describe('BGM audio deck', () => {
     expect(audio.pause).toHaveBeenCalledOnce();
     expect(deck.state.isPlaying).toBe(false);
     expect(deck.state.playbackPhase).toBe('error');
-    expect(deck.state.error).toBe('BGM 音訊無法播放。');
+    expect(deck.state.error).toBe('場間音樂音訊無法播放。');
   });
 
   it('cuts synchronously, records bounded errors, and tears down listeners', async () => {
@@ -469,7 +469,7 @@ describe('BGM audio deck', () => {
 
     audio.error = new Error('private decoder detail');
     audio.dispatch('error');
-    expect(deck.state.error).toBe('BGM 音訊無法播放。');
+    expect(deck.state.error).toBe('場間音樂音訊無法播放。');
     expect(deck.state.error).not.toContain('private');
 
     await deck.dispose();

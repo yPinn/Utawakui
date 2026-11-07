@@ -122,7 +122,7 @@ describe('registerBgmStandbyPlanHandlers', () => {
     const validation = new BgmStandbyPlanValidationError({
       code: 'BGM_SETTING_OUT_OF_RANGE',
       field: 'fadeOutSeconds',
-      message: 'BGM 淡出時間超出允許範圍。',
+      message: '場間音樂淡出時間超出允許範圍。',
     });
     const { handlers, recordDiagnostic } = register({
       store: createStore({
@@ -141,7 +141,7 @@ describe('registerBgmStandbyPlanHandlers', () => {
       error: {
         code: 'BGM_SETTING_OUT_OF_RANGE',
         field: 'fadeOutSeconds',
-        message: 'BGM 淡出時間超出允許範圍。',
+        message: '場間音樂淡出時間超出允許範圍。',
       },
     });
     expect(recordDiagnostic).not.toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe('registerBgmStandbyPlanHandlers', () => {
 
     expect(payload).toMatchObject({
       code: 'BGM_STANDBY_GET_FAILED',
-      message: '目前無法讀取 BGM，請再試一次。',
+      message: '目前無法讀取場間音樂，請再試一次。',
       context: { diagnosticRecorded: true, retryable: true },
     });
     expect(JSON.stringify(payload)).not.toContain('E:/private');

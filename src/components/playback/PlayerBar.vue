@@ -500,6 +500,7 @@ onUnmounted(() => {
   <div
     class="player-bar"
     data-ui-region="chrome"
+    data-ui-popover-peer-group="playback-tools"
     role="region"
     :aria-label="t('player.bar.controls')"
   >

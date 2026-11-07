@@ -100,6 +100,7 @@ function setActiveTab(key) {
     :open="open"
     :close-on-scroll="false"
     :related-pointer-region="transportRegion"
+    peer-group="playback-tools"
     :panel-style="panelStyle"
     :aria-label="t('player.toolsPanel.label')"
     placement="top-end"

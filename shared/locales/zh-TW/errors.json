@@ -541,12 +541,12 @@
     "message": "歌詞分析未完成；伴奏與原有歌詞仍可使用。"
   },
   "BGM_STANDBY_GET_FAILED": {
-    "title": "BGM 無法讀取",
-    "message": "目前無法讀取 BGM，請再試一次。"
+    "title": "場間音樂無法讀取",
+    "message": "目前無法讀取場間音樂，請再試一次。"
   },
   "BGM_STANDBY_UPDATE_FAILED": {
-    "title": "BGM 無法更新",
-    "message": "目前無法更新 BGM，請再試一次。"
+    "title": "場間音樂無法更新",
+    "message": "目前無法更新場間音樂，請再試一次。"
   },
   "EXTERNAL_TARGET_UNKNOWN": {
     "title": "無法開啟外部頁面",

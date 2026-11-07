@@ -15,7 +15,20 @@ describe('BgmTrackPicker', () => {
     const html = await renderToString(
       createSSRApp(BgmTrackPicker, {
         searchResults: [
-          { id: 'track-1', title: 'Quiet Room', artist: 'Local Artist' },
+          {
+            id: 'track-1',
+            title: 'Quiet Room',
+            artist: 'Local Artist',
+            duration: 202,
+            hasSeparation: true,
+            stemsUrl: 'utawakui-media://stems.wav',
+          },
+          {
+            id: 'track-2',
+            title: 'Quiet Evening',
+            hasSeparation: true,
+            duration: 145,
+          },
         ],
         searchQuery: 'quiet',
       }),
@@ -23,11 +36,15 @@ describe('BgmTrackPicker', () => {
 
     expect(html).not.toContain('更換歌曲');
     expect(html).toContain('搜尋本機曲庫');
-    expect(html).toContain('改用此 BGM：Quiet Room');
-    expect(html).not.toContain('選取後會取代目前 BGM，並從開頭待命。');
+    expect(html).toContain('改用「Quiet Room」作為場間音樂，已有伴奏');
+    expect(html).toContain('改用「Quiet Evening」作為場間音樂，僅有原曲');
+    expect(html).toContain('aria-label="已有伴奏"');
+    expect(html).toContain('aria-label="僅有原曲"');
+    expect(html).not.toContain('ui-track__duration');
+    expect(html).not.toContain('選取後會取代目前場間音樂，並從開頭待命。');
     expect(html).not.toContain('首已準備');
     expect(html).not.toContain('準備清單');
-    expect(html).not.toContain('移除 BGM');
+    expect(html).not.toContain('移除場間音樂');
     expect(source).not.toContain('UiChip');
     expect(source).not.toContain('Trash2');
     expect(source).not.toContain('RefreshCw');
@@ -42,12 +59,12 @@ describe('BgmTrackPicker', () => {
       createSSRApp(BgmTrackPicker, {
         searchQuery: 'missing',
         searchResults: [],
-        error: '目前無法更換 BGM。',
+        error: '目前無法更換場間音樂。',
       }),
     );
 
     expect(html).toContain('role="alert"');
-    expect(html).toContain('目前無法更換 BGM。');
+    expect(html).toContain('目前無法更換場間音樂。');
     expect(html).toContain('找不到符合搜尋的其他曲目。');
   });
 

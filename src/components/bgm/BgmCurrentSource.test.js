@@ -37,7 +37,7 @@ describe('BgmCurrentSource', () => {
     expect(html).toContain('尚未選擇場間音樂');
     expect(html).not.toContain('從本機曲庫選擇背景音樂');
   });
-  it('reuses the artwork overlay and accessible play action while retaining canonical metadata', async () => {
+  it('uses the shared overlay button for the accessible pause action', async () => {
     const html = await renderToString(
       createSSRApp(BgmCurrentSource, {
         track: { id: 'bgm-1', title: 'Quiet Room', artist: 'Local Artist' },
@@ -50,13 +50,28 @@ describe('BgmCurrentSource', () => {
     expect(html).toContain('Quiet Room');
     expect(html).toContain('Local Artist');
     expect(html).toContain('bgm-current-source__playback');
-    expect(html).toContain('暫停 BGM');
-    expect(html).toContain('ui-artwork-reveal');
-    expect(html).toContain('ui-artwork-overlay');
-    expect(html).toContain('ui-track-artwork-button');
-    expect(html).toContain('right-dock-track__artwork-cue');
+    expect(html).toContain('暫停場間音樂');
+    expect(html).toContain('ui-track-thumb');
+    expect(html).toContain('ui-icon-btn--overlay');
+    expect(html).toContain('ui-icon-btn--circle');
     expect(html).toContain('lucide-pause');
-    expect(source).not.toContain('UiIconButton');
-    expect(source).toContain('<RightDockTrackArtworkCue');
+  });
+
+  it('keeps the cover visible and hides the disabled action during fade-out', async () => {
+    const html = await renderToString(
+      createSSRApp(BgmCurrentSource, {
+        track: { id: 'bgm-1', title: 'Quiet Room' },
+        playbackAction: projectBgmPrimaryAction({
+          phase: 'stopping-bgm',
+          hasTrack: true,
+        }),
+      }),
+    );
+    expect(html).toContain('ui-track-thumb');
+    const button = html.match(
+      /<button[^>]*bgm-current-source__playback[^>]*>/u,
+    )?.[0];
+    expect(button).toContain('disabled');
+    expect(button).toContain('display:none');
   });
 });
