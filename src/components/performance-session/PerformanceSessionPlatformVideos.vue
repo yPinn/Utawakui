@@ -198,9 +198,11 @@ watch(
 </script>
 
 <template>
-  <UiButton :icon="Link" @click="show(links[0]?.platform)">
-    {{ t(links.length ? 'platformVideo.paired' : 'platformVideo.pair') }}
-  </UiButton>
+  <UiIconButton
+    :icon="Link"
+    :label="t(links.length ? 'platformVideo.paired' : 'platformVideo.pair')"
+    @click="show(links[0]?.platform)"
+  />
   <UiModal
     :open="opened"
     :title="t('platformVideo.pair')"

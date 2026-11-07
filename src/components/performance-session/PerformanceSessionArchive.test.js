@@ -2,6 +2,17 @@ import { createSSRApp, h, shallowRef } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Archive from './PerformanceSessionArchive.vue';
+import PlatformVideos from './PerformanceSessionPlatformVideos.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiModal from '../ui/UiModal.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import {
+  attachClientRender,
+  findAll,
+  mount,
+  textContent,
+} from '../ui/uiTestHost.js';
+import { i18n } from '../../utils/i18n.js';
 const fixture = vi.hoisted(() => ({ archive: null }));
 vi.mock('../../composables/usePerformanceArchive.js', () => ({
   usePerformanceArchive: () => fixture.archive,
@@ -126,7 +137,9 @@ describe('archive collection document', () => {
     expect(embedded).toContain('library-track-row__status-detail');
     expect(embedded).toContain('演出狀態');
     expect(embedded).toContain('匯出時間點');
-    expect(embedded).toContain('配對影片');
+    expect(embedded).toMatch(
+      /class="ui-visually-hidden"[^>]*>連結本場影片<\/span>/u,
+    );
   });
   it('retains the marker-only empty state', async () => {
     fixture.archive.session.value = {
@@ -142,4 +155,45 @@ describe('archive collection document', () => {
     expect(html).not.toContain('首筆紀錄');
     expect(html).not.toMatch(/完成\s0\s項/u);
   });
+});
+
+describe('archive video link', () => {
+  it.each([
+    ['zh-TW', '連結本場影片', '本場影片'],
+    ['en-US', 'Link session video', 'Session video'],
+  ])(
+    'updates the icon button after loading an existing link in %s',
+    async (locale, unlinked, linked) => {
+      for (const [component, file] of [
+        [PlatformVideos, './PerformanceSessionPlatformVideos.vue'],
+        [UiIconButton, '../ui/UiIconButton.vue'],
+        [UiModal, '../ui/UiModal.vue'],
+        [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+      ]) {
+        attachClientRender(component, file, import.meta.url);
+      }
+      const getSessionPlatformVideos = vi.fn().mockResolvedValue({
+        ok: true,
+        value: [{ platform: 'twitch' }],
+      });
+      vi.stubGlobal('window', {
+        Utawakui: { getSessionPlatformVideos },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      });
+      const originalLocale = i18n.global.locale.value;
+      i18n.global.locale.value = locale;
+      const { app, root } = mount(PlatformVideos, { sessionId: 'old' });
+      try {
+        const [button] = findAll(root, (node) => node.type === 'button');
+        expect(textContent(button)).toBe(unlinked);
+        expect(getSessionPlatformVideos).toHaveBeenCalledExactlyOnceWith('old');
+        await vi.waitFor(() => expect(textContent(button)).toBe(linked));
+      } finally {
+        app.unmount();
+        i18n.global.locale.value = originalLocale;
+        vi.unstubAllGlobals();
+      }
+    },
+  );
 });
