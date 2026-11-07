@@ -9,9 +9,6 @@ const rowSource = readCatalogSource(
 );
 
 describe('PlaylistSidebar compact-to-expanded stability', () => {
-  it('supplies the required subtitle prop on the records entry', () => {
-    expect(source).toMatch(/:playlist="archiveRow"\s+subtitle=""/u);
-  });
   it('searches collection members by every integrated artist form', () => {
     expect(source).toMatch(
       /import\s*\{[\s\S]*?artistSearchTexts[\s\S]*?\}\s*from '\.\.\/\.\.\/utils\/artistPage\.js'/u,
@@ -40,7 +37,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).toMatch(
       /<UiScrollLayout[\s\S]*?@contextmenu="openGlobalMenu"[\s\S]*?>/u,
     );
-    expect(source.match(/@contextmenu="openGlobalMenu"/gu)).toHaveLength(3);
+    expect(source.match(/@contextmenu="openGlobalMenu"/gu)).toHaveLength(2);
     expect(
       source.match(
         /@contextmenu="openPlaylistMenu\(row\.playlist, \$event\)"/gu,
@@ -70,15 +67,13 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     const fixedNavigationAt = source.indexOf(
       'class="playlist-sidebar__fixed-navigation"',
     );
-    const allTracksAt = source.indexOf('aria-label="全部曲目"');
-    const localTracksAt = source.indexOf('aria-label="本機檔案"');
+    const entriesAt = source.indexOf('v-for="entry in fixedEntries"');
     const scrollAt = source.indexOf('<UiScrollLayout');
     const collectionsAt = source.indexOf('v-for="row in visiblePlaylistRows"');
 
     expect(toolbarAt).toBeLessThan(fixedNavigationAt);
-    expect(fixedNavigationAt).toBeLessThan(allTracksAt);
-    expect(allTracksAt).toBeLessThan(localTracksAt);
-    expect(localTracksAt).toBeLessThan(scrollAt);
+    expect(fixedNavigationAt).toBeLessThan(entriesAt);
+    expect(entriesAt).toBeLessThan(scrollAt);
     expect(source).not.toContain('匯入曲目');
     expect(source).not.toContain('本機曲目');
     expect(source).not.toContain('ArrowDownToLine');
@@ -210,13 +205,11 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     const plates = source
       .match(/<UiCollageThumb\b[\s\S]*?\/>/gu)
       .filter((tag) => /\splate\b/u.test(tag));
-    expect(plates).toHaveLength(2);
-    for (const tag of plates) {
-      expect(tag).toContain('background="var(--ui-color-entry)"');
-      expect(tag).toContain('color="var(--ui-color-entry-foreground)"');
-      expect(tag).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
-    }
-    expect(rowSource).toContain(':plate="folder"');
+    expect(plates).toHaveLength(1);
+    expect(plates[0]).toContain('background="var(--ui-color-entry)"');
+    expect(plates[0]).toContain('color="var(--ui-color-entry-foreground)"');
+    expect(plates[0]).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
+    expect(rowSource).toContain(':plate="folder || artworkPlate"');
     expect(source).not.toContain('--ui-playlist-navigation-plate');
     expect(source).not.toMatch(
       /\.playlist-sidebar__item:(?:where\(:hover\)|active)\s+\.playlist-sidebar__thumb/u,
@@ -289,13 +282,12 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).toContain(
       "import { useTooltip } from '../ui/useTooltip.js';",
     );
-    expect(source.match(/useTooltip\(\{/gu)).toHaveLength(2);
-    expect(
-      source.match(/disabled: computed\(\(\) => !props\.compact\)/gu),
-    ).toHaveLength(2);
-    expect(source.match(/placement: 'end'/gu)).toHaveLength(2);
-    expect(source.match(/<UiTooltipSurface/gu)).toHaveLength(2);
-    expect(source.match(/placement="end"/gu)).toHaveLength(2);
+    expect(source).toMatch(
+      /\.map\(\(entry\) => \(\{[\s\S]*?tooltip: useTooltip\(\{/u,
+    );
+    expect(source).toContain('disabled: computed(() => !props.compact)');
+    expect(source).toContain("placement: 'end'");
+    expect(source).toMatch(/<UiTooltipSurface[\s\S]*?placement="end"/u);
     expect(source).not.toMatch(/<(?:button|span|div|nav)\b[^>]*\stitle="/u);
   });
 
@@ -331,7 +323,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
 
   it('does not mark a library view current while an artist page is open', () => {
     expect(source).toMatch(
-      /const isLibraryViewActive = \(view\) =>\s*state\.selectedId === null &&\s*state\.selectedArtistId === null &&/u,
+      /const isLibraryViewActive = \(view\) =>\s*!isArchiveActive\.value &&\s*state\.selectedId === null &&\s*state\.selectedArtistId === null &&/u,
     );
     expect(source).not.toContain(
       "state.selectedId === null && libraryView === 'all'",

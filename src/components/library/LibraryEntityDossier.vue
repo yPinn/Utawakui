@@ -5,7 +5,7 @@ import {
   FOLDER_DOSSIER_ARTWORK_SIZE,
   FOLDER_DOSSIER_GLYPH_SIZE,
 } from '../../constants/ui.js';
-import { FolderOpen, Library, UserRound } from '../../icons/index.js';
+import { FolderOpen, Library, Tickets, UserRound } from '../../icons/index.js';
 import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import AppFolderDossier from '../layout/AppFolderDossier.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -46,9 +46,8 @@ const marker = computed(() =>
     ? releaseTypeLabel(props.releaseType || 'album')
     : t(`library.markers.${props.entityKind}`),
 );
-const libraryIcon = computed(() =>
-  props.libraryView === 'local' ? FolderOpen : Library,
-);
+const libraryIcons = { local: FolderOpen, 'performance-records': Tickets };
+const libraryIcon = computed(() => libraryIcons[props.libraryView] ?? Library);
 // Library titles are UI text; everything else is user content.
 const titleLang = computed(() =>
   isLibrary.value ? undefined : contentLangAttribute(props.title, props.artist),
@@ -71,7 +70,14 @@ const summaryFields = computed(() =>
     :artwork-shape="entityKind === 'artist' ? 'round' : 'square'"
   >
     <template #artwork>
-      <span v-if="isLibrary" class="library-entity-dossier__icon">
+      <span
+        v-if="isLibrary"
+        class="library-entity-dossier__icon"
+        :class="{
+          'library-entity-dossier__icon--performance':
+            libraryView === 'performance-records',
+        }"
+      >
         <component
           :is="libraryIcon"
           :size="FOLDER_DOSSIER_GLYPH_SIZE"
@@ -122,6 +128,11 @@ const summaryFields = computed(() =>
   /* Same entry plate as the sidebar's library rows. */
   background: var(--ui-color-entry);
   color: var(--ui-color-entry-foreground);
+}
+
+.library-entity-dossier__icon--performance {
+  background: var(--ui-color-folder-secondary);
+  color: var(--ui-color-folder-secondary-foreground);
 }
 
 /* UiTextButton leaves font-weight to its caller. */

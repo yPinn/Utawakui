@@ -17,11 +17,19 @@ import {
   Play,
   Plus,
   RefreshCw,
-  StickyNote,
+  Tickets,
   Trash2,
 } from '../../icons/index.js';
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  watch,
+} from 'vue';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
+import { unlinkedPerformanceArchives } from '../../utils/performanceArchivePresentation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
@@ -101,32 +109,6 @@ const emit = defineEmits([
   'libraryViewSelect',
   'playlistAction',
 ]);
-
-const {
-  open: allTracksTooltipOpen,
-  position: allTracksTooltipPosition,
-  setTooltip: setAllTracksTooltip,
-  tooltipId: allTracksTooltipId,
-  triggerProps: allTracksTooltipTriggerProps,
-} = useTooltip({
-  text: t('playlist.sidebar.all'),
-  placement: 'end',
-  disabled: computed(() => !props.compact),
-  describedBy: false,
-});
-
-const {
-  open: localTracksTooltipOpen,
-  position: localTracksTooltipPosition,
-  setTooltip: setLocalTracksTooltip,
-  tooltipId: localTracksTooltipId,
-  triggerProps: localTracksTooltipTriggerProps,
-} = useTooltip({
-  text: t('playlist.sidebar.local'),
-  placement: 'end',
-  disabled: computed(() => !props.compact),
-  describedBy: false,
-});
 
 // A custom cover (album's own official artwork, or a playlist's manually
 // uploaded one — see LibraryEntityDossier.vue) always wins; otherwise the
@@ -472,6 +454,7 @@ function suppressArtistMenu(event) {
 }
 
 const isLibraryViewActive = (view) =>
+  !isArchiveActive.value &&
   state.selectedId === null &&
   state.selectedArtistId === null &&
   props.libraryView === view;
@@ -515,13 +498,55 @@ function createCollectionItems() {
   ];
 }
 
-const { state: performancePlan } = usePerformanceSessionPlan();
+const { state: performancePlan, initialize: initializePerformancePlan } =
+  usePerformanceSessionPlan();
+onMounted(initializePerformancePlan);
 const { activeView, libraryWorkspace, openPerformanceArchiveIndex } =
   useAppView();
-const archiveRow = {
+const isArchiveActive = computed(
+  () =>
+    activeView.value === 'library' &&
+    libraryWorkspace.value === 'performance-records',
+);
+const hasUnlinkedArchives = computed(
+  () =>
+    state.hasLoaded &&
+    unlinkedPerformanceArchives(performancePlan.plan.archives, state.playlists)
+      .length > 0,
+);
+const archiveEntry = {
   id: 'performance-records',
   name: t('session.archive.records'),
 };
+const fixedEntries = [
+  {
+    id: 'all',
+    label: t('playlist.sidebar.all'),
+    icon: Library,
+    active: () => isLibraryViewActive('all'),
+    select: () => selectLibraryView('all'),
+  },
+  {
+    id: 'local',
+    label: t('playlist.sidebar.local'),
+    icon: FolderOpen,
+    active: () => isLibraryViewActive('local'),
+    select: () => selectLibraryView('local'),
+  },
+].map((entry) => ({
+  ...entry,
+  tooltip: useTooltip({
+    text: entry.label,
+    placement: 'end',
+    disabled: computed(() => !props.compact),
+    describedBy: false,
+  }),
+}));
+
+function selectArchiveIndex() {
+  closePlaylistMenu();
+  openPerformanceArchiveIndex();
+}
 
 const menuContent = computed(() => {
   const context = menuContext.value;
@@ -1041,15 +1066,15 @@ function startDrag(row, event) {
       </div>
       <template v-else>
         <button
-          v-bind="allTracksTooltipTriggerProps"
+          v-for="entry in fixedEntries"
+          :key="entry.id"
+          v-bind="entry.tooltip.triggerProps.value"
           type="button"
           class="playlist-sidebar__item"
-          :aria-label="t('playlist.sidebar.all')"
-          :class="{
-            'playlist-sidebar__item--active': isLibraryViewActive('all'),
-          }"
-          :aria-current="isLibraryViewActive('all') ? 'page' : undefined"
-          @click="selectLibraryView('all')"
+          :aria-label="entry.label"
+          :class="{ 'playlist-sidebar__item--active': entry.active() }"
+          :aria-current="entry.active() ? 'page' : undefined"
+          @click="entry.select()"
           @contextmenu="openGlobalMenu"
         >
           <span
@@ -1060,69 +1085,27 @@ function startDrag(row, event) {
             class="playlist-sidebar__thumb"
             plate
             :can-collage="false"
-            :empty-icon="Library"
+            :empty-icon="entry.icon"
             :size="PLAYLIST_ROW_THUMB_SIZE"
             background="var(--ui-color-entry)"
             color="var(--ui-color-entry-foreground)"
           />
           <span class="playlist-sidebar__info">
-            <span class="playlist-sidebar__label">{{
-              t('playlist.sidebar.all')
-            }}</span>
+            <span class="playlist-sidebar__label">{{ entry.label }}</span>
           </span>
           <UiTooltipSurface
-            :open="allTracksTooltipOpen"
-            :text="t('playlist.sidebar.all')"
-            :tooltip-id="allTracksTooltipId"
-            :position="allTracksTooltipPosition"
+            :open="entry.tooltip.open.value"
+            :text="entry.label"
+            :tooltip-id="entry.tooltip.tooltipId"
+            :position="entry.tooltip.position.value"
             placement="end"
-            :set-element="setAllTracksTooltip"
-          />
-        </button>
-
-        <button
-          v-bind="localTracksTooltipTriggerProps"
-          type="button"
-          class="playlist-sidebar__item"
-          :aria-label="t('playlist.sidebar.local')"
-          :class="{
-            'playlist-sidebar__item--active': isLibraryViewActive('local'),
-          }"
-          :aria-current="isLibraryViewActive('local') ? 'page' : undefined"
-          @click="selectLibraryView('local')"
-          @contextmenu="openGlobalMenu"
-        >
-          <span
-            class="playlist-sidebar__item-state-surface"
-            aria-hidden="true"
-          ></span>
-          <UiCollageThumb
-            class="playlist-sidebar__thumb"
-            plate
-            :can-collage="false"
-            :empty-icon="FolderOpen"
-            :size="PLAYLIST_ROW_THUMB_SIZE"
-            background="var(--ui-color-entry)"
-            color="var(--ui-color-entry-foreground)"
-          />
-          <span class="playlist-sidebar__info">
-            <span class="playlist-sidebar__label">{{
-              t('playlist.sidebar.local')
-            }}</span>
-          </span>
-          <UiTooltipSurface
-            :open="localTracksTooltipOpen"
-            :text="t('playlist.sidebar.local')"
-            :tooltip-id="localTracksTooltipId"
-            :position="localTracksTooltipPosition"
-            placement="end"
-            :set-element="setLocalTracksTooltip"
+            :set-element="entry.tooltip.setTooltip"
           />
         </button>
       </template>
 
       <hr
-        v-if="hasVisibleCollectionItems"
+        v-if="hasVisibleCollectionItems || (!openFolder && hasUnlinkedArchives)"
         class="playlist-sidebar__divider"
         aria-hidden="true"
       />
@@ -1190,16 +1173,17 @@ function startDrag(row, event) {
           />
         </template>
         <PlaylistSidebarRow
-          :playlist="archiveRow"
+          v-if="!openFolder && hasUnlinkedArchives"
+          :playlist="archiveEntry"
           subtitle=""
-          :empty-icon="StickyNote"
-          :active="
-            activeView === 'library' &&
-            libraryWorkspace === 'performance-records'
-          "
           :compact="compact"
+          :active="isArchiveActive"
           :playback-enabled="false"
-          @select="openPerformanceArchiveIndex"
+          artwork-plate
+          :empty-icon="Tickets"
+          artwork-background="var(--ui-color-folder-secondary)"
+          artwork-color="var(--ui-color-folder-secondary-foreground)"
+          @select="selectArchiveIndex"
         />
         <template v-for="row in visiblePlaylistRows" :key="row.key">
           <PlaylistSidebarRow
@@ -1252,7 +1236,7 @@ function startDrag(row, event) {
             :cover-tracks="coverTracksFor(row.playlist)"
             :subtitle="subtitleFor(row.playlist)"
             :compact="compact"
-            :active="row.playlist.id === state.selectedId"
+            :active="!isArchiveActive && row.playlist.id === state.selectedId"
             :active-source="isActiveSource(row.playlist)"
             :playing="isPlayingThis(row.playlist)"
             :draggable="canDragPlaylistItem()"
@@ -1288,7 +1272,9 @@ function startDrag(row, event) {
             :cover-url="entry.item.photoUrl"
             :subtitle="referenceSubtitle(entry)"
             :compact="compact"
-            :active="entry.item.id === state.selectedArtistId"
+            :active="
+              !isArchiveActive && entry.item.id === state.selectedArtistId
+            "
             :active-source="collectionPlayback.isActiveSource(entry.item.id)"
             :playing="collectionPlayback.isPlaying(entry.item.id)"
             @select="selectArtistRow(entry.item.id)"
@@ -1302,7 +1288,7 @@ function startDrag(row, event) {
             :cover-tracks="coverTracksFor(entry.item)"
             :subtitle="referenceSubtitle(entry)"
             :compact="compact"
-            :active="entry.item.id === state.selectedId"
+            :active="!isArchiveActive && entry.item.id === state.selectedId"
             :active-source="isActiveSource(entry.item)"
             :playing="isPlayingThis(entry.item)"
             :draggable="canDragLibraryAlbum()"

@@ -1,11 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import {
+  groupPerformanceArchives,
   performanceArchiveDate,
   performanceArchiveSummary,
   performanceArchiveRows,
   performancePlaylistName,
 } from './performanceArchivePresentation.js';
 describe('archive presentation', () => {
+  it('groups by local start month with a save-date fallback and sorts by performance time', () => {
+    const october = new Date(2026, 9, 31, 23, 50).toISOString();
+    const november = new Date(2026, 10, 1, 0, 20).toISOString();
+    const december = new Date(2025, 11, 31, 23, 59).toISOString();
+    const olderOctober = new Date(2026, 9, 10, 8, 0).toISOString();
+    const archives = [
+      { id: 'november', startedAt: 'invalid', endedAt: november },
+      { id: 'late-saved', startedAt: october, endedAt: november },
+      { id: 'older-october', startedAt: olderOctober, endedAt: november },
+      { id: 'previous-year', endedAt: december },
+      { id: 'unknown' },
+    ];
+    expect(groupPerformanceArchives(archives)).toEqual([
+      { key: '2026-11', label: '2026年11月', archives: [archives[0]] },
+      { key: '2026-10', label: '2026年10月', archives: archives.slice(1, 3) },
+      { key: '2025-12', label: '2025年12月', archives: [archives[3]] },
+      { key: 'unknown', label: '日期不明', archives: [archives[4]] },
+    ]);
+  });
   it('prefills YYMMDD from the local start date and uses the save date for unstarted sessions', () => {
     const startedAt = new Date(2026, 10, 6, 23, 50).toISOString();
     const now = new Date(2026, 10, 7, 0, 30);
@@ -37,13 +57,19 @@ describe('archive presentation', () => {
     expect(
       performanceArchiveSummary({ startedAt, endedAt, ...counts }),
     ).toMatch(
-      /^首筆紀錄 2026\/10\/20\s20:30 · 演出\u00a010\u00a0項 · 完成\u00a08\u00a0項$/u,
+      /^2026\/10\/20\s20:30 · 演出\u00a010\u00a0項 · 完成\u00a08\u00a0項$/u,
     );
     expect(
       performanceArchiveSummary({ endedAt, ...counts }, { multiline: true }),
     ).toMatch(
       /^保存於 2026\/10\/21\s01:00\n演出\u00a010\u00a0項 · 完成\u00a08\u00a0項$/u,
     );
+    expect(
+      performanceArchiveSummary(
+        { startedAt, endedAt, ...counts },
+        { compact: true },
+      ),
+    ).toMatch(/^10\/20\s20:30 · 演出\u00a010\u00a0項 · 完成\u00a08\u00a0項$/u);
   });
   it('preserves occurrence keys, original order and saved identity for repeated, manual and missing tracks', () => {
     const items = [

@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
   </AppFolderPage>
   <UiModal
     :open="Boolean(recordOpenFor)"
-    :title="t('session.archive.record')"
+    :title="t('session.archive.thisPerformance')"
     size="notice"
     max-block-size="small"
     @close="recordOpenFor = null"

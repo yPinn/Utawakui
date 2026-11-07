@@ -6,6 +6,14 @@ import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
+import AppFolderDossier from '../layout/AppFolderDossier.vue';
+import CollectionActionRail from '../library/CollectionActionRail.vue';
+import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
+import UiPopover from '../ui/UiPopover.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiTooltip from '../ui/UiTooltip.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useAppNotifications } from '../../composables/useAppNotifications.js';
 const notifications = useAppNotifications();
 import {
@@ -18,7 +26,7 @@ import {
 const fixture = vi.hoisted(() => ({
   plan: null,
   playback: null,
-  timeline: { openForArrangement: vi.fn() },
+  timeline: { open: vi.fn(), openForArrangement: vi.fn() },
   playlist: null,
   openArchive: vi.fn(),
   openLibrary: vi.fn(),
@@ -175,6 +183,14 @@ for (const [component, file] of [
   [UiNotice, '../ui/UiNotice.vue'],
   [UiSkeleton, '../ui/UiSkeleton.vue'],
   [AppRightDockSection, '../layout/AppRightDockSection.vue'],
+  [AppFolderDossier, '../layout/AppFolderDossier.vue'],
+  [CollectionActionRail, '../library/CollectionActionRail.vue'],
+  [LibraryEntityDossier, '../library/LibraryEntityDossier.vue'],
+  [UiPopover, '../ui/UiPopover.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
+  [UiSearchBox, '../ui/UiSearchBox.vue'],
+  [UiTooltip, '../ui/UiTooltip.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ])
   attachClientRender(component, file, import.meta.url);
 const settle = async () => {
@@ -218,6 +234,7 @@ beforeEach(() => {
     }),
     archiveSession: vi.fn(async () => true),
     initialize: vi.fn(),
+    refresh: vi.fn(async () => false),
   };
   fixture.playback = {
     state: reactive({ busy: false }),
@@ -225,6 +242,7 @@ beforeEach(() => {
     currentItem: reactive({ value: null }),
   };
   vi.stubGlobal('window', {
+    getComputedStyle: () => ({ direction: 'ltr', getPropertyValue: () => '' }),
     Utawakui: {
       getPerformanceSession: vi.fn(async (id) => ({
         ok: true,
@@ -273,15 +291,53 @@ describe('performance history and archive entry points', () => {
       endedAt: '2026-10-23T12:00:00Z',
     });
     const index = mount(ArchiveList);
+    const headings = findAll(index.root, (node) => node.type === 'h1');
+    expect(headings.map(textContent)).toEqual(['場次紀錄']);
     const labels = findAll(
       index.root,
       (node) => node.type === 'button' && textContent(node).startsWith('選取 '),
     ).map(textContent);
     expect(labels).toEqual(['選取 Recent show', '選取 Older show']);
-    expect(textContent(index.root)).toContain('2026/10/20');
+    expect(textContent(index.root)).toContain('10/20');
+    expect(
+      findAll(index.root, (node) => node.type === 'h2').map(textContent),
+    ).toEqual(['2026年10月']);
+    await click(index.root, '最近 OBS 紀錄');
+    expect(fixture.timeline.open).toHaveBeenCalledWith();
+    expect(fixture.timeline.openForArrangement).not.toHaveBeenCalled();
     await click(index.root, '選取 Older show');
     expect(fixture.openArchive).toHaveBeenCalledWith('old');
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
+    index.app.unmount();
+  });
+
+  it('opens search from its icon and filters the archive by name', async () => {
+    fixture.plan.state.plan.archives.push({
+      id: 'recent',
+      name: 'Recent show',
+      endedAt: '2026-11-22T12:00:00Z',
+    });
+    const index = mount(ArchiveList);
+    const input = () =>
+      findAll(index.overlayHost, (node) => node.type === 'input')[0];
+    expect(input()).toBeUndefined();
+    await click(index.root, '搜尋場次紀錄');
+
+    trigger(input(), 'onInput', { target: { value: '  RECENT ' } });
+    await settle();
+    expect(button(index.root, '選取 Recent show')).toBeDefined();
+    expect(button(index.root, '選取 Older show')).toBeUndefined();
+    expect(
+      findAll(index.root, (node) => node.type === 'h2').map(textContent),
+    ).toEqual(['2026年11月']);
+
+    trigger(input(), 'onInput', { target: { value: 'nothing' } });
+    await settle();
+    expect(textContent(index.root)).toContain('沒有符合搜尋條件的場次紀錄。');
+
+    trigger(input(), 'onInput', { target: { value: '' } });
+    await settle();
+    expect(button(index.root, '選取 Older show')).toBeDefined();
     index.app.unmount();
   });
 

@@ -3,7 +3,17 @@ import { renderToString } from '@vue/server-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PlaylistSidebar from './PlaylistSidebar.vue';
 
-const owners = vi.hoisted(() => ({ playlists: null, artists: null }));
+const owners = vi.hoisted(() => ({
+  playlists: null,
+  artists: null,
+  performance: null,
+}));
+vi.mock('../../composables/usePerformanceSessionPlan.js', () => ({
+  usePerformanceSessionPlan: () => ({
+    state: owners.performance,
+    initialize: vi.fn(),
+  }),
+}));
 vi.mock('../../composables/usePlaylists.js', () => ({
   usePlaylists: () => ({
     state: owners.playlists,
@@ -45,6 +55,7 @@ beforeEach(() => {
     error: null,
   });
   owners.artists = reactive({ index: null, isLoading: false });
+  owners.performance = reactive({ plan: { archives: [] } });
 });
 afterEach(() => {
   vi.clearAllTimers();
@@ -122,6 +133,37 @@ describe('Sidebar initial loading', () => {
     const html = await render();
     expect(html).toContain('Encore');
     expect(html).not.toContain('playlist-sidebar__skeleton-row');
+  });
+
+  it('shows the pink records entry first below the divider only while an unlinked archive exists', async () => {
+    const record = '選取 場次紀錄';
+    owners.performance.plan.archives = [{ id: 'show' }];
+    expect(await render()).not.toContain(record);
+
+    owners.playlists.hasLoaded = true;
+    owners.playlists.isLoading = false;
+    owners.playlists.playlists = [
+      { id: 'p1', name: 'Encore', trackIds: [], performanceSessionId: 'show' },
+    ];
+    expect(await render()).not.toContain(record);
+
+    owners.performance.plan.archives.push({ id: 'unlinked' });
+    for (const compact of [false, true]) {
+      const html = await render({ compact });
+      const index = html.indexOf(record);
+      expect(index).toBeGreaterThan(html.indexOf('playlist-sidebar__divider'));
+      expect(index).toBeGreaterThan(html.indexOf('playlist-sidebar__scroll'));
+      const playlist = html.indexOf('選取 Encore');
+      expect(index).toBeLessThan(playlist);
+      const entry = html.slice(index, playlist);
+      expect(entry).toContain('lucide-tickets');
+      expect(entry).toContain(
+        '--ui-collage-thumb-background:var(--ui-color-folder-secondary)',
+      );
+    }
+
+    owners.performance.plan.archives = [];
+    expect(await render()).not.toContain(record);
   });
 
   it('settles empty results and failures without a permanent skeleton', async () => {

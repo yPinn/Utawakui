@@ -162,7 +162,10 @@ function selectMenuAction(value) {
       </slot>
     </div>
 
-    <div v-if="showSearch || showDensity" class="collection-action-rail__tools">
+    <div
+      v-if="showSearch || showDensity || $slots.tools"
+      class="collection-action-rail__tools"
+    >
       <UiSearchBox
         v-if="showSearch"
         :model-value="searchQuery"
@@ -177,6 +180,7 @@ function selectMenuAction(value) {
         :density="density"
         @update-density="emit('updateDensity', $event)"
       />
+      <slot name="tools" />
     </div>
 
     <UiActionMenu

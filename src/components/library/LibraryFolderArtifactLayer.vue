@@ -181,7 +181,7 @@ const items = computed(() => {
       rotation: ARTIST_SUMMARY_ROTATION,
       order: 0,
       content: {
-        title: t('session.archive.record'),
+        title: t('session.archive.thisPerformance'),
         body: props.performanceRecord.summary,
       },
     });

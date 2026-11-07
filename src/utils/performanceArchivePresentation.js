@@ -2,6 +2,13 @@ import { UI_LOCALE } from './uiLocale.js';
 import { t } from './i18n.js';
 import { sessionPerformedItems } from '../../shared/sessionPerformedItems.mjs';
 
+export function unlinkedPerformanceArchives(archives, playlists) {
+  const linked = new Set(
+    playlists.map((playlist) => playlist.performanceSessionId),
+  );
+  return (archives ?? []).filter((archive) => !linked.has(archive.id));
+}
+
 export function performancePlaylistName({
   startedAt,
   name,
@@ -23,16 +30,77 @@ export function performancePlaylistName({
   return candidate;
 }
 
-export function performanceArchiveDate(value, { includeTime = true } = {}) {
+function validArchiveDate(value) {
   const date = new Date(value);
-  if (!value || Number.isNaN(date.getTime())) return '—';
+  return value && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+function archiveTiming(archive) {
+  const started = validArchiveDate(archive.startedAt);
+  return started
+    ? { date: started, saved: false }
+    : {
+        date: validArchiveDate(archive.endedAt),
+        saved: true,
+      };
+}
+
+const archiveMonth = new Intl.DateTimeFormat(UI_LOCALE, {
+  year: 'numeric',
+  month: 'long',
+});
+
+export function groupPerformanceArchives(archives) {
+  const dated = archives
+    .slice()
+    .reverse()
+    .map((archive) => ({ archive, date: archiveTiming(archive).date }))
+    .sort(
+      (a, b) =>
+        (b.date?.getTime() ?? Number.MIN_SAFE_INTEGER) -
+        (a.date?.getTime() ?? Number.MIN_SAFE_INTEGER),
+    );
+  const groups = new Map();
+  for (const { archive, date } of dated) {
+    const key = date
+      ? `${date.getFullYear()}-${date.getMonth() + 1}`
+      : 'unknown';
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        label: date
+          ? archiveMonth.format(date)
+          : t('session.archive.unknownMonth'),
+        archives: [],
+      });
+    }
+    groups.get(key).archives.push(archive);
+  }
+  return [...groups.values()];
+}
+
+export function performanceArchiveDate(
+  value,
+  { includeTime = true, includeYear = true } = {},
+) {
+  const date = validArchiveDate(value);
+  if (!date) return '—';
   return date.toLocaleString(UI_LOCALE, {
-    year: 'numeric',
+    ...(includeYear ? { year: 'numeric' } : {}),
     month: '2-digit',
     day: '2-digit',
     ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {}),
     hour12: false,
   });
+}
+
+export function performanceArchiveTiming(archive, { compact = false } = {}) {
+  const { date, saved } = archiveTiming(archive);
+  if (!date) return '';
+  const formatted = performanceArchiveDate(date, { includeYear: !compact });
+  return saved && !compact
+    ? t('session.archive.archivedAt', { date: formatted })
+    : formatted;
 }
 
 export function performanceArchiveProgress(completed, performed) {
@@ -41,22 +109,26 @@ export function performanceArchiveProgress(completed, performed) {
     : t('session.archive.completedOnly', { completed }, completed);
 }
 
-export function performanceArchiveSummary(archive, { multiline = false } = {}) {
-  const started = archive.startedAt;
-  const date = performanceArchiveDate(started ?? archive.endedAt);
-  const timing = t(
-    started ? 'session.archive.startedAt' : 'session.archive.archivedAt',
-    { date },
+export function performanceArchiveSummary(
+  archive,
+  { multiline = false, compact = false } = {},
+) {
+  const timing = performanceArchiveTiming(archive, { compact });
+  if (
+    !Number.isInteger(archive.completedCount) ||
+    (compact && archive.completedCount === 0 && archive.performedCount === 0)
+  )
+    return timing;
+  const progress = performanceArchiveProgress(
+    archive.completedCount,
+    archive.performedCount,
   );
-  if (!Number.isInteger(archive.completedCount)) return timing;
+  if (!timing) return progress;
   return t(
     multiline ? 'session.archive.noteBody' : 'session.archive.noteSummary',
     {
       timing,
-      progress: performanceArchiveProgress(
-        archive.completedCount,
-        archive.performedCount,
-      ),
+      progress,
     },
   );
 }

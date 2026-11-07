@@ -8,9 +8,9 @@ import { usePerformanceArchive } from '../../composables/usePerformanceArchive.j
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import {
-  performanceArchiveDate,
   performanceArchiveProgress,
   performanceArchiveRows,
+  performanceArchiveTiming,
 } from '../../utils/performanceArchivePresentation.js';
 import AppFolderDossier from '../layout/AppFolderDossier.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
@@ -96,38 +96,22 @@ const coverTracks = computed(() => {
       return true;
     });
 });
-const progressText = computed(() =>
-  performanceArchiveProgress(
-    rows.value.filter(({ progress }) => progress === 'completed').length,
-    rows.value.length,
-  ),
-);
-const timingFields = computed(() =>
-  session.value
-    ? [
-        ...(session.value.startedAt
-          ? [
-              {
-                key: 'started',
-                text: t('session.archive.startedAt', {
-                  date: performanceArchiveDate(session.value.startedAt),
-                }),
-              },
-            ]
-          : []),
-        {
-          key: 'ended',
-          text: t('session.archive.archivedAt', {
-            date: performanceArchiveDate(session.value.endedAt),
-          }),
-        },
-      ]
-    : [],
-);
-const fields = computed(() => [
-  ...timingFields.value,
-  { key: 'summary', text: progressText.value },
-]);
+const fields = computed(() => {
+  if (!session.value) return [];
+  const timing = performanceArchiveTiming(session.value);
+  const completed = rows.value.filter(
+    ({ progress }) => progress === 'completed',
+  ).length;
+  return [
+    { key: 'timing', text: timing },
+    {
+      key: 'summary',
+      text: rows.value.length
+        ? performanceArchiveProgress(completed, rows.value.length)
+        : '',
+    },
+  ].filter(({ text }) => text);
+});
 </script>
 
 <template>
@@ -144,7 +128,6 @@ const fields = computed(() => [
     <template v-if="session">
       <AppFolderDossier
         v-if="!embedded"
-        :marker="t('session.archive.marker')"
         :title="session.name"
         title-id="performance-archive-title"
         :fields="fields"
@@ -157,15 +140,10 @@ const fields = computed(() => [
         /></template>
       </AppFolderDossier>
       <UiStack v-else direction="column" :gap="1">
-        <UiStack :gap="2" wrap align="baseline">
-          <h3 class="performance-archive__name">{{ session.name }}</h3>
-          <UiHint>{{ progressText }}</UiHint>
-        </UiStack>
-        <UiStack :gap="2" wrap>
-          <UiHint v-for="field in timingFields" :key="field.key">{{
-            field.text
-          }}</UiHint>
-        </UiStack>
+        <h3 class="performance-archive__name">{{ session.name }}</h3>
+        <UiHint v-for="field in fields" :key="field.key">{{
+          field.text
+        }}</UiHint>
       </UiStack>
       <CollectionActionRail
         :entity-label="t('session.archive.entity')"

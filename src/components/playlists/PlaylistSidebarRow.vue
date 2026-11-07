@@ -32,6 +32,7 @@ const props = defineProps({
   dropInside: { type: Boolean, default: false },
   // Folder rows show a folder glyph instead of a track collage.
   folder: { type: Boolean, default: false },
+  artworkPlate: { type: Boolean, default: false },
   // Plate and glyph colours for an artwork-less row, e.g. a folder's hue.
   artworkBackground: { type: String, default: undefined },
   artworkColor: { type: String, default: 'var(--ui-color-text-muted)' },
@@ -161,13 +162,15 @@ function toggleFromArtwork(event) {
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
       :tracks="coverTracks"
-      :can-collage="playlist.kind !== 'album' && !isArtist && !folder"
+      :can-collage="
+        playlist.kind !== 'album' && !isArtist && !folder && !artworkPlate
+      "
       :radius="isArtist ? 'var(--ui-radius-pill)' : undefined"
       :empty-icon="isArtist ? UserRound : emptyIcon"
       :size="PLAYLIST_ROW_THUMB_SIZE"
       :background="artworkBackground"
       :color="artworkColor"
-      :plate="folder"
+      :plate="folder || artworkPlate"
       :uppercase="false"
       :decorative="false"
     >

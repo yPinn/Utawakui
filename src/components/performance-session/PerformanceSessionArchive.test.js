@@ -93,7 +93,10 @@ describe('archive collection document', () => {
     expect(html).toMatch(/完成\s3\s項/u);
     expect(html).not.toContain('Not performed');
     expect(html).toContain('手動曲目');
-    expect(html).toMatch(/app-folder-dossier__marker[^>]*>\s*封存場次\s*</u);
+    expect(html).not.toContain('app-folder-dossier__marker');
+    expect(html).toContain('2026/10/20');
+    expect(html).not.toContain('首筆紀錄');
+    expect(html).not.toContain('保存於');
     expect(html).toContain('另存本場歌單');
     expect(html).toContain('匯出時間點');
     expect(html).not.toContain('加入演出待唱');
@@ -112,8 +115,10 @@ describe('archive collection document', () => {
     expect(embedded).toContain('library-track-row--compact-stacked');
     expect(embedded).not.toContain('library-track-row--compact-inline');
     expect(embedded).toContain('Archived show');
-    expect(embedded).toContain('首筆紀錄');
-    expect(embedded).toContain('保存於');
+    expect(embedded.replaceAll(/<!--[\s\S]*?-->/gu, '')).toMatch(
+      /<p[^>]*>2026\/10\/20[^<]*<\/p><p[^>]*>完成\s3\s項<\/p>/u,
+    );
+    expect(embedded).not.toContain('保存於');
     expect(embedded).toMatch(/完成\s3\s項/u);
     expect(embedded).toContain('MY FIRST STORY');
     expect(embedded).toContain('曲長');
@@ -127,9 +132,14 @@ describe('archive collection document', () => {
     fixture.archive.session.value = {
       id: 'old',
       name: 'Opening',
+      endedAt: '2026-10-20T12:00:00Z',
       items: [],
       timeline: [{ type: 'marker' }],
     };
-    expect(await render()).toContain('本場只有標記紀錄。');
+    const html = await render();
+    expect(html).toContain('本場只有標記紀錄。');
+    expect(html).toContain('保存於');
+    expect(html).not.toContain('首筆紀錄');
+    expect(html).not.toMatch(/完成\s0\s項/u);
   });
 });

@@ -32,10 +32,10 @@ function render(props) {
 describe('LibraryFolderArtifactLayer', () => {
   it('makes a short performance record note readable directly from the playlist', async () => {
     const html = await render({
-      performanceRecord: { summary: '2026/11/06 · 完成 2 項' },
+      performanceRecord: { summary: '2026/11/06 20:30\n完成 2 項' },
     });
-    expect(html).toContain('場次紀錄');
-    expect(html).toContain('2026/11/06 · 完成 2 項');
+    expect(html).toContain('本場演出');
+    expect(html).toContain('2026/11/06 20:30\n完成 2 項');
     expect(html).toContain('按 Enter 或空白鍵查看場次紀錄');
   });
   it('combines the derived artist note and user photos in one folder canvas', async () => {
