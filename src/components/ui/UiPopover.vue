@@ -29,6 +29,8 @@ const props = defineProps({
   closeOnScroll: { type: Boolean, default: true },
   closeOnOutsidePointer: { type: Boolean, default: true },
   relatedPointerRegion: { type: Object, default: null },
+  // Independent popovers can share interaction boundaries without sharing open state.
+  peerGroup: { type: String, default: undefined },
   closeOnEscape: { type: Boolean, default: true },
   ariaLabel: { type: String, required: true },
   placement: {
@@ -37,6 +39,11 @@ const props = defineProps({
     validator: (value) =>
       ['bottom-end', 'bottom-start', 'top-end', 'top-start'].includes(value),
   },
+  anchorGap: { type: Number, default: undefined },
+  viewportInset: { type: Number, default: undefined },
+  // Drawers match the anchor width and shrink on the requested side.
+  fitAnchor: { type: Boolean, default: false },
+  positionLayoutElement: { type: Object, default: null },
   role: {
     type: String,
     default: 'dialog',
@@ -46,6 +53,7 @@ const props = defineProps({
     type: [String, Array, Object],
     default: undefined,
   },
+  keepMounted: { type: Boolean, default: false },
   scrollAxis: {
     type: String,
     default: 'both',
@@ -75,18 +83,43 @@ function updatePosition() {
   if (!props.open || props.maximized || typeof window === 'undefined') return;
   const anchor = anchorRef.value?.getBoundingClientRect();
   const panel = panelRef.value?.getBoundingClientRect();
-  if (!anchor || !panel) return;
+  if (!anchor || (!panel && !props.fitAnchor)) return;
 
+  const gap = props.anchorGap ?? customLengthPixels('--ui-floating-gap', 0.5);
+  const inset =
+    props.viewportInset ??
+    customLengthPixels('--ui-floating-viewport-inset', 0.5);
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  const opensAbove = props.placement.startsWith('top');
+  const availableBlock = opensAbove
+    ? anchor.top - gap - inset
+    : viewport.height - anchor.bottom - gap - inset;
+  const surface = props.fitAnchor ? { width: anchor.width, height: 0 } : panel;
   const { left, top } = anchoredFloatingPosition({
     anchor,
-    surface: panel,
-    viewport: { width: window.innerWidth, height: window.innerHeight },
+    surface,
+    viewport,
     placement: props.placement,
     direction: window.getComputedStyle(anchorRef.value).direction,
-    gap: customLengthPixels('--ui-floating-gap', 0.5),
-    inset: customLengthPixels('--ui-floating-viewport-inset', 0.5),
+    gap,
+    inset,
   });
-  position.value = { left: `${left}px`, top: `${top}px` };
+  position.value = props.fitAnchor
+    ? {
+        left: `${left}px`,
+        top: opensAbove ? 'auto' : `${top}px`,
+        bottom: opensAbove ? `${viewport.height - anchor.top + gap}px` : 'auto',
+        inlineSize: `${anchor.width}px`,
+        maxInlineSize: `${Math.max(0, viewport.width - inset * 2)}px`,
+        maxBlockSize: `${Math.max(0, availableBlock)}px`,
+      }
+    : {
+        left: `${left}px`,
+        top: `${top}px`,
+        ...(props.peerGroup && {
+          '--ui-popover-anchor-right': `${viewport.width - left - panel.width}px`,
+        }),
+      };
 }
 
 function requestClose(reason) {
@@ -146,12 +179,25 @@ function isRelatedFloatingSurface(target) {
   );
 }
 
+function isPeerPointer(target) {
+  return (
+    props.peerGroup &&
+    target
+      ?.closest?.('[data-ui-popover-peer-group]')
+      ?.getAttribute('data-ui-popover-peer-group') === props.peerGroup
+  );
+}
+
+function containsTarget(target) {
+  return anchorRef.value?.contains(target) || panelRef.value?.contains(target);
+}
+
 function handleOutsidePointer(event) {
   if (
     !props.open ||
     !props.closeOnOutsidePointer ||
-    anchorRef.value?.contains(event.target) ||
-    panelRef.value?.contains(event.target) ||
+    containsTarget(event.target) ||
+    isPeerPointer(event.target) ||
     props.relatedPointerRegion?.contains(event.target) ||
     isRelatedFloatingSurface(event.target)
   ) {
@@ -166,6 +212,7 @@ function handleKeydown(event) {
     !props.closeOnEscape ||
     event.key !== 'Escape' ||
     isRelatedFloatingSurface(event.target) ||
+    (props.peerGroup && !containsTarget(event.target)) ||
     (panelRef.value?.contains(event.target) &&
       event.target?.closest?.('[role="combobox"][aria-expanded="true"]'))
   ) {
@@ -221,6 +268,16 @@ watch(
 watch(
   () => props.open,
   (open) => {
+    if (open && props.fitAnchor) updatePosition();
+    if (!open && props.keepMounted && panelRef.value) {
+      const { height } = panelRef.value.getBoundingClientRect();
+      position.value = { ...position.value, blockSize: `${height}px` };
+    }
+  },
+);
+watch(
+  () => props.open,
+  (open) => {
     if (open) nextTick(openPanel);
   },
   { flush: 'post' },
@@ -228,13 +285,16 @@ watch(
 
 // Search results and async content can change height after the first anchor pass.
 watch(
-  panelRef,
-  (panel) => {
+  [panelRef, () => props.positionLayoutElement],
+  ([panel, layoutElement]) => {
     sizeObserver?.disconnect();
     sizeObserver = null;
     if (!panel || typeof ResizeObserver === 'undefined') return;
     sizeObserver = new ResizeObserver(updatePosition);
     sizeObserver.observe(panel);
+    if (props.fitAnchor && anchorRef.value)
+      sizeObserver.observe(anchorRef.value);
+    if (layoutElement) sizeObserver.observe(layoutElement);
   },
   { flush: 'post' },
 );
@@ -259,17 +319,26 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <span ref="anchor" class="ui-popover__anchor" v-bind="$attrs">
+  <span
+    ref="anchor"
+    class="ui-popover__anchor"
+    :data-ui-popover-peer-group="props.peerGroup"
+    v-bind="$attrs"
+  >
     <slot name="trigger" :open="props.open" :trigger-props="triggerProps" />
   </span>
   <!-- Deferred: an always-mounted overlay can mount in the same pass as its
        surface host, before that host is in the document. -->
   <Teleport defer :to="overlayHost || undefined" :disabled="!overlayHost">
     <section
-      v-if="props.open"
+      v-if="props.open || keepMounted"
       :id="panelId"
       ref="panel"
       class="ui-popover"
+      :data-open="props.open"
+      :data-ui-popover-peer-group="props.peerGroup"
+      :inert="!props.open"
+      :aria-hidden="!props.open || undefined"
       :role="props.role"
       :aria-label="props.ariaLabel"
       :aria-modal="props.role === 'dialog' ? 'false' : undefined"
@@ -343,6 +412,10 @@ onBeforeUnmount(() => {
 .ui-popover__scroll {
   min-block-size: 0;
   overscroll-behavior: contain;
+}
+.ui-popover[data-open='false'] {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .ui-popover__header {

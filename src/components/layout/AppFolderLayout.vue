@@ -1,6 +1,7 @@
 <script setup>
 import { computed, useId } from 'vue';
 import { APP_DESTINATIONS } from '../../utils/appDestinationRegistry.js';
+import UiFolderTabShape from '../ui/UiFolderTabShape.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -39,21 +40,10 @@ function navigate(destinationId, event) {
     :data-active-material="activeMaterial"
     :style="tabShapeStyle"
   >
-    <svg
+    <UiFolderTabShape
       class="app-folder-layout__shape-definition"
-      width="0"
-      height="0"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <defs>
-        <clipPath :id="tabShapeId" clipPathUnits="objectBoundingBox">
-          <path
-            d="M0.16,0 L0.84,0 C0.9,0 0.92,0.18 0.95,0.42 L1,1 L0,1 L0.05,0.42 C0.08,0.18 0.1,0 0.16,0 Z"
-          />
-        </clipPath>
-      </defs>
-    </svg>
+      :shape-id="tabShapeId"
+    />
 
     <UiScrollRegion
       class="app-folder-layout__navigation"
