@@ -917,4 +917,18 @@ describe('registerConfigHandlers', () => {
     });
     expect(applyOutputLanguage).toHaveBeenCalledOnce();
   });
+
+  it('resolves the fallback UI locale and persists Output language without live locale hooks', async () => {
+    const { ipcMain, updateConfig } = register();
+
+    await expect(
+      ipcMain.handlers.get('config:get-ui-language-target')(),
+    ).resolves.toBe('zh-TW');
+    await expect(
+      ipcMain.handlers.get('config:set-output-language')({}, 'en-US'),
+    ).resolves.toBe('en-US');
+    expect(updateConfig).toHaveBeenCalledExactlyOnceWith({
+      outputLanguage: 'en-US',
+    });
+  });
 });

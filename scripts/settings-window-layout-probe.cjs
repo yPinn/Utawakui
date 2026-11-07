@@ -47,7 +47,13 @@ function collectLayout(label) {
   );
   const nestedRow = select('.settings-document-item--nested');
   const values = selectAll('.settings-document-item__value');
-  const actions = selectAll('.settings-document-item__actions');
+  const actionSlots = selectAll('.settings-document-item__actions');
+  const actions = actionSlots.filter(
+    (element) => element.getClientRects().length,
+  );
+  const emptyActionCount = actions.filter(
+    (element) => !element.firstElementChild,
+  ).length;
   const required = {
     layout,
     perimeter,
@@ -103,18 +109,24 @@ function collectLayout(label) {
     const actionRect = element.getBoundingClientRect();
     const leadRect = lead.getBoundingClientRect();
     const itemRect = item.getBoundingClientRect();
-    const inline = actionRect.left >= leadRect.right - 1;
-    return (
-      Math.abs(actionRect.right - itemRect.right) <= 1 &&
-      (!inline ||
-        Math.abs(
-          (actionRect.top +
-            actionRect.bottom -
-            leadRect.top -
-            leadRect.bottom) /
-            2,
-        ) <= 1)
-    );
+    const inline =
+      getComputedStyle(item).gridTemplateColumns.split(' ').length > 1;
+    const trailingOffset = actionRect.right - itemRect.right;
+    const blockOffset = inline
+      ? (actionRect.top + actionRect.bottom - leadRect.top - leadRect.bottom) /
+        2
+      : actionRect.top - leadRect.bottom;
+    return {
+      title: item
+        .querySelector('.settings-document-item__title')
+        .textContent.trim(),
+      inline,
+      trailingOffset,
+      blockOffset,
+      aligned:
+        Math.abs(trailingOffset) <= 1 &&
+        (inline ? Math.abs(blockOffset) <= 1 : blockOffset >= -1),
+    };
   });
   const valueStyles = values.map((element) => {
     const style = getComputedStyle(element);
@@ -168,8 +180,9 @@ function collectLayout(label) {
     horizontalOverflow,
     overflowOwnerClasses: overflowOwners.map((element) => element.className),
     actionCount: actions.length,
+    emptyActionCount,
     actionsContained: actionContainment.every(Boolean),
-    actionsAligned: actionAlignment.every(Boolean),
+    misalignedActions: actionAlignment.filter(({ aligned }) => !aligned),
     valueCount: values.length,
     overflowingValueCount: valueStyles.filter((value) => value.overflowing)
       .length,
@@ -219,9 +232,12 @@ function validateMeasurement(measurement) {
   if (!measurement.actionCount || !measurement.actionsContained) {
     failures.push('row actions are missing or extend outside their rows');
   }
-  if (!measurement.actionsAligned) {
+  if (measurement.emptyActionCount) {
+    failures.push('empty action slots consume layout space');
+  }
+  for (const action of measurement.misalignedActions) {
     failures.push(
-      'row actions do not share the information center or trailing edge',
+      `row actions misaligned for "${action.title}" (inline: ${action.inline}, trailing: ${action.trailingOffset}px, block: ${action.blockOffset}px)`,
     );
   }
   if (

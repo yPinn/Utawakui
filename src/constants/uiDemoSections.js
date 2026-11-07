@@ -1,6 +1,7 @@
 export const UI_DEMO_EXCLUDED_COMPONENTS = Object.freeze([
   'UiFolderArtifact',
   'UiFolderArtifactCanvas',
+  'UiFolderTabShape', // Non-visual SVG clip definition owned by the Folder chrome.
 ]);
 
 export const UI_DEMO_GROUPS = Object.freeze([
@@ -96,7 +97,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'range',
         title: '範圍控制',
-        components: ['UiRange'],
+        components: ['UiRange', 'UiVolumeControl'],
       },
       {
         key: 'color-field',

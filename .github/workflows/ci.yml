@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
+      quality: ${{ steps.scope.outputs.quality }}
       windows-package: ${{ steps.scope.outputs.windows_package }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -98,6 +99,17 @@ jobs:
         if: steps.scope.outputs.quality == 'true'
         run: npm run lint:md
 
+      - name: Prepare FFmpeg for runtime tests
+        if: steps.scope.outputs.quality == 'true'
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y ffmpeg
+          fi
+          ffmpeg -version
+          printf 'UTAWAKUI_TEST_FFMPEG=%s\n' "$(command -v ffmpeg)" >> "$GITHUB_ENV"
+
       - name: Run tests
         if: steps.scope.outputs.quality == 'true' && steps.scope.outputs.coverage == 'false'
         run: npm test
@@ -115,13 +127,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        if: steps.scope.outputs.quality == 'true'
+        with:
+          python-version: '3.14'
+
+      - name: Run Python tests
+        if: steps.scope.outputs.quality == 'true'
+        shell: bash
+        run: |
+          requests_version=$(node -p "require('./shared/featureDependencies.json').dependencies.find(d => d.id === 'yt-dlp-provider-tool').artifacts.find(a => a.role === 'requests-wheel').version")
+          python -m pip install --only-binary=:all: "requests==$requests_version"
+          git ls-files -z -- '*test.py' | while IFS= read -r -d '' test_file; do
+            printf '\nRunning %s\n' "$test_file"
+            python -B "$test_file"
+          done
+
       - name: Build renderer
         if: steps.scope.outputs.quality == 'true'
         run: npm run build
 
   windows-package:
     needs: build
-    if: needs.build.result == 'success' && needs.build.outputs.windows-package == 'true'
+    if: needs.build.result == 'success' && needs.build.outputs.quality == 'true'
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -136,20 +164,35 @@ jobs:
 
       - run: npm ci
 
-      # Electron 43 no longer downloads its binary on install; packaging reads its notices.
+      - name: Run Windows runtime tests
+        run: >-
+          npm exec -- vitest run
+          electron/lib/featureDependencies/archive.runtime.test.js
+          electron/lib/library/paths.test.js
+          electron/lib/lyricsAcoustic/artifacts.test.js
+          electron/lib/waveform/cache.test.js
+          scripts/lyrics-reading-review-cli.test.mjs
+
+      # Electron 43 no longer downloads its binary on install.
       - name: Install the pinned Electron binary
         run: npm run electron:install
 
+      - name: Run Settings layout probe
+        run: npm run test:settings-layout
+
       - name: Build unsigned Windows updater bundle
+        if: needs.build.outputs.windows-package == 'true'
         run: npm run dist
 
       - name: Verify ephemeral unsigned package
+        if: needs.build.outputs.windows-package == 'true'
         shell: pwsh
         run: |
           $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
           ./scripts/verify-unsigned-windows-package.ps1 -Version $version
 
       - name: Verify installed upgrade from each public baseline
+        if: needs.build.outputs.windows-package == 'true'
         shell: pwsh
         run: |
           $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
@@ -164,7 +207,7 @@ jobs:
           }
 
       - name: Upload installed acceptance evidence
-        if: always()
+        if: always() && needs.build.outputs.windows-package == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: windows-installed-acceptance-${{ github.run_id }}-${{ github.run_attempt }}

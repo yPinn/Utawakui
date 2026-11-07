@@ -138,7 +138,7 @@ module.exports = defineConfig({
       provider: 'istanbul',
       reporter: ['text', 'html', 'lcov', 'json-summary'],
       reportsDirectory: 'coverage',
-      all: true,
+      reportOnFailure: true,
       clean: true,
       skipFull: true,
       include: coveragePolicy.include,

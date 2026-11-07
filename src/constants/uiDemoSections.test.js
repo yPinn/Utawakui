@@ -126,7 +126,7 @@ describe('UI demo component order', () => {
     );
   });
 
-  it('keeps page-only artifacts out of the component catalogue', () => {
+  it('keeps page-only artifacts and the Folder clip definition out of the catalogue', () => {
     expect(
       UI_DEMO_GROUPS.flatMap((group) => group.sections).some(
         (section) => section.key === 'page-layout',
@@ -135,6 +135,7 @@ describe('UI demo component order', () => {
     expect(UI_DEMO_EXCLUDED_COMPONENTS).toEqual([
       'UiFolderArtifact',
       'UiFolderArtifactCanvas',
+      'UiFolderTabShape',
     ]);
   });
 

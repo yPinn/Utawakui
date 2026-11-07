@@ -60,6 +60,9 @@ describe('ordinary CI workflow', () => {
     expect(qualityJob.outputs['windows-package']).toContain(
       'steps.scope.outputs.windows_package',
     );
+    expect(qualityJob.outputs.quality).toBe(
+      '${{ steps.scope.outputs.quality }}',
+    );
     expect(commands).toEqual(
       expect.arrayContaining([
         'npm ci',
@@ -148,6 +151,28 @@ describe('ordinary CI workflow', () => {
     );
   });
 
+  it('runs the Python and real FFmpeg cases during Ubuntu quality checks', () => {
+    const steps = readWorkflow().jobs.build.steps;
+    const setupPython = steps.find((step) =>
+      step.uses?.startsWith('actions/setup-python@'),
+    );
+    const pythonTests = steps.find((step) => step.name === 'Run Python tests');
+    const ffmpeg = steps.find(
+      (step) => step.name === 'Prepare FFmpeg for runtime tests',
+    );
+    expect(setupPython?.uses).toMatch(/^actions\/setup-python@[a-f0-9]{40}$/u);
+    for (const step of [setupPython, pythonTests, ffmpeg]) {
+      expect(step?.if).toBe("steps.scope.outputs.quality == 'true'");
+    }
+    expect(pythonTests?.run).toContain('python -B "$test_file"');
+    expect(pythonTests?.run).toContain("'*test.py'");
+    expect(ffmpeg?.run).toContain('UTAWAKUI_TEST_FFMPEG');
+    expect(ffmpeg?.run).toContain('GITHUB_ENV');
+    expect(steps.indexOf(ffmpeg)).toBeLessThan(
+      steps.findIndex((step) => step.run === 'npm test'),
+    );
+  });
+
   it('lints the correct commit range for pushes and pull requests', () => {
     const qualityJob = readWorkflow().jobs.build;
     const serializedSteps = JSON.stringify(qualityJob.steps);
@@ -167,9 +192,7 @@ describe('ordinary CI workflow', () => {
     expect(packageJob?.needs).toBe('build');
     expect(packageJob?.['runs-on']).toBe('windows-latest');
     expect(packageJob?.['timeout-minutes']).toBeLessThanOrEqual(30);
-    expect(packageJob?.if).toContain(
-      "needs.build.outputs.windows-package == 'true'",
-    );
+    expect(packageJob?.if).toContain("needs.build.outputs.quality == 'true'");
     expect(packageJob).not.toHaveProperty('environment');
 
     const serializedJob = JSON.stringify(packageJob);
@@ -188,9 +211,19 @@ describe('ordinary CI workflow', () => {
     const evidenceUpload = packageJob.steps.find((step) =>
       step.uses?.startsWith('actions/upload-artifact@'),
     );
-    expect(evidenceUpload?.if).toBe('always()');
+    const packagingScope = "needs.build.outputs.windows-package == 'true'";
+    expect(evidenceUpload?.if).toBe(`always() && ${packagingScope}`);
     expect(evidenceUpload?.with?.path).toBe('release-evidence/');
     expect(evidenceUpload?.with?.['retention-days']).toBe(7);
+    for (const command of [
+      'npm run dist',
+      'scripts/verify-unsigned-windows-package.ps1',
+      'scripts/windows-installed-acceptance.ps1',
+    ]) {
+      expect(
+        packageJob.steps.find((step) => step.run?.includes(command))?.if,
+      ).toBe(packagingScope);
+    }
 
     const verifier = fs.readFileSync(packageVerifierPath, 'utf8');
     expect(verifier).toContain('Get-AuthenticodeSignature');
@@ -249,6 +282,32 @@ describe('ordinary CI workflow', () => {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     expect(packageJson.scripts['release:verify-installed']).toContain(
       'windows-installed-acceptance.ps1',
+    );
+  });
+
+  it('runs Windows-only Vitest cases and the Electron layout probe for all quality changes', () => {
+    const steps = readWorkflow().jobs['windows-package'].steps;
+    const windowsTests = steps.find(
+      (step) => step.name === 'Run Windows runtime tests',
+    );
+    const layoutProbe = steps.find(
+      (step) => step.run === 'npm run test:settings-layout',
+    );
+    expect(windowsTests?.run).toContain('vitest run');
+    for (const file of [
+      'archive.runtime.test.js',
+      'paths.test.js',
+      'lyricsAcoustic/artifacts.test.js',
+      'waveform/cache.test.js',
+      'lyrics-reading-review-cli.test.mjs',
+    ]) {
+      expect(windowsTests?.run).toContain(file);
+    }
+    expect(windowsTests).not.toHaveProperty('if');
+    expect(layoutProbe).toBeDefined();
+    expect(layoutProbe).not.toHaveProperty('if');
+    expect(steps.indexOf(layoutProbe)).toBeGreaterThan(
+      steps.findIndex((step) => step.run === 'npm run electron:install'),
     );
   });
 

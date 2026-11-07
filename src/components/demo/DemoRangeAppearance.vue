@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue';
 import UiRange from '../ui/UiRange.vue';
+import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import '../../styles/demoSpecimens.css';
 
 function formatPercent(value) {
@@ -153,6 +154,8 @@ const values = reactive({
   states: Object.fromEntries(STATES.map((s) => [s.key, s.value])),
   validationHint: 72,
   validationError: 140,
+  volume: 0.64,
+  muted: false,
 });
 
 function stateInvalid(state) {
@@ -165,6 +168,17 @@ function stateInvalid(state) {
     <p class="demo-specimens__copy">
       連續或離散數值調整；拖曳或方向鍵調整，指向軌道可預覽。無空值、必填或唯讀狀態。
     </p>
+
+    <section class="demo-specimens__section">
+      <h4>音量與靜音</h4>
+      <UiVolumeControl
+        v-model="values.volume"
+        v-model:muted="values.muted"
+        volume-label="範例音量"
+        mute-label="靜音"
+        unmute-label="解除靜音"
+      />
+    </section>
 
     <section class="demo-specimens__section">
       <h4>密度與寬度</h4>

@@ -224,6 +224,11 @@ const supportingCopy = computed(() =>
   gap: var(--ui-space-2);
 }
 
+/* Conditional slot content can leave an empty grid item behind. */
+.settings-document-item__actions:empty {
+  display: none;
+}
+
 @container settings-section (max-width: 48rem) {
   .settings-document-item {
     column-gap: var(--ui-space-3);

@@ -47,9 +47,15 @@ so the `CI / build` check remains visible for every configured event.
 | `main` push                            |          Yes          |      Yes      |   Yes    |  As classified   |  As classified  |
 | Manual diagnostic                      |          Yes          |      Yes      |   Yes    |       Yes        |       Yes       |
 
-Pull requests run the affected quality suite without coverage instrumentation.
-`main` and manual runs retain the complete coverage gate. The Windows job runs
-only after Ubuntu succeeds and only when the classifier requests it.
+Pull requests run the quality suite without coverage instrumentation.
+`main` and manual runs retain the complete coverage gate. Ubuntu quality runs
+include the real FFmpeg cases and the tracked Python test scripts. The Python
+suite uses the Requests version from the provider manifest for the loopback
+HTTP test.
+
+When quality checks are selected, the Windows job runs the Windows-specific
+Vitest files and the Electron Settings layout probe after Ubuntu succeeds. The
+Windows package column governs the installer build and upgrade acceptance.
 
 ## Changed-Path Contract
 
@@ -75,7 +81,8 @@ classifier and its table before relying on the cheaper route.
 
 Concurrency cancels only an older run for the same pull request. `main` pushes and
 manual diagnostics include the run id in their group and do not cancel one
-another. Ubuntu jobs time out after 15 minutes; Windows jobs time out after 20.
+another. Ubuntu jobs time out after 15 minutes. The ordinary Windows job times
+out after 30 minutes.
 
 Audits precede `npm ci`. Every run gates shipped dependencies with
 `npm run audit:prod` (high and above) regardless of scope, so a new advisory
