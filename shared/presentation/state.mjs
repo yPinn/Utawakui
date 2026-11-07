@@ -51,6 +51,7 @@ const LIVE_STAGE_CARD_START_MS = 4000;
 const LIVE_STAGE_CARD_END_MS = 8000;
 const LYRICS_COUNT_IN_BEATS = 4;
 const LYRICS_COUNT_IN_FALLBACK_BEAT_MS = 500;
+const OVERLAY_MAX_ESTIMATED_FINAL_HOLD_MS = 6000;
 const KTV_DEFAULT_LINE_DURATION_MS = 7000;
 const KTV_MIN_LINE_DURATION_MS = 3000;
 const KTV_MAX_LINE_DURATION_MS = 10000;
@@ -781,6 +782,16 @@ function ktvLineVisualWeight(line, language, presentationLine = null) {
   );
 }
 
+function medianKtvLineWeight(timedLines, language) {
+  return median(
+    timedLines
+      .map(({ line, presentationLine }) =>
+        ktvLineVisualWeight(line, language, presentationLine),
+      )
+      .filter((weight) => weight > 0),
+  );
+}
+
 function estimatedKtvLineDurationMs(
   line,
   language,
@@ -851,30 +862,51 @@ export function prepareLyricsOverlaySnapshot(snapshot) {
   const { lines } = snapshot.lyrics;
   if (!Array.isArray(lines)) return snapshot;
   const hasSections = musicStructureDocument(snapshot)?.level === 'M2';
+  let timedLines;
   let typicalIntervalMs;
   let displayLines;
   for (const [index, line] of lines.entries()) {
     if (
       !Number.isFinite(line?.startMs) ||
-      (Number.isFinite(line.endMs) && line.endInferred !== true) ||
-      mappedLineSegments(line)?.length
+      (Number.isFinite(line.endMs) && line.endInferred !== true)
     )
       continue;
     const boundaryMs = Number.isFinite(line.endMs)
       ? line.endMs
       : nextFiniteLineStart(lines, index);
+    const openFinalLine = !Number.isFinite(boundaryMs);
     if (
-      !Number.isFinite(boundaryMs) ||
-      (!hasSections && boundaryMs - line.startMs < KTV_LONG_GAP_MIN_MS)
+      !openFinalLine &&
+      (mappedLineSegments(line)?.length ||
+        (!hasSections && boundaryMs - line.startMs < KTV_LONG_GAP_MIN_MS))
     )
       continue;
-    typicalIntervalMs ??= typicalKtvLineIntervalMs(
-      timedVisibleLyricsLines(lines),
-    );
-    const endMs =
-      confidentInstrumentalStartMs(snapshot, line.startMs, boundaryMs) ??
-      estimatedLongGapEndMs(line.startMs, boundaryMs, typicalIntervalMs);
-    if (endMs >= boundaryMs) continue;
+    timedLines ??= timedVisibleLyricsLines(lines);
+    typicalIntervalMs ??= typicalKtvLineIntervalMs(timedLines);
+    let endMs;
+    if (openFinalLine) {
+      if (timedLines.at(-1)?.sourceLineIndex !== index) continue;
+      const language = text(snapshot.lyrics.source?.language);
+      endMs = resolvedKtvLineEndMs(
+        snapshot,
+        timedLines,
+        timedLines.length - 1,
+        language,
+        typicalIntervalMs,
+        medianKtvLineWeight(timedLines, language),
+        OVERLAY_MAX_ESTIMATED_FINAL_HOLD_MS,
+      );
+    } else {
+      endMs =
+        confidentInstrumentalStartMs(snapshot, line.startMs, boundaryMs) ??
+        estimatedLongGapEndMs(line.startMs, boundaryMs, typicalIntervalMs);
+    }
+    if (
+      !Number.isFinite(endMs) ||
+      endMs <= line.startMs ||
+      (!openFinalLine && endMs >= boundaryMs)
+    )
+      continue;
     displayLines ??= lines.slice();
     displayLines[index] = { ...line, endMs, endInferred: false };
   }
@@ -895,6 +927,7 @@ function resolvedKtvLineEndMs(
   language,
   typicalIntervalMs,
   medianWeight,
+  maxEstimatedHoldMs = Infinity,
 ) {
   const { line, presentationLine } = timedLines[timedLineIndex];
   const nextStartMs = timedLines[timedLineIndex + 1]?.line?.startMs;
@@ -951,7 +984,10 @@ function resolvedKtvLineEndMs(
     const durationEndMs = Number.isFinite(snapshot?.playback?.durationMs)
       ? snapshot.playback.durationMs + lyricsOffsetMs(snapshot)
       : Infinity;
-    return Math.min(durationEndMs, estimateAnchorMs + estimatedDurationMs);
+    return Math.min(
+      durationEndMs,
+      estimateAnchorMs + Math.min(estimatedDurationMs, maxEstimatedHoldMs),
+    );
   }
   return estimatedLongGapEndMs(
     line.startMs,
@@ -1051,12 +1087,7 @@ export function projectKtvDisplayTimeline(
   const language = text(snapshot?.lyrics?.source?.language);
   const timedLines = timedVisibleLyricsLines(lines, presentationDocument);
   const typicalIntervalMs = typicalKtvLineIntervalMs(timedLines);
-  const weights = timedLines
-    .map(({ line, presentationLine }) =>
-      ktvLineVisualWeight(line, language, presentationLine),
-    )
-    .filter((weight) => weight > 0);
-  const medianWeight = median(weights);
+  const medianWeight = medianKtvLineWeight(timedLines, language);
   const units = [];
 
   timedLines.forEach(

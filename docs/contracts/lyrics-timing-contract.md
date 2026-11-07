@@ -358,6 +358,24 @@ Partial fine coverage may add explicitly marked display estimates bounded by exi
 coarse/fine times. These remain paint-only, never acoustic evidence or canonical T2.
 Output's starts-only path is unchanged.
 
+General Lyrics Overlay selection and scheduling share a display-only end for an
+open final line. It reuses the existing KTV duration estimate, with an explicit
+final segment end or a confident instrumental boundary taking precedence when
+available. An estimated end is capped at the track duration. Explicit line ends
+and the existing interlude policy retain their behavior. The source document and
+local reading position retain their original timing.
+
+The general Overlay holds an estimated final line for at most six seconds from
+the last timed segment start, or from the line start if it has no timed segment.
+This cap applies only when neither an explicit end nor a confident instrumental
+boundary is available. In a local check of 100 cues from five recordings, masking
+cue ends and treating each cue as final, the cap reduced 16 holds without adding
+an early clear. Six seconds is the smallest whole-second cap above the longest
+labeled cue (5.18 seconds). The underlying estimator still cleared 11 cues
+early. In a sparse RWC P004 check using AIST vocal
+activity annotation, the estimated clear fell 2.2 seconds into the instrumental
+outro, down from 5.3 seconds before the cap.
+
 Paint completion is separate from source-line ownership. Prepared T1+ paint
 plans expose a display-only `paintEndMs`, `holdUntilMs`, per-coarse `cueEnds`
 and diagnostic `quality` reasons. A complete covered range can stop its active

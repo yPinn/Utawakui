@@ -66,6 +66,86 @@ function snapshot(overrides = {}) {
 }
 
 describe('overlay state selectors', () => {
+  it('caps only the estimated final cue hold at six seconds', () => {
+    const value = snapshot();
+    value.lyrics.lines = [{ text: '最後一句', startMs: 8000, endMs: null }];
+    value.playback.positionMs = 13000;
+    const nowMs = Date.parse(value.generatedAt);
+    const options = { templateId: 'centered-vertical', nowMs };
+
+    expect(nextPresentationBoundaryDelayMs(value, options)).toBe(1000);
+    expect(
+      selectLyricsOverlayFrame(value, { ...options, nowMs: nowMs + 1000 }),
+    ).toMatchObject({ visible: false, currentText: '' });
+
+    const authored = {
+      ...value,
+      lyrics: {
+        ...value.lyrics,
+        lines: [{ ...value.lyrics.lines[0], endMs: 17000 }],
+      },
+    };
+    expect(nextPresentationBoundaryDelayMs(authored, options)).toBe(4000);
+    expect(
+      selectLyricsOverlayFrame(authored, { ...options, nowMs: nowMs + 1000 })
+        .currentText,
+    ).toBe('最後一句');
+  });
+
+  it('expires an open final cue on the shared display clock without changing its source', () => {
+    const value = snapshot();
+    value.lyrics.lines = [
+      { text: '原曲第一行', startMs: 0, endMs: 4000, endInferred: true },
+      { text: '原曲第二行', startMs: 4000, endMs: 8000, endInferred: true },
+      { text: '原曲最後行', startMs: 8000, endMs: null },
+    ];
+    value.playback.positionMs = 11000;
+    value.playback.rate = 2;
+    const nowMs = Date.parse(value.generatedAt);
+    const options = { templateId: 'centered-vertical', nowMs };
+
+    expect(nextPresentationBoundaryDelayMs(value, options)).toBe(500);
+    expect(
+      selectLyricsOverlayFrame(value, { ...options, nowMs: nowMs + 499 })
+        .currentText,
+    ).toBe('原曲最後行');
+    expect(
+      selectLyricsOverlayFrame(value, { ...options, nowMs: nowMs + 500 }),
+    ).toMatchObject({ visible: false, currentText: '' });
+    expect(value.lyrics.lines.at(-1).endMs).toBeNull();
+    expect(selectLyricsFrame(value, { nowMs: nowMs + 500 }).currentText).toBe(
+      '原曲最後行',
+    );
+
+    const paused = {
+      ...value,
+      playback: { ...value.playback, status: 'paused' },
+    };
+    expect(nextPresentationBoundaryDelayMs(paused, options)).toBeNull();
+    expect(
+      selectLyricsOverlayFrame(paused, { ...options, nowMs: nowMs + 5000 })
+        .currentText,
+    ).toBe('原曲最後行');
+    const seeked = {
+      ...paused,
+      playback: { ...paused.playback, positionMs: 16000 },
+    };
+    expect(selectLyricsOverlayFrame(seeked, options).visible).toBe(false);
+    const explicit = {
+      ...seeked,
+      lyrics: {
+        ...seeked.lyrics,
+        lines: [
+          ...value.lyrics.lines.slice(0, -1),
+          { ...value.lyrics.lines.at(-1), endMs: 24000 },
+        ],
+      },
+    };
+    expect(selectLyricsOverlayFrame(explicit, options).currentText).toBe(
+      '原曲最後行',
+    );
+  });
+
   it('keeps Chalkboard Vertical transparent for unsynced lyrics with an active line', () => {
     const value = snapshot();
     value.lyrics.synced = false;
