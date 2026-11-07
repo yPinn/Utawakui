@@ -472,9 +472,9 @@
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(0 0 0 / 42%);
   /* Cast by fixed chrome onto content scrolled beneath it (see UiScrollRegion). */
   --ui-scroll-edge-shadow-start:
-    0 0.125rem 0.25rem 0 rgb(0 0 0 / 45%), 0 0.5rem 1rem 0 rgb(0 0 0 / 55%);
+    0 0.125rem 0.25rem 0 rgb(0 0 0 / 22%), 0 0.5rem 1rem 0 rgb(0 0 0 / 28%);
   --ui-scroll-edge-shadow-end:
-    0 -0.125rem 0.25rem 0 rgb(0 0 0 / 45%), 0 -0.5rem 1rem 0 rgb(0 0 0 / 55%);
+    0 -0.125rem 0.25rem 0 rgb(0 0 0 / 22%), 0 -0.5rem 1rem 0 rgb(0 0 0 / 28%);
   --ui-scroll-edge-band-size: var(--ui-space-6);
 
   /* Global semantic layers: only shell chrome and teleported overlays. */
@@ -932,11 +932,10 @@
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(39 41 40 / 18%);
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
   --ui-scroll-edge-shadow-start:
-    0 0.125rem 0.25rem 0 rgb(39 41 40 / 18%),
-    0 0.5rem 1rem 0 rgb(39 41 40 / 24%);
+    0 0.125rem 0.25rem 0 rgb(39 41 40 / 9%), 0 0.5rem 1rem 0 rgb(39 41 40 / 13%);
   --ui-scroll-edge-shadow-end:
-    0 -0.125rem 0.25rem 0 rgb(39 41 40 / 18%),
-    0 -0.5rem 1rem 0 rgb(39 41 40 / 24%);
+    0 -0.125rem 0.25rem 0 rgb(39 41 40 / 9%),
+    0 -0.5rem 1rem 0 rgb(39 41 40 / 13%);
 
   --ui-color-shell-substrate: var(--ui-palette-neutral-950);
   --ui-color-canvas: var(--ui-palette-warm-neutral-300);
