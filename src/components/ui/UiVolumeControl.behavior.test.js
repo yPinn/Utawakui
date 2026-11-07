@@ -36,6 +36,7 @@ const controls = (root) =>
 describe('UiVolumeControl', () => {
   it.each([
     ['expanded', 'start', ['button', 'input']],
+    ['reveal', 'start', ['input', 'button']],
     ['reveal', 'end', ['button', 'input']],
   ])(
     'follows the visual control order for %s %s',
@@ -61,10 +62,9 @@ describe('UiVolumeControl', () => {
       const { app, root } = mount(UiVolumeControl, {
         ...labels,
         variant: 'reveal',
-        revealSide: 'end',
       });
       try {
-        const [, input] = controls(root);
+        const [input] = controls(root);
         const [group] = findAll(root, (node) => node.props.role === 'group');
         trigger(input, 'onPointerdown', {
           button: 0,
