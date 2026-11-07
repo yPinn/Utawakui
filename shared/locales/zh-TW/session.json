@@ -148,9 +148,10 @@
     "completed": "完成曲目",
     "all": "完整安排",
     "checking": "正在檢查曲目…",
-    "totals": "共 {total} 項，將保存 {saved} 首本機曲目。",
-    "confirmTitle": "保存前確認",
-    "confirmMessage": "將合併重複曲目 {merged} 項，排除手動項目 {manual} 項、找不到音檔 {unavailable} 項。原始紀錄不會修改。",
+    "summary": "將保存 {count} 首曲目，原始紀錄會保留。",
+    "merged": "將合併重複曲目 {count} 項。",
+    "manual": "將略過手動項目 {count} 項。",
+    "unavailable": "將略過找不到音檔 {count} 項。",
     "nothingToSave": "沒有可保存的本機曲目，請改選範圍或檢查曲目連結。",
     "cancel": "取消",
     "repreview": "重新預覽"

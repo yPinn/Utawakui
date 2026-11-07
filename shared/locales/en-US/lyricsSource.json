@@ -53,8 +53,8 @@
     "invalidYrc": "The NetEase word sync data can't be used; you can still save {fallback}"
   },
   "timeline": {
-    "later": "About {seconds} s later than {reference}. Expand other sources to compare; this doesn't mean either is more accurate.",
-    "earlier": "About {seconds} s earlier than {reference}. Expand other sources to compare; this doesn't mean either is more accurate.",
+    "later": "About {seconds} s later than {reference}.",
+    "earlier": "About {seconds} s earlier than {reference}.",
     "reference": "the reference source in this group"
   },
   "issue": {

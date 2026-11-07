@@ -121,6 +121,8 @@ async function save() {
   <UiModal
     :open="open"
     :title="t('session.history.saveAsPlaylist')"
+    size="notice"
+    max-block-size="small"
     :close-disabled="saving"
     @close="!saving && emit('close')"
   >
@@ -144,28 +146,17 @@ async function save() {
       />
       <UiHint v-if="loading">{{ t('session.export.checking') }}</UiHint>
       <template v-if="preview">
-        <UiHint>{{
-          t('session.export.totals', {
-            total: preview.total,
-            saved: preview.savedCount,
-          })
-        }}</UiHint>
-        <UiNotice
-          compact
-          :tone="
-            preview.mergedCount + preview.manualCount + preview.unavailableCount
-              ? 'warning'
-              : 'info'
-          "
-          :title="t('session.export.confirmTitle')"
-          :message="
-            t('session.export.confirmMessage', {
-              merged: preview.mergedCount,
-              manual: preview.manualCount,
-              unavailable: preview.unavailableCount,
-            })
-          "
-        />
+        <UiHint v-if="preview.mergedCount">
+          {{ t('session.export.merged', { count: preview.mergedCount }) }}
+        </UiHint>
+        <UiHint v-if="preview.manualCount">
+          {{ t('session.export.manual', { count: preview.manualCount }) }}
+        </UiHint>
+        <UiHint v-if="preview.unavailableCount">
+          {{
+            t('session.export.unavailable', { count: preview.unavailableCount })
+          }}
+        </UiHint>
         <UiHint v-if="!preview.savedCount" tone="warning">{{
           t('session.export.nothingToSave')
         }}</UiHint>
@@ -173,19 +164,38 @@ async function save() {
       <UiNotice v-if="error" compact tone="warning" :message="error" />
     </div>
     <template #footer>
-      <UiButton :disabled="saving" @click="emit('close')">{{
-        t('session.export.cancel')
-      }}</UiButton>
-      <UiButton v-if="!preview" :disabled="saving || loading" @click="load">{{
-        t('session.export.repreview')
-      }}</UiButton>
-      <UiButton
-        variant="accent"
-        :disabled="!canSave"
-        :loading="saving"
-        @click="save"
-        >{{ t('session.history.saveAsPlaylist') }}</UiButton
-      >
+      <div class="session-playlist-export__footer">
+        <UiHint
+          v-if="preview?.savedCount"
+          class="session-playlist-export__summary"
+        >
+          {{
+            t(
+              'session.export.summary',
+              { count: preview.savedCount },
+              preview.savedCount,
+            )
+          }}
+        </UiHint>
+        <div class="session-playlist-export__actions">
+          <UiButton :disabled="saving" @click="emit('close')">{{
+            t('session.export.cancel')
+          }}</UiButton>
+          <UiButton
+            v-if="!preview"
+            :disabled="saving || loading"
+            @click="load"
+            >{{ t('session.export.repreview') }}</UiButton
+          >
+          <UiButton
+            variant="accent"
+            :disabled="!canSave"
+            :loading="saving"
+            @click="save"
+            >{{ t('session.history.saveAsPlaylist') }}</UiButton
+          >
+        </div>
+      </div>
     </template>
   </UiModal>
 </template>
@@ -194,5 +204,29 @@ async function save() {
   display: grid;
   min-inline-size: 0;
   gap: var(--ui-space-3);
+}
+
+.session-playlist-export__footer,
+.session-playlist-export__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-inline-size: 0;
+}
+
+.session-playlist-export__footer {
+  inline-size: 100%;
+  gap: var(--ui-space-3);
+}
+
+.session-playlist-export__summary {
+  flex: 1 1 12rem;
+  text-wrap: balance;
+}
+
+.session-playlist-export__actions {
+  justify-content: flex-end;
+  margin-inline-start: auto;
+  gap: var(--ui-space-2);
 }
 </style>

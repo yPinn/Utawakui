@@ -146,23 +146,26 @@ const searchIncomplete = computed(
           )),
     ),
 );
+const searchHint = computed(() => {
+  if (state.manualSave.error) return '';
+  if (draftDiffersFromResults.value)
+    return t('lyricsAcquisition.queryChangedMessage');
+  if (
+    !isSearchPending.value &&
+    hasResults.value &&
+    state.candidateSearch.extensionFailed
+  )
+    return t('lyricsAcquisition.moreUnavailable');
+  return '';
+});
 const workspaceNotice = computed(() => {
   if (state.manualSave.error)
     return {
       tone: state.manualSave.committed ? 'warning' : 'danger',
       message: state.manualSave.error,
     };
-  if (draftDiffersFromResults.value)
-    return {
-      tone: 'info',
-      title: t('lyricsAcquisition.queryChangedTitle'),
-      message: t('lyricsAcquisition.queryChangedMessage'),
-    };
-  if (isSearchPending.value) return null;
-  if (hasResults.value)
-    return state.candidateSearch.extensionFailed
-      ? { tone: 'info', message: t('lyricsAcquisition.moreUnavailable') }
-      : null;
+  if (searchHint.value || isSearchPending.value || hasResults.value)
+    return null;
   return (hasSearched.value || state.candidateSearch.error) &&
     searchIncomplete.value
     ? {
@@ -368,6 +371,7 @@ function reportCandidate(candidate) {
         :gap="2"
         align="center"
         justify="end"
+        wrap
         role="group"
         :aria-label="t('lyricsSource.search.actions')"
       >
@@ -391,12 +395,13 @@ function reportCandidate(candidate) {
           {{ t('lyricsSource.search.search') }}
         </UiButton>
       </UiStack>
-      <p
+      <UiHint
         :id="`${providerId}-query-help`"
         class="lyrics-lrclib-search__query-help"
+        aria-live="polite"
       >
-        {{ t('lyricsSource.search.queryHelp') }}
-      </p>
+        {{ searchHint || t('lyricsSource.search.queryHelp') }}
+      </UiHint>
     </UiSurface>
 
     <p v-if="resultAnnouncement" class="ui-visually-hidden" aria-live="polite">
@@ -433,7 +438,11 @@ function reportCandidate(candidate) {
       <UiHint v-else-if="!hasSearched && !workspaceNotice" padded>{{
         t('lyricsAcquisition.searchStart')
       }}</UiHint>
-      <UiHint v-else-if="!hasResults && !workspaceNotice" role="status" padded>
+      <UiHint
+        v-else-if="!hasResults && !workspaceNotice && !searchHint"
+        role="status"
+        padded
+      >
         {{ t('lyricsAcquisition.noResults') }}
       </UiHint>
 
@@ -560,10 +569,7 @@ function reportCandidate(candidate) {
 
 .lyrics-lrclib-search__query-help {
   grid-column: 1 / -1;
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
+  text-wrap: pretty;
 }
 
 .lyrics-lrclib-search__actions {

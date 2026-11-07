@@ -148,9 +148,10 @@
     "completed": "Completed tracks",
     "all": "Full arrangement",
     "checking": "Checking tracks…",
-    "totals": "{total} items; {saved} local tracks will be saved.",
-    "confirmTitle": "Before saving",
-    "confirmMessage": "{merged} repeated songs will be merged; {manual} manual items and {unavailable} items with missing audio are excluded. The original records aren't changed.",
+    "summary": "Saves {count} track and keeps the original record. | Saves {count} tracks and keeps the original record.",
+    "merged": "Repeated entries to merge ({count})",
+    "manual": "Manual entries to skip ({count})",
+    "unavailable": "Entries to skip for missing audio ({count})",
     "nothingToSave": "No local tracks to save. Choose another scope or check track links.",
     "cancel": "Cancel",
     "repreview": "Preview again"

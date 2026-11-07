@@ -107,6 +107,24 @@ beforeEach(() =>
   }),
 );
 describe('save performance playlist confirmation', () => {
+  it('puts the save summary beside the button and omits zero-count exclusions', async () => {
+    window.Utawakui.previewPerformancePlaylist.mockResolvedValueOnce({
+      ok: true,
+      plan: { ...preview, mergedCount: 0, manualCount: 0 },
+    });
+    const view = mount(Modal, { open: true, sessionId: 'show' });
+    await settle();
+    const footer = findAll(view.root, (node) =>
+      node.props?.class?.includes?.('session-playlist-export__footer'),
+    )[0];
+    expect(footer).toBeDefined();
+    expect(textContent(footer)).toContain('將保存 1 首曲目，原始紀錄會保留。');
+    expect(saveButton(footer)).toBeDefined();
+    expect(textContent(view.root)).toContain('找不到音檔 1 項');
+    expect(textContent(view.root)).not.toMatch(/合併重複曲目|手動項目/u);
+    view.app.unmount();
+  });
+
   it('keeps a failed write in its dialog, then announces one successful retry even if list refresh fails', async () => {
     const close = vi.fn();
     window.Utawakui.savePerformancePlaylist.mockRejectedValueOnce(

@@ -20,6 +20,7 @@ import TrackArtistCredits from './TrackArtistCredits.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiProgress from '../ui/UiProgress.vue';
@@ -70,23 +71,18 @@ let lastWheelAt = 0;
 
 const WHEEL_STEP_INTERVAL_MS = 450;
 // A blocked preview is expected operator context, not an alarm.
-const BLOCKED_NOTICES = Object.freeze({
-  'session-active': {
-    tone: 'info',
-    message: t('track.preview.blockedSession'),
-  },
-  preempted: { tone: 'muted', message: t('track.preview.preempted') },
-  unavailable: { tone: 'muted', message: t('track.preview.unavailable') },
+const BLOCKED_HINT_KEYS = Object.freeze({
+  'session-active': 'track.preview.blockedSession',
+  preempted: 'track.preview.preempted',
+  unavailable: 'track.preview.unavailable',
 });
 
 const track = computed(() => props.tracks[props.index] ?? null);
 const previousTrack = computed(() => props.tracks[props.index - 1] ?? null);
 const nextTrack = computed(() => props.tracks[props.index + 1] ?? null);
-const statusNotice = computed(() => {
-  if (props.status === 'error') {
-    return { tone: 'danger', message: t('track.preview.noneAvailable') };
-  }
-  return BLOCKED_NOTICES[props.blockedReason] ?? null;
+const blockedHint = computed(() => {
+  const key = BLOCKED_HINT_KEYS[props.blockedReason];
+  return props.status !== 'error' && key ? t(key) : '';
 });
 const segmentLength = computed(() =>
   props.segment ? Math.max(0, props.segment.end - props.segment.start) : 0,
@@ -312,6 +308,12 @@ onUnmounted(() => setKeyboardListener(false));
               :value="segmentElapsed"
               :max="segmentLength || 1"
             />
+            <UiHint
+              v-if="blockedHint"
+              class="track-preview__status-hint"
+              role="status"
+              >{{ blockedHint }}</UiHint
+            >
           </div>
 
           <div class="track-preview__details">
@@ -355,9 +357,9 @@ onUnmounted(() => setKeyboardListener(false));
             </div>
 
             <UiNotice
-              v-if="statusNotice"
-              :tone="statusNotice.tone"
-              :message="statusNotice.message"
+              v-if="status === 'error'"
+              tone="danger"
+              :message="t('track.preview.noneAvailable')"
               compact
             />
           </div>
@@ -762,6 +764,10 @@ onUnmounted(() => setKeyboardListener(false));
 
 .track-preview__now-playing {
   grid-area: now-playing;
+}
+
+.track-preview__status-hint {
+  text-wrap: balance;
 }
 
 .track-preview__details {

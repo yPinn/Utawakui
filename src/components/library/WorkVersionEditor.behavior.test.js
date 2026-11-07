@@ -151,6 +151,7 @@ import UiTextField from '../ui/UiTextField.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiField from '../ui/UiField.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiTabs from '../ui/UiTabs.vue';
@@ -158,12 +159,14 @@ import WorkLinkSearch from './WorkLinkSearch.vue';
 import WorkVersionFields from './WorkVersionFields.vue';
 import WorkVersionEditor from './WorkVersionEditor.vue';
 import { useWorkOrganization } from '../../composables/useWorkOrganization.js';
+import { t } from '../../utils/i18n.js';
 
 for (const [component, path] of [
   [UiTextField, '../ui/UiTextField.vue'],
   [UiTextarea, '../ui/UiTextarea.vue'],
   [UiSelect, '../ui/UiSelect.vue'],
   [UiField, '../ui/UiField.vue'],
+  [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiDisclosure, '../ui/UiDisclosure.vue'],
   [UiTabs, '../ui/UiTabs.vue'],
@@ -280,20 +283,28 @@ describe('WorkVersionEditor mounted workflow', () => {
       'utawakui-media://track/b/cover.jpg',
     );
   });
-  it('keeps source-managed notices in the footer and out of the metadata layout', async () => {
-    trigger(button('歌曲資訊'), 'onClick');
+  it('shows the source-managed hint beside save only on the metadata tab', async () => {
+    const sourceManaged = '歌名、演唱者與封面由下載來源管理。';
+    expect(textContent(mounted.root)).not.toContain(sourceManaged);
+    trigger(button(t('work.editor.tabs.metadata')), 'onClick');
     await settle();
-    const notices = findAll(
+    const actionRow = findAll(
       mounted.root,
-      (node) => node.props?.['aria-label'] === '歌曲整理提示',
+      (node) => node.props?.class === 'work-version-editor__footer-row',
     )[0];
-    expect(textContent(notices)).toContain('歌曲資訊無法在此修改');
+    const hint = findAll(
+      actionRow,
+      (node) => node.type === 'p' && textContent(node) === sourceManaged,
+    )[0];
+    expect(hint.props.class).toContain('ui-hint--muted');
+    expect(findAll(actionRow, (node) => node.type === 'button')).toContain(
+      button('儲存'),
+    );
     const panel = findAll(
       mounted.root,
       (node) => node.props?.id === 'song-editor-metadata-panel',
     )[0];
-    expect(textContent(panel)).not.toContain('歌曲資訊無法在此修改');
-    expect(button('關閉')).toBeTruthy();
+    expect(textContent(panel)).not.toContain(sourceManaged);
   });
   it.each([false, true])(
     'submits explicit defaults for untouched choices without inferring a classification (already linked=%s)',

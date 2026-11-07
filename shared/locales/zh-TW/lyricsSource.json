@@ -53,8 +53,8 @@
     "invalidYrc": "網易逐字同步資料無法使用；仍可儲存{fallback}"
   },
   "timeline": {
-    "later": "比 {reference} 晚約 {seconds} 秒。可展開其他來源比較；這不代表哪份較準。",
-    "earlier": "比 {reference} 早約 {seconds} 秒。可展開其他來源比較；這不代表哪份較準。",
+    "later": "比 {reference} 晚約 {seconds} 秒。",
+    "earlier": "比 {reference} 早約 {seconds} 秒。",
     "reference": "同組參考來源"
   },
   "issue": {

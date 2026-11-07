@@ -87,7 +87,7 @@
     "label": "Track actions"
   },
   "preview": {
-    "blockedSession": "Preview isn't available while recording or streaming, so it can't leak into the program.",
+    "blockedSession": "Preview is unavailable while streaming or recording.",
     "preempted": "Another player started, so preview paused.",
     "unavailable": "Preview can't start right now.",
     "noneAvailable": "None of these tracks can be previewed right now.",

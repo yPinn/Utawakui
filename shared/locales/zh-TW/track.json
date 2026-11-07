@@ -87,7 +87,7 @@
     "label": "曲目操作"
   },
   "preview": {
-    "blockedSession": "錄影或直播中無法試聽，避免試聽聲音進入節目。",
+    "blockedSession": "直播或錄影期間無法試聽。",
     "preempted": "其他播放器開始播放，試聽已暫停。",
     "unavailable": "目前無法開始試聽。",
     "noneAvailable": "這些曲目目前都無法試聽。",

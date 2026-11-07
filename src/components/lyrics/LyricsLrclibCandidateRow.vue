@@ -10,6 +10,7 @@ import {
 } from '../../utils/lrclibPresentation.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiStack from '../ui/UiStack.vue';
@@ -156,7 +157,7 @@ function previewLineHasTiming(line) {
           </span>
         </span>
         <div class="lyrics-lrclib-candidate-row__metadata">
-          <UiChip v-if="timelineMessage" tone="info">{{
+          <UiChip v-if="timelineMessage">{{
             t('lyricsSource.candidate.timeDiff')
           }}</UiChip>
           <div
@@ -214,12 +215,6 @@ function previewLineHasTiming(line) {
       </UiSurface>
 
       <UiNotice
-        v-if="timelineMessage"
-        tone="info"
-        :message="timelineMessage"
-        compact
-      />
-      <UiNotice
         v-if="changedCandidate"
         tone="warning"
         :title="t('lyricsSource.candidate.changedTitle')"
@@ -237,7 +232,14 @@ function previewLineHasTiming(line) {
         align="center"
         wrap
       >
-        <div class="lyrics-lrclib-candidate-row__warning-slot">
+        <div
+          class="lyrics-lrclib-candidate-row__warning-slot"
+          :class="{
+            'lyrics-lrclib-candidate-row__warning-slot--timeline':
+              timelineMessage,
+          }"
+        >
+          <UiHint v-if="timelineMessage">{{ timelineMessage }}</UiHint>
           <ul
             v-if="visibleWarnings.length"
             class="lyrics-lrclib-candidate-row__warnings"
@@ -538,6 +540,11 @@ function previewLineHasTiming(line) {
     var(--ui-type-caption-size) * var(--ui-type-caption-line-height) * 2 +
       var(--ui-space-1)
   );
+}
+
+.lyrics-lrclib-candidate-row__warning-slot--timeline {
+  flex-basis: 10rem;
+  text-wrap: pretty;
 }
 
 .lyrics-lrclib-candidate-row__availability {

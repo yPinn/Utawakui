@@ -158,12 +158,13 @@ describe('TrackPreviewOverlay', () => {
   });
 
   it('explains why the preview is silent', async () => {
-    expect(
-      await renderOverlay({
-        status: 'blocked',
-        blockedReason: 'session-active',
-      }),
-    ).toContain('錄影或直播中無法試聽');
+    const blocked = await renderOverlay({
+      status: 'blocked',
+      blockedReason: 'session-active',
+    });
+    expect(blocked).toContain('直播或錄影期間無法試聽。');
+    expect(blocked).toContain('ui-hint--muted track-preview__status-hint');
+    expect(blocked).not.toContain('ui-notice--info');
     expect(
       await renderOverlay({ status: 'paused', blockedReason: 'preempted' }),
     ).toContain('其他播放器開始播放');

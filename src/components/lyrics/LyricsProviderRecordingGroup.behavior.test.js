@@ -4,6 +4,7 @@ import Group from './LyricsProviderRecordingGroup.vue';
 import Row from './LyricsLrclibCandidateRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiSurface from '../ui/UiSurface.vue';
@@ -21,6 +22,7 @@ for (const [component, path] of [
   [Row, './LyricsLrclibCandidateRow.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiChip, '../ui/UiChip.vue'],
+  [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiStack, '../ui/UiStack.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
@@ -140,7 +142,15 @@ describe('timeline information within the existing candidate flow', () => {
     await nextTick();
     expect(textContent(root)).toContain('比 LRCLIB 晚約 2 秒');
     expect(textContent(root)).not.toContain('比對');
-    expect(textContent(root)).toContain('不代表哪份較準');
+    const support = findAll(root, (node) =>
+      node.props?.class?.includes?.('lyrics-lrclib-candidate-row__support'),
+    )[0];
+    expect(textContent(support)).toContain('比 LRCLIB 晚約 2 秒。');
+    expect(
+      findAll(support, (node) =>
+        node.props?.class?.includes?.('ui-hint--muted'),
+      ),
+    ).toHaveLength(1);
     expect(onSave).not.toHaveBeenCalled();
     const save = findAll(
       root,

@@ -17,6 +17,7 @@ import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { RotateCcw } from '../../icons/index.js';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -355,6 +356,12 @@ onUnmounted(songEditor.dispose);
     <template #footer>
       <div class="work-version-editor__footer">
         <div
+          v-if="
+            metadata.state.error ||
+            state.error ||
+            songEditor.state.partialMessage ||
+            state.snapshot?.bindingStatus === 'changed'
+          "
           class="work-version-editor__notices"
           :aria-label="t('work.editor.notices')"
         >
@@ -385,41 +392,42 @@ onUnmounted(songEditor.dispose);
             tone="warning"
             :message="t('work.editor.audioChanged')"
           />
-          <UiNotice
+        </div>
+        <div class="work-version-editor__footer-row">
+          <UiHint
             v-if="
               songEditor.state.section === 'metadata' &&
               !songEditor.canEditMetadata.value
             "
-            compact
-            tone="info"
-            :message="t('work.editor.sourceManaged')"
-          />
-        </div>
-        <div class="work-version-editor__actions">
-          <UiButton
-            variant="secondary"
-            :disabled="songEditor.busy.value"
-            @click="songEditor.close"
-            >{{ t('work.editor.close') }}</UiButton
+            class="work-version-editor__footer-hint"
+            >{{ t('work.editor.sourceManaged') }}</UiHint
           >
-          <UiButton
-            v-if="state.snapshot?.bindingStatus === 'changed'"
-            variant="accent"
-            :disabled="disabled"
-            :loading="songEditor.state.saving"
-            :loading-label="t('work.editor.saving')"
-            @click="songEditor.save({ reconfirm: true })"
-            >{{ t('work.editor.confirmAndSave') }}</UiButton
-          >
-          <UiButton
-            v-else
-            variant="accent"
-            :disabled="songEditor.busy.value || !songEditor.isDirty.value"
-            :loading="songEditor.state.saving"
-            :loading-label="t('work.editor.saving')"
-            @click="songEditor.save"
-            >{{ t('work.editor.save') }}</UiButton
-          >
+          <div class="work-version-editor__actions">
+            <UiButton
+              variant="secondary"
+              :disabled="songEditor.busy.value"
+              @click="songEditor.close"
+              >{{ t('work.editor.close') }}</UiButton
+            >
+            <UiButton
+              v-if="state.snapshot?.bindingStatus === 'changed'"
+              variant="accent"
+              :disabled="disabled"
+              :loading="songEditor.state.saving"
+              :loading-label="t('work.editor.saving')"
+              @click="songEditor.save({ reconfirm: true })"
+              >{{ t('work.editor.confirmAndSave') }}</UiButton
+            >
+            <UiButton
+              v-else
+              variant="accent"
+              :disabled="songEditor.busy.value || !songEditor.isDirty.value"
+              :loading="songEditor.state.saving"
+              :loading-label="t('work.editor.saving')"
+              @click="songEditor.save"
+              >{{ t('work.editor.save') }}</UiButton
+            >
+          </div>
         </div>
       </div>
     </template>
@@ -494,20 +502,29 @@ onUnmounted(songEditor.dispose);
   gap: var(--ui-space-3);
 }
 .work-version-editor__footer {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
   gap: var(--ui-space-3);
   inline-size: 100%;
   min-inline-size: 0;
 }
 .work-version-editor__notices {
-  flex: 1 1 18rem;
   display: grid;
   gap: var(--ui-space-2);
   min-inline-size: 0;
 }
+.work-version-editor__footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-inline-size: 0;
+}
+.work-version-editor__footer-hint {
+  flex: 1 1 12rem;
+  text-wrap: balance;
+}
 .work-version-editor__actions {
+  justify-content: flex-end;
   margin-inline-start: auto;
 }
 </style>

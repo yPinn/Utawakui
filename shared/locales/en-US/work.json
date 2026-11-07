@@ -35,7 +35,7 @@
     "notices": "Song organizing notices",
     "reload": "Reload",
     "audioChanged": "The audio file changed. Check the version details.",
-    "sourceManaged": "Song info can't be changed here; versions and links can still be edited.",
+    "sourceManaged": "The download source manages the title, artist, and artwork.",
     "close": "Close",
     "saving": "Saving",
     "confirmAndSave": "Confirm audio files and save",

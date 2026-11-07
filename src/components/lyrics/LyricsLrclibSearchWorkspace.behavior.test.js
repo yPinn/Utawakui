@@ -865,9 +865,12 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       state.candidateSearch.extensionFailed = true;
       await findButtonByText(root, '擴大搜尋').props.onClick();
       await nextTick();
-      expect(nodeText(root)).toContain(
-        '暫時無法取得更多結果，已找到的歌詞仍可使用。',
+      expect(nodeText(findByProp(root, 'id', 'all-query-help'))).toContain(
+        '暫時無法取得更多結果，現有歌詞仍可使用。',
       );
+      expect(
+        findAll(root, (n) => n.props?.class?.includes?.('ui-notice--info')),
+      ).toHaveLength(0);
       state.manualSave.error = '歌詞尚未儲存，請再試一次。';
       await nextTick();
       expect(nodeText(root)).not.toContain('暫時無法取得更多結果');
@@ -1023,6 +1026,9 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     artistInput.props.onInput({ target: { value: 'Edited artist' } });
     await nextTick();
     expect(searchLyricsCandidates).toHaveBeenCalledOnce();
+    expect(nodeText(findByProp(root, 'id', 'lrclib-query-help'))).toContain(
+      '搜尋條件已變更，請重新搜尋。',
+    );
 
     const form = findAll(root, (node) => node.type === 'form')[0];
     const event = { preventDefault: vi.fn() };
