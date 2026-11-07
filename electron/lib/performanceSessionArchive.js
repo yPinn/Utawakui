@@ -134,12 +134,16 @@ function normalizeSessionFields(value, sanitizeItem, sanitizeSource) {
     archives,
   };
 }
+function hasSessionContent(document) {
+  return document.items.length > 0 || document.timeline.length > 0;
+}
+
 function sessionProjectionFields(document) {
   if (!document.sessionId) return {};
   return {
     sessionId: document.sessionId,
     sessionStartedAt: document.sessionStartedAt,
-    canArchive: document.items.length > 0 || document.timeline.length > 0,
+    canArchive: hasSessionContent(document),
     archives: document.archives.map((a) => {
       const performed = sessionPerformedItems(a);
       return {
@@ -185,6 +189,13 @@ function createSessionOperations({
   function ensureSession(tracks) {
     return project(mutate(begin), tracks);
   }
+
+  function getArchivableSessionId() {
+    const document = load();
+    return document.sessionId && hasSessionContent(document)
+      ? document.sessionId
+      : null;
+  }
   function attachTimeline(draft, entry) {
     begin(draft);
     const clean = timelineEntry(entry);
@@ -229,7 +240,7 @@ function createSessionOperations({
       if (d.sessionId !== intent.sessionId)
         throw invalid(t('session.main.sessionChanged'));
       assertNoCurrent(d);
-      if (!d.items.length && !d.timeline.length)
+      if (!hasSessionContent(d))
         throw invalid(t('session.main.nothingToArchive'));
       if (d.archives.length >= ARCHIVE_LIMIT)
         throw invalid(t('session.main.archiveFull'));
@@ -320,6 +331,7 @@ function createSessionOperations({
   }
   return {
     ensureSession,
+    getArchivableSessionId,
     attachTimeline,
     recordMarker,
     getSession,

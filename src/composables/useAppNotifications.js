@@ -26,6 +26,7 @@ const REPEAT_FIELDS = Object.freeze([
   'tone',
   'variant',
   'actionLabel',
+  'actionVariant',
   'dismissLabel',
 ]);
 
@@ -55,6 +56,7 @@ function notify({
   message = '',
   tone = 'success',
   actionLabel = '',
+  actionVariant = '',
   action = null,
   variant,
   lifecycle = variant === 'confirmation'
@@ -76,6 +78,7 @@ function notify({
     lifecycle,
     dismissLabel,
     actionLabel: typeof action === 'function' ? actionLabel : '',
+    actionVariant,
   });
   if (repeat) {
     // The newest attempt owns the action; nothing else visible changes.
@@ -103,6 +106,7 @@ function notify({
       consumeAction,
       ...(variant ? { variant } : {}),
       ...(dismissLabel ? { dismissLabel } : {}),
+      ...(actionVariant ? { actionVariant } : {}),
       dismissible: true,
       ...(actions.has(id) ? { actionLabel } : {}),
     }),

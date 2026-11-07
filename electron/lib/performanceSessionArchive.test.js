@@ -24,6 +24,17 @@ function prepare() {
   return store.ensureSession(tracks);
 }
 describe('explicit performance session archive', () => {
+  it('reads only the current unfinished session identity for a stream-end reminder', () => {
+    expect(store.getArchivableSessionId()).toBeNull();
+    expect(fs.readdirSync(directory)).toEqual([]);
+    const original = prepare();
+    expect(store.getArchivableSessionId()).toBe(original.sessionId);
+    store.archiveSession(
+      { sessionId: original.sessionId, name: 'Finished' },
+      tracks,
+    );
+    expect(store.getArchivableSessionId()).toBeNull();
+  });
   it('atomically appends an archive repeatedly as fresh occurrences during playback, preserving manual entries and all current state', () => {
     const original = prepare();
     const [first, second] = original.items;

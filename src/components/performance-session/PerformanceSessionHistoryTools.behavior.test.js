@@ -15,6 +15,7 @@ import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useAppNotifications } from '../../composables/useAppNotifications.js';
+import { usePerformanceStreamEndReminder } from '../../composables/usePerformanceStreamEndReminder.js';
 const notifications = useAppNotifications();
 import {
   attachClientRender,
@@ -30,6 +31,7 @@ const fixture = vi.hoisted(() => ({
   playlist: null,
   openArchive: vi.fn(),
   openLibrary: vi.fn(),
+  openPreparation: vi.fn(),
   selectPlaylist: vi.fn(),
   createPlaylist: vi.fn(),
   playlists: null,
@@ -41,6 +43,7 @@ vi.mock('../../composables/useAppView.js', () => ({
     performanceArchiveId: { value: 'old' },
     openPerformanceArchive: fixture.openArchive,
     openLibraryContent: fixture.openLibrary,
+    openPerformancePreparation: fixture.openPreparation,
     selectPerformanceSessionTab: fixture.selectTab,
   }),
 }));
@@ -341,6 +344,56 @@ describe('performance history and archive entry points', () => {
     index.app.unmount();
   });
 
+  it('offers later or the existing confirmation after a stream ends without archiving', async () => {
+    let streamEnded;
+    const unsubscribe = vi.fn();
+    window.Utawakui.onObsStreamEnded = (callback) => {
+      streamEnded = callback;
+      return unsubscribe;
+    };
+    const view = mount({
+      setup() {
+        usePerformanceStreamEndReminder();
+        return () => h(Tools);
+      },
+    });
+    await streamEnded('obsolete');
+    expect(notifications.items.value).toEqual([]);
+
+    await streamEnded('current');
+    const [reminder] = notifications.items.value;
+    expect(reminder).toMatchObject({
+      title: '直播已結束',
+      actionLabel: '結束場次',
+      actionVariant: 'accent',
+      dismissLabel: '稍後',
+    });
+    notifications.dismiss(reminder.id);
+    await settle();
+    expect(fixture.openPreparation).not.toHaveBeenCalled();
+    expect(button(view.root, '保存')).toBeUndefined();
+
+    await streamEnded('current');
+    const [nextReminder] = notifications.items.value;
+    fixture.playback.state.busy = true;
+    await notifications.runAction(nextReminder.id);
+    await settle();
+    expect(fixture.openPreparation).toHaveBeenCalledExactlyOnceWith('history');
+    expect(button(view.root, '保存')).toBeUndefined();
+    fixture.playback.state.busy = false;
+    await settle();
+    expect(button(view.root, '保存')).toBeDefined();
+    expect(fixture.playback.stop).not.toHaveBeenCalled();
+    expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
+
+    await streamEnded('current');
+    fixture.plan.state.plan.sessionId = 'new-session';
+    await settle();
+    expect(notifications.items.value).toEqual([]);
+    view.app.unmount();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
   it('only stops playback after confirming an explicit archive action', async () => {
     fixture.playback.currentItem.value = { itemId: 'one' };
     const view = mount(
@@ -352,7 +405,13 @@ describe('performance history and archive entry points', () => {
     await click(view.root, '結束場次');
     expect(fixture.playback.stop).not.toHaveBeenCalled();
     expect(textContent(view.root)).toContain('目前項目會停止，並記為中止');
-    await click(view.root, '結束並保存');
+    expect(button(view.root, '保存').props.variant).toBe('accent');
+    await click(view.root, '取消');
+    expect(button(view.root, '保存')).toBeUndefined();
+    expect(fixture.playback.stop).not.toHaveBeenCalled();
+    expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
+    await click(view.root, '結束場次');
+    await click(view.root, '保存');
     expect(fixture.playback.stop).toHaveBeenCalledOnce();
     expect(fixture.plan.archiveSession).toHaveBeenCalledWith(
       '261106 - 演出歌單',
@@ -373,7 +432,7 @@ describe('performance history and archive entry points', () => {
     const view = mount(Tools);
     expect(button(view.root, '結束場次').props.disabled).toBe(true);
     await click(view.root, '結束場次');
-    expect(button(view.root, '結束並保存')).toBeUndefined();
+    expect(button(view.root, '保存')).toBeUndefined();
     expect(fixture.playback.stop).not.toHaveBeenCalled();
     view.app.unmount();
   });
@@ -385,12 +444,12 @@ describe('performance history and archive entry points', () => {
       .mockResolvedValueOnce(true);
     const view = mount(Tools);
     await click(view.root, '結束場次');
-    await click(view.root, '結束並保存');
+    await click(view.root, '保存');
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
     expect(textContent(view.root)).toContain('尚未停止');
-    await click(view.root, '結束並保存');
+    await click(view.root, '保存');
     expect(textContent(view.root)).toContain('原安排仍保留');
-    await click(view.root, '結束並保存');
+    await click(view.root, '保存');
     expect(fixture.plan.archiveSession.mock.calls).toEqual([
       ['261106 - 演出歌單', 'current'],
       ['261106 - 演出歌單', 'current'],

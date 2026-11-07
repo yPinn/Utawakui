@@ -30,6 +30,7 @@ import ReleaseCatalogModal from './components/library/ReleaseCatalogModal.vue';
 import { useBgmSession } from './composables/useBgmSession.js';
 import { usePlayerPractice } from './composables/usePlayerPractice.js';
 import { usePerformanceHistoryObserver } from './composables/usePerformanceHistoryObserver.js';
+import { usePerformanceStreamEndReminder } from './composables/usePerformanceStreamEndReminder.js';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import LibraryPage from './pages/LibraryPage.vue';
@@ -162,6 +163,7 @@ provideNoticeReporter({
 const trayNavigation = useTrayNavigation();
 const playbackHistory = usePlaybackHistory();
 const performanceHistoryObserver = usePerformanceHistoryObserver();
+usePerformanceStreamEndReminder();
 const playbackResume = usePlaybackResume();
 const audioPreferences = useAudioPreferences();
 const keyboardShortcutSettings = useKeyboardShortcutSettings();

@@ -220,6 +220,8 @@
 
 ### OBS 與資源監視
 
+`obsAdapter.js` 只在同一連線已觀察到直播進行且收到明確 STOPPED 事件時發出收播事件。Main 綁定當前有內容的場次識別，控制台透過共用通知提供收場選項，並由既有收場確認持有保存動作。
+
 - `obsAdapter.js` 只在 `obs-integration` 啟用且期望連線時 lazy 載入 SDK，只讀版本、直播／錄影狀態與時間戳；握手與請求有期限，逾時淘汰 transport 並退避重連，舊連線不得回寫。失敗分類為有限的公開原因，不暴露 endpoint 或例外。密碼只以 `safeStorage` 加密存在獨立檔案，不可用時拒絕設定。
 - `sessionHistoryService.js` 消費 confirmed performance identity：安排由 main 驗證 sessionId＋itemId，安排外由 App 的 `usePerformanceHistoryObserver` 訂閱 player.onPlaying 後送 epoch／playbackRevision／trackId。OBS ready／degraded 且對應輸出 active 才擷取獨立快照；安排在 progress playing 保存 occurrence，離線時間為 null。標記綁定 main 場次 context，封存先 flush。OBS convenience log 保留既有略過門檻與 Settings 入口，production 不再由 Output trackId 變更觸發。`obsPowerSaveBlocker.js` 只在直播或錄影中防止螢幕休眠。
 - `appUsageService.js` 每 3 秒發布 CPU／RAM；平時只讀 `app.getAppMetrics()`，`heavyJobScheduler` 忙碌時才補量子程序。

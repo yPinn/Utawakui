@@ -13,6 +13,7 @@ export const NOTIFICATION_KEYS = Object.freeze({
   MUSIC_ANALYSIS_RESULT: 'music-analysis-result',
   PERFORMANCE_PLAYLIST_EXPORT: 'performance-playlist-export',
   PERFORMANCE_SESSION_ARCHIVE: 'performance-session-archive',
+  PERFORMANCE_STREAM_ENDED: 'performance-stream-ended',
   PERFORMER_VIEW: 'performer-view',
   PLAYBACK_HISTORY_CLEAR: 'playback-history-clear',
   PLAYER_PERFORMANCE_SETTINGS: 'player-performance-settings',

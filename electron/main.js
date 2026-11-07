@@ -1096,6 +1096,16 @@ if (!gotSingleInstanceLock) {
         windowState.sendToMainWindow('obs:status', status);
         obsPowerSaveBlockerSync.sync(status);
       },
+      onStreamEnded: () => {
+        const directory = configState.resolveDownloadDir(
+          configState.getConfig(),
+        );
+        const sessionId = createPerformanceSessionPlanStore({
+          directory,
+        }).getArchivableSessionId();
+        if (sessionId)
+          windowState.sendToMainWindow('obs:stream-ended', sessionId);
+      },
       logger: runtimeDiagnosticsLogger,
     });
     // Confirmed playing events carry an occurrence identity independently

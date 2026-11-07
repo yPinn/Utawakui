@@ -368,6 +368,7 @@ describe('UiNotificationHost', () => {
           dismissible: true,
           dismissLabel: '關閉',
           actionLabel: '重試',
+          actionVariant: 'accent',
         },
       ],
       onDismiss,
@@ -380,6 +381,8 @@ describe('UiNotificationHost', () => {
     expect(footer).toBeDefined();
     const buttons = findAll(footer, (node) => node.type === 'button');
     expect(buttons.map(textContent)).toEqual(['關閉', '重試']);
+    expect(buttons[0].props.class).toContain('ui-btn--ghost');
+    expect(buttons[1].props.class).toContain('ui-btn--accent');
     trigger(buttons[1], 'onClick');
     expect(onAction).toHaveBeenCalledWith('footer');
     expect(onDismiss).not.toHaveBeenCalled();

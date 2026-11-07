@@ -514,7 +514,7 @@ onBeforeUnmount(() => {
               </UiButton>
               <UiButton
                 v-if="item.actionLabel"
-                variant="secondary"
+                :variant="item.actionVariant || 'secondary'"
                 :disabled="Boolean(item.actionDisabled)"
                 @click="!item.actionDisabled && emit('action', item.id)"
               >

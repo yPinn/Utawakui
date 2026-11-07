@@ -373,6 +373,7 @@ const MAIN_EVENT_CHANNELS = [
   'music-structure:batch-progress',
   'music-structure:capability-progress',
   'obs:status',
+  'obs:stream-ended',
   'performer-view:status',
   'performer-view:lyrics-offset-intent',
   'performer-view:control-intent',
@@ -421,6 +422,25 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('forwards only the session ID for a stream-end event and unsubscribes the listener', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const onStreamEnded = vi.fn();
+    const unsubscribe = bridge.onObsStreamEnded(onStreamEnded);
+
+    expect(electron.ipcRenderer.on).toHaveBeenCalledWith(
+      'obs:stream-ended',
+      expect.any(Function),
+    );
+    const [, listener] = electron.ipcRenderer.on.mock.lastCall;
+    listener({ sender: 'private' }, 'current-session');
+    expect(onStreamEnded).toHaveBeenCalledExactlyOnceWith('current-session');
+
+    unsubscribe();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
+      'obs:stream-ended',
+      listener,
+    );
+  });
   it('keeps reconciliation file details private and bounds nested decisions', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     await bridge.commitLibraryReconciliation({

@@ -1,9 +1,13 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { Copy, Download, Ellipsis } from '../../icons/index.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePerformanceSessionPlayback } from '../../composables/usePerformanceSessionPlayback.js';
+import {
+  consumeStreamEndFinishRequest,
+  streamEndFinishRequest,
+} from '../../composables/usePerformanceStreamEndReminder.js';
 import { useAppNotifications } from '../../composables/useAppNotifications.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { useAppView } from '../../composables/useAppView.js';
@@ -11,6 +15,7 @@ import { usePlaylists } from '../../composables/usePlaylists.js';
 import { performancePlaylistName } from '../../utils/performanceArchivePresentation.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -91,6 +96,16 @@ function openFinish() {
   name.value = suggestedName;
   error.value = '';
 }
+
+watch(
+  [streamEndFinishRequest, canArchive],
+  ([sessionId, ready]) => {
+    if (!ready || sessionId !== currentSession.value.id) return;
+    consumeStreamEndFinishRequest(sessionId);
+    openFinish();
+  },
+  { immediate: true },
+);
 
 function selectAction(action) {
   anchor.value = null;
@@ -217,11 +232,7 @@ async function archive() {
         :maxlength="200"
         :disabled="archiving"
       />
-      <UiNotice
-        compact
-        tone="info"
-        :message="t('session.history.finishMessage')"
-      />
+      <UiHint>{{ t('session.history.finishMessage') }}</UiHint>
       <UiNotice
         v-if="playback.currentItem.value"
         compact

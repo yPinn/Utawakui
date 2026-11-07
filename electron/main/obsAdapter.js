@@ -148,6 +148,7 @@ function createObsAdapter({
   clearTimeoutFn = clearTimeout,
   logger = console,
   onStatusChange = () => {},
+  onStreamEnded = () => {},
   reconnectBaseMs = DEFAULT_RECONNECT_BASE_MS,
   reconnectMaxMs = DEFAULT_RECONNECT_MAX_MS,
   connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS,
@@ -365,6 +366,9 @@ function createObsAdapter({
       ok:
         streamResult.status === 'fulfilled' ||
         recordResult.status === 'fulfilled',
+      streamActive:
+        streamResult.status === 'fulfilled' &&
+        streamResult.value.outputActive === true,
     };
   }
 
@@ -389,6 +393,7 @@ function createObsAdapter({
 
       const nextClient = createClient();
       client = nextClient;
+      let streamWasLive;
 
       nextClient.once('Hello', () => {
         if (client !== nextClient) return;
@@ -401,9 +406,30 @@ function createObsAdapter({
       });
       nextClient.on('StreamStateChanged', (event) => {
         if (client !== nextClient) return;
+        const stopped =
+          event.outputState === 'OBS_WEBSOCKET_OUTPUT_STOPPED' &&
+          event.outputActive === false;
+        const shouldNotify =
+          stopped &&
+          streamWasLive &&
+          ['ready', 'degraded'].includes(status.observed.lifecycle);
+        if (stopped) streamWasLive = false;
+        if (
+          event.outputState === 'OBS_WEBSOCKET_OUTPUT_STARTED' &&
+          event.outputActive === true
+        ) {
+          streamWasLive = true;
+        }
         outputSegment('streaming', event.outputActive);
         status.observed.streaming.active = event.outputActive;
         publishStatus();
+        if (shouldNotify) {
+          try {
+            onStreamEnded();
+          } catch (error) {
+            logger.error?.('[obs-adapter] Failed to publish stream end', error);
+          }
+        }
       });
       nextClient.on('RecordStateChanged', (event) => {
         if (client !== nextClient) return;
@@ -453,6 +479,7 @@ function createObsAdapter({
           error.code = 'OBS_REQUEST_TIMEOUT';
           throw error;
         }
+        streamWasLive ??= snapshot.streamActive;
         status.observed.lifecycle = snapshot.ok ? 'ready' : 'degraded';
         status.error = snapshot.ok ? null : toPublicError('OBS_REQUEST_FAILED');
         publishStatus();

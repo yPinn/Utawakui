@@ -774,6 +774,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('obs:status', listener);
     return () => ipcRenderer.removeListener('obs:status', listener);
   },
+  onObsStreamEnded: (callback) => {
+    const listener = (_event, sessionId) => callback(sessionId);
+    ipcRenderer.on('obs:stream-ended', listener);
+    return () => ipcRenderer.removeListener('obs:stream-ended', listener);
+  },
   getObsSettings: () => ipcRenderer.invoke('obs:get-settings'),
   updateObsSettings: (settings) =>
     ipcRenderer.invoke('obs:update-settings', settings),

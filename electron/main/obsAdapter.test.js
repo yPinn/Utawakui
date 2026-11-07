@@ -45,6 +45,59 @@ function deferred() {
 }
 
 describe('obsAdapter', () => {
+  it('reports only a confirmed stop after observing a live stream on this connection', async () => {
+    const client = new FakeObsClient();
+    const onStreamEnded = vi.fn();
+    const adapter = createObsAdapter({
+      createClient: () => client,
+      onStreamEnded,
+    });
+    await adapter.configure({ enabled: true, host: '127.0.0.1', port: 4455 });
+    const stream = (phase, outputActive) =>
+      client.emit('StreamStateChanged', {
+        outputState: `OBS_WEBSOCKET_OUTPUT_${phase}`,
+        outputActive,
+      });
+    client.emit('RecordStateChanged', {
+      outputActive: false,
+      outputState: 'OBS_WEBSOCKET_OUTPUT_STOPPED',
+    });
+    stream('STOPPING', false);
+    expect(onStreamEnded).not.toHaveBeenCalled();
+    stream('STOPPED', false);
+    stream('STOPPED', false);
+    expect(onStreamEnded).toHaveBeenCalledOnce();
+    stream('STARTED', true);
+    stream('RECONNECTING', false);
+    stream('RECONNECTED', true);
+    expect(onStreamEnded).toHaveBeenCalledOnce();
+    stream('STOPPED', false);
+    expect(onStreamEnded).toHaveBeenCalledTimes(2);
+    await adapter.disconnect();
+  });
+
+  it('does not infer a stop from disconnection or an inactive reconnect snapshot', async () => {
+    const first = new FakeObsClient();
+    const second = new FakeObsClient();
+    second.call.mockResolvedValue({ outputActive: false });
+    const onStreamEnded = vi.fn();
+    const createClient = vi
+      .fn()
+      .mockReturnValueOnce(first)
+      .mockReturnValue(second);
+    const adapter = createObsAdapter({ createClient, onStreamEnded });
+    await adapter.configure({ enabled: true, host: '127.0.0.1', port: 4455 });
+    first.emit('ConnectionClosed', new Error('disconnected'));
+    await adapter.connect();
+    for (const client of [first, second]) {
+      client.emit('StreamStateChanged', {
+        outputActive: false,
+        outputState: 'OBS_WEBSOCKET_OUTPUT_STOPPED',
+      });
+    }
+    expect(onStreamEnded).not.toHaveBeenCalled();
+    await adapter.disconnect();
+  });
   it('captures separate recording generations and skips paused output samples', async () => {
     const client = new FakeObsClient();
     let paused = false;
