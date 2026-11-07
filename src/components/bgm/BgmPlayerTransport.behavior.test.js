@@ -1,6 +1,7 @@
 import { h, nextTick, reactive } from 'vue';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import BgmPlayerTransport from './BgmPlayerTransport.vue';
+import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import {
   attachClientRender,
   findAll,
@@ -28,13 +29,18 @@ vi.mock('../ui/range/UiRangeControl.vue', () => ({
     },
   },
 }));
-beforeAll(() =>
+beforeAll(() => {
+  attachClientRender(
+    UiVolumeControl,
+    '../ui/UiVolumeControl.vue',
+    import.meta.url,
+  );
   attachClientRender(
     BgmPlayerTransport,
     './BgmPlayerTransport.vue',
     import.meta.url,
-  ),
-);
+  );
+});
 const button = (root, label) =>
   findAll(root, (n) => n.type === 'button' && textContent(n) === label)[0];
 

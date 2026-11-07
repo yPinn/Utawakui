@@ -11,22 +11,18 @@ describe('audio range context-menu reset contract', () => {
     const playerProgress = playerBar.match(
       /<UiRangeControl[\s\S]*?aria-label="播放進度"[\s\S]*?\/>/u,
     )?.[0];
-    const playerVolume = playerBar
-      .match(/<UiRangeControl[\s\S]*?aria-label="音量"[\s\S]*?\/>/gu)
-      ?.at(-1);
+    expect(playerBar).toMatch(/<UiVolumeControl[^>]*volume-label="音量"/u);
     const bgmProgress = bgmTransport.match(
       /<UiRangeControl[\s\S]*?aria-label="BGM 進度"[\s\S]*?\/>/u,
     )?.[0];
-    const bgmVolume = bgmTransport
-      .match(/<UiRangeControl[\s\S]*?aria-label="BGM 音量"[\s\S]*?\/>/gu)
-      ?.at(-1);
+    expect(bgmTransport).toMatch(
+      /<UiVolumeControl[^>]*volume-label="BGM 音量"/u,
+    );
+    const volume = read('./UiVolumeControl.vue').match(
+      /<UiRangeControl[^>]*\/>/u,
+    )?.[0];
 
-    for (const range of [
-      playerProgress,
-      playerVolume,
-      bgmProgress,
-      bgmVolume,
-    ]) {
+    for (const range of [playerProgress, bgmProgress, volume]) {
       expect(range).toBeTruthy();
       expect(range).not.toContain('default-value');
     }

@@ -182,7 +182,7 @@ describe('BgmPlayerTransport', () => {
     expect(source).toContain('class="bgm-transport__audio"');
     expect(source).toContain('class="bgm-transport__cut"');
     expect(source).toContain(':aria-pressed="isDimmed"');
-    expect(source).toContain(':aria-pressed="isMuted"');
+    expect(source).toContain(':muted="isMuted"');
     expect(source).toContain('intent="danger"');
   });
 
@@ -237,7 +237,8 @@ describe('session and Dock reuse one BGM safety transport', () => {
     expect(source).not.toContain('UiPopover');
     expect(source).not.toContain('SlidersHorizontal');
     expect(source).not.toContain('detailsOpen');
-    expect(source.match(/<UiRangeControl/gu)).toHaveLength(2);
+    expect(source.match(/<UiRangeControl/gu)).toHaveLength(1);
+    expect(html).toContain('ui-volume-control--expanded');
     expect(html).not.toContain('暫停 BGM');
     expect(source).toContain('v-if="variant !== \'dock\'"');
   });

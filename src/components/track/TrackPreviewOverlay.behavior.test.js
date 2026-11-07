@@ -60,6 +60,7 @@ describe('TrackPreviewOverlay', () => {
       /<input(?=[^>]*type="range")(?=[^>]*aria-label="試聽音量")/u,
     );
     expect(html).toContain('35%');
+    expect(html).toContain('ui-volume-control--reveal');
     expect(await renderOverlay()).not.toContain('track-preview__lyric');
   });
 
@@ -269,9 +270,8 @@ describe('TrackPreviewOverlay', () => {
     );
     // No wrapper splits copy and media from the edge; one grid places all.
     expect(source).not.toContain('track-preview__group');
-    // Mute is a session-wide tool in the modal's header tool area.
     expect(source).toMatch(
-      /#header-actions>[\s\S]*?試聽靜音[\s\S]*?<\/template>/u,
+      /#header-actions>[\s\S]*?<UiVolumeControl[\s\S]*?variant="reveal"[\s\S]*?試聽靜音[\s\S]*?<\/template>/u,
     );
     // Previous／next stack vertically, like the feed they move through.
     expect(source).toMatch(

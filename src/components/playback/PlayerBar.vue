@@ -51,6 +51,7 @@ import PlaybackPrimaryButton from './PlaybackPrimaryButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import { t } from '../../utils/i18n.js';
 
 defineProps({
@@ -155,7 +156,6 @@ const volume = computed({
   set: (value) => setVolume(Number(value)),
 });
 
-const volumePercent = computed(() => Math.round(state.volume * 100));
 function formatVolumePercent(value) {
   return `${Math.round(Number(value) * 100)}%`;
 }
@@ -670,26 +670,19 @@ onUnmounted(() => {
         />
       </div>
 
-      <div class="player-bar__volume">
-        <UiIconButton
-          :icon="state.isMuted || state.volume === 0 ? VolumeX : Volume2"
-          :label="t(state.isMuted ? 'player.bar.unmute' : 'player.bar.mute')"
-          :aria-pressed="state.isMuted"
-          :title="t(state.isMuted ? 'player.bar.unmute' : 'player.bar.mute')"
-          tooltip-suffix=" (M)"
-          @click="toggleMute"
-        />
-        <UiRangeControl
-          v-model="volume"
-          class="player-bar__volume-range"
-          :min="PLAYER_VOLUME_RANGE.min"
-          :max="PLAYER_VOLUME_RANGE.max"
-          :step="PLAYER_VOLUME_RANGE.step"
-          :format-value="formatVolumePercent"
-          :value-text="`${volumePercent}%`"
-          :aria-label="t('player.bar.volume')"
-        />
-      </div>
+      <UiVolumeControl
+        v-model="volume"
+        class="player-bar__volume"
+        :muted="state.isMuted"
+        :min="PLAYER_VOLUME_RANGE.min"
+        :max="PLAYER_VOLUME_RANGE.max"
+        :step="PLAYER_VOLUME_RANGE.step"
+        :volume-label="t('player.bar.volume')"
+        :mute-label="t('player.bar.mute')"
+        :unmute-label="t('player.bar.unmute')"
+        tooltip-suffix=" (M)"
+        @update:muted="toggleMute"
+      />
     </div>
   </div>
 </template>
@@ -824,15 +817,9 @@ onUnmounted(() => {
 }
 
 .player-bar__volume {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-player-action-gap);
-}
-
-.player-bar__volume-range {
+  --ui-volume-control-gap: var(--ui-player-action-gap);
+  --ui-volume-control-range-size: var(--ui-player-volume-inline-size);
   --ui-range-target-size: var(--ui-space-4);
-
-  width: var(--ui-player-volume-inline-size);
 }
 
 @media (forced-colors: active) {

@@ -1,17 +1,12 @@
 <script setup>
 import { computed, shallowRef, watch } from 'vue';
-import {
-  MicVocal,
-  Square,
-  Volume1,
-  Volume2,
-  VolumeX,
-} from '../../icons/index.js';
+import { MicVocal, Square, Volume1 } from '../../icons/index.js';
 import { projectBgmPrimaryAction } from './bgmPresentation.js';
 import { formatDuration } from '../../utils/format.js';
 import audioControlValues from '../../../shared/audioControlValues.json';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
@@ -165,31 +160,21 @@ function updatePosition(value) {
         @click="emit('setDimmed', !isDimmed)"
       />
 
-      <div
+      <UiVolumeControl
         class="bgm-transport__audio"
-        role="group"
-        :aria-label="t('player.bgm.volume')"
-      >
-        <UiIconButton
-          :icon="isMuted ? VolumeX : Volume2"
-          :label="t(isMuted ? 'player.bgm.unmute' : 'player.bgm.mute')"
-          :active="isMuted"
-          :aria-pressed="isMuted"
-          @click="emit('setMuted', !isMuted)"
-        />
-        <UiRangeControl
-          class="bgm-transport__volume"
-          :model-value="volumeDraft"
-          :min="audioControlValues.bgmVolume.min"
-          :max="audioControlValues.bgmVolume.max"
-          :step="audioControlValues.bgmVolume.step"
-          :value-text="`${Math.round(volumeDraft * 100)}%`"
-          :format-value="(value) => `${Math.round(value * 100)}%`"
-          :aria-label="t('player.bgm.volume')"
-          @update:model-value="updateVolume"
-          @change="emit('commitVolume', volumeDraft)"
-        />
-      </div>
+        :model-value="volumeDraft"
+        :muted="isMuted"
+        :active="isMuted"
+        :min="audioControlValues.bgmVolume.min"
+        :max="audioControlValues.bgmVolume.max"
+        :step="audioControlValues.bgmVolume.step"
+        :volume-label="t('player.bgm.volume')"
+        :mute-label="t('player.bgm.mute')"
+        :unmute-label="t('player.bgm.unmute')"
+        @update:muted="emit('setMuted', $event)"
+        @update:model-value="updateVolume"
+        @change="emit('commitVolume', volumeDraft)"
+      />
     </div>
   </section>
 </template>
@@ -233,11 +218,7 @@ function updatePosition(value) {
 }
 
 .bgm-transport__audio {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: var(--ui-icon-button-size-md) minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ui-space-1);
+  --ui-volume-control-range-size: auto;
   min-inline-size: calc(
     var(--ui-icon-button-size-md) + var(--ui-space-1) + var(--ui-space-7)
   );
@@ -246,10 +227,6 @@ function updatePosition(value) {
   grid-template-columns: auto auto minmax(0, 1fr);
 }
 
-.bgm-transport__volume {
-  inline-size: 100%;
-  min-inline-size: var(--ui-space-7);
-}
 .bgm-transport__time--end {
   text-align: left;
 }

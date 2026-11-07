@@ -83,9 +83,7 @@ describe('PlayerBar responsive metadata layout', () => {
     const lyricsIndex = extrasSource.indexOf(':icon="MicVocal"');
     const queueIndex = extrasSource.indexOf(':icon="ListMusic"');
     const playerToolsIndex = extrasSource.indexOf(':icon="SlidersHorizontal"');
-    const volumeIndex = extrasSource.indexOf(
-      ':icon="state.isMuted || state.volume === 0 ? VolumeX : Volume2"',
-    );
+    const volumeIndex = extrasSource.indexOf('<UiVolumeControl');
 
     expect(extrasStart).toBeGreaterThan(-1);
     expect(guideOutputIndex).toBeGreaterThan(-1);
@@ -107,7 +105,8 @@ describe('PlayerBar responsive metadata layout', () => {
 
     expect(extrasSource).toContain('<UiIconButton');
     expect(extrasSource).not.toContain('<UiButton');
-    expect(extrasSource.match(/<UiIconButton/gu)).toHaveLength(5);
+    expect(extrasSource.match(/<UiIconButton/gu)).toHaveLength(4);
+    expect(extrasSource).toContain('<UiVolumeControl');
     expect(extrasSource).toContain('title="導唱輸出"');
     expect(extrasSource).toContain('tooltip-suffix=" (G)"');
     expect(extrasSource).toContain('title="歌詞"');
@@ -300,10 +299,6 @@ describe('PlayerBar responsive metadata layout', () => {
   it('uses density-aware action geometry and resets the native volume input box model', () => {
     const extrasRule = cssRule(componentSource, '.player-bar__extras');
     const volumeRule = cssRule(componentSource, '.player-bar__volume');
-    const volumeRangeRule = cssRule(
-      componentSource,
-      '.player-bar__volume-range',
-    );
 
     expect(extrasRule).toContain(
       '--ui-icon-button-size-override: var(--ui-player-action-size)',
@@ -312,12 +307,14 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(componentSource).toMatch(
       /\.player-bar__context-actions,[\s\S]*?gap:\s*var\(--ui-player-action-gap\)/u,
     );
-    expect(volumeRule).toContain('gap: var(--ui-player-action-gap)');
-    expect(volumeRangeRule).toContain(
-      'width: var(--ui-player-volume-inline-size)',
+    expect(volumeRule).toContain(
+      '--ui-volume-control-gap: var(--ui-player-action-gap)',
+    );
+    expect(volumeRule).toContain(
+      '--ui-volume-control-range-size: var(--ui-player-volume-inline-size)',
     );
     expect(tokenSource).toContain('--ui-player-volume-inline-size: 7rem');
-    expect(componentSource).toContain('UiRangeControl');
+    expect(componentSource).toContain('<UiVolumeControl');
     expect(tokenSource).toContain('--ui-player-action-size:');
     expect(tokenSource).toContain('--ui-player-action-gap:');
     expect(tokenSource).toContain('--ui-player-group-gap:');
@@ -327,8 +324,7 @@ describe('PlayerBar responsive metadata layout', () => {
   });
 
   it('keeps the exact volume accessible without a persistent percentage label', () => {
-    expect(componentSource).toContain(':value-text="`${volumePercent}%`"');
-    expect(componentSource).not.toContain('{{ volumePercent }}%');
+    expect(componentSource).toContain('volume-label="音量"');
     expect(componentSource).not.toContain('class="player-bar__volume-value"');
     expect(componentSource).not.toContain('.player-bar__volume-value');
   });

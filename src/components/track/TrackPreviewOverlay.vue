@@ -9,8 +9,6 @@ import {
   ChevronUp,
   Ellipsis,
   ListEnd,
-  Volume2,
-  VolumeX,
 } from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { loadArtworkTone } from '../../utils/artworkTone.js';
@@ -25,7 +23,7 @@ import UiNotice from '../ui/UiNotice.vue';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
 import UiProgress from '../ui/UiProgress.vue';
-import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
@@ -80,7 +78,6 @@ const BLOCKED_NOTICES = Object.freeze({
 });
 
 const track = computed(() => props.tracks[props.index] ?? null);
-const formatVolume = (value) => `${Math.round(value * 100)}%`;
 const previousTrack = computed(() => props.tracks[props.index - 1] ?? null);
 const nextTrack = computed(() => props.tracks[props.index + 1] ?? null);
 const statusNotice = computed(() => {
@@ -243,16 +240,20 @@ onUnmounted(() => setKeyboardListener(false));
     :tint="tone"
     @close="emit('close')"
   >
-    <!-- Session-wide preview tools live in the modal's header tool area. -->
     <template v-if="track" #header-actions>
-      <UiIconButton
-        :icon="muted ? VolumeX : Volume2"
-        :label="t(muted ? 'track.preview.unmute' : 'track.preview.mute')"
-        :title="t(muted ? 'track.preview.unmute' : 'track.preview.mute')"
+      <UiVolumeControl
+        class="track-preview__volume"
+        variant="reveal"
+        :model-value="volume"
+        :muted="muted"
+        :volume-label="t('track.preview.volume')"
+        :mute-label="t('track.preview.mute')"
+        :unmute-label="t('track.preview.unmute')"
         tooltip-suffix=" (M)"
         tooltip-placement="bottom"
-        :aria-pressed="muted"
-        @click="emit('mute', !muted)"
+        @keydown="isRangeKey($event) && $event.stopPropagation()"
+        @update:muted="emit('mute', $event)"
+        @update:model-value="emit('volume', $event)"
       />
     </template>
     <AppSurfaceBoundary
@@ -298,18 +299,6 @@ onUnmounted(() => setKeyboardListener(false));
           />
 
           <p v-if="lyricText" class="track-preview__lyric">{{ lyricText }}</p>
-
-          <UiRangeControl
-            class="track-preview__volume"
-            :model-value="volume"
-            :max="1"
-            :step="0.01"
-            :aria-label="t('track.preview.volume')"
-            :value-text="formatVolume(volume)"
-            :format-value="formatVolume"
-            @keydown="isRangeKey($event) && $event.stopPropagation()"
-            @update:model-value="emit('volume', $event)"
-          />
 
           <UiNotice
             v-if="statusNotice"
@@ -698,7 +687,7 @@ onUnmounted(() => setKeyboardListener(false));
 }
 
 .track-preview__volume {
-  inline-size: 100%;
+  --ui-volume-control-range-size: var(--ui-player-volume-inline-size);
 }
 
 .track-preview__identity {
