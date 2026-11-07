@@ -17,6 +17,7 @@ import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import TrackTable from '../track/TrackTable.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import CollectionActionRail from '../library/CollectionActionRail.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -158,12 +159,11 @@ const fields = computed(() => {
             @click="createPlaylist"
             >{{ t('session.archive.savePlaylist') }}</UiButton
           >
-          <UiButton
+          <UiIconButton
             :icon="Download"
-            variant="secondary"
+            :label="t('obs.export.title')"
             @click="timeline.openForArrangement(session.id)"
-            >{{ t('obs.export.title') }}</UiButton
-          >
+          />
           <PerformanceSessionPlatformVideos :session-id="session.id" />
         </template>
       </CollectionActionRail>

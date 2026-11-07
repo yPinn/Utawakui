@@ -110,6 +110,15 @@ describe('archive collection document', () => {
     expect(html).not.toContain('保存於');
     expect(html).toContain('另存本場歌單');
     expect(html).toContain('匯出時間點');
+    const archiveActions = html.slice(
+      html.indexOf('collection-action-rail__actions'),
+    );
+    const exportIcon = archiveActions.indexOf(
+      'lucide-download ui-icon-btn__icon',
+    );
+    const linkIcon = archiveActions.indexOf('lucide-link ui-icon-btn__icon');
+    expect(exportIcon).toBeGreaterThanOrEqual(0);
+    expect(linkIcon).toBeGreaterThan(exportIcon);
     expect(html).not.toContain('加入演出待唱');
     expect(html).toContain('collection-action-rail__actions');
     expect(html).toContain('library-track-table__header--scroll-shadow');
