@@ -53,6 +53,7 @@ const emit = defineEmits(['update:open', 'update:activeTab', 'settingsAction']);
 const { width: dockWidth } = useAppRightDockWidth();
 const panelStyle = computed(() => ({
   inlineSize: `${dockWidth.value}px`,
+  '--player-tools-dock-width': `${dockWidth.value}px`,
   userSelect: 'none',
 }));
 
@@ -444,6 +445,23 @@ function setActiveTab(key) {
 </template>
 
 <style scoped>
+:global(
+  :root:has(.ui-popover[data-open='true'] .bgm-player__picker--tab)
+    .ui-popover:has(.player-tools__heading)
+) {
+  --player-tools-dock-clearance: calc(
+    var(--player-tools-dock-width) + 2 * var(--ui-shell-edge-inset-inline)
+  );
+  max-inline-size: calc(
+    100vw - var(--player-tools-dock-clearance) -
+      var(--ui-floating-viewport-inset)
+  );
+  translate: min(
+      0px,
+      calc(var(--ui-popover-anchor-right) - var(--player-tools-dock-clearance))
+    )
+    0;
+}
 .player-tools__tabs {
   width: 100%;
   margin-bottom: var(--ui-space-3);
