@@ -266,6 +266,9 @@ const {
   <AppRightDockPanel
     ref="dockPanel"
     class="queue-panel"
+    :class="{
+      'queue-panel--arrangement': dock.queueVariant.value === 'arrangement',
+    }"
     :title="t('queue.panel.title')"
     :workspace="
       dock.queueVariant.value === 'arrangement' &&
@@ -504,6 +507,45 @@ const {
   inline-size: max-content;
   max-inline-size: 100%;
 }
+/* The Dock shell and switch button stay in place while the new mode appears. */
+.queue-panel__view-controls,
+.queue-panel
+  > :deep(
+    :is(
+      .app-right-dock-panel__scroll,
+      .app-right-dock-panel__workspace,
+      .app-right-dock-panel__footer
+    )
+  ) {
+  animation: queue-panel-show-general var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
+}
+
+.queue-panel--arrangement .queue-panel__view-controls,
+.queue-panel--arrangement
+  > :deep(
+    :is(
+      .app-right-dock-panel__scroll,
+      .app-right-dock-panel__workspace,
+      .app-right-dock-panel__footer
+    )
+  ) {
+  animation-name: queue-panel-show-arrangement;
+}
+
+/* Distinct names restart the fade when both modes reuse the same scroll view. */
+@keyframes queue-panel-show-general {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes queue-panel-show-arrangement {
+  from {
+    opacity: 0;
+  }
+}
+
 .queue-panel__content {
   min-width: 0;
   -webkit-user-select: none;

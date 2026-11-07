@@ -62,8 +62,8 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).not.toContain('UiSegmentedControl');
     expect(source).toContain('切換演出待唱');
     expect(source).toContain('切換一般佇列');
-    expect(source).toContain('兩份佇列各自安排');
-    expect(source).toContain('從待唱開始播放才會留下演出紀錄');
+    expect(source).toContain('切到一般佇列。');
+    expect(source).toContain('切到演出待唱。從待唱播放才會留下演出紀錄。');
     expect(source).toContain(':icon="Tickets"');
     expect(source).toContain(
       ':aria-pressed="dock.queueVariant.value === \'arrangement\'"',
@@ -73,6 +73,14 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain("{ id: 'recent', label: '最近播放' }");
     expect(source).toMatch(
       /\.queue-panel__view-controls\s*\{[^}]*inline-size:\s*max-content;[^}]*max-inline-size:\s*100%;/su,
+    );
+  });
+  it('restarts an opacity fade for both modes using the shared motion tokens', () => {
+    expect(panelCss).toMatch(
+      /animation:\s*queue-panel-show-general-right-dock-test-0\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\)/u,
+    );
+    expect(panelCss).toContain(
+      'animation-name: queue-panel-show-arrangement-right-dock-test-0',
     );
   });
   it('gives arrangement its own header tabs linked to controlled panels', () => {
