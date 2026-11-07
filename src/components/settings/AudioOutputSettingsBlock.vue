@@ -18,6 +18,7 @@ defineProps({
 });
 
 const emit = defineEmits(['selectDevice', 'update:captureVolume']);
+const formatVolumePercent = (value) => `${Math.round(value * 100)}%`;
 </script>
 
 <template>
@@ -49,7 +50,8 @@ const emit = defineEmits(['selectDevice', 'update:captureVolume']);
       :max="AUDIO_CONTROL_VALUES.captureVolume.max"
       :step="AUDIO_CONTROL_VALUES.captureVolume.step"
       :default-value="AUDIO_CONTROL_VALUES.captureVolume.defaultValue"
-      :value-text="`${Math.round(captureVolume * 100)}%`"
+      :value-text="formatVolumePercent(captureVolume)"
+      :format-value="formatVolumePercent"
       :hint="t('audio.capture.volumeHint')"
       @update:model-value="emit('update:captureVolume', $event)"
     />

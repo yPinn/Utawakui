@@ -5,6 +5,8 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const controlPath = new URL('./range/UiRangeControl.vue', import.meta.url);
 const rangeSource = read('./UiRange.vue');
+const volumeControlSource = read('./UiVolumeControl.vue');
+const captureSettingsSource = read('../settings/AudioOutputSettingsBlock.vue');
 const playerBarSource = read('../playback/PlayerBar.vue');
 const playerToolsSource = read('../playback/PlayerToolsPanel.vue');
 const obsAppearanceSource = read('../output/ObsAppearanceField.vue');
@@ -54,7 +56,11 @@ describe('Token v2 Range formal adoption', () => {
 
   it('keeps time and numeric formatting with the consumer that owns the domain', () => {
     expect(playerBarSource).toContain(':format-value="formatDuration"');
-    expect(playerBarSource).toContain(':format-value="formatVolumePercent"');
+    expect(playerBarSource).toContain('<UiVolumeControl');
+    expect(volumeControlSource).toContain(':format-value="formatPercent"');
+    expect(captureSettingsSource).toContain(
+      ':format-value="formatVolumePercent"',
+    );
     expect(playerToolsSource).toContain(
       ':format-value="row.formatSliderValue"',
     );

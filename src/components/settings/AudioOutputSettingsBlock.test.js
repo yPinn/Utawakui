@@ -21,10 +21,17 @@ describe('AudioOutputSettingsBlock', () => {
   it('exposes a separately labelled capture master at 50% with its canonical reset', async () => {
     const html = await renderBlock();
     expect(html).toContain('直播擷取總音量');
-    expect(html).toContain('50%');
-    expect(html).toContain('演唱與 BGM 音量');
+    expect(html).toContain('調整直播收到的演唱與場間音樂音量，不影響監聽。');
     expect(html).toContain('id="capture-master-volume"');
-    expect(await renderBlock({ captureVolume: 0 })).toContain('0%');
+    expect(html).toContain('aria-valuetext="50%"');
+    expect(html).toMatch(
+      /<output[^>]+for="capture-master-volume"[^>]*>50%<\/output>/u,
+    );
+    const zero = await renderBlock({ captureVolume: 0 });
+    expect(zero).toContain('aria-valuetext="0%"');
+    expect(zero).toMatch(
+      /<output[^>]+for="capture-master-volume"[^>]*>0%<\/output>/u,
+    );
   });
   it('keeps the section body concise and leaves its heading to the Folder section', async () => {
     const html = await renderBlock();

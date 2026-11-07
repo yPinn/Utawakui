@@ -10,7 +10,7 @@
     "guidance": "For capture by streaming or recording software; set separately from local listening.",
     "select": "Choose capture output device",
     "volume": "Stream capture master volume",
-    "volumeHint": "Adjusts the vocal and BGM volume your stream receives; doesn't affect monitoring."
+    "volumeHint": "Adjusts the vocal and interlude music volume your stream receives; doesn't affect monitoring."
   },
   "modal": {
     "title": "Choose capture output device",
