@@ -565,7 +565,7 @@ onUnmounted(() => setKeyboardListener(false));
      neighbours; none shrinks below the section gap. */
   grid-template-columns:
     minmax(var(--ui-modal-section-gap), 1fr) var(--track-preview-info-size)
-    minmax(var(--ui-modal-section-gap), 1fr) max-content
+    minmax(var(--ui-modal-section-gap), 1fr) var(--track-preview-artwork-size)
     minmax(var(--ui-modal-section-gap), 1fr) max-content;
   grid-template-areas: '. info . media . edge';
   align-items: center;
@@ -601,6 +601,8 @@ onUnmounted(() => setKeyboardListener(false));
 .track-preview__stage {
   grid-area: media;
   display: grid;
+  min-inline-size: 0;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows:
     var(--track-preview-peek-size) auto
     var(--track-preview-peek-size);
@@ -680,9 +682,7 @@ onUnmounted(() => setKeyboardListener(false));
 .track-preview__peek {
   --track-preview-switch-offset: var(--track-preview-peek-size);
 
-  inline-size: calc(
-    var(--track-preview-artwork-size) * var(--track-preview-peek-scale)
-  );
+  inline-size: 100%;
   position: relative;
   aspect-ratio: 1;
   padding: 0;
@@ -716,11 +716,18 @@ onUnmounted(() => setKeyboardListener(false));
   opacity: var(--ui-opacity-muted);
 }
 
-/* Each slot keeps its row while neighbours swap; the stage clips the rest. */
+/* Keep even an empty slot centred, and clip each swap to its own row. */
 .track-preview__peek-slot {
   position: relative;
   display: grid;
+  inline-size: min(
+    100%,
+    calc(var(--track-preview-artwork-size) * var(--track-preview-peek-scale))
+  );
+  min-block-size: 0;
+  grid-template-rows: minmax(0, 1fr);
   justify-items: center;
+  overflow-y: clip;
 }
 
 .track-preview__peek-slot--previous {

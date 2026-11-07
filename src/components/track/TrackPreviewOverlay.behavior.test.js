@@ -97,6 +97,21 @@ describe('TrackPreviewOverlay', () => {
     expect(html).not.toMatch(/暫停試聽|試聽：群青/u);
   });
 
+  it.each([
+    [0, '下一首：群青'],
+    [tracks.length - 1, '上一首：群青'],
+  ])(
+    'keeps both neighbour slots at collection boundary %i',
+    async (index, neighbourLabel) => {
+      const html = await renderOverlay({ index });
+
+      expect(html).toContain('track-preview__peek-slot--previous');
+      expect(html).toContain('track-preview__peek-slot--next');
+      expect(html.match(/class="track-preview__peek"/gu)).toHaveLength(1);
+      expect(html).toContain(neighbourLabel);
+    },
+  );
+
   it('links the title to its album and leaves an album-less title plain', async () => {
     const withAlbum = await renderOverlay();
     expect(withAlbum).toMatch(
@@ -389,7 +404,7 @@ describe('TrackPreviewOverlay', () => {
     // The cover sits evenly: equal flexible spaces before the copy, between
     // copy and cover, and between cover and edge, never under the section gap.
     expect(styles).toMatch(
-      /grid-template-columns:\s*minmax\(var\(--ui-modal-section-gap\), 1fr\) var\(--track-preview-info-size\)\s*minmax\(var\(--ui-modal-section-gap\), 1fr\) max-content\s*minmax\(var\(--ui-modal-section-gap\), 1fr\) max-content;/u,
+      /grid-template-columns:\s*minmax\(var\(--ui-modal-section-gap\), 1fr\) var\(--track-preview-info-size\)\s*minmax\(var\(--ui-modal-section-gap\), 1fr\) var\(--track-preview-artwork-size\)\s*minmax\(var\(--ui-modal-section-gap\), 1fr\) max-content;/u,
     );
     const edge = source.slice(source.indexOf('class="track-preview__edge"'));
     expect(edge.indexOf('track-preview__rail')).toBeLessThan(
@@ -453,7 +468,7 @@ describe('TrackPreviewOverlay', () => {
     // Neighbours sit one named tier below the current cover.
     expect(styles).toContain('--track-preview-peek-scale: 0.7;');
     expect(styles).toMatch(
-      /\.track-preview__peek\s*\{[^}]*var\(--track-preview-artwork-size\)\s*\*\s*var\(--track-preview-peek-scale\)/u,
+      /\.track-preview__peek-slot\s*\{[^}]*var\(--track-preview-artwork-size\)\s*\*\s*var\(--track-preview-peek-scale\)[^}]*overflow-y:\s*clip;/u,
     );
   });
 

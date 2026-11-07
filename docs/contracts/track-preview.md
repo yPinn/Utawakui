@@ -175,6 +175,7 @@ Acquire 尚未完成時，上述意圖會以 generation 使該次 acquire 回傳
   mount（host 此時才在 document 內），畫在 dialog 的 stacking context 內。
 - `UiModal` 的 Teleport 使用 `defer`：LibraryBrowseContent 與 library host 在同一輪 mount，host 尚未插入
   document，未 defer 時目標為 null，第一次開啟就會讓 Vue patch 崩潰並凍結頁面。
+- 寬版的上一首和下一首縮圖各自置中並裁切於自己的預覽區，首尾沒有相鄰曲目時仍保留空欄位。窄版隱藏相鄰封面。切歌動畫期間，封面欄與右側操作位置保持固定。
 - 播放錯誤以 `TRACK_PREVIEW_PLAYBACK_FAILED` 記錄並跳到下一首；整份清單都失敗時停在錯誤狀態。
 
 ## 副作用邊界
