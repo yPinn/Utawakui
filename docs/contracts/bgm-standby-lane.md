@@ -295,6 +295,15 @@ gate 接入，不經演唱音量、靜音、導唱或 pitch；pause／cut／fade
 由 config audio preferences 保存；舊設定補 50%，不改既有監聽或導唱值。此控制不影響
 monitor，亦不提供 limiter 或 normalization。BGM 本身仍預設 25%；兩個 gain 相乘。
 
+### 音量起點與 Mic 退避
+
+下一輪實機驗收沿用既有線性音量。數值是控制器比例，實際聽感與錄音電平需以同場素材確認。
+
+- 主播放的本機監聽與直播擷取各從 50% 起，兩條路徑分開調整。演唱時即使 Mic 有聲，主伴奏也保持穩定。
+- 待機 BGM 的本機監聽從 25% 起。共用擷取總音量為 50% 時，BGM 送入 OBS 的有效比例約為 12.5%，先在同一份錄音確認它與主播放的相對音量。
+- 說話需要讓位時，手動 Talk 只把當下 BGM 降 12 dB，沿用 100 ms 下降、600 ms 恢復。以預設值換算，監聽約為 6.3%，共用擷取約為 3.1%。Mic 單純連接時維持正常 BGM 音量。
+- 需要依 Mic 自動退避或分錄音軌時，再驗獨立 BGM 擷取。由 OBS 或外部混音器只對 BGM source 套用退避，主播放保持原路徑。共用擷取仍是預設，App 自動 Mic 退避待另行驗證。
+
 Routing 必須遵守：
 
 - BGM mute／volume、stop 與 silence windows 在 monitor／capture 同步生效，不能只在本機
@@ -429,8 +438,8 @@ Routing 必須遵守：
   [演出場次準備契約](performance-session-preparation.md)；BGM coordinator 只 snapshot current
   eligible revision 並執行互斥 handoff，不建立第二份 plan state。
 - 第一版使用本契約的 pre-roll／post-roll、BGM fade 與 Talk／Dim 參數；release 前必須以實際
-  OBS 錄製與監聽做人工聽感／timeline 驗收。Owner 仍需確認 `shared-capture`／
-  `separate-bgm-capture` 的預設 routing profile。
+  OBS 錄製與監聽做人工聽感／timeline 驗收。`shared-capture` 已確認為預設，
+  `separate-bgm-capture` 依獨立分軌或 Mic 退避需求另驗。
 - Runtime 依 ADR 0021 採既有 performance audio owner、單 deck BGM owner、BGM bus gain、session
   handoff coordinator、monitor-only lazy context 與 teardown strategy；confirmed-playing timestamp
   commit 與 capture bus 留在後續，A／B deck 不列入第一版但不得被架構永久阻斷。

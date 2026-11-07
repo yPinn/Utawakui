@@ -66,7 +66,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 | OBS 整合                  | 唯讀路徑              | WebSocket 5 狀態、secure storage、本機 session history／YouTube 章節與防休眠。                                                                                                           | 不提供 scene／source 寫入。[整合契約](contracts/integration-adapter-contract.md)。                                                                                                                                                                                                                                                                                               |
 | Feature gates／診斷／回饋 | 已實作                | 五個 gate、Main diagnostics／遮蔽匯出；四類回報強制預覽，嚴重錯誤可另行同意自動回報。                                                                                                    | 其他 domain 持續導入；回饋 relay 需部署設定。[診斷](adr/0008-local-diagnostics-and-error-handling.md)、[回饋](adr/0016-user-feedback-intake.md)、[自動回報](adr/0029-consented-automatic-error-reports.md)。                                                                                                                                                                     |
 | 發行                      | 公開測試              | 截至 2026-11-05 最新公開版為 [v0.5.2](https://github.com/yPinn/Utawakui-Releases/releases/tag/v0.5.2)，tag 指向 `52330f9f`。                                                             | 本表含 v0.5.2 後開發變更，該版內容見[版本說明](releases/v0.5.2.md)。Unsigned channel；公開發布不代替真實裝置／OBS 與正式 feed 升級驗收，signed manifest 只有 dev key。[ADR 0007](adr/0007-public-release-app-updates.md)、[ADR 0018](adr/0018-signed-update-manifest.md)。                                                                                                       |
-| VOD／clip review          | 已接受方向            | 目前 history 只保存時間戳。                                                                                                                                                              | 每場權利狀態與輸出 review 未實作。                                                                                                                                                                                                                                                                                                                                               |
+| VOD／clip review          | 已接受方向            | 目前 history 只保存時間戳。                                                                                                                                                              | 一次性權利告知與輸出 review 待實作。                                                                                                                                                                                                                                                                                                                                             |
 | Native adapters           | 原型                  | Windows x64 固定 `Utawakui.Lyrics` Spout2 sender。                                                                                                                                       | Receiver／alpha／GPU／安裝版驗收前不列正式支援。[Spout2](contracts/integration-adapter-contract.md#spout2-native-video-profile)。                                                                                                                                                                                                                                                |
 
 ## 4. 產品與資料邊界
@@ -152,13 +152,15 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 | 方向             | 後續範圍                                                                          | 前置與界線                                                                                                                                      |
 | ---------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| 本地演出完整性   | 既有場次／OBS 時間軸的實機驗收；VOD／clip 狀態與輸出 review。                     | 本機播放與安排不依賴 OBS；review 政策另定。                                                                                                     |
+| 本地演出完整性   | 既有場次／OBS 時間軸的實機驗收；VOD／clip 狀態與輸出 review。                     | 本機播放與安排不依賴 OBS；一般權利告知採一次確認。                                                                                              |
 | 手機遙控／提詞器 | 延續既有手機操作與讀詞規劃，共用 Performer presentation。                         | 桌面提詞器已存在；手機 pairing／權限／撤銷與 transport 未接入，不暴露現有唯讀 Output 為控制 API。                                               |
 | 音訊準備與設定   | 新分離結果的受控 FLAC 5／WAV 回退；Pitch／tempo pre-render cache、preset 匯出入。 | FLAC 正式維持關閉、只驗隔離工廠、不遷移舊音訊；[格式契約](contracts/separation-output-format.md)。其餘保存範圍、缺曲 remap 與結果生命週期另定。 |
 | Output 外觀交付  | Instance、受限 Presentation Pack／User Variant 與逐模板藝術改善。                 | 依 ADR 0011／0027 與[外觀交付標準](governance/appearance-sets-plan.md)分期；帳號、付款與遠端取得不隨之自動啟動。                                |
 | 曲庫細節         | 跨語言弱藝人證據、本機 tag 與翻唱歸屬。                                           | 延續已保存的人工校對與作品／版本邊界，不重做既有曲庫能力。                                                                                      |
 
 播放器／排練四項沿[原規劃順序](research/product/player-practice-planning-2026-10-26.md)接續已接受的切片，不另列一套排程；完整現況與待驗範圍見第 3 節。逐曲設定、區段練習、對時確認及 App／背景快捷鍵須各守來源、保存與平台門檻，未完成的實機／品質驗收不因程式切片完成而解除。
+
+VOD／clip 的一般權利告知依告知版本在本機確認一次，保存確認紀錄，並提供可隨時重開的說明入口。同版本不在每場重複詢問。個別素材與場次仍由使用者自行確認，告知紀錄只代表已讀。輸出 review 仍待實作。
 
 ### 6.3 等待條件與暫緩範圍
 
@@ -174,12 +176,11 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 ### 7.1 既有方向的未決細節
 
-1. VOD／clip 權利狀態每場確認，或保存可重用的 session preset？
-2. Preset 匯入遇到缺曲時提示、略過或 remap？
-3. Official Presentation Pack 與 User Variant 的版本、簽章、分享與取得／復原邊界？
-4. Refined 的品質與容量門檻？
-5. BGM 的 loudness policy 與預設 capture profile；伴奏優先、原曲回退與獨立導唱開關已實作，不重列為未定政策。
-6. 演唱工具「歌詞」頁與曲庫歌詞編輯的分工：現行來源切換、讀音產生與編輯超出 [ADR 0023](adr/0023-renderer-destination-and-workspace-model.md) 的現場職責。
+1. Preset 匯入遇到缺曲時提示、略過或 remap？
+2. Official Presentation Pack 與 User Variant 的版本、簽章、分享與取得／復原邊界？
+3. Refined 的品質與容量門檻？
+4. BGM 響度政策與獨立擷取的採用門檻，先按監聽／擷取、主播放／BGM 及 Mic 退避情境驗收。[音量起點](contracts/bgm-standby-lane.md#音量起點與-mic-退避)
+5. 演唱工具「歌詞」頁與曲庫歌詞編輯的分工：現行來源切換、讀音產生與編輯超出 [ADR 0023](adr/0023-renderer-destination-and-workspace-model.md) 的現場職責。
 
 ### 7.2 系統與環境
 
