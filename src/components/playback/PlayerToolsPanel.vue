@@ -10,8 +10,6 @@ import {
   Play,
   Plus,
   RotateCcw,
-  Volume2,
-  VolumeX,
   X,
 } from '../../icons/index.js';
 import {
@@ -25,6 +23,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiButtonGroup from '../ui/UiButtonGroup.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiVolumeControl from '../ui/UiVolumeControl.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
@@ -65,14 +64,11 @@ const {
   adjustBpm,
   adjustBeatsPerBar,
   tapTempo,
-  resetTaps,
   toggleSound,
   setVolume,
 } = useMetronome();
 
-function formatMetronomeVolume(value) {
-  return `${Math.round(value * 100)}%`;
-}
+const awaitingTempoTap = computed(() => metronome.tapCount === 1);
 
 const tabItems = [
   { id: 'adjust', label: t('player.toolsPanel.adjust') },
@@ -240,58 +236,48 @@ function setActiveTab(key) {
           </div>
         </div>
 
-        <div
-          class="player-tools__metro-volume"
-          role="group"
-          :aria-label="t('player.toolsPanel.beatVolume')"
-        >
-          <UiIconButton
-            :icon="metronome.soundEnabled ? Volume2 : VolumeX"
-            :active="metronome.soundEnabled"
-            :label="
-              t(
-                metronome.soundEnabled
-                  ? 'player.toolsPanel.soundOff'
-                  : 'player.toolsPanel.soundOn',
-              )
-            "
-            :aria-pressed="metronome.soundEnabled"
-            @click="toggleSound"
-          />
-          <UiRangeControl
-            :model-value="metronome.volume"
-            :default-value="1"
-            :min="0"
-            :max="1"
-            :step="0.05"
-            :value-text="formatMetronomeVolume(metronome.volume)"
-            :format-value="formatMetronomeVolume"
-            :aria-label="t('player.toolsPanel.beatVolume')"
-            @update:model-value="setVolume"
-          />
-        </div>
-
         <div class="player-tools__tap-row">
-          <span
-            class="player-tools__description player-tools__tap-hint"
-            role="status"
-            >{{
-              metronome.tapCount === 1 ? t('player.toolsPanel.tapAgain') : ''
-            }}</span
-          >
-          <UiIconButton
-            :icon="RotateCcw"
-            :disabled="metronome.tapCount === 0"
-            :label="t('player.toolsPanel.clearTaps')"
-            @click="resetTaps"
+          <span class="ui-visually-hidden" role="status">{{
+            awaitingTempoTap ? t('player.toolsPanel.tapAgain') : ''
+          }}</span>
+          <UiVolumeControl
+            variant="reveal"
+            inline
+            :model-value="metronome.volume"
+            :muted="!metronome.soundEnabled"
+            toggle-mode="sound"
+            :active="metronome.soundEnabled"
+            :volume-label="t('player.toolsPanel.beatVolume')"
+            :mute-label="t('player.toolsPanel.soundOff')"
+            :unmute-label="t('player.toolsPanel.soundOn')"
+            :default-value="1"
+            :step="0.05"
+            @update:muted="toggleSound"
+            @update:model-value="setVolume"
           />
           <UiButton
             :icon="Metronome"
             variant="secondary"
             :title="t('player.toolsPanel.tapHint')"
             @click="tapTempo()"
-            >{{ t('player.toolsPanel.tap') }}</UiButton
           >
+            <span class="player-tools__tap-label">
+              <span
+                :class="{
+                  'player-tools__tap-label--reserved': awaitingTempoTap,
+                }"
+              >
+                {{ t('player.toolsPanel.tap') }}
+              </span>
+              <span
+                :class="{
+                  'player-tools__tap-label--reserved': !awaitingTempoTap,
+                }"
+              >
+                {{ t('player.toolsPanel.tapAgain') }}
+              </span>
+            </span>
+          </UiButton>
         </div>
         <p
           v-if="trackTempoHint"
@@ -526,13 +512,6 @@ function setActiveTab(key) {
   gap: var(--ui-space-1);
 }
 
-.player-tools__metro-volume {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ui-space-2);
-}
-
 .player-tools__metro-beats {
   padding-inline: var(--ui-space-1);
   min-width: 0;
@@ -595,15 +574,22 @@ function setActiveTab(key) {
 }
 
 .player-tools__tap-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-end;
   gap: var(--ui-space-2);
 }
 
-.player-tools__tap-hint {
-  min-width: 0;
-  margin-inline-end: auto;
+.player-tools__tap-label {
+  display: grid;
+}
+
+.player-tools__tap-label > span {
+  grid-area: 1 / 1;
+}
+
+.player-tools__tap-label--reserved {
+  visibility: hidden;
 }
 
 .player-tools__tempo-hint {

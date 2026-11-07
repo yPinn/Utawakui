@@ -1,4 +1,4 @@
-import { h, nextTick, reactive } from 'vue';
+import { h, nextTick, reactive, readonly } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import TrackTableColumnChooser from '../track/TrackTableColumnChooser.vue';
 import TrackListDensityMenu from '../track/TrackListDensityMenu.vue';
@@ -21,6 +21,7 @@ import UiHint from './UiHint.vue';
 import UiNotice from './UiNotice.vue';
 import UiTabs from './UiTabs.vue';
 import UiRangeControl from './range/UiRangeControl.vue';
+import UiVolumeControl from './UiVolumeControl.vue';
 import PlayerToolsPanel from '../playback/PlayerToolsPanel.vue';
 import { useAppRightDockWidth } from '../../composables/useAppRightDockWidth.js';
 import { useMetronome } from '../../composables/useMetronome.js';
@@ -36,6 +37,7 @@ import {
 
 for (const [component, path] of [
   [UiRangeControl, './range/UiRangeControl.vue'],
+  [UiVolumeControl, './UiVolumeControl.vue'],
   [TrackTableColumnChooser, '../track/TrackTableColumnChooser.vue'],
   [TrackListDensityMenu, '../track/TrackListDensityMenu.vue'],
   [PerformerActionBar, '../performer/PerformerActionBar.vue'],
@@ -144,7 +146,8 @@ async function explicitDismissal(view) {
   expect(view.panel()).toBeTruthy();
   windowEvents.dispatch('keydown', {
     key: 'Escape',
-    target: hostNode('body'),
+    // Match the template ref proxy around the test host's plain-object node.
+    target: readonly(view.panel()),
     preventDefault: vi.fn(),
     stopPropagation: vi.fn(),
   });
@@ -172,7 +175,9 @@ function setupMetronome() {
   const button = (label) =>
     findAll(
       view.overlayHost,
-      (node) => node.type === 'button' && textContent(node).trim() === label,
+      (node) =>
+        node.type === 'button' &&
+        (node.props['aria-label'] ?? textContent(node).trim()) === label,
     )[0];
   return { ...view, metronome, button };
 }
@@ -333,25 +338,49 @@ describe('settings Popover persistence across consumers', () => {
     expect(metronome.state.beatsPerBar).toBe(4);
   });
 
-  it('retains tap estimation, separate tap clearing and the applied track estimate hint', async () => {
-    const { metronome, button, overlayHost } = setupMetronome();
+  it('updates the tap prompt on the same button and retains tempo estimation', async () => {
+    const { metronome, overlayHost } = setupMetronome();
     await nextTick();
-    expect(button('清除點擊記錄').props.disabled).toBe(true);
+    const tapLabel = findAll(
+      overlayHost,
+      (node) => node.props.class === 'player-tools__tap-label',
+    )[0];
+    const tapButton = findAll(
+      overlayHost,
+      (node) => node.type === 'button' && node.contains(tapLabel),
+    )[0];
+    const visibleTapLabel = () =>
+      textContent(
+        tapLabel.children.find(
+          (child) =>
+            child.type === 'span' &&
+            child.props.class !== 'player-tools__tap-label--reserved',
+        ),
+      ).trim();
+    const announcement = findAll(
+      overlayHost,
+      (node) =>
+        node.props.role === 'status' &&
+        node.props.class === 'ui-visually-hidden',
+    )[0];
+
+    expect(visibleTapLabel()).toBe('點擊測速');
+    expect(textContent(announcement)).toBe('');
     metronome.setBpm(90);
-    trigger(button('點擊測速'), 'onClick');
+    trigger(tapButton, 'onClick');
     await nextTick();
-    expect(textContent(overlayHost)).toContain('再點一下');
+    expect(visibleTapLabel()).toBe('再點一下');
+    expect(textContent(announcement)).toBe('再點一下');
     vi.advanceTimersByTime(500);
-    trigger(button('點擊測速'), 'onClick');
+    trigger(tapButton, 'onClick');
     await nextTick();
     expect(metronome.state.bpm).toBe(120);
-    expect(textContent(overlayHost)).not.toContain('已點擊');
-    expect(textContent(overlayHost)).not.toContain('再點一下');
-    trigger(button('清除點擊記錄'), 'onClick');
-    await nextTick();
+    expect(visibleTapLabel()).toBe('點擊測速');
+    expect(textContent(announcement)).toBe('');
+
+    vi.advanceTimersByTime(2000);
     expect(metronome.state.tapCount).toBe(0);
     expect(metronome.state.bpm).toBe(120);
-    expect(button('清除點擊記錄').props.disabled).toBe(true);
     metronome.reset();
     metronome.applyTrackTempo(150, 0.87);
     await nextTick();

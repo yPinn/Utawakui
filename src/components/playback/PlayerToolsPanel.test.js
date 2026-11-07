@@ -86,6 +86,27 @@ describe('PlayerToolsPanel shared surface', () => {
     }
   });
 
+  it('keeps the beat markers separate and reveals volume in the tap tempo row', async () => {
+    const html = await render({ activeTab: 'live' });
+    const liveStart = html.indexOf('id="player-tools-live-panel"');
+    const live = html
+      .slice(liveStart, html.indexOf('</section>', liveStart))
+      .replace(/<!--.*?-->/g, '');
+
+    expect(live.match(/type="range"/g)).toHaveLength(1);
+    expect(live).toContain('aria-label="節拍音量"');
+    expect(live).toContain('step="0.05"');
+    expect(live).toContain(
+      'ui-volume-control--reveal ui-volume-control--inline',
+    );
+    const tapRow = live.indexOf('class="player-tools__tap-row"');
+    expect(live.slice(0, tapRow)).toContain('class="player-tools__beat-row"');
+    expect(live.slice(0, tapRow)).toContain('重設節拍器');
+    expect(live.slice(tapRow)).toContain('aria-label="節拍音量"');
+    expect(live.slice(tapRow)).toContain('點擊測速');
+    expect(live).not.toContain('清除點擊記錄');
+  });
+
   it('removes the duplicate separation entry and dedicated PlayerBar wiring', async () => {
     for (const value of [
       'SeparationPresetControl',
