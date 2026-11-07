@@ -235,10 +235,9 @@ watch(
   },
   { immediate: true },
 );
-watch(
-  () => props.activeLyric,
-  () => lyricViewport.value?.scrollTo(0, 0),
-);
+function resetLyricScroll() {
+  lyricViewport.value?.scrollTo(0, 0);
+}
 onUnmounted(() => setKeyboardListener(false));
 </script>
 
@@ -317,29 +316,42 @@ onUnmounted(() => setKeyboardListener(false));
 
           <div class="track-preview__details">
             <div
-              v-if="activeLyric"
               ref="lyricViewport"
               class="track-preview__lyric"
-              :lang="activeLyric.lang"
               role="region"
               :aria-label="t('track.context.lyrics')"
-              tabindex="0"
+              :tabindex="activeLyric ? 0 : undefined"
             >
-              <p
-                v-for="(row, rowIndex) in activeLyric.rows"
-                :key="rowIndex"
-                class="track-preview__lyric-row"
+              <Transition
+                :key="index"
+                name="track-preview-lyric-fade"
+                mode="out-in"
+                appear
+                @before-enter="resetLyricScroll"
               >
-                <template
-                  v-for="(phrase, phraseIndex) in row"
-                  :key="phraseIndex"
+                <div
+                  v-if="activeLyric"
+                  :key="activeLyric.key"
+                  class="track-preview__lyric-text"
+                  :lang="activeLyric.lang"
                 >
-                  <span class="track-preview__lyric-phrase">{{
-                    phrase.text
-                  }}</span
-                  >{{ phrase.spaceAfter ? ' ' : '' }}
-                </template>
-              </p>
+                  <p
+                    v-for="(row, rowIndex) in activeLyric.rows"
+                    :key="rowIndex"
+                    class="track-preview__lyric-row"
+                  >
+                    <template
+                      v-for="(phrase, phraseIndex) in row"
+                      :key="phraseIndex"
+                    >
+                      <span class="track-preview__lyric-phrase">{{
+                        phrase.text
+                      }}</span
+                      >{{ phrase.spaceAfter ? ' ' : '' }}
+                    </template>
+                  </p>
+                </div>
+              </Transition>
             </div>
 
             <UiNotice
@@ -755,7 +767,7 @@ onUnmounted(() => setKeyboardListener(false));
   justify-self: stretch;
   display: grid;
   grid-auto-rows: max-content;
-  align-content: safe center;
+  align-content: start;
   box-sizing: border-box;
   min-inline-size: 0;
   min-block-size: var(--track-preview-lyrics-min-size);
@@ -770,6 +782,21 @@ onUnmounted(() => setKeyboardListener(false));
   line-height: var(--ui-type-subtitle-line-height);
   line-break: strict;
   overflow-wrap: anywhere;
+}
+
+.track-preview__lyric:not(:has(.track-preview__lyric-text)) {
+  display: none;
+}
+
+.track-preview-lyric-fade-enter-active,
+.track-preview-lyric-fade-leave-active {
+  transition: opacity var(--ui-motion-duration-feedback)
+    var(--ui-motion-easing-standard);
+}
+
+.track-preview-lyric-fade-enter-from,
+.track-preview-lyric-fade-leave-to {
+  opacity: 0;
 }
 
 .track-preview__lyric:focus-visible {
@@ -815,7 +842,7 @@ onUnmounted(() => setKeyboardListener(false));
     2 * var(--ui-type-heading-size) * var(--ui-type-title-line-height)
   );
   display: grid;
-  align-content: start;
+  align-content: end;
 }
 
 .track-preview__meta {
@@ -887,6 +914,9 @@ onUnmounted(() => setKeyboardListener(false));
   margin-inline: auto;
 }
 
+/* Preserve the title's lower baseline while it animates out. */
+.track-preview__title.track-preview-next-leave-active,
+.track-preview__title.track-preview-previous-leave-active,
 .track-preview__peek-slot--previous > .track-preview-next-leave-active,
 .track-preview__peek-slot--previous > .track-preview-previous-leave-active {
   inset-block: auto 0;

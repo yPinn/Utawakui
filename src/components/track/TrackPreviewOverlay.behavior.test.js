@@ -53,12 +53,13 @@ describe('TrackPreviewOverlay', () => {
   it('renders a single active lyric with authored line breaks and an independently labelled volume slider', async () => {
     const html = await renderOverlay({
       activeLyric: {
+        key: '0:0',
         rows: [[{ text: '夜が明ける' }], [{ text: '明日' }]],
         lang: 'ja',
       },
       volume: 0.35,
     });
-    expect(html).toMatch(/class="track-preview__lyric" lang="ja"/u);
+    expect(html).toMatch(/class="track-preview__lyric-text" lang="ja"/u);
     expect(html.match(/class="track-preview__lyric-row"/gu)).toHaveLength(2);
     expect(html).toMatch(
       /class="track-preview__lyric-phrase"[^>]*>夜が明ける<\/span>/u,
@@ -75,7 +76,7 @@ describe('TrackPreviewOverlay', () => {
     expect(html).toContain('35%');
     expect(html).toContain('ui-volume-control--reveal');
     expect(html).toContain('ui-volume-control--reveal-end');
-    expect(await renderOverlay()).not.toContain('track-preview__lyric');
+    expect(await renderOverlay()).not.toContain('track-preview__lyric-text');
   });
 
   it('renders the current track, its neighbours and segment progress', async () => {
@@ -342,9 +343,27 @@ describe('TrackPreviewOverlay', () => {
     );
   });
 
+  it('top-aligns lyrics and only animates the cue opacity', () => {
+    expect(source).toMatch(
+      /\.track-preview__lyric\s*\{[^}]*align-content:\s*start;/u,
+    );
+    const fade = source.match(
+      /<Transition\b(?=[^>]*\bname="track-preview-lyric-fade")[^>]*>/u,
+    )?.[0];
+    expect(fade).toContain('mode="out-in"');
+    expect(fade).toContain(':key="index"');
+    expect(fade).toMatch(/\sappear(?:\s|>)/u);
+    expect(source).toMatch(
+      /<div\b(?=[^>]*v-if="activeLyric")(?=[^>]*:key="activeLyric\.key")(?=[^>]*class="track-preview__lyric-text")[^>]*>/u,
+    );
+    expect(source).toMatch(
+      /\.track-preview-lyric-fade-leave-active\s*\{\s*transition:\s*opacity var\(--ui-motion-duration-feedback\)\s*var\(--ui-motion-easing-standard\);\s*\}/u,
+    );
+  });
+
   it('reserves two title lines and separates the lyric from progress', () => {
     expect(source).toMatch(
-      /\.track-preview__identity-switch\s*\{[^}]*min-block-size:\s*calc\(\s*2 \* var\(--ui-type-heading-size\) \* var\(--ui-type-title-line-height\)\s*\);/u,
+      /\.track-preview__identity-switch\s*\{[^}]*min-block-size:\s*calc\(\s*2 \* var\(--ui-type-heading-size\) \* var\(--ui-type-title-line-height\)\s*\);[^}]*align-content:\s*end;/u,
     );
     expect(source).toMatch(
       /\.track-preview__lyric\s*\{[^}]*margin-block-start:\s*var\(--track-preview-lyric-offset\);/u,

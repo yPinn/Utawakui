@@ -121,6 +121,7 @@ export function createTrackPreview({
     isMuted: false,
   });
   const currentLyrics = shallowRef(null);
+  const lyricClockReady = shallowRef(false);
   const lyricLanguage = computed(() => {
     const lines = currentLyrics.value?.document.lines ?? [];
     const script = detectLyricsScript(lines.map((line) => line.text).join(''));
@@ -129,7 +130,7 @@ export function createTrackPreview({
   });
   const activeLyricIndex = computed(() => {
     const lyrics = currentLyrics.value;
-    if (!lyrics || state.blockedReason) return -1;
+    if (!lyrics || !lyricClockReady.value || state.blockedReason) return -1;
     const positionMs = (state.currentTime + lyrics.offsetSeconds) * 1000;
     return deriveLyricsPlaybackState(lyrics.document, positionMs)
       .activeLineIndex;
@@ -140,7 +141,11 @@ export function createTrackPreview({
     if (!text) return null;
 
     const lang = lyricLanguage.value;
-    return { rows: previewLyricRows(text, lang), lang };
+    return {
+      key: `${state.index}:${index}`,
+      rows: previewLyricRows(text, lang),
+      lang,
+    };
   });
 
   let lease = null;
@@ -150,6 +155,7 @@ export function createTrackPreview({
   // src, element events still describe the previous track.
   let sourceGeneration = 0;
   let pendingSeek = null;
+  let playbackStarted = false;
   // Only a pause caused by losing focus resumes on its own.
   let pausedByFocus = false;
   let failedInRow = 0;
@@ -199,6 +205,11 @@ export function createTrackPreview({
     return true;
   }
 
+  function syncPlaybackTime() {
+    state.currentTime = audio.currentTime;
+    if (playbackStarted && !audio.seeking) lyricClockReady.value = true;
+  }
+
   // A 30s segment moves ~3px per timeupdate tick, so playback reads the
   // element every frame; timeupdate still owns the segment-end check.
   function syncFrame() {
@@ -206,7 +217,7 @@ export function createTrackPreview({
     if (!state.isOpen || state.status !== 'playing') return;
     // Loading the next track keeps 'playing' while the old time lingers.
     if (ownsSource() && pendingSeek === null && !audio.paused) {
-      state.currentTime = audio.currentTime;
+      syncPlaybackTime();
     }
     frameId = requestFrame(syncFrame);
   }
@@ -263,6 +274,7 @@ export function createTrackPreview({
       await audio.play();
       if (generation === trackGeneration && lease) {
         state.status = 'playing';
+        playbackStarted = true;
         startFrameSync();
         if (fades) fadeIn();
       } else if (generation === trackGeneration) {
@@ -283,6 +295,8 @@ export function createTrackPreview({
     const track = state.tracks[index];
     if (!track) return;
     audio.pause();
+    playbackStarted = false;
+    lyricClockReady.value = false;
     currentLyrics.value = null;
     state.index = index;
     state.currentTime = 0;
@@ -356,6 +370,8 @@ export function createTrackPreview({
     lease?.release();
     lease = null;
     pendingSeek = null;
+    playbackStarted = false;
+    lyricClockReady.value = false;
     currentLyrics.value = null;
     Object.assign(state, {
       isOpen: false,
@@ -453,7 +469,7 @@ export function createTrackPreview({
   });
   audio.addEventListener('timeupdate', () => {
     if (!state.isOpen || !ownsSource() || pendingSeek !== null) return;
-    state.currentTime = audio.currentTime;
+    syncPlaybackTime();
     if (state.status === 'playing' && audio.currentTime >= state.segment?.end) {
       replaySegment();
     }

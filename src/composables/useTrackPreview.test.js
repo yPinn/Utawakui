@@ -171,12 +171,14 @@ describe('track preview', () => {
       audio.currentTime = 51;
       audio.dispatch('timeupdate');
       expect(preview.activeLyric.value).toEqual({
+        key: '0:0',
         rows: [[{ text: '遠方的雲', spaceAfter: false }]],
         lang: 'zh-Hant-TW',
       });
       audio.currentTime = 53;
       audio.dispatch('timeupdate');
       expect(preview.activeLyric.value).toEqual({
+        key: '0:1',
         rows: [
           [
             { text: '愛在這裡', spaceAfter: true },
@@ -191,6 +193,7 @@ describe('track preview', () => {
       audio.currentTime = 56;
       audio.dispatch('timeupdate');
       expect(preview.activeLyric.value).toEqual({
+        key: '0:2',
         rows: [[{ text: '聽見風聲', spaceAfter: false }]],
         lang: 'zh-Hant-TW',
       });
@@ -221,6 +224,7 @@ describe('track preview', () => {
     audio.currentTime = 35;
     audio.dispatch('timeupdate');
     expect(preview.activeLyric.value).toEqual({
+      key: '0:0',
       rows: [[{ text: 'Preview line', spaceAfter: false }]],
     });
     audio.currentTime = 37;
@@ -275,6 +279,45 @@ describe('track preview', () => {
       preview.close();
     },
   );
+
+  it('waits for the new audio clock before showing the first lyric on open or switch', async () => {
+    const { audio, preview } = createHarness({
+      getLyrics: async ({ id }) => ({
+        offsetSeconds: 0,
+        document: {
+          lines: [{ text: id, startMs: 58000, endMs: 65000 }],
+        },
+      }),
+    });
+    await preview.open({ tracks: [track('a'), track('b')] });
+    expect(preview.state.currentTime).toBe(58);
+    expect(preview.activeLyric.value).toBeNull();
+    audio.dispatch('loadedmetadata');
+    audio.seeking = true;
+    audio.dispatch('timeupdate');
+    expect(preview.activeLyric.value).toBeNull();
+    audio.seeking = false;
+    audio.dispatch('timeupdate');
+    expect(preview.activeLyric.value).toMatchObject({ key: '0:0' });
+
+    const play = createDeferred();
+    audio.play.mockReturnValueOnce(play.promise);
+    const switching = preview.next();
+    expect(preview.activeLyric.value).toBeNull();
+    await vi.waitFor(() => expect(audio.src).toContain('/b/'));
+    audio.dispatch('loadedmetadata');
+    audio.dispatch('timeupdate');
+    expect(preview.activeLyric.value).toBeNull();
+    play.resolve();
+    await switching;
+    expect(preview.activeLyric.value).toBeNull();
+    audio.dispatch('timeupdate');
+    expect(preview.activeLyric.value).toMatchObject({
+      key: '1:0',
+      rows: [[{ text: 'b' }]],
+    });
+    preview.close();
+  });
 
   it('keeps volume changes within a preview session and clamps invalid input', async () => {
     const { audio, preview } = createHarness();
