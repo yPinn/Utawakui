@@ -3,7 +3,7 @@ import { computed, shallowRef, useTemplateRef } from 'vue';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { trackArtistText } from '../../utils/artistPage.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
-import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
+import { Play } from '../../icons/index.js';
 import TrackContextActions from '../playback/context/TrackContextActions.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -31,6 +31,7 @@ const subtitle = computed(() =>
     overflow="ellipsis"
     hide-duration
     artwork-clickable
+    :artwork-icon="Play"
     :artwork-label="t('work.trackRow.play', { title: track.title })"
     state-surface
     :state-surface-active="menuOpen"
@@ -38,7 +39,6 @@ const subtitle = computed(() =>
     @artwork-click="emit('play', track)"
     @contextmenu.prevent.stop="actions?.open($event)"
   >
-    <template #artworkOverlay><RightDockTrackArtworkCue /></template>
     <template #trail>
       <TrackContextActions
         ref="actions"

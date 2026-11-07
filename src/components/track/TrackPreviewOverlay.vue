@@ -429,6 +429,7 @@ onUnmounted(() => setKeyboardListener(false));
             </span>
             <UiArtworkReveal class="track-preview__play">
               <PlaybackPrimaryButton
+                fill
                 :play-label="t('track.preview.playFromHere')"
                 @click="emit('playTrack', track)"
               />

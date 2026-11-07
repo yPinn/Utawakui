@@ -12,8 +12,8 @@ const rowSource = readCatalogSource(
 const recentSource = readCatalogSource(
   new URL('./RecentPlaybackList.vue', import.meta.url),
 );
-const artworkCueSource = readCatalogSource(
-  new URL('./RightDockTrackArtworkCue.vue', import.meta.url),
+const artworkButtonSource = readCatalogSource(
+  new URL('../ui/UiTrackArtworkButton.vue', import.meta.url),
 );
 const menuButtonSource = readCatalogSource(
   new URL('./RightDockTrackMenuButton.vue', import.meta.url),
@@ -310,9 +310,7 @@ describe('QueuePanel shared Dock content', () => {
       ':playing="playerPlaying && track.id === playingTrackId"',
     );
     expect(rowSource).toContain(':artwork-label="artworkActionLabel"');
-    expect(rowSource).toContain(
-      '<RightDockTrackArtworkCue :playing="playing" />',
-    );
+    expect(rowSource).toContain(':artwork-icon="playing ? Pause : Play"');
   });
 
   it('keeps an independent Recent selection while leaving history clearing out of the panel', () => {
@@ -362,31 +360,24 @@ describe('QueuePanel shared Dock content', () => {
 
   it('shares one Right Dock artwork-hover and overflow-action recipe with recent rows', () => {
     expect(rowSource).toContain(
-      "import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';",
-    );
-    expect(rowSource).toContain(
       "import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';",
     );
     expect(rowSource).toContain('right-dock-track');
-    expect(rowSource).toContain('<RightDockTrackArtworkCue');
     expect(rowSource).toContain('<RightDockTrackMenuButton');
     expect(rowSource).toContain('right-dock-track--menu-open');
     expect(recentSource).toContain(
       "import QueueTrackButton from './QueueTrackButton.vue';",
     );
     expect(recentSource).toContain('<QueueTrackButton');
-    expect(recentSource).not.toContain('RightDockTrackArtworkCue');
     expect(recentSource).not.toContain('RightDockTrackMenuButton');
     expect(rowSource).not.toContain('queue-track__artwork-cue');
     expect(rowSource).not.toContain('queue-track__menu');
     expect(recentSource).not.toContain('recent-playback__artwork-cue');
     // Geometry comes from UiTrackRow's UiArtworkOverlay; the reveal comes from
     // UiArtworkReveal with the row as a focus-within reveal scope.
-    expect(artworkCueSource).toContain('<UiArtworkReveal>');
+    expect(artworkButtonSource).toContain('<UiArtworkReveal>');
+    expect(artworkButtonSource).toContain('variant="overlay"');
     expect(rowSource).toContain('data-artwork-reveal-scope="focus-within"');
-    expect(artworkCueSource).not.toMatch(
-      /\.right-dock-track__artwork-cue\s*\{[^}]*(?:position:|inset:|z-index:|border-radius:|opacity:|transition:)/su,
-    );
     expect(menuButtonSource).toMatch(
       /\.right-dock-track__menu\s*\{[^}]*opacity:\s*0;[^}]*visibility:\s*hidden;[^}]*pointer-events:\s*none;/su,
     );

@@ -45,6 +45,7 @@ const props = defineProps({
   // An explicit artwork destination stays separate from the row action.
   // Queue uses it for playback; other consumers may keep artwork decorative.
   artworkClickable: { type: Boolean, default: false },
+  artworkIcon: { type: [Object, Function], default: undefined },
   artworkLabel: { type: String, default: undefined },
   // Split keyboard semantics for selection-oriented rows: Space follows the
   // row click contract while Enter performs the caller's primary action.
@@ -163,6 +164,7 @@ function handleActionKeydown(event) {
       class="ui-track__artwork-action"
       :disabled="disabled"
       :label="artworkLabel"
+      :overlay-icon="artworkIcon"
       :track="thumbTrack"
       :loading="thumbLoading"
       :decoding="thumbDecoding"

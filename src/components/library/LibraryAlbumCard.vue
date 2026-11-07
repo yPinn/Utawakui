@@ -58,6 +58,7 @@ function playAlbum(event) {
       />
       <UiArtworkReveal class="library-album-card__play">
         <PlaybackPrimaryButton
+          fill
           :playing="playing"
           :play-label="t('library.albumCard.play', { name: album.name })"
           :pause-label="t('library.albumCard.pause', { name: album.name })"

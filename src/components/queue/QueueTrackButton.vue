@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
-import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
+import { Pause, Play } from '../../icons/index.js';
 import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -110,6 +110,7 @@ function handleDragEnd(event) {
     "
     :artwork-clickable="canPlay"
     :artwork-label="artworkActionLabel"
+    :artwork-icon="playing ? Pause : Play"
     hide-duration
     overflow="ellipsis"
     thumb-loading="lazy"
@@ -142,9 +143,6 @@ function handleDragEnd(event) {
         "
         >{{ ordinal }}</span
       >
-    </template>
-    <template v-if="canPlay" #artworkOverlay>
-      <RightDockTrackArtworkCue :playing="playing" />
     </template>
     <template #artist>
       <TrackArtistCredits

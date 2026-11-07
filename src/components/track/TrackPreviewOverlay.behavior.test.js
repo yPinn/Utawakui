@@ -207,7 +207,7 @@ describe('TrackPreviewOverlay', () => {
     // The only Play glyph starts real playback, reusing the app's primary
     // play button on the cover corner like a feed card.
     expect(source).toMatch(
-      /<UiArtworkReveal class="track-preview__play">\s*<PlaybackPrimaryButton\s+play-label="從這首開始播放"\s+@click="emit\('playTrack', track\)"\s*\/>\s*<\/UiArtworkReveal>/u,
+      /<UiArtworkReveal class="track-preview__play">\s*<PlaybackPrimaryButton\s+fill\s+play-label="從這首開始播放"\s+@click="emit\('playTrack', track\)"\s*\/>\s*<\/UiArtworkReveal>/u,
     );
     expect(source).not.toMatch(/<UiButton[\s>]/u);
   });

@@ -11,7 +11,8 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
-import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
 import {
   attachClientRender,
@@ -33,7 +34,8 @@ for (const [component, filename] of [
   [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
-  [RightDockTrackArtworkCue, './RightDockTrackArtworkCue.vue'],
+  [UiArtworkReveal, '../ui/UiArtworkReveal.vue'],
+  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
   [RightDockTrackMenuButton, './RightDockTrackMenuButton.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -144,7 +146,7 @@ describe('QueueTrackButton standard Track Row adapter', () => {
       String(node.props?.class ?? '').includes('ui-track__action'),
     );
     const artworkButton = buttons.find((node) =>
-      String(node.props?.class ?? '').includes('ui-track__artwork-action'),
+      String(node.props?.class ?? '').includes('ui-icon-btn--overlay'),
     );
     const menuButton = buttons.find(
       (node) => textContent(node) === `${track.title}的更多選項`,
@@ -159,7 +161,7 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     expect(String(row.props.class)).toContain('ui-track--active');
     expect(buttons).toHaveLength(3);
     expect(primaryAction.parent).toBe(row);
-    expect(artworkButton.parent).toBe(row);
+    expect(artworkButton.parent.type).not.toBe('button');
     expect(primaryAction.props['aria-label']).toBe(`選取：${track.title}`);
     expect(primaryAction.props['aria-pressed']).toBeUndefined();
     expect(artworkButton.props['aria-label']).toBeUndefined();
@@ -249,7 +251,7 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     )[0];
     const buttons = findAll(row, (node) => node.type === 'button');
     const artworkButton = buttons.find((node) =>
-      String(node.props?.class ?? '').includes('ui-track__artwork-action'),
+      String(node.props?.class ?? '').includes('ui-icon-btn--overlay'),
     );
 
     expect(String(row.props.class)).not.toContain('ui-track--interactive');

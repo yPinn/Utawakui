@@ -10,14 +10,14 @@ import {
 import PerformanceSessionCurrent from './PerformanceSessionCurrent.vue';
 import QueueSection from '../queue/QueueSection.vue';
 import QueueTrackButton from '../queue/QueueTrackButton.vue';
-import RightDockTrackArtworkCue from '../queue/RightDockTrackArtworkCue.vue';
+import UiArtworkReveal from '../ui/UiArtworkReveal.vue';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import RightDockTrackMenuButton from '../queue/RightDockTrackMenuButton.vue';
 import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import TrackArtworkContent from '../ui/TrackArtworkContent.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackArtworkButton from '../ui/UiTrackArtworkButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
-import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -50,14 +50,14 @@ for (const [component, file] of [
   [PerformanceSessionCurrent, './PerformanceSessionCurrent.vue'],
   [QueueSection, '../queue/QueueSection.vue'],
   [QueueTrackButton, '../queue/QueueTrackButton.vue'],
-  [RightDockTrackArtworkCue, '../queue/RightDockTrackArtworkCue.vue'],
+  [UiArtworkReveal, '../ui/UiArtworkReveal.vue'],
+  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
   [RightDockTrackMenuButton, '../queue/RightDockTrackMenuButton.vue'],
   [TrackArtistCredits, '../track/TrackArtistCredits.vue'],
   [TrackArtworkContent, '../ui/TrackArtworkContent.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackArtworkButton, '../ui/UiTrackArtworkButton.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
-  [UiArtworkOverlay, '../ui/UiArtworkOverlay.vue'],
   [UiOverflowTooltip, '../ui/UiOverflowTooltip.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiButton, '../ui/UiButton.vue'],

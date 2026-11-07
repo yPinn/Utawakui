@@ -39,7 +39,7 @@ import UiTrackThumb from '../../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../../ui/tooltip/UiTooltipSurface.vue';
 import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
 import QueueTrackButton from '../../queue/QueueTrackButton.vue';
-import RightDockTrackArtworkCue from '../../queue/RightDockTrackArtworkCue.vue';
+import UiArtworkReveal from '../../ui/UiArtworkReveal.vue';
 import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';
 import {
   attachClientRender,
@@ -80,7 +80,7 @@ for (const [component, filename] of [
   [UiTooltipSurface, '../../ui/tooltip/UiTooltipSurface.vue'],
   [TrackArtistCredits, '../../track/TrackArtistCredits.vue'],
   [QueueTrackButton, '../../queue/QueueTrackButton.vue'],
-  [RightDockTrackArtworkCue, '../../queue/RightDockTrackArtworkCue.vue'],
+  [UiArtworkReveal, '../../ui/UiArtworkReveal.vue'],
   [RightDockTrackMenuButton, '../../queue/RightDockTrackMenuButton.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
