@@ -10,7 +10,9 @@ import { createWaveformSource } from '../electron/lib/waveform/source.js';
 import { createHeavyJobScheduler } from '../electron/lib/audioProcessing/heavyJobScheduler.js';
 import { buildReleaseRuntime } from './build-release-runtime.mjs';
 
-const root = fs.mkdtempSync(path.resolve('tasks/wave-main-'));
+const scratch = path.resolve('.tmp');
+fs.mkdirSync(scratch, { recursive: true });
+const root = fs.mkdtempSync(path.join(scratch, 'wave-main-'));
 afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
 function wav() {
   const dir = path.join(root, 'library/tracks/track');

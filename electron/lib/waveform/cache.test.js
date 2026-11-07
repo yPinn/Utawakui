@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterEach, expect, it } from 'vitest';
 import { createWaveformCache } from './cache.js';
@@ -31,7 +32,7 @@ const value = () => ({
   },
 });
 function setup(options = {}) {
-  const root = fs.mkdtempSync(path.resolve('tasks/wave-cache-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-wave-cache-'));
   roots.push(root);
   return { root, cache: createWaveformCache(root, options) };
 }

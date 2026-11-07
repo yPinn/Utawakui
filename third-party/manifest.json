@@ -1402,7 +1402,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "9244989993f2dd18f7aa525c7671bb3416495add2496e1ec0a6c63ab4a026c95"
+      "sha256": "e091d5f119de27a99cf6bd8fff1b0d17e9395f0a084fea8c61677c97cec25f29"
     },
     {
       "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
@@ -1432,25 +1432,25 @@
       "sourcePath": "shared/assets/fonts/OFL-CHEN-YU-LUO-YAN.txt",
       "location": "asar",
       "targetPath": "shared/assets/fonts/OFL-CHEN-YU-LUO-YAN.txt",
-      "sha256": "393732512d2658fa5841dfaad325e002ccb6755b9037a818500434c0a5c4a6d1"
+      "sha256": "8db1dae687e02f290646fa96b7e27021d547452c0c4d8f5390b8244eb9c53679"
     },
     {
       "sourcePath": "shared/assets/fonts/OFL-KLEE-ONE.txt",
       "location": "asar",
       "targetPath": "shared/assets/fonts/OFL-KLEE-ONE.txt",
-      "sha256": "e376b0df8e8a2345a9533db6f0a5333a1107975569ad9d1973a7ee557161ca38"
+      "sha256": "f5f4f05e005b6495a0d1f5bd49d37f5ac3e369883e2b7e3e48cd5aefded912f4"
     },
     {
       "sourcePath": "shared/assets/fonts/SOURCE-CHEN-YU-LUO-YAN.txt",
       "location": "asar",
       "targetPath": "shared/assets/fonts/SOURCE-CHEN-YU-LUO-YAN.txt",
-      "sha256": "4c75f365ff6cba22f54818858b119cbcb858f9169b379161bf8469b16328ca82"
+      "sha256": "6291558b7c3788d03c6b212fbf507cee16763b3f780b5f09e474e31dc71bfa85"
     },
     {
       "sourcePath": "shared/assets/fonts/SOURCE-KLEE-ONE.txt",
       "location": "asar",
       "targetPath": "shared/assets/fonts/SOURCE-KLEE-ONE.txt",
-      "sha256": "4a7648be15e961ff4206ed47b7b9fe9f7e23cf4d95a27c1ea9119d5866ca1133"
+      "sha256": "069b812e040871c362021c4cb556514934d5bdd1683dd343f796feb715fe1bdd"
     },
     {
       "sourcePath": "shared/assets/fonts/jf-open-huninn-2.1.ttf",

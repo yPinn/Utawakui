@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { afterEach, expect, it } from 'vitest';
@@ -10,7 +11,7 @@ afterEach(() =>
     .forEach((dir) => fs.rmSync(dir, { recursive: true, force: true })),
 );
 function fixture() {
-  const dir = fs.mkdtempSync(path.resolve('.tmp/tags-ledger-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-tags-ledger-'));
   roots.push(dir);
   return dir;
 }

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTagWritebackService } from './runtime.js';
@@ -20,7 +21,7 @@ afterEach(() => {
     .forEach((dir) => fs.rmSync(dir, { recursive: true, force: true }));
 });
 function fixture(overrides = {}) {
-  const dir = fs.mkdtempSync(path.resolve('.tmp/tags-service-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-tags-service-'));
   roots.push(dir);
   fs.mkdirSync(path.join(dir, 'tracks/t'), { recursive: true });
   const source = fs.readFileSync('scripts/fixtures/tags/tone.flac');
@@ -110,7 +111,9 @@ describe('Main-owned FLAC writeback workflow', () => {
     expect(await tagContentAliases(f.dir, 't', newHash)).toContain(
       digest(f.source),
     );
-    const sourceDir = fs.mkdtempSync(path.resolve('.tmp/tags-original-'));
+    const sourceDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-tags-original-'),
+    );
     roots.push(sourceDir);
     const sourceFile = path.join(sourceDir, 'original.flac');
     fs.writeFileSync(sourceFile, f.source);

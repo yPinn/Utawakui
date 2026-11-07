@@ -1,9 +1,10 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { expect, it } from 'vitest';
 import { decoderIdentity } from './source.js';
 it('resolves approved system aliases and binds their current physical executable', () => {
-  const root = fs.mkdtempSync(path.resolve('tasks/wave-decoder-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-wave-decoder-'));
   try {
     const file = path.join(root, 'decoder.exe'),
       alias = path.join(root, 'approved.exe');

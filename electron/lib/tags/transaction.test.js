@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { digest } from '../reconciliation/documents.js';
@@ -9,7 +10,9 @@ import {
 } from './transaction.js';
 const roots = [];
 function fixture() {
-  const dir = fs.mkdtempSync(path.resolve('.tmp/tags-transaction-'));
+  const dir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'utawakui-tags-transaction-'),
+  );
   roots.push(dir);
   fs.mkdirSync(path.join(dir, 'tracks', 't'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'tracks', 't', 'audio.flac'), 'before media');

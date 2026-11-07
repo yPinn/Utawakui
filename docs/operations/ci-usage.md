@@ -57,6 +57,15 @@ When quality checks are selected, the Windows job runs the Windows-specific
 Vitest files and the Electron Settings layout probe after Ubuntu succeeds. The
 Windows package column governs the installer build and upgrade acceptance.
 
+## Test Fixture Isolation
+
+Use a unique directory under `os.tmpdir()` for writable test fixtures and clean
+it up when the test finishes. If a test must write inside the repository, such as
+when exercising the release bundler, explicitly create its scratch parent before
+calling `mkdtemp`. Run new or changed fixture tests in isolation from a clean
+checkout without precreating `tasks/` or `.tmp/`. Other test files can create
+these ignored directories during a full run and hide missing setup.
+
 ## Changed-Path Contract
 
 `scripts/ci-changed-paths.mjs` owns classification, and
@@ -112,6 +121,11 @@ PyPI wheels; Python, bgutil and FFmpeg are listed for manual review).
 - Every checkout sets `persist-credentials: false`, so install scripts cannot read
   the job token from `.git/config`; `gh` steps receive their token explicitly.
   `scripts/dependency-security-workflow.test.mjs` enforces both rules.
+- After editing a packaged notice such as `THIRD_PARTY_NOTICES.md`, run
+  `npm run license:write` and `npm run license:verify` from a clean Windows
+  checkout after `npm ci` and `npm run electron:install`. Notice hashes cover exact
+  bytes, including line endings. Commit the generated changes with the notice
+  edit.
 
 Existing artifacts are not deleted by this policy change. They expire according to
 the retention configured on the run that created them.
