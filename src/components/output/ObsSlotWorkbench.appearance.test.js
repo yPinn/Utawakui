@@ -4,11 +4,26 @@ import { describe, expect, it } from 'vitest';
 import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppearance.mjs';
 import { localizeAppearanceField } from '../../utils/outputPanelCopy.js';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
+import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 
 // Production fields reach the workbench localized (outputTemplates.js).
 const fieldsFor = (templateId) =>
   outputAppearanceFieldsForTemplate(templateId).map(localizeAppearanceField);
+
+const templateTabLabels = {
+  'queue-board': ['版面', '文字', '色彩'],
+  'karaoke-stack': ['文字', '色彩'],
+  'kinetic-pop': ['版面', '文字', '色彩', '顯示'],
+  'ornate-vertical': ['定位', '文字', '色彩'],
+  'chalkboard-vertical': ['定位', '文字', '色彩'],
+  'centered-vertical': ['文字', '色彩', '顯示'],
+  'live-stage': ['文字', '色彩', '顯示'],
+  'manga-frame': ['文字', '色彩'],
+  'art-card': ['文字', '色彩'],
+  'cover-player': ['文字', '色彩'],
+  'receipt-setlist': ['版面', '文字', '動態'],
+};
 
 async function renderRegisteredTemplate(
   templateId,
@@ -40,6 +55,107 @@ async function renderRegisteredTemplate(
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it.each(getOutputWorkbenchData().templates)(
+    'uses only the supported folder tabs and renders every field for $id',
+    async ({ id, appearanceFields, presentationFields }) => {
+      const html = await renderRegisteredTemplate(id);
+      expect(
+        [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
+          ([, label]) => label,
+        ),
+      ).toEqual(templateTabLabels[id]);
+      expect(html).not.toContain('data-output-side-toggle');
+      for (const { key } of [...appearanceFields, ...presentationFields]) {
+        expect(html).toContain(`output-appearance-${key}`);
+      }
+    },
+  );
+
+  it('keeps ornate vertical positioning split into its anchor and offsets', async () => {
+    const html = await renderRegisteredTemplate('ornate-vertical');
+    const labels = [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
+      ([, label]) => label,
+    );
+    expect(labels).toEqual(['定位', '文字', '色彩']);
+    expect(html).toMatch(/aria-label="定位"[^>]+aria-selected="true"/u);
+    expect(html).toContain('定位基準');
+    expect(html).toContain('位置微調');
+    expect(html).not.toContain('data-output-side-toggle');
+    for (const { key } of fieldsFor('ornate-vertical')) {
+      expect(html).toContain(`output-appearance-${key}`);
+    }
+  });
+
+  it('derives available categories from fields and keeps uncovered fields in the existing inspector', async () => {
+    const fields = fieldsFor('ornate-vertical').filter(
+      ({ group }) => group === 'typography' || group === 'custom-color',
+    );
+    expect(outputInspectorTabs(fields).map(({ id }) => id)).toEqual([
+      'text',
+      'color',
+    ]);
+    const html = await renderRegisteredTemplate('ornate-vertical', {
+      appearanceFields: [
+        ...fields,
+        ...fieldsFor('centered-vertical')
+          .filter(({ group }) => group === 'readability')
+          .map((field) => ({ ...field, group: 'unclassified' })),
+      ],
+    });
+    expect(html).toContain('data-output-side-toggle');
+    expect(html).toContain('output-appearance-contrastStyle');
+  });
+
+  it('keeps a folder tab for a single supported element category', () => {
+    const template = getOutputWorkbenchData().templates.find(
+      ({ id }) => id === 'cover-player',
+    );
+    expect(
+      template.elementTargets.map(({ id, fields }) => [
+        id,
+        outputInspectorTabs(fields).map(({ label }) => label),
+      ]),
+    ).toEqual([
+      ['title', ['文字']],
+      ['artist', ['文字', '顯示']],
+      ['progress', ['顯示']],
+      ['transport', ['顯示']],
+    ]);
+  });
+
+  it('groups receipt layout, type, and both review settings in the shared inspector', async () => {
+    const fields = fieldsFor('receipt-setlist');
+    const tabs = outputInspectorTabs(fields);
+    expect(
+      tabs.map(({ label, groups }) => [
+        label,
+        groups.flatMap(({ fields }) => fields.map(({ key }) => key)),
+      ]),
+    ).toEqual([
+      ['版面', ['receiptDirection']],
+      ['文字', ['fontScale']],
+      ['動態', ['receiptReview', 'receiptReviewInterval']],
+    ]);
+
+    const html = await renderRegisteredTemplate('receipt-setlist');
+    expect(
+      [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
+        ([, label]) => label,
+      ),
+    ).toEqual(['版面', '文字', '動態']);
+    expect(html).toMatch(/aria-label="版面"[^>]+aria-selected="true"/u);
+    expect(html).not.toContain('data-output-side-toggle');
+    expect(html).not.toContain('output-appearance-paletteId');
+    for (const { key } of fields) {
+      expect(html).toContain(`output-appearance-${key}`);
+    }
+    expect(
+      outputInspectorTabs(fields.filter(({ group }) => group !== 'motion')).map(
+        ({ id }) => id,
+      ),
+    ).toEqual(['arrangement', 'text']);
+  });
+
   it('uses destination-neutral workbench and Browser Source sizing labels', async () => {
     const html = await renderRegisteredTemplate('queue-board');
 
@@ -189,7 +305,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
           }),
       }),
     );
-    const labels = ['色彩處理', '文字', '可讀性', '背景', '版面', '內容顯示'];
+    const labels = ['版面', '文字', '色彩處理', '背景', '可讀性', '內容顯示'];
 
     for (let index = 1; index < labels.length; index += 1) {
       expect(html.indexOf(`>${labels[index - 1]}</h3>`)).toBeLessThan(

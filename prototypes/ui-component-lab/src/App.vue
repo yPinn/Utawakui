@@ -1,7 +1,12 @@
 <script setup>
 /* global URLSearchParams, document, window */
 
-import { onBeforeUnmount, shallowRef, watchEffect } from 'vue';
+import {
+  defineAsyncComponent,
+  onBeforeUnmount,
+  shallowRef,
+  watchEffect,
+} from 'vue';
 import { Check, Ellipsis, Play } from '../../../src/icons/index.js';
 import UiButton from '../../../src/components/ui/UiButton.vue';
 import UiCheckbox from '../../../src/components/ui/UiCheckbox.vue';
@@ -32,6 +37,9 @@ provideUiOverlayHost('component-lab');
 const componentLabAttributes = registeredSurfaceAttributes('component-lab');
 const componentLabOverlayHostAttributes =
   registeredOverlayHostAttributes('component-lab');
+const OrnateInspectorDemo = defineAsyncComponent(
+  () => import('./OrnateInspectorDemo.vue'),
+);
 
 const requestedTheme = new URLSearchParams(window.location.search).get('theme');
 const requestedState = new URLSearchParams(window.location.search).get('state');
@@ -57,9 +65,6 @@ const mode = shallowRef('general');
 const force = shallowRef(false);
 const volume = shallowRef(0.42);
 const query = shallowRef('');
-const activeTab = shallowRef(
-  requestedTab === 'feedback' ? 'feedback' : 'controls',
-);
 const modalOpen = shallowRef(false);
 const menuOpen = shallowRef(false);
 
@@ -90,8 +95,13 @@ const loading = () => state.value === 'loading';
 const tabs = [
   { id: 'controls', label: 'Controls' },
   { id: 'feedback', label: 'Feedback' },
+  { id: 'ornate', label: '和風直書側欄' },
   { id: 'disabled', label: 'Unavailable', disabled: true },
 ];
+const activeTab = shallowRef(
+  tabs.find(({ id, disabled }) => id === requestedTab && !disabled)?.id ??
+    'controls',
+);
 
 const modes = [
   { value: 'quick', label: 'Quick' },
@@ -138,7 +148,11 @@ const menuContent = {
       >Real shared Vue components under the production token contract.</UiHint
     >
 
-    <section class="lab-toolbar" aria-label="Lab controls">
+    <section
+      v-if="activeTab !== 'ornate'"
+      class="lab-toolbar"
+      aria-label="Lab controls"
+    >
       <UiSelect
         id="lab-theme"
         v-model="theme"
@@ -296,6 +310,13 @@ const menuContent = {
         </ul>
       </article>
     </section>
+
+    <OrnateInspectorDemo
+      v-else-if="activeTab === 'ornate'"
+      id="lab-ornate-panel"
+      role="tabpanel"
+      aria-labelledby="lab-ornate-tab"
+    />
 
     <section
       v-else

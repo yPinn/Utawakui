@@ -7,6 +7,8 @@
   --ui-output-side-width-default: 18rem;
   --ui-output-side-max-width: 24rem;
   --ui-output-main-min-width: 16rem;
+  /* Keep a usable preview before retaining the tabbed two-column layout. */
+  --ui-output-workbench-preview-min-width: 18rem;
   /* Display-space cells: the full checker tile contains two cells. */
   --ui-output-preview-checker-cell: 8px;
   --ui-output-preview-checker-tile: calc(
@@ -115,4 +117,22 @@
   --ui-output-preview-aspect-ratio: 16 / 9;
   --ui-output-preview-cycle-duration: 4.8s;
   --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.obs-output-folder-inspector {
+  --ui-folder-inspector-min: var(--ui-output-side-min-width);
+  --ui-folder-inspector-default: var(--ui-output-side-width-default);
+  --ui-folder-inspector-max: var(--ui-output-side-max-width);
+  --ui-folder-inspector-preview-min: var(
+    --ui-output-workbench-preview-min-width
+  );
+  --ui-folder-inspector-toolbar-height: var(--ui-output-toolbar-height);
+}
+
+@container ui-folder-inspector-sheet (max-width: 16rem) {
+  .obs-output-folder-inspector
+    .ui-folder-inspector__scroll
+    .obs-appearance-control-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ui-space-1);
+  }
 }

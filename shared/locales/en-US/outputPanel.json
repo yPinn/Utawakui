@@ -465,6 +465,17 @@
     "checker": "Transparent background",
     "toggle": "Preview background: {current}; switch to {next}"
   },
+  "inspector": {
+    "label": "Appearance categories",
+    "layout": "Position",
+    "arrangement": "Layout",
+    "text": "Text",
+    "color": "Color",
+    "display": "Display",
+    "motion": "Motion",
+    "anchor": "Anchor position",
+    "offset": "Position offsets"
+  },
   "workbench": {
     "appearance": "Appearance",
     "saveFailed": "Save failed",

@@ -5,6 +5,12 @@
   "button": {
     "loading": "處理中"
   },
+  "folderInspector": {
+    "resize": "調整側欄寬度",
+    "width": "側欄寬度 {width} 像素",
+    "collapsed": "側欄已收合",
+    "dismiss": "收合設定側欄"
+  },
   "colorField": {
     "invalid": "請輸入 #RRGGBB 六位色碼",
     "picker": "{label}色票"

@@ -24,12 +24,14 @@ import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
 import { useOutputElementTarget } from '../../composables/output/useOutputElementTarget.js';
 import UiButton from '../ui/UiButton.vue';
+import UiFolderInspector from '../ui/UiFolderInspector.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import { t } from '../../utils/i18n.js';
+import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
 
 const props = defineProps({
   sideWidth: { type: Number, default: null },
@@ -67,6 +69,10 @@ const emit = defineEmits([
 ]);
 
 const draft = reactive({ captureSize: 'small' });
+const compactMode = defineModel('compactMode', {
+  type: Boolean,
+  default: false,
+});
 const tools = useTemplateRef('tools');
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
@@ -132,6 +138,14 @@ const configurationFieldGroups = computed(() => {
   }
   return [...groups.values()];
 });
+const inspectorTabs = computed(() => outputInspectorTabs(visibleFields.value));
+const useFolderInspector = computed(
+  () =>
+    inspectorTabs.value.length > 0 &&
+    inspectorTabs.value.flatMap(({ groups }) =>
+      groups.flatMap(({ fields }) => fields),
+    ).length === visibleFields.value.length,
+);
 const supportedCaptureSizes = computed(() =>
   supportedCaptureSizeIdsForTemplate(templateId.value, props.activeKind),
 );
@@ -278,16 +292,28 @@ function resetAppearance() {
 </script>
 
 <template>
-  <ObsOutputSplitLayout
+  <component
+    :is="useFolderInspector ? UiFolderInspector : ObsOutputSplitLayout"
     :aria-label="t('outputPanel.workbench.label')"
     :side-label="t('outputPanel.workbench.side')"
-    side-variant="inspector"
+    v-bind="
+      useFolderInspector
+        ? {
+            items: inspectorTabs,
+            tabsLabel: t('outputPanel.inspector.label'),
+            compactMode,
+            class:
+              'obs-output-folder-inspector obs-slot-workbench__folder-inspector',
+          }
+        : { sideVariant: 'inspector' }
+    "
     :side-width="sideWidth"
     :side-collapsed="sideCollapsed"
     :compact-side-open="compactSideOpen"
     @update:side-width="emit('update:sideWidth', $event)"
     @update:side-collapsed="emit('update:sideCollapsed', $event)"
     @update:compact-side-open="emit('update:compactSideOpen', $event)"
+    @update:compact-mode="compactMode = $event"
   >
     <template #tools
       ><div ref="tools" class="obs-slot-workbench__tools"
@@ -346,7 +372,7 @@ function resetAppearance() {
       </header>
     </template>
 
-    <template #side>
+    <template #side-top>
       <UiNotice
         v-if="outputError"
         class="obs-slot-workbench__notice"
@@ -372,9 +398,10 @@ function resetAppearance() {
           />
         </ObsAppearanceControlRow>
       </div>
-
+    </template>
+    <template #side="{ item }">
       <ObsPropertySection
-        v-for="group in configurationFieldGroups"
+        v-for="group in item?.groups ?? configurationFieldGroups"
         :key="group.id"
         :title="group.label"
         :modified="group.fields.some(isFieldModified)"
@@ -422,10 +449,14 @@ function resetAppearance() {
         {{ t('outputPanel.workbench.resetTemplate') }}
       </UiButton>
     </template>
-  </ObsOutputSplitLayout>
+  </component>
 </template>
 
 <style scoped>
+.obs-slot-workbench__folder-inspector {
+  block-size: 100%;
+}
+
 .obs-slot-workbench__canvas {
   min-height: 0;
   min-width: 0;

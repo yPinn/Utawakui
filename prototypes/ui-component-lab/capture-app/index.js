@@ -3,6 +3,10 @@
 const { app, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const {
+  ornateVariants,
+  verifyOrnateInspector,
+} = require('./ornate-inspector.cjs');
 
 const labDir = path.resolve(__dirname, '..');
 const outputDir =
@@ -16,7 +20,7 @@ if (!captureDataDir) {
   );
 }
 
-const variants = [
+const foundationVariants = [
   {
     theme: 'dark',
     state: 'default',
@@ -67,6 +71,10 @@ const variants = [
     name: 'ui-components-dark-feedback-1280x900.png',
   },
 ];
+const variants =
+  process.env.UTAWAKUI_UI_LAB_CAPTURE === 'ornate'
+    ? ornateVariants
+    : foundationVariants;
 
 let captureInProgress = true;
 
@@ -183,13 +191,17 @@ async function captureVariant(variant, index) {
         state: variant.state,
         tab: variant.tab,
         motion: variant.motion,
+        ...variant.query,
       },
     });
     await waitForStablePaint(window);
   };
 
   await loadVariant();
-  if (index === 0) {
+  if (variant.tab === 'ornate') {
+    await verifyOrnateInspector(window, variant, index === 0);
+    await loadVariant();
+  } else if (index === 0) {
     await verifyContracts(window);
     await verifyZoom(window);
     await loadVariant();
@@ -202,10 +214,17 @@ async function captureVariant(variant, index) {
       document.documentElement.dataset.uiTheme === ${JSON.stringify(variant.theme)},
       'capture theme did not initialize',
     );
-    assert(
-      document.getElementById('lab-state').value === ${JSON.stringify(variant.state)},
-      'capture state did not initialize',
-    );
+    if (${JSON.stringify(variant.tab)} !== 'ornate') {
+      assert(
+        document.getElementById('lab-state').value === ${JSON.stringify(variant.state)},
+        'capture state did not initialize',
+      );
+    } else {
+      assert(
+        document.querySelector('.ui-folder-inspector__workspace[data-open="true"]'),
+        'ornate demo did not initialize',
+      );
+    }
     assert(
       document.getElementById(${JSON.stringify(`lab-${variant.tab}-tab`)}).getAttribute('aria-selected') === 'true',
       'capture tab did not initialize',
@@ -254,6 +273,23 @@ async function captureVariant(variant, index) {
   const outputPath = path.join(outputDir, variant.name);
   fs.writeFileSync(outputPath, image.toPNG());
   console.log(`captured ${outputPath}`);
+  if (
+    variant.tab === 'ornate' &&
+    !variant.query.side &&
+    !variant.query.labels
+  ) {
+    await window.webContents.executeJavaScript(
+      `document.querySelector('.ui-folder-inspector__resize').dispatchEvent(new MouseEvent('dblclick'))`,
+    );
+    await waitForStablePaint(window);
+    const collapsed = await window.webContents.capturePage();
+    const collapsedPath = outputPath.replace(
+      '-1280x900',
+      '-collapsed-1280x900',
+    );
+    fs.writeFileSync(collapsedPath, collapsed.toPNG());
+    console.log(`captured ${collapsedPath}`);
+  }
   window.destroy();
 }
 

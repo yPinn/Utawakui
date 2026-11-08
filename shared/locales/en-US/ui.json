@@ -5,6 +5,12 @@
   "button": {
     "loading": "Working"
   },
+  "folderInspector": {
+    "resize": "Resize side panel",
+    "width": "Side panel width: {width} pixels",
+    "collapsed": "Side panel collapsed",
+    "dismiss": "Collapse settings panel"
+  },
   "colorField": {
     "invalid": "Enter a six-digit #RRGGBB color",
     "picker": "{label} swatch"

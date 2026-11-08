@@ -244,6 +244,7 @@ onBeforeUnmount(() => {
         tabindex="0"
         :aria-label="sideLabel"
       >
+        <slot name="side-top" />
         <slot name="side" />
       </UiScrollLayout>
       <div class="obs-output-split-layout__side-footer">

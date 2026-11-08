@@ -28,6 +28,7 @@ export {
   Download,
   Ellipsis,
   ExternalLink,
+  Eye,
   Folder,
   FolderInput,
   FolderOpen,

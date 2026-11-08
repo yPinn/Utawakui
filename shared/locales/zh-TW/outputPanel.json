@@ -465,6 +465,17 @@
     "checker": "透明背景",
     "toggle": "預覽背景：{current}，切換為{next}"
   },
+  "inspector": {
+    "label": "外觀分類",
+    "layout": "定位",
+    "arrangement": "版面",
+    "text": "文字",
+    "color": "色彩",
+    "display": "顯示",
+    "motion": "動態",
+    "anchor": "定位基準",
+    "offset": "位置微調"
+  },
   "workbench": {
     "appearance": "外觀",
     "saveFailed": "儲存失敗",
