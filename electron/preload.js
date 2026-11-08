@@ -1066,6 +1066,26 @@ contextBridge.exposeInMainWorld('Utawakui', {
       folderPageObjectTargetIntent(intent),
     ),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
+  getTrackStyleTags: (trackId) =>
+    ipcRenderer.invoke('library:track-style-tags-get', trackId),
+  saveTrackStyleTags: (trackId, token, tags, dismissed) =>
+    ipcRenderer.invoke(
+      'library:track-style-tags-save',
+      trackId,
+      token,
+      tags,
+      dismissed,
+    ),
+  importTrackStyleCandidates: () =>
+    ipcRenderer.invoke('library:track-style-tags-import'),
+  previewTrackStyleAdoption: () =>
+    ipcRenderer.invoke('library:track-style-tags-preview-adoption'),
+  applyTrackStyleAdoption: (previewId, trackIds) =>
+    ipcRenderer.invoke(
+      'library:track-style-tags-apply-adoption',
+      previewId,
+      trackIds,
+    ),
   convertLocalAudioFiles: (sessionId) =>
     ipcRenderer.invoke(
       'library:convert-local-audio-files',

@@ -2,12 +2,14 @@ import { computed, reactive, readonly, watch } from 'vue';
 import { useAppConfirmation } from './useAppConfirmation.js';
 import { useLibrary } from './useLibrary.js';
 import { useTrackMetadataEditor } from './useTrackMetadataEditor.js';
+import { useTrackStyleEditor } from './useTrackStyleEditor.js';
 import { useWorkOrganization } from './useWorkOrganization.js';
 import { t } from '../utils/i18n.js';
 
 const work = useWorkOrganization();
 const { refresh } = useLibrary();
 const metadata = useTrackMetadataEditor({ refresh });
+const style = useTrackStyleEditor();
 const { confirm } = useAppConfirmation();
 const state = reactive({
   section: 'organization',
@@ -18,13 +20,16 @@ let generation = 0;
 const canEditMetadata = computed(
   () => work.state.track?.sourceType === 'local-file',
 );
-const isDirty = computed(() => metadata.isDirty.value || work.isDirty.value);
+const isDirty = computed(
+  () => metadata.isDirty.value || work.isDirty.value || style.isDirty.value,
+);
 const busy = computed(
   () =>
     state.saving ||
     metadata.state.isSaving ||
     metadata.state.isArtworkPreparing ||
-    work.state.saving,
+    work.state.saving ||
+    style.pending.value,
 );
 
 watch(
@@ -33,10 +38,14 @@ watch(
     if (!id) {
       generation += 1;
       metadata.close();
+      style.reset();
       state.partialMessage = '';
     }
   },
 );
+watch([() => state.section, () => work.state.track?.id], ([section, id]) => {
+  if (section === 'metadata' && id) void style.load(id);
+});
 
 function setSection(section) {
   if (['metadata', 'organization'].includes(section)) state.section = section;
@@ -58,6 +67,7 @@ async function close() {
   generation += 1;
   await work.close({ discardChanges: true });
   metadata.close();
+  style.reset();
   state.partialMessage = '';
   return true;
 }
@@ -110,6 +120,10 @@ async function save({ reconfirm = false } = {}) {
         return false;
       }
     }
+    if (style.isDirty.value && !(await style.save())) {
+      if (stillCurrent()) setSection('metadata');
+      return false;
+    }
     return stillCurrent();
   } finally {
     state.saving = false;
@@ -119,6 +133,7 @@ function dispose() {
   generation += 1;
   work.dispose();
   metadata.close();
+  style.reset();
   state.section = 'organization';
   state.partialMessage = '';
 }
@@ -127,6 +142,7 @@ export function useSongEditor() {
     state: readonly(state),
     work,
     metadata,
+    style,
     canEditMetadata,
     isDirty,
     busy,

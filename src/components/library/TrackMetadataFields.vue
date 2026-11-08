@@ -177,6 +177,8 @@ watch(searchOptionsOpen, (open) => {
         </div>
       </section>
 
+      <slot name="style-tags" />
+
       <section
         v-if="artworkSearchOpen"
         class="track-metadata__section track-metadata__search"

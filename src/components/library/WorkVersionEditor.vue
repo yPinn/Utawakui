@@ -8,6 +8,7 @@ import {
 } from 'vue';
 import { useSongEditor } from '../../composables/useSongEditor.js';
 import TrackMetadataFields from './TrackMetadataFields.vue';
+import TrackStyleTagsPanel from './TrackStyleTagsPanel.vue';
 import TrackContextActions from '../playback/context/TrackContextActions.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import { useLibrary } from '../../composables/useLibrary.js';
@@ -238,7 +239,15 @@ onUnmounted(songEditor.dispose);
             @select-artwork-candidate="metadata.selectArtworkCandidate"
             @update-title="metadata.setTitleDraft"
             @update-artist="metadata.setArtistDraft"
-          />
+          >
+            <template v-if="state.track" #style-tags>
+              <TrackStyleTagsPanel
+                :editor="songEditor.style"
+                :disabled="songEditor.busy.value"
+                @reload="songEditor.style.load(state.track.id)"
+              />
+            </template>
+          </TrackMetadataFields>
         </section>
         <section
           v-show="songEditor.state.section === 'organization'"

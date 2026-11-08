@@ -1,4 +1,8 @@
 {
+  "TRACK_STYLE_TAGS_FAILED": {
+    "title": "風格標籤處理失敗",
+    "message": "無法處理曲庫風格標籤，請再試一次。"
+  },
   "PLATFORM_VIDEO_FAILED": {
     "title": "操作未完成",
     "message": "目前無法完成影片配對操作，請再試一次。"

@@ -190,6 +190,9 @@ const {
 } = require('./lib/lyricsProviders/identityResolver.js');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
 const {
+  registerLibraryTrackStyleTagsHandlers,
+} = require('./main/library/trackStyleTagsHandlers');
+const {
   createWorkOrganizationHost,
 } = require('./main/library/workOrganizationHost');
 const {
@@ -1469,6 +1472,16 @@ if (!gotSingleInstanceLock) {
     registerLibraryWorkOrganizationHandlers({
       ipcMain,
       runtime: workOrganizationHost.runtime,
+      recordDiagnostic,
+    });
+    registerLibraryTrackStyleTagsHandlers({
+      ipcMain,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
+      getLibraryContext: () => ({
+        dir: configState.resolveDownloadDir(configState.getConfig()),
+        epoch: workLibraryEpoch,
+      }),
       recordDiagnostic,
     });
     registerLibraryReleaseHandlers({

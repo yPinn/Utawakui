@@ -150,6 +150,11 @@ const MAIN_INVOKE_CHANNELS = [
   'library:tags-preview',
   'library:tags-commit',
   'library:tags-restore',
+  'library:track-style-tags-apply-adoption',
+  'library:track-style-tags-get',
+  'library:track-style-tags-import',
+  'library:track-style-tags-preview-adoption',
+  'library:track-style-tags-save',
   'library:tags-recover',
   'library:tags-activity',
   'library:tags-cancel',
@@ -426,6 +431,26 @@ afterEach(() => {
 });
 
 describe('main preload bridge', () => {
+  it('sends a style adoption preview id and selected track ids on fixed channels', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.previewTrackStyleAdoption();
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'library:track-style-tags-preview-adoption',
+    );
+    await bridge.applyTrackStyleAdoption('opaque', ['track-1']);
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'library:track-style-tags-apply-adoption',
+      'opaque',
+      ['track-1'],
+    );
+  });
+  it('opens the style candidate picker without accepting a renderer path', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    await bridge.importTrackStyleCandidates('untrusted renderer path');
+    expect(electron.ipcRenderer.invoke).toHaveBeenLastCalledWith(
+      'library:track-style-tags-import',
+    );
+  });
   it('forwards only the session ID for a stream-end event and unsubscribes the listener', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
     const onStreamEnded = vi.fn();

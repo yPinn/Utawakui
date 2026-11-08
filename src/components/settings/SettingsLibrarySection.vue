@@ -11,6 +11,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import LibraryMetadataSettingsRow from './LibraryMetadataSettingsRow.vue';
 import LibraryStorageSettingsRow from './LibraryStorageSettingsRow.vue';
+import LibraryStyleCandidatesSettingsRow from './LibraryStyleCandidatesSettingsRow.vue';
 import PlaybackHistorySettingsRow from './PlaybackHistorySettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import { t } from '../../utils/i18n.js';
@@ -220,6 +221,12 @@ onUnmounted(() => libraryStorage.dispose());
     />
 
     <LibraryMetadataSettingsRow />
+
+    <LibraryStyleCandidatesSettingsRow
+      :disabled="
+        Boolean(importState.configError) || !importState.isDownloadDirAvailable
+      "
+    />
 
     <PlaybackHistorySettingsRow
       :record-count="recentItems.length"

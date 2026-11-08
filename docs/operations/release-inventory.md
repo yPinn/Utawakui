@@ -145,6 +145,9 @@ network install or signed-installer acceptance; see the
   are not installer payload. No TagLib-Wasm, new executable, Python family or
   runtime dependency is added. Per-library journals, `tag-writebacks.json` and
   `.utawakui-tags/` backups are private user data, never package resources.
+- Track style tags use the existing Main, preload and Vite bundles. The candidate
+  import manifest and the two per-library style sidecars are user data. This flow
+  adds no packaged model, worker, dependency or provider environment.
 - Cross-runtime JSON contracts and pure presentation projections: `shared/`,
   packaged into `app.asar`; Browser Source access is limited to exact loopback
   routes declared by `electron/lib/outputServer/http.js` and composed by
