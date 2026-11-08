@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import outputHttpModule from './http.js';
 
@@ -115,6 +116,7 @@ async function startHandler(options = {}) {
 }
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await Promise.all(
     [...servers].map(
       (server) =>
@@ -131,6 +133,43 @@ afterEach(async () => {
 });
 
 describe('output HTTP delivery', () => {
+  it('defaults to zero connected clients and no artwork when those providers are absent', async () => {
+    const baseUrl = await startHandler({
+      getClientCount: undefined,
+    });
+    const health = await fetch(`${baseUrl}/health`).then((response) =>
+      response.json(),
+    );
+    const missing = await fetch(`${baseUrl}/media/artwork/track-1`);
+    expect(health.clients).toBe(0);
+    expect(missing.status).toBe(404);
+    expect(await missing.json()).toEqual({ error: 'not_found' });
+  });
+
+  it('serves large artwork by digest and terminates a failed body stream', async () => {
+    const { root } = createFixtureRoots();
+    const filePath = path.join(root, 'cover.png');
+    const body = Buffer.alloc(1024 * 1024 + 17, 1);
+    fs.writeFileSync(filePath, body);
+    const baseUrl = await startHandler({ resolveArtworkAsset: () => filePath });
+    const digest = crypto.createHash('sha256').update(body).digest('hex');
+    const url = `${baseUrl}/media/artwork/track-1/${digest}`;
+    const response = await fetch(url);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-length')).toBe(String(body.length));
+    expect(Buffer.from(await response.arrayBuffer()).equals(body)).toBe(true);
+
+    const failed = new Readable({
+      read() {
+        this.destroy(new Error('artwork stream failed'));
+      },
+    });
+    vi.spyOn(fs, 'createReadStream').mockReturnValueOnce(failed);
+    await expect(
+      fetch(url).then((result) => result.arrayBuffer()),
+    ).rejects.toThrow();
+  });
+
   it('serves bounded health and canonical state projections', async () => {
     const baseUrl = await startHandler();
 

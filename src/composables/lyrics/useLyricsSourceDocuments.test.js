@@ -27,14 +27,110 @@ function setup(prepareLyrics) {
   });
   const selectedTrack = shallowRef({ id: 'a' });
   const reportLyricsError = vi.fn(() => 'load failed');
+  const refreshLibrary = vi.fn();
+  const selectSource = vi.fn((filename) => {
+    state.selectedSourceFilename = filename;
+    return owner.loadSelectedLyrics();
+  });
   const owner = useLyricsSourceDocuments({
     state,
     selectedTrack,
     prepareLyrics,
     reportLyricsError,
+    refreshLibrary,
+    selectSource,
   });
-  return { state, selectedTrack, owner, getTrackLyrics };
+  return {
+    state,
+    selectedTrack,
+    owner,
+    getTrackLyrics,
+    refreshLibrary,
+    selectSource,
+  };
 }
+
+describe('authored lyrics', () => {
+  it('forks the current source and loads the copy without changing the saved preference', async () => {
+    const f = setup();
+    const pending = Promise.withResolvers();
+    const fork = vi.fn(() => pending.promise);
+    window.Utawakui.forkAuthoredLyrics = fork;
+    expect(f.owner.forkAuthoredLyrics()).toBeNull();
+    expect(fork).not.toHaveBeenCalled();
+    await f.owner.loadSelectedLyrics();
+    const session = f.owner.sourceSession.value;
+    const task = f.owner.forkAuthoredLyrics();
+    expect(fork).toHaveBeenCalledExactlyOnceWith('a', 'zh.vtt', session);
+    expect(f.owner.forkAuthoredLyrics()).toBeNull();
+    const saved = { source: { filename: 'authored.vtt' } };
+    f.getTrackLyrics.mockResolvedValueOnce({
+      text: '校訂副本',
+      source: saved.source,
+    });
+    pending.resolve(saved);
+    expect(await task).toBe(saved);
+    expect(f.refreshLibrary).toHaveBeenCalledOnce();
+    expect(f.selectSource).toHaveBeenCalledWith('authored.vtt', {
+      persistPreference: false,
+    });
+    expect(f.state.lyricsText).toBe('校訂副本');
+  });
+
+  it.each(['fork', 'edit'])(
+    'does not change a newer selection when a pending %s completes',
+    async (action) => {
+      const f = setup();
+      const pending = Promise.withResolvers();
+      window.Utawakui.forkAuthoredLyrics = vi.fn(() => pending.promise);
+      window.Utawakui.editAuthoredLyrics = vi.fn(() => pending.promise);
+      await f.owner.loadSelectedLyrics();
+      const task =
+        action === 'fork'
+          ? f.owner.forkAuthoredLyrics()
+          : f.owner.editAuthoredLyrics('line-1', '改字', 'replace');
+      f.state.selectedTrackId = 'b';
+      f.selectedTrack.value = { id: 'b' };
+      await f.owner.loadSelectedLyrics();
+      f.getTrackLyrics.mockClear();
+      const saved = { source: { filename: 'authored.vtt' } };
+      pending.resolve(saved);
+      expect(await task).toBe(saved);
+      expect(f.selectSource).not.toHaveBeenCalled();
+      expect(f.getTrackLyrics).not.toHaveBeenCalled();
+      expect(f.state.lyricsText).toBe('b中文');
+    },
+  );
+
+  it('sends an authored line edit with the active session and reloads the saved text', async () => {
+    const f = setup();
+    const saved = { source: { filename: 'zh.vtt' } };
+    const edit = vi.fn().mockResolvedValue(saved);
+    window.Utawakui.editAuthoredLyrics = edit;
+    expect(f.owner.editAuthoredLyrics('line-1', '改字', 'replace')).toBeNull();
+    expect(edit).not.toHaveBeenCalled();
+    await f.owner.loadSelectedLyrics();
+    const session = f.owner.sourceSession.value;
+    f.getTrackLyrics.mockResolvedValueOnce({ ...saved, text: '改字' });
+    expect(await f.owner.editAuthoredLyrics('line-1', '改字', 'replace')).toBe(
+      saved,
+    );
+    expect(edit).toHaveBeenCalledExactlyOnceWith(
+      'a',
+      'zh.vtt',
+      session,
+      'line-1',
+      '改字',
+      'replace',
+    );
+    expect(f.state.lyricsText).toBe('改字');
+    expect(f.state.sourceAction).toMatchObject({
+      operation: 'edit-authored',
+      isSaving: false,
+      error: null,
+    });
+  });
+});
 
 describe('lyrics source preparation boundary', () => {
   it('cancels a scoped offset before IPC and restores only its own preview without overwriting a newer edit', async () => {
