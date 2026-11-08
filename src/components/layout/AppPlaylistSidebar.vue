@@ -1,4 +1,5 @@
 <script setup>
+import { shallowRef } from 'vue';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
@@ -31,26 +32,38 @@ const props = defineProps({
 });
 const emit = defineEmits(['toggleExpanded']);
 const overlayHost = useUiOverlayHost();
-let dragExpanded = false;
+const SIDEBAR_DRAG_THRESHOLD = 24;
+const dragExpanded = shallowRef(false);
+let startExpanded = false;
 let directionAnchor = 0;
 const { isResizing, startResize: startDrag } = useResizeDrag({
   onMove: (delta) => {
     // Follow the furthest point in the current direction. A reversal needs
     // its own deliberate movement, even if the pointer passed the old origin.
-    directionAnchor = dragExpanded
+    directionAnchor = dragExpanded.value
       ? Math.max(directionAnchor, delta)
       : Math.min(directionAnchor, delta);
     if (
-      dragExpanded ? delta > directionAnchor - 24 : delta < directionAnchor + 24
+      dragExpanded.value
+        ? delta > directionAnchor - SIDEBAR_DRAG_THRESHOLD
+        : delta < directionAnchor + SIDEBAR_DRAG_THRESHOLD
     )
       return;
-    dragExpanded = !dragExpanded;
+    dragExpanded.value = !dragExpanded.value;
     directionAnchor = delta;
-    emit('toggleExpanded');
+  },
+  onCommit: () => {
+    if (
+      props.expanded === startExpanded &&
+      dragExpanded.value !== startExpanded
+    )
+      emit('toggleExpanded');
   },
 });
 function startResize(event) {
-  dragExpanded = props.expanded;
+  if (event.button !== 0) return;
+  startExpanded = props.expanded;
+  dragExpanded.value = startExpanded;
   directionAnchor = 0;
   startDrag(event);
 }
@@ -87,7 +100,8 @@ function handleResizeKeydown(event) {
       data-sidebar-disclosure
       type="button"
       class="app-playlist-sidebar__handle"
-      :class="{ 'app-playlist-sidebar__handle--active': isResizing }"
+      :data-resizing="isResizing"
+      :data-resize-ready="isResizing && dragExpanded !== startExpanded"
       role="separator"
       tabindex="0"
       aria-orientation="vertical"
@@ -191,13 +205,11 @@ function handleResizeKeydown(event) {
   );
   inline-size: var(--ui-drag-indicator-width);
   background: transparent;
-  transition: background-color var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
 }
 
 .app-playlist-sidebar__handle:hover::after,
-.app-playlist-sidebar__handle--active::after {
-  background: var(--ui-color-accent);
+.app-playlist-sidebar__handle[data-resizing='true']::after {
+  background: var(--ui-color-border);
 }
 
 .app-playlist-sidebar__handle:focus-visible {
@@ -208,7 +220,11 @@ function handleResizeKeydown(event) {
   background: var(--ui-color-focus);
 }
 
-/* Keep the resize cursor after the original axis snaps away from the pointer. */
+.app-playlist-sidebar__handle[data-resize-ready='true']::after {
+  background: var(--ui-color-accent);
+}
+
+/* Keep the resize cursor when the pointer leaves the fixed handle. */
 .app-playlist-sidebar__drag-feedback {
   position: fixed;
   inset: 0;

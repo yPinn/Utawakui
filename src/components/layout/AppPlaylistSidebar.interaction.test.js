@@ -54,6 +54,7 @@ function setup(expanded) {
   };
   const start = () =>
     trigger(handle, 'onPointerdown', {
+      button: 0,
       clientX: 100,
       pointerId: 1,
       currentTarget: target,
@@ -63,37 +64,42 @@ function setup(expanded) {
 }
 
 describe('Sidebar boundary axis', () => {
-  it('switches immediately in both directions during one held drag with a fresh reversal threshold', () => {
-    const { app, toggle, listeners, start } = setup(true);
+  it('updates the pending state at each reversal but commits only on release', async () => {
+    const { app, toggle, handle, listeners, start } = setup(true);
+    const expectReady = async (ready) => {
+      await nextTick();
+      expect(handle.props['data-resize-ready']).toBe(ready);
+      expect(toggle).not.toHaveBeenCalled();
+    };
     start();
     listeners.get('pointermove')({ clientX: 77 });
-    expect(toggle).not.toHaveBeenCalled();
+    await expectReady(false);
     listeners.get('pointermove')({ clientX: 76 });
-    expect(toggle).toHaveBeenCalledOnce();
+    await expectReady(true);
     listeners.get('pointermove')({ clientX: 40 });
     listeners.get('pointermove')({ clientX: 63 });
-    expect(toggle).toHaveBeenCalledOnce();
+    await expectReady(true);
     listeners.get('pointermove')({ clientX: 64 });
-    expect(toggle).toHaveBeenCalledTimes(2);
+    await expectReady(false);
     listeners.get('pointermove')({ clientX: 90 });
     listeners.get('pointermove')({ clientX: 67 });
-    expect(toggle).toHaveBeenCalledTimes(2);
+    await expectReady(false);
     listeners.get('pointermove')({ clientX: 66 });
-    expect(toggle).toHaveBeenCalledTimes(3);
+    await expectReady(true);
     listeners.get('pointerup')();
-    expect(toggle).toHaveBeenCalledTimes(3);
+    expect(toggle).toHaveBeenCalledOnce();
     app.unmount();
   });
 
-  it('expands immediately and keeps an already applied state when the drag is cancelled', () => {
+  it('discards a pending expansion when the drag is cancelled', () => {
     const { app, toggle, listeners, start } = setup(false);
     start();
     listeners.get('pointermove')({ clientX: 123 });
     expect(toggle).not.toHaveBeenCalled();
     listeners.get('pointermove')({ clientX: 124 });
-    expect(toggle).toHaveBeenCalledOnce();
+    expect(toggle).not.toHaveBeenCalled();
     listeners.get('pointercancel')();
-    expect(toggle).toHaveBeenCalledOnce();
+    expect(toggle).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -119,7 +125,7 @@ describe('Sidebar boundary axis', () => {
     app.unmount();
   });
 
-  it('keeps resize feedback through the snap without adding a guide line and clears it on release', async () => {
+  it('keeps resize feedback while held and clears it after committing', async () => {
     const { app, toggle, overlayHost, listeners, start } = setup(true);
     const feedback = () =>
       findAll(
@@ -133,7 +139,7 @@ describe('Sidebar boundary axis', () => {
     expect(feedback()).toHaveLength(1);
     listeners.get('pointermove')({ clientX: 76 });
     await nextTick();
-    expect(toggle).toHaveBeenCalledOnce();
+    expect(toggle).not.toHaveBeenCalled();
     expect(
       findAll(
         overlayHost,
@@ -143,6 +149,7 @@ describe('Sidebar boundary axis', () => {
     expect(feedback()).toHaveLength(1);
     listeners.get('pointerup')();
     await nextTick();
+    expect(toggle).toHaveBeenCalledOnce();
     expect(feedback()).toHaveLength(0);
     app.unmount();
   });
