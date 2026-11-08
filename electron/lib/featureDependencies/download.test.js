@@ -341,6 +341,76 @@ describe('feature dependency downloads', () => {
       expect(fetchImpl.mock.calls[2][1].headers).toBeUndefined();
     });
 
+    it('restarts when the resumed range reports a different file size', async () => {
+      const resized = rangeResponse({
+        status: 206,
+        headers: { 'content-range': 'bytes 1-4/5' },
+        chunks: [[2, 3, 4, 5]],
+      });
+      resized.body.cancel.mockRejectedValue(new Error('already closed'));
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 3 },
+            chunks: [[1]],
+            reset: terminated(),
+          }),
+        )
+        .mockResolvedValueOnce(resized)
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 3 },
+            chunks: [[1, 2, 3]],
+          }),
+        );
+
+      await expect(
+        downloadBuffer('https://example.test/tool', fetchImpl),
+      ).resolves.toEqual(Buffer.from([1, 2, 3]));
+      expect(resized.body.cancel).toHaveBeenCalledOnce();
+    });
+
+    it('resumes a non-streaming body that fails while buffering', async () => {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          body: null,
+          arrayBuffer: async () => {
+            throw terminated();
+          },
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          body: null,
+          arrayBuffer: async () => arrayBufferFrom(Buffer.from([7, 8])),
+        });
+
+      await expect(
+        downloadBuffer('https://example.test/tool', fetchImpl),
+      ).resolves.toEqual(Buffer.from([7, 8]));
+      expect(fetchImpl.mock.calls[1][1].headers).toBeUndefined();
+    });
+
+    it('completes progress when a body ends before its declared length', async () => {
+      const onProgress = vi.fn();
+      await expect(
+        downloadBuffer(
+          'https://example.test/tool',
+          vi.fn().mockResolvedValue(streamResponse([[1]], 2)),
+          { onProgress },
+        ),
+      ).resolves.toEqual(Buffer.from([1]));
+      expect(onProgress.mock.calls.map(([event]) => event.percent)).toEqual([
+        50, 100,
+      ]);
+    });
+
     it('retries a failed resume request and gives up with the original error', async () => {
       const lastReset = terminated();
       const fetchImpl = vi
