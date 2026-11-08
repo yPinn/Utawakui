@@ -44,30 +44,22 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ## 3. 功能現況
 
-本表區分可執行能力、公開支援與尚缺的驗收；沒有列出的能力不因競品提供就自動成為承諾。實作、資料欄位與歷史測試細節由連結文件持有。
+截至 2026-11-08，最新公開測試版是 [v0.5.2](https://github.com/yPinn/Utawakui-Releases/releases/tag/v0.5.2)，原始碼 tag 指向 `52330f9f`，使用者可見範圍見[該版更新說明](releases/v0.5.2.md)。下表的 v0.5.3 欄是 tag 之後的已實作變更，供待發行版本核對。目前版本欄仍為 0.5.2，v0.5.3 安裝包及升級驗收待完成。
 
-| 領域                      | 現況                  | 已具備                                                                                                                                                                                                                           | 驗收／邊界                                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Desktop shell             | 已實作                | Secure preload、single instance、tray 背景執行與關閉選擇。                                                                                                                                                                       | 不含登入自啟動與 tray 播放控制。                                                                                                                                                                                                                                                                                                                                                 |
-| 介面與 Output 語言        | 已實作                | 繁中／English 介面（跟隨系統、重新啟動套用）、獨立的 Output 語言（即時套用）、中英功能告知與更新公告。                                                                                                                           | 英文介面的對話框、選單與右側面板尚待人工逐頁檢查（`npm run dev:pseudo`）。[ADR 0032](adr/0032-ui-and-output-languages.md)。                                                                                                                                                                                                                                                      |
-| 資源監視                  | 已實作                | App CPU／RAM 與 heavy job 子程序投影。                                                                                                                                                                                           | 不含整機、GPU 與 yt-dlp 程序。                                                                                                                                                                                                                                                                                                                                                   |
-| 曲庫與資訊                | 已實作                | 本機匯入／明示相容轉檔、作品／版本／發行、資訊校對與復原；native FLAC 文字 tags 回寫。                                                                                                                                           | 封裝版轉檔矩陣待驗；其他 tags 格式、音檔封面回寫與整庫同步未開放。[校對](contracts/library-reconciliation.md)、[作品與版本](contracts/works-versions-and-releases.md)、[回寫](contracts/audio-tag-writeback.md)、[ADR 0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)。                                                                                        |
-| 集合、藝人與空間          | 已實作                | Playlists、來源專輯完整曲序／本地持有、專輯批次下載／停止／重試、藝人整理／照片、附同步歌詞與獨立音量的試聽、Folder 頁面物件；分離結果安全清理。                                                                                 | 弱 alias、本機藝人 tags 未完成；試聽與其他集合介面的實機視覺待驗。[來源曲序](contracts/release-source-catalog.md)、[藝人](adr/0022-artist-identity-and-organization.md)、[照片](contracts/artist-photo-provider.md)、[試聽](contracts/track-preview.md)、[頁面物件](contracts/folder-page-objects.md)、[空間](contracts/library-storage-management.md)。                         |
-| 播放與佇列                | 已實作                | Audio element 時間權威、佇列／恢復、pitch／tempo、Windows 控制、capture-only 直接輸出與雙路回退；演出工具含逐曲三組設定、導唱／節拍器與 A–B 練習。                                                                               | 程式／隔離裝置／OBS 有限收據已驗；monitor 短零、卡頓／模糊與延遲感已回報，品質未通過。聲學延遲、雙路耐久／負載／休眠與節拍器 drift 待驗，失真未結案。[套用](contracts/player-audio-controls.md)、[練習](contracts/player-ab-practice.md)、[播放紀錄](contracts/playback-history-and-resume.md)、[失真診斷](research/engineering/playback-distortion-diagnostics-2026-10-26.md)。 |
-| App 自訂快捷鍵            | 已實作                | 十命令分類設定與 CAS 保存；主工作區／右側／波形放大還原；限主視窗內使用。                                                                                                                                                        | 背景快捷鍵的 Windows 註冊、接收端與狀態 UI 已接並經隔離驗證，正式 allowlist 仍空、入口未開放；實體持鍵、原生 Tray 回復與 S08–S10／S18 平台驗收未完成。[輸入](contracts/input-bindings.md#機器保存與錄製)、[全域](contracts/global-keyboard-shortcuts.md)、[驗證紀錄](research/engineering/global-keyboard-shortcut-verification-2026-10-29.md)。                                 |
-| BGM 待機播放              | monitor／capture 基礎 | 伴奏優先／獨立導唱開關、單來源 loop、fade／Talk／急停、位置恢復與演唱互斥；共用擷取裝置與獨立擷取總音量。                                                                                                                        | Loudness policy 與實際 OBS 錄音／聽感待驗。[BGM 契約](contracts/bgm-standby-lane.md)。                                                                                                                                                                                                                                                                                           |
-| 演出安排                  | 本地流程              | 目前／待唱／紀錄、manual 手動項目、連續播放、完成／略過／中止、封存／恢復及另存歌單；confirmed start 已接 Main 場次時間軸。                                                                                                      | 實際 OBS 連線／去重、BGM 交接及最終操作／聽感待驗。[演出安排](contracts/performance-session-preparation.md)。                                                                                                                                                                                                                                                                    |
-| 歌詞與提詞器              | 主路徑                | T0／T1／T2、多來源與酷狗T1受控備援、證據式跨語別名與整體查詢／背景預算、AMLL舊資料轉本機來源、保真編輯、可撤回的 Output 文字處理、聲部標註、讀音與桌面提詞器；句級對時、逐來源人工確認、本機校訂、逐句打點與單曲 LRC／SRT 匯出。 | 人工視覺／時間品質待驗；手機 transport 未接入。[時間](contracts/lyrics-timing-contract.md)、[確認](contracts/lyrics-timing-review.md)、[波形](contracts/lyrics-waveform.md)、[文字](contracts/lyrics-text-processing.md)、[來源](contracts/lyrics-sources.md)、[讀音](contracts/lyrics-reading-quality-contract.md)、[提詞器](contracts/performer-prompter-contract.md)。        |
-| 聲學歌詞估計              | 實驗性 T1+            | 手動準備環境後，CPU 逐句分流中／日／英；來源版本隔離、相容舊分析及有界細時間呈現／回退。                                                                                                                                         | 正式模型 gate／預設下載與人工時間驗收未完成；句內混語與 GPU 擴充暫緩。[聲學估計](contracts/lyrics-acoustic-estimate-contract.md)。                                                                                                                                                                                                                                               |
-| 音訊分離                  | 基礎能力              | `quick`／`general` 序列佇列、既有 DirectML 加速、guide vocal 與受控 FLAC 5／WAV 回退工廠，含交易遺留清理與真模型隔離驗證。                                                                                                       | 0.5.2 測試封裝通過隔離 OBS 本機錄影的整批效能驗收。DirectML 建立工作階段失敗才自動回退 CPU。[ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md)。正式 FLAC 關閉，無 UI 入口或舊音訊遷移。[輸出格式](contracts/separation-output-format.md)。跨重啟／平行處理／ETA、Refined 與 pre-render 未完成。[ADR 0009](adr/0009-tiered-audio-processing-runtime.md)。    |
-| 音樂分析                  | 可執行、待品質驗收    | BPM／節拍分析與有界 sidecar；就緒時可在匯入後背景執行。                                                                                                                                                                          | 尚未列為正式公開能力，準確度、離線、容量與 UI 門檻見[分析契約](contracts/music-analysis.md)。                                                                                                                                                                                                                                                                                    |
-| Provider assist           | 核心路徑              | App-managed yt-dlp、YT Music 優先搜尋、recording-first 匯入／backfill、批次下載與封面候選。                                                                                                                                      | 非官方 API；不含 Spotify／Apple Music 轉換與帳號歌單。[ADR 0015](adr/0015-recording-first-provider-discovery.md)。                                                                                                                                                                                                                                                               |
-| OBS 輸出                  | MVP                   | 三個固定 slot、十一個模板、Gallery／Workbench、字體／色票與只讀擷取視窗。                                                                                                                                                        | Default pack W3 短測已確認；alpha／跨環境／耐久待驗，Instance／Pack 未交付。[顯示契約](contracts/output-appearance.md)、[驗收](operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。                                                                                                                                                                               |
-| OBS 整合                  | 唯讀路徑              | WebSocket 5 狀態、secure storage、本機 session history／YouTube 章節與防休眠。                                                                                                                                                   | 不提供 scene／source 寫入。[整合契約](contracts/integration-adapter-contract.md)。                                                                                                                                                                                                                                                                                               |
-| Feature gates／診斷／回饋 | 已實作                | 五個 gate、Main diagnostics／遮蔽匯出；四類回報強制預覽，嚴重錯誤可另行同意自動回報。                                                                                                                                            | 其他 domain 持續導入；回饋 relay 需部署設定。[診斷](adr/0008-local-diagnostics-and-error-handling.md)、[回饋](adr/0016-user-feedback-intake.md)、[自動回報](adr/0029-consented-automatic-error-reports.md)。                                                                                                                                                                     |
-| 發行                      | 公開測試              | 截至 2026-11-05 最新公開版為 [v0.5.2](https://github.com/yPinn/Utawakui-Releases/releases/tag/v0.5.2)，tag 指向 `52330f9f`。                                                                                                     | 本表含 v0.5.2 後開發變更，該版內容見[版本說明](releases/v0.5.2.md)。Unsigned channel；公開發布不代替真實裝置／OBS 與正式 feed 升級驗收，signed manifest 只有 dev key。[ADR 0007](adr/0007-public-release-app-updates.md)、[ADR 0018](adr/0018-signed-update-manifest.md)。                                                                                                       |
-| VOD／clip review          | 已接受方向            | 目前 history 只保存時間戳。                                                                                                                                                                                                      | 一次性權利告知與輸出 review 待實作。                                                                                                                                                                                                                                                                                                                                             |
-| Native adapters           | 原型                  | Windows x64 固定 `Utawakui.Lyrics` Spout2 sender。                                                                                                                                                                               | Receiver／alpha／GPU／安裝版驗收前不列正式支援。[Spout2](contracts/integration-adapter-contract.md#spout2-native-video-profile)。                                                                                                                                                                                                                                                |
+| 領域               | v0.5.2 公開基線                                                                       | v0.5.3 已實作                                                                                                 | 驗收與使用邊界                                                                                                                                                                                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 桌面與設定         | Windows 主視窗、系統匣、工作列／媒體控制、App CPU／RAM。                              | 繁中／English 介面，重啟套用；Output 語言獨立且即時套用。設定重分組，關閉提示說明背景與伴奏處理選項。         | 英文介面逐頁與安裝版視窗生命週期待驗。[語言 ADR](adr/0032-ui-and-output-languages.md)                                                                                                                                                                                                                        |
+| 曲庫與試聽         | 本機匯入與相容轉檔、作品／版本／發行、資訊校對、FLAC 文字標籤、歌單／藝人與曲目試聽。 | 側欄播放清單資料夾、曲目表欄位保存、同步歌詞試聽與獨立音量。可匯入風格候選並逐曲校對。                        | 試聽已有局部切曲驗證，封裝版轉檔與介面仍待驗。風格標籤分開保存候選與人工結果。[歌曲電台](#621-曲庫風格標籤與歌曲電台)仍待試聽評分。[試聽](contracts/track-preview.md) · [轉檔](adr/0024-explicit-local-audio-compatibility-transcoding.md) · [曲庫校對](contracts/library-reconciliation.md)                 |
+| 外部來源與匯入     | 選用的 YT Music／YouTube 搜尋、批次下載與資訊補全。                                   | Firefox 登入或匯入加密保存的登入檔；手動下載仍先走一般路徑。批次進度分組，可重試未完成項目。                  | 登入是選用備援，依來源及登入有效性而定。[下載與登入](adr/0005-python-ytdlp-provider-engine.md)                                                                                                                                                                                                               |
+| 播放、排練與快捷鍵 | 播放／佇列恢復、變調／速度／導唱、逐曲三組設定、A–B 練習、節拍器與主視窗快捷鍵。      | 演出待唱操作整合、右側佇列切換、節拍器及擷取音量顯示調整。                                                    | 監聽的短暫無聲、雜訊與延遲待定位；裝置耐久與節拍漂移待驗。背景快捷鍵仍未開放。[播放](contracts/player-audio-controls.md) · [背景快捷鍵](contracts/global-keyboard-shortcuts.md)                                                                                                                              |
+| 場間音樂           | 單來源循環、伴奏優先、可開導唱，與演唱互斥。                                          | 待唱面板可展開換曲、拖曳進度、調音量。                                                                        | 共用擷取為預設，監聽／OBS 電平、交接與長時聽感待驗。[場間音樂](contracts/bgm-standby-lane.md)                                                                                                                                                                                                                |
+| 演出場次與 OBS     | 本機演出安排、手動項目、封存與恢復；選用的唯讀 OBS 狀態及直播／錄影時間。             | 收播提醒後由使用者確認封存；曲庫可查場次，歌單保留原封存場次連結。可貼 YouTube／Twitch 回放並匯出章節或 CSV。 | Twitch 手動貼連結已有桌面驗證。公開下載版採手動連結；平台自動查詢、整場收播與時碼對照仍待驗。[場次與匯出](contracts/performance-session-preparation.md)                                                                                                                                                      |
+| 歌詞與提詞器       | 本機歌詞、多來源搜尋、酷狗逐行備援、讀音與桌面提詞器；波形、句級對時與人工確認。      | 本機校訂、逐句打點及單曲 LRC／SRT 匯出。                                                                      | 實曲片段與 Shotcut 匯入已抽驗，漸弱尾音仍需人工判斷。[歌詞來源](contracts/lyrics-sources.md) · [對時確認](contracts/lyrics-timing-review.md)                                                                                                                                                                 |
+| OBS 畫面輸出       | 歌詞、歌單與播放中三個固定輸出，共九款模板。                                          | 新增黑板直書、中央直書，共十一款。和風直書換句及無結束時間的尾句退場改善。                                    | 新直書有局部 OBS 取樣；完整模板、透明合成與跨環境耐久待驗。[模板與外觀](contracts/output-appearance.md) · [實機清單](operations/output-appearance-acceptance.md)                                                                                                                                             |
+| 音訊分離           | `quick`／`general` 序列處理、導唱、DirectML 與建立失敗時的 CPU 回退。                 | 沿用 WAV。                                                                                                    | 使用 0.5.2 版號的隔離封裝曾完成 OBS 錄影下的整批效能驗證；該證據來自公開 tag 後的快照。隔離工廠已有 FLAC 5 驗證及 WAV 回退，公開入口維持關閉。[DirectML 驗收](adr/0017-directml-execution-provider-for-mdx-separation.md#batch-queue-and-obs-acceptance) · [輸出格式](contracts/separation-output-format.md) |
+| 診斷與回饋         | 功能啟用確認、遮蔽敏感資訊的診斷匯出、回饋預覽與同意後的自動錯誤回報。                | 功能告知及常用錯誤訊息補上英文。                                                                              | 回饋 relay 依部署而定。[回饋](adr/0016-user-feedback-intake.md) · [自動回報](adr/0029-consented-automatic-error-reports.md)                                                                                                                                                                                  |
+
+另有開發或隔離功能。聲學歌詞估計可手動準備環境並逐句執行，正式模型下載與人工時間品質仍待驗；BPM／節拍分析已有可執行路徑，公開前需通過準確度、離線及介面驗收。原唱音高預覽、Mic 電平與 Spout2 仍屬開發或原型，Mic 監聽／錄音與正式 Spout2 支援尚未開放。[聲學估計](contracts/lyrics-acoustic-estimate-contract.md) · [音樂分析](contracts/music-analysis.md) · [原唱音高](research/audio/reference-pitch-note-boundary-summary-2026-11-06.md) · [Mic](contracts/microphone-level-research.md) · [Spout2](operations/manual-acceptance.md#spout2)
 
 ## 4. 產品與資料邊界
 
@@ -138,29 +130,26 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 ## 6. 方向與優先順序
 
-投入順序以現有播放可靠性與完整演出操作為先，不承諾日期。競品研究提供需求證據，不自動改變產品範圍；功能現況只以上表為準。
+先驗收現有演出流程，再依前置條件推進已接受的方向。
 
 ### 6.1 既有能力：穩定與驗收優先
 
-- 先完成一場本機 OBS 錄影驗收。固定曲目、裝置和場景，對照監聽、擷取與 OBS 實收，定位偶發電子音、短暫無聲和卡頓出現在哪條路徑。
-- 同場核對 BGM 交接、換曲、歌詞／提詞器同步、場次封存及時間點匯出。節拍器 drift、Workbench／OBS 可見品質與長時耐久沿各自門檻驗證。[實機清單](operations/manual-acceptance.md#local-performance-pass)
-- 延續 startup、封裝邊界、依賴／資產／授權稽核與 installed-upgrade 驗收；已完成量測作為基線，不反覆列為新功能。
-- 完成缺檔、損壞 sidecar、依賴修復與曲庫維護的復原路徑；擴大 diagnostics 覆蓋。
-- Signed manifest 正式啟用前仍需 active／recovery key、protected environment、signing secrets 與真實升級證據。最新公開版、候選版及已驗證範圍分開記錄。
+1. 完成一場本機 OBS 錄影。固定曲目、裝置及場景，對照原曲／分離曲的監聽、擷取與 OBS 實收，記錄異常的時間與路徑。聲學延遲另以實體量測判定。[實機清單](operations/manual-acceptance.md#local-performance-pass) · [失真排查](research/engineering/playback-distortion-diagnostics-2026-10-26.md)
+2. 在同一場核對場間音樂交接、換曲、歌詞／提詞器、收播提醒、封存、貼回放與匯出。用實際素材核對直播／錄影時碼，再測長時節拍、裝置耐久與 OBS 字幕合成。[場次驗收](contracts/performance-session-preparation.md#驗收) · [Output 驗收](operations/output-appearance-acceptance.md)
+3. 用 v0.5.3 候選安裝包驗收覆蓋安裝、冷／暖啟動、關閉與恢復；複核雙語長字串、窄窗、登入遷移、封裝版轉檔與依賴／授權清單。公開通道目前沿用未簽章流程。[封裝驗收](operations/manual-acceptance.md#packaged-windows) · [發行手冊](operations/release-runbook.md)
+4. 補齊缺檔、損壞 sidecar、依賴修復與曲庫維護的復原流程。先確認原資料保留與可重試，再擴大診斷覆蓋。[曲庫空間與維護](contracts/library-storage-management.md)
 
 ### 6.2 已接受方向：依前置條件推進
 
-| 方向             | 後續範圍                                                                                         | 前置與界線                                                                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| 本地演出完整性   | 既有場次／OBS 時間軸的實機驗收；VOD／clip 狀態與輸出 review。                                    | 本機播放與安排不依賴 OBS；一般權利告知採一次確認。                                                                                              |
-| 手機遙控／提詞器 | 延續既有手機操作與讀詞規劃，共用 Performer presentation。                                        | 桌面提詞器已存在；手機 pairing／權限／撤銷與 transport 未接入，不暴露現有唯讀 Output 為控制 API。                                               |
-| 音訊準備與設定   | 新分離結果的受控 FLAC 5／WAV 回退；Pitch／tempo pre-render cache、preset 匯出入。                | FLAC 正式維持關閉、只驗隔離工廠、不遷移舊音訊；[格式契約](contracts/separation-output-format.md)。其餘保存範圍、缺曲 remap 與結果生命週期另定。 |
-| Output 外觀交付  | Instance、受限 Presentation Pack／User Variant 與逐模板藝術改善。                                | 依 ADR 0011／0027 與[外觀交付標準](governance/appearance-sets-plan.md)分期；帳號、付款與遠端取得不隨之自動啟動。                                |
-| 曲庫細節         | 先驗[曲目演唱語言](#622-曲目演唱語言)，再推進[曲風覆核與歌曲電台](#621-曲庫風格標籤與歌曲電台)。 | 沿既有人工校對與作品／版本關係保存證據。歌曲電台的預設排序等試聽評分。[作品與版本](contracts/works-versions-and-releases.md)                    |
+| 方向             | 下一步                                                                                           | 前置條件                                                                                                                     |
+| ---------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| 本地演出與回放   | 在已驗收的場次時間軸上補 VOD／clip 狀態與輸出 review。                                           | 一般權利告知採版本化的一次確認，保留重開說明入口；個別素材權利由使用者確認。                                                 |
+| 手機遙控／提詞器 | 定義手機選取連線、遙控與讀詞的最小流程，共用桌面提詞呈現。                                       | 先定配對、權限、撤銷與傳輸；保持現有 Output 唯讀。                                                                           |
+| 音訊準備與設定   | 評估新分離結果的受控 FLAC 5／WAV 回退，並分別定義變調／速度預渲染與 preset 匯出入。              | 先驗品質、取消與失敗復原；定保存與缺曲處理，既有音訊保留原格式。[音訊處理 ADR](adr/0009-tiered-audio-processing-runtime.md)  |
+| Output 外觀交付  | 分期定義 Instance、Presentation Pack／User Variant 與逐模板改善。                                | 先定可分享範圍、取得與復原；帳號、付款與遠端取得各自決策。[外觀交付計畫](governance/appearance-sets-plan.md)                 |
+| 曲庫細節         | 先驗[曲目演唱語言](#622-曲目演唱語言)，再推進[曲風覆核與歌曲電台](#621-曲庫風格標籤與歌曲電台)。 | 沿既有人工校對與作品／版本關係保存證據。歌曲電台的預設排序等試聽評分。[作品與版本](contracts/works-versions-and-releases.md) |
 
-播放器／排練四項沿[原規劃順序](research/product/player-practice-planning-2026-10-26.md)接續已接受的切片，不另列一套排程；完整現況與待驗範圍見第 3 節。逐曲設定、區段練習、對時確認及 App／背景快捷鍵須各守來源、保存與平台門檻，未完成的實機／品質驗收不因程式切片完成而解除。
-
-VOD／clip 的一般權利告知依告知版本在本機確認一次，保存確認紀錄，並提供可隨時重開的說明入口。同版本不在每場重複詢問。個別素材與場次仍由使用者自行確認，告知紀錄只代表已讀。輸出 review 仍待實作。
+逐曲設定、區段練習、對時確認及快捷鍵的驗收案例沿[排練規劃](research/product/player-practice-planning-2026-10-26.md)推進。
 
 #### 6.2.1 曲庫風格標籤與歌曲電台
 
@@ -187,51 +176,53 @@ Ballad 的上下文試作仍維持唯讀預覽。固定回歸正例覆蓋 2/11�
 
 ### 6.3 等待條件與暫緩範圍
 
-- 曲目準備與首次操作引導等待視覺定案；不因競品改版而提前增加引導工作。
-- 多人／社交互動僅遠期備忘，待社交配套與 TA／行銷定位決策；個人手機遙控／提詞器及既有場次沿原方向。[證據](research/product/osu-play-modes-and-product-mapping-2026-10-26.md#5-owner-收斂後的分類與進入條件)。
-- BGM 先完成現有單 deck／capture 驗收；loudness policy 需明定，A／B deck 與曲間 crossfade 再依需求評估。
-- Refined 須先通過授權、離線、wheel、容量、失敗復原與品質門檻，才可成為可選 recipe。
-- 句內混語、歌詞分析 GPU 與模型文字預處理維持研究限制；實驗結果不等於正式採用或新下載承諾。
-- 原唱音高、停唱遮罩與音符切段維持開發或離線研究。四語盲測暫擱，續驗條件集中在[原唱音高研究摘要](research/audio/reference-pitch-note-boundary-summary-2026-11-06.md)。
-- Provider 與官方 metadata 整合維持 optional；可選服務失效不擴大到本機核心。
+| 項目                             | 恢復投入條件                                                                                                                                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 曲目準備與首次操作引導           | 等視覺及入口定案，再用首次操作驗證。                                                                                                                                                            |
+| 簽章更新                         | 準備正式／復原金鑰、受保護環境與簽署憑證，再以實際 feed 驗證升級。[簽章 ADR](adr/0018-signed-update-manifest.md)                                                                                |
+| 背景快捷鍵                       | 逐命令通過持鍵、焦點、Tray 復原等 Windows 平台驗收，才開放 opt-in。                                                                                                                             |
+| 場間音樂分軌、響度及交叉淡入淡出 | 完成單來源與共用擷取驗收，量測主播放／場間音樂的監聽、擷取及 Mic 退避，再依需求評估。                                                                                                           |
+| Refined 分離                     | 通過授權、離線、依賴、容量、失敗復原與品質門檻。                                                                                                                                                |
+| 分離排程擴充                     | 先釐清跨重啟復原、平行處理的資源上限及 ETA，再決定是否排入。                                                                                                                                    |
+| 回放平台自動查詢                 | 先有可用憑證、真實平台與權限驗證，再決定公開範圍。                                                                                                                                              |
+| 聲學歌詞與原唱音高研究           | 句內混語、GPU 與模型文字預處理維持研究。原唱停唱遮罩及音符切段依獨立標註與留出結果決定是否重開。[原唱音高重開條件](research/audio/reference-pitch-note-boundary-summary-2026-11-06.md#重開條件) |
 
 ## 7. 尚待產品決策
 
 ### 7.1 既有方向的未決細節
 
-1. Preset 匯入遇到缺曲時提示、略過或 remap？
-2. Official Presentation Pack 與 User Variant 的版本、簽章、分享與取得／復原邊界？
-3. Refined 的品質與容量門檻？
-4. BGM 響度政策與獨立擷取的採用門檻，先按監聽／擷取、主播放／BGM 及 Mic 退避情境驗收。[音量起點](contracts/bgm-standby-lane.md#音量起點與-mic-退避)
-5. 演唱工具「歌詞」頁與曲庫歌詞編輯的分工：現行來源切換、讀音產生與編輯超出 [ADR 0023](adr/0023-renderer-destination-and-workspace-model.md) 的現場職責。
+- Preset 匯入遇到缺曲時，如何提示、略過或重新配對。
+- Presentation Pack／User Variant 的版本、簽章、分享、取得與復原規則。
+- 演唱工具的歌詞頁保留哪些現場操作，以及哪些來源、讀音與編輯工作回到曲庫。[工作區 ADR](adr/0023-renderer-destination-and-workspace-model.md)
+- 手動演出項目的定時結束，以及暫停、背景與重啟時的行為。[無伴奏演出覆核](research/product/player-practice-planning-2026-10-26.md#5-無伴奏演出既有能力覆核)
+- 依[試聽評分](#621-曲庫風格標籤與歌曲電台)決定電台排序、同藝人上限及多樣性。先以實曲檢查跨語言偏差，再決定候選詞表的合併與門檻。
 
 ### 7.2 系統與環境
 
-1. 直播期間是否抑制 App 或系統通知？
-2. 偵測系統字型供 Lyrics／Overlay，並檢查 CJK 缺字？
-3. 控制台主題是否跟隨 Windows 深淺色？
-4. Per-monitor DPI 與提詞器／Workbench 跨螢幕重算？
-5. 是否投影 Windows 減少動態效果設定？
+- 是否在直播期間抑制 App 或系統通知。
+- 是否偵測系統字型與 CJK 缺字，以及跟隨 Windows 深淺色與減少動態效果。
+- 提詞器與 Workbench 跨螢幕時，如何處理不同 DPI。
 
 ### 7.3 研究候選：尚未接受為開發路線
 
-下表保留尚未接受為開發路線的研究候選；已接受的播放器／排練切片見第 6.2 節，功能現況仍只由第 3 節持有。
+| 想法                    | 下一步或採用前條件                                                                                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 字幕風格候選            | 固定起點的片語歌詞先比較直式頂線、字區容量與細時間回退。其他款式沿候選索引補齊構圖、資料能力與可調項。[字幕候選](research/design/lyrics-overlays/README.md)    |
+| 本機影片擷取音訊        | 先確認自備影片的實際需求、格式與保存方式，再評估擴充明示轉檔。                                                                                                 |
+| Mic 電平畫面            | 延續 R02 開發原型，先量測真實裝置、串音、延遲及與 OBS 同開的成本。[Mic 研究](contracts/microphone-level-research.md)                                           |
+| Mic 音準視覺化          | R03 先驗參考旋律、輸入時間與音高校準，再評估呈現。評分與競賽暫緩。[排練研究](research/product/player-practice-planning-2026-10-26.md#8-mic-音準視覺化研究方案) |
+| 原生音訊與可寫 adapters | 先有具體需求證據，再定義失敗處理、授權和控制邊界。[競品與技術研究](research/product/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目)        |
 
-| 候選                     | 實作前條件                                                                                                                                                     |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 本機影片擷取音訊         | 先確認自備 MP4／MKV 等需求，再擴明示轉檔入口。                                                                                                                 |
-| 字幕風格候選             | 黑板直書與中央直書已進入首版實作及驗收。其餘各款維持 Proposal，待補充構圖、資料能力與可調項。[候選清單與共用格式](research/design/lyrics-overlays/README.md)。 |
-| Mic 電平畫面／音準視覺化 | 兩項獨立研究：輸入生命週期、噪聲／串音、畫面落後或旋律／時間校準。                                                                                             |
-| 原生音訊與可寫 adapters  | 有具體需求證據後，另定故障與權限邊界。[研究](research/product/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目)。                            |
+#### 7.3.1 曲庫風格與電台的研究及依賴
 
-無伴奏／自行伴奏的 manual 已有開始／完成，屬既有能力驗收；定時結束另議。[覆核](research/product/player-practice-planning-2026-10-26.md#5-無伴奏演出既有能力覆核)。
-
-正式版尚無 Mic 輸入、監聽或錄音。R02 已有開發版內部工具的單一輸入／本機電平原型，明確啟停、精確裝置、失訊清理、基本分析輸入設定、即時電平歷史、操作者逐步量測與雙門檻活動校準沿[研究契約](contracts/microphone-level-research.md)；真 Mic、串音、播放／OBS 成本與畫面延遲仍待驗，未接 Output。電平用 dBFS／相對強度，不是環境聲壓或演唱品質；噪聲門檻、平滑／上限、失訊回基準、可讀性與 reduced motion 見[研究方案](research/product/player-practice-planning-2026-10-26.md#7-mic-電平驅動畫面研究方案)。R03 音準尚未實作，需另驗參考與校準，不宣稱已解監聽延遲；分數競賽／遊戲化回饋目前不投入。
+- 沿用現有 `music-metadata`（MIT，約 1.3k GitHub stars）唯讀提取內嵌曲風，及 Microsoft `onnxruntime-node`（MIT，約 22k）執行 Windows CPU 推論。兩者都已在專案依賴中。Windows 安裝版仍須驗證模型啟動、離線、資源限制及演出中播放穩定度。[標籤解析](https://github.com/Borewit/music-metadata) · [ONNX Runtime](https://github.com/microsoft/onnxruntime) · [官方 Node.js 套件](https://onnxruntime.ai/docs/get-started/with-javascript/node.html)
+- MTG Essentia（約 3.8k）提供當輪實測的 Discogs-EffNet，可同時提取風格分數與相似度所需的音訊特徵。保留為離線比較基準。模型權重標示 CC BY-NC-SA 4.0，Essentia 程式庫為 AGPL-3.0。公開交付前須核對指定權重、預處理程式與發行方式的條件，評估取得適用授權或更換模型。[Essentia 專案](https://github.com/MTG/essentia) · [官方模型與授權](https://essentia.upf.edu/models.html)
+- Navidrome（約 25k）與 AudioMuse-AI（約 2.9k）的 Instant Mix 已用曲庫音訊產生相似曲佇列，可參考種子曲入口和接續播放。AudioMuse-AI 的 Windows 發行包含資料庫、Web 介面和工作程序，第一版只參考使用流程。[Navidrome 專案](https://github.com/navidrome/navidrome) · [Instant Mix 整合](https://navidrome.org/docs/usage/integration/audiomuse/) · [AudioMuse-AI 專案](https://github.com/NeptuneHub/AudioMuse-AI)
+- MusicBrainz Picard（約 5.4k）可參考其曲風詞表與來源辨識。專輯或藝人層級的曲風可作未來選用的查詢線索，曲目版本仍需個別確認。串接前需核對使用資料的授權與查詢限制。[Picard 專案](https://github.com/metabrainz/picard) · [曲風取值](https://picard-docs.musicbrainz.org/en/v3.0/config/options_genres.html) · [資料授權](https://musicbrainz.org/doc/About/Data_License) · [查詢限制](https://musicbrainz.org/doc/MusicBrainz_API/Rate_Limiting)
+- 研究已比較不同音訊模型在推薦上的效果，也有結合歌單共同出現與音訊特徵的做法，可用來設計後續對照實驗。第一版使用本機試聽評分決定排序。LAION CLAP（約 2.3k）可作替代模型對照，官方音樂權重仍屬研究發布，檔案約 2.35 GB，暫緩部署。[音訊模型比較](https://arxiv.org/abs/2604.23077) · [歌單與音訊相似度研究](https://arxiv.org/abs/2304.12257) · [LAION CLAP](https://github.com/LAION-AI/CLAP) · [音樂權重](https://huggingface.co/lukewys/laion_clap/blob/main/music_audioset_epoch_15_esc_90.14.pt)
 
 ### 7.4 一般歡唱受眾與可選歌曲資訊
 
-居家歡唱、練習、聚會與歌曲資訊服務仍為研究，正式定位／免費核心與可選外觀方向未變；帳號、榜單、統計上傳或雲端服務尚未新增。來源與商業模式證據見[研究索引](research/README.md#產品與競品)。
-
-先評估本機播放資訊與只讀選曲，再考慮自願貢獻的歌曲熱度。現有 playCount 是 qualified playback，不證明實唱，也不能重建每週事件；讀榜與貢獻分別決策，上傳需獨立同意／資料契約。媒體上傳、雲端協作等非目標不因研究開放。
-
-artist／album 繼續沿正式音源證據；MV／影片是另外確認的呈現關係，同 ID 不保證配對或同步。影片路線、YouTube embed 政策及未知版本歸屬仍待決策，不先改 CSP、播放器權威、曲庫儲存或建立社群媒體包。
+- 居家歡唱與聚會先評估本機播放資訊與唯讀選曲。多人／社交等待目標受眾與配套定案。[產品研究](research/README.md#產品與競品)
+- 讀榜與自願貢獻歌曲熱度分開決策。現有播放次數只表示符合記錄條件的播放；任何上傳需獨立同意與資料契約。
+- MV／影片和正式音源分開確認歸屬與同步。先決定影片來源、嵌入政策及未知版本如何處理，再評估實作。
