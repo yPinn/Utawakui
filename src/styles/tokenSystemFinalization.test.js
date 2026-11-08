@@ -33,7 +33,7 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(561);
+    expect(names.size).toBe(565);
     expect(names).toContain('--ui-motion-easing-reversible');
     expect(names).toContain('--ui-shell-workspace-min-inline-size');
     expect(names).toContain('--ui-shell-layout-recovery-inline-size');
@@ -60,6 +60,10 @@ describe('finalized control-panel token system', () => {
     expect(names).toContain('--ui-folder-artifact-pinned-region-inset');
     expect(names).toContain('--ui-folder-extension-block-inset');
     expect(names).toContain('--ui-folder-artifact-folder-min-height');
+    expect(names).toContain('--ui-folder-tool-tab-depth');
+    expect(names).toContain('--ui-folder-tool-tab-length');
+    expect(names).toContain('--ui-folder-tool-tab-gap');
+    expect(names).toContain('--ui-folder-tool-tab-seam-width');
     expect([...names]).not.toEqual(
       expect.arrayContaining([
         '--ui-folder-interior-background-setlist',

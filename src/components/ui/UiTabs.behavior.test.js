@@ -114,6 +114,41 @@ describe('UiTabs', () => {
     app.unmount();
   });
 
+  it('keeps the last focused folder tab reachable while its panel is closed', async () => {
+    const onUpdate = vi.fn();
+    const { app, root } = mount(UiTabs, {
+      items,
+      inactiveFocusId: 'recent',
+      ariaLabel: '外觀分類',
+      tabIdPrefix: 'folder',
+      panelIdPrefix: 'folder',
+      variant: 'folder',
+      'onUpdate:activeId': onUpdate,
+    });
+    const [tablist] = findAll(root, (node) => node.props.role === 'tablist');
+    const tabs = findAll(root, (node) => node.props.role === 'tab');
+
+    expect(tablist.props['aria-orientation']).toBe('vertical');
+    expect(tabs.map((tab) => tab.props.tabindex)).toEqual([-1, 0]);
+    expect(tabs.map((tab) => tab.props['aria-selected'])).toEqual([
+      false,
+      false,
+    ]);
+    trigger(tabs[1], 'onKeydown', {
+      key: 'ArrowRight',
+      preventDefault: vi.fn(),
+    });
+    expect(onUpdate).not.toHaveBeenCalled();
+    trigger(tabs[1], 'onKeydown', {
+      key: 'ArrowDown',
+      preventDefault: vi.fn(),
+    });
+    await nextTick();
+    expect(onUpdate).toHaveBeenCalledWith('queue');
+    expect(tabs[0].focus).toHaveBeenCalledWith({ preventScroll: true });
+    app.unmount();
+  });
+
   it('skips disabled items and supports Home and End navigation', async () => {
     const onUpdate = vi.fn();
     const navigationItems = [

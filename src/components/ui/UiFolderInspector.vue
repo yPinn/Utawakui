@@ -14,7 +14,7 @@ import { ICON_SIZE } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
 import UiFolderTabShape from './UiFolderTabShape.vue';
 import UiScrollLayout from './UiScrollLayout.vue';
-import UiTooltip from './UiTooltip.vue';
+import UiTabs from './UiTabs.vue';
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -42,15 +42,25 @@ const workspace = useTemplateRef('workspace');
 const rail = useTemplateRef('rail');
 const inspector = useTemplateRef('inspector');
 const resizeHandle = useTemplateRef('resizeHandle');
-const tablist = useTemplateRef('tablist');
 const scroll = useTemplateRef('scroll');
 const uniqueId = useId();
 const ids = props.idPrefix || `folder-inspector-${uniqueId}`;
 const shapeId = `${ids}-shape`;
-const shapeStyle = { '--ui-folder-tab-shape': `url("#${shapeId}")` };
+const shapeStyle = { '--_folder-tab-shape': `url("#${shapeId}")` };
 const selectedId = shallowRef(null);
 const activeItem = computed(
   () => props.items.find(({ id }) => id === selectedId.value) ?? props.items[0],
+);
+const tabs = computed(() =>
+  props.items.map((item) => ({
+    ...item,
+    tooltipPlacement:
+      props.labelMode === 'icon' && item.icon
+        ? props.side === 'left'
+          ? 'right'
+          : 'left'
+        : undefined,
+  })),
 );
 const limits = shallowRef(null);
 const dragWidth = shallowRef(null);
@@ -200,8 +210,8 @@ function resizeWithKeys(event) {
   setOpen(true);
 }
 
-function activate(item) {
-  selectedId.value = item.id;
+function activate(id) {
+  selectedId.value = id;
   setOpen(true);
 }
 
@@ -213,32 +223,10 @@ function dismissCompact(event) {
   resizeHandle.value?.focus({ preventScroll: true });
 }
 
-function moveTab(event, index) {
-  const last = props.items.length - 1;
-  const destination = {
-    ArrowUp: index === 0 ? last : index - 1,
-    ArrowDown: index === last ? 0 : index + 1,
-    Home: 0,
-    End: last,
-  }[event.key];
-  if (destination === undefined) return;
-  event.preventDefault();
-  const item = props.items[destination];
-  activate(item);
-  nextTick(() =>
-    tablist.value
-      ?.querySelectorAll('[role="tab"]')
-      [destination]?.focus({ preventScroll: true }),
-  );
-}
-
 watch(
   activeItem,
   () => {
     scroll.value?.scrollTo({ top: 0 });
-    tablist.value
-      ?.querySelector('[aria-selected="true"]')
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   },
   { flush: 'post' },
 );
@@ -290,47 +278,28 @@ onBeforeUnmount(() => {
       <div class="ui-folder-inspector__drawer">
         <div ref="rail" class="ui-folder-inspector__rail">
           <UiFolderTabShape :shape-id="shapeId" />
-          <div
-            ref="tablist"
+          <UiTabs
             class="ui-folder-inspector__tabs"
             :style="shapeStyle"
-            role="tablist"
+            :items="tabs"
+            :active-id="open ? activeItem?.id : ''"
+            :inactive-focus-id="activeItem?.id"
             :aria-label="tabsLabel"
-            aria-orientation="vertical"
+            :tab-id-prefix="ids"
+            :panel-id-prefix="ids"
+            variant="folder"
+            @update:active-id="activate"
           >
-            <UiTooltip
-              v-for="(item, index) in items"
-              :key="item.id"
-              :text="item.label"
-              :placement="side === 'left' ? 'right' : 'left'"
-              :disabled="labelMode === 'text' || !item.icon"
-              :described-by="false"
-            >
-              <template #trigger="{ triggerProps }">
-                <button
-                  :id="`${ids}-${item.id}-tab`"
-                  v-bind="triggerProps"
-                  class="ui-folder-inspector__tab"
-                  type="button"
-                  role="tab"
-                  :aria-label="item.label"
-                  :aria-controls="`${ids}-${item.id}-panel`"
-                  :aria-selected="open && activeItem?.id === item.id"
-                  :tabindex="activeItem?.id === item.id ? 0 : -1"
-                  @click="activate(item)"
-                  @keydown="moveTab($event, index)"
-                >
-                  <component
-                    :is="item.icon"
-                    v-if="labelMode === 'icon' && item.icon"
-                    :size="ICON_SIZE"
-                    aria-hidden="true"
-                  />
-                  <span v-else>{{ item.label }}</span>
-                </button>
-              </template>
-            </UiTooltip>
-          </div>
+            <template #label="{ item }">
+              <component
+                :is="item.icon"
+                v-if="item.tooltipPlacement"
+                :size="ICON_SIZE"
+                aria-hidden="true"
+              />
+              <template v-else>{{ item.label }}</template>
+            </template>
+          </UiTabs>
           <div
             ref="resizeHandle"
             class="ui-folder-inspector__resize"
@@ -452,7 +421,7 @@ onBeforeUnmount(() => {
 }
 
 .ui-folder-inspector__workspace[data-open='false'] {
-  --_inspector-width: 0px;
+  --_inspector-width: 0;
 }
 
 .ui-folder-inspector__workspace[data-side='left'] {
@@ -551,68 +520,11 @@ onBeforeUnmount(() => {
 }
 
 .ui-folder-inspector__tabs {
-  display: grid;
-  align-content: start;
-  min-block-size: 0;
-  gap: var(--ui-folder-tool-tab-gap);
   padding-inline-start: var(--tab-tip-gap);
-  overflow: hidden auto;
-  scrollbar-width: none;
 }
 
 .ui-folder-inspector__workspace[data-side='left'] .ui-folder-inspector__tabs {
   padding-inline: 0 var(--tab-tip-gap);
-}
-
-.ui-folder-inspector__tab {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  place-items: center;
-  block-size: var(--tab-height);
-  inline-size: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-folder-neutral-foreground);
-  font: inherit;
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  cursor: pointer;
-}
-
-.ui-folder-inspector__tab::before {
-  position: absolute;
-  z-index: -1;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
-  inline-size: var(--tab-height);
-  block-size: var(--tab-depth);
-  transform: translate(-50%, -50%) rotate(var(--tab-rotation));
-  clip-path: var(--ui-folder-tab-shape);
-  background: var(--ui-color-folder-neutral);
-  content: '';
-}
-
-.ui-folder-inspector__tab:hover {
-  color: var(--ui-color-accent);
-}
-
-.ui-folder-inspector__tab:hover::before {
-  background: var(--ui-color-surface-selected);
-}
-
-.ui-folder-inspector__tab[aria-selected='true'] {
-  color: var(--ui-color-folder-primary-foreground);
-}
-
-.ui-folder-inspector__tab[aria-selected='true']::before {
-  background: var(--ui-color-folder-primary);
-}
-
-.ui-folder-inspector__tab:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-folder-inspector__inspector {

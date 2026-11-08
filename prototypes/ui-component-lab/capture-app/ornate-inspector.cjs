@@ -289,7 +289,8 @@ async function verifyShortTabRail(window) {
     const items = [...tabs.querySelectorAll('[role="tab"]')];
     const last = items.at(-1);
     root.style.blockSize = '112px';
-    if (tabs.scrollHeight <= tabs.clientHeight)
+    const viewport = tabs.querySelector('.ui-scroll-region__viewport');
+    if (viewport.scrollHeight <= viewport.clientHeight)
       throw new Error('short tab rail does not offer a scrollable area');
     items[0].dispatchEvent(new KeyboardEvent('keydown', {
       key: 'End',
@@ -297,8 +298,8 @@ async function verifyShortTabRail(window) {
     }));
     await new Promise((resolve) => requestAnimationFrame(resolve));
     const bounds = last.getBoundingClientRect();
-    const viewport = tabs.getBoundingClientRect();
-    if (document.activeElement !== last || bounds.bottom > viewport.bottom + 1)
+    const visibleRail = viewport.getBoundingClientRect();
+    if (document.activeElement !== last || bounds.bottom > visibleRail.bottom + 1)
       throw new Error('keyboard selection did not reveal the last tab in the short rail');
     root.style.blockSize = '';
     items[0].click();

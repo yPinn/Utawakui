@@ -1,17 +1,19 @@
 <script setup>
 import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import UiScrollLayout from './UiScrollLayout.vue';
+import UiTooltip from './UiTooltip.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
   activeId: { type: String, default: '' },
+  inactiveFocusId: { type: String, default: '' },
   ariaLabel: { type: String, required: true },
   tabIdPrefix: { type: String, required: true },
   panelIdPrefix: { type: String, default: '' },
   variant: {
     type: String,
     default: 'panel',
-    validator: (value) => ['panel', 'bar'].includes(value),
+    validator: (value) => ['panel', 'bar', 'folder'].includes(value),
   },
   distribution: {
     type: String,
@@ -23,15 +25,22 @@ const props = defineProps({
 const emit = defineEmits(['update:activeId']);
 const tabRefs = new Map();
 const groupRef = useTemplateRef('group');
+const vertical = computed(() => props.variant === 'folder');
 
 const enabledItems = computed(() =>
   props.items.filter((item) => !item.disabled),
 );
-const focusId = computed(() =>
-  enabledItems.value.some((item) => item.id === props.activeId)
-    ? props.activeId
-    : enabledItems.value[0]?.id,
-);
+const focusId = computed(() => {
+  const preferred = props.activeId || props.inactiveFocusId;
+  return (
+    enabledItems.value.find((item) => item.id === preferred)?.id ??
+    enabledItems.value[0]?.id
+  );
+});
+
+function PlainTrigger(_props, { slots }) {
+  return slots.trigger?.({ triggerProps: {} });
+}
 
 function tabId(item) {
   return `${props.tabIdPrefix}-${item.id}-tab`;
@@ -43,10 +52,23 @@ function panelId(item) {
     : undefined;
 }
 
-function setOptionRef(id, element) {
+function setOptionRef(id, element, setAnchor) {
   if (element) tabRefs.set(id, element);
   else tabRefs.delete(id);
+  setAnchor?.(element);
 }
+
+function revealTab(element) {
+  element?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+}
+
+watch(
+  () => props.activeId,
+  (id) => {
+    if (vertical.value) revealTab(tabRefs.get(id));
+  },
+  { flush: 'post' },
+);
 
 // Preserve an existing keyboard owner when a focused item disappears or disables.
 // Selection remains caller-owned; updates outside this group never steal focus.
@@ -76,10 +98,19 @@ function select(item) {
 }
 
 function moveFocus(item, event) {
-  const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+  const rtl =
+    !vertical.value &&
+    typeof globalThis.getComputedStyle === 'function' &&
+    globalThis.getComputedStyle(groupRef.value).direction === 'rtl';
+  const previous = vertical.value
+    ? 'ArrowUp'
+    : rtl
+      ? 'ArrowRight'
+      : 'ArrowLeft';
+  const next = vertical.value ? 'ArrowDown' : rtl ? 'ArrowLeft' : 'ArrowRight';
   if (
     item.disabled ||
-    !keys.includes(event.key) ||
+    ![previous, next, 'Home', 'End'].includes(event.key) ||
     enabledItems.value.length === 0
   )
     return;
@@ -90,17 +121,11 @@ function moveFocus(item, event) {
     enabledItems.value.findIndex((candidate) => candidate.id === item.id),
   );
   let targetIndex = currentIndex;
-  const rtl =
-    typeof globalThis.getComputedStyle === 'function' &&
-    globalThis.getComputedStyle(groupRef.value).direction === 'rtl';
-  if (
-    (event.key === 'ArrowLeft' && !rtl) ||
-    (event.key === 'ArrowRight' && rtl)
-  ) {
+  if (event.key === previous) {
     targetIndex =
       (currentIndex - 1 + enabledItems.value.length) %
       enabledItems.value.length;
-  } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+  } else if (event.key === next) {
     targetIndex = (currentIndex + 1) % enabledItems.value.length;
   } else if (event.key === 'Home') {
     targetIndex = 0;
@@ -111,7 +136,11 @@ function moveFocus(item, event) {
   const target = enabledItems.value[targetIndex];
   select(target);
   nextTick(() => {
-    (tabRefs.get(target.id) || tabRefs.get(focusId.value))?.focus();
+    const element = tabRefs.get(target.id) || tabRefs.get(focusId.value);
+    if (vertical.value) {
+      element?.focus({ preventScroll: true });
+      revealTab(element);
+    } else element?.focus();
   });
 }
 </script>
@@ -123,35 +152,56 @@ function moveFocus(item, event) {
     :class="[`ui-tabs--${variant}`, `ui-tabs--${distribution}`]"
     role="tablist"
     :aria-label="ariaLabel"
+    :aria-orientation="vertical ? 'vertical' : undefined"
   >
     <UiScrollLayout
       scrollbar-reserve="overflow"
       class="ui-tabs__scroll"
-      axis="horizontal"
+      :axis="vertical ? 'vertical' : 'horizontal'"
+      :scrollbar-visibility="vertical ? 'hidden' : 'auto'"
       content-class="ui-tabs__list"
     >
-      <button
+      <component
+        :is="item.tooltipPlacement ? UiTooltip : PlainTrigger"
         v-for="item in items"
-        :id="tabId(item)"
         :key="item.id"
-        :ref="(element) => setOptionRef(item.id, element)"
-        type="button"
-        class="ui-tabs__tab"
-        :class="{ 'is-active': item.id === activeId }"
-        role="tab"
-        :aria-selected="item.id === activeId"
-        :aria-controls="panelId(item)"
-        :disabled="item.disabled"
-        :aria-disabled="item.disabled || undefined"
-        :tabindex="item.id === focusId ? 0 : -1"
-        @click="select(item)"
-        @keydown="moveFocus(item, $event)"
+        v-bind="
+          item.tooltipPlacement
+            ? {
+                text: item.label,
+                placement: item.tooltipPlacement,
+                describedBy: false,
+              }
+            : {}
+        "
       >
-        <span class="ui-tabs__label">
-          <slot name="label" :item="item">{{ item.label }}</slot>
-        </span>
-        <slot name="after" :item="item" />
-      </button>
+        <template #trigger="{ triggerProps }">
+          <button
+            :id="tabId(item)"
+            v-bind="triggerProps"
+            :ref="(element) => setOptionRef(item.id, element, triggerProps.ref)"
+            type="button"
+            class="ui-tabs__tab"
+            :class="{ 'is-active': item.id === activeId }"
+            role="tab"
+            :aria-label="
+              vertical || item.tooltipPlacement ? item.label : undefined
+            "
+            :aria-selected="item.id === activeId"
+            :aria-controls="panelId(item)"
+            :disabled="item.disabled"
+            :aria-disabled="item.disabled || undefined"
+            :tabindex="item.id === focusId ? 0 : -1"
+            @click="select(item)"
+            @keydown="moveFocus(item, $event)"
+          >
+            <span class="ui-tabs__label">
+              <slot name="label" :item="item">{{ item.label }}</slot>
+            </span>
+            <slot name="after" :item="item" />
+          </button>
+        </template>
+      </component>
     </UiScrollLayout>
   </div>
 </template>
@@ -296,5 +346,71 @@ function moveFocus(item, event) {
   height: var(--ui-border-width-strong);
   border-radius: var(--ui-radius-pill) var(--ui-radius-pill) 0 0;
   background: currentColor;
+}
+.ui-tabs--folder {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-block-size: 0;
+}
+
+.ui-tabs--folder .ui-tabs__scroll :deep(.ui-tabs__list) {
+  flex-direction: column;
+  gap: var(--ui-folder-tool-tab-gap);
+}
+
+.ui-tabs--folder .ui-tabs__label {
+  display: grid;
+  place-items: center;
+}
+
+.ui-tabs--folder .ui-tabs__tab {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  block-size: var(--tab-height);
+  inline-size: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ui-color-folder-neutral-foreground);
+  transition: none;
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  cursor: pointer;
+}
+
+.ui-tabs--folder .ui-tabs__tab::before {
+  position: absolute;
+  z-index: var(--ui-layer-behind);
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: var(--tab-height);
+  block-size: var(--tab-depth);
+  transform: translate(-50%, -50%) rotate(var(--tab-rotation));
+  clip-path: var(--_folder-tab-shape);
+  background: var(--ui-color-folder-neutral);
+  content: '';
+}
+
+.ui-tabs--folder .ui-tabs__tab:hover {
+  color: var(--ui-color-accent);
+}
+
+.ui-tabs--folder .ui-tabs__tab:hover::before {
+  background: var(--ui-color-surface-selected);
+}
+
+.ui-tabs--folder .ui-tabs__tab[aria-selected='true'] {
+  color: var(--ui-color-folder-primary-foreground);
+}
+
+.ui-tabs--folder .ui-tabs__tab[aria-selected='true']::before {
+  background: var(--ui-color-folder-primary);
+}
+
+.ui-tabs--folder .ui-tabs__tab:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 </style>
