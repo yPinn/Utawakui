@@ -17,6 +17,8 @@ const OVERLAY_TRACE_MILESTONES = new Set([
 ]);
 const STATIC_CACHE_LIMIT = 32;
 const ARTWORK_CACHE_LIMIT = 128;
+// Larger files keep only their digest in memory and stream from disk.
+const CACHED_BODY_MAX_BYTES = 1024 * 1024;
 const DEFAULT_OVERLAY_ROOT = path.resolve(__dirname, '../../../overlay');
 const DEFAULT_SHARED_ROOT = path.resolve(__dirname, '../../../shared');
 const GSAP_BROWSER_ASSET = require.resolve('gsap/dist/gsap.min.js');
@@ -311,9 +313,19 @@ function writeStatic(
   }
   response.writeHead(200, {
     ...headers,
-    'Content-Length': asset.body.byteLength,
+    'Content-Length': asset.size,
   });
-  response.end(asset.body);
+  if (asset.body) response.end(asset.body);
+  else streamAsset(response, asset);
+}
+
+function streamAsset(response, asset) {
+  const stream = fs.createReadStream(asset.filePath, {
+    start: 0,
+    end: asset.size - 1,
+  });
+  stream.on('error', () => response.destroy());
+  stream.pipe(response);
 }
 
 function writeArtwork(request, response, asset, contentType) {
@@ -332,9 +344,10 @@ function writeArtwork(request, response, asset, contentType) {
   }
   response.writeHead(200, {
     ...headers,
-    'Content-Length': asset.body.byteLength,
+    'Content-Length': asset.size,
   });
-  Readable.from(asset.body).pipe(response);
+  if (asset.body) Readable.from(asset.body).pipe(response);
+  else streamAsset(response, asset);
 }
 
 function parseArtworkRoute(pathname) {
@@ -388,14 +401,24 @@ function createOutputHttpHandler(options = {}) {
       cache.set(filePath, cached);
       return cached;
     }
-    const body = await fs.promises.readFile(filePath);
-    const digest = crypto.createHash('sha256').update(body).digest('hex');
+    let body = null;
+    let digest;
+    if (stat.size <= CACHED_BODY_MAX_BYTES) {
+      body = await fs.promises.readFile(filePath);
+      digest = crypto.createHash('sha256').update(body).digest('hex');
+    } else {
+      const hash = crypto.createHash('sha256');
+      for await (const chunk of fs.createReadStream(filePath))
+        hash.update(chunk);
+      digest = hash.digest('hex');
+    }
     return putBounded(
       cache,
       filePath,
       {
         body,
-        size: stat.size,
+        filePath,
+        size: body ? body.byteLength : stat.size,
         mtimeMs: stat.mtimeMs,
         etag: `"${digest}"`,
         digest,

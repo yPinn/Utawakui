@@ -342,6 +342,35 @@ describe('output HTTP delivery', () => {
     expect(unchanged.status).toBe(304);
   });
 
+  it('streams large static assets without holding their bytes', async () => {
+    const { overlayRoot, sharedRoot } = createFixtureRoots();
+    const font = crypto.randomBytes(1024 * 1024 + 17);
+    fs.writeFileSync(
+      path.join(sharedRoot, 'assets', 'fonts', 'KleeOne-SemiBold.ttf'),
+      font,
+    );
+    const readFile = vi.spyOn(fs.promises, 'readFile');
+    const baseUrl = await startHandler({ overlayRoot, sharedRoot });
+    const url = `${baseUrl}/shared/assets/fonts/KleeOne-SemiBold.ttf`;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const response = await fetch(url);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-length')).toBe(String(font.length));
+      expect(Buffer.from(await response.arrayBuffer()).equals(font)).toBe(true);
+      expect(response.headers.get('etag')).toBe(
+        `"${crypto.createHash('sha256').update(font).digest('hex')}"`,
+      );
+    }
+    const unchanged = await fetch(url, {
+      headers: {
+        'if-none-match': `"${crypto.createHash('sha256').update(font).digest('hex')}"`,
+      },
+    });
+    expect(unchanged.status).toBe(304);
+    expect(readFile).not.toHaveBeenCalled();
+  });
+
   it('redirects artwork to a content digest and serves only that revision', async () => {
     const { root } = createFixtureRoots();
     const artworkPath = path.join(root, 'cover.png');
