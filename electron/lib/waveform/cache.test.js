@@ -7,7 +7,7 @@ import { createWaveformCache } from './cache.js';
 const roots = [];
 const group = 'a'.repeat(64);
 it.runIf(process.platform === 'win32')(
-  'accepts Windows path case variants without accepting directory redirects',
+  'accepts Windows path case variants',
   async () => {
     const { root } = setup();
     const cache = createWaveformCache(root.toUpperCase());
@@ -31,8 +31,12 @@ const value = () => ({
     rms: new Float32Array(4096).fill(0.25),
   },
 });
-function setup(options = {}) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-wave-cache-'));
+function setup(options = {}, tempDir = os.tmpdir()) {
+  // The OS temp path can be an alias. Cache roots must be physical paths.
+  // Only the native resolver expands Windows 8.3 names, matching cache.js.
+  const root = fs.mkdtempSync(
+    path.join(fs.realpathSync.native(tempDir), 'utawakui-wave-cache-'),
+  );
   roots.push(root);
   return { root, cache: createWaveformCache(root, options) };
 }
@@ -41,6 +45,36 @@ afterEach(() =>
     .splice(0)
     .forEach((root) => fs.rmSync(root, { recursive: true, force: true })),
 );
+
+it('creates fixtures under the physical directory when the temporary parent is aliased', async () => {
+  const { root } = setup();
+  const physical = path.join(root, 'physical');
+  const alias = path.join(root, 'alias');
+  fs.mkdirSync(physical);
+  fs.symlinkSync(physical, alias, 'junction');
+
+  const { cache, root: fixture } = setup({}, alias);
+  await cache.put(group, key(1), value(), () => {});
+  expect(path.dirname(fixture)).toBe(physical);
+  expect(await cache.get(group, key(1))).toEqual(value());
+});
+
+it('rejects a redirected cache root or ancestor without touching the target', async () => {
+  const { root } = setup();
+  const physical = path.join(root, 'physical');
+  const alias = path.join(root, 'alias');
+  fs.mkdirSync(path.join(physical, 'cache'), { recursive: true });
+  fs.symlinkSync(physical, alias, 'junction');
+
+  for (const redirected of [alias, path.join(alias, 'cache')]) {
+    const cache = createWaveformCache(redirected);
+    await expect(cache.put(group, key(1), value(), () => {})).rejects.toThrow(
+      'CACHE_UNAVAILABLE',
+    );
+  }
+  expect(fs.readdirSync(physical)).toEqual(['cache']);
+  expect(fs.readdirSync(path.join(physical, 'cache'))).toEqual([]);
+});
 
 it('round trips bounded typed peaks, prunes LRU and clears only the requested group', async () => {
   const { cache, root } = setup({ maxEntries: 2 });
