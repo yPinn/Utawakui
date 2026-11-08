@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(561);
+    expect(uniqueNames.size).toBe(565);
     expect(uniqueNames).toContain('--ui-motion-easing-reversible');
     expect(uniqueNames).toContain('--ui-shell-workspace-min-inline-size');
     expect(uniqueNames).toContain('--ui-shell-layout-recovery-inline-size');
@@ -317,6 +317,10 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
     expect(uniqueNames).toContain('--ui-folder-artifact-folder-min-height');
     expect(uniqueNames).toContain('--ui-folder-artifact-pinned-region-inset');
+    expect(uniqueNames).toContain('--ui-folder-tool-tab-depth');
+    expect(uniqueNames).toContain('--ui-folder-tool-tab-length');
+    expect(uniqueNames).toContain('--ui-folder-tool-tab-gap');
+    expect(uniqueNames).toContain('--ui-folder-tool-tab-seam-width');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-background');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-padding');
     expect(uniqueNames).toContain('--ui-right-dock-section-surface-radius');

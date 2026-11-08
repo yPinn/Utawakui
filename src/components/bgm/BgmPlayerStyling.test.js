@@ -31,4 +31,19 @@ describe('integrated BGM layout contract', () => {
     expect(sources[1]).toContain('場間音樂音量');
     expect(sources[1]).toContain('立即停止場間音樂');
   });
+  it('uses the shared folder tool geometry for the resting tabs and raised picker', () => {
+    const [player] = sources;
+    expect(player).toMatch(
+      /\.bgm-player__tab-button\s*\{[^}]*min-inline-size:\s*var\(--ui-folder-tool-tab-length\);[^}]*block-size:\s*var\(--ui-folder-tool-tab-depth\);/su,
+    );
+    expect(player).toMatch(
+      /\.bgm-player__audio-tab--paired\s*\{[^}]*margin-inline-end:\s*calc\(\s*var\(--ui-folder-tool-tab-length\) \+ var\(--ui-folder-tool-tab-gap\)/su,
+    );
+    expect(player).toMatch(
+      /\.ui-popover__header\)\s*\{[^}]*gap:\s*var\(--ui-folder-tool-tab-gap\);[^}]*padding:\s*0 var\(--ui-right-dock-content-inset\);/su,
+    );
+    expect(player).toMatch(
+      /\.ui-popover__scroll\)\s*\{[^}]*border-block-start:\s*var\(--ui-folder-tool-tab-seam-width\) solid\s*var\(--ui-color-folder-primary\)/su,
+    );
+  });
 });

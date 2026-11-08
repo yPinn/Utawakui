@@ -728,7 +728,6 @@ async function changeTrack(trackId) {
   padding-block: var(--ui-space-1);
 }
 .bgm-player--dock .bgm-player__main {
-  --bgm-tab-width: calc(var(--ui-control-height) + var(--ui-space-3));
   grid-template-columns: minmax(0, 1fr);
   gap: var(--ui-space-1);
   align-items: center;
@@ -751,7 +750,8 @@ async function changeTrack(trackId) {
   align-self: start;
   justify-self: start;
   max-inline-size: calc(
-    100% - var(--bgm-tab-width) * 2 - var(--ui-space-2) * 2
+    100% - 2 *
+      (var(--ui-folder-tool-tab-length) + var(--ui-folder-tool-tab-gap))
   );
   transform: translateY(
     calc(-100% - var(--ui-space-2) - var(--ui-border-width))
@@ -784,7 +784,9 @@ async function changeTrack(trackId) {
   );
 }
 .bgm-player__audio-tab--paired {
-  margin-inline-end: calc(var(--bgm-tab-width) + var(--ui-space-2));
+  margin-inline-end: calc(
+    var(--ui-folder-tool-tab-length) + var(--ui-folder-tool-tab-gap)
+  );
 }
 .bgm-player__search-tab :deep(.ui-popover__anchor) {
   display: flex;
@@ -798,8 +800,8 @@ async function changeTrack(trackId) {
   --ui-color-surface-active: transparent;
   --ui-color-text: var(--ui-color-folder-primary-foreground);
   display: grid;
-  min-inline-size: calc(var(--ui-control-height) + var(--ui-space-3));
-  block-size: var(--ui-control-height);
+  min-inline-size: var(--ui-folder-tool-tab-length);
+  block-size: var(--ui-folder-tool-tab-depth);
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
   color: var(--ui-color-folder-primary-foreground);
@@ -842,12 +844,12 @@ async function changeTrack(trackId) {
 :global(.ui-popover:has(.bgm-player__picker--tab) > .ui-popover__header) {
   display: flex;
   justify-content: flex-end;
-  gap: var(--ui-space-2);
+  gap: var(--ui-folder-tool-tab-gap);
   padding: 0 var(--ui-right-dock-content-inset);
 }
 :global(.ui-popover:has(.bgm-player__picker--tab) > .ui-popover__scroll) {
   border-inline: var(--ui-border-width) solid var(--ui-color-folder-primary);
-  border-block-start: var(--ui-border-width) solid
+  border-block-start: var(--ui-folder-tool-tab-seam-width) solid
     var(--ui-color-folder-primary);
   background: var(--ui-folder-sheet-background);
 }
@@ -859,8 +861,8 @@ async function changeTrack(trackId) {
   padding-inline: calc(var(--ui-space-3) - var(--ui-border-width));
 }
 :global(.ui-popover[data-open='false']:has(.bgm-player__picker--tab)) {
-  transform: translateY(calc(100% - var(--ui-control-height)));
-  clip-path: inset(0 0 calc(100% - var(--ui-control-height)));
+  transform: translateY(calc(100% - var(--ui-folder-tool-tab-depth)));
+  clip-path: inset(0 0 calc(100% - var(--ui-folder-tool-tab-depth)));
   transition-delay: 0s, 0s, var(--ui-motion-duration-standard);
 }
 :global(
@@ -870,8 +872,8 @@ async function changeTrack(trackId) {
 }
 @starting-style {
   :global(.ui-popover[data-open='true']:has(.bgm-player__picker--tab)) {
-    transform: translateY(calc(100% - var(--ui-control-height)));
-    clip-path: inset(0 0 calc(100% - var(--ui-control-height)));
+    transform: translateY(calc(100% - var(--ui-folder-tool-tab-depth)));
+    clip-path: inset(0 0 calc(100% - var(--ui-folder-tool-tab-depth)));
   }
 }
 .bgm-player__source-notice > span {
@@ -889,12 +891,12 @@ async function changeTrack(trackId) {
   white-space: nowrap;
 }
 .bgm-player__tab-button--neutral {
-  --ui-color-text: var(--ui-color-text-muted);
-  color: var(--ui-color-text-muted);
+  --ui-color-text: var(--ui-color-folder-neutral-foreground);
+  color: var(--ui-color-folder-neutral-foreground);
 }
 
 .bgm-player__tab-button--neutral::before {
-  background: var(--ui-color-border);
+  background: var(--ui-color-folder-neutral);
 }
 
 @container performance-session-workspace (max-width:28rem) {

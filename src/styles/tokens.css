@@ -308,6 +308,12 @@
   --ui-folder-tab-min-inline-size-narrow: 5rem;
   --ui-folder-tab-height: 2.5rem;
   --ui-folder-tab-height-active: 2.75rem;
+  --ui-folder-tool-tab-depth: var(--ui-control-height);
+  --ui-folder-tool-tab-length: calc(
+    var(--ui-folder-tool-tab-depth) + var(--ui-space-3)
+  );
+  --ui-folder-tool-tab-gap: var(--ui-space-2);
+  --ui-folder-tool-tab-seam-width: var(--ui-border-width-strong);
   --ui-folder-tab-rest-offset: calc(
     (var(--ui-folder-tab-height-active) - var(--ui-folder-tab-height))
   );
