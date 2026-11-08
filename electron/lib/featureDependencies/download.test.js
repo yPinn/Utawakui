@@ -220,6 +220,166 @@ describe('feature dependency downloads', () => {
     ).rejects.toBe(connectionReset);
   });
 
+  describe('interrupted transfers', () => {
+    const terminated = () => new TypeError('terminated');
+
+    function rangeResponse({ status = 200, headers = {}, chunks, reset }) {
+      let index = 0;
+      const values = Object.fromEntries(
+        Object.entries(headers).map(([name, value]) => [
+          name.toLowerCase(),
+          String(value),
+        ]),
+      );
+      return {
+        ok: true,
+        status,
+        headers: { get: (name) => values[name] ?? null },
+        body: {
+          cancel: vi.fn(async () => {}),
+          getReader: () => ({
+            read: vi.fn(async () => {
+              if (index < chunks.length)
+                return { done: false, value: Uint8Array.from(chunks[index++]) };
+              if (reset) throw reset;
+              return { done: true };
+            }),
+          }),
+        },
+      };
+    }
+
+    it('resumes from the received offset with the original validator', async () => {
+      const onProgress = vi.fn();
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 6, etag: '"v1"' },
+            chunks: [[1, 2], [3]],
+            reset: terminated(),
+          }),
+        )
+        .mockResolvedValueOnce(
+          rangeResponse({
+            status: 206,
+            headers: { 'content-range': 'bytes 3-5/6' },
+            chunks: [[4, 5, 6]],
+          }),
+        );
+
+      await expect(
+        downloadBuffer(
+          'https://example.test/tool',
+          fetchImpl,
+          { onProgress },
+          { maxDownloadSize: 6 },
+        ),
+      ).resolves.toEqual(Buffer.from([1, 2, 3, 4, 5, 6]));
+      expect(fetchImpl.mock.calls[0][1].headers).toBeUndefined();
+      expect(fetchImpl.mock.calls[1][1].headers).toEqual({
+        Range: 'bytes=3-',
+        'If-Range': '"v1"',
+      });
+      const percents = onProgress.mock.calls.map(([event]) => event.percent);
+      expect(percents).toEqual([...percents].sort((a, b) => a - b));
+      expect(percents.at(-1)).toBe(100);
+    });
+
+    it('uses a full response when the server ignores the range', async () => {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 3, etag: 'W/"weak"' },
+            chunks: [[9]],
+            reset: terminated(),
+          }),
+        )
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 3 },
+            chunks: [[1, 2, 3]],
+          }),
+        );
+
+      await expect(
+        downloadBuffer('https://example.test/tool', fetchImpl),
+      ).resolves.toEqual(Buffer.from([1, 2, 3]));
+      expect(fetchImpl.mock.calls[1][1].headers).toEqual({
+        Range: 'bytes=1-',
+      });
+    });
+
+    it('discards a mismatched range and restarts from the beginning', async () => {
+      const mismatched = rangeResponse({
+        status: 206,
+        headers: { 'content-range': 'bytes 0-2/3' },
+        chunks: [[1, 2, 3]],
+      });
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 3 },
+            chunks: [[1]],
+            reset: terminated(),
+          }),
+        )
+        .mockResolvedValueOnce(mismatched)
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 3 },
+            chunks: [[1, 2, 3]],
+          }),
+        );
+
+      await expect(
+        downloadBuffer('https://example.test/tool', fetchImpl),
+      ).resolves.toEqual(Buffer.from([1, 2, 3]));
+      expect(mismatched.body.cancel).toHaveBeenCalledOnce();
+      expect(fetchImpl.mock.calls[2][1].headers).toBeUndefined();
+    });
+
+    it('retries a failed resume request and gives up with the original error', async () => {
+      const lastReset = terminated();
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(
+          rangeResponse({
+            headers: { 'content-length': 4 },
+            chunks: [[1]],
+            reset: terminated(),
+          }),
+        )
+        .mockRejectedValueOnce(new Error('ECONNRESET'))
+        .mockResolvedValueOnce(
+          rangeResponse({
+            status: 206,
+            headers: { 'content-range': 'bytes 1-3/4' },
+            chunks: [[2]],
+            reset: terminated(),
+          }),
+        )
+        .mockResolvedValueOnce(
+          rangeResponse({
+            status: 206,
+            headers: { 'content-range': 'bytes 2-3/4' },
+            chunks: [[3]],
+            reset: lastReset,
+          }),
+        );
+
+      await expect(
+        downloadBuffer('https://example.test/tool', fetchImpl),
+      ).rejects.toBe(lastReset);
+      expect(fetchImpl).toHaveBeenCalledTimes(4);
+      expect(fetchImpl.mock.calls[3][1].headers).toEqual({
+        Range: 'bytes=2-',
+      });
+    });
+  });
+
   it('downloads and trims dependency metadata', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
