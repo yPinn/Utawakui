@@ -33,27 +33,14 @@ missing runtime instead of substituting another package manager.
 
 ```bash
 npm run dev
-npm run dev:tools
-npm run dev:pseudo
 npm run build
-npm start
-npm run dist:dir
-npm run dist
-npm run dist:release
-npm run release:verify-version
-npm run release:verify-artifacts
-npm run lint
-npm run lint:fix
-npm run lint:md
-npm run format
-npm run format:check
+npm run check
 npm test
-npm run test:watch
-npm run test:coverage
-npm run perf:startup
-npm run license:inventory
-npm run clean
+npm run package
 ```
+
+See the [command guide](scripts/README.md) for variants, release checks and
+domain tools.
 
 ESLint, Prettier and markdownlint all read `.gitignore`; add untracked or
 generated paths there, not per tool. `.prettierignore` lists only tracked files

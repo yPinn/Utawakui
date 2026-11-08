@@ -176,15 +176,16 @@ manual line correction affect production sidecars today.
 Run the synthetic baseline with:
 
 ```text
-npm run lyrics:evaluate-readings -- scripts/fixtures/lyrics-reading-evaluation/synthetic-baseline.json .benchmarks/lyrics-reading/synthetic-baseline-report.json
+node scripts/lyrics-reading-evaluation.mjs scripts/fixtures/lyrics-reading-evaluation/synthetic-baseline.json .benchmarks/lyrics-reading/synthetic-baseline-report.json
 ```
 
 Prepare a private local review corpus from an explicitly selected Utawakui
-library with:
+library. Set `$libraryDirectory` to the library you want to sample.
 
 ```powershell
+$libraryDirectory = 'C:\Path\To\UtawakuiLibrary'
 $readingCorpusPath = Join-Path $env:LOCALAPPDATA 'Utawakui\private-benchmarks\lyrics-reading\local-corpus-v1.json'
-npm run lyrics:prepare-reading-corpus -- <library-directory> $readingCorpusPath --limit 200
+node scripts/lyrics-reading-local-corpus.mjs $libraryDirectory $readingCorpusPath --limit 200
 ```
 
 The output file must not already exist, must be outside the library, and must be
@@ -200,7 +201,7 @@ analyzer-addressable classification before it can be compiled into a benchmark.
 Review the private corpus without editing JSON by hand:
 
 ```text
-npm run lyrics:review-readings
+node scripts/lyrics-reading-review-cli.mjs
 ```
 
 The first run creates `local-reviews-v1.json` beside the immutable source corpus
@@ -239,9 +240,9 @@ rebuilt and read back again. The following non-interactive commands emit counts
 only and do not print lyric text:
 
 ```text
-npm run lyrics:review-readings -- status
-npm run lyrics:review-readings -- undo
-npm run lyrics:review-readings -- export
+node scripts/lyrics-reading-review-cli.mjs status
+node scripts/lyrics-reading-review-cli.mjs undo
+node scripts/lyrics-reading-review-cli.mjs export
 ```
 
 `undo` returns the most recently decided case to pending. `export` writes the
@@ -271,7 +272,7 @@ durable product status must cite a reviewed report rather than committing
 machine-specific timing as architecture.
 
 The built-in timing and memory values describe the development evaluator. After
-building `dist` and `dist:dir`, run the packaged worker benchmark from PowerShell:
+building with `npm run package` or `npm run package:unpacked`, run the packaged worker benchmark from PowerShell:
 
 ```powershell
 $env:ELECTRON_RUN_AS_NODE = '1'

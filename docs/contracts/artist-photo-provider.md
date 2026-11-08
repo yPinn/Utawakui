@@ -175,7 +175,7 @@ manual path passes verification even if automatic apply never ships.
 
 Release verification includes focused Node and Python tests, preload／IPC
 allowlist tests, artist-photo sidecar migration and race tests, runtime manifest
-and license inventory, production build, `dist:dir`, packaged worker path／spawn
+and license inventory, production build, `npm run package:unpacked`, packaged worker path／spawn
 smoke, and a full Electron restart after Main／preload changes. Manual acceptance
 covers missing-photo entry visibility, keyboard and focus behavior, deep／light
 themes, candidate selection, apply refresh, no-match, gate-disabled, offline and

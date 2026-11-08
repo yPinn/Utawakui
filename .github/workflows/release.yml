@@ -81,7 +81,7 @@ jobs:
       - name: License inventory
         run: npm run license:inventory
 
-      - run: npm run commitlint
+      - run: npm run lint:commit
       - run: npm run lint
       - run: npm run format:check
       - run: npm run lint:md
@@ -132,7 +132,7 @@ jobs:
         run: npm run electron:install
 
       - name: Build unsigned updater bundle
-        run: npm run dist
+        run: npm run package
 
       - name: Verify unsigned updater bundle and create checksum
         shell: pwsh

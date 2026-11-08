@@ -82,7 +82,7 @@ OBS官方[Browser Source說明](https://obsproject.com/kb/browser-source)定義�
 
 ## 重跑 F1 基線
 
-執行 `npm run output:baseline`；預期 `ok: true`、`templates: 9`、`scenarios: 32`、`issues: []`。
+執行 `npm run output:verify`，預期 `ok: true`、`templates: 11`、`scenarios: 32`、`issues: []`。
 執行 `npm exec -- vitest run scripts/outputAppearanceBaseline.test.mjs` 檢查固定資料、跨入口設定與純投影契約。
 在 Windows 受限環境遇到既有檔案 rename 的 EPERM，依既有測試慣例把 TEMP／TMP 指到工作區內獨立 tasks 目錄重跑；不要改正式存檔語意來消除環境錯誤。
 
@@ -189,7 +189,7 @@ Kinetic 在可見驗證發現的固定第一句問題已改用當前 canonical p
 在 repository 根目錄完成 `npm ci` 後，於可開啟桌面視窗的 Windows 環境執行：
 
 ```powershell
-npm run output:baseline
+npm run output:verify
 npm run output:audit -- --list
 npm run output:audit
 npm run output:audit -- --template art-card,cover-player --scenario empty,missing-artwork

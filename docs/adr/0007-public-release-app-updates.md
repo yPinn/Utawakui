@@ -164,7 +164,7 @@ pinned to `electron-updater@6.8.11` to match electron-builder 26.
 
 ### Release workflow
 
-Normal `npm run dist`, `dist:dir`, and release builds explicitly pass
+Normal `npm run package`, `npm run package:unpacked`, and release builds explicitly pass
 `--publish never`. Stable version tags run an unsigned review workflow that
 validates and packages the complete updater bundle as a private CI artifact.
 The protected release workflow remains manual-only and publishes only after

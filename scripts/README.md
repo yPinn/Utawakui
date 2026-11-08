@@ -1,24 +1,31 @@
 # 開發工具入口
 
-常用命令由根目錄 `package.json` 維護；本頁說明用途與額外手動工具。請在專案根目錄執行，使用 npm。產品現況見[規格](../docs/spec.md)，研究結論見[研究索引](../docs/research/README.md)。
+請在專案根目錄使用 npm。`npm run` 可列出全部入口。常用動作使用短名，例如 `dev`、`check`、`package`；同類操作以冒號分組，例如 `test:watch`、`package:unpacked`、`release:verify-installed`。多字名稱用連字號。
 
-## 常用命令
+## 日常開發
 
-| 用途           | 入口                                                                                                                                         | 說明                                                                                                          |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| 開發與建置     | `npm run dev`、`npm run dev:tools`、`npm run build`、`npm run build:runtime`                                                                 | 桌面啟動、renderer 建置與獨立正式 runtime；electron-builder beforePack 會自動重建 runtime                     |
-| 程式與文件檢查 | `npm run lint`、`npm run lint:md`、`npm run format:check`                                                                                    | 檢查程式、Markdown 與格式                                                                                     |
-| 自動測試       | `npm test`、`npm run test:coverage`                                                                                                          | scripts 下的 Vitest 測試由 runtime project 收集；coverage 命令另執行 ratchet                                  |
-| 啟動與視窗量測 | `npm run perf:startup`、`npm run test:settings-layout`                                                                                       | 後者先建置，再由 Node launcher 啟動 Electron probe                                                            |
-| Output         | `npm run output:baseline`、`npm run output:audit`                                                                                            | 固定資料契約與外觀稽核；操作見[外觀驗收](../docs/operations/output-appearance-acceptance.md)                  |
-| 音樂分析       | `npm run analysis:benchmark-real -- <config.json>`                                                                                           | 同一 runner 依 config 處理 M2、BPM 計分及 BPM runtime smoke                                                   |
-| 分析計分       | `npm run analysis:evaluate-bpm -- …`、`npm run analysis:evaluate -- …`                                                                       | BPM 與 M2 使用不同參考資料及門檻，見[音樂分析契約](../docs/contracts/music-analysis.md#執行評估)              |
-| 歌詞來源評估   | `npm run lyrics:prepare-provider-corpus`、`npm run lyrics:review-provider-corpus`、`npm run lyrics:evaluate-providers`                       | 私有語料準備、人工審核與評估，見[語料契約](../docs/contracts/lyrics-provider-evaluation-corpus.md)            |
-| Provider 契約  | `npm run lyrics:contracts -- replay lrclib`                                                                                                  | 亦可回放 `netease`；`record` 會存取外部服務，見[操作手冊](../docs/operations/lyrics-provider-contracts.md)    |
-| 歌詞讀音評估   | `npm run lyrics:prepare-reading-corpus`、`npm run lyrics:review-readings`、`npm run lyrics:evaluate-readings`                                | 本機語料、人工審核與計分，見[讀音品質契約](../docs/contracts/lyrics-reading-quality-contract.md)              |
-| 授權清單       | `npm run license:inventory`、`npm run license:verify`、`npm run license:write`                                                               | inventory／驗證／重建 notices；`afterPackThirdPartyNotices.cjs` 由 builder 呼叫                               |
-| 發行           | `npm run dist:dir`、`npm run dist`、`npm run release:verify-version`、`npm run release:verify-artifacts`、`npm run release:verify-installed` | 操作及可選簽署流程見[發行手冊](../docs/operations/release-runbook.md)                                         |
-| 可重建產物清理 | `npm run clean`                                                                                                                              | 清除 dist、coverage、Vite cache 與 release 目錄；先確認沒有仍在使用的封裝或驗證產物。研究資料與模型須另行核對 |
+- `npm run dev` 啟動桌面開發環境。`npm run dev:tools` 同時開啟 Chromium DevTools，`npm run dev:pseudo` 以假語系檢查翻譯版面。
+- `npm run check` 依序檢查程式碼、Markdown 與格式。也可單跑 `npm run lint`、`npm run lint:md` 或 `npm run format:check`。需要套用修正時用 `npm run lint:fix` 或 `npm run format`。
+- `npm test` 執行自動測試。`npm run test:watch` 持續監看變更，`npm run test:coverage` 加上覆蓋率門檻。
+- `npm run build` 建置 renderer。`npm start` 建置後啟動桌面程式。
+- `npm run clean` 清除可重建的建置、覆蓋率、Vite 快取與封裝產物。執行前先確認沒有仍在使用的封裝或驗證產物。
+
+## 封裝、CI 與發版
+
+- `npm run electron:install` 準備鎖定版本的 Electron 執行檔。`npm run build:runtime` 可獨立重建正式 runtime，封裝時也會自動重建。
+- `npm run package` 產生未簽署的 Windows 安裝與更新檔。`npm run package:unpacked` 只產生可直接啟動的目錄。`npm run package:signing` 啟用選用的 Authenticode 簽署設定。三個入口都只產出本機檔案。
+- `npm run release:verify-version`、`npm run release:verify-artifacts`、`npm run release:verify-installed` 分別檢查版號、發版產物及實際安裝。參數與流程見[發行手冊](../docs/operations/release-runbook.md)。
+- `npm run lint:commit` 檢查最近一筆 commit。CI 的提交範圍與 `audit:prod`、`audit:all`、`audit:runtime` 執行條件見 [CI 手冊](../docs/operations/ci-usage.md)。
+- `npm run license:inventory` 產生依賴清單。`npm run license:verify` 驗證第三方聲明，`npm run license:write` 重建聲明。
+
+## 專項驗證與評估
+
+- `npm run perf:startup` 量測啟動效能。`npm run test:settings-layout` 先建置，再透過 Electron 驗證設定視窗版面。
+- `npm run output:verify` 唯讀檢查 Output 固定基線。`npm run output:audit` 執行外觀稽核，參數見[外觀驗收](../docs/operations/output-appearance-acceptance.md)。
+- `npm run i18n:update-baseline` 更新介面字串檢查基線。
+- `npm run analysis:benchmark -- <config.json>` 依設定檔執行 M2、BPM 計分或 BPM runtime smoke。單獨計分見[音樂分析契約](../docs/contracts/music-analysis.md#執行評估)。
+- `npm run lyrics:contracts -- replay lrclib` 回放 Provider 契約。亦可回放 `netease`，`record` 會存取外部服務。操作見 [Provider 契約手冊](../docs/operations/lyrics-provider-contracts.md)。
+- 私有歌詞語料的準備、審核與計分由各工具直接執行。參數及範例見[來源語料契約](../docs/contracts/lyrics-provider-evaluation-corpus.md#candidate-preparation)與[讀音品質契約](../docs/contracts/lyrics-reading-quality-contract.md#cli-and-artifacts)。
 
 ## 手動與研究工具
 
@@ -50,4 +57,4 @@ Windows 快捷鍵 helper 可用 `node scripts/build-keyboard-shortcut-helper.mjs
 - `*.test.mjs` 由 `vite.config.js` 收集；`*.test.py`／`*_test.py` 與 NetEase 的 `dependency-security.test.cjs` 需要各自的 Python／Node test runner，不能以「npm test 沒收集」判定棄用。獨立 NetEase 測試的準備與執行命令寫在該檔開頭。
 - `outputAppearanceAudit.mjs`／`outputPerformanceProbe.mjs` 是共用實作，帶連字號的對應檔案是 CLI；Settings 的 `.mjs`／`.cjs` 則分別執行於 Node／Electron。這些不是重複副本。
 
-新增工具時優先沿用既有領域入口；只有會反覆手動使用的頂層流程才增加 npm 指令。變更檔案位置前，須同時核對 import、子程序路徑、測試收集、CI、source hash 綁定與封裝 allowlist。
+新增工具時優先沿用既有領域入口。會反覆手動使用或由 CI 共用的流程才增加 npm 指令。變更檔案位置前，須同時核對 import、子程序路徑、測試收集、CI、source hash 綁定與封裝 allowlist。

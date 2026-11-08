@@ -79,9 +79,9 @@ describe('runtime configuration boundaries', () => {
 
     expect(packageJson.devDependencies.electron).toBe('^43.7.8');
     expect(packageLock.packages['node_modules/electron'].version).toBe(
-      '43.8.3',
+      '43.8.7',
     );
-    expect(builder.electronVersion).toBe('43.8.3');
+    expect(builder.electronVersion).toBe('43.8.7');
     expect(builder.electronFuses).toEqual({
       runAsNode: true,
       enableNodeOptionsEnvironmentVariable: false,

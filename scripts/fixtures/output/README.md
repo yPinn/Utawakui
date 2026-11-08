@@ -15,7 +15,7 @@ Presentation Pack. The application must not import or serve this directory.
   personal images, metadata or external artwork. It uses the repository's own
   fixture permissions; it is not a third-party asset or a user image import.
 
-Run `npm run output:baseline` for the read-only structural check, and
+Run `npm run output:verify` for the read-only structural check, and
 `npm exec -- vitest run scripts/outputAppearanceBaseline.test.mjs` for contract
 tests across the existing consumers. Never regenerate the pinned expectations
 automatically merely to make a changed implementation pass.

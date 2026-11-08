@@ -3,28 +3,28 @@
   "packages": [
     {
       "path": "node_modules/onnxruntime-node",
-      "version": "1.30.0",
+      "version": "1.31.1",
       "files": [
         {
           "path": "upstream/onnx-license.txt",
           "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
-          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.1/LICENSE"
         },
         {
           "path": "upstream/onnx-notices.txt",
           "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
-          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt"
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.1/ThirdPartyNotices.txt"
         }
       ]
     },
     {
       "path": "node_modules/onnxruntime-common",
-      "version": "1.30.0",
+      "version": "1.31.1",
       "files": [
         {
           "path": "upstream/onnx-license.txt",
           "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
-          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.1/LICENSE"
         }
       ]
     },
@@ -112,7 +112,7 @@
       "version": "1.15.4",
       "owner": {
         "path": "node_modules/onnxruntime-node",
-        "version": "1.30.0"
+        "version": "1.31.1"
       },
       "note": "EULA and accompanying notices from the official NuGet 1.15.4 package. ONNX Runtime uses a differently signed build with the same PE payload; provenance is recorded in the repair report.",
       "files": [
@@ -136,17 +136,17 @@
         {
           "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
           "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
-          "sha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625"
+          "sha256": "d16be72fa002dd610cca93e376f0ef44865dfce43de4b7bf9738af22534f7a9d"
         },
         {
           "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
           "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
-          "sha256": "508c362f5673483dd3a086379c392795b2e42d10d5e6f3f90ebd7ac21c97af67"
+          "sha256": "beb6e1edba0e74c132453fe4df113da2ea2b99ef8ea7dfc25696a872efd11c45"
         },
         {
           "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
           "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
-          "sha256": "ddd428464069b84414d34ec1796c7c2a69c33a976e4b0390692629e394f92fa1"
+          "sha256": "8d9f996ff7dcc60c4899aa87aa7abe07d806f9c314882f44a001d0fd8a23d16f"
         }
       ]
     },

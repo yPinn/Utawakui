@@ -47,7 +47,7 @@ describe('UI literal ratchet', () => {
   it('adds no hardcoded UI text beyond the baseline', () => {
     const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'));
     // Move new text to shared/locales and read it with t() (AGENTS.md
-    // "UI Text And Locale"). Lower counts: npm run i18n:baseline.
+    // "UI Text And Locale"). Lower counts: npm run i18n:update-baseline.
     expect(evaluateUiLiterals(measureUiLiterals(), baseline)).toEqual([]);
   });
 });

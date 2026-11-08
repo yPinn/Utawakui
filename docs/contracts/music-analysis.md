@@ -93,13 +93,13 @@ LinkSeg 與 Hybrid-Net 因 checkpoint 權利與 Windows 封裝證據較弱而不
 
 ## 執行評估
 
-範本：[BPM 語料](music-analysis-bpm-benchmark-template.json)、[BPM 計分 run config](music-analysis-bpm-run-config-template.json)、[BPM runtime smoke](music-analysis-bpm-smoke-run-config-template.json)、[M2 語料](music-analysis-m2-benchmark-template.json)。先複製到 ignored 目錄再填寫。
+範本：[BPM 語料](music-analysis-bpm-benchmark-template.json)、[BPM 計分 run config](music-analysis-bpm-run-config-template.json)、[BPM runtime smoke](music-analysis-bpm-smoke-run-config-template.json)、[M2 語料](music-analysis-m2-benchmark-template.json)。先複製到 `tasks/` 等忽略目錄再填寫，執行時依實際檔名和輸出位置調整路徑。
 
 ```powershell
-npm run analysis:benchmark-real -- tasks/<run-config>.json     # schema v2 計分或 v3 smoke
-npm run analysis:evaluate-bpm -- tasks/<corpus>.json tasks/<results>/bpm-predictions.json tasks/<report>.json
-npm run analysis:benchmark-real -- tasks/<m2-run>.json          # 可加 --case <id>、--force
-npm run analysis:evaluate -- tasks/<m2-real>.json tasks/<m2-report>.json
+npm run analysis:benchmark -- tasks/bpm-run-config.json   # schema v2 計分或 v3 smoke
+node scripts/music-analysis-bpm-evaluation.mjs tasks/bpm-corpus.json tasks/bpm-results/bpm-predictions.json tasks/bpm-report.json
+npm run analysis:benchmark -- tasks/m2-run-config.json    # 可加 --case <id>、--force
+node scripts/music-analysis-evaluation.mjs tasks/m2-corpus.json tasks/m2-report.json
 ```
 
 - Run config 把不透明 case id 對應到目前曲庫的 trackId 與毫秒長度；runner 只接受內建的 small0／final0 manifest，逐首解碼暫存 WAV 並刪除，cache 綁定音訊、worker、profile 與模型。BPM 計分不接受 `--case`，因為部分結果無法對上整份語料。比較 `final0` 時只改 `outputRoot`、`modelManifestPath`、`modelPath`，結果分開存放。

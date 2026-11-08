@@ -36,17 +36,19 @@ Utawakui 以本機曲庫與播放器為核心，將歌單、排練、演出安�
 
 ```bash
 npm install
+npm run electron:install
 npm run dev
 ```
 
-`npm install` 只準備 JavaScript dependencies。Provider runtime、FFmpeg 與音訊
+`npm install` 準備 JavaScript 依賴，`npm run electron:install` 準備桌面執行檔。Provider runtime、FFmpeg 與音訊
 模型由應用程式在對應功能啟用後，從 Settings 個別準備；它們不是預設開發依賴。
 
 `npm run dev` 啟動 Vite 與 Electron；若選擇系統匣背景執行，需從系統匣完整結束
 才會停止 dev server。需要 Chromium DevTools 時使用 `npm run dev:tools`。
 
-建置、測試、檢查與量測命令集中在 [scripts 導覽](scripts/README.md)；
-發布維護工具見 [tools 導覽](tools/README.md)，發行步驟見[發行手冊](docs/operations/release-runbook.md)。
+`npm run check` 檢查程式碼、Markdown 與格式，`npm test` 執行自動測試。
+更多開發與封裝命令見[指令導覽](scripts/README.md)，發行步驟見[發行手冊](docs/operations/release-runbook.md)。
+發行維護工具另見 [tools 導覽](tools/README.md)。
 
 ## 專案結構
 

@@ -5,7 +5,7 @@
 ## 權威
 
 - 執行時由 [outputAppearance.mjs](../../shared/outputAppearance.mjs)、[模板 registry](../../shared/outputTemplateValues.json)、[timing 能力](../../shared/presentation/lyricsTemplateCapabilities.mjs) 與 main／Overlay 驗證決定。Main 在儲存邊界驗證、renderer 依模板欄位清單產生控制、Browser Source 再次正規化後才投影為 `--ovl-*`。
-- [固定基線](../../scripts/fixtures/output/appearance-baseline.json)是測試期望，不是第二套 runtime 設定；改能力時須明確審閱基線差異。`npm run output:baseline` 唯讀核對，不啟動 App 或 OBS。
+- [固定基線](../../scripts/fixtures/output/appearance-baseline.json)是測試期望，不是第二套 runtime 設定；改能力時須明確審閱基線差異。`npm run output:verify` 唯讀核對，不啟動 App 或 OBS。
 - CSS layer 順序：`ovl-reset`、`ovl-fallback`、`ovl-semantic`、`ovl-template`、`ovl-appearance`、`ovl-constraints`，四個 HTML route 以相同順序載入。Fallback 是內建復原基線，不是 Style Set。
 - 沒有全域主題或跨模板同步。最近／常用色票只是選色工具。切模板時，仍等於舊預設的值跟隨新模板預設，合法自訂值依既有 carry 規則與正規化決定是否保留。
 

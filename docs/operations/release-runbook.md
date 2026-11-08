@@ -35,6 +35,14 @@ Current public／working-tree versions and remaining acceptance are maintained i
 [the product spec](../spec.md#3-功能現況); record each actual upgrade using the
 [acceptance template](update-acceptance-template.md).
 
+## Local Packaging Commands
+
+Starting with the v0.5.3 source tree, use `npm run package` to build the installer
+and update files, `npm run package:unpacked` to build a runnable directory, and
+`npm run package:signing` to enable optional Authenticode signing. The signing
+option uses local credentials when available. See the [command guide](../../scripts/README.md)
+for the development and verification commands.
+
 ## Pull Request And Main CI
 
 `.github/workflows/ci.yml` runs for pull requests, pushes to `main`, and manual
@@ -48,7 +56,7 @@ the continuous dependency signal.
 
 After that job passes, `windows-package` uses a GitHub-hosted Windows runner only
 for manual diagnostics or changes that can affect the packaged application. It
-builds the full NSIS/update bundle with `npm run dist` and calls
+builds the full NSIS/update bundle with `npm run package` and calls
 `scripts/verify-unsigned-windows-package.ps1`, which fails unless the installer
 and packaged executable are both `NotSigned`, the packaged version matches,
 required legal notices are in ASAR, and the installer/blockmap/`latest.yml`
@@ -239,7 +247,7 @@ before the update path is treated as fully accepted.
 
 ## Authenticode Policy
 
-`npm run dist:release` exposes the signing-capable package configuration, but the
+`npm run package:signing` exposes the signing-capable package configuration, but the
 current public workflow deliberately builds unsigned artifacts. The owner accepts
 this as the current product boundary and has no plan to purchase a trusted
 Authenticode certificate; it is not a release blocker or an incomplete roadmap

@@ -14,7 +14,7 @@ appId: com.utawakui.app
 productName: Utawakui
 # Keep packaging deterministic even if a developer checkout has an older
 # Electron distribution locked by a running dev session.
-electronVersion: 43.8.3
+electronVersion: 43.8.7
 afterPack: scripts/afterPackThirdPartyNotices.cjs
 beforePack: scripts/beforePackReleaseRuntime.cjs
 extraMetadata:
@@ -237,7 +237,7 @@ win:
   # product code must use main/runtimeEnvironment.js's app.asar detector.
   executableName: electron
   # Normal local builds and the active public release workflow remain unsigned.
-  # The optional dist:release maintainer command can still override this for a
+  # The optional package:signing maintainer command can still override this for a
   # future signing experiment. This does not skip icon/version-info resource
   # editing (signAndEditExecutable is a separate flag).
   signExecutable: false

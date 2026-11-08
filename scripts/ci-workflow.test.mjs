@@ -196,8 +196,8 @@ describe('ordinary CI workflow', () => {
     expect(packageJob).not.toHaveProperty('environment');
 
     const serializedJob = JSON.stringify(packageJob);
-    expect(serializedJob).toContain('npm run dist');
-    expect(serializedJob).not.toContain('npm run dist:release');
+    expect(serializedJob).toContain('npm run package');
+    expect(serializedJob).not.toContain('npm run package:signing');
     expect(serializedJob).toContain(
       'scripts/verify-unsigned-windows-package.ps1',
     );
@@ -216,7 +216,7 @@ describe('ordinary CI workflow', () => {
     expect(evidenceUpload?.with?.path).toBe('release-evidence/');
     expect(evidenceUpload?.with?.['retention-days']).toBe(7);
     for (const command of [
-      'npm run dist',
+      'npm run package',
       'scripts/verify-unsigned-windows-package.ps1',
       'scripts/windows-installed-acceptance.ps1',
     ]) {

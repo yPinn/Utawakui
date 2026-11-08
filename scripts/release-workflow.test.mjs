@@ -178,7 +178,14 @@ describe('release workflow', () => {
       'scripts/verify-unsigned-windows-package.ps1',
     );
 
-    expect(packageJson.scripts.dist).toContain('--publish never');
+    const localCommands = packageJson.scripts;
+    expect(localCommands.package).toContain('--publish never');
+    expect(localCommands.package).not.toMatch(/--dir\b|signExecutable/u);
+    expect(localCommands['package:unpacked']).toContain(
+      '--dir --publish never',
+    );
+    expect(localCommands['package:signing']).toContain('--publish never');
+    expect(localCommands['package:signing']).toContain('signExecutable=true');
     expect(packageCommands).toContain('Build unsigned updater bundle');
     expect(packageCommands).toContain(
       'scripts/verify-unsigned-windows-package.ps1',
@@ -311,7 +318,17 @@ describe('release workflow', () => {
         indexOf('npm ci'),
       );
       expect(indexOf('npm run electron:install')).toBeLessThan(
-        indexOf('npm run dist'),
+        indexOf('npm run package'),
+      );
+    },
+  );
+
+  it.each(['public-test-release.yml', 'release.yml'])(
+    'uses the commit lint entry point in %s',
+    (filename) => {
+      const { steps } = readWorkflow(filename).jobs.validate;
+      expect(steps.some((step) => step.run === 'npm run lint:commit')).toBe(
+        true,
       );
     },
   );

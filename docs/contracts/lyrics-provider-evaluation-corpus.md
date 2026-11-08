@@ -69,7 +69,7 @@ or directly create the runnable corpus.
 Run the read-only official-source smoke with:
 
 ```text
-npm run lyrics:prepare-provider-corpus -- --smoke
+node scripts/lyrics-provider-corpus-prepare-cli.mjs --smoke
 ```
 
 It selects one deterministic seed per stratum, reads at most one MusicBrainz page
@@ -96,7 +96,7 @@ long-tail control. This fallback never expands the 40-case human-review pool.
 Initialize the separate private review manifest after candidate preparation:
 
 ```text
-npm run lyrics:review-provider-corpus -- init
+node scripts/lyrics-provider-corpus-review-cli.mjs init
 ```
 
 This command reads only the fixed ignored `candidates.json`, validates its complete
@@ -156,7 +156,7 @@ readable for audit but are not exportable as the current pilot.
 After all 40 reviews are approved, export with:
 
 ```text
-npm run lyrics:review-provider-corpus -- export
+node scripts/lyrics-provider-corpus-review-cli.mjs export
 ```
 
 The command uses only fixed private paths, bounded JSON reads, private no-overwrite
@@ -300,7 +300,7 @@ headers, or cookies from the corpus or command line. Run the private 40-case
 corpus with:
 
 ```text
-npm run lyrics:evaluate-providers -- <corpus.json> <report.json>
+node scripts/lyrics-provider-corpus-cli.mjs <corpus.json> <report.json>
 ```
 
 The committed two-case fixture is accepted only with an explicit final

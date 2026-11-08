@@ -182,7 +182,7 @@ jobs:
 
       - name: Build unsigned Windows updater bundle
         if: needs.build.outputs.windows-package == 'true'
-        run: npm run dist
+        run: npm run package
 
       - name: Verify ephemeral unsigned package
         if: needs.build.outputs.windows-package == 'true'

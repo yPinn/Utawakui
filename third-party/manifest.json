@@ -135,13 +135,13 @@
     {
       "path": "node_modules/@lucide/vue",
       "name": "@lucide/vue",
-      "version": "1.69.0",
-      "integrity": "sha512-uxR2FtureNe37HOQk/e92CZjlTjXVuNiYlD60Mgns0rmbs0wqDnHDgZPUooP6nvmFn/v7Ie6dKRKPzgR6HW5Tw==",
+      "version": "1.70.0",
+      "integrity": "sha512-kutUu3oEtfQnyaP6hh76ShG2dxa8PiL6uY3rk3DqclQe0Vd2FtPlnclezR0XMQtlFMPiEaCOXDSuhehFHW5ErQ==",
       "files": [
         {
           "path": "node_modules/@lucide/vue/LICENSE",
           "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
-          "source": "https://registry.npmjs.org/@lucide/vue/-/vue-1.69.0.tgz"
+          "source": "https://registry.npmjs.org/@lucide/vue/-/vue-1.70.0.tgz"
         }
       ]
     },
@@ -369,13 +369,13 @@
     {
       "path": "node_modules/argparse",
       "name": "argparse",
-      "version": "2.0.1",
-      "integrity": "sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==",
+      "version": "3.0.4",
+      "integrity": "sha512-fwWK3Zq22l4XJJjx5mcBHGikIk+hJqO+32dPm0Jur7+rtG5x1scOjSfdT9ZKeWHPpsya/l0HHK4tDImBkTrtvA==",
       "files": [
         {
           "path": "node_modules/argparse/LICENSE",
-          "sha256": "de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23",
-          "source": "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"
+          "sha256": "ab745c5061d1dea43a3885e5b4b6befc7e983954954775c5736debeefcdfd89b",
+          "source": "https://registry.npmjs.org/argparse/-/argparse-3.0.4.tgz"
         }
       ]
     },
@@ -493,6 +493,19 @@
           "path": "node_modules/electron-updater/LICENSE",
           "sha256": "bed8d0ab3e6031817f775a641ff37313b0f5591bc8ba0ed79b978dafbd4231ce",
           "source": "https://registry.npmjs.org/electron-updater/-/electron-updater-6.8.11.tgz"
+        }
+      ]
+    },
+    {
+      "path": "node_modules/electron-updater/node_modules/argparse",
+      "name": "argparse",
+      "version": "2.0.1",
+      "integrity": "sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==",
+      "files": [
+        {
+          "path": "node_modules/electron-updater/node_modules/argparse/LICENSE",
+          "sha256": "de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23",
+          "source": "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"
         }
       ]
     },
@@ -629,13 +642,13 @@
     {
       "path": "node_modules/global-agent",
       "name": "global-agent",
-      "version": "4.1.6",
-      "integrity": "sha512-V9u791atI/bS7RryfRTK2oixDWo6/RCrIikjwuQ4kADPRZZml1C6LUJXc7y6qRhaAF8geo3bIvE/siAGJCw38A==",
+      "version": "4.1.7",
+      "integrity": "sha512-pxaZqdsMwPA4i7TuRKpDUONm2xGRjvYdRoidCQz7VleUKVuUfh/4p5Q3QDTGrpAE5Kz5TxxcZ+uqEgTkoKRNtg==",
       "files": [
         {
           "path": "node_modules/global-agent/LICENSE",
           "sha256": "2aabdab5d0ce03a7314def8222988c2da4ba593ae82ae312439e5e306001dbae",
-          "source": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.6.tgz"
+          "source": "https://registry.npmjs.org/global-agent/-/global-agent-4.1.7.tgz"
         }
       ]
     },
@@ -740,19 +753,6 @@
           "path": "node_modules/js-yaml/LICENSE",
           "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
           "source": "https://registry.npmjs.org/js-yaml/-/js-yaml-5.5.0.tgz"
-        }
-      ]
-    },
-    {
-      "path": "node_modules/js-yaml/node_modules/argparse",
-      "name": "argparse",
-      "version": "3.0.4",
-      "integrity": "sha512-fwWK3Zq22l4XJJjx5mcBHGikIk+hJqO+32dPm0Jur7+rtG5x1scOjSfdT9ZKeWHPpsya/l0HHK4tDImBkTrtvA==",
-      "files": [
-        {
-          "path": "node_modules/js-yaml/node_modules/argparse/LICENSE",
-          "sha256": "ab745c5061d1dea43a3885e5b4b6befc7e983954954775c5736debeefcdfd89b",
-          "source": "https://registry.npmjs.org/argparse/-/argparse-3.0.4.tgz"
         }
       ]
     },
@@ -1003,31 +1003,31 @@
     {
       "path": "node_modules/onnxruntime-common",
       "name": "onnxruntime-common",
-      "version": "1.30.0",
-      "integrity": "sha512-7fdVWjAID1dVhH/G8qK3APARunV4VkBFoCQAP7qp4Wkab0mrorvmc+sqiT+mKXOzDqdjN5j+/Z9nb4gzNPWcyA==",
+      "version": "1.31.1",
+      "integrity": "sha512-F+nnYNiQtmNJ95V6R/isBJqiVpdANCrsMEg1OaF+Bkbl3GAtzWLR7Ng17Ld0QtYtYJyotOHPJzOQn1Y6PLZjpg==",
       "files": [
         {
           "path": "third-party/upstream/onnx-license.txt",
           "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
-          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.1/LICENSE"
         }
       ]
     },
     {
       "path": "node_modules/onnxruntime-node",
       "name": "onnxruntime-node",
-      "version": "1.30.0",
-      "integrity": "sha512-twhs1C2C/BFkz1yc5OY0KIU2GUq6DURO7hD4bx5Q2Qy3nAMJwRXW8xU3NVczE29VA9lolLOYepoD8fjTGOfIqw==",
+      "version": "1.31.1",
+      "integrity": "sha512-ijnSghbDHVWaQ2nDPmVccPlCHI8kH1Mx1aJ4a/qzRP16bBcVs4E3EqZQKZCkhWnbqN1tuQWxagimFtDpbPYYQw==",
       "files": [
         {
           "path": "third-party/upstream/onnx-license.txt",
           "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
-          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE"
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.1/LICENSE"
         },
         {
           "path": "third-party/upstream/onnx-notices.txt",
           "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
-          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt"
+          "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/v1.31.1/ThirdPartyNotices.txt"
         }
       ]
     },
@@ -1316,7 +1316,7 @@
       "version": "1.15.4",
       "owner": {
         "path": "node_modules/onnxruntime-node",
-        "version": "1.30.0"
+        "version": "1.31.1"
       },
       "note": "EULA and accompanying notices from the official NuGet 1.15.4 package. ONNX Runtime uses a differently signed build with the same PE payload; provenance is recorded in the repair report.",
       "files": [
@@ -1340,17 +1340,17 @@
         {
           "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
           "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
-          "sha256": "234e8898778cdec88d3cb0539508273494082812c968699f3de665a018971625"
+          "sha256": "d16be72fa002dd610cca93e376f0ef44865dfce43de4b7bf9738af22534f7a9d"
         },
         {
           "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
           "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime.dll",
-          "sha256": "508c362f5673483dd3a086379c392795b2e42d10d5e6f3f90ebd7ac21c97af67"
+          "sha256": "beb6e1edba0e74c132453fe4df113da2ea2b99ef8ea7dfc25696a872efd11c45"
         },
         {
           "sourcePath": "node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
           "packagedPath": "resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64/onnxruntime_binding.node",
-          "sha256": "ddd428464069b84414d34ec1796c7c2a69c33a976e4b0390692629e394f92fa1"
+          "sha256": "8d9f996ff7dcc60c4899aa87aa7abe07d806f9c314882f44a001d0fd8a23d16f"
         }
       ]
     },
@@ -1402,7 +1402,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "e091d5f119de27a99cf6bd8fff1b0d17e9395f0a084fea8c61677c97cec25f29"
+      "sha256": "9cc76e6b818e2b736803b865ce3e6f6c075dff6f97473b77a9a03225ebb554c6"
     },
     {
       "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
@@ -1543,5 +1543,5 @@
       "sha256": "c971fa90cb787337e9df73773f3b43cd5621f035e53cded439bd927b3b759e0c"
     }
   ],
-  "noticeSha256": "d8fc7f07f276b8147e2d35688f3f50c3f614d3c92b790fd9faf7d6f9a160482c"
+  "noticeSha256": "966b23e78eab7d5b5c7b0caed83ffb175094f93b43ba1561a7353554f6b9815f"
 }
