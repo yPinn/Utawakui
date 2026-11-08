@@ -78,4 +78,80 @@ describe('private original audio bindings', () => {
       fs.rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  function countReads() {
+    const open = fs.promises.open.bind(fs.promises);
+    const reads = { count: 0 };
+    vi.spyOn(fs.promises, 'open').mockImplementation(async (...args) => {
+      const handle = await open(...args);
+      const read = handle.read.bind(handle);
+      handle.read = (...readArgs) => {
+        reads.count += 1;
+        return read(...readArgs);
+      };
+      return handle;
+    });
+    return reads;
+  }
+
+  it('reuses the digest of an unchanged file and rehashes after a change', async () => {
+    fs.mkdirSync('.tmp', { recursive: true });
+    const dir = fs.mkdtempSync(path.resolve('.tmp/binding-cache-'));
+    const file = path.join(dir, 'audio.bin');
+    try {
+      fs.writeFileSync(file, 'first');
+      const reads = countReads();
+      const first = await hashAudioFile(file);
+      const afterFirst = reads.count;
+      expect(await hashAudioFile(file)).toEqual(first);
+      expect(reads.count).toBe(afterFirst);
+
+      const check = vi.fn(() => {
+        throw Object.assign(new Error('stale scope'), { code: 'STALE' });
+      });
+      await expect(hashAudioFile(file, { check })).rejects.toMatchObject({
+        code: 'STALE',
+      });
+
+      fs.writeFileSync(file, 'second!');
+      expect((await hashAudioFile(file)).value).toBe(
+        crypto.createHash('sha256').update('second!').digest('hex'),
+      );
+      expect(reads.count).toBeGreaterThan(afterFirst);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('shares one read between concurrent callers and survives a failed share', async () => {
+    fs.mkdirSync('.tmp', { recursive: true });
+    const dir = fs.mkdtempSync(path.resolve('.tmp/binding-shared-'));
+    const file = path.join(dir, 'audio.bin');
+    try {
+      fs.writeFileSync(file, 'shared');
+      const reads = countReads();
+      const [left, right] = await Promise.all([
+        hashAudioFile(file),
+        hashAudioFile(file),
+      ]);
+      expect(left).toEqual(right);
+      // One data read plus the end-of-file read.
+      expect(reads.count).toBe(2);
+
+      fs.writeFileSync(file, 'shared again');
+      const stale = () => {
+        throw Object.assign(new Error('stale scope'), { code: 'STALE' });
+      };
+      const [failed, recovered] = await Promise.allSettled([
+        hashAudioFile(file, { check: stale }),
+        hashAudioFile(file),
+      ]);
+      expect(failed.reason).toMatchObject({ code: 'STALE' });
+      expect(recovered.value.value).toBe(
+        crypto.createHash('sha256').update('shared again').digest('hex'),
+      );
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
