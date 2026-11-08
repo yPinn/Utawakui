@@ -148,6 +148,8 @@ const {
   retryOffsetSave,
   saveTimingDocument,
   setSourceLabel,
+  forkAuthoredLyrics,
+  editAuthoredLyrics,
   deleteSource,
   importManualLyricsText,
   importManualLyricsFile,
@@ -217,7 +219,10 @@ const experimentalLyrics = useExperimentalLyrics({
   samplePlaybackClock,
   document: lyricsDocument,
   trackId: () => state.selectedTrackId,
-  filename: () => state.selectedSourceFilename,
+  filename: () =>
+    selectedSource.value?.kind === 'authored'
+      ? ''
+      : state.selectedSourceFilename,
   offsetMs: () => Math.round(state.offsetSeconds * 1000),
   positionMs: currentLyricsPositionMs,
   variant: lyricsTextVariant,
@@ -542,6 +547,8 @@ export function useLyrics() {
     saveLyricsCandidate,
     backfillSourceLabels,
     setSourceLabel,
+    forkAuthoredLyrics,
+    editAuthoredLyrics,
     deleteSource,
     importManualLyricsText,
     importManualLyricsFile,

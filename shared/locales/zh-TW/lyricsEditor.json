@@ -1,4 +1,18 @@
 {
+  "correction": {
+    "title": "校訂文字",
+    "copy": "另存本機校訂版",
+    "copyHint": "在本機副本校訂文字，隨時可切回原來源。",
+    "editHint": "選擇要校訂的唱句。改字後保留句級時間，該句需要重新複聽。",
+    "line": "唱句",
+    "text": "歌詞文字",
+    "recheck": "這句改過文字，請重新複聽對時。",
+    "operation": "操作",
+    "insert": "在下方插入一句",
+    "split": "依換行拆成多句",
+    "merge": "與下一句合併",
+    "structureHint": "插入、拆分或合併後，請重新標記受影響的句子。"
+  },
   "workspace": {
     "roles": {
       "male": "男",
@@ -318,5 +332,38 @@
       "load": "聲部標註讀取失敗，請再試一次。",
       "save": "聲部標註未儲存，請重新載入後再試。"
     }
+  },
+  "tap": {
+    "title": "逐句打點",
+    "start": "開始打點",
+    "record": "記錄句首",
+    "skip": "跳過這句",
+    "coverage": "已打點 {timed}／{total} 句",
+    "hint": "開始逐句打點。其他來源的歌詞會先另存為本機校訂版。",
+    "shortcut": "聽到句首時，在此按 T 或選擇「記錄句首」。",
+    "loadTrack": "請先在播放器載入這首歌，再記錄句首。"
+  },
+  "export": {
+    "title": "匯出歌詞",
+    "format": "檔案格式",
+    "basis": "以原曲音檔 0:00 為起點，已套用儲存的歌詞偏移。",
+    "loading": "正在準備預覽…",
+    "count": "預覽涵蓋 {count} 句已計時歌詞。",
+    "untimed": "有 {count} 句尚未打點，這次將略過。",
+    "invalid": "有 {count} 筆文字或時間超出此格式可處理的範圍。",
+    "overlaps": "有 {count} 句字幕時間重疊，請先調整再匯出 SRT。",
+    "overlapDetail": "第 {earlier}、{later} 句在 {start} 至 {end} 重疊。{text}",
+    "estimatedEnds": "有 {count} 句使用本次匯出的暫定句尾。",
+    "adjustedBreaks": "有 {count} 句的換行已依檔案格式調整。",
+    "sameTime": "有 {count} 句在時間取整後共用句首。",
+    "estimated": "（暫定句尾）",
+    "until": "至 {time}",
+    "fix": "請先處理上方列出的問題，再匯出。",
+    "noTimed": "請先標記歌詞句首，再匯出。",
+    "confirm": "採用預覽中的時間與略過項目。",
+    "save": "儲存檔案",
+    "saved": "歌詞檔已儲存。",
+    "retry": "重新預覽",
+    "failed": "無法準備或儲存檔案。請重新預覽後再試。"
   }
 }

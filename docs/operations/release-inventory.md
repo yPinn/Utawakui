@@ -120,6 +120,11 @@ network install or signed-installer acceptance; see the
   owner remains bundled in `dist/**/*`. Session revisions are process memory;
   existing timing, manifest and per-source `lyrics/review/` files remain library user data. No new worker,
   runtime dependency, waveform asset or installed data path is introduced.
+- Local lyric revisions and single-track LRC/SRT export are bundled through
+  `lyricsAuthored.js`, `lyricsExport.js` and `electron/main/lyrics/exportHandlers.js`.
+  Authored JSON stays in the user's track lyrics directory, and exports go to a
+  user-selected destination. The Main and renderer reuse the existing bundles
+  and the audio metadata reader. The regression tests stay outside the package.
 
 - Local works/version persistence and release schemas: `electron/lib/works/`
   and `electron/lib/releases/` are included in the Main bundle;

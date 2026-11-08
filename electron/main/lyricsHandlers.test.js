@@ -33,6 +33,10 @@ function createIpcMain(getTrustedEvent = () => null) {
         channel,
         [
           'lyrics:get-track',
+          'lyrics:fork-authored',
+          'lyrics:edit-authored',
+          'lyrics:preview-export',
+          'lyrics:save-export',
           'lyrics:save-timing',
           'lyrics:set-source-offset',
           'lyrics:cancel-source-session',
@@ -66,6 +70,169 @@ describe('lyrics timing IPC', () => {
   let requireFeatureGate;
   let runReadingWorker;
   let recordDiagnostic;
+  it('exports an acknowledged partial source and rechecks after the save dialog', async () => {
+    const audio = Buffer.alloc(44 + 8000 * 2 * 10);
+    audio.write('RIFF');
+    audio.writeUInt32LE(audio.length - 8, 4);
+    audio.write('WAVEfmt ', 8);
+    audio.writeUInt32LE(16, 16);
+    audio.writeUInt16LE(1, 20);
+    audio.writeUInt16LE(1, 22);
+    audio.writeUInt32LE(8000, 24);
+    audio.writeUInt32LE(16000, 28);
+    audio.writeUInt16LE(2, 32);
+    audio.writeUInt16LE(16, 34);
+    audio.write('data', 36);
+    audio.writeUInt32LE(audio.length - 44, 40);
+    fs.rmSync(path.join(trackDir, 'audio.mp3'));
+    fs.writeFileSync(path.join(trackDir, 'audio.wav'), audio);
+    const open = ipcMain.handlers.get('lyrics:get-track');
+    const preview = ipcMain.handlers.get('lyrics:preview-export');
+    const save = ipcMain.handlers.get('lyrics:save-export');
+    const { source } = await ipcMain.handlers.get('lyrics:import-text')(
+      null,
+      'track-a',
+      { text: '歌\n另句' },
+    );
+    const baseline = await open(null, 'track-a', source.filename);
+    const { source: copy } = await ipcMain.handlers.get('lyrics:fork-authored')(
+      null,
+      'track-a',
+      source.filename,
+      baseline.sourceSession,
+    );
+    const opened = await open(null, 'track-a', copy.filename);
+    const [first, second] = opened.timing.document.lines;
+    const timed = await ipcMain.handlers.get('lyrics:save-timing')(
+      null,
+      'track-a',
+      copy.filename,
+      opened.timing.sourceFingerprint,
+      {
+        ...opened.timing.document,
+        lines: [{ ...first, startMs: 1500 }, second],
+      },
+      opened.sourceSession,
+    );
+    const plan = await preview(
+      null,
+      'track-a',
+      copy.filename,
+      timed.sourceSession,
+      'srt',
+    );
+    expect(plan).toMatchObject({
+      count: 1,
+      needsConfirmation: true,
+      issues: { untimed: 1, estimatedEnds: 1 },
+    });
+    await expect(save(null, plan.token, false)).rejects.toMatchObject({
+      code: 'LYRICS_SOURCE_STALE',
+    });
+    const target = path.join(dir, 'lyrics.srt');
+    dialog.showSaveDialog = vi
+      .fn()
+      .mockResolvedValue({ filePath: target, canceled: false });
+    await expect(save(null, plan.token, true)).resolves.toEqual({
+      status: 'saved',
+    });
+    expect(fs.readFileSync(target, 'utf8')).toContain(
+      '00:00:01,500 --> 00:00:05,500\r\n歌',
+    );
+    await expect(save(null, plan.token, true)).rejects.toMatchObject({
+      code: 'LYRICS_SOURCE_STALE',
+    });
+
+    const stale = await preview(
+      null,
+      'track-a',
+      copy.filename,
+      timed.sourceSession,
+      'lrc',
+    );
+    const staleTarget = path.join(dir, 'stale.lrc');
+    dialog.showSaveDialog.mockImplementation(async () => {
+      await ipcMain.handlers.get('lyrics:set-source-offset')(
+        null,
+        'track-a',
+        copy.filename,
+        100,
+        timed.sourceSession,
+      );
+      return { filePath: staleTarget, canceled: false };
+    });
+    await expect(save(null, stale.token, true)).rejects.toMatchObject({
+      code: 'LYRICS_SOURCE_CONFLICT',
+    });
+    expect(fs.existsSync(staleTarget)).toBe(false);
+    const fresh = await open(null, 'track-a', copy.filename);
+    const cancelled = await preview(
+      null,
+      'track-a',
+      copy.filename,
+      fresh.sourceSession,
+      'lrc',
+    );
+    dialog.showSaveDialog.mockResolvedValueOnce({ canceled: true });
+    await expect(save(null, cancelled.token, true)).resolves.toEqual({
+      status: 'cancelled',
+    });
+
+    const blocked = await preview(
+      null,
+      'track-a',
+      copy.filename,
+      fresh.sourceSession,
+      'lrc',
+    );
+    const originalPath = path.join(trackDir, 'lyrics', 'main.lrc');
+    const before = fs.readFileSync(originalPath, 'utf8');
+    dialog.showSaveDialog.mockResolvedValueOnce({
+      filePath: originalPath,
+      canceled: false,
+    });
+    await expect(save(null, blocked.token, true)).rejects.toMatchObject({
+      code: 'LYRICS_SOURCE_INVALID',
+    });
+    expect(fs.readFileSync(originalPath, 'utf8')).toBe(before);
+  });
+  it('forks and corrects through the trusted IPC and leaves the original untouched', async () => {
+    const open = ipcMain.handlers.get('lyrics:get-track');
+    const fork = ipcMain.handlers.get('lyrics:fork-authored');
+    const edit = ipcMain.handlers.get('lyrics:edit-authored');
+    const original = await open(null, 'track-a', 'main.lrc');
+    await expect(
+      fork(
+        { sender: {}, senderFrame: {} },
+        'track-a',
+        'main.lrc',
+        original.sourceSession,
+      ),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_INVALID' });
+    const { source } = await fork(
+      null,
+      'track-a',
+      'main.lrc',
+      original.sourceSession,
+    );
+    const copy = await open(null, 'track-a', source.filename);
+    const [{ lineId }] = copy.timing.document.lines;
+    const saved = await edit(
+      null,
+      'track-a',
+      source.filename,
+      copy.sourceSession,
+      {
+        lineId,
+        text: 'Hello!',
+      },
+    );
+    expect(saved.timing.document.lines).toMatchObject([
+      { lineId, text: 'Hello!', startMs: 1000 },
+    ]);
+    expect((await open(null, 'track-a', 'main.lrc')).text).toBe(original.text);
+    expect(requireFeatureGate).not.toHaveBeenCalled();
+  });
   it('confirms and revokes only Main-derived receipts through the trusted main frame', async () => {
     const a = await ipcMain.handlers.get('lyrics:get-track')(
       null,

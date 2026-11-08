@@ -4,14 +4,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { atomicWriteJson } = require('../atomicWrite');
-const { isLyricsSubtitleFilename } = require('./paths');
+const { isLyricsSourceFilename } = require('./paths');
 const { validateTrackBinding } = require('../works/trackBinding');
 
 function failure(code = 'LYRICS_SOURCE_INVALID') {
   return Object.assign(new Error(code), { code });
 }
 function reviewPath(trackDir, filename) {
-  if (!isLyricsSubtitleFilename(filename) || filename.length > 240)
+  if (!isLyricsSourceFilename(filename) || filename.length > 240)
     throw failure();
   const file = path.join(trackDir, 'lyrics', 'review', `${filename}.json`);
   const parent = path.dirname(file);

@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const { randomUUID } = require('node:crypto');
 
 // Base .tmp + rename primitive; callers needing custom rename-failure
 // handling (e.g. vocalSeparation.js's EPERM case) wrap this themselves.
@@ -44,6 +45,21 @@ function atomicWriteText(filePath, text) {
   atomicWriteBuffer(filePath, Buffer.from(text, 'utf8'));
 }
 
+function atomicWriteExclusiveText(filePath, text) {
+  const temporary = `${filePath}.${randomUUID()}.tmp`;
+  const descriptor = fs.openSync(temporary, 'wx');
+  try {
+    try {
+      fs.writeFileSync(descriptor, text, 'utf8');
+    } finally {
+      fs.closeSync(descriptor);
+    }
+    fs.renameSync(temporary, filePath);
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
+}
+
 // Shared by callers that preserve unreadable/corrupted data files (which
 // can't be regenerated) by renaming them aside, best-effort, rather than
 // silently overwriting them with defaults on the next save.
@@ -59,6 +75,7 @@ function backupCorrupted(filePath) {
 module.exports = {
   atomicWriteJson,
   atomicWriteText,
+  atomicWriteExclusiveText,
   atomicWriteBuffer,
   atomicCopyFileSync,
   backupCorrupted,

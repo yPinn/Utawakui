@@ -28,6 +28,7 @@ const {
 } = require('../../lib/library/lyricsTimingReview');
 const { createAppError } = require('../../lib/appError');
 const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
+const { registerLyricsExportHandlers } = require('./exportHandlers');
 
 function registerLyricsDocumentHandlers({
   ipcMain,
@@ -107,6 +108,13 @@ function registerLyricsDocumentHandlers({
       throw new Error('unknown lyrics source');
     return resolveTrackDir(dir, trackId);
   }
+  registerLyricsExportHandlers({
+    ipcMain,
+    sources: sourceSessions,
+    sourceOperation,
+    dialog,
+    getMainWindow,
+  });
   ipcMain.handle(
     'lyrics:get-vocal-roles',
     (_event, trackId, filename, documentId) =>
@@ -168,6 +176,28 @@ function registerLyricsDocumentHandlers({
         return saved;
       });
     },
+  );
+
+  ipcMain.handle('lyrics:fork-authored', (event, trackId, filename, session) =>
+    sourceOperation(event, 'fork-authored', () => {
+      const saved = sourceSessions.forkAuthored(trackId, filename, session);
+      notifyLibraryUpdated();
+      return saved;
+    }),
+  );
+  ipcMain.handle(
+    'lyrics:edit-authored',
+    (event, trackId, filename, session, edit) =>
+      sourceOperation(event, 'edit-authored', () => {
+        const saved = sourceSessions.editAuthored(
+          trackId,
+          filename,
+          session,
+          edit,
+        );
+        notifyLibraryUpdated();
+        return saved;
+      }),
   );
 
   ipcMain.handle(

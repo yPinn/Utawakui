@@ -6,7 +6,7 @@ const path = require('path');
 const { atomicWriteJson } = require('../atomicWrite');
 const timingValues = require('../../../shared/lyricsTimingValues.json');
 const { LYRICS_DIRNAME } = require('./constants');
-const { isLyricsSubtitleFilename } = require('./paths');
+const { isLyricsSourceFilename, isAuthoredLyricsFilename } = require('./paths');
 
 const LYRICS_TIMING_SCHEMA_VERSION = timingValues.schemaVersion;
 const LYRICS_NORMALIZER_PROFILE_ID = timingValues.normalizerProfileId;
@@ -24,7 +24,7 @@ const ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
 
 function sourcePath(trackDir, sourceFilename) {
   if (
-    !isLyricsSubtitleFilename(sourceFilename) ||
+    !isLyricsSourceFilename(sourceFilename) ||
     sourceFilename.length > MAX_SOURCE_FILENAME_LENGTH
   ) {
     return null;
@@ -130,7 +130,7 @@ function validateLyricsTimingDocument(rawDocument, options = {}) {
   );
   const source = assertPlainObject(document.source, 'source');
   if (
-    !isLyricsSubtitleFilename(source.filename) ||
+    !isLyricsSourceFilename(source.filename) ||
     !SHA256_RE.test(source.sha256)
   ) {
     throw new Error('source identity is invalid');
@@ -326,6 +326,21 @@ function timingStatus(status, sourceFingerprint, extra = {}) {
 }
 
 function loadTrackLyricsTiming(trackDir, sourceFilename) {
+  if (isAuthoredLyricsFilename(sourceFilename)) {
+    const { readAuthoredLyrics } = require('./lyricsAuthored');
+    const { status, value } = readAuthoredLyrics(trackDir, sourceFilename);
+    return timingStatus(
+      status,
+      value?.document.source.sha256 ?? null,
+      value
+        ? {
+            normalizerProfileId: value.document.normalizerProfileId,
+            document: value.document,
+            recheckLineIds: value.recheckLineIds,
+          }
+        : {},
+    );
+  }
   const sourceFingerprint = computeLyricsSourceFingerprint(
     trackDir,
     sourceFilename,

@@ -77,13 +77,20 @@ export function validTimingDraft(document, { allowIncomplete = false } = {}) {
   });
 }
 
-export function editLineTiming(document, lineId, kind, value) {
+export function editLineTiming(
+  document,
+  lineId,
+  kind,
+  value,
+  { allowUntimed = false } = {},
+) {
   const fail = (reason = 'invalid-range') => ({ document: null, reason });
   const index =
     document?.lines?.findIndex((line) => line.lineId === lineId) ?? -1;
   const line = document?.lines?.[index];
   if (
-    !canEditLineTiming(line) ||
+    (!canEditLineTiming(line) &&
+      !(allowUntimed && line?.startMs === null && kind === 'start')) ||
     !['move', 'start', 'end'].includes(kind) ||
     !Number.isSafeInteger(value)
   )

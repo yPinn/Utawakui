@@ -26,6 +26,37 @@ beforeEach(() => {
 });
 
 describe('useLyricsTimingEditor', () => {
+  it('records ordered line starts on a T0 draft, skips, restores selection on undo and keeps partial coverage', async () => {
+    const editor = await loadEditor();
+    const plain = {
+      ...document,
+      granularity: 'T0',
+      lines: ['a', 'b', 'c'].map((lineId) => ({
+        lineId,
+        text: 'Same',
+        startMs: null,
+        endMs: null,
+      })),
+    };
+    expect(editor.beginLineTaps(plain, { id: 'source' })).toBe(true);
+    expect(editor.recordLineTap(1000)).toBe(true);
+    expect(editor.draft.value.lineId).toBe('b');
+    expect(editor.advanceLineTap()).toBe(true);
+    expect(editor.recordLineTap(900)).toBe(false);
+    expect(editor.recordLineTap(4000)).toBe(true);
+    expect(editor.buildDocument()).toMatchObject({
+      granularity: 'T1',
+      lines: [{ startMs: 1000 }, { startMs: null }, { startMs: 4000 }],
+    });
+    expect(editor.undo()).toBe(true);
+    expect(editor.draft.value).toMatchObject({ lineId: 'c', startMs: null });
+    expect(editor.selectLineTap('b')).toBe(true);
+    expect(editor.recordLineTap(2000)).toBe(true);
+    expect(editor.recordLineTap(4100)).toBe(true);
+    expect(editor.buildDocument().lines.map((line) => line.startMs)).toEqual([
+      1000, 2000, 4100,
+    ]);
+  });
   it('bounds undo history while retaining the most recent complete document snapshots', async () => {
     const editor = await loadEditor();
     editor.beginLine(document, 'line_01', null, null, { mode: 'line' });

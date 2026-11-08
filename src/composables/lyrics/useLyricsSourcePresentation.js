@@ -38,11 +38,16 @@ export function useLyricsSourcePresentation({
           try {
             const [result, estimate] = await Promise.all([
               bridge.getTrackLyrics(id, source.filename),
-              Promise.resolve()
-                .then(() =>
-                  bridge.getExperimentalLyricsEstimate?.(id, source.filename),
-                )
-                .catch(() => null),
+              source.kind === 'authored'
+                ? null
+                : Promise.resolve()
+                    .then(() =>
+                      bridge.getExperimentalLyricsEstimate?.(
+                        id,
+                        source.filename,
+                      ),
+                    )
+                    .catch(() => null),
             ]);
             if (!result || typeof result.text !== 'string') continue;
             const canonical = normalizeLyricsDocument({

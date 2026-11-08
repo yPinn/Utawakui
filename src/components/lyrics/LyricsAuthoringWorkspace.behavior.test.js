@@ -791,6 +791,7 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
       isLoading: false,
       isLoadingLyrics: false,
       timingSave: { isSaving: false, error: null },
+      sourceAction: { isSaving: false, error: null },
       offsetSave: { isSaving: false, error: null },
       backfillStatus: { error: '', isRunning: false },
     });

@@ -9,6 +9,7 @@ defineProps({
   offsetLabel: { type: String, required: true },
   canReset: { type: Boolean, default: false },
   error: { type: String, default: '' },
+  disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['adjustOffset', 'resetOffset', 'retryOffset']);
@@ -51,13 +52,14 @@ function resetLyricsOffset() {
         :icon="Minus"
         :title="t('lyricsDisplay.live.laterTitle')"
         :aria-label="t('lyricsEditor.segment.later')"
+        :disabled="disabled"
         @click="delayLyrics"
       >
         {{ t('lyricsDisplay.live.later') }}
       </UiButton>
       <UiButton
         class="lyrics-live-controls__value"
-        :disabled="!canReset"
+        :disabled="disabled || !canReset"
         :title="t('lyricsDisplay.live.reset')"
         :aria-label="t('lyricsDisplay.live.reset')"
         @click="resetLyricsOffset"
@@ -69,6 +71,7 @@ function resetLyricsOffset() {
         :icon="Plus"
         :title="t('lyricsDisplay.live.earlierTitle')"
         :aria-label="t('lyricsEditor.segment.earlier')"
+        :disabled="disabled"
         @click="advanceLyrics"
       >
         {{ t('lyricsDisplay.live.earlier') }}

@@ -37,6 +37,7 @@ beforeEach(() => {
   owners.lyrics = {
     state: reactive({
       timingSave: { isSaving: false },
+      sourceAction: { isSaving: false, error: null },
       offsetSave: {},
       backfillStatus: {},
       tracks: [],
@@ -84,6 +85,7 @@ beforeEach(() => {
     sourceSession: shallowRef(null),
     canCommit: computed(() => Boolean(draft.value)),
     canUndo: shallowRef(false),
+    lineTaps: shallowRef(false),
     beginLine: vi.fn((doc, id, readings, session) => {
       draft.value = { lineId: id, segments: [] };
       owners.timing.sourceSession.value = session;

@@ -13,6 +13,8 @@ const props = defineProps({
   reloadStatus: { type: String, default: '' },
   isReloading: { type: Boolean, default: false },
   canEditReadings: { type: Boolean, default: false },
+  canEditText: { type: Boolean, default: false },
+  canExport: { type: Boolean, default: false },
   canEditTiming: { type: Boolean, default: false },
   canEditVocals: { type: Boolean, default: false },
   isLocked: { type: Boolean, default: false },
@@ -34,6 +36,18 @@ const menuContent = computed(() => ({
       id: 'edit',
       items: [
         {
+          id: 'text',
+          kind: 'action',
+          label: t('lyricsEditor.correction.title'),
+          disabled: !props.canEditText || props.isLocked,
+        },
+        {
+          id: 'tap',
+          kind: 'action',
+          label: t('lyricsEditor.tap.title'),
+          disabled: !props.canEditText || props.isLocked,
+        },
+        {
           id: 'reading',
           kind: 'action',
           label: t('lyricsEditor.header.reading'),
@@ -53,6 +67,12 @@ const menuContent = computed(() => ({
           kind: 'action',
           label: t('lyricsEditor.header.vocal'),
           disabled: !props.canEditVocals || props.isLocked,
+        },
+        {
+          id: 'export',
+          kind: 'action',
+          label: t('lyricsEditor.export.title'),
+          disabled: !props.canExport || props.isLocked,
         },
       ],
     },
@@ -99,7 +119,7 @@ function selectAction(item) {
     .find((entry) => entry.id === item.id);
   if (!action || action.disabled) return;
   menuOpen.value = false;
-  if (['reading', 'timing', 'vocal'].includes(item.id))
+  if (['text', 'tap', 'reading', 'timing', 'vocal', 'export'].includes(item.id))
     emit('editModeChange', item.id);
   else emit(item.id);
 }

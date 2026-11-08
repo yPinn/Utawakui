@@ -1,7 +1,7 @@
 import { t } from './i18n.js';
 import { formatLyricsSourceLabel as formatSourceLabel } from './lyrics.js';
 
-const CATALOG_KINDS = new Set(['kugou', 'netease', 'manual']);
+const CATALOG_KINDS = new Set(['kugou', 'netease', 'manual', 'authored']);
 const TIER_KEYS = { T0: 't0', T1: 't1', 'T1+': 't1Plus', T2: 't2' };
 const tierKey = (tier) =>
   Object.hasOwn(TIER_KEYS, tier) ? TIER_KEYS[tier] : 'unknown';

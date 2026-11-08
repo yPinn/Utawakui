@@ -19,6 +19,8 @@ const {
 } = require('./constants');
 const {
   isLyricsSubtitleFilename,
+  isLyricsSourceFilename,
+  isAuthoredLyricsFilename,
   compareFilenames,
   resolveTrackDir,
 } = require('./paths');
@@ -110,7 +112,7 @@ function normalizeLyricsSourcePreference(value, sources) {
   if (
     !value ||
     typeof value !== 'object' ||
-    !isLyricsSubtitleFilename(value.filename) ||
+    !isLyricsSourceFilename(value.filename) ||
     !['user', 'automatic'].includes(value.origin) ||
     !sources.some((source) => source.filename === value.filename)
   ) {
@@ -143,7 +145,7 @@ function loadTrackLyricsManifest(trackDir) {
       .filter(
         (source) =>
           source &&
-          isLyricsSubtitleFilename(source.filename) &&
+          isLyricsSourceFilename(source.filename) &&
           typeof source.language === 'string',
       )
       .map((source) => {
@@ -174,11 +176,21 @@ function listTrackLyricsSources(trackDir, { lyricsDirExists = true } = {}) {
   if (!lyricsDirExists)
     return { checked: false, needsScan: false, sources: [] };
   const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+  const manifest = loadTrackLyricsManifest(trackDir);
+  const manifestByFilename = new Map(
+    manifest.sources.map((source) => [source.filename, source]),
+  );
   let filenames;
   try {
     filenames = fs
       .readdirSync(lyricsDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && isLyricsSubtitleFilename(entry.name))
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          (isLyricsSubtitleFilename(entry.name) ||
+            (isAuthoredLyricsFilename(entry.name) &&
+              manifestByFilename.get(entry.name)?.kind === 'authored')),
+      )
       .map((entry) => entry.name)
       .filter(
         (filename) =>
@@ -190,10 +202,6 @@ function listTrackLyricsSources(trackDir, { lyricsDirExists = true } = {}) {
     filenames = [];
   }
 
-  const manifest = loadTrackLyricsManifest(trackDir);
-  const manifestByFilename = new Map(
-    manifest.sources.map((source) => [source.filename, source]),
-  );
   const sources = filenames.map((filename) => {
     const manifestSource = manifestByFilename.get(filename);
     const offsetMs = normalizeLyricsSourceOffsetMs(manifestSource?.offsetMs);
@@ -261,7 +269,7 @@ function saveTrackLyricsManifest(trackDir, sources, options = {}) {
     existingManifest.sources.map((source) => [source.filename, source]),
   );
   const normalizedSources = (Array.isArray(sources) ? sources : [])
-    .filter((source) => source && isLyricsSubtitleFilename(source.filename))
+    .filter((source) => source && isLyricsSourceFilename(source.filename))
     .filter((source) => {
       const language =
         typeof source.language === 'string'
@@ -442,10 +450,15 @@ function setLyricsSourceOffset(trackDir, filename, offsetMs) {
 
 // Removes the file, its manifest entry, and source-derived sidecars.
 function deleteLyricsSource(trackDir, filename) {
-  if (!isLyricsSubtitleFilename(filename)) return false;
+  if (!isLyricsSourceFilename(filename)) return false;
 
   const lyricsDir = getLyricsDirFromTrackDir(trackDir);
   try {
+    if (
+      isAuthoredLyricsFilename(filename) &&
+      fs.realpathSync(lyricsDir) !== lyricsDir
+    )
+      return false;
     fs.unlinkSync(path.join(lyricsDir, filename));
   } catch {
     return false;
@@ -648,6 +661,14 @@ function readTrackLyrics(dir, trackId, lyricsFilename = null) {
     : sources[0];
   if (!source) return null;
 
+  if (isAuthoredLyricsFilename(source.filename)) {
+    const timing = loadTrackLyricsTiming(trackDir, source.filename);
+    return {
+      source,
+      text: timing.document?.lines.map((line) => line.text).join('\n') ?? '',
+      timing,
+    };
+  }
   const lyricsPath = resolveTrackLyricsPath(dir, trackId, source.filename);
   if (!lyricsPath) return null;
   return {

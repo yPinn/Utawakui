@@ -16,6 +16,7 @@ const baseDocument = shallowRef(null),
   draftDocument = shallowRef(null),
   sourceSession = shallowRef(null);
 const activeLineId = shallowRef(null),
+  lineTaps = shallowRef(false),
   readingSuggestion = shallowRef(null),
   validationError = shallowRef('');
 const history = [];
@@ -42,10 +43,15 @@ const canUndo = computed(
 );
 const canEnableSegments = computed(() =>
   Boolean(
+    !lineTaps.value &&
     draft.value &&
     !draft.value.segments.length &&
     canEditTimingLine(draft.value, readingSuggestion.value),
   ),
+);
+const tapLines = computed(() => draftDocument.value?.lines ?? []);
+const timedLineCount = computed(
+  () => tapLines.value.filter((line) => Number.isFinite(line.startMs)).length,
 );
 const dependencies = computed(() =>
   (draftDocument.value?.lines ?? []).filter(
@@ -70,6 +76,7 @@ function beginLine(
   )
     return false;
   baseDocument.value = clone(document);
+  lineTaps.value = false;
   sourceSession.value = session ? clone(session) : null;
   activeLineId.value = lineId;
   readingSuggestion.value = readingLine ? clone(readingLine) : null;
@@ -83,10 +90,42 @@ function beginLine(
   return true;
 }
 function replaceDocument(next) {
-  history.push(draftDocument.value);
+  history.push({ document: draftDocument.value, lineId: activeLineId.value });
   if (history.length > 100) history.shift();
   draftDocument.value = next;
   validationError.value = '';
+  return true;
+}
+function beginLineTaps(document, session) {
+  if (!validTimingDraft(document) || !document.lines.length || !session?.id)
+    return false;
+  cancel();
+  baseDocument.value = clone(document);
+  draftDocument.value = clone(document);
+  sourceSession.value = clone(session);
+  lineTaps.value = true;
+  activeLineId.value = (
+    document.lines.find((line) => line.startMs === null) ?? document.lines[0]
+  ).lineId;
+  return true;
+}
+function selectLineTap(lineId) {
+  if (!lineTaps.value || !tapLines.value.some((line) => line.lineId === lineId))
+    return false;
+  activeLineId.value = lineId;
+  validationError.value = '';
+  return true;
+}
+function advanceLineTap() {
+  const index = tapLines.value.findIndex(
+    (line) => line.lineId === activeLineId.value,
+  );
+  const next = index >= 0 ? tapLines.value[index + 1] : null;
+  return next ? selectLineTap(next.lineId) : false;
+}
+function recordLineTap(positionMs) {
+  if (!lineTaps.value || !changeLine('start', positionMs)) return false;
+  advanceLineTap();
   return true;
 }
 function changeLine(kind, value) {
@@ -96,6 +135,7 @@ function changeLine(kind, value) {
     activeLineId.value,
     kind,
     value,
+    { allowUntimed: lineTaps.value },
   );
   validationError.value = result.reason
     ? t('lyricsEditor.lineTiming.invalid')
@@ -171,7 +211,9 @@ function nudgeBoundary(index, deltaMs) {
 }
 function undo() {
   if (!draftDocument.value || !history.length) return false;
-  draftDocument.value = history.pop();
+  const previous = history.pop();
+  draftDocument.value = previous.document;
+  activeLineId.value = previous.lineId;
   validationError.value = '';
   return true;
 }
@@ -189,6 +231,7 @@ function cancel() {
   draftDocument.value = baseDocument.value = sourceSession.value = null;
   activeLineId.value = readingSuggestion.value = null;
   validationError.value = '';
+  lineTaps.value = false;
   history.length = 0;
 }
 export function useLyricsTimingEditor() {
@@ -202,6 +245,13 @@ export function useLyricsTimingEditor() {
     validationError: readonly(validationError),
     suggestSplitOffsets,
     beginLine,
+    beginLineTaps,
+    selectLineTap,
+    advanceLineTap,
+    recordLineTap,
+    lineTaps: readonly(lineTaps),
+    tapLines,
+    timedLineCount,
     enableSegments,
     shiftLine: (deltaMs) => changeLine('move', deltaMs),
     previewLineTiming,

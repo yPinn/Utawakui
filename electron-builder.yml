@@ -58,6 +58,7 @@ files:
   # development-only renderer adds no packaged asset or external dependency.
   # beforePack regenerates these seven minified CJS entries from current source.
   # Lyrics request budgets/rate/cache policy is included in the Main closure.
+  # Local lyric revisions and LRC/SRT writers are included in the Main closure.
   - runtime/*.cjs
   - runtime/keyboard-helper.json
   - scripts/research/lyricsAcoustic/assets.cjs

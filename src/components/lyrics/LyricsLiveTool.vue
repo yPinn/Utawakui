@@ -41,6 +41,7 @@ defineProps({
   vocalSectionLineIds: { type: Array, default: () => [] },
   offsetLabel: { type: String, required: true },
   canResetOffset: { type: Boolean, default: false },
+  offsetDisabled: { type: Boolean, default: false },
   offsetError: { type: String, default: '' },
   allowAuthoringActions: { type: Boolean, default: false },
   presentation: { type: String, default: 'list' },
@@ -106,6 +107,7 @@ const emit = defineEmits([
     <LyricsLiveControls
       :offset-label="offsetLabel"
       :can-reset="canResetOffset"
+      :disabled="offsetDisabled"
       :error="offsetError"
       @adjust-offset="emit('adjustOffset', $event)"
       @reset-offset="emit('resetOffset')"

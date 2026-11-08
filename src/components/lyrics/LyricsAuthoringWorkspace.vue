@@ -14,6 +14,9 @@ import { formatDuration } from '../../utils/format.js';
 import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
 import { canEditLineTiming } from '../../utils/lyricsLineTiming.js';
 import LyricsLineTimingEditor from './LyricsLineTimingEditor.vue';
+import LyricsCorrectionPanel from './LyricsCorrectionPanel.vue';
+import LyricsLineTapPanel from './LyricsLineTapPanel.vue';
+import LyricsExportPanel from './LyricsExportPanel.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsAcousticPreview from './LyricsAcousticPreview.vue';
 import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
@@ -75,6 +78,13 @@ const {
   canEnableSegments,
   dependencies: timingDependencies,
   validationError: timingValidationError,
+  beginLineTaps,
+  selectLineTap,
+  advanceLineTap,
+  recordLineTap,
+  lineTaps,
+  tapLines,
+  timedLineCount,
 } = useLyricsTimingEditor();
 
 const { setReadingLine } = reading;
@@ -112,7 +122,7 @@ if (timingDraft.value) {
       (line) => line.lineId === timingDraft.value.lineId,
     )
   )
-    editMode.value = 'timing';
+    editMode.value = lineTaps.value ? 'tap' : 'timing';
   else cancelTiming();
 }
 const vocalRoles = computed(() => lyrics.lyricsTextProcessing?.vocalRoles);
@@ -151,15 +161,28 @@ const selectedDurationMs = computed(() =>
     : null,
 );
 const isSavingReading = ref(false);
+const hasTextDraft = ref(false);
+const isExporting = ref(false);
+const canEditText = computed(
+  () =>
+    Boolean(
+      lyricsTiming.value.sourceSession && lyricsDocument.value.lines.length,
+    ) && ['current', 'missing'].includes(lyricsTiming.value.status),
+);
 const reviewBusy = computed(() => lyrics.timingReview?.state.isBusy ?? false);
 const hasEditingDraft = computed(
-  () => Boolean(timingDraft.value) || editingReadingLineIndex.value !== null,
+  () =>
+    Boolean(timingDraft.value) ||
+    editingReadingLineIndex.value !== null ||
+    hasTextDraft.value,
 );
 const isEditingLocked = computed(
   () =>
     hasEditingDraft.value ||
     isSavingReading.value ||
     state.timingSave.isSaving ||
+    state.sourceAction.isSaving ||
+    isExporting.value ||
     reviewBusy.value,
 );
 const waveformTimingDisabled = computed(() =>
@@ -211,12 +234,21 @@ const editingHelp = computed(() => {
 function setEditMode(mode) {
   if (
     isEditingLocked.value ||
-    !['preview', 'reading', 'timing', 'vocal'].includes(mode)
+    ![
+      'preview',
+      'text',
+      'tap',
+      'reading',
+      'timing',
+      'vocal',
+      'export',
+    ].includes(mode)
   )
     return;
   if (mode !== 'preview' && (!selectedSource.value || state.isLoadingLyrics))
     return;
   if (mode === 'reading' && !showsReadingAid.value) return;
+  if (['text', 'tap'].includes(mode) && !canEditText.value) return;
   if (mode === 'timing' && !canEditTiming.value) return;
   if (mode === 'vocal' && !canEditVocals.value) return;
   lastPaintedLineId = null;
@@ -296,6 +328,11 @@ watch(
   () => {
     cancelReadingLineEdit();
     cancelTiming();
+    if (
+      ['text', 'tap'].includes(editMode.value) &&
+      selectedSource.value?.kind === 'authored'
+    )
+      return;
     editMode.value = 'preview';
   },
 );
@@ -444,6 +481,51 @@ function recordTimingBoundary() {
   }
 }
 
+async function startLineTaps() {
+  if (!canEditText.value || isEditingLocked.value) return;
+  const trackId = selectedTrack.value?.id;
+  if (selectedSource.value?.kind !== 'authored') {
+    if (!(await lyrics.forkAuthoredLyrics())) return;
+  }
+  if (
+    trackId !== selectedTrack.value?.id ||
+    editMode.value !== 'tap' ||
+    selectedSource.value?.kind !== 'authored' ||
+    state.isLoadingLyrics ||
+    state.offsetSave.isSaving ||
+    state.offsetSave.error
+  )
+    return;
+  beginLineTaps(lyricsDocument.value, lyricsTiming.value.sourceSession);
+}
+
+const canRecordLineTap = computed(() =>
+  Boolean(
+    lineTaps.value &&
+    timingDraft.value &&
+    selectedTrack.value?.id === playerState.track?.id &&
+    selectedDurationMs.value > 0 &&
+    timingSourceSession.value?.offsetRevision ===
+      lyricsTiming.value.sourceSession?.offsetRevision &&
+    !waveformTimingDisabled.value,
+  ),
+);
+function tapCurrentLine() {
+  if (!canRecordLineTap.value) return;
+  const sample = samplePlaybackClock();
+  if (
+    sample?.trackId !== selectedTrack.value?.id ||
+    !['playing', 'paused'].includes(sample.phase)
+  )
+    return;
+  const canonicalMs = Math.round(
+    sample.positionMs + state.offsetSeconds * 1000,
+  );
+  if (!lyrics.timingPlaybackTarget(canonicalMs, timingSourceSession.value))
+    return;
+  recordLineTap(canonicalMs);
+}
+
 async function commitTimingDocument() {
   if (state.timingSave.isSaving || !timingDraft.value || !canCommitTiming.value)
     return;
@@ -493,6 +575,13 @@ async function confirmTimingReview() {
         :reload-status="reloadStatusLabel"
         :is-reloading="isReloading"
         :can-edit-readings="showsReadingAid && !state.isLoadingLyrics"
+        :can-edit-text="canEditText && !state.isLoadingLyrics"
+        :can-export="
+          canEditText &&
+          !state.isLoadingLyrics &&
+          !state.offsetSave.isSaving &&
+          !state.offsetSave.error
+        "
         :can-edit-timing="canEditTiming && !state.isLoadingLyrics"
         :can-edit-vocals="canEditVocals && !state.isLoadingLyrics"
         :is-locked="isEditingLocked"
@@ -542,6 +631,7 @@ async function confirmTimingReview() {
             :blocked="
               isSavingReading ||
               editingReadingLineIndex !== null ||
+              hasTextDraft ||
               state.isLoadingLyrics
             "
             :estimated="lyrics.experimentalLyrics?.applied.value ?? false"
@@ -584,7 +674,68 @@ async function confirmTimingReview() {
           </LyricsPreparationBar>
         </template>
       </LyricsWorkspaceHeader>
-      <div v-if="editMode !== 'preview'" class="lyrics-edit-context">
+      <LyricsCorrectionPanel
+        v-if="editMode === 'text' && selectedSource"
+        :key="acousticSourceKey"
+        :authored="selectedSource.kind === 'authored'"
+        :lines="lyricsDocument.lines"
+        :recheck-line-ids="lyricsTiming.recheckLineIds"
+        :timing-confirmed="lyrics.timingReview?.state.status === 'confirmed'"
+        :busy="
+          state.sourceAction.isSaving || state.isLoadingLyrics || reviewBusy
+        "
+        :error="state.sourceAction.error || ''"
+        :fork="lyrics.forkAuthoredLyrics"
+        :save="lyrics.editAuthoredLyrics"
+        @dirty="hasTextDraft = $event"
+        @close="setEditMode('preview')"
+      />
+      <LyricsLineTapPanel
+        v-else-if="editMode === 'tap'"
+        :active="lineTaps"
+        :line-id="timingDraft?.lineId || ''"
+        :lines="lineTaps ? tapLines : lyricsDocument.lines"
+        :timed="
+          lineTaps
+            ? timedLineCount
+            : lyricsDocument.lines.filter((line) => line.startMs !== null)
+                .length
+        "
+        :can-record="canRecordLineTap"
+        :busy="
+          state.sourceAction.isSaving ||
+          state.isLoadingLyrics ||
+          state.timingSave.isSaving ||
+          reviewBusy
+        "
+        :error="state.sourceAction.error || timingValidationError"
+        @start="startLineTaps"
+        @select-line="selectLineTap"
+        @record="tapCurrentLine"
+        @skip="advanceLineTap"
+        @close="setEditMode('preview')"
+      />
+      <LyricsExportPanel
+        v-else-if="
+          editMode === 'export' &&
+          selectedTrack &&
+          selectedSource &&
+          lyricsTiming.sourceSession
+        "
+        :track-id="selectedTrack.id"
+        :filename="selectedSource.filename"
+        :session="lyricsTiming.sourceSession"
+        :blocked="
+          Boolean(
+            state.isLoadingLyrics ||
+            state.offsetSave.isSaving ||
+            state.offsetSave.error,
+          )
+        "
+        @saving="isExporting = $event"
+        @close="setEditMode('preview')"
+      />
+      <div v-else-if="editMode !== 'preview'" class="lyrics-edit-context">
         <UiHint role="status">{{ editingHelp }}</UiHint>
         <UiSegmentedControl
           v-if="editMode === 'vocal'"
@@ -646,7 +797,7 @@ async function confirmTimingReview() {
           :aria-label="t('lyricsEditor.workspace.draftTools')"
         >
           <LyricsLineTimingEditor
-            v-if="timingDraft"
+            v-if="timingDraft?.startMs != null"
             :draft="timingDraft"
             :position-ms="currentLyricsPositionMs"
             :disabled="state.timingSave.isSaving || reviewBusy"
@@ -713,6 +864,7 @@ async function confirmTimingReview() {
         :vocal-section-line-ids="vocalSectionLineIds"
         :offset-label="offsetLabel"
         :can-reset-offset="state.offsetSeconds !== 0"
+        :offset-disabled="lineTaps || isExporting"
         :offset-error="state.offsetSave.error || ''"
         allow-authoring-actions
         @seek-line="playFromLine"

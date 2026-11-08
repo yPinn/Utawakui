@@ -7,13 +7,24 @@ const { findTrackRecord } = require('./tracks');
 const {
   resolveTrackDir,
   isBoundedTrackId,
-  isLyricsSubtitleFilename,
+  isLyricsSourceFilename,
+  isAuthoredLyricsFilename,
 } = require('./paths');
 const {
   readTrackLyrics,
   listTrackLyricsSources,
   setLyricsSourceOffset,
+  saveTrackLyricsManifest,
 } = require('./lyrics');
+const {
+  authoredDocument,
+  readAuthoredLyrics,
+  reviseAuthoredLyrics,
+  writeAuthoredLyrics,
+} = require('./lyricsAuthored');
+const {
+  normalizeLyricsDocument,
+} = require('../../../src/utils/lyricsDocument.js');
 const {
   timingSidecarPath,
   saveTrackLyricsTiming,
@@ -88,7 +99,7 @@ function createLyricsSourceSessions({
     if (
       !isBoundedTrackId(trackId) ||
       ['__proto__', 'prototype', 'constructor'].includes(trackId) ||
-      (filename != null && !isLyricsSubtitleFilename(filename))
+      (filename != null && !isLyricsSourceFilename(filename))
     )
       throw failure('LYRICS_SOURCE_INVALID');
     const scope = getContext(),
@@ -106,17 +117,21 @@ function createLyricsSourceSessions({
       : sources[0];
     if (!source) return null;
     const sourceFile = path.join(trackDir, 'lyrics', source.filename);
-    const sourceStamp = fileStamp(sourceFile);
-    const timingFile = timingSidecarPath(trackDir, source.filename);
-    const timingStamp = fileStamp(timingFile, {
+    const authored = isAuthoredLyricsFilename(source.filename);
+    const timingFile = authored
+      ? sourceFile
+      : timingSidecarPath(trackDir, source.filename);
+    const sourceStamp = authored ? 'authored' : fileStamp(sourceFile);
+    const timingStampOptions = {
       optional: true,
       contents: true,
-    });
+    };
+    const timingStamp = fileStamp(timingFile, timingStampOptions);
     const result = readTrackLyrics(dir, trackId, source.filename);
     if (
       !result ||
-      fileStamp(sourceFile) !== sourceStamp ||
-      fileStamp(timingFile, { optional: true, contents: true }) !== timingStamp
+      (!authored && fileStamp(sourceFile) !== sourceStamp) ||
+      fileStamp(timingFile, timingStampOptions) !== timingStamp
     )
       throw failure();
     const offsetMs = Number.isInteger(result.source.offsetMs)
@@ -135,6 +150,7 @@ function createLyricsSourceSessions({
       identity,
       trackId,
       filename: source.filename,
+      authored,
       sourceStamp,
       result,
       timingRevision: digest(timingStamp),
@@ -164,16 +180,18 @@ function createLyricsSourceSessions({
       throw failure();
     return value;
   }
+  function inspect(trackId, filename, input) {
+    const value = current(trackId, filename, input, false);
+    if (
+      value.timingRevision !== input.timingRevision ||
+      value.offsetRevision !== input.offsetRevision
+    )
+      throw failure('LYRICS_SOURCE_CONFLICT');
+    return value;
+  }
+
   return {
-    inspect(trackId, filename, input) {
-      const value = current(trackId, filename, input, false);
-      if (
-        value.timingRevision !== input.timingRevision ||
-        value.offsetRevision !== input.offsetRevision
-      )
-        throw failure('LYRICS_SOURCE_CONFLICT');
-      return value;
-    },
+    inspect,
     invalidateTrack(trackId) {
       for (const [id, session] of sessions)
         if (!trackId || session.trackId === trackId) sessions.delete(id);
@@ -213,6 +231,80 @@ function createLyricsSourceSessions({
       sessions.delete(id);
       return { status: 'cancelled' };
     },
+    forkAuthored(trackId, filename, input) {
+      const value = inspect(trackId, filename, input);
+      const { source, timing } = value.result;
+      if (
+        !findTrackRecord(value.dir, trackId) ||
+        Buffer.byteLength(value.result.text, 'utf8') > maxDocumentBytes ||
+        !timing.sourceFingerprint ||
+        !['missing', 'current'].includes(timing.status)
+      )
+        throw failure('LYRICS_SOURCE_UNUSABLE');
+      const id = randomUUID();
+      const copyFilename = `authored-${id}.json`;
+      const original = normalizeLyricsDocument({
+        ...value.result,
+        sourceFingerprint: timing.sourceFingerprint,
+        normalizerProfileId: timing.normalizerProfileId,
+      });
+      if (original.lines.length === 0) throw failure('LYRICS_SOURCE_UNUSABLE');
+      let document;
+      try {
+        document = authoredDocument(copyFilename, {
+          ...original,
+          documentId: id,
+        });
+      } catch {
+        throw failure('LYRICS_SOURCE_UNUSABLE');
+      }
+      const copy = {
+        filename: copyFilename,
+        kind: 'authored',
+        language: source.language,
+        offsetMs: source.offsetMs,
+      };
+      writeAuthoredLyrics(value.trackDir, copyFilename, {
+        schemaVersion: 1,
+        revision: 1,
+        base: {
+          filename: source.filename,
+          fingerprint: timing.sourceFingerprint,
+        },
+        document,
+        recheckLineIds: timing.recheckLineIds ?? [],
+      });
+      try {
+        const sources = listTrackLyricsSources(value.trackDir).sources;
+        saveTrackLyricsManifest(value.trackDir, [...sources, copy], {
+          preference: { filename: copyFilename, origin: 'user' },
+        });
+      } catch (error) {
+        fs.rmSync(path.join(value.trackDir, 'lyrics', copyFilename), {
+          force: true,
+        });
+        throw error;
+      }
+      return { source: copy };
+    },
+    editAuthored(trackId, filename, input, edit) {
+      const value = inspect(trackId, filename, input);
+      if (!value.authored) throw failure('LYRICS_SOURCE_INVALID');
+      const { value: saved } = readAuthoredLyrics(value.trackDir, filename);
+      if (!saved || !findTrackRecord(value.dir, trackId))
+        throw failure('LYRICS_SOURCE_UNUSABLE');
+      let updated;
+      try {
+        updated = reviseAuthoredLyrics(filename, saved, edit);
+      } catch {
+        throw failure('LYRICS_SOURCE_INVALID');
+      }
+      if (updated !== saved) {
+        beforeMutation(value);
+        writeAuthoredLyrics(value.trackDir, filename, updated);
+      }
+      return this.open(trackId, filename);
+    },
     saveTiming(trackId, filename, fingerprint, document, input) {
       const value = current(trackId, filename, input);
       if (
@@ -246,8 +338,36 @@ function createLyricsSourceSessions({
         JSON.stringify(validated) !==
           JSON.stringify(value.result.timing.document)
       ) {
-        beforeMutation(value);
-        saveTrackLyricsTiming(value.trackDir, filename, fingerprint, document);
+        if (value.authored) {
+          const { value: saved } = readAuthoredLyrics(value.trackDir, filename);
+          if (
+            !saved ||
+            validated.documentId !== saved.document.documentId ||
+            validated.normalizerProfileId !==
+              saved.document.normalizerProfileId ||
+            validated.lines.length !== saved.document.lines.length ||
+            validated.lines.some(
+              (line, index) =>
+                line.lineId !== saved.document.lines[index].lineId ||
+                line.text !== saved.document.lines[index].text,
+            )
+          )
+            throw failure('LYRICS_SOURCE_INVALID');
+          beforeMutation(value);
+          writeAuthoredLyrics(value.trackDir, filename, {
+            ...saved,
+            revision: saved.revision + 1,
+            document: validated,
+          });
+        } else {
+          beforeMutation(value);
+          saveTrackLyricsTiming(
+            value.trackDir,
+            filename,
+            fingerprint,
+            document,
+          );
+        }
       }
       const saved = current(trackId, filename, input);
       return {

@@ -1287,6 +1287,24 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:set-preferred-source', trackId, filename),
   deleteLyricsSource: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:delete-source', trackId, filename),
+  forkAuthoredLyrics: (trackId, filename, session) =>
+    ipcRenderer.invoke('lyrics:fork-authored', trackId, filename, session),
+  previewLyricsExport: (trackId, filename, session, format) =>
+    ipcRenderer.invoke(
+      'lyrics:preview-export',
+      trackId,
+      filename,
+      session,
+      format,
+    ),
+  saveLyricsExport: (token, confirmed) =>
+    ipcRenderer.invoke('lyrics:save-export', token, confirmed),
+  editAuthoredLyrics: (trackId, filename, session, lineId, text, operation) =>
+    ipcRenderer.invoke('lyrics:edit-authored', trackId, filename, session, {
+      lineId,
+      text,
+      operation,
+    }),
   importLyricsText: (trackId, payload) =>
     ipcRenderer.invoke('lyrics:import-text', trackId, payload),
   importLyricsFile: (trackId) =>

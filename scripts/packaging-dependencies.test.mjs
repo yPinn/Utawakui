@@ -389,6 +389,16 @@ describe('packaged dependency boundary', () => {
       ),
     ).toBe(false);
   });
+  it('bundles local lyric authoring and export without delivering their tests', () => {
+    for (const file of [
+      'electron/lib/library/lyricsAuthored.js',
+      'electron/lib/library/lyricsExport.js',
+      'electron/main/lyrics/exportHandlers.js',
+    ])
+      expect(bundledSources).toContain(file);
+    for (const name of ['lyricsAuthored', 'lyricsExport'])
+      expect(isDelivered(`electron/lib/library/${name}.test.js`)).toBe(false);
+  });
   it('ships the optional lyrics environment probe/catalog without private research assets', () => {
     for (const filename of [
       'lyrics_acoustic_probe.py',

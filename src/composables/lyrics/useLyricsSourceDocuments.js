@@ -176,11 +176,12 @@ export function useLyricsSourceDocuments({
         cancelSession(previousSession);
       if (!pendingOffset) savedOffsetMs.value = storedOffset;
       state.error = null;
-      selectedAcousticLoad = loadAcousticEstimate(
-        track.id,
-        filename,
-        requestId,
-      );
+      if (result?.source?.kind !== 'authored')
+        selectedAcousticLoad = loadAcousticEstimate(
+          track.id,
+          filename,
+          requestId,
+        );
     } catch (error) {
       if (requestId !== lyricsRequestId) return;
       cancelSession(previousSession);
@@ -391,6 +392,55 @@ export function useLyricsSourceDocuments({
     );
   }
 
+  function forkAuthoredLyrics() {
+    const filename = state.selectedSourceFilename;
+    const session = sourceSession.value;
+    if (!filename || !session || state.sourceAction.isSaving) return null;
+    return runSourceAction(
+      'fork-authored',
+      'forkAuthoredLyrics',
+      async (bridge, track) => {
+        const saved = await bridge(track.id, filename, session);
+        await refreshLibrary();
+        if (
+          track.id === state.selectedTrackId &&
+          filename === state.selectedSourceFilename &&
+          saved?.source?.filename
+        ) {
+          selectSource(saved.source.filename, { persistPreference: false });
+          await waitForSelectedLyricsLoad();
+        }
+        return saved;
+      },
+    );
+  }
+
+  function editAuthoredLyrics(lineId, text, operation) {
+    const filename = state.selectedSourceFilename;
+    const session = sourceSession.value;
+    if (!filename || !session || state.sourceAction.isSaving) return null;
+    return runSourceAction(
+      'edit-authored',
+      'editAuthoredLyrics',
+      async (bridge, track) => {
+        const saved = await bridge(
+          track.id,
+          filename,
+          session,
+          lineId,
+          text,
+          operation,
+        );
+        if (
+          track.id === state.selectedTrackId &&
+          filename === state.selectedSourceFilename
+        )
+          await loadSelectedLyrics();
+        return saved;
+      },
+    );
+  }
+
   function deleteSource(filename) {
     return runSourceAction(
       'delete-source',
@@ -502,6 +552,8 @@ export function useLyricsSourceDocuments({
     retryOffsetSave: persistSelectedOffset,
     saveTimingDocument,
     setSourceLabel,
+    forkAuthoredLyrics,
+    editAuthoredLyrics,
     deleteSource,
     importManualLyricsText,
     importManualLyricsFile,

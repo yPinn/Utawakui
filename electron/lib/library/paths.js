@@ -45,6 +45,21 @@ function isLyricsSubtitleFilename(filename) {
   return /^[A-Za-z0-9._-]+$/.test(stem);
 }
 
+function isAuthoredLyricsFilename(filename) {
+  return (
+    typeof filename === 'string' &&
+    /^authored-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\.json$/u.test(
+      filename,
+    )
+  );
+}
+
+function isLyricsSourceFilename(filename) {
+  return (
+    isAuthoredLyricsFilename(filename) || isLyricsSubtitleFilename(filename)
+  );
+}
+
 function compareFilenames(a, b) {
   const lowerA = a.toLowerCase();
   const lowerB = b.toLowerCase();
@@ -170,6 +185,8 @@ module.exports = {
   isStructuredAudioFilename,
   isArtworkFilename,
   isLyricsSubtitleFilename,
+  isAuthoredLyricsFilename,
+  isLyricsSourceFilename,
   compareFilenames,
   trackIdFromFilename,
   isSafeTrackId,

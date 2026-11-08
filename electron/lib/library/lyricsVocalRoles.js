@@ -3,11 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { atomicWriteJson } = require('../atomicWrite');
 const { loadTrackLyricsTiming } = require('./lyricsTiming');
-const { isLyricsSubtitleFilename } = require('./paths');
+const { isLyricsSourceFilename } = require('./paths');
 const values = require('../../../shared/lyricsTimingValues.json');
 
 function vocalRolesPath(trackDir, filename) {
-  if (!isLyricsSubtitleFilename(filename) || filename.length > 240)
+  if (!isLyricsSourceFilename(filename) || filename.length > 240)
     throw new Error('invalid lyrics source');
   return path.join(trackDir, 'lyrics', 'vocal-roles', `${filename}.json`);
 }

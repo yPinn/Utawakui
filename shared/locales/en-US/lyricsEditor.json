@@ -1,4 +1,18 @@
 {
+  "correction": {
+    "title": "Correct lyrics",
+    "copy": "Save local revision",
+    "copyHint": "Edit a local copy. You can switch back to the original source at any time.",
+    "editHint": "Choose a line to edit. Line timing is retained after a text edit and needs review.",
+    "line": "Lyric line",
+    "text": "Lyric text",
+    "recheck": "The text changed. Listen again to check this line’s timing.",
+    "operation": "Action",
+    "insert": "Insert a line after",
+    "split": "Split at line breaks",
+    "merge": "Join with the next line",
+    "structureHint": "Set new line times after inserting, splitting, or joining lines."
+  },
   "workspace": {
     "roles": {
       "male": "M",
@@ -318,5 +332,38 @@
       "load": "Couldn't load vocal parts. Try again.",
       "save": "Vocal parts weren't saved. Reload and try again."
     }
+  },
+  "tap": {
+    "title": "Tap line timing",
+    "start": "Start timing",
+    "record": "Mark line start",
+    "skip": "Skip line",
+    "coverage": "{timed} of {total} lines timed",
+    "hint": "Start a timing draft. Lyrics from other sources are copied to a local revision.",
+    "shortcut": "Press T here or select Mark line start at the start of the sung line.",
+    "loadTrack": "Load this song in the player to mark its lines."
+  },
+  "export": {
+    "title": "Export lyrics",
+    "format": "File format",
+    "basis": "Times start at 0:00 of the original song file. Your saved lyrics offset is included.",
+    "loading": "Preparing preview…",
+    "count": "{count} timed lines in this preview.",
+    "untimed": "{count} untimed lines will be left out.",
+    "invalid": "{count} entries have unsupported text or timing for this format.",
+    "overlaps": "{count} subtitles overlap. Adjust their times before exporting SRT.",
+    "overlapDetail": "Lines {earlier} and {later} overlap from {start} to {end}. {text}",
+    "estimatedEnds": "{count} subtitle ends are estimated for this export.",
+    "adjustedBreaks": "{count} lines use adjusted line breaks for this format.",
+    "sameTime": "{count} lyrics share a start time after rounding.",
+    "estimated": "(estimated end)",
+    "until": "to {time}",
+    "fix": "Adjust the reported entries before exporting.",
+    "noTimed": "Mark lyric line starts before exporting.",
+    "confirm": "Use the timings and omissions shown in this preview.",
+    "save": "Save file",
+    "saved": "Lyrics file saved.",
+    "retry": "Refresh preview",
+    "failed": "Could not prepare or save the file. Refresh the preview and try again."
   }
 }

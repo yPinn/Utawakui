@@ -9,7 +9,7 @@ const {
   LYRICS_READINGS_DIRNAME,
   READING_DOC_VERSION,
 } = require('./constants');
-const { isLyricsSubtitleFilename } = require('./paths');
+const { isLyricsSourceFilename } = require('./paths');
 
 const LEGACY_READING_DOC_VERSION = 1;
 const STABLE_ID_READING_DOC_VERSION = 2;
@@ -69,7 +69,7 @@ function getReadingsDirFromTrackDir(trackDir) {
 // manual.lrc and manual.vtt would otherwise collide on one doc (see
 // LYRICS_READINGS_DIRNAME's comment in constants.js).
 function readingSidecarPath(trackDir, sourceFilename) {
-  if (!isLyricsSubtitleFilename(sourceFilename)) return null;
+  if (!isLyricsSourceFilename(sourceFilename)) return null;
   return path.join(
     getReadingsDirFromTrackDir(trackDir),
     `${sourceFilename}.json`,
