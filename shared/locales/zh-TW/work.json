@@ -1,7 +1,7 @@
 {
   "editor": {
     "tabs": {
-      "metadata": "歌曲資訊",
+      "metadata": "曲目資訊",
       "organization": "版本與連結"
     },
     "relationship": {
@@ -22,8 +22,8 @@
       "live": "現場",
       "instrumental": "純伴奏"
     },
-    "title": "整理歌曲",
-    "label": "歌曲整理",
+    "title": "編輯曲目",
+    "label": "曲目編輯",
     "loading": "讀取中…",
     "relationshipLabel": "演唱類別",
     "linkTracks": "連結曲目",

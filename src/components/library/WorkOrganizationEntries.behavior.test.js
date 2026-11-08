@@ -189,7 +189,7 @@ vi.mock('../track/TrackActionMenu.vue', () => ({
                       : {}),
                   }),
               },
-              '整理歌曲',
+              '編輯曲目',
             )
           : null,
   },
@@ -425,7 +425,7 @@ describe('real feature entry event wiring', () => {
       deps.action = 'go-to-release';
       trigger(button('選項'), 'onClick');
       await settleEntries();
-      trigger(button('整理歌曲'), 'onClick');
+      trigger(button('編輯曲目'), 'onClick');
       await settleEntries();
       expect(beforeNavigate).toHaveBeenCalledOnce();
       if (allowed) {
@@ -587,7 +587,7 @@ describe('real feature entry event wiring', () => {
       mounted = mount(LibraryBrowseContent);
       trigger(button('曲目選項'), 'onClick');
       await nextTick();
-      trigger(button('整理歌曲'), 'onClick');
+      trigger(button('編輯曲目'), 'onClick');
       await settleEntries();
       expect(deps.verify).toHaveBeenCalledOnce();
       expect(deps.enqueue).not.toHaveBeenCalled();
@@ -595,7 +595,7 @@ describe('real feature entry event wiring', () => {
       expect(button('播放 A')).toBeDefined();
       trigger(button('曲目選項'), 'onClick');
       await nextTick();
-      trigger(button('整理歌曲'), 'onClick');
+      trigger(button('編輯曲目'), 'onClick');
       await settleEntries();
       expect(deps.verify).toHaveBeenCalledTimes(2);
       if (action === 'add-to-queue')
@@ -608,7 +608,7 @@ describe('real feature entry event wiring', () => {
     mounted = mount(LibraryBrowseContent);
     trigger(button('曲目選項'), 'onClick');
     await nextTick();
-    trigger(button('整理歌曲'), 'onClick');
+    trigger(button('編輯曲目'), 'onClick');
     await settleEntries();
     expect(deps.enqueue).toHaveBeenCalledWith(deps.tracks[0]);
     expect(deps.verify).not.toHaveBeenCalled();
@@ -624,13 +624,13 @@ describe('real feature entry event wiring', () => {
       deps.action = 'create-local-release';
       trigger(button(triggerLabel), 'onClick');
       await settleEntries();
-      trigger(button('整理歌曲'), 'onClick');
+      trigger(button('編輯曲目'), 'onClick');
       await settleEntries();
       expect(deps.releaseCreate).toHaveBeenCalledWith(deps.tracks[0]);
       deps.action = 'go-to-release';
       trigger(button(triggerLabel), 'onClick');
       await settleEntries();
-      trigger(button('整理歌曲'), 'onClick');
+      trigger(button('編輯曲目'), 'onClick');
       await settleEntries();
       expect(deps.jump).toHaveBeenCalledWith('release-target');
       expect(deps.play).not.toHaveBeenCalled();
@@ -704,7 +704,7 @@ describe('real feature entry event wiring', () => {
       expect(deps.open).not.toHaveBeenCalled();
       trigger(button(triggerLabel), 'onClick');
       await nextTick();
-      trigger(button('整理歌曲'), 'onClick');
+      trigger(button('編輯曲目'), 'onClick');
       await nextTick();
       expect(deps.open).toHaveBeenCalledWith(deps.tracks[0]);
       expect(deps.play).not.toHaveBeenCalled();

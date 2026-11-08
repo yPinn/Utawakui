@@ -1,7 +1,7 @@
 {
   "editor": {
     "tabs": {
-      "metadata": "Song info",
+      "metadata": "Track info",
       "organization": "Versions and links"
     },
     "relationship": {
@@ -22,8 +22,8 @@
       "live": "Live",
       "instrumental": "Instrumental"
     },
-    "title": "Organize song",
-    "label": "Song organizing",
+    "title": "Edit track",
+    "label": "Track editing",
     "loading": "Loading…",
     "relationshipLabel": "Performance type",
     "linkTracks": "Link tracks",

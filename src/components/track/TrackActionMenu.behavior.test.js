@@ -175,7 +175,7 @@ describe('TrackActionMenu behavior model', () => {
       open: true,
       track: { ...track, sourceType: 'local-file' },
     });
-    expect(buttonByText('整理歌曲')).toBeTruthy();
+    expect(buttonByText('編輯曲目')).toBeTruthy();
     expect(buttonByText('編輯歌曲')).toBeUndefined();
     expect(buttonByText('解除連結')).toBeUndefined();
     mounted.app.unmount();
@@ -187,7 +187,7 @@ describe('TrackActionMenu behavior model', () => {
       canUnlinkWork: true,
       onSelect,
     });
-    expect(buttonByText('整理歌曲')).toBeUndefined();
+    expect(buttonByText('編輯曲目')).toBeUndefined();
     trigger(buttonByText('解除連結'), 'onClick');
     await nextTick();
     expect(onSelect).toHaveBeenCalledWith(
@@ -205,7 +205,7 @@ describe('TrackActionMenu behavior model', () => {
         track: { ...track, sourceType },
         onSelect,
       });
-      const action = buttonByText('整理歌曲');
+      const action = buttonByText('編輯曲目');
       expect(action).toBeTruthy();
       trigger(action, 'onClick');
       await nextTick();
@@ -395,7 +395,7 @@ describe('TrackActionMenu behavior model', () => {
       expect.arrayContaining([
         '加入一般佇列',
         '加入播放清單',
-        '整理歌曲',
+        '編輯曲目',
         '前往專輯',
       ]),
     );
