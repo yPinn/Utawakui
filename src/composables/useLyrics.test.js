@@ -277,6 +277,116 @@ afterEach(() => {
 });
 
 describe('useLyrics', () => {
+  it('plays inherited lyrics with reference timing and offset until hidden or replaced', async () => {
+    const cover = {
+      ...trackMissingLyrics,
+      workPresentation: { relationship: 'cover', referenceTrackId: trackA.id },
+    };
+    const readReference = vi.fn().mockResolvedValue({
+      text: '[00:02.00]Reference words',
+      source: { filename: 'reference.lrc', offsetMs: 400 },
+    });
+    window.Utawakui.getTrackLyricsReference = readReference;
+    playerState.track = cover;
+    listTracksMock.mockResolvedValue([trackA, cover]);
+    const lyrics = await loadLyrics();
+    await vi.waitFor(() =>
+      expect(lyrics.lyricLines.value[0]).toMatchObject({
+        text: 'Reference words',
+        start: 2,
+      }),
+    );
+    expect(readReference).toHaveBeenCalledWith(trackA.id, 'en.vtt', true);
+    expect(lyrics.state.playbackOffsetSeconds).toBe(0.4);
+    expect(lyrics.activeLineIndex.value).toBe(0);
+    await lyrics.playFromLine(lyrics.lyricLines.value[0]);
+    expect(seekMock).toHaveBeenCalledWith(1.6);
+    expect(lyrics.selectedSource.value).toBeNull();
+    lyrics.selectSource('');
+    expect(lyrics.linkedReference.value).toBeNull();
+    expect(lyrics.state.playbackOffsetSeconds).toBe(0);
+    lyrics.selectSource(null);
+    listTracksMock.mockResolvedValue([
+      trackA,
+      { ...cover, lyrics: trackA.lyrics },
+    ]);
+    await lyrics.refresh();
+    await vi.waitFor(() =>
+      expect(lyrics.selectedSource.value?.filename).toBe('en.vtt'),
+    );
+    expect(lyrics.linkedReference.value).toBeNull();
+  });
+  it('creates and selects an editable cover copy only when requested', async () => {
+    const cover = {
+      ...trackMissingLyrics,
+      workPresentation: { relationship: 'cover', referenceTrackId: trackA.id },
+    };
+    const source = { filename: 'authored-copy.json', kind: 'authored' };
+    window.Utawakui.getTrackLyricsReference = vi.fn().mockResolvedValue({
+      text: 'Reference words',
+      source: { filename: 'reference.lrc' },
+    });
+    playerState.track = cover;
+    listTracksMock.mockResolvedValue([trackA, cover]);
+    const copy = vi.fn(async () => {
+      listTracksMock.mockResolvedValue([
+        trackA,
+        { ...cover, lyrics: { status: 'available', sources: [source] } },
+      ]);
+      return { source };
+    });
+    window.Utawakui.copyLinkedLyricsReference = copy;
+    const lyrics = await loadLyrics();
+    await vi.waitFor(() =>
+      expect(lyrics.lyricLines.value[0]?.text).toBe('Reference words'),
+    );
+    expect(copy).not.toHaveBeenCalled();
+    await lyrics.applyLinkedReference();
+    expect(copy).toHaveBeenCalledWith(cover.id, trackA.id, 'en.vtt');
+    expect(lyrics.selectedSource.value?.filename).toBe(source.filename);
+    expect(lyrics.linkedReference.value).toBeNull();
+  });
+  it('adds timing to an unchanged legacy text copy and still lets users choose that copy', async () => {
+    const legacy = {
+      filename: 'manual.lrc',
+      kind: 'manual',
+      label: '參照 Track A',
+    };
+    const cover = {
+      ...trackMissingLyrics,
+      lyrics: { status: 'available', sources: [legacy] },
+      workPresentation: { relationship: 'cover', referenceTrackId: trackA.id },
+    };
+    window.Utawakui.getTrackLyricsReference = vi.fn().mockResolvedValue({
+      text: '[00:02.00]Reference words',
+      source: { filename: 'reference.lrc' },
+    });
+    getTrackLyricsMock.mockResolvedValue({
+      text: 'Reference words',
+      source: legacy,
+      timing: { status: 'missing' },
+    });
+    playerState.track = cover;
+    listTracksMock.mockResolvedValue([trackA, cover]);
+    const lyrics = await loadLyrics();
+    await vi.waitFor(() => expect(lyrics.lyricLines.value[0]?.start).toBe(2));
+    lyrics.toggleLinkedReference();
+    expect(lyrics.lyricLines.value[0].start).toBeNaN();
+    expect(lyrics.selectedSource.value.filename).toBe(legacy.filename);
+    lyrics.toggleLinkedReference();
+    await vi.waitFor(() => expect(lyrics.lyricLines.value[0]?.start).toBe(2));
+    getTrackLyricsMock.mockResolvedValue({
+      text: 'User changed these words',
+      source: legacy,
+      timing: { status: 'missing' },
+    });
+    lyrics.selectTrack(trackA.id);
+    lyrics.selectTrack(cover.id);
+    await vi.waitFor(() =>
+      expect(lyrics.lyricLines.value[0]?.text).toBe('User changed these words'),
+    );
+    expect(lyrics.linkedReference.value).toBeNull();
+  });
   it('preserves the stable public Lyrics composable contract', async () => {
     const lyrics = await loadLyrics();
 
@@ -287,6 +397,8 @@ describe('useLyrics', () => {
         'activeLineIndex',
         'activeSegmentId',
         'adjustOffset',
+        'applyLinkedReference',
+        'toggleLinkedReference',
         'availableSources',
         'backfillSourceLabels',
         'clearCandidateSearch',
@@ -298,11 +410,13 @@ describe('useLyrics', () => {
         'experimentalLyrics',
         'forkAuthoredLyrics',
         'ensureLyricsFlow',
+        'hasLinkedReference',
         'importManualLyricsFile',
         'importManualLyricsText',
         'initialize',
         'isReloading',
         'isSelectedTrackPlaying',
+        'linkedReference',
         'lyricLines',
         'localLyricsFrame',
         'lyricsAcousticEstimate',

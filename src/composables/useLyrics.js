@@ -13,11 +13,13 @@ import { useLyricsClock } from './lyrics/useLyricsClock.js';
 import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
 import { useLyricsSourcePresentation } from './lyrics/useLyricsSourcePresentation.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
+import { trackTitlePresentation } from '../utils/trackTitlePresentation.js';
 import {
   deriveLyricsPlaybackState,
   deriveLyricsPositionLineIndex,
   normalizeLyricsDocument,
   projectLegacyLyricLines,
+  referenceLyricsDraft,
 } from '../utils/lyricsDocument.js';
 import {
   DEFAULT_LYRICS_TEXT_VARIANT,
@@ -105,6 +107,14 @@ const state = reactive({
   },
   error: null,
   offsetSeconds: 0,
+  playbackOffsetSeconds: computed(
+    () => linkedReference.value?.offsetSeconds ?? state.offsetSeconds,
+  ),
+  linkedReferenceHidden: computed(
+    () =>
+      state.selectedSourceFilename === '' ||
+      hiddenLegacyReference.value === state.selectedTrackId,
+  ),
 });
 const selectedTrack = computed(
   () =>
@@ -121,6 +131,126 @@ const selectedSource = computed(() => {
     ) ?? null
   );
 });
+
+// The reference participates in playback without granting authoring authority.
+const hiddenLegacyReference = shallowRef('');
+const linkedReferenceCandidate = computed(() => {
+  const cover = selectedTrack.value;
+  const link = cover?.workPresentation;
+  if (link?.relationship !== 'cover' || !link.referenceTrackId) return null;
+  const reference = tracksById.value.get(link.referenceTrackId);
+  const source = pickPreferredLyricsSource(reference);
+  if (!reference || !source) return null;
+  const title = trackTitlePresentation(reference).title;
+  const sources = selectedLyrics.value.sources;
+  const [ownSource] = sources;
+  // The previous Apply action saved an ordinary manual source with this label.
+  const legacyFilename =
+    sources.length === 1 &&
+    ownSource.kind === 'manual' &&
+    !ownSource.offsetMs &&
+    // eslint-disable-next-line no-restricted-syntax -- persisted labels from both older locales
+    [`參照 ${title}`, `From ${title}`].some(
+      (label) => ownSource.label === label.slice(0, 32),
+    )
+      ? ownSource.filename
+      : null;
+  if (sources.length && !legacyFilename) return null;
+  return {
+    reference,
+    title,
+    legacyFilename,
+    filename: source.filename,
+    key: JSON.stringify([
+      cover.id,
+      link.workId,
+      reference.id,
+      source,
+      title,
+      legacyFilename,
+    ]),
+  };
+});
+const linkedReferenceRequest = computed(() => {
+  const candidate = linkedReferenceCandidate.value;
+  return !state.linkedReferenceHidden &&
+    candidate &&
+    state.selectedSourceFilename === candidate.legacyFilename
+    ? candidate
+    : null;
+});
+const loadedLinkedReference = shallowRef(null);
+const linkedReference = computed(() => {
+  const request = linkedReferenceRequest.value;
+  const loaded = loadedLinkedReference.value;
+  if (!request || loaded?.key !== request.key) return null;
+  if (
+    request.legacyFilename &&
+    (state.isLoadingLyrics ||
+      state.lyricSource?.filename !== request.legacyFilename ||
+      state.offsetSeconds !== 0 ||
+      lyricsTiming.value.status !== 'missing' ||
+      !loaded.legacyText ||
+      state.lyricsText.trim() !== loaded.legacyText)
+  )
+    return null;
+  return loaded;
+});
+const stopLinkedReference = watch(
+  () => linkedReferenceRequest.value?.key,
+  async (key, _previous, onCleanup) => {
+    loadedLinkedReference.value = null;
+    const request = linkedReferenceRequest.value;
+    if (!key || !request || !window.Utawakui?.getTrackLyricsReference) return;
+    let active = true;
+    onCleanup(() => {
+      active = false;
+    });
+    try {
+      const result = await window.Utawakui.getTrackLyricsReference(
+        request.reference.id,
+        request.filename,
+        true,
+      );
+      if (!active || linkedReferenceRequest.value?.key !== key || !result)
+        return;
+      const document = normalizeLyricsDocument({
+        ...result,
+        sourceFingerprint: result.timing?.sourceFingerprint,
+        normalizerProfileId: result.timing?.normalizerProfileId,
+      });
+      if (!document.lines.length) return;
+      await lyricsTextVariantLoader.prepare(document);
+      if (!active || linkedReferenceRequest.value?.key !== key) return;
+      loadedLinkedReference.value = {
+        key,
+        title: request.title,
+        document,
+        legacyText: request.legacyFilename ? referenceLyricsDraft(result) : '',
+        offsetSeconds: (result.source?.offsetMs ?? 0) / 1000,
+      };
+    } catch {
+      // An unavailable optional reference leaves the normal empty state usable.
+    }
+  },
+);
+async function applyLinkedReference() {
+  const request = linkedReferenceRequest.value;
+  if (!request || !linkedReference.value) return null;
+  return sourceDocuments.copyLinkedReference(
+    request.reference.id,
+    request.filename,
+  );
+}
+function toggleLinkedReference() {
+  if (linkedReferenceCandidate.value?.legacyFilename) {
+    hiddenLegacyReference.value = linkedReference.value
+      ? state.selectedTrackId
+      : '';
+  } else {
+    selectSource(linkedReference.value ? '' : null);
+  }
+}
 
 const sourceDocuments = useLyricsSourceDocuments({
   state,
@@ -197,9 +327,12 @@ const lyricsDocument = computed(() =>
   }),
 );
 const displayLyricsDocument = computed(() =>
-  lyricsTextVariantLoader.project(lyricsDocument.value, {
-    variant: lyricsTextVariant.value,
-  }),
+  lyricsTextVariantLoader.project(
+    linkedReference.value?.document ?? lyricsDocument.value,
+    {
+      variant: lyricsTextVariant.value,
+    },
+  ),
 );
 const lyricsTextProcessing = useLyricsTextProcessing({
   document: lyricsDocument,
@@ -251,7 +384,7 @@ const lyricsClock = useLyricsClock({
   playerState,
   samplePlaybackClock,
   selectedTrackId: () => state.selectedTrackId,
-  offsetMs: () => state.offsetSeconds * 1000,
+  offsetMs: () => state.playbackOffsetSeconds * 1000,
   document: () =>
     experimentalLyrics.outputDocument.value ?? displayLyricsDocument.value,
   positionMs: currentLyricsPositionMs,
@@ -281,7 +414,7 @@ const localLyricsFrame = computed(() => {
     ...frame,
     paintClock: {
       positionMs: sample
-        ? sample.positionMs + state.offsetSeconds * 1000
+        ? sample.positionMs + state.playbackOffsetSeconds * 1000
         : currentLyricsPositionMs.value,
       sampledAtMs: sample ? Date.parse(sample.sampledAt) : Date.now(),
       rate: sample?.rate ?? 1,
@@ -499,6 +632,7 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     lyricsClock.stop();
     sourcePresentation.stop();
+    stopLinkedReference();
     stopPlayerSync();
     stopLibrarySync();
     stopLibraryErrorSync();
@@ -515,6 +649,10 @@ export function useLyrics() {
     availableSources: sourcePresentation.availableSources,
     refreshSourceDetails: sourcePresentation.refresh,
     selectedSource,
+    linkedReference,
+    applyLinkedReference,
+    hasLinkedReference: computed(() => Boolean(linkedReferenceCandidate.value)),
+    toggleLinkedReference,
     lyricsTiming: readonly(lyricsTiming),
     sourceSession: sourceDocuments.sourceSession,
     timingReview: sourceDocuments.timingReview,

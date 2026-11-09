@@ -19,6 +19,7 @@ defineProps({
   },
   sources: { type: Array, default: () => [] },
   selectedSourceFilename: { type: String, default: '' },
+  emptySourceLabel: { type: String, default: '' },
   hasSelectedTrack: { type: Boolean, default: false },
   isLoadingSources: { type: Boolean, default: false },
   readingOptions: { type: Array, default: () => [] },
@@ -81,6 +82,7 @@ function increaseFontSize() {
       class="lyrics-display-controls__source"
       :sources="sources"
       :selected-source-filename="selectedSourceFilename"
+      :empty-source-label="emptySourceLabel"
       :has-selected-track="hasSelectedTrack"
       :is-loading="isLoadingSources"
       @source-change="changeSource"

@@ -1113,6 +1113,20 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
+  getTrackLyricsReference: (trackId, filename, timed = false) =>
+    ipcRenderer.invoke(
+      'lyrics:get-track',
+      trackId,
+      filename,
+      timed ? 'reference-timed' : 'reference',
+    ),
+  copyLinkedLyricsReference: (trackId, referenceId, filename) =>
+    ipcRenderer.invoke(
+      'lyrics:copy-linked-reference',
+      trackId,
+      referenceId,
+      filename,
+    ),
   readWaveform: (intent) => ipcRenderer.invoke('waveform:read', intent),
   cancelWaveform: (requestId) =>
     ipcRenderer.invoke('waveform:cancel', { requestId }),

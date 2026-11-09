@@ -5,6 +5,8 @@ import { useAppView } from '../../composables/useAppView.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import { trackContentLang } from '../../utils/contentLanguage.js';
+import { trackTitlePresentation } from '../../utils/trackTitlePresentation.js';
+import { trackArtistText } from '../../utils/artistPage.js';
 import { useLyricsDisplay } from '../../composables/useLyricsDisplay.js';
 import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
@@ -13,6 +15,7 @@ import LyricsDisplayControls from './LyricsDisplayControls.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import LyricsLoopTool from './LyricsLoopTool.vue';
 import { t } from '../../utils/i18n.js';
@@ -39,6 +42,11 @@ const {
   setLyricsTextVariant,
 } = lyrics;
 const { openLyricsAuthoring } = useAppView();
+const presentation = computed(() =>
+  trackTitlePresentation(selectedTrack.value),
+);
+const trackMeta = computed(() => trackArtistText(selectedTrack.value));
+const reference = computed(() => lyrics.linkedReference?.value);
 
 let disposed = false;
 onUnmounted(() => {
@@ -92,11 +100,10 @@ const {
   decreaseLyricsFontSize,
   increaseLyricsFontSize,
 } = useLyricsDisplay({ lyrics, reading });
-const offsetLabel = computed(() =>
-  state.offsetSeconds === 0
-    ? '0.0s'
-    : `${state.offsetSeconds > 0 ? '+' : ''}${state.offsetSeconds.toFixed(1)}s`,
-);
+const offsetLabel = computed(() => {
+  const seconds = state.playbackOffsetSeconds ?? state.offsetSeconds;
+  return `${seconds > 0 ? '+' : ''}${seconds.toFixed(1)}s`;
+});
 const trackLang = computed(() => trackContentLang(selectedTrack.value));
 
 onMounted(initialize);
@@ -108,9 +115,9 @@ onMounted(initialize);
     :aria-label="t('lyricsDisplay.title')"
   >
     <AppFolderWorkspaceToolbar
-      :context="selectedTrack?.title || t('lyricsEditor.header.noTrack')"
+      :context="presentation.title || t('lyricsEditor.header.noTrack')"
       :context-lang="trackLang"
-      :meta="selectedTrack?.artist ?? ''"
+      :meta="trackMeta"
       :meta-lang="trackLang"
     >
       <template #actions>
@@ -133,8 +140,17 @@ onMounted(initialize);
           </template>
           <LyricsDisplayControls
             class="performance-lyrics-workspace__display"
-            :sources="availableSources ?? selectedLyrics.sources"
+            :sources="
+              reference ? [] : (availableSources ?? selectedLyrics.sources)
+            "
             :selected-source-filename="selectedSource?.filename ?? ''"
+            :empty-source-label="
+              reference
+                ? t('lyricsSource.control.reference', {
+                    title: reference.title,
+                  })
+                : ''
+            "
             :has-selected-track="Boolean(selectedTrack)"
             :is-loading-sources="state.isLoadingLyrics"
             :reading-options="readingOptions"
@@ -164,17 +180,27 @@ onMounted(initialize);
           :icon="Pencil"
           :label="t('lyricsDisplay.performance.edit')"
           :title="t('lyricsDisplay.performance.editTitle')"
-          @click="openLyricsAuthoring"
+          @click="reference ? openSourceManager() : openLyricsAuthoring()"
         />
       </template>
     </AppFolderWorkspaceToolbar>
 
+    <UiHint v-if="reference" role="status">
+      {{
+        t(
+          reference.document.granularity === 'T0'
+            ? 'lyricsSource.manager.linkedReferenceText'
+            : 'lyricsSource.manager.linkedReference',
+          { title: reference.title },
+        )
+      }}
+    </UiHint>
     <LyricsLiveTool
       :experimental-frame="
         lyrics.localLyricsFrame?.value ?? lyrics.experimentalLyrics?.frame.value
       "
       class="performance-lyrics-workspace__reader"
-      :document-id="lyricsDocument.documentId"
+      :document-id="reference?.document.documentId ?? lyricsDocument.documentId"
       :error="state.error || ''"
       :is-loading="state.isLoading"
       :is-loading-lyrics="state.isLoadingLyrics"
@@ -182,8 +208,8 @@ onMounted(initialize);
       :has-selected-track="Boolean(selectedTrack)"
       :selection-hint="t('lyricsDisplay.performance.selectionHint')"
       :unchecked-hint="t('lyricsDisplay.performance.uncheckedHint')"
-      :lyrics-status="selectedLyrics.status"
-      :has-selected-source="Boolean(selectedSource)"
+      :lyrics-status="reference ? 'available' : selectedLyrics.status"
+      :has-selected-source="Boolean(reference || selectedSource)"
       :lines="lyricLines"
       :active-line-index="activeLineIndex"
       :positioned-line-index="positionedLineIndex"
@@ -194,6 +220,7 @@ onMounted(initialize);
       :lyrics-script="lyricsScript"
       :offset-label="offsetLabel"
       :can-reset-offset="state.offsetSeconds !== 0"
+      :offset-disabled="Boolean(reference)"
       :offset-error="state.offsetSave.error || ''"
       :vocal-roles="lyrics.lyricsTextProcessing?.lineRoles?.value ?? {}"
       presentation="sheet"

@@ -31,6 +31,13 @@ describe('Main lyrics source sessions', () => {
     runtime = createLyricsSourceSessions({ getContext: () => scope });
   });
   afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+  it('reads reference text without granting or cancelling source authority', () => {
+    const opened = runtime.open('one', source);
+    expect(runtime.readReference('one', source)).toEqual({ text: 'Hello' });
+    expect(runtime.open('one', source).sourceSession).toEqual(
+      opened.sourceSession,
+    );
+  });
   it('returns only opaque source authority and rejects another timing revision of the same text', () => {
     const a = runtime.open('one', source),
       b = runtime.open('one', source);

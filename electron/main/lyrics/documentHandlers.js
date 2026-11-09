@@ -20,6 +20,7 @@ const {
   loadTrackVocalRoles,
   saveTrackVocalRoles,
 } = require('../../lib/library/lyricsVocalRoles');
+const { isBoundedTrackId } = require('../../lib/library/paths');
 const {
   createLyricsSourceSessions,
 } = require('../../lib/library/lyricsSourceSessions');
@@ -38,6 +39,7 @@ function registerLyricsDocumentHandlers({
   getMainWindow,
   notifyLibraryUpdated,
   getLibraryContext,
+  getLinkedLyricsReference,
   recordDiagnostic,
 }) {
   let timingReview;
@@ -131,9 +133,13 @@ function registerLyricsDocumentHandlers({
         assignments,
       ),
   );
-  ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
+  ipcMain.handle('lyrics:get-track', async (event, trackId, filename, mode) => {
     return sourceOperation(event, 'load', () =>
-      sourceSessions.open(trackId, filename),
+      mode === 'reference' || mode === 'reference-timed'
+        ? sourceSessions.readReference(trackId, filename, {
+            timed: mode === 'reference-timed',
+          })
+        : sourceSessions.open(trackId, filename),
     );
   });
   ipcMain.handle('lyrics:cancel-source-session', (event, id) =>
@@ -184,6 +190,38 @@ function registerLyricsDocumentHandlers({
       notifyLibraryUpdated();
       return saved;
     }),
+  );
+  ipcMain.handle(
+    'lyrics:copy-linked-reference',
+    (event, trackId, referenceId, filename) =>
+      sourceOperation(event, 'copy-linked-reference', async () => {
+        if (!isBoundedTrackId(trackId) || !isBoundedTrackId(referenceId))
+          throw createAppError({
+            code: 'LYRICS_SOURCE_INVALID',
+            message: t('errors.LYRICS_SOURCE_INVALID.message'),
+          });
+        const scope = getLibraryContext?.();
+        const confirmed = scope
+          ? await getLinkedLyricsReference?.(scope.dir, trackId)
+          : null;
+        const current = getLibraryContext?.();
+        if (
+          confirmed !== referenceId ||
+          current?.dir !== scope?.dir ||
+          current?.epoch !== scope?.epoch
+        )
+          throw createAppError({
+            code: 'LYRICS_SOURCE_STALE',
+            message: t('errors.LYRICS_SOURCE_STALE.message'),
+          });
+        const saved = sourceSessions.copyLinkedReference(
+          trackId,
+          confirmed,
+          filename,
+        );
+        notifyLibraryUpdated();
+        return saved;
+      }),
   );
   ipcMain.handle(
     'lyrics:edit-authored',

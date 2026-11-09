@@ -19,7 +19,8 @@ export function useLyricsPlaybackNavigation({
   } = player;
   async function playFromLine(line) {
     if (!line || !Number.isFinite(line.start) || !selectedTrack.value) return;
-    const targetTime = Math.max(0, line.start - state.offsetSeconds);
+    const offset = state.playbackOffsetSeconds ?? state.offsetSeconds;
+    const targetTime = Math.max(0, line.start - offset);
     if (playerState.track?.id !== selectedTrack.value.id) {
       setQueue(state.tracks, selectedTrack.value.id, {
         sourceName: t('lyricsDisplay.title'),

@@ -6,6 +6,15 @@ function source(filename) {
 }
 
 describe('online lyrics search modal contract', () => {
+  it('gives the alternate-title field its own grid row', () => {
+    const workspace = source('./LyricsLrclibSearchWorkspace.vue');
+    expect(workspace).toMatch(
+      /<UiSelect[\s\S]*?class="lyrics-lrclib-search__alternate-title"/u,
+    );
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search__alternate-title\s*\{\s*grid-column: 1 \/ -1/u,
+    );
+  });
   it('uses the formal button for candidate expansion without overriding interaction paint', () => {
     const row = source('./LyricsLrclibCandidateRow.vue');
     expect(row).not.toContain('<button');
@@ -46,7 +55,7 @@ describe('online lyrics search modal contract', () => {
     expect(manager).toContain(
       'formatLyricsSourceOffset(sourceOffsetMs(source))',
     );
-    expect(manager).toContain('@click="selectSource(source.filename)"');
+    expect(manager).toContain(': selectSource(source.filename)');
     expect(manager).toContain('aria-pressed');
     expect(manager).toMatch(
       /:deep\(\.lyrics-source-manager__local-content\)\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u,

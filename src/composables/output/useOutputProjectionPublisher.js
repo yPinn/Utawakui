@@ -154,7 +154,9 @@ export function useOutputProjectionPublisher({
       sample && !manual && lyricsTrack.value?.id === player.track?.id
         ? deriveLyricsPlaybackState(
             projectedLyricsDocument.value,
-            sample.positionMs + lyricsState.offsetSeconds * 1000,
+            sample.positionMs +
+              (lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds) *
+                1000,
             player.duration * 1000 || null,
           )
         : {
@@ -179,7 +181,8 @@ export function useOutputProjectionPublisher({
         },
         output: { displayDelayMs: getDisplayDelayMs() },
         lyrics: {
-          offsetSeconds: lyricsState.offsetSeconds,
+          offsetSeconds:
+            lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds,
           activeLineId: active.activeLineId,
           activeSegmentId: active.activeSegmentId,
           reference: null,

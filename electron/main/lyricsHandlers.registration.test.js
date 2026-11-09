@@ -6,6 +6,7 @@ const EXPECTED_LYRICS_CHANNELS = [
   'lyrics:cancel-source-session',
   'lyrics:cancel-timing-review',
   'lyrics:confirm-timing-review',
+  'lyrics:copy-linked-reference',
   'lyrics:delete-reading',
   'lyrics:delete-source',
   'lyrics:edit-authored',

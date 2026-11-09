@@ -186,6 +186,7 @@ const MAIN_INVOKE_CHANNELS = [
   'lyrics:cancel-source-session',
   'lyrics:cancel-timing-review',
   'lyrics:confirm-timing-review',
+  'lyrics:copy-linked-reference',
   'lyrics:get-timing-review',
   'lyrics:revoke-timing-review',
   'lyrics:delete-reading',

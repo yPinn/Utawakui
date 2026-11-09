@@ -2,9 +2,17 @@
 import { computed, ref, useId } from 'vue';
 import { FolderOpen } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { useLibrary } from '../../composables/useLibrary.js';
+import { trackArtistText } from '../../utils/artistPage.js';
+import {
+  recordingVersionTags,
+  trackTitlePresentation,
+} from '../../utils/trackTitlePresentation.js';
+import { pickPreferredLyricsSource } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 import UiTextField from '../ui/UiTextField.vue';
@@ -14,11 +22,88 @@ const emit = defineEmits(['cancel', 'saved']);
 
 const { state, selectedTrack, importManualLyricsText, importManualLyricsFile } =
   useLyrics();
+const { state: library } = useLibrary();
 
 const fieldId = `lyrics-manual-import-${useId()}`;
 const labelDraft = ref('');
 const textDraft = ref('');
 const isImportingFile = ref(false);
+const referenceId = ref('');
+const readingReference = ref(false);
+const referenceError = ref(false);
+const references = computed(() => {
+  const current = selectedTrack.value;
+  const work = current?.workPresentation;
+  if (work?.relationship !== 'cover') return [];
+  const versions = recordingVersionTags(current);
+  const score = (track) =>
+    Number(track.id === work.referenceTrackId) * 8 +
+    Number(
+      recordingVersionTags(track).some((version) => versions.includes(version)),
+    ) *
+      3 +
+    ({ original: 2, unknown: 1, cover: 0 }[
+      track.workPresentation.relationship
+    ] ?? 0);
+  return library.tracks
+    .filter(
+      (track) =>
+        track.id !== current.id &&
+        track.workPresentation?.workId === work.workId,
+    )
+    .map((track) => ({ track, source: pickPreferredLyricsSource(track) }))
+    .filter(({ source }) => source)
+    .sort((a, b) => score(b.track) - score(a.track));
+});
+const referenceOptions = computed(() =>
+  references.value.map(({ track }) => ({
+    value: track.id,
+    label: [trackTitlePresentation(track).title, trackArtistText(track)]
+      .filter(Boolean)
+      .join(' · '),
+  })),
+);
+const selectedReference = computed(
+  () =>
+    references.value.find(({ track }) => track.id === referenceId.value) ??
+    references.value[0],
+);
+
+async function prepareReference() {
+  const currentId = selectedTrack.value?.id;
+  const chosen = selectedReference.value;
+  if (!chosen || !currentId || textDraft.value.trim() || readingReference.value)
+    return;
+  readingReference.value = true;
+  referenceError.value = false;
+  try {
+    const result = await window.Utawakui.getTrackLyricsReference(
+      chosen.track.id,
+      chosen.source.filename,
+    );
+    if (
+      selectedTrack.value?.id !== currentId ||
+      selectedReference.value !== chosen ||
+      textDraft.value.trim()
+    )
+      return;
+    const text = result?.text;
+    if (!text) {
+      referenceError.value = true;
+      return;
+    }
+    textDraft.value = text;
+    if (!labelDraft.value) {
+      labelDraft.value = t('lyricsSource.manual.referenceLabel', {
+        artist: trackArtistText(chosen.track),
+      }).slice(0, 32);
+    }
+  } catch {
+    if (selectedTrack.value?.id === currentId) referenceError.value = true;
+  } finally {
+    readingReference.value = false;
+  }
+}
 
 const canImportText = computed(
   () => textDraft.value.trim().length > 0 && !state.manualSave.isSaving,
@@ -93,6 +178,28 @@ async function handleFileImport() {
       :maxlength="32"
       :placeholder="t('lyricsSource.manual.optional')"
     />
+
+    <template v-if="referenceOptions.length">
+      <UiSelect
+        :id="`${fieldId}-reference`"
+        :label="t('lyricsSource.manual.reference')"
+        :model-value="selectedReference?.track.id"
+        :options="referenceOptions"
+        :disabled="readingReference"
+        @update:model-value="referenceId = $event"
+      />
+      <div>
+        <UiButton
+          :loading="readingReference"
+          :disabled="Boolean(textDraft.trim()) || state.manualSave.isSaving"
+          @click="prepareReference"
+          >{{ t('lyricsSource.manual.prepareReference') }}</UiButton
+        >
+        <UiHint v-if="referenceError" role="status">{{
+          t('lyricsSource.manual.referenceFailed')
+        }}</UiHint>
+      </div>
+    </template>
 
     <UiTextarea
       :id="`${fieldId}-text`"

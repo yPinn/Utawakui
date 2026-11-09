@@ -415,6 +415,23 @@ export function useLyricsSourceDocuments({
     );
   }
 
+  function copyLinkedReference(referenceId, filename) {
+    if (state.sourceAction.isSaving) return null;
+    return runSourceAction(
+      'copy-linked-reference',
+      'copyLinkedLyricsReference',
+      async (bridge, track) => {
+        const saved = await bridge(track.id, referenceId, filename);
+        await refreshLibrary();
+        if (track.id === state.selectedTrackId && saved?.source?.filename) {
+          selectSource(saved.source.filename, { persistPreference: false });
+          await waitForSelectedLyricsLoad();
+        }
+        return saved;
+      },
+    );
+  }
+
   function editAuthoredLyrics(lineId, text, operation) {
     const filename = state.selectedSourceFilename;
     const session = sourceSession.value;
@@ -449,7 +466,7 @@ export function useLyricsSourceDocuments({
         const result = await bridge(track.id, filename);
         await refreshLibrary();
         if (state.selectedSourceFilename === filename) {
-          selectSource(result.sources[0]?.filename ?? '', {
+          selectSource(result.sources[0]?.filename ?? null, {
             persistPreference: false,
           });
         }
@@ -553,6 +570,7 @@ export function useLyricsSourceDocuments({
     saveTimingDocument,
     setSourceLabel,
     forkAuthoredLyrics,
+    copyLinkedReference,
     editAuthoredLyrics,
     deleteSource,
     importManualLyricsText,

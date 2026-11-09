@@ -55,7 +55,9 @@ describe('lyrics contextual compositions', () => {
     const source = readComponent('./PerformanceLyricsWorkspace.vue');
     expect(source).toContain('selection-hint="從曲庫播放曲目，即可查看歌詞。"');
     expect(source).toContain('unchecked-hint="按「編輯歌詞」後重新掃描歌詞。"');
-    expect(source).toContain('@click="openLyricsAuthoring"');
+    expect(source).toContain(
+      '@click="reference ? openSourceManager() : openLyricsAuthoring()"',
+    );
   });
 
   it('uses the shared library scope vocabulary in the track picker', () => {

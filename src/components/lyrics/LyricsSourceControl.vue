@@ -18,6 +18,7 @@ const props = defineProps({
   hasSelectedTrack: { type: Boolean, default: false },
   isLoading: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  emptySourceLabel: { type: String, default: '' },
 });
 const emit = defineEmits(['sourceChange', 'manageSources']);
 const selectId = `lyrics-source-${useId()}`;
@@ -26,7 +27,7 @@ const options = computed(() => [
     value: '',
     label: props.sources.length
       ? t('lyricsSource.control.hide')
-      : t('lyricsSource.control.none'),
+      : props.emptySourceLabel || t('lyricsSource.control.none'),
   },
   ...sortLyricsSources(props.sources).map((source) => ({
     value: source.filename,

@@ -24,6 +24,7 @@ const {
 } = require('./lyricsAuthored');
 const {
   normalizeLyricsDocument,
+  referenceLyricsDraft,
 } = require('../../../src/utils/lyricsDocument.js');
 const {
   timingSidecarPath,
@@ -190,8 +191,97 @@ function createLyricsSourceSessions({
     return value;
   }
 
+  function writeAuthoredCopy(value, targetDir = value.trackDir) {
+    const { source, timing } = value.result;
+    if (
+      Buffer.byteLength(value.result.text, 'utf8') > maxDocumentBytes ||
+      !timing.sourceFingerprint ||
+      !['missing', 'current'].includes(timing.status)
+    )
+      throw failure('LYRICS_SOURCE_UNUSABLE');
+    const id = randomUUID();
+    const filename = `authored-${id}.json`;
+    const original = normalizeLyricsDocument({
+      ...value.result,
+      sourceFingerprint: timing.sourceFingerprint,
+      normalizerProfileId: timing.normalizerProfileId,
+    });
+    if (original.lines.length === 0) throw failure('LYRICS_SOURCE_UNUSABLE');
+    let document;
+    try {
+      document = authoredDocument(filename, { ...original, documentId: id });
+    } catch {
+      throw failure('LYRICS_SOURCE_UNUSABLE');
+    }
+    const copy = {
+      filename,
+      kind: 'authored',
+      language: source.language,
+      offsetMs: source.offsetMs,
+    };
+    const lyricsDir = path.join(targetDir, 'lyrics');
+    fs.mkdirSync(lyricsDir, { recursive: true });
+    writeAuthoredLyrics(targetDir, filename, {
+      schemaVersion: 1,
+      revision: 1,
+      base: {
+        filename: source.filename,
+        fingerprint: timing.sourceFingerprint,
+      },
+      document,
+      recheckLineIds: timing.recheckLineIds ?? [],
+    });
+    try {
+      const sources = listTrackLyricsSources(targetDir).sources;
+      saveTrackLyricsManifest(targetDir, [...sources, copy], {
+        preference: { filename, origin: 'user' },
+      });
+    } catch (error) {
+      fs.rmSync(path.join(lyricsDir, filename), { force: true });
+      throw error;
+    }
+    return { source: copy };
+  }
+
   return {
     inspect,
+    readReference(trackId, filename, { timed = false } = {}) {
+      const value = snapshot(trackId, filename);
+      if (!value) return null;
+      if (timed) return value.result;
+      const text = referenceLyricsDraft(value.result);
+      return text ? { text } : null;
+    },
+    copyLinkedReference(trackId, referenceId, filename) {
+      const value = snapshot(referenceId, filename);
+      if (!value || trackId === referenceId || !isBoundedTrackId(trackId))
+        throw failure();
+      const targetDir = resolveTrackDir(value.dir, trackId);
+      if (
+        !targetDir ||
+        !findTrackRecord(value.dir, trackId) ||
+        fs.realpathSync(targetDir) !== targetDir
+      )
+        throw failure();
+      const sources = listTrackLyricsSources(targetDir).sources;
+      if (sources.length) {
+        const [existing] = sources;
+        if (
+          sources.length !== 1 ||
+          existing.kind !== 'manual' ||
+          !/^(?:參照 |From )/u.test(existing.label ?? '') ||
+          existing.offsetMs
+        )
+          throw failure();
+        const legacy = snapshot(trackId, existing.filename)?.result;
+        if (
+          legacy?.timing.status !== 'missing' ||
+          legacy.text.trim() !== referenceLyricsDraft(value.result)
+        )
+          throw failure();
+      }
+      return writeAuthoredCopy(value, targetDir);
+    },
     invalidateTrack(trackId) {
       for (const [id, session] of sessions)
         if (!trackId || session.trackId === trackId) sessions.delete(id);
@@ -233,59 +323,9 @@ function createLyricsSourceSessions({
     },
     forkAuthored(trackId, filename, input) {
       const value = inspect(trackId, filename, input);
-      const { source, timing } = value.result;
-      if (
-        !findTrackRecord(value.dir, trackId) ||
-        Buffer.byteLength(value.result.text, 'utf8') > maxDocumentBytes ||
-        !timing.sourceFingerprint ||
-        !['missing', 'current'].includes(timing.status)
-      )
+      if (!findTrackRecord(value.dir, trackId))
         throw failure('LYRICS_SOURCE_UNUSABLE');
-      const id = randomUUID();
-      const copyFilename = `authored-${id}.json`;
-      const original = normalizeLyricsDocument({
-        ...value.result,
-        sourceFingerprint: timing.sourceFingerprint,
-        normalizerProfileId: timing.normalizerProfileId,
-      });
-      if (original.lines.length === 0) throw failure('LYRICS_SOURCE_UNUSABLE');
-      let document;
-      try {
-        document = authoredDocument(copyFilename, {
-          ...original,
-          documentId: id,
-        });
-      } catch {
-        throw failure('LYRICS_SOURCE_UNUSABLE');
-      }
-      const copy = {
-        filename: copyFilename,
-        kind: 'authored',
-        language: source.language,
-        offsetMs: source.offsetMs,
-      };
-      writeAuthoredLyrics(value.trackDir, copyFilename, {
-        schemaVersion: 1,
-        revision: 1,
-        base: {
-          filename: source.filename,
-          fingerprint: timing.sourceFingerprint,
-        },
-        document,
-        recheckLineIds: timing.recheckLineIds ?? [],
-      });
-      try {
-        const sources = listTrackLyricsSources(value.trackDir).sources;
-        saveTrackLyricsManifest(value.trackDir, [...sources, copy], {
-          preference: { filename: copyFilename, origin: 'user' },
-        });
-      } catch (error) {
-        fs.rmSync(path.join(value.trackDir, 'lyrics', copyFilename), {
-          force: true,
-        });
-        throw error;
-      }
-      return { source: copy };
+      return writeAuthoredCopy(value);
     },
     editAuthored(trackId, filename, input, edit) {
       const value = inspect(trackId, filename, input);

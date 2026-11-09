@@ -106,6 +106,21 @@ export function normalizeLyricsDocument({
   };
 }
 
+export function referenceLyricsDraft(result) {
+  const document = normalizeLyricsDocument(result);
+  const text = document.lines
+    .map((line) => line.text.trim())
+    .filter(Boolean)
+    .join('\n');
+  // The manual importer stores LRC. Refuse a draft that would still parse as
+  // timed even after removing the source document's timing fields.
+  return parseLyricsText(text, { source: { filename: 'reference.lrc' } }).some(
+    (line) => Number.isFinite(line.start),
+  )
+    ? ''
+    : text;
+}
+
 function boundedProgress(positionMs, startMs, endMs) {
   if (
     !Number.isFinite(startMs) ||

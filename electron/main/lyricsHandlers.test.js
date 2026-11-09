@@ -40,6 +40,7 @@ function createIpcMain(getTrustedEvent = () => null) {
         [
           'lyrics:get-track',
           'lyrics:fork-authored',
+          'lyrics:copy-linked-reference',
           'lyrics:edit-authored',
           'lyrics:preview-export',
           'lyrics:save-export',
@@ -341,6 +342,9 @@ describe('lyrics timing IPC', () => {
       dialog,
       getConfig: () => ({}),
       resolveDownloadDir: () => dir,
+      getLibraryContext: () => ({ dir, epoch: 1 }),
+      getLinkedLyricsReference: async (_dir, id) =>
+        id === 'cover' ? 'track-a' : null,
       getMainWindow: () => mainWindow,
       notifyLibraryUpdated,
       requireFeatureGate,
@@ -353,6 +357,51 @@ describe('lyrics timing IPC', () => {
 
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+  it('inherits timing without a session and copies only to the confirmed cover', async () => {
+    const cover = path.join(dir, 'tracks', 'cover');
+    fs.mkdirSync(cover);
+    fs.writeFileSync(path.join(cover, 'audio.mp3'), 'audio');
+    saveTrackLyricsText(
+      cover,
+      { filename: 'manual.lrc', kind: 'manual', label: '參照 Track A' },
+      'Hello',
+    );
+    setLyricsSourceOffset(trackDir, 'main.lrc', 400);
+    const load = ipcMain.handlers.get('lyrics:get-track');
+    const reference = await load(
+      null,
+      'track-a',
+      'main.lrc',
+      'reference-timed',
+    );
+    expect(reference).toMatchObject({
+      text: '[00:01.00]Hello',
+      source: { offsetMs: 400 },
+    });
+    expect(reference.sourceSession).toBeUndefined();
+    const copy = ipcMain.handlers.get('lyrics:copy-linked-reference');
+    await expect(
+      copy(null, 'cover', 'elsewhere', 'main.lrc'),
+    ).rejects.toMatchObject({
+      code: 'LYRICS_SOURCE_STALE',
+    });
+    const { source } = await copy(null, 'cover', 'track-a', 'main.lrc');
+    expect(await load(null, 'cover', source.filename)).toMatchObject({
+      source: { kind: 'authored', offsetMs: 400 },
+      timing: { document: { lines: [{ startMs: 1000, text: 'Hello' }] } },
+    });
+    expect(
+      fs.readFileSync(path.join(trackDir, 'lyrics', 'main.lrc'), 'utf8'),
+    ).toBe('[00:01.00]Hello');
+    expect(
+      fs.readFileSync(path.join(cover, 'lyrics', 'manual.lrc'), 'utf8'),
+    ).toBe('Hello');
+    await expect(
+      copy(null, 'cover', 'track-a', 'main.lrc'),
+    ).rejects.toMatchObject({
+      code: 'LYRICS_SOURCE_STALE',
+    });
   });
   it('rejects forged frames and source sessions without exposing private paths', async () => {
     const load = ipcMain.handlers.get('lyrics:get-track');

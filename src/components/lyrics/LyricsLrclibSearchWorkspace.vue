@@ -10,6 +10,11 @@ import {
 } from 'vue';
 import { Search } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
+import {
+  trackTitlePresentation,
+  trackTitleQueries,
+} from '../../utils/trackTitlePresentation.js';
+import { trackArtistText } from '../../utils/artistPage.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 import { buildLyricsIssueReport } from '../../utils/lyricsIssueReport.js';
@@ -18,6 +23,7 @@ import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiSurface from '../ui/UiSurface.vue';
@@ -42,8 +48,17 @@ const saveLyricsProviderCandidate =
     lyrics.saveLyricsCandidate(candidate, trackId, query));
 
 const trackContext = selectedTrack.value;
-const titleDraft = shallowRef(trackContext?.title || '');
-const artistDraft = shallowRef(trackContext?.artist || '');
+const titleDraft = shallowRef(trackTitlePresentation(trackContext).queryTitle);
+const artistDraft = shallowRef(trackArtistText(trackContext));
+const alternateTitles = computed(() =>
+  trackTitleQueries(
+    selectedTrack.value?.id === trackContext?.id
+      ? selectedTrack.value
+      : trackContext,
+  )
+    .slice(1)
+    .map((title) => ({ value: title, label: title })),
+);
 const submittedQuery = shallowRef(null);
 const activeMode = shallowRef('structured');
 const hasSearched = shallowRef(false);
@@ -401,6 +416,20 @@ function reportCandidate(candidate) {
       >
         {{ searchHint || t('lyricsSource.search.queryHelp') }}
       </UiHint>
+      <UiSelect
+        v-if="alternateTitles.length"
+        :id="`${providerId}-alternate-title`"
+        class="lyrics-lrclib-search__alternate-title"
+        :label="t('lyricsSource.search.alternateTitle')"
+        :placeholder="t('lyricsSource.search.chooseAlternateTitle')"
+        :options="alternateTitles"
+        :model-value="
+          alternateTitles.some((option) => option.value === titleDraft)
+            ? titleDraft
+            : ''
+        "
+        @update:model-value="titleDraft = $event"
+      />
     </UiSurface>
 
     <p v-if="resultAnnouncement" class="ui-visually-hidden" aria-live="polite">
@@ -571,6 +600,11 @@ function reportCandidate(candidate) {
 .lyrics-lrclib-search__query-help {
   grid-column: 1 / -1;
   text-wrap: pretty;
+}
+
+.lyrics-lrclib-search__alternate-title {
+  grid-column: 1 / -1;
+  min-inline-size: 0;
 }
 
 .lyrics-lrclib-search__actions {

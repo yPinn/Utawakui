@@ -4,6 +4,7 @@ import {
   deriveLyricsPositionLineIndex,
   normalizeLyricsDocument,
   projectLegacyLyricLines,
+  referenceLyricsDraft,
 } from './lyricsDocument.js';
 import { selectLyricsFrame } from '../../shared/presentation/state.mjs';
 
@@ -14,6 +15,19 @@ const SOURCE = {
 };
 const SOURCE_FINGERPRINT = 'a'.repeat(64);
 const NORMALIZER_PROFILE_ID = 'lyrics-source-v2';
+
+describe('linked lyrics reference', () => {
+  it('copies the text without cue time, word time, or source offset', () => {
+    const text = referenceLyricsDraft({
+      text: '[offset:2000]\n[00:01.00]<00:01.00>First\n[00:05.00]Second',
+      source: SOURCE,
+    });
+    expect(text).toBe('First\nSecond');
+    expect(normalizeLyricsDocument({ text, source: SOURCE }).granularity).toBe(
+      'T0',
+    );
+  });
+});
 
 describe('local lyrics reading position', () => {
   const document = {

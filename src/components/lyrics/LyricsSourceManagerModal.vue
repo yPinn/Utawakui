@@ -53,6 +53,10 @@ const {
   experimentalLyrics,
   availableSources,
   refreshSourceDetails,
+  linkedReference,
+  hasLinkedReference,
+  applyLinkedReference,
+  toggleLinkedReference,
 } = useLyrics();
 const feedback = useFeedbackReport();
 
@@ -309,10 +313,58 @@ function reportSource(source) {
               :title="sourceActionTitle"
               :message="sourceActionError"
             />
-            <UiHint v-if="selectedLyrics.sources.length === 0">
-              {{ t('lyricsSource.manager.empty') }}
-            </UiHint>
-            <ul v-else class="lyrics-source-manager__list">
+            <template
+              v-if="
+                linkedReference ||
+                (hasLinkedReference && state.linkedReferenceHidden)
+              "
+            >
+              <UiHint v-if="linkedReference">
+                {{
+                  t(
+                    linkedReference.document.granularity === 'T0'
+                      ? 'lyricsSource.manager.linkedReferenceText'
+                      : 'lyricsSource.manager.linkedReference',
+                    { title: linkedReference.title },
+                  )
+                }}
+              </UiHint>
+              <UiHint v-else-if="selectedLyrics.sources.length === 0">{{
+                t('lyricsSource.manager.empty')
+              }}</UiHint>
+              <div
+                v-if="linkedReference || state.linkedReferenceHidden"
+                class="lyrics-source-manager__reference-actions"
+              >
+                <UiButton
+                  v-if="linkedReference"
+                  variant="secondary"
+                  :loading="state.sourceAction?.isSaving"
+                  @click="applyLinkedReference"
+                >
+                  {{ t('lyricsSource.manager.applyReference') }}
+                </UiButton>
+                <UiButton
+                  :disabled="state.sourceAction?.isSaving"
+                  @click="toggleLinkedReference"
+                >
+                  {{
+                    t(
+                      linkedReference
+                        ? 'lyricsSource.manager.hideReference'
+                        : 'lyricsSource.manager.showReference',
+                    )
+                  }}
+                </UiButton>
+              </div>
+            </template>
+            <UiHint v-else-if="selectedLyrics.sources.length === 0">{{
+              t('lyricsSource.manager.empty')
+            }}</UiHint>
+            <ul
+              v-if="selectedLyrics.sources.length"
+              class="lyrics-source-manager__list"
+            >
               <UiSurface
                 v-for="source in displaySources"
                 :key="source.filename"
@@ -378,9 +430,15 @@ function reportSource(source) {
                       class="lyrics-source-manager__row-label"
                       :title="formatLyricsSourceLabel(source)"
                       :aria-pressed="
+                        !linkedReference &&
                         state.selectedSourceFilename === source.filename
                       "
-                      @click="selectSource(source.filename)"
+                      @click="
+                        linkedReference &&
+                        state.selectedSourceFilename === source.filename
+                          ? toggleLinkedReference()
+                          : selectSource(source.filename)
+                      "
                     >
                       <span
                         class="lyrics-source-manager__row-name"
@@ -389,7 +447,10 @@ function reportSource(source) {
                       >
                     </UiButton>
                     <UiChip
-                      v-if="state.selectedSourceFilename === source.filename"
+                      v-if="
+                        !linkedReference &&
+                        state.selectedSourceFilename === source.filename
+                      "
                       class="lyrics-source-manager__row-status"
                       tone="current"
                     >
@@ -526,6 +587,17 @@ function reportSource(source) {
   font-size: var(--ui-type-subtitle-size);
   font-weight: var(--ui-type-subtitle-weight);
   line-height: var(--ui-type-subtitle-line-height);
+}
+
+.lyrics-source-manager__reference-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  margin-block-start: var(--ui-space-3);
+}
+
+.lyrics-source-manager__reference-actions + .lyrics-source-manager__list {
+  margin-block-start: var(--ui-space-3);
 }
 
 @media (min-width: 64rem) {

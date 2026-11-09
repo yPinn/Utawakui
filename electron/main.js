@@ -90,6 +90,7 @@ const packagedUpdateConfigPath = resolvePackagedUpdateConfigPath({
 
 const { FEATURE_IDS, isFeatureGateEnabled } = require('./lib/featureGates');
 const {
+  findTrack,
   inspectTrackMusicStructure,
   prepareTrackMusicStructureSource,
   resolveTrackArtworkPath,
@@ -1523,6 +1524,17 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       lyricsAcquisitionService,
       recordDiagnostic,
+      async getLinkedLyricsReference(dir, trackId) {
+        const track = findTrack(dir, trackId);
+        if (!track) return null;
+        const [projected] = await workOrganizationHost.runtime.projectTracks(
+          dir,
+          [track],
+          { includeReferences: true },
+        );
+        const link = projected?.workPresentation;
+        return link?.relationship === 'cover' ? link.referenceTrackId : null;
+      },
       getLibraryContext: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
         epoch: workLibraryEpoch,

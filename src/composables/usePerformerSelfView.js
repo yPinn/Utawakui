@@ -161,7 +161,8 @@ function projectionInput() {
       lines: lyricLines.value,
       activeLineIndex: activeLineIndex.value,
       wordFrame: localLyricsFrame?.value,
-      offsetSeconds: lyricsState.offsetSeconds,
+      offsetSeconds:
+        lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds,
       offsetSave: lyricsState.offsetSave,
     },
     readings: {

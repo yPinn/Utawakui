@@ -979,8 +979,8 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const clearCandidateSearch = vi.fn();
     const selectedTrack = ref({
       id: 'track-a',
-      title: 'Initial title',
-      artist: 'Initial artist',
+      title: '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 𝑬𝒂𝒓𝒆𝒏𝒅𝒆𝒍',
+      artist: 'Earendel ch. 厄倫蒂兒',
     });
     const state = reactive({
       candidateSearch: {
@@ -1011,7 +1011,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     );
     expect(searchLyricsCandidates).toHaveBeenCalledWith(
       {
-        query: { title: 'Initial title', artist: 'Initial artist' },
+        query: { title: '螺旋 Acoustic', artist: 'Earendel ch. 厄倫蒂兒' },
       },
       'track-a',
     );

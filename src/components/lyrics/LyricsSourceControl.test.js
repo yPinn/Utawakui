@@ -65,6 +65,9 @@ describe('shared lyrics source entry', () => {
     await nextTick();
     expect(select().props.disabled).toBe(true);
     expect(textContent(select())).toBe('尚無歌詞來源');
+    props.emptySourceLabel = '參照〈RASEN Acoustic Ver〉';
+    await nextTick();
+    expect(textContent(select())).toBe('參照〈RASEN Acoustic Ver〉');
     props.sources = [{ filename: 'two.lrc', kind: 'manual', label: '恢復' }];
     props.selectedSourceFilename = 'two.lrc';
     await nextTick();
