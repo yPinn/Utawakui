@@ -10,6 +10,7 @@ const props = defineProps({
   required: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   inline: { type: Boolean, default: false },
+  labelInline: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
   group: { type: Boolean, default: false },
 });
@@ -33,7 +34,11 @@ const fieldDescribedBy = computed(() =>
 <template>
   <div
     class="ui-field"
-    :class="{ 'ui-field--inline': inline, 'is-invalid': fieldInvalid }"
+    :class="{
+      'ui-field--inline': inline || (labelInline && !labelHidden),
+      'ui-field--label-end': $slots['label-end'],
+      'is-invalid': fieldInvalid,
+    }"
     :role="group ? 'group' : undefined"
     :aria-labelledby="group ? `${id}-label` : undefined"
     :aria-describedby="group ? fieldDescribedBy || undefined : undefined"
@@ -52,6 +57,8 @@ const fieldDescribedBy = computed(() =>
           >＊</span
         >
       </component>
+
+      <slot name="label-end" />
 
       <div class="ui-field__control">
         <slot
@@ -107,6 +114,16 @@ const fieldDescribedBy = computed(() =>
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.ui-field--label-end .ui-field__main {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--ui-space-2);
+}
+
+.ui-field--label-end .ui-field__control {
+  grid-column: 1 / -1;
 }
 
 /* Control labels are interface chrome; hint and error stay selectable. */

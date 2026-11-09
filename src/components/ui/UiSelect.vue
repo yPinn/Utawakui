@@ -18,6 +18,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  labelInline: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -60,6 +61,7 @@ defineExpose({ focus });
     :required="required"
     :invalid="invalid"
     :label-hidden="labelHidden"
+    :label-inline="labelInline"
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
       <span class="ui-select__control">

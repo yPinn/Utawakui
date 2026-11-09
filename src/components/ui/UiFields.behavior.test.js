@@ -258,6 +258,36 @@ describe('shared field accessibility and data flow', () => {
     rangeMount.app.unmount();
   });
 
+  it('places a range value by the label and retains native associations', async () => {
+    const props = reactive({
+      id: 'offset',
+      label: '提前量',
+      modelValue: 0,
+      valueText: '0 ms',
+      valueInLabel: true,
+    });
+    const { root, app } = mount(UiRange, props);
+    const label = findAll(root, (node) => node.type === 'label')[0];
+    const control = findAll(root, (node) => node.props.type === 'range')[0];
+    const outputs = () => findAll(root, (node) => node.type === 'output');
+    expect(outputs()).toHaveLength(1);
+    expect(outputs()[0].parent).toBe(label.parent);
+    expect(outputs()[0].props.for).toBe(control.props.id);
+    expect(label.props.for).toBe(control.props.id);
+
+    props.modelValue = 10;
+    props.valueText = '10 ms';
+    await nextTick();
+    expect(textContent(outputs()[0])).toBe('10 ms');
+    expect(control.props['aria-valuetext']).toBe('10 ms');
+
+    props.valueInLabel = false;
+    await nextTick();
+    expect(outputs()).toHaveLength(1);
+    expect(outputs()[0].parent).not.toBe(label.parent);
+    app.unmount();
+  });
+
   it('keeps full native option labels and field associations through content recovery', async () => {
     const long = '中文／日本語の長い選択肢／A very long option label';
     const props = reactive({

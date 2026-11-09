@@ -1,12 +1,12 @@
 <script setup>
-import { useAttrs, useTemplateRef } from 'vue';
+import { computed, useAttrs, useTemplateRef } from 'vue';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
 import UiRangeControl from './range/UiRangeControl.vue';
 
 defineOptions({ inheritAttrs: false });
 
-defineProps({
+const props = defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
   modelValue: { type: Number, default: 0 },
@@ -16,6 +16,7 @@ defineProps({
   defaultValue: { type: Number, default: undefined },
   marks: { type: Array, default: () => [] },
   valueText: { type: String, default: '' },
+  valueInLabel: { type: Boolean, default: false },
   formatValue: { type: Function, default: null },
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
@@ -27,6 +28,9 @@ defineProps({
 const emit = defineEmits(['update:modelValue', 'reset']);
 const attrs = useAttrs();
 const rangeRef = useTemplateRef('range');
+const showValueInLabel = computed(
+  () => props.valueInLabel && !props.labelHidden && Boolean(props.valueText),
+);
 
 function updateValue(value) {
   emit('update:modelValue', value);
@@ -51,8 +55,14 @@ defineExpose({ focus });
     :invalid="invalid"
     :label-hidden="labelHidden"
   >
+    <template v-if="showValueInLabel" #label-end>
+      <output class="ui-range__value" :for="id">{{ valueText }}</output>
+    </template>
     <template #default="{ describedBy, invalid: fieldInvalid }">
-      <div class="ui-range__layout" :class="{ 'has-value-text': valueText }">
+      <div
+        class="ui-range__layout"
+        :class="{ 'has-value-text': valueText && !showValueInLabel }"
+      >
         <UiRangeControl
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
@@ -72,7 +82,11 @@ defineExpose({ focus });
           @update:model-value="updateValue"
           @reset="emit('reset', $event)"
         />
-        <output v-if="valueText" class="ui-range__value" :for="id">
+        <output
+          v-if="valueText && !showValueInLabel"
+          class="ui-range__value"
+          :for="id"
+        >
           {{ valueText }}
         </output>
       </div>
@@ -89,10 +103,14 @@ defineExpose({ focus });
 .ui-range__layout {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: var(--ui-space-2);
   min-height: var(--ui-field-height);
+}
+
+.ui-range__layout.has-value-text {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .ui-range__control {
@@ -102,7 +120,7 @@ defineExpose({ focus });
 
 .ui-range__value {
   min-width: 3ch;
-  color: var(--ui-color-text-muted);
+  color: var(--ui-range-value);
   font-size: var(--ui-type-caption-size);
   font-weight: var(--ui-type-caption-weight);
   font-variant-numeric: tabular-nums;
@@ -120,7 +138,6 @@ defineExpose({ focus });
 
   .ui-range__value {
     min-inline-size: 2.5rem;
-    color: var(--ui-color-text-muted);
     overflow-wrap: anywhere;
     -webkit-user-select: none;
     user-select: none;
