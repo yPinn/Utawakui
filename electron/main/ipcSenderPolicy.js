@@ -22,6 +22,8 @@ const IPC_CHANNEL_CAPABILITIES = Object.freeze({
   'performer-mic:end': IPC_CAPABILITIES.PERFORMER,
   'performer-pitch:analyze': IPC_CAPABILITIES.PERFORMER,
   'performer-pitch:cancel': IPC_CAPABILITIES.PERFORMER,
+  'performer-pitch:analyze-live': IPC_CAPABILITIES.PERFORMER,
+  'performer-pitch:cancel-live': IPC_CAPABILITIES.PERFORMER,
   'performer-review:load': IPC_CAPABILITIES.PERFORMER,
   'performer-review:cancel': IPC_CAPABILITIES.PERFORMER,
   'performer-review:mark': IPC_CAPABILITIES.PERFORMER,

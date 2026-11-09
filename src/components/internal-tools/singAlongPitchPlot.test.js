@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import {
   applyGuideOctaveMarks,
+  compareSingAlongPitch,
   clipGuideContour,
   createSingAlongClock,
   guideContourPath,
@@ -9,13 +10,54 @@ import {
   guideNotes,
   guideSilenceRanges,
   guideTechniqueMarkers,
+  inputLevelPath,
   maskGuideContours,
-  smoothMicFrames,
+  connectMicFrames,
+  projectMicSamplePosition,
   songPitchBounds,
 } from './singAlongPitchPlot.js';
 
+it('plots level independently of pitch and separates discontinuous samples', () => {
+  expect(
+    inputLevelPath(
+      [
+        { time: 0, dbfs: -65, hz: null, continuous: false },
+        { time: 1, dbfs: -20, hz: null, continuous: true },
+        { time: 2, dbfs: -20, hz: 440, continuous: false },
+        { time: 3, dbfs: -20, hz: 440, continuous: true },
+      ],
+      0,
+      2.5,
+      (time) => time,
+    ),
+  ).toBe('M0.00,16L0.00,16.00L1.00,2.00L1.00,16ZM2.00,16L2.00,2.00L2.00,16Z');
+});
+
 const toHz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 const step = 0.016;
+
+it('compares the latest pitch with the guide at the aligned time and key', () => {
+  const guide = [{ start: 2, end: 3, points: [{ midi: 67 }] }];
+  for (const [cents, direction] of [
+    [-35, 'low'],
+    [0, 'center'],
+    [35, 'high'],
+  ]) {
+    expect(
+      compareSingAlongPitch(
+        { time: 2.5, hz: toHz(69 + cents / 100) },
+        guide,
+        2,
+      ),
+    ).toMatchObject({ time: 2.5, midi: 69, direction });
+  }
+  expect(compareSingAlongPitch({ time: 3, hz: 440 }, guide, 2)).toBeNull();
+  expect(compareSingAlongPitch({ time: 2.5, hz: null }, guide, 2)).toBeNull();
+  expect(
+    compareSingAlongPitch({ time: 2.5, hz: toHz(70) }, guide, 2),
+  ).toBeNull();
+});
+
 const toContours = (values) =>
   guideContours(
     values.map((midi) => (midi === null ? 0 : toHz(midi))),
@@ -346,20 +388,27 @@ it('clips the guide slope to the page without changing its timing', () => {
   ).toMatch(/^M8\.00,65\.10.*Z$/);
 });
 
-it('suppresses a single spike and smooths slight mic jitter without modifying raw frames', () => {
+it('breaks the line around an isolated mic jump and preserves all measured pitches', () => {
   expect(edges(toContours([69, 69, 81, 69, 69]))).toEqual([[0, 5]]);
   const frames = [69, 69, 81, 69, 69, 69.25, 69, 69].map((midi, index) => ({
     time: index * 0.033,
     hz: toHz(midi),
     continuous: index > 0,
   }));
-  const cleaned = smoothMicFrames(frames);
-  expect(cleaned[2]).toEqual({ ...frames[2], hz: toHz(69) });
-  expect(cleaned[5].hz).toBeGreaterThan(toHz(69.09));
-  expect(cleaned[5].hz).toBeLessThan(frames[5].hz);
-  expect(frames[2].hz).toBe(toHz(81));
+  const plotted = connectMicFrames(frames);
+  expect(plotted.map(({ hz }) => hz)).toEqual(frames.map(({ hz }) => hz));
+  expect(plotted[2]).toEqual({ ...frames[2], continuous: false });
+  expect(plotted[3]).toEqual({ ...frames[3], continuous: false });
+  expect(plotted[5]).toBe(frames[5]);
   const afterGap = frames.map((frame, index) =>
     index === 3 ? { ...frame, continuous: false } : frame,
   );
-  expect(smoothMicFrames(afterGap)[2]).toBe(afterGap[2]);
+  expect(connectMicFrames(afterGap)[2]).toBe(afterGap[2]);
+});
+
+it('centers an analysis window on the song clock and drops a window crossing a seek', () => {
+  const frame = { sampledAtMs: 200, windowMs: 40 };
+  const positionAt = (time) => 12_000 + 1.5 * time;
+  expect(projectMicSamplePosition(frame, 161, positionAt, 1.5)).toBeNull();
+  expect(projectMicSamplePosition(frame, 160, positionAt, 1.5)).toBe(12_270);
 });

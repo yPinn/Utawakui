@@ -130,6 +130,8 @@ describe('trusted IPC main boundary', () => {
     ).rejects.toThrow();
 
     for (const channel of [
+      'performer-pitch:analyze-live',
+      'performer-pitch:cancel-live',
       'performer-review:load',
       'performer-review:cancel',
       'performer-review:mark',
@@ -165,6 +167,8 @@ describe('trusted IPC main boundary', () => {
       'performer-mic:end': 'performer',
       'performer-pitch:analyze': 'performer',
       'performer-pitch:cancel': 'performer',
+      'performer-pitch:analyze-live': 'performer',
+      'performer-pitch:cancel-live': 'performer',
       'performer-review:load': 'performer',
       'performer-review:cancel': 'performer',
       'performer-review:mark': 'performer',

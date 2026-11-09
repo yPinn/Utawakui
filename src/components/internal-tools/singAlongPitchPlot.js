@@ -12,7 +12,6 @@ const toMidi = (hz) =>
   Number.isFinite(hz) && hz >= 35 && hz <= 2200
     ? 69 + 12 * Math.log2(hz / 440)
     : null;
-const toHz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 function cleanCenter(centers, index, continuous) {
   const midi = centers[index];
@@ -663,11 +662,67 @@ export function guideContourPath(
   return `M${top.join('L')}L${bottom.reverse().join('L')}Z`;
 }
 
-export function smoothMicFrames(frames) {
+export function connectMicFrames(frames) {
   const raw = frames.map(({ hz }) => toMidi(hz));
-  const continuous = (index) => frames[index].continuous;
-  return frames.map((frame, index) => {
-    const midi = cleanCenter(raw, index, continuous);
-    return midi === raw[index] ? frame : { ...frame, hz: toHz(midi) };
-  });
+  const isolated = raw.map(
+    (midi, index) =>
+      midi !== null &&
+      index >= 2 &&
+      index + 2 < raw.length &&
+      [index - 1, index, index + 1, index + 2].every(
+        (at) => frames[at].continuous,
+      ) &&
+      isIsolatedSpike(midi, [
+        raw[index - 2],
+        raw[index - 1],
+        raw[index + 1],
+        raw[index + 2],
+      ]),
+  );
+  return frames.map((frame, index) =>
+    frame.continuous && (isolated[index] || isolated[index - 1])
+      ? { ...frame, continuous: false }
+      : frame,
+  );
+}
+
+export const INPUT_LEVEL_HEIGHT = 16;
+
+export function inputLevelPath(frames, from, to, timeToX) {
+  let path = '';
+  let lastX = null;
+  for (const { time, dbfs, continuous } of frames) {
+    if (time < from || time > to || !Number.isFinite(dbfs)) continue;
+    if (!continuous && lastX !== null) {
+      path += `L${lastX},${INPUT_LEVEL_HEIGHT}Z`;
+      lastX = null;
+    }
+    const x = timeToX(time).toFixed(2);
+    const level = Math.min(1, Math.max(0, (dbfs + 65) / 45));
+    const y = INPUT_LEVEL_HEIGHT - level * (INPUT_LEVEL_HEIGHT - 2);
+    if (lastX === null) path += `M${x},${INPUT_LEVEL_HEIGHT}`;
+    path += `L${x},${y.toFixed(2)}`;
+    lastX = x;
+  }
+  return lastX === null ? path : `${path}L${lastX},${INPUT_LEVEL_HEIGHT}Z`;
+}
+
+export function projectMicSamplePosition(frame, boundaryMs, positionAt, rate) {
+  const { sampledAtMs, windowMs } = frame;
+  if (sampledAtMs - windowMs < boundaryMs) return null;
+  return Math.max(0, positionAt(sampledAtMs) - (windowMs / 2) * rate);
+}
+
+export function compareSingAlongPitch(frame, notes, semitones) {
+  const actual = toMidi(frame?.hz);
+  if (actual === null || !Number.isFinite(semitones)) return null;
+  const { time } = frame;
+  const note = notes.find(({ start, end }) => start <= time && time < end);
+  if (!note) return null;
+  const midi = note.points[0].midi + semitones;
+  const delta = actual - midi;
+  if (Math.abs(delta) > 0.5) return null;
+  const direction =
+    Math.abs(delta) <= 0.12 ? 'center' : delta > 0 ? 'high' : 'low';
+  return { time, midi, direction };
 }

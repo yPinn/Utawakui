@@ -51,10 +51,17 @@ defineEmits([
       </div>
       <section
         class="performer-surface__utility-rail"
+        :class="{
+          'performer-surface__utility-rail--with-tools': $slots['rail-tools'],
+        }"
         :aria-label="t('performer.surface.tools')"
       >
+        <div v-if="$slots['rail-tools']" class="performer-surface__rail-tools">
+          <slot name="rail-tools" />
+          <PerformerNextTrack v-if="frame.nextTrack" :track="frame.nextTrack" />
+        </div>
         <PerformerNextTrack
-          v-if="frame.nextTrack"
+          v-else-if="frame.nextTrack"
           class="performer-surface__next"
           :track="frame.nextTrack"
         />
@@ -68,6 +75,9 @@ defineEmits([
         >
           <template v-if="$slots['leading-tools']" #leading-tools>
             <slot name="leading-tools" />
+          </template>
+          <template v-if="$slots['display-tools']" #display-tools>
+            <slot name="display-tools" />
           </template>
         </PerformerActionBar>
       </section>
@@ -158,6 +168,20 @@ defineEmits([
 }
 
 .performer-surface__utility-rail {
+  gap: var(--ui-space-2);
+}
+
+.performer-surface__utility-rail--with-tools {
+  grid-template-columns:
+    minmax(var(--ui-performer-action-min-block-size), 1fr)
+    minmax(0, auto);
+  align-items: center;
+}
+
+.performer-surface__rail-tools {
+  min-width: 0;
+  display: flex;
+  align-items: center;
   gap: var(--ui-space-2);
 }
 

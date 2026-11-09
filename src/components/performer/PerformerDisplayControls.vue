@@ -69,6 +69,7 @@ const readingScaleItems = [
         @update:model-value="$emit('update:readingScale', $event)"
       />
     </div>
+    <slot />
   </section>
 </template>
 

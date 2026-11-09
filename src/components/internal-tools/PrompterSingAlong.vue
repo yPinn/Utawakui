@@ -7,15 +7,24 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
-import { playbackPositionMs } from '../../../shared/presentation/state.mjs';
-import { MicVocal, SlidersHorizontal } from '../../icons/index.js';
+import { Info, MicVocal, SlidersHorizontal } from '../../icons/index.js';
 import PerformerSurface from '../performer/PerformerSurface.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiDisclosure from '../ui/UiDisclosure.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiModal from '../ui/UiModal.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import UiRange from '../ui/UiRange.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import GuideSegmentReview from './GuideSegmentReview.vue';
 import ReferencePitchMicrophone from './ReferencePitchMicrophone.vue';
+import {
+  alignedOfflineVocalFrames,
+  ALIGNED_VOCAL_HALF_WINDOW_SECONDS,
+  MAX_ALIGNED_VOCAL_BYTES,
+  readAlignedVocalWav,
+} from './alignedVocalInput.js';
 import {
   microphonePitchPath,
   noteName,
@@ -23,16 +32,20 @@ import {
 } from './referencePitchPlot.js';
 import {
   applyGuideOctaveMarks,
+  compareSingAlongPitch,
+  connectMicFrames,
   createSingAlongClock,
   GUIDE_NOTE_HEIGHT,
   guideNoteGeometry,
   guideNotes,
   guideSilenceRanges,
   guideTechniqueMarkers,
+  INPUT_LEVEL_HEIGHT,
+  inputLevelPath,
   maskGuideContours,
   SING_ALONG_CURSOR,
   SING_ALONG_SECONDS,
-  smoothMicFrames,
+  projectMicSamplePosition,
   songPitchBounds,
 } from './singAlongPitchPlot.js';
 
@@ -66,12 +79,33 @@ const response = shallowRef(null);
 const reviewMarks = shallowRef([]);
 const pendingGuide = shallowRef(false);
 const toolsOpen = shallowRef(false);
+const showInputLevel = shallowRef(false);
+const legendOpen = shallowRef(false);
 const reviewOpen = shallowRef(false);
 const reviewCenterMs = shallowRef(0);
 const reviewTrigger = useTemplateRef('reviewTrigger');
-const alignmentOpen = shallowRef(false);
 const micRunning = shallowRef(false);
 const micFrames = shallowRef([]);
+const inputMode = shallowRef('microphone');
+const inputOptions = [
+  { value: 'microphone', label: '麥克風' },
+  { value: 'live', label: 'Live 人聲檔' },
+];
+const liveSelected = computed(() => inputMode.value === 'live');
+const livePicker = useTemplateRef('livePicker');
+const liveInput = shallowRef(null);
+const liveInputError = shallowRef('');
+const liveMethod = shallowRef('realtime');
+const liveMethods = [
+  { value: 'realtime', label: '即時' },
+  { value: 'offline', label: '離線' },
+];
+const offline = shallowRef(null);
+const showOffline = computed(
+  () => liveSelected.value && liveMethod.value === 'offline',
+);
+let liveRequest = 0;
+let offlineRequest = null;
 const clock = createSingAlongClock();
 const continuityKey = computed(() =>
   JSON.stringify([
@@ -83,6 +117,7 @@ const continuityKey = computed(() =>
 let requestId = null;
 let animation = null;
 let continuous = false;
+let micBoundaryMs = performance.now();
 
 const sourceKey = computed(() =>
   source.value?.guide && props.frame.trackId && duration.value > 0
@@ -216,21 +251,78 @@ const wordBand = computed(() => {
     ),
   };
 });
-const displayMicFrames = computed(() =>
-  smoothMicFrames(micFrames.value).map((sample) => ({
-    ...sample,
-    time: sample.time - correctionMs.value / 1000,
-  })),
+const realtimeFrames = computed(() =>
+  liveSelected.value
+    ? (liveInput.value?.frames(viewStart.value, position.value) ?? []).map(
+        (sample) => ({
+          ...sample,
+          time: Math.max(0, sample.time - ALIGNED_VOCAL_HALF_WINDOW_SECONDS),
+        }),
+      )
+    : micFrames.value.map((sample) => ({
+        ...sample,
+        time: sample.time - correctionMs.value / 1000,
+      })),
+);
+const inputFrames = computed(() => {
+  if (!showOffline.value) return realtimeFrames.value;
+  if (offline.value?.status !== 'ready') return [];
+  return alignedOfflineVocalFrames(
+    offline.value.pitches,
+    viewStart.value,
+    position.value,
+  );
+});
+const trace = computed(() => connectMicFrames(inputFrames.value));
+const levelPath = computed(() =>
+  showInputLevel.value
+    ? inputLevelPath(
+        realtimeFrames.value,
+        viewStart.value,
+        position.value,
+        timeToX,
+      )
+    : '',
 );
 const micPath = computed(() =>
   microphonePitchPath(
-    displayMicFrames.value,
+    trace.value,
     focusStart.value - overscan,
     focusEnd.value - focusStart.value + 2 * overscan,
     y,
     timeToX,
   ),
 );
+const pitchComparison = computed(() => {
+  const latest = trace.value.at(-1);
+  if (liveSelected.value && position.value - latest?.time > 0.066) return null;
+  const comparison = compareSingAlongPitch(
+    latest,
+    nearbyGuide.value,
+    semitones.value,
+  );
+  if (
+    !comparison ||
+    comparison.time < viewStart.value ||
+    comparison.time > viewEnd.value
+  )
+    return null;
+  const { time, midi, direction } = comparison;
+  const center = y(midi);
+  const offset = GUIDE_NOTE_HEIGHT / 2 + 5;
+  return {
+    direction,
+    x: timeToX(time - viewStart.value),
+    y:
+      center +
+      (direction === 'high' ? -offset : direction === 'low' ? offset : 0),
+  };
+});
+const comparisonShapes = {
+  center: 'M-0.1 0h0.2',
+  high: 'M-1.3 2L0 -2L1.3 2',
+  low: 'M-1.3 -2L0 2L1.3 -2',
+};
 const guideStatus = computed(() => {
   if (!props.frame.trackId) return '請先在主視窗播放曲目。';
   if (!source.value?.guide) return '請在主視窗選用有分離導唱的音源。';
@@ -251,8 +343,63 @@ const guideStatus = computed(() => {
 });
 
 function clearMic() {
+  micBoundaryMs = performance.now();
   continuous = false;
   micFrames.value = [];
+}
+
+function clearLiveInput() {
+  liveRequest++;
+  clearOffline();
+  liveInput.value = null;
+  liveInputError.value = '';
+}
+
+function clearOffline() {
+  const previous = offlineRequest;
+  offlineRequest = null;
+  offline.value = null;
+  if (previous) void access?.cancelLiveVocal?.(previous).catch(() => {});
+}
+
+async function analyzeLiveInput() {
+  const input = liveInput.value;
+  if (!showOffline.value || !input?.range || offlineRequest) return;
+  const id = crypto.randomUUID();
+  offlineRequest = id;
+  offline.value = { status: 'pending' };
+  try {
+    const samples = await input.offlineSamples();
+    if (offlineRequest !== id) return;
+    const result = await access?.analyzeLiveVocal?.(id, samples.buffer);
+    if (offlineRequest !== id) return;
+    offline.value = result?.status === 'ready' ? result : { status: 'error' };
+  } catch {
+    if (offlineRequest === id) offline.value = { status: 'error' };
+  } finally {
+    if (offlineRequest === id) offlineRequest = null;
+  }
+}
+
+async function loadLiveInput(event) {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file || !liveSelected.value || !sourceKey.value) return;
+  const request = ++liveRequest;
+  const source = sourceKey.value;
+  liveInputError.value = '';
+  try {
+    if (file.size > MAX_ALIGNED_VOCAL_BYTES) throw new Error('WAV size limit');
+    const buffer = await file.arrayBuffer();
+    if (request !== liveRequest || source !== sourceKey.value) return;
+    const input = readAlignedVocalWav(buffer);
+    clearOffline();
+    liveInput.value = { name: file.name, ...input };
+  } catch {
+    if (request !== liveRequest || source !== sourceKey.value) return;
+    liveInputError.value =
+      '請選擇 24 MB 以下、已對齊的單聲道 16-bit WAV（16 或 48 kHz）。';
+  }
 }
 
 function cancelGuide() {
@@ -308,7 +455,14 @@ function sampleMic(running, frame) {
     continuous = false;
     return;
   }
-  const time = playbackPositionMs(state.value, Date.now()) / 1000;
+  const positionMs = projectMicSamplePosition(
+    frame,
+    micBoundaryMs,
+    clock.positionAt,
+    playback.value?.rate ?? 1,
+  );
+  if (positionMs === null) return;
+  const time = positionMs / 1000;
   const previous = micFrames.value.at(-1);
   if (previous && time <= previous.time) return;
   micFrames.value = [
@@ -317,6 +471,7 @@ function sampleMic(running, frame) {
       time,
       atMs: frame.atMs,
       hz: frame.hz,
+      dbfs: frame.dbfs,
       continuous: continuous && previous && frame.atMs - previous.atMs <= 150,
     },
   ];
@@ -327,6 +482,11 @@ function tick(frameMs) {
   animation = null;
   position.value = clock.positionAt(frameMs) / 1000;
   if (playing.value) animation = requestAnimationFrame(tick);
+}
+
+function openLegend() {
+  toolsOpen.value = false;
+  legendOpen.value = true;
 }
 
 function openReview() {
@@ -340,7 +500,16 @@ function returnToTools() {
 }
 
 watch(sourceKey, loadGuide, { immediate: true });
+watch([liveInput, showOffline], () => {
+  if (offline.value?.status !== 'ready') void analyzeLiveInput();
+});
+watch(inputMode, () => {
+  clearMic();
+  clearLiveInput();
+  micRunning.value = false;
+});
 watch(sourceKey, () => {
+  clearLiveInput();
   if (reviewOpen.value) returnToTools();
 });
 watch(
@@ -365,6 +534,7 @@ watch(
   playing,
   () => {
     continuous = false;
+    if (playing.value) micBoundaryMs = performance.now();
   },
   { flush: 'sync' },
 );
@@ -389,6 +559,7 @@ watch(
   { immediate: true },
 );
 onBeforeUnmount(() => {
+  clearLiveInput();
   cancelGuide();
   if (animation !== null) cancelAnimationFrame(animation);
 });
@@ -428,7 +599,11 @@ onBeforeUnmount(() => {
             :viewBox="`0 0 ${PITCH_WIDTH} 120`"
             preserveAspectRatio="none"
             role="img"
-            aria-label="目前曲目的導唱空框與麥克風實唱音高"
+            :aria-label="
+              liveSelected
+                ? '目前曲目的導唱空框與 Live 人聲音高'
+                : '目前曲目的導唱空框與麥克風實唱音高'
+            "
           >
             <rect
               v-if="wordBand"
@@ -493,7 +668,42 @@ onBeforeUnmount(() => {
               y1="0"
               y2="120"
             />
+            <path
+              v-if="pitchComparison"
+              aria-hidden="true"
+              class="prompter-sing-along__pitch-comparison"
+              :data-direction="pitchComparison.direction"
+              :transform="`translate(${pitchComparison.x} ${pitchComparison.y})`"
+              :d="comparisonShapes[pitchComparison.direction]"
+            />
           </svg>
+          <template v-if="showInputLevel">
+            <span class="prompter-sing-along__level-label" aria-hidden="true">
+              電平
+            </span>
+            <svg
+              class="prompter-sing-along__level"
+              :viewBox="`0 0 ${PITCH_WIDTH} ${INPUT_LEVEL_HEIGHT}`"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="輸入電平，與音高圖共用時間軸"
+            >
+              <path
+                class="prompter-sing-along__ruler"
+                :d="`M0 ${INPUT_LEVEL_HEIGHT - 1}H${PITCH_WIDTH}`"
+              />
+              <g :transform="timelineTransform">
+                <path class="prompter-sing-along__level-fill" :d="levelPath" />
+              </g>
+              <line
+                class="prompter-sing-along__cursor"
+                :x1="cursor"
+                :x2="cursor"
+                y1="0"
+                :y2="INPUT_LEVEL_HEIGHT"
+              />
+            </svg>
+          </template>
           <svg
             class="prompter-sing-along__annotations"
             :viewBox="`0 0 ${PITCH_WIDTH} 16`"
@@ -525,6 +735,23 @@ onBeforeUnmount(() => {
         </div>
       </figure>
     </template>
+    <template #rail-tools>
+      <UiIconButton
+        class="prompter-sing-along__legend-button"
+        :icon="Info"
+        label="譜面圖例"
+        :title="legendOpen ? '' : undefined"
+        aria-haspopup="dialog"
+        @click="openLegend"
+      />
+    </template>
+    <template #display-tools>
+      <UiCheckbox
+        id="prompter-show-input-level"
+        v-model="showInputLevel"
+        label="顯示輸入音量"
+      />
+    </template>
     <template #leading-tools>
       <UiPopover
         v-model:open="toolsOpen"
@@ -554,25 +781,87 @@ onBeforeUnmount(() => {
           >
         </template>
         <div v-show="!reviewOpen" class="prompter-sing-along__mic-settings">
+          <UiSelect
+            id="prompter-pitch-input"
+            v-model="inputMode"
+            label="音高來源"
+            :options="inputOptions"
+            label-inline
+          />
           <ReferencePitchMicrophone
+            v-if="inputMode === 'microphone'"
             :access="access"
             :list-on-open="toolsOpen && !reviewOpen"
             :playing="playing"
             prefer-system-default
             stop-when-hidden
             @frame="sampleMic"
-          />
-          <UiDisclosure v-model:open="alignmentOpen" label="時間對齊">
-            <UiRange
-              id="prompter-mic-correction"
-              v-model="correctionMs"
-              label="實唱線提前"
-              :min="-500"
-              :max="500"
-              :step="10"
-              :value-text="`${correctionMs} ms`"
+          >
+            <template #tuning>
+              <UiRange
+                id="prompter-mic-correction"
+                v-model="correctionMs"
+                label="實唱線提前量"
+                :min="-500"
+                :max="500"
+                :step="10"
+                :value-text="`${correctionMs} ms`"
+                value-in-label
+              />
+            </template>
+          </ReferencePitchMicrophone>
+          <template v-else>
+            <input
+              ref="livePicker"
+              type="file"
+              accept=".wav,audio/wav"
+              hidden
+              @change="loadLiveInput"
             />
-          </UiDisclosure>
+            <UiButton
+              variant="accent"
+              :disabled="!sourceKey || offline?.status === 'pending'"
+              @click="livePicker?.click()"
+            >
+              選擇人聲 WAV
+            </UiButton>
+            <UiHint v-if="liveInputError" tone="warning" role="alert">
+              {{ liveInputError }}
+            </UiHint>
+            <UiHint v-if="liveInput" class="prompter-sing-along__filename">
+              {{ liveInput.name }}
+            </UiHint>
+            <UiHint v-if="liveInput && !liveInput.range">
+              這份 WAV 沒有聲音。
+            </UiHint>
+            <UiSelect
+              v-if="liveInput?.range && access?.analyzeLiveVocal"
+              id="prompter-live-method"
+              v-model="liveMethod"
+              label="音高分析"
+              :options="liveMethods"
+              label-inline
+            />
+            <UiHint
+              v-if="showOffline && offline?.status === 'pending'"
+              role="status"
+            >
+              分析中…
+            </UiHint>
+            <UiHint
+              v-if="showOffline && offline?.status === 'error'"
+              tone="warning"
+              role="alert"
+            >
+              離線分析失敗。
+            </UiHint>
+            <UiButton
+              v-if="showOffline && offline?.status === 'error'"
+              variant="secondary"
+              @click="analyzeLiveInput"
+              >重試</UiButton
+            >
+          </template>
           <UiButton
             v-if="access?.loadGuideReview"
             ref="reviewTrigger"
@@ -593,6 +882,92 @@ onBeforeUnmount(() => {
           @pause="$emit('control', 'pause')"
         />
       </UiPopover>
+      <UiModal
+        :open="legendOpen"
+        title="譜面圖例"
+        size="notice"
+        initial-focus="dialog"
+        :selectable="false"
+        dismiss-on-backdrop
+        @close="legendOpen = false"
+      >
+        <dl class="prompter-sing-along__legend">
+          <div>
+            <dt>
+              <svg viewBox="0 0 48 24" aria-hidden="true">
+                <rect
+                  class="prompter-sing-along__target"
+                  x="4"
+                  y="8"
+                  width="29"
+                  height="8"
+                />
+                <path class="prompter-sing-along__voice" d="M13 12H43" />
+              </svg>
+              音高對照
+            </dt>
+            <dd>空框是導唱，實線是收到的音高。</dd>
+          </div>
+          <div>
+            <dt>
+              <svg viewBox="0 0 48 24" aria-hidden="true">
+                <path
+                  v-for="(direction, index) in ['center', 'high', 'low']"
+                  :key="direction"
+                  class="prompter-sing-along__pitch-comparison"
+                  :data-direction="direction"
+                  :transform="`translate(${9 + index * 15} 12) scale(2)`"
+                  :d="comparisonShapes[direction]"
+                />
+              </svg>
+              音準提示
+            </dt>
+            <dd>圓點表示接近目標。上箭頭偏高，下箭頭偏低。</dd>
+          </div>
+          <div>
+            <dt>
+              <svg viewBox="0 0 48 24" aria-hidden="true">
+                <path
+                  v-for="(mark, index) in Object.values(techniqueMarks)"
+                  :key="mark.label"
+                  class="prompter-sing-along__technique"
+                  :transform="`translate(${9 + index * 15} 12) scale(1.5)`"
+                  :d="mark.path"
+                />
+              </svg>
+              演唱標記
+            </dt>
+            <dd>斜箭頭是滑音，波浪是顫音，短線是句首。</dd>
+          </div>
+          <div>
+            <dt>
+              <svg viewBox="0 0 48 24" aria-hidden="true">
+                <path class="prompter-sing-along__ruler" d="M4 20H44" />
+                <path class="prompter-sing-along__barline" d="M10 4V20" />
+                <path class="prompter-sing-along__cursor" d="M22 4V20" />
+                <path
+                  class="prompter-sing-along__beat"
+                  d="M34 15V20M42 15V20"
+                />
+              </svg>
+              節拍定位
+            </dt>
+            <dd>固定直線是現在，長線標小節，短刻度標拍子。</dd>
+          </div>
+          <div>
+            <dt>
+              <svg viewBox="0 0 48 24" aria-hidden="true">
+                <path
+                  class="prompter-sing-along__level-fill"
+                  d="M4 20V15L10 13L14 16L21 8L27 10L33 15L38 12L44 16V20Z"
+                />
+              </svg>
+              輸入音量
+            </dt>
+            <dd>越高表示聲音越大，也可能有背景聲。</dd>
+          </div>
+        </dl>
+      </UiModal>
     </template>
   </PerformerSurface>
 </template>
@@ -619,8 +994,19 @@ onBeforeUnmount(() => {
   gap: var(--ui-space-2);
 }
 
+.prompter-sing-along__legend-button {
+  flex: none;
+  min-block-size: var(--ui-performer-action-min-block-size);
+  min-inline-size: var(--ui-performer-action-min-block-size);
+}
+
+.prompter-sing-along__filename {
+  overflow-wrap: anywhere;
+}
+
 .prompter-sing-along__status,
-.prompter-sing-along__axis {
+.prompter-sing-along__axis,
+.prompter-sing-along__level-label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
 }
@@ -629,7 +1015,8 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-areas:
     '. annotations'
-    'axis plot';
+    'axis plot'
+    'level-label level';
   grid-template-columns: 4ch minmax(0, 1fr);
   column-gap: var(--ui-space-2);
 }
@@ -657,8 +1044,62 @@ onBeforeUnmount(() => {
 }
 
 .prompter-sing-along__plot,
-.prompter-sing-along__annotations {
+.prompter-sing-along__annotations,
+.prompter-sing-along__level {
   overflow: hidden;
+}
+
+.prompter-sing-along__level-label {
+  grid-area: level-label;
+  align-self: end;
+  white-space: nowrap;
+}
+
+.prompter-sing-along__level {
+  grid-area: level;
+  inline-size: 100%;
+  block-size: var(--ui-space-5);
+}
+
+.prompter-sing-along__level-fill {
+  fill: var(--ui-color-text-muted);
+  fill-opacity: 0.4;
+}
+
+.prompter-sing-along__legend {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--ui-space-2) var(--ui-space-4);
+  margin: 0;
+  font-size: var(--ui-type-body-size);
+}
+
+.prompter-sing-along__legend > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+.prompter-sing-along__legend dt {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  font-weight: var(--ui-font-weight-semibold);
+}
+
+.prompter-sing-along__legend svg {
+  flex: none;
+  inline-size: var(--ui-space-7);
+  block-size: var(--ui-space-5);
+  color: var(--ui-color-text-muted);
+}
+
+.prompter-sing-along__legend dd {
+  margin: 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-label-size);
+  line-height: var(--ui-type-label-line-height);
 }
 
 .prompter-sing-along__grid,
@@ -670,6 +1111,7 @@ onBeforeUnmount(() => {
 .prompter-sing-along__technique,
 .prompter-sing-along__annotation-stem,
 .prompter-sing-along__voice,
+.prompter-sing-along__pitch-comparison,
 .prompter-sing-along__cursor {
   fill: none;
   vector-effect: non-scaling-stroke;
@@ -703,7 +1145,12 @@ onBeforeUnmount(() => {
 }
 
 .prompter-sing-along__barline {
-  opacity: 0.65;
+  opacity: 0.32;
+}
+
+.prompter-sing-along__beat,
+.prompter-sing-along__ruler {
+  opacity: 0.48;
 }
 
 .prompter-sing-along__phrase {
@@ -747,5 +1194,16 @@ onBeforeUnmount(() => {
   stroke: var(--ui-color-text);
   stroke-width: 2;
   stroke-linecap: round;
+}
+
+.prompter-sing-along__pitch-comparison {
+  stroke: var(--ui-color-text);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.prompter-sing-along__pitch-comparison[data-direction='center'] {
+  stroke-width: 4;
 }
 </style>

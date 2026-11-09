@@ -46,6 +46,33 @@ it('accepts comparison intent only from the main frame and checks the audio gate
   expect(getScope).not.toHaveBeenCalled();
 });
 
+it('bounds Live vocal PCM and checks the gate before scheduling offline work', async () => {
+  const handlers = new Map();
+  const schedule = vi.fn();
+  const requireGate = vi.fn(() => {
+    throw new Error('Disabled');
+  });
+  registerReferencePitch({
+    ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
+    getPerformerSource: () => null,
+    requireGate,
+    scheduler: { schedule },
+  });
+  const analyze = handlers.get('performer-pitch:analyze-live');
+  const id = '00000000-0000-4000-8000-000000000000';
+  await expect(analyze({}, id, 'voice.wav')).resolves.toEqual({
+    status: 'unavailable',
+  });
+  await expect(analyze({}, id, new ArrayBuffer(1025))).resolves.toEqual({
+    status: 'unavailable',
+  });
+  expect(requireGate).not.toHaveBeenCalled();
+  await expect(analyze({}, id, new ArrayBuffer(1024))).resolves.toEqual({
+    status: 'gate-disabled',
+  });
+  expect(schedule).not.toHaveBeenCalled();
+});
+
 it('retains seven-frame candidates and masks an eight-frame inverse-phase run', () => {
   const hz = 187.5;
   const backing = Float32Array.from({ length: 40 * 256 }, (_, i) =>

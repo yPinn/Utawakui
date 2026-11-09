@@ -116,6 +116,7 @@ describe('packaged dependency boundary', () => {
       'model.onnx',
       'register.cjs',
       'worker.cjs',
+      'liveVocalWorker.cjs',
       'phaseComparison.cjs',
     ]) {
       expect(isDelivered(`prototypes/reference-pitch/${file}`)).toBe(false);

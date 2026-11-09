@@ -32,6 +32,7 @@ const MODEL_HASH =
   '6385e8c2ebc3872e82c9ff5946228de44cd3be77a750ea53698b7dbfe94b0a22';
 const MAX_SECONDS = 12 * 60;
 const PCM_BYTES_PER_SECOND = 32_000;
+const MAX_LIVE_SAMPLE_BYTES = 48 * 1024 * 1024;
 const JOB_ID = /^[0-9a-f-]{36}$/;
 const activityHash = createHash('sha256')
   .update(fs.readFileSync(path.join(__dirname, 'guideActivity.cjs')))
@@ -202,6 +203,99 @@ function runPitchWorker(file, workerData, transferList, signal) {
       else reject(new Error(`Pitch worker exited (${code})`));
     });
   });
+}
+
+function loadModel(modelPath) {
+  const stat = fs.statSync(modelPath, { throwIfNoEntry: false });
+  if (!stat?.isFile() || stat.size !== 135_090) return null;
+  const model = fs.readFileSync(modelPath);
+  return createHash('sha256').update(model).digest('hex') === MODEL_HASH
+    ? model
+    : null;
+}
+
+function registerLiveVocalPitch({
+  ipcMain,
+  modelPath,
+  requireGate,
+  scheduler,
+  recordDiagnostic,
+}) {
+  let active = null;
+  ipcMain.handle('performer-pitch:cancel-live', (event, requestId) => {
+    if (active?.sender === event.sender && active.requestId === requestId)
+      active.cancel();
+  });
+  ipcMain.handle(
+    'performer-pitch:analyze-live',
+    async (event, requestId, buffer) => {
+      if (
+        typeof requestId !== 'string' ||
+        !JOB_ID.test(requestId) ||
+        !(buffer instanceof ArrayBuffer) ||
+        buffer.byteLength < 256 * Float32Array.BYTES_PER_ELEMENT ||
+        buffer.byteLength > MAX_LIVE_SAMPLE_BYTES ||
+        buffer.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0
+      )
+        return { status: 'unavailable' };
+      if (active) return { status: 'busy' };
+      try {
+        requireGate();
+      } catch {
+        return { status: 'gate-disabled' };
+      }
+      const controller = new AbortController();
+      const jobId = `performer-live-pitch-${requestId}`;
+      const cancel = () => {
+        controller.abort();
+        void scheduler.cancel(jobId);
+      };
+      const events = [
+        'did-start-navigation',
+        'destroyed',
+        'render-process-gone',
+      ];
+      active = { sender: event.sender, requestId, cancel };
+      for (const name of events) event.sender.once(name, cancel);
+      try {
+        const model = loadModel(modelPath);
+        if (!model) return { status: 'no-model' };
+        const pitches = await scheduler.schedule({
+          jobId,
+          start: () => ({
+            result: runPitchWorker(
+              'liveVocalWorker.cjs',
+              { samples: new Float32Array(buffer), model },
+              [buffer],
+              controller.signal,
+            ),
+            cancel: () => controller.abort(),
+          }),
+        });
+        if (controller.signal.aborted) return { status: 'cancelled' };
+        try {
+          requireGate();
+        } catch {
+          return { status: 'gate-disabled' };
+        }
+        return { status: 'ready', pitches };
+      } catch (error) {
+        if (controller.signal.aborted) return { status: 'cancelled' };
+        recordDiagnostic({
+          process: 'main',
+          level: 'warning',
+          source: 'reference-pitch',
+          operation: 'analyze-live-vocal',
+          code: 'LIVE_VOCAL_PITCH_FAILED',
+          error,
+        });
+        return { status: 'unavailable' };
+      } finally {
+        for (const name of events) event.sender.removeListener(name, cancel);
+        active = null;
+      }
+    },
+  );
 }
 
 async function compareWithBacking(
@@ -428,12 +522,8 @@ function registerReferencePitch({
         if (error?.code !== 'FEATURE_DEPENDENCY_MISSING') throw error;
       }
       if (!ffmpeg) return { status: 'no-decoder' };
-      const stat = fs.statSync(modelPath, { throwIfNoEntry: false });
-      if (!stat?.isFile() || stat.size !== 135_090)
-        return { status: 'no-model' };
-      const model = fs.readFileSync(modelPath);
-      if (createHash('sha256').update(model).digest('hex') !== MODEL_HASH)
-        return { status: 'no-model' };
+      const model = loadModel(modelPath);
+      if (!model) return { status: 'no-model' };
       const key = await keyFor(input, ffmpeg, controller.signal);
       const cached = readPitchCache(input.cacheFile, key);
       const activityFile =
@@ -572,6 +662,13 @@ function registerReferencePitch({
       : { status: 'unavailable' },
   );
   if (getPerformerSource) {
+    registerLiveVocalPitch({
+      ipcMain,
+      modelPath,
+      requireGate,
+      scheduler,
+      recordDiagnostic,
+    });
     registerGuideReview({
       ipcMain,
       requireGate,

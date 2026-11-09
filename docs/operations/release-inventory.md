@@ -18,7 +18,8 @@ owns its input and permission boundaries.
 The [reference pitch prototype](../../prototypes/reference-pitch/README.md) is
 development-only. The production renderer omits its panel, the packaged Main
 process leaves its IPC handlers disabled, and the packaged preload does not
-expose the pitch API. Its model and workers remain outside the package allowlist.
+expose the pitch API. Its model and workers, including the Live WAV offline
+worker, remain outside the package allowlist.
 
 ## Current Build Shape
 

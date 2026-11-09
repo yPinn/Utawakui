@@ -79,7 +79,9 @@ const playing = computed(() =>
         :error="frame.readingError"
         @update:reading-scale="$emit('update:readingScale', $event)"
         @update:reading-variant="$emit('control', `reading-${$event}`)"
-      />
+      >
+        <slot name="display-tools" />
+      </PerformerDisplayControls>
     </UiPopover>
   </div>
 </template>

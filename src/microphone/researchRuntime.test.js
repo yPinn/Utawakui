@@ -133,6 +133,10 @@ describe('microphone research lifecycle', () => {
     await h.runtime.start();
     await vi.advanceTimersByTimeAsync(33);
     expect(h.state.pitchHistory.at(-1).hz).toBeCloseTo(110, 1);
+    expect(h.state.pitchHistory.at(-1).windowMs).toBeCloseTo(2048 / 44.1);
+    expect(h.state.pitchHistory.at(-1).sampledAtMs).toBeLessThanOrEqual(
+      h.state.pitchHistory.at(-1).atMs,
+    );
     hz = 0;
     await vi.advanceTimersByTimeAsync(33);
     expect(h.state.pitchHistory.at(-1).hz).toBeNull();

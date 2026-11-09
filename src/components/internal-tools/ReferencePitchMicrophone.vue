@@ -1,8 +1,11 @@
 <script setup>
-import { computed, watch } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { useMicrophoneResearch } from '../../composables/useMicrophoneResearch.js';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiRange from '../ui/UiRange.vue';
 import UiSelect from '../ui/UiSelect.vue';
 
 const emit = defineEmits(['frame']);
@@ -13,7 +16,7 @@ const props = defineProps({
   playing: { type: Boolean, default: undefined },
   preferSystemDefault: { type: Boolean, default: false },
 });
-const { state, refreshDevices, selectDevice, start, stop } =
+const { state, refreshDevices, selectDevice, start, stop, configureInput } =
   useMicrophoneResearch({
     access: props.access,
     stopWhenHidden: props.stopWhenHidden,
@@ -23,6 +26,23 @@ const running = computed(() => state.value.status === 'running');
 const active = computed(
   () => running.value || state.value.status === 'requesting',
 );
+const lowCutOptions = [
+  { value: 0, label: '關閉' },
+  { value: 80, label: '輕' },
+  { value: 120, label: '中' },
+  { value: 180, label: '強' },
+];
+const tuningOpen = shallowRef(false);
+const noiseHint = computed(() => {
+  if (!state.value.processingSupport.noiseSuppression)
+    return '此裝置未確認支援降噪。';
+  if (!state.value.settings) return '';
+  const enabled = state.value.settings.noiseSuppression;
+  if (enabled === null) return '裝置未回報降噪狀態。';
+  return enabled ? '降噪已開啟。' : '降噪已關閉。';
+});
+const levelText = (dbfs) =>
+  dbfs <= -100 ? '−∞ dBFS' : `${dbfs.toFixed(1)} dBFS`;
 const options = computed(() =>
   state.value.devices.map(({ id, label }) => ({ value: id, label })),
 );
@@ -71,11 +91,12 @@ watch(
   <div class="reference-mic">
     <UiSelect
       id="reference-pitch-mic"
-      :label="listOnOpen ? '麥克風' : '實唱輸入'"
+      :label="listOnOpen ? '裝置' : '實唱輸入'"
       :placeholder="placeholder"
       :model-value="state.selectedDeviceId"
       :options="options"
       :disabled="active || state.refreshing || (listOnOpen && !options.length)"
+      label-inline
       @update:model-value="selectDevice"
     />
     <div class="reference-mic__actions">
@@ -102,11 +123,53 @@ watch(
       {{ state.error }}
     </UiHint>
     <UiHint v-else-if="statusHint" role="status">{{ statusHint }}</UiHint>
+    <UiDisclosure v-model:open="tuningOpen" label="收音調整">
+      <div class="reference-mic__tuning">
+        <UiCheckbox
+          id="sing-along-mic-noise"
+          label="降噪"
+          :model-value="state.inputOptions.noiseSuppression"
+          :hint="noiseHint"
+          :disabled="active || !state.processingSupport.noiseSuppression"
+          @update:model-value="configureInput({ noiseSuppression: $event })"
+        />
+        <UiSelect
+          id="sing-along-mic-low-cut"
+          label="低頻過濾"
+          :options="lowCutOptions"
+          :model-value="state.inputOptions.highPassHz"
+          :disabled="active"
+          label-inline
+          @update:model-value="configureInput({ highPassHz: $event })"
+        />
+        <UiRange
+          id="sing-along-mic-gain"
+          label="輸入增益"
+          :model-value="state.inputOptions.gainDb"
+          :min="-24"
+          :max="24"
+          :step="1"
+          :value-text="`${state.inputOptions.gainDb} dB`"
+          value-in-label
+          :disabled="state.status === 'requesting'"
+          @update:model-value="configureInput({ gainDb: $event })"
+        />
+        <UiHint v-if="running">
+          原始 {{ levelText(state.rawDbfs) }} · 調整後
+          {{ levelText(state.dbfs) }}
+        </UiHint>
+        <UiHint v-if="state.clipped || state.rawClipped" tone="warning">
+          音量過大，請降低輸入增益或麥克風音量。
+        </UiHint>
+        <slot name="tuning" />
+      </div>
+    </UiDisclosure>
   </div>
 </template>
 
 <style scoped>
-.reference-mic {
+.reference-mic,
+.reference-mic__tuning {
   display: grid;
   gap: var(--ui-space-2);
 }

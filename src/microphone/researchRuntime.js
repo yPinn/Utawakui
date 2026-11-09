@@ -7,6 +7,7 @@ import {
   normalizeMicrophoneInputOptions,
   microphoneProcessingSupport,
   MICROPHONE_PROCESSING_KEYS,
+  MICROPHONE_ANALYSIS_SAMPLES,
   createMicrophoneInputGraph,
 } from './inputProcessing.js';
 import {
@@ -300,10 +301,13 @@ export function createMicrophoneResearchRuntime({
         inputOptions,
         (error) => report(error, 'MIC_RESEARCH_GRAPH_CLEANUP_FAILED'),
       );
+      const windowMs =
+        (1000 * MICROPHONE_ANALYSIS_SAMPLES) / op.context.sampleRate;
       let lastSample = now();
       function sample() {
         if (!isCurrent(op)) return;
         try {
+          const sampledAtMs = now();
           const { pitchHz, ...measured } =
             op.inputGraph.sample(!activitySuspended);
           const time = now();
@@ -332,7 +336,16 @@ export function createMicrophoneResearchRuntime({
                     (point) => point.atMs >= time - PITCH_WINDOW_MS,
                   )
                 : [];
-            pitchHistory = [...recent, { atMs: time, hz: pitchHz }];
+            pitchHistory = [
+              ...recent,
+              {
+                atMs: time,
+                sampledAtMs,
+                windowMs,
+                hz: pitchHz,
+                dbfs: measured.dbfs,
+              },
+            ];
           }
           update({ ...measured, intensity, activity, pitchHistory });
           op.timer = setTimeout(sample, SAMPLE_MS);

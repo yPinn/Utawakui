@@ -1,7 +1,8 @@
 import { measureMicrophoneLevel } from './level.js';
 import { createMicrophonePitchEstimator } from './pitch.js';
 
-const PITCH_MIN_DBFS = -55;
+export const PITCH_MIN_DBFS = -55;
+export const MICROPHONE_ANALYSIS_SAMPLES = 2048;
 
 export const MICROPHONE_PROCESSING_KEYS = Object.freeze([
   'noiseSuppression',
@@ -62,7 +63,7 @@ export function createMicrophoneInputGraph(
     const rawAnalyser = own(context.createAnalyser());
     const gain = own(context.createGain());
     const analyser = own(context.createAnalyser());
-    rawAnalyser.fftSize = analyser.fftSize = 2048;
+    rawAnalyser.fftSize = analyser.fftSize = MICROPHONE_ANALYSIS_SAMPLES;
     gain.gain.value = 10 ** (options.gainDb / 20);
     source.connect(rawAnalyser);
     if (options.highPassHz) {
