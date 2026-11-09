@@ -1,4 +1,9 @@
 {
+  "layoutDemo": {
+    "label": "提詞器版面",
+    "lyrics": "讀詞",
+    "videoPitch": "跟唱"
+  },
   "sync": {
     "seconds": "{value} 秒",
     "label": "歌詞同步微調",

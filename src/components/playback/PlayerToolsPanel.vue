@@ -40,7 +40,6 @@ defineProps({
     validator: (value) => ['adjust', 'guide', 'live'].includes(value),
   },
   hasTrack: { type: Boolean, default: false },
-  transportRegion: { type: Object, default: null },
   guideVocalVisible: { type: Boolean, default: false },
   guideVocalRows: { type: Array, default: () => [] },
   // { message, detail?, busy?, actionLabel?, loading?, onAction? }
@@ -96,7 +95,6 @@ function setActiveTab(key) {
   <UiPopover
     :open="open"
     :close-on-scroll="false"
-    :related-pointer-region="transportRegion"
     peer-group="playback-tools"
     :panel-style="panelStyle"
     :aria-label="t('player.toolsPanel.label')"
@@ -337,7 +335,6 @@ function setActiveTab(key) {
           </div>
         </template>
       </div>
-      <slot name="reference-pitch" />
     </section>
 
     <section

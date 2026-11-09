@@ -1,7 +1,9 @@
 <script setup>
+import { defineAsyncComponent, shallowRef } from 'vue';
 import PerformerSurface from '../components/performer/PerformerSurface.vue';
 import PerformerWindowToolbar from '../components/performer/PerformerWindowToolbar.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
+import UiTabs from '../components/ui/UiTabs.vue';
 import { usePerformerViewState } from '../composables/usePerformerViewState.js';
 import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from '../utils/rendererSurfaceRegistry.js';
@@ -15,6 +17,7 @@ const performerOverlayHostAttributes =
 const {
   error,
   frame,
+  snapshot,
   readingScale,
   control,
   controlPending,
@@ -27,6 +30,23 @@ const {
   toggleAlwaysOnTop,
   toggleFullScreen,
 } = usePerformerViewState();
+
+const SingAlong = import.meta.env.DEV
+  ? defineAsyncComponent(
+      () => import('../components/internal-tools/PrompterSingAlong.vue'),
+    )
+  : null;
+const layout = shallowRef('lyrics');
+const micCorrectionMs = shallowRef(0);
+const layoutOptions = [
+  { id: 'lyrics', label: t('performer.layoutDemo.lyrics') },
+  { id: 'video-pitch', label: t('performer.layoutDemo.videoPitch') },
+];
+
+function selectLayout(value) {
+  layout.value = value;
+  setDisplayBoundary(null);
+}
 </script>
 
 <template>
@@ -39,8 +59,39 @@ const {
       @minimize="minimize"
       @toggle-always-on-top="toggleAlwaysOnTop"
       @toggle-full-screen="toggleFullScreen"
+    >
+      <template v-if="SingAlong" #layout>
+        <UiTabs
+          :items="layoutOptions"
+          :active-id="layout"
+          :aria-label="t('performer.layoutDemo.label')"
+          variant="bar"
+          tab-id-prefix="prompter-layout"
+          panel-id-prefix="prompter-layout"
+          @update:active-id="selectLayout"
+        />
+      </template>
+    </PerformerWindowToolbar>
+    <SingAlong
+      v-if="SingAlong && layout === 'video-pitch'"
+      id="prompter-layout-video-pitch-panel"
+      v-model:correction-ms="micCorrectionMs"
+      role="tabpanel"
+      aria-labelledby="prompter-layout-video-pitch-tab"
+      :frame="frame"
+      :snapshot="snapshot"
+      :reading-scale="readingScale"
+      :pending="controlPending"
+      @control="control"
+      @sync-action="adjustLyricsOffset"
+      @update:reading-scale="setReadingScale"
+      @display-boundary="setDisplayBoundary"
     />
     <PerformerSurface
+      v-else
+      :id="SingAlong ? 'prompter-layout-lyrics-panel' : undefined"
+      :role="SingAlong ? 'tabpanel' : undefined"
+      :aria-labelledby="SingAlong ? 'prompter-layout-lyrics-tab' : undefined"
       :frame="frame"
       mode="prompter"
       :reading-scale="readingScale"

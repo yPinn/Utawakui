@@ -20,7 +20,7 @@ function stream(deviceId = 'mic-a') {
   });
   return { track, getTracks: () => [track], getAudioTracks: () => [track] };
 }
-function harness() {
+function harness(options = {}) {
   vi.useFakeTimers();
   const devices = Object.assign(new EventTarget(), {
     getSupportedConstraints: () => ({
@@ -76,6 +76,7 @@ function harness() {
       state = value;
     },
     onError,
+    ...options,
   });
   return {
     runtime,
@@ -95,6 +96,57 @@ afterEach(() => {
 });
 
 describe('microphone research lifecycle', () => {
+  it('prefills the system device only when requested and retains a manual choice', async () => {
+    const h = harness({ preferSystemDefault: true });
+    await h.runtime.refreshDevices();
+    expect(h.state.selectedDeviceId).toBe('default');
+    expect(h.state.devices).toContainEqual({
+      id: 'default',
+      label: '系統預設裝置',
+    });
+    expect(h.devices.getUserMedia).not.toHaveBeenCalled();
+    h.devices.getUserMedia.mockResolvedValueOnce(stream('default'));
+    expect(await h.runtime.start()).toBe(true);
+    expect(h.devices.getUserMedia).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audio: expect.objectContaining({ deviceId: { exact: 'default' } }),
+      }),
+    );
+    h.runtime.stop();
+    h.runtime.selectDevice('mic-a');
+    await h.runtime.refreshDevices();
+    expect(h.state.selectedDeviceId).toBe('mic-a');
+    h.runtime.destroy();
+  });
+
+  it('tracks pitch at the analyser sample rate and clears it on silence, hide and stop', async () => {
+    const h = harness();
+    h.context.sampleRate = 44100;
+    let hz = 110;
+    h.analyser.getFloatTimeDomainData = (data) => {
+      for (let i = 0; i < data.length; i++) {
+        data[i] = 0.1 * Math.sin((2 * Math.PI * hz * i) / 44100);
+      }
+    };
+    await h.runtime.refreshDevices();
+    h.runtime.selectDevice('mic-a');
+    await h.runtime.start();
+    await vi.advanceTimersByTimeAsync(33);
+    expect(h.state.pitchHistory.at(-1).hz).toBeCloseTo(110, 1);
+    hz = 0;
+    await vi.advanceTimersByTimeAsync(33);
+    expect(h.state.pitchHistory.at(-1).hz).toBeNull();
+    h.runtime.setActivitySuspended(true);
+    await vi.advanceTimersByTimeAsync(33);
+    expect(h.state.pitchHistory).toEqual([]);
+    h.runtime.setActivitySuspended(false);
+    hz = 440;
+    await vi.advanceTimersByTimeAsync(33);
+    expect(h.state.pitchHistory.at(-1).hz).toBeCloseTo(440, 1);
+    h.runtime.stop();
+    expect(h.state.pitchHistory).toEqual([]);
+  });
+
   const calibration = (state) => {
     const conditions = Object.fromEntries(
       [

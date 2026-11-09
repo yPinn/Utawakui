@@ -31,6 +31,30 @@ contextBridge.exposeInMainWorld('UtawakuiPerformer', {
     ipcRenderer.invoke('diagnostics:record-renderer', event),
   initialUiTheme: readInitialUiTheme(),
   initialUiLocale: readInitialUiLocale(),
+  ...(process.argv.includes('--performer-research-enabled=1')
+    ? {
+        beginMicrophoneResearch: () =>
+          ipcRenderer.invoke('performer-mic:begin'),
+        endMicrophoneResearch: (lease) =>
+          ipcRenderer.invoke('performer-mic:end', lease),
+        analyzeCurrentGuide: (requestId) =>
+          ipcRenderer.invoke('performer-pitch:analyze', requestId),
+        cancelCurrentGuide: (requestId) =>
+          ipcRenderer.invoke('performer-pitch:cancel', requestId),
+        loadGuideReview: (requestId, centerMs) =>
+          ipcRenderer.invoke('performer-review:load', requestId, centerMs),
+        cancelGuideReview: (requestId) =>
+          ipcRenderer.invoke('performer-review:cancel', requestId),
+        markGuideReview: (requestId, fromMs, toMs, label) =>
+          ipcRenderer.invoke(
+            'performer-review:mark',
+            requestId,
+            fromMs,
+            toMs,
+            label,
+          ),
+      }
+    : {}),
   getSnapshot: () => ipcRenderer.invoke('performer-view:get-snapshot'),
   getWindowState: () => ipcRenderer.invoke('performer-view:get-status'),
   control: (intent) =>

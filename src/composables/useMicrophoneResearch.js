@@ -2,12 +2,17 @@ import { onScopeDispose, readonly, shallowRef } from 'vue';
 import { createMicrophoneResearchRuntime } from '../microphone/researchRuntime.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 
-export function useMicrophoneResearch() {
+export function useMicrophoneResearch({
+  access = window.Utawakui,
+  stopWhenHidden = false,
+  preferSystemDefault = false,
+} = {}) {
   const state = shallowRef(null);
   const { recordError } = useAppDiagnostics();
   const runtime = createMicrophoneResearchRuntime({
     mediaDevices: navigator.mediaDevices,
-    access: window.Utawakui,
+    access,
+    preferSystemDefault,
     createContext: () => new AudioContext({ latencyHint: 'interactive' }),
     publish: (value) => {
       state.value = value;
@@ -20,11 +25,14 @@ export function useMicrophoneResearch() {
         source: 'microphone-research',
         operation: 'input-analysis',
         context: { retryable: true },
+        persist: access === window.Utawakui,
       }),
   });
   const stopOnUnload = () => runtime.stop();
-  const activityVisibilityChanged = () =>
+  const activityVisibilityChanged = () => {
     runtime.setActivitySuspended(document.hidden);
+    if (stopWhenHidden && document.hidden) runtime.stop();
+  };
   activityVisibilityChanged();
   document.addEventListener('visibilitychange', activityVisibilityChanged);
   window.addEventListener('pagehide', stopOnUnload);

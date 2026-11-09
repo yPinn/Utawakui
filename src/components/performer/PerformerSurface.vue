@@ -34,8 +34,14 @@ defineEmits([
     :data-mode="mode"
     :data-reading-scale="readingScale"
   >
-    <div class="performer-surface__layout">
+    <div
+      class="performer-surface__layout"
+      :class="{
+        'performer-surface__layout--with-overview': $slots['above-cues'],
+      }"
+    >
       <PerformerTrackContext class="performer-surface__track" :frame="frame" />
+      <slot name="above-cues" />
       <div class="performer-surface__cue-region">
         <PerformerCueStack
           :frame="frame"
@@ -59,7 +65,11 @@ defineEmits([
           @control="$emit('control', $event)"
           @sync-action="$emit('sync-action', $event)"
           @update:reading-scale="$emit('update:readingScale', $event)"
-        />
+        >
+          <template v-if="$slots['leading-tools']" #leading-tools>
+            <slot name="leading-tools" />
+          </template>
+        </PerformerActionBar>
       </section>
     </div>
   </main>
@@ -101,6 +111,10 @@ defineEmits([
     max(var(--ui-space-3), env(safe-area-inset-left));
   overflow: hidden;
   background: var(--ui-color-canvas);
+}
+
+.performer-surface__layout--with-overview {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 
 .performer-surface[data-reading-scale='near'] {

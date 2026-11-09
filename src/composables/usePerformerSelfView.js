@@ -199,6 +199,34 @@ function currentSnapshot() {
     revision,
     generatedAt: matched ? sample.sampledAt : new Date().toISOString(),
   });
+  if (import.meta.env.DEV && matched) {
+    const track = playerState.track;
+    const recipeId = track.separation?.selectedRecipeId;
+    const applied = playerState.audioControlApplication?.applied;
+    const application = playerState.audioControlApplication;
+    const controls =
+      applied ??
+      (application?.lanes?.monitor === 'applied'
+        ? application.requested
+        : null) ??
+      (sample.phase === 'playing' ? null : playerState);
+    snapshot.singAlong = {
+      playbackRevision: sample.playbackRevision,
+      continuityRevision: sample.continuityRevision,
+      guide:
+        track.usesSeparatedAudio && recipeId
+          ? {
+              recipeId,
+              completedAtMs:
+                Date.parse(track.separation.results?.[recipeId]?.completedAt) ||
+                0,
+            }
+          : null,
+      semitones: controls
+        ? (controls.transposeSemitones ?? 0) + (controls.pitchCents ?? 0) / 100
+        : null,
+    };
+  }
   publishedContexts.set(revision, currentLyricsContext());
   while (publishedContexts.size > MAX_PUBLISHED_CONTEXTS) {
     publishedContexts.delete(publishedContexts.keys().next().value);

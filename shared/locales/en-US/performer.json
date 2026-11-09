@@ -1,4 +1,9 @@
 {
+  "layoutDemo": {
+    "label": "Prompter layout",
+    "lyrics": "Read",
+    "videoPitch": "Sing Along"
+  },
   "sync": {
     "seconds": "{value} s",
     "label": "Lyrics sync adjustment",

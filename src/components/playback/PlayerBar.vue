@@ -1,13 +1,5 @@
 <script setup>
-import {
-  computed,
-  defineAsyncComponent,
-  onMounted,
-  onUnmounted,
-  ref,
-  unref,
-  useTemplateRef,
-} from 'vue';
+import { computed, onMounted, onUnmounted, ref, unref } from 'vue';
 import {
   Cable,
   Headphones,
@@ -63,12 +55,6 @@ defineProps({
 });
 
 const emit = defineEmits(['artworkActivate', 'queueActivate']);
-const ReferencePitchPreview = import.meta.env.DEV
-  ? defineAsyncComponent(
-      () => import('../internal-tools/ReferencePitchPreview.vue'),
-    )
-  : null;
-const transportRegion = useTemplateRef('transport-region');
 
 const {
   state,
@@ -517,7 +503,7 @@ onUnmounted(() => {
       </template>
     </PlaybackTrackIdentity>
 
-    <div ref="transport-region" class="player-bar__center">
+    <div class="player-bar__center">
       <div class="player-bar__transport">
         <UiButton
           :icon="Shuffle"
@@ -640,7 +626,6 @@ onUnmounted(() => {
           v-model:open="isPlayerToolsOpen"
           v-model:active-tab="activeToolTab"
           :has-track="Boolean(state.track)"
-          :transport-region="ReferencePitchPreview ? transportRegion : null"
           :guide-vocal-visible="showGuideVocal"
           :guide-vocal-rows="guideVocalRows"
           :guide-accompaniment="guideAccompaniment"
@@ -648,11 +633,6 @@ onUnmounted(() => {
           :performance-settings="performanceSettingsView"
           @settings-action="handleSettingsAction"
         >
-          <template v-if="ReferencePitchPreview" #reference-pitch>
-            <ReferencePitchPreview
-              v-if="isPlayerToolsOpen && activeToolTab === 'adjust'"
-            />
-          </template>
           <template #trigger="{ triggerProps }">
             <UiIconButton
               v-bind="triggerProps"

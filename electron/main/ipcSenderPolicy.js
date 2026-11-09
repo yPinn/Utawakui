@@ -18,6 +18,13 @@ const IPC_CHANNEL_CAPABILITIES = Object.freeze({
   'performer-view:minimize': IPC_CAPABILITIES.PERFORMER,
   'performer-view:toggle-full-screen': IPC_CAPABILITIES.PERFORMER,
   'performer-view:toggle-always-on-top': IPC_CAPABILITIES.PERFORMER,
+  'performer-mic:begin': IPC_CAPABILITIES.PERFORMER,
+  'performer-mic:end': IPC_CAPABILITIES.PERFORMER,
+  'performer-pitch:analyze': IPC_CAPABILITIES.PERFORMER,
+  'performer-pitch:cancel': IPC_CAPABILITIES.PERFORMER,
+  'performer-review:load': IPC_CAPABILITIES.PERFORMER,
+  'performer-review:cancel': IPC_CAPABILITIES.PERFORMER,
+  'performer-review:mark': IPC_CAPABILITIES.PERFORMER,
 });
 
 function createUntrustedSenderError() {

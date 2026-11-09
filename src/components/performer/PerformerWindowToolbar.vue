@@ -22,6 +22,9 @@ defineEmits([
       <span class="performer-toolbar__mark" aria-hidden="true" />
       <span>{{ t('performer.toolbar.title') }}</span>
     </div>
+    <div v-if="$slots.layout" class="performer-toolbar__layout">
+      <slot name="layout" />
+    </div>
     <div class="performer-toolbar__controls">
       <UiIconButton
         :icon="Pin"
@@ -99,6 +102,12 @@ defineEmits([
   height: 100%;
   gap: var(--ui-space-1);
   padding-right: var(--ui-space-1);
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+.performer-toolbar__layout {
+  min-width: 0;
   app-region: no-drag;
   -webkit-app-region: no-drag;
 }

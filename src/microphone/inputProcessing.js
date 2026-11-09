@@ -1,4 +1,7 @@
 import { measureMicrophoneLevel } from './level.js';
+import { createMicrophonePitchEstimator } from './pitch.js';
+
+const PITCH_MIN_DBFS = -55;
 
 export const MICROPHONE_PROCESSING_KEYS = Object.freeze([
   'noiseSuppression',
@@ -74,17 +77,28 @@ export function createMicrophoneInputGraph(
     gain.connect(analyser);
     const rawSamples = new Float32Array(rawAnalyser.fftSize);
     const samples = new Float32Array(analyser.fftSize);
+    const estimatePitch = createMicrophonePitchEstimator(
+      context.sampleRate,
+      samples.length,
+    );
     return {
-      sample() {
+      sample(includePitch = false) {
         if (disposed) throw new Error('Microphone graph is disposed');
         rawAnalyser.getFloatTimeDomainData(rawSamples);
         analyser.getFloatTimeDomainData(samples);
         const raw = measureMicrophoneLevel(rawSamples);
+        const level = measureMicrophoneLevel(samples);
         return {
-          ...measureMicrophoneLevel(samples),
+          ...level,
           rawDbfs: raw.dbfs,
           rawPeak: raw.peak,
           rawClipped: raw.clipped,
+          ...(includePitch && {
+            pitchHz:
+              level.dbfs > PITCH_MIN_DBFS && !level.clipped && !raw.clipped
+                ? estimatePitch(samples)
+                : null,
+          }),
         };
       },
       setGainDb(value) {

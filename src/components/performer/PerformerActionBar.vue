@@ -27,6 +27,10 @@ const playing = computed(() =>
     role="group"
     :aria-label="t('performer.actionBar.label')"
   >
+    <template v-if="$slots['leading-tools']">
+      <slot name="leading-tools" />
+      <UiSeparator orientation="vertical" />
+    </template>
     <UiButtonGroup :label="t('performer.actionBar.playback')">
       <UiIconButton
         class="performer-action-bar__playback"

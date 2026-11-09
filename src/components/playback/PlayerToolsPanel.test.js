@@ -127,31 +127,28 @@ describe('PlayerToolsPanel shared surface', () => {
   });
 
   it('keeps independent guide controls in their own pane without percentage preset buttons', async () => {
-    const html = await render(
-      {
-        activeTab: 'guide',
-        hasTrack: true,
-        guideVocalVisible: true,
-        guideVocalRows: ['監聽', '擷取'].map((label) => ({
-          key: label,
-          label,
-          icon: Headphones,
-          deviceName: `${label}裝置`,
-          onIcon: Volume2,
-          on: true,
-          onLabel: `關閉導唱(${label})`,
-          value: '50%',
-          sliderValue: 0.5,
-          defaultValue: 0.5,
-          min: 0,
-          max: 1,
-          step: 0.01,
-          sliderLabel: `導唱比例(${label})`,
-          marks: [0, 0.25, 0.5, 0.75, 1],
-        })),
-      },
-      { 'reference-pitch': () => h('div', '音高預覽') },
-    );
+    const html = await render({
+      activeTab: 'guide',
+      hasTrack: true,
+      guideVocalVisible: true,
+      guideVocalRows: ['監聽', '擷取'].map((label) => ({
+        key: label,
+        label,
+        icon: Headphones,
+        deviceName: `${label}裝置`,
+        onIcon: Volume2,
+        on: true,
+        onLabel: `關閉導唱(${label})`,
+        value: '50%',
+        sliderValue: 0.5,
+        defaultValue: 0.5,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        sliderLabel: `導唱比例(${label})`,
+        marks: [0, 0.25, 0.5, 0.75, 1],
+      })),
+    });
     for (const label of ['監聽', '擷取']) {
       expect(html).toContain(`關閉導唱(${label})`);
       expect(html).toContain(`aria-label="導唱比例(${label})"`);
@@ -169,7 +166,7 @@ describe('PlayerToolsPanel shared surface', () => {
       html.indexOf('</section>', html.indexOf('id="player-tools-guide-panel"')),
     );
     expect(adjust).not.toContain('導唱比例');
-    expect(adjust).toContain('音高預覽');
+    expect(adjust).not.toContain('音高預覽');
     expect(guide).not.toContain('音高預覽');
     expect(guide).toContain('導唱比例(監聽)');
     expect(guide).toContain('導唱比例(擷取)');

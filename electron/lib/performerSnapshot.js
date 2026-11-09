@@ -190,6 +190,42 @@ function parseControls(value) {
   return { lyricsOffset: { available, saving, error } };
 }
 
+function parseSingAlong(value) {
+  const fields = record(value, 'singAlong');
+  function revision(key) {
+    if (!Number.isSafeInteger(fields[key]) || fields[key] < 0)
+      invalid(`singAlong.${key}`, 'expected a nonnegative safe integer');
+    return fields[key];
+  }
+  const guide =
+    fields.guide === null ? null : record(fields.guide, 'singAlong.guide');
+  return {
+    playbackRevision: revision('playbackRevision'),
+    continuityRevision: revision('continuityRevision'),
+    guide: guide
+      ? {
+          recipeId: boundedString(
+            guide.recipeId,
+            'singAlong.guide.recipeId',
+            64,
+          ),
+          completedAtMs: number(
+            guide.completedAtMs,
+            'singAlong.guide.completedAtMs',
+            { min: 0 },
+          ),
+        }
+      : null,
+    semitones:
+      fields.semitones === null
+        ? null
+        : number(fields.semitones, 'singAlong.semitones', {
+            min: -25,
+            max: 25,
+          }),
+  };
+}
+
 function parsePerformerSnapshot(value) {
   const snapshot = record(value, 'root');
   if (snapshot.version !== performerValues.stateVersion) {
@@ -204,6 +240,9 @@ function parsePerformerSnapshot(value) {
     version: performerValues.stateVersion,
     state,
     ...(wordCue ? { wordCue } : {}),
+    ...(snapshot.singAlong === undefined
+      ? {}
+      : { singAlong: parseSingAlong(snapshot.singAlong) }),
     adjustments: parseAdjustments(snapshot.adjustments),
     readings: parseReadings(snapshot.readings, state.lyrics),
     controls: parseControls(snapshot.controls),

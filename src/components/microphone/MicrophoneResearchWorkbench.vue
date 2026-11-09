@@ -11,6 +11,7 @@ import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import { useMicrophoneMeasurement } from '../../composables/useMicrophoneMeasurement.js';
 import MicrophoneLevelHistory from './MicrophoneLevelHistory.vue';
+import MicrophonePitchHistory from './MicrophonePitchHistory.vue';
 import MicrophoneMeasurementPanel from './MicrophoneMeasurementPanel.vue';
 import MicrophoneInputSettings from './MicrophoneInputSettings.vue';
 import MicrophoneActivitySettings from './MicrophoneActivitySettings.vue';
@@ -128,6 +129,10 @@ const inputSettingsText = computed(() => {
       <UiHint>不錄音、不監聽；離開即停止。</UiHint>
     </div>
     <div class="microphone-research__results">
+      <MicrophonePitchHistory
+        :history="state.pitchHistory"
+        :running="state.status === 'running'"
+      />
       <MicrophoneActivitySettings
         :options="state.activityOptions"
         :activity="state.activity"

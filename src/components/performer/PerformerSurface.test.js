@@ -50,21 +50,50 @@ function frame(overrides = {}) {
   };
 }
 
-function render(props = {}) {
+function render(props = {}, slots = {}) {
   return renderToString(
     createSSRApp({
       render: () =>
-        h(PerformerSurface, {
-          frame: frame(),
-          mode: 'prompter',
-          readingScale: 'desk',
-          ...props,
-        }),
+        h(
+          PerformerSurface,
+          {
+            frame: frame(),
+            mode: 'prompter',
+            readingScale: 'desk',
+            ...props,
+          },
+          slots,
+        ),
     }),
   );
 }
 
 describe('PerformerSurface', () => {
+  it('places the optional overview above the shared cues and tools in the shared action bar', async () => {
+    const html = await render(
+      { readingScale: 'near' },
+      {
+        'above-cues': () => h('figure', { id: 'pitch-overview' }),
+        'leading-tools': () => h('button', { id: 'sing-along-tool' }),
+      },
+    );
+    expect(html).toContain('data-reading-scale="near"');
+    expect(html).toContain('performer-surface__layout--with-overview');
+    expect(html.indexOf('id="pitch-overview"')).toBeLessThan(
+      html.indexOf('class="performer-cue-stack"'),
+    );
+    expect(html.indexOf('class="performer-action-bar"')).toBeLessThan(
+      html.indexOf('id="sing-along-tool"'),
+    );
+    expect(html.indexOf('id="sing-along-tool"')).toBeLessThan(
+      html.indexOf('performer-action-bar__playback'),
+    );
+    expect(html.match(/class="performer-cue-stack"/gu)).toHaveLength(1);
+    expect(await render()).not.toContain(
+      'performer-surface__layout--with-overview',
+    );
+  });
+
   it('marks each cue and romanization independently of the interface locale', async () => {
     const html = await render({
       frame: frame({

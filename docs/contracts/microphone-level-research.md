@@ -6,8 +6,8 @@
 
 - 開發版按 F5／F6／F7 進入內部工具，再選 Evaluation → Mic Level R02。沒有新增快捷鍵或正式 Settings 入口；原型 renderer 只在 `import.meta.env.DEV` 分支載入。
 - `microphoneResearchAccess.js` 持有開發限定的短期授權。兩個固定 IPC 為 `microphone-research:begin` 與 `microphone-research:end`；沿既有 Main sender／main frame policy，不接收路徑、來源 URL 或音訊。
-- begin 產生 Main-owned lease id，有效 30 秒，只綁定目前主視窗與文件 URL。導覽（包含相同 URL reload）、renderer 結束／crash 使 lease 失效；舊 lease 的 end 不能撤銷新 lease。
-- `audioOutputPermissions.js` 的兩個權限 hook 同時驗主 frame、目前文件與 lease。request 僅接受單一 `mediaTypes: ['audio']`，check 僅接受 `mediaType: 'audio'`；缺省、未知、video、混合請求及其他視窗一律拒絕。既有 speaker／font 規則不變。
+- begin 產生 Main-owned lease id，有效 30 秒，綁定請求的開發版視窗與文件 URL。提詞器跟唱有獨立的 `performer-mic:begin`／`performer-mic:end` 與 lease。導覽（包含相同 URL reload）、renderer 結束／crash 使 lease 失效；舊 lease 的 end 不能撤銷新 lease。
+- `audioOutputPermissions.js` 的兩個權限 hook 同時驗主 frame、目前文件與各視窗自己的 lease。request 僅接受單一 `mediaTypes: ['audio']`，check 僅接受 `mediaType: 'audio'`；缺省、未知、video、混合請求及未授權視窗一律拒絕。speaker／font 仍限定主視窗。
 - 正式 Main 不註冊研究 IPC，正式 preload 不暴露研究方法，Mic 權限預設拒絕。編譯入 Main 的 policy 不代表正式啟用。
 
 ## 輸入生命週期
@@ -76,4 +76,10 @@
 
 正式採用或接 Output 前仍須以使用者明確選定的實體輸入，量測安靜、噪聲、伴奏串音、輕／強唱、削波、USB 中斷／重插、Windows 權限變更，及同時播放／切歌／BGM／OBS 的 CPU、記憶體、音訊中斷與輸入到畫面延遲分布。先固定測試裝置、驅動、sample rate、處理回報與取樣方法，再決定品質預算；未量測不填通過。
 
-R03 音準、可信參考旋律、Key／tempo 與時間校準另行研究；人聲監聽、錄音、自動 BGM ducking、評分／排行與 Output transport 不隨本切片納入。
+## 即時音高原型
+
+R03 第一階段在同一開發工具顯示最近五秒的麥克風音高，以 AudioContext 實際取樣率分析既有 2048 samples 的分析後 PCM。單聲源 YIN 基線搜尋約 65–1050 Hz，分析後電平須高於原型固定的 −55 dBFS，裝置回傳或分析後近削波及週期性不足皆留白。音高與電平門檻校準及活動包絡各自判定，伴奏等週期聲也可能出現在曲線。歷史只留工具記憶體，停止、失訊或隱藏時清除。
+
+開發版的疊線試唱入口為提詞器「跟唱」。播放時以取樣當下的播放器媒體位置畫實唱線，停唱或低可信度留白。原唱沿用播放調性投影，實唱使用麥克風量到的音高。暫停保留已畫片段，跳轉、切歌或 Key／tempo 變更清除舊片段；離開跟唱停止輸入。疊線尚未校準裝置及分析延遲。[跟唱契約](performer-prompter-contract.md)
+
+人聲監聽、錄音、自動 BGM ducking、評分／排行與 Output transport 不隨本切片納入。

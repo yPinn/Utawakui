@@ -14,14 +14,14 @@ export function pitchAt(pitches, step, time, semitones = 0) {
   return hz > 0 ? 69 + 12 * Math.log2(hz / 440) + semitones : null;
 }
 
-function isIsolatedSpike(midi, neighbors) {
+export function isIsolatedSpike(midi, neighbors) {
   if (neighbors.some((pitch) => pitch === null)) return false;
   const low = Math.min(...neighbors);
   const high = Math.max(...neighbors);
   return high - low <= 0.5 && (midi >= high + 5 || midi <= low - 5);
 }
 
-function smoothJitter(midi, neighbors) {
+export function smoothJitter(midi, neighbors) {
   if (neighbors.includes(null)) return midi;
   const [outerBefore, before, after, outerAfter] = neighbors;
   const window = [...neighbors, midi];
@@ -41,7 +41,14 @@ function smoothJitter(midi, neighbors) {
   return midi + Math.min(0.15, Math.max(-0.15, (out - into) / 4));
 }
 
-export function pitchPlot(pitches, step, start, span, semitones = 0) {
+export function pitchPlot(
+  pitches,
+  step,
+  start,
+  span,
+  semitones = 0,
+  includeMicRange = false,
+) {
   const startIndex = Math.ceil(start / step);
   const endIndex = Math.min(pitches.length, Math.ceil((start + span) / step));
   const at = (index) => pitchAt(pitches, step, index * step, semitones);
@@ -62,10 +69,11 @@ export function pitchPlot(pitches, step, start, span, semitones = 0) {
     }
     points.push({ index, midi: smoothJitter(midi, neighbors) });
   }
-  if (!points.length && !spikes.length) {
+  if (!points.length && !spikes.length && !includeMicRange) {
     return { path: '', grid: [], markers: [] };
   }
   const values = (points.length ? points : spikes).map(({ midi }) => midi);
+  if (includeMicRange) values.push(36, 84);
   const low = Math.floor(Math.min(...values) / 3) * 3 - 3;
   const high = Math.max(low + 12, Math.ceil(Math.max(...values) / 3) * 3 + 3);
   const y = (midi) => ((high - midi) / (high - low)) * PITCH_HEIGHT;
@@ -97,7 +105,34 @@ export function pitchPlot(pitches, step, start, span, semitones = 0) {
     x: pitchCursor(index * step, start, span),
     y: Math.min(PITCH_HEIGHT - 3, Math.max(3, y(midi))),
   }));
-  return { path, grid, markers };
+  return { path, grid, markers, y };
+}
+
+export function microphonePitchPath(
+  frames,
+  start,
+  span,
+  y,
+  toX = (time) => pitchCursor(time, start, span),
+) {
+  if (!y) return '';
+  const end = start + span;
+  let previousVoiced = false;
+  const commands = [];
+  for (const { time, hz, continuous } of frames) {
+    if (time < start || time > end || hz === null) {
+      previousVoiced = false;
+      continue;
+    }
+    const x = toX(time);
+    const midi = 69 + 12 * Math.log2(hz / 440);
+    const coordinate = `${x.toFixed(2)},${y(midi).toFixed(2)}`;
+    commands.push(
+      previousVoiced && continuous ? `L${coordinate}` : `M${coordinate}h0.15`,
+    );
+    previousVoiced = true;
+  }
+  return commands.join(' ');
 }
 
 export function pitchPage(time, duration, windowSeconds = PAGE_SECONDS) {

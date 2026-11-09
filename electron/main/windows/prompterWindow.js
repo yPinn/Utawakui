@@ -175,6 +175,7 @@ function createPerformerWindowManager(options) {
         additionalArguments: [
           `--ui-theme=${initialTheme}`,
           `--ui-locale=${getUiLocale()}`,
+          ...(isDev ? ['--performer-research-enabled=1'] : []),
         ],
       },
     });

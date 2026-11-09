@@ -130,6 +130,19 @@ describe('trusted IPC main boundary', () => {
     ).rejects.toThrow();
 
     for (const channel of [
+      'performer-review:load',
+      'performer-review:cancel',
+      'performer-review:mark',
+    ]) {
+      trusted.handle(channel, () => 'review');
+      const invoke = rawIpcMain.handles.get(channel);
+      await expect(invoke(createEvent(performer))).resolves.toBe('review');
+      await expect(invoke(createEvent(main))).rejects.toMatchObject({
+        code: 'IPC_SENDER_UNTRUSTED',
+      });
+    }
+
+    for (const channel of [
       'performer-view:get-status',
       'diagnostics:record-renderer',
     ]) {
@@ -148,6 +161,13 @@ describe('trusted IPC main boundary', () => {
     });
     expect(IPC_CHANNEL_CAPABILITIES).toEqual({
       'diagnostics:record-renderer': 'main-or-performer',
+      'performer-mic:begin': 'performer',
+      'performer-mic:end': 'performer',
+      'performer-pitch:analyze': 'performer',
+      'performer-pitch:cancel': 'performer',
+      'performer-review:load': 'performer',
+      'performer-review:cancel': 'performer',
+      'performer-review:mark': 'performer',
       'performer-view:get-status': 'main-or-performer',
       'performer-view:get-snapshot': 'main-or-performer',
       'performer-view:adjust-lyrics-offset': 'performer',

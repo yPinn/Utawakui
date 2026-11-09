@@ -68,11 +68,9 @@ function createMicrophoneResearchAccess({
       now() < lease.deadline,
     );
   }
-  function register(ipcMain) {
-    ipcMain.handle('microphone-research:begin', (event) => begin(event.sender));
-    ipcMain.handle('microphone-research:end', (event, id) =>
-      end(event.sender, id),
-    );
+  function register(ipcMain, channel = 'microphone-research') {
+    ipcMain.handle(`${channel}:begin`, (event) => begin(event.sender));
+    ipcMain.handle(`${channel}:end`, (event, id) => end(event.sender, id));
   }
   return { begin, end, isAllowed, register };
 }

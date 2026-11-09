@@ -247,6 +247,7 @@ export function usePerformerViewState() {
     setDisplayBoundary,
     error,
     frame,
+    snapshot: computed(() => snapshot.value),
     readingScale,
     controlPending,
     control,

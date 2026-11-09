@@ -16,6 +16,9 @@ import {
 import { recommendMicrophoneActivityThresholds } from './calibration.js';
 
 const SAMPLE_MS = 33;
+const PITCH_WINDOW_MS = 5000;
+const PITCH_MAX_GAP_MS = 150;
+const SYSTEM_DEFAULT_DEVICE = 'default';
 const RESET = {
   dbfs: -100,
   peak: 0,
@@ -24,6 +27,7 @@ const RESET = {
   rawDbfs: -100,
   rawPeak: 0,
   rawClipped: false,
+  pitchHistory: [],
 };
 
 // Owns one analysis-only stream. No player, destination, file or Output access.
@@ -34,6 +38,7 @@ export function createMicrophoneResearchRuntime({
   publish = () => {},
   onError = () => {},
   now = () => performance.now(),
+  preferSystemDefault = false,
 } = {}) {
   const activityOwner = createMicrophoneActivity();
   let activitySignature = null;
@@ -147,12 +152,16 @@ export function createMicrophoneResearchRuntime({
           typeof device.deviceId === 'string' &&
           device.deviceId.length > 0 &&
           device.deviceId.length <= 512 &&
-          !['default', 'communications'].includes(device.deviceId),
+          device.deviceId !== 'communications' &&
+          (preferSystemDefault || device.deviceId !== SYSTEM_DEFAULT_DEVICE),
       )
       .slice(0, 64)
       .map((device, index) => ({
         id: device.deviceId,
-        label: device.label?.slice(0, 200) || `未命名輸入 ${index + 1}`,
+        label:
+          device.deviceId === SYSTEM_DEFAULT_DEVICE
+            ? '系統預設裝置'
+            : device.label?.slice(0, 200) || `未命名輸入 ${index + 1}`,
       }));
   }
   async function refreshDevices() {
@@ -172,7 +181,7 @@ export function createMicrophoneResearchRuntime({
         (d) => d.id === state.selectedDeviceId,
       )
         ? state.selectedDeviceId
-        : '';
+        : (devices.find((d) => d.id === SYSTEM_DEFAULT_DEVICE)?.id ?? '');
       const invalidated =
         selectedDeviceId !== state.selectedDeviceId ? invalidateActivity() : {};
       update({ devices, selectedDeviceId, status: 'idle', ...invalidated });
@@ -295,7 +304,8 @@ export function createMicrophoneResearchRuntime({
       function sample() {
         if (!isCurrent(op)) return;
         try {
-          const measured = op.inputGraph.sample();
+          const { pitchHz, ...measured } =
+            op.inputGraph.sample(!activitySuspended);
           const time = now();
           const intensity = projectMicrophoneLevel(
             measured.dbfs,
@@ -312,7 +322,19 @@ export function createMicrophoneResearchRuntime({
                 state.activityOptions,
                 activityEnabled(),
               );
-          update({ ...measured, intensity, activity });
+          let pitchHistory = state.pitchHistory;
+          if (!activitySuspended) {
+            const previousPitchTime = pitchHistory.at(-1)?.atMs;
+            const recent =
+              time > previousPitchTime &&
+              time - previousPitchTime <= PITCH_MAX_GAP_MS
+                ? pitchHistory.filter(
+                    (point) => point.atMs >= time - PITCH_WINDOW_MS,
+                  )
+                : [];
+            pitchHistory = [...recent, { atMs: time, hz: pitchHz }];
+          }
+          update({ ...measured, intensity, activity, pitchHistory });
           op.timer = setTimeout(sample, SAMPLE_MS);
         } catch (error) {
           fail(
@@ -454,7 +476,10 @@ export function createMicrophoneResearchRuntime({
   }
   function setActivitySuspended(suspended) {
     activitySuspended = suspended === true;
-    update({ activity: activityOwner.reset(activityPhase()) });
+    update({
+      activity: activityOwner.reset(activityPhase()),
+      pitchHistory: [],
+    });
   }
   function configureInput(input) {
     if (destroyed || state.status === 'requesting') return false;

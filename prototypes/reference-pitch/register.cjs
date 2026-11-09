@@ -1,10 +1,14 @@
-/* global require, __dirname, __filename, module, process, setTimeout, clearTimeout, AbortController */
+/* global require, __dirname, module, process, setTimeout, clearTimeout, AbortController */
 const { createHash } = require('node:crypto');
 const { execFile } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { promisify } = require('node:util');
 const { Worker } = require('node:worker_threads');
+const {
+  readGuideReviewMarks,
+  registerGuideReview,
+} = require('./guideReview.cjs');
 const {
   buildCacheKey,
   readPitchCache,
@@ -19,6 +23,9 @@ const {
   resolveSeparationResultPath,
   resolveSeparationsDir,
 } = require('../../electron/lib/library/separationManifest');
+const {
+  loadTrackMusicStructure,
+} = require('../../electron/lib/library/musicStructure');
 
 const decode = promisify(execFile);
 const MODEL_HASH =
@@ -26,18 +33,39 @@ const MODEL_HASH =
 const MAX_SECONDS = 12 * 60;
 const PCM_BYTES_PER_SECOND = 32_000;
 const JOB_ID = /^[0-9a-f-]{36}$/;
-const algorithmHash = (() => {
-  const hash = createHash('sha256').update(MODEL_HASH);
-  for (const file of [
-    'worker.cjs',
-    'rangeRescue.cjs',
-    'backingRejection.cjs',
-    'cache.cjs',
-  ]) {
-    hash.update(fs.readFileSync(path.join(__dirname, file)));
+const activityHash = createHash('sha256')
+  .update(fs.readFileSync(path.join(__dirname, 'guideActivity.cjs')))
+  .update(fs.readFileSync(path.join(__dirname, 'backingRejection.cjs')))
+  .digest('hex');
+
+function reviewMarksFile(cacheFile) {
+  return cacheFile
+    ? path.join(path.dirname(cacheFile), 'reference-pitch-review-v1.json')
+    : null;
+}
+
+async function performerBeats(dir, trackId, durationSeconds) {
+  try {
+    const { signals, sourceDurationMs } = await loadTrackMusicStructure(
+      dir,
+      trackId,
+    );
+    if (
+      sourceDurationMs === null ||
+      Math.abs(sourceDurationMs - durationSeconds * 1000) >= 100
+    )
+      return [];
+    return signals.beats
+      .filter((beat) => beat.confidence >= 0.5)
+      .map(({ timeMs, downbeat, positionInBar }) => ({
+        timeMs,
+        downbeat: downbeat ?? positionInBar === 1,
+      }));
+  } catch {
+    // Beat guides are optional.
+    return [];
   }
-  return hash.update(fs.readFileSync(__filename)).digest('hex');
-})();
+}
 
 function sourceFor({ dir, epoch }, trackId) {
   const directory = resolveSeparationsDir(dir, trackId);
@@ -176,7 +204,13 @@ function runPitchWorker(file, workerData, transferList, signal) {
   });
 }
 
-async function compareWithBacking(source, ffmpeg, baseline, signal) {
+async function compareWithBacking(
+  workerFile,
+  source,
+  ffmpeg,
+  baseline,
+  signal,
+) {
   const bytesPerSecond = 2 * PCM_BYTES_PER_SECOND;
   const raw = await decodePcm(
     ffmpeg,
@@ -190,7 +224,7 @@ async function compareWithBacking(source, ffmpeg, baseline, signal) {
   const pcm = Uint8Array.from(raw);
   const pitches = baseline.pitches.slice();
   return runPitchWorker(
-    'phaseComparison.cjs',
+    workerFile,
     { pcm, pitches },
     [pcm.buffer, pitches.buffer],
     signal,
@@ -255,9 +289,35 @@ async function analyze({
   };
 }
 
+// Cache the baseline by its decoding and inference code, independently of
+// request orchestration and display-only comparisons.
+const algorithmHash = (() => {
+  const hash = createHash('sha256').update(MODEL_HASH);
+  for (const file of [
+    'worker.cjs',
+    'rangeRescue.cjs',
+    'backingRejection.cjs',
+  ]) {
+    hash.update(fs.readFileSync(path.join(__dirname, file)));
+  }
+  return hash
+    .update(
+      JSON.stringify([
+        MAX_SECONDS,
+        PCM_BYTES_PER_SECOND,
+        pairedFilter,
+        decodePcm.toString(),
+        runPitchWorker.toString(),
+        analyze.toString(),
+      ]),
+    )
+    .digest('hex');
+})();
+
 function registerReferencePitch({
   ipcMain,
   getMainWindow,
+  getPerformerSource,
   getScope,
   requireGate,
   getFfmpeg,
@@ -266,6 +326,7 @@ function registerReferencePitch({
   recordDiagnostic,
 }) {
   let active = null;
+  let reviewPitch = null;
   const recentKeys = new Map();
   async function keyFor(input, ffmpeg, signal) {
     if (!input.cacheFile) return null;
@@ -308,125 +369,275 @@ function registerReferencePitch({
     if (
       allowed(event) &&
       typeof requestId === 'string' &&
-      JOB_ID.test(requestId)
+      JOB_ID.test(requestId) &&
+      active?.sender === event.sender
     )
       cancel(requestId);
   });
-  ipcMain.handle(
-    'reference-pitch:analyze',
-    async (event, trackId, requestId, cachedOnly = false, phase = false) => {
+  async function requestAnalysis(
+    event,
+    trackId,
+    requestId,
+    cachedOnly = false,
+    phase = false,
+    expectedGuide = null,
+  ) {
+    if (
+      !isBoundedTrackId(trackId) ||
+      typeof requestId !== 'string' ||
+      !JOB_ID.test(requestId) ||
+      typeof cachedOnly !== 'boolean' ||
+      typeof phase !== 'boolean' ||
+      (cachedOnly && phase)
+    )
+      return { status: 'unavailable' };
+    if (active) return { status: 'busy' };
+    try {
+      requireGate();
+    } catch {
+      return { status: 'gate-disabled' };
+    }
+    const controller = new AbortController();
+    const jobId = `reference-pitch-${requestId}`;
+    const abort = () => cancel(requestId);
+    active = { requestId, jobId, controller, sender: event.sender };
+    event.sender.once('destroyed', abort);
+    event.sender.once('render-process-gone', abort);
+    try {
+      const scope = getScope();
+      const input = sourceFor(scope, trackId);
+      if (!input) return { status: 'no-guide' };
       if (
-        !allowed(event) ||
-        !isBoundedTrackId(trackId) ||
-        typeof requestId !== 'string' ||
-        !JOB_ID.test(requestId) ||
-        typeof cachedOnly !== 'boolean' ||
-        typeof phase !== 'boolean' ||
-        (cachedOnly && phase)
+        expectedGuide &&
+        (expectedGuide.recipeId !== input.recipeId ||
+          expectedGuide.completedAtMs !== input.completedAtMs)
       )
-        return { status: 'unavailable' };
-      if (active) return { status: 'busy' };
+        return { status: 'source-changed' };
+      if (phase && !input.phaseAvailable)
+        return { status: 'comparison-unavailable' };
+      const activity = Boolean(expectedGuide && input.phaseAvailable);
+      const comparisonWorker = activity
+        ? 'guideActivity.cjs'
+        : phase
+          ? 'phaseComparison.cjs'
+          : null;
+      let ffmpeg;
+      try {
+        ffmpeg = getFfmpeg();
+      } catch (error) {
+        if (error?.code !== 'FEATURE_DEPENDENCY_MISSING') throw error;
+      }
+      if (!ffmpeg) return { status: 'no-decoder' };
+      const stat = fs.statSync(modelPath, { throwIfNoEntry: false });
+      if (!stat?.isFile() || stat.size !== 135_090)
+        return { status: 'no-model' };
+      const model = fs.readFileSync(modelPath);
+      if (createHash('sha256').update(model).digest('hex') !== MODEL_HASH)
+        return { status: 'no-model' };
+      const key = await keyFor(input, ffmpeg, controller.signal);
+      const cached = readPitchCache(input.cacheFile, key);
+      const activityFile =
+        activity && input.cacheFile
+          ? path.join(
+              path.dirname(input.cacheFile),
+              'reference-pitch-activity-v1.json',
+            )
+          : null;
+      const activityKey =
+        activityFile && key
+          ? createHash('sha256').update(key).update(activityHash).digest('hex')
+          : null;
+      const cachedActivity =
+        cached && readPitchCache(activityFile, activityKey);
+      if (controller.signal.aborted) return { status: 'cancelled' };
+      if (!cached && cachedOnly) return { status: 'cache-miss' };
+      const { baseline, compared } =
+        cached && (!comparisonWorker || cachedActivity)
+          ? { baseline: cached, compared: cachedActivity?.pitches }
+          : await scheduler.schedule({
+              jobId,
+              start: () => ({
+                result: (async () => {
+                  const baseline =
+                    cached ??
+                    (await analyze({
+                      ...input,
+                      ffmpeg,
+                      model,
+                      signal: controller.signal,
+                    }));
+                  const compared =
+                    comparisonWorker && baseline.status === 'ready'
+                      ? await compareWithBacking(
+                          comparisonWorker,
+                          input.source,
+                          ffmpeg,
+                          baseline,
+                          controller.signal,
+                        ).catch((error) => {
+                          if (!activity) throw error;
+                          controller.signal.throwIfAborted();
+                          recordDiagnostic({
+                            process: 'main',
+                            level: 'warning',
+                            source: 'reference-pitch',
+                            operation: 'guide-activity',
+                            code: 'REFERENCE_GUIDE_ACTIVITY_FAILED',
+                            error,
+                          });
+                          return null;
+                        })
+                      : null;
+                  return { baseline, compared };
+                })(),
+                cancel: () => controller.abort(),
+              }),
+            });
+      if (controller.signal.aborted) return { status: 'cancelled' };
       try {
         requireGate();
       } catch {
         return { status: 'gate-disabled' };
       }
-      const controller = new AbortController();
-      const jobId = `reference-pitch-${requestId}`;
-      const abort = () => cancel(requestId);
-      active = { requestId, jobId, controller };
-      event.sender.once('destroyed', abort);
-      event.sender.once('render-process-gone', abort);
-      try {
-        const input = sourceFor(getScope(), trackId);
-        if (!input) return { status: 'no-guide' };
-        if (phase && !input.phaseAvailable)
-          return { status: 'comparison-unavailable' };
-        let ffmpeg;
-        try {
-          ffmpeg = getFfmpeg();
-        } catch (error) {
-          if (error?.code !== 'FEATURE_DEPENDENCY_MISSING') throw error;
-        }
-        if (!ffmpeg) return { status: 'no-decoder' };
-        const stat = fs.statSync(modelPath, { throwIfNoEntry: false });
-        if (!stat?.isFile() || stat.size !== 135_090)
-          return { status: 'no-model' };
-        const model = fs.readFileSync(modelPath);
-        if (createHash('sha256').update(model).digest('hex') !== MODEL_HASH)
-          return { status: 'no-model' };
-        const key = await keyFor(input, ffmpeg, controller.signal);
-        const cached = readPitchCache(input.cacheFile, key);
+      if (sourceFor(getScope(), trackId)?.stamp !== input.stamp)
+        return { status: 'source-changed' };
+      if (baseline.status !== 'ready') return baseline;
+      const { cacheable, ...preview } = baseline;
+      if (!cached && cacheable) writePitchCache(input.cacheFile, key, preview);
+      if (activity && compared && !cachedActivity && (cached || cacheable)) {
+        writePitchCache(activityFile, activityKey, {
+          ...preview,
+          pitches: compared,
+        });
+      }
+      if (phase && !compared) return { status: 'comparison-unavailable' };
+      const result = {
+        ...preview,
+        pitches: compared ?? preview.pitches,
+        phaseAvailable: input.phaseAvailable,
+        cached: Boolean(cached),
+        recipeId: input.recipeId,
+        completedAtMs: input.completedAtMs,
+      };
+      if (expectedGuide) {
+        const beats = await performerBeats(
+          scope.dir,
+          trackId,
+          preview.durationSeconds,
+        );
         if (controller.signal.aborted) return { status: 'cancelled' };
-        if (!cached && cachedOnly) return { status: 'cache-miss' };
-        const { baseline, compared } =
-          cached && !phase
-            ? { baseline: cached }
-            : await scheduler.schedule({
-                jobId,
-                start: () => ({
-                  result: (async () => {
-                    const baseline =
-                      cached ??
-                      (await analyze({
-                        ...input,
-                        ffmpeg,
-                        model,
-                        signal: controller.signal,
-                      }));
-                    const compared =
-                      phase && baseline.status === 'ready'
-                        ? await compareWithBacking(
-                            input.source,
-                            ffmpeg,
-                            baseline,
-                            controller.signal,
-                          )
-                        : null;
-                    return { baseline, compared };
-                  })(),
-                  cancel: () => controller.abort(),
-                }),
-              });
-        if (controller.signal.aborted) return { status: 'cancelled' };
-        try {
-          requireGate();
-        } catch {
-          return { status: 'gate-disabled' };
-        }
         if (sourceFor(getScope(), trackId)?.stamp !== input.stamp)
           return { status: 'source-changed' };
-        if (baseline.status !== 'ready') return baseline;
-        const { cacheable, ...preview } = baseline;
-        if (!cached && cacheable)
-          writePitchCache(input.cacheFile, key, preview);
-        if (phase && !compared) return { status: 'comparison-unavailable' };
-        return {
-          ...preview,
-          pitches: compared ?? preview.pitches,
-          phaseAvailable: input.phaseAvailable,
-          cached: Boolean(cached),
-          recipeId: input.recipeId,
-          completedAtMs: input.completedAtMs,
+        let marks = [];
+        try {
+          marks = readGuideReviewMarks(
+            reviewMarksFile(input.cacheFile),
+            expectedGuide,
+          );
+        } catch {
+          // An unreadable review file cannot replace the acoustic result.
+        }
+        reviewPitch = {
+          stamp: input.stamp,
+          playbackRevision: expectedGuide.playbackRevision,
+          durationSeconds: preview.durationSeconds,
+          stepSeconds: preview.stepSeconds,
+          baseline: preview.pitches,
+          shown: compared ?? preview.pitches,
+          maskApplied: activity && Boolean(compared),
         };
-      } catch (error) {
-        if (controller.signal.aborted) return { status: 'cancelled' };
-        recordDiagnostic({
-          process: 'main',
-          level: 'warning',
-          source: 'reference-pitch',
-          operation: 'analyze',
-          code: 'REFERENCE_PITCH_FAILED',
-          error,
-        });
-        return { status: 'unavailable' };
-      } finally {
-        event.sender.removeListener('destroyed', abort);
-        event.sender.removeListener('render-process-gone', abort);
-        active = null;
+        return { ...result, marks, beats };
       }
-    },
+      return result;
+    } catch (error) {
+      if (controller.signal.aborted) return { status: 'cancelled' };
+      recordDiagnostic({
+        process: 'main',
+        level: 'warning',
+        source: 'reference-pitch',
+        operation: 'analyze',
+        code: 'REFERENCE_PITCH_FAILED',
+        error,
+      });
+      return { status: 'unavailable' };
+    } finally {
+      event.sender.removeListener('destroyed', abort);
+      event.sender.removeListener('render-process-gone', abort);
+      active = null;
+    }
+  }
+  ipcMain.handle('reference-pitch:analyze', async (event, ...args) =>
+    allowed(event)
+      ? requestAnalysis(event, ...args.slice(0, 4))
+      : { status: 'unavailable' },
   );
+  if (getPerformerSource) {
+    registerGuideReview({
+      ipcMain,
+      requireGate,
+      getFfmpeg,
+      scheduler,
+      recordDiagnostic,
+      getSource: () => {
+        const current = getPerformerSource();
+        if (
+          !current ||
+          reviewPitch?.playbackRevision !== current.playbackRevision
+        )
+          return null;
+        const scope = getScope();
+        const input = sourceFor(scope, current.trackId);
+        if (
+          !input ||
+          input.stamp !== reviewPitch.stamp ||
+          input.recipeId !== current.recipeId ||
+          input.completedAtMs !== current.completedAtMs
+        )
+          return null;
+        const original = findOriginal(
+          scope.dir,
+          current.trackId,
+          input.completedAtMs,
+        );
+        if (!original) return null;
+        return {
+          ...reviewPitch,
+          ...current,
+          identity: JSON.stringify([
+            input.stamp,
+            current.playbackRevision,
+            original,
+          ]),
+          original: original.source,
+          source: input.source,
+          marksFile: reviewMarksFile(input.cacheFile),
+        };
+      },
+    });
+    ipcMain.handle('performer-pitch:cancel', (event, requestId) => {
+      if (active?.sender === event.sender && active.requestId === requestId)
+        cancel(requestId);
+    });
+    ipcMain.handle('performer-pitch:analyze', async (event, requestId) => {
+      const source = getPerformerSource();
+      if (!source) return { status: 'no-guide' };
+      const result = await requestAnalysis(
+        event,
+        source.trackId,
+        requestId,
+        false,
+        false,
+        source,
+      );
+      const current = getPerformerSource();
+      return current?.trackId === source.trackId &&
+        current.playbackRevision === source.playbackRevision &&
+        current.recipeId === source.recipeId &&
+        current.completedAtMs === source.completedAtMs
+        ? result
+        : { status: 'source-changed' };
+    });
+  }
 }
 
 module.exports = { registerReferencePitch, analyze };

@@ -39,6 +39,40 @@ describe('audio output permissions', () => {
     ).toBe(true);
   });
 
+  it('only grants the Performer audio capture on its own explicit lease', () => {
+    const url = 'http://localhost:5173/src/entries/prompter/index.html';
+    const performer = { getURL: () => url };
+    const lease = vi.fn(() => false);
+    const { checkHandler, requestHandler } = createHarness({
+      getPerformerSender: () => performer,
+      isPerformerMicrophoneAllowed: lease,
+    });
+    const details = { isMainFrame: true, requestingUrl: url };
+    expect(
+      checkHandler(performer, 'media', url, { ...details, mediaType: 'audio' }),
+    ).toBe(false);
+    lease.mockReturnValue(true);
+    expect(
+      checkHandler(performer, 'media', url, { ...details, mediaType: 'audio' }),
+    ).toBe(true);
+    expect(checkHandler(performer, 'speaker-selection', url, details)).toBe(
+      false,
+    );
+    expect(
+      checkHandler(performer, 'media', url, {
+        ...details,
+        isMainFrame: false,
+        mediaType: 'audio',
+      }),
+    ).toBe(false);
+    const callback = vi.fn();
+    requestHandler(performer, 'media', callback, {
+      ...details,
+      mediaTypes: ['audio', 'video'],
+    });
+    expect(callback).toHaveBeenCalledWith(false);
+  });
+
   it('allows explicit local font access only in the trusted main frame', () => {
     const { allowedSender, requestHandler, checkHandler } = createHarness();
     const callback = vi.fn();

@@ -28,12 +28,19 @@ function isAudioOutputPermissionAllowed(
 
 function registerAudioOutputPermissions(
   targetSession,
-  { getAllowedSender, isMicrophoneAllowed = () => false } = {},
+  {
+    getAllowedSender,
+    isMicrophoneAllowed = () => false,
+    getPerformerSender,
+    isPerformerMicrophoneAllowed = () => false,
+  } = {},
 ) {
   const allowMicrophone = (webContents, permission, details) =>
     permission === 'media' &&
-    isTrustedMainFrame(webContents, details, getAllowedSender) &&
-    isMicrophoneAllowed(webContents) === true;
+    ((isTrustedMainFrame(webContents, details, getAllowedSender) &&
+      isMicrophoneAllowed(webContents) === true) ||
+      (isTrustedMainFrame(webContents, details, getPerformerSender) &&
+        isPerformerMicrophoneAllowed(webContents) === true));
   targetSession.setPermissionRequestHandler(
     (webContents, permission, callback, details) => {
       callback(

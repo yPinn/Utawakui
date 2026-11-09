@@ -568,12 +568,21 @@ if (!gotSingleInstanceLock) {
       enabled: windowState.isDev,
       getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
     });
-    if (windowState.isDev) microphoneResearchAccess.register(ipcMain);
-    // Output/font permissions stay unchanged; only an explicit, short dev
-    // research lease can additionally authorize audio input in the main frame.
+    const getPerformerSender = () =>
+      performerWindowManager?.getWebContents() ?? null;
+    const performerMicrophoneAccess = createMicrophoneResearchAccess({
+      enabled: windowState.isDev,
+      getAllowedSender: getPerformerSender,
+    });
+    if (windowState.isDev) {
+      microphoneResearchAccess.register(ipcMain);
+      performerMicrophoneAccess.register(ipcMain, 'performer-mic');
+    }
     registerAudioOutputPermissions(session.defaultSession, {
       getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
       isMicrophoneAllowed: microphoneResearchAccess.isAllowed,
+      getPerformerSender,
+      isPerformerMicrophoneAllowed: performerMicrophoneAccess.isAllowed,
     });
     configState.loadInitialConfig();
     windowCloseDecisionBridge = createWindowCloseDecisionBridge({
@@ -792,6 +801,18 @@ if (!gotSingleInstanceLock) {
       registerReferencePitch({
         ipcMain,
         getMainWindow: windowState.getMainWindow,
+        getPerformerSource: () => {
+          const snapshot = performerWindowManager?.getSnapshot();
+          const guide = snapshot?.singAlong?.guide;
+          const trackId = snapshot?.state.playback.track?.id;
+          return guide && trackId
+            ? {
+                trackId,
+                playbackRevision: snapshot.singAlong.playbackRevision,
+                ...guide,
+              }
+            : null;
+        },
         getScope: () => ({
           dir: configState.resolveDownloadDir(configState.getConfig()),
           epoch: workLibraryEpoch,

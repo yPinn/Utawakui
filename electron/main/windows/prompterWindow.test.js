@@ -97,6 +97,7 @@ describe('performer window manager', () => {
     expect(window.options.webPreferences.additionalArguments).toEqual([
       '--ui-theme=dark',
       '--ui-locale=zh-TW',
+      '--performer-research-enabled=1',
     ]);
     window.webContents.emit('did-finish-load');
     expect(window.webContents.send).toHaveBeenCalledWith(
