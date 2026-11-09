@@ -2,6 +2,8 @@
 
 研究保存當輪方法、分母與限制，不代表產品狀態；現況見[規格](../spec.md)。舊數字不回改，新結論寫進該主題入口。私有歌曲與人工標註不隨專案分發。
 
+查現行行為可由[契約索引](../contracts/README.md)進入。已完成或被取代的提案見[歷史索引](../archive/README.md)。下列日期報告各自保留原本的試驗條件與證據。
+
 ## 歌詞時間與聲學對齊
 
 入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data)。
@@ -34,6 +36,7 @@
 
 ## 音訊處理與分析
 
+- [導唱估音、聲部與主唱活動研究收斂](audio/reference-pitch-lead-activity-summary-2026-11-10.md)（11-10）整理八度、雙音高、角色與停唱離線結果，以及下一輪獨立留出提案。
 - [曲庫標註與歌曲電台](audio/library-style-taxonomy-2026-11-08.md)（11-08）涵蓋曲風詞表、演唱語言、候選覆核與電台試聽。[Ballad 逐曲證據與錄音版本](audio/library-ballad-holdout-2026-11-08.md)保留固定分母、上下文試作與版本例外。
 - [原唱音高、停唱與音符切段研究收斂](audio/reference-pitch-note-boundary-summary-2026-11-06.md)（11-07）：分離與預覽的 CPU／GPU 量測、平滑與手動反相的採用範圍、離線音符切段與實唱對照的重開條件。
 - [Mic 輸入原型首輪驗證](audio/microphone-input-r02-2026-10-30.md)（10-30）：開發原型的原生權限、合成輸入與停止清理；保留初始裝置底限與後續 B1 有聲重試，完整品質待驗。
@@ -48,23 +51,29 @@
 - 分離（08-22～23）：[ONNX CPU 基線](audio/audio-processing-baseline-2026-08-22.md)、[模型調查](audio/audio-processing-model-review-2026-08-23.md)、[HQ3／HQ4](audio/audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md)、[CPU lock](audio/audio-python-separation-cpu-spike-2026-08-23.md)
 - 分析（08-24～28）：[Beat This!](audio/audio-python-beat-this-m1-spike-2026-08-24.md)、[結構分析](audio/audio-python-analysis-structure-spike-2026-08-24.md)、[模型調查](audio/music-analysis-model-survey-2026-08-24.md)、[BPM 正規化](audio/music-analysis-bpm-normalization-2026-08-28.md)
 
-## 其他
+## 工程驗證
 
 - [YouTube 登入資料相容性](engineering/youtube-login-cookies-2026-11-05.md)（11-05）：Windows 的 Chrome／Edge 讀不到、內嵌登入被 Google 擋；保留 Firefox 自動讀取並新增 cookies.txt 匯入與精簡引導，11-05 已實作（見 ADR 0005 修訂）。
 - [全域快捷操作的分層驗證](engineering/global-keyboard-shortcut-verification-2026-10-29.md)（10-29，10-30 集中整理）：原生探針、modifier-only 推論撤回、helper／接收端及隔離互動的原始分母與限制；不解除正式平台 gate。
 - [歌詞波形 backend 預算與取消](engineering/lyrics-waveform-backend-2026-10-28.md)（10-28）：16 個 Main／9 個 Browser 合成 cases；採用 Main 分塊 producer，Browser close 後 decode 仍完成。實驗分母與限制見報告；後續 Main／cache／唯讀介面驗收見[波形契約](../contracts/lyrics-waveform.md)。
 
-- 識別：[封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）
 - 效能與安全：[啟動與 Settings](engineering/startup-settings-profile-2026-10-18.md)、[Output 首幀](engineering/output-first-frame-profile-2026-10-18.md)、[BGM 啟動](engineering/bgm-startup-profile-2026-10-18.md)（10-18）、[依賴安全](engineering/dependency-security-review-2026-10-16.md)（10-16）
 - [診斷關聯 ID 提案](../archive/diagnostics-correlation-proposal-2026-10-29.md)（10-30）：main 為 IPC 失敗發號已實作並寫入 ADR 0008；回報整合與長任務關聯延後及其啟動條件。
 - [防禦編程與發行防護檢查](engineering/defensive-security-review-2026-10-26.md)（10-26）：Windows 名稱／ZIP 邊界、獨立工具修補、fuse 實測及尚未啟用的更新簽章。
 - [正式 runtime 打包驗證](engineering/runtime-packaging-verification-2026-10-26.md)（10-26）：六個壓縮入口、三個自有 unpacked 檔、啟動／播放與四聲道輸出比對。
 - [輕量混淆候選評估](engineering/light-obfuscation-assessment-2026-10-26.md)與[第一批正式驗證](engineering/light-symbols-verification-2026-10-26.md)（10-26）：Main 兩個規則模組的私有符號轉換、實際 ASAR 邊界、播放與四聲道管線、兩輪各十冷／十暖交錯量測；第二批未啟用。
-- 視覺：[Row／Grid 收束](../archive/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
+
+## 曲目與演出者識別
+
+- [封面來源](metadata/online-artwork-provider-evaluation-2026-09-27.md)（09-27）、[MusicBrainz 覆蓋率](metadata/musicbrainz-artist-coverage-2026-10-05.md)、[演出者照片](metadata/artist-photo-sources-2026-10-05.md)（10-05）
+
+## 介面與呈現
+
+- [Row／Grid 收束](../archive/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
+- [字幕風格候選與共用格式](design/lyrics-overlays/README.md)保存視覺提案、來源與 Proposal／Build Spec 格式。採用與實作狀態見規格第 7.3 節。
 
 ## 產品與競品
 
-- [字幕風格候選與共用格式](design/lyrics-overlays/README.md)：保存各款視覺提案、來源與 Proposal／Build Spec 格式；採用與實作狀態見 spec 第 7.3 節。
 - [播放器／排練規劃入口](product/player-practice-planning-2026-10-26.md)：四項順序、共用前置與待決策；四份提案已歸檔，行為與驗收案例由各契約持有；初始 JSON 僅保存歷史基線。功能狀態只見 spec。
 - [競品現況](product/competitive-research.md)：2026-10-26 查核 Setlista、聲嶼、歌回救星、KAREOKIE。
 - 受眾與資料：[歡唱／有限雲端](product/audience-and-optional-cloud-2026-10-26.md)、[商業模式／資料架構](product/business-model-and-data-architecture-2026-10-26.md)。研究證據，不是採用承諾。

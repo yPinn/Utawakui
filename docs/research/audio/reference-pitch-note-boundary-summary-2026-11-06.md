@@ -2,6 +2,8 @@
 
 本文保留 2026-11-06 的離線與開發版基線。當時 A 為預設，反相 B 為手動對照，日語停唱抑制關閉，音符條仍在離線研究。現行預設與試唱方式見[開發版跟唱契約](../../contracts/performer-prompter-contract.md#開發版跟唱)。
 
+八度、雙音高、主唱角色及下一輪停唱驗證見[2026-11-10 導唱研究收斂](reference-pitch-lead-activity-summary-2026-11-10.md)。
+
 ## 分離與預覽
 
 - 導唱分離沿用 Windows 封裝版的 DirectML。六個工作與 OBS 本機錄影同跑，批次耗時由 364.9 降至 159.1 秒，減少 56.4%。四聲道分離 WAV 約 20.2 MiB／分鐘，五分鐘約 101 MiB，是曲庫的主要容量成本。[封裝版驗收](../../adr/0017-directml-execution-provider-for-mdx-separation.md#batch-queue-and-obs-acceptance) · [四聲道格式](../../adr/0009-tiered-audio-processing-runtime.md)
