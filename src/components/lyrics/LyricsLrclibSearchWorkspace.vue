@@ -1,6 +1,7 @@
 <script setup>
 import {
   computed,
+  nextTick,
   onMounted,
   onUnmounted,
   shallowRef,
@@ -23,10 +24,9 @@ import UiSurface from '../ui/UiSurface.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import LyricsProviderRecordingGroup from './LyricsProviderRecordingGroup.vue';
 
-const emit = defineEmits(['back']);
 const props = defineProps({
+  active: { type: Boolean, default: true },
   providerId: { type: String, default: 'lrclib' },
-  providerLabel: { type: String, default: 'LRCLIB' },
 });
 
 const lyrics = useLyrics();
@@ -59,14 +59,15 @@ onMounted(() => {
   titleInputRef.value?.focus();
   void handleSearch();
 });
-onUnmounted(clearCandidateSearch);
-
 watch(
-  () => selectedTrack.value?.id,
-  (trackId) => {
-    if (trackId !== trackContext?.id) emit('back');
+  () => props.active,
+  async (active) => {
+    if (!active) return;
+    await nextTick();
+    if (props.active) titleInputRef.value?.focus();
   },
 );
+onUnmounted(clearCandidateSearch);
 
 const titleIsMissing = computed(() => !titleDraft.value.trim());
 const isSearchPending = computed(
@@ -376,10 +377,8 @@ function reportCandidate(candidate) {
         :aria-label="t('lyricsSource.search.actions')"
       >
         <UiButton
-          class="lyrics-lrclib-search__broaden"
-          :class="{ 'lyrics-lrclib-search__broaden--hidden': !canBroaden }"
-          :disabled="!canBroaden || isSearchDisabled"
-          :aria-hidden="!canBroaden || undefined"
+          v-if="canBroaden"
+          :disabled="isSearchDisabled"
           @click="handleSearch('broaden')"
         >
           {{ t('lyricsSource.search.broaden') }}
@@ -549,6 +548,8 @@ function reportCandidate(candidate) {
   --lyrics-lrclib-search-focus-safe-inset: var(--ui-focus-safe-inset);
 
   min-height: 0;
+  min-inline-size: 0;
+  container: lyrics-search / inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-2);
@@ -576,21 +577,18 @@ function reportCandidate(candidate) {
   min-width: 0;
 }
 
-.lyrics-lrclib-search__broaden--hidden {
-  visibility: hidden;
-}
-
 .lyrics-lrclib-search__results {
   --ui-scroll-layout-padding-inline-end: var(--ui-space-2);
   --ui-scroll-layout-padding-block-end: var(--ui-space-2);
 
   min-height: 0;
-  display: grid;
+  display: var(--lyrics-search-results-display, grid);
   grid-template-rows: minmax(0, 1fr);
 }
 
 .lyrics-lrclib-search__results :deep(.lyrics-lrclib-search__results-viewport) {
   block-size: auto;
+  overflow: var(--lyrics-search-results-overflow, hidden auto);
   overscroll-behavior: contain;
 }
 
@@ -642,7 +640,30 @@ function reportCandidate(candidate) {
   border-bottom: 0;
 }
 
-@media (max-width: 680px) {
+@container lyrics-search (width < 38rem) {
+  .lyrics-lrclib-search__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lyrics-lrclib-search__actions {
+    grid-area: 2 / 2;
+  }
+
+  .lyrics-lrclib-search__query-help {
+    grid-area: 2 / 1;
+    align-self: center;
+    font-size: var(--ui-type-caption-size);
+  }
+}
+
+@container lyrics-search (width < 24rem) {
+  .lyrics-lrclib-search__actions,
+  .lyrics-lrclib-search__query-help {
+    grid-area: auto / 1 / auto / -1;
+  }
+}
+
+@container lyrics-search (width < 20rem) {
   .lyrics-lrclib-search__form {
     grid-template-columns: minmax(0, 1fr);
   }

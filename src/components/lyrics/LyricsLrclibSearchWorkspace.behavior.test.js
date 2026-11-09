@@ -1005,8 +1005,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     const Workspace = await loadWorkspaceComponent();
 
-    const onBack = vi.fn();
-    const { app, root } = mount(Workspace, { onBack });
+    const { app, root } = mount(Workspace);
     await vi.waitFor(() =>
       expect(searchLyricsCandidates).toHaveBeenCalledOnce(),
     );
@@ -1046,10 +1045,6 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     resolveEditedSearch({ status: 'ok', candidates: [], groups: null });
     await first;
-    selectedTrack.value = { id: 'track-b', title: 'B', artist: 'Artist B' };
-    await nextTick();
-    expect(onBack).toHaveBeenCalledOnce();
-
     app.unmount();
     expect(clearCandidateSearch).toHaveBeenCalledTimes(3);
   });
@@ -1215,13 +1210,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     );
 
     await nextTick();
-    const unavailableBroaden = findButtonByText(root, '擴大搜尋');
-    expect(unavailableBroaden).toBe(broadenButton);
-    expect(unavailableBroaden.props.disabled).toBe(true);
-    expect(unavailableBroaden.props['aria-hidden']).toBe(true);
-    expect(unavailableBroaden.props.class).toContain(
-      'lyrics-lrclib-search__broaden--hidden',
-    );
+    expect(findButtonByText(root, '擴大搜尋')).toBeUndefined();
 
     state.candidateSearch.isLoading = true;
     await nextTick();

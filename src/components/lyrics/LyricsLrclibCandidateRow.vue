@@ -230,9 +230,11 @@ function previewLineHasTiming(line) {
         class="lyrics-lrclib-candidate-row__support"
         :gap="2"
         align="center"
+        justify="end"
         wrap
       >
         <div
+          v-if="timelineMessage || visibleWarnings.length"
           class="lyrics-lrclib-candidate-row__warning-slot"
           :class="{
             'lyrics-lrclib-candidate-row__warning-slot--timeline':
@@ -536,10 +538,6 @@ function previewLineHasTiming(line) {
   flex: 1 1 0;
   display: grid;
   align-content: center;
-  min-block-size: calc(
-    var(--ui-type-caption-size) * var(--ui-type-caption-line-height) * 2 +
-      var(--ui-space-1)
-  );
 }
 
 .lyrics-lrclib-candidate-row__warning-slot--timeline {
@@ -558,18 +556,46 @@ function previewLineHasTiming(line) {
   padding: var(--ui-space-2) var(--ui-space-3);
 }
 
-@media (max-width: 680px) {
+@container lyrics-search (width < 32rem) {
   .lyrics-lrclib-candidate-row__header {
     display: grid;
+    gap: var(--ui-space-1);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lyrics-lrclib-candidate-row__summary {
+    display: flex;
     flex-wrap: wrap;
     padding-inline-start: var(--ui-lyrics-candidate-content-inset);
   }
 
+  .lyrics-lrclib-candidate-row__summary-details {
+    flex-wrap: wrap;
+    min-inline-size: 0;
+  }
+
+  .lyrics-lrclib-candidate-row__provider-slot,
+  .lyrics-lrclib-candidate-row__duration {
+    flex-basis: auto;
+    width: auto;
+    text-align: start;
+  }
+
+  .lyrics-lrclib-candidate-row__metadata {
+    margin-inline-start: 0;
+    gap: var(--ui-space-1);
+  }
+
   .lyrics-lrclib-candidate-row__expanded {
     padding-inline-start: 0;
+  }
+
+  .lyrics-lrclib-candidate-row__warning-slot {
+    flex-basis: 100%;
+  }
+
+  .lyrics-lrclib-candidate-row__footer {
+    flex-wrap: wrap;
   }
 }
 </style>

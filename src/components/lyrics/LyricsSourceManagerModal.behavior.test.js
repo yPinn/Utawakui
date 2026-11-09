@@ -6,6 +6,7 @@ import Modal from './LyricsSourceManagerModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSurface from '../ui/UiSurface.vue';
@@ -21,6 +22,17 @@ import {
 
 const domain = vi.hoisted(() => ({}));
 vi.mock('../../composables/useLyrics.js', () => ({ useLyrics: () => domain }));
+vi.mock('../ui/UiScrollLayout.vue', async () => {
+  const { h } = await import('vue');
+  return {
+    default: {
+      setup:
+        (_, { slots }) =>
+        () =>
+          h('div', slots.default?.()),
+    },
+  };
+});
 vi.mock('./LyricsSourceAnalysis.vue', async () => {
   const { h } = await import('vue');
   return {
@@ -64,10 +76,14 @@ vi.mock('./LyricsLrclibSearchWorkspace.vue', async () => {
   const { h } = await import('vue');
   return {
     default: {
-      props: ['providerId'],
+      props: ['providerId', 'active'],
       emits: ['back'],
       setup: (props) => () =>
-        h('div', { 'data-provider': props.providerId }, '搜尋內容'),
+        h(
+          'div',
+          { 'data-provider': props.providerId, 'data-active': props.active },
+          '搜尋內容',
+        ),
     },
   };
 });
@@ -92,6 +108,7 @@ for (const [component, path] of [
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiChip, '../ui/UiChip.vue'],
+  [UiDisclosure, '../ui/UiDisclosure.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
@@ -126,6 +143,7 @@ beforeEach(() => {
       artist: 'Artist',
     })),
     setSourceLabel: vi.fn(),
+    selectSource: vi.fn(),
     deleteSource: vi.fn(),
     backfillSourceLabels: vi.fn(async () => {}),
     experimentalLyrics: null,
@@ -191,6 +209,12 @@ describe('local lyrics collection modal navigation', () => {
     expect(textContent(root)).toContain('-0.5s');
     expect(
       findAll(root, (n) => n.props['data-analysis-active'] === true),
+    ).toHaveLength(0);
+    const disclosure = findAll(root, (n) => n.type === 'details')[0];
+    trigger(disclosure, 'onToggle', { currentTarget: { open: true } });
+    await nextTick();
+    expect(
+      findAll(root, (n) => n.props['data-analysis-active'] === true),
     ).toHaveLength(1);
     props.analysisDisabled = true;
     await nextTick();
@@ -199,6 +223,12 @@ describe('local lyrics collection modal navigation', () => {
     ).toHaveLength(1);
     expect(domain.state.selectedSourceFilename).toBe('active.lrc');
     expect(domain.state.offsetSeconds).toBe(-0.5);
+    const chooseNative = findAll(
+      rows[0],
+      (n) => n.type === 'button' && n.props['aria-pressed'] === false,
+    )[0];
+    trigger(chooseNative, 'onClick');
+    expect(domain.selectSource).toHaveBeenCalledWith('native.lrc');
   });
   it('opens a content draft for the reported source while preserving current selection and timing', async () => {
     sources.items = [
@@ -236,17 +266,20 @@ describe('local lyrics collection modal navigation', () => {
     expect(domain.setSourceLabel).not.toHaveBeenCalled();
     expect(domain.deleteSource).not.toHaveBeenCalled();
   });
-  it('keeps one search entry on the empty collection and returns focus after combined search', async () => {
+  it('keeps the local collection and preserves the search instance when folded', async () => {
     const { root, button } = setup();
     expect(
       findAll(root, (n) => n.props['data-size'] === 'notice'),
     ).toHaveLength(1);
+    expect(
+      findAll(root, (n) => n.props['data-provider'] === 'all'),
+    ).toHaveLength(0);
     expect(textContent(root)).toContain('尚無可用歌詞');
     expect(
       findAll(
         root,
         (n) =>
-          n.props['data-body-mode'] === 'scroll' &&
+          n.props['data-body-mode'] === 'workspace' &&
           n.props['data-cap'] === 'small',
       ),
     ).toHaveLength(1);
@@ -256,11 +289,16 @@ describe('local lyrics collection modal navigation', () => {
     ]);
     trigger(button('搜尋歌詞'), 'onClick');
     await nextTick();
-    expect(
-      findAll(root, (n) => n.props['data-provider'] === 'all'),
-    ).toHaveLength(1);
-    const back = button('返回可用歌詞');
-    expect(back.props.class).toContain('ui-icon-btn');
+    const [workspace] = findAll(
+      root,
+      (n) => n.props['data-provider'] === 'all',
+    );
+    expect(workspace.props['data-active']).toBe(true);
+    const back = button('收合搜尋');
+    expect(textContent(root)).toContain('尚無可用歌詞');
+    expect(button('手動匯入歌詞')).toBeDefined();
+    expect(back.props.class).toContain('ui-icon-btn--ghost');
+    expect(back.props.class).toContain('ui-icon-btn--active');
     expect(back.parent.type).toBe('header');
     expect(findAll(root, (n) => n.props['data-size'] === 'wide')).toHaveLength(
       1,
@@ -278,9 +316,18 @@ describe('local lyrics collection modal navigation', () => {
     await nextTick();
     await nextTick();
     expect(button('搜尋歌詞').focus).toHaveBeenCalledOnce();
+    expect(findAll(root, (n) => n.props['data-provider'] === 'all')[0]).toBe(
+      workspace,
+    );
+    expect(workspace.props['data-active']).toBe(false);
     expect(
       findAll(root, (n) => n.props['data-size'] === 'notice'),
     ).toHaveLength(1);
+    domain.state.selectedTrackId = 'another-track';
+    await nextTick();
+    expect(
+      findAll(root, (n) => n.props['data-provider'] === 'all'),
+    ).toHaveLength(0);
   });
 
   it('projects import expansion through the toolbar and closes the panel after save or cancel', async () => {
@@ -364,6 +411,6 @@ describe('local lyrics collection modal navigation', () => {
     props.open = true;
     await nextTick();
     expect(button('搜尋歌詞')).toBeDefined();
-    expect(button('返回可用歌詞')).toBeUndefined();
+    expect(button('收合搜尋')).toBeUndefined();
   });
 });

@@ -2,7 +2,6 @@
 import { computed, onScopeDispose, shallowRef, useId, watch } from 'vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useExperimentalLyricsQueue } from '../../composables/lyrics/useExperimentalLyricsQueue.js';
-import { formatLyricsSourceLabel } from '../../utils/lyricsSourcePresentation.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiProgress from '../ui/UiProgress.vue';
@@ -29,11 +28,6 @@ const languageOptions = [
   { value: 'ja', label: t('lyricsResearch.languages.ja') },
   { value: 'en', label: t('lyricsResearch.languages.en') },
 ];
-const sourceLabel = computed(() =>
-  lyrics.selectedSource.value
-    ? formatLyricsSourceLabel(lyrics.selectedSource.value)
-    : t('lyricsResearch.analysis.noSource'),
-);
 const lines = computed(() => lyrics.lyricsDocument.value?.lines ?? []);
 const hasT1 = computed(() =>
   lines.value.some(
@@ -246,12 +240,6 @@ onScopeDispose(() => clearInterval(timer));
     class="lyrics-source-analysis"
     :aria-label="t('lyricsResearch.analysis.label')"
   >
-    <div class="lyrics-source-analysis__heading">
-      <strong>{{ t('lyricsResearch.settings.title') }}</strong>
-      <span>{{
-        t('lyricsResearch.analysis.currentSource', { source: sourceLabel })
-      }}</span>
-    </div>
     <UiHint v-if="queue.error.value" tone="danger" role="alert">{{
       queue.error.value
     }}</UiHint>
@@ -316,7 +304,6 @@ onScopeDispose(() => clearInterval(timer));
         >
       </div>
     </div>
-    <UiHint v-if="hasT1">{{ t('lyricsResearch.analysis.afterHint') }}</UiHint>
     <UiDisclosure
       v-if="hasT1"
       v-model:open="detailsOpen"
@@ -338,19 +325,8 @@ onScopeDispose(() => clearInterval(timer));
   display: grid;
   gap: var(--ui-space-2);
   min-inline-size: 0;
-  padding-block-start: var(--ui-space-4);
-  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
-.lyrics-source-analysis__heading {
-  display: grid;
-  gap: var(--ui-space-1);
-  overflow-wrap: anywhere;
-  font-size: var(--ui-type-label-size);
-  color: var(--ui-color-text);
-}
-.lyrics-source-analysis__heading span {
-  color: var(--ui-color-text-muted);
-}
+
 .lyrics-source-analysis__actions {
   display: flex;
   flex-wrap: wrap;
