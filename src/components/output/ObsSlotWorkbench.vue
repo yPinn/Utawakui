@@ -7,7 +7,7 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
-import { Check, CircleAlert, Loader2 } from '../../icons/index.js';
+import { Check, CircleAlert, Loader2, RotateCcw } from '../../icons/index.js';
 import {
   isOutputLocalFont,
   sanitizeOutputAppearanceSetting,
@@ -19,6 +19,7 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
+import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
@@ -26,6 +27,7 @@ import { useOutputElementTarget } from '../../composables/output/useOutputElemen
 import UiButton from '../ui/UiButton.vue';
 import UiFolderInspector from '../ui/UiFolderInspector.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
@@ -117,6 +119,23 @@ const visibleFields = computed(() =>
   selectedTarget.value
     ? sortConfigurationFields(selectedTarget.value.fields)
     : templateFields.value,
+);
+const activeColorFieldKey = shallowRef(null);
+const colorFields = computed(() =>
+  visibleFields.value.filter((field) => field.control === 'color'),
+);
+const activeColorField = computed(
+  () =>
+    colorFields.value.find(
+      (field) => field.key === activeColorFieldKey.value,
+    ) ?? colorFields.value[0],
+);
+watch(
+  [templateId, selectedTargetId],
+  () => {
+    activeColorFieldKey.value = null;
+  },
+  { flush: 'sync' },
 );
 const configurationFieldGroups = computed(() => {
   const groups = new Map();
@@ -274,6 +293,14 @@ function commitSettings() {
   emitSettingsChange('immediate');
 }
 
+function applyPaletteColor(color) {
+  const field = activeColorField.value;
+  if (!field) return;
+  draft[field.key] = color;
+  commitSettings();
+  emit('commitColor', color);
+}
+
 function resetFields(fields) {
   for (const field of fields) {
     draft[field.key] = field.defaultValue;
@@ -341,28 +368,42 @@ function resetAppearance() {
     </template>
 
     <template #side-header>
-      <header class="obs-slot-workbench__inspector-header">
+      <div class="obs-slot-workbench__inspector-header">
         <h2 class="obs-slot-workbench__title">
           {{ preset?.name ?? t('outputPanel.workbench.noTemplate') }}
         </h2>
         <div
-          v-if="showSaveStatus"
-          class="obs-slot-workbench__save-state"
-          :data-state="saveStatus"
+          v-if="showSaveStatus || configurationFields.length > 0"
+          class="obs-slot-workbench__header-actions"
         >
-          <span role="status" aria-live="polite" aria-atomic="true">
-            <UiStatusIcon
-              :icon="saveStatusIcon"
-              :tone="saveStatusTone"
-              :spinning="saveStatusIcon === Loader2"
-              :label="saveStatusLabel"
-            />
-          </span>
-          <UiButton v-if="saveStatus === 'error'" @click="emit('retrySave')">
-            {{ t('outputPanel.workbench.retry') }}
-          </UiButton>
+          <div
+            v-if="showSaveStatus"
+            class="obs-slot-workbench__save-state"
+            :data-state="saveStatus"
+          >
+            <span role="status" aria-live="polite" aria-atomic="true">
+              <UiStatusIcon
+                :icon="saveStatusIcon"
+                :tone="saveStatusTone"
+                :spinning="saveStatusIcon === Loader2"
+                :label="saveStatusLabel"
+              />
+            </span>
+            <UiButton v-if="saveStatus === 'error'" @click="emit('retrySave')">
+              {{ t('outputPanel.workbench.retry') }}
+            </UiButton>
+          </div>
+          <UiIconButton
+            v-if="configurationFields.length > 0"
+            class="obs-slot-workbench__reset"
+            :icon="RotateCcw"
+            :label="t('outputPanel.workbench.resetTemplate')"
+            tooltip-placement="bottom"
+            :disabled="isConfigurationAtDefaults"
+            @click="resetAppearance"
+          />
         </div>
-      </header>
+      </div>
     </template>
 
     <template #side-top>
@@ -418,29 +459,26 @@ function resetAppearance() {
           :key="field.key"
           :field="field"
           :model-value="draft[field.key]"
-          :recent-colors="recentColors"
-          :saved-colors="savedColors"
           :disabled="
             field.key === 'lookAmount' && draft.paletteId === 'original'
           "
           :modified="isFieldModified(field)"
+          :palette-target="field === activeColorField"
+          @activate-color="activeColorFieldKey = field.key"
           @update:model-value="updateAppearanceField(field, $event)"
           @commit="commitSettings"
           @commit-color="emit('commitColor', $event)"
+        />
+        <ObsOutputColorPalette
+          v-if="activeColorField && group.fields.includes(activeColorField)"
+          :label="activeColorField.label"
+          :model-value="String(draft[activeColorField.key])"
+          :recent-colors="recentColors"
+          :saved-colors="savedColors"
+          @select="applyPaletteColor"
           @toggle-saved-color="emit('toggleSavedColor', $event)"
         />
       </ObsPropertySection>
-    </template>
-
-    <template #side-footer>
-      <UiButton
-        v-if="configurationFields.length > 0"
-        class="obs-slot-workbench__reset"
-        :disabled="isConfigurationAtDefaults"
-        @click="resetAppearance"
-      >
-        {{ t('outputPanel.workbench.resetTemplate') }}
-      </UiButton>
     </template>
   </component>
 </template>
@@ -493,13 +531,15 @@ function resetAppearance() {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.obs-slot-workbench__reset {
-  justify-self: start;
-  margin-block-start: var(--ui-space-2);
-}
-
 .obs-slot-workbench__inspector-header {
   padding-block: var(--ui-space-1);
+}
+
+.obs-slot-workbench__header-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
 }
 
 .obs-slot-workbench__save-state {
@@ -517,14 +557,12 @@ function resetAppearance() {
 
 .obs-slot-workbench__title {
   margin: 0;
-  color: var(--ui-color-text);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
-}
-
-.obs-slot-workbench__title {
-  font-size: var(--ui-type-title-size);
   min-width: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
+  line-height: var(--ui-type-subtitle-line-height);
+  overflow-wrap: anywhere;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;

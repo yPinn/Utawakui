@@ -250,7 +250,10 @@ onBeforeUnmount(() => {
         <slot name="side-top" />
         <slot name="side" />
       </UiScrollLayout>
-      <div class="obs-output-split-layout__side-footer">
+      <div
+        v-if="$slots['side-footer']"
+        class="obs-output-split-layout__side-footer"
+      >
         <slot name="side-footer" />
       </div>
     </aside>
@@ -382,6 +385,10 @@ onBeforeUnmount(() => {
   display: grid;
   align-content: start;
   gap: var(--ui-space-3);
+}
+
+.obs-output-split-layout--side-inspector .obs-output-split-layout__side {
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .obs-output-split-layout--side-inspector

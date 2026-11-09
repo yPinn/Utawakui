@@ -1,159 +1,78 @@
 <script setup>
-import { computed } from 'vue';
-import {
-  MAX_OUTPUT_SAVED_COLORS,
-  normalizeOutputRecentColors,
-  normalizeOutputSavedColors,
-} from '../../../shared/outputColorPreferences.mjs';
-import ObsColorSwatchRail from './ObsColorSwatchRail.vue';
-import UiButton from '../ui/UiButton.vue';
+import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import UiColorField from '../ui/UiColorField.vue';
-import { t } from '../../utils/i18n.js';
 
-const props = defineProps({
+defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
   modelValue: { type: String, required: true },
-  recentColors: { type: Array, default: () => [] },
-  savedColors: { type: Array, default: () => [] },
+  modified: { type: Boolean, default: false },
+  paletteTarget: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:modelValue', 'commit', 'toggleSavedColor']);
-
-const normalizedRecentColors = computed(() =>
-  normalizeOutputRecentColors(props.recentColors),
-);
-const normalizedValue = computed(() => String(props.modelValue).toLowerCase());
-const normalizedSavedColors = computed(() =>
-  normalizeOutputSavedColors(props.savedColors),
-);
-const currentIsSaved = computed(() =>
-  normalizedSavedColors.value.includes(normalizedValue.value),
-);
-const savedPaletteIsFull = computed(
-  () =>
-    normalizedSavedColors.value.length >= MAX_OUTPUT_SAVED_COLORS &&
-    !currentIsSaved.value,
-);
-const savedActionLabel = computed(() => {
-  if (currentIsSaved.value) return t('outputPanel.color.removeSaved');
-  if (savedPaletteIsFull.value) return t('outputPanel.color.savedFull');
-  return t('outputPanel.color.addSaved');
-});
-const savedActionAriaLabel = computed(() => {
-  const color = normalizedValue.value.toUpperCase();
-  if (currentIsSaved.value)
-    return t('outputPanel.color.removeNamed', { color });
-  if (savedPaletteIsFull.value) {
-    return t('outputPanel.color.fullNamed', { max: MAX_OUTPUT_SAVED_COLORS });
-  }
-  return t('outputPanel.color.addNamed', { color });
-});
-
-function selectColor(color) {
-  emit('update:modelValue', color);
-  emit('commit', color);
-}
-
-function toggleSavedColor() {
-  if (savedPaletteIsFull.value) return;
-  emit('toggleSavedColor', normalizedValue.value);
-}
+const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
 </script>
 
 <template>
-  <div class="obs-output-color-field">
-    <UiColorField
-      :id="id"
+  <div
+    class="obs-output-color-field"
+    :data-palette-target="paletteTarget || undefined"
+    @focusin="emit('activate')"
+    @click="emit('activate')"
+  >
+    <ObsAppearanceControlRow
+      class="obs-output-color-field__controls"
+      :control-id="id"
       :label="label"
-      :model-value="modelValue"
-      label-hidden
-      @update:model-value="emit('update:modelValue', $event)"
-      @commit="emit('commit', $event)"
-    />
-
-    <div
-      class="obs-output-color-field__shelf"
-      role="group"
-      :aria-label="t('outputPanel.color.swatches')"
+      :labels-control="false"
+      :modified="modified"
     >
-      <div class="obs-output-color-field__shelf-header">
-        <span class="obs-output-color-field__shelf-title">{{
-          t('outputPanel.color.swatchesTitle')
-        }}</span>
-        <UiButton
-          class="obs-output-color-field__shelf-action"
-          variant="ghost"
-          :disabled="savedPaletteIsFull"
-          :active="currentIsSaved"
-          :aria-label="savedActionAriaLabel"
-          :aria-pressed="currentIsSaved"
-          @click="toggleSavedColor"
-        >
-          {{ savedActionLabel }}
-        </UiButton>
-      </div>
-
-      <ObsColorSwatchRail
-        :label="t('outputPanel.color.saved')"
-        :selection-label="t('outputPanel.color.savedSelection')"
-        :aria-label="t('outputPanel.color.savedLabel')"
-        source="saved"
-        :colors="normalizedSavedColors"
-        :model-value="normalizedValue"
-        :empty-label="t('outputPanel.color.empty')"
-        @select="selectColor"
+      <UiColorField
+        :id="id"
+        :label="label"
+        :model-value="modelValue"
+        label-hidden
+        @update:model-value="emit('update:modelValue', $event)"
+        @commit="emit('commit', $event)"
       />
-
-      <ObsColorSwatchRail
-        v-if="normalizedRecentColors.length > 0"
-        :label="t('outputPanel.color.recent')"
-        :selection-label="t('outputPanel.color.recentSelection')"
-        :aria-label="t('outputPanel.color.recentLabel')"
-        source="recent"
-        :colors="normalizedRecentColors"
-        :model-value="normalizedValue"
-        @select="selectColor"
-      />
-    </div>
+    </ObsAppearanceControlRow>
   </div>
 </template>
 
 <style scoped>
 .obs-output-color-field {
   min-width: 0;
-  display: grid;
+}
+
+.obs-output-color-field > .obs-output-color-field__controls {
+  grid-template-columns: minmax(0, max-content) minmax(
+      calc(
+        var(--ui-control-height) + var(--ui-space-2) +
+          var(--ui-field-hex-value-inline-size)
+      ),
+      1fr
+    );
   gap: var(--ui-space-2);
 }
 
-.obs-output-color-field__shelf {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
+.obs-output-color-field__controls :deep(.obs-appearance-control-row__label) {
+  position: relative;
+  overflow-wrap: anywhere;
 }
 
-.obs-output-color-field__shelf-header {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
+.obs-output-color-field__controls :deep(.ui-color-field) {
+  margin-inline-start: auto;
 }
 
-.obs-output-color-field__shelf-title {
+.obs-output-color-field__controls :deep(.obs-appearance-control-row__modified) {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: calc(100% + var(--ui-space-1) / 2);
+  margin: auto 0;
+}
+
+.obs-output-color-field[data-palette-target]
+  :deep(.obs-appearance-control-row__label) {
   color: var(--ui-color-text);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.obs-output-color-field__shelf-action {
-  min-height: calc(var(--ui-control-height) - var(--ui-space-2));
-  padding-block: 0;
-  border-radius: var(--ui-radius-sm);
-}
-
-.obs-output-color-field__shelf-action:disabled {
-  opacity: 1;
 }
 </style>

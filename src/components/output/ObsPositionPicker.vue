@@ -134,6 +134,7 @@ function moveFocus(choice, event) {
   min-width: 0;
   inline-size: fit-content;
   max-inline-size: 100%;
+  margin-inline-start: auto;
   display: grid;
   justify-items: center;
   gap: var(--ui-space-1);

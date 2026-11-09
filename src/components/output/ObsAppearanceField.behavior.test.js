@@ -114,7 +114,7 @@ describe('ObsAppearanceField', () => {
   it('renders shared color and range controls with explicit commit behavior', () => {
     const colorUpdate = vi.fn();
     const colorCommit = vi.fn();
-    const toggleSavedColor = vi.fn();
+    const activateColor = vi.fn();
     const colorMount = mount(ObsAppearanceField, {
       field: {
         key: 'textColor',
@@ -122,10 +122,11 @@ describe('ObsAppearanceField', () => {
         control: 'color',
       },
       modelValue: '#fff8ec',
-      savedColors: ['#112233'],
+      modified: true,
+      paletteTarget: true,
       'onUpdate:modelValue': colorUpdate,
       onCommit: colorCommit,
-      onToggleSavedColor: toggleSavedColor,
+      onActivateColor: activateColor,
     });
     const color = findAll(
       colorMount.root,
@@ -141,12 +142,15 @@ describe('ObsAppearanceField', () => {
       (node) => node.props.type === 'text',
     )[0];
     expect(hexInput.props.id).toBe('output-appearance-textColor');
-    const savedAction = findAll(
+    const colorRow = findAll(
       colorMount.root,
-      (node) => node.props?.['aria-label'] === '加入常用色 #FFF8EC',
+      (node) => node.props?.['data-palette-target'],
     )[0];
-    trigger(savedAction, 'onClick');
-    expect(toggleSavedColor).toHaveBeenCalledWith('#fff8ec');
+    expect(
+      findAll(colorRow, (node) => 'data-modified' in node.props),
+    ).toHaveLength(1);
+    trigger(colorRow, 'onFocusin');
+    expect(activateColor).toHaveBeenCalledOnce();
     colorMount.app.unmount();
 
     const rangeUpdate = vi.fn();

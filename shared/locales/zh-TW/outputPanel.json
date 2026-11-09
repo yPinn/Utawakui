@@ -408,7 +408,7 @@
     "fullNamed": "常用色已滿（最多 {max} 色）",
     "addNamed": "加入常用色 {color}",
     "swatches": "Output 色票",
-    "swatchesTitle": "色票",
+    "applyTo": "套用至：{label}",
     "saved": "常用",
     "savedSelection": "常用色票",
     "savedLabel": "Output 常用色票",
@@ -489,7 +489,7 @@
     "target": "調整對象",
     "presentationHint": "只影響此模板的歌詞顯示，不會改動歌詞本身。",
     "conciseHint": "「轉播精簡」會省略部分重複詞；要保留完整文字請選「平衡分行」或「忠實原文」。",
-    "resetTemplate": "恢復模板預設",
+    "resetTemplate": "重設模板",
     "wholeTemplate": "整個模板"
   },
   "gallery": {
@@ -569,13 +569,13 @@
   },
   "appearance": {
     "groups": {
-      "colorTreatment": "色彩處理",
+      "colorTreatment": "整體配色",
       "customColor": "自訂色彩",
-      "typography": "文字",
+      "typography": "字體設定",
       "readability": "可讀性",
       "surface": "背景",
       "layout": "版面",
-      "motion": "動態",
+      "motion": "歷史回顧",
       "content": "內容顯示"
     },
     "fields": {

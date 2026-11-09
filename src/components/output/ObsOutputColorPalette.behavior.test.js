@@ -1,10 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import ObsColorSwatchRail from './ObsColorSwatchRail.vue';
-import ObsOutputColorField from './ObsOutputColorField.vue';
+import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiColorField from '../ui/UiColorField.vue';
-import UiField from '../ui/UiField.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
@@ -16,8 +14,8 @@ import {
 } from '../ui/uiTestHost.js';
 
 attachClientRender(
-  ObsOutputColorField,
-  './ObsOutputColorField.vue',
+  ObsOutputColorPalette,
+  './ObsOutputColorPalette.vue',
   import.meta.url,
 );
 attachClientRender(
@@ -26,8 +24,6 @@ attachClientRender(
   import.meta.url,
 );
 attachClientRender(UiButton, '../ui/UiButton.vue', import.meta.url);
-attachClientRender(UiColorField, '../ui/UiColorField.vue', import.meta.url);
-attachClientRender(UiField, '../ui/UiField.vue', import.meta.url);
 attachClientRender(UiTooltip, '../ui/UiTooltip.vue', import.meta.url);
 attachClientRender(
   UiTooltipSurface,
@@ -35,10 +31,9 @@ attachClientRender(
   import.meta.url,
 );
 
-describe('ObsOutputColorField', () => {
-  it('keeps saved and recent colors in one compact Output shelf', () => {
-    const { app, root } = mount(ObsOutputColorField, {
-      id: 'output-appearance-textColor',
+describe('ObsOutputColorPalette', () => {
+  it('labels the current target above the saved and recent shelves', () => {
+    const { app, root } = mount(ObsOutputColorPalette, {
       label: '文字色',
       modelValue: '#ffffff',
       savedColors: ['#112233', '#445566'],
@@ -54,7 +49,7 @@ describe('ObsOutputColorField', () => {
       (node) => node.props?.['aria-label'] === 'Output 常用色票',
     )[0];
 
-    expect(textContent(shelf)).toContain('色票');
+    expect(textContent(shelf)).toContain('套用至：文字色');
     expect(textContent(savedRail)).toContain('常用');
     expect(
       findAll(shelf, (node) => node.props?.['data-color-source']).map(
@@ -65,8 +60,7 @@ describe('ObsOutputColorField', () => {
   });
 
   it('omits an empty recent-color rail', () => {
-    const { app, root } = mount(ObsOutputColorField, {
-      id: 'output-appearance-textColor',
+    const { app, root } = mount(ObsOutputColorPalette, {
       label: '文字色',
       modelValue: '#ffffff',
     });
@@ -102,16 +96,13 @@ describe('ObsOutputColorField', () => {
     },
   );
 
-  it('applies and commits a recent color with selected and hex semantics', () => {
-    const update = vi.fn();
-    const commit = vi.fn();
-    const { app, root } = mount(ObsOutputColorField, {
-      id: 'output-appearance-textColor',
+  it('selects a recent color with selected and hex semantics', () => {
+    const select = vi.fn();
+    const { app, root } = mount(ObsOutputColorPalette, {
       label: '文字色',
       modelValue: '#aabbcc',
       recentColors: ['#aabbcc', '#112233'],
-      'onUpdate:modelValue': update,
-      onCommit: commit,
+      onSelect: select,
     });
     const rail = findAll(
       root,
@@ -127,22 +118,18 @@ describe('ObsOutputColorField', () => {
     });
     expect(swatches[0].props.title).toBeUndefined();
     trigger(swatches[1], 'onClick');
-    expect(update).toHaveBeenCalledWith('#112233');
-    expect(commit).toHaveBeenCalledWith('#112233');
+    expect(select).toHaveBeenCalledWith('#112233');
     app.unmount();
   });
 
   it('shows one Output-scoped saved palette and toggles the current color', () => {
-    const update = vi.fn();
-    const commit = vi.fn();
+    const select = vi.fn();
     const toggleSavedColor = vi.fn();
-    const { app, root } = mount(ObsOutputColorField, {
-      id: 'output-appearance-accentColor',
+    const { app, root } = mount(ObsOutputColorPalette, {
       label: '強調色',
       modelValue: '#aabbcc',
       savedColors: ['#112233', '#aabbcc'],
-      'onUpdate:modelValue': update,
-      onCommit: commit,
+      onSelect: select,
       onToggleSavedColor: toggleSavedColor,
     });
     const palette = findAll(
@@ -162,16 +149,14 @@ describe('ObsOutputColorField', () => {
     expect(swatches).toHaveLength(2);
     expect(swatches[1].props['aria-pressed']).toBe(true);
     trigger(swatches[0], 'onClick');
-    expect(update).toHaveBeenCalledWith('#112233');
-    expect(commit).toHaveBeenCalledWith('#112233');
+    expect(select).toHaveBeenCalledWith('#112233');
     trigger(toggle, 'onClick');
     expect(toggleSavedColor).toHaveBeenCalledWith('#aabbcc');
     app.unmount();
   });
 
   it('keeps the saved palette discoverable when empty and disables adding when full', () => {
-    const empty = mount(ObsOutputColorField, {
-      id: 'output-appearance-textColor',
+    const empty = mount(ObsOutputColorPalette, {
       label: '文字色',
       modelValue: '#ffffff',
     });
@@ -186,8 +171,7 @@ describe('ObsOutputColorField', () => {
     ).toHaveLength(1);
     empty.app.unmount();
 
-    const full = mount(ObsOutputColorField, {
-      id: 'output-appearance-textColor',
+    const full = mount(ObsOutputColorPalette, {
       label: '文字色',
       modelValue: '#ffffff',
       savedColors: Array.from(
@@ -204,13 +188,13 @@ describe('ObsOutputColorField', () => {
     full.app.unmount();
   });
 
-  it('uses a fixed four-column classic shelf without raw visual values', () => {
+  it('wraps swatches against the right edge using shared sizing and focus tokens', () => {
     const railSource = readFileSync(
       new URL('./ObsColorSwatchRail.vue', import.meta.url),
       'utf8',
     );
     const fieldSource = readFileSync(
-      new URL('./ObsOutputColorField.vue', import.meta.url),
+      new URL('./ObsOutputColorPalette.vue', import.meta.url),
       'utf8',
     );
     const styles =
@@ -219,16 +203,18 @@ describe('ObsOutputColorField', () => {
     expect(styles).toMatch(
       /--obs-output-color-swatch-size:\s*calc\(\s*var\(--ui-control-height\)/u,
     );
-    expect(styles).toContain(
-      'grid-template-columns: repeat(4, var(--obs-output-color-swatch-size))',
+    expect(styles).toMatch(
+      /\.obs-color-swatch-rail__swatches\s*\{[^}]*flex-wrap:\s*wrap;[^}]*justify-content:\s*flex-end;/u,
     );
     expect(styles).toContain('border-radius: var(--ui-radius-xs)');
     expect(styles).toContain('outline: var(--ui-focus-width)');
-    expect(styles).toContain('box-shadow: inset 0 0 0 var(--ui-border-width)');
+    expect(styles).toContain(
+      'box-shadow: inset 0 0 0 var(--ui-border-width-strong)',
+    );
     expect(styles).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(|hsla?\(/iu);
     expect(styles).not.toMatch(/\b\d*\.?\d+(?:px|rem)\b/u);
     expect(fieldSource).toMatch(
-      /\.obs-output-color-field__shelf-action:disabled\s*\{[^}]*opacity:\s*1/u,
+      /\.obs-output-color-palette__action:disabled\s*\{[^}]*opacity:\s*1/u,
     );
   });
 });

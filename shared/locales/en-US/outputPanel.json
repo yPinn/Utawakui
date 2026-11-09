@@ -408,7 +408,7 @@
     "fullNamed": "Saved colors are full (up to {max})",
     "addNamed": "Save color {color}",
     "swatches": "Output swatches",
-    "swatchesTitle": "Swatches",
+    "applyTo": "Apply to: {label}",
     "saved": "Saved",
     "savedSelection": "Saved swatches",
     "savedLabel": "Output saved swatches",
@@ -489,7 +489,7 @@
     "target": "Adjust",
     "presentationHint": "Affects how lyrics show in this template only; the lyrics themselves aren't changed.",
     "conciseHint": "Broadcast concise drops some repeated words; to keep the full text, choose Balanced lines or Faithful to original.",
-    "resetTemplate": "Reset template defaults",
+    "resetTemplate": "Reset template",
     "wholeTemplate": "Whole template"
   },
   "gallery": {
@@ -569,13 +569,13 @@
   },
   "appearance": {
     "groups": {
-      "colorTreatment": "Color treatment",
+      "colorTreatment": "Overall palette",
       "customColor": "Custom colors",
-      "typography": "Text",
+      "typography": "Typography",
       "readability": "Readability",
       "surface": "Background",
       "layout": "Layout",
-      "motion": "Motion",
+      "motion": "History review",
       "content": "Content"
     },
     "fields": {

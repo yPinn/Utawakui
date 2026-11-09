@@ -81,10 +81,11 @@ const visibleColors = computed(() =>
   );
 
   min-width: 0;
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: start;
-  gap: var(--ui-space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-1) var(--ui-space-2);
 }
 
 .obs-color-swatch-rail__label,
@@ -102,13 +103,16 @@ const visibleColors = computed(() =>
 }
 
 .obs-color-swatch-rail__swatches {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(4, var(--obs-output-color-swatch-size));
-  gap: var(--ui-space-2);
+  min-inline-size: var(--obs-output-color-swatch-size);
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ui-space-1);
 }
 
 .obs-color-swatch-rail__swatch {
+  flex: none;
   inline-size: var(--obs-output-color-swatch-size);
   block-size: var(--obs-output-color-swatch-size);
   padding: var(--ui-border-width);
@@ -125,7 +129,7 @@ const visibleColors = computed(() =>
 
 .obs-color-swatch-rail__swatch--selected {
   border-color: var(--ui-color-accent);
-  box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-canvas);
+  box-shadow: inset 0 0 0 var(--ui-border-width-strong) var(--ui-color-canvas);
 }
 
 .obs-color-swatch-rail__swatch:focus-visible {

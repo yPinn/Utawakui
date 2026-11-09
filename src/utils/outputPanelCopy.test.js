@@ -29,13 +29,13 @@ describe('output panel copy', () => {
           .groupLabel,
     );
     expect(labels).toEqual([
-      '色彩處理',
+      '整體配色',
       '自訂色彩',
-      '文字',
+      '字體設定',
       '可讀性',
       '背景',
       '版面',
-      '動態',
+      '歷史回顧',
       '內容顯示',
     ]);
   });
@@ -47,7 +47,7 @@ describe('output panel copy', () => {
     expect(look).toMatchObject({
       key: 'paletteId',
       label: '配色風格',
-      groupLabel: '色彩處理',
+      groupLabel: '整體配色',
       options: [
         { id: 'original', label: '模板原色' },
         { id: 'warm', label: '暖色舞台' },

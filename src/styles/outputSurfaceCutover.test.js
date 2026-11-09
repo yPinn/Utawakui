@@ -159,7 +159,9 @@ describe('Output Token v2 surface cutover', () => {
     expect(outputFeatureSource).not.toContain(
       '--ui-output-settings-column-min-width:',
     );
-    expect(workbenchSource).toContain('var(--ui-type-title-weight)');
+    expect(workbenchSource).toContain('var(--ui-type-subtitle-size)');
+    expect(workbenchSource).toContain('var(--ui-type-subtitle-weight)');
+    expect(workbenchSource).toContain('var(--ui-type-subtitle-line-height)');
   });
 
   it('includes transitive shared compounds in the no-T1 contract', () => {

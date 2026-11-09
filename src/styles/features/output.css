@@ -142,7 +142,7 @@
 @container ui-folder-inspector-sheet (max-width: 16rem) {
   .obs-output-folder-inspector
     .ui-folder-inspector__scroll
-    .obs-appearance-control-row {
+    .obs-appearance-control-row:not(.obs-output-color-field__controls) {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-space-1);
   }

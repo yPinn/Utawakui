@@ -14,17 +14,16 @@ import { t } from '../../utils/i18n.js';
 const props = defineProps({
   field: { type: Object, required: true },
   modelValue: { type: [String, Number, Object], required: true },
-  recentColors: { type: Array, default: () => [] },
-  savedColors: { type: Array, default: () => [] },
   disabled: { type: Boolean, default: false },
   modified: { type: Boolean, default: false },
+  paletteTarget: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
   'update:modelValue',
   'commit',
   'commitColor',
-  'toggleSavedColor',
+  'activateColor',
 ]);
 
 const controlId = computed(() => `output-appearance-${props.field.key}`);
@@ -71,16 +70,25 @@ function commitColor(value) {
 </script>
 
 <template>
+  <ObsOutputColorField
+    v-if="field.control === 'color'"
+    :id="controlId"
+    :label="field.label"
+    :model-value="String(modelValue)"
+    :modified="modified"
+    :palette-target="paletteTarget"
+    @activate="emit('activateColor')"
+    @update:model-value="updateValue"
+    @commit="commitColor"
+  />
+
   <ObsAppearanceControlRow
+    v-else
     :control-id="controlId"
     :label="field.label"
     :labels-control="field.control === 'range'"
     :modified="modified"
-    :align-start="
-      editor === 'position-grid' ||
-      editor === 'font-family' ||
-      field.control === 'color'
-    "
+    :align-start="editor === 'position-grid' || editor === 'font-family'"
   >
     <ObsLookSelect
       v-if="editor === 'look'"
@@ -127,18 +135,6 @@ function commitColor(value) {
       :options="selectOptions"
       label-hidden
       @update:model-value="updateValue"
-    />
-
-    <ObsOutputColorField
-      v-else-if="field.control === 'color'"
-      :id="controlId"
-      :label="field.label"
-      :model-value="String(modelValue)"
-      :recent-colors="recentColors"
-      :saved-colors="savedColors"
-      @update:model-value="updateValue"
-      @commit="commitColor"
-      @toggle-saved-color="emit('toggleSavedColor', $event)"
     />
 
     <div

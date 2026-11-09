@@ -143,6 +143,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         ([, label]) => label,
       ),
     ).toEqual(['版面', '文字', '動態']);
+    expect(html).toContain('>字體設定</h3>');
+    expect(html).toContain('>歷史回顧</h3>');
     expect(html).toMatch(/aria-label="版面"[^>]+aria-selected="true"/u);
     expect(html).not.toContain('data-output-side-toggle');
     expect(html).not.toContain('output-appearance-paletteId');
@@ -214,7 +216,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       presentationFields: [],
     });
 
-    expect(html).not.toContain('恢復模板預設');
+    expect(html).not.toContain('obs-slot-workbench__reset');
   });
 
   it('marks no field and offers no group reset at template defaults', async () => {
@@ -232,8 +234,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
 
     expect(html.match(/data-modified/gu)).toHaveLength(1);
-    expect(html).toContain('恢復「文字」預設');
-    expect(html).not.toContain('恢復「色彩處理」預設');
+    expect(html).toContain('恢復「字體設定」預設');
+    expect(html).not.toContain('恢復「整體配色」預設');
     expect(html).not.toContain('恢復「背景」預設');
   });
 
@@ -305,7 +307,14 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
           }),
       }),
     );
-    const labels = ['版面', '文字', '色彩處理', '背景', '可讀性', '內容顯示'];
+    const labels = [
+      '版面',
+      '字體設定',
+      '整體配色',
+      '背景',
+      '可讀性',
+      '內容顯示',
+    ];
 
     for (let index = 1; index < labels.length; index += 1) {
       expect(html.indexOf(`>${labels[index - 1]}</h3>`)).toBeLessThan(
@@ -613,12 +622,18 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('垂直微調');
     expect(html).toContain('type="color"');
     expect(html).toContain('type="range"');
-    expect(html).toContain('aria-label="最近使用色票"');
-    expect(html).toContain('aria-label="Output 常用色票"');
+    expect(html.match(/aria-label="最近使用色票"/gu)).toHaveLength(1);
+    expect(html.match(/aria-label="Output 常用色票"/gu)).toHaveLength(1);
+    expect(html).toContain('套用至：文字色');
+    expect(html.indexOf('obs-output-color-palette')).toBeGreaterThan(
+      html.indexOf('id="output-appearance-accentColor"'),
+    );
     expect(html).toContain('data-color-source="saved"');
     expect(html).toContain('aria-label="顯示位置"');
     expect(html).not.toContain('<select id="output-appearance-positionAnchor"');
-    expect(html).toContain('恢復模板預設');
+    expect(html).toMatch(
+      /obs-slot-workbench__inspector-header[^]*?<h2[^]*?<\/h2>[^]*?<button(?=[^>]*ui-icon-btn)(?=[^>]*obs-slot-workbench__reset)[^>]*>[^]*?重設模板[^]*?<\/button>[^]*?obs-property-section/u,
+    );
     expect(html).toMatch(
       /<select id="output-appearance-fontFamily"[^>]*value="ornate"/,
     );
