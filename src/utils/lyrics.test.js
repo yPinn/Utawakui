@@ -293,6 +293,28 @@ describe('parseLrc', () => {
     ]);
   });
 
+  it('keeps spaces after a vocal cue in the first Enhanced LRC segment', () => {
+    const [line] = parseEnhancedLrc(
+      '[00:01.00][女]<00:01.10>  Hello<00:01.50> world<00:02.00>\n[00:03.00]Next',
+    );
+    expect(line.text).toBe('[女]  Hello world');
+    expect(line.segments).toEqual([
+      { text: '[女]  Hello', start: 1.1, end: 1.5 },
+      { text: ' world', start: 1.5, end: 2 },
+    ]);
+  });
+
+  it('omits timed whitespace at the edges without extending neighboring segments', () => {
+    const [line] = parseEnhancedLrc(
+      '[00:01.00]<00:01.00>  <00:01.20> Hello<00:01.50>  world <00:02.00> <00:02.50> \n[00:03.00]Next',
+    );
+    expect(line.text).toBe('Hello  world');
+    expect(line.segments).toEqual([
+      { text: 'Hello', start: 1.2, end: 1.5 },
+      { text: '  world', start: 1.5, end: 2 },
+    ]);
+  });
+
   it('preserves exact segment text and falls back to T1 for malformed timing', () => {
     expect(
       parseEnhancedLrc(`[00:01.00]<00:01.00>Hello, <00:01.50> world!

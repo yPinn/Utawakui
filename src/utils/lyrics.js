@@ -245,7 +245,9 @@ function enhancedTimestamps(sourceText) {
   );
 }
 
-function parseEnhancedSegments(sourceText, lineStart, lineEnd) {
+function parseEnhancedSegments(lineText, lineStart, lineEnd) {
+  const speakerCue = lineText.match(LRC_SPEAKER_CUE_RE)?.[0] ?? '';
+  const sourceText = lineText.slice(speakerCue.length);
   const matches = enhancedTimestamps(sourceText);
   if (matches.length === 0) return null;
 
@@ -280,18 +282,21 @@ function parseEnhancedSegments(sourceText, lineStart, lineEnd) {
     return null;
   }
 
-  contentChunks[0].text = contentChunks[0].text.trimStart();
-  contentChunks.at(-1).text = contentChunks.at(-1).text.trimEnd();
-  if (contentChunks.some((chunk) => chunk.text.length === 0)) return null;
-
   const segments = contentChunks.map((chunk, index) => ({
     text: chunk.text,
     start: chunk.start,
     end: chunks[index + 1]?.start ?? lineEnd,
   }));
-  return segments.some((segment) => segment.end <= segment.start)
-    ? null
-    : segments;
+  if (segments.some((segment) => segment.end <= segment.start)) return null;
+
+  const hasText = (segment) => segment.text.trim().length > 0;
+  const last = segments.findLastIndex(hasText);
+  if (last === -1) return null;
+  const first = speakerCue ? 0 : segments.findIndex(hasText);
+  const trimmed = segments.slice(first, last + 1);
+  trimmed[0].text = `${speakerCue}${trimmed[0].text}`.trimStart();
+  trimmed.at(-1).text = trimmed.at(-1).text.trimEnd();
+  return trimmed;
 }
 
 export function parseEnhancedLrc(text) {
@@ -328,12 +333,7 @@ export function parseEnhancedLrc(text) {
 
   return starts.map((line, index) => {
     const end = starts[index + 1]?.start ?? Number.POSITIVE_INFINITY;
-    const speakerCue = line.sourceText.match(LRC_SPEAKER_CUE_RE)?.[0] ?? '';
-    const segmentSourceText = line.sourceText.slice(speakerCue.length);
-    const segments = parseEnhancedSegments(segmentSourceText, line.start, end);
-    if (segments && speakerCue) {
-      segments[0].text = `${speakerCue}${segments[0].text}`;
-    }
+    const segments = parseEnhancedSegments(line.sourceText, line.start, end);
     const parsed = { start: line.start, end, text: line.text };
     if (segments) parsed.segments = segments;
     return parsed;

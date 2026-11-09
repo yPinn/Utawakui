@@ -156,6 +156,16 @@ function normalizedWordParts(children) {
   };
 }
 
+function trimWordBoundaries(words) {
+  const first = words.findIndex((word) => word.text.trim().length > 0);
+  if (first === -1) return [];
+  const last = words.findLastIndex((word) => word.text.trim().length > 0);
+  const trimmed = words.slice(first, last + 1);
+  trimmed[0].text = trimmed[0].text.trimStart();
+  trimmed.at(-1).text = trimmed.at(-1).text.trimEnd();
+  return trimmed;
+}
+
 function createState(options) {
   const trackDurationMs = options.trackDurationMs;
   return {
@@ -361,12 +371,8 @@ function normalizeLines(state) {
     }
     totalSegments += words.length;
     if (totalSegments > MAX_LYRIC_SEGMENTS) return null;
-    if (
-      words
-        .map((word) => word.text)
-        .join('')
-        .trim() !== text
-    ) {
+    words = trimWordBoundaries(words);
+    if (words.map((word) => word.text).join('') !== text) {
       partialWordTiming = true;
     }
     lines.push({

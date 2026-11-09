@@ -50,6 +50,39 @@ describe('provider-neutral TTML normalization golden behavior', () => {
     });
   });
 
+  it.each([
+    [
+      'inside the first and last words',
+      '<span begin="5s" end="5.5s">  First</span>  <span begin="5.5s" end="6s">last </span>',
+    ],
+    [
+      'in separate timed spans',
+      '<span begin="4s" end="5s">  </span><span begin="5s" end="5.5s">First</span>  <span begin="5.5s" end="6s">last</span><span begin="6s" end="7s"> </span>',
+    ],
+  ])(
+    'trims line-boundary whitespace %s without retiming words',
+    (_label, spans) => {
+      const result = analyzeTtml(
+        wordTtml(`<p begin="4s" end="7s">${spans}</p>`),
+      );
+      expect(result).toMatchObject({
+        status: 'ok',
+        capability: { level: 'T2', partial: false },
+        warnings: [],
+        sourceText: '[00:01.000]Hello world\n[00:04.000]First  last\n',
+      });
+      expect(result.document.lines[1]).toEqual({
+        text: 'First  last',
+        startMs: 4000,
+        endMs: 7000,
+        words: [
+          { text: 'First', startMs: 5000, endMs: 5500 },
+          { text: '  last', startMs: 5500, endMs: 6000 },
+        ],
+      });
+    },
+  );
+
   it('treats declared line timing as T1 without inventing word timing', () => {
     const value = wordTtml()
       .replace('itunes:timing="Word"', 'itunes:timing="Line"')

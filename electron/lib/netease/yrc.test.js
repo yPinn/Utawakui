@@ -44,6 +44,49 @@ describe('analyzeNeteaseLyrics', () => {
     });
   });
 
+  it('omits timed whitespace at the end of a line without retiming lyrics', () => {
+    expect(
+      analyzeNeteaseLyrics({
+        yrcLyrics:
+          '[1000,2000](1000,500,0)Hello(1500,500,0)  world (2000,500,0)  (2500,500,0)\t',
+        lrcLyrics: '[00:01.000]Hello world',
+      }),
+    ).toMatchObject({
+      capability: { level: 'T2', partial: false },
+      warnings: [],
+      segmentCount: 2,
+      sourceText: '[00:01.000]Hello  world\n',
+      document: {
+        lines: [
+          {
+            text: 'Hello  world',
+            startMs: 1000,
+            endMs: 3000,
+            words: [
+              { text: 'Hello', startMs: 1000, endMs: 1500 },
+              { text: '  world', startMs: 1500, endMs: 2000 },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it.each(['(2000,500,0)', '(2000,1001,0) '])(
+    'still rejects an empty or out-of-bounds final word %j',
+    (finalWord) => {
+      expect(
+        analyzeNeteaseLyrics({
+          yrcLyrics: `[1000,2000](1000,1000,0)Hello${finalWord}`,
+          lrcLyrics: '[00:01.000]Hello',
+        }),
+      ).toMatchObject({
+        capability: { level: 'T1', partial: false },
+        warnings: ['invalid-yrc'],
+      });
+    },
+  );
+
   it('never reports partial or out-of-bounds YRC as T2 and falls back to line timing', () => {
     const invalidYrc = [
       '[1000,1000](1000,500,0)Valid(1400,800,0)Overlap',

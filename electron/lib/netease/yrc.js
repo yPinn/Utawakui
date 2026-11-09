@@ -39,14 +39,13 @@ function parseYrc(value) {
   }
   const rawLines = value
     .split(/\r?\n/u)
-    .map((line) => line.trimEnd())
     .filter((line) => line.trim().length > 0);
   if (rawLines.length > MAX_YRC_LINES) {
     return { status: 'error', reason: 'response-too-large' };
   }
 
   const lines = [];
-  let segmentCount = 0;
+  let authoredSegmentCount = 0;
   let previousLineStart = -1;
   for (const rawLine of rawLines) {
     if (rawLine.trimStart().startsWith('{')) {
@@ -83,8 +82,8 @@ function parseYrc(value) {
     const words = [];
     let previousEnd = startMs;
     for (const [index, match] of matches.entries()) {
-      segmentCount += 1;
-      if (segmentCount > MAX_YRC_SEGMENTS) {
+      authoredSegmentCount += 1;
+      if (authoredSegmentCount > MAX_YRC_SEGMENTS) {
         return { status: 'error', reason: 'response-too-large' };
       }
       const wordStartMs = safeInteger(match[1]);
@@ -113,14 +112,21 @@ function parseYrc(value) {
       previousEnd = wordEndMs;
     }
 
+    const lastWordIndex = words.findLastIndex((word) => word.text.trim());
+    if (lastWordIndex === -1) return { status: 'invalid' };
+    words.length = lastWordIndex + 1;
+    words[lastWordIndex].text = words[lastWordIndex].text.trimEnd();
     const text = words.map((word) => word.text).join('');
-    if (!text.trim()) return { status: 'invalid' };
     lines.push({ text, startMs, endMs, words });
     previousLineStart = startMs;
   }
 
   if (lines.length === 0) return { status: 'invalid' };
-  return { status: 'ok', document: { lines }, segmentCount };
+  return {
+    status: 'ok',
+    document: { lines },
+    segmentCount: lines.reduce((count, line) => count + line.words.length, 0),
+  };
 }
 
 function analyzeFallback(lrcLyrics, warnings) {
