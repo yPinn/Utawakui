@@ -1,12 +1,5 @@
 <script setup>
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  shallowRef,
-  watch,
-} from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
 import { useAppView } from '../../composables/useAppView.js';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
@@ -96,7 +89,6 @@ const appearanceAutosave = useOutputAppearanceAutosave({
     saveSlotSettings(kind, settings, props.slotDefaults[kind]),
 });
 const appearanceSaveStatus = appearanceAutosave.status;
-const workbenchCompact = shallowRef(false);
 const { openSettings } = useAppView();
 
 const browsedPreset = computed(
@@ -308,8 +300,6 @@ onBeforeUnmount(() => {
         class="obs-output-workspace__panel"
       >
         <ObsSlotWorkbench
-          v-model:compact-mode="workbenchCompact"
-          :side-width="sideWidth"
           :side-collapsed="sideCollapsed"
           :compact-side-open="compactSideOpen"
           :preset="appliedPreset"
@@ -323,7 +313,6 @@ onBeforeUnmount(() => {
           :recent-colors="outputState.preferences.recentColors"
           :saved-colors="outputState.preferences.savedColors"
           :save-status="appearanceSaveStatus"
-          @update:side-width="setSideWidth"
           @update:side-collapsed="setSideCollapsed"
           @update:compact-side-open="setCompactSideOpen"
           @update:preview-backdrop="selectPreviewBackdrop"

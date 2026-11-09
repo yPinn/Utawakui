@@ -73,13 +73,14 @@ afterEach(() => {
   mounted = null;
   vi.unstubAllGlobals();
 });
-function setup(width = 336) {
+function setup(width = 336, options = {}) {
   const props = reactive({
     ariaLabel: '測試',
     sideLabel: '屬性',
     sideWidth: width,
     sideCollapsed: false,
     compactSideOpen: false,
+    ...options,
   });
   props['onUpdate:sideWidth'] = (value) => {
     props.sideWidth = value;
@@ -140,8 +141,29 @@ describe('shared Output split mechanics', () => {
     });
     await nextTick();
     expect(props.sideCollapsed).toBe(true);
+    expect(props.sideWidth).toBe(336);
     expect(separator()).toBeUndefined();
     expect(findAll(mounted.root, (n) => n.type === 'input')[0]).toBe(input);
+  });
+  it('uses the CSS default when a Workbench inspector opens again', async () => {
+    const props = setup(336, { resetWidthOnOpen: true });
+    await nextTick();
+    trigger(separator(), 'onKeydown', {
+      key: 'Enter',
+      preventDefault: vi.fn(),
+    });
+    await nextTick();
+
+    const toggle = findAll(
+      mounted.root,
+      (n) => n.type === 'button' && 'data-output-side-toggle' in n.props,
+    )[0];
+    trigger(toggle, 'onClick');
+    await nextTick();
+
+    expect(props.sideCollapsed).toBe(false);
+    expect(props.sideWidth).toBeNull();
+    expect(separator().props['aria-valuenow']).toBe(288);
   });
   it('uses a separate compact reveal without changing the shared width or wide disclosure', async () => {
     const props = setup();

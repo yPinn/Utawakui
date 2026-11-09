@@ -7,7 +7,7 @@ const activePage = shallowRef('workbench');
 const activeKind = shallowRef(null);
 const previewBackdrop = shallowRef('checker');
 const showLyricsGuide = shallowRef(true);
-// A null preference lets the layout use its CSS default. Both modes share it.
+// The Gallery retains its width across visits. A null value uses its CSS default.
 const sideWidth = shallowRef(null);
 const sideCollapsed = shallowRef(false);
 const compactSideOpen = shallowRef(false);

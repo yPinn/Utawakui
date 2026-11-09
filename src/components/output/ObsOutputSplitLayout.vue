@@ -17,6 +17,7 @@ import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   sideWidth: { type: Number, default: null },
+  resetWidthOnOpen: { type: Boolean, default: false },
   sideCollapsed: { type: Boolean, default: false },
   compactSideOpen: { type: Boolean, default: false },
   ariaLabel: { type: String, required: true },
@@ -139,7 +140,9 @@ function keyResize(event) {
     Math.max(geometry.value.min, Math.min(maximum.value, widths[event.key])),
   );
 }
-watch([compact, sideOpen], async ([isCompact, open]) => {
+watch([compact, sideOpen], async ([isCompact, open], [, wasOpen]) => {
+  if (props.resetWidthOnOpen && open && !wasOpen)
+    emit('update:sideWidth', null);
   const focused = document.activeElement;
   if (
     (!open && sidePane.value?.contains(focused)) ||

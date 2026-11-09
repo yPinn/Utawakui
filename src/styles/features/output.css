@@ -118,6 +118,17 @@
   --ui-output-preview-cycle-duration: 4.8s;
   --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
+.obs-slot-workbench {
+  --ui-output-side-min-width: 16rem;
+  --ui-output-side-width-default: var(--ui-output-side-min-width);
+}
+
+.obs-slot-workbench.obs-output-split-layout--compact
+  > .obs-output-split-layout__side {
+  inline-size: min(100%, var(--ui-output-side-width-default));
+  justify-self: end;
+}
+
 .obs-output-folder-inspector {
   --ui-folder-inspector-min: var(--ui-output-side-min-width);
   --ui-folder-inspector-default: var(--ui-output-side-width-default);

@@ -137,6 +137,17 @@ describe('Output Token v2 surface cutover', () => {
     }
   });
 
+  it('defaults the Workbench Dock to its own minimum width', () => {
+    expect(workbenchSource).toContain('class="obs-slot-workbench"');
+    expect(outputFeatureSource).toMatch(
+      /\.obs-slot-workbench\s*\{\s*--ui-output-side-min-width:\s*16rem;\s*--ui-output-side-width-default:\s*var\(--ui-output-side-min-width\);/u,
+    );
+    expect(outputFeatureSource).toContain('--ui-output-side-min-width: 14rem;');
+    expect(outputFeatureSource).toContain(
+      '--ui-output-side-width-default: 18rem;',
+    );
+  });
+
   it('uses formal v2 semantics for generic Output controls', () => {
     for (const path of outputConsumerPaths) {
       const source = readSource(path);

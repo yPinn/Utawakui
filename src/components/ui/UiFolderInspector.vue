@@ -34,10 +34,6 @@ const compactSideOpen = defineModel('compactSideOpen', {
   type: Boolean,
   default: false,
 });
-const compactMode = defineModel('compactMode', {
-  type: Boolean,
-  default: false,
-});
 const workspace = useTemplateRef('workspace');
 const rail = useTemplateRef('rail');
 const inspector = useTemplateRef('inspector');
@@ -65,16 +61,14 @@ const tabs = computed(() =>
 const limits = shallowRef(null);
 const dragWidth = shallowRef(null);
 const heldClosedWidth = shallowRef(null);
-const compactWidth = shallowRef(null);
-const compact = computed(() => limits.value?.compact ?? compactMode.value);
+const compact = computed(() => limits.value?.compact ?? false);
 const open = computed(() =>
   compact.value ? compactSideOpen.value : !sideCollapsed.value,
 );
 const expandedWidth = computed(() => {
   const geometry = limits.value;
   if (!geometry) return null;
-  const preferred = geometry.compact ? compactWidth.value : sideWidth.value;
-  return clamp(preferred ?? geometry.default, geometry.min, geometry.max);
+  return clamp(sideWidth.value ?? geometry.default, geometry.min, geometry.max);
 });
 const liveWidth = computed(() => {
   if (dragWidth.value === null || !open.value) return null;
@@ -141,7 +135,6 @@ function measure() {
     default: length('--_panel-default'),
     step: length('--ui-space-2'),
   };
-  compactMode.value = isCompact;
 }
 
 function setOpen(value) {
@@ -157,10 +150,7 @@ const { isResizing, startResize } = useResizeDrag({
   },
   onCommit() {
     const width = pendingWidth.value;
-    if (width > 0) {
-      const preferred = compact.value ? compactWidth : sideWidth;
-      preferred.value = width;
-    }
+    if (width > 0 && open.value) sideWidth.value = width;
     setOpen(width > 0);
     dragWidth.value = null;
     heldClosedWidth.value = null;
@@ -198,14 +188,13 @@ function resizeWithKeys(event) {
     setOpen(false);
     return;
   }
-  if (!compact.value || open.value || key === 'End') {
+  if (open.value) {
     const width =
       key === 'End'
         ? geometry.max
         : effectiveWidth.value +
           (key === inward ? geometry.step : -geometry.step);
-    const preferred = compact.value ? compactWidth : sideWidth;
-    preferred.value = clamp(width, geometry.min, geometry.max);
+    sideWidth.value = clamp(width, geometry.min, geometry.max);
   }
   setOpen(true);
 }
@@ -231,8 +220,13 @@ watch(
   { flush: 'post' },
 );
 watch(open, async (isOpen) => {
+  // Keep the previous sheet width through the compact closing transition.
+  if (isOpen) {
+    sideWidth.value = null;
+    return;
+  }
   const focused = workspace.value?.ownerDocument.activeElement;
-  if (!isOpen && inspector.value?.contains(focused)) {
+  if (inspector.value?.contains(focused)) {
     await nextTick();
     resizeHandle.value?.focus({ preventScroll: true });
   }

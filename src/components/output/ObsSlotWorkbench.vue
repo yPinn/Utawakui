@@ -34,7 +34,6 @@ import { t } from '../../utils/i18n.js';
 import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
 
 const props = defineProps({
-  sideWidth: { type: Number, default: null },
   sideCollapsed: { type: Boolean, default: false },
   compactSideOpen: { type: Boolean, default: false },
   preset: { type: Object, default: null },
@@ -56,7 +55,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  'update:sideWidth',
   'update:sideCollapsed',
   'update:compactSideOpen',
   'update:previewBackdrop',
@@ -69,10 +67,7 @@ const emit = defineEmits([
 ]);
 
 const draft = reactive({ captureSize: 'small' });
-const compactMode = defineModel('compactMode', {
-  type: Boolean,
-  default: false,
-});
+const sideWidth = shallowRef(null);
 const tools = useTemplateRef('tools');
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
@@ -294,6 +289,8 @@ function resetAppearance() {
 <template>
   <component
     :is="useFolderInspector ? UiFolderInspector : ObsOutputSplitLayout"
+    v-model:side-width="sideWidth"
+    class="obs-slot-workbench"
     :aria-label="t('outputPanel.workbench.label')"
     :side-label="t('outputPanel.workbench.side')"
     v-bind="
@@ -301,19 +298,15 @@ function resetAppearance() {
         ? {
             items: inspectorTabs,
             tabsLabel: t('outputPanel.inspector.label'),
-            compactMode,
             class:
               'obs-output-folder-inspector obs-slot-workbench__folder-inspector',
           }
-        : { sideVariant: 'inspector' }
+        : { sideVariant: 'inspector', resetWidthOnOpen: true }
     "
-    :side-width="sideWidth"
     :side-collapsed="sideCollapsed"
     :compact-side-open="compactSideOpen"
-    @update:side-width="emit('update:sideWidth', $event)"
     @update:side-collapsed="emit('update:sideCollapsed', $event)"
     @update:compact-side-open="emit('update:compactSideOpen', $event)"
-    @update:compact-mode="compactMode = $event"
   >
     <template #tools
       ><div ref="tools" class="obs-slot-workbench__tools"
