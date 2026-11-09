@@ -9,6 +9,7 @@ import {
   projectQueueOutputDocument,
 } from '../../utils/outputStreamProjection.js';
 import { withMergedArtist } from '../../utils/artistPage.js';
+import { trackDisplayTitle } from '../../utils/trackTitlePresentation.js';
 import { useArtistIndex } from '../useArtistIndex.js';
 import { useLibrary } from '../useLibrary.js';
 import { useLyrics } from '../useLyrics.js';
@@ -44,20 +45,25 @@ export function useOutputProjectionPublisher({
   const { state: queueState, upcomingTracks } = usePlaybackQueue();
   const arrangement = usePerformanceSessionPlayback();
   const { state: arrangementPlanState } = usePerformanceSessionPlan();
+  const { tracksById: libraryTracksById } = useLibrary();
   const arrangementProjection = computed(() =>
     arrangement.ownsPlayback.value
       ? projectPerformanceSessionOutput({
           plan: arrangementPlanState.plan,
           current: arrangement.currentItem.value,
+          tracksById: libraryTracksById.value,
         })
       : null,
   );
-  const { tracksById: libraryTracksById } = useLibrary();
-  // Library playback shows merged artists; arrangement items keep their own
-  // display names (performance-session-preparation contract).
+  // Library playback shows merged artists; arrangement keeps stage credits.
   const { state: artistIndexState } = useArtistIndex();
-  const mergedTrack = (track) =>
-    withMergedArtist(track, artistIndexState.index);
+  function presentTrack(track) {
+    if (!track) return track;
+    return {
+      ...withMergedArtist(track, artistIndexState.index),
+      title: trackDisplayTitle(track, libraryTracksById.value),
+    };
+  }
   const {
     state: lyricsState,
     selectedTrack: lyricsTrack,
@@ -97,10 +103,10 @@ export function useOutputProjectionPublisher({
     return {
       historyEntries: (queueState.historyEntries ?? []).map((entry) => ({
         ...entry,
-        track: mergedTrack(entry?.track),
+        track: presentTrack(entry?.track),
       })),
-      currentTrack: mergedTrack(queueState.currentTrack),
-      upcomingTracks: (upcomingTracks.value ?? []).map(mergedTrack),
+      currentTrack: presentTrack(queueState.currentTrack),
+      upcomingTracks: (upcomingTracks.value ?? []).map(presentTrack),
       sourceName: queueState.sourceName,
     };
   }
@@ -141,7 +147,7 @@ export function useOutputProjectionPublisher({
           ...playerState,
           track: arrangementProjection.value
             ? arrangementProjection.value.queue.currentTrack
-            : mergedTrack(playerState.track),
+            : presentTrack(playerState.track),
           ...(sample
             ? {
                 currentTime: sample.positionMs / 1000,

@@ -13,6 +13,7 @@ import {
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { loadArtworkTone } from '../../utils/artworkTone.js';
 import { resolvePreviewKeyIntent } from '../../utils/trackPreviewKeys.js';
+import { trackDisplayTitle } from '../../utils/trackTitlePresentation.js';
 import AppSurfaceBoundary from '../layout/AppSurfaceBoundary.vue';
 import PlaybackPrimaryButton from '../playback/PlaybackPrimaryButton.vue';
 import TrackActionMenu from './TrackActionMenu.vue';
@@ -102,7 +103,7 @@ const trackAlbum = computed(() => albumForTrack(track.value));
 const albumCtaLabel = computed(() =>
   trackAlbum.value
     ? t('track.preview.goToAlbumNamed', {
-        title: track.value.title,
+        title: trackDisplayTitle(track.value),
         album: trackAlbum.value.name || t('track.preview.untitledAlbum'),
       })
     : '',
@@ -281,13 +282,13 @@ onUnmounted(() => setKeyboardListener(false));
                     <UiTextButton
                       v-if="trackAlbum"
                       class="track-preview__title-link"
-                      :text="track.title"
+                      :text="trackDisplayTitle(track)"
                       overflow="clamp"
                       :aria-label="albumCtaLabel"
                       @click="openAlbum"
                     />
                     <span v-else class="track-preview__title-text">
-                      {{ track.title }}
+                      {{ trackDisplayTitle(track) }}
                     </span>
                   </h3>
                 </Transition>
@@ -382,7 +383,7 @@ onUnmounted(() => setKeyboardListener(false));
                 class="track-preview__peek"
                 :aria-label="
                   t('track.preview.previousNamed', {
-                    title: previousTrack.title,
+                    title: trackDisplayTitle(previousTrack),
                   })
                 "
                 tabindex="-1"
@@ -445,7 +446,9 @@ onUnmounted(() => setKeyboardListener(false));
                 type="button"
                 class="track-preview__peek"
                 :aria-label="
-                  t('track.preview.nextNamed', { title: nextTrack.title })
+                  t('track.preview.nextNamed', {
+                    title: trackDisplayTitle(nextTrack),
+                  })
                 "
                 tabindex="-1"
                 @click="select(1)"

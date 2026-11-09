@@ -1,11 +1,18 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { reactive, shallowRef } from 'vue';
-const fixture = vi.hoisted(() => ({ player: null, lyrics: null }));
+const fixture = vi.hoisted(() => ({
+  player: null,
+  lyrics: null,
+  tracksById: null,
+}));
 vi.mock('./usePlayer.js', () => ({ usePlayer: () => fixture.player }));
 vi.mock('./usePlaybackQueue.js', () => ({
   usePlaybackQueue: () => ({ state: {}, upcomingTracks: shallowRef([]) }),
 }));
 vi.mock('./useLyrics.js', () => ({ useLyrics: () => fixture.lyrics }));
+vi.mock('./useLibrary.js', () => ({
+  useLibrary: () => ({ tracksById: fixture.tracksById }),
+}));
 vi.mock('./useLyricsReading.js', () => ({
   useLyricsReading: () => ({
     getDoc: vi.fn(),
@@ -15,6 +22,7 @@ vi.mock('./useLyricsReading.js', () => ({
 }));
 beforeEach(() => {
   vi.resetModules();
+  fixture.tracksById = shallowRef(new Map());
   fixture.player = {
     state: reactive({
       track: { id: 'a' },
@@ -54,6 +62,33 @@ beforeEach(() => {
       publishPerformerSnapshot: vi.fn(async () => true),
     },
   });
+});
+it('publishes the latest library title for a cover already loaded in the player', async () => {
+  const rawTitle = '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 Earendel';
+  fixture.player.state.track = {
+    id: 'a',
+    title: rawTitle,
+    artist: 'Earendel ch. 厄倫蒂兒',
+  };
+  fixture.tracksById.value = new Map([
+    [
+      'a',
+      {
+        ...fixture.player.state.track,
+        workPresentation: { title: 'RASEN Acoustic Ver' },
+      },
+    ],
+  ]);
+
+  const { usePerformerSelfView } = await import('./usePerformerSelfView.js');
+  await usePerformerSelfView().open();
+  const snapshot = window.Utawakui.openPerformerView.mock.calls[0][0];
+  expect(snapshot.state.playback.track).toEqual({
+    id: 'a',
+    title: 'RASEN Acoustic Ver',
+    artist: 'Earendel ch. 厄倫蒂兒',
+  });
+  expect(fixture.player.state.track.title).toBe(rawTitle);
 });
 afterEach(() => vi.unstubAllGlobals());
 it('pairs the word-boundary publication with an actual audio sample instead of stale timeupdate state', async () => {

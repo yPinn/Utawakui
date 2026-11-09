@@ -8,6 +8,7 @@ import { useSongEditor } from '../../../composables/useSongEditor.js';
 import { useReleaseOrganization } from '../../../composables/useReleaseOrganization.js';
 import { Ellipsis } from '../../../icons/index.js';
 import { TRACK_MENU_ACTIONS } from '../../../utils/playlistMenu.js';
+import { trackDisplayTitle } from '../../../utils/trackTitlePresentation.js';
 import RightDockTrackMenuButton from '../../queue/RightDockTrackMenuButton.vue';
 import TrackActionMenu from '../../track/TrackActionMenu.vue';
 import UiIconButton from '../../ui/UiIconButton.vue';
@@ -153,14 +154,16 @@ async function handleTrackMenuSelect(value) {
     <UiIconButton
       v-else-if="trigger === 'inline'"
       :icon="Ellipsis"
-      :label="t('player.context.moreNamed', { title: track.title })"
+      :label="
+        t('player.context.moreNamed', { title: trackDisplayTitle(track) })
+      "
       aria-haspopup="menu"
       :aria-expanded="Boolean(trackMenu)"
       @click="openTrackMenu"
     />
     <RightDockTrackMenuButton
       v-else
-      :track-title="track.title"
+      :track-title="trackDisplayTitle(track)"
       :menu-open="Boolean(trackMenu)"
       @open="openTrackMenu"
     />

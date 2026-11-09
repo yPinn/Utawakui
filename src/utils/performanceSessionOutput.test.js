@@ -24,6 +24,29 @@ const player = {
 };
 
 describe('arrangement public projection', () => {
+  it('uses the library display title for a saved source label and preserves custom stage labels', () => {
+    const source = player.track;
+    const current = item('current', 'playing', { displayTitle: source.title });
+    const earlier = item('earlier', 'completed', {
+      displayTitle: 'Stage title',
+    });
+    const projection = projectPerformanceSessionOutput({
+      plan: { items: [earlier, current] },
+      current,
+      tracksById: new Map([
+        [
+          source.id,
+          { ...source, workPresentation: { title: 'RASEN Acoustic Ver' } },
+        ],
+      ]),
+    });
+    expect(projection.player.track).toMatchObject({
+      title: 'RASEN Acoustic Ver',
+      artist: current.displayArtist,
+    });
+    expect(projection.queue.historyEntries[0].track.title).toBe('Stage title');
+    expect(current.displayTitle).toBe(source.title);
+  });
   it('passes the existing main validation and Browser Source frame without a new wire schema', () => {
     const hub = outputProjection.createOutputProjectionHub({ bootId: 'boot' });
     hub.connectSource('renderer');

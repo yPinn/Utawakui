@@ -7,6 +7,7 @@ import UiPopover from '../ui/UiPopover.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiHint from '../ui/UiHint.vue';
 import { t } from '../../utils/i18n.js';
+import { trackDisplayTitle } from '../../utils/trackTitlePresentation.js';
 const props = defineProps({
   track: { type: Object, default: null },
   trackMeta: { type: String, default: '' },
@@ -127,7 +128,7 @@ function selectAction(item) {
 <template>
   <div class="lyrics-workspace-header">
     <AppFolderWorkspaceToolbar
-      :context="track?.title || t('lyricsEditor.header.noTrack')"
+      :context="trackDisplayTitle(track) || t('lyricsEditor.header.noTrack')"
       :meta="trackMeta"
     >
       <template #actions>

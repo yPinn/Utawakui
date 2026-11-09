@@ -807,11 +807,20 @@ describe('output source handshake', () => {
     const runtime = await loadRuntime();
     playerState.track = {
       id: 'track-1',
-      title: 'Canonical',
+      title: '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 Earendel',
       artist: 'Raw credit',
       url: 'private',
     };
     playerState.playbackPhase = 'paused';
+    libraryTracksById.value = new Map([
+      [
+        'track-1',
+        {
+          ...playerState.track,
+          workPresentation: { title: 'RASEN Acoustic Ver' },
+        },
+      ],
+    ]);
     artistIndexState.index = {
       artists: [{ id: 'artist-merged', name: 'Merged artist' }],
       trackArtistIds: { 'track-1': ['artist-merged'] },
@@ -887,20 +896,20 @@ describe('output source handshake', () => {
       items: [
         {
           state: 'played',
-          track: { title: 'Canonical', artist: 'Merged artist' },
+          track: { title: 'RASEN Acoustic Ver', artist: 'Merged artist' },
         },
         {
           state: 'current',
-          track: { title: 'Canonical', artist: 'Merged artist' },
+          track: { title: 'RASEN Acoustic Ver', artist: 'Merged artist' },
         },
       ],
     });
     expect(envelopes().at(-1).payload.playback.track).toMatchObject({
-      title: 'Canonical',
+      title: 'RASEN Acoustic Ver',
       artist: 'Merged artist',
     });
     expect(playerState.track.artist).toBe('Raw credit');
-    expect(playerState.track.title).toBe('Canonical');
+    expect(playerState.track.title).toContain('Covered by');
     expect(arrangementPlanState.plan.items[0].progress).toBe('completed');
   });
   it('has no IPC or hydration side effects at module import time', async () => {

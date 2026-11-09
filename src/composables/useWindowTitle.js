@@ -1,6 +1,8 @@
 import { watchEffect } from 'vue';
 import { trackArtistText } from '../utils/artistPage.js';
+import { trackDisplayTitle } from '../utils/trackTitlePresentation.js';
 import { useArtistIndex } from './useArtistIndex.js';
+import { useLibrary } from './useLibrary.js';
 import { usePlayer } from './usePlayer.js';
 
 import appIdentity from '../../shared/appIdentity.json';
@@ -15,17 +17,17 @@ const APP_TITLE = appIdentity.productName;
 export function useWindowTitle() {
   const { state } = usePlayer();
   const { state: artistIndexState } = useArtistIndex();
+  const { tracksById } = useLibrary();
 
-  // Tracks only state.track and the artist index — reading nothing else here
-  // means frequent fields like currentTime don't trigger a DOM write on every
-  // timeupdate tick.
+  // The title updates with library presentation, independent of playback ticks.
   watchEffect(() => {
     const track = state.track;
     if (!track) {
       document.title = APP_TITLE;
       return;
     }
+    const title = trackDisplayTitle(track, tracksById.value);
     const artist = trackArtistText(track, artistIndexState.index);
-    document.title = artist ? `${track.title} - ${artist}` : track.title;
+    document.title = artist ? `${title} - ${artist}` : title;
   });
 }

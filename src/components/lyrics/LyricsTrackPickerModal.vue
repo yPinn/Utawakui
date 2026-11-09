@@ -13,6 +13,7 @@ import { useLyrics } from '../../composables/useLyrics.js';
 import { useVirtualList } from '../../composables/useVirtualRows.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { artistSearchTexts } from '../../utils/artistPage.js';
+import { trackDisplayTitle } from '../../utils/trackTitlePresentation.js';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -74,6 +75,7 @@ const visibleTracks = computed(() => {
   return state.tracks.filter((track) =>
     [
       track.title,
+      trackDisplayTitle(track),
       ...artistSearchTexts(track, artistIndexState.index),
       track.id,
       track.filename,
@@ -206,7 +208,9 @@ function handleTrackSelect(track) {
             :current="track.id === currentTrackId"
             interactive
             :action-label="
-              t('lyricsSource.picker.selectNamed', { title: track.title })
+              t('lyricsSource.picker.selectNamed', {
+                title: trackDisplayTitle(track),
+              })
             "
             hide-duration
             navigation="album"

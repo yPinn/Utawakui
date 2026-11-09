@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
-import { effectScope, nextTick, reactive } from 'vue';
+import { effectScope, nextTick, reactive, shallowRef } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const lifecycle = vi.hoisted(() => ({ unmounted: [] }));
 const playerHarness = vi.hoisted(() => ({ current: null, calls: 0 }));
 const artistIndexHarness = vi.hoisted(() => ({ state: null }));
+const libraryHarness = vi.hoisted(() => ({ tracksById: null }));
 
 vi.mock('vue', async () => {
   const actual = await vi.importActual('vue');
@@ -33,8 +34,12 @@ vi.mock('./usePlaybackTransport.js', () => ({
 vi.mock('./useArtistIndex.js', () => ({
   useArtistIndex: () => ({ state: artistIndexHarness.state }),
 }));
+vi.mock('./useLibrary.js', () => ({
+  useLibrary: () => ({ tracksById: libraryHarness.tracksById }),
+}));
 
 import { useMediaSession } from './useMediaSession.js';
+import { useWindowTitle } from './useWindowTitle.js';
 
 class FakeMediaMetadata {
   constructor(value) {
@@ -69,6 +74,7 @@ describe('useMediaSession', () => {
       pause: vi.fn(),
     };
     artistIndexHarness.state = reactive({ index: null });
+    libraryHarness.tracksById = shallowRef(new Map());
     scope = effectScope();
   });
 
@@ -144,6 +150,33 @@ describe('useMediaSession', () => {
     };
     await nextTick();
     expect(mediaSession.metadata.artist).toBe('BTS');
+  });
+
+  it('updates the Windows title and media card when the cover display title arrives', async () => {
+    vi.stubGlobal('document', { title: '' });
+    const track = {
+      id: 'cover',
+      title: '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 Earendel',
+      artist: 'Earendel ch. 厄倫蒂兒',
+    };
+    playerHarness.current.state.track = track;
+    scope.run(() => {
+      useMediaSession();
+      useWindowTitle();
+    });
+    libraryHarness.tracksById.value = new Map([
+      [
+        track.id,
+        { ...track, workPresentation: { title: 'RASEN Acoustic Ver' } },
+      ],
+    ]);
+    await nextTick();
+    expect(mediaSession.metadata).toMatchObject({
+      title: 'RASEN Acoustic Ver',
+      artist: track.artist,
+    });
+    expect(document.title).toBe(`RASEN Acoustic Ver - ${track.artist}`);
+    expect(playerHarness.current.state.track.title).toBe(track.title);
   });
 
   it('routes play, pause and track skipping and releases them on unmount', () => {

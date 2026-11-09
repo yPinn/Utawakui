@@ -16,8 +16,10 @@ import {
 import { useLyricsDisplay } from './useLyricsDisplay.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
 import { withMergedArtist } from '../utils/artistPage.js';
+import { trackDisplayTitle } from '../utils/trackTitlePresentation.js';
 import { useArtistIndex } from './useArtistIndex.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
@@ -29,7 +31,12 @@ const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 const { state: playerState, play, pause, samplePlaybackClock } = usePlayer();
 const { state: queueState, upcomingTracks } = usePlaybackQueue();
 const { state: artistIndexState } = useArtistIndex();
-const mergedTrack = (track) => withMergedArtist(track, artistIndexState.index);
+const { tracksById } = useLibrary();
+function presentTrack(track) {
+  if (!track) return track;
+  const title = trackDisplayTitle(track, tracksById.value);
+  return { ...withMergedArtist(track, artistIndexState.index), title };
+}
 const {
   state: lyricsState,
   selectedTrack: lyricsTrack,
@@ -145,14 +152,14 @@ const alignedReadings = computed(() => {
 
 function projectionInput() {
   return {
-    player: { ...playerState, track: mergedTrack(playerState.track) },
+    player: { ...playerState, track: presentTrack(playerState.track) },
     queue: {
       historyEntries: (queueState.historyEntries ?? []).map((entry) => ({
         ...entry,
-        track: mergedTrack(entry?.track),
+        track: presentTrack(entry?.track),
       })),
-      currentTrack: mergedTrack(queueState.currentTrack),
-      upcomingTracks: (upcomingTracks.value ?? []).map(mergedTrack),
+      currentTrack: presentTrack(queueState.currentTrack),
+      upcomingTracks: (upcomingTracks.value ?? []).map(presentTrack),
       sourceName: queueState.sourceName,
     },
     lyrics: {
