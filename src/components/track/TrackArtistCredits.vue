@@ -5,7 +5,7 @@ import { t } from '../../utils/i18n.js';
 import { computed, shallowRef } from 'vue';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
-import { artistCreditLinks } from '../../utils/artistPage.js';
+import { artistCreditLinks, trackArtistText } from '../../utils/artistPage.js';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiOverflowTooltip from '../ui/UiOverflowTooltip.vue';
 
@@ -27,12 +27,12 @@ function openArtist(artistId) {
 
 const links = computed(() => {
   if (!props.navigable) {
-    const text = props.track.artist ?? '';
+    const text = trackArtistText(props.track);
     return text ? [{ text, artistId: '' }] : [];
   }
   const paired = artistCreditLinks(props.track, artistIndexState.index);
   if (paired) return paired;
-  const text = props.track.artist ?? '';
+  const text = trackArtistText(props.track);
   return text ? [{ text, artistId: '' }] : [];
 });
 const fullText = computed(() =>

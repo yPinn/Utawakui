@@ -14,6 +14,7 @@ const {
   resolveTrackPath,
 } = require('../library/paths');
 const { hasControlCharacters } = require('../textGuards');
+const { readTrackTitleHints } = require('../../../shared/trackTitleHints.mjs');
 
 const DEFAULT_VERSION = Object.freeze({
   arrangement: 'unspecified',
@@ -110,6 +111,21 @@ function titleScore(value, query) {
   return score >= 0.65 ? score : 0;
 }
 
+function versionTagsFor(track, profile) {
+  const hint = readTrackTitleHints(track.title).version;
+  const { arrangement, performance, vocal } = profile.versionInfo;
+  return [
+    ...new Set(
+      [
+        ['acoustic', 'remix'].includes(arrangement) ? arrangement : '',
+        ['live', 'demo'].includes(performance) ? performance : '',
+        vocal === 'instrumental' ? vocal : '',
+        hint,
+      ].filter(Boolean),
+    ),
+  ].sort();
+}
+
 // The runtime is Main-owned. Inputs are product intents; canonical audio paths,
 // content bindings and deletion receipts never cross its public projection.
 function createWorkOrganizationRuntime({
@@ -150,9 +166,13 @@ function createWorkOrganizationRuntime({
       throw Object.assign(failure('WORKS_UNAVAILABLE'), { cause });
     }
   }
-  async function inspect(trackId, context, { allowEmpty = false } = {}) {
+  async function inspect(
+    trackId,
+    context,
+    { allowEmpty = false, checkLibrary = true } = {},
+  ) {
     identifier(trackId, true);
-    available(context);
+    if (checkLibrary) available(context);
     const trackDirectory = path.join(context.dir, 'tracks', trackId);
     let audioPath;
     try {
@@ -227,6 +247,167 @@ function createWorkOrganizationRuntime({
     )
       throw failure();
   }
+
+  async function projectNames(
+    context,
+    document,
+    libraryTracks,
+    artistOnly = false,
+  ) {
+    const candidates = libraryTracks.filter((track) => {
+      const profile = document.trackProfiles[track.id];
+      if (artistOnly)
+        return Boolean(profile?.presentation?.artistCredits.length);
+      return profile?.workLink || profile?.presentation;
+    });
+    if (!candidates.length) return libraryTracks;
+    available(context);
+    const profiles = new Map();
+    for (let offset = 0; offset < candidates.length; offset += 4) {
+      await Promise.all(
+        candidates.slice(offset, offset + 4).map(async (track) => {
+          try {
+            const inspected = await inspect(track.id, context, {
+              checkLibrary: false,
+            });
+            if (inspected.status !== 'present') return;
+            const profile = organization.getBoundTrackProfile(
+              document,
+              track.id,
+              inspected.binding,
+            );
+            if (profile) profiles.set(track.id, profile);
+          } catch {
+            assertCurrent(context);
+            // Unavailable media contributes neither names nor artist credits.
+          }
+        }),
+      );
+    }
+    assertCurrent(context);
+    if (artistOnly) {
+      return libraryTracks.map((track) => {
+        const artistCredits = profiles.get(track.id)?.presentation
+          .artistCredits;
+        return artistCredits?.length ? { ...track, artistCredits } : track;
+      });
+    }
+    const groupTitles = new Map();
+    const groupTracks = new Map();
+    for (const track of candidates) {
+      const profile = profiles.get(track.id);
+      const id = profile?.workLink?.workId;
+      if (!id) continue;
+      if (!groupTitles.has(id)) {
+        const work = document.works[id];
+        groupTitles.set(
+          id,
+          new Set(
+            [work.title, ...work.aliases].map(
+              (title) => readTrackTitleHints(title).title,
+            ),
+          ),
+        );
+        groupTracks.set(id, []);
+      }
+      groupTracks.get(id).push(track);
+      const base = readTrackTitleHints(track.title).title;
+      if (base) groupTitles.get(id).add(base);
+    }
+    const searchTitles = new Map(
+      [...groupTitles].map(([id, titles]) => [id, [...titles].slice(0, 24)]),
+    );
+    return libraryTracks.map((track) => {
+      const profile = profiles.get(track.id);
+      if (!profile) return track;
+      const workId = profile.workLink?.workId;
+      const details = profile.presentation;
+      const versionTags = versionTagsFor(track, profile);
+      let reference;
+      if (profile.workLink?.relationship === 'cover') {
+        const related = groupTracks
+          .get(workId)
+          .filter((candidate) => candidate.id !== track.id);
+        if (profile.workLink.referenceTrackId) {
+          reference = related.find(
+            (candidate) => candidate.id === profile.workLink.referenceTrackId,
+          );
+        } else {
+          // Older links lack a direction. Only use a unique, version-compatible source.
+          const eligible = related.filter((candidate) => {
+            const parent = profiles.get(candidate.id);
+            return (
+              parent.workLink.relationship !== 'cover' &&
+              !readTrackTitleHints(candidate.title).cover &&
+              versionTagsFor(candidate, parent).join() === versionTags.join()
+            );
+          });
+          if (eligible.length === 1) reference = eligible[0];
+        }
+      }
+      const inheritedTitle =
+        reference && details?.inheritTitle !== false
+          ? profiles.get(reference.id).presentation?.displayTitle ||
+            reference.title
+          : '';
+      return {
+        ...track,
+        ...(details?.artistCredits.length
+          ? { artistCredits: details.artistCredits }
+          : {}),
+        workPresentation: {
+          ...(workId
+            ? {
+                workId,
+                relationship: profile.workLink.relationship,
+                searchTitles: searchTitles.get(workId),
+                ...(reference ? { referenceTrackId: reference.id } : {}),
+              }
+            : {}),
+          title: details?.displayTitle || inheritedTitle,
+          ...(versionTags.length ? { versionTags } : {}),
+        },
+      };
+    });
+  }
+
+  async function projectTracks(
+    directory,
+    libraryTracks,
+    { artistOnly = false, includeReferences = false } = {},
+  ) {
+    const scope = getDirectory();
+    const context = { ...scope, dir: path.resolve(directory), generation };
+    assertCurrent(context);
+    const document = organization.loadWorks(context.dir);
+    let candidates = libraryTracks;
+    if (includeReferences) {
+      const ids = new Set(libraryTracks.map((track) => track.id));
+      const works = new Set(
+        libraryTracks
+          .map((track) => document.trackProfiles[track.id]?.workLink?.workId)
+          .filter(Boolean),
+      );
+      const related = Object.entries(document.trackProfiles)
+        .filter(
+          ([id, profile]) =>
+            !ids.has(id) && works.has(profile.workLink?.workId),
+        )
+        .map(([id]) => findTrack(context.dir, id))
+        .filter(Boolean);
+      candidates = [...libraryTracks, ...related];
+    }
+    const result = await projectNames(
+      context,
+      document,
+      candidates,
+      artistOnly,
+    );
+    assertCurrent(context);
+    if (organization.loadWorks(context.dir).revision !== document.revision)
+      throw failure('WORKS_STALE');
+    return includeReferences ? result.slice(0, libraryTracks.length) : result;
+  }
   async function snapshot(
     trackId,
     context,
@@ -287,6 +468,7 @@ function createWorkOrganizationRuntime({
       work,
       relationship: profile?.workLink?.relationship ?? 'unknown',
       versionInfo: profile?.versionInfo ?? { ...DEFAULT_VERSION },
+      ...(profile?.presentation ? { presentation: profile.presentation } : {}),
       relatedVersions,
       relatedCandidateTotal: candidates.length,
       hasMore,
@@ -341,7 +523,12 @@ function createWorkOrganizationRuntime({
           title: work.title,
           memberCount: counts.get(id) ?? 0,
         }));
-      const candidates = listTracks(context.dir)
+      const projected = await projectNames(
+        context,
+        document,
+        listTracks(context.dir),
+      );
+      const candidates = projected
         .filter(
           (track) =>
             track.id !== input.trackId &&
@@ -353,14 +540,10 @@ function createWorkOrganizationRuntime({
           track,
           score: Math.max(
             titleScore(track.title, titleQuery),
-            ...[
-              document.works[
-                document.trackProfiles[track.id]?.workLink?.workId
-              ],
-            ]
-              .filter(Boolean)
-              .flatMap((work) => [work.title, ...work.aliases])
-              .map((value) => titleScore(value, titleQuery)),
+            titleScore(track.workPresentation?.title, titleQuery),
+            ...(track.workPresentation?.searchTitles ?? []).map((value) =>
+              titleScore(value, titleQuery),
+            ),
             query &&
               String(track.artist || '')
                 .toLocaleLowerCase()
@@ -376,7 +559,7 @@ function createWorkOrganizationRuntime({
           id: track.id,
           title: track.title || track.id,
           artist: track.artist || '',
-          workId: document.trackProfiles[track.id]?.workLink?.workId || null,
+          workId: track.workPresentation?.workId || null,
         }));
       assertCurrent(context);
       return {
@@ -397,11 +580,21 @@ function createWorkOrganizationRuntime({
         'selection',
         'relationship',
         'versionInfo',
+        'presentation',
+        'workDetails',
         'reconfirm',
       ]);
       identifier(input.trackId);
       record(input.selection, ['kind', 'workId', 'title', 'targetTrackId']);
       const selection = input.selection;
+      if (input.workDetails !== undefined) {
+        record(input.workDetails, ['title', 'aliases']);
+        if (
+          selection.kind !== 'keep' ||
+          typeof input.workDetails.title !== 'string'
+        )
+          throw failure();
+      }
       const selectionFields = {
         keep: ['kind'],
         none: ['kind'],
@@ -444,6 +637,11 @@ function createWorkOrganizationRuntime({
             ? { versionInfo: { ...DEFAULT_VERSION } }
             : {}),
         ...(input.reconfirm ? { reconfirm: true } : {}),
+        ...(input.presentation !== undefined
+          ? { presentation: input.presentation }
+          : bindingChanged
+            ? { presentation: {} }
+            : {}),
       };
       let target;
       let targetWorkId;
@@ -464,9 +662,8 @@ function createWorkOrganizationRuntime({
         const targetTrack = findTrack(context.dir, selection.targetTrackId);
         if (!targetTrack) throw failure('WORKS_NOT_FOUND');
         targetTitle =
-          String(targetTrack.title || '')
-            .trim()
-            .slice(0, 200) || '未命名';
+          readTrackTitleHints(targetTrack.title).title.trim().slice(0, 200) ||
+          '未命名';
         target = {
           trackId: selection.targetTrackId,
           binding: targetBinding,
@@ -497,6 +694,11 @@ function createWorkOrganizationRuntime({
             : 'WORKS_BINDING_MISMATCH',
         );
       assertCurrent(context);
+      const relationship = input.relationship ?? 'unknown';
+      const referenceTrackId =
+        relationship === 'cover' && target
+          ? { referenceTrackId: target.trackId }
+          : {};
       let updated;
       if (
         selection.kind === 'new' ||
@@ -506,7 +708,7 @@ function createWorkOrganizationRuntime({
           expectedRevision: input.expectedRevision,
           title: selection.kind === 'track' ? targetTitle : selection.title,
           tracks: [
-            { ...common, relationship: input.relationship ?? 'unknown' },
+            { ...common, relationship, ...referenceTrackId },
             ...(target ? [target] : []),
           ],
         });
@@ -521,7 +723,8 @@ function createWorkOrganizationRuntime({
         else if (selection.kind === 'track')
           workLink = {
             workId: targetWorkId,
-            relationship: input.relationship ?? 'unknown',
+            relationship,
+            ...referenceTrackId,
           };
         else
           workLink = displayedProfile?.workLink
@@ -535,6 +738,9 @@ function createWorkOrganizationRuntime({
           expectedRevision: input.expectedRevision,
           ...common,
           workLink,
+          ...(input.workDetails !== undefined
+            ? { workDetails: input.workDetails }
+            : {}),
         });
       }
       changed(context, updated, [
@@ -736,6 +942,7 @@ function createWorkOrganizationRuntime({
     search,
     save,
     rename,
+    projectTracks,
     deleteTrack: remove,
     reconcile,
     runImport,

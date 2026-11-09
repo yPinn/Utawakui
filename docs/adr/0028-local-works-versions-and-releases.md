@@ -56,6 +56,13 @@ Do not deduplicate audio, copy lyrics timing, modify track title/artist, change
 queue occurrences or replace playback as a consequence of organization.
 Manual organization is offline and does not require provider gates.
 
+Recording titles keep the release wording. A cover can use the exact title of
+its linked reference recording, or supply its own display title. Bound profiles
+can also specify ordered artist credits. Confirmed work names and verified
+member names participate in local search. Version classifications stay in the editor.
+The lyrics importer can stage plain text from a selected linked recording
+for manual review and saving.
+
 Persist user changes with revision checks and atomic replacement. Read failures,
 malformed organization documents and unsupported future versions fail closed.
 Back up legacy playlist documents before their first successful v3 write.

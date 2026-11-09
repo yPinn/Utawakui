@@ -18,12 +18,16 @@ import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { RotateCcw } from '../../icons/index.js';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiTextField from '../ui/UiTextField.vue';
+import UiTextarea from '../ui/UiTextarea.vue';
 import WorkLinkSearch from './WorkLinkSearch.vue';
 import WorkVersionFields from './WorkVersionFields.vue';
 import WorkVersionTrackRow from './WorkVersionTrackRow.vue';
@@ -118,36 +122,6 @@ function playRelated(track) {
   setCurrentTrack(track.id);
   playTrack(toPlayableTrack(track));
 }
-function relatedLabel(version) {
-  const dimensions = {
-    acoustic: 'Acoustic',
-    remix: 'Remix',
-    other: t('work.editor.dimensions.other'),
-    studio: t('work.editor.dimensions.studio'),
-    live: t('work.editor.dimensions.live'),
-    demo: 'Demo',
-    instrumental: t('work.editor.dimensions.instrumental'),
-  };
-  const labels = version.versionInfo?.label
-    ? [version.versionInfo.label]
-    : [
-        dimensions[version.versionInfo?.arrangement],
-        dimensions[version.versionInfo?.performance],
-        version.versionInfo?.vocal === 'instrumental'
-          ? dimensions.instrumental
-          : '',
-      ].filter(Boolean);
-  // A custom label may already name the relationship; reuse its display label.
-  const coverLabel = relationshipOptions.find(
-    (option) => option.value === 'cover',
-  ).label;
-  if (
-    version.relationship === 'cover' &&
-    !labels.some((label) => label.includes(coverLabel))
-  )
-    labels.push(coverLabel);
-  return labels.join(' · ');
-}
 onMounted(() => {
   editor.initialize();
   initializeLibrary();
@@ -241,6 +215,46 @@ onUnmounted(songEditor.dispose);
             @update-artist="metadata.setArtistDraft"
           >
             <template v-if="state.track" #style-tags>
+              <UiDisclosure
+                v-if="state.names && state.snapshot"
+                :label="t('work.editor.presentationSettings')"
+              >
+                <div class="work-version-editor__name-fields">
+                  <UiTextField
+                    id="work-display-title"
+                    :label="t('work.editor.displayTitle')"
+                    :hint="t('work.editor.displayTitleHint')"
+                    :model-value="state.names.displayTitle"
+                    :maxlength="200"
+                    :disabled="disabled"
+                    @update:model-value="
+                      editor.updateName('displayTitle', $event)
+                    "
+                  />
+                  <UiCheckbox
+                    v-if="hasWork && state.relationship === 'cover'"
+                    id="work-inherit-title"
+                    :label="t('work.editor.inheritTitle')"
+                    :model-value="state.names.inheritTitle"
+                    :disabled="disabled"
+                    @update:model-value="
+                      editor.updateName('inheritTitle', $event)
+                    "
+                  />
+                  <UiTextarea
+                    id="work-artist-credits"
+                    :label="t('work.editor.artistCredits')"
+                    :hint="t('work.editor.artistCreditsHint')"
+                    :model-value="state.names.artistCredits"
+                    :maxlength="3216"
+                    :rows="2"
+                    :disabled="disabled"
+                    @update:model-value="
+                      editor.updateName('artistCredits', $event)
+                    "
+                  />
+                </div>
+              </UiDisclosure>
               <TrackStyleTagsPanel
                 :editor="songEditor.style"
                 :disabled="songEditor.busy.value"
@@ -279,6 +293,11 @@ onUnmounted(songEditor.dispose);
                     />
                   </template>
                 </WorkVersionFields>
+                <UiHint
+                  v-if="state.titleSuggestion || state.pendingCoverSuggestion"
+                >
+                  {{ t('work.editor.titleSuggestion') }}
+                </UiHint>
               </div>
               <div class="work-version-editor__link-pane">
                 <section
@@ -306,6 +325,39 @@ onUnmounted(songEditor.dispose);
                     @search="editor.search"
                     @select="select"
                   />
+                  <UiDisclosure
+                    v-if="
+                      state.names &&
+                      state.snapshot.work &&
+                      state.selection.kind === 'keep'
+                    "
+                    :label="t('work.editor.workNames')"
+                  >
+                    <div class="work-version-editor__name-fields">
+                      <UiTextField
+                        id="work-common-title"
+                        :label="t('work.editor.workTitle')"
+                        :model-value="state.names.workTitle"
+                        :maxlength="200"
+                        :disabled="disabled"
+                        @update:model-value="
+                          editor.updateName('workTitle', $event)
+                        "
+                      />
+                      <UiTextarea
+                        id="work-aliases"
+                        :label="t('work.editor.workAliases')"
+                        :hint="t('work.editor.workAliasesHint')"
+                        :model-value="state.names.aliases"
+                        :maxlength="3216"
+                        :rows="2"
+                        :disabled="disabled"
+                        @update:model-value="
+                          editor.updateName('aliases', $event)
+                        "
+                      />
+                    </div>
+                  </UiDisclosure>
                   <div
                     v-if="state.selection.kind !== 'keep'"
                     class="work-version-editor__pending"
@@ -341,7 +393,6 @@ onUnmounted(songEditor.dispose);
                       v-for="version in related"
                       :key="version.trackId"
                       :track="version.track"
-                      :version-label="relatedLabel(version)"
                       :before-navigate="songEditor.close"
                       @play="playRelated"
                     />
@@ -430,7 +481,10 @@ onUnmounted(songEditor.dispose);
             <UiButton
               v-else
               variant="accent"
-              :disabled="songEditor.busy.value || !songEditor.isDirty.value"
+              :disabled="
+                disabled ||
+                (!songEditor.isDirty.value && !editor.hasSuggestions?.value)
+              "
               :loading="songEditor.state.saving"
               :loading-label="t('work.editor.saving')"
               @click="songEditor.save"
@@ -444,6 +498,11 @@ onUnmounted(songEditor.dispose);
 </template>
 
 <style scoped>
+.work-version-editor__name-fields {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
 .work-version-editor {
   min-block-size: 0;
   container: work-version-editor / inline-size;

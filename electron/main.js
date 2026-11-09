@@ -659,6 +659,7 @@ if (!gotSingleInstanceLock) {
         if (window && !window.isDestroyed()) {
           window.webContents.send('library:work-organization-changed', payload);
         }
+        notifyLibraryUpdated({ allowProviderBackfill: false });
       },
       notifyLibraryUpdated,
       recordDiagnostic,

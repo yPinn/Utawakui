@@ -109,6 +109,7 @@ async function save({ reconfirm = false } = {}) {
     }
     if (
       work.isDirty.value ||
+      work.hasSuggestions?.value ||
       work.state.snapshot?.bindingStatus === 'changed'
     ) {
       if (!(await work.save({ reconfirm }))) {

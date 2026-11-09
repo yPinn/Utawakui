@@ -56,6 +56,40 @@ const saveIntent = () => ({
 });
 
 describe('work organization Main IPC', () => {
+  it('accepts bounded title and credits edits for the current work only', async () => {
+    const { handlers, runtime } = register();
+    const handler = handlers.get('library:save-work-organization');
+    const intent = {
+      ...saveIntent(),
+      selection: { kind: 'keep' },
+      presentation: {
+        displayTitle: '',
+        inheritTitle: true,
+        artistCredits: ['ECHORA', 'Sabrina 胡恂舞'],
+        hintsReviewed: true,
+      },
+      workDetails: { title: '螺旋', aliases: ['RASEN'] },
+    };
+    expect((await handler(null, intent)).status).toBe('ok');
+    expect(runtime.save).toHaveBeenCalledWith(intent);
+    runtime.save.mockClear();
+    for (const patch of [
+      { selection: { kind: 'none' } },
+      {
+        presentation: {
+          ...intent.presentation,
+          artistCredits: ['bad\ncredit'],
+        },
+      },
+      { presentation: { ...intent.presentation, path: 'untrusted' } },
+      { workDetails: { title: '螺旋', aliases: Array(17).fill('RASEN') } },
+    ]) {
+      expect(await handler(null, { ...intent, ...patch })).toEqual({
+        status: 'invalid-intent',
+      });
+    }
+    expect(runtime.save).not.toHaveBeenCalled();
+  });
   it.each(['合作歌手：Guest\n台北場錄音', '合作歌手：Guest\r\n台北場錄音'])(
     'accepts version note line breaks without relaxing other text validation: %s',
     async (note) => {

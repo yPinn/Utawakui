@@ -228,8 +228,35 @@ function registerLibraryHandlers({
     }
   }
 
+  async function projectWorkTracks(dir, tracks, options) {
+    if (!workOrganizationRuntime?.projectTracks) return tracks;
+    try {
+      return await workOrganizationRuntime.projectTracks(dir, tracks, options);
+    } catch {
+      // Invalid or unavailable organization must not hide playable media.
+      return tracks;
+    }
+  }
+
   ipcMain.handle('library:list', async (event, options = {}) => {
     const dir = resolveDownloadDir(getConfig());
+    if (options?.workPresentation === true) {
+      const projected = await projectWorkTracks(
+        dir,
+        trackSnapshot.listRecent(dir),
+      );
+      return projected.flatMap(({ id, workPresentation, artistCredits }) =>
+        workPresentation
+          ? [
+              {
+                id,
+                workPresentation,
+                ...(artistCredits ? { artistCredits } : {}),
+              },
+            ]
+          : [],
+      );
+    }
     organizeLibraryMetadataAutomatically(dir);
     const tracks = trackSnapshot.listFresh(dir);
     // Fire-and-forget — don't make the renderer wait on a network-bound
@@ -271,9 +298,14 @@ function registerLibraryHandlers({
 
   // Reads one track folder, so playback can follow library changes without
   // a second full-library scan beside useLibrary's own refresh.
-  ipcMain.handle('library:get-track', async (event, trackId) =>
-    findLibraryTrack(resolveDownloadDir(getConfig()), trackId),
-  );
+  ipcMain.handle('library:get-track', async (event, trackId) => {
+    const dir = resolveDownloadDir(getConfig());
+    const track = findLibraryTrack(dir, trackId);
+    if (!track) return track;
+    return (
+      await projectWorkTracks(dir, [track], { includeReferences: true })
+    )[0];
+  });
 
   ipcMain.handle('library:import-audio-files', async () => {
     const result = await dialog.showOpenDialog(getMainWindow(), {
@@ -444,6 +476,8 @@ function registerLibraryHandlers({
   registerLibraryArtistOrganizationHandlers({
     ...libraryDependencies,
     listRecentLibraryTracks: trackSnapshot.listRecent,
+    projectTracks: (dir, tracks) =>
+      projectWorkTracks(dir, tracks, { artistOnly: true }),
     artistIndexCache,
     artistIdentityService,
   });

@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useAlbumNavigation } from '../../../composables/useAlbumNavigation.js';
 import { useArtistIndex } from '../../../composables/useArtistIndex.js';
 import { trackArtistText } from '../../../utils/artistPage.js';
+import { trackTitlePresentation } from '../../../utils/trackTitlePresentation.js';
 import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
 import UiTextButton from '../../ui/UiTextButton.vue';
 import UiTrackThumb from '../../ui/UiTrackThumb.vue';
@@ -14,6 +15,10 @@ const props = defineProps({
 });
 
 const { state: artistIndexState } = useArtistIndex();
+const presentation = computed(() => trackTitlePresentation(props.track));
+const title = computed(
+  () => presentation.value.title || t('player.context.untitledTrack'),
+);
 const artistName = computed(
   () =>
     trackArtistText(props.track, artistIndexState.index) ||
@@ -21,7 +26,7 @@ const artistName = computed(
 );
 const accessibleLabel = computed(() =>
   t('player.context.currentSongNamed', {
-    title: props.track?.title || t('player.context.untitledTrack'),
+    title: title.value,
     artist: artistName.value,
   }),
 );
@@ -30,7 +35,7 @@ const trackAlbum = computed(() => albumForTrack(props.track));
 const albumCtaLabel = computed(() =>
   trackAlbum.value
     ? t('player.context.goToAlbumNamed', {
-        title: props.track?.title || t('player.context.untitledTrack'),
+        title: title.value,
         album: trackAlbum.value.name || t('player.context.untitledAlbum'),
       })
     : '',
@@ -60,7 +65,7 @@ function openAlbum() {
               <UiTextButton
                 v-if="trackAlbum"
                 class="track-context-hero__title"
-                :text="track.title || t('player.context.untitledTrack')"
+                :text="title"
                 :aria-label="albumCtaLabel"
                 overflow="clamp"
                 @click="openAlbum"
@@ -69,12 +74,12 @@ function openAlbum() {
                 v-else
                 as="p"
                 class="track-context-hero__title track-context-hero__title-text"
-                :text="track.title || t('player.context.untitledTrack')"
+                :text="title"
               >
-                {{ track.title || t('player.context.untitledTrack') }}
+                {{ title }}
               </UiOverflowTooltip>
               <TrackArtistCredits
-                v-if="track.artist"
+                v-if="track.artist || track.artistCredits?.length"
                 class="track-context-hero__artist"
                 :track="track"
                 :title="artistName"

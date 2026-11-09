@@ -2,6 +2,8 @@ import { computed, reactive, readonly } from 'vue';
 import { useAppConfirmation } from './useAppConfirmation.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { t } from '../utils/i18n.js';
+import { trackTitlePresentation } from '../utils/trackTitlePresentation.js';
+import { readTrackTitleHints } from '../../shared/trackTitleHints.mjs';
 
 const emptyVersion = () => ({
   arrangement: 'unspecified',
@@ -10,11 +12,27 @@ const emptyVersion = () => ({
   label: '',
   note: '',
 });
+const emptyPresentation = () => ({
+  displayTitle: '',
+  inheritTitle: true,
+  artistCredits: [],
+  hintsReviewed: false,
+});
+const emptyNames = () => ({
+  displayTitle: '',
+  inheritTitle: true,
+  artistCredits: '',
+  workTitle: '',
+  aliases: '',
+});
 const state = reactive({
   track: null,
   snapshot: null,
   versionInfo: emptyVersion(),
   relationship: 'unknown',
+  names: emptyNames(),
+  titleSuggestion: false,
+  pendingCoverSuggestion: false,
   selection: { kind: 'keep' },
   loading: false,
   saving: false,
@@ -35,17 +53,20 @@ let searchGeneration = 0;
 let unsubscribe = null;
 let baseline = '';
 let observedRevision = 0;
+let relationshipTouched = false;
 
 const draftKey = () =>
   JSON.stringify({
     versionInfo: state.versionInfo,
     relationship: state.relationship,
     selection: state.selection,
+    names: state.names,
   });
 const isOpen = computed(() => Boolean(state.track));
 const isDirty = computed(
   () => Boolean(state.snapshot) && draftKey() !== baseline,
 );
+const hasSuggestions = computed(() => state.titleSuggestion);
 
 function reset() {
   generation += 1;
@@ -56,6 +77,9 @@ function reset() {
     snapshot: null,
     versionInfo: emptyVersion(),
     relationship: 'unknown',
+    names: emptyNames(),
+    titleSuggestion: false,
+    pendingCoverSuggestion: false,
     selection: { kind: 'keep' },
     loading: false,
     saving: false,
@@ -70,13 +94,47 @@ function reset() {
   });
   baseline = '';
   observedRevision = 0;
+  relationshipTouched = false;
 }
 
-function applySnapshot(snapshot) {
+function applySnapshot(snapshot, { suggest = true } = {}) {
   state.snapshot = snapshot;
   state.versionInfo = { ...emptyVersion(), ...snapshot.versionInfo };
   state.relationship = snapshot.relationship || 'unknown';
   state.selection = { kind: 'keep' };
+  const presentation = { ...emptyPresentation(), ...snapshot.presentation };
+  state.names = {
+    displayTitle: presentation.displayTitle,
+    inheritTitle: presentation.inheritTitle,
+    artistCredits: presentation.artistCredits.join('\n'),
+    workTitle: snapshot.work?.title ?? '',
+    aliases: snapshot.work?.aliases?.join('\n') ?? '',
+  };
+  state.titleSuggestion = false;
+  state.pendingCoverSuggestion = false;
+  relationshipTouched = false;
+  if (
+    suggest &&
+    !presentation.hintsReviewed &&
+    snapshot.bindingStatus !== 'changed'
+  ) {
+    const { version, cover } = readTrackTitleHints(state.track?.title);
+    const field = {
+      acoustic: 'arrangement',
+      remix: 'arrangement',
+      live: 'performance',
+      demo: 'performance',
+      instrumental: 'vocal',
+    }[version];
+    if (field && state.versionInfo[field] === 'unspecified') {
+      state.versionInfo[field] = version;
+      state.titleSuggestion = true;
+    }
+    if (cover && snapshot.work && state.relationship === 'unknown') {
+      state.relationship = 'cover';
+      state.titleSuggestion = true;
+    }
+  }
   state.needsReload = observedRevision > snapshot.revision;
   state.error = state.needsReload ? t('workOrganize.reload') : '';
   observedRevision = Math.max(observedRevision, snapshot.revision);
@@ -137,7 +195,10 @@ async function reload() {
     }
     applySnapshot(result);
     state.loading = false;
-    const query = state.query || state.track.title || '';
+    const query =
+      state.query ||
+      (result.relationship === 'cover' && result.work?.title) ||
+      trackTitlePresentation(state.track).queryTitle;
     if (query.trim()) await search(query.slice(0, 200));
     return current === generation && request === readGeneration;
   } catch (error) {
@@ -283,6 +344,36 @@ function select(selection) {
   )
     return;
   state.selection = { ...selection };
+  if (
+    state.pendingCoverSuggestion &&
+    ['keep', 'none'].includes(selection.kind)
+  ) {
+    state.pendingCoverSuggestion = false;
+    state.relationship = 'unknown';
+  }
+  if (
+    ['track', 'new', 'existing'].includes(selection.kind) &&
+    !state.snapshot.work &&
+    !relationshipTouched &&
+    state.relationship === 'unknown' &&
+    readTrackTitleHints(state.track?.title).cover
+  ) {
+    state.relationship = 'cover';
+    state.pendingCoverSuggestion = true;
+  }
+}
+
+function updateName(field, value) {
+  if (state.saving || !Object.hasOwn(state.names, field)) return;
+  state.names[field] =
+    field === 'inheritTitle' ? Boolean(value) : String(value ?? '');
+}
+
+function nameLines(value) {
+  return value
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function updateVersion(field, value) {
@@ -302,6 +393,44 @@ async function save({ reconfirm = false } = {}) {
     state.error = t('workOrganize.nameRequired');
     return false;
   }
+  const { displayTitle, inheritTitle, workTitle } = state.names;
+  const artistCredits = nameLines(state.names.artistCredits);
+  const aliases = nameLines(state.names.aliases);
+  const normalizedCredits = artistCredits.map((name) =>
+    name.normalize('NFKC').toLowerCase(),
+  );
+  const work = state.snapshot.work;
+  const workEdited =
+    work &&
+    (workTitle.trim() !== work.title ||
+      JSON.stringify(aliases) !== JSON.stringify(work.aliases ?? []));
+  if (workEdited && state.selection.kind !== 'keep') {
+    state.error = t('workOrganize.saveWorkBeforeRelinking');
+    return false;
+  }
+  if (
+    (workEdited && !workTitle.trim()) ||
+    aliases.length > 16 ||
+    artistCredits.length > 16 ||
+    new Set(normalizedCredits).size !== artistCredits.length ||
+    [displayTitle, workTitle, ...aliases, ...artistCredits].some(
+      (name) => name.length > 200,
+    )
+  ) {
+    state.error = t('workOrganize.invalidNames');
+    return false;
+  }
+  const presentation = {
+    displayTitle: displayTitle.trim(),
+    inheritTitle,
+    artistCredits,
+    hintsReviewed: Boolean(
+      state.snapshot.presentation?.hintsReviewed ||
+      state.titleSuggestion ||
+      state.pendingCoverSuggestion ||
+      relationshipTouched,
+    ),
+  };
   const current = generation;
   state.saving = true;
   state.error = '';
@@ -314,6 +443,13 @@ async function save({ reconfirm = false } = {}) {
       relationship:
         state.selection.kind === 'none' ? 'unknown' : state.relationship,
       versionInfo: { ...state.versionInfo },
+      ...(JSON.stringify(presentation) !==
+        JSON.stringify(emptyPresentation()) || state.snapshot.presentation
+        ? { presentation }
+        : {}),
+      ...(workEdited
+        ? { workDetails: { title: workTitle.trim(), aliases } }
+        : {}),
       ...(reconfirm ? { reconfirm: true } : {}),
     });
     if (current !== generation) return false;
@@ -325,7 +461,7 @@ async function save({ reconfirm = false } = {}) {
       reset();
       return false;
     }
-    applySnapshot(result);
+    applySnapshot(result, { suggest: false });
     return true;
   } catch (error) {
     if (current === generation) state.error = report(error, 'save');
@@ -367,6 +503,7 @@ export function useWorkOrganization() {
     state: readonly(state),
     isOpen,
     isDirty,
+    hasSuggestions,
     updateTrack: (track) => {
       if (state.track?.id === track?.id) state.track = { ...track };
     },
@@ -378,8 +515,13 @@ export function useWorkOrganization() {
     loadMore,
     select,
     updateVersion,
+    updateName,
     setRelationship: (value) => {
-      if (!state.saving) state.relationship = value;
+      if (!state.saving) {
+        relationshipTouched = true;
+        state.pendingCoverSuggestion = false;
+        state.relationship = value;
+      }
     },
     save,
     initialize,

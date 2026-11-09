@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { trackArtistText } from '../../utils/artistPage.js';
+import { trackTitlePresentation } from '../../utils/trackTitlePresentation.js';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import TrackArtistCredits from './TrackArtistCredits.vue';
 import { t } from '../../utils/i18n.js';
@@ -34,7 +35,9 @@ const artistNavigationEnabled = computed(() =>
 const albumDestination = computed(() =>
   albumNavigationEnabled.value ? albumForTrack(props.track) : null,
 );
-const displayTitle = computed(() => props.title ?? props.track?.title ?? '');
+const displayTitle = computed(
+  () => props.title ?? trackTitlePresentation(props.track).title,
+);
 // Rows without artist links still show the merged artist name (ADR 0022).
 const displayArtist = computed(
   () => props.artist ?? trackArtistText(props.track, artistIndexState.index),
@@ -56,7 +59,7 @@ function announceArtistNavigation(artistId) {
   <UiTrackRow
     v-bind="$attrs"
     :track="track"
-    :title="title"
+    :title="displayTitle"
     :artist="displayArtist"
     :title-clickable="Boolean(albumDestination)"
     :title-aria-label="

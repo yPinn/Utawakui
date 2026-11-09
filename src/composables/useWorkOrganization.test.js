@@ -66,6 +66,39 @@ afterEach(() => {
 });
 
 describe('shared works and version editing owner', () => {
+  it('suggests arrangement and cover in the draft and persists explicit dismissal', async () => {
+    const track = {
+      id: 'a',
+      title: '螺旋 - Acoustic Ver. - / Covered by Earendel',
+    };
+    await owner.open(track);
+    expect(owner.state.versionInfo.arrangement).toBe('acoustic');
+    expect(owner.isDirty.value).toBe(false);
+    expect(owner.hasSuggestions.value).toBe(true);
+    expect(bridge.saveWorkOrganization).not.toHaveBeenCalled();
+    owner.select({ kind: 'track', targetTrackId: 'b' });
+    expect(owner.state.relationship).toBe('cover');
+    owner.select({ kind: 'keep' });
+    expect(owner.state.relationship).toBe('unknown');
+    owner.updateVersion('arrangement', 'unspecified');
+    await owner.save();
+    expect(bridge.saveWorkOrganization).toHaveBeenCalledWith(
+      expect.objectContaining({
+        versionInfo: expect.objectContaining({ arrangement: 'unspecified' }),
+        presentation: expect.objectContaining({ hintsReviewed: true }),
+      }),
+    );
+    const saved = bridge.saveWorkOrganization.mock.calls.at(-1)[0];
+    bridge.getWorkOrganization.mockResolvedValue(
+      snapshot('a', {
+        bindingStatus: 'current',
+        presentation: saved.presentation,
+      }),
+    );
+    await owner.open(track);
+    expect(owner.state.versionInfo.arrangement).toBe('unspecified');
+    expect(owner.hasSuggestions.value).toBe(false);
+  });
   it('keeps source binding and drafts intact when the selected target media changed', async () => {
     await owner.open({ id: 'a', title: '夜航' });
     owner.select({ kind: 'track', targetTrackId: 'b' });
@@ -96,6 +129,24 @@ describe('shared works and version editing owner', () => {
     expect(bridge.renameWork).not.toHaveBeenCalled();
     owner.updateQuery('另一首');
     expect(owner.state.searched).toBe(false);
+  });
+  it('prefills the confirmed work name for a linked cover and keeps manual queries', async () => {
+    bridge.getWorkOrganization.mockResolvedValue(
+      snapshot('a', {
+        bindingStatus: 'current',
+        work: { id: 'work-a', title: 'RASEN Acoustic Ver' },
+        relationship: 'cover',
+      }),
+    );
+    await owner.open({
+      id: 'a',
+      title: '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 Earendel',
+      artist: 'Earendel ch. 厄倫蒂兒',
+    });
+    expect(owner.state.query).toBe('RASEN Acoustic Ver');
+    owner.updateQuery('手動搜尋');
+    await owner.reload();
+    expect(owner.state.query).toBe('手動搜尋');
   });
   it('keeps editing available after an automatic search failure and ignores its late result after switching tracks', async () => {
     bridge.searchWorkOrganization.mockRejectedValueOnce(new Error('private'));

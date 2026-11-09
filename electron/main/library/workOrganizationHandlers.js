@@ -104,6 +104,8 @@ function validSave(value) {
       'selection',
       'relationship',
       'versionInfo',
+      'presentation',
+      'workDetails',
       'reconfirm',
     ]) &&
     safeTrack(value.trackId) &&
@@ -112,7 +114,37 @@ function validSave(value) {
     validSelection(value.selection) &&
     relationships.has(value.relationship) &&
     validVersion(value.versionInfo) &&
+    (value.presentation === undefined ||
+      validPresentation(value.presentation)) &&
+    (value.workDetails === undefined ||
+      (value.selection.kind === 'keep' &&
+        safeRecord(value.workDetails, ['title', 'aliases']) &&
+        safeText(value.workDetails.title, 200, true) &&
+        validNames(value.workDetails.aliases))) &&
     (value.reconfirm === undefined || typeof value.reconfirm === 'boolean')
+  );
+}
+
+function validNames(values) {
+  return (
+    Array.isArray(values) &&
+    values.length <= 16 &&
+    Array.from(values).every((name) => safeText(name, 200, true))
+  );
+}
+
+function validPresentation(value) {
+  return (
+    safeRecord(value, [
+      'displayTitle',
+      'inheritTitle',
+      'artistCredits',
+      'hintsReviewed',
+    ]) &&
+    safeText(value.displayTitle, 200) &&
+    typeof value.inheritTitle === 'boolean' &&
+    validNames(value.artistCredits) &&
+    typeof value.hintsReviewed === 'boolean'
   );
 }
 
@@ -193,6 +225,9 @@ function projectResult(result, operation) {
       : null,
     relationship: result.relationship,
     versionInfo: projectVersion(result.versionInfo),
+    ...(result.presentation && validPresentation(result.presentation)
+      ? { presentation: result.presentation }
+      : {}),
     relatedVersions: (result.relatedVersions ?? [])
       .slice(0, 100)
       .map(({ trackId, relationship, versionInfo }) => ({

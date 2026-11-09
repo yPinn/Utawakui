@@ -11,5 +11,7 @@
   "searchFailed": "Songs can't be searched right now. Try again.",
   "versionsReload": "The data changed. Reload the version list.",
   "nameRequired": "Enter a work name.",
+  "invalidNames": "Enter a work title and use up to 16 aliases and 16 distinct artist credits, each at most 200 characters.",
+  "saveWorkBeforeRelinking": "Save or undo the work title and alias edits before changing the link.",
   "partialSaved": "Song info saved; versions and links weren't saved yet."
 }

@@ -38,12 +38,21 @@ function artistIdForKey(key) {
   return `artist-${crypto.createHash('sha256').update(key).digest('hex').slice(0, 16)}`;
 }
 
-// Sidecar parts are trusted only while they still reproduce the stored scalar;
-// a manual or legacy artist value stays one credit instead of being re-split.
+function comparableCreditList(value) {
+  return value.replace(/\s*[,，、]\s*/gu, ', ').trim();
+}
+
+// Trust the ordered source credits when only the display separator changed.
+// A legacy scalar without supporting credits stays a single credit.
 function creditPartsFor(track, sidecarParts) {
+  if (track.artistCredits?.length) return track.artistCredits;
   const artist = typeof track.artist === 'string' ? track.artist.trim() : '';
   if (!artist) return [];
-  if (sidecarParts?.length && sidecarParts.join(', ') === artist) {
+  if (
+    sidecarParts?.length &&
+    comparableCreditList(sidecarParts.join(', ')) ===
+      comparableCreditList(artist)
+  ) {
     return sidecarParts;
   }
   return [artist];

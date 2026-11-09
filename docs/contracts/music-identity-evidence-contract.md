@@ -240,8 +240,9 @@ title／artist／album。
 
 [ADR 0022](../adr/0022-artist-identity-and-organization.md) 是 artist organization 的決策來源。第一階段的
 `electron/lib/artists/artistIndex.js` 只消費 `normalizeForCompare()` 作 Tier A 分組鍵，以及
-`ytdlpInfo.extractPerformerCredits()` 的有序演出者 parts；它不使用 `splitArtistNames()`，不重新拆分扁平
-artist 字串。未經整理的 credit 仍使用可重新計算的衍生 id；`artistOrganization.js` 再把確認過的
+`ytdlpInfo.extractPerformerCredits()` 的有序演出者 parts，也接受音源綁定的人工合作署名。
+只差逗號字形或空格的曲庫資料仍可使用結構化來源署名；其餘扁平 artist 字串維持單一 credit。
+未經整理的 credit 仍使用可重新計算的衍生 id；`artistOrganization.js` 再把確認過的
 credit keys 投影到 `artists.json` 的 stable entity。Track scalar 與 credited form 不被改寫。
 Artist-aware track presentation 以 `trackArtistIds` 投影 entity canonical display name；index 尚未載入才回退
 raw credit。搜尋同時比對 canonical name 與 entity 中所有 credited forms，因此任一別名都會找到完整 entity

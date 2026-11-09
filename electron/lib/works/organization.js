@@ -125,8 +125,44 @@ function versionInfo(value = {}) {
   };
 }
 
+function trackPresentation(value) {
+  record(value, [
+    'displayTitle',
+    'inheritTitle',
+    'artistCredits',
+    'hintsReviewed',
+  ]);
+  const {
+    displayTitle = '',
+    inheritTitle = true,
+    artistCredits = [],
+    hintsReviewed = false,
+  } = value;
+  if (
+    typeof inheritTitle !== 'boolean' ||
+    typeof hintsReviewed !== 'boolean' ||
+    !Array.isArray(artistCredits) ||
+    artistCredits.length > 16
+  )
+    fail();
+  const credits = Array.from(artistCredits, (credit) =>
+    text(credit, 200, true),
+  );
+  if (
+    new Set(credits.map((credit) => credit.normalize('NFKC').toLowerCase()))
+      .size !== credits.length
+  )
+    fail();
+  return {
+    displayTitle: text(displayTitle, 200),
+    inheritTitle,
+    artistCredits: credits,
+    hintsReviewed,
+  };
+}
+
 function workLink(value, works) {
-  record(value, ['workId', 'relationship']);
+  record(value, ['workId', 'relationship', 'referenceTrackId']);
   const workId = identifier(value.workId);
   if (!Object.hasOwn(works, workId)) fail('WORKS_NOT_FOUND');
   return {
@@ -136,6 +172,9 @@ function workLink(value, works) {
       'original',
       'cover',
     ]),
+    ...(value.referenceTrackId !== undefined
+      ? { referenceTrackId: trackIdentifier(value.referenceTrackId) }
+      : {}),
   };
 }
 
@@ -144,7 +183,7 @@ function workFields(value) {
   if (!Array.isArray(aliases) || aliases.length > 16) fail();
   return {
     title: text(value.title, 200, true),
-    aliases: aliases.map((alias) => text(alias, 200, true)),
+    aliases: Array.from(aliases, (alias) => text(alias, 200, true)),
     note: text(note, 500),
   };
 }
@@ -191,13 +230,16 @@ function validateWorksDocument(value) {
   }
   for (const [id, profile] of Object.entries(value.trackProfiles)) {
     trackIdentifier(id);
-    record(profile, ['binding', 'workLink', 'versionInfo']);
+    record(profile, ['binding', 'workLink', 'versionInfo', 'presentation']);
     result.trackProfiles[id] = {
       binding: validateTrackBinding(profile.binding),
       ...(Object.hasOwn(profile, 'workLink')
         ? { workLink: workLink(profile.workLink, result.works) }
         : {}),
       versionInfo: versionInfo(profile.versionInfo),
+      ...(profile.presentation !== undefined
+        ? { presentation: trackPresentation(profile.presentation) }
+        : {}),
     };
   }
   const pendingIds = new Set();
@@ -298,9 +340,12 @@ function applyProfile(document, input) {
     binding,
     versionInfo: existing?.versionInfo ?? versionInfo(),
     ...(existing?.workLink ? { workLink: existing.workLink } : {}),
+    ...(existing?.presentation ? { presentation: existing.presentation } : {}),
   };
   if (Object.hasOwn(input, 'versionInfo'))
     profile.versionInfo = versionInfo(input.versionInfo);
+  if (Object.hasOwn(input, 'presentation'))
+    profile.presentation = trackPresentation(input.presentation);
   if (Object.hasOwn(input, 'workLink')) {
     if (input.workLink === null) delete profile.workLink;
     else profile.workLink = workLink(input.workLink, document.works);
@@ -328,12 +373,20 @@ function createAndLinkWork(dir, input) {
         'trackId',
         'binding',
         'relationship',
+        'referenceTrackId',
         'versionInfo',
+        'presentation',
         'reconfirm',
       ]);
       applyProfile(document, {
         ...track,
-        workLink: { workId: id, relationship: track.relationship ?? 'unknown' },
+        workLink: {
+          workId: id,
+          relationship: track.relationship ?? 'unknown',
+          ...(track.referenceTrackId
+            ? { referenceTrackId: track.referenceTrackId }
+            : {}),
+        },
       });
     }
   });
@@ -345,12 +398,23 @@ function saveTrackProfile(dir, input) {
     'trackId',
     'binding',
     'versionInfo',
+    'presentation',
     'workLink',
+    'workDetails',
     'reconfirm',
   ]);
-  return commitWorks(dir, input.expectedRevision, (document) =>
-    applyProfile(document, input),
-  );
+  return commitWorks(dir, input.expectedRevision, (document) => {
+    applyProfile(document, input);
+    if (input.workDetails !== undefined) {
+      record(input.workDetails, ['title', 'aliases']);
+      const id = document.trackProfiles[input.trackId].workLink?.workId;
+      if (!id) fail('WORKS_NOT_FOUND');
+      const work = document.works[id];
+      Object.assign(work, workFields({ ...work, ...input.workDetails }), {
+        updatedAt: new Date().toISOString(),
+      });
+    }
+  });
 }
 
 function unlinkTrack(dir, input) {

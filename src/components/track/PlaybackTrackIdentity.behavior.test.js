@@ -64,6 +64,24 @@ const track = {
 };
 
 describe('shared transport track identity', () => {
+  it('shows the reference recording title and keeps version tags out of the artist line', () => {
+    const cover = {
+      id: 'cover',
+      title: '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 𝑬𝒂𝒓𝒆𝒏𝒅𝒆𝒍',
+      artist: 'Earendel ch. 厄倫蒂兒',
+      workPresentation: {
+        title: 'RASEN Acoustic Ver',
+        versionTags: ['acoustic'],
+      },
+    };
+    const view = mount(PlaybackTrackIdentity, { track: cover });
+    const copy = textContent(view.root);
+    expect(copy).toContain('RASEN Acoustic Ver');
+    expect(copy).toContain('Earendel ch. 厄倫蒂兒');
+    expect(copy).not.toContain('· Acoustic');
+    expect(copy).not.toContain('Covered by');
+    view.app.unmount();
+  });
   it('shows complete canonical title and artist data through the same copy and artwork composition', () => {
     const view = mount(PlaybackTrackIdentity, { track, artworkSize: 40 });
     expect(textContent(view.root)).toContain(track.title);

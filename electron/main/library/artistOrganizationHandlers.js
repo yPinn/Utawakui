@@ -13,6 +13,7 @@ function registerLibraryArtistOrganizationHandlers({
   resolveDownloadDir,
   listLibraryTracks,
   listRecentLibraryTracks = listLibraryTracks,
+  projectTracks = (_directory, tracks) => tracks,
   notifyLibraryUpdated,
   featureIds,
   artistIndexCache,
@@ -22,7 +23,10 @@ function registerLibraryArtistOrganizationHandlers({
   // Derived, read-only artist grouping (ADR 0022); never triggers backfill.
   ipcMain.handle('library:get-artist-index', async () => {
     const dir = resolveDownloadDir(getConfig());
-    return artistIndexCache.getIndex(dir, listRecentLibraryTracks(dir));
+    return artistIndexCache.getIndex(
+      dir,
+      await projectTracks(dir, listRecentLibraryTracks(dir)),
+    );
   });
 
   const validRevision = (value) => Number.isSafeInteger(value) && value >= 0;
@@ -65,7 +69,7 @@ function registerLibraryArtistOrganizationHandlers({
       return invalidArtistIntent();
     }
     const directory = resolveDownloadDir(getConfig());
-    const tracks = listLibraryTracks(directory);
+    const tracks = await projectTracks(directory, listLibraryTracks(directory));
     return runArtistOrganizationIntent('merge', () =>
       artistIndexCache.mergeArtists(directory, tracks, intent.artistIds, {
         expectedRevision: intent.expectedRevision,
@@ -83,7 +87,7 @@ function registerLibraryArtistOrganizationHandlers({
       return invalidArtistIntent();
     }
     const directory = resolveDownloadDir(getConfig());
-    const tracks = listLibraryTracks(directory);
+    const tracks = await projectTracks(directory, listLibraryTracks(directory));
     return runArtistOrganizationIntent('split', () =>
       artistIndexCache.splitArtistCredit(
         directory,
@@ -107,7 +111,7 @@ function registerLibraryArtistOrganizationHandlers({
       return invalidArtistIntent();
     }
     const directory = resolveDownloadDir(getConfig());
-    const tracks = listLibraryTracks(directory);
+    const tracks = await projectTracks(directory, listLibraryTracks(directory));
     return runArtistOrganizationIntent('display-name', () =>
       artistIndexCache.setDisplayName(
         directory,
@@ -156,7 +160,7 @@ function registerLibraryArtistOrganizationHandlers({
       return { status: 'disabled' };
     }
     const directory = resolveDownloadDir(getConfig());
-    const tracks = listLibraryTracks(directory);
+    const tracks = await projectTracks(directory, listLibraryTracks(directory));
     void runArtistIdentityLookup('automatic-reconciliation', () =>
       artistIdentityService.reconcile(directory, tracks, {
         onApplied: () => notifyLibraryUpdated({ allowProviderBackfill: false }),
@@ -175,7 +179,10 @@ function registerLibraryArtistOrganizationHandlers({
         return { status: 'disabled' };
       }
       const directory = resolveDownloadDir(getConfig());
-      const tracks = listLibraryTracks(directory);
+      const tracks = await projectTracks(
+        directory,
+        listLibraryTracks(directory),
+      );
       return runArtistIdentityLookup('search', () =>
         artistIdentityService.search(directory, tracks, artistId),
       );
@@ -203,7 +210,10 @@ function registerLibraryArtistOrganizationHandlers({
         return { status: 'disabled' };
       }
       const directory = resolveDownloadDir(getConfig());
-      const tracks = listLibraryTracks(directory);
+      const tracks = await projectTracks(
+        directory,
+        listLibraryTracks(directory),
+      );
       return runArtistOrganizationIntent('catalog', () =>
         artistIdentityService.apply(
           directory,

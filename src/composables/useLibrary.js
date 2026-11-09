@@ -96,6 +96,20 @@ async function refresh(options) {
     rawTracks.value = tracks;
     state.hasLoaded = true;
     state.error = null;
+    const listWithWorks = window.Utawakui.listTrackWorkPresentation;
+    if (listWithWorks) {
+      void listWithWorks()
+        .then((projected) => {
+          if (revision !== readRevision || projected.length === 0) return;
+          const byId = new Map(projected.map((entry) => [entry.id, entry]));
+          rawTracks.value = tracks.map((track) =>
+            byId.has(track.id) ? { ...track, ...byId.get(track.id) } : track,
+          );
+        })
+        .catch(() => {
+          // Keep the source library usable if optional work metadata is unavailable.
+        });
+    }
   } catch (err) {
     if (revision !== readRevision) return;
     state.error = recordError(err, {

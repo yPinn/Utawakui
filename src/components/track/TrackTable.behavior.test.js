@@ -84,6 +84,31 @@ const rowSource = readFileSync(
 );
 
 describe('initial table loading', () => {
+  it.each([
+    ['artist', false],
+    ['album', true],
+  ])(
+    'keeps the official title and artist line separate in the %s table',
+    (collectionKind, showArtist) => {
+      const cover = {
+        ...tracks[0],
+        title: '螺旋 - Acoustic Ver. - / Covered by 厄倫蒂兒 Earendel',
+        artist: 'Earendel ch. 厄倫蒂兒',
+      };
+      const { root, app } = mount(TrackTable, {
+        entries: [{ track: cover }],
+        collectionKind,
+      });
+      const titleNode = findAll(root, (node) =>
+        classIncludes(node, 'library-track-row__title'),
+      )[0];
+      expect(textContent(titleNode)).toBe('螺旋 - Acoustic Ver.');
+      if (showArtist) expect(textContent(root)).toContain(cover.artist);
+      expect(textContent(root)).not.toContain('· Acoustic');
+      expect(textContent(root)).not.toContain('Covered by');
+      app.unmount();
+    },
+  );
   it('preserves local table rows, selection and playback identity when only separation completes', async () => {
     const props = reactive({
       entries: tracks.map((track) => ({ track: { ...track } })),
@@ -475,7 +500,7 @@ describe('TrackTable shared row behavior', () => {
 
   it('projects the current title cue through the marquee component boundary', () => {
     expect(rowSource).toMatch(
-      /<span class="library-track-row__title">\s*<UiMarqueeText\s+:text="displayTrack\.title"\s*\/>\s*<\/span>/u,
+      /<span class="library-track-row__title">\s*<UiMarqueeText\s+:text="displayTitle"\s*\/>\s*<\/span>/u,
     );
     expect(rowSource).toMatch(
       /\.library-track-row--current\s+\.library-track-row__title\s*\{[^}]*color:\s*var\(--ui-color-current\);/su,

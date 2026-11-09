@@ -9,6 +9,7 @@ import {
   Play,
 } from '../../icons/index.js';
 import { trackContentLang } from '../../utils/contentLanguage.js';
+import { trackTitlePresentation } from '../../utils/trackTitlePresentation.js';
 import { formatDuration } from '../../utils/format.js';
 import TrackArtistCredits from './TrackArtistCredits.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -78,6 +79,15 @@ const rowActionDescription = computed(() =>
 );
 const displayTrack = computed(
   () => props.entry.track ?? props.entry.displayTrack,
+);
+const displayTitle = computed(
+  () => trackTitlePresentation(displayTrack.value).title,
+);
+const showArtist = computed(
+  () =>
+    Boolean(
+      displayTrack.value?.artist || displayTrack.value?.artistCredits?.length,
+    ) && props.profile.showArtist,
 );
 const canInteract = computed(
   () => Boolean(props.entry.track) && !props.entry.disabled,
@@ -178,7 +188,7 @@ function openContextMenu(event) {
       type="button"
       class="library-track-row__action"
       :disabled="!canInteract"
-      :aria-label="t('track.row.selectNamed', { title: displayTrack.title })"
+      :aria-label="t('track.row.selectNamed', { title: displayTitle })"
       :aria-description="rowActionDescription"
       :aria-pressed="selected"
       @click.stop="canInteract && emit('selectTrack', entry.track)"
@@ -214,7 +224,7 @@ function openContextMenu(event) {
         :icon="playing ? Pause : Play"
         :label="
           t(playing ? 'track.row.pauseNamed' : 'track.row.playNamed', {
-            title: displayTrack.title,
+            title: displayTitle,
           })
         "
         :fill="!playing"
@@ -239,10 +249,10 @@ function openContextMenu(event) {
       />
       <span class="library-track-row__copy" :lang="contentLang">
         <span class="library-track-row__title">
-          <UiMarqueeText :text="displayTrack.title" />
+          <UiMarqueeText :text="displayTitle" />
         </span>
         <TrackArtistCredits
-          v-if="displayTrack.artist && profile.showArtist"
+          v-if="showArtist"
           class="library-track-row__subtitle"
           :track="displayTrack"
           :navigable="profile.artistNavigation && canInteract"
@@ -341,7 +351,7 @@ function openContextMenu(event) {
             tone="success"
             :label="
               t('track.row.hasAccompanimentNamed', {
-                title: displayTrack.title,
+                title: displayTitle,
               })
             "
           />
@@ -352,7 +362,7 @@ function openContextMenu(event) {
             spinning
             :label="
               t('track.row.accompanimentBusyNamed', {
-                title: displayTrack.title,
+                title: displayTitle,
               })
             "
           />
@@ -360,10 +370,10 @@ function openContextMenu(event) {
             v-else-if="canInteract"
             class="library-track-row__separation-action"
             :icon="MicAudioLines"
-            :label="t('track.row.enqueueNamed', { title: displayTrack.title })"
+            :label="t('track.row.enqueueNamed', { title: displayTitle })"
             :loading="vsEnqueuePending"
             :loading-label="
-              t('track.row.enqueueingNamed', { title: displayTrack.title })
+              t('track.row.enqueueingNamed', { title: displayTitle })
             "
             @click.stop="emit('queueSeparation', entry.track)"
             @dblclick.stop
@@ -410,7 +420,7 @@ function openContextMenu(event) {
         ><UiIconButton
           class="library-track-row__more-action"
           :icon="Ellipsis"
-          :label="t('track.row.moreNamed', { title: displayTrack.title })"
+          :label="t('track.row.moreNamed', { title: displayTitle })"
           @click.stop="emit('openMenu', entry.track, $event)"
           @dblclick.stop
       /></slot>

@@ -13,6 +13,7 @@ vi.mock('../ui/UiTrackRow.vue', () => ({
   default: {
     props: [
       'track',
+      'title',
       'artist',
       'artworkLabel',
       'artworkClickable',
@@ -24,7 +25,7 @@ vi.mock('../ui/UiTrackRow.vue', () => ({
       () => {
         deps.rowProps = props;
         return h('li', attrs, [
-          props.track.title,
+          props.title,
           props.artist,
           h(
             'button',
@@ -78,19 +79,24 @@ const button = (label) =>
 describe('WorkVersionTrackRow', () => {
   it('uses the shared row identity and only artwork playback plus an overflow trigger', () => {
     const play = vi.fn();
-    const track = { id: 'a', title: '夜航', artist: '另一位歌手' };
+    const track = {
+      id: 'a',
+      title: '夜航 - Acoustic Ver. - / Covered by 另一位歌手',
+      artist: '另一位歌手',
+    };
     mounted = mount(WorkVersionTrackRow, {
       track,
-      versionLabel: 'Acoustic · 翻唱',
       onPlay: play,
     });
-    expect(textContent(mounted.root)).toContain('另一位歌手 · Acoustic · 翻唱');
+    expect(textContent(mounted.root)).toContain('夜航 - Acoustic Ver.');
+    expect(textContent(mounted.root)).toContain('另一位歌手');
+    expect(textContent(mounted.root)).not.toContain('· Acoustic');
     expect(
       findAll(mounted.root, (node) => node.type === 'button'),
     ).toHaveLength(2);
     expect(textContent(mounted.root)).not.toContain('一般佇列');
     expect(play).not.toHaveBeenCalled();
-    trigger(button('播放 夜航'), 'onClick');
+    trigger(button('播放 夜航 - Acoustic Ver.'), 'onClick');
     expect(play).toHaveBeenCalledWith(track);
   });
   it('routes both ellipsis and right click through the existing action controller', async () => {

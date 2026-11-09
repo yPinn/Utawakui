@@ -6,6 +6,7 @@ import TrackArtistCredits from '../track/TrackArtistCredits.vue';
 import { Pause, Play } from '../../icons/index.js';
 import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
 import { t } from '../../utils/i18n.js';
+import { trackTitlePresentation } from '../../utils/trackTitlePresentation.js';
 
 const props = defineProps({
   track: { type: Object, required: true },
@@ -48,11 +49,12 @@ const emit = defineEmits([
   'dragEnd',
 ]);
 
+const title = computed(() => trackTitlePresentation(props.track).title);
 const artworkActionLabel = computed(
   () =>
     props.playbackLabel ??
     t(props.playing ? 'queue.track.pauseNamed' : 'queue.track.playNamed', {
-      title: props.track.title,
+      title: title.value,
     }),
 );
 const canPlay = computed(
@@ -96,6 +98,7 @@ function handleDragEnd(event) {
     data-artwork-reveal-scope="focus-within"
     :class="{ 'right-dock-track--menu-open': menuOpen }"
     :track="track"
+    :title="title"
     :artist="artistText"
     :active="active"
     :current="current"
@@ -104,9 +107,7 @@ function handleDragEnd(event) {
     :state-surface-active="menuOpen"
     :activate-on-enter="interactive && canPlay"
     :action-label="
-      interactive
-        ? t('queue.track.selectNamed', { title: track.title })
-        : undefined
+      interactive ? t('queue.track.selectNamed', { title }) : undefined
     "
     :artwork-clickable="canPlay"
     :artwork-label="artworkActionLabel"
@@ -155,7 +156,7 @@ function handleDragEnd(event) {
     <template #trail>
       <slot name="trail">
         <RightDockTrackMenuButton
-          :track-title="track.title"
+          :track-title="title"
           :menu-open="menuOpen"
           @open="emit('openMenu', { track, event: $event })"
         />

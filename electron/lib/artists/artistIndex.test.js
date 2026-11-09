@@ -13,6 +13,24 @@ function byName(index, name) {
 }
 
 describe('buildArtistIndex', () => {
+  it('keeps ordered source or confirmed collaboration credits as separate artists', () => {
+    const credits = ['ECHORA', 'Sabrina 胡恂舞'];
+    const index = buildArtistIndex(
+      [
+        { id: 'source', artist: 'ECHORA、Sabrina 胡恂舞' },
+        {
+          id: 'manual',
+          artist: 'ECHORA, Sabrina 胡恂舞',
+          artistCredits: credits,
+        },
+        { id: 'legacy', artist: 'ECHORA, Sabrina 胡恂舞' },
+      ],
+      new Map([['source', credits]]),
+    );
+    expect(index.trackArtistIds.source).toHaveLength(2);
+    expect(index.trackArtistIds.manual).toEqual(index.trackArtistIds.source);
+    expect(index.trackArtistIds.legacy).toHaveLength(1);
+  });
   it('groups credited forms that share a provider-neutral key', () => {
     const index = buildArtistIndex([
       { id: 'a', artist: 'YOASOBI' },

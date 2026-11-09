@@ -48,6 +48,26 @@ async function importLibrary() {
 }
 
 describe('initial load', () => {
+  it('loads work names after source tracks and rejects a superseded projection', async () => {
+    const stale = Promise.withResolvers();
+    const current = Promise.withResolvers();
+    window.Utawakui.listTrackWorkPresentation = vi
+      .fn()
+      .mockReturnValueOnce(stale.promise)
+      .mockReturnValueOnce(current.promise);
+    listTracksMock.mockResolvedValue([{ id: 'a', title: 'Source' }]);
+    const library = await loadLibrary();
+    expect(library.state.tracks[0].title).toBe('Source');
+    expect(library.state.tracks[0].workPresentation).toBeUndefined();
+    await library.refresh();
+    stale.resolve([{ id: 'a', workPresentation: { title: 'Old work' } }]);
+    current.resolve([{ id: 'a', workPresentation: { title: 'Current work' } }]);
+    await flushMicrotasks();
+    expect(library.state.tracks[0]).toMatchObject({
+      title: 'Source',
+      workPresentation: { title: 'Current work' },
+    });
+  });
   it('finishes singleton hydration after the requesting page unmounts', async () => {
     const read = Promise.withResolvers();
     listTracksMock.mockReturnValueOnce(read.promise);

@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import { Music2 } from '../../icons/index.js';
 import { trackContentLang } from '../../utils/contentLanguage.js';
+import { trackTitlePresentation } from '../../utils/trackTitlePresentation.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import TrackArtistCredits from './TrackArtistCredits.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
@@ -15,11 +16,12 @@ const props = defineProps({
   emptyLabel: { type: String, default: '' },
 });
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const presentation = computed(() => trackTitlePresentation(props.track));
 const currentTrackAlbum = computed(() => albumForTrack(props.track));
 const currentTrackAlbumCtaLabel = computed(() => {
   if (!currentTrackAlbum.value) return '';
   return t('player.context.goToAlbumNamed', {
-    title: props.track?.title || t('player.context.currentSongFallback'),
+    title: presentation.value.title || t('player.context.currentSongFallback'),
     album: currentTrackAlbum.value.name || t('player.context.untitledAlbum'),
   });
 });
@@ -52,7 +54,7 @@ function jumpToCurrentTrackAlbum() {
             >
               <UiMarqueeText
                 class="playback-track-title-marquee"
-                :text="track.title"
+                :text="presentation.title"
                 :tooltip-enabled="false"
               />
             </button>
@@ -61,9 +63,12 @@ function jumpToCurrentTrackAlbum() {
         <UiMarqueeText
           v-else
           class="playback-track-title"
-          :text="track.title"
+          :text="presentation.title"
         />
-        <span v-if="track.artist" class="playback-track-artist">
+        <span
+          v-if="track.artist || track.artistCredits?.length"
+          class="playback-track-artist"
+        >
           <TrackArtistCredits :track="track" />
         </span>
       </template>

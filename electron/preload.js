@@ -839,6 +839,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: (options) => ipcRenderer.invoke('library:list', options),
+  listTrackWorkPresentation: () =>
+    ipcRenderer.invoke('library:list', { workPresentation: true }),
   getTrack: (trackId) => ipcRenderer.invoke('library:get-track', trackId),
   getArtistIndex: () => ipcRenderer.invoke('library:get-artist-index'),
   getReleaseInfo: (value) =>
@@ -959,6 +961,24 @@ contextBridge.exposeInMainWorld('Utawakui', {
       selection: workSelectionIntent(value?.selection),
       relationship: value?.relationship,
       versionInfo: workVersionIntent(value?.versionInfo),
+      ...(value?.presentation !== undefined
+        ? {
+            presentation: {
+              displayTitle: value.presentation?.displayTitle,
+              inheritTitle: value.presentation?.inheritTitle,
+              artistCredits: value.presentation?.artistCredits,
+              hintsReviewed: value.presentation?.hintsReviewed,
+            },
+          }
+        : {}),
+      ...(value?.workDetails !== undefined
+        ? {
+            workDetails: {
+              title: value.workDetails?.title,
+              aliases: value.workDetails?.aliases,
+            },
+          }
+        : {}),
       ...(value?.reconfirm !== undefined ? { reconfirm: value.reconfirm } : {}),
     }),
   renameWork: (value) =>

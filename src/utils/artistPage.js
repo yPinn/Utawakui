@@ -127,9 +127,12 @@ function appendUniqueText(values, seen, value) {
 // Artist-aware surfaces show the entity's canonical names. Source credits stay
 // untouched in library.json and remain available through artistSearchTexts.
 export function artistCreditLinks(track, artistIndex) {
-  const credit = typeof track?.artist === 'string' ? track.artist.trim() : '';
+  const hasCredit = Boolean(
+    (typeof track?.artist === 'string' && track.artist.trim()) ||
+    track?.artistCredits?.length,
+  );
   const ids = artistIndex?.trackArtistIds?.[track?.id];
-  if (!credit || !Array.isArray(ids) || ids.length === 0) return null;
+  if (!hasCredit || !Array.isArray(ids) || ids.length === 0) return null;
   const artists = artistMap(artistIndex);
   const links = ids.map((artistId) => {
     const artist = artists.get(artistId);
@@ -141,7 +144,12 @@ export function artistCreditLinks(track, artistIndex) {
 // Plain-text form of artistCreditLinks, falling back to the source credit.
 export function trackArtistText(track, artistIndex) {
   const links = artistCreditLinks(track, artistIndex);
-  return links?.map((link) => link.text).join(', ') || track?.artist || '';
+  return (
+    links?.map((link) => link.text).join(', ') ||
+    track?.artistCredits?.join(', ') ||
+    track?.artist ||
+    ''
+  );
 }
 
 // Track copy carrying the merged artist name; unchanged tracks keep identity.
@@ -157,6 +165,8 @@ export function artistSearchTexts(track, artistIndex) {
   const values = [];
   const seen = new Set();
   appendUniqueText(values, seen, track?.artist);
+  for (const credit of track?.artistCredits ?? [])
+    appendUniqueText(values, seen, credit);
 
   const ids = artistIndex?.trackArtistIds?.[track?.id];
   if (!Array.isArray(ids)) return values;

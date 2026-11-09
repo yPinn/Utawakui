@@ -111,14 +111,13 @@ vi.mock('../ui/UiIconButton.vue', () => ({
 
 vi.mock('./WorkVersionTrackRow.vue', () => ({
   default: {
-    props: ['track', 'versionLabel'],
+    props: ['track'],
     emits: ['play'],
     setup:
       (props, { emit }) =>
       () =>
         h('li', [
           props.track.title,
-          props.versionLabel,
           h(
             'button',
             {
@@ -284,7 +283,8 @@ describe('WorkVersionEditor mounted workflow', () => {
     );
   });
   it('shows the source-managed hint beside save only on the metadata tab', async () => {
-    const sourceManaged = '歌名、演唱者與封面由下載來源管理。';
+    const sourceManaged =
+      '下載來源保留原始歌名、演唱者與封面。可另設定顯示歌名或確認合作署名。';
     expect(textContent(mounted.root)).not.toContain(sourceManaged);
     trigger(button(t('work.editor.tabs.metadata')), 'onClick');
     await settle();
@@ -492,7 +492,7 @@ describe('WorkVersionEditor mounted workflow', () => {
       }),
     );
   });
-  it('calls an unnamed demo version Demo in related rows', async () => {
+  it('offers Demo in the editor without appending it to a related recording', async () => {
     bridge.getWorkOrganization.mockResolvedValueOnce(
       snapshot({
         work: { id: 'w', title: 'RASEN' },
@@ -507,7 +507,8 @@ describe('WorkVersionEditor mounted workflow', () => {
     );
     await owner.reload();
     await settle();
-    expect(textContent(mounted.root)).toContain('Demo · 翻唱');
+    expect(textContent(mounted.root)).toContain('Demo');
+    expect(textContent(mounted.root)).not.toContain('Demo · 翻唱');
     expect(textContent(mounted.root)).not.toContain('試唱');
   });
   it('places settings on the left and song linking plus related versions on the right', async () => {
@@ -711,7 +712,7 @@ describe('WorkVersionEditor mounted workflow', () => {
       offset: 100,
       limit: 100,
     });
-    expect(textContent(mounted.root)).toContain('Acoustic · 現場 · 翻唱');
+    expect(button('播放 Acoustic')).toBeTruthy();
     expect(button('載入更多')).toBeUndefined();
   });
   it('saves independent version dimensions without requiring a work or starting playback', async () => {
@@ -811,7 +812,7 @@ describe('WorkVersionEditor mounted workflow', () => {
     expect(button('加入一般佇列 Acoustic')).toBeUndefined();
     expect(button('加入演出待唱 Acoustic')).toBeUndefined();
   });
-  it('uses a named version without repeating all its classifications in related rows', async () => {
+  it('shows only the track title in related rows even when classifications are recorded', async () => {
     bridge.getWorkOrganization.mockResolvedValueOnce(
       snapshot({
         work: { id: 'w', title: 'RASEN' },
@@ -836,7 +837,8 @@ describe('WorkVersionEditor mounted workflow', () => {
       mounted.root,
       (node) => node.props?.['aria-labelledby'] === 'work-related-heading',
     )[0];
-    expect(textContent(related)).toContain('翻唱 Acoustic Live');
+    expect(textContent(related)).toContain('Acoustic');
+    expect(textContent(related)).not.toContain('翻唱 Acoustic Live');
     expect(textContent(related)).not.toContain('Acoustic · 現場');
     expect(textContent(related)).not.toContain('有人聲');
   });

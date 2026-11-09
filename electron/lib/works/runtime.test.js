@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkOrganizationRuntime } from './runtime.js';
-import { loadWorks, prepareTrackDeletion } from './organization.js';
+import { loadWorks, prepareTrackDeletion, saveWorks } from './organization.js';
 import { hashAudioFile } from './trackBinding.js';
 import { saveIndexEntry } from '../library/metadataIndex.js';
 import { importLocalAudioFiles } from '../library/importLocal.js';
@@ -53,6 +53,114 @@ afterEach(() => {
 });
 
 describe('Main work organization runtime', () => {
+  it('uses the exact Acoustic title for a linked cover without renaming either official recording', async () => {
+    saveIndexEntry(dir, 'one', {
+      title: '螺旋 - Acoustic Ver. - / Covered by Singer',
+    });
+    saveIndexEntry(dir, 'two', {
+      title: 'RASEN Acoustic Ver',
+      artist: '9Lana',
+    });
+    saveIndexEntry(dir, 'three', { title: 'RASEN', artist: '9Lana' });
+    const linked = await save('one', { kind: 'track', targetTrackId: 'two' });
+    await save(
+      'three',
+      { kind: 'track', targetTrackId: 'two' },
+      { relationship: 'original', versionInfo: {} },
+    );
+    const tracks = [
+      { id: 'one', title: '螺旋 - Acoustic Ver. - / Covered by Singer' },
+      { id: 'two', title: 'RASEN Acoustic Ver' },
+      { id: 'three', title: 'RASEN' },
+    ];
+    const projected = await runtime.projectTracks(dir, tracks);
+    expect(linked.work.title).toBe('RASEN');
+    expect(projected.map((track) => track.title)).toEqual(
+      tracks.map((track) => track.title),
+    );
+    for (const track of projected) {
+      expect(track.workPresentation).toMatchObject({
+        searchTitles: expect.arrayContaining(['螺旋', 'RASEN']),
+      });
+    }
+    expect(projected[0].workPresentation).toMatchObject({
+      title: 'RASEN Acoustic Ver',
+      referenceTrackId: 'two',
+    });
+    expect(
+      (
+        await runtime.projectTracks(dir, [tracks[0]], {
+          includeReferences: true,
+        })
+      )[0].workPresentation.title,
+    ).toBe('RASEN Acoustic Ver');
+    expect(
+      projected.slice(1).map(({ workPresentation }) => workPresentation.title),
+    ).toEqual(['', '']);
+    const legacy = loadWorks(dir);
+    delete legacy.trackProfiles.one.workLink.referenceTrackId;
+    const revision = legacy.revision++;
+    saveWorks(dir, legacy, revision);
+    expect(
+      (await runtime.projectTracks(dir, tracks))[0].workPresentation.title,
+    ).toBe('RASEN Acoustic Ver');
+    await save(
+      'one',
+      { kind: 'keep' },
+      { presentation: { inheritTitle: false } },
+    );
+    expect(
+      (await runtime.projectTracks(dir, tracks))[0].workPresentation.title,
+    ).toBe('');
+    audio('outside');
+    expect(
+      (await runtime.search({ trackId: 'outside', query: '螺旋' })).tracks
+        .map(({ id }) => id)
+        .sort(),
+    ).toEqual(['one', 'three', 'two']);
+  });
+  it('saves shared names, individual overrides and credits together and ignores a replaced binding', async () => {
+    saveIndexEntry(dir, 'one', {
+      title: 'Cover',
+      artist: 'ECHORA, Sabrina 胡恂舞',
+    });
+    saveIndexEntry(dir, 'two', { title: 'RASEN', artist: '9Lana' });
+    await save('one', { kind: 'track', targetTrackId: 'two' });
+    const presentation = {
+      displayTitle: '本地翻唱名稱',
+      inheritTitle: false,
+      artistCredits: ['ECHORA', 'Sabrina 胡恂舞'],
+      hintsReviewed: true,
+    };
+    const result = await save(
+      'one',
+      { kind: 'keep' },
+      {
+        presentation,
+        workDetails: { title: '螺旋', aliases: ['RASEN'] },
+      },
+    );
+    expect(result.presentation).toEqual(presentation);
+    const tracks = [
+      { id: 'one', title: 'Cover', artist: 'ECHORA, Sabrina 胡恂舞' },
+      { id: 'two', title: 'RASEN', artist: '9Lana' },
+    ];
+    const [cover, original] = await runtime.projectTracks(dir, tracks);
+    expect(cover).toMatchObject({
+      artist: tracks[0].artist,
+      artistCredits: presentation.artistCredits,
+      workPresentation: { title: presentation.displayTitle },
+    });
+    expect(original.workPresentation).toMatchObject({
+      title: '',
+      searchTitles: expect.arrayContaining(['螺旋', 'RASEN']),
+    });
+    fs.writeFileSync(path.join(dir, 'tracks/one/audio.mp3'), 'replacement');
+    expect((await runtime.projectTracks(dir, tracks))[0]).toEqual(tracks[0]);
+    expect(
+      (await runtime.get({ trackId: 'one' })).presentation,
+    ).toBeUndefined();
+  });
   it('awaits cancellable readers and releases their hold after the filesystem deletion', async () => {
     const barrier = Promise.withResolvers(),
       released = vi.fn();

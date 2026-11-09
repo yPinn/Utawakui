@@ -1,4 +1,5 @@
 <script setup>
+import { matchesTrackTitle } from '../../utils/trackTitlePresentation.js';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { ImagePlus, Search, Trash2, UserRound } from '../../icons/index.js';
@@ -294,8 +295,8 @@ const normalizedSearchQuery = computed(() =>
 function matchesSearch(track) {
   const query = normalizedSearchQuery.value;
   if (!query) return true;
+  if (matchesTrackTitle(track, query)) return true;
   return [
-    track.title,
     ...artistSearchTexts(track, artistIndexState.index),
     track.id,
     track.filename,
