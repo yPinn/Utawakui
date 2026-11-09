@@ -150,7 +150,7 @@ const {
   setSourceLabel,
   forkAuthoredLyrics,
   editAuthoredLyrics,
-  deleteSource,
+  deleteSource: deleteSourceDocument,
   importManualLyricsText,
   importManualLyricsFile,
 } = sourceDocuments;
@@ -174,6 +174,18 @@ const {
   saveLyricsCandidate,
   backfillSourceLabels,
 } = acquisition;
+
+async function deleteSource(filename) {
+  const trackId = state.selectedTrackId;
+  const result = await deleteSourceDocument(filename);
+  if (
+    result?.sources &&
+    !result.sources.some((source) => source.filename === filename)
+  ) {
+    acquisition.markStoredSourceRemoved(trackId, filename);
+  }
+  return result;
+}
 
 const lyricsDocument = computed(() =>
   normalizeLyricsDocument({

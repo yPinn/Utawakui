@@ -31,8 +31,9 @@
 Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marker 與 duration 重新分級：
 
 1. `exact` > `strong` > `related`。
-2. 同級內：完整 T2 > 完整 T1 > partial T2 > T0／instrumental／unsupported。完整 T2 指每一行都有通過 canonical validator 的 segments。
-3. 再以 duration delta、warnings、provider id、candidate id 做 deterministic tie-break。
+2. 錄音匹配同級時，依時長差分級（≤ 4 秒、≤ 15 秒、≤ 45 秒、> 45 秒、未知）。
+3. 時長差同級時，完整 T2 > 完整 T1 > partial T2 > T0 > instrumental > unsupported。完整 T2 指每一行都有通過 canonical validator 的 segments。
+4. 再依是否部分涵蓋、實際時長差、warning 數量、provider id、candidate id 排序。
 
 錯誤版本的 T2 不得越過正確版本的 T1。
 
@@ -101,6 +102,7 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 - 明確「擴大搜尋」保留原 hydration 候選，以原有可用數再加三筆為目標、最多20筆；不因已找到三筆而阻止取得其他版本。沒有可保留結果時可做至多三組 structured，另至多一組移除歌手限制的 query。擴搜最多七次 detail 嘗試，合計最多八次實際 attempt；不會因大量空歌詞遍歷所有 metadata。繁簡視為同一身份但不改寫內容。
 - 完整 YRC 每行、每個 segment 的時間、範圍、順序與文字都有效才算 T2；任一無效整筆降為 LRC 的 T1，不放寬 validator。2026-09-01 起匿名 YRC 可用率明顯下降，不得描述為穩定逐字來源。
 - 保存 `lyrics/netease-<id>[-n].lrc`、完整 T2 的 timing sidecar、`lyrics/providers/netease-<id>.json`（`netease-direct-http-v1` profile）。Hydration cache 依 track／query 隔離，最多 32 組。
+- 同一原始 record 在新版解析器可產出完整 T2 時，舊 T1 來源若仍符合原保存的 LRC 指紋且無 timing sidecar，候選標為可更新。手動確認後仍以 fresh refetch 驗證，原地保存並保留標籤、偏移、目前播放選擇及已存偏好。
 - 2026-08-29 owner 決定略過 Sentinel／30 日觀測直接實驗性接入；歷史隔離驗證見[研究報告](../research/lyrics-providers/netease-isolated-technical-validation-2026-08-28.md)。
 
 ### Better Lyrics

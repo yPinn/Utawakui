@@ -8,12 +8,16 @@ const {
   resolveTrackDir,
   setLyricsSourcePreference,
 } = require('../../lib/library');
+const { loadTrackLyricsTiming } = require('../../lib/library/lyricsTiming.js');
 const {
   loadStoredBetterLyricsArtifactSummary,
 } = require('../../lib/betterlyrics');
 const { probeMusixmatchLyrics } = require('../../lib/musixmatch');
 const { loadStoredLrclibArtifactSummary } = require('../../lib/lrclib');
 const { loadStoredNeteaseArtifactSummary } = require('../../lib/netease');
+const {
+  canUpgradeStoredNeteaseTiming,
+} = require('../../lib/netease/storage.js');
 const {
   loadStoredKugouArtifactSummary,
 } = require('../../lib/kugou/storage.js');
@@ -79,8 +83,21 @@ function mapCandidateStorageState(trackDir, providerId, result) {
     const legacySaved =
       candidateProviderId === 'lrclib' &&
       existingFilenames.has(`lrclib-${candidate.id}.lrc`);
+    const storedSourceFilename =
+      existingSource?.filename ??
+      (legacySaved ? `lrclib-${candidate.id}.lrc` : null);
+    const timingUpgrade =
+      candidateProviderId === 'netease' &&
+      candidate.compatibility?.t2 === true &&
+      stored?.lineSourceFingerprint &&
+      stored.recordFingerprint === candidate.previewFingerprint &&
+      canUpgradeStoredNeteaseTiming(
+        stored,
+        loadTrackLyricsTiming(trackDir, existingSource.filename),
+      );
     const saveState = stored
-      ? stored.recordFingerprint === candidate.previewFingerprint
+      ? stored.recordFingerprint === candidate.previewFingerprint &&
+        !timingUpgrade
         ? 'current'
         : 'update-available'
       : existingSource
@@ -94,6 +111,7 @@ function mapCandidateStorageState(trackDir, providerId, result) {
       candidateKey,
       saveState,
       alreadySaved: saveState === 'current',
+      ...(storedSourceFilename ? { storedSourceFilename } : {}),
       ...(stored ? { retrievedAt: stored.retrievedAt } : {}),
     };
   });
@@ -306,7 +324,7 @@ function registerLyricsAcquisitionHandlers({
         },
       );
       if (result.status !== 'saved') return result;
-      if (result.source?.filename) {
+      if (result.source?.filename && result.preserveSelection !== true) {
         setLyricsSourcePreference(trackDir, result.source.filename, 'user');
       }
       notifyLibraryUpdated();

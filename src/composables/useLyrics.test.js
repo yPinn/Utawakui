@@ -880,6 +880,7 @@ describe('useLyrics', () => {
           ...changed,
           alreadySaved: true,
           saveState: 'current',
+          storedSourceFilename: 'lrclib-42.lrc',
           retrievedAt: '2026-08-23T12:00:00.000Z',
         },
       ],
@@ -2080,6 +2081,56 @@ describe('useLyrics', () => {
     expect(deleteLyricsSourceMock).toHaveBeenCalledWith(trackA.id, 'en.vtt');
     expect(lyrics.state.selectedSourceFilename).toBe('replacement.lrc');
     expect(setLyricsSourcePreferenceMock).not.toHaveBeenCalled();
+  });
+
+  it('clears the saved status for the deleted source in retained search results', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    const stored = {
+      id: 42,
+      candidateKey: 'lrclib:42',
+      matchBand: 'exact',
+      alreadySaved: true,
+      saveState: 'current',
+      storedSourceFilename: 'en.vtt',
+      retrievedAt: '2026-08-23T10:00:00.000Z',
+    };
+    const other = {
+      ...stored,
+      id: 43,
+      candidateKey: 'lrclib:43',
+      storedSourceFilename: 'replacement.lrc',
+    };
+    searchLyricsProviderCandidatesMock.mockResolvedValue({
+      provider: 'all',
+      status: 'ok',
+      candidates: [stored, other],
+      recordingGroups: {
+        best: [
+          {
+            recommendedCandidateKey: stored.candidateKey,
+            candidates: [stored, other],
+          },
+        ],
+        related: [],
+      },
+    });
+
+    await lyrics.searchLyricsProviderCandidates('all', {
+      query: { title: 'Song', artist: 'Artist' },
+    });
+    expect(lyrics.state.candidateSearch.candidates[0]).toEqual(stored);
+    await lyrics.deleteSource('en.vtt');
+
+    const search = lyrics.state.candidateSearch;
+    const [removed] = search.candidates;
+    expect(removed).toMatchObject({
+      alreadySaved: false,
+      saveState: 'unsaved',
+    });
+    expect(removed).not.toHaveProperty('storedSourceFilename');
+    expect(removed).not.toHaveProperty('retrievedAt');
+    expect(search.candidates[1]).toEqual(other);
+    expect(search.recordingGroups.best[0].candidates).toEqual([removed, other]);
   });
 
   it('bounds local source edit, delete, and manual import failures', async () => {

@@ -5,9 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../lib/appError.js';
 
 import { saveLrclibRecord } from '../lib/lrclib.js';
-import { saveTrackLyricsText } from '../lib/library/lyrics.js';
+import {
+  getTrackLyricsState,
+  saveTrackLyricsText,
+  setLyricsSourceLabel,
+  setLyricsSourceOffset,
+  setLyricsSourcePreference,
+} from '../lib/library/lyrics.js';
 import { saveIndexEntry } from '../lib/library/metadataIndex.js';
-import { saveNeteaseRecord } from '../lib/netease.js';
+import { fingerprintNeteaseRecord, saveNeteaseRecord } from '../lib/netease.js';
 import { saveKugouRecord } from '../lib/kugou/storage.js';
 import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
 import documentHandlersModule from './lyrics/documentHandlers.js';
@@ -896,6 +902,7 @@ describe('lyrics timing IPC', () => {
       providerId: 'kugou',
       saveState: 'current',
       alreadySaved: true,
+      storedSourceFilename: saved.source.filename,
     });
     expect(result.candidates[0].retrievedAt).toBeTypeOf('string');
     await ipcMain.handlers.get('lyrics:delete-source')(
@@ -909,6 +916,96 @@ describe('lyrics timing IPC', () => {
     expect(
       fs.existsSync(path.join(trackDir, 'lyrics', saved.source.filename)),
     ).toBe(false);
+  });
+
+  it('updates a stored NetEase T1 to T2 in place when the provider record is unchanged', async () => {
+    const record = {
+      id: 77,
+      trackName: 'Song',
+      artistName: 'Artist',
+      artists: ['Artist'],
+      duration: 180,
+      yrcLyrics: '[1000,1000](1000,500,0)Song(1500,500,0) ',
+      lrcLyrics: '[00:01.000]Song',
+    };
+    const { source } = saveNeteaseRecord(trackDir, {
+      ...record,
+      yrcLyrics: '',
+    });
+    const artifactPath = path.join(
+      trackDir,
+      'lyrics/providers/netease-77.json',
+    );
+    const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    const fingerprint = fingerprintNeteaseRecord(record);
+    fs.writeFileSync(
+      artifactPath,
+      JSON.stringify({
+        ...artifact,
+        record,
+        hashes: { ...artifact.hashes, record: fingerprint },
+      }),
+    );
+    setLyricsSourceLabel(trackDir, source.filename, 'My label');
+    setLyricsSourceOffset(trackDir, source.filename, -850);
+    setLyricsSourcePreference(trackDir, source.filename, 'automatic');
+
+    lyricsAcquisitionService.searchProviderCandidates.mockResolvedValue({
+      provider: 'netease',
+      status: 'ok',
+      candidates: [
+        {
+          id: 77,
+          previewFingerprint: fingerprint,
+          capability: { level: 'T2', partial: false },
+          compatibility: { t2: true },
+        },
+      ],
+    });
+    lyricsAcquisitionService.saveProviderCandidate.mockImplementation(
+      async () => saveNeteaseRecord(trackDir, record),
+    );
+    const search = ipcMain.handlers.get('lyrics:search-provider-candidates');
+    const save = ipcMain.handlers.get('lyrics:save-provider-candidate');
+    const sourcePath = path.join(trackDir, 'lyrics', source.filename);
+    const originalSource = fs.readFileSync(sourcePath, 'utf8');
+    await expect(search(null, 'netease', 'track-a')).resolves.toMatchObject({
+      candidates: [{ saveState: 'update-available', alreadySaved: false }],
+    });
+    fs.writeFileSync(sourcePath, '[00:01.000]Local edit\n');
+    await expect(
+      save(null, 'netease', 'track-a', 77, fingerprint),
+    ).resolves.toMatchObject({
+      status: 'unavailable',
+      reason: 'stale-search',
+    });
+    expect(fs.readFileSync(sourcePath, 'utf8')).toContain('Local edit');
+    fs.writeFileSync(sourcePath, originalSource);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await expect(
+        save(null, 'netease', 'track-a', 77, fingerprint),
+      ).resolves.toMatchObject({
+        status: 'saved',
+        preserveSelection: true,
+        source: { filename: source.filename },
+        timing: { status: 'current', document: { granularity: 'T2' } },
+      });
+    }
+    expect(getTrackLyricsState(trackDir)).toMatchObject({
+      preferredSourceFilename: source.filename,
+      preferenceOrigin: 'automatic',
+      sources: expect.arrayContaining([
+        expect.objectContaining({
+          filename: source.filename,
+          label: 'My label',
+          offsetMs: -850,
+        }),
+      ]),
+    });
+    await expect(search(null, 'netease', 'track-a')).resolves.toMatchObject({
+      candidates: [{ saveState: 'current', alreadySaved: true }],
+    });
   });
 
   it('passes NetEase save through main-owned track and query resolution', async () => {

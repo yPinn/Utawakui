@@ -270,6 +270,20 @@ describe('candidate save lifetime', () => {
     );
   });
 
+  it('refreshes an in-place timing upgrade without switching the active source', async () => {
+    const h = harness();
+    h.save.mockResolvedValue({
+      status: 'saved',
+      preserveSelection: true,
+      source: { filename: 'netease-42.lrc' },
+    });
+
+    await h.saveLyricsProviderCandidate('netease', candidate);
+
+    expect(h.refreshLibrary).toHaveBeenCalledOnce();
+    expect(h.selectSource).not.toHaveBeenCalled();
+  });
+
   it('distinguishes a committed save whose library refresh failed', async () => {
     const h = harness();
     h.save.mockResolvedValue({

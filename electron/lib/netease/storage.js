@@ -111,6 +111,14 @@ function buildTimingDocument(recordId, filename, sourceSha256, document) {
   );
 }
 
+function canUpgradeStoredNeteaseTiming(stored, timing) {
+  return (
+    typeof stored?.lineSourceFingerprint === 'string' &&
+    timing.status === 'missing' &&
+    timing.sourceFingerprint === stored.lineSourceFingerprint
+  );
+}
+
 function saveNeteaseRecord(trackDir, record, options = {}) {
   const analysis = analyzeNeteaseLyrics(record);
   if (
@@ -164,6 +172,52 @@ function saveNeteaseRecord(trackDir, record, options = {}) {
     existing?.filename || allocateSourceFilename(trackDir, record.id);
   if (!sourceFilename) throw new Error('unable to allocate a lyrics filename');
 
+  const stored = existing
+    ? loadStoredNeteaseArtifactSummary(trackDir, existing.provider)
+    : null;
+  const preserveSelection =
+    analysis.compatibility.t2 &&
+    stored?.recordFingerprint === recordFingerprint;
+  const source = preserveSelection
+    ? existing
+    : {
+        filename: sourceFilename,
+        language: 'und',
+        kind: 'netease',
+        ...(record.albumName || record.artistName
+          ? { label: record.albumName || record.artistName }
+          : {}),
+        provider: {
+          name: 'netease',
+          recordId: record.id,
+          artifactFilename,
+        },
+      };
+  const result = {
+    status: 'saved',
+    source: {
+      filename: source.filename,
+      language: source.language,
+      kind: source.kind,
+      ...(source.label ? { label: source.label } : {}),
+    },
+    capability: analysis.capability,
+    compatibility: analysis.compatibility,
+    warnings: analysis.warnings,
+    recordFingerprint,
+    retrievedAt,
+    ...(preserveSelection ? { preserveSelection: true } : {}),
+  };
+  if (preserveSelection) {
+    const timing = loadTrackLyricsTiming(trackDir, sourceFilename);
+    if (timing.status === 'current' && timing.document.granularity === 'T2') {
+      return { ...result, timing, retrievedAt: stored.retrievedAt };
+    }
+    if (!canUpgradeStoredNeteaseTiming(stored, timing)) {
+      return { status: 'unavailable', reason: 'stale-search' };
+    }
+  }
+
   const sourcePath = path.join(trackDir, 'lyrics', sourceFilename);
   const timingPath = timingSidecarPath(trackDir, sourceFilename);
   const manifestPath = path.join(trackDir, 'lyrics', 'lyrics.json');
@@ -182,20 +236,6 @@ function saveNeteaseRecord(trackDir, record, options = {}) {
         analysis.document,
       )
     : null;
-  const source = {
-    filename: sourceFilename,
-    language: 'und',
-    kind: 'netease',
-    ...(record.albumName || record.artistName
-      ? { label: record.albumName || record.artistName }
-      : {}),
-    provider: {
-      name: 'netease',
-      recordId: record.id,
-      artifactFilename,
-    },
-  };
-
   try {
     fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
     atomicWriteJson(artifactPath, artifact);
@@ -230,18 +270,7 @@ function saveNeteaseRecord(trackDir, record, options = {}) {
   }
 
   return {
-    status: 'saved',
-    source: {
-      filename: source.filename,
-      language: source.language,
-      kind: source.kind,
-      ...(source.label ? { label: source.label } : {}),
-    },
-    capability: analysis.capability,
-    compatibility: analysis.compatibility,
-    warnings: analysis.warnings,
-    recordFingerprint,
-    retrievedAt,
+    ...result,
     timing: loadTrackLyricsTiming(trackDir, sourceFilename),
   };
 }
@@ -281,6 +310,10 @@ function loadStoredNeteaseArtifactSummary(trackDir, provider) {
     return {
       recordFingerprint: artifact.hashes.record,
       retrievedAt: new Date(artifact.retrievedAt).toISOString(),
+      ...(artifact.capability?.level === 'T1' &&
+      SHA256_RE.test(artifact.hashes.compatibilitySource)
+        ? { lineSourceFingerprint: artifact.hashes.compatibilitySource }
+        : {}),
     };
   } catch {
     return null;
@@ -303,6 +336,7 @@ function deleteStoredNeteaseSource(trackDir, sourceFilename) {
 
 module.exports = {
   PROVIDER_ARTIFACT_SCHEMA_VERSION,
+  canUpgradeStoredNeteaseTiming,
   deleteStoredNeteaseSource,
   loadStoredNeteaseArtifactSummary,
   saveNeteaseRecord,

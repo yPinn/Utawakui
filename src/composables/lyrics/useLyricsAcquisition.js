@@ -161,6 +161,20 @@ export function useLyricsAcquisition({
     };
   }
 
+  function markStoredSourceRemoved(trackId, filename) {
+    const search = state.candidateSearch;
+    if (search.trackId !== trackId) return;
+    const candidate = search.candidates.find(
+      (item) => item.storedSourceFilename === filename,
+    );
+    if (!candidate) return;
+
+    const unsaved = { ...candidate, alreadySaved: false, saveState: 'unsaved' };
+    delete unsaved.storedSourceFilename;
+    delete unsaved.retrievedAt;
+    replaceCandidate(unsaved);
+  }
+
   async function ensureLyricsFlow(options = {}) {
     const enabled = await requireFeatureGate(FEATURE_IDS.LYRICS_FLOW, {
       source: 'lyrics',
@@ -509,9 +523,13 @@ export function useLyricsAcquisition({
           : {}),
         alreadySaved: true,
         saveState: 'current',
+        storedSourceFilename: result.source.filename,
         ...(result.retrievedAt ? { retrievedAt: result.retrievedAt } : {}),
       });
-      if (state.selectedTrackId === track.id) {
+      if (
+        state.selectedTrackId === track.id &&
+        result.preserveSelection !== true
+      ) {
         selectSource(result.source.filename);
       }
       return result;
@@ -588,6 +606,7 @@ export function useLyricsAcquisition({
   return {
     clearMusixmatchProbe,
     clearCandidateSearch,
+    markStoredSourceRemoved,
     ensureLyricsFlow,
     probeMusixmatch,
     searchLyricsProviderCandidates,
