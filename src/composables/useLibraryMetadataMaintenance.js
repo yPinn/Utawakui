@@ -87,37 +87,25 @@ function createSession(
         if (!['complete', 'cancelled', 'interrupted'].includes(result?.status))
           throw new Error('Invalid result');
         state.error = false;
-        const count = (key, value) => t(key, { count: value }, value);
-        // Independent sentences, joined per locale.
-        const sentences = [];
-        if (result.status === 'cancelled')
-          sentences.push(
-            count('librarySettings.metadata.stopped', result.updated),
+        const count = (key) =>
+          t(
+            `librarySettings.metadata.${key}`,
+            { count: result.updated },
+            result.updated,
           );
+        if (result.status === 'cancelled') state.message = count('stopped');
         else if (result.status === 'interrupted') {
           state.error = true;
-          sentences.push(
-            count('librarySettings.metadata.interrupted', result.updated),
-          );
+          state.message = count('interrupted');
         } else if (result.total === 0)
-          sentences.push(t('librarySettings.metadata.nothingToFill'));
-        else {
-          sentences.push(
-            count('librarySettings.metadata.filled', result.updated),
+          state.message = t('librarySettings.metadata.nothingToFill');
+        else if (result.unresolved > 0)
+          state.message = t(
+            'librarySettings.metadata.filledWithIssues',
+            { updated: result.updated, count: result.unresolved },
+            result.unresolved,
           );
-          if (result.unresolved)
-            sentences.push(
-              count('librarySettings.metadata.unresolved', result.unresolved),
-            );
-        }
-        if (result.needsConfirmation > 0)
-          sentences.push(
-            count(
-              'librarySettings.metadata.needsConfirmation',
-              result.needsConfirmation,
-            ),
-          );
-        state.message = sentences.join(t('common.sentenceJoin'));
+        else state.message = count('filled');
         return result.status === 'complete';
       } catch {
         if (stale) return false;
@@ -158,7 +146,6 @@ function createSession(
             {
               completed: state.progress.completed,
               total: state.progress.total,
-              updated: state.progress.updated,
             },
           )
         : state.message,

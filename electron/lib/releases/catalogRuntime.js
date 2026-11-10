@@ -29,6 +29,11 @@ const sourceAlbum = (collection) =>
   collection.kind === 'album' &&
   ['youtube', 'yt-music'].includes(collection.source?.platform) &&
   SOURCE.test(collection.source.id);
+function resultLabel(value) {
+  return typeof value === 'string' && !hasControlCharacters(value)
+    ? value.trim().slice(0, 300)
+    : '';
+}
 function failure(code = 'RELEASE_CATALOG_INVALID') {
   return Object.assign(new Error('Release catalog operation failed.'), {
     code,
@@ -326,6 +331,11 @@ function createReleaseCatalogService({
       },
     };
     active = job;
+    const issues = [];
+    const recordUnresolved = (target, reason) => {
+      job.result.unresolved++;
+      if (!request) issues.push({ ...target.label, reason });
+    };
     const publish = () => {
       try {
         onProgress({ ...job.result });
@@ -345,17 +355,25 @@ function createReleaseCatalogService({
         );
       };
       const albumTarget = (entry) => ({
-        action: 'album',
-        playlistId: entry.source.id,
+        intent: { action: 'album', playlistId: entry.source.id },
+        label: { kind: 'album', title: resultLabel(entry.name) },
         ...((automatic || !request) && fresh(entry)
           ? { savedManifest: entry.releaseInfo.catalog.manifest }
           : {}),
       });
+      const trackTarget = (track) => ({
+        intent: { action: 'resolve', videoId: track.id },
+        label: {
+          kind: 'track',
+          title: track.title === track.id ? '' : resultLabel(track.title),
+          artist: resultLabel(track.artist),
+        },
+      });
       let targets;
       if (request?.trackId) {
         const trackId = id(request.trackId);
-        if (!tracks.some((track) => track.id === trackId))
-          throw failure('RELEASE_NOT_FOUND');
+        const track = tracks.find((entry) => entry.id === trackId);
+        if (!track) throw failure('RELEASE_NOT_FOUND');
         const known = collections.filter((entry) =>
           entry.releaseInfo?.catalog?.manifest.slots.some(
             (slot) => slot.videoId === trackId,
@@ -364,7 +382,7 @@ function createReleaseCatalogService({
         targets = known.length
           ? known.map(albumTarget)
           : VIDEO.test(trackId)
-            ? [{ action: 'resolve', videoId: trackId }]
+            ? [trackTarget(track)]
             : [];
         if (!targets.length) job.result.needsConfirmation++;
       } else if (request?.collectionId) {
@@ -384,12 +402,14 @@ function createReleaseCatalogService({
             albums.map((entry) => [entry.source.id, albumTarget(entry)]),
           ).values(),
           ...tracks
-            .filter((track) => VIDEO.test(track.id) && !covered.has(track.id))
-            .map((track) => ({ action: 'resolve', videoId: track.id })),
+            .filter(
+              (track) =>
+                track.sourceType !== 'local-file' &&
+                VIDEO.test(track.id) &&
+                !covered.has(track.id),
+            )
+            .map(trackTarget),
         ];
-        job.result.needsConfirmation = tracks.filter(
-          (track) => !VIDEO.test(track.id) && !covered.has(track.id),
-        ).length;
       }
       job.result.total = targets.length;
       publish();
@@ -397,13 +417,16 @@ function createReleaseCatalogService({
       for (const target of targets) {
         if (controller.signal.aborted) break;
         admit(scope);
-        if (target.playlistId && completedSources.has(target.playlistId)) {
+        const { intent: workerIntent, savedManifest } = target;
+        if (
+          workerIntent.playlistId &&
+          completedSources.has(workerIntent.playlistId)
+        ) {
           job.result.completed++;
           continue;
         }
         const before = loadPlaylists(scope.dir);
         try {
-          const { savedManifest, ...workerIntent } = target;
           const result = savedManifest
             ? { status: 'ok', manifest: savedManifest }
             : await runWorker(workerIntent, { signal: controller.signal });
@@ -424,12 +447,16 @@ function createReleaseCatalogService({
               if (!previous || revision(saved) !== revision(previous))
                 job.result.updated++;
             }
-          } else job.result.unresolved++;
+          } else
+            recordUnresolved(
+              target,
+              result.status === 'no-match' ? 'no-match' : 'failed',
+            );
         } catch (error) {
           if (controller.signal.aborted) break;
           admit(scope);
           report(error);
-          job.result.unresolved++;
+          recordUnresolved(target, 'failed');
         }
         job.result.completed++;
         publish();
@@ -445,7 +472,7 @@ function createReleaseCatalogService({
       active = null;
       publish();
     }
-    return { ...job.result };
+    return request ? { ...job.result } : { ...job.result, issues };
   }
   function refresh(request) {
     if (request !== undefined) {

@@ -67,7 +67,7 @@ describe('useLibraryMetadataMaintenance', () => {
     });
     expect(await current.session.refresh()).toBe(false);
     expect(current.session.state.error).toBe(true);
-    expect(current.session.feedback.value).toContain('目前無法更新');
+    expect(current.session.feedback.value).toBe('更新失敗，請重試。');
   });
   it('allows retry after a failed stop without losing the pending update', async () => {
     const current = setup();
@@ -94,7 +94,7 @@ describe('useLibraryMetadataMaintenance', () => {
     );
     await current.session.cancel();
     expect(current.session.state.cancelling).toBe(false);
-    expect(current.session.feedback.value).toContain('目前無法停止');
+    expect(current.session.feedback.value).toBe('停止失敗，請重試。');
     await current.session.cancel();
     expect(current.session.state.cancelling).toBe(true);
     expect(current.session.feedback.value).toContain('停止中');
@@ -106,22 +106,28 @@ describe('useLibraryMetadataMaintenance', () => {
   it('never queries automatically and reports complete, incomplete, empty and interrupted outcomes', async () => {
     for (const [result, message] of [
       [
-        { status: 'complete', total: 2, updated: 1, unresolved: 1 },
-        '仍有 1 個來源資訊不完整',
+        {
+          status: 'complete',
+          total: 2,
+          updated: 1,
+          unresolved: 1,
+          needsConfirmation: 1,
+        },
+        '已更新 1 張 · 1 項待查看',
       ],
       [
         { status: 'complete', total: 0, updated: 0, unresolved: 0 },
-        '目前沒有可從來源補齊的作品',
+        '沒有可補齊的線上來源。',
       ],
       [
         { status: 'interrupted', total: 2, updated: 1, unresolved: 0 },
-        '更新中斷，已補齊 1 張作品',
+        '更新中斷 · 已更新 1 張',
       ],
     ]) {
       const current = setup({ libraryEpoch: 1, ...result });
       expect(current.bridge.refreshReleaseMetadata).not.toHaveBeenCalled();
       await current.session.refresh();
-      expect(current.session.feedback.value).toContain(message);
+      expect(current.session.feedback.value).toBe(message);
       expect(current.disposeProgress).toHaveBeenCalledOnce();
       expect(current.disposeScope).toHaveBeenCalledOnce();
       expect(current.session.state.busy).toBe(false);
@@ -153,7 +159,7 @@ describe('useLibraryMetadataMaintenance', () => {
     expect(remounted.feedback.value).toContain('停止中');
     resolve({ status: 'cancelled', libraryEpoch: 1, updated: 1 });
     await pending;
-    expect(remounted.feedback.value).toContain('已停止，已補齊 1 張作品');
+    expect(remounted.feedback.value).toBe('已停止 · 已更新 1 張');
     expect(current.bridge.refreshReleaseMetadata).toHaveBeenCalledOnce();
   });
   it('ignores old-library progress and results after a scope change, even before initial progress', async () => {

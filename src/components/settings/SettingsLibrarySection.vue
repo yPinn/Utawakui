@@ -40,6 +40,9 @@ const downloadDirUnavailableMessage = computed(() =>
     ? t('librarySettings.location.defaultUnavailable')
     : t('librarySettings.location.customUnavailable'),
 );
+const libraryUnavailable = computed(
+  () => Boolean(importState.configError) || !importState.isDownloadDirAvailable,
+);
 const downloadDirMenuAnchor = computed(() => ({
   kind: 'element',
   element: downloadDirMenuAnchorEl.value,
@@ -220,13 +223,9 @@ onUnmounted(() => libraryStorage.dispose());
       @cleanup="handleCleanupLibraryStorage"
     />
 
-    <LibraryMetadataSettingsRow />
+    <LibraryMetadataSettingsRow :disabled="libraryUnavailable" />
 
-    <LibraryStyleCandidatesSettingsRow
-      :disabled="
-        Boolean(importState.configError) || !importState.isDownloadDirAvailable
-      "
-    />
+    <LibraryStyleCandidatesSettingsRow :disabled="libraryUnavailable" />
 
     <PlaybackHistorySettingsRow
       :record-count="recentItems.length"

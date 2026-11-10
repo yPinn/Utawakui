@@ -168,7 +168,9 @@ describe('SettingsView behavior wiring', () => {
     expect(librarySource).toContain(':policy="libraryStorage.policy.value"');
     expect(librarySource).toContain('@set-policy="libraryStorage.setPolicy"');
     expect(librarySource).toContain('@cleanup="handleCleanupLibraryStorage"');
-    expect(librarySource).toContain('<LibraryMetadataSettingsRow />');
+    expect(librarySource).toContain(
+      '<LibraryMetadataSettingsRow :disabled="libraryUnavailable" />',
+    );
     expect(source).toContain('libraryStorage.initialize(),');
     expect(source).toContain('libraryStorage.dispose');
     expect(source).toContain("title: '清理去人聲空間？'");

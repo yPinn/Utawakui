@@ -265,12 +265,14 @@ it('never overwrites a user cover chosen while a source catalog is being verifie
   );
   expect(loadPlaylists(dir)[0].coverImage).toBe('cover.jpg');
 });
-it('bounds candidate intent, empty legacy scans and cancelled pending import work', async () => {
+it('skips unlinked local tracks in bulk while allowing explicit confirmation', async () => {
   tracks = [{ id: 'local-file', title: 'Song', artist: 'Artist' }];
   expect(await service.refresh()).toMatchObject({
     total: 0,
-    needsConfirmation: 1,
+    needsConfirmation: 0,
+    issues: [],
   });
+  expect(runWorker).not.toHaveBeenCalled();
   expect(await service.refresh({ trackId: 'local-file' })).toMatchObject({
     total: 0,
     needsConfirmation: 1,
@@ -308,6 +310,45 @@ it('bounds candidate intent, empty legacy scans and cancelled pending import wor
       slotKey: 'slot-1',
     }),
   ).rejects.toMatchObject({ code: 'RELEASE_INFO_CONFLICT' });
+});
+it('returns named batch issues in query order without provider internals', async () => {
+  upsertAlbum(dir, {
+    name: 'Saved release',
+    source: { platform: 'youtube', id: 'OLAK5uy_offline' },
+    trackIds: ['local-file'],
+  });
+  tracks.push(
+    { id: second, title: 'Cover', artist: 'Other singer' },
+    { id: 'local123456', title: 'Local', sourceType: 'local-file' },
+  );
+  runWorker
+    .mockResolvedValueOnce({ status: 'no-match' })
+    .mockResolvedValueOnce({ status: 'no-match' })
+    .mockRejectedValueOnce(new Error('Private provider details'));
+  expect(await service.refresh()).toEqual({
+    status: 'complete',
+    libraryEpoch: 1,
+    total: 3,
+    completed: 3,
+    updated: 0,
+    unresolved: 3,
+    needsConfirmation: 0,
+    issues: [
+      { kind: 'album', title: 'Saved release', reason: 'no-match' },
+      { kind: 'track', title: 'Song', artist: 'Artist', reason: 'no-match' },
+      {
+        kind: 'track',
+        title: 'Cover',
+        artist: 'Other singer',
+        reason: 'failed',
+      },
+    ],
+  });
+  expect(runWorker.mock.calls.map(([intent]) => intent)).toEqual([
+    { action: 'album', playlistId: 'OLAK5uy_offline' },
+    { action: 'resolve', videoId: video },
+    { action: 'resolve', videoId: second },
+  ]);
 });
 it('keeps changed source positions out of Main playback, and deduplicates cached import reconciliation', async () => {
   await service.refresh({ trackId: video });

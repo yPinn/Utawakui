@@ -1,9 +1,9 @@
 <script setup>
-import { shallowRef } from 'vue';
-import { Tag } from '../../icons/index.js';
+import { computed, shallowRef } from 'vue';
+import { Eye, FolderInput, Tag } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
-import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import SettingsActionMenuButton from './SettingsActionMenuButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import LibraryStyleAdoptionModal from './LibraryStyleAdoptionModal.vue';
 
@@ -12,6 +12,16 @@ const busy = shallowRef(false);
 const feedback = shallowRef('');
 const failed = shallowRef(false);
 const adoptionOpen = shallowRef(false);
+const actions = computed(() => [
+  { id: 'import', label: t('trackStyle.importCandidates'), icon: FolderInput },
+  { id: 'preview', label: t('trackStyle.adoptionPreview'), icon: Eye },
+]);
+
+function manage(action) {
+  if (props.disabled || busy.value) return;
+  if (action === 'import') importCandidates();
+  else if (action === 'preview') adoptionOpen.value = true;
+}
 
 function reportAdoption(result) {
   failed.value = false;
@@ -19,7 +29,6 @@ function reportAdoption(result) {
 }
 
 async function importCandidates() {
-  if (props.disabled || busy.value) return;
   busy.value = true;
   feedback.value = '';
   failed.value = false;
@@ -55,21 +64,14 @@ async function importCandidates() {
     :guidance="t('trackStyle.importGuidance')"
   >
     <template #actions>
-      <UiButton
-        variant="secondary"
+      <SettingsActionMenuButton
         :disabled="disabled"
         :loading="busy"
         :loading-label="t('trackStyle.importing')"
-        @click="importCandidates"
-        >{{ t('trackStyle.importCandidates') }}</UiButton
-      >
-      <UiButton
-        variant="secondary"
-        :disabled="disabled || busy"
-        @click="adoptionOpen = true"
-      >
-        {{ t('trackStyle.adoptionPreview') }}
-      </UiButton>
+        :label="t('trackStyle.manageCandidates')"
+        :items="actions"
+        @select="manage"
+      />
     </template>
     <template v-if="feedback" #feedback>
       <UiHint
