@@ -36,7 +36,7 @@
 
 ## 音訊處理與分析
 
-- [導唱估音、聲部與主唱活動研究收斂](audio/reference-pitch-lead-activity-summary-2026-11-10.md)（11-10）整理八度、雙音高、角色與停唱離線結果，以及下一輪獨立留出提案。
+- [導唱估音、聲部與主唱活動研究收斂](audio/reference-pitch-lead-activity-summary-2026-11-10.md)（11-10）整理停唱跨曲結果、哼唱誤刪、下一輪驗收條件及前期聲部研究。
 - [曲庫標註與歌曲電台](audio/library-style-taxonomy-2026-11-08.md)（11-08）涵蓋曲風詞表、演唱語言、候選覆核與電台試聽。[Ballad 逐曲證據與錄音版本](audio/library-ballad-holdout-2026-11-08.md)保留固定分母、上下文試作與版本例外。
 - [原唱音高、停唱與音符切段研究收斂](audio/reference-pitch-note-boundary-summary-2026-11-06.md)（11-07）：分離與預覽的 CPU／GPU 量測、平滑與手動反相的採用範圍、離線音符切段與實唱對照的重開條件。
 - [Mic 輸入原型首輪驗證](audio/microphone-input-r02-2026-10-30.md)（10-30）：開發原型的原生權限、合成輸入與停止清理；保留初始裝置底限與後續 B1 有聲重試，完整品質待驗。
