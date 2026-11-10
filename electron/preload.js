@@ -1141,6 +1141,31 @@ contextBridge.exposeInMainWorld('Utawakui', {
   cancelWaveform: (requestId) =>
     ipcRenderer.invoke('waveform:cancel', { requestId }),
   clearWaveform: (trackId) => ipcRenderer.invoke('waveform:clear', { trackId }),
+  getLyricsTranslations: (trackId, filename, session, documentId) =>
+    ipcRenderer.invoke(
+      'lyrics:get-translations',
+      trackId,
+      filename,
+      projectLyricsSession(session),
+      documentId,
+    ),
+  saveLyricsTranslations: (
+    trackId,
+    filename,
+    session,
+    documentId,
+    revision,
+    rows,
+  ) =>
+    ipcRenderer.invoke(
+      'lyrics:save-translations',
+      trackId,
+      filename,
+      projectLyricsSession(session),
+      documentId,
+      revision,
+      rows,
+    ),
   getLyricsVocalRoles: (trackId, filename, documentId) =>
     ipcRenderer.invoke('lyrics:get-vocal-roles', trackId, filename, documentId),
   saveLyricsVocalRoles: (
@@ -1400,6 +1425,34 @@ contextBridge.exposeInMainWorld('Utawakui', {
       ipcRenderer.removeListener('lyrics:reading-progress', listener);
   },
   deleteTrack: (trackId) => ipcRenderer.invoke('library:delete-track', trackId),
+  getTrackVideo: (trackId, includeSource = false) =>
+    ipcRenderer.invoke('track-video:get', { trackId, includeSource }),
+  pickTrackVideo: (trackId) =>
+    ipcRenderer.invoke('track-video:pick', { trackId }),
+  getTrackVideoFormats: (trackId, videoId) =>
+    ipcRenderer.invoke('track-video:formats', { trackId, videoId }),
+  previewTrackVideoSource: (trackId, videoId) =>
+    ipcRenderer.invoke('track-video:preview', { trackId, videoId }),
+  downloadTrackVideo: (trackId, token, formatId, permitted) =>
+    ipcRenderer.invoke('track-video:download', {
+      trackId,
+      token,
+      formatId,
+      permitted,
+    }),
+  getTrackVideoStatus: (trackId) =>
+    ipcRenderer.invoke('track-video:status', { trackId }),
+  cancelTrackVideo: (trackId) =>
+    ipcRenderer.invoke('track-video:cancel', { trackId }),
+  saveTrackVideo: (trackId, token, offsetMs) =>
+    ipcRenderer.invoke('track-video:save', { trackId, token, offsetMs }),
+  removeTrackVideo: (trackId) =>
+    ipcRenderer.invoke('track-video:remove', { trackId }),
+  onTrackVideoChanged: (callback) => {
+    const listener = (_event, trackId) => callback(trackId);
+    ipcRenderer.on('track-video:changed', listener);
+    return () => ipcRenderer.removeListener('track-video:changed', listener);
+  },
   saveTrackEdits: (trackId, fields) =>
     ipcRenderer.invoke(
       'library:save-track-edits',

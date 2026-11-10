@@ -59,7 +59,11 @@ const IMAGE_MIME_TYPES = {
   '.png': 'image/png',
   '.webp': 'image/webp',
 };
-const MIME_TYPES = { ...AUDIO_MIME_TYPES, ...IMAGE_MIME_TYPES };
+const MIME_TYPES = {
+  ...AUDIO_MIME_TYPES,
+  ...IMAGE_MIME_TYPES,
+  '.mp4': 'video/mp4',
+};
 const AUDIO_EXTENSIONS = new Set(Object.keys(AUDIO_MIME_TYPES));
 const AUDIO_CONVERSION_EXTENSIONS = new Set(
   Object.keys(AUDIO_CONVERSION_FORMATS),

@@ -12,6 +12,7 @@ const {
   resolveFolderPageAssetPath,
 } = require('../lib/library/folderPageObjects');
 const { MEDIA_SCHEME } = require('./mediaScheme');
+const { resolveTrackVideoPath } = require('../lib/library/trackVideo');
 
 // Serves local audio files to the sandboxed renderer (nodeIntegration:
 // false means it has no direct filesystem access). Dispatches on
@@ -49,6 +50,7 @@ function registerMediaProtocol({
   resolveArtistPhotoPath: resolvePhotoPath = resolveArtistPhotoPath,
   resolveFolderPageAssetPath:
     resolveFolderAssetPath = resolveFolderPageAssetPath,
+  resolveVideoCandidate = () => null,
   logger = console,
 }) {
   protocol.handle(MEDIA_SCHEME, (request) => {
@@ -75,6 +77,15 @@ function registerMediaProtocol({
       } else {
         return notFoundResponse();
       }
+    } else if (
+      url.hostname === 'track-video' ||
+      url.hostname === 'video-candidate'
+    ) {
+      if (segments.length !== 2) return notFoundResponse();
+      filePath =
+        url.hostname === 'track-video'
+          ? resolveTrackVideoPath(dir, ...segments)
+          : resolveVideoCandidate(dir, ...segments);
     } else if (url.hostname === 'playlist-cover') {
       if (segments.length !== 2) return notFoundResponse();
       const [playlistId, coverFilename] = segments;

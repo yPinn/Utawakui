@@ -25,6 +25,7 @@ const {
   resolveTrackDir,
 } = require('./paths');
 const { deleteTrackReading } = require('./lyricsReadings');
+const { deleteTranslations } = require('./lyricsTranslations');
 const { deleteTrackVocalRoles } = require('./lyricsVocalRoles');
 const { deleteTrackAcousticEstimate } = require('./lyricsAcousticEstimates');
 const {
@@ -465,6 +466,7 @@ function deleteLyricsSource(trackDir, filename) {
   }
 
   deleteTrackReading(trackDir, filename);
+  deleteTranslations(trackDir, filename);
   deleteTrackVocalRoles(trackDir, filename);
   deleteTrackLyricsTiming(trackDir, filename);
   deleteTrackAcousticEstimate(trackDir, filename);

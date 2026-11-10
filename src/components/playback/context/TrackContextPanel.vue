@@ -115,6 +115,8 @@ const currentTrackFacts = computed(() => {
       </UiHint>
     </AppRightDockSection>
 
+    <slot name="video" />
+
     <TrackLyricsPreview
       v-if="currentTrack && (lyricsLoading || lyricsPreview?.lines?.length)"
       :preview="lyricsPreview"

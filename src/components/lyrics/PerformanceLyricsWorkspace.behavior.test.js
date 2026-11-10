@@ -76,6 +76,7 @@ beforeEach(async () => {
     }),
     lyricLines: shallowRef([{ lineId: 'a', text: 'あした' }]),
     activeLineIndex: shallowRef(0),
+    positionedLineIndex: shallowRef(0),
     initialize: vi.fn(),
     adjustOffset: vi.fn(),
     resetOffset: vi.fn(),
@@ -108,6 +109,24 @@ beforeEach(async () => {
   owners.reading.loadReading.mockClear();
 });
 afterEach(() => app.unmount());
+
+it('starts the video stage in 16:9', () => {
+  expect(vm.videoAspect).toBe('standard');
+});
+
+it('keeps the video caption on the positioned line through a gap and follows a backwards seek', () => {
+  owners.lyrics.activeLineIndex.value = -1;
+  owners.lyrics.positionedLineIndex.value = 0;
+  expect(vm.videoCaptionIndex).toBe(0);
+
+  owners.lyrics.activeLineIndex.value = 1;
+  owners.lyrics.positionedLineIndex.value = 2;
+  expect(vm.videoCaptionIndex).toBe(1);
+
+  owners.lyrics.activeLineIndex.value = -1;
+  owners.lyrics.positionedLineIndex.value = -1;
+  expect(vm.videoCaptionIndex).toBe(-1);
+});
 
 it('closes display before opening the shared manager and preserves a persistent focus target', async () => {
   const trigger = { focus: vi.fn() };

@@ -1,0 +1,17 @@
+{
+  "manage": "匯入與校對譯文",
+  "language": "譯文語言",
+  "off": "關閉",
+  "traditionalChinese": "繁中",
+  "english": "英文",
+  "importText": "貼上譯文",
+  "importHint": "每行對應一句原詞。缺譯請留空行，避免後面的譯文錯位。",
+  "importFile": "匯入 TXT",
+  "pair": "預覽配對",
+  "reviewHint": "逐行確認原詞與譯文。可在下方修改或移動譯文，留白的句子不顯示譯文。",
+  "row": "第 {number} 行的譯文",
+  "invalidImport": "請確認譯文行數沒有超過原詞，且每行在 1,000 字元以內。",
+  "invalidFile": "無法讀取這個檔案。請選擇 256 KB 以內的 UTF-8 TXT。",
+  "loadFailed": "無法讀取此歌詞來源的譯文。",
+  "saveFailed": "無法儲存譯文。請確認歌詞來源仍相同，或重新開啟校對。"
+}

@@ -135,6 +135,7 @@ function increaseFontSize() {
         </UiHint>
       </div>
     </UiField>
+    <slot name="presentation-options" />
     <div class="lyrics-display-controls__footer">
       <UiField
         :id="fontSizeId"

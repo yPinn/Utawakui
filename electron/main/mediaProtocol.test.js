@@ -26,6 +26,7 @@ function setup() {
   };
   const getConfig = vi.fn(() => ({ downloadDir: 'configured' }));
   const resolveDownloadDir = vi.fn(() => 'E:\\Library');
+  const resolveVideoCandidate = vi.fn(() => null);
   registerMediaProtocol({
     protocol,
     getConfig,
@@ -37,9 +38,17 @@ function setup() {
     resolveTrackPath: library.resolveTrackPath,
     resolveArtistPhotoPath: library.resolveArtistPhotoPath,
     resolveFolderPageAssetPath: library.resolveFolderPageAssetPath,
+    resolveVideoCandidate,
     logger,
   });
-  return { getConfig, handler, logger, protocol, resolveDownloadDir };
+  return {
+    getConfig,
+    handler,
+    logger,
+    protocol,
+    resolveDownloadDir,
+    resolveVideoCandidate,
+  };
 }
 
 function request(url, range = null) {
@@ -67,6 +76,37 @@ beforeEach(() => {
 });
 
 describe('registerMediaProtocol', () => {
+  it('serves candidate byte ranges only through the dedicated resolver', () => {
+    const { handler, resolveVideoCandidate } = setup();
+    resolveVideoCandidate.mockReturnValueOnce(
+      'E:\\Library\\verified-candidate.mp4',
+    );
+    expect(
+      handler(
+        request(
+          'utawakui-media://video-candidate/track-a/token',
+          'bytes=0-255',
+        ),
+      ).status,
+    ).toBe(206);
+    expect(resolveVideoCandidate).toHaveBeenCalledWith(
+      'E:\\Library',
+      'track-a',
+      'token',
+    );
+    expect(library.buildRangeResponse).toHaveBeenCalledWith(
+      'E:\\Library\\verified-candidate.mp4',
+      'bytes=0-255',
+    );
+    expect(
+      handler(request('utawakui-media://video-candidate/track-a/token/extra'))
+        .status,
+    ).toBe(404);
+    expect(
+      handler(request('utawakui-media://track-video/track-a/unknown')).status,
+    ).toBe(404);
+    expect(library.resolveTrackAssetPath).not.toHaveBeenCalled();
+  });
   it('registers the fixed scheme and forwards byte ranges for track assets', () => {
     const { getConfig, handler, protocol, resolveDownloadDir } = setup();
 

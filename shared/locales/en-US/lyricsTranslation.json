@@ -1,0 +1,17 @@
+{
+  "manage": "Import and review translations",
+  "language": "Translation language",
+  "off": "Off",
+  "traditionalChinese": "Traditional Chinese",
+  "english": "English",
+  "importText": "Paste translations",
+  "importHint": "Enter one translation per lyric line. Leave a blank line wherever a translation is missing to keep later lines aligned.",
+  "importFile": "Import TXT",
+  "pair": "Preview matches",
+  "reviewHint": "Review each pair. Edit or move translations below. Blank entries have no translation during playback.",
+  "row": "Translation for line {number}",
+  "invalidImport": "Use at most one translation per lyric line, with up to 1,000 characters per line.",
+  "invalidFile": "Could not read this file. Choose a UTF-8 TXT file up to 256 KB.",
+  "loadFailed": "Could not load translations for this lyrics source.",
+  "saveFailed": "Could not save translations. Check that the lyrics source is still the same, or reopen the editor."
+}

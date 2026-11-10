@@ -9,6 +9,7 @@ import {
 import { useSongEditor } from '../../composables/useSongEditor.js';
 import TrackMetadataFields from './TrackMetadataFields.vue';
 import TrackStyleTagsPanel from './TrackStyleTagsPanel.vue';
+import TrackVideoEditor from './TrackVideoEditor.vue';
 import TrackContextActions from '../playback/context/TrackContextActions.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import { useLibrary } from '../../composables/useLibrary.js';
@@ -40,6 +41,7 @@ const sourceActions = useTemplateRef('sourceActions');
 const tabs = [
   { id: 'metadata', label: t('work.editor.tabs.metadata') },
   { id: 'organization', label: t('work.editor.tabs.organization') },
+  { id: 'video', label: t('trackVideo.tab') },
 ];
 const { state } = editor;
 const { tracksById, initialize: initializeLibrary } = useLibrary();
@@ -411,6 +413,14 @@ onUnmounted(songEditor.dispose);
             </div>
           </template>
         </section>
+        <section
+          v-if="songEditor.state.section === 'video' && state.track?.id"
+          id="song-editor-video-panel"
+          role="tabpanel"
+          aria-labelledby="song-editor-video-tab"
+        >
+          <TrackVideoEditor :key="state.track.id" :track-id="state.track.id" />
+        </section>
       </UiScrollLayout>
     </template>
     <template #footer>
@@ -470,7 +480,10 @@ onUnmounted(songEditor.dispose);
               >{{ t('work.editor.close') }}</UiButton
             >
             <UiButton
-              v-if="state.snapshot?.bindingStatus === 'changed'"
+              v-if="
+                songEditor.state.section !== 'video' &&
+                state.snapshot?.bindingStatus === 'changed'
+              "
               variant="accent"
               :disabled="disabled"
               :loading="songEditor.state.saving"
@@ -479,7 +492,7 @@ onUnmounted(songEditor.dispose);
               >{{ t('work.editor.confirmAndSave') }}</UiButton
             >
             <UiButton
-              v-else
+              v-else-if="songEditor.state.section !== 'video'"
               variant="accent"
               :disabled="
                 disabled ||

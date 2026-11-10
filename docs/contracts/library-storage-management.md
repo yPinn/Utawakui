@@ -9,6 +9,7 @@
   預估大小。
 - 結構化 `audio.<ext>` 與 legacy root audio 計入「歌曲」。
 - `tracks/<trackId>/separations/*.wav` 中的分離音訊計入「去人聲」。
+- `tracks/<trackId>/video-<revision>.mp4` 計入「影片」，由曲目詳情手動移除。
 - 其他 sidecar、manifest、封面、歌詞、分析與未知檔案計入「其他」。未知檔案不得進入
   自動刪除候選。
 - Settings 關閉狀態只顯示「曲庫空間」、曲庫已使用容量與所在磁碟可用容量。分類、政策與

@@ -48,7 +48,8 @@ watch([() => state.section, () => work.state.track?.id], ([section, id]) => {
 });
 
 function setSection(section) {
-  if (['metadata', 'organization'].includes(section)) state.section = section;
+  if (['metadata', 'organization', 'video'].includes(section))
+    state.section = section;
 }
 async function close() {
   if (busy.value) return false;

@@ -10,6 +10,10 @@ const OPTION_FLAGS = Object.freeze([
   ['noPlaylist', '--no-playlist', 'boolean'],
   ['quiet', '--quiet', 'boolean'],
   ['noWarnings', '--no-warnings', 'boolean'],
+  ['newline', '--newline', 'boolean'],
+  ['progressTemplate', '--progress-template', 'value'],
+  ['noContinue', '--no-continue', 'boolean'],
+  ['maxFilesize', '--max-filesize', 'value'],
   ['flatPlaylist', '--flat-playlist', 'boolean'],
   ['playlistEnd', '--playlist-end', 'value'],
   ['output', '--output', 'value'],
@@ -167,27 +171,36 @@ function createPythonYtdlpRunner(runtime) {
       let settled = false;
       let idleTimer = null;
       let abortListener = null;
+      let interrupted = null;
+      let stdoutLine = '';
 
       function clearIdleTimer() {
         clearTimeout(idleTimer);
         idleTimer = null;
       }
 
+      function stopChild() {
+        try {
+          child.kill();
+        } catch {
+          // The process may already have exited before close is delivered.
+        }
+      }
+
       function armIdleTimer() {
         clearIdleTimer();
         idleTimer = setTimeout(() => {
           if (settled) return;
-          settled = true;
           const error = Object.assign(
             new Error('yt-dlp process stopped making progress'),
             { code: 'YTDLP_PROCESS_TIMEOUT', name: 'TimeoutError' },
           );
-          try {
-            child.kill();
-          } catch {
-            // The timeout remains the primary failure.
+          if (execution.waitForExitOnAbort) {
+            interrupted = error;
+            stopChild();
+            return;
           }
-          reject(error);
+          if (finish(() => reject(error))) stopChild();
         }, idleTimeoutMs);
         idleTimer.unref?.();
       }
@@ -205,25 +218,35 @@ function createPythonYtdlpRunner(runtime) {
       }
 
       abortListener = () => {
-        if (!finish(() => reject(providerCancellationError()))) return;
-        try {
-          child.kill();
-        } catch {
-          // Cancellation remains authoritative even if the process exited.
+        if (execution.waitForExitOnAbort && !settled) {
+          interrupted ||= providerCancellationError();
+          clearIdleTimer();
+          stopChild();
+          return;
         }
+        if (finish(() => reject(providerCancellationError()))) stopChild();
       };
 
       child.stdout?.on('data', (chunk) => {
         stdout += chunk;
-        armIdleTimer();
+        if (!interrupted) armIdleTimer();
+        if (execution.onStdoutLine) {
+          const lines = (stdoutLine + chunk).split(/\r?\n/u);
+          stdoutLine = lines.pop();
+          for (const line of lines) execution.onStdoutLine(line);
+        }
       });
       child.stderr?.on('data', (chunk) => {
         stderr += chunk;
-        armIdleTimer();
+        if (!interrupted) armIdleTimer();
       });
       child.on('error', (error) => finish(() => reject(error)));
       child.on('close', (code) => {
         finish(() => {
+          if (interrupted) {
+            reject(interrupted);
+            return;
+          }
           if (code !== 0) {
             reject(createYtdlpError(code, stdout, stderr));
             return;

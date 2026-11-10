@@ -78,6 +78,9 @@ function updatePolicy(fields) {
         <template v-if="storage">
           <dl
             class="library-storage__categories"
+            :class="{
+              'library-storage__categories--with-video': storage.videoBytes > 0,
+            }"
             :aria-label="t('librarySettings.storage.categories')"
           >
             <div class="library-storage__category">
@@ -91,6 +94,13 @@ function updatePolicy(fields) {
             <div class="library-storage__category">
               <dt>{{ t('librarySettings.storage.other') }}</dt>
               <dd>{{ formatBytes(storage.otherBytes) }}</dd>
+            </div>
+            <div
+              v-if="storage.videoBytes > 0"
+              class="library-storage__category"
+            >
+              <dt>{{ t('trackVideo.tab') }}</dt>
+              <dd>{{ formatBytes(storage.videoBytes) }}</dd>
             </div>
           </dl>
 
@@ -210,6 +220,10 @@ function updatePolicy(fields) {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-1);
+}
+
+.library-storage__categories--with-video {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .library-storage__category dt,

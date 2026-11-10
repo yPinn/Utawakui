@@ -53,6 +53,15 @@ describe('library storage', () => {
     writeSized(path.join(root, 'tracks', 'track-a', 'audio.flac'), 10);
     writeSized(path.join(root, 'tracks', 'track-a', 'thumbnail.jpg'), 4);
     writeSized(path.join(root, 'tracks', 'track-a', 'lyrics', 'main.lrc'), 3);
+    writeSized(
+      path.join(
+        root,
+        'tracks',
+        'track-a',
+        'video-12345678-1234-1234-1234-123456789abc.mp4',
+      ),
+      12,
+    );
     addSeparation(root, 'track-a', 'quick', 20, '2026-01-01T00:00:00.000Z');
 
     const snapshot = inspectLibraryStorage(root, {
@@ -63,9 +72,10 @@ describe('library storage', () => {
     ).size;
 
     expect(snapshot).toEqual({
-      totalBytes: 42 + manifestBytes,
+      totalBytes: 54 + manifestBytes,
       songBytes: 15,
       separationBytes: 20,
+      videoBytes: 12,
       otherBytes: 7 + manifestBytes,
       trackCount: 2,
       separationTrackCount: 1,

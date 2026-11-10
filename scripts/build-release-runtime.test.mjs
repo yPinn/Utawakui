@@ -157,6 +157,8 @@ describe('application release entries', () => {
     expect(main).not.toContain(root);
     expect(main).not.toContain('sourceMappingURL');
     expect(main).not.toContain('// electron/');
+    expect(main).toContain('lyrics:get-translations');
+    expect(main).toContain('lyrics:save-translations');
   });
 
   it.each([
@@ -191,6 +193,13 @@ describe('application release entries', () => {
     expect(apis[apiName]).not.toHaveProperty('compareReferencePitch');
     expect(apis[apiName]).not.toHaveProperty('beginMicrophoneResearch');
     expect(apis[apiName]).not.toHaveProperty('endMicrophoneResearch');
+    if (apiName === 'Utawakui') {
+      expect(apis[apiName].getLyricsTranslations).toBeTypeOf('function');
+      expect(apis[apiName].saveLyricsTranslations).toBeTypeOf('function');
+    } else {
+      expect(apis[apiName]).not.toHaveProperty('getLyricsTranslations');
+      expect(apis[apiName]).not.toHaveProperty('saveLyricsTranslations');
+    }
     expect(invoke).not.toHaveBeenCalled();
   });
 

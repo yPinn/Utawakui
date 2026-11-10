@@ -30,6 +30,13 @@ const {
 const { createAppError } = require('../../lib/appError');
 const { runDiagnosticIpcOperation } = require('../ipcErrorBoundary');
 const { registerLyricsExportHandlers } = require('./exportHandlers');
+const {
+  normalizeLyricsDocument,
+} = require('../../../src/utils/lyricsDocument.js');
+const {
+  loadTranslations,
+  saveTranslations,
+} = require('../../lib/library/lyricsTranslations');
 
 function registerLyricsDocumentHandlers({
   ipcMain,
@@ -117,6 +124,36 @@ function registerLyricsDocumentHandlers({
     dialog,
     getMainWindow,
   });
+  for (const [channel, mutate] of [
+    ['lyrics:get-translations', false],
+    ['lyrics:save-translations', true],
+  ]) {
+    ipcMain.handle(
+      channel,
+      (event, trackId, filename, session, documentId, revision, rows) =>
+        sourceOperation(
+          event,
+          mutate ? 'save-translations' : 'get-translations',
+          () => {
+            const { trackDir, result } = sourceSessions.inspect(
+              trackId,
+              filename,
+              session,
+            );
+            const document = normalizeLyricsDocument({
+              ...result,
+              sourceFingerprint: result.timing.sourceFingerprint,
+              normalizerProfileId: result.timing.normalizerProfileId,
+            });
+            if (document.documentId !== documentId)
+              throw createAppError({ code: 'LYRICS_SOURCE_STALE' });
+            return mutate
+              ? saveTranslations(trackDir, filename, document, revision, rows)
+              : loadTranslations(trackDir, filename, document);
+          },
+        ),
+    );
+  }
   ipcMain.handle(
     'lyrics:get-vocal-roles',
     (_event, trackId, filename, documentId) =>

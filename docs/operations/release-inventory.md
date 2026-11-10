@@ -60,6 +60,7 @@ network install or signed-installer acceptance; see the
   privileges remain enabled only while the main renderer loads from `file://`.
 - Renderer output: `dist/index.html` and `dist/src/entries/prompter/index.html`, loaded by `electron/main/windows/mainWindow.js` and `prompterWindow.js` respectively. `shared/rendererEntries.json` supplies the entry mapping. Source preloads remain under `electron/`; their release bundles are `runtime/preload.cjs` and `runtime/performer-preload.cjs` inside ASAR. Recursive `dist/**/*` includes the nested renderer entry; retired root prompter HTML is not shipped.
 - Read-only Output capture windows: `electron/main/windows/outputWindow.js` and `electron/main/outputWindowHandlers.js` are included in the Main bundle; adjacent tests remain excluded. They load the existing loopback routes and canonical `shared/outputTemplateValues.json`／`outputCaptureValues.json`, with the existing native ICO. No extra renderer HTML, preload, native dependency or OBS plugin is added.
+- Local track video uses the existing Main and preload bundles and the prepared FFmpeg and provider runtimes. Its loopback test source is disabled in packaged builds. The isolated `prototypes/local-mv/` verifier and generated media stay outside the installer.
 - Fixed brand metadata: `shared/appIdentity.json` ships with `shared/`; `electron/main/windows/windowIdentity.js` resolves the existing packaged ICO for both control panel and prompter. Vite injects HTML titles and PNG favicons at build time through `scripts/viteAppIdentity.js`; that build helper is not a packaged runtime dependency. Native icon and renderer favicon asset locations are unchanged.
   Pure deferred-loader sources under `src/utils/` are bundled by Vite into this
   existing renderer output, including their self-hosted runtime assets.
@@ -730,6 +731,11 @@ missing audio is bundled. Its adjacent synthetic Python test is excluded.
 Verify the packaged worker exists, Main derives its fixed path, the anonymous
 source lookup terminates on cancel／quit, and persisted playlists v4 remains
 readable with the provider gate disabled. See the [contract](../contracts/release-source-catalog.md).
+
+## 本機歌詞譯文
+
+本機譯文的 `electron/lib/library/lyricsTranslations.js` 及其 IPC 編入現有 Main 與
+preload，編輯介面編入 Vite renderer。逐曲譯文屬使用者資料，沒有額外發行資產或套件。
 
 ## 歌詞手動聲部標註
 

@@ -240,6 +240,9 @@ const {
   registerBgmStandbyPlanHandlers,
 } = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
+const { registerTrackVideoHandlers } = require('./main/trackVideoHandlers');
+const { registerYoutubePreviewHeaders } = require('./main/youtubePreview');
+const { createPythonYtdlpRunner } = require('./lib/pythonYtdlp');
 const { createYoutubeLoginStore } = require('./lib/youtubeLoginStore');
 const { t } = require('./lib/i18n');
 const {
@@ -560,6 +563,10 @@ if (!gotSingleInstanceLock) {
   app.whenReady().then(async () => {
     recordMainMilestone('electron-ready');
     void preparePreviewSession(session.defaultSession);
+    registerYoutubePreviewHeaders({
+      webRequest: session.defaultSession.webRequest,
+      getMainWindow: windowState.getMainWindow,
+    });
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
     const {
@@ -755,7 +762,18 @@ if (!gotSingleInstanceLock) {
     app.once('before-quit', () => reconciliationService.cancel());
     const releaseCatalogService = createReleaseCatalogService({
       getDirectory: getReleaseScope,
-      requireProvider: () => requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW),
+      requireProvider: () => {
+        if (
+          !isFeatureGateEnabled(
+            configState.getConfig(),
+            FEATURE_IDS.PROVIDER_FLOW,
+          )
+        ) {
+          throw Object.assign(new Error('provider gate required'), {
+            code: 'provider-disabled',
+          });
+        }
+      },
       runWorker: (request, options) =>
         providerRunnerManager.runReleaseCatalogWorker(request, options),
       inspectBinding: workOrganizationHost.runtime.inspectBinding,
@@ -1384,10 +1402,50 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
+    const videoFixturePort = Number(process.env.UTAWAKUI_MV_FIXTURE_PORT);
+    const videoFixture =
+      windowState.isDev &&
+      !isPackagedRuntime &&
+      Number.isInteger(videoFixturePort) &&
+      videoFixturePort > 0 &&
+      videoFixturePort <= 65535 &&
+      process.env.UTAWAKUI_MV_FIXTURE_PYTHON
+        ? {
+            port: videoFixturePort,
+            run: createPythonYtdlpRunner({
+              pythonPath: process.env.UTAWAKUI_MV_FIXTURE_PYTHON,
+            }),
+          }
+        : null;
+    const notifyTrackVideo = (trackId) => {
+      const window = windowState.getMainWindow();
+      if (window && !window.isDestroyed())
+        window.webContents.send('track-video:changed', trackId);
+    };
+    const trackVideo = registerTrackVideoHandlers({
+      ipcMain,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
+      getScope: getReleaseScope,
+      getFfmpeg: () =>
+        (videoFixture && process.env.UTAWAKUI_MV_FIXTURE_FFMPEG) ||
+        getPreparedFfmpegPath(
+          app.getPath('userData'),
+          configState.getConfig().systemFfmpegPath,
+        ),
+      getProviderRunner: providerRunnerManager.getRunner,
+      requireProvider: () => requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW),
+      recordDiagnostic,
+      onChange: notifyTrackVideo,
+      openExternal: (url) => shell.openExternal(url),
+      fixture: videoFixture,
+    });
+    app.once('before-quit', trackVideo.invalidate);
     registerMediaProtocol({
       protocol,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      resolveVideoCandidate: trackVideo.resolveCandidate,
       logger: runtimeDiagnosticsLogger,
     });
 
@@ -1701,6 +1759,8 @@ if (!gotSingleInstanceLock) {
     registerConfigHandlers({
       ipcMain,
       onLibraryDirectoryChanged: () => {
+        trackVideo.invalidate();
+        notifyTrackVideo(null);
         releaseCatalogService.cancel();
         reconciliationService.invalidate();
         tagWritebackService.invalidate();

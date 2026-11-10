@@ -18,9 +18,13 @@ import {
   createTrackReadiness,
 } from '../utils/trackContextPresentation.js';
 import TrackContextPanel from '../components/playback/context/TrackContextPanel.vue';
+import TrackVideoPlayback from '../components/playback/TrackVideoPlayback.vue';
+import { useLyricsVideoMode } from '../composables/useLyricsVideoMode.js';
 import { t } from '../utils/i18n.js';
 
 const emit = defineEmits(['collapse', 'openQueue']);
+defineProps({ videoActive: { type: Boolean, default: false } });
+const { active: lyricsVideoActive } = useLyricsVideoMode();
 
 const {
   state: playerState,
@@ -176,5 +180,9 @@ const readiness = computed(() =>
     @open-queue="emit('openQueue')"
     @toggle-queue-track-playback="toggleUpcomingTrackPlayback"
     @collapse="emit('collapse')"
-  />
+  >
+    <template #video>
+      <TrackVideoPlayback :active="videoActive && !lyricsVideoActive" />
+    </template>
+  </TrackContextPanel>
 </template>

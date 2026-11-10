@@ -9,6 +9,7 @@ const {
   TRACKS_DIRNAME,
 } = require('./constants');
 const { isSafeTrackId, isStructuredAudioFilename } = require('./paths');
+const { VIDEO_FILENAME } = require('./trackVideo');
 const {
   hasSeparationResultFile,
   loadSeparationManifest,
@@ -41,6 +42,7 @@ function inspectLibraryStorage(
     totalBytes: 0,
     songBytes: 0,
     separationBytes: 0,
+    videoBytes: 0,
     otherBytes: 0,
   };
   const trackIds = new Set();
@@ -74,6 +76,11 @@ function inspectLibraryStorage(
         isSafeTrackId(nextSegments[1]) &&
         nextSegments[2] === SEPARATIONS_DIRNAME &&
         /^[a-z0-9-]+\.wav$/iu.test(nextSegments[3]);
+      const isTrackVideo =
+        nextSegments.length === 3 &&
+        nextSegments[0] === TRACKS_DIRNAME &&
+        isSafeTrackId(nextSegments[1]) &&
+        VIDEO_FILENAME.test(entry.name);
 
       if (isStructuredSong || isLegacySong) {
         totals.songBytes += bytes;
@@ -81,6 +88,8 @@ function inspectLibraryStorage(
       } else if (isSeparationAudio) {
         totals.separationBytes += bytes;
         separationTrackIds.add(nextSegments[1]);
+      } else if (isTrackVideo) {
+        totals.videoBytes += bytes;
       } else {
         totals.otherBytes += bytes;
       }

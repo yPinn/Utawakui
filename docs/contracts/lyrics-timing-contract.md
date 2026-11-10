@@ -250,6 +250,26 @@ with `source.sha256`:
 The app does not heuristically attach edited timing to different text. A future
 guided rebase may offer suggestions, but the user confirms the resulting mapping.
 
+## Local translation data
+
+The active local lyrics source can store Traditional Chinese and English in
+`tracks/<trackId>/lyrics/translations/<sourceFilename>.json`. UTF-8 TXT and
+pasted text enter the same positional review. Each physical row maps to one
+original line and an interior blank row leaves a gap. The operator can edit the
+individual pairings before saving either language.
+
+Main checks the source session and translation revision before saving. Each
+saved row binds to the canonical document, stable line ID and original text.
+Time-only edits retain matching rows. A changed original or missing ID hides
+the affected translation until it is supplied again. Deleting a source also
+removes its translation data.
+
+The video lyrics view uses the existing playback line selection, including the
+positioned line during gaps. An enabled language reserves a fixed caption area
+for the source and translation, including untranslated lines. Playback reads
+the saved text locally. The translation selection starts off when the lyrics
+workspace opens.
+
 ## Reading data
 
 Furigana, romanization, translation, and manual reading corrections remain in

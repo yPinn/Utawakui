@@ -585,6 +585,7 @@ useKeyboardShortcuts({
             }"
             :aria-hidden="!metadataExpanded"
             :inert="!metadataExpanded"
+            :video-active="metadataExpanded"
             @collapse="collapseRightDock"
             @open-queue="toggleQueueSurface"
           />
