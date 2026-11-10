@@ -80,6 +80,7 @@ const rootItemRefs = [];
 const childItemRefs = [];
 
 let focusOrigin = null;
+let openedAt = null;
 let frameId = 0;
 let typeaheadBuffer = '';
 let typeaheadTimer = 0;
@@ -644,6 +645,16 @@ function onWindowScroll(event) {
     }
     return;
   }
+  // A queued scroll event can arrive after the menu opens without moving its
+  // anchor. Keep the menu open unless its position has actually changed.
+  const current = anchorElement.value?.getBoundingClientRect?.();
+  if (
+    openedAt &&
+    current &&
+    openedAt.left === current.left &&
+    openedAt.top === current.top
+  )
+    return;
   requestClose();
 }
 
@@ -659,9 +670,11 @@ watch(
     rootQuery.value = '';
     submenuQuery.value = '';
     if (!isOpen) {
+      openedAt = null;
       release(closeFromGate);
       return;
     }
+    openedAt = anchorElement.value?.getBoundingClientRect?.() ?? null;
     focusOrigin =
       typeof document === 'undefined' ? null : document.activeElement;
     claim(closeFromGate);

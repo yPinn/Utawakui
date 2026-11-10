@@ -142,6 +142,37 @@ function keyEvent(key, overrides = {}) {
 }
 
 describe('UiActionMenu behavior', () => {
+  it('ignores a queued scroll event unless the element anchor moves', async () => {
+    const anchor = hostNode('button');
+    const bounds = vi.spyOn(anchor, 'getBoundingClientRect');
+    bounds.mockReturnValue({
+      x: 40,
+      y: 60,
+      left: 40,
+      top: 60,
+      right: 80,
+      bottom: 92,
+    });
+    const onClose = vi.fn();
+    const mounted = await mountMenu({
+      anchor: { kind: 'element', element: anchor },
+      onClose,
+    });
+    listeners.get('scroll')({ target: body });
+    expect(onClose).not.toHaveBeenCalled();
+    bounds.mockReturnValue({
+      x: 40,
+      y: 50,
+      left: 40,
+      top: 50,
+      right: 80,
+      bottom: 82,
+    });
+    listeners.get('scroll')({ target: body });
+    expect(onClose).toHaveBeenCalledOnce();
+    mounted.app.unmount();
+  });
+
   it('forwards the accessible name, applies semantic size, and focuses the first item', async () => {
     const mounted = await mountMenu({ size: 'sm' });
     const menu = findAll(body, (node) => node.props.role === 'menu')[0];
