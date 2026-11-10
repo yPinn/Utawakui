@@ -52,19 +52,26 @@ defineEmits([
       <section
         class="performer-surface__utility-rail"
         :class="{
-          'performer-surface__utility-rail--with-tools': $slots['rail-tools'],
+          'performer-surface__utility-rail--with-tools':
+            $slots['rail-tools'] || $slots['rail-meter'],
         }"
         :aria-label="t('performer.surface.tools')"
       >
+        <PerformerNextTrack
+          v-if="$slots['rail-meter'] && frame.nextTrack"
+          class="performer-surface__next--above"
+          :track="frame.nextTrack"
+        />
         <div
-          v-if="$slots['above-tools']"
-          class="performer-surface__above-tools"
+          v-if="$slots['rail-tools'] || $slots['rail-meter']"
+          class="performer-surface__rail-tools"
         >
-          <slot name="above-tools" />
-        </div>
-        <div v-if="$slots['rail-tools']" class="performer-surface__rail-tools">
           <slot name="rail-tools" />
-          <PerformerNextTrack v-if="frame.nextTrack" :track="frame.nextTrack" />
+          <slot v-if="$slots['rail-meter']" name="rail-meter" />
+          <PerformerNextTrack
+            v-else-if="frame.nextTrack"
+            :track="frame.nextTrack"
+          />
         </div>
         <PerformerNextTrack
           v-else-if="frame.nextTrack"
@@ -192,23 +199,15 @@ defineEmits([
   gap: var(--ui-space-2);
 }
 
-.performer-surface__above-tools {
-  position: absolute;
-  z-index: var(--ui-layer-overlay);
-  inset-block-end: calc(100% + var(--ui-space-2));
-  inset-inline: 0;
-  pointer-events: none;
-}
-
-.performer-surface__above-tools > :slotted(*) {
-  pointer-events: auto;
+.performer-surface__next--above {
+  grid-column: 1 / -1;
 }
 
 @container performer-surface (min-width: 48rem) {
   .performer-surface__utility-rail {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: var(--ui-space-5);
+    column-gap: var(--ui-space-5);
   }
 }
 

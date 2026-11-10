@@ -69,6 +69,26 @@ function render(props = {}, slots = {}) {
 }
 
 describe('PerformerSurface', () => {
+  it('places the next track above the meter and keeps it inline when the meter is hidden', async () => {
+    const rail = { 'rail-tools': () => h('button', { id: 'pitch-legend' }) };
+    const html = await render(
+      {},
+      { ...rail, 'rail-meter': () => h('section', { id: 'input-meter' }) },
+    );
+    expect(html.indexOf('Stellar Stellar')).toBeLessThan(
+      html.indexOf('id="pitch-legend"'),
+    );
+    expect(html.indexOf('id="pitch-legend"')).toBeLessThan(
+      html.indexOf('id="input-meter"'),
+    );
+    expect(html).toContain('id="input-meter"');
+    expect(html.match(/Stellar Stellar/gu)).toHaveLength(1);
+    const hidden = await render({}, rail);
+    expect(hidden.indexOf('id="pitch-legend"')).toBeLessThan(
+      hidden.indexOf('Stellar Stellar'),
+    );
+  });
+
   it('places the optional overview above the shared cues and tools in the shared action bar', async () => {
     const html = await render(
       { readingScale: 'near' },

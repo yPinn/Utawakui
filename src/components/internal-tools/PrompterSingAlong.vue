@@ -929,7 +929,7 @@ onBeforeUnmount(() => {
         </div>
       </figure>
     </template>
-    <template v-if="!liveSelected && showMeter" #above-tools>
+    <template v-if="!liveSelected && showMeter" #rail-meter>
       <UiSurface
         class="prompter-sing-along__meter"
         tag="section"
@@ -1205,6 +1205,7 @@ onBeforeUnmount(() => {
 
 .prompter-sing-along__meter {
   inline-size: min(100%, var(--ui-performer-mic-meter-inline-size));
+  min-inline-size: 0;
   padding: var(--ui-space-2);
 }
 
