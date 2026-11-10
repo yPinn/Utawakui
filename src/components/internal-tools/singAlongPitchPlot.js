@@ -597,6 +597,19 @@ export const SING_ALONG_CURSOR = 1 / 3;
 export const SING_ALONG_MIC_LOOKBACK_MS = 80;
 export const SING_ALONG_MIC_SCAN_BUFFER_MS = 70;
 
+export function crossedSweepNote(notes, previousTime, scanTime) {
+  if (
+    previousTime === null ||
+    scanTime <= previousTime ||
+    scanTime - previousTime > 0.25
+  )
+    return;
+  return notes.findLast(
+    ({ start, end }) =>
+      previousTime < start && start <= scanTime && scanTime < end,
+  );
+}
+
 export function createSingAlongClock() {
   let anchor = null;
   let displayed = null;

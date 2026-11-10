@@ -42,6 +42,7 @@ import {
   applyGuideOctaveMarks,
   connectMicFrames,
   createSingAlongClock,
+  crossedSweepNote,
   GUIDE_NOTE_HEIGHT,
   guideNoteGeometry,
   guideNotes,
@@ -88,6 +89,10 @@ const position = shallowRef(0);
 const guideFillId = `prompter-guide-fill-${useId()}`;
 const inputClipId = `prompter-input-clip-${useId()}`;
 const inputClip = `url(#${inputClipId})`;
+const sweepTintId = `prompter-sweep-tint-${useId()}`;
+const sweepGlintId = `prompter-sweep-glint-${useId()}`;
+const sweepGlint = shallowRef(null);
+const sweepGlintStrike = shallowRef(false);
 const response = shallowRef(null);
 const reviewMarks = shallowRef([]);
 const pendingGuide = shallowRef(false);
@@ -144,6 +149,7 @@ const continuityKey = computed(() =>
 );
 let requestId = null;
 let animation = null;
+let previousScanTime = null;
 let continuous = false;
 let micBoundaryMs = performance.now();
 
@@ -526,10 +532,21 @@ function sampleMic(running, frame) {
   continuous = true;
 }
 
+function resetSweepGlint() {
+  previousScanTime = null;
+  sweepGlint.value = null;
+  sweepGlintStrike.value = false;
+}
+
 function tick(frameMs) {
   animation = null;
   if (!playing.value) return;
   position.value = clock.advanceDisplay(frameMs) / 1000;
+  const time = scanTime.value;
+  const hit = crossedSweepNote(guideBoxes.value, previousScanTime, time);
+  if (hit) sweepGlint.value = hit;
+  sweepGlintStrike.value = Boolean(hit);
+  previousScanTime = time;
   animation = requestAnimationFrame(tick);
 }
 
@@ -614,9 +631,15 @@ watch(
   { immediate: true },
 );
 watch(
+  [playing, continuityKey, scanDelay, displayGuide, semitones],
+  resetSweepGlint,
+  { flush: 'sync' },
+);
+watch(
   [state, continuityKey, micLookback, () => source.value?.monitorPitchDelayMs],
   () => {
     const frameMs = performance.now();
+    const previous = clock.displayPositionAt(frameMs);
     const next = clock.sync(
       state.value,
       continuityKey.value,
@@ -625,6 +648,7 @@ watch(
       source.value?.monitorPitchDelayMs,
       micLookback.value,
     );
+    if (Math.abs(next - previous) > 0.001) resetSweepGlint();
     if (!playing.value || animation === null) position.value = next / 1000;
     if (playing.value && animation === null) {
       animation = requestAnimationFrame(tick);
@@ -703,6 +727,26 @@ onBeforeUnmount(() => {
                   :offset="SING_ALONG_CURSOR"
                 />
               </linearGradient>
+              <linearGradient :id="sweepTintId">
+                <stop class="prompter-sing-along__tint-stop" stop-opacity="0" />
+                <stop
+                  class="prompter-sing-along__tint-stop"
+                  offset="1"
+                  stop-opacity="0.22"
+                />
+              </linearGradient>
+              <linearGradient
+                :id="sweepGlintId"
+                gradientUnits="userSpaceOnUse"
+                x2="8"
+              >
+                <stop class="prompter-sing-along__light" offset="0.28" />
+                <stop
+                  class="prompter-sing-along__light"
+                  offset="1"
+                  stop-opacity="0"
+                />
+              </linearGradient>
             </defs>
             <rect
               v-if="wordBand"
@@ -727,6 +771,16 @@ onBeforeUnmount(() => {
               class="prompter-sing-along__ruler"
               :d="`M0 116H${PITCH_WIDTH}`"
             />
+            <rect
+              class="prompter-sing-along__sweep-tint"
+              :opacity="playing ? 1 : 0"
+              :fill="`url(#${sweepTintId})`"
+              :x="scanX - 6"
+              width="6"
+              height="120"
+              pointer-events="none"
+              aria-hidden="true"
+            />
             <g :transform="timelineTransform">
               <path
                 v-for="beat in visibleBeats"
@@ -747,6 +801,7 @@ onBeforeUnmount(() => {
               <g
                 v-for="note in guideBoxes"
                 :key="note.start"
+                v-memo="[note, scanTime >= note.start, scanTime >= note.end]"
                 class="prompter-sing-along__note"
                 :class="{
                   'prompter-sing-along__note--past': scanTime >= note.end,
@@ -769,7 +824,24 @@ onBeforeUnmount(() => {
                   :height="note.bandHeight"
                 />
               </g>
-              <path class="prompter-sing-along__reference" :d="referencePath" />
+              <rect
+                v-memo="[sweepGlint, sweepGlintStrike]"
+                class="prompter-sing-along__glint"
+                :class="{
+                  'prompter-sing-along__glint--strike': sweepGlintStrike,
+                  'prompter-sing-along__glint--idle': !sweepGlint,
+                }"
+                :transform="`translate(${sweepGlint?.x ?? 0} ${sweepGlint?.y ?? 0})`"
+                :width="sweepGlint?.width ?? 0"
+                :height="GUIDE_NOTE_HEIGHT"
+                :fill="`url(#${sweepGlintId})`"
+                aria-hidden="true"
+              />
+              <path
+                v-memo="[referencePath]"
+                class="prompter-sing-along__reference"
+                :d="referencePath"
+              />
             </g>
             <g :clip-path="inputClip">
               <g :transform="timelineTransform">
@@ -1328,6 +1400,44 @@ onBeforeUnmount(() => {
   stroke-width: var(--ui-performer-sweep-width);
 }
 
+.prompter-sing-along__tint-stop {
+  stop-color: var(--ui-color-accent);
+}
+
+.prompter-sing-along__light {
+  stop-color: color-mix(
+    in srgb,
+    var(--ui-color-focus),
+    var(--ui-palette-warm-neutral-100) 25%
+  );
+}
+
+.prompter-sing-along__glint {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--ui-motion-duration-standard)
+    var(--ui-motion-easing-standard);
+}
+
+.prompter-sing-along__glint--strike {
+  opacity: 0.9;
+  transition: none;
+}
+
+.prompter-sing-along__glint--idle {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompter-sing-along__glint {
+    visibility: hidden;
+  }
+}
+
+:global(:root[data-ui-motion='reduced'] .prompter-sing-along__glint) {
+  visibility: hidden;
+}
+
 .prompter-sing-along__annotation {
   color: var(--ui-color-text-muted);
 }
@@ -1344,9 +1454,13 @@ onBeforeUnmount(() => {
 .prompter-sing-along__annotation--active {
   color: var(--ui-color-accent);
 }
-.prompter-sing-along__target {
+.prompter-sing-along__target,
+.prompter-sing-along__glint {
   rx: var(--ui-radius-xs);
   ry: var(--ui-radius-sm);
+}
+
+.prompter-sing-along__target {
   fill: var(
     --prompter-guide-fill,
     color-mix(in srgb, var(--ui-color-surface), var(--ui-color-accent) 23%)

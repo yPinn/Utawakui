@@ -3,6 +3,7 @@ import {
   applyGuideOctaveMarks,
   clipGuideContour,
   createSingAlongClock,
+  crossedSweepNote,
   guideContourPath,
   guideContours,
   guideNoteGeometry,
@@ -55,6 +56,18 @@ it('colours historical level intervals by input state without bridging a break',
 
 const toHz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 const step = 0.016;
+
+it('emits a sweep glint only on a guide onset crossed by a continuous frame', () => {
+  const short = { start: 1, end: 1.04 };
+  const held = { start: 1.06, end: 1.4 };
+  const notes = [short, held];
+  expect(crossedSweepNote(notes, 0.99, 1)).toBe(short);
+  expect(crossedSweepNote(notes, 1, 1.02)).toBeUndefined();
+  expect(crossedSweepNote(notes, 1.04, 1.07)).toBe(held);
+  expect(crossedSweepNote(notes, 0.6, 1.07)).toBeUndefined();
+  expect(crossedSweepNote(notes, 1.07, 1.01)).toBeUndefined();
+  expect(crossedSweepNote(notes, null, 1.07)).toBeUndefined();
+});
 
 it('retains unsnapped reference pitches and breaks at verified silence', () => {
   const pitches = [440, 444, 448, 452, 456, 0, 460];
