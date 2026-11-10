@@ -17,6 +17,16 @@ describe('Now Playing artwork layouts', () => {
     expect(html).toContain('/overlay/now-playing/artwork.css');
   });
 
+  it('scales and positions Cover Player inside its capture container', () => {
+    expect(artworkStyles).toMatch(
+      /:root\[data-ovl-template='cover-player'\] body\s*\{[^}]*container-type: size;/s,
+    );
+    expect(artworkStyles).toMatch(
+      /:root\[data-ovl-template='cover-player'\] \.artwork-overlay\s*\{[^}]*--ovl-cover-unit: min\(100cqi \/ 30, 100cqb \/ 40\);[^}]*position: absolute;/s,
+    );
+    expect(artworkStyles).not.toContain('100vw / 30');
+  });
+
   it('builds 黑膠主題 as equal album and turntable regions', () => {
     const artwork = html.slice(
       html.indexOf('id="artwork-overlay"'),

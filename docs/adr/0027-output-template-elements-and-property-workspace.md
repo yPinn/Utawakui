@@ -5,7 +5,8 @@
 Accepted on 2026-10-23 (proposed 2026-10-22). P1–P4 are implemented:
 definition attributes with the `now-next` removal, inspector modified marks
 and group reset, Cover Player element settings, and canvas selection from
-Workbench-only element boxes. P5–P6 are not started.
+Workbench-only element boxes. P5 has begun with Cover Player's container-relative
+layout. P6 remains planned.
 
 The decision amends the "locked" list in
 [ADR 0011](0011-overlay-instances-and-presentation-pack-delivery.md) and the
@@ -194,9 +195,9 @@ supports:
 - Canvas drag and resize are pointer shortcuts. The inspector exposes the same
   position and size as bounded numeric fields for the selected target, which is
   the keyboard and assistive-technology path.
-- Cover Player sizes its root type from the viewport
-  (`min(100vw / 30, 100vh / 40)`), so its container-relative refactor is the
-  first P5 step and must be reviewed against the appearance baseline.
+- Cover Player resolves its 30 × 40 design unit from the capture container's
+  width and height. This is the first P5 step and preserves the existing
+  appearance at both supported capture sizes.
 
 ### Stacking
 

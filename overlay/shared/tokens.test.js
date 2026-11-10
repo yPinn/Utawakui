@@ -334,7 +334,7 @@ describe('overlay CSS tokens', () => {
     // AM uses a full portrait card with internal padding, rather than the
     // external safe-area gutters used by Art Card and the setlist.
     expect(coverPlayer).toMatch(
-      /\.artwork-overlay\s*{[^}]*inline-size: 100%;[^}]*block-size: 100%;[^}]*padding: 1\.5rem;/s,
+      /\.artwork-overlay\s*{[^}]*inline-size: 100%;[^}]*block-size: 100%;[^}]*padding: calc\(1\.5 \* var\(--ovl-cover-unit\)\);/s,
     );
   });
 
@@ -406,7 +406,7 @@ describe('overlay CSS tokens', () => {
     }
 
     expect(coverPlayer).toMatch(
-      /\.artwork-overlay\s*{[^}]*inline-size: 100%;[^}]*block-size: 100%;[^}]*overflow: hidden;[^}]*padding: 1\.5rem;/s,
+      /\.artwork-overlay\s*{[^}]*inline-size: 100%;[^}]*block-size: 100%;[^}]*overflow: hidden;[^}]*padding: calc\(1\.5 \* var\(--ovl-cover-unit\)\);/s,
     );
 
     expect(setlist).toContain(
@@ -428,7 +428,7 @@ describe('overlay CSS tokens', () => {
       /\.artwork-overlay__mark\s*{[^}]*max-inline-size: 100%;[^}]*inline-size: auto;[^}]*block-size: 100%;/s,
     );
     expect(coverPlayer).toMatch(
-      /\.artwork-overlay__mark\s*{[^}]*aspect-ratio: 1;[^}]*block-size: min\(100%, 27rem\);/s,
+      /\.artwork-overlay__mark\s*{[^}]*aspect-ratio: 1;[^}]*block-size: min\(100%, calc\(27 \* var\(--ovl-cover-unit\)\)\);/s,
     );
     expect(setlist).toMatch(
       /\.setlist-overlay__history-viewport\s*{[^}]*min-block-size:\s*0;[^}]*overflow:\s*hidden;/s,
