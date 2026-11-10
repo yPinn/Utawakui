@@ -8,6 +8,7 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
+import { selectPerformerFrame } from '../../../shared/presentation/performerFrame.mjs';
 import { Info, MicVocal, SlidersHorizontal } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
 import PerformerSurface from '../performer/PerformerSurface.vue';
@@ -52,23 +53,20 @@ import {
   maskGuideContours,
   SING_ALONG_CURSOR,
   SING_ALONG_MIC_LOOKBACK_MS,
+  SING_ALONG_MIC_SCAN_BUFFER_MS,
   SING_ALONG_SECONDS,
   projectMicSamplePosition,
+  retainSingAlongWordCue,
+  selectSingAlongWordCue,
   songPitchBounds,
 } from './singAlongPitchPlot.js';
 
 const props = defineProps({
-  frame: { type: Object, required: true },
   snapshot: { type: Object, default: null },
   readingScale: { type: String, default: 'desk' },
   pending: { type: Boolean, default: false },
 });
-defineEmits([
-  'control',
-  'sync-action',
-  'update:readingScale',
-  'display-boundary',
-]);
+defineEmits(['control', 'sync-action', 'update:readingScale']);
 const preferences = loadSingAlongPreferences();
 const correctionMs = shallowRef(preferences.correctionMs);
 const micPreferences = shallowRef(preferences.microphone);
@@ -79,6 +77,7 @@ const formatCorrection = (ms) => `${ms > 0 ? '+' : ''}${ms} ms`;
 const access = window.UtawakuiPerformer;
 const state = computed(() => props.snapshot?.state);
 const playback = computed(() => state.value?.playback);
+const trackId = computed(() => playback.value?.track?.id);
 const source = computed(() => props.snapshot?.singAlong);
 const duration = computed(() => (playback.value?.durationMs ?? 0) / 1000);
 const playing = computed(() => playback.value?.status === 'playing');
@@ -149,9 +148,9 @@ let continuous = false;
 let micBoundaryMs = performance.now();
 
 const sourceKey = computed(() =>
-  source.value?.guide && props.frame.trackId && duration.value > 0
+  source.value?.guide && trackId.value && duration.value > 0
     ? JSON.stringify([
-        props.frame.trackId,
+        trackId.value,
         source.value.playbackRevision,
         source.value.guide.recipeId,
         source.value.guide.completedAtMs,
@@ -265,6 +264,14 @@ const annotations = computed(() =>
 );
 const vibratoPath = 'M-3 0Q-1.5 -3 0 0T3 0';
 const cursor = PITCH_WIDTH * SING_ALONG_CURSOR;
+const scanDelay = computed(() =>
+  micLookback.value
+    ? ((playback.value?.rate ?? 1) * SING_ALONG_MIC_SCAN_BUFFER_MS) / 1000
+    : 0,
+);
+const scanTime = computed(() => position.value - scanDelay.value);
+const scanX = computed(() => cursor - timeToX(scanDelay.value));
+const guideFillX = computed(() => timelineX.value + scanX.value - cursor);
 const nearScreen = (time) => time >= focusStart.value && time <= focusEnd.value;
 const beats = computed(() =>
   (response.value?.beats ?? []).map(({ timeMs, downbeat }) => ({
@@ -277,9 +284,26 @@ const visibleBeats = computed(() =>
 );
 const lyrics = computed(() => state.value?.lyrics);
 const lyricsOffset = computed(() => lyrics.value?.offsetMs ?? 0);
+const wordCues = shallowRef([]);
+const lyricPositionMs = computed(
+  () => position.value * 1000 + lyricsOffset.value,
+);
+const displayWordCue = computed(() =>
+  selectSingAlongWordCue(
+    wordCues.value,
+    lyrics.value?.lines,
+    lyricPositionMs.value,
+  ),
+);
+const displayFrame = computed(() =>
+  selectPerformerFrame(props.snapshot, {
+    positionMs: position.value * 1000,
+    wordCue: displayWordCue.value,
+  }),
+);
 const toMediaTime = (timeMs) => (timeMs - lyricsOffset.value) / 1000;
 const lineStarts = computed(() =>
-  lyrics.value?.synced === true && lyrics.value.trackId === props.frame.trackId
+  lyrics.value?.synced === true && lyrics.value.trackId === trackId.value
     ? [
         ...new Set(
           lyrics.value.lines
@@ -292,8 +316,8 @@ const lineStarts = computed(() =>
 );
 const visibleLineStarts = computed(() => lineStarts.value.filter(nearScreen));
 const wordBand = computed(() => {
-  const cue = props.snapshot?.wordCue;
-  if (!cue) return null;
+  const cue = displayWordCue.value;
+  if (!cue || !displayFrame.value.currentWordCue) return null;
   const start = toMediaTime(cue.startMs);
   const end = toMediaTime(cue.endMs);
   if (position.value < start || position.value >= end) return null;
@@ -347,7 +371,7 @@ const micPath = computed(() =>
   ),
 );
 const guideStatus = computed(() => {
-  if (!props.frame.trackId) return '請先在主視窗播放曲目。';
+  if (!trackId.value) return '請先在主視窗播放曲目。';
   if (!source.value?.guide) return '請在主視窗選用有分離導唱的音源。';
   if (!sourceKey.value) return '等待主播放器載入曲目…';
   if (pendingGuide.value) return '正在準備導唱音高…';
@@ -474,7 +498,7 @@ function sampleMic(running, frame) {
     clearMic();
     return;
   }
-  if (!playing.value || !props.frame.trackId) {
+  if (!playing.value || !trackId.value) {
     continuous = false;
     return;
   }
@@ -505,7 +529,7 @@ function sampleMic(running, frame) {
 function tick(frameMs) {
   animation = null;
   if (!playing.value) return;
-  position.value = clock.displayPositionAt(frameMs) / 1000;
+  position.value = clock.advanceDisplay(frameMs) / 1000;
   animation = requestAnimationFrame(tick);
 }
 
@@ -546,7 +570,7 @@ watch(
 );
 watch(
   [
-    () => props.frame.trackId,
+    trackId,
     () => source.value?.playbackRevision,
     () => source.value?.continuityRevision,
     () => playback.value?.rate,
@@ -563,6 +587,31 @@ watch(
     if (playing.value) micBoundaryMs = performance.now();
   },
   { flush: 'sync' },
+);
+watch(
+  [
+    continuityKey,
+    lyricsOffset,
+    () => lyrics.value?.trackId,
+    () => lyrics.value?.synced,
+    () => JSON.stringify(lyrics.value?.source),
+  ],
+  () => {
+    wordCues.value = [];
+  },
+  { flush: 'sync' },
+);
+watch(
+  () => props.snapshot,
+  (snapshot) => {
+    wordCues.value = retainSingAlongWordCue(
+      wordCues.value,
+      snapshot?.wordCue,
+      snapshot?.state?.lyrics?.lines,
+      lyricPositionMs.value,
+    );
+  },
+  { immediate: true },
 );
 watch(
   [state, continuityKey, micLookback, () => source.value?.monitorPitchDelayMs],
@@ -595,13 +644,12 @@ onBeforeUnmount(() => {
 
 <template>
   <PerformerSurface
-    :frame="frame"
+    :frame="displayFrame"
     :reading-scale="readingScale"
     :pending="pending"
     @control="$emit('control', $event)"
     @sync-action="$emit('sync-action', $event)"
     @update:reading-scale="$emit('update:readingScale', $event)"
-    @display-boundary="$emit('display-boundary', $event)"
   >
     <template #above-cues>
       <figure class="prompter-sing-along__pitch">
@@ -636,14 +684,14 @@ onBeforeUnmount(() => {
           >
             <defs>
               <clipPath :id="inputClipId">
-                <rect :width="cursor" height="120" />
+                <rect :width="scanX" height="120" />
               </clipPath>
-              <!-- Cancel the scrolling translation to keep the color edge on the cursor. -->
+              <!-- Match the fixed scan position in the scrolling score coordinates. -->
               <linearGradient
                 :id="guideFillId"
                 class="prompter-sing-along__sweep"
                 gradientUnits="userSpaceOnUse"
-                :gradientTransform="`translate(${timelineX} 0)`"
+                :gradientTransform="`translate(${guideFillX} 0)`"
                 :x2="PITCH_WIDTH"
               >
                 <stop
@@ -701,9 +749,9 @@ onBeforeUnmount(() => {
                 :key="note.start"
                 class="prompter-sing-along__note"
                 :class="{
-                  'prompter-sing-along__note--past': position >= note.end,
+                  'prompter-sing-along__note--past': scanTime >= note.end,
                   'prompter-sing-along__note--active':
-                    position >= note.start && position < note.end,
+                    scanTime >= note.start && scanTime < note.end,
                 }"
               >
                 <rect
@@ -731,8 +779,8 @@ onBeforeUnmount(() => {
             </g>
             <line
               class="prompter-sing-along__cursor"
-              :x1="cursor"
-              :x2="cursor"
+              :x1="scanX"
+              :x2="scanX"
               y1="0"
               y2="120"
             />
@@ -765,8 +813,8 @@ onBeforeUnmount(() => {
               </g>
               <line
                 class="prompter-sing-along__cursor"
-                :x1="cursor"
-                :x2="cursor"
+                :x1="scanX"
+                :x2="scanX"
                 y1="0"
                 :y2="INPUT_LEVEL_HEIGHT"
               />
@@ -1046,7 +1094,7 @@ onBeforeUnmount(() => {
               </svg>
               節拍定位
             </dt>
-            <dd>固定直線是現在，長線標小節，短刻度標拍子。</dd>
+            <dd>{{ t('performerInput.scanLegend') }}</dd>
           </div>
           <div>
             <dt>
@@ -1277,7 +1325,7 @@ onBeforeUnmount(() => {
 
 .prompter-sing-along__cursor {
   stroke: var(--ui-color-text-muted);
-  stroke-width: 2;
+  stroke-width: var(--ui-performer-sweep-width);
 }
 
 .prompter-sing-along__annotation {

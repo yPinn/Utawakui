@@ -595,9 +595,11 @@ export const SING_ALONG_SECONDS = 8;
 export const SING_ALONG_CURSOR = 1 / 3;
 // Allow the mic analysis window, one sample interval and a paint to complete.
 export const SING_ALONG_MIC_LOOKBACK_MS = 80;
+export const SING_ALONG_MIC_SCAN_BUFFER_MS = 70;
 
 export function createSingAlongClock() {
   let anchor = null;
+  let displayed = null;
   const correctionMs = 800;
   function positionAt(frameMs) {
     if (!anchor) return 0;
@@ -616,6 +618,10 @@ export function createSingAlongClock() {
       anchor?.frozen ??
       Math.max(0, positionAt(frameMs) - (anchor?.lookback ?? 0))
     );
+  }
+  function advanceDisplay(frameMs) {
+    displayed = displayPositionAt(frameMs);
+    return displayed;
   }
   function sync(
     state,
@@ -638,11 +644,9 @@ export function createSingAlongClock() {
       (status === 'paused' || status === 'buffering') &&
       sameSource &&
       (anchor.status === 'playing' || wasHeld)
-        ? displayPositionAt(frameMs)
+        ? (displayed ?? displayPositionAt(frameMs))
         : null;
-    const previous = wasHeld
-      ? displayPositionAt(frameMs) + lookback
-      : positionAt(frameMs);
+    const previous = anchor?.resumePosition ?? positionAt(frameMs);
     const difference = previous - position;
     const continuous =
       sameSource &&
@@ -651,6 +655,17 @@ export function createSingAlongClock() {
         wasHeld) &&
       status === 'playing' &&
       Math.abs(difference) <= Math.min(120, (rate * correctionMs) / 2);
+    const resuming = status === 'playing' && wasHeld;
+    if (
+      !sameSource ||
+      anchor.playbackRate !== rate ||
+      (resuming && !continuous) ||
+      (status === 'playing' &&
+        anchor.status === 'playing' &&
+        anchor.lookback !== lookback)
+    ) {
+      displayed = null;
+    }
     anchor = {
       continuity,
       status,
@@ -660,13 +675,47 @@ export function createSingAlongClock() {
       mediaDelay,
       lookback,
       frozen,
+      resumePosition: frozen === null ? null : previous,
       rate: status === 'playing' ? rate : 0,
       duration: playback?.durationMs ?? Infinity,
       offset: continuous ? difference : 0,
     };
-    return displayPositionAt(frameMs);
+    const projected = displayPositionAt(frameMs);
+    return resuming && displayed !== null
+      ? Math.min(projected, displayed)
+      : projected;
   }
-  return { sync, positionAt, displayPositionAt };
+  return { sync, positionAt, displayPositionAt, advanceDisplay };
+}
+
+export function retainSingAlongWordCue(queue, cue, lines, lyricPositionMs) {
+  const line = cue && lines?.[cue.lineIndex];
+  if (!line) return queue;
+  return [
+    ...queue
+      .filter(
+        ({ cue: prior }) =>
+          prior.endMs > lyricPositionMs &&
+          (prior.lineIndex !== cue.lineIndex || prior.startMs !== cue.startMs),
+      )
+      .slice(-15),
+    { cue, line },
+  ];
+}
+
+export function selectSingAlongWordCue(queue, lines, lyricPositionMs) {
+  const selected = queue.findLast(({ cue, line }) => {
+    const current = lines?.[cue.lineIndex];
+    return (
+      current &&
+      cue.startMs <= lyricPositionMs &&
+      lyricPositionMs < cue.endMs &&
+      current.text === line.text &&
+      current.startMs === line.startMs &&
+      current.endMs === line.endMs
+    );
+  });
+  return selected?.cue ?? null;
 }
 
 export function songPitchBounds(notes, semitones) {

@@ -1,6 +1,7 @@
 {
   "meter": "Input level",
   "pitchLegend": "The thin line shows the original vocal pitch. The thicker plum line shows input pitch. Capsules mark the target notes, with a tolerance band of 50 cents on either side.",
+  "scanLegend": "The sweep line marks the fill edge. Long lines mark bars, and short ticks mark beats.",
   "accessibleReading": "{level}, {status}",
   "accessibleClippingReading": "Analysis level {level}, {status}, peak {peak}.",
   "device": "Microphone device",

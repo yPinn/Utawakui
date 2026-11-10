@@ -15,6 +15,8 @@ import {
   maskGuideContours,
   connectMicFrames,
   projectMicSamplePosition,
+  retainSingAlongWordCue,
+  selectSingAlongWordCue,
   songPitchBounds,
 } from './singAlongPitchPlot.js';
 
@@ -285,6 +287,47 @@ it('buffers the display while keeping microphone samples on the audible clock', 
   expect(clock.sync(state, 'a', 10_000, 0, 120, 80)).toBe(1750);
   expect(clock.positionAt(100)).toBe(1975);
   expect(clock.displayPositionAt(100)).toBe(1875);
+});
+
+it('advances the score clock independently of a late capsule fill', () => {
+  const clock = createSingAlongClock();
+  const state = {
+    generatedAt: new Date(10_000).toISOString(),
+    playback: { status: 'playing', positionMs: 2000, rate: 1 },
+  };
+  clock.sync(state, 'a', 10_000, 0, 0, 80);
+  expect(clock.advanceDisplay(0)).toBe(1920);
+  expect(clock.advanceDisplay(100)).toBe(2020);
+  expect(clock.advanceDisplay(120)).toBe(2040);
+  expect(clock.advanceDisplay(500)).toBe(2420);
+  expect(clock.positionAt(500)).toBe(2500);
+  const paused = {
+    ...state,
+    playback: { ...state.playback, status: 'paused', positionMs: 2510 },
+  };
+  expect(clock.sync(paused, 'a', 10_510, 510, 0, 80)).toBe(2420);
+  expect(clock.displayPositionAt(900)).toBe(2420);
+  const resumed = {
+    ...state,
+    generatedAt: new Date(10_900).toISOString(),
+    playback: { ...state.playback, positionMs: 2510 },
+  };
+  expect(clock.sync(resumed, 'a', 10_900, 900, 0, 80)).toBe(2420);
+  expect(clock.advanceDisplay(920)).toBe(2450);
+});
+
+it('retains a known word until the display crosses its end and rejects a changed source line', () => {
+  const first = { lineIndex: 0, startMs: 1200, endMs: 1400, from: 0, to: 2 };
+  const next = { lineIndex: 0, startMs: 1400, endMs: 1700, from: 2, to: 4 };
+  const lines = [{ text: 'abcd', startMs: 1100, endMs: 1700 }];
+  let queue = retainSingAlongWordCue([], first, lines, 1250);
+  queue = retainSingAlongWordCue(queue, next, lines, 1350);
+  expect(selectSingAlongWordCue(queue, lines, 1350)).toBe(first);
+  expect(selectSingAlongWordCue(queue, lines, 1400)).toBe(next);
+  expect(
+    selectSingAlongWordCue(queue, [{ ...lines[0], text: 'wxyz' }], 1400),
+  ).toBeNull();
+  expect(selectSingAlongWordCue(queue, lines, 1700)).toBeNull();
 });
 
 it('keeps the compensated display still through pause snapshots and resumes from it', () => {

@@ -115,9 +115,9 @@ function lyricsPositionMs(snapshot, nowMs) {
 }
 
 function nextFiniteLineStart(lines, lineIndex) {
-  return lines
-    .slice(lineIndex + 1)
-    .find((line) => Number.isFinite(line?.startMs))?.startMs;
+  for (let index = lineIndex + 1; index < lines.length; index++) {
+    if (Number.isFinite(lines[index]?.startMs)) return lines[index].startMs;
+  }
 }
 
 function effectiveLineEnd(snapshot, lines, lineIndex) {
@@ -653,16 +653,22 @@ function nextKineticPopPhraseBoundaryDelayMs(snapshot, options = {}) {
 }
 
 export function activeLyricIndex(snapshot, lines, nowMs) {
-  const lyrics = snapshot?.lyrics;
+  return activeLyricIndexAtPosition(
+    snapshot?.lyrics,
+    lines,
+    lyricsPositionMs(snapshot, nowMs),
+  );
+}
+
+export function activeLyricIndexAtPosition(lyrics, lines, lyricPositionMs) {
   if (lyrics?.synced === true) {
-    const lyricPositionMs = lyricsPositionMs(snapshot, nowMs);
     return lines.findIndex((line, index) => {
-      if (!Number.isFinite(line?.startMs)) return false;
-      const nextStartMs = nextFiniteLineStart(lines, index);
+      if (!Number.isFinite(line?.startMs) || lyricPositionMs < line.startMs)
+        return false;
       const endMs = Number.isFinite(line.endMs)
         ? line.endMs
-        : (nextStartMs ?? Infinity);
-      return lyricPositionMs >= line.startMs && lyricPositionMs < endMs;
+        : (nextFiniteLineStart(lines, index) ?? Infinity);
+      return lyricPositionMs < endMs;
     });
   }
   return Number.isSafeInteger(lyrics?.activeLineIndex)

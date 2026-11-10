@@ -76,14 +76,12 @@ function selectLayout(value) {
       id="prompter-layout-video-pitch-panel"
       role="tabpanel"
       aria-labelledby="prompter-layout-video-pitch-tab"
-      :frame="frame"
       :snapshot="snapshot"
       :reading-scale="readingScale"
       :pending="controlPending"
       @control="control"
       @sync-action="adjustLyricsOffset"
       @update:reading-scale="setReadingScale"
-      @display-boundary="setDisplayBoundary"
     />
     <PerformerSurface
       v-else

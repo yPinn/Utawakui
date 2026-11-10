@@ -1,4 +1,4 @@
-import { activeLyricIndex, playbackPositionMs } from './state.mjs';
+import { activeLyricIndexAtPosition, playbackPositionMs } from './state.mjs';
 import { normalizePerformerReadingVariant } from '../performerViewContract.mjs';
 
 function text(value) {
@@ -69,10 +69,15 @@ export function selectPerformerFrame(snapshot, options = {}) {
   const lyrics = state.lyrics ?? {};
   const lines = Array.isArray(lyrics.lines) ? lyrics.lines : [];
   const nowMs = options.nowMs ?? Date.now();
-  const activeIndex = activeLyricIndex(state, lines, nowMs);
+  const { wordCue = snapshot?.wordCue } = options;
   const lyricPositionMs =
-    playbackPositionMs(state, nowMs) +
+    (options.positionMs ?? playbackPositionMs(state, nowMs)) +
     (Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0);
+  const activeIndex = activeLyricIndexAtPosition(
+    lyrics,
+    lines,
+    lyricPositionMs,
+  );
   const linked = Boolean(
     state.playback?.track?.id && lyrics.trackId === state.playback.track.id,
   );
@@ -149,10 +154,10 @@ export function selectPerformerFrame(snapshot, options = {}) {
         : null,
     currentWordCue:
       linked &&
-      snapshot.wordCue?.lineIndex === readingIndex &&
-      lyricPositionMs >= snapshot.wordCue.startMs &&
-      lyricPositionMs < snapshot.wordCue.endMs
-        ? { from: snapshot.wordCue.from, to: snapshot.wordCue.to }
+      wordCue?.lineIndex === readingIndex &&
+      lyricPositionMs >= wordCue.startMs &&
+      lyricPositionMs < wordCue.endMs
+        ? { from: wordCue.from, to: wordCue.to }
         : null,
     nextLine: upcomingIndex >= 0 ? (lines[upcomingIndex] ?? null) : null,
     nextReading:

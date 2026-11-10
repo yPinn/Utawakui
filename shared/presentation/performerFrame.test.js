@@ -55,6 +55,39 @@ function snapshot() {
 }
 
 describe('selectPerformerFrame', () => {
+  it('uses one supplied media position for the lyric line and a buffered word cue', () => {
+    const value = snapshot();
+    value.wordCue = {
+      lineIndex: 1,
+      from: 0,
+      to: 3,
+      startMs: 2000,
+      endMs: 2300,
+    };
+    const wordCue = {
+      lineIndex: 0,
+      from: 0,
+      to: 2,
+      startMs: 1800,
+      endMs: 2000,
+    };
+    const nowMs = Date.parse(value.state.generatedAt) + 1300;
+    expect(
+      selectPerformerFrame(value, { nowMs, positionMs: 2150, wordCue }),
+    ).toMatchObject({
+      mode: 'live',
+      lyricPositionMs: 1950,
+      currentLine: { text: 'first' },
+      currentWordCue: { from: 0, to: 2 },
+    });
+    expect(
+      selectPerformerFrame(value, { nowMs, positionMs: 2200 }),
+    ).toMatchObject({
+      currentLine: { text: 'second' },
+      currentWordCue: { from: 0, to: 3 },
+    });
+  });
+
   it('resolves open source ends from the next cue or duration without changing canonical lines', () => {
     const value = snapshot();
     value.state.playback.status = 'paused';

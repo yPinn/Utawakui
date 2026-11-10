@@ -1,6 +1,7 @@
 {
   "meter": "輸入電平",
   "pitchLegend": "細線是原唱音高，較粗的梅紫色線是輸入音高。膠囊標出目標音，內帶是上下 50 音分的對準範圍。",
+  "scanLegend": "掃條對齊目前的填色邊界。長線標小節，短刻度標拍子。",
   "accessibleReading": "{level}，{status}",
   "accessibleClippingReading": "分析電平 {level}，{status}，峰值 {peak}。",
   "device": "麥克風裝置",

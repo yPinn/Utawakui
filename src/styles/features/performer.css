@@ -1,6 +1,9 @@
 [data-ui-system] {
   --ui-performer-secondary-foreground: var(--ui-color-text-muted);
   --ui-performer-input-foreground: var(--ui-palette-plum-900);
+  --ui-performer-sweep-width: calc(
+    var(--ui-border-width-strong) + var(--ui-border-width)
+  );
   --ui-performer-settings-inline-size: 15rem;
   --ui-performer-mic-meter-inline-size: 24rem;
   --ui-performer-lyrics-max-width-near: 72rem;
