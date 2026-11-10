@@ -163,6 +163,7 @@ const limits = t('performerInput.meterLimits', {
 }
 .input-meter__track {
   position: relative;
+  isolation: isolate;
   block-size: var(--ui-space-2);
   border-radius: var(--ui-radius-xs);
   background: var(--ui-color-surface-active);
@@ -201,7 +202,7 @@ const limits = t('performerInput.meterLimits', {
   block-size: 55%;
 }
 .input-meter__limit {
-  z-index: 1;
+  z-index: var(--ui-layer-raised);
   inset-block: auto 0;
   block-size: 55%;
   background: var(--ui-color-danger);

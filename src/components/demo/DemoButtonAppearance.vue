@@ -1,9 +1,13 @@
 <script setup>
+import { shallowRef } from 'vue';
 import { Download, Repeat } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiButtonGroup from '../ui/UiButtonGroup.vue';
+import UiFilePickerButton from '../ui/UiFilePickerButton.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import '../../styles/demoSpecimens.css';
+
+const selectedFileName = shallowRef('');
 
 const DENSITIES = [
   ['standard', 'Standard · 36 CSS px'],
@@ -103,6 +107,21 @@ function stateProps(state, variant) {
             <UiButton aria-label="前一項">前一項</UiButton>
             <UiButton aria-label="下一項">下一項</UiButton>
           </UiButtonGroup>
+        </article>
+        <article class="demo-specimens__case">
+          <h5>檔案選擇</h5>
+          <div class="demo-specimens__row">
+            <UiFilePickerButton
+              accept=".wav,audio/wav"
+              variant="secondary"
+              @select="selectedFileName = $event.name"
+            >
+              選擇 WAV
+            </UiFilePickerButton>
+          </div>
+          <p class="demo-specimens__copy" role="status">
+            {{ selectedFileName }}
+          </p>
         </article>
       </div>
     </section>

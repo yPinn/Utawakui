@@ -14,6 +14,7 @@ import { t } from '../../utils/i18n.js';
 import PerformerSurface from '../performer/PerformerSurface.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiFilePickerButton from '../ui/UiFilePickerButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
@@ -125,7 +126,6 @@ const liveSelected = computed(() => inputMode.value === 'live');
 const micLookback = computed(() =>
   micRunning.value && !liveSelected.value ? SING_ALONG_MIC_LOOKBACK_MS : 0,
 );
-const livePicker = useTemplateRef('livePicker');
 const liveInput = shallowRef(null);
 const liveInputError = shallowRef('');
 const liveMethod = shallowRef('offline');
@@ -434,10 +434,8 @@ async function analyzeLiveInput() {
   }
 }
 
-async function loadLiveInput(event) {
-  const file = event.target.files?.[0];
-  event.target.value = '';
-  if (!file || !liveSelected.value || !sourceKey.value) return;
+async function loadLiveInput(file) {
+  if (!liveSelected.value || !sourceKey.value) return;
   const request = ++liveRequest;
   const source = sourceKey.value;
   liveInputError.value = '';
@@ -1029,20 +1027,14 @@ onBeforeUnmount(() => {
             </template>
           </ReferencePitchMicrophone>
           <template v-else>
-            <input
-              ref="livePicker"
-              type="file"
+            <UiFilePickerButton
               accept=".wav,audio/wav"
-              hidden
-              @change="loadLiveInput"
-            />
-            <UiButton
               variant="accent"
               :disabled="!sourceKey || offline?.status === 'pending'"
-              @click="livePicker?.click()"
+              @select="loadLiveInput"
             >
               選擇人聲 WAV
-            </UiButton>
+            </UiFilePickerButton>
             <UiHint v-if="liveInputError" tone="warning" role="alert">
               {{ liveInputError }}
             </UiHint>

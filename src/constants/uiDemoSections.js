@@ -120,7 +120,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'buttons',
         title: '按鈕',
-        components: ['UiButton', 'UiButtonGroup'],
+        components: ['UiButton', 'UiButtonGroup', 'UiFilePickerButton'],
       },
       {
         key: 'icon-buttons',
