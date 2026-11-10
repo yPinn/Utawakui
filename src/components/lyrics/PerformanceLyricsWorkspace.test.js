@@ -25,7 +25,9 @@ describe('PerformanceLyricsWorkspace live controls', () => {
     expect(source).toContain('@manage-sources="openSourceManager"');
     expect(source).toContain(':is-loading-sources="state.isLoadingLyrics"');
     expect(source).not.toContain('sourceOptions.length < 2');
-    expect(source).toContain('@click="openLyricsAuthoring"');
+    expect(source).toContain(
+      '@click="reference ? openSourceManager() : openLyricsAuthoring()"',
+    );
     expect(source).not.toContain('searchLyricsCandidates');
     expect(source).not.toContain('deleteLyricsSource');
   });

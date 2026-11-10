@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveLyricsPlaybackState,
   deriveLyricsPositionLineIndex,
+  isLegacyReferenceLabel,
   normalizeLyricsDocument,
   projectLegacyLyricLines,
   referenceLyricsDraft,
@@ -17,6 +18,17 @@ const SOURCE_FINGERPRINT = 'a'.repeat(64);
 const NORMALIZER_PROFILE_ID = 'lyrics-source-v2';
 
 describe('linked lyrics reference', () => {
+  it('recognizes both persisted label formats and verifies a known title when supplied', () => {
+    const title = 'A track title that exceeds the stored label length';
+    for (const prefix of ['參照 ', 'From ']) {
+      const label = `${prefix}${title}`.slice(0, 32);
+      expect(isLegacyReferenceLabel(label)).toBe(true);
+      expect(isLegacyReferenceLabel(label, title)).toBe(true);
+      expect(isLegacyReferenceLabel(label, 'Another recording')).toBe(false);
+    }
+    expect(isLegacyReferenceLabel('Manual import')).toBe(false);
+  });
+
   it('copies the text without cue time, word time, or source offset', () => {
     const text = referenceLyricsDraft({
       text: '[offset:2000]\n[00:01.00]<00:01.00>First\n[00:05.00]Second',

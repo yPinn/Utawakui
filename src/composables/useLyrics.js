@@ -13,20 +13,14 @@ import { useLyricsClock } from './lyrics/useLyricsClock.js';
 import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
 import { useLyricsSourcePresentation } from './lyrics/useLyricsSourcePresentation.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
-import { trackTitlePresentation } from '../utils/trackTitlePresentation.js';
-import {
-  deriveLyricsPlaybackState,
-  deriveLyricsPositionLineIndex,
-  normalizeLyricsDocument,
-  projectLegacyLyricLines,
-  referenceLyricsDraft,
-} from '../utils/lyricsDocument.js';
+import { useLinkedLyricsReference } from './lyrics/useLinkedLyricsReference.js';
+import { useLyricsPlaybackProjection } from './lyrics/useLyricsPlaybackProjection.js';
+import { normalizeLyricsDocument } from '../utils/lyricsDocument.js';
 import {
   DEFAULT_LYRICS_TEXT_VARIANT,
   LYRICS_TEXT_VARIANTS,
 } from '../utils/lyricsTextVariantValues.js';
 import { lyricsTextVariantLoader } from '../utils/lyricsTextVariantLoader.js';
-import { projectNativeLyricsFrame } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { useLyricsPlaybackNavigation } from './lyrics/useLyricsPlaybackNavigation.js';
 import { t } from '../utils/i18n.js';
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
@@ -110,11 +104,7 @@ const state = reactive({
   playbackOffsetSeconds: computed(
     () => linkedReference.value?.offsetSeconds ?? state.offsetSeconds,
   ),
-  linkedReferenceHidden: computed(
-    () =>
-      state.selectedSourceFilename === '' ||
-      hiddenLegacyReference.value === state.selectedTrackId,
-  ),
+  linkedReferenceHidden: computed(() => reference.isHidden.value),
 });
 const selectedTrack = computed(
   () =>
@@ -131,126 +121,6 @@ const selectedSource = computed(() => {
     ) ?? null
   );
 });
-
-// The reference participates in playback without granting authoring authority.
-const hiddenLegacyReference = shallowRef('');
-const linkedReferenceCandidate = computed(() => {
-  const cover = selectedTrack.value;
-  const link = cover?.workPresentation;
-  if (link?.relationship !== 'cover' || !link.referenceTrackId) return null;
-  const reference = tracksById.value.get(link.referenceTrackId);
-  const source = pickPreferredLyricsSource(reference);
-  if (!reference || !source) return null;
-  const title = trackTitlePresentation(reference).title;
-  const sources = selectedLyrics.value.sources;
-  const [ownSource] = sources;
-  // The previous Apply action saved an ordinary manual source with this label.
-  const legacyFilename =
-    sources.length === 1 &&
-    ownSource.kind === 'manual' &&
-    !ownSource.offsetMs &&
-    // eslint-disable-next-line no-restricted-syntax -- persisted labels from both older locales
-    [`參照 ${title}`, `From ${title}`].some(
-      (label) => ownSource.label === label.slice(0, 32),
-    )
-      ? ownSource.filename
-      : null;
-  if (sources.length && !legacyFilename) return null;
-  return {
-    reference,
-    title,
-    legacyFilename,
-    filename: source.filename,
-    key: JSON.stringify([
-      cover.id,
-      link.workId,
-      reference.id,
-      source,
-      title,
-      legacyFilename,
-    ]),
-  };
-});
-const linkedReferenceRequest = computed(() => {
-  const candidate = linkedReferenceCandidate.value;
-  return !state.linkedReferenceHidden &&
-    candidate &&
-    state.selectedSourceFilename === candidate.legacyFilename
-    ? candidate
-    : null;
-});
-const loadedLinkedReference = shallowRef(null);
-const linkedReference = computed(() => {
-  const request = linkedReferenceRequest.value;
-  const loaded = loadedLinkedReference.value;
-  if (!request || loaded?.key !== request.key) return null;
-  if (
-    request.legacyFilename &&
-    (state.isLoadingLyrics ||
-      state.lyricSource?.filename !== request.legacyFilename ||
-      state.offsetSeconds !== 0 ||
-      lyricsTiming.value.status !== 'missing' ||
-      !loaded.legacyText ||
-      state.lyricsText.trim() !== loaded.legacyText)
-  )
-    return null;
-  return loaded;
-});
-const stopLinkedReference = watch(
-  () => linkedReferenceRequest.value?.key,
-  async (key, _previous, onCleanup) => {
-    loadedLinkedReference.value = null;
-    const request = linkedReferenceRequest.value;
-    if (!key || !request || !window.Utawakui?.getTrackLyricsReference) return;
-    let active = true;
-    onCleanup(() => {
-      active = false;
-    });
-    try {
-      const result = await window.Utawakui.getTrackLyricsReference(
-        request.reference.id,
-        request.filename,
-        true,
-      );
-      if (!active || linkedReferenceRequest.value?.key !== key || !result)
-        return;
-      const document = normalizeLyricsDocument({
-        ...result,
-        sourceFingerprint: result.timing?.sourceFingerprint,
-        normalizerProfileId: result.timing?.normalizerProfileId,
-      });
-      if (!document.lines.length) return;
-      await lyricsTextVariantLoader.prepare(document);
-      if (!active || linkedReferenceRequest.value?.key !== key) return;
-      loadedLinkedReference.value = {
-        key,
-        title: request.title,
-        document,
-        legacyText: request.legacyFilename ? referenceLyricsDraft(result) : '',
-        offsetSeconds: (result.source?.offsetMs ?? 0) / 1000,
-      };
-    } catch {
-      // An unavailable optional reference leaves the normal empty state usable.
-    }
-  },
-);
-async function applyLinkedReference() {
-  const request = linkedReferenceRequest.value;
-  if (!request || !linkedReference.value) return null;
-  return sourceDocuments.copyLinkedReference(
-    request.reference.id,
-    request.filename,
-  );
-}
-function toggleLinkedReference() {
-  if (linkedReferenceCandidate.value?.legacyFilename) {
-    hiddenLegacyReference.value = linkedReference.value
-      ? state.selectedTrackId
-      : '';
-  } else {
-    selectSource(linkedReference.value ? '' : null);
-  }
-}
 
 const sourceDocuments = useLyricsSourceDocuments({
   state,
@@ -284,6 +154,21 @@ const {
   importManualLyricsText,
   importManualLyricsFile,
 } = sourceDocuments;
+const reference = useLinkedLyricsReference({
+  state,
+  selectedTrack,
+  selectedLyrics,
+  tracksById,
+  lyricsTiming,
+  selectSource,
+  copyLinkedReference: sourceDocuments.copyLinkedReference,
+});
+const {
+  linkedReference,
+  applyLinkedReference,
+  hasLinkedReference,
+  toggleLinkedReference,
+} = reference;
 
 const acquisition = useLyricsAcquisition({
   state,
@@ -342,23 +227,8 @@ const lyricsTextProcessing = useLyricsTextProcessing({
   sourceKey: () =>
     `${state.selectedTrackId ?? ''}/${state.selectedSourceFilename ?? ''}`,
 });
-const lyricLines = computed(() =>
-  projectLegacyLyricLines(displayLyricsDocument.value),
-);
-const isSelectedTrackPlaying = computed(
-  () =>
-    Boolean(state.selectedTrackId) &&
-    playerState.track?.id === state.selectedTrackId,
-);
 const currentTrackId = computed(() => playerState.track?.id ?? null);
 const currentLyricsPositionMs = shallowRef(null);
-const playbackState = computed(() =>
-  deriveLyricsPlaybackState(
-    displayLyricsDocument.value,
-    currentLyricsPositionMs.value ?? Number.NaN,
-    Number.isFinite(playerState.duration) ? playerState.duration * 1000 : null,
-  ),
-);
 const experimentalLyrics = useExperimentalLyrics({
   playbackState: () => playerState,
   samplePlaybackClock,
@@ -395,39 +265,14 @@ function setLyricsTextVariant(variant) {
   lyricsTextVariant.value = variant;
   return true;
 }
-const activeLineIndex = computed(() => playbackState.value.activeLineIndex);
-const positionedLineIndex = computed(() =>
-  deriveLyricsPositionLineIndex(
-    displayLyricsDocument.value,
-    currentLyricsPositionMs.value,
-  ),
-);
-const localLyricsFrame = computed(() => {
-  const estimated = experimentalLyrics.frame.value;
-  if (estimated) return estimated;
-  const line = displayLyricsDocument.value.lines[activeLineIndex.value];
-  const frame = projectNativeLyricsFrame(line, currentLyricsPositionMs.value);
-  if (!frame?.fineTiming) return frame;
-  const sample = samplePlaybackClock();
-  const transport = playerState;
-  return {
-    ...frame,
-    paintClock: {
-      positionMs: sample
-        ? sample.positionMs + state.playbackOffsetSeconds * 1000
-        : currentLyricsPositionMs.value,
-      sampledAtMs: sample ? Date.parse(sample.sampledAt) : Date.now(),
-      rate: sample?.rate ?? 1,
-      playing: sample?.phase === 'playing',
-      revision: `${transport.playbackRevision}:${transport.continuityRevision}:${transport.playbackPhase}:${transport.tempoRate}`,
-    },
-  };
+const projection = useLyricsPlaybackProjection({
+  state,
+  playerState,
+  samplePlaybackClock,
+  displayLyricsDocument,
+  currentLyricsPositionMs,
+  estimatedFrame: experimentalLyrics.frame,
 });
-const activeLine = computed(() =>
-  activeLineIndex.value >= 0 ? lyricLines.value[activeLineIndex.value] : null,
-);
-const activeLineId = computed(() => playbackState.value.activeLineId);
-const activeSegmentId = computed(() => playbackState.value.activeSegmentId);
 const isReloading = computed(
   () => state.isLoading || state.backfillStatus.isRunning,
 );
@@ -632,7 +477,7 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     lyricsClock.stop();
     sourcePresentation.stop();
-    stopLinkedReference();
+    reference.stop();
     stopPlayerSync();
     stopLibrarySync();
     stopLibraryErrorSync();
@@ -651,7 +496,7 @@ export function useLyrics() {
     selectedSource,
     linkedReference,
     applyLinkedReference,
-    hasLinkedReference: computed(() => Boolean(linkedReferenceCandidate.value)),
+    hasLinkedReference,
     toggleLinkedReference,
     lyricsTiming: readonly(lyricsTiming),
     sourceSession: sourceDocuments.sourceSession,
@@ -662,15 +507,7 @@ export function useLyrics() {
     lyricsTextProcessing,
     experimentalLyrics,
     lyricsTextVariant: readonly(lyricsTextVariant),
-    localLyricsFrame,
-    lyricLines,
-    activeLine,
-    activeLineIndex,
-    positionedLineIndex,
-    activeLineId,
-    activeSegmentId,
-    playbackState,
-    isSelectedTrackPlaying,
+    ...projection,
     currentTrackId,
     currentLyricsPositionMs: readonly(currentLyricsPositionMs),
     isReloading,

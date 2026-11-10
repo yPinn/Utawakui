@@ -23,6 +23,7 @@ const {
   writeAuthoredLyrics,
 } = require('./lyricsAuthored');
 const {
+  isLegacyReferenceLabel,
   normalizeLyricsDocument,
   referenceLyricsDraft,
 } = require('../../../src/utils/lyricsDocument.js');
@@ -269,7 +270,7 @@ function createLyricsSourceSessions({
         if (
           sources.length !== 1 ||
           existing.kind !== 'manual' ||
-          !/^(?:參照 |From )/u.test(existing.label ?? '') ||
+          !isLegacyReferenceLabel(existing.label) ||
           existing.offsetMs
         )
           throw failure();

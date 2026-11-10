@@ -2,6 +2,17 @@ import timingValues from '../../shared/lyricsTimingValues.json' with { type: 'js
 import { parseLyricsText } from './lyrics.js';
 
 const SHA256_RE = /^[a-f0-9]{64}$/;
+// Persisted prefixes from the former copy action (參照 and From).
+const LEGACY_REFERENCE_PREFIXES = ['\u53c3\u7167 ', 'From '];
+
+export function isLegacyReferenceLabel(label, title) {
+  if (typeof label !== 'string') return false;
+  return LEGACY_REFERENCE_PREFIXES.some((prefix) =>
+    title === undefined
+      ? label.startsWith(prefix)
+      : label === `${prefix}${title}`.slice(0, 32),
+  );
+}
 
 function stableHash(value) {
   let hash = 0x811c9dc5;
