@@ -45,7 +45,7 @@ describe('PlayerBar responsive metadata layout', () => {
 
     expect(albumActionStart).toBeGreaterThan(-1);
     expect(albumActionSource).toContain(':tooltip-enabled="false"');
-    expect(albumActionSource).toContain(':text="track.title"');
+    expect(albumActionSource).toContain(':text="presentation.title"');
     expect(componentSource).toContain('<PlaybackTrackIdentity');
   });
 
@@ -262,7 +262,7 @@ describe('PlayerBar responsive metadata layout', () => {
 
   it('links the now-playing artists through the shared credits inside the clipped line', () => {
     expect(identitySource).toMatch(
-      /<span v-if="track\.artist" class="playback-track-artist">\s*<TrackArtistCredits :track="track" \/>\s*<\/span>/u,
+      /<span\s+v-if="track\.artist \|\| track\.artistCredits\?\.length"\s+class="playback-track-artist"\s*>\s*<TrackArtistCredits :track="track" \/>\s*<\/span>/u,
     );
     expect(componentSource).not.toMatch(
       /<TrackArtistCredits[^>]*current-artist-id/u,
