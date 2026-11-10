@@ -4,10 +4,12 @@ import {
   nextTick,
   onBeforeUnmount,
   shallowRef,
+  useId,
   useTemplateRef,
   watch,
 } from 'vue';
 import { Info, MicVocal, SlidersHorizontal } from '../../icons/index.js';
+import { t } from '../../utils/i18n.js';
 import PerformerSurface from '../performer/PerformerSurface.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
@@ -17,8 +19,13 @@ import UiModal from '../ui/UiModal.vue';
 import UiPopover from '../ui/UiPopover.vue';
 import UiRange from '../ui/UiRange.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import GuideSegmentReview from './GuideSegmentReview.vue';
 import ReferencePitchMicrophone from './ReferencePitchMicrophone.vue';
+import {
+  loadSingAlongPreferences,
+  saveSingAlongPreferences,
+} from './singAlongPreferences.js';
 import {
   alignedOfflineVocalFrames,
   ALIGNED_VOCAL_HALF_WINDOW_SECONDS,
@@ -32,18 +39,19 @@ import {
 } from './referencePitchPlot.js';
 import {
   applyGuideOctaveMarks,
-  compareSingAlongPitch,
   connectMicFrames,
   createSingAlongClock,
   GUIDE_NOTE_HEIGHT,
   guideNoteGeometry,
   guideNotes,
+  guidePitchFrames,
   guideSilenceRanges,
   guideTechniqueMarkers,
   INPUT_LEVEL_HEIGHT,
-  inputLevelPath,
+  inputLevelPaths,
   maskGuideContours,
   SING_ALONG_CURSOR,
+  SING_ALONG_MIC_LOOKBACK_MS,
   SING_ALONG_SECONDS,
   projectMicSamplePosition,
   songPitchBounds,
@@ -61,10 +69,13 @@ defineEmits([
   'update:readingScale',
   'display-boundary',
 ]);
-const correctionMs = defineModel('correctionMs', {
-  type: Number,
-  required: true,
-});
+const preferences = loadSingAlongPreferences();
+const correctionMs = shallowRef(preferences.correctionMs);
+const micPreferences = shallowRef(preferences.microphone);
+const showMeter = shallowRef(preferences.showMeter);
+const showReferencePitch = shallowRef(preferences.showReferencePitch);
+const meterHost = useTemplateRef('meterHost');
+const formatCorrection = (ms) => `${ms > 0 ? '+' : ''}${ms} ms`;
 const access = window.UtawakuiPerformer;
 const state = computed(() => props.snapshot?.state);
 const playback = computed(() => state.value?.playback);
@@ -75,11 +86,26 @@ const playRequested = computed(() =>
   ['playing', 'buffering', 'seeking'].includes(playback.value?.status),
 );
 const position = shallowRef(0);
+const guideFillId = `prompter-guide-fill-${useId()}`;
+const inputClipId = `prompter-input-clip-${useId()}`;
+const inputClip = `url(#${inputClipId})`;
 const response = shallowRef(null);
 const reviewMarks = shallowRef([]);
 const pendingGuide = shallowRef(false);
 const toolsOpen = shallowRef(false);
-const showInputLevel = shallowRef(false);
+const showInputLevel = shallowRef(preferences.showLevelHistory);
+watch(
+  [micPreferences, correctionMs, showMeter, showInputLevel, showReferencePitch],
+  () => {
+    saveSingAlongPreferences({
+      microphone: micPreferences.value,
+      correctionMs: correctionMs.value,
+      showMeter: showMeter.value,
+      showLevelHistory: showInputLevel.value,
+      showReferencePitch: showReferencePitch.value,
+    });
+  },
+);
 const legendOpen = shallowRef(false);
 const reviewOpen = shallowRef(false);
 const reviewCenterMs = shallowRef(0);
@@ -92,13 +118,16 @@ const inputOptions = [
   { value: 'live', label: 'Live 人聲檔' },
 ];
 const liveSelected = computed(() => inputMode.value === 'live');
+const micLookback = computed(() =>
+  micRunning.value && !liveSelected.value ? SING_ALONG_MIC_LOOKBACK_MS : 0,
+);
 const livePicker = useTemplateRef('livePicker');
 const liveInput = shallowRef(null);
 const liveInputError = shallowRef('');
-const liveMethod = shallowRef('realtime');
+const liveMethod = shallowRef('offline');
 const liveMethods = [
-  { value: 'realtime', label: '即時' },
-  { value: 'offline', label: '離線' },
+  { value: 'offline', label: '離線（SwiftF0）' },
+  { value: 'realtime', label: '即時對照（YIN）' },
 ];
 const offline = shallowRef(null);
 const showOffline = computed(
@@ -130,20 +159,23 @@ const sourceKey = computed(() =>
     : null,
 );
 const semitones = computed(() => source.value?.semitones ?? null);
-const guide = computed(() =>
+const guidePitches = computed(() =>
   response.value?.status === 'ready'
-    ? guideNotes(
-        applyGuideOctaveMarks(
-          response.value.pitches,
-          response.value.stepSeconds,
-          reviewMarks.value,
-        ),
+    ? applyGuideOctaveMarks(
+        response.value.pitches,
         response.value.stepSeconds,
+        reviewMarks.value,
       )
+    : null,
+);
+const silenceRanges = computed(() => guideSilenceRanges(reviewMarks.value));
+const guide = computed(() =>
+  guidePitches.value
+    ? guideNotes(guidePitches.value, response.value.stepSeconds)
     : [],
 );
 const contours = computed(() =>
-  maskGuideContours(guide.value, guideSilenceRanges(reviewMarks.value)),
+  maskGuideContours(guide.value, silenceRanges.value),
 );
 const historySeconds = SING_ALONG_SECONDS * SING_ALONG_CURSOR;
 const viewStart = computed(() => position.value - historySeconds);
@@ -188,9 +220,8 @@ const grid = computed(() => {
 });
 const labeledGrid = computed(() => grid.value.filter((line) => line.octave));
 const timeToX = (time) => (time * PITCH_WIDTH) / SING_ALONG_SECONDS;
-const timelineTransform = computed(
-  () => `translate(${-timeToX(viewStart.value)} 0)`,
-);
+const timelineX = computed(() => timeToX(viewStart.value));
+const timelineTransform = computed(() => `translate(${-timelineX.value} 0)`);
 const guideBoxes = computed(() =>
   nearbyGuide.value.map((note) => ({
     start: note.start,
@@ -198,19 +229,41 @@ const guideBoxes = computed(() =>
     ...guideNoteGeometry(note, timeToX, (midi) => y(midi + semitones.value)),
   })),
 );
+const referencePath = computed(() => {
+  if (
+    !showReferencePitch.value ||
+    !guidePitches.value ||
+    semitones.value === null
+  )
+    return '';
+  const from = focusStart.value - overscan;
+  const to = focusEnd.value + overscan;
+  const frames = guidePitchFrames(
+    guidePitches.value,
+    response.value.stepSeconds,
+    silenceRanges.value,
+    from,
+    to,
+  );
+  return microphonePitchPath(
+    frames,
+    from,
+    to - from,
+    (midi) => y(midi + semitones.value),
+    timeToX,
+  );
+});
 const annotations = computed(() =>
   guideTechniqueMarkers(
-    nearbyGuide.value,
+    nearbyGuide.value.filter(({ technique }) => technique?.kind === 'vibrato'),
     timeToX,
     focusStart.value - overscan,
     focusEnd.value + overscan,
+    response.value?.techniqueCues,
+    response.value?.hiddenTechniqueMarks,
   ),
 );
-const techniqueMarks = {
-  rise: { path: 'M-2 2L2 -2M0 -2H2V0', label: '上滑音' },
-  fall: { path: 'M-2 -2L2 2M0 2H2V0', label: '下滑音' },
-  vibrato: { path: 'M-3 0Q-1.5 -3 0 0T3 0', label: '抖音' },
-};
+const vibratoPath = 'M-3 0Q-1.5 -3 0 0T3 0';
 const cursor = PITCH_WIDTH * SING_ALONG_CURSOR;
 const nearScreen = (time) => time >= focusStart.value && time <= focusEnd.value;
 const beats = computed(() =>
@@ -240,7 +293,7 @@ const lineStarts = computed(() =>
 const visibleLineStarts = computed(() => lineStarts.value.filter(nearScreen));
 const wordBand = computed(() => {
   const cue = props.snapshot?.wordCue;
-  if (!props.frame.currentWordCue || !cue) return null;
+  if (!cue) return null;
   const start = toMediaTime(cue.startMs);
   const end = toMediaTime(cue.endMs);
   if (position.value < start || position.value >= end) return null;
@@ -261,7 +314,7 @@ const realtimeFrames = computed(() =>
       )
     : micFrames.value.map((sample) => ({
         ...sample,
-        time: sample.time - correctionMs.value / 1000,
+        time: sample.time + correctionMs.value / 1000,
       })),
 );
 const inputFrames = computed(() => {
@@ -274,15 +327,15 @@ const inputFrames = computed(() => {
   );
 });
 const trace = computed(() => connectMicFrames(inputFrames.value));
-const levelPath = computed(() =>
+const levelPaths = computed(() =>
   showInputLevel.value
-    ? inputLevelPath(
+    ? inputLevelPaths(
         realtimeFrames.value,
-        viewStart.value,
-        position.value,
+        focusStart.value - overscan,
+        focusEnd.value + overscan,
         timeToX,
       )
-    : '',
+    : {},
 );
 const micPath = computed(() =>
   microphonePitchPath(
@@ -293,36 +346,6 @@ const micPath = computed(() =>
     timeToX,
   ),
 );
-const pitchComparison = computed(() => {
-  const latest = trace.value.at(-1);
-  if (liveSelected.value && position.value - latest?.time > 0.066) return null;
-  const comparison = compareSingAlongPitch(
-    latest,
-    nearbyGuide.value,
-    semitones.value,
-  );
-  if (
-    !comparison ||
-    comparison.time < viewStart.value ||
-    comparison.time > viewEnd.value
-  )
-    return null;
-  const { time, midi, direction } = comparison;
-  const center = y(midi);
-  const offset = GUIDE_NOTE_HEIGHT / 2 + 5;
-  return {
-    direction,
-    x: timeToX(time - viewStart.value),
-    y:
-      center +
-      (direction === 'high' ? -offset : direction === 'low' ? offset : 0),
-  };
-});
-const comparisonShapes = {
-  center: 'M-0.1 0h0.2',
-  high: 'M-1.3 2L0 -2L1.3 2',
-  low: 'M-1.3 -2L0 2L1.3 -2',
-};
 const guideStatus = computed(() => {
   if (!props.frame.trackId) return '請先在主視窗播放曲目。';
   if (!source.value?.guide) return '請在主視窗選用有分離導唱的音源。';
@@ -472,6 +495,7 @@ function sampleMic(running, frame) {
       atMs: frame.atMs,
       hz: frame.hz,
       dbfs: frame.dbfs,
+      levelTone: frame.levelTone,
       continuous: continuous && previous && frame.atMs - previous.atMs <= 150,
     },
   ];
@@ -480,8 +504,9 @@ function sampleMic(running, frame) {
 
 function tick(frameMs) {
   animation = null;
-  position.value = clock.positionAt(frameMs) / 1000;
-  if (playing.value) animation = requestAnimationFrame(tick);
+  if (!playing.value) return;
+  position.value = clock.displayPositionAt(frameMs) / 1000;
+  animation = requestAnimationFrame(tick);
 }
 
 function openLegend() {
@@ -526,6 +551,7 @@ watch(
     () => source.value?.continuityRevision,
     () => playback.value?.rate,
     semitones,
+    () => source.value?.monitorPitchDelayMs,
   ],
   clearMic,
   { flush: 'sync' },
@@ -539,7 +565,7 @@ watch(
   { flush: 'sync' },
 );
 watch(
-  [state, continuityKey],
+  [state, continuityKey, micLookback, () => source.value?.monitorPitchDelayMs],
   () => {
     const frameMs = performance.now();
     const next = clock.sync(
@@ -547,6 +573,8 @@ watch(
       continuityKey.value,
       Date.now(),
       frameMs,
+      source.value?.monitorPitchDelayMs,
+      micLookback.value,
     );
     if (!playing.value || animation === null) position.value = next / 1000;
     if (playing.value && animation === null) {
@@ -596,15 +624,38 @@ onBeforeUnmount(() => {
           </div>
           <svg
             class="prompter-sing-along__plot"
+            :style="{ '--prompter-guide-fill': `url(#${guideFillId})` }"
             :viewBox="`0 0 ${PITCH_WIDTH} 120`"
             preserveAspectRatio="none"
             role="img"
             :aria-label="
               liveSelected
-                ? '目前曲目的導唱空框與 Live 人聲音高'
-                : '目前曲目的導唱空框與麥克風實唱音高'
+                ? '原唱曲線、目標音符與人聲檔音高'
+                : '原唱曲線、目標音符與麥克風實唱音高'
             "
           >
+            <defs>
+              <clipPath :id="inputClipId">
+                <rect :width="cursor" height="120" />
+              </clipPath>
+              <!-- Cancel the scrolling translation to keep the color edge on the cursor. -->
+              <linearGradient
+                :id="guideFillId"
+                class="prompter-sing-along__sweep"
+                gradientUnits="userSpaceOnUse"
+                :gradientTransform="`translate(${timelineX} 0)`"
+                :x2="PITCH_WIDTH"
+              >
+                <stop
+                  class="prompter-sing-along__sweep--passed"
+                  :offset="SING_ALONG_CURSOR"
+                />
+                <stop
+                  class="prompter-sing-along__sweep--pending"
+                  :offset="SING_ALONG_CURSOR"
+                />
+              </linearGradient>
+            </defs>
             <rect
               v-if="wordBand"
               class="prompter-sing-along__word"
@@ -645,21 +696,38 @@ onBeforeUnmount(() => {
                 class="prompter-sing-along__phrase"
                 :d="`M${timeToX(time)} 0V9`"
               />
-              <rect
+              <g
                 v-for="note in guideBoxes"
                 :key="note.start"
-                class="prompter-sing-along__target"
+                class="prompter-sing-along__note"
                 :class="{
-                  'prompter-sing-along__target--past': position >= note.end,
-                  'prompter-sing-along__target--active':
+                  'prompter-sing-along__note--past': position >= note.end,
+                  'prompter-sing-along__note--active':
                     position >= note.start && position < note.end,
                 }"
-                :x="note.x"
-                :y="note.y"
-                :width="note.width"
-                :height="GUIDE_NOTE_HEIGHT"
-              />
-              <path class="prompter-sing-along__voice" :d="micPath" />
+              >
+                <rect
+                  class="prompter-sing-along__target"
+                  :x="note.x"
+                  :y="note.y"
+                  :width="note.width"
+                  :height="GUIDE_NOTE_HEIGHT"
+                />
+                <rect
+                  class="prompter-sing-along__target-band"
+                  :x="note.x + 0.1"
+                  :y="note.bandY"
+                  :width="Math.max(0, note.width - 0.2)"
+                  :height="note.bandHeight"
+                />
+              </g>
+              <path class="prompter-sing-along__reference" :d="referencePath" />
+            </g>
+            <g :clip-path="inputClip">
+              <g :transform="timelineTransform">
+                <path class="prompter-sing-along__voice-edge" :d="micPath" />
+                <path class="prompter-sing-along__voice" :d="micPath" />
+              </g>
             </g>
             <line
               class="prompter-sing-along__cursor"
@@ -667,14 +735,6 @@ onBeforeUnmount(() => {
               :x2="cursor"
               y1="0"
               y2="120"
-            />
-            <path
-              v-if="pitchComparison"
-              aria-hidden="true"
-              class="prompter-sing-along__pitch-comparison"
-              :data-direction="pitchComparison.direction"
-              :transform="`translate(${pitchComparison.x} ${pitchComparison.y})`"
-              :d="comparisonShapes[pitchComparison.direction]"
             />
           </svg>
           <template v-if="showInputLevel">
@@ -686,14 +746,22 @@ onBeforeUnmount(() => {
               :viewBox="`0 0 ${PITCH_WIDTH} ${INPUT_LEVEL_HEIGHT}`"
               preserveAspectRatio="none"
               role="img"
-              aria-label="輸入電平，與音高圖共用時間軸"
+              :aria-label="t('performerInput.historyDescription')"
             >
               <path
                 class="prompter-sing-along__ruler"
                 :d="`M0 ${INPUT_LEVEL_HEIGHT - 1}H${PITCH_WIDTH}`"
               />
-              <g :transform="timelineTransform">
-                <path class="prompter-sing-along__level-fill" :d="levelPath" />
+              <g :clip-path="inputClip">
+                <g :transform="timelineTransform">
+                  <path
+                    v-for="(path, tone) in levelPaths"
+                    :key="tone"
+                    class="prompter-sing-along__level-fill"
+                    :data-tone="tone"
+                    :d="path"
+                  />
+                </g>
               </g>
               <line
                 class="prompter-sing-along__cursor"
@@ -723,17 +791,33 @@ onBeforeUnmount(() => {
                 }"
                 :transform="`translate(${mark.x} 6)`"
               >
-                <title>{{ techniqueMarks[mark.kind].label }}</title>
+                <title>顫音</title>
+                <path class="prompter-sing-along__technique" :d="vibratoPath" />
                 <path
-                  class="prompter-sing-along__technique"
-                  :d="techniqueMarks[mark.kind].path"
+                  v-if="mark.onsetOffset"
+                  class="prompter-sing-along__annotation-stem"
+                  :d="`M${Math.min(4, mark.onsetOffset / 2)} 0H${mark.onsetOffset}v4`"
                 />
-                <path class="prompter-sing-along__annotation-stem" d="M0 4V8" />
+                <path
+                  v-else
+                  class="prompter-sing-along__annotation-stem"
+                  d="M0 4V8"
+                />
               </g>
             </g>
           </svg>
         </div>
       </figure>
+    </template>
+    <template v-if="!liveSelected && showMeter" #above-tools>
+      <UiSurface
+        class="prompter-sing-along__meter"
+        tag="section"
+        stroke="inset"
+        :aria-label="t('performerInput.device')"
+      >
+        <div ref="meterHost" />
+      </UiSurface>
     </template>
     <template #rail-tools>
       <UiIconButton
@@ -746,11 +830,23 @@ onBeforeUnmount(() => {
       />
     </template>
     <template #display-tools>
-      <UiCheckbox
-        id="prompter-show-input-level"
-        v-model="showInputLevel"
-        label="顯示輸入音量"
-      />
+      <div class="prompter-sing-along__display-toggles">
+        <UiCheckbox
+          id="prompter-show-reference-pitch"
+          v-model="showReferencePitch"
+          :label="t('performerInput.showReferencePitch')"
+        />
+        <UiCheckbox
+          id="prompter-show-mic-meter"
+          v-model="showMeter"
+          :label="t('performerInput.showMeter')"
+        />
+        <UiCheckbox
+          id="prompter-show-input-level"
+          v-model="showInputLevel"
+          :label="t('performerInput.history')"
+        />
+      </div>
     </template>
     <template #leading-tools>
       <UiPopover
@@ -790,9 +886,9 @@ onBeforeUnmount(() => {
           />
           <ReferencePitchMicrophone
             v-if="inputMode === 'microphone'"
+            v-model:preferences="micPreferences"
             :access="access"
-            :list-on-open="toolsOpen && !reviewOpen"
-            :playing="playing"
+            :meter-host="meterHost"
             prefer-system-default
             stop-when-hidden
             @frame="sampleMic"
@@ -801,11 +897,13 @@ onBeforeUnmount(() => {
               <UiRange
                 id="prompter-mic-correction"
                 v-model="correctionMs"
-                label="實唱線提前量"
+                :label="t('performerInput.alignment')"
+                :hint="t('performerInput.alignmentHint')"
                 :min="-500"
                 :max="500"
                 :step="10"
-                :value-text="`${correctionMs} ms`"
+                :value-text="formatCorrection(correctionMs)"
+                :format-value="formatCorrection"
                 value-in-label
               />
             </template>
@@ -902,42 +1000,38 @@ onBeforeUnmount(() => {
                   width="29"
                   height="8"
                 />
-                <path class="prompter-sing-along__voice" d="M13 12H43" />
+                <rect
+                  class="prompter-sing-along__target-band"
+                  x="4.2"
+                  y="10"
+                  width="28.6"
+                  height="4"
+                />
+                <path
+                  class="prompter-sing-along__reference"
+                  d="M5 13Q11 6 17 12T29 12"
+                />
+                <path class="prompter-sing-along__voice" d="M14 12H43" />
               </svg>
               音高對照
             </dt>
-            <dd>空框是導唱，實線是收到的音高。</dd>
+            <dd>
+              {{ t('performerInput.pitchLegend') }}
+            </dd>
           </div>
           <div>
             <dt>
               <svg viewBox="0 0 48 24" aria-hidden="true">
                 <path
-                  v-for="(direction, index) in ['center', 'high', 'low']"
-                  :key="direction"
-                  class="prompter-sing-along__pitch-comparison"
-                  :data-direction="direction"
-                  :transform="`translate(${9 + index * 15} 12) scale(2)`"
-                  :d="comparisonShapes[direction]"
-                />
-              </svg>
-              音準提示
-            </dt>
-            <dd>圓點表示接近目標。上箭頭偏高，下箭頭偏低。</dd>
-          </div>
-          <div>
-            <dt>
-              <svg viewBox="0 0 48 24" aria-hidden="true">
-                <path
-                  v-for="(mark, index) in Object.values(techniqueMarks)"
-                  :key="mark.label"
                   class="prompter-sing-along__technique"
-                  :transform="`translate(${9 + index * 15} 12) scale(1.5)`"
-                  :d="mark.path"
+                  transform="translate(13 12) scale(1.5)"
+                  :d="vibratoPath"
                 />
+                <path class="prompter-sing-along__phrase" d="M32 8V16" />
               </svg>
               演唱標記
             </dt>
-            <dd>斜箭頭是滑音，波浪是顫音，短線是句首。</dd>
+            <dd>波浪是顫音，短線是句首。</dd>
           </div>
           <div>
             <dt>
@@ -962,9 +1056,9 @@ onBeforeUnmount(() => {
                   d="M4 20V15L10 13L14 16L21 8L27 10L33 15L38 12L44 16V20Z"
                 />
               </svg>
-              輸入音量
+              {{ t('performerInput.historyName') }}
             </dt>
-            <dd>越高表示聲音越大，也可能有背景聲。</dd>
+            <dd>{{ t('performerInput.historyDescription') }}</dd>
           </div>
         </dl>
       </UiModal>
@@ -987,6 +1081,16 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: var(--ui-space-3);
   flex-wrap: wrap;
+}
+
+.prompter-sing-along__meter {
+  inline-size: min(100%, var(--ui-performer-mic-meter-inline-size));
+  padding: var(--ui-space-2);
+}
+
+.prompter-sing-along__display-toggles {
+  display: grid;
+  gap: var(--ui-space-1);
 }
 
 .prompter-sing-along__mic-settings {
@@ -1062,8 +1166,20 @@ onBeforeUnmount(() => {
 }
 
 .prompter-sing-along__level-fill {
-  fill: var(--ui-color-text-muted);
+  fill: var(--ui-color-accent);
   fill-opacity: 0.4;
+}
+
+.prompter-sing-along__level-fill[data-tone='success'] {
+  fill: var(--ui-color-success);
+}
+
+.prompter-sing-along__level-fill[data-tone='warning'] {
+  fill: var(--ui-color-warning);
+}
+
+.prompter-sing-along__level-fill[data-tone='danger'] {
+  fill: var(--ui-color-danger);
 }
 
 .prompter-sing-along__legend {
@@ -1110,8 +1226,9 @@ onBeforeUnmount(() => {
 .prompter-sing-along__target,
 .prompter-sing-along__technique,
 .prompter-sing-along__annotation-stem,
+.prompter-sing-along__reference,
+.prompter-sing-along__voice-edge,
 .prompter-sing-along__voice,
-.prompter-sing-along__pitch-comparison,
 .prompter-sing-along__cursor {
   fill: none;
   vector-effect: non-scaling-stroke;
@@ -1180,30 +1297,70 @@ onBeforeUnmount(() => {
   color: var(--ui-color-accent);
 }
 .prompter-sing-along__target {
+  rx: var(--ui-radius-xs);
+  ry: var(--ui-radius-sm);
+  fill: var(
+    --prompter-guide-fill,
+    color-mix(in srgb, var(--ui-color-surface), var(--ui-color-accent) 23%)
+  );
   stroke: var(--ui-color-text-muted);
 }
-.prompter-sing-along__target--past {
+.prompter-sing-along__sweep--passed {
+  stop-color: color-mix(
+    in srgb,
+    var(--ui-color-surface),
+    var(--ui-color-accent) 70%
+  );
+}
+.prompter-sing-along__sweep--pending {
+  stop-color: var(--ui-color-surface);
+}
+.prompter-sing-along__target-band {
+  rx: var(--ui-radius-xs);
+  ry: var(--ui-radius-xs);
+  fill: color-mix(in srgb, var(--ui-color-surface), var(--ui-color-accent) 8%);
+}
+.prompter-sing-along__plot .prompter-sing-along__target-band {
+  fill: none;
+  stroke: var(--ui-color-text);
+  stroke-opacity: 0.4;
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+}
+.prompter-sing-along__note--past .prompter-sing-along__target {
   stroke-opacity: 0.62;
 }
-.prompter-sing-along__target--active {
-  stroke: var(--ui-color-accent);
-  stroke-width: 2;
+.prompter-sing-along__note--active .prompter-sing-along__target {
+  stroke: color-mix(
+    in srgb,
+    var(--ui-color-text-muted) 80%,
+    var(--ui-color-text)
+  );
+  stroke-width: 1.5;
 }
 
-.prompter-sing-along__voice {
-  stroke: var(--ui-color-text);
-  stroke-width: 2;
+.prompter-sing-along__reference {
+  stroke: var(--ui-color-text-muted);
+  stroke-width: 1.25;
   stroke-linecap: round;
 }
+.prompter-sing-along__plot .prompter-sing-along__reference {
+  stroke: color-mix(
+    in srgb,
+    var(--ui-color-text),
+    var(--ui-color-text-muted) 15%
+  );
+}
 
-.prompter-sing-along__pitch-comparison {
+.prompter-sing-along__voice-edge {
   stroke: var(--ui-color-text);
-  stroke-width: 1.5;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-
-.prompter-sing-along__pitch-comparison[data-direction='center'] {
-  stroke-width: 4;
+.prompter-sing-along__voice {
+  stroke: var(--ui-performer-input-foreground);
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 </style>

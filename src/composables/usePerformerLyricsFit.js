@@ -45,6 +45,7 @@ export function usePerformerLyricsFit(source, host, onBoundary, options = {}) {
       : 0;
     const height = region.clientHeight * 0.8 - readingHeight;
     const probe = document.createElement('p');
+    probe.lang = target.lang;
     Object.assign(probe.style, {
       position: 'fixed',
       left: '-10000px',
@@ -52,8 +53,10 @@ export function usePerformerLyricsFit(source, host, onBoundary, options = {}) {
       visibility: 'hidden',
       margin: '0',
       width: `${width}px`,
-      whiteSpace: 'pre-wrap',
-      overflowWrap: 'anywhere',
+      whiteSpace: style.whiteSpace,
+      textWrap: style.textWrap,
+      overflowWrap: style.overflowWrap,
+      textAlign: style.textAlign,
       fontFamily: style.fontFamily,
       fontSize: style.fontSize,
       fontWeight: style.fontWeight,

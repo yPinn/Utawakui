@@ -450,6 +450,16 @@ function keyboardShortcutSettingsIntent(input) {
 }
 
 contextBridge.exposeInMainWorld('Utawakui', {
+  ...(process.argv.includes('--internal-workbenches-enabled=1')
+    ? {
+        inspectGuidePitch: () =>
+          ipcRenderer.invoke('reference-pitch:inspect-guides'),
+        backfillGuidePitch: () =>
+          ipcRenderer.invoke('reference-pitch:backfill-guides'),
+        stopGuidePitchBackfill: () =>
+          ipcRenderer.invoke('reference-pitch:stop-backfill'),
+      }
+    : {}),
   getKeyboardShortcuts: () => ipcRenderer.invoke('keyboard-shortcuts:get'),
   testKeyboardShortcuts: (input) =>
     ipcRenderer.invoke(

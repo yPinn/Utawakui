@@ -202,6 +202,11 @@ function parseSingAlong(value) {
   return {
     playbackRevision: revision('playbackRevision'),
     continuityRevision: revision('continuityRevision'),
+    monitorPitchDelayMs: number(
+      fields.monitorPitchDelayMs ?? 0,
+      'singAlong.monitorPitchDelayMs',
+      { min: 0, max: 1000 },
+    ),
     guide: guide
       ? {
           recipeId: boundedString(

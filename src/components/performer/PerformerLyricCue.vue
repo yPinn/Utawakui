@@ -74,6 +74,8 @@ const groups = computed(() => {
 .performer-lyric-cue__reading {
   margin: 0;
   overflow-wrap: anywhere;
+  white-space: pre-line;
+  text-wrap: balance;
 }
 .performer-lyric-cue__word--active {
   text-decoration: underline;

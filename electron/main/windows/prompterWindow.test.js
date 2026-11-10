@@ -57,6 +57,27 @@ class FakeWindow extends EventEmitter {
 }
 
 describe('performer window manager', () => {
+  it('exposes the segment review bridge only in an opted-in dev window', () => {
+    for (const isDev of [true, false]) {
+      FakeWindow.instances = [];
+      const manager = createPerformerWindowManager({
+        BrowserWindow: FakeWindow,
+        isDev,
+        enableGuideReview: true,
+        devUrl: 'http://localhost:5173/src/entries/prompter/index.html',
+        pagePath: 'dist/src/entries/prompter/index.html',
+        preloadPath: 'performerPreload.js',
+      });
+      manager.open();
+      expect(
+        FakeWindow.instances[0].options.webPreferences.additionalArguments.includes(
+          '--guide-segment-review-enabled=1',
+        ),
+      ).toBe(isDev);
+      manager.close();
+    }
+  });
+
   it('reuses a live window and resends the latest snapshot after load', () => {
     FakeWindow.instances = [];
     const publishStatus = vi.fn();

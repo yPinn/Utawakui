@@ -1,0 +1,17 @@
+{
+  "title": "Guide vocal pitch",
+  "guidance": "Pitch is prepared after separation. Check the library to fill in pitch for existing guide vocals.",
+  "check": "Check",
+  "fill": "Fill in guide pitch",
+  "stop": "Stop backfill",
+  "checking": "Checking guide vocal pitch…",
+  "preparing": "Preparing guide vocal pitch…",
+  "counts": "{ready} ready, {missing} missing, {invalid} to rebuild, {noGuide} without an eligible guide vocal.",
+  "result": "{prepared} prepared, {ready} already ready, {failed} incomplete, {noGuide} without an eligible guide vocal.",
+  "busy": "A guide pitch job is already running.",
+  "cancelled": "Backfill stopped.",
+  "noDecoder": "Set up FFmpeg in the audio processing settings first.",
+  "noModel": "A guide pitch model is unavailable.",
+  "sourceChanged": "The library changed. Check again.",
+  "unavailable": "Guide vocal pitch is currently unavailable."
+}

@@ -1,0 +1,61 @@
+{
+  "meter": "Input level",
+  "pitchLegend": "The thin line shows the original vocal pitch. The thicker plum line shows input pitch. Capsules mark the target notes, with a tolerance band of 50 cents on either side.",
+  "accessibleReading": "{level}, {status}",
+  "accessibleClippingReading": "Analysis level {level}, {status}, peak {peak}.",
+  "device": "Microphone device",
+  "defaultDevice": "System default device",
+  "chooseDevice": "Choose a microphone",
+  "noDevice": "No microphone found",
+  "readDevices": "Refresh devices",
+  "readingDevices": "Reading devices…",
+  "start": "Enable microphone",
+  "stop": "Stop microphone",
+  "meterLimits": "Pitch threshold {pitch} dBFS. Pitch stops at clipping near {clip} dBFS.",
+  "showMeter": "Show microphone meter",
+  "showReferencePitch": "Show original vocal curve",
+  "history": "Show level history",
+  "historyName": "Level history",
+  "historyDescription": "Higher levels indicate louder input. Level and pitch share a timeline. The microphone level strip shows pitch status by color.",
+  "gain": "Microphone gain",
+  "gainHint": "Adjusts the input level used for sing-along analysis.",
+  "lowCut": "Low-cut filter",
+  "lowCutPresets": {
+    "hz0": {
+      "label": "Off · Preserve low end",
+      "hint": "For quiet rooms or practicing low notes."
+    },
+    "hz80": {
+      "label": "{hz} Hz · Rumble reduction",
+      "hint": "For footsteps, stand vibration, or air-conditioning rumble."
+    },
+    "hz120": {
+      "label": "{hz} Hz · Proximity effect",
+      "hint": "For excess bass when singing close to a directional mic."
+    },
+    "hz180": {
+      "label": "{hz} Hz · Stronger low cut",
+      "hint": "For persistent rumble. Turn it down if low notes drop out."
+    }
+  },
+  "noiseSuppression": "Noise suppression",
+  "noiseHint": "Changing this briefly restarts microphone capture.",
+  "noiseUnsupported": "Noise suppression support is unconfirmed.",
+  "noiseUnknown": "The device did not report its noise suppression setting.",
+  "noiseMismatch": "The device did not apply the selected noise suppression setting.",
+  "adjust": "Microphone settings",
+  "alignment": "Sync offset",
+  "alignmentHint": "Moves only the sung pitch trace.",
+  "status": {
+    "idle": "Off",
+    "waiting": "Waiting for input",
+    "requesting": "Starting",
+    "error": "Input unavailable",
+    "lost": "Input disconnected",
+    "quiet": "Low input",
+    "noPitch": "Pitch undetected",
+    "voiced": "Pitch available",
+    "rawClipping": "Device clip",
+    "analysisClipping": "Analysis clip"
+  }
+}

@@ -118,6 +118,7 @@ describe('packaged dependency boundary', () => {
       'worker.cjs',
       'liveVocalWorker.cjs',
       'phaseComparison.cjs',
+      'preparationQueue.cjs',
     ]) {
       expect(isDelivered(`prototypes/reference-pitch/${file}`)).toBe(false);
     }

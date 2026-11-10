@@ -27,6 +27,7 @@ function createPerformerWindowManager(options) {
   const {
     BrowserWindow,
     isDev,
+    enableGuideReview = false,
     devUrl,
     pagePath,
     preloadPath,
@@ -176,6 +177,9 @@ function createPerformerWindowManager(options) {
           `--ui-theme=${initialTheme}`,
           `--ui-locale=${getUiLocale()}`,
           ...(isDev ? ['--performer-research-enabled=1'] : []),
+          ...(isDev && enableGuideReview
+            ? ['--guide-segment-review-enabled=1']
+            : []),
         ],
       },
     });

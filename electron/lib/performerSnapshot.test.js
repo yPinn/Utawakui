@@ -54,6 +54,24 @@ function snapshot() {
 }
 
 describe('performer snapshot contract', () => {
+  it('carries a bounded monitor delay independently of the lyric offset', () => {
+    const value = snapshot();
+    value.state.lyrics.offsetMs = -100;
+    value.singAlong = {
+      playbackRevision: 1,
+      continuityRevision: 2,
+      guide: null,
+      semitones: 4,
+    };
+    expect(parsePerformerSnapshot(value).singAlong.monitorPitchDelayMs).toBe(0);
+    value.singAlong.monitorPitchDelayMs = 121.25;
+    const parsed = parsePerformerSnapshot(value);
+    expect(parsed.singAlong.monitorPitchDelayMs).toBe(121.25);
+    expect(parsed.state.lyrics.offsetMs).toBe(-100);
+    value.singAlong.monitorPitchDelayMs = 1001;
+    expect(() => parsePerformerSnapshot(value)).toThrow(/monitorPitchDelayMs/);
+  });
+
   it('accepts an optional active word cue and preserves old snapshots without it', () => {
     const value = snapshot();
     value.wordCue = {

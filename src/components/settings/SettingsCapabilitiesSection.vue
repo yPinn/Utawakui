@@ -1,5 +1,12 @@
 <script setup>
-import { computed, nextTick, onMounted, shallowRef, watch } from 'vue';
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  shallowRef,
+  watch,
+} from 'vue';
 import {
   FEATURE_DEPENDENCY_IDS,
   getFeatureDependencies,
@@ -31,6 +38,10 @@ import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
 import SettingsDependencyList from './SettingsDependencyList.vue';
 import { t } from '../../utils/i18n.js';
+
+const GuidePitchSettingsRow = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('./GuidePitchSettingsRow.vue'))
+  : null;
 
 const OPTIONAL_FEATURE_GROUPS = Object.freeze([
   {
@@ -489,6 +500,7 @@ onMounted(() => {
                         separationSettings.setGpuAcceleration
                       "
                     />
+                    <GuidePitchSettingsRow v-if="GuidePitchSettingsRow" />
                   </template>
                 </SettingsDependencyList>
                 <SettingsDependencyList

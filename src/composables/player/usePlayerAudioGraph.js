@@ -76,6 +76,7 @@ export function usePlayerAudioGraph({
   let isDisposed = false;
   let pitchNode = null;
   let pitchNodeReady = null;
+  let pitchNodeDelayMs = 0;
   let pitchProcessingError = null;
   let monitorPitchFailed = false;
   let capturePitchProcessingError = null;
@@ -709,6 +710,7 @@ export function usePlayerAudioGraph({
         }
         node.onprocessorerror = () => {
           monitorPitchFailed = true;
+          state.monitorPitchDelayMs = 0;
           if (monitorRelay) failMonitorRelay(monitorRelay);
           applications.invalidate('monitor', 'failed');
           recordAudioDiagnostic('processor-error', 'monitor');
@@ -831,6 +833,16 @@ export function usePlayerAudioGraph({
           ),
         });
         if (!job.isCurrent()) return false;
+        if (pitchNodeDelayMs === 0) {
+          const seconds = await Promise.resolve(node.latency?.()).catch(
+            () => null,
+          );
+          if (!job.isCurrent()) return false;
+          if (Number.isFinite(seconds) && seconds > 0 && seconds <= 1)
+            pitchNodeDelayMs = seconds * 1000;
+        }
+        if (monitorPitchFailed)
+          throw new Error('Monitor pitch processor stopped');
       }
       audio.defaultPlaybackRate = target.tempoRate;
       audio.playbackRate = target.tempoRate;
@@ -846,6 +858,7 @@ export function usePlayerAudioGraph({
       }
       rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
       rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
+      state.monitorPitchDelayMs = active ? pitchNodeDelayMs : 0;
       if (target.monitorGuideVocalEnabled) applyMonitorGuideVocalGain();
       else hardStopGain(audioCtx, vocalGain.gain);
       monitorControls = { ...target };

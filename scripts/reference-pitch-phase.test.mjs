@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { createRequire } from 'node:module';
 import { expect, it, vi } from 'vitest';
 
@@ -8,6 +11,65 @@ const {
 const {
   registerReferencePitch,
 } = require('../prototypes/reference-pitch/register.cjs');
+const {
+  readGuideTechniqueCues,
+  readGuideTechniqueReview,
+} = require('../prototypes/reference-pitch/guideReview.cjs');
+
+it('accepts bounded technique cues only for the exact separation version', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'guide-cues-'));
+  const cacheFile = path.join(directory, 'reference-pitch-v1.json');
+  const file = path.join(directory, 'reference-pitch-technique-cues-v1.json');
+  const source = { trackId: 'track', recipeId: 'general', completedAtMs: 123 };
+  const cue = { kind: 'rise', fromMs: 1600, toMs: 1800, hintMs: 1360 };
+  const write = (cues, hidden) =>
+    fs.writeFileSync(
+      file,
+      JSON.stringify({ version: 1, ...source, cues, hidden }),
+    );
+  try {
+    expect(readGuideTechniqueCues(cacheFile, source, 2)).toEqual([]);
+    write([{ ...cue, privateField: 'extra' }]);
+    expect(readGuideTechniqueCues(cacheFile, source, 2)).toEqual([cue]);
+    const hidden = [{ kind: 'fall', atMs: 1000 }];
+    write([cue], [{ ...hidden[0], privateField: 'extra' }]);
+    expect(readGuideTechniqueReview(cacheFile, source, 2)).toEqual({
+      techniqueCues: [cue],
+      hiddenTechniqueMarks: hidden,
+    });
+    expect(
+      readGuideTechniqueReview(cacheFile, { ...source, completedAtMs: 124 }, 2),
+    ).toEqual({ techniqueCues: [], hiddenTechniqueMarks: [] });
+    write([cue], [{ ...hidden[0], atMs: 2001 }]);
+    expect(readGuideTechniqueReview(cacheFile, source, 2)).toEqual({
+      techniqueCues: [cue],
+      hiddenTechniqueMarks: [],
+    });
+    expect(
+      readGuideTechniqueCues(cacheFile, { ...source, completedAtMs: 124 }, 2),
+    ).toEqual([]);
+    expect(readGuideTechniqueCues(cacheFile, source, 1)).toEqual([]);
+    write([{ ...cue, hintMs: 1650 }]);
+    expect(readGuideTechniqueCues(cacheFile, source, 2)).toEqual([]);
+    const fullSong = Array.from({ length: 128 }, (_, index) => ({
+      kind: 'vibrato',
+      hintMs: 500 * index,
+      fromMs: 500 * index + 120,
+      toMs: 500 * index + 420,
+    }));
+    fs.writeFileSync(
+      file,
+      JSON.stringify({ version: 1, ...source, cues: fullSong }, null, 2),
+    );
+    expect(readGuideTechniqueCues(cacheFile, source, 65)).toEqual(fullSong);
+    write([...fullSong, { ...cue, hintMs: 64000, fromMs: 64120, toMs: 64420 }]);
+    expect(readGuideTechniqueCues(cacheFile, source, 65)).toEqual([]);
+    fs.writeFileSync(file, '{');
+    expect(readGuideTechniqueCues(cacheFile, source, 2)).toEqual([]);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 it('accepts comparison intent only from the main frame and checks the audio gate', async () => {
   const senderFrame = {};

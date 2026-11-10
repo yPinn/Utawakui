@@ -122,4 +122,19 @@ describe('microphone analysis input processing', () => {
     h.graph.dispose();
     expect(h.filter.disconnect).toHaveBeenCalledOnce();
   });
+
+  it('retunes or bypasses the low-cut without disconnecting the raw meter', () => {
+    const h = harness();
+    h.graph.setHighPassHz(80);
+    expect(h.source.disconnect).toHaveBeenLastCalledWith(h.gain);
+    expect(h.source.connect).toHaveBeenLastCalledWith(h.filter);
+    h.graph.setHighPassHz(120);
+    expect(h.filter.frequency.value).toBe(120);
+    expect(h.source.disconnect).toHaveBeenCalledOnce();
+    h.graph.setHighPassHz(0);
+    expect(h.source.disconnect).toHaveBeenLastCalledWith(h.filter);
+    expect(h.source.connect).toHaveBeenLastCalledWith(h.gain);
+    expect(h.source.disconnect).not.toHaveBeenCalledWith(h.analysers[0]);
+    expect(h.filter.connect).toHaveBeenCalledOnce();
+  });
 });

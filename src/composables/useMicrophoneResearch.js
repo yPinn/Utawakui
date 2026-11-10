@@ -6,6 +6,7 @@ export function useMicrophoneResearch({
   access = window.Utawakui,
   stopWhenHidden = false,
   preferSystemDefault = false,
+  followDeviceChanges = false,
 } = {}) {
   const state = shallowRef(null);
   const { recordError } = useAppDiagnostics();
@@ -13,6 +14,7 @@ export function useMicrophoneResearch({
     mediaDevices: navigator.mediaDevices,
     access,
     preferSystemDefault,
+    followDeviceChanges,
     createContext: () => new AudioContext({ latencyHint: 'interactive' }),
     publish: (value) => {
       state.value = value;

@@ -244,6 +244,34 @@ describe('UiRangeControl', () => {
     app.unmount();
   });
 
+  it('shows the applied value on the thumb and follows native input while dragging', async () => {
+    const { app, root } = mount(UiRangeControl, {
+      modelValue: 0,
+      min: -24,
+      max: 24,
+      step: 1,
+      formatValue: (value) => `${value} dB`,
+    });
+    const input = findAll(root, (node) => node.props.type === 'range')[0];
+    inputRect(input);
+    const tooltip = () =>
+      textContent(findAll(body, (node) => node.props.role === 'tooltip')[0]);
+
+    trigger(input, 'onPointermove', { clientX: 195, pointerType: 'mouse' });
+    await nextTick();
+    expect(tooltip()).toBe('0 dB');
+
+    trigger(input, 'onPointermove', {
+      clientX: 235,
+      pointerType: 'mouse',
+      buttons: 1,
+    });
+    trigger(input, 'onInput', { target: { valueAsNumber: 9 } });
+    await nextTick();
+    expect(tooltip()).toBe('9 dB');
+    app.unmount();
+  });
+
   it('keeps disabled and touch input free of pointer preview', async () => {
     const disabled = mount(UiRangeControl, {
       id: 'formal-disabled',

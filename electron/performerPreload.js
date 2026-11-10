@@ -49,6 +49,11 @@ contextBridge.exposeInMainWorld('UtawakuiPerformer', {
           ),
         cancelLiveVocal: (requestId) =>
           ipcRenderer.invoke('performer-pitch:cancel-live', requestId),
+      }
+    : {}),
+  ...(process.argv.includes('--performer-research-enabled=1') &&
+  process.argv.includes('--guide-segment-review-enabled=1')
+    ? {
         loadGuideReview: (requestId, centerMs) =>
           ipcRenderer.invoke('performer-review:load', requestId, centerMs),
         cancelGuideReview: (requestId) =>

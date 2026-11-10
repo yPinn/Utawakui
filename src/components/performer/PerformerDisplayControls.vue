@@ -77,12 +77,11 @@ const readingScaleItems = [
 .performer-display-controls {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-4);
-  padding: var(--ui-space-2);
+  gap: var(--ui-space-3);
 }
 .performer-display-controls__group {
   display: grid;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-1);
 }
 
 .performer-display-controls__label {

@@ -83,6 +83,7 @@ const state = reactive({
   transposeSemitones: PLAYER_AUDIO_DEFAULTS.transposeSemitones,
   pitchCents: PLAYER_AUDIO_DEFAULTS.pitchCents,
   tempoRate: PLAYER_AUDIO_DEFAULTS.tempoRate,
+  monitorPitchDelayMs: 0,
   captureDeviceId: null,
   captureError: null,
 });

@@ -21,6 +21,7 @@ const PITCH_WINDOW_MS = 5000;
 const PITCH_MAX_GAP_MS = 150;
 const SYSTEM_DEFAULT_DEVICE = 'default';
 const RESET = {
+  inputLabel: '',
   dbfs: -100,
   peak: 0,
   intensity: 0,
@@ -40,6 +41,7 @@ export function createMicrophoneResearchRuntime({
   onError = () => {},
   now = () => performance.now(),
   preferSystemDefault = false,
+  followDeviceChanges = false,
 } = {}) {
   const activityOwner = createMicrophoneActivity();
   let activitySignature = null;
@@ -62,6 +64,7 @@ export function createMicrophoneResearchRuntime({
   let current = null;
   let destroyed = false;
   let listRevision = 0;
+  let hasListedDevices = false;
   function update(values) {
     if (destroyed) return;
     state = { ...state, ...values };
@@ -165,11 +168,11 @@ export function createMicrophoneResearchRuntime({
             : device.label?.slice(0, 200) || `未命名輸入 ${index + 1}`,
       }));
   }
-  async function refreshDevices() {
+  async function refreshDevices({ keepLoss = false } = {}) {
     if (destroyed || current || state.refreshing) return false;
     const revision = ++listRevision;
     let lease;
-    update({ refreshing: true, error: '' });
+    update({ refreshing: true, ...(keepLoss ? {} : { error: '' }) });
     try {
       if (!mediaDevices?.enumerateDevices || !access?.beginMicrophoneResearch)
         throw new Error('Mic research unavailable');
@@ -178,6 +181,7 @@ export function createMicrophoneResearchRuntime({
       if (!lease) throw new Error('Mic research permission unavailable');
       const devices = availableDevices(await mediaDevices.enumerateDevices());
       if (destroyed || revision !== listRevision) return false;
+      hasListedDevices = true;
       const selectedDeviceId = devices.some(
         (d) => d.id === state.selectedDeviceId,
       )
@@ -185,7 +189,12 @@ export function createMicrophoneResearchRuntime({
         : (devices.find((d) => d.id === SYSTEM_DEFAULT_DEVICE)?.id ?? '');
       const invalidated =
         selectedDeviceId !== state.selectedDeviceId ? invalidateActivity() : {};
-      update({ devices, selectedDeviceId, status: 'idle', ...invalidated });
+      update({
+        devices,
+        selectedDeviceId,
+        status: keepLoss ? 'lost' : 'idle',
+        ...invalidated,
+      });
       return true;
     } catch (error) {
       if (!destroyed && revision === listRevision) {
@@ -208,6 +217,12 @@ export function createMicrophoneResearchRuntime({
       update({ selectedDeviceId: id, ...invalidateActivity() });
     }
     return true;
+  }
+  async function switchDevice(id) {
+    if (state.status === 'requesting') return false;
+    const restart = state.status === 'running' && id !== state.selectedDeviceId;
+    if (!selectDevice(id)) return false;
+    return restart ? start() : true;
   }
   async function start() {
     if (destroyed || current || state.refreshing || !state.selectedDeviceId)
@@ -277,8 +292,9 @@ export function createMicrophoneResearchRuntime({
       )
         throw new Error('Selected input unavailable');
       const lost = () => {
-        if (isCurrent(op))
-          stop('lost', '輸入訊號已中斷，請確認裝置後重新開始。');
+        if (!isCurrent(op)) return;
+        stop('lost', '輸入訊號已中斷，請確認裝置後重新開始。');
+        if (followDeviceChanges) void refreshDevices({ keepLoss: true });
       };
       listen(op, tracks[0], 'ended', lost);
       listen(op, tracks[0], 'mute', lost);
@@ -377,6 +393,7 @@ export function createMicrophoneResearchRuntime({
           : {};
       update({
         status: 'running',
+        inputLabel: tracks[0].label?.slice(0, 200) ?? '',
         settings: actualSettings,
         ...invalidated,
         activity: activityOwner.reset(
@@ -403,16 +420,24 @@ export function createMicrophoneResearchRuntime({
   }
   async function deviceChanged() {
     const op = current;
-    if (!op || state.status !== 'running') return;
+    if (!op) {
+      if (followDeviceChanges && hasListedDevices)
+        await refreshDevices({ keepLoss: state.status === 'lost' });
+      return;
+    }
+    if (state.status !== 'running') return;
+    const revision = ++listRevision;
     try {
       const devices = availableDevices(await mediaDevices.enumerateDevices());
-      if (!isCurrent(op)) return;
+      if (!isCurrent(op) || revision !== listRevision) return;
       update({ devices });
       if (!devices.some((device) => device.id === state.selectedDeviceId)) {
         stop('lost', '所選輸入已移除，請重新讀取並選擇裝置。');
         update(invalidateActivity());
+        if (followDeviceChanges) await refreshDevices({ keepLoss: true });
       }
     } catch (error) {
+      if (revision !== listRevision) return;
       fail(
         op,
         error,
@@ -508,20 +533,23 @@ export function createMicrophoneResearchRuntime({
       return false;
     if (
       current &&
-      Object.keys(options).some(
-        (key) => key !== 'gainDb' && options[key] !== state.inputOptions[key],
+      MICROPHONE_PROCESSING_KEYS.some(
+        (key) => options[key] !== state.inputOptions[key],
       )
     )
       return false;
-    if (current && options.gainDb !== state.inputOptions.gainDb) {
+    const gainChanged = options.gainDb !== state.inputOptions.gainDb;
+    const filterChanged = options.highPassHz !== state.inputOptions.highPassHz;
+    if (current && (gainChanged || filterChanged)) {
       try {
-        current.inputGraph.setGainDb(options.gainDb);
+        if (filterChanged) current.inputGraph.setHighPassHz(options.highPassHz);
+        if (gainChanged) current.inputGraph.setGainDb(options.gainDb);
       } catch (error) {
         fail(
           current,
           error,
-          'MIC_RESEARCH_GAIN_FAILED',
-          '輸入增益無法套用，請重新開始。',
+          'MIC_RESEARCH_INPUT_SETTINGS_FAILED',
+          '收音調整無法套用，請重新開始。',
         );
         return false;
       }
@@ -534,10 +562,30 @@ export function createMicrophoneResearchRuntime({
       inputOptions: options,
       ...invalidated,
       ...(state.settings
-        ? { settings: { ...state.settings, gainDb: options.gainDb } }
+        ? {
+            settings: {
+              ...state.settings,
+              gainDb: options.gainDb,
+              highPassHz: options.highPassHz,
+            },
+          }
         : {}),
     });
     return true;
+  }
+  async function setNoiseSuppression(enabled) {
+    if (
+      destroyed ||
+      state.status === 'requesting' ||
+      !state.processingSupport.noiseSuppression ||
+      typeof enabled !== 'boolean'
+    )
+      return false;
+    if (enabled === state.inputOptions.noiseSuppression) return true;
+    const restart = state.status === 'running';
+    if (restart) stop();
+    if (!configureInput({ noiseSuppression: enabled })) return false;
+    return restart ? start() : true;
   }
   function destroy() {
     stop();
@@ -549,6 +597,7 @@ export function createMicrophoneResearchRuntime({
   return {
     refreshDevices,
     selectDevice,
+    switchDevice,
     start,
     stop: () => stop(),
     configure,
@@ -556,6 +605,7 @@ export function createMicrophoneResearchRuntime({
     applyActivityCalibration,
     setActivitySuspended,
     configureInput,
+    setNoiseSuppression,
     destroy,
   };
 }

@@ -146,7 +146,14 @@ function previewPointerValue(event) {
   const visualRatio = (clientX - trackStart) / trackWidth;
   const direction = window.getComputedStyle(rangeElement).direction;
   const ratio = direction === 'rtl' ? 1 - visualRatio : visualRatio;
-  const previewValue = snapPreviewValue(props.min + ratio * span);
+  const thumbRatio =
+    direction === 'rtl' ? 1 - rangeRatio.value : rangeRatio.value;
+  const thumbCenter = trackStart + thumbRatio * trackWidth;
+  const onThumb = Math.abs(event.clientX - thumbCenter) <= thumbSize / 2;
+  const previewValue =
+    onThumb || (event.buttons & 1) !== 0
+      ? props.modelValue
+      : snapPreviewValue(props.min + ratio * span);
   const trackCenter = range.top + range.height / 2;
 
   previewText.value = formatPreviewValue(previewValue);
@@ -170,6 +177,7 @@ function updateValue(event) {
   const value = Number.isFinite(event.target.valueAsNumber)
     ? event.target.valueAsNumber
     : Number(event.target.value);
+  if (previewOpen.value) previewText.value = formatPreviewValue(value);
   emit('update:modelValue', value);
 }
 

@@ -791,6 +791,11 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
     heavyJobScheduler = createHeavyJobScheduler();
+    const enableGuideReview =
+      windowState.isDev &&
+      !app.isPackaged &&
+      process.env.UTAWAKUI_GUIDE_SEGMENT_REVIEW === '1';
+    let guidePreparation;
     if (windowState.isDev && !app.isPackaged) {
       const prototypeRoot = path.join(
         app.getAppPath(),
@@ -800,7 +805,7 @@ if (!gotSingleInstanceLock) {
       const { registerReferencePitch } = require(
         path.join(prototypeRoot, 'register.cjs'),
       );
-      registerReferencePitch({
+      guidePreparation = registerReferencePitch({
         ipcMain,
         getMainWindow: windowState.getMainWindow,
         getPerformerSource: () => {
@@ -819,6 +824,8 @@ if (!gotSingleInstanceLock) {
           dir: configState.resolveDownloadDir(configState.getConfig()),
           epoch: workLibraryEpoch,
         }),
+        listTracks: listCatalogTracks,
+        enableGuideReview,
         requireGate: () =>
           requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW),
         getFfmpeg: () =>
@@ -1423,6 +1430,7 @@ if (!gotSingleInstanceLock) {
     performerWindowManager = createPerformerWindowManager({
       BrowserWindow,
       isDev: windowState.isDev,
+      enableGuideReview,
       devUrl: devServerUrl(rendererEntries.prompter),
       pagePath: path.join(__dirname, '..', 'dist', rendererEntries.prompter),
       preloadPath: resolveRuntimeEntry(
@@ -1672,7 +1680,10 @@ if (!gotSingleInstanceLock) {
       heavyJobScheduler,
       onQueueUpdate: windowState.setSeparationQueueStatus,
       getLibraryScope: getReleaseScope,
-      onSeparationComplete: experimentalLyricsQueue.enqueue,
+      onSeparationComplete(trackId) {
+        void guidePreparation?.enqueue(trackId);
+        experimentalLyricsQueue.enqueue(trackId);
+      },
       recordDiagnostic,
       enforceLibraryStoragePolicy,
     });

@@ -2,6 +2,7 @@
 const { execFile } = require('node:child_process');
 const { randomUUID } = require('node:crypto');
 const fs = require('node:fs');
+const path = require('node:path');
 const { promisify } = require('node:util');
 const { atomicWriteExclusiveText } = require('../../electron/lib/atomicWrite');
 
@@ -15,6 +16,9 @@ const LABELS = new Set([
   'octave-up',
   'octave-down',
 ]);
+const TECHNIQUE_KINDS = new Set(['rise', 'fall', 'vibrato']);
+const MAX_TECHNIQUE_CUES = 128;
+const MAX_TECHNIQUE_CUE_BYTES = 16 * 1024;
 const REQUEST_ID = /^[0-9a-f-]{36}$/;
 const MAX_MARKS = 256;
 
@@ -62,6 +66,68 @@ function sameVersion(mark, source) {
 
 function readGuideReviewMarks(file, source) {
   return readMarks(file).filter((mark) => sameVersion(mark, source));
+}
+
+function readGuideTechniqueReview(cacheFile, source, durationSeconds) {
+  const empty = { techniqueCues: [], hiddenTechniqueMarks: [] };
+  if (!cacheFile) return empty;
+  const file = path.join(
+    path.dirname(cacheFile),
+    'reference-pitch-technique-cues-v1.json',
+  );
+  try {
+    const stat = fs.lstatSync(file);
+    if (!stat.isFile() || stat.size > MAX_TECHNIQUE_CUE_BYTES) return empty;
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (
+      data?.version !== 1 ||
+      !sameVersion(data, source) ||
+      !Array.isArray(data.cues) ||
+      data.cues.length > MAX_TECHNIQUE_CUES
+    )
+      return empty;
+    const ceiling = Math.floor(durationSeconds * 1000);
+    const cues = [];
+    for (const cue of data.cues) {
+      if (!cue) return empty;
+      const { kind, fromMs, toMs, hintMs } = cue;
+      if (
+        !TECHNIQUE_KINDS.has(kind) ||
+        !validRange(fromMs, toMs, cues.at(-1)?.toMs ?? 0, ceiling) ||
+        !Number.isSafeInteger(hintMs) ||
+        hintMs < 0 ||
+        fromMs - hintMs < 1 ||
+        fromMs - hintMs > 1000
+      )
+        return empty;
+      cues.push({ kind, fromMs, toMs, hintMs });
+    }
+    const hidden = data.hidden;
+    const validHidden =
+      Array.isArray(hidden) &&
+      hidden.length <= MAX_TECHNIQUE_CUES &&
+      hidden.every(
+        (mark) =>
+          mark &&
+          TECHNIQUE_KINDS.has(mark.kind) &&
+          Number.isSafeInteger(mark.atMs) &&
+          mark.atMs >= 0 &&
+          mark.atMs < ceiling,
+      );
+    return {
+      techniqueCues: cues,
+      hiddenTechniqueMarks: validHidden
+        ? hidden.map(({ kind, atMs }) => ({ kind, atMs }))
+        : [],
+    };
+  } catch {
+    return empty;
+  }
+}
+
+function readGuideTechniqueCues(cacheFile, source, durationSeconds) {
+  return readGuideTechniqueReview(cacheFile, source, durationSeconds)
+    .techniqueCues;
 }
 
 function saveGuideReviewMark(source, fromMs, toMs, label) {
@@ -320,6 +386,8 @@ function registerGuideReview({
 
 module.exports = {
   readGuideReviewMarks,
+  readGuideTechniqueCues,
+  readGuideTechniqueReview,
   registerGuideReview,
   saveGuideReviewMark,
 };

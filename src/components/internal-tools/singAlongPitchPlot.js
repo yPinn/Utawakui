@@ -7,6 +7,11 @@ const NOTE_CONFIRM_SECONDS = 0.064;
 const SHORT_NOTE_STABILITY = 0.2;
 const SHORT_NOTE_EDGE = 0.75;
 const SHORT_GUIDE_SECONDS = 0.08;
+const PITCH_MATCH_SEMITONES = 0.5;
+const MAX_GUIDE_STEP_SEMITONES = 7;
+const GUIDE_GAP_SUPPORT_FRAMES = 4;
+const MAX_GUIDE_GAP_SECONDS = 0.016;
+const MAX_GUIDE_GAP_PITCH_SPAN = 0.5;
 
 const toMidi = (hz) =>
   Number.isFinite(hz) && hz >= 35 && hz <= 2200
@@ -511,7 +516,7 @@ export function maskGuideContours(contours, ranges) {
     let start = contour.start;
     const segments = [];
     const addSegment = (end) => {
-      if (end <= start) return;
+      if (end - start <= 1e-9) return;
       segments.push({ ...clipGuideContour(contour, start, end), start, end });
     };
     for (const [from, to] of ranges) {
@@ -526,8 +531,70 @@ export function maskGuideContours(contours, ranges) {
   });
 }
 
+function hasStableGuideGap(pitches, step, index, ranges) {
+  if (step > MAX_GUIDE_GAP_SECONDS + 1e-9) return false;
+  const first = index - GUIDE_GAP_SUPPORT_FRAMES;
+  const last = index + GUIDE_GAP_SUPPORT_FRAMES;
+  let low = Infinity;
+  let high = -Infinity;
+  for (let at = first; at <= last; at++) {
+    if (at === index) continue;
+    const midi = toMidi(pitches[at]);
+    if (midi === null) return false;
+    low = Math.min(low, midi);
+    high = Math.max(high, midi);
+  }
+  return (
+    high - low <= MAX_GUIDE_GAP_PITCH_SPAN + 1e-9 &&
+    !ranges.some(
+      ([from, to]) => from <= last * step + 1e-9 && to > first * step + 1e-9,
+    )
+  );
+}
+
+export function guidePitchFrames(pitches, step, ranges, from, to) {
+  const first = Math.max(0, Math.floor(from / step));
+  const last = Math.min(pitches.length - 1, Math.ceil(to / step));
+  let rangeIndex = 0;
+  let previousTime = (first - 1) * step;
+  let previousMidi = null;
+  const frames = [];
+  for (let index = first; index <= last; index++) {
+    const time = index * step;
+    while (ranges[rangeIndex]?.[1] <= time + 1e-9) rangeIndex++;
+    const range = ranges[rangeIndex];
+    const silent = range?.[0] <= time + 1e-9;
+    const crossesSilence =
+      silent || ranges[rangeIndex - 1]?.[1] > previousTime + 1e-9;
+    // Join the measured endpoints without inventing a pitch for a missed frame.
+    if (
+      index > first &&
+      index < last &&
+      pitches[index] === 0 &&
+      !crossesSilence &&
+      hasStableGuideGap(pitches, step, index, ranges)
+    )
+      continue;
+    const midi = silent ? null : toMidi(pitches[index]);
+    frames.push({
+      time,
+      hz: midi === null ? null : pitches[index],
+      continuous:
+        !crossesSilence &&
+        midi !== null &&
+        previousMidi !== null &&
+        Math.abs(midi - previousMidi) < MAX_GUIDE_STEP_SEMITONES,
+    });
+    previousTime = time;
+    previousMidi = midi;
+  }
+  return frames;
+}
+
 export const SING_ALONG_SECONDS = 8;
 export const SING_ALONG_CURSOR = 1 / 3;
+// Allow the mic analysis window, one sample interval and a paint to complete.
+export const SING_ALONG_MIC_LOOKBACK_MS = 80;
 
 export function createSingAlongClock() {
   let anchor = null;
@@ -544,18 +611,44 @@ export function createSingAlongClock() {
       ),
     );
   }
-  function sync(state, continuity, nowMs, frameMs) {
+  function displayPositionAt(frameMs) {
+    return (
+      anchor?.frozen ??
+      Math.max(0, positionAt(frameMs) - (anchor?.lookback ?? 0))
+    );
+  }
+  function sync(
+    state,
+    continuity,
+    nowMs,
+    frameMs,
+    monitorPitchDelayMs = 0,
+    micLookbackMs = 0,
+  ) {
     const playback = state?.playback;
     const status = playback?.status;
     const rate =
       Number.isFinite(playback?.rate) && playback.rate > 0 ? playback.rate : 1;
-    const position = playbackPositionMs(state, nowMs);
-    const difference = positionAt(frameMs) - position;
+    const mediaDelay = status === 'playing' ? monitorPitchDelayMs * rate : 0;
+    const lookback = status === 'playing' ? micLookbackMs * rate : 0;
+    const position = playbackPositionMs(state, nowMs) - mediaDelay;
+    const sameSource = anchor && anchor.continuity === continuity;
+    const wasHeld = anchor?.frozen != null || anchor?.status === 'paused';
+    const frozen =
+      (status === 'paused' || status === 'buffering') &&
+      sameSource &&
+      (anchor.status === 'playing' || wasHeld)
+        ? displayPositionAt(frameMs)
+        : null;
+    const previous = wasHeld
+      ? displayPositionAt(frameMs) + lookback
+      : positionAt(frameMs);
+    const difference = previous - position;
     const continuous =
-      anchor &&
-      anchor.continuity === continuity &&
+      sameSource &&
       anchor.playbackRate === rate &&
-      (anchor.status === 'playing' || anchor.status === 'paused') &&
+      ((anchor.status === 'playing' && anchor.mediaDelay === mediaDelay) ||
+        wasHeld) &&
       status === 'playing' &&
       Math.abs(difference) <= Math.min(120, (rate * correctionMs) / 2);
     anchor = {
@@ -564,13 +657,16 @@ export function createSingAlongClock() {
       frameMs,
       position,
       playbackRate: rate,
+      mediaDelay,
+      lookback,
+      frozen,
       rate: status === 'playing' ? rate : 0,
       duration: playback?.durationMs ?? Infinity,
       offset: continuous ? difference : 0,
     };
-    return positionAt(frameMs);
+    return displayPositionAt(frameMs);
   }
-  return { sync, positionAt };
+  return { sync, positionAt, displayPositionAt };
 }
 
 export function songPitchBounds(notes, semitones) {
@@ -615,15 +711,27 @@ export function guideNoteGeometry(note, x, y) {
   const left = x(note.start);
   const right = x(note.end);
   const inset = Math.min(0.4, (right - left) / 4);
-  const center = y(note.points[0].midi);
+  const { midi } = note.points[0];
+  const center = y(midi);
+  const high = y(midi + PITCH_MATCH_SEMITONES);
+  const low = y(midi - PITCH_MATCH_SEMITONES);
   return {
     x: left + inset,
     y: center - GUIDE_NOTE_HEIGHT / 2,
     width: right - left - 2 * inset,
+    bandY: Math.min(high, low),
+    bandHeight: Math.abs(low - high),
   };
 }
 
-export function guideTechniqueMarkers(notes, x, viewStart, viewEnd) {
+export function guideTechniqueMarkers(
+  notes,
+  x,
+  viewStart,
+  viewEnd,
+  cues = [],
+  hidden = [],
+) {
   const left = x(viewStart) + 4;
   const right = x(viewEnd) - 4;
   const markers = [];
@@ -634,7 +742,36 @@ export function guideTechniqueMarkers(notes, x, viewStart, viewEnd) {
     if (markers.length && column - markers.at(-1).x < 10) continue;
     markers.push({ ...technique, x: column, start, end });
   }
-  return markers;
+  if (!cues.length && !hidden.length) return markers;
+  // Hide after spacing so a suppressed neighbor does not take the marker's place.
+  return markers.flatMap((mark) => {
+    const timeMs = Math.round(mark.time * 1000);
+    const cue = cues.find(
+      ({ kind, fromMs, toMs }) =>
+        kind === mark.kind &&
+        fromMs <= timeMs &&
+        timeMs < toMs &&
+        fromMs >= Math.round(mark.start * 1000) &&
+        toMs <= Math.round(mark.end * 1000),
+    );
+    if (!cue) {
+      const hiddenMark = hidden.some(
+        ({ kind, atMs }) => kind === mark.kind && atMs === timeMs,
+      );
+      return hiddenMark ? [] : [mark];
+    }
+    const start = cue.fromMs / 1000;
+    const hint = x(cue.hintMs / 1000);
+    return [
+      {
+        ...mark,
+        x: hint,
+        start,
+        end: cue.toMs / 1000,
+        onsetOffset: x(start) - hint,
+      },
+    ];
+  });
 }
 
 export function guideContourPath(
@@ -707,22 +844,45 @@ export function inputLevelPath(frames, from, to, timeToX) {
   return lastX === null ? path : `${path}L${lastX},${INPUT_LEVEL_HEIGHT}Z`;
 }
 
+export function inputLevelPaths(frames, from, to, timeToX) {
+  const paths = Object.create(null);
+  let group = [];
+  let tone = 'neutral';
+  function flush() {
+    if (!group.length) return;
+    paths[tone] =
+      (paths[tone] ?? '') + inputLevelPath(group, from, to, timeToX);
+    group = [];
+  }
+
+  for (const frame of frames) {
+    if (frame.time < from || frame.time > to || !Number.isFinite(frame.dbfs)) {
+      flush();
+      continue;
+    }
+    const previous = group.at(-1);
+    const nextTone = frame.levelTone ?? 'neutral';
+    if (!frame.continuous) {
+      flush();
+    } else if (previous && nextTone !== tone) {
+      const edge = {
+        time: (previous.time + frame.time) / 2,
+        dbfs: (previous.dbfs + frame.dbfs) / 2,
+        continuous: true,
+      };
+      group.push(edge);
+      flush();
+      group.push(edge);
+    }
+    tone = nextTone;
+    group.push(frame);
+  }
+  flush();
+  return paths;
+}
+
 export function projectMicSamplePosition(frame, boundaryMs, positionAt, rate) {
   const { sampledAtMs, windowMs } = frame;
   if (sampledAtMs - windowMs < boundaryMs) return null;
   return Math.max(0, positionAt(sampledAtMs) - (windowMs / 2) * rate);
-}
-
-export function compareSingAlongPitch(frame, notes, semitones) {
-  const actual = toMidi(frame?.hz);
-  if (actual === null || !Number.isFinite(semitones)) return null;
-  const { time } = frame;
-  const note = notes.find(({ start, end }) => start <= time && time < end);
-  if (!note) return null;
-  const midi = note.points[0].midi + semitones;
-  const delta = actual - midi;
-  if (Math.abs(delta) > 0.5) return null;
-  const direction =
-    Math.abs(delta) <= 0.12 ? 'center' : delta > 0 ? 'high' : 'low';
-  return { time, midi, direction };
 }

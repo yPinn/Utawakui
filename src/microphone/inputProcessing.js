@@ -3,6 +3,7 @@ import { createMicrophonePitchEstimator } from './pitch.js';
 
 export const PITCH_MIN_DBFS = -55;
 export const MICROPHONE_ANALYSIS_SAMPLES = 2048;
+export const MICROPHONE_LOW_CUT_OPTIONS_HZ = Object.freeze([0, 80, 120, 180]);
 
 export const MICROPHONE_PROCESSING_KEYS = Object.freeze([
   'noiseSuppression',
@@ -14,7 +15,7 @@ export function normalizeMicrophoneInputOptions(input = {}) {
     gainDb: Number.isFinite(input?.gainDb)
       ? Math.max(-24, Math.min(24, input.gainDb))
       : 0,
-    highPassHz: [0, 80, 120, 180].includes(input?.highPassHz)
+    highPassHz: MICROPHONE_LOW_CUT_OPTIONS_HZ.includes(input?.highPassHz)
       ? input.highPassHz
       : 0,
     ...Object.fromEntries(
@@ -66,15 +67,31 @@ export function createMicrophoneInputGraph(
     rawAnalyser.fftSize = analyser.fftSize = MICROPHONE_ANALYSIS_SAMPLES;
     gain.gain.value = 10 ** (options.gainDb / 20);
     source.connect(rawAnalyser);
-    if (options.highPassHz) {
-      const filter = own(context.createBiquadFilter());
-      filter.type = 'highpass';
-      filter.frequency.value = options.highPassHz;
-      // Web Audio interprets highpass Q in dB; convert Butterworth's linear Q.
-      filter.Q.value = 20 * Math.log10(Math.SQRT1_2);
-      source.connect(filter);
-      filter.connect(gain);
-    } else source.connect(gain);
+    source.connect(gain);
+    let highPassHz = 0;
+    let filter;
+    function setHighPassHz(value) {
+      if (disposed) return false;
+      const next = normalizeMicrophoneInputOptions({
+        highPassHz: value,
+      }).highPassHz;
+      if (next === highPassHz) return true;
+      if (next && !filter) {
+        filter = own(context.createBiquadFilter());
+        filter.type = 'highpass';
+        // Web Audio interprets highpass Q in dB.
+        filter.Q.value = 20 * Math.log10(Math.SQRT1_2);
+        filter.connect(gain);
+      }
+      if (next) filter.frequency.value = next;
+      if (Boolean(next) !== Boolean(highPassHz)) {
+        source.disconnect(highPassHz ? filter : gain);
+        source.connect(next ? filter : gain);
+      }
+      highPassHz = next;
+      return true;
+    }
+    setHighPassHz(options.highPassHz);
     gain.connect(analyser);
     const rawSamples = new Float32Array(rawAnalyser.fftSize);
     const samples = new Float32Array(analyser.fftSize);
@@ -114,6 +131,7 @@ export function createMicrophoneInputGraph(
         );
         return true;
       },
+      setHighPassHz,
       dispose,
     };
   } catch (error) {

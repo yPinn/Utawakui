@@ -1,0 +1,61 @@
+{
+  "meter": "輸入電平",
+  "pitchLegend": "細線是原唱音高，較粗的梅紫色線是輸入音高。膠囊標出目標音，內帶是上下 50 音分的對準範圍。",
+  "accessibleReading": "{level}，{status}",
+  "accessibleClippingReading": "分析電平 {level}，{status}，峰值 {peak}。",
+  "device": "麥克風裝置",
+  "defaultDevice": "系統預設裝置",
+  "chooseDevice": "選擇麥克風",
+  "noDevice": "找不到麥克風",
+  "readDevices": "重新讀取裝置",
+  "readingDevices": "正在讀取裝置…",
+  "start": "啟用麥克風",
+  "stop": "停止麥克風",
+  "meterLimits": "{pitch} dBFS 估音門檻，{clip} dBFS 削波停估。",
+  "showMeter": "顯示麥克風電平尺",
+  "showReferencePitch": "顯示原唱曲線",
+  "history": "顯示電平歷史",
+  "historyName": "電平歷史",
+  "historyDescription": "電平越高，聲音越大。電平和音高共用時間軸，麥克風電平帶的顏色顯示估音狀態。",
+  "gain": "麥克風增量",
+  "gainHint": "只調整跟唱的輸入電平。",
+  "lowCut": "低切濾波",
+  "lowCutPresets": {
+    "hz0": {
+      "label": "關閉 · 保留低頻",
+      "hint": "環境安靜或練習低音時使用。"
+    },
+    "hz80": {
+      "label": "{hz} Hz · 抑制低頻噪音",
+      "hint": "適合腳步、桌架震動或空調低鳴。"
+    },
+    "hz120": {
+      "label": "{hz} Hz · 減輕近接效應",
+      "hint": "貼近指向性麥克風唱、低頻偏重時使用。"
+    },
+    "hz180": {
+      "label": "{hz} Hz · 加強低切",
+      "hint": "低頻干擾仍明顯時試用，低音漏判就調低。"
+    }
+  },
+  "noiseSuppression": "降噪",
+  "noiseHint": "切換時會短暫重新收音。",
+  "noiseUnsupported": "目前環境未確認支援降噪。",
+  "noiseUnknown": "裝置未回報降噪狀態。",
+  "noiseMismatch": "裝置未套用所選降噪設定。",
+  "adjust": "麥克風設定",
+  "alignment": "同步位移",
+  "alignmentHint": "只移動譜面上的實唱線。",
+  "status": {
+    "idle": "未啟用",
+    "waiting": "等待輸入",
+    "requesting": "正在啟用",
+    "error": "輸入未就緒",
+    "lost": "輸入已中斷",
+    "quiet": "過低",
+    "noPitch": "未判出音高",
+    "voiced": "音高可用",
+    "rawClipping": "裝置端削波",
+    "analysisClipping": "分析端削波"
+  }
+}

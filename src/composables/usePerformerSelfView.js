@@ -221,6 +221,7 @@ function currentSnapshot() {
     snapshot.singAlong = {
       playbackRevision: sample.playbackRevision,
       continuityRevision: sample.continuityRevision,
+      monitorPitchDelayMs: playerState.monitorPitchDelayMs ?? 0,
       guide:
         track.usesSeparatedAudio && recipeId
           ? {

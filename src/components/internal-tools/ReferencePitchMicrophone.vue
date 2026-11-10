@@ -1,88 +1,183 @@
 <script setup>
-import { computed, shallowRef, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, watch, shallowRef } from 'vue';
 import { useMicrophoneResearch } from '../../composables/useMicrophoneResearch.js';
+import { MICROPHONE_LOW_CUT_OPTIONS_HZ } from '../../microphone/inputProcessing.js';
+import {
+  microphonePitchStatus,
+  microphonePitchTone,
+} from '../../microphone/pitchInputStatus.js';
+import { t } from '../../utils/i18n.js';
 import UiButton from '../ui/UiButton.vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiRange from '../ui/UiRange.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiSwitch from '../ui/UiSwitch.vue';
+import MicrophoneInputMeter from './MicrophoneInputMeter.vue';
 
 const emit = defineEmits(['frame']);
+const preferences = defineModel('preferences', {
+  type: Object,
+  required: true,
+});
 const props = defineProps({
   access: { type: Object, default: undefined },
   stopWhenHidden: { type: Boolean, default: false },
-  listOnOpen: { type: Boolean, default: false },
-  playing: { type: Boolean, default: undefined },
   preferSystemDefault: { type: Boolean, default: false },
+  meterHost: { type: Object, default: null },
 });
-const { state, refreshDevices, selectDevice, start, stop, configureInput } =
-  useMicrophoneResearch({
-    access: props.access,
-    stopWhenHidden: props.stopWhenHidden,
-    preferSystemDefault: props.preferSystemDefault,
-  });
+const {
+  state,
+  refreshDevices,
+  selectDevice,
+  switchDevice,
+  start,
+  stop,
+  configureInput,
+  setNoiseSuppression,
+} = useMicrophoneResearch({
+  access: props.access,
+  stopWhenHidden: props.stopWhenHidden,
+  preferSystemDefault: props.preferSystemDefault,
+  followDeviceChanges: true,
+});
 const running = computed(() => state.value.status === 'running');
 const active = computed(
   () => running.value || state.value.status === 'requesting',
 );
-const lowCutOptions = [
-  { value: 0, label: '關閉' },
-  { value: 80, label: '輕' },
-  { value: 120, label: '中' },
-  { value: 180, label: '強' },
-];
-const tuningOpen = shallowRef(false);
+const lowCutOptions = MICROPHONE_LOW_CUT_OPTIONS_HZ.map((value) => ({
+  value,
+  label: t(`performerInput.lowCutPresets.hz${value}.label`, { hz: value }),
+}));
+const lowCutHint = computed(() =>
+  t(
+    `performerInput.lowCutPresets.hz${state.value.inputOptions.highPassHz}.hint`,
+  ),
+);
 const noiseHint = computed(() => {
-  if (!state.value.processingSupport.noiseSuppression)
-    return '此裝置未確認支援降噪。';
-  if (!state.value.settings) return '';
-  const enabled = state.value.settings.noiseSuppression;
-  if (enabled === null) return '裝置未回報降噪狀態。';
-  return enabled ? '降噪已開啟。' : '降噪已關閉。';
+  const { processingSupport, settings, inputOptions } = state.value;
+  if (!processingSupport.noiseSuppression)
+    return t('performerInput.noiseUnsupported');
+  if (running.value) {
+    const actual = settings?.noiseSuppression;
+    if (actual == null) return t('performerInput.noiseUnknown');
+    if (actual !== inputOptions.noiseSuppression)
+      return t('performerInput.noiseMismatch');
+  }
+  return t('performerInput.noiseHint');
 });
-const levelText = (dbfs) =>
-  dbfs <= -100 ? '−∞ dBFS' : `${dbfs.toFixed(1)} dBFS`;
+const formatGain = (db) => `${db > 0 ? '+' : ''}${db} dB`;
+const tuningOpen = shallowRef(false);
+const latestFrame = computed(() => state.value.pitchHistory.at(-1));
+const meterStatus = computed(() =>
+  running.value
+    ? microphonePitchStatus(latestFrame.value, state.value)
+    : state.value.status,
+);
+const METER_REFRESH_MS = 200;
+const meterReading = shallowRef(null);
+let meterTimer;
+function publishMeter() {
+  meterReading.value =
+    running.value && latestFrame.value
+      ? {
+          status: meterStatus.value,
+          dbfs: state.value.dbfs,
+          peak: state.value.peak,
+          rawPeak: state.value.rawPeak,
+        }
+      : null;
+}
+
+watch([meterStatus, latestFrame], ([status, frame]) => {
+  // Keep the history frame-accurate. Only the settings meter is rate-limited.
+  const newClippingWarning =
+    microphonePitchTone(status) === 'danger' &&
+    status !== meterReading.value?.status;
+  if (!running.value || !frame || newClippingWarning) {
+    clearTimeout(meterTimer);
+    meterTimer = undefined;
+    publishMeter();
+  } else if (meterTimer === undefined) {
+    meterTimer = setTimeout(() => {
+      meterTimer = undefined;
+      publishMeter();
+    }, METER_REFRESH_MS);
+  }
+});
+onBeforeUnmount(() => clearTimeout(meterTimer));
 const options = computed(() =>
-  state.value.devices.map(({ id, label }) => ({ value: id, label })),
+  state.value.devices.map(({ id, label }) => ({
+    value: id,
+    label: id === 'default' ? t('performerInput.defaultDevice') : label,
+  })),
+);
+const deviceName = computed(
+  () =>
+    state.value.inputLabel ||
+    options.value.find(({ value }) => value === state.value.selectedDeviceId)
+      ?.label ||
+    t('performerInput.device'),
 );
 const showRefresh = computed(
-  () =>
-    !props.listOnOpen ||
-    (!state.value.refreshing &&
-      (!options.value.length || Boolean(state.value.error))),
+  () => !options.value.length || Boolean(state.value.error),
 );
 const placeholder = computed(() => {
-  if (!props.listOnOpen) return '先讀取裝置，再選擇麥克風';
-  if (state.value.refreshing) return '正在讀取裝置…';
-  return options.value.length ? '選擇麥克風' : '找不到麥克風';
+  if (state.value.refreshing) return t('performerInput.readingDevices');
+  return t(
+    options.value.length
+      ? 'performerInput.chooseDevice'
+      : 'performerInput.noDevice',
+  );
 });
-const statusHint = computed(() => {
-  if (state.value.status === 'requesting') return '正在啟動麥克風…';
-  if (!props.listOnOpen) return '播放時繪製實唱線。關閉面板即停止輸入。';
-  if (!running.value) return '';
-  if (props.playing === undefined) return '麥克風使用中。離開跟唱即停止。';
-  if (!props.playing) return '麥克風已啟用，播放後顯示實唱線。';
-  const frames = state.value.pitchHistory;
-  const latest = frames.at(-1);
-  const lastVoiced = frames.findLast(({ hz }) => hz !== null);
-  // Brief unvoiced gaps between syllables should not flicker the status.
-  return lastVoiced && latest.atMs - lastVoiced.atMs <= 250
-    ? '收音中，已偵測到音高。'
-    : '收音中，等待歌聲。';
+
+function remember(changes) {
+  preferences.value = { ...preferences.value, ...changes };
+}
+function toggleInput() {
+  const enabled = !active.value;
+  remember({ enabled });
+  return enabled ? start() : stop();
+}
+function changeDevice(id) {
+  const switching = switchDevice(id);
+  if (state.value.selectedDeviceId === id) remember({ deviceId: id });
+  return switching;
+}
+function changeInput(changes) {
+  if (configureInput(changes)) remember(changes);
+}
+function changeNoise(enabled) {
+  const applying = setNoiseSuppression(enabled);
+  if (state.value.inputOptions.noiseSuppression === enabled)
+    remember({ noiseSuppression: enabled });
+  return applying;
+}
+
+onMounted(async () => {
+  const { gainDb, highPassHz, noiseSuppression, deviceId } = preferences.value;
+  configureInput({
+    gainDb,
+    highPassHz,
+    noiseSuppression:
+      noiseSuppression && state.value.processingSupport.noiseSuppression,
+  });
+  if (!(await refreshDevices())) return;
+  if (deviceId && !selectDevice(deviceId)) return;
+  if (preferences.value.enabled && !document.hidden) await start();
 });
 
 watch(
-  () => props.listOnOpen,
-  (open) => {
-    if (open && !active.value) void refreshDevices();
+  [running, latestFrame],
+  ([isRunning, frame]) => {
+    emit(
+      'frame',
+      isRunning,
+      isRunning && frame
+        ? { ...frame, levelTone: microphonePitchTone(meterStatus.value) }
+        : undefined,
+    );
   },
-  { immediate: true },
-);
-
-watch(
-  [running, () => state.value.pitchHistory.at(-1)],
-  ([isRunning, frame]) => emit('frame', isRunning, frame),
   { flush: 'sync' },
 );
 </script>
@@ -91,76 +186,88 @@ watch(
   <div class="reference-mic">
     <UiSelect
       id="reference-pitch-mic"
-      :label="listOnOpen ? '裝置' : '實唱輸入'"
+      :label="t('performerInput.device')"
       :placeholder="placeholder"
       :model-value="state.selectedDeviceId"
       :options="options"
-      :disabled="active || state.refreshing || (listOnOpen && !options.length)"
+      :disabled="
+        state.status === 'requesting' || state.refreshing || !options.length
+      "
       label-inline
-      @update:model-value="selectDevice"
+      @update:model-value="changeDevice"
     />
     <div class="reference-mic__actions">
       <UiButton
         v-if="showRefresh"
         variant="secondary"
         :disabled="active || state.refreshing"
-        @click="refreshDevices"
+        @click="refreshDevices()"
       >
         {{
-          listOnOpen ? '重新讀取' : state.refreshing ? '讀取中…' : '讀取裝置'
+          t(
+            state.refreshing
+              ? 'performerInput.readingDevices'
+              : 'performerInput.readDevices',
+          )
         }}
       </UiButton>
       <UiButton
-        :class="{ 'reference-mic__primary': listOnOpen }"
+        class="reference-mic__primary"
         variant="accent"
         :disabled="!active && (!state.selectedDeviceId || state.refreshing)"
-        @click="active ? stop() : start()"
+        @click="toggleInput"
       >
-        {{ active ? '停止麥克風' : '啟用麥克風' }}
+        {{ t(active ? 'performerInput.stop' : 'performerInput.start') }}
       </UiButton>
     </div>
+    <Teleport v-if="meterHost" :to="meterHost">
+      <MicrophoneInputMeter
+        :device-name="deviceName"
+        :status="meterReading?.status ?? (running ? 'waiting' : state.status)"
+        :dbfs="meterReading?.dbfs"
+        :peak="meterReading?.peak"
+        :raw-peak="meterReading?.rawPeak"
+      />
+    </Teleport>
     <UiHint v-if="state.error" tone="warning" role="alert">
       {{ state.error }}
     </UiHint>
-    <UiHint v-else-if="statusHint" role="status">{{ statusHint }}</UiHint>
-    <UiDisclosure v-model:open="tuningOpen" label="收音調整">
+    <UiDisclosure v-model:open="tuningOpen" :label="t('performerInput.adjust')">
       <div class="reference-mic__tuning">
-        <UiCheckbox
+        <UiSwitch
           id="sing-along-mic-noise"
-          label="降噪"
-          :model-value="state.inputOptions.noiseSuppression"
+          :label="t('performerInput.noiseSuppression')"
           :hint="noiseHint"
-          :disabled="active || !state.processingSupport.noiseSuppression"
-          @update:model-value="configureInput({ noiseSuppression: $event })"
+          :model-value="state.inputOptions.noiseSuppression"
+          :disabled="
+            state.status === 'requesting' ||
+            !state.processingSupport.noiseSuppression
+          "
+          @update:model-value="changeNoise"
         />
         <UiSelect
           id="sing-along-mic-low-cut"
-          label="低頻過濾"
+          :label="t('performerInput.lowCut')"
+          :hint="lowCutHint"
           :options="lowCutOptions"
           :model-value="state.inputOptions.highPassHz"
-          :disabled="active"
-          label-inline
-          @update:model-value="configureInput({ highPassHz: $event })"
+          :disabled="state.status === 'requesting'"
+          @update:model-value="changeInput({ highPassHz: $event })"
         />
         <UiRange
           id="sing-along-mic-gain"
-          label="輸入增益"
+          :label="t('performerInput.gain')"
+          :hint="t('performerInput.gainHint')"
           :model-value="state.inputOptions.gainDb"
           :min="-24"
           :max="24"
           :step="1"
-          :value-text="`${state.inputOptions.gainDb} dB`"
+          :value-text="formatGain(state.inputOptions.gainDb)"
+          :format-value="formatGain"
           value-in-label
           :disabled="state.status === 'requesting'"
-          @update:model-value="configureInput({ gainDb: $event })"
+          @update:model-value="changeInput({ gainDb: $event })"
         />
-        <UiHint v-if="running">
-          原始 {{ levelText(state.rawDbfs) }} · 調整後
-          {{ levelText(state.dbfs) }}
-        </UiHint>
-        <UiHint v-if="state.clipped || state.rawClipped" tone="warning">
-          音量過大，請降低輸入增益或麥克風音量。
-        </UiHint>
         <slot name="tuning" />
       </div>
     </UiDisclosure>

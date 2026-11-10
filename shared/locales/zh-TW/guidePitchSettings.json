@@ -1,0 +1,17 @@
+{
+  "title": "導唱音高",
+  "guidance": "分離完成後自動準備。也能檢查並補齊曲庫既有導唱的音高資料。",
+  "check": "檢查",
+  "fill": "補齊導唱音高",
+  "stop": "停止補齊",
+  "checking": "正在檢查導唱音高…",
+  "preparing": "正在補齊導唱音高…",
+  "counts": "{ready} 首可用，{missing} 首缺少，{invalid} 首需重建，{noGuide} 首無可用導唱。",
+  "result": "已補齊 {prepared} 首，{ready} 首原已可用，{failed} 首未完成，{noGuide} 首無可用導唱。",
+  "busy": "已有導唱音高作業進行中。",
+  "cancelled": "已停止補齊。",
+  "noDecoder": "請先在音訊處理設定準備 FFmpeg。",
+  "noModel": "找不到可用的導唱估音模型。",
+  "sourceChanged": "曲庫已切換，請重新檢查。",
+  "unavailable": "目前無法準備導唱音高。"
+}

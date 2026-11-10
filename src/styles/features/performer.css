@@ -1,6 +1,8 @@
 [data-ui-system] {
   --ui-performer-secondary-foreground: var(--ui-color-text-muted);
+  --ui-performer-input-foreground: var(--ui-palette-plum-900);
   --ui-performer-settings-inline-size: 15rem;
+  --ui-performer-mic-meter-inline-size: 24rem;
   --ui-performer-lyrics-max-width-near: 72rem;
   --ui-performer-lyrics-max-width-desk: 64rem;
   --ui-performer-lyrics-max-width-stage: 56rem;
@@ -21,4 +23,8 @@
   --ui-performer-next-ruby-size-desk: var(--ui-font-size-md);
   --ui-performer-next-ruby-size-stage: var(--ui-font-size-lg);
   --ui-performer-action-min-block-size: var(--ui-control-height);
+}
+
+[data-ui-theme='dark'] [data-ui-system] {
+  --ui-performer-input-foreground: var(--ui-palette-plum-100);
 }

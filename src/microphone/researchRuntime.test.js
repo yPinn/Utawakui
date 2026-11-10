@@ -247,7 +247,7 @@ describe('microphone research lifecycle', () => {
     expect(h.state.activityCalibrated).toBe(false);
     h.runtime.destroy();
   });
-  it('snapshots requested processing at start, verifies actual values, and allows only gain while running', async () => {
+  it('keeps native processing fixed and applies gain and low-cut on the current stream', async () => {
     const h = harness();
     await h.runtime.refreshDevices();
     h.runtime.selectDevice('mic-a');
@@ -273,9 +273,11 @@ describe('microphone research lifecycle', () => {
     expect(h.state.settings.noiseSuppression).toBe(false);
     expect(h.state.settings.gainDb).toBe(6);
     expect(h.runtime.configureInput({ echoCancellation: true })).toBe(false);
-    expect(h.runtime.configureInput({ highPassHz: 120 })).toBe(false);
+    expect(h.runtime.configureInput({ highPassHz: 120 })).toBe(true);
+    expect(h.state.settings.highPassHz).toBe(120);
     expect(h.runtime.configureInput({ gainDb: -6 })).toBe(true);
     expect(h.state.settings.gainDb).toBe(-6);
+    expect(h.devices.getUserMedia).toHaveBeenCalledOnce();
     h.runtime.stop();
     expect(h.runtime.configureInput({ highPassHz: 120 })).toBe(true);
     h.runtime.destroy();
@@ -298,6 +300,80 @@ describe('microphone research lifecycle', () => {
     expect(h.source.disconnect).toHaveBeenCalled();
     expect(input.track.stop).toHaveBeenCalled();
     expect(h.state.status).toBe('error');
+    h.runtime.destroy();
+  });
+
+  it('reopens the selected device when toggling noise suppression and reads actual settings', async () => {
+    const h = harness();
+    await h.runtime.refreshDevices();
+    h.runtime.selectDevice('mic-a');
+    const original = stream();
+    const replacement = stream();
+    replacement.track.getSettings = () => ({
+      deviceId: 'mic-a',
+      noiseSuppression: true,
+    });
+    h.devices.getUserMedia
+      .mockResolvedValueOnce(original)
+      .mockResolvedValueOnce(replacement);
+    await h.runtime.start();
+
+    await expect(h.runtime.setNoiseSuppression(true)).resolves.toBe(true);
+    expect(original.track.stop).toHaveBeenCalledOnce();
+    expect(replacement.track.stop).not.toHaveBeenCalled();
+    expect(h.devices.getUserMedia).toHaveBeenLastCalledWith({
+      video: false,
+      audio: expect.objectContaining({
+        deviceId: { exact: 'mic-a' },
+        noiseSuppression: true,
+      }),
+    });
+    expect(h.state).toMatchObject({
+      selectedDeviceId: 'mic-a',
+      status: 'running',
+      settings: { noiseSuppression: true },
+    });
+    h.runtime.destroy();
+  });
+
+  it('honors stop while a noise-suppression restart waits for a replacement stream', async () => {
+    const h = harness();
+    await h.runtime.refreshDevices();
+    h.runtime.selectDevice('mic-a');
+    await h.runtime.start();
+    const pending = deferred();
+    h.devices.getUserMedia.mockReturnValueOnce(pending.promise);
+    const restarting = h.runtime.setNoiseSuppression(true);
+    await vi.advanceTimersByTimeAsync(0);
+    await expect(h.runtime.setNoiseSuppression(false)).resolves.toBe(false);
+    h.runtime.stop();
+    const late = stream();
+    pending.resolve(late);
+    await expect(restarting).resolves.toBe(false);
+    expect(late.track.stop).toHaveBeenCalledOnce();
+    expect(h.state.status).toBe('idle');
+    h.runtime.destroy();
+  });
+
+  it('keeps the selected device and desired option if restarting with noise suppression fails', async () => {
+    const h = harness();
+    await h.runtime.refreshDevices();
+    h.runtime.selectDevice('mic-a');
+    const original = stream();
+    h.devices.getUserMedia
+      .mockResolvedValueOnce(original)
+      .mockRejectedValueOnce(new Error('unavailable'));
+    await h.runtime.start();
+
+    await expect(h.runtime.setNoiseSuppression(true)).resolves.toBe(false);
+    expect(original.track.stop).toHaveBeenCalledOnce();
+    expect(h.devices.getUserMedia).toHaveBeenCalledTimes(2);
+    expect(h.state).toMatchObject({
+      selectedDeviceId: 'mic-a',
+      status: 'error',
+      settings: null,
+      inputOptions: { noiseSuppression: true },
+    });
     h.runtime.destroy();
   });
   it('requires selection, preserves fresh list state after stale reads, and handles request timeout', async () => {
@@ -452,6 +528,41 @@ describe('microphone research lifecycle', () => {
       expect(h.context.close).toHaveBeenCalled();
       h.runtime.destroy();
     }
+  });
+
+  it('switches the active input on explicit selection and relists after replug without reopening', async () => {
+    const h = harness({ preferSystemDefault: true, followDeviceChanges: true });
+    const first = stream('default');
+    const second = stream('mic-a');
+    h.devices.getUserMedia
+      .mockResolvedValueOnce(first)
+      .mockResolvedValueOnce(second);
+    await h.runtime.refreshDevices();
+    await h.runtime.start();
+    await expect(h.runtime.switchDevice('mic-a')).resolves.toBe(true);
+    expect(first.track.stop).toHaveBeenCalledOnce();
+    expect(second.track.stop).not.toHaveBeenCalled();
+    expect(h.state).toMatchObject({
+      status: 'running',
+      selectedDeviceId: 'mic-a',
+    });
+
+    h.devices.enumerateDevices.mockResolvedValueOnce([]);
+    second.track.dispatchEvent(new Event('ended'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(second.track.stop).toHaveBeenCalledOnce();
+    expect(h.state).toMatchObject({
+      status: 'lost',
+      devices: [],
+      selectedDeviceId: '',
+    });
+
+    h.devices.dispatchEvent(new Event('devicechange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(h.state.devices.some(({ id }) => id === 'mic-a')).toBe(true);
+    expect(h.state.status).toBe('lost');
+    expect(h.devices.getUserMedia).toHaveBeenCalledTimes(2);
+    h.runtime.destroy();
   });
   it('bounds controls and never exposes native errors', async () => {
     const h = harness();

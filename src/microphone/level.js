@@ -4,6 +4,8 @@ export const MICROPHONE_LEVEL_DEFAULTS = Object.freeze({
   smoothingMs: 150,
 });
 
+export const MICROPHONE_CLIP_PEAK = 0.999;
+
 const bounded = (value, fallback, min, max) =>
   Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
 
@@ -27,7 +29,7 @@ export function measureMicrophoneLevel(samples) {
   return {
     dbfs: Math.max(-100, Math.min(0, rms ? 20 * Math.log10(rms) : -100)),
     peak: Math.min(1, peak),
-    clipped: peak >= 0.999,
+    clipped: peak >= MICROPHONE_CLIP_PEAK,
   };
 }
 

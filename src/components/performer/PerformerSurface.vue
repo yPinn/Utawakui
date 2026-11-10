@@ -56,6 +56,12 @@ defineEmits([
         }"
         :aria-label="t('performer.surface.tools')"
       >
+        <div
+          v-if="$slots['above-tools']"
+          class="performer-surface__above-tools"
+        >
+          <slot name="above-tools" />
+        </div>
         <div v-if="$slots['rail-tools']" class="performer-surface__rail-tools">
           <slot name="rail-tools" />
           <PerformerNextTrack v-if="frame.nextTrack" :track="frame.nextTrack" />
@@ -163,6 +169,7 @@ defineEmits([
 }
 
 .performer-surface__utility-rail {
+  position: relative;
   min-width: 0;
   display: grid;
 }
@@ -183,6 +190,18 @@ defineEmits([
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.performer-surface__above-tools {
+  position: absolute;
+  z-index: var(--ui-layer-overlay);
+  inset-block-end: calc(100% + var(--ui-space-2));
+  inset-inline: 0;
+  pointer-events: none;
+}
+
+.performer-surface__above-tools > :slotted(*) {
+  pointer-events: auto;
 }
 
 @container performer-surface (min-width: 48rem) {

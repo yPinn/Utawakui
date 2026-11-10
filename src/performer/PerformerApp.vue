@@ -37,7 +37,6 @@ const SingAlong = import.meta.env.DEV
     )
   : null;
 const layout = shallowRef('lyrics');
-const micCorrectionMs = shallowRef(0);
 const layoutOptions = [
   { id: 'lyrics', label: t('performer.layoutDemo.lyrics') },
   { id: 'video-pitch', label: t('performer.layoutDemo.videoPitch') },
@@ -75,7 +74,6 @@ function selectLayout(value) {
     <SingAlong
       v-if="SingAlong && layout === 'video-pitch'"
       id="prompter-layout-video-pitch-panel"
-      v-model:correction-ms="micCorrectionMs"
       role="tabpanel"
       aria-labelledby="prompter-layout-video-pitch-tab"
       :frame="frame"

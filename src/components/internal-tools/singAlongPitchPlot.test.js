@@ -1,16 +1,17 @@
 import { expect, it } from 'vitest';
 import {
   applyGuideOctaveMarks,
-  compareSingAlongPitch,
   clipGuideContour,
   createSingAlongClock,
   guideContourPath,
   guideContours,
   guideNoteGeometry,
   guideNotes,
+  guidePitchFrames,
   guideSilenceRanges,
   guideTechniqueMarkers,
   inputLevelPath,
+  inputLevelPaths,
   maskGuideContours,
   connectMicFrames,
   projectMicSamplePosition,
@@ -33,29 +34,148 @@ it('plots level independently of pitch and separates discontinuous samples', () 
   ).toBe('M0.00,16L0.00,16.00L1.00,2.00L1.00,16ZM2.00,16L2.00,2.00L2.00,16Z');
 });
 
+it('colours historical level intervals by input state without bridging a break', () => {
+  const paths = inputLevelPaths(
+    [
+      { time: 0, dbfs: -60, levelTone: 'warning' },
+      { time: 1, dbfs: -25, continuous: true, levelTone: 'success' },
+      { time: 2, dbfs: -22, continuous: false, levelTone: 'danger' },
+      { time: 3, dbfs: -20, continuous: true, levelTone: 'danger' },
+    ],
+    0,
+    3,
+    (time) => time,
+  );
+  expect(paths.warning).toMatch(/^M0\.00.*L0\.50,16Z$/);
+  expect(paths.success).toMatch(/^M0\.50.*L1\.00,16Z$/);
+  expect(paths.danger).toMatch(/^M2\.00.*L3\.00,16Z$/);
+});
+
 const toHz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 const step = 0.016;
 
-it('compares the latest pitch with the guide at the aligned time and key', () => {
-  const guide = [{ start: 2, end: 3, points: [{ midi: 67 }] }];
-  for (const [cents, direction] of [
-    [-35, 'low'],
-    [0, 'center'],
-    [35, 'high'],
-  ]) {
-    expect(
-      compareSingAlongPitch(
-        { time: 2.5, hz: toHz(69 + cents / 100) },
-        guide,
-        2,
-      ),
-    ).toMatchObject({ time: 2.5, midi: 69, direction });
-  }
-  expect(compareSingAlongPitch({ time: 3, hz: 440 }, guide, 2)).toBeNull();
-  expect(compareSingAlongPitch({ time: 2.5, hz: null }, guide, 2)).toBeNull();
+it('retains unsnapped reference pitches and breaks at verified silence', () => {
+  const pitches = [440, 444, 448, 452, 456, 0, 460];
+  const frames = guidePitchFrames(
+    pitches,
+    step,
+    [
+      [0.018, 0.023],
+      [0.046, 0.061],
+    ],
+    0,
+    0.1,
+  );
+  expect(frames.map(({ hz }) => hz)).toEqual([
+    440,
+    444,
+    448,
+    null,
+    456,
+    null,
+    460,
+  ]);
+  expect(frames.map(({ continuous }) => continuous)).toEqual([
+    false,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
   expect(
-    compareSingAlongPitch({ time: 2.5, hz: toHz(70) }, guide, 2),
+    guidePitchFrames(
+      pitches,
+      step,
+      [
+        [0.01, 0.02],
+        [0.04, 0.06],
+      ],
+      0.048,
+      0.1,
+    )[0].hz,
   ).toBeNull();
+});
+
+it('keeps detected pitches without drawing a vertical line across a large jump', () => {
+  const frames = guidePitchFrames([220, 225, 450, 452], step, [], 0, 0.05);
+  expect(frames.map(({ hz }) => hz)).toEqual([220, 225, 450, 452]);
+  expect(frames.map(({ continuous }) => continuous)).toEqual([
+    false,
+    true,
+    false,
+    true,
+  ]);
+});
+
+it('joins stable reference pitches across one missed frame without adding an estimate', () => {
+  const pitches = [440, 441, 442, 443, 0, 445, 446, 447, 448];
+  const frames = guidePitchFrames(pitches, step, [], 0, 0.128);
+  expect(frames.map(({ hz }) => hz)).toEqual(pitches.filter(Boolean));
+  expect(frames[4]).toEqual({ time: 0.08, hz: 445, continuous: true });
+});
+
+it.each([
+  {
+    label: 'reviewed silence between samples',
+    missing: [0],
+    after: 445,
+    ranges: [[0.067, 0.075]],
+  },
+  { label: 'a longer gap', missing: [0, 0], after: 445, ranges: [] },
+  { label: 'a different note', missing: [0], after: 465, ranges: [] },
+])('keeps the break for $label', ({ missing, after, ranges }) => {
+  const pitches = [440, 441, 442, 443, ...missing, after, after, after, after];
+  const frames = guidePitchFrames(pitches, step, ranges, 0, 0.2);
+  expect(frames[4].hz).toBeNull();
+  expect(frames[4 + missing.length]).toMatchObject({
+    hz: after,
+    continuous: false,
+  });
+});
+
+it('projects the monitor delay once at the applied playback rate', () => {
+  const clock = createSingAlongClock();
+  const now = 10000;
+  const state = {
+    generatedAt: new Date(now).toISOString(),
+    playback: {
+      status: 'playing',
+      positionMs: 2000,
+      durationMs: 5000,
+      rate: 1.25,
+    },
+  };
+  expect(clock.sync(state, 'a', now, 0, 120)).toBe(1850);
+  expect(clock.positionAt(200)).toBe(2100);
+  expect(
+    projectMicSamplePosition(
+      { sampledAtMs: 200, windowMs: 40 },
+      0,
+      clock.positionAt,
+      state.playback.rate,
+    ),
+  ).toBe(2075);
+  expect(clock.sync(state, 'a', now + 200, 200, 0)).toBe(2250);
+  state.playback.status = 'paused';
+  expect(clock.sync(state, 'a', now + 200, 200, 120)).toBe(2250);
+  state.playback.status = 'playing';
+  state.playback.positionMs = 0;
+  expect(clock.sync(state, 'seek', now, 300, 120)).toBe(0);
+  expect(clock.positionAt(400)).toBe(0);
+  expect(clock.positionAt(460)).toBe(50);
+});
+
+it('places the effective band at ±50 cents around the transposed note', () => {
+  const guide = [{ start: 2, end: 3, points: [{ midi: 67 }] }];
+  const y = (midi) => 150 - midi * 2;
+  const box = guideNoteGeometry(
+    guide[0],
+    (time) => time * 40,
+    (midi) => y(midi + 2),
+  );
+  expect(box).toMatchObject({ bandY: y(69.5), bandHeight: y(68.5) - y(69.5) });
 });
 
 const toContours = (values) =>
@@ -154,6 +274,43 @@ it('eases clock drift during playback, freezes at pause, and snaps on seek', () 
     1200,
   );
   expect(clock.positionAt(6000)).toBe(5000);
+});
+
+it('buffers the display while keeping microphone samples on the audible clock', () => {
+  const clock = createSingAlongClock();
+  const state = {
+    generatedAt: new Date(10_000).toISOString(),
+    playback: { status: 'playing', positionMs: 2000, rate: 1.25 },
+  };
+  expect(clock.sync(state, 'a', 10_000, 0, 120, 80)).toBe(1750);
+  expect(clock.positionAt(100)).toBe(1975);
+  expect(clock.displayPositionAt(100)).toBe(1875);
+});
+
+it('keeps the compensated display still through pause snapshots and resumes from it', () => {
+  const clock = createSingAlongClock();
+  const state = (status, positionMs, nowMs) => ({
+    generatedAt: new Date(nowMs).toISOString(),
+    playback: { status, positionMs, rate: 1.25 },
+  });
+  clock.sync(state('playing', 2000, 10_000), 'a', 10_000, 0, 120, 80);
+  expect(
+    clock.sync(state('paused', 2250, 10_200), 'a', 10_200, 200, 0, 80),
+  ).toBe(2000);
+  expect(clock.sync(state('paused', 2253, 10_400), 'a', 10_400, 400)).toBe(
+    2000,
+  );
+  expect(clock.displayPositionAt(800)).toBe(2000);
+  expect(clock.sync(state('buffering', 2250, 10_800), 'a', 10_800, 800)).toBe(
+    2000,
+  );
+  expect(
+    clock.sync(state('playing', 2250, 10_800), 'a', 10_800, 800, 120, 80),
+  ).toBe(2000);
+  expect(clock.displayPositionAt(900)).toBe(2125);
+  expect(clock.sync(state('paused', 5000, 11_000), 'seek', 11_000, 1000)).toBe(
+    5000,
+  );
 });
 
 it('keeps silence, abrupt note changes and short isolated notes', () => {
@@ -273,6 +430,46 @@ it('keeps annotations on their media time and omits colliding or masked markers'
   expect(
     guideTechniqueMarkers(notes, (time) => time * 100, 0, 1).map(({ x }) => x),
   ).toEqual([15, 80]);
+});
+
+it('moves only the matching reviewed technique ahead of its measured onset', () => {
+  const notes = [
+    { start: 1, end: 1.5, technique: { kind: 'vibrato', time: 1.25 } },
+    { start: 1.5, end: 2, technique: { kind: 'rise', time: 1.8 } },
+  ];
+  const cues = [{ kind: 'rise', fromMs: 1620, toMs: 1900, hintMs: 1380 }];
+  const markers = guideTechniqueMarkers(notes, (time) => time * 100, 0, 3);
+  expect(
+    guideTechniqueMarkers(notes, (time) => time * 100, 0, 3, cues),
+  ).toEqual([
+    markers[0],
+    { kind: 'rise', time: 1.8, x: 138, start: 1.62, end: 1.9, onsetOffset: 24 },
+  ]);
+  const clipped = [notes[0], { ...notes[1], start: 1.7 }];
+  expect(
+    guideTechniqueMarkers(clipped, (time) => time * 100, 0, 3, cues),
+  ).toEqual(guideTechniqueMarkers(clipped, (time) => time * 100, 0, 3));
+});
+
+it('hides only the exact reviewed symbol after deciding which markers fit', () => {
+  const notes = [
+    { start: 0.1, end: 0.2, technique: { kind: 'fall', time: 0.15 } },
+    { start: 0.2, end: 0.3, technique: { kind: 'rise', time: 0.22 } },
+    { start: 0.5, end: 0.6, technique: { kind: 'vibrato', time: 0.55 } },
+    { start: 0.7, end: 0.9, technique: { kind: 'rise', time: 0.8 } },
+  ];
+  const x = (time) => time * 100;
+  const cues = [{ kind: 'rise', fromMs: 750, toMs: 840, hintMs: 650 }];
+  const hidden = [
+    { kind: 'fall', atMs: 150 },
+    { kind: 'fall', atMs: 550 },
+    { kind: 'rise', atMs: 800 },
+  ];
+  const [, untouched, reviewed] = guideTechniqueMarkers(notes, x, 0, 1, cues);
+  expect(guideTechniqueMarkers(notes, x, 0, 1, cues, hidden)).toEqual([
+    untouched,
+    reviewed,
+  ]);
 });
 
 it('keeps periodic vibrato inside one rectangular note without conflating distinct pitches', () => {

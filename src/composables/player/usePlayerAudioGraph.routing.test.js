@@ -175,6 +175,29 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('publishes the worklet delay only on the applied pitch route', async () => {
+  pitch.create.mockImplementation(async (context) => {
+    const node = new Node(context);
+    node.schedule = vi.fn(async () => {});
+    node.latency = vi.fn(async () => 0.12);
+    pitch.nodes.push(node);
+    return node;
+  });
+  const { graph, state, audio } = fixture();
+  await graph.resume();
+  await graph.setTempoRate(1.25);
+  expect(audio.playbackRate).toBe(1.25);
+  expect(state.monitorPitchDelayMs).toBe(0);
+  await graph.setTransposeSemitones(2);
+  expect(state.monitorPitchDelayMs).toBe(120);
+  await graph.setTempoRate(0.8);
+  expect(audio.playbackRate).toBe(0.8);
+  expect(state.monitorPitchDelayMs).toBe(120);
+  expect(pitch.nodes[0].latency).toHaveBeenCalledTimes(1);
+  await graph.resetPitchTempo();
+  expect(state.monitorPitchDelayMs).toBe(0);
+});
+
 describe('default-context monitor relay', () => {
   const setup = () => fixture({ monitorBridgeReturn: undefined });
 
