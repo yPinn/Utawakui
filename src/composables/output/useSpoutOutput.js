@@ -20,6 +20,8 @@ const state = reactive({
   errors: {},
 });
 let unsubscribeStatus = null;
+let statusRevision = 0;
+let refreshRevision = 0;
 
 function clearFailure(operation) {
   const message = state.errors[operation];
@@ -28,11 +30,17 @@ function clearFailure(operation) {
 }
 
 function applyStatus(status) {
-  if (!status || typeof status !== 'object') return;
   state.status = status;
   if (status.observed?.lifecycle) clearFailure('refresh');
   if (status.observed?.lifecycle === 'sending') clearFailure('start');
   if (status.observed?.lifecycle === 'stopped') clearFailure('stop');
+}
+
+function publishStatus(status, expectedRevision = statusRevision) {
+  if (expectedRevision !== statusRevision || !status?.observed?.lifecycle)
+    return;
+  statusRevision += 1;
+  applyStatus(status);
 }
 
 function ensureStatusSubscription() {
@@ -43,7 +51,9 @@ function ensureStatusSubscription() {
     return;
   }
   unsubscribeStatus =
-    globalThis.window.Utawakui.onSpoutOutputStatus(applyStatus) ?? null;
+    globalThis.window.Utawakui.onSpoutOutputStatus((status) =>
+      publishStatus(status),
+    ) ?? null;
 }
 
 function setFailure(error, operation, code, message) {
@@ -64,24 +74,29 @@ export function useSpoutOutput() {
   ensureStatusSubscription();
 
   async function refresh() {
+    const request = ++refreshRevision;
+    const observed = statusRevision;
+    const isCurrent = () =>
+      request === refreshRevision && observed === statusRevision;
     state.isRefreshing = true;
     try {
       const status = await globalThis.window.Utawakui.getSpoutOutputStatus();
       if (!status?.observed?.lifecycle)
         throw new TypeError('invalid Spout status');
-      applyStatus(status);
-      clearFailure('refresh');
+      if (isCurrent()) applyStatus(status);
       return true;
     } catch (error) {
-      setFailure(
-        error,
-        'refresh',
-        'SPOUT_OUTPUT_STATUS_FAILED',
-        t('output.spout.readFailed'),
-      );
+      if (isCurrent()) {
+        setFailure(
+          error,
+          'refresh',
+          'SPOUT_OUTPUT_STATUS_FAILED',
+          t('output.spout.readFailed'),
+        );
+      }
       return false;
     } finally {
-      state.isRefreshing = false;
+      if (request === refreshRevision) state.isRefreshing = false;
     }
   }
 
@@ -90,8 +105,12 @@ export function useSpoutOutput() {
       return false;
     }
     state.isStarting = true;
+    const request = ++statusRevision;
     try {
-      applyStatus(await globalThis.window.Utawakui.startSpoutOutput());
+      publishStatus(
+        await globalThis.window.Utawakui.startSpoutOutput(),
+        request,
+      );
       clearFailure('start');
       return true;
     } catch (error) {
@@ -112,8 +131,12 @@ export function useSpoutOutput() {
       return false;
     }
     state.isStopping = true;
+    const request = ++statusRevision;
     try {
-      applyStatus(await globalThis.window.Utawakui.stopSpoutOutput());
+      publishStatus(
+        await globalThis.window.Utawakui.stopSpoutOutput(),
+        request,
+      );
       clearFailure('stop');
       return true;
     } catch (error) {
@@ -139,11 +162,13 @@ export function useSpoutOutput() {
       return false;
     }
     state.isConfiguring = true;
+    const request = ++statusRevision;
     try {
-      applyStatus(
+      publishStatus(
         await globalThis.window.Utawakui.setSpoutOutputFrameRateProfile(
           frameRateProfile,
         ),
+        request,
       );
       clearFailure('set-frame-rate-profile');
       return true;

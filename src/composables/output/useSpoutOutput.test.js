@@ -42,6 +42,57 @@ afterEach(() => {
 });
 
 describe('useSpoutOutput', () => {
+  it('keeps a pushed lifecycle when an older refresh completes', async () => {
+    const older = Promise.withResolvers();
+    bridge.getSpoutOutputStatus.mockReturnValueOnce(older.promise);
+    const { useSpoutOutput } = await loadComposable();
+    const spout = useSpoutOutput();
+    const [publish] = bridge.onSpoutOutputStatus.mock.calls[0];
+
+    const refresh = spout.refresh();
+    publish({ ...stoppedStatus, observed: { lifecycle: 'sending' } });
+    older.resolve(stoppedStatus);
+    await expect(refresh).resolves.toBe(true);
+    expect(spout.state.status.observed.lifecycle).toBe('sending');
+    expect(spout.state.isRefreshing).toBe(false);
+  });
+
+  it('keeps a newer pushed lifecycle when an older start reply completes', async () => {
+    const older = Promise.withResolvers();
+    bridge.startSpoutOutput.mockReturnValueOnce(older.promise);
+    const { useSpoutOutput } = await loadComposable();
+    const spout = useSpoutOutput();
+    const [publish] = bridge.onSpoutOutputStatus.mock.calls[0];
+
+    const starting = spout.start();
+    publish({ ...stoppedStatus, observed: { lifecycle: 'error' } });
+    older.resolve({ ...stoppedStatus, observed: { lifecycle: 'sending' } });
+    await expect(starting).resolves.toBe(true);
+    expect(spout.state.status.observed.lifecycle).toBe('error');
+    expect(spout.state.isStarting).toBe(false);
+  });
+
+  it('keeps the latest refresh in control of status and the busy flag', async () => {
+    const older = Promise.withResolvers();
+    const latest = Promise.withResolvers();
+    bridge.getSpoutOutputStatus
+      .mockReturnValueOnce(older.promise)
+      .mockReturnValueOnce(latest.promise);
+    const { useSpoutOutput } = await loadComposable();
+    const spout = useSpoutOutput();
+
+    const first = spout.refresh();
+    const second = spout.refresh();
+    older.reject(new Error('obsolete failure'));
+    await first;
+    expect(spout.state.isRefreshing).toBe(true);
+    expect(spout.state.errors.refresh).toBeUndefined();
+    latest.resolve({ ...stoppedStatus, observed: { lifecycle: 'sending' } });
+    await second;
+    expect(spout.state.status.observed.lifecycle).toBe('sending');
+    expect(spout.state.isRefreshing).toBe(false);
+  });
+
   it('does not clear a configuration failure when status refresh succeeds', async () => {
     bridge.setSpoutOutputFrameRateProfile.mockRejectedValueOnce(
       new Error('private'),

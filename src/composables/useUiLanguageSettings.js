@@ -36,14 +36,20 @@ export function useUiLanguageSettings(options = {}) {
   const targetLocale = shallowRef(currentLocale);
   const relaunchError = shallowRef('');
   const relaunching = shallowRef(false);
+  let targetRevision = 0;
 
   async function refreshTarget() {
+    const current = ++targetRevision;
     try {
       const locale = await bridge.getUiLanguageTarget();
-      if (supportedLocales.includes(locale)) targetLocale.value = locale;
+      if (current === targetRevision && supportedLocales.includes(locale)) {
+        targetLocale.value = locale;
+        return true;
+      }
     } catch {
       // The pending hint is advisory; the saved preference is what matters.
     }
+    return false;
   }
 
   async function refresh() {
@@ -101,8 +107,8 @@ export function useUiLanguageSettings(options = {}) {
 
   async function setPreference(next) {
     if (!(await preference.save(next))) return false;
-    await refreshTarget();
-    if (targetLocale.value !== currentLocale) await offerRestart();
+    if ((await refreshTarget()) && targetLocale.value !== currentLocale)
+      await offerRestart();
     return true;
   }
 

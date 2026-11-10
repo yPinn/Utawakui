@@ -66,13 +66,15 @@ async function refreshConfirmations() {
 
   if (!refreshPromise) {
     state.isLoading = true;
-    refreshPromise = window.Utawakui.getFeatureConfirmations()
+    const request = window.Utawakui.getFeatureConfirmations()
       .then((confirmations) => {
+        if (refreshPromise !== request) return state.confirmations;
         state.confirmations = normalizeConfirmations(confirmations);
         state.readError = '';
         return state.confirmations;
       })
       .catch((err) => {
+        if (refreshPromise !== request) return state.confirmations;
         state.readError = recordError(err, {
           code: 'FEATURE_GATE_LIST_FAILED',
           title: t('featureGates.readFailed'),
@@ -84,9 +86,11 @@ async function refreshConfirmations() {
         return state.confirmations;
       })
       .finally(() => {
+        if (refreshPromise !== request) return;
         state.isLoading = false;
         refreshPromise = null;
       });
+    refreshPromise = request;
   }
 
   return refreshPromise;
@@ -141,6 +145,9 @@ function confirmPendingFeature() {
         throw new Error('invalid feature confirmation response');
       }
       state.confirmations[featureId] = confirmation;
+      // A list requested before this save cannot describe the new state.
+      refreshPromise = null;
+      state.isLoading = false;
       state.confirmError = '';
       settlePending(true);
       return true;

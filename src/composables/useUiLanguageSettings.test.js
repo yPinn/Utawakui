@@ -73,6 +73,24 @@ describe('useUiLanguageSettings', () => {
     expect(settings.pendingMessage.value).toBe('');
   });
 
+  it('ignores an older target read after saving a different language', async () => {
+    const { bridge, settings } = setup({ confirmed: false });
+    const earlier = Promise.withResolvers();
+    bridge.getUiLanguageTarget.mockReturnValueOnce(earlier.promise);
+    const refreshing = settings.refresh();
+    await vi.waitFor(() =>
+      expect(bridge.getUiLanguageTarget).toHaveBeenCalledOnce(),
+    );
+
+    await expect(settings.setPreference('en-US')).resolves.toBe(true);
+    expect(settings.pendingMessage.value).toContain('English');
+    earlier.resolve('zh-TW');
+    await refreshing;
+
+    expect(settings.preference.value).toBe('en-US');
+    expect(settings.pendingMessage.value).toContain('English');
+  });
+
   it('reports a failed relaunch so the user can restart by hand', async () => {
     const { bridge, settings } = setup({ target: 'en-US' });
     bridge.relaunchApp.mockRejectedValueOnce(new Error('denied'));

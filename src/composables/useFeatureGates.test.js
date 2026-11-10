@@ -142,6 +142,44 @@ describe('useFeatureGates', () => {
     expect(gates.isFeatureEnabled(PROVIDER_ID)).toBe(true);
   });
 
+  it.each(['reply', 'failure'])(
+    'keeps a new confirmation and its next refresh after an older %s',
+    async (outcome) => {
+      const old = createDeferred();
+      const latest = createDeferred();
+      getFeatureConfirmationsMock
+        .mockResolvedValueOnce({})
+        .mockReturnValueOnce(old.promise)
+        .mockReturnValueOnce(latest.promise);
+      const gates = await loadFeatureGates();
+      const confirmation = gates.ensureFeatureGate(PROVIDER_ID);
+      await vi.waitFor(() => {
+        expect(gates.state.pendingFeatureId).toBe(PROVIDER_ID);
+      });
+
+      const oldRefresh = gates.refreshConfirmations();
+      await expect(gates.confirmPendingFeature()).resolves.toBe(true);
+      await expect(confirmation).resolves.toBe(true);
+      const currentRefresh = gates.refreshConfirmations();
+      const numberOfReads = getFeatureConfirmationsMock.mock.calls.length;
+      if (outcome === 'reply') old.resolve({});
+      else old.reject(new Error('obsolete failure'));
+      await oldRefresh;
+      const afterOld = {
+        enabled: gates.isFeatureEnabled(PROVIDER_ID),
+        loading: gates.state.isLoading,
+        error: gates.state.readError,
+      };
+
+      latest.resolve({ [PROVIDER_ID]: validConfirmation() });
+      await currentRefresh;
+      expect(numberOfReads).toBe(3);
+      expect(afterOld).toEqual({ enabled: true, loading: true, error: '' });
+      expect(gates.isFeatureEnabled(PROVIDER_ID)).toBe(true);
+      expect(gates.state.isLoading).toBe(false);
+    },
+  );
+
   it('keeps prior truth and exposes a bounded refresh failure', async () => {
     getFeatureConfirmationsMock
       .mockResolvedValueOnce({ [PROVIDER_ID]: validConfirmation(PROVIDER_ID) })

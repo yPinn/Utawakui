@@ -599,6 +599,21 @@ describe('Settings document section behavior', () => {
     supportApp.unmount();
   });
 
+  it('rereads close behavior when the settings window regains focus', () => {
+    const windowTarget = new EventTarget();
+    vi.stubGlobal('window', windowTarget);
+    const applicationApp = mountSetup(SettingsApplicationSection);
+    try {
+      expect(mocks.refreshWindowsPreference).toHaveBeenCalledOnce();
+      windowTarget.dispatchEvent(new Event('focus'));
+      expect(mocks.refreshWindowsPreference).toHaveBeenCalledTimes(2);
+    } finally {
+      applicationApp.unmount();
+    }
+    windowTarget.dispatchEvent(new Event('focus'));
+    expect(mocks.refreshWindowsPreference).toHaveBeenCalledTimes(2);
+  });
+
   it('owns capability lifecycle and reveals one-shot section and feature targets', async () => {
     const sectionTarget = {
       scrollIntoView: vi.fn(),

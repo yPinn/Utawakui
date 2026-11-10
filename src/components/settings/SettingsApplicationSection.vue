@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useWindowsIntegrationSettings } from '../../composables/useWindowsIntegrationSettings.js';
 import { useUiLanguageSettings } from '../../composables/useUiLanguageSettings.js';
 import { useOutputLanguageSettings } from '../../composables/useOutputLanguageSettings.js';
@@ -36,8 +36,19 @@ const outputLanguage = computed(() => ({
 
 onMounted(() => {
   windowsIntegrationSettings.refreshPreference();
+  // The close dialog can save a choice while this section stays mounted.
+  window.addEventListener?.(
+    'focus',
+    windowsIntegrationSettings.refreshPreference,
+  );
   uiLanguageSettings.refresh();
   outputLanguageSettings.refresh();
+});
+onUnmounted(() => {
+  window.removeEventListener?.(
+    'focus',
+    windowsIntegrationSettings.refreshPreference,
+  );
 });
 </script>
 
