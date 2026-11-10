@@ -1,4 +1,5 @@
 import { computed, readonly, shallowRef } from 'vue';
+import { isSeparationBackend } from '../../shared/separationQueueContract.mjs';
 import { useAppNotifications } from './useAppNotifications.js';
 import { useSeparationQueueNotifications } from './useSeparationQueueNotifications.js';
 import {
@@ -52,11 +53,15 @@ function normalizeItem(value) {
   if (value.reason !== undefined && !ITEM_REASONS.has(value.reason)) {
     return null;
   }
+  if (value.backend !== undefined && !isSeparationBackend(value.backend)) {
+    return null;
+  }
   return {
     itemId: value.itemId,
     trackId: value.trackId,
     recipeId: value.recipeId,
     status: value.status,
+    ...(value.backend ? { backend: value.backend } : {}),
     ...(typeof value.stage === 'string' ? { stage: value.stage } : {}),
     ...(Number.isFinite(value.percent) ? { percent: value.percent } : {}),
     ...(value.reason ? { reason: value.reason } : {}),

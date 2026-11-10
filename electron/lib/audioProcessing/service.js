@@ -38,12 +38,13 @@ function createAudioProcessingService({
         ...(outputFormat ? { outputFormat } : {}),
       });
       assertCurrent();
-      const emitProgress = ({ stage, percent }) => {
+      const emitProgress = ({ stage, percent, backend }) => {
         onProgress?.({
           jobId,
           trackId,
           recipeId: recipe.id,
           stage,
+          ...(backend === undefined ? {} : { backend }),
           ...(Number.isFinite(percent) ? { percent } : {}),
         });
       };

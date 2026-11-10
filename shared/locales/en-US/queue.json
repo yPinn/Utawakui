@@ -52,6 +52,11 @@
       "failed": "Not completed",
       "cancelled": "Stopped"
     },
+    "backend": {
+      "directml": "GPU (DirectML)",
+      "cpu": "CPU",
+      "cpuFallback": "CPU fallback"
+    },
     "idle": "Prepared in playback order",
     "pausing": "Pauses after this song",
     "paused": "Paused · {count} pending",

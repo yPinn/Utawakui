@@ -223,9 +223,13 @@ and uses existing separated accompaniment only for diagnostics.
 ### CPU fallback and retry
 
 With GPU acceleration enabled, an error returned while creating the DirectML
-session triggers one CPU session creation attempt for that queue item. With GPU
-acceleration disabled, the item starts on CPU. Errors after session creation,
-including inference errors, fail the item. Cancellation terminates the worker.
+session triggers one CPU session creation attempt for that queue item. Main
+reads the preference when the shared scheduler starts the worker. With GPU
+acceleration disabled, the item starts on CPU. Once a session is created, the
+queue shows DirectML, CPU, or CPU fallback for that attempt. Retrying clears
+the previous attempt's backend. Skipping an existing result reports no backend.
+Errors after session creation, including inference errors, fail the item.
+Cancellation terminates the worker before releasing its scheduler slot.
 A worker exit before it returns a result also fails the item. These paths do
 not automatically retry on CPU. To retry a failed item on CPU, turn off GPU
 acceleration in Settings and retry the item.

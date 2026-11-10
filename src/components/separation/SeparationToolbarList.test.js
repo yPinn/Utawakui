@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createSSRApp } from 'vue';
+import { renderToString } from 'vue/server-renderer';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -28,6 +30,41 @@ const source = readCatalogSource(
 );
 
 describe('SeparationToolbarList', () => {
+  it('shows the selected backend in active and finished rows', async () => {
+    const app = createSSRApp(SeparationToolbarList, {
+      activeItems: [
+        {
+          itemId: 'active',
+          trackId: 'one',
+          status: 'running',
+          backend: 'directml',
+        },
+      ],
+      attentionItems: [
+        { itemId: 'failed', trackId: 'two', status: 'failed', backend: 'cpu' },
+      ],
+      completedItems: [
+        {
+          itemId: 'done',
+          trackId: 'three',
+          status: 'completed',
+          backend: 'cpu-fallback',
+        },
+        { itemId: 'skipped', trackId: 'four', status: 'skipped' },
+      ],
+      trackFor: (item) => ({
+        id: item.trackId,
+        title: item.trackId,
+        artist: '',
+      }),
+    });
+    const html = await renderToString(app);
+    expect(html).toContain('>GPU（DirectML）<');
+    expect(html).toContain('>CPU<');
+    expect(html).toContain('>已改用 CPU<');
+    expect(html.match(/class="ui-chip__label"/gu)).toHaveLength(3);
+  });
+
   it('groups active, pending, attention, and complete history states', () => {
     expect(source).toContain('處理中');
     expect(source).toContain('接下來');

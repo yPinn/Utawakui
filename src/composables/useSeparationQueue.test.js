@@ -75,6 +75,21 @@ function createHarness() {
 }
 
 describe('normalizeSeparationQueueStatus', () => {
+  it('keeps known backends and rejects an unrecognized backend', () => {
+    const payload = runningQueue();
+    const [, active] = payload.queue.items;
+    for (const backend of ['directml', 'cpu', 'cpu-fallback']) {
+      active.backend = backend;
+      expect(normalizeSeparationQueueStatus(payload).items[1].backend).toBe(
+        backend,
+      );
+    }
+    active.backend = 'private driver error';
+    expect(() => normalizeSeparationQueueStatus(payload)).toThrow(
+      'invalid separation queue status',
+    );
+  });
+
   it('accepts a bounded cloneable queue snapshot', () => {
     expect(normalizeSeparationQueueStatus(runningQueue())).toMatchObject({
       status: 'running',

@@ -139,6 +139,38 @@ function createQueueHarness() {
 }
 
 describe('registerSeparationHandlers', () => {
+  it.each([true, false])(
+    'uses GPU preference %j when the queued worker actually starts',
+    async (nextPreference) => {
+      let preference = !nextPreference;
+      const slot = Promise.withResolvers();
+      const scheduler = {
+        schedule: vi.fn(({ start }) => slot.promise.then(() => start().result)),
+        cancel: vi.fn(),
+      };
+      const engine = vi.fn(() => ({ result: Promise.resolve({}) }));
+      const handlers = register({
+        getConfig: () => ({ separationGpuAcceleration: preference }),
+        resolveUserDataDir: () => 'user-data',
+        heavyJobScheduler: scheduler,
+        createSeparationEngineJob: engine,
+        findSeparationTrackRecord: () => ({ id: 'same-id' }),
+        resolveSeparationsOutputDir: () => 'output',
+        resolveSeparationInputAudioPath: () => 'input.wav',
+      });
+      const outcome = handlers.get('separation:run')(null, 'same-id', 'quick');
+      await vi.waitFor(() => expect(scheduler.schedule).toHaveBeenCalledOnce());
+      preference = nextPreference;
+      slot.resolve();
+      await outcome;
+      expect(engine).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workerData: expect.objectContaining({ preferGpu: nextPreference }),
+        }),
+      );
+    },
+  );
+
   it('rechecks the processing gate when a queued heavy worker can actually start', async () => {
     let enabled = true;
     const slot = Promise.withResolvers(),

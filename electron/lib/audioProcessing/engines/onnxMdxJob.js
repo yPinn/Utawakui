@@ -1,6 +1,9 @@
 'use strict';
 
 const { Worker } = require('worker_threads');
+const {
+  isSeparationBackend,
+} = require('../../../../shared/separationQueueContract.mjs');
 
 function createOnnxMdxJob({
   WorkerCtor = Worker,
@@ -10,6 +13,7 @@ function createOnnxMdxJob({
 }) {
   const worker = new WorkerCtor(workerPath, { workerData });
   let settled = false;
+  let cancellation;
   let resolveResult;
   let rejectResult;
   const result = new Promise((resolve, reject) => {
@@ -24,9 +28,13 @@ function createOnnxMdxJob({
   }
 
   worker.on('message', (message) => {
+    if (settled || cancellation) return;
     if (message?.type === 'progress') {
       emitProgress?.({
         stage: message.stage,
+        ...(isSeparationBackend(message.backend)
+          ? { backend: message.backend }
+          : {}),
         ...(Number.isFinite(message.percent)
           ? { percent: message.percent }
           : {}),
@@ -43,8 +51,17 @@ function createOnnxMdxJob({
         : 'separation worker returned an invalid message';
     settle(rejectResult, new Error(errorMessage));
   });
-  worker.on('error', (error) => settle(rejectResult, error));
+  worker.on('error', (error) => {
+    if (!cancellation) settle(rejectResult, error);
+  });
+  function settleCancelled() {
+    settle(rejectResult, new Error('audio-processing job cancelled'));
+  }
   worker.on('exit', (code) => {
+    if (cancellation) {
+      settleCancelled();
+      return;
+    }
     const message =
       code === 0
         ? 'separation worker exited without a result'
@@ -52,9 +69,14 @@ function createOnnxMdxJob({
     settle(rejectResult, new Error(message));
   });
 
-  async function cancel() {
-    settle(rejectResult, new Error('audio-processing job cancelled'));
-    await worker.terminate();
+  function cancel() {
+    if (cancellation) return cancellation;
+    if (settled) return false;
+    // The scheduler releases its slot when result settles. Hold it until exit.
+    cancellation = Promise.resolve()
+      .then(() => worker.terminate())
+      .then(settleCancelled);
+    return cancellation;
   }
 
   return { result, cancel };

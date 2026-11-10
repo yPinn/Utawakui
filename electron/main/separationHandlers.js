@@ -124,9 +124,6 @@ function registerSeparationHandlers({
         engineRecipeId: recipe.engineRecipeId,
         profileId: recipe.profileId,
         modelId: recipe.modelIds[0],
-        // Boolean product intent read fresh per run, not a renderer-chosen
-        // execution-provider name — see ADR 0017/0009.
-        preferGpu: getConfig().separationGpuAcceleration !== false,
         ...(format === 'flac5' ? { outputFormat: format } : {}),
       };
     },
@@ -190,7 +187,8 @@ function registerSeparationHandlers({
                 recipeId: prepared.engineRecipeId,
                 profileId: prepared.profileId,
                 modelId: prepared.modelId,
-                preferGpu: prepared.preferGpu,
+                // The shared scheduler may have waited after preparation.
+                preferGpu: getConfig().separationGpuAcceleration !== false,
               },
               emitProgress,
             });

@@ -15,13 +15,17 @@ import {
 } from '../../icons/index.js';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiChip from '../ui/UiChip.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiProgress from '../ui/UiProgress.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import TrackIdentityRow from '../track/TrackIdentityRow.vue';
-import { separationItemLabel } from './separationQueuePresentation.js';
+import {
+  separationBackendLabel,
+  separationItemLabel,
+} from './separationQueuePresentation.js';
 import { pendingReorderOffset } from './separationToolbarQueue.js';
 import { t } from '../../utils/i18n.js';
 
@@ -287,7 +291,11 @@ function dragItem(item) {
           @contextmenu.prevent.stop="openItemMenu(item, $event)"
           @keydown="openItemMenuFromKeyboard(item, $event)"
           @navigate="emit('navigate', $event)"
-        />
+        >
+          <template v-if="item.backend" #trail>
+            <UiChip>{{ separationBackendLabel(item.backend) }}</UiChip>
+          </template>
+        </TrackIdentityRow>
       </ul>
     </AppRightDockSection>
 
@@ -380,6 +388,9 @@ function dragItem(item) {
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
+            <UiChip v-if="item.backend">{{
+              separationBackendLabel(item.backend)
+            }}</UiChip>
             <UiStatusIcon
               :icon="statusPresentationFor(item).icon"
               :tone="statusPresentationFor(item).tone"
@@ -412,6 +423,9 @@ function dragItem(item) {
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
+            <UiChip v-if="item.backend">{{
+              separationBackendLabel(item.backend)
+            }}</UiChip>
             <UiStatusIcon
               :icon="statusPresentationFor(item).icon"
               :tone="statusPresentationFor(item).tone"

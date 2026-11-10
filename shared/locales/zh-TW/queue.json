@@ -52,6 +52,11 @@
       "failed": "未完成",
       "cancelled": "已停止"
     },
+    "backend": {
+      "directml": "GPU（DirectML）",
+      "cpu": "CPU",
+      "cpuFallback": "已改用 CPU"
+    },
     "idle": "依播放順序準備",
     "pausing": "這首完成後暫停",
     "paused": "已暫停 · {count} 首待處理",

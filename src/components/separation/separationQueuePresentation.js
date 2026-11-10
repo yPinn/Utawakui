@@ -93,6 +93,19 @@ export function separationSourceStatus(tracks = [], items = [], recipeId) {
     .map(([id, label]) => ({ id, label, count: counts[id] }));
 }
 
+export function separationBackendLabel(backend) {
+  switch (backend) {
+    case 'directml':
+      return t('queue.separation.backend.directml');
+    case 'cpu':
+      return t('queue.separation.backend.cpu');
+    case 'cpu-fallback':
+      return t('queue.separation.backend.cpuFallback');
+    default:
+      return '';
+  }
+}
+
 export function separationItemLabel(item) {
   switch (item?.status) {
     case 'pending':

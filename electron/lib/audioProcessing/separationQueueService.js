@@ -3,6 +3,9 @@
 const { isBoundedTrackId } = require('../library/paths');
 const { hasControlCharacters } = require('../textGuards');
 const { normalizeSeparationOutputFormat } = require('./separationOutputJob');
+const {
+  isSeparationBackend,
+} = require('../../../shared/separationQueueContract.mjs');
 
 const MAX_QUEUE_ITEMS = 500;
 const ACTIVE_ITEM_STATUSES = new Set(['checking', 'running']);
@@ -59,6 +62,7 @@ function publicItem(entry) {
     recipeId: entry.recipeId,
     ...(entry.outputFormat === 'flac5' ? { outputFormat: 'flac5' } : {}),
     status: entry.status,
+    ...(entry.backend ? { backend: entry.backend } : {}),
     ...(typeof entry.stage === 'string' ? { stage: entry.stage } : {}),
     ...(Number.isFinite(entry.percent) ? { percent: entry.percent } : {}),
     ...(typeof entry.reason === 'string' ? { reason: entry.reason } : {}),
@@ -216,8 +220,12 @@ function createSeparationQueueService({
               onProgress: (progress) => {
                 if (entry.status !== 'running') return;
                 const previousStage = entry.stage;
+                const previousBackend = entry.backend;
                 if (typeof progress?.stage === 'string') {
                   entry.stage = progress.stage.slice(0, 64);
+                }
+                if (isSeparationBackend(progress?.backend)) {
+                  entry.backend = progress.backend;
                 }
                 if (Number.isFinite(progress?.percent)) {
                   entry.percent = Math.min(100, Math.max(0, progress.percent));
@@ -225,6 +233,7 @@ function createSeparationQueueService({
                 const tick = now();
                 if (
                   entry.stage === previousStage &&
+                  entry.backend === previousBackend &&
                   tick - lastProgressEmitAt < PROGRESS_EMIT_INTERVAL_MS
                 ) {
                   return;
@@ -429,6 +438,7 @@ function createSeparationQueueService({
     delete entry.error;
     delete entry.reason;
     delete entry.result;
+    delete entry.backend;
     delete entry.stage;
     delete entry.percent;
     emitUpdate();

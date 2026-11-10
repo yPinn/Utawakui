@@ -51,6 +51,35 @@ function createHarness(overrides = {}) {
 }
 
 describe('separation queue service', () => {
+  it('publishes the selected backend and clears it before retrying', async () => {
+    const h = createHarness();
+    h.service.enqueue({ trackIds: ['one'], recipeId: 'quick' });
+    await flush();
+    h.runs[0].onProgress({ stage: 'decoding', backend: 'cpu-fallback' });
+    h.runs[0].onProgress({
+      stage: 'separating',
+      backend: 'private driver error',
+    });
+    expect(h.updates.at(-1).queue.items[0].backend).toBe('cpu-fallback');
+    h.runs[0].task.reject(new Error('failed'));
+    await flush();
+    expect(h.service.getStatus().queue.items[0]).toMatchObject({
+      status: 'failed',
+      backend: 'cpu-fallback',
+    });
+
+    expect(h.service.retry('item-1')).toBe(true);
+    expect(h.service.getStatus().queue.items[0]).not.toHaveProperty('backend');
+    await flush();
+    h.runs[1].onProgress({ stage: 'decoding', backend: 'directml' });
+    h.runs[1].task.resolve({});
+    await flush();
+    expect(h.service.getStatus().queue.items[0]).toMatchObject({
+      status: 'completed',
+      backend: 'directml',
+    });
+  });
+
   it('keeps distinct output intents and preserves FLAC on retry', async () => {
     const h = createHarness();
     h.service.pause();

@@ -272,13 +272,7 @@ function resolveExecutionPreset(presetId, expectedProfileId, expectedModelId) {
   return preset;
 }
 
-// DirectML session creation is a code path that has never actually run
-// GPU inference before (the bundled DirectML.dll previously just sat
-// unused) — see ADR 0002 for the packaging-level crash history and
-// ADR 0017 for the Electron worker_thread-specific upstream issues this
-// fallback is guarding against (microsoft/onnxruntime#20084, #13086,
-// #17678). Injectable so vocalSeparation.test.js can simulate a DirectML
-// failure without mocking the onnxruntime-node module itself.
+// See ADR 0017 for the DirectML session and CPU fallback policy.
 async function createInferenceSession(
   modelPath,
   { preferGpu = true, onFallback, createSession } = {},
@@ -601,8 +595,6 @@ async function separateTrack(
   presetId = DEFAULT_PRESET_ID,
   expectedProfileId,
   expectedModelId,
-  // Test/diagnostic seams only — production callers (vocalSeparationWorker.js)
-  // never pass these, so real runs always try DirectML then fall back to CPU.
   { preferGpu = true, createSession, onGpuFallback } = {},
 ) {
   fs.mkdirSync(outputDir, { recursive: true });
@@ -633,10 +625,12 @@ async function separateTrack(
   };
 
   onProgress?.({ stage: 'loading-model' });
+  let backend = preferGpu ? 'directml' : 'cpu';
   const session = await createInferenceSession(modelPath, {
     preferGpu,
     createSession,
     onFallback: (err) => {
+      backend = 'cpu-fallback';
       console.warn(
         `DirectML session creation failed, falling back to CPU: ${err.message}`,
       );
@@ -644,7 +638,7 @@ async function separateTrack(
     },
   });
 
-  onProgress?.({ stage: 'decoding' });
+  onProgress?.({ stage: 'decoding', backend });
   const { left, right } = await decodeAudio(inputPath, ffmpegPath);
 
   let peak = 0;

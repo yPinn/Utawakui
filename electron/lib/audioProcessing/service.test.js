@@ -94,7 +94,7 @@ describe('AudioProcessingService', () => {
   it('normalizes engine progress with stable product and job fields', async () => {
     const onProgress = vi.fn();
     const createEngineJob = vi.fn(({ emitProgress }) => {
-      emitProgress({ stage: 'separating', percent: 42 });
+      emitProgress({ stage: 'separating', percent: 42, backend: 'directml' });
       return { result: Promise.resolve({ ok: true }) };
     });
     const { service } = makeService({ createEngineJob });
@@ -111,6 +111,7 @@ describe('AudioProcessingService', () => {
       recipeId: 'general',
       stage: 'separating',
       percent: 42,
+      backend: 'directml',
     });
   });
 

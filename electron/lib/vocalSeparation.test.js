@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import {
   encodeWav,
@@ -6,6 +9,7 @@ import {
   SEPARATION_PRESETS,
   MODELS,
   createInferenceSession,
+  separateTrack,
 } from './vocalSeparation.js';
 
 // createInferenceSession's own fallback logic is pure and injectable (no
@@ -69,6 +73,54 @@ describe('createInferenceSession', () => {
     expect(onFallback).not.toHaveBeenCalled();
     expect(createSession).toHaveBeenCalledTimes(1);
   });
+});
+
+describe('separation backend progress', () => {
+  it.each([
+    [true, false, 'directml'],
+    [false, false, 'cpu'],
+    [true, true, 'cpu-fallback'],
+  ])(
+    'reports %s / %s as %s after creating a session',
+    async (preferGpu, failDml, backend) => {
+      const outputDir = fs.mkdtempSync(
+        path.join(os.tmpdir(), 'separation-backend-'),
+      );
+      const stop = new Error('stop before decoding');
+      const onProgress = vi.fn(({ stage }) => {
+        if (stage === 'decoding') throw stop;
+      });
+      const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        await expect(
+          separateTrack(
+            'input.wav',
+            outputDir,
+            'model.onnx',
+            'ffmpeg',
+            onProgress,
+            'quick',
+            undefined,
+            undefined,
+            {
+              preferGpu,
+              createSession: async (_path, options) => {
+                if (options && failDml) throw new Error('DirectML unavailable');
+                return {};
+              },
+            },
+          ),
+        ).rejects.toBe(stop);
+        expect(onProgress.mock.calls.map(([progress]) => progress)).toEqual([
+          { stage: 'loading-model' },
+          { stage: 'decoding', backend },
+        ]);
+      } finally {
+        warning.mockRestore();
+        fs.rmdirSync(outputDir);
+      }
+    },
+  );
 });
 
 // Only the pure, deterministic piece gets automated coverage — the
