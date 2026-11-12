@@ -33,7 +33,7 @@
     "success": "Done",
     "warning": "Needs attention",
     "error": "Something went wrong",
-    "message": "The action didn't finish. Try again later.",
+    "message": "The action didn't finish. Try again.",
     "failureKind": {
       "diskFull": "Not enough disk space. Free up space and try again.",
       "accessDenied": "Utawakui can't use this location. Choose another folder.",

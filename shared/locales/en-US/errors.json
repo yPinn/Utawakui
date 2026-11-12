@@ -1,19 +1,19 @@
 {
   "TRACK_STYLE_TAGS_FAILED": {
-    "title": "Style tags unavailable",
-    "message": "Could not process library style tags. Try again."
+    "title": "Style tags didn't finish",
+    "message": "Couldn't process library style tags. Try again."
   },
   "PLATFORM_VIDEO_FAILED": {
-    "title": "Action failed",
-    "message": "The video pairing action could not be completed. Try again."
+    "title": "Action didn't finish",
+    "message": "The video pairing action couldn't be completed. Try again."
   },
   "PLATFORM_VIDEO_NOT_CONFIGURED": {
     "title": "Authorization not configured",
     "message": "YouTube authorization is not configured in this build."
   },
   "PLATFORM_VIDEO_SECURE_STORAGE": {
-    "title": "Authorization cannot be stored",
-    "message": "YouTube authorization cannot be stored securely."
+    "title": "Authorization can't be stored",
+    "message": "YouTube authorization can't be stored securely."
   },
   "PLATFORM_VIDEO_CANCELLED": {
     "title": "Authorization canceled",
@@ -48,35 +48,35 @@
     "message": "Wait for the current account action to finish."
   },
   "ANNOUNCEMENT_SEEN_VERSION_INVALID": {
-    "title": "Could not save announcement status",
+    "title": "Couldn't save announcement status",
     "message": "This setting is not valid. Choose again."
   },
   "ANNOUNCEMENT_SEEN_VERSION_READ_FAILED": {
-    "title": "Could not read announcement status",
-    "message": "Announcement status cannot be read right now."
+    "title": "Couldn't read announcement status",
+    "message": "Announcement status can't be read right now."
   },
   "ANNOUNCEMENT_SEEN_VERSION_UPDATE_FAILED": {
-    "title": "Could not save announcement status",
-    "message": "Announcement status cannot be saved right now. Try again later."
+    "title": "Couldn't save announcement status",
+    "message": "Announcement status can't be saved right now. Try again."
   },
   "APP_UPDATE_AUTO_CHECK_INVALID": {
-    "title": "Could not apply the automatic update check setting",
+    "title": "Couldn't apply the automatic update check setting",
     "message": "This setting is not valid. Choose again."
   },
   "APP_UPDATE_AUTO_CHECK_READ_FAILED": {
-    "title": "Could not read the automatic update check setting",
-    "message": "The automatic update check setting cannot be read right now."
+    "title": "Couldn't read the automatic update check setting",
+    "message": "The automatic update check setting can't be read right now."
   },
   "APP_UPDATE_AUTO_CHECK_UPDATE_FAILED": {
-    "title": "Could not apply the automatic update check setting",
-    "message": "The automatic update check setting cannot be applied right now. Try again later."
+    "title": "Couldn't apply the automatic update check setting",
+    "message": "The automatic update check setting can't be applied right now. Try again."
   },
   "ARTIST_IDENTITY_LOOKUP_FAILED": {
     "title": "Can't look up artist details",
     "message": "MusicBrainz isn't available right now; you can still organize artists manually."
   },
   "ARTIST_ORGANIZATION_FAILED": {
-    "title": "Artist organizing not completed",
+    "title": "Artist organizing didn't finish",
     "message": "Artist organizing can't be saved right now. Try again."
   },
   "ARTIST_PHOTO_CHOOSE_FAILED": {
@@ -100,83 +100,83 @@
     "message": "The web page can't be opened right now. Try again later."
   },
   "AUDIO_PREFERENCES_INVALID": {
-    "title": "Could not save volume settings",
+    "title": "Couldn't save volume settings",
     "message": "The volume settings are outside the available range."
   },
   "AUDIO_PREFERENCES_READ_FAILED": {
-    "title": "Could not read volume settings",
-    "message": "Volume settings cannot be read right now."
+    "title": "Couldn't read volume settings",
+    "message": "Volume settings can't be read right now."
   },
   "AUDIO_PREFERENCES_UPDATE_FAILED": {
-    "title": "Could not save volume settings",
-    "message": "Volume settings cannot be saved right now. Try again later."
+    "title": "Couldn't save volume settings",
+    "message": "Volume settings can't be saved right now. Try again."
   },
   "AUTO_ERROR_REPORTING_INVALID": {
-    "title": "Could not apply the automatic error report setting",
+    "title": "Couldn't apply the automatic error report setting",
     "message": "This setting is not valid. Choose again."
   },
   "AUTO_ERROR_REPORTING_READ_FAILED": {
-    "title": "Could not read the automatic error report setting",
-    "message": "The automatic error report setting cannot be read right now."
+    "title": "Couldn't read the automatic error report setting",
+    "message": "The automatic error report setting can't be read right now."
   },
   "AUTO_ERROR_REPORTING_UPDATE_FAILED": {
-    "title": "Could not apply the automatic error report setting",
-    "message": "The automatic error report setting cannot be applied right now. Try again later."
+    "title": "Couldn't apply the automatic error report setting",
+    "message": "The automatic error report setting can't be applied right now. Try again."
   },
   "AUTO_MUSIC_ANALYSIS_INVALID": {
-    "title": "Could not apply the automatic analysis setting",
+    "title": "Couldn't apply the automatic analysis setting",
     "message": "This setting is not valid. Choose again."
   },
   "AUTO_MUSIC_ANALYSIS_READ_FAILED": {
-    "title": "Could not read the automatic analysis setting",
-    "message": "The automatic analysis setting cannot be read right now."
+    "title": "Couldn't read the automatic analysis setting",
+    "message": "The automatic analysis setting can't be read right now."
   },
   "AUTO_MUSIC_ANALYSIS_UPDATE_FAILED": {
-    "title": "Could not apply the automatic analysis setting",
-    "message": "The automatic analysis setting cannot be applied right now. Try again later."
+    "title": "Couldn't apply the automatic analysis setting",
+    "message": "The automatic analysis setting can't be applied right now. Try again."
   },
   "CAPTURE_DEVICE_INVALID": {
-    "title": "Could not apply the capture device",
+    "title": "Couldn't apply the capture device",
     "message": "This setting is not valid. Choose again."
   },
   "CAPTURE_DEVICE_READ_FAILED": {
-    "title": "Could not read the capture device",
-    "message": "The capture device cannot be read right now."
+    "title": "Couldn't read the capture device",
+    "message": "The capture device can't be read right now."
   },
   "CAPTURE_DEVICE_UPDATE_FAILED": {
-    "title": "Could not apply the capture device",
-    "message": "The capture device cannot be applied right now. Try again later."
+    "title": "Couldn't apply the capture device",
+    "message": "The capture device can't be applied right now. Try again."
   },
   "DOWNLOAD_DIRECTORY_CHOOSE_FAILED": {
-    "title": "Could not change the download location",
-    "message": "The download location cannot be changed right now. Try again later."
+    "title": "Couldn't change the download location",
+    "message": "The download location can't be changed right now. Try again."
   },
   "DOWNLOAD_DIRECTORY_OPEN_FAILED": {
-    "title": "Could not open the download location",
-    "message": "The download location cannot be opened. Check that the folder is still available."
+    "title": "Couldn't open the download location",
+    "message": "The download location can't be opened. Check that the folder is still available."
   },
   "DOWNLOAD_DIRECTORY_READ_FAILED": {
-    "title": "Could not read the download location",
-    "message": "The download location cannot be read right now. Try again later."
+    "title": "Couldn't read the download location",
+    "message": "The download location can't be read right now. Try again."
   },
   "DOWNLOAD_DIRECTORY_RESET_FAILED": {
-    "title": "Could not reset the download location",
-    "message": "The download location cannot be reset right now. Try again later."
+    "title": "Couldn't reset the download location",
+    "message": "The download location can't be reset right now. Try again."
   },
   "FEATURE_DEPENDENCY_LIST_FAILED": {
-    "title": "Couldn't read setup status",
+    "title": "Couldn't read tool status",
     "message": "Try again."
   },
   "FEATURE_DEPENDENCY_PREPARE_FAILED": {
-    "title": "Setup failed",
+    "title": "Tool setup didn't finish",
     "message": "Try again."
   },
   "FEATURE_DEPENDENCY_REMOVE_FAILED": {
-    "title": "Removal failed",
+    "title": "Tool removal didn't finish",
     "message": "Try again."
   },
   "FEATURE_DEPENDENCY_REPAIR_FAILED": {
-    "title": "Repair failed",
+    "title": "Tool repair didn't finish",
     "message": "Try again."
   },
   "FEATURE_DEPENDENCY_UNKNOWN": {
@@ -185,15 +185,15 @@
   },
   "FEATURE_GATE_CONFIRM_FAILED": {
     "title": "Couldn't save the feature confirmation",
-    "message": "The feature confirmation can't be saved right now. Try again later."
+    "message": "The feature confirmation can't be saved right now. Try again."
   },
   "FEATURE_GATE_LIST_FAILED": {
     "title": "Couldn't read feature confirmations",
-    "message": "Feature confirmations can't be read right now. Try again later."
+    "message": "Feature confirmations can't be read right now. Try again."
   },
   "FEATURE_GATE_NOTICE_STALE": {
     "title": "Feature notice updated",
-    "message": "The feature notice was updated. Read it again before confirming."
+    "message": "Read it again before confirming."
   },
   "FEATURE_GATE_UNKNOWN": {
     "title": "Unknown feature",
@@ -213,7 +213,7 @@
   },
   "FOLDER_PAGE_OBJECT_LIST_FAILED": {
     "title": "Can't read page items",
-    "message": "This page's items can't be read right now. Try again later."
+    "message": "This page's items can't be read right now. Try again."
   },
   "FOLDER_PAGE_OBJECT_NOTE_FAILED": {
     "title": "Can't save page note",
@@ -245,7 +245,7 @@
     "message": "This image can't be previewed. Choose another image."
   },
   "LIBRARY_CONVERT_AUDIO_FAILED": {
-    "title": "Format conversion not completed",
+    "title": "Format conversion didn't finish",
     "message": "Choose the files again and retry."
   },
   "LIBRARY_DELETE_TRACK_FAILED": {
@@ -253,7 +253,7 @@
     "message": "This song can't be deleted. Try again."
   },
   "LIBRARY_IMPORT_AUDIO_FAILED": {
-    "title": "Local import not completed",
+    "title": "Local import didn't finish",
     "message": "Try again."
   },
   "LIBRARY_LOCATION_UNAVAILABLE": {
@@ -265,19 +265,19 @@
     "message": "Try again."
   },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
-    "title": "Library cleanup not completed",
+    "title": "Library cleanup didn't finish",
     "message": "Vocal-removed versions can't be cleaned up right now. Try again."
   },
   "LIBRARY_STORAGE_POLICY_INVALID": {
-    "title": "Could not apply the storage setting",
+    "title": "Couldn't apply the storage setting",
     "message": "This setting is not valid. Choose again."
   },
   "LIBRARY_STORAGE_POLICY_UPDATE_FAILED": {
-    "title": "Could not save the storage setting",
+    "title": "Couldn't save the storage setting",
     "message": "The storage setting can't be saved right now. Try again."
   },
   "LIBRARY_STORAGE_READ_FAILED": {
-    "title": "Could not read library storage",
+    "title": "Couldn't read library storage",
     "message": "Library storage can't be read right now."
   },
   "LOCAL_IMPORT_REVIEW_EXPIRED": {
@@ -285,16 +285,16 @@
     "message": "The confirmation timed out. Choose the files again."
   },
   "OBS_ARRANGEMENT_DOCK_INVALID": {
-    "title": "Could not save the arrangement display preference",
+    "title": "Couldn't save the arrangement display preference",
     "message": "This setting is not valid. Choose again."
   },
   "OBS_ARRANGEMENT_DOCK_READ_FAILED": {
-    "title": "Could not read the arrangement display preference",
-    "message": "The arrangement display preference cannot be read right now."
+    "title": "Couldn't read the arrangement display preference",
+    "message": "The arrangement display preference can't be read right now."
   },
   "OBS_ARRANGEMENT_DOCK_UPDATE_FAILED": {
-    "title": "Could not save the arrangement display preference",
-    "message": "The arrangement display preference cannot be saved right now. Try again later."
+    "title": "Couldn't save the arrangement display preference",
+    "message": "The arrangement display preference can't be saved right now. Try again."
   },
   "OUTPUT_WINDOW_OPEN_FAILED": {
     "title": "Output window not opened",
@@ -302,15 +302,15 @@
   },
   "PERFORMANCE_SESSION_ARCHIVE_FAILED": {
     "title": "Session not archived",
-    "message": "The session wasn't archived; the current data is kept. Try again."
+    "message": "The current data is kept. Try again."
   },
   "PERFORMANCE_SESSION_EXPORT_FAILED": {
     "title": "Setlist not saved",
-    "message": "The setlist wasn't saved. Try again."
+    "message": "Try again."
   },
   "PERFORMANCE_SESSION_MARKER_EXPORT_FAILED": {
     "title": "Editing markers not saved",
-    "message": "The editing markers could not be saved. Try again."
+    "message": "The editing markers couldn't be saved. Try again."
   },
   "PERFORMANCE_SESSION_HISTORY_FAILED": {
     "title": "Performance records not updated",
@@ -370,7 +370,7 @@
   },
   "PLAYLISTS_LIST_FAILED": {
     "title": "Can't read playlists",
-    "message": "Playlists can't be read right now. Try again later."
+    "message": "Playlists can't be read right now. Try again."
   },
   "PLAYLISTS_RENAME_FAILED": {
     "title": "Playlist can't be renamed",
@@ -378,11 +378,11 @@
   },
   "PLAYLISTS_REORDER_FAILED": {
     "title": "Playlist order can't be updated",
-    "message": "The playlist order can't be updated. Try again."
+    "message": "Try again."
   },
   "PLAYLISTS_SCOPE_CHANGED": {
     "title": "Library location changed",
-    "message": "The library location changed. Reload and try again."
+    "message": "Reload and try again."
   },
   "PLAYLISTS_SET_DESCRIPTION_FAILED": {
     "title": "Playlist description can't be updated",
@@ -401,7 +401,7 @@
     "message": "This album can't be synced right now. Try again."
   },
   "PROVIDER_SEARCH_FAILED": {
-    "title": "YT Music / YouTube search not completed",
+    "title": "YT Music / YouTube search didn't finish",
     "message": "The YT Music / YouTube search can't finish right now. Try again later."
   },
   "RELEASE_METADATA_REFRESH_FAILED": {
@@ -409,67 +409,67 @@
     "message": "Release information can't be updated right now. Try again later."
   },
   "RELEASE_ORGANIZATION_FAILED": {
-    "title": "Release details not completed",
+    "title": "Couldn't update release details",
     "message": "Release details can't be read or saved right now. Try again."
   },
   "SEPARATION_GPU_ACCELERATION_INVALID": {
-    "title": "Could not apply the GPU acceleration setting",
+    "title": "Couldn't apply the GPU acceleration setting",
     "message": "This setting is not valid. Choose again."
   },
   "SEPARATION_GPU_ACCELERATION_READ_FAILED": {
-    "title": "Could not read the GPU acceleration setting",
-    "message": "The GPU acceleration setting cannot be read right now."
+    "title": "Couldn't read the GPU acceleration setting",
+    "message": "The GPU acceleration setting can't be read right now."
   },
   "SEPARATION_GPU_ACCELERATION_UPDATE_FAILED": {
-    "title": "Could not apply the GPU acceleration setting",
-    "message": "The GPU acceleration setting cannot be applied right now. Try again later."
+    "title": "Couldn't apply the GPU acceleration setting",
+    "message": "The GPU acceleration setting can't be applied right now. Try again."
   },
   "SIDEBAR_WIDTH_INVALID": {
-    "title": "Could not apply the sidebar width",
+    "title": "Couldn't apply the sidebar width",
     "message": "The sidebar width is outside the available range."
   },
   "SIDEBAR_WIDTH_READ_FAILED": {
-    "title": "Could not read the sidebar width",
-    "message": "The sidebar width cannot be read right now."
+    "title": "Couldn't read the sidebar width",
+    "message": "The sidebar width can't be read right now."
   },
   "SIDEBAR_WIDTH_UPDATE_FAILED": {
-    "title": "Could not apply the sidebar width",
-    "message": "The sidebar width cannot be applied right now. Try again later."
+    "title": "Couldn't apply the sidebar width",
+    "message": "The sidebar width can't be applied right now. Try again."
   },
   "SYSTEM_FFMPEG_DETECTION_FAILED": {
-    "title": "Detection failed",
+    "title": "FFmpeg detection didn't finish",
     "message": "Try again."
   },
   "UI_THEME_INVALID": {
-    "title": "Could not apply the theme",
+    "title": "Couldn't apply the theme",
     "message": "This setting is not valid. Choose again."
   },
   "UI_THEME_READ_FAILED": {
-    "title": "Could not read the theme",
-    "message": "The theme cannot be read right now."
+    "title": "Couldn't read the theme",
+    "message": "The theme can't be read right now."
   },
   "UI_THEME_UPDATE_FAILED": {
-    "title": "Could not apply the theme",
-    "message": "The theme cannot be applied right now. Try again later."
+    "title": "Couldn't apply the theme",
+    "message": "The theme can't be applied right now. Try again."
   },
   "UNKNOWN": {
-    "title": "Action not completed",
-    "message": "This action could not be completed. Try again."
+    "title": "Action didn't finish",
+    "message": "Try again."
   },
   "WINDOW_CLOSE_BEHAVIOR_INVALID": {
-    "title": "Could not apply the close behavior",
+    "title": "Couldn't apply the close behavior",
     "message": "This setting is not valid. Choose again."
   },
   "WINDOW_CLOSE_BEHAVIOR_READ_FAILED": {
-    "title": "Could not read the close behavior",
-    "message": "The close behavior cannot be read right now."
+    "title": "Couldn't read the close behavior",
+    "message": "The close behavior can't be read right now."
   },
   "WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED": {
-    "title": "Could not apply the close behavior",
-    "message": "The close behavior cannot be applied right now. Try again later."
+    "title": "Couldn't apply the close behavior",
+    "message": "The close behavior can't be applied right now. Try again."
   },
   "WORK_ORGANIZATION_FAILED": {
-    "title": "Song organizing not completed",
+    "title": "Song organizing didn't finish",
     "message": "Song details can't be read or saved right now. Try again."
   },
   "LYRICS_READING_IDENTITY_STALE": {
@@ -482,7 +482,7 @@
   },
   "LYRICS_READING_LOAD_FAILED": {
     "title": "Couldn't load readings",
-    "message": "Couldn't load readings. Try again later."
+    "message": "Couldn't load readings. Try again."
   },
   "LYRICS_READING_UNSUPPORTED_SCRIPT": {
     "title": "Reading not supported",
@@ -498,11 +498,11 @@
   },
   "LYRICS_READING_GENERATE_FAILED": {
     "title": "Readings didn't finish",
-    "message": "Creating readings didn't finish. Try again."
+    "message": "Try again."
   },
   "LYRICS_READING_SAVE_FAILED": {
     "title": "Readings can't be saved",
-    "message": "The readings couldn't be saved. Try again."
+    "message": "Try again."
   },
   "LYRICS_READING_SET_LINE_FAILED": {
     "title": "Reading can't be updated",
@@ -526,31 +526,31 @@
   },
   "LYRICS_SOURCE_FAILED": {
     "title": "Lyrics source action didn't finish",
-    "message": "The lyrics source action didn't finish. Try again."
+    "message": "Try again."
   },
   "LYRICS_ENV_INVALID_INTENT": {
-    "title": "Lyrics timing estimate",
-    "message": "The lyrics timing estimate tool action didn't finish."
+    "title": "Lyrics timing estimate didn't finish",
+    "message": "Try again."
   },
   "LYRICS_ENV_OPERATION_FAILED": {
-    "title": "Lyrics timing estimate",
-    "message": "The lyrics timing estimate tool action didn't finish."
+    "title": "Lyrics timing estimate didn't finish",
+    "message": "Try again."
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
-    "title": "Lyrics timing analysis",
-    "message": "The lyrics analysis request is invalid."
+    "title": "Lyrics timing analysis didn't finish",
+    "message": "Try again."
   },
   "LYRICS_RESEARCH_FAILED": {
-    "title": "Lyrics timing analysis",
+    "title": "Lyrics timing analysis didn't finish",
     "message": "Analysis didn't finish. Make sure FFmpeg is prepared, or download the lyrics analysis tools again to repair them. Your lyrics still work."
   },
   "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
-    "title": "Lyrics analysis",
-    "message": "The lyrics analysis request is invalid."
+    "title": "Lyrics analysis didn't finish",
+    "message": "Try again."
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
-    "title": "Lyrics analysis",
-    "message": "Lyrics analysis didn't finish. Your accompaniment and lyrics still work."
+    "title": "Lyrics analysis didn't finish",
+    "message": "Your accompaniment and lyrics still work."
   },
   "BGM_STANDBY_GET_FAILED": {
     "title": "Interlude music can't be loaded",
@@ -589,28 +589,28 @@
     "message": "This accompaniment version isn't available. Prepare it again."
   },
   "UI_LANGUAGE_INVALID": {
-    "title": "Could not change the display language",
+    "title": "Couldn't change the display language",
     "message": "This setting is not valid. Choose again."
   },
   "UI_LANGUAGE_READ_FAILED": {
-    "title": "Could not read the display language",
-    "message": "The display language cannot be read right now."
+    "title": "Couldn't read the display language",
+    "message": "The display language can't be read right now."
   },
   "UI_LANGUAGE_UPDATE_FAILED": {
-    "title": "Could not change the display language",
-    "message": "The display language cannot be changed right now. Try again later."
+    "title": "Couldn't change the display language",
+    "message": "The display language can't be changed right now. Try again."
   },
   "OUTPUT_LANGUAGE_INVALID": {
-    "title": "Could not change the Output language",
+    "title": "Couldn't change the Output language",
     "message": "This setting is not valid. Choose again."
   },
   "OUTPUT_LANGUAGE_READ_FAILED": {
-    "title": "Could not read the Output language",
-    "message": "The Output language cannot be read right now."
+    "title": "Couldn't read the Output language",
+    "message": "The Output language can't be read right now."
   },
   "OUTPUT_LANGUAGE_UPDATE_FAILED": {
-    "title": "Could not change the Output language",
-    "message": "The Output language cannot be changed right now. Try again later."
+    "title": "Couldn't change the Output language",
+    "message": "The Output language can't be changed right now. Try again."
   },
   "YOUTUBE_LOGIN_FILE_FORMAT": {
     "title": "Couldn't import the sign-in file",
@@ -630,7 +630,7 @@
   },
   "YOUTUBE_LOGIN_REMOVE_FAILED": {
     "title": "Couldn't remove the sign-in file",
-    "message": "The sign-in file couldn't be removed. Try again."
+    "message": "Try again."
   },
   "YOUTUBE_LOGIN_STATUS_FAILED": {
     "title": "Couldn't read sign-in status",
@@ -650,7 +650,7 @@
   },
   "YOUTUBE_LOGIN_SOURCE_UPDATE_FAILED": {
     "title": "Couldn't apply the sign-in setting",
-    "message": "The sign-in setting can't be applied right now. Try again later."
+    "message": "The sign-in setting can't be applied right now. Try again."
   },
   "PLAYLIST_FOLDER_CREATE_FAILED": {
     "title": "Can't create folder",

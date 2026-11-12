@@ -365,7 +365,7 @@ describe('useArtistIndex', () => {
     expect(artistIndex.state.index.artists[0].name).toBe('Aimer');
     expect(artistIndex.state.error).toMatchObject({
       code: 'ARTIST_INDEX_FAILED',
-      message: '目前無法整理藝人，請稍後再試。',
+      message: '目前無法整理藝人，請再試一次。',
     });
   });
 

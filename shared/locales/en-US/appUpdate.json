@@ -12,7 +12,7 @@
     "latest": "Up to date",
     "downloadedVersion": "v{version} downloaded",
     "downloadedUnknown": "New version downloaded",
-    "failed": "Update failed. Try again.",
+    "failed": "The update didn't finish. Try again.",
     "unsupported": "Development builds don't update automatically",
     "infoUnavailable": "Version information unavailable"
   },

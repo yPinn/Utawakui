@@ -104,7 +104,7 @@ describe('useAppUpdate', () => {
     await update.checkForAppUpdate();
     await update.refreshAppUpdateStatus();
     expect(update.state.statusReadError).toBe('');
-    expect(update.state.actionError).toContain('更新失敗');
+    expect(update.state.actionError).toContain('更新未完成');
     await update.checkForAppUpdate();
     expect(update.state.actionError).toBe('');
   });
@@ -285,6 +285,6 @@ describe('useAppUpdate', () => {
 
     await appUpdate.checkForAppUpdate();
 
-    expect(appUpdate.state.error).toBe('更新失敗，請再試一次。');
+    expect(appUpdate.state.error).toBe('更新未完成，請再試一次。');
   });
 });

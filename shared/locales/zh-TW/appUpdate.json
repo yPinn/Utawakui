@@ -12,7 +12,7 @@
     "latest": "已是最新版本",
     "downloadedVersion": "v{version} 已下載",
     "downloadedUnknown": "新版本已下載",
-    "failed": "更新失敗，請再試一次。",
+    "failed": "更新未完成，請再試一次。",
     "unsupported": "開發版不支援自動更新",
     "infoUnavailable": "版本資訊無法取得"
   },

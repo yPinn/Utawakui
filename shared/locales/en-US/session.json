@@ -308,7 +308,7 @@
   },
   "observer": {
     "failedTitle": "Performance timeline not updated",
-    "failedMessage": "This performance's timestamps weren't saved. Check the records and retry."
+    "failedMessage": "This performance's timestamps weren't saved. Check the records and try again."
   },
   "archiveStatus": {
     "queued": "Not performed",

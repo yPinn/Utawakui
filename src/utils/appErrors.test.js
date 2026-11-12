@@ -22,7 +22,7 @@ describe('normalizeAppError', () => {
       code: 'UNKNOWN_ERROR',
       severity: 'error',
       title: '發生錯誤',
-      message: '操作未完成，請稍後再試。',
+      message: '操作未完成，請再試一次。',
       actionLabel: '',
       source: 'settings',
       operation: 'prepare',
@@ -133,7 +133,7 @@ describe('appError helpers', () => {
 
   it('returns the cleaned user message', () => {
     expect(appErrorMessage(new Error('plain'))).toBe(
-      '操作未完成，請稍後再試。',
+      '操作未完成，請再試一次。',
     );
   });
 });

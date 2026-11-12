@@ -1,6 +1,6 @@
 {
   "TRACK_STYLE_TAGS_FAILED": {
-    "title": "風格標籤處理失敗",
+    "title": "風格標籤處理未完成",
     "message": "無法處理曲庫風格標籤，請再試一次。"
   },
   "PLATFORM_VIDEO_FAILED": {
@@ -12,8 +12,8 @@
     "message": "此版本尚未設定 YouTube 授權。"
   },
   "PLATFORM_VIDEO_SECURE_STORAGE": {
-    "title": "無法保存授權",
-    "message": "目前無法安全保存 YouTube 授權。"
+    "title": "無法儲存授權",
+    "message": "目前無法安全儲存 YouTube 授權。"
   },
   "PLATFORM_VIDEO_CANCELLED": {
     "title": "已取消授權",
@@ -41,7 +41,7 @@
   },
   "PLATFORM_VIDEO_MISSING_SESSION": {
     "title": "找不到場次",
-    "message": "請重新開啟已保存的場次紀錄。"
+    "message": "請重新開啟已儲存的場次紀錄。"
   },
   "PLATFORM_VIDEO_BUSY": {
     "title": "操作進行中",
@@ -57,7 +57,7 @@
   },
   "ANNOUNCEMENT_SEEN_VERSION_UPDATE_FAILED": {
     "title": "無法儲存公告狀態",
-    "message": "目前無法儲存公告狀態，請稍後再試。"
+    "message": "目前無法儲存公告狀態，請再試一次。"
   },
   "APP_UPDATE_AUTO_CHECK_INVALID": {
     "title": "無法套用自動檢查更新設定",
@@ -69,7 +69,7 @@
   },
   "APP_UPDATE_AUTO_CHECK_UPDATE_FAILED": {
     "title": "無法套用自動檢查更新設定",
-    "message": "目前無法套用自動檢查更新設定，請稍後再試。"
+    "message": "目前無法套用自動檢查更新設定，請再試一次。"
   },
   "ARTIST_IDENTITY_LOOKUP_FAILED": {
     "title": "無法查詢藝人資料",
@@ -100,7 +100,7 @@
     "message": "目前無法開啟網頁，請稍後再試。"
   },
   "AUDIO_PREFERENCES_INVALID": {
-    "title": "無法保存音量設定",
+    "title": "無法儲存音量設定",
     "message": "音量設定超出可用範圍。"
   },
   "AUDIO_PREFERENCES_READ_FAILED": {
@@ -108,8 +108,8 @@
     "message": "目前無法讀取音量設定。"
   },
   "AUDIO_PREFERENCES_UPDATE_FAILED": {
-    "title": "無法保存音量設定",
-    "message": "目前無法保存音量設定，請稍後再試。"
+    "title": "無法儲存音量設定",
+    "message": "目前無法儲存音量設定，請再試一次。"
   },
   "AUTO_ERROR_REPORTING_INVALID": {
     "title": "無法套用自動回報設定",
@@ -121,7 +121,7 @@
   },
   "AUTO_ERROR_REPORTING_UPDATE_FAILED": {
     "title": "無法套用自動回報設定",
-    "message": "目前無法套用錯誤自動回報設定，請稍後再試。"
+    "message": "目前無法套用錯誤自動回報設定，請再試一次。"
   },
   "AUTO_MUSIC_ANALYSIS_INVALID": {
     "title": "無法套用自動分析設定",
@@ -133,7 +133,7 @@
   },
   "AUTO_MUSIC_ANALYSIS_UPDATE_FAILED": {
     "title": "無法套用自動分析設定",
-    "message": "目前無法套用自動分析設定，請稍後再試。"
+    "message": "目前無法套用自動分析設定，請再試一次。"
   },
   "CAPTURE_DEVICE_INVALID": {
     "title": "無法套用擷取裝置",
@@ -145,11 +145,11 @@
   },
   "CAPTURE_DEVICE_UPDATE_FAILED": {
     "title": "無法套用擷取裝置",
-    "message": "目前無法套用擷取裝置，請稍後再試。"
+    "message": "目前無法套用擷取裝置，請再試一次。"
   },
   "DOWNLOAD_DIRECTORY_CHOOSE_FAILED": {
     "title": "無法變更下載位置",
-    "message": "目前無法變更下載位置，請稍後再試。"
+    "message": "目前無法變更下載位置，請再試一次。"
   },
   "DOWNLOAD_DIRECTORY_OPEN_FAILED": {
     "title": "無法開啟下載位置",
@@ -157,26 +157,26 @@
   },
   "DOWNLOAD_DIRECTORY_READ_FAILED": {
     "title": "無法讀取下載位置",
-    "message": "目前無法讀取下載位置，請稍後再試。"
+    "message": "目前無法讀取下載位置，請再試一次。"
   },
   "DOWNLOAD_DIRECTORY_RESET_FAILED": {
     "title": "無法重設下載位置",
-    "message": "目前無法重設下載位置，請稍後再試。"
+    "message": "目前無法重設下載位置，請再試一次。"
   },
   "FEATURE_DEPENDENCY_LIST_FAILED": {
-    "title": "無法讀取準備狀態",
+    "title": "無法讀取工具狀態",
     "message": "請再試一次。"
   },
   "FEATURE_DEPENDENCY_PREPARE_FAILED": {
-    "title": "準備失敗",
+    "title": "工具準備未完成",
     "message": "請再試一次。"
   },
   "FEATURE_DEPENDENCY_REMOVE_FAILED": {
-    "title": "移除失敗",
+    "title": "工具移除未完成",
     "message": "請再試一次。"
   },
   "FEATURE_DEPENDENCY_REPAIR_FAILED": {
-    "title": "修復失敗",
+    "title": "工具修復未完成",
     "message": "請再試一次。"
   },
   "FEATURE_DEPENDENCY_UNKNOWN": {
@@ -185,15 +185,15 @@
   },
   "FEATURE_GATE_CONFIRM_FAILED": {
     "title": "無法儲存功能確認",
-    "message": "目前無法儲存功能確認，請稍後再試。"
+    "message": "目前無法儲存功能確認，請再試一次。"
   },
   "FEATURE_GATE_LIST_FAILED": {
     "title": "無法讀取功能確認狀態",
-    "message": "目前無法讀取功能確認狀態，請稍後再試。"
+    "message": "目前無法讀取功能確認狀態，請再試一次。"
   },
   "FEATURE_GATE_NOTICE_STALE": {
     "title": "功能說明已更新",
-    "message": "功能說明已更新，請重新閱讀後再確認。"
+    "message": "請重新閱讀後再確認。"
   },
   "FEATURE_GATE_UNKNOWN": {
     "title": "無法辨識功能",
@@ -213,7 +213,7 @@
   },
   "FOLDER_PAGE_OBJECT_LIST_FAILED": {
     "title": "無法讀取頁面物件",
-    "message": "目前無法讀取這個頁面的物件，請稍後再試。"
+    "message": "目前無法讀取這個頁面的物件，請再試一次。"
   },
   "FOLDER_PAGE_OBJECT_NOTE_FAILED": {
     "title": "無法儲存頁面便條",
@@ -302,11 +302,11 @@
   },
   "PERFORMANCE_SESSION_ARCHIVE_FAILED": {
     "title": "場次尚未封存",
-    "message": "場次尚未封存，目前資料仍保留，請再試一次。"
+    "message": "目前資料仍保留，請再試一次。"
   },
   "PERFORMANCE_SESSION_EXPORT_FAILED": {
-    "title": "演出歌單尚未保存",
-    "message": "演出歌單尚未保存，請再試一次。"
+    "title": "演出歌單尚未儲存",
+    "message": "請再試一次。"
   },
   "PERFORMANCE_SESSION_MARKER_EXPORT_FAILED": {
     "title": "剪輯標記尚未儲存",
@@ -314,7 +314,7 @@
   },
   "PERFORMANCE_SESSION_HISTORY_FAILED": {
     "title": "演出紀錄未更新",
-    "message": "目前無法讀取或保存演出紀錄，請再試一次。"
+    "message": "目前無法讀取或儲存演出紀錄，請再試一次。"
   },
   "PERFORMANCE_SESSION_PLAN_APPEND_FAILED": {
     "title": "曲目無法加入場次",
@@ -370,7 +370,7 @@
   },
   "PLAYLISTS_LIST_FAILED": {
     "title": "無法讀取播放清單",
-    "message": "目前無法讀取播放清單，請稍後再試。"
+    "message": "目前無法讀取播放清單，請再試一次。"
   },
   "PLAYLISTS_RENAME_FAILED": {
     "title": "播放清單無法重新命名",
@@ -378,11 +378,11 @@
   },
   "PLAYLISTS_REORDER_FAILED": {
     "title": "播放清單順序無法更新",
-    "message": "播放清單順序無法更新，請再試一次。"
+    "message": "請再試一次。"
   },
   "PLAYLISTS_SCOPE_CHANGED": {
     "title": "曲庫位置已變更",
-    "message": "曲庫位置已變更，請重新載入後再操作。"
+    "message": "請重新載入後再操作。"
   },
   "PLAYLISTS_SET_DESCRIPTION_FAILED": {
     "title": "播放清單說明無法更新",
@@ -422,7 +422,7 @@
   },
   "SEPARATION_GPU_ACCELERATION_UPDATE_FAILED": {
     "title": "無法套用 GPU 加速設定",
-    "message": "目前無法套用 GPU 加速設定，請稍後再試。"
+    "message": "目前無法套用 GPU 加速設定，請再試一次。"
   },
   "SIDEBAR_WIDTH_INVALID": {
     "title": "無法調整側欄寬度",
@@ -434,10 +434,10 @@
   },
   "SIDEBAR_WIDTH_UPDATE_FAILED": {
     "title": "無法調整側欄寬度",
-    "message": "目前無法調整側欄寬度，請稍後再試。"
+    "message": "目前無法調整側欄寬度，請再試一次。"
   },
   "SYSTEM_FFMPEG_DETECTION_FAILED": {
-    "title": "偵測失敗",
+    "title": "FFmpeg 偵測未完成",
     "message": "請再試一次。"
   },
   "UI_THEME_INVALID": {
@@ -450,11 +450,11 @@
   },
   "UI_THEME_UPDATE_FAILED": {
     "title": "無法套用介面主題",
-    "message": "目前無法套用介面主題，請稍後再試。"
+    "message": "目前無法套用介面主題，請再試一次。"
   },
   "UNKNOWN": {
     "title": "操作未完成",
-    "message": "目前無法完成這項操作，請再試一次。"
+    "message": "請再試一次。"
   },
   "WINDOW_CLOSE_BEHAVIOR_INVALID": {
     "title": "無法套用關閉行為",
@@ -466,7 +466,7 @@
   },
   "WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED": {
     "title": "無法套用關閉行為",
-    "message": "目前無法套用關閉行為，請稍後再試。"
+    "message": "目前無法套用關閉行為，請再試一次。"
   },
   "WORK_ORGANIZATION_FAILED": {
     "title": "歌曲整理未完成",
@@ -482,7 +482,7 @@
   },
   "LYRICS_READING_LOAD_FAILED": {
     "title": "無法讀取讀音",
-    "message": "目前無法讀取讀音，請稍後再試。"
+    "message": "目前無法讀取讀音，請再試一次。"
   },
   "LYRICS_READING_UNSUPPORTED_SCRIPT": {
     "title": "不支援這種讀音",
@@ -498,11 +498,11 @@
   },
   "LYRICS_READING_GENERATE_FAILED": {
     "title": "讀音產生未完成",
-    "message": "讀音產生未完成，請再試一次。"
+    "message": "請再試一次。"
   },
   "LYRICS_READING_SAVE_FAILED": {
     "title": "讀音無法儲存",
-    "message": "讀音無法儲存，請再試一次。"
+    "message": "請再試一次。"
   },
   "LYRICS_READING_SET_LINE_FAILED": {
     "title": "讀音無法更新",
@@ -517,40 +517,40 @@
     "message": "無法執行這個歌詞來源操作。"
   },
   "LYRICS_SOURCE_UNUSABLE": {
-    "title": "歌詞時間無法保存",
-    "message": "這份歌詞時間資料無法保存，請先檢查來源版本。"
+    "title": "歌詞時間無法儲存",
+    "message": "這份歌詞時間資料無法儲存，請先檢查來源版本。"
   },
   "LYRICS_SOURCE_STALE": {
     "title": "歌詞來源已變更",
-    "message": "歌詞來源或保存版本已變更，請重新讀取後再試一次。"
+    "message": "歌詞來源或儲存版本已變更，請重新讀取後再試一次。"
   },
   "LYRICS_SOURCE_FAILED": {
     "title": "歌詞來源操作未完成",
-    "message": "歌詞來源操作未完成，請再試一次。"
+    "message": "請再試一次。"
   },
   "LYRICS_ENV_INVALID_INTENT": {
-    "title": "歌詞時間估計",
-    "message": "歌詞時間估計工具操作未完成。"
+    "title": "歌詞時間估計未完成",
+    "message": "請再試一次。"
   },
   "LYRICS_ENV_OPERATION_FAILED": {
-    "title": "歌詞時間估計",
-    "message": "歌詞時間估計工具操作未完成。"
+    "title": "歌詞時間估計未完成",
+    "message": "請再試一次。"
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
-    "title": "歌詞時間分析",
-    "message": "歌詞分析操作格式不正確。"
+    "title": "歌詞時間分析未完成",
+    "message": "請再試一次。"
   },
   "LYRICS_RESEARCH_FAILED": {
-    "title": "歌詞時間分析",
+    "title": "歌詞時間分析未完成",
     "message": "分析未完成；請確認 FFmpeg 已準備，或重新下載修復歌詞分析工具。原有歌詞仍可使用。"
   },
   "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
-    "title": "歌詞分析",
-    "message": "歌詞分析操作格式不正確。"
+    "title": "歌詞分析未完成",
+    "message": "請再試一次。"
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
-    "title": "歌詞分析",
-    "message": "歌詞分析未完成；伴奏與原有歌詞仍可使用。"
+    "title": "歌詞分析未完成",
+    "message": "伴奏與原有歌詞仍可使用。"
   },
   "BGM_STANDBY_GET_FAILED": {
     "title": "場間音樂無法讀取",
@@ -598,7 +598,7 @@
   },
   "UI_LANGUAGE_UPDATE_FAILED": {
     "title": "無法變更介面語言",
-    "message": "目前無法變更介面語言，請稍後再試。"
+    "message": "目前無法變更介面語言，請再試一次。"
   },
   "OUTPUT_LANGUAGE_INVALID": {
     "title": "無法變更畫面輸出語言",
@@ -610,7 +610,7 @@
   },
   "OUTPUT_LANGUAGE_UPDATE_FAILED": {
     "title": "無法變更畫面輸出語言",
-    "message": "目前無法變更畫面輸出語言，請稍後再試。"
+    "message": "目前無法變更畫面輸出語言，請再試一次。"
   },
   "YOUTUBE_LOGIN_FILE_FORMAT": {
     "title": "無法匯入登入檔案",
@@ -622,7 +622,7 @@
   },
   "YOUTUBE_LOGIN_STORAGE_UNAVAILABLE": {
     "title": "無法匯入登入檔案",
-    "message": "這台電腦目前無法加密保存登入檔案。"
+    "message": "這台電腦目前無法加密儲存登入檔案。"
   },
   "YOUTUBE_LOGIN_IMPORT_FAILED": {
     "title": "無法匯入登入檔案",
@@ -630,7 +630,7 @@
   },
   "YOUTUBE_LOGIN_REMOVE_FAILED": {
     "title": "無法移除登入檔案",
-    "message": "無法移除登入檔案，請再試一次。"
+    "message": "請再試一次。"
   },
   "YOUTUBE_LOGIN_STATUS_FAILED": {
     "title": "無法讀取登入狀態",
@@ -650,7 +650,7 @@
   },
   "YOUTUBE_LOGIN_SOURCE_UPDATE_FAILED": {
     "title": "無法套用登入設定",
-    "message": "目前無法套用登入設定，請稍後再試。"
+    "message": "目前無法套用登入設定，請再試一次。"
   },
   "PLAYLIST_FOLDER_CREATE_FAILED": {
     "title": "無法建立資料夾",

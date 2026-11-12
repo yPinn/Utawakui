@@ -308,7 +308,7 @@
   },
   "observer": {
     "failedTitle": "演出時間軸未更新",
-    "failedMessage": "這次演出時間戳未能保存，請檢查紀錄後重試。"
+    "failedMessage": "這次演出時間戳未能儲存，請檢查紀錄後再試一次。"
   },
   "archiveStatus": {
     "queued": "未演出",

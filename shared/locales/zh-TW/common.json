@@ -33,7 +33,7 @@
     "success": "已完成",
     "warning": "需要確認",
     "error": "發生錯誤",
-    "message": "操作未完成，請稍後再試。",
+    "message": "操作未完成，請再試一次。",
     "failureKind": {
       "diskFull": "磁碟空間不足，請清出空間後再試。",
       "accessDenied": "沒有使用這個位置的權限，請改選其他資料夾。",

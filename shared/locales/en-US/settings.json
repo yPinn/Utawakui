@@ -51,7 +51,7 @@
   "appInfo": {
     "restart": "Restart the app to read the version info.",
     "failedTitle": "Couldn't read version info",
-    "failed": "Couldn't read the version info. Try again later."
+    "failed": "Couldn't read the version info. Try again."
   },
   "page": {
     "bodyLabel": "Settings document",
