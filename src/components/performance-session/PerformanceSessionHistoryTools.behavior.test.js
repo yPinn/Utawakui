@@ -517,8 +517,8 @@ describe('performance history and archive entry points', () => {
     expect(fixture.selectTab).toHaveBeenCalledWith('pending');
     expect(fixture.createPlaylist).toHaveBeenCalledExactlyOnceWith('current');
     expect(notifications.items.value[0]).toMatchObject({
-      title: '歌單已儲存',
-      actionLabel: '查看歌單',
+      title: '播放清單已儲存',
+      actionLabel: '查看播放清單',
       lifecycle: 'transient',
     });
     view.app.unmount();
@@ -557,7 +557,7 @@ describe('performance history and archive entry points', () => {
   it('targets the current session explicitly from both history export entries', async () => {
     const view = mount(Tools);
     await click(view.root, '目前場次操作');
-    await click(view.root, '另存歌單');
+    await click(view.root, '另存為播放清單');
     expect(fixture.playlist.open).toBe(true);
     expect(fixture.playlist.sessionId).toBe('current');
     await click(view.root, '目前場次操作');

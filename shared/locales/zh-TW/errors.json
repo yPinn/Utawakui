@@ -305,7 +305,7 @@
     "message": "目前資料仍保留，請再試一次。"
   },
   "PERFORMANCE_SESSION_EXPORT_FAILED": {
-    "title": "演出歌單尚未儲存",
+    "title": "播放清單尚未儲存",
     "message": "請再試一次。"
   },
   "PERFORMANCE_SESSION_MARKER_EXPORT_FAILED": {

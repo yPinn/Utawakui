@@ -86,7 +86,10 @@ const settle = async () => {
   await nextTick();
 };
 const saveButton = (root) =>
-  findAll(root, (n) => n.type === 'button' && textContent(n) === '另存歌單')[0];
+  findAll(
+    root,
+    (n) => n.type === 'button' && textContent(n) === '另存為播放清單',
+  )[0];
 afterEach(() => {
   for (const item of notifications.items.value) notifications.clear(item.key);
   vi.unstubAllGlobals();
@@ -138,7 +141,7 @@ describe('save performance playlist confirmation', () => {
     await settle();
     trigger(saveButton(view.root), 'onClick');
     await settle();
-    expect(textContent(view.root)).toContain('歌單尚未儲存');
+    expect(textContent(view.root)).toContain('播放清單尚未儲存');
     expect(textContent(view.root)).not.toContain('private');
     expect(close).not.toHaveBeenCalled();
     expect(notifications.items.value).toHaveLength(0);
@@ -147,7 +150,7 @@ describe('save performance playlist confirmation', () => {
     await settle();
     expect(close).toHaveBeenCalledOnce();
     expect(notifications.items.value).toHaveLength(1);
-    expect(notifications.items.value[0].title).toBe('演出歌單已儲存');
+    expect(notifications.items.value[0].title).toBe('播放清單已儲存');
     view.app.unmount();
   });
 
@@ -184,7 +187,7 @@ describe('save performance playlist confirmation', () => {
     await settle();
     expect(notifications.items.value).toHaveLength(0);
     expect(close).not.toHaveBeenCalled();
-    expect(textContent(view.root)).toContain('歌單尚未儲存');
+    expect(textContent(view.root)).toContain('播放清單尚未儲存');
     view.app.unmount();
   });
 
@@ -216,7 +219,7 @@ describe('save performance playlist confirmation', () => {
     expect(close).toHaveBeenCalledOnce();
     expect(notifications.items.value).toHaveLength(1);
     expect(notifications.items.value[0]).toMatchObject({
-      title: '演出歌單已儲存',
+      title: '播放清單已儲存',
       tone: 'success',
       lifecycle: 'transient',
     });

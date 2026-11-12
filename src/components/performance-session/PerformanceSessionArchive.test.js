@@ -108,7 +108,7 @@ describe('archive collection document', () => {
     expect(html).toContain('2026/10/20');
     expect(html).not.toContain('首筆紀錄');
     expect(html).not.toContain('儲存於');
-    expect(html).toContain('另存本場歌單');
+    expect(html).toContain('另存本場播放清單');
     expect(html).toContain('匯出時間點');
     const archiveActions = html.slice(
       html.indexOf('collection-action-rail__actions'),
@@ -126,7 +126,7 @@ describe('archive collection document', () => {
     expect(html).not.toContain('播放此封存場次');
     expect(html).not.toContain('performance-archive__actions');
     const embedded = await render({ embedded: true });
-    expect(embedded).not.toContain('另存本場歌單');
+    expect(embedded).not.toContain('另存本場播放清單');
     expect(embedded).not.toContain('app-folder-dossier');
     expect(embedded).toContain('library-track-table--compact');
     expect(embedded).not.toContain(

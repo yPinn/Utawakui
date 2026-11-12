@@ -305,7 +305,7 @@
     "message": "The current data is kept. Try again."
   },
   "PERFORMANCE_SESSION_EXPORT_FAILED": {
-    "title": "Setlist not saved",
+    "title": "Playlist not saved",
     "message": "Try again."
   },
   "PERFORMANCE_SESSION_MARKER_EXPORT_FAILED": {
