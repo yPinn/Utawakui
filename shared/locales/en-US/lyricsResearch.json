@@ -45,7 +45,7 @@
   },
   "preview": {
     "track": "Library song",
-    "trackPlaceholder": "Choose a song with lyrics",
+    "trackPlaceholder": "Choose a track with lyrics",
     "language": "Analysis language",
     "line": "Start from line",
     "linePlaceholder": "Choose a timed line",

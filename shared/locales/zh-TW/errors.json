@@ -249,8 +249,8 @@
     "message": "請重新選擇檔案後再試一次。"
   },
   "LIBRARY_DELETE_TRACK_FAILED": {
-    "title": "歌曲無法刪除",
-    "message": "這首歌曲無法刪除，請再試一次。"
+    "title": "曲目無法刪除",
+    "message": "請再試一次。"
   },
   "LIBRARY_IMPORT_AUDIO_FAILED": {
     "title": "本機匯入未完成",
@@ -261,7 +261,7 @@
     "message": "無法使用已設定的曲庫位置。請重新連接磁碟，或到設定選擇其他位置。"
   },
   "LIBRARY_SAVE_TRACK_EDITS_FAILED": {
-    "title": "歌曲變更無法儲存",
+    "title": "曲目變更無法儲存",
     "message": "請再試一次。"
   },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {
@@ -477,8 +477,8 @@
     "message": "這份歌詞的讀音資料已過期，請重新整理後再試一次。"
   },
   "LYRICS_READING_UNKNOWN_TRACK": {
-    "title": "找不到這首歌曲",
-    "message": "這首歌曲目前無法使用。"
+    "title": "找不到這首曲目",
+    "message": "這首曲目目前無法使用。"
   },
   "LYRICS_READING_LOAD_FAILED": {
     "title": "無法讀取讀音",
@@ -570,7 +570,7 @@
   },
   "PROVIDER_DISCOVERY_QUERY_INVALID": {
     "title": "無法開啟 YT Music",
-    "message": "請輸入較短的歌曲或歌手名稱後再試一次。"
+    "message": "請輸入較短的歌曲或藝人名稱後再試一次。"
   },
   "PROVIDER_DISCOVERY_OPEN_FAILED": {
     "title": "無法開啟 YT Music",
@@ -581,8 +581,8 @@
     "message": "伴奏還沒準備好，請再試一次。"
   },
   "SEPARATION_INVALID_TRACK": {
-    "title": "找不到這首歌曲",
-    "message": "這首歌曲的伴奏目前無法使用。"
+    "title": "找不到這首曲目",
+    "message": "這首曲目的伴奏目前無法使用。"
   },
   "SEPARATION_RESULT_MISSING": {
     "title": "找不到這個伴奏版本",

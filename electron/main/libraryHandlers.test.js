@@ -1548,7 +1548,7 @@ describe('local import automatic music analysis', () => {
       properties: ['openFile', 'multiSelections'],
       filters: [
         {
-          name: '音訊檔',
+          name: '音檔',
           extensions: AUDIO_PICKER_EXTENSIONS,
         },
       ],

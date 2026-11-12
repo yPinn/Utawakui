@@ -2,7 +2,7 @@
   "commands": {
     "playerPlayPause": {
       "label": "Play/pause",
-      "description": "Load a song from the library first."
+      "description": "Load a track from the library first."
     },
     "playerPrevious": {
       "label": "Previous song",
@@ -124,12 +124,12 @@
       "readingEdit": "Editing a reading or lyrics source name",
       "panelView": "Panel view",
       "rightPanel": "Side panel",
-      "trackRow": "Song row",
+      "trackRow": "Track row",
       "sortableRow": "Sortable song row",
       "sliderDefault": "Slider default",
       "reorderableHeader": "Reorderable column header",
       "columnEdge": "Column edge",
-      "queueRow": "Queued song row",
+      "queueRow": "Queued track row",
       "panelEdge": "Side panel edges",
       "playlistEdge": "Playlist sidebar edge",
       "rightPanelEdge": "Side panel or output edge",

@@ -6,7 +6,7 @@
       "unsupportedCodec": "目前無法直接播放此編碼",
       "unsupportedMedia": "包含影片或不支援的內容",
       "missingFile": "找不到檔案",
-      "notAFile": "不是音訊檔案",
+      "notAFile": "不是音檔",
       "invalidPath": "無法讀取檔案",
       "invalidAudio": "無法讀取音訊內容",
       "formatMismatch": "檔案格式與內容不符",
@@ -29,22 +29,22 @@
       "duplicatesAndOthers": "略過 {duplicates} 個重複、{others} 個檔案",
       "any": "略過 {count} 個檔案"
     },
-    "codecOnly": "沒有可匯入的音訊檔；{count} 個檔案使用目前無法直接播放的編碼。",
-    "mediaOnly": "沒有可匯入的音訊檔；{count} 個檔案包含影片或其他不支援的內容。",
+    "codecOnly": "沒有可匯入的音檔；{count} 個檔案使用目前無法直接播放的編碼。",
+    "mediaOnly": "沒有可匯入的音檔；{count} 個檔案包含影片或其他不支援的內容。",
     "copiedNeedsConversion": "已複製 {count} 首；另有 {files} 個檔案需要轉換格式",
     "needsConversionCount": "{count} 個檔案需要轉換格式",
-    "noneSelected": "沒有選取音訊檔",
+    "noneSelected": "沒有選取音檔",
     "copiedWithSkipped": "已複製 {count} 首，{skipped}",
     "copied": "已複製 {count} 首",
     "noneAddedSkipped": "沒有新增曲目，{skipped}",
-    "noneImportableSkipped": "沒有可匯入的音訊檔，{skipped}",
+    "noneImportableSkipped": "沒有可匯入的音檔，{skipped}",
     "convertedWithSkipped": "已轉換並匯入 {count} 首，{skipped}",
     "converted": "已轉換並匯入 {count} 首",
     "conversionNoneSkipped": "沒有完成格式轉換，{skipped}",
     "conversionNone": "沒有完成格式轉換，請重新選擇檔案。",
     "restartImport": "需要重新啟動應用程式才能使用本機音訊匯入。",
     "failedTitle": "本機匯入失敗",
-    "failedMessage": "目前無法匯入音訊檔，請再試一次。",
+    "failedMessage": "目前無法匯入音檔，請再試一次。",
     "restartConversion": "需要重新啟動應用程式才能使用格式轉換。",
     "needsAudioTitle": "需要啟用音訊處理",
     "needsAudioMessage": "格式轉換需要音訊處理，請先查看並啟用。",
@@ -80,7 +80,7 @@
     "folderOpenFailed": "目前無法開啟下載資料夾，請再試一次。"
   },
   "execution": {
-    "untitledSong": "未命名歌曲",
+    "untitledSong": "未命名曲目",
     "untitledList": "未命名清單",
     "downloadFailed": "下載未完成，請再試一次。",
     "playlistNotSaved": "曲目已下載，但播放清單未儲存。請再試一次。",
@@ -90,7 +90,7 @@
     "batchFailedReason": "下載完成，{count} 首失敗（{reason}）",
     "batchFailed": "下載完成，{count} 首失敗",
     "downloadedNamed": "已下載：{title}",
-    "downloadedSong": "歌曲已下載",
+    "downloadedSong": "曲目已下載",
     "addedToAlbum": "已加入專輯「{title}」",
     "addedToPlaylist": "已加入播放清單「{title}」",
     "done": "下載完成",
@@ -103,7 +103,7 @@
   "resolution": {
     "unknownPlatform": "未知平台",
     "deferred": "{platform} 連結轉換尚未開放",
-    "queryTooLong": "搜尋文字過長，請縮短歌曲名稱或歌手名稱",
+    "queryTooLong": "搜尋文字過長，請縮短歌曲名稱或藝人名稱",
     "unsupported": "目前只支援歌曲名稱、YouTube 與 YouTube Music 連結",
     "emptyPlaylist": "這個播放清單沒有可匯入的曲目",
     "untitledPlaylist": "未命名播放清單",
@@ -128,7 +128,7 @@
     "stopped": "下載已停止",
     "done": "下載完成",
     "imported": "匯入完成",
-    "songAdded": "歌曲已加入曲庫",
+    "songAdded": "曲目已加入曲庫",
     "viewResults": "查看下載結果"
   },
   "candidate": {
@@ -225,7 +225,7 @@
     "retryNamed": "重試 {title}",
     "reviewNamed": "檢視 {title}",
     "localAudio": "本機音訊",
-    "chooseFiles": "選擇音訊檔",
+    "chooseFiles": "選擇音檔",
     "needsConversion": "需要轉換格式",
     "convertAndImport": "轉成 FLAC 並匯入",
     "localFailed": "本機匯入未完成",
@@ -290,7 +290,7 @@
   },
   "review": {
     "titles": {
-      "song": "匯入歌曲",
+      "song": "匯入曲目",
       "single": "匯入單曲",
       "ep": "匯入迷你專輯",
       "album": "匯入專輯",
@@ -306,7 +306,7 @@
     "progress": "{phase} · 已處理 {processed}／{total} 首",
     "listLabel": "已確認的匯入曲目",
     "cancelFailed": "停止下載未完成，工作仍在執行。請再試一次。",
-    "saveFailed": "曲目已下載，但清單未儲存。請再試一次；已完成的歌曲不會再次下載。",
+    "saveFailed": "曲目已下載，但清單未儲存。請再試一次；已完成的曲目不會再次下載。",
     "providerNotReady": "外部來源尚未準備完成，請到設定完成準備後重試。"
   },
   "trackStatus": {
@@ -320,7 +320,7 @@
   },
   "sourceField": {
     "label": "歌名或連結",
-    "placeholder": "搜尋歌名、歌手或貼上連結",
+    "placeholder": "搜尋歌名、藝人或貼上連結",
     "search": "搜尋",
     "clipboardDetected": "剪貼簿中有可匯入的連結",
     "skip": "略過",

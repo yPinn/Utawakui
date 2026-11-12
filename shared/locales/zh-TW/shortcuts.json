@@ -2,7 +2,7 @@
   "commands": {
     "playerPlayPause": {
       "label": "播放／暫停",
-      "description": "請先從曲庫載入歌曲。"
+      "description": "請先從曲庫載入曲目。"
     },
     "playerPrevious": {
       "label": "上一首",
@@ -124,12 +124,12 @@
       "readingEdit": "編輯讀音／歌詞來源名稱",
       "panelView": "面板檢視",
       "rightPanel": "右側面板",
-      "trackRow": "歌曲列",
+      "trackRow": "曲目列",
       "sortableRow": "可排序曲目列",
       "sliderDefault": "滑桿預設值",
       "reorderableHeader": "可重排表頭",
       "columnEdge": "欄位邊緣",
-      "queueRow": "待唱歌曲列",
+      "queueRow": "待唱曲目列",
       "panelEdge": "左右面板邊緣",
       "playlistEdge": "左側播放清單邊緣",
       "rightPanelEdge": "右側面板／畫面輸出邊緣",

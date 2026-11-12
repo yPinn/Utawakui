@@ -45,7 +45,7 @@
   },
   "preview": {
     "track": "曲庫歌曲",
-    "trackPlaceholder": "選擇已有歌詞的歌曲",
+    "trackPlaceholder": "選擇已有歌詞的曲目",
     "language": "分析語言",
     "line": "從哪句開始試算",
     "linePlaceholder": "選擇有時間的歌詞句",

@@ -81,7 +81,7 @@
     "removeFromPlaylist": {
       "title": "Remove track from playlist?",
       "playlistFallback": "Playlist",
-      "message": "The library song and audio file are kept.",
+      "message": "The library track and audio file are kept.",
       "confirm": "Remove track"
     },
     "previewBlockedSession": "Unavailable while recording or streaming",

@@ -74,7 +74,7 @@
   "defaultNamePrefix": "播放清單 #",
   "actions": {
     "removeCoverTitle": "移除播放清單封面？",
-    "removeCoverMessage": "目前的自訂封面會被移除，歌曲與其他資訊會保留。",
+    "removeCoverMessage": "目前的自訂封面會被移除，曲目與其他資訊會保留。",
     "removeCoverDetail": "移除後需重新選擇封面才能恢復。",
     "removeCover": "移除封面",
     "removeAlbum": "移除專輯",

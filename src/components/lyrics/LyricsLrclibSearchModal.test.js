@@ -77,7 +77,7 @@ describe('online lyrics search modal contract', () => {
     expect(workspace).toContain('props.providerId');
     expect(workspace).toContain('可用原文、羅馬字或常用譯名搜尋。');
     expect(workspace).toContain('歌曲名稱');
-    expect(workspace).toContain('演唱者（選填）');
+    expect(workspace).toContain('藝人（選填）');
     expect(workspace).not.toContain('label="歌手"');
     expect(
       workspace.match(/:aria-describedby="`\$\{providerId\}-query-help`"/g),

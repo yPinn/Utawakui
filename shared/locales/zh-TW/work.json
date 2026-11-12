@@ -31,7 +31,7 @@
     "displayTitle": "此錄音的顯示歌名（選填）",
     "displayTitleHint": "留空時使用來源歌名，翻唱可沿用參照錄音的歌名。",
     "inheritTitle": "沿用參照錄音的歌名",
-    "artistCredits": "確認演唱者（選填）",
+    "artistCredits": "確認藝人（選填）",
     "artistCreditsHint": "每行一位藝人，順序依署名。留空時使用來源署名。",
     "titleSuggestion": "已依標題預填版本資訊，可在儲存前調整。",
     "workNames": "作品搜尋名稱與別名",
@@ -46,7 +46,7 @@
     "notices": "歌曲整理提示",
     "reload": "重新載入",
     "audioChanged": "音檔已變更，請確認版本資料。",
-    "sourceManaged": "下載來源保留原始歌名、演唱者與封面。可另設定顯示歌名或確認合作署名。",
+    "sourceManaged": "下載來源保留原始歌名、藝人與封面。可另設定顯示歌名或確認合作署名。",
     "close": "關閉",
     "saving": "儲存中",
     "confirmAndSave": "確認音檔並儲存",
@@ -74,7 +74,7 @@
   "metadata": {
     "basics": "基本資料",
     "title": "歌名",
-    "artist": "演唱者",
+    "artist": "藝人",
     "searchArtwork": "搜尋封面",
     "previewHint": "選取後預覽，儲存後套用。",
     "albumFilter": "設定專輯篩選",
@@ -86,7 +86,7 @@
     "searchByAlbum": "以專輯條件搜尋",
     "closeAlbumFilter": "關閉專輯篩選",
     "findingArtwork": "正在尋找封面…",
-    "noArtwork": "找不到封面。請確認歌名與演唱者，或加入專輯名稱後再搜尋。",
+    "noArtwork": "找不到封面。請確認歌名與藝人，或加入專輯名稱後再搜尋。",
     "failed": "操作未完成"
   },
   "linkSearch": {
@@ -97,7 +97,7 @@
     "searchingStatus": "搜尋中…",
     "selectedNamed": "已選擇 {title}（{artist}）",
     "linkNamed": "連結 {title}（{artist}）",
-    "unknownArtist": "未知演唱者",
+    "unknownArtist": "未知藝人",
     "selected": "已選擇",
     "link": "連結",
     "noResults": "沒有其他可連結的曲目。試試其他關鍵字。"

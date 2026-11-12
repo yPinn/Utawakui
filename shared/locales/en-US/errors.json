@@ -249,8 +249,8 @@
     "message": "Choose the files again and retry."
   },
   "LIBRARY_DELETE_TRACK_FAILED": {
-    "title": "Song can't be deleted",
-    "message": "This song can't be deleted. Try again."
+    "title": "Track can't be deleted",
+    "message": "Try again."
   },
   "LIBRARY_IMPORT_AUDIO_FAILED": {
     "title": "Local import didn't finish",
@@ -261,7 +261,7 @@
     "message": "The set library location can't be used. Reconnect the drive, or choose another location in Settings."
   },
   "LIBRARY_SAVE_TRACK_EDITS_FAILED": {
-    "title": "Song changes can't be saved",
+    "title": "Track changes can't be saved",
     "message": "Try again."
   },
   "LIBRARY_STORAGE_CLEANUP_FAILED": {

@@ -154,7 +154,7 @@ describe('TrackContextHero', () => {
     });
     const links = findAll(root, (node) => node.type === 'button');
 
-    expect(textContent(root)).toContain('未知演唱者');
+    expect(textContent(root)).toContain('未知藝人');
     expect(links).toHaveLength(0);
     expect(source).not.toContain('sourceName');
     expect(source).not.toContain('sourceNavigable');

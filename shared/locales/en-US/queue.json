@@ -77,7 +77,7 @@
     "viewList": "View processing list",
     "readFailedReopen": "The processing list can't be read right now. Reopen it and try again.",
     "readFailed": "The processing list can't be read right now. Try again later.",
-    "addFailed": "The song can't be added right now. Finish setup in Settings and try again.",
+    "addFailed": "The track can't be added right now. Finish setup in Settings and try again.",
     "updateFailed": "The processing list can't be updated right now. Try again."
   },
   "outputPreview": {

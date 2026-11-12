@@ -18,7 +18,7 @@
   },
   "dock": {
     "storageHint": "最多佔用{size}",
-    "missingTrack": "找不到歌曲",
+    "missingTrack": "找不到曲目",
     "maybeRemoved": "可能已從曲庫移除",
     "title": "伴奏處理",
     "listLabel": "伴奏處理曲目",
@@ -85,7 +85,7 @@
     "gateLabel": "伴奏處理",
     "gateTitle": "先完成初次設定",
     "gateMessage": "請先到設定啟用伴奏處理。",
-    "failed": "歌曲目前無法加入伴奏處理佇列。",
+    "failed": "這首曲目目前無法加入伴奏處理佇列。",
     "failedTitle": "伴奏處理未加入"
   }
 }

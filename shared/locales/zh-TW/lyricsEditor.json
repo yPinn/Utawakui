@@ -313,7 +313,7 @@
     "content": "歌詞內容",
     "loadFailed": "歌詞讀取未完成",
     "loadingLibrary": "正在讀取曲庫…",
-    "emptyLibrary": "曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。",
+    "emptyLibrary": "曲庫還沒有曲目。從頂部開啟「匯入」加入音檔。",
     "loadingLyrics": "正在讀取歌詞…",
     "missing": "還沒有歌詞。從「顯示 → 管理來源」搜尋或匯入。",
     "emptyText": "這份歌詞沒有文字。從「顯示 → 管理來源」更換歌詞。",

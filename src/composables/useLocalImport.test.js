@@ -355,11 +355,11 @@ describe('useLocalImport', () => {
   it.each([
     [
       'unsupported-codec',
-      '沒有可匯入的音訊檔；1 個檔案使用目前無法直接播放的編碼。',
+      '沒有可匯入的音檔；1 個檔案使用目前無法直接播放的編碼。',
     ],
     [
       'unsupported-media',
-      '沒有可匯入的音訊檔；1 個檔案包含影片或其他不支援的內容。',
+      '沒有可匯入的音檔；1 個檔案包含影片或其他不支援的內容。',
     ],
   ])(
     'explains the bounded %s compatibility failure',
@@ -388,7 +388,7 @@ describe('useLocalImport', () => {
     await localImport.importFiles();
 
     expect(localImport.state.statusType).toBe('idle');
-    expect(localImport.state.message).toBe('沒有選取音訊檔');
+    expect(localImport.state.message).toBe('沒有選取音檔');
   });
 
   it('surfaces bridge errors without throwing', async () => {
@@ -400,7 +400,7 @@ describe('useLocalImport', () => {
     await localImport.importFiles();
 
     expect(localImport.state.statusType).toBe('error');
-    expect(localImport.state.message).toBe('目前無法匯入音訊檔，請再試一次。');
+    expect(localImport.state.message).toBe('目前無法匯入音檔，請再試一次。');
     expect(localImport.state.message).not.toContain('ENOSPC');
     expect(localImport.state.isImporting).toBe(false);
   });

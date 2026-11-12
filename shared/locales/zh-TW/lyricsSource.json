@@ -124,7 +124,7 @@
     "statusUnscanned": "尚未檢查歌詞",
     "scope": "曲目範圍",
     "search": "搜尋曲目",
-    "searchPlaceholder": "搜尋歌名或歌手",
+    "searchPlaceholder": "搜尋歌名或藝人",
     "count": "{count} 首",
     "noPlaylist": "尚未選擇播放清單。",
     "noMatch": "找不到符合的曲目。",
@@ -154,7 +154,7 @@
   },
   "search": {
     "title": "歌曲名稱",
-    "artist": "演唱者（選填）",
+    "artist": "藝人（選填）",
     "actions": "搜尋操作",
     "broaden": "擴大搜尋",
     "search": "搜尋",

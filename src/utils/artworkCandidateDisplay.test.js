@@ -56,7 +56,7 @@ describe('artwork candidate display projection', () => {
 
     expect(projected).toEqual({
       title: '未知發行',
-      artist: '未知演唱者',
+      artist: '未知藝人',
       releaseMeta: '發行資訊未提供',
       decisionLabel: '差異較多',
       decisionTone: 'muted',

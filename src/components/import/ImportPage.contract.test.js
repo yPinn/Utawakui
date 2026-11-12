@@ -31,7 +31,7 @@ describe('Import preparation composition contract', () => {
     expect(dock).toContain(
       "import UiIconButton from '../ui/UiIconButton.vue';",
     );
-    expect(dock).toContain('label="選擇音訊檔"');
+    expect(dock).toContain('label="選擇音檔"');
     expect(dock).toContain('<ImportSourceField');
     expect(readSource('./ImportSourceField.vue')).toContain('label="搜尋"');
     expect(dock).toContain('label="到 YT Music 尋找更多結果"');

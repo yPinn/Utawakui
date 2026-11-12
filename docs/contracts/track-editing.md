@@ -48,7 +48,7 @@ Artwork mutation 前先擷取既有 `thumbnail.<ext>` 與 `artwork.json` 的 Mai
 
 ## UI contract
 
-- 共用曲目選單只有一個「編輯歌曲」入口；Library、Queue、目前播放與 preview consumers 使用同一 editor contract。
+- 共用曲目選單只有一個「編輯曲目」入口；Library、Queue、目前播放與 preview consumers 使用同一 editor contract。
 - Modal 保留 wide 兩欄與 13rem 封面；一般編輯 content-height，線上搜尋展開時才使用 bounded fixed-height scroll body。
 - 封面操作使用一組精簡 `UiIconButton`；本機「選擇圖片／更換圖片」、
   「線上搜尋」與「移除封面」都必須保留完整 accessible label／Tooltip，移除使用 danger intent。

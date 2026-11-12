@@ -11,7 +11,7 @@
   "searchFailed": "目前無法搜尋歌曲，請再試一次。",
   "versionsReload": "資料已變更，請重新載入版本清單。",
   "nameRequired": "請輸入作品名稱。",
-  "invalidNames": "請填寫作品歌名。別名與演唱者各最多 16 筆，每筆最多 200 字，演唱者須分列且不可重複。",
+  "invalidNames": "請填寫作品歌名。別名與藝人各最多 16 筆，每筆最多 200 字，藝人須分列且不可重複。",
   "saveWorkBeforeRelinking": "請先儲存或復原作品歌名與別名，再變更曲目連結。",
   "partialSaved": "歌曲資訊已儲存；版本與連結尚未儲存。"
 }

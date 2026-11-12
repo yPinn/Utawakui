@@ -85,5 +85,5 @@ it('falls back to the accepted track title when the provider omits a title', () 
   notifyImportResult(batch({ kind: 'single', title: 'Accepted song' }), notify);
   expect(notify.mock.calls[0][0].message).toBe('Accepted song');
   notifyImportResult(batch({ kind: 'single' }), notify);
-  expect(notify.mock.calls[1][0].message).toBe('歌曲已加入曲庫');
+  expect(notify.mock.calls[1][0].message).toBe('曲目已加入曲庫');
 });

@@ -18,7 +18,7 @@
   },
   "dock": {
     "storageHint": "Uses up to {size}",
-    "missingTrack": "Song not found",
+    "missingTrack": "Track not found",
     "maybeRemoved": "It may have been removed from the library",
     "title": "Accompaniment",
     "listLabel": "Accompaniment tracks",
@@ -85,7 +85,7 @@
     "gateLabel": "Accompaniment processing",
     "gateTitle": "Finish setup first",
     "gateMessage": "Turn on accompaniment processing in Settings first.",
-    "failed": "This song can't be added to the accompaniment queue right now.",
+    "failed": "This track can't be added to the accompaniment queue right now.",
     "failedTitle": "Accompaniment processing wasn't added"
   }
 }

@@ -137,11 +137,11 @@
     "artworkUnavailable": "The artwork can't be read right now. Choose it again.",
     "invalidArtworkIntent": "The artwork change is invalid. Try again.",
     "invalidMetadata": "The title or artist is invalid. Check the length.",
-    "trackUnavailable": "This song can't be found.",
+    "trackUnavailable": "This track can't be found.",
     "notUpdatedTitle": "Track info not updated",
     "providerRequired": "Turn on external sources in Settings to search artwork online.",
     "searchFailed": "Online artwork can't be searched right now. Try again later.",
-    "saveFailed": "The song changes weren't saved. Try again.",
+    "saveFailed": "The track changes weren't saved. Try again.",
     "infoNotSaved": "The track info wasn't saved. Try again.",
     "previewOther": "The artwork can't be previewed. Choose another image.",
     "previewRetry": "The artwork can't be previewed. Try again."

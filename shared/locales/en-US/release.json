@@ -73,7 +73,7 @@
     "confirm": "Confirm track link",
     "libraryMoved": "The library location changed. Reopen album organizing.",
     "incomplete": "Album details can't be retrieved. Search again later.",
-    "noneFound": "No matching album found. Check the song's artist and album name first.",
+    "noneFound": "No matching album found. Check the track's artist and album name first.",
     "completed": "Album details completed.",
     "chooseCandidate": "The album wasn't found automatically. Choose from the candidates.",
     "needsProvider": "Turn on external sources to search and complete album details.",

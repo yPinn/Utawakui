@@ -74,7 +74,7 @@
   "defaultNamePrefix": "Playlist #",
   "actions": {
     "removeCoverTitle": "Remove playlist cover?",
-    "removeCoverMessage": "The custom cover will be removed; songs and other details are kept.",
+    "removeCoverMessage": "The custom cover will be removed; tracks and other details are kept.",
     "removeCoverDetail": "Choose a cover again to restore it.",
     "removeCover": "Remove cover",
     "removeAlbum": "Remove album",

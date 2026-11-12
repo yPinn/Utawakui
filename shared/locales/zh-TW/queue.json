@@ -12,7 +12,7 @@
     "toArrangement": "切換演出待唱",
     "toGeneralHint": "切到一般佇列。",
     "toArrangementHint": "切到演出待唱。從待唱播放才會留下演出紀錄。",
-    "empty": "一般佇列尚無歌曲。從曲庫播放，或選擇「加入一般佇列」。",
+    "empty": "一般佇列尚無曲目。從曲庫播放，或選擇「加入一般佇列」。",
     "nowPlaying": "現正播放",
     "nextUp": "佇列中下一首",
     "clear": "清除佇列",
@@ -77,7 +77,7 @@
     "viewList": "查看處理清單",
     "readFailedReopen": "處理清單暫時無法讀取，請重新開啟後再試。",
     "readFailed": "處理清單暫時無法讀取，請稍後再試。",
-    "addFailed": "歌曲目前無法加入，請到設定完成準備後再試。",
+    "addFailed": "曲目目前無法加入，請到設定完成準備後再試。",
     "updateFailed": "目前無法更新處理清單，請再試一次。"
   },
   "outputPreview": {

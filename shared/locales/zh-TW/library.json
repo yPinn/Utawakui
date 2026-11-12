@@ -81,7 +81,7 @@
     "removeFromPlaylist": {
       "title": "從播放清單移除曲目？",
       "playlistFallback": "播放清單",
-      "message": "曲庫中的歌曲與音檔會保留。",
+      "message": "曲庫中的曲目與音檔會保留。",
       "confirm": "移除曲目"
     },
     "previewBlockedSession": "錄影或直播中無法使用",
@@ -89,7 +89,7 @@
     "pauseNamed": "暫停{name}",
     "tracklistStatus": "曲目清單與狀態",
     "recheck": "重新確認",
-    "libraryEmpty": "曲庫還沒有曲目。從頂部開啟「匯入」加入音訊檔。",
+    "libraryEmpty": "曲庫還沒有曲目。從頂部開啟「匯入」加入音檔。",
     "playlistReadFailed": "播放清單讀取未完成",
     "retryRead": "重試讀取",
     "loadingArtist": "正在讀取藝人資料…",
@@ -227,7 +227,7 @@
     "untitledTrack": "未命名曲目"
   },
   "dialog": {
-    "audioFiles": "音訊檔",
+    "audioFiles": "音檔",
     "images": "圖片"
   },
   "sourceStates": {

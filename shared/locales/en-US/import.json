@@ -80,7 +80,7 @@
     "folderOpenFailed": "The download folder can't be opened right now. Try again."
   },
   "execution": {
-    "untitledSong": "Untitled song",
+    "untitledSong": "Untitled track",
     "untitledList": "Untitled list",
     "downloadFailed": "The download didn't finish. Try again.",
     "playlistNotSaved": "The tracks were downloaded, but the playlist wasn't saved. Try again.",
@@ -90,7 +90,7 @@
     "batchFailedReason": "Download finished; {count} failed ({reason})",
     "batchFailed": "Download finished; {count} failed",
     "downloadedNamed": "Downloaded: {title}",
-    "downloadedSong": "Song downloaded",
+    "downloadedSong": "Track downloaded",
     "addedToAlbum": "Added to album \"{title}\"",
     "addedToPlaylist": "Added to playlist \"{title}\"",
     "done": "Download finished",
@@ -128,7 +128,7 @@
     "stopped": "Download stopped",
     "done": "Download finished",
     "imported": "Import finished",
-    "songAdded": "Song added to the library",
+    "songAdded": "Track added to the library",
     "viewResults": "View download results"
   },
   "candidate": {
@@ -290,7 +290,7 @@
   },
   "review": {
     "titles": {
-      "song": "Import song",
+      "song": "Import track",
       "single": "Import single",
       "ep": "Import EP",
       "album": "Import album",
@@ -306,7 +306,7 @@
     "progress": "{phase} · {processed} of {total} processed",
     "listLabel": "Confirmed import tracks",
     "cancelFailed": "Stopping the download didn't finish; the job is still running. Try again.",
-    "saveFailed": "The tracks were downloaded, but the list wasn't saved. Try again; finished songs won't download again.",
+    "saveFailed": "The tracks were downloaded, but the list wasn't saved. Try again; finished tracks won't download again.",
     "providerNotReady": "External sources aren't ready. Finish preparing them in Settings, then retry."
   },
   "trackStatus": {

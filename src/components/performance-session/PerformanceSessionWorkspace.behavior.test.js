@@ -131,7 +131,7 @@ describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
     expect(reviewSource).toContain('原唱、演出者或版本資訊');
     expect(reviewSource).toContain('不會修改曲庫曲名');
     expect(reviewSource).toContain('曲庫曲名');
-    expect(reviewSource).toContain('歌手／藝人');
+    expect(reviewSource).toContain('藝人');
     expect(reviewSource).not.toContain('本場顯示名稱');
     expect(reviewSource).not.toContain('本場顯示演出者');
     expect(reviewSource).not.toContain('編輯曲庫資料');

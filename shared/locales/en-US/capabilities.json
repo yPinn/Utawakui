@@ -27,7 +27,7 @@
     "title": "Analyze after import",
     "guidance": "Analyzed locally; songs are not uploaded.",
     "auto": "Analyze automatically",
-    "autoLabel": "Analyze BPM and beats automatically after importing songs",
+    "autoLabel": "Analyze BPM and beats automatically after importing tracks",
     "readFailed": "The automatic analysis setting can't be read. Reload it.",
     "saveFailed": "The automatic analysis setting can't be saved and has been restored.",
     "componentTitle": "BPM analysis tool",

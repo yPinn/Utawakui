@@ -21,7 +21,7 @@
   "kind": "類別",
   "description": "說明",
   "track": "歌曲資訊（選填）",
-  "trackPlaceholder": "歌手 - 歌名",
+  "trackPlaceholder": "藝人 - 歌名",
   "attachDiagnostics": "附上最近的錯誤紀錄",
   "contact": "聯絡方式（選填）",
   "contactHint": "需要回覆時使用，例如 Discord 帳號或 Email。",

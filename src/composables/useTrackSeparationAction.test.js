@@ -118,7 +118,7 @@ describe('useTrackSeparationAction', () => {
 
     await action.queueTrackForSeparation(track);
 
-    expect(action.error.value).toBe('歌曲目前無法加入伴奏處理佇列。');
+    expect(action.error.value).toBe('這首曲目目前無法加入伴奏處理佇列。');
     expect(useAppNotifications().items.value[0]).toMatchObject({
       title: '伴奏處理未加入',
       tone: 'danger',

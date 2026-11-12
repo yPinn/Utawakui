@@ -146,7 +146,7 @@ describe('useSeparationQueue', () => {
     expect(h.notify).toHaveBeenCalledOnce();
     h.bridge.enqueueSeparations.mockRejectedValueOnce(Error('private enqueue'));
     await h.separationQueue.enqueue(['track-1']);
-    expect(h.separationQueue.error.value).toContain('歌曲目前無法加入');
+    expect(h.separationQueue.error.value).toContain('曲目目前無法加入');
     h.bridge.pauseSeparationQueue.mockRejectedValueOnce(Error('private pause'));
     await h.separationQueue.pause();
     expect(h.separationQueue.error.value).toBe(

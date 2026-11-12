@@ -284,7 +284,7 @@ describe('WorkVersionEditor mounted workflow', () => {
   });
   it('shows the source-managed hint beside save only on the metadata tab', async () => {
     const sourceManaged =
-      '下載來源保留原始歌名、演唱者與封面。可另設定顯示歌名或確認合作署名。';
+      '下載來源保留原始歌名、藝人與封面。可另設定顯示歌名或確認合作署名。';
     expect(textContent(mounted.root)).not.toContain(sourceManaged);
     trigger(button(t('work.editor.tabs.metadata')), 'onClick');
     await settle();

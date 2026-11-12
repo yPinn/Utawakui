@@ -981,7 +981,7 @@ describe('useImportSession', () => {
   });
 
   it.each([
-    ['query-too-long', '搜尋文字過長，請縮短歌曲名稱或歌手名稱'],
+    ['query-too-long', '搜尋文字過長，請縮短歌曲名稱或藝人名稱'],
     ['unsupported-url', '目前只支援歌曲名稱、YouTube 與 YouTube Music 連結'],
   ])('explains generic unsupported input: %s', async (reason, message) => {
     window.Utawakui.resolveImportInput = resolveImportInputMock;
