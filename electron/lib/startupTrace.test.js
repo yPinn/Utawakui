@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import startupTraceModule from './startupTrace.js';
 
@@ -5,6 +6,7 @@ const {
   createStartupBaselineMetadata,
   createStartupTrace,
   parseExternalStartupMilestone,
+  pruneStartupTraceFiles,
   readStartupTraceOptions,
   registerStartupTraceHandler,
 } = startupTraceModule;
@@ -267,5 +269,56 @@ describe('startup trace contract', () => {
       process: 'renderer',
       atUnixMs: 1200,
     });
+  });
+});
+
+describe('pruneStartupTraceFiles', () => {
+  it('keeps the newest default trace files and ignores other files', () => {
+    const files = [
+      'startup-trace-100-1.jsonl',
+      'startup-trace-300-3.jsonl',
+      'startup-trace-200-2.jsonl',
+      'diagnostics.jsonl',
+      'startup-trace-notes.jsonl',
+    ];
+    const unlinkSync = vi.fn();
+    const result = pruneStartupTraceFiles('/logs', {
+      keep: 1,
+      fsApi: { readdirSync: () => files, unlinkSync },
+    });
+
+    expect(result).toEqual({ ok: true, removed: 2 });
+    const removed = unlinkSync.mock.calls.map(([file]) => path.basename(file));
+    expect(removed).toEqual([
+      'startup-trace-200-2.jsonl',
+      'startup-trace-100-1.jsonl',
+    ]);
+  });
+
+  it('fails open when the directory is missing or a file is locked', () => {
+    const missing = Object.assign(new Error('missing'), { code: 'ENOENT' });
+    expect(
+      pruneStartupTraceFiles('/logs', {
+        fsApi: {
+          readdirSync: () => {
+            throw missing;
+          },
+          unlinkSync: vi.fn(),
+        },
+      }),
+    ).toEqual({ ok: true, removed: 0 });
+
+    const locked = Object.assign(new Error('busy'), { code: 'EBUSY' });
+    expect(
+      pruneStartupTraceFiles('/logs', {
+        keep: 0,
+        fsApi: {
+          readdirSync: () => ['startup-trace-1-1.jsonl'],
+          unlinkSync: () => {
+            throw locked;
+          },
+        },
+      }),
+    ).toEqual({ ok: false, removed: 0, errorCode: 'EBUSY' });
   });
 });

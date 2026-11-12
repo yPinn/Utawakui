@@ -149,6 +149,32 @@ describe('registerDiagnosticsHandlers', () => {
     expect(openLogsDirectory).toHaveBeenCalledOnce();
   });
 
+  it('also clears other managed log files and reports their failure', async () => {
+    const ipcMain = createIpcMain();
+    const clearAdditional = vi
+      .fn()
+      .mockReturnValueOnce({ ok: true, removed: 2 })
+      .mockReturnValueOnce({ ok: false, removed: 0, errorCode: 'EBUSY' });
+    registerDiagnosticsHandlers({
+      ipcMain,
+      service: {
+        record: vi.fn(),
+        listRecent: vi.fn(),
+        clear: vi.fn(() => ({ ok: true, removed: 3 })),
+      },
+      openLogsDirectory: vi.fn(),
+      clearAdditional,
+    });
+    const clear = ipcMain.handlers.get('diagnostics:clear');
+
+    await expect(clear()).resolves.toEqual({ ok: true, removed: 5 });
+    await expect(clear()).resolves.toEqual({
+      ok: false,
+      removed: 3,
+      errorCode: 'EBUSY',
+    });
+  });
+
   it('bounds recent reads and handles invalid renderer payloads fail-open', async () => {
     const ipcMain = createIpcMain();
     const record = vi.fn(() => ({ ok: false, errorCode: 'ENOSPC' }));

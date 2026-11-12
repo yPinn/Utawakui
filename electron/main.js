@@ -136,6 +136,7 @@ const { DEV_SERVER_ORIGIN, devServerUrl } = require('./lib/devServer');
 const {
   createStartupBaselineMetadata,
   createStartupTrace,
+  pruneStartupTraceFiles,
   readStartupTraceOptions,
   registerStartupTraceHandler,
 } = require('./lib/startupTrace');
@@ -376,6 +377,9 @@ const startupTraceFileReady = startupTraceFilePath
   ? fs
       .mkdir(path.dirname(startupTraceFilePath), { recursive: true })
       .then(() => fs.writeFile(startupTraceFilePath, '', { flag: 'wx' }))
+      .then(() => {
+        pruneStartupTraceFiles(app.getPath('logs'));
+      })
   : Promise.resolve();
 const startupTrace = createStartupTrace({
   enabled: startupTraceOptions.enabled,
@@ -1366,6 +1370,8 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       service: diagnosticsService,
       openLogsDirectory: () => shell.openPath(app.getPath('logs')),
+      clearAdditional: () =>
+        pruneStartupTraceFiles(app.getPath('logs'), { keep: 0 }),
       dialog,
       getMainWindow: windowState.getMainWindow,
       appVersion: app.getVersion(),

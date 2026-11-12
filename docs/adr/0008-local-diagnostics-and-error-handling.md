@@ -149,10 +149,13 @@ Redaction is centralized and defense-in-depth:
 - Use append-only UTF-8 JSONL. Readers skip malformed lines, including a
   partial final line after a crash, and report a bounded parse-warning event in
   memory without recursively logging that warning.
-- Rotate before append when the active file would exceed 5 MiB. Keep the
-  active file plus five rotations. Exact limits remain constants covered by
-  tests, not user settings in the first release.
-- Keep only the current and recent local sessions. There is no automatic
+- Rotate before append when the active file would exceed 5 MiB, and on the
+  first record of each launch. Keep the active file plus five rotations.
+  Exact limits remain constants covered by tests, not user settings in the
+  first release.
+- Keep only the current and recent local sessions: a launch starts its own
+  file, so the rotations hold about five recent launches with records (fewer
+  when one launch fills a file). There is no automatic
   upload, remote transport, analytics identifier, or background network call.
 - Logger initialization and every write/rotate/clear failure are fail-open:
   return a failure result and optionally use stderr, but never block playback,

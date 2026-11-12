@@ -74,6 +74,7 @@ function registerDiagnosticsHandlers({
   electronVersion = '',
   writeExportFile = (filePath, data) => atomicWriteJson(filePath, data),
   readBundleFile = readBoundedText,
+  clearAdditional = () => ({ ok: true, removed: 0 }),
 }) {
   const rendererEventLimit =
     Number.isSafeInteger(maxRendererEventsPerMinute) &&
@@ -103,7 +104,23 @@ function registerDiagnosticsHandlers({
     service.listRecent(boundedRecentLimit(limit)).map(toPublicDiagnosticEvent),
   );
 
-  ipcMain.handle('diagnostics:clear', async () => service.clear());
+  // Sibling log files (startup traces) are cleared with the records.
+  ipcMain.handle('diagnostics:clear', async () => {
+    const result = service.clear();
+    let extra = { ok: true, removed: 0 };
+    try {
+      extra = clearAdditional() ?? extra;
+    } catch {
+      extra = { ok: false, removed: 0, errorCode: 'DIAGNOSTICS_IO_FAILED' };
+    }
+    const removed = (result.removed ?? 0) + (extra.removed ?? 0);
+    if (result.ok && extra.ok) return { ok: true, removed };
+    return {
+      ok: false,
+      removed,
+      errorCode: result.ok ? extra.errorCode : result.errorCode,
+    };
+  });
 
   ipcMain.handle('diagnostics:open-folder', async () => {
     try {

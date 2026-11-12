@@ -21,7 +21,12 @@ their bodies in Settings reactive state. The composition owner is
   and application metadata. It can include sanitized stack and session identifiers;
   users should inspect it before choosing to share it.
 - Opening the folder uses the main-owned logs location; renderer never supplies
-  or receives its filesystem path. Clearing affects managed diagnostic files.
+  or receives its filesystem path. Clearing affects managed diagnostic files and
+  default-named `startup-trace-*.jsonl` files; a traced launch keeps the newest
+  five traces. Auto-report throttle state and a pending consented report are not
+  cleared; the report prompt and its setting govern them.
+- Each launch starts a new `diagnostics.jsonl` on its first record, so the five
+  rotations hold recent launches rather than one long-running file.
 - Export and the standalone viewer do not transmit a bundle. Issue reporting is
   a separate, explicit preview-and-send flow defined by
   [ADR 0016](../adr/0016-user-feedback-intake.md).

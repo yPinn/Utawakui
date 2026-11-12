@@ -363,10 +363,16 @@ function createDiagnosticsService(options = {}) {
     ];
   }
 
+  // Each launch starts its own file, so rotations keep recent launches.
+  let launchFileStarted = false;
+
   function rotateIfNeeded(nextBytes) {
+    const startsLaunch = !launchFileStarted;
+    launchFileStarted = true;
     if (!fsApi.existsSync(activePath)) return;
     const currentBytes = fsApi.statSync(activePath).size;
-    if (currentBytes === 0 || currentBytes + nextBytes <= maxFileBytes) return;
+    if (currentBytes === 0) return;
+    if (!startsLaunch && currentBytes + nextBytes <= maxFileBytes) return;
 
     if (maxRotations === 0) {
       fsApi.unlinkSync(activePath);

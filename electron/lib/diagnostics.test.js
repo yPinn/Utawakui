@@ -399,6 +399,31 @@ describe('createDiagnosticsService', () => {
     ]);
   });
 
+  it('starts a new file on the first record of each launch', () => {
+    const logsDir = makeTempDir();
+    const launch = (sessionId) =>
+      createDiagnosticsService({ logsDir, maxRotations: 2, sessionId });
+
+    launch('first').record({ source: 'test', operation: 'a', code: 'ONE' });
+    launch('idle');
+    const second = launch('second');
+    second.record({ source: 'test', operation: 'a', code: 'TWO' });
+    second.record({ source: 'test', operation: 'a', code: 'THREE' });
+    launch('third').record({ source: 'test', operation: 'a', code: 'FOUR' });
+    launch('fourth').record({ source: 'test', operation: 'a', code: 'FIVE' });
+
+    const read = (name) =>
+      parseDiagnosticJsonLines(
+        fs.readFileSync(path.join(logsDir, name), 'utf8'),
+      ).map((event) => event.code);
+    expect(read('diagnostics.jsonl')).toEqual(['FIVE']);
+    expect(read('diagnostics.1.jsonl')).toEqual(['FOUR']);
+    expect(read('diagnostics.2.jsonl')).toEqual(['TWO', 'THREE']);
+    expect(fs.existsSync(path.join(logsDir, 'diagnostics.3.jsonl'))).toBe(
+      false,
+    );
+  });
+
   it('fails open when the filesystem rejects a write', () => {
     const logsDir = makeTempDir();
     const service = createDiagnosticsService({

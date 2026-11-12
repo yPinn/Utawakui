@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs');
+const nodePath = require('node:path');
 const traceValues = require('../../shared/startupTraceValues.json');
 
 const milestoneProcesses = new Map(Object.entries(traceValues.milestones));
@@ -213,10 +215,44 @@ function registerStartupTraceHandler({
   return true;
 }
 
+const DEFAULT_TRACE_FILE_RE = /^startup-trace-(\d+)-\d+\.jsonl$/;
+const DEFAULT_KEPT_TRACE_FILES = 5;
+
+// Removes default-named trace files in the logs directory, newest kept.
+function pruneStartupTraceFiles(
+  logsDir,
+  { keep = DEFAULT_KEPT_TRACE_FILES, fsApi = fs } = {},
+) {
+  let names;
+  try {
+    names = fsApi.readdirSync(logsDir);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return { ok: true, removed: 0 };
+    return { ok: false, removed: 0, errorCode: error?.code ?? 'EIO' };
+  }
+  const stale = names
+    .map((name) => ({ name, match: DEFAULT_TRACE_FILE_RE.exec(name) }))
+    .filter(({ match }) => match)
+    .sort((a, b) => Number(b.match[1]) - Number(a.match[1]))
+    .slice(Math.max(0, keep));
+  let removed = 0;
+  let errorCode = null;
+  for (const { name } of stale) {
+    try {
+      fsApi.unlinkSync(nodePath.join(logsDir, name));
+      removed += 1;
+    } catch (error) {
+      errorCode ??= error?.code ?? 'EIO';
+    }
+  }
+  return errorCode ? { ok: false, removed, errorCode } : { ok: true, removed };
+}
+
 module.exports = {
   createStartupBaselineMetadata,
   createStartupTrace,
   parseExternalStartupMilestone,
+  pruneStartupTraceFiles,
   readStartupTraceOptions,
   registerStartupTraceHandler,
 };
