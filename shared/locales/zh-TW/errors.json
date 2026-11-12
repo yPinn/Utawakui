@@ -513,18 +513,23 @@
     "message": "這份讀音無法刪除，請再試一次。"
   },
   "LYRICS_SOURCE_INVALID": {
+    "title": "歌詞來源操作未完成",
     "message": "無法執行這個歌詞來源操作。"
   },
   "LYRICS_SOURCE_UNUSABLE": {
+    "title": "歌詞時間無法保存",
     "message": "這份歌詞時間資料無法保存，請先檢查來源版本。"
   },
   "LYRICS_SOURCE_STALE": {
+    "title": "歌詞來源已變更",
     "message": "歌詞來源或保存版本已變更，請重新讀取後再試一次。"
   },
   "LYRICS_SOURCE_FAILED": {
+    "title": "歌詞來源操作未完成",
     "message": "歌詞來源操作未完成，請再試一次。"
   },
   "LYRICS_ENV_INVALID_INTENT": {
+    "title": "歌詞時間估計",
     "message": "歌詞時間估計工具操作未完成。"
   },
   "LYRICS_ENV_OPERATION_FAILED": {
@@ -532,6 +537,7 @@
     "message": "歌詞時間估計工具操作未完成。"
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
+    "title": "歌詞時間分析",
     "message": "歌詞分析操作格式不正確。"
   },
   "LYRICS_RESEARCH_FAILED": {
@@ -539,9 +545,11 @@
     "message": "分析未完成；請確認 FFmpeg 已準備，或重新下載修復歌詞分析工具。原有歌詞仍可使用。"
   },
   "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
+    "title": "歌詞分析",
     "message": "歌詞分析操作格式不正確。"
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
+    "title": "歌詞分析",
     "message": "歌詞分析未完成；伴奏與原有歌詞仍可使用。"
   },
   "BGM_STANDBY_GET_FAILED": {

@@ -513,18 +513,23 @@
     "message": "These readings couldn't be deleted. Try again."
   },
   "LYRICS_SOURCE_INVALID": {
+    "title": "Lyrics source action didn't finish",
     "message": "This lyrics source action can't be run."
   },
   "LYRICS_SOURCE_UNUSABLE": {
+    "title": "Lyrics timing can't be saved",
     "message": "This lyrics timing can't be saved. Check the source version first."
   },
   "LYRICS_SOURCE_STALE": {
+    "title": "Lyrics source changed",
     "message": "The lyrics source or saved version changed. Reload and try again."
   },
   "LYRICS_SOURCE_FAILED": {
+    "title": "Lyrics source action didn't finish",
     "message": "The lyrics source action didn't finish. Try again."
   },
   "LYRICS_ENV_INVALID_INTENT": {
+    "title": "Lyrics timing estimate",
     "message": "The lyrics timing estimate tool action didn't finish."
   },
   "LYRICS_ENV_OPERATION_FAILED": {
@@ -532,6 +537,7 @@
     "message": "The lyrics timing estimate tool action didn't finish."
   },
   "LYRICS_RESEARCH_INVALID_INTENT": {
+    "title": "Lyrics timing analysis",
     "message": "The lyrics analysis request is invalid."
   },
   "LYRICS_RESEARCH_FAILED": {
@@ -539,9 +545,11 @@
     "message": "Analysis didn't finish. Make sure FFmpeg is prepared, or download the lyrics analysis tools again to repair them. Your lyrics still work."
   },
   "LYRICS_EXPERIMENTAL_INVALID_INTENT": {
+    "title": "Lyrics analysis",
     "message": "The lyrics analysis request is invalid."
   },
   "LYRICS_EXPERIMENTAL_FAILED": {
+    "title": "Lyrics analysis",
     "message": "Lyrics analysis didn't finish. Your accompaniment and lyrics still work."
   },
   "BGM_STANDBY_GET_FAILED": {

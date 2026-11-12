@@ -7,7 +7,7 @@ function serializeAppErrorPayload(payload) {
 }
 
 // Public errors with neither title nor message read errors.<CODE> from the UI
-// catalog; callers passing either keep their explicit copy.
+// catalog; explicit copy is kept and a missing title comes from the catalog.
 // Tests fail on a missing entry; packaged builds fall back to generic copy.
 function catalogCopy(code, field) {
   const { hasMessage, t } = require('./i18n');
@@ -28,6 +28,9 @@ function createAppError({
   if (title === undefined && message === undefined) {
     title = catalogCopy(code, 'title');
     message = catalogCopy(code, 'message');
+  } else if (title === undefined) {
+    const { hasMessage, t } = require('./i18n');
+    if (hasMessage(`errors.${code}.title`)) title = t(`errors.${code}.title`);
   }
   const payload = {
     code,

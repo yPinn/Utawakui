@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import enErrors from '../../shared/locales/en-US/errors.json';
+import zhErrors from '../../shared/locales/zh-TW/errors.json';
 import {
   APP_ERROR_PREFIX,
   createAppError,
@@ -56,6 +58,7 @@ describe('createAppError', () => {
     expect(JSON.parse(error.message.slice(APP_ERROR_PREFIX.length))).toEqual({
       code: 'UNKNOWN',
       severity: 'error',
+      title: '操作未完成',
       message: 'boom',
     });
   });
@@ -68,13 +71,31 @@ describe('createAppError catalog copy', () => {
     expect(error.publicMessage).toBe('目前無法讀取介面主題。');
   });
 
-  it('keeps explicit copy from callers that pass either field', () => {
+  it('keeps explicit copy and fills only a missing title from the catalog', () => {
     const error = createAppError({
       code: 'UI_THEME_READ_FAILED',
       message: '自訂',
     });
-    expect(error.title).toBeUndefined();
+    expect(error.title).toBe('無法讀取介面主題');
     expect(error.publicMessage).toBe('自訂');
+
+    const titled = createAppError({ code: 'UI_THEME_READ_FAILED', title: 'T' });
+    expect(titled.title).toBe('T');
+    expect(titled.publicMessage).toBeUndefined();
+  });
+
+  it('leaves the title empty when a message-only code has no catalog title', () => {
+    const error = createAppError({ code: 'NOT_IN_CATALOG', message: '自訂' });
+    expect(error.title).toBeUndefined();
+  });
+
+  it('gives every catalog code a title in each locale', () => {
+    for (const locale of [zhErrors, enErrors]) {
+      const untitled = Object.entries(locale)
+        .filter(([, entry]) => !entry.title)
+        .map(([code]) => code);
+      expect(untitled).toEqual([]);
+    }
   });
 
   it('fails tests when a code has no catalog entry', () => {
