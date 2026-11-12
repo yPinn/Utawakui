@@ -13,6 +13,7 @@ import { folderStationeryFor } from '../../utils/folderStationery.js';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
 import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
+import UiFolderDecoration from '../ui/UiFolderDecoration.vue';
 import { t } from '../../utils/i18n.js';
 
 const ARTIST_SUMMARY_KEY = 'derived:artist-summary';
@@ -20,6 +21,10 @@ const PERFORMANCE_RECORD_KEY = 'derived:performance-record';
 const ARTIST_SUMMARY_PLACEMENT = Object.freeze({
   region: 'paper',
   anchor: Object.freeze({ x: 1, y: 0 }),
+});
+const PERFORMANCE_RECORD_PLACEMENT = Object.freeze({
+  region: 'bottom',
+  anchor: Object.freeze({ x: 0, y: 0 }),
 });
 const ARTIST_SUMMARY_ROTATION = -1.5;
 
@@ -177,7 +182,7 @@ const items = computed(() => {
       key: PERFORMANCE_RECORD_KEY,
       type: 'note',
       source: 'derived',
-      placement: ARTIST_SUMMARY_PLACEMENT,
+      placement: PERFORMANCE_RECORD_PLACEMENT,
       rotation: ARTIST_SUMMARY_ROTATION,
       order: 0,
       content: {
@@ -229,7 +234,12 @@ const artifacts = computed(() =>
             activationLabel: t('session.archive.viewRecord'),
           }
         : {}),
-      props: { ...rendered.props, ...folderStationeryFor(item) },
+      props: {
+        ...rendered.props,
+        ...(item.key === PERFORMANCE_RECORD_KEY
+          ? {}
+          : folderStationeryFor(item)),
+      },
       initialPlacement: item.placement,
       initialPinned: item.pinned === true,
       initialZ: index + 1,
@@ -434,7 +444,31 @@ function selectMenuAction(action) {
         :kind="artifact.kind"
         v-bind="artifact.props"
         @overflow-change="setNoteOverflow(artifact.id, $event)"
-      />
+      >
+        <div
+          v-if="artifact.id === PERFORMANCE_RECORD_KEY"
+          class="library-folder-record-print"
+          aria-hidden="true"
+        >
+          <UiFolderDecoration
+            class="library-folder-record-print__ticket"
+            kind="ticket"
+          />
+          <UiFolderDecoration
+            class="library-folder-record-print__stamp"
+            kind="stamp"
+            motif="record"
+            ink="blue"
+          />
+          <UiFolderDecoration
+            v-if="performanceRecord?.postmarkDate"
+            class="library-folder-record-print__postmark"
+            kind="postmark"
+            ink="red"
+            :date="performanceRecord.postmarkDate"
+          />
+        </div>
+      </UiFolderArtifact>
     </template>
   </UiFolderArtifactCanvas>
   <UiActionMenu
@@ -447,3 +481,35 @@ function selectMenuAction(action) {
     @close="closeMenu"
   />
 </template>
+
+<style scoped>
+.library-folder-record-print {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--ui-space-2);
+  pointer-events: none;
+}
+
+.library-folder-record-print__ticket {
+  --ui-folder-decoration-inline-size: calc(
+    var(--ui-artwork-size-md) + var(--ui-space-7)
+  );
+  max-inline-size: 50%;
+  margin-block-end: var(--ui-space-1);
+  transform: rotate(-5deg);
+}
+
+.library-folder-record-print__stamp {
+  transform: rotate(6deg);
+}
+
+.library-folder-record-print__postmark {
+  position: absolute;
+  inset-inline-end: var(--ui-space-5);
+  inset-block-end: var(--ui-space-1);
+  z-index: var(--ui-layer-raised);
+  transform: rotate(-8deg);
+}
+</style>

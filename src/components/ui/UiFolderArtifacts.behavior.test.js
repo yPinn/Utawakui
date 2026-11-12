@@ -404,7 +404,7 @@ describe('UiFolderArtifact', () => {
     }
     expect(artifactSource).not.toMatch(/\[data-paper='tissue'\]/u);
     expect(artifactSource).toContain(
-      "url('../../assets/folder-paper/grain-fine.svg?no-inline')",
+      "url('../../../overlay/shared/paper-grain.svg?no-inline')",
     );
     expect(artifactSource).toContain(
       "url('../../assets/folder-paper/grain-coarse.svg?no-inline')",

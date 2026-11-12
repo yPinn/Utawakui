@@ -2,6 +2,9 @@ import { h, nextTick, reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Tools from './PerformanceSessionHistoryTools.vue';
 import ArchiveList from './PerformanceSessionArchiveList.vue';
+import ArchiveCalendar from './PerformanceSessionArchiveCalendar.vue';
+import ArchiveCollage from './PerformanceSessionArchiveCollage.vue';
+import ArchiveGroups from './PerformanceSessionArchiveGroups.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
@@ -10,6 +13,7 @@ import AppFolderDossier from '../layout/AppFolderDossier.vue';
 import CollectionActionRail from '../library/CollectionActionRail.vue';
 import LibraryEntityDossier from '../library/LibraryEntityDossier.vue';
 import UiPopover from '../ui/UiPopover.vue';
+import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
@@ -33,6 +37,7 @@ const fixture = vi.hoisted(() => ({
   openLibrary: vi.fn(),
   openPreparation: vi.fn(),
   selectPlaylist: vi.fn(),
+  initializePlaylists: vi.fn(),
   createPlaylist: vi.fn(),
   playlists: null,
   selectTab: vi.fn(),
@@ -50,6 +55,7 @@ vi.mock('../../composables/useAppView.js', () => ({
 vi.mock('../../composables/usePlaylists.js', () => ({
   usePlaylists: () => ({
     state: fixture.playlists,
+    initialize: fixture.initializePlaylists,
     select: fixture.selectPlaylist,
     createFromPerformanceArchive: fixture.createPlaylist,
   }),
@@ -87,15 +93,53 @@ vi.mock('../../composables/useLibrary.js', () => ({
 vi.mock('../ui/UiModal.vue', () => ({
   default: {
     props: ['open', 'title', 'closeDisabled'],
-    setup(props, { slots }) {
+    emits: ['close'],
+    setup(props, { emit, slots }) {
       return () =>
         props.open
           ? h(
               'section',
               { 'aria-label': props.title, 'data-locked': props.closeDisabled },
-              [slots.default?.(), slots.footer?.()],
+              [
+                slots.default?.(),
+                slots.footer?.(),
+                h('button', { onClick: () => emit('close') }, 'Close modal'),
+              ],
             )
           : null;
+    },
+  },
+}));
+vi.mock('../ui/UiTabs.vue', () => ({
+  default: {
+    props: ['items', 'activeId'],
+    emits: ['update:activeId'],
+    setup(props, { emit }) {
+      return () =>
+        h(
+          'div',
+          props.items.map(({ id, label }) =>
+            h(
+              'button',
+              {
+                onClick: () => emit('update:activeId', id),
+              },
+              label,
+            ),
+          ),
+        );
+    },
+  },
+}));
+vi.mock('./PerformanceSessionArchive.vue', () => ({
+  default: {
+    props: { sessionId: String, embedded: Boolean, allowSavePlaylist: Boolean },
+    setup(props) {
+      return () =>
+        h('article', {
+          'data-session-id': props.sessionId,
+          'data-allow-save': props.allowSavePlaylist,
+        });
     },
   },
 }));
@@ -182,6 +226,9 @@ vi.mock('./PerformanceSessionPlaylistExportModal.vue', () => ({
 for (const [component, file] of [
   [Tools, './PerformanceSessionHistoryTools.vue'],
   [ArchiveList, './PerformanceSessionArchiveList.vue'],
+  [ArchiveCalendar, './PerformanceSessionArchiveCalendar.vue'],
+  [ArchiveCollage, './PerformanceSessionArchiveCollage.vue'],
+  [ArchiveGroups, './PerformanceSessionArchiveGroups.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiSkeleton, '../ui/UiSkeleton.vue'],
@@ -190,6 +237,7 @@ for (const [component, file] of [
   [CollectionActionRail, '../library/CollectionActionRail.vue'],
   [LibraryEntityDossier, '../library/LibraryEntityDossier.vue'],
   [UiPopover, '../ui/UiPopover.vue'],
+  [UiPageHeader, '../ui/UiPageHeader.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiSearchBox, '../ui/UiSearchBox.vue'],
   [UiTooltip, '../ui/UiTooltip.vue'],
@@ -278,7 +326,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('performance history and archive entry points', () => {
-  it('lists archived sessions only on the archive page, newest first', async () => {
+  it('opens the linked playlist and falls back to the shared record if the playlist is removed', async () => {
     const view = mount(Tools);
     expect(textContent(view.root)).not.toContain('Older show');
     view.app.unmount();
@@ -296,43 +344,66 @@ describe('performance history and archive entry points', () => {
     const index = mount(ArchiveList);
     const headings = findAll(index.root, (node) => node.type === 'h1');
     expect(headings.map(textContent)).toEqual(['場次紀錄']);
-    const labels = findAll(
+    expect(button(index.root, '選取 Linked record')).toBeDefined();
+    await click(index.root, '清單');
+    const list = findAll(
       index.root,
+      (node) => node.props.id === 'performance-archive-list-panel',
+    )[0];
+    const labels = findAll(
+      list,
       (node) => node.type === 'button' && textContent(node).startsWith('選取 '),
     ).map(textContent);
-    expect(labels).toEqual(['選取 Recent show', '選取 Older show']);
-    expect(textContent(index.root)).toContain('10/20');
-    expect(
-      findAll(index.root, (node) => node.type === 'h2').map(textContent),
-    ).toEqual(['2026年10月']);
+    expect(labels).toEqual([
+      '選取 Linked record',
+      '選取 Recent show',
+      '選取 Older show',
+    ]);
+    expect(textContent(list)).toContain('保存於');
     await click(index.root, '最近 OBS 紀錄');
     expect(fixture.timeline.open).toHaveBeenCalledWith();
     expect(fixture.timeline.openForArrangement).not.toHaveBeenCalled();
-    await click(index.root, '選取 Older show');
-    expect(fixture.openArchive).toHaveBeenCalledWith('old');
+    await click(list, '選取 Linked record');
+    expect(fixture.selectPlaylist).toHaveBeenCalledExactlyOnceWith('created');
+    expect(fixture.openLibrary).toHaveBeenCalledTimes(1);
+    expect(textContent(index.root)).not.toContain('Close modal');
+
+    fixture.playlists.playlists = [];
+    await click(list, '選取 Linked record');
+    await vi.dynamicImportSettled();
+    await settle();
+    expect(
+      findAll(index.root, (node) => node.props['data-session-id'] === 'linked'),
+    ).toHaveLength(1);
+    await click(index.root, 'Close modal');
+
+    await click(list, '選取 Older show');
+    await vi.dynamicImportSettled();
+    await settle();
+    const detail = findAll(
+      index.root,
+      (node) => node.props['data-session-id'] === 'old',
+    )[0];
+    expect(detail?.props['data-allow-save']).toBe(true);
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
     index.app.unmount();
   });
 
-  it('opens search from its icon and filters the archive by name', async () => {
+  it('searches older months by name and restores the calendar after clearing', async () => {
     fixture.plan.state.plan.archives.push({
       id: 'recent',
       name: 'Recent show',
       endedAt: '2026-11-22T12:00:00Z',
     });
     const index = mount(ArchiveList);
-    const input = () =>
-      findAll(index.overlayHost, (node) => node.type === 'input')[0];
-    expect(input()).toBeUndefined();
-    await click(index.root, '搜尋場次紀錄');
+    const input = () => findAll(index.root, (node) => node.type === 'input')[0];
+    const results = () =>
+      findAll(index.root, (node) => node.props['aria-live'] === 'polite')[0];
 
-    trigger(input(), 'onInput', { target: { value: '  RECENT ' } });
+    trigger(input(), 'onInput', { target: { value: '  OLDER ' } });
     await settle();
-    expect(button(index.root, '選取 Recent show')).toBeDefined();
-    expect(button(index.root, '選取 Older show')).toBeUndefined();
-    expect(
-      findAll(index.root, (node) => node.type === 'h2').map(textContent),
-    ).toEqual(['2026年11月']);
+    expect(button(results(), '選取 Older show')).toBeDefined();
+    expect(button(results(), '選取 Recent show')).toBeUndefined();
 
     trigger(input(), 'onInput', { target: { value: 'nothing' } });
     await settle();
@@ -340,7 +411,33 @@ describe('performance history and archive entry points', () => {
 
     trigger(input(), 'onInput', { target: { value: '' } });
     await settle();
-    expect(button(index.root, '選取 Older show')).toBeDefined();
+    expect(button(index.root, '選取 Recent show')).toBeDefined();
+    expect(button(index.root, '選取 Older show')).toBeUndefined();
+    index.app.unmount();
+  });
+
+  it('waits for the initial playlist read before choosing a destination', async () => {
+    let finishRead;
+    fixture.initializePlaylists.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishRead = resolve;
+      }),
+    );
+    fixture.playlists.playlists = [];
+    fixture.playlists.isLoading = true;
+    const index = mount(ArchiveList);
+    await click(index.root, '選取 Older show');
+    expect(fixture.selectPlaylist).not.toHaveBeenCalled();
+    expect(textContent(index.root)).not.toContain('Close modal');
+
+    fixture.playlists.playlists = [
+      { id: 'found', performanceSessionId: 'old' },
+    ];
+    fixture.playlists.isLoading = false;
+    finishRead();
+    await settle();
+    expect(fixture.selectPlaylist).toHaveBeenCalledExactlyOnceWith('found');
+    expect(fixture.openLibrary).toHaveBeenCalledTimes(1);
     index.app.unmount();
   });
 

@@ -18,7 +18,10 @@ import {
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useLibraryAlbumContext } from '../../composables/useLibraryAlbumContext.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
-import { performanceArchiveSummary } from '../../utils/performanceArchivePresentation.js';
+import {
+  performanceArchivePostmarkDate,
+  performanceArchiveSummary,
+} from '../../utils/performanceArchivePresentation.js';
 import { ImagePlus, Plus, StickyNote } from '../../icons/index.js';
 import LibraryBrowseContent from './LibraryBrowseContent.vue';
 import AppFolderPage from '../layout/AppFolderPage.vue';
@@ -52,6 +55,7 @@ const performanceRecord = computed(() => {
     summary: archive
       ? performanceArchiveSummary(archive, { multiline: true })
       : '',
+    postmarkDate: archive ? performanceArchivePostmarkDate(archive) : '',
   };
 });
 watch(

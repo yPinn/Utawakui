@@ -93,6 +93,8 @@ export {
   SlidersHorizontal,
   Square,
   SquareCheckBig,
+  SquarePlay,
+  Star,
   StickyNote,
   Sun,
   Tag,

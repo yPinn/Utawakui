@@ -135,24 +135,21 @@ describe('Sidebar initial loading', () => {
     expect(html).not.toContain('playlist-sidebar__skeleton-row');
   });
 
-  it('shows the pink records entry first below the divider only while an unlinked archive exists', async () => {
+  it('keeps the pink records entry in fixed navigation across archive and playlist loading states', async () => {
     const record = '選取 場次紀錄';
-    owners.performance.plan.archives = [{ id: 'show' }];
-    expect(await render()).not.toContain(record);
+    expect(await render()).toContain(record);
 
     owners.playlists.hasLoaded = true;
     owners.playlists.isLoading = false;
     owners.playlists.playlists = [
       { id: 'p1', name: 'Encore', trackIds: [], performanceSessionId: 'show' },
     ];
-    expect(await render()).not.toContain(record);
-
-    owners.performance.plan.archives.push({ id: 'unlinked' });
+    owners.performance.plan.archives = [{ id: 'show' }];
     for (const compact of [false, true]) {
       const html = await render({ compact });
       const index = html.indexOf(record);
-      expect(index).toBeGreaterThan(html.indexOf('playlist-sidebar__divider'));
-      expect(index).toBeGreaterThan(html.indexOf('playlist-sidebar__scroll'));
+      expect(index).toBeLessThan(html.indexOf('playlist-sidebar__divider'));
+      expect(index).toBeLessThan(html.indexOf('playlist-sidebar__scroll'));
       const playlist = html.indexOf('選取 Encore');
       expect(index).toBeLessThan(playlist);
       const entry = html.slice(index, playlist);
@@ -162,8 +159,8 @@ describe('Sidebar initial loading', () => {
       );
     }
 
-    owners.performance.plan.archives = [];
-    expect(await render()).not.toContain(record);
+    owners.performance.plan.archives.push({ id: 'unlinked' });
+    expect((await render()).match(/選取 場次紀錄/gu)).toHaveLength(1);
   });
 
   it('settles empty results and failures without a permanent skeleton', async () => {

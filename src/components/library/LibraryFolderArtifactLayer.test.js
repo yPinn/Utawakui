@@ -32,11 +32,24 @@ function render(props) {
 describe('LibraryFolderArtifactLayer', () => {
   it('makes a short performance record note readable directly from the playlist', async () => {
     const html = await render({
-      performanceRecord: { summary: '2026/11/06 20:30\n完成 2 項' },
+      performanceRecord: {
+        summary: '2026/11/06 20:30\n完成 2 項',
+        postmarkDate: '11/06',
+      },
     });
     expect(html).toContain('本場演出');
     expect(html).toContain('2026/11/06 20:30\n完成 2 項');
     expect(html).toContain('按 Enter 或空白鍵查看場次紀錄');
+    expect(html).toContain('data-decoration="ticket"');
+    expect(html).toContain('data-decoration="stamp"');
+    expect(html).toMatch(/data-decoration="postmark"[^>]*aria-hidden="true"/u);
+    expect(html).toContain('>11/06</span>');
+  });
+  it('leaves the stamp and blank ticket on a record with no known date', async () => {
+    const html = await render({ performanceRecord: { summary: '' } });
+    expect(html).toContain('data-decoration="stamp"');
+    expect(html).toContain('data-decoration="ticket"');
+    expect(html).not.toContain('data-decoration="postmark"');
   });
   it('combines the derived artist note and user photos in one folder canvas', async () => {
     const html = await render({
@@ -57,6 +70,7 @@ describe('LibraryFolderArtifactLayer', () => {
 
     expect(source.match(/<UiFolderArtifactCanvas/gu)).toHaveLength(1);
     expect(html).toContain('Artist summary');
+    expect(html).not.toContain('data-decoration=');
     expect(html).toContain('utawakui-media://folder-asset/asset-1/image.png');
     expect(html).toContain('--ui-folder-artifact-rotation:-2.5deg');
     expect(html).toContain('藝人資料：Aimer，已固定');

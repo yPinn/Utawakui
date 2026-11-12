@@ -29,7 +29,6 @@ import {
   watch,
 } from 'vue';
 import { releaseTypeLabel } from '../../utils/releasePresentation.js';
-import { unlinkedPerformanceArchives } from '../../utils/performanceArchivePresentation.js';
 import { useArtistIndex } from '../../composables/useArtistIndex.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
@@ -507,12 +506,6 @@ const isArchiveActive = computed(
   () =>
     activeView.value === 'library' &&
     libraryWorkspace.value === 'performance-records',
-);
-const hasUnlinkedArchives = computed(
-  () =>
-    state.hasLoaded &&
-    unlinkedPerformanceArchives(performancePlan.plan.archives, state.playlists)
-      .length > 0,
 );
 const archiveEntry = {
   id: 'performance-records',
@@ -1104,8 +1097,20 @@ function startDrag(row, event) {
         </button>
       </template>
 
+      <PlaylistSidebarRow
+        :playlist="archiveEntry"
+        subtitle=""
+        :compact="compact"
+        :active="isArchiveActive"
+        :playback-enabled="false"
+        artwork-plate
+        :empty-icon="Tickets"
+        artwork-background="var(--ui-color-folder-secondary)"
+        artwork-color="var(--ui-color-folder-secondary-foreground)"
+        @select="selectArchiveIndex"
+      />
       <hr
-        v-if="hasVisibleCollectionItems || (!openFolder && hasUnlinkedArchives)"
+        v-if="hasVisibleCollectionItems"
         class="playlist-sidebar__divider"
         aria-hidden="true"
       />
@@ -1172,19 +1177,6 @@ function startDrag(row, event) {
             @action="refresh"
           />
         </template>
-        <PlaylistSidebarRow
-          v-if="!openFolder && hasUnlinkedArchives"
-          :playlist="archiveEntry"
-          subtitle=""
-          :compact="compact"
-          :active="isArchiveActive"
-          :playback-enabled="false"
-          artwork-plate
-          :empty-icon="Tickets"
-          artwork-background="var(--ui-color-folder-secondary)"
-          artwork-color="var(--ui-color-folder-secondary-foreground)"
-          @select="selectArchiveIndex"
-        />
         <template v-for="row in visiblePlaylistRows" :key="row.key">
           <PlaylistSidebarRow
             v-if="row.kind === 'folder'"

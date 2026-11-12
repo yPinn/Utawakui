@@ -1,0 +1,38 @@
+@import '../../overlay/shared/ticketShape.css';
+
+/* Shared cut edges for postage paper and ticket stock. Colour and placement
+   belong to the surface that prints the piece. */
+.ui-folder-stamp-edge {
+  --ui-folder-stamp-perforation: calc(var(--ui-space-1) * 0.38);
+  --ui-folder-stamp-pitch: calc(var(--ui-space-1) * 1.5);
+  mask:
+    radial-gradient(
+        circle at 50% 0,
+        transparent var(--ui-folder-stamp-perforation),
+        currentColor 0
+      )
+      top / var(--ui-folder-stamp-pitch) 100% repeat-x,
+    radial-gradient(
+        circle at 50% 100%,
+        transparent var(--ui-folder-stamp-perforation),
+        currentColor 0
+      )
+      bottom / var(--ui-folder-stamp-pitch) 100% repeat-x,
+    radial-gradient(
+        circle at 0 50%,
+        transparent var(--ui-folder-stamp-perforation),
+        currentColor 0
+      )
+      left / 100% var(--ui-folder-stamp-pitch) repeat-y,
+    radial-gradient(
+        circle at 100% 50%,
+        transparent var(--ui-folder-stamp-perforation),
+        currentColor 0
+      )
+      right / 100% var(--ui-folder-stamp-pitch) repeat-y;
+  mask-composite: intersect;
+}
+
+.ui-folder-ticket-edge {
+  --ticket-notch-radius: var(--ui-space-1);
+}

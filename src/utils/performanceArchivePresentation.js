@@ -2,13 +2,6 @@ import { UI_LOCALE } from './uiLocale.js';
 import { t } from './i18n.js';
 import { sessionPerformedItems } from '../../shared/sessionPerformedItems.mjs';
 
-export function unlinkedPerformanceArchives(archives, playlists) {
-  const linked = new Set(
-    playlists.map((playlist) => playlist.performanceSessionId),
-  );
-  return (archives ?? []).filter((archive) => !linked.has(archive.id));
-}
-
 export function performancePlaylistName({
   startedAt,
   name,
@@ -45,38 +38,53 @@ function archiveTiming(archive) {
       };
 }
 
-const archiveMonth = new Intl.DateTimeFormat(UI_LOCALE, {
+const archiveDay = new Intl.DateTimeFormat(UI_LOCALE, {
   year: 'numeric',
   month: 'long',
+  day: 'numeric',
+  weekday: 'short',
+});
+const archiveClock = new Intl.DateTimeFormat(UI_LOCALE, {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
 });
 
-export function groupPerformanceArchives(archives) {
-  const dated = archives
-    .slice()
-    .reverse()
-    .map((archive) => ({ archive, date: archiveTiming(archive).date }))
-    .sort(
-      (a, b) =>
-        (b.date?.getTime() ?? Number.MIN_SAFE_INTEGER) -
-        (a.date?.getTime() ?? Number.MIN_SAFE_INTEGER),
-    );
+export function performanceArchiveDayKey(date) {
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+    .map((part) => String(part).padStart(2, '0'))
+    .join('-');
+}
+
+export function groupPerformanceArchiveDays(archives) {
+  const dated = archives.map((archive) => ({
+    archive,
+    date: archiveTiming(archive).date,
+  }));
+  dated.sort(
+    (a, b) =>
+      (a.date?.getTime() ?? 0) - (b.date?.getTime() ?? 0) ||
+      a.archive.id.localeCompare(b.archive.id),
+  );
   const groups = new Map();
   for (const { archive, date } of dated) {
-    const key = date
-      ? `${date.getFullYear()}-${date.getMonth() + 1}`
-      : 'unknown';
+    const key = date ? performanceArchiveDayKey(date) : 'unknown';
     if (!groups.has(key)) {
       groups.set(key, {
         key,
+        date,
         label: date
-          ? archiveMonth.format(date)
+          ? archiveDay.format(date)
           : t('session.archive.unknownMonth'),
         archives: [],
       });
     }
     groups.get(key).archives.push(archive);
   }
-  return [...groups.values()];
+  return [...groups.values()].sort(
+    (a, b) =>
+      (b.date?.getTime() ?? -Infinity) - (a.date?.getTime() ?? -Infinity),
+  );
 }
 
 export function performanceArchiveDate(
@@ -94,11 +102,23 @@ export function performanceArchiveDate(
   });
 }
 
-export function performanceArchiveTiming(archive, { compact = false } = {}) {
+export function performanceArchivePostmarkDate(archive) {
+  const { date } = archiveTiming(archive);
+  return date
+    ? performanceArchiveDate(date, { includeTime: false, includeYear: false })
+    : '';
+}
+
+export function performanceArchiveTiming(
+  archive,
+  { compact = false, timeOnly = false } = {},
+) {
   const { date, saved } = archiveTiming(archive);
   if (!date) return '';
-  const formatted = performanceArchiveDate(date, { includeYear: !compact });
-  return saved && !compact
+  const formatted = timeOnly
+    ? archiveClock.format(date)
+    : performanceArchiveDate(date, { includeYear: !compact });
+  return saved && (!compact || timeOnly)
     ? t('session.archive.archivedAt', { date: formatted })
     : formatted;
 }
@@ -111,9 +131,9 @@ export function performanceArchiveProgress(completed, performed) {
 
 export function performanceArchiveSummary(
   archive,
-  { multiline = false, compact = false } = {},
+  { multiline = false, compact = false, timeOnly = false } = {},
 ) {
-  const timing = performanceArchiveTiming(archive, { compact });
+  const timing = performanceArchiveTiming(archive, { compact, timeOnly });
   if (
     !Number.isInteger(archive.completedCount) ||
     (compact && archive.completedCount === 0 && archive.performedCount === 0)

@@ -1,13 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import {
-  groupPerformanceArchives,
+  groupPerformanceArchiveDays,
   performanceArchiveDate,
+  performanceArchivePostmarkDate,
   performanceArchiveSummary,
   performanceArchiveRows,
   performancePlaylistName,
 } from './performanceArchivePresentation.js';
 describe('archive presentation', () => {
-  it('groups by local start month with a save-date fallback and sorts by performance time', () => {
+  it('groups by the first local day and orders same-day records from early to late', () => {
+    const date = (day, hour, minute = 0) =>
+      new Date(2026, 10, day, hour, minute).toISOString();
+    const midnight = {
+      id: 'night',
+      startedAt: date(6, 23, 30),
+      endedAt: date(7, 0, 18),
+    };
+    const afternoon = { id: 'afternoon', startedAt: date(6, 14) };
+    const saved = { id: 'saved', endedAt: date(12, 21, 10) };
+    const unknown = { id: 'unknown' };
+
+    expect(
+      groupPerformanceArchiveDays([midnight, afternoon, saved, unknown]).map(
+        ({ key, archives }) => [key, archives.map(({ id }) => id)],
+      ),
+    ).toEqual([
+      ['2026-11-12', ['saved']],
+      ['2026-11-06', ['afternoon', 'night']],
+      ['unknown', ['unknown']],
+    ]);
+    expect(
+      performanceArchiveSummary(saved, { compact: true, timeOnly: true }),
+    ).toBe('保存於 21:10');
+  });
+  it('retains local dates across months and years with unknown dates last', () => {
     const october = new Date(2026, 9, 31, 23, 50).toISOString();
     const november = new Date(2026, 10, 1, 0, 20).toISOString();
     const december = new Date(2025, 11, 31, 23, 59).toISOString();
@@ -19,11 +45,16 @@ describe('archive presentation', () => {
       { id: 'previous-year', endedAt: december },
       { id: 'unknown' },
     ];
-    expect(groupPerformanceArchives(archives)).toEqual([
-      { key: '2026-11', label: '2026年11月', archives: [archives[0]] },
-      { key: '2026-10', label: '2026年10月', archives: archives.slice(1, 3) },
-      { key: '2025-12', label: '2025年12月', archives: [archives[3]] },
-      { key: 'unknown', label: '日期不明', archives: [archives[4]] },
+    expect(
+      groupPerformanceArchiveDays(archives).map(
+        ({ key, archives: entries }) => [key, entries[0].id],
+      ),
+    ).toEqual([
+      ['2026-11-01', 'november'],
+      ['2026-10-31', 'late-saved'],
+      ['2026-10-10', 'older-october'],
+      ['2025-12-31', 'previous-year'],
+      ['unknown', 'unknown'],
     ]);
   });
   it('prefills YYMMDD from the local start date and uses the save date for unstarted sessions', () => {
@@ -49,6 +80,17 @@ describe('archive presentation', () => {
     );
     expect(performanceArchiveDate(value)).toMatch(/^2026\/10\/20\s20:30$/u);
     expect(performanceArchiveDate(null, { includeTime: false })).toBe('—');
+  });
+  it('prints the first local record date or falls back to the local save date', () => {
+    const startedAt = new Date(2026, 10, 6, 23, 30).toISOString();
+    const endedAt = new Date(2026, 10, 7, 0, 18).toISOString();
+    expect(performanceArchivePostmarkDate({ startedAt, endedAt })).toBe(
+      '11/06',
+    );
+    expect(
+      performanceArchivePostmarkDate({ startedAt: 'invalid', endedAt }),
+    ).toBe('11/07');
+    expect(performanceArchivePostmarkDate({})).toBe('');
   });
   it('labels the first recorded time or saved time and shows completed versus planned', () => {
     const startedAt = new Date(2026, 9, 20, 20, 30).toISOString();

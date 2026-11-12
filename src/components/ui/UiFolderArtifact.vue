@@ -537,17 +537,17 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact[data-paper='periwinkle'] {
   --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-periwinkle);
-  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+  --ui-folder-artifact-note-grain: url('../../../overlay/shared/paper-grain.svg?no-inline');
 }
 
 .ui-folder-artifact[data-paper='rose'] {
   --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-rose);
-  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+  --ui-folder-artifact-note-grain: url('../../../overlay/shared/paper-grain.svg?no-inline');
 }
 
 .ui-folder-artifact[data-paper='canary'] {
   --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-canary);
-  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+  --ui-folder-artifact-note-grain: url('../../../overlay/shared/paper-grain.svg?no-inline');
 }
 
 .ui-folder-artifact[data-paper='kraft'] {
@@ -557,7 +557,7 @@ function handleStackLayerKeydown(layer, event) {
 
 .ui-folder-artifact[data-paper='ruled'] {
   --ui-folder-artifact-note-paper: var(--ui-folder-artifact-paper-ruled);
-  --ui-folder-artifact-note-grain: url('../../assets/folder-paper/grain-fine.svg?no-inline');
+  --ui-folder-artifact-note-grain: url('../../../overlay/shared/paper-grain.svg?no-inline');
   --ui-folder-artifact-note-print: repeating-linear-gradient(
     to bottom,
     transparent 0 calc(var(--ui-space-5) - var(--ui-border-width)),

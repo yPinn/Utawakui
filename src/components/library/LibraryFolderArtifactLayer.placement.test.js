@@ -14,13 +14,14 @@ vi.mock('../ui/UiFolderArtifactCanvas.vue', () => ({
   },
 }));
 
-async function render(objects = []) {
+async function render(objects = [], props = {}) {
   await renderToString(
     createSSRApp({
       render: () =>
         h(LibraryFolderArtifactLayer, {
           summary: { artist: '測試藝人', trackCount: 2, albumCount: 2 },
           objects,
+          ...props,
         }),
     }),
   );
@@ -76,5 +77,40 @@ describe('album and Single data memo placement', () => {
       initialPlacement: placement,
       rotation: 1,
     });
+  });
+});
+
+it('places the decorated record on the Folder below the sheet and respects its saved pose', async () => {
+  const props = {
+    performanceRecord: { summary: '完成 2 項', postmarkDate: '11/06' },
+  };
+  const artifacts = await render([], props);
+  const recordId = 'derived:performance-record';
+  expect(artifacts.find(({ id }) => id === recordId)?.initialPlacement).toEqual(
+    {
+      region: 'bottom',
+      anchor: { x: 0, y: 0 },
+    },
+  );
+
+  const savedPlacement = { region: 'paper', anchor: { x: 0.4, y: 0.5 } };
+  const saved = await render(
+    [
+      {
+        key: recordId,
+        type: 'note',
+        source: 'derived',
+        placement: savedPlacement,
+        pinned: true,
+        rotation: 3,
+        order: 1,
+      },
+    ],
+    props,
+  );
+  expect(saved.find(({ id }) => id === recordId)).toMatchObject({
+    initialPlacement: savedPlacement,
+    initialPinned: true,
+    rotation: 3,
   });
 });

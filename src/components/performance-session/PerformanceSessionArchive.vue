@@ -29,6 +29,7 @@ import PerformanceSessionPlatformVideos from './PerformanceSessionPlatformVideos
 const props = defineProps({
   sessionId: { type: String, required: true },
   embedded: Boolean,
+  allowSavePlaylist: Boolean,
 });
 const { session, loading, error, refresh } = usePerformanceArchive(
   toRef(props, 'sessionId'),
@@ -153,7 +154,7 @@ const fields = computed(() => {
       >
         <template #actions>
           <UiButton
-            v-if="!embedded && canSave"
+            v-if="(!embedded || allowSavePlaylist) && canSave"
             :icon="Copy"
             :disabled="saving"
             @click="createPlaylist"
