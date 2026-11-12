@@ -739,6 +739,47 @@ describe('registerSeparationHandlers', () => {
     });
   });
 
+  it('records a GPU-to-CPU fallback once per separation run', async () => {
+    let runTrack;
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    register({
+      recordDiagnostic,
+      createSeparationQueue: vi.fn((dependencies) => {
+        runTrack = dependencies.runTrack;
+        return createQueueHarness().queue;
+      }),
+      createSeparationEngineJob: vi.fn(({ emitProgress }) => {
+        emitProgress({ stage: 'decoding', backend: 'cpu-fallback' });
+        emitProgress({ stage: 'separating', backend: 'cpu-fallback' });
+        return { result: Promise.resolve({ stemsPath: 'C:\\stems.wav' }) };
+      }),
+      heavyJobScheduler: {
+        schedule: vi.fn(({ start }) => start().result),
+        cancel: vi.fn(),
+      },
+      findSeparationTrackRecord: vi.fn(() => ({ id: 'track-1' })),
+      resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
+      resolveSeparationInputAudioPath: vi.fn(() => 'input.mp3'),
+      resolveUserDataDir: vi.fn(() => 'C:\\AppData\\Utawakui'),
+    });
+
+    await runTrack({
+      trackId: 'track-1',
+      recipeId: 'quick',
+      onProgress: vi.fn(),
+    });
+
+    const fallbacks = recordDiagnostic.mock.calls.filter(
+      ([event]) => event.code === 'SEPARATION_GPU_FALLBACK',
+    );
+    expect(fallbacks).toHaveLength(1);
+    expect(fallbacks[0][0]).toMatchObject({
+      level: 'warning',
+      source: 'separation',
+      operation: 'gpu-acceleration',
+    });
+  });
+
   it('records an automatic storage-cleanup failure without hiding a completed separation', async () => {
     const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
     const handlers = register({

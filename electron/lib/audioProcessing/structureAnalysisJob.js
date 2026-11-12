@@ -216,6 +216,7 @@ function createStructureAnalysisJob({
   emitProgress,
   createDecodeJob = createFfmpegDecodeJob,
   createProcessJob = createAudioPythonProcessJob,
+  logger,
 }) {
   let workspace = null;
   let released = false;
@@ -381,6 +382,7 @@ function createStructureAnalysisJob({
       }
 
       activeJob = createProcessJob({
+        ...(logger ? { logger } : {}),
         executablePath: runtimePaths.pythonPath,
         workerPath,
         request: {

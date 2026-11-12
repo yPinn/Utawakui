@@ -45,6 +45,7 @@ function createAudioPythonProcessJob({
   cleanup,
   spawnImpl = spawn,
   maxMessageBytes = DEFAULT_MAX_MESSAGE_BYTES,
+  logger = console,
 }) {
   if (!isAbsolutePath(executablePath) || !isAbsolutePath(workerPath)) {
     throw new Error('audio Python worker paths must be absolute');
@@ -92,7 +93,7 @@ function createAudioPythonProcessJob({
       try {
         cleanup();
       } catch (error) {
-        console.error('audio Python job cleanup failed', error);
+        logger.error?.('[audio-processing] Python job cleanup failed', error);
         rejectResult(new Error('audio Python job cleanup failed'));
         return;
       }
@@ -208,7 +209,10 @@ function createAudioPythonProcessJob({
   child.on('close', (code, signal) => {
     if (settled) return;
     if (stderrBytes > 0) {
-      console.error('audio Python worker emitted stderr', { stderrBytes });
+      // Only presence is logged; stderr text may carry local paths.
+      logger.warn?.('[audio-processing] Python worker emitted stderr', null, {
+        retryable: false,
+      });
     }
     if (protocolError) {
       settle(rejectResult, protocolError);

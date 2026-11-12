@@ -12,6 +12,7 @@ function createStructureAnalysisService({
   prepareSource,
   publishDocument,
   createJob = createStructureAnalysisJob,
+  logger,
 }) {
   if (
     !host ||
@@ -61,6 +62,7 @@ function createStructureAnalysisService({
           }
           try {
             return createJob({
+              ...(logger ? { logger } : {}),
               host,
               runtimeRef: capability.runtime,
               environmentRef: capability.environment,

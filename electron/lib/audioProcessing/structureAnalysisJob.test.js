@@ -304,6 +304,7 @@ describe('createStructureAnalysisJob', () => {
     }));
     const createDecodeJob = decodeFactory();
 
+    const logger = { warn: vi.fn(), error: vi.fn() };
     const job = createStructureAnalysisJob({
       ...prepared,
       completedAt: () => '2026-08-24T00:00:00.000Z',
@@ -311,10 +312,12 @@ describe('createStructureAnalysisJob', () => {
       releaseGenerationLease,
       createDecodeJob,
       createProcessJob,
+      logger,
     });
 
     await expect(job.result).resolves.toMatchObject({ trackId: 'track-1' });
     expect(createProcessJob).toHaveBeenCalledOnce();
+    expect(createProcessJob.mock.calls[0][0].logger).toBe(logger);
     expect(createDecodeJob).toHaveBeenCalledWith(
       expect.objectContaining({
         ffmpegPath: prepared.ffmpegPath,

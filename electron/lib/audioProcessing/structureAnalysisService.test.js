@@ -73,6 +73,15 @@ function createHarness(overrides = {}) {
 }
 
 describe('createStructureAnalysisService', () => {
+  it('passes the diagnostics logger to each analysis job', async () => {
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const harness = createHarness({ logger });
+
+    await harness.service.run({ trackId: 'track-1', onProgress: vi.fn() });
+
+    expect(harness.createJob.mock.calls[0][0].logger).toBe(logger);
+  });
+
   it('pins the current structure capability only when scheduled and publishes for the same track', async () => {
     const harness = createHarness();
     const onProgress = vi.fn();

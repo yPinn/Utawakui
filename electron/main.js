@@ -907,6 +907,7 @@ if (!gotSingleInstanceLock) {
       resourcesPath: process.resourcesPath,
     });
     const structureAnalysisService = createStructureAnalysisService({
+      logger: runtimeDiagnosticsLogger,
       host: audioPythonRuntimeHost,
       scheduler: heavyJobScheduler,
       createJobId: crypto.randomUUID,

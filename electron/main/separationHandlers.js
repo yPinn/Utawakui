@@ -144,6 +144,7 @@ function registerSeparationHandlers({
           start: () => {
             assertCurrent();
             requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+            let gpuFallbackSeen = false;
             const createJob =
               prepared.outputFormat === 'flac5'
                 ? createControlledOutputJob
@@ -190,7 +191,20 @@ function registerSeparationHandlers({
                 // The shared scheduler may have waited after preparation.
                 preferGpu: getConfig().separationGpuAcceleration !== false,
               },
-              emitProgress,
+              emitProgress: (progress) => {
+                if (progress?.backend === 'cpu-fallback' && !gpuFallbackSeen) {
+                  gpuFallbackSeen = true;
+                  recordDiagnostic?.({
+                    level: 'warning',
+                    source: 'separation',
+                    operation: 'gpu-acceleration',
+                    code: 'SEPARATION_GPU_FALLBACK',
+                    message: 'GPU session failed; separation used the CPU',
+                    context: { presetId: prepared.engineRecipeId },
+                  });
+                }
+                emitProgress(progress);
+              },
             });
           },
         }),

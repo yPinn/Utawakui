@@ -108,9 +108,37 @@ describe('createAudioPythonProcessJob', () => {
     await expect(oversized.job.result).rejects.toThrow(/protocol/i);
   });
 
+  it('reports stderr presence and cleanup failure through the injected logger', async () => {
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const noisy = startJob({ logger });
+    noisy.child.stderr.write('secret path C:\\Users\\Name\\song.wav');
+    noisy.child.emit('close', 9, null);
+    await expect(noisy.job.result).rejects.toThrow();
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[audio-processing] Python worker emitted stderr',
+      null,
+      expect.objectContaining({ retryable: false }),
+    );
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toMatch(/Users|song/);
+
+    const cleanupError = new Error('locked');
+    const broken = startJob({
+      logger,
+      cleanup: () => {
+        throw cleanupError;
+      },
+    });
+    broken.child.emit('close', 9, null);
+    await expect(broken.job.result).rejects.toThrow(/cleanup failed/);
+    expect(logger.error).toHaveBeenCalledWith(
+      '[audio-processing] Python job cleanup failed',
+      cleanupError,
+    );
+  });
+
   it('does not expose stderr or local paths through abnormal-exit errors', async () => {
     const consoleError = vi
-      .spyOn(console, 'error')
+      .spyOn(console, 'warn')
       .mockImplementation(() => undefined);
     const { child, job } = startJob();
     child.stderr.write('secret path C:\\Users\\Name\\song.wav');
