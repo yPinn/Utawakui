@@ -72,6 +72,8 @@
 - [Row／Grid 收束](../archive/track-collection-row-consolidation-proposal-2026-10-14.md)（10-14）、[Apple HIG](design/apple-hig-alignment-review-2026-09-15.md)（09-15）、[視覺系統選型與遷移沿革](../archive/visual-system-evolution.md)、[參考網站結構](design/nintendo-wonder-reference-structure.md)
 - [字幕風格候選與共用格式](design/lyrics-overlays/README.md)保存視覺提案、來源與 Proposal／Build Spec 格式。採用與實作狀態見規格第 7.3 節。
 
+- [演出印刷物風格提案](design/performance-ephemera-proposal.md)（11-12）依序整理場次月曆、Folder 郵票與票根，以及 Output 票根、收據與歌詞色帶的樣張設定。
+
 ## 產品與競品
 
 - [播放器／排練規劃入口](product/player-practice-planning-2026-10-26.md)：四項順序、共用前置與待決策；四份提案已歸檔，行為與驗收案例由各契約持有；初始 JSON 僅保存歷史基線。功能狀態只見 spec。

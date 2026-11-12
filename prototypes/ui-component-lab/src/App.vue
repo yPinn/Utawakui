@@ -40,6 +40,9 @@ const componentLabOverlayHostAttributes =
 const OrnateInspectorDemo = defineAsyncComponent(
   () => import('./OrnateInspectorDemo.vue'),
 );
+const FolderStationeryDemo = defineAsyncComponent(
+  () => import('./FolderStationeryDemo.vue'),
+);
 
 const requestedTheme = new URLSearchParams(window.location.search).get('theme');
 const requestedState = new URLSearchParams(window.location.search).get('state');
@@ -96,6 +99,7 @@ const tabs = [
   { id: 'controls', label: 'Controls' },
   { id: 'feedback', label: 'Feedback' },
   { id: 'ornate', label: '和風直書側欄' },
+  { id: 'stationery', label: 'Folder 裝飾素材' },
   { id: 'disabled', label: 'Unavailable', disabled: true },
 ];
 const activeTab = shallowRef(
@@ -149,7 +153,7 @@ const menuContent = {
     >
 
     <section
-      v-if="activeTab !== 'ornate'"
+      v-if="activeTab !== 'ornate' && activeTab !== 'stationery'"
       class="lab-toolbar"
       aria-label="Lab controls"
     >
@@ -316,6 +320,13 @@ const menuContent = {
       id="lab-ornate-panel"
       role="tabpanel"
       aria-labelledby="lab-ornate-tab"
+    />
+
+    <FolderStationeryDemo
+      v-else-if="activeTab === 'stationery'"
+      id="lab-stationery-panel"
+      role="tabpanel"
+      aria-labelledby="lab-stationery-tab"
     />
 
     <section

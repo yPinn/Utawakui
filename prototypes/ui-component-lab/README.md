@@ -30,6 +30,11 @@ behavior, and 200% zoom reflow. It writes seven review fixtures under
 `screenshots/`: dark／light default and invalid controls plus dark loading with
 reduced motion, disabled, and feedback states.
 
+## Folder 裝飾素材
+
+選「Folder 裝飾素材」，或在 Lab 網址加上 `?tab=stationery&theme=dark`。
+用 `theme=light` 看淺色紙面。樣張使用正式 `UiFolderDecoration` 顯示三款郵票、日期郵戳及空白票根。
+
 ## 和風直書側欄
 
 啟動 Lab 後選「和風直書側欄」，或在 Lab 網址加上

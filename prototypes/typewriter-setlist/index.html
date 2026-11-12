@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant" data-overlay-backdrop="transparent">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>打字機歌單</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./typewriter.css" />
+    <script type="module" src="./main.mjs"></script>
+  </head>
+  <body>
+    <main class="typewriter-setlist" aria-labelledby="setlist-label" hidden>
+      <div class="typewriter-setlist__sheet">
+        <header class="typewriter-setlist__header">
+          <h1 id="setlist-label">歌單</h1>
+          <p id="setlist-source"></p>
+        </header>
+
+        <div class="typewriter-setlist__print-area">
+          <div class="typewriter-setlist__viewport">
+            <ol id="printed-tracks" class="typewriter-setlist__tracks"></ol>
+          </div>
+        </div>
+      </div>
+
+      <span
+        id="current-clip"
+        class="typewriter-setlist__clip"
+        aria-hidden="true"
+        hidden
+        >NP</span
+      >
+
+      <div class="typewriter-setlist__machine" aria-hidden="true">
+        <div class="typewriter-setlist__platen"></div>
+        <div class="typewriter-setlist__housing">
+          <div class="typewriter-setlist__basket"></div>
+          <div class="typewriter-setlist__keys">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

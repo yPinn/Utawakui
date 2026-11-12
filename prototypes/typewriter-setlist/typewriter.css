@@ -1,0 +1,274 @@
+@import '../../overlay/shared/base.css';
+@import '../../overlay/shared/fallback.css';
+@import '../../overlay/shared/tokens.css';
+
+.typewriter-setlist {
+  --unit: calc(100cqi / 480);
+  --paper: var(--ovl-color-kinetic-paper);
+  --ink: var(--ovl-color-ink);
+  --muted-ink: color-mix(in srgb, var(--ink) 70%, var(--paper));
+  --rule: color-mix(in srgb, var(--ink) 30%, var(--paper));
+  --blue: color-mix(
+    in srgb,
+    var(--ovl-color-ktv-fill-solo) 28%,
+    var(--ovl-color-text-secondary)
+  );
+  --blue-light: color-mix(in srgb, var(--blue) 68%, var(--ovl-color-paper));
+  --blue-shadow: color-mix(in srgb, var(--blue) 52%, var(--ink));
+  --mono: 'Courier New', monospace;
+  --type: 'Courier New', var(--ovl-font-display-cjk);
+
+  position: relative;
+  container-type: inline-size;
+  inline-size: min(100%, 480px, calc(100dvh * 480 / 810));
+  aspect-ratio: 480 / 810;
+  margin-inline: auto;
+  color: var(--ink);
+}
+
+.typewriter-setlist__sheet {
+  position: absolute;
+  inset: calc(38 * var(--unit)) calc(49 * var(--unit)) calc(105 * var(--unit));
+  overflow: hidden;
+  padding: calc(36 * var(--unit)) calc(32 * var(--unit)) 0;
+  border: 1px solid var(--rule);
+  border-radius: 14% 1% 0 0 / 4% 1% 0 0;
+  background:
+    url('../../overlay/shared/paper-grain.svg?no-inline'),
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--paper) 94%, var(--ink)),
+      var(--paper) 13% 87%,
+      color-mix(in srgb, var(--paper) 93%, var(--ink))
+    );
+  box-shadow: 0 calc(8 * var(--unit)) calc(18 * var(--unit))
+    color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.typewriter-setlist__sheet :is(h1, p, ol) {
+  margin: 0;
+}
+
+.typewriter-setlist__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: calc(12 * var(--unit));
+  padding-block-end: calc(10 * var(--unit));
+  border-block-end: 1px solid currentColor;
+}
+
+.typewriter-setlist__header h1,
+.typewriter-setlist__header p {
+  font: 600 calc(15 * var(--unit)) / 1.35 var(--mono);
+}
+
+.typewriter-setlist__header h1 {
+  flex: none;
+  letter-spacing: 0.1em;
+}
+
+.typewriter-setlist__header p {
+  overflow: hidden;
+  color: var(--muted-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typewriter-setlist__artist {
+  grid-area: artist;
+  overflow: hidden;
+  color: var(--muted-ink);
+  font-size: calc(14 * var(--unit));
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typewriter-setlist__print-area {
+  position: absolute;
+  inset: calc(84 * var(--unit)) calc(32 * var(--unit)) calc(48 * var(--unit));
+}
+
+.typewriter-setlist__viewport {
+  position: absolute;
+  inset: auto 0 0;
+  overflow: hidden;
+}
+
+.typewriter-setlist__tracks {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.typewriter-setlist__tracks li {
+  display: grid;
+  grid-template-columns: calc(32 * var(--unit)) minmax(0, 1fr);
+  grid-template-areas: 'number title' '. artist';
+  align-content: center;
+  row-gap: calc(3 * var(--unit));
+  min-block-size: calc(70 * var(--unit));
+  padding-block: calc(10 * var(--unit));
+  border-block-start: 1px solid var(--rule);
+}
+
+.typewriter-setlist__position {
+  grid-area: number;
+  color: var(--muted-ink);
+  font: 600 calc(15 * var(--unit)) / 1.6 var(--mono);
+}
+
+.typewriter-setlist__track {
+  display: -webkit-box;
+  grid-area: title;
+  overflow: hidden;
+  font: 700 calc(20 * var(--unit)) / 1.25 var(--type);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.typewriter-setlist__clip {
+  position: absolute;
+  z-index: 2;
+  inset-inline-end: calc(28 * var(--unit));
+  inset-block-end: calc(154 * var(--unit) + var(--clip-offset, 0px));
+  display: grid;
+  place-items: center;
+  inline-size: calc(36 * var(--unit));
+  block-size: calc(28 * var(--unit));
+  border: 1px solid var(--blue-shadow);
+  border-radius: calc(3 * var(--unit));
+  background: linear-gradient(var(--blue-light), var(--blue));
+  box-shadow: 0 2px 2px color-mix(in srgb, var(--ink) 28%, transparent);
+  color: var(--ink);
+  font: 700 calc(14 * var(--unit)) / 1 var(--mono);
+  transform: translateY(50%) rotate(-5deg);
+}
+
+.typewriter-setlist__clip::after {
+  position: absolute;
+  z-index: -1;
+  inset-block: calc(5 * var(--unit));
+  inset-inline-start: calc(100% - 2 * var(--unit));
+  inline-size: calc(15 * var(--unit));
+  border: 2px solid var(--blue-shadow);
+  border-radius: calc(3 * var(--unit)) calc(7 * var(--unit))
+    calc(7 * var(--unit)) calc(3 * var(--unit));
+  content: '';
+}
+
+.typewriter-setlist[data-feed='printing'] .typewriter-setlist__clip {
+  visibility: hidden;
+}
+
+.typewriter-setlist__machine {
+  position: absolute;
+  inset-inline: calc(13 * var(--unit));
+  inset-block-end: calc(26 * var(--unit));
+  block-size: calc(133 * var(--unit));
+}
+
+.typewriter-setlist__platen {
+  position: absolute;
+  z-index: 1;
+  inset-inline: calc(18 * var(--unit));
+  inset-block-start: calc(6 * var(--unit));
+  block-size: calc(21 * var(--unit));
+  border-radius: calc(8 * var(--unit));
+  background: linear-gradient(
+    var(--ink),
+    var(--ovl-color-vinyl-highlight) 19%,
+    var(--ink) 76%
+  );
+  box-shadow: 0 1px 0 var(--blue-light);
+}
+
+.typewriter-setlist__platen::before,
+.typewriter-setlist__platen::after {
+  position: absolute;
+  inset-block: calc(-4 * var(--unit));
+  inline-size: calc(29 * var(--unit));
+  border: 1px solid var(--blue-shadow);
+  border-radius: calc(5 * var(--unit));
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(3 * var(--unit)),
+      var(--blue-shadow) calc(4 * var(--unit))
+    ),
+    linear-gradient(var(--blue-light), var(--blue-shadow));
+  content: '';
+}
+
+.typewriter-setlist__platen::before {
+  inset-inline-start: calc(-15 * var(--unit));
+}
+
+.typewriter-setlist__platen::after {
+  inset-inline-end: calc(-15 * var(--unit));
+}
+
+.typewriter-setlist__housing {
+  position: absolute;
+  inset: calc(22 * var(--unit)) 0 0;
+  overflow: hidden;
+  border: 1px solid var(--blue-shadow);
+  border-radius: calc(27 * var(--unit)) calc(27 * var(--unit))
+    calc(14 * var(--unit)) calc(14 * var(--unit));
+  background: linear-gradient(
+    var(--blue-light),
+    var(--blue) 20%,
+    var(--blue) 78%,
+    var(--blue-shadow)
+  );
+  box-shadow: inset 0 calc(3 * var(--unit)) 0
+    color-mix(in srgb, var(--blue-light) 62%, var(--ovl-color-paper));
+}
+
+.typewriter-setlist__basket {
+  position: absolute;
+  inset: calc(14 * var(--unit)) calc(42 * var(--unit)) auto;
+  block-size: calc(37 * var(--unit));
+  overflow: hidden;
+  border: 1px solid var(--blue-shadow);
+  border-radius: 2% 2% 18% 18% / 14% 14% 66% 66%;
+  background: linear-gradient(var(--ovl-color-vinyl-highlight), var(--ink) 78%);
+}
+
+.typewriter-setlist__basket::after {
+  position: absolute;
+  inset: calc(12 * var(--unit)) 15% calc(-21 * var(--unit));
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from -2deg at 50% 98%,
+    var(--ovl-color-vinyl-highlight) 0 3deg,
+    color-mix(in srgb, var(--ovl-color-paper) 52%, var(--ink)) 3deg 4deg,
+    var(--ink) 4deg 7deg
+  );
+  content: '';
+}
+
+.typewriter-setlist__keys {
+  position: absolute;
+  inset-inline: calc(43 * var(--unit));
+  inset-block-end: calc(15 * var(--unit));
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: calc(4 * var(--unit));
+  padding: calc(6 * var(--unit));
+  border-radius: calc(10 * var(--unit));
+  background: var(--ink);
+}
+
+.typewriter-setlist__keys span {
+  block-size: calc(20 * var(--unit));
+  border-radius: calc(5 * var(--unit));
+  background: linear-gradient(
+    var(--blue-light),
+    var(--blue) 68%,
+    var(--blue-shadow)
+  );
+}

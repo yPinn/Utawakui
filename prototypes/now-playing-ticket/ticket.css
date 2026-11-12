@@ -1,0 +1,10 @@
+@import '../../overlay/shared/base.css';
+@import '../../overlay/shared/fallback.css';
+@import '../../overlay/shared/tokens.css';
+@import '../../overlay/now-playing/artwork.css';
+@import '../../overlay/shared/appearance.css';
+@import '../../overlay/now-playing/ticket.css';
+
+body {
+  container-type: inline-size;
+}
