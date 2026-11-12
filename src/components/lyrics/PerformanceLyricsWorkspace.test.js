@@ -9,6 +9,19 @@ const source = readCatalogSource(
 );
 
 describe('PerformanceLyricsWorkspace live controls', () => {
+  it('uses a single pill button with a distinct destination label and icon for each lyrics mode', () => {
+    const toggle = source.match(
+      /<UiButton\s+v-if="videoAsset \|\| videoMode"[\s\S]*?<\/UiButton\s*>/,
+    )?.[0];
+
+    expect(toggle).toContain('variant="secondary"');
+    expect(toggle).toContain('shape="pill"');
+    expect(toggle).toContain(':icon="videoMode ? Captions : SquarePlay"');
+    expect(toggle).toContain('切換至影片');
+    expect(toggle).toContain('切換至歌詞');
+    expect(toggle).toContain('@click="setVideoMode(!videoMode)"');
+  });
+
   it('places the A–B loop entry in the lyrics workspace and keeps PlayerBar free of it', () => {
     expect(source).toContain(
       '<LyricsLoopTool :context-track-id="selectedTrack?.id',

@@ -35,6 +35,11 @@ const props = defineProps({
     default: 'neutral',
     validator: (value) => ['neutral', 'danger'].includes(value),
   },
+  shape: {
+    type: String,
+    default: 'rounded',
+    validator: (value) => ['rounded', 'pill'].includes(value),
+  },
   active: { type: Boolean, default: false }, // toggle state, e.g. repeat-on
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
@@ -81,6 +86,7 @@ function buttonAttrs(tooltipTriggerProps) {
       `ui-btn--intent-${intent}`,
       {
         'ui-btn--active': active,
+        'ui-btn--pill': shape === 'pill',
         'ui-btn--stretch': stretch,
         'ui-btn--icon-only': (icon || loading) && !$slots.default,
         'is-loading': loading,
@@ -132,6 +138,10 @@ function buttonAttrs(tooltipTriggerProps) {
       var(--ui-motion-easing-standard),
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard),
     opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
+}
+
+.ui-btn--pill {
+  border-radius: var(--ui-radius-pill);
 }
 
 @scope ([data-ui-system='v2']) to ([data-ui-system]) {

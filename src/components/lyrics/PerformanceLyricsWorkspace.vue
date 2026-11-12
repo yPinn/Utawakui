@@ -8,7 +8,12 @@ import {
   useId,
   watch,
 } from 'vue';
-import { Pencil, SlidersHorizontal, Video } from '../../icons/index.js';
+import {
+  Captions,
+  Pencil,
+  SlidersHorizontal,
+  SquarePlay,
+} from '../../icons/index.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
@@ -274,12 +279,14 @@ onMounted(initialize);
       <template #actions>
         <UiButton
           v-if="videoAsset || videoMode"
-          :icon="Video"
           variant="secondary"
-          :aria-pressed="videoMode"
+          shape="pill"
+          :icon="videoMode ? Captions : SquarePlay"
           @click="setVideoMode(!videoMode)"
           >{{
-            t(videoMode ? 'trackVideo.lyricsSheet' : 'trackVideo.lyricsVideo')
+            videoMode
+              ? t('trackVideo.switchToLyrics')
+              : t('trackVideo.switchToVideo')
           }}</UiButton
         >
         <LyricsLoopTool :context-track-id="selectedTrack?.id ?? ''" />

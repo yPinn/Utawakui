@@ -14,6 +14,8 @@
   "youtubeFallback": "如果影片無法內嵌播放，可在 YouTube 開啟。",
   "lyricsVideo": "影片版",
   "lyricsSheet": "回到一般歌詞",
+  "switchToVideo": "切換至影片",
+  "switchToLyrics": "切換至歌詞",
   "aspect": "影片畫幅",
   "scopeAspect": "電影 2.39:1",
   "noFrame": "目前播放位置沒有可顯示的影片畫面。",
