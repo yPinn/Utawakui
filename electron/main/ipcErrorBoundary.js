@@ -2,6 +2,7 @@
 
 const { randomUUID } = require('node:crypto');
 const { createAppError } = require('../lib/appError');
+const { classifyFailureKind } = require('../lib/failureKind');
 
 // Failures get one id shared by the main event and the public error, so a
 // renderer fallback record links to the same failure. Successes stay unlogged.
@@ -11,6 +12,8 @@ async function runDiagnosticIpcOperation(options, operation) {
     return await operation();
   } catch (error) {
     const correlationId = randomUUID();
+    const failureKind = classifyFailureKind(error);
+    const kindContext = failureKind ? { failureKind } : {};
     let diagnosticRecorded = false;
     try {
       diagnosticRecorded =
@@ -21,6 +24,7 @@ async function runDiagnosticIpcOperation(options, operation) {
           correlationId,
           context: {
             ...(options.diagnostic?.context || {}),
+            ...kindContext,
             durationMs: Date.now() - startedAt,
           },
           error,
@@ -31,6 +35,7 @@ async function runDiagnosticIpcOperation(options, operation) {
 
     const publicContext = {
       ...(options.publicError.context || {}),
+      ...kindContext,
       correlationId,
       ...(diagnosticRecorded ? { diagnosticRecorded: true } : {}),
     };

@@ -321,6 +321,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 3. IPC 只回傳 bounded `UTAWAKUI_APP_ERROR`，不含路徑、URL、stderr 或 provider body。
 4. `diagnosticRecorded: true` 防止 renderer 重複保存；main 記錄失敗時 renderer 才保存安全 fallback。
 5. 下載失敗值在 `shared/downloadFailureValues.json`；main 分類、renderer 顯示文案。
+6. 失敗原因類別在 `shared/failureKindValues.json`；`ipcErrorBoundary.js` 依錯誤碼（含 `cause` 鏈）標記 `failureKind`，renderer 以 `common.appError.failureKind.*` 取代內文，標題保留操作名稱。
 
 `diagnosticsLifecycle.js` 記錄 process／webContents 失敗；只有主視窗的致命 renderer 結束、main-frame 載入或 preload 失敗、無回應會交給 `rendererRecovery.js`，每個 process 最多一個原生對話框（重新啟動／退出）。Performer、startup probe、Spout helper 與 Chromium 子程序各自處理。
 

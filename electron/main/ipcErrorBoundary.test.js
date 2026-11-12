@@ -116,6 +116,46 @@ describe('runDiagnosticIpcOperation', () => {
     expect(thrown.message).not.toContain('private');
   });
 
+  it('tags a recognized failure kind on both the record and the public error', async () => {
+    const recordDiagnostic = vi.fn(() => ({ ok: true }));
+    const thrown = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: { source: 'playlists', operation: 'delete', code: 'X' },
+        publicError: { code: 'X', message: '公開訊息', context: { a: 1 } },
+      },
+      () =>
+        Promise.reject(
+          new Error('wrapped', {
+            cause: Object.assign(new Error('C:\\x'), { code: 'ENOSPC' }),
+          }),
+        ),
+    ).catch((error) => error);
+
+    expect(recordDiagnostic.mock.calls[0][0].context.failureKind).toBe(
+      'disk-full',
+    );
+    expect(thrown.context).toMatchObject({ a: 1, failureKind: 'disk-full' });
+    expect(thrown.message).toContain('"failureKind":"disk-full"');
+  });
+
+  it('adds no failure kind when the cause is not recognized', async () => {
+    const recordDiagnostic = vi.fn(() => ({ ok: true }));
+    const thrown = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: { source: 'playlists', operation: 'delete', code: 'X' },
+        publicError: { code: 'X', message: '公開訊息' },
+      },
+      () => Promise.reject(new Error('private')),
+    ).catch((error) => error);
+
+    expect(recordDiagnostic.mock.calls[0][0].context).not.toHaveProperty(
+      'failureKind',
+    );
+    expect(thrown.context).not.toHaveProperty('failureKind');
+  });
+
   it('returns validation results through the plan runner without diagnostics', async () => {
     const recordDiagnostic = vi.fn();
     const run = createPlanIpcRunner({

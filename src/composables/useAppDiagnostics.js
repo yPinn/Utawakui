@@ -11,6 +11,7 @@ const recordedErrors = new WeakMap();
 const DIAGNOSTIC_CONTEXT_KEYS = new Set([
   'count',
   'dependencyId',
+  'failureKind',
   'featureId',
   'httpStatus',
   'presetId',

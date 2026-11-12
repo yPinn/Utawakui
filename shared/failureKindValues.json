@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "kinds": [
+    "disk-full",
+    "access-denied",
+    "file-in-use",
+    "file-missing",
+    "network",
+    "dependency-missing"
+  ]
+}

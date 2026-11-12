@@ -27,6 +27,7 @@ const CONTEXT_KEYS = Object.freeze([
   'errno',
   'errorName',
   'exitCode',
+  'failureKind',
   'fatal',
   'failureCount',
   'featureId',

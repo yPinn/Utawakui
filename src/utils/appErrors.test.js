@@ -95,6 +95,33 @@ describe('normalizeAppError', () => {
       context: { dependencyId: 'model-a' },
     });
   });
+
+  it('replaces the message with failure-kind guidance and keeps the title', () => {
+    const payload = {
+      code: 'PLAYLISTS_DELETE_FAILED',
+      title: '播放清單無法刪除',
+      message: '這個播放清單無法刪除，請再試一次。',
+      context: { failureKind: 'disk-full', retryable: true },
+    };
+    const normalized = normalizeAppError(
+      new Error(`${APP_ERROR_PREFIX}${JSON.stringify(payload)}`),
+      { message: '呼叫端文案，請再試一次。' },
+    );
+
+    expect(normalized.title).toBe('播放清單無法刪除');
+    expect(normalized.message).toBe('磁碟空間不足，請清出空間後再試。');
+    expect(normalized.context.failureKind).toBe('disk-full');
+  });
+
+  it('ignores an unknown failure kind', () => {
+    const normalized = normalizeAppError(new Error('x'), {
+      message: '呼叫端文案。',
+      context: { failureKind: 'C:\\Users\\Singer' },
+    });
+
+    expect(normalized.message).toBe('呼叫端文案。');
+    expect(normalized.context).not.toHaveProperty('failureKind');
+  });
 });
 
 describe('appError helpers', () => {

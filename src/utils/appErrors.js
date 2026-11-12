@@ -1,3 +1,4 @@
+import failureKindValues from '../../shared/failureKindValues.json';
 import { t } from './i18n.js';
 export const APP_ERROR_PREFIX = 'UTAWAKUI_APP_ERROR:';
 
@@ -13,6 +14,7 @@ const PUBLIC_CONTEXT_KEYS = new Set([
   'correlationId',
   'diagnosticRecorded',
   'dependencyId',
+  'failureKind',
   'featureId',
   'httpStatus',
   'presetId',
@@ -58,6 +60,16 @@ function boundedPublicText(value, maxLength, fallback = '') {
   return text ? text.slice(0, maxLength) : fallback;
 }
 
+const FAILURE_KINDS = new Set(failureKindValues.kinds);
+
+// Guidance for a cause main recognized; the title still names the operation.
+function failureKindMessage(kind) {
+  if (!FAILURE_KINDS.has(kind)) return '';
+  return t(
+    `common.appError.failureKind.${kind.replace(/-([a-z])/g, (_, c) => c.toUpperCase())}`,
+  );
+}
+
 function safePublicContext(context) {
   if (!context || typeof context !== 'object' || Array.isArray(context)) {
     return {};
@@ -66,6 +78,7 @@ function safePublicContext(context) {
     Object.entries(context).filter(
       ([key, value]) =>
         PUBLIC_CONTEXT_KEYS.has(key) &&
+        (key !== 'failureKind' || FAILURE_KINDS.has(value)) &&
         (typeof value === 'boolean' ||
           (typeof value === 'number' && Number.isFinite(value)) ||
           (typeof value === 'string' && value.length <= 80)),
@@ -88,8 +101,14 @@ export function normalizeAppError(error, options = {}) {
     options.severity || parsed?.severity || error?.severity,
   );
   const code = options.code || parsed?.code || error?.code || 'UNKNOWN_ERROR';
+  const context = safePublicContext({
+    ...(parsed?.context || {}),
+    ...(options.context || {}),
+  });
   const message = boundedPublicText(
-    options.message || parsed?.message,
+    failureKindMessage(context.failureKind) ||
+      options.message ||
+      parsed?.message,
     PUBLIC_TEXT_LIMITS.message,
     t('common.appError.message'),
   );
@@ -113,10 +132,7 @@ export function normalizeAppError(error, options = {}) {
     ),
     source,
     operation: options.operation || parsed?.operation || '',
-    context: safePublicContext({
-      ...(parsed?.context || {}),
-      ...(options.context || {}),
-    }),
+    context,
     createdAt: options.createdAt || new Date().toISOString(),
   };
 }

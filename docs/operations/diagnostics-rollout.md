@@ -67,6 +67,13 @@ fail-open and cannot replace the original operation's public error. The
 Expected cancellation, disabled gates and validation/stale-state control flow stay
 outside operational-error recording.
 
+The boundary also tags a closed `failureKind` (disk full, access denied, file in
+use, file missing, network, missing component) from the error code or its `cause`
+chain. It is stored in the private record and the public context; renderer swaps
+the message for that kind's short guidance and keeps the operation title.
+Unrecognized causes keep the operation's own copy. New kinds go through
+`shared/failureKindValues.json` plus copy in every locale.
+
 Adoption is incremental and must be checked per operation. Current consumers
 include dependency, separation, library/playlist, reading, configuration and
 selected feature, storage, artwork/artist, lyrics-research
