@@ -258,6 +258,35 @@ describe('output HTTP delivery', () => {
     expect(recordingFailed.status).toBe(400);
   });
 
+  it('serves the ticket and ribbon assets on the exact Browser Source routes', async () => {
+    const baseUrl = await startHandler();
+    const routes = [
+      ['/overlay/now-playing/ticket.css', 'text/css', 'ticket-stub'],
+      ['/overlay/shared/ticketShape.css', 'text/css', '.ticket-cut'],
+      ['/overlay/shared/paper-grain.svg', 'image/svg+xml', '<svg'],
+      ['/overlay/setlist/ribbon.css', 'text/css', '.ribbon-setlist'],
+      [
+        '/overlay/setlist/ribbonView.mjs',
+        'text/javascript',
+        'createRibbonView',
+      ],
+      [
+        '/overlay/setlist/ribbonFlashback.mjs',
+        'text/javascript',
+        'createRibbonFlashback',
+      ],
+    ];
+    for (const [route, type, marker] of routes) {
+      const response = await fetch(baseUrl + route);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toContain(type);
+      expect(await response.text()).toContain(marker);
+    }
+    expect(
+      (await fetch(baseUrl + '/overlay/shared/paper-grain-private.svg')).status,
+    ).toBe(404);
+  });
+
   it('serves only exact static routes with browser-source security headers', async () => {
     const { overlayRoot, sharedRoot } = createFixtureRoots();
     const grainBytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);

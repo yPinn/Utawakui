@@ -143,6 +143,54 @@ export function createOutputPreviewScene({
       (item) => item.state === 'current',
     ).track.title;
   }
+  if (!suppliedSnapshot && templateId === 'ribbon-setlist') {
+    const earlier = [
+      'Night Drive',
+      '風的方向',
+      'Paper Planes',
+      '夜明け',
+      'After Rain',
+      'City Lights',
+      '海邊的信',
+      'Low Tide',
+      'Window Seat (Late Night Acoustic Version)',
+      '靜夜',
+      'Before Dawn',
+    ];
+    const titles = [
+      'Midnight Signal',
+      'Hollow City',
+      '玻璃海',
+      'BLUE',
+      '2 AM',
+      'Night Bus',
+      'AFTERGLOW',
+      'A Place Between',
+      '静かな空',
+      'Blue Hour',
+      'When the City Sleeps',
+      'Silent Radio',
+      '晚風',
+    ];
+    snapshot.queue.receipt = {
+      completedCount: earlier.length + titles.length,
+      history: [
+        ...earlier.map((title, index) => ({
+          ordinal: index + 1,
+          track: { id: `archive-demo-${index + 1}`, title },
+        })),
+        ...titles.map((title, index) => ({
+          ordinal: earlier.length + index + 1,
+          track: { id: `ribbon-example-${index + 1}`, title },
+        })),
+      ],
+    };
+    const current = snapshot.queue.items.find(
+      (item) => item.state === 'current',
+    );
+    current.track.title = 'Into the Morning';
+    snapshot.playback.track.title = current.track.title;
+  }
   const appearance = normalizeOutputAppearance(settings, { templateId });
   const lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
     templateId,
@@ -158,7 +206,7 @@ export function createOutputPreviewScene({
     kind === 'lyrics'
       ? selectLyricsOverlayFrame(snapshot, options)
       : kind === 'setlist'
-        ? templateId === 'receipt-setlist'
+        ? templateId === 'receipt-setlist' || templateId === 'ribbon-setlist'
           ? selectReceiptSetlistFrame(snapshot)
           : selectSetlistFrame(snapshot)
         : selectArtworkFrame(snapshot, options);

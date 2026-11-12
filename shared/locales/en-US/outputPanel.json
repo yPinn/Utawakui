@@ -1,5 +1,21 @@
 {
   "templates": {
+    "ribbonSetlist": {
+      "name": "Red & Black Ribbon",
+      "availability": { "summary": "Available for Setlist output" },
+      "summary": "Angled red and black ribbons with aligned titles and consistent row spacing.",
+      "detail": "Fills each page in performance order as the current song unrolls. Review earlier pages on a timer and choose a white or transparent background.",
+      "preview": {
+        "layoutLabel": "Single-column ribbons",
+        "motionLabel": "Unrolls with changing print"
+      },
+      "tags": [
+        "Red and black ribbons",
+        "Transparent option",
+        "Fixed row spacing"
+      ],
+      "settings": [{ "label": "Background", "value": "White or transparent" }]
+    },
     "receiptSetlist": {
       "name": "Receipt Setlist",
       "availability": {
@@ -334,6 +350,17 @@
         }
       }
     },
+    "ticketStub": {
+      "name": "Show Ticket",
+      "availability": "A bottom-aligned ticket on a transparent canvas.",
+      "summary": "Now Playing on a warm paper ticket.",
+      "detail": "Square artwork sits beside the track name, with a perforated stub at the right edge.",
+      "layoutLabel": "Landscape ticket",
+      "motionLabel": "Track updates",
+      "coverTag": "Square artwork",
+      "paperTag": "Warm paper",
+      "backdropTag": "Transparent edges"
+    },
     "coverPlayer": {
       "name": "Cover Radio",
       "availability": {
@@ -552,6 +579,7 @@
     "common": "Default look only; check the actual output in the workbench.",
     "queueBoard": "Scrolling sample; actual output shows page by page.",
     "receiptSetlist": "Uses sample records; the real review shows up to 100.",
+    "ribbonSetlist": "The motion preview uses synthetic songs. Live output paginates based on row height.",
     "karaokeStack": "Wipe sample, not actual per-character sync.",
     "kineticPop": "Fixed phrase sample; doesn't show line changes across the song.",
     "ornateVertical": "Two-line loop sample; doesn't show full line changes.",
@@ -561,6 +589,7 @@
     "mangaFrame": "Panels shown together; doesn't show handoffs or per-character sync.",
     "artCard": "Text artwork sample; the spin doesn't follow playback position.",
     "coverPlayer": "Artwork and progress are for illustration only.",
+    "ticketStub": "The example shows an initial. During playback, available artwork is displayed.",
     "fallback": "Style reference only."
   },
   "obs": {

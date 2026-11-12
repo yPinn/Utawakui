@@ -11,12 +11,15 @@ import MangaFramePreview from './MangaFramePreview.vue';
 import OrnateVerticalPreview from './OrnateVerticalPreview.vue';
 import QueueBoardPreview from './QueueBoardPreview.vue';
 import ReceiptSetlistPreview from './ReceiptSetlistPreview.vue';
+import RibbonSetlistPreview from './RibbonSetlistPreview.vue';
+import TicketStubPreview from './TicketStubPreview.vue';
 
 // Each preview renders inside the shared ObsTemplateMockup canvas and takes
 // the same props: { scene, size, animated }.
 const TEMPLATE_PREVIEWS = Object.freeze({
   'queue-board': QueueBoardPreview,
   'receipt-setlist': ReceiptSetlistPreview,
+  'ribbon-setlist': RibbonSetlistPreview,
   'karaoke-stack': KaraokeStackPreview,
   'kinetic-pop': KineticPopPreview,
   'ornate-vertical': OrnateVerticalPreview,
@@ -25,6 +28,7 @@ const TEMPLATE_PREVIEWS = Object.freeze({
   'manga-frame': MangaFramePreview,
   'live-stage': LiveStagePreview,
   'art-card': ArtCardPreview,
+  'ticket-stub': TicketStubPreview,
   'cover-player': CoverPlayerPreview,
 });
 

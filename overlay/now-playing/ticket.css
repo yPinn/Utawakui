@@ -1,0 +1,138 @@
+@import '../shared/ticketShape.css';
+
+:is(
+  :root[data-ovl-template='ticket-stub'] .artwork-overlay,
+  .now-playing-ticket
+) {
+  --ticket-unit: min(calc(100cqi / 480), 1px);
+  --ticket-paper: var(--ovl-color-kinetic-paper);
+  --ticket-ink: var(--ovl-color-ink);
+  --ticket-type-scale: var(--ovl-user-font-scale-ratio, 1);
+  --ticket-type-weight: var(--ovl-user-font-weight, 700);
+
+  position: absolute;
+  inset: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: 0;
+  transform: none;
+
+  .ticket-paper {
+    --ticket-inset: calc(8 * var(--ticket-unit));
+    --ticket-notch-radius: var(--ticket-inset);
+
+    position: absolute;
+    inset-block-end: calc(16 * var(--ticket-unit));
+    left: 50%;
+    translate: -50%;
+    z-index: auto;
+    display: grid;
+    grid-template-columns: calc(96 * var(--ticket-unit)) minmax(0, 1fr);
+    align-items: center;
+    gap: calc(16 * var(--ticket-unit));
+    inline-size: calc(448 * var(--ticket-unit));
+    block-size: calc(136 * var(--ticket-unit));
+    padding-inline: calc(24 * var(--ticket-unit)) calc(76 * var(--ticket-unit));
+    aspect-ratio: auto;
+    container-type: normal;
+    direction: ltr;
+    border: 0;
+    border-radius: 0;
+    background: var(--ticket-paper) url('../shared/paper-grain.svg?no-inline');
+    color: var(--ticket-ink);
+  }
+
+  .ticket-paper::before,
+  .ticket-paper::after {
+    position: absolute;
+    inset: var(--ticket-inset);
+    background: none;
+    box-shadow: none;
+    mix-blend-mode: normal;
+    opacity: 1;
+    pointer-events: none;
+    content: '';
+  }
+
+  .ticket-paper::before {
+    border: 1px solid currentColor;
+  }
+
+  .ticket-paper::after {
+    inset-inline-start: calc(388 * var(--ticket-unit));
+    border-inline-start: 1px dashed currentColor;
+  }
+
+  .ticket-cover {
+    position: relative;
+    inset: auto;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    overflow: hidden;
+    outline: 1px solid var(--ticket-ink);
+    background: var(--ticket-ink);
+    color: var(--ticket-paper);
+    font-size: calc(48 * var(--ticket-unit));
+    font-weight: var(--ticket-type-weight);
+    line-height: 1;
+  }
+
+  .ticket-copy {
+    position: relative;
+    inset: auto;
+    display: grid;
+    align-content: center;
+    gap: calc(8 * var(--ticket-unit));
+    min-inline-size: 0;
+    padding: 0;
+    background: none;
+    color: var(--ticket-ink);
+    text-align: start;
+  }
+
+  .ticket-title {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: var(--ticket-ink);
+    font-size: calc(26 * var(--ticket-unit) * var(--ticket-type-scale));
+    font-weight: var(--ticket-type-weight);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    text-wrap: wrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .ticket-artist {
+    display: block;
+    margin: 0;
+    overflow: hidden;
+    color: color-mix(in srgb, var(--ticket-ink) 76%, var(--ticket-paper));
+    font-size: calc(14 * var(--ticket-unit) * var(--ticket-type-scale));
+    font-weight: 500;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+:root[data-ovl-template='ticket-stub'] {
+  body {
+    container-type: inline-size;
+  }
+
+  .artwork-overlay__vinyl-stage,
+  .artwork-overlay__album-panel {
+    display: contents;
+  }
+
+  .artwork-overlay__turntable,
+  .artwork-overlay__exchange-record,
+  .artwork-overlay__incoming-sleeve,
+  .artwork-overlay__player {
+    display: none;
+  }
+}

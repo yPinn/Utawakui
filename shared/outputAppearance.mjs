@@ -433,8 +433,18 @@ const TEMPLATE_CONFIGS = Object.freeze({
     ],
     fields: { fontScale: { defaultValue: 'medium' } },
   },
+  'ribbon-setlist': {
+    keys: ['surface', 'receiptReview', 'receiptReviewInterval'],
+    fields: {
+      surface: { defaultValue: 'solid', optionIds: ['solid', 'transparent'] },
+    },
+  },
   'art-card': {
     keys: ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
+    fields: NOW_PLAYING_FIELD_DEFAULTS,
+  },
+  'ticket-stub': {
+    keys: ['fontScale', 'fontWeight'],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'cover-player': {

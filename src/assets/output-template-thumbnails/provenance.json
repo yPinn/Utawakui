@@ -8,6 +8,15 @@
     "requiredReview": "Inspect content, rights, crop, dimensions and runtime match before a separately authorized replacement"
   },
   "templates": {
+    "ribbon-setlist": {
+      "file": "ribbon-setlist.png",
+      "sha256": "f62de04c55306805fe96ddbdc7553b65049a9cfda22a7a8ea55ed3d8f97b6d3d",
+      "content": "style-reference",
+      "rights": "unverified",
+      "delivery": "blocked-G01",
+      "humanReview": "not-tested",
+      "origin": "User-supplied red and black ribbon collage, requested as the Gallery cover on 2026-11-12; original PNG bytes preserved"
+    },
     "queue-board": {
       "file": "queue-board.jpg",
       "sha256": "9f1f04006e72b066f6b558eb7a15c6e9cb60ec5bc6fcd4ed5bc9acf7ca8edc14",
@@ -81,6 +90,15 @@
       "rights": "unverified",
       "delivery": "blocked-G01",
       "humanReview": "not-tested"
+    },
+    "ticket-stub": {
+      "file": "ticket-stub.jpg",
+      "sha256": "5dab6a2f51d8aad001acb099e89388fa9bd34b628f32b6f515bc7a8bd4084d82",
+      "content": "current-runtime-capture",
+      "rights": "project-owned-synthetic-artwork",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "2026-11-12 live 480 × 270 Now Playing Browser Source capture in Electron with synthetic stage artwork, composited onto the dark inspection backdrop and scaled to 1280 × 720."
     },
     "cover-player": {
       "file": "cover-player.jpg",

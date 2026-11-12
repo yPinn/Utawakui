@@ -16,7 +16,9 @@ describe('bundled output template thumbnails', () => {
     const blocked = [];
     for (const preset of OUTPUT_TEMPLATES) {
       const record = provenance.templates[preset.id];
-      expect(record.file).toBe(`${preset.id}.jpg`);
+      expect(record.file).toBe(
+        `${preset.id}.${preset.id === 'ribbon-setlist' ? 'png' : 'jpg'}`,
+      );
       const bytes = readFileSync(
         new URL(
           `../assets/output-template-thumbnails/${record.file}`,
@@ -35,6 +37,7 @@ describe('bundled output template thumbnails', () => {
         [
           'receipt-setlist',
           'cover-player',
+          'ticket-stub',
           'chalkboard-vertical',
           'centered-vertical',
         ].includes(preset.id)
@@ -59,6 +62,7 @@ describe('bundled output template thumbnails', () => {
       'live-stage',
       'manga-frame',
       'receipt-setlist',
+      'ribbon-setlist',
     ]);
     expect(provenance.generation.overwriteBundledAssets).toBe(false);
   });
@@ -115,5 +119,11 @@ describe('bundled output template thumbnails', () => {
 
   it('maps the bundled vinyl artwork to the stable Art Card template id', () => {
     expect(getOutputTemplateThumbnail('art-card')).toMatch(/art-card.*\.jpg$/);
+  });
+
+  it('maps the supplied ribbon collage to the Red & Black Ribbon template', () => {
+    expect(getOutputTemplateThumbnail('ribbon-setlist')).toMatch(
+      /ribbon-setlist.*\.png$/,
+    );
   });
 });

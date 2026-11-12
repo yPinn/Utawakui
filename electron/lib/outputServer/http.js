@@ -57,6 +57,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/now-playing/': ['now-playing', 'index.html'],
   '/overlay/now-playing/now-playing.mjs': ['now-playing', 'now-playing.mjs'],
   '/overlay/now-playing/artwork.css': ['now-playing', 'artwork.css'],
+  '/overlay/now-playing/ticket.css': ['now-playing', 'ticket.css'],
   '/overlay/now-playing/artworkLayout.mjs': [
     'now-playing',
     'artworkLayout.mjs',
@@ -76,6 +77,9 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/setlist/setlistMotion.mjs': ['setlist', 'setlistMotion.mjs'],
   '/overlay/setlist/receipt.css': ['setlist', 'receipt.css'],
   '/overlay/setlist/receiptView.mjs': ['setlist', 'receiptView.mjs'],
+  '/overlay/setlist/ribbon.css': ['setlist', 'ribbon.css'],
+  '/overlay/setlist/ribbonView.mjs': ['setlist', 'ribbonView.mjs'],
+  '/overlay/setlist/ribbonFlashback.mjs': ['setlist', 'ribbonFlashback.mjs'],
   '/overlay/setlist/receiptMotion.mjs': ['setlist', 'receiptMotion.mjs'],
   '/overlay/setlist/receipt-paper.png': ['setlist', 'receipt-paper.png'],
   '/overlay/setlist/receipt-grain.png': ['setlist', 'receipt-grain.png'],
@@ -83,6 +87,8 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/lifecycle.mjs': ['shared', 'lifecycle.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
+  '/overlay/shared/ticketShape.css': ['shared', 'ticketShape.css'],
+  '/overlay/shared/paper-grain.svg': ['shared', 'paper-grain.svg'],
   '/overlay/shared/fallback.css': ['shared', 'fallback.css'],
   '/overlay/shared/elementReporter.mjs': ['shared', 'elementReporter.mjs'],
   '/overlay/shared/lyricsPresentation.mjs': [
@@ -217,6 +223,7 @@ const OVERLAY_MIME_TYPES = Object.freeze({
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
   '.png': 'image/png',
+  '.svg': 'image/svg+xml',
   '.ttf': 'font/ttf',
   '.woff2': 'font/woff2',
 });

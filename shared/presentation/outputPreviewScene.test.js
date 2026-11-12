@@ -86,7 +86,8 @@ describe('F3 app-owned preview scene', () => {
         kind === 'lyrics'
           ? selectLyricsOverlayFrame(result.snapshot, options)
           : kind === 'setlist'
-            ? templateId === 'receipt-setlist'
+            ? templateId === 'receipt-setlist' ||
+              templateId === 'ribbon-setlist'
               ? selectReceiptSetlistFrame(result.snapshot)
               : selectSetlistFrame(result.snapshot)
             : selectArtworkFrame(result.snapshot, options);

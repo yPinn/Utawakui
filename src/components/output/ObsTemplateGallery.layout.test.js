@@ -30,10 +30,13 @@ describe('Output Gallery bounded Folder composition', () => {
         /<button[^>]*class="obs-template-thumb[\s\S]*?<\/button>/gu,
       ),
     ];
-    expect(tiles).toHaveLength(2);
-    expect(tiles[0][0]).toContain('obs-template-thumbnail');
-    expect(tiles[0][0]).toContain('obs-template-thumb__name');
-    expect(tiles[0][0]).not.toContain('ui-chip');
+    expect(tiles).toHaveLength(3);
+    for (const [tile] of tiles) {
+      expect(tile).toContain('obs-template-thumbnail');
+      expect(tile).toContain('obs-template-thumb__name');
+      expect(tile).not.toContain('ui-chip');
+    }
+    expect(tiles.some(([tile]) => tile.includes('紅黑緞帶'))).toBe(true);
     const preset = getOutputWorkbenchData().templates.find(
       (item) => item.id === 'queue-board',
     );

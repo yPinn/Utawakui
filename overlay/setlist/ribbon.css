@@ -1,0 +1,498 @@
+.ribbon-host {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.ribbon-host[hidden] {
+  display: none !important;
+}
+
+.ribbon-setlist,
+.ribbon-setlist * {
+  box-sizing: border-box;
+}
+
+.ribbon-setlist {
+  --ribbon-unroll-duration: 1180ms;
+  --ribbon-unroll-ease: cubic-bezier(0.3, 0.35, 0.4, 1);
+  --ribbon-red: color-mix(
+    in oklch,
+    var(--ovl-color-kinetic-red) 84%,
+    var(--ovl-color-kinetic-ochre)
+  );
+  --ribbon-ink: var(--ovl-color-vinyl-ink);
+  --ribbon-paper: var(--ovl-color-paper);
+  --ribbon-paper-inset: var(--ovl-primitive-space-2);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  inline-size: 480px;
+  block-size: 810px;
+  overflow: hidden;
+  isolation: isolate;
+  transform: translate(-50%, -50%) scale(var(--ribbon-scale, 1));
+  color: var(--ribbon-ink);
+  font-family: var(--ovl-font-ui);
+  text-align: left;
+}
+
+.ribbon-setlist[data-surface='solid'] {
+  background: var(--ribbon-paper);
+  clip-path: inset(var(--ribbon-paper-inset));
+}
+
+.ribbon-setlist[data-surface='solid']::before {
+  position: absolute;
+  z-index: -1;
+  inset: var(--ribbon-paper-inset);
+  background: url('./receipt-grain.png') center / cover;
+  opacity: 0.1;
+  mix-blend-mode: multiply;
+  content: '';
+}
+
+.ribbon-setlist__page {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+}
+
+.ribbon-setlist[data-flashback-page='latest'] .ribbon-setlist__page--archive,
+.ribbon-setlist[data-flashback-page='archive'] .ribbon-setlist__page--latest {
+  visibility: hidden;
+}
+
+.ribbon-setlist[data-flashback-page='top-archive']
+  .ribbon-setlist__page--archive,
+.ribbon-setlist[data-flashback-page='top-latest']
+  .ribbon-setlist__page--latest {
+  clip-path: inset(0 0 50%);
+}
+
+.ribbon-setlist[data-flashback-page='top-archive']
+  .ribbon-setlist__page--latest,
+.ribbon-setlist[data-flashback-page='top-latest']
+  .ribbon-setlist__page--archive {
+  clip-path: inset(50% 0 0);
+}
+
+.ribbon-flashback {
+  --ribbon-flashback-brush-depth: 120px;
+  --ribbon-flashback-seam-bleed: 4px;
+  --ribbon-flashback-shift: 100%;
+  --ribbon-flashback-cover: var(--ovl-motion-line-duration);
+  --ribbon-flashback-reveal: var(--ovl-primitive-motion-fast);
+  --ribbon-flashback-stagger: calc(var(--ovl-primitive-motion-fast) / 2);
+  --ribbon-flashback-beat: 40ms;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ribbon-flashback[data-direction='return'] {
+  --ribbon-flashback-shift: -100%;
+  --ribbon-flashback-cover: calc(var(--ovl-primitive-motion-fast) * 2 / 3);
+  --ribbon-flashback-reveal: var(--ribbon-flashback-cover);
+  --ribbon-flashback-stagger: calc(var(--ovl-primitive-motion-fast) / 6);
+  --ribbon-flashback-beat: 20ms;
+}
+
+.ribbon-flashback:not([data-step]) {
+  visibility: hidden;
+}
+
+.ribbon-flashback__half {
+  --ribbon-flashback-delay: 0ms;
+  position: absolute;
+  /* Overlap both layers to cover rounding at fractional output scales. */
+  inset: 0 0 calc(50% - var(--ribbon-flashback-seam-bleed));
+  overflow: hidden;
+}
+
+.ribbon-flashback__half + .ribbon-flashback__half {
+  --ribbon-flashback-delay: var(--ribbon-flashback-stagger);
+  inset: calc(50% - var(--ribbon-flashback-seam-bleed)) 0 0;
+}
+
+.ribbon-flashback__brush {
+  position: absolute;
+  inset: 0 calc(-1 * (var(--ribbon-flashback-brush-depth) + 2px));
+  background: var(--ribbon-red);
+  animation-timing-function: var(--ovl-motion-ease);
+  animation-fill-mode: both;
+}
+
+.ribbon-flashback[data-step='cover'] .ribbon-flashback__brush {
+  animation-name: ribbon-flashback-cover;
+  animation-duration: var(--ribbon-flashback-cover);
+  animation-delay: var(--ribbon-flashback-delay);
+}
+
+.ribbon-flashback[data-step='reveal'] .ribbon-flashback__brush {
+  animation-name: ribbon-flashback-reveal;
+  animation-duration: var(--ribbon-flashback-reveal);
+  animation-delay: calc(
+    var(--ribbon-flashback-beat) + var(--ribbon-flashback-delay)
+  );
+}
+
+@keyframes ribbon-flashback-cover {
+  from {
+    transform: translateX(calc(-1 * var(--ribbon-flashback-shift)));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ribbon-flashback-reveal {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--ribbon-flashback-shift));
+  }
+}
+
+.ribbon-setlist__list {
+  --ribbon-row-overlap: 2px;
+  position: absolute;
+  inset: 76px 10px auto 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ribbon-setlist__list--measure {
+  visibility: hidden;
+}
+
+.ribbon-setlist__row {
+  --band-color: var(--ribbon-red);
+  --band-shadow: color-mix(in srgb, var(--band-color), var(--ribbon-ink) 7%);
+  --band-sheen: color-mix(in srgb, var(--band-color), var(--ribbon-paper) 7%);
+  --band-print-strong: var(--ribbon-ink);
+  --band-fill:
+    linear-gradient(
+        var(--fold-angle, 135deg),
+        transparent 40%,
+        var(--band-shadow) 46%,
+        var(--band-sheen) 50%,
+        transparent 61%
+      )
+      var(--fold-position, 50%) center / var(--fold-width, 0%) 100% no-repeat,
+    linear-gradient(
+      177deg,
+      var(--band-color),
+      var(--band-sheen) 39%,
+      var(--band-color) 61%,
+      var(--band-shadow)
+    );
+  --band-left-inset: max(0px, var(--band-slant));
+  --band-right-inset: max(0px, calc(-1 * var(--band-slant)));
+  --band-top-shift: max(0px, var(--band-lean));
+  --band-bottom-shift: max(0px, calc(-1 * var(--band-lean)));
+  --band-top-slant-limit: calc(6.4px - var(--band-trim-top));
+  --band-bottom-slant-limit: calc(4.8px - var(--band-trim-bottom));
+  --band-shape: polygon(
+    var(--band-top-shift)
+      min(var(--band-top-slant-limit), var(--band-left-inset)),
+    calc(100% - var(--band-bottom-shift))
+      min(var(--band-top-slant-limit), var(--band-right-inset)),
+    calc(100% - var(--band-top-shift))
+      calc(100% - min(var(--band-bottom-slant-limit), var(--band-left-inset))),
+    var(--band-bottom-shift)
+      calc(100% - min(var(--band-bottom-slant-limit), var(--band-right-inset)))
+  );
+  position: relative;
+  max-inline-size: calc(100% - 7px);
+  padding-block: 5px 7px;
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 36px;
+  letter-spacing: -0.035em;
+}
+
+.ribbon-setlist__row + .ribbon-setlist__row {
+  margin-block-start: calc(-1 * var(--ribbon-row-overlap));
+}
+
+.ribbon-setlist__row[data-compact] {
+  font-size: 30px;
+  line-height: 33px;
+}
+
+.ribbon-setlist__row[data-script='han'] {
+  --ribbon-title-font:
+    'Microsoft JhengHei', 'Noto Sans CJK TC', var(--ovl-font-ui);
+}
+
+.ribbon-setlist__row[data-script='kana'] {
+  --ribbon-title-font: 'Yu Gothic UI', 'Noto Sans CJK JP', var(--ovl-font-ui);
+}
+
+.ribbon-setlist__row[data-script='hangul'] {
+  --ribbon-title-font: 'Malgun Gothic', 'Noto Sans CJK KR', var(--ovl-font-ui);
+}
+
+.ribbon-setlist__row[data-script] {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: normal;
+}
+
+.ribbon-setlist__row[data-script][data-compact] {
+  font-size: 28px;
+}
+
+.ribbon-setlist__row::before,
+.ribbon-unroll {
+  position: absolute;
+  inset: var(--band-trim-top) calc(-1 * var(--band-tail))
+    var(--band-trim-bottom) var(--band-start);
+  clip-path: var(--band-shape);
+}
+
+.ribbon-setlist__row::before {
+  z-index: 0;
+  background: var(--band-fill);
+  content: '';
+}
+
+.ribbon-setlist__row[data-ink='black'] {
+  --band-color: var(--ribbon-ink);
+  --band-shadow: var(--band-color);
+  --band-sheen: color-mix(in srgb, var(--band-color), var(--ribbon-paper) 5%);
+  --band-print-strong: color-mix(
+    in srgb,
+    var(--ribbon-paper) 62%,
+    var(--ribbon-ink)
+  );
+  color: var(--ribbon-paper);
+}
+
+.ribbon-setlist__entry {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ribbon-setlist__title {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  -webkit-text-stroke: 0.95px currentColor;
+}
+
+.ribbon-setlist__row[data-script] .ribbon-setlist__title {
+  font-family: var(--ribbon-title-font);
+  -webkit-text-stroke-width: 0.35px;
+}
+
+.ribbon-setlist__latin {
+  font-family: var(--ovl-font-ui);
+}
+
+.ribbon-setlist__title[data-truncated] {
+  display: -webkit-box;
+  overflow: clip;
+  overflow-clip-margin: 1px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ribbon-setlist__ordinal {
+  flex: none;
+  padding-block-start: 0.16em;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-stroke: 0.25px currentColor;
+}
+
+.ribbon-setlist__row[data-entering]::before {
+  visibility: hidden;
+}
+
+.ribbon-setlist__row[data-entering] .ribbon-setlist__entry {
+  animation: ribbon-settled-face var(--ribbon-unroll-duration) linear both;
+}
+
+.ribbon-unroll {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ribbon-unroll__edge,
+.ribbon-unroll__face {
+  position: absolute;
+  inset: 0;
+  animation-duration: var(--ribbon-unroll-duration);
+  animation-timing-function: var(--ribbon-unroll-ease);
+  animation-fill-mode: both;
+}
+
+/* Keep the ink at a fixed position while the cutout reveals it. */
+.ribbon-unroll__face {
+  background: var(--band-fill);
+  animation-name: ribbon-unroll-face;
+}
+
+.ribbon-unroll__edge {
+  animation-name: ribbon-unroll-edge;
+}
+
+.ribbon-unroll__edge::after {
+  position: absolute;
+  inset: 0 0 0 auto;
+  inline-size: 17px;
+  border-radius: 45% 18% 18% 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--ribbon-ink) 30%, transparent) 43%,
+    color-mix(in srgb, var(--ribbon-paper) 34%, transparent) 78%,
+    transparent
+  );
+  animation: ribbon-curl var(--ribbon-unroll-duration) ease-out both;
+  content: '';
+}
+
+.ribbon-unroll__print {
+  position: absolute;
+  inset-block-start: -0.3em;
+  inset-inline-start: -0.12em;
+  white-space: pre;
+  font-size: 0.82em;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  color: var(--ribbon-paper);
+  opacity: 0;
+  animation-duration: var(--ribbon-unroll-duration);
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+.ribbon-unroll__print--light {
+  animation-name: ribbon-print-light;
+}
+
+.ribbon-unroll__print--dark {
+  inset-block-start: -0.46em;
+  inset-inline-start: -0.35em;
+  transform: rotate(-12deg);
+  transform-origin: left top;
+  color: var(--band-print-strong);
+  font-size: 1.62em;
+  animation-name: ribbon-print-dark;
+}
+
+.ribbon-unroll__print--wide {
+  inset-inline-start: -0.6em;
+  font-size: 1.15em;
+  animation-name: ribbon-print-wide;
+}
+
+@keyframes ribbon-unroll-face {
+  0% {
+    clip-path: inset(0 94% 0 0);
+  }
+  91%,
+  100% {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes ribbon-unroll-edge {
+  0% {
+    transform: translateX(-94%);
+  }
+  91%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ribbon-print-light {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  35%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ribbon-print-dark {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  35%,
+  58% {
+    opacity: 1;
+  }
+  63%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ribbon-print-wide {
+  0%,
+  58% {
+    opacity: 0;
+  }
+  63%,
+  88% {
+    opacity: 1;
+  }
+  94%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ribbon-curl {
+  0%,
+  75% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ribbon-settled-face {
+  0%,
+  93% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ribbon-unroll {
+    display: none;
+  }
+  .ribbon-setlist__row[data-entering]::before {
+    visibility: visible;
+  }
+  .ribbon-setlist__row[data-entering] .ribbon-setlist__entry {
+    animation: none;
+  }
+}

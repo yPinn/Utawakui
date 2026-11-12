@@ -40,6 +40,11 @@ const selectedPreset = computed(
     props.presets[0] ??
     null,
 );
+const selectedPreviewScene = computed(() =>
+  selectedPreset.value?.id === 'ribbon-setlist'
+    ? undefined
+    : props.previewScene,
+);
 const isApplied = computed(
   () =>
     selectedPreset.value?.id ===
@@ -199,7 +204,7 @@ function applyPreset(preset) {
         <ObsTemplatePreviewStage
           v-if="selectedPreset"
           :preset="selectedPreset"
-          :scene="previewScene"
+          :scene="selectedPreviewScene"
         />
         <div v-if="selectedPreset" class="obs-template-gallery__detail-copy">
           <p class="obs-template-gallery__detail-summary">

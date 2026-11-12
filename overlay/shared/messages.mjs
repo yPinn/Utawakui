@@ -4,6 +4,7 @@ export const OVERLAY_MESSAGES = Object.freeze({
   'zh-TW': Object.freeze({
     currentEmpty: '目前無演唱曲目',
     currentLabel: '目前演唱曲目',
+    setlistLabel: '歌單',
     historyCaption: '已唱紀錄',
     historyEmpty: '尚無已唱歌曲',
     waitingNext: '等待下一首',
@@ -12,6 +13,7 @@ export const OVERLAY_MESSAGES = Object.freeze({
   'en-US': Object.freeze({
     currentEmpty: 'No song playing',
     currentLabel: 'Now singing',
+    setlistLabel: 'Setlist',
     historyCaption: 'Sung so far',
     historyEmpty: 'No songs sung yet',
     waitingNext: 'Waiting for the next song',

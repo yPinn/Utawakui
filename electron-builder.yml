@@ -87,10 +87,11 @@ files:
   # Independent Browser Source pages and the single inspection guide source.
   # Includes receipt setlist DOM/motion/CSS and its textless paper/grain plates;
   # shared/presentation/receiptSetlist.mjs supplies its pure frame/page rules.
+  # The ribbon setlist shares that frame and bundles its exact-route view and CSS.
   # Includes lyricsFit/ktvDisplayFit local geometry adapters; shared owns display planners.
   # Fine text paint includes lyricsFine.mjs, shared/browser/lyricsFinePaint.mjs,
   # shared/lyricsFineTiming.mjs with browser-safe, versioned bounds.
-  # Includes the exact-route Chalkboard Vertical renderer.
+  # Includes the exact-route Chalkboard Vertical and Now Playing Ticket assets.
   - overlay/**/*
   - '!overlay/**/*.test.js'
   # Main and renderer use the same session timestamp and CSV projection.

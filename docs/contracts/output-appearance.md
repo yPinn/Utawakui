@@ -46,7 +46,7 @@
 | `tier`   | `advanced` 只有 textColor、accentColor、positionOffsetX、positionOffsetY，與上表分級一致；其餘為 `basic`                                                                                                                                                      |
 | `reflow` | 會讓文字重新排版的欄位（字級、字型、字重、讀音、歌詞呈現策略與 layout 中改變尺寸者）為 true；位置、色彩、背景、材質與動態為 false                                                                                                                             |
 
-`receipt-setlist` 另提供 `receiptDirection`（down／up，預設down）、`receiptReview`（on／off，預設on）與 `receiptReviewInterval`（5–60秒、step5，預設15）；只公開這三項與字級，不顯示未消費的Look或背景控制。外觀schema 6 起提供這三項，舊欄位相容；既存間隔以新範圍正規化。
+`receipt-setlist` 與 `ribbon-setlist` 共用動態欄位 `receiptReview`（on／off，預設 on）與 `receiptReviewInterval`（5–60 秒，每次調整 5 秒，預設 15 秒）。收據歌單另提供字級與 `receiptDirection`（down／up，預設 down），緞帶歌單另提供背景。既存間隔使用同一值域正規化。
 
 ### 設定欄互動
 
@@ -88,11 +88,24 @@
 | live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 balanced       | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
 | manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto | Ruby atomicity、框內安全版面、bubble timing                  |
 | art-card／480×270              | 字型 sans、字重 bold                                        | 唱片 playhead、封套交換、驗證過的 artwork route              |
+| ticket-stub／480×270           | 字級 medium、字重 bold                                      | 票外透明、曲名兩行、封面缺圖時使用曲名首字                   |
 | cover-player／360×480、480×640 | 字重 bold、背景 solid                                       | 同一 artwork route 與進度權威                                |
 
 Setlist 只公開目前演唱曲目與已唱紀錄，不投影待唱。480×810 是擷取尺寸而非固定版面：queue-board 以約兩成高度保留目前歌曲，其餘給已唱紀錄，兩區只以固定 spacing 分隔；最近八首依播放順序向下排列，超出時才自動垂直滾動。
 
-Now Playing 的 `art-card` 與 `cover-player` 共用 `artwork-overlay` 結構及 `artwork.css`，沒有第二份 compact renderer。舊 `now-next` id 在設定讀取邊界回退為 `art-card`，不再交付舊版 HTML／CSS 分支。
+`ribbon-setlist` 在 480×810 依演唱順序由上往下填頁。每頁最多 14 列，並依實際列高在整列放不下時換頁。目前曲目置於當頁末列，換頁時從新頁頂端開始。每首沿用依曲序與曲目身分取樣的紅黑配色。預設白底，背景可切換透明。拉丁曲名預設 36 px，超過兩行降至 30 px。含漢字、假名或韓文的曲名使用相應無襯線字型，預設 32 px、字重 700，超過兩行降至 28 px，保留原本行高與色帶留白。仍放不下時於第二行省略。序號固定 15 px。色帶的傾斜、錯位與搭接獨立於文字排版。Gallery 與 Browser Source 共用版面及 Output tokens。
+
+緞帶歌單初次顯示目前曲目或換曲時播放約 1.18 秒入場。左端與印字位置固定，卷邊連續向右展開，印字依序短暫交疊過渡至放大印字、白色滿版印字及正式曲名。色帶底色由展開延續至落版。曲目轉為已唱時沿用同一字寬、行數、配色與形狀。重複快照、同首資料刷新與重連不重播。減少動態時直接顯示最終樣式。
+
+中日韓曲名中的拉丁片段與其標點使用 Output 的 UI 字型。原始曲名、全形字元與東亞標點保留。
+
+白色實底沿用 Output 間距 token，紙面與刷幕皆收在四周 8 px 的透明邊界內。
+
+開啟緞帶歌單的定時回顧且已有上一頁時，直播版面經過工作臺設定的間隔後，依直播分頁的原邊界回顧較早的一頁。上下紅色刷痕各自覆蓋後換頁，目前曲目隨下半切出。兩塊刷幕在中央略微交疊，以覆蓋縮放時可能出現的接縫。預設刷入 640 ms，兩段退開後固定停留 3 秒，接著以 320 ms 刷回。下一輪繼續回顧更早的一頁，回到最早頁後循環。關閉回顧、調整間隔、換曲、切換模板及連線恢復會還原直播畫面。減少動態時直接換頁。兩頁共用白底或透明底，透明底只在刷幕掃過的區域暫時覆蓋背景。
+
+Now Playing 的三款模板共用 `artwork-overlay` 結構及封面、曲名、藝人呈現。舊 `now-next` id 在設定讀取邊界回退為 `art-card`。
+
+`ticket-stub` 以既有 Now Playing Browser Source 輸出暖白票根。方形封面使用已驗證的 artwork route，票身隨當前曲目更新。短副券維持素面，兩側缺口與票身外使用透明合成。控制台預覽與 Browser Source 共用票身樣式，Folder 共用切口與紙紋。
 
 `cover-player` 採使用者確認的Apple Music參考比例：預設portrait擷取360×480，portrait-large保留480×640。原portrait設定直接採用較小尺寸，舊medium設定正規化為portrait；medium本身仍為480×540。封面方形、曲目資訊靠左，單行超長省略；480×640設計基準的曲名22px、藝人18px；360×480等比縮為16.5px、13.5px。背景依既有封面取色產生暗色暈染，透明／柔和背景仍可選。細進度條與剩餘時間跟隨播放器權威；僅保留上一首、播放／暫停、下一首三個圖示及音量外觀。這些是只讀Output的非互動圖示；音量列同步App主音量與靜音，播放／暫停符號跟隨實際狀態。音量為0或靜音時顯示靜音符號，靜音時滑塊歸零，解除後恢復原設定；沒有音量資料的舊來源保留該列空間但不顯示數值或符號。隱藏transport時一併隱藏音量列。封面沿用已驗證media route，缺圖用曲名首字；不交付參考截圖或其專輯美術。
 
@@ -157,6 +170,7 @@ Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.jso
 | live-stage      | 固定時刻的標題卡與 caption                      |
 | manga-frame     | 可同時顯示全部 bubble，非逐框交接               |
 | art-card        | 文字代封面、簡化唱盤                            |
+| ticket-stub     | 文字代封面，票根依曲目更新                      |
 | cover-player    | 文字代封面；靜態時間正確，動態進度非時鐘        |
 
 ## 驗證

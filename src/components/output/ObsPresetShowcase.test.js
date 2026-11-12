@@ -187,7 +187,10 @@ describe('OBS output workspace layout contract', () => {
   });
 
   it('keeps thumbnails static and animates only the selected detail preview', () => {
-    expect(componentSource).toContain(':scene="previewScene"');
+    expect(componentSource).toContain(':scene="selectedPreviewScene"');
+    expect(componentSource).toMatch(
+      /selectedPreset\.value\?\.id === 'ribbon-setlist'\s*\?\s*undefined\s*:\s*props\.previewScene/u,
+    );
     expect(thumbnailSource).not.toContain('ObsTemplateMockup');
     expect(previewStageSource).toContain("import('./ObsTemplateMockup.vue')");
     expect(previewStageSource).toContain('v-if="livePreview"');

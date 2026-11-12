@@ -21,8 +21,10 @@ const templateTabLabels = {
   'live-stage': ['文字', '色彩', '顯示'],
   'manga-frame': ['文字', '色彩'],
   'art-card': ['文字', '色彩'],
+  'ticket-stub': ['文字'],
   'cover-player': ['文字', '色彩'],
   'receipt-setlist': ['版面', '文字', '動態'],
+  'ribbon-setlist': ['色彩', '動態'],
 };
 
 async function renderRegisteredTemplate(
@@ -158,6 +160,18 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     ).toEqual(['arrangement', 'text']);
   });
 
+  it('uses the same motion controls for the Ribbon and Receipt Setlists', async () => {
+    const reviewFields = (templateId) =>
+      fieldsFor(templateId).filter(({ group }) => group === 'motion');
+    expect(reviewFields('ribbon-setlist')).toEqual(
+      reviewFields('receipt-setlist'),
+    );
+    const html = await renderRegisteredTemplate('ribbon-setlist');
+    expect(html).toContain('>歷史回顧</h3>');
+    expect(html).toContain('定時回顧歷史');
+    expect(html).toContain('回顧間隔');
+  });
+
   it('uses destination-neutral workbench and Browser Source sizing labels', async () => {
     const html = await renderRegisteredTemplate('queue-board');
 
@@ -186,6 +200,11 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       'art-card',
       ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
       ['alignment', 'surface'],
+    ],
+    [
+      'ticket-stub',
+      ['fontScale', 'fontWeight'],
+      ['surface', 'paletteId', 'lookAmount'],
     ],
     [
       'cover-player',

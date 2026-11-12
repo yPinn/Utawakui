@@ -9,6 +9,7 @@ import {
 import { selectSetlistFrame } from '../shared/state.mjs';
 import { selectReceiptSetlistFrame } from '../../shared/presentation/receiptSetlist.mjs';
 import { createReceiptView } from './receiptView.mjs';
+import { createRibbonView } from './ribbonView.mjs';
 import {
   createSetlistCurrentMotionController,
   createSetlistHistoryMotionController,
@@ -178,9 +179,10 @@ function boot() {
   const receipt = createReceiptView(document.querySelector('#receipt-host'), {
     gsap,
   });
-  let receiptMode = false;
-  let active = false;
   const previewMode = isPreviewMode(window.location);
+  const ribbon = createRibbonView(document.querySelector('#ribbon-host'));
+  let templateId = 'queue-board';
+  let active = false;
   let previewScene = previewSceneForSlot('setlist');
   const renderState = { history: [] };
   const historyMotion = createSetlistHistoryMotionController({
@@ -203,23 +205,24 @@ function boot() {
   const motionControllers = [currentMotion, historyMotion];
   let latestSnapshot = null;
   function syncTemplateActivity() {
-    receipt.setActive(active && receiptMode);
-    setMotionSuspended(motionControllers, !active || receiptMode);
-    if (active && !receiptMode) historyMeasurement.resume();
+    const boardActive = active && templateId === 'queue-board';
+    receipt.setActive(active && templateId === 'receipt-setlist');
+    setMotionSuspended(motionControllers, !boardActive);
+    if (boardActive) historyMeasurement.resume();
     else historyMeasurement.suspend();
   }
   function present(snapshot, { recovering = false } = {}) {
     latestSnapshot = snapshot;
-    if (receiptMode) {
+    if (templateId === 'receipt-setlist' || templateId === 'ribbon-setlist') {
       elements.root.hidden = true;
-      receipt.update(
-        withPreviewFallback(
-          selectReceiptSetlistFrame(snapshot),
-          previewScene.frame,
-          previewMode,
-        ),
-        { settle: recovering },
+      const frame = withPreviewFallback(
+        selectReceiptSetlistFrame(snapshot),
+        previewScene.frame,
+        previewMode,
       );
+      if (templateId === 'receipt-setlist')
+        receipt.update(frame, { settle: recovering });
+      else ribbon.update(frame, { settle: recovering });
       return;
     }
     const frame = withPreviewFallback(
@@ -231,6 +234,7 @@ function boot() {
   }
   const applyReducedMotion = (value) => {
     receipt.setReducedMotion(value);
+    ribbon.setReducedMotion(value);
     for (const controller of motionControllers) {
       controller.setReducedMotion(value);
     }
@@ -242,37 +246,46 @@ function boot() {
     kind: 'setlist',
     previewMode,
     onReducedMotion: applyReducedMotion,
-    onActivity: (value) => {
+    onActivity: (value, { recovering = false } = {}) => {
       active = value;
       syncTemplateActivity();
+      ribbon.setActive(active && templateId === 'ribbon-setlist', {
+        reveal: !recovering,
+      });
     },
     onFontsChanged: () => {
       historyMeasurement.schedule({ force: true });
       receipt.refresh();
+      ribbon.refresh();
     },
     onConfig: (slot) => {
-      receiptMode = slot?.templateId === 'receipt-setlist';
-      receipt.setVisible(receiptMode);
+      const previousTemplateId = templateId;
+      templateId = slot?.templateId ?? 'queue-board';
       receipt.configure(slot?.settings);
+      ribbon.configure(slot?.settings);
+      receipt.setVisible(templateId === 'receipt-setlist');
+      ribbon.setVisible(templateId === 'ribbon-setlist');
       syncTemplateActivity();
-      if (receiptMode) elements.root.hidden = true;
+      if (templateId !== 'queue-board') elements.root.hidden = true;
       previewScene = previewSceneForSlot('setlist', slot);
       applyOverlayAppearance(document, slot);
       if (latestSnapshot) present(latestSnapshot, { recovering: true });
+      else if (previewMode) present(null, { recovering: true });
+      ribbon.setActive(active && templateId === 'ribbon-setlist', {
+        reveal: previousTemplateId !== templateId,
+      });
     },
     onSnapshot: present,
     onDispose: () => {
       receipt.destroy();
+      ribbon.destroy();
       historyMeasurement.stop();
       currentMotion.destroy();
       historyMotion.destroy();
     },
   });
   host.start();
-  if (previewMode) {
-    if (receiptMode) receipt.update(previewScene.frame, { settle: true });
-    else currentMotion.update(previewScene.frame);
-  }
+  if (previewMode && !latestSnapshot) present(null, { recovering: true });
 }
 
 if (typeof document !== 'undefined') boot();

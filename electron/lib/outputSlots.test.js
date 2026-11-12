@@ -76,6 +76,18 @@ describe('outputSlots', () => {
     });
   });
 
+  it('saves and reloads the ticket template at its fixed capture size', () => {
+    upsertOutputSlot(dir, 'now-playing', {
+      templateId: 'ticket-stub',
+      settings: { captureSize: 'portrait', fontScale: 'large' },
+    });
+
+    expect(loadOutputSlots(dir).slots['now-playing']).toMatchObject({
+      templateId: 'ticket-stub',
+      settings: { captureSize: 'small', fontScale: 'large' },
+    });
+  });
+
   it('round-trips independent machine-safe slots atomically', () => {
     const saved = saveOutputSlots(dir, {
       slots: {
@@ -503,6 +515,27 @@ describe('outputSlots', () => {
       'now-playing': { settings: { captureSize: 'small' } },
       setlist: { settings: { captureSize: 'large' } },
       lyrics: { settings: { captureSize: 'full' } },
+    });
+  });
+
+  it('persists the Ribbon Setlist review controls with transparent surface and 480×810 capture', () => {
+    upsertOutputSlot(dir, 'setlist', {
+      templateId: 'ribbon-setlist',
+      settings: {
+        surface: 'transparent',
+        captureSize: 'medium',
+        receiptReview: 'off',
+        receiptReviewInterval: 27,
+      },
+    });
+    expect(loadOutputSlots(dir).slots.setlist).toMatchObject({
+      templateId: 'ribbon-setlist',
+      settings: {
+        surface: 'transparent',
+        captureSize: 'large',
+        receiptReview: 'off',
+        receiptReviewInterval: 25,
+      },
     });
   });
 

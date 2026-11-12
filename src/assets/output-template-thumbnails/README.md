@@ -29,11 +29,16 @@ project artwork, not additional third-party source images.
 ## Provenance and replacement review
 
 `provenance.json` maps every active template to the existing image hash and its
-content status. Six images (`karaoke-stack`, `live-stage`, `manga-frame`,
-`art-card`, `receipt-setlist`, `cover-player`) are style references, not runtime
-captures; their rights remain unverified and G01 remains a delivery blocker.
-The other three are legacy
-programmatic captures per the earlier record, pending current-runtime review.
+content status. Seven templates (`karaoke-stack`, `live-stage`, `manga-frame`,
+`art-card`, `receipt-setlist`, `cover-player`, `ribbon-setlist`) use style
+references. Their rights remain unverified and G01 remains a delivery blocker.
+The older programmatic captures retain their previous review status.
+The ticket-stub thumbnail captures the current 480 × 270 Browser Source in
+Electron using the project's synthetic stage artwork, composited on a dark
+backdrop and scaled proportionally to 1280 × 720.
+The ribbon-setlist thumbnail uses the red and black ribbon collage supplied
+on 2026-11-12. The bundled PNG retains the original bytes and uses the
+Gallery's existing cover crop.
 No image is automatically approved by filename, successful decoding or a hash.
 
 On 2026-10-24, the user supplied `kqtoc.jpg` for `receipt-setlist` and

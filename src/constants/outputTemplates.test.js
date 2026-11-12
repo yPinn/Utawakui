@@ -13,6 +13,7 @@ import { createOutputPreviewScene } from '../../shared/presentation/outputPrevie
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'receipt-setlist': '票據歌單',
+  'ribbon-setlist': '紅黑緞帶',
   'queue-board': '夜色歌單',
   'karaoke-stack': '經典字幕',
   'live-stage': '轉播字卡',
@@ -22,10 +23,12 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'centered-vertical': '中央直書',
   'manga-frame': '分格對白',
   'art-card': '星空黑膠',
+  'ticket-stub': '演出票根',
   'cover-player': '封面電台',
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
+  'ribbon-setlist': ['surface', 'receiptReview', 'receiptReviewInterval'],
   'receipt-setlist': [
     'fontScale',
     'receiptDirection',
@@ -96,6 +99,7 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontScale',
     'fontWeight',
   ],
+  'ticket-stub': ['fontScale', 'fontWeight'],
   'cover-player': [
     'paletteId',
     'lookAmount',
@@ -146,6 +150,7 @@ describe('output template registry', () => {
     expect(setlists.map(({ id }) => id)).toEqual([
       'receipt-setlist',
       'queue-board',
+      'ribbon-setlist',
     ]);
     expect(setlists[0].availability.label).toBe('建議');
     expect(setlists[1].availability.label).toBe('可用');
@@ -529,6 +534,7 @@ describe('output template registry', () => {
       })),
     ).toEqual([
       { id: 'art-card', name: '星空黑膠', order: 10 },
+      { id: 'ticket-stub', name: '演出票根', order: 20 },
       { id: 'cover-player', name: '封面電台', order: 30 },
     ]);
     expect(

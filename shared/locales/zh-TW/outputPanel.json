@@ -1,5 +1,14 @@
 {
   "templates": {
+    "ribbonSetlist": {
+      "name": "紅黑緞帶",
+      "availability": { "summary": "可在歌單輸出使用" },
+      "summary": "紅黑斜帶錯落排列，曲名保持水平與固定列距。",
+      "detail": "曲目依演唱順序由上往下填頁，目前曲目捲開入場。可定時回顧較早的頁面，背景可選白底或透明。",
+      "preview": { "layoutLabel": "單欄紅黑緞帶", "motionLabel": "捲開換字" },
+      "tags": ["紅黑緞帶", "可用透明底", "固定列距"],
+      "settings": [{ "label": "背景", "value": "白底或透明" }]
+    },
     "receiptSetlist": {
       "name": "票據歌單",
       "availability": {
@@ -334,6 +343,17 @@
         }
       }
     },
+    "ticketStub": {
+      "name": "演出票根",
+      "availability": "透明畫布，票根靠下緣。",
+      "summary": "把正在播放的曲目排成暖白票根。",
+      "detail": "方形封面與曲名並排，打孔線分出副券，適合放在演出畫面下緣。",
+      "layoutLabel": "橫式票根",
+      "motionLabel": "隨曲更新",
+      "coverTag": "方形封面",
+      "paperTag": "暖白紙面",
+      "backdropTag": "透明外圍"
+    },
     "coverPlayer": {
       "name": "封面電台",
       "availability": {
@@ -552,6 +572,7 @@
     "common": "預設外觀示意，實際輸出請至工作臺確認。",
     "queueBoard": "捲動示意，正式輸出採逐頁顯示。",
     "receiptSetlist": "使用示例紀錄，正式回顧最多一百筆。",
+    "ribbonSetlist": "動態預覽使用合成曲名，正式輸出依實際列高分頁。",
     "karaokeStack": "掃色示意，非實際逐字同步。",
     "kineticPop": "固定句段示意，未呈現整首換句。",
     "ornateVertical": "兩句循環示意，未呈現完整換詞。",
@@ -561,6 +582,7 @@
     "mangaFrame": "對白同時展示，未呈現交接與逐字同步。",
     "artCard": "文字封面示意，旋轉不對應播放位置。",
     "coverPlayer": "封面與進度僅供示意。",
+    "ticketStub": "示範曲使用曲名首字，實際播放會顯示可用封面。",
     "fallback": "僅供風格參考。"
   },
   "obs": {

@@ -73,17 +73,18 @@ describe('Now Playing template runtime', () => {
   });
 
   it('accepts a template query only on the bounded preview route', () => {
-    const location = { search: '?preview=1&template=art-card' };
-    expect(initialNowPlayingTemplateId(location, true)).toBe('art-card');
+    const location = { search: '?preview=1&template=ticket-stub' };
+    expect(initialNowPlayingTemplateId(location, true)).toBe('ticket-stub');
     expect(initialNowPlayingTemplateId(location, false)).toBe('art-card');
     expect(
       initialNowPlayingTemplateId({ search: '?template=unknown' }, true),
     ).toBe('art-card');
   });
 
-  it('accepts the two remaining layouts and falls back for retired ids', () => {
+  it('accepts the current layouts and falls back for retired ids', () => {
     expect(normalizeNowPlayingTemplateId('now-next')).toBe('art-card');
     expect(normalizeNowPlayingTemplateId('art-card')).toBe('art-card');
+    expect(normalizeNowPlayingTemplateId('ticket-stub')).toBe('ticket-stub');
     expect(normalizeNowPlayingTemplateId('cover-player')).toBe('cover-player');
     expect(normalizeNowPlayingTemplateId('unknown')).toBe('art-card');
   });
@@ -93,7 +94,7 @@ describe('Now Playing template runtime', () => {
     vi.clearAllMocks();
   });
 
-  it.each(['art-card', 'cover-player'])(
+  it.each(['art-card', 'ticket-stub', 'cover-player'])(
     'boots %s without retired DOM and switches the same host between current templates',
     async (templateId) => {
       vi.resetModules();
@@ -120,10 +121,18 @@ describe('Now Playing template runtime', () => {
       expect(harness.motion.update).toHaveBeenLastCalledWith(
         expect.objectContaining({ active: templateId === 'art-card' }),
       );
-      for (const next of ['cover-player', 'art-card', 'now-next', 'unknown']) {
+      for (const next of [
+        'cover-player',
+        'ticket-stub',
+        'art-card',
+        'now-next',
+        'unknown',
+      ]) {
         harness.render.mockClear();
         harness.host.onConfig({ templateId: next });
-        const artworkMotionActive = next !== 'cover-player';
+        const artworkMotionActive = !['ticket-stub', 'cover-player'].includes(
+          next,
+        );
         expect(harness.motion.update).toHaveBeenLastCalledWith(
           expect.objectContaining({ active: artworkMotionActive }),
         );

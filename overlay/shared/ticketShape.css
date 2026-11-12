@@ -1,0 +1,16 @@
+/* Geometry shared by Folder stationery and Output. */
+.ticket-cut {
+  mask:
+    radial-gradient(
+        circle at left,
+        transparent var(--ticket-notch-radius),
+        currentColor 0
+      )
+      left / 55% 100% no-repeat,
+    radial-gradient(
+        circle at right,
+        transparent var(--ticket-notch-radius),
+        currentColor 0
+      )
+      right / 55% 100% no-repeat;
+}

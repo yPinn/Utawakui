@@ -46,6 +46,32 @@ export const OUTPUT_PREVIEW_SCENE = deepFreeze(createOutputPreviewScene());
 
 const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
+    id: 'ribbon-setlist',
+    kind: 'setlist',
+    order: 30,
+    name: t('outputPanel.templates.ribbonSetlist.name'),
+    availability: {
+      summary: t('outputPanel.templates.ribbonSetlist.availability.summary'),
+    },
+    summary: t('outputPanel.templates.ribbonSetlist.summary'),
+    detail: t('outputPanel.templates.ribbonSetlist.detail'),
+    preview: {
+      layoutLabel: t('outputPanel.templates.ribbonSetlist.preview.layoutLabel'),
+      motionLabel: t('outputPanel.templates.ribbonSetlist.preview.motionLabel'),
+    },
+    tags: [
+      t('outputPanel.templates.ribbonSetlist.tags.0'),
+      t('outputPanel.templates.ribbonSetlist.tags.1'),
+      t('outputPanel.templates.ribbonSetlist.tags.2'),
+    ],
+    settings: [
+      {
+        label: t('outputPanel.templates.ribbonSetlist.settings.0.label'),
+        value: t('outputPanel.templates.ribbonSetlist.settings.0.value'),
+      },
+    ],
+  },
+  {
     id: 'receipt-setlist',
     kind: 'setlist',
     order: 10,
@@ -430,6 +456,27 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
         value: t('outputPanel.templates.artCard.settings.2.value'),
       },
     ],
+  },
+  {
+    id: 'ticket-stub',
+    kind: 'now-playing',
+    order: 20,
+    name: t('outputPanel.templates.ticketStub.name'),
+    availability: {
+      summary: t('outputPanel.templates.ticketStub.availability'),
+    },
+    summary: t('outputPanel.templates.ticketStub.summary'),
+    detail: t('outputPanel.templates.ticketStub.detail'),
+    preview: {
+      layoutLabel: t('outputPanel.templates.ticketStub.layoutLabel'),
+      motionLabel: t('outputPanel.templates.ticketStub.motionLabel'),
+    },
+    tags: [
+      t('outputPanel.templates.ticketStub.coverTag'),
+      t('outputPanel.templates.ticketStub.paperTag'),
+      t('outputPanel.templates.ticketStub.backdropTag'),
+    ],
+    settings: [],
   },
   {
     id: 'cover-player',

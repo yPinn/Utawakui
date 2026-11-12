@@ -18,7 +18,11 @@ import {
 import { createArtworkMotionController } from './artworkMotion.mjs';
 import { createCoverPlayerMotionController } from './coverPlayerMotion.mjs';
 
-const NOW_PLAYING_TEMPLATE_IDS = new Set(['art-card', 'cover-player']);
+const NOW_PLAYING_TEMPLATE_IDS = new Set([
+  'art-card',
+  'ticket-stub',
+  'cover-player',
+]);
 
 const EMPTY_FRAME = Object.freeze({
   revision: 0,
@@ -128,6 +132,11 @@ function boot() {
     }
 
     if (switched) artworkMotion.update({ active: false, frame: currentFrame });
+    if (activeTemplateId === 'ticket-stub') {
+      if (switched) coverMotion.update(currentFrame, { active: false });
+      renderArtworkFrame(artworkElements, currentFrame);
+      return;
+    }
     if (switched) coverMotion.setReducedMotion(reducedMotion);
     coverMotion.update(currentFrame, {
       active: true,
@@ -148,7 +157,8 @@ function boot() {
       reducedMotion = value;
       if (activeTemplateId === 'art-card')
         artworkMotion.setReducedMotion(value);
-      else coverMotion.setReducedMotion(value);
+      else if (activeTemplateId === 'cover-player')
+        coverMotion.setReducedMotion(value);
     },
     onActivity: (active, { recovering } = {}) => {
       if (!active) {
@@ -165,7 +175,10 @@ function boot() {
         ...slot,
         templateId: activeTemplateId,
       });
-      applyOverlayAppearance(document, slot);
+      applyOverlayAppearance(document, {
+        ...slot,
+        templateId: activeTemplateId,
+      });
       if (host.active) renderCurrentFrame();
     },
     onSnapshot: (snapshot, context) => {

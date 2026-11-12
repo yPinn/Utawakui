@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/overlay/shared/fallback.css" />
     <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/now-playing/artwork.css" />
+    <link rel="stylesheet" href="/overlay/now-playing/ticket.css" />
     <link rel="stylesheet" href="/overlay/shared/appearance.css" />
     <script src="/overlay/vendor/gsap.min.js"></script>
     <script type="module" src="/overlay/now-playing/now-playing.mjs"></script>
@@ -16,8 +17,8 @@
     <main id="artwork-overlay" class="artwork-overlay" dir="auto" hidden>
       <div class="artwork-overlay__vinyl-stage">
         <div class="artwork-overlay__album-panel">
-          <div class="artwork-overlay__sleeve">
-            <div class="artwork-overlay__mark" aria-hidden="true">
+          <div class="artwork-overlay__sleeve ticket-paper ticket-cut">
+            <div class="artwork-overlay__mark ticket-cover" aria-hidden="true">
               <img
                 id="artwork-image"
                 class="artwork-overlay__image"
@@ -29,15 +30,15 @@
                 class="artwork-overlay__fallback"
               ></span>
             </div>
-            <div class="artwork-overlay__copy">
+            <div class="artwork-overlay__copy ticket-copy" dir="auto">
               <h1
                 id="artwork-title"
-                class="artwork-overlay__title"
+                class="artwork-overlay__title ticket-title"
                 data-ovl-element="title"
               ></h1>
               <p
                 id="artwork-artist"
-                class="artwork-overlay__artist"
+                class="artwork-overlay__artist ticket-artist"
                 data-ovl-element="artist"
               ></p>
             </div>

@@ -290,10 +290,10 @@ describe('Now Playing artwork layouts', () => {
   });
 
   it('keeps song identity in the artwork sleeve copy region', () => {
-    const informationStart = html.indexOf('class="artwork-overlay__copy"');
-    const information = html.slice(informationStart);
+    const information = html.match(
+      /<div class="artwork-overlay__copy ticket-copy"[^>]*>([\s\S]*?)<\/div>/,
+    )?.[1];
 
-    expect(informationStart).toBeGreaterThan(-1);
     expect(information).toContain('id="artwork-title"');
     expect(information).toContain('id="artwork-artist"');
   });

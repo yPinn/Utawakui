@@ -30,8 +30,10 @@ const ids = [
   'live-stage',
   'manga-frame',
   'art-card',
+  'ticket-stub',
   'cover-player',
   'receipt-setlist',
+  'ribbon-setlist',
 ];
 
 describe('Output F1 acceptance foundation', () => {

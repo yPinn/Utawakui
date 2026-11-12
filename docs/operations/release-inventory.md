@@ -446,10 +446,19 @@ HTTP route. Existing overlay/shared globs include them and exclude adjacent test
 The renderer preview imports the same DOM, motion and CSS, with Vite emitting its
 copies of the paper and grain plates. No extra dependency or unpack rule is introduced.
 
+Ribbon Setlist ships `overlay/setlist/ribbonView.mjs`, `ribbonFlashback.mjs`
+and `ribbon.css` on exact HTTP routes under the existing package glob. Gallery
+uses the same view and motion. The white surface reuses the packaged grain
+plate. The transparent surface shows bands and text at rest and adds the brush
+shape during a flashback.
+
 `overlay/**/*` ships the three fixed Browser Source pages and their exact-route
 assets; adjacent `*.test.js` files stay excluded. Now Playing shares
-`artwork.css` across its two templates; `coverPlayerMotion.mjs` supplies the
+`artwork.css` across its three templates; `coverPlayerMotion.mjs` supplies the
 Cover Player track fade through its exact HTTP route under the same package glob.
+`now-playing/ticket.css`, `shared/ticketShape.css` and `shared/paper-grain.svg`
+are exact-route assets under the existing overlay glob. Vite also bundles the
+ticket styling for the renderer preview and the shared cut and grain for Folder.
 The retired Workbench wrapper
 HTML／CSS／JS and compact Now Playing stylesheet are removed along with their
 HTTP routes. `overlay/assets/streamer-guide.png` is the single source for the

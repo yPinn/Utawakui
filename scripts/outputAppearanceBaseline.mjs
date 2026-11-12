@@ -215,7 +215,7 @@ export function projectOutputScenario(templateId, scene) {
     });
   }
   return kind === 'setlist'
-    ? templateId === 'receipt-setlist'
+    ? templateId === 'receipt-setlist' || templateId === 'ribbon-setlist'
       ? selectReceiptSetlistFrame(scene.snapshot)
       : selectSetlistFrame(scene.snapshot)
     : selectArtworkFrame(scene.snapshot, { nowMs: scene.nowMs });

@@ -3,6 +3,7 @@ const COMMON = t('outputPanel.previewLimits.common');
 const DETAILS = Object.freeze({
   'queue-board': t('outputPanel.previewLimits.queueBoard'),
   'receipt-setlist': t('outputPanel.previewLimits.receiptSetlist'),
+  'ribbon-setlist': t('outputPanel.previewLimits.ribbonSetlist'),
   'karaoke-stack': t('outputPanel.previewLimits.karaokeStack'),
   'kinetic-pop': t('outputPanel.previewLimits.kineticPop'),
   'ornate-vertical': t('outputPanel.previewLimits.ornateVertical'),
@@ -11,6 +12,7 @@ const DETAILS = Object.freeze({
   'live-stage': t('outputPanel.previewLimits.liveStage'),
   'manga-frame': t('outputPanel.previewLimits.mangaFrame'),
   'art-card': t('outputPanel.previewLimits.artCard'),
+  'ticket-stub': t('outputPanel.previewLimits.ticketStub'),
   'cover-player': t('outputPanel.previewLimits.coverPlayer'),
 });
 
