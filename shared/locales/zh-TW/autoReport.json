@@ -16,15 +16,15 @@
   "events": {
     "UNCAUGHT_EXCEPTION": "主程序未捕捉的例外",
     "RENDER_PROCESS_GONE": "畫面程序異常結束",
-    "PRELOAD_FAILED": "應用程式初始化失敗",
-    "STARTUP_DEFERRED_MIGRATION_FAILED": "啟動資料遷移失敗",
+    "PRELOAD_FAILED": "應用程式無法初始化",
+    "STARTUP_DEFERRED_MIGRATION_FAILED": "啟動時的資料更新未完成",
     "UNHANDLED_REJECTION": "未處理的非同步錯誤",
     "RENDERER_UNRESPONSIVE": "畫面沒有回應",
-    "RENDERER_LOAD_FAILED": "畫面載入失敗",
+    "RENDERER_LOAD_FAILED": "畫面無法載入",
     "CHILD_PROCESS_GONE": "子程序異常結束",
     "VUE_UNHANDLED_ERROR": "介面元件錯誤",
     "WINDOW_ERROR": "畫面腳本錯誤",
-    "OUTPUT_AUTOMATIC_START_FAILED": "Output 自動啟動失敗",
+    "OUTPUT_AUTOMATIC_START_FAILED": "Output 無法自動啟動",
     "unknown": "未分類錯誤"
   }
 }

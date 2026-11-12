@@ -1041,11 +1041,9 @@ describe('useImportSession', () => {
     await session.resolveSource();
 
     expect(session.state.sourceKind).toBe('idle');
-    expect(session.state.status).toBe(
-      '搜尋 YT Music／YouTube 失敗：網路連線失敗',
-    );
+    expect(session.state.status).toBe('無法搜尋 YT Music／YouTube：無法連線');
     expect(session.state.statusType).toBe('error');
-    expect(session.state.failureHint).toBe('請確認網路連線後再重試。');
+    expect(session.state.failureHint).toBe('請確認網路連線後再試一次。');
   });
 
   it('contains a malformed generic import response as a safe resolve failure', async () => {
@@ -1680,9 +1678,9 @@ describe('useImportSession', () => {
     await session.resolveSource();
 
     expect(session.state.sourceKind).toBe('idle');
-    expect(session.state.status).toBe('找不到來源：網路連線失敗');
+    expect(session.state.status).toBe('找不到來源：無法連線');
     expect(session.state.statusType).toBe('error');
-    expect(session.state.failureHint).toBe('請確認網路連線後再重試。');
+    expect(session.state.failureHint).toBe('請確認網路連線後再試一次。');
   });
 
   it('routes missing provider tools back to Settings instead of download-failure copy', async () => {

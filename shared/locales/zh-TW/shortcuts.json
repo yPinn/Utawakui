@@ -282,7 +282,7 @@
     "runtimeReadFailed": "無法讀取背景快捷鍵狀態，請重新讀取。",
     "unusable": "這組快捷鍵無法使用，請重新設定。",
     "saveUnconfirmed": "快捷鍵還沒存好，請重新讀取後再試。",
-    "testFailed": "無法確認按鍵是否可用，請重試。",
+    "testFailed": "無法確認按鍵是否可用，請再試一次。",
     "testFailedReload": "無法確認按鍵是否可用，請重新讀取後再試。",
     "recordUnusable": "無法使用這組按鍵，請換一組。",
     "recordUnconfirmed": "快捷鍵還沒存好，請再試一次或取消。"

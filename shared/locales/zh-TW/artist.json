@@ -73,7 +73,7 @@
     "restart": "需要重新啟動應用程式。"
   },
   "index": {
-    "organizeFailedTitle": "藝人整理失敗",
+    "organizeFailedTitle": "藝人整理未完成",
     "organizeFailed": "目前無法整理藝人，請再試一次。",
     "photoUpdateTitle": "藝人照片無法更新",
     "photoUpdate": "這張圖片無法作為藝人照片，請換一張再試。",
@@ -82,7 +82,7 @@
     "changedTitle": "藝人資料已更新",
     "changed": "藝人資料已更新，請確認最新內容後再試一次。",
     "updateFailedTitle": "藝人整理未完成",
-    "updateFailed": "目前無法更新藝人整理，請稍後再試。",
+    "updateFailed": "目前無法更新藝人整理，請再試一次。",
     "needsProvider": "請先在設定中啟用外部來源，再查詢 MusicBrainz。",
     "musicbrainzDown": "MusicBrainz 目前無法使用，仍可手動整理藝人。",
     "lookupFailedTitle": "無法查詢藝人資料"

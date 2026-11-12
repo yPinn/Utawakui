@@ -23,7 +23,7 @@
   },
   "native": {
     "saveFailed": "無法儲存關閉行為",
-    "saveFailedDetail": "視窗會保持開啟，請稍後再試。",
+    "saveFailedDetail": "視窗會保持開啟，請再試一次。",
     "trayUnavailable": "無法在背景執行",
     "trayUnavailableDetail": "目前無法使用系統匣，視窗會保持開啟。"
   }

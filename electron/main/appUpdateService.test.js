@@ -267,7 +267,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
     expect(service.getStatus().error).not.toContain('token');
     expect(logger.error).toHaveBeenCalledWith(
@@ -292,7 +292,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
     expect(logger.error).toHaveBeenCalledWith(
       '[update] Check failed',
@@ -320,7 +320,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
     expect(service.getStatus().phase).not.toBe('checking');
     expect(logger.error).toHaveBeenCalledWith(
@@ -378,7 +378,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
     expect(service.scheduleStartupCheck(15000)).toBe(false);
     expect(service.getStatus().error).not.toContain('private');
@@ -411,7 +411,7 @@ describe('app update service', () => {
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
       availableVersion: '0.2.0',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
 
     updater.emit('update-downloaded', { version: '0.2.0' });
@@ -420,7 +420,7 @@ describe('app update service', () => {
     });
     expect(service.install()).toMatchObject({
       phase: 'error',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
     expect(logger.error).toHaveBeenCalledWith(
       '[update] Download failed',
@@ -495,7 +495,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請再試一次。',
+      error: '無法驗證更新，請再試一次。',
     });
     expect(manifestClient.fetchManifest).toHaveBeenCalledWith('0.2.0');
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
@@ -528,7 +528,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請再試一次。',
+      error: '無法驗證更新，請再試一次。',
     });
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
   });
@@ -558,7 +558,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請再試一次。',
+      error: '無法驗證更新，請再試一次。',
     });
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
   });
@@ -624,7 +624,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請再試一次。',
+      error: '無法驗證更新，請再試一次。',
     });
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
   });
@@ -669,7 +669,7 @@ describe('app update service', () => {
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
       availableVersion: '0.2.0',
-      error: '更新失敗，請再試一次。',
+      error: '更新未完成，請再試一次。',
     });
     expect(logger.error).toHaveBeenCalledWith(
       '[update] Download failed',

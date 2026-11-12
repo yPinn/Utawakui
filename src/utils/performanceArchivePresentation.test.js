@@ -31,7 +31,7 @@ describe('archive presentation', () => {
     ]);
     expect(
       performanceArchiveSummary(saved, { compact: true, timeOnly: true }),
-    ).toBe('保存於 21:10');
+    ).toBe('儲存於 21:10');
   });
   it('retains local dates across months and years with unknown dates last', () => {
     const october = new Date(2026, 9, 31, 23, 50).toISOString();
@@ -104,7 +104,7 @@ describe('archive presentation', () => {
     expect(
       performanceArchiveSummary({ endedAt, ...counts }, { multiline: true }),
     ).toMatch(
-      /^保存於 2026\/10\/21\s01:00\n演出\u00a010\u00a0項 · 完成\u00a08\u00a0項$/u,
+      /^儲存於 2026\/10\/21\s01:00\n演出\u00a010\u00a0項 · 完成\u00a08\u00a0項$/u,
     );
     expect(
       performanceArchiveSummary(

@@ -22,7 +22,7 @@
   "readOnly": "唯讀",
   "notConnected": "尚未連接",
   "notConfigured": "此版本尚未設定 YouTube 授權，可在場次紀錄貼上影片連結。",
-  "secureUnavailable": "目前無法安全保存授權，可在場次紀錄貼上影片連結。",
+  "secureUnavailable": "目前無法安全儲存授權，可在場次紀錄貼上影片連結。",
   "authorizeHint": "在瀏覽器完成授權，再回到 Utawakui。",
   "twitchManual": "在場次紀錄貼上 VOD 連結即可配對。",
   "returnToPairing": "返回影片配對",
@@ -43,9 +43,9 @@
   "loadingCandidates": "正在查詢直播回放…",
   "link": "影片連結",
   "twitchLink": "VOD 連結",
-  "save": "保存",
+  "save": "儲存",
   "replace": "更換",
-  "saved": "已保存配對。",
-  "manualHint": "手動連結會保存在本機，影片可用狀態由平台決定。",
+  "saved": "已儲存配對。",
+  "manualHint": "手動連結會儲存在本機，影片可用狀態由平台決定。",
   "fallbackError": "目前無法完成操作，請再試一次。"
 }

@@ -41,7 +41,7 @@
     "enable": "啟用{feature}",
     "viewSetup": "查看準備項目"
   },
-  "readFailed": "功能狀態讀取失敗",
+  "readFailed": "無法讀取功能狀態",
   "readFailedMessage": "目前無法讀取功能狀態，請再試一次。",
   "restartRequired": "請重新啟動 Utawakui。",
   "enableFailed": "功能未啟用",

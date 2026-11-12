@@ -17,7 +17,7 @@
   "applyHint": "儲存後套用；變更連接埠須更新直播軟體的來源網址。",
   "availablePorts": "可用連接埠",
   "save": "儲存設定",
-  "fault": "輸出服務發生異常，請檢查連接埠後重試。",
+  "fault": "輸出服務發生異常，請檢查連接埠後再試一次。",
   "unreadable": "無法讀取",
   "unconfirmed": "尚未確認輸出服務狀態。",
   "serviceFault": "服務異常",
@@ -61,13 +61,13 @@
     "stopFailed": "Spout2 輸出未停止，請再試一次。",
     "fpsFailed": "Spout2 幀率未更新。",
     "errors": {
-      "SPOUT_NATIVE_MODULE_UNAVAILABLE": "Spout2 元件無法載入。",
+      "SPOUT_NATIVE_MODULE_UNAVAILABLE": "無法載入 Spout2。",
       "SPOUT_RENDERER_LOAD_FAILED": "透明歌詞畫面無法載入。",
       "SPOUT_RENDERER_FAILED": "透明歌詞畫面已停止。",
       "SPOUT_SENDER_NAME_IN_USE": "Utawakui.Lyrics 已被使用。",
       "SPOUT_SHARED_TEXTURE_UNAVAILABLE": "無法取得共享畫面。",
       "SPOUT_SURFACE_INVALID": "Spout2 輸出規格不相容。",
-      "SPOUT_TEXTURE_SEND_FAILED": "Spout2 畫面傳送失敗。",
+      "SPOUT_TEXTURE_SEND_FAILED": "無法傳送 Spout2 畫面。",
       "SPOUT_HELPER_INTERNAL": "Spout2 輸出發生錯誤。"
     }
   }

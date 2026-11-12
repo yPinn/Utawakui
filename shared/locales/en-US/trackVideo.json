@@ -51,11 +51,11 @@
   "error": {
     "busy": "Another video task is running. Try again shortly.",
     "invalid-intent": "Check the video ID, quality selection, or sync offset.",
-    "invalid-video": "This video could not be verified. Choose a playable H.264 MP4.",
+    "invalid-video": "This video couldn't be verified. Choose a playable H.264 MP4.",
     "no-formats": "This source offers no compatible H.264 MP4 formats.",
     "space": "There is not enough disk space, or the video exceeds 2 GB.",
     "stale": "The audio or library has changed. Add the video again.",
-    "unavailable": "The video could not be opened or retrieved. Try again or choose a local file.",
+    "unavailable": "The video can't be opened or retrieved. Try again or choose a local file.",
     "provider-disabled": "Enable external sources in Settings first.",
     "ffmpeg": "Set up FFmpeg in Settings to verify the video."
   }

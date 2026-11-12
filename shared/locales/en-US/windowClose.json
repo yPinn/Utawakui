@@ -1,8 +1,8 @@
 {
   "title": "Close Utawakui",
   "separationTitle": "Vocal removal in progress",
-  "errorTitle": "Could not close",
-  "responseError": "The close action could not be completed. Try again.",
+  "errorTitle": "Couldn't close",
+  "responseError": "The close action couldn't be completed. Try again.",
   "remember": "Remember my choice",
   "settings": {
     "readFailed": "Couldn't read the close behavior. Reload.",
@@ -22,9 +22,9 @@
     "quitting": "Quitting"
   },
   "native": {
-    "saveFailed": "Could not save the close behavior",
-    "saveFailedDetail": "The window stays open. Try again later.",
-    "trayUnavailable": "Cannot run in the background",
+    "saveFailed": "Couldn't save the close behavior",
+    "saveFailedDetail": "The window stays open. Try again.",
+    "trayUnavailable": "Can't run in the background",
     "trayUnavailableDetail": "The system tray is unavailable, so the window stays open."
   }
 }

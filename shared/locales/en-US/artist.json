@@ -29,7 +29,7 @@
     "possible": "Possible match; please check",
     "evidenceAliases": "{evidence}; also known as: {aliases}",
     "displayHint": "Tracks show this name; the original credits stay searchable.",
-    "failed": "Artist organizing not completed",
+    "failed": "Artist organizing didn't finish",
     "currentGroup": "Current grouping",
     "splitHint": "If the grouping is wrong, split it back into separate artists.",
     "status": "Organizing status",
@@ -73,7 +73,7 @@
     "restart": "Restart the app."
   },
   "index": {
-    "organizeFailedTitle": "Artist organizing failed",
+    "organizeFailedTitle": "Artist organizing didn't finish",
     "organizeFailed": "Artists can't be organized right now. Try again.",
     "photoUpdateTitle": "Artist photo can't be updated",
     "photoUpdate": "This image can't be used as an artist photo. Try another one.",
@@ -81,8 +81,8 @@
     "photoRemove": "This artist photo can't be removed right now. Try again.",
     "changedTitle": "Artist details updated",
     "changed": "Artist details were updated. Check the latest and try again.",
-    "updateFailedTitle": "Artist organizing not completed",
-    "updateFailed": "Artist organizing can't be updated right now. Try again later.",
+    "updateFailedTitle": "Artist organizing didn't finish",
+    "updateFailed": "Artist organizing can't be updated right now. Try again.",
     "needsProvider": "Turn on external sources in Settings before looking up MusicBrainz.",
     "musicbrainzDown": "MusicBrainz isn't available right now; you can still organize artists manually.",
     "lookupFailedTitle": "Can't look up artist details"

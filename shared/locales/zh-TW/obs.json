@@ -6,7 +6,7 @@
     "authenticating": "驗證中",
     "ready": "已連線",
     "degraded": "連線異常",
-    "error": "連線失敗"
+    "error": "無法連線"
   },
   "unreadable": "無法讀取",
   "summaryIdle": "連線後顯示直播與錄影狀態",

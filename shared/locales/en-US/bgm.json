@@ -16,7 +16,7 @@
   "postRoll": "Post-song gap",
   "paused": "Interlude music paused",
   "pausedLabel": "Interlude music paused",
-  "failedNamed": "Interlude music action failed: {error}",
+  "failedNamed": "Interlude music action didn't finish: {error}",
   "restorePending": "Resumes after the song",
   "restorePendingLabel": "Interlude music resumes after the song",
   "restoreAfter": "{status} · resumes after the song",

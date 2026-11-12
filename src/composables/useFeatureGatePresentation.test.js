@@ -288,7 +288,7 @@ describe('useFeatureGatePresentation', () => {
 
     expect(
       findItem(presentation, 'provider-flow', 'yt-dlp-provider-tool').value,
-    ).toBe('保存外部來源到本機曲庫');
+    ).toBe('儲存外部來源到本機曲庫');
     expect(
       findItem(presentation, 'audio-processing-flow', 'ffmpeg-gyan-essentials')
         .value,

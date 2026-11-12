@@ -5,7 +5,7 @@
     "repeatOn": "Turn on repeat",
     "accompanimentReady": "Accompaniment ready",
     "accompanimentBusy": "Preparing accompaniment",
-    "accompanimentIncomplete": "Accompaniment not completed",
+    "accompanimentIncomplete": "Accompaniment didn't finish",
     "noAccompaniment": "This song has no accompaniment yet",
     "regenerate": "Generate again",
     "generate": "Generate accompaniment",
@@ -177,9 +177,9 @@
     "stale": "The song details changed. Reload.",
     "notFound": "This song's audio can't be found right now.",
     "timeout": "Song settings timed out. Reload to check the result.",
-    "failedTitle": "Song settings not completed",
+    "failedTitle": "Song settings didn't finish",
     "failed": "Song settings can't be read or saved right now. Try again.",
-    "applyUnconfirmed": "This performance's settings weren't confirmed as applied. Check the output device and retry.",
+    "applyUnconfirmed": "This performance's settings weren't confirmed as applied. Check the output device and try again.",
     "applyFailed": "This performance's settings didn't finish. Try again."
   },
   "start": {
@@ -187,7 +187,7 @@
     "setupFailed": "Required audio setup didn't finish. Check the output device and try again.",
     "resumeFailed": "Playback can't resume right now. Try again.",
     "playFailed": "This track can't be played right now. Try again.",
-    "failedTitle": "Playback action not completed"
+    "failedTitle": "Playback action didn't finish"
   },
   "practice": {
     "leaveSession": "Stop arrangement playback first.",

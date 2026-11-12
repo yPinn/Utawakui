@@ -384,7 +384,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       }),
     );
 
-    expect(html).toContain('儲存失敗');
+    expect(html).toContain('無法儲存');
     expect(html).toContain('重試');
   });
 

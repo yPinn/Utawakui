@@ -107,7 +107,7 @@
     "reference": "Linked lyrics reference",
     "prepareReference": "Use plain text for review",
     "referenceLabel": "From {artist}",
-    "referenceFailed": "Could not load plain lyrics from this version.",
+    "referenceFailed": "Couldn't load plain lyrics from this version.",
     "fileTitle": "Choose an LRC, VTT or text file",
     "file": "Choose file",
     "saveTitle": "Save pasted lyrics"

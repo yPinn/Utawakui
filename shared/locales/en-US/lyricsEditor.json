@@ -364,6 +364,6 @@
     "save": "Save file",
     "saved": "Lyrics file saved.",
     "retry": "Refresh preview",
-    "failed": "Could not prepare or save the file. Refresh the preview and try again."
+    "failed": "Couldn't prepare or save the file. Refresh the preview and try again."
   }
 }

@@ -119,11 +119,11 @@
     "needsTools": "請先至設定準備或修復歌詞分析工具。",
     "savingOffset": "正在儲存校時，完成後才能分析。",
     "offsetFailed": "請先重試儲存校時，再分析。",
-    "failed": "分析失敗；原有歌詞與伴奏仍可使用，可重新分析。",
+    "failed": "分析未完成；原有歌詞與伴奏仍可使用，可重新分析。",
     "cancelled": "分析已取消；原有歌詞與伴奏仍可使用。",
     "skipped": {
       "sourceChanged": "歌詞來源已變更，請重新分析。",
-      "languageUnknown": "無法確認語言。請選擇主要語言後重試；混合語言的句子保留原有逐行時間。",
+      "languageUnknown": "無法確認語言。請選擇主要語言後再試一次；混合語言的句子保留原有逐行時間。",
       "languageUnsupported": "支援中文、日文與英文。請選擇分析語言。",
       "lyricsMissing": "請先加入含同步時間的歌詞。",
       "untimedLyrics": "這份歌詞沒有可分析的逐行時間。",

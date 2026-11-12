@@ -164,7 +164,7 @@ describe('release catalog batch facade', () => {
     expect(notify).toHaveBeenCalledWith(
       expect.objectContaining({
         tone: 'warning',
-        message: expect.stringContaining('畫面更新失敗'),
+        message: expect.stringContaining('畫面未更新'),
       }),
     );
     expect(bridge.releaseCatalogDownloadBatch).toHaveBeenCalledWith(

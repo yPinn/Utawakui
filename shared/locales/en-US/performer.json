@@ -37,7 +37,7 @@
   },
   "selfView": {
     "restart": "Restart the app, then open the teleprompter again.",
-    "failedTitle": "Teleprompter action not completed",
+    "failedTitle": "Teleprompter action didn't finish",
     "retry": "Retry",
     "controlFailed": "The teleprompter action didn't finish. Try again.",
     "tryAgain": "Try again.",

@@ -206,7 +206,7 @@
   },
   "folderObjects": {
     "layoutFailed": "Page layout not saved",
-    "operationFailed": "Page item action not completed",
+    "operationFailed": "Page item action didn't finish",
     "retrySave": "Retry save",
     "saveLayout": "The page item layout can't be saved right now.",
     "read": "Page items can't be read right now.",

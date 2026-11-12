@@ -15,7 +15,7 @@
   },
   "value": {
     "systemFfmpeg": "使用系統安裝版本",
-    "ytdlp": "保存外部來源到本機曲庫",
+    "ytdlp": "儲存外部來源到本機曲庫",
     "ffmpeg": "支援音訊轉換與格式讀取",
     "model": "產生人聲分離結果時使用"
   },
@@ -69,7 +69,7 @@
     "group": "{title} · {status}"
   },
   "notify": {
-    "fallbackName": "功能元件",
+    "fallbackName": "工具",
     "prepare": {
       "running": "{name}準備中",
       "failed": "{name}準備未完成",
@@ -89,12 +89,12 @@
     "retry": "重試",
     "restartTitle": "需要重新啟動",
     "restartMessage": "請重新啟動 Utawakui 後再試。",
-    "readFailed": "無法讀取準備狀態",
+    "readFailed": "無法讀取工具狀態",
     "reload": "重新讀取",
     "tryAgain": "請再試一次。",
-    "prepareFailed": "準備失敗",
-    "removeFailed": "移除項目失敗",
-    "repairFailed": "修復項目失敗"
+    "prepareFailed": "工具準備未完成",
+    "removeFailed": "工具移除未完成",
+    "repairFailed": "工具修復未完成"
   },
   "ffmpeg": {
     "title": "音訊轉換工具（FFmpeg）",

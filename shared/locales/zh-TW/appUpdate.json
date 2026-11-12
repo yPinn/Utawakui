@@ -59,13 +59,13 @@
     "downloaded": "更新已下載，可安裝",
     "downloadedMessage": "安裝時會重新啟動 Utawakui。",
     "viewUpdate": "查看更新",
-    "failedTitle": "更新失敗"
+    "failedTitle": "更新未完成"
   },
   "statusReadFailedRestart": "無法讀取更新狀態，請重新啟動後再試。",
   "statusReadFailed": "無法讀取更新狀態，請重新讀取。",
   "restartRequired": "請重新啟動 Utawakui 後再試。",
   "errors": {
-    "manifest": "更新驗證失敗，請再試一次。",
-    "failed": "更新失敗，請再試一次。"
+    "manifest": "無法驗證更新，請再試一次。",
+    "failed": "更新未完成，請再試一次。"
   }
 }

@@ -359,7 +359,7 @@ describe('performance history and archive entry points', () => {
       '選取 Recent show',
       '選取 Older show',
     ]);
-    expect(textContent(list)).toContain('保存於');
+    expect(textContent(list)).toContain('儲存於');
     await click(index.root, '最近 OBS 紀錄');
     expect(fixture.timeline.open).toHaveBeenCalledWith();
     expect(fixture.timeline.openForArrangement).not.toHaveBeenCalled();
@@ -468,7 +468,7 @@ describe('performance history and archive entry points', () => {
     notifications.dismiss(reminder.id);
     await settle();
     expect(fixture.openPreparation).not.toHaveBeenCalled();
-    expect(button(view.root, '保存')).toBeUndefined();
+    expect(button(view.root, '儲存')).toBeUndefined();
 
     await streamEnded('current');
     const [nextReminder] = notifications.items.value;
@@ -476,10 +476,10 @@ describe('performance history and archive entry points', () => {
     await notifications.runAction(nextReminder.id);
     await settle();
     expect(fixture.openPreparation).toHaveBeenCalledExactlyOnceWith('history');
-    expect(button(view.root, '保存')).toBeUndefined();
+    expect(button(view.root, '儲存')).toBeUndefined();
     fixture.playback.state.busy = false;
     await settle();
-    expect(button(view.root, '保存')).toBeDefined();
+    expect(button(view.root, '儲存')).toBeDefined();
     expect(fixture.playback.stop).not.toHaveBeenCalled();
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
 
@@ -502,13 +502,13 @@ describe('performance history and archive entry points', () => {
     await click(view.root, '結束場次');
     expect(fixture.playback.stop).not.toHaveBeenCalled();
     expect(textContent(view.root)).toContain('目前項目會停止，並記為中止');
-    expect(button(view.root, '保存').props.variant).toBe('accent');
+    expect(button(view.root, '儲存').props.variant).toBe('accent');
     await click(view.root, '取消');
-    expect(button(view.root, '保存')).toBeUndefined();
+    expect(button(view.root, '儲存')).toBeUndefined();
     expect(fixture.playback.stop).not.toHaveBeenCalled();
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
     await click(view.root, '結束場次');
-    await click(view.root, '保存');
+    await click(view.root, '儲存');
     expect(fixture.playback.stop).toHaveBeenCalledOnce();
     expect(fixture.plan.archiveSession).toHaveBeenCalledWith(
       '261106 - 演出歌單',
@@ -517,7 +517,7 @@ describe('performance history and archive entry points', () => {
     expect(fixture.selectTab).toHaveBeenCalledWith('pending');
     expect(fixture.createPlaylist).toHaveBeenCalledExactlyOnceWith('current');
     expect(notifications.items.value[0]).toMatchObject({
-      title: '歌單已保存',
+      title: '歌單已儲存',
       actionLabel: '查看歌單',
       lifecycle: 'transient',
     });
@@ -529,7 +529,7 @@ describe('performance history and archive entry points', () => {
     const view = mount(Tools);
     expect(button(view.root, '結束場次').props.disabled).toBe(true);
     await click(view.root, '結束場次');
-    expect(button(view.root, '保存')).toBeUndefined();
+    expect(button(view.root, '儲存')).toBeUndefined();
     expect(fixture.playback.stop).not.toHaveBeenCalled();
     view.app.unmount();
   });
@@ -541,12 +541,12 @@ describe('performance history and archive entry points', () => {
       .mockResolvedValueOnce(true);
     const view = mount(Tools);
     await click(view.root, '結束場次');
-    await click(view.root, '保存');
+    await click(view.root, '儲存');
     expect(fixture.plan.archiveSession).not.toHaveBeenCalled();
     expect(textContent(view.root)).toContain('尚未停止');
-    await click(view.root, '保存');
+    await click(view.root, '儲存');
     expect(textContent(view.root)).toContain('原安排仍保留');
-    await click(view.root, '保存');
+    await click(view.root, '儲存');
     expect(fixture.plan.archiveSession.mock.calls).toEqual([
       ['261106 - 演出歌單', 'current'],
       ['261106 - 演出歌單', 'current'],

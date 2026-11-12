@@ -22,12 +22,12 @@
   },
   "history": {
     "title": "播放紀錄",
-    "guidance": "自動保存；清除不影響佇列或播放清單。",
+    "guidance": "自動儲存；清除不影響佇列或播放清單。",
     "options": "播放紀錄選項",
     "actions": "播放紀錄操作",
     "unconfirmed": "暫時無法讀取",
     "clearing": "清除中",
-    "saved": "已保存 {count} 首",
+    "saved": "已儲存 {count} 首",
     "empty": "尚無播放紀錄",
     "clear": "清除播放紀錄",
     "readFailedNamed": "播放紀錄無法讀取：{error}",
@@ -95,12 +95,12 @@
     "unnamedItem": "未命名項目",
     "trackNotMatched": "查無對應發行",
     "albumNotFound": "找不到來源專輯",
-    "issueFailed": "更新失敗，可重試",
-    "refreshFailed": "更新失敗，請重試。",
-    "stopFailed": "停止失敗，請重試。",
+    "issueFailed": "更新未完成，可再試一次",
+    "refreshFailed": "更新未完成，請再試一次。",
+    "stopFailed": "無法停止，請再試一次。",
     "progressQuerying": "查詢中 · {completed} / {total}",
     "progressStopping": "停止中 · {completed} / {total}",
     "reloaded": "已重新讀取本機曲庫。",
-    "reloadFailed": "目前無法重新讀取曲庫，請稍後再試。"
+    "reloadFailed": "目前無法重新讀取曲庫，請再試一次。"
   }
 }

@@ -11,16 +11,16 @@
       "invalidAudio": "The audio can't be read",
       "formatMismatch": "The file format doesn't match its content",
       "sourceChanged": "The source file changed. Choose it again",
-      "conversionFailed": "Format conversion not completed",
-      "importFailed": "Import not completed"
+      "conversionFailed": "Format conversion didn't finish",
+      "importFailed": "Import didn't finish"
     },
     "skipUnknown": "This file can't be imported",
     "titles": {
       "needsConversion": "Format conversion needed",
       "conversionDone": "Format conversion finished",
-      "conversionFailed": "Format conversion not completed",
+      "conversionFailed": "Format conversion didn't finish",
       "importDone": "Local import finished",
-      "importFailed": "Local import not completed"
+      "importFailed": "Local import didn't finish"
     },
     "viewResults": "View import results",
     "conversionReview": "{count} {formats} file needs converting to FLAC; the original isn't changed, and the converted copy may use more space. | {count} {formats} files need converting to FLAC; the originals aren't changed, and the converted copies may use more space.",
@@ -43,7 +43,7 @@
     "conversionNoneSkipped": "No format conversion finished; {skipped}",
     "conversionNone": "No format conversion finished. Choose the files again.",
     "restartImport": "Restart the app to use local audio import.",
-    "failedTitle": "Local import failed",
+    "failedTitle": "Local import didn't finish",
     "failedMessage": "Audio files can't be imported right now. Try again.",
     "restartConversion": "Restart the app to use format conversion.",
     "needsAudioTitle": "Audio processing needs to be on",
@@ -52,7 +52,7 @@
     "converting": "Converting to FLAC…",
     "needsFfmpegTitle": "FFmpeg needs to be prepared",
     "needsFfmpegMessage": "Prepare FFmpeg in Settings, then come back to convert.",
-    "conversionFailedTitle": "Format conversion failed",
+    "conversionFailedTitle": "Format conversion didn't finish",
     "conversionFailedMessage": "The format conversion didn't finish. Choose the files again and retry."
   },
   "session": {
@@ -63,7 +63,7 @@
     "downloadCount": "Download {count}",
     "addCount": "Add {count}",
     "noneSelected": "No tracks selected",
-    "failedTitle": "Import action not completed",
+    "failedTitle": "Import action didn't finish",
     "providerNotReadyTitle": "External sources aren't ready",
     "providerSetupMessage": "Finish preparing external sources in Settings.",
     "providerToolTitle": "External source tool needs to be prepared",
@@ -71,7 +71,7 @@
     "providerRequired": "Turn on external sources in Settings to look up or download online songs.",
     "providerRequiredStatus": "Turn on external sources in Settings first",
     "libraryUnreadableTitle": "The library location can't be read",
-    "folderFailedTitle": "Library folder action not completed",
+    "folderFailedTitle": "Library folder action didn't finish",
     "retry": "Retry",
     "libraryUnreadable": "The library location can't be read right now. Try again.",
     "settingsUnreadable": "Import settings can't be read right now. Try again.",
@@ -110,7 +110,7 @@
     "noSource": "No downloadable version found",
     "restartPreview": "Restart the app to preview singles; you can still download now.",
     "providerUnresponsive": "External sources aren't responding right now",
-    "searchFailed": "YT Music / YouTube search failed: {reason}",
+    "searchFailed": "Couldn't search YT Music / YouTube: {reason}",
     "checkFailed": "This source can't be checked right now.",
     "notFound": "Source not found: {reason}",
     "providerRequiredYtMusic": "Turn on external sources in Settings to look for a source on YT Music.",
@@ -124,7 +124,7 @@
     "cancelled": "{count} stopped",
     "local": "{count} already in the library",
     "saveError": "The playlist wasn't saved. Try again",
-    "incomplete": "Download not completed",
+    "incomplete": "Download didn't finish",
     "stopped": "Download stopped",
     "done": "Download finished",
     "imported": "Import finished",
@@ -153,7 +153,7 @@
     }
   },
   "batch": {
-    "stopFailed": "Stop not completed",
+    "stopFailed": "Stop didn't finish",
     "notSaved": "List not saved yet",
     "phases": {
       "queued": "Waiting to download",
@@ -193,11 +193,11 @@
     },
     "rateLimited": {
       "label": "Download limit reached",
-      "hint": "YouTube is temporarily limiting downloads. Wait a few minutes and retry."
+      "hint": "YouTube is temporarily limiting downloads. Wait a few minutes and try again."
     },
     "networkError": {
-      "label": "Network connection failed",
-      "hint": "Check your network connection and retry."
+      "label": "Can't connect",
+      "hint": "Check your network connection and try again."
     },
     "diskFull": {
       "label": "Not enough storage",
@@ -209,7 +209,7 @@
     },
     "unknown": {
       "label": "Download failed",
-      "hint": "Retry later; if it keeps failing, import with Local audio above."
+      "hint": "Try again later; if it still doesn't download, import with Local audio above."
     },
     "loginExpired": {
       "label": "Sign-in may have expired",
@@ -228,13 +228,13 @@
     "chooseFiles": "Choose audio files",
     "needsConversion": "Format conversion needed",
     "convertAndImport": "Convert to FLAC and import",
-    "localFailed": "Local import not completed",
+    "localFailed": "Local import didn't finish",
     "retry": "Retry",
     "skippedFiles": "Skipped local files",
     "localResults": "Local import results",
     "external": "External sources",
     "moreOnYtMusic": "Find more results on YT Music",
-    "externalFailed": "External source action not completed",
+    "externalFailed": "External source action didn't finish",
     "candidates": "Downloadable versions",
     "pendingList": "Import list to review",
     "activeBatches": "Importing",
@@ -275,7 +275,7 @@
     },
     "missingEmpty": "No tracks to download",
     "localEmpty": "No tracks already in the library",
-    "downloadIncomplete": "Download not completed",
+    "downloadIncomplete": "Download didn't finish",
     "failureDetail": "{label} | {hint}",
     "retryFailed": "Retry unfinished tracks",
     "stopNamed": "Stop downloading {title}",
@@ -307,7 +307,7 @@
     "listLabel": "Confirmed import tracks",
     "cancelFailed": "Stopping the download didn't finish; the job is still running. Try again.",
     "saveFailed": "The tracks were downloaded, but the list wasn't saved. Try again; finished tracks won't download again.",
-    "providerNotReady": "External sources aren't ready. Finish preparing them in Settings, then retry."
+    "providerNotReady": "External sources aren't ready. Finish preparing them in Settings, then try again."
   },
   "trackStatus": {
     "done": "Done",

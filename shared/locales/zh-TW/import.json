@@ -43,7 +43,7 @@
     "conversionNoneSkipped": "沒有完成格式轉換，{skipped}",
     "conversionNone": "沒有完成格式轉換，請重新選擇檔案。",
     "restartImport": "需要重新啟動應用程式才能使用本機音訊匯入。",
-    "failedTitle": "本機匯入失敗",
+    "failedTitle": "本機匯入未完成",
     "failedMessage": "目前無法匯入音檔，請再試一次。",
     "restartConversion": "需要重新啟動應用程式才能使用格式轉換。",
     "needsAudioTitle": "需要啟用音訊處理",
@@ -52,7 +52,7 @@
     "converting": "正在轉換為 FLAC…",
     "needsFfmpegTitle": "需要準備 FFmpeg",
     "needsFfmpegMessage": "請先在設定準備 FFmpeg，再回來轉換格式。",
-    "conversionFailedTitle": "格式轉換失敗",
+    "conversionFailedTitle": "格式轉換未完成",
     "conversionFailedMessage": "格式轉換未完成，請重新選擇檔案後再試一次。"
   },
   "session": {
@@ -110,7 +110,7 @@
     "noSource": "找不到可下載的版本",
     "restartPreview": "重新啟動應用程式後即可預覽單曲；目前仍可下載。",
     "providerUnresponsive": "外部來源暫時無法回應",
-    "searchFailed": "搜尋 YT Music／YouTube 失敗：{reason}",
+    "searchFailed": "無法搜尋 YT Music／YouTube：{reason}",
     "checkFailed": "目前無法檢查這個來源。",
     "notFound": "找不到來源：{reason}",
     "providerRequiredYtMusic": "請先到設定啟用外部來源，才能前往 YT Music 尋找來源。",
@@ -193,11 +193,11 @@
     },
     "rateLimited": {
       "label": "下載次數受限",
-      "hint": "YouTube 暫時限制了下載，請等幾分鐘再重試。"
+      "hint": "YouTube 暫時限制了下載，請等幾分鐘後再試一次。"
     },
     "networkError": {
-      "label": "網路連線失敗",
-      "hint": "請確認網路連線後再重試。"
+      "label": "無法連線",
+      "hint": "請確認網路連線後再試一次。"
     },
     "diskFull": {
       "label": "儲存空間不足",
@@ -209,7 +209,7 @@
     },
     "unknown": {
       "label": "下載失敗",
-      "hint": "請稍後重試；若持續失敗，可改用上方的「本機音訊」匯入。"
+      "hint": "請稍後再試；若仍無法下載，可改用上方的「本機音訊」匯入。"
     },
     "loginExpired": {
       "label": "登入可能已過期",
@@ -307,7 +307,7 @@
     "listLabel": "已確認的匯入曲目",
     "cancelFailed": "停止下載未完成，工作仍在執行。請再試一次。",
     "saveFailed": "曲目已下載，但清單未儲存。請再試一次；已完成的曲目不會再次下載。",
-    "providerNotReady": "外部來源尚未準備完成，請到設定完成準備後重試。"
+    "providerNotReady": "外部來源尚未準備完成，請到設定完成準備後再試一次。"
   },
   "trackStatus": {
     "done": "完成",

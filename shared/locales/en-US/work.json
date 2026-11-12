@@ -87,7 +87,7 @@
     "closeAlbumFilter": "Close album filter",
     "findingArtwork": "Finding artwork…",
     "noArtwork": "No artwork found. Check the title and artist, or add the album name and search again.",
-    "failed": "Action not completed"
+    "failed": "Action didn't finish"
   },
   "linkSearch": {
     "label": "Link tracks",

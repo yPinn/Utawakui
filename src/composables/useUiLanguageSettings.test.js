@@ -110,7 +110,7 @@ describe('useUiLanguageSettings', () => {
     await settings.refresh();
     await settings.offerRestart();
     expect(confirm.mock.calls[0][0].detail).toBe(
-      'Utawakui 會關閉後重新開啟，尚未保存的修改不會保留。' +
+      'Utawakui 會關閉後重新開啟，尚未儲存的修改不會保留。' +
         '伴奏處理會停止，目前歌曲與其餘排程都會取消。' +
         '畫面輸出會中斷，重新開啟後自動恢復。',
     );

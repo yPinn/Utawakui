@@ -278,17 +278,17 @@
     "busy": "Shortcuts are busy. Try again shortly.",
     "degraded": "Background shortcuts are paused. Reload shortcuts and try again.",
     "unsupportedGlobal": "This background shortcut isn't available yet.",
-    "readFailed": "Shortcuts could not be read. Reload them.",
-    "runtimeReadFailed": "Background shortcut status could not be read. Reload it.",
+    "readFailed": "Shortcuts couldn't be read. Reload them.",
+    "runtimeReadFailed": "Background shortcut status couldn't be read. Reload it.",
     "unusable": "This shortcut can't be used. Set it again.",
     "saveUnconfirmed": "Shortcuts aren't saved yet. Reload and try again.",
-    "testFailed": "Couldn't check whether the keys are available. Retry.",
+    "testFailed": "Couldn't check whether the keys are available. Try again.",
     "testFailedReload": "Couldn't check whether the keys are available. Reload and try again.",
     "recordUnusable": "These keys can't be used. Choose another combination.",
     "recordUnconfirmed": "The shortcut isn't saved yet. Try again or cancel."
   },
   "mainErrors": {
-    "settingsTitle": "Shortcut settings not completed",
+    "settingsTitle": "Shortcut settings didn't finish",
     "receiverTitle": "Shortcuts aren't ready",
     "receiverMessage": "Reload the shortcut settings and try again."
   }

@@ -119,11 +119,11 @@
     "needsTools": "Prepare or repair the lyrics analysis tools in Settings first.",
     "savingOffset": "Saving the timing; analysis can start when it finishes.",
     "offsetFailed": "Retry saving the timing before analyzing.",
-    "failed": "Analysis failed. Your lyrics and accompaniment still work; you can analyze again.",
+    "failed": "Analysis didn't finish. Your lyrics and accompaniment still work; you can analyze again.",
     "cancelled": "Analysis cancelled. Your lyrics and accompaniment still work.",
     "skipped": {
       "sourceChanged": "The lyrics source changed. Analyze again.",
-      "languageUnknown": "Couldn't detect the language. Choose the main language and retry; mixed-language lines keep their line timing.",
+      "languageUnknown": "Couldn't detect the language. Choose the main language and try again; mixed-language lines keep their line timing.",
       "languageUnsupported": "Chinese, Japanese and English are supported. Choose an analysis language.",
       "lyricsMissing": "Add lyrics with sync timing first.",
       "untimedLyrics": "These lyrics have no line timing to analyze.",

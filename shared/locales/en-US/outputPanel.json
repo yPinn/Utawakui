@@ -448,7 +448,7 @@
     "label": "Output status",
     "start": "Start",
     "stop": "Stop",
-    "failedTitle": "Output action not completed"
+    "failedTitle": "Output action didn't finish"
   },
   "split": {
     "back": "Back",
@@ -505,7 +505,7 @@
   },
   "workbench": {
     "appearance": "Appearance",
-    "saveFailed": "Save failed",
+    "saveFailed": "Couldn't save",
     "saving": "Saving…",
     "saved": "Saved",
     "label": "Output workbench",
@@ -564,7 +564,7 @@
     "notStarted": "The output service didn't start. Try again.",
     "notStopped": "The output service didn't stop. Try again.",
     "enableToOpen": "Turn on public output in Settings, then open the output window.",
-    "windowNotOpened": "The output window didn't open. Make sure the service is running and retry.",
+    "windowNotOpened": "The output window didn't open. Make sure the service is running and try again.",
     "styleNotSaved": "The output style wasn't saved. Try again.",
     "initFailed": "Output didn't finish starting. Try again."
   },

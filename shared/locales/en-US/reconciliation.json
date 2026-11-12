@@ -116,6 +116,6 @@
     "failed": "This can't be completed right now. Try again later.",
     "saved": "Saved to the library.",
     "undone": "Release merge undone.",
-    "stopFailed": "Can't stop right now. Try again later."
+    "stopFailed": "Can't stop right now. Try again."
   }
 }

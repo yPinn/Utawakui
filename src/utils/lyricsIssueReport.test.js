@@ -43,7 +43,7 @@ describe('lyrics issue draft projection', () => {
       tier: 'T2',
       offsetMs: -1200,
     });
-    expect(draft.description).toContain('已保存來源');
+    expect(draft.description).toContain('已儲存來源');
     expect(draft.description).toContain('LRCLIB #17');
     expect(draft.description).toContain('-1200 ms');
     expect(JSON.stringify(draft)).not.toMatch(/private|PRIVATE|lines/);

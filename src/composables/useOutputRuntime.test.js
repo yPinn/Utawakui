@@ -310,7 +310,9 @@ it('opens a read-only window with only a kind intent and contains failures for r
     new Error('private main cause'),
   );
   await expect(runtime.openWindow('lyrics')).resolves.toBe(false);
-  expect(runtime.state.error).toBe('輸出視窗未開啟，請確認服務已啟動後重試。');
+  expect(runtime.state.error).toBe(
+    '輸出視窗未開啟，請確認服務已啟動後再試一次。',
+  );
   expect(runtime.state.isOpeningWindow).toBe(false);
   await expect(runtime.openWindow('lyrics')).resolves.toBe(true);
 });

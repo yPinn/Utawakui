@@ -18,7 +18,7 @@
   "support": {
     "clearTitle": "Clear error log?",
     "clearMessage": "The saved error log will be cleared.",
-    "clearDetail": "This cannot be undone.",
+    "clearDetail": "This can't be undone.",
     "clearConfirm": "Clear log",
     "viewAnnouncements": "View release announcements",
     "discord": "Community Discord",

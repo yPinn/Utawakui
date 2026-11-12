@@ -22,7 +22,7 @@
   "readOnly": "Read only",
   "notConnected": "Not connected",
   "notConfigured": "YouTube authorization is not configured in this build. Paste a video link in the session record.",
-  "secureUnavailable": "Authorization cannot be stored securely. Paste a video link in the session record.",
+  "secureUnavailable": "Authorization can't be stored securely. Paste a video link in the session record.",
   "authorizeHint": "Complete authorization in your browser, then return to Utawakui.",
   "twitchManual": "Paste a VOD link in a session record to pair it.",
   "returnToPairing": "Return to video pairing",
@@ -47,5 +47,5 @@
   "replace": "Replace",
   "saved": "Pairing saved.",
   "manualHint": "The link is stored locally. Availability depends on the platform.",
-  "fallbackError": "Could not complete the action. Try again."
+  "fallbackError": "Couldn't complete the action. Try again."
 }

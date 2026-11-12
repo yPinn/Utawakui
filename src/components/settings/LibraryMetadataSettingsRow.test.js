@@ -82,7 +82,7 @@ describe('LibraryMetadataSettingsRow', () => {
 
   it.each([
     [false, '已更新 2 張', 'status'],
-    [true, '更新失敗，請重試。', 'alert'],
+    [true, '更新未完成，請再試一次。', 'alert'],
   ])(
     'shows one result area and a retry action after completion (error=%s)',
     async (error, feedback, role) => {
@@ -122,6 +122,6 @@ describe('LibraryMetadataSettingsRow', () => {
     expect(disclosure).toContain('演唱者');
     expect(disclosure).toContain('查無對應發行');
     expect(disclosure).toContain('專輯名稱');
-    expect(disclosure).toContain('更新失敗，可重試');
+    expect(disclosure).toContain('更新未完成，可再試一次');
   });
 });

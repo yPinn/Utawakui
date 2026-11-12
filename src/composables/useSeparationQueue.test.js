@@ -162,7 +162,7 @@ describe('useSeparationQueue', () => {
     );
     await h.separationQueue.refreshStatus();
     expect(h.separationQueue.error.value).toBe(
-      '處理清單暫時無法讀取，請稍後再試。',
+      '處理清單暫時無法讀取，請再試一次。',
     );
   });
   it('keeps a known snapshot on malformed pushes and refuses actions after disposal', async () => {

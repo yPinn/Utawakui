@@ -1,6 +1,6 @@
 {
   "reload": "The data changed. Reload before editing.",
-  "failedTitle": "Song organizing not completed",
+  "failedTitle": "Song organizing didn't finish",
   "failed": "Song details can't be read or saved right now. Try again.",
   "targetChanged": "The selected track's audio changed. Check that track or choose another.",
   "audioChanged": "The audio changed. Check this track's song and version, then save again.",

@@ -49,23 +49,23 @@
   "autoCheckUnconfirmed": "Loading…",
   "reloadAutoCheck": "Reload the automatic check setting",
   "reloadStatus": "Reload update status",
-  "autoCheckReadFailed": "The automatic check setting could not be read. Reload it.",
+  "autoCheckReadFailed": "The automatic check setting couldn't be read. Reload it.",
   "autoCheckSaveFailed": "The automatic check setting was not saved and has been restored.",
   "notify": {
     "downloading": "Downloading Utawakui update",
-    "downloadFailed": "Update download not completed",
+    "downloadFailed": "Update download didn't finish",
     "downloadFailedMessage": "Check your network connection and try again.",
     "retryDownload": "Retry download",
     "downloaded": "Update downloaded and ready to install",
     "downloadedMessage": "Installing restarts Utawakui.",
     "viewUpdate": "View update",
-    "failedTitle": "Update failed"
+    "failedTitle": "Update didn't finish"
   },
-  "statusReadFailedRestart": "Update status could not be read. Restart and try again.",
-  "statusReadFailed": "Update status could not be read. Reload it.",
+  "statusReadFailedRestart": "Update status couldn't be read. Restart and try again.",
+  "statusReadFailed": "Update status couldn't be read. Reload it.",
   "restartRequired": "Restart Utawakui and try again.",
   "errors": {
-    "manifest": "Update verification failed. Try again.",
-    "failed": "Update failed. Try again."
+    "manifest": "Couldn't verify the update. Try again.",
+    "failed": "The update didn't finish. Try again."
   }
 }

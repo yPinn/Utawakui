@@ -319,7 +319,7 @@ describe('useFeatureDependencies', () => {
       code: 'FEATURE_DEPENDENCY_STATUS_FAILED',
       operation: 'refresh',
       source: 'feature-dependencies',
-      title: '無法讀取準備狀態',
+      title: '無法讀取工具狀態',
       message: '請再試一次。',
     });
     expect(dependencies.state.error.message).not.toContain('private-runtime');
@@ -383,7 +383,7 @@ describe('useFeatureDependencies', () => {
       code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
       operation: 'prepare',
       context: { dependencyId: DEPENDENCY_ID },
-      title: '準備失敗',
+      title: '工具準備未完成',
       message: '請再試一次。',
     });
     expect(dependencies.state.error.message).not.toContain('private.test');

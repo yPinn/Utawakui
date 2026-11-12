@@ -246,7 +246,7 @@ describe('Spout output runtime', () => {
       observed: { lifecycle: 'error' },
       error: {
         code: 'SPOUT_NATIVE_MODULE_UNAVAILABLE',
-        message: 'Spout2 元件無法載入。',
+        message: '無法載入 Spout2。',
       },
     });
     expect(JSON.stringify(runtime.getStatus())).not.toContain('private');

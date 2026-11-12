@@ -41,8 +41,8 @@
   },
   "warnings": {
     "partialWordTiming": "部分歌詞缺少逐字時間",
-    "overlappingLines": "逐行時間有重疊，會保存但不直接使用",
-    "overlappingWords": "逐字時間有重疊，會保存但不直接使用",
+    "overlappingLines": "逐行時間有重疊，會儲存但不直接使用",
+    "overlappingWords": "逐字時間有重疊，會儲存但不直接使用",
     "unsupportedLyricsfileVersion": "逐字格式版本尚未支援",
     "invalidLyricsfile": "逐字同步資料無法使用",
     "normalizedBoundaryJitter": "已自動修正逐字時間的微小誤差",
@@ -65,7 +65,7 @@
     "heading": "歌詞問題（待確認）",
     "location": "位置：{value}",
     "candidate": "搜尋候選",
-    "saved": "已保存來源",
+    "saved": "已儲存來源",
     "source": "來源：{value}",
     "song": "候選歌曲：{value}",
     "level": "同步層級：{value}",
@@ -76,13 +76,13 @@
     "steps": "重現步驟："
   },
   "reading": {
-    "loadTitle": "讀取讀音資料失敗",
+    "loadTitle": "無法讀取讀音",
     "load": "目前無法讀取讀音資料，請再試一次。",
-    "generateTitle": "產生讀音失敗",
+    "generateTitle": "無法產生讀音",
     "generate": "讀音未產生，請再試一次。",
-    "setLineTitle": "修改讀音失敗",
+    "setLineTitle": "無法修改讀音",
     "setLine": "讀音未儲存，請再試一次。",
-    "deleteTitle": "刪除讀音失敗",
+    "deleteTitle": "無法刪除讀音",
     "delete": "目前無法刪除讀音，請再試一次。"
   },
   "saving": "儲存中…",

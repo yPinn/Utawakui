@@ -21,7 +21,7 @@
     "removeItemTitle": "Remove “{name}”?",
     "removeItemMessage": "After removal, this feature is unavailable until you set it up again.",
     "removeItemDetail": "You can set it up again when needed.",
-    "removeComponent": "Remove component"
+    "removeComponent": "Remove tool"
   },
   "bpm": {
     "title": "Analyze after import",

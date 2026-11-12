@@ -94,15 +94,15 @@
     "descriptionNoTrack": "設定 {slot}，請先選擇曲目",
     "name": "設定 {slot}",
     "nextDefault": "下次預設",
-    "saved": "已保存",
+    "saved": "已儲存",
     "empty": "空組",
-    "unsavedChanges": "未保存變更",
+    "unsavedChanges": "未儲存變更",
     "reading": "讀取歌曲設定中…",
-    "writing": "保存中…",
+    "writing": "儲存中…",
     "applying": "套用中…",
     "unconfirmed": "設定未確認",
     "copyTo": "複製已存設定到",
-    "copyTargetOverwrite": "設定 {slot}（保存後覆寫）",
+    "copyTargetOverwrite": "設定 {slot}（儲存後覆寫）",
     "copyTargetEmpty": "設定 {slot}（空組）",
     "reset": "重設目前設定",
     "remove": "移除此組設定",
@@ -111,8 +111,8 @@
     "useDefault": "本次使用預設",
     "groupLabel": "本曲設定組別",
     "cancelStart": "取消開始播放",
-    "save": "保存本曲",
-    "saving": "正在保存歌曲設定",
+    "save": "儲存本曲",
+    "saving": "正在儲存歌曲設定",
     "options": "歌曲設定選項"
   },
   "bgm": {
@@ -172,14 +172,14 @@
   "settings": {
     "invalid": "歌曲設定已損壞，原檔已保留。",
     "unsupported": "歌曲設定來自較新版本，請更新應用程式。",
-    "sourceStale": "歌曲音檔已變更，請重新確認已保存的設定。",
-    "conflict": "歌曲設定已變更，請重新讀取後再保存。",
+    "sourceStale": "歌曲音檔已變更，請重新確認已儲存的設定。",
+    "conflict": "歌曲設定已變更，請重新讀取後再儲存。",
     "stale": "歌曲資料已變更，請重新讀取。",
     "notFound": "目前找不到這首歌的音訊。",
     "timeout": "歌曲設定處理逾時，請重新讀取確認結果。",
     "failedTitle": "歌曲設定未完成",
-    "failed": "歌曲設定暫時無法讀取或保存，請再試一次。",
-    "applyUnconfirmed": "本次演唱設定尚未確認套用，請確認輸出裝置後重試。",
+    "failed": "歌曲設定暫時無法讀取或儲存，請再試一次。",
+    "applyUnconfirmed": "本次演唱設定尚未確認套用，請確認輸出裝置後再試一次。",
     "applyFailed": "本次演唱設定尚未完成，請再試一次。"
   },
   "start": {
@@ -196,7 +196,7 @@
     "waitingAudio": "等候音訊就緒…"
   },
   "resume": {
-    "saveFailed": "播放進度暫時無法保存。",
+    "saveFailed": "播放進度暫時無法儲存。",
     "restoreFailed": "上次播放狀態暫時無法恢復。"
   },
   "primary": {

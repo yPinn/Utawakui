@@ -69,32 +69,32 @@
     "group": "{title} · {status}"
   },
   "notify": {
-    "fallbackName": "Component",
+    "fallbackName": "Tool",
     "prepare": {
       "running": "Setting up {name}",
-      "failed": "{name} setup not completed",
+      "failed": "{name} setup didn't finish",
       "done": "{name} ready"
     },
     "repair": {
       "running": "Repairing {name}",
-      "failed": "{name} repair not completed",
+      "failed": "{name} repair didn't finish",
       "done": "{name} repaired"
     },
     "remove": {
       "running": "Removing {name}",
-      "failed": "{name} removal not completed",
+      "failed": "{name} removal didn't finish",
       "done": "{name} removed"
     },
     "viewSettings": "View settings",
     "retry": "Retry",
     "restartTitle": "Restart required",
     "restartMessage": "Restart Utawakui and try again.",
-    "readFailed": "Couldn't read setup status",
+    "readFailed": "Couldn't read tool status",
     "reload": "Reload",
     "tryAgain": "Try again.",
-    "prepareFailed": "Setup failed",
-    "removeFailed": "Couldn't remove the item",
-    "repairFailed": "Couldn't repair the item"
+    "prepareFailed": "Tool setup didn't finish",
+    "removeFailed": "Tool removal didn't finish",
+    "repairFailed": "Tool repair didn't finish"
   },
   "ffmpeg": {
     "title": "Audio conversion tool (FFmpeg)",

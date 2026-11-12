@@ -76,7 +76,7 @@
     "doneTitle": "伴奏處理完成",
     "viewList": "查看處理清單",
     "readFailedReopen": "處理清單暫時無法讀取，請重新開啟後再試。",
-    "readFailed": "處理清單暫時無法讀取，請稍後再試。",
+    "readFailed": "處理清單暫時無法讀取，請再試一次。",
     "addFailed": "曲目目前無法加入，請到設定完成準備後再試。",
     "updateFailed": "目前無法更新處理清單，請再試一次。"
   },

@@ -107,7 +107,7 @@ describe('archive collection document', () => {
     expect(html).not.toContain('app-folder-dossier__marker');
     expect(html).toContain('2026/10/20');
     expect(html).not.toContain('首筆紀錄');
-    expect(html).not.toContain('保存於');
+    expect(html).not.toContain('儲存於');
     expect(html).toContain('另存本場歌單');
     expect(html).toContain('匯出時間點');
     const archiveActions = html.slice(
@@ -138,7 +138,7 @@ describe('archive collection document', () => {
     expect(embedded.replaceAll(/<!--[\s\S]*?-->/gu, '')).toMatch(
       /<p[^>]*>2026\/10\/20[^<]*<\/p><p[^>]*>完成\s3\s項<\/p>/u,
     );
-    expect(embedded).not.toContain('保存於');
+    expect(embedded).not.toContain('儲存於');
     expect(embedded).toMatch(/完成\s3\s項/u);
     expect(embedded).toContain('MY FIRST STORY');
     expect(embedded).toContain('曲長');
@@ -160,7 +160,7 @@ describe('archive collection document', () => {
     };
     const html = await render();
     expect(html).toContain('本場只有標記紀錄。');
-    expect(html).toContain('保存於');
+    expect(html).toContain('儲存於');
     expect(html).not.toContain('首筆紀錄');
     expect(html).not.toMatch(/完成\s0\s項/u);
   });

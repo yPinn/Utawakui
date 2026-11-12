@@ -498,7 +498,7 @@
   },
   "workbench": {
     "appearance": "外觀",
-    "saveFailed": "儲存失敗",
+    "saveFailed": "無法儲存",
     "saving": "儲存中…",
     "saved": "已儲存",
     "label": "輸出工作台",
@@ -535,7 +535,7 @@
     "motionSample": "動態示例",
     "reference": "參考圖",
     "static": "靜態",
-    "motionFailed": "動態預覽載入失敗，請再試一次"
+    "motionFailed": "無法載入動態預覽，請再試一次"
   },
   "widget": {
     "sizes": "Widget 擷取尺寸",
@@ -557,7 +557,7 @@
     "notStarted": "輸出服務未啟動，請再試一次。",
     "notStopped": "輸出服務未停止，請再試一次。",
     "enableToOpen": "請先到設定啟用對外輸出，再開啟輸出視窗。",
-    "windowNotOpened": "輸出視窗未開啟，請確認服務已啟動後重試。",
+    "windowNotOpened": "輸出視窗未開啟，請確認服務已啟動後再試一次。",
     "styleNotSaved": "輸出樣式未儲存，請再試一次。",
     "initFailed": "輸出初始化未完成，請再試一次。"
   },

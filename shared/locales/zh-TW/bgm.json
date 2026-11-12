@@ -16,7 +16,7 @@
   "postRoll": "曲後留白",
   "paused": "場間音樂暫停",
   "pausedLabel": "場間音樂已暫停",
-  "failedNamed": "場間音樂操作失敗：{error}",
+  "failedNamed": "場間音樂操作未完成：{error}",
   "restorePending": "曲後恢復",
   "restorePendingLabel": "曲後恢復場間音樂",
   "restoreAfter": "{status} · 曲後恢復",

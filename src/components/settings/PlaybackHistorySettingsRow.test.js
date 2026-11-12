@@ -35,7 +35,7 @@ describe('PlaybackHistorySettingsRow', () => {
     const html = await renderRow({ recordCount: 7 });
 
     expect(html).toContain('播放紀錄');
-    expect(html).toContain('已保存 7 首');
+    expect(html).toContain('已儲存 7 首');
     expect(html).not.toContain('>有紀錄</span>');
     expect(html).toContain('播放紀錄選項');
     expect(html).toContain('aria-haspopup="menu"');

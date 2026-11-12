@@ -325,7 +325,7 @@ describe('explicit performance session archive', () => {
       new Map(),
     );
     expect(() => store.verifyPlaylistPreview(empty, new Map())).toThrow(
-      '沒有可保存',
+      '沒有可儲存',
     );
   });
   it('fails closed on malformed archives, preserving the original file', () => {

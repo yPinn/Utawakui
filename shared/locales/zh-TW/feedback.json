@@ -42,7 +42,7 @@
   "prefillWithMessage": "發生問題：{title} — {message}",
   "descriptionRequired": "簡短描述你遇到的狀況，才能繼續預覽。",
   "failure": {
-    "defaultMessage": "請稍後再試一次。",
+    "defaultMessage": "請稍後再試。",
     "retry": "重試",
     "expiredTitle": "預覽已逾時",
     "expiredMessage": "請重新建立預覽後再送出。",
@@ -51,7 +51,7 @@
     "previewFailed": "無法建立預覽",
     "rateLimited": "這台電腦短時間內送出太多次，請稍後再試。",
     "submitUnavailable": "目前無法送出，可另存檔案再自行傳給開發者。",
-    "submitFailed": "送出失敗",
+    "submitFailed": "無法送出",
     "exportFailed": "無法另存檔案",
     "exportedTitle": "已另存檔案",
     "exportedMessage": "檔案已儲存，請自行傳給開發者。"

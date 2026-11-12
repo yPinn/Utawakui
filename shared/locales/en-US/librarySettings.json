@@ -101,6 +101,6 @@
     "progressQuerying": "Searching · {completed} / {total}",
     "progressStopping": "Stopping · {completed} / {total}",
     "reloaded": "Local library reloaded.",
-    "reloadFailed": "The library can't be reloaded right now. Try again later."
+    "reloadFailed": "The library can't be reloaded right now. Try again."
   }
 }

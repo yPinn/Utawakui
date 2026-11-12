@@ -61,16 +61,16 @@
     "confirm": "Confirm and enable"
   },
   "notifications": {
-    "incompleteTitle": "Action not completed",
+    "incompleteTitle": "Action didn't finish",
     "incompleteMessage": "Go back to where you started and try again."
   },
   "recovery": {
     "title": "Utawakui needs to restart",
-    "message": "The main window cannot continue",
+    "message": "The main window can't continue",
     "rendererCrashed": "The main window stopped unexpectedly. Restart to continue.",
     "rendererUnresponsive": "The main window is not responding. Restart to continue.",
-    "rendererLoadFailed": "The main window could not load. Restart to continue.",
-    "rendererPreloadFailed": "The main window could not load. Restart to continue.",
+    "rendererLoadFailed": "The main window couldn't load. Restart to continue.",
+    "rendererPreloadFailed": "The main window couldn't load. Restart to continue.",
     "unknown": "The main window ran into a problem. Restart to continue.",
     "restart": "Restart Utawakui",
     "quit": "Quit"

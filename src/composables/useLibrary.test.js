@@ -319,7 +319,7 @@ describe('initial load', () => {
     );
     const { state, refresh } = await loadLibrary();
     expect(state.error).toMatchObject({
-      title: '曲庫讀取失敗',
+      title: '無法讀取曲庫',
       message: '目前無法讀取曲庫，請再試一次。',
       actionLabel: '重試',
     });

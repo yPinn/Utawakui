@@ -66,7 +66,7 @@ it.each(['tracks', 'playlists'])(
         localCandidateTrackId: 'existing',
       }),
     ).toBe(true);
-    expect(api.errorFor(collection)).toContain('畫面更新失敗');
+    expect(api.errorFor(collection)).toContain('畫面未更新');
     expect(api.errorFor(collection)).not.toContain('private');
   },
 );

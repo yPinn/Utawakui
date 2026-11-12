@@ -82,7 +82,7 @@ describe('BGM presentation projection', () => {
       }),
     ).toMatchObject({
       label: '場間音樂音訊輸出暫時無法使用。',
-      accessibleLabel: '場間音樂操作失敗：場間音樂音訊輸出暫時無法使用。',
+      accessibleLabel: '場間音樂操作未完成：場間音樂音訊輸出暫時無法使用。',
       tone: 'danger',
     });
   });

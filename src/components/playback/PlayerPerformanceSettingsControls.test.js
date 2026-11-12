@@ -28,21 +28,21 @@ describe('per-track performance commands', () => {
       dirty: true,
       hasSaved: true,
     });
-    expect(html).toContain('未保存變更');
+    expect(html).toContain('未儲存變更');
     expect(html).toMatch(
-      /class="ui-visually-hidden" role="status"[^>]*>未保存變更</,
+      /class="ui-visually-hidden" role="status"[^>]*>未儲存變更</,
     );
     expect(html).not.toContain('ui-hint');
-    expect(html).toContain('保存本曲');
+    expect(html).toContain('儲存本曲');
     expect(html).toContain('歌曲設定選項');
     expect(html).toContain('本曲設定組別');
     expect(html.indexOf('role="group"')).toBeLessThan(
       html.indexOf('ui-separator--vertical'),
     );
     expect(html.indexOf('ui-separator--vertical')).toBeLessThan(
-      html.indexOf('保存本曲'),
+      html.indexOf('儲存本曲'),
     );
-    expect(html.indexOf('保存本曲')).toBeLessThan(html.indexOf('歌曲設定選項'));
+    expect(html.indexOf('儲存本曲')).toBeLessThan(html.indexOf('歌曲設定選項'));
     expect(html).not.toContain('★');
     expect(html).not.toContain('ui-segmented');
     expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
@@ -51,8 +51,8 @@ describe('per-track performance commands', () => {
   });
   it.each([
     [false, false, '空組'],
-    [true, false, '已保存'],
-    [false, true, '未保存變更'],
+    [true, false, '已儲存'],
+    [false, true, '未儲存變更'],
   ])(
     'keeps saved=%s, dirty=%s accessible as %s without a visible status row',
     async (hasSaved, dirty, label) => {

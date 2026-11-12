@@ -217,7 +217,7 @@
     "remove": "目前無法移除頁面物件。"
   },
   "load": {
-    "failedTitle": "曲庫讀取失敗",
+    "failedTitle": "無法讀取曲庫",
     "failedMessage": "目前無法讀取曲庫，請再試一次。",
     "retry": "重試"
   },

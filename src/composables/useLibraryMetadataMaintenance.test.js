@@ -67,7 +67,7 @@ describe('useLibraryMetadataMaintenance', () => {
     });
     expect(await current.session.refresh()).toBe(false);
     expect(current.session.state.error).toBe(true);
-    expect(current.session.feedback.value).toBe('更新失敗，請重試。');
+    expect(current.session.feedback.value).toBe('更新未完成，請再試一次。');
   });
   it('allows retry after a failed stop without losing the pending update', async () => {
     const current = setup();
@@ -94,7 +94,7 @@ describe('useLibraryMetadataMaintenance', () => {
     );
     await current.session.cancel();
     expect(current.session.state.cancelling).toBe(false);
-    expect(current.session.feedback.value).toBe('停止失敗，請重試。');
+    expect(current.session.feedback.value).toBe('無法停止，請再試一次。');
     await current.session.cancel();
     expect(current.session.state.cancelling).toBe(true);
     expect(current.session.feedback.value).toContain('停止中');

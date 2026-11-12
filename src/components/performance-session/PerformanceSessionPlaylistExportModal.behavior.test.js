@@ -118,7 +118,7 @@ describe('save performance playlist confirmation', () => {
       node.props?.class?.includes?.('session-playlist-export__footer'),
     )[0];
     expect(footer).toBeDefined();
-    expect(textContent(footer)).toContain('將保存 1 首曲目，原始紀錄會保留。');
+    expect(textContent(footer)).toContain('將儲存 1 首曲目，原始紀錄會保留。');
     expect(saveButton(footer)).toBeDefined();
     expect(textContent(view.root)).toContain('找不到音檔 1 項');
     expect(textContent(view.root)).not.toMatch(/合併重複曲目|手動項目/u);
@@ -138,7 +138,7 @@ describe('save performance playlist confirmation', () => {
     await settle();
     trigger(saveButton(view.root), 'onClick');
     await settle();
-    expect(textContent(view.root)).toContain('歌單尚未保存');
+    expect(textContent(view.root)).toContain('歌單尚未儲存');
     expect(textContent(view.root)).not.toContain('private');
     expect(close).not.toHaveBeenCalled();
     expect(notifications.items.value).toHaveLength(0);
@@ -147,7 +147,7 @@ describe('save performance playlist confirmation', () => {
     await settle();
     expect(close).toHaveBeenCalledOnce();
     expect(notifications.items.value).toHaveLength(1);
-    expect(notifications.items.value[0].title).toBe('演出歌單已保存');
+    expect(notifications.items.value[0].title).toBe('演出歌單已儲存');
     view.app.unmount();
   });
 
@@ -184,7 +184,7 @@ describe('save performance playlist confirmation', () => {
     await settle();
     expect(notifications.items.value).toHaveLength(0);
     expect(close).not.toHaveBeenCalled();
-    expect(textContent(view.root)).toContain('歌單尚未保存');
+    expect(textContent(view.root)).toContain('歌單尚未儲存');
     view.app.unmount();
   });
 
@@ -216,7 +216,7 @@ describe('save performance playlist confirmation', () => {
     expect(close).toHaveBeenCalledOnce();
     expect(notifications.items.value).toHaveLength(1);
     expect(notifications.items.value[0]).toMatchObject({
-      title: '演出歌單已保存',
+      title: '演出歌單已儲存',
       tone: 'success',
       lifecycle: 'transient',
     });
@@ -259,7 +259,7 @@ describe('save performance playlist confirmation', () => {
     const view = mount(Modal, { open: true, sessionId: 'show' });
     await settle();
     expect(saveButton(view.root).props.disabled).toBe(true);
-    expect(textContent(view.root)).toContain('沒有可保存');
+    expect(textContent(view.root)).toContain('沒有可儲存');
     expect(window.Utawakui.savePerformancePlaylist).not.toHaveBeenCalled();
     view.app.unmount();
   });

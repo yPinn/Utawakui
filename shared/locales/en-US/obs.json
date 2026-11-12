@@ -6,7 +6,7 @@
     "authenticating": "Authenticating",
     "ready": "Connected",
     "degraded": "Connection problem",
-    "error": "Connection failed"
+    "error": "Couldn't connect"
   },
   "unreadable": "Unavailable",
   "summaryIdle": "Shows streaming and recording status once connected",
@@ -97,7 +97,7 @@
     "readFailed": "The session log can't be read right now. Try again.",
     "offsetInvalid": "Enter seconds with up to three decimal places.",
     "copySuccess": "Chapters copied",
-    "copyFailed": "Could not copy. Select and copy the text manually.",
+    "copyFailed": "Couldn't copy. Select and copy the text manually.",
     "markerFallback": "Marker",
     "tooFew": "YouTube chapters need at least {min} parts; there are only {count}.",
     "firstNotZero": "The first chapter must start at 00:00.",
@@ -124,7 +124,7 @@
     "copyTooLong": "This preview is long. Select and copy the text manually.",
     "saveCsv": "Save CSV",
     "csvSaved": "CSV saved.",
-    "csvFailed": "Could not save the CSV. Try again.",
+    "csvFailed": "Couldn't save the CSV. Try again.",
     "csvStale": "The timestamps changed. Reload the session and save again."
   }
 }

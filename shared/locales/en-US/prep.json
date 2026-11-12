@@ -72,9 +72,9 @@
     "tools": "Track preparation tools"
   },
   "activity": {
-    "attention": "Some items not completed",
-    "importFailed": "Import not completed",
-    "separationFailed": "{count} not completed",
+    "attention": "Some items didn't finish",
+    "importFailed": "Import didn't finish",
+    "separationFailed": "{count} didn't finish",
     "multiple": "Several in progress",
     "importing": "Importing"
   },

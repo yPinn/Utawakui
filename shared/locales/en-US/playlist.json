@@ -58,7 +58,7 @@
     "reorderTitle": "Couldn't save playlist order",
     "orderNotSaved": "The order wasn't saved. Try again.",
     "saveTitle": "Couldn't save playlist",
-    "operationTitle": "Playlist action failed",
+    "operationTitle": "Playlist action didn't finish",
     "operationMessage": "The action didn't finish. Try again.",
     "tryAgain": "Try again.",
     "restartToReorder": "Restart the app before reordering playlists.",
