@@ -161,6 +161,8 @@ migrate feature by feature, so new or edited text follows these rules now:
   `shared/locales/zh-TW/<namespace>.json`, one namespace per feature, and is read
   with `t()` from `src/utils/i18n.js` (renderer) or `electron/lib/i18n.js` (main).
   zh-TW is the source catalog; every key also needs an `en-US` entry.
+- Pick words from the [UI terminology](docs/contracts/ui-terminology.md) table; add
+  a term there before introducing or changing one.
 - Write whole sentences with named parameters. Do not build a sentence by
   concatenating fragments, and never compare, branch on or key by display text;
   use codes and derive the label.
