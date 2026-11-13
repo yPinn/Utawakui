@@ -7,12 +7,27 @@ const props = defineProps({
   readingSegments: { type: Array, default: null },
   readingGaps: { type: Array, default: () => [] },
   presentation: { type: String, default: 'list' },
+  // Display line [from, to) of frame.text; null renders the whole line.
+  range: { type: Object, default: null },
 });
 // Reading and timing partitions may cross. Slice their text intersections only;
 // the original chunks remain the sole authority for the active word cue.
-const groups = computed(() =>
-  lyricsCueTextGroups(props.frame, props.readingSegments),
-);
+const groups = computed(() => {
+  const range = props.range;
+  // A range edge inside a plain group becomes a part cut.
+  const cut = range?.from > 0 ? range.from : range?.to;
+  const all = lyricsCueTextGroups(props.frame, props.readingSegments, cut);
+  if (!range) return all;
+  return all
+    .map((group) => ({
+      ...group,
+      leading: group.from >= range.from,
+      parts: group.parts.filter(
+        (part) => part.from >= range.from && part.to <= range.to,
+      ),
+    }))
+    .filter((group) => group.parts.length);
+});
 </script>
 
 <template>
@@ -26,7 +41,7 @@ const groups = computed(() =>
       :key="group.from"
       class="lyrics-fine-text__group"
       :style="
-        readingGaps[group.index] > 0
+        group.leading !== false && readingGaps[group.index] > 0
           ? { '--lyrics-ruby-gap': `${readingGaps[group.index]}em` }
           : undefined
       "
@@ -63,6 +78,7 @@ const groups = computed(() =>
 .lyrics-fine-text--sheet ruby {
   position: relative;
   display: inline-block;
+  line-height: var(--ui-lyrics-line-height);
 }
 .lyrics-fine-text--sheet rt {
   position: absolute;

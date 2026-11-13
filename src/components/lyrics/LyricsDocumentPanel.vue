@@ -10,6 +10,11 @@ import {
 } from 'vue';
 import { Check, Clock, LocateFixed, Pencil, X } from '../../icons/index.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
+import {
+  lyricsLineBreak,
+  splitReadingSegmentsAt,
+  splitRomajiAt,
+} from '../../utils/lyricsLineBreak.js';
 import { rubySegmentGaps } from '../../utils/rubyLayout.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -90,6 +95,10 @@ const isFollowingActiveLine = shallowRef(true);
 let pointerScrollStart = null;
 const measuredRubyScale = shallowRef(1);
 const readerHeight = shallowRef('0px');
+// Text column width in em; sheet lines past 80% of it get one phrase break.
+const lineCapacity = shallowRef(0);
+// Real glyph widths in em for the lyric font; null falls back to estimates.
+const lineMeasure = shallowRef(null);
 let readerObserver;
 let readerFrame = 0;
 
@@ -148,6 +157,69 @@ const rubyGaps = computed(() =>
     : [],
 );
 
+const NBSP = String.fromCharCode(160);
+const showsRomaji = computed(
+  () => props.showsReadingAid && props.readingVariant === 'romaji',
+);
+// Display lines per lyric: one, or two around a phrase break in the sheet.
+// Each line carries its own readings so ruby and romaji stay over their words.
+const linePieces = computed(() =>
+  props.lines.map((line, index) => {
+    const reading = props.readingLines[index];
+    const segments =
+      showsFurigana.value && reading?.segments?.length
+        ? reading.segments
+        : null;
+    const romaji = reading?.romaji ?? '';
+    const whole = [
+      {
+        from: 0,
+        to: line.text.length,
+        romaji,
+        segments: segments?.map((segment, gapIndex) => ({
+          ...segment,
+          gapIndex,
+        })),
+      },
+    ];
+    if (props.presentation !== 'sheet' || !(lineCapacity.value > 0)) {
+      return whole;
+    }
+    const offset = lyricsLineBreak(line.text, {
+      capacity: lineCapacity.value,
+      measure: lineMeasure.value,
+      segments,
+      gaps: rubyGaps.value[index],
+    });
+    if (!offset) return whole;
+    const romajiLines =
+      showsRomaji.value && romaji
+        ? splitRomajiAt(line.text, romaji, offset, {
+            script: props.lyricsScript,
+          })
+        : ['', ''];
+    // Unmatched romaji keeps the line whole rather than misplace it.
+    if (!romajiLines) return whole;
+    const segmentLines = segments
+      ? splitReadingSegmentsAt(segments, offset)
+      : [];
+    return [
+      {
+        from: 0,
+        to: offset,
+        romaji: romajiLines[0],
+        segments: segmentLines[0],
+      },
+      {
+        from: offset,
+        to: line.text.length,
+        romaji: romajiLines[1],
+        segments: segmentLines[1],
+      },
+    ];
+  }),
+);
+
 function rubyGapStyle(lineIndex, segmentIndex) {
   const gap = rubyGaps.value[lineIndex]?.[segmentIndex] ?? 0;
   return gap > 0 ? { '--lyrics-ruby-gap': `${gap}em` } : undefined;
@@ -166,6 +238,13 @@ function measureReader() {
   if (!viewport) return;
   readerHeight.value = `${Math.max(0, viewport.clientHeight || 0)}px`;
   if (typeof globalThis.getComputedStyle !== 'function') return;
+  const text = viewport.querySelector?.('.lyrics-line__text');
+  const textSize = text
+    ? Number.parseFloat(getComputedStyle(text).fontSize)
+    : 0;
+  lineCapacity.value =
+    text?.clientWidth > 0 && textSize > 0 ? text.clientWidth / textSize : 0;
+  if (lineCapacity.value > 0) updateLineMeasure(text, textSize);
   const annotation = viewport.querySelector?.('rt');
   const lyric = annotation?.closest('.lyrics-line__text');
   if (!annotation || !lyric) return;
@@ -173,6 +252,41 @@ function measureReader() {
   const rubySize = Number.parseFloat(getComputedStyle(annotation).fontSize);
   if (mainSize > 0 && rubySize > 0)
     measuredRubyScale.value = rubySize / mainSize;
+}
+
+// A hidden probe with the lyric font and language measures real glyphs;
+// canvas would pick a different CJK fallback font without `lang`.
+let measureProbe = null;
+let measuredKey = '';
+function updateLineMeasure(text, size) {
+  const style = getComputedStyle(text);
+  const lang = text.closest?.('[lang]')?.lang ?? '';
+  const key = `${style.font}|${lang}`;
+  if (!style.font || key === measuredKey) return;
+  const probe = globalThis.document?.createElement?.('span');
+  if (!probe?.style || !globalThis.document.body) return;
+  measureProbe?.remove();
+  measureProbe = probe;
+  measuredKey = key;
+  probe.lang = lang;
+  probe.setAttribute('aria-hidden', 'true');
+  Object.assign(probe.style, {
+    position: 'fixed',
+    visibility: 'hidden',
+    whiteSpace: 'pre',
+    font: style.font,
+    fontFeatureSettings: style.fontFeatureSettings,
+    letterSpacing: style.letterSpacing,
+  });
+  globalThis.document.body.append(probe);
+  const cache = new Map();
+  lineMeasure.value = (char) => {
+    if (!cache.has(char)) {
+      probe.textContent = char;
+      cache.set(char, probe.getBoundingClientRect().width / size);
+    }
+    return cache.get(char);
+  };
 }
 
 function scheduleReaderResize() {
@@ -197,6 +311,7 @@ onMounted(() => {
 });
 onUnmounted(() => {
   readerObserver?.disconnect();
+  measureProbe?.remove();
   if (readerFrame) cancelAnimationFrame(readerFrame);
 });
 
@@ -378,6 +493,7 @@ watch(
             'lyrics-line--active': index === locatedLineIndex,
             'lyrics-line--past': index < locatedLineIndex,
             'lyrics-line--ruby': showsFurigana,
+            'lyrics-line--romaji': showsRomaji,
             'lyrics-line--marked': isPaintingVocals && vocalRoles[line.lineId],
             [`lyrics-line--role-${vocalRoles[line.lineId]}`]:
               vocalRoles[line.lineId],
@@ -441,51 +557,57 @@ watch(
                 formatLyricTime(line.start)
               }}</span>
               <span class="lyrics-line__text-group" :lang="lyricsLang">
-                <span class="lyrics-line__text"
-                  ><span class="lyrics-line__ink">
-                    <LyricsFineText
-                      v-if="activeTimingFrame && index === activeLineIndex"
-                      :frame="activeTimingFrame"
-                      :presentation="presentation"
-                      :reading-gaps="rubyGaps[index]"
-                      :reading-segments="
-                        showsFurigana ? readingLines[index]?.segments : null
-                      "
-                    />
-                    <template
-                      v-else-if="
-                        showsFurigana && readingLines[index]?.segments?.length
-                      "
-                    >
-                      <template
-                        v-for="(segment, segmentIndex) in readingLines[index]
-                          .segments"
-                        :key="segmentIndex"
-                      >
-                        <ruby
-                          v-if="segment.r"
-                          :style="rubyGapStyle(index, segmentIndex)"
-                          >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
+                <template
+                  v-for="(piece, pieceIndex) in linePieces[index]"
+                  :key="pieceIndex"
+                >
+                  <span
+                    class="lyrics-line__text"
+                    :style="{ '--lyrics-piece': pieceIndex }"
+                    ><span class="lyrics-line__ink">
+                      <LyricsFineText
+                        v-if="activeTimingFrame && index === activeLineIndex"
+                        :frame="activeTimingFrame"
+                        :presentation="presentation"
+                        :range="piece"
+                        :reading-gaps="rubyGaps[index]"
+                        :reading-segments="
+                          showsFurigana ? readingLines[index]?.segments : null
+                        "
+                      />
+                      <template v-else-if="piece.segments">
+                        <template
+                          v-for="(segment, segmentIndex) in piece.segments"
+                          :key="segmentIndex"
                         >
-                        <span
-                          v-else-if="rubyGapStyle(index, segmentIndex)"
-                          class="lyrics-line__ruby-gap"
-                          :style="rubyGapStyle(index, segmentIndex)"
-                          >{{ segment.t }}</span
-                        >
-                        <template v-else>{{ segment.t }}</template>
+                          <ruby
+                            v-if="segment.r"
+                            :style="rubyGapStyle(index, segment.gapIndex)"
+                            >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
+                          >
+                          <span
+                            v-else-if="rubyGapStyle(index, segment.gapIndex)"
+                            class="lyrics-line__ruby-gap"
+                            :style="rubyGapStyle(index, segment.gapIndex)"
+                            >{{ segment.t }}</span
+                          >
+                          <template v-else>{{ segment.t }}</template>
+                        </template>
                       </template>
-                    </template>
-                    <template v-else>{{ line.text }}</template>
-                  </span></span
-                >
-                <span
-                  v-if="showsReadingAid && readingVariant === 'romaji'"
-                  class="lyrics-line__romaji"
-                  :lang="romanizationLang"
-                >
-                  {{ readingLines[index]?.romaji || '\u00A0' }}
-                </span>
+                      <template v-else>{{
+                        line.text.slice(piece.from, piece.to)
+                      }}</template>
+                    </span></span
+                  >
+                  <span
+                    v-if="showsRomaji"
+                    class="lyrics-line__romaji"
+                    :lang="romanizationLang"
+                    :style="{ '--lyrics-piece': pieceIndex }"
+                  >
+                    {{ piece.romaji || NBSP }}
+                  </span>
+                </template>
               </span>
             </button>
             <span
@@ -738,7 +860,23 @@ watch(
   color: var(--ui-color-text);
 }
 .lyrics-preview--sheet .lyrics-line__button {
-  align-items: last baseline;
+  align-items: first baseline;
+  row-gap: var(--ui-space-1);
+}
+/* Time follows the first lyric line, so romaji above joins the button grid. */
+.lyrics-preview--sheet .lyrics-line--romaji .lyrics-line__text-group {
+  display: contents;
+}
+.lyrics-preview--sheet .lyrics-line--romaji .lyrics-line__romaji {
+  grid-column: 2;
+  grid-row: calc(var(--lyrics-piece) * 2 + 1);
+}
+.lyrics-preview--sheet .lyrics-line--romaji .lyrics-line__time {
+  grid-area: 2 / 1;
+}
+.lyrics-preview--sheet .lyrics-line--romaji .lyrics-line__text {
+  grid-column: 2;
+  grid-row: calc(var(--lyrics-piece) * 2 + 2);
 }
 .lyrics-preview--sheet .lyrics-line__time {
   color: var(--ui-color-text-muted);
@@ -760,12 +898,25 @@ watch(
     var(--ui-lyrics-ruby-font-size) * var(--ui-lyrics-ruby-line-height)
   );
 }
+/* Every wrapped line reserves a reading tier: half from padding, the rest
+   from leading, so wrapped lines never print readings into the line above. */
 .lyrics-preview--sheet .lyrics-line--ruby .lyrics-line__text {
-  padding-block-start: var(--lyrics-ruby-block-size);
+  padding-block-start: calc(var(--lyrics-ruby-block-size) / 2);
+  line-height: calc(
+    var(--ui-lyrics-line-height) * 1em + var(--lyrics-ruby-block-size)
+  );
+}
+/* The previous display line's leading already covers the next reading tier. */
+.lyrics-preview--sheet
+  .lyrics-line--ruby
+  .lyrics-line__text
+  + .lyrics-line__text {
+  padding-block-start: 0;
 }
 .lyrics-preview--sheet .lyrics-line__text ruby {
   position: relative;
   display: inline-block;
+  line-height: var(--ui-lyrics-line-height);
   margin-inline-start: var(--lyrics-ruby-gap, 0);
 }
 .lyrics-preview--sheet .lyrics-line__ruby-gap {

@@ -41,3 +41,17 @@ it('drops mismatched readings without dropping original text or inventing a cue 
   expect(groups[0].reading).toBeUndefined();
   expect(groups[0].parts).toEqual([{ from: 0, to: 4, text, cue: false }]);
 });
+
+it('cuts a part at the display break without changing cues', () => {
+  const groups = lyricsCueTextGroups(
+    { text: 'ねえ、きみ', chunks: [{ text: 'ねえ、きみ', state: 'active' }] },
+    null,
+    3,
+  );
+  expect(
+    groups[0].parts.map((part) => [part.from, part.text, part.cue]),
+  ).toEqual([
+    [0, 'ねえ、', true],
+    [3, 'きみ', true],
+  ]);
+});

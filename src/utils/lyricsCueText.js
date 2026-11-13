@@ -1,6 +1,6 @@
 // Shared text/ruby intersections for an existing cue. This never creates times
 // or changes the original reading/timing partitions.
-export function lyricsCueTextGroups(frame, readingSegments) {
+export function lyricsCueTextGroups(frame, readingSegments, breakAt = null) {
   let cursor = 0;
   const chunks = frame.chunks.map((chunk) => {
     const from = cursor;
@@ -31,6 +31,7 @@ export function lyricsCueTextGroups(frame, readingSegments) {
         ...chunks
           .flatMap((chunk) => [chunk.from, chunk.to])
           .filter((cut) => cut > from && cut < to),
+        ...(breakAt > from && breakAt < to ? [breakAt] : []),
       ]),
     ].sort((a, b) => a - b);
     return {
