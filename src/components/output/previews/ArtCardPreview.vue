@@ -1,5 +1,8 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, useTemplateRef } from 'vue';
+import gsap from 'gsap';
+import { createVinylSurfaceLight } from '../../../../overlay/now-playing/artworkMotion.mjs';
+import { useOutputPreviewMotion } from '../../../composables/output/useOutputPreviewMotion.js';
 
 const props = defineProps({
   scene: { type: Object, default: () => ({}) },
@@ -8,11 +11,27 @@ const props = defineProps({
 });
 
 const track = computed(() => props.scene?.track ?? {});
+const beam = useTemplateRef('beam');
+const lightStyle = computed(() => {
+  const style = props.scene?.appearance?.vinylSurfaceLight;
+  return style && style !== 'off' ? style : props.animated ? 'standard' : 'off';
+});
+
+useOutputPreviewMotion({
+  scene: () => props.scene,
+  animated: () => props.animated,
+  start() {
+    const light = createVinylSurfaceLight(gsap, beam.value);
+    light.update({ enabled: lightStyle.value !== 'off', playing: true });
+    return () => light.update({ enabled: false });
+  },
+});
 </script>
 
 <template>
   <div
     class="obs-template-mockup__content obs-template-mockup__content--artwork"
+    :data-vinyl-surface-light="lightStyle"
   >
     <span class="obs-template-mockup__vinyl-stage">
       <span class="obs-template-mockup__vinyl-album">
@@ -33,9 +52,14 @@ const track = computed(() => props.scene?.track ?? {});
       <span class="obs-template-mockup__vinyl-turntable">
         <span class="obs-template-mockup__vinyl-deck-light" />
         <span class="obs-template-mockup__vinyl-platter">
-          <span class="obs-template-mockup__vinyl-record">
-            <span class="obs-template-mockup__vinyl-record-grooves" />
-            <span class="obs-template-mockup__vinyl-label">UW</span>
+          <span class="obs-template-mockup__vinyl-disc">
+            <span class="obs-template-mockup__vinyl-record">
+              <span class="obs-template-mockup__vinyl-record-grooves" />
+              <span class="obs-template-mockup__vinyl-label">UW</span>
+            </span>
+            <span class="vinyl-surface-light"
+              ><span ref="beam" class="vinyl-surface-light__beam"
+            /></span>
           </span>
           <span class="obs-template-mockup__vinyl-spindle" />
         </span>
@@ -170,4 +194,7 @@ const track = computed(() => props.scene?.track ?? {});
   </div>
 </template>
 
+<style src="../../../../overlay/shared/fallback.css"></style>
+<style src="../../../../overlay/shared/tokens.css"></style>
+<style src="../../../../overlay/now-playing/artwork.css"></style>
 <style src="./ArtCardPreview.css"></style>

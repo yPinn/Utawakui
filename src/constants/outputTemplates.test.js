@@ -111,6 +111,7 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontFamily',
     'fontScale',
     'fontWeight',
+    'vinylSurfaceLight',
   ],
   'ticket-stub': ['fontScale', 'fontWeight'],
   'cover-player': [

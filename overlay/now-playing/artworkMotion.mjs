@@ -1,4 +1,38 @@
 const VINYL_SPIN_DURATION_SECONDS = 18;
+const SURFACE_LIGHT_SWEEP_SECONDS = 7;
+
+export function createVinylSurfaceLight(gsap, beam) {
+  let tween;
+  return {
+    update({ enabled, playing, reducedMotion }) {
+      if (!beam || !gsap?.fromTo) return;
+      if (!enabled || reducedMotion) {
+        if (!tween) return;
+        tween.kill();
+        tween = undefined;
+        gsap.set(beam, { clearProps: 'transform' });
+        return;
+      }
+      if (!playing) {
+        tween?.pause();
+        return;
+      }
+      tween ??= gsap.fromTo(
+        beam,
+        { xPercent: -36 },
+        {
+          xPercent: 36,
+          duration: SURFACE_LIGHT_SWEEP_SECONDS,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          paused: true,
+        },
+      );
+      tween.play();
+    },
+  };
+}
 const TRANSIENT_PLAYBACK_STATUSES = new Set(['buffering', 'seeking']);
 const EXCHANGE_RECORD_CLEAR_PROPS = 'height,opacity,transform,visibility,width';
 // Presentation owns palette/progress custom properties on the same elements.
@@ -131,6 +165,7 @@ export function createArtworkMotionController({
   sleeve,
   turntable,
   bloom,
+  surfaceLightBeam,
   record,
   recordRotor,
   exchangeRecord,
@@ -157,6 +192,7 @@ export function createArtworkMotionController({
   let spinTween = null;
   let suspended = false;
   let swapCommitted = false;
+  const surfaceLight = createVinylSurfaceLight(gsap, surfaceLightBeam);
 
   const sceneElements = [
     root,
@@ -225,6 +261,19 @@ export function createArtworkMotionController({
       active &&
       presented &&
       lastStablePlaybackStatus === 'playing';
+
+    surfaceLight.update({
+      enabled:
+        !destroyed &&
+        active &&
+        presented &&
+        ['soft', 'standard'].includes(
+          surfaceLightBeam?.ownerDocument?.documentElement?.dataset
+            .vinylSurfaceLight,
+        ),
+      playing: shouldRun && motionState === 'presented',
+      reducedMotion,
+    });
 
     if (shouldRun) {
       const tween = ensureSpinTween();
@@ -412,6 +461,7 @@ export function createArtworkMotionController({
         sceneTimeline = null;
         setMotionState('presented');
         syncBloom();
+        syncSpin();
       },
     });
     const bloomAlpha = stableBloomAlpha();
@@ -477,6 +527,7 @@ export function createArtworkMotionController({
         gsap.set(tonearmAssembly, { rotation: 0 });
         setMotionState('presented');
         syncBloom();
+        syncSpin();
       },
     });
     bloomTarget = stableBloomAlpha();
@@ -787,6 +838,7 @@ export function createArtworkMotionController({
   function destroy() {
     if (destroyed) return;
     destroyed = true;
+    surfaceLight.update({ enabled: false });
     running = false;
     killSceneTimeline();
     spinTween?.kill?.();

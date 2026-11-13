@@ -240,13 +240,20 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     ],
     [
       'art-card',
-      ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
+      [
+        'paletteId',
+        'lookAmount',
+        'fontFamily',
+        'fontScale',
+        'fontWeight',
+        'vinylSurfaceLight',
+      ],
       ['alignment', 'surface'],
     ],
     [
       'ticket-stub',
       ['fontScale', 'fontWeight'],
-      ['surface', 'paletteId', 'lookAmount'],
+      ['surface', 'paletteId', 'lookAmount', 'vinylSurfaceLight'],
     ],
     [
       'cover-player',

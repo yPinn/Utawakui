@@ -1,5 +1,29 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createArtworkMotionController } from './artworkMotion.mjs';
+import {
+  createArtworkMotionController,
+  createVinylSurfaceLight,
+} from './artworkMotion.mjs';
+
+it('keeps one surface light tween through pause and clears it on reduced motion or disable', () => {
+  const beam = {};
+  const tween = { play: vi.fn(), pause: vi.fn(), kill: vi.fn() };
+  const gsap = { fromTo: vi.fn(() => tween), set: vi.fn() };
+  const light = createVinylSurfaceLight(gsap, beam);
+  light.update({ enabled: false, playing: true });
+  expect(gsap.fromTo).not.toHaveBeenCalled();
+  light.update({ enabled: true, playing: true });
+  light.update({ enabled: true, playing: false });
+  light.update({ enabled: true, playing: true });
+  expect(gsap.fromTo).toHaveBeenCalledOnce();
+  expect(tween.play).toHaveBeenCalledTimes(2);
+  expect(tween.pause).toHaveBeenCalledOnce();
+  light.update({ enabled: true, playing: true, reducedMotion: true });
+  expect(tween.kill).toHaveBeenCalledOnce();
+  expect(gsap.set).toHaveBeenLastCalledWith(beam, { clearProps: 'transform' });
+  light.update({ enabled: true, playing: true });
+  light.update({ enabled: false });
+  expect(tween.kill).toHaveBeenCalledTimes(2);
+});
 
 describe('F2 artwork recovery', () => {
   it('settles latest content and kills old transitions without replaying their timeline', () => {

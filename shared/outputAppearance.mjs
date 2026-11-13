@@ -1,6 +1,6 @@
 import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 8;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 9;
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', order: 10 }),
@@ -190,6 +190,16 @@ const FIELD_DEFINITIONS = [
     control: 'select',
     defaultValue: 'transparent',
     options: [{ id: 'transparent' }, { id: 'soft' }, { id: 'solid' }],
+  }),
+  fieldDefinition('surface', {
+    key: 'vinylSurfaceLight',
+    family: 'asset',
+    tier: 'basic',
+    reflow: false,
+    order: 40,
+    control: 'select',
+    defaultValue: 'off',
+    options: [{ id: 'off' }, { id: 'soft' }, { id: 'standard' }],
   }),
   fieldDefinition('content', {
     key: 'furigana',
@@ -506,7 +516,14 @@ const TEMPLATE_CONFIGS = Object.freeze({
     },
   },
   'art-card': {
-    keys: ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
+    keys: [
+      'paletteId',
+      'lookAmount',
+      'fontFamily',
+      'fontScale',
+      'fontWeight',
+      'vinylSurfaceLight',
+    ],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'ticket-stub': {
@@ -784,6 +801,12 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   }
   const baseField = FIELD_MAP.get(key);
   if (!baseField) return undefined;
+  if (
+    baseField.family === 'asset' &&
+    options.templateId &&
+    !templateConfig(options.templateId).keys.includes(key)
+  )
+    return undefined;
   let sanitized;
   if (baseField.control === 'select') {
     if (key === 'fontFamily') {

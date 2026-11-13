@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 8,
+  "appearanceSchemaVersion": 9,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -33,6 +33,7 @@
     "advanced": "Bounded artistic-role override; only where a verified consumer exists"
   },
   "fieldPolicy": {
+    "vinylSurfaceLight": { "level": "opt" },
     "paletteId": {
       "level": "opt",
       "scope": "slot-template",
@@ -1682,6 +1683,29 @@
           "tier": "basic",
           "reflow": true,
           "scope": "template"
+        },
+        {
+          "scope": "template",
+          "key": "vinylSurfaceLight",
+          "family": "asset",
+          "tier": "basic",
+          "reflow": false,
+          "order": 40,
+          "control": "select",
+          "defaultValue": "off",
+          "options": [
+            {
+              "id": "off"
+            },
+            {
+              "id": "soft"
+            },
+            {
+              "id": "standard"
+            }
+          ],
+          "group": "surface",
+          "groupOrder": 50
         }
       ],
       "timing": null,

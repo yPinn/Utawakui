@@ -75,6 +75,9 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlWeight = appearance.fontWeight;
   root.dataset.ovlAlign = appearance.alignment;
   root.dataset.ovlSurface = appearance.surface;
+  if (templateId === 'art-card')
+    root.dataset.vinylSurfaceLight = appearance.vinylSurfaceLight;
+  else delete root.dataset.vinylSurfaceLight;
   root.dataset.ovlFurigana = appearance.furigana;
   root.dataset.ovlKineticMaterial = appearance.kineticMaterial;
   root.dataset.ovlKineticArrangement = appearance.kineticArrangement;

@@ -88,9 +88,10 @@ function contactError({
   html,
   prefix,
   sizeProperties = ['width', 'height'],
+  disc = 'record',
 }) {
   const platter = cssRule(source, `.${prefix}platter`, sizeProperties[0]);
-  const record = cssRule(source, `.${prefix}record`, sizeProperties[0]);
+  const record = cssRule(source, `.${prefix}${disc}`, sizeProperties[0]);
   const grooves = cssRule(source, `.${prefix}record-grooves`, 'inset');
   const tonearm = cssRule(source, `.${prefix}tonearm`, sizeProperties[0]);
   const tip = stylusTip(html, `${prefix}stylus-tip`);
@@ -152,6 +153,7 @@ describe('vinyl tonearm geometry', () => {
           'obs-template-mockup__vinyl-tonearm',
         ),
         prefix: 'obs-template-mockup__vinyl-',
+        disc: 'disc',
       }),
     ).toBeLessThanOrEqual(CONTACT_TOLERANCE);
   });

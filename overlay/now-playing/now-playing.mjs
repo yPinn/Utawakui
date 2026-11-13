@@ -87,6 +87,7 @@ function boot() {
   const artworkMotion = createArtworkMotionController({
     gsap,
     ...artworkMotionElements,
+    surfaceLightBeam: document.querySelector('.vinyl-surface-light__beam'),
     commitFrame: (frame) => renderArtworkFrame(artworkElements, frame),
     prepareFrame: (frame) =>
       prepareArtworkSleeve(artworkElements.incoming, frame),

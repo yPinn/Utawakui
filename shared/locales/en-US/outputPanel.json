@@ -637,6 +637,11 @@
       "content": "Content"
     },
     "fields": {
+      "vinylSurfaceLight": {
+        "label": "Record highlight",
+        "group": "Decoration",
+        "options": { "off": "Off", "soft": "Soft", "standard": "Standard" }
+      },
       "receiptDirection": {
         "label": "Feed direction",
         "options": {

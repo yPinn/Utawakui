@@ -630,6 +630,11 @@
       "content": "內容顯示"
     },
     "fields": {
+      "vinylSurfaceLight": {
+        "label": "唱片高光",
+        "group": "裝飾",
+        "options": { "off": "關閉", "soft": "柔和", "standard": "標準" }
+      },
       "receiptDirection": {
         "label": "出紙方向",
         "options": {

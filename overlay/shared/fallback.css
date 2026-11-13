@@ -18,6 +18,9 @@
     --ovl-primitive-color-vinyl-lowlight: #0a0c0e;
     --ovl-primitive-color-vinyl-sheen: #262a2d;
     --ovl-primitive-color-vinyl-highlight: #303538;
+    --ovl-primitive-color-vinyl-beam-cool: rgb(164 208 255 / 14%);
+    --ovl-primitive-color-vinyl-beam-center: rgb(224 238 255 / 88%);
+    --ovl-primitive-color-vinyl-beam-warm: rgb(255 224 190 / 52%);
     --ovl-primitive-color-deck-metal: #373d3f;
     --ovl-primitive-color-deck-metal-highlight: #646b6d;
     --ovl-primitive-color-platter-rim: #8a9294;

@@ -269,6 +269,52 @@
     inline-size: 90%;
   }
 
+  .vinyl-surface-light {
+    position: absolute;
+    z-index: 1;
+    inset: 2%;
+    display: none;
+    overflow: hidden;
+    border-radius: 50%;
+    -webkit-mask-image: radial-gradient(
+      circle,
+      transparent 0 26%,
+      currentColor 29% 66%,
+      transparent 71%
+    );
+    mask-image: radial-gradient(
+      circle,
+      transparent 0 26%,
+      currentColor 29% 66%,
+      transparent 71%
+    );
+    pointer-events: none;
+  }
+
+  [data-vinyl-surface-light='soft'] .vinyl-surface-light,
+  [data-vinyl-surface-light='standard'] .vinyl-surface-light {
+    display: block;
+    opacity: 0.62;
+  }
+
+  [data-vinyl-surface-light='soft'] .vinyl-surface-light {
+    opacity: 0.3;
+  }
+
+  .vinyl-surface-light__beam {
+    position: absolute;
+    inset: -12%;
+    background: linear-gradient(
+      119deg,
+      transparent 34%,
+      var(--ovl-color-vinyl-beam-cool) 43%,
+      var(--ovl-color-vinyl-beam-center) 49%,
+      var(--ovl-color-vinyl-beam-warm) 52%,
+      transparent 64%
+    );
+    transform: translateX(-16%);
+  }
+
   .artwork-overlay__record-rotor {
     position: absolute;
     z-index: 1;

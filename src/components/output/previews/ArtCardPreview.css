@@ -168,9 +168,15 @@
   transform: translateY(-50%);
 }
 
-.obs-template-mockup__vinyl-record {
+.obs-template-mockup__vinyl-disc {
   position: relative;
   width: 90%;
+  aspect-ratio: 1;
+}
+
+.obs-template-mockup__vinyl-record {
+  position: absolute;
+  inset: 0;
   aspect-ratio: 1;
   display: grid;
   place-items: center;

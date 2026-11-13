@@ -295,6 +295,7 @@ describe('output appearance schema', () => {
       receiptDirection: 'down',
       receiptReview: 'on',
       receiptReviewInterval: 15,
+      vinylSurfaceLight: 'off',
       fisheyeRim: 100,
       fisheyeLayout: 'auto',
       fisheyeReflection: 100,
@@ -449,6 +450,7 @@ describe('output appearance schema', () => {
       'fontFamily',
       'fontScale',
       'fontWeight',
+      'vinylSurfaceLight',
     ]);
     expect(keysFor('cover-player')).toEqual([
       'paletteId',
@@ -457,6 +459,16 @@ describe('output appearance schema', () => {
       'fontWeight',
       'surface',
     ]);
+  });
+
+  it('limits record highlight presets to Starry Vinyl', () => {
+    const value = (settings, templateId = 'art-card') =>
+      normalizeOutputAppearance(settings, { templateId }).vinylSurfaceLight;
+    expect(value({})).toBe('off');
+    expect(value({ vinylSurfaceLight: 'soft' })).toBe('soft');
+    expect(value({ vinylSurfaceLight: 'standard' })).toBe('standard');
+    expect(value({ vinylSurfaceLight: 'unexpected' })).toBe('off');
+    expect(value({ vinylSurfaceLight: 'standard' }, 'ticket-stub')).toBe('off');
   });
 
   it('keeps shared controls in a stable product-facing category order', () => {
