@@ -516,30 +516,18 @@
   },
   "cameraEffects": {
     "label": "Camera effects",
-    "scene": "OBS program scene: {name}",
-    "bind": "Bind current scene",
     "automatic": "Automatic bursts",
     "glitch": "Glitch once",
     "zoom": "Zoom once",
     "grain": "Grain once",
     "busy": "Wait for the current effect to finish before triggering another.",
-    "sent": "OBS received the trigger.",
-    "saved": "OBS updated the automatic bursts setting.",
+    "sent": "Foreground effect triggered.",
     "states": {
-      "loading": "Checking the OBS scene.",
-      "disconnected": "Connect OBS in the integration settings first.",
-      "unbound": "Bind the current OBS program scene.",
-      "scene-changed": "The OBS scene changed. Bind the current scene to use effects.",
-      "filter-changed": "The filter changed. Bind the scene again.",
-      "missing": "Add the Utawakui Fisheye Camera filter to the OBS scene.",
-      "ambiguous": "Keep one Utawakui Fisheye Camera filter on this scene.",
-      "update-script": "Reload the latest Fisheye Camera script in OBS.",
-      "disabled-filter": "Enable the Fisheye Camera filter in OBS.",
-      "inactive-filter": "Set the OBS filter to Live and raise its intensity above 0%.",
-      "no-scene": "OBS has no available program scene.",
-      "unconfirmed": "OBS has yet to confirm the filter update.",
-      "request-failed": "Could not check the filter. Check the OBS connection.",
-      "ready": "The scene filter is ready."
+      "loading": "Checking Output.",
+      "unavailable": "Start Output and apply Fisheye Lens first.",
+      "no-output": "Open the Workbench preview or Lyrics Output first.",
+      "request-failed": "Could not trigger the effect. Check Output.",
+      "ready": "Effects appear over the full output frame."
     }
   },
   "workbench": {

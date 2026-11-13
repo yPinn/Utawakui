@@ -235,14 +235,6 @@ describe('packaged dependency boundary', () => {
       ),
     ).toBe(false);
   });
-  it('ships the two user-loadable OBS camera files together outside ASAR', () => {
-    expect(builder.extraResources).toContainEqual({
-      from: 'scripts/obs',
-      to: 'obs',
-      filter: ['fisheye-camera.lua', 'fisheye-camera.effect'],
-    });
-  });
-
   it('ships the fixed release catalog worker without its synthetic Python test or runtime installation', () => {
     expect(builder.extraResources).toContainEqual({
       from: 'resources/provider/release_catalog_worker.py',
@@ -503,16 +495,16 @@ describe('packaged dependency boundary', () => {
       ['overlay/shared/lifecycle.mjs', true],
       ['overlay/now-playing/coverPlayerMotion.mjs', true],
       ['overlay/now-playing/coverPlayerMotion.test.js', false],
-      ['overlay/setlist/receiptView.mjs', true],
       ['overlay/now-playing/ticket.css', true],
       ['overlay/shared/ticketShape.css', true],
       ['overlay/shared/paper-grain.svg', true],
-      ['overlay/setlist/receiptMotion.mjs', true],
+      ['overlay/setlist/receiptView.mjs', true],
       ['overlay/setlist/ribbonView.mjs', true],
       ['overlay/setlist/ribbonFlashback.mjs', true],
       ['overlay/setlist/ribbon.css', true],
       ['overlay/setlist/ribbonView.test.js', false],
       ['overlay/setlist/ribbonFlashback.test.js', false],
+      ['overlay/setlist/receiptMotion.mjs', true],
       ['overlay/setlist/receipt.css', true],
       ['overlay/setlist/receipt-paper.png', true],
       ['overlay/setlist/receipt-grain.png', true],
@@ -536,6 +528,7 @@ describe('packaged dependency boundary', () => {
       ['overlay/lyrics/lyricsFit.mjs', true],
       ['overlay/lyrics/chalkboardVertical.mjs', true],
       ['overlay/lyrics/fisheyeLens.mjs', true],
+      ['overlay/lyrics/fisheyeEffects.mjs', true],
       ['shared/browser/fisheyePaint.mjs', true],
       ['shared/browser/fisheyeMotion.mjs', true],
       ['shared/presentation/fisheyeLyrics.mjs', true],

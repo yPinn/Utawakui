@@ -231,8 +231,7 @@
 
 `obsAdapter.js` 只在同一連線已觀察到直播進行且收到明確 STOPPED 事件時發出收播事件。Main 綁定當前有內容的場次識別，控制台透過共用通知提供收場選項，並由既有收場確認持有保存動作。
 
-- `obsAdapter.js` 只在 `obs-integration` 啟用且期望連線時 lazy 載入 SDK，讀取版本、直播／錄影狀態與時間戳。握手與請求有期限，舊連線不得回寫。失敗分類為有限的公開原因，不暴露 endpoint 或例外。密碼只以 `safeStorage` 加密存在獨立檔案，不可用時拒絕設定。
-- `obsFisheyeCamera.js` 接受工作臺固定的攝影機特效指令，僅寫入已明確綁定的 OBS 節目場景魚眼濾鏡，並讀回欄位確認。Lua 濾鏡依自己的畫格時鐘播放一次，重載時以已儲存的 cue 作為基準。控制通道在 main，Browser Source 保持唯讀。
+- `obsAdapter.js` 只在 `obs-integration` 啟用且期望連線時 lazy 載入 SDK，只讀版本、直播／錄影狀態與時間戳。握手與請求有期限，舊連線不得回寫。失敗分類為有限的公開原因，不暴露 endpoint 或例外。密碼只以 `safeStorage` 加密存在獨立檔案，不可用時拒絕設定。
 - `sessionHistoryService.js` 消費 confirmed performance identity：安排由 main 驗證 sessionId＋itemId，安排外由 App 的 `usePerformanceHistoryObserver` 訂閱 player.onPlaying 後送 epoch／playbackRevision／trackId。OBS ready／degraded 且對應輸出 active 才擷取獨立快照；安排在 progress playing 保存 occurrence，離線時間為 null。標記綁定 main 場次 context，封存先 flush。OBS convenience log 保留既有略過門檻與 Settings 入口，production 不再由 Output trackId 變更觸發。`obsPowerSaveBlocker.js` 只在直播或錄影中防止螢幕休眠。
 - `appUsageService.js` 每 3 秒發布 CPU／RAM；平時只讀 `app.getAppMetrics()`，`heavyJobScheduler` 忙碌時才補量子程序。
 
@@ -311,7 +310,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 - 舊 slot 的 `focus-line`／`now-next` 讀取時回退為 `karaoke-stack`／`art-card`；新套用須通過 allowlist，純 helper 保留舊 id 的相容解析。
 - 封面電台：`coverPlayerMotion.mjs` 僅協調封面／metadata切歌fade，播放器的volume／mute／progress由`artworkLayout.mjs`獨立即時呈現；reduced-motion、恢復與模板切換清除舊過場。portrait預設360×480，portrait-large保留480×640。Browser Source 以擷取容器的寬高解析同一 3:4 設計尺度，封面、文字及播放控制共用該尺度。
 - 黑板直書沿用歌詞 fit controller 的量測、分頁及 scheduler。共用 frame 投影提供當前頁欄位，`overlay/lyrics/chalkboardVertical.mjs` 持有字面與右線的入退場。
-- 魚眼鏡筒從共用歌詞 frame 讀取目前整句、可對時短句或來源段落。`state.mjs` 沿歌詞時鐘決定文字範圍，沿播放時鐘讀取 M2 副歌或同曲的重複歌詞備援與構圖切換點。`lyricsChorus.mjs` 共用曲目試聽的重複段落比對，魚眼區間按歌詞內容版本快取。`shared/presentation/fisheyeLyrics.mjs` 持有字列與動畫格投影。Gallery 與 Browser Source 共用 `shared/browser/fisheyeMotion.mjs` 的 GSAP 時間軸及 `shared/browser/fisheyePaint.mjs` 的 Canvas 2D 繪製。時間軸保持暫停，由既有時鐘決定取樣位置，再由顯示畫格更新畫布。`overlay/lyrics/fisheyeLens.mjs` 持有 Browser Source 畫布生命週期，工作臺透過既有輸出設定更新該畫布。
+- 魚眼鏡筒從共用歌詞 frame 讀取目前整句、可對時短句或來源段落。`state.mjs` 沿歌詞時鐘決定文字範圍，沿播放時鐘讀取 M2 副歌或同曲的重複歌詞備援與構圖切換點。`lyricsChorus.mjs` 共用曲目試聽的重複段落比對，魚眼區間按歌詞內容版本快取。`shared/presentation/fisheyeLyrics.mjs` 持有字列與動畫格投影。Gallery 與 Browser Source 共用 `shared/browser/fisheyeMotion.mjs` 的 GSAP 時間軸及 `shared/browser/fisheyePaint.mjs` 的 Canvas 2D 繪製。時間軸保持暫停，由既有時鐘決定取樣位置，再由顯示畫格更新畫布。`overlay/lyrics/fisheyeLens.mjs` 持有 Browser Source 畫布生命週期，工作臺透過既有輸出設定更新該畫布。攝影機特效使用 main 擁有的短效事件，由唯讀 Output WebSocket 廣播給已連線頁面，並在字幕與鏡圈上方繪製。
 - Display 頁：`ObsOutputWorkspace.vue` 擁有畫面分頁、編輯／模板切換、runtime 狀態與 start／stop。Workbench 透過 `outputInspectorTabs.js` 投影目前調整對象的欄位，使用共用的 `UiFolderInspector` 顯示分類。`ObsOutputSplitLayout` 負責 Gallery 與無法分類的設定版型。兩者使用 `useOutputWorkspaceNavigation` 的 session 側欄狀態。Gallery 的預覽由 `ObsTemplatePreviewStage` 單一管理，hover 250ms 或明確播放才載入 `ObsTemplateMockup`。
 - Spout2 重用 Lyrics route：main 推導固定 surface 與 loopback URL、重查 gate、監督 helper；helper 載入 native bridge、擁有 offscreen 視窗與 sender、驗證並釋放每個 texture。Output server 重建前先停止 helper。見[整合契約](contracts/integration-adapter-contract.md#spout2-native-video-profile)。
 - 開發用 `scripts/output-appearance-audit.mjs` 與 `scripts/output-performance-probe.mjs` 使用隔離 profile 與合成資料，不進封裝，見[驗收 runbook](operations/output-appearance-acceptance.md#f4-隔離-capture-重跑)。

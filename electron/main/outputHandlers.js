@@ -69,6 +69,11 @@ function registerOutputHandlers({
 
   ipcMain.handle('output:get-status', async () => server.getStatus());
 
+  ipcMain.handle('output:fisheye-effects', async (_event, action) => {
+    requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+    return server.controlFisheyeEffects(action);
+  });
+
   ipcMain.handle('output:copy-url', async (event, kind) => {
     const url = buildOutputUrl(server.getStatus(), kind);
     if (typeof writeClipboardText !== 'function') {

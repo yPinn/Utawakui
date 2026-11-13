@@ -16,7 +16,13 @@ const DEFAULT_MAX_PENDING_BYTES =
   MAX_MUSIC_STRUCTURE_DOCUMENT_BYTES +
   DELIVERY_PROTOCOL_OVERHEAD_BYTES * 4;
 const DEFAULT_SEND_TIMEOUT_MS = 5000;
-const DELIVERY_KINDS = new Set(['clock', 'semantic', 'content', 'config']);
+const DELIVERY_KINDS = new Set([
+  'clock',
+  'semantic',
+  'content',
+  'config',
+  'effect',
+]);
 
 function createStats() {
   return {
@@ -191,7 +197,11 @@ function createOutputClientDelivery({
     if (terminated) return false;
     const next = message(value?.kind, value?.data);
     let accepted = true;
-    if (next.kind === 'content' || next.kind === 'config') {
+    if (
+      next.kind === 'content' ||
+      next.kind === 'config' ||
+      next.kind === 'effect'
+    ) {
       ordered.push(next);
       pendingBytes += next.bytes;
       if (pendingBytes > maxPendingBytes) {

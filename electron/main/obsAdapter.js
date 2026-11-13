@@ -1,15 +1,11 @@
 'use strict';
 
 const { randomUUID } = require('node:crypto');
-const {
-  createObsFisheyeCamera,
-  isCameraAction,
-} = require('./obsFisheyeCamera');
 
 // Main-owned OBS WebSocket adapter — see ADR 0013 (external integration
 // planes) and docs/contracts/integration-adapter-contract.md's OBS adapter
-// profile. Status and timecode requests share the connection with the
-// explicitly bound Fisheye Camera filter controls.
+// profile. v1 is read-only: version handshake, streaming/recording state,
+// and on-demand fresh snapshots for timestamping (no scene/source writes).
 //
 // Lifecycle mirrors spoutOutputRuntime.js's desired/observed status shape
 // and mutual-exclusion pattern, adapted for a socket instead of a child
@@ -166,9 +162,7 @@ function createObsAdapter({
   let cancelPendingConnect = null;
   const pendingRequestCancels = new Set();
   let operationEpoch = 0;
-  let cameraConnection = 0;
   const outputSegments = { streaming: null, recording: null };
-  const fisheyeCamera = createObsFisheyeCamera();
 
   function outputSegment(kind, active) {
     if (!active) {
@@ -202,7 +196,6 @@ function createObsAdapter({
 
   function detachClient() {
     if (!client) return;
-    cameraConnection += 1;
     client.removeAllListeners?.();
     client = null;
   }
@@ -257,7 +250,7 @@ function createObsAdapter({
     }
   }
 
-  async function callWithDeadline(activeClient, requestType, ...requestData) {
+  async function callWithDeadline(activeClient, requestType) {
     let settled = false;
     let deadlineTimer = null;
     let rejectCancellation;
@@ -284,7 +277,7 @@ function createObsAdapter({
 
     try {
       return await Promise.race([
-        activeClient.call(requestType, ...requestData),
+        activeClient.call(requestType),
         deadline,
         cancellation,
       ]);
@@ -613,37 +606,6 @@ function createObsAdapter({
     }
   }
 
-  async function controlFisheyeCamera(action) {
-    if (!isCameraAction(action)) return { state: 'invalid-action' };
-    requireFeatureGate(featureId);
-    if (!client || !['ready', 'degraded'].includes(status.observed.lifecycle)) {
-      return { state: 'disconnected' };
-    }
-    const activeClient = client;
-    const activeEpoch = operationEpoch;
-    const activeCameraConnection = cameraConnection;
-    const current = () =>
-      client === activeClient &&
-      operationEpoch === activeEpoch &&
-      cameraConnection === activeCameraConnection;
-    try {
-      return await fisheyeCamera.run(action, {
-        connection: activeCameraConnection,
-        async call(request, ...data) {
-          if (!current()) throw new Error('OBS connection changed');
-          requireFeatureGate(featureId);
-          const result = await callWithDeadline(activeClient, request, ...data);
-          if (!current()) throw new Error('OBS connection changed');
-          return result;
-        },
-      });
-    } catch (error) {
-      if (!current()) return { state: 'disconnected' };
-      logger.error?.('[obs-adapter] Fisheye Camera request failed', error);
-      return { state: 'request-failed' };
-    }
-  }
-
   // Called at a semantic boundary (e.g. the moment a track starts playing),
   // not polled — see integration-adapter-contract.md's "clock samples ...
   // reacts to semantic boundaries" principle. Always asks OBS fresh so the
@@ -752,7 +714,6 @@ function createObsAdapter({
     disconnect,
     requestStreamSnapshot,
     requestRecordSnapshot,
-    controlFisheyeCamera,
     destroy,
   };
 }

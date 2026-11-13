@@ -43,6 +43,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
   '/overlay/lyrics/fisheyeLens.mjs': ['lyrics', 'fisheyeLens.mjs'],
+  '/overlay/lyrics/fisheyeEffects.mjs': ['lyrics', 'fisheyeEffects.mjs'],
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
   '/overlay/lyrics/lyricsFit.mjs': ['lyrics', 'lyricsFit.mjs'],
   '/overlay/lyrics/ktvDisplayFit.mjs': ['lyrics', 'ktvDisplayFit.mjs'],

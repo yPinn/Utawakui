@@ -108,6 +108,28 @@ describe('output handlers', () => {
     expect(server.stop).toHaveBeenCalledOnce();
   });
 
+  it('passes the camera action through the public Output gate', async () => {
+    const ipcMain = createIpcMain();
+    const requireFeatureGate = vi.fn();
+    const controlFisheyeEffects = vi.fn(() => ({ state: 'ready', sent: true }));
+    registerOutputHandlers({
+      ipcMain,
+      server: { controlFisheyeEffects },
+      requireFeatureGate,
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => dir,
+    });
+    const trigger = ipcMain.handlers.get('output:fisheye-effects');
+    await expect(trigger({}, 'glitch')).resolves.toMatchObject({ sent: true });
+    expect(controlFisheyeEffects).toHaveBeenCalledWith('glitch');
+    requireFeatureGate.mockImplementationOnce(() => {
+      throw new Error('gate closed');
+    });
+    await expect(trigger({}, 'grain')).rejects.toThrow('gate closed');
+    expect(controlFisheyeEffects).toHaveBeenCalledOnce();
+  });
+
   it('loads and independently upserts portable output slots', async () => {
     const ipcMain = createIpcMain();
     const setOverlaySlots = vi.fn();

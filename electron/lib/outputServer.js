@@ -4,6 +4,7 @@ const http = require('node:http');
 const { WebSocket, WebSocketServer } = require('ws');
 const { OUTPUT_V3_SUBPROTOCOL } = require('../../shared/outputStreamContract');
 const { createOutputClientDelivery } = require('./outputDeliveryQueue');
+const { createOutputFisheyeEffects } = require('./outputFisheyeEffects');
 const { createOutputHttpHandler, writeJson } = require('./outputServer/http');
 const {
   createEmptyOutputSnapshot,
@@ -124,6 +125,21 @@ function createOutputServer(options = {}) {
   let stoppingPromise = null;
   const clientLiveness = new WeakMap();
   const clientDeliveries = new Map();
+  const fisheyeEffects = createOutputFisheyeEffects({
+    isAvailable: () =>
+      isRunning() && overlaySlots.lyrics?.templateId === 'fisheye-lens',
+    publish: (message) => {
+      let sent = false;
+      for (const client of webSocketServer?.clients ?? []) {
+        if (
+          client.readyState === WebSocket.OPEN &&
+          enqueueClient(client, 'effect', message)
+        )
+          sent = true;
+      }
+      return sent;
+    },
+  });
   const handleRequest = createOutputHttpHandler({
     getSnapshot,
     getClientCount: () => webSocketServer?.clients.size ?? 0,
@@ -157,9 +173,7 @@ function createOutputServer(options = {}) {
   }
 
   function getStatus() {
-    const running = Boolean(
-      httpServer?.listening && webSocketServer && !stoppingPromise,
-    );
+    const running = isRunning();
     const port = activePort ?? configuredPort;
     return {
       running,
@@ -171,6 +185,12 @@ function createOutputServer(options = {}) {
       clients: running ? webSocketServer.clients.size : 0,
       delivery: aggregateDeliveryStats(),
     };
+  }
+
+  function isRunning() {
+    return Boolean(
+      httpServer?.listening && webSocketServer && !stoppingPromise,
+    );
   }
 
   function getSnapshot() {
@@ -566,6 +586,7 @@ function createOutputServer(options = {}) {
 
   function setOverlaySlots(value) {
     overlaySlots = structuredClone(value ?? {});
+    fisheyeEffects.onAvailabilityChanged();
     broadcastOverlayConfig();
   }
 
@@ -583,6 +604,7 @@ function createOutputServer(options = {}) {
   }
 
   async function stop() {
+    fisheyeEffects.stop();
     if (startingPromise) {
       try {
         await startingPromise;
@@ -614,6 +636,7 @@ function createOutputServer(options = {}) {
   }
 
   return {
+    controlFisheyeEffects: fisheyeEffects.control,
     getOverlayConfig,
     getSnapshot,
     getStatus,

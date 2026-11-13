@@ -759,6 +759,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   confirmFeatureGate: (featureId, noticeVersion) =>
     ipcRenderer.invoke('feature-gates:confirm', featureId, noticeVersion),
   getOutputStatus: () => ipcRenderer.invoke('output:get-status'),
+  controlOutputFisheyeEffects: (action) =>
+    ipcRenderer.invoke('output:fisheye-effects', action),
   connectOutputSource: () => ipcRenderer.invoke('output:connect-source'),
   getOutputSettings: () => ipcRenderer.invoke('output:get-settings'),
   updateOutputSettings: (settings) =>
@@ -795,8 +797,6 @@ contextBridge.exposeInMainWorld('Utawakui', {
   clearObsPassword: () => ipcRenderer.invoke('obs:clear-password'),
   connectObs: () => ipcRenderer.invoke('obs:connect'),
   disconnectObs: () => ipcRenderer.invoke('obs:disconnect'),
-  controlObsFisheyeCamera: (action) =>
-    ipcRenderer.invoke('obs:fisheye-camera', action),
   addObsMarker: (label) => ipcRenderer.invoke('obs:add-marker', label),
   getObsLatestSession: () => ipcRenderer.invoke('obs:get-latest-session'),
   copyObsText: (value) => ipcRenderer.invoke('obs:copy-text', value),

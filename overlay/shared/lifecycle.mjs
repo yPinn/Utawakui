@@ -62,6 +62,10 @@ export function createOverlayHost(options = {}) {
       latestSnapshot = snapshot;
       syncActivity({ deliver: true });
     },
+    onFisheyeEffect(effect) {
+      if (!disposed && connected && !document?.hidden)
+        options.onFisheyeEffect?.(effect);
+    },
     onStatus(status) {
       if (disposed) return;
       connected = status === 'connected';

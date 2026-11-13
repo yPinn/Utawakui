@@ -11,12 +11,6 @@ const notice = shallowRef('');
 const canTrigger = computed(
   () => status.value.state === 'ready' && !pending.value,
 );
-const canBind = computed(
-  () =>
-    ['unbound', 'scene-changed', 'filter-changed'].includes(
-      status.value.state,
-    ) && !pending.value,
-);
 const effects = [
   { id: 'glitch', label: t('outputPanel.cameraEffects.glitch') },
   { id: 'zoom', label: t('outputPanel.cameraEffects.zoom') },
@@ -24,17 +18,8 @@ const effects = [
 ];
 const stateKeys = new Set([
   'loading',
-  'disconnected',
-  'unbound',
-  'scene-changed',
-  'filter-changed',
-  'missing',
-  'ambiguous',
-  'update-script',
-  'disabled-filter',
-  'inactive-filter',
-  'no-scene',
-  'unconfirmed',
+  'unavailable',
+  'no-output',
   'request-failed',
   'ready',
 ]);
@@ -59,7 +44,7 @@ async function invoke(action) {
   }
   let result;
   try {
-    result = await window.Utawakui?.controlObsFisheyeCamera?.(action);
+    result = await window.Utawakui?.controlOutputFisheyeEffects?.(action);
   } catch {
     result = { state: 'request-failed' };
   } finally {
@@ -71,14 +56,8 @@ async function invoke(action) {
     notice.value = t('outputPanel.cameraEffects.busy');
     return;
   }
-  status.value = result ?? { state: 'disconnected' };
-  if (result?.confirmed) {
-    notice.value = t(
-      effects.some(({ id }) => id === action)
-        ? 'outputPanel.cameraEffects.sent'
-        : 'outputPanel.cameraEffects.saved',
-    );
-  }
+  status.value = result ?? { state: 'unavailable' };
+  if (result?.sent) notice.value = t('outputPanel.cameraEffects.sent');
 }
 
 onMounted(() => {
@@ -97,16 +76,6 @@ onBeforeUnmount(() => {
     :aria-label="t('outputPanel.cameraEffects.label')"
   >
     <UiHint aria-live="polite">{{ stateLabel }}</UiHint>
-    <p v-if="status.scene" class="obs-fisheye-camera__scene">
-      {{ t('outputPanel.cameraEffects.scene', { name: status.scene }) }}
-    </p>
-    <UiButton
-      v-if="canBind && status.state !== 'ready'"
-      variant="secondary"
-      @click="invoke('bind')"
-    >
-      {{ t('outputPanel.cameraEffects.bind') }}
-    </UiButton>
     <label class="obs-fisheye-camera__automatic" :for="controlsId">
       <input
         :id="controlsId"
@@ -137,11 +106,6 @@ onBeforeUnmount(() => {
   display: grid;
   gap: var(--ui-space-3);
   padding-block: var(--ui-space-3);
-}
-
-.obs-fisheye-camera__scene {
-  margin: 0;
-  overflow-wrap: anywhere;
 }
 
 .obs-fisheye-camera__automatic,

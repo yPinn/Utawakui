@@ -1,6 +1,7 @@
 import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 import { clearFisheyeLens, renderFisheyeLens } from './fisheyeLens.mjs';
+import { createFisheyeEffects } from './fisheyeEffects.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   clearChalkboardVertical,
@@ -2148,11 +2149,19 @@ function boot() {
   if (!elements.root || !elements.current || !elements.next) return;
 
   const gsap = globalThis.gsap ?? null;
+  const fisheyeEffects = createFisheyeEffects({
+    canvas: document.querySelector('#lyrics-fisheye-effect'),
+    lens: elements.fisheye,
+    gsap,
+  });
   pagePerformanceTrace = createLyricsPerformanceTrace({
     location: window.location,
   });
   const onTrace = pagePerformanceTrace?.mark;
   let reducedMotion = false;
+  const reducedMotionPreference = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  );
   let fisheyeAppearance;
   let frameScheduler = null;
   const fit = createLyricsFitController({
@@ -2228,6 +2237,7 @@ function boot() {
     previewMode,
     onReducedMotion: (value) => {
       reducedMotion = value;
+      if (value) fisheyeEffects.stop();
       frameScheduler.refresh();
     },
     onFontsChanged: () => {
@@ -2239,12 +2249,14 @@ function boot() {
     onActivity: (active) => {
       onTrace?.('activity', { activeIndex: Number(active) });
       if (!active) {
+        fisheyeEffects.stop();
         fit.suspend();
         frameScheduler.suspend();
         destroyLyricsAnimations(elements, { gsap });
       } else prepareFocusStyles();
     },
     onConfig: (slot) => {
+      if (slot?.templateId !== 'fisheye-lens') fisheyeEffects.stop();
       onTrace?.('config');
       previewScene = previewSceneForSlot('lyrics', slot);
       const { ovlTemplate, ovlFont } = document.documentElement.dataset;
@@ -2271,12 +2283,22 @@ function boot() {
       }
       prepareFocusStyles();
     },
+    onFisheyeEffect: (effect) => {
+      if (
+        !reducedMotion &&
+        !reducedMotionPreference.matches &&
+        document.documentElement.dataset.ovlTemplate === 'fisheye-lens'
+      ) {
+        fisheyeEffects.play(effect);
+      }
+    },
     onSnapshot: (snapshot, { recovering }) => {
       const delivery = onTrace ? { deliveryId: ++deliveryId } : undefined;
       onTrace?.('receive', { revision: snapshot.revision, ...delivery });
       frameScheduler.update(snapshot, { ...delivery, recovering });
     },
     onDispose: () => {
+      fisheyeEffects.stop();
       fit.stop();
       frameScheduler.stop();
       destroyLyricsAnimations(elements, { gsap });

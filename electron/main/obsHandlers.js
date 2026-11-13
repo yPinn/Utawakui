@@ -71,10 +71,6 @@ function registerObsHandlers({
 
   ipcMain.handle('obs:disconnect', async () => adapter.disconnect());
 
-  ipcMain.handle('obs:fisheye-camera', async (_event, action) =>
-    adapter.controlFisheyeCamera(action),
-  );
-
   // Resolves null when there's nothing to mark against (not currently
   // live/recording) — see sessionHistoryService.js's own addMarker() doc.
   ipcMain.handle('obs:add-marker', async (_event, label) => {

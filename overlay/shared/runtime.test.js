@@ -41,6 +41,36 @@ function snapshot(revision, overrides = {}) {
 }
 
 describe('overlay WebSocket runtime', () => {
+  it('delivers current fish-eye effects independently of the lyric clock', () => {
+    FakeWebSocket.instances = [];
+    const onFisheyeEffect = vi.fn();
+    const connection = createOverlayConnection({
+      kind: 'lyrics',
+      location: { protocol: 'http:', host: 'localhost' },
+      WebSocketImpl: FakeWebSocket,
+      now: () => 5000,
+      schedule: vi.fn(),
+      cancelSchedule: vi.fn(),
+      onFisheyeEffect,
+    });
+    connection.start();
+    const socket = FakeWebSocket.instances.at(-1);
+    const cue = {
+      type: 'overlay.fisheye.effect',
+      effect: 'glitch',
+      startedAt: 4900,
+      durationMs: 330,
+    };
+    const send = (change) =>
+      socket.emit('message', { data: JSON.stringify({ ...cue, ...change }) });
+    send({});
+    send({ startedAt: 4600 });
+    send({ startedAt: 7000 });
+    send({ durationMs: 10000 });
+    send({ effect: 'invalid' });
+    expect(onFisheyeEffect).toHaveBeenCalledExactlyOnceWith(cue);
+    connection.stop();
+  });
   it('cancels trace animation frames and ignores already queued trace callbacks on stop', () => {
     FakeWebSocket.instances = [];
     const frames = new Map();

@@ -65,7 +65,6 @@ describe('obs handlers', () => {
       'obs:clear-password',
       'obs:connect',
       'obs:disconnect',
-      'obs:fisheye-camera',
       'obs:add-marker',
       'obs:get-latest-session',
       'obs:copy-text',

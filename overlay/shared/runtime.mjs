@@ -3,6 +3,11 @@ const OUTPUT_V3_SUBPROTOCOL = 'utawakui.output.v3';
 const INITIAL_RECONNECT_DELAY_MS = 500;
 const MAX_RECONNECT_DELAY_MS = 8000;
 const OUTPUT_STATE_VERSION = 2;
+const FISHEYE_EFFECTS = new Map([
+  ['glitch', 330],
+  ['zoom', 640],
+  ['grain', 720],
+]);
 
 export function buildWebSocketUrl(location) {
   const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -13,6 +18,18 @@ export function parseOutputMessage(raw) {
   try {
     const message = JSON.parse(raw);
     if (!message || typeof message !== 'object') return null;
+
+    if (message.type === 'overlay.fisheye.effect') {
+      if (
+        !FISHEYE_EFFECTS.has(message.effect) ||
+        message.durationMs !== FISHEYE_EFFECTS.get(message.effect) ||
+        !Number.isSafeInteger(message.startedAt) ||
+        message.startedAt < 0
+      )
+        return null;
+      const { type, effect, startedAt, durationMs } = message;
+      return { type, effect, startedAt, durationMs };
+    }
 
     if (STATE_MESSAGE_TYPES.has(message.type) && message.snapshot) {
       if (
@@ -485,6 +502,17 @@ export function createOverlayConnection(options = {}) {
     listen('message', (event) => {
       const message = parseOutputMessage(event.data);
       if (!message) return;
+      if (message.type === 'overlay.fisheye.effect') {
+        const receivedAt = now();
+        if (
+          options.kind === 'lyrics' &&
+          receivedAt >= message.startedAt - 1000 &&
+          receivedAt < message.startedAt + message.durationMs
+        ) {
+          options.onFisheyeEffect?.(message);
+        }
+        return;
+      }
       if (message.type === 'overlay.config.snapshot') {
         lastConfigRevision = message.overlayConfig.revision;
         onConfig(

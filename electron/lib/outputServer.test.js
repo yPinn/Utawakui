@@ -221,6 +221,38 @@ afterEach(async () => {
 });
 
 describe('outputServer', () => {
+  it('broadcasts one-shot fish-eye events to current readers without replay on connection', async () => {
+    const server = createServer({
+      overlaySlots: { lyrics: { templateId: 'fisheye-lens' } },
+    });
+    const status = await server.start();
+    expect(server.controlFisheyeEffects('glitch').state).toBe('no-output');
+    const first = connect(status);
+    const second = connect(status);
+    await Promise.all([waitForMessage(first), waitForMessage(second)]);
+    const effects = Promise.all([
+      waitForMessage(first),
+      waitForMessage(second),
+    ]);
+    expect(server.controlFisheyeEffects('grain')).toMatchObject({ sent: true });
+    const [cue, otherCue] = await effects;
+    expect(cue).toEqual(otherCue);
+    expect(cue).toMatchObject({
+      type: 'overlay.fisheye.effect',
+      effect: 'grain',
+      durationMs: 720,
+    });
+    expect(server.controlFisheyeEffects('glitch').state).toBe('busy');
+    const newcomer = connect(status);
+    const messages = waitForMessages(newcomer, 2);
+    await waitForOpen(newcomer);
+    server.setOverlaySlots({ lyrics: { templateId: 'karaoke-stack' } });
+    expect((await messages).map(({ type }) => type)).toEqual([
+      'state.snapshot',
+      'overlay.config.changed',
+    ]);
+    expect(server.controlFisheyeEffects('glitch').state).toBe('unavailable');
+  });
   it('uses a stable production port and an immutable loopback host', () => {
     expect(DEFAULT_OUTPUT_PORT).toBe(8700);
     expect(OUTPUT_HOST).toBe('127.0.0.1');
@@ -610,6 +642,7 @@ describe('outputServer', () => {
         '/overlay/lyrics/lyricsFit.mjs',
         '/overlay/lyrics/chalkboardVertical.mjs',
         '/overlay/lyrics/fisheyeLens.mjs',
+        '/overlay/lyrics/fisheyeEffects.mjs',
         '/shared/browser/fisheyePaint.mjs',
         '/shared/browser/fisheyeMotion.mjs',
         '/shared/presentation/fisheyeLyrics.mjs',

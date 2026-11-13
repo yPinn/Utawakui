@@ -3,10 +3,10 @@
 ## Status
 
 Accepted on 2026-08-23; amended on 2026-09-08 and 2026-09-24. OBS Browser Source
-remains the supported presentation baseline. A main-owned OBS WebSocket adapter
-observes streaming／recording state and timestamps for local session history. The
-Fisheye Camera workbench adds scoped control of an explicitly bound program-scene
-filter. Windows x64 also has an explicitly started experimental Spout2 Lyrics sender; receiver,
+remains the supported presentation baseline. A main-owned, read-only OBS WebSocket
+adapter now observes streaming／recording state and timestamps for local session
+history; no scene／source write or transport control capability is exposed. Windows
+x64 also has an explicitly started experimental Spout2 Lyrics sender; receiver,
 alpha, GPU, recovery, and installed acceptance remain required before support.
 
 ## Context
@@ -85,11 +85,9 @@ requirement for normal overlays. It may:
 - request a fresh stream／record timecode when a track or manual marker boundary
   needs to be recorded.
 
-The Fisheye Camera capability writes only automatic mode and one-shot cues to a
-compatible `utawakui_fisheye_camera` filter on the bound program scene. Main
-verifies the scene, filter and setting readback over the authenticated adapter.
-Scene enumeration, Browser Source creation／update, visibility changes, scene
-cues, and player transport require separate capability contracts.
+The adopted first slice is read-only. Scene enumeration, Browser Source creation／
+update, visibility changes, scene cues, and player transport remain deferred
+write capabilities that require separate capability and applied-state contracts.
 The adapter never disables OBS authentication. `obs-websocket-js` is lazy-loaded
 behind the main-owned port; its password is stored only through Electron
 `safeStorage`, never in config, presets, renderer state, diagnostics, or URLs.

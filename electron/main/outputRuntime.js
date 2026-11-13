@@ -308,6 +308,11 @@ function createOutputRuntime({
 
   return {
     attachRenderer,
+    controlFisheyeEffects: (action) =>
+      server?.controlFisheyeEffects?.(action) ?? {
+        state: 'unavailable',
+        automatic: false,
+      },
     connectSource,
     getSettings,
     getOverlaySlot: (kind) => structuredClone(overlaySlots[kind] ?? null),
