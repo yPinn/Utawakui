@@ -67,6 +67,33 @@
 }
 
 @layer ovl-template {
+  :root[data-ovl-template='fisheye-lens'] .lyrics-overlay {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    transform: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :root[data-ovl-template='fisheye-lens']
+    .lyrics-overlay
+    > :not(.lyrics-overlay__fisheye) {
+    display: none;
+  }
+
+  .lyrics-overlay__fisheye {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
   .lyrics-workbench__backdrop,
   .lyrics-workbench__guide {
     position: fixed;

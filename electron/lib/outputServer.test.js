@@ -598,6 +598,7 @@ describe('outputServer', () => {
     expect(graph.routes).toEqual(
       expect.arrayContaining([
         '/shared/presentation/lyricsPhraseBreaks.mjs',
+        '/shared/presentation/lyricsChorus.mjs',
         '/shared/presentation/lyricsDisplayLayout.mjs',
         '/shared/presentation/lyricsTextProcessing.mjs',
         '/shared/presentation/lyricsDisplayFrame.mjs',
@@ -608,6 +609,10 @@ describe('outputServer', () => {
         '/overlay/lyrics/lyricsFine.mjs',
         '/overlay/lyrics/lyricsFit.mjs',
         '/overlay/lyrics/chalkboardVertical.mjs',
+        '/overlay/lyrics/fisheyeLens.mjs',
+        '/shared/browser/fisheyePaint.mjs',
+        '/shared/browser/fisheyeMotion.mjs',
+        '/shared/presentation/fisheyeLyrics.mjs',
         '/overlay/lyrics/ktvDisplayFit.mjs',
       ]),
     );

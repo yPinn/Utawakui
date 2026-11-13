@@ -1,5 +1,6 @@
 import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
+import { clearFisheyeLens, renderFisheyeLens } from './fisheyeLens.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   clearChalkboardVertical,
@@ -1603,6 +1604,7 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearKineticPopPresentation(elements, options);
   clearOrnateVerticalPresentation(elements, options);
   clearChalkboardVertical(elements);
+  clearFisheyeLens(elements);
 }
 
 let performanceRenderId = 0;
@@ -1676,13 +1678,16 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isOrnateVertical = templateId === 'ornate-vertical';
   const isChalkboard = templateId === 'chalkboard-vertical';
   const isCenteredVertical = templateId === 'centered-vertical';
+  const isFisheye = templateId === 'fisheye-lens';
+  if (!isFisheye) clearFisheyeLens(elements);
   if (!isChalkboard) clearChalkboardVertical(elements);
   if (
     isLiveStage ||
     isKineticPop ||
     isOrnateVertical ||
     isChalkboard ||
-    isCenteredVertical
+    isCenteredVertical ||
+    isFisheye
   ) {
     entranceAnimations.get(elements.current)?.cancel?.();
     entranceAnimations.delete(elements.current);
@@ -1720,6 +1725,18 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     return;
   }
   clearKineticPopPresentation(elements, renderOptions);
+  if (isFisheye) {
+    clearOrnateVerticalPresentation(elements, renderOptions);
+    stopMangaAnimations(elements, renderOptions, true);
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, renderOptions);
+    clearLyricsRenderState(elements.next, renderOptions);
+    renderFisheyeLens(elements, frame, renderOptions);
+    elements.root.hidden = elements.fisheye?.hidden !== false;
+    elements.root.setAttribute('lang', frame.language || 'und');
+    elements.root.dataset.revision = String(frame.revision);
+    return;
+  }
   if (isOrnateVertical || isChalkboard || isCenteredVertical) {
     stopMangaAnimations(elements, renderOptions, true);
     clearMangaLyrics(elements);
@@ -1887,6 +1904,7 @@ export function createLyricsFrameScheduler(options = {}) {
   let kineticMaterial = normalizeOverlayAppearance({
     kineticMaterial: options.kineticMaterial,
   }).kineticMaterial;
+  let fisheyeGranularity = options.fisheyeGranularity ?? 'line';
   let lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
     templateId,
     options.lyricsPresentationPolicyId,
@@ -1984,6 +2002,7 @@ export function createLyricsFrameScheduler(options = {}) {
     for (let pass = 0; pass < 2; pass++) {
       const nowMs = pass === 0 ? enteredAtMs : now();
       const projectionOptions = {
+        fisheyeGranularity,
         kineticMaterial,
         lyricsPresentationPolicyId,
         nowMs,
@@ -2113,18 +2132,23 @@ export function createLyricsFrameScheduler(options = {}) {
         normalizedTemplateId,
         nextPolicyValue,
       );
+    const nextFisheyeGranularity =
+      nextSettings.fisheyeGranularity ?? fisheyeGranularity;
     if (
       normalizedTemplateId === templateId &&
       normalizedKineticMaterial === kineticMaterial &&
+      nextFisheyeGranularity === fisheyeGranularity &&
       normalizedLyricsPresentationPolicyId === lyricsPresentationPolicyId
     ) {
-      return;
+      return false;
     }
     settleNextFrame ||= Boolean(latestSnapshot);
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
+    fisheyeGranularity = nextFisheyeGranularity;
     lyricsPresentationPolicyId = normalizedLyricsPresentationPolicyId;
     refresh();
+    return true;
   }
 
   function setTemplateId(nextTemplateId) {
@@ -2158,6 +2182,7 @@ function boot() {
   const elements = {
     root: document.querySelector('#lyrics-overlay'),
     current: document.querySelector('#lyrics-current'),
+    fisheye: document.querySelector('#lyrics-fisheye'),
     liveStageCard: document.querySelector('#lyrics-live-stage-card'),
     liveStageChrome: document.querySelector('#lyrics-live-stage-chrome'),
     liveStageTitle: document.querySelector('#lyrics-live-stage-title'),
@@ -2174,6 +2199,7 @@ function boot() {
   });
   const onTrace = pagePerformanceTrace?.mark;
   let reducedMotion = false;
+  let fisheyeAppearance;
   let frameScheduler = null;
   const fit = createLyricsFitController({
     onTrace,
@@ -2231,6 +2257,7 @@ function boot() {
         previewMode,
       );
       renderLyricsFrameSafely(elements, visibleFrame, {
+        fisheyeAppearance,
         gsap,
         reportError,
         reducedMotion,
@@ -2269,16 +2296,22 @@ function boot() {
       const { ovlTemplate, ovlFont } = document.documentElement.dataset;
       applyOverlayAppearance(document, slot);
       fit.invalidate(3);
-      frameScheduler.setPresentationSettings({
-        kineticMaterial: normalizeOverlayAppearance(slot?.settings)
-          .kineticMaterial,
+      const appearance = normalizeOverlayAppearance(slot?.settings, {
+        templateId: slot?.templateId,
+      });
+      fisheyeAppearance = appearance;
+      const reprojected = frameScheduler.setPresentationSettings({
+        fisheyeGranularity: appearance.fisheyeGranularity,
+        kineticMaterial: appearance.kineticMaterial,
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
         templateId: slot?.templateId ?? 'karaoke-stack',
       });
       if (
-        ovlTemplate === 'centered-vertical' &&
-        slot?.templateId === ovlTemplate &&
-        ovlFont !== document.documentElement.dataset.ovlFont
+        !reprojected &&
+        (slot?.templateId === 'fisheye-lens' ||
+          (ovlTemplate === 'centered-vertical' &&
+            slot?.templateId === ovlTemplate &&
+            ovlFont !== document.documentElement.dataset.ovlFont))
       ) {
         frameScheduler.refresh();
       }

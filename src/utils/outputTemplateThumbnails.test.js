@@ -40,14 +40,16 @@ describe('bundled output template thumbnails', () => {
           'ticket-stub',
           'chalkboard-vertical',
           'centered-vertical',
+          'fisheye-lens',
         ].includes(preset.id)
       ) {
         expect(record.content).toBe('current-runtime-capture');
         expect(record.delivery).toBe('pending-user-visual-acceptance');
         expect(record.rights).toBe(
-          preset.id === 'receipt-setlist'
-            ? 'project-owned-runtime-and-generated-paper'
-            : 'project-owned-synthetic-artwork',
+          {
+            'receipt-setlist': 'project-owned-runtime-and-generated-paper',
+            'fisheye-lens': 'project-owned-runtime-and-synthetic-lyrics',
+          }[preset.id] ?? 'project-owned-synthetic-artwork',
         );
         expect(record.origin).toBeTruthy();
       } else {

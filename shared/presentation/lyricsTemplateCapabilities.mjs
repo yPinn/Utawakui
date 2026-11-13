@@ -19,6 +19,13 @@ function freezeCapabilities(capabilities) {
 }
 
 export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
+  'fisheye-lens': freezeCapabilities({
+    ...UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
+    t2Progress: 'source-mapped-phrases-and-segments',
+    usesSourceMappedTiming: true,
+    music: { cadence: false, beatPhase: false, sections: true },
+    scheduler: ['lyrics-lines', 'fisheye-units', 'music-sections'],
+  }),
   'focus-line': freezeCapabilities({
     minimumTimingTier: 'T1',
     t1Progress: 'estimated-segments',

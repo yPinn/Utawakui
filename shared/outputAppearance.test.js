@@ -295,6 +295,14 @@ describe('output appearance schema', () => {
       receiptDirection: 'down',
       receiptReview: 'on',
       receiptReviewInterval: 15,
+      fisheyeRim: 100,
+      fisheyeLayout: 'auto',
+      fisheyeReflection: 100,
+      fisheyeEnter: 'arc',
+      fisheyeExit: 'auto',
+      fisheyePulse: 100,
+      fisheyeBlur: 'off',
+      fisheyeGranularity: 'line',
     });
 
     expect(

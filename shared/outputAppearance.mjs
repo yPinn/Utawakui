@@ -1,6 +1,6 @@
 import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 7;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 8;
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', order: 10 }),
@@ -34,6 +34,7 @@ const UNSAFE_LOCAL_FONT_NAME_RE = /[\\/;{}<>]|(?:url|var)\s*\(/iu;
 const GROUP_MAP = new Map(
   OUTPUT_APPEARANCE_GROUPS.map((group) => [group.id, group]),
 );
+const FISHEYE_PAIRED_MOTION_IDS = ['arc', 'scale', 'swirl', 'cut'];
 
 function fieldDefinition(groupId, definition) {
   const group = GROUP_MAP.get(groupId);
@@ -321,6 +322,71 @@ const FIELD_DEFINITIONS = [
     defaultValue: 'standard',
     options: [{ id: 'narrow' }, { id: 'standard' }, { id: 'wide' }],
   }),
+  ...['fisheyeRim', 'fisheyeReflection'].map((key, index) =>
+    fieldDefinition('surface', {
+      key,
+      family: 'fill',
+      tier: 'basic',
+      reflow: false,
+      order: 20 + index * 10,
+      control: 'range',
+      defaultValue: 100,
+      min: 0,
+      max: 100,
+      step: 5,
+      unit: '%',
+    }),
+  ),
+  fieldDefinition('layout', {
+    key: 'fisheyeLayout',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
+    order: 90,
+    control: 'select',
+    defaultValue: 'auto',
+    options: [{ id: 'auto' }, { id: 'standard' }, { id: 'close' }],
+  }),
+  ...['fisheyeEnter', 'fisheyeExit', 'fisheyeBlur'].map((key, index) =>
+    fieldDefinition('motion', {
+      key,
+      family: 'motion',
+      tier: 'basic',
+      reflow: false,
+      order: 30 + index * 10,
+      control: 'select',
+      defaultValue: ['arc', 'auto', 'off'][index],
+      options: (index === 2
+        ? ['off', 'on']
+        : index === 0
+          ? [...FISHEYE_PAIRED_MOTION_IDS, 'smoke']
+          : ['auto', ...FISHEYE_PAIRED_MOTION_IDS]
+      ).map((id) => ({ id })),
+    }),
+  ),
+  fieldDefinition('motion', {
+    key: 'fisheyePulse',
+    family: 'motion',
+    tier: 'basic',
+    reflow: false,
+    order: 45,
+    control: 'range',
+    defaultValue: 100,
+    min: 0,
+    max: 100,
+    step: 5,
+    unit: '%',
+  }),
+  fieldDefinition('content', {
+    key: 'fisheyeGranularity',
+    family: 'document',
+    tier: 'basic',
+    reflow: true,
+    order: 20,
+    control: 'select',
+    defaultValue: 'line',
+    options: [{ id: 'line' }, { id: 'phrase' }, { id: 'segment' }],
+  }),
 ];
 
 const FIELD_MAP = new Map(FIELD_DEFINITIONS.map((field) => [field.key, field]));
@@ -478,6 +544,21 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'kineticMaterial',
       'kineticArrangement',
     ],
+  },
+  'fisheye-lens': {
+    keys: [
+      'fisheyeLayout',
+      'fontScale',
+      'textColor',
+      'fisheyeRim',
+      'fisheyeReflection',
+      'fisheyeEnter',
+      'fisheyeExit',
+      'fisheyePulse',
+      'fisheyeBlur',
+      'fisheyeGranularity',
+    ],
+    fields: { textColor: { defaultValue: '#a3f39e' } },
   },
   'centered-vertical': {
     keys: ['fontFamily', 'fontScale', 'contrastStyle', 'textColor'],

@@ -92,6 +92,7 @@ files:
   # Fine text paint includes lyricsFine.mjs, shared/browser/lyricsFinePaint.mjs,
   # shared/lyricsFineTiming.mjs with browser-safe, versioned bounds.
   # Includes the exact-route Chalkboard Vertical and Now Playing Ticket assets.
+  # Fisheye Lens uses its exact-route view, painter, GSAP recipe and lyrics projection.
   - overlay/**/*
   - '!overlay/**/*.test.js'
   # Main and renderer use the same session timestamp and CSV projection.

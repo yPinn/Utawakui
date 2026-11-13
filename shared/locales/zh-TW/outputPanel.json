@@ -262,6 +262,17 @@
       "anchorTag": "畫面正中央",
       "surfaceTag": "透明背景"
     },
+    "fisheyeLens": {
+      "name": "魚眼鏡筒",
+      "availability": "套用後顯示正在播放的同步歌詞",
+      "summary": "沿門鏡左右弧緣排列歌詞。",
+      "detail": "鏡心保留人物空間，字形錯拍縮放，換句時沿鏡弧翻轉。",
+      "layoutLabel": "雙側弧列",
+      "motionLabel": "沿弧翻轉",
+      "lensTag": "魚眼",
+      "columnTag": "弧列",
+      "motionTag": "翻轉"
+    },
     "chalkboardVertical": {
       "name": "黑板直書",
       "availability": "使用逐行歌詞。",
@@ -497,6 +508,7 @@
     "offset": "位置微調"
   },
   "workbench": {
+    "fisheyeGranularityHint": "短句和來源段落需要對應的時間標記。時間不足時顯示整句。",
     "appearance": "外觀",
     "saveFailed": "無法儲存",
     "saving": "儲存中…",
@@ -569,6 +581,7 @@
     "retry": "重試"
   },
   "previewLimits": {
+    "fisheyeLens": "示範外弧字幕與副歌貼近。可在工作臺用實曲確認時序。",
     "common": "預設外觀示意，實際輸出請至工作臺確認。",
     "queueBoard": "捲動示意，正式輸出採逐頁顯示。",
     "receiptSetlist": "使用示例紀錄，正式回顧最多一百筆。",
@@ -618,6 +631,45 @@
       "receiptReviewInterval": {
         "label": "回顧間隔",
         "unit": " 秒"
+      },
+      "fisheyeRim": { "label": "鏡框強度" },
+      "fisheyeLayout": {
+        "label": "鏡頭構圖",
+        "options": {
+          "auto": "副歌自動貼近",
+          "standard": "標準",
+          "close": "貼近"
+        }
+      },
+      "fisheyeReflection": { "label": "反光強度" },
+      "fisheyeEnter": {
+        "label": "進場動畫",
+        "options": {
+          "arc": "沿弧翻入",
+          "scale": "逐字彈入",
+          "swirl": "漩渦展開",
+          "cut": "直接切換",
+          "smoke": "煙團露字"
+        }
+      },
+      "fisheyeExit": {
+        "label": "退場動畫",
+        "options": {
+          "auto": "隨段落切換",
+          "arc": "沿弧轉出",
+          "scale": "逐字縮退",
+          "swirl": "漩渦捲退",
+          "cut": "直接切換"
+        }
+      },
+      "fisheyePulse": { "label": "停留縮放" },
+      "fisheyeBlur": {
+        "label": "沿弧動態模糊",
+        "options": { "off": "關閉", "on": "開啟" }
+      },
+      "fisheyeGranularity": {
+        "label": "字幕顆粒度",
+        "options": { "line": "整句", "phrase": "短句", "segment": "來源段落" }
       },
       "paletteId": {
         "label": "配色風格",

@@ -532,6 +532,13 @@ artwork or unpacked payload.
 The Gallery JPEG is a derived capture of the synthetic test scene. Vite bundles
 the image into `dist/` and leaves the source provenance catalog outside the package.
 
+Fisheye Lens adds exact routes for `overlay/lyrics/fisheyeLens.mjs`,
+`shared/browser/fisheyePaint.mjs`, `shared/browser/fisheyeMotion.mjs` and `shared/presentation/fisheyeLyrics.mjs`.
+They use the existing overlay and shared package rules. The Gallery and the
+Browser Source share the canvas painter and require no extra asset or dependency.
+The chorus fallback adds the exact module route for
+`shared/presentation/lyricsChorus.mjs` under the existing shared package rule.
+
 Shared text annotations add `shared/presentation/lyricsTextProcessing.mjs`
 under the existing `shared/**/*` package rule and an exact HTTP module route.
 The route is included in the closed Browser Source graph test; adjacent tests

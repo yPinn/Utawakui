@@ -5,6 +5,15 @@ import {
 } from './lyricsTemplateCapabilities.mjs';
 
 const EXPECTED_LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
+  'fisheye-lens': {
+    minimumTimingTier: 'T1',
+    t1Progress: 'line-entry',
+    t2Progress: 'source-mapped-phrases-and-segments',
+    usesSourceMappedTiming: true,
+    music: { cadence: false, beatPhase: false, sections: true },
+    scheduler: ['lyrics-lines', 'fisheye-units', 'music-sections'],
+    presentationPolicyIds: [],
+  },
   'focus-line': {
     minimumTimingTier: 'T1',
     t1Progress: 'estimated-segments',

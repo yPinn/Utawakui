@@ -9,6 +9,7 @@ const DETAILS = Object.freeze({
   'ornate-vertical': t('outputPanel.previewLimits.ornateVertical'),
   'chalkboard-vertical': t('outputPanel.previewLimits.chalkboardVertical'),
   'centered-vertical': t('outputPanel.previewLimits.centeredVertical'),
+  'fisheye-lens': t('outputPanel.previewLimits.fisheyeLens'),
   'live-stage': t('outputPanel.previewLimits.liveStage'),
   'manga-frame': t('outputPanel.previewLimits.mangaFrame'),
   'art-card': t('outputPanel.previewLimits.artCard'),

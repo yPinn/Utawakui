@@ -34,6 +34,7 @@ const ids = [
   'cover-player',
   'receipt-setlist',
   'ribbon-setlist',
+  'fisheye-lens',
 ];
 
 describe('Output F1 acceptance foundation', () => {

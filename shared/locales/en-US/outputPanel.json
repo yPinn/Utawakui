@@ -269,6 +269,17 @@
       "anchorTag": "Canvas center",
       "surfaceTag": "Transparent"
     },
+    "fisheyeLens": {
+      "name": "Fisheye Lens",
+      "availability": "Uses synced lyrics from the current track",
+      "summary": "Lyrics follow the two sides of a peephole.",
+      "detail": "The lens leaves room for the performer. Glyphs pulse in size, then flip along the rim between lines.",
+      "layoutLabel": "Curved columns",
+      "motionLabel": "Arc flip",
+      "lensTag": "Fisheye",
+      "columnTag": "Columns",
+      "motionTag": "Flip"
+    },
     "chalkboardVertical": {
       "name": "Chalkboard Vertical",
       "availability": "Uses line-synced lyrics.",
@@ -504,6 +515,7 @@
     "offset": "Position offsets"
   },
   "workbench": {
+    "fisheyeGranularityHint": "Short phrases and source segments need matching timing cues. The full line appears when those cues are missing.",
     "appearance": "Appearance",
     "saveFailed": "Couldn't save",
     "saving": "Saving…",
@@ -576,6 +588,7 @@
     "retry": "Retry"
   },
   "previewLimits": {
+    "fisheyeLens": "Shows curved lyrics and a chorus close-up. Use the Workbench to check timing with a song.",
     "common": "Default look only; check the actual output in the workbench.",
     "queueBoard": "Scrolling sample; actual output shows page by page.",
     "receiptSetlist": "Uses sample records; the real review shows up to 100.",
@@ -625,6 +638,49 @@
       "receiptReviewInterval": {
         "label": "Review interval",
         "unit": " s"
+      },
+      "fisheyeRim": { "label": "Rim intensity" },
+      "fisheyeLayout": {
+        "label": "Camera framing",
+        "options": {
+          "auto": "Close-up in chorus",
+          "standard": "Standard",
+          "close": "Close-up"
+        }
+      },
+      "fisheyeReflection": { "label": "Reflection intensity" },
+      "fisheyeEnter": {
+        "label": "Entrance",
+        "options": {
+          "arc": "Arc flip in",
+          "scale": "Letter pop in",
+          "swirl": "Swirl open",
+          "cut": "Cut",
+          "smoke": "Smoke reveal"
+        }
+      },
+      "fisheyeExit": {
+        "label": "Exit",
+        "options": {
+          "auto": "Follow song sections",
+          "arc": "Arc turn out",
+          "scale": "Letter shrink out",
+          "swirl": "Swirl closed",
+          "cut": "Cut"
+        }
+      },
+      "fisheyePulse": { "label": "Hold scaling" },
+      "fisheyeBlur": {
+        "label": "Arc motion blur",
+        "options": { "off": "Off", "on": "On" }
+      },
+      "fisheyeGranularity": {
+        "label": "Subtitle granularity",
+        "options": {
+          "line": "Full line",
+          "phrase": "Short phrase",
+          "segment": "Source segment"
+        }
       },
       "paletteId": {
         "label": "Color style",

@@ -176,6 +176,31 @@ function contentMatches(reference, entry) {
   );
 }
 
+const splitLyricsLines = new WeakMap();
+
+function projectSplitLyricsLines(document) {
+  if (!document) return [];
+  const cached = splitLyricsLines.get(document);
+  if (cached) return cached;
+  const lines = (document.lines ?? []).map((line) => ({
+    text: line.text,
+    startMs: line.startMs,
+    endMs: line.endMs,
+    ...(Array.isArray(line.vocalParts) ? { vocalParts: line.vocalParts } : {}),
+    ...(line.endInferred === true ? { endInferred: true } : {}),
+    ...(Array.isArray(line.segments) ? { segments: line.segments } : {}),
+    ...(line.estimatedStarts?.version === 1
+      ? { estimatedStarts: line.estimatedStarts }
+      : {}),
+    ...(line.estimatedStarts?.version === 1 &&
+    line.estimatedFineTiming?.version === 1
+      ? { estimatedFineTiming: line.estimatedFineTiming }
+      : {}),
+  }));
+  splitLyricsLines.set(document, lines);
+  return lines;
+}
+
 function assembleSplitSnapshot(
   message,
   lyricsEntry,
@@ -200,21 +225,7 @@ function assembleSplitSnapshot(
   ) {
     return null;
   }
-  const lines = (lyricsDocument?.lines ?? []).map((line) => ({
-    text: line.text,
-    startMs: line.startMs,
-    endMs: line.endMs,
-    ...(Array.isArray(line.vocalParts) ? { vocalParts: line.vocalParts } : {}),
-    ...(line.endInferred === true ? { endInferred: true } : {}),
-    ...(Array.isArray(line.segments) ? { segments: line.segments } : {}),
-    ...(line.estimatedStarts?.version === 1
-      ? { estimatedStarts: line.estimatedStarts }
-      : {}),
-    ...(line.estimatedStarts?.version === 1 &&
-    line.estimatedFineTiming?.version === 1
-      ? { estimatedFineTiming: line.estimatedFineTiming }
-      : {}),
-  }));
+  const lines = projectSplitLyricsLines(lyricsDocument);
   return {
     version: OUTPUT_STATE_VERSION,
     revision: message.revision,

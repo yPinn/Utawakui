@@ -42,6 +42,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/': ['lyrics', 'index.html'],
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
+  '/overlay/lyrics/fisheyeLens.mjs': ['lyrics', 'fisheyeLens.mjs'],
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
   '/overlay/lyrics/lyricsFit.mjs': ['lyrics', 'lyricsFit.mjs'],
   '/overlay/lyrics/ktvDisplayFit.mjs': ['lyrics', 'ktvDisplayFit.mjs'],
@@ -116,6 +117,12 @@ const SHARED_STATIC_ROUTES = Object.freeze({
   ],
   '/shared/lyricsFineTiming.mjs': ['lyricsFineTiming.mjs'],
   '/shared/browser/lyricsFinePaint.mjs': ['browser', 'lyricsFinePaint.mjs'],
+  '/shared/browser/fisheyePaint.mjs': ['browser', 'fisheyePaint.mjs'],
+  '/shared/browser/fisheyeMotion.mjs': ['browser', 'fisheyeMotion.mjs'],
+  '/shared/presentation/fisheyeLyrics.mjs': [
+    'presentation',
+    'fisheyeLyrics.mjs',
+  ],
   '/shared/presentation/lyricsFineFrame.mjs': [
     'presentation',
     'lyricsFineFrame.mjs',
@@ -162,6 +169,7 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'presentation',
     'lyricsPresentation.mjs',
   ],
+  '/shared/presentation/lyricsChorus.mjs': ['presentation', 'lyricsChorus.mjs'],
   '/shared/presentation/lyricsPresentationPolicies.mjs': [
     'presentation',
     'lyricsPresentationPolicies.mjs',

@@ -424,6 +424,27 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ],
   },
   {
+    id: 'fisheye-lens',
+    kind: 'lyrics',
+    order: 60,
+    name: t('outputPanel.templates.fisheyeLens.name'),
+    availability: {
+      summary: t('outputPanel.templates.fisheyeLens.availability'),
+    },
+    summary: t('outputPanel.templates.fisheyeLens.summary'),
+    detail: t('outputPanel.templates.fisheyeLens.detail'),
+    preview: {
+      layoutLabel: t('outputPanel.templates.fisheyeLens.layoutLabel'),
+      motionLabel: t('outputPanel.templates.fisheyeLens.motionLabel'),
+    },
+    tags: [
+      t('outputPanel.templates.fisheyeLens.lensTag'),
+      t('outputPanel.templates.fisheyeLens.columnTag'),
+      t('outputPanel.templates.fisheyeLens.motionTag'),
+    ],
+    settings: [],
+  },
+  {
     id: 'art-card',
     kind: 'now-playing',
     order: 10,

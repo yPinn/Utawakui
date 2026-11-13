@@ -409,6 +409,11 @@ export function createLyricsFitController(options = {}) {
   }
   window?.addEventListener?.('resize', resized);
   function prepare(snapshot, frame, settings = {}) {
+    if (settings.templateId === 'fisheye-lens') {
+      if (notice) notice.hidden = true;
+      if (elements) elements.root.dataset.fitActive = 'false';
+      return { frame, delayMs: null };
+    }
     if (!stopped && settings.templateId === 'karaoke-stack' && frame.ktv) {
       const result = ktvFit.prepare(snapshot, frame, settings);
       const ktv = result.frame.ktv;

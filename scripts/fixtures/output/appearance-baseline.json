@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 7,
+  "appearanceSchemaVersion": 8,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -129,6 +129,46 @@
       "activation": "explicit-selection"
     },
     "receiptReviewInterval": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeRim": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeReflection": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeEnter": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeExit": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyePulse": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeBlur": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeGranularity": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "fisheyeLayout": {
       "level": "opt",
       "scope": "slot-template",
       "activation": "explicit-selection"
@@ -2098,6 +2138,255 @@
       },
       "localSourceLimitations": [
         "Latest whole rows that fit; current track appears at the end."
+      ]
+    },
+    {
+      "id": "fisheye-lens",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "scope": "template",
+          "key": "fisheyeLayout",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "order": 90,
+          "control": "select",
+          "defaultValue": "auto",
+          "options": [
+            {
+              "id": "auto"
+            },
+            {
+              "id": "standard"
+            },
+            {
+              "id": "close"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "fontScale",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small"
+            },
+            {
+              "id": "medium"
+            },
+            {
+              "id": "large"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "textColor",
+          "family": "swatch",
+          "tier": "advanced",
+          "reflow": false,
+          "order": 10,
+          "control": "color",
+          "defaultValue": "#a3f39e",
+          "group": "custom-color",
+          "groupOrder": 20
+        },
+        {
+          "scope": "template",
+          "key": "fisheyeRim",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "surface",
+          "groupOrder": 50
+        },
+        {
+          "scope": "template",
+          "key": "fisheyeReflection",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "surface",
+          "groupOrder": 50
+        },
+        {
+          "scope": "template",
+          "key": "fisheyeEnter",
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "select",
+          "defaultValue": "arc",
+          "options": [
+            {
+              "id": "arc"
+            },
+            {
+              "id": "scale"
+            },
+            {
+              "id": "swirl"
+            },
+            {
+              "id": "cut"
+            },
+            {
+              "id": "smoke"
+            }
+          ],
+          "group": "motion",
+          "groupOrder": 70
+        },
+        {
+          "scope": "template",
+          "key": "fisheyeExit",
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "order": 40,
+          "control": "select",
+          "defaultValue": "auto",
+          "options": [
+            {
+              "id": "auto"
+            },
+            {
+              "id": "arc"
+            },
+            {
+              "id": "scale"
+            },
+            {
+              "id": "swirl"
+            },
+            {
+              "id": "cut"
+            }
+          ],
+          "group": "motion",
+          "groupOrder": 70
+        },
+        {
+          "scope": "template",
+          "key": "fisheyePulse",
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "order": 45,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "motion",
+          "groupOrder": 70
+        },
+        {
+          "scope": "template",
+          "key": "fisheyeBlur",
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "order": 50,
+          "control": "select",
+          "defaultValue": "off",
+          "options": [
+            {
+              "id": "off"
+            },
+            {
+              "id": "on"
+            }
+          ],
+          "group": "motion",
+          "groupOrder": 70
+        },
+        {
+          "scope": "template",
+          "key": "fisheyeGranularity",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "defaultValue": "line",
+          "options": [
+            {
+              "id": "line"
+            },
+            {
+              "id": "phrase"
+            },
+            {
+              "id": "segment"
+            }
+          ],
+          "group": "content",
+          "groupOrder": 80
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "line-entry",
+        "t2Progress": "source-mapped-phrases-and-segments",
+        "usesSourceMappedTiming": true,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": true
+        },
+        "scheduler": ["lyrics-lines", "fisheye-units", "music-sections"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "transparent-center",
+        "source-clock",
+        "right-to-left-columns"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "The lens composites over the host scene."
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "The first version uses a fixed glyph style."
+        }
+      },
+      "localSourceLimitations": [
+        "Fine units require matching source timing and fall back to the complete line."
       ]
     }
   ]

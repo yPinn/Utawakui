@@ -21,6 +21,7 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'ornate-vertical': '和風直書',
   'chalkboard-vertical': '黑板直書',
   'centered-vertical': '中央直書',
+  'fisheye-lens': '魚眼鏡筒',
   'manga-frame': '分格對白',
   'art-card': '星空黑膠',
   'ticket-stub': '演出票根',
@@ -29,6 +30,18 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
   'ribbon-setlist': ['surface', 'receiptReview', 'receiptReviewInterval'],
+  'fisheye-lens': [
+    'fisheyeLayout',
+    'fontScale',
+    'textColor',
+    'fisheyeRim',
+    'fisheyeReflection',
+    'fisheyeEnter',
+    'fisheyeExit',
+    'fisheyePulse',
+    'fisheyeBlur',
+    'fisheyeGranularity',
+  ],
   'receipt-setlist': [
     'fontScale',
     'receiptDirection',
@@ -385,6 +398,7 @@ describe('output template registry', () => {
       'chalkboard-vertical',
       'manga-frame',
       'centered-vertical',
+      'fisheye-lens',
     ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),

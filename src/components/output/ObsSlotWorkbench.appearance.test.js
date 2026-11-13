@@ -17,6 +17,7 @@ const templateTabLabels = {
   'kinetic-pop': ['版面', '文字', '色彩', '顯示'],
   'ornate-vertical': ['定位', '文字', '色彩'],
   'chalkboard-vertical': ['定位', '文字', '色彩'],
+  'fisheye-lens': ['動態', '顯示', '版面', '文字', '色彩'],
   'centered-vertical': ['文字', '色彩', '顯示'],
   'live-stage': ['文字', '色彩', '顯示'],
   'manga-frame': ['文字', '色彩'],
@@ -57,6 +58,42 @@ async function renderRegisteredTemplate(
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it('lists the shared Fisheye transitions in matching order before entrance-only effects', async () => {
+    const html = await renderRegisteredTemplate('fisheye-lens');
+    const options = (key) => {
+      const select = html.match(
+        new RegExp(
+          `<select[^>]*id="output-appearance-${key}"[^>]*>([\\s\\S]*?)</select>`,
+          'u',
+        ),
+      )?.[1];
+      return [
+        ...(select ?? '').matchAll(
+          /<option[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option>/gu,
+        ),
+      ].map(([, id, label]) => [id, label.trim()]);
+    };
+    expect(options('fisheyeEnter')).toEqual([
+      ['arc', '沿弧翻入'],
+      ['scale', '逐字彈入'],
+      ['swirl', '漩渦展開'],
+      ['cut', '直接切換'],
+      ['smoke', '煙團露字'],
+    ]);
+    expect(options('fisheyeExit')).toEqual([
+      ['auto', '隨段落切換'],
+      ['arc', '沿弧轉出'],
+      ['scale', '逐字縮退'],
+      ['swirl', '漩渦捲退'],
+      ['cut', '直接切換'],
+    ]);
+    expect(options('fisheyeGranularity').map(([id]) => id)).toEqual([
+      'line',
+      'phrase',
+      'segment',
+    ]);
+  });
+
   it.each(getOutputWorkbenchData().templates)(
     'uses only the supported folder tabs and renders every field for $id',
     async ({ id, appearanceFields, presentationFields }) => {

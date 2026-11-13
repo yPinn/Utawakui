@@ -8,6 +8,15 @@
     "requiredReview": "Inspect content, rights, crop, dimensions and runtime match before a separately authorized replacement"
   },
   "templates": {
+    "fisheye-lens": {
+      "file": "fisheye-lens.jpg",
+      "sha256": "a497ef916b09ef4985fa545ae8f666d9989ad571b7a59cc79c0ead09a791d8dd",
+      "content": "current-runtime-capture",
+      "rights": "project-owned-runtime-and-synthetic-lyrics",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "Electron 1920 × 1080 Lyrics Browser Source canvas with synthetic lyrics and a procedural backdrop, scaled to 1280 × 720 JPEG."
+    },
     "ribbon-setlist": {
       "file": "ribbon-setlist.png",
       "sha256": "f62de04c55306805fe96ddbdc7553b65049a9cfda22a7a8ea55ed3d8f97b6d3d",

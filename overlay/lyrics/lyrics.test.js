@@ -7,7 +7,10 @@ import {
   renderLyricsFrame,
   renderLyricsFrameSafely,
 } from './lyrics.mjs';
-import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
+import {
+  nextPresentationBoundaryDelayMs,
+  selectLyricsOverlayFrame,
+} from '../../shared/presentation/state.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 
 function gsapHarness() {
@@ -865,6 +868,243 @@ it('renders KTV fine ink in its lane without consuming the coarse progress or al
 });
 
 describe('lyrics overlay renderer', () => {
+  it('uses repeated timed lyrics with M1 and gives M2 sections precedence', () => {
+    const nowMs = Date.parse('2026-08-22T00:00:00.000Z');
+    const repeated = ['潮聲沿著夜色靠岸', '下一句仍在遠方', '晨光在海面上亮起'];
+    const lines = [
+      [0, '原來路上還有微風'],
+      ...repeated.map((text, index) => [20000 + index * 4000, text]),
+      [40000, '轉身之後留下腳印'],
+      ...repeated.map((text, index) => [65000 + index * 4000, text]),
+      [85000, '隨著最後一道光離開'],
+    ].map(([startMs, text]) => ({ text, startMs, endMs: startMs + 3500 }));
+    const value = {
+      generatedAt: new Date(nowMs).toISOString(),
+      playback: {
+        status: 'playing',
+        positionMs: 18000,
+        durationMs: 100000,
+        rate: 2,
+        track: { id: 'track-1' },
+      },
+      lyrics: { trackId: 'track-1', synced: true, offsetMs: 1000, lines },
+      musicStructure: {
+        documentId: 'music-1',
+        trackId: 'track-1',
+        level: 'M1',
+        beats: [{ timeMs: 18500, confidence: 0.9 }],
+        sections: [],
+      },
+    };
+    const options = { nowMs, templateId: 'fisheye-lens' };
+    const variantAt = (positionMs, overrides = {}) =>
+      selectLyricsOverlayFrame(
+        {
+          ...value,
+          playback: { ...value.playback, status: 'paused', positionMs },
+          ...overrides,
+        },
+        options,
+      ).fisheyeVariant;
+    expect(nextPresentationBoundaryDelayMs(value, options)).toBe(500);
+    expect(variantAt(18999)).toBe('base');
+    expect(variantAt(19000)).toBe('chorus');
+    expect(variantAt(22750)).toBe('chorus');
+    expect(variantAt(26750)).toBe('chorus');
+    expect(variantAt(30499)).toBe('chorus');
+    expect(variantAt(30500)).toBe('base');
+    expect(variantAt(64000, { musicStructure: null })).toBe('chorus');
+    expect(
+      variantAt(64000, {
+        musicStructure: {
+          ...value.musicStructure,
+          level: 'M2',
+          sections: [
+            { startMs: 0, endMs: 100000, role: 'verse', confidence: 0.9 },
+          ],
+        },
+      }),
+    ).toBe('base');
+    expect(
+      variantAt(64000, {
+        lyrics: { ...value.lyrics, lines: lines.slice(0, 4) },
+      }),
+    ).toBe('base');
+  });
+
+  it('switches Fisheye variants on the audio clock while the same lyric stays active', () => {
+    const generatedAt = '2026-08-22T00:00:00.000Z';
+    const epoch = Date.parse(generatedAt);
+    let now = epoch;
+    const frames = [];
+    const scheduled = [];
+    const templateId = 'fisheye-lens';
+    const scheduler = createLyricsFrameScheduler({
+      templateId,
+      now: () => now,
+      onFrame: (frame) => frames.push(frame),
+      schedule: (callback, delay) => scheduled.push({ callback, delay }),
+      cancelSchedule: vi.fn(),
+    });
+    const value = {
+      revision: 1,
+      generatedAt,
+      playback: {
+        status: 'playing',
+        positionMs: 1000,
+        durationMs: 8000,
+        rate: 2,
+        track: { id: 'track-1' },
+      },
+      lyrics: {
+        trackId: 'track-1',
+        synced: true,
+        offsetMs: 500,
+        lines: [{ text: '同一句歌詞', startMs: 0, endMs: 7500 }],
+      },
+      musicStructure: {
+        documentId: 'music-1',
+        trackId: 'track-1',
+        sourceDurationMs: 8000,
+        level: 'M2',
+        beats: [{ timeMs: 1500, confidence: 0.9 }],
+        sections: [
+          { startMs: 0, endMs: 2000, role: 'verse', confidence: 0.9 },
+          { startMs: 2000, endMs: 4000, role: 'chorus', confidence: 0.9 },
+          { startMs: 4000, endMs: 8000, role: 'outro', confidence: 0.9 },
+        ],
+      },
+    };
+    const expectFrame = (variant, ageMs) =>
+      expect(frames.at(-1)).toMatchObject({
+        currentText: '同一句歌詞',
+        fisheyeVariant: variant,
+        fisheyeTiming: { ageMs },
+      });
+    scheduler.update(value);
+    expectFrame('base', 750);
+    expect(scheduled[0].delay).toBe(500);
+
+    now += 500;
+    scheduled[0].callback();
+    expectFrame('chorus', 1250);
+    expect(scheduled[1].delay).toBe(1000);
+
+    now += 1000;
+    scheduled[1].callback();
+    expectFrame('base', 2250);
+
+    const seek = {
+      ...value,
+      revision: 2,
+      generatedAt: new Date(now).toISOString(),
+      playback: { ...value.playback, status: 'seeking', positionMs: 3000 },
+    };
+    scheduler.update(seek);
+    expectFrame('chorus', 1750);
+    expect(frames.at(-1).timelineDiscontinuity).toBe(true);
+    const scheduledCount = scheduled.length;
+    const paused = {
+      ...seek,
+      playback: { ...seek.playback, status: 'paused' },
+    };
+    scheduler.update(paused);
+    now += 10000;
+    scheduler.refresh();
+    expectFrame('chorus', 1750);
+    expect(scheduled).toHaveLength(scheduledCount);
+
+    scheduler.update({
+      ...paused,
+      revision: 3,
+      playback: { ...paused.playback, track: { id: 'track-2' } },
+      lyrics: { ...paused.lyrics, trackId: 'track-2' },
+    });
+    expectFrame('base', 1750);
+  });
+
+  it.each([
+    ['M1', 'chorus', 0.9],
+    ['M2', 'chorus', 0.49],
+    ['M2', 'chorus', undefined],
+    ['M2', 'pre-chorus', 0.9],
+    ['M2', 'unknown', 0.9],
+  ])(
+    'keeps the base Fisheye variant for %s / %s / %s',
+    (level, role, confidence) => {
+      const nowMs = Date.parse('2026-08-22T00:00:00.000Z');
+      const frame = selectLyricsOverlayFrame(
+        {
+          generatedAt: new Date(nowMs).toISOString(),
+          playback: {
+            status: 'playing',
+            positionMs: 2000,
+            track: { id: 'track-1' },
+          },
+          lyrics: {
+            trackId: 'track-1',
+            synced: true,
+            lines: [
+              { text: '上一句', startMs: 0, endMs: 1000 },
+              { text: '下一句', startMs: 4000, endMs: 5000 },
+            ],
+          },
+          musicStructure: {
+            documentId: 'music-1',
+            trackId: 'track-1',
+            level,
+            sections: [{ startMs: 1000, endMs: 4000, role, confidence }],
+          },
+        },
+        { nowMs, templateId: 'fisheye-lens' },
+      );
+      expect(frame).toMatchObject({
+        fisheyeStage: true,
+        fisheyeVariant: 'base',
+      });
+    },
+  );
+
+  it('schedules the end of a final Fisheye chorus at the reachable playback duration', () => {
+    const nowMs = Date.parse('2026-08-22T00:00:00.000Z');
+    const value = {
+      generatedAt: new Date(nowMs).toISOString(),
+      playback: {
+        status: 'playing',
+        positionMs: 4200,
+        durationMs: 5000,
+        track: { id: 'track-1' },
+      },
+      lyrics: {
+        trackId: 'track-1',
+        synced: true,
+        lines: [{ text: '最後一句', startMs: 0, endMs: 4000 }],
+      },
+      musicStructure: {
+        documentId: 'music-1',
+        trackId: 'track-1',
+        level: 'M2',
+        sections: [
+          { startMs: 0, endMs: 3000, role: 'verse', confidence: 0.9 },
+          { startMs: 3000, endMs: 5200, role: 'chorus', confidence: 0.9 },
+        ],
+      },
+    };
+    const options = { nowMs, templateId: 'fisheye-lens' };
+    expect(selectLyricsOverlayFrame(value, options)).toMatchObject({
+      fisheyeStage: true,
+      visible: false,
+      fisheyeVariant: 'chorus',
+      fisheyeLayoutChangedAt: 3000,
+    });
+    expect(nextPresentationBoundaryDelayMs(value, options)).toBe(800);
+    const end = { ...options, nowMs: nowMs + 800 };
+    expect(selectLyricsOverlayFrame(value, end)).toMatchObject({
+      fisheyeVariant: 'base',
+      fisheyeLayoutChangedAt: 5000,
+    });
+    expect(nextPresentationBoundaryDelayMs(value, end)).toBeNull();
+  });
   it('reuses fine structure across clock updates and DOM reset, invalidating changed text and times', () => {
     const elements = domElements();
     const onTrace = vi.fn();

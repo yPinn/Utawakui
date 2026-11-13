@@ -152,7 +152,16 @@ const configurationFieldGroups = computed(() => {
   }
   return [...groups.values()];
 });
-const inspectorTabs = computed(() => outputInspectorTabs(visibleFields.value));
+const inspectorTabs = computed(() => {
+  const tabs = outputInspectorTabs(visibleFields.value);
+  if (templateId.value === 'fisheye-lens' && !selectedTarget.value) {
+    const order = ['motion', 'display', 'arrangement', 'text', 'color'];
+    tabs.sort(
+      (left, right) => order.indexOf(left.id) - order.indexOf(right.id),
+    );
+  }
+  return tabs;
+});
 const useFolderInspector = computed(
   () =>
     inspectorTabs.value.length > 0 &&
@@ -452,6 +461,11 @@ function resetAppearance() {
             "
           >
             {{ t('outputPanel.workbench.conciseHint') }}
+          </UiHint>
+          <UiHint
+            v-if="group.fields.some(({ key }) => key === 'fisheyeGranularity')"
+          >
+            {{ t('outputPanel.workbench.fisheyeGranularityHint') }}
           </UiHint>
         </template>
         <ObsAppearanceField

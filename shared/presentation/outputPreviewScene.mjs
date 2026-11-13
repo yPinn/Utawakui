@@ -199,6 +199,7 @@ export function createOutputPreviewScene({
   const options = {
     nowMs,
     templateId,
+    fisheyeGranularity: appearance.fisheyeGranularity,
     kineticMaterial: appearance.kineticMaterial,
     lyricsPresentationPolicyId,
   };

@@ -7,13 +7,19 @@ import {
   analyzeLyricsSource,
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
+import { lyricChorusRanges } from './lyricsChorus.mjs';
 import { estimatedLyricsTextUnits } from './lyricsTimingUnits.mjs';
 import {
   projectLyricsFineFrame,
   prepareLyricsPaintFrame,
 } from './lyricsFineFrame.mjs';
 import { ktvHandoffEndMs } from './lyricsKtvHandoff.mjs';
-import { sliceLyricsVocalParts } from './lyricsTextProcessing.mjs';
+import {
+  analyzeLyricsText,
+  isProtectedLyricsBreak,
+  isSafeLyricsBreak,
+  sliceLyricsVocalParts,
+} from './lyricsTextProcessing.mjs';
 import { sliceLyricsReading } from './lyricsDisplayLayout.mjs';
 import { planLyricsPhrases } from './lyricsPhraseBreaks.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
@@ -199,6 +205,75 @@ function modelLineSegments(line) {
 
 function mappedLineSegments(line) {
   return authoredLineSegments(line) ?? modelLineSegments(line);
+}
+
+function fisheyeTimedUnits(snapshot, lines, index, granularity) {
+  if (
+    snapshot?.lyrics?.synced !== true ||
+    !['phrase', 'segment'].includes(granularity)
+  )
+    return null;
+  const line = lines[index];
+  if (!Number.isFinite(line?.startMs)) return null;
+  const endMs = effectiveLineEnd(snapshot, lines, index);
+  if (!Number.isFinite(endMs) || endMs <= line.startMs) return null;
+  if (granularity === 'phrase') {
+    const plan = planLyricsPhrases({ ...line, endMs });
+    return plan.status === 'ready'
+      ? plan.phrases
+      : fisheyePunctuationPhrases(line, endMs);
+  }
+  const segments = authoredLineSegments(line);
+  if (!segments || segments.length < 2) return null;
+  const units = segments.filter(({ text }) => text.trim());
+  if (units.length < 2) return null;
+  const timeline = units.map((unit, i) => ({
+    text: unit.text,
+    startMs: unit.startMs,
+    endMs: Math.min(
+      unit.endMs ?? Infinity,
+      units[i + 1]?.startMs ?? Infinity,
+      endMs,
+    ),
+  }));
+  return timeline.every(
+    (unit, i) =>
+      unit.startMs >= line.startMs &&
+      unit.endMs > unit.startMs &&
+      (i === 0 || unit.startMs > timeline[i - 1].startMs),
+  )
+    ? timeline
+    : null;
+}
+
+function fisheyePunctuationPhrases(line, endMs) {
+  const segments = mappedLineSegments(line);
+  if (!segments || segments.length < 2) return null;
+  const analysis = analyzeLyricsText(line.text);
+  if (analysis.malformedPairs) return null;
+  const phrases = [];
+  let offset = 0;
+  let phraseOffset = 0;
+  let startMs = line.startMs;
+  for (const { text, startMs: boundary } of segments) {
+    if (boundary < line.startMs || boundary >= endMs) return null;
+    const before = line.text.slice(phraseOffset, offset).trimEnd();
+    if (
+      /[，、。！？!?;；,]$/u.test(before) &&
+      boundary - startMs >= 650 &&
+      endMs - boundary >= 650 &&
+      !isProtectedLyricsBreak(analysis, offset) &&
+      isSafeLyricsBreak(line.text, offset)
+    ) {
+      phrases.push({ text: before, startMs, endMs: boundary });
+      phraseOffset = offset;
+      startMs = boundary;
+    }
+    offset += text.length;
+  }
+  if (!phrases.length) return null;
+  phrases.push({ text: line.text.slice(phraseOffset), startMs, endMs });
+  return phrases;
 }
 
 function hasMappedTiming(source) {
@@ -1874,6 +1949,37 @@ function isConfident(value) {
   return confidence(value) !== null && value >= MIN_PRESENTATION_CONFIDENCE;
 }
 
+function fisheyeChorusRanges(snapshot) {
+  const document = musicStructureDocument(snapshot);
+  const durationMs = snapshot.playback?.durationMs;
+  const limit = Number.isFinite(durationMs) ? durationMs : Infinity;
+  if (document?.level === 'M2') {
+    return (Array.isArray(document.sections) ? document.sections : [])
+      .filter(
+        (section) =>
+          section?.role === 'chorus' &&
+          Number.isFinite(section.startMs) &&
+          Number.isFinite(section.endMs) &&
+          isConfident(section.confidence) &&
+          section.startMs < limit,
+      )
+      .map(({ startMs, endMs }) => ({
+        startMs,
+        endMs: Math.min(endMs, limit),
+      }));
+  }
+  const lyrics = snapshot.lyrics;
+  if (!lyrics?.synced || lyrics.trackId !== snapshot.playback?.track?.id)
+    return [];
+  const offsetMs = lyricsOffsetMs(snapshot);
+  return lyricChorusRanges(lyrics.lines, durationMs)
+    .map(({ startMs, endMs }) => ({
+      startMs: Math.max(0, startMs - offsetMs),
+      endMs: Math.min(limit, endMs - offsetMs),
+    }))
+    .filter(({ startMs, endMs }) => startMs < endMs);
+}
+
 export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   if (snapshot?.playback?.status !== 'playing') return null;
   const sourceSnapshot = snapshot;
@@ -1906,6 +2012,25 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
         legacyAllTemplates || schedulerCapabilities.has('lyrics-segments'),
     });
     if (lyricsDelay !== null) delays.push(lyricsDelay);
+  }
+  if (
+    schedulerCapabilities?.has('fisheye-units') &&
+    ['phrase', 'segment'].includes(options.fisheyeGranularity)
+  ) {
+    const lines = snapshot.lyrics?.lines ?? [];
+    const index = activeLyricIndex(snapshot, lines, nowMs);
+    const units = fisheyeTimedUnits(
+      snapshot,
+      lines,
+      index,
+      options.fisheyeGranularity,
+    );
+    const positionMs = lyricsPositionMs(snapshot, nowMs);
+    const unit = units?.find(({ endMs }) => endMs > positionMs);
+    if (unit) {
+      const boundary = unit.startMs > positionMs ? unit.startMs : unit.endMs;
+      delays.push(Math.max(1, Math.ceil((boundary - positionMs) / rate)));
+    }
   }
   if (legacyAllTemplates || schedulerCapabilities.has('manga-bubbles')) {
     const mangaDelay = nextMangaBubbleBoundaryDelayMs(snapshot, {
@@ -1955,8 +2080,8 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
 
   const document = musicStructureDocument(snapshot);
   if (
-    document &&
-    (legacyAllTemplates || schedulerCapabilities.has('music-sections'))
+    (document && legacyAllTemplates) ||
+    schedulerCapabilities?.has('music-sections')
   ) {
     const positionMs = playbackPositionMs(snapshot, nowMs);
     let nextMusicBoundaryMs = Infinity;
@@ -1969,20 +2094,23 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
         nextMusicBoundaryMs = boundary;
       }
     };
-    for (const beat of Array.isArray(document.beats) ? document.beats : []) {
-      if (isConfident(beat?.confidence)) considerBoundary(beat.timeMs);
-    }
-    for (const section of Array.isArray(document.sections)
-      ? document.sections
-      : []) {
-      if (
-        isConfident(section?.confidence) &&
-        CANONICAL_SECTION_ROLES.has(section?.role) &&
-        section.role !== 'unknown'
-      ) {
-        considerBoundary(section.startMs);
-        considerBoundary(section.endMs);
+    if (legacyAllTemplates || schedulerCapabilities.has('beat-phase')) {
+      for (const beat of Array.isArray(document?.beats) ? document.beats : []) {
+        if (isConfident(beat?.confidence)) considerBoundary(beat.timeMs);
       }
+    }
+    const sections =
+      templateId === 'fisheye-lens'
+        ? fisheyeChorusRanges(sourceSnapshot)
+        : (Array.isArray(document?.sections) ? document.sections : []).filter(
+            (section) =>
+              isConfident(section?.confidence) &&
+              CANONICAL_SECTION_ROLES.has(section?.role) &&
+              section.role !== 'unknown',
+          );
+    for (const { startMs, endMs } of sections) {
+      considerBoundary(startMs);
+      considerBoundary(endMs);
     }
     if (Number.isFinite(nextMusicBoundaryMs)) {
       delays.push(
@@ -2225,8 +2353,86 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
       : null;
   const chalkboardLineStartMs = lines[frame.lineIndex]?.startMs;
+  const fisheyeLine =
+    templateId === 'fisheye-lens' ? lines[frame.lineIndex] : null;
+  const fisheyeStage =
+    templateId === 'fisheye-lens' &&
+    snapshot?.lyrics?.synced === true &&
+    snapshot?.playback?.track?.id &&
+    snapshot.playback.track.id === snapshot.lyrics.trackId &&
+    ['playing', 'paused', 'seeking'].includes(snapshot.playback.status) &&
+    lines.length > 0;
+  const fisheyeEndMs = fisheyeLine
+    ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
+    : null;
+  const fisheyeRate = playbackRate(snapshot);
+  const fisheyePosition = fisheyeLine ? lyricsPositionMs(snapshot, nowMs) : 0;
+  const fisheyeUnits = fisheyeLine
+    ? fisheyeTimedUnits(
+        snapshot,
+        lines,
+        frame.lineIndex,
+        options.fisheyeGranularity,
+      )
+    : null;
+  const fisheyeUnit = fisheyeUnits?.find(
+    ({ startMs, endMs }) =>
+      startMs <= fisheyePosition && fisheyePosition < endMs,
+  );
+  const fisheyeStart = fisheyeUnit?.startMs ?? fisheyeLine?.startMs;
+  const fisheyeEnd = fisheyeUnit?.endMs ?? fisheyeEndMs;
+  const fisheyeText = fisheyeUnit?.text.trim() ?? '';
+  const fisheyeActive = Boolean(fisheyeStage || fisheyeLine);
+  const fisheyeAudioPosition = fisheyeActive
+    ? playbackPositionMs(snapshot, nowMs)
+    : null;
+  const fisheyeRanges = fisheyeActive
+    ? fisheyeChorusRanges(sourceSnapshot)
+    : [];
+  const fisheyeChorus = fisheyeRanges.find(
+    ({ startMs, endMs }) =>
+      startMs <= fisheyeAudioPosition && fisheyeAudioPosition < endMs,
+  );
+  const fisheyeLayoutChangedAt =
+    fisheyeChorus?.startMs ??
+    fisheyeRanges.findLast(({ endMs }) => endMs <= fisheyeAudioPosition)?.endMs;
   return {
     ...frame,
+    ...(templateId === 'fisheye-lens'
+      ? { fisheyeVariant: fisheyeChorus ? 'chorus' : 'base' }
+      : {}),
+    ...(Number.isFinite(fisheyeLayoutChangedAt)
+      ? { fisheyeLayoutChangedAt }
+      : {}),
+    ...(fisheyeActive
+      ? {
+          fisheyeReflectionClock: {
+            positionMs: fisheyeAudioPosition,
+            rate: fisheyeRate,
+            playing: snapshot.playback?.status === 'playing',
+          },
+        }
+      : {}),
+    ...(fisheyeUnits
+      ? { currentText: fisheyeText, visible: Boolean(fisheyeText) }
+      : {}),
+    ...(fisheyeStage ? { fisheyeStage: true } : {}),
+    ...(fisheyeLine
+      ? {
+          fisheyeTiming: {
+            playing:
+              snapshot.lyrics?.synced === true &&
+              snapshot.playback?.status === 'playing',
+            ageMs: Number.isFinite(fisheyeStart)
+              ? Math.max(0, (fisheyePosition - fisheyeStart) / fisheyeRate)
+              : 0,
+            durationMs:
+              Number.isFinite(fisheyeEnd) && Number.isFinite(fisheyeStart)
+                ? (fisheyeEnd - fisheyeStart) / fisheyeRate
+                : Infinity,
+          },
+        }
+      : {}),
     ...(templateId === 'chalkboard-vertical'
       ? {
           chalkboardPlaying: snapshot?.playback?.status === 'playing',
