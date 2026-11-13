@@ -31,6 +31,8 @@
 
 [合規參考](governance/legal-compliance.md)、[外觀 set 計畫](governance/appearance-sets-plan.md)、[依賴查核](governance/community-dependency-boundaries-2026-10-20.md)、[服務／模型／元件授權查核](governance/release-license-review-2026-10-18.md)、[功能說明查核](governance/feature-notice-review-2026-10-18.md)
 
+Output 外觀實作規劃見[圖層與素材](governance/output-layer-implementation-plan.md)與 [GSAP 動畫改寫](governance/output-gsap-migration-plan.md)。
+
 ## 發行與歷史
 
 歌詞工程結果集中於[顯示、時鐘與效能](archive/lyrics-display-performance-2026-10.md)及[來源、相容與交接](archive/lyrics-source-and-cues-2026-10.md)；現行操作仍由上列手冊與契約持有。

@@ -28,14 +28,18 @@
 | 工具、模型；準備   | 元件；安裝       | 需要另外取得的處理程式與模型，與設定頁「工具與模型」一致   | tool、model；prepare                |
 | 磁碟空間           | 空間（單獨使用） | 電腦儲存空間；曲庫占用寫「曲庫空間」                       | disk space；library storage         |
 | 作品、版本、發行   |                  | 見作品與版本契約                                           | work、version、release              |
+| 文字陰影           |                  | Output 正文字形的投影，選項為「標準」和「關閉」            | Text shadow                         |
+| 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                  |
 | 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                        |
 | 鏡頭構圖、貼近     |                  | 魚眼鏡圈與歌詞弧列的尺寸和位置，貼近用於人物近景           | Camera framing, Close-up            |
 | 鏡框強度、反光強度 |                  | 魚眼外圈遮罩與鏡面反光的各自不透明度                       | Rim intensity, Reflection intensity |
 | 進場動畫、退場動畫 |                  | 字幕顯示與消失時各自使用的動畫                             | Entrance, Exit                      |
 | 停留縮放、動態模糊 |                  | 字形停留時的縮放幅度與沿弧快速移動時的拖影                 | Hold scaling, Motion blur           |
 | 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity                |
-| 攝影機特效         |                  | 作用於 OBS 場景合成畫幅的 Glitch、推拉和雜訊               | Camera effects                      |
-| 自動穿插           |                  | 攝影機濾鏡按隨機間隔播放短暫特效                           | Automatic bursts                    |
+| 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight                    |
+| 裝飾               |                  | Output 可選用的視覺物件                                    | Decoration                          |
+| 攝影機特效         |                  | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects                      |
+| 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts                    |
 
 「介面元件」指畫面上的元件，不屬於「工具」的範圍。
 

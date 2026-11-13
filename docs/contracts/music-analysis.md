@@ -47,7 +47,8 @@ BPM／節拍（M1）與段落（M2）分析的資料、驗證、投影與品質�
 
 - Output v3 以 `music-structure.document` 傳送 M1／M2，document id 以音訊 SHA-256 revision 為 key，只含公開 identity、長度、tempo、beat／downbeat 與 canonical 段落。動態 snapshot 只帶可為 null 的 `{ documentId, documentRevision }`，不在每個 tick 重送。遺失、stale、M0 或曲目不符時送 null 並保留原呈現。
 - 所有歌詞模板收到相同的 `lyricsRhythm` 投影：連續四拍、每拍 confidence ≥ 0.5、間隔在局部中位數 75%–125% 時才使用實際 beat，提供目前／下一拍、行內拍序、進度、拍長與限制在 0.75–1.35 的 motion scale；單行超過 128 拍時省略行內計數。格線不成立時，有信心的 BPM 只提供 cadence，不提供相位；證據不足則不投影。
-- 目前可選模板中只有 `karaoke-stack` 消費 beat phase 與段落；其他模板維持只用時間的 fallback。音樂 wake 不改變歌詞 identity，不重播換行動畫。Reduced motion、`unknown`、低信心與 M0 維持靜態呈現；T2 逐字進度是獨立圖層。
+- `karaoke-stack` 消費 beat phase 與段落。魚眼鏡筒依播放位置讀取可信的 M2 `chorus` 區間，並在副歌起訖更新模板狀態。M2 段落沿音訊時鐘，與歌詞 offset 無關。沒有 M2 時，魚眼以同曲同步歌詞中的重複段落作呈現備援，至少要有兩次各達 10 秒的重複，每段至少三句相符，並套用歌詞 offset、限制在播放長度內。近景從段落開頭維持到段落結尾，涵蓋換句與句間空拍。證據不足時使用基本版。
+- 音樂更新保留歌詞 identity 與當前句的動效時間。Reduced motion 維持靜態呈現；T2 逐字進度是獨立圖層。
 - 播放 rate 改變到下一個 cue 的實際延遲；歌詞 offset 把 beat 映射到歌詞時鐘，兩者都不改寫來源。
 
 ## 品質門檻

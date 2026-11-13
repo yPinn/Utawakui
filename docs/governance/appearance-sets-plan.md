@@ -61,6 +61,8 @@
 
 模板背景、主內容、前景的開發順序、透明驗收和素材歸屬見 [Output 圖層分階段實作計畫](output-layer-implementation-plan.md)。
 
+動畫編排、逐款處置與驗收順序見 [Output GSAP 動畫改寫計畫](output-gsap-migration-plan.md)。
+
 ## 尚待完成與下一步
 
 - W3 僅在當時使用者環境確認 Queue Board、Karaoke Stack、Art Card 的只讀視窗擷取短測；詳細通過／未驗界線見[W3 收尾](../operations/output-appearance-acceptance.md#w3-收尾紀錄2026-10-21)。這不涵蓋其他模板、Browser Source alpha、跨環境或耐久。

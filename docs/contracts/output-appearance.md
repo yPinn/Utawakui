@@ -23,8 +23,10 @@
 | fontScale                                        | default；medium                   | small／medium／large，各模板對應自己的尺寸                                            |
 | fontFamily                                       | opt；依模板                       | 列明的字型角色；只有 Live Stage 另接受已驗證的本機已安裝字型                          |
 | fontWeight                                       | opt；依模板                       | regular／semibold／bold                                                               |
-| contrastStyle                                    | opt；balanced                     | clean／balanced／strong-outline；只有 Live Stage                                      |
-| surface                                          | opt；solid                        | transparent／soft／solid；queue-board、cover-player                                   |
+| contrastStyle                                    | opt；balanced                     | clean／balanced／strong-outline；轉播字卡、中央直書                                   |
+| textShadow                                       | opt；standard                     | standard／off；和風直書的正文陰影                                                     |
+| sectionAccent                                    | opt；off                          | off／auto；和風直書的段落重點色                                                       |
+| surface                                          | opt；solid                        | 夜色歌單、封面電台為 transparent／soft／solid，紅黑緞帶為 transparent／solid          |
 | spacingDensity                                   | opt；normal                       | compact／normal／relaxed；只有 queue-board                                            |
 | furigana                                         | opt；auto                         | Manga 的 auto／off；只顯示既有讀音                                                    |
 | kineticMaterial／kineticArrangement              | opt；candy-rim／straight          | 三個既有材料或 cycle；straight／subtle-offset                                         |
@@ -37,14 +39,14 @@
 
 每個欄位另宣告 [ADR 0027](../adr/0027-output-template-elements-and-property-workspace.md) 的定義屬性；`group` 仍只決定 Inspector 分組，畫面與儲存不受這些屬性影響。
 
-已登錄模板使用 `UiFolderInspector`，依目前調整對象顯示有欄位的定位／版面、文字、色彩、顯示或動態頁籤。收據歌單的回顧開關與間隔同列於動態。欄位草稿、儲存和還原由 Workbench 管理。無設定欄位或仍有欄位未分類時使用同頁版型。
+已登錄模板使用 `UiFolderInspector`。設定頁籤依動態、顯示、定位／版面、文字、色彩排列，只顯示目前調整對象有欄位的頁籤。魚眼鏡筒的攝影機特效接在動態後。動態包含定時回顧與進退場。顯示包含歌詞呈現、字幕顆粒度、讀音與元素可見性。文字包含字體與可讀性。欄位草稿、儲存和還原由 Workbench 管理。無設定欄位或仍有欄位未分類時使用同頁版型。
 
-| 屬性     | 值與目前規則                                                                                                                                                                                                                                                  |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `family` | document：Look、強度、字級、讀音、歌詞呈現策略；swatch：兩個自訂色；character：字型、字重；legibility：對比、文字材質；fill：背景；layout：對齊、密度、內容寬度、文字排列、出紙方向、位置與微調；motion：回顧開關與間隔。stacking、visibility、asset 尚無欄位 |
-| `scope`  | 上表欄位皆為 `template`；元素屬性為 `element`，見下方「元素層級設定」                                                                                                                                                                                         |
-| `tier`   | `advanced` 只有 textColor、accentColor、positionOffsetX、positionOffsetY，與上表分級一致；其餘為 `basic`                                                                                                                                                      |
-| `reflow` | 會讓文字重新排版的欄位（字級、字型、字重、讀音、歌詞呈現策略與 layout 中改變尺寸者）為 true；位置、色彩、背景、材質與動態為 false                                                                                                                             |
+| 屬性     | 值與目前規則                                                                                                                                                                                                                                                    |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `family` | document：Look、強度、字級、讀音、歌詞呈現策略；swatch：兩個自訂色；character：字型、字重；legibility：對比、文字材質；fill：背景；layout：對齊、密度、內容寬度、文字排列、出紙方向、位置與微調；motion：回顧開關與間隔；asset：唱片高光樣式。stacking 尚無欄位 |
+| `scope`  | 上表欄位皆為 `template`；元素屬性為 `element`，見下方「元素層級設定」                                                                                                                                                                                           |
+| `tier`   | `advanced` 只有 textColor、accentColor、positionOffsetX、positionOffsetY，與上表分級一致；其餘為 `basic`                                                                                                                                                        |
+| `reflow` | 會讓文字重新排版的欄位（字級、字型、字重、讀音、歌詞呈現策略與 layout 中改變尺寸者）為 true；位置、色彩、背景、材質與動態為 false                                                                                                                               |
 
 `receipt-setlist` 與 `ribbon-setlist` 共用動態欄位 `receiptReview`（on／off，預設 on）與 `receiptReviewInterval`（5–60 秒，每次調整 5 秒，預設 15 秒）。收據歌單另提供字級與 `receiptDirection`（down／up，預設 down），緞帶歌單另提供背景。既存間隔使用同一值域正規化。
 
@@ -56,7 +58,7 @@
 
 ### 元素層級設定
 
-外觀 schema 為 7。元素宣告在 [outputTemplateElements.mjs](../../shared/outputTemplateElements.mjs)，目前只有 cover-player；其他模板沒有元素層級設定。
+元素宣告在 [outputTemplateElements.mjs](../../shared/outputTemplateElements.mjs)，目前由 cover-player 提供元素層級設定。
 
 | 元素      | 屬性                               | 備註                                                         |
 | --------- | ---------------------------------- | ------------------------------------------------------------ |
@@ -74,37 +76,40 @@
 
 ## 模板清單
 
-歌單slot預設為receipt-setlist，並排列於歌單模板首位；既存合法模板選擇維持原值。共同預設為 original Look、強度 100、medium 字級；下表只列差異。
+歌單 slot 預設為 `receipt-setlist`，並排列於歌單模板首位。既存合法模板選擇維持原值。下表依目前登錄的模板欄位列出工作臺設定，擷取尺寸依模板 registry。封面電台的個別元素設定見上一節。
 
-| 模板／capture                  | 可選與初始值                                                | Invariant                                                    |
-| ------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------ |
-| queue-board／480×810           | 字型 sans、字重 semibold、背景 solid、密度 normal           | current／played membership、history 分頁接續                 |
-| receipt-setlist／480×810       | 字級medium、向下出紙、回顧開啟／15秒                        | 單行優先／最多兩行省略、完成才送紙、最近100筆回顧            |
-| karaoke-stack／1920×1080       | 只有共用 Look／字級                                         | 雙 lane、count-in、timing mask、字型角色                     |
-| kinetic-pop／1920×1080         | 材料 candy-rim、排列 straight                               | 三層 paint order、phrase source boundaries                   |
-| ornate-vertical／1920×1080     | 字型 ornate／antique；兩色與右側位置                        | 直書、至多三欄、grapheme 分組；不消費 T2，行級回退           |
-| chalkboard-vertical／1920×1080 | 左區預設／右區可選、字級、X／Y 微調                         | 當前句右至左直書、每頁至多三欄、逐字分向擦除                 |
-| centered-vertical／1920×1080   | 字型、字級                                                  | 單欄水平與垂直置中、長句分頁、直接換句                       |
-| fisheye-lens／1920×1080        | 構圖、字級、字色、鏡框／反光、進退場、縮放、模糊、顆粒度    | 鏡心透明、右到左雙側弧列、沿來源時間換字                     |
-| live-stage／1920×1080          | 字型 sans／本機字型；對比 balanced；文字策略 balanced       | Title-card 時窗、caption 分頁、U／UW 標記；不可換 logo／背景 |
-| manga-frame／1920×1080         | 字型 antique／sans／serif／rounded；字重 bold；reading auto | Ruby atomicity、框內安全版面、bubble timing                  |
-| art-card／480×270              | 字型 sans、字重 bold                                        | 唱片 playhead、封套交換、驗證過的 artwork route              |
-| ticket-stub／480×270           | 字級 medium、字重 bold                                      | 票外透明、曲名兩行、封面缺圖時使用曲名首字                   |
-| cover-player／360×480、480×640 | 字重 bold、背景 solid                                       | 同一 artwork route 與進度權威                                |
+| 模板                           | 工作臺設定                                                                                               |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `queue-board` 夜色歌單         | 配色與強度、字型、字級、字重、背景、間距密度                                                             |
+| `receipt-setlist` 票據歌單     | 字級、出紙方向、定時回顧與間隔                                                                           |
+| `ribbon-setlist` 紅黑緞帶      | 背景、定時回顧與間隔                                                                                     |
+| `karaoke-stack` 經典字幕       | 配色與強度、字級                                                                                         |
+| `kinetic-pop` 躍動字幕         | 配色與強度、字級、文字材質、文字排列                                                                     |
+| `ornate-vertical` 和風直書     | 配色與強度、正文與強調色、字型、字級、文字陰影、段落重點色、右側錨點、X／Y 微調                          |
+| `chalkboard-vertical` 黑板直書 | 字級、正文與輔助線色、左／右錨點、X／Y 微調                                                              |
+| `centered-vertical` 中央直書   | 字型、字級、文字對比、文字色                                                                             |
+| `fisheye-lens` 魚眼鏡筒        | 構圖、字級、文字色、鏡框與反光強度、進場與退場、停留縮放、動態模糊、字幕顆粒度。攝影機特效另列為即時操作 |
+| `live-stage` 轉播字卡          | 配色與強度、字型與本機字型選擇、字級、文字對比、歌詞呈現策略                                             |
+| `manga-frame` 分格對白         | 配色與強度、字型、字級、字重、讀音                                                                       |
+| `art-card` 星空黑膠            | 配色與強度、字型、字級、字重、唱片高光                                                                   |
+| `ticket-stub` 演出票根         | 字級、字重                                                                                               |
+| `cover-player` 封面電台        | 配色與強度、字級、字重、背景                                                                             |
 
 Setlist 只公開目前演唱曲目與已唱紀錄，不投影待唱。480×810 是擷取尺寸而非固定版面：queue-board 以約兩成高度保留目前歌曲，其餘給已唱紀錄，兩區只以固定 spacing 分隔；最近八首依播放順序向下排列，超出時才自動垂直滾動。
 
 `ribbon-setlist` 在 480×810 依演唱順序由上往下填頁。每頁最多 14 列，並依實際列高在整列放不下時換頁。目前曲目置於當頁末列，換頁時從新頁頂端開始。每首沿用依曲序與曲目身分取樣的紅黑配色。預設白底，背景可切換透明。拉丁曲名預設 36 px，超過兩行降至 30 px。含漢字、假名或韓文的曲名使用相應無襯線字型，預設 32 px、字重 700，超過兩行降至 28 px，保留原本行高與色帶留白。仍放不下時於第二行省略。序號固定 15 px。色帶的傾斜、錯位與搭接獨立於文字排版。Gallery 與 Browser Source 共用版面及 Output tokens。
 
-緞帶歌單初次顯示目前曲目或換曲時播放約 1.18 秒入場。左端與印字位置固定，卷邊連續向右展開，印字依序短暫交疊過渡至放大印字、白色滿版印字及正式曲名。色帶底色由展開延續至落版。曲目轉為已唱時沿用同一字寬、行數、配色與形狀。重複快照、同首資料刷新與重連不重播。減少動態時直接顯示最終樣式。
+緞帶歌單初次顯示目前曲目或換曲時，以 GSAP 播放約 1.18 秒入場。左端與印字位置固定，卷邊連續向右展開，印字依序短暫交疊過渡至放大印字、白色滿版印字及正式曲名。色帶底色由展開延續至落版。曲目轉為已唱時沿用同一字寬、行數、配色與形狀。重複快照、同首資料刷新與重連不重播。減少動態時直接顯示最終樣式。模板庫與正式 Browser Source 共用入場和刷幕時間軸。
 
 中日韓曲名中的拉丁片段與其標點使用 Output 的 UI 字型。原始曲名、全形字元與東亞標點保留。
 
 白色實底沿用 Output 間距 token，紙面與刷幕皆收在四周 8 px 的透明邊界內。
 
-開啟緞帶歌單的定時回顧且已有上一頁時，直播版面經過工作臺設定的間隔後，依直播分頁的原邊界回顧較早的一頁。上下紅色刷痕各自覆蓋後換頁，目前曲目隨下半切出。兩塊刷幕在中央略微交疊，以覆蓋縮放時可能出現的接縫。預設刷入 640 ms，兩段退開後固定停留 3 秒，接著以 320 ms 刷回。下一輪繼續回顧更早的一頁，回到最早頁後循環。關閉回顧、調整間隔、換曲、切換模板及連線恢復會還原直播畫面。減少動態時直接換頁。兩頁共用白底或透明底，透明底只在刷幕掃過的區域暫時覆蓋背景。
+開啟緞帶歌單的定時回顧且已有上一頁時，直播版面經過工作臺設定的間隔後，依直播分頁的原邊界回顧較早的一頁。GSAP 在上下紅色刷痕各自覆蓋後換頁，目前曲目隨下半切出。兩塊刷幕在中央略微交疊，以覆蓋縮放時可能出現的接縫。刷入 640 ms，兩段退開後固定停留 3 秒，接著以 320 ms 刷回。下一輪繼續回顧更早的一頁，回到最早頁後循環。關閉回顧、調整間隔、換曲、切換模板及連線恢復會取消舊刷幕並還原直播畫面。減少動態或動畫引擎無法使用時直接換頁。兩頁共用白底或透明底，透明底只在刷幕掃過的區域暫時覆蓋背景。
 
 Now Playing 的三款模板共用 `artwork-overlay` 結構及封面、曲名、藝人呈現。舊 `now-next` id 在設定讀取邊界回退為 `art-card`。
+
+星空黑膠的「色彩 → 裝飾」提供唱片高光，預設關閉，可選柔和或標準。高光沿盤面掃過，限制在唱片溝槽區域。GSAP 移動光帶，CSS 負責光色與遮罩。播放時往返，暫停時定格，減少動態或動畫引擎無法使用時保留靜態高光。模板庫的動態樣張展示標準高光，工作臺與 OBS 依保存的選擇呈現。
 
 `ticket-stub` 以既有 Now Playing Browser Source 輸出暖白票根。方形封面使用已驗證的 artwork route，票身隨當前曲目更新。短副券維持素面，兩側缺口與票身外使用透明合成。控制台預覽與 Browser Source 共用票身樣式，Folder 共用切口與紙紋。
 
@@ -126,19 +131,21 @@ Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，�
 
 圓形外圈是貓眼視野的前景遮罩。波紋、歌詞及其進退場共用同一個圓形裁切，前景鏡框最後疊上。內圈反光帶有厚薄起伏，各圈向外推進時略微旋轉，擴散越過內部橢圓，直到外圈。圓形上下超出畫幅的部分依畫面邊界裁切。透色本體、外緣柔光和局部亮邊分層繪製，保留底圖可見。冷青高光與暖紫粉反光分布在不同方向。反光以透明色層與 OBS 場景合成，底圖的實際折射需取得背景畫面。
 
-攝影機訊號特效由 OBS 場景濾鏡套用，處理背景、人物、字幕和鏡框合成後的整個畫幅。透明 Browser Source 繼續繪製鏡框、反光與歌詞。參見[魚眼攝影機濾鏡](../../scripts/obs/README.md)。
-
-工作臺的「攝影機特效」頁籤可綁定目前的 OBS 節目場景，切換自動穿插，並各別觸發一次 Glitch、推拉或雜訊。每個指令只作用於該場景的魚眼濾鏡。切換場景會停用目前的觸發，連線重建後需重新綁定。場景綁定及單次指令不寫入模板外觀，自動穿插由 OBS 濾鏡儲存。
+工作臺的「攝影機特效」可切換自動穿插，並分別觸發一次 Glitch、推拉或雜訊。Output 將同一事件同步送至已連線的工作臺和字幕輸出頁。短效事件繪製在鏡圈與歌詞上方的全幅透明畫布，涵蓋鏡口外緣與四角。Glitch 位移取樣魚眼模板自身的畫布，推拉縮放魚眼鏡圈和字列，其他獨立來源透過色帶、暗角與顆粒呈現疊加效果。自動穿插預設關閉，只維持本次 Output 執行期間，切換模板或停止 Output 時關閉。過期事件不補播，減少動態時停用特效。
 
 動態頁籤分開設定進場及退場。兩個選單都依沿弧、逐字縮放、漩渦、直接切換排列，進場專用的煙團露字排在最後。預設沿弧依原有 24 格／秒的節奏轉出 3 格、留空 2 格、翻正 3 格。停留縮放可由 0% 調至原幅度，沿弧動態模糊預設關閉。極短字幕、暫停、跳轉當格與減少動態時顯示完整字形。同步曲目間奏保留空鏡。
 
 顯示頁籤的字幕顆粒度預設整句。短句使用能對回有效時間標記的語句或標點斷點，來源段落使用歌詞文件既有的逐段時間與段間空白。每句缺少可靠斷點時回到整句。所有模式沿用播放速率和歌詞偏移，設定不寫回歌詞文件。
 
+和風直書的「文字陰影」位於文字頁籤。標準沿用既有陰影，既存設定缺值時也使用標準。關閉只移除正文字形的投影，藝術字的輕墨層仍由強調色控制。工作臺預覽與 OBS 使用同一條 Browser Source 渲染路徑。
+
+同一頁籤的「段落重點色」預設關閉。自動模式從已對時的歌詞找連續三句以上且完整重現至少兩次的段落，起始三句的文字須各不相同。以全部重現的總行數選出一組主要段落。較早出現時每句選一處，最後一次重現可在後半加一處。選點由句序、段落次序與字位決定，保留英文詞及結合字形。自動模式停用藝術字輕墨層，無合格段落時維持單色。強調色沿用自訂值，預設使用玫瑰色。換曲目或歌詞文件時重新判定，跳轉時依同一版本的來源範圍重現字色。此選項仍待實曲驗收。
+
 五款正式字幕的構圖、位置限制與左中右人物佔位研究見[VTuber 佔位回看](../research/design/lyrics-overlays/production-vtuber-placement-review.md)。
 
 歌詞呈現分兩層：`lyricsTimingUnits.mjs` 只把 T1 fallback 切成無語意的 `{ text, weight }` 單元，原文換行、空白與標點無損附著；`lyricsPresentation.mjs` 再依版本化的 Generic／KTV／Kinetic Pop／Ornate Vertical／Manga／Live Stage profile 解讀為 phrase、role、bubble 或 caption page。Browser Source 依 document id、revision、language 與 profile 快取靜態結果，`state.mjs` 投影動態 frame 與下一個 boundary。`lyricsTemplateCapabilities.mjs` 是各模板 T1／T2、source mapping、music cue 與 scheduler wake 的唯一宣告。模板分句不回寫 canonical timing，T2 永遠優先；raw LRC／VTT parser 不進模板。
 
-- **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1）；唯一消費 beat phase 與段落的模板（見[音樂分析](music-analysis.md)）。
+- **karaoke-stack**：封裝 justfont open-huninn 2.1（OFL 1.1），使用 beat phase 與段落（見[音樂分析](music-analysis.md)）。
 - **live-stage**：轉播精簡（移除可判定的 filler、連續重複與 CJK 顯示標點）、平衡分行、忠實原文三個 policy，都保留 canonical `sourceText` 與 line／segment identity。Caption 先列出 1／2、2／1、2／2 候選，依容量、作者與跨語邊界、附著性與幾何選解，不為個別歌曲加例外。多頁且有 T2 時以 `lyricsSourceMapping.mjs` 映回來源區間插值，失敗才用 T1 權重。
 - **manga-frame**：依 document language、實際假名或既有讀音投影 `ja`／`other`。預設封裝 GenEi Antique 6.0a，可改 sans／serif／rounded；ruby 繼承對話框字體。可從 `lyrics.document` 取得已存在且 identity 相符的日文讀音；publisher 只讀 sidecar，不為 OBS 啟動讀音 worker。
 - 中央直書提供文字色與可讀性選項。黑板直書的文字色和輔助線色可分別調整，預設沿用原本的紙白色。
@@ -180,17 +187,18 @@ Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.jso
 
 縮略的已知限制（正式驗收以 Workbench／Output 為準）：
 
-| 模板            | 縮略限制                                        |
-| --------------- | ----------------------------------------------- |
-| queue-board     | 連續 CSS 捲動，不是 runtime 的逐列分頁與 reveal |
-| karaoke-stack   | 掃色為示意，未消費逐字 progress                 |
-| kinetic-pop     | 循環不是整首 scheduler                          |
-| ornate-vertical | 固定循環 offset，正式依來源時間換詞             |
-| live-stage      | 固定時刻的標題卡與 caption                      |
-| manga-frame     | 可同時顯示全部 bubble，非逐框交接               |
-| art-card        | 文字代封面、簡化唱盤                            |
-| ticket-stub     | 文字代封面，票根依曲目更新                      |
-| cover-player    | 文字代封面；靜態時間正確，動態進度非時鐘        |
+| 模板                | 縮略限制                                           |
+| ------------------- | -------------------------------------------------- |
+| queue-board         | 連續 CSS 捲動，不是 runtime 的逐列分頁與 reveal    |
+| karaoke-stack       | 掃色為示意，未消費逐字 progress                    |
+| kinetic-pop         | 循環不是整首 scheduler                             |
+| ornate-vertical     | 固定循環 offset，正式依來源時間換詞                |
+| chalkboard-vertical | 共用書寫與擦除。樣張以固定句長播放，實曲分欄依來源 |
+| live-stage          | 共用標題卡進退和字幕淡入，樣張縮短兩者的間隔       |
+| manga-frame         | 共用對白框進退，以兩句示範資料重播交接             |
+| art-card            | 文字代封面、簡化唱盤                               |
+| ticket-stub         | 文字代封面，票根依曲目更新                         |
+| cover-player        | 文字代封面；靜態時間正確，動態進度非時鐘           |
 
 ## 驗證
 
