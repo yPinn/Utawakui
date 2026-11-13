@@ -224,6 +224,45 @@ describe('app notification owner', () => {
     expect(owner.items.value[1].message).toBe('曲庫暫時無法讀取。');
     vi.unstubAllGlobals();
   });
+  it('points a disabled gate to Settings instead of recording a failure', async () => {
+    const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
+    const requireFeatureGate = vi.fn().mockResolvedValue(false);
+    vi.stubGlobal('window', { Utawakui: { recordDiagnostic } });
+    vi.doMock('./useFeatureGateAccess.js', () => ({
+      useFeatureGateAccess: () => ({ requireFeatureGate }),
+    }));
+    const owner = await load();
+    const gateError = new Error(
+      `UTAWAKUI_APP_ERROR:${JSON.stringify({
+        code: 'FEATURE_GATE_REQUIRED',
+        severity: 'warning',
+        context: { featureId: 'audio-processing-flow' },
+      })}`,
+    );
+
+    const message = owner.notifyFailure({
+      key: 'queue',
+      title: '無法繼續',
+      error: gateError,
+      code: 'QUEUE_FAILED',
+      source: 'separation-queue',
+      operation: 'resume',
+    });
+
+    expect(message).toBe('請先到設定啟用這項功能。');
+    expect(owner.items.value[0]).toMatchObject({
+      tone: 'warning',
+      actionLabel: '前往設定',
+    });
+    expect(recordDiagnostic).not.toHaveBeenCalled();
+    await owner.runAction(owner.items.value[0].id);
+    expect(requireFeatureGate).toHaveBeenCalledWith('audio-processing-flow', {
+      source: 'separation-queue',
+      operation: 'resume',
+    });
+    vi.doUnmock('./useFeatureGateAccess.js');
+    vi.unstubAllGlobals();
+  });
   it('records a repeated visible failure once per incident', async () => {
     const recordDiagnostic = vi.fn(() => Promise.resolve({ ok: true }));
     vi.stubGlobal('window', { Utawakui: { recordDiagnostic } });

@@ -4,7 +4,37 @@ import {
   appErrorMessage,
   appErrorTone,
   normalizeAppError,
+  requiredFeatureGate,
 } from './appErrors.js';
+
+describe('requiredFeatureGate', () => {
+  const gateError = (featureId) =>
+    new Error(
+      `${APP_ERROR_PREFIX}${JSON.stringify({
+        code: 'FEATURE_GATE_REQUIRED',
+        severity: 'warning',
+        context: { featureId },
+      })}`,
+    );
+
+  it('names a known gate and replaces the message with Settings guidance', () => {
+    expect(requiredFeatureGate(gateError('provider-flow'))).toBe(
+      'provider-flow',
+    );
+    const normalized = normalizeAppError(gateError('provider-flow'), {
+      code: 'IMPORT_FAILED',
+      title: '匯入未完成',
+      message: '請再試一次。',
+    });
+    expect(normalized.message).toBe('請先到設定啟用這項功能。');
+    expect(normalized.title).toBe('匯入未完成');
+  });
+
+  it('ignores unknown gates and other codes', () => {
+    expect(requiredFeatureGate(gateError('not-a-gate'))).toBeNull();
+    expect(requiredFeatureGate(new Error('feature gate required'))).toBeNull();
+  });
+});
 
 describe('normalizeAppError', () => {
   it('does not expose a plain Error message in a user-facing record', () => {

@@ -46,6 +46,24 @@ describe('configState audio-preference initialization', () => {
     }
   }
 
+  it('refuses a disabled gate with a coded public error naming the feature', async () => {
+    const configState = await loadConfigState();
+    configState.loadInitialConfig();
+
+    let thrown;
+    try {
+      configState.requireFeatureGate('audio-processing-flow');
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toMatchObject({
+      code: 'FEATURE_GATE_REQUIRED',
+      severity: 'warning',
+      context: { featureId: 'audio-processing-flow' },
+    });
+    expect(thrown.message).toContain('UTAWAKUI_APP_ERROR:');
+  });
+
   it('migrates legacy resume volume only when config has no stored preferences', async () => {
     const configState = await loadConfigState();
     configState.loadInitialConfig();

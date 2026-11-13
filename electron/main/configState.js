@@ -12,6 +12,7 @@ const {
   normalizeAudioPreferences,
   saveConfig,
 } = require('../lib/config');
+const { createAppError } = require('../lib/appError');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
 const {
   ensureLibraryDirectory,
@@ -80,7 +81,12 @@ function initializeAudioPreferences(legacyAudioPreferences = null) {
 
 function requireFeatureGate(featureId) {
   if (isFeatureGateEnabled(cachedConfig, featureId)) return;
-  throw new Error(`feature gate required: ${featureId}`);
+  // The renderer reads featureId to point the user at that gate in Settings.
+  throw createAppError({
+    code: 'FEATURE_GATE_REQUIRED',
+    severity: 'warning',
+    context: { featureId },
+  });
 }
 
 function resolveConfiguredDownloadDir(config) {

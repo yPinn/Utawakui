@@ -1,6 +1,7 @@
 import { readonly, shallowRef } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
-import { normalizeAppError } from '../utils/appErrors.js';
+import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { normalizeAppError, requiredFeatureGate } from '../utils/appErrors.js';
 import { t } from '../utils/i18n.js';
 
 const items = shallowRef([]);
@@ -192,6 +193,17 @@ function notifyFailure({
     context,
   };
   const notice = { tone: 'danger', ...notification };
+  // A disabled gate is not a fault: point to it instead of logging a failure.
+  const featureId = requiredFeatureGate(error);
+  if (featureId && typeof notice.action !== 'function') {
+    notice.tone = 'warning';
+    notice.actionLabel = t('common.goToSettings');
+    notice.action = () =>
+      useFeatureGateAccess().requireFeatureGate(featureId, {
+        source,
+        operation,
+      });
+  }
   const publicMessage = normalizeAppError(error, options).message;
   const repeat = visibleRepeat(notice.key, {
     ...notice,
@@ -200,7 +212,7 @@ function notifyFailure({
     actionLabel:
       typeof notice.action === 'function' ? (notice.actionLabel ?? '') : '',
   });
-  if (!repeat) useAppDiagnostics().recordError(error, options);
+  if (!repeat && !featureId) useAppDiagnostics().recordError(error, options);
   notify({ ...notice, message: publicMessage });
   return publicMessage;
 }

@@ -6,6 +6,27 @@ import {
 } from './ipcErrorBoundary.js';
 
 describe('runDiagnosticIpcOperation', () => {
+  it('passes a disabled-gate error through without recording a failure', async () => {
+    const recordDiagnostic = vi.fn(() => ({ ok: true }));
+    const gateError = Object.assign(new Error('gate'), {
+      code: 'FEATURE_GATE_REQUIRED',
+    });
+
+    const thrown = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: { source: 'separation', operation: 'run', code: 'X' },
+        publicError: { code: 'SEPARATION_FAILED' },
+      },
+      async () => {
+        throw gateError;
+      },
+    ).catch((error) => error);
+
+    expect(thrown).toBe(gateError);
+    expect(recordDiagnostic).not.toHaveBeenCalled();
+  });
+
   it('records the original private error in main and throws a safe public error', async () => {
     const recordDiagnostic = vi.fn(() => ({ ok: true }));
     const privateError = new Error(

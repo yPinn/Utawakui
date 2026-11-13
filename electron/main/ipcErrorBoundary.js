@@ -11,6 +11,8 @@ async function runDiagnosticIpcOperation(options, operation) {
   try {
     return await operation();
   } catch (error) {
+    // A disabled gate is expected control flow; keep its public code intact.
+    if (error?.code === 'FEATURE_GATE_REQUIRED') throw error;
     const correlationId = randomUUID();
     const failureKind = classifyFailureKind(error);
     const kindContext = failureKind ? { failureKind } : {};

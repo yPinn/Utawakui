@@ -195,6 +195,10 @@
     "title": "Feature notice updated",
     "message": "Read it again before confirming."
   },
+  "FEATURE_GATE_REQUIRED": {
+    "title": "Feature is off",
+    "message": "Turn on this feature in Settings first."
+  },
   "FEATURE_GATE_UNKNOWN": {
     "title": "Unknown feature",
     "message": "This feature can't be found."

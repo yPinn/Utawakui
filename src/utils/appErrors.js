@@ -1,4 +1,5 @@
 import failureKindValues from '../../shared/failureKindValues.json';
+import featureGateRegistry from '../../shared/featureGates.json';
 import { t } from './i18n.js';
 export const APP_ERROR_PREFIX = 'UTAWAKUI_APP_ERROR:';
 
@@ -70,6 +71,23 @@ function failureKindMessage(kind) {
   );
 }
 
+const FEATURE_GATE_IDS = new Set(
+  featureGateRegistry.features.map((feature) => feature.id),
+);
+
+function gateFromPayload(parsed, error) {
+  const featureId = parsed?.context?.featureId ?? error?.context?.featureId;
+  return (parsed?.code ?? error?.code) === 'FEATURE_GATE_REQUIRED' &&
+    FEATURE_GATE_IDS.has(featureId)
+    ? featureId
+    : null;
+}
+
+// The feature id when main refused the operation because its gate is off.
+export function requiredFeatureGate(error) {
+  return gateFromPayload(parseStructuredMessage(rawMessage(error)), error);
+}
+
 function safePublicContext(context) {
   if (!context || typeof context !== 'object' || Array.isArray(context)) {
     return {};
@@ -106,7 +124,9 @@ export function normalizeAppError(error, options = {}) {
     ...(options.context || {}),
   });
   const message = boundedPublicText(
-    failureKindMessage(context.failureKind) ||
+    (gateFromPayload(parsed, error) &&
+      t('featureGates.access.defaultReason')) ||
+      failureKindMessage(context.failureKind) ||
       options.message ||
       parsed?.message,
     PUBLIC_TEXT_LIMITS.message,
