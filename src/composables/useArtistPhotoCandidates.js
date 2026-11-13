@@ -1,4 +1,6 @@
 import { onScopeDispose, reactive, readonly } from 'vue';
+import { FEATURE_IDS } from '../constants/featureGates.js';
+import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { t } from '../utils/i18n.js';
 
 const SEARCH_FAILURE_MESSAGES = Object.freeze({
@@ -43,6 +45,7 @@ export function useArtistPhotoCandidates({
   refreshArtistIndex = null,
   createObjectURL = (blob) => URL.createObjectURL(blob),
   revokeObjectURL = (url) => URL.revokeObjectURL(url),
+  requireFeatureGate = useFeatureGateAccess().requireFeatureGate,
 } = {}) {
   let generation = 0;
   const state = reactive({
@@ -196,6 +199,12 @@ export function useArtistPhotoCandidates({
 
   async function openForArtist(artist) {
     close();
+    // Online search needs the gate; when off, Settings opens at it instead.
+    const allowed = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
+      source: 'artist-photo',
+      operation: 'search',
+    });
+    if (!allowed) return null;
     state.open = true;
     state.artistId = typeof artist?.id === 'string' ? artist.id : '';
     state.artistName = typeof artist?.name === 'string' ? artist.name : '';

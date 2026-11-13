@@ -39,7 +39,10 @@ async function createSubject(options = {}) {
   const scope = effectScope();
   let subject;
   scope.run(() => {
-    subject = useArtistPhotoCandidates(options);
+    subject = useArtistPhotoCandidates({
+      requireFeatureGate: async () => true,
+      ...options,
+    });
   });
   return { scope, subject };
 }
@@ -61,6 +64,24 @@ afterEach(() => {
 });
 
 describe('useArtistPhotoCandidates', () => {
+  it('sends a closed external-source gate to Settings without opening the search', async () => {
+    const api = createApi();
+    const requireFeatureGate = vi.fn().mockResolvedValue(false);
+    const { scope, subject } = await createSubject({ api, requireFeatureGate });
+
+    await expect(
+      subject.openForArtist({ id: ARTIST_ID, name: 'Artist' }),
+    ).resolves.toBeNull();
+
+    expect(requireFeatureGate).toHaveBeenCalledWith('provider-flow', {
+      source: 'artist-photo',
+      operation: 'search',
+    });
+    expect(subject.state.open).toBe(false);
+    expect(api.searchArtistPhotoCandidates).not.toHaveBeenCalled();
+    scope.stop();
+  });
+
   it('searches only after the artist modal is opened and loads validated bytes into blob previews', async () => {
     const api = createApi();
     const createObjectURL = vi.fn().mockReturnValue('blob:artist-preview');

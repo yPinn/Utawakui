@@ -1,6 +1,8 @@
 import { computed, readonly, shallowRef } from 'vue';
 import { isSeparationBackend } from '../../shared/separationQueueContract.mjs';
+import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useAppNotifications } from './useAppNotifications.js';
+import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useSeparationQueueNotifications } from './useSeparationQueueNotifications.js';
 import {
   boundedCount,
@@ -146,6 +148,7 @@ export function normalizeSeparationQueueStatus(payload) {
 export function useSeparationQueue({
   bridge = window.Utawakui,
   notify = useAppNotifications().notify,
+  requireFeatureGate = useFeatureGateAccess().requireFeatureGate,
 } = {}) {
   const queue = shallowRef(null);
   const error = shallowRef('');
@@ -262,7 +265,16 @@ export function useSeparationQueue({
   }
 
   const pause = () => applyStatusAction('pauseSeparationQueue');
-  const resume = () => applyStatusAction('resumeSeparationQueue');
+  // Starting work again needs the gate; a notice-version update may revoke it.
+  const processingAllowed = (operation) =>
+    requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
+      source: 'separation-queue',
+      operation,
+    });
+  const resume = async () =>
+    (await processingAllowed('resume'))
+      ? applyStatusAction('resumeSeparationQueue')
+      : null;
   const move = (itemId, offset) =>
     safeId(itemId, 128) &&
     Number.isSafeInteger(offset) &&
@@ -274,8 +286,8 @@ export function useSeparationQueue({
     safeId(itemId, 128)
       ? applyRefreshAction('removeSeparationQueueItem', itemId)
       : false;
-  const retry = (itemId) =>
-    safeId(itemId, 128)
+  const retry = async (itemId) =>
+    safeId(itemId, 128) && (await processingAllowed('retry'))
       ? applyRefreshAction('retrySeparationQueueItem', itemId)
       : false;
   const clearPending = () => applyRefreshAction('clearPendingSeparations');

@@ -44,7 +44,7 @@ function runningQueue() {
   };
 }
 
-function createHarness() {
+function createHarness({ gateOpen = true } = {}) {
   let listener;
   const unsubscribe = vi.fn();
   const bridge = {
@@ -64,13 +64,19 @@ function createHarness() {
     }),
   };
   const notify = vi.fn();
-  const separationQueue = useSeparationQueue({ bridge, notify });
+  const requireFeatureGate = vi.fn().mockResolvedValue(gateOpen);
+  const separationQueue = useSeparationQueue({
+    bridge,
+    notify,
+    requireFeatureGate,
+  });
   return {
     bridge,
     separationQueue,
     emit: (payload) => listener?.(payload),
     unsubscribe,
     notify,
+    requireFeatureGate,
   };
 }
 
@@ -410,6 +416,26 @@ describe('useSeparationQueue', () => {
     expect(harness.bridge.clearCompletedSeparations).toHaveBeenCalledOnce();
     expect(harness.bridge.cancelSeparation).toHaveBeenCalledOnce();
     expect(harness.bridge.getSeparationQueueStatus).toHaveBeenCalledTimes(6);
+  });
+
+  it('routes resume and retry to the processing gate when it is off', async () => {
+    const harness = createHarness({ gateOpen: false });
+
+    await expect(harness.separationQueue.resume()).resolves.toBeNull();
+    await expect(harness.separationQueue.retry('item-2')).resolves.toBe(false);
+    await harness.separationQueue.pause();
+
+    expect(harness.requireFeatureGate).toHaveBeenCalledWith(
+      'audio-processing-flow',
+      { source: 'separation-queue', operation: 'resume' },
+    );
+    expect(harness.requireFeatureGate).toHaveBeenCalledWith(
+      'audio-processing-flow',
+      { source: 'separation-queue', operation: 'retry' },
+    );
+    expect(harness.bridge.resumeSeparationQueue).not.toHaveBeenCalled();
+    expect(harness.bridge.retrySeparationQueueItem).not.toHaveBeenCalled();
+    expect(harness.bridge.pauseSeparationQueue).toHaveBeenCalledOnce();
   });
 
   it('rejects zero, fractional, and out-of-range reorder offsets', () => {

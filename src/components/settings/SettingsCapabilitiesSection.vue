@@ -4,6 +4,7 @@ import {
   defineAsyncComponent,
   nextTick,
   onMounted,
+  onUnmounted,
   shallowRef,
   watch,
 } from 'vue';
@@ -352,6 +353,9 @@ onMounted(() => {
   youtubeLoginSettings.refresh();
   obsIntegrationSettings.refreshSettings();
 });
+
+// A redirect is for this visit; a later visit should not reopen at it.
+onUnmounted(() => clearFeatureGateRequest());
 </script>
 
 <template>
