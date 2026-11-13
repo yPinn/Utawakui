@@ -157,6 +157,12 @@ export function normalizeAppError(error, options = {}) {
   };
 }
 
+// A recognized cause already tells the user what to do, so only unexplained
+// errors are worth reporting.
+export function isReportableAppError(record) {
+  return record?.severity === 'error' && !record.context?.failureKind;
+}
+
 export function appErrorTone(error) {
   if (!error) return 'muted';
   if (error.severity === 'error') return 'danger';

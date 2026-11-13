@@ -3,6 +3,7 @@ import {
   APP_ERROR_PREFIX,
   appErrorMessage,
   appErrorTone,
+  isReportableAppError,
   normalizeAppError,
   requiredFeatureGate,
 } from './appErrors.js';
@@ -33,6 +34,35 @@ describe('requiredFeatureGate', () => {
   it('ignores unknown gates and other codes', () => {
     expect(requiredFeatureGate(gateError('not-a-gate'))).toBeNull();
     expect(requiredFeatureGate(new Error('feature gate required'))).toBeNull();
+  });
+});
+
+describe('isReportableAppError', () => {
+  it('offers reports only for errors without a recognized cause', () => {
+    expect(isReportableAppError({ severity: 'error', context: {} })).toBe(true);
+    expect(
+      isReportableAppError({
+        severity: 'error',
+        context: { failureKind: 'disk-full' },
+      }),
+    ).toBe(false);
+    expect(isReportableAppError({ severity: 'warning', context: {} })).toBe(
+      false,
+    );
+    expect(isReportableAppError(null)).toBe(false);
+  });
+
+  it('keeps a recognized cause on records built from main errors', () => {
+    const record = normalizeAppError(
+      new Error(
+        `${APP_ERROR_PREFIX}${JSON.stringify({
+          code: 'LIBRARY_WRITE_FAILED',
+          severity: 'error',
+          context: { failureKind: 'access-denied' },
+        })}`,
+      ),
+    );
+    expect(isReportableAppError(record)).toBe(false);
   });
 });
 

@@ -48,6 +48,7 @@ import { useNavigationHistory } from './composables/useNavigationHistory.js';
 import { useNavigationInput } from './composables/useNavigationInput.js';
 import { useFeedbackReport } from './composables/useFeedbackReport.js';
 import { provideNoticeReporter } from './components/ui/noticeReporter.js';
+import { isReportableAppError } from './utils/appErrors.js';
 import { useShellLayout } from './composables/useShellLayout.js';
 import {
   usePanelView,
@@ -151,12 +152,12 @@ useTheme();
 useUiDensity();
 const closeDecision = useWindowCloseDecision();
 const feedbackReport = useFeedbackReport();
-// Every error notice in the main window offers a prefilled bug report;
-// feedback's own failures are excluded so a report never reports itself.
+// Unexplained error notices offer a prefilled bug report; feedback's own
+// failures are excluded so a report never reports itself.
 provideNoticeReporter({
   label: t('shell.app.reportIssue'),
   canReport: (notice) =>
-    notice.severity === 'error' && notice.source !== 'feedback',
+    notice.source !== 'feedback' && isReportableAppError(notice),
   report: (notice) =>
     feedbackReport.openReport({ kind: 'bug', errorRecord: notice }),
 });
