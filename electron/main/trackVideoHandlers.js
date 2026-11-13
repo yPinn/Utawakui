@@ -16,6 +16,7 @@ const {
   readTrackVideo,
   readVideoSegments,
   resolveTrackVideoPath,
+  shiftVideoSegments,
   trackVideoSource,
   videoPath,
   VIDEO_MANIFEST,
@@ -231,6 +232,11 @@ function registerTrackVideoHandlers({
 
   function publishVideo(item, offsetMs, useSegments) {
     const { context, token } = item;
+    const keepSegments = item.syncSegments && useSegments !== false;
+    const segments = keepSegments
+      ? shiftVideoSegments(item.syncSegments, offsetMs, item.metadata.duration)
+      : null;
+    if (keepSegments && !segments) throw problem('invalid-intent');
     const old = readTrackVideo(context);
     const destination = videoPath(context.trackDir, token);
     fs.renameSync(item.filePath, destination);
@@ -242,8 +248,7 @@ function registerTrackVideoHandlers({
         offsetMs,
         ...item.metadata,
         ...(item.sourceVideoId && { sourceVideoId: item.sourceVideoId }),
-        ...(item.syncSegments &&
-          useSegments !== false && { syncSegments: item.syncSegments }),
+        ...(segments && { syncSegments: segments }),
       });
     } catch (error) {
       fs.renameSync(destination, item.filePath);

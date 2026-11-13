@@ -48,6 +48,19 @@ function readVideoSegments(value, duration) {
   return segments;
 }
 
+// Stored offsets stay equal to what playback applies: the first segment
+// follows the base offset. Returns null when a shifted segment no longer fits.
+function shiftVideoSegments(segments, offsetMs, duration) {
+  const delta = offsetMs - segments[0].offsetMs;
+  return readVideoSegments(
+    segments.map((segment) => ({
+      ...segment,
+      offsetMs: segment.offsetMs + delta,
+    })),
+    duration,
+  );
+}
+
 function fileStat(file) {
   const stat = fs.lstatSync(file, { throwIfNoEntry: false });
   return stat?.isFile() ? stat : null;
@@ -156,6 +169,7 @@ module.exports = {
   readTrackVideo,
   readVideoSegments,
   resolveTrackVideoPath,
+  shiftVideoSegments,
   trackVideoSource,
   videoPath,
   VIDEO_MANIFEST,

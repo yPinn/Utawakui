@@ -220,7 +220,13 @@ describe('track video IPC', () => {
       }),
     ).resolves.toMatchObject({
       status: 'ok',
-      video: { offsetMs: 800, syncSegments: segments },
+      video: {
+        offsetMs: 800,
+        syncSegments: [
+          { startMs: 0, endMs: 12000, offsetMs: 800 },
+          { startMs: 15000, endMs: 21000, offsetMs: 2800 },
+        ],
+      },
     });
   });
 
@@ -467,6 +473,46 @@ describe('track video IPC', () => {
       offsetMs: -75,
     });
     expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('shifts saved segments with the base offset and rejects a shift past the video', async () => {
+    const revision = '12345678-1234-1234-1234-123456789abc';
+    const { binding } = trackVideoSource(dir, 'track-1');
+    const manifestPath = path.join(trackDir, 'video.json');
+    fs.writeFileSync(
+      manifestPath,
+      JSON.stringify({
+        version: 1,
+        binding,
+        revision,
+        offsetMs: 750,
+        duration: 24,
+        syncSegments: [
+          { startMs: 0, endMs: 12000, offsetMs: 750 },
+          { startMs: 15000, endMs: 21000, offsetMs: 2750 },
+        ],
+      }),
+    );
+    fs.writeFileSync(path.join(trackDir, `video-${revision}.mp4`), 'video');
+
+    expect(await call('set-offset', { revision, offsetMs: 500 })).toMatchObject(
+      {
+        status: 'ok',
+        video: {
+          offsetMs: 500,
+          syncSegments: [
+            { startMs: 0, endMs: 12000, offsetMs: 500 },
+            { startMs: 15000, endMs: 21000, offsetMs: 2500 },
+          ],
+        },
+      },
+    );
+    expect(await call('set-offset', { revision, offsetMs: 1500 })).toEqual({
+      status: 'invalid-intent',
+    });
+    expect(
+      JSON.parse(fs.readFileSync(manifestPath, 'utf8')).syncSegments[1],
+    ).toEqual({ startMs: 15000, endMs: 21000, offsetMs: 2500 });
   });
 
   it('rejects a stale revision and raw reference URL before starting alignment', async () => {

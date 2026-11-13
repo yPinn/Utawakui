@@ -12,6 +12,7 @@ const {
   readTrackVideo,
   readVideoSegments,
   resolveTrackVideoPath,
+  shiftVideoSegments,
   videoPath,
   VIDEO_REVISION,
   writeTrackVideo,
@@ -307,6 +308,10 @@ function createTrackVideoAlignment({
       )
         throw problem('stale');
       segments = useSegments === false ? null : offer.segments;
+    }
+    if (segments) {
+      segments = shiftVideoSegments(segments, offsetMs, saved.duration);
+      if (!segments) throw problem('invalid-intent');
     }
     if (
       saved.offsetMs !== offsetMs ||
