@@ -18,24 +18,38 @@ function setup(prepare = vi.fn(() => 8)) {
   const root = { ...element(), ownerDocument: { createElement: element } };
   const latest = element();
   const archive = element();
-  const motion = createRibbonFlashback({ root, latest, archive, prepare });
-  const wash = root.children[0];
-  const durations = {
-    enter: { cover: [240, 330], reveal: [220, 310] },
-    return: { cover: [120, 150], reveal: [140, 170] },
+  const gsap = {
+    set: vi.fn(),
+    timeline({ onComplete }) {
+      const cues = [];
+      const timers = [];
+      let duration = 0;
+      return {
+        to(_target, tween, at) {
+          duration = Math.max(duration, at + tween.duration);
+        },
+        call(callback, _args, at) {
+          cues.push([callback, at]);
+        },
+        play() {
+          for (const [callback, at] of cues)
+            timers.push(setTimeout(callback, Math.round(at * 1000)));
+          timers.push(setTimeout(onComplete, Math.round(duration * 1000)));
+        },
+        kill() {
+          for (const timer of timers) clearTimeout(timer);
+        },
+      };
+    },
   };
-  wash.children.forEach((half, index) => {
-    half.children[0].getAnimations = () => [
-      {
-        finished: new Promise((resolve) => {
-          setTimeout(
-            resolve,
-            durations[wash.dataset.direction][wash.dataset.step][index],
-          );
-        }),
-      },
-    ];
+  const motion = createRibbonFlashback({
+    root,
+    latest,
+    archive,
+    prepare,
+    gsap,
   });
+  const wash = root.children[0];
   return { motion, root, latest, archive, wash, prepare };
 }
 
@@ -50,7 +64,10 @@ describe('Ribbon Setlist flashback', () => {
     expect(prepare).not.toHaveBeenCalled();
     await advance(241);
     expect(root.dataset.flashbackPage).toBe('top-archive');
-    await advance(400);
+    await advance(90);
+    expect(wash.dataset.step).toBe('reveal');
+    expect(root.dataset.flashbackPage).toBe('archive');
+    await advance(310);
     expect(root.dataset.flashbackPage).toBe('archive');
     expect(latest.inert).toBe(true);
     expect(archive.inert).toBe(false);
@@ -117,5 +134,22 @@ describe('Ribbon Setlist flashback', () => {
     await advance(15000 + 3000 + 15000);
     expect(prepare.mock.calls).toEqual([[undefined], [8], [1], []]);
     expect(root.dataset.flashbackPage).toBe('archive');
+  });
+
+  it('uses direct page changes when GSAP is unavailable', async () => {
+    vi.useFakeTimers();
+    const root = { ...element(), ownerDocument: { createElement: element } };
+    const motion = createRibbonFlashback({
+      root,
+      latest: element(),
+      archive: element(),
+      prepare: () => 1,
+    });
+    motion.reset({ enabled: true, interval: 5000 });
+    await advance(5000);
+    expect(root.dataset.flashbackPage).toBe('archive');
+    expect(root.children[0].dataset.step).toBeUndefined();
+    await advance(3000);
+    expect(root.dataset.flashbackPage).toBe('latest');
   });
 });

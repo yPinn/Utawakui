@@ -180,7 +180,9 @@ function boot() {
     gsap,
   });
   const previewMode = isPreviewMode(window.location);
-  const ribbon = createRibbonView(document.querySelector('#ribbon-host'));
+  const ribbon = createRibbonView(document.querySelector('#ribbon-host'), {
+    gsap,
+  });
   let templateId = 'queue-board';
   let active = false;
   let previewScene = previewSceneForSlot('setlist');

@@ -3,13 +3,21 @@ import {
   OUTPUT_APPEARANCE_DEFAULTS,
 } from '../../shared/outputAppearance.mjs';
 import { overlayText } from '../shared/messages.mjs';
-import { createRibbonFlashback } from './ribbonFlashback.mjs';
+import { createRibbonFlashback, ribbonBezierEase } from './ribbonFlashback.mjs';
 
 const CANVAS_WIDTH = 480;
 const CANVAS_HEIGHT = 810;
 const MAX_ROWS = 14;
 const HISTORY_HEIGHT = 659;
 const STYLE_SEED = 'ribbon-v8';
+const UNROLL_SECONDS = 1.18;
+const UNROLL_EASE = ribbonBezierEase(0.3, 0.35, 0.4, 1);
+const CURL_EASE = ribbonBezierEase(0, 0, 0.58, 1);
+const PRINT_CUES = [
+  { appear: 0, fadeIn: 0, fadeOut: 0.3, gone: 0.35 },
+  { appear: 0.3, fadeIn: 0.35, fadeOut: 0.58, gone: 0.63 },
+  { appear: 0.58, fadeIn: 0.63, fadeOut: 0.88, gone: 0.94 },
+];
 
 export function ribbonTitleScript(title) {
   if (/\p{Script=Hangul}/u.test(title)) return 'hangul';
@@ -145,7 +153,7 @@ function createRow(document, track, band) {
     row.style.setProperty('--fold-position', band.fold.position + '%');
     row.style.setProperty('--fold-angle', band.fold.angle + 'deg');
   }
-  return { row, title, band, track };
+  return { row, entry, title, band, track };
 }
 
 function exceedsTwoLines(title, window) {
@@ -191,10 +199,13 @@ function createUnroll(document, title) {
   const layer = document.createElement('div');
   const face = document.createElement('div');
   const edge = document.createElement('div');
+  const curl = document.createElement('div');
   layer.className = 'ribbon-unroll';
   layer.setAttribute('aria-hidden', 'true');
   face.className = 'ribbon-unroll__face';
   edge.className = 'ribbon-unroll__edge';
+  curl.className = 'ribbon-unroll__curl';
+  edge.append(curl);
   const fragment = Array.from(title.trim().replace(/\s+/gu, ' ')).slice(0, 8);
   const word = fragment.join('');
   const line = (word + '\u2002').repeat(
@@ -208,11 +219,11 @@ function createUnroll(document, title) {
     face.append(print);
   }
   layer.append(face, edge);
-  return layer;
+  return { layer, face, edge, curl };
 }
 
 // Shared by the Browser Source and the Gallery so both use the same text metrics.
-export function createRibbonView(host, { reviewInterval } = {}) {
+export function createRibbonView(host, { gsap, reviewInterval } = {}) {
   const document = host.ownerDocument;
   const window = document.defaultView;
   const root = document.createElement('section');
@@ -256,6 +267,7 @@ export function createRibbonView(host, { reviewInterval } = {}) {
 
   const flashback = createRibbonFlashback({
     root,
+    gsap,
     latest: latest.page,
     archive: archive.page,
     prepare(before) {
@@ -315,26 +327,69 @@ export function createRibbonView(host, { reviewInterval } = {}) {
 
   function settle() {
     if (!entrance) return;
-    delete entrance.row.dataset.entering;
-    entrance.layer.remove();
+    const { row, entry, layer, timeline } = entrance;
     entrance = null;
+    timeline.kill();
+    entry.style.removeProperty('opacity');
+    delete row.dataset.entering;
+    layer.remove();
   }
 
   function reveal() {
-    if (!enabled || !active || reducedMotion || !currentItem || entrance)
+    if (
+      !enabled ||
+      !active ||
+      reducedMotion ||
+      !currentItem ||
+      entrance ||
+      !gsap?.timeline
+    )
       return;
-    const { row, title } = currentItem;
-    const layer = createUnroll(document, title.textContent);
-    entrance = { row, layer };
-    layer.addEventListener('animationend', (event) => {
-      if (
-        event.animationName === 'ribbon-unroll-face' &&
-        entrance?.layer === layer
-      )
-        settle();
+    const { row, entry, title } = currentItem;
+    const { layer, face, edge, curl } = createUnroll(
+      document,
+      title.textContent,
+    );
+    const timeline = gsap.timeline({
+      paused: true,
+      defaults: { ease: 'none' },
+      onComplete: settle,
     });
+    entrance = { row, entry, layer, timeline };
     row.dataset.entering = '';
     row.append(layer);
+    gsap.set(face, { clipPath: 'inset(0% 94% 0% 0%)' });
+    gsap.set(edge, { xPercent: -94 });
+    gsap.set(entry, { opacity: 0 });
+    const unroll = { duration: UNROLL_SECONDS * 0.91, ease: UNROLL_EASE };
+    timeline.to(face, { clipPath: 'inset(0% 0% 0% 0%)', ...unroll }, 0);
+    timeline.to(edge, { xPercent: 0, ...unroll }, 0);
+    for (const [index, print] of Array.from(face.children).entries()) {
+      const { appear, fadeIn, fadeOut, gone } = PRINT_CUES[index];
+      if (fadeIn)
+        timeline.to(
+          print,
+          { opacity: 1, duration: UNROLL_SECONDS * (fadeIn - appear) },
+          UNROLL_SECONDS * appear,
+        );
+      else gsap.set(print, { opacity: 1 });
+      timeline.to(
+        print,
+        { opacity: 0, duration: UNROLL_SECONDS * (gone - fadeOut) },
+        UNROLL_SECONDS * fadeOut,
+      );
+    }
+    timeline.to(
+      curl,
+      { opacity: 0, duration: UNROLL_SECONDS * 0.15, ease: CURL_EASE },
+      UNROLL_SECONDS * 0.75,
+    );
+    timeline.to(
+      entry,
+      { opacity: 1, duration: UNROLL_SECONDS * 0.07 },
+      UNROLL_SECONDS * 0.93,
+    );
+    timeline.play();
   }
 
   function scale() {

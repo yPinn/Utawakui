@@ -1,7 +1,38 @@
 const REVIEW_HOLD_MS = 3000;
 export const RIBBON_PREVIEW_REVIEW_INTERVAL_MS = 1800;
 
-export function createRibbonFlashback({ root, latest, archive, prepare }) {
+// Preserve the original CSS curves without loading an extra GSAP plugin.
+export function ribbonBezierEase(x1, y1, x2, y2) {
+  const sample = (t, a, b) => {
+    const rest = 1 - t;
+    return 3 * rest * t * (rest * a + t * b) + t ** 3;
+  };
+  return (progress) => {
+    if (progress <= 0 || progress >= 1) return progress;
+    let low = 0;
+    let high = 1;
+    for (let iteration = 0; iteration < 16; iteration++) {
+      const t = (low + high) / 2;
+      if (sample(t, x1, x2) < progress) low = t;
+      else high = t;
+    }
+    return sample((low + high) / 2, y1, y2);
+  };
+}
+
+const SWEEP_EASE = ribbonBezierEase(0.22, 1, 0.36, 1);
+const SWEEP_TIMING = {
+  enter: { cover: 0.24, reveal: 0.18, stagger: 0.09, beat: 0.04 },
+  return: { cover: 0.12, reveal: 0.12, stagger: 0.03, beat: 0.02 },
+};
+
+export function createRibbonFlashback({
+  root,
+  latest,
+  archive,
+  prepare,
+  gsap,
+}) {
   const wash = root.ownerDocument.createElement('div');
   wash.className = 'ribbon-flashback';
   wash.setAttribute('aria-hidden', 'true');
@@ -17,8 +48,8 @@ export function createRibbonFlashback({ root, latest, archive, prepare }) {
   });
   root.append(wash);
 
-  let generation = 0;
   let timer;
+  let timeline;
   let before;
   let reducedMotion = false;
 
@@ -29,10 +60,7 @@ export function createRibbonFlashback({ root, latest, archive, prepare }) {
   }
 
   function later(callback, ms) {
-    const expected = generation;
-    timer = setTimeout(() => {
-      if (expected === generation) callback();
-    }, ms);
+    timer = setTimeout(callback, ms);
   }
 
   function clearBrush() {
@@ -40,62 +68,79 @@ export function createRibbonFlashback({ root, latest, archive, prepare }) {
     delete wash.dataset.direction;
   }
 
-  async function sweep(returning, expected) {
+  function sweep(returning, onComplete) {
     const destination = returning ? 'latest' : 'archive';
-    if (reducedMotion) {
+    if (reducedMotion || !gsap?.timeline) {
       show(destination);
-      return true;
+      onComplete();
+      return;
     }
 
-    const play = (step, onFinish = () => {}) => {
-      wash.dataset.step = step;
-      return Promise.all(
-        panels.map(async (panel, index) => {
-          const animation = panel.getAnimations?.()[0];
-          if (animation) await animation.finished;
-          if (expected === generation) onFinish(index);
-        }),
+    const direction = returning ? 'return' : 'enter';
+    const shift = returning ? -100 : 100;
+    const { cover, reveal, stagger, beat } = SWEEP_TIMING[direction];
+    const revealAt = cover + stagger;
+    gsap.set(panels, { xPercent: -shift });
+    timeline = gsap.timeline({
+      paused: true,
+      defaults: { ease: SWEEP_EASE },
+      onComplete() {
+        timeline = null;
+        clearBrush();
+        onComplete();
+      },
+    });
+    for (const [index, panel] of panels.entries()) {
+      const delay = index * stagger;
+      timeline.to(panel, { xPercent: 0, duration: cover }, delay);
+      timeline.call(
+        () => show(index === 0 ? `top-${destination}` : destination),
+        [],
+        cover + delay,
       );
-    };
-
-    wash.dataset.direction = returning ? 'return' : 'enter';
-    try {
-      await play('cover', (index) => {
-        show(index === 0 ? `top-${destination}` : destination);
-      });
-      if (expected !== generation) return false;
-      await play('reveal');
-    } catch (error) {
-      if (expected !== generation) return false;
-      if (error?.name !== 'AbortError') throw error;
-      show(destination);
     }
-    if (expected !== generation) return false;
-    clearBrush();
-    return true;
+    timeline.call(
+      () => {
+        wash.dataset.step = 'reveal';
+      },
+      [],
+      revealAt,
+    );
+    for (const [index, panel] of panels.entries()) {
+      timeline.to(
+        panel,
+        { xPercent: shift, duration: reveal },
+        revealAt + beat + index * stagger,
+      );
+    }
+    wash.dataset.direction = direction;
+    wash.dataset.step = 'cover';
+    timeline.play();
   }
 
   function scheduleReview(interval) {
     later(() => review(interval), interval);
   }
 
-  async function review(interval) {
+  function review(interval) {
     const first = prepare(before) ?? (before === undefined ? null : prepare());
     if (first == null) return;
-    const expected = generation;
-    if (!(await sweep(false, expected)) || expected !== generation) return;
-    later(async () => {
-      if (!(await sweep(true, expected)) || expected !== generation) return;
-      before = first;
-      scheduleReview(interval);
-    }, REVIEW_HOLD_MS);
+    sweep(false, () => {
+      later(() => {
+        sweep(true, () => {
+          before = first;
+          scheduleReview(interval);
+        });
+      }, REVIEW_HOLD_MS);
+    });
   }
 
   show('latest');
   return {
     reset({ enabled = false, reduced = false, interval } = {}) {
-      generation += 1;
       clearTimeout(timer);
+      timeline?.kill();
+      timeline = null;
       clearBrush();
       before = undefined;
       reducedMotion = reduced;

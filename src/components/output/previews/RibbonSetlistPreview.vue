@@ -1,5 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
+import gsap from 'gsap';
 import { RIBBON_PREVIEW_REVIEW_INTERVAL_MS } from '../../../../overlay/setlist/ribbonFlashback.mjs';
 import { createRibbonView } from '../../../../overlay/setlist/ribbonView.mjs';
 import { selectReceiptSetlistFrame } from '../../../../shared/presentation/receiptSetlist.mjs';
@@ -27,6 +28,7 @@ function update() {
 
 onMounted(() => {
   view = createRibbonView(host.value, {
+    gsap,
     reviewInterval: RIBBON_PREVIEW_REVIEW_INTERVAL_MS,
   });
   motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
