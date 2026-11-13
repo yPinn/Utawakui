@@ -72,7 +72,18 @@
     "freed": "{size} freed. Original songs are kept.",
     "originalsKept": "Original songs are kept.",
     "notCleaned": "Vocal-removed versions not cleaned up",
-    "retry": "Try again."
+    "retry": "Try again.",
+    "videos": {
+      "cleanup": "Clean up song videos",
+      "title": "Clean up song videos in this library?",
+      "message": "This removes local song videos and their sync data.",
+      "detail": "Song audio, lyrics, artwork, and vocal-removed versions are kept.",
+      "cleaned": "Song videos cleaned up",
+      "incomplete": "Some video items could not be cleaned up",
+      "nothingToClean": "No song videos to clean up",
+      "notCleaned": "Song videos not cleaned up",
+      "result": "No videos removed, {size} freed. | Removed {count} video, freeing {size}. | Removed {count} videos, freeing {size}."
+    }
   },
   "metadata": {
     "title": "Library information",

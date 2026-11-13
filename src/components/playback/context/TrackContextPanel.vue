@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { Music, SquarePlay } from '../../../icons/index.js';
 import { formatDuration } from '../../../utils/format.js';
 import AppRightDockPanel from '../../layout/AppRightDockPanel.vue';
 import AppRightDockSection from '../../layout/AppRightDockSection.vue';
@@ -9,6 +10,7 @@ import TrackContextActions from './TrackContextActions.vue';
 import TrackContextHero from './TrackContextHero.vue';
 import TrackLyricsPreview from './TrackLyricsPreview.vue';
 import TrackQueuePreview from './TrackQueuePreview.vue';
+import UiButton from '../../ui/UiButton.vue';
 import UiHint from '../../ui/UiHint.vue';
 import UiSeparator from '../../ui/UiSeparator.vue';
 import UiTextButton from '../../ui/UiTextButton.vue';
@@ -27,6 +29,8 @@ const props = defineProps({
   lyricsLoading: { type: Boolean, default: false },
   artistSummary: { type: Object, default: null },
   readiness: { type: Array, default: () => [] },
+  videoAvailable: { type: Boolean, default: false },
+  showingVideo: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
@@ -36,6 +40,7 @@ const emit = defineEmits([
   'openLyrics',
   'openQueue',
   'toggleQueueTrackPlayback',
+  'toggleVideo',
 ]);
 
 const queueContextLabel = computed(() => {
@@ -98,11 +103,32 @@ const currentTrackFacts = computed(() => {
       </div>
     </template>
 
-    <TrackContextHero v-if="currentTrack" :track="currentTrack">
-      <template #actions>
-        <TrackContextActions :track="currentTrack" />
-      </template>
-    </TrackContextHero>
+    <template v-if="currentTrack">
+      <TrackContextHero :track="currentTrack">
+        <template v-if="showingVideo" #video>
+          <slot name="video" />
+        </template>
+        <template #actions>
+          <TrackContextActions
+            :track="currentTrack"
+            :trigger="showingVideo ? 'inline' : 'overlay'"
+          />
+        </template>
+      </TrackContextHero>
+      <UiButton
+        v-if="videoAvailable"
+        class="studio-context-inspector__video-toggle"
+        variant="secondary"
+        shape="pill"
+        :icon="showingVideo ? Music : SquarePlay"
+        @click="emit('toggleVideo')"
+        >{{
+          showingVideo
+            ? t('trackVideo.switchToAudio')
+            : t('trackVideo.switchToVideo')
+        }}</UiButton
+      >
+    </template>
 
     <AppRightDockSection
       v-else
@@ -114,8 +140,6 @@ const currentTrackFacts = computed(() => {
         {{ t('player.context.nothingPlaying') }}
       </UiHint>
     </AppRightDockSection>
-
-    <slot name="video" />
 
     <TrackLyricsPreview
       v-if="currentTrack && (lyricsLoading || lyricsPreview?.lines?.length)"
@@ -166,6 +190,10 @@ const currentTrackFacts = computed(() => {
 <style scoped>
 .studio-context-inspector {
   --ui-right-dock-section-surface-background: var(--ui-color-surface-raised);
+}
+
+.studio-context-inspector__video-toggle {
+  align-self: start;
 }
 
 .studio-context-inspector__details,

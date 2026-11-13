@@ -72,7 +72,7 @@ describe('TrackLyricsPreview', () => {
     app.unmount();
   });
 
-  it('keeps its destination action in the section header with shared ghost weight', () => {
+  it('uses the shared secondary pill for the section header action', () => {
     const onOpen = vi.fn();
     const { app, root } = mountPreview({ onOpen });
     const header = findAll(root, (node) => node.type === 'header')[0];
@@ -83,8 +83,8 @@ describe('TrackLyricsPreview', () => {
     )[0];
 
     expect(openButton).toBeTruthy();
-    expect(String(openButton.props.class)).toContain('ui-btn--ghost');
-    expect(String(openButton.props.class)).not.toContain('ui-btn--secondary');
+    expect(openButton.props.class).toContain('ui-btn--secondary');
+    expect(openButton.props.class).toContain('ui-btn--pill');
 
     trigger(openButton, 'onClick');
     expect(onOpen).toHaveBeenCalledOnce();

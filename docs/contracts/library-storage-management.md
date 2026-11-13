@@ -9,7 +9,7 @@
   預估大小。
 - 結構化 `audio.<ext>` 與 legacy root audio 計入「歌曲」。
 - `tracks/<trackId>/separations/*.wav` 中的分離音訊計入「去人聲」。
-- `tracks/<trackId>/video-<revision>.mp4` 計入「影片」，由曲目詳情手動移除。
+- `tracks/<trackId>/video-<revision>.mp4` 計入「影片」。
 - 其他 sidecar、manifest、封面、歌詞、分析與未知檔案計入「其他」。未知檔案不得進入
   自動刪除候選。
 - Settings 關閉狀態只顯示「曲庫空間」、曲庫已使用容量與所在磁碟可用容量。分類、政策與
@@ -40,9 +40,18 @@
 
 ## IPC 與失敗邊界
 
-- `library-storage:get`、`library-storage:set-policy` 與 `library-storage:cleanup` 是唯一 renderer
-  邊界。回應只含 policy、分類容量與清理筆數／釋放容量，不公開被刪除的 track ids、路徑或
-  recipe ids。
+- `library-storage:get`、`library-storage:set-policy`、`library-storage:cleanup` 與
+  `library-storage:cleanup-videos` 是固定 renderer 邊界。回應只含 policy、分類容量與清理統計。
 - Separation 完成、provider download 或本機匯入成功後會執行已啟用的 policy；清理失敗只
   記錄 main diagnostics，不得把已完成的分離、下載或匯入改成失敗。
 - Settings 手動清理使用同一套候選與保護規則，操作前明示「歌曲保留」。
+
+## 僅清理歌曲影片
+
+- Settings 的「曲庫空間」展開後，與去人聲清理並列提供獨立的手動清理。確認後只清理目前曲庫中
+  有有效影片 manifest 對應的本機 MP4，並移除其對時資料。
+- Main 略過連結、未配對檔案、影片工作或待套用候選所屬曲目。個別檔案移除失敗時繼續處理
+  其餘影片，回報已移除數、釋放容量和未完成數。MP4 已移除但對時資料無法刪除時仍計為已移除，
+  並記錄 diagnostics。
+- 清理後更新容量及桌面影片狀態。歌曲音訊、去人聲版本、歌詞與封面保留，去人聲自動清理
+  政策不處理影片。

@@ -39,3 +39,32 @@ it('keeps only the current track and drops late results when disabled', async ()
   scope.stop();
   expect(unsubscribe).toHaveBeenCalledOnce();
 });
+
+it('keeps the current video mounted while fetching its updated offset', async () => {
+  let changed;
+  const video = { available: true, url: 'same-video', offsetMs: 0 };
+  const getTrackVideo = vi.fn(async () => ({ video }));
+  vi.stubGlobal('window', {
+    Utawakui: {
+      getTrackVideo,
+      onTrackVideoChanged: (callback) => {
+        changed = callback;
+      },
+    },
+  });
+  const scope = effectScope();
+  const { asset } = scope.run(() =>
+    useTrackVideoAsset({ trackId: 'track', enabled: true }),
+  );
+  await nextTick();
+  expect(asset.value).toBe(video);
+  const updated = { ...video, offsetMs: 80 };
+  getTrackVideo.mockResolvedValueOnce({ video: updated });
+  changed('track');
+  expect(asset.value).toBe(video);
+  await nextTick();
+  expect(asset.value).toBe(updated);
+  changed(null);
+  expect(asset.value).toBeNull();
+  scope.stop();
+});

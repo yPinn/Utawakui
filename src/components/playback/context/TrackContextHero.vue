@@ -4,10 +4,8 @@ import { useAlbumNavigation } from '../../../composables/useAlbumNavigation.js';
 import { useArtistIndex } from '../../../composables/useArtistIndex.js';
 import { trackArtistText } from '../../../utils/artistPage.js';
 import { trackTitlePresentation } from '../../../utils/trackTitlePresentation.js';
-import TrackArtistCredits from '../../track/TrackArtistCredits.vue';
-import UiTextButton from '../../ui/UiTextButton.vue';
 import UiTrackThumb from '../../ui/UiTrackThumb.vue';
-import UiOverflowTooltip from '../../ui/UiOverflowTooltip.vue';
+import TrackContextHeroIdentity from './TrackContextHeroIdentity.vue';
 import { t } from '../../../utils/i18n.js';
 
 const props = defineProps({
@@ -48,8 +46,13 @@ function openAlbum() {
 </script>
 
 <template>
-  <article class="track-context-hero" :aria-label="accessibleLabel">
+  <article
+    class="track-context-hero"
+    :class="{ 'track-context-hero--video': $slots.video }"
+    :aria-label="accessibleLabel"
+  >
     <UiTrackThumb
+      v-if="!$slots.video"
       class="track-context-hero__artwork"
       :track="track"
       size="100%"
@@ -60,46 +63,37 @@ function openAlbum() {
     >
       <template #overlay>
         <div class="track-context-hero__overlay">
-          <div class="track-context-hero__identity">
-            <div class="track-context-hero__copy">
-              <UiTextButton
-                v-if="trackAlbum"
-                class="track-context-hero__title"
-                :text="title"
-                :aria-label="albumCtaLabel"
-                overflow="clamp"
-                @click="openAlbum"
-              />
-              <UiOverflowTooltip
-                v-else
-                as="p"
-                class="track-context-hero__title track-context-hero__title-text"
-                :text="title"
-              >
-                {{ title }}
-              </UiOverflowTooltip>
-              <TrackArtistCredits
-                v-if="track.artist || track.artistCredits?.length"
-                class="track-context-hero__artist"
-                :track="track"
-                :title="artistName"
-              />
-              <UiOverflowTooltip
-                v-else
-                as="p"
-                class="track-context-hero__artist"
-                :text="artistName"
-              >
-                {{ artistName }}
-              </UiOverflowTooltip>
-            </div>
-            <div v-if="$slots.actions" class="track-context-hero__actions">
+          <TrackContextHeroIdentity
+            :track="track"
+            :title="title"
+            :artist-name="artistName"
+            :album-cta-label="albumCtaLabel"
+            @open-album="openAlbum"
+          >
+            <template v-if="$slots.actions" #actions>
               <slot name="actions" />
-            </div>
-          </div>
+            </template>
+          </TrackContextHeroIdentity>
         </div>
       </template>
     </UiTrackThumb>
+    <template v-else>
+      <div class="track-context-hero__video">
+        <slot name="video" />
+      </div>
+      <TrackContextHeroIdentity
+        class="track-context-hero__caption"
+        :track="track"
+        :title="title"
+        :artist-name="artistName"
+        :album-cta-label="albumCtaLabel"
+        @open-album="openAlbum"
+      >
+        <template v-if="$slots.actions" #actions>
+          <slot name="actions" />
+        </template>
+      </TrackContextHeroIdentity>
+    </template>
   </article>
 </template>
 
@@ -133,55 +127,24 @@ function openAlbum() {
   color: var(--ui-color-overlay-contrast);
 }
 
-.track-context-hero__identity {
-  min-inline-size: 0;
+.track-context-hero--video {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
   gap: var(--ui-space-2);
+  aspect-ratio: auto;
+  box-shadow: none;
 }
 
-.track-context-hero__copy {
-  min-inline-size: 0;
+.track-context-hero__video {
   display: grid;
-  gap: var(--ui-space-1);
-}
-
-.track-context-hero__title,
-.track-context-hero__artist {
-  margin: 0;
-  max-inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  min-inline-size: 0;
+  border-radius: inherit;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  background: var(--ui-color-surface);
 }
 
-.track-context-hero__title {
-  color: inherit;
-  font-size: var(--ui-type-title-size);
-  font-weight: var(--ui-type-title-weight);
-  line-height: var(--ui-type-title-line-height);
-}
-
-.track-context-hero__title-text {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.track-context-hero__artist {
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.track-context-hero__actions {
-  align-self: end;
-}
-
-.track-context-hero__identity {
-  -webkit-user-select: none;
-  user-select: none;
+.track-context-hero__caption {
+  padding: 0 var(--ui-space-2);
+  color: var(--ui-color-text);
 }
 </style>

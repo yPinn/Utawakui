@@ -413,9 +413,7 @@ onMounted(initialize);
     >
       <TrackVideoPlayback
         v-if="videoAsset"
-        active
-        stage
-        :stage-asset="videoAsset"
+        :asset="videoAsset"
         class="performance-lyrics-workspace__video"
       />
       <UiHint

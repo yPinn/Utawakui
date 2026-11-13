@@ -272,6 +272,10 @@
     "title": "Library cleanup didn't finish",
     "message": "Vocal-removed versions can't be cleaned up right now. Try again."
   },
+  "LIBRARY_STORAGE_VIDEO_CLEANUP_FAILED": {
+    "title": "Song video cleanup not completed",
+    "message": "Try again."
+  },
   "LIBRARY_STORAGE_POLICY_INVALID": {
     "title": "Couldn't apply the storage setting",
     "message": "This setting is not valid. Choose again."

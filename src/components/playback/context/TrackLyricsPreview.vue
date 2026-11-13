@@ -42,7 +42,7 @@ watch(
     :aria-busy="loading ? 'true' : undefined"
   >
     <template #trailing>
-      <UiButton variant="ghost" @click="emit('open')">{{
+      <UiButton variant="secondary" shape="pill" @click="emit('open')">{{
         t('lyricsDisplay.preview.open')
       }}</UiButton>
     </template>

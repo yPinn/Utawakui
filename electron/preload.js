@@ -1062,6 +1062,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
       libraryStoragePolicyIntent(policy),
     ),
   cleanupLibraryStorage: () => ipcRenderer.invoke('library-storage:cleanup'),
+  cleanupLibraryVideos: () =>
+    ipcRenderer.invoke('library-storage:cleanup-videos'),
   listFolderPageObjects: (page) =>
     ipcRenderer.invoke(
       'folder-page-objects:list',
@@ -1446,8 +1448,23 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('track-video:status', { trackId }),
   cancelTrackVideo: (trackId) =>
     ipcRenderer.invoke('track-video:cancel', { trackId }),
-  saveTrackVideo: (trackId, token, offsetMs) =>
-    ipcRenderer.invoke('track-video:save', { trackId, token, offsetMs }),
+  saveTrackVideo: (trackId, token, offsetMs, useSegments) =>
+    ipcRenderer.invoke('track-video:save', {
+      trackId,
+      token,
+      offsetMs,
+      useSegments,
+    }),
+  alignTrackVideo: (trackId, revision, videoId) =>
+    ipcRenderer.invoke('track-video:align', { trackId, revision, videoId }),
+  setTrackVideoOffset: (trackId, revision, offsetMs, alignment) =>
+    ipcRenderer.invoke('track-video:set-offset', {
+      trackId,
+      revision,
+      offsetMs,
+      alignmentToken: alignment?.token,
+      useSegments: alignment?.useSegments,
+    }),
   removeTrackVideo: (trackId) =>
     ipcRenderer.invoke('track-video:remove', { trackId }),
   onTrackVideoChanged: (callback) => {

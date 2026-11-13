@@ -169,6 +169,36 @@ describe('library storage settings owner', () => {
     });
   });
 
+  it('serializes video cleanup with separation cleanup and reports partial results', async () => {
+    const result = Promise.withResolvers();
+    const { bridge, owner } = createHarness({
+      cleanupLibraryVideos: vi.fn(() => result.promise),
+    });
+    const operation = owner.cleanupVideos();
+    expect(owner.cleaning.value).toBe(true);
+    expect(owner.cleaningVideos.value).toBe(true);
+    await expect(owner.cleanup()).resolves.toBe(false);
+    expect(bridge.cleanupLibraryStorage).not.toHaveBeenCalled();
+    result.resolve(
+      snapshot({
+        storage: { ...snapshot().storage, videoBytes: 4 },
+        cleanup: { freedBytes: 12, removedCount: 1, skippedCount: 1 },
+      }),
+    );
+    await expect(operation).resolves.toBe(true);
+    expect(owner.storage.value).toMatchObject({
+      songBytes: 10,
+      separationBytes: 18,
+      videoBytes: 4,
+    });
+    expect(owner.cleaning.value).toBe(false);
+    expect(useAppNotifications().items.value[0]).toMatchObject({
+      title: '部分影片項目未清理完成',
+      message: '已移除 1 支影片，釋放 12 B。',
+      tone: 'warning',
+    });
+  });
+
   it('uses bounded user copy and releases its library subscription', async () => {
     const { owner, unsubscribe } = createHarness({
       getLibraryStorage: vi.fn().mockRejectedValue(new Error('E:\\private')),

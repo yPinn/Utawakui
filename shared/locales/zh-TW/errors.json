@@ -272,6 +272,10 @@
     "title": "曲庫清理未完成",
     "message": "目前無法清理去人聲版本，請再試一次。"
   },
+  "LIBRARY_STORAGE_VIDEO_CLEANUP_FAILED": {
+    "title": "歌曲影片清理未完成",
+    "message": "請再試一次。"
+  },
   "LIBRARY_STORAGE_POLICY_INVALID": {
     "title": "無法套用曲庫空間設定",
     "message": "這個設定無效，請重新選擇。"

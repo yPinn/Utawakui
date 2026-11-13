@@ -10,6 +10,7 @@ import {
   resolveReserveBytes,
 } from './storage.js';
 import storageValues from '../../../shared/libraryStorageValues.json';
+import { cleanupTrackVideos, videoPath } from './trackVideo.js';
 import {
   loadSeparationManifest,
   recordSeparationResult,
@@ -82,6 +83,111 @@ describe('library storage', () => {
       driveFreeBytes: 200,
       driveCapacityBytes: 400,
     });
+  });
+
+  it('cleans only manifest-owned videos in the current library and reports protected or locked files', () => {
+    const revision = '12345678-1234-1234-1234-123456789abc';
+    function addVideo(trackDir) {
+      writeSized(path.join(trackDir, 'audio.mp3'), 10);
+      fs.writeFileSync(
+        path.join(trackDir, 'video.json'),
+        JSON.stringify({ version: 1, revision, offsetMs: 725 }),
+      );
+      const file = videoPath(trackDir, revision);
+      writeSized(file, 12);
+      return file;
+    }
+    const library = path.join(root, 'library');
+    const current = path.join(library, 'tracks', 'song');
+    const video = addVideo(current);
+    const active = addVideo(path.join(library, 'tracks', 'active'));
+    const locked = addVideo(path.join(library, 'tracks', 'locked'));
+    const external = addVideo(
+      path.join(root, 'another-library', 'tracks', 'song'),
+    );
+    fs.symlinkSync(
+      path.dirname(external),
+      path.join(library, 'tracks', 'link'),
+      'junction',
+    );
+    const extras = [
+      path.join(current, 'artwork.jpg'),
+      path.join(current, 'lyrics', 'main.lrc'),
+      path.join(current, 'separations', 'quick.wav'),
+      path.join(current, 'original.mp4'),
+      videoPath(current, '12345678-1234-1234-1234-123456789abd'),
+    ];
+    for (const file of extras) writeSized(file, 4);
+    const originalUnlink = fs.unlinkSync;
+    const failure = new Error('locked');
+    const unlink = vi.spyOn(fs, 'unlinkSync').mockImplementation((file) => {
+      if (file === locked) throw failure;
+      return originalUnlink(file);
+    });
+    const onError = vi.fn();
+    try {
+      expect(
+        cleanupTrackVideos(library, {
+          protectedTrackIds: ['active'],
+          onError,
+        }),
+      ).toEqual({ removedCount: 1, skippedCount: 2, freedBytes: 12 });
+    } finally {
+      unlink.mockRestore();
+    }
+    expect(onError).toHaveBeenCalledExactlyOnceWith(failure);
+    expect(fs.existsSync(video)).toBe(false);
+    expect(fs.existsSync(path.join(current, 'video.json'))).toBe(false);
+    for (const file of [
+      path.join(current, 'audio.mp3'),
+      ...extras,
+      active,
+      locked,
+      external,
+    ])
+      expect(fs.existsSync(file)).toBe(true);
+    expect(fs.existsSync(path.join(path.dirname(locked), 'video.json'))).toBe(
+      true,
+    );
+    expect(cleanupTrackVideos(library)).toEqual({
+      removedCount: 2,
+      skippedCount: 0,
+      freedBytes: 24,
+    });
+    expect(cleanupTrackVideos(library)).toEqual({
+      removedCount: 0,
+      skippedCount: 0,
+      freedBytes: 0,
+    });
+  });
+
+  it('counts a removed video once when only its manifest cannot be removed', () => {
+    const revision = '12345678-1234-1234-1234-123456789abc';
+    const library = path.join(root, 'library');
+    const trackDir = path.join(library, 'tracks', 'song');
+    const manifest = path.join(trackDir, 'video.json');
+    writeSized(path.join(trackDir, 'audio.mp3'), 10);
+    fs.writeFileSync(manifest, JSON.stringify({ version: 1, revision }));
+    const video = videoPath(trackDir, revision);
+    writeSized(video, 12);
+    const originalUnlink = fs.unlinkSync;
+    const failure = new Error('manifest locked');
+    const unlink = vi.spyOn(fs, 'unlinkSync').mockImplementation((file) => {
+      if (file === manifest) throw failure;
+      return originalUnlink(file);
+    });
+    const onError = vi.fn();
+    try {
+      expect(cleanupTrackVideos(library, { onError })).toEqual({
+        removedCount: 1,
+        skippedCount: 0,
+        freedBytes: 12,
+      });
+    } finally {
+      unlink.mockRestore();
+    }
+    expect(onError).toHaveBeenCalledExactlyOnceWith(failure);
+    expect(fs.existsSync(video)).toBe(false);
   });
 
   it('removes a non-selected recipe before any selected result', () => {

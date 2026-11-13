@@ -61,7 +61,7 @@ network install or signed-installer acceptance; see the
 - Renderer output: `dist/index.html` and `dist/src/entries/prompter/index.html`, loaded by `electron/main/windows/mainWindow.js` and `prompterWindow.js` respectively. `shared/rendererEntries.json` supplies the entry mapping. Source preloads remain under `electron/`; their release bundles are `runtime/preload.cjs` and `runtime/performer-preload.cjs` inside ASAR. Recursive `dist/**/*` includes the nested renderer entry; retired root prompter HTML is not shipped.
 - Read-only Output capture windows: `electron/main/windows/outputWindow.js` and `electron/main/outputWindowHandlers.js` are included in the Main bundle; adjacent tests remain excluded. They load the existing loopback routes and canonical `shared/outputTemplateValues.json`／`outputCaptureValues.json`, with the existing native ICO. No extra renderer HTML, preload, native dependency or OBS plugin is added.
 - Fisheye Camera's Lua script and shader ship together in `resources/obs/` for explicit loading in OBS. The Main and preload bundles contain the scoped camera IPC; the script is loaded by OBS after the operator adds it.
-- Local track video uses the existing Main and preload bundles and the prepared FFmpeg and provider runtimes. Its loopback test source is disabled in packaged builds. The isolated `prototypes/local-mv/` verifier and generated media stay outside the installer.
+- Local track video uses the existing Main and preload bundles and the prepared FFmpeg and provider runtimes. Automatic offset estimation uses the included `kissfft-js` dependency. Its loopback test source is disabled in packaged builds. The isolated `prototypes/local-mv/` verifier and generated media stay outside the installer.
 - Fixed brand metadata: `shared/appIdentity.json` ships with `shared/`; `electron/main/windows/windowIdentity.js` resolves the existing packaged ICO for both control panel and prompter. Vite injects HTML titles and PNG favicons at build time through `scripts/viteAppIdentity.js`; that build helper is not a packaged runtime dependency. Native icon and renderer favicon asset locations are unchanged.
   Pure deferred-loader sources under `src/utils/` are bundled by Vite into this
   existing renderer output, including their self-hosted runtime assets.
@@ -157,7 +157,7 @@ network install or signed-installer acceptance; see the
   routes declared by `electron/lib/outputServer/http.js` and composed by
   `outputServer.js`.
 - App-owned Node files outside ASAR: only `runtime/reading.cjs`,
-  `runtime/separation.cjs`, `runtime/waveform.cjs` and `runtime/probe.cjs`. `runtimeEntries.js` maps
+  `runtime/separation.cjs`, `runtime/waveform.cjs`, `runtime/video-sync.cjs` and `runtime/probe.cjs`. `runtimeEntries.js` maps
   packaged worker/probe launches to these physical paths. ONNX native binaries,
   Node wrappers and `onnxruntime-common/dist/cjs`, kuromoji with async/lodash,
   doublearray/zlibjs, wanakana and koroman remain unpacked as required by plain
@@ -431,7 +431,7 @@ When adding a dependency, classify it before installing:
 
 ## Packaging Locations
 
-`runtime/*.cjs` includes seven generated Main/preload/worker entries. Original
+`runtime/*.cjs` includes eight generated Main/preload/worker entries. Original
 Electron modules, tests and synthetic corpora are not separately shipped; the
 latter remain in source for artist-credit, music
 structure and LRCLIB parser regressions and benchmark tooling. Music identity

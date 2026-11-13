@@ -140,9 +140,10 @@ asarUnpack:
   - node_modules/onnxruntime-common/package.json
   - node_modules/kissfft-js/**/*
   # Workers/probes execute in a plain Node context. Their app-owned dependency
-  # graphs are self-contained; only these four bundles require real disk paths.
+  # graphs are self-contained; these bundles require real disk paths.
   - runtime/reading.cjs
   - runtime/waveform.cjs
+  - runtime/video-sync.cjs
   - runtime/separation.cjs
   - runtime/probe.cjs
   # Waveform metadata/hash worker uses plain Node, including metadata's ESM graph.

@@ -7,7 +7,7 @@ import { TOOLTIP_PLACEMENTS } from './useTooltip.js';
 
 const SOURCE_ROOTS = ['src/components', 'src/views'];
 const ALLOWED_NATIVE_TITLES = [
-  'src/components/library/TrackVideoEditor.vue:iframe',
+  'src/components/library/TrackVideoSourcePanel.vue:iframe',
   'src/components/output/ObsOverlayPreview.vue:iframe',
   'src/components/output/ObsWidgetCapturePreview.vue:iframe',
 ];

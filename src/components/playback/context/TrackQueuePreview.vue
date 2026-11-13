@@ -39,7 +39,7 @@ function openTrackActions(payload) {
     appearance="contained"
   >
     <template #trailing>
-      <UiButton variant="ghost" @click="emit('open')">{{
+      <UiButton variant="secondary" shape="pill" @click="emit('open')">{{
         t('player.context.openQueue')
       }}</UiButton>
     </template>

@@ -72,7 +72,18 @@
     "freed": "已釋放 {size}。原始歌曲已保留。",
     "originalsKept": "原始歌曲已保留。",
     "notCleaned": "去人聲版本未清理",
-    "retry": "請再試一次。"
+    "retry": "請再試一次。",
+    "videos": {
+      "cleanup": "清理歌曲影片",
+      "title": "清理目前曲庫的歌曲影片？",
+      "message": "將移除本機歌曲影片及其對時資料。",
+      "detail": "歌曲音訊、歌詞、封面和去人聲版本會保留。",
+      "cleaned": "歌曲影片已清理",
+      "incomplete": "部分影片項目未清理完成",
+      "nothingToClean": "沒有可清理的歌曲影片",
+      "notCleaned": "歌曲影片未清理",
+      "result": "已移除 {count} 支影片，釋放 {size}。"
+    }
   },
   "metadata": {
     "title": "曲庫資訊",

@@ -68,6 +68,7 @@ function registerLibraryStorageHandlers({
   getConfig,
   updateConfig,
   storage,
+  cleanupVideos,
   recordDiagnostic,
 }) {
   ipcMain.handle('library-storage:get', async () =>
@@ -121,6 +122,24 @@ function registerLibraryStorageHandlers({
       () => {
         const policy = getConfig().libraryStorage;
         return response(policy, storage.cleanup(policy), true);
+      },
+    ),
+  );
+
+  ipcMain.handle('library-storage:cleanup-videos', async () =>
+    runStorageOperation(
+      {
+        recordDiagnostic,
+        operation: 'cleanup-videos',
+        code: 'LIBRARY_STORAGE_VIDEO_CLEANUP_FAILED',
+      },
+      () => {
+        const cleanup = cleanupVideos();
+        return {
+          policy: getConfig().libraryStorage,
+          storage: storage.inspect(),
+          cleanup,
+        };
       },
     ),
   );

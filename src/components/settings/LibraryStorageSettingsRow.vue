@@ -6,7 +6,6 @@ import { Trash2 } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import { t } from '../../utils/i18n.js';
@@ -17,11 +16,17 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   saving: { type: Boolean, default: false },
   cleaning: { type: Boolean, default: false },
+  cleaningVideos: { type: Boolean, default: false },
   error: { type: String, default: '' },
   readError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['set-policy', 'cleanup', 'refresh']);
+const emit = defineEmits([
+  'set-policy',
+  'cleanup',
+  'cleanup-videos',
+  'refresh',
+]);
 
 const limitOptions = storageValues.separationLimitOptionsBytes.map((value) => ({
   value,
@@ -78,9 +83,6 @@ function updatePolicy(fields) {
         <template v-if="storage">
           <dl
             class="library-storage__categories"
-            :class="{
-              'library-storage__categories--with-video': storage.videoBytes > 0,
-            }"
             :aria-label="t('librarySettings.storage.categories')"
           >
             <div class="library-storage__category">
@@ -92,15 +94,12 @@ function updatePolicy(fields) {
               <dd>{{ formatBytes(storage.separationBytes) }}</dd>
             </div>
             <div class="library-storage__category">
+              <dt>{{ t('trackVideo.tab') }}</dt>
+              <dd>{{ formatBytes(storage.videoBytes ?? 0) }}</dd>
+            </div>
+            <div class="library-storage__category">
               <dt>{{ t('librarySettings.storage.other') }}</dt>
               <dd>{{ formatBytes(storage.otherBytes) }}</dd>
-            </div>
-            <div
-              v-if="storage.videoBytes > 0"
-              class="library-storage__category"
-            >
-              <dt>{{ t('trackVideo.tab') }}</dt>
-              <dd>{{ formatBytes(storage.videoBytes) }}</dd>
             </div>
           </dl>
 
@@ -126,15 +125,32 @@ function updatePolicy(fields) {
                 updatePolicy({ separationLimitBytes: $event })
               "
             />
-            <UiIconButton
-              :icon="Trash2"
-              :label="t('librarySettings.storage.cleanup')"
-              intent="danger"
-              :loading="cleaning"
-              :loading-label="t('librarySettings.storage.cleaning')"
-              :disabled="saving || cleaning || storage.separationBytes === 0"
-              @click="emit('cleanup')"
-            />
+            <div class="library-storage__cleanup">
+              <UiButton
+                :icon="Trash2"
+                intent="danger"
+                :loading="cleaning && !cleaningVideos"
+                :loading-label="t('librarySettings.storage.cleaning')"
+                :disabled="saving || cleaning || storage.separationBytes === 0"
+                @click="emit('cleanup')"
+                >{{ t('librarySettings.storage.cleanup') }}</UiButton
+              >
+              <UiButton
+                :icon="Trash2"
+                intent="danger"
+                :loading="cleaningVideos"
+                :loading-label="t('librarySettings.storage.cleaning')"
+                :disabled="
+                  saving ||
+                  cleaning ||
+                  loading ||
+                  Boolean(readError) ||
+                  !storage.videoBytes
+                "
+                @click="emit('cleanup-videos')"
+                >{{ t('librarySettings.storage.videos.cleanup') }}</UiButton
+              >
+            </div>
           </div>
 
           <div class="library-storage__feedback">
@@ -211,7 +227,7 @@ function updatePolicy(fields) {
 
 .library-storage__categories {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ui-space-2);
   margin: 0;
 }
@@ -219,11 +235,8 @@ function updatePolicy(fields) {
 .library-storage__category {
   min-width: 0;
   display: grid;
+  align-content: start;
   gap: var(--ui-space-1);
-}
-
-.library-storage__categories--with-video {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .library-storage__category dt,
@@ -248,6 +261,13 @@ function updatePolicy(fields) {
   gap: var(--ui-space-2);
   padding-block-start: var(--ui-space-3);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.library-storage__cleanup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  margin-inline-start: auto;
 }
 
 .library-storage__limit {

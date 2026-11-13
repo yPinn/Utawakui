@@ -59,11 +59,34 @@ describe('LibraryStorageSettingsRow', () => {
     expect(source).toContain('自動清理去人聲版本');
     expect(source).toContain('label="去人聲容量上限"');
     expect(source).toContain('自動刪除去人聲版本；原始歌曲會保留');
-    expect(source).toContain('<UiIconButton');
-    expect(source).toContain('label="清理去人聲空間"');
+    expect(source).toContain('class="library-storage__cleanup"');
     expect(source).toContain('loading-label="清理中"');
     expect(source).toContain('@click=' + '"emit(\'refresh\')"');
     expect(source).not.toContain('>清理<');
+  });
+
+  it('keeps both cleanup actions together after the policy controls', async () => {
+    const html = await renderRow();
+    const body = html.slice(
+      html.indexOf('</summary>'),
+      html.indexOf('</details>'),
+    );
+    const cleanup = body.slice(
+      body.indexOf('library-storage__cleanup'),
+      body.indexOf('library-storage__feedback'),
+    );
+    const buttons = cleanup.match(/<button[\s\S]*?<\/button>/gu) ?? [];
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0]).toContain('清理去人聲空間');
+    expect(buttons[1]).toContain('清理歌曲影片');
+    expect(buttons[1]).toContain('disabled');
+    for (const button of buttons)
+      expect(button).toContain('ui-btn--intent-danger');
+    expect(source).toContain(`@click="emit('cleanup-videos')"`);
+    expect(body).toMatch(/<dt\b[^>]*>影片<\/dt>\s*<dd[^>]*>\s*0 B/u);
+    expect(body.indexOf('去人聲容量上限')).toBeLessThan(
+      body.indexOf('清理去人聲空間'),
+    );
   });
 
   it('keeps loading and errors but does not replay completed cleanup snapshots', async () => {

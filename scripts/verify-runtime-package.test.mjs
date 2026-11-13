@@ -17,7 +17,7 @@ afterEach(() => {
 });
 async function fixture({
   sourceLeak = false,
-  unpack = '**/{reading,separation,probe,waveform}.cjs',
+  unpack = '**/{reading,separation,probe,waveform,video-sync}.cjs',
   mainExtra = '',
   omitPublic = false,
 } = {}) {
@@ -92,7 +92,7 @@ describe('release artifact runtime boundary', () => {
     expect(() => verifyReleaseRuntimePackage(root)).toThrow(/helper/u);
   });
   it('checks the actual ASAR layout and physical worker dependency roots', async () => {
-    expect(verifyReleaseRuntimePackage(await fixture()).entries).toBe(7);
+    expect(verifyReleaseRuntimePackage(await fixture()).entries).toBe(8);
   });
   it('rejects an old unprotected Main bundle', async () => {
     const root = await fixture({ mainExtra: 'function confidenceFields(){}' });

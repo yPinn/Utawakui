@@ -41,4 +41,10 @@ function extractVideoId(input) {
   return null;
 }
 
-export { VIDEO_ID_RE, YOUTUBE_HOSTS, extractVideoId };
+function normalizeVideoInput(input) {
+  const value = String(input).trim();
+  const id = extractVideoId(value);
+  return id && value !== id ? `https://www.youtube.com/watch?v=${id}` : value;
+}
+
+export { VIDEO_ID_RE, YOUTUBE_HOSTS, extractVideoId, normalizeVideoInput };

@@ -66,15 +66,28 @@ function createHarness(overrides = {}) {
     })),
   };
   const recordDiagnostic = vi.fn(() => ({ ok: true }));
+  const cleanupVideos = vi.fn(() => ({
+    freedBytes: 12,
+    removedCount: 1,
+    skippedCount: 2,
+  }));
   registerLibraryStorageHandlers({
     ipcMain,
     getConfig,
     updateConfig,
     storage,
+    cleanupVideos,
     recordDiagnostic,
     ...overrides,
   });
-  return { ipcMain, getConfig, updateConfig, storage, recordDiagnostic };
+  return {
+    ipcMain,
+    getConfig,
+    updateConfig,
+    storage,
+    recordDiagnostic,
+    cleanupVideos,
+  };
 }
 
 describe('library storage handlers', () => {
@@ -84,6 +97,7 @@ describe('library storage handlers', () => {
       'library-storage:get',
       'library-storage:set-policy',
       'library-storage:cleanup',
+      'library-storage:cleanup-videos',
     ]);
   });
 
@@ -160,5 +174,20 @@ describe('library storage handlers', () => {
       storage: { separationBytes: 10 },
     });
     expect(storage.cleanup).toHaveBeenCalledOnce();
+  });
+
+  it('runs video cleanup independently and returns an updated storage snapshot', async () => {
+    const { ipcMain, storage, cleanupVideos, updateConfig } = createHarness();
+    await expect(
+      ipcMain.handlers.get('library-storage:cleanup-videos')(null, {
+        path: 'E:\\private',
+      }),
+    ).resolves.toMatchObject({
+      cleanup: { freedBytes: 12, removedCount: 1, skippedCount: 2 },
+      storage: { songBytes: 10, separationBytes: 18 },
+    });
+    expect(cleanupVideos).toHaveBeenCalledExactlyOnceWith();
+    expect(storage.cleanup).not.toHaveBeenCalled();
+    expect(updateConfig).not.toHaveBeenCalled();
   });
 });

@@ -115,6 +115,17 @@ async function handleCleanupLibraryStorage() {
   if (confirmed) await libraryStorage.cleanup();
 }
 
+async function handleCleanupLibraryVideos() {
+  const confirmed = await confirmAction({
+    title: t('librarySettings.storage.videos.title'),
+    message: t('librarySettings.storage.videos.message'),
+    detail: t('librarySettings.storage.videos.detail'),
+    confirmLabel: t('librarySettings.storage.videos.cleanup'),
+    intent: 'danger',
+  });
+  if (confirmed) await libraryStorage.cleanupVideos();
+}
+
 async function initializeSection() {
   await Promise.all([
     refreshConfig(),
@@ -216,11 +227,13 @@ onUnmounted(() => libraryStorage.dispose());
       :loading="libraryStorage.loading.value"
       :saving="libraryStorage.saving.value"
       :cleaning="libraryStorage.cleaning.value"
+      :cleaning-videos="libraryStorage.cleaningVideos.value"
       :error="libraryStorage.saveError.value"
       :read-error="libraryStorage.readError.value"
       @refresh="libraryStorage.refresh"
       @set-policy="libraryStorage.setPolicy"
       @cleanup="handleCleanupLibraryStorage"
+      @cleanup-videos="handleCleanupLibraryVideos"
     />
 
     <LibraryMetadataSettingsRow :disabled="libraryUnavailable" />

@@ -13,6 +13,7 @@ import TrackContextPanel from './TrackContextPanel.vue';
 import TrackContextActions from './TrackContextActions.vue';
 import TrackArtistPreview from './TrackArtistPreview.vue';
 import TrackContextHero from './TrackContextHero.vue';
+import TrackContextHeroIdentity from './TrackContextHeroIdentity.vue';
 import TrackLyricsPreview from './TrackLyricsPreview.vue';
 import TrackQueuePreview from './TrackQueuePreview.vue';
 import TrackCapabilityItem from './TrackCapabilityItem.vue';
@@ -54,6 +55,7 @@ for (const [component, filename] of [
   [TrackContextActions, './TrackContextActions.vue'],
   [TrackArtistPreview, './TrackArtistPreview.vue'],
   [TrackContextHero, './TrackContextHero.vue'],
+  [TrackContextHeroIdentity, './TrackContextHeroIdentity.vue'],
   [TrackLyricsPreview, './TrackLyricsPreview.vue'],
   [TrackQueuePreview, './TrackQueuePreview.vue'],
   [TrackCapabilityItem, './TrackCapabilityItem.vue'],
@@ -186,6 +188,51 @@ function mountPanel(overrides = {}) {
 }
 
 describe('TrackContextPanel', () => {
+  it.each([
+    [false, false, '', true],
+    [true, false, '切換至影片', true],
+    [true, true, '切換至音訊', false],
+  ])(
+    'shows one media surface and the appropriate switch',
+    (videoAvailable, showingVideo, label, hasArtwork) => {
+      const onToggleVideo = vi.fn();
+      const { app, root } = mount(
+        TrackContextPanel,
+        { currentTrack, videoAvailable, showingVideo, onToggleVideo },
+        { video: () => 'MV fixture' },
+      );
+      const hero = findAll(
+        root,
+        (node) =>
+          node.type === 'article' &&
+          String(node.props?.class ?? '').includes('track-context-hero'),
+      )[0];
+      const hasCover =
+        findAll(hero, (node) =>
+          String(node.props?.class ?? '').includes('ui-track-thumb'),
+        ).length > 0;
+      const switches = findAll(
+        root,
+        (node) =>
+          node.type === 'button' &&
+          String(node.props?.class ?? '').includes(
+            'studio-context-inspector__video-toggle',
+          ),
+      );
+
+      expect(hasCover).toBe(hasArtwork);
+      expect(textContent(hero).includes('MV fixture')).toBe(showingVideo);
+      expect(switches.map(textContent)).toEqual(label ? [label] : []);
+      if (label) {
+        expect(switches[0].props.class).toContain('ui-btn--secondary');
+        expect(switches[0].props.class).toContain('ui-btn--pill');
+        trigger(switches[0], 'onClick');
+        expect(onToggleVideo).toHaveBeenCalledOnce();
+      }
+      app.unmount();
+    },
+  );
+
   it('moves the playlist destination into the one-row Dock header', () => {
     const { app, root, onCollapse, onNavigateSource } = mountPanel();
     const header = findAll(root, (node) => node.type === 'header')[0];
@@ -315,7 +362,7 @@ describe('TrackContextPanel', () => {
   it('prevents accidental selection across passive playback copy', () => {
     const passiveCopySources = [
       './TrackContextPanel.vue',
-      './TrackContextHero.vue',
+      './TrackContextHeroIdentity.vue',
       './TrackLyricsPreview.vue',
       './TrackArtistPreview.vue',
       './TrackQueuePreview.vue',
@@ -423,7 +470,8 @@ describe('TrackContextPanel', () => {
     expect(textContent(lyricsSection)).toContain('正在播放的歌詞');
     expect(textContent(lyricsSection)).toContain('接下來的一行');
     expect(textContent(lyricsSection)).not.toContain('手動匯入 / 演出修訂版');
-    expect(openLyrics.props.class).toContain('ui-btn--ghost');
+    expect(openLyrics.props.class).toContain('ui-btn--secondary');
+    expect(openLyrics.props.class).toContain('ui-btn--pill');
     trigger(openLyrics, 'onClick');
     expect(onOpenLyrics).toHaveBeenCalledOnce();
     expect(onCollapse).not.toHaveBeenCalled();
@@ -525,7 +573,8 @@ describe('TrackContextPanel', () => {
     expect(textContent(artistSection)).toContain('本機 4 首 · 2 張專輯');
     expect(textContent(artistSection)).not.toContain('本機收錄');
     expect(photo).toBeTruthy();
-    expect(artistCta.props.class).toContain('ui-btn--ghost');
+    expect(artistCta.props.class).toContain('ui-btn--secondary');
+    expect(artistCta.props.class).toContain('ui-btn--pill');
     trigger(artistCta, 'onClick');
     expect(onOpenArtist).toHaveBeenCalledOnce();
     expect(onCollapse).not.toHaveBeenCalled();
@@ -588,6 +637,8 @@ describe('TrackContextPanel', () => {
     expect(text).not.toContain('共 1000 首');
     expect(artworkAction).toBeTruthy();
     expect(menuAction).toBeTruthy();
+    expect(openQueue.props.class).toContain('ui-btn--secondary');
+    expect(openQueue.props.class).toContain('ui-btn--pill');
     trigger(artworkAction, 'onClick', { stopPropagation: vi.fn() });
     expect(onToggleQueueTrackPlayback).toHaveBeenCalledWith(longQueue[0]);
     trigger(openQueue, 'onClick');

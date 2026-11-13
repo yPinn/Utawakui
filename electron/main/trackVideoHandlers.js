@@ -6,28 +6,39 @@ const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 const { promisify } = require('node:util');
-const { atomicWriteExclusiveText } = require('../lib/atomicWrite');
 const { isBoundedTrackId } = require('../lib/library/paths');
 const {
+  cleanupTrackVideos,
   fileStat,
+  MAX_ALIGNMENT_SECONDS,
   MAX_OFFSET_MS,
   MAX_VIDEO_BYTES,
   readTrackVideo,
+  readVideoSegments,
   resolveTrackVideoPath,
   trackVideoSource,
   videoPath,
   VIDEO_MANIFEST,
   VIDEO_REVISION,
+  writeTrackVideo,
 } = require('../lib/library/trackVideo');
-const { planVideoFormats } = require('../lib/trackVideoFormats');
+const {
+  planVideoFormats,
+  planVideoReference,
+} = require('../lib/trackVideoFormats');
 const { VIDEO_ID_RE, extractVideoId } = require('../lib/youtube');
 const { classifyPlaybackKind } = require('../lib/importResolver');
+const {
+  createTrackVideoAlignment,
+  problem,
+  readAlignment,
+  progressPrefix,
+  validateOffset,
+} = require('./trackVideoAlignment');
+const { watchUrl } = require('../lib/youtubeAttempts');
 
 const exec = promisify(execFile);
-const progressPrefix = 'UTAWAKUI_MV ';
 const fixtureHeights = [720, 1080, 1440];
-
-const watchUrl = (id) => `https://www.youtube.com/watch?v=${id}`;
 
 function sourceKind(data) {
   const kind = classifyPlaybackKind({
@@ -65,10 +76,6 @@ function recordedSource(context) {
   }
 }
 
-function problem(code) {
-  return Object.assign(new Error(code), { code });
-}
-
 async function inspectTrackVideo(filePath, ffmpeg, signal) {
   const sizeBytes = (await fsp.lstat(filePath)).size;
   if (sizeBytes > MAX_VIDEO_BYTES) throw problem('space');
@@ -95,8 +102,8 @@ async function inspectTrackVideo(filePath, ffmpeg, signal) {
     ],
     { windowsHide: true, timeout: 20_000, signal, maxBuffer: 256 * 1024 },
   );
-  const stream = stderr
-    .split('Stream mapping:')[0]
+  const streams = stderr.split('Stream mapping:')[0];
+  const stream = streams
     .split(/\r?\n/u)
     .find((line) => /Video: h264\b/u.test(line));
   const dimensions = stream?.match(/\b(\d{2,5})x(\d{2,5})\b/u);
@@ -104,7 +111,13 @@ async function inspectTrackVideo(filePath, ffmpeg, signal) {
   const duration = time && +time[1] * 3600 + +time[2] * 60 + +time[3];
   if (!dimensions || !duration || /smpte2084|arib-std-b67/u.test(stream))
     throw problem('invalid-video');
-  return { width: +dimensions[1], height: +dimensions[2], duration, sizeBytes };
+  return {
+    width: +dimensions[1],
+    height: +dimensions[2],
+    duration,
+    sizeBytes,
+    hasAudio: /Stream #\d+:\d+[^\r\n]*:\s*Audio:/u.test(streams),
+  };
 }
 
 function registerTrackVideoHandlers({
@@ -119,10 +132,31 @@ function registerTrackVideoHandlers({
   onChange,
   openExternal,
   fixture = null,
+  inspectVideo = inspectTrackVideo,
+  estimateAlignment,
 }) {
   let offer;
   let draft;
   let job;
+  const aligner = createTrackVideoAlignment({
+    getContext,
+    stillCurrent,
+    savedView,
+    requireProvider,
+    cleanup,
+    recordDiagnostic,
+    onChange,
+    getFfmpeg,
+    getProviderRunner,
+    inspectVideo,
+    estimateAlignment,
+    jobs: {
+      get: () => job,
+      set: (value) => {
+        job = value;
+      },
+    },
+  });
 
   function getContext(trackId) {
     const { dir, epoch } = getScope();
@@ -175,8 +209,11 @@ function registerTrackVideoHandlers({
       context.trackId,
       saved.revision,
     );
+    const segments = readVideoSegments(saved.syncSegments, saved.duration);
     return {
       available: Boolean(active),
+      revision: saved.revision,
+      ...(segments && { syncSegments: segments }),
       width: Number(saved.width) || 0,
       height: Number(saved.height) || 0,
       duration: Number(saved.duration) || 0,
@@ -189,6 +226,33 @@ function registerTrackVideoHandlers({
         ? `utawakui-media://track-video/${encodeURIComponent(context.trackId)}/${saved.revision}`
         : null,
     };
+  }
+
+  function publishVideo(item, offsetMs, useSegments) {
+    const { context, token } = item;
+    const old = readTrackVideo(context);
+    const destination = videoPath(context.trackDir, token);
+    fs.renameSync(item.filePath, destination);
+    try {
+      writeTrackVideo(context.trackDir, {
+        version: 1,
+        revision: token,
+        binding: context.binding,
+        offsetMs,
+        ...item.metadata,
+        ...(item.sourceVideoId && { sourceVideoId: item.sourceVideoId }),
+        ...(item.syncSegments &&
+          useSegments !== false && { syncSegments: item.syncSegments }),
+      });
+    } catch (error) {
+      fs.renameSync(destination, item.filePath);
+      throw error;
+    }
+    if (draft === item) draft = null;
+    cleanup(item.stage, true);
+    if (old) cleanup(videoPath(context.trackDir, old.revision));
+    onChange?.(context.trackId);
+    return { status: 'ok', video: savedView(context) };
   }
 
   async function acquire(context, kind, take, reserved = null) {
@@ -205,30 +269,71 @@ function registerTrackVideoHandlers({
       clearDraft();
       stage = await fsp.mkdtemp(path.join(context.trackDir, '.video-stage-'));
       const filePath = path.join(stage, 'video.mp4');
-      await take(filePath, controller.signal, current);
+      const getReference = await take(filePath, controller.signal, current);
       controller.signal.throwIfAborted();
       if (!fileStat(filePath)) throw problem('invalid-video');
       current.kind = 'validating';
-      let metadata;
+      let inspected;
       try {
-        metadata = await inspectTrackVideo(filePath, ffmpeg, controller.signal);
+        inspected = await inspectVideo(filePath, ffmpeg, controller.signal);
       } catch (error) {
         if (controller.signal.aborted || error.code === 'space') throw error;
         throw problem('invalid-video');
       }
+      const { hasAudio, ...metadata } = inspected;
       if (
         current.expectedHeight &&
         metadata.height !== current.expectedHeight
       ) {
         throw problem('invalid-video');
       }
+      let alignment;
+      let reason = current.sourceVideoId
+        ? 'reference-unavailable'
+        : 'missing-reference';
+      if (metadata.duration > MAX_ALIGNMENT_SECONDS) reason = 'duration-limit';
+      else if (hasAudio || getReference) {
+        current.kind = 'aligning';
+        current.progress = null;
+        ({ alignment, reason } = await aligner.suggest(
+          context,
+          filePath,
+          ffmpeg,
+          hasAudio,
+          getReference,
+          controller.signal,
+        ));
+      }
       controller.signal.throwIfAborted();
       if (!stillCurrent(context)) throw problem('stale');
-      draft = { context, token, stage, filePath, metadata };
+      const suggestion = readAlignment(alignment, metadata.duration);
+      const item = {
+        context,
+        token,
+        stage,
+        filePath,
+        metadata,
+        sourceVideoId: current.sourceVideoId,
+        syncSegments: suggestion?.segments ?? null,
+      };
+      if (suggestion?.autoApply) {
+        if (current.sourceVideoId) requireProvider();
+        return publishVideo(item, suggestion.offsetMs, true);
+      }
+      draft = item;
+      const reviewRange = suggestion?.reviewRange;
       return {
         status: 'candidate',
         token,
         ...metadata,
+        reason: reviewRange
+          ? 'partial-offset'
+          : suggestion
+            ? 'partial-match'
+            : (reason ?? 'insufficient-match'),
+        suggestedOffsetMs: suggestion?.offsetMs ?? null,
+        ...(reviewRange && { reviewRange }),
+        ...(item.syncSegments && { segmentCount: item.syncSegments.length }),
         url: `utawakui-media://video-candidate/${encodeURIComponent(context.trackId)}/${token}`,
       };
     } catch (error) {
@@ -338,9 +443,8 @@ function registerTrackVideoHandlers({
             );
         if (controller.signal.aborted) throw problem('cancelled');
         if (!stillCurrent(context)) throw problem('stale');
-        const plan = planVideoFormats(
-          Array.isArray(data?.formats) ? data.formats : [],
-        );
+        const formats = Array.isArray(data?.formats) ? data.formats : [];
+        const plan = planVideoFormats(formats);
         const token = plan.choices.length ? randomUUID() : null;
         if (token)
           offer = {
@@ -348,7 +452,9 @@ function registerTrackVideoHandlers({
             context,
             target,
             isFixture,
+            videoId: isFixture ? null : videoId,
             choices: plan.choices,
+            reference: planVideoReference(formats),
             expires: Date.now() + 15 * 60_000,
           };
         return {
@@ -381,6 +487,7 @@ function registerTrackVideoHandlers({
         'download',
         async (file, signal, current) => {
           current.expectedHeight = choice.height;
+          current.sourceVideoId = chosen.videoId;
           await checkSpace(chosen.context.trackDir, choice.sizeBytes);
           const run = chosen.isFixture
             ? fixture.run
@@ -418,6 +525,10 @@ function registerTrackVideoHandlers({
             },
           );
           if (!chosen.isFixture) requireProvider();
+          return chosen.reference
+            ? () =>
+                aligner.fetchReference(run, chosen, path.dirname(file), signal)
+            : null;
         },
       );
     },
@@ -432,9 +543,10 @@ function registerTrackVideoHandlers({
       if (draft?.context.trackId === trackId) clearDraft();
       return { status: 'ok' };
     },
-    save({ trackId, token, offsetMs }) {
+    save({ trackId, token, offsetMs, useSegments }) {
       const item = draft;
-      if (!Number.isSafeInteger(offsetMs) || Math.abs(offsetMs) > MAX_OFFSET_MS)
+      validateOffset(offsetMs);
+      if (useSegments !== undefined && typeof useSegments !== 'boolean')
         throw problem('invalid-intent');
       if (
         !item ||
@@ -443,34 +555,10 @@ function registerTrackVideoHandlers({
         !stillCurrent(item.context)
       )
         throw problem('stale');
-      const context = item.context;
-      const old = readTrackVideo(context);
-      const destination = videoPath(context.trackDir, token);
-      fs.renameSync(item.filePath, destination);
-      try {
-        atomicWriteExclusiveText(
-          path.join(context.trackDir, VIDEO_MANIFEST),
-          JSON.stringify(
-            {
-              version: 1,
-              revision: token,
-              binding: context.binding,
-              offsetMs,
-              ...item.metadata,
-            },
-            null,
-            2,
-          ),
-        );
-      } catch (error) {
-        fs.renameSync(destination, item.filePath);
-        throw error;
-      }
-      clearDraft();
-      if (old) cleanup(videoPath(context.trackDir, old.revision));
-      onChange?.(trackId);
-      return { status: 'ok', video: savedView(context) };
+      return publishVideo(item, offsetMs, useSegments);
     },
+    align: (input) => aligner.align(input),
+    'set-offset': (input) => aligner.setOffset(input),
     remove({ trackId }) {
       if (job?.context.trackId === trackId) throw problem('busy');
       const context = getContext(trackId);
@@ -490,7 +578,6 @@ function registerTrackVideoHandlers({
     'invalid-intent',
     'invalid-video',
     'no-formats',
-    'provider-disabled',
     'space',
     'stale',
     'unavailable',
@@ -514,6 +601,8 @@ function registerTrackVideoHandlers({
           error.code === 'IMPORT_DOWNLOAD_CANCELLED'
         )
           return { status: 'cancelled' };
+        if (error.code === 'FEATURE_GATE_REQUIRED')
+          return { status: 'provider-disabled' };
         if (publicStatuses.has(error.code)) return { status: error.code };
         if (error.code === 'ENOSPC') return { status: 'space' };
         if (error.code === 'FEATURE_DEPENDENCY_MISSING')
@@ -532,6 +621,31 @@ function registerTrackVideoHandlers({
   }
 
   return {
+    cleanupLibraryVideos() {
+      const { dir, epoch } = getScope();
+      const protectedTrackIds = [job?.context, draft?.context]
+        .filter((context) => context?.dir === dir && context.epoch === epoch)
+        .map(({ trackId }) => trackId);
+      const result = cleanupTrackVideos(dir, {
+        protectedTrackIds,
+        onError(error) {
+          try {
+            recordDiagnostic?.({
+              process: 'main',
+              level: 'warning',
+              source: 'track-video',
+              operation: 'cleanup-library-videos',
+              code: 'TRACK_VIDEO_CLEANUP_FAILED',
+              error,
+            });
+          } catch {
+            // Continue cleaning other tracks if diagnostics are unavailable.
+          }
+        },
+      });
+      if (result.removedCount > 0) onChange?.(null);
+      return result;
+    },
     resolveCandidate(dir, trackId, token) {
       const item = draft;
       return item &&
@@ -545,6 +659,7 @@ function registerTrackVideoHandlers({
     },
     invalidate() {
       offer = null;
+      aligner.invalidate();
       job?.controller.abort(problem('stale'));
       clearDraft();
     },

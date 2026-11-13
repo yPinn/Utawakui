@@ -192,8 +192,8 @@
 - 本機匯入 `library/importLocal.js` 在 library root 的隱藏 staging 非同步複製與計算 SHA-256，以 `music-metadata` 驗證容器、codec、時長與有界 tag／封面，通過後原子移入 `tracks/<trackId>/`，索引失敗即回滾。`library/constants.js` 的 direct-play registry 是 picker、allowlist、MIME 與驗證的單一來源。
 - 相容轉檔（[ADR 0024](adr/0024-explicit-local-audio-compatibility-transcoding.md)）：首次選檔只把路徑放入 15 分鐘、記憶體內、one-shot 的 review session，renderer 只拿到 UUID、basename 與格式碼。確認後重查 `audio-processing-flow` 與 FFmpeg，以固定參數輸出到 staging，再走完整 FLAC 驗證與原子移入；原檔不改，`library.json` 只存原 basename、`sourceFormat` 與 `conversionFormat: flac`。
 - 媒體經 `utawakui-media:` 交付：scheme 與 handler 在 `electron/main/mediaScheme.js`／`mediaProtocol.js`，`electron/lib/` 只提供 path／range 工具；resolver 只接受 track id 與 allowlisted asset 名稱。
-- 本機 MV 由 `trackVideoHandlers.js` 管理影片暫存、yt-dlp 進度、驗檔與套用，媒體路由只提供暫存候選或目前 manifest 影片修訂。歌詞影片版與播放資訊欄共用桌面影片元件，依本機音訊時計和監聽延遲顯示。曲目詳情的 YouTube 原聲預覽按需載入，`youtubePreview.js` 只識別主視窗的官方 embed 請求。見[本機曲目影片契約](contracts/local-track-video.md)。
-- 空間：`library/storage.js` 依 allowlisted 結構掃描實際大小；`libraryStorageHandlers.js` 只有 inspect／set-policy／cleanup 固定 IPC。見[空間管理契約](contracts/library-storage-management.md)。
+- 本機 MV 由 `trackVideoHandlers.js` 管理影片暫存、yt-dlp 進度、驗檔與套用；`trackVideoAlignment.js` 持有參考音軌、偏移建議與已存影片重新估算。`trackVideoSync.js` 以 FFmpeg 解碼，交由獨立 FFT worker 估算固定或分段偏移並判斷能否直接套用，參考音軌與影片工作共用取消及來源驗證。Main 在取得流程中直接發布可信結果，需確認的影片由 Renderer 以候選 token 套用。已存影片的分段候選由 Main 綁定影片修訂，儲存時只接受短期 token。媒體路由只提供暫存候選或目前 manifest 影片修訂。歌詞影片版與播放資訊欄共用桌面影片元件，依本機音訊時計和監聽延遲顯示。曲目詳情的 YouTube 原聲預覽按需載入，`youtubePreview.js` 只識別主視窗的官方 embed 請求。見[本機曲目影片契約](contracts/local-track-video.md)。
+- 空間：`library/storage.js` 依 allowlisted 結構掃描實際大小；`libraryStorageHandlers.js` 持有容量、去人聲政策及手動清理 IPC。手動影片清理重用 `trackVideoHandlers.js` 的目前曲庫、工作保護及影片刷新。見[空間管理契約](contracts/library-storage-management.md)。
 - 播放紀錄：`playbackPersistence.js` 保存到 userData，歷史檔另含 Sidebar 排序用的來源時間；同一 qualified event 也更新 main 私有的 `playback-usage.json`（去人聲 LRU 用的 `lastPlayedAt` 與只讀投影的 `playCount`）。
 
 ### 藝人、照片與封面

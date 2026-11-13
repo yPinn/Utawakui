@@ -177,7 +177,7 @@ describe('packaged dependency boundary', () => {
           expect(WAVEFORM_RUNTIME_PACKAGES).toContain(dependency);
     }
   });
-  it('ships only built app-owned entries and unpacks four process entry bundles', () => {
+  it('ships only built app-owned entries and unpacks five process entry bundles', () => {
     expect(builder.beforePack).toBe('scripts/beforePackReleaseRuntime.cjs');
     expect(builder.extraMetadata.main).toBe('runtime/main.cjs');
     expect(builder.files).toContain('runtime/*.cjs');
@@ -187,6 +187,7 @@ describe('packaged dependency boundary', () => {
     ).toEqual([
       'runtime/reading.cjs',
       'runtime/waveform.cjs',
+      'runtime/video-sync.cjs',
       'runtime/separation.cjs',
       'runtime/probe.cjs',
     ]);

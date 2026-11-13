@@ -29,6 +29,11 @@ const RUNTIME_ENTRIES = Object.freeze({
     file: 'waveform.cjs',
     physical: true,
   },
+  videoSyncWorker: {
+    source: 'electron/lib/trackVideoSyncWorker.js',
+    file: 'video-sync.cjs',
+    physical: true,
+  },
 });
 
 function resolveRuntimeEntry(appRoot, key) {

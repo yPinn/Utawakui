@@ -59,6 +59,12 @@ v0.5.3 已發布，使用者可見範圍見[發行說明](releases/v0.5.3.md)。
 | 音訊分離           | `quick`／`general` 序列處理、導唱、DirectML 與建立失敗時的 CPU 回退。                 | 沿用 WAV。                                                                                                    | 使用 0.5.2 版號的隔離封裝曾完成 OBS 錄影下的整批效能驗證；該證據來自公開 tag 後的快照。隔離工廠已有 FLAC 5 驗證及 WAV 回退，公開入口維持關閉。[DirectML 驗收](adr/0017-directml-execution-provider-for-mdx-separation.md#batch-queue-and-obs-acceptance) · [輸出格式](contracts/separation-output-format.md) |
 | 診斷與回饋         | 功能啟用確認、遮蔽敏感資訊的診斷匯出、回饋預覽與同意後的自動錯誤回報。                | 功能告知及常用錯誤訊息補上英文。                                                                              | 回饋 relay 依部署而定。[回饋](adr/0016-user-feedback-intake.md) · [自動回報](adr/0029-consented-automatic-error-reports.md)                                                                                                                                                                                  |
 
+v0.6.0 工作樹變更如下。
+
+| 項目     | 已實作                                                                                                                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 本機影片 | 匯入或下載後自動套用可信的固定或分段對時，需要確認時可換來源或手動調整。已加入的影片可重新估算。播放時依音源時間定位畫面。設定可手動清理歌曲影片。[本機曲目影片](contracts/local-track-video.md) |
+
 另有開發或隔離功能。聲學歌詞估計可手動準備環境並逐句執行，正式模型下載與人工時間品質仍待驗；BPM／節拍分析已有可執行路徑，公開前需通過準確度、離線及介面驗收。原唱音高預覽、Mic 電平與 Spout2 仍屬開發或原型，Mic 監聽／錄音與正式 Spout2 支援尚未開放。[聲學估計](contracts/lyrics-acoustic-estimate-contract.md) · [音樂分析](contracts/music-analysis.md) · [原唱音高](research/audio/reference-pitch-note-boundary-summary-2026-11-06.md) · [Mic](contracts/microphone-level-research.md) · [Spout2](operations/manual-acceptance.md#spout2)
 
 ## 4. 產品與資料邊界

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppView } from '../composables/useAppView.js';
 import { useArtistIndex } from '../composables/useArtistIndex.js';
@@ -20,10 +20,13 @@ import {
 import TrackContextPanel from '../components/playback/context/TrackContextPanel.vue';
 import TrackVideoPlayback from '../components/playback/TrackVideoPlayback.vue';
 import { useLyricsVideoMode } from '../composables/useLyricsVideoMode.js';
+import { useTrackVideoAsset } from '../composables/useTrackVideoAsset.js';
 import { t } from '../utils/i18n.js';
 
 const emit = defineEmits(['collapse', 'openQueue']);
-defineProps({ videoActive: { type: Boolean, default: false } });
+const { videoActive } = defineProps({
+  videoActive: { type: Boolean, default: false },
+});
 const { active: lyricsVideoActive } = useLyricsVideoMode();
 
 const {
@@ -31,6 +34,18 @@ const {
   playTrack,
   toggle: togglePlayerPlayback,
 } = usePlayer();
+const dockVideoEnabled = computed(
+  () => videoActive && !lyricsVideoActive.value,
+);
+const { asset: dockVideo } = useTrackVideoAsset({
+  trackId: () => playerState.track?.id,
+  enabled: dockVideoEnabled,
+});
+const prefersVideo = shallowRef(false);
+const videoAvailable = computed(
+  () => dockVideoEnabled.value && Boolean(dockVideo.value),
+);
+const showingVideo = computed(() => videoAvailable.value && prefersVideo.value);
 const {
   state: queueState,
   currentTrack: queueCurrentTrack,
@@ -174,15 +189,18 @@ const readiness = computed(() =>
     :lyrics-loading="lyricsLoading"
     :artist-summary="artistSummary"
     :readiness="readiness"
+    :video-available="videoAvailable"
+    :showing-video="showingVideo"
     @navigate-source="navigateToQueueSource"
     @open-artist="openArtist"
     @open-lyrics="openLyrics"
     @open-queue="emit('openQueue')"
     @toggle-queue-track-playback="toggleUpcomingTrackPlayback"
     @collapse="emit('collapse')"
+    @toggle-video="prefersVideo = !prefersVideo"
   >
     <template #video>
-      <TrackVideoPlayback :active="videoActive && !lyricsVideoActive" />
+      <TrackVideoPlayback v-if="dockVideo" :asset="dockVideo" />
     </template>
   </TrackContextPanel>
 </template>

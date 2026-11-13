@@ -1401,14 +1401,6 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       service: playbackPersistence,
     });
-    registerLibraryStorageHandlers({
-      ipcMain,
-      getConfig: configState.getConfig,
-      updateConfig: configState.updateConfig,
-      storage: libraryStorageService,
-      recordDiagnostic,
-    });
-
     const videoFixturePort = Number(process.env.UTAWAKUI_MV_FIXTURE_PORT);
     const videoFixture =
       windowState.isDev &&
@@ -1446,6 +1438,14 @@ if (!gotSingleInstanceLock) {
       onChange: notifyTrackVideo,
       openExternal: (url) => shell.openExternal(url),
       fixture: videoFixture,
+    });
+    registerLibraryStorageHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+      storage: libraryStorageService,
+      cleanupVideos: trackVideo.cleanupLibraryVideos,
+      recordDiagnostic,
     });
     app.once('before-quit', trackVideo.invalidate);
     registerMediaProtocol({

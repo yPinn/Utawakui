@@ -35,7 +35,7 @@ const summaryText = computed(() => {
     appearance="contained"
   >
     <template v-if="summary.artistId" #trailing>
-      <UiButton variant="ghost" @click="emit('open')">{{
+      <UiButton variant="secondary" shape="pill" @click="emit('open')">{{
         t('player.context.goToArtist')
       }}</UiButton>
     </template>

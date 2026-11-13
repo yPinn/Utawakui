@@ -27,7 +27,7 @@ function createStorageSession(bridge) {
   const state = reactive({
     loading: false,
     saving: false,
-    cleaning: false,
+    cleaning: '',
     readError: '',
     saveError: '',
   });
@@ -100,21 +100,49 @@ function createStorageSession(bridge) {
     }
   }
 
-  async function cleanup() {
+  async function cleanup(kind = 'separation') {
     if (state.cleaning || state.saving) {
       return false;
     }
 
     ++revision;
     state.loading = false;
-    state.cleaning = true;
+    state.cleaning = kind;
+    const videos = kind === 'videos';
+    const key = videos
+      ? NOTIFICATION_KEYS.LIBRARY_VIDEO_CLEANUP
+      : NOTIFICATION_KEYS.LIBRARY_CLEANUP;
     try {
-      const result = await bridge.cleanupLibraryStorage();
+      const result = await (videos
+        ? bridge.cleanupLibraryVideos()
+        : bridge.cleanupLibraryStorage());
       applySnapshot(result);
       state.readError = '';
+      if (videos) {
+        const { freedBytes, removedCount, skippedCount } = result.cleanup;
+        notifications.notify({
+          key,
+          tone: skippedCount ? 'warning' : 'success',
+          title: t(
+            skippedCount
+              ? 'librarySettings.storage.videos.incomplete'
+              : removedCount
+                ? 'librarySettings.storage.videos.cleaned'
+                : 'librarySettings.storage.videos.nothingToClean',
+          ),
+          message:
+            removedCount || skippedCount
+              ? t('librarySettings.storage.videos.result', {
+                  count: removedCount,
+                  size: formatBytes(freedBytes),
+                })
+              : '',
+        });
+        return true;
+      }
       const freedBytes = result?.cleanup?.freedBytes;
       notifications.notify({
-        key: NOTIFICATION_KEYS.LIBRARY_CLEANUP,
+        key,
         title: t(
           freedBytes > 0
             ? 'librarySettings.storage.cleaned'
@@ -130,14 +158,18 @@ function createStorageSession(bridge) {
       return true;
     } catch {
       notifications.notify({
-        key: NOTIFICATION_KEYS.LIBRARY_CLEANUP,
+        key,
         tone: 'danger',
-        title: t('librarySettings.storage.notCleaned'),
+        title: t(
+          videos
+            ? 'librarySettings.storage.videos.notCleaned'
+            : 'librarySettings.storage.notCleaned',
+        ),
         message: t('librarySettings.storage.retry'),
       });
       return false;
     } finally {
-      state.cleaning = false;
+      state.cleaning = '';
     }
   }
 
@@ -154,14 +186,16 @@ function createStorageSession(bridge) {
     lastCleanup: computed(() => snapshot.value?.cleanup ?? null),
     loading: computed(() => state.loading),
     saving: computed(() => state.saving),
-    cleaning: computed(() => state.cleaning),
+    cleaning: computed(() => Boolean(state.cleaning)),
+    cleaningVideos: computed(() => state.cleaning === 'videos'),
     readError: computed(() => state.readError),
     saveError: computed(() => state.saveError),
     error: computed(() => state.saveError || state.readError),
     initialize,
     refresh,
     setPolicy,
-    cleanup,
+    cleanup: () => cleanup(),
+    cleanupVideos: () => cleanup('videos'),
     dispose,
   };
 }

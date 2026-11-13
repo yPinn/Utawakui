@@ -56,6 +56,13 @@ describe('UiButton destructive consumers', () => {
       'handleCleanupLibraryStorage',
     ],
     [
+      'song video cleanup',
+      '../settings/LibraryStorageSettingsRow.vue',
+      '@click="emit(\'cleanup-videos\')"',
+      '../settings/SettingsLibrarySection.vue',
+      'handleCleanupLibraryVideos',
+    ],
+    [
       'stored OBS password removal',
       '../settings/ObsIntegrationSettingsBlock.vue',
       '@click="emit(\'clearPassword\')"',

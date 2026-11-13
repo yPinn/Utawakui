@@ -6,6 +6,7 @@ export const NOTIFICATION_KEYS = Object.freeze({
   LIBRARY_CLEANUP: 'library-cleanup',
   LIBRARY_DELETE_TRACK: 'library-delete-track',
   LIBRARY_SEPARATION_ENQUEUE: 'library-separation-enqueue',
+  LIBRARY_VIDEO_CLEANUP: 'library-video-cleanup',
   LOCAL_IMPORT_RESULT: 'local-import-result',
   LYRICS_PROVIDER_CORPUS_EXPORT: 'lyrics-provider-corpus-export',
   LYRICS_WAVEFORM: 'lyrics-waveform',

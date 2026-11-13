@@ -180,6 +180,7 @@ const MAIN_INVOKE_CHANNELS = [
   'library:split-artist-credit',
   'library:undo-artist-organization',
   'library-storage:cleanup',
+  'library-storage:cleanup-videos',
   'library-storage:get',
   'library-storage:set-policy',
   'lyrics:backfill-source-labels',
@@ -360,6 +361,8 @@ const MAIN_INVOKE_CHANNELS = [
   'track-video:status',
   'track-video:cancel',
   'track-video:save',
+  'track-video:align',
+  'track-video:set-offset',
   'track-video:remove',
   'window-close:present',
   'window-close:respond',
@@ -2139,6 +2142,7 @@ describe('main preload bridge', () => {
       privatePath: 'E:\\private',
     });
     bridge.cleanupLibraryStorage('E:\\private');
+    bridge.cleanupLibraryVideos('E:\\private');
 
     expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
       ['library-storage:get'],
@@ -2150,6 +2154,7 @@ describe('main preload bridge', () => {
         },
       ],
       ['library-storage:cleanup'],
+      ['library-storage:cleanup-videos'],
     ]);
   });
 

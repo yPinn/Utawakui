@@ -37,9 +37,12 @@ vi.mock('../../../composables/useArtistIndex.js', () => ({
 }));
 
 const { default: TrackContextHero } = await import('./TrackContextHero.vue');
+const { default: TrackContextHeroIdentity } =
+  await import('./TrackContextHeroIdentity.vue');
 
 for (const [component, filename] of [
   [TrackContextHero, './TrackContextHero.vue'],
+  [TrackContextHeroIdentity, './TrackContextHeroIdentity.vue'],
   [UiArtworkOverlay, '../../ui/UiArtworkOverlay.vue'],
   [UiIconButton, '../../ui/UiIconButton.vue'],
   [UiMarqueeText, '../../ui/UiMarqueeText.vue'],
@@ -163,10 +166,9 @@ describe('TrackContextHero', () => {
   });
 
   it('uses the established overlay, type, radius, and spacing tokens', () => {
-    const source = readFileSync(
-      new URL('./TrackContextHero.vue', import.meta.url),
-      'utf8',
-    );
+    const source = ['./TrackContextHero.vue', './TrackContextHeroIdentity.vue']
+      .map((path) => readFileSync(new URL(path, import.meta.url), 'utf8'))
+      .join('\n');
 
     expect(source).toContain('var(--ui-radius-lg)');
     expect(source).toContain('var(--ui-color-overlay-scrim)');
