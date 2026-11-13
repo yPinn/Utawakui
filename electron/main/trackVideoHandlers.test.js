@@ -18,6 +18,8 @@ describe('track video IPC', () => {
   let chooseFile;
   let inspectVideo;
   let estimateAlignment;
+  let protectedTrackIds;
+  let handlers;
 
   function pickFile() {
     const file = path.join(dir, 'source.mp4');
@@ -68,7 +70,8 @@ describe('track video IPC', () => {
       hasAudio: true,
     }));
     estimateAlignment = vi.fn(async () => null);
-    registerTrackVideoHandlers({
+    protectedTrackIds = [];
+    handlers = registerTrackVideoHandlers({
       ipcMain: { handle: (channel, handler) => methods.set(channel, handler) },
       dialog: { showOpenDialog: chooseFile },
       getMainWindow: () => ({ isDestroyed: () => false, webContents }),
@@ -78,6 +81,7 @@ describe('track video IPC', () => {
       requireProvider,
       openExternal,
       onChange,
+      getProtectedTrackIds: () => protectedTrackIds,
       inspectVideo,
       estimateAlignment,
     });
@@ -89,6 +93,22 @@ describe('track video IPC', () => {
   });
 
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+  it('keeps videos of playing or queued tracks during cleanup', async () => {
+    estimateAlignment.mockResolvedValueOnce({
+      offsetMs: 0,
+      segments: null,
+      autoApply: true,
+    });
+    await pickFile();
+    protectedTrackIds = ['track-1'];
+    expect(handlers.cleanupLibraryVideos()).toMatchObject({ removedCount: 0 });
+    expect(fs.readdirSync(trackDir)).toContain('video.json');
+
+    protectedTrackIds = [];
+    expect(handlers.cleanupLibraryVideos()).toMatchObject({ removedCount: 1 });
+    expect(fs.readdirSync(trackDir)).toEqual(['audio.mp3']);
+  });
 
   it('publishes a fixed offset immediately after importing a verified MP4', async () => {
     estimateAlignment.mockResolvedValueOnce({

@@ -129,6 +129,7 @@ function registerTrackVideoHandlers({
   getProviderRunner,
   requireProvider,
   recordDiagnostic,
+  getProtectedTrackIds = () => [],
   onChange,
   openExternal,
   fixture = null,
@@ -623,9 +624,12 @@ function registerTrackVideoHandlers({
   return {
     cleanupLibraryVideos() {
       const { dir, epoch } = getScope();
-      const protectedTrackIds = [job?.context, draft?.context]
-        .filter((context) => context?.dir === dir && context.epoch === epoch)
-        .map(({ trackId }) => trackId);
+      const protectedTrackIds = [
+        ...getProtectedTrackIds(),
+        ...[job?.context, draft?.context]
+          .filter((context) => context?.dir === dir && context.epoch === epoch)
+          .map(({ trackId }) => trackId),
+      ];
       const result = cleanupTrackVideos(dir, {
         protectedTrackIds,
         onError(error) {

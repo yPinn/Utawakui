@@ -85,7 +85,7 @@ describe('library storage', () => {
     });
   });
 
-  it('cleans only manifest-owned videos in the current library and reports protected or locked files', () => {
+  it('cleans only manifest-owned videos in the current library, keeps protected ones and reports locked files', () => {
     const revision = '12345678-1234-1234-1234-123456789abc';
     function addVideo(trackDir) {
       writeSized(path.join(trackDir, 'audio.mp3'), 10);
@@ -131,7 +131,7 @@ describe('library storage', () => {
           protectedTrackIds: ['active'],
           onError,
         }),
-      ).toEqual({ removedCount: 1, skippedCount: 2, freedBytes: 12 });
+      ).toEqual({ removedCount: 1, skippedCount: 1, freedBytes: 12 });
     } finally {
       unlink.mockRestore();
     }

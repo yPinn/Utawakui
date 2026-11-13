@@ -107,14 +107,14 @@ function cleanupTrackVideos(dir, { protectedTrackIds, onError } = {}) {
   for (const entry of fs.readdirSync(tracksRoot, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const trackDir = resolveTrackDir(dir, entry.name);
-    if (!trackDir) continue;
+    if (!trackDir || protectedIds.has(entry.name)) continue;
     try {
       const saved = readTrackVideo({ trackDir });
       if (!saved) continue;
       const file = videoPath(trackDir, saved.revision);
       const stat = fs.lstatSync(file, { throwIfNoEntry: false });
       if (!stat) continue;
-      if (!stat.isFile() || protectedIds.has(entry.name)) {
+      if (!stat.isFile()) {
         result.skippedCount += 1;
         continue;
       }

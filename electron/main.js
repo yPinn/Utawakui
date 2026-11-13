@@ -1194,19 +1194,21 @@ if (!gotSingleInstanceLock) {
     configState.initializeAudioPreferences(
       playbackPersistence.getLegacyAudioPreferences(),
     );
+    // Tracks that are playing or queued; storage cleanup must keep them.
+    const getPlaybackTrackIds = () => {
+      const snapshot = playbackPersistence.getResumeSnapshot();
+      return [
+        windowState.getCurrentPlaybackTrackId(),
+        snapshot?.currentTrackId,
+        ...(snapshot?.queue?.sourceTrackIds || []),
+        ...(snapshot?.queue?.queuedTrackIds || []),
+      ].filter(Boolean);
+    };
     const libraryStorageService = createLibraryStorageService({
       resolveLibraryDir: () =>
         configState.resolveDownloadDir(configState.getConfig()),
       getLastPlayedAtByTrackId: playbackPersistence.getLastPlayedAtByTrackId,
-      getProtectedTrackIds: () => {
-        const snapshot = playbackPersistence.getResumeSnapshot();
-        return [
-          windowState.getCurrentPlaybackTrackId(),
-          snapshot?.currentTrackId,
-          ...(snapshot?.queue?.sourceTrackIds || []),
-          ...(snapshot?.queue?.queuedTrackIds || []),
-        ].filter(Boolean);
-      },
+      getProtectedTrackIds: getPlaybackTrackIds,
       notifyLibraryUpdated,
     });
     const enforceLibraryStoragePolicy = (options) => {
@@ -1435,6 +1437,7 @@ if (!gotSingleInstanceLock) {
       getProviderRunner: providerRunnerManager.getRunner,
       requireProvider: () => requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW),
       recordDiagnostic,
+      getProtectedTrackIds: getPlaybackTrackIds,
       onChange: notifyTrackVideo,
       openExternal: (url) => shell.openExternal(url),
       fixture: videoFixture,
