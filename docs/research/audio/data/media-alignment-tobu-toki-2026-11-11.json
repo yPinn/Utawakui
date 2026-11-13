@@ -1,0 +1,203 @@
+{
+  "date": "2026-11-11",
+  "sourceId": "LVCwdZoUFQ8",
+  "targetId": "ARj1adoUoEU",
+  "targetFormat": "251",
+  "ytDlpVersion": "2026.08.19",
+  "ffmpegVersion": "9.0",
+  "probeSha256": "d74d207034cac7cf1323b13f4c3981b5598ef918d5b2fcce82e89eb666c14d46",
+  "analysisSampleRate": 4000,
+  "nativeTailCheck": {
+    "sampleRate": 48000,
+    "channels": 2,
+    "startSampleFrame": 12134940,
+    "sampleFrames": 73370,
+    "allZero": true
+  },
+  "evidence": {
+    "algorithm": "pcm-window-ncc-v1",
+    "sourceSha256": "17bf8b01d57c22a94cac3723748be64006feea1f865143012efadada2b905f97",
+    "targetSha256": "db0a38aa6e87f63bcf87aed723a6ae398d69329a4101be749246166315c8b671",
+    "lyricsSourceSha256": "d645f1c1359efe847007452d52251fc04f0cd5666832669d83526c4412bd25a0",
+    "sourceDurationMs": 252811.25,
+    "targetDurationMs": 254339.75,
+    "coverage": 0.9888800439062739,
+    "segments": [
+      {
+        "sourceStartMs": 0.0,
+        "sourceEndMs": 246000.0,
+        "targetStartMs": 0.0,
+        "rate": 1,
+        "anchorCount": 489,
+        "minimumScore": 0.999434
+      },
+      {
+        "sourceStartMs": 247000.0,
+        "sourceEndMs": 251000.0,
+        "targetStartMs": 247000.0,
+        "rate": 1,
+        "anchorCount": 5,
+        "minimumScore": 0.999666
+      }
+    ],
+    "anchorCounts": {
+      "matched": 494,
+      "ambiguous": 7,
+      "silent": 1
+    },
+    "totalSeconds": 13.586609,
+    "unmappedSource": [
+      {
+        "startMs": 246000.0,
+        "endMs": 247000.0
+      },
+      {
+        "startMs": 251000.0,
+        "endMs": 252811.25
+      }
+    ],
+    "unmappedTarget": [
+      {
+        "startMs": 246000.0,
+        "endMs": 247000.0
+      },
+      {
+        "startMs": 251000.0,
+        "endMs": 254339.75
+      }
+    ],
+    "extraTargetTailAt4kHz": {
+      "samples": 6114,
+      "allZero": true,
+      "rmsDbfs": null
+    },
+    "localChecks": [
+      {
+        "sourceSeconds": 2,
+        "offsetMs": 0.0,
+        "ncc": 0.9996329
+      },
+      {
+        "sourceSeconds": 20,
+        "offsetMs": 0.0,
+        "ncc": 0.9998219
+      },
+      {
+        "sourceSeconds": 60,
+        "offsetMs": 0.0,
+        "ncc": 0.9996922
+      },
+      {
+        "sourceSeconds": 126,
+        "offsetMs": 0.0,
+        "ncc": 0.999744
+      },
+      {
+        "sourceSeconds": 190,
+        "offsetMs": 0.0,
+        "ncc": 0.9997254
+      },
+      {
+        "sourceSeconds": 239,
+        "offsetMs": 0.0,
+        "ncc": 0.9997736
+      },
+      {
+        "sourceSeconds": 246,
+        "offsetMs": 0.0,
+        "ncc": 0.9998186
+      },
+      {
+        "sourceSeconds": 248,
+        "offsetMs": 0.0,
+        "ncc": 0.9996676
+      },
+      {
+        "sourceSeconds": 250,
+        "offsetMs": 0.0,
+        "ncc": 0.9997961
+      }
+    ],
+    "lyrics": {
+      "lines": 53,
+      "mapped": 53,
+      "review": 0,
+      "shiftedStarts": 0,
+      "roundTrip": 53
+    },
+    "edited": {
+      "metrics": {
+        "expectedSharedPoints": 540,
+        "matchedPoints": 540,
+        "unmappedSharedPoints": 0,
+        "wrongOrUnsupportedPoints": 0,
+        "maximumMappedErrorMs": 0.0,
+        "sharedCoverage": 1.0
+      },
+      "segments": [
+        {
+          "sourceStartMs": 0.0,
+          "sourceEndMs": 20000.0,
+          "targetStartMs": 2000.0,
+          "rate": 1,
+          "anchorCount": 37,
+          "minimumScore": 1.0
+        },
+        {
+          "sourceStartMs": 20000.0,
+          "sourceEndMs": 40000.0,
+          "targetStartMs": 25000.0,
+          "rate": 1,
+          "anchorCount": 37,
+          "minimumScore": 1.0
+        },
+        {
+          "sourceStartMs": 46000.0,
+          "sourceEndMs": 60000.0,
+          "targetStartMs": 45000.0,
+          "rate": 1,
+          "anchorCount": 25,
+          "minimumScore": 1.0
+        }
+      ],
+      "lyrics": {
+        "lines": 12,
+        "mapped": 11,
+        "review": 1,
+        "shiftedStarts": 11,
+        "roundTrip": 11
+      }
+    },
+    "mp3": {
+      "metrics": {
+        "expectedSharedPoints": 600,
+        "matchedPoints": 600,
+        "unmappedSharedPoints": 0,
+        "wrongOrUnsupportedPoints": 0,
+        "maximumMappedErrorMs": 0.0,
+        "sharedCoverage": 1.0
+      },
+      "segments": [
+        {
+          "sourceStartMs": 0.0,
+          "sourceEndMs": 60000.0,
+          "targetStartMs": 2000.0,
+          "rate": 1,
+          "anchorCount": 117,
+          "minimumScore": 0.99648
+        }
+      ]
+    },
+    "unrelated": {
+      "status": "no-match",
+      "metrics": {
+        "expectedSharedPoints": 0,
+        "matchedPoints": 0,
+        "unmappedSharedPoints": 0,
+        "wrongOrUnsupportedPoints": 0,
+        "maximumMappedErrorMs": null,
+        "sharedCoverage": null
+      }
+    }
+  }
+}

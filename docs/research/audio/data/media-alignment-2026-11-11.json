@@ -1,0 +1,136 @@
+{
+  "syntheticOnly": true,
+  "python": "3.14.0",
+  "numpy": "2.5.1",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "scoringStepMs": 100,
+  "scoringToleranceMs": 100,
+  "fixtureFamily": "harmonic-percussive-non-vocal",
+  "holdoutSeeds": [21, 71, 81, 111, 121],
+  "regressionSeeds": [918],
+  "scriptSha256": {
+    "probe.py": "d74d207034cac7cf1323b13f4c3981b5598ef918d5b2fcce82e89eb666c14d46",
+    "fixtures.py": "f453278bc7c03a9ec9156ff1d7e31d27ccef9e52e1b2fcde882bbe0ee54603f4",
+    "evaluate.py": "f9131b97f2445e69061289627af050fec947859c1ce3b2168fc8e1fdc9701923"
+  },
+  "cases": [
+    {
+      "name": "padding-gain",
+      "status": "candidate",
+      "analysisSeconds": 0.168531,
+      "segments": 1,
+      "expectedSharedPoints": 240,
+      "matchedPoints": 240,
+      "unmappedSharedPoints": 0,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": 0.0,
+      "sharedCoverage": 1.0
+    },
+    {
+      "name": "source-intro-removed",
+      "status": "candidate",
+      "analysisSeconds": 0.129077,
+      "segments": 1,
+      "expectedSharedPoints": 220,
+      "matchedPoints": 220,
+      "unmappedSharedPoints": 0,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": 0.0,
+      "sharedCoverage": 1.0
+    },
+    {
+      "name": "insert-delete",
+      "status": "candidate",
+      "analysisSeconds": 0.133916,
+      "segments": 3,
+      "expectedSharedPoints": 210,
+      "matchedPoints": 210,
+      "unmappedSharedPoints": 0,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": 0.0,
+      "sharedCoverage": 1.0
+    },
+    {
+      "name": "off-grid-edit",
+      "status": "candidate",
+      "analysisSeconds": 0.141114,
+      "segments": 2,
+      "expectedSharedPoints": 240,
+      "matchedPoints": 235,
+      "unmappedSharedPoints": 5,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": 0.0,
+      "sharedCoverage": 0.9791666666666666
+    },
+    {
+      "name": "repeated",
+      "status": "no-match",
+      "analysisSeconds": 0.011309,
+      "segments": 0,
+      "expectedSharedPoints": 0,
+      "matchedPoints": 0,
+      "unmappedSharedPoints": 0,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": null,
+      "sharedCoverage": null
+    },
+    {
+      "name": "unrelated",
+      "status": "no-match",
+      "analysisSeconds": 0.129399,
+      "segments": 0,
+      "expectedSharedPoints": 0,
+      "matchedPoints": 0,
+      "unmappedSharedPoints": 0,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": null,
+      "sharedCoverage": null
+    },
+    {
+      "name": "silence",
+      "status": "no-match",
+      "analysisSeconds": 0.133592,
+      "segments": 0,
+      "expectedSharedPoints": 0,
+      "matchedPoints": 0,
+      "unmappedSharedPoints": 0,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": null,
+      "sharedCoverage": null
+    },
+    {
+      "name": "rate-drift-unsupported",
+      "status": "no-match",
+      "analysisSeconds": 0.123175,
+      "segments": 0,
+      "expectedSharedPoints": 240,
+      "matchedPoints": 0,
+      "unmappedSharedPoints": 240,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": null,
+      "sharedCoverage": 0.0
+    },
+    {
+      "name": "slow-drift-regression",
+      "status": "unstable-offset",
+      "analysisSeconds": 3.064625,
+      "segments": 0,
+      "expectedSharedPoints": 1200,
+      "matchedPoints": 0,
+      "unmappedSharedPoints": 1200,
+      "wrongOrUnsupportedPoints": 0,
+      "maximumMappedErrorMs": null,
+      "sharedCoverage": 0.0
+    }
+  ],
+  "fourMinute": {
+    "analysisSeconds": 12.645177,
+    "totalSeconds": 12.77231,
+    "expectedSharedPoints": 2400,
+    "matchedPoints": 2400,
+    "unmappedSharedPoints": 0,
+    "wrongOrUnsupportedPoints": 0,
+    "maximumMappedErrorMs": 0.0,
+    "sharedCoverage": 1.0
+  }
+}

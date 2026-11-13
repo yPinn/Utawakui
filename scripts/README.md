@@ -29,6 +29,8 @@
 
 ## 手動與研究工具
 
+- [音訊／MV 時間對照探針](research/mediaAlignment/README.md)：本機同錄音的離線配對與既有歌詞時間搬移，使用既有 NumPy／FFmpeg；不寫曲庫，不由正式 App 載入。
+
 Windows 快捷鍵 helper 可用 `node scripts/build-keyboard-shortcut-helper.mjs` 單獨重建；正式 beforePack 會在 runtime bundle 後自動執行。需 Windows x64 Framework compiler，產物進 ignored `.build/`；不在產品啟動時編譯或下載。固定資源與驗證見[全域快捷鍵契約](../docs/contracts/global-keyboard-shortcuts.md#windows-helper-與實體資源)。
 
 下列工具保留直接執行方式，不為每支工具增加 npm 別名。帶私有輸入或模型的工具，先閱讀對應契約與程式的參數驗證；不要直接以正式曲庫試跑。

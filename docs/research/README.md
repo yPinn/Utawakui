@@ -6,6 +6,9 @@
 
 ## 歌詞時間與聲學對齊
 
+- 11-11：[飛ぶ時實曲音軌對時](audio/media-alignment-tobu-toki-2026-11-11.md)：兩條音軌共同段落為 0 ms 偏移，完成句首搬移及受控剪輯驗證；實際畫面仍待驗。
+- 11-11：[MV 時間對照與歌詞時間搬移](audio/media-alignment-and-lyrics-transfer-2026-11-11.md)：同錄音的離線分段候選及雙向 T1 時間轉換已用合成素材驗證，未接正式介面或實曲。
+
 入口：[研究結論](lyrics-alignment/lyrics-alignment-summary.md)；操作見[本機試用手冊](../operations/lyrics-alignment-research.md)；原始數據在 [data](lyrics-alignment/data)。
 
 - 10-22：[offset 與內容證據收斂](lyrics-alignment/lyrics-alignment-summary.md#offset-與內容證據)：前段不足後完成內容／定位／時間分離的固定快取離線對照，仍不可校時；中後段未補測、未接產品。原方案與日期證據由研究結論追溯。
