@@ -1,6 +1,0 @@
-/* Loads after every preview, as the shared motion override. */
-.obs-template-mockup[data-motion='playing']
-  .obs-template-mockup__animated-primary {
-  animation: obs-preview-line-cycle var(--ui-output-preview-cycle-duration)
-    var(--ui-output-preview-cycle-ease) infinite;
-}

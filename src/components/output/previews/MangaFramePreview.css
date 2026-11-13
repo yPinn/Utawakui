@@ -17,6 +17,10 @@
   display: block;
 }
 
+.obs-template-mockup__manga-bubbles[data-manga-preview-next] > span {
+  visibility: hidden;
+}
+
 .obs-template-mockup__manga-bubble {
   --ui-manga-bubble-base-block-size: calc(24 * var(--obs-canvas-rem));
   --ui-manga-bubble-row-cap: calc(37.5 * var(--obs-canvas-rem));

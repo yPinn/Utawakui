@@ -39,7 +39,9 @@ import {
   mangaFrameTextLayout,
 } from '../shared/mangaFrameContract.mjs';
 import {
+  addMangaBubbleFade,
   applyMangaFramePresentation,
+  MANGA_FADE_IN_DURATION_SECONDS,
   renderMangaFrameSvg,
 } from './mangaFrame.mjs';
 import {
@@ -67,10 +69,6 @@ const PRESENTATION_SECTION_ROLES = new Set([
   'instrumental',
   'outro',
 ]);
-const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
-const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
-const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
-const MANGA_BUBBLE_ENTER_GAP_SECONDS = 1;
 const KTV_DEFAULT_LANE_REPLACEMENT_DELAY_MS = 600;
 const KTV_MAX_LANE_REPLACEMENT_DELAY_MS = 5000;
 const ktvFallbackAnimations = new WeakMap();
@@ -1416,50 +1414,6 @@ function mangaEnteringBubbleTargets(elements, frame) {
   }
   return targets.filter(
     (_, index) => frame.mangaBubbleTiming[index]?.state === 'revealed',
-  );
-}
-
-function addMangaBubbleFade(
-  timeline,
-  targets,
-  direction,
-  staggerEntrance = true,
-  position,
-) {
-  const entering = direction === 'enter';
-  timeline.addLabel(direction, position);
-
-  if (entering) {
-    for (const [index, target] of targets.entries()) {
-      timeline.to(
-        target,
-        {
-          autoAlpha: 1,
-          duration: MANGA_FADE_IN_DURATION_SECONDS,
-          ease: 'power2.out',
-          overwrite: 'auto',
-        },
-        index === 0 || !staggerEntrance
-          ? direction
-          : `+=${MANGA_BUBBLE_ENTER_GAP_SECONDS}`,
-      );
-    }
-    return;
-  }
-
-  timeline.to(
-    targets,
-    {
-      autoAlpha: 0,
-      duration: MANGA_FADE_OUT_DURATION_SECONDS,
-      ease: 'power2.in',
-      overwrite: 'auto',
-      stagger: {
-        each: MANGA_BUBBLE_EXIT_STAGGER_SECONDS,
-        from: 'start',
-      },
-    },
-    direction,
   );
 }
 

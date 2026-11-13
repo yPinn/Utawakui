@@ -101,7 +101,5 @@ const canvasStyle = computed(() => {
   </div>
 </template>
 
-<!-- Shared canvas rules load first through the preview registry and each preview
-  owns its unscoped obs-template-mockup__* rules; these shared overrides follow. -->
-<style src="./ObsTemplateMockup.motion.css"></style>
+<!-- Shared canvas rules load first through the preview registry. -->
 <style src="./ObsTemplateMockup.reduced-motion.css"></style>

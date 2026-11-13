@@ -7,6 +7,44 @@ import {
 } from '../shared/mangaFrameContract.mjs';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+export const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
+
+export function addMangaBubbleFade(
+  timeline,
+  targets,
+  direction,
+  staggerEntrance = true,
+  position,
+) {
+  timeline.addLabel(direction, position);
+  if (direction === 'enter') {
+    for (const [index, target] of targets.entries()) {
+      timeline.to(
+        target,
+        {
+          autoAlpha: 1,
+          duration: MANGA_FADE_IN_DURATION_SECONDS,
+          ease: 'power2.out',
+          overwrite: 'auto',
+        },
+        index === 0 || !staggerEntrance ? direction : '+=1',
+      );
+    }
+    return;
+  }
+
+  timeline.to(
+    targets,
+    {
+      autoAlpha: 0,
+      duration: 0.14,
+      ease: 'power2.in',
+      overwrite: 'auto',
+      stagger: { each: 0.06, from: 'start' },
+    },
+    direction,
+  );
+}
 
 export function renderMangaFrameSvg(svg, frameId = DEFAULT_MANGA_FRAME_ID) {
   const frame = resolveMangaFrame(frameId);

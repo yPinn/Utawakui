@@ -113,6 +113,10 @@
   line-height: 1;
 }
 
+.obs-template-mockup__live-stage-card[hidden] {
+  display: none;
+}
+
 .obs-template-mockup__live-stage-card-mark > strong {
   inline-size: calc(2.75 * var(--obs-canvas-rem));
   aspect-ratio: 1;

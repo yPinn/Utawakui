@@ -236,7 +236,7 @@ describe('OBS output workspace layout contract', () => {
     const mangaBranch = readObsTemplatePreviewSource('MangaFrame');
     expect(mangaBranch).toContain('mangaBubbles');
     expect(mangaBranch).toContain('bubble.text');
-    expect(mangaBranch).not.toContain('lyrics.next');
+    expect(mangaBranch).toContain('addMangaBubbleFade');
     expect(mangaBranch).not.toContain(
       'obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble',
     );
@@ -244,7 +244,7 @@ describe('OBS output workspace layout contract', () => {
       'obs-template-mockup__manga-text obs-template-mockup__animated-primary',
     );
     expect(mockupSource).toContain('@media (prefers-reduced-motion: reduce)');
-    expect(mockupSource).toContain('@keyframes obs-preview-line-cycle');
+    expect(mockupSource).not.toContain('@keyframes obs-preview-line-cycle');
     expect(mockupSource).not.toContain('@keyframes obs-preview-bubble-cycle');
   });
 
@@ -255,7 +255,6 @@ describe('OBS output workspace layout contract', () => {
     expect(previewTokenSource).toContain('--ui-output-preview-text-muted:');
     expect(previewTokenSource).toContain('--ui-output-preview-accent:');
     expect(previewTokenSource).toContain('--ui-output-preview-cycle-duration:');
-    expect(previewTokenSource).toContain('--ui-output-preview-cycle-ease:');
     for (const backdrop of ['dark', 'light', 'checker-a', 'checker-b']) {
       expect(previewTokenSource).toContain(
         `--ui-output-preview-backdrop-${backdrop}:`,
@@ -280,7 +279,6 @@ describe('OBS output workspace layout contract', () => {
     expect(previewTokenSource).not.toContain('--ui-output-preview-ktv-shadow:');
     expect(mockupSource).toContain('var(--ui-output-preview-canvas)');
     expect(mockupSource).toContain('var(--ui-output-preview-cycle-duration)');
-    expect(mockupSource).toContain('var(--ui-output-preview-cycle-ease)');
     expect(mockupSource).not.toMatch(/#[0-9a-f]{3,8}/i);
     expect(mockupSource).not.toContain('0.625rem');
     // 0.7em only appears in the artist clamp copied from the runtime Overlay.

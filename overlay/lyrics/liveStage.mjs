@@ -61,7 +61,7 @@ function completeCardTransition(elements, token, visible) {
   if (!visible) elements.liveStageCard.hidden = true;
 }
 
-function renderCard(elements, stage, options) {
+export function renderLiveStageCard(elements, stage, options) {
   const card = elements.liveStageCard;
   if (!card) return;
   const visible = stage?.active === true && stage?.cardVisible === true;
@@ -122,6 +122,19 @@ function renderCard(elements, stage, options) {
     ease: 'power2.in',
     overwrite: 'auto',
   });
+}
+
+export function animateLiveStageCaption(element, rhythm) {
+  return element.animate?.(
+    [
+      { opacity: 0.35, transform: 'translateY(0.3em)' },
+      { opacity: 1, transform: 'translateY(0)' },
+    ],
+    {
+      duration: scaleLyricsMotionDuration(240, rhythm),
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    },
+  );
 }
 
 function renderCaption(elements, frame, options) {
@@ -188,15 +201,9 @@ function renderCaption(elements, frame, options) {
     frame.timelineDiscontinuity !== true &&
     options.reducedMotion !== true
   ) {
-    const animation = elements.current.animate?.(
-      [
-        { opacity: 0.35, transform: 'translateY(0.3em)' },
-        { opacity: 1, transform: 'translateY(0)' },
-      ],
-      {
-        duration: scaleLyricsMotionDuration(240, frame.lyricsRhythm),
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      },
+    const animation = animateLiveStageCaption(
+      elements.current,
+      frame.lyricsRhythm,
     );
     captionAnimations.set(elements.current, animation);
   }
@@ -210,7 +217,7 @@ export function renderLiveStagePresentation(elements, frame, options = {}) {
   if (elements.liveStageChrome) {
     elements.liveStageChrome.hidden = stage.active !== true;
   }
-  renderCard(elements, stage, options);
+  renderLiveStageCard(elements, stage, options);
   elements.root.hidden =
     stage.active !== true && presentation.lines.length === 0;
   elements.root.setAttribute('lang', frame.language || 'und');

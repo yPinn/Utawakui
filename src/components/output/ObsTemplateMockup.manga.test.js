@@ -20,7 +20,7 @@ describe('Manga Frame gallery mockup', () => {
     expect(source).toContain('mangaFramePlacementForBubble');
     expect(source).toContain('analyzeLyricsSource');
     expect(source).toContain('adaptMangaLyricsPresentation');
-    expect(source).toContain(':data-manga-count="mangaBubbles.length"');
+    expect(source).toContain(':data-manga-count="group.length"');
     expect(source).toContain(':data-manga-side="bubble.placement.side"');
     expect(source).toContain(':data-manga-order="bubble.order"');
     expect(source).toContain('bubble.placement.anchorYPercent');
@@ -32,7 +32,7 @@ describe('Manga Frame gallery mockup', () => {
     expect(source).toContain('<ruby v-if="token.reading">');
     expect(source).toContain('<rt>{{ token.reading }}</rt>');
     expect(source).toContain('bubble.layout.requiredBlockSizeEm');
-    expect(source).toContain('v-for="(bubble, index) in mangaBubbles"');
+    expect(source).toContain('v-for="(bubble, index) in group"');
     expect(source).toContain('class="obs-template-mockup__manga-text"');
     expect(source).not.toContain('obs-template-mockup__title');
   });
