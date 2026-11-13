@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   OUTPUT_APPEARANCE_DEFAULTS,
   OUTPUT_APPEARANCE_FIELDS,
+  normalizeOutputAppearance,
   outputAppearanceFieldsForTemplate,
+  outputElementFieldsForTemplate,
+  outputElementFontWeight,
 } from '../../shared/outputAppearance.mjs';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import { normalizeLyricsPresentationPolicyId } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
@@ -25,6 +28,8 @@ const DATASET_TARGETS = Object.freeze({
   alignment: 'ovlAlign',
   contentWidth: 'ovlContentWidth',
   contrastStyle: 'ovlContrast',
+  textShadow: 'ovlTextShadow',
+  sectionAccent: 'ovlSectionAccent',
   fontFamily: 'ovlFont',
   fontScale: 'ovlScale',
   fontWeight: 'ovlWeight',
@@ -35,7 +40,20 @@ const DATASET_TARGETS = Object.freeze({
   positionAnchor: 'ovlPosition',
   spacingDensity: 'ovlDensity',
   surface: 'ovlSurface',
+  vinylSurfaceLight: 'vinylSurfaceLight',
 });
+
+// These settings go directly to the Canvas painter or timing projection.
+const FISHEYE_FIELDS = new Set([
+  'fisheyeLayout',
+  'fisheyeRim',
+  'fisheyeReflection',
+  'fisheyeEnter',
+  'fisheyeExit',
+  'fisheyePulse',
+  'fisheyeBlur',
+  'fisheyeGranularity',
+]);
 
 const STYLE_TARGETS = Object.freeze({
   accentColor: ['--ovl-user-accent-color', ''],
@@ -108,6 +126,12 @@ describe('Output settings path', () => {
       temporaryDirectories.push(directory);
       const settings = {
         ...appearanceSettingsFor(templateId),
+        ...Object.fromEntries(
+          outputElementFieldsForTemplate(templateId).map((field) => [
+            field.key,
+            nonDefaultValue(field),
+          ]),
+        ),
         captureSize: 'large',
         lyricsPresentationPolicyId: 'literal',
       };
@@ -141,6 +165,27 @@ describe('Output settings path', () => {
         ),
       ).toBe(templateId === 'live-stage' ? 'literal' : null);
       expect(document.documentElement.dataset.ovlTemplate).toBe(templateId);
+      for (const field of outputElementFieldsForTemplate(templateId)) {
+        const value = settings[field.key];
+        const { elementId, propertyKey } = field;
+        expect(slot.settings[field.key]).toBe(value);
+        if (propertyKey === 'visible') {
+          const datasetKey =
+            'ovlEl' +
+            elementId[0].toUpperCase() +
+            elementId.slice(1) +
+            'Visible';
+          expect(document.documentElement.dataset[datasetKey]).toBe(value);
+        } else if (propertyKey === 'fontWeight') {
+          expect(styleValues.get(`--ovl-el-${elementId}-font-weight`)).toBe(
+            String(outputElementFontWeight(value)),
+          );
+        } else {
+          expect(styleValues.get(`--ovl-el-${elementId}-size-scale`)).toBe(
+            String(value / 100),
+          );
+        }
+      }
 
       const exposedFields = new Map(
         outputAppearanceFieldsForTemplate(templateId).map((field) => [
@@ -158,7 +203,18 @@ describe('Output settings path', () => {
           expect(
             document.documentElement.dataset[datasetTarget],
             `${templateId}.${field.key}`,
-          ).toBe(String(expectedValue));
+          ).toBe(
+            field.key === 'vinylSurfaceLight' && templateId !== 'art-card'
+              ? undefined
+              : String(expectedValue),
+          );
+          continue;
+        }
+        if (FISHEYE_FIELDS.has(field.key)) {
+          expect(
+            normalizeOutputAppearance(slot.settings, { templateId })[field.key],
+            `${templateId}.${field.key}`,
+          ).toBe(expectedValue);
           continue;
         }
         const [styleTarget, unit] = STYLE_TARGETS[field.key];

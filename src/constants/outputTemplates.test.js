@@ -474,6 +474,7 @@ describe('output template registry', () => {
         available: true,
       },
       'live-stage': { id: 'live-stage', version: 1, available: true },
+      'fisheye-lens': { id: 'fisheye-lens', version: 1, available: true },
     });
     for (const template of lyricsGroup.templates) {
       expect(template.lyricsCapabilities).toEqual(
