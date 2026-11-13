@@ -159,6 +159,15 @@ hosts, URLs, credentials, and vendor error text remain main-private. Local sessi
 history is derived from canonical track-change projections plus fresh OBS
 timecodes and can be exported as YouTube chapter text.
 
+The Fisheye Camera workbench exposes fixed intents to read status, bind the
+current program scene, toggle automatic bursts and trigger Zoom, Glitch or
+Grain. Main resolves the scene and exactly one compatible filter from OBS and
+rechecks the program scene before each write. Binding is local to the current
+connection. Commands use a fresh cue ID, never retry after disconnect, and
+read back filter settings. Readback confirms OBS accepted the setting. Frame
+execution and timing belong to the scene's Lua filter. The Browser Source
+presentation path remains read-only.
+
 Deferred write capabilities, each requiring a separate opt-in contract:
 
 - create or update a named Browser Source selected by the user;

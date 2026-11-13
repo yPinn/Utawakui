@@ -17,7 +17,7 @@ const templateTabLabels = {
   'kinetic-pop': ['版面', '文字', '色彩', '顯示'],
   'ornate-vertical': ['定位', '文字', '色彩'],
   'chalkboard-vertical': ['定位', '文字', '色彩'],
-  'fisheye-lens': ['動態', '顯示', '版面', '文字', '色彩'],
+  'fisheye-lens': ['動態', '攝影機特效', '顯示', '版面', '文字', '色彩'],
   'centered-vertical': ['文字', '色彩', '顯示'],
   'live-stage': ['文字', '色彩', '顯示'],
   'manga-frame': ['文字', '色彩'],

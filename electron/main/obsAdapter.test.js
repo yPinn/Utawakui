@@ -45,6 +45,103 @@ function deferred() {
 }
 
 describe('obsAdapter', () => {
+  it('only writes the camera filter after binding the active scene on this connection', async () => {
+    const client = new FakeObsClient();
+    const settings = { mode: 0, intensity: 75, automatic: true };
+    let sceneUuid = 'scene-a';
+    let filterName = 'Camera';
+    const filterKind = 'utawakui_fisheye_camera';
+    let version = 0;
+    const defaultCall = client.call.getMockImplementation();
+    client.call.mockImplementation(async (request, data) => {
+      switch (request) {
+        case 'GetCurrentProgramScene':
+          return { sceneUuid, sceneName: sceneUuid };
+        case 'GetSourceFilterList':
+          return {
+            filters: [
+              {
+                filterName,
+                filterKind,
+                filterEnabled: true,
+                filterSettings: settings,
+              },
+            ],
+          };
+        case 'GetSourceFilterDefaultSettings':
+          return { defaultFilterSettings: { camera_control_version: version } };
+        case 'GetSourceFilter':
+          return { filterKind, filterEnabled: true, filterSettings: settings };
+        case 'SetSourceFilterSettings':
+          Object.assign(settings, data.filterSettings);
+          return;
+        default:
+          return defaultCall(request);
+      }
+    });
+    const adapter = createObsAdapter({ createClient: () => client });
+    const control = adapter.controlFisheyeCamera;
+    const writes = () =>
+      client.call.mock.calls.filter(
+        ([request]) => request === 'SetSourceFilterSettings',
+      );
+    expect(await control('glitch')).toEqual({ state: 'disconnected' });
+    await adapter.configure({ enabled: true, host: '127.0.0.1', port: 4455 });
+    expect(await control('SetCurrentProgramScene')).toEqual({
+      state: 'invalid-action',
+    });
+    expect(await control('glitch')).toMatchObject({ state: 'unbound' });
+    expect(await control('bind')).toMatchObject({ state: 'update-script' });
+    version = 1;
+    expect(await control('bind')).toMatchObject({
+      state: 'ready',
+      scene: 'scene-a',
+    });
+    sceneUuid = 'scene-b';
+    expect(await control('glitch')).toMatchObject({ state: 'scene-changed' });
+    sceneUuid = 'scene-a';
+    filterName = 'Renamed';
+    expect(await control('glitch')).toMatchObject({ state: 'filter-changed' });
+    expect(writes()).toEqual([]);
+    await control('bind');
+    expect(await control('auto-off')).toMatchObject({
+      state: 'ready',
+      automatic: false,
+      confirmed: true,
+    });
+    const [first, second] = await Promise.all([
+      control('glitch'),
+      control('grain'),
+    ]);
+    expect(first).toMatchObject({ state: 'ready', confirmed: true });
+    expect(second).toEqual({ state: 'busy' });
+    expect(await control('zoom')).toMatchObject({ state: 'busy' });
+    expect(writes()).toEqual([
+      [
+        'SetSourceFilterSettings',
+        {
+          sourceUuid: 'scene-a',
+          filterName: 'Renamed',
+          overlay: true,
+          filterSettings: { automatic: false },
+        },
+      ],
+      [
+        'SetSourceFilterSettings',
+        {
+          sourceUuid: 'scene-a',
+          filterName: 'Renamed',
+          overlay: true,
+          filterSettings: { camera_effect: 2, camera_cue: expect.any(String) },
+        },
+      ],
+    ]);
+    await adapter.disconnect();
+    await adapter.configure({ enabled: true, host: '127.0.0.1', port: 4455 });
+    expect(await control('glitch')).toMatchObject({ state: 'unbound' });
+    adapter.destroy();
+  });
+
   it('reports only a confirmed stop after observing a live stream on this connection', async () => {
     const client = new FakeObsClient();
     const onStreamEnded = vi.fn();

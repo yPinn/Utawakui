@@ -189,6 +189,12 @@ asarUnpack:
 # PyTorch runtime remain explicit, removable downloads under userData; no
 # interpreter, provider package, or model is bundled into the base installer.
 extraResources:
+  # OBS loads these two files from disk through its Lua scripting UI.
+  - from: scripts/obs
+    to: obs
+    filter:
+      - fisheye-camera.lua
+      - fisheye-camera.effect
   # Full texts stay readable outside ASAR, with pinned version/checksum metadata.
   - from: third-party
     to: third-party

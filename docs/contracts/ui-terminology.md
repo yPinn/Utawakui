@@ -34,6 +34,8 @@
 | 進場動畫、退場動畫 |                  | 字幕顯示與消失時各自使用的動畫                             | Entrance, Exit                      |
 | 停留縮放、動態模糊 |                  | 字形停留時的縮放幅度與沿弧快速移動時的拖影                 | Hold scaling, Motion blur           |
 | 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity                |
+| 攝影機特效         |                  | 作用於 OBS 場景合成畫幅的 Glitch、推拉和雜訊               | Camera effects                      |
+| 自動穿插           |                  | 攝影機濾鏡按隨機間隔播放短暫特效                           | Automatic bursts                    |
 
 「介面元件」指畫面上的元件，不屬於「工具」的範圍。
 

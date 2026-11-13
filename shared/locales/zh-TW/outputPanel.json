@@ -507,6 +507,34 @@
     "anchor": "定位基準",
     "offset": "位置微調"
   },
+  "cameraEffects": {
+    "label": "攝影機特效",
+    "scene": "OBS 節目場景：{name}",
+    "bind": "綁定目前場景",
+    "automatic": "自動穿插",
+    "glitch": "Glitch 一次",
+    "zoom": "推拉一次",
+    "grain": "雜訊一次",
+    "busy": "請等目前的特效播完再觸發。",
+    "sent": "OBS 已收到觸發指令。",
+    "saved": "OBS 已更新自動穿插設定。",
+    "states": {
+      "loading": "正在檢查 OBS 場景。",
+      "disconnected": "請先在 OBS 整合設定中連線。",
+      "unbound": "請綁定目前的 OBS 節目場景。",
+      "scene-changed": "OBS 已切換場景。綁定目前場景即可使用特效。",
+      "filter-changed": "濾鏡已變更。請重新綁定場景。",
+      "missing": "請在場景加入 Utawakui Fisheye Camera 濾鏡。",
+      "ambiguous": "請在場景保留一個 Utawakui Fisheye Camera 濾鏡。",
+      "update-script": "請在 OBS 重新載入最新版的魚眼攝影機指令碼。",
+      "disabled-filter": "請在 OBS 啟用魚眼攝影機濾鏡。",
+      "inactive-filter": "請在 OBS 將濾鏡切到 Live，並將強度調到 0% 以上。",
+      "no-scene": "OBS 目前沒有可用的節目場景。",
+      "unconfirmed": "OBS 尚未確認濾鏡已更新。",
+      "request-failed": "無法取得 OBS 濾鏡狀態。請檢查 OBS 連線。",
+      "ready": "場景濾鏡已就緒。"
+    }
+  },
   "workbench": {
     "fisheyeGranularityHint": "短句和來源段落需要對應的時間標記。時間不足時顯示整句。",
     "appearance": "外觀",

@@ -7,7 +7,13 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
-import { Check, CircleAlert, Loader2, RotateCcw } from '../../icons/index.js';
+import {
+  Check,
+  CircleAlert,
+  Loader2,
+  RotateCcw,
+  Video,
+} from '../../icons/index.js';
 import {
   isOutputLocalFont,
   sanitizeOutputAppearanceSetting,
@@ -19,6 +25,7 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
+import ObsFisheyeCameraControls from './ObsFisheyeCameraControls.vue';
 import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
@@ -159,6 +166,13 @@ const inspectorTabs = computed(() => {
     tabs.sort(
       (left, right) => order.indexOf(left.id) - order.indexOf(right.id),
     );
+    const motionIndex = tabs.findIndex(({ id }) => id === 'motion');
+    tabs.splice(motionIndex + 1, 0, {
+      id: 'camera-effects',
+      icon: Video,
+      label: t('outputPanel.cameraEffects.label'),
+      groups: [],
+    });
   }
   return tabs;
 });
@@ -442,7 +456,10 @@ function resetAppearance() {
         </ObsAppearanceControlRow>
       </div>
     </template>
-    <template #side="{ item }">
+    <template #side="{ item, active }">
+      <ObsFisheyeCameraControls
+        v-if="item?.id === 'camera-effects' && active"
+      />
       <ObsPropertySection
         v-for="group in item?.groups ?? configurationFieldGroups"
         :key="group.id"

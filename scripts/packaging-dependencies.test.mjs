@@ -234,6 +234,14 @@ describe('packaged dependency boundary', () => {
       ),
     ).toBe(false);
   });
+  it('ships the two user-loadable OBS camera files together outside ASAR', () => {
+    expect(builder.extraResources).toContainEqual({
+      from: 'scripts/obs',
+      to: 'obs',
+      filter: ['fisheye-camera.lua', 'fisheye-camera.effect'],
+    });
+  });
+
   it('ships the fixed release catalog worker without its synthetic Python test or runtime installation', () => {
     expect(builder.extraResources).toContainEqual({
       from: 'resources/provider/release_catalog_worker.py',

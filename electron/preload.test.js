@@ -252,6 +252,7 @@ const MAIN_INVOKE_CHANNELS = [
   'obs:connect',
   'obs:copy-text',
   'obs:disconnect',
+  'obs:fisheye-camera',
   'obs:get-latest-session',
   'obs:get-settings',
   'obs:get-status',

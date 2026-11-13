@@ -795,6 +795,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   clearObsPassword: () => ipcRenderer.invoke('obs:clear-password'),
   connectObs: () => ipcRenderer.invoke('obs:connect'),
   disconnectObs: () => ipcRenderer.invoke('obs:disconnect'),
+  controlObsFisheyeCamera: (action) =>
+    ipcRenderer.invoke('obs:fisheye-camera', action),
   addObsMarker: (label) => ipcRenderer.invoke('obs:add-marker', label),
   getObsLatestSession: () => ipcRenderer.invoke('obs:get-latest-session'),
   copyObsText: (value) => ipcRenderer.invoke('obs:copy-text', value),

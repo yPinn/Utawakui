@@ -34,7 +34,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 - Audio processing：pitch／tempo preview、分離 recipe、guide vocal 與選用分析。
 - Public output：Setlist、Lyrics、Now Playing Browser Sources。
 - Provider assist：候選搜尋、來源匯入、下載與 metadata backfill。
-- External integrations：唯讀 OBS WebSocket、直播／錄影時間戳與本機 session history。
+- External integrations：OBS 狀態、直播／錄影時間戳、魚眼攝影機特效與本機 session history。
 
 任一可選工作流在 gate 關閉或依賴缺失時，預設核心仍須可用。
 
@@ -110,7 +110,7 @@ v0.5.3 已發布，使用者可見範圍見[發行說明](releases/v0.5.3.md)。
 - Server 只綁定 loopback，以 exact route allowlist 提供資產；snapshot 不含路徑、provider payload 或任意 HTML。
 - 三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；模板與設定見[顯示契約](contracts/output-appearance.md)。
 - 演出安排中未開始的項目不進公開輸出；confirmed playing 後才使用該次的顯示名稱。
-- OBS WebSocket 是獨立、可停用的唯讀 adapter，不經 Browser Source 通道。
+- OBS WebSocket 是獨立、可停用的 adapter，提供狀態與時碼查詢，以及已綁定的魚眼場景濾鏡控制。Browser Source 使用獨立的唯讀通道。
 
 ### 4.5 使用者回饋
 

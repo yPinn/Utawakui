@@ -348,7 +348,11 @@ onBeforeUnmount(() => {
                 role="tabpanel"
                 :aria-labelledby="`${ids}-${item.id}-tab`"
               >
-                <slot name="side" :item="item" />
+                <slot
+                  name="side"
+                  :item="item"
+                  :active="activeItem?.id === item.id && open"
+                />
               </section>
             </UiScrollLayout>
             <footer
