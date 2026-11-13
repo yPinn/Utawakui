@@ -754,6 +754,20 @@
           "strongOutline": "Strong outline"
         }
       },
+      "textShadow": {
+        "label": "Text shadow",
+        "options": {
+          "standard": "Standard",
+          "off": "Off"
+        }
+      },
+      "sectionAccent": {
+        "label": "Section highlights",
+        "options": {
+          "off": "Off",
+          "auto": "Auto"
+        }
+      },
       "alignment": {
         "label": "Alignment",
         "options": {

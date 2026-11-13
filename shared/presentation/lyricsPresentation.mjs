@@ -2008,7 +2008,9 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
   const lines = Array.isArray(document.lines) ? document.lines : [];
   const ornateDocumentContext =
     profile.id === 'ornate-vertical'
-      ? createOrnateVerticalDocumentContext(lines)
+      ? createOrnateVerticalDocumentContext(lines, {
+          synced: document.synced === true && options.sectionAccent === 'auto',
+        })
       : null;
   return {
     documentId:
@@ -2079,6 +2081,9 @@ function documentCacheKey(document, profile, options = {}) {
       ? KINETIC_POP_MATERIAL_SETTINGS.has(options.kineticMaterial)
         ? options.kineticMaterial
         : KINETIC_POP_DEFAULT_MATERIAL
+      : '',
+    profile.id === 'ornate-vertical' && options.sectionAccent === 'auto'
+      ? JSON.stringify([document.trackId, document.synced === true])
       : '',
   ].join('\u0000');
 }

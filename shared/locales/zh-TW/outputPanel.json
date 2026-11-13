@@ -743,6 +743,20 @@
           "strongOutline": "強描邊"
         }
       },
+      "textShadow": {
+        "label": "文字陰影",
+        "options": {
+          "standard": "標準",
+          "off": "關閉"
+        }
+      },
+      "sectionAccent": {
+        "label": "段落重點色",
+        "options": {
+          "off": "關閉",
+          "auto": "自動"
+        }
+      },
       "alignment": {
         "label": "對齊",
         "options": {

@@ -82,6 +82,23 @@ ${fs.readFileSync(
     );
   });
 
+  it('removes the text shadow from the preview and Browser Source when disabled', () => {
+    const preview = readObsTemplatePreviewSource('OrnateVertical');
+    const runtimeCss = fs.readFileSync(
+      path.join(directory, '..', '..', '..', 'overlay', 'lyrics', 'lyrics.css'),
+      'utf8',
+    );
+    expect(readObsTemplateMockupSource()).toContain(
+      ':data-appearance-text-shadow="appearance.textShadow"',
+    );
+    expect(preview).toMatch(
+      /\[data-appearance-text-shadow='off'\] \.ornate-preview\s*\{\s*text-shadow: none;/u,
+    );
+    expect(runtimeCss).toMatch(
+      /\[data-ovl-template='ornate-vertical'\]\[data-ovl-text-shadow='off'\]\s+\.lyrics-overlay__current\s*\{\s*text-shadow: none;/u,
+    );
+  });
+
   it('sizes the preview from runtime units on a 1920×1080 canvas', () => {
     const preview = readObsTemplatePreviewSource('OrnateVertical');
     const runtimeCss = fs.readFileSync(

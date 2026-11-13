@@ -206,9 +206,80 @@ function sourceLineText(line) {
   return typeof line === 'string' ? line : String(line?.text ?? '');
 }
 
-export function createOrnateVerticalDocumentContext(lines = []) {
+const MINIMUM_SECTION_LINES = 3;
+
+function normalizedLine(line) {
+  if (!Number.isFinite(line?.startMs)) return '';
+  return String(line.text ?? '')
+    .normalize('NFKC')
+    .replace(/[\p{P}\p{S}\s]/gu, '')
+    .toLowerCase();
+}
+
+// Repeated lyrics are evidence for a presentation accent. Keep the original
+// line order, and let blanks and untimed lines break a match.
+function repeatedLyricsSections(lines) {
+  const keys = lines.map(normalizedLine);
+  const startsByPhrase = new Map();
+  for (let start = 0; start <= keys.length - MINIMUM_SECTION_LINES; start++) {
+    const phrase = keys.slice(start, start + MINIMUM_SECTION_LINES);
+    if (phrase.includes('') || new Set(phrase).size < MINIMUM_SECTION_LINES)
+      continue;
+    const key = JSON.stringify(phrase);
+    const starts = startsByPhrase.get(key) ?? [];
+    if (!starts.length || start - starts.at(-1) >= MINIMUM_SECTION_LINES) {
+      starts.push(start);
+      startsByPhrase.set(key, starts);
+    }
+  }
+
+  let best = null;
+  for (const starts of startsByPhrase.values()) {
+    if (starts.length < 2) continue;
+    const maxLength = starts.reduce(
+      (shortest, start, index) =>
+        Math.min(shortest, (starts[index + 1] ?? keys.length) - start),
+      Infinity,
+    );
+    let length = MINIMUM_SECTION_LINES;
+    while (
+      length < maxLength &&
+      keys[starts[0] + length] &&
+      starts.every((start) => keys[start + length] === keys[starts[0] + length])
+    ) {
+      length++;
+    }
+    const coverage = length * starts.length;
+    if (
+      !best ||
+      coverage > best.coverage ||
+      (coverage === best.coverage && length > best.length)
+    ) {
+      best = { starts, length, coverage };
+    }
+  }
+  // A repeated verse can be longer than the chorus. Use the total number of
+  // matching lines across all occurrences and keep one dominant family.
+  const byLine = [];
+  if (best) {
+    const { starts, length } = best;
+    starts.forEach((start, occurrence) => {
+      for (let offset = 0; offset < length; offset++) {
+        byLine[start + offset] = Object.freeze({
+          offset,
+          occurrence,
+          final: occurrence === starts.length - 1,
+        });
+      }
+    });
+  }
+  return Object.freeze(byLine);
+}
+
+export function createOrnateVerticalDocumentContext(lines = [], options = {}) {
+  const sourceLines = Array.isArray(lines) ? lines : [];
   const hanFrequencies = Object.create(null);
-  for (const line of Array.isArray(lines) ? lines : []) {
+  for (const line of sourceLines) {
     for (const unit of splitOrnateVerticalUnits(sourceLineText(line))) {
       if (unit.kind !== 'han') continue;
       const key = hanKey(unit);
@@ -216,7 +287,12 @@ export function createOrnateVerticalDocumentContext(lines = []) {
       hanFrequencies[key] = (hanFrequencies[key] ?? 0) + 1;
     }
   }
-  return Object.freeze({ hanFrequencies: Object.freeze(hanFrequencies) });
+  return Object.freeze({
+    hanFrequencies: Object.freeze(hanFrequencies),
+    ...(options.synced === true
+      ? { sectionAccents: repeatedLyricsSections(sourceLines) }
+      : {}),
+  });
 }
 
 function selectKeyword(units, documentContext) {
@@ -243,21 +319,80 @@ function selectKeyword(units, documentContext) {
     : null;
 }
 
+function sectionAccentRanges(text, startOffset, section) {
+  if (!section || !WORD_SEGMENTER) return [];
+  const candidates = [];
+  for (const { segment, index, isWordLike } of WORD_SEGMENTER.segment(text)) {
+    if (!isWordLike) continue;
+    let from = startOffset + index;
+    const graphemes = splitGraphemes(segment);
+    if (
+      graphemes.some(
+        (glyph) => HAN_GRAPHEME_RE.test(glyph) || KANA_GRAPHEME_RE.test(glyph),
+      )
+    ) {
+      for (const glyph of graphemes) {
+        const to = from + glyph.length;
+        if (!LIGHTWEIGHT_MARK_RE.test(glyph)) candidates.push({ from, to });
+        from = to;
+      }
+    } else {
+      candidates.push({ from, to: from + segment.length });
+    }
+  }
+  if (candidates.length < 2) return [];
+  if (section.final) {
+    const second = Math.max(2, Math.ceil((candidates.length - 1) / 2));
+    return [candidates[0], candidates[second]].filter(Boolean);
+  }
+  const positions = [0, 0.5, 0, 0.8];
+  const position =
+    positions[(section.offset + section.occurrence) % positions.length];
+  return [candidates[Math.round(position * (candidates.length - 1))]];
+}
+
+function accentParts(text, offset, accents) {
+  const parts = [];
+  let cursor = 0;
+  for (const { from, to } of accents) {
+    const start = Math.max(0, from - offset);
+    const end = Math.min(text.length, to - offset);
+    if (end <= start) continue;
+    if (cursor < start) parts.push({ text: text.slice(cursor, start) });
+    parts.push({ text: text.slice(start, end), accent: true });
+    cursor = end;
+  }
+  if (parts.length && cursor < text.length)
+    parts.push({ text: text.slice(cursor) });
+  return parts;
+}
+
 export function adaptOrnateVerticalLyricsPresentation(value, options = {}) {
   const sourceText = String(value ?? '');
   const text = sourceText.trim();
   const sourceSegments = splitOrnateVerticalSegments(text);
   const sourceUnits = sourceSegments.flatMap((segment) => segment.units);
   const keyword = selectKeyword(sourceUnits, options.documentContext);
+  let offset = sourceText.length - sourceText.trimStart().length;
+  const accents =
+    options.sectionAccentRanges ??
+    sectionAccentRanges(
+      text,
+      offset,
+      options.documentContext?.sectionAccents?.[options.lineIndex],
+    );
   const units = [];
   const segments = sourceSegments.map((segment) => {
     const segmentUnits = segment.units.map((unit) => {
       const index = units.length;
+      const parts = accentParts(unit.text, offset, accents);
+      offset += unit.text.length;
       const presentedUnit = Object.freeze({
         ...unit,
         emphasis: keyword?.index === index ? 'keyword' : 'normal',
         index,
         reveal: unit.kind === 'han' ? 'group' : 'character',
+        ...(parts.length ? { parts } : {}),
       });
       units.push(presentedUnit);
       return presentedUnit;
@@ -270,6 +405,7 @@ export function adaptOrnateVerticalLyricsPresentation(value, options = {}) {
   });
   return Object.freeze({
     keyword,
+    ...(accents.length ? { sectionAccentRanges: accents } : {}),
     placement: ORNATE_VERTICAL_PLACEMENT,
     segments: Object.freeze(segments),
     sourceText,

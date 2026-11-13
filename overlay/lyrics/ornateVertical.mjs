@@ -39,7 +39,16 @@ function createOrnateLine(documentApi, presentation, identity) {
       if (unit.emphasis === 'keyword') {
         element.dataset.ornateText = unit.text.trim();
       }
-      element.textContent = unit.text;
+      if (unit.parts) {
+        for (const part of unit.parts) {
+          const span = documentApi.createElement('span');
+          if (part.accent) span.className = 'lyrics-overlay__ornate-accent';
+          span.textContent = part.text;
+          element.append(span);
+        }
+      } else {
+        element.textContent = unit.text;
+      }
       segmentElement.append(element);
       units.push(element);
     }
@@ -123,6 +132,7 @@ export function renderOrnateVerticalPresentation(
     text,
     placement,
     source?.keyword?.text ?? null,
+    source?.sectionAccentRanges ?? null,
     segments.map((segment) => segment.text),
   ]);
   const documentApi = elements.current.ownerDocument ?? globalThis.document;

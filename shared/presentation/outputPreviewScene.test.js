@@ -18,30 +18,49 @@ import {
 import { createOutputScenario } from '../../scripts/outputAppearanceBaseline.mjs';
 
 describe('F3 app-owned preview scene', () => {
-  it('keeps synthetic reading data valid for the real V3 document boundary', () => {
-    const { lyrics } = createOutputPreviewSnapshot();
-    const document = {
-      documentId: 'preview-document',
-      trackId: lyrics.trackId,
-      source: lyrics.source,
-      granularity: 'T1',
-      lines: lyrics.lines,
-      reading: lyrics.reading,
+  it('illustrates automatic section highlights without replacing supplied lyrics', () => {
+    const options = {
+      templateId: 'ornate-vertical',
+      settings: { sectionAccent: 'auto' },
     };
-    const parsed = streamContract.parseOutputStreamEnvelope(
-      {
-        contractVersion: outputValues.projectionEnvelopeVersion,
-        bootId: 'preview-boot',
-        sourceEpoch: 'preview-epoch',
-        stream: 'lyrics.document',
-        kind: 'full',
-        revision: 0,
-        payload: { document },
-      },
-      'preview-boot',
-    );
-    expect(parsed.payload.document.reading).toEqual(lyrics.reading);
+    const synthetic = createOutputPreviewScene(options);
+    expect(synthetic.frame.ornateVertical.sectionAccentRanges).toHaveLength(1);
+    const supplied = createOutputPreviewScene({
+      ...options,
+      snapshot: createOutputPreviewSnapshot(),
+    });
+    expect(supplied.frame.ornateVertical.sectionAccentRanges).toBeUndefined();
   });
+  it.each(['off', 'auto'])(
+    'keeps synthetic reading valid at the V3 document boundary with accents %s',
+    (sectionAccent) => {
+      const { lyrics } = createOutputPreviewScene({
+        templateId: 'ornate-vertical',
+        settings: { sectionAccent },
+      }).snapshot;
+      const document = {
+        documentId: 'preview-document',
+        trackId: lyrics.trackId,
+        source: lyrics.source,
+        granularity: 'T1',
+        lines: lyrics.lines,
+        reading: lyrics.reading,
+      };
+      const parsed = streamContract.parseOutputStreamEnvelope(
+        {
+          contractVersion: outputValues.projectionEnvelopeVersion,
+          bootId: 'preview-boot',
+          sourceEpoch: 'preview-epoch',
+          stream: 'lyrics.document',
+          kind: 'full',
+          revision: 0,
+          payload: { document },
+        },
+        'preview-boot',
+      );
+      expect(parsed.payload.document.reading).toEqual(lyrics.reading);
+    },
+  );
   it('provides a deterministic small synthetic scene without private or provider data', () => {
     const first = createOutputPreviewSnapshot();
     expect(first).toEqual(createOutputPreviewSnapshot());

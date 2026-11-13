@@ -125,6 +125,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toMatch(/aria-label="定位"[^>]+aria-selected="true"/u);
     expect(html).toContain('定位基準');
     expect(html).toContain('位置微調');
+    expect(html).toContain('文字陰影');
+    expect(html).toContain('段落重點色');
     expect(html).not.toContain('data-output-side-toggle');
     for (const { key } of fieldsFor('ornate-vertical')) {
       expect(html).toContain(`output-appearance-${key}`);

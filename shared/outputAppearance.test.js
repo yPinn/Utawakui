@@ -183,6 +183,8 @@ describe('output appearance schema', () => {
       'accentColor',
       'fontFamily',
       'fontScale',
+      'textShadow',
+      'sectionAccent',
       'positionAnchor',
       'positionOffsetX',
       'positionOffsetY',
@@ -224,6 +226,23 @@ describe('output appearance schema', () => {
       step: 1,
       unit: '%',
     });
+  });
+
+  it('uses the standard shadow for legacy settings and honors off only for Ornate Vertical', () => {
+    const options = { templateId: 'ornate-vertical' };
+    expect(normalizeOutputAppearance({}, options).textShadow).toBe('standard');
+    expect(
+      normalizeOutputAppearance({ textShadow: 'off' }, options).textShadow,
+    ).toBe('off');
+    expect(
+      normalizeOutputAppearance({ textShadow: 'custom' }, options).textShadow,
+    ).toBe('standard');
+    expect(
+      normalizeOutputAppearance(
+        { textShadow: 'off' },
+        { templateId: 'centered-vertical' },
+      ).textShadow,
+    ).toBe('standard');
   });
 
   it('normalizes legacy and unsafe values through template defaults', () => {
@@ -290,6 +309,8 @@ describe('output appearance schema', () => {
       positionOffsetX: 0,
       positionOffsetY: 0,
       contrastStyle: 'balanced',
+      textShadow: 'standard',
+      sectionAccent: 'off',
       spacingDensity: 'normal',
       contentWidth: 'standard',
       receiptDirection: 'down',

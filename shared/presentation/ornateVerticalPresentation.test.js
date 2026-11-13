@@ -6,8 +6,166 @@ import {
   splitOrnateVerticalSegments,
   splitOrnateVerticalUnits,
 } from './ornateVerticalPresentation.mjs';
+import { createLyricsPresentationDocumentCache } from './lyricsPresentation.mjs';
+
+const timed = (texts) =>
+  texts.map((text, index) => ({ text, startMs: index * 2500 }));
+
+function accentsFor(lines, synced = true) {
+  const documentContext = createOrnateVerticalDocumentContext(lines, {
+    synced,
+  });
+  return lines.map(
+    ({ text }, lineIndex) =>
+      adaptOrnateVerticalLyricsPresentation(text, {
+        documentContext,
+        lineIndex,
+      }).sectionAccentRanges?.map(({ from, to }) => text.slice(from, to)) ?? [],
+  );
+}
 
 describe('Ornate Vertical presentation', () => {
+  it('accents the three complete seven-line refrains in a 50-card sequence', () => {
+    const verse = (name, length) =>
+      Array.from({ length }, (_, index) => `${name} verse line ${index}`);
+    const refrain = verse('Refrain', 7);
+    const lyrics = timed([
+      ...verse('First', 9),
+      ...refrain,
+      ...verse('Second', 9),
+      ...refrain,
+      ...verse('Bridge', 4),
+      ...refrain.slice(0, 2),
+      ...verse('Variation', 3),
+      refrain[5],
+      'A new ending',
+      ...refrain,
+    ]);
+    const accents = accentsFor(lyrics);
+    expect(lyrics).toHaveLength(50);
+    expect(accents.map((parts) => parts.length)).toEqual([
+      ...Array(9).fill(0),
+      ...Array(7).fill(1),
+      ...Array(9).fill(0),
+      ...Array(7).fill(1),
+      ...Array(11).fill(0),
+      ...Array(7).fill(2),
+    ]);
+    expect(accents[9]).not.toEqual(accents[25]);
+  });
+
+  it.each([
+    ['ja', ['か\u3099なで響く', '星が窓を照らす', '明日も歩いて'], 'か\u3099'],
+    ['zh-Hant', ['晚風穿過窗前', '小城燈火未眠', '等到天空放晴'], '晚'],
+    [
+      'en',
+      ['Keep the morning light', 'Run across the water', 'Turn and sing again'],
+      'Keep',
+    ],
+    [
+      'mixed',
+      ['星の quiet night', '聲音 in the rain', '歩く when we sing'],
+      '星',
+    ],
+  ])(
+    'keeps %s graphemes and Latin words intact',
+    (_language, refrain, first) => {
+      const lyrics = timed([...refrain, '間奏之後 another verse', ...refrain]);
+      const accents = accentsFor(lyrics);
+      expect(accents.map((parts) => parts.length)).toEqual([
+        1, 1, 1, 0, 2, 2, 2,
+      ]);
+      expect(accents[0][0]).toBe(first);
+      expect(accentsFor(lyrics, false).flat()).toEqual([]);
+    },
+  );
+
+  it('skips two-line hooks, altered triples and ranges crossing untimed lines', () => {
+    const first = 'The morning light';
+    const second = 'A window opens';
+    const third = 'The sky changes';
+    expect(
+      accentsFor(timed([first, second, first, second, first, second])).flat(),
+    ).toEqual([]);
+    expect(
+      accentsFor(
+        timed([first, second, third, first, second, 'A different sky']),
+      ).flat(),
+    ).toEqual([]);
+    const lines = timed([first, second, third, first, second, third]);
+    delete lines[4].startMs;
+    expect(accentsFor(lines).flat()).toEqual([]);
+  });
+
+  it('prefers the chorus over a longer block that includes repeated lead-in lines', () => {
+    const lead = ['Here comes the sun', 'Look out the window'];
+    const chorus = ['Wake up today', 'Take in the light', 'Go on singing'];
+    const verse = [
+      'Quiet in the evening',
+      'Even in the dark',
+      'Soon it will pass',
+    ];
+    const sequence = [
+      ...lead,
+      ...chorus,
+      ...verse,
+      ...chorus,
+      ...verse,
+      ...lead,
+      ...chorus,
+      ...chorus,
+    ];
+    const accents = accentsFor(timed(sequence));
+    expect(accents.map((parts) => parts.length)).toEqual([
+      0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2,
+    ]);
+  });
+
+  it('selects a whole Latin contraction across existing reveal units', () => {
+    const refrain = [
+      'Don’t look back',
+      'Keep moving ahead',
+      'See you tomorrow',
+    ];
+    const lyrics = timed([...refrain, ...refrain]);
+    expect(accentsFor(lyrics)[0]).toEqual(['Don’t']);
+  });
+
+  it('keys cached accents by track, document revision and selected mode', () => {
+    const refrain = [
+      'Night is falling',
+      'The stars appear',
+      'The air is still',
+    ];
+    const lines = timed([...refrain, ...refrain]);
+    const document = {
+      trackId: 'track-a',
+      documentId: 'lyrics-a',
+      documentRevision: 1,
+      synced: true,
+      lines,
+    };
+    const cache = createLyricsPresentationDocumentCache();
+    const options = { templateId: 'ornate-vertical', sectionAccent: 'auto' };
+    const first = cache.get(document, options);
+    expect(first.lines[0].presentation.sectionAccentRanges).toHaveLength(1);
+    expect(cache.get({ ...document }, options)).toBe(first);
+    for (const changes of [
+      { trackId: 'track-b' },
+      { documentId: 'lyrics-b' },
+      { documentRevision: 2 },
+    ]) {
+      const next = cache.get(
+        { ...document, ...changes, lines: timed(refrain) },
+        options,
+      );
+      expect(next.lines[0].presentation.sectionAccentRanges).toBeUndefined();
+    }
+    expect(
+      cache.get(document, { ...options, sectionAccent: 'off' }).lines[0]
+        .presentation.sectionAccentRanges,
+    ).toBeUndefined();
+  });
   it('groups continuous Han while revealing Japanese kana by grapheme', () => {
     expect(splitOrnateVerticalUnits('後悔ばかりが募って。')).toEqual([
       { kind: 'han', text: '後悔' },

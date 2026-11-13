@@ -165,6 +165,8 @@ describe('overlay appearance', () => {
       ovlReceiptReview: 'on',
       ovlReceiptReviewInterval: '15',
       ovlContrast: 'balanced',
+      ovlTextShadow: 'standard',
+      ovlSectionAccent: 'off',
       ovlDensity: 'normal',
       ovlContentWidth: 'standard',
       ovlPosition: 'bottom-right',

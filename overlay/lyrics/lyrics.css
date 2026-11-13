@@ -949,6 +949,11 @@
     text-shadow: var(--ovl-ornate-text-shadow);
   }
 
+  :root[data-ovl-template='ornate-vertical'][data-ovl-text-shadow='off']
+    .lyrics-overlay__current {
+    text-shadow: none;
+  }
+
   :root[data-ovl-template='ornate-vertical'][data-ovl-scale='small']
     .lyrics-overlay__current {
     --ovl-ornate-font-size: 3.91vh;
@@ -1014,6 +1019,16 @@
     opacity: 0.18;
     text-shadow: none;
     transform: translate(0.055em, 0.035em);
+  }
+
+  :root[data-ovl-template='ornate-vertical'][data-ovl-section-accent='auto']
+    .lyrics-overlay__ornate-unit[data-ornate-emphasis='keyword']::before {
+    content: none;
+  }
+
+  :root[data-ovl-template='ornate-vertical'][data-ovl-section-accent='auto']
+    .lyrics-overlay__ornate-accent {
+    color: var(--ovl-ornate-section-accent);
   }
 
   :root[data-ovl-template='ornate-vertical']

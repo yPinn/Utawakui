@@ -2339,12 +2339,19 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     : null;
   const cachedOrnateLine =
     options.presentationDocument?.lines?.[frame.lineIndex];
+  const ornateSourceText = frame.currentText
+    ? (lines[frame.lineIndex]?.text ?? frame.currentText)
+    : frame.currentText;
   const ornateVertical =
     templateId === 'ornate-vertical'
-      ? cachedOrnateLine?.sourceText === frame.currentText
+      ? cachedOrnateLine?.sourceText === ornateSourceText
         ? cachedOrnateLine.presentation
-        : adaptOrnateVerticalLyricsPresentation(frame.currentText, {
-            documentContext: createOrnateVerticalDocumentContext(lines),
+        : adaptOrnateVerticalLyricsPresentation(ornateSourceText, {
+            documentContext: createOrnateVerticalDocumentContext(lines, {
+              synced:
+                snapshot?.lyrics?.synced === true &&
+                options.sectionAccent === 'auto',
+            }),
             lineIndex: frame.lineIndex,
           })
       : null;

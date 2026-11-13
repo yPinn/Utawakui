@@ -170,6 +170,26 @@ const FIELD_DEFINITIONS = [
     defaultValue: 'balanced',
     options: [{ id: 'clean' }, { id: 'balanced' }, { id: 'strong-outline' }],
   }),
+  fieldDefinition('typography', {
+    key: 'textShadow',
+    family: 'legibility',
+    tier: 'basic',
+    reflow: false,
+    order: 40,
+    control: 'select',
+    defaultValue: 'standard',
+    options: [{ id: 'standard' }, { id: 'off' }],
+  }),
+  fieldDefinition('typography', {
+    key: 'sectionAccent',
+    family: 'legibility',
+    tier: 'basic',
+    reflow: false,
+    order: 50,
+    control: 'select',
+    defaultValue: 'off',
+    options: [{ id: 'off' }, { id: 'auto' }],
+  }),
   fieldDefinition('layout', {
     key: 'alignment',
     family: 'layout',
@@ -618,6 +638,8 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'accentColor',
       'fontFamily',
       'fontScale',
+      'textShadow',
+      'sectionAccent',
       'positionAnchor',
       'positionOffsetX',
       'positionOffsetY',
@@ -746,6 +768,12 @@ export const OUTPUT_APPEARANCE_DEFAULTS = Object.freeze(
     FIELD_DEFINITIONS.map((field) => [field.key, field.defaultValue]),
   ),
 );
+
+export function ornateSectionAccentColor(appearance) {
+  return appearance.accentColor === OUTPUT_APPEARANCE_DEFAULTS.accentColor
+    ? '#d96879'
+    : appearance.accentColor;
+}
 
 export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   'now-playing': Object.freeze({

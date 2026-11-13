@@ -26,6 +26,22 @@ const plan = {
   ],
 };
 describe('capacity pages keep existing template projections', () => {
+  it('maps a section accent onto its own page without coloring the other page', () => {
+    const base = {
+      visible: true,
+      currentText: line.text,
+      ornateVertical: { sectionAccentRanges: [{ from: 6, to: 12 }] },
+    };
+    const options = { templateId: 'ornate-vertical' };
+    expect(
+      projectLyricsDisplayFrame(base, line, plan, 1000, options).ornateVertical
+        .sectionAccentRanges,
+    ).toBeUndefined();
+    expect(
+      projectLyricsDisplayFrame(base, line, plan, 3000, options).ornateVertical
+        .units[0].parts,
+    ).toEqual([{ text: 'second', accent: true }]);
+  });
   it('clips role ranges independently for current and preview batches', () => {
     const source = {
       ...line,

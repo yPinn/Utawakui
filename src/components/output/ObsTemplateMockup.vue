@@ -1,6 +1,9 @@
 <script setup>
 import { computed, toRaw } from 'vue';
-import { normalizeOutputAppearance } from '../../../shared/outputAppearance.mjs';
+import {
+  normalizeOutputAppearance,
+  ornateSectionAccentColor,
+} from '../../../shared/outputAppearance.mjs';
 import { createOutputPreviewScene } from '../../../shared/presentation/outputPreviewScene.mjs';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
 import { outputTemplatePreviewFor } from './previews/outputTemplatePreviews.js';
@@ -69,6 +72,13 @@ const canvasStyle = computed(() => {
     '--obs-canvas-width': String(width),
     '--obs-canvas-aspect': `${width} / ${height}`,
     '--obs-canvas-ratio': String(width / height),
+    ...(props.preset?.id === 'ornate-vertical'
+      ? {
+          '--obs-ornate-section-accent': ornateSectionAccentColor(
+            appearance.value,
+          ),
+        }
+      : {}),
   };
 });
 </script>
@@ -86,6 +96,8 @@ const canvasStyle = computed(() => {
     :data-appearance-font="appearance.fontFamily"
     :data-appearance-weight="appearance.fontWeight"
     :data-appearance-surface="appearance.surface"
+    :data-appearance-text-shadow="appearance.textShadow"
+    :data-appearance-section-accent="appearance.sectionAccent"
     :style="canvasStyle"
     aria-hidden="true"
   >

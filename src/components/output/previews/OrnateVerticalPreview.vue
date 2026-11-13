@@ -18,14 +18,25 @@ const sourceTexts = computed(() => [
 ]);
 
 const previewLines = computed(() => {
+  const document = props.scene?.snapshot?.lyrics;
+  const documentLines = document?.lines ?? [];
+  const currentIndex = props.scene?.lyrics?.lineIndex ?? -1;
+  const nextIndex = documentLines.findIndex(
+    (line, index) => index > currentIndex && line.text?.trim(),
+  );
+  const indices = [currentIndex, nextIndex];
+  const showSectionAccent = props.scene?.appearance?.sectionAccent === 'auto';
   const documentContext = createOrnateVerticalDocumentContext(
-    sourceTexts.value,
+    showSectionAccent ? documentLines : sourceTexts.value,
+    { synced: showSectionAccent && document?.synced === true },
   );
 
   return sourceTexts.value.map((text, lineIndex) => {
+    const index = indices[lineIndex];
     const presentation = adaptOrnateVerticalLyricsPresentation(text, {
       documentContext,
-      lineIndex,
+      lineIndex:
+        documentLines[index]?.text?.trim() === text.trim() ? index : -1,
     });
 
     return {
@@ -70,7 +81,14 @@ const previewLines = computed(() => {
             :data-kind="unit.kind"
             :data-text="unit.text"
             :style="{ '--ornate-unit-delay': unit.delay }"
-            >{{ unit.text }}</span
+            ><template v-if="unit.parts">
+              <span
+                v-for="(part, partIndex) in unit.parts"
+                :key="partIndex"
+                :class="{ 'ornate-preview__accent': part.accent }"
+                >{{ part.text }}</span
+              > </template
+            ><template v-else>{{ unit.text }}</template></span
           >
         </span>
       </span>
@@ -101,6 +119,10 @@ const previewLines = computed(() => {
   font-family: var(--obs-user-font-family);
   line-height: 0.96;
   text-shadow: var(--ui-output-preview-ornate-shadow);
+}
+
+.obs-template-mockup[data-appearance-text-shadow='off'] .ornate-preview {
+  text-shadow: none;
 }
 
 .ornate-preview__line {
@@ -160,6 +182,16 @@ const previewLines = computed(() => {
   color: var(--ui-output-preview-ornate-echo);
   text-shadow: none;
   transform: translate(0.055em, 0.035em);
+}
+
+.obs-template-mockup[data-appearance-section-accent='auto']
+  .ornate-preview__unit[data-emphasis='keyword']::before {
+  content: none;
+}
+
+.obs-template-mockup[data-appearance-section-accent='auto']
+  .ornate-preview__accent {
+  color: var(--obs-ornate-section-accent);
 }
 
 .ornate-preview[data-animated='true'] .ornate-preview__line {

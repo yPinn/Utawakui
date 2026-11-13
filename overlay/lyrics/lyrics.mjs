@@ -1859,6 +1859,7 @@ export function createLyricsFrameScheduler(options = {}) {
   let kineticMaterial = normalizeOverlayAppearance({
     kineticMaterial: options.kineticMaterial,
   }).kineticMaterial;
+  let sectionAccent = options.sectionAccent === 'auto' ? 'auto' : 'off';
   let fisheyeGranularity = options.fisheyeGranularity ?? 'line';
   let lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
     templateId,
@@ -1943,8 +1944,15 @@ export function createLyricsFrameScheduler(options = {}) {
         documentRevision: lyrics.documentRevision,
         language: lyrics.source?.language,
         lines: lyrics.lines,
+        synced: lyrics.synced,
+        trackId: lyrics.trackId,
       },
-      { kineticMaterial, lyricsPresentationPolicyId, templateId },
+      {
+        kineticMaterial,
+        lyricsPresentationPolicyId,
+        sectionAccent,
+        templateId,
+      },
     );
     onTrace?.('presentation', {
       durationMs: measureNow() - stageAt,
@@ -1960,6 +1968,7 @@ export function createLyricsFrameScheduler(options = {}) {
         fisheyeGranularity,
         kineticMaterial,
         lyricsPresentationPolicyId,
+        sectionAccent,
         nowMs,
         presentationDocument,
         templateId,
@@ -2087,11 +2096,14 @@ export function createLyricsFrameScheduler(options = {}) {
         normalizedTemplateId,
         nextPolicyValue,
       );
+    const nextSectionAccent =
+      (nextSettings.sectionAccent ?? sectionAccent) === 'auto' ? 'auto' : 'off';
     const nextFisheyeGranularity =
       nextSettings.fisheyeGranularity ?? fisheyeGranularity;
     if (
       normalizedTemplateId === templateId &&
       normalizedKineticMaterial === kineticMaterial &&
+      nextSectionAccent === sectionAccent &&
       nextFisheyeGranularity === fisheyeGranularity &&
       normalizedLyricsPresentationPolicyId === lyricsPresentationPolicyId
     ) {
@@ -2100,6 +2112,7 @@ export function createLyricsFrameScheduler(options = {}) {
     settleNextFrame ||= Boolean(latestSnapshot);
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
+    sectionAccent = nextSectionAccent;
     fisheyeGranularity = nextFisheyeGranularity;
     lyricsPresentationPolicyId = normalizedLyricsPresentationPolicyId;
     refresh();
@@ -2270,6 +2283,7 @@ function boot() {
         fisheyeGranularity: appearance.fisheyeGranularity,
         kineticMaterial: appearance.kineticMaterial,
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
+        sectionAccent: appearance.sectionAccent,
         templateId: slot?.templateId ?? 'karaoke-stack',
       });
       if (

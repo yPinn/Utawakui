@@ -2,6 +2,7 @@ import {
   isOutputLocalFont,
   normalizeOutputAppearance,
   normalizeOutputElementAppearance,
+  ornateSectionAccentColor,
   OUTPUT_APPEARANCE_DEFAULTS,
   outputAppearanceOptionIds,
   outputElementFontWeight,
@@ -82,6 +83,8 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlKineticMaterial = appearance.kineticMaterial;
   root.dataset.ovlKineticArrangement = appearance.kineticArrangement;
   root.dataset.ovlContrast = appearance.contrastStyle;
+  root.dataset.ovlTextShadow = appearance.textShadow;
+  root.dataset.ovlSectionAccent = appearance.sectionAccent;
   root.dataset.ovlDensity = appearance.spacingDensity;
   root.dataset.ovlContentWidth = appearance.contentWidth;
   root.dataset.ovlPosition = appearance.positionAnchor;
@@ -108,6 +111,10 @@ export function applyOverlayAppearance(document, slot) {
 
   root.style?.setProperty?.('--ovl-user-text-color', textColor);
   root.style?.setProperty?.('--ovl-user-accent-color', accentColor);
+  root.style?.setProperty?.(
+    '--ovl-ornate-section-accent',
+    ornateSectionAccentColor(appearance),
+  );
   root.style?.setProperty?.(
     '--ovl-user-chalkboard-rule-color',
     appearance.chalkboardRuleColor,

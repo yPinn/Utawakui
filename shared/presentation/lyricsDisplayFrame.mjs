@@ -264,7 +264,20 @@ export function projectLyricsDisplayFrame(
     };
   }
   if (options.templateId === 'ornate-vertical') {
-    projected.ornateVertical = adaptOrnateVerticalLyricsPresentation(page.text);
+    const sectionAccentRanges = (base.ornateVertical?.sectionAccentRanges ?? [])
+      .filter(
+        ({ from, to }) => from >= page.sourceStart && to <= page.sourceEnd,
+      )
+      .map(({ from, to }) => ({
+        from: from - page.sourceStart,
+        to: to - page.sourceStart,
+      }));
+    projected.ornateVertical = adaptOrnateVerticalLyricsPresentation(
+      page.text,
+      {
+        sectionAccentRanges,
+      },
+    );
   }
   if (options.templateId === 'live-stage') {
     projected.liveStageDisplayLines = rows.map((row) => row.text);

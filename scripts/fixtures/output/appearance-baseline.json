@@ -114,6 +114,16 @@
       "scope": "slot-template",
       "activation": "explicit-selection"
     },
+    "textShadow": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "sectionAccent": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
     "furigana": {
       "level": "opt",
       "scope": "slot-template",
@@ -818,6 +828,46 @@
             },
             {
               "id": "large"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "textShadow",
+          "family": "legibility",
+          "tier": "basic",
+          "reflow": false,
+          "order": 40,
+          "control": "select",
+          "defaultValue": "standard",
+          "options": [
+            {
+              "id": "standard"
+            },
+            {
+              "id": "off"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "sectionAccent",
+          "family": "legibility",
+          "tier": "basic",
+          "reflow": false,
+          "order": 50,
+          "control": "select",
+          "defaultValue": "off",
+          "options": [
+            {
+              "id": "off"
+            },
+            {
+              "id": "auto"
             }
           ],
           "group": "typography",

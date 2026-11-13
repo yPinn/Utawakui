@@ -124,6 +124,30 @@ export function createOutputPreviewScene({
   const snapshot = suppliedSnapshot
     ? globalThis.structuredClone(suppliedSnapshot)
     : createOutputPreviewSnapshot();
+  const appearance = normalizeOutputAppearance(settings, { templateId });
+  if (
+    !suppliedSnapshot &&
+    templateId === 'ornate-vertical' &&
+    appearance.sectionAccent === 'auto'
+  ) {
+    const lyrics = snapshot.lyrics;
+    const shiftMs = lyrics.lines.at(-1).endMs;
+    lyrics.lines.push(
+      ...lyrics.lines.map((line) => ({
+        ...line,
+        lineId: `${line.lineId}-repeat`,
+        startMs: line.startMs + shiftMs,
+        endMs: line.endMs + shiftMs,
+      })),
+    );
+    lyrics.reading.lines.push(
+      ...lyrics.reading.lines.map((line) => ({
+        ...line,
+        lineId: `${line.lineId}-repeat`,
+      })),
+    );
+    snapshot.playback.durationMs = lyrics.lines.at(-1).endMs;
+  }
   if (!suppliedSnapshot && templateId === 'receipt-setlist') {
     const history = Array.from({ length: 12 }, (_, index) => ({
       ordinal: index + 1,
@@ -191,7 +215,6 @@ export function createOutputPreviewScene({
     current.track.title = 'Into the Morning';
     snapshot.playback.track.title = current.track.title;
   }
-  const appearance = normalizeOutputAppearance(settings, { templateId });
   const lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
     templateId,
     settings?.lyricsPresentationPolicyId,
@@ -201,6 +224,7 @@ export function createOutputPreviewScene({
     templateId,
     fisheyeGranularity: appearance.fisheyeGranularity,
     kineticMaterial: appearance.kineticMaterial,
+    sectionAccent: appearance.sectionAccent,
     lyricsPresentationPolicyId,
   };
   const frame =
