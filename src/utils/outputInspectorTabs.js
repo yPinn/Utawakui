@@ -10,9 +10,14 @@ import { t } from './i18n.js';
 
 const anchorKeys = ['positionAnchor'];
 const offsetKeys = ['positionOffsetX', 'positionOffsetY'];
-const readingKeys = ['furigana'];
 
 const categories = [
+  { id: 'motion', icon: Repeat, groups: [{ id: 'motion' }] },
+  {
+    id: 'display',
+    icon: Eye,
+    groups: [{ id: 'template-presentation' }, { id: 'content' }],
+  },
   {
     id: 'layout',
     icon: LocateFixed,
@@ -35,7 +40,7 @@ const categories = [
   {
     id: 'text',
     icon: Type,
-    groups: [{ id: 'typography' }, { id: 'content', keys: readingKeys }],
+    groups: [{ id: 'typography' }, { id: 'readability' }],
   },
   {
     id: 'color',
@@ -46,16 +51,6 @@ const categories = [
       { id: 'surface' },
     ],
   },
-  {
-    id: 'display',
-    icon: Eye,
-    groups: [
-      { id: 'readability' },
-      { id: 'template-presentation' },
-      { id: 'content', excludeKeys: readingKeys },
-    ],
-  },
-  { id: 'motion', icon: Repeat, groups: [{ id: 'motion' }] },
 ];
 
 export function outputInspectorTabs(fields) {

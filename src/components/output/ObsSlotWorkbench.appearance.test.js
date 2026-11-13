@@ -14,18 +14,18 @@ const fieldsFor = (templateId) =>
 const templateTabLabels = {
   'queue-board': ['版面', '文字', '色彩'],
   'karaoke-stack': ['文字', '色彩'],
-  'kinetic-pop': ['版面', '文字', '色彩', '顯示'],
+  'kinetic-pop': ['版面', '文字', '色彩'],
   'ornate-vertical': ['定位', '文字', '色彩'],
   'chalkboard-vertical': ['定位', '文字', '色彩'],
+  'centered-vertical': ['文字', '色彩'],
   'fisheye-lens': ['動態', '攝影機特效', '顯示', '版面', '文字', '色彩'],
-  'centered-vertical': ['文字', '色彩', '顯示'],
-  'live-stage': ['文字', '色彩', '顯示'],
-  'manga-frame': ['文字', '色彩'],
+  'live-stage': ['顯示', '文字', '色彩'],
+  'manga-frame': ['顯示', '文字', '色彩'],
   'art-card': ['文字', '色彩'],
   'ticket-stub': ['文字'],
   'cover-player': ['文字', '色彩'],
-  'receipt-setlist': ['版面', '文字', '動態'],
-  'ribbon-setlist': ['色彩', '動態'],
+  'receipt-setlist': ['動態', '版面', '文字'],
+  'ribbon-setlist': ['動態', '色彩'],
 };
 
 async function renderRegisteredTemplate(
@@ -103,6 +103,12 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
           ([, label]) => label,
         ),
       ).toEqual(templateTabLabels[id]);
+      expect(html).toMatch(
+        new RegExp(
+          `aria-label="${templateTabLabels[id][0]}"[^>]+aria-selected="true"`,
+          'u',
+        ),
+      );
       expect(html).not.toContain('data-output-side-toggle');
       for (const { key } of [...appearanceFields, ...presentationFields]) {
         expect(html).toContain(`output-appearance-${key}`);
@@ -156,7 +162,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ]),
     ).toEqual([
       ['title', ['文字']],
-      ['artist', ['文字', '顯示']],
+      ['artist', ['顯示', '文字']],
       ['progress', ['顯示']],
       ['transport', ['顯示']],
     ]);
@@ -171,9 +177,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         groups.flatMap(({ fields }) => fields.map(({ key }) => key)),
       ]),
     ).toEqual([
+      ['動態', ['receiptReview', 'receiptReviewInterval']],
       ['版面', ['receiptDirection']],
       ['文字', ['fontScale']],
-      ['動態', ['receiptReview', 'receiptReviewInterval']],
     ]);
 
     const html = await renderRegisteredTemplate('receipt-setlist');
@@ -181,10 +187,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
         ([, label]) => label,
       ),
-    ).toEqual(['版面', '文字', '動態']);
+    ).toEqual(['動態', '版面', '文字']);
     expect(html).toContain('>字體設定</h3>');
     expect(html).toContain('>歷史回顧</h3>');
-    expect(html).toMatch(/aria-label="版面"[^>]+aria-selected="true"/u);
     expect(html).not.toContain('data-output-side-toggle');
     expect(html).not.toContain('output-appearance-paletteId');
     for (const { key } of fields) {
@@ -364,12 +369,12 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       }),
     );
     const labels = [
+      '內容顯示',
       '版面',
       '字體設定',
+      '可讀性',
       '整體配色',
       '背景',
-      '可讀性',
-      '內容顯示',
     ];
 
     for (let index = 1; index < labels.length; index += 1) {
