@@ -104,6 +104,7 @@ useOutputPreviewMotion({
 <style scoped>
 .chalkboard-preview {
   --chalkboard-preview-rule-gap: 0.18em;
+  --chalkboard-preview-column-gap: 0.52em;
   position: relative;
   inset-inline-start: -33.333cqi;
   place-self: center;
@@ -144,7 +145,7 @@ useOutputPreviewMotion({
   display: flex;
   flex-direction: row-reverse;
   align-items: flex-start;
-  gap: 0.52em;
+  gap: var(--chalkboard-preview-column-gap);
 }
 
 .chalkboard-preview__ink,

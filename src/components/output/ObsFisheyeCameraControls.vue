@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, shallowRef, useId } from 'vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -76,16 +77,14 @@ onBeforeUnmount(() => {
     :aria-label="t('outputPanel.cameraEffects.label')"
   >
     <UiHint aria-live="polite">{{ stateLabel }}</UiHint>
-    <label class="obs-fisheye-camera__automatic" :for="controlsId">
-      <input
-        :id="controlsId"
-        type="checkbox"
-        :checked="status.automatic === true"
-        :disabled="!canTrigger"
-        @click.prevent="invoke(status.automatic ? 'auto-off' : 'auto-on')"
-      />
-      {{ t('outputPanel.cameraEffects.automatic') }}
-    </label>
+    <!-- Checked state mirrors the Output status, so the click never toggles locally. -->
+    <UiCheckbox
+      :id="controlsId"
+      :label="t('outputPanel.cameraEffects.automatic')"
+      :model-value="status.automatic === true"
+      :disabled="!canTrigger"
+      @click.prevent="invoke(status.automatic ? 'auto-off' : 'auto-on')"
+    />
     <div class="obs-fisheye-camera__buttons">
       <UiButton
         v-for="effect in effects"
@@ -108,7 +107,6 @@ onBeforeUnmount(() => {
   padding-block: var(--ui-space-3);
 }
 
-.obs-fisheye-camera__automatic,
 .obs-fisheye-camera__buttons {
   display: flex;
   flex-wrap: wrap;
