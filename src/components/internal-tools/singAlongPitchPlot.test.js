@@ -11,6 +11,7 @@ import {
   guidePitchFrames,
   guideSilenceRanges,
   guideTechniqueMarkers,
+  inputEdgePaths,
   inputLevelPath,
   inputLevelPaths,
   maskGuideContours,
@@ -34,7 +35,38 @@ it('plots level independently of pitch and separates discontinuous samples', () 
       2.5,
       (time) => time,
     ),
-  ).toBe('M0.00,16L0.00,16.00L1.00,2.00L1.00,16ZM2.00,16L2.00,2.00L2.00,16Z');
+  ).toBe('M0.00,16L0.00,16.00L1.00,6.67L1.00,16ZM2.00,16L2.00,6.67L2.00,16Z');
+});
+
+it('marks off-chart input on the matching edge and splits at breaks', () => {
+  const frames = [
+    { time: 0, hz: 880, continuous: false },
+    { time: 1, hz: 880, continuous: true },
+    { time: 2, hz: 440, continuous: true },
+    { time: 3, hz: 110, continuous: true },
+    { time: 4, hz: 110, continuous: false },
+    { time: 5, hz: null, continuous: false },
+  ];
+  // A4 sits mid-chart; an octave above or two below leaves it.
+  const y = (midi) => 60 + (69 - midi) * 6;
+  expect(inputEdgePaths(frames, 0, 5, y, (time) => time)).toEqual({
+    above: 'M0.00 1H1.00',
+    below: 'M3.00 119H3.60M4.00 119H4.60',
+  });
+});
+
+it('shares the level meter scale from -60 to 0 dBFS', () => {
+  const path = inputLevelPath(
+    [
+      { time: 0, dbfs: -60, continuous: false },
+      { time: 1, dbfs: -9, continuous: true },
+      { time: 2, dbfs: 0, continuous: true },
+    ],
+    0,
+    2,
+    (time) => time,
+  );
+  expect(path).toBe('M0.00,16L0.00,16.00L1.00,4.10L2.00,2.00L2.00,16Z');
 });
 
 it('colours historical level intervals by input state without bridging a break', () => {
@@ -261,6 +293,23 @@ it('uses the whole song, preserves sustained extremes, and excludes isolated pit
   expect(songPitchBounds(notes, 0)).toEqual({ low: 42, high: 75 });
   expect(songPitchBounds(notes, 3)).toEqual({ low: 45, high: 78 });
   expect(songPitchBounds([], null)).toEqual({ low: 36, high: 84 });
+});
+
+it('ignores guide notes inside reviewed no-voice ranges when sizing the scale', () => {
+  const note = (midi, start, end) => ({
+    start,
+    end,
+    points: [
+      { time: start, midi },
+      { time: end, midi },
+    ],
+  });
+  const notes = [note(60, 0, 80), note(66, 80, 160), note(84, 200, 201)];
+  expect(songPitchBounds(notes, 0)).toEqual({ low: 51, high: 87 });
+  expect(songPitchBounds(maskGuideContours(notes, [[199, 202]]), 0)).toEqual({
+    low: 51,
+    high: 75,
+  });
 });
 
 it('eases clock drift during playback, freezes at pause, and snaps on seek', () => {

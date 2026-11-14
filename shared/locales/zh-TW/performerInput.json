@@ -1,6 +1,6 @@
 {
   "meter": "輸入電平",
-  "pitchLegend": "細線是原唱音高，較粗的梅紫色線是輸入音高。膠囊標出目標音，內帶是上下 50 音分的對準範圍。",
+  "pitchLegend": "細線是原唱，梅紫色粗線是實唱。膠囊是目標音，內帶是上下 50 音分。實唱超出譜面時，上下緣會出現梅紫色短線。",
   "scanLegend": "掃條對齊目前的填色邊界。長線標小節，短刻度標拍子。",
   "accessibleReading": "{level}，{status}",
   "accessibleClippingReading": "分析電平 {level}，{status}，峰值 {peak}。",
@@ -17,7 +17,7 @@
   "showReferencePitch": "顯示原唱曲線",
   "history": "顯示電平歷史",
   "historyName": "電平歷史",
-  "historyDescription": "電平越高，聲音越大。電平和音高共用時間軸，麥克風電平帶的顏色顯示估音狀態。",
+  "historyDescription": "越高越大聲，顏色表示估音狀態。",
   "gain": "麥克風增量",
   "gainHint": "只調整跟唱的輸入電平。",
   "lowCut": "低切濾波",

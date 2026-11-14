@@ -51,6 +51,7 @@ import {
   guideSilenceRanges,
   guideTechniqueMarkers,
   INPUT_LEVEL_HEIGHT,
+  inputEdgePaths,
   inputLevelPaths,
   maskGuideContours,
   SING_ALONG_CURSOR,
@@ -193,7 +194,7 @@ const focusStart = computed(
 const focusEnd = computed(
   () => focusStart.value + focusPeriod + SING_ALONG_SECONDS,
 );
-const bounds = computed(() => songPitchBounds(guide.value, semitones.value));
+const bounds = computed(() => songPitchBounds(contours.value, semitones.value));
 const displayGuide = computed(() => {
   if (semitones.value === null) return [];
   const { low, high } = bounds.value;
@@ -344,7 +345,10 @@ const realtimeFrames = computed(() =>
       )
     : micFrames.value.map((sample) => ({
         ...sample,
-        time: sample.time + correctionMs.value / 1000,
+        // Wall-clock offset converted to song time, like the other delays.
+        time:
+          sample.time +
+          (correctionMs.value * (playback.value?.rate ?? 1)) / 1000,
       })),
 );
 const inputFrames = computed(() => {
@@ -372,6 +376,15 @@ const micPath = computed(() =>
     trace.value,
     focusStart.value - overscan,
     focusEnd.value - focusStart.value + 2 * overscan,
+    y,
+    timeToX,
+  ),
+);
+const edgePaths = computed(() =>
+  inputEdgePaths(
+    trace.value,
+    focusStart.value - overscan,
+    focusEnd.value + overscan,
     y,
     timeToX,
   ),
@@ -698,11 +711,7 @@ onBeforeUnmount(() => {
             :viewBox="`0 0 ${PITCH_WIDTH} 120`"
             preserveAspectRatio="none"
             role="img"
-            :aria-label="
-              liveSelected
-                ? '原唱曲線、目標音符與人聲檔音高'
-                : '原唱曲線、目標音符與麥克風實唱音高'
-            "
+            aria-label="原唱曲線、導唱膠囊與實唱線"
           >
             <defs>
               <clipPath :id="inputClipId">
@@ -845,6 +854,12 @@ onBeforeUnmount(() => {
               <g :transform="timelineTransform">
                 <path class="prompter-sing-along__voice-edge" :d="micPath" />
                 <path class="prompter-sing-along__voice" :d="micPath" />
+                <path
+                  v-for="(path, side) in edgePaths"
+                  :key="side"
+                  class="prompter-sing-along__voice-edge-hint"
+                  :d="path"
+                />
               </g>
             </g>
             <line
@@ -905,7 +920,7 @@ onBeforeUnmount(() => {
                 class="prompter-sing-along__annotation"
                 :class="{
                   'prompter-sing-along__annotation--active':
-                    position >= mark.start && position < mark.end,
+                    scanTime >= mark.start && scanTime < mark.end,
                 }"
                 :transform="`translate(${mark.x} 6)`"
               >
@@ -1124,6 +1139,10 @@ onBeforeUnmount(() => {
                   d="M5 13Q11 6 17 12T29 12"
                 />
                 <path class="prompter-sing-along__voice" d="M14 12H43" />
+                <path
+                  class="prompter-sing-along__voice-edge-hint"
+                  d="M34 2H44"
+                />
               </svg>
               音高對照
             </dt>
@@ -1517,5 +1536,12 @@ onBeforeUnmount(() => {
   stroke: var(--ui-performer-input-foreground);
   stroke-width: 2;
   stroke-linecap: round;
+}
+.prompter-sing-along__voice-edge-hint {
+  fill: none;
+  stroke: var(--ui-performer-input-foreground);
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 </style>

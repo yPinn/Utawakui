@@ -1,4 +1,5 @@
 import { playbackPositionMs } from '../../../shared/presentation/state.mjs';
+import { microphoneMeterPercent } from '../../microphone/pitchInputStatus.js';
 import { isIsolatedSpike, smoothJitter } from './referencePitchPlot.js';
 
 // Include values on the 60-cent boundary despite Hz-to-MIDI rounding.
@@ -885,6 +886,32 @@ export function connectMicFrames(frames) {
   );
 }
 
+// Mark input pitch above or below the plot along the matching edge.
+export function inputEdgePaths(frames, from, to, y, timeToX, height = 120) {
+  const paths = { above: '', below: '' };
+  let run = null;
+  const close = () => {
+    if (!run) return;
+    const edge = run.side === 'above' ? 1 : height - 1;
+    const end = Math.max(run.right, run.left + 0.6);
+    paths[run.side] += `M${run.left.toFixed(2)} ${edge}H${end.toFixed(2)}`;
+    run = null;
+  };
+  for (const { time, hz, continuous } of frames) {
+    const midi = time >= from && time <= to ? toMidi(hz) : null;
+    const row = midi === null ? null : y(midi);
+    const side =
+      row === null ? null : row < 0 ? 'above' : row > height ? 'below' : null;
+    if (!side || !continuous || run?.side !== side) close();
+    if (!side) continue;
+    const x = timeToX(time);
+    if (run) run.right = x;
+    else run = { side, left: x, right: x };
+  }
+  close();
+  return paths;
+}
+
 export const INPUT_LEVEL_HEIGHT = 16;
 
 export function inputLevelPath(frames, from, to, timeToX) {
@@ -897,7 +924,7 @@ export function inputLevelPath(frames, from, to, timeToX) {
       lastX = null;
     }
     const x = timeToX(time).toFixed(2);
-    const level = Math.min(1, Math.max(0, (dbfs + 65) / 45));
+    const level = microphoneMeterPercent(dbfs) / 100;
     const y = INPUT_LEVEL_HEIGHT - level * (INPUT_LEVEL_HEIGHT - 2);
     if (lastX === null) path += `M${x},${INPUT_LEVEL_HEIGHT}`;
     path += `L${x},${y.toFixed(2)}`;

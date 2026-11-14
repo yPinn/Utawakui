@@ -1,6 +1,6 @@
 {
   "meter": "Input level",
-  "pitchLegend": "The thin line shows the original vocal pitch. The thicker plum line shows input pitch. Capsules mark the target notes, with a tolerance band of 50 cents on either side.",
+  "pitchLegend": "The thin line is the original vocal; the thicker plum line is your singing. Capsules mark target notes, with a 50-cent band either side. A plum mark on the top or bottom edge means your singing is off the chart.",
   "scanLegend": "The sweep line marks the fill edge. Long lines mark bars, and short ticks mark beats.",
   "accessibleReading": "{level}, {status}",
   "accessibleClippingReading": "Analysis level {level}, {status}, peak {peak}.",
@@ -17,7 +17,7 @@
   "showReferencePitch": "Show original vocal curve",
   "history": "Show level history",
   "historyName": "Level history",
-  "historyDescription": "Higher levels indicate louder input. Level and pitch share a timeline. The microphone level strip shows pitch status by color.",
+  "historyDescription": "Taller means louder; color shows pitch status.",
   "gain": "Microphone gain",
   "gainHint": "Adjusts the input level used for sing-along analysis.",
   "lowCut": "Low-cut filter",

@@ -35,4 +35,8 @@ it('defaults to an enabled microphone and both level displays and restores chang
   };
   saveSingAlongPreferences(changed);
   expect(loadSingAlongPreferences()).toEqual(changed);
+  saveSingAlongPreferences({ correctionMs: 14 });
+  expect(loadSingAlongPreferences().correctionMs).toBe(10);
+  saveSingAlongPreferences({ correctionMs: 900 });
+  expect(loadSingAlongPreferences().correctionMs).toBe(500);
 });

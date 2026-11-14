@@ -18,8 +18,9 @@ export function normalizeSingAlongPreferences(value) {
       highPassHz,
       noiseSuppression,
     },
+    // Match the 10 ms slider step.
     correctionMs: Number.isFinite(offset)
-      ? Math.max(-500, Math.min(500, offset))
+      ? Math.max(-500, Math.min(500, Math.round(offset / 10) * 10)) || 0
       : 0,
     showMeter: value?.showMeter !== false,
     showLevelHistory: value?.showLevelHistory !== false,
