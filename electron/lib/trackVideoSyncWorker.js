@@ -342,11 +342,29 @@ async function estimateVideoAlignment(source, target, signal) {
 }
 
 if (parentPort && workerData?.kind === 'track-video-offset') {
-  estimateVideoAlignment(workerData.source, workerData.target).then(
-    (alignment) => {
-      parentPort.postMessage(alignment);
-    },
-  );
+  const { source, target, includeWaveforms } = workerData;
+  estimateVideoAlignment(source, target).then((alignment) => {
+    if (!includeWaveforms || !source.length || !target.length) {
+      parentPort.postMessage(includeWaveforms ? { alignment } : alignment);
+      return;
+    }
+    const {
+      summarizeMonoWaveform,
+    } = require('../../shared/waveform/peaks.mjs');
+    const summarize = (samples) => ({
+      overview: summarizeMonoWaveform(samples, SAMPLE_RATE, 150),
+      detail: summarizeMonoWaveform(samples, SAMPLE_RATE, 5),
+    });
+    const waveforms = { source: summarize(source), target: summarize(target) };
+    const buffers = Object.values(waveforms).flatMap(({ overview, detail }) =>
+      [overview, detail].flatMap(({ peaks }) => [
+        peaks.min.buffer,
+        peaks.max.buffer,
+        peaks.rms.buffer,
+      ]),
+    );
+    parentPort.postMessage({ alignment, waveforms }, buffers);
+  });
 }
 
 module.exports = { estimateVideoAlignment };

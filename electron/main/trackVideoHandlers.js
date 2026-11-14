@@ -140,6 +140,7 @@ function registerTrackVideoHandlers({
   let offer;
   let draft;
   let job;
+  let waveformReview;
   const aligner = createTrackVideoAlignment({
     getContext,
     stillCurrent,
@@ -152,6 +153,7 @@ function registerTrackVideoHandlers({
     getProviderRunner,
     inspectVideo,
     estimateAlignment,
+    rememberWaveforms,
     jobs: {
       get: () => job,
       set: (value) => {
@@ -159,6 +161,17 @@ function registerTrackVideoHandlers({
       },
     },
   });
+
+  function rememberWaveforms(context, revision, filePath, waveforms, external) {
+    waveformReview = waveforms && {
+      context,
+      revision,
+      stat: fileStat(filePath),
+      waveforms,
+      external,
+      expires: Date.now() + 10 * 60_000,
+    };
+  }
 
   function getContext(trackId) {
     const { dir, epoch } = getScope();
@@ -255,6 +268,14 @@ function registerTrackVideoHandlers({
       throw error;
     }
     if (draft === item) draft = null;
+    if (item.waveforms)
+      rememberWaveforms(
+        context,
+        token,
+        destination,
+        item.waveforms,
+        item.externalWaveforms,
+      );
     cleanup(item.stage, true);
     if (old) cleanup(videoPath(context.trackDir, old.revision));
     onChange?.(context.trackId);
@@ -294,6 +315,7 @@ function registerTrackVideoHandlers({
         throw problem('invalid-video');
       }
       let alignment;
+      let waveforms;
       let reason = current.sourceVideoId
         ? 'reference-unavailable'
         : 'missing-reference';
@@ -301,7 +323,7 @@ function registerTrackVideoHandlers({
       else if (hasAudio || getReference) {
         current.kind = 'aligning';
         current.progress = null;
-        ({ alignment, reason } = await aligner.suggest(
+        ({ alignment, reason, waveforms } = await aligner.suggest(
           context,
           filePath,
           ffmpeg,
@@ -321,6 +343,8 @@ function registerTrackVideoHandlers({
         metadata,
         sourceVideoId: current.sourceVideoId,
         syncSegments: suggestion?.segments ?? null,
+        waveforms,
+        externalWaveforms: !hasAudio,
       };
       if (suggestion?.autoApply) {
         if (current.sourceVideoId) requireProvider();
@@ -339,7 +363,10 @@ function registerTrackVideoHandlers({
             : (reason ?? 'insufficient-match'),
         suggestedOffsetMs: suggestion?.offsetMs ?? null,
         ...(reviewRange && { reviewRange }),
-        ...(item.syncSegments && { segmentCount: item.syncSegments.length }),
+        ...(item.syncSegments && {
+          segmentCount: item.syncSegments.length,
+          segments: item.syncSegments,
+        }),
         url: `utawakui-media://video-candidate/${encodeURIComponent(context.trackId)}/${token}`,
       };
     } catch (error) {
@@ -564,12 +591,47 @@ function registerTrackVideoHandlers({
       return publishVideo(item, offsetMs, useSegments);
     },
     align: (input) => aligner.align(input),
+    waveforms({ trackId, revision }) {
+      if (typeof revision !== 'string' || !VIDEO_REVISION.test(revision))
+        throw problem('invalid-intent');
+      const context = getContext(trackId);
+      if (draft?.token === revision && draft.context.trackId === trackId) {
+        if (!stillCurrent(draft.context) || !fileStat(draft.filePath))
+          throw problem('stale');
+        if (draft.waveforms && draft.externalWaveforms) requireProvider();
+        return { status: 'ok', waveforms: draft.waveforms ?? null };
+      }
+      const file = resolveTrackVideoPath(context.dir, trackId, revision);
+      if (!file) throw problem('stale');
+      const review = waveformReview;
+      if (review && review.expires <= Date.now()) waveformReview = null;
+      if (
+        waveformReview === null ||
+        review?.revision !== revision ||
+        review.context.trackId !== trackId ||
+        review.context.dir !== context.dir ||
+        review.context.epoch !== context.epoch ||
+        review.context.binding !== context.binding
+      )
+        return { status: 'ok', waveforms: null };
+      const current = fileStat(file);
+      if (
+        !current ||
+        !review.stat ||
+        current.mtimeMs !== review.stat.mtimeMs ||
+        current.size !== review.stat.size
+      )
+        throw problem('stale');
+      if (review.external) requireProvider();
+      return { status: 'ok', waveforms: review.waveforms };
+    },
     'set-offset': (input) => aligner.setOffset(input),
     remove({ trackId }) {
       if (job?.context.trackId === trackId) throw problem('busy');
       const context = getContext(trackId);
       const old = readTrackVideo(context);
       if (old) {
+        if (waveformReview?.revision === old.revision) waveformReview = null;
         fs.rmSync(path.join(context.trackDir, VIDEO_MANIFEST));
         cleanup(videoPath(context.trackDir, old.revision));
         onChange?.(trackId);
@@ -668,6 +730,7 @@ function registerTrackVideoHandlers({
     },
     invalidate() {
       offer = null;
+      waveformReview = null;
       aligner.invalidate();
       job?.controller.abort(problem('stale'));
       clearDraft();

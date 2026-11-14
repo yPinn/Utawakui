@@ -5,9 +5,11 @@ import { t } from '../../utils/i18n.js';
 import { trackVideoFrame } from '../../utils/trackVideoClock.js';
 import UiHint from '../ui/UiHint.vue';
 
-const { asset } = defineProps({
+const { asset, clock } = defineProps({
   asset: { type: Object, required: true },
+  clock: { type: Function, default: null },
 });
+const emit = defineEmits(['frame-ready', 'error']);
 const { state, samplePlaybackClock } = usePlayer();
 const video = useTemplateRef('video');
 const failed = shallowRef(false);
@@ -34,6 +36,7 @@ watch(
     let lastSegmentStart;
     let lastPlaying;
     let transitionAfterSeek = false;
+    let readyPosition;
 
     function revealSection() {
       if (!transitionAfterSeek) return;
@@ -43,9 +46,13 @@ watch(
     element.addEventListener('seeked', revealSection);
 
     function sync() {
-      const sample = samplePlaybackClock();
-      const delay = state.monitorPitchDelayMs || 0;
-      if (element.readyState >= 1 && sample.trackId === state.track?.id) {
+      const sample = clock ? clock() : samplePlaybackClock();
+      const delay = clock ? 0 : state.monitorPitchDelayMs || 0;
+      if (
+        element.readyState >= 1 &&
+        sample &&
+        (clock || sample.trackId === state.track?.id)
+      ) {
         const frame = trackVideoFrame(
           sample,
           asset.offsetMs,
@@ -89,6 +96,7 @@ watch(
             if (!continuousPlayback || sectionChanged)
               sectionTransition.value = false;
             element.currentTime = frame.position;
+            readyPosition = undefined;
             lastContinuity = sample.continuityRevision;
             lastDelay = delay;
             lastPhase = sample.phase;
@@ -98,6 +106,17 @@ watch(
             lastPlaying = frame.playing;
           }
           if (!frame.playing && !element.paused) element.pause();
+          if (
+            clock &&
+            !frame.playing &&
+            !element.seeking &&
+            element.readyState >= 2 &&
+            readyPosition !== frame.position &&
+            Math.abs(element.currentTime - frame.position) < 0.05
+          ) {
+            readyPosition = frame.position;
+            emit('frame-ready', sample.positionMs);
+          }
           if (
             frame.playing &&
             element.paused &&
@@ -111,7 +130,7 @@ watch(
               .play()
               .catch((error) => {
                 if (error.name !== 'AbortError' && video.value === element)
-                  failed.value = true;
+                  mediaFailed();
               })
               .finally(() => {
                 playingRequest = false;
@@ -131,6 +150,11 @@ watch(
   },
   { flush: 'post' },
 );
+
+function mediaFailed() {
+  failed.value = true;
+  emit('error');
+}
 </script>
 
 <template>
@@ -147,7 +171,7 @@ watch(
       preload="metadata"
       muted
       playsinline
-      @error="failed = true"
+      @error="mediaFailed"
       @animationend.self="sectionTransition = false"
     />
     <UiHint v-if="failed" class="track-video-playback__placeholder">{{

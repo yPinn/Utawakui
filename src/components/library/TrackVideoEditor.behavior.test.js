@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import TrackVideoEditor from './TrackVideoEditor.vue';
 import { mount } from '../ui/uiTestHost.js';
 
+vi.mock('./TrackVideoWaveforms.vue', () => ({ default: {} }));
 vi.mock('../../composables/useAppConfirmation.js', () => ({
   useAppConfirmation: () => ({ confirm: vi.fn(async () => true) }),
 }));

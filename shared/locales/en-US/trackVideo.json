@@ -65,6 +65,25 @@
   "switchToVideo": "Switch to video",
   "switchToLyrics": "Switch to lyrics",
   "switchToAudio": "Switch to audio",
+  "segmentPreview": {
+    "play": "Play segment",
+    "stop": "Stop preview",
+    "preparing": "Preparing segment preview…",
+    "failed": "Could not play the segment. Try again."
+  },
+  "waveform": {
+    "title": "Waveform comparison",
+    "local": "Local audio",
+    "reference": "MV reference audio",
+    "empty": "Run Auto sync to compare waveforms.",
+    "unavailable": "Waveforms are currently unavailable.",
+    "overview": "Full song waveform. Click or drag to zoom into a section.",
+    "detail": "Waveform comparison. Drag horizontally to adjust only the MV offset.",
+    "range": "Song time {start} to {end}",
+    "review": "Section to check",
+    "jump": "Sync transition",
+    "whole": "Full song"
+  },
   "error": {
     "busy": "Another video task is running. Try again shortly.",
     "invalid-intent": "Check the video ID, quality selection, or sync offset.",

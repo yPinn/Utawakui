@@ -66,6 +66,7 @@ function createTrackVideoAlignment({
   getProviderRunner,
   inspectVideo,
   estimateAlignment = estimateTrackVideoAlignment,
+  rememberWaveforms,
   jobs,
 }) {
   let pending = null;
@@ -82,13 +83,22 @@ function createTrackVideoAlignment({
     try {
       referencePath = hasAudio ? filePath : await getReference?.();
       if (!referencePath) return { reason: 'reference-unavailable' };
-      const alignment = await estimateAlignment({
+      const result = await estimateAlignment({
         ffmpeg,
         audioPath: context.audioPath,
         referencePath,
         signal,
+        includeWaveforms: true,
       });
-      return alignment ? { alignment } : { reason: 'insufficient-match' };
+      const alignment =
+        result && Object.hasOwn(result, 'alignment')
+          ? result.alignment
+          : result;
+      return {
+        alignment,
+        waveforms: result?.waveforms,
+        ...(!alignment && { reason: 'insufficient-match' }),
+      };
     } catch (error) {
       signal.throwIfAborted();
       if (error.code === 'FEATURE_GATE_REQUIRED') throw error;
@@ -216,7 +226,7 @@ function createTrackVideoAlignment({
           );
           return fetchReference(run, { target, reference }, stage, signal);
         });
-      const { alignment } =
+      const { alignment, waveforms } =
         duration <= MAX_ALIGNMENT_SECONDS
           ? await suggest(
               context,
@@ -238,6 +248,7 @@ function createTrackVideoAlignment({
         throw problem('stale');
       const suggestion = readAlignment(alignment, duration);
       const segments = suggestion?.segments;
+      rememberWaveforms(context, revision, filePath, waveforms, !hasAudio);
       const alignmentToken = segments ? randomUUID() : null;
       if (segments)
         pending = {
@@ -252,7 +263,11 @@ function createTrackVideoAlignment({
         status: 'ok',
         suggestedOffsetMs: suggestion?.offsetMs ?? null,
         ...(suggestion?.reviewRange && { reviewRange: suggestion.reviewRange }),
-        ...(segments && { alignmentToken, segmentCount: segments.length }),
+        ...(segments && {
+          alignmentToken,
+          segmentCount: segments.length,
+          segments,
+        }),
         needsReference:
           duration <= MAX_ALIGNMENT_SECONDS && !hasAudio && !referenceId,
       };

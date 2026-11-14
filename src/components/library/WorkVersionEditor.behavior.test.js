@@ -37,6 +37,8 @@ vi.mock('../../composables/usePerformanceQueueActions.js', () => ({
     state: { isSaving: false },
   }),
 }));
+// The video tab pulls in the BGM audio deck, which needs a browser Audio.
+vi.mock('./TrackVideoEditor.vue', () => ({ default: {} }));
 vi.mock('../ui/UiModal.vue', () => ({
   default: {
     props: ['open'],

@@ -72,7 +72,7 @@ function samplesFrom(bytes) {
   );
 }
 
-function compareInWorker(source, target, signal) {
+function compareInWorker(source, target, signal, includeWaveforms) {
   const deadline = AbortSignal.timeout(15_000);
   const bounded = signal ? AbortSignal.any([signal, deadline]) : deadline;
   bounded.throwIfAborted();
@@ -80,7 +80,12 @@ function compareInWorker(source, target, signal) {
     const worker = new Worker(
       resolveRuntimeEntry(path.resolve(__dirname, '../..'), 'videoSyncWorker'),
       {
-        workerData: { kind: 'track-video-offset', source, target },
+        workerData: {
+          kind: 'track-video-offset',
+          source,
+          target,
+          includeWaveforms,
+        },
         // samplesFrom owns these buffers, so they move instead of copying.
         transferList: [source.buffer, target.buffer],
       },
@@ -109,13 +114,19 @@ async function estimateTrackVideoAlignment({
   audioPath,
   referencePath,
   signal,
+  includeWaveforms = false,
 }) {
   const [source, target] = await Promise.all([
     decode(ffmpeg, audioPath, signal),
     decode(ffmpeg, referencePath, signal),
   ]);
   if (!source || !target) return null;
-  const alignment = await compareInWorker(source, target, signal);
+  const alignment = await compareInWorker(
+    source,
+    target,
+    signal,
+    includeWaveforms,
+  );
   signal?.throwIfAborted();
   return alignment;
 }

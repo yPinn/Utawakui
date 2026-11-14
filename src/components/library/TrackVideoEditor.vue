@@ -25,8 +25,12 @@ import UiProgress from '../ui/UiProgress.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import TrackVideoSourcePanel from './TrackVideoSourcePanel.vue';
+import TrackVideoWaveforms from './TrackVideoWaveforms.vue';
 
-const { trackId } = defineProps({ trackId: { type: String, required: true } });
+const { trackId, audioUrl } = defineProps({
+  trackId: { type: String, required: true },
+  audioUrl: { type: String, default: '' },
+});
 const api = window.Utawakui;
 const { confirm } = useAppConfirmation();
 const { requireFeatureGate } = useFeatureGateAccess();
@@ -60,6 +64,9 @@ const previewUrl = computed(() =>
 const candidate = shallowRef(null);
 const candidatePlayable = shallowRef(false);
 const timingOpen = shallowRef(false);
+const waveformsOpen = shallowRef(false);
+const waveforms = shallowRef(null);
+const waveformStatus = shallowRef('');
 const offset = shallowRef(0);
 const offsetField = useTemplateRef('offsetField');
 const referenceOpen = shallowRef(false);
@@ -70,6 +77,20 @@ const defaultOffsetHint = t('trackVideo.offsetHint');
 const savedOffsetHint = shallowRef(defaultOffsetHint);
 const pendingAlignment = shallowRef(null);
 const useSegments = shallowRef(false);
+const waveformRevision = computed(
+  () => candidate.value?.token ?? saved.value?.revision,
+);
+const waveformSegments = computed(() => {
+  if (!useSegments.value) return null;
+  return candidate.value
+    ? candidate.value.segments
+    : (pendingAlignment.value?.segments ?? saved.value?.syncSegments);
+});
+const waveformReview = computed(() =>
+  candidate.value
+    ? candidate.value.reviewRange
+    : pendingAlignment.value?.reviewRange,
+);
 const segmentCount = computed(() =>
   candidate.value
     ? (candidate.value.segmentCount ?? 0)
@@ -127,6 +148,11 @@ const canSaveOffset = computed(
 const isAcquiring = computed(() =>
   ['importing', 'download', 'validating', 'aligning'].includes(status.value),
 );
+const visibleWaveforms = computed(
+  () =>
+    timingOpen.value &&
+    (candidate.value || (!downloadOpen.value && !isAcquiring.value)),
+);
 const sourceLabel = computed(() => {
   if (!sourceResult.value) return '';
   const { title, kind } = sourceResult.value;
@@ -152,6 +178,7 @@ function reviewTimes(range) {
 function setSaved(video) {
   if (saved.value?.revision !== video?.revision) {
     timingOpen.value = false;
+    waveformsOpen.value = false;
     referenceOpen.value = false;
     referenceInput.value = '';
   }
@@ -238,6 +265,7 @@ function handleAcquired(result) {
     return;
   }
   candidatePlayable.value = false;
+  waveformsOpen.value = false;
   offset.value = result.suggestedOffsetMs ?? 0;
   useSegments.value = Boolean(result.segmentCount);
   timingOpen.value = true;
@@ -361,6 +389,28 @@ watch(
   { flush: 'post' },
 );
 
+watch(
+  [waveformsOpen, visibleWaveforms, waveformRevision, isEstimating],
+  async ([open, timing, revision, estimating], _old, onCleanup) => {
+    waveforms.value = null;
+    waveformStatus.value = '';
+    if (!open || !timing || !revision || estimating) return;
+    let current = true;
+    onCleanup(() => {
+      current = false;
+    });
+    waveformStatus.value = 'loading';
+    try {
+      const result = await api.getTrackVideoWaveforms(trackId, revision);
+      if (!current) return;
+      waveforms.value = result.waveforms ?? null;
+      waveformStatus.value = result.status;
+    } catch {
+      if (current) waveformStatus.value = 'unavailable';
+    }
+  },
+);
+
 function alignSaved() {
   if (!saved.value?.available || (referenceOpen.value && !referenceId.value))
     return;
@@ -376,6 +426,7 @@ function alignSaved() {
         return;
       }
       if (result.suggestedOffsetMs == null) {
+        pendingAlignment.value = null;
         savedOffsetHint.value = t('trackVideo.offsetUncertain');
         return;
       }
@@ -385,6 +436,8 @@ function alignSaved() {
       pendingAlignment.value = {
         token: result.alignmentToken,
         segmentCount: result.segmentCount ?? 0,
+        segments: result.segments,
+        reviewRange: result.reviewRange,
       };
       useSegments.value = Boolean(result.segmentCount);
       savedOffsetHint.value = t(
@@ -434,7 +487,11 @@ function saveOffset() {
           },
         ),
       ),
-    (result) => setSaved(result.video),
+    (result) => {
+      const reviewRange = pendingAlignment.value?.reviewRange;
+      setSaved(result.video);
+      if (reviewRange) pendingAlignment.value = { reviewRange };
+    },
   );
 }
 
@@ -635,6 +692,35 @@ onUnmounted(() => {
             </UiButton>
           </template>
         </UiTextField>
+        <UiDisclosure
+          v-if="api.getTrackVideoWaveforms"
+          v-model:open="waveformsOpen"
+          :label="t('trackVideo.waveform.title')"
+        >
+          <template v-if="waveformsOpen">
+            <TrackVideoWaveforms
+              v-if="waveforms"
+              :waveforms="waveforms"
+              :audio-url="audioUrl"
+              :video-url="candidate?.url ?? saved?.url"
+              :offset-ms="validOffset ? Number(offset) : (saved?.offsetMs ?? 0)"
+              :segments="waveformSegments"
+              :review-range="waveformReview"
+              :disabled="isBusy"
+              :preview-disabled="!validOffset"
+              @update:offset="offset = $event"
+            />
+            <UiHint v-else role="status">
+              {{
+                waveformStatus === 'loading' || isEstimating
+                  ? t('lyricsEditor.waveform.status.loading')
+                  : waveformStatus === 'ok' && !candidate
+                    ? t('trackVideo.waveform.empty')
+                    : t('trackVideo.waveform.unavailable')
+              }}
+            </UiHint>
+          </template>
+        </UiDisclosure>
         <div v-if="segmentCount || !candidate" class="track-video-editor__row">
           <UiCheckbox
             v-if="segmentCount"

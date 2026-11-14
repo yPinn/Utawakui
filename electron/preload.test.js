@@ -362,6 +362,7 @@ const MAIN_INVOKE_CHANNELS = [
   'track-video:cancel',
   'track-video:save',
   'track-video:align',
+  'track-video:waveforms',
   'track-video:set-offset',
   'track-video:remove',
   'window-close:present',

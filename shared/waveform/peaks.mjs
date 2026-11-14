@@ -17,6 +17,38 @@ function update(target, frame, min, max, meanSquare) {
   if (max > target.max[index]) target.max[index] = max;
   target.energy[index] += meanSquare;
 }
+
+// The alignment worker already owns decoded mono PCM. Retain only bucket
+// statistics, with the original frame coordinates for both resolutions.
+export function summarizeMonoWaveform(samples, sampleRate, bucketMs) {
+  const frames = samples.length;
+  const strideFrames = Math.max(1, Math.round((sampleRate * bucketMs) / 1000));
+  const count = Math.ceil(frames / strideFrames);
+  const min = new Float32Array(count);
+  const max = new Float32Array(count);
+  const rms = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    const start = i * strideFrames;
+    const end = Math.min(start + strideFrames, frames);
+    let low = Infinity;
+    let high = -Infinity;
+    let energy = 0;
+    for (let frame = start; frame < end; frame++) {
+      const value = samples[frame];
+      low = Math.min(low, value);
+      high = Math.max(high, value);
+      energy += value * value;
+    }
+    min[i] = low;
+    max[i] = high;
+    rms[i] = Math.sqrt(energy / (end - start));
+  }
+  return {
+    sampleRate,
+    frames,
+    peaks: { startFrame: 0, endFrame: frames, strideFrames, min, max, rms },
+  };
+}
 export class PeakAccumulator {
   constructor(
     metadata,

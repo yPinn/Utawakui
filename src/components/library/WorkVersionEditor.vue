@@ -419,7 +419,11 @@ onUnmounted(songEditor.dispose);
           role="tabpanel"
           aria-labelledby="song-editor-video-tab"
         >
-          <TrackVideoEditor :key="state.track.id" :track-id="state.track.id" />
+          <TrackVideoEditor
+            :key="state.track.id"
+            :track-id="state.track.id"
+            :audio-url="state.track.url"
+          />
         </section>
       </UiScrollLayout>
     </template>

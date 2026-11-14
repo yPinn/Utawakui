@@ -276,6 +276,41 @@ describe('track video IPC', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it('serves waveform summaries only for the current candidate or installed revision', async () => {
+    const waveforms = { source: { detail: {} }, target: { detail: {} } };
+    estimateAlignment.mockResolvedValueOnce({ alignment: null, waveforms });
+    const candidate = await pickFile();
+    expect(candidate).not.toHaveProperty('waveforms');
+    await expect(
+      call('waveforms', { revision: candidate.token }),
+    ).resolves.toEqual({
+      status: 'ok',
+      waveforms,
+    });
+    const { video } = await call('save', {
+      token: candidate.token,
+      offsetMs: 0,
+    });
+    await expect(
+      call('waveforms', { revision: video.revision }),
+    ).resolves.toEqual({
+      status: 'ok',
+      waveforms,
+    });
+    epoch += 1;
+    await expect(
+      call('waveforms', { revision: video.revision }),
+    ).resolves.toEqual({
+      status: 'ok',
+      waveforms: null,
+    });
+    await expect(
+      call('waveforms', { revision: '../reference.m4a' }),
+    ).resolves.toEqual({
+      status: 'invalid-intent',
+    });
+  });
+
   it('does not publish a verified result after the library changes', async () => {
     estimateAlignment.mockImplementationOnce(async () => {
       epoch += 1;

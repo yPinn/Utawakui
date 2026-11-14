@@ -65,6 +65,25 @@
   "switchToVideo": "切換至影片",
   "switchToLyrics": "切換至歌詞",
   "switchToAudio": "切換至音訊",
+  "segmentPreview": {
+    "play": "播放片段",
+    "stop": "停止預覽",
+    "preparing": "正在準備片段預覽…",
+    "failed": "無法播放片段。請再試一次。"
+  },
+  "waveform": {
+    "title": "波形對照",
+    "local": "本機音源",
+    "reference": "MV 參考音軌",
+    "empty": "執行自動對時後，即可檢視波形。",
+    "unavailable": "目前無法顯示波形。",
+    "overview": "全曲波形。點選或拖曳以放大區段。",
+    "detail": "波形對照。左右拖曳只調整 MV 的同步偏移。",
+    "range": "歌曲時間 {start}–{end}",
+    "review": "待確認區間",
+    "jump": "對時切換點",
+    "whole": "全曲"
+  },
   "error": {
     "busy": "另一個影片工作正在進行，請稍候。",
     "invalid-intent": "請檢查影片 ID、畫質選擇或偏移數值。",

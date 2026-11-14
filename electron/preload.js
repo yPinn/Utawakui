@@ -1463,6 +1463,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     }),
   alignTrackVideo: (trackId, revision, videoId) =>
     ipcRenderer.invoke('track-video:align', { trackId, revision, videoId }),
+  getTrackVideoWaveforms: (trackId, revision) =>
+    ipcRenderer.invoke('track-video:waveforms', { trackId, revision }),
   setTrackVideoOffset: (trackId, revision, offsetMs, alignment) =>
     ipcRenderer.invoke('track-video:set-offset', {
       trackId,

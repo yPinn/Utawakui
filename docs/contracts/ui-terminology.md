@@ -43,6 +43,8 @@
 | 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts            |
 | 監聽跟隨擷取       |                  | 監聽採用擷取端的導唱開關與比例                             | Monitor follows capture     |
 | 伴奏               |                  | 曲目分離後可用於演唱及混入導唱的音訊                       | Accompaniment               |
+| 波形對照           |                  | 本機音源與影片參考音軌在同一時間軸的對照                   | Waveform comparison         |
+| 播放片段、停止預覽 |                  | 預覽目前檢視區間的本機音源與影片畫面                       | Play segment, Stop preview  |
 
 「介面元件」指畫面上的元件，不屬於「工具」的範圍。
 
