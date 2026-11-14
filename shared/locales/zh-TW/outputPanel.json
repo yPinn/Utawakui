@@ -653,7 +653,10 @@
         "label": "回顧間隔",
         "unit": " 秒"
       },
-      "fisheyeRim": { "label": "鏡框強度" },
+      "fisheyeRim": {
+        "label": "鏡框",
+        "options": { "off": "關閉", "soft": "柔和", "standard": "標準" }
+      },
       "fisheyeLayout": {
         "label": "鏡頭構圖",
         "options": {

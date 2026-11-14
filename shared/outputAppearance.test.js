@@ -6,7 +6,7 @@ import {
   OUTPUT_PROPERTY_TIERS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   carryOutputAppearanceToTemplate,
-  fisheyeReflectionStrength,
+  fisheyeDecorationStrength,
   normalizeOutputAppearance,
   normalizeOutputElementAppearance,
   outputAppearanceFieldsForTemplate,
@@ -28,14 +28,18 @@ describe('output appearance schema', () => {
     ['standard', 'standard', 100],
     ['unknown', 'standard', 100],
     [undefined, 'standard', 100],
-  ])('normalizes Fisheye reflection %s to %s', (value, style, strength) => {
-    const { fisheyeReflection } = normalizeOutputAppearance(
-      { fisheyeReflection: value },
-      { templateId: 'fisheye-lens' },
-    );
-    expect(fisheyeReflection).toBe(style);
-    expect(fisheyeReflectionStrength(fisheyeReflection)).toBe(strength);
-  });
+  ])(
+    'normalizes Fisheye decorations with value %s to %s',
+    (value, style, strength) => {
+      const appearance = normalizeOutputAppearance(
+        { fisheyeRim: value, fisheyeReflection: value },
+        { templateId: 'fisheye-lens' },
+      );
+      expect(appearance.fisheyeRim).toBe(style);
+      expect(appearance.fisheyeReflection).toBe(style);
+      expect(fisheyeDecorationStrength(style)).toBe(strength);
+    },
+  );
 
   it('keeps the vertical defaults and accepts independent text, contrast and rule choices', () => {
     const centered = { templateId: 'centered-vertical' };
@@ -340,7 +344,7 @@ describe('output appearance schema', () => {
       receiptReview: 'on',
       receiptReviewInterval: 15,
       vinylSurfaceLight: 'off',
-      fisheyeRim: 100,
+      fisheyeRim: 'standard',
       fisheyeLayout: 'auto',
       fisheyeReflection: 'standard',
       fisheyeEnter: 'arc',

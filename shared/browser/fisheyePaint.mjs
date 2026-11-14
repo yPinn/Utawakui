@@ -1,5 +1,5 @@
 import { fisheyeLetterScale } from '../presentation/fisheyeLyrics.mjs';
-import { fisheyeReflectionStrength } from '../outputAppearance.mjs';
+import { fisheyeDecorationStrength } from '../outputAppearance.mjs';
 
 export const FISHEYE_WIDTH = 960;
 export const FISHEYE_HEIGHT = 540;
@@ -401,7 +401,7 @@ export function createFisheyePainter(canvas) {
       layoutMix = lensLayout === 'close' ? 1 : 0,
     } = pose;
     const {
-      fisheyeRim = 100,
+      fisheyeRim,
       fisheyeReflection,
       fisheyePulse = 100,
       fontScale = 'medium',
@@ -421,7 +421,7 @@ export function createFisheyePainter(canvas) {
     clipView(lensScale);
     glass.save();
     scaleAtLens(lensScale);
-    glass.globalAlpha = fisheyeReflectionStrength(fisheyeReflection) / 100;
+    glass.globalAlpha = fisheyeDecorationStrength(fisheyeReflection) / 100;
     paintReflection(reflectionPositionMs);
     glass.restore();
     if (visible || smoke)
@@ -433,7 +433,7 @@ export function createFisheyePainter(canvas) {
         layoutMix,
       });
     glass.restore();
-    paintForeground(fisheyeRim, lensScale);
+    paintForeground(fisheyeDecorationStrength(fisheyeRim), lensScale);
   }
 
   function paintEffects(columns, pose, options) {

@@ -660,7 +660,10 @@
         "label": "Review interval",
         "unit": " s"
       },
-      "fisheyeRim": { "label": "Rim intensity" },
+      "fisheyeRim": {
+        "label": "Lens rim",
+        "options": { "off": "Off", "soft": "Soft", "standard": "Standard" }
+      },
       "fisheyeLayout": {
         "label": "Camera framing",
         "options": {

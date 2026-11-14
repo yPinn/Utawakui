@@ -76,7 +76,7 @@ describe('outputSlots', () => {
     });
   });
 
-  it('reads a legacy Fisheye reflection and persists an explicit replacement', () => {
+  it('reads legacy Fisheye decorations and persists independent choices', () => {
     const legacy = JSON.stringify({
       version: 4,
       slots: {
@@ -90,20 +90,20 @@ describe('outputSlots', () => {
     const { lyrics } = loadOutputSlots(dir).slots;
     expect(lyrics.settings).toMatchObject({
       fisheyeReflection: 'soft',
-      fisheyeRim: 80,
+      fisheyeRim: 'standard',
     });
     expect(fs.readFileSync(filePath, 'utf8')).toBe(legacy);
     upsertOutputSlot(dir, 'lyrics', {
       ...lyrics,
-      settings: { ...lyrics.settings, fisheyeReflection: 'off' },
+      settings: { ...lyrics.settings, fisheyeRim: 'off' },
     });
     expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
-      fisheyeReflection: 'off',
-      fisheyeRim: 80,
+      fisheyeReflection: 'soft',
+      fisheyeRim: 'off',
     });
     expect(
       JSON.parse(fs.readFileSync(filePath, 'utf8')).slots.lyrics.settings,
-    ).toHaveProperty('fisheyeReflection', 'off');
+    ).toMatchObject({ fisheyeReflection: 'soft', fisheyeRim: 'off' });
   });
 
   it('saves and reloads the ticket template at its fixed capture size', () => {

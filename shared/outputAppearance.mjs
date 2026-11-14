@@ -1,6 +1,6 @@
 import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 10;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 11;
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', order: 10 }),
@@ -36,7 +36,7 @@ const GROUP_MAP = new Map(
   OUTPUT_APPEARANCE_GROUPS.map((group) => [group.id, group]),
 );
 const FISHEYE_PAIRED_MOTION_IDS = ['arc', 'scale', 'swirl', 'cut'];
-const FISHEYE_REFLECTION_STRENGTH = Object.freeze({
+const FISHEYE_DECORATION_STRENGTH = Object.freeze({
   off: 0,
   soft: 50,
   standard: 100,
@@ -358,29 +358,18 @@ const FIELD_DEFINITIONS = [
     defaultValue: 'standard',
     options: [{ id: 'narrow' }, { id: 'standard' }, { id: 'wide' }],
   }),
-  fieldDefinition('surface', {
-    key: 'fisheyeRim',
-    family: 'fill',
-    tier: 'basic',
-    reflow: false,
-    order: 20,
-    control: 'range',
-    defaultValue: 100,
-    min: 0,
-    max: 100,
-    step: 5,
-    unit: '%',
-  }),
-  fieldDefinition('decoration', {
-    key: 'fisheyeReflection',
-    family: 'asset',
-    tier: 'basic',
-    reflow: false,
-    order: 30,
-    control: 'select',
-    defaultValue: 'standard',
-    options: Object.keys(FISHEYE_REFLECTION_STRENGTH).map((id) => ({ id })),
-  }),
+  ...['fisheyeRim', 'fisheyeReflection'].map((key, index) =>
+    fieldDefinition('decoration', {
+      key,
+      family: 'asset',
+      tier: 'basic',
+      reflow: false,
+      order: 20 + index * 10,
+      control: 'select',
+      defaultValue: 'standard',
+      options: Object.keys(FISHEYE_DECORATION_STRENGTH).map((id) => ({ id })),
+    }),
+  ),
   fieldDefinition('layout', {
     key: 'fisheyeLayout',
     family: 'layout',
@@ -730,17 +719,17 @@ function sanitizedRangeValue(field, value) {
   return Number((field.min + steps * field.step).toFixed(6));
 }
 
-function legacyFisheyeReflectionStyle(value) {
+function legacyFisheyeDecorationStyle(value) {
   const normalized = sanitizedRangeValue({ min: 0, max: 100, step: 5 }, value);
   if (normalized === undefined) return undefined;
   if (normalized === 0) return 'off';
   return normalized < 75 ? 'soft' : 'standard';
 }
 
-export function fisheyeReflectionStrength(style) {
-  return Object.hasOwn(FISHEYE_REFLECTION_STRENGTH, style)
-    ? FISHEYE_REFLECTION_STRENGTH[style]
-    : FISHEYE_REFLECTION_STRENGTH.standard;
+export function fisheyeDecorationStrength(style) {
+  return Object.hasOwn(FISHEYE_DECORATION_STRENGTH, style)
+    ? FISHEYE_DECORATION_STRENGTH[style]
+    : FISHEYE_DECORATION_STRENGTH.standard;
 }
 
 function sanitizedLocalFontName(value) {
@@ -863,8 +852,8 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   )
     return undefined;
   let sanitized;
-  if (key === 'fisheyeReflection')
-    value = legacyFisheyeReflectionStyle(value) ?? value;
+  if (key === 'fisheyeRim' || key === 'fisheyeReflection')
+    value = legacyFisheyeDecorationStyle(value) ?? value;
   if (baseField.control === 'select') {
     if (key === 'fontFamily') {
       const localFont = sanitizeOutputLocalFont(value);

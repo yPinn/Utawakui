@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 10,
+  "appearanceSchemaVersion": 11,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -2284,18 +2284,25 @@
         {
           "scope": "template",
           "key": "fisheyeRim",
-          "family": "fill",
+          "family": "asset",
           "tier": "basic",
           "reflow": false,
           "order": 20,
-          "control": "range",
-          "defaultValue": 100,
-          "min": 0,
-          "max": 100,
-          "step": 5,
-          "unit": "%",
-          "group": "surface",
-          "groupOrder": 50
+          "control": "select",
+          "defaultValue": "standard",
+          "options": [
+            {
+              "id": "off"
+            },
+            {
+              "id": "soft"
+            },
+            {
+              "id": "standard"
+            }
+          ],
+          "group": "decoration",
+          "groupOrder": 55
         },
         {
           "scope": "template",

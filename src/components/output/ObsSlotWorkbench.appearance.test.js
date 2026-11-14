@@ -58,15 +58,27 @@ async function renderRegisteredTemplate(
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
-  it('groups the three Fisheye reflection choices under Decoration', async () => {
+  it('groups independent Fisheye rim and reflection choices under Decoration', async () => {
+    const decoration = outputInspectorTabs(fieldsFor('fisheye-lens'))
+      .find(({ id }) => id === 'color')
+      .groups.find(({ id }) => id === 'decoration');
+    expect(decoration.fields.map(({ key }) => key)).toEqual([
+      'fisheyeRim',
+      'fisheyeReflection',
+    ]);
     const html = await renderRegisteredTemplate('fisheye-lens');
     expect(html).toContain('>裝飾</h3>');
-    const reflection = html.match(
-      /<select[^>]*id="output-appearance-fisheyeReflection"[^>]*>([\s\S]*?)<\/select>/u,
-    )?.[1];
-    expect(reflection).toMatch(
-      /value="off"[^>]*>關閉<.*value="soft"[^>]*>柔和<.*value="standard"[^>]*>標準</su,
-    );
+    for (const key of ['fisheyeRim', 'fisheyeReflection']) {
+      const options = html.match(
+        new RegExp(
+          `<select[^>]*id="output-appearance-${key}"[^>]*>([\\s\\S]*?)</select>`,
+          'u',
+        ),
+      )?.[1];
+      expect(options).toMatch(
+        /value="off"[^>]*>關閉<.*value="soft"[^>]*>柔和<.*value="standard"[^>]*>標準</su,
+      );
+    }
   });
 
   it('lists the shared Fisheye transitions in matching order before entrance-only effects', async () => {
