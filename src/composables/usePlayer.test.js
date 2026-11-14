@@ -1022,6 +1022,7 @@ describe('guide vocal defaults', () => {
           performanceMuted: true,
           monitorGuideVocalLevel: 0.35,
           captureGuideVocalLevel: 0.15,
+          monitorGuideVocalFollowsCapture: true,
         },
         onLibraryUpdated: vi.fn(() => vi.fn()),
       },
@@ -1034,6 +1035,7 @@ describe('guide vocal defaults', () => {
       isMuted: true,
       guideVocalValue: 0.35,
       captureGuideVocalValue: 0.15,
+      monitorGuideVocalFollowsCapture: true,
     });
     expect(MockAudioContext.instances).toHaveLength(0);
   });
@@ -1072,6 +1074,7 @@ describe('guide vocal defaults', () => {
         'setCaptureGuideVocalValue',
         'setGuideVocalOn',
         'setGuideVocalValue',
+        'setMonitorGuideVocalFollowsCapture',
         'setPitchCents',
         'setPlaybackMode',
         'setTempoRate',
@@ -1153,11 +1156,13 @@ describe('guide vocal defaults', () => {
   it('clamps guide-vocal calibration independently for monitor and capture', async () => {
     const player = await loadPlayer();
 
-    player.setGuideVocalValue(2);
+    player.setGuideVocalValue(2.1);
     player.setCaptureGuideVocalValue(-1);
 
-    expect(player.state.guideVocalValue).toBe(1);
+    expect(player.state.guideVocalValue).toBe(2);
     expect(player.state.captureGuideVocalValue).toBe(0);
+    player.setCaptureGuideVocalValue(2.1);
+    expect(player.state.captureGuideVocalValue).toBe(2);
   });
 });
 

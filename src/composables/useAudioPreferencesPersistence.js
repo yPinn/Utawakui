@@ -60,6 +60,7 @@ export function createAudioPreferencesPersistence({
         playerState.isMuted,
         playerState.guideVocalValue,
         playerState.captureGuideVocalValue,
+        playerState.monitorGuideVocalFollowsCapture,
       ],
       schedulePersist,
     );

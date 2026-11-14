@@ -28,6 +28,7 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiSwitch from '../ui/UiSwitch.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import PlayerPerformanceSettingsControls from './PlayerPerformanceSettingsControls.vue';
 import { t } from '../../utils/i18n.js';
@@ -42,13 +43,20 @@ defineProps({
   hasTrack: { type: Boolean, default: false },
   guideVocalVisible: { type: Boolean, default: false },
   guideVocalRows: { type: Array, default: () => [] },
+  canSyncGuideVocal: { type: Boolean, default: false },
+  guideVocalSynced: { type: Boolean, default: false },
   // { message, detail?, busy?, actionLabel?, loading?, onAction? }
   guideAccompaniment: { type: Object, default: null },
   pitchTempoRows: { type: Array, default: () => [] },
   performanceSettings: { type: Object, default: null },
 });
 
-const emit = defineEmits(['update:open', 'update:activeTab', 'settingsAction']);
+const emit = defineEmits([
+  'update:open',
+  'update:activeTab',
+  'update:guideVocalSynced',
+  'settingsAction',
+]);
 const { width: dockWidth } = useAppRightDockWidth();
 const panelStyle = computed(() => ({
   inlineSize: `${dockWidth.value}px`,
@@ -340,7 +348,7 @@ function setActiveTab(key) {
     <section
       v-show="activeTab === 'guide'"
       id="player-tools-guide-panel"
-      class="player-tools__section"
+      class="player-tools__section player-tools__section--guide"
       role="tabpanel"
       aria-labelledby="player-tools-guide-tab"
       tabindex="0"
@@ -380,9 +388,16 @@ function setActiveTab(key) {
         t('player.toolsPanel.guideNeedsAccompaniment')
       }}</UiHint>
       <div class="player-tools__group">
+        <UiSwitch
+          v-if="canSyncGuideVocal"
+          id="player-tools-guide-sync"
+          :label="t('player.toolsPanel.guideMonitorFollowsCapture')"
+          :model-value="guideVocalSynced"
+          @update:model-value="emit('update:guideVocalSynced', $event)"
+        />
         <template v-for="(row, index) in guideVocalRows" :key="row.key">
           <UiSeparator v-if="index > 0" />
-          <div class="player-tools__adjust-row">
+          <div class="player-tools__guide-row">
             <div class="player-tools__row-header">
               <UiTooltip :text="row.deviceName">
                 <template #trigger="{ triggerProps }">
@@ -404,7 +419,7 @@ function setActiveTab(key) {
               <span class="player-tools__value">{{ row.value }}</span>
               <UiIconButton
                 :icon="row.onIcon"
-                :disabled="!guideVocalVisible"
+                :disabled="!guideVocalVisible || row.disabled"
                 :active="row.on"
                 :label="row.onLabel"
                 :aria-pressed="row.on"
@@ -420,8 +435,9 @@ function setActiveTab(key) {
                 :min="row.min"
                 :max="row.max"
                 :step="row.step"
-                :disabled="!hasTrack || !guideVocalVisible"
+                :disabled="!hasTrack || !guideVocalVisible || row.disabled"
                 :marks="row.marks"
+                :reference-mark="row.referenceMark"
                 :value-text="row.value"
                 :format-value="row.formatSliderValue"
                 :aria-label="row.sliderLabel"
@@ -468,6 +484,10 @@ function setActiveTab(key) {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
+}
+
+.player-tools__section--guide {
+  gap: var(--ui-space-2);
 }
 
 .player-tools__heading {
@@ -616,6 +636,10 @@ function setActiveTab(key) {
   gap: var(--ui-space-1);
 }
 
+.player-tools__guide-row {
+  display: grid;
+}
+
 .player-tools__value {
   display: inline-flex;
   align-items: baseline;
@@ -632,12 +656,14 @@ function setActiveTab(key) {
   min-block-size: var(--ui-control-height);
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--ui-space-2);
 }
 
 .player-tools__accompaniment-message {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-label-size);
   font-weight: var(--ui-type-label-weight);

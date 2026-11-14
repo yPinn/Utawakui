@@ -25,6 +25,7 @@ const props = defineProps({
   step: { type: Number, default: 1 },
   defaultValue: { type: Number, default: undefined },
   marks: { type: Array, default: () => [] },
+  referenceMark: { type: Number, default: undefined },
   valueText: { type: String, default: '' },
   formatValue: { type: Function, default: null },
   disabled: { type: Boolean, default: false },
@@ -245,6 +246,9 @@ defineExpose({ focus });
           v-for="mark in normalizedMarks"
           :key="mark.value"
           class="ui-range-control__stop"
+          :class="{
+            'ui-range-control__stop--reference': mark.value === referenceMark,
+          }"
           :data-range-stop="mark.value"
           :style="{ '--ui-range-stop-position': mark.position }"
         ></span>
@@ -378,6 +382,12 @@ defineExpose({ focus });
     width: 1px;
     background: var(--ui-range-stop);
     transform: translateX(-50%);
+  }
+
+  .ui-range-control__stop--reference {
+    inset-block: 0;
+    width: var(--ui-border-width-strong);
+    background: var(--ui-color-text);
   }
 
   .ui-range-control__native:where(:hover:not(:disabled))

@@ -49,6 +49,19 @@ export function combinedSemitones(transposeSemitones, pitchCents) {
   return transposeSemitones + pitchCents / 100;
 }
 
+export function monitorGuideVocalMix(state) {
+  const followsCapture =
+    state.monitorGuideVocalFollowsCapture === true &&
+    Boolean(state.captureDeviceId);
+  return {
+    followsCapture,
+    on: followsCapture ? state.captureGuideVocalOn : state.guideVocalOn,
+    value: followsCapture
+      ? state.captureGuideVocalValue
+      : state.guideVocalValue,
+  };
+}
+
 export function usePlayerAudioGraph({
   audio,
   state,
@@ -248,7 +261,8 @@ export function usePlayerAudioGraph({
     splitter.connect(mergerVoc, 3, 1);
 
     vocalGain = audioCtx.createGain();
-    vocalGain.gain.value = state.guideVocalOn ? state.guideVocalValue : 0;
+    const guide = monitorGuideVocalMix(state);
+    vocalGain.gain.value = guide.on ? guide.value : 0;
     mergerVoc.connect(vocalGain);
 
     masterGain = audioCtx.createGain();
@@ -477,7 +491,7 @@ export function usePlayerAudioGraph({
     applications.invalidate('capture', 'failed');
     desiredCaptureDeviceId = null;
     state.captureError = message;
-    state.captureDeviceId = null;
+    setCaptureDeviceState(null);
     notifyCaptureUnavailable();
     void disposeCaptureGraph(graph);
     if (graph.direct) {
@@ -594,13 +608,28 @@ export function usePlayerAudioGraph({
     );
   }
 
-  function applyMonitorGuideVocalGain() {
+  function applyMonitorGuideVocalGain({ stopImmediately = false } = {}) {
     if (!audioCtx) return;
-    rampGain(
-      audioCtx,
-      vocalGain.gain,
-      state.guideVocalOn ? state.guideVocalValue : 0,
-    );
+    const guide = monitorGuideVocalMix(state);
+    if (!guide.on && stopImmediately) hardStopGain(audioCtx, vocalGain.gain);
+    else rampGain(audioCtx, vocalGain.gain, guide.on ? guide.value : 0);
+  }
+
+  function setCaptureDeviceState(deviceId) {
+    const wasFollowing = monitorGuideVocalMix(state).followsCapture;
+    state.captureDeviceId = deviceId;
+    if (wasFollowing !== monitorGuideVocalMix(state).followsCapture)
+      applyMonitorGuideVocalGain({ stopImmediately: true });
+  }
+
+  function setMonitorGuideVocalFollowsCapture(enabled) {
+    if (
+      typeof enabled !== 'boolean' ||
+      state.monitorGuideVocalFollowsCapture === enabled
+    )
+      return;
+    state.monitorGuideVocalFollowsCapture = enabled;
+    applyMonitorGuideVocalGain({ stopImmediately: true });
   }
 
   function setGuideVocalValue(value) {
@@ -609,7 +638,8 @@ export function usePlayerAudioGraph({
       GUIDE_VOCAL_LEVEL_RANGE,
       state.guideVocalValue,
     );
-    applyMonitorGuideVocalGain();
+    if (!monitorGuideVocalMix(state).followsCapture)
+      applyMonitorGuideVocalGain();
   }
 
   function setCaptureGuideVocalValue(value) {
@@ -619,14 +649,14 @@ export function usePlayerAudioGraph({
       state.captureGuideVocalValue,
     );
     applyCaptureGuideVocalGain();
+    if (monitorGuideVocalMix(state).followsCapture)
+      applyMonitorGuideVocalGain();
   }
 
   function setGuideVocalOn(on) {
     state.guideVocalOn = Boolean(on);
-    if (audioCtx) {
-      if (state.guideVocalOn) applyMonitorGuideVocalGain();
-      else hardStopGain(audioCtx, vocalGain.gain);
-    }
+    if (!monitorGuideVocalMix(state).followsCapture)
+      applyMonitorGuideVocalGain({ stopImmediately: true });
     return applyAudioControls({
       ...controlValues(),
       monitorGuideVocalEnabled: Boolean(on),
@@ -639,6 +669,8 @@ export function usePlayerAudioGraph({
     else if (captureGraph) {
       hardStopGain(captureGraph.context, captureGraph.vocalGain.gain);
     }
+    if (monitorGuideVocalMix(state).followsCapture)
+      applyMonitorGuideVocalGain({ stopImmediately: true });
   }
 
   function restoreGuideVocalState(on, value) {
@@ -651,6 +683,8 @@ export function usePlayerAudioGraph({
     state.captureGuideVocalValue = value;
     state.captureGuideVocalOn = on;
     applyCaptureGuideVocalGain();
+    if (monitorGuideVocalMix(state).followsCapture)
+      applyMonitorGuideVocalGain();
   }
 
   function reportPitchProcessingError(error) {
@@ -859,8 +893,7 @@ export function usePlayerAudioGraph({
       rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
       rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
       state.monitorPitchDelayMs = active ? pitchNodeDelayMs : 0;
-      if (target.monitorGuideVocalEnabled) applyMonitorGuideVocalGain();
-      else hardStopGain(audioCtx, vocalGain.gain);
+      applyMonitorGuideVocalGain({ stopImmediately: true });
       monitorControls = { ...target };
       if (!routePending) openMonitorOutput();
       clearPitchProcessingError();
@@ -1387,7 +1420,7 @@ export function usePlayerAudioGraph({
             for (const [key, input] of captureInputs)
               connectCaptureInput(candidate, key, input);
             candidate.prepared = true;
-            state.captureDeviceId = deviceId;
+            setCaptureDeviceState(deviceId);
             state.captureError = null;
             candidate.gate.gain.setValueAtTime(
               1,
@@ -1411,7 +1444,7 @@ export function usePlayerAudioGraph({
   function reportCaptureDeviceFailure(clearSelection = true) {
     if (clearSelection) {
       desiredCaptureDeviceId = null;
-      state.captureDeviceId = null;
+      setCaptureDeviceState(null);
     }
     state.captureError = t('playerAudio.captureUnavailable');
     if (clearSelection) notifyCaptureUnavailable();
@@ -1428,7 +1461,7 @@ export function usePlayerAudioGraph({
     clearMonitorRelayError();
     applications.invalidate('capture');
     desiredCaptureDeviceId = deviceId || null;
-    state.captureDeviceId = desiredCaptureDeviceId;
+    setCaptureDeviceState(desiredCaptureDeviceId);
     state.captureError = null;
     return true;
   }
@@ -1444,7 +1477,7 @@ export function usePlayerAudioGraph({
   ) {
     if (isDisposed) return;
     state.captureError = null;
-    state.captureDeviceId = null;
+    setCaptureDeviceState(null);
     let graph = null;
     try {
       // Only source-sink ownership is serialized. An old capture context's
@@ -1501,9 +1534,7 @@ export function usePlayerAudioGraph({
           selectionRevision === captureSelectionRevision &&
           !state.captureError
         ) {
-          desiredCaptureDeviceId = null;
-          state.captureError = t('playerAudio.captureUnavailable');
-          notifyCaptureUnavailable();
+          reportCaptureDeviceFailure();
         }
         return;
       }
@@ -1520,7 +1551,7 @@ export function usePlayerAudioGraph({
         return;
       }
       graph.prepared = true;
-      state.captureDeviceId = deviceId;
+      setCaptureDeviceState(deviceId);
       if (!direct) {
         clearMonitorRelayError();
         graph.gate.gain.setValueAtTime(1, graph.context.currentTime);
@@ -1761,6 +1792,7 @@ export function usePlayerAudioGraph({
     restoreGuideVocalState,
     restoreCaptureGuideVocalState,
     setGuideVocalValue,
+    setMonitorGuideVocalFollowsCapture,
     setCaptureGuideVocalValue,
     setGuideVocalOn,
     setCaptureGuideVocalOn,

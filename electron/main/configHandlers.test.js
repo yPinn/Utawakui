@@ -29,6 +29,7 @@ function register(overrides = {}) {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
+      monitorGuideVocalFollowsCapture: false,
     },
     autoAnalyzeMusicStructure: true,
     separationGpuAcceleration: true,
@@ -179,8 +180,9 @@ describe('registerConfigHandlers', () => {
       performanceVolume: 0.72,
       captureVolume: 0.5,
       performanceMuted: true,
-      monitorGuideVocalLevel: 0.35,
-      captureGuideVocalLevel: 0.15,
+      monitorGuideVocalLevel: 2,
+      captureGuideVocalLevel: 2,
+      monitorGuideVocalFollowsCapture: true,
     };
 
     await expect(
@@ -191,6 +193,7 @@ describe('registerConfigHandlers', () => {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
+      monitorGuideVocalFollowsCapture: false,
     });
     await expect(
       ipcMain.handlers.get('config:set-audio-preferences')(null, preferences),

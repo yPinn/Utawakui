@@ -10,6 +10,8 @@ export const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
     audioControlValues.monitorGuideVocalLevel.defaultValue,
   captureGuideVocalLevel:
     audioControlValues.captureGuideVocalLevel.defaultValue,
+  monitorGuideVocalFollowsCapture:
+    audioControlValues.monitorGuideVocalFollowsCaptureDefault,
 });
 
 function boundedValue(value, rule, fallback) {
@@ -46,6 +48,10 @@ export function normalizeAudioPreferences(value) {
       audioControlValues.captureGuideVocalLevel,
       DEFAULT_AUDIO_PREFERENCES.captureGuideVocalLevel,
     ),
+    monitorGuideVocalFollowsCapture:
+      typeof source.monitorGuideVocalFollowsCapture === 'boolean'
+        ? source.monitorGuideVocalFollowsCapture
+        : DEFAULT_AUDIO_PREFERENCES.monitorGuideVocalFollowsCapture,
   };
 }
 
@@ -56,5 +62,7 @@ export function projectAudioPreferences(playerState) {
     performanceMuted: playerState.isMuted,
     monitorGuideVocalLevel: playerState.guideVocalValue,
     captureGuideVocalLevel: playerState.captureGuideVocalValue,
+    monitorGuideVocalFollowsCapture:
+      playerState.monitorGuideVocalFollowsCapture,
   });
 }

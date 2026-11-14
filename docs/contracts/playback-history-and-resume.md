@@ -43,10 +43,11 @@ session history 或 Queue 的 previous stack 合併。
 - `shared/audioControlValues.json` 是演唱 master volume、導唱監聽／擷取 level、BGM base
   volume 與 Talk attenuation 的 canonical default／range／step authority。Main、preload、
   Renderer state、BGM plan 與 audio deck 不得另寫一份現行數值。
-- 演唱 master volume／mute 與兩個導唱 level 是 machine-local durable preferences，由 Main
+- 演唱 master volume／mute、兩個導唱 level 與監聽跟隨擷取是 machine-local durable preferences，由 Main
   `config.json.audioPreferences` 保存。啟動解析順序固定為 canonical defaults、通過逐欄正規化的
   config preferences、Renderer／Web Audio runtime projection；合法保存值不得被新版 default
   覆寫，單一欄位損壞也不得清掉其他合法欄位。
+  舊設定的監聽跟隨擷取預設關閉。
 - Main 在建立主 BrowserWindow 前完成正規化，並以 bounded `additionalArguments` 交給 preload；
   `usePlayer` 第一個 reactive state 已是 resolved preferences，不得先繪製 defaults 再非同步跳值，
   也不得為了 hydration 建立 `AudioContext`。

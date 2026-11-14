@@ -41,6 +41,8 @@
 | 鏡內反光           |                  | 魚眼鏡筒的可選環形反光，樣式為關閉、柔和及標準             | Lens reflection             |
 | 攝影機特效         |                  | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects              |
 | 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts            |
+| 監聽跟隨擷取       |                  | 監聽採用擷取端的導唱開關與比例                             | Monitor follows capture     |
+| 伴奏               |                  | 曲目分離後可用於演唱及混入導唱的音訊                       | Accompaniment               |
 
 「介面元件」指畫面上的元件，不屬於「工具」的範圍。
 

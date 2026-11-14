@@ -32,6 +32,7 @@ import {
   PLAYBACK_MODES,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
+  monitorGuideVocalMix,
   usePlayer,
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
@@ -67,6 +68,7 @@ const {
   setGuideVocalValue,
   setCaptureGuideVocalValue,
   setGuideVocalOn,
+  setMonitorGuideVocalFollowsCapture,
   setTransposeSemitones,
   setPitchCents,
   setTempoRate,
@@ -163,6 +165,7 @@ const playbackModeActive = computed(
 );
 
 const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
+const monitorGuide = computed(() => monitorGuideVocalMix(state));
 
 // Same queue and gate as the library row action; RightDock stays the place
 // to manage the whole queue.
@@ -246,7 +249,7 @@ const playerToolsEngaged = computed(
     // doesn't light up for every track/on every launch, only when the
     // current track actually has separated audio to mix.
     (showGuideVocal.value &&
-      (state.guideVocalOn || state.captureGuideVocalOn)) ||
+      (monitorGuide.value.on || state.captureGuideVocalOn)) ||
     metronomeState.isRunning,
 );
 const playerToolsLabel = computed(() => {
@@ -275,10 +278,8 @@ function adjustTempo(delta) {
   setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
 }
 
-// Keep quarter-scale marks for orientation; fine adjustment and right-click
-// reset belong to the shared range control, with no duplicate preset buttons.
-const GUIDE_VOCAL_MARKS = [0, 0.25, 0.5, 0.75, 1];
-const GUIDE_VOCAL_STEP = GUIDE_VOCAL_LEVEL_RANGE.step;
+const GUIDE_VOCAL_MARKS = [0, 0.5, 1, 1.5, GUIDE_VOCAL_LEVEL_RANGE.max];
+const GUIDE_VOCAL_REFERENCE_MARK = 1;
 
 // A slider drag fires far more 'input' events than the audio thread can
 // usefully act on — each one restarts vocalGain's exponential ramp (see
@@ -312,6 +313,7 @@ const throttledSetCaptureGuideVocalLevel = throttleToAnimationFrame((value) =>
 // selected, since there's nothing to preview otherwise (see
 // useAudioOutput.js).
 const guideVocalRows = computed(() => {
+  const monitor = monitorGuide.value;
   const rows = [
     {
       key: 'guide-vocal-monitor',
@@ -325,21 +327,19 @@ const guideVocalRows = computed(() => {
       // Always the calibrated value, regardless of on/off — on/off has its
       // own dedicated speaker icon (onIcon/onToggle below) now, so the
       // number doesn't also need to encode it by dropping to 0 while off.
-      value: `${Math.round(state.guideVocalValue * 100)}%`,
-      on: state.guideVocalOn,
-      onIcon: state.guideVocalOn ? Volume2 : VolumeX,
+      value: formatVolumePercent(monitor.value),
+      on: monitor.on,
+      onIcon: monitor.on ? Volume2 : VolumeX,
       onLabel: t(
-        state.guideVocalOn
-          ? 'player.bar.guideMonitorOff'
-          : 'player.bar.guideMonitorOn',
+        monitor.on ? 'player.bar.guideMonitorOff' : 'player.bar.guideMonitorOn',
       ),
       onToggle: () => setGuideVocalOn(!state.guideVocalOn),
+      disabled: monitor.followsCapture,
       marks: GUIDE_VOCAL_MARKS,
-      sliderValue: state.guideVocalValue,
+      referenceMark: GUIDE_VOCAL_REFERENCE_MARK,
+      sliderValue: monitor.value,
       defaultValue: PLAYER_AUDIO_DEFAULTS.monitorGuideVocalLevel,
-      min: 0,
-      max: 1,
-      step: GUIDE_VOCAL_STEP,
+      ...GUIDE_VOCAL_LEVEL_RANGE,
       sliderLabel: t('player.bar.guideMonitorLevel'),
       formatSliderValue: formatVolumePercent,
       onSliderInput: throttledSetGuideVocalLevel,
@@ -351,7 +351,7 @@ const guideVocalRows = computed(() => {
       icon: Cable,
       label: t('player.bar.capture'),
       deviceName: captureDeviceLabel.value,
-      value: `${Math.round(state.captureGuideVocalValue * 100)}%`,
+      value: formatVolumePercent(state.captureGuideVocalValue),
       on: state.captureGuideVocalOn,
       onIcon: state.captureGuideVocalOn ? Volume2 : VolumeX,
       onLabel: t(
@@ -361,11 +361,10 @@ const guideVocalRows = computed(() => {
       ),
       onToggle: toggleCaptureGuideVocal,
       marks: GUIDE_VOCAL_MARKS,
+      referenceMark: GUIDE_VOCAL_REFERENCE_MARK,
       sliderValue: state.captureGuideVocalValue,
       defaultValue: PLAYER_AUDIO_DEFAULTS.captureGuideVocalLevel,
-      min: 0,
-      max: 1,
-      step: GUIDE_VOCAL_STEP,
+      ...GUIDE_VOCAL_LEVEL_RANGE,
       sliderLabel: t('player.bar.guideCaptureLevel'),
       formatSliderValue: formatVolumePercent,
       onSliderInput: throttledSetCaptureGuideVocalLevel,
@@ -628,9 +627,12 @@ onUnmounted(() => {
           :has-track="Boolean(state.track)"
           :guide-vocal-visible="showGuideVocal"
           :guide-vocal-rows="guideVocalRows"
+          :can-sync-guide-vocal="Boolean(state.captureDeviceId)"
+          :guide-vocal-synced="monitorGuide.followsCapture"
           :guide-accompaniment="guideAccompaniment"
           :pitch-tempo-rows="pitchTempoRows"
           :performance-settings="performanceSettingsView"
+          @update:guide-vocal-synced="setMonitorGuideVocalFollowsCapture"
           @settings-action="handleSettingsAction"
         >
           <template #trigger="{ triggerProps }">

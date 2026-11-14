@@ -34,7 +34,9 @@ metadata、封面及分離結果不改原音源 binding。原音檔 hash 改變�
 
 `applyAudioControls()` 接收完整四欄快照：`transposeSemitones`（-12～12 整數）、`pitchCents`（-50～50 整數）、`tempoRate`（0.5～1.5、0.05 步階）、`monitorGuideVocalEnabled`（Boolean）。缺欄、額外欄位、錯誤型別、非有限值、越界及非法步階直接回 `invalid`，不改控制或暫停。
 
-原批次命令預設暫停並套用，成功後保持 paused、位置不變；set 切換及重設明確要求 preservePlayback，沿既有 graph 同樣的四欄交易即時更新，不以 pause 後再 play 偽裝持續播放。原本的單欄 live setters 仍可在播放中使用；監聽導唱的開關先立即操作 gain，不等候 pitch 資源。粗調／微調仍合成一次 `semitones`，速度由原 audio element 設定。Master／capture 音量、mute、導唱比例、擷取導唱開關與裝置偏好不屬於此快照。
+原批次命令預設暫停並套用，成功後保持 paused、位置不變；set 切換及重設明確要求 preservePlayback，沿既有 graph 同樣的四欄交易即時更新，不以 pause 後再 play 偽裝持續播放。原本的單欄 live setters 仍可在播放中使用；監聽導唱的開關先立即操作 gain，不等候 pitch 資源。粗調／微調仍合成一次 `semitones`，速度由原 audio element 設定。Master／capture 音量、mute、導唱比例、擷取導唱開關、監聽跟隨擷取與裝置偏好不屬於此快照。
+
+監聽與擷取的導唱 gain 都是 0–200%，每步 5%，100% 為原始音量，200% 約為 +6 dB。增益只作用於分離後的導唱聲道。監聽跟隨擷取開啟且已選用擷取裝置時，監聽採用擷取導唱開關與比例，演唱設定仍保存獨立的監聽開關。關閉跟隨或失去擷取裝置時，監聽使用獨立開關與比例。兩路總音量獨立，擷取導唱仍在換曲時關閉。
 
 ## 要求值與結果
 

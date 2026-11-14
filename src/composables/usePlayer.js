@@ -14,6 +14,7 @@ import {
   PLAYER_VOLUME_RANGE,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
+  monitorGuideVocalMix,
 } from './player/usePlayerAudioGraph.js';
 import { normalizeAudioPreferences } from '../utils/audioPreferences.js';
 import { createPlaybackClockSampler } from '../utils/playbackClockSample.js';
@@ -26,6 +27,7 @@ export {
   PLAYER_VOLUME_RANGE,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
+  monitorGuideVocalMix,
 };
 
 // Module-scope singleton shared by views and the persistent player bar.
@@ -80,6 +82,8 @@ const state = reactive({
   guideVocalValue: initialAudioPreferences.monitorGuideVocalLevel,
   captureGuideVocalOn: false,
   captureGuideVocalValue: initialAudioPreferences.captureGuideVocalLevel,
+  monitorGuideVocalFollowsCapture:
+    initialAudioPreferences.monitorGuideVocalFollowsCapture,
   transposeSemitones: PLAYER_AUDIO_DEFAULTS.transposeSemitones,
   pitchCents: PLAYER_AUDIO_DEFAULTS.pitchCents,
   tempoRate: PLAYER_AUDIO_DEFAULTS.tempoRate,
@@ -114,6 +118,7 @@ const {
   setCaptureGuideVocalValue,
   setGuideVocalOn,
   setGuideVocalValue,
+  setMonitorGuideVocalFollowsCapture,
   setPitchCents,
   setTempoRate,
   setTransposeSemitones,
@@ -552,6 +557,7 @@ export function usePlayer() {
     toggleRepeat,
     toggleCaptureGuideVocal,
     setGuideVocalValue,
+    setMonitorGuideVocalFollowsCapture,
     setCaptureGuideVocalValue,
     setGuideVocalOn,
     setCaptureGuideVocalOn,

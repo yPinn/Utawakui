@@ -59,6 +59,8 @@ const DEFAULT_AUDIO_PREFERENCES = Object.freeze({
     audioControlValues.monitorGuideVocalLevel.defaultValue,
   captureGuideVocalLevel:
     audioControlValues.captureGuideVocalLevel.defaultValue,
+  monitorGuideVocalFollowsCapture:
+    audioControlValues.monitorGuideVocalFollowsCaptureDefault,
 });
 const AUTO_ERROR_REPORTING_VALUES = new Set(['ask', 'always', 'never']);
 
@@ -180,6 +182,10 @@ function normalizeAudioPreferences(value) {
     )
       ? source.captureGuideVocalLevel
       : DEFAULT_AUDIO_PREFERENCES.captureGuideVocalLevel,
+    monitorGuideVocalFollowsCapture:
+      typeof source.monitorGuideVocalFollowsCapture === 'boolean'
+        ? source.monitorGuideVocalFollowsCapture
+        : DEFAULT_AUDIO_PREFERENCES.monitorGuideVocalFollowsCapture,
   };
 }
 
@@ -202,7 +208,8 @@ function isValidAudioPreferences(value) {
     isBoundedAudioValue(
       value.captureGuideVocalLevel,
       audioControlValues.captureGuideVocalLevel,
-    ),
+    ) &&
+    typeof value.monitorGuideVocalFollowsCapture === 'boolean',
   );
 }
 

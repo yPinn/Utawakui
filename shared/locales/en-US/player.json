@@ -6,7 +6,7 @@
     "accompanimentReady": "Accompaniment ready",
     "accompanimentBusy": "Preparing accompaniment",
     "accompanimentIncomplete": "Accompaniment didn't finish",
-    "noAccompaniment": "This song has no accompaniment yet",
+    "noAccompaniment": "No accompaniment",
     "regenerate": "Generate again",
     "generate": "Generate accompaniment",
     "captureDevice": "Capture device",
@@ -84,7 +84,8 @@
     "tap": "Tap tempo",
     "accompanimentBusy": "Preparing accompaniment",
     "enqueueing": "Adding to the accompaniment queue",
-    "guideNeedsAccompaniment": "Guide vocal level can be adjusted once accompaniment audio is used."
+    "guideNeedsAccompaniment": "Guide vocals require accompaniment.",
+    "guideMonitorFollowsCapture": "Monitor follows capture"
   },
   "slots": {
     "chooseTrack": "Choose a track first",

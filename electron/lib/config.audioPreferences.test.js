@@ -37,8 +37,9 @@ describe('config audio preferences', () => {
       performanceVolume: 0.72,
       captureVolume: 0.3,
       performanceMuted: true,
-      monitorGuideVocalLevel: 0.35,
-      captureGuideVocalLevel: 0.15,
+      monitorGuideVocalLevel: 1.25,
+      captureGuideVocalLevel: 2,
+      monitorGuideVocalFollowsCapture: true,
     };
 
     saveConfig(configPath, { audioPreferences: preferences });
@@ -66,6 +67,7 @@ describe('config audio preferences', () => {
       captureVolume: 0.5,
       monitorGuideVocalLevel: 0.7,
       captureGuideVocalLevel: 1,
+      monitorGuideVocalFollowsCapture: false,
     });
   });
 
@@ -84,6 +86,7 @@ describe('config audio preferences', () => {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0.2,
+      monitorGuideVocalFollowsCapture: false,
     });
   });
 
@@ -94,7 +97,7 @@ describe('config audio preferences', () => {
         captureVolume: 0.5,
         performanceMuted: true,
         monitorGuideVocalLevel: -1,
-        captureGuideVocalLevel: 1.5,
+        captureGuideVocalLevel: 2.01,
       }),
     ).toEqual({
       performanceVolume: 0.5,
@@ -102,6 +105,7 @@ describe('config audio preferences', () => {
       performanceMuted: true,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
+      monitorGuideVocalFollowsCapture: false,
     });
   });
 });

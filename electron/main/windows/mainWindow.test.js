@@ -167,6 +167,7 @@ describe('windowState security boundary', () => {
           '--performance-muted=0',
           '--monitor-guide-vocal-level=0.5',
           '--capture-guide-vocal-level=0',
+          '--monitor-guide-vocal-follows-capture=0',
           '--startup-trace-enabled=1',
         ],
       },

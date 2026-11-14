@@ -128,12 +128,17 @@ function readInitialAudioPreferences() {
     value.startsWith('--performance-muted='),
   );
   const muted = mutedArgument?.slice('--performance-muted='.length);
+  const followsCapture = readNumberArgument(
+    'monitor-guide-vocal-follows-capture',
+  );
   return {
     performanceVolume: readNumberArgument('performance-volume'),
     captureVolume: readNumberArgument('capture-volume'),
     performanceMuted: muted === '1' ? true : muted === '0' ? false : undefined,
     monitorGuideVocalLevel: readNumberArgument('monitor-guide-vocal-level'),
     captureGuideVocalLevel: readNumberArgument('capture-guide-vocal-level'),
+    monitorGuideVocalFollowsCapture:
+      followsCapture === 1 ? true : followsCapture === 0 ? false : undefined,
   };
 }
 
@@ -230,6 +235,7 @@ function audioPreferencesIntent(value) {
     performanceMuted: value?.performanceMuted,
     monitorGuideVocalLevel: value?.monitorGuideVocalLevel,
     captureGuideVocalLevel: value?.captureGuideVocalLevel,
+    monitorGuideVocalFollowsCapture: value?.monitorGuideVocalFollowsCapture,
   };
 }
 

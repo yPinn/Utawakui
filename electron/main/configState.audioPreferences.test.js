@@ -80,6 +80,7 @@ describe('configState audio-preference initialization', () => {
       performanceMuted: true,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
+      monitorGuideVocalFollowsCapture: false,
     });
     expect(
       JSON.parse(fs.readFileSync(path.join(userDataDir, 'config.json'), 'utf8'))
@@ -94,6 +95,7 @@ describe('configState audio-preference initialization', () => {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.3,
       captureGuideVocalLevel: 0.1,
+      monitorGuideVocalFollowsCapture: true,
     };
     fs.writeFileSync(
       path.join(userDataDir, 'config.json'),

@@ -6,7 +6,7 @@
     "accompanimentReady": "伴奏已就緒",
     "accompanimentBusy": "伴奏處理中",
     "accompanimentIncomplete": "伴奏未完成",
-    "noAccompaniment": "這首歌還沒有伴奏",
+    "noAccompaniment": "尚無伴奏",
     "regenerate": "重新產生",
     "generate": "產生伴奏",
     "captureDevice": "擷取裝置",
@@ -84,7 +84,8 @@
     "tap": "點擊測速",
     "accompanimentBusy": "伴奏處理中",
     "enqueueing": "正在加入伴奏處理佇列",
-    "guideNeedsAccompaniment": "使用伴奏音訊後可調整導唱比例。"
+    "guideNeedsAccompaniment": "導唱需使用伴奏。",
+    "guideMonitorFollowsCapture": "監聽跟隨擷取"
   },
   "slots": {
     "chooseTrack": "請先選擇曲目",

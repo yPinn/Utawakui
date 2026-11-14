@@ -175,6 +175,53 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('follows the capture guide mix and restores the independent monitor mix', async () => {
+  const { graph, state } = fixture();
+  state.volume = 0.5;
+  graph.setMonitorGuideVocalFollowsCapture(true);
+  await graph.resume();
+  const [monitor, capture] = Context.instances;
+  const monitorGuide = monitor.gains[0].gain;
+  const captureGuide = capture.gains[0].gain;
+  const monitorMaster = monitor.gains[1].gain;
+  const captureMaster = capture.gains[2].gain;
+  expect(monitorGuide.value).toBe(0);
+  expect(captureGuide.value).toBe(0);
+
+  graph.setCaptureGuideVocalValue(1);
+  graph.setCaptureGuideVocalOn(true);
+  expect(monitorGuide.value).toBe(1);
+  expect(captureGuide.value).toBe(1);
+  graph.setCaptureGuideVocalValue(2);
+  expect(monitorGuide.value).toBe(2);
+  expect(captureGuide.value).toBe(2);
+  expect(monitorMaster.value).toBe(0.5);
+  expect(captureMaster.value).toBe(0.3);
+  await graph.setGuideVocalOn(false);
+  expect(monitorGuide.value).toBe(2);
+
+  graph.setMonitorGuideVocalFollowsCapture(false);
+  expect(monitorGuide.value).toBe(0);
+  expect(captureGuide.value).toBe(2);
+  await graph.setGuideVocalOn(true);
+  expect(monitorGuide.value).toBe(0.7);
+  graph.setGuideVocalValue(2);
+  expect(monitorGuide.value).toBe(2);
+  graph.setGuideVocalValue(0.7);
+
+  graph.setMonitorGuideVocalFollowsCapture(true);
+  graph.setCaptureGuideVocalOn(false);
+  expect(monitorGuide.value).toBe(0);
+  expect(captureGuide.value).toBe(0);
+  capture.sinkId = '';
+  capture.dispatchEvent(new Event('sinkchange'));
+  expect(state.captureDeviceId).toBeNull();
+  expect(state.monitorGuideVocalFollowsCapture).toBe(true);
+  expect(monitorGuide.value).toBe(0.7);
+  await graph.applyCaptureDevice('capture');
+  expect(monitorGuide.value).toBe(0);
+});
+
 it('publishes the worklet delay only on the applied pitch route', async () => {
   pitch.create.mockImplementation(async (context) => {
     const node = new Node(context);

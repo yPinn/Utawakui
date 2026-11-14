@@ -131,6 +131,7 @@ describe('PlayerToolsPanel shared surface', () => {
       activeTab: 'guide',
       hasTrack: true,
       guideVocalVisible: true,
+      canSyncGuideVocal: true,
       guideVocalRows: ['監聽', '擷取'].map((label) => ({
         key: label,
         label,
@@ -143,10 +144,11 @@ describe('PlayerToolsPanel shared surface', () => {
         sliderValue: 0.5,
         defaultValue: 0.5,
         min: 0,
-        max: 1,
-        step: 0.01,
+        max: 2,
+        step: 0.05,
         sliderLabel: `導唱比例(${label})`,
-        marks: [0, 0.25, 0.5, 0.75, 1],
+        marks: [0, 0.5, 1, 1.5, 2],
+        referenceMark: 1,
       })),
     });
     for (const label of ['監聽', '擷取']) {
@@ -165,6 +167,15 @@ describe('PlayerToolsPanel shared surface', () => {
       html.indexOf('id="player-tools-guide-panel"'),
       html.indexOf('</section>', html.indexOf('id="player-tools-guide-panel"')),
     );
+    expect(guide).toContain('role="switch"');
+    expect(guide.match(/max="2"/g)).toHaveLength(2);
+    expect(guide.match(/step="0.05"/g)).toHaveLength(2);
+    const marks = [...guide.matchAll(/data-range-stop="([^"]+)"/g)].map(
+      ([, value]) => Number(value),
+    );
+    expect(marks).toEqual([0, 0.5, 1, 1.5, 2, 0, 0.5, 1, 1.5, 2]);
+    expect(guide.match(/ui-range-control__stop--reference/g)).toHaveLength(2);
+    expect(guide).not.toContain('100%');
     expect(adjust).not.toContain('導唱比例');
     expect(adjust).not.toContain('音高預覽');
     expect(guide).not.toContain('音高預覽');
@@ -172,18 +183,44 @@ describe('PlayerToolsPanel shared surface', () => {
     expect(guide).toContain('導唱比例(擷取)');
   });
 
+  it('shows the mirrored monitor level and keeps capture editable while synced', async () => {
+    const html = await render({
+      activeTab: 'guide',
+      hasTrack: true,
+      guideVocalVisible: true,
+      canSyncGuideVocal: true,
+      guideVocalSynced: true,
+      guideVocalRows: ['monitor', 'capture'].map((key) => ({
+        key,
+        disabled: key === 'monitor',
+        sliderLabel: key,
+        onIcon: Volume2,
+        onLabel: `toggle ${key}`,
+        value: '200%',
+        sliderValue: 2,
+        min: 0,
+        max: 2,
+        step: 0.05,
+      })),
+    });
+    expect(html).toMatch(/role="switch"[^>]*checked/);
+    expect(html).toMatch(/<input[^>]*aria-label="monitor"[^>]*disabled/);
+    expect(html).not.toMatch(/<input[^>]*aria-label="capture"[^>]*disabled/);
+    expect(html.match(/aria-valuetext="200%"/g)).toHaveLength(2);
+  });
+
   it('explains the unavailable guide controls when no track status is known', async () => {
     const html = await render({ activeTab: 'guide' });
-    expect(html).toContain('使用伴奏音訊後可調整導唱比例。');
+    expect(html).toContain('導唱需使用伴奏。');
     expect(html).not.toContain('產生伴奏');
   });
 
-  it('keeps guide sliders visible but disabled above an accompaniment action', async () => {
+  it('keeps guide sliders visible but disabled below the accompaniment action', async () => {
     const html = await render({
       activeTab: 'guide',
       hasTrack: true,
       guideAccompaniment: {
-        message: '這首歌還沒有伴奏',
+        message: '尚無伴奏',
         actionLabel: '產生伴奏',
       },
       guideVocalRows: [
@@ -206,11 +243,11 @@ describe('PlayerToolsPanel shared surface', () => {
       ],
     });
     const guide = html.slice(html.indexOf('id="player-tools-guide-panel"'));
-    expect(guide).toContain('這首歌還沒有伴奏');
+    expect(guide).toContain('尚無伴奏');
     expect(guide.indexOf('產生伴奏')).toBeLessThan(
       guide.indexOf('導唱比例(監聽)'),
     );
-    expect(guide).not.toContain('使用伴奏音訊後可調整導唱比例。');
+    expect(guide).not.toContain('導唱需使用伴奏。');
     expect(guide).toMatch(/aria-label="導唱比例\(監聽\)"[^>]*disabled/);
     expect(guide).toMatch(/aria-pressed="true"[^>]*disabled/);
   });

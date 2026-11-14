@@ -278,6 +278,7 @@ function createMainWindow(
         `--performance-muted=${initialAudioPreferences.performanceMuted ? '1' : '0'}`,
         `--monitor-guide-vocal-level=${initialAudioPreferences.monitorGuideVocalLevel}`,
         `--capture-guide-vocal-level=${initialAudioPreferences.captureGuideVocalLevel}`,
+        `--monitor-guide-vocal-follows-capture=${Number(initialAudioPreferences.monitorGuideVocalFollowsCapture)}`,
         ...(options.startupTraceEnabled ? ['--startup-trace-enabled=1'] : []),
         ...(isDev ? ['--internal-workbenches-enabled=1'] : []),
       ],

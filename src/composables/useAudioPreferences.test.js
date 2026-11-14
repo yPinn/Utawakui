@@ -25,6 +25,7 @@ describe('audio preference persistence', () => {
     playerState.volume = 0.62;
     playerState.guideVocalValue = 0.4;
     playerState.captureVolume = 0.3;
+    playerState.monitorGuideVocalFollowsCapture = true;
     await nextTick();
 
     expect(bridge.setAudioPreferences).not.toHaveBeenCalled();
@@ -37,6 +38,7 @@ describe('audio preference persistence', () => {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.4,
       captureGuideVocalLevel: 0,
+      monitorGuideVocalFollowsCapture: true,
     });
 
     await persistence.dispose();

@@ -25,14 +25,16 @@ describe('renderer audio preferences', () => {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0,
+      monitorGuideVocalFollowsCapture: false,
     });
     expect(
       normalizeAudioPreferences({
         performanceVolume: 0.7,
         captureVolume: 0.5,
         performanceMuted: 'yes',
-        monitorGuideVocalLevel: 2,
+        monitorGuideVocalLevel: 2.01,
         captureGuideVocalLevel: 0.2,
+        monitorGuideVocalFollowsCapture: 'true',
       }),
     ).toEqual({
       performanceVolume: 0.7,
@@ -40,6 +42,7 @@ describe('renderer audio preferences', () => {
       performanceMuted: false,
       monitorGuideVocalLevel: 0.5,
       captureGuideVocalLevel: 0.2,
+      monitorGuideVocalFollowsCapture: false,
     });
   });
 
@@ -48,8 +51,9 @@ describe('renderer audio preferences', () => {
       projectAudioPreferences({
         volume: 0.64,
         isMuted: true,
-        guideVocalValue: 0.45,
-        captureGuideVocalValue: 0.25,
+        guideVocalValue: 1.25,
+        captureGuideVocalValue: 2,
+        monitorGuideVocalFollowsCapture: true,
         guideVocalOn: false,
         captureGuideVocalOn: true,
         privatePath: 'E:\\private.wav',
@@ -58,8 +62,9 @@ describe('renderer audio preferences', () => {
       performanceVolume: 0.64,
       captureVolume: 0.5,
       performanceMuted: true,
-      monitorGuideVocalLevel: 0.45,
-      captureGuideVocalLevel: 0.25,
+      monitorGuideVocalLevel: 1.25,
+      captureGuideVocalLevel: 2,
+      monitorGuideVocalFollowsCapture: true,
     });
   });
 });

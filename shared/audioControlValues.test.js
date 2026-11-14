@@ -15,15 +15,16 @@ describe('audio control values', () => {
       monitorGuideVocalLevel: {
         defaultValue: 0.5,
         min: 0,
-        max: 1,
+        max: 2,
         step: 0.05,
       },
       captureGuideVocalLevel: {
         defaultValue: 0,
         min: 0,
-        max: 1,
+        max: 2,
         step: 0.05,
       },
+      monitorGuideVocalFollowsCaptureDefault: false,
       bgmVolume: {
         defaultValue: 0.25,
         min: 0,

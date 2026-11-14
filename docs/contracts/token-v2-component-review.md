@@ -198,7 +198,7 @@ selected state。
 寬度直接讀取 `useAppRightDockWidth` 的 272–280px 狀態；不再保留獨立的 fixed panel 外殼與尺寸 token。
 背景歌詞捲動不關閉調整面板；Escape、關閉按鈕及外部點擊仍可關閉。
 內容使用 `UiTabs` bar、`UiIconButton`、`UiRangeControl`，分頁依序為「調整／導唱／節拍器」；
-伴奏產生留在既有曲目準備入口。導唱獨立在第二個分頁，監聽與擷取分開控制；保留當前比例、開關、滑桿刻度與右鍵重置，移除底下的預設百分比按鈕。未使用伴奏音訊時沿 `UiHint` 顯示使用條件。
+伴奏產生留在既有曲目準備入口。導唱獨立在第二個分頁，監聽與擷取各有比例、開關、0–200% 滑桿與右鍵重置。滑桿每 50% 一格，100% 為加粗的原始音量刻度，實際調整每步 5%。百分比只在列首顯示目前值。選用擷取裝置後顯示「監聽跟隨擷取」開關，啟用時監聽列呈現目前跟隨的數值，透過擷取列調整。未使用伴奏音訊時顯示曲目的伴奏狀態或簡短使用條件。
 節拍器第一列保留獨立 BPM `UiButtonGroup` 與右側操作；上下共用 50／50 欄：左欄依序是 BPM 與拍數兩個獨立 `UiButtonGroup`，右欄依序是操作按鈕與獨立拍點顯示。兩框同寬同高，左右步進按鈕對齊；拍數以數字與 BEATS 顯示（不是完整拍號），拍點以進度數字與 bars 顯示，不與左側設定共框。下方以單列發聲開關＋滑桿整合獨立節拍音量，再接測速區；不顯示常駐百分比，數值沿共用 range preview／`valueText`，保留右鍵回復 100%，調整不改發聲開關。只顯示一次 BPM，拍點更新不重建啟停按鈕。
 節拍器兩列數字沿 title、BPM／BEATS 單位由 caption 縮小一級（0.125rem），數字／單位置中集中，保留窄版最大值與標準 target；調整頁既有數值與 Hz 字級保持。導唱每路依標籤與數值／開關、滑桿排列，監聽與擷取共用同一欄位節奏。
 調整頁 Hz 參考值在前、音分主值在最右，兩者保持同一行；數值列及兩個導唱通道之間沿用 `UiSeparator`。滑桿沿 `defaultValue` 右鍵重置，不另放重複的重設按鈕；三頁的圖示按鈕及滑桿操作高度均沿用共用密度尺寸，不為壓低面板高度另行縮小。
@@ -271,6 +271,10 @@ adoption。Primitive 只新增 optional rich-option slot 與 caller-provided sea
 原有單值、鍵盤、dismissal、floating geometry 與 focus ownership 不變；字體 sample、
 Local Font Access、來源狀態、授權提示與 persisted descriptor 全由 Output feature owner
 組合，不進入通用 primitive。
+
+2026-11-14 `UiSwitch` 由播放工具導唱分頁的「監聽跟隨擷取」完成第一個 production
+adoption。這是即時生效的布林設定，符合原契約用途；primitive 不變，開關狀態與
+監聽／擷取的聯動由播放器 feature owner 擁有。
 
 外觀自訂的應用邏輯屬 feature composition，而不是 infra：
 

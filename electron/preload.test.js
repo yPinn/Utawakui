@@ -910,6 +910,7 @@ describe('main preload bridge', () => {
       '--performance-muted=1',
       '--monitor-guide-vocal-level=0.35',
       '--capture-guide-vocal-level=0.15',
+      '--monitor-guide-vocal-follows-capture=1',
       '--startup-trace-enabled=1',
     ]);
     expect(configured).toMatchObject({
@@ -924,6 +925,7 @@ describe('main preload bridge', () => {
         performanceMuted: true,
         monitorGuideVocalLevel: 0.35,
         captureGuideVocalLevel: 0.15,
+        monitorGuideVocalFollowsCapture: true,
       },
       startupTraceEnabled: true,
     });
@@ -2000,6 +2002,7 @@ describe('main preload bridge', () => {
       performanceMuted: true,
       monitorGuideVocalLevel: 0.35,
       captureGuideVocalLevel: 0.15,
+      monitorGuideVocalFollowsCapture: true,
       privatePath: 'E:\\private.wav',
     });
 
@@ -2011,6 +2014,7 @@ describe('main preload bridge', () => {
         performanceMuted: true,
         monitorGuideVocalLevel: 0.35,
         captureGuideVocalLevel: 0.15,
+        monitorGuideVocalFollowsCapture: true,
       },
     );
   });
