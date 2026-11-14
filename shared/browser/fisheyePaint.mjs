@@ -484,6 +484,8 @@ export function createFisheyePainter(canvas) {
 
 export function warpFisheyeInk(source, target, shape, direction = 1) {
   const { width, height, data } = source;
+  const output = target.data;
+  const stride = width * 4;
   const centerX = width / 2;
   const centerY = height / 2;
   const twistRadius = 125;
@@ -509,29 +511,37 @@ export function warpFisheyeInk(source, target, shape, direction = 1) {
       const sx0 = Math.floor(sx);
       const sy0 = Math.floor(sy);
       if (sx0 < 0 || sx0 >= width - 1 || sy0 < 0 || sy0 >= height - 1) continue;
+      const topLeft = sy0 * stride + sx0 * 4;
+      const topRight = topLeft + 4;
+      const bottomLeft = topLeft + stride;
+      const bottomRight = bottomLeft + 4;
+      const alphaTL = data[topLeft + 3];
+      const alphaTR = data[topRight + 3];
+      const alphaBL = data[bottomLeft + 3];
+      const alphaBR = data[bottomRight + 3];
+      // Most of the column is transparent. Skip the color reads and blending
+      // when none of the four bilinear samples contains ink.
+      if (!(alphaTL || alphaTR || alphaBL || alphaBR)) continue;
+
       const fx = sx - sx0;
       const fy = sy - sy0;
-      let alpha = 0;
-      let red = 0;
-      let green = 0;
-      let blue = 0;
-      for (let row = 0; row < 2; row++) {
-        for (let col = 0; col < 2; col++) {
-          const from = 4 * ((sy0 + row) * width + sx0 + col);
-          const weight =
-            (row ? fy : 1 - fy) * (col ? fx : 1 - fx) * data[from + 3];
-          alpha += weight;
-          red += data[from] * weight;
-          green += data[from + 1] * weight;
-          blue += data[from + 2] * weight;
-        }
-      }
+      const weightTL = (1 - fy) * (1 - fx) * alphaTL;
+      const weightTR = (1 - fy) * fx * alphaTR;
+      const weightBL = fy * (1 - fx) * alphaBL;
+      const weightBR = fy * fx * alphaBR;
+      const alpha = weightTL + weightTR + weightBL + weightBR;
       if (!alpha) continue;
-      const to = 4 * (y * width + x);
-      target.data[to] = red / alpha;
-      target.data[to + 1] = green / alpha;
-      target.data[to + 2] = blue / alpha;
-      target.data[to + 3] = alpha;
+      const to = y * stride + x * 4;
+      // Accumulate in source order to preserve rounding at byte boundaries.
+      for (let channel = 0; channel < 3; channel++) {
+        output[to + channel] =
+          (data[topLeft + channel] * weightTL +
+            data[topRight + channel] * weightTR +
+            data[bottomLeft + channel] * weightBL +
+            data[bottomRight + channel] * weightBR) /
+          alpha;
+      }
+      output[to + 3] = alpha;
     }
   }
 }
