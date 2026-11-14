@@ -30,6 +30,7 @@ import UiKbd from '../ui/UiKbd.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiButton from '../ui/UiButton.vue';
+import WaveformSignal from '../waveform/WaveformSignal.vue';
 import PanelViewButton from '../layout/PanelViewButton.vue';
 import { usePanelViewTarget } from '../../composables/usePanelView.js';
 import { useLyricsWaveformBoundaryDrag } from '../../composables/lyrics/useLyricsWaveformBoundaryDrag.js';
@@ -649,17 +650,12 @@ const noticeLabel = computed(
           y2="32"
           class="lyrics-waveform__baseline"
         />
-        <g class="lyrics-waveform__signal lyrics-waveform__signal--muted">
-          <path :d="overviewPath" class="lyrics-waveform__peaks" />
-          <path :d="overviewEnergy" class="lyrics-waveform__energy" />
-        </g>
-        <g
-          class="lyrics-waveform__signal"
+        <WaveformSignal :peaks="overviewPath" :energy="overviewEnergy" muted />
+        <WaveformSignal
+          :peaks="overviewPath"
+          :energy="overviewEnergy"
           :clip-path="`url(#${clipId}-overview)`"
-        >
-          <path :d="overviewPath" class="lyrics-waveform__peaks" />
-          <path :d="overviewEnergy" class="lyrics-waveform__energy" />
-        </g>
+        />
         <rect
           v-if="overview"
           :x="overviewBox.x"
@@ -888,29 +884,24 @@ const noticeLabel = computed(
               y2="32"
               class="lyrics-waveform__baseline"
             />
-            <g
+            <WaveformSignal
               v-if="previewGaps.length"
-              class="lyrics-waveform__signal lyrics-waveform__signal--muted lyrics-waveform__preview"
+              :peaks="previewPath"
+              :energy="previewEnergy"
+              muted
               :clip-path="`url(#${clipId}-preview)`"
-            >
-              <path :d="previewPath" class="lyrics-waveform__peaks" />
-              <path :d="previewEnergy" class="lyrics-waveform__energy" />
-            </g>
-            <g
-              class="lyrics-waveform__signal"
-              :class="{ 'lyrics-waveform__signal--muted': hasFocusedRegion }"
-            >
-              <path :d="detailPath" class="lyrics-waveform__peaks" />
-              <path :d="detailEnergy" class="lyrics-waveform__energy" />
-            </g>
-            <g
+            />
+            <WaveformSignal
+              :peaks="detailPath"
+              :energy="detailEnergy"
+              :muted="hasFocusedRegion"
+            />
+            <WaveformSignal
               v-if="hasFocusedRegion"
-              class="lyrics-waveform__signal lyrics-waveform__signal--selected"
+              :peaks="detailPath"
+              :energy="detailEnergy"
               :clip-path="`url(#${clipId}-sentence)`"
-            >
-              <path :d="detailPath" class="lyrics-waveform__peaks" />
-              <path :d="detailEnergy" class="lyrics-waveform__energy" />
-            </g>
+            />
             <line
               v-for="marker in markers.markers"
               :key="marker.id"
@@ -1097,28 +1088,6 @@ const noticeLabel = computed(
 }
 .lyrics-waveform__overview {
   height: 2.5rem;
-}
-.lyrics-waveform__peaks {
-  stroke: var(--ui-color-accent);
-  stroke-opacity: 0.4;
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.lyrics-waveform__energy {
-  stroke: var(--ui-color-accent);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.lyrics-waveform__signal {
-  pointer-events: none;
-}
-.lyrics-waveform__signal--muted .lyrics-waveform__peaks {
-  stroke: var(--ui-color-text-muted);
-  stroke-opacity: 0.22;
-}
-.lyrics-waveform__signal--muted .lyrics-waveform__energy {
-  stroke: var(--ui-color-text-muted);
-  stroke-opacity: 0.4;
 }
 .lyrics-waveform__sentence-fill {
   fill: var(--ui-color-accent-soft);

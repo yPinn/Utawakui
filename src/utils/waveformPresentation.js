@@ -31,7 +31,12 @@ export function waveformGaps(summaries, { fromMs, toMs }) {
   return gaps;
 }
 
-export function waveformPath(summary, viewport = null, layer = 'peaks') {
+export function waveformPath(
+  summary,
+  viewport = null,
+  layer = 'peaks',
+  mapping = null,
+) {
   const summaries = (Array.isArray(summary) ? summary : [summary]).filter(
     Boolean,
   );
@@ -59,8 +64,14 @@ export function waveformPath(summary, viewport = null, layer = 'peaks') {
     ),
     path = [];
   for (let x = 0; x < columns; x++) {
-    const left = fromFrame + (x * frames) / columns,
-      right = fromFrame + ((x + 1) * frames) / columns;
+    const position = fromFrame + (x * frames) / columns;
+    const shift = mapping
+      ? (mapping((position / rate) * 1000) * rate) / 1000
+      : 0;
+    const left = position + shift;
+    const right = mapping
+      ? left + frames / columns
+      : fromFrame + ((x + 1) * frames) / columns;
     let low = 0,
       high = 0,
       covered = false,
@@ -94,7 +105,7 @@ export function waveformPath(summary, viewport = null, layer = 'peaks') {
         high = Math.max(high, target.max[i]);
       }
     }
-    if (!covered) continue;
+    if (!covered || (layer === 'rms' && !weight)) continue;
     if (layer === 'rms') {
       high = Math.sqrt(energy / weight);
       low = -high;

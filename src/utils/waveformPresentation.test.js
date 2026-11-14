@@ -6,6 +6,21 @@ import {
   waveformLineFocus,
   waveformGaps,
 } from './waveformPresentation.js';
+it('projects each display column through the current video offset without moving the song axis', () => {
+  const waveform = {
+    sampleRate: 10,
+    frames: 3,
+    peaks: {
+      min: Float32Array.of(0, -0.5, -1),
+      max: Float32Array.of(0, 0.5, 1),
+    },
+  };
+  const view = { fromMs: 0, toMs: 200 };
+  expect(waveformPath(waveform, view)).toBe('M0,32V32M320,16V48');
+  expect(waveformPath(waveform, view, 'peaks', () => 100)).toBe(
+    'M0,16V48M320,0V64',
+  );
+});
 it('bounds continuous windows by the media, including the short last tile', () => {
   expect(waveformRange(30000, 14500, 1000)).toEqual({
     fromMs: 14500,
