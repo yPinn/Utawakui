@@ -58,6 +58,17 @@ async function renderRegisteredTemplate(
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it('groups the three Fisheye reflection choices under Decoration', async () => {
+    const html = await renderRegisteredTemplate('fisheye-lens');
+    expect(html).toContain('>裝飾</h3>');
+    const reflection = html.match(
+      /<select[^>]*id="output-appearance-fisheyeReflection"[^>]*>([\s\S]*?)<\/select>/u,
+    )?.[1];
+    expect(reflection).toMatch(
+      /value="off"[^>]*>關閉<.*value="soft"[^>]*>柔和<.*value="standard"[^>]*>標準</su,
+    );
+  });
+
   it('lists the shared Fisheye transitions in matching order before entrance-only effects', async () => {
     const html = await renderRegisteredTemplate('fisheye-lens');
     const options = (key) => {

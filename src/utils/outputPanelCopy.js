@@ -13,11 +13,9 @@ export function localizeAppearanceField(field) {
     : `outputPanel.appearance.fields.${field.key}`;
   const unitKey = `${base}.unit`;
   const groupLabel =
-    field.key === 'vinylSurfaceLight'
-      ? t(`${base}.group`)
-      : field.group === 'motion' && field.key.startsWith('fisheye')
-        ? t('outputPanel.inspector.motion')
-        : t(`outputPanel.appearance.groups.${catalogKey(field.group)}`);
+    field.group === 'motion' && field.key.startsWith('fisheye')
+      ? t('outputPanel.inspector.motion')
+      : t(`outputPanel.appearance.groups.${catalogKey(field.group)}`);
   return {
     ...field,
     label: t(`${base}.label`),

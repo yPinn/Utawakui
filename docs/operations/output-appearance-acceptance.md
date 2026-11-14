@@ -413,3 +413,9 @@ Canvas 的雙線性取樣先讀四個來源像素的 alpha。四者全透明時�
 隔離 OBS 33.0.1 以正式字幕 Browser Source 驗證近景、旋渦和反光。單來源及與歌單、播放中三來源同開時各取樣 253 個合成影格，渲染跳格皆為 0。暫停擷取一致，鏡心維持透明。這是短測，沒有量測來源內部幀率或長時間效能。
 
 本機前後截圖與量測記錄位於 `tasks/fisheye-canvas-optimization/`，OBS 結果位於 `tasks/red-tape-setlist-qa/fisheye-canvas-obs-report.json`。
+
+## 魚眼鏡筒鏡內反光裝飾（2026-11-14）
+
+隔離 Electron 工作臺從既存 65% 讀出柔和。依序選關閉、標準與柔和，三種樣式都寫入設定。切回工作臺後仍顯示柔和，期間鏡框保持 80%。重設模板後反光回到標準，鏡框回到 100%。模板庫播放樣張時切換減少動態，畫面隨即定格。
+
+以工作臺預覽路徑及隔離 OBS 33.0.1 的正式字幕 Browser Source，在同一曲內時間擷取三種樣式。柔和比標準淡，關閉移除反光。OBS 的三種樣式在鏡心取樣 alpha 皆為 0，鏡框外側採樣一致。兩條路徑中原 100% 與標準的擷取各自相同。播放時反光移動，暫停在同一位置後畫面可重現。截圖與短測結果位於 `tasks/red-tape-setlist-qa/fisheye-reflection-obs-*.png`、`tasks/red-tape-setlist-qa/fisheye-reflection-obs-report.json`。

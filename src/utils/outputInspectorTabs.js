@@ -49,6 +49,7 @@ const categories = [
       { id: 'color-treatment' },
       { id: 'custom-color' },
       { id: 'surface' },
+      { id: 'decoration' },
     ],
   },
 ];

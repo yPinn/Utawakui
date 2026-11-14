@@ -38,6 +38,7 @@
 | 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity                |
 | 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight                    |
 | 裝飾               |                  | Output 可選用的視覺物件                                    | Decoration                          |
+| 鏡內反光           |                  | 魚眼鏡筒的可選環形反光，樣式為關閉、柔和及標準             | Lens reflection                     |
 | 攝影機特效         |                  | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects                      |
 | 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts                    |
 

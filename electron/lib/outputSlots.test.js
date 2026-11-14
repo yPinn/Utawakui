@@ -76,6 +76,36 @@ describe('outputSlots', () => {
     });
   });
 
+  it('reads a legacy Fisheye reflection and persists an explicit replacement', () => {
+    const legacy = JSON.stringify({
+      version: 4,
+      slots: {
+        lyrics: {
+          templateId: 'fisheye-lens',
+          settings: { fisheyeReflection: 65, fisheyeRim: 80 },
+        },
+      },
+    });
+    fs.writeFileSync(filePath, legacy);
+    const { lyrics } = loadOutputSlots(dir).slots;
+    expect(lyrics.settings).toMatchObject({
+      fisheyeReflection: 'soft',
+      fisheyeRim: 80,
+    });
+    expect(fs.readFileSync(filePath, 'utf8')).toBe(legacy);
+    upsertOutputSlot(dir, 'lyrics', {
+      ...lyrics,
+      settings: { ...lyrics.settings, fisheyeReflection: 'off' },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
+      fisheyeReflection: 'off',
+      fisheyeRim: 80,
+    });
+    expect(
+      JSON.parse(fs.readFileSync(filePath, 'utf8')).slots.lyrics.settings,
+    ).toHaveProperty('fisheyeReflection', 'off');
+  });
+
   it('saves and reloads the ticket template at its fixed capture size', () => {
     upsertOutputSlot(dir, 'now-playing', {
       templateId: 'ticket-stub',

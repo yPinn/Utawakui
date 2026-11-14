@@ -24,6 +24,7 @@ const canvas = useTemplateRef('canvas');
 let painter;
 let motion;
 let animation;
+let motionPreference;
 
 function stop() {
   if (animation !== undefined) cancelAnimationFrame(animation);
@@ -41,8 +42,7 @@ function update() {
     appearance?.fisheyeLayout,
     props.scene.frame?.fisheyeVariant,
   );
-  const still =
-    !props.animated || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still = !props.animated || motionPreference.matches;
   if (still) {
     painter.render(columns, { reducedMotion: true, lensLayout }, appearance);
     return;
@@ -92,6 +92,8 @@ function update() {
 }
 
 onMounted(() => {
+  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  motionPreference.addEventListener('change', update);
   painter = createFisheyePainter(canvas.value);
   motion = createFisheyeMotion(gsap);
   update();
@@ -99,6 +101,7 @@ onMounted(() => {
 watch(() => [props.scene, props.animated], update);
 onBeforeUnmount(() => {
   stop();
+  motionPreference?.removeEventListener('change', update);
   motion?.dispose();
 });
 </script>

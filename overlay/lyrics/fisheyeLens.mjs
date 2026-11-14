@@ -105,7 +105,7 @@ function createView(canvas, gsap) {
     const animateReflection =
       !reducedMotion &&
       reflectionClock?.playing &&
-      appearance?.fisheyeReflection !== 0;
+      appearance?.fisheyeReflection !== 'off';
     function paint(now) {
       const elapsed = Math.max(0, now - started);
       const age = ageMs + (animate ? elapsed : 0);

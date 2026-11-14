@@ -632,6 +632,7 @@
       "typography": "Typography",
       "readability": "Readability",
       "surface": "Background",
+      "decoration": "Decoration",
       "layout": "Layout",
       "motion": "History review",
       "content": "Content"
@@ -639,7 +640,6 @@
     "fields": {
       "vinylSurfaceLight": {
         "label": "Record highlight",
-        "group": "Decoration",
         "options": { "off": "Off", "soft": "Soft", "standard": "Standard" }
       },
       "receiptDirection": {
@@ -669,7 +669,10 @@
           "close": "Close-up"
         }
       },
-      "fisheyeReflection": { "label": "Reflection intensity" },
+      "fisheyeReflection": {
+        "label": "Lens reflection",
+        "options": { "off": "Off", "soft": "Soft", "standard": "Standard" }
+      },
       "fisheyeEnter": {
         "label": "Entrance",
         "options": {

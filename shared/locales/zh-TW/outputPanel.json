@@ -625,6 +625,7 @@
       "typography": "字體設定",
       "readability": "可讀性",
       "surface": "背景",
+      "decoration": "裝飾",
       "layout": "版面",
       "motion": "歷史回顧",
       "content": "內容顯示"
@@ -632,7 +633,6 @@
     "fields": {
       "vinylSurfaceLight": {
         "label": "唱片高光",
-        "group": "裝飾",
         "options": { "off": "關閉", "soft": "柔和", "standard": "標準" }
       },
       "receiptDirection": {
@@ -662,7 +662,10 @@
           "close": "貼近"
         }
       },
-      "fisheyeReflection": { "label": "反光強度" },
+      "fisheyeReflection": {
+        "label": "鏡內反光",
+        "options": { "off": "關閉", "soft": "柔和", "standard": "標準" }
+      },
       "fisheyeEnter": {
         "label": "進場動畫",
         "options": {

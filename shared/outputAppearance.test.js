@@ -6,6 +6,7 @@ import {
   OUTPUT_PROPERTY_TIERS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   carryOutputAppearanceToTemplate,
+  fisheyeReflectionStrength,
   normalizeOutputAppearance,
   normalizeOutputElementAppearance,
   outputAppearanceFieldsForTemplate,
@@ -15,6 +16,27 @@ import {
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it.each([
+    [-5, 'off', 0],
+    [2, 'off', 0],
+    [3, 'soft', 50],
+    [70, 'soft', 50],
+    [73, 'standard', 100],
+    [100, 'standard', 100],
+    ['off', 'off', 0],
+    ['soft', 'soft', 50],
+    ['standard', 'standard', 100],
+    ['unknown', 'standard', 100],
+    [undefined, 'standard', 100],
+  ])('normalizes Fisheye reflection %s to %s', (value, style, strength) => {
+    const { fisheyeReflection } = normalizeOutputAppearance(
+      { fisheyeReflection: value },
+      { templateId: 'fisheye-lens' },
+    );
+    expect(fisheyeReflection).toBe(style);
+    expect(fisheyeReflectionStrength(fisheyeReflection)).toBe(strength);
+  });
+
   it('keeps the vertical defaults and accepts independent text, contrast and rule choices', () => {
     const centered = { templateId: 'centered-vertical' };
     const chalkboard = { templateId: 'chalkboard-vertical' };
@@ -127,6 +149,7 @@ describe('output appearance schema', () => {
       { id: 'typography', order: 30 },
       { id: 'readability', order: 40 },
       { id: 'surface', order: 50 },
+      { id: 'decoration', order: 55 },
       { id: 'layout', order: 60 },
       { id: 'motion', order: 70 },
       { id: 'content', order: 80 },
@@ -319,7 +342,7 @@ describe('output appearance schema', () => {
       vinylSurfaceLight: 'off',
       fisheyeRim: 100,
       fisheyeLayout: 'auto',
-      fisheyeReflection: 100,
+      fisheyeReflection: 'standard',
       fisheyeEnter: 'arc',
       fisheyeExit: 'auto',
       fisheyePulse: 100,

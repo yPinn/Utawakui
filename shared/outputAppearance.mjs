@@ -1,6 +1,6 @@
 import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 9;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 10;
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', order: 10 }),
@@ -8,6 +8,7 @@ export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'typography', order: 30 }),
   Object.freeze({ id: 'readability', order: 40 }),
   Object.freeze({ id: 'surface', order: 50 }),
+  Object.freeze({ id: 'decoration', order: 55 }),
   Object.freeze({ id: 'layout', order: 60 }),
   Object.freeze({ id: 'motion', order: 70 }),
   Object.freeze({ id: 'content', order: 80 }),
@@ -35,6 +36,11 @@ const GROUP_MAP = new Map(
   OUTPUT_APPEARANCE_GROUPS.map((group) => [group.id, group]),
 );
 const FISHEYE_PAIRED_MOTION_IDS = ['arc', 'scale', 'swirl', 'cut'];
+const FISHEYE_REFLECTION_STRENGTH = Object.freeze({
+  off: 0,
+  soft: 50,
+  standard: 100,
+});
 
 function fieldDefinition(groupId, definition) {
   const group = GROUP_MAP.get(groupId);
@@ -211,7 +217,7 @@ const FIELD_DEFINITIONS = [
     defaultValue: 'transparent',
     options: [{ id: 'transparent' }, { id: 'soft' }, { id: 'solid' }],
   }),
-  fieldDefinition('surface', {
+  fieldDefinition('decoration', {
     key: 'vinylSurfaceLight',
     family: 'asset',
     tier: 'basic',
@@ -352,21 +358,29 @@ const FIELD_DEFINITIONS = [
     defaultValue: 'standard',
     options: [{ id: 'narrow' }, { id: 'standard' }, { id: 'wide' }],
   }),
-  ...['fisheyeRim', 'fisheyeReflection'].map((key, index) =>
-    fieldDefinition('surface', {
-      key,
-      family: 'fill',
-      tier: 'basic',
-      reflow: false,
-      order: 20 + index * 10,
-      control: 'range',
-      defaultValue: 100,
-      min: 0,
-      max: 100,
-      step: 5,
-      unit: '%',
-    }),
-  ),
+  fieldDefinition('surface', {
+    key: 'fisheyeRim',
+    family: 'fill',
+    tier: 'basic',
+    reflow: false,
+    order: 20,
+    control: 'range',
+    defaultValue: 100,
+    min: 0,
+    max: 100,
+    step: 5,
+    unit: '%',
+  }),
+  fieldDefinition('decoration', {
+    key: 'fisheyeReflection',
+    family: 'asset',
+    tier: 'basic',
+    reflow: false,
+    order: 30,
+    control: 'select',
+    defaultValue: 'standard',
+    options: Object.keys(FISHEYE_REFLECTION_STRENGTH).map((id) => ({ id })),
+  }),
   fieldDefinition('layout', {
     key: 'fisheyeLayout',
     family: 'layout',
@@ -716,6 +730,19 @@ function sanitizedRangeValue(field, value) {
   return Number((field.min + steps * field.step).toFixed(6));
 }
 
+function legacyFisheyeReflectionStyle(value) {
+  const normalized = sanitizedRangeValue({ min: 0, max: 100, step: 5 }, value);
+  if (normalized === undefined) return undefined;
+  if (normalized === 0) return 'off';
+  return normalized < 75 ? 'soft' : 'standard';
+}
+
+export function fisheyeReflectionStrength(style) {
+  return Object.hasOwn(FISHEYE_REFLECTION_STRENGTH, style)
+    ? FISHEYE_REFLECTION_STRENGTH[style]
+    : FISHEYE_REFLECTION_STRENGTH.standard;
+}
+
 function sanitizedLocalFontName(value) {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().normalize('NFC');
@@ -836,6 +863,8 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   )
     return undefined;
   let sanitized;
+  if (key === 'fisheyeReflection')
+    value = legacyFisheyeReflectionStyle(value) ?? value;
   if (baseField.control === 'select') {
     if (key === 'fontFamily') {
       const localFont = sanitizeOutputLocalFont(value);

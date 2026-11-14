@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 9,
+  "appearanceSchemaVersion": 10,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -1754,8 +1754,8 @@
               "id": "standard"
             }
           ],
-          "group": "surface",
-          "groupOrder": 50
+          "group": "decoration",
+          "groupOrder": 55
         }
       ],
       "timing": null,
@@ -2300,18 +2300,25 @@
         {
           "scope": "template",
           "key": "fisheyeReflection",
-          "family": "fill",
+          "family": "asset",
           "tier": "basic",
           "reflow": false,
           "order": 30,
-          "control": "range",
-          "defaultValue": 100,
-          "min": 0,
-          "max": 100,
-          "step": 5,
-          "unit": "%",
-          "group": "surface",
-          "groupOrder": 50
+          "control": "select",
+          "defaultValue": "standard",
+          "options": [
+            {
+              "id": "off"
+            },
+            {
+              "id": "soft"
+            },
+            {
+              "id": "standard"
+            }
+          ],
+          "group": "decoration",
+          "groupOrder": 55
         },
         {
           "scope": "template",
