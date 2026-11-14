@@ -135,6 +135,7 @@ describe('UI demo component order', () => {
     expect(UI_DEMO_EXCLUDED_COMPONENTS).toEqual([
       'UiFolderArtifact',
       'UiFolderArtifactCanvas',
+      'UiFolderDecoration',
       'UiFolderInspector',
       'UiFolderTabShape',
     ]);

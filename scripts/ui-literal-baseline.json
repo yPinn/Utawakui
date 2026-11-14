@@ -12,5 +12,6 @@
   "src/utils/contentLanguage.js": 1,
   "src/utils/contentLanguageCharSets.js": 3,
   "src/utils/lyrics.js": 2,
+  "src/utils/lyricsLineBreak.js": 1,
   "src/utils/rubyLayout.js": 1
 }

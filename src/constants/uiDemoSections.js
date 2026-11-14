@@ -1,6 +1,7 @@
 export const UI_DEMO_EXCLUDED_COMPONENTS = Object.freeze([
   'UiFolderArtifact',
   'UiFolderArtifactCanvas',
+  'UiFolderDecoration', // Page-only stationery rendered inside the Folder artifact layer.
   'UiFolderInspector', // Interactive example lives in the standalone UI Component Lab.
   'UiFolderTabShape', // Non-visual SVG clip definition owned by the Folder chrome.
 ]);
