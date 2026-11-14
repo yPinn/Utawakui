@@ -110,6 +110,8 @@ export function collectProbeRuntimeFiles(root = AUDIT_ROOT) {
         isBuiltin(reference)
       )
         continue;
+      // Drop bundler suffixes such as `?no-inline` before resolving the file.
+      reference = reference.replace(/[?#].*$/u, '');
       if (reference === '/overlay/vendor/gsap.min.js')
         reference = createRequire(file).resolve('gsap/dist/gsap.min.js');
       let target;
