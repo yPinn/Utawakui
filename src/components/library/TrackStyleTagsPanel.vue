@@ -61,9 +61,18 @@ function removeTag(row) {
     </p>
     <template v-if="editor.snapshot.value">
       <UiNotice
-        v-if="editor.snapshot.value.needsReview"
-        tone="warning"
-        :message="t('trackStyle.audioChanged')"
+        v-if="editor.needsConfirmation.value"
+        :tone="editor.snapshot.value.needsReview ? 'warning' : 'info'"
+        :message="
+          t(
+            editor.snapshot.value.needsReview
+              ? 'trackStyle.audioChanged'
+              : 'trackStyle.unconfirmed',
+          )
+        "
+        :action-label="t('trackStyle.confirm')"
+        :action-disabled="disabled"
+        @action="editor.confirm()"
       />
       <section
         class="track-style__group"

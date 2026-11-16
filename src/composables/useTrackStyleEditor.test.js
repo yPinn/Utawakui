@@ -45,3 +45,65 @@ it('saves accepts, edits, additions and removals as manual changes', async () =>
   expect(editor.visibleCandidates.value).toEqual([]);
   expect(editor.isDirty.value).toBe(false);
 });
+
+it('saves unchanged unconfirmed tags once the user confirms them', async () => {
+  const snapshot = {
+    ok: true,
+    editToken: 'current',
+    tags: ['Rock'],
+    dismissed: [],
+    candidates: [],
+    unconfirmed: true,
+  };
+  const api = {
+    getTrackStyleTags: vi.fn().mockResolvedValue(snapshot),
+    saveTrackStyleTags: vi
+      .fn()
+      .mockResolvedValue({ ...snapshot, unconfirmed: false }),
+  };
+  vi.stubGlobal('window', { Utawakui: api });
+  const editor = useTrackStyleEditor();
+  await editor.load('song');
+  expect(editor.needsConfirmation.value).toBe(true);
+  expect(editor.isDirty.value).toBe(false);
+  editor.confirm();
+  expect(editor.needsConfirmation.value).toBe(false);
+  expect(editor.isDirty.value).toBe(true);
+  await editor.save();
+  expect(api.saveTrackStyleTags).toHaveBeenCalledWith(
+    'song',
+    'current',
+    ['Rock'],
+    [],
+  );
+  expect(editor.isDirty.value).toBe(false);
+});
+
+it('lets the user re-confirm unchanged tags after the audio changes', async () => {
+  const snapshot = {
+    ok: true,
+    editToken: 'current',
+    tags: ['Rock'],
+    dismissed: [],
+    candidates: [],
+    needsReview: true,
+  };
+  const api = {
+    getTrackStyleTags: vi.fn().mockResolvedValue(snapshot),
+    saveTrackStyleTags: vi
+      .fn()
+      .mockResolvedValue({ ...snapshot, needsReview: false }),
+  };
+  vi.stubGlobal('window', { Utawakui: api });
+  const editor = useTrackStyleEditor();
+  await editor.load('song');
+  expect(editor.needsConfirmation.value).toBe(true);
+  editor.confirm();
+  await editor.save();
+  expect(api.saveTrackStyleTags).toHaveBeenCalledWith(
+    'song',
+    'current',
+    ['Rock'],
+    [],
+  );
+});

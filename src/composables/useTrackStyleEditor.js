@@ -9,6 +9,7 @@ export function useTrackStyleEditor() {
   const dismissed = shallowRef([]);
   const pending = shallowRef(false);
   const error = shallowRef('');
+  const confirmed = shallowRef(false);
   let trackId = null;
   let request = 0;
   let rowId = 0;
@@ -28,10 +29,16 @@ export function useTrackStyleEditor() {
       ({ label }) => !hidden.has(labelKey(label)),
     );
   });
+  const needsConfirmation = computed(
+    () =>
+      Boolean(snapshot.value?.unconfirmed || snapshot.value?.needsReview) &&
+      !confirmed.value,
+  );
   const isDirty = computed(
     () =>
       Boolean(snapshot.value) &&
-      (JSON.stringify(tags.value) !== JSON.stringify(snapshot.value.tags) ||
+      (confirmed.value ||
+        JSON.stringify(tags.value) !== JSON.stringify(snapshot.value.tags) ||
         JSON.stringify(rejected.value) !==
           JSON.stringify(snapshot.value.dismissed)),
   );
@@ -50,10 +57,12 @@ export function useTrackStyleEditor() {
     dismissed.value = [];
     pending.value = false;
     error.value = '';
+    confirmed.value = false;
   }
 
   function setSnapshot(value) {
     snapshot.value = value;
+    confirmed.value = false;
     rows.value = value.tags.map((label) => ({
       id: ++rowId,
       label,
@@ -118,6 +127,11 @@ export function useTrackStyleEditor() {
       dismissed.value = [...dismissed.value, label];
   }
 
+  function confirm() {
+    if (snapshot.value?.unconfirmed || snapshot.value?.needsReview)
+      confirmed.value = true;
+  }
+
   function remove(row) {
     dismiss(row.original);
     rows.value = rows.value.filter(({ id }) => id !== row.id);
@@ -148,7 +162,9 @@ export function useTrackStyleEditor() {
     pending,
     error,
     isDirty,
+    needsConfirmation,
     load,
+    confirm,
     reset,
     add,
     change,

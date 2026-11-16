@@ -108,9 +108,19 @@ it('previews conservative first candidates and persists only the selected track'
     service.applyAdoption(preview.previewId, ['selected']),
   ).rejects.toMatchObject({ styleStatus: 'stale' });
   service = createTrackStyleTagsService({ getLibraryContext: () => scope });
-  await expect(service.get('selected')).resolves.toMatchObject({
-    tags: ['Rock'],
-  });
+  const adopted = await service.get('selected');
+  expect(adopted).toMatchObject({ tags: ['Rock'], unconfirmed: true });
+  await expect(
+    service.save({
+      trackId: 'selected',
+      token: adopted.editToken,
+      tags: ['Rock'],
+      dismissed: [],
+    }),
+  ).resolves.toMatchObject({ tags: ['Rock'], unconfirmed: false });
+  expect(
+    JSON.parse(fs.readFileSync(manualPath, 'utf8')).tracks.selected,
+  ).not.toHaveProperty('adoptedFrom');
   for (const entry of entries)
     expect(
       fs.readFileSync(

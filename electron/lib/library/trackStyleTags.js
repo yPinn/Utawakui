@@ -153,6 +153,9 @@ function readEdit(store, trackId) {
     audioSha256: entry.audioSha256,
     tags: uniqueLabels(entry.tags, 24),
     dismissed: uniqueLabels(entry.dismissed, 128),
+    ...(typeof entry.adoptedFrom === 'string'
+      ? { adoptedFrom: entry.adoptedFrom }
+      : {}),
   };
 }
 
@@ -256,6 +259,8 @@ function createTrackStyleTagsService({
       tags: edit?.tags ?? [],
       dismissed: edit?.dismissed ?? [],
       needsReview: Boolean(edit && edit.audioSha256 !== audio),
+      // Bulk-adopted tags stay unconfirmed until the next per-track save.
+      unconfirmed: Boolean(edit?.adoptedFrom),
       candidates,
       candidatesUnavailable,
     };

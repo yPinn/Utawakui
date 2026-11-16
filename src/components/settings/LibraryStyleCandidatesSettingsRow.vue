@@ -1,31 +1,22 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
-import { Eye, FolderInput, Tag } from '../../icons/index.js';
+import { FolderInput, Tag } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
 import UiHint from '../ui/UiHint.vue';
 import SettingsActionMenuButton from './SettingsActionMenuButton.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
-import LibraryStyleAdoptionModal from './LibraryStyleAdoptionModal.vue';
 
 const props = defineProps({ disabled: Boolean });
 const busy = shallowRef(false);
 const feedback = shallowRef('');
 const failed = shallowRef(false);
-const adoptionOpen = shallowRef(false);
 const actions = computed(() => [
   { id: 'import', label: t('trackStyle.importCandidates'), icon: FolderInput },
-  { id: 'preview', label: t('trackStyle.adoptionPreview'), icon: Eye },
 ]);
 
 function manage(action) {
   if (props.disabled || busy.value) return;
   if (action === 'import') importCandidates();
-  else if (action === 'preview') adoptionOpen.value = true;
-}
-
-function reportAdoption(result) {
-  failed.value = false;
-  feedback.value = t('trackStyle.adoptionResult', result);
 }
 
 async function importCandidates() {
@@ -82,9 +73,4 @@ async function importCandidates() {
       </UiHint>
     </template>
   </SettingsDocumentItem>
-  <LibraryStyleAdoptionModal
-    :open="adoptionOpen"
-    @close="adoptionOpen = false"
-    @adopted="reportAdoption"
-  />
 </template>
