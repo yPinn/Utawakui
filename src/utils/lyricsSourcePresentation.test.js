@@ -5,21 +5,36 @@ import {
   formatLyricsSourceTier,
 } from './lyricsSourcePresentation.js';
 describe('renderer source labels', () => {
-  it('labels a persisted Kugou source without changing existing source formatting', () => {
+  it('shows saved lyrics by version and source code', () => {
     expect(
       formatLyricsSourceLabel({
         kind: 'kugou',
         language: 'und',
         label: 'Artist',
       }),
-    ).toBe('酷狗音樂 / Artist');
+    ).toBe('Artist · 來源 C');
     expect(
       formatLyricsSourceLabel({
         kind: 'lrclib',
         language: 'und',
         label: 'Album',
       }),
-    ).toBe('LRCLIB / Album');
+    ).toBe('Album · 來源 A');
+  });
+
+  it('removes provider prefixes and bare legacy defaults at display time', () => {
+    expect(
+      formatLyricsSourceLabel({
+        kind: 'netease',
+        label: '網易雲音樂 / 飛ぶ時 / 飛ぼうよ',
+      }),
+    ).toBe('飛ぶ時 / 飛ぼうよ · 來源 B');
+    expect(
+      formatLyricsSourceLabel({ kind: 'betterlyrics', label: 'Better Lyrics' }),
+    ).toBe('歌詞 · 來源 D');
+    expect(
+      formatLyricsSourceLabel({ kind: 'unknown-provider', label: 'Acoustic' }),
+    ).toBe('Acoustic · 來源 X');
   });
 });
 

@@ -19,6 +19,7 @@ const props = defineProps({
   canEditTiming: { type: Boolean, default: false },
   canEditVocals: { type: Boolean, default: false },
   isLocked: { type: Boolean, default: false },
+  showsEditActions: { type: Boolean, default: true },
   editMode: { type: String, default: 'preview' },
 });
 const emit = defineEmits(['selectTrack', 'refresh', 'editModeChange']);
@@ -157,6 +158,7 @@ function selectAction(item) {
           />
         </UiPopover>
         <UiButton
+          v-if="showsEditActions"
           :icon="Pencil"
           :active="editMode !== 'preview'"
           :disabled="isLocked"
@@ -167,6 +169,7 @@ function selectAction(item) {
         >
       </template>
     </AppFolderWorkspaceToolbar>
+    <slot name="sections" />
     <UiHint v-if="reloadStatus" role="status">{{ reloadStatus }}</UiHint>
     <UiActionMenu
       :open="menuOpen"

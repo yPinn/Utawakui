@@ -121,6 +121,15 @@ describe('Better Lyrics storage', () => {
     );
   });
 
+  it('uses the track title when album and artist labels are missing', () => {
+    const result = saveBetterLyricsRecord(
+      trackDir,
+      record({ albumName: '', artistName: '' }),
+    );
+    expect(result.source.label).toBe('Song');
+    expect(loadTrackLyricsManifest(trackDir).sources[0].label).toBe('Song');
+  });
+
   it('stores line timing without claiming a T2 sidecar', () => {
     const lineTtml = TTML.replace(
       'itunes:timing="Word"',

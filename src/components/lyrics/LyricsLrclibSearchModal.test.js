@@ -44,7 +44,9 @@ describe('online lyrics search modal contract', () => {
     expect(manager).toContain('provider-id="all"');
     expect(manager).toContain('@container lyrics-manager (min-width: 40rem)');
     expect(manager).toContain('@media (min-width: 64rem)');
-    expect(manager).toContain('grid-template-columns: 16rem minmax(0, 1fr)');
+    expect(manager).toContain(
+      'grid-template-columns: clamp(14rem, 35%, 17rem) minmax(0, 1fr)',
+    );
     expect(manager).toContain('searchTriggerRef.value?.$el?.focus?.()');
   });
 
@@ -75,13 +77,13 @@ describe('online lyrics search modal contract', () => {
     expect(workspace).toContain('searchLyricsProviderCandidates');
     expect(workspace).toContain('saveLyricsProviderCandidate');
     expect(workspace).toContain('props.providerId');
-    expect(workspace).toContain('可用原文、羅馬字或常用譯名搜尋。');
+    expect(workspace).toContain('可用原文、羅馬字或譯名。');
     expect(workspace).toContain('歌曲名稱');
     expect(workspace).toContain('藝人（選填）');
     expect(workspace).not.toContain('label="歌手"');
-    expect(
-      workspace.match(/:aria-describedby="`\$\{providerId\}-query-help`"/g),
-    ).toHaveLength(2);
+    expect(workspace).toContain(
+      ':aria-describedby="queryHelp ? `${providerId}-query-help` : undefined"',
+    );
     expect(workspace).toContain(':id="`${providerId}-query-help`"');
     expect(workspace.match(/<UiTextField/g)).toHaveLength(2);
     expect(workspace).not.toContain('<input');
@@ -97,7 +99,7 @@ describe('online lyrics search modal contract', () => {
     const row = source('./LyricsLrclibCandidateRow.vue');
     const group = source('./LyricsProviderRecordingGroup.vue');
 
-    expect(workspace).toContain('較符合的錄音版本');
+    expect(workspace).toContain('較相符版本');
     expect(workspace).toContain('其他可能版本');
     expect(workspace).not.toContain('最佳符合');
     expect(workspace).toContain('<LyricsProviderRecordingGroup');

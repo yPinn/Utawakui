@@ -138,6 +138,20 @@ function setup() {
 }
 
 describe('selected source analysis in available lyrics', () => {
+  it('shows the enabling instruction without inactive language and analysis controls', async () => {
+    mocks.queue.state.value = { ...mocks.queue.state.value, enabled: false };
+    owner.needsReanalysis.value = true;
+    setup();
+    await flush();
+    expect(textContent(mounted.root)).toContain(
+      '請先在設定啟用實驗性歌詞分析。',
+    );
+    expect(
+      findAll(mounted.root, (node) => node.type === 'select'),
+    ).toHaveLength(0);
+    expect(button('分析歌詞')).toBeUndefined();
+  });
+
   it('shows a declined mixed-source reason only for the current source revision', async () => {
     setup();
     await flush();
@@ -389,7 +403,7 @@ describe('selected source analysis in available lyrics', () => {
       environmentStatus: 'missing',
     };
     await flush();
-    expect(button('分析歌詞').props.disabled).toBe(true);
+    expect(button('分析歌詞')).toBeUndefined();
     expect(textContent(mounted.root)).toContain('設定');
     mocks.domain.lyricsDocument.value = {
       lines: [{ startMs: 1000, endMs: 5000, segments: [{}] }],

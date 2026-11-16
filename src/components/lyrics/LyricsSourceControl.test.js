@@ -7,6 +7,7 @@ import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -21,6 +22,7 @@ for (const [component, path] of [
   [UiField, '../ui/UiField.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiButton, '../ui/UiButton.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ])
   attachClientRender(component, path, import.meta.url);
 
@@ -41,11 +43,43 @@ function setup(overrides = {}) {
   const select = () =>
     findAll(mounted.root, (n) => n.props.role === 'combobox')[0];
   const button = () =>
-    findAll(mounted.root, (n) => n.props['aria-label'] === '管理歌詞來源')[0];
+    findAll(
+      mounted.root,
+      (n) => n.type === 'button' && n.props['aria-label'] === '管理歌詞來源',
+    )[0];
   return { ...mounted, props, select, button };
 }
 
 describe('shared lyrics source entry', () => {
+  it('shows version and timing on playback labels, with codes only for duplicate choices', async () => {
+    const { props, select } = setup({
+      playbackLabels: true,
+      sources: [
+        {
+          filename: 'one.lrc',
+          kind: 'netease',
+          label: '原版',
+          timingTier: 'T1',
+        },
+        {
+          filename: 'two.lrc',
+          kind: 'lrclib',
+          label: '原版',
+          timingTier: 'T1',
+        },
+        {
+          filename: 'three.lrc',
+          kind: 'kugou',
+          label: 'Acoustic',
+          timingTier: 'T2',
+        },
+      ],
+    });
+    expect(textContent(select())).toBe('原版 · 逐行 · 來源 B');
+    props.selectedSourceFilename = 'three.lrc';
+    await nextTick();
+    expect(textContent(select())).toBe('Acoustic · 逐字');
+  });
   it('restores displayed content after source labels and availability change', async () => {
     const { props, select } = setup({
       sources: [
@@ -59,7 +93,7 @@ describe('shared lyrics source entry', () => {
     expect(textContent(select())).toContain('日本語／中文');
     props.sources = [{ filename: 'one.lrc', kind: 'lrclib', label: '短' }];
     await nextTick();
-    expect(textContent(select())).toBe('LRCLIB / 短');
+    expect(textContent(select())).toBe('短 · 來源 A');
     props.sources = [];
     props.selectedSourceFilename = '';
     await nextTick();
@@ -83,7 +117,7 @@ describe('shared lyrics source entry', () => {
         }),
       );
       expect(html).toContain('歌詞來源');
-      expect(html).toContain('管理來源');
+      expect(html).toContain('aria-label="管理歌詞來源"');
     }
   });
   it('switches a saved source through the canonical parent action', () => {
@@ -101,7 +135,8 @@ describe('shared lyrics source entry', () => {
       sources: [{ filename: 'one.lrc' }],
     });
     expect(select().props.disabled).toBe(false);
-    expect(textContent(button())).toContain('管理來源');
+    expect(button().props.class).toContain('ui-btn--secondary');
+    expect(button().props.class).toContain('ui-btn--icon-only');
     trigger(button(), 'onClick');
     expect(props.onManageSources).toHaveBeenCalledOnce();
   });

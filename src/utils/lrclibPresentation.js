@@ -1,4 +1,5 @@
 import { catalogKey, t } from './i18n.js';
+import { lyricsProviderAlias } from './lyricsSourcePresentation.js';
 
 const CAPABILITY_KEYS = Object.freeze({
   T2: 't2',
@@ -39,32 +40,30 @@ export function candidateImportMessage(candidate) {
   return null;
 }
 
-function fallbackCapabilityLabel(capability) {
-  if (capability?.level === 'T1') return t('lyricsSource.fallback.t1');
-  if (capability?.level === 'T0') return t('lyricsSource.fallback.t0');
-  return t('lyricsSource.fallback.other');
-}
-
-function warningLabel(warning, capability) {
-  const fallback = fallbackCapabilityLabel(capability);
-  if (warning === 'unsupported-lyricsfile-version-fallback') {
-    return t('lyricsSource.warnings.versionFallback', { fallback });
-  }
-  if (warning === 'invalid-lyricsfile-fallback') {
-    return t('lyricsSource.warnings.invalidFallback', { fallback });
-  }
-  if (warning === 'invalid-yrc') {
-    return t('lyricsSource.warnings.invalidYrc', { fallback });
-  }
-  return WARNINGS.has(warning)
-    ? t(`lyricsSource.warnings.${catalogKey(warning)}`)
-    : undefined;
-}
-
-export function warningLabels(warnings, capability = null) {
+export function warningLabels(warnings) {
+  // The capability badge already shows the usable format after a fallback.
   return [...new Set(Array.isArray(warnings) ? warnings : [])]
-    .map((warning) => warningLabel(warning, capability))
-    .filter(Boolean);
+    .filter((warning) => WARNINGS.has(warning))
+    .map((warning) => t(`lyricsSource.warnings.${catalogKey(warning)}`));
+}
+
+export function candidateTimingDetails(candidate) {
+  if (!['T0', 'T1'].includes(candidate?.capability?.level)) return '';
+  const evidence = candidate.timingEvidence;
+  switch (evidence?.status) {
+    case 'no-word-timing':
+      return t('lyricsSource.timingDetails.noWordTiming');
+    case 'unsupported-format':
+      return t('lyricsSource.timingDetails.unsupportedFormat');
+    case 'structural-error':
+      return t('lyricsSource.timingDetails.structure');
+    case 'semantic-error':
+      return evidence.issueCodes?.includes('word-text-mismatch')
+        ? t('lyricsSource.timingDetails.wordTextMismatch')
+        : t('lyricsSource.timingDetails.validation');
+    default:
+      return '';
+  }
 }
 
 export function candidateTimelineDifference(
@@ -95,12 +94,6 @@ export function candidateTimelineDifference(
     candidate.previewFingerprint !== comparison.candidateFingerprint
   )
     return null;
-  const labels = {
-    kugou: t('lyricsAcquisition.kugou'),
-    lrclib: 'LRCLIB',
-    netease: t('lyricsAcquisition.netease'),
-    betterlyrics: 'Better Lyrics',
-  };
   const { offsetMs, matchedLineCount } = comparison;
   if (
     !Number.isSafeInteger(offsetMs) ||
@@ -117,8 +110,9 @@ export function candidateTimelineDifference(
       ? 'lyricsSource.timeline.later'
       : 'lyricsSource.timeline.earlier',
     {
-      reference:
-        labels[reference.providerId] || t('lyricsSource.timeline.reference'),
+      reference: reference.providerId
+        ? lyricsProviderAlias(reference.providerId)
+        : t('lyricsSource.timeline.reference'),
       seconds,
     },
   );

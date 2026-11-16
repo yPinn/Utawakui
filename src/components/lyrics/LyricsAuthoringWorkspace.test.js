@@ -37,7 +37,7 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
     expect(readerIndex).toBeGreaterThan(-1);
     expect(liveControlsIndex).toBeGreaterThan(readerIndex);
     expect(workspaceSource).toContain(
-      'grid-template-rows: auto auto minmax(0, auto) minmax(6rem, 1fr)',
+      'grid-template-rows: auto minmax(0, auto) minmax(6rem, 1fr)',
     );
     expect(workspaceSource).not.toContain(
       'grid-template-rows: auto auto auto minmax(0, 1fr) auto',
@@ -149,10 +149,10 @@ describe('LyricsAuthoringWorkspace information hierarchy', () => {
     );
     expect(workspaceSource).toContain('class="lyrics-stage__live-tool"');
     expect(workspaceSource).toMatch(
-      /\.lyrics-timing-stack\s*\{(?=[^}]*grid-row:\s*3)[^}]*\}/su,
+      /\.lyrics-timing-stack\s*\{(?=[^}]*grid-row:\s*2)[^}]*\}/su,
     );
     expect(workspaceSource).toMatch(
-      /\.lyrics-stage__live-tool\s*\{(?=[^}]*grid-row:\s*4)[^}]*\}/su,
+      /\.lyrics-stage__live-tool\s*\{(?=[^}]*grid-row:\s*3)[^}]*\}/su,
     );
   });
 });

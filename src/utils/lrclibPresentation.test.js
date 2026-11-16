@@ -89,37 +89,35 @@ describe('LRCLIB candidate presentation', () => {
 
   it('maps bounded warnings to user-facing labels', () => {
     expect(
-      warningLabels(
-        [
-          'partial-word-timing',
-          'overlapping-words',
-          'unsupported-lyricsfile-version',
-          'invalid-lyricsfile',
-          'unsupported-lyricsfile-version-fallback',
-          'invalid-lyricsfile-fallback',
-          'invalid-yrc',
-          'normalized-boundary-jitter',
-          'version-mismatch',
-          'lyricsfile-missing',
-        ],
-        { level: 'T1' },
-      ),
+      warningLabels([
+        'partial-word-timing',
+        'overlapping-words',
+        'unsupported-lyricsfile-version',
+        'invalid-lyricsfile',
+        'unsupported-lyricsfile-version-fallback',
+        'invalid-lyricsfile-fallback',
+        'invalid-yrc',
+        'normalized-boundary-jitter',
+        'version-mismatch',
+        'lyricsfile-missing',
+      ]),
     ).toEqual([
       '部分歌詞缺少逐字時間',
       '逐字時間有重疊，會儲存但不直接使用',
-      '逐字格式版本尚未支援',
-      '逐字同步資料無法使用',
-      '逐字格式版本尚未支援；仍可儲存逐行同步歌詞',
-      '逐字同步資料無法使用；仍可儲存逐行同步歌詞',
-      '網易逐字同步資料無法使用；仍可儲存逐行同步歌詞',
+      '歌詞格式版本尚未支援',
+      '歌詞資料無法解析',
       '已自動修正逐字時間的微小誤差',
       '可能是不同版本',
     ]);
   });
 
-  it('names the usable fallback capability instead of a generic downgrade', () => {
+  it('leaves successful fallbacks to the capability badge', () => {
     expect(
-      warningLabels(['invalid-lyricsfile-fallback'], { level: 'T0' }),
-    ).toEqual(['逐字同步資料無法使用；仍可儲存純文字歌詞']);
+      warningLabels([
+        'invalid-lyricsfile-fallback',
+        'unsupported-lyricsfile-version-fallback',
+        'invalid-yrc',
+      ]),
+    ).toEqual([]);
   });
 });

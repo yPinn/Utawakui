@@ -1,6 +1,5 @@
 {
   "authored": "本機校訂版",
-  "kugou": "酷狗音樂",
   "restartToSave": "請重新啟動應用程式後再試。",
   "saveIncomplete": "歌詞尚未儲存，請再試一次。",
   "savedRefreshFailed": "歌詞已儲存，請重新開啟歌詞清單。",
@@ -18,7 +17,6 @@
   "flowRequiredShort": "請先到設定啟用歌詞來源",
   "probeRestart": "請重新啟動應用程式後再檢查歌詞來源。",
   "probeFailed": "目前無法檢查歌詞來源，請再試一次。",
-  "netease": "網易雲音樂",
   "manual": "手動匯入",
   "importFileTitle": "匯入歌詞檔"
 }

@@ -115,7 +115,7 @@
     "needsTimed": "Add lyrics with sync timing first.",
     "checking": "Checking analysis settings.",
     "needsProcessing": "Turn on audio processing in Settings first.",
-    "needsExperiment": "Turn on experimental lyrics analysis in Settings first. Tools aren't downloaded automatically.",
+    "needsExperiment": "Turn on experimental lyrics analysis in Settings first.",
     "needsTools": "Prepare or repair the lyrics analysis tools in Settings first.",
     "savingOffset": "Saving the timing; analysis can start when it finishes.",
     "offsetFailed": "Retry saving the timing before analyzing.",
@@ -157,6 +157,6 @@
     "analyze": "Analyze lyrics",
     "afterHint": "After analysis, turn on Analysis display.",
     "detailsTitle": "About analysis",
-    "details": "Analyzes Chinese, Japanese or English lyrics, using original word timing first; lines that can't be analyzed keep line timing. Analyze again after changing the source or timing, and play to check the results. The reading view underlines the current part; Focus and Karaoke support continuous fill."
+    "details": "Supports Chinese, Japanese, and English lyrics. Keeps existing word timing and falls back to line timing where needed. Run analysis again after changing the source or timing, then play to verify."
   }
 }

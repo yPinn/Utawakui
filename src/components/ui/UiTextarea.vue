@@ -114,6 +114,10 @@ defineExpose({ focus });
   block-size: var(--ui-textarea-fill-block-size, 100%);
 }
 
+.ui-textarea-field--fill :deep(.ui-field__main) {
+  grid-template-rows: var(--ui-textarea-fill-main-rows, none);
+}
+
 .ui-textarea--resize-none {
   resize: none;
 }

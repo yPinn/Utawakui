@@ -174,6 +174,11 @@ const searchHint = computed(() => {
     return t('lyricsAcquisition.moreUnavailable');
   return '';
 });
+const queryHelp = computed(
+  () =>
+    searchHint.value ||
+    (!hasResults.value ? t('lyricsSource.search.queryHelp') : ''),
+);
 const workspaceNotice = computed(() => {
   if (state.manualSave.error)
     return {
@@ -371,7 +376,7 @@ function reportCandidate(candidate) {
         ref="titleInput"
         v-model="titleDraft"
         :label="t('lyricsSource.search.title')"
-        :aria-describedby="`${providerId}-query-help`"
+        :aria-describedby="queryHelp ? `${providerId}-query-help` : undefined"
         :maxlength="256"
         required
       />
@@ -379,7 +384,6 @@ function reportCandidate(candidate) {
         :id="`${providerId}-artist-name`"
         v-model="artistDraft"
         :label="t('lyricsSource.search.artist')"
-        :aria-describedby="`${providerId}-query-help`"
         :maxlength="256"
       />
       <UiStack
@@ -410,11 +414,12 @@ function reportCandidate(candidate) {
         </UiButton>
       </UiStack>
       <UiHint
+        v-if="queryHelp"
         :id="`${providerId}-query-help`"
         class="lyrics-lrclib-search__query-help"
         aria-live="polite"
       >
-        {{ searchHint || t('lyricsSource.search.queryHelp') }}
+        {{ queryHelp }}
       </UiHint>
       <UiSelect
         v-if="alternateTitles.length"

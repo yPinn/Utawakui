@@ -155,6 +155,7 @@ async function handleFileImport() {
       </div>
       <UiButton
         :title="t('lyricsSource.manual.collapseTitle')"
+        :disabled="state.manualSave.isSaving || isImportingFile"
         @click="emit('cancel')"
         >{{ t('lyricsSource.manual.collapse') }}</UiButton
       >

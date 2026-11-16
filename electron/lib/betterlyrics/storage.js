@@ -151,7 +151,8 @@ function saveBetterLyricsRecord(trackDir, record, options = {}) {
     filename: sourceFilename,
     language: 'und',
     kind: 'betterlyrics',
-    label: record.albumName || record.artistName || 'Better Lyrics',
+    label:
+      record.albumName || record.artistName || record.trackName || undefined,
     provider: {
       name: 'betterlyrics',
       recordId: record.id,
@@ -197,7 +198,7 @@ function saveBetterLyricsRecord(trackDir, record, options = {}) {
       filename: source.filename,
       language: source.language,
       kind: source.kind,
-      label: source.label,
+      ...(source.label ? { label: source.label } : {}),
     },
     capability: analysis.capability,
     compatibility: analysis.compatibility,

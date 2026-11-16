@@ -257,6 +257,16 @@ The active local lyrics source can store Traditional Chinese and English in
 pasted text enter the same positional review. Each physical row maps to one
 original line and an interior blank row leaves a gap. The operator can edit the
 individual pairings before saving either language.
+The lyrics authoring workspace has a Translations tab for this workflow. It uses
+the same track and source selection as the Lyrics and timing tab. Video playback
+offers the saved translation languages as display options.
+An original-lyrics block followed by bulleted translations can also be pasted
+or imported. Each original block must match the current source in order, starting
+at its first line. A block with a different number of translations keeps its
+existing draft rows and shows the affected line range for review.
+When copied text has more rows than the source and has no bullets, the importer
+can identify mixed blocks if the complete original sequence is found in order.
+Reset clears the pasted text and restores the current language's saved draft.
 
 Main checks the source session and translation revision before saving. Each
 saved row binds to the canonical document, stable line ID and original text.

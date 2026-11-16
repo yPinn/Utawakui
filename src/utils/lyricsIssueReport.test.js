@@ -21,7 +21,7 @@ describe('lyrics issue draft projection', () => {
     const draft = buildLyricsIssueReport(input);
     expect(draft.kind).toBe('content');
     expect(draft.trackLabel).toBe('Artist - Local song');
-    expect(draft.description).toContain('網易雲音樂 #42');
+    expect(draft.description).toContain('來源 B #42');
     expect(draft.description).toContain('Other artist - Other song');
     expect(draft.description).toContain('T2（部分）');
     expect(draft.description).toContain('重現步驟：');
@@ -44,7 +44,7 @@ describe('lyrics issue draft projection', () => {
       offsetMs: -1200,
     });
     expect(draft.description).toContain('已儲存來源');
-    expect(draft.description).toContain('LRCLIB #17');
+    expect(draft.description).toContain('來源 A #17');
     expect(draft.description).toContain('-1200 ms');
     expect(JSON.stringify(draft)).not.toMatch(/private|PRIVATE|lines/);
   });
@@ -63,7 +63,7 @@ describe('lyrics issue draft projection', () => {
     expect(draft.trackLabel.length).toBeLessThanOrEqual(200);
     expect(draft.description.length).toBeLessThanOrEqual(2000);
     expect(JSON.stringify(draft)).not.toMatch(/private|PRIVATE|\\u0000/);
-    expect(draft.description).toContain('線上來源');
+    expect(draft.description).toContain('來源 X');
     expect(draft.description).toContain('未確認');
     expect(buildLyricsIssueReport().description).not.toContain('undefined');
   });

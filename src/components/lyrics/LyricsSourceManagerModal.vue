@@ -1,7 +1,10 @@
 <script setup>
 import {
+  describePlaybackLyricsSources,
   formatLyricsSourceLabel,
+  formatLyricsSourceName,
   formatLyricsSourceTier,
+  lyricsSourceVersionName,
   describeLyricsSourceTier,
 } from '../../utils/lyricsSourcePresentation.js';
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
@@ -60,12 +63,16 @@ const {
 } = useLyrics();
 const feedback = useFeedbackReport();
 
-const searchOpen = ref(false);
+const activePane = ref(null);
+const searchOpen = computed(() => activePane.value === 'search');
+const isManualImportOpen = computed(() => activePane.value === 'manual');
 const searchMounted = ref(false);
+const manualMounted = ref(false);
 const analysisOpen = ref(false);
 const searchPaneId = `lyrics-source-search-${useId()}`;
 const searchTriggerRef = useTemplateRef('searchTrigger');
-const isManualImportOpen = ref(false);
+const manualTriggerRef = useTemplateRef('manualTrigger');
+const manualPaneId = `lyrics-source-manual-${useId()}`;
 const isBackfilling = ref(false);
 const hasUnlabeledLrclibSources = computed(() =>
   selectedLyrics.value.sources.some(
@@ -80,6 +87,15 @@ const isDeletingSource = ref(false);
 const displaySources = computed(
   () => availableSources?.value ?? selectedLyrics.value.sources,
 );
+const sourceAliases = computed(() =>
+  describePlaybackLyricsSources(displaySources.value),
+);
+function managedSourceLabel(source) {
+  return formatLyricsSourceLabel(
+    source,
+    sourceAliases.value.get(source.filename)?.alias,
+  );
+}
 const SOURCE_ACTIONS = new Set([
   'set-label',
   'delete-source',
@@ -123,10 +139,10 @@ watch(
 watch(() => state.selectedTrackId, resetPanes);
 
 function resetPanes() {
-  searchOpen.value = false;
+  activePane.value = null;
   searchMounted.value = false;
+  manualMounted.value = false;
   analysisOpen.value = false;
-  isManualImportOpen.value = false;
   editingFilename.value = null;
   pendingDeleteSource.value = null;
 }
@@ -137,7 +153,24 @@ function toggleSearch() {
     return;
   }
   searchMounted.value = true;
-  searchOpen.value = true;
+  activePane.value = 'search';
+}
+
+function toggleManualImport() {
+  if (isManualImportOpen.value) {
+    void closeManualImport();
+    return;
+  }
+  manualMounted.value = true;
+  activePane.value = 'manual';
+}
+
+async function closeManualImport() {
+  manualMounted.value = false;
+  if (!isManualImportOpen.value) return;
+  activePane.value = null;
+  await nextTick();
+  manualTriggerRef.value?.$el?.focus?.();
 }
 
 async function handleBackfill() {
@@ -151,7 +184,7 @@ async function handleBackfill() {
 }
 
 async function collapseSearch() {
-  searchOpen.value = false;
+  activePane.value = null;
   await nextTick();
   searchTriggerRef.value?.$el?.focus?.();
 }
@@ -163,7 +196,7 @@ function handleModalClose() {
 
 function startEdit(source) {
   editingFilename.value = source.filename;
-  labelDraft.value = source.label || '';
+  labelDraft.value = lyricsSourceVersionName(source);
 }
 
 function cancelEdit() {
@@ -241,11 +274,7 @@ function reportSource(source) {
   <UiModal
     :open="open"
     :title="t('lyricsSource.manager.sourcesTitle')"
-    :size="
-      searchOpen || selectedLyrics.sources.length || isManualImportOpen
-        ? 'wide'
-        : 'notice'
-    "
+    :size="activePane || selectedLyrics.sources.length ? 'wide' : 'notice'"
     max-block-size="small"
     body-mode="workspace"
     initial-focus="dialog"
@@ -264,18 +293,22 @@ function reportSource(source) {
         @click="handleBackfill"
       />
       <UiIconButton
+        ref="manualTrigger"
         :icon="Plus"
         :active="isManualImportOpen"
         :aria-expanded="isManualImportOpen"
+        :aria-controls="manualMounted ? manualPaneId : undefined"
+        :disabled="state.manualSave?.isSaving"
         :label="t('lyricsSource.manager.manualImport')"
-        @click="isManualImportOpen = !isManualImportOpen"
+        @click="toggleManualImport"
       />
       <UiIconButton
         ref="searchTrigger"
         :icon="Search"
-        :variant="searchOpen ? 'ghost' : 'accent'"
+        :variant="activePane ? 'ghost' : 'accent'"
         :active="searchOpen"
         :aria-expanded="searchOpen"
+        :disabled="state.manualSave?.isSaving"
         :aria-controls="searchMounted ? searchPaneId : undefined"
         :label="
           t(
@@ -290,7 +323,7 @@ function reportSource(source) {
     <div class="lyrics-source-manager">
       <UiScrollLayout
         class="lyrics-source-manager__scroll"
-        :class="{ 'lyrics-source-manager__scroll--expanded': searchOpen }"
+        :class="{ 'lyrics-source-manager__scroll--expanded': activePane }"
         viewport-class="lyrics-source-manager__viewport"
         content-class="lyrics-source-manager__panes"
         scrollbar-reserve="overflow"
@@ -379,7 +412,7 @@ function reportSource(source) {
                     <strong>{{ t('lyricsSource.manager.deleteTitle') }}</strong>
                     <span>{{
                       t('lyricsSource.manager.deleteMessage', {
-                        name: formatLyricsSourceLabel(source),
+                        name: managedSourceLabel(source),
                       })
                     }}</span>
                   </div>
@@ -428,7 +461,7 @@ function reportSource(source) {
                   <div class="lyrics-source-manager__row-identity">
                     <UiButton
                       class="lyrics-source-manager__row-label"
-                      :title="formatLyricsSourceLabel(source)"
+                      :title="managedSourceLabel(source)"
                       :aria-pressed="
                         !linkedReference &&
                         state.selectedSourceFilename === source.filename
@@ -443,7 +476,7 @@ function reportSource(source) {
                       <span
                         class="lyrics-source-manager__row-name"
                         dir="auto"
-                        >{{ formatLyricsSourceLabel(source) }}</span
+                        >{{ formatLyricsSourceName(source) }}</span
                       >
                     </UiButton>
                     <UiChip
@@ -461,15 +494,21 @@ function reportSource(source) {
                     class="lyrics-source-manager__row-meta"
                     :aria-label="
                       [
+                        sourceAliases.get(source.filename)?.alias,
                         sourceTierDescription(source),
                         t('lyricsSource.manager.offsetNamed', {
                           offset: formatLyricsSourceOffset(
                             sourceOffsetMs(source),
                           ),
                         }),
-                      ].join(t('common.clauseSeparator'))
+                      ]
+                        .filter(Boolean)
+                        .join(t('common.clauseSeparator'))
                     "
                   >
+                    <span v-if="sourceAliases.get(source.filename)?.alias">
+                      {{ sourceAliases.get(source.filename).alias }}
+                    </span>
                     <UiOverflowTooltip
                       class="lyrics-source-manager__row-tier"
                       :text="sourceTierDescription(source)"
@@ -504,13 +543,6 @@ function reportSource(source) {
                 </div>
               </UiSurface>
             </ul>
-
-            <LyricsManualImportPanel
-              v-if="isManualImportOpen"
-              class="lyrics-source-manager__manual-import"
-              @cancel="isManualImportOpen = false"
-              @saved="isManualImportOpen = false"
-            />
           </section>
           <UiDisclosure
             v-if="experimentalLyrics && state.selectedSourceFilename"
@@ -523,21 +555,43 @@ function reportSource(source) {
             />
           </UiDisclosure>
         </UiScrollLayout>
-        <section
-          v-if="searchMounted"
-          v-show="searchOpen"
-          :id="searchPaneId"
-          class="lyrics-source-manager__search"
-          :aria-labelledby="`${searchPaneId}-heading`"
+        <div
+          v-if="searchMounted || manualMounted"
+          v-show="activePane"
+          class="lyrics-source-manager__acquisition"
         >
-          <h3
-            :id="`${searchPaneId}-heading`"
-            class="lyrics-source-manager__heading"
+          <section
+            v-if="searchMounted"
+            v-show="searchOpen"
+            :id="searchPaneId"
+            class="lyrics-source-manager__search"
+            :aria-labelledby="`${searchPaneId}-heading`"
           >
-            {{ t('lyricsSource.manager.searchTitle') }}
-          </h3>
-          <LyricsLrclibSearchWorkspace :active="searchOpen" provider-id="all" />
-        </section>
+            <h3
+              :id="`${searchPaneId}-heading`"
+              class="lyrics-source-manager__heading"
+            >
+              {{ t('lyricsSource.manager.searchTitle') }}
+            </h3>
+            <LyricsLrclibSearchWorkspace
+              :active="searchOpen"
+              provider-id="all"
+            />
+          </section>
+          <UiScrollLayout
+            v-if="manualMounted"
+            v-show="isManualImportOpen"
+            :id="manualPaneId"
+            class="lyrics-source-manager__manual"
+            viewport-class="lyrics-source-manager__manual-viewport"
+            scrollbar-reserve="overflow"
+          >
+            <LyricsManualImportPanel
+              @cancel="closeManualImport"
+              @saved="closeManualImport"
+            />
+          </UiScrollLayout>
+        </div>
       </UiScrollLayout>
     </div>
   </UiModal>
@@ -569,6 +623,15 @@ function reportSource(source) {
   overflow: visible;
 }
 
+.lyrics-source-manager__acquisition {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-inline-size: 0;
+  min-block-size: 0;
+  padding-block-start: var(--ui-space-4);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
 .lyrics-source-manager__search {
   --lyrics-search-results-display: block;
   --lyrics-search-results-overflow: visible;
@@ -577,8 +640,11 @@ function reportSource(source) {
   grid-template-rows: auto minmax(0, 1fr);
   min-inline-size: 0;
   min-block-size: 0;
-  padding-block-start: var(--ui-space-4);
-  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.lyrics-source-manager__manual :deep(.lyrics-source-manager__manual-viewport) {
+  block-size: auto;
+  overflow: visible;
 }
 
 .lyrics-source-manager__heading {
@@ -616,7 +682,7 @@ function reportSource(source) {
 
     .lyrics-source-manager__scroll--expanded
       :deep(.lyrics-source-manager__panes) {
-      grid-template-columns: 16rem minmax(0, 1fr);
+      grid-template-columns: clamp(14rem, 35%, 17rem) minmax(0, 1fr);
       align-content: stretch;
       min-block-size: 0;
     }
@@ -632,14 +698,22 @@ function reportSource(source) {
       overflow: hidden auto;
     }
 
-    .lyrics-source-manager__search {
-      --lyrics-search-results-display: grid;
-      --lyrics-search-results-overflow: hidden auto;
-
+    .lyrics-source-manager__acquisition {
       padding-block-start: 0;
       padding-inline-start: var(--ui-space-4);
       border-block-start: 0;
       border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
+    }
+
+    .lyrics-source-manager__search {
+      --lyrics-search-results-display: grid;
+      --lyrics-search-results-overflow: hidden auto;
+    }
+
+    .lyrics-source-manager__manual
+      :deep(.lyrics-source-manager__manual-viewport) {
+      block-size: 100%;
+      overflow: hidden auto;
     }
   }
 }
@@ -750,9 +824,16 @@ function reportSource(source) {
 
   .lyrics-source-manager__row-identity {
     grid-column: 1 / -1;
+    align-items: start;
+  }
+
+  .lyrics-source-manager__row-name {
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .lyrics-source-manager__row-meta {
+    column-gap: var(--ui-space-1);
     padding-inline-start: calc(var(--ui-space-2) + var(--ui-border-width));
   }
 
@@ -779,10 +860,6 @@ function reportSource(source) {
 .lyrics-source-manager__label-field {
   min-width: 0;
   flex: 1;
-}
-
-.lyrics-source-manager__manual-import {
-  margin-top: var(--ui-space-3);
 }
 
 .lyrics-source-manager__action-error {

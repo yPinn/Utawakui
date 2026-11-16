@@ -1,15 +1,18 @@
 <script setup>
-import { computed, useId } from 'vue';
+import { computed, shallowRef, useId } from 'vue';
 import { ChevronDown, ChevronRight } from '../../icons/index.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
+import { lyricsProviderAlias } from '../../utils/lyricsSourcePresentation.js';
 import {
   candidateImportMessage,
+  candidateTimingDetails,
   capabilityLabel,
   warningLabels,
 } from '../../utils/lrclibPresentation.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSurface from '../ui/UiSurface.vue';
@@ -22,7 +25,6 @@ const props = defineProps({
   saving: { type: Boolean, default: false },
   saveDisabled: { type: Boolean, default: false },
   changedCandidate: { type: Object, default: null },
-  providerLabel: { type: String, default: 'LRCLIB' },
   showProvider: { type: Boolean, default: false },
   recommended: { type: Boolean, default: false },
   timelineMessage: { type: String, default: null },
@@ -40,15 +42,19 @@ const previewId = `lyrics-candidate-preview-${useId()}`;
 const presentedCandidate = computed(
   () => props.changedCandidate || props.candidate,
 );
+const providerLabel = computed(() =>
+  lyricsProviderAlias(presentedCandidate.value.providerId),
+);
 const visibleWarnings = computed(() =>
-  warningLabels(
-    presentedCandidate.value.warnings,
-    presentedCandidate.value.capability,
-  ),
+  warningLabels(presentedCandidate.value.warnings),
 );
 const importMessage = computed(() =>
   candidateImportMessage(presentedCandidate.value),
 );
+const timingDetails = computed(() =>
+  candidateTimingDetails(presentedCandidate.value),
+);
+const timingDetailsOpen = shallowRef(false);
 
 const capabilityTone = computed(() => {
   const level = presentedCandidate.value.capability?.level;
@@ -213,6 +219,14 @@ function previewLineHasTiming(line) {
           }}</span>
         </li>
       </UiSurface>
+
+      <UiDisclosure
+        v-if="timingDetails"
+        v-model:open="timingDetailsOpen"
+        :label="t('lyricsSource.timingDetails.label')"
+      >
+        <UiHint>{{ timingDetails }}</UiHint>
+      </UiDisclosure>
 
       <UiNotice
         v-if="changedCandidate"

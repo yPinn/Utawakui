@@ -22,6 +22,7 @@ defineProps({
   emptySourceLabel: { type: String, default: '' },
   hasSelectedTrack: { type: Boolean, default: false },
   isLoadingSources: { type: Boolean, default: false },
+  playbackSourceLabels: { type: Boolean, default: false },
   readingOptions: { type: Array, default: () => [] },
   readingVariant: { type: String, default: 'off' },
   readingError: { type: String, default: '' },
@@ -85,6 +86,7 @@ function increaseFontSize() {
       :empty-source-label="emptySourceLabel"
       :has-selected-track="hasSelectedTrack"
       :is-loading="isLoadingSources"
+      :playback-labels="playbackSourceLabels"
       @source-change="changeSource"
       @manage-sources="manageSources"
     />

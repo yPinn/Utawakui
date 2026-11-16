@@ -4,6 +4,7 @@ import Group from './LyricsProviderRecordingGroup.vue';
 import Row from './LyricsLrclibCandidateRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiStack from '../ui/UiStack.vue';
@@ -22,6 +23,7 @@ for (const [component, path] of [
   [Row, './LyricsLrclibCandidateRow.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiChip, '../ui/UiChip.vue'],
+  [UiDisclosure, '../ui/UiDisclosure.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiStack, '../ui/UiStack.vue'],
@@ -80,6 +82,25 @@ function setup(offsetMs = 2000) {
 }
 
 describe('timeline information within the existing candidate flow', () => {
+  it('explains timing fallback only inside the collapsed sync details', async () => {
+    const { root, props } = setup();
+    props.group.candidates[0].timingEvidence = {
+      status: 'semantic-error',
+      issueCodes: ['word-text-mismatch'],
+    };
+    props.expandedKey = 'lrclib:1';
+    await nextTick();
+    const [details] = findAll(root, (node) => node.type === 'details');
+    expect(details.props.open).toBe(false);
+    expect(textContent(details)).toContain('同步詳情');
+    expect(textContent(details)).toContain('逐字片段的文字與整行歌詞不一致');
+    expect(
+      findAll(
+        root,
+        (node) => node.props.class === 'lyrics-lrclib-candidate-row__warnings',
+      ),
+    ).toHaveLength(0);
+  });
   it('keeps Kugou as an individually selectable source and saves only on a click', async () => {
     const { root, props, onSave } = setup();
     props.showProvider = true;
@@ -90,7 +111,8 @@ describe('timeline information within the existing candidate flow', () => {
     };
     props.expandedKey = 'kugou:1';
     await nextTick();
-    expect(textContent(root)).toContain('酷狗音樂');
+    expect(textContent(root)).toContain('來源 C');
+    expect(textContent(root)).not.toContain('酷狗音樂');
     expect(onSave).not.toHaveBeenCalled();
     const button = findAll(
       root,
@@ -140,12 +162,12 @@ describe('timeline information within the existing candidate flow', () => {
     expect(onSave).not.toHaveBeenCalled();
     props.expandedKey = 'netease:1';
     await nextTick();
-    expect(textContent(root)).toContain('比 LRCLIB 晚約 2 秒');
+    expect(textContent(root)).toContain('比 來源 A 晚約 2 秒');
     expect(textContent(root)).not.toContain('比對');
     const support = findAll(root, (node) =>
       node.props?.class?.includes?.('lyrics-lrclib-candidate-row__support'),
     )[0];
-    expect(textContent(support)).toContain('比 LRCLIB 晚約 2 秒。');
+    expect(textContent(support)).toContain('比 來源 A 晚約 2 秒。');
     expect(
       findAll(support, (node) =>
         node.props?.class?.includes?.('ui-hint--muted'),

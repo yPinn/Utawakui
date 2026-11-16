@@ -74,14 +74,15 @@ const blocked = computed(() =>
     lyrics.state.timingSave?.isSaving,
   ),
 );
-const canAnalyze = computed(
+const canConfigureAnalysis = computed(
   () =>
-    !blocked.value &&
-    !busy.value &&
     hasT1.value &&
     queue.state.value?.enabled &&
     queue.state.value.allowed &&
     !['missing', 'damaged'].includes(queue.state.value.environmentStatus),
+);
+const canAnalyze = computed(
+  () => canConfigureAnalysis.value && !blocked.value && !busy.value,
 );
 const summary = computed(() =>
   summarizeAcousticPreview(experiment.prepared.value),
@@ -146,6 +147,8 @@ const progressLabel = computed(() =>
       t('lyricsResearch.analysis.preparing')),
 );
 const statusMessage = computed(() => {
+  if (!busy.value && !canConfigureAnalysis.value && availability.value)
+    return availability.value;
   if (!busy.value && experiment.needsReanalysis.value)
     return t('lyricsResearch.analysis.reanalyze');
   if (jobDescription.value) return jobDescription.value;
@@ -259,9 +262,12 @@ onScopeDispose(() => clearInterval(timer));
           : ''
       "
     />
-    <div class="lyrics-source-analysis__actions">
+    <div
+      v-if="canConfigureAnalysis || busy || readyCount"
+      class="lyrics-source-analysis__actions"
+    >
       <UiSelect
-        v-if="hasT1"
+        v-if="canConfigureAnalysis"
         :id="languageId"
         v-model="language"
         :label="t('lyricsResearch.analysis.mainLanguage')"
@@ -277,7 +283,7 @@ onScopeDispose(() => clearInterval(timer));
           >{{ t('lyricsResearch.analysis.cancel') }}</UiButton
         >
         <UiButton
-          v-else-if="hasT1"
+          v-else-if="canConfigureAnalysis"
           :disabled="!canAnalyze"
           variant="secondary"
           @click="analyze"

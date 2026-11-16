@@ -23,6 +23,13 @@
     "t2": "Includes part timing. Some lines may still show as whole lines.",
     "unknown": "Sync type not checked yet."
   },
+  "compactTier": {
+    "t0": "Text",
+    "t1": "Line sync",
+    "t1Plus": "Estimated line sync",
+    "t2": "Word sync",
+    "unknown": "Unchecked"
+  },
   "capability": {
     "t2": "Word sync",
     "t2Partial": "Partial word sync",
@@ -34,23 +41,23 @@
   },
   "importInstrumental": "This source is marked instrumental and has no lyrics to import.",
   "importUnsupported": "This source's format isn't supported, so it can't be imported safely.",
-  "fallback": {
-    "t1": "line-synced lyrics",
-    "t0": "plain lyrics",
-    "other": "other usable lyrics"
-  },
   "warnings": {
     "partialWordTiming": "Some lyrics have no word timing",
     "overlappingLines": "Line times overlap. They'll be saved but not used directly",
     "overlappingWords": "Word times overlap. They'll be saved but not used directly",
-    "unsupportedLyricsfileVersion": "This word-timing format version isn't supported yet",
-    "invalidLyricsfile": "The word sync data can't be used",
+    "unsupportedLyricsfileVersion": "This lyrics format version isn't supported yet",
+    "invalidLyricsfile": "The lyrics data couldn't be parsed",
     "normalizedBoundaryJitter": "Small word timing gaps were corrected automatically",
     "versionMismatch": "May be a different version",
-    "instrumentalRecord": "This entry is marked instrumental",
-    "versionFallback": "This word-timing format version isn't supported yet; you can still save {fallback}",
-    "invalidFallback": "The word sync data can't be used; you can still save {fallback}",
-    "invalidYrc": "The NetEase word sync data can't be used; you can still save {fallback}"
+    "instrumentalRecord": "This entry is marked instrumental"
+  },
+  "timingDetails": {
+    "label": "Sync details",
+    "noWordTiming": "The source has no word timing.",
+    "unsupportedFormat": "The accompanying lyrics format version isn't supported yet.",
+    "structure": "The accompanying lyrics format couldn't be parsed.",
+    "validation": "The accompanying lyrics data failed validation.",
+    "wordTextMismatch": "The timed words don't match the whole line. Word timing was skipped."
   },
   "timeline": {
     "later": "About {seconds} s later than {reference}.",
@@ -87,13 +94,16 @@
   },
   "saving": "Saving…",
   "control": {
+    "unnamed": "Lyrics",
+    "languageChoice": "{name} ({language})",
+    "playbackChoice": "{name} · {timing}",
+    "sourceCode": "Source {code}",
+    "withSourceCode": "{name} · {alias}",
     "hide": "Hide lyrics",
     "none": "No lyrics sources yet",
     "reference": "Reference: {title}",
     "label": "Lyrics source",
-    "manageTitle": "Search, import and manage lyrics sources",
-    "manageLabel": "Manage lyrics sources",
-    "manage": "Manage sources"
+    "manageLabel": "Manage lyrics sources"
   },
   "manual": {
     "hint": "Paste LRC or plain text, or choose a local lyrics file.",
@@ -158,12 +168,12 @@
     "actions": "Search actions",
     "broaden": "Broaden search",
     "search": "Search",
-    "queryHelp": "Try the original title, romanization, or a common translation.",
+    "queryHelp": "Use the original, romanized, or translated title.",
     "alternateTitle": "Other work titles",
     "chooseAlternateTitle": "Choose a search title",
     "loading": "Loading lyrics results",
     "versionsHint": "These may be different versions. Check before choosing.",
-    "best": "Closer recording matches",
+    "best": "Closer matches",
     "remaining": "Other matching versions ({count})",
     "other": "Other possible versions"
   },

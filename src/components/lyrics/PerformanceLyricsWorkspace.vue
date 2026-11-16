@@ -28,7 +28,7 @@ import AppFolderWorkspaceToolbar from '../layout/AppFolderWorkspaceToolbar.vue';
 import TrackVideoPlayback from '../playback/TrackVideoPlayback.vue';
 import LyricsLiveTool from './LyricsLiveTool.vue';
 import LyricsVideoCaptions from './LyricsVideoCaptions.vue';
-import LyricsTranslationEditor from './LyricsTranslationEditor.vue';
+import { useLyricsTranslations } from '../../composables/useLyricsTranslations.js';
 import LyricsExperimentalEstimate from './LyricsExperimentalEstimate.vue';
 import LyricsDisplayControls from './LyricsDisplayControls.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
@@ -85,30 +85,12 @@ const hasTimedVideoLyrics = computed(() =>
 );
 const translationId = useId();
 const translationLanguage = shallowRef('off');
-const translationLanguages = [
-  { id: 'zh-TW', label: t('lyricsTranslation.traditionalChinese') },
-  { id: 'en', label: t('lyricsTranslation.english') },
-];
-const translationRecord = shallowRef(null);
-const translationEditorOpen = shallowRef(false);
-const translationLoadError = shallowRef(false);
-const translationContext = computed(() => {
-  const session = lyrics.sourceSession?.value;
-  const filename = selectedSource.value?.filename;
-  const trackId = selectedTrack.value?.id;
-  const { documentId, lines, source } = lyricsDocument.value;
-  if (
-    reference.value ||
-    state.isLoadingLyrics ||
-    !session ||
-    !trackId ||
-    !filename ||
-    source?.filename !== filename ||
-    !lines?.length
-  )
-    return null;
-  return { trackId, filename, session: { ...session }, documentId, lines };
-});
+const {
+  languages: translationLanguages,
+  record: translationRecord,
+  loadError: translationLoadError,
+  retry: retryTranslations,
+} = useLyricsTranslations(lyrics);
 const translationOptions = computed(() => [
   { id: 'off', label: t('lyricsTranslation.off') },
   ...translationLanguages.map((language) => ({
@@ -139,37 +121,6 @@ const videoTranslation = computed(() =>
 const translationVisible = computed(() =>
   Boolean(translationRecord.value?.rows[translationLanguage.value]?.length),
 );
-const translationReload = shallowRef(0);
-watch(
-  [translationContext, translationReload],
-  async ([context], _previous, onCleanup) => {
-    translationRecord.value = null;
-    translationEditorOpen.value = false;
-    translationLoadError.value = false;
-    if (
-      !context ||
-      typeof window.Utawakui?.getLyricsTranslations !== 'function'
-    )
-      return;
-    let current = true;
-    onCleanup(() => {
-      current = false;
-    });
-    try {
-      const { trackId, filename, session, documentId } = context;
-      const result = await window.Utawakui.getLyricsTranslations(
-        trackId,
-        filename,
-        session,
-        documentId,
-      );
-      if (current) translationRecord.value = result;
-    } catch {
-      if (current) translationLoadError.value = true;
-    }
-  },
-  { immediate: true },
-);
 const videoTrackId = computed(() => {
   const id = lyrics.currentTrackId?.value;
   return id === selectedTrack.value?.id ? id : null;
@@ -197,26 +148,6 @@ let restoreDisplayAfterManager = false;
 function toggleDisplayMenu(event) {
   displayTriggerElement = event.currentTarget;
   displayMenuOpen.value = !displayMenuOpen.value;
-}
-
-async function openTranslationEditor() {
-  const context = translationContext.value;
-  displayMenuOpen.value = false;
-  await nextTick();
-  if (
-    disposed ||
-    !translationRecord.value ||
-    translationContext.value !== context
-  )
-    return;
-  displayTriggerElement?.focus();
-  translationEditorOpen.value = true;
-}
-
-function applyTranslations(record, language) {
-  translationRecord.value = record;
-  translationLanguage.value = record.rows[language].length ? language : 'off';
-  translationEditorOpen.value = false;
 }
 
 async function openSourceManager() {
@@ -308,6 +239,7 @@ onMounted(initialize);
           </template>
           <LyricsDisplayControls
             class="performance-lyrics-workspace__display"
+            playback-source-labels
             :sources="
               reference ? [] : (availableSources ?? selectedLyrics.sources)
             "
@@ -364,16 +296,11 @@ onMounted(initialize);
                   :aria-label="t('lyricsTranslation.language')"
                 />
               </UiField>
-              <UiButton
-                v-if="translationRecord"
-                @click="openTranslationEditor"
-                >{{ t('lyricsTranslation.manage') }}</UiButton
-              >
-              <div v-else-if="translationLoadError">
+              <div v-if="videoMode && translationLoadError">
                 <UiHint role="status">{{
                   t('lyricsTranslation.loadFailed')
                 }}</UiHint>
-                <UiButton @click="translationReload++">{{
+                <UiButton @click="retryTranslations">{{
                   t('common.retry')
                 }}</UiButton>
               </div>
@@ -483,17 +410,6 @@ onMounted(initialize);
     <LyricsSourceManagerModal
       :open="isSourceManagerOpen"
       @close="closeSourceManager"
-    />
-    <LyricsTranslationEditor
-      v-if="translationEditorOpen && translationContext && translationRecord"
-      :context="translationContext"
-      :saved="translationRecord"
-      :languages="translationLanguages"
-      :initial-language="
-        translationLanguage === 'off' ? 'zh-TW' : translationLanguage
-      "
-      @close="translationEditorOpen = false"
-      @saved="applyTranslations"
     />
   </section>
 </template>

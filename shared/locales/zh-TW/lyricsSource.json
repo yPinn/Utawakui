@@ -23,6 +23,13 @@
     "t2": "含歌詞分段時間，部分句子可能仍按整句顯示。",
     "unknown": "尚未確認同步方式。"
   },
+  "compactTier": {
+    "t0": "純文字",
+    "t1": "逐行",
+    "t1Plus": "逐行估計",
+    "t2": "逐字",
+    "unknown": "待確認"
+  },
   "capability": {
     "t2": "逐字同步",
     "t2Partial": "部分逐字同步",
@@ -34,23 +41,23 @@
   },
   "importInstrumental": "這筆來源標示為純音樂，沒有可匯入的歌詞。",
   "importUnsupported": "這筆來源格式目前不支援，無法安全匯入。",
-  "fallback": {
-    "t1": "逐行同步歌詞",
-    "t0": "純文字歌詞",
-    "other": "其他可用歌詞"
-  },
   "warnings": {
     "partialWordTiming": "部分歌詞缺少逐字時間",
     "overlappingLines": "逐行時間有重疊，會儲存但不直接使用",
     "overlappingWords": "逐字時間有重疊，會儲存但不直接使用",
-    "unsupportedLyricsfileVersion": "逐字格式版本尚未支援",
-    "invalidLyricsfile": "逐字同步資料無法使用",
+    "unsupportedLyricsfileVersion": "歌詞格式版本尚未支援",
+    "invalidLyricsfile": "歌詞資料無法解析",
     "normalizedBoundaryJitter": "已自動修正逐字時間的微小誤差",
     "versionMismatch": "可能是不同版本",
-    "instrumentalRecord": "這筆資料標示為純音樂",
-    "versionFallback": "逐字格式版本尚未支援；仍可儲存{fallback}",
-    "invalidFallback": "逐字同步資料無法使用；仍可儲存{fallback}",
-    "invalidYrc": "網易逐字同步資料無法使用；仍可儲存{fallback}"
+    "instrumentalRecord": "這筆資料標示為純音樂"
+  },
+  "timingDetails": {
+    "label": "同步詳情",
+    "noWordTiming": "來源未提供逐字時間。",
+    "unsupportedFormat": "來源附帶的歌詞格式版本尚未支援。",
+    "structure": "來源附帶的歌詞格式無法解析。",
+    "validation": "來源附帶的歌詞資料未通過檢核。",
+    "wordTextMismatch": "逐字片段的文字與整行歌詞不一致，未採用逐字時間。"
   },
   "timeline": {
     "later": "比 {reference} 晚約 {seconds} 秒。",
@@ -87,13 +94,16 @@
   },
   "saving": "儲存中…",
   "control": {
+    "unnamed": "歌詞",
+    "languageChoice": "{name}（{language}）",
+    "playbackChoice": "{name} · {timing}",
+    "sourceCode": "來源 {code}",
+    "withSourceCode": "{name} · {alias}",
     "hide": "不顯示歌詞",
     "none": "尚無歌詞來源",
     "reference": "參照〈{title}〉",
     "label": "歌詞來源",
-    "manageTitle": "搜尋、匯入與管理歌詞來源",
-    "manageLabel": "管理歌詞來源",
-    "manage": "管理來源"
+    "manageLabel": "管理歌詞來源"
   },
   "manual": {
     "hint": "貼上 LRC 或純文字，或選擇本機歌詞檔。",
@@ -158,12 +168,12 @@
     "actions": "搜尋操作",
     "broaden": "擴大搜尋",
     "search": "搜尋",
-    "queryHelp": "可用原文、羅馬字或常用譯名搜尋。",
+    "queryHelp": "可用原文、羅馬字或譯名。",
     "alternateTitle": "作品的其他歌名",
     "chooseAlternateTitle": "選擇搜尋歌名",
     "loading": "正在載入候選歌詞",
     "versionsHint": "以下可能是不同版本，請先確認。",
-    "best": "較符合的錄音版本",
+    "best": "較相符版本",
     "remaining": "其餘符合版本（{count}）",
     "other": "其他可能版本"
   },

@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue';
-import { t } from '../../utils/i18n.js';
 import LyricsLrclibCandidateRow from './LyricsLrclibCandidateRow.vue';
 import { candidateTimelineDifference } from '../../utils/lrclibPresentation.js';
 
@@ -30,15 +29,6 @@ const orderedCandidates = computed(() => {
 });
 const hasAlternatives = computed(() => orderedCandidates.value.length > 1);
 
-function providerLabel(candidate) {
-  if (candidate?.providerId === 'kugou') return t('lyricsAcquisition.kugou');
-  if (candidate?.providerId === 'betterlyrics') return 'Better Lyrics';
-  if (candidate?.providerId === 'netease')
-    return t('lyricsAcquisition.netease');
-  if (candidate?.providerId === 'lrclib') return 'LRCLIB';
-  return t('lyricsSource.issue.online');
-}
-
 function changedCandidate(candidate) {
   return props.changedCandidates.get(candidate.candidateKey) || null;
 }
@@ -58,7 +48,6 @@ function changedCandidate(candidate) {
         :timeline-message="
           candidateTimelineDifference(group, candidate, changedCandidates)
         "
-        :provider-label="providerLabel(candidate)"
         :show-provider="showProvider || hasAlternatives"
         :recommended="
           hasAlternatives &&

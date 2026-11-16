@@ -29,6 +29,7 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
+import UiTabs from '../ui/UiTabs.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
 
@@ -52,6 +53,7 @@ attachClientRender(LyricsSourceControl, './LyricsSourceControl.vue');
 attachClientRender(LyricsDisplayControls, './LyricsDisplayControls.vue');
 attachClientRender(UiSegmentedControl, '../ui/UiSegmentedControl.vue');
 attachClientRender(UiScrollLayout, '../ui/UiScrollLayout.vue');
+attachClientRender(UiTabs, '../ui/UiTabs.vue');
 attachClientRender(UiSelect, '../ui/UiSelect.vue');
 attachClientRender(UiCombobox, '../ui/UiCombobox.vue');
 attachClientRender(UiField, '../ui/UiField.vue');
@@ -83,7 +85,15 @@ function selectReading(root, label) {
 }
 
 function hostNode(type, text = '') {
-  return { type, text, props: {}, children: [], parent: null, focus: vi.fn() };
+  return {
+    type,
+    text,
+    props: {},
+    style: {},
+    children: [],
+    parent: null,
+    focus: vi.fn(),
+  };
 }
 
 const renderer = createRenderer({
@@ -904,6 +914,21 @@ describe('LyricsAuthoringWorkspace event wiring', () => {
       lyricsDocumentRef.value,
     );
     expect(generateReading).not.toHaveBeenCalled();
+
+    const tab = (name) =>
+      findAll(
+        root,
+        (node) => node.props.role === 'tab' && nodeText(node).trim() === name,
+      )[0];
+    tab('譯文').props.onClick();
+    await nextTick();
+    expect(tab('譯文').props['aria-selected']).toBe(true);
+    expect(
+      findByProp(root, 'id', tab('譯文').props['aria-controls']).style.display,
+    ).not.toBe('none');
+    tab('原詞與對時').props.onClick();
+    await nextTick();
+    expect(tab('原詞與對時').props['aria-selected']).toBe(true);
 
     vm.isTrackPickerOpen = true;
     vm.refresh();

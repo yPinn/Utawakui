@@ -168,6 +168,27 @@ function setup() {
 }
 
 describe('local lyrics collection modal navigation', () => {
+  it('uses the version and source code in the saved row and delete confirmation', async () => {
+    sources.items = [
+      {
+        filename: 'netease-42.lrc',
+        kind: 'netease',
+        label: '網易雲音樂 / 飛ぶ時 / 飛ぼうよ',
+        timingTier: 'T1',
+      },
+    ];
+    const { root, button } = setup();
+    const label = '飛ぶ時 / 飛ぼうよ · 來源 B';
+    expect(button('飛ぶ時 / 飛ぼうよ')).toBeDefined();
+    expect(textContent(root)).toContain('來源 B');
+    expect(textContent(root)).not.toContain('網易雲音樂');
+
+    trigger(button('刪除這個歌詞來源'), 'onClick');
+    await nextTick();
+    expect(textContent(root)).toContain(label);
+    expect(textContent(root)).not.toContain('網易雲音樂');
+  });
+
   it('distinguishes selected model chunks from canonical T1 and source T2 without changing sources', async () => {
     sources.items = [
       {
@@ -343,6 +364,38 @@ describe('local lyrics collection modal navigation', () => {
     trigger(button('取消匯入'), 'onClick');
     await nextTick();
     expect(button('取消匯入')).toBeUndefined();
+  });
+
+  it('switches between search and manual import in one acquisition pane', async () => {
+    const { root, button } = setup();
+    trigger(button('搜尋歌詞'), 'onClick');
+    await nextTick();
+    const workspace = findByProvider();
+    trigger(button('手動匯入歌詞'), 'onClick');
+    await nextTick();
+    const manual = findAll(root, (node) => node.type === 'form')[0];
+    const panes = findAll(
+      root,
+      (node) => node.props.class === 'lyrics-source-manager__acquisition',
+    );
+    expect(panes).toHaveLength(1);
+    expect(panes[0].contains(manual)).toBe(true);
+    expect(panes[0].contains(workspace)).toBe(true);
+    expect(workspace.props['data-active']).toBe(false);
+    expect(button('手動匯入歌詞').props['aria-expanded']).toBe(true);
+    expect(button('搜尋歌詞').props.class).toContain('ui-icon-btn--ghost');
+    expect(textContent(root)).toContain('本機來源');
+
+    trigger(button('搜尋歌詞'), 'onClick');
+    await nextTick();
+    expect(findByProvider()).toBe(workspace);
+    expect(workspace.props['data-active']).toBe(true);
+    expect(button('手動匯入歌詞').props['aria-expanded']).toBe(false);
+    expect(findAll(root, (node) => node.type === 'form')[0]).toBe(manual);
+
+    function findByProvider() {
+      return findAll(root, (node) => node.props['data-provider'] === 'all')[0];
+    }
   });
 
   it('preserves legacy label backfill without adding provider search entries', async () => {

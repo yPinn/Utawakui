@@ -1,4 +1,5 @@
 import { t } from './i18n.js';
+import { lyricsProviderAlias } from './lyricsSourcePresentation.js';
 import {
   FEEDBACK_KINDS,
   MAX_TRACK_LABEL_LENGTH,
@@ -30,16 +31,11 @@ export function buildLyricsIssueReport({
   offsetMs,
 } = {}) {
   const provider = candidate ? candidate.providerId : source?.kind;
-  const names = {
-    kugou: t('lyricsAcquisition.kugou'),
-    lrclib: 'LRCLIB',
-    netease: t('lyricsAcquisition.netease'),
-    betterlyrics: 'Better Lyrics',
-  };
-  const name = Object.hasOwn(names, provider)
-    ? names[provider]
-    : candidate
-      ? t('lyricsSource.issue.online')
+  const name =
+    candidate ||
+    source?.provider ||
+    (provider && !['manual', 'authored'].includes(provider))
+      ? lyricsProviderAlias(provider)
       : t('lyricsSource.issue.local');
   const recordId = candidate ? candidate.id : source?.provider?.recordId;
   const id =

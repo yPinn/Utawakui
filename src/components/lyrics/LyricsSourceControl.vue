@@ -1,9 +1,11 @@
 <script setup>
 import {
+  describePlaybackLyricsSources,
   formatLyricsSourceLabel,
   formatLyricsSourceTier,
 } from '../../utils/lyricsSourcePresentation.js';
 import { computed, useId } from 'vue';
+import { Settings } from '../../icons/index.js';
 import {
   lyricsSourceDisplayTier,
   sortLyricsSources,
@@ -19,9 +21,13 @@ const props = defineProps({
   isLoading: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
   emptySourceLabel: { type: String, default: '' },
+  playbackLabels: { type: Boolean, default: false },
 });
 const emit = defineEmits(['sourceChange', 'manageSources']);
 const selectId = `lyrics-source-${useId()}`;
+const sourceChoices = computed(() =>
+  describePlaybackLyricsSources(props.sources),
+);
 const options = computed(() => [
   {
     value: '',
@@ -31,8 +37,15 @@ const options = computed(() => [
   },
   ...sortLyricsSources(props.sources).map((source) => ({
     value: source.filename,
-    label: formatLyricsSourceLabel(source),
-    tierLabel: formatLyricsSourceTier(lyricsSourceDisplayTier(source)),
+    label: props.playbackLabels
+      ? sourceChoices.value.get(source.filename).label
+      : formatLyricsSourceLabel(
+          source,
+          sourceChoices.value.get(source.filename).alias,
+        ),
+    tierLabel: props.playbackLabels
+      ? ''
+      : formatLyricsSourceTier(lyricsSourceDisplayTier(source)),
   })),
 ]);
 
@@ -61,20 +74,27 @@ function manageSources() {
       @update:model-value="changeSource"
     >
       <template #option="{ item }">
-        <template v-if="item.tierLabel">{{ item.tierLabel }} · </template
-        >{{ item.label }}
+        <span
+          v-if="playbackLabels"
+          class="lyrics-source-control__playback-option"
+        >
+          {{ item.label }}
+        </span>
+        <template v-else>
+          <template v-if="item.tierLabel">{{ item.tierLabel }} · </template>
+          {{ item.label }}
+        </template>
       </template>
     </UiCombobox>
     <UiButton
       class="lyrics-source-control__manage"
+      :icon="Settings"
       variant="secondary"
       :disabled="!hasSelectedTrack"
-      :title="t('lyricsSource.control.manageTitle')"
+      :title="t('lyricsSource.control.manageLabel')"
       :aria-label="t('lyricsSource.control.manageLabel')"
       @click="manageSources"
-    >
-      {{ t('lyricsSource.control.manage') }}
-    </UiButton>
+    />
   </div>
 </template>
 
@@ -93,5 +113,11 @@ function manageSources() {
 
 .lyrics-source-control__manage {
   flex-shrink: 0;
+}
+
+.lyrics-source-control__playback-option {
+  display: block;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 </style>

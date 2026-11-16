@@ -390,7 +390,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       includeDiagnostics: false,
     });
     expect(feedback.state.description).toContain('Version 1');
-    expect(feedback.state.description).toContain('LRCLIB');
+    expect(feedback.state.description).toContain('來源 A');
     expect(saveLyricsCandidate).not.toHaveBeenCalled();
     feedback.closeReport();
     await nextTick();
@@ -533,9 +533,10 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       providerId: 'all',
       providerLabel: '所有線上來源',
     });
-    await vi.waitFor(() => expect(nodeText(root)).toContain('網易雲音樂'));
+    await vi.waitFor(() => expect(nodeText(root)).toContain('來源 B'));
 
-    expect(nodeText(root)).toContain('LRCLIB');
+    expect(nodeText(root)).toContain('來源 A');
+    expect(nodeText(root)).not.toMatch(/LRCLIB|網易雲音樂/u);
     expect(nodeText(root)).not.toContain('顯示其他');
     expect(nodeText(root).match(/建議來源/g)).toHaveLength(1);
     expect(nodeText(root)).toContain('3:05 · 相同');
@@ -1019,7 +1020,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const titleInput = findByProp(root, 'id', 'lrclib-track-title');
     const artistInput = findByProp(root, 'id', 'lrclib-artist-name');
     expect(titleInput.props['aria-describedby']).toBe('lrclib-query-help');
-    expect(artistInput.props['aria-describedby']).toBe('lrclib-query-help');
+    expect(artistInput.props['aria-describedby']).toBeUndefined();
     expect(titleInput.focus).toHaveBeenCalledOnce();
     titleInput.props.onInput({ target: { value: 'Edited title' } });
     artistInput.props.onInput({ target: { value: 'Edited artist' } });

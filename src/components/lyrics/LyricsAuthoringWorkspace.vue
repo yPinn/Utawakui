@@ -1,13 +1,15 @@
 <script setup>
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, useId, watch } from 'vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
+import { useLyricsTranslations } from '../../composables/useLyricsTranslations.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTabs from '../ui/UiTabs.vue';
 import { isVocalSection } from '../../composables/lyrics/useLyricsVocalRoles.js';
 import { useLyricsTimingEditor } from '../../composables/useLyricsTimingEditor.js';
 import { formatDuration } from '../../utils/format.js';
@@ -28,6 +30,7 @@ import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 import LyricsTextProcessing from './LyricsTextProcessing.vue';
 import LyricsTimingReviewTool from './LyricsTimingReviewTool.vue';
+import LyricsTranslationEditor from './LyricsTranslationEditor.vue';
 import LyricsWaveformTool from './LyricsWaveformTool.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -113,6 +116,18 @@ const isTrackPickerOpen = ref(false);
 const editingReadingLineIndex = ref(null);
 const readingLineDraft = ref('');
 const editMode = ref('preview');
+const sectionId = useId();
+const section = ref('original');
+const translationBusy = ref(false);
+const translations = useLyricsTranslations(lyrics);
+const {
+  context: translationContext,
+  record: translationRecord,
+  loadError: translationLoadError,
+} = translations;
+watch(translationContext, () => {
+  translationBusy.value = false;
+});
 // The editor survives view switching; only resume a draft for this exact source.
 if (timingDraft.value) {
   if (
@@ -183,8 +198,21 @@ const isEditingLocked = computed(
     state.timingSave.isSaving ||
     state.sourceAction.isSaving ||
     isExporting.value ||
-    reviewBusy.value,
+    reviewBusy.value ||
+    translationBusy.value,
 );
+const sections = computed(() => [
+  {
+    id: 'original',
+    label: t('lyricsTranslation.originalSection'),
+    disabled: section.value !== 'original' && isEditingLocked.value,
+  },
+  {
+    id: 'translation',
+    label: t('lyricsTranslation.openEditor'),
+    disabled: section.value !== 'translation' && isEditingLocked.value,
+  },
+]);
 const waveformTimingDisabled = computed(() =>
   Boolean(
     state.isLoadingLyrics ||
@@ -585,12 +613,13 @@ async function confirmTimingReview() {
         :can-edit-timing="canEditTiming && !state.isLoadingLyrics"
         :can-edit-vocals="canEditVocals && !state.isLoadingLyrics"
         :is-locked="isEditingLocked"
+        :shows-edit-actions="section === 'original'"
         :edit-mode="editMode"
         @select-track="isTrackPickerOpen = true"
         @refresh="refresh"
         @edit-mode-change="setEditMode"
       >
-        <template #review>
+        <template v-if="section === 'original'" #review>
           <LyricsWaveformTool
             :track-id="selectedTrack?.id || ''"
             :source-key="acousticSourceKey"
@@ -673,211 +702,266 @@ async function confirmTimingReview() {
             <template #text-processing><LyricsTextProcessing /></template>
           </LyricsPreparationBar>
         </template>
+        <template #sections>
+          <UiTabs
+            v-model:active-id="section"
+            class="lyrics-stage__sections"
+            :aria-label="t('lyricsEditor.workspace.label')"
+            :items="sections"
+            :tab-id-prefix="sectionId"
+            :panel-id-prefix="sectionId"
+            variant="bar"
+          />
+        </template>
       </LyricsWorkspaceHeader>
-      <LyricsCorrectionPanel
-        v-if="editMode === 'text' && selectedSource"
-        :key="acousticSourceKey"
-        :authored="selectedSource.kind === 'authored'"
-        :lines="lyricsDocument.lines"
-        :recheck-line-ids="lyricsTiming.recheckLineIds"
-        :timing-confirmed="lyrics.timingReview?.state.status === 'confirmed'"
-        :busy="
-          state.sourceAction.isSaving || state.isLoadingLyrics || reviewBusy
-        "
-        :error="state.sourceAction.error || ''"
-        :fork="lyrics.forkAuthoredLyrics"
-        :save="lyrics.editAuthoredLyrics"
-        @dirty="hasTextDraft = $event"
-        @close="setEditMode('preview')"
-      />
-      <LyricsLineTapPanel
-        v-else-if="editMode === 'tap'"
-        :active="lineTaps"
-        :line-id="timingDraft?.lineId || ''"
-        :lines="lineTaps ? tapLines : lyricsDocument.lines"
-        :timed="
-          lineTaps
-            ? timedLineCount
-            : lyricsDocument.lines.filter((line) => line.startMs !== null)
-                .length
-        "
-        :can-record="canRecordLineTap"
-        :busy="
-          state.sourceAction.isSaving ||
-          state.isLoadingLyrics ||
-          state.timingSave.isSaving ||
-          reviewBusy
-        "
-        :error="state.sourceAction.error || timingValidationError"
-        @start="startLineTaps"
-        @select-line="selectLineTap"
-        @record="tapCurrentLine"
-        @skip="advanceLineTap"
-        @close="setEditMode('preview')"
-      />
-      <LyricsExportPanel
-        v-else-if="
-          editMode === 'export' &&
-          selectedTrack &&
-          selectedSource &&
-          lyricsTiming.sourceSession
-        "
-        :track-id="selectedTrack.id"
-        :filename="selectedSource.filename"
-        :session="lyricsTiming.sourceSession"
-        :blocked="
-          Boolean(
-            state.isLoadingLyrics ||
-            state.offsetSave.isSaving ||
-            state.offsetSave.error,
-          )
-        "
-        @saving="isExporting = $event"
-        @close="setEditMode('preview')"
-      />
-      <div v-else-if="editMode !== 'preview'" class="lyrics-edit-context">
-        <UiHint role="status">{{ editingHelp }}</UiHint>
-        <UiSegmentedControl
-          v-if="editMode === 'vocal'"
-          v-model="vocalPen"
-          :items="VOCAL_PENS"
-          :aria-label="t('lyricsEditor.workspace.roleColors')"
-        />
-        <UiButton :disabled="isEditingLocked" @click="setEditMode('preview')">{{
-          t('lyricsEditor.workspace.finish')
-        }}</UiButton>
-        <UiNotice
-          v-if="editMode === 'reading' && readingError"
-          tone="danger"
-          :message="readingError"
-          compact
-        />
-        <UiNotice
-          v-if="editMode === 'vocal' && vocalRoles?.error.value"
-          tone="danger"
-          :message="vocalRoles.error.value"
-          compact
-        />
-        <UiButton
-          v-if="editMode === 'vocal' && vocalRoles?.error.value"
-          @click="vocalRoles.reload()"
-          >{{ t('lyricsEditor.workspace.reload') }}</UiButton
-        >
-      </div>
       <div
-        v-if="timingDraft || showsAcousticPreview"
-        class="lyrics-timing-stack"
+        v-show="section === 'original'"
+        :id="`${sectionId}-original-panel`"
+        class="lyrics-stage__original"
+        role="tabpanel"
+        :aria-labelledby="`${sectionId}-original-tab`"
       >
-        <LyricsAcousticPreview
-          v-if="showsAcousticPreview"
-          :document="lyricsDocument"
-          :estimate="acousticEstimate"
-          :source-key="acousticSourceKey"
-          :position-ms="currentLyricsPositionMs"
-          :offset-ms="Math.round(state.offsetSeconds * 1000)"
-          :duration-ms="selectedDurationMs"
-          :disabled="isEditingLocked || editMode !== 'preview'"
+        <LyricsCorrectionPanel
+          v-if="editMode === 'text' && selectedSource"
+          :key="acousticSourceKey"
+          :authored="selectedSource.kind === 'authored'"
+          :lines="lyricsDocument.lines"
+          :recheck-line-ids="lyricsTiming.recheckLineIds"
+          :timing-confirmed="lyrics.timingReview?.state.status === 'confirmed'"
+          :busy="
+            state.sourceAction.isSaving || state.isLoadingLyrics || reviewBusy
+          "
+          :error="state.sourceAction.error || ''"
+          :fork="lyrics.forkAuthoredLyrics"
+          :save="lyrics.editAuthoredLyrics"
+          @dirty="hasTextDraft = $event"
+          @close="setEditMode('preview')"
         />
-        <LyricsTimingToolbar
-          v-if="timingDraft"
-          :can-undo="canUndoTiming"
-          :can-save="canCommitTiming"
-          :completed-boundaries="completedTimingBoundaries"
-          :total-boundaries="totalTimingBoundaries"
-          :is-saving="state.timingSave.isSaving || reviewBusy"
-          :error="state.timingSave.error || ''"
-          @undo="undoTiming"
-          @save="commitTimingDocument"
-          @cancel="cancelTiming"
+        <LyricsLineTapPanel
+          v-else-if="editMode === 'tap'"
+          :active="lineTaps"
+          :line-id="timingDraft?.lineId || ''"
+          :lines="lineTaps ? tapLines : lyricsDocument.lines"
+          :timed="
+            lineTaps
+              ? timedLineCount
+              : lyricsDocument.lines.filter((line) => line.startMs !== null)
+                  .length
+          "
+          :can-record="canRecordLineTap"
+          :busy="
+            state.sourceAction.isSaving ||
+            state.isLoadingLyrics ||
+            state.timingSave.isSaving ||
+            reviewBusy
+          "
+          :error="state.sourceAction.error || timingValidationError"
+          @start="startLineTaps"
+          @select-line="selectLineTap"
+          @record="tapCurrentLine"
+          @skip="advanceLineTap"
+          @close="setEditMode('preview')"
         />
-        <UiScrollRegion
-          v-if="timingDraft"
-          class="lyrics-timing-stack__editor"
-          axis="vertical"
-          :aria-label="t('lyricsEditor.workspace.draftTools')"
+        <LyricsExportPanel
+          v-else-if="
+            editMode === 'export' &&
+            selectedTrack &&
+            selectedSource &&
+            lyricsTiming.sourceSession
+          "
+          :track-id="selectedTrack.id"
+          :filename="selectedSource.filename"
+          :session="lyricsTiming.sourceSession"
+          :blocked="
+            Boolean(
+              state.isLoadingLyrics ||
+              state.offsetSave.isSaving ||
+              state.offsetSave.error,
+            )
+          "
+          @saving="isExporting = $event"
+          @close="setEditMode('preview')"
+        />
+        <div v-else-if="editMode !== 'preview'" class="lyrics-edit-context">
+          <UiHint role="status">{{ editingHelp }}</UiHint>
+          <UiSegmentedControl
+            v-if="editMode === 'vocal'"
+            v-model="vocalPen"
+            :items="VOCAL_PENS"
+            :aria-label="t('lyricsEditor.workspace.roleColors')"
+          />
+          <UiButton
+            :disabled="isEditingLocked"
+            @click="setEditMode('preview')"
+            >{{ t('lyricsEditor.workspace.finish') }}</UiButton
+          >
+          <UiNotice
+            v-if="editMode === 'reading' && readingError"
+            tone="danger"
+            :message="readingError"
+            compact
+          />
+          <UiNotice
+            v-if="editMode === 'vocal' && vocalRoles?.error.value"
+            tone="danger"
+            :message="vocalRoles.error.value"
+            compact
+          />
+          <UiButton
+            v-if="editMode === 'vocal' && vocalRoles?.error.value"
+            @click="vocalRoles.reload()"
+            >{{ t('lyricsEditor.workspace.reload') }}</UiButton
+          >
+        </div>
+        <div
+          v-if="timingDraft || showsAcousticPreview"
+          class="lyrics-timing-stack"
         >
-          <LyricsLineTimingEditor
-            v-if="timingDraft?.startMs != null"
-            :draft="timingDraft"
+          <LyricsAcousticPreview
+            v-if="showsAcousticPreview"
+            :document="lyricsDocument"
+            :estimate="acousticEstimate"
+            :source-key="acousticSourceKey"
             :position-ms="currentLyricsPositionMs"
-            :disabled="state.timingSave.isSaving || reviewBusy"
-            :can-enable-segments="canEnableSegments"
-            :dependencies="timingDependencies"
-            :error="timingValidationError"
             :offset-ms="Math.round(state.offsetSeconds * 1000)"
             :duration-ms="selectedDurationMs"
-            @shift="shiftLine"
-            @set-start="setLineStart"
-            @set-end="setLineEnd"
-            @enable-segments="enableSegments"
+            :disabled="isEditingLocked || editMode !== 'preview'"
           />
-          <LyricsSegmentEditor
-            v-if="timingDraft?.segments.length > 1"
-            :draft="timingDraft"
-            :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
+          <LyricsTimingToolbar
+            v-if="timingDraft"
+            :can-undo="canUndoTiming"
+            :can-save="canCommitTiming"
+            :completed-boundaries="completedTimingBoundaries"
+            :total-boundaries="totalTimingBoundaries"
             :is-saving="state.timingSave.isSaving || reviewBusy"
-            @tap="recordTimingBoundary"
-            @nudge-boundary="nudgeBoundary"
+            :error="state.timingSave.error || ''"
+            @undo="undoTiming"
+            @save="commitTimingDocument"
+            @cancel="cancelTiming"
           />
-        </UiScrollRegion>
+          <UiScrollRegion
+            v-if="timingDraft"
+            class="lyrics-timing-stack__editor"
+            axis="vertical"
+            :aria-label="t('lyricsEditor.workspace.draftTools')"
+          >
+            <LyricsLineTimingEditor
+              v-if="timingDraft?.startMs != null"
+              :draft="timingDraft"
+              :position-ms="currentLyricsPositionMs"
+              :disabled="state.timingSave.isSaving || reviewBusy"
+              :can-enable-segments="canEnableSegments"
+              :dependencies="timingDependencies"
+              :error="timingValidationError"
+              :offset-ms="Math.round(state.offsetSeconds * 1000)"
+              :duration-ms="selectedDurationMs"
+              @shift="shiftLine"
+              @set-start="setLineStart"
+              @set-end="setLineEnd"
+              @enable-segments="enableSegments"
+            />
+            <LyricsSegmentEditor
+              v-if="timingDraft?.segments.length > 1"
+              :draft="timingDraft"
+              :can-tap="
+                canTapTiming && Number.isFinite(currentLyricsPositionMs)
+              "
+              :is-saving="state.timingSave.isSaving || reviewBusy"
+              @tap="recordTimingBoundary"
+              @nudge-boundary="nudgeBoundary"
+            />
+          </UiScrollRegion>
+        </div>
+        <LyricsLiveTool
+          :experimental-frame="
+            editMode === 'preview'
+              ? (lyrics.localLyricsFrame?.value ??
+                lyrics.experimentalLyrics?.frame.value)
+              : null
+          "
+          class="lyrics-stage__live-tool"
+          :document-id="lyricsDocument.documentId"
+          :error="state.error || ''"
+          :is-loading="state.isLoading"
+          :is-loading-lyrics="state.isLoadingLyrics"
+          :track-count="state.tracks.length"
+          :has-selected-track="Boolean(selectedTrack)"
+          :selection-hint="t('lyricsEditor.workspace.selectionHint')"
+          :unchecked-hint="t('lyricsEditor.workspace.uncheckedHint')"
+          :lyrics-status="selectedLyrics.status"
+          :has-selected-source="Boolean(selectedSource)"
+          :lines="lyricLines"
+          :active-line-index="activeLineIndex"
+          :positioned-line-index="positionedLineIndex"
+          :font-size-class="lyricsFontSizeClass"
+          :shows-reading-aid="showsReadingAid"
+          :reading-variant="readingVariant"
+          :reading-lines="readingLines"
+          :has-reading-document="
+            editMode === 'reading' &&
+            Boolean(selectedReadingDoc) &&
+            !hasEditingDraft
+          "
+          :editing-reading-line-index="editingReadingLineIndex"
+          :reading-line-draft="readingLineDraft"
+          :is-saving-reading="isSavingReading"
+          :editable-timing-line-ids="editableTimingLineIds"
+          :lyrics-script="lyricsScript"
+          :can-edit-timing="
+            editMode === 'timing' && canEditTiming && !hasEditingDraft
+          "
+          :vocal-roles="lyrics.lyricsTextProcessing?.lineRoles?.value ?? {}"
+          :is-painting-vocals="editMode === 'vocal'"
+          :vocal-section-line-ids="vocalSectionLineIds"
+          :offset-label="offsetLabel"
+          :can-reset-offset="state.offsetSeconds !== 0"
+          :offset-disabled="lineTaps || isExporting"
+          :offset-error="state.offsetSave.error || ''"
+          allow-authoring-actions
+          @seek-line="playFromLine"
+          @edit-timing="startTimingEdit"
+          @start-reading-edit="startEditReadingLine"
+          @update-reading-draft="readingLineDraft = $event"
+          @commit-reading-edit="commitReadingLineEdit"
+          @cancel-reading-edit="cancelReadingLineEdit"
+          @paint-line="paintVocalLine"
+          @adjust-offset="adjustOffset"
+          @reset-offset="resetOffset"
+          @retry-offset="retryOffsetSave"
+        />
       </div>
-      <LyricsLiveTool
-        :experimental-frame="
-          editMode === 'preview'
-            ? (lyrics.localLyricsFrame?.value ??
-              lyrics.experimentalLyrics?.frame.value)
-            : null
-        "
-        class="lyrics-stage__live-tool"
-        :document-id="lyricsDocument.documentId"
-        :error="state.error || ''"
-        :is-loading="state.isLoading"
-        :is-loading-lyrics="state.isLoadingLyrics"
-        :track-count="state.tracks.length"
-        :has-selected-track="Boolean(selectedTrack)"
-        :selection-hint="t('lyricsEditor.workspace.selectionHint')"
-        :unchecked-hint="t('lyricsEditor.workspace.uncheckedHint')"
-        :lyrics-status="selectedLyrics.status"
-        :has-selected-source="Boolean(selectedSource)"
-        :lines="lyricLines"
-        :active-line-index="activeLineIndex"
-        :positioned-line-index="positionedLineIndex"
-        :font-size-class="lyricsFontSizeClass"
-        :shows-reading-aid="showsReadingAid"
-        :reading-variant="readingVariant"
-        :reading-lines="readingLines"
-        :has-reading-document="
-          editMode === 'reading' &&
-          Boolean(selectedReadingDoc) &&
-          !hasEditingDraft
-        "
-        :editing-reading-line-index="editingReadingLineIndex"
-        :reading-line-draft="readingLineDraft"
-        :is-saving-reading="isSavingReading"
-        :editable-timing-line-ids="editableTimingLineIds"
-        :lyrics-script="lyricsScript"
-        :can-edit-timing="
-          editMode === 'timing' && canEditTiming && !hasEditingDraft
-        "
-        :vocal-roles="lyrics.lyricsTextProcessing?.lineRoles?.value ?? {}"
-        :is-painting-vocals="editMode === 'vocal'"
-        :vocal-section-line-ids="vocalSectionLineIds"
-        :offset-label="offsetLabel"
-        :can-reset-offset="state.offsetSeconds !== 0"
-        :offset-disabled="lineTaps || isExporting"
-        :offset-error="state.offsetSave.error || ''"
-        allow-authoring-actions
-        @seek-line="playFromLine"
-        @edit-timing="startTimingEdit"
-        @start-reading-edit="startEditReadingLine"
-        @update-reading-draft="readingLineDraft = $event"
-        @commit-reading-edit="commitReadingLineEdit"
-        @cancel-reading-edit="cancelReadingLineEdit"
-        @paint-line="paintVocalLine"
-        @adjust-offset="adjustOffset"
-        @reset-offset="resetOffset"
-        @retry-offset="retryOffsetSave"
-      />
+      <div
+        v-show="section === 'translation'"
+        :id="`${sectionId}-translation-panel`"
+        class="lyrics-stage__translation"
+        role="tabpanel"
+        :aria-labelledby="`${sectionId}-translation-tab`"
+      >
+        <LyricsTranslationEditor
+          v-if="translationContext && translationRecord"
+          :key="translationContext.session.id"
+          :context="translationContext"
+          :saved="translationRecord"
+          :languages="translations.languages"
+          initial-language="zh-TW"
+          @busy="translationBusy = $event"
+          @saved="translations.applySaved"
+        />
+        <UiNotice
+          v-else-if="translationLoadError"
+          tone="danger"
+          :message="t('lyricsTranslation.loadFailed')"
+          :action-label="t('common.retry')"
+          @action="translations.retry"
+        />
+        <UiHint v-else role="status">
+          {{
+            translationContext || state.isLoadingLyrics
+              ? t('lyricsTranslation.loading')
+              : t('lyricsTranslation.unavailable')
+          }}
+        </UiHint>
+      </div>
     </section>
 
     <LyricsTrackPickerModal
@@ -903,7 +987,7 @@ async function confirmTimingReview() {
   position: relative;
   display: grid;
   container-type: inline-size;
-  grid-template-rows: auto auto minmax(0, auto) minmax(6rem, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -912,6 +996,25 @@ async function confirmTimingReview() {
   background: var(--ui-color-surface);
 }
 
+.lyrics-stage__sections {
+  margin-block-start: var(--ui-space-2);
+}
+.lyrics-stage__original,
+.lyrics-stage__translation {
+  display: grid;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+.lyrics-stage__original {
+  grid-template-rows: auto minmax(0, auto) minmax(6rem, 1fr);
+}
+.lyrics-stage__translation {
+  grid-template-rows: minmax(0, 1fr);
+}
+.lyrics-stage__translation > :is(.ui-hint, .ui-notice) {
+  align-self: start;
+  margin: var(--ui-space-4);
+}
 .lyrics-edit-context {
   display: flex;
   flex-wrap: wrap;
@@ -922,7 +1025,7 @@ async function confirmTimingReview() {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 .lyrics-timing-stack {
-  grid-row: 3;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   min-block-size: 0;
@@ -940,6 +1043,6 @@ async function confirmTimingReview() {
 }
 
 .lyrics-stage__live-tool {
-  grid-row: 4;
+  grid-row: 3;
 }
 </style>

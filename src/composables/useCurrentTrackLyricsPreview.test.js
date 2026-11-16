@@ -278,7 +278,7 @@ describe('current-track lyrics preview', () => {
         { id: expect.any(String), text: 'First line', active: true },
         { id: expect.any(String), text: 'Second line', active: false },
       ],
-      sourceLabel: 'YouTube CC / EN',
+      sourceLabel: '歌詞（EN） · 來源 E',
     });
 
     playerState.currentTime = 2.5;
@@ -327,7 +327,7 @@ describe('current-track lyrics preview', () => {
           active: false,
         },
       ],
-      sourceLabel: 'YouTube CC / EN',
+      sourceLabel: '歌詞（EN） · 來源 E',
     });
     scope.stop();
   });

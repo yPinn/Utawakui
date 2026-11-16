@@ -29,6 +29,34 @@ const identity = {
 };
 
 describe('analyzeLrclibRecord', () => {
+  it.each([
+    [null, { status: 'no-word-timing' }],
+    [
+      "version: '1.0'\nmetadata: {title: Song, artist: Artist}\nlines: [{text: Hello world, start_ms: 1000}]",
+      { status: 'no-word-timing' },
+    ],
+    ["version: '2.0'\n", { status: 'unsupported-format' }],
+    [
+      'not: [valid',
+      { status: 'structural-error', issueCodes: ['invalid-yaml'] },
+    ],
+    [
+      "version: '1.0'\nmetadata: {title: Song, artist: Artist}\nlines: [{text: Hello world, start_ms: 1000, words: [{text: Hello, start_ms: 1000}]}]",
+      { status: 'semantic-error', issueCodes: ['word-text-mismatch'] },
+    ],
+  ])(
+    'retains the reason behind the same line-timed capability',
+    (lyricsfile, evidence) => {
+      const [match] = rankLrclibCandidateMatches(identity, [
+        record({ lyricsfile }),
+      ]);
+      expect(summarizeLrclibCandidate(match)).toMatchObject({
+        capability: { level: 'T1' },
+        timingEvidence: evidence,
+      });
+    },
+  );
+
   it('uses validated Lyricsfile word timing as T2 capability', () => {
     const analysis = analyzeLrclibRecord(
       record({
