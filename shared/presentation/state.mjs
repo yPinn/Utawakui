@@ -207,6 +207,43 @@ function mappedLineSegments(line) {
   return authoredLineSegments(line) ?? modelLineSegments(line);
 }
 
+const FISHEYE_MIN_PHRASE_MS = 650;
+const fisheyeGraphemes = new Intl.Segmenter(undefined, {
+  granularity: 'grapheme',
+});
+const lyricContent = /[\p{L}\p{N}\p{S}]/u;
+
+function fisheyeMappedTiming(line, endMs, authoredOnly) {
+  const segments =
+    authoredOnly || line.segments?.length
+      ? authoredLineSegments(line)
+      : modelLineSegments(line);
+  if (!segments || segments.length < 2) return null;
+  const boundaries = new Set(
+    Array.from(fisheyeGraphemes.segment(line.text), ({ index }) => index),
+  );
+  let offset = 0;
+  let previousStart = -Infinity;
+  for (const segment of segments) {
+    const { text, startMs, endMs: segmentEndMs } = segment;
+    if (
+      !text ||
+      !boundaries.has(offset) ||
+      startMs < line.startMs ||
+      startMs >= endMs ||
+      startMs < previousStart ||
+      (segmentEndMs != null &&
+        (!Number.isFinite(segmentEndMs) ||
+          segmentEndMs < startMs ||
+          segmentEndMs > endMs))
+    )
+      return null;
+    offset += text.length;
+    previousStart = startMs;
+  }
+  return segments;
+}
+
 function fisheyeTimedUnits(snapshot, lines, index, granularity) {
   if (
     snapshot?.lyrics?.synced !== true ||
@@ -217,14 +254,14 @@ function fisheyeTimedUnits(snapshot, lines, index, granularity) {
   if (!Number.isFinite(line?.startMs)) return null;
   const endMs = effectiveLineEnd(snapshot, lines, index);
   if (!Number.isFinite(endMs) || endMs <= line.startMs) return null;
+  const segments = fisheyeMappedTiming(line, endMs, granularity === 'segment');
+  if (!segments) return null;
   if (granularity === 'phrase') {
+    const punctuation = fisheyePunctuationPhrases(line, endMs, segments);
+    if (punctuation) return punctuation;
     const plan = planLyricsPhrases({ ...line, endMs });
-    return plan.status === 'ready'
-      ? plan.phrases
-      : fisheyePunctuationPhrases(line, endMs);
+    return plan.status === 'ready' ? plan.phrases : null;
   }
-  const segments = authoredLineSegments(line);
-  if (!segments || segments.length < 2) return null;
   const units = segments.filter(({ text }) => text.trim());
   if (units.length < 2) return null;
   const timeline = units.map((unit, i) => ({
@@ -246,29 +283,48 @@ function fisheyeTimedUnits(snapshot, lines, index, granularity) {
     : null;
 }
 
-function fisheyePunctuationPhrases(line, endMs) {
-  const segments = mappedLineSegments(line);
-  if (!segments || segments.length < 2) return null;
+function fisheyePunctuationPhrases(line, endMs, segments) {
   const analysis = analyzeLyricsText(line.text);
   if (analysis.malformedPairs) return null;
   const phrases = [];
   let offset = 0;
   let phraseOffset = 0;
-  let startMs = line.startMs;
-  for (const { text, startMs: boundary } of segments) {
-    if (boundary < line.startMs || boundary >= endMs) return null;
-    const before = line.text.slice(phraseOffset, offset).trimEnd();
+  let previousEnd = -Infinity;
+  let startMs = segments.find(({ text }) => text.trim())?.startMs;
+  for (const { text, startMs: boundary, endMs: segmentEnd } of segments) {
+    const before = line.text.slice(phraseOffset, offset);
+    const after = line.text.slice(offset);
+    const trimmed = before.trimEnd();
+    const ending = trimmed.replace(/[)）\]】}」』”’"》〉]+$/u, '');
+    const punctuation =
+      /[，、。！？!?;；,….．]$/u.test(ending) &&
+      !(/\p{N}[,.，．]$/u.test(ending) && /^\p{N}/u.test(after)) &&
+      (!ending.endsWith('.') ||
+        /^\s/u.test(after) ||
+        trimmed.length < before.length ||
+        trimmed !== ending ||
+        !/[\p{Script=Latin}\p{N}]\.$/u.test(ending)) &&
+      !/(?:\b[A-Z]|\b(?:Mr|Mrs|Ms|Dr|St|vs|etc)|\b[A-Za-z]\.[A-Za-z])\.$/u.test(
+        ending,
+      );
+    const newline = /[\r\n\u2028\u2029]/u.test(
+      before.slice(trimmed.length) + (after.match(/^\s*/u)?.[0] ?? ''),
+    );
     if (
-      /[，、。！？!?;；,]$/u.test(before) &&
-      boundary - startMs >= 650 &&
-      endMs - boundary >= 650 &&
+      (punctuation || newline) &&
+      lyricContent.test(trimmed) &&
+      lyricContent.test(text) &&
+      boundary >= previousEnd &&
+      boundary - startMs >= FISHEYE_MIN_PHRASE_MS &&
+      endMs - boundary >= FISHEYE_MIN_PHRASE_MS &&
       !isProtectedLyricsBreak(analysis, offset) &&
       isSafeLyricsBreak(line.text, offset)
     ) {
-      phrases.push({ text: before, startMs, endMs: boundary });
+      phrases.push({ text: trimmed, startMs, endMs: boundary });
       phraseOffset = offset;
       startMs = boundary;
     }
+    previousEnd = Math.max(previousEnd, segmentEnd ?? -Infinity);
     offset += text.length;
   }
   if (!phrases.length) return null;

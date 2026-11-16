@@ -1,3 +1,9 @@
+import {
+  analyzeLyricsText,
+  isProtectedLyricsBreak,
+  isSafeLyricsBreak,
+} from './lyricsTextProcessing.mjs';
+
 export const FISHEYE_FPS = 24;
 export const FISHEYE_FRAME_MS = 1000 / FISHEYE_FPS;
 
@@ -12,6 +18,10 @@ export function resolveFisheyeExit(exit = 'auto', variant) {
 
 const MAX_COLUMN_UNITS = 10;
 const segments = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+const wordGlyph = /^[\p{Script=Latin}\p{N}]\p{M}*$/u;
+const numberGlyph = /^\p{N}$/u;
+const wordJoiner = /^['’.-]$/u;
+const numberJoiner = /^[,，．:：]$/u;
 export const FISHEYE_ARC_ENTRANCE = [
   { turn: -0.7, face: 0.22 },
   { turn: -0.34, face: 0.59, trail: 0.03 },
@@ -38,24 +48,74 @@ const EMPTY_FRAMES = 2;
 const ENTRY_FRAMES = { arc: 3, scale: 6, swirl: 4, smoke: 14, cut: 0 };
 const EXIT_FRAMES = { arc: 3, scale: 5, swirl: 4, cut: 0 };
 export function fisheyeLyricsColumns(text) {
+  const source = String(text ?? '');
+  const glyphs = [...segments.segment(source)];
   const units = [];
-  const chunks = String(text ?? '').matchAll(
-    /[\p{Script=Latin}\p{N}][\p{Script=Latin}\p{N}\p{M}'’.-]*|[^\p{Script=Latin}\p{N}\s]+/gu,
-  );
-  for (const [chunk] of chunks) {
-    if (/^[\p{Script=Latin}\p{N}]/u.test(chunk)) units.push(chunk);
-    else {
-      for (const { segment } of segments.segment(chunk)) {
-        units.push(segment);
-        if (units.length > 2 * MAX_COLUMN_UNITS) break;
+  const isWord = (glyph) =>
+    glyph !== undefined && wordGlyph.test(glyph) && !glyph.endsWith('\u20e3');
+  for (let i = 0; i < glyphs.length; i++) {
+    const { segment, index } = glyphs[i];
+    if (/^\s+$/u.test(segment)) continue;
+    let value = segment;
+    if (isWord(segment)) {
+      while (i + 1 < glyphs.length) {
+        const next = glyphs[i + 1].segment;
+        const after = glyphs[i + 2]?.segment;
+        if (isWord(next)) {
+          value += next;
+          i++;
+        } else if (
+          (wordJoiner.test(next) && isWord(after)) ||
+          (numberJoiner.test(next) &&
+            numberGlyph.test(glyphs[i].segment) &&
+            numberGlyph.test(after ?? ''))
+        ) {
+          value += next + after;
+          i += 2;
+        } else break;
       }
     }
+    units.push({ value, index });
     if (units.length > 2 * MAX_COLUMN_UNITS) break;
   }
   const capacity = 2 * MAX_COLUMN_UNITS;
-  if (units.length > capacity) units.splice(capacity - 1, 2, '…');
-  const split = units.length <= 3 ? units.length : Math.ceil(units.length / 2);
-  return { right: units.slice(0, split), left: units.slice(split) };
+  if (units.length <= 3) {
+    return { right: units.map(({ value }) => value), left: [] };
+  }
+  const analysis = analyzeLyricsText(source);
+  const isSafe = (index) => isSafeLyricsBreak(source, units[index].index);
+  const outsidePair = (index) =>
+    !isProtectedLyricsBreak(analysis, units[index].index);
+  if (units.length > capacity) {
+    const last = isSafe(capacity - 1) ? capacity - 1 : capacity - 2;
+    units.splice(last, units.length, {
+      value: '…',
+      index: units[last].index,
+    });
+  }
+  const middle = Math.ceil(units.length / 2);
+  const breaks = [];
+  for (
+    let split = Math.max(1, units.length - MAX_COLUMN_UNITS);
+    split <= Math.min(MAX_COLUMN_UNITS, units.length - 1);
+    split++
+  ) {
+    if (isSafe(split)) breaks.push(split);
+  }
+  const nearest = (values) =>
+    values.reduce((best, value) =>
+      Math.abs(value - middle) <= Math.abs(best - middle) ? value : best,
+    );
+  const outsidePairs = breaks.filter(outsidePair);
+  const split = outsidePairs.length
+    ? nearest(outsidePairs)
+    : breaks.length
+      ? nearest(breaks)
+      : middle;
+  return {
+    right: units.slice(0, split).map(({ value }) => value),
+    left: units.slice(split).map(({ value }) => value),
+  };
 }
 
 export function fisheyeLyricsPose({
