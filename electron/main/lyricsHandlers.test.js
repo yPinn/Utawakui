@@ -18,6 +18,7 @@ import { saveKugouRecord } from '../lib/kugou/storage.js';
 import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
 import documentHandlersModule from './lyrics/documentHandlers.js';
 import readingHandlersModule from './lyrics/readingHandlers.js';
+import { normalizeLyricsDocument } from '../../src/utils/lyricsDocument.js';
 
 const { normalizeLrclibSearchOptions, registerLyricsAcquisitionHandlers } =
   acquisitionHandlersModule;
@@ -403,6 +404,94 @@ describe('lyrics timing IPC', () => {
       code: 'LYRICS_SOURCE_STALE',
     });
   });
+  it('loads and saves translations only for the current source document', async () => {
+    const trusted = {
+      sender: mainWindow.webContents,
+      senderFrame: mainWindow.webContents.mainFrame,
+    };
+    const opened = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    // Same identity Main derives before touching translations.
+    const { documentId, lines } = normalizeLyricsDocument({
+      ...opened,
+      sourceFingerprint: opened.timing.sourceFingerprint,
+      normalizerProfileId: opened.timing.normalizerProfileId,
+    });
+    const get = ipcMain.handlers.get('lyrics:get-translations');
+    const save = ipcMain.handlers.get('lyrics:save-translations');
+
+    expect(
+      await get(
+        trusted,
+        'track-a',
+        'main.lrc',
+        opened.sourceSession,
+        documentId,
+      ),
+    ).toEqual({ revision: null, rows: { 'zh-TW': [], en: [] } });
+
+    const rows = {
+      'zh-TW': [{ lineId: lines[0].lineId, original: 'Hello', text: '你好' }],
+      en: [],
+    };
+    const saved = await save(
+      trusted,
+      'track-a',
+      'main.lrc',
+      opened.sourceSession,
+      documentId,
+      null,
+      rows,
+    );
+    expect(saved.rows).toEqual(rows);
+    expect(
+      await get(
+        trusted,
+        'track-a',
+        'main.lrc',
+        opened.sourceSession,
+        documentId,
+      ),
+    ).toEqual({ revision: saved.revision, rows });
+
+    await expect(
+      get(trusted, 'track-a', 'main.lrc', opened.sourceSession, 'other-doc'),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_STALE' });
+  });
+
+  it('rejects linked-reference copies with malformed track ids', async () => {
+    const copy = ipcMain.handlers.get('lyrics:copy-linked-reference');
+    await expect(
+      copy(null, '../escape', 'track-a', 'main.lrc'),
+    ).rejects.toMatchObject({ code: 'LYRICS_SOURCE_INVALID' });
+  });
+
+  it('resolves the library from config when no library context is supplied', async () => {
+    const plain = createIpcMain(() => ({
+      sender: mainWindow.webContents,
+      senderFrame: mainWindow.webContents.mainFrame,
+    }));
+    registerLyricsDocumentHandlers({
+      ipcMain: plain,
+      dialog,
+      getConfig: () => ({}),
+      resolveDownloadDir: () => dir,
+      getMainWindow: () => mainWindow,
+      notifyLibraryUpdated,
+      recordDiagnostic,
+    });
+
+    const opened = await plain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    expect(opened.text).toBe('[00:01.00]Hello');
+  });
+
   it('rejects forged frames and source sessions without exposing private paths', async () => {
     const load = ipcMain.handlers.get('lyrics:get-track');
     await expect(
