@@ -879,3 +879,59 @@ describe('snapshot-v2 compatibility assembly', () => {
     });
   });
 });
+
+describe('lyric line timing rejections', () => {
+  it.each([
+    ['a non-object line', (lines) => (lines[0] = null), /expected an object/],
+    [
+      'non-array vocal parts',
+      (lines) => (lines[0].vocalParts = 'male'),
+      /vocalParts: expected bounded vocal parts/,
+    ],
+    [
+      'an end without a start',
+      (lines) => {
+        lines[0].startMs = null;
+        lines[0].segments = [];
+      },
+      /cannot end without a start/,
+    ],
+    [
+      'an end before the start',
+      (lines) => (lines[0].endMs = 500),
+      /precedes startMs/,
+    ],
+    [
+      'non-array segments',
+      (lines) => (lines[0].segments = 'segment'),
+      /segments: expected a bounded array/,
+    ],
+    [
+      'segments under an untimed line',
+      (lines) => {
+        lines[0].startMs = null;
+        lines[0].endMs = null;
+      },
+      /timed parent required/,
+    ],
+    [
+      'duplicate segment ids',
+      (lines) => (lines[0].segments[1].segmentId = 'segment-1'),
+      /segmentId: duplicate id/,
+    ],
+    [
+      'a segment past the line end',
+      (lines) => (lines[0].segments[1].endMs = 4000),
+      /outside parent interval/,
+    ],
+    [
+      'overlapping segments',
+      (lines) => (lines[0].segments[1].startMs = 1500),
+      /monotonic and non-overlapping/,
+    ],
+  ])('rejects %s', (_name, mutate, message) => {
+    const value = lyricsEnvelope();
+    mutate(value.payload.document.lines);
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow(message);
+  });
+});

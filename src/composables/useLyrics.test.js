@@ -370,7 +370,9 @@ describe('useLyrics', () => {
     listTracksMock.mockResolvedValue([trackA, cover]);
     const lyrics = await loadLyrics();
     await vi.waitFor(() => expect(lyrics.lyricLines.value[0]?.start).toBe(2));
+    expect(lyrics.state.linkedReferenceHidden).toBe(false);
     lyrics.toggleLinkedReference();
+    expect(lyrics.state.linkedReferenceHidden).toBe(true);
     expect(lyrics.lyricLines.value[0].start).toBeNaN();
     expect(lyrics.selectedSource.value.filename).toBe(legacy.filename);
     lyrics.toggleLinkedReference();
@@ -2338,5 +2340,51 @@ describe('useLyrics', () => {
     await flushPromises();
 
     expect(lyrics.state.error).toBe(null);
+  });
+});
+
+describe('applied acoustic estimate', () => {
+  it('paints the estimated current line against the player transport', async () => {
+    const lyrics = await loadLyrics();
+    await vi.waitFor(() =>
+      expect(lyrics.lyricsDocument.value?.lines.length).toBe(2),
+    );
+    const document = lyrics.lyricsDocument.value;
+    window.Utawakui.getExperimentalLyricsEstimate = vi.fn(async () => ({
+      status: 'ready',
+      sourceRevision: 'r1',
+      preview: {
+        estimateId: 'est',
+        documentId: document.documentId,
+        sourceFilename: document.source?.filename,
+        sourceFingerprint: document.source?.sha256,
+        normalizerProfileId: document.normalizerProfileId,
+        offsetUsedMs: 100,
+        lines: document.lines.map((line, index) => ({
+          lineId: line.lineId,
+          text: line.text,
+          startMs: line.startMs,
+          endMs: line.endMs,
+          status: index === 1 ? 'ready' : 'unsupported',
+          reason: index === 1 ? null : 'no-evidence',
+          chunks:
+            index === 1
+              ? [
+                  { chunkId: 'm', from: 0, to: 3, startMs: 40000 },
+                  { chunkId: 'n', from: 3, to: 6, startMs: 45000 },
+                ]
+              : [],
+        })),
+      },
+    }));
+
+    // An offset change re-reads the estimate for the settled document.
+    await lyrics.adjustOffset(0.1);
+    await flushPromises();
+    lyrics.experimentalLyrics.setApplied(true);
+    expect(lyrics.experimentalLyrics.applied.value).toBe(true);
+    await vi.waitFor(() =>
+      expect(lyrics.experimentalLyrics.frame.value?.text).toBe('Middle'),
+    );
   });
 });

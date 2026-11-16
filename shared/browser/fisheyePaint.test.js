@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { warpFisheyeInk } from './fisheyePaint.mjs';
+import {
+  FISHEYE_RIDGE,
+  columnGeometry,
+  ellipse,
+  fisheyeCloseColumnGeometry,
+  warpFisheyeInk,
+} from './fisheyePaint.mjs';
 
 function image(width, height, bytes) {
   return {
@@ -59,5 +65,43 @@ describe('Fisheye Canvas swirl', () => {
     warpFisheyeInk(source, left, pose, -1);
     expect(pixel(right, 1, 2)).toEqual([11, 193, 35, 8]);
     expect(pixel(left, 1, 2)).toEqual([243, 33, 11, 177]);
+  });
+});
+
+describe('Fisheye lyric geometry', () => {
+  it('places standard columns on fitted curves around the lens', () => {
+    const left = columnGeometry(-1, 270);
+    expect(left.x).toBeCloseTo(194.859);
+    expect(left.tangent).toBeCloseTo(-0.00268);
+
+    const right = columnGeometry(1, 370);
+    expect(right.x).toBeCloseTo(743.926);
+    expect(right.tangent).toBeCloseTo(-0.36428);
+  });
+
+  it('keeps close-up columns on the ridge circle and clamps beyond it', () => {
+    const level = fisheyeCloseColumnGeometry(1, FISHEYE_RIDGE.y);
+    expect(level.x).toBeCloseTo(FISHEYE_RIDGE.x + 352);
+    expect(level.tangent).toBeCloseTo(0);
+
+    const mirrored = fisheyeCloseColumnGeometry(-1, FISHEYE_RIDGE.y);
+    expect(mirrored.x).toBeCloseTo(FISHEYE_RIDGE.x - 352);
+
+    // Far past the circle the half-width floors at one pixel.
+    const clamped = fisheyeCloseColumnGeometry(1, FISHEYE_RIDGE.y + 1000);
+    expect(clamped.x).toBeCloseTo(FISHEYE_RIDGE.x + 1);
+  });
+
+  it('starts a fresh full ellipse path', () => {
+    const calls = [];
+    const ctx = {
+      beginPath: () => calls.push(['beginPath']),
+      ellipse: (...args) => calls.push(['ellipse', ...args]),
+    };
+    ellipse(ctx, 10, 20, 30, 40);
+    expect(calls).toEqual([
+      ['beginPath'],
+      ['ellipse', 10, 20, 30, 40, 0, 0, Math.PI * 2],
+    ]);
   });
 });

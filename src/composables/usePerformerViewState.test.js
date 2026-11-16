@@ -128,6 +128,7 @@ describe('usePerformerViewState', () => {
     snapshotListener(snapshot(4));
     await nextTick();
     expect(state.frame.value.revision).toBe(5);
+    expect(state.snapshot.value.state.revision).toBe(5);
 
     windowStateListener({ open: true, fullScreen: true, alwaysOnTop: true });
     expect(state.windowState).toMatchObject({

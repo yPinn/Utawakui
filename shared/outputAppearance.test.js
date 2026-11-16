@@ -683,3 +683,18 @@ describe('output element appearance', () => {
     ).toEqual(settings);
   });
 });
+
+describe('template-scoped decoration settings', () => {
+  it('drops a template asset field for templates that do not own it', () => {
+    expect(
+      sanitizeOutputAppearanceSetting('fisheyeRim', 'soft', {
+        templateId: 'fisheye-lens',
+      }),
+    ).toBe('soft');
+    expect(
+      sanitizeOutputAppearanceSetting('fisheyeRim', 'soft', {
+        templateId: 'queue-board',
+      }),
+    ).toBeUndefined();
+  });
+});
