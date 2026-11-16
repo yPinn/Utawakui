@@ -57,7 +57,7 @@ defineExpose({ focus });
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
           ref="input"
-          class="ui-text-field"
+          class="ui-field-surface ui-text-field"
           :class="`ui-text-field--${textRole}`"
           :type="type"
           :value="modelValue"
@@ -80,6 +80,7 @@ defineExpose({ focus });
 <style scoped>
 .ui-text-field__control-row {
   min-inline-size: 0;
+  max-inline-size: var(--ui-text-field-control-max-inline-size, none);
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
@@ -95,9 +96,6 @@ defineExpose({ focus });
   min-width: 0;
   min-height: var(--ui-field-height);
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-background);
   color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
@@ -105,11 +103,6 @@ defineExpose({ focus });
   line-height: var(--ui-field-line-height);
   -webkit-user-select: text;
   user-select: text;
-  transition:
-    background-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard),
-    border-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard);
 }
 
 .ui-text-field--title {
@@ -118,26 +111,7 @@ defineExpose({ focus });
   line-height: var(--ui-type-title-line-height);
 }
 
-.ui-text-field:where(:hover:not(:disabled)) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-background-hover);
-}
-
 .ui-text-field::placeholder {
   color: var(--ui-field-placeholder);
-}
-
-.ui-text-field:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.ui-text-field[aria-invalid='true'] {
-  border-color: var(--ui-field-border-invalid);
-}
-
-.ui-text-field:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
 }
 </style>

@@ -112,9 +112,10 @@ describe('UiActionMenu appearance contract', () => {
     expect(menuSource).toMatch(
       /\.ui-action-menu__filter\s*\{[^}]*margin:\s*var\(--ui-floating-list-padding\);[^}]*margin-block-end:\s*0;/s,
     );
-    expect(searchBoxSource).toMatch(
-      /\.ui-search-box__control:focus-within\s*\{[^}]*outline:\s*var\(--ui-focus-width\) solid var\(--ui-color-focus\);[^}]*outline-offset:\s*var\(--ui-focus-offset\);/s,
+    expect(searchBoxSource).toContain(
+      'class="ui-field-surface ui-search-box__control"',
     );
+    expect(menuSource).toContain('data-ui-field-surface="raised"');
     expect(trackMenuSource).not.toContain('<style');
     expect(trackMenuSource).not.toContain('UiSearchBox');
   });

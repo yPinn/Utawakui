@@ -335,6 +335,7 @@ onBeforeUnmount(() => {
       :id="panelId"
       ref="panel"
       class="ui-popover"
+      data-ui-field-surface="raised"
       :data-open="props.open"
       :data-ui-popover-peer-group="props.peerGroup"
       :inert="!props.open"

@@ -438,11 +438,10 @@ watch(
 }
 
 .obs-integration-settings-block__threshold {
+  --ui-text-field-control-max-inline-size: var(--settings-number-inline-size);
+
   inline-size: var(--settings-text-inline-size);
   max-inline-size: 100%;
-}
-.obs-integration-settings-block__threshold :deep(.ui-text-field__control-row) {
-  max-inline-size: var(--settings-number-inline-size);
 }
 
 .obs-integration-settings-block__stored-credential {

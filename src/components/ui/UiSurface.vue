@@ -32,7 +32,12 @@ const modifierClasses = computed(() => [
 </script>
 
 <template>
-  <component :is="tag" class="ui-surface" :class="modifierClasses">
+  <component
+    :is="tag"
+    class="ui-surface"
+    :class="modifierClasses"
+    :data-ui-field-surface="tone"
+  >
     <slot />
   </component>
 </template>

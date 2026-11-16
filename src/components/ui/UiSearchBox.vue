@@ -16,6 +16,7 @@ const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: () => t('ui.searchBox.label') },
   disabled: { type: Boolean, default: false },
+  readonly: { type: Boolean, default: false },
   // Square divided icon cell, so the glyph can share a caller's artwork column.
   iconCell: { type: Boolean, default: false },
 });
@@ -27,7 +28,7 @@ const controlId = computed(() => props.id || `ui-search-${generatedId}`);
 const inputRef = useTemplateRef('input');
 
 function clear() {
-  if (props.disabled) return;
+  if (props.disabled || props.readonly) return;
   emit('update:modelValue', '');
   focus();
 }
@@ -43,9 +44,11 @@ defineExpose({ focus });
   <div class="ui-search-box" :class="attrs.class" :style="attrs.style">
     <label class="ui-search-box__label" :for="controlId">{{ label }}</label>
     <div
-      class="ui-search-box__control"
+      class="ui-field-surface ui-search-box__control"
+      :data-field-disabled="disabled || undefined"
+      :data-field-readonly="readonly || undefined"
       :class="{
-        'ui-search-box__control--clearable': modelValue,
+        'ui-search-box__control--clearable': modelValue && !readonly,
         'ui-search-box__control--icon-cell': iconCell,
       }"
     >
@@ -67,9 +70,10 @@ defineExpose({ focus });
         type="search"
         :placeholder="placeholder"
         :disabled="disabled"
+        :readonly="readonly"
         @input="emit('update:modelValue', $event.target.value)"
       />
-      <UiTooltip v-if="modelValue" :text="t('ui.searchBox.clear')">
+      <UiTooltip v-if="modelValue && !readonly" :text="t('ui.searchBox.clear')">
         <template #trigger="{ triggerProps }">
           <button
             v-bind="triggerProps"
@@ -120,9 +124,6 @@ defineExpose({ focus });
   padding-block: var(--ui-field-padding-block);
   padding-inline-start: var(--ui-field-padding-inline);
   padding-inline-end: var(--ui-field-padding-inline);
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-background);
   color: var(--ui-color-text-muted);
 }
 
@@ -156,7 +157,7 @@ defineExpose({ focus });
   inset-block: var(--ui-search-box-divider-inset-block);
   inset-inline-end: 0;
   width: var(--ui-border-width);
-  background: var(--ui-field-border);
+  background: var(--ui-color-border);
 }
 
 .ui-search-box__input {
@@ -213,16 +214,5 @@ defineExpose({ focus });
 .ui-search-box__clear:focus-visible:not(:disabled) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
-}
-
-.ui-search-box__clear:disabled,
-.ui-search-box__input:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
-}
-
-.ui-search-box__control:focus-within {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 </style>

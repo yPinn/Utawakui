@@ -38,6 +38,7 @@ const resultRows = computed(() =>
     :aria-busy="isLoading || isSaving"
   >
     <UiSearchBox
+      class="bgm-track-picker__search"
       :model-value="searchQuery"
       :label="t('bgm.search')"
       :placeholder="t('bgm.searchPlaceholder')"
@@ -103,8 +104,8 @@ const resultRows = computed(() =>
   overflow: hidden;
 }
 
-.bgm-track-picker :deep(.ui-search-box__control) {
-  --ui-focus-offset: var(--ui-focus-offset-inset);
+.bgm-track-picker__search {
+  --ui-field-focus-offset: var(--ui-focus-offset-inset);
 }
 
 .bgm-track-picker__results-scroll {

@@ -405,7 +405,9 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-notification-motion-offset');
     expect(uniqueNames).toContain('--ui-notification-swipe-dismiss-distance');
     expect(uniqueNames).toContain('--ui-field-background-hover-on-raised');
-    expect(uniqueNames).toContain('--ui-field-background-readonly-on-raised');
+    expect(uniqueNames).toContain(
+      '--ui-field-background-readonly-in-container',
+    );
     expect(uniqueNames).toContain('--ui-field-hex-value-inline-size');
     expect(uniqueNames).not.toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-right-dock-width');

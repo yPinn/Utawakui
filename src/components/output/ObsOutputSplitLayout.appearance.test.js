@@ -63,9 +63,8 @@ describe('ObsOutputSplitLayout focus-safe inspector boundary', () => {
     expect(splitLayoutSource).toMatch(
       /\.obs-output-split-layout__side-header,\s*\.obs-output-split-layout__side-footer\s*\{[\s\S]*?padding-inline:\s*var\(--ui-output-side-content-inset-start\)\s+var\(--ui-output-side-content-inset-end\);/u,
     );
-    expect(selectSource).toMatch(
-      /\.ui-select:focus-visible\s*\{[\s\S]*?outline:\s*var\(--ui-focus-width\) solid var\(--ui-color-focus\);[\s\S]*?outline-offset:\s*var\(--ui-focus-offset\);/u,
-    );
+    expect(selectSource).toContain('class="ui-field-surface ui-select"');
+    expect(splitLayoutSource).not.toContain('--ui-field-focus-offset');
     expect(splitLayoutSource).not.toContain(':deep(.ui-select:focus-visible)');
   });
 });

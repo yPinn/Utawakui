@@ -674,11 +674,15 @@
   --ui-field-background-readonly: var(--ui-color-surface);
   --ui-field-background-on-raised: var(--ui-color-surface);
   --ui-field-background-hover-on-raised: var(--ui-color-surface-hover);
-  --ui-field-background-readonly-on-raised: var(--ui-color-surface-raised);
+  --ui-field-background-readonly-in-container: color-mix(
+    in srgb,
+    var(--ui-color-surface),
+    var(--ui-color-surface-hover) 65%
+  );
   --ui-field-foreground: var(--ui-color-text);
   --ui-field-placeholder: var(--ui-color-text-muted);
-  --ui-field-border: var(--ui-color-border);
-  --ui-field-border-hover: var(--ui-color-border-strong);
+  --ui-field-border: var(--ui-color-control-boundary);
+  --ui-field-border-hover: var(--ui-color-control-boundary);
   --ui-field-border-invalid: var(--ui-color-danger);
   --ui-button-danger-text: var(--ui-color-danger);
   --ui-button-danger-border: var(--ui-color-danger);
@@ -1150,14 +1154,20 @@
   --ui-floating-list-border: var(--ui-color-border);
   --ui-field-background: var(--ui-color-surface-raised);
   --ui-field-background-hover: var(--ui-color-surface-hover);
-  --ui-field-background-readonly: var(--ui-color-surface);
+  --ui-field-background-readonly: var(
+    --ui-field-background-readonly-in-container
+  );
   --ui-field-background-on-raised: var(--ui-color-surface);
   --ui-field-background-hover-on-raised: var(--ui-color-surface-hover);
-  --ui-field-background-readonly-on-raised: var(--ui-color-surface-raised);
+  --ui-field-background-readonly-in-container: color-mix(
+    in srgb,
+    var(--ui-color-surface),
+    var(--ui-color-surface-hover) 65%
+  );
   --ui-field-foreground: var(--ui-color-text);
   --ui-field-placeholder: var(--ui-color-text-muted);
-  --ui-field-border: var(--ui-color-border);
-  --ui-field-border-hover: var(--ui-color-border-strong);
+  --ui-field-border: var(--ui-color-control-boundary);
+  --ui-field-border-hover: var(--ui-color-control-boundary);
   --ui-field-border-invalid: var(--ui-color-danger);
   --ui-button-danger-text: var(--ui-color-danger);
   --ui-button-danger-border: var(--ui-color-danger);

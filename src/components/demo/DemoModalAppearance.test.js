@@ -52,7 +52,7 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
       '--ui-field-background-hover-on-raised: var(--ui-color-surface-hover)',
     );
     expect(tokenSource).toContain(
-      '--ui-field-background-readonly-on-raised: var(--ui-color-surface-raised)',
+      '--ui-field-background-readonly-in-container: color-mix(',
     );
   });
 });

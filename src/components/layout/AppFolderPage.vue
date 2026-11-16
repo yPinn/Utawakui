@@ -55,7 +55,11 @@ watch(
       :aria-label="props.bodyLabel"
       tabindex="0"
     >
-      <div class="app-folder-page__sheet" data-folder-artifact-region="paper">
+      <div
+        class="app-folder-page__sheet"
+        data-folder-artifact-region="paper"
+        data-ui-field-surface="surface"
+      >
         <AppLooseLeafEdge />
 
         <header v-if="$slots.header" class="app-folder-page__header">
@@ -87,6 +91,7 @@ watch(
     <div
       v-else
       class="app-folder-page__sheet app-folder-page__sheet--workspace"
+      data-ui-field-surface="surface"
     >
       <AppLooseLeafEdge v-if="props.surface !== 'canvas'" />
 

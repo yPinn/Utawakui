@@ -25,6 +25,11 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  align: {
+    type: String,
+    default: 'start',
+    validator: (value) => ['start', 'end'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'commit']);
@@ -96,9 +101,12 @@ defineExpose({ focus });
     :label-hidden="labelHidden"
   >
     <template #default="{ describedBy, invalid: controlInvalid }">
-      <div class="ui-color-field">
+      <div
+        class="ui-color-field"
+        :class="{ 'ui-color-field--align-end': align === 'end' }"
+      >
         <input
-          class="ui-color-field__picker"
+          class="ui-field-surface ui-color-field__picker"
           type="color"
           :value="pickerValue"
           :disabled="disabled"
@@ -112,7 +120,7 @@ defineExpose({ focus });
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
           ref="input"
-          class="ui-color-field__input"
+          class="ui-field-surface ui-color-field__input"
           type="text"
           :value="draft"
           :placeholder="placeholder"
@@ -148,18 +156,14 @@ defineExpose({ focus });
   gap: var(--ui-space-2);
 }
 
+.ui-color-field--align-end {
+  margin-inline-start: auto;
+}
+
 .ui-color-field__picker,
 .ui-color-field__input {
   min-width: 0;
   min-height: var(--ui-field-height);
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-background);
-  transition:
-    background-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard),
-    border-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard);
 }
 
 .ui-color-field__picker {
@@ -192,30 +196,7 @@ defineExpose({ focus });
   user-select: text;
 }
 
-.ui-color-field__picker:where(:hover:not(:disabled)),
-.ui-color-field__input:where(:hover:not(:disabled)) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-background-hover);
-}
-
 .ui-color-field__input::placeholder {
   color: var(--ui-field-placeholder);
-}
-
-.ui-color-field__picker:focus-visible,
-.ui-color-field__input:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.ui-color-field__picker[aria-invalid='true'],
-.ui-color-field__input[aria-invalid='true'] {
-  border-color: var(--ui-field-border-invalid);
-}
-
-.ui-color-field__picker:disabled,
-.ui-color-field__input:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
 }
 </style>

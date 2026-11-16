@@ -483,12 +483,11 @@ onMounted(() => {
 }
 
 .output-runtime-settings-block__delay {
+  --ui-text-field-control-max-inline-size: var(--settings-number-inline-size);
+
   flex: 0 1 var(--settings-text-inline-size);
   min-inline-size: min(100%, 16ch);
   max-inline-size: 100%;
-}
-.output-runtime-settings-block__delay :deep(.ui-text-field__control-row) {
-  max-inline-size: var(--settings-number-inline-size);
 }
 
 .output-runtime-settings-block__suggestions {

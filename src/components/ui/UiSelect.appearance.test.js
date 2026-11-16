@@ -18,7 +18,7 @@ describe('UiSelect native popup surface', () => {
   });
 
   it('keeps field hover and native option highlight as separate owners', () => {
-    expect(source).toContain('background: var(--ui-field-background-hover)');
+    expect(source).toContain('class="ui-field-surface ui-select"');
     expect(source).not.toMatch(
       /option:(?:hover|checked)|optgroup:(?:hover|checked)/u,
     );

@@ -152,6 +152,7 @@ onBeforeUnmount(() => {
       v-bind="attrs"
       ref="dialog"
       class="demo-candidate-modal"
+      data-ui-field-surface="raised"
       :class="[
         `demo-candidate-modal--${size}`,
         { 'demo-candidate-modal--with-footer': slots.footer },
@@ -201,9 +202,6 @@ onBeforeUnmount(() => {
 .demo-candidate-modal {
   --demo-candidate-modal-inline-size: var(--ui-modal-inline-size-medium);
   --demo-candidate-modal-max-block-size: var(--ui-modal-max-block-size-medium);
-  --ui-field-background: var(--ui-field-background-on-raised);
-  --ui-field-background-hover: var(--ui-field-background-hover-on-raised);
-  --ui-field-background-readonly: var(--ui-field-background-readonly-on-raised);
 
   position: fixed;
   inset: 0;

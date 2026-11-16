@@ -776,12 +776,9 @@ describe('UiCombobox', () => {
       'utf8',
     );
 
+    expect(source).toContain('class="ui-field-surface ui-combobox__native');
     for (const token of [
       '--ui-field-height',
-      '--ui-field-background',
-      '--ui-field-border',
-      '--ui-color-focus',
-      '--ui-focus-width',
       '--ui-z-popover',
       '--ui-floating-viewport-inset',
       '--ui-floating-row-min-height',

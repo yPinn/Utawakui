@@ -178,17 +178,15 @@ describe('UiColorField', () => {
     const styles = source.match(/<style scoped>([\s\S]*)<\/style>/u)?.[1] ?? '';
 
     expect(source).toContain("import UiField from './UiField.vue'");
+    expect(source).toContain('class="ui-field-surface ui-color-field__picker"');
+    expect(source).toContain('class="ui-field-surface ui-color-field__input"');
     for (const token of [
       '--ui-control-height',
-      '--ui-field-border',
-      '--ui-field-background',
       '--ui-field-foreground',
-      '--ui-field-radius',
       '--ui-field-hex-value-inline-size',
       '--ui-field-font-size',
       '--ui-field-font-weight',
       '--ui-field-line-height',
-      '--ui-color-focus',
     ]) {
       expect(styles).toContain(`var(${token})`);
     }

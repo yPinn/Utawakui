@@ -155,15 +155,7 @@ describe('DemoCandidateModal appearance contract', () => {
       source.match(/\.demo-candidate-modal::backdrop\s*\{[^}]*\}/s)?.[0] ?? '';
 
     expect(modalRule).toContain('background: var(--ui-color-surface-raised)');
-    expect(modalRule).toContain(
-      '--ui-field-background: var(--ui-field-background-on-raised)',
-    );
-    expect(modalRule).toContain(
-      '--ui-field-background-hover: var(--ui-field-background-hover-on-raised)',
-    );
-    expect(modalRule).toContain(
-      '--ui-field-background-readonly: var(--ui-field-background-readonly-on-raised)',
-    );
+    expect(source).toContain('data-ui-field-surface="raised"');
     expect(headerRule).not.toContain('background');
     expect(bodyRule).not.toContain('background');
     expect(footerRule).not.toContain('background');

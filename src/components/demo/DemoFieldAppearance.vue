@@ -39,7 +39,7 @@ const VALUES = [
   ['高度', 'Standard 2.25rem／36 CSS px · Compact 2rem／32 CSS px'],
   ['內距', 'Block 0.25rem／4 CSS px · Inline 0.5rem／8 CSS px'],
   ['圓角', '0.375rem／6 CSS px'],
-  ['邊界', '1 CSS px · Hover 提升為 strong border'],
+  ['邊界', '1 CSS px · Hover 提升為 Control Boundary'],
   ['Focus', '2 CSS px＋2 CSS px offset'],
   ['Disabled', '50% · 原生 disabled'],
   ['Placeholder', 'Dark 5.69:1 · Light 7.37:1 · AA'],

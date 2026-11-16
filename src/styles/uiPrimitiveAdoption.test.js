@@ -38,11 +38,11 @@ describe('shared primitive adoption', () => {
     expect(deepRootOverrides).toEqual([]);
   });
 
-  it('keeps UiTextarea field anatomy owned by the primitive', () => {
+  it('keeps field state tokens and input anatomy owned by the shared primitives', () => {
     const anatomyOverrides = featureSources.flatMap(({ path, source }) =>
       [
         ...source.matchAll(
-          /:deep\(\.(?:ui-field__main|ui-field__control|ui-textarea)\)/gu,
+          /:deep\(\.(?:ui-field__(?:main|control)|ui-(?:textarea|text-field|search-box|select|combobox|color-field)[\w-]*)\b|--ui-field-(?:background|border)[\w-]*\s*:/gu,
         ),
       ].map(
         (match) =>

@@ -24,7 +24,7 @@ defineProps({
   resize: {
     type: String,
     default: 'vertical',
-    validator: (value) => ['vertical', 'none'].includes(value),
+    validator: (value) => ['vertical', 'none', 'content'].includes(value),
   },
   // 'bare' drops the field surface so the text sits on its host material.
   variant: {
@@ -63,11 +63,12 @@ defineExpose({ focus });
         v-bind="nativeControlAttrs(attrs)"
         :id="id"
         ref="textarea"
-        class="ui-textarea"
+        class="ui-field-surface ui-textarea"
         :class="{
           'ui-textarea--bare': variant === 'bare',
           'ui-textarea--fill': fill,
-          'ui-textarea--resize-none': resize === 'none',
+          'ui-textarea--resize-none': resize !== 'vertical',
+          'ui-textarea--resize-content': resize === 'content',
         }"
         :value="modelValue"
         :placeholder="placeholder"
@@ -92,9 +93,6 @@ defineExpose({ focus });
   min-height: calc(var(--ui-field-height) * 2);
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
   resize: vertical;
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-background);
   color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-textarea-font-size);
@@ -102,25 +100,10 @@ defineExpose({ focus });
   line-height: var(--ui-textarea-line-height);
   -webkit-user-select: text;
   user-select: text;
-  transition:
-    background-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard),
-    border-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard);
-}
-
-.ui-textarea:where(:hover:not(:disabled)) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-background-hover);
 }
 
 .ui-textarea::placeholder {
   color: var(--ui-field-placeholder);
-}
-
-.ui-textarea:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .ui-textarea-field--fill,
@@ -135,23 +118,20 @@ defineExpose({ focus });
   resize: none;
 }
 
-.ui-textarea[aria-invalid='true'] {
-  border-color: var(--ui-field-border-invalid);
+.ui-textarea--resize-content {
+  field-sizing: content;
+  min-block-size: var(--ui-field-height);
+  max-block-size: 8lh;
 }
 
-.ui-textarea--bare,
-.ui-textarea--bare:where(:hover:not(:disabled)) {
+.ui-textarea--bare {
+  --_ui-field-surface-background: transparent;
+  --_ui-field-surface-border: transparent;
+
   min-height: 0;
   padding: 0;
   resize: none;
-  border-color: transparent;
-  background: transparent;
   color: inherit;
   font-size: inherit;
-}
-
-.ui-textarea:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
 }
 </style>

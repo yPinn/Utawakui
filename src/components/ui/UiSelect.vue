@@ -69,7 +69,7 @@ defineExpose({ focus });
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
           ref="select"
-          class="ui-select"
+          class="ui-field-surface ui-select"
           :value="modelValue"
           :required="required"
           :disabled="disabled"
@@ -136,19 +136,11 @@ defineExpose({ focus });
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-background);
   color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
   font-weight: var(--ui-field-font-weight);
   line-height: var(--ui-field-line-height);
-  transition:
-    background-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard),
-    border-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard);
 }
 
 .ui-select__indicator {
@@ -164,29 +156,10 @@ defineExpose({ focus });
   opacity: var(--ui-opacity-disabled);
 }
 
-.ui-select:where(:hover:not(:disabled)) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-background-hover);
-}
-
 /* Native popups otherwise reuse the select's transient hover background.
    Keep their resting surface stable; the platform owns option highlighting. */
 .ui-select option,
 .ui-select optgroup {
   background-color: var(--ui-floating-list-background);
-}
-
-.ui-select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.ui-select[aria-invalid='true'] {
-  border-color: var(--ui-field-border-invalid);
-}
-
-.ui-select:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
 }
 </style>

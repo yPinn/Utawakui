@@ -6,8 +6,12 @@ const headingId = `settings-section-${useId()}`;
 </script>
 
 <template>
-  <section class="settings-section" :aria-labelledby="headingId">
-    <header class="settings-section__header">
+  <section
+    class="settings-section"
+    data-ui-field-surface="raised"
+    :aria-labelledby="headingId"
+  >
+    <header class="settings-section__header" data-ui-field-surface="canvas">
       <h2 :id="headingId" class="settings-section__title">{{ title }}</h2>
       <div v-if="$slots.actions" class="settings-section__actions">
         <slot name="actions" />

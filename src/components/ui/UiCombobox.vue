@@ -459,7 +459,7 @@ onBeforeUnmount(() => {
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
           ref="control"
-          class="ui-combobox__native ui-combobox__select-trigger"
+          class="ui-field-surface ui-combobox__native ui-combobox__select-trigger"
           type="button"
           role="combobox"
           aria-haspopup="listbox"
@@ -488,7 +488,7 @@ onBeforeUnmount(() => {
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
           ref="control"
-          class="ui-combobox__native"
+          class="ui-field-surface ui-combobox__native"
           type="text"
           role="combobox"
           autocomplete="off"
@@ -609,19 +609,11 @@ onBeforeUnmount(() => {
   padding-inline-end: calc(
     var(--ui-field-padding-inline) + var(--ui-space-4) + var(--ui-space-2)
   );
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-background);
   color: var(--ui-field-foreground);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-field-font-size);
   font-weight: var(--ui-field-font-weight);
   line-height: var(--ui-field-line-height);
-  transition:
-    background-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard),
-    border-color var(--ui-motion-duration-feedback)
-      var(--ui-motion-easing-standard);
 }
 
 .ui-combobox__select-trigger {
@@ -648,25 +640,6 @@ onBeforeUnmount(() => {
   color: var(--ui-field-placeholder);
 }
 
-.ui-combobox__native:where(:hover:not(:disabled)) {
-  border-color: var(--ui-field-border-hover);
-  background: var(--ui-field-background-hover);
-}
-
-.ui-combobox__native:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.ui-combobox__native[aria-invalid='true'] {
-  border-color: var(--ui-field-border-invalid);
-}
-
-.ui-combobox__native:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
-}
-
 .ui-combobox__indicator {
   position: absolute;
   top: 50%;
@@ -674,6 +647,10 @@ onBeforeUnmount(() => {
   color: var(--ui-field-foreground);
   pointer-events: none;
   transform: translateY(-50%);
+}
+
+.ui-combobox__native:disabled + .ui-combobox__indicator {
+  opacity: var(--ui-opacity-disabled);
 }
 
 .ui-combobox__listbox {

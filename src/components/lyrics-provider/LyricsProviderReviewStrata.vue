@@ -40,7 +40,7 @@ const stratumOptions = computed(() =>
 </script>
 
 <template>
-  <div class="review-strata">
+  <div class="review-strata" data-ui-field-surface="canvas">
     <UiSegmentedControl
       class="review-strata__strata"
       :items="stratumOptions"

@@ -29,6 +29,7 @@ describe('UiSearchBox clear action state tokens', () => {
     expect(source).toContain(
       'outline: var(--ui-focus-width) solid var(--ui-color-focus);',
     );
-    expect(source).toContain('opacity: var(--ui-opacity-disabled);');
+    expect(source).toContain(':data-field-disabled="disabled || undefined"');
+    expect(source).not.toContain('opacity: var(--ui-opacity-disabled);');
   });
 });

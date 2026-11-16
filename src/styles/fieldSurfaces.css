@@ -1,0 +1,78 @@
+/* The nearest painted host owns the field's surface mapping. */
+:where([data-ui-field-surface='surface'], [data-ui-field-surface='canvas']) {
+  --ui-field-background: var(--ui-color-surface-raised);
+  --ui-field-background-hover: var(--ui-color-surface-hover);
+  --ui-field-background-readonly: var(
+    --ui-field-background-readonly-in-container
+  );
+}
+
+/* Light Canvas and Surface Hover share a palette value. Blend the hover
+   toward Raised so even there the field and its host stay distinct. */
+:where([data-ui-field-surface='canvas']) {
+  --ui-field-background-hover: color-mix(
+    in srgb,
+    var(--ui-color-surface-hover),
+    var(--ui-color-surface-raised) 45%
+  );
+}
+
+:where([data-ui-field-surface='raised']) {
+  --ui-field-background: var(--ui-field-background-on-raised);
+  --ui-field-background-hover: var(--ui-field-background-hover-on-raised);
+  --ui-field-background-readonly: var(
+    --ui-field-background-readonly-in-container
+  );
+}
+
+/* Native controls and composite control frames opt into the same states. */
+.ui-field-surface {
+  border: var(--ui-border-width) solid
+    var(--_ui-field-surface-border, var(--ui-field-border));
+  border-radius: var(--ui-field-radius);
+  background: var(--_ui-field-surface-background, var(--ui-field-background));
+  transition:
+    background-color var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard),
+    border-color var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard);
+}
+
+.ui-field-surface:where(
+  :hover:not(
+    :disabled,
+    [data-field-disabled],
+    [readonly],
+    [data-field-readonly]
+  )
+) {
+  border-color: var(--_ui-field-surface-border, var(--ui-field-border-hover));
+  background: var(
+    --_ui-field-surface-background,
+    var(--ui-field-background-hover)
+  );
+}
+
+.ui-field-surface:where([readonly], [data-field-readonly]) {
+  background: var(
+    --_ui-field-surface-background,
+    var(--ui-field-background-readonly)
+  );
+}
+
+.ui-field-surface:where(:focus-visible, :has(> input:focus-visible)) {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-field-focus-offset, var(--ui-focus-offset));
+}
+
+.ui-field-surface:is(
+  [aria-invalid='true'],
+  :has(> input[aria-invalid='true'])
+) {
+  border-color: var(--ui-field-border-invalid);
+}
+
+.ui-field-surface:where(:disabled, [data-field-disabled]) {
+  cursor: not-allowed;
+  opacity: var(--ui-opacity-disabled);
+}

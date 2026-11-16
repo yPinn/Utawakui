@@ -4,63 +4,39 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import DemoFieldReadonlyAppearance from './DemoFieldReadonlyAppearance.vue';
 import DemoInputs from './DemoInputs.vue';
-const componentSource = readFileSync(
+
+const source = readFileSync(
   new URL('./DemoFieldReadonlyAppearance.vue', import.meta.url),
   'utf8',
 );
-const tokenSource = readFileSync(
-  new URL('../../styles/tokens.css', import.meta.url),
-  'utf8',
-);
-describe('DemoFieldReadonlyAppearance', () => {
-  it('defines one Candidate readonly surface alias and keeps text fully readable and selectable', async () => {
+
+describe('F8 field surface comparison', () => {
+  it('uses the same interactive sample in every host and keeps the block mapping local', async () => {
     const html = await renderToString(
       createSSRApp(DemoFieldReadonlyAppearance),
     );
-    expect(tokenSource).toContain(
-      '--ui-field-background-readonly: var(--ui-color-surface);',
+    expect(html.match(/class="ui-field-surface ui-textarea"/gu)).toHaveLength(
+      2,
     );
-    expect(componentSource).toMatch(
-      /\.demo-field-readonly-layer--candidate[\s\S]*?:deep\(\.ui-text-field:read-only\)[\s\S]*?:deep\(\.ui-textarea:read-only\)[\s\S]*?background: var\(--ui-field-background-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
-    );
-    expect(componentSource).toMatch(
-      /\.demo-field-readonly-layer--candidate[\s\S]*?:read-only:hover[\s\S]*?background: var\(--ui-field-background-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
-    );
-    expect(componentSource).not.toMatch(/:read-only[^{}]*\{[^}]*opacity:/u);
-    expect(componentSource).not.toMatch(
-      /:read-only[^{}]*\{[^}]*user-select:\s*none/u,
-    );
-    expect(html).toContain('完整文字對比');
-    expect(html).toContain('可選取／複製');
-    expect(html).toContain('無 Hover 提升');
-    expect(html).toContain('Focus-visible 保留');
+    expect(html.match(/\sreadonly(?:\s|>)/gu)).toHaveLength(2);
+    expect(html.match(/data-field-disabled="true"/gu)).toHaveLength(2);
+    expect(html).toContain('data-ui-field-surface="raised"');
+    expect(source).toContain('data-ui-field-surface="surface"');
+    expect(source).toContain('<UiModal');
+    expect(source).toContain('<UiPopover');
+    expect(source).not.toMatch(/:deep|--ui-field-background/u);
   });
-  it('keeps the comparison fluid and reflows at a narrow catalogue container', () => {
-    expect(componentSource).toContain('container-type: inline-size;');
-    expect(componentSource).toContain(
-      'repeat(3, minmax(min(12rem, 100%), 1fr))',
-    );
-    expect(componentSource).toContain('@container (max-width: 42rem)');
-    expect(componentSource).toMatch(
-      /@container \(max-width: 42rem\)[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/u,
-    );
-  });
-  it('mounts immediately after the shared Field specimen without adding a production section', async () => {
+
+  it('mounts after the shared Field specimen', async () => {
     const html = await renderToString(
       createSSRApp(DemoInputs, {
-        sections: [
-          {
-            key: 'field',
-            title: '欄位共用外觀',
-            components: ['UiField'],
-          },
-        ],
+        sections: [{ key: 'field', title: 'Field' }],
       }),
     );
     const fieldIndex = html.indexOf('data-field-source="production"');
-    const readonlyIndex = html.indexOf('data-field-readonly-review');
     expect(fieldIndex).toBeGreaterThanOrEqual(0);
-    expect(readonlyIndex).toBeGreaterThan(fieldIndex);
-    expect(html).not.toContain('demo-field-readonly-section');
+    expect(html.indexOf('data-field-readonly-review')).toBeGreaterThan(
+      fieldIndex,
+    );
   });
 });

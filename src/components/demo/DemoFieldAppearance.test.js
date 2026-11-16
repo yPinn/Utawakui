@@ -12,7 +12,7 @@ const componentSource = readFileSync(
   'utf8',
 );
 describe('DemoFieldAppearance', () => {
-  it('anchors candidate values to Token v2 and states to the shared field contract', async () => {
+  it('anchors specimen values to Token v2 and states to the shared field contract', async () => {
     const html = await renderToString(createSSRApp(DemoFieldAppearance));
     for (const declaration of [
       '--ui-field-height: var(--ui-control-height);',
@@ -22,8 +22,8 @@ describe('DemoFieldAppearance', () => {
       '--ui-field-radius: var(--ui-radius-md);',
       '--ui-field-background: var(--ui-color-surface-raised);',
       '--ui-field-background-hover: var(--ui-color-surface-hover);',
-      '--ui-field-border: var(--ui-color-border);',
-      '--ui-field-border-hover: var(--ui-color-border-strong);',
+      '--ui-field-border: var(--ui-color-control-boundary);',
+      '--ui-field-border-hover: var(--ui-color-control-boundary);',
       '--ui-field-border-invalid: var(--ui-color-danger);',
       '--ui-opacity-disabled: 0.5;',
       '--ui-focus-width: 2px;',

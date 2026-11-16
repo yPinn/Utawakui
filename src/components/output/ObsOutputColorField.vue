@@ -32,6 +32,7 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
         :label="label"
         :model-value="modelValue"
         label-hidden
+        align="end"
         @update:model-value="emit('update:modelValue', $event)"
         @commit="emit('commit', $event)"
       />
@@ -58,10 +59,6 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
 .obs-output-color-field__controls :deep(.obs-appearance-control-row__label) {
   position: relative;
   overflow-wrap: anywhere;
-}
-
-.obs-output-color-field__controls :deep(.ui-color-field) {
-  margin-inline-start: auto;
 }
 
 .obs-output-color-field__controls :deep(.obs-appearance-control-row__modified) {

@@ -134,7 +134,12 @@ function submitApproval() {
 </script>
 
 <template>
-  <form ref="review-form" class="review-form" @submit.prevent="submitApproval">
+  <form
+    ref="review-form"
+    class="review-form"
+    data-ui-field-surface="surface"
+    @submit.prevent="submitApproval"
+  >
     <header class="review-form__header">
       <div>
         <span class="review-form__eyebrow">審核中</span>
@@ -409,7 +414,7 @@ function submitApproval() {
       </dl>
     </UiDisclosure>
 
-    <footer class="review-form__actions">
+    <footer class="review-form__actions" data-ui-field-surface="canvas">
       <p
         v-if="approvalBlocker"
         id="lyrics-review-approval-blocker"

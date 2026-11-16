@@ -74,13 +74,7 @@ describe('UiModal appearance contract', () => {
 
   it('uses the reviewed raised shell, nested field aliases, and semantic zone spacing', () => {
     expect(modalSource).toContain(
-      '--ui-field-background: var(--ui-field-background-on-raised);',
-    );
-    expect(modalSource).toContain(
-      '--ui-field-background-hover: var(--ui-field-background-hover-on-raised);',
-    );
-    expect(modalSource).toContain(
-      '--ui-field-background-readonly: var(--ui-field-background-readonly-on-raised);',
+      "{ dialog: 'raised', document: 'surface' }[presentation]",
     );
     expect(modalSource).toContain(
       'background: var(--ui-color-surface-raised);',

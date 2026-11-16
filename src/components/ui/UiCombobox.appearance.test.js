@@ -29,9 +29,7 @@ describe('UiCombobox appearance contract', () => {
     );
   });
   it('keeps the input in the field family and the listbox in the floating family', () => {
-    expect(source).toMatch(
-      /\.ui-combobox__native\s*\{[^}]*border-radius:\s*var\(--ui-field-radius\);/s,
-    );
+    expect(source).toContain('class="ui-field-surface ui-combobox__native');
     expect(source).toMatch(
       /\.ui-combobox__listbox\s*\{[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-floating-list-border\);[^}]*border-radius:\s*var\(--ui-floating-list-radius\);[^}]*background:\s*var\(--ui-floating-list-background\);[^}]*box-shadow:\s*var\(--ui-floating-list-shadow\);/s,
     );

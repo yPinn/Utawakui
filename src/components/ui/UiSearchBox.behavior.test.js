@@ -88,6 +88,26 @@ describe('UiSearchBox native input and clear recovery', () => {
     app.unmount();
   });
 
+  it('uses native readonly and removes the clear action until editing resumes', async () => {
+    const props = reactive({ modelValue: 'Recorded query', readonly: true });
+    const { app, root } = mount(UiSearchBox, props);
+    const input = findAll(root, (node) => node.type === 'input')[0];
+    const frame = findAll(root, (node) =>
+      node.props?.class?.includes('ui-search-box__control'),
+    )[0];
+    expect(input.props.readonly).toBe(true);
+    expect(input.props.disabled).toBe(false);
+    expect(frame.props['data-field-readonly']).toBe(true);
+    expect(findAll(root, (node) => node.type === 'button')).toHaveLength(0);
+
+    props.readonly = false;
+    await nextTick();
+    expect(input.props.value).toBe('Recorded query');
+    expect(frame.props['data-field-readonly']).toBeUndefined();
+    expect(findAll(root, (node) => node.type === 'button')).toHaveLength(1);
+    app.unmount();
+  });
+
   it('blocks clearing while disabled and recovers after enabling', async () => {
     const update = vi.fn();
     const props = reactive({

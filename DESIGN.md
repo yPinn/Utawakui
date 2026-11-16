@@ -126,7 +126,7 @@ remain independent from folder and artwork color.
 ```text
 Dark Canvas   #191a1e
 Dark Accent   #8296d0
-Light Canvas  #e8e4dd
+Light Canvas  #dad7d0
 Light Accent  #3d578e
 Paper         #fbfaf7
 ```
@@ -145,71 +145,67 @@ launches; Light is only the fallback when no valid saved／bridge value exists.
 
 ### Light Theme
 
-Implemented in `src/styles/tokens.css` (`:root[data-ui-theme='light']`):
+Light surface roots use the document theme override in `src/styles/tokens.css`.
 
 ```css
---ui-color-canvas: #f7f1e7;
---ui-color-surface: #fffdfa;
---ui-color-surface-raised: #ffffff;
---ui-color-surface-hover: #edf2ef;
---ui-color-surface-active: #e4ece8;
---ui-color-surface-selected: #dceee9;
---ui-color-surface-playing: #f1d9cc;
---ui-color-text: #1f2328;
---ui-color-text-muted: #69747a;
---ui-color-border: #d8ded9;
---ui-color-border-strong: #b9c4c0;
+--ui-color-canvas: #dad7d0;
+--ui-color-surface: #f3f1ec;
+--ui-color-surface-raised: #fbfaf7;
+--ui-color-surface-hover: #dad7d0;
+--ui-color-surface-active: #c7c8cc;
+--ui-color-surface-selected: #e0e5f3;
+--ui-color-text: #272928;
+--ui-color-text-muted: #50535b;
+--ui-color-border: #c6c2ba;
+--ui-color-border-strong: #85888f;
+--ui-color-control-boundary: #70737b;
 
---ui-color-accent: #327a7f;
---ui-color-accent-hover: #286a6e;
---ui-color-accent-soft: #dceee9;
---ui-color-accent-contrast: #fffdfa;
---ui-color-focus: #d26a45;
+--ui-color-accent: #3d578e;
+--ui-color-accent-hover: #334873;
+--ui-color-accent-soft: #e0e5f3;
+--ui-color-accent-contrast: #f3f1ec;
+--ui-color-focus: #50679f;
 
---ui-color-current: #9f4629;
---ui-color-current-soft: #f1d9cc;
---ui-color-info: #4d8793;
---ui-color-success: #5f9a72;
---ui-color-warning: #b78336;
---ui-color-danger: #bd5961;
---ui-color-gated: #9a6b45;
---ui-color-gated-background: #f3eadc;
-
+--ui-color-current: #3d578e;
+--ui-color-current-soft: #e0e5f3;
+--ui-color-info: #1d6888;
+--ui-color-success: #2f6f45;
+--ui-color-warning: #705500;
+--ui-color-danger: #a33f43;
+--ui-color-gated: #705500;
 --ui-opacity-disabled: 0.5;
 ```
 
 ### Dark Theme
 
-Implemented in `src/styles/tokens.css` (`:root`, the default):
+Dark values are the base surface-root mapping in `src/styles/tokens.css`.
 
 ```css
---ui-color-canvas: #1f2328;
---ui-color-surface: #292f35;
---ui-color-surface-raised: #30383e;
---ui-color-surface-hover: #344046;
---ui-color-surface-active: #3a464c;
---ui-color-surface-selected: #25474a;
---ui-color-surface-playing: #4a332e;
---ui-color-text: #f7f1e7;
---ui-color-text-muted: #aeb8b6;
---ui-color-border: #3c4749;
---ui-color-border-strong: #586568;
+--ui-color-canvas: #191a1e;
+--ui-color-surface: #272928;
+--ui-color-surface-raised: #2d2f35;
+--ui-color-surface-hover: #3c3e46;
+--ui-color-surface-active: #50535b;
+--ui-color-surface-selected: #293a5b;
+--ui-color-text: #f3f1ec;
+--ui-color-text-muted: #a7a9af;
+--ui-color-border: #3c3e46;
+--ui-color-border-strong: #70737b;
+--ui-color-control-boundary: #a7a9af;
 
---ui-color-accent: #55a2a7;
---ui-color-accent-hover: #6ab4b8;
---ui-color-accent-soft: #25474a;
---ui-color-accent-contrast: #102326;
---ui-color-focus: #dd7a64;
+--ui-color-accent: #8296d0;
+--ui-color-accent-hover: #a5b3d8;
+--ui-color-accent-soft: #293a5b;
+--ui-color-accent-contrast: #191a1e;
+--ui-color-focus: #a5b3d8;
 
---ui-color-current: #f39a85;
---ui-color-current-soft: #4a332e;
---ui-color-info: #7fb8bd;
---ui-color-success: #7bbd8b;
---ui-color-warning: #d6a84f;
---ui-color-danger: #dd7078;
---ui-color-gated: #d6a84f;
---ui-color-gated-background: #3a3226;
-
+--ui-color-current: #a5b3d8;
+--ui-color-current-soft: #293a5b;
+--ui-color-info: #7ec9ed;
+--ui-color-success: #95cf96;
+--ui-color-warning: #ebc669;
+--ui-color-danger: #f79494;
+--ui-color-gated: #ebc669;
 --ui-opacity-disabled: 0.5;
 ```
 
@@ -1316,12 +1312,12 @@ Performer display settings use the shared Popover panel-style interface for a bo
 - **Notification drag geometry:** Keep list FLIP／entry／exit on a stationary outer item and drag translation on a separate inner card. Capture the outer item on press, but require a 12px dead zone and 1.5:1 horizontal intent before moving. Dismiss only on release after visible travel reaches 35% of the card width, with a 72px floor; crossing and returning before release cancels dismissal. Clamp travel to one card width and clip it to the original notification frame. Successful swipes exit in the same direction inside that frame without snapping back; cancellation restores the card and remaining timer. Verify dense forward／reverse pointer traces and fast first moves across the frame, including native capture／cancel, alongside list reordering.
 
 - **Grouped fields:** `UiField group` reuses Field label／hint typography for multiple controls, associates its visible label through `aria-labelledby`, and avoids an HTML label targeting a non-labelable group. Lyrics display controls order source／text／reading／font size, compose neutral `UiIconButton` controls inside `UiButtonGroup`, and leave paint／focus to those primitives.
-- **Style:** tonal surface or transparent field with visible border.
-- **Focus:** border or ring shift, never color-only.
-- **Error / Disabled:** semantic state tokens plus text/icon support.
+- **Field surface:** Text Field, Textarea, Search Box, native Select, both Combobox triggers and both Color Field controls share one surface recipe. Editable controls use the field background at rest and the hover background on hover. Keyboard focus draws an independent outline. Invalid keeps its semantic border through hover, focus and disabled. Disabled dims the complete visible control and suppresses hover. Native readonly keeps its resting fill during hover and retains text contrast, keyboard focus, selection and copying.
+- **Field token layers:** palette values feed semantic surfaces and the control boundary. Field aliases translate those roles into component states. A painted host declares its actual role with `data-ui-field-surface="surface|raised|canvas"`. Raised hosts use Surface for editable fields. Surface and Canvas hosts use Raised. Canvas uses a mixed hover fill because Light Canvas and Surface Hover resolve to the same color. Explicit hosts mix Surface with 65% Surface Hover for readonly, giving readonly its own resting fill across the painted hosts. Transparent layout inherits the nearest mapping. Teleported dialog and popover panels declare the role of their own painted surface.
+- **Field variants:** opt into a named variant when the control itself needs a reusable appearance. Textarea `bare` keeps the host material visible and retains keyboard focus and the invalid border. Container-driven layering follows the painted host, including a block nested in a modal. The F8 field surface specimens use the production primitives in both themes for review.
 - **Button disabled semantics:** `UiButton`／`UiIconButton` preserve focus and Tooltip access for `aria-disabled="true"`, but capture guards block click and Enter／Space activation before caller listeners and native submit／reset defaults. Native `disabled` and `loading` still remove the control from keyboard navigation. All hover／pressed rules exclude both disabled paths; focus stays visible and disabled opacity／variant colors reuse existing tokens. Clearing ARIA-disabled restores normal actions without changing caller-owned toggle state.
 - **Input catalogue coverage:** RadioGroup, Switch and Combobox state pages directly compose their formal primitives. Demo-only shared CSS owns layout and captions, never control paint or forced interaction overrides. Fixed validation specimens stay distinct from value-driven recovery examples. RadioGroup recovery uses native disabled/unlock semantics; Switch and both Combobox trigger modes clear or restore Field errors from sample values. Reset also clears a pending Combobox query and popup. Theme and density remain global authorities.
-- **Field validation precedence:** Text Field, Textarea, native Select, Color Field and both Combobox triggers keep `--ui-field-border-invalid` authoritative during hover／focus／press and disabled error states. Hover changes the field surface without hiding its error border; the focus outline remains independent. Color Field's picker and text entry share the Field validation projection. Only the caller clearing validation (and an invalid color draft becoming valid) restores the normal border; interaction alone never does.
+- **Field validation precedence:** Text Field, Textarea, Search Box, native Select, Color Field and both Combobox triggers keep `--ui-field-border-invalid` authoritative during hover／focus／press and disabled error states. Hover changes the field surface without hiding its error border; the focus outline remains independent. Color Field's picker and text entry share the Field validation projection. Only the caller clearing validation (and an invalid color draft becoming valid) restores the normal border; interaction alone never does.
 - **Checkbox / Radio boundaries:** the indicator's resting border uses `--ui-color-control-boundary`, distinct from decorative borders. It reuses Neutral 300 in dark surfaces and Chrome, and Neutral 500 in light surfaces, preserving at least 3:1 against normal, raised, hover and selected surfaces. Checkbox hover has lower specificity than checked／mixed fill and invalid borders; focus remains an independent outline and disabled controls suppress hover feedback.
 - **Switch validation:** the resting track border reuses `--ui-color-control-boundary`. Invalid uses `--ui-color-danger` for the track border throughout hover／focus／press and disabled states, while checked fill and thumb position continue to describe the value. Focus remains an independent outline and disabled retains its shared opacity. Only clearing both caller validation inputs (`invalid` and `error`) restores the normal boundary; toggling alone does not clear validation.
 - **Radio identity:** DOM option IDs use a Vue instance namespace and a lossless typed key, so Unicode／punctuation and numeric／string IDs remain distinct across groups and reorder. Labels target their own input. The caller retains native group naming and the original domain value; native radio inputs own keyboard navigation and disabled behavior.
