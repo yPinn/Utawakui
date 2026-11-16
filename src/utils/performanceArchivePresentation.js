@@ -159,6 +159,9 @@ const PROGRESS_LABELS = Object.freeze({
   interrupted: t('session.archiveStatus.interrupted'),
   recorded: t('session.archiveStatus.recorded'),
 });
+const MV_TITLE_MARKER =
+  /(?:\bofficial\s+(?:music\s+video|mv)\b|[(（[【]\s*MV\s*[)）\]】])/iu;
+
 export function performanceArchiveRows(session, tracks) {
   const canonical = new Map(tracks.map((track) => [track.id, track]));
   return sessionPerformedItems(session ?? undefined).map((item, index) => ({
@@ -167,6 +170,8 @@ export function performanceArchiveRows(session, tracks) {
     title: item.displayTitle,
     artist: item.displayArtist,
     mode: item.mode,
+    isMusicVideo:
+      item.mode !== 'manual' && MV_TITLE_MARKER.test(item.displayTitle ?? ''),
     track: canonical.get(item.trackId) ?? null,
     progress: item.progress,
     status: PROGRESS_LABELS[item.progress] ?? '',

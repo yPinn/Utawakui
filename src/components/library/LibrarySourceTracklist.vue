@@ -14,6 +14,7 @@ const props = defineProps({
   downloadDisabled: Boolean,
   downloadPendingSlots: { type: Set, default: () => new Set() },
   selectedTrackId: { type: String, default: '' },
+  revealTrack: { type: Object, default: null },
   currentTrackId: { type: String, default: '' },
   playingTrackId: { type: String, default: '' },
   columnPreferences: { type: Object, default: () => ({}) },
@@ -25,6 +26,7 @@ const emit = defineEmits([
   'play',
   'togglePlayback',
   'select',
+  'trackRevealed',
   'menu',
   'download',
   'separate',
@@ -69,11 +71,13 @@ const unmatchedEntries = computed(() =>
     :column-preferences="columnPreferences"
     :density="density"
     :selected-track-id="selectedTrackId"
+    :reveal-track="revealTrack"
     :current-track-id="currentTrackId"
     :playing-track-id="playingTrackId"
     :vs-queued-track-ids="queuedTrackIds"
     :vs-enqueue-pending-track-id="enqueueingTrackId"
     @select-track="emit('select', $event)"
+    @track-revealed="emit('trackRevealed', $event)"
     @activate-track="emit('play', $event)"
     @toggle-playback="emit('togglePlayback', $event)"
     @queue-separation="emit('separate', $event)"
@@ -124,11 +128,13 @@ const unmatchedEntries = computed(() =>
       :column-preferences="columnPreferences"
       :density="density"
       :selected-track-id="selectedTrackId"
+      :reveal-track="revealTrack"
       :current-track-id="currentTrackId"
       :playing-track-id="playingTrackId"
       :vs-queued-track-ids="queuedTrackIds"
       :vs-enqueue-pending-track-id="enqueueingTrackId"
       @select-track="emit('select', $event)"
+      @track-revealed="emit('trackRevealed', $event)"
       @activate-track="emit('play', $event)"
       @toggle-playback="emit('togglePlayback', $event)"
       @queue-separation="emit('separate', $event)"

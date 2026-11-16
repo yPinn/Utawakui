@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
 import { ImagePlus, Search, Trash2, UserRound } from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { useAppView } from '../../composables/useAppView.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
 import { useAppNotifications } from '../../composables/useAppNotifications.js';
@@ -127,6 +128,7 @@ const { playCountOf } = usePlaybackHistory();
 const collectionPlayback = useCollectionPlayback();
 const performanceQueue = usePerformanceQueueActions();
 const { canJumpToAlbum, jumpToAlbum, jumpToPlaylist } = useAlbumNavigation();
+const { libraryTrackRequest, clearLibraryTrackRequest } = useAppView();
 const {
   state: artistIndexState,
   ensureLoaded: ensureArtistIndex,
@@ -744,6 +746,20 @@ function selectTrack(track) {
   selectedTrackId.value = track?.id ?? null;
 }
 
+watch(
+  libraryTrackRequest,
+  (request) => {
+    if (!request) return;
+    searchQuery.value = '';
+    selectedTrackId.value = request.id;
+  },
+  { immediate: true, flush: 'post' },
+);
+
+function finishTrackReveal(request) {
+  if (request === libraryTrackRequest.value) clearLibraryTrackRequest();
+}
+
 async function activateTrack(track) {
   const request = ++rowPlaybackRequest;
   const admission = beginCollectionPlaybackRequest();
@@ -1345,6 +1361,7 @@ onMounted(async () => {
             :collection="selectedPlaylist"
             :tracks-by-id="libraryTracksById"
             :selected-track-id="selectedTrackId"
+            :reveal-track="libraryTrackRequest"
             :playing-track-id="state.isPlaying ? state.track?.id : ''"
             :column-preferences="currentTableColumnPreferences"
             :density="trackListDensity"
@@ -1355,6 +1372,7 @@ onMounted(async () => {
             @toggle-playback="toggleTrackPlayback"
             @update-column-preferences="updateTableColumnPreferences"
             @select="selectTrack"
+            @track-revealed="finishTrackReveal"
             @preview-availability="previewEligibility.acceptCatalog"
             @menu="openAddMenu"
             @separate="queueTrackForSeparation"
@@ -1376,6 +1394,7 @@ onMounted(async () => {
             :sort="effectiveTrackRowSort"
             :can-reorder-playlist-tracks="canReorderPlaylistTracks"
             :selected-track-id="selectedTrackId"
+            :reveal-track="libraryTrackRequest"
             :current-track-id="state.track?.id"
             :playing-track-id="state.isPlaying ? state.track?.id : ''"
             :dragging-track-id="draggingTrackId"
@@ -1388,6 +1407,7 @@ onMounted(async () => {
             @toggle-sort="toggleTrackRowSort"
             @update-column-preferences="updateTableColumnPreferences"
             @select-track="selectTrack"
+            @track-revealed="finishTrackReveal"
             @activate-track="activateTrack"
             @toggle-playback="toggleTrackPlayback"
             @navigate-album="jumpToAlbum"

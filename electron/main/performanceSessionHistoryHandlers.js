@@ -19,7 +19,70 @@ function registerPerformanceSessionHistoryHandlers({
   sessionHistoryService,
   dialog,
   getMainWindow = () => null,
+  getReleaseScope,
 }) {
+  const invalidArchive = () =>
+    Object.assign(new Error(t('session.main.archiveInvalid')), {
+      code: 'SESSION_ARCHIVE_INVALID',
+      publicValidation: true,
+    });
+
+  ipcMain.handle(
+    'performance-session-plan:choose-archive-cover',
+    async (_event, sessionId) => {
+      const scope = getReleaseScope?.();
+      const before = await run('archiveCover', () => {
+        const { directory, store, tracksById } = operationContext();
+        if (!store.getSession(sessionId, tracksById).endedAt)
+          throw invalidArchive();
+        return directory;
+      });
+      if (!before.ok) return before;
+      try {
+        const owner = getMainWindow();
+        const options = {
+          properties: ['openFile'],
+          filters: [
+            {
+              name: t('library.dialog.images'),
+              extensions: ['jpg', 'jpeg', 'png', 'webp'],
+            },
+          ],
+        };
+        const result = owner
+          ? await dialog.showOpenDialog(owner, options)
+          : await dialog.showOpenDialog(options);
+        return run('archiveCover', () => {
+          const { directory, store, tracksById } = operationContext();
+          if (
+            directory !== before.plan ||
+            (scope && getReleaseScope().epoch !== scope.epoch)
+          )
+            throw invalidArchive();
+          const file = result.filePaths?.[0];
+          return result.canceled || !file
+            ? store.getProjected(tracksById)
+            : store.setSessionCover(sessionId, file, tracksById);
+        });
+      } catch (error) {
+        return run('archiveCover', () => {
+          throw error;
+        });
+      }
+    },
+  );
+  ipcMain.handle(
+    'performance-session-plan:reset-archive-cover',
+    (_event, sessionId) => {
+      const scope = getReleaseScope?.();
+      return run('archiveCover', () => {
+        if (scope && getReleaseScope().epoch !== scope.epoch)
+          throw invalidArchive();
+        const { store, tracksById } = operationContext();
+        return store.setSessionCover(sessionId, null, tracksById);
+      });
+    },
+  );
   ipcMain.handle(
     'performance-session-plan:append-from-archive',
     (_event, intent) =>
@@ -117,11 +180,7 @@ function registerPerformanceSessionHistoryHandlers({
       run('export', () => {
         const { store, tracksById, directory } = operationContext();
         const session = store.getSession(intent?.sessionId, tracksById);
-        if (!session.endedAt)
-          throw Object.assign(new Error(t('session.main.archiveInvalid')), {
-            code: 'SESSION_ARCHIVE_INVALID',
-            publicValidation: true,
-          });
+        if (!session.endedAt) throw invalidArchive();
         const existing = loadPlaylists(directory).find(
           (playlist) => playlist.performanceSessionId === session.id,
         );

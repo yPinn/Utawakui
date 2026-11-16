@@ -1,11 +1,5 @@
 <script setup>
-import {
-  computed,
-  defineAsyncComponent,
-  onMounted,
-  onScopeDispose,
-  shallowRef,
-} from 'vue';
+import { computed, onMounted, onScopeDispose, shallowRef } from 'vue';
 import { Video } from '../../icons/index.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useLibrary } from '../../composables/useLibrary.js';
@@ -17,7 +11,6 @@ import { t } from '../../utils/i18n.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
@@ -25,12 +18,7 @@ import UiSkeleton from '../ui/UiSkeleton.vue';
 import UiTabs from '../ui/UiTabs.vue';
 import PerformanceSessionArchiveCalendar from './PerformanceSessionArchiveCalendar.vue';
 import PerformanceSessionArchiveGroups from './PerformanceSessionArchiveGroups.vue';
-
-const PerformanceSessionArchive = defineAsyncComponent(() =>
-  import('./PerformanceSessionArchive.vue').then(
-    ({ default: component }) => component,
-  ),
-);
+import PerformanceSessionArchiveModal from './PerformanceSessionArchiveModal.vue';
 
 const { state, initialize, refresh } = usePerformanceSessionPlan();
 const { state: library } = useLibrary();
@@ -48,6 +36,9 @@ const normalizedSearch = computed(() =>
   searchQuery.value.trim().toLocaleLowerCase(),
 );
 const archives = computed(() => state.plan.archives ?? []);
+const sessionName = computed(
+  () => archives.value.find(({ id }) => id === sessionId.value)?.name,
+);
 const groups = computed(() => {
   const tracks = new Map(library.tracks.map((track) => [track.id, track]));
   return groupPerformanceArchiveDays(
@@ -179,20 +170,13 @@ onMounted(initialize);
       </div>
     </template>
 
-    <UiModal
-      :open="Boolean(sessionId)"
-      :title="t('session.archive.record')"
-      size="wide"
-      max-block-size="large"
+    <PerformanceSessionArchiveModal
+      :session-id="sessionId"
+      :session-name="sessionName"
+      wide
+      allow-save-playlist
       @close="sessionId = null"
-    >
-      <PerformanceSessionArchive
-        v-if="sessionId"
-        :session-id="sessionId"
-        embedded
-        allow-save-playlist
-      />
-    </UiModal>
+    />
   </div>
 </template>
 

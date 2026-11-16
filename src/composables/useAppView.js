@@ -9,6 +9,7 @@ const performanceTool = shallowRef('live-lyrics');
 const performanceArchiveId = shallowRef(null);
 const performanceSessionTab = shallowRef('pending');
 const rootEntryRevision = shallowRef(0);
+const libraryTrackRequest = shallowRef(null);
 const isSettingsView = computed(() => activeView.value === 'settings');
 // One-shot section request so other views can open Settings at a block.
 const settingsSection = shallowRef(null);
@@ -45,11 +46,20 @@ function setActiveView(view) {
 function resetLibraryWorkspace() {
   libraryWorkspace.value = 'browse';
   performanceArchiveId.value = null;
+  libraryTrackRequest.value = null;
 }
 
 function openLibraryContent() {
   resetLibraryWorkspace();
   commitActiveView('library');
+}
+
+function revealLibraryTrack(id) {
+  libraryTrackRequest.value = { id };
+}
+
+function clearLibraryTrackRequest() {
+  libraryTrackRequest.value = null;
 }
 
 function openLyricsAuthoring() {
@@ -142,6 +152,9 @@ export function useAppView() {
     clearSettingsSection,
     setActiveView,
     openLibraryContent,
+    libraryTrackRequest: readonly(libraryTrackRequest),
+    revealLibraryTrack,
+    clearLibraryTrackRequest,
     openLyricsAuthoring,
     openLiveLyrics,
     returnFromLyricsAuthoring,

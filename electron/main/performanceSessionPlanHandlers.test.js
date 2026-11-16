@@ -204,6 +204,8 @@ describe('registerPerformanceSessionPlanHandlers', () => {
       'performance-session-plan:remove-item',
       'performance-session-plan:set-review-cursor',
       'performance-session-plan:clear',
+      'performance-session-plan:choose-archive-cover',
+      'performance-session-plan:reset-archive-cover',
       'performance-session-plan:append-from-archive',
       'performance-session-plan:archive',
       'performance-session-plan:save-marker-csv',

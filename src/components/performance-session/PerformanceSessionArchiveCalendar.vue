@@ -32,6 +32,7 @@ const printLayouts = ['instant', 'wide', 'stamp', 'ticket'];
 const today = new Date();
 const requestedMonth = shallowRef(null);
 const requestedDay = shallowRef(null);
+const failedCovers = shallowRef(new Set());
 const month = computed(() => {
   if (requestedMonth.value) return requestedMonth.value;
   const date = props.groups.find((group) => group.date)?.date ?? today;
@@ -76,6 +77,9 @@ const weeks = computed(() => {
           ),
         ].slice(0, 2);
         const [first] = group.archives;
+        const cover = group.archives
+          .map(({ coverUrl }) => coverUrl)
+          .find((url) => url && !failedCovers.value.has(url));
         const layout =
           photos.length === 2
             ? 'pair'
@@ -85,6 +89,7 @@ const weeks = computed(() => {
         return {
           day,
           group,
+          cover,
           collage: {
             layout,
             photos,
@@ -103,6 +108,10 @@ function changeMonth(direction) {
     1,
   );
   requestedDay.value = null;
+}
+
+function markCoverUnavailable(url) {
+  failedCovers.value = new Set([...failedCovers.value, url]);
 }
 </script>
 
@@ -182,8 +191,19 @@ function changeMonth(direction) {
                     aria-hidden="true"
                     >{{ cell.group.archives.length }}</span
                   >
+                  <div v-if="cell.cover" class="archive-calendar__cover">
+                    <img
+                      :key="cell.cover"
+                      :src="cell.cover"
+                      class="archive-calendar__cover-image"
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      @error="markCoverUnavailable(cell.cover)"
+                    />
+                  </div>
                   <PerformanceSessionArchiveCollage
-                    v-if="cell.collage"
+                    v-else-if="cell.collage"
                     v-bind="cell.collage"
                   />
                 </template>
@@ -206,6 +226,22 @@ function changeMonth(direction) {
 </template>
 
 <style scoped>
+.archive-calendar__cover {
+  position: absolute;
+  inset: var(--ui-space-5) var(--ui-space-1) var(--ui-space-1);
+  display: grid;
+  place-items: center;
+  container-type: size;
+  pointer-events: none;
+}
+.archive-calendar__cover-image {
+  display: block;
+  inline-size: min(100%, calc(100cqb * 16 / 9));
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--ui-radius-xs);
+}
+
 .archive-calendar {
   container: archive-calendar / inline-size;
 }

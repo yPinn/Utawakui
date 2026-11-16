@@ -23,6 +23,9 @@ const OPERATION_ERRORS = Object.freeze({
   archive: {
     code: 'PERFORMANCE_SESSION_ARCHIVE_FAILED',
   },
+  archiveCover: {
+    code: 'PERFORMANCE_SESSION_COVER_FAILED',
+  },
   history: {
     code: 'PERFORMANCE_SESSION_HISTORY_FAILED',
   },
@@ -293,6 +296,7 @@ function registerPerformanceSessionPlanHandlers({
     sessionHistoryService,
     dialog,
     getMainWindow,
+    getReleaseScope,
   });
   if (platformVideos) {
     registerSessionPlatformVideoHandlers({

@@ -7,6 +7,7 @@ import TrackArtworkContent from './TrackArtworkContent.vue';
 defineProps({
   track: { type: Object, default: undefined },
   size: { type: [Number, String], required: true },
+  width: { type: String, default: undefined },
   radius: { type: String, default: undefined },
   background: { type: String, default: undefined },
   color: { type: String, default: undefined },
@@ -37,7 +38,7 @@ function toCssLength(value) {
     class="ui-track-thumb"
     :aria-hidden="decorative ? 'true' : undefined"
     :style="{
-      width: toCssLength(size),
+      width: width ?? toCssLength(size),
       height: toCssLength(size),
       '--ui-track-thumb-radius': radius,
       '--ui-track-thumb-background': background,

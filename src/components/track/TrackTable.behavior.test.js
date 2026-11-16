@@ -297,6 +297,42 @@ function rowRoles(row) {
 }
 
 describe('TrackTable canonical grid', () => {
+  it('mounts and scrolls to the exact requested track in a windowed list', async () => {
+    const targetId = 'version-49';
+    const props = reactive({
+      entries: Array.from({ length: 50 }, (_, index) => ({
+        track: { id: 'version-' + index, title: 'Same title' },
+      })),
+      virtualizeAbove: 10,
+      revealTrack: null,
+      onTrackRevealed: vi.fn(),
+      onActivateTrack: vi.fn(),
+    });
+    const { root, app } = mount(TrackTable, props);
+    const [list] = findAll(root, (node) =>
+      classIncludes(node, 'library-track-table__body'),
+    );
+    const scrollIntoView = vi.fn();
+    list.querySelector = (selector) => {
+      if (selector !== '[data-reveal-track]') return null;
+      const [row] = findAll(
+        list,
+        (node) => node.props['data-reveal-track'] === '',
+      );
+      expect(row?.props['data-virtual-key']).toBe(targetId);
+      return { scrollIntoView };
+    };
+    expect(
+      findAll(list, (node) => node.props['data-virtual-key'] === targetId),
+    ).toHaveLength(0);
+    props.revealTrack = { id: targetId };
+    await nextTick();
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
+    expect(props.onTrackRevealed).toHaveBeenCalledWith(props.revealTrack);
+    expect(props.onActivateTrack).not.toHaveBeenCalled();
+    app.unmount();
+  });
+
   it('keeps occurrence identity for repeated tracks and renders an inert archive ledger', async () => {
     const props = reactive({
       collectionKind: 'performance-archive',

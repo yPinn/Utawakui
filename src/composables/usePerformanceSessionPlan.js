@@ -49,6 +49,7 @@ const { state, enqueue, refresh, initialize, dispose } = useSerializedPlanStore(
 if (import.meta.hot) import.meta.hot.dispose(dispose);
 
 const notifications = useAppNotifications();
+const { recordError } = useAppDiagnostics();
 function enqueueMenuMutation(operation, name, title) {
   const key = notificationKey.performanceSession(name);
   return enqueue(
@@ -225,6 +226,33 @@ function archiveSession(name, sessionId = state.plan.sessionId) {
   );
 }
 
+async function editArchiveCover(sessionId, { reset, onError }) {
+  try {
+    const bridge = window.Utawakui;
+    const result = await (reset
+      ? bridge.resetPerformanceSessionCover(sessionId)
+      : bridge.choosePerformanceSessionCover(sessionId));
+    if (result?.ok === true) {
+      await refresh();
+      return true;
+    }
+    onError(
+      result?.error?.message ||
+        t('errors.PERFORMANCE_SESSION_COVER_FAILED.message'),
+    );
+  } catch (error) {
+    const { message } = recordError(error, {
+      code: 'PERFORMANCE_SESSION_COVER_FAILED',
+      title: t('errors.PERFORMANCE_SESSION_COVER_FAILED.title'),
+      message: t('errors.PERFORMANCE_SESSION_COVER_FAILED.message'),
+      source: 'performance-session-plan',
+      operation: 'archiveCover',
+    });
+    onError(message);
+  }
+  return false;
+}
+
 function setProgress(itemId, progress) {
   // Resolve the revision inside the serialized task: playing and ended can
   // arrive before the prior IPC response, without dropping either transition.
@@ -260,6 +288,7 @@ export function usePerformanceSessionPlan() {
     selectItem,
     clear,
     archiveSession,
+    editArchiveCover,
     setProgress,
   };
 }

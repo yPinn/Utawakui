@@ -89,6 +89,40 @@ function setup({ trusted = false, service = null, dialog } = {}) {
   return { call, store, adapter, history, main, performer };
 }
 describe('performance session history integration', () => {
+  it('uses only native picker output and leaves the archive unchanged on cancellation', async () => {
+    const filePath = path.resolve(
+      'prototypes/performance-calendar/art/stage.webp',
+    );
+    const dialog = {
+      showOpenDialog: vi
+        .fn()
+        .mockResolvedValueOnce({ canceled: false, filePaths: [filePath] })
+        .mockResolvedValueOnce({ canceled: true, filePaths: [] }),
+    };
+    const { call } = setup({ dialog });
+    await call('get');
+    const { plan } = await call('append-library-track', 'song');
+    const { sessionId } = plan;
+    expect((await call('choose-archive-cover', sessionId)).ok).toBe(false);
+    expect(dialog.showOpenDialog).not.toHaveBeenCalled();
+    expect((await call('archive', { sessionId, name: 'Show' })).ok).toBe(true);
+    expect(
+      (await call('choose-archive-cover', { sessionId, filePath })).ok,
+    ).toBe(false);
+    const selected = await call('choose-archive-cover', sessionId);
+    expect(selected.ok).toBe(true);
+    const { plan: detail } = await call('get-session', { sessionId });
+    expect(detail.coverUrl).toMatch(/^utawakui-media:\/\/session-cover\//u);
+    expect((await call('choose-archive-cover', sessionId)).ok).toBe(true);
+    expect((await call('get-session', { sessionId })).plan.coverUrl).toBe(
+      detail.coverUrl,
+    );
+    expect((await call('reset-archive-cover', sessionId)).ok).toBe(true);
+    expect((await call('get-session', { sessionId })).plan).not.toHaveProperty(
+      'coverUrl',
+    );
+  });
+
   it('saves only the reviewed marker snapshot to the path selected in the native dialog', async () => {
     const filePath = path.join(directory, 'chosen.csv');
     const dialog = {

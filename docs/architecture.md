@@ -230,6 +230,8 @@
 
 - `sessionPlatformVideos.js` 在 userData 保存配對，YouTube 授權另由 `safeStorage` 加密保存。Main 處理系統瀏覽器 PKCE 回呼、唯讀查詢和官方網址驗證，renderer 只接收帳號狀態與影片摘要。實測和發行邊界見[平台影片配對](contracts/performance-session-preparation.md#平台影片配對)。
 
+- 封存場次在 `performance-session-plan.json` 保存可選的封面檔名。Main 選取並驗證本機圖片後寫入 `performance-session-covers/<sessionId>/`，透過 `utawakui-media://session-cover/` 提供明細與月曆共用的圖片。Renderer 只提交場次 ID。
+
 ### OBS 與資源監視
 
 `obsAdapter.js` 只在同一連線已觀察到直播進行且收到明確 STOPPED 事件時發出收播事件。Main 綁定當前有內容的場次識別，控制台透過共用通知提供收場選項，並由既有收場確認持有保存動作。

@@ -2,6 +2,14 @@
 // Lazy so the catalog loads only when a message is built.
 const t = (key, named) => require('./i18n').t(key, named);
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const { atomicWriteBuffer } = require('./atomicWrite');
+const {
+  MAX_ARTWORK_BYTES,
+  hasValidArtworkDimensions,
+  inspectArtworkImage,
+} = require('./artwork/image');
 const { hasControlCharacters } = require('./textGuards');
 const {
   sessionPerformedItems,
@@ -11,6 +19,52 @@ const ARCHIVE_LIMIT = 100;
 const TIMELINE_LIMIT = 2000;
 const safeId = (value) =>
   typeof value === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(value);
+const safeCover = (value) =>
+  typeof value === 'string' && /^[0-9a-f]{32}\.(?:jpg|png|webp)$/u.test(value);
+const COVER_EXTENSIONS = Object.freeze({
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+});
+
+function coverPath(directory, id, filename) {
+  if (!safeId(id) || !safeCover(filename)) return null;
+  const root = fs.realpathSync(directory);
+  const folder = path.join(root, 'performance-session-covers', id);
+  return { root, folder, file: path.join(folder, filename) };
+}
+
+function resolveSessionCoverPath(directory, id, filename) {
+  try {
+    const target = coverPath(directory, id, filename);
+    if (!target || fs.realpathSync(target.file) !== target.file) return null;
+    return fs.statSync(target.file).isFile() ? target.file : null;
+  } catch {
+    return null;
+  }
+}
+
+function coverUrl({ id, coverFilename }) {
+  return safeCover(coverFilename)
+    ? `utawakui-media://session-cover/${id}/${coverFilename}`
+    : null;
+}
+
+function readCover(sourcePath) {
+  const stat = fs.statSync(sourcePath);
+  if (!stat.isFile() || stat.size > MAX_ARTWORK_BYTES)
+    throw invalid(t('session.main.coverInvalid'));
+  const buffer = fs.readFileSync(sourcePath);
+  const image =
+    buffer.length <= MAX_ARTWORK_BYTES && inspectArtworkImage(buffer);
+  const extension = image && COVER_EXTENSIONS[image.mimeType];
+  if (!extension || !hasValidArtworkDimensions(image))
+    throw invalid(t('session.main.coverInvalid'));
+  return {
+    buffer,
+    filename: `${crypto.randomBytes(16).toString('hex')}.${extension}`,
+  };
+}
 const text = (value, limit = 256) =>
   typeof value === 'string' &&
   value.length <= limit &&
@@ -115,6 +169,7 @@ function normalizeSessionFields(value, sanitizeItem, sanitizeSource) {
       name: a.name,
       startedAt: timestamp(a.startedAt) ? a.startedAt : null,
       endedAt: a.endedAt,
+      ...(safeCover(a.coverFilename) ? { coverFilename: a.coverFilename } : {}),
       source: sanitizeSource(a.source),
       items,
       timeline: timeline(a.timeline),
@@ -151,6 +206,7 @@ function sessionProjectionFields(document) {
         name: a.name,
         startedAt: a.startedAt,
         endedAt: a.endedAt,
+        ...(a.coverFilename ? { coverUrl: coverUrl(a) } : {}),
         itemCount: a.items.length,
         performedCount: performed.length,
         completedCount: performed.filter((i) => i.progress === 'completed')
@@ -170,6 +226,7 @@ function sessionProjectionFields(document) {
   };
 }
 function createSessionOperations({
+  directory,
   load,
   mutate,
   project,
@@ -226,7 +283,60 @@ function createSessionOperations({
     const a = d.archives?.find((a) => a.id === id);
     if (!a) throw invalid(t('session.main.sessionNotFound'));
     // The archive stays scalar-only; availability is always resolved afresh.
-    return { ...a, items: project({ ...d, items: a.items }, tracks).items };
+    const { coverFilename, ...record } = a;
+    return {
+      ...record,
+      ...(coverFilename ? { coverUrl: coverUrl(a) } : {}),
+      items: project({ ...d, items: a.items }, tracks).items,
+    };
+  }
+  function setSessionCover(id, sourcePath, tracks) {
+    let previous;
+    let written;
+    let document;
+    try {
+      document = mutate((draft) => {
+        const archive = draft.archives?.find((entry) => entry.id === id);
+        if (!archive) throw invalid(t('session.main.sessionNotFound'));
+        previous = archive.coverFilename;
+        if (sourcePath === null) {
+          if (!previous) return false;
+          delete archive.coverFilename;
+          return true;
+        }
+        const { buffer, filename } = readCover(sourcePath);
+        const target = coverPath(directory, archive.id, filename);
+        const coverRoot = path.dirname(target.folder);
+        fs.mkdirSync(coverRoot, { recursive: true });
+        if (fs.realpathSync(coverRoot) !== coverRoot) throw invalid();
+        fs.mkdirSync(target.folder, { recursive: true });
+        if (fs.realpathSync(target.folder) !== target.folder) throw invalid();
+        written = target.file;
+        atomicWriteBuffer(written, buffer);
+        archive.coverFilename = filename;
+        return true;
+      });
+    } catch (error) {
+      if (written) {
+        try {
+          fs.rmSync(written, { force: true });
+          fs.rmSync(`${written}.tmp`, { force: true });
+        } catch {
+          // Preserve the original failure.
+        }
+      }
+      throw error;
+    }
+    const oldFile =
+      previous && resolveSessionCoverPath(directory, id, previous);
+    if (oldFile) {
+      try {
+        fs.rmSync(oldFile, { force: true });
+      } catch {
+        /* The committed cover remains authoritative. */
+      }
+    }
+    return project(document, tracks);
   }
   function archiveSession(intent, tracks) {
     if (
@@ -335,6 +445,7 @@ function createSessionOperations({
     attachTimeline,
     recordMarker,
     getSession,
+    setSessionCover,
     archiveSession,
     previewPlaylist,
     verifyPlaylistPreview,
@@ -344,5 +455,6 @@ module.exports = {
   normalizeSessionFields,
   sessionProjectionFields,
   createSessionOperations,
+  resolveSessionCoverPath,
   isSessionArchiveValidationError: (error) => error?.publicValidation === true,
 };

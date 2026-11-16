@@ -65,6 +65,7 @@ const props = defineProps({
     default: 'auto',
     validator: (value) => ['auto', 'sync', 'async'].includes(value),
   },
+  thumbWidth: { type: String, default: undefined },
 });
 
 const emit = defineEmits([
@@ -179,6 +180,7 @@ function handleActionKeydown(event) {
       class="ui-track__thumb"
       :track="thumbTrack"
       size="var(--ui-track-row-thumb-size)"
+      :width="thumbWidth"
       :loading="thumbLoading"
       :decoding="thumbDecoding"
     />

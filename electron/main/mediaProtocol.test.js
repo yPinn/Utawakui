@@ -189,6 +189,9 @@ describe('registerMediaProtocol', () => {
     'utawakui-media://artist-photo/id/photo.jpg/ignored',
     'utawakui-media://folder-asset/asset-1',
     'utawakui-media://folder-asset/asset-1/image.png/ignored',
+    'utawakui-media://session-cover/id',
+    'utawakui-media://session-cover/id/cover.webp/ignored',
+    'utawakui-media://session-cover/id/cover.webp',
     'utawakui-media://local/file.mp3/ignored',
     'utawakui-media://track/%E0%A4%A/audio.wav',
   ])('fails closed for a non-allowlisted route: %s', (url) => {

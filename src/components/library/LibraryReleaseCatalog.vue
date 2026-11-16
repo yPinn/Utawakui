@@ -12,6 +12,7 @@ const props = defineProps({
   collection: { type: Object, required: true },
   tracksById: { type: Map, required: true },
   selectedTrackId: { type: String, default: '' },
+  revealTrack: { type: Object, default: null },
   playingTrackId: { type: String, default: '' },
   columnPreferences: { type: Object, default: () => ({}) },
   density: { type: String, default: 'list' },
@@ -23,6 +24,7 @@ const emit = defineEmits([
   'play',
   'togglePlayback',
   'select',
+  'trackRevealed',
   'menu',
   'separate',
   'updateColumnPreferences',
@@ -190,6 +192,22 @@ watch(
   () => load(),
   { immediate: true },
 );
+watch(
+  [catalog, busy, () => props.revealTrack],
+  ([current, loading, request]) => {
+    if (!request || loading || !current?.hasMore) return;
+    if (
+      current.rows.some(
+        (row) => row.state === 'available' && row.localTrackId === request.id,
+      ) ||
+      current.unmatchedTrackIds?.includes(request.id)
+    ) {
+      return;
+    }
+    void load(current.nextOffset);
+  },
+  { flush: 'post' },
+);
 function download(row) {
   if (pendingSlots.value.has(row.key)) return false;
   return downloads.download(props.collection, row);
@@ -219,6 +237,7 @@ function download(row) {
         :busy="busy"
         :download-pending-slots="pendingSlots"
         :selected-track-id="selectedTrackId"
+        :reveal-track="revealTrack"
         :playing-track-id="playingTrackId"
         :column-preferences="columnPreferences"
         :density="density"
@@ -227,6 +246,7 @@ function download(row) {
         :enqueueing-track-id="enqueueingTrackId"
         @play="emit('play', $event)"
         @select="emit('select', $event)"
+        @track-revealed="emit('trackRevealed', $event)"
         @menu="(track, event) => emit('menu', track, event)"
         @toggle-playback="emit('togglePlayback', $event)"
         @update-column-preferences="emit('updateColumnPreferences', $event)"

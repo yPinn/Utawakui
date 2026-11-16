@@ -5,6 +5,7 @@ import ArchiveList from './PerformanceSessionArchiveList.vue';
 import ArchiveCalendar from './PerformanceSessionArchiveCalendar.vue';
 import ArchiveCollage from './PerformanceSessionArchiveCollage.vue';
 import ArchiveGroups from './PerformanceSessionArchiveGroups.vue';
+import ArchiveModal from './PerformanceSessionArchiveModal.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
@@ -229,6 +230,7 @@ for (const [component, file] of [
   [ArchiveCalendar, './PerformanceSessionArchiveCalendar.vue'],
   [ArchiveCollage, './PerformanceSessionArchiveCollage.vue'],
   [ArchiveGroups, './PerformanceSessionArchiveGroups.vue'],
+  [ArchiveModal, './PerformanceSessionArchiveModal.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiSkeleton, '../ui/UiSkeleton.vue'],

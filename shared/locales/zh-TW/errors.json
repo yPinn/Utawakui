@@ -316,6 +316,10 @@
     "title": "場次尚未封存",
     "message": "目前資料仍保留，請再試一次。"
   },
+  "PERFORMANCE_SESSION_COVER_FAILED": {
+    "title": "場次封面未更新",
+    "message": "無法更新場次封面。請再試一次。"
+  },
   "PERFORMANCE_SESSION_EXPORT_FAILED": {
     "title": "播放清單尚未儲存",
     "message": "請再試一次。"

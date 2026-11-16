@@ -13,6 +13,7 @@ const {
 } = require('../lib/library/folderPageObjects');
 const { MEDIA_SCHEME } = require('./mediaScheme');
 const { resolveTrackVideoPath } = require('../lib/library/trackVideo');
+const { resolveSessionCoverPath } = require('../lib/performanceSessionArchive');
 
 // Serves local audio files to the sandboxed renderer (nodeIntegration:
 // false means it has no direct filesystem access). Dispatches on
@@ -98,6 +99,9 @@ function registerMediaProtocol({
       if (segments.length !== 2) return notFoundResponse();
       const [assetId, assetFilename] = segments;
       filePath = resolveFolderAssetPath(dir, assetId, assetFilename);
+    } else if (url.hostname === 'session-cover') {
+      if (segments.length !== 2) return notFoundResponse();
+      filePath = resolveSessionCoverPath(dir, ...segments);
     } else if (url.hostname === 'local') {
       if (segments.length !== 1) return notFoundResponse();
       filePath = resolveLegacyTrackPath(dir, segments[0]);

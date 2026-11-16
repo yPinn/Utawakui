@@ -184,6 +184,10 @@
     "entity": "此封存場次",
     "savePlaylist": "另存本場播放清單",
     "tracksLabel": "本場演出曲目",
+    "musicVideo": "MV",
+    "chooseCover": "更換場次封面",
+    "resetCover": "還原場次封面",
+    "locateTrack": "在曲庫中找出「{title}」",
     "empty": "本場沒有曲目演出紀錄。",
     "markersOnly": "本場只有標記紀錄。",
     "record": "場次紀錄",
@@ -265,6 +269,7 @@
     "fallback": "操作無效。"
   },
   "main": {
+    "coverInvalid": "請選擇有效且不超過 10 MB 的 JPG、PNG 或 WebP 圖片。",
     "sourceNotFound": "找不到這個播放清單，曲庫可能已更新。",
     "dataUnreadable": "場次資料無法讀取；原檔已保留，請先修復資料。",
     "performanceInvalid": "演出識別無效。",

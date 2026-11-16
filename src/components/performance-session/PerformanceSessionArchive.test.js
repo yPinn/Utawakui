@@ -2,6 +2,8 @@ import { createSSRApp, h, shallowRef } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Archive from './PerformanceSessionArchive.vue';
+import ArchiveModal from './PerformanceSessionArchiveModal.vue';
+import ArchiveCalendar from './PerformanceSessionArchiveCalendar.vue';
 import PlatformVideos from './PerformanceSessionPlatformVideos.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
@@ -19,7 +21,30 @@ vi.mock('../../composables/usePerformanceArchive.js', () => ({
 }));
 vi.mock('../../composables/useLibrary.js', () => ({
   useLibrary: () => ({
-    state: { tracks: [{ id: 'song', duration: 125, title: 'Canonical' }] },
+    state: {
+      tracks: [
+        { id: 'song', duration: 125, title: 'Canonical' },
+        {
+          id: 'video',
+          artist: 'Juice WRLD, Guest',
+          duration: 240,
+          thumbnailUrl: '/video.jpg',
+        },
+      ],
+    },
+  }),
+}));
+vi.mock('../../composables/useArtistIndex.js', () => ({
+  useArtistIndex: () => ({
+    state: {
+      index: {
+        artists: [
+          { id: 'juice', name: 'Juice WRLD' },
+          { id: 'guest', name: 'Guest' },
+        ],
+        trackArtistIds: { video: ['juice', 'guest'], gone: ['juice'] },
+      },
+    },
   }),
 }));
 vi.mock('../../composables/useAppView.js', () => ({
@@ -44,6 +69,65 @@ const render = (props = {}) =>
     createSSRApp({ render: () => h(Archive, { sessionId: 'old', ...props }) }),
   );
 describe('archive collection document', () => {
+  it.each([false, true])(
+    'shows the session name once as the dialog heading (wide: %s)',
+    async (wide) => {
+      fixture.archive.session.value = {
+        id: 'old',
+        name: 'Archived show',
+        coverUrl: 'utawakui-media://session-cover/old/art.webp',
+        endedAt: '2026-10-20T12:00:00Z',
+        items: [],
+      };
+      const html = await renderToString(
+        createSSRApp({
+          render: () =>
+            h(ArchiveModal, {
+              sessionId: 'old',
+              sessionName: 'Archived show',
+              wide,
+            }),
+        }),
+      );
+      expect(html).toMatch(
+        /role="dialog"[^>]*aria-modal="true"[^>]*aria-label="Archived show"/u,
+      );
+      const [header, body] = html.split('class="ui-modal__body-viewport', 2);
+      expect(header).toMatch(
+        /<h2 class="ui-modal__title"[^>]*>Archived show<\/h2>/u,
+      );
+      expect(header).toContain('ui-icon-btn--ghost');
+      expect(header).not.toContain('performance-archive-modal__artwork');
+      expect(html.match(/>Archived show</gu)).toHaveLength(1);
+      expect(body).toMatch(
+        /<img[^>]*src="utawakui-media:\/\/session-cover\/old\/art.webp"[^>]*class="performance-archive-modal__artwork"[^>]*>.*?class="performance-archive__header/su,
+      );
+      expect(body).toContain('更換場次封面');
+      expect(body).toContain('還原場次封面');
+    },
+  );
+
+  it('uses the same saved cover URL for the calendar thumbnail', async () => {
+    const date = new Date(2026, 9, 20);
+    const coverUrl = 'utawakui-media://session-cover/old/art.webp';
+    const groups = [
+      {
+        key: '2026-10-20',
+        date,
+        label: '2026/10/20',
+        archives: [
+          { id: 'old', name: 'Archived show', coverUrl, coverTracks: [] },
+        ],
+      },
+    ];
+    const html = await renderToString(
+      createSSRApp({ render: () => h(ArchiveCalendar, { groups }) }),
+    );
+    expect(html).toContain(
+      `src="${coverUrl}" class="archive-calendar__cover-image"`,
+    );
+  });
+
   it('uses a real initial skeleton and errors without an empty-track claim', async () => {
     fixture.archive.loading.value = true;
     expect(await render()).toContain('讀取封存場次');
@@ -84,6 +168,22 @@ describe('archive collection document', () => {
           progress: 'completed',
         },
         {
+          itemId: 'mv',
+          trackId: 'video',
+          mode: 'library-track',
+          displayTitle: 'Lucid Dreams (Official Music Video)',
+          displayArtist: 'Juice WRLD',
+          progress: 'interrupted',
+        },
+        {
+          itemId: 'missing',
+          trackId: 'gone',
+          mode: 'library-track',
+          displayTitle: 'Removed recording',
+          displayArtist: 'Archived credit',
+          progress: 'interrupted',
+        },
+        {
           itemId: 'planned',
           mode: 'manual',
           displayTitle: 'Not performed',
@@ -93,14 +193,28 @@ describe('archive collection document', () => {
     };
     const html = await render();
     expect(html).toContain('app-folder-dossier');
-    expect(html).toContain('data-collection-kind="performance-archive"');
-    expect(html).toContain('演出狀態');
+    expect(html).toContain('<ol class="performance-archive__tracks"');
     expect(html).not.toContain('library-track-row__playback-control');
     expect(html).not.toContain('library-track-row__separation-action');
     expect(html).not.toContain('library-track-table__sort"');
     expect(html).toContain('Archived show');
-    for (const key of ['one', 'two', 'manual'])
-      expect(html).toContain(`data-occurrence-id="${key}"`);
+    expect(
+      [...html.matchAll(/data-occurrence-id="([^"]+)"/gu)].map(
+        ([, key]) => key,
+      ),
+    ).toEqual(['one', 'two', 'manual', 'mv', 'missing']);
+    expect(html).toContain(
+      '在曲庫中找出「Lucid Dreams (Official Music Video)」',
+    );
+    expect(html).toContain('前往藝人：Juice WRLD');
+    expect(html).toContain('前往藝人：Guest');
+    expect(html).toMatch(/class="performance-archive-track__source"[^>]*>MV</u);
+    expect(html).toContain('/video.jpg');
+    expect(html).toContain('無本機曲目');
+    expect(html).toContain('performance-archive-track__status--interrupted');
+    expect(html).not.toContain('在曲庫中找出「Removed recording」');
+    expect(html).toContain('Archived credit');
+    expect(html).not.toContain('前往藝人：Archived credit');
     expect(html).toMatch(/完成\s3\s項/u);
     expect(html).not.toContain('Not performed');
     expect(html).toContain('手動曲目');
@@ -121,30 +235,21 @@ describe('archive collection document', () => {
     expect(linkIcon).toBeGreaterThan(exportIcon);
     expect(html).not.toContain('加入演出待唱');
     expect(html).toContain('collection-action-rail__actions');
-    expect(html).toContain('library-track-table__header--scroll-shadow');
     expect(html).not.toContain('collection-action-rail__tools');
     expect(html).not.toContain('播放此封存場次');
     expect(html).not.toContain('performance-archive__actions');
     const embedded = await render({ embedded: true });
     expect(embedded).not.toContain('另存本場播放清單');
     expect(embedded).not.toContain('app-folder-dossier');
-    expect(embedded).toContain('library-track-table--compact');
-    expect(embedded).not.toContain(
-      'library-track-table__header--scroll-shadow',
-    );
-    expect(embedded).toContain('library-track-row--compact-stacked');
-    expect(embedded).not.toContain('library-track-row--compact-inline');
-    expect(embedded).toContain('Archived show');
+    expect(embedded).toContain('<ol class="performance-archive__tracks"');
+    expect(embedded).not.toContain('Archived show');
     expect(embedded.replaceAll(/<!--[\s\S]*?-->/gu, '')).toMatch(
-      /<p[^>]*>2026\/10\/20[^<]*<\/p><p[^>]*>完成\s3\s項<\/p>/u,
+      /<p class="performance-archive__summary"[^>]*><span[^>]*>2026\/10\/20[^<]*<\/span><span[^>]*>演出\s5\s項 · 完成\s3\s項<\/span><\/p>/u,
     );
     expect(embedded).not.toContain('儲存於');
     expect(embedded).toMatch(/完成\s3\s項/u);
     expect(embedded).toContain('MY FIRST STORY');
-    expect(embedded).toContain('曲長');
     expect(embedded).toContain('2:05');
-    expect(embedded).toContain('library-track-row__status-detail');
-    expect(embedded).toContain('演出狀態');
     expect(embedded).toContain('匯出時間點');
     expect(embedded).toMatch(
       /class="ui-visually-hidden"[^>]*>連結本場影片<\/span>/u,

@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPerformanceSessionPlanStore } from './performanceSessionPlan.js';
+import { resolveSessionCoverPath } from './performanceSessionArchive.js';
 import { loadPlaylists, savePerformancePlaylist } from './playlists.js';
 
 let directory, store;
@@ -24,6 +25,41 @@ function prepare() {
   return store.ensureSession(tracks);
 }
 describe('explicit performance session archive', () => {
+  it('persists one cover for both projections and replaces or resets it safely', () => {
+    const { sessionId } = prepare();
+    const image = path.resolve(
+      'prototypes/performance-calendar/art/stage.webp',
+    );
+    expect(() => store.setSessionCover(sessionId, image, tracks)).toThrow();
+    store.archiveSession({ sessionId, name: 'Finished' }, tracks);
+    const { coverUrl } = store.setSessionCover(sessionId, image, tracks)
+      .archives[0];
+    const reloaded = createPerformanceSessionPlanStore({ directory });
+    expect(reloaded.getSession(sessionId, tracks).coverUrl).toBe(coverUrl);
+    const filename = new URL(coverUrl).pathname.split('/').at(-1);
+    const file = resolveSessionCoverPath(directory, sessionId, filename);
+    expect(fs.readFileSync(file)).toEqual(fs.readFileSync(image));
+    expect(resolveSessionCoverPath(directory, '..', filename)).toBeNull();
+    expect(() =>
+      store.setSessionCover(
+        sessionId,
+        path.join(directory, 'performance-session-plan.json'),
+        tracks,
+      ),
+    ).toThrow();
+    expect(reloaded.getSession(sessionId, tracks).coverUrl).toBe(coverUrl);
+    const replaced = store.setSessionCover(sessionId, image, tracks)
+      .archives[0];
+    expect(replaced.coverUrl).not.toBe(coverUrl);
+    expect(fs.existsSync(file)).toBe(false);
+    expect(
+      store.setSessionCover(sessionId, null, tracks).archives[0],
+    ).not.toHaveProperty('coverUrl');
+    expect(reloaded.getSession(sessionId, tracks)).not.toHaveProperty(
+      'coverUrl',
+    );
+  });
+
   it('reads only the current unfinished session identity for a stream-end reminder', () => {
     expect(store.getArchivableSessionId()).toBeNull();
     expect(fs.readdirSync(directory)).toEqual([]);

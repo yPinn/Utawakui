@@ -1731,6 +1731,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
     }),
   getPerformanceSession: (sessionId) =>
     ipcRenderer.invoke('performance-session-plan:get-session', { sessionId }),
+  choosePerformanceSessionCover: (sessionId) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:choose-archive-cover',
+      sessionId,
+    ),
+  resetPerformanceSessionCover: (sessionId) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:reset-archive-cover',
+      sessionId,
+    ),
   getPlatformVideoAccount: () =>
     ipcRenderer.invoke('session-platform-video:status'),
   connectPlatformVideoAccount: () =>

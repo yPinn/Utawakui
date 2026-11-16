@@ -49,6 +49,7 @@ const props = defineProps({
   canReorderEntries: { type: Boolean, default: false },
   canReorderPlaylistTracks: { type: Boolean, default: false },
   selectedTrackId: { type: String, default: '' },
+  revealTrack: { type: Object, default: null },
   selectedEntryKey: { type: String, default: '' },
   currentTrackId: { type: String, default: '' },
   playingTrackId: { type: String, default: '' },
@@ -76,6 +77,7 @@ const emit = defineEmits([
   'layoutChange',
   'toggleSort',
   'selectTrack',
+  'trackRevealed',
   'activateTrack',
   'togglePlayback',
   'navigateAlbum',
@@ -115,6 +117,13 @@ function rowKey(entry) {
 }
 
 const bodyList = shallowRef(null);
+const revealEntry = computed(() =>
+  props.revealTrack
+    ? projectedEntries.value.find(
+        (entry) => entry.track?.id === props.revealTrack.id,
+      )
+    : undefined,
+);
 const {
   rows: renderedRows,
   rowAttrs,
@@ -125,17 +134,32 @@ const {
   items: () => projectedEntries.value,
   keyOf: rowKey,
   threshold: () => props.virtualizeAbove,
-  // Dragged rows stay mounted so dragend survives scrolling.
   pinnedKeys: () => {
-    if (!props.draggingTrackId) return [];
-    const dragged = projectedEntries.value.find(
-      (entry) => reorderId(entry) === props.draggingTrackId,
-    );
-    return dragged ? [rowKey(dragged)] : [];
+    const dragged =
+      props.draggingTrackId &&
+      projectedEntries.value.find(
+        (entry) => reorderId(entry) === props.draggingTrackId,
+      );
+    return [revealEntry.value, dragged].filter(Boolean).map(rowKey);
   },
   // First-frame guess from measured default rows; replaced once one renders.
   estimateRowHeight: () => (props.density === 'compact' ? 36 : 46),
 });
+
+watch(
+  [bodyList, revealEntry, () => props.revealTrack],
+  ([list, entry, request], _, onCleanup) => {
+    if (!list || !entry || !request) return;
+    const frame = requestAnimationFrame(() => {
+      const row = list.querySelector('[data-reveal-track]');
+      if (!row) return;
+      row.scrollIntoView({ block: 'center' });
+      emit('trackRevealed', request);
+    });
+    onCleanup(() => cancelAnimationFrame(frame));
+  },
+  { flush: 'post' },
+);
 
 const dragEnabled = computed(
   () =>
@@ -541,6 +565,7 @@ function reorderHeaderFromKeyboard(column, event) {
         v-for="{ key, item: entry, index, gap } in renderedRows"
         :key="key"
         v-bind="rowAttrs({ key, index, gap })"
+        :data-reveal-track="entry === revealEntry ? '' : undefined"
         :data-occurrence-id="
           profile.readOnly || profile.managedActions ? entry.key : undefined
         "

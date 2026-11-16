@@ -1,7 +1,6 @@
 <script setup>
 import {
   computed,
-  defineAsyncComponent,
   nextTick,
   onMounted,
   onBeforeUnmount,
@@ -28,17 +27,13 @@ import AppFolderPage from '../layout/AppFolderPage.vue';
 import UiActionMenu from '../ui/UiActionMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiModal from '../ui/UiModal.vue';
+import PerformanceSessionArchiveModal from '../performance-session/PerformanceSessionArchiveModal.vue';
 import AppFolderNoteEditorModal from '../layout/AppFolderNoteEditorModal.vue';
 import AppFolderNoteReaderModal from '../layout/AppFolderNoteReaderModal.vue';
 import AppFolderPhotoTextEditorModal from '../layout/AppFolderPhotoTextEditorModal.vue';
 import FolderAssetPreviewModal from './FolderAssetPreviewModal.vue';
 import LibraryFolderArtifactLayer from './LibraryFolderArtifactLayer.vue';
 import { t } from '../../utils/i18n.js';
-
-const PerformanceSessionArchive = defineAsyncComponent(
-  () => import('../performance-session/PerformanceSessionArchive.vue'),
-);
 
 const { state: playlistState, selectedPlaylist } = usePlaylists();
 const performancePlan = usePerformanceSessionPlan();
@@ -52,6 +47,7 @@ const performanceRecord = computed(() => {
   );
   return {
     id,
+    name: archive?.name,
     summary: archive
       ? performanceArchiveSummary(archive, { multiline: true })
       : '',
@@ -459,19 +455,11 @@ onBeforeUnmount(() => {
       />
     </template>
   </AppFolderPage>
-  <UiModal
-    :open="Boolean(recordOpenFor)"
-    :title="t('session.archive.thisPerformance')"
-    size="notice"
-    max-block-size="small"
+  <PerformanceSessionArchiveModal
+    :session-id="recordOpenFor"
+    :session-name="performanceRecord?.name"
     @close="recordOpenFor = null"
-  >
-    <PerformanceSessionArchive
-      v-if="recordOpenFor"
-      :session-id="recordOpenFor"
-      embedded
-    />
-  </UiModal>
+  />
 
   <AppFolderNoteReaderModal
     :open="Boolean(readNote)"

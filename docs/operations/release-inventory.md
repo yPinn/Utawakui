@@ -734,7 +734,7 @@ scripts/outputPerformanceProbe.mjs、scripts/output-performance-probe.mjs 與 sc
 
 ## Performance session archive and export runtime
 
-`electron/lib/performanceSessionArchive.js` and `electron/main/performanceSessionHistoryHandlers.js` use the generated Main bundle. No new dependency or external executable is added. `performance-session-plan.json` remains library-owned, with atomic current-session rotation and scalar archives/timelines; `playlists.json` stores populated exports and their idempotency keys. Main-only fixed IPC handles selected-session reads, archive, preview and save; the renderer never supplies storage paths or media URLs. The existing independent OBS session files remain under userData.
+`electron/lib/performanceSessionArchive.js` and `electron/main/performanceSessionHistoryHandlers.js` use the generated Main bundle. No new dependency or external executable is added. `performance-session-plan.json` remains library-owned, with atomic current-session rotation and scalar archives/timelines. User-selected cover images stay under `performance-session-covers/` in the library and are served by the local media protocol. `playlists.json` stores populated exports and their idempotency keys. The renderer never supplies storage paths or media URLs. The existing independent OBS session files remain under userData.
 
 ## Release source catalog Phase 1
 

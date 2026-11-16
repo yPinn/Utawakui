@@ -1,10 +1,12 @@
 <script setup>
-import { computed, onScopeDispose, shallowRef, toRef } from 'vue';
-import { Copy, Download } from '../../icons/index.js';
+import { computed, onScopeDispose, shallowRef, toRef, watch } from 'vue';
+import { Copy, Download, ImagePlus, RotateCcw } from '../../icons/index.js';
 import { FOLDER_DOSSIER_ARTWORK_SIZE } from '../../constants/ui.js';
 import { useAppView } from '../../composables/useAppView.js';
+import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePerformanceArchive } from '../../composables/usePerformanceArchive.js';
+import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import {
@@ -15,14 +17,13 @@ import {
 import AppFolderDossier from '../layout/AppFolderDossier.vue';
 import AppFolderContentField from '../layout/AppFolderContentField.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
-import TrackTable from '../track/TrackTable.vue';
+import PerformanceArchiveTrackRow from './PerformanceArchiveTrackRow.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import CollectionActionRail from '../library/CollectionActionRail.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
-import UiStack from '../ui/UiStack.vue';
 import { t } from '../../utils/i18n.js';
 import PerformanceSessionPlatformVideos from './PerformanceSessionPlatformVideos.vue';
 
@@ -35,9 +36,21 @@ const { session, loading, error, refresh } = usePerformanceArchive(
   toRef(props, 'sessionId'),
 );
 const { state: library } = useLibrary();
-const { openLibraryContent } = useAppView();
+const emit = defineEmits(['navigate', 'session-name']);
+watch(
+  () => session.value?.name,
+  (name) => {
+    if (props.embedded && name) emit('session-name', name);
+  },
+  { immediate: true },
+);
+const { openLibraryContent, revealLibraryTrack } = useAppView();
+const { canJumpToAlbum, jumpToAlbum } = useAlbumNavigation();
 const playlists = usePlaylists();
 const timeline = useObsSessionExport();
+const { editArchiveCover } = usePerformanceSessionPlan();
+const editingCover = shallowRef(false);
+const coverError = shallowRef('');
 const saving = shallowRef(false);
 const saveError = shallowRef(false);
 let disposed = false;
@@ -50,6 +63,37 @@ const rows = computed(() =>
 const canSave = computed(() =>
   rows.value.some((row) => row.mode === 'library-track' && row.track),
 );
+
+function locateTrack({ track, isMusicVideo }) {
+  if (!track) return;
+  emit('navigate');
+  if (!isMusicVideo && canJumpToAlbum(track)) {
+    jumpToAlbum(track);
+  } else {
+    playlists.select(null);
+    playlists.setLibraryView('all');
+    openLibraryContent();
+  }
+  revealLibraryTrack(track.id);
+}
+
+async function changeCover(reset = false) {
+  if (editingCover.value || !session.value?.endedAt) return;
+  const id = session.value.id;
+  coverError.value = '';
+  editingCover.value = true;
+  try {
+    const saved = await editArchiveCover(id, {
+      reset,
+      onError: (message) => {
+        if (!disposed && props.sessionId === id) coverError.value = message;
+      },
+    });
+    if (saved && !disposed && props.sessionId === id) await refresh();
+  } finally {
+    editingCover.value = false;
+  }
+}
 
 async function createPlaylist() {
   if (!canSave.value || saving.value) return;
@@ -74,20 +118,6 @@ async function createPlaylist() {
     saving.value = false;
   }
 }
-const tableEntries = computed(() =>
-  rows.value.map((row, visibleIndex) => ({
-    key: row.key,
-    visibleIndex,
-    track: {
-      ...row.track,
-      id: row.track?.id ?? row.key,
-      title: row.title,
-      artist: row.artist,
-    },
-    performanceStatusText: row.status,
-    performanceStatusDetail: row.statusDetail,
-  })),
-);
 const coverTracks = computed(() => {
   const seen = new Set();
   return rows.value
@@ -128,46 +158,71 @@ const fields = computed(() => {
       t('session.archive.reload')
     }}</UiButton>
     <template v-if="session">
-      <AppFolderDossier
-        v-if="!embedded"
-        :title="session.name"
-        title-id="performance-archive-title"
-        :fields="fields"
+      <slot name="artwork" :cover-url="session.coverUrl || ''" />
+      <header
+        class="performance-archive__header"
+        :class="{ 'performance-archive__header--embedded': embedded }"
       >
-        <template #artwork
-          ><UiCollageThumb
-            :tracks="coverTracks"
-            :size="FOLDER_DOSSIER_ARTWORK_SIZE"
-            radius="0"
-        /></template>
-      </AppFolderDossier>
-      <UiStack v-else direction="column" :gap="1">
-        <h3 class="performance-archive__name">{{ session.name }}</h3>
-        <UiHint v-for="field in fields" :key="field.key">{{
-          field.text
-        }}</UiHint>
-      </UiStack>
-      <CollectionActionRail
-        :entity-label="t('session.archive.entity')"
-        :show-search="false"
-        :show-density="false"
-      >
-        <template #actions>
-          <UiButton
-            v-if="(!embedded || allowSavePlaylist) && canSave"
-            :icon="Copy"
-            :disabled="saving"
-            @click="createPlaylist"
-            >{{ t('session.archive.savePlaylist') }}</UiButton
-          >
-          <UiIconButton
-            :icon="Download"
-            :label="t('obs.export.title')"
-            @click="timeline.openForArrangement(session.id)"
-          />
-          <PerformanceSessionPlatformVideos :session-id="session.id" />
-        </template>
-      </CollectionActionRail>
+        <AppFolderDossier
+          v-if="!embedded"
+          :title="session.name"
+          title-id="performance-archive-title"
+          :fields="fields"
+        >
+          <template #artwork
+            ><UiCollageThumb
+              :tracks="coverTracks"
+              :size="FOLDER_DOSSIER_ARTWORK_SIZE"
+              radius="0"
+          /></template>
+        </AppFolderDossier>
+        <p v-else-if="fields.length" class="performance-archive__summary">
+          <span v-for="field in fields" :key="field.key">{{ field.text }}</span>
+        </p>
+        <CollectionActionRail
+          class="performance-archive__rail"
+          :entity-label="t('session.archive.entity')"
+          :show-search="false"
+          :show-density="false"
+        >
+          <template #actions>
+            <template v-if="session.endedAt">
+              <UiIconButton
+                :icon="ImagePlus"
+                :label="t('session.archive.chooseCover')"
+                :disabled="editingCover"
+                @click="changeCover()"
+              />
+              <UiIconButton
+                v-if="session.coverUrl"
+                :icon="RotateCcw"
+                :label="t('session.archive.resetCover')"
+                :disabled="editingCover"
+                @click="changeCover(true)"
+              />
+            </template>
+            <UiButton
+              v-if="(!embedded || allowSavePlaylist) && canSave"
+              :icon="Copy"
+              :disabled="saving"
+              @click="createPlaylist"
+              >{{ t('session.archive.savePlaylist') }}</UiButton
+            >
+            <UiIconButton
+              :icon="Download"
+              :label="t('obs.export.title')"
+              @click="timeline.openForArrangement(session.id)"
+            />
+            <PerformanceSessionPlatformVideos :session-id="session.id" />
+          </template>
+        </CollectionActionRail>
+      </header>
+      <UiNotice
+        v-if="coverError"
+        tone="warning"
+        compact
+        :message="coverError"
+      />
       <UiNotice
         v-if="saveError"
         tone="warning"
@@ -182,15 +237,15 @@ const fields = computed(() => {
               : 'session.archive.empty',
           )
         }}</UiHint>
-        <TrackTable
-          v-else
-          collection-kind="performance-archive"
-          :density="embedded ? 'compact' : 'list'"
-          :header-scroll-shadow="!embedded"
-          :class="{ 'performance-archive__embedded-table': embedded }"
-          :entries="tableEntries"
-          :content-key="session.id"
-        />
+        <ol v-else class="performance-archive__tracks" role="list">
+          <PerformanceArchiveTrackRow
+            v-for="row in rows"
+            :key="row.key"
+            :row="row"
+            @locate="locateTrack"
+            @navigate="emit('navigate')"
+          />
+        </ol>
       </AppFolderContentField>
     </template>
   </section>
@@ -205,14 +260,42 @@ const fields = computed(() => {
 .performance-archive > .ui-btn {
   justify-self: start;
 }
-.performance-archive__embedded-table {
-  /* Close the modal scrollport's focus inset when the table header sticks. */
-  --ui-folder-sticky-offset: calc(-1 * var(--ui-modal-focus-safe-inset));
+.performance-archive__header {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-space-3);
 }
-.performance-archive__name {
+.performance-archive__header--embedded {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-block-end: var(--ui-space-3);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+}
+.performance-archive__header--embedded .performance-archive__rail {
+  max-inline-size: 100%;
+  margin-inline-start: auto;
+  padding-block-end: 0;
+}
+.performance-archive__tracks {
+  display: grid;
+  gap: var(--ui-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.performance-archive__summary {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  min-inline-size: 0;
+  gap: var(--ui-space-1) var(--ui-space-3);
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: var(--ui-type-body-size);
-  font-weight: var(--ui-font-weight-semibold);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  font-weight: var(--ui-type-caption-weight);
+  line-height: var(--ui-type-caption-line-height);
+  font-variant-numeric: tabular-nums;
 }
 </style>

@@ -316,6 +316,10 @@
     "title": "Session not archived",
     "message": "The current data is kept. Try again."
   },
+  "PERFORMANCE_SESSION_COVER_FAILED": {
+    "title": "Session cover not updated",
+    "message": "The session cover couldn't be updated. Try again."
+  },
   "PERFORMANCE_SESSION_EXPORT_FAILED": {
     "title": "Playlist not saved",
     "message": "Try again."

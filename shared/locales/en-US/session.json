@@ -184,6 +184,10 @@
     "entity": "this archived session",
     "savePlaylist": "Save session playlist",
     "tracksLabel": "Tracks performed in this session",
+    "musicVideo": "MV",
+    "chooseCover": "Change session cover",
+    "resetCover": "Reset session cover",
+    "locateTrack": "Find {title} in the library",
     "empty": "No track performances were recorded in this session.",
     "markersOnly": "This session contains markers only.",
     "record": "Session record",
@@ -265,6 +269,7 @@
     "fallback": "This action is invalid."
   },
   "main": {
+    "coverInvalid": "Choose a valid JPG, PNG or WebP image up to 10 MB.",
     "sourceNotFound": "This playlist can't be found; the library may have been updated.",
     "dataUnreadable": "The session data can't be read; the original file is kept. Repair the data first.",
     "performanceInvalid": "The performance ID is invalid.",

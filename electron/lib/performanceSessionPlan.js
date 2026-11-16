@@ -1019,6 +1019,7 @@ function createPerformanceSessionPlanStore({
     };
   }
   const sessions = createSessionOperations({
+    directory,
     load,
     mutate,
     project: projectDocument,

@@ -280,6 +280,8 @@ const MAIN_INVOKE_CHANNELS = [
   'performer-view:publish',
   'performance-session-plan:append-placeholders',
   'performance-session-plan:archive',
+  'performance-session-plan:choose-archive-cover',
+  'performance-session-plan:reset-archive-cover',
   'performance-session-plan:create-archive-playlist',
   'performance-session-plan:get-session',
   'session-platform-video:status',
