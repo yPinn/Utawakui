@@ -1,4 +1,8 @@
 {
+  "TRACK_LANGUAGES_FAILED": {
+    "title": "演唱語言處理未完成",
+    "message": "無法處理演唱語言，請再試一次。"
+  },
   "TRACK_STYLE_TAGS_FAILED": {
     "title": "風格標籤處理未完成",
     "message": "無法處理曲庫風格標籤，請再試一次。"

@@ -150,6 +150,8 @@ const MAIN_INVOKE_CHANNELS = [
   'library:tags-preview',
   'library:tags-commit',
   'library:tags-restore',
+  'library:track-languages-get',
+  'library:track-languages-save',
   'library:track-style-tags-apply-adoption',
   'library:track-style-tags-get',
   'library:track-style-tags-import',

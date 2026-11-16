@@ -195,6 +195,9 @@ const {
   registerLibraryTrackStyleTagsHandlers,
 } = require('./main/library/trackStyleTagsHandlers');
 const {
+  registerLibraryTrackLanguagesHandlers,
+} = require('./main/library/trackLanguagesHandlers');
+const {
   createWorkOrganizationHost,
 } = require('./main/library/workOrganizationHost');
 const {
@@ -1577,6 +1580,14 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       dialog,
       getMainWindow: windowState.getMainWindow,
+      getLibraryContext: () => ({
+        dir: configState.resolveDownloadDir(configState.getConfig()),
+        epoch: workLibraryEpoch,
+      }),
+      recordDiagnostic,
+    });
+    registerLibraryTrackLanguagesHandlers({
+      ipcMain,
       getLibraryContext: () => ({
         dir: configState.resolveDownloadDir(configState.getConfig()),
         epoch: workLibraryEpoch,

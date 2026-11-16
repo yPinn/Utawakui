@@ -1116,6 +1116,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
       tags,
       dismissed,
     ),
+  getTrackLanguages: (trackId) =>
+    ipcRenderer.invoke('library:track-languages-get', trackId),
+  saveTrackLanguages: (trackId, token, languages, primary) =>
+    ipcRenderer.invoke(
+      'library:track-languages-save',
+      trackId,
+      token,
+      languages,
+      primary,
+    ),
   importTrackStyleCandidates: () =>
     ipcRenderer.invoke('library:track-style-tags-import'),
   previewTrackStyleAdoption: () =>

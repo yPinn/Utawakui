@@ -1,15 +1,19 @@
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const { createHmac, randomBytes, randomUUID } = require('node:crypto');
+const { randomUUID } = require('node:crypto');
 const { hasControlCharacters } = require('../textGuards');
 const { hashAudioFile } = require('../works/trackBinding');
 const { loadIndex } = require('./metadataIndex');
-const { isBoundedTrackId, resolveTrackAudioPath } = require('./paths');
+const {
+  createTrackBinding,
+  isStoreTrackId: validId,
+  readJson,
+  readTrackStore,
+  sha256Hex: digest,
+  writeTrackStore,
+} = require('./trackSidecarStore');
 
-const maxBytes = 8 * 1024 * 1024;
-const digest = /^[a-f0-9]{64}$/u;
+const storeName = 'track style';
 const manualFile = 'style-tags.json';
 const candidateFile = 'style-candidates.json';
 const maxAdoptionTracks = 1000;
@@ -18,13 +22,6 @@ function invalid(code = 'invalid') {
   return Object.assign(new Error(`Invalid track style operation (${code})`), {
     styleStatus: code,
   });
-}
-
-function validId(id) {
-  return (
-    isBoundedTrackId(id) &&
-    !['__proto__', 'prototype', 'constructor'].includes(id)
-  );
 }
 
 function styleLabel(value) {
@@ -54,55 +51,12 @@ function uniqueLabels(labels, max) {
   ];
 }
 
-function readJson(file, limit = maxBytes) {
-  const fd = fs.openSync(file, 'r');
-  try {
-    const stat = fs.fstatSync(fd);
-    if (!stat.isFile() || stat.size > limit) throw invalid();
-    const data = Buffer.alloc(stat.size + 1);
-    if (fs.readSync(fd, data, 0, data.length, 0) !== stat.size) throw invalid();
-    return JSON.parse(
-      data
-        .subarray(0, stat.size)
-        .toString('utf8')
-        .replace(/^\uFEFF/u, ''),
-    );
-  } finally {
-    fs.closeSync(fd);
-  }
-}
-
 function readStore(dir, filename) {
-  let doc;
-  try {
-    doc = readJson(path.join(dir, filename));
-  } catch (error) {
-    if (error.code === 'ENOENT') return Object.create(null);
-    throw new Error('Unable to read the track style store', { cause: error });
-  }
-  if (
-    doc?.version !== 1 ||
-    !doc.tracks ||
-    typeof doc.tracks !== 'object' ||
-    Array.isArray(doc.tracks)
-  )
-    throw new Error('Invalid track style store');
-  return Object.assign(Object.create(null), doc.tracks);
+  return readTrackStore(dir, filename, { name: storeName, invalid });
 }
 
 function writeStore(dir, filename, tracks) {
-  const document = JSON.stringify({ version: 1, tracks }, null, 2);
-  if (Buffer.byteLength(document) > maxBytes)
-    throw new Error('Track style store exceeds size limit');
-  const target = path.join(dir, filename);
-  const temporary = `${target}.${randomUUID()}.tmp`;
-  fs.writeFileSync(temporary, document, { flag: 'wx' });
-  try {
-    fs.renameSync(temporary, target);
-  } catch (error) {
-    fs.rmSync(temporary, { force: true });
-    throw error;
-  }
+  writeTrackStore(dir, filename, tracks, { name: 'Track style' });
 }
 
 function candidateList(value) {
@@ -162,7 +116,7 @@ function readEdit(store, trackId) {
 function readImport(file) {
   let doc;
   try {
-    doc = readJson(file, 2 * 1024 * 1024);
+    doc = readJson(file, 2 * 1024 * 1024, invalid);
   } catch (error) {
     if (error instanceof SyntaxError) throw invalid();
     throw error;
@@ -205,43 +159,13 @@ function createTrackStyleTagsService({
   hashAudio = hashAudioFile,
   onCandidateReadError = () => {},
 }) {
-  const secret = randomBytes(32);
+  const { checkScope, audioBinding, editToken } = createTrackBinding({
+    getLibraryContext,
+    hashAudio,
+    invalid,
+  });
   let importing = false;
   let adoptionPreview = null;
-
-  function checkScope(scope) {
-    const current = getLibraryContext();
-    if (scope.dir !== current.dir || scope.epoch !== current.epoch)
-      throw invalid('stale');
-  }
-
-  async function audioBinding(scope, trackId) {
-    if (!validId(trackId)) throw invalid();
-    const file = resolveTrackAudioPath(scope.dir, trackId);
-    if (!file) return null;
-    try {
-      const root = fs.realpathSync(scope.dir);
-      const canonical = fs.realpathSync(file);
-      if (path.relative(root, canonical) !== path.relative(scope.dir, file))
-        return null;
-      const { value } = await hashAudio(canonical, {
-        check: () => checkScope(scope),
-      });
-      checkScope(scope);
-      return value;
-    } catch (error) {
-      if (error.code === 'ENOENT' || error.code === 'WORKS_STALE') return null;
-      throw error;
-    }
-  }
-
-  function editToken(scope, trackId, audio, edit) {
-    return createHmac('sha256', secret)
-      .update(
-        JSON.stringify([scope.epoch, scope.dir, trackId, audio, edit || null]),
-      )
-      .digest('hex');
-  }
 
   function view(scope, trackId, audio, edit) {
     let candidates = [];

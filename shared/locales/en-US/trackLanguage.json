@@ -1,0 +1,23 @@
+{
+  "heading": "Sung languages",
+  "names": {
+    "cmn": "Mandarin",
+    "yue": "Cantonese",
+    "nanTW": "Taiwanese Hokkien",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "en": "English",
+    "zh": "Chinese (unspecified)",
+    "zxx": "No vocals"
+  },
+  "primary": "Main language",
+  "primaryNone": "Not set",
+  "loading": "Loading sung languages.",
+  "retry": "Retry",
+  "audioChanged": "The audio file for this track has changed. Review the sung languages again.",
+  "confirm": "Confirm languages",
+  "invalid": "The sung language data isn't valid.",
+  "stale": "The library, audio file, or sung languages changed. Reopen this track before editing again.",
+  "missing": "The audio file for this track couldn't be found.",
+  "failed": "Couldn't process sung languages. Try again."
+}

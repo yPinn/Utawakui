@@ -1,6 +1,7 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { useAppConfirmation } from './useAppConfirmation.js';
 import { useLibrary } from './useLibrary.js';
+import { useTrackLanguageEditor } from './useTrackLanguageEditor.js';
 import { useTrackMetadataEditor } from './useTrackMetadataEditor.js';
 import { useTrackStyleEditor } from './useTrackStyleEditor.js';
 import { useWorkOrganization } from './useWorkOrganization.js';
@@ -10,6 +11,7 @@ const work = useWorkOrganization();
 const { refresh } = useLibrary();
 const metadata = useTrackMetadataEditor({ refresh });
 const style = useTrackStyleEditor();
+const language = useTrackLanguageEditor();
 const { confirm } = useAppConfirmation();
 const state = reactive({
   section: 'organization',
@@ -21,7 +23,11 @@ const canEditMetadata = computed(
   () => work.state.track?.sourceType === 'local-file',
 );
 const isDirty = computed(
-  () => metadata.isDirty.value || work.isDirty.value || style.isDirty.value,
+  () =>
+    metadata.isDirty.value ||
+    work.isDirty.value ||
+    style.isDirty.value ||
+    language.isDirty.value,
 );
 const busy = computed(
   () =>
@@ -29,7 +35,8 @@ const busy = computed(
     metadata.state.isSaving ||
     metadata.state.isArtworkPreparing ||
     work.state.saving ||
-    style.pending.value,
+    style.pending.value ||
+    language.pending.value,
 );
 
 watch(
@@ -39,12 +46,15 @@ watch(
       generation += 1;
       metadata.close();
       style.reset();
+      language.reset();
       state.partialMessage = '';
     }
   },
 );
 watch([() => state.section, () => work.state.track?.id], ([section, id]) => {
-  if (section === 'metadata' && id) void style.load(id);
+  if (section !== 'metadata' || !id) return;
+  void language.load(id);
+  void style.load(id);
 });
 
 function setSection(section) {
@@ -69,6 +79,7 @@ async function close() {
   await work.close({ discardChanges: true });
   metadata.close();
   style.reset();
+  language.reset();
   state.partialMessage = '';
   return true;
 }
@@ -122,6 +133,10 @@ async function save({ reconfirm = false } = {}) {
         return false;
       }
     }
+    if (language.isDirty.value && !(await language.save())) {
+      if (stillCurrent()) setSection('metadata');
+      return false;
+    }
     if (style.isDirty.value && !(await style.save())) {
       if (stillCurrent()) setSection('metadata');
       return false;
@@ -136,6 +151,7 @@ function dispose() {
   work.dispose();
   metadata.close();
   style.reset();
+  language.reset();
   state.section = 'organization';
   state.partialMessage = '';
 }
@@ -145,6 +161,7 @@ export function useSongEditor() {
     work,
     metadata,
     style,
+    language,
     canEditMetadata,
     isDirty,
     busy,

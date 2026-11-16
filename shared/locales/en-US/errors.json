@@ -1,4 +1,8 @@
 {
+  "TRACK_LANGUAGES_FAILED": {
+    "title": "Sung languages didn't finish",
+    "message": "Couldn't process sung languages. Try again."
+  },
   "TRACK_STYLE_TAGS_FAILED": {
     "title": "Style tags didn't finish",
     "message": "Couldn't process library style tags. Try again."

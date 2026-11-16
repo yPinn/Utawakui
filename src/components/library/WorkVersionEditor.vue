@@ -8,6 +8,7 @@ import {
 } from 'vue';
 import { useSongEditor } from '../../composables/useSongEditor.js';
 import TrackMetadataFields from './TrackMetadataFields.vue';
+import TrackLanguagePanel from './TrackLanguagePanel.vue';
 import TrackStyleTagsPanel from './TrackStyleTagsPanel.vue';
 import TrackVideoEditor from './TrackVideoEditor.vue';
 import TrackContextActions from '../playback/context/TrackContextActions.vue';
@@ -257,6 +258,11 @@ onUnmounted(songEditor.dispose);
                   />
                 </div>
               </UiDisclosure>
+              <TrackLanguagePanel
+                :editor="songEditor.language"
+                :disabled="songEditor.busy.value"
+                @reload="songEditor.language.load(state.track.id)"
+              />
               <TrackStyleTagsPanel
                 :editor="songEditor.style"
                 :disabled="songEditor.busy.value"
