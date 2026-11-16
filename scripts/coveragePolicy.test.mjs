@@ -127,6 +127,7 @@ describe('coverage policy', () => {
     'overlay/shared/state.mjs',
     'src/components/demo/demoTrackCollectionProfiles.js',
     'src/icons/index.js',
+    'src/utils/trackPreviewLyricChorus.js',
   ])('marks re-export-only module %s as coverage-neutral', (file) => {
     expect(classifyAppSource(file)).toEqual({
       status: 'coverage-neutral',

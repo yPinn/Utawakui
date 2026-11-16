@@ -19,6 +19,7 @@ const COVERAGE_NEUTRAL_SOURCES = new Map([
   ['src/components/demo/demoImageFixtures.js', 'static-fixture'],
   ['src/components/demo/demoTrackCollectionProfiles.js', 're-export-only'],
   ['src/icons/index.js', 're-export-only'],
+  ['src/utils/trackPreviewLyricChorus.js', 're-export-only'],
   ['src/components/ui/uiTestHost.js', 'test-infrastructure'],
   ['src/utils/catalogSourceText.js', 'test-infrastructure'],
   // Node/vitest has no real Web Audio implementation (same posture as
