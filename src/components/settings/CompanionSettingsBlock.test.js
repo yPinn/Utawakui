@@ -77,3 +77,25 @@ describe('CompanionSettingsBlock', () => {
     expect(none).toContain('還沒有配對的手機');
   });
 });
+
+describe('CompanionPairingQr', () => {
+  it('renders a scannable SVG for the pairing address', async () => {
+    const { default: CompanionPairingQr } =
+      await import('./CompanionPairingQr.vue');
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(CompanionPairingQr, {
+            value: 'http://192.168.1.20:8710/m/#pair=abc',
+            label: '配對用 QR 碼',
+          }),
+      }),
+    );
+    expect(html).toContain('role="img"');
+    expect(html).toContain('aria-label="配對用 QR 碼"');
+    const [, width, height] = html.match(/viewBox="0 0 (\d+) (\d+)"/iu) ?? [];
+    expect(Number(width)).toBeGreaterThan(20);
+    expect(height).toBe(width);
+    expect(html).toMatch(/d="M\d+ \d+h1v1h-1z/u);
+  });
+});

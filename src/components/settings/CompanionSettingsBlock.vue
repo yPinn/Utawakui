@@ -9,6 +9,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
+import CompanionPairingQr from './CompanionPairingQr.vue';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
@@ -133,6 +134,10 @@ onBeforeUnmount(() => companion.stop());
           role="status"
         >
           <strong>{{ t('companion.pairingTitle') }}</strong>
+          <CompanionPairingQr
+            :value="companion.pairing.value.url"
+            :label="t('companion.pairingQr')"
+          />
           <code class="companion-settings-block__url">{{
             companion.pairing.value.url
           }}</code>
