@@ -2,6 +2,7 @@
   "electron/lib/importResolver.js": 1,
   "electron/lib/japaneseReading/corrections.js": 1,
   "electron/lib/kugou/identity.js": 7,
+  "electron/lib/library/trackLanguageCandidates.js": 12,
   "electron/lib/lyricsAcoustic/capability.js": 1,
   "electron/lib/lyricsProviders/timelineComparison.js": 1,
   "electron/lib/lyricsReading.js": 4,
