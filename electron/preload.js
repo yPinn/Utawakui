@@ -807,6 +807,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('companion:command', listener);
     return () => ipcRenderer.removeListener('companion:command', listener);
   },
+  approveCompanionPairing: (requestId) =>
+    ipcRenderer.invoke('companion:approve-pairing', requestId),
+  denyCompanionPairing: (requestId) =>
+    ipcRenderer.invoke('companion:deny-pairing', requestId),
   reportCompanionCommandResult: (id, status) =>
     ipcRenderer.invoke('companion:command-result', id, status),
   onCompanionStatusChanged: (callback) => {

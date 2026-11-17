@@ -6,6 +6,7 @@ import { WebSocket } from 'ws';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createCompanionDeviceStore } from './deviceStore.js';
 import { createPairingCodes } from './pairing.js';
+import { createPairingApprovals } from './pairingApproval.js';
 import { createReaderHub } from './readerHub.js';
 import { createCompanionServer } from './server.js';
 
@@ -54,12 +55,14 @@ async function startFlow() {
     },
     onReaderCount: (count) => readerCounts.push(count),
   });
+  const approvals = createPairingApprovals();
   const server = createCompanionServer({
     address: '127.0.0.1',
     port,
     pairing,
     devices,
     readers,
+    approvals,
   });
   await server.start();
   cleanups.push(() => server.stop());
@@ -69,6 +72,7 @@ async function startFlow() {
     origin,
     devices,
     pairing,
+    approvals,
     readers,
     readerCounts,
     publish(next) {
@@ -78,14 +82,14 @@ async function startFlow() {
   };
 }
 
-function postPair(flow, body) {
+function postPair(flow, body, path = '/m/api/v1/pair') {
   return new Promise((resolve, reject) => {
     const request = http.request(
       {
         host: '127.0.0.1',
         port: flow.port,
         method: 'POST',
-        path: '/m/api/v1/pair',
+        path,
         headers: {
           host: `127.0.0.1:${flow.port}`,
           origin: flow.origin,
@@ -130,12 +134,31 @@ describe('companion pairing and reading flow', () => {
   it('pairs once, streams snapshots and disconnects on removal', async () => {
     const flow = await startFlow();
     const { code } = flow.pairing.begin();
-    const paired = await postPair(flow, { code, label: 'Pixel' });
+    const requested = await postPair(flow, { code, label: 'Pixel' });
+    expect(requested.status).toBe(202);
+    expect(flow.devices.list()).toEqual([]);
+    expect((await postPair(flow, { code, label: 'Again' })).status).toBe(400);
+
+    // Nothing pairs until the computer approves the shown match code.
+    const request = flow.approvals.status();
+    expect(request).toMatchObject({
+      label: 'Pixel',
+      matchCode: requested.body.matchCode,
+    });
+    flow.approvals.approve(
+      request.id,
+      (label) => flow.devices.add(label).credential,
+    );
+    const paired = await postPair(
+      flow,
+      { claimToken: requested.body.claimToken },
+      '/m/api/v1/pair/status',
+    );
     expect(paired.status).toBe(200);
     expect(flow.devices.list()).toEqual([
       expect.objectContaining({ label: 'Pixel' }),
     ]);
-    expect((await postPair(flow, { code, label: 'Again' })).status).toBe(400);
+    paired.body.device = flow.devices.list()[0];
 
     const reader = openReader(flow, paired.body.credential);
     await expect.poll(() => reader.messages.length).toBe(1);

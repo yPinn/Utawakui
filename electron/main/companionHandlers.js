@@ -54,6 +54,19 @@ function registerCompanionHandlers({
       { gated: false },
     ),
   );
+  ipcMain.handle('companion:approve-pairing', (_event, requestId) =>
+    run('approve-pairing', async () => ({
+      approved: runtime.approvePairing(requestId),
+    })),
+  );
+  // Refusing a phone never needs the gate, like removal.
+  ipcMain.handle('companion:deny-pairing', (_event, requestId) =>
+    run(
+      'deny-pairing',
+      async () => ({ denied: runtime.denyPairing(requestId) }),
+      { gated: false },
+    ),
+  );
   // The renderer reports how an admitted phone command ended.
   ipcMain.handle('companion:command-result', (_event, id, status) =>
     typeof id === 'string' && typeof status === 'string'

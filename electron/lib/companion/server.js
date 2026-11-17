@@ -3,6 +3,7 @@
 const http = require('node:http');
 const { WebSocketServer } = require('ws');
 const { parseCompanionCommand } = require('./commandGate');
+const { normalizeLabel } = require('./deviceStore');
 
 const MAX_BODY_BYTES = 1024;
 const SUBPROTOCOL = 'utawakui.companion.v1';
@@ -65,6 +66,8 @@ function createCompanionServer({
   isGateEnabled = () => true,
   loadPage = () => new Map(),
   readers = null,
+  approvals = null,
+  onPairingRequest = () => {},
   commands = null,
   createHttpServer = http.createServer,
 }) {
@@ -109,20 +112,35 @@ function createCompanionServer({
     return value === undefined || value === origin;
   }
 
+  // A valid code opens a request the computer must approve; the phone gets
+  // only a claim token and the match code to compare.
   async function pair(request, response) {
     const body = await readJsonBody(request);
     const fail = () => sendJson(response, 400, { error: 'pairing-failed' });
-    if (!body || typeof body !== 'object') return fail();
-    if (!pairing.claim(body.code)) return fail();
+    if (!body || typeof body !== 'object' || !approvals) return fail();
+    const label = normalizeLabel(body.label);
+    if (!label || !pairing.claim(body.code)) return fail();
+    const opened = approvals.open(label);
+    if (!opened) return sendJson(response, 409, { error: 'pairing-busy' });
     try {
-      const { device, credential } = devices.add(body.label);
-      return sendJson(response, 200, { credential, device });
-    } catch (error) {
-      return sendJson(response, 409, {
-        error:
-          error.companionStatus === 'full' ? 'devices-full' : 'pairing-failed',
-      });
+      onPairingRequest();
+    } catch {
+      // Settings refreshes on its own; the request stays valid.
     }
+    return sendJson(response, 202, opened);
+  }
+
+  async function pairStatus(request, response) {
+    const body = await readJsonBody(request);
+    const result = approvals?.poll(body?.claimToken) ?? { state: 'unknown' };
+    if (result.state === 'approved')
+      return sendJson(response, 200, {
+        state: 'approved',
+        credential: result.credential,
+      });
+    if (result.state === 'pending')
+      return sendJson(response, 202, { state: 'pending' });
+    return sendJson(response, 403, { state: result.state });
   }
 
   function bearer(request) {
@@ -158,6 +176,7 @@ function createCompanionServer({
 
   const routes = new Map([
     ['POST /m/api/v1/pair', pair],
+    ['POST /m/api/v1/pair/status', pairStatus],
     ['POST /m/api/v1/command', command],
   ]);
 

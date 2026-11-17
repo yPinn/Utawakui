@@ -53,6 +53,7 @@ function setup(overrides = {}) {
     describeNetworkScope: async () => state.scope,
     createServer,
     onChange,
+    ...(overrides.approvals ? { approvals: overrides.approvals } : {}),
   });
   return { runtime, state, servers, createServer, devices, pairing, onChange };
 }
@@ -155,6 +156,42 @@ describe('companion runtime', () => {
     expect(servers[0].closeDevice).toHaveBeenCalledWith('d1');
     runtime.revokeAll();
     expect(servers[0].closeDevice).toHaveBeenCalledTimes(2);
+  });
+
+  it('approves a waiting phone by issuing a credential, or denies it', async () => {
+    const approvals = {
+      approve: vi.fn((id, issue) => (issue('Pixel'), true)),
+      deny: vi.fn(() => true),
+      cancel: vi.fn(),
+      status: () => ({ id: 'r1', label: 'Pixel', matchCode: '1234' }),
+    };
+    const { runtime, devices } = setup({ approvals });
+    devices.add = vi.fn(() => ({ credential: 'c' }));
+    expect((await runtime.status()).pairing.request).toMatchObject({
+      matchCode: '1234',
+    });
+    expect(runtime.approvePairing('r1')).toBe(true);
+    expect(devices.add).toHaveBeenCalledWith('Pixel');
+    expect(runtime.denyPairing('r1')).toBe(true);
+    expect(() => runtime.approvePairing(1)).toThrow();
+    expect(() => runtime.denyPairing(null)).toThrow();
+  });
+
+  it('denies the request when the device list is full', () => {
+    const approvals = {
+      approve: vi.fn((id, issue) => issue('Pixel')),
+      deny: vi.fn(() => true),
+      cancel: vi.fn(),
+      status: () => null,
+    };
+    const { runtime, devices } = setup({ approvals });
+    devices.add = vi.fn(() => {
+      throw Object.assign(new Error('full'), { companionStatus: 'full' });
+    });
+    expect(() => runtime.approvePairing('r1')).toThrow(
+      expect.objectContaining({ companionStatus: 'full' }),
+    );
+    expect(approvals.deny).toHaveBeenCalledWith('r1');
   });
 
   it('builds a pairing URL with the code only in the fragment', async () => {

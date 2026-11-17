@@ -3,6 +3,7 @@
 const { isPrivateIpv4 } = require('./networkScope');
 const { createReaderHub } = require('./readerHub');
 const { createCommandAdmission } = require('./commandGate');
+const { createPairingApprovals } = require('./pairingApproval');
 
 const DEFAULT_PORT = 8710;
 const PORT_MIN = 1024;
@@ -48,6 +49,7 @@ function createCompanionRuntime({
   onReaderCount = () => {},
   createReaders = createReaderHub,
   dispatchCommand = null,
+  approvals = createPairingApprovals(),
   onChange = () => {},
 }) {
   let server = null;
@@ -56,6 +58,7 @@ function createCompanionRuntime({
 
   async function stopServer() {
     pairing.cancel();
+    approvals.cancel();
     const current = server;
     server = null;
     await current?.stop();
@@ -100,6 +103,8 @@ function createCompanionRuntime({
       isGateEnabled,
       loadPage,
       readers: createReaders({ devices, snapshots, onReaderCount }),
+      approvals,
+      onPairingRequest: () => onChange(),
       commands: dispatchCommand
         ? { admission: createCommandAdmission(), dispatch: dispatchCommand }
         : null,
@@ -152,7 +157,7 @@ function createCompanionRuntime({
       error,
       interfaces,
       devices: deviceList,
-      pairing: pairing.status(),
+      pairing: { ...pairing.status(), request: approvals.status() },
     };
   }
 
@@ -193,7 +198,34 @@ function createCompanionRuntime({
 
   function cancelPairing() {
     pairing.cancel();
+    approvals.cancel();
     onChange();
+  }
+
+  // Issues the device credential only on an explicit approval. A failed
+  // issue (such as a full device list) denies the request instead.
+  function approvePairing(id) {
+    if (typeof id !== 'string') throw runtimeError('invalid');
+    let approved;
+    try {
+      approved = approvals.approve(
+        id,
+        (label) => devices.add(label).credential,
+      );
+    } catch (error) {
+      approvals.deny(id);
+      onChange();
+      throw runtimeError(error.companionStatus ?? 'failed');
+    }
+    onChange();
+    return approved;
+  }
+
+  function denyPairing(id) {
+    if (typeof id !== 'string') throw runtimeError('invalid');
+    const denied = approvals.deny(id);
+    onChange();
+    return denied;
   }
 
   function revoke(id) {
@@ -218,6 +250,8 @@ function createCompanionRuntime({
     refresh,
     beginPairing,
     cancelPairing,
+    approvePairing,
+    denyPairing,
     revoke,
     revokeAll,
     stop: async () => {

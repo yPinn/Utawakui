@@ -86,6 +86,29 @@ describe('companion IPC', () => {
     expect(await settle(null, 5, 'applied')).toBe(false);
   });
 
+  it('approves pairing only with the gate and always allows denial', async () => {
+    const open = setup();
+    open.runtime.approvePairing = vi.fn(() => true);
+    open.runtime.denyPairing = vi.fn(() => true);
+    await expect(open.call('companion:approve-pairing', 'r1')).resolves.toEqual(
+      {
+        ok: true,
+        approved: true,
+      },
+    );
+    expect(open.runtime.approvePairing).toHaveBeenCalledWith('r1');
+    const closed = setup({ gate: false });
+    closed.runtime.approvePairing = vi.fn();
+    closed.runtime.denyPairing = vi.fn(() => true);
+    await expect(
+      closed.call('companion:approve-pairing', 'r1'),
+    ).rejects.toThrow();
+    await expect(closed.call('companion:deny-pairing', 'r1')).resolves.toEqual({
+      ok: true,
+      denied: true,
+    });
+  });
+
   it('returns bounded statuses for expected companion errors', async () => {
     const { call, runtime } = setup();
     runtime.beginPairing.mockRejectedValueOnce(

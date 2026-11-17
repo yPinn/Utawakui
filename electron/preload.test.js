@@ -63,6 +63,8 @@ const MAIN_INVOKE_CHANNELS = [
   'companion:revoke',
   'companion:revoke-all',
   'companion:command-result',
+  'companion:approve-pairing',
+  'companion:deny-pairing',
   'config:get-youtube-login-source',
   'youtube-login:get-status',
   'youtube-login:import',

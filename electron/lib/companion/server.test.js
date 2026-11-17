@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createCompanionServer } from './server.js';
+import { createPairingApprovals } from './pairingApproval.js';
 
 const servers = [];
 afterEach(async () => {
@@ -23,15 +24,19 @@ async function setup({ claim = () => true, add } = {}) {
   await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
   const { port } = probe.address();
   await new Promise((resolve) => probe.close(resolve));
+  const approvals = createPairingApprovals();
+  const onPairingRequest = vi.fn();
   const server = createCompanionServer({
     address: '127.0.0.1',
     port,
     pairing,
     devices,
+    approvals,
+    onPairingRequest,
   });
   servers.push(server);
   await server.start();
-  return { server, port, pairing, devices };
+  return { server, port, pairing, devices, approvals, onPairingRequest };
 }
 
 function request(
@@ -71,22 +76,60 @@ function request(
 }
 
 describe('companion server', () => {
-  it('pairs with a valid code and returns the credential once', async () => {
-    const { port, devices } = await setup();
-    const result = await request(port, {
+  it('opens an approval request and releases the credential only after approval', async () => {
+    const { port, approvals, onPairingRequest } = await setup();
+    const opened = await request(port, {
       body: { code: 'A'.repeat(22), label: 'Phone' },
       headers: { origin: `http://127.0.0.1:${port}` },
     });
-    expect(result.status).toBe(200);
-    expect(result.body).toEqual({
-      credential: 'c'.repeat(43),
-      device: { id: 'device-1', label: 'Phone' },
-    });
-    expect(devices.add).toHaveBeenCalledWith('Phone');
-    expect(result.headers['cache-control']).toBe('no-store');
-    expect(result.headers['content-security-policy']).toContain(
+    expect(opened.status).toBe(202);
+    expect(opened.body).toMatchObject({ matchCode: expect.any(String) });
+    expect(opened.body).not.toHaveProperty('credential');
+    expect(opened.headers['cache-control']).toBe('no-store');
+    expect(opened.headers['content-security-policy']).toContain(
       "default-src 'none'",
     );
+    expect(onPairingRequest).toHaveBeenCalledOnce();
+    const poll = () =>
+      request(port, {
+        path: '/m/api/v1/pair/status',
+        body: { claimToken: opened.body.claimToken },
+      });
+    expect(await poll()).toMatchObject({
+      status: 202,
+      body: { state: 'pending' },
+    });
+    approvals.approve(approvals.status().id, () => 'c'.repeat(43));
+    expect(await poll()).toMatchObject({
+      status: 200,
+      body: { state: 'approved', credential: 'c'.repeat(43) },
+    });
+    expect(await poll()).toMatchObject({
+      status: 403,
+      body: { state: 'unknown' },
+    });
+  });
+
+  it('keeps a second scan out while a request is waiting', async () => {
+    const { port } = await setup();
+    await request(port, { body: { code: 'A'.repeat(22), label: 'Phone' } });
+    expect(
+      await request(port, { body: { code: 'B'.repeat(22), label: 'Other' } }),
+    ).toMatchObject({ status: 409, body: { error: 'pairing-busy' } });
+  });
+
+  it('reports a denied request to the waiting phone', async () => {
+    const { port, approvals } = await setup();
+    const opened = await request(port, {
+      body: { code: 'A'.repeat(22), label: 'Phone' },
+    });
+    approvals.deny(approvals.status().id);
+    expect(
+      await request(port, {
+        path: '/m/api/v1/pair/status',
+        body: { claimToken: opened.body.claimToken },
+      }),
+    ).toMatchObject({ status: 403, body: { state: 'denied' } });
   });
 
   it('returns one bounded error for any pairing failure', async () => {
@@ -99,18 +142,12 @@ describe('companion server', () => {
     expect(devices.add).not.toHaveBeenCalled();
   });
 
-  it('reports a full device list separately', async () => {
-    const { port } = await setup({
-      add: () => {
-        throw Object.assign(new Error('full'), { companionStatus: 'full' });
-      },
-    });
+  it('rejects an empty device label before using the code', async () => {
+    const { port, pairing } = await setup();
     expect(
-      await request(port, { body: { code: 'x', label: 'P' } }),
-    ).toMatchObject({
-      status: 409,
-      body: { error: 'devices-full' },
-    });
+      await request(port, { body: { code: 'A'.repeat(22), label: '  ' } }),
+    ).toMatchObject({ status: 400, body: { error: 'pairing-failed' } });
+    expect(pairing.claim).not.toHaveBeenCalled();
   });
 
   it('rejects a foreign Host or Origin, other routes and non-JSON bodies', async () => {
