@@ -2,7 +2,8 @@
   "groups": {
     "sources": "External sources and lyrics",
     "processing": "Local audio processing",
-    "output": "Public output and OBS"
+    "output": "Public output and OBS",
+    "remote": "Phone"
   },
   "unreadableTitle": "Feature status can't be read",
   "reload": "Reload",

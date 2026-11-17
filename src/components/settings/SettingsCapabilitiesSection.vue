@@ -34,6 +34,7 @@ import MusicAnalysisSettingsRow from './MusicAnalysisSettingsRow.vue';
 import LyricsAcousticSettingsRow from './LyricsAcousticSettingsRow.vue';
 import { useLyricsAcousticCapability } from '../../composables/lyrics/useLyricsAcousticCapability.js';
 import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
+import CompanionSettingsBlock from './CompanionSettingsBlock.vue';
 import OutputRuntimeSettingsBlock from './OutputRuntimeSettingsBlock.vue';
 import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
 import SeparationAutoSettingsRow from './SeparationAutoSettingsRow.vue';
@@ -61,6 +62,11 @@ const OPTIONAL_FEATURE_GROUPS = Object.freeze([
     title: t('capabilities.groups.output'),
     featureIds: [FEATURE_IDS.PUBLIC_OUTPUT_FLOW, FEATURE_IDS.OBS_INTEGRATION],
   },
+  {
+    id: 'remote',
+    title: t('capabilities.groups.remote'),
+    featureIds: [FEATURE_IDS.MOBILE_COMPANION],
+  },
 ]);
 
 // Gates whose #settings slot holds rows; a slot outside this set never shows.
@@ -68,6 +74,7 @@ const SETTINGS_FEATURES = new Set([
   FEATURE_IDS.PROVIDER_FLOW,
   FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
   FEATURE_IDS.OBS_INTEGRATION,
+  FEATURE_IDS.MOBILE_COMPANION,
 ]);
 const musicToolNeedsAttention = computed(() =>
   Boolean(
@@ -425,6 +432,9 @@ onUnmounted(() => clearFeatureGateRequest());
                 @import-file="youtubeLoginSettings.importFile"
                 @remove-file="youtubeLoginSettings.removeFile"
                 @refresh="youtubeLoginSettings.refresh"
+              />
+              <CompanionSettingsBlock
+                v-if="gate.id === FEATURE_IDS.MOBILE_COMPANION && gate.enabled"
               />
               <OutputRuntimeSettingsBlock
                 v-if="

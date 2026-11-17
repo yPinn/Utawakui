@@ -2,7 +2,8 @@
   "groups": {
     "sources": "外部來源與歌詞",
     "processing": "本機音訊處理",
-    "output": "公開輸出與 OBS"
+    "output": "公開輸出與 OBS",
+    "remote": "手機"
   },
   "unreadableTitle": "功能狀態無法讀取",
   "reload": "重新讀取",

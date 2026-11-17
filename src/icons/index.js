@@ -90,6 +90,7 @@ export {
   ZoomOut,
   Shuffle,
   Settings,
+  Smartphone,
   SkipBack,
   SkipForward,
   SlidersHorizontal,
