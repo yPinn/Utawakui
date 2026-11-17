@@ -187,3 +187,137 @@ describe('companion server', () => {
     expect(server.isRunning()).toBe(false);
   });
 });
+
+describe('companion server page and reader socket', () => {
+  async function freePort() {
+    const probe = http.createServer();
+    await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
+    const { port } = probe.address();
+    await new Promise((resolve) => probe.close(resolve));
+    return port;
+  }
+
+  async function startWith(overrides = {}) {
+    const port = await freePort();
+    const readers = {
+      attach: vi.fn((socket) => socket.send('hello')),
+      closeAll: vi.fn(),
+      closeDevice: vi.fn(),
+    };
+    const server = createCompanionServer({
+      address: '127.0.0.1',
+      port,
+      pairing: { claim: () => false },
+      devices: {},
+      loadPage: () =>
+        new Map([
+          [
+            '/m/',
+            {
+              body: Buffer.from('<html>phone</html>'),
+              type: 'text/html; charset=utf-8',
+            },
+          ],
+          [
+            '/assets/a.js',
+            { body: Buffer.from('x'), type: 'text/javascript; charset=utf-8' },
+          ],
+        ]),
+      readers,
+      ...overrides,
+    });
+    servers.push(server);
+    await server.start();
+    return { server, port, readers };
+  }
+
+  function get(port, path, headers = {}) {
+    return new Promise((resolve, reject) => {
+      http
+        .get(
+          {
+            host: '127.0.0.1',
+            port,
+            path,
+            headers: { host: `127.0.0.1:${port}`, ...headers },
+          },
+          (res) => {
+            const chunks = [];
+            res.on('data', (chunk) => chunks.push(chunk));
+            res.on('end', () =>
+              resolve({
+                status: res.statusCode,
+                headers: res.headers,
+                body: Buffer.concat(chunks).toString(),
+              }),
+            );
+          },
+        )
+        .on('error', reject);
+    });
+  }
+
+  it('serves only allowlisted page files with a strict policy', async () => {
+    const { port } = await startWith();
+    const page = await get(port, '/m/');
+    expect(page.status).toBe(200);
+    expect(page.body).toBe('<html>phone</html>');
+    expect(page.headers['content-security-policy']).toContain(
+      `connect-src 'self' ws://127.0.0.1:${port}`,
+    );
+    expect(page.headers['content-security-policy']).toContain(
+      "script-src 'self'",
+    );
+    expect((await get(port, '/assets/a.js')).status).toBe(200);
+    for (const path of [
+      '/m',
+      '/assets/../package.json',
+      '/assets/b.js',
+      '/index.html',
+    ])
+      expect((await get(port, path)).status).toBe(404);
+  });
+
+  async function openSocket(
+    port,
+    { origin, protocol = 'utawakui.companion.v1' } = {},
+  ) {
+    const { WebSocket } = await import('ws');
+    return new Promise((resolve) => {
+      const socket = new WebSocket(`ws://127.0.0.1:${port}/m/ws`, protocol, {
+        origin: origin ?? `http://127.0.0.1:${port}`,
+      });
+      socket.on('message', (data) => {
+        resolve({ ok: true, message: String(data) });
+        socket.close();
+      });
+      socket.on('unexpected-response', (_req, res) =>
+        resolve({ ok: false, status: res.statusCode }),
+      );
+      socket.on('error', () => resolve({ ok: false, status: 'error' }));
+    });
+  }
+
+  it('hands authenticated-protocol sockets from the exact origin to the reader hub', async () => {
+    const { port, readers } = await startWith();
+    expect(await openSocket(port)).toEqual({ ok: true, message: 'hello' });
+    expect(readers.attach).toHaveBeenCalledOnce();
+    expect(await openSocket(port, { origin: 'http://evil.test' })).toEqual({
+      ok: false,
+      status: 403,
+    });
+    expect(await openSocket(port, { protocol: 'other' })).toEqual({
+      ok: false,
+      status: 400,
+    });
+    expect(readers.attach).toHaveBeenCalledOnce();
+  });
+
+  it('closes readers when stopping and forwards device removal', async () => {
+    const { server, readers } = await startWith();
+    server.closeDevice('d1');
+    expect(readers.closeDevice).toHaveBeenCalledWith('d1');
+    await server.stop();
+    expect(readers.closeAll).toHaveBeenCalled();
+  });
+});

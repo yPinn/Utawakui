@@ -140,6 +140,22 @@ describe('companion runtime', () => {
     ).toMatchObject({ running: false, error: 'port-in-use' });
   });
 
+  it('gives each listener a reader hub and disconnects revoked phones', async () => {
+    const { runtime, servers, createServer } = setup();
+    await runtime.configure({
+      enabled: true,
+      interfaceAddress: '192.168.1.20',
+    });
+    const options = createServer.mock.calls[0][0];
+    expect(typeof options.readers.attach).toBe('function');
+    expect(typeof options.loadPage).toBe('function');
+    servers[0].closeDevice = vi.fn();
+    runtime.revoke('d1');
+    expect(servers[0].closeDevice).toHaveBeenCalledWith('d1');
+    runtime.revokeAll();
+    expect(servers[0].closeDevice).toHaveBeenCalledTimes(2);
+  });
+
   it('builds a pairing URL with the code only in the fragment', async () => {
     const { runtime, pairing } = setup();
     await expect(runtime.beginPairing()).rejects.toMatchObject({

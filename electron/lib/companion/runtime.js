@@ -1,6 +1,7 @@
 'use strict';
 
 const { isPrivateIpv4 } = require('./networkScope');
+const { createReaderHub } = require('./readerHub');
 
 const DEFAULT_PORT = 8710;
 const PORT_MIN = 1024;
@@ -41,6 +42,10 @@ function createCompanionRuntime({
   pairing,
   describeNetworkScope,
   createServer,
+  snapshots = { get: () => null, subscribe: () => () => {} },
+  loadPage = () => new Map(),
+  onReaderCount = () => {},
+  createReaders = createReaderHub,
   onChange = () => {},
 }) {
   let server = null;
@@ -91,6 +96,8 @@ function createCompanionRuntime({
       pairing,
       devices,
       isGateEnabled,
+      loadPage,
+      readers: createReaders({ devices, snapshots, onReaderCount }),
     });
     try {
       await instance.start();
@@ -187,12 +194,15 @@ function createCompanionRuntime({
   function revoke(id) {
     if (typeof id !== 'string') throw runtimeError('invalid');
     const removed = devices.revoke(id);
+    server?.instance.closeDevice?.(id);
     onChange();
     return removed;
   }
 
   function revokeAll() {
+    const ids = devices.list().map((device) => device.id);
     const removed = devices.revokeAll();
+    for (const id of ids) server?.instance.closeDevice?.(id);
     onChange();
     return removed;
   }

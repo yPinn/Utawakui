@@ -171,6 +171,7 @@ const { createPairingCodes } = require('./lib/companion/pairing');
 const { createCompanionRuntime } = require('./lib/companion/runtime');
 const { createCompanionServer } = require('./lib/companion/server');
 const { describeNetworkScope } = require('./lib/companion/networkScope');
+const { loadCompanionPage } = require('./lib/companion/pageAssets');
 const { registerCompanionHandlers } = require('./main/companionHandlers');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
 const {
@@ -1920,6 +1921,14 @@ if (!gotSingleInstanceLock) {
       pairing: createPairingCodes(),
       describeNetworkScope,
       createServer: createCompanionServer,
+      // Phones read the prompter snapshot even while its window is closed.
+      snapshots: {
+        get: () => performerWindowManager?.getSnapshot() ?? null,
+        subscribe: (listener) =>
+          performerWindowManager?.onSnapshot(listener) ?? (() => {}),
+      },
+      onReaderCount: (count) => performerWindowManager?.setRemoteReaders(count),
+      loadPage: () => loadCompanionPage(path.join(__dirname, '..', 'dist')),
       onChange: () => windowState.sendToMainWindow('companion:status-changed'),
     });
     registerCompanionHandlers({

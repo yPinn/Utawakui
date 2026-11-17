@@ -1,8 +1,11 @@
 'use strict';
 
 const http = require('node:http');
+const { WebSocketServer } = require('ws');
 
 const MAX_BODY_BYTES = 1024;
+const SUBPROTOCOL = 'utawakui.companion.v1';
+const MAX_SOCKET_PAYLOAD_BYTES = 4096;
 const SECURITY_HEADERS = Object.freeze({
   'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff',
@@ -59,12 +62,45 @@ function createCompanionServer({
   pairing,
   devices,
   isGateEnabled = () => true,
+  loadPage = () => new Map(),
+  readers = null,
   createHttpServer = http.createServer,
 }) {
   const authority = `${address}:${port}`;
   const origin = `http://${authority}`;
   const sockets = new Set();
   let server = null;
+  let socketServer = null;
+  let page = null;
+
+  // The phone page allows only same-origin assets and this socket.
+  const pageHeaders = Object.freeze({
+    ...SECURITY_HEADERS,
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "font-src 'self'",
+      `connect-src 'self' ws://${authority}`,
+      "frame-ancestors 'none'",
+      "base-uri 'none'",
+      "form-action 'none'",
+    ].join('; '),
+  });
+
+  function servePage(pathname, response) {
+    page ??= loadPage();
+    const entry = page.get(pathname);
+    if (!entry) return false;
+    response.writeHead(200, {
+      ...pageHeaders,
+      'Content-Type': entry.type,
+      'Content-Length': entry.body.length,
+    });
+    response.end(entry.body);
+    return true;
+  }
 
   function allowedOrigin(request) {
     const value = request.headers.origin;
@@ -97,8 +133,34 @@ function createCompanionServer({
       return sendJson(response, 503, { error: 'unavailable' });
     const url = new URL(request.url, origin);
     const route = routes.get(`${request.method} ${url.pathname}`);
-    if (!route) return sendJson(response, 404, { error: 'not-found' });
-    return route(request, response);
+    if (route) return route(request, response);
+    if (request.method === 'GET' && servePage(url.pathname, response)) return;
+    return sendJson(response, 404, { error: 'not-found' });
+  }
+
+  function rejectUpgrade(socket, status) {
+    socket.end(`HTTP/1.1 ${status} ${http.STATUS_CODES[status]}\r\n\r\n`);
+  }
+
+  function handleUpgrade(request, socket, head) {
+    let pathname;
+    try {
+      pathname = new URL(request.url, origin).pathname;
+    } catch {
+      return rejectUpgrade(socket, 400);
+    }
+    if (request.method !== 'GET' || pathname !== '/m/ws' || !readers)
+      return rejectUpgrade(socket, 404);
+    if (request.headers.host !== authority || request.headers.origin !== origin)
+      return rejectUpgrade(socket, 403);
+    if (!isGateEnabled()) return rejectUpgrade(socket, 503);
+    const protocols = String(request.headers['sec-websocket-protocol'] ?? '')
+      .split(',')
+      .map((value) => value.trim());
+    if (!protocols.includes(SUBPROTOCOL)) return rejectUpgrade(socket, 400);
+    socketServer.handleUpgrade(request, socket, head, (client) =>
+      readers.attach(client),
+    );
   }
 
   function start() {
@@ -113,6 +175,14 @@ function createCompanionServer({
       sockets.add(socket);
       socket.on('close', () => sockets.delete(socket));
     });
+    socketServer = new WebSocketServer({
+      noServer: true,
+      maxPayload: MAX_SOCKET_PAYLOAD_BYTES,
+      perMessageDeflate: false,
+      handleProtocols: (protocols) =>
+        protocols.has(SUBPROTOCOL) ? SUBPROTOCOL : false,
+    });
+    server.on('upgrade', handleUpgrade);
     return new Promise((resolve, reject) => {
       server.once('error', (error) => {
         server = null;
@@ -130,12 +200,21 @@ function createCompanionServer({
     if (!server) return Promise.resolve();
     const closing = server;
     server = null;
+    readers?.closeAll();
+    socketServer?.close();
+    socketServer = null;
     for (const socket of sockets) socket.destroy();
     sockets.clear();
     return new Promise((resolve) => closing.close(() => resolve()));
   }
 
-  return { origin, start, stop, isRunning: () => server !== null };
+  return {
+    origin,
+    start,
+    stop,
+    closeDevice: (deviceId) => readers?.closeDevice(deviceId),
+    isRunning: () => server !== null,
+  };
 }
 
-module.exports = { MAX_BODY_BYTES, createCompanionServer };
+module.exports = { MAX_BODY_BYTES, SUBPROTOCOL, createCompanionServer };

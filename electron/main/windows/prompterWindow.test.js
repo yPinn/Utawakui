@@ -302,4 +302,40 @@ describe('performer window manager', () => {
     expect(manager.applyUiTheme('sepia')).toBe(false);
     expect(window.setBackgroundColor).toHaveBeenCalledTimes(1);
   });
+
+  it('feeds paired phones the same snapshot and reports remote readers', () => {
+    const publishStatus = vi.fn();
+    const manager = createPerformerWindowManager({
+      BrowserWindow: FakeWindow,
+      isDev: false,
+      devUrl: 'http://localhost:5173/src/entries/prompter/index.html',
+      pagePath: 'dist/src/entries/prompter/index.html',
+      preloadPath: 'performerPreload.js',
+      publishStatus,
+    });
+    const listener = vi.fn();
+    const failing = vi.fn(() => {
+      throw new Error('reader failed');
+    });
+    const stop = manager.onSnapshot(listener);
+    manager.onSnapshot(failing);
+    const snapshot = manager.getSnapshot();
+    expect(manager.publish(snapshot)).toBe(true);
+    expect(listener).toHaveBeenCalledWith(manager.getSnapshot());
+    stop();
+    manager.publish(snapshot);
+    expect(listener).toHaveBeenCalledOnce();
+
+    expect(manager.setRemoteReaders(2)).toMatchObject({
+      open: false,
+      remoteReaders: 2,
+    });
+    expect(publishStatus).toHaveBeenLastCalledWith(
+      expect.objectContaining({ remoteReaders: 2 }),
+    );
+    publishStatus.mockClear();
+    manager.setRemoteReaders(2);
+    expect(publishStatus).not.toHaveBeenCalled();
+    expect(manager.setRemoteReaders(-1).remoteReaders).toBe(0);
+  });
 });

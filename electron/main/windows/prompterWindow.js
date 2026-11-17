@@ -46,6 +46,9 @@ function createPerformerWindowManager(options) {
   let lastPersistedBounds = null;
   let boundsPersistTimer = null;
   let alwaysOnTop = false;
+  // Paired phones read the same snapshot even while this window is closed.
+  let remoteReaders = 0;
+  const snapshotListeners = new Set();
 
   function liveWindow() {
     return performerWindow && !performerWindow.isDestroyed()
@@ -59,7 +62,20 @@ function createPerformerWindowManager(options) {
       open: Boolean(window),
       fullScreen: window?.isFullScreen() ?? false,
       alwaysOnTop: window?.isAlwaysOnTop() ?? alwaysOnTop,
+      remoteReaders,
     };
+  }
+
+  function setRemoteReaders(count) {
+    const next = Number.isSafeInteger(count) && count > 0 ? count : 0;
+    if (next === remoteReaders) return getStatus();
+    remoteReaders = next;
+    return emitStatus();
+  }
+
+  function onSnapshot(listener) {
+    snapshotListeners.add(listener);
+    return () => snapshotListeners.delete(listener);
   }
 
   function emitStatus() {
@@ -244,6 +260,13 @@ function createPerformerWindowManager(options) {
   function publish(snapshot) {
     latestSnapshot = parsePerformerSnapshot(snapshot);
     sendLatestSnapshot();
+    for (const listener of snapshotListeners) {
+      try {
+        listener(latestSnapshot);
+      } catch {
+        // A remote reader failure never affects the desktop prompter.
+      }
+    }
     return true;
   }
 
@@ -286,8 +309,10 @@ function createPerformerWindowManager(options) {
     getStatus,
     getWebContents: () => liveWindow()?.webContents ?? null,
     minimize,
+    onSnapshot,
     open,
     publish,
+    setRemoteReaders,
     toggleAlwaysOnTop,
     toggleFullScreen,
   };

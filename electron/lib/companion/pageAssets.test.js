@@ -1,0 +1,86 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  ENTRY_KEY,
+  MANIFEST_NAME,
+  collectEntryFiles,
+  loadCompanionPage,
+} from './pageAssets.js';
+
+const manifest = {
+  [ENTRY_KEY]: {
+    file: 'assets/companion-a.js',
+    css: ['assets/companion-a.css'],
+    imports: ['_base.js'],
+    dynamicImports: ['src/lazy.vue'],
+  },
+  '_base.js': {
+    file: 'assets/base-b.js',
+    css: ['assets/base-b.css'],
+    assets: ['assets/fonts/x.woff2'],
+    imports: [ENTRY_KEY],
+  },
+  'src/lazy.vue': { file: 'assets/lazy-c.js' },
+  'index.html': { file: 'assets/main-d.js' },
+};
+
+const dirs = [];
+afterEach(() => {
+  for (const dir of dirs.splice(0))
+    fs.rmSync(dir, { recursive: true, force: true });
+});
+
+describe('companion page assets', () => {
+  it('collects only the companion entry closure', () => {
+    expect(collectEntryFiles(manifest).sort()).toEqual([
+      'assets/base-b.css',
+      'assets/base-b.js',
+      'assets/companion-a.css',
+      'assets/companion-a.js',
+      'assets/fonts/x.woff2',
+      'assets/lazy-c.js',
+    ]);
+  });
+
+  it('rejects paths outside assets and missing chunks', () => {
+    expect(
+      collectEntryFiles({
+        [ENTRY_KEY]: { file: '../secret.js', css: ['assets/ok.css'] },
+      }),
+    ).toEqual(['assets/ok.css']);
+    expect(() =>
+      collectEntryFiles({ [ENTRY_KEY]: { file: 'a.js', imports: ['_x'] } }),
+    ).toThrow('Missing manifest chunk');
+  });
+
+  it('loads the page and its files into an exact route table', () => {
+    const dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-companion-page-'),
+    );
+    dirs.push(dir);
+    const write = (file, body) => {
+      fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+      fs.writeFileSync(path.join(dir, file), body);
+    };
+    write(MANIFEST_NAME, JSON.stringify(manifest));
+    write(ENTRY_KEY, '<html></html>');
+    for (const file of collectEntryFiles(manifest)) write(file, file);
+    const routes = loadCompanionPage(dir);
+    expect([...routes.keys()].sort()).toEqual([
+      '/assets/base-b.css',
+      '/assets/base-b.js',
+      '/assets/companion-a.css',
+      '/assets/companion-a.js',
+      '/assets/fonts/x.woff2',
+      '/assets/lazy-c.js',
+      '/m/',
+    ]);
+    expect(routes.get('/m/').type).toBe('text/html; charset=utf-8');
+    expect(String(routes.get('/assets/base-b.js').body)).toBe(
+      'assets/base-b.js',
+    );
+    expect(routes.has('/assets/main-d.js')).toBe(false);
+  });
+});
