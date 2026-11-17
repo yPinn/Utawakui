@@ -113,12 +113,13 @@ describe('featureGates', () => {
       FEATURE_IDS.AUDIO_PROCESSING_FLOW,
       FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
       FEATURE_IDS.OBS_INTEGRATION,
+      FEATURE_IDS.MOBILE_COMPANION,
     ]);
   });
 
   it('keeps user copy bounded, source-specific and free of internal implementation details', () => {
     const gates = Object.values(FEATURE_GATES).map(noticeCopy);
-    expect(gates).toHaveLength(5);
+    expect(gates).toHaveLength(6);
     for (const gate of gates) {
       expect(gate.summary.length).toBeLessThanOrEqual(28);
       expect(gate.summary.endsWith('。')).toBe(true);
@@ -132,7 +133,12 @@ describe('featureGates', () => {
       expect([gate.summary, ...gate.body].join('')).not.toMatch(
         /FFmpeg|GPLv[0-9]|BPM|yt-dlp|Python|MDX|127\.0\.0\.1|https?:\/\//u,
       );
-      if (gate.id !== FEATURE_IDS.OBS_INTEGRATION) {
+      // Local control features publish no material, so no rights wording.
+      if (
+        ![FEATURE_IDS.OBS_INTEGRATION, FEATURE_IDS.MOBILE_COMPANION].includes(
+          gate.id,
+        )
+      ) {
         expect(gate.body.join('')).toContain('適用法律');
         expect(gate.body.join('')).toContain('授權');
       }
@@ -164,12 +170,20 @@ describe('featureGates', () => {
     expect(obs.body.join('')).toContain('密碼會加密保存在本機');
     expect(obs.body.join('')).toContain('匯出或分享記錄前');
     expect(obs.body.join('')).not.toContain('不會驗證素材授權');
+    const companion = noticeCopy(getFeatureGate(FEATURE_IDS.MOBILE_COMPANION));
+    expect(companion.noticeVersion).toBe('feature-notice-v3');
+    expect(companion.body.join('')).toContain('公用網路不會啟動');
+    expect(companion.body.join('')).toContain('連線未加密');
+    expect(companion.body.join('')).toContain('請在設定撤銷');
+    expect(companion.body.join('')).toContain(
+      '不能瀏覽曲庫、修改歌單或存取檔案',
+    );
   });
 
   it('gives every UI language the same notice sections under one notice version', () => {
     for (const [locale, catalog] of Object.entries(catalogs)) {
       const copies = catalog.featureGates.notices;
-      expect(Object.keys(copies), locale).toHaveLength(5);
+      expect(Object.keys(copies), locale).toHaveLength(6);
       for (const gate of Object.values(FEATURE_GATES)) {
         const copy =
           copies[gate.id.replace(/-(\w)/gu, (_, c) => c.toUpperCase())];

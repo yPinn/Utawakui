@@ -27,6 +27,11 @@
       "id": "obs-integration",
       "category": "obs-integration",
       "sections": ["setup", "scope", "sharing"]
+    },
+    {
+      "id": "mobile-companion",
+      "category": "mobile-companion",
+      "sections": ["network", "pairing", "scope"]
     }
   ]
 }

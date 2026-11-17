@@ -19,6 +19,10 @@
     "obsIntegration": {
       "title": "OBS connection",
       "description": "Read streaming/recording status and log sessions."
+    },
+    "mobileCompanion": {
+      "title": "Phone remote",
+      "description": "Read lyrics and control playback from a phone."
     }
   },
   "status": {
@@ -150,6 +154,24 @@
         "sharing": {
           "title": "Logs and sharing",
           "body": "Session logs and this setting are stored on this computer. Before exporting or sharing logs, check the track titles, time markers and notes in them, and confirm who will receive them and how widely they're shared."
+        }
+      }
+    },
+    "mobileCompanion": {
+      "documentTitle": "About turning on the phone remote",
+      "summary": "Let paired phones on the same private network read lyrics and control playback.",
+      "sections": {
+        "network": {
+          "title": "Network scope",
+          "body": "Once on, connections are accepted only on the private network you choose; it won't start on a public network. The connection isn't encrypted, so other devices on the same network may see the lyrics and playback details being sent."
+        },
+        "pairing": {
+          "title": "Pairing and removal",
+          "body": "A phone must scan the pairing code shown on the computer to connect, and paired phones are remembered. Remove a phone in Settings if it's lost or no longer used."
+        },
+        "scope": {
+          "title": "What a phone can do",
+          "body": "A phone can only read lyrics and the current track, and control playback, track changes, key, volume, lyric timing and readings. It can't browse the library, edit playlists or access files. The setting is saved only on this computer."
         }
       }
     }

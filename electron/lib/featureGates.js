@@ -8,6 +8,7 @@ const FEATURE_IDS = Object.freeze({
   AUDIO_PROCESSING_FLOW: 'audio-processing-flow',
   PUBLIC_OUTPUT_FLOW: 'public-output-flow',
   OBS_INTEGRATION: 'obs-integration',
+  MOBILE_COMPANION: 'mobile-companion',
 });
 
 const FEATURE_GATES = Object.freeze(
