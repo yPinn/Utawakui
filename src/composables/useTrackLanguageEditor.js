@@ -1,36 +1,20 @@
 import { computed, shallowRef } from 'vue';
 import { t } from '../utils/i18n.js';
+import { TRACK_LANGUAGE_OPTIONS } from '../utils/trackLanguageNames.js';
+import { useTrackLanguageIndex } from './useTrackLanguageIndex.js';
 
-// Offered codes; saved codes outside this list are kept as they are.
-export const TRACK_LANGUAGE_OPTIONS = Object.freeze([
-  'cmn',
-  'yue',
-  'nan-TW',
-  'ja',
-  'ko',
-  'en',
-  'zh',
-  'zxx',
-]);
+export { TRACK_LANGUAGE_OPTIONS };
 const NO_VOCALS = 'zxx';
 
 export function useTrackLanguageEditor() {
   const snapshot = shallowRef(null);
   const languages = shallowRef([]);
-  const primary = shallowRef(null);
   const pending = shallowRef(false);
   const error = shallowRef('');
   const confirmed = shallowRef(false);
   let trackId = null;
   let request = 0;
 
-  const choices = computed(() => [
-    ...TRACK_LANGUAGE_OPTIONS,
-    ...(snapshot.value?.languages ?? []).filter(
-      (code) => !TRACK_LANGUAGE_OPTIONS.includes(code),
-    ),
-  ]);
-  const needsPrimary = computed(() => languages.value.length > 1);
   const needsConfirmation = computed(
     () => Boolean(snapshot.value?.needsReview) && !confirmed.value,
   );
@@ -39,15 +23,13 @@ export function useTrackLanguageEditor() {
       Boolean(snapshot.value) &&
       (confirmed.value ||
         JSON.stringify(languages.value) !==
-          JSON.stringify(snapshot.value.languages) ||
-        (needsPrimary.value && primary.value !== snapshot.value.primary)),
+          JSON.stringify(snapshot.value.languages)),
   );
 
   function setSnapshot(value) {
     snapshot.value = value;
     confirmed.value = false;
     languages.value = value.languages;
-    primary.value = value.primary;
   }
 
   function reset() {
@@ -55,7 +37,6 @@ export function useTrackLanguageEditor() {
     trackId = null;
     snapshot.value = null;
     languages.value = [];
-    primary.value = null;
     pending.value = false;
     error.value = '';
     confirmed.value = false;
@@ -97,9 +78,8 @@ export function useTrackLanguageEditor() {
     return run(() => window.Utawakui.getTrackLanguages(id));
   }
 
-  // "No vocals" excludes every sung language, and vice versa. Choices order
-  // keeps toggling back to a saved selection clean; the main language is
-  // only chosen explicitly once two or more languages are ticked.
+  // "No vocals" excludes every sung language, and vice versa. Display order
+  // keeps toggling back to a saved selection clean.
   function toggle(code, selected) {
     if (!snapshot.value || pending.value) return;
     const others = languages.value.filter((item) => item !== code);
@@ -109,23 +89,13 @@ export function useTrackLanguageEditor() {
         code === NO_VOCALS
           ? [NO_VOCALS]
           : [...others.filter((item) => item !== NO_VOCALS), code];
-    const order = choices.value;
-    next = [...next].sort((a, b) => order.indexOf(a) - order.indexOf(b));
-    if (
-      next.length < 2 ||
-      languages.value.length < 2 ||
-      !next.includes(primary.value)
-    )
-      primary.value = null;
-    languages.value = next;
+    languages.value = TRACK_LANGUAGE_OPTIONS.filter((item) =>
+      next.includes(item),
+    );
   }
 
   function confirm() {
     if (snapshot.value?.needsReview) confirmed.value = true;
-  }
-
-  function setPrimary(code) {
-    primary.value = languages.value.includes(code) ? code : null;
   }
 
   function save() {
@@ -135,17 +105,16 @@ export function useTrackLanguageEditor() {
         trackId,
         snapshot.value.editToken,
         languages.value,
-        needsPrimary.value ? primary.value : null,
       ),
-    );
+    ).then((saved) => {
+      if (saved) void useTrackLanguageIndex().refresh();
+      return saved;
+    });
   }
 
   return {
     snapshot,
     languages,
-    primary,
-    choices,
-    needsPrimary,
     pending,
     error,
     isDirty,
@@ -154,7 +123,6 @@ export function useTrackLanguageEditor() {
     confirm,
     reset,
     toggle,
-    setPrimary,
     save,
   };
 }

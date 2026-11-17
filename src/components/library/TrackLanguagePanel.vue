@@ -1,40 +1,17 @@
 <script setup>
-import { computed } from 'vue';
-import { catalogKey, t } from '../../utils/i18n.js';
-import { UI_LOCALE } from '../../utils/uiLocale.js';
-import { TRACK_LANGUAGE_OPTIONS } from '../../composables/useTrackLanguageEditor.js';
+import { t } from '../../utils/i18n.js';
+import {
+  TRACK_LANGUAGE_OPTIONS,
+  trackLanguageName as languageName,
+} from '../../utils/trackLanguageNames.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiSelect from '../ui/UiSelect.vue';
 
 const { editor } = defineProps({
   editor: { type: Object, required: true },
   disabled: Boolean,
 });
 defineEmits(['reload']);
-
-// Codes outside the offered list fall back to the platform's language name.
-function languageName(code) {
-  if (TRACK_LANGUAGE_OPTIONS.includes(code))
-    return t(`trackLanguage.names.${catalogKey(code)}`);
-  try {
-    return (
-      new Intl.DisplayNames([UI_LOCALE], {
-        type: 'language',
-      }).of(code) ?? code
-    );
-  } catch {
-    return code;
-  }
-}
-
-const primaryOptions = computed(() => [
-  { value: '', label: t('trackLanguage.primaryNone') },
-  ...editor.languages.value.map((code) => ({
-    value: code,
-    label: languageName(code),
-  })),
-]);
 </script>
 
 <template>
@@ -65,7 +42,7 @@ const primaryOptions = computed(() => [
         aria-labelledby="track-language-heading"
       >
         <UiCheckbox
-          v-for="code in editor.choices.value"
+          v-for="code in TRACK_LANGUAGE_OPTIONS"
           :id="`track-language-${code}`"
           :key="code"
           :label="languageName(code)"
@@ -74,15 +51,6 @@ const primaryOptions = computed(() => [
           @update:model-value="editor.toggle(code, $event)"
         />
       </div>
-      <UiSelect
-        v-if="editor.needsPrimary.value"
-        id="track-language-primary"
-        :label="t('trackLanguage.primary')"
-        :options="primaryOptions"
-        :model-value="editor.primary.value ?? ''"
-        :disabled="disabled"
-        @update:model-value="editor.setPrimary($event)"
-      />
     </template>
   </section>
 </template>

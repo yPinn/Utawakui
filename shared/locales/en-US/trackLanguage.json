@@ -1,17 +1,13 @@
 {
   "heading": "Sung languages",
   "names": {
-    "cmn": "Mandarin",
-    "yue": "Cantonese",
-    "nanTW": "Taiwanese Hokkien",
+    "zh": "Chinese",
     "ja": "Japanese",
     "ko": "Korean",
     "en": "English",
-    "zh": "Chinese (unspecified)",
+    "other": "Other languages",
     "zxx": "No vocals"
   },
-  "primary": "Main language",
-  "primaryNone": "Not set",
   "loading": "Loading sung languages.",
   "retry": "Retry",
   "audioChanged": "The audio file for this track has changed. Review the sung languages again.",
@@ -19,5 +15,16 @@
   "invalid": "The sung language data isn't valid.",
   "stale": "The library, audio file, or sung languages changed. Reopen this track before editing again.",
   "missing": "The audio file for this track couldn't be found.",
-  "failed": "Couldn't process sung languages. Try again."
+  "failed": "Couldn't process sung languages. Try again.",
+  "batch": {
+    "title": "Set sung language",
+    "choose": "Choose a language",
+    "track": "{title} · {artist}",
+    "saved": "{track} (set: {languages})",
+    "selection": "{count} of {total} track selected | {count} of {total} tracks selected",
+    "cancel": "Cancel",
+    "apply": "Apply to {count} track | Apply to {count} tracks",
+    "result": "Set the sung language for {count} track | Set the sung language for {count} tracks",
+    "skipped": "Skipped {count} track without an audio file. | Skipped {count} tracks without an audio file."
+  }
 }

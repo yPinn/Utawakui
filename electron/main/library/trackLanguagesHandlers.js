@@ -39,10 +39,18 @@ function registerLibraryTrackLanguagesHandlers({
   ipcMain.handle('library:track-languages-get', (_event, trackId) =>
     run('get', () => service.get(trackId)),
   );
+  ipcMain.handle('library:track-languages-list', () =>
+    run('list', async () => service.list()),
+  );
+  ipcMain.handle(
+    'library:track-languages-apply-batch',
+    (_event, trackIds, language) =>
+      run('apply-batch', () => service.applyBatch({ trackIds, language })),
+  );
   ipcMain.handle(
     'library:track-languages-save',
-    (_event, trackId, token, languages, primary) =>
-      run('save', () => service.save({ trackId, token, languages, primary })),
+    (_event, trackId, token, languages) =>
+      run('save', () => service.save({ trackId, token, languages })),
   );
 }
 

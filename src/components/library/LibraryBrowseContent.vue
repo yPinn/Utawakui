@@ -2,7 +2,13 @@
 import { matchesTrackTitle } from '../../utils/trackTitlePresentation.js';
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { NOTIFICATION_KEYS } from '../../constants/notificationKeys.js';
-import { ImagePlus, Search, Trash2, UserRound } from '../../icons/index.js';
+import {
+  ImagePlus,
+  Languages,
+  Search,
+  Trash2,
+  UserRound,
+} from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
@@ -34,6 +40,9 @@ import { useTrackPreviewEligibility } from '../../composables/useTrackPreviewEli
 import { createReleaseMemberResolver } from '../../composables/useReleaseMembers.js';
 import { isLocalPreviewTrack } from '../../utils/trackPreviewSource.js';
 import { useSongEditor } from '../../composables/useSongEditor.js';
+import { useTrackLanguageIndex } from '../../composables/useTrackLanguageIndex.js';
+import { trackLanguageName } from '../../utils/trackLanguageNames.js';
+import TrackLanguageBatchModal from './TrackLanguageBatchModal.vue';
 import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
 import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue';
 import LibraryArtistIdentityController from './LibraryArtistIdentityController.vue';
@@ -153,6 +162,8 @@ const searchQuery = defineModel('searchQuery', {
   default: '',
 });
 const addMenu = ref(null);
+const trackLanguages = useTrackLanguageIndex();
+const languageBatchOpen = shallowRef(false);
 const trackRowSort = ref({ key: null, direction: 'asc' });
 
 const songEditor = useSongEditor();
@@ -300,6 +311,7 @@ function matchesSearch(track) {
   if (matchesTrackTitle(track, query)) return true;
   return [
     ...artistSearchTexts(track, artistIndexState.index),
+    ...trackLanguages.languagesOf(track.id).map(trackLanguageName),
     track.id,
     track.filename,
   ].some((value) =>
@@ -570,7 +582,9 @@ async function confirmClearArtistPhoto() {
 }
 
 function handleCollectionMenuAction(value) {
-  if (value?.action === ARTIST_IDENTITY_ACTIONS.manage) {
+  if (value?.action === TRACK_LANGUAGE_ACTION) {
+    languageBatchOpen.value = true;
+  } else if (value?.action === ARTIST_IDENTITY_ACTIONS.manage) {
     openArtistIdentity();
   } else if (value?.action === ARTIST_PHOTO_ACTIONS.choose) {
     chooseSelectedArtistPhoto();
@@ -596,6 +610,7 @@ const ARTIST_PHOTO_ACTIONS = Object.freeze({
   searchOnline: 'search-online-artist-photo',
   clear: 'clear-artist-photo',
 });
+const TRACK_LANGUAGE_ACTION = 'set-track-languages';
 const ARTIST_IDENTITY_ACTIONS = Object.freeze({
   manage: 'manage-artist-identity',
 });
@@ -654,6 +669,25 @@ const collectionMoreContent = computed(() => {
     };
   }
   const playlist = selectedPlaylist.value;
+  if (!playlist && mode.value === 'all')
+    return {
+      kind: 'actions',
+      groups: [
+        {
+          id: 'track-languages',
+          items: [
+            {
+              id: TRACK_LANGUAGE_ACTION,
+              kind: 'action',
+              label: t('trackLanguage.batch.title'),
+              icon: Languages,
+              disabled: visibleLibraryEntries.value.length === 0,
+              value: { action: TRACK_LANGUAGE_ACTION },
+            },
+          ],
+        },
+      ],
+    };
   if (!playlist) return { kind: 'actions', groups: [] };
   return collectionActionMenu(playlistState.playlists, playlist, {
     performanceQueueBusy: performanceQueue.state.isSaving,
@@ -879,6 +913,24 @@ async function removeTrack(track) {
     });
   }
 }
+
+function reportLanguageBatch({ updated, skipped }) {
+  notifications.notify({
+    key: NOTIFICATION_KEYS.LIBRARY_TRACK_LANGUAGES,
+    title: t('trackLanguage.batch.result', { count: updated }, updated),
+    message: skipped
+      ? t('trackLanguage.batch.skipped', { count: skipped }, skipped)
+      : '',
+    tone: skipped ? 'warning' : 'success',
+  });
+}
+
+// Library refreshes cover imports, deletes and audio replacement.
+watch(
+  () => libraryState.tracks,
+  () => void trackLanguages.refresh(),
+  { immediate: true },
+);
 
 function openAddMenu(track, event) {
   event.preventDefault();
@@ -1460,6 +1512,12 @@ onMounted(async () => {
         @play-album="toggleSupportingAlbumPlayback"
       />
 
+      <TrackLanguageBatchModal
+        :open="languageBatchOpen"
+        :tracks="visibleLibraryEntries.map(({ track }) => track)"
+        @close="languageBatchOpen = false"
+        @applied="reportLanguageBatch"
+      />
       <TrackActionMenu
         :open="Boolean(addMenu)"
         :anchor="addMenu?.anchor"
