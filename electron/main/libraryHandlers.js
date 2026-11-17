@@ -145,6 +145,7 @@ function registerLibraryHandlers({
   artworkDiscoveryService,
   createArtworkService = createArtworkDiscoveryService,
   enqueueMusicAnalysis = () => false,
+  enqueueAutoSeparation = () => false,
   enforceLibraryStoragePolicy = async () => undefined,
   artistIndexCache = createArtistIndexCache(),
   artistPhotoService = createArtistPhotoService({ artistIndexCache }),
@@ -192,6 +193,11 @@ function registerLibraryHandlers({
       } catch {
         // Analysis is optional background work. Imported audio remains
         // available even if queue admission fails unexpectedly.
+      }
+      try {
+        enqueueAutoSeparation(track.id);
+      } catch {
+        // Opt-in accompaniment never fails an import.
       }
     }
   }

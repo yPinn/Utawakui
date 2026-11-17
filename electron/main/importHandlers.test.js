@@ -1053,6 +1053,26 @@ describe('provider download scheduling and automatic music analysis', () => {
     ).resolves.toMatchObject({ title: 'Song' });
   });
 
+  it('offers each downloaded track to opt-in automatic separation', async () => {
+    const enqueueAutoSeparation = vi.fn(() => true);
+    const harness = registerDownload({ enqueueAutoSeparation });
+
+    await harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ');
+    expect(enqueueAutoSeparation).toHaveBeenCalledWith('dQw4w9WgXcQ');
+  });
+
+  it('keeps a successful download when automatic separation admission throws', async () => {
+    const harness = registerDownload({
+      enqueueAutoSeparation: vi.fn(() => {
+        throw new Error('private queue failure');
+      }),
+    });
+
+    await expect(
+      harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ'),
+    ).resolves.toMatchObject({ title: 'Song' });
+  });
+
   it('keeps a successful download when automatic storage cleanup fails', async () => {
     const enforceLibraryStoragePolicy = vi
       .fn()

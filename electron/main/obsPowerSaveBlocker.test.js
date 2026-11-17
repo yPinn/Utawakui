@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createObsPowerSaveBlocker } from './obsPowerSaveBlocker.js';
+import {
+  createObsPowerSaveBlocker,
+  isObsLiveStatus,
+} from './obsPowerSaveBlocker.js';
 
 function fakePowerSaveBlocker() {
   let nextId = 1;
@@ -89,5 +92,17 @@ describe('obsPowerSaveBlocker', () => {
     expect(powerSaveBlocker.start).toHaveBeenCalledWith(
       'prevent-app-suspension',
     );
+  });
+});
+
+describe('isObsLiveStatus', () => {
+  it.each([
+    [statusWith({ streaming: true }), true],
+    [statusWith({ recording: true }), true],
+    [statusWith(), false],
+    [null, false],
+    [{}, false],
+  ])('reads %j as live=%s', (status, expected) => {
+    expect(isObsLiveStatus(status)).toBe(expected);
   });
 });

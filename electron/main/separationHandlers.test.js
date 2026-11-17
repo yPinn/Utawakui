@@ -829,3 +829,61 @@ describe('registerSeparationHandlers', () => {
     expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 });
+
+describe('automatic separation seam', () => {
+  function registerApi(overrides = {}) {
+    return registerSeparationHandlers({
+      ipcMain: createIpcMain(),
+      getConfig: () => ({ systemFfmpegPath: 'C:\ffmpeg.exe' }),
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: () => null,
+      notifyLibraryUpdated: vi.fn(),
+      requireFeatureGate: vi.fn(),
+      featureIds: { AUDIO_PROCESSING_FLOW: 'audio-processing-flow' },
+      heavyJobScheduler: { schedule: vi.fn(), cancel: vi.fn() },
+      recordDiagnostic: vi.fn(),
+      resolveUserDataDir: () => 'user-data',
+      getPreparedSeparationFfmpegPath: vi.fn(() => 'ffmpeg-path'),
+      getPreparedSeparationModel: vi.fn(() => 'model-path'),
+      ...overrides,
+    });
+  }
+
+  it('reports readiness from prepared tools without a stale-path callback', () => {
+    const ffmpeg = vi.fn(() => 'ffmpeg-path');
+    const api = registerApi({ getPreparedSeparationFfmpegPath: ffmpeg });
+    expect(api.isReady()).toBe(true);
+    expect(ffmpeg).toHaveBeenCalledWith('user-data', 'C:\ffmpeg.exe');
+  });
+
+  it('is not ready when FFmpeg or the default model is missing', () => {
+    const missing = () => {
+      throw new Error('missing dependency');
+    };
+    expect(
+      registerApi({ getPreparedSeparationFfmpegPath: missing }).isReady(),
+    ).toBe(false);
+    expect(registerApi({ getPreparedSeparationModel: missing }).isReady()).toBe(
+      false,
+    );
+  });
+
+  it('queues the default recipe and can withdraw a pending item', () => {
+    const queue = {
+      enqueue: vi.fn(() => ({ itemIds: ['item-1'] })),
+      waitForItem: vi.fn(),
+      remove: vi.fn(() => true),
+      getStatus: vi.fn(),
+    };
+    const api = registerApi({ createSeparationQueue: () => queue });
+    expect(api.enqueue({ trackIds: ['track-1'] })).toEqual({
+      itemIds: ['item-1'],
+    });
+    expect(queue.enqueue).toHaveBeenCalledWith({
+      trackIds: ['track-1'],
+      recipeId: 'general',
+      regenerate: false,
+    });
+    expect(api.remove('item-1')).toBe(true);
+  });
+});

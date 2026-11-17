@@ -658,6 +658,9 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-auto-music-analysis'),
   setAutoMusicAnalysis: (enabled) =>
     ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
+  getAutoSeparation: () => ipcRenderer.invoke('config:get-auto-separation'),
+  setAutoSeparation: (enabled) =>
+    ipcRenderer.invoke('config:set-auto-separation', enabled),
   getYoutubeLoginSource: () =>
     ipcRenderer.invoke('config:get-youtube-login-source'),
   setYoutubeLoginSource: (source) =>

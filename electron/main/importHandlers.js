@@ -204,6 +204,7 @@ function registerImportHandlers({
   lyricsAcquisitionService,
   notifyLibraryUpdated = () => {},
   enqueueMusicAnalysis = () => false,
+  enqueueAutoSeparation = () => false,
   enforceLibraryStoragePolicy = async () => undefined,
   downloadTrackAudio = downloadAudio,
   createLibraryImportAdmission = () => undefined,
@@ -335,6 +336,11 @@ function registerImportHandlers({
           enqueueMusicAnalysis(videoId);
         } catch {
           // Optional analysis must not fail an installed playable file.
+        }
+        try {
+          enqueueAutoSeparation(videoId);
+        } catch {
+          // Opt-in accompaniment never fails an installed playable file.
         }
         metadataCommitted = true;
       };

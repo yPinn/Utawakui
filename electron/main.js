@@ -116,6 +116,9 @@ const {
   createStructureAnalysisAutoQueue,
 } = require('./lib/audioProcessing/structureAnalysisAutoQueue');
 const {
+  createSeparationAutoQueue,
+} = require('./lib/audioProcessing/separationAutoQueue');
+const {
   createStructureAnalysisCapabilityService,
   loadStructureAnalysisCapabilityCatalog,
 } = require('./lib/audioProcessing/structureAnalysisCapability');
@@ -284,7 +287,10 @@ const { registerSpoutOutputHandlers } = require('./main/spoutOutputHandlers');
 const { createObsAdapter } = require('./main/obsAdapter');
 const { createObsCredentialStore } = require('./main/obsCredentialStore');
 const { registerObsHandlers } = require('./main/obsHandlers');
-const { createObsPowerSaveBlocker } = require('./main/obsPowerSaveBlocker');
+const {
+  createObsPowerSaveBlocker,
+  isObsLiveStatus,
+} = require('./main/obsPowerSaveBlocker');
 const { createSessionHistoryService } = require('./main/sessionHistoryService');
 const { createPlaybackPersistence } = require('./lib/playbackPersistence');
 const {
@@ -1138,6 +1144,16 @@ if (!gotSingleInstanceLock) {
       onTrackComplete: notifyLibraryUpdated,
       logger: runtimeDiagnosticsLogger,
     });
+    // Bound after registerSeparationHandlers; imports before then are skipped.
+    let separationAutomation = null;
+    const separationAutoQueue = createSeparationAutoQueue({
+      getConfig: configState.getConfig,
+      isFeatureEnabled: isFeatureGateEnabled,
+      featureId: FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+      getSeparation: () => separationAutomation,
+      isObsLive: () => isObsLiveStatus(obsAdapterController?.getStatus()),
+      logger: runtimeDiagnosticsLogger,
+    });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       identityResolver: createLyricsIdentityResolver({
         cacheDirectory: path.join(app.getPath('userData'), 'lyrics-identity'),
@@ -1175,6 +1191,7 @@ if (!gotSingleInstanceLock) {
       onStatusChange: (status) => {
         windowState.sendToMainWindow('obs:status', status);
         obsPowerSaveBlockerSync.sync(status);
+        separationAutoQueue.refresh();
       },
       onStreamEnded: () => {
         const directory = configState.resolveDownloadDir(
@@ -1589,6 +1606,7 @@ if (!gotSingleInstanceLock) {
       runArtistPhotoWorker: providerRunnerManager.runArtistPhotoWorker,
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
+      enqueueAutoSeparation: separationAutoQueue.enqueue,
       enforceLibraryStoragePolicy,
       recordDiagnostic,
     });
@@ -1763,13 +1781,14 @@ if (!gotSingleInstanceLock) {
       lyricsAcquisitionService,
       notifyLibraryUpdated,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
+      enqueueAutoSeparation: separationAutoQueue.enqueue,
       enforceLibraryStoragePolicy,
       recordDiagnostic,
     });
 
     app.once('before-quit', () => importHandlerRuntime.dispose());
 
-    registerSeparationHandlers({
+    separationAutomation = registerSeparationHandlers({
       ipcMain,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
@@ -1801,6 +1820,7 @@ if (!gotSingleInstanceLock) {
 
     registerConfigHandlers({
       ipcMain,
+      onAutoSeparationChanged: () => separationAutoQueue.refresh(),
       onLibraryDirectoryChanged: () => {
         trackVideo.invalidate();
         notifyTrackVideo(null);

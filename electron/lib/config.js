@@ -87,6 +87,9 @@ const DEFAULTS = {
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
+  // Opt-in: queue the default separation recipe after import. Main rechecks
+  // the gate, prepared tools and OBS live state before each track.
+  autoSeparateAfterImport: false,
   // Last-resort sign-in for a failed provider download: 'none', 'firefox'
   // (yt-dlp --cookies-from-browser) or 'file' (an imported cookies.txt).
   youtubeLoginSource: 'none',
@@ -405,6 +408,7 @@ function loadConfigSnapshot(configPath) {
         typeof data.autoAnalyzeMusicStructure === 'boolean'
           ? data.autoAnalyzeMusicStructure
           : DEFAULTS.autoAnalyzeMusicStructure,
+      autoSeparateAfterImport: data.autoSeparateAfterImport === true,
       youtubeLoginSource: normalizeYoutubeLoginSource(data),
       youtubeLoginNoticeVersion:
         typeof data.youtubeLoginNoticeVersion === 'string' &&

@@ -32,6 +32,7 @@ function register(overrides = {}) {
       monitorGuideVocalFollowsCapture: false,
     },
     autoAnalyzeMusicStructure: true,
+    autoSeparateAfterImport: false,
     separationGpuAcceleration: true,
     autoCheckAppUpdates: true,
     windowCloseBehavior: 'ask',
@@ -156,6 +157,8 @@ describe('registerConfigHandlers', () => {
       'config:set-audio-preferences',
       'config:get-auto-music-analysis',
       'config:set-auto-music-analysis',
+      'config:get-auto-separation',
+      'config:set-auto-separation',
       'config:get-auto-error-reporting',
       'config:set-auto-error-reporting',
       'config:get-separation-gpu-acceleration',
@@ -583,6 +586,44 @@ describe('registerConfigHandlers', () => {
       expect(thrown.message).toContain('AUTO_MUSIC_ANALYSIS_INVALID');
       expect(updateConfig).not.toHaveBeenCalled();
       expect(recordDiagnostic).not.toHaveBeenCalled();
+    },
+  );
+
+  it('reads and persists automatic separation, then notifies the queue', async () => {
+    const onAutoSeparationChanged = vi.fn();
+    const { ipcMain, updateConfig } = register({ onAutoSeparationChanged });
+    await expect(
+      ipcMain.handlers.get('config:get-auto-separation')(),
+    ).resolves.toBe(false);
+    await expect(
+      ipcMain.handlers.get('config:set-auto-separation')(null, true),
+    ).resolves.toBe(true);
+    expect(updateConfig).toHaveBeenCalledWith({
+      autoSeparateAfterImport: true,
+    });
+    expect(onAutoSeparationChanged).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the saved automatic separation value when the queue refresh fails', async () => {
+    const { ipcMain } = register({
+      onAutoSeparationChanged: () => {
+        throw new Error('queue unavailable');
+      },
+    });
+    await expect(
+      ipcMain.handlers.get('config:set-auto-separation')(null, true),
+    ).resolves.toBe(true);
+  });
+
+  it.each([null, 0, 'true', {}])(
+    'rejects invalid automatic separation value %j',
+    async (enabled) => {
+      const { ipcMain, updateConfig } = register();
+      const thrown = await ipcMain.handlers
+        .get('config:set-auto-separation')(null, enabled)
+        .catch((error) => error);
+      expect(thrown.message).toContain('AUTO_SEPARATION_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
     },
   );
 

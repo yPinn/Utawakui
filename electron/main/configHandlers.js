@@ -59,6 +59,7 @@ function registerConfigHandlers({
   applyWindowCloseBehavior = () => undefined,
   getPreferredSystemLanguages = () => [],
   applyOutputLanguage = () => undefined,
+  onAutoSeparationChanged = () => undefined,
 }) {
   ipcMain.handle('config:get-obs-arrangement-dock', async () =>
     runConfigOperation(
@@ -310,6 +311,39 @@ function registerConfigHandlers({
       () => {
         updateConfig({ autoAnalyzeMusicStructure: enabled });
         return getConfig().autoAnalyzeMusicStructure;
+      },
+    );
+  });
+
+  ipcMain.handle('config:get-auto-separation', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-auto-separation',
+        code: 'AUTO_SEPARATION_READ_FAILED',
+      },
+      () => getConfig().autoSeparateAfterImport,
+    ),
+  );
+
+  ipcMain.handle('config:set-auto-separation', async (event, enabled) => {
+    if (typeof enabled !== 'boolean') {
+      throw createValidationError('AUTO_SEPARATION_INVALID');
+    }
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-auto-separation',
+        code: 'AUTO_SEPARATION_UPDATE_FAILED',
+      },
+      () => {
+        updateConfig({ autoSeparateAfterImport: enabled });
+        try {
+          onAutoSeparationChanged();
+        } catch {
+          // The saved preference stands; each queued track rechecks it.
+        }
+        return getConfig().autoSeparateAfterImport;
       },
     );
   });

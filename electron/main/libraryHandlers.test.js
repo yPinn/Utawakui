@@ -1724,6 +1724,24 @@ describe('local import automatic music analysis', () => {
     });
   });
 
+  it('offers imported tracks to automatic separation even if one admission throws', async () => {
+    const enqueueAutoSeparation = vi.fn((trackId) => {
+      if (trackId === 'local-1') throw new Error('private queue failure');
+      return true;
+    });
+    const harness = registerLocalImport({ enqueueAutoSeparation });
+
+    await expect(
+      harness.handlers.get('library:import-audio-files')(),
+    ).resolves.toMatchObject({
+      imported: [{ id: 'local-1' }, { id: 'local-2' }],
+    });
+    expect(enqueueAutoSeparation.mock.calls).toEqual([
+      ['local-1'],
+      ['local-2'],
+    ]);
+  });
+
   it('keeps a successful import when automatic storage cleanup fails', async () => {
     const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
     const harness = registerLocalImport({

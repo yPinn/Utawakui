@@ -7,6 +7,12 @@
 // without a real Electron process. Symmetric start/stop, never a stacked
 // counter — each obsAdapter status update carries the complete current
 // truth, not a delta.
+function isObsLiveStatus(status) {
+  return Boolean(
+    status?.observed?.streaming?.active || status?.observed?.recording?.active,
+  );
+}
+
 function createObsPowerSaveBlocker({
   powerSaveBlocker,
   blockerType = 'prevent-display-sleep',
@@ -14,10 +20,7 @@ function createObsPowerSaveBlocker({
   let blockerId = null;
 
   function sync(status) {
-    const shouldBlockSleep = Boolean(
-      status?.observed?.streaming?.active ||
-      status?.observed?.recording?.active,
-    );
+    const shouldBlockSleep = isObsLiveStatus(status);
     if (shouldBlockSleep && blockerId === null) {
       blockerId = powerSaveBlocker.start(blockerType);
     } else if (!shouldBlockSleep && blockerId !== null) {
@@ -33,4 +36,4 @@ function createObsPowerSaveBlocker({
   return { sync, isActive };
 }
 
-module.exports = { createObsPowerSaveBlocker };
+module.exports = { createObsPowerSaveBlocker, isObsLiveStatus };

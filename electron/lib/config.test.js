@@ -43,6 +43,7 @@ describe('config', () => {
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
+      autoSeparateAfterImport: false,
       youtubeLoginSource: 'none',
       youtubeLoginNoticeVersion: null,
       autoErrorReporting: 'ask',
@@ -168,6 +169,7 @@ describe('config', () => {
       captureDeviceId: null,
       audioPreferences: DEFAULT_AUDIO_PREFERENCES,
       autoAnalyzeMusicStructure: true,
+      autoSeparateAfterImport: false,
       youtubeLoginSource: 'none',
       youtubeLoginNoticeVersion: null,
       autoErrorReporting: 'ask',
@@ -399,6 +401,19 @@ describe('config', () => {
         JSON.stringify({ autoAnalyzeMusicStructure }),
       );
       expect(loadConfig(configPath).autoAnalyzeMusicStructure).toBe(true);
+    },
+  );
+
+  it('round-trips the automatic separation preference', () => {
+    saveConfig(configPath, { autoSeparateAfterImport: true });
+    expect(loadConfig(configPath).autoSeparateAfterImport).toBe(true);
+  });
+
+  it.each([null, 1, 'true', {}])(
+    'keeps automatic separation off for invalid value %j',
+    (autoSeparateAfterImport) => {
+      fs.writeFileSync(configPath, JSON.stringify({ autoSeparateAfterImport }));
+      expect(loadConfig(configPath).autoSeparateAfterImport).toBe(false);
     },
   );
 

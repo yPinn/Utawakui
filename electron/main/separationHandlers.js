@@ -426,6 +426,35 @@ function registerSeparationHandlers({
     notifyLibraryUpdated();
     return { ok: true };
   });
+
+  // Main-only seam for opt-in automatic work. Readiness only verifies
+  // prepared tools; it never downloads or clears a stale system path.
+  return {
+    isReady() {
+      try {
+        const userDataDir = resolveUserDataDir();
+        getPreparedSeparationFfmpegPath(
+          userDataDir,
+          getConfig().systemFfmpegPath,
+        );
+        getPreparedSeparationModel(
+          userDataDir,
+          resolveRecipe(DEFAULT_RECIPE_ID).modelIds[0],
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    enqueue: ({ trackIds, regenerate = false }) =>
+      queueService.enqueue({
+        trackIds,
+        recipeId: DEFAULT_RECIPE_ID,
+        regenerate,
+      }),
+    waitForItem: (itemId) => queueService.waitForItem(itemId),
+    remove: (itemId) => queueService.remove(itemId),
+  };
 }
 
 module.exports = { registerSeparationHandlers };
