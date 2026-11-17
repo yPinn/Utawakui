@@ -497,6 +497,8 @@ async function demixSong(session, mixL, mixR, onProgress, params) {
   ];
 }
 
+const NORMALIZE_PEAK = 0.9;
+
 function normalizeWave(samples, maxPeak, currentPeak) {
   if (currentPeak <= maxPeak) return samples;
   const scale = maxPeak / currentPeak;
@@ -505,16 +507,19 @@ function normalizeWave(samples, maxPeak, currentPeak) {
   return out;
 }
 
-// Secondary stem (Vocals, for every current instrumental-primary model) =
-// -(primary * compensate) + normalized mix. Subtracts against the
-// NORMALIZED mix, not raw input — that's upstream's
-// (invert_using_spec=False) behavior, not a bug in the port.
-function computeSecondary(primaryPeakScale, normalizedMix, compensate) {
-  const out = new Float32Array(primaryPeakScale.length);
-  for (let i = 0; i < primaryPeakScale.length; i++) {
-    out[i] = -primaryPeakScale[i] * compensate + normalizedMix[i];
+// Both stems are computed in the normalized domain, then undo only the
+// normalizeWave() scale. Upstream multiplies the primary by the raw peak and
+// subtracts it from the normalized mix, which leaves quiet sources (peak <
+// 0.9) with a quieter accompaniment and accompaniment leaking into vocals.
+function restoreStems(primaryNorm, normalizedMix, compensate, peak) {
+  const restore = peak > NORMALIZE_PEAK ? peak / NORMALIZE_PEAK : 1;
+  const primary = new Float32Array(primaryNorm.length);
+  const secondary = new Float32Array(primaryNorm.length);
+  for (let i = 0; i < primaryNorm.length; i++) {
+    primary[i] = primaryNorm[i] * restore;
+    secondary[i] = (normalizedMix[i] - primaryNorm[i] * compensate) * restore;
   }
-  return out;
+  return { primary, secondary };
 }
 
 // Pure encode — no filesystem access, kept separate from writeWavAtomic so
@@ -645,8 +650,8 @@ async function separateTrack(
   for (let i = 0; i < left.length; i++) {
     peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
   }
-  const normL = normalizeWave(left, 0.9, peak);
-  const normR = normalizeWave(right, 0.9, peak);
+  const normL = normalizeWave(left, NORMALIZE_PEAK, peak);
+  const normR = normalizeWave(right, NORMALIZE_PEAK, peak);
 
   const [primaryNormL, primaryNormR] = await demixSong(
     session,
@@ -655,11 +660,18 @@ async function separateTrack(
     onProgress,
     params,
   );
-  const primaryL = Float32Array.from(primaryNormL, (v) => v * peak);
-  const primaryR = Float32Array.from(primaryNormR, (v) => v * peak);
-
-  const secondaryL = computeSecondary(primaryL, normL, model.compensate);
-  const secondaryR = computeSecondary(primaryR, normR, model.compensate);
+  const { primary: primaryL, secondary: secondaryL } = restoreStems(
+    primaryNormL,
+    normL,
+    model.compensate,
+    peak,
+  );
+  const { primary: primaryR, secondary: secondaryR } = restoreStems(
+    primaryNormR,
+    normR,
+    model.compensate,
+    peak,
+  );
 
   onProgress?.({ stage: 'writing' });
   const stemsPath = path.join(outputDir, `${presetId}.wav`);
@@ -698,4 +710,5 @@ module.exports = {
   DEFAULT_PRESET_ID,
   resolvePreset,
   resolveExecutionPreset,
+  restoreStems,
 };

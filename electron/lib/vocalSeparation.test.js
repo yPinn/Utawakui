@@ -10,6 +10,7 @@ import {
   MODELS,
   createInferenceSession,
   separateTrack,
+  restoreStems,
 } from './vocalSeparation.js';
 
 // createInferenceSession's own fallback logic is pure and injectable (no
@@ -305,5 +306,39 @@ describe('MODELS / SEPARATION_PRESETS consistency', () => {
     for (const model of Object.values(MODELS)) {
       expect(model.primaryStem).toBe('instrumental');
     }
+  });
+});
+
+describe('restoreStems', () => {
+  const mix = Float32Array.from([0.4, -0.2, 0.1]);
+  const inst = Float32Array.from([0.3, -0.1, 0.05]);
+
+  it('keeps a quiet source at its original level and keeps stems complementary', () => {
+    const { primary, secondary } = restoreStems(inst, mix, 1, 0.4);
+    expect(Array.from(primary)).toEqual(Array.from(inst));
+    for (let i = 0; i < mix.length; i++) {
+      expect(primary[i] + secondary[i]).toBeCloseTo(mix[i], 6);
+    }
+  });
+
+  it('undoes only the 0.9 normalization for a loud source', () => {
+    const peak = 1.8;
+    const normalized = Float32Array.from(mix, (v) => (v * 0.9) / peak);
+    const normalizedInst = Float32Array.from(inst, (v) => (v * 0.9) / peak);
+    const { primary, secondary } = restoreStems(
+      normalizedInst,
+      normalized,
+      1,
+      peak,
+    );
+    for (let i = 0; i < mix.length; i++) {
+      expect(primary[i]).toBeCloseTo(inst[i], 6);
+      expect(primary[i] + secondary[i]).toBeCloseTo(mix[i], 6);
+    }
+  });
+
+  it('applies the model compensation to the subtracted accompaniment', () => {
+    const { secondary } = restoreStems(inst, mix, 1.05, 0.4);
+    expect(secondary[0]).toBeCloseTo(0.4 - 0.3 * 1.05, 6);
   });
 });

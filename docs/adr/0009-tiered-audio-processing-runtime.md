@@ -196,6 +196,18 @@ holds its next track while a connected OBS reports streaming or recording.
 Turning it off drops its waiting tracks and withdraws its not-yet-started
 item. Its waiting list is session-only, like the queue.
 
+### Stem level
+
+Both stems are computed in the 0.9 peak-normalized inference domain and then
+scaled back by only that normalization factor, so accompaniment and guide vocal
+keep the source level and still sum to the source mix. Upstream multiplies the
+primary stem by the raw source peak and subtracts it from the normalized mix;
+for a source peaking at 0.4 (about −8 dB) that left the accompaniment 8 dB too
+quiet and accompaniment leaking into the guide vocal (verified 2026-11-17 on a
+45-second Inst HQ4 clip: accompaniment −28.1 → −20.1 LUFS, matching the
+louder copy minus 8 dB). Existing results keep their level until regenerated;
+the profile id is unchanged so stored results stay current.
+
 ### Runtime and dependency policy
 
 The lightweight ONNX path remains built in. It is CPU-completable and uses the
