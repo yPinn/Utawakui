@@ -1,7 +1,8 @@
-import { reactive } from 'vue';
+import { reactive, watch } from 'vue';
 import { useLibrary } from './useLibrary.js';
 import { useObsIntegration } from './useObsIntegration.js';
 import { usePlayer } from './usePlayer.js';
+import { useTrackGain } from './useTrackGain.js';
 import { useBgmStandbyPlan } from './useBgmStandbyPlan.js';
 import { createBgmAudioDeck } from '../bgm/audioDeck.js';
 import { createBgmHandoffCoordinator } from '../bgm/handoffCoordinator.js';
@@ -33,6 +34,19 @@ const controller = createBgmSessionController({
   coordinator,
   projector: createBgmSessionModeProjector(),
 });
+
+// Applies the BGM track's per-recording trim; a new track starts at 0 dB
+// until its own value arrives, never at the previous track's trim.
+const trackGain = useTrackGain();
+watch(
+  () => [plan.state.plan.currentTrackId, trackGain.revision.value],
+  async ([trackId], previous) => {
+    if (trackId !== previous?.[0]) deck.setTrackGainDb(0);
+    const gainDb = await trackGain.gainDbFor(trackId);
+    if (plan.state.plan.currentTrackId === trackId) deck.setTrackGainDb(gainDb);
+  },
+  { immediate: true },
+);
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => controller.dispose());

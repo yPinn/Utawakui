@@ -1078,6 +1078,7 @@ describe('guide vocal defaults', () => {
         'setPitchCents',
         'setPlaybackMode',
         'setTempoRate',
+        'setTrackGainDb',
         'setTransposeSemitones',
         'setVolume',
         'setCaptureVolume',

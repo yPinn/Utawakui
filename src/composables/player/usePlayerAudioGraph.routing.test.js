@@ -314,8 +314,10 @@ describe('default-context monitor relay', () => {
     graph.setCaptureGuideVocalValue(0.9);
     graph.setGuideVocalValue(0.4);
     expect(source.gains[0].gain.value).toBe(0.4);
-    expect(source.gains[5].gain.value).toBe(0.9);
-    expect(source.gains[7].gain.value).toBe(0.8);
+    // gains[5] is the per-track trim; capture nodes follow it.
+    expect(source.gains[5].gain.value).toBe(1);
+    expect(source.gains[6].gain.value).toBe(0.9);
+    expect(source.gains[8].gain.value).toBe(0.8);
     expect(relay.gains.every((n) => n.gain.value === 1)).toBe(true);
     expect((await graph.setTransposeSemitones(3)).ok).toBe(true);
     expect(Context.instances).toHaveLength(2);
@@ -654,8 +656,8 @@ describe('default-context monitor relay', () => {
       .spyOn(gate, 'setValueAtTime')
       .mockImplementation((value) => {
         if (value === 1) {
-          expect(source.gains[8].gain.value).toBe(1);
-          expect(source.gains[9].gain.value).toBe(0);
+          expect(source.gains[9].gain.value).toBe(1);
+          expect(source.gains[10].gain.value).toBe(0);
         }
         gate.value = value;
       });
@@ -806,10 +808,13 @@ describe('capture-only output routing and staged monitor-return opt-out', () => 
     graph.routeAudioGraph(false);
     expect((await graph.resume()).ok).toBe(true);
     const ctx = Context.instances[0];
-    expect(ctx.elements[0].edges.size).toBe(2);
+    // The element feeds only the per-track trim, which owns the fan-out.
+    const trim = ctx.gains[5];
+    expect(ctx.elements[0].edges.size).toBe(1);
+    expect(trim.edges.size).toBe(2);
     expect(ctx.bridges).toHaveLength(0);
     graph.routeAudioGraph(true);
-    expect(ctx.elements[0].edges.size).toBe(1);
+    expect(trim.edges.size).toBe(1);
   });
 
   it('leaves direct mode before monitor becomes audible and never closes the borrowed context', async () => {
@@ -1496,5 +1501,23 @@ describe('capture-only output routing and staged monitor-return opt-out', () => 
     });
     expect(graph.isPlaybackReady(result)).toBe(true);
     expect(terminalGains(replacement).map((n) => n.gain.value)).toEqual([1]);
+  });
+});
+
+describe('per-track gain trim', () => {
+  it('applies a bounded dB trim before both monitor and capture paths', async () => {
+    const { graph, state } = fixture();
+    graph.setTrackGainDb(-6);
+    expect(state.trackGainDb).toBe(-6);
+    await graph.resume();
+    const ctx = Context.instances[0];
+    const trim = ctx.gains[5];
+    expect(trim.gain.value).toBeCloseTo(10 ** (-6 / 20), 6);
+    expect(ctx.elements[0].edges.has(trim)).toBe(true);
+
+    graph.setTrackGainDb(20);
+    expect(state.trackGainDb).toBe(6);
+    graph.setTrackGainDb(Number.NaN);
+    expect(state.trackGainDb).toBe(0);
   });
 });

@@ -276,6 +276,31 @@ describe('BGM audio deck', () => {
     );
   });
 
+  it('applies the per-track trim under volume, Dim and fades', async () => {
+    const { audio, deck, gain } = createHarness();
+    deck.setTrackGainDb(-6);
+    deck.load('utawakui-media://track/bgm/audio.wav');
+    const playPromise = deck.startSilent();
+    audio.dispatch('playing');
+    await playPromise;
+    await deck.fadeIn(0);
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      0.25 * 10 ** (-6 / 20),
+      10,
+    );
+
+    deck.setTrackGainDb(99);
+    expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(
+      0.25 * 10 ** (6 / 20),
+      10,
+    );
+    deck.setDimmed(true);
+    expect(gain.gain.linearRampToValueAtTime.mock.lastCall[0]).toBeCloseTo(
+      0.25 * 10 ** (6 / 20) * 10 ** (-12 / 20),
+      9,
+    );
+  });
+
   it('loads a monitor-only source without creating Web Audio or autoplaying', () => {
     const { audio, createAudioContext, deck } = createHarness();
 

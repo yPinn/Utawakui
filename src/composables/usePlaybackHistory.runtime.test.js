@@ -73,6 +73,7 @@ vi.mock('./player/usePlayerAudioGraph.js', () => ({
     setTempoRate: vi.fn(),
     setTransposeSemitones: vi.fn(),
     setVolume: vi.fn(),
+    setTrackGainDb: vi.fn(),
     setMuted: vi.fn(),
     toggleCaptureGuideVocal: vi.fn(),
     toggleMute: vi.fn(),

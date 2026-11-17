@@ -3,6 +3,7 @@ import { usePlayerDiagnostics } from './player/usePlayerDiagnostics.js';
 import { usePlayerLibrarySync } from './player/usePlayerLibrarySync.js';
 import { usePlayerAudioStart } from './player/usePlayerAudioStart.js';
 import { usePlayerPerformanceSettings } from './player/usePlayerPerformanceSettings.js';
+import { useTrackGain } from './useTrackGain.js';
 import { usePlayerMediaBoundary } from './player/usePlayerMediaBoundary.js';
 import { usePlayerErrorNotice } from './player/usePlayerErrorNotice.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
@@ -75,6 +76,7 @@ const state = reactive({
   volume: initialAudioPreferences.performanceVolume,
   captureVolume: initialAudioPreferences.captureVolume,
   isMuted: initialAudioPreferences.performanceMuted,
+  trackGainDb: 0,
   playbackMode: PLAYBACK_MODES.sequence,
   isLooping: false,
   error: null,
@@ -124,6 +126,7 @@ const {
   setTransposeSemitones,
   setCaptureVolume,
   setVolume,
+  setTrackGainDb,
   toggleCaptureGuideVocal,
   toggleMute,
 } = audioGraph;
@@ -291,6 +294,8 @@ usePlayerErrorNotice({
   retry: () => toggle(),
   retryMonitorOutput: audioGraph.retryMonitorOutput,
 });
+const trackGain = useTrackGain();
+trackGain.followSavedTrackGain(() => state.track?.id, setTrackGainDb);
 const performanceSettings = usePlayerPerformanceSettings({
   playerState: state,
   graph: audioGraph,
@@ -312,6 +317,7 @@ async function playTrack(track, { useDefaults = false } = {}) {
   // boundary. Stop the current performance immediately, but keep its
   // identity/source stable until the BGM handoff hook grants the new start.
   if (state.isPlaying) audio.pause();
+  const gainRequest = trackGain.gainDbFor(track.id);
   const controls = await performanceSettings.prepare(track, {
     isCurrent: () => requestRevision === playbackStartRequestRevision,
     useDefaults,
@@ -327,8 +333,11 @@ async function playTrack(track, { useDefaults = false } = {}) {
     requestRevision,
   });
   if (!allowed) return false;
+  const gainDb = await gainRequest;
+  if (requestRevision !== playbackStartRequestRevision) return false;
 
   state.track = track;
+  setTrackGainDb(gainDb);
   state.playbackRevision += 1;
   state.currentTime = 0;
   state.duration = 0;
@@ -362,6 +371,10 @@ function restorePlaybackState({
   lastObservedCurrentTime = 0;
   pendingRestorePosition = Math.max(0, Number(positionSeconds) || 0);
   resetTrackAudioControls();
+  setTrackGainDb(0);
+  void trackGain.gainDbFor(track.id).then((gainDb) => {
+    if (state.track?.id === track.id) setTrackGainDb(gainDb);
+  });
   routeAudioGraph(Boolean(track.usesSeparatedAudio));
   setPlaybackMode(playbackMode);
   audio.src = track.url;
@@ -551,6 +564,7 @@ export function usePlayer() {
     clearTrack,
     setCaptureVolume,
     setVolume,
+    setTrackGainDb,
     toggleMute,
     setPlaybackMode,
     cyclePlaybackMode,

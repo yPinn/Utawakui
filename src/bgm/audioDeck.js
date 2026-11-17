@@ -59,10 +59,14 @@ export function createBgmAudioDeck({
 
   audio.crossOrigin = 'anonymous';
 
+  // Per-recording trim shared with the singing player; fades, Dim and mute
+  // all target this level.
+  let trackGainDb = audioControlValues.trackGainDb.defaultValue;
+
   function effectiveGain() {
     if (settings.isMuted) return 0;
     const attenuation = state.isDimmed ? 10 ** (settings.dimDb / 20) : 1;
-    return settings.volume * attenuation;
+    return settings.volume * attenuation * 10 ** (trackGainDb / 20);
   }
 
   function ensureGraph() {
@@ -400,6 +404,16 @@ export function createBgmAudioDeck({
     applyLiveGain(0);
   }
 
+  function setTrackGainDb(gainDb) {
+    trackGainDb = clamp(
+      gainDb,
+      audioControlValues.trackGainDb.min,
+      audioControlValues.trackGainDb.max,
+      audioControlValues.trackGainDb.defaultValue,
+    );
+    applyLiveGain(0);
+  }
+
   function setDimmed(isDimmed) {
     state.isDimmed = Boolean(isDimmed);
     applyLiveGain(
@@ -462,6 +476,7 @@ export function createBgmAudioDeck({
     cut,
     setVolume,
     setMuted,
+    setTrackGainDb,
     setDimmed,
     setGuideVocalOn,
     seek,

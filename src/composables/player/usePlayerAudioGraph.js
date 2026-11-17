@@ -71,6 +71,9 @@ export function usePlayerAudioGraph({
   monitorBridgeReturn = true,
 }) {
   let audioCtx = null;
+  // sourceNode is the per-track trim fed by the media element, so every
+  // existing fan-out (monitor, bridges, direct capture) inherits the trim.
+  let mediaSource = null;
   let sourceNode = null;
   let splitter = null;
   let mergerInst = null;
@@ -251,7 +254,7 @@ export function usePlayerAudioGraph({
 
     audioCtx = new AudioContext();
     audioCtx.addEventListener?.('statechange', handleMonitorStateChange);
-    sourceNode = audioCtx.createMediaElementSource(audio);
+    mediaSource = audioCtx.createMediaElementSource(audio);
     splitter = audioCtx.createChannelSplitter(4);
     mergerInst = audioCtx.createChannelMerger(2);
     mergerVoc = audioCtx.createChannelMerger(2);
@@ -280,6 +283,9 @@ export function usePlayerAudioGraph({
     dryGain.connect(monitorOutput);
     wetGain.connect(monitorOutput);
     monitorOutput.connect(audioCtx.destination);
+    sourceNode = audioCtx.createGain();
+    sourceNode.gain.value = trackGainLinear();
+    mediaSource.connect(sourceNode);
     connectSourceNode();
     return audioCtx;
   }
@@ -1078,6 +1084,20 @@ export function usePlayerAudioGraph({
     rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : nextVolume);
   }
 
+  function trackGainLinear() {
+    return 10 ** ((Number(state.trackGainDb) || 0) / 20);
+  }
+
+  // Non-destructive per-recording trim; user volumes stay downstream.
+  function setTrackGainDb(gainDb) {
+    state.trackGainDb = boundedOrCurrent(
+      gainDb,
+      AUDIO_CONTROL_VALUES.trackGainDb,
+      AUDIO_CONTROL_VALUES.trackGainDb.defaultValue,
+    );
+    if (audioCtx) rampGain(audioCtx, sourceNode.gain, trackGainLinear());
+  }
+
   function setMuted(muted) {
     state.isMuted = Boolean(muted);
     if (!audioCtx) return;
@@ -1763,6 +1783,7 @@ export function usePlayerAudioGraph({
     // Direct capture borrows source/merger edges. Remove those before the
     // shared nodes' disconnect-all; native targeted disconnect throws otherwise.
     void disposeCaptureGraph();
+    mediaSource?.disconnect();
     sourceNode?.disconnect();
     splitter?.disconnect();
     mergerInst?.disconnect();
@@ -1802,6 +1823,7 @@ export function usePlayerAudioGraph({
     resetPitchTempo,
     setCaptureVolume,
     setVolume,
+    setTrackGainDb,
     setMuted,
     toggleMute,
     toggleCaptureGuideVocal,

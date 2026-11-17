@@ -45,6 +45,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 import UiVolumeControl from '../ui/UiVolumeControl.vue';
+import { usePlayerTrackGainRow } from '../../composables/player/usePlayerTrackGainRow.js';
 import { t } from '../../utils/i18n.js';
 
 defineProps({
@@ -373,6 +374,7 @@ const guideVocalRows = computed(() => {
   return rows;
 });
 
+const trackGainRow = usePlayerTrackGainRow();
 const pitchTempoRows = computed(() => [
   {
     key: 'transpose',
@@ -453,6 +455,7 @@ const pitchTempoRows = computed(() => [
     }),
     onPlus: () => adjustTempo(0.05),
   },
+  trackGainRow.value,
 ]);
 
 // useLyrics.js already syncs to whatever's playing, so switching tabs is
