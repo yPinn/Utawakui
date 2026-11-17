@@ -187,6 +187,15 @@ remains authoritative for durable results, and app-restart persistence,
 parallel separation, time estimates, notifications, and worker/model reuse
 remain separate future decisions.
 
+The opt-in "accompaniment after import" setting (default off) is a main-only
+producer for this same queue, not a second scheduler. It admits only tracks
+committed after the setting is on, hands one track at a time to the queue with
+the default recipe and `regenerate: false`, and admits nothing unless the
+gate is enabled and FFmpeg plus the default model are already prepared. It
+holds its next track while a connected OBS reports streaming or recording.
+Turning it off drops its waiting tracks and withdraws its not-yet-started
+item. Its waiting list is session-only, like the queue.
+
 ### Runtime and dependency policy
 
 The lightweight ONNX path remains built in. It is CPU-completable and uses the
