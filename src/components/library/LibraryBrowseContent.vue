@@ -42,6 +42,10 @@ import { isLocalPreviewTrack } from '../../utils/trackPreviewSource.js';
 import { useSongEditor } from '../../composables/useSongEditor.js';
 import { useTrackLanguageIndex } from '../../composables/useTrackLanguageIndex.js';
 import { trackLanguageName } from '../../utils/trackLanguageNames.js';
+import {
+  librarySearchTerms,
+  matchesLibrarySearch,
+} from '../../utils/librarySearch.js';
 import TrackLanguageBatchModal from './TrackLanguageBatchModal.vue';
 import { useReleaseOrganization } from '../../composables/useReleaseOrganization.js';
 import ArtistPhotoCandidateModal from '../artists/ArtistPhotoCandidateModal.vue';
@@ -305,20 +309,21 @@ const normalizedSearchQuery = computed(() =>
   showTrackSearch.value ? searchQuery.value.trim().toLocaleLowerCase() : '',
 );
 
+const searchTerms = computed(() =>
+  librarySearchTerms(normalizedSearchQuery.value),
+);
+
 function matchesSearch(track) {
-  const query = normalizedSearchQuery.value;
-  if (!query) return true;
-  if (matchesTrackTitle(track, query)) return true;
-  return [
-    ...artistSearchTexts(track, artistIndexState.index),
-    ...trackLanguages.languagesOf(track.id).map(trackLanguageName),
-    track.id,
-    track.filename,
-  ].some((value) =>
-    String(value ?? '')
-      .toLocaleLowerCase()
-      .includes(query),
-  );
+  if (!searchTerms.value.length) return true;
+  return matchesLibrarySearch(searchTerms.value, {
+    matchesTitle: (term) => matchesTrackTitle(track, term),
+    texts: [
+      ...artistSearchTexts(track, artistIndexState.index),
+      ...trackLanguages.languagesOf(track.id).map(trackLanguageName),
+      track.id,
+      track.filename,
+    ],
+  });
 }
 
 const libraryViewTracks = computed(() =>
