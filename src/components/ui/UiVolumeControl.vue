@@ -113,6 +113,7 @@ onBeforeUnmount(stopDrag);
           :min="min"
           :max="max"
           :step="step"
+          wheel-mode="hover"
           :default-value="defaultValue"
           :aria-label="volumeLabel"
           :value-text="formatPercent(modelValue)"

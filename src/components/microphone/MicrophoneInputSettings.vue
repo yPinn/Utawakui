@@ -6,7 +6,10 @@ import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiRange from '../ui/UiRange.vue';
 import UiSelect from '../ui/UiSelect.vue';
-import { normalizeMicrophoneInputOptions } from '../../microphone/inputProcessing.js';
+import {
+  DEFAULT_MICROPHONE_GAIN_DB,
+  normalizeMicrophoneInputOptions,
+} from '../../microphone/inputProcessing.js';
 
 const props = defineProps({
   options: { type: Object, required: true },
@@ -83,7 +86,8 @@ function processingStatus(key) {
       :min="-24"
       :max="24"
       :step="1"
-      :default-value="0"
+      :default-value="DEFAULT_MICROPHONE_GAIN_DB"
+      :reference-mark="DEFAULT_MICROPHONE_GAIN_DB"
       :value-text="`${options.gainDb > 0 ? '+' : ''}${options.gainDb} dB`"
       :disabled="requesting || measuring"
       hint="只影響分析；增益也會放大底噪。"

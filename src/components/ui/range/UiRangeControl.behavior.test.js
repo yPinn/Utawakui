@@ -67,6 +67,19 @@ function inputRect(input) {
   });
 }
 
+function wheelInput(input, options = {}) {
+  const event = {
+    currentTarget: input,
+    cancelable: true,
+    deltaX: 0,
+    deltaY: -120,
+    preventDefault: vi.fn(),
+    ...options,
+  };
+  trigger(input, 'onWheel', event);
+  return event;
+}
+
 describe('UiRangeControl', () => {
   it('keeps one native numeric input as the model and attribute authority', () => {
     const update = vi.fn();
@@ -104,6 +117,74 @@ describe('UiRangeControl', () => {
     trigger(input, 'onChange', { target: input });
     expect(update).toHaveBeenCalledWith(0.7);
     expect(change).toHaveBeenCalledOnce();
+    app.unmount();
+  });
+
+  it.each(['focus', 'hover'])(
+    'steps the native input and commits the new value in %s mode',
+    (wheelMode) => {
+      const updates = [];
+      const { app, root } = mount(UiRangeControl, {
+        wheelMode,
+        wheelSteps: 10,
+        onChange: (event) => updates.push([event.type, event.target.value]),
+        'onUpdate:modelValue': (value) => updates.push(['update', value]),
+      });
+      const [input] = findAll(root, (node) => node.props.type === 'range');
+      input.value = '25';
+      input.stepUp = vi.fn((count) => {
+        input.value = String(Math.min(100, Number(input.value) + count));
+      });
+      input.stepDown = vi.fn((count) => {
+        input.value = String(Number(input.value) - count);
+      });
+      input.dispatchEvent = (event) => {
+        expect(event.bubbles).toBe(true);
+        const handler = event.type === 'input' ? 'onInput' : 'onChange';
+        trigger(input, handler, { type: event.type, target: input });
+      };
+
+      if (wheelMode === 'focus') {
+        expect(wheelInput(input).preventDefault).not.toHaveBeenCalled();
+        document.activeElement = input;
+      }
+      expect(wheelInput(input).preventDefault).toHaveBeenCalledOnce();
+      expect(
+        wheelInput(input, { deltaY: 120 }).preventDefault,
+      ).toHaveBeenCalledOnce();
+      expect(input.stepUp).toHaveBeenCalledWith(10);
+      expect(input.stepDown).toHaveBeenCalledWith(10);
+      expect(updates).toEqual([
+        ['update', 35],
+        ['change', '35'],
+        ['update', 25],
+        ['change', '25'],
+      ]);
+
+      input.value = '100';
+      expect(wheelInput(input).preventDefault).not.toHaveBeenCalled();
+      expect(updates).toHaveLength(4);
+      app.unmount();
+    },
+  );
+
+  it.each([
+    ['opted-out range', { wheelMode: 'off' }, {}],
+    ['disabled range', { disabled: true }, {}],
+    ['horizontal gesture', {}, { deltaX: 120, deltaY: -10 }],
+    ['pinch gesture', {}, { ctrlKey: true }],
+    ['shift-scroll', {}, { shiftKey: true }],
+    ['active drag', {}, { buttons: 1 }],
+    ['uncancelable scroll', {}, { cancelable: false }],
+  ])('preserves scrolling for a %s', (_label, props, event) => {
+    const { app, root } = mount(UiRangeControl, {
+      wheelMode: 'hover',
+      ...props,
+    });
+    const [input] = findAll(root, (node) => node.props.type === 'range');
+    input.stepUp = vi.fn();
+    expect(wheelInput(input, event).preventDefault).not.toHaveBeenCalled();
+    expect(input.stepUp).not.toHaveBeenCalled();
     app.unmount();
   });
 
@@ -319,6 +400,7 @@ describe('UiRangeControl', () => {
       min: 0,
       max: 100,
       marks: [100, 50, 0, 50, -25, Number.NaN, 125],
+      referenceMark: 75,
     });
     const stops = findAll(
       root,
@@ -326,8 +408,9 @@ describe('UiRangeControl', () => {
     );
 
     expect(stops.map((stop) => stop.props['data-range-stop'])).toEqual([
-      0, 50, 100,
+      0, 50, 75, 100,
     ]);
+    expect(stops[2].props.class).toContain('ui-range-control__stop--reference');
     expect(
       findAll(root, (node) => node.props.class === 'ui-range-control__stops')[0]
         .props['aria-hidden'],

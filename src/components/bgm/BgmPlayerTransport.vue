@@ -131,6 +131,7 @@ function updatePosition(value) {
         :min="0"
         :max="duration"
         :step="0.1"
+        wheel-mode="off"
         :disabled="seekDisabled || !currentTrack || duration <= 0"
         :value-text="formatDuration(currentTime, '0:00')"
         :format-value="(value) => formatDuration(value, '0:00')"

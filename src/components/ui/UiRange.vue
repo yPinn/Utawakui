@@ -13,8 +13,10 @@ const props = defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
   step: { type: Number, default: 1 },
+  wheelSteps: { type: Number, default: 1 },
   defaultValue: { type: Number, default: undefined },
   marks: { type: Array, default: () => [] },
+  referenceMark: { type: Number, default: undefined },
   valueText: { type: String, default: '' },
   valueInLabel: { type: Boolean, default: false },
   formatValue: { type: Function, default: null },
@@ -72,8 +74,10 @@ defineExpose({ focus });
           :min="min"
           :max="max"
           :step="step"
+          :wheel-steps="wheelSteps"
           :default-value="defaultValue"
           :marks="marks"
+          :reference-mark="referenceMark"
           :value-text="valueText"
           :format-value="formatValue"
           :disabled="disabled"

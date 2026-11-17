@@ -556,6 +556,7 @@ onUnmounted(() => {
           :min="0"
           :max="state.duration || 0"
           :step="0.1"
+          wheel-mode="off"
           :disabled="!state.track"
           :format-value="formatDuration"
           :value-text="`${formatDuration(state.currentTime)} / ${formatDuration(state.duration)}`"

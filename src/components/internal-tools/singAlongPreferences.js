@@ -1,6 +1,7 @@
 import { normalizeMicrophoneInputOptions } from '../../microphone/inputProcessing.js';
 
 const STORAGE_KEY = 'utawakui.prompter.sing-along';
+export const DEFAULT_CORRECTION_MS = 0;
 
 export function normalizeSingAlongPreferences(value) {
   const mic = value?.microphone;
@@ -21,7 +22,7 @@ export function normalizeSingAlongPreferences(value) {
     // Match the 10 ms slider step.
     correctionMs: Number.isFinite(offset)
       ? Math.max(-500, Math.min(500, Math.round(offset / 10) * 10)) || 0
-      : 0,
+      : DEFAULT_CORRECTION_MS,
     showMeter: value?.showMeter !== false,
     showLevelHistory: value?.showLevelHistory !== false,
     showReferencePitch: value?.showReferencePitch !== false,

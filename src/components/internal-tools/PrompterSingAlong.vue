@@ -25,6 +25,7 @@ import UiSurface from '../ui/UiSurface.vue';
 import GuideSegmentReview from './GuideSegmentReview.vue';
 import ReferencePitchMicrophone from './ReferencePitchMicrophone.vue';
 import {
+  DEFAULT_CORRECTION_MS,
   loadSingAlongPreferences,
   saveSingAlongPreferences,
 } from './singAlongPreferences.js';
@@ -1035,6 +1036,8 @@ onBeforeUnmount(() => {
                 :min="-500"
                 :max="500"
                 :step="10"
+                :default-value="DEFAULT_CORRECTION_MS"
+                :reference-mark="DEFAULT_CORRECTION_MS"
                 :value-text="formatCorrection(correctionMs)"
                 :format-value="formatCorrection"
                 value-in-label

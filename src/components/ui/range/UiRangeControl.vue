@@ -23,6 +23,16 @@ const props = defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
   step: { type: Number, default: 1 },
+  wheelMode: {
+    type: String,
+    default: 'focus',
+    validator: (value) => ['focus', 'hover', 'off'].includes(value),
+  },
+  wheelSteps: {
+    type: Number,
+    default: 1,
+    validator: (value) => Number.isSafeInteger(value) && value > 0,
+  },
   defaultValue: { type: Number, default: undefined },
   marks: { type: Array, default: () => [] },
   referenceMark: { type: Number, default: undefined },
@@ -58,7 +68,7 @@ const normalizedMarks = computed(() => {
   const span = props.max - props.min;
   if (!Number.isFinite(span) || span <= 0) return [];
 
-  return [...new Set(props.marks)]
+  return [...new Set([...props.marks, props.referenceMark])]
     .filter(
       (value) =>
         Number.isFinite(value) && value >= props.min && value <= props.max,
@@ -182,6 +192,39 @@ function updateValue(event) {
   emit('update:modelValue', value);
 }
 
+function adjustWithWheel(event) {
+  const input = event.currentTarget;
+  if (
+    props.disabled ||
+    props.wheelMode === 'off' ||
+    (props.wheelMode === 'focus' &&
+      input.ownerDocument.activeElement !== input) ||
+    event.defaultPrevented ||
+    !event.cancelable ||
+    event.buttons ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    event.shiftKey ||
+    !Number.isFinite(event.deltaY) ||
+    Math.abs(event.deltaY) <= Math.abs(event.deltaX) ||
+    !Number.isFinite(props.step) ||
+    props.step <= 0 ||
+    props.max <= props.min
+  ) {
+    return;
+  }
+
+  const previous = input.value;
+  if (event.deltaY < 0) input.stepUp(props.wheelSteps);
+  else input.stepDown(props.wheelSteps);
+  if (input.value === previous) return;
+
+  event.preventDefault();
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 function resetToDefault(event) {
   if (props.disabled || !Number.isFinite(props.defaultValue)) return;
 
@@ -233,6 +276,7 @@ defineExpose({ focus });
       @pointerleave="hidePreview"
       @pointercancel="hidePreview"
       @input="updateValue"
+      @wheel="adjustWithWheel"
       @contextmenu="resetToDefault"
     />
     <span class="ui-range-control__track" aria-hidden="true">

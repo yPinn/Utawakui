@@ -2,6 +2,7 @@ import { measureMicrophoneLevel } from './level.js';
 import { createMicrophonePitchEstimator } from './pitch.js';
 
 export const PITCH_MIN_DBFS = -55;
+export const DEFAULT_MICROPHONE_GAIN_DB = 0;
 export const MICROPHONE_ANALYSIS_SAMPLES = 2048;
 export const MICROPHONE_LOW_CUT_OPTIONS_HZ = Object.freeze([0, 80, 120, 180]);
 
@@ -14,7 +15,7 @@ export function normalizeMicrophoneInputOptions(input = {}) {
   return {
     gainDb: Number.isFinite(input?.gainDb)
       ? Math.max(-24, Math.min(24, input.gainDb))
-      : 0,
+      : DEFAULT_MICROPHONE_GAIN_DB,
     highPassHz: MICROPHONE_LOW_CUT_OPTIONS_HZ.includes(input?.highPassHz)
       ? input.highPassHz
       : 0,

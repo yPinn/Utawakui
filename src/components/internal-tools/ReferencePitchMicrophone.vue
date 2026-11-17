@@ -1,7 +1,10 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, watch, shallowRef } from 'vue';
 import { useMicrophoneResearch } from '../../composables/useMicrophoneResearch.js';
-import { MICROPHONE_LOW_CUT_OPTIONS_HZ } from '../../microphone/inputProcessing.js';
+import {
+  DEFAULT_MICROPHONE_GAIN_DB,
+  MICROPHONE_LOW_CUT_OPTIONS_HZ,
+} from '../../microphone/inputProcessing.js';
 import {
   microphonePitchStatus,
   microphonePitchTone,
@@ -262,6 +265,8 @@ watch(
           :min="-24"
           :max="24"
           :step="1"
+          :default-value="DEFAULT_MICROPHONE_GAIN_DB"
+          :reference-mark="DEFAULT_MICROPHONE_GAIN_DB"
           :value-text="formatGain(state.inputOptions.gainDb)"
           :format-value="formatGain"
           value-in-label

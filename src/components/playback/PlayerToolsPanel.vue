@@ -323,6 +323,7 @@ function setActiveTab(key) {
                 class="player-tools__range"
                 :model-value="row.sliderValue"
                 :default-value="row.defaultValue"
+                :reference-mark="row.defaultValue"
                 :min="row.min"
                 :max="row.max"
                 :step="row.step"

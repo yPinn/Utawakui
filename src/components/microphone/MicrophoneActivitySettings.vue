@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { MICROPHONE_ACTIVITY_DEFAULTS } from '../../microphone/activity.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
@@ -35,6 +36,12 @@ const timings = [
   { key: 'holdMs', label: '保持時間', max: 2000 },
   { key: 'releaseMs', label: '退場時間', max: 2000 },
 ];
+const formatTiming = (value) => `${value} ms`;
+
+function resetTimings() {
+  const { attackMs, holdMs, releaseMs } = MICROPHONE_ACTIVITY_DEFAULTS;
+  emit('configure', { attackMs, holdMs, releaseMs });
+}
 </script>
 
 <template>
@@ -103,15 +110,14 @@ const timings = [
           :min="0"
           :max="item.max"
           :step="1"
+          :wheel-steps="10"
+          :default-value="MICROPHONE_ACTIVITY_DEFAULTS[item.key]"
           :disabled="locked"
-          :value-text="`${options[item.key]} ms`"
+          :value-text="formatTiming(options[item.key])"
+          :format-value="formatTiming"
           @update:model-value="emit('configure', { [item.key]: $event })"
         />
-        <UiButton
-          :disabled="locked"
-          @click="
-            emit('configure', { attackMs: 25, holdMs: 200, releaseMs: 150 })
-          "
+        <UiButton :disabled="locked" @click="resetTimings"
           >還原時間設定</UiButton
         >
         <UiHint>只影響活動顯示，時間受取樣間隔影響。</UiHint>

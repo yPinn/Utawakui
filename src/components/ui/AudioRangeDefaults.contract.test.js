@@ -34,6 +34,12 @@ describe('audio range context-menu reset contract', () => {
       expect(range).toBeTruthy();
       expect(range).not.toContain('default-value');
     }
+
+    expect(playerProgress).toContain('wheel-mode="off"');
+    expect(bgmProgress).toContain('wheel-mode="off"');
+    expect(bgmVolume).toContain(
+      '@change="emit(\'commitVolume\', volumeDraft)"',
+    );
   });
 
   it('keeps canonical reset values on calibration and pitch/tempo settings', () => {

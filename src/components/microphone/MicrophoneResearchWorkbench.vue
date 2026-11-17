@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { MICROPHONE_LEVEL_DEFAULTS } from '../../microphone/level.js';
 import { useMicrophoneResearch } from '../../composables/useMicrophoneResearch.js';
 import UiButton from '../ui/UiButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
@@ -199,6 +200,7 @@ const inputSettingsText = computed(() => {
           :max="-10"
           :step="1"
           :model-value="state.controls.noiseFloor"
+          :default-value="MICROPHONE_LEVEL_DEFAULTS.noiseFloor"
           :value-text="`${state.controls.noiseFloor} dBFS`"
           hint="只調整相對電平比例，與活動雙門檻分開。"
           @update:model-value="configure({ noiseFloor: $event })"
@@ -211,6 +213,8 @@ const inputSettingsText = computed(() => {
           :max="4"
           :step="0.25"
           :model-value="state.controls.sensitivity"
+          :default-value="MICROPHONE_LEVEL_DEFAULTS.sensitivity"
+          :reference-mark="MICROPHONE_LEVEL_DEFAULTS.sensitivity"
           :value-text="`${state.controls.sensitivity}×`"
           @update:model-value="configure({ sensitivity: $event })"
         />
@@ -222,6 +226,7 @@ const inputSettingsText = computed(() => {
           :max="1000"
           :step="10"
           :model-value="state.controls.smoothingMs"
+          :default-value="MICROPHONE_LEVEL_DEFAULTS.smoothingMs"
           :value-text="`${state.controls.smoothingMs} ms`"
           hint="數值越大，反應越緩。"
           @update:model-value="configure({ smoothingMs: $event })"
