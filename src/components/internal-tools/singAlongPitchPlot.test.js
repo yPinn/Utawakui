@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   applyGuideOctaveMarks,
   clipGuideContour,
@@ -20,6 +20,9 @@ import {
   retainSingAlongWordCue,
   selectSingAlongWordCue,
   songPitchBounds,
+  nextMicLap,
+  pitchDeviationNotes,
+  pitchDeviationRuns,
 } from './singAlongPitchPlot.js';
 
 it('plots level independently of pitch and separates discontinuous samples', () => {
@@ -713,4 +716,167 @@ it('centers an analysis window on the song clock and drops a window crossing a s
   const positionAt = (time) => 12_000 + 1.5 * time;
   expect(projectMicSamplePosition(frame, 161, positionAt, 1.5)).toBeNull();
   expect(projectMicSamplePosition(frame, 160, positionAt, 1.5)).toBe(12_270);
+});
+
+describe('nextMicLap', () => {
+  const sung = [{ time: 1, hz: 220 }];
+  const silent = [{ time: 1, hz: null }];
+
+  it('keeps the last voiced pass on a seek and starts an empty lap', () => {
+    expect(nextMicLap({ frames: sung, previous: [] }, 'seek')).toEqual({
+      frames: [],
+      previous: sung,
+    });
+  });
+
+  it('keeps the older pass when the latest lap had no voiced frames', () => {
+    expect(nextMicLap({ frames: silent, previous: sung }, 'seek')).toEqual({
+      frames: [],
+      previous: sung,
+    });
+  });
+
+  it('clears both passes on any other change', () => {
+    expect(nextMicLap({ frames: sung, previous: sung }, 'reset')).toEqual({
+      frames: [],
+      previous: [],
+    });
+  });
+});
+
+describe('pitchDeviationRuns', () => {
+  const step = 0.01;
+  // Guide A3 (220 Hz) for 1 s, then silence.
+  const pitches = Float32Array.from({ length: 200 }, (_, i) =>
+    i < 100 ? 220 : 0,
+  );
+  const sing = (hz, from, to) =>
+    Array.from({ length: Math.round((to - from) / step) }, (_, i) => ({
+      time: from + i * step,
+      hz,
+    }));
+
+  it('marks frames within ±50 cents as on pitch and joins them', () => {
+    const runs = pitchDeviationRuns(sing(222, 0, 0.5), pitches, step, [], 0);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]).toMatchObject({ kind: 'on', start: 0 });
+    expect(runs[0].medianCents).toBeCloseTo(15.7, 0);
+  });
+
+  it('separates sharp, flat, octave slips and unjudged frames', () => {
+    const frames = [
+      ...sing(240, 0, 0.2),
+      ...sing(200, 0.4, 0.6),
+      ...sing(440, 0.8, 0.95),
+      ...sing(220, 1.2, 1.3),
+    ];
+    expect(
+      pitchDeviationRuns(frames, pitches, step, [], 0).map((run) => run.kind),
+    ).toEqual(['sharp', 'flat', 'octave', 'unknown']);
+  });
+
+  it('compares against the transposed guide and skips silence and unvoiced input', () => {
+    const up = 2 ** (2 / 12);
+    expect(
+      pitchDeviationRuns(sing(220 * up, 0, 0.1), pitches, step, [], 2)[0].kind,
+    ).toBe('on');
+    expect(
+      pitchDeviationRuns(sing(220, 0, 0.1), pitches, step, [[0, 0.5]], 0)[0]
+        .kind,
+    ).toBe('unknown');
+    expect(
+      pitchDeviationRuns(sing(null, 0, 0.1), pitches, step, [], 0),
+    ).toEqual([]);
+  });
+});
+
+describe('pitchDeviationNotes', () => {
+  const step = 0.016;
+  const note = (start, end, midi) => ({
+    start,
+    end,
+    points: [
+      { time: start, midi },
+      { time: end, midi },
+    ],
+  });
+  const sing = (hzAt, from, to) =>
+    Array.from({ length: Math.round((to - from) / step) }, (_, i) => {
+      const time = from + i * step;
+      return { time, hz: hzAt(time) };
+    });
+
+  it('reads vibrato around the note center as on pitch', () => {
+    const frames = sing(
+      (t) => 220 * 2 ** ((80 * Math.sin(t * 35)) / 1200),
+      0,
+      1,
+    );
+    const [result] = pitchDeviationNotes(frames, [note(0, 1, 57)], 0, { step });
+    expect(result.kind).toBe('on');
+  });
+
+  it('ignores a scooped attack and judges the sustained part', () => {
+    const frames = sing((t) => (t < 0.07 ? 180 : 250), 0, 0.6);
+    const [result] = pitchDeviationNotes(frames, [note(0, 0.6, 57)], 0, {
+      step,
+    });
+    expect(result.kind).toBe('sharp');
+    expect(result.medianCents).toBeCloseTo(221, 0);
+  });
+
+  it('leaves sparsely sung notes unjudged and skips unsung ones', () => {
+    const frames = sing(() => 220, 0.5, 0.56);
+    expect(
+      pitchDeviationNotes(frames, [note(0, 1, 57), note(2, 3, 57)], 0, {
+        step,
+      }),
+    ).toEqual([{ start: 0, end: 1, kind: 'unknown', medianCents: null }]);
+  });
+
+  it('applies transposition and separates octave slips', () => {
+    const up = 2 ** (3 / 12);
+    expect(
+      pitchDeviationNotes(
+        sing(() => 220 * up, 0, 1),
+        [note(0, 1, 57)],
+        3,
+        { step },
+      )[0].kind,
+    ).toBe('on');
+    expect(
+      pitchDeviationNotes(
+        sing(() => 110, 0, 1),
+        [note(0, 1, 57)],
+        0,
+        { step },
+      )[0].kind,
+    ).toBe('octave');
+  });
+});
+
+it('targets the guide pitch actually sung over the note, not the rounded semitone', () => {
+  const step = 0.016;
+  // Guide sung 40 cents above A3; singer matches the guide exactly.
+  const guideHz = 220 * 2 ** (40 / 1200);
+  const guidePitches = Float32Array.from({ length: 70 }, () => guideHz);
+  const frames = Array.from({ length: 60 }, (_, i) => ({
+    time: i * step,
+    hz: guideHz,
+  }));
+  const note = {
+    start: 0,
+    end: 0.96,
+    points: [
+      { time: 0, midi: 57 },
+      { time: 0.96, midi: 57 },
+    ],
+  };
+  const [result] = pitchDeviationNotes(frames, [note], 0, {
+    step,
+    guidePitches,
+    guideStep: step,
+  });
+  expect(result).toMatchObject({ kind: 'on' });
+  expect(result.medianCents).toBeCloseTo(0, 3);
 });

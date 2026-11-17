@@ -41,6 +41,8 @@ import {
   PITCH_WIDTH,
 } from './referencePitchPlot.js';
 import {
+  nextMicLap,
+  pitchDeviationNotes,
   applyGuideOctaveMarks,
   connectMicFrames,
   createSingAlongClock,
@@ -119,6 +121,7 @@ const reviewCenterMs = shallowRef(0);
 const reviewTrigger = useTemplateRef('reviewTrigger');
 const micRunning = shallowRef(false);
 const micFrames = shallowRef([]);
+const previousLapFrames = shallowRef([]);
 const inputMode = shallowRef('microphone');
 const inputOptions = [
   { value: 'microphone', label: '麥克風' },
@@ -362,6 +365,45 @@ const inputFrames = computed(() => {
   );
 });
 const trace = computed(() => connectMicFrames(inputFrames.value));
+// Review lane under the chart, judged per guide note: on pitch, sharp, flat,
+// octave slip or unjudged.
+const deviationRuns = computed(() => {
+  if (!guidePitches.value || semitones.value === null) return [];
+  const from = focusStart.value - overscan;
+  const to = focusEnd.value + overscan;
+  return pitchDeviationNotes(
+    inputFrames.value,
+    contours.value.filter(({ start, end }) => end > from && start < to),
+    semitones.value,
+    {
+      step: response.value.stepSeconds,
+      guidePitches: guidePitches.value,
+      guideStep: response.value.stepSeconds,
+    },
+  ).map((run) => ({
+    ...run,
+    x: timeToX(run.start),
+    width: Math.max(1, timeToX(run.end) - timeToX(run.start)),
+  }));
+});
+const previousLapPath = computed(() =>
+  liveSelected.value || showOffline.value
+    ? ''
+    : microphonePitchPath(
+        connectMicFrames(
+          previousLapFrames.value.map((sample) => ({
+            ...sample,
+            time:
+              sample.time +
+              (correctionMs.value * (playback.value?.rate ?? 1)) / 1000,
+          })),
+        ),
+        focusStart.value - overscan,
+        focusEnd.value - focusStart.value + 2 * overscan,
+        y,
+        timeToX,
+      ),
+);
 const levelPaths = computed(() =>
   showInputLevel.value
     ? inputLevelPaths(
@@ -409,10 +451,15 @@ const guideStatus = computed(() => {
   );
 });
 
-function clearMic() {
+function clearMic(change = 'reset') {
   micBoundaryMs = performance.now();
   continuous = false;
-  micFrames.value = [];
+  const lap = nextMicLap(
+    { frames: micFrames.value, previous: previousLapFrames.value },
+    change,
+  );
+  micFrames.value = lap.frames;
+  previousLapFrames.value = lap.previous;
 }
 
 function clearLiveInput() {
@@ -601,12 +648,17 @@ watch(
   [
     trackId,
     () => source.value?.playbackRevision,
-    () => source.value?.continuityRevision,
     () => playback.value?.rate,
     semitones,
     () => source.value?.monitorPitchDelayMs,
   ],
-  clearMic,
+  () => clearMic(),
+  { flush: 'sync' },
+);
+// Seeks keep the previous pass so A–B laps can be compared.
+watch(
+  () => source.value?.continuityRevision,
+  () => clearMic('seek'),
   { flush: 'sync' },
 );
 watch(
@@ -853,6 +905,22 @@ onBeforeUnmount(() => {
             </g>
             <g :clip-path="inputClip">
               <g :transform="timelineTransform">
+                <rect
+                  v-for="run in deviationRuns"
+                  :key="`${run.kind}:${run.start}`"
+                  class="prompter-sing-along__deviation"
+                  :class="`prompter-sing-along__deviation--${run.kind}`"
+                  :x="run.x"
+                  y="115"
+                  :width="run.width"
+                  height="4"
+                  aria-hidden="true"
+                />
+                <path
+                  v-if="previousLapPath"
+                  class="prompter-sing-along__voice-previous"
+                  :d="previousLapPath"
+                />
                 <path class="prompter-sing-along__voice-edge" :d="micPath" />
                 <path class="prompter-sing-along__voice" :d="micPath" />
                 <path
@@ -1534,6 +1602,31 @@ onBeforeUnmount(() => {
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+.prompter-sing-along__deviation {
+  fill: var(--ui-color-border-strong);
+  opacity: var(--ui-opacity-muted);
+}
+.prompter-sing-along__deviation--on {
+  fill: var(--ui-color-success);
+}
+.prompter-sing-along__deviation--sharp {
+  fill: var(--ui-color-warning);
+}
+.prompter-sing-along__deviation--flat {
+  fill: var(--ui-color-info);
+}
+.prompter-sing-along__deviation--octave {
+  fill: var(--ui-color-accent);
+}
+.prompter-sing-along__voice-previous {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke: var(--ui-performer-input-foreground);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 2 4;
+  opacity: var(--ui-opacity-muted);
 }
 .prompter-sing-along__voice {
   stroke: var(--ui-performer-input-foreground);

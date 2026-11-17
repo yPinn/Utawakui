@@ -862,6 +862,151 @@ export function guideContourPath(
   return `M${top.join('L')}L${bottom.reverse().join('L')}Z`;
 }
 
+export const PITCH_DEVIATION_TOLERANCE_CENTS = 50;
+const DEVIATION_JOIN_SECONDS = 0.15;
+
+function inSilence(ranges, time) {
+  return ranges.some(([start, end]) => time >= start && time < end);
+}
+
+// Review lane for sung input against the transposed guide. No reference or
+// silence stays unjudged; octave slips are their own class, never a miss.
+export function pitchDeviationRuns(
+  frames,
+  pitches,
+  step,
+  silenceRanges,
+  semitones,
+  tolerance = PITCH_DEVIATION_TOLERANCE_CENTS,
+) {
+  const runs = [];
+  for (const frame of frames) {
+    if (!(frame.hz > 0)) continue;
+    const index = Math.round(frame.time / step);
+    const guideHz = pitches?.[index];
+    let kind = 'unknown';
+    let cents = null;
+    if (guideHz > 0 && !inSilence(silenceRanges, frame.time)) {
+      cents = 1200 * Math.log2(frame.hz / (guideHz * 2 ** (semitones / 12)));
+      const folded = cents - 1200 * Math.round(cents / 1200);
+      if (Math.abs(cents) <= tolerance) kind = 'on';
+      else if (Math.abs(cents) > 600 && Math.abs(folded) <= tolerance)
+        kind = 'octave';
+      else kind = cents > 0 ? 'sharp' : 'flat';
+    }
+    const last = runs.at(-1);
+    if (
+      last &&
+      last.kind === kind &&
+      frame.time - last.end <= DEVIATION_JOIN_SECONDS
+    ) {
+      last.end = frame.time;
+      if (cents !== null) last.cents.push(cents);
+    } else {
+      runs.push({
+        start: frame.time,
+        end: frame.time,
+        kind,
+        cents: cents === null ? [] : [cents],
+      });
+    }
+  }
+  return runs.map(({ cents, ...run }) => ({
+    ...run,
+    medianCents: cents.length
+      ? cents.toSorted((a, b) => a - b)[Math.floor(cents.length / 2)]
+      : null,
+  }));
+}
+
+export const PITCH_REVIEW_ONSET_SECONDS = 0.08;
+export const PITCH_REVIEW_MIN_COVERAGE = 0.3;
+
+// Per-note review: skip each note's attack and compare medians, so vibrato and
+// slides do not read as misses. The target is the guide's own sung pitch over
+// the same span when available, since the singer may sit between semitones.
+// Typical spacing of the input frames, so coverage works for mic and offline.
+function frameInterval(frames) {
+  const gaps = [];
+  for (let at = 1; at < frames.length && gaps.length < 64; at++) {
+    const gap = frames[at].time - frames[at - 1].time;
+    if (gap > 0 && gap < 0.1) gaps.push(gap);
+  }
+  return gaps.length ? gaps.toSorted((a, b) => a - b)[gaps.length >> 1] : 0;
+}
+
+function medianGuideHz(pitches, step, from, to) {
+  if (!pitches) return 0;
+  const voiced = [];
+  const last = Math.min(pitches.length, Math.ceil(to / step));
+  for (let at = Math.max(0, Math.ceil(from / step)); at < last; at++)
+    if (pitches[at] > 0) voiced.push(pitches[at]);
+  return voiced.length
+    ? voiced.toSorted((a, b) => a - b)[Math.floor(voiced.length / 2)]
+    : 0;
+}
+
+export function pitchDeviationNotes(
+  frames,
+  notes,
+  semitones,
+  {
+    step,
+    guidePitches = null,
+    guideStep = step,
+    tolerance = PITCH_DEVIATION_TOLERANCE_CENTS,
+    onset = PITCH_REVIEW_ONSET_SECONDS,
+    minCoverage = PITCH_REVIEW_MIN_COVERAGE,
+  },
+) {
+  const voiced = frames.filter(({ hz }) => hz > 0);
+  const inputStep = frameInterval(frames) || step;
+  const results = [];
+  let cursor = 0;
+  for (const note of notes) {
+    const from = note.start + onset;
+    if (note.end - from < step) continue;
+    while (cursor < voiced.length && voiced[cursor].time < from) cursor++;
+    const transpose = 2 ** (semitones / 12);
+    const target =
+      medianGuideHz(guidePitches, guideStep, from, note.end) * transpose ||
+      440 * 2 ** ((note.points[0].midi + semitones - 69) / 12);
+    const cents = [];
+    for (
+      let at = cursor;
+      at < voiced.length && voiced[at].time < note.end;
+      at++
+    )
+      cents.push(1200 * Math.log2(voiced[at].hz / target));
+    const expected = Math.max(1, Math.round((note.end - from) / inputStep));
+    if (cents.length === 0) continue;
+    let kind = 'unknown';
+    let medianCents = null;
+    if (cents.length / expected >= minCoverage) {
+      medianCents = cents.toSorted((a, b) => a - b)[
+        Math.floor(cents.length / 2)
+      ];
+      const folded = medianCents - 1200 * Math.round(medianCents / 1200);
+      if (Math.abs(medianCents) <= tolerance) kind = 'on';
+      else if (Math.abs(medianCents) > 600 && Math.abs(folded) <= tolerance)
+        kind = 'octave';
+      else kind = medianCents > 0 ? 'sharp' : 'flat';
+    }
+    results.push({ start: note.start, end: note.end, kind, medianCents });
+  }
+  return results;
+}
+
+// A seek (such as an A–B lap return) keeps the last sung pass for comparison;
+// track, key, rate or delay changes invalidate both passes.
+export function nextMicLap({ frames, previous }, change) {
+  if (change !== 'seek') return { frames: [], previous: [] };
+  return {
+    frames: [],
+    previous: frames.some(({ hz }) => hz) ? frames : previous,
+  };
+}
+
 export function connectMicFrames(frames) {
   const raw = frames.map(({ hz }) => toMidi(hz));
   const isolated = raw.map(
