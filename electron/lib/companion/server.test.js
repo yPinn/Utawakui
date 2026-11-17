@@ -321,3 +321,98 @@ describe('companion server page and reader socket', () => {
     expect(readers.closeAll).toHaveBeenCalled();
   });
 });
+
+describe('companion server commands', () => {
+  async function startCommands({ dispatch, admit = () => null } = {}) {
+    const probe = http.createServer();
+    await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
+    const { port } = probe.address();
+    await new Promise((resolve) => probe.close(resolve));
+    const commands = {
+      admission: { admit: vi.fn(admit) },
+      dispatch: vi.fn(dispatch ?? (async () => 'applied')),
+    };
+    const server = createCompanionServer({
+      address: '127.0.0.1',
+      port,
+      pairing: { claim: () => false },
+      devices: {
+        authenticate: (credential) =>
+          credential === 'k'.repeat(43) ? { id: 'd1' } : null,
+      },
+      commands,
+    });
+    servers.push(server);
+    await server.start();
+    return { port, commands };
+  }
+
+  const body = {
+    command: 'player.next',
+    sequence: 1,
+    revision: 2,
+    trackId: 'a',
+  };
+  const auth = { authorization: `Bearer ${'k'.repeat(43)}` };
+
+  it('applies an authenticated, valid command and returns the outcome', async () => {
+    const { port, commands } = await startCommands();
+    const result = await request(port, {
+      path: '/m/api/v1/command',
+      headers: auth,
+      body,
+    });
+    expect(result).toMatchObject({ status: 200, body: { result: 'applied' } });
+    expect(commands.admission.admit).toHaveBeenCalledWith('d1', body);
+    expect(commands.dispatch).toHaveBeenCalledWith({
+      command: 'player.next',
+      revision: 2,
+      trackId: 'a',
+    });
+  });
+
+  it('rejects missing credentials, invalid bodies and refused admission', async () => {
+    const { port, commands } = await startCommands({
+      admit: (_device, parsed) =>
+        parsed.sequence === 9 ? 'rate-limited' : null,
+    });
+    expect(
+      await request(port, { path: '/m/api/v1/command', body }),
+    ).toMatchObject({ status: 401, body: { reason: 'unauthorized' } });
+    expect(
+      await request(port, {
+        path: '/m/api/v1/command',
+        headers: auth,
+        body: { ...body, command: 'queue.clear' },
+      }),
+    ).toMatchObject({ status: 400, body: { reason: 'invalid' } });
+    expect(
+      await request(port, {
+        path: '/m/api/v1/command',
+        headers: auth,
+        body: { ...body, sequence: 9 },
+      }),
+    ).toMatchObject({ status: 429, body: { reason: 'rate-limited' } });
+    expect(commands.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('reports renderer refusals and timeouts', async () => {
+    const outcomes = ['stale', 'timed_out'];
+    const { port } = await startCommands({
+      dispatch: async () => outcomes.shift(),
+    });
+    expect(
+      await request(port, { path: '/m/api/v1/command', headers: auth, body }),
+    ).toMatchObject({
+      status: 409,
+      body: { result: 'rejected', reason: 'stale' },
+    });
+    expect(
+      await request(port, {
+        path: '/m/api/v1/command',
+        headers: auth,
+        body: { ...body, sequence: 2 },
+      }),
+    ).toMatchObject({ status: 504, body: { result: 'timed_out' } });
+  });
+});

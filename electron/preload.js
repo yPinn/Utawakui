@@ -798,6 +798,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
   revokeCompanionDevice: (deviceId) =>
     ipcRenderer.invoke('companion:revoke', deviceId),
   revokeAllCompanionDevices: () => ipcRenderer.invoke('companion:revoke-all'),
+  onCompanionCommand: (callback) => {
+    const listener = (_event, command) => callback(command);
+    ipcRenderer.on('companion:command', listener);
+    return () => ipcRenderer.removeListener('companion:command', listener);
+  },
+  reportCompanionCommandResult: (id, status) =>
+    ipcRenderer.invoke('companion:command-result', id, status),
   onCompanionStatusChanged: (callback) => {
     const listener = () => callback();
     ipcRenderer.on('companion:status-changed', listener);

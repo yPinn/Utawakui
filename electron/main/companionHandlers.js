@@ -10,6 +10,7 @@ function registerCompanionHandlers({
   requireFeatureGate,
   featureId,
   recordDiagnostic,
+  commandRelay = null,
 }) {
   const run = (operation, action, { gated = true } = {}) =>
     runDiagnosticIpcOperation(
@@ -52,6 +53,12 @@ function registerCompanionHandlers({
       },
       { gated: false },
     ),
+  );
+  // The renderer reports how an admitted phone command ended.
+  ipcMain.handle('companion:command-result', (_event, id, status) =>
+    typeof id === 'string' && typeof status === 'string'
+      ? Boolean(commandRelay?.settle(id, status))
+      : false,
   );
   // Revocation never needs the gate: removing access must always work.
   ipcMain.handle('companion:revoke', (_event, deviceId) =>

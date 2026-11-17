@@ -172,6 +172,7 @@ const { createCompanionRuntime } = require('./lib/companion/runtime');
 const { createCompanionServer } = require('./lib/companion/server');
 const { describeNetworkScope } = require('./lib/companion/networkScope');
 const { loadCompanionPage } = require('./lib/companion/pageAssets');
+const { createCommandRelay } = require('./lib/companion/commandRelay');
 const { registerCompanionHandlers } = require('./main/companionHandlers');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
 const {
@@ -1905,6 +1906,15 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
+    // Phone commands go to the renderer that owns playback; never queued.
+    const companionCommands = createCommandRelay({
+      send: (command) => {
+        const window = windowState.getMainWindow();
+        if (!window || window.isDestroyed()) return false;
+        window.webContents.send('companion:command', command);
+        return true;
+      },
+    });
     // Paired-phone listener: off unless its gate and setting are on.
     const companionRuntime = createCompanionRuntime({
       getSettings: () => configState.getConfig().companion,
@@ -1929,6 +1939,7 @@ if (!gotSingleInstanceLock) {
       },
       onReaderCount: (count) => performerWindowManager?.setRemoteReaders(count),
       loadPage: () => loadCompanionPage(path.join(__dirname, '..', 'dist')),
+      dispatchCommand: companionCommands.dispatch,
       onChange: () => windowState.sendToMainWindow('companion:status-changed'),
     });
     registerCompanionHandlers({
@@ -1937,6 +1948,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureId: FEATURE_IDS.MOBILE_COMPANION,
       recordDiagnostic,
+      commandRelay: companionCommands,
     });
     if (configState.getConfig().companion.enabled)
       void companionRuntime.refresh();

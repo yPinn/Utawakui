@@ -69,6 +69,23 @@ describe('companion IPC', () => {
     expect(runtime.revoke).toHaveBeenCalledWith('d1');
   });
 
+  it('settles renderer command results through the relay only', async () => {
+    const handlers = new Map();
+    const commandRelay = { settle: vi.fn(() => true) };
+    registerCompanionHandlers({
+      ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
+      runtime: {},
+      requireFeatureGate: vi.fn(),
+      featureId: 'mobile-companion',
+      recordDiagnostic: vi.fn(),
+      commandRelay,
+    });
+    const settle = handlers.get('companion:command-result');
+    expect(await settle(null, 'id-1', 'applied')).toBe(true);
+    expect(commandRelay.settle).toHaveBeenCalledWith('id-1', 'applied');
+    expect(await settle(null, 5, 'applied')).toBe(false);
+  });
+
   it('returns bounded statuses for expected companion errors', async () => {
     const { call, runtime } = setup();
     runtime.beginPairing.mockRejectedValueOnce(

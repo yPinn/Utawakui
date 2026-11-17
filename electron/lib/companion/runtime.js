@@ -2,6 +2,7 @@
 
 const { isPrivateIpv4 } = require('./networkScope');
 const { createReaderHub } = require('./readerHub');
+const { createCommandAdmission } = require('./commandGate');
 
 const DEFAULT_PORT = 8710;
 const PORT_MIN = 1024;
@@ -46,6 +47,7 @@ function createCompanionRuntime({
   loadPage = () => new Map(),
   onReaderCount = () => {},
   createReaders = createReaderHub,
+  dispatchCommand = null,
   onChange = () => {},
 }) {
   let server = null;
@@ -98,6 +100,9 @@ function createCompanionRuntime({
       isGateEnabled,
       loadPage,
       readers: createReaders({ devices, snapshots, onReaderCount }),
+      commands: dispatchCommand
+        ? { admission: createCommandAdmission(), dispatch: dispatchCommand }
+        : null,
     });
     try {
       await instance.start();

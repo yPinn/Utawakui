@@ -149,6 +149,7 @@ describe('companion runtime', () => {
     const options = createServer.mock.calls[0][0];
     expect(typeof options.readers.attach).toBe('function');
     expect(typeof options.loadPage).toBe('function');
+    expect(options.commands).toBeNull();
     servers[0].closeDevice = vi.fn();
     runtime.revoke('d1');
     expect(servers[0].closeDevice).toHaveBeenCalledWith('d1');

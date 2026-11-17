@@ -2,6 +2,7 @@
 
 const http = require('node:http');
 const { WebSocketServer } = require('ws');
+const { parseCompanionCommand } = require('./commandGate');
 
 const MAX_BODY_BYTES = 1024;
 const SUBPROTOCOL = 'utawakui.companion.v1';
@@ -64,6 +65,7 @@ function createCompanionServer({
   isGateEnabled = () => true,
   loadPage = () => new Map(),
   readers = null,
+  commands = null,
   createHttpServer = http.createServer,
 }) {
   const authority = `${address}:${port}`;
@@ -123,7 +125,41 @@ function createCompanionServer({
     }
   }
 
-  const routes = new Map([['POST /m/api/v1/pair', pair]]);
+  function bearer(request) {
+    const match = /^Bearer ([A-Za-z0-9_-]{43})$/u.exec(
+      String(request.headers.authorization ?? ''),
+    );
+    return match ? match[1] : null;
+  }
+
+  // Validated in Main, applied by the renderer; the reply is the outcome.
+  async function command(request, response) {
+    const reject = (status, reason) =>
+      sendJson(response, status, { result: 'rejected', reason });
+    if (!commands) return reject(404, 'unavailable');
+    const device = devices.authenticate(bearer(request));
+    if (!device) return reject(401, 'unauthorized');
+    const parsed = parseCompanionCommand(await readJsonBody(request));
+    if (!parsed) return reject(400, 'invalid');
+    const refused = commands.admission.admit(device.id, parsed);
+    if (refused) return reject(refused === 'stale' ? 409 : 429, refused);
+    const { command: name, revision, trackId } = parsed;
+    const outcome = await commands.dispatch({
+      command: name,
+      revision,
+      trackId,
+    });
+    if (outcome === 'applied')
+      return sendJson(response, 200, { result: 'applied' });
+    if (outcome === 'timed_out')
+      return sendJson(response, 504, { result: 'timed_out' });
+    return reject(409, outcome);
+  }
+
+  const routes = new Map([
+    ['POST /m/api/v1/pair', pair],
+    ['POST /m/api/v1/command', command],
+  ]);
 
   async function handle(request, response) {
     if (request.headers.host !== authority || !allowedOrigin(request))
