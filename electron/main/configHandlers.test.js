@@ -604,6 +604,13 @@ describe('registerConfigHandlers', () => {
     expect(onAutoSeparationChanged).toHaveBeenCalledOnce();
   });
 
+  it('saves automatic separation without a queue refresh hook', async () => {
+    const { ipcMain } = register();
+    await expect(
+      ipcMain.handlers.get('config:set-auto-separation')(null, true),
+    ).resolves.toBe(true);
+  });
+
   it('keeps the saved automatic separation value when the queue refresh fails', async () => {
     const { ipcMain } = register({
       onAutoSeparationChanged: () => {

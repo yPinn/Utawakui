@@ -896,6 +896,55 @@ describe('guide vocal defaults', () => {
     ).toBe(false);
   });
 
+  it('retries a resumed play with one-time defaults after a corrupt settings read', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({ status: 'invalid' })),
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    player.restorePlaybackState({ track: { id: 'one', url: 'media:one' } });
+    // The first play settles the restore read; the next one owns the retry.
+    expect(await player.play()).toBe(false);
+    expect(await player.play()).toBe(false);
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+    expect(await player.performanceSettings.useDefaultsOnce()).toBe(true);
+    await vi.waitFor(() => expect(MockAudio.latest.play).toHaveBeenCalled());
+  });
+
+  it('applies the saved track volume trim on start and after a later save', async () => {
+    const saveTrackGain = vi.fn(async (_trackId, _token, gainDb) => ({
+      ok: true,
+      gainDb,
+      editToken: 'next',
+    }));
+    vi.stubGlobal('window', {
+      Utawakui: {
+        getPerformanceSettings: vi.fn(async () => ({
+          status: 'absent',
+          values: null,
+        })),
+        getTrackGain: vi.fn(async () => ({
+          ok: true,
+          gainDb: -6,
+          editToken: 'open',
+        })),
+        saveTrackGain,
+        onLibraryUpdated: () => vi.fn(),
+      },
+    });
+    const player = await loadPlayer();
+    const { useTrackGain } = await import('./useTrackGain.js');
+    useTrackGain().forgetTrackGains();
+    await player.playTrack({ id: 'gain-one', url: 'media:gain-one' });
+    expect(player.state.trackGainDb).toBe(-6);
+
+    await useTrackGain().saveTrackGain('gain-one', 3);
+    expect(saveTrackGain).toHaveBeenCalledWith('gain-one', 'open', 3);
+    await vi.waitFor(() => expect(player.state.trackGainDb).toBe(3));
+  });
+
   it('stages saved restore values without a graph and starts only on explicit play', async () => {
     vi.stubGlobal('window', {
       Utawakui: {
