@@ -39,6 +39,7 @@
 
 ## 音訊處理與分析
 
+- [跟唱音準回看一致性](audio/pitch-review-consistency-2026-11-17.md)（11-17）：逐幀與逐音符判定對照；逐音符讓專業演唱判準 55–97%、兩趟一致率提高 11–17 點，仍待同人重唱與實體麥克風驗證。
 - [導唱估音、聲部與主唱活動研究收斂](audio/reference-pitch-lead-activity-summary-2026-11-10.md)（11-10）整理停唱跨曲結果、哼唱誤刪、下一輪驗收條件及前期聲部研究。
 - [曲庫標註與歌曲電台](audio/library-style-taxonomy-2026-11-08.md)（11-08）涵蓋曲風詞表、演唱語言、候選覆核與電台試聽。[Ballad 逐曲證據與錄音版本](audio/library-ballad-holdout-2026-11-08.md)保留固定分母、上下文試作與版本例外。
 - [原唱音高、停唱與音符切段研究收斂](audio/reference-pitch-note-boundary-summary-2026-11-06.md)（11-07）：分離與預覽的 CPU／GPU 量測、平滑與手動反相的採用範圍、離線音符切段與實唱對照的重開條件。
