@@ -80,6 +80,9 @@ export function useCompanionSettings(options = {}) {
       pairing.value = null;
       return act(() => bridge.cancelCompanionPairing());
     },
+    approve: (requestId) =>
+      act(() => bridge.approveCompanionPairing(requestId)),
+    deny: (requestId) => act(() => bridge.denyCompanionPairing(requestId)),
     revoke: (deviceId) => act(() => bridge.revokeCompanionDevice(deviceId)),
     revokeAll: () => act(() => bridge.revokeAllCompanionDevices()),
   };

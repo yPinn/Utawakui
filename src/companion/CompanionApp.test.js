@@ -66,4 +66,26 @@ describe('CompanionApp', () => {
       expect(withRemote).toContain(label);
     expect(await render('live')).not.toContain('下一首');
   });
+
+  it('shows the match code while waiting for the computer', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(CompanionApp, {
+            status: shallowRef('awaiting-approval'),
+            matchCode: shallowRef('4321'),
+          }),
+      }),
+    );
+    expect(html).toContain('請在電腦上按「允許」');
+    expect(html).toContain('4321');
+    expect(html).not.toContain('surface:');
+  });
+
+  it.each([
+    ['pairing-denied', '電腦拒絕了這次配對'],
+    ['pairing-busy', '正在確認另一支手機'],
+  ])('explains %s', async (status, text) => {
+    expect(await render(status)).toContain(text);
+  });
 });

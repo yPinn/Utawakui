@@ -14,7 +14,7 @@
   "pair": "Pair a phone",
   "pairingTitle": "Scan with your phone or open this address",
   "pairingQr": "Pairing QR code",
-  "pairingHint": "This address works once, within two minutes.",
+  "pairingHint": "This code works once, within two minutes. After a phone scans it, you still allow it here.",
   "cancelPairing": "Cancel pairing",
   "devices": "Paired phones",
   "noDevices": "No paired phones yet.",
@@ -40,7 +40,10 @@
     "unpaired": "This phone isn't paired. On the computer, open Settings → Phone remote, choose Pair a phone, then scan the QR code.",
     "pairing-failed": "Pairing didn't finish. The code may have expired or been used. Create a new one on the computer and scan again.",
     "devices-full": "The paired phone limit is reached. Remove an unused phone in the computer's Settings first.",
-    "stopped": "Disconnected."
+    "stopped": "Disconnected.",
+    "awaiting-approval": "Choose Allow on the computer. Check that it shows the same code:",
+    "pairing-denied": "The computer refused this pairing. If this is your phone, create a new code on the computer and scan again.",
+    "pairing-busy": "The computer is confirming another phone. Scan again shortly."
   },
   "remote": {
     "label": "Remote",
@@ -64,5 +67,15 @@
       "timed_out": "The computer didn't respond. Try again.",
       "failed": "That didn't finish. Try again."
     }
+  },
+  "pairingHidden": "Pairing code hidden",
+  "showPairing": "Show pairing code",
+  "hidePairing": "Hide pairing code",
+  "approval": {
+    "label": "Confirm new phone",
+    "title": "Allow “{name}” to connect?",
+    "hint": "Check that the phone shows the same code. If it isn't your phone, choose Deny.",
+    "allow": "Allow",
+    "deny": "Deny"
   }
 }

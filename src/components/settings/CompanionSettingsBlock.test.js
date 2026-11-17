@@ -15,6 +15,8 @@ function settingsWith(status, extra = {}) {
     beginPairing: async () => true,
     cancelPairing: async () => true,
     revoke: async () => true,
+    approve: async () => true,
+    deny: async () => true,
     revokeAll: async () => true,
   };
 }
@@ -53,15 +55,40 @@ describe('CompanionSettingsBlock', () => {
     expect(html).toContain('請只允許私人網路');
   });
 
-  it('shows the one-time pairing address while pairing', async () => {
+  it('keeps the pairing code hidden until it is asked for', async () => {
     const html = await render(
       settingsWith(base, {
         pairing: { url: 'http://192.168.1.20:8710/m/#pair=abc', expiresAt: 1 },
       }),
     );
-    expect(html).toContain('#pair=abc');
+    expect(html).not.toContain('#pair=abc');
+    expect(html).not.toContain('companion-pairing-qr');
+    expect(html).toContain('配對碼已隱藏');
+    expect(html).toContain('顯示配對碼');
     expect(html).toContain('取消配對');
     expect(html).not.toContain('>配對手機<');
+  });
+
+  it('asks to allow a waiting phone with its match code', async () => {
+    const html = await render(
+      settingsWith({
+        ...base,
+        pairing: {
+          pending: true,
+          request: {
+            id: 'r1',
+            label: 'Pixel',
+            matchCode: '4321',
+            expiresAt: 1,
+          },
+        },
+      }),
+    );
+    expect(html).toContain('允許「Pixel」連線？');
+    expect(html).toContain('4321');
+    expect(html).toContain('不是你的手機請按拒絕');
+    expect(html).toContain('>允許<');
+    expect(html).toContain('>拒絕<');
   });
 
   it('explains public networks and missing interfaces', async () => {

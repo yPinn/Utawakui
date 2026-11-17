@@ -21,6 +21,11 @@ function createBridge(overrides = {}) {
       cancelCompanionPairing: vi.fn(async () => ({ ok: true })),
       revokeCompanionDevice: vi.fn(async () => ({ ok: true, removed: true })),
       revokeAllCompanionDevices: vi.fn(async () => ({ ok: true, removed: 2 })),
+      approveCompanionPairing: vi.fn(async () => ({
+        ok: true,
+        approved: true,
+      })),
+      denyCompanionPairing: vi.fn(async () => ({ ok: true, denied: true })),
       onCompanionStatusChanged: vi.fn((callback) => {
         listener = callback;
         return vi.fn();
@@ -92,5 +97,14 @@ describe('useCompanionSettings', () => {
     expect(await settings.refresh()).toBe(false);
     expect(settings.error.value).toBe('read-failed');
     expect(await settings.configure({ enabled: true })).toBe(false);
+  });
+
+  it('forwards approval decisions to Main', async () => {
+    const { bridge } = createBridge();
+    const settings = useCompanionSettings({ bridge });
+    expect(await settings.approve('r1')).toMatchObject({ approved: true });
+    expect(bridge.approveCompanionPairing).toHaveBeenCalledWith('r1');
+    expect(await settings.deny('r2')).toMatchObject({ denied: true });
+    expect(bridge.denyCompanionPairing).toHaveBeenCalledWith('r2');
   });
 });

@@ -14,7 +14,7 @@
   "pair": "配對手機",
   "pairingTitle": "用手機掃描或開啟這個網址",
   "pairingQr": "配對用 QR 碼",
-  "pairingHint": "此網址兩分鐘內有效，只能使用一次。",
+  "pairingHint": "此配對碼兩分鐘內有效，只能使用一次；手機掃描後仍需在這裡允許。",
   "cancelPairing": "取消配對",
   "devices": "已配對的手機",
   "noDevices": "還沒有配對的手機。",
@@ -40,7 +40,10 @@
     "unpaired": "這支手機尚未配對。請在電腦的「設定 → 手機遙控」按「配對手機」，再用手機掃描 QR 碼。",
     "pairing-failed": "配對未完成。配對碼可能已過期或已使用，請在電腦重新產生後再掃描。",
     "devices-full": "已配對的手機已達上限。請先在電腦的設定移除不用的手機。",
-    "stopped": "已停止連線。"
+    "stopped": "已停止連線。",
+    "awaiting-approval": "請在電腦上按「允許」。確認電腦顯示相同的代碼：",
+    "pairing-denied": "電腦拒絕了這次配對。若是你的手機，請在電腦重新產生配對碼後再掃描。",
+    "pairing-busy": "電腦正在確認另一支手機，請稍後再掃描。"
   },
   "remote": {
     "label": "遙控",
@@ -64,5 +67,15 @@
       "timed_out": "電腦沒有回應，請再試一次。",
       "failed": "操作未完成，請再試一次。"
     }
+  },
+  "pairingHidden": "配對碼已隱藏",
+  "showPairing": "顯示配對碼",
+  "hidePairing": "隱藏配對碼",
+  "approval": {
+    "label": "確認新手機",
+    "title": "允許「{name}」連線？",
+    "hint": "請確認手機上顯示相同的代碼。不是你的手機請按拒絕。",
+    "allow": "允許",
+    "deny": "拒絕"
   }
 }

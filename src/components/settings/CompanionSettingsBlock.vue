@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue';
-import { Smartphone, Trash2 } from '../../icons/index.js';
+import { computed, onBeforeUnmount, onMounted, shallowRef, watch } from 'vue';
+import { Eye, EyeOff, Smartphone, Trash2 } from '../../icons/index.js';
 import { useCompanionSettings } from '../../composables/useCompanionSettings.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
@@ -18,6 +18,16 @@ const props = defineProps({
 
 const companion = props.settings ?? useCompanionSettings();
 const portDraft = shallowRef('');
+// The pairing code stays hidden until asked for, so a captured or streamed
+// Settings window does not show it by default.
+const revealed = shallowRef(false);
+watch(
+  () => companion.pairing.value?.url,
+  () => {
+    revealed.value = false;
+  },
+);
+const approvalRequest = computed(() => status.value?.pairing?.request ?? null);
 
 const status = computed(() => companion.status.value);
 const interfaceOptions = computed(() =>
@@ -134,15 +144,53 @@ onBeforeUnmount(() => companion.stop());
           role="status"
         >
           <strong>{{ t('companion.pairingTitle') }}</strong>
-          <CompanionPairingQr
-            :value="companion.pairing.value.url"
-            :label="t('companion.pairingQr')"
-          />
-          <code class="companion-settings-block__url">{{
-            companion.pairing.value.url
-          }}</code>
+          <template v-if="revealed">
+            <CompanionPairingQr
+              :value="companion.pairing.value.url"
+              :label="t('companion.pairingQr')"
+            />
+            <code class="companion-settings-block__url">{{
+              companion.pairing.value.url
+            }}</code>
+          </template>
+          <p v-else class="companion-settings-block__concealed">
+            {{ t('companion.pairingHidden') }}
+          </p>
+          <UiButton
+            :icon="revealed ? EyeOff : Eye"
+            @click="revealed = !revealed"
+            >{{
+              t(revealed ? 'companion.hidePairing' : 'companion.showPairing')
+            }}</UiButton
+          >
           <UiHint>{{ t('companion.pairingHint') }}</UiHint>
         </div>
+        <section
+          v-if="approvalRequest"
+          class="companion-settings-block__approval"
+          :aria-label="t('companion.approval.label')"
+        >
+          <strong>{{
+            t('companion.approval.title', { name: approvalRequest.label })
+          }}</strong>
+          <span class="companion-settings-block__match-code">{{
+            approvalRequest.matchCode
+          }}</span>
+          <UiHint>{{ t('companion.approval.hint') }}</UiHint>
+          <div class="companion-settings-block__approval-actions">
+            <UiButton
+              variant="accent"
+              :disabled="companion.busy.value"
+              @click="companion.approve(approvalRequest.id)"
+              >{{ t('companion.approval.allow') }}</UiButton
+            >
+            <UiButton
+              :disabled="companion.busy.value"
+              @click="companion.deny(approvalRequest.id)"
+              >{{ t('companion.approval.deny') }}</UiButton
+            >
+          </div>
+        </section>
         <UiHint v-if="status && !status.devices.length">{{
           t('companion.noDevices')
         }}</UiHint>
@@ -192,6 +240,37 @@ onBeforeUnmount(() => companion.stop());
 .companion-settings-block__pairing {
   display: grid;
   gap: var(--ui-space-1);
+}
+
+.companion-settings-block__concealed {
+  display: grid;
+  place-items: center;
+  inline-size: min(100%, 12rem);
+  aspect-ratio: 1;
+  margin: 0;
+  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ui-color-text-muted);
+  text-align: center;
+}
+
+.companion-settings-block__approval {
+  display: grid;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-3);
+  border: var(--ui-border-width) solid var(--ui-color-accent);
+  border-radius: var(--ui-radius-sm);
+}
+
+.companion-settings-block__match-code {
+  font-size: var(--ui-font-size-xl);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2em;
+}
+
+.companion-settings-block__approval-actions {
+  display: flex;
+  gap: var(--ui-space-2);
 }
 
 .companion-settings-block__url {

@@ -7,6 +7,7 @@ export const READING_SCALE_STORAGE_KEY = 'utawakui.companion.reading-scale';
 const SUBPROTOCOL = 'utawakui.companion.v1';
 const RETRY_DELAYS_MS = [1000, 2000, 5000, 10000];
 const UNAUTHORIZED = 4401;
+const PAIR_POLL_MS = 1500;
 const CONTROL_COMMANDS = Object.freeze({
   play: 'player.play-pause',
   pause: 'player.play-pause',
@@ -85,19 +86,45 @@ export function createCompanionBridge({
     onStatus(value);
   }
 
-  async function pair(code, label) {
-    const response = await fetchImpl('/m/api/v1/pair', {
+  async function postJson(path, body) {
+    const response = await fetchImpl(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, label }),
+      body: JSON.stringify(body),
       credentials: 'omit',
       cache: 'no-store',
     });
-    const body = await response.json().catch(() => null);
-    if (!response.ok || typeof body?.credential !== 'string')
-      return { ok: false, status: body?.error ?? 'pairing-failed' };
-    store.set(CREDENTIAL_STORAGE_KEY, body.credential);
-    return { ok: true };
+    return {
+      status: response.status,
+      body: await response.json().catch(() => null),
+    };
+  }
+
+  const wait = (ms) => new Promise((resolve) => setTimer(resolve, ms));
+
+  // Scanning opens a request; the phone shows the match code and waits until
+  // the computer allows or refuses it.
+  async function pair(code, label, { onMatchCode = () => {} } = {}) {
+    const opened = await postJson('/m/api/v1/pair', { code, label });
+    if (opened.status !== 202 || typeof opened.body?.claimToken !== 'string')
+      return { ok: false, status: opened.body?.error ?? 'pairing-failed' };
+    onMatchCode(opened.body.matchCode);
+    for (;;) {
+      await wait(PAIR_POLL_MS);
+      const polled = await postJson('/m/api/v1/pair/status', {
+        claimToken: opened.body.claimToken,
+      });
+      if (polled.body?.state === 'pending') continue;
+      if (polled.body?.state === 'approved' && polled.body.credential) {
+        store.set(CREDENTIAL_STORAGE_KEY, polled.body.credential);
+        return { ok: true };
+      }
+      return {
+        ok: false,
+        status:
+          polled.body?.state === 'denied' ? 'pairing-denied' : 'pairing-failed',
+      };
+    }
   }
 
   function hasCredential() {

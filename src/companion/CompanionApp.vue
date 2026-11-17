@@ -11,6 +11,7 @@ import { t } from '../utils/i18n.js';
 const props = defineProps({
   status: { type: Object, required: true },
   remote: { type: Object, default: null },
+  matchCode: { type: Object, default: null },
 });
 
 provideUiOverlayHost('performer');
@@ -75,6 +76,11 @@ const message = computed(() =>
       role="status"
     >
       {{ message }}
+      <strong
+        v-if="state === 'awaiting-approval' && matchCode?.value"
+        class="companion-app__match-code"
+        >{{ matchCode.value }}</strong
+      >
     </p>
     <PerformerSurface
       v-if="state === 'live' || state === 'reconnecting'"
@@ -109,6 +115,14 @@ const message = computed(() =>
     env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
+}
+
+.companion-app__match-code {
+  display: block;
+  margin-block-start: var(--ui-space-3);
+  font-size: var(--ui-font-size-xl);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2em;
 }
 
 .companion-app__status {

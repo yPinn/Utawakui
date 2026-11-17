@@ -39,7 +39,7 @@ function memoryStorage(initial = {}) {
   };
 }
 
-function setup({ credential = 'cred', fetchImpl } = {}) {
+function setup({ credential = 'cred', fetchImpl, immediate = false } = {}) {
   FakeSocket.instances = [];
   const storage = memoryStorage(
     credential ? { [CREDENTIAL_STORAGE_KEY]: credential } : {},
@@ -52,7 +52,9 @@ function setup({ credential = 'cred', fetchImpl } = {}) {
     fetchImpl,
     WebSocketImpl: FakeSocket,
     now: () => 10_000,
-    setTimer: (fn, delay) => timers.push({ fn, delay }),
+    setTimer: immediate
+      ? (fn) => fn()
+      : (fn, delay) => timers.push({ fn, delay }),
     onStatus: (status) => statuses.push(status),
   });
   return { bridge, storage, statuses, timers };
@@ -86,29 +88,73 @@ describe('companion bridge', () => {
     ).toBeNull();
   });
 
-  it('stores the credential after pairing and reports failures', async () => {
-    const ok = setup({
+  it('shows the match code and stores the credential only after approval', async () => {
+    const replies = [
+      {
+        status: 202,
+        json: async () => ({ claimToken: 't', matchCode: '4321' }),
+      },
+      { status: 202, json: async () => ({ state: 'pending' }) },
+      {
+        status: 200,
+        json: async () => ({ state: 'approved', credential: 'new' }),
+      },
+    ];
+    const fetchImpl = vi.fn(async () => replies.shift());
+    const { bridge, storage } = setup({
       credential: null,
-      fetchImpl: vi.fn(async () => ({
-        ok: true,
-        json: async () => ({ credential: 'new' }),
-      })),
+      fetchImpl,
+      immediate: true,
     });
-    expect(ok.bridge.hasCredential()).toBe(false);
-    expect(await ok.bridge.pair('code', 'Phone')).toEqual({ ok: true });
-    expect(ok.storage.data.get(CREDENTIAL_STORAGE_KEY)).toBe('new');
+    const onMatchCode = vi.fn();
+    expect(await bridge.pair('code', 'Phone', { onMatchCode })).toEqual({
+      ok: true,
+    });
+    expect(onMatchCode).toHaveBeenCalledWith('4321');
+    expect(storage.data.get(CREDENTIAL_STORAGE_KEY)).toBe('new');
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
+      '/m/api/v1/pair',
+      '/m/api/v1/pair/status',
+      '/m/api/v1/pair/status',
+    ]);
+    expect(JSON.parse(fetchImpl.mock.calls[1][1].body)).toEqual({
+      claimToken: 't',
+    });
+  });
 
-    const failed = setup({
-      credential: null,
-      fetchImpl: vi.fn(async () => ({
-        ok: false,
-        json: async () => ({ error: 'devices-full' }),
-      })),
-    });
-    expect(await failed.bridge.pair('code', 'Phone')).toEqual({
-      ok: false,
-      status: 'devices-full',
-    });
+  it('reports denial, expiry and a busy or failed scan', async () => {
+    const run = async (replies) => {
+      const fetchImpl = vi.fn(async () => replies.shift());
+      const { bridge, storage } = setup({
+        credential: null,
+        fetchImpl,
+        immediate: true,
+      });
+      const result = await bridge.pair('code', 'Phone');
+      expect(storage.data.has(CREDENTIAL_STORAGE_KEY)).toBe(false);
+      return result;
+    };
+    const opened = {
+      status: 202,
+      json: async () => ({ claimToken: 't', matchCode: '1' }),
+    };
+    expect(
+      await run([
+        opened,
+        { status: 403, json: async () => ({ state: 'denied' }) },
+      ]),
+    ).toEqual({ ok: false, status: 'pairing-denied' });
+    expect(
+      await run([
+        { ...opened },
+        { status: 403, json: async () => ({ state: 'expired' }) },
+      ]),
+    ).toEqual({ ok: false, status: 'pairing-failed' });
+    expect(
+      await run([
+        { status: 409, json: async () => ({ error: 'pairing-busy' }) },
+      ]),
+    ).toEqual({ ok: false, status: 'pairing-busy' });
   });
 
   it('authenticates first and delivers clock-corrected snapshots', async () => {
