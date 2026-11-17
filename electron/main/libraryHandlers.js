@@ -155,6 +155,7 @@ function registerLibraryHandlers({
       })
     : null,
   artistIdentityService = createArtistIdentityService({ artistIndexCache }),
+  onLibraryListed = () => {},
   recordDiagnostic,
 }) {
   function recordLocalImportFailure(failure, operation) {
@@ -259,6 +260,8 @@ function registerLibraryHandlers({
     }
     organizeLibraryMetadataAutomatically(dir);
     const tracks = trackSnapshot.listFresh(dir);
+    // Reloads and refreshes after edits may make lyrics retries due now.
+    onLibraryListed();
     // Fire-and-forget — don't make the renderer wait on a network-bound
     // metadata pass just to see the tracks it already has.
     if (

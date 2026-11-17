@@ -187,6 +187,7 @@ const {
 const {
   createLyricsAcquisitionService,
 } = require('./main/lyricsAcquisitionService');
+const { createLyricsBacklog } = require('./main/lyrics/automaticBacklog');
 const {
   createLyricsIdentityResolver,
 } = require('./lib/lyricsProviders/identityResolver.js');
@@ -626,9 +627,11 @@ if (!gotSingleInstanceLock) {
     recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
     const libraryTrackSnapshot = createLibraryTrackSnapshot();
+    let lyricsBacklog = null;
     const notifyLibraryUpdated = (options) => {
       libraryTrackSnapshot.invalidate();
       windowState.notifyLibraryUpdated(options);
+      lyricsBacklog?.wake();
     };
     let workLibraryEpoch = 0;
     let lyricsSourceSessions;
@@ -711,6 +714,7 @@ if (!gotSingleInstanceLock) {
       epoch: workLibraryEpoch,
     });
     const publishReleaseChange = (payload) => {
+      lyricsBacklog?.wake();
       const window = windowState.getMainWindow();
       if (window && !window.isDestroyed()) {
         window.webContents.send(
@@ -1142,6 +1146,23 @@ if (!gotSingleInstanceLock) {
       featureId: FEATURE_IDS.LYRICS_FLOW,
       logger: runtimeDiagnosticsLogger,
     });
+    lyricsBacklog = createLyricsBacklog({
+      getLibraryDir: () =>
+        configState.resolveDownloadDir(configState.getConfig()),
+      acquire: lyricsAcquisitionService.scheduleAutomaticAcquisition,
+      isEnabled: () => {
+        try {
+          requireFeatureGate(FEATURE_IDS.LYRICS_FLOW);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      onSaved: () => notifyLibraryUpdated({ allowProviderBackfill: false }),
+      logger: runtimeDiagnosticsLogger,
+    });
+    lyricsBacklog.start();
+    app.once('will-quit', () => lyricsBacklog.stop());
     const obsCredentialStore = createObsCredentialStore({
       app,
       safeStorage,
@@ -1548,6 +1569,7 @@ if (!gotSingleInstanceLock) {
     });
 
     registerLibraryHandlers({
+      onLibraryListed: () => lyricsBacklog?.wake(),
       ipcMain,
       createLibraryImportAdmission,
       workOrganizationRuntime: workOrganizationHost.runtime,

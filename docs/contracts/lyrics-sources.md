@@ -67,7 +67,9 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 
 - Provider 匯入與 metadata backfill 在音訊提交成功後於背景執行；歌詞 miss、gate 關閉或失敗都不延後或回滾匯入。
 - 只有 LRCLIB 與 NetEase 參與，只接受 `exact`；`strong`／`related` 即使是 T2 也不自動保存。已有任何來源時，新的 T1 不算升級，只有完整 T2 可新增為自動偏好；已有完整 T2 時不發請求。
-- 背景佇列預設一次一首、最多32首待執行、各曲起點至少30秒，每曲single-flight，以main推導的track id為job key。每曲探索加fresh保存最多7次實際HTTP／30秒；來源背景最小間隔5秒、rolling60秒最多12次。滿佇列或達額度回skipped／有界失敗，不自動延後重排。同曲庫、同曲目metadata的背景嘗試完成後五分鐘內不重排，最多保留256筆process-local記憶；刪除／重新匯入會失效，不阻擋手動搜尋。保存前重讀manifest與timing sidecar，並在refetch後、同步寫入前再檢查generation、實際音訊與完整T2狀態；已刪除曲目的舊工作不得重建目錄。
+- 背景佇列預設一次一首、最多32首待執行、各曲起點至少30秒，每曲single-flight，以main推導的track id為job key。每曲探索加fresh保存最多7次實際HTTP／30秒；來源背景最小間隔5秒、rolling60秒最多12次。滿佇列或達額度回skipped，不算失敗，由補抓處理。保存前重讀manifest與timing sidecar，並在refetch後、同步寫入前再檢查generation、實際音訊與完整T2狀態；已刪除曲目的舊工作不得重建目錄。
+- 補抓：啟動兩分鐘後與每次嘗試結束後，Main 從目前曲庫挑一首沒有任何歌詞來源、到期且演唱語言不是無人聲的曲目，經同一背景佇列與上述頻率上限抓取；從未嘗試的曲目優先（最新匯入優先），其次是到期最久的重試。沒有到期曲目時等到最早到期（至少一分鐘、最多三十分鐘），曲庫清單重新讀取、發行資料變更或曲庫更新時提早喚醒。Gate 關閉時不挑選。
+- 每曲 `lyrics/lyrics.json` 的選用欄位 `automatic` 記錄最後嘗試時間、未命中與失敗次數，以及曲名、藝人與時長的指紋；指紋改變即視為新曲目。網路、來源失敗或額度用完依 1、6、24 小時退避；沒有 exact 候選每 7 天再試，累計三次後停止；保存非完整 T2 後 7 天才再嘗試升級；已有完整 T2 時清除紀錄。佇列滿、曲目已失效不記錄。使用者刪光來源時記 `userCleared`，背景不再自動補，再保存任一來源即解除。手動搜尋不受影響。
 - `lyrics/lyrics.json` 可存 `{ filename, origin }` 偏好，`origin` 為 `user` 或 `automatic`；使用者選擇不被自動偏好覆寫，偏好來源刪除時一併清除。Renderer 選擇順序：目前有效的畫面選擇 → 持久化偏好 → 語言推測 → 第一筆來源。
 - Timing metric只記provider、cache hit、duration、候選數與status；整合與背景另記實際HTTP總數。均不記曲名、歌手或歌詞。
 

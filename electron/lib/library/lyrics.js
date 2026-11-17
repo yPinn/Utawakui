@@ -25,6 +25,7 @@ const {
   resolveTrackDir,
 } = require('./paths');
 const { deleteTrackReading } = require('./lyricsReadings');
+const { normalizeAutomaticAttempt } = require('./lyricsAutomaticAttempts');
 const { deleteTranslations } = require('./lyricsTranslations');
 const { deleteTrackVocalRoles } = require('./lyricsVocalRoles');
 const { deleteTrackAcousticEstimate } = require('./lyricsAcousticEstimates');
@@ -160,11 +161,13 @@ function loadTrackLyricsManifest(trackDir) {
       manifest.preference,
       sources,
     );
+    const automatic = normalizeAutomaticAttempt(manifest.automatic);
     return {
       checked: Boolean(manifest.checked),
       needsScan: manifest.version !== LYRICS_MANIFEST_VERSION,
       sources,
       ...(preference ? { preference } : {}),
+      ...(automatic ? { automatic } : {}),
     };
   } catch {
     return { checked: false, needsScan: false, sources: [] };
@@ -312,6 +315,15 @@ function saveTrackLyricsManifest(trackDir, sources, options = {}) {
     normalizedSources,
   );
 
+  // Background retry state survives source edits; saving any source ends a
+  // user's opt-out.
+  let automatic = normalizeAutomaticAttempt(
+    Object.hasOwn(options, 'automatic')
+      ? options.automatic
+      : existingManifest.automatic,
+  );
+  if (automatic?.userCleared && normalizedSources.length > 0) automatic = null;
+
   const lyricsDir = getLyricsDirFromTrackDir(trackDir);
   fs.mkdirSync(lyricsDir, { recursive: true });
   atomicWriteJson(path.join(lyricsDir, LYRICS_MANIFEST_FILENAME), {
@@ -320,6 +332,7 @@ function saveTrackLyricsManifest(trackDir, sources, options = {}) {
     checkedAt: new Date().toISOString(),
     sources: normalizedSources,
     ...(preference ? { preference } : {}),
+    ...(automatic ? { automatic } : {}),
   });
   return normalizedSources;
 }
@@ -477,8 +490,30 @@ function deleteLyricsSource(trackDir, filename) {
   const remaining = listTrackLyricsSources(trackDir).sources.filter(
     (source) => source.filename !== filename,
   );
-  saveTrackLyricsManifest(trackDir, remaining);
+  saveTrackLyricsManifest(
+    trackDir,
+    remaining,
+    remaining.length
+      ? {}
+      : {
+          automatic: {
+            metadataKey: '',
+            at: new Date().toISOString(),
+            userCleared: true,
+          },
+        },
+  );
   return true;
+}
+
+function readAutomaticLyricsAttempt(trackDir) {
+  return loadTrackLyricsManifest(trackDir).automatic ?? null;
+}
+
+function recordAutomaticLyricsAttempt(trackDir, automatic) {
+  saveTrackLyricsManifest(trackDir, listTrackLyricsSources(trackDir).sources, {
+    automatic,
+  });
 }
 
 function saveTrackLyricsText(trackDir, source, text) {
@@ -694,6 +729,8 @@ module.exports = {
   setLyricsSourceOffset,
   setLyricsSourcePreference,
   deleteLyricsSource,
+  readAutomaticLyricsAttempt,
+  recordAutomaticLyricsAttempt,
   allocateLyricsFilename,
   saveTrackLyricsText,
   importManualLyricsText,

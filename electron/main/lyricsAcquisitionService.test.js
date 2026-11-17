@@ -311,33 +311,49 @@ describe('createLyricsAcquisitionService', () => {
     expect(provider.getExact).toHaveBeenCalledOnce();
     expect(provider.search.mock.calls.length).toBeGreaterThan(1);
   });
-  it('deduplicates recent automatic failures without blocking interactive searches or track invalidation', async () => {
+  it('backs off failed automatic attempts across restarts without blocking interactive searches', async () => {
     const provider = client({
       getExact: vi
         .fn()
         .mockResolvedValue({ status: 'error', reason: 'service-unavailable' }),
     });
-    let time = 1000;
-    const service = createLyricsAcquisitionService({
-      requireFeatureGate: vi.fn(),
-      featureId: 'lyrics-flow',
-      client: provider,
-      neteaseProvider: unavailableNeteaseProvider(),
-      now: () => time,
-      logger: { warn: vi.fn() },
-    });
-    await service.acquireBestIfNeeded(track, trackDir);
+    let time = Date.parse('2026-11-16T00:00:00Z');
+    const create = () =>
+      createLyricsAcquisitionService({
+        requireFeatureGate: vi.fn(),
+        featureId: 'lyrics-flow',
+        client: provider,
+        neteaseProvider: unavailableNeteaseProvider(),
+        now: () => time,
+        logger: { warn: vi.fn() },
+      });
+    let service = create();
     await service.acquireBestIfNeeded(track, trackDir);
     expect(provider.getExact).toHaveBeenCalledOnce();
+    service = create();
+    await expect(service.acquireBestIfNeeded(track, trackDir)).resolves.toEqual(
+      { status: 'skipped', reason: 'recent-attempt' },
+    );
     await service.searchCandidates(track);
     expect(provider.getExact).toHaveBeenCalledOnce();
     expect(provider.search).toHaveBeenCalledOnce();
-    service.invalidateAutomaticAcquisition(track.id);
-    await service.acquireBestIfNeeded(track, trackDir);
+    await service.acquireBestIfNeeded(
+      { ...track, title: `${track.title} (edited)` },
+      trackDir,
+    );
     expect(provider.getExact).toHaveBeenCalledTimes(2);
-    time += 300_001;
+    const minutes = (n) => n * 60 * 1000;
     await service.acquireBestIfNeeded(track, trackDir);
     expect(provider.getExact).toHaveBeenCalledTimes(3);
+    time += minutes(30);
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.getExact).toHaveBeenCalledTimes(3);
+    time += minutes(31);
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.getExact).toHaveBeenCalledTimes(4);
+    time += minutes(120);
+    await service.acquireBestIfNeeded(track, trackDir);
+    expect(provider.getExact).toHaveBeenCalledTimes(4);
   });
 
   let rootDir;

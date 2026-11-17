@@ -3,6 +3,16 @@ import { createLyricsAcquisitionService } from './lyricsAcquisitionService.js';
 import { createLrclibClient } from '../lib/lrclib/client.js';
 import { createNeteaseClient } from '../lib/netease/client.js';
 import { createNeteaseAcquisitionProvider } from '../lib/netease/acquisition.js';
+
+// Keeps retry records off disk for synthetic track folders.
+function memoryAttempts() {
+  const records = new Map();
+  return {
+    readAutomaticAttempt: (trackDir) => records.get(trackDir) ?? null,
+    recordAutomaticAttempt: (trackDir, record) => records.set(trackDir, record),
+  };
+}
+
 it('counts discovery and fresh saves together while a batch stays below source background caps', async () => {
   let time = 0;
   const requests = [];
@@ -57,6 +67,7 @@ it('counts discovery and fresh saves together while a batch stays below source b
     now: () => time,
     automaticWait: options.wait,
     isTrackCurrent: () => true,
+    ...memoryAttempts(),
     setAutomaticPreference() {},
     logger: {
       warn() {},
@@ -115,6 +126,7 @@ it('spaces different background tracks by thirty seconds and deduplicates queued
       time += ms;
     },
     isTrackCurrent: () => true,
+    ...memoryAttempts(),
     neteaseProvider: {
       searchCandidates: async () => ({
         provider: 'netease',
@@ -152,6 +164,7 @@ it('bounds the background backlog rather than enqueueing an entire unbounded lib
     client,
     automaticIntervalMs: 0,
     isTrackCurrent: () => true,
+    ...memoryAttempts(),
     neteaseProvider: {
       searchCandidates: async () => ({
         provider: 'netease',

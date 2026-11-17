@@ -17,7 +17,13 @@ const {
   getTrackLyricsState,
   hasCurrentFullT2Lyrics,
   setLyricsSourcePreference,
+  readAutomaticLyricsAttempt,
+  recordAutomaticLyricsAttempt,
 } = require('../lib/library');
+const {
+  automaticAttemptDueAt,
+  nextAutomaticAttempt,
+} = require('../lib/library/lyricsAutomaticAttempts.js');
 const {
   createBetterLyricsAcquisitionProvider,
 } = require('../lib/betterlyrics');
@@ -72,8 +78,6 @@ const NON_RETRYABLE_REASONS = new Set([
 const DEFAULT_CANDIDATE_CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHED_CANDIDATE_SEARCHES = 32;
 const DEFAULT_AUTOMATIC_CONCURRENCY = 1;
-const AUTOMATIC_ATTEMPT_COOLDOWN_MS = 5 * 60 * 1000;
-const MAX_RECENT_AUTOMATIC_ATTEMPTS = 256;
 const MAX_AUTOMATIC_CONCURRENCY = 4;
 const MAX_AUTOMATIC_TRACK_KEY_LENGTH = 128;
 
@@ -148,6 +152,8 @@ function createLyricsAcquisitionService({
   isTrackCurrent = (_track, trackDir) =>
     Boolean(findStructuredAudioFilename(trackDir)),
   setAutomaticPreference = setLyricsSourcePreference,
+  readAutomaticAttempt = readAutomaticLyricsAttempt,
+  recordAutomaticAttempt = recordAutomaticLyricsAttempt,
   now = Date.now,
 }) {
   const candidateSearchesInFlight = new Map();
@@ -158,7 +164,6 @@ function createLyricsAcquisitionService({
   const automaticAcquisitionCounts = new Map();
   const automaticGenerationByTrackKey = new Map();
   const automaticQueue = [];
-  const recentAutomaticAttempts = new Map();
   const automaticConcurrencyLimit =
     Number.isSafeInteger(automaticConcurrency) && automaticConcurrency > 0
       ? Math.min(automaticConcurrency, MAX_AUTOMATIC_CONCURRENCY)
@@ -822,7 +827,12 @@ function createLyricsAcquisitionService({
       const aggregate = aggregateLyricsProviderResults(track, providerResults);
       const candidate = selectAutomaticLyricsCandidate(aggregate.candidates);
       if (!candidate) {
-        return { status: 'skipped', reason: 'no-exact-candidate' };
+        // A failed source may hold the exact match; retry it on the short backoff.
+        const failed = providerResults.some((r) => r?.status === 'error');
+        return {
+          status: 'skipped',
+          reason: failed ? 'provider-unavailable' : 'no-exact-candidate',
+        };
       }
       const policy = lyricsProviderPolicy(candidate.providerId);
       if (!policy?.automaticSave) {
@@ -885,6 +895,18 @@ function createLyricsAcquisitionService({
     }
   }
 
+  // Deleted tracks keep no record: the folder must still hold its audio.
+  function persistAutomaticAttempt(track, trackDir, previous, result) {
+    const next = nextAutomaticAttempt(previous, { track, result, at: now() });
+    if (next === undefined || (next === null && previous === null)) return;
+    try {
+      if (isTrackCurrent(track, trackDir) === true)
+        recordAutomaticAttempt(trackDir, next);
+    } catch {
+      // Retry state is advisory; acquisition already finished.
+    }
+  }
+
   function acquireBestIfNeeded(track, trackDir) {
     const key = automaticTrackKey(track, trackDir);
     if (!key) {
@@ -893,12 +915,13 @@ function createLyricsAcquisitionService({
     const generation = automaticGeneration(key);
     const existing = automaticAcquisitionsInFlight.get(key);
     if (existing?.generation === generation) return existing.operation;
-    const attemptKey = JSON.stringify([
-      trackDir,
-      candidateSearchKey('all', track, {}),
-    ]);
-    const recent = recentAutomaticAttempts.get(attemptKey);
-    if (recent && now() - recent.at < AUTOMATIC_ATTEMPT_COOLDOWN_MS) {
+    let attempt = null;
+    try {
+      attempt = readAutomaticAttempt(trackDir);
+    } catch {
+      // An unreadable record never blocks a fresh attempt.
+    }
+    if (automaticAttemptDueAt(attempt, track) > now()) {
       return Promise.resolve({ status: 'skipped', reason: 'recent-attempt' });
     }
     automaticAcquisitionCounts.set(
@@ -909,17 +932,8 @@ function createLyricsAcquisitionService({
       runAutomaticAcquisition(track, trackDir, key, generation),
     )
       .then((result) => {
-        if (
-          automaticGeneration(key) === generation &&
-          result?.reason !== 'stale-track'
-        ) {
-          if (recentAutomaticAttempts.size >= MAX_RECENT_AUTOMATIC_ATTEMPTS) {
-            recentAutomaticAttempts.delete(
-              recentAutomaticAttempts.keys().next().value,
-            );
-          }
-          recentAutomaticAttempts.set(attemptKey, { at: now(), trackId: key });
-        }
+        if (automaticGeneration(key) === generation)
+          persistAutomaticAttempt(track, trackDir, attempt, result);
         return result;
       })
       .finally(() => {
@@ -941,9 +955,6 @@ function createLyricsAcquisitionService({
   function invalidateAutomaticAcquisition(trackId) {
     const key = boundedTrackKey(trackId);
     if (!key) return false;
-    for (const [attemptKey, attempt] of recentAutomaticAttempts) {
-      if (attempt.trackId === key) recentAutomaticAttempts.delete(attemptKey);
-    }
     if ((automaticAcquisitionCounts.get(key) || 0) > 0) {
       automaticGenerationByTrackKey.set(key, automaticGeneration(key) + 1);
     }

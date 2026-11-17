@@ -23,6 +23,8 @@ const FUNCTION_EXPORTS = [
   'computeLyricsSourceFingerprint',
   'convertLocalAudioFiles',
   'deleteLyricsSource',
+  'readAutomaticLyricsAttempt',
+  'recordAutomaticLyricsAttempt',
   'deleteTrack',
   'deleteTrackArtworkFile',
   'deleteTrackReading',
