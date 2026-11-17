@@ -166,6 +166,7 @@
     "actions": "Queued song actions"
   },
   "archive": {
+    "viewNamed": "View {name}",
     "archivedAt": "Saved {date}",
     "listEmpty": "No sessions have been archived yet.",
     "search": "Search session names",

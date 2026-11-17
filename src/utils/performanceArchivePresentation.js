@@ -49,6 +49,13 @@ const archiveClock = new Intl.DateTimeFormat(UI_LOCALE, {
   minute: '2-digit',
   hourCycle: 'h23',
 });
+const archiveMonth = new Intl.DateTimeFormat(UI_LOCALE, {
+  year: 'numeric',
+  month: 'long',
+});
+const archiveTicketMonth = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+});
 
 export function performanceArchiveDayKey(date) {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
@@ -85,6 +92,36 @@ export function groupPerformanceArchiveDays(archives) {
     (a, b) =>
       (b.date?.getTime() ?? -Infinity) - (a.date?.getTime() ?? -Infinity),
   );
+}
+
+export function groupPerformanceArchiveMonths(days) {
+  const months = new Map();
+  for (const { key, date, archives, label } of days) {
+    const monthKey = date ? key.slice(0, -3) : key;
+    if (!months.has(monthKey)) {
+      months.set(monthKey, {
+        key: monthKey,
+        label: date ? archiveMonth.format(date) : label,
+        archives: [],
+      });
+    }
+    months.get(monthKey).archives.push(...archives);
+  }
+  return [...months.values()];
+}
+
+export function performanceArchiveTicketDate(archive) {
+  const { date, saved } = archiveTiming(archive);
+  if (!date) return null;
+  const fullDate = performanceArchiveDate(date, { includeTime: false });
+  return {
+    datetime: performanceArchiveDayKey(date),
+    month: archiveTicketMonth.format(date).toUpperCase(),
+    day: String(date.getDate()).padStart(2, '0'),
+    label: saved
+      ? t('session.archive.archivedAt', { date: fullDate })
+      : fullDate,
+  };
 }
 
 export function performanceArchiveDate(

@@ -166,6 +166,7 @@
     "actions": "待唱曲目操作"
   },
   "archive": {
+    "viewNamed": "查看 {name}",
     "archivedAt": "儲存於 {date}",
     "listEmpty": "還沒有封存的場次紀錄。",
     "search": "搜尋場次名稱",

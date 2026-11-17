@@ -6,7 +6,10 @@ import { useLibrary } from '../../composables/useLibrary.js';
 import { useObsSessionExport } from '../../composables/useObsSessionExport.js';
 import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessionPlan.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
-import { groupPerformanceArchiveDays } from '../../utils/performanceArchivePresentation.js';
+import {
+  groupPerformanceArchiveDays,
+  groupPerformanceArchiveMonths,
+} from '../../utils/performanceArchivePresentation.js';
 import { t } from '../../utils/i18n.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -58,6 +61,9 @@ const matches = computed(() =>
     );
     return matching.length ? [{ ...group, archives: matching }] : [];
   }),
+);
+const monthlyGroups = computed(() =>
+  groupPerformanceArchiveMonths(groups.value),
 );
 
 let openRevision = 0;
@@ -163,7 +169,8 @@ onMounted(initialize);
         >
           <PerformanceSessionArchiveGroups
             v-if="view === 'list' && !normalizedSearch"
-            :groups="groups"
+            :groups="monthlyGroups"
+            ticket
             @open="openSession"
           />
         </div>

@@ -5,7 +5,9 @@ import ArchiveList from './PerformanceSessionArchiveList.vue';
 import ArchiveCalendar from './PerformanceSessionArchiveCalendar.vue';
 import ArchiveCollage from './PerformanceSessionArchiveCollage.vue';
 import ArchiveGroups from './PerformanceSessionArchiveGroups.vue';
+import ArchiveTicket from './PerformanceSessionArchiveTicket.vue';
 import ArchiveModal from './PerformanceSessionArchiveModal.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
@@ -30,6 +32,7 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 const fixture = vi.hoisted(() => ({
+  loadArtworkTone: vi.fn(),
   plan: null,
   playback: null,
   timeline: { open: vi.fn(), openForArrangement: vi.fn() },
@@ -42,6 +45,9 @@ const fixture = vi.hoisted(() => ({
   createPlaylist: vi.fn(),
   playlists: null,
   selectTab: vi.fn(),
+}));
+vi.mock('../../utils/artworkTone.js', () => ({
+  loadArtworkTone: fixture.loadArtworkTone,
 }));
 vi.mock('../../composables/useAppView.js', () => ({
   useAppView: () => ({
@@ -230,7 +236,9 @@ for (const [component, file] of [
   [ArchiveCalendar, './PerformanceSessionArchiveCalendar.vue'],
   [ArchiveCollage, './PerformanceSessionArchiveCollage.vue'],
   [ArchiveGroups, './PerformanceSessionArchiveGroups.vue'],
+  [ArchiveTicket, './PerformanceSessionArchiveTicket.vue'],
   [ArchiveModal, './PerformanceSessionArchiveModal.vue'],
+  [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiNotice, '../ui/UiNotice.vue'],
   [UiSkeleton, '../ui/UiSkeleton.vue'],
@@ -253,7 +261,11 @@ const settle = async () => {
   await nextTick();
 };
 const button = (root, text) =>
-  findAll(root, (n) => n.type === 'button' && textContent(n) === text)[0];
+  findAll(
+    root,
+    (n) =>
+      n.type === 'button' && (n.props['aria-label'] ?? textContent(n)) === text,
+  )[0];
 async function click(root, text) {
   trigger(button(root, text), 'onClick', { currentTarget: {} });
   await settle();
@@ -328,6 +340,35 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('performance history and archive entry points', () => {
+  it('falls back to a collage thumbnail tone and clears the tint on a cover change', async () => {
+    const archive = reactive({
+      name: 'Archive',
+      coverUrl: 'utawakui-media://session-cover/show.webp',
+      coverTracks: [
+        { id: 'song', thumbnailUrl: 'utawakui-media://song/cover' },
+      ],
+    });
+    fixture.loadArtworkTone
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('rgb(140 78 42)');
+    const { app, root } = mount(ArchiveTicket, { archive });
+    const card = button(root, '查看 Archive');
+    await settle();
+    expect(fixture.loadArtworkTone.mock.calls).toEqual([
+      [archive.coverUrl],
+      [archive.coverTracks[0].thumbnailUrl],
+    ]);
+    expect(card.props.style).toEqual({
+      '--archive-ticket-tone': 'rgb(140 78 42)',
+    });
+
+    archive.coverUrl = '';
+    archive.coverTracks = [];
+    await settle();
+    expect(card.props.style?.['--archive-ticket-tone']).toBeUndefined();
+    app.unmount();
+  });
+
   it('opens the linked playlist and falls back to the shared record if the playlist is removed', async () => {
     const view = mount(Tools);
     expect(textContent(view.root)).not.toContain('Older show');
@@ -336,17 +377,23 @@ describe('performance history and archive entry points', () => {
     fixture.plan.state.plan.archives.push({
       id: 'recent',
       name: 'Recent show',
+      startedAt: new Date(2026, 9, 22, 19, 16).toISOString(),
       endedAt: '2026-10-22T12:00:00Z',
+      performedCount: 12,
+      completedCount: 8,
     });
     fixture.plan.state.plan.archives.push({
       id: 'linked',
       name: 'Linked record',
-      endedAt: '2026-10-23T12:00:00Z',
+      endedAt: new Date(2026, 9, 22, 20, 16).toISOString(),
     });
     const index = mount(ArchiveList);
     const headings = findAll(index.root, (node) => node.type === 'h1');
     expect(headings.map(textContent)).toEqual(['場次紀錄']);
     expect(button(index.root, '選取 Linked record')).toBeDefined();
+    expect(
+      button(index.root, '選取 Linked record').props.class ?? '',
+    ).not.toContain('archive-ticket');
     await click(index.root, '清單');
     const list = findAll(
       index.root,
@@ -354,24 +401,54 @@ describe('performance history and archive entry points', () => {
     )[0];
     const labels = findAll(
       list,
-      (node) => node.type === 'button' && textContent(node).startsWith('選取 '),
-    ).map(textContent);
+      (node) =>
+        node.type === 'button' && node.props.class?.includes('archive-ticket'),
+    ).map((node) => node.props['aria-label']);
     expect(labels).toEqual([
-      '選取 Linked record',
-      '選取 Recent show',
-      '選取 Older show',
+      '查看 Recent show',
+      '查看 Linked record',
+      '查看 Older show',
     ]);
-    expect(textContent(list)).toContain('儲存於');
+    const ticketGrids = findAll(
+      list,
+      (node) => node.props.class === 'archive-groups__tickets',
+    );
+    expect(
+      ticketGrids.map(
+        (grid) => findAll(grid, (node) => node.type === 'button').length,
+      ),
+    ).toEqual([3]);
+    expect(
+      findAll(list, (node) => node.type === 'h2').map(textContent),
+    ).toEqual(['2026年10月']);
+    const recent = button(list, '查看 Recent show');
+    expect(textContent(recent)).toContain('Recent show');
+    const [stub] = findAll(
+      recent,
+      (node) => node.props.class === 'archive-ticket__stub',
+    );
+    const [time] = findAll(stub, (node) => node.type === 'time');
+    expect(time.props.id).toBe(recent.props['aria-describedby']);
+    expect(time.props.datetime).toBe('2026-10-22');
+    expect(textContent(time).trim()).toMatch(/^OCT\s*22$/u);
+    const [savedTime] = findAll(
+      button(list, '查看 Linked record'),
+      (node) => node.type === 'time',
+    );
+    expect(textContent(savedTime).trim()).toMatch(/^OCT\s*22$/u);
+    // The date reads through its accessible name; native titles are reserved.
+    expect(savedTime.props['aria-label']).toBe('儲存於 2026/10/22');
+    expect(textContent(list)).not.toMatch(/19:16|20:16|演出|完成/u);
     await click(index.root, '最近 OBS 紀錄');
     expect(fixture.timeline.open).toHaveBeenCalledWith();
     expect(fixture.timeline.openForArrangement).not.toHaveBeenCalled();
-    await click(list, '選取 Linked record');
+    await click(list, '查看 Linked record');
     expect(fixture.selectPlaylist).toHaveBeenCalledExactlyOnceWith('created');
     expect(fixture.openLibrary).toHaveBeenCalledTimes(1);
     expect(textContent(index.root)).not.toContain('Close modal');
 
     fixture.playlists.playlists = [];
-    await click(list, '選取 Linked record');
+    await click(list, '查看 Linked record');
     await vi.dynamicImportSettled();
     await settle();
     expect(
@@ -379,7 +456,7 @@ describe('performance history and archive entry points', () => {
     ).toHaveLength(1);
     await click(index.root, 'Close modal');
 
-    await click(list, '選取 Older show');
+    await click(list, '查看 Older show');
     await vi.dynamicImportSettled();
     await settle();
     const detail = findAll(

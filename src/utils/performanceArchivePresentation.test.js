@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   groupPerformanceArchiveDays,
+  groupPerformanceArchiveMonths,
   performanceArchiveDate,
   performanceArchivePostmarkDate,
   performanceArchiveSummary,
   performanceArchiveRows,
+  performanceArchiveTicketDate,
   performancePlaylistName,
 } from './performanceArchivePresentation.js';
 describe('archive presentation', () => {
@@ -45,10 +47,9 @@ describe('archive presentation', () => {
       { id: 'previous-year', endedAt: december },
       { id: 'unknown' },
     ];
+    const days = groupPerformanceArchiveDays(archives);
     expect(
-      groupPerformanceArchiveDays(archives).map(
-        ({ key, archives: entries }) => [key, entries[0].id],
-      ),
+      days.map(({ key, archives: entries }) => [key, entries[0].id]),
     ).toEqual([
       ['2026-11-01', 'november'],
       ['2026-10-31', 'late-saved'],
@@ -56,6 +57,29 @@ describe('archive presentation', () => {
       ['2025-12-31', 'previous-year'],
       ['unknown', 'unknown'],
     ]);
+    expect(
+      groupPerformanceArchiveMonths(days).map(({ key, archives: entries }) => [
+        key,
+        entries.map(({ id }) => id),
+      ]),
+    ).toEqual([
+      ['2026-11', ['november']],
+      ['2026-10', ['late-saved', 'older-october']],
+      ['2025-12', ['previous-year']],
+      ['unknown', ['unknown']],
+    ]);
+    expect(performanceArchiveTicketDate(archives[1])).toMatchObject({
+      datetime: '2026-10-31',
+      month: 'OCT',
+      day: '31',
+    });
+    expect(performanceArchiveTicketDate(archives[0])).toMatchObject({
+      datetime: '2026-11-01',
+      month: 'NOV',
+      day: '01',
+      label: '儲存於 2026/11/01',
+    });
+    expect(performanceArchiveTicketDate(archives[4])).toBeNull();
   });
   it('prefills YYMMDD from the local start date and uses the save date for unstarted sessions', () => {
     const startedAt = new Date(2026, 10, 6, 23, 50).toISOString();
