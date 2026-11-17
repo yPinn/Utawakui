@@ -36,10 +36,15 @@ server and shares no port, route, channel or credential with it.
   network as Public or unknown. Host and Origin must equal that address and
   port exactly. Plain HTTP is used; self-signed TLS was rejected because phone
   browsers show warnings users cannot meaningfully judge.
-- **Pairing by QR with a one-time code.** The desktop shows a QR code for a URL
-  whose fragment carries a single-use, short-lived code. Fragments are not sent
-  in requests, logged or exported. The phone exchanges the code for a device
-  credential.
+- **Pairing by QR with a one-time code, approved on the computer.** The
+  pairing code is hidden in Settings until the user reveals it, so a streamed
+  or captured Settings window shows nothing scannable by default. The QR URL's
+  fragment carries a single-use, short-lived code; fragments are not sent in
+  requests, logged or exported. A valid code only opens a pending request: the
+  phone and the computer both show a four-digit match code, and the device
+  credential is issued only after the user chooses Allow on the computer.
+  Deny or a 60-second timeout voids the request, so a leaked QR code alone
+  never pairs a phone. (Added 2026-11-18 after review of stream leakage.)
 - **Remembered devices.** Main stores only a hash of each device credential,
   with a label and timestamps, encrypted with `safeStorage`. Every paired device
   is listed in Settings and can be revoked individually or all at once.
@@ -67,7 +72,8 @@ server and shares no port, route, channel or credential with it.
 
 | Threat                                        | Mitigation                                                                                                              |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Another device on the LAN sends commands      | No command without a paired device credential; pairing needs the on-screen QR code within its validity window.          |
+| Another device on the LAN sends commands      | No command without a paired device credential; a credential is issued only after approval on the computer.              |
+| QR code shown on a stream or recording        | Code hidden until revealed; a scan only opens a request the user must approve after comparing match codes.              |
 | Code or credential leaks through URLs or logs | Pairing code only in the URL fragment; credential only in headers or the first socket message; never logged.            |
 | Passive sniffing on the LAN (plain HTTP)      | Accepted residual risk on private networks. Capabilities are limited to transport and display; revocation is one click. |
 | DNS rebinding or cross-site requests          | Exact Host and Origin checks; no CORS; JSON only; strict CSP on the phone page.                                         |
@@ -94,7 +100,7 @@ server and shares no port, route, channel or credential with it.
   VPN and public adapters.
 - **Self-signed TLS.** Browser warnings train users to click through; the
   pairing secret model gives comparable protection for this scope.
-- **Typed PIN or desktop approval prompt.** A PIN adds a typing step; an approval
-  prompt interrupts the stream window.
+- **Typed PIN.** It adds a typing step without protecting against a code seen
+  on stream; the match-code approval covers that case.
 - **Cloud relay or mDNS discovery.** Relays are a non-goal; mDNS widens the
   advertised surface without solving pairing.
