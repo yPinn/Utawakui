@@ -17,23 +17,23 @@
 - **invariant**：App 持有的時序、幾何、source mapping 與安全規則，外觀不能改。
 - **not-exposed**：目前沒有 consumer，不代表永遠禁止。
 
-| 欄位                                             | 分級／預設                        | 範圍                                                                                  |
-| ------------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------- |
-| paletteId／lookAmount                            | opt；original／100                | original、warm、cool、monochrome、high-contrast；0–100 step 5，混合語意角色而非透明度 |
-| fontScale                                        | default；medium                   | small／medium／large，各模板對應自己的尺寸                                            |
-| fontFamily                                       | opt；依模板                       | 列明的字型角色；只有 Live Stage 另接受已驗證的本機已安裝字型                          |
-| fontWeight                                       | opt；依模板                       | regular／semibold／bold                                                               |
-| contrastStyle                                    | opt；balanced                     | clean／balanced／strong-outline；轉播字卡、中央直書                                   |
-| textShadow                                       | opt；standard                     | standard／off；和風直書的正文陰影                                                     |
-| sectionAccent                                    | opt；off                          | off／auto；和風直書的段落重點色                                                       |
-| surface                                          | opt；solid                        | 夜色歌單、封面電台為 transparent／soft／solid，紅黑緞帶為 transparent／solid          |
-| spacingDensity                                   | opt；normal                       | compact／normal／relaxed；只有 queue-board                                            |
-| furigana                                         | opt；auto                         | Manga 的 auto／off；只顯示既有讀音                                                    |
-| kineticMaterial／kineticArrangement              | opt；candy-rim／straight          | 三個既有材料或 cycle；straight／subtle-offset                                         |
-| textColor／accentColor                           | advanced；#fff8ec／#ffffff        | Ornate 的六位 Hex，拒絕 CSS 函式與路徑                                                |
-| positionAnchor／positionOffsetX／positionOffsetY | opt／advanced；center-right／0／0 | Ornate 只開右上／右中／右下，X −12%～12%、Y −25%～25%                                 |
-| lyricsPresentationPolicyId                       | opt；balanced                     | Live Stage 的 broadcast-compact／balanced／literal，獨立列在模板進階顯示              |
-| captureSize                                      | 依 registry                       | 只開放各模板支援的尺寸                                                                |
+| 欄位                                             | 分級／預設                        | 範圍                                                                                                                                              |
+| ------------------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| paletteId／lookAmount                            | opt；original／100                | original、warm、cool、warm-film、cool-film、velvia-style、kodak-gold-200-style、polaroid-600-style、monochrome、high-contrast；強度 0–100，步長 5 |
+| fontScale                                        | default；medium                   | small／medium／large，各模板對應自己的尺寸                                                                                                        |
+| fontFamily                                       | opt；依模板                       | 所有模板提供原有字型、共用字型選項與本機已安裝字型，可調歌詞或模板呈現的曲名及藝人名稱                                                            |
+| fontWeight                                       | opt；依模板                       | regular／semibold／bold                                                                                                                           |
+| contrastStyle                                    | opt；balanced                     | clean／balanced／strong-outline；轉播字卡、中央直書                                                                                               |
+| textShadow                                       | opt；standard                     | standard／off；和風直書的正文陰影                                                                                                                 |
+| sectionAccent                                    | opt；off                          | off／auto；和風直書的段落重點色                                                                                                                   |
+| surface                                          | opt；solid                        | 夜色歌單、封面電台為 transparent／soft／solid，紅黑緞帶為 transparent／solid                                                                      |
+| spacingDensity                                   | opt；normal                       | compact／normal／relaxed；只有 queue-board                                                                                                        |
+| furigana                                         | opt；auto                         | Manga 的 auto／off；只顯示既有讀音                                                                                                                |
+| kineticMaterial／kineticArrangement              | opt；candy-rim／straight          | 三個既有材料或 cycle；straight／subtle-offset                                                                                                     |
+| textColor／accentColor                           | advanced；#fff8ec／#ffffff        | Ornate 的六位 Hex，拒絕 CSS 函式與路徑                                                                                                            |
+| positionAnchor／positionOffsetX／positionOffsetY | opt／advanced；center-right／0／0 | Ornate 只開右上／右中／右下，X −12%～12%、Y −25%～25%                                                                                             |
+| lyricsPresentationPolicyId                       | opt；balanced                     | Live Stage 的 broadcast-compact／balanced／literal，獨立列在模板進階顯示                                                                          |
+| captureSize                                      | 依 registry                       | 只開放各模板支援的尺寸                                                                                                                            |
 
 `alignment`、`contentWidth` 存在於 schema，但模板未公開。控制依「配色、自訂色、字體、可讀性、背景、版面、動態、內容」分組，空組不顯示。
 
@@ -159,18 +159,33 @@ Gallery 的 CoverPlayerPreview 沿用相同3:4比例與480×640設計座標，�
 
 所有封裝字型、來源 checksum 與授權位於 `shared/assets/fonts/`，只經 Output server exact allowlist 提供，Renderer 預覽與 Browser Source 用同一份檔案，不依賴遠端 webfont。GSAP recipe 持有可中斷的 playhead、sequencing、reduced motion 與清理，CSS 持有版面、材質與靜態狀態，兩者不同時控制同一屬性。
 
+## 配色風格
+
+所有輸出模板提供「配色風格」與「套用強度」。工作臺色票使用共用目標色，Browser Source 依模板混合語意色，或對保留原有繪製方式的字幕與收據套用 RGB 調色。
+黑白、Fujifilm NOSTALGIC Neg.、Fujifilm ETERNA、Fujifilm Velvia、Kodak Gold 200與 Polaroid 600也會調整播放中模板的封面 RGB，涵蓋切換中的封面。調色維持影像的 alpha 與畫布透明區，強度為零時使用原貌。
+三款 Fujifilm 風格依照原廠公開描述設計，為應用內的調色近似。NOSTALGIC Neg. 偏琥珀、ETERNA 降低飽和度與對比、Velvia 提高飽和度與對比。參考 [Fujifilm 膠片模擬](https://www.fujifilm-x.com/global/products/film-simulation/)。
+Kodak Gold 200使用偏暖的鮮明色彩。Polaroid 600以 Color 600 即影即有底片為參考，採奶油色亮部與較淡的暗部。參考 [Kodak Gold 200](https://kodakprofessional.com/photographers/film/everyday-film) 與 [Polaroid Color 600](https://www.polaroid.com/en_us/products/color-600-instant-film)。
+
+## 材質顆粒
+
+底片風格各自指定顆粒的強度與粗細，和配色共用「套用強度」，歸零時一起關閉。
+所有輸出模板的「材質」另提供顆粒強度與粗細。這層預設關閉，粗細可選細、中、粗，切換配色風格時會保留設定。
+歌詞與歌單顆粒作用於實際輸出內容。播放中顆粒作用於封面與演出票根的紙面。兩層可同時使用，依序套用風格、材質，各自保留來源透明度。
+
 ## 本機字型與圖片
 
-| 來源                        | 現況                                                                  | 界線                                                                     |
-| --------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 內建字型與圖形              | 既有模板使用，依原授權交付                                            | 不可由 set 覆寫到任意路徑或外網                                          |
-| 已安裝字型                  | Live Stage 明確操作 `queryLocalFonts`；只對可信控制台 main frame 允許 | 不在啟動時列舉；只存 family／postscriptName／style；Overlay 不能列舉字型 |
-| OBS 端字型                  | CSS 嘗試所選 family 再 fallback                                       | 不保證與控制台相同；不傳字型檔補齊                                       |
-| 字型檔、背景／logo 圖片選檔 | 未實作                                                                | 未來須 main picker、格式／大小驗證、受管 asset id 與使用權處理           |
-| 曲目／藝人圖片              | 曲庫自己的匯入流程；Output 以 track id 走安全 route                   | 不打包進可分享 set                                                       |
-| 含使用者素材的分享包        | 未實作                                                                | 不帶入本機路徑、字型目錄或私人圖片                                       |
+| 來源                        | 現況                                                                           | 界線                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| 內建字型與圖形              | 既有模板使用，依原授權交付                                                     | 不可由 set 覆寫到任意路徑或外網                                                                 |
+| 已安裝字型                  | 首次操作開啟 Output 字型選單時呼叫 `queryLocalFonts`，於控制台工作階段共用清單 | 只允許可信控制台 main frame；只存選用字型的 family／postscriptName／style；Overlay 不能列舉字型 |
+| OBS 端字型                  | 文字優先使用所選 family，缺字時沿用模板的字型順序                              | 字型可用性由 OBS 主機決定；不傳字型檔補齊                                                       |
+| 字型檔、背景／logo 圖片選檔 | 未實作                                                                         | 未來須 main picker、格式／大小驗證、受管 asset id 與使用權處理                                  |
+| 曲目／藝人圖片              | 曲庫自己的匯入流程；Output 以 track id 走安全 route                            | 不打包進可分享 set                                                                              |
+| 含使用者素材的分享包        | 未實作                                                                         | 不帶入本機路徑、字型目錄或私人圖片                                                              |
 
 Main 的相容儲存可能保存未公開的 scalar；只保存在 `overlays.json` 不代表是可用來源。新增來源能力須同時有 main 驗證、模板 consumer、回退、授權與測試。
+
+`overlays.json` v5 保留 v4 已生效的字型選擇。舊模板從未套用的字型值在升級時移除，讓首次開啟時保留原有外觀。
 
 ## 預覽
 
