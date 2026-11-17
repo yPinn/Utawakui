@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../composables/usePerformerViewState.js', () => ({
   usePerformerViewState: () => ({
-    frame: shallowRef({ trackId: 'a' }),
+    frame: shallowRef({ trackId: 'a', revision: 7 }),
+    control: vi.fn(),
+    adjustLyricsOffset: vi.fn(),
     readingScale: shallowRef('near'),
     controlPending: shallowRef(false),
     setReadingScale: vi.fn(),
@@ -14,21 +16,22 @@ vi.mock('../composables/usePerformerViewState.js', () => ({
 vi.mock('../components/performer/PerformerSurface.vue', () => ({
   default: {
     props: ['frame', 'mode', 'readingScale'],
-    setup: (props) => () =>
-      h(
-        'section',
-        { 'data-mode': props.mode },
-        `surface:${props.frame.trackId}`,
-      ),
+    setup:
+      (props, { slots }) =>
+      () =>
+        h('section', { 'data-mode': props.mode }, [
+          `surface:${props.frame.trackId}`,
+          slots['rail-tools']?.(),
+        ]),
   },
 }));
 
 import CompanionApp from './CompanionApp.vue';
 
-const render = (status) =>
+const render = (status, remote = null) =>
   renderToString(
     createSSRApp({
-      render: () => h(CompanionApp, { status: shallowRef(status) }),
+      render: () => h(CompanionApp, { status: shallowRef(status), remote }),
     }),
   );
 
@@ -55,5 +58,12 @@ describe('CompanionApp', () => {
     const html = await render(status);
     expect(html).toContain(text);
     expect(html).not.toContain('surface:');
+  });
+
+  it('adds the remote buttons only when commands are available', async () => {
+    const withRemote = await render('live', { sendCommand: vi.fn() });
+    for (const label of ['上一首', '下一首', '降 Key', '升 Key', '靜音'])
+      expect(withRemote).toContain(label);
+    expect(await render('live')).not.toContain('下一首');
   });
 });

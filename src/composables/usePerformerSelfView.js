@@ -273,8 +273,21 @@ function handleLyricsOffsetIntent(intent) {
   });
 }
 
+// True only for a revision this window published for the same track and
+// lyrics source that are current now.
+function matchesPublishedContext(publishedRevision, trackId) {
+  const published = publishedContexts.get(publishedRevision);
+  if (!published || published.playerTrackId !== trackId) return false;
+  const current = currentLyricsContext();
+  return (
+    published.playerTrackId === current.playerTrackId &&
+    published.lyricsTrackId === current.lyricsTrackId &&
+    published.sourceFilename === current.sourceFilename
+  );
+}
+
 function handleControlIntent(intent) {
-  if (!state.open) return Promise.resolve(false);
+  if (!isPublishing()) return Promise.resolve(false);
   return applyPerformerControlIntent(intent, {
     getPublishedContext: (revision) => publishedContexts.get(revision) ?? null,
     getCurrentContext: currentLyricsContext,
@@ -412,5 +425,7 @@ export function usePerformerSelfView() {
     close,
     toggle,
     refreshStatus,
+    matchesPublishedContext,
+    applyControlIntent: handleControlIntent,
   };
 }

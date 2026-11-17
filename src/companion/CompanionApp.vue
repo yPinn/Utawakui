@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, shallowRef } from 'vue';
 import PerformerSurface from '../components/performer/PerformerSurface.vue';
+import CompanionRemoteControls from './CompanionRemoteControls.vue';
 import { usePerformerViewState } from '../composables/usePerformerViewState.js';
 import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from '../utils/rendererSurfaceRegistry.js';
@@ -9,6 +10,7 @@ import { t } from '../utils/i18n.js';
 
 const props = defineProps({
   status: { type: Object, required: true },
+  remote: { type: Object, default: null },
 });
 
 provideUiOverlayHost('performer');
@@ -17,9 +19,45 @@ const {
   frame,
   readingScale,
   controlPending,
+  control,
+  adjustLyricsOffset,
   setReadingScale,
   setDisplayBoundary,
 } = usePerformerViewState();
+
+const sending = shallowRef(false);
+const notice = shallowRef('');
+let noticeTimer = null;
+
+function showNotice(result) {
+  clearTimeout(noticeTimer);
+  notice.value =
+    result === 'applied' ? '' : t(`companion.remote.results.${result}`);
+  if (notice.value) noticeTimer = setTimeout(() => (notice.value = ''), 3000);
+}
+
+// Commands target the snapshot on screen; a refusal shows a short reason.
+async function sendRemote(command) {
+  if (!props.remote || sending.value) return;
+  sending.value = true;
+  try {
+    const result = await props.remote.sendCommand(command, {
+      revision: frame.value.revision,
+      trackId: frame.value.trackId,
+    });
+    showNotice(
+      ['stale', 'unavailable', 'busy', 'rate-limited', 'timed_out'].includes(
+        result,
+      ) || result === 'applied'
+        ? result
+        : 'failed',
+    );
+  } finally {
+    sending.value = false;
+  }
+}
+
+onBeforeUnmount(() => clearTimeout(noticeTimer));
 
 const state = computed(() => props.status.value);
 const message = computed(() =>
@@ -44,9 +82,21 @@ const message = computed(() =>
       mode="prompter"
       :reading-scale="readingScale"
       :pending="controlPending"
+      @control="control"
+      @sync-action="adjustLyricsOffset"
       @update:reading-scale="setReadingScale"
       @display-boundary="setDisplayBoundary"
-    />
+    >
+      <template v-if="remote" #rail-tools>
+        <CompanionRemoteControls
+          :disabled="sending || !frame.trackId || state !== 'live'"
+          @command="sendRemote"
+        />
+      </template>
+    </PerformerSurface>
+    <p v-if="notice" class="companion-app__notice" role="status">
+      {{ notice }}
+    </p>
   </div>
 </template>
 
@@ -66,6 +116,19 @@ const message = computed(() =>
   max-inline-size: 32ch;
   padding: var(--ui-space-4);
   text-align: center;
+}
+
+.companion-app__notice {
+  position: fixed;
+  inset-block-end: calc(env(safe-area-inset-bottom) + var(--ui-space-4));
+  inset-inline: var(--ui-space-4);
+  margin: 0 auto;
+  max-inline-size: 32ch;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface);
+  text-align: center;
+  z-index: var(--ui-layer-raised);
 }
 
 .companion-app__status--overlay {

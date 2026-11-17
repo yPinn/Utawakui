@@ -13,7 +13,10 @@ import '../../styles/base.css';
 
 document.documentElement.lang = UI_LOCALE;
 const surfaceRoot = registerRendererSurfaceRoot('performer');
-createApp(CompanionApp, { status: companionStatus }).mount(surfaceRoot);
+createApp(CompanionApp, {
+  status: companionStatus,
+  remote: { sendCommand: companion.sendCommand },
+}).mount(surfaceRoot);
 
 async function start() {
   if (pairingCode) {

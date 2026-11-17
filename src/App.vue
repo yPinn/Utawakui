@@ -43,6 +43,7 @@ import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
+import { useCompanionRemote } from './composables/useCompanionRemote.js';
 import { useKeyboardShortcutSettings } from './composables/useKeyboardShortcutSettings.js';
 import { useNavigationHistory } from './composables/useNavigationHistory.js';
 import { useNavigationInput } from './composables/useNavigationInput.js';
@@ -196,6 +197,7 @@ onMounted(() => {
 });
 const performerView = usePerformerSelfView();
 performerView.initialize();
+useCompanionRemote().initialize();
 
 // Root-level so the passive "update available" tab marker reflects the
 // main-process startup check even before Settings is ever opened. The

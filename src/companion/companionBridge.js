@@ -7,6 +7,17 @@ export const READING_SCALE_STORAGE_KEY = 'utawakui.companion.reading-scale';
 const SUBPROTOCOL = 'utawakui.companion.v1';
 const RETRY_DELAYS_MS = [1000, 2000, 5000, 10000];
 const UNAUTHORIZED = 4401;
+const CONTROL_COMMANDS = Object.freeze({
+  play: 'player.play-pause',
+  pause: 'player.play-pause',
+  'reading-off': 'reading.off',
+  'reading-furigana': 'reading.furigana',
+  'reading-romaji': 'reading.romaji',
+});
+const OFFSET_COMMANDS = Object.freeze({
+  delay: 'lyrics.offset-down',
+  advance: 'lyrics.offset-up',
+});
 
 // Snapshots carry the computer's timestamps; shift them by the measured clock
 // offset so lyric timing follows the phone's own clock.
@@ -67,6 +78,8 @@ export function createCompanionBridge({
   let socket = null;
   let retry = 0;
   let stopped = false;
+  // Monotonic across reloads: a millisecond base plus a per-page counter.
+  let sequence = now() * 1000;
 
   function setStatus(value) {
     onStatus(value);
@@ -131,6 +144,39 @@ export function createCompanionBridge({
     });
   }
 
+  // Sends one bounded command against the snapshot the phone is showing.
+  async function sendCommand(command, { revision, trackId } = {}) {
+    const credential = store.get(CREDENTIAL_STORAGE_KEY);
+    if (!credential || !trackId || !Number.isSafeInteger(revision))
+      return 'unavailable';
+    sequence += 1;
+    let response;
+    try {
+      response = await fetchImpl('/m/api/v1/command', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${credential}`,
+        },
+        body: JSON.stringify({ command, sequence, revision, trackId }),
+        credentials: 'omit',
+        cache: 'no-store',
+      });
+    } catch {
+      return 'unavailable';
+    }
+    const body = await response.json().catch(() => null);
+    if (response.status === 401) {
+      store.set(CREDENTIAL_STORAGE_KEY, null);
+      setStatus('unpaired');
+      socket?.close();
+      return 'unauthorized';
+    }
+    return body?.result === 'applied'
+      ? 'applied'
+      : (body?.reason ?? body?.result ?? 'failed');
+  }
+
   function stop() {
     stopped = true;
     socket?.close();
@@ -153,9 +199,18 @@ export function createCompanionBridge({
       store.set(READING_SCALE_STORAGE_KEY, value);
       return value;
     },
-    // Commands arrive with the remote slice; reading stays read-only here.
-    control: async () => false,
-    adjustLyricsOffset: async () => false,
+    async control({ action, revision, trackId } = {}) {
+      const command = CONTROL_COMMANDS[action];
+      return command
+        ? (await sendCommand(command, { revision, trackId })) === 'applied'
+        : false;
+    },
+    async adjustLyricsOffset({ action, revision, trackId } = {}) {
+      const command = OFFSET_COMMANDS[action];
+      return command
+        ? (await sendCommand(command, { revision, trackId })) === 'applied'
+        : false;
+    },
     close: async () => ({ open: true }),
     minimize: async () => ({ open: true }),
     toggleFullScreen: async () => ({ open: true }),
@@ -163,5 +218,5 @@ export function createCompanionBridge({
     recordDiagnostic: async () => undefined,
   };
 
-  return { pair, hasCredential, connect, stop, performerBridge };
+  return { pair, hasCredential, connect, stop, sendCommand, performerBridge };
 }

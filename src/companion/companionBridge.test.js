@@ -170,4 +170,64 @@ describe('companion bridge', () => {
     paired.bridge.stop();
     expect(paired.timers).toHaveLength(0);
   });
+
+  it('sends bounded commands with the bearer credential and a rising sequence', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      status: 200,
+      json: async () => ({ result: 'applied' }),
+    }));
+    const { bridge } = setup({ fetchImpl });
+    const context = { revision: 7, trackId: 'a' };
+    expect(await bridge.sendCommand('player.next', context)).toBe('applied');
+    expect(
+      await bridge.performerBridge.control({ action: 'pause', ...context }),
+    ).toBe(true);
+    expect(
+      await bridge.performerBridge.adjustLyricsOffset({
+        action: 'delay',
+        ...context,
+      }),
+    ).toBe(true);
+    const bodies = fetchImpl.mock.calls.map(([url, init]) => {
+      expect(url).toBe('/m/api/v1/command');
+      expect(init.headers.Authorization).toBe('Bearer cred');
+      return JSON.parse(init.body);
+    });
+    expect(bodies.map((body) => body.command)).toEqual([
+      'player.next',
+      'player.play-pause',
+      'lyrics.offset-down',
+    ]);
+    expect(bodies[1].sequence).toBe(bodies[0].sequence + 1);
+    expect(bodies[2]).toMatchObject({ revision: 7, trackId: 'a' });
+  });
+
+  it('reports refusals, ignores unsupported actions and forgets a revoked phone', async () => {
+    const responses = [
+      {
+        status: 409,
+        json: async () => ({ result: 'rejected', reason: 'stale' }),
+      },
+      { status: 401, json: async () => ({ result: 'rejected' }) },
+    ];
+    const fetchImpl = vi.fn(async () => responses.shift());
+    const { bridge, storage, statuses } = setup({ fetchImpl });
+    const context = { revision: 1, trackId: 'a' };
+    expect(await bridge.sendCommand('player.mute', context)).toBe('stale');
+    expect(
+      await bridge.performerBridge.adjustLyricsOffset({
+        action: 'reset',
+        ...context,
+      }),
+    ).toBe(false);
+    expect(await bridge.sendCommand('player.mute', { revision: 1 })).toBe(
+      'unavailable',
+    );
+    expect(await bridge.sendCommand('player.mute', context)).toBe(
+      'unauthorized',
+    );
+    expect(storage.data.has(CREDENTIAL_STORAGE_KEY)).toBe(false);
+    expect(statuses.at(-1)).toBe('unpaired');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
 });

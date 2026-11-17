@@ -41,5 +41,28 @@
     "pairing-failed": "Pairing didn't finish. The code may have expired or been used. Create a new one on the computer and scan again.",
     "devices-full": "The paired phone limit is reached. Remove an unused phone in the computer's Settings first.",
     "stopped": "Disconnected."
+  },
+  "remote": {
+    "label": "Remote",
+    "groups": {
+      "track": "Track",
+      "key": "Key",
+      "volume": "Volume"
+    },
+    "previous": "Previous",
+    "next": "Next",
+    "keyDown": "Key down",
+    "keyUp": "Key up",
+    "volumeDown": "Volume down",
+    "volumeUp": "Volume up",
+    "mute": "Mute",
+    "results": {
+      "stale": "The display just changed. Tap again.",
+      "unavailable": "Can't do that now. Check that the computer is playing.",
+      "busy": "The computer is busy. Try again shortly.",
+      "rate-limited": "Too fast. Wait a moment.",
+      "timed_out": "The computer didn't respond. Try again.",
+      "failed": "That didn't finish. Try again."
+    }
   }
 }
