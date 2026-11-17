@@ -8,6 +8,14 @@
     "other": "其他語言",
     "zxx": "無人聲"
   },
+  "searchAliases": {
+    "zh": "華語, 國語, 国语, 普通話, 粵語, 粤语, 廣東話, 台語, 臺語, 閩南語, Chinese, Mandarin, Cantonese",
+    "ja": "日文, 日语, 日本語, Japanese",
+    "ko": "韓文, 韩语, 韩文, 韓國語, 한국어, Korean",
+    "en": "英文, 英语, English",
+    "other": "外語, 外语, Other languages",
+    "zxx": "純音樂, 纯音乐, 伴奏, Instrumental, No vocals"
+  },
   "loading": "正在載入演唱語言。",
   "retry": "重試",
   "audioChanged": "這首曲目的音檔已變更。請重新確認演唱語言。",

@@ -25,3 +25,9 @@ describe('library search', () => {
     expect(search('中文 日語')).toBe(false);
   });
 });
+
+describe('library search normalization', () => {
+  it('folds full-width letters and spaces', () => {
+    expect(librarySearchTerms('Ｃａｐｐｅｒ　雪')).toEqual(['capper', '雪']);
+  });
+});

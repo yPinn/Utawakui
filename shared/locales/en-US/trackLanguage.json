@@ -8,6 +8,14 @@
     "other": "Other languages",
     "zxx": "No vocals"
   },
+  "searchAliases": {
+    "zh": "Mandarin, Cantonese, Taiwanese, 中文, 華語, 粵語",
+    "ja": "日語, 日文, 日本語",
+    "ko": "韓語, 韓文, 한국어",
+    "en": "英語, 英文",
+    "other": "Foreign",
+    "zxx": "Instrumental, 純音樂, 伴奏"
+  },
   "loading": "Loading sung languages.",
   "retry": "Retry",
   "audioChanged": "The audio file for this track has changed. Review the sung languages again.",

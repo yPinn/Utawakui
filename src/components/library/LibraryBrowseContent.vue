@@ -41,7 +41,7 @@ import { createReleaseMemberResolver } from '../../composables/useReleaseMembers
 import { isLocalPreviewTrack } from '../../utils/trackPreviewSource.js';
 import { useSongEditor } from '../../composables/useSongEditor.js';
 import { useTrackLanguageIndex } from '../../composables/useTrackLanguageIndex.js';
-import { trackLanguageName } from '../../utils/trackLanguageNames.js';
+import { trackLanguageSearchTexts } from '../../utils/trackLanguageNames.js';
 import {
   librarySearchTerms,
   matchesLibrarySearch,
@@ -319,7 +319,7 @@ function matchesSearch(track) {
     matchesTitle: (term) => matchesTrackTitle(track, term),
     texts: [
       ...artistSearchTexts(track, artistIndexState.index),
-      ...trackLanguages.languagesOf(track.id).map(trackLanguageName),
+      ...trackLanguages.languagesOf(track.id).flatMap(trackLanguageSearchTexts),
       track.id,
       track.filename,
     ],

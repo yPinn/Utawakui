@@ -17,6 +17,18 @@ export function trackLanguageName(code) {
     : code;
 }
 
+// Name plus search-only aliases, e.g. 日文 or Japanese for 日語.
+export function trackLanguageSearchTexts(code) {
+  if (!TRACK_LANGUAGE_OPTIONS.includes(code)) return [code];
+  return [
+    trackLanguageName(code),
+    ...t(`trackLanguage.searchAliases.${code}`)
+      .split(',')
+      .map((alias) => alias.trim())
+      .filter(Boolean),
+  ];
+}
+
 export function formatTrackLanguages(codes) {
   const names = codes.map(trackLanguageName);
   try {
