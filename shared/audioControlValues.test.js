@@ -38,6 +38,12 @@ describe('audio control values', () => {
         max: -6,
         step: 1,
       },
+      trackGainDb: {
+        defaultValue: 0,
+        min: -12,
+        max: 6,
+        step: 0.5,
+      },
     });
   });
 });

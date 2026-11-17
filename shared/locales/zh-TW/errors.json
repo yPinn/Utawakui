@@ -1,4 +1,8 @@
 {
+  "TRACK_GAIN_FAILED": {
+    "title": "本首音量未完成",
+    "message": "無法處理本首音量，請再試一次。"
+  },
   "TRACK_LANGUAGES_FAILED": {
     "title": "演唱語言處理未完成",
     "message": "無法處理演唱語言，請再試一次。"

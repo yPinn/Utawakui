@@ -1,4 +1,8 @@
 {
+  "TRACK_GAIN_FAILED": {
+    "title": "Track volume didn't finish",
+    "message": "Couldn't process this track's volume. Try again."
+  },
   "TRACK_LANGUAGES_FAILED": {
     "title": "Sung languages didn't finish",
     "message": "Couldn't process sung languages. Try again."

@@ -1129,6 +1129,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
       languages,
     ),
   listTrackLanguages: () => ipcRenderer.invoke('library:track-languages-list'),
+  getTrackGain: (trackId) =>
+    ipcRenderer.invoke('library:track-gain-get', trackId),
+  saveTrackGain: (trackId, token, gainDb) =>
+    ipcRenderer.invoke('library:track-gain-save', trackId, token, gainDb),
   applyTrackLanguageBatch: (trackIds, language) =>
     ipcRenderer.invoke(
       'library:track-languages-apply-batch',
