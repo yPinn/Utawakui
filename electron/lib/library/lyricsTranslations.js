@@ -6,9 +6,10 @@ const { randomUUID } = require('node:crypto');
 const { atomicWriteExclusiveText } = require('../atomicWrite');
 const { isLyricsSourceFilename } = require('./paths');
 const { maxDocumentBytes } = require('../../../shared/lyricsTimingValues.json');
-
-const languages = ['zh-TW', 'en'];
-const maxTextLength = 1000;
+const {
+  languages,
+  maxTextLength,
+} = require('../../../shared/lyricsTranslationValues.json');
 
 function translationPath(trackDir, filename) {
   if (!isLyricsSourceFilename(filename) || filename.length > 240)
@@ -36,10 +37,22 @@ function read(file) {
   if (
     value?.version !== 1 ||
     typeof value.revision !== 'string' ||
-    !languages.every((language) => Array.isArray(value.rows?.[language]))
+    !value.rows ||
+    typeof value.rows !== 'object' ||
+    !languages.every(
+      (language) =>
+        value.rows[language] === undefined ||
+        Array.isArray(value.rows[language]),
+    )
   )
     throw new Error('invalid translation document');
-  return value;
+  // Files written before a language was added simply lack its rows.
+  return {
+    ...value,
+    rows: Object.fromEntries(
+      languages.map((language) => [language, value.rows[language] ?? []]),
+    ),
+  };
 }
 
 function matchingRows(rows, document, strict = false) {

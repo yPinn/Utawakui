@@ -49,6 +49,36 @@ it('persists both languages and keeps repeated lyrics distinct when timing chang
   expect(loadTranslations(trackDir, filename, document).revision).toBeNull();
 });
 
+it('reads a file that lacks a later-added language as empty rows', () => {
+  const file = path.join(
+    trackDir,
+    'lyrics',
+    'translations',
+    `${filename}.json`,
+  );
+  fs.mkdirSync(path.dirname(file));
+  fs.writeFileSync(
+    file,
+    JSON.stringify({
+      version: 1,
+      revision: 'r1',
+      documentId: 'song',
+      rows: { 'zh-TW': rows['zh-TW'] },
+    }),
+  );
+  expect(loadTranslations(trackDir, filename, document)).toEqual({
+    revision: 'r1',
+    rows: { 'zh-TW': rows['zh-TW'], en: [] },
+  });
+  fs.writeFileSync(
+    file,
+    JSON.stringify({ version: 1, revision: 'r1', rows: { en: 'x' } }),
+  );
+  expect(() => loadTranslations(trackDir, filename, document)).toThrow(
+    'invalid translation document',
+  );
+});
+
 it('filters an edited original and rejects stale or unpaired writes', () => {
   const saved = saveTranslations(trackDir, filename, document, null, rows);
   const edited = {

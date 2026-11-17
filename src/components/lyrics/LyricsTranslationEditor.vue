@@ -25,7 +25,9 @@ const emit = defineEmits(['busy', 'saved']);
 const id = useId();
 const reviewScroll = useTemplateRef('reviewScroll');
 const language = shallowRef(props.initialLanguage);
-const importedText = ref({ 'zh-TW': '', en: '' });
+const importedText = ref(
+  Object.fromEntries(props.languages.map(({ id }) => [id, ''])),
+);
 const savedDrafts = computed(() =>
   Object.fromEntries(
     props.languages.map(({ id }) => [

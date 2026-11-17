@@ -1,4 +1,6 @@
-export const translationTextLimit = 1000;
+import translationValues from '../../shared/lyricsTranslationValues.json';
+
+export const translationTextLimit = translationValues.maxTextLength;
 export const translationImportLimit = 256 * 1024;
 
 const bulletPrefix = /^(?:[-*+][^\S\n]+|[•◦▪‣][^\S\n]*)/u;
