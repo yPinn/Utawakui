@@ -39,6 +39,7 @@ function register(overrides = {}) {
     lastSeenAnnouncementVersion: null,
     uiLanguage: 'system',
     outputLanguage: 'ui',
+    outputTranslation: 'output',
   };
   const getConfig = vi.fn(() => config);
   const updateConfig = vi.fn((patch) => {
@@ -174,6 +175,8 @@ describe('registerConfigHandlers', () => {
       'config:get-ui-language-target',
       'config:get-output-language',
       'config:set-output-language',
+      'config:get-output-translation',
+      'config:set-output-translation',
     ]);
   });
 
@@ -965,6 +968,23 @@ describe('registerConfigHandlers', () => {
     expect(await set({}, 'en-US')).toBe('en-US');
     expect(updateConfig).toHaveBeenCalledExactlyOnceWith({
       outputLanguage: 'en-US',
+    });
+    expect(applyOutputLanguage).toHaveBeenCalledOnce();
+  });
+
+  it('persists a supported Output translation and applies it live', async () => {
+    const applyOutputLanguage = vi.fn();
+    const { ipcMain, updateConfig } = register({ applyOutputLanguage });
+    const get = ipcMain.handlers.get('config:get-output-translation');
+    const set = ipcMain.handlers.get('config:set-output-translation');
+
+    expect(await get()).toBe('output');
+    for (const invalid of ['ui', 'ja', '', null])
+      await expect(set({}, invalid)).rejects.toThrow();
+    expect(applyOutputLanguage).not.toHaveBeenCalled();
+    expect(await set({}, 'off')).toBe('off');
+    expect(updateConfig).toHaveBeenCalledExactlyOnceWith({
+      outputTranslation: 'off',
     });
     expect(applyOutputLanguage).toHaveBeenCalledOnce();
   });

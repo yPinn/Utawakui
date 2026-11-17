@@ -27,6 +27,9 @@ const {
   isValidObsHost: isValidBoundedObsHost,
 } = require('../../shared/obsConnectionContract.mjs');
 const {
+  outputPreferences: OUTPUT_TRANSLATION_PREFERENCES,
+} = require('../../shared/lyricsTranslationValues.json');
+const {
   isWindowCloseBehavior,
 } = require('../../shared/windowCloseBehaviorContract.mjs');
 const {
@@ -74,6 +77,8 @@ const DEFAULTS = {
   uiLanguage: 'system',
   // 'ui' or a supported locale for text OBS viewers see; applies live.
   outputLanguage: 'ui',
+  // 'output' follows the Output language; 'off' or a translation language.
+  outputTranslation: 'output',
   autoShowArrangementOnObs: false,
   performerReadingScale: 'desk',
   performerWindowBounds: null,
@@ -396,6 +401,11 @@ function loadConfigSnapshot(configPath) {
       outputLanguage: OUTPUT_LANGUAGE_PREFERENCES.includes(data.outputLanguage)
         ? data.outputLanguage
         : DEFAULTS.outputLanguage,
+      outputTranslation: OUTPUT_TRANSLATION_PREFERENCES.includes(
+        data.outputTranslation,
+      )
+        ? data.outputTranslation
+        : DEFAULTS.outputTranslation,
       autoShowArrangementOnObs: data.autoShowArrangementOnObs === true,
       performerReadingScale: normalizePerformerReadingScale(
         data.performerReadingScale,

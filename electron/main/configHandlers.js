@@ -14,6 +14,9 @@ const {
 } = require('../../shared/windowCloseBehaviorContract.mjs');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 const {
+  outputPreferences: OUTPUT_TRANSLATION_PREFERENCES,
+} = require('../../shared/lyricsTranslationValues.json');
+const {
   OUTPUT_LANGUAGE_PREFERENCES,
   UI_LANGUAGE_PREFERENCES,
   resolveUiLocale,
@@ -591,6 +594,38 @@ function registerConfigHandlers({
       },
     );
   });
+
+  ipcMain.handle('config:get-output-translation', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-output-translation',
+        code: 'OUTPUT_TRANSLATION_READ_FAILED',
+      },
+      () => getConfig().outputTranslation,
+    ),
+  );
+
+  ipcMain.handle(
+    'config:set-output-translation',
+    async (_event, preference) => {
+      if (!OUTPUT_TRANSLATION_PREFERENCES.includes(preference)) {
+        throw createValidationError('OUTPUT_TRANSLATION_INVALID');
+      }
+      return runConfigOperation(
+        {
+          recordDiagnostic,
+          operation: 'set-output-translation',
+          code: 'OUTPUT_TRANSLATION_UPDATE_FAILED',
+        },
+        () => {
+          updateConfig({ outputTranslation: preference });
+          applyOutputLanguage();
+          return getConfig().outputTranslation;
+        },
+      );
+    },
+  );
 }
 
 module.exports = { registerConfigHandlers };

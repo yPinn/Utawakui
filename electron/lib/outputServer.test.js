@@ -1043,6 +1043,17 @@ describe('outputServer', () => {
     });
     server.setOverlayLanguage('en-US');
     expect(server.getOverlayConfig().revision).toBe(1);
+
+    const translationMessage = waitForMessage(socket);
+    server.setOverlayLanguage('en-US', 'en');
+    expect(await translationMessage).toMatchObject({
+      type: 'overlay.config.changed',
+      overlayConfig: {
+        revision: 2,
+        language: 'en-US',
+        translationLanguage: 'en',
+      },
+    });
     socket.close();
   });
 

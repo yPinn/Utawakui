@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted } from 'vue';
 import { useWindowsIntegrationSettings } from '../../composables/useWindowsIntegrationSettings.js';
 import { useUiLanguageSettings } from '../../composables/useUiLanguageSettings.js';
 import { useOutputLanguageSettings } from '../../composables/useOutputLanguageSettings.js';
+import { useOutputTranslationSettings } from '../../composables/useOutputTranslationSettings.js';
 import SettingsSection from './SettingsSection.vue';
 import WindowsBackgroundSettingsRow from './WindowsBackgroundSettingsRow.vue';
 import LanguageSettingsRow from './LanguageSettingsRow.vue';
@@ -12,6 +13,7 @@ import { t } from '../../utils/i18n.js';
 const windowsIntegrationSettings = useWindowsIntegrationSettings();
 const uiLanguageSettings = useUiLanguageSettings();
 const outputLanguageSettings = useOutputLanguageSettings();
+const outputTranslationSettings = useOutputTranslationSettings();
 const uiLanguage = computed(() => ({
   preference: uiLanguageSettings.preference.value,
   items: uiLanguageSettings.items,
@@ -33,6 +35,15 @@ const outputLanguage = computed(() => ({
   error: outputLanguageSettings.saveError.value,
   readError: outputLanguageSettings.readError.value,
 }));
+const outputTranslation = computed(() => ({
+  preference: outputTranslationSettings.preference.value,
+  items: outputTranslationSettings.items,
+  busy: outputTranslationSettings.busy.value,
+  reading: outputTranslationSettings.reading.value,
+  loaded: outputTranslationSettings.loaded.value,
+  error: outputTranslationSettings.saveError.value,
+  readError: outputTranslationSettings.readError.value,
+}));
 
 onMounted(() => {
   windowsIntegrationSettings.refreshPreference();
@@ -43,6 +54,7 @@ onMounted(() => {
   );
   uiLanguageSettings.refresh();
   outputLanguageSettings.refresh();
+  outputTranslationSettings.refresh();
 });
 onUnmounted(() => {
   window.removeEventListener?.(
@@ -62,10 +74,13 @@ onUnmounted(() => {
     <LanguageSettingsRow
       :ui="uiLanguage"
       :output="outputLanguage"
+      :translation="outputTranslation"
       @set-ui-language="uiLanguageSettings.setPreference"
       @set-output-language="outputLanguageSettings.setPreference"
+      @set-output-translation="outputTranslationSettings.setPreference"
       @refresh-ui-language="uiLanguageSettings.refresh"
       @refresh-output-language="outputLanguageSettings.refresh"
+      @refresh-output-translation="outputTranslationSettings.refresh"
       @relaunch="uiLanguageSettings.offerRestart"
     />
     <WindowsBackgroundSettingsRow

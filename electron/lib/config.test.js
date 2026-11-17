@@ -36,6 +36,7 @@ describe('config', () => {
       uiTheme: 'light',
       uiLanguage: 'system',
       outputLanguage: 'ui',
+      outputTranslation: 'output',
       autoShowArrangementOnObs: false,
       performerReadingScale: 'desk',
       performerWindowBounds: null,
@@ -163,6 +164,7 @@ describe('config', () => {
       uiTheme: 'light',
       uiLanguage: 'system',
       outputLanguage: 'ui',
+      outputTranslation: 'output',
       autoShowArrangementOnObs: false,
       performerReadingScale: 'desk',
       performerWindowBounds: null,
@@ -285,6 +287,13 @@ describe('config', () => {
     expect(loadConfig(configPath).outputLanguage).toBe('en-US');
     fs.writeFileSync(configPath, JSON.stringify({ outputLanguage: 'system' }));
     expect(loadConfig(configPath).outputLanguage).toBe('ui');
+  });
+
+  it('keeps a supported outputTranslation and resets unknown values', () => {
+    saveConfig(configPath, { outputTranslation: 'off' });
+    expect(loadConfig(configPath).outputTranslation).toBe('off');
+    fs.writeFileSync(configPath, JSON.stringify({ outputTranslation: 'ja' }));
+    expect(loadConfig(configPath).outputTranslation).toBe('output');
   });
 
   it('reads uiLanguage before ready without backing up a corrupt file', () => {

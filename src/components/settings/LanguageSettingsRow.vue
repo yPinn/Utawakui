@@ -12,13 +12,16 @@ import { t } from '../../utils/i18n.js';
 const props = defineProps({
   ui: { type: Object, required: true },
   output: { type: Object, required: true },
+  translation: { type: Object, required: true },
 });
 
 const emit = defineEmits([
   'setUiLanguage',
   'setOutputLanguage',
+  'setOutputTranslation',
   'refreshUiLanguage',
   'refreshOutputLanguage',
+  'refreshOutputTranslation',
   'relaunch',
 ]);
 
@@ -35,9 +38,17 @@ const readIssue = computed(() =>
           reading: props.output.reading,
           event: 'refreshOutputLanguage',
         }
-      : null,
+      : props.translation.readError
+        ? {
+            message: props.translation.readError,
+            reading: props.translation.reading,
+            event: 'refreshOutputTranslation',
+          }
+        : null,
 );
-const loading = computed(() => !props.ui.loaded || !props.output.loaded);
+const loading = computed(
+  () => !props.ui.loaded || !props.output.loaded || !props.translation.loaded,
+);
 </script>
 
 <template>
@@ -70,6 +81,19 @@ const loading = computed(() => !props.ui.loaded || !props.output.loaded);
             :disabled="output.busy || output.reading || !output.loaded"
             :error="output.error"
             @update:model-value="emit('setOutputLanguage', $event)"
+          />
+          <UiSelect
+            id="output-translation-preference"
+            class="language-settings-row__select"
+            :label="t('settings.outputTranslation.label')"
+            :options="translation.items"
+            :model-value="translation.loaded ? translation.preference : ''"
+            :placeholder="translation.loaded ? '' : t('settings.notLoaded')"
+            :disabled="
+              translation.busy || translation.reading || !translation.loaded
+            "
+            :error="translation.error"
+            @update:model-value="emit('setOutputTranslation', $event)"
           />
         </div>
       </template>

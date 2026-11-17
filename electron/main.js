@@ -61,6 +61,7 @@ if (!runtimeRestriction.allowed) {
 const { readUiLanguagePreference } = require('./lib/config');
 const {
   resolveOutputLocale,
+  resolveOutputTranslationLanguage,
   resolveUiLocale,
   setUiLocale,
   getUiLocale,
@@ -1289,6 +1290,13 @@ if (!gotSingleInstanceLock) {
       onOverlaySlotsChange: () => outputWindowManager?.syncSlots(),
       getOverlayLanguage: () =>
         resolveOutputLocale(configState.getConfig().outputLanguage),
+      getOverlayTranslationLanguage: () => {
+        const config = configState.getConfig();
+        return resolveOutputTranslationLanguage(
+          config.outputTranslation,
+          resolveOutputLocale(config.outputLanguage),
+        );
+      },
       logger: runtimeDiagnosticsLogger,
     });
     outputWindowManager = createOutputWindowManager({

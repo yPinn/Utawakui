@@ -7,7 +7,18 @@ import {
   setUiLocale,
   OUTPUT_LANGUAGE_PREFERENCES,
   resolveOutputLocale,
+  resolveOutputTranslationLanguage,
 } from './uiLocale.js';
+
+describe('resolveOutputTranslationLanguage', () => {
+  it('follows the Output language unless turned off or chosen', () => {
+    expect(resolveOutputTranslationLanguage('output', 'zh-TW')).toBe('zh-TW');
+    expect(resolveOutputTranslationLanguage('output', 'en-US')).toBe('en');
+    expect(resolveOutputTranslationLanguage('off', 'en-US')).toBeNull();
+    expect(resolveOutputTranslationLanguage('en', 'zh-TW')).toBe('en');
+    expect(resolveOutputTranslationLanguage('output', 'fr-FR')).toBeNull();
+  });
+});
 
 const WITH_ENGLISH = ['zh-TW', 'en-US'];
 

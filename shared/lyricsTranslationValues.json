@@ -1,4 +1,6 @@
 {
   "languages": ["zh-TW", "en"],
-  "maxTextLength": 1000
+  "maxTextLength": 1000,
+  "outputPreferences": ["output", "off", "zh-TW", "en"],
+  "outputLocaleLanguages": { "zh-TW": "zh-TW", "en-US": "en" }
 }

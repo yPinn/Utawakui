@@ -97,5 +97,12 @@
     "ui": "Same as display language",
     "readFailed": "Couldn't read the Output language setting.",
     "saveFailed": "The Output language wasn't changed. Try again."
+  },
+  "outputTranslation": {
+    "label": "Output translation",
+    "output": "Same as Output language",
+    "off": "Don't show",
+    "readFailed": "Couldn't read the Output translation setting.",
+    "saveFailed": "The Output translation wasn't changed. Try again."
   }
 }

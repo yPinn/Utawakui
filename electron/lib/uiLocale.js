@@ -5,6 +5,10 @@ const {
   supportedLocales,
 } = require('../../shared/uiLocaleValues.json');
 const { PSEUDO_LOCALE } = require('../../shared/pseudoLocale.mjs');
+const {
+  languages: TRANSLATION_LANGUAGES,
+  outputLocaleLanguages: OUTPUT_LOCALE_TRANSLATIONS,
+} = require('../../shared/lyricsTranslationValues.json');
 
 const UI_LANGUAGE_PREFERENCES = Object.freeze(['system', ...supportedLocales]);
 // 'ui' follows the UI language; Output can be set apart for viewers.
@@ -68,7 +72,15 @@ function resolveOutputLocale(preference, uiLocale = currentUiLocale) {
   return uiLocale === PSEUDO_LOCALE ? 'en-US' : fallbackLocale;
 }
 
+// Lyrics translation language for viewers, or null when it is off.
+function resolveOutputTranslationLanguage(preference, outputLocale) {
+  if (TRANSLATION_LANGUAGES.includes(preference)) return preference;
+  if (preference === 'off') return null;
+  return OUTPUT_LOCALE_TRANSLATIONS[outputLocale] ?? null;
+}
+
 module.exports = {
+  resolveOutputTranslationLanguage,
   OUTPUT_LANGUAGE_PREFERENCES,
   UI_LANGUAGE_PREFERENCES,
   getUiLocale,

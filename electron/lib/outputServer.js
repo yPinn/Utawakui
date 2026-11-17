@@ -116,6 +116,7 @@ function createOutputServer(options = {}) {
   }
   let overlaySlots = { ...(options.overlaySlots ?? {}) };
   let overlayLanguage = options.overlayLanguage ?? 'zh-TW';
+  let overlayTranslationLanguage = options.overlayTranslationLanguage ?? null;
   let overlayConfigRevision = 0;
   let httpServer = null;
   let webSocketServer = null;
@@ -212,6 +213,7 @@ function createOutputServer(options = {}) {
       version: 2,
       revision: overlayConfigRevision,
       language: overlayLanguage,
+      translationLanguage: overlayTranslationLanguage,
       slots: structuredClone(overlaySlots),
     };
   }
@@ -578,9 +580,14 @@ function createOutputServer(options = {}) {
     }
   }
 
-  function setOverlayLanguage(language) {
-    if (language === overlayLanguage) return;
+  function setOverlayLanguage(language, translationLanguage = null) {
+    if (
+      language === overlayLanguage &&
+      translationLanguage === overlayTranslationLanguage
+    )
+      return;
     overlayLanguage = language;
+    overlayTranslationLanguage = translationLanguage;
     broadcastOverlayConfig();
   }
 

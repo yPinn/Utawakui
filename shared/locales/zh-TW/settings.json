@@ -97,5 +97,12 @@
     "ui": "跟隨介面語言",
     "readFailed": "無法讀取畫面輸出語言設定。",
     "saveFailed": "畫面輸出語言未變更，請再試一次。"
+  },
+  "outputTranslation": {
+    "label": "畫面輸出譯文",
+    "output": "跟隨畫面輸出語言",
+    "off": "不顯示",
+    "readFailed": "無法讀取畫面輸出譯文設定。",
+    "saveFailed": "畫面輸出譯文未變更，請再試一次。"
   }
 }
