@@ -1861,6 +1861,7 @@ export function createLyricsFrameScheduler(options = {}) {
   }).kineticMaterial;
   let sectionAccent = options.sectionAccent === 'auto' ? 'auto' : 'off';
   let fisheyeGranularity = options.fisheyeGranularity ?? 'line';
+  let translationLanguage = options.translationLanguage ?? null;
   let lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
     templateId,
     options.lyricsPresentationPolicyId,
@@ -1972,6 +1973,7 @@ export function createLyricsFrameScheduler(options = {}) {
         nowMs,
         presentationDocument,
         templateId,
+        translationLanguage,
         ...(cycle ? { traceContext: { ...cycle, pass } } : {}),
       };
       stageAt = onTrace ? measureNow() : 0;
@@ -2100,16 +2102,24 @@ export function createLyricsFrameScheduler(options = {}) {
       (nextSettings.sectionAccent ?? sectionAccent) === 'auto' ? 'auto' : 'off';
     const nextFisheyeGranularity =
       nextSettings.fisheyeGranularity ?? fisheyeGranularity;
+    const nextTranslationLanguage = Object.hasOwn(
+      nextSettings,
+      'translationLanguage',
+    )
+      ? (nextSettings.translationLanguage ?? null)
+      : translationLanguage;
     if (
       normalizedTemplateId === templateId &&
       normalizedKineticMaterial === kineticMaterial &&
       nextSectionAccent === sectionAccent &&
       nextFisheyeGranularity === fisheyeGranularity &&
-      normalizedLyricsPresentationPolicyId === lyricsPresentationPolicyId
+      normalizedLyricsPresentationPolicyId === lyricsPresentationPolicyId &&
+      nextTranslationLanguage === translationLanguage
     ) {
       return false;
     }
     settleNextFrame ||= Boolean(latestSnapshot);
+    translationLanguage = nextTranslationLanguage;
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
     sectionAccent = nextSectionAccent;
@@ -2268,7 +2278,7 @@ function boot() {
         destroyLyricsAnimations(elements, { gsap });
       } else prepareFocusStyles();
     },
-    onConfig: (slot) => {
+    onConfig: (slot, { translationLanguage = null } = {}) => {
       if (slot?.templateId !== 'fisheye-lens') fisheyeEffects.stop();
       onTrace?.('config');
       previewScene = previewSceneForSlot('lyrics', slot);
@@ -2285,6 +2295,7 @@ function boot() {
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
         sectionAccent: appearance.sectionAccent,
         templateId: slot?.templateId ?? 'karaoke-stack',
+        translationLanguage,
       });
       if (
         !reprojected &&

@@ -52,10 +52,10 @@ export function createOverlayHost(options = {}) {
 
   const connection = (options.createConnection ?? createOverlayConnection)({
     kind: options.kind,
-    onConfig(slot, language) {
+    onConfig(slot, language, translationLanguage = null) {
       if (disposed) return;
       setOverlayLanguage(document, language);
-      options.onConfig?.(slot);
+      options.onConfig?.(slot, { translationLanguage });
     },
     onSnapshot(snapshot) {
       if (disposed) return;

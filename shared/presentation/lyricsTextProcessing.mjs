@@ -681,5 +681,15 @@ export function projectLyricsTextSelection(
           },
         }
       : {}),
+    ...(document.translations
+      ? {
+          translations: Object.fromEntries(
+            Object.entries(document.translations).map(([language, rows]) => [
+              language,
+              rows.filter((row) => !hidden.has(row.lineId)),
+            ]),
+          ),
+        }
+      : {}),
   };
 }

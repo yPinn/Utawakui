@@ -128,11 +128,27 @@ function projectReadingDocument(source, document, readingDocument) {
   return { lines };
 }
 
+// Saved rows were matched to the canonical text; display variants keep ids.
+function projectTranslations(lines, translationRows) {
+  if (!translationRows || typeof translationRows !== 'object') return null;
+  const lineIds = new Set(lines.map((line) => line.lineId));
+  const entries = Object.entries(translationRows).flatMap(
+    ([language, rows]) => {
+      const kept = (Array.isArray(rows) ? rows : [])
+        .filter((row) => lineIds.has(row?.lineId) && row.text)
+        .map(({ lineId, text }) => ({ lineId, text }));
+      return kept.length ? [[language, kept]] : [];
+    },
+  );
+  return entries.length ? Object.fromEntries(entries) : null;
+}
+
 export function projectLyricsOutputDocument({
   trackId,
   source,
   document,
   readingDocument,
+  translationRows,
 } = {}) {
   if (
     typeof trackId !== 'string' ||
@@ -143,13 +159,18 @@ export function projectLyricsOutputDocument({
     return null;
   }
   const reading = projectReadingDocument(source, document, readingDocument);
+  const lines = Array.isArray(document.lines)
+    ? document.lines.map(projectLine)
+    : [];
+  const translations = projectTranslations(lines, translationRows);
   const projected = {
     documentId: document.documentId,
     trackId,
     granularity: document.granularity,
     source: publicLyricsSource(source),
-    lines: Array.isArray(document.lines) ? document.lines.map(projectLine) : [],
+    lines,
     ...(reading ? { reading } : {}),
+    ...(translations ? { translations } : {}),
   };
   if (
     projected.lines.some((line) => line.estimatedFineTiming) &&

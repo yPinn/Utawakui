@@ -1,11 +1,23 @@
 import { computed, shallowRef, watch } from 'vue';
 import { t } from '../utils/i18n.js';
+import translationValues from '../../shared/lyricsTranslationValues.json';
+
+export const translationLanguageLabels = {
+  'zh-TW': () => t('lyricsTranslation.traditionalChinese'),
+  en: () => t('lyricsTranslation.english'),
+};
+
+// A save from one view (editor) reaches the others (video, Output) at once.
+const latestSaved = shallowRef(null);
+let sequence = 0;
+const contextKey = (context) =>
+  `${context.trackId}\0${context.filename}\0${context.documentId}`;
 
 export function useLyricsTranslations(lyrics) {
-  const languages = [
-    { id: 'zh-TW', label: t('lyricsTranslation.traditionalChinese') },
-    { id: 'en', label: t('lyricsTranslation.english') },
-  ];
+  const languages = translationValues.languages.map((id) => ({
+    id,
+    label: translationLanguageLabels[id](),
+  }));
   const context = computed(() => {
     const session = lyrics.sourceSession?.value;
     const trackId = lyrics.selectedTrack.value?.id;
@@ -28,16 +40,33 @@ export function useLyricsTranslations(lyrics) {
   const loaded = shallowRef(null);
   const failure = shallowRef(null);
   const reload = shallowRef(0);
-  const record = computed(() =>
-    loaded.value?.context === context.value ? loaded.value.record : null,
-  );
+  const record = computed(() => {
+    const own = loaded.value?.context === context.value ? loaded.value : null;
+    const shared = latestSaved.value;
+    if (
+      own &&
+      shared?.key === contextKey(context.value) &&
+      shared.sequence > own.sequence
+    )
+      return shared.record;
+    return own?.record ?? null;
+  });
   const loadError = computed(
     () => context.value !== null && failure.value === context.value,
   );
 
+  function store(record, current) {
+    loaded.value = { context: current, record, sequence: ++sequence };
+  }
+
   function applySaved(saved, editedContext) {
-    if (context.value === editedContext)
-      loaded.value = { context: editedContext, record: saved };
+    if (context.value !== editedContext) return;
+    store(saved, editedContext);
+    latestSaved.value = {
+      key: contextKey(editedContext),
+      record: saved,
+      sequence: loaded.value.sequence,
+    };
   }
 
   watch(
@@ -60,7 +89,7 @@ export function useLyricsTranslations(lyrics) {
           session,
           documentId,
         );
-        if (active) applySaved(result, current);
+        if (active && context.value === current) store(result, current);
       } catch {
         if (active) failure.value = current;
       }

@@ -10,6 +10,7 @@ const {
   parseReceiptSetlist,
 } = require('./outputContract');
 const { validateLyricsFineTiming } = require('./lyricsFineTiming.mjs');
+const translationValues = require('./lyricsTranslationValues.json');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
 const OUTPUT_STREAMS = new Set([
@@ -334,6 +335,43 @@ function parseReading(value, lines) {
   };
 }
 
+// Saved translations keyed by stable line id; the overlay picks one language.
+function parseTranslations(value, lines) {
+  if (value === undefined || value === null) return null;
+  const translations = record(value, 'payload.document.translations');
+  strictKeys(
+    translations,
+    'payload.document.translations',
+    new Set(translationValues.languages),
+  );
+  const lineIds = new Set(lines.map((line) => line.lineId));
+  const result = {};
+  for (const [language, rawRows] of Object.entries(translations)) {
+    const path = `payload.document.translations.${language}`;
+    if (!Array.isArray(rawRows) || rawRows.length > lines.length)
+      invalid(path, 'expected a bounded array');
+    const seen = new Set();
+    const rows = rawRows.map((rawRow, index) => {
+      const row = record(rawRow, `${path}[${index}]`);
+      const lineId = id(row.lineId, `${path}[${index}].lineId`);
+      if (!lineIds.has(lineId) || seen.has(lineId))
+        invalid(`${path}[${index}].lineId`, 'must name one lyric line');
+      seen.add(lineId);
+      return {
+        lineId,
+        text: string(
+          row.text,
+          `${path}[${index}].text`,
+          translationValues.maxTextLength,
+          false,
+        ),
+      };
+    });
+    if (rows.length) result[language] = rows;
+  }
+  return Object.keys(result).length ? result : null;
+}
+
 function hasJapaneseLyricsEvidence(source, lines) {
   if (
     String(source?.language ?? '')
@@ -432,6 +470,7 @@ function parseLyricsDocument(value) {
   if (reading && !hasJapaneseLyricsEvidence(source, lines)) {
     invalid('payload.document.reading', 'Japanese lyrics are required');
   }
+  const translations = parseTranslations(document.translations, lines);
   return {
     documentId: id(document.documentId, 'payload.document.documentId'),
     trackId: id(document.trackId, 'payload.document.trackId'),
@@ -439,6 +478,7 @@ function parseLyricsDocument(value) {
     source,
     lines,
     ...(reading ? { reading } : {}),
+    ...(translations ? { translations } : {}),
   };
 }
 

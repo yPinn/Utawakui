@@ -353,7 +353,8 @@ describe('overlay WebSocket runtime', () => {
       WebSocketImpl: FakeWebSocket,
       kind: 'lyrics',
       onSnapshot: (value) => received.push(value),
-      onConfig: (value) => configs.push(value?.templateId ?? null),
+      onConfig: (value, _language, translationLanguage) =>
+        configs.push([value?.templateId ?? null, translationLanguage]),
       schedule: setTimeout,
       cancelSchedule: clearTimeout,
       now: () => Date.parse('2026-08-23T00:00:00.000Z'),
@@ -367,6 +368,7 @@ describe('overlay WebSocket runtime', () => {
         overlayConfig: {
           version: 2,
           revision: 4,
+          translationLanguage: 'en',
           slots: { lyrics: { templateId: 'karaoke-stack' } },
         },
       }),
@@ -456,6 +458,7 @@ describe('overlay WebSocket runtime', () => {
               },
             ],
           },
+          translations: { en: [{ lineId: 'line-2', text: 'Second' }] },
         },
       }),
     });
@@ -479,8 +482,9 @@ describe('overlay WebSocket runtime', () => {
       }),
     });
 
-    expect(configs).toEqual(['karaoke-stack']);
+    expect(configs).toEqual([['karaoke-stack', 'en']]);
     expect(received).toHaveLength(1);
+    expect(received[0].lyrics.translations).toEqual({ en: ['', 'Second'] });
     expect(received[0].lyrics.lines[0].estimatedStarts).toEqual({
       version: 1,
       segments: [{ segmentId: 'model-first', text: 'first', startMs: 0 }],

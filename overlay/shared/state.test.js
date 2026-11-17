@@ -66,6 +66,35 @@ function snapshot(overrides = {}) {
 }
 
 describe('overlay state selectors', () => {
+  it('carries the current translation without replacing the next line', () => {
+    const value = snapshot();
+    value.lyrics.translations = {
+      en: ['', 'The tide comes ashore', '', ''],
+    };
+    const nowMs = Date.parse(value.generatedAt);
+    const select = (translationLanguage) =>
+      selectLyricsFrame(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+        translationLanguage,
+      });
+    expect(select('en')).toMatchObject({
+      currentText: '潮聲沿著夜色靠岸',
+      nextText: '下一句仍在遠方',
+      currentTranslation: 'The tide comes ashore',
+      translationLanguage: 'en',
+    });
+
+    value.lyrics.translations.en[1] = '';
+    expect(select('en')).toMatchObject({
+      currentTranslation: '',
+      translationLanguage: 'en',
+    });
+
+    for (const language of ['zh-TW', null])
+      expect(select(language)).not.toHaveProperty('currentTranslation');
+  });
+
   it('caps only the estimated final cue hold at six seconds', () => {
     const value = snapshot();
     value.lyrics.lines = [{ text: '最後一句', startMs: 8000, endMs: null }];

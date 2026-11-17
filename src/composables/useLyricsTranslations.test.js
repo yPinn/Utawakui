@@ -1,6 +1,51 @@
 import { effectScope, nextTick, reactive, shallowRef } from 'vue';
 import { expect, it, vi } from 'vitest';
-import { useLyricsTranslations } from './useLyricsTranslations.js';
+import {
+  translationLanguageLabels,
+  useLyricsTranslations,
+} from './useLyricsTranslations.js';
+import translationValues from '../../shared/lyricsTranslationValues.json';
+
+it('hands a save from one view to another view of the same source', async () => {
+  const record = { revision: 'disk', rows: { 'zh-TW': [], en: [] } };
+  vi.stubGlobal('window', {
+    Utawakui: { getLyricsTranslations: vi.fn().mockResolvedValue(record) },
+  });
+  const lyrics = {
+    state: reactive({ isLoadingLyrics: false }),
+    selectedTrack: shallowRef({ id: 'track' }),
+    selectedSource: shallowRef({ filename: 'a.lrc' }),
+    sourceSession: shallowRef({ id: 's' }),
+    lyricsDocument: shallowRef({
+      documentId: 'doc',
+      source: { filename: 'a.lrc' },
+      lines: [{ lineId: 'line', text: 'Hello' }],
+    }),
+  };
+  const scope = effectScope();
+  const [editor, output] = scope.run(() => [
+    useLyricsTranslations(lyrics),
+    useLyricsTranslations(lyrics),
+  ]);
+  await vi.waitFor(() => expect(output.record.value).toBe(record));
+
+  const saved = {
+    revision: 'saved',
+    rows: {
+      'zh-TW': [],
+      en: [{ lineId: 'line', original: 'Hello', text: 'Hi' }],
+    },
+  };
+  editor.applySaved(saved, editor.context.value);
+  expect(output.record.value).toBe(saved);
+  scope.stop();
+  vi.unstubAllGlobals();
+});
+
+it('labels every shared translation language', () => {
+  for (const id of translationValues.languages)
+    expect(translationLanguageLabels[id]?.()).toBeTruthy();
+});
 
 it('loads the selected source and ignores reads and saves from a previous source', async () => {
   let finishFirstRead;

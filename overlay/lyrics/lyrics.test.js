@@ -4485,6 +4485,51 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('');
   });
 
+  it('adds the current translation below the Live Stage caption', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 4,
+      visible: true,
+      currentText: '潮聲沿著夜色靠岸',
+      nextText: '',
+      language: 'zh-Hant',
+      currentTranslation: 'The tide comes ashore',
+      translationLanguage: 'en',
+      liveStage: { active: true, cardVisible: false },
+    };
+    renderLyricsFrame(elements, frame, {
+      templateId: 'live-stage',
+      reducedMotion: true,
+    });
+    const translation = elements.current.children.at(-1);
+    expect(translation.className).toBe(
+      'lyrics-overlay__live-stage-translation',
+    );
+    expect(translation.textContent).toBe('The tide comes ashore');
+    expect(translation.attributes.lang).toBe('en');
+    expect(elements.root.dataset.liveStageCaptionLines).toBe(
+      String(elements.current.children.length - 1),
+    );
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 5, currentTranslation: '' },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+    expect(elements.current.children.at(-1).textContent).toBe('');
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 6, currentTranslation: undefined },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+    expect(
+      elements.current.children.every(
+        (line) => line.className === 'lyrics-overlay__live-stage-caption-line',
+      ),
+    ).toBe(true);
+  });
+
   it('keeps one typography contract for a long asymmetric Live Stage pair', () => {
     const elements = domElements();
 

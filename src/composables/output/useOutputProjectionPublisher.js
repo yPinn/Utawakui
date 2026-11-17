@@ -14,6 +14,7 @@ import { useArtistIndex } from '../useArtistIndex.js';
 import { useLibrary } from '../useLibrary.js';
 import { useLyrics } from '../useLyrics.js';
 import { useLyricsReading } from '../useLyricsReading.js';
+import { useLyricsTranslations } from '../useLyricsTranslations.js';
 import { useMusicStructureSignals } from '../useMusicStructureSignals.js';
 import { usePlaybackQueue } from '../usePlaybackQueue.js';
 import { usePlayer } from '../usePlayer.js';
@@ -64,6 +65,7 @@ export function useOutputProjectionPublisher({
       title: trackDisplayTitle(track, libraryTracksById.value),
     };
   }
+  const lyrics = useLyrics();
   const {
     state: lyricsState,
     selectedTrack: lyricsTrack,
@@ -73,7 +75,8 @@ export function useOutputProjectionPublisher({
     lyricsTextProcessing,
     activeLineId,
     activeSegmentId,
-  } = useLyrics();
+  } = lyrics;
+  const { record: translationRecord } = useLyricsTranslations(lyrics);
   const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
   const {
     current: musicStructureSignals,
@@ -120,6 +123,7 @@ export function useOutputProjectionPublisher({
       document:
         experimentalLyrics?.outputDocument.value ?? displayLyricsDocument.value,
       readingDocument: getReadingDoc(trackId, lyricsSource.value?.filename),
+      translationRows: translationRecord.value?.rows,
     });
     return lyricsTextProcessing
       ? lyricsTextProcessing.project(document)

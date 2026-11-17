@@ -2201,6 +2201,11 @@ export function selectLyricsFrame(snapshot, options = {}) {
     Array.isArray(readingLine.segments)
       ? readingLine
       : null;
+  // Present whenever the chosen language has saved rows, so a template can
+  // keep its translation row even for an untranslated line.
+  const translationTexts = options.translationLanguage
+    ? lyrics?.translations?.[options.translationLanguage]
+    : null;
   let nextText = '';
   let nextIndex = null;
   for (let index = activeIndex + 1; index < lines.length; index += 1) {
@@ -2259,6 +2264,14 @@ export function selectLyricsFrame(snapshot, options = {}) {
     lineIndex: activeIndex,
     currentVisibleLineIndex: visibleLyricLineIndex(lines, activeIndex),
     nextVisibleLineIndex: visibleLyricLineIndex(lines, nextIndex),
+    ...(Array.isArray(translationTexts)
+      ? {
+          currentTranslation: currentText
+            ? String(translationTexts[activeIndex] ?? '')
+            : '',
+          translationLanguage: options.translationLanguage,
+        }
+      : {}),
     ...(currentReading ? { currentReading } : {}),
     ...(snapshot?.playback?.status === 'seeking'
       ? { timelineDiscontinuity: true }

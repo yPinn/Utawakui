@@ -363,6 +363,69 @@ function lyricsEnvelope(overrides = {}) {
   };
 }
 
+describe('lyrics translations', () => {
+  const withTranslations = (translations) => {
+    const value = lyricsEnvelope();
+    value.payload.document.translations = translations;
+    return value;
+  };
+
+  it('keeps line-bound translations and drops empty languages', () => {
+    const parsed = parseOutputStreamEnvelope(
+      withTranslations({
+        'zh-TW': [{ lineId: 'line-1', text: '歌詞', extra: 'x' }],
+        en: [],
+      }),
+      'boot-1',
+    );
+    expect(parsed.payload.document.translations).toEqual({
+      'zh-TW': [{ lineId: 'line-1', text: '歌詞' }],
+    });
+    expect(
+      parseOutputStreamEnvelope(withTranslations({ en: [] }), 'boot-1').payload
+        .document.translations,
+    ).toBeUndefined();
+  });
+
+  it('rejects unknown languages, unknown or repeated lines and empty text', () => {
+    for (const translations of [
+      { ja: [{ lineId: 'line-1', text: 'x' }] },
+      { en: [{ lineId: 'missing', text: 'x' }] },
+      {
+        en: [
+          { lineId: 'line-1', text: 'a' },
+          { lineId: 'line-1', text: 'b' },
+        ],
+      },
+      { en: [{ lineId: 'line-1', text: '' }] },
+      { en: [{ lineId: 'line-1', text: 'x'.repeat(1001) }] },
+    ])
+      expect(() =>
+        parseOutputStreamEnvelope(withTranslations(translations), 'boot-1'),
+      ).toThrow(/translations/);
+  });
+
+  it('drops translations of lines hidden by text processing', () => {
+    const document = {
+      documentId: 'doc',
+      lines: [
+        { lineId: 'credit', text: '作詞：某人' },
+        { lineId: 'lyric', text: '歌詞' },
+      ],
+      translations: {
+        en: [
+          { lineId: 'credit', text: 'Lyrics: someone' },
+          { lineId: 'lyric', text: 'Lyrics' },
+        ],
+      },
+    };
+    const projected = projectLyricsTextSelection(document, ['credit']);
+    expect(projected.translations.en).toEqual([
+      { lineId: 'lyric', text: 'Lyrics' },
+    ]);
+  });
+});
+
 function queueEnvelope(overrides = {}) {
   return {
     ...identity,

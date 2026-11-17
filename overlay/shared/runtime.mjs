@@ -177,6 +177,12 @@ function configLanguage(config) {
   return typeof config?.language === 'string' ? config.language : '';
 }
 
+function configTranslationLanguage(config) {
+  return typeof config?.translationLanguage === 'string'
+    ? config.translationLanguage
+    : null;
+}
+
 function slotFromConfig(config, kind) {
   if (!config) return null;
   if (!kind) return config.slots;
@@ -218,6 +224,32 @@ function projectSplitLyricsLines(document) {
   return lines;
 }
 
+const splitLyricsTranslations = new WeakMap();
+
+// Index-aligned like `reading`; untranslated lines stay empty strings.
+function projectSplitLyricsTranslations(document) {
+  const translations = document?.translations;
+  if (!translations || typeof translations !== 'object') return null;
+  const cached = splitLyricsTranslations.get(document);
+  if (cached) return cached;
+  const indexById = new Map(
+    (document.lines ?? []).map((line, index) => [line.lineId, index]),
+  );
+  const projected = {};
+  for (const [language, rows] of Object.entries(translations)) {
+    if (!Array.isArray(rows)) continue;
+    const texts = new Array(indexById.size).fill('');
+    for (const row of rows) {
+      const index = indexById.get(row?.lineId);
+      if (index !== undefined && typeof row.text === 'string')
+        texts[index] = row.text;
+    }
+    projected[language] = texts;
+  }
+  splitLyricsTranslations.set(document, projected);
+  return projected;
+}
+
 function assembleSplitSnapshot(
   message,
   lyricsEntry,
@@ -243,6 +275,7 @@ function assembleSplitSnapshot(
     return null;
   }
   const lines = projectSplitLyricsLines(lyricsDocument);
+  const translations = projectSplitLyricsTranslations(lyricsDocument);
   return {
     version: OUTPUT_STATE_VERSION,
     revision: message.revision,
@@ -272,6 +305,7 @@ function assembleSplitSnapshot(
           ...(lyricsDocument.reading
             ? { reading: lyricsDocument.reading }
             : {}),
+          ...(translations ? { translations } : {}),
         }
       : {
           documentId: null,
@@ -518,6 +552,7 @@ export function createOverlayConnection(options = {}) {
         onConfig(
           slotFromConfig(message.overlayConfig, options.kind),
           configLanguage(message.overlayConfig),
+          configTranslationLanguage(message.overlayConfig),
         );
         return;
       }
@@ -605,6 +640,7 @@ export function createOverlayConnection(options = {}) {
           onConfig(
             slotFromConfig(message.overlayConfig, options.kind),
             configLanguage(message.overlayConfig),
+            configTranslationLanguage(message.overlayConfig),
           );
         }
       }
