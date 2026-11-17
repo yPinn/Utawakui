@@ -14,15 +14,15 @@ function sliceSegments(segments, from, to) {
     cursor += segment.text.length;
     const a = Math.max(start, from),
       b = Math.min(cursor, to);
-    return a < b
-      ? [
-          {
-            ...segment,
-            text: segment.text.slice(a - start, b - start),
-            ...(a !== start || b !== cursor ? { partialText: true } : {}),
-          },
-        ]
-      : [];
+    if (a >= b) return [];
+    const text = segment.text.slice(a - start, b - start);
+    return [
+      {
+        ...segment,
+        text,
+        ...(text.trim() !== segment.text.trim() ? { partialText: true } : {}),
+      },
+    ];
   });
 }
 
@@ -91,8 +91,8 @@ export function createKtvDisplayFit(measure, onTrace) {
         endMs: unit.endMs,
         ...(canonical.vocalParts ? { vocalParts: unit.vocalParts } : {}),
       };
-      // Keep canonical intervals on paint segments. Only complete source chunks
-      // can anchor a derived capacity page; partial chunks are not new evidence.
+      // Keep canonical intervals on paint segments. Moving edge whitespace
+      // between pages leaves the timed word intact.
       const native = sliceSegments(
         canonical.segments,
         unit.sourceStart,

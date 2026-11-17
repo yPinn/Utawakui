@@ -73,14 +73,19 @@ function timingMap(line) {
   return { source, starts: cursor === line.text.length ? starts : new Map() };
 }
 
-function sourceTimedPages(pages, text, timing, start, end) {
+function visibleTimingStarts(text, starts) {
   // Separators stay on the previous page, even when the next timed segment
   // includes leading whitespace. Prefer a later segment at the same glyph.
   const visibleStarts = new Map();
-  for (const [offset, at] of timing.starts) {
+  for (const [offset, at] of starts) {
     const whitespace = text.slice(offset).match(/^\s+/u)?.[0].length ?? 0;
     visibleStarts.set(offset + whitespace, at);
   }
+  return visibleStarts;
+}
+
+function sourceTimedPages(pages, text, timing, start, end) {
+  const visibleStarts = visibleTimingStarts(text, timing.starts);
   const anchors = [[0, start]];
   for (const [offset, at] of visibleStarts) {
     if (offset > 0 && offset < text.length && at > anchors.at(-1)[1])
@@ -405,7 +410,12 @@ export function planLyricsDisplay(line, options = {}) {
     const timed = sourceTimedPages(pages, text, timing, start, end);
     if (timed) return { ...base, ...timed, status: 'ready' };
   }
-  const exact = pages.map((p) => timing.starts.get(p.sourceStart));
+  const visibleStarts =
+    pages.length > 1 ? visibleTimingStarts(text, timing.starts) : null;
+  const exact = pages.map(
+    (p) =>
+      timing.starts.get(p.sourceStart) ?? visibleStarts?.get(p.sourceStart),
+  );
   const exactUsable = exact.every(
     (at, i) => Number.isFinite(at) && (exact[i + 1] ?? end) - at >= minimumMs,
   );

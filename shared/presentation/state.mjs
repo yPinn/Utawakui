@@ -1520,11 +1520,11 @@ function projectKtvSegments(snapshot, unit, positionMs) {
         cueEnds,
       )
     : null;
-  // Capacity cuts retain native intervals, but do not invent a partial-word
-  // sweep. Fine paint, when present, keeps its own canonical glyph intervals.
+  // Capacity cuts keep the original onset and completed fill. Only the
+  // in-flight sweep needs to fall back to a static cue for partial text.
   return (
     projected?.map((segment, index) =>
-      segments[index].partialText
+      segments[index].partialText && segment.state === 'active'
         ? { ...segment, progress: null, remainingMs: null }
         : segment,
     ) ?? null

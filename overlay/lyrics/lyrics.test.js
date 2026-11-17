@@ -12,6 +12,7 @@ import {
   selectLyricsOverlayFrame,
 } from '../../shared/presentation/state.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
+import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
 
 function gsapHarness() {
   const timelines = [];
@@ -681,6 +682,79 @@ it('paints Focus only once after two preparation boundary crossings', () => {
 function kineticLineUnits(line) {
   return kineticLineTracks(line).flatMap((track) => track.children);
 }
+
+it('sweeps a KTV word from its onset and keeps it filled after pagination moves its leading space', () => {
+  const elements = domElements();
+  const nowMs = Date.now();
+  const segments = [
+    ['FAKE', 25573, 26083],
+    [' LOVE,', 26083, 26668],
+    [' FAKE', 27103, 27647],
+    [' LOVE,', 27647, 28232],
+    [' FAKE', 28810, 29245],
+    [' LOVE', 29245, 29891],
+  ].map(([text, startMs, endMs], index) => ({
+    segmentId: String(index),
+    text,
+    startMs,
+    endMs,
+  }));
+  const snapshot = {
+    generatedAt: new Date(nowMs).toISOString(),
+    playback: {
+      track: { id: 'song' },
+      status: 'playing',
+      positionMs: 27103,
+      rate: 1,
+    },
+    lyrics: {
+      trackId: 'song',
+      synced: true,
+      lines: [
+        {
+          text: segments.map((segment) => segment.text).join(''),
+          startMs: 25573,
+          endMs: 29891,
+          segments,
+        },
+        { text: "I'm so sorry but it's", startMs: 30476, endMs: 31866 },
+      ],
+    },
+  };
+  const options = { templateId: 'karaoke-stack', nowMs, schedule: vi.fn() };
+  const fit = createKtvDisplayFit(() => ({
+    fits: (text) => text.length <= 27,
+  }));
+  function renderAt(positionMs) {
+    snapshot.playback.positionMs = positionMs;
+    const source = selectLyricsOverlayFrame(snapshot, options);
+    const { frame } = fit.prepare(snapshot, source, options);
+    renderLyricsFrame(elements, frame, options);
+    return [elements.current, elements.next].find(
+      (node) => node.dataset.ktvActive === 'true',
+    );
+  }
+
+  const previousLane = renderAt(27102);
+  const activeLane = renderAt(27103);
+  expect(activeLane).not.toBe(previousLane);
+  const [entering] = activeLane.children;
+  expect(entering.textContent).toBe('FAKE');
+  expect(entering.dataset.segmentState).toBe('active');
+  expect(entering.animate).toHaveBeenCalledWith(
+    [{ '--ovl-segment-progress': '0%' }, { '--ovl-segment-progress': '100%' }],
+    expect.objectContaining({ duration: 544, easing: 'linear' }),
+  );
+  expect(renderAt(27300).children[0]).toBe(entering);
+  expect(entering.animate).toHaveBeenCalledOnce();
+
+  const [completed, active, upcoming] = renderAt(27900).children;
+  expect(completed.textContent).toBe('FAKE');
+  expect(completed.dataset.segmentState).toBe('past');
+  expect(completed.style.values['--ovl-segment-progress']).toBe('100%');
+  expect(active.dataset.segmentState).toBe('active');
+  expect(upcoming.style.values['--ovl-segment-progress']).toBe('0%');
+});
 
 it.each([false, true])(
   'keeps pending KTV ink/static tail in a distinct lane through the real renderer (static=%s)',
