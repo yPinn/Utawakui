@@ -10,6 +10,8 @@ const DEFERRED_SOURCES = new Map([
   ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],
   ['src/main.js', 'renderer-entrypoint'],
   ['src/entries/prompter/main.js', 'renderer-entrypoint'],
+  ['src/entries/companion/main.js', 'renderer-entrypoint'],
+  ['src/entries/companion/bootstrap.js', 'renderer-entrypoint'],
 ]);
 
 const COVERAGE_NEUTRAL_SOURCES = new Map([
@@ -65,6 +67,7 @@ const coveragePolicy = Object.freeze({
     'scripts/lyrics-provider-probe-registry.mjs',
     'scripts/release-contract.mjs',
     'src/bgm/**/*.js',
+    'src/companion/**/*.js',
     'src/microphone/**/*.js',
     'src/composables/**/*.js',
     'src/components/**/*.js',
@@ -558,7 +561,7 @@ function classifyAppSource(filePath) {
       /^overlay\/.+\.mjs$/.test(normalized) ||
       /^shared\/.+\.(?:js|mjs)$/.test(normalized) ||
       /^src\/components\/.+\.js$/.test(normalized) ||
-      /^src\/(?:bgm|microphone|composables|constants|icons|utils)\/.+\.js$/.test(
+      /^src\/(?:bgm|companion|microphone|composables|constants|icons|utils)\/.+\.js$/.test(
         normalized,
       )) &&
     !DEFERRED_SOURCES.has(normalized)

@@ -106,3 +106,34 @@ it('pairs the word-boundary publication with an actual audio sample instead of s
   });
   expect(fixture.player.state.currentTime).toBe(1.1);
 });
+
+it('keeps publishing for paired phones while the desktop prompter is closed', async () => {
+  let pushStatus;
+  window.Utawakui.getPerformerViewStatus = vi.fn(async () => ({
+    open: false,
+    remoteReaders: 0,
+  }));
+  window.Utawakui.onPerformerViewStatus = vi.fn((listener) => {
+    pushStatus = listener;
+    return vi.fn();
+  });
+  const { usePerformerSelfView } = await import('./usePerformerSelfView.js');
+  const selfView = usePerformerSelfView();
+  await selfView.initialize();
+  const publish = window.Utawakui.publishPerformerSnapshot;
+  expect(publish).not.toHaveBeenCalled();
+
+  pushStatus({ open: false, remoteReaders: 1 });
+  await vi.waitFor(() => expect(publish).toHaveBeenCalledOnce());
+  expect(selfView.state.remoteReaders).toBe(1);
+
+  fixture.player.state.currentTime = 5;
+  fixture.lyrics.activeLineIndex.value = 1;
+  await vi.waitFor(() => expect(publish).toHaveBeenCalledTimes(2));
+
+  pushStatus({ open: false, remoteReaders: 0 });
+  fixture.lyrics.activeLineIndex.value = 0;
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(publish).toHaveBeenCalledTimes(2);
+  selfView.dispose?.();
+});

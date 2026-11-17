@@ -227,6 +227,14 @@ describe('coverage policy', () => {
 
   it('measures the renderer BGM runtime domain', () => {
     expect(coveragePolicy.include).toContain('src/bgm/**/*.js');
+    expect(coveragePolicy.include).toContain('src/companion/**/*.js');
+    expect(classifyAppSource('src/companion/companionBridge.js')).toEqual({
+      status: 'measured',
+    });
+    expect(classifyAppSource('src/entries/companion/bootstrap.js')).toEqual({
+      status: 'deferred',
+      reason: 'renderer-entrypoint',
+    });
     expect(classifyAppSource('src/bgm/audioDeck.js')).toEqual({
       status: 'measured',
     });

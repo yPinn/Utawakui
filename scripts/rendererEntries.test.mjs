@@ -8,15 +8,23 @@ const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 
 describe('renderer entry and window ownership boundary', () => {
-  it('builds the single colocated prompter entry and keeps the main entry at root', () => {
+  it('builds the colocated prompter and phone entries and keeps the main entry at root', () => {
     expect(entries).toEqual({
       main: 'index.html',
       prompter: 'src/entries/prompter/index.html',
+      companion: 'src/entries/companion/index.html',
     });
     expect(viteConfig.build.rollupOptions.input).toEqual({
       main: path.join(root, entries.main),
       prompter: path.join(root, entries.prompter),
+      companion: path.join(root, entries.companion),
     });
+    expect(viteConfig.build.manifest).toBe('utawakui-manifest.json');
+    // The phone page is served by the companion listener, never an Electron window.
+    expect(read(entries.companion)).not.toContain('Content-Security-Policy');
+    expect(read('src/entries/companion/main.js')).toMatch(
+      /^import \{[^}]*\} from '\.\/bootstrap\.js';/u,
+    );
     expect(read(entries.prompter)).toContain('src="./main.js"');
     expect(read('src/entries/prompter/main.js')).toContain(
       "registerRendererSurfaceRoot('performer')",

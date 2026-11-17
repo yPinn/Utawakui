@@ -88,9 +88,11 @@ network install or signed-installer acceptance; see the
   `electron/main/companionHandlers.js` use the existing Main bundle dependency
   closure and the existing `ws`/Node `http` modules. Fixed `companion:*` intents use
   the main preload. Paired-device hashes live in userData as
-  `companion-devices.bin`, encrypted with `safeStorage`; no installer asset, worker
-  or new dependency is added in this slice. The phone page entry and its served
-  asset allowlist arrive with the read slice ([ADR 0033](../adr/0033-mobile-companion-local-network.md)).
+  `companion-devices.bin`, encrypted with `safeStorage`. The phone page is the
+  `companion` renderer entry under `dist/src/entries/companion/`; the listener
+  serves only the files listed for it in `dist/utawakui-manifest.json`, both shipped
+  by the existing `dist/**/*` rule. `uqr` is a renderer-only QR encoder bundled into
+  Settings ([ADR 0033](../adr/0033-mobile-companion-local-network.md)).
 
 - Track performance settings: `electron/lib/performanceSettings/` and
   `electron/main/performanceSettingsHandlers.js` use the existing Main bundle

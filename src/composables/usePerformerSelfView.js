@@ -60,9 +60,15 @@ const state = reactive({
   open: false,
   fullScreen: false,
   alwaysOnTop: false,
+  remoteReaders: 0,
   isOpening: false,
   error: '',
 });
+
+// The desktop prompter and paired phones read the same published snapshot.
+function isPublishing() {
+  return state.open || state.remoteReaders > 0;
+}
 
 let initialized = false;
 let revision = 0;
@@ -109,10 +115,15 @@ function clearPerformerError(operation) {
 }
 
 function applyStatus(status = {}) {
+  const wasPublishing = isPublishing();
   state.open = status.open === true;
   state.fullScreen = status.fullScreen === true;
   state.alwaysOnTop = status.alwaysOnTop === true;
-  if (!state.open) {
+  state.remoteReaders = Number.isSafeInteger(status.remoteReaders)
+    ? Math.max(0, status.remoteReaders)
+    : 0;
+  if (!wasPublishing && isPublishing()) publisher.request(currentSnapshot());
+  if (!isPublishing()) {
     readingDisplayScope?.stop();
     readingDisplayScope = null;
     readingDisplay.value = null;
@@ -371,7 +382,7 @@ async function initialize() {
       window.Utawakui.onPerformerControlIntent(handleControlIntent);
   }
   stopProjectionWatch = watch(projectedState, () => {
-    if (state.open) publisher.request(currentSnapshot());
+    if (isPublishing()) publisher.request(currentSnapshot());
   });
   stopReadingWatch = watch(
     () => [lyricsTrack.value?.id, lyricsSource.value?.filename],

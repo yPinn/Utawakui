@@ -67,6 +67,8 @@ module.exports = defineConfig({
     },
   },
   build: {
+    // The phone companion listener serves only its entry's manifest closure.
+    manifest: 'utawakui-manifest.json',
     rollupOptions: {
       input: Object.fromEntries(
         Object.entries(rendererEntries).map(([role, entry]) => [

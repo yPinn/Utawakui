@@ -78,7 +78,8 @@ files:
   - scripts/research/lyricsFreshEvaluation/lowCost.cjs
   - scripts/research/lyricsFreshEvaluation/completeness.cjs
   - scripts/research/lyricsFreshEvaluation/trial-assets.json
-  # Includes nested HTML at dist/src/entries/prompter/index.html.
+  # Includes nested HTML at dist/src/entries/prompter/index.html and the phone
+  # companion page plus dist/utawakui-manifest.json, its served-file allowlist.
   - dist/**/*
   # Original electron/ and src/ modules, adjacent tests and fixture corpora
   # are absent from the package; their runtime code is inside the bundles.
