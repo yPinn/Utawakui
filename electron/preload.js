@@ -790,6 +790,20 @@ contextBridge.exposeInMainWorld('Utawakui', {
   publishOutputSnapshot: (snapshot) =>
     ipcRenderer.invoke('output:publish', snapshot),
   getObsStatus: () => ipcRenderer.invoke('obs:get-status'),
+  getCompanionStatus: () => ipcRenderer.invoke('companion:get-status'),
+  configureCompanion: (input) =>
+    ipcRenderer.invoke('companion:configure', input),
+  beginCompanionPairing: () => ipcRenderer.invoke('companion:begin-pairing'),
+  cancelCompanionPairing: () => ipcRenderer.invoke('companion:cancel-pairing'),
+  revokeCompanionDevice: (deviceId) =>
+    ipcRenderer.invoke('companion:revoke', deviceId),
+  revokeAllCompanionDevices: () => ipcRenderer.invoke('companion:revoke-all'),
+  onCompanionStatusChanged: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('companion:status-changed', listener);
+    return () =>
+      ipcRenderer.removeListener('companion:status-changed', listener);
+  },
   onObsStatus: (callback) => {
     const listener = (_event, status) => callback(status);
     ipcRenderer.on('obs:status', listener);

@@ -13,6 +13,7 @@ function registerFeatureGateHandlers({
   getConfig,
   updateConfig,
   recordDiagnostic,
+  onConfirmed = () => {},
 }) {
   ipcMain.handle('feature-gates:list', async () =>
     runDiagnosticIpcOperation(
@@ -69,6 +70,11 @@ function registerFeatureGateHandlers({
               [featureId]: record,
             },
           });
+          try {
+            onConfirmed(featureId);
+          } catch {
+            // The confirmation is saved; dependants recheck on their next use.
+          }
           return record;
         },
       );

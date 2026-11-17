@@ -57,6 +57,7 @@ describe('config', () => {
         autoManageSeparation: false,
         separationLimitBytes: storageValues.defaultSeparationLimitBytes,
       },
+      companion: { enabled: false, interfaceAddress: null, port: 8710 },
       outputRuntime: {
         autoStart: true,
         port: 8700,
@@ -183,6 +184,7 @@ describe('config', () => {
         autoManageSeparation: false,
         separationLimitBytes: storageValues.defaultSeparationLimitBytes,
       },
+      companion: { enabled: false, interfaceAddress: null, port: 8710 },
       outputRuntime: {
         autoStart: true,
         port: 8700,

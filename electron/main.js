@@ -166,6 +166,12 @@ const {
 const {
   createKeyboardShortcutRuntime,
 } = require('./main/keyboardShortcutRuntime');
+const { createCompanionDeviceStore } = require('./lib/companion/deviceStore');
+const { createPairingCodes } = require('./lib/companion/pairing');
+const { createCompanionRuntime } = require('./lib/companion/runtime');
+const { createCompanionServer } = require('./lib/companion/server');
+const { describeNetworkScope } = require('./lib/companion/networkScope');
+const { registerCompanionHandlers } = require('./main/companionHandlers');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
 const {
   registerExternalNavigationHandlers,
@@ -1898,11 +1904,43 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
     });
 
+    // Paired-phone listener: off unless its gate and setting are on.
+    const companionRuntime = createCompanionRuntime({
+      getSettings: () => configState.getConfig().companion,
+      saveSettings: (companion) => configState.updateConfig({ companion }),
+      isGateEnabled: () =>
+        isFeatureGateEnabled(
+          configState.getConfig(),
+          FEATURE_IDS.MOBILE_COMPANION,
+        ),
+      devices: createCompanionDeviceStore({
+        filePath: path.join(app.getPath('userData'), 'companion-devices.bin'),
+        safeStorage,
+      }),
+      pairing: createPairingCodes(),
+      describeNetworkScope,
+      createServer: createCompanionServer,
+      onChange: () => windowState.sendToMainWindow('companion:status-changed'),
+    });
+    registerCompanionHandlers({
+      ipcMain,
+      runtime: companionRuntime,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.MOBILE_COMPANION,
+      recordDiagnostic,
+    });
+    if (configState.getConfig().companion.enabled)
+      void companionRuntime.refresh();
+    app.once('will-quit', () => void companionRuntime.stop());
     registerFeatureGateHandlers({
       ipcMain,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       recordDiagnostic,
+      onConfirmed: (featureId) => {
+        if (featureId === FEATURE_IDS.MOBILE_COMPANION)
+          void companionRuntime.refresh();
+      },
     });
 
     registerExternalNavigationHandlers({
