@@ -69,6 +69,7 @@ v0.6.0 工作樹變更如下。
 | 本首音量     | 演出工具「調整」可為每首歌保存 −12～+6 dB 微調，演唱播放器與場間音樂共用。新產生的伴奏改為與原曲同音量，舊伴奏重新產生後才會變。[本首音量](contracts/player-audio-controls.md#本首音量)                                                              |
 | OBS 畫面輸出 | 所有模板可選模板字型或本機已安裝字型；配色分基本與底片風格，可加材質顆粒，強度 0% 時維持原色。歌詞工作臺的預覽背景可切換人物參考、同步 MV 或無。[模板與外觀](contracts/output-appearance.md) · [本機影片](contracts/local-track-video.md#播放與過場) |
 | 場次票券     | 封存場次以票券卡片顯示，封面色調與日期票根。[場次紀錄契約](contracts/performance-session-preparation.md#紀錄頁封存與雙匯出)                                                                                                                          |
+| 手機遙控     | 開啟「手機遙控」並在設定掃 QR 碼配對後，同一私人網路的手機可看歌詞，並遙控播放、換曲、升降 Key、音量、歌詞快慢與讀音。配對的手機會被記住，可逐台移除。[手機遙控契約](contracts/mobile-companion.md)                                                  |
 
 另有開發或隔離功能。聲學歌詞估計可手動準備環境並逐句執行，正式模型下載與人工時間品質仍待驗；BPM／節拍分析已有可執行路徑，公開前需通過準確度、離線及介面驗收。原唱音高預覽、Mic 電平與 Spout2 仍屬開發或原型，Mic 監聽／錄音與正式 Spout2 支援尚未開放。[聲學估計](contracts/lyrics-acoustic-estimate-contract.md) · [音樂分析](contracts/music-analysis.md) · [原唱音高](research/audio/reference-pitch-note-boundary-summary-2026-11-06.md) · [Mic](contracts/microphone-level-research.md) · [Spout2](operations/manual-acceptance.md#spout2)
 
@@ -152,13 +153,13 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 ### 6.2 已接受方向：依前置條件推進
 
-| 方向             | 下一步                                                                                                                                                                     | 前置條件                                                                                                                                      |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 本地演出與回放   | 在已驗收的場次時間軸上補 VOD／clip 狀態與輸出 review。                                                                                                                     | 一般權利告知採版本化的一次確認，保留重開說明入口；個別素材權利由使用者確認。                                                                  |
-| 手機遙控／提詞器 | 依[手機遙控契約](contracts/mobile-companion.md)實作：QR 一次性碼配對並記住裝置，只綁定選定的私人網路介面；先做讀詞，再開放播放、換曲、升降 Key、音量、歌詞快慢與讀音指令。 | 配對、撤銷、傳輸與威脅模型已定於 [ADR 0033](adr/0033-mobile-companion-local-network.md)；保持現有 Output 唯讀，新增 `mobile-companion` gate。 |
-| 音訊準備與設定   | 評估新分離結果的受控 FLAC 5／WAV 回退，並分別定義變調／速度預渲染與 preset 匯出入。                                                                                        | 先驗品質、取消與失敗復原；定保存與缺曲處理，既有音訊保留原格式。[音訊處理 ADR](adr/0009-tiered-audio-processing-runtime.md)                   |
-| Output 外觀交付  | 分期定義 Instance、Presentation Pack／User Variant 與逐模板改善。                                                                                                          | 先定可分享範圍、取得與復原；帳號、付款與遠端取得各自決策。[外觀交付計畫](governance/appearance-sets-plan.md)                                  |
-| 曲庫細節         | 先驗[曲目演唱語言](#622-曲目演唱語言)，再推進[曲風覆核與歌曲電台](#621-曲庫風格標籤與歌曲電台)。                                                                           | 沿既有人工校對與作品／版本關係保存證據。歌曲電台的預設排序等試聽評分。[作品與版本](contracts/works-versions-and-releases.md)                  |
+| 方向             | 下一步                                                                                              | 前置條件                                                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 本地演出與回放   | 在已驗收的場次時間軸上補 VOD／clip 狀態與輸出 review。                                              | 一般權利告知採版本化的一次確認，保留重開說明入口；個別素材權利由使用者確認。                                                      |
+| 手機遙控／提詞器 | 實機驗收：真實手機掃碼配對、讀詞延遲與時鐘校正、遙控指令與撤銷，以及 Windows 防火牆與網路類型偵測。 | 依 [ADR 0033](adr/0033-mobile-companion-local-network.md) 與[手機遙控契約](contracts/mobile-companion.md)；保持現有 Output 唯讀。 |
+| 音訊準備與設定   | 評估新分離結果的受控 FLAC 5／WAV 回退，並分別定義變調／速度預渲染與 preset 匯出入。                 | 先驗品質、取消與失敗復原；定保存與缺曲處理，既有音訊保留原格式。[音訊處理 ADR](adr/0009-tiered-audio-processing-runtime.md)       |
+| Output 外觀交付  | 分期定義 Instance、Presentation Pack／User Variant 與逐模板改善。                                   | 先定可分享範圍、取得與復原；帳號、付款與遠端取得各自決策。[外觀交付計畫](governance/appearance-sets-plan.md)                      |
+| 曲庫細節         | 先驗[曲目演唱語言](#622-曲目演唱語言)，再推進[曲風覆核與歌曲電台](#621-曲庫風格標籤與歌曲電台)。    | 沿既有人工校對與作品／版本關係保存證據。歌曲電台的預設排序等試聽評分。[作品與版本](contracts/works-versions-and-releases.md)      |
 
 逐曲設定、區段練習、對時確認及快捷鍵的驗收案例沿[排練規劃](research/product/player-practice-planning-2026-10-26.md)推進。
 

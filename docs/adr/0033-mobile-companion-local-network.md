@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted (2026-11-17). Implementation pending; behavior is specified in the
+Accepted and implemented (2026-11-17); device acceptance pending. Behavior is
+specified in the
 [mobile companion contract](../contracts/mobile-companion.md).
 
 ## Context
