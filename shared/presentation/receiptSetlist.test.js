@@ -221,10 +221,15 @@ describe('receipt setlist presentation and bounded source contract', () => {
   it('has bounded template-specific controls and defaults to downward printing', () => {
     const options = { templateId: 'receipt-setlist' };
     expect(outputAppearanceFieldKeysForTemplate('receipt-setlist')).toEqual([
+      'paletteId',
+      'lookAmount',
+      'fontFamily',
       'fontScale',
       'receiptDirection',
       'receiptReview',
       'receiptReviewInterval',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
     expect(normalizeOutputAppearance({}, options)).toMatchObject({
       receiptDirection: 'down',

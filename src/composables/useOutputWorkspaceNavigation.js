@@ -6,7 +6,7 @@ const OUTPUT_PREVIEW_BACKDROP_IDS = Object.freeze(['checker', 'dark', 'light']);
 const activePage = shallowRef('workbench');
 const activeKind = shallowRef(null);
 const previewBackdrop = shallowRef('checker');
-const showLyricsGuide = shallowRef(true);
+const lyricsPreviewMode = shallowRef('performer');
 // The Gallery retains its width across visits. A null value uses its CSS default.
 const sideWidth = shallowRef(null);
 const sideCollapsed = shallowRef(false);
@@ -14,7 +14,7 @@ const compactSideOpen = shallowRef(false);
 const visibleActivePage = readonly(activePage);
 const visibleActiveKind = readonly(activeKind);
 const visiblePreviewBackdrop = readonly(previewBackdrop);
-const visibleShowLyricsGuide = readonly(showLyricsGuide);
+const visibleLyricsPreviewMode = readonly(lyricsPreviewMode);
 
 function selectPage(page) {
   if (!OUTPUT_PAGE_IDS.includes(page)) return false;
@@ -45,8 +45,9 @@ function selectPreviewBackdrop(backdrop) {
   return true;
 }
 
-function setLyricsGuideVisible(visible) {
-  showLyricsGuide.value = visible === true;
+function selectLyricsPreviewMode(mode) {
+  if (!['performer', 'mv', 'none'].includes(mode)) return false;
+  lyricsPreviewMode.value = mode;
   return true;
 }
 
@@ -74,11 +75,11 @@ export function useOutputWorkspaceNavigation() {
     activePage: visibleActivePage,
     activeKind: visibleActiveKind,
     previewBackdrop: visiblePreviewBackdrop,
-    showLyricsGuide: visibleShowLyricsGuide,
+    lyricsPreviewMode: visibleLyricsPreviewMode,
     selectPage,
     selectKind,
     ensureAvailableKind,
     selectPreviewBackdrop,
-    setLyricsGuideVisible,
+    selectLyricsPreviewMode,
   };
 }

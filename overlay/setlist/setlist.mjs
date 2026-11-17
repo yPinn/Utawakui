@@ -242,6 +242,12 @@ function boot() {
     }
   };
 
+  const refreshTypography = () => {
+    historyMeasurement.schedule({ force: true });
+    receipt.refresh();
+    ribbon.refresh();
+  };
+
   applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, { previewMode, location: window.location });
   const host = createOverlayHost({
@@ -255,13 +261,14 @@ function boot() {
         reveal: !recovering,
       });
     },
-    onFontsChanged: () => {
-      historyMeasurement.schedule({ force: true });
-      receipt.refresh();
-      ribbon.refresh();
-    },
+    onFontsChanged: refreshTypography,
     onConfig: (slot) => {
       const previousTemplateId = templateId;
+      const root = document.documentElement;
+      const previousFont = root.dataset.ovlFont;
+      const previousLocalFamily = root.style.getPropertyValue(
+        '--ovl-user-local-font-family',
+      );
       templateId = slot?.templateId ?? 'queue-board';
       receipt.configure(slot?.settings);
       ribbon.configure(slot?.settings);
@@ -273,6 +280,14 @@ function boot() {
       applyOverlayAppearance(document, slot);
       if (latestSnapshot) present(latestSnapshot, { recovering: true });
       else if (previewMode) present(null, { recovering: true });
+      if (
+        templateId === previousTemplateId &&
+        (root.dataset.ovlFont !== previousFont ||
+          root.style.getPropertyValue('--ovl-user-local-font-family') !==
+            previousLocalFamily)
+      ) {
+        refreshTypography();
+      }
       ribbon.setActive(active && templateId === 'ribbon-setlist', {
         reveal: previousTemplateId !== templateId,
       });

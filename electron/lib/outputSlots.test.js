@@ -53,9 +53,9 @@ describe('outputSlots', () => {
     }
   });
 
-  it('returns an empty v4 document when overlays.json is missing', () => {
+  it('returns an empty v5 document with the original template fonts', () => {
     const document = loadOutputSlots(dir);
-    expect(document.version).toBe(4);
+    expect(document.version).toBe(5);
     expect(document.preferences).toEqual({
       recentColors: [],
       savedColors: [],
@@ -70,15 +70,15 @@ describe('outputSlots', () => {
       'now-playing': { settings: { captureSize: 'small' } },
       setlist: {
         templateId: 'receipt-setlist',
-        settings: { captureSize: 'large' },
+        settings: { captureSize: 'large', fontFamily: 'template' },
       },
-      lyrics: { settings: { captureSize: 'full' } },
+      lyrics: { settings: { captureSize: 'full', fontFamily: 'template' } },
     });
   });
 
   it('reads legacy Fisheye decorations and persists independent choices', () => {
     const legacy = JSON.stringify({
-      version: 4,
+      version: 5,
       slots: {
         lyrics: {
           templateId: 'fisheye-lens',
@@ -139,7 +139,7 @@ describe('outputSlots', () => {
     });
 
     expect(saved).toMatchObject({
-      version: 4,
+      version: 5,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
@@ -179,7 +179,7 @@ describe('outputSlots', () => {
     );
 
     expect(loadOutputSlots(dir)).toMatchObject({
-      version: 4,
+      version: 5,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         'now-playing': {
@@ -204,10 +204,10 @@ describe('outputSlots', () => {
         .readdirSync(dir)
         .some((name) => /^overlays\.json\.v1-.*\.bak$/.test(name)),
     ).toBe(true);
-    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).version).toBe(4);
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf8')).version).toBe(5);
   });
 
-  it('migrates v2 slots to v4 preferences without losing slot settings', () => {
+  it('migrates v2 slots to the current version without losing slot settings', () => {
     fs.writeFileSync(
       filePath,
       JSON.stringify({
@@ -222,7 +222,7 @@ describe('outputSlots', () => {
     );
 
     expect(loadOutputSlots(dir)).toMatchObject({
-      version: 4,
+      version: 5,
       preferences: { recentColors: [], savedColors: [] },
       slots: {
         lyrics: {
@@ -257,7 +257,7 @@ describe('outputSlots', () => {
     );
 
     const document = loadOutputSlots(dir);
-    expect(document.version).toBe(4);
+    expect(document.version).toBe(5);
     expect(document.slots.lyrics.settings.fontFamily).toBe('antique');
     expect(document.slots['now-playing'].settings.fontFamily).toBe('serif');
     expect(
@@ -398,28 +398,61 @@ describe('outputSlots', () => {
     ).not.toThrow();
   });
 
-  it('persists a bounded local font only for the Live Stage capability', () => {
+  it('discards previously inactive v4 fonts and keeps effective choices', () => {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 4,
+        slots: {
+          lyrics: {
+            templateId: 'ornate-vertical',
+            settings: { fontFamily: 'antique' },
+          },
+          setlist: {
+            templateId: 'receipt-setlist',
+            settings: { fontFamily: 'rounded' },
+          },
+          'now-playing': {
+            templateId: 'cover-player',
+            settings: { fontFamily: 'serif' },
+          },
+        },
+      }),
+    );
+
+    const { slots, version } = loadOutputSlots(dir);
+    expect(version).toBe(5);
+    expect(slots.lyrics.settings.fontFamily).toBe('antique');
+    expect(slots.setlist.settings).not.toHaveProperty('fontFamily');
+    expect(slots['now-playing'].settings).not.toHaveProperty('fontFamily');
+    expect(loadOutputSlots(dir).slots).toEqual(slots);
+    expect(
+      fs
+        .readdirSync(dir)
+        .some((name) => /^overlays\.json\.v4-.*\.bak$/.test(name)),
+    ).toBe(true);
+  });
+
+  it('persists a bounded local font across all three output kinds', () => {
     const localFont = {
       source: 'local',
       family: 'Noto Sans CJK TC',
       postscriptName: 'NotoSansCJKtc-Regular',
       style: 'Regular',
     };
-    upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'live-stage',
-      settings: { fontFamily: localFont, captureSize: 'full' },
-    });
-    expect(loadOutputSlots(dir).slots.lyrics.settings.fontFamily).toEqual(
-      localFont,
-    );
-
-    upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'karaoke-stack',
-      settings: { fontFamily: localFont, captureSize: 'full' },
-    });
-    expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
-      'fontFamily',
-    );
+    for (const [kind, templateId] of [
+      ['lyrics', 'karaoke-stack'],
+      ['setlist', 'ribbon-setlist'],
+      ['now-playing', 'ticket-stub'],
+    ]) {
+      upsertOutputSlot(dir, kind, {
+        templateId,
+        settings: { fontFamily: localFont },
+      });
+      expect(loadOutputSlots(dir).slots[kind].settings.fontFamily).toEqual(
+        localFont,
+      );
+    }
   });
 
   it('bounds the independent Live Stage presentation policy setting', () => {
@@ -578,7 +611,7 @@ describe('outputSlots', () => {
         .filter((name) => name.startsWith('overlays.json.corrupted-')),
     ).toHaveLength(1);
 
-    fs.writeFileSync(filePath, JSON.stringify({ version: 5, slots: {} }));
+    fs.writeFileSync(filePath, JSON.stringify({ version: 6, slots: {} }));
     expect(() => loadOutputSlots(dir)).toThrow(/newer overlays/i);
   });
 });

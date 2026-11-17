@@ -26,6 +26,7 @@ import {
 } from './floatingPosition.js';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
+import UiHint from './UiHint.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
 
 const overlayHost = useUiOverlayHost();
@@ -45,11 +46,12 @@ const props = defineProps({
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
   editable: { type: Boolean, default: true },
+  searchOnOpen: { type: Boolean, default: false },
   closeOnScroll: { type: Boolean, default: true },
   noResultsText: { type: String, default: () => t('ui.combobox.noResults') },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['open', 'update:modelValue']);
 const attrs = useAttrs();
 const { claim, release } = useFloatingSurfaceGate();
 
@@ -95,6 +97,7 @@ const itemGroups = computed(() =>
     return {
       key: `group:${entry.label}:${index}`,
       label: String(entry.label ?? ''),
+      status: entry.status,
       items: entry.options.map((item) => ({
         ...item,
         disabled: Boolean(entry.disabled || item.disabled),
@@ -119,17 +122,17 @@ function isSelected(item) {
 }
 const filteredGroups = computed(() => {
   const needle = isFiltering.value ? query.value.trim().toLowerCase() : '';
-  if (!needle) return itemGroups.value;
-  return itemGroups.value
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) =>
-        String(item.searchText ?? item.label)
-          .toLowerCase()
-          .includes(needle),
-      ),
-    }))
-    .filter(({ items }) => items.length > 0);
+  const groups = needle
+    ? itemGroups.value.map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          String(item.searchText ?? item.label)
+            .toLowerCase()
+            .includes(needle),
+        ),
+      }))
+    : itemGroups.value;
+  return groups.filter(({ items, status }) => items.length > 0 || status);
 });
 const filteredItems = computed(() =>
   filteredGroups.value.flatMap(({ items }) => items),
@@ -233,10 +236,20 @@ function ensureOpen() {
   if (props.disabled || isOpen.value) return;
   isOpen.value = true;
   claim(closeFromGate);
+  // Notify in the opening event so consumers can use its user activation.
+  emit('open');
   nextTick(() => scheduleFrame(updatePosition));
 }
 
 function openWithSelection() {
+  if (
+    props.editable &&
+    props.searchOnOpen &&
+    !props.disabled &&
+    !isOpen.value
+  ) {
+    query.value = '';
+  }
   ensureOpen();
   const selectedIndex = selectedItem.value
     ? filteredItems.value.findIndex(
@@ -535,7 +548,7 @@ onBeforeUnmount(() => {
       :style="position"
     >
       <li
-        v-if="!filteredItems.length"
+        v-if="!filteredGroups.length"
         class="ui-combobox__empty"
         role="presentation"
       >
@@ -551,6 +564,7 @@ onBeforeUnmount(() => {
             {{ group.label }}
           </span>
           <ul
+            v-if="group.items.length"
             class="ui-combobox__group-options"
             :role="group.label ? 'group' : 'presentation'"
             :aria-label="group.label || undefined"
@@ -588,6 +602,9 @@ onBeforeUnmount(() => {
               </span>
             </li>
           </ul>
+          <UiHint v-if="group.status" class="ui-combobox__group-status">
+            {{ group.status }}
+          </UiHint>
         </li>
       </template>
     </UiScrollRegion>
@@ -736,6 +753,11 @@ onBeforeUnmount(() => {
   gap: var(--ui-space-1);
 }
 
+.ui-combobox__group-shell:has(> .ui-combobox__group-label)
+  + .ui-combobox__group-shell:has(> .ui-combobox__group-label) {
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
 .ui-combobox__group-label {
   display: block;
   padding: var(--ui-space-2) var(--ui-space-2) var(--ui-space-1);
@@ -747,6 +769,11 @@ onBeforeUnmount(() => {
 
 .ui-combobox__option--grouped .ui-combobox__option-content {
   margin-inline-start: var(--ui-space-2);
+}
+
+.ui-combobox__group-status {
+  padding: var(--ui-floating-row-padding-block)
+    calc(var(--ui-floating-row-padding-inline) + var(--ui-space-2));
 }
 
 .ui-combobox__option[aria-selected='true'] {

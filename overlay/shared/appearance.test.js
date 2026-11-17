@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import {
   OUTPUT_APPEARANCE_DEFAULTS,
+  OUTPUT_LOOK_PRESETS,
+  outputArtworkGradeMatrix,
   outputAppearanceOptionIds,
 } from '../../shared/outputAppearance.mjs';
 import {
@@ -44,14 +46,9 @@ function mixHex(left, right, amount) {
     .join('')}`;
 }
 
-function lookRole(css, lookId, role) {
-  const block = css.match(
-    new RegExp(`\\[data-ovl-palette='${lookId}'\\]\\s*\\{([^}]+)\\}`, 'u'),
-  )?.[1];
-  return block?.match(
-    new RegExp(`--ovl-look-color-${role}:\\s*(#[0-9a-f]{6})`, 'iu'),
-  )?.[1];
-}
+const gradedLooks = Object.entries(OUTPUT_LOOK_PRESETS).filter(
+  ([, { colors }]) => colors,
+);
 
 describe('overlay appearance', () => {
   const localFont = {
@@ -88,7 +85,7 @@ describe('overlay appearance', () => {
   it('uses template-specific fallbacks for fixed-identity controls', () => {
     expect(
       normalizeOverlayAppearance(
-        { fontFamily: 'serif', positionAnchor: 'center' },
+        { fontFamily: 'unrecognized-font', positionAnchor: 'center' },
         { templateId: 'ornate-vertical' },
       ),
     ).toMatchObject({
@@ -185,34 +182,49 @@ describe('overlay appearance', () => {
     expect(setProperty).toHaveBeenCalledWith('--ovl-user-position-y', '-9%');
   });
 
-  it('projects a validated Live Stage local font through one quoted CSS value', () => {
-    const setProperty = vi.fn();
-    const removeProperty = vi.fn();
-    const document = {
-      documentElement: {
-        dataset: {},
-        style: { setProperty, removeProperty },
-      },
-    };
+  it.each([
+    'live-stage',
+    'chalkboard-vertical',
+    'ribbon-setlist',
+    'cover-player',
+  ])(
+    'projects a validated local font and clears it when restoring a preset in %s',
+    (templateId) => {
+      const setProperty = vi.fn();
+      const removeProperty = vi.fn();
+      const document = {
+        documentElement: {
+          dataset: {},
+          style: { setProperty, removeProperty },
+        },
+      };
 
-    applyOverlayAppearance(document, {
-      templateId: 'live-stage',
-      settings: { fontFamily: localFont },
-    });
+      applyOverlayAppearance(document, {
+        templateId,
+        settings: { fontFamily: localFont },
+      });
 
-    expect(document.documentElement.dataset.ovlFont).toBe('local');
-    expect(setProperty).toHaveBeenCalledWith(
-      '--ovl-user-local-font-family',
-      '"Noto Sans CJK TC"',
-    );
+      expect(document.documentElement.dataset.ovlFont).toBe('local');
+      expect(setProperty).toHaveBeenCalledWith(
+        '--ovl-user-local-font-family',
+        '"Noto Sans CJK TC"',
+      );
+      expect(setProperty).toHaveBeenCalledWith(
+        '--ovl-local-font-prefix',
+        '"Noto Sans CJK TC",',
+      );
 
-    setProperty.mockClear();
-    applyOverlayAppearance(document, {
-      templateId: 'live-stage',
-      settings: { fontFamily: 'sans' },
-    });
-    expect(removeProperty).toHaveBeenCalledWith('--ovl-user-local-font-family');
-  });
+      setProperty.mockClear();
+      applyOverlayAppearance(document, {
+        templateId,
+        settings: { fontFamily: 'sans' },
+      });
+      expect(removeProperty).toHaveBeenCalledWith(
+        '--ovl-user-local-font-family',
+      );
+      expect(removeProperty).toHaveBeenCalledWith('--ovl-local-font-prefix');
+    },
+  );
 
   it('lets an Ornate palette color the template defaults without overriding custom colors', () => {
     const setProperty = vi.fn();
@@ -258,11 +270,14 @@ describe('overlay appearance', () => {
       'utf8',
     );
 
-    for (const lookId of ['warm', 'cool', 'monochrome', 'high-contrast']) {
-      expect(css).toContain(`[data-ovl-palette='${lookId}']`);
+    const roles = [...new Set(css.match(/--ovl-look-color-[a-z-]+/gu))].sort();
+    for (const [, { colors }] of gradedLooks) {
+      expect(
+        Object.keys(colors)
+          .map((role) => `--ovl-look-color-${role}`)
+          .sort(),
+      ).toEqual(roles);
     }
-    expect(css).toContain('--ovl-look-color-ktv-fill-unsung:');
-    expect(css).toContain('--ovl-look-color-kinetic-yellow:');
     expect(css).toContain('--ovl-look-amount: 100%');
     expect(css).toContain('var(--ovl-look-amount)');
     expect(css).toContain("[data-ovl-contrast='clean']");
@@ -285,16 +300,10 @@ describe('overlay appearance', () => {
   });
 
   it('keeps preset text roles readable against each palette ink role', () => {
-    const css = readFileSync(
-      fileURLToPath(new URL('./appearance.css', import.meta.url)),
-      'utf8',
-    );
-
-    for (const lookId of ['warm', 'cool', 'monochrome', 'high-contrast']) {
-      const ink = lookRole(css, lookId, 'ink');
+    for (const [lookId, { colors }] of gradedLooks) {
       for (const role of ['text-primary', 'text-secondary', 'current']) {
         expect(
-          contrastRatio(lookRole(css, lookId, role), ink),
+          contrastRatio(colors[role], colors.ink),
           `${lookId}.${role}`,
         ).toBeGreaterThanOrEqual(4.5);
       }
@@ -302,10 +311,6 @@ describe('overlay appearance', () => {
   });
 
   it('keeps text roles readable through intermediate Look Amount values', () => {
-    const css = readFileSync(
-      fileURLToPath(new URL('./appearance.css', import.meta.url)),
-      'utf8',
-    );
     const fallbackCss = readFileSync(
       fileURLToPath(new URL('./fallback.css', import.meta.url)),
       'utf8',
@@ -325,21 +330,137 @@ describe('overlay appearance', () => {
       )[1],
     };
 
-    for (const lookId of ['warm', 'cool', 'monochrome', 'high-contrast']) {
-      for (const amount of [0.25, 0.5, 0.75]) {
-        const ink = mixHex(original.ink, lookRole(css, lookId, 'ink'), amount);
+    for (const [lookId, { colors }] of gradedLooks) {
+      for (let step = 1; step < 20; step += 1) {
+        const amount = step / 20;
+        const ink = mixHex(original.ink, colors.ink, amount);
         for (const role of ['text-primary', 'text-secondary', 'current']) {
-          const text = mixHex(
-            original[role],
-            lookRole(css, lookId, role),
-            amount,
-          );
+          const text = mixHex(original[role], colors[role], amount);
           expect(
             contrastRatio(text, ink),
             `${lookId}.${role}.${amount}`,
           ).toBeGreaterThanOrEqual(4.5);
         }
       }
+    }
+  });
+
+  it('applies artwork grading only where the image filter exists and clears it at zero strength', () => {
+    const setAttribute = vi.fn();
+    const style = { setProperty: vi.fn(), removeProperty: vi.fn() };
+    const documentElement = { dataset: {}, style };
+    const document = {
+      documentElement,
+      getElementById: vi.fn(() => ({ setAttribute })),
+    };
+    const slot = {
+      templateId: 'ticket-stub',
+      settings: { paletteId: 'monochrome', lookAmount: 50 },
+    };
+    applyOverlayAppearance(document, slot);
+    expect(documentElement.dataset.ovlArtworkGrade).toBe('on');
+    expect(setAttribute).toHaveBeenCalledWith(
+      'values',
+      outputArtworkGradeMatrix('monochrome', 50).join(' '),
+    );
+
+    applyOverlayAppearance(document, {
+      ...slot,
+      settings: { ...slot.settings, lookAmount: 0 },
+    });
+    expect(documentElement.dataset.ovlPalette).toBe('original');
+    expect(documentElement.dataset.ovlArtworkGrade).toBeUndefined();
+    expect(style.removeProperty).toHaveBeenCalledWith('--ovl-look-color-ink');
+  });
+
+  it('scales fixed look grain and user-controlled lyrics grain independently', () => {
+    const element = (tag) => ({
+      tag,
+      attributes: {},
+      nodes: [],
+      setAttribute(key, value) {
+        this.attributes[key] = value;
+      },
+      append(...nodes) {
+        this.nodes.push(...nodes);
+      },
+    });
+    const properties = new Map();
+    const document = {
+      documentElement: {
+        dataset: {},
+        style: {
+          setProperty: (key, value) => properties.set(key, value),
+          removeProperty: (key) => properties.delete(key),
+        },
+      },
+      body: element('body'),
+      createElementNS: (_, tag) => element(tag),
+    };
+    const settings = {
+      paletteId: 'cool-film',
+      lookAmount: 50,
+      filmGrainAmount: 60,
+      filmGrainSize: 'coarse',
+    };
+    const apply = (overrides, templateId = 'karaoke-stack') =>
+      applyOverlayAppearance(document, {
+        templateId,
+        settings: { ...settings, ...overrides },
+      });
+    const filters = () => properties.get('--ovl-grain-filters');
+    const strength = (node) => Number(node.attributes.values.split(' ')[0]) * 3;
+    apply({});
+    expect(filters()).toBe(
+      "url('#output-look-grain') url('#output-film-grain')",
+    );
+    const [look, material] = document.body.nodes[0].nodes;
+    const [lookNoise, lookLevels] = look.nodes;
+    const [materialNoise, materialLevels] = material.nodes;
+    expect(lookNoise.attributes.baseFrequency).toBe('0.72');
+    expect(materialNoise.attributes.baseFrequency).toBe('0.24');
+    expect(lookNoise.attributes.seed).not.toBe(materialNoise.attributes.seed);
+    expect(strength(lookLevels)).toBeCloseTo(0.14);
+    expect(strength(materialLevels)).toBeCloseTo(0.6);
+    for (const filter of [look, material]) {
+      expect(filter.nodes.at(-1).attributes).toMatchObject({
+        in2: 'SourceAlpha',
+        operator: 'in',
+      });
+    }
+
+    apply({ lookAmount: 100 });
+    expect(strength(lookLevels)).toBeCloseTo(0.28);
+    expect(strength(materialLevels)).toBeCloseTo(0.6);
+    apply({ lookAmount: 100, filmGrainAmount: 25, filmGrainSize: 'medium' });
+    expect(strength(lookLevels)).toBeCloseTo(0.28);
+    expect(strength(materialLevels)).toBeCloseTo(0.25);
+    expect(materialNoise.attributes.baseFrequency).toBe('0.46');
+    apply({ lookAmount: 0 });
+    expect(filters()).toBe("url('#output-film-grain')");
+    apply({ filmGrainAmount: 0 });
+    expect(filters()).toBe("url('#output-look-grain')");
+    apply({}, 'queue-board');
+    expect(filters()).toBe(
+      "url('#output-look-grain') url('#output-film-grain')",
+    );
+    apply({ paletteId: 'original', filmGrainAmount: 0 }, 'queue-board');
+    expect(filters()).toBeUndefined();
+    expect(document.documentElement.dataset.ovlGrain).toBeUndefined();
+
+    for (const templateId of [
+      'centered-vertical',
+      'chalkboard-vertical',
+      'fisheye-lens',
+      'receipt-setlist',
+    ]) {
+      apply({ paletteId: 'warm', filmGrainAmount: 0 }, templateId);
+      expect(document.documentElement.dataset.ovlCompositionGrade).toBe('on');
+      expect(filters()).toBeUndefined();
+      apply({ lookAmount: 0, filmGrainAmount: 0 }, templateId);
+      expect(
+        document.documentElement.dataset.ovlCompositionGrade,
+      ).toBeUndefined();
     }
   });
 });

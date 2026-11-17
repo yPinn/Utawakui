@@ -12,16 +12,13 @@ const workbenchPreviewSource = readFileSync(
 );
 
 describe('Workbench streamer preview', () => {
-  it('imports the shared guide source for the no-runtime fallback', () => {
+  it('imports the shared guide source as the local preview fallback', () => {
     expect(workbenchPreviewSource).toContain(
       "import streamerPreviewImage from '../../../overlay/assets/streamer-guide.png'",
     );
     expect(workbenchPreviewSource).toContain('<ObsStreamerPreview');
     expect(workbenchPreviewSource).toContain(
-      'v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"',
-    );
-    expect(workbenchPreviewSource).toContain(
-      '@click="emit(\'update:showLyricsGuide\', !showLyricsGuide)"',
+      '@click="emit(\'update:lyricsPreviewMode\', nextPreviewMode)"',
     );
     expect(workbenchPreviewSource).toContain(':src="streamerPreviewImage"');
     expect(workbenchPreviewSource).toContain(

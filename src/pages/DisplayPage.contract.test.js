@@ -33,12 +33,14 @@ describe('Display page composition contract', () => {
     );
     expect(workspaceSource).toContain('await appearanceAutosave.flush()');
     expect(workspaceSource).toContain(':preview-backdrop="previewBackdrop"');
-    expect(workspaceSource).toContain(':show-lyrics-guide="showLyricsGuide"');
+    expect(workspaceSource).toContain(
+      ':lyrics-preview-mode="lyricsPreviewMode"',
+    );
     expect(workspaceSource).toContain(
       '@update:preview-backdrop="selectPreviewBackdrop"',
     );
     expect(workspaceSource).toContain(
-      '@update:show-lyrics-guide="setLyricsGuideVisible"',
+      '@update:lyrics-preview-mode="selectLyricsPreviewMode"',
     );
     expect(workspaceSource).not.toContain('obs-output-workspace__modebar');
   });

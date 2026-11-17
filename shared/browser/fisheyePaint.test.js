@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FISHEYE_RIDGE,
   columnGeometry,
+  createFisheyePainter,
   ellipse,
   fisheyeCloseColumnGeometry,
   warpFisheyeInk,
@@ -69,6 +70,46 @@ describe('Fisheye Canvas swirl', () => {
 });
 
 describe('Fisheye lyric geometry', () => {
+  it('draws lyrics with a selected local family before the original fallbacks', () => {
+    const drawnFonts = [];
+    const noop = () => {};
+    const context = new Proxy(
+      {
+        fillText() {
+          drawnFonts.push(this.font);
+        },
+        createLinearGradient: () => ({ addColorStop: noop }),
+        createRadialGradient: () => ({ addColorStop: noop }),
+      },
+      { get: (target, key) => target[key] ?? noop },
+    );
+    const painter = createFisheyePainter({
+      width: 960,
+      height: 540,
+      getContext: () => context,
+      ownerDocument: { createElement: () => ({ getContext: () => context }) },
+    });
+    painter.render(
+      { left: [], right: ['Stage'] },
+      {},
+      {
+        fisheyeRim: 'off',
+        fisheyeReflection: 'off',
+        fontFamily: {
+          source: 'local',
+          family: 'Constantia',
+          postscriptName: 'Constantia',
+          style: 'Regular',
+        },
+      },
+    );
+
+    expect(drawnFonts).toHaveLength(3);
+    for (const font of drawnFonts) {
+      expect(font).toMatch(/px "Constantia", 'Microsoft JhengHei', /);
+    }
+  });
+
   it('places standard columns on fitted curves around the lens', () => {
     const left = columnGeometry(-1, 270);
     expect(left.x).toBeCloseTo(194.859);

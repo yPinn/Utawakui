@@ -5,20 +5,30 @@ import { t } from '../../utils/i18n.js';
 import { trackVideoFrame } from '../../utils/trackVideoClock.js';
 import UiHint from '../ui/UiHint.vue';
 
-const { asset, clock } = defineProps({
+const { asset, clock, background } = defineProps({
   asset: { type: Object, required: true },
   clock: { type: Function, default: null },
+  background: { type: Boolean, default: false },
 });
-const emit = defineEmits(['frame-ready', 'error']);
+const emit = defineEmits(['frame-ready', 'error', 'visibility-change']);
 const { state, samplePlaybackClock } = usePlayer();
 const video = useTemplateRef('video');
 const failed = shallowRef(false);
+const visible = shallowRef(false);
 const sectionTransition = shallowRef(false);
+
+function setVisible(value) {
+  if (!background || visible.value === value) return;
+  visible.value = value;
+  emit('visibility-change', value);
+}
+
 watch(
   () => asset.url,
   () => {
     failed.value = false;
     sectionTransition.value = false;
+    setVisible(false);
   },
 );
 
@@ -59,8 +69,10 @@ watch(
           delay,
           element.duration,
           asset.syncSegments,
+          { hideOutside: background },
         );
         if (!frame || sample.phase === 'seeking') {
+          if (!frame) setVisible(false);
           transitionAfterSeek = false;
           sectionTransition.value = false;
           if (!element.paused) element.pause();
@@ -107,6 +119,14 @@ watch(
           }
           if (!frame.playing && !element.paused) element.pause();
           if (
+            background &&
+            !element.seeking &&
+            element.readyState >= 2 &&
+            Math.abs(element.currentTime - frame.position) < 0.16
+          ) {
+            setVisible(true);
+          }
+          if (
             clock &&
             !frame.playing &&
             !element.seeking &&
@@ -137,6 +157,9 @@ watch(
               });
           }
         }
+      } else if (background) {
+        setVisible(false);
+        if (!element.paused) element.pause();
       }
       request = requestAnimationFrame(sync);
     }
@@ -153,12 +176,20 @@ watch(
 
 function mediaFailed() {
   failed.value = true;
+  setVisible(false);
   emit('error');
 }
 </script>
 
 <template>
-  <div class="track-video-playback">
+  <div
+    class="track-video-playback"
+    :class="{
+      'track-video-playback--background': background,
+      'track-video-playback--waiting': background && !visible,
+    }"
+    :aria-hidden="background || undefined"
+  >
     <video
       v-if="!failed"
       :key="asset.url"
@@ -168,15 +199,17 @@ function mediaFailed() {
         'track-video-playback__image--section-transition': sectionTransition,
       }"
       :src="asset.url"
-      preload="metadata"
+      :preload="background ? 'auto' : 'metadata'"
       muted
       playsinline
       @error="mediaFailed"
       @animationend.self="sectionTransition = false"
     />
-    <UiHint v-if="failed" class="track-video-playback__placeholder">{{
-      t('trackVideo.error.unavailable')
-    }}</UiHint>
+    <UiHint
+      v-if="failed && !background"
+      class="track-video-playback__placeholder"
+      >{{ t('trackVideo.error.unavailable') }}</UiHint
+    >
   </div>
 </template>
 
@@ -198,6 +231,13 @@ function mediaFailed() {
 .track-video-playback__image--section-transition {
   animation: track-video-section-reveal var(--ui-motion-duration-standard)
     var(--ui-motion-easing-standard);
+}
+.track-video-playback--background .track-video-playback__image {
+  background: transparent;
+  border-radius: 0;
+}
+.track-video-playback--waiting {
+  opacity: 0;
 }
 @keyframes track-video-section-reveal {
   from {

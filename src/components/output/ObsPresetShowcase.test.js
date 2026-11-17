@@ -331,10 +331,6 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
     expect(previewSource).toContain('ObsWidgetCapturePreview');
     expect(previewSource).toContain('v-if="isLyrics"');
-    expect(previewSource).toContain(
-      'v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"',
-    );
-    expect(previewSource).toMatch(/'隱藏人物參考'\s*:\s*'顯示人物參考'/u);
     expect(previewSource).toContain(':src="streamerPreviewImage"');
     expect(widgetCapturePreviewSource).toContain('gridTemplateColumns');
     expect(widgetCapturePreviewSource).toContain('supportedCaptureSizes');

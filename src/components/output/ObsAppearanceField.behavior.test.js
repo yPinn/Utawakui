@@ -13,6 +13,8 @@ import UiButton from '../ui/UiButton.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiModal from '../ui/UiModal.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -64,6 +66,8 @@ attachClientRender(
 );
 attachClientRender(UiField, '../ui/UiField.vue', import.meta.url);
 attachClientRender(UiHint, '../ui/UiHint.vue', import.meta.url);
+attachClientRender(UiIconButton, '../ui/UiIconButton.vue', import.meta.url);
+attachClientRender(UiModal, '../ui/UiModal.vue', import.meta.url);
 attachClientRender(UiButton, '../ui/UiButton.vue', import.meta.url);
 attachClientRender(UiCombobox, '../ui/UiCombobox.vue', import.meta.url);
 attachClientRender(UiSelect, '../ui/UiSelect.vue', import.meta.url);
@@ -273,7 +277,7 @@ describe('ObsAppearanceField', () => {
 
     const control = findAll(root, (node) => node.props?.role === 'combobox')[0];
     expect(control.props.id).toBe('output-appearance-fontFamily');
-    expect(textContent(root)).toContain('舞台 · 무대 · ステージ · Stage 123');
+    expect(textContent(root)).toContain('字型預覽');
     expect(findAll(root, (node) => node.type === 'select')).toHaveLength(0);
     expect(
       findAll(root, (node) =>

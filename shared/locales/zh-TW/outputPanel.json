@@ -413,23 +413,53 @@
   "swatch": {
     "applyNamed": "套用{label} {color}"
   },
+  "lookGroups": {
+    "basic": "基本配色",
+    "film": "底片風格"
+  },
   "font": {
-    "presetWord": "預設",
-    "localWord": "本機",
+    "templateGroup": "模板字型",
+    "localGroup": "本機字型",
     "unavailable": "不可用",
-    "load": "載入本機字體",
-    "reload": "重新載入本機字體",
-    "idle": "按下後才會讀取本機字體清單",
-    "loading": "正在讀取本機字體…",
-    "loaded": "已載入 {count} 個字體家族",
-    "none": "未找到可用的本機字體",
-    "unsupported": "目前環境不支援本機字體存取",
-    "denied": "未允許本機字體存取",
-    "search": "搜尋字體",
-    "reading": "讀取本機字體",
-    "missing": "本機字體不可用，輸出會使用預設字體",
-    "rightsNotice": "本機字體會用於公開輸出；請確認直播、錄影、VOD、剪輯及商用所需權利。",
-    "readFailed": "目前無法讀取本機字體，請再試一次。"
+    "reload": "重新讀取本機字型",
+    "loading": "正在讀取本機字型…",
+    "none": "未找到可用的本機字型",
+    "unsupported": "目前環境不支援本機字型存取",
+    "denied": "目前無法存取本機字型",
+    "search": "搜尋字型",
+    "missing": "本機字型不可用，輸出將使用預設字型",
+    "rightsNotice": "請確認本機字型的直播、錄影、VOD、剪輯及商用授權。",
+    "usage": "用於歌詞。字型不可用或缺字時會自動替代。",
+    "trackUsage": "用於曲名與藝人。字型不可用或缺字時會自動替代。",
+    "readFailed": "無法讀取本機字型，請再試一次。",
+    "presets": {
+      "sans": "系統無襯線（如 Segoe UI）",
+      "serif": "源雲明體（GenWanMin2）、Noto Serif",
+      "rounded": "拉丁字元優先用 Arial Rounded MT Bold",
+      "ornate": "日文明朝體",
+      "antique": "日文漫畫字型",
+      "lyricsAuto": "繁中用辰宇落雁體／日文用 Klee One／其餘用 Open Huninn",
+      "chenYuLuoYan": "繁中手寫體，缺字用 Open Huninn",
+      "kleeOne": "日文手寫體，缺字用 Open Huninn",
+      "openHuninn": "繁中圓體"
+    },
+    "templateDetails": {
+      "receiptSetlist": "Yu Gothic UI、微軟正黑體",
+      "ribbonSetlist": "依語系使用微軟正黑體、Yu Gothic UI 或 Malgun Gothic",
+      "karaokeStack": "Open Huninn、微軟正黑體",
+      "kineticPop": "依語系與材質使用 Open Huninn、M PLUS Rounded 1c 或 Keifont",
+      "fisheyeLens": "微軟正黑體、Yu Gothic",
+      "chalkboardVertical": "Open Huninn"
+    },
+    "preview": {
+      "title": "字型預覽",
+      "languages": {
+        "zh-Hant": "繁體中文",
+        "en": "英文",
+        "ja": "日文",
+        "ko": "韓文"
+      }
+    }
   },
   "color": {
     "removeSaved": "移除常用",
@@ -474,8 +504,9 @@
     "label": "Browser Source 預覽",
     "live": "Browser Source 即時預覽",
     "fixed": "固定",
-    "hideGuide": "隱藏人物參考",
-    "showGuide": "顯示人物參考",
+    "showPreviewPerformer": "顯示人物參考",
+    "showPreviewMv": "切換至 MV",
+    "hidePreviewBackground": "隱藏預覽背景",
     "copyUrl": "複製網址",
     "copyUrlHint": "複製網址，或直接拖進直播軟體"
   },
@@ -626,11 +657,19 @@
       "readability": "可讀性",
       "surface": "背景",
       "decoration": "裝飾",
+      "material": "材質",
       "layout": "版面",
       "motion": "歷史回顧",
       "content": "內容顯示"
     },
     "fields": {
+      "filmGrainAmount": {
+        "label": "顆粒強度"
+      },
+      "filmGrainSize": {
+        "label": "顆粒粗細",
+        "options": { "fine": "細", "medium": "中", "coarse": "粗" }
+      },
       "vinylSurfaceLight": {
         "label": "唱片高光",
         "options": { "off": "關閉", "soft": "柔和", "standard": "標準" }
@@ -702,18 +741,24 @@
         "label": "配色風格",
         "options": {
           "original": "模板原色",
-          "warm": "暖色舞台",
-          "cool": "冷色舞台",
+          "warm": "暖調舞台",
+          "cool": "冷調舞台",
+          "warmFilm": "Fujifilm NOSTALGIC Neg.",
+          "coolFilm": "Fujifilm ETERNA",
+          "velviaStyle": "Fujifilm Velvia",
+          "kodakGold200Style": "Kodak Gold 200",
+          "polaroid600Style": "Polaroid 600",
           "monochrome": "黑白",
           "highContrast": "高對比"
         }
       },
       "lookAmount": {
-        "label": "強度"
+        "label": "套用強度"
       },
       "fontFamily": {
         "label": "字型",
         "options": {
+          "template": "隨模板",
           "sans": "無襯線",
           "serif": "襯線",
           "rounded": "圓體",

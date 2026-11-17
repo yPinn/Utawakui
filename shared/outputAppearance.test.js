@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import outputTemplates from './outputTemplateValues.json';
 import {
   OUTPUT_APPEARANCE_FIELDS,
   OUTPUT_APPEARANCE_GROUPS,
@@ -10,12 +11,58 @@ import {
   normalizeOutputAppearance,
   normalizeOutputElementAppearance,
   outputAppearanceFieldsForTemplate,
+  outputArtworkGradeMatrix,
   outputElementFontWeight,
   outputElementTargetsForTemplate,
+  outputFontFamilyCss,
   sanitizeOutputAppearanceSetting,
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it('interpolates artwork grading and preserves alpha at every strength', () => {
+    expect(outputArtworkGradeMatrix('monochrome', 0)).toBeUndefined();
+    expect(outputArtworkGradeMatrix('original', 100)).toBeUndefined();
+    expect(outputArtworkGradeMatrix('warm', 100)).toBeUndefined();
+
+    const grayscale = outputArtworkGradeMatrix('monochrome', 100);
+    expect(grayscale.slice(0, 5)).toEqual([0.2126, 0.7152, 0.0722, 0, 0]);
+    expect(grayscale.slice(5, 10)).toEqual(grayscale.slice(0, 5));
+    expect(grayscale.slice(10, 15)).toEqual(grayscale.slice(0, 5));
+    expect(outputArtworkGradeMatrix('monochrome', 50)[0]).toBeCloseTo(0.6063);
+
+    for (const id of [
+      'monochrome',
+      'warm-film',
+      'cool-film',
+      'velvia-style',
+      'kodak-gold-200-style',
+      'polaroid-600-style',
+    ]) {
+      for (const strength of [5, 50, 100]) {
+        const matrix = outputArtworkGradeMatrix(id, strength);
+        expect(matrix.slice(15)).toEqual([0, 0, 0, 1, 0]);
+        expect([matrix[3], matrix[8], matrix[13]]).toEqual([0, 0, 0]);
+      }
+    }
+
+    const neutralGray = (matrix, row) =>
+      matrix
+        .slice(row * 5, row * 5 + 3)
+        .reduce((sum, value) => sum + value * 0.5, 0) + matrix[row * 5 + 4];
+    const warm = outputArtworkGradeMatrix('warm-film', 100);
+    const cool = outputArtworkGradeMatrix('cool-film', 100);
+    expect(neutralGray(warm, 0)).toBeGreaterThan(neutralGray(warm, 2));
+    expect(neutralGray(cool, 0)).toBeLessThan(neutralGray(cool, 2));
+    const vivid = outputArtworkGradeMatrix('velvia-style', 100);
+    expect(vivid[0]).toBeGreaterThan(1);
+    expect(vivid[1]).toBeLessThan(0);
+    const gold = outputArtworkGradeMatrix('kodak-gold-200-style', 100);
+    const instant = outputArtworkGradeMatrix('polaroid-600-style', 100);
+    expect(neutralGray(gold, 0)).toBeGreaterThan(neutralGray(gold, 2));
+    expect(gold[1]).toBeLessThan(0);
+    expect(instant[4]).toBeGreaterThan(0.07);
+  });
+
   it.each([
     [-5, 'off', 0],
     [2, 'off', 0],
@@ -111,6 +158,9 @@ describe('output appearance schema', () => {
       'chen-yu-luo-yan',
       'klee-one',
       'open-huninn',
+      'sans',
+      'serif',
+      'rounded',
     ];
     expect(field.defaultValue).toBe('lyrics-auto');
     expect(field.options.map(({ id }) => id)).toEqual(options);
@@ -119,10 +169,6 @@ describe('output appearance schema', () => {
         normalizeOutputAppearance({ fontFamily }, { templateId }).fontFamily,
       ).toBe(fontFamily);
     }
-    expect(
-      normalizeOutputAppearance({ fontFamily: 'sans' }, { templateId })
-        .fontFamily,
-    ).toBe('lyrics-auto');
   });
   const localFont = {
     source: 'local',
@@ -154,6 +200,7 @@ describe('output appearance schema', () => {
       { id: 'readability', order: 40 },
       { id: 'surface', order: 50 },
       { id: 'decoration', order: 55 },
+      { id: 'material', order: 56 },
       { id: 'layout', order: 60 },
       { id: 'motion', order: 70 },
       { id: 'content', order: 80 },
@@ -215,11 +262,19 @@ describe('output appearance schema', () => {
       'positionAnchor',
       'positionOffsetX',
       'positionOffsetY',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
     expect(fields.find((field) => field.key === 'fontFamily')).toMatchObject({
       control: 'select',
       defaultValue: 'ornate',
-      options: [{ id: 'ornate' }, { id: 'antique' }],
+      options: [
+        { id: 'ornate' },
+        { id: 'antique' },
+        { id: 'sans' },
+        { id: 'serif' },
+        { id: 'rounded' },
+      ],
     });
     expect(fields.find((field) => field.key === 'fontScale')).toMatchObject({
       control: 'select',
@@ -276,7 +331,7 @@ describe('output appearance schema', () => {
     expect(
       normalizeOutputAppearance(
         {
-          fontFamily: 'serif',
+          fontFamily: 'unknown-font',
           fontScale: 'large',
           textColor: 'url(https://example.com/attack.css)',
           accentColor: '#AABBCC',
@@ -321,7 +376,7 @@ describe('output appearance schema', () => {
     ).toEqual({
       paletteId: 'original',
       lookAmount: 100,
-      fontFamily: 'sans',
+      fontFamily: 'rounded',
       fontScale: 'large',
       fontWeight: 'semibold',
       alignment: 'left',
@@ -344,6 +399,8 @@ describe('output appearance schema', () => {
       receiptReview: 'on',
       receiptReviewInterval: 15,
       vinylSurfaceLight: 'off',
+      filmGrainAmount: 0,
+      filmGrainSize: 'medium',
       fisheyeRim: 'standard',
       fisheyeLayout: 'auto',
       fisheyeReflection: 'standard',
@@ -359,7 +416,7 @@ describe('output appearance schema', () => {
         templateId: 'ornate-vertical',
       }),
     ).toMatchObject({
-      fontFamily: 'ornate',
+      fontFamily: 'rounded',
       fontScale: 'large',
       fontWeight: 'semibold',
       alignment: 'left',
@@ -423,22 +480,30 @@ describe('output appearance schema', () => {
     });
   });
 
-  it('opens local font selection only for the Live Stage pilot', () => {
-    const liveStageFont = outputAppearanceFieldsForTemplate('live-stage').find(
-      ({ key }) => key === 'fontFamily',
-    );
-    const focusLineFont = outputAppearanceFieldsForTemplate('focus-line').find(
-      ({ key }) => key === 'fontFamily',
-    );
-
-    expect(liveStageFont).toMatchObject({
-      editor: 'font-family',
-      allowLocalFonts: true,
-      options: [{ id: 'sans' }, { id: 'serif' }, { id: 'rounded' }],
-    });
-    expect(focusLineFont).not.toHaveProperty('allowLocalFonts', true);
-    expect(focusLineFont.editor).not.toBe('font-family');
-  });
+  it.each(Object.keys(outputTemplates.templateKinds))(
+    'offers template, common and local fonts for %s',
+    (templateId) => {
+      const font = outputAppearanceFieldsForTemplate(templateId).find(
+        ({ key }) => key === 'fontFamily',
+      );
+      expect(font).toMatchObject({
+        editor: 'font-family',
+        allowLocalFonts: true,
+      });
+      expect(font.options.map(({ id }) => id)).toEqual(
+        expect.arrayContaining([
+          ...new Set([font.defaultValue, 'sans', 'serif', 'rounded']),
+        ]),
+      );
+      expect(normalizeOutputAppearance({}, { templateId }).fontFamily).toBe(
+        font.defaultValue,
+      );
+      expect(
+        normalizeOutputAppearance({ fontFamily: localFont }, { templateId })
+          .fontFamily,
+      ).toEqual(localFont);
+    },
+  );
 
   it('sanitizes a bounded local font descriptor without accepting paths or CSS', () => {
     expect(sanitizeOutputAppearanceSetting('fontFamily', localFont)).toEqual(
@@ -458,25 +523,24 @@ describe('output appearance schema', () => {
     ).toBeUndefined();
   });
 
-  it('keeps a local font only on templates that declare the capability', () => {
+  it('previews local glyph fallback in the template stack and script', () => {
+    expect(outputFontFamilyCss(localFont, 'centered-vertical', 'ja')).toBe(
+      `"${localFont.family}", 'Utawakui Klee One', 'Utawakui Open Huninn', sans-serif`,
+    );
+    expect(outputFontFamilyCss('template', 'kinetic-pop')).toContain(
+      'Utawakui Keifont',
+    );
     expect(
-      normalizeOutputAppearance(
-        { fontFamily: localFont },
-        { templateId: 'live-stage' },
-      ).fontFamily,
-    ).toEqual(localFont);
-    expect(
-      normalizeOutputAppearance(
-        { fontFamily: localFont },
-        { templateId: 'focus-line' },
-      ).fontFamily,
-    ).toBe('serif');
-    expect(
-      normalizeOutputAppearance(
-        { fontFamily: localFont },
-        { templateId: 'kinetic-pop' },
-      ).fontFamily,
-    ).toBe('sans');
+      outputFontFamilyCss(
+        'template',
+        'kinetic-pop',
+        'zh-Hant',
+        'chromatic-depth',
+      ),
+    ).toContain('Utawakui Open Huninn');
+    expect(outputFontFamilyCss(localFont, 'ribbon-setlist', 'ko')).toContain(
+      'Malgun Gothic',
+    );
   });
 
   it('exposes only appearance controls consumed by each non-Lyrics template', () => {
@@ -491,6 +555,8 @@ describe('output appearance schema', () => {
       'fontWeight',
       'surface',
       'spacingDensity',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
     expect(keysFor('art-card')).toEqual([
       'paletteId',
@@ -499,13 +565,18 @@ describe('output appearance schema', () => {
       'fontScale',
       'fontWeight',
       'vinylSurfaceLight',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
     expect(keysFor('cover-player')).toEqual([
       'paletteId',
       'lookAmount',
+      'fontFamily',
       'fontScale',
       'fontWeight',
       'surface',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
   });
 
@@ -533,6 +604,8 @@ describe('output appearance schema', () => {
       'alignment',
       'spacingDensity',
       'contentWidth',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
     expect(fields.map(({ group }) => group)).toEqual([
       'color-treatment',
@@ -545,9 +618,11 @@ describe('output appearance schema', () => {
       'layout',
       'layout',
       'layout',
+      'material',
+      'material',
     ]);
     expect(fields.map(({ groupOrder }) => groupOrder)).toEqual([
-      10, 10, 30, 30, 30, 40, 50, 60, 60, 60,
+      10, 10, 30, 30, 30, 40, 50, 60, 60, 60, 56, 56,
     ]);
   });
 
@@ -572,6 +647,11 @@ describe('output appearance schema', () => {
         { id: 'original' },
         { id: 'warm' },
         { id: 'cool' },
+        { id: 'warm-film' },
+        { id: 'cool-film' },
+        { id: 'velvia-style' },
+        { id: 'kodak-gold-200-style' },
+        { id: 'polaroid-600-style' },
         { id: 'monochrome' },
         { id: 'high-contrast' },
       ],

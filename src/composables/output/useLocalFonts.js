@@ -17,6 +17,7 @@ export function createLocalFontsCatalog({
   const error = shallowRef('');
 
   async function load() {
+    if (status.value === 'loading') return;
     const queryLocalFonts = getQueryLocalFonts();
     if (typeof queryLocalFonts !== 'function') {
       status.value = 'unsupported';
@@ -44,6 +45,8 @@ export function createLocalFontsCatalog({
   return { error, fonts, load, status };
 }
 
+const sessionCatalog = createLocalFontsCatalog();
+
 export function useLocalFonts() {
-  return createLocalFontsCatalog();
+  return sessionCatalog;
 }

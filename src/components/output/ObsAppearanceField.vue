@@ -17,6 +17,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   modified: { type: Boolean, default: false },
   paletteTarget: { type: Boolean, default: false },
+  kineticMaterial: { type: String, default: undefined },
 });
 
 const emit = defineEmits([
@@ -105,6 +106,9 @@ function commitColor(value) {
       :label="field.label"
       :model-value="modelValue"
       :options="field.options"
+      :default-value="field.defaultValue"
+      :template-id="field.templateId"
+      :kinetic-material="kineticMaterial"
       @update:model-value="updateValue"
     />
 

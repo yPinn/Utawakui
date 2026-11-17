@@ -1,5 +1,8 @@
 import { fisheyeLetterScale } from '../presentation/fisheyeLyrics.mjs';
-import { fisheyeDecorationStrength } from '../outputAppearance.mjs';
+import {
+  fisheyeDecorationStrength,
+  outputFontFamilyCss,
+} from '../outputAppearance.mjs';
 
 export const FISHEYE_WIDTH = 960;
 export const FISHEYE_HEIGHT = 540;
@@ -11,6 +14,7 @@ const CLOSE_LYRIC_RADIUS = 352;
 const mix = (from, to, progress) => from + (to - from) * progress;
 const DEFAULT_TEXT_COLOR = '#a3f39e';
 const FONT_SCALE = { small: 0.83, medium: 1, large: 1.18 };
+const DEFAULT_FONT_FAMILY = outputFontFamilyCss('template', 'fisheye-lens');
 const REFLECTION_PERIOD_MS = 4000;
 const REFLECTION_LIGHTS = [
   { width: 16, drift: 0.46, cool: '#78e5ff', tint: '#5641df', warm: '#aa58f6' },
@@ -221,6 +225,7 @@ export function createFisheyePainter(canvas) {
     reducedMotion = false,
     {
       fontScale = 'medium',
+      fontFamily = DEFAULT_FONT_FAMILY,
       textColor = DEFAULT_TEXT_COLOR,
       pulse = 1,
       scaleTransition,
@@ -278,10 +283,7 @@ export function createFisheyePainter(canvas) {
           FONT_SCALE[fontScale],
         spacing * (fontScale === 'large' ? 0.94 : 0.8),
       );
-      ctx.font =
-        '900 ' +
-        fontSize +
-        'px "Microsoft JhengHei", "Yu Gothic", "Noto Sans CJK TC", sans-serif';
+      ctx.font = `900 ${fontSize}px ${fontFamily}`;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.lineJoin = 'round';
@@ -427,6 +429,10 @@ export function createFisheyePainter(canvas) {
     if (visible || smoke)
       paintEffects(columns, pose, {
         fontScale,
+        fontFamily: outputFontFamilyCss(
+          appearance.fontFamily ?? 'template',
+          'fisheye-lens',
+        ),
         textColor,
         pulse: fisheyePulse / 100,
         scaleTransition,

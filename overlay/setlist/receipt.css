@@ -123,6 +123,13 @@
   -webkit-line-clamp: 2;
   font-weight: 600;
 }
+.receipt-setlist__current-title,
+.receipt-setlist__track,
+.receipt-setlist__current-artist,
+.receipt-setlist__artist {
+  font-family: var(--ovl-local-font-prefix,)
+    var(--ovl-font-preset-override, var(--receipt-text));
+}
 .receipt-setlist__current-title {
   max-block-size: calc(68 * var(--receipt-pixel) * var(--receipt-type-scale));
   font-size: calc(26 * var(--receipt-pixel) * var(--receipt-type-scale));

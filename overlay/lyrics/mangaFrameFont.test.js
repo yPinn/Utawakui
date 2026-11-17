@@ -69,10 +69,10 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
     );
     expect(mangaFont.defaultValue).toBe('antique');
     expect(mangaFont.options.map((option) => option.id)).toEqual([
+      'antique',
       'sans',
       'serif',
       'rounded',
-      'antique',
     ]);
     expect(appearanceCss).toMatch(
       /\[data-ovl-font='antique'\]\s*{[^}]*'Utawakui GenEi Antique'/,

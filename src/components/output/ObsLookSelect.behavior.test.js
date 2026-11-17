@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
+import { OUTPUT_LOOK_PRESETS } from '../../../shared/outputAppearance.mjs';
 import ObsLookSelect from './ObsLookSelect.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
@@ -20,8 +21,13 @@ attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue', import.meta.url);
 
 const OPTIONS = [
   { id: 'original', label: '模板原色' },
-  { id: 'warm', label: '暖色舞台' },
-  { id: 'cool', label: '冷色舞台' },
+  { id: 'warm', label: '暖調舞台' },
+  { id: 'cool', label: '冷調舞台' },
+  { id: 'warm-film', label: 'Fujifilm NOSTALGIC Neg.' },
+  { id: 'cool-film', label: 'Fujifilm ETERNA' },
+  { id: 'velvia-style', label: 'Fujifilm Velvia' },
+  { id: 'kodak-gold-200-style', label: 'Kodak Gold 200' },
+  { id: 'polaroid-600-style', label: 'Polaroid 600' },
   { id: 'monochrome', label: '黑白' },
   { id: 'high-contrast', label: '高對比' },
 ];
@@ -34,19 +40,9 @@ const overlayFallbackStyles = readFileSync(
   new URL('../../../overlay/shared/fallback.css', import.meta.url),
   'utf8',
 );
-const overlayAppearanceStyles = readFileSync(
-  new URL('../../../overlay/shared/appearance.css', import.meta.url),
-  'utf8',
-);
 
 function propertyValue(source, property) {
   return source.match(new RegExp(`${property}:\\s*([^;]+);`, 'u'))?.[1].trim();
-}
-
-function lookBlock(lookId) {
-  return overlayAppearanceStyles.match(
-    new RegExp(`:root\\[data-ovl-palette='${lookId}'\\]\\s*\\{([^}]+)\\}`, 'u'),
-  )?.[1];
 }
 
 function combobox(root) {
@@ -58,43 +54,20 @@ function options(overlayHost) {
 }
 
 describe('ObsLookSelect', () => {
-  it('keeps representative swatches aligned with the full-strength Overlay Look roles', () => {
-    const sources = {
-      original: {
-        block: overlayFallbackStyles,
-        roles: [
-          'primitive-color-ink',
-          'primitive-color-paper',
-          'primitive-color-coral',
-        ],
-      },
-      warm: {
-        block: lookBlock('warm'),
-        roles: ['look-color-ink', 'look-color-paper', 'look-color-current'],
-      },
-      cool: {
-        block: lookBlock('cool'),
-        roles: ['look-color-ink', 'look-color-paper', 'look-color-current'],
-      },
-      monochrome: {
-        block: lookBlock('monochrome'),
-        roles: ['look-color-ink', 'look-color-paper', 'look-color-current'],
-      },
-      contrast: {
-        block: lookBlock('high-contrast'),
-        roles: ['look-color-ink', 'look-color-paper', 'look-color-current'],
-      },
-    };
-
-    for (const [lookId, { block, roles }] of Object.entries(sources)) {
-      for (const [index, previewRole] of ['ink', 'paper', 'accent'].entries()) {
-        expect(
-          propertyValue(
-            outputStyles,
-            `--ui-output-look-${lookId}-${previewRole}`,
-          ),
-        ).toBe(propertyValue(block, `--ovl-${roles[index]}`));
-      }
+  it('keeps original swatches aligned with the generic overlay fallback', () => {
+    for (const [previewRole, sourceRole] of [
+      ['ink', 'ink'],
+      ['paper', 'paper'],
+      ['accent', 'coral'],
+    ]) {
+      expect(
+        propertyValue(outputStyles, `--ui-output-look-original-${previewRole}`),
+      ).toBe(
+        propertyValue(
+          overlayFallbackStyles,
+          `--ovl-primitive-color-${sourceRole}`,
+        ),
+      );
     }
   });
 
@@ -113,7 +86,7 @@ describe('ObsLookSelect', () => {
       'aria-expanded': false,
       'aria-haspopup': 'listbox',
     });
-    expect(textContent(trigger)).toContain('冷色舞台');
+    expect(textContent(trigger)).toContain('冷調舞台');
     expect(
       findAll(trigger, (node) => node.props?.['data-look'] === 'cool'),
     ).toHaveLength(1);
@@ -121,7 +94,7 @@ describe('ObsLookSelect', () => {
     app.unmount();
   });
 
-  it('opens five rich options and marks the persisted Look as selected', async () => {
+  it('groups adjacent Look families in order and uses their shared swatch colors', async () => {
     const { app, overlayHost, root } = mount(ObsLookSelect, {
       id: 'output-appearance-paletteId',
       label: 'Look',
@@ -140,15 +113,47 @@ describe('ObsLookSelect', () => {
     const optionNodes = options(overlayHost);
     expect(triggerNode.props['aria-expanded']).toBe(true);
     expect(listbox.props['aria-label']).toBe('Look');
-    expect(optionNodes).toHaveLength(5);
-    expect(optionNodes[1].props['aria-selected']).toBe(true);
-    expect(textContent(overlayHost)).toContain('高對比');
+    const groups = findAll(listbox, (node) => node.props?.role === 'group');
     expect(
-      findAll(
-        optionNodes[4],
-        (node) => node.props?.['data-look'] === 'high-contrast',
-      ),
-    ).toHaveLength(1);
+      groups.map((group) => [
+        group.props['aria-label'],
+        options(group).map((node) => textContent(node).trim()),
+      ]),
+    ).toEqual([
+      ['基本配色', ['模板原色', '冷調舞台', '高對比', '黑白', '暖調舞台']],
+      [
+        '底片風格',
+        [
+          'Fujifilm ETERNA',
+          'Fujifilm NOSTALGIC Neg.',
+          'Fujifilm Velvia',
+          'Kodak Gold 200',
+          'Polaroid 600',
+        ],
+      ],
+    ]);
+    expect(
+      optionNodes.find((node) => textContent(node).trim() === '暖調舞台').props[
+        'aria-selected'
+      ],
+    ).toBe(true);
+    for (const { id, label } of OPTIONS) {
+      const option = optionNodes.find(
+        (node) => textContent(node).trim() === label,
+      );
+      const swatch = findAll(
+        option,
+        (node) => node.props?.['data-look'] === id,
+      )[0];
+      expect(swatch).toBeDefined();
+      const { colors } = OUTPUT_LOOK_PRESETS[id];
+      if (!colors) continue;
+      expect(swatch.props.style).toEqual({
+        '--ui-output-look-preview-ink': colors.ink,
+        '--ui-output-look-preview-paper': colors.paper,
+        '--ui-output-look-preview-accent': colors.current,
+      });
+    }
     app.unmount();
   });
 
@@ -157,7 +162,7 @@ describe('ObsLookSelect', () => {
     const { app, root } = mount(ObsLookSelect, {
       id: 'output-appearance-paletteId',
       label: 'Look',
-      modelValue: 'warm',
+      modelValue: 'high-contrast',
       options: OPTIONS,
       'onUpdate:modelValue': update,
     });
@@ -165,7 +170,7 @@ describe('ObsLookSelect', () => {
     trigger(triggerNode, 'onClick');
     await nextTick();
 
-    const arrowEvent = { key: 'ArrowDown', preventDefault: vi.fn() };
+    const arrowEvent = { key: 'ArrowUp', preventDefault: vi.fn() };
     trigger(triggerNode, 'onKeydown', arrowEvent);
     await nextTick();
 
@@ -235,7 +240,7 @@ describe('ObsLookSelect', () => {
 
     expect(update).not.toHaveBeenCalled();
     expect(triggerNode.props['aria-expanded']).toBe(false);
-    expect(textContent(triggerNode)).toContain('暖色舞台');
+    expect(textContent(triggerNode)).toContain('暖調舞台');
     expect(triggerNode.focus).toHaveBeenCalledOnce();
     app.unmount();
   });

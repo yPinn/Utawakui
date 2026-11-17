@@ -1,6 +1,317 @@
 import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 11;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 18;
+
+// A Look owns semantic color targets and optional artwork grading.
+function filmColors({
+  ink,
+  paper,
+  muted,
+  accent,
+  echo,
+  blue,
+  rose,
+  green,
+  amber,
+}) {
+  const tint = (color, amount) =>
+    `color-mix(in srgb, ${color} ${amount}%, transparent)`;
+  return {
+    ink,
+    paper,
+    'text-primary': paper,
+    'text-secondary': muted,
+    current: accent,
+    surface: tint(ink, 94),
+    'surface-soft': tint(ink, 72),
+    outline: tint(paper, 38),
+    divider: tint(paper, 25),
+    'current-surface': tint(accent, 22),
+    'mark-surface': tint(paper, 14),
+    'stroke-strong': ink,
+    'stroke-soft': tint(ink, 84),
+    'ktv-fill-unsung': paper,
+    'ktv-fill-solo': accent,
+    'ktv-fill-male': blue,
+    'ktv-fill-female': rose,
+    'ktv-fill-group': green,
+    'ktv-stroke-unsung': ink,
+    'ktv-stroke-sung': paper,
+    'kinetic-ink': ink,
+    'kinetic-paper': paper,
+    'kinetic-yellow': amber,
+    'kinetic-red': rose,
+    'kinetic-ochre': echo,
+    'kinetic-cyan': blue,
+    'kinetic-magenta': rose,
+    'kinetic-candy-deep': echo,
+    'kinetic-candy-light': accent,
+    'ornate-paper': paper,
+    'ornate-echo': echo,
+  };
+}
+
+export const OUTPUT_LOOK_PRESETS = Object.freeze({
+  original: {},
+  warm: {
+    colors: {
+      ink: '#211711',
+      paper: '#fff4df',
+      'text-primary': '#fff4df',
+      'text-secondary': '#e7caa8',
+      current: '#ff8b68',
+      surface: 'rgb(33 23 17 / 94%)',
+      'surface-soft': 'rgb(33 23 17 / 72%)',
+      outline: 'rgb(255 244 223 / 38%)',
+      divider: 'rgb(255 244 223 / 24%)',
+      'current-surface': 'rgb(255 139 104 / 22%)',
+      'mark-surface': 'rgb(255 244 223 / 14%)',
+      'stroke-strong': '#211711',
+      'stroke-soft': 'rgb(33 23 17 / 82%)',
+      'ktv-fill-unsung': '#fff4df',
+      'ktv-fill-solo': '#ffba63',
+      'ktv-fill-male': '#74c9ff',
+      'ktv-fill-female': '#ff99b8',
+      'ktv-fill-group': '#97e0aa',
+      'ktv-stroke-unsung': '#211711',
+      'ktv-stroke-sung': '#fff4df',
+      'kinetic-ink': '#211711',
+      'kinetic-paper': '#fff4df',
+      'kinetic-yellow': '#ffc85a',
+      'kinetic-red': '#ff725c',
+      'kinetic-ochre': '#b86f2e',
+      'kinetic-cyan': '#69d8df',
+      'kinetic-magenta': '#ef7ca8',
+      'kinetic-candy-deep': '#ff765f',
+      'kinetic-candy-light': '#ffd37a',
+      'ornate-paper': '#fff4df',
+      'ornate-echo': '#c79f7e',
+    },
+  },
+  cool: {
+    colors: {
+      ink: '#0c1821',
+      paper: '#eef9ff',
+      'text-primary': '#eef9ff',
+      'text-secondary': '#bdd9e8',
+      current: '#66d8e8',
+      surface: 'rgb(12 24 33 / 94%)',
+      'surface-soft': 'rgb(12 24 33 / 72%)',
+      outline: 'rgb(238 249 255 / 38%)',
+      divider: 'rgb(238 249 255 / 24%)',
+      'current-surface': 'rgb(102 216 232 / 22%)',
+      'mark-surface': 'rgb(238 249 255 / 14%)',
+      'stroke-strong': '#0c1821',
+      'stroke-soft': 'rgb(12 24 33 / 82%)',
+      'ktv-fill-unsung': '#eef9ff',
+      'ktv-fill-solo': '#76e4ee',
+      'ktv-fill-male': '#70aaff',
+      'ktv-fill-female': '#e293ff',
+      'ktv-fill-group': '#75e2b3',
+      'ktv-stroke-unsung': '#0c1821',
+      'ktv-stroke-sung': '#eef9ff',
+      'kinetic-ink': '#0c1821',
+      'kinetic-paper': '#eef9ff',
+      'kinetic-yellow': '#82e8f2',
+      'kinetic-red': '#8a9eff',
+      'kinetic-ochre': '#4c84b9',
+      'kinetic-cyan': '#66d8e8',
+      'kinetic-magenta': '#c18cf0',
+      'kinetic-candy-deep': '#608de8',
+      'kinetic-candy-light': '#8ce9ed',
+      'ornate-paper': '#eef9ff',
+      'ornate-echo': '#8bb8ce',
+    },
+  },
+  'warm-film': {
+    section: 'film',
+    grain: { amount: 48, size: 'medium' },
+    colors: filmColors({
+      ink: '#302520',
+      paper: '#f3e3c7',
+      muted: '#c9b59e',
+      accent: '#dca370',
+      echo: '#bb8c6b',
+      blue: '#9fb5bb',
+      rose: '#d499a1',
+      green: '#a7b897',
+      amber: '#e0bc7f',
+    }),
+    artwork: { saturation: 0.8, contrast: 1.03, gain: [1.06, 1.01, 0.89] },
+  },
+  'cool-film': {
+    section: 'film',
+    grain: { amount: 28, size: 'fine' },
+    colors: filmColors({
+      ink: '#252e37',
+      paper: '#e4ebea',
+      muted: '#b4c7d0',
+      accent: '#9ac9ca',
+      echo: '#80a7b3',
+      blue: '#97b8dc',
+      rose: '#c4a4bb',
+      green: '#a0c3b5',
+      amber: '#c7c5a3',
+    }),
+    artwork: { saturation: 0.72, contrast: 0.91, gain: [0.96, 1, 1.03] },
+  },
+  'velvia-style': {
+    section: 'film',
+    grain: { amount: 24, size: 'fine' },
+    colors: filmColors({
+      ink: '#191427',
+      paper: '#fff5fa',
+      muted: '#dcc5e7',
+      accent: '#ff7dac',
+      echo: '#c891e3',
+      blue: '#76cfff',
+      rose: '#ff8497',
+      green: '#9bdf80',
+      amber: '#ffd36d',
+    }),
+    artwork: { saturation: 1.24, contrast: 1.1, gain: [1, 1, 1] },
+  },
+  'kodak-gold-200-style': {
+    section: 'film',
+    grain: { amount: 55, size: 'medium' },
+    colors: filmColors({
+      ink: '#2c1c15',
+      paper: '#fff2d6',
+      muted: '#e7c79c',
+      accent: '#ffb459',
+      echo: '#c89058',
+      blue: '#80c5e6',
+      rose: '#f79a86',
+      green: '#a9ce79',
+      amber: '#ffd466',
+    }),
+    artwork: { saturation: 1.13, contrast: 1.04, gain: [1.08, 1.02, 0.91] },
+  },
+  'polaroid-600-style': {
+    section: 'film',
+    grain: { amount: 64, size: 'coarse' },
+    colors: filmColors({
+      ink: '#343038',
+      paper: '#fff8ef',
+      muted: '#d8c8c8',
+      accent: '#eeb5b2',
+      echo: '#aa8b9b',
+      blue: '#9dc7d0',
+      rose: '#dfa2aa',
+      green: '#acc9ae',
+      amber: '#eed19f',
+    }),
+    artwork: { saturation: 0.84, contrast: 0.85, gain: [1.04, 0.99, 1.01] },
+  },
+  monochrome: {
+    colors: {
+      ink: '#0d0d0f',
+      paper: '#fafafa',
+      'text-primary': '#fafafa',
+      'text-secondary': '#d0d0d4',
+      current: '#b8b8be',
+      surface: 'rgb(13 13 15 / 94%)',
+      'surface-soft': 'rgb(13 13 15 / 72%)',
+      outline: 'rgb(250 250 250 / 40%)',
+      divider: 'rgb(250 250 250 / 25%)',
+      'current-surface': 'rgb(250 250 250 / 18%)',
+      'mark-surface': 'rgb(250 250 250 / 13%)',
+      'stroke-strong': '#0d0d0f',
+      'stroke-soft': 'rgb(13 13 15 / 84%)',
+      'ktv-fill-unsung': '#fafafa',
+      'ktv-fill-solo': '#b8b8be',
+      'ktv-fill-male': '#d8d8dc',
+      'ktv-fill-female': '#a8a8ae',
+      'ktv-fill-group': '#c4c4c9',
+      'ktv-stroke-unsung': '#0d0d0f',
+      'ktv-stroke-sung': '#fafafa',
+      'kinetic-ink': '#0d0d0f',
+      'kinetic-paper': '#fafafa',
+      'kinetic-yellow': '#d8d8dc',
+      'kinetic-red': '#a4a4aa',
+      'kinetic-ochre': '#7d7d84',
+      'kinetic-cyan': '#c8c8cd',
+      'kinetic-magenta': '#9999a0',
+      'kinetic-candy-deep': '#8c8c93',
+      'kinetic-candy-light': '#dedee1',
+      'ornate-paper': '#fafafa',
+      'ornate-echo': '#9d9da3',
+    },
+    artwork: { saturation: 0, contrast: 1, gain: [1, 1, 1] },
+  },
+  'high-contrast': {
+    colors: {
+      ink: '#000000',
+      paper: '#ffffff',
+      'text-primary': '#ffffff',
+      'text-secondary': '#ffffff',
+      current: '#ffe100',
+      surface: '#000000',
+      'surface-soft': 'rgb(0 0 0 / 88%)',
+      outline: '#ffffff',
+      divider: 'rgb(255 255 255 / 58%)',
+      'current-surface': 'rgb(255 225 0 / 28%)',
+      'mark-surface': 'rgb(255 255 255 / 20%)',
+      'stroke-strong': '#000000',
+      'stroke-soft': '#000000',
+      'ktv-fill-unsung': '#ffffff',
+      'ktv-fill-solo': '#ffe100',
+      'ktv-fill-male': '#00d8ff',
+      'ktv-fill-female': '#ff70d0',
+      'ktv-fill-group': '#9cff57',
+      'ktv-stroke-unsung': '#000000',
+      'ktv-stroke-sung': '#000000',
+      'kinetic-ink': '#000000',
+      'kinetic-paper': '#ffffff',
+      'kinetic-yellow': '#ffe100',
+      'kinetic-red': '#ff6159',
+      'kinetic-ochre': '#ff9d00',
+      'kinetic-cyan': '#00d8ff',
+      'kinetic-magenta': '#ff70d0',
+      'kinetic-candy-deep': '#ff6159',
+      'kinetic-candy-light': '#ffe100',
+      'ornate-paper': '#ffffff',
+      'ornate-echo': '#ffe100',
+    },
+  },
+});
+
+const COMPOSITION_ONLY_GRADES = Object.freeze({
+  warm: { saturation: 1, contrast: 1, gain: [1.04, 0.98, 0.89] },
+  cool: { saturation: 0.95, contrast: 1, gain: [0.88, 0.98, 1.05] },
+  'high-contrast': { saturation: 1.08, contrast: 1.24, gain: [1, 1, 1] },
+});
+
+// The alpha row stays the identity for artwork and template content.
+export function outputArtworkGradeMatrix(
+  presetId,
+  strength,
+  { composition = false } = {},
+) {
+  const artwork = Object.hasOwn(OUTPUT_LOOK_PRESETS, presetId)
+    ? OUTPUT_LOOK_PRESETS[presetId].artwork
+    : undefined;
+  const grade =
+    artwork ??
+    (composition && Object.hasOwn(COMPOSITION_ONLY_GRADES, presetId)
+      ? COMPOSITION_ONLY_GRADES[presetId]
+      : undefined);
+  if (!grade || !Number.isFinite(strength) || strength <= 0) return undefined;
+  const amount = Math.min(strength, 100) / 100;
+  const luminance = [0.2126, 0.7152, 0.0722];
+  const coefficients = grade.gain.flatMap((gain, row) => [
+    ...luminance.map((weight, column) => {
+      const identity = Number(column === row);
+      const saturated =
+        weight * (1 - grade.saturation) + identity * grade.saturation;
+      const target = saturated * grade.contrast * gain;
+      return identity * (1 - amount) + target * amount;
+    }),
+    0,
+    0.5 * (1 - grade.contrast) * gain * amount,
+  ]);
+  return [...coefficients, 0, 0, 0, 1, 0];
+}
 
 export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'color-treatment', order: 10 }),
@@ -9,6 +320,7 @@ export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'readability', order: 40 }),
   Object.freeze({ id: 'surface', order: 50 }),
   Object.freeze({ id: 'decoration', order: 55 }),
+  Object.freeze({ id: 'material', order: 56 }),
   Object.freeze({ id: 'layout', order: 60 }),
   Object.freeze({ id: 'motion', order: 70 }),
   Object.freeze({ id: 'content', order: 80 }),
@@ -104,13 +416,7 @@ const FIELD_DEFINITIONS = [
     control: 'select',
     editor: 'look',
     defaultValue: 'original',
-    options: [
-      { id: 'original' },
-      { id: 'warm' },
-      { id: 'cool' },
-      { id: 'monochrome' },
-      { id: 'high-contrast' },
-    ],
+    options: Object.keys(OUTPUT_LOOK_PRESETS).map((id) => ({ id })),
   }),
   fieldDefinition('color-treatment', {
     key: 'lookAmount',
@@ -132,8 +438,11 @@ const FIELD_DEFINITIONS = [
     reflow: true,
     order: 10,
     control: 'select',
+    editor: 'font-family',
+    allowLocalFonts: true,
     defaultValue: 'sans',
     options: [
+      { id: 'template' },
       { id: 'sans' },
       { id: 'serif' },
       { id: 'rounded' },
@@ -226,6 +535,29 @@ const FIELD_DEFINITIONS = [
     control: 'select',
     defaultValue: 'off',
     options: [{ id: 'off' }, { id: 'soft' }, { id: 'standard' }],
+  }),
+  fieldDefinition('material', {
+    key: 'filmGrainAmount',
+    family: 'asset',
+    tier: 'basic',
+    reflow: false,
+    order: 10,
+    control: 'range',
+    defaultValue: 0,
+    min: 0,
+    max: 100,
+    step: 5,
+    unit: '%',
+  }),
+  fieldDefinition('material', {
+    key: 'filmGrainSize',
+    family: 'asset',
+    tier: 'basic',
+    reflow: false,
+    order: 20,
+    control: 'select',
+    defaultValue: 'medium',
+    options: [{ id: 'fine' }, { id: 'medium' }, { id: 'coarse' }],
   }),
   fieldDefinition('content', {
     key: 'furigana',
@@ -479,9 +811,10 @@ const ELEMENT_PROPERTY_DEFINITIONS = Object.freeze(
 );
 
 const ELEMENT_SETTING_KEY_RE = /^element.([a-z][a-z0-9-]*).([A-Za-z]+)$/u;
+const LOOK_KEYS = ['paletteId', 'lookAmount'];
+const MATERIAL_GRAIN_KEYS = ['filmGrainAmount', 'filmGrainSize'];
 const BASIC_APPEARANCE_KEYS = Object.freeze([
-  'paletteId',
-  'lookAmount',
+  ...LOOK_KEYS,
   'fontFamily',
   'fontScale',
   'fontWeight',
@@ -493,7 +826,7 @@ const BASIC_APPEARANCE_KEYS = Object.freeze([
 ]);
 const BASIC_FONT_IDS = Object.freeze(['sans', 'serif', 'rounded']);
 const ORNATE_FONT_IDS = Object.freeze(['ornate', 'antique']);
-const MANGA_FONT_IDS = Object.freeze(['antique', ...BASIC_FONT_IDS]);
+const MANGA_FONT_IDS = Object.freeze(['antique']);
 const ORNATE_POSITION_IDS = Object.freeze([
   'top-right',
   'center-right',
@@ -522,45 +855,41 @@ const LYRICS_FIELD_DEFAULTS = Object.freeze({
   surface: { defaultValue: 'transparent' },
 });
 
-const TEMPLATE_CONFIGS = Object.freeze({
+const TEMPLATE_OVERRIDES = {
   'receipt-setlist': {
     keys: [
+      'fontFamily',
       'fontScale',
       'receiptDirection',
       'receiptReview',
       'receiptReviewInterval',
     ],
-    fields: { fontScale: { defaultValue: 'medium' } },
+    fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
+      fontScale: { defaultValue: 'medium' },
+    },
   },
   'ribbon-setlist': {
-    keys: ['surface', 'receiptReview', 'receiptReviewInterval'],
+    keys: ['fontFamily', 'surface', 'receiptReview', 'receiptReviewInterval'],
     fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
       surface: { defaultValue: 'solid', optionIds: ['solid', 'transparent'] },
     },
   },
   'art-card': {
-    keys: [
-      'paletteId',
-      'lookAmount',
-      'fontFamily',
-      'fontScale',
-      'fontWeight',
-      'vinylSurfaceLight',
-    ],
+    keys: ['fontFamily', 'fontScale', 'fontWeight', 'vinylSurfaceLight'],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'ticket-stub': {
-    keys: ['fontScale', 'fontWeight'],
+    keys: ['fontFamily', 'fontScale', 'fontWeight'],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'cover-player': {
-    keys: ['paletteId', 'lookAmount', 'fontScale', 'fontWeight', 'surface'],
+    keys: ['fontFamily', 'fontScale', 'fontWeight', 'surface'],
     fields: NOW_PLAYING_FIELD_DEFAULTS,
   },
   'queue-board': {
     keys: [
-      'paletteId',
-      'lookAmount',
       'fontFamily',
       'fontScale',
       'fontWeight',
@@ -570,24 +899,25 @@ const TEMPLATE_CONFIGS = Object.freeze({
     fields: SETLIST_FIELD_DEFAULTS,
   },
   'focus-line': {
-    keys: BASIC_APPEARANCE_KEYS,
+    keys: BASIC_APPEARANCE_KEYS.filter((key) => !LOOK_KEYS.includes(key)),
     fields: LYRICS_FIELD_DEFAULTS,
   },
   'karaoke-stack': {
-    keys: ['paletteId', 'lookAmount', 'fontScale'],
+    keys: ['fontFamily', 'fontScale'],
+    fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
+    },
   },
   'kinetic-pop': {
-    keys: [
-      'paletteId',
-      'lookAmount',
-      'fontScale',
-      'kineticMaterial',
-      'kineticArrangement',
-    ],
+    keys: ['fontFamily', 'fontScale', 'kineticMaterial', 'kineticArrangement'],
+    fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
+    },
   },
   'fisheye-lens': {
     keys: [
       'fisheyeLayout',
+      'fontFamily',
       'fontScale',
       'textColor',
       'fisheyeRim',
@@ -598,7 +928,10 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'fisheyeBlur',
       'fisheyeGranularity',
     ],
-    fields: { textColor: { defaultValue: '#a3f39e' } },
+    fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
+      textColor: { defaultValue: '#a3f39e' },
+    },
   },
   'centered-vertical': {
     keys: ['fontFamily', 'fontScale', 'contrastStyle', 'textColor'],
@@ -618,6 +951,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
   },
   'chalkboard-vertical': {
     keys: [
+      'fontFamily',
       'fontScale',
       'textColor',
       'chalkboardRuleColor',
@@ -626,6 +960,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
       'positionOffsetY',
     ],
     fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
       textColor: { defaultValue: '#fffdfa' },
       positionAnchor: {
         defaultValue: 'center-left',
@@ -635,8 +970,6 @@ const TEMPLATE_CONFIGS = Object.freeze({
   },
   'ornate-vertical': {
     keys: [
-      'paletteId',
-      'lookAmount',
       'textColor',
       'accentColor',
       'fontFamily',
@@ -656,14 +989,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
     },
   },
   'manga-frame': {
-    keys: [
-      'paletteId',
-      'lookAmount',
-      'fontFamily',
-      'fontScale',
-      'fontWeight',
-      'furigana',
-    ],
+    keys: ['fontFamily', 'fontScale', 'fontWeight', 'furigana'],
     fields: {
       fontFamily: { defaultValue: 'antique', optionIds: MANGA_FONT_IDS },
       fontScale: { defaultValue: 'medium' },
@@ -672,23 +998,22 @@ const TEMPLATE_CONFIGS = Object.freeze({
     },
   },
   'live-stage': {
-    keys: [
-      'paletteId',
-      'lookAmount',
-      'fontFamily',
-      'fontScale',
-      'contrastStyle',
-    ],
+    keys: ['fontFamily', 'fontScale', 'contrastStyle'],
     fields: {
       fontFamily: {
         defaultValue: 'sans',
-        editor: 'font-family',
-        allowLocalFonts: true,
       },
       fontScale: { defaultValue: 'medium' },
     },
   },
-});
+};
+
+const TEMPLATE_CONFIGS = Object.fromEntries(
+  Object.entries(TEMPLATE_OVERRIDES).map(([id, config]) => [
+    id,
+    { ...config, keys: [...LOOK_KEYS, ...config.keys, ...MATERIAL_GRAIN_KEYS] },
+  ]),
+);
 
 function templateConfig(templateId) {
   return (
@@ -775,6 +1100,78 @@ export function outputLocalFontCssValue(value) {
   return normalized ? JSON.stringify(normalized.family) : undefined;
 }
 
+const SYSTEM_SANS =
+  "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+const OPEN_HUNINN = "'Utawakui Open Huninn', sans-serif";
+const OPEN_HUNINN_CJK =
+  "'Utawakui Open Huninn', 'Microsoft JhengHei', 'Noto Sans CJK TC', sans-serif";
+const PRESET_FONT_STACKS = Object.freeze({
+  sans: SYSTEM_SANS,
+  serif:
+    "'GenWanMin2 TW', 'GenWanMin2 TC', 'GenWanMin2 PJP', 'Noto Serif TC', 'Noto Serif JP', 'Noto Serif KR', 'Microsoft JhengHei', serif",
+  rounded:
+    "'Arial Rounded MT Bold', 'Yu Gothic UI', 'Microsoft JhengHei', sans-serif",
+  ornate:
+    "'Utawakui Hina Mincho', 'Hina Mincho', 'Yu Mincho', 'Noto Serif CJK JP', serif",
+  antique: "'Utawakui GenEi Antique', 'Noto Serif CJK JP', 'Yu Mincho', serif",
+  'open-huninn': OPEN_HUNINN,
+  'chen-yu-luo-yan': `'Utawakui ChenYuLuoYan', ${OPEN_HUNINN}`,
+  'klee-one': `'Utawakui Klee One', ${OPEN_HUNINN}`,
+});
+const TEMPLATE_FONT_STACKS = Object.freeze({
+  'karaoke-stack': OPEN_HUNINN_CJK,
+  'chalkboard-vertical': OPEN_HUNINN,
+  'fisheye-lens':
+    "'Microsoft JhengHei', 'Yu Gothic', 'Noto Sans CJK TC', sans-serif",
+  'receipt-setlist':
+    "'Yu Gothic UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', sans-serif",
+});
+const RIBBON_FONT_STACKS = Object.freeze({
+  zh: `'Microsoft JhengHei', 'Noto Sans CJK TC', ${SYSTEM_SANS}`,
+  ja: `'Yu Gothic UI', 'Noto Sans CJK JP', ${SYSTEM_SANS}`,
+  ko: `'Malgun Gothic', 'Noto Sans CJK KR', ${SYSTEM_SANS}`,
+});
+
+export function outputFontFamilyCss(
+  value,
+  templateId,
+  language = '',
+  kineticMaterial = 'candy-rim',
+) {
+  const primaryLanguage = language.toLowerCase().split('-')[0];
+  const localFamily = outputLocalFontCssValue(value);
+  const preset = localFamily
+    ? (templateConfig(templateId).fields?.fontFamily?.defaultValue ?? 'sans')
+    : value;
+  let stack = Object.hasOwn(PRESET_FONT_STACKS, preset)
+    ? PRESET_FONT_STACKS[preset]
+    : SYSTEM_SANS;
+  if (preset === 'lyrics-auto') {
+    if (primaryLanguage === 'ja') stack = PRESET_FONT_STACKS['klee-one'];
+    else if (
+      primaryLanguage === 'zh' &&
+      !/^zh-(hans|cn|sg)(-|$)/i.test(language)
+    ) {
+      stack = PRESET_FONT_STACKS['chen-yu-luo-yan'];
+    } else stack = OPEN_HUNINN;
+  } else if (preset === 'template') {
+    if (templateId === 'ribbon-setlist') {
+      stack = RIBBON_FONT_STACKS[primaryLanguage] ?? SYSTEM_SANS;
+    } else if (templateId === 'kinetic-pop') {
+      if (kineticMaterial === 'candy-rim' || kineticMaterial === 'cycle') {
+        stack =
+          "'Utawakui Keifont', 'Utawakui M PLUS Rounded 1c', 'Noto Sans CJK JP', sans-serif";
+      } else {
+        stack =
+          primaryLanguage === 'zh'
+            ? OPEN_HUNINN_CJK
+            : "'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP', sans-serif";
+      }
+    } else stack = TEMPLATE_FONT_STACKS[templateId] ?? SYSTEM_SANS;
+  }
+  return localFamily ? `${localFamily}, ${stack}` : stack;
+}
+
 export const OUTPUT_APPEARANCE_FIELDS = Object.freeze(
   FIELD_DEFINITIONS.map((field) => Object.freeze(cloneField(field))),
 );
@@ -810,7 +1207,7 @@ export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   setlist: Object.freeze({
     paletteId: 'original',
     lookAmount: 100,
-    fontFamily: 'sans',
+    fontFamily: 'template',
     fontScale: 'medium',
     fontWeight: 'semibold',
     alignment: 'left',
@@ -825,7 +1222,7 @@ export const OUTPUT_SLOT_APPEARANCE_DEFAULTS = Object.freeze({
   lyrics: Object.freeze({
     paletteId: 'original',
     lookAmount: 100,
-    fontFamily: 'serif',
+    fontFamily: 'template',
     fontScale: 'medium',
     fontWeight: 'bold',
     alignment: 'left',
@@ -890,11 +1287,17 @@ export function outputAppearanceFieldsForTemplate(templateId) {
   return config.keys.map((key) => {
     const field = FIELD_MAP.get(key);
     const templateOverride = config.fields?.[key] ?? {};
-    const fontOverride =
-      key === 'fontFamily' && !templateOverride.optionIds
-        ? { optionIds: BASIC_FONT_IDS }
-        : {};
-    return cloneField(field, { ...fontOverride, ...templateOverride });
+    if (key !== 'fontFamily') return cloneField(field, templateOverride);
+    const optionIds = [
+      ...(templateOverride.optionIds ?? []),
+      ...BASIC_FONT_IDS,
+    ];
+    const options = new Map(field.options.map((option) => [option.id, option]));
+    return {
+      ...cloneField(field, templateOverride),
+      ...(Object.hasOwn(TEMPLATE_CONFIGS, templateId) ? { templateId } : {}),
+      options: optionIds.map((id) => ({ ...options.get(id) })),
+    };
   });
 }
 

@@ -151,3 +151,20 @@
 .obs-template-mockup__content--lyrics {
   align-content: end;
 }
+@font-face {
+  font-family: 'Utawakui ChenYuLuoYan';
+  src: url('../../../shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Utawakui Klee One';
+  src: url('../../../shared/assets/fonts/KleeOne-SemiBold.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}

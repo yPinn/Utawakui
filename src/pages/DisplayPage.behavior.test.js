@@ -1,4 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// The lyrics preview borrows the player clock; SSR has no audio element.
+vi.mock('../composables/usePlayer.js', () => ({
+  usePlayer: () => ({ state: { track: null } }),
+}));
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import DisplayPage from './DisplayPage.vue';

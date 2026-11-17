@@ -1,8 +1,16 @@
-import { createSSRApp, h } from 'vue';
+import { createSSRApp, h, shallowRef } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import { readCatalogSource } from '../../utils/catalogSourceText.js';
+
+vi.mock('../../composables/usePlayer.js', () => ({
+  usePlayer: () => ({ state: { track: null } }),
+}));
+const previewVideo = shallowRef(null);
+vi.mock('../../composables/useTrackVideoAsset.js', () => ({
+  useTrackVideoAsset: () => ({ asset: previewVideo }),
+}));
 
 const componentSource = readCatalogSource(
   new URL('./ObsOverlayPreview.vue', import.meta.url),
@@ -22,6 +30,15 @@ function renderPreview(props = {}) {
   );
 }
 
+function nextBackgroundButton(html, mode) {
+  return html.match(
+    new RegExp(
+      `<button[^>]*data-next-preview-mode="${mode}"[^>]*>[\\s\\S]*?</button>`,
+      'u',
+    ),
+  )?.[0];
+}
+
 describe('ObsOverlayPreview', () => {
   it.each(['lyrics', 'now-playing', 'setlist'])(
     'keeps %s Workbench live and strips demo/sample parameters',
@@ -38,6 +55,7 @@ describe('ObsOverlayPreview', () => {
   );
   afterEach(() => {
     vi.unstubAllEnvs();
+    previewVideo.value = null;
   });
 
   it('uses a fresh inspection URL for every Workbench preview mount', async () => {
@@ -54,9 +72,12 @@ describe('ObsOverlayPreview', () => {
 
     expect(html).toContain('data-backdrop="checker"');
     expect(html).toMatch(
-      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;backdrop=transparent&amp;guide=1&amp;reload=\d+"/,
+      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;backdrop=transparent&amp;guide=0&amp;reload=\d+"/,
     );
-    expect(html).not.toContain('obs-streamer-preview');
+    expect(html.indexOf('obs-streamer-preview')).toBeLessThan(
+      html.indexOf('<iframe'),
+    );
+    expect(html).toContain('obs-streamer-preview');
     expect(html.match(/<iframe/g)).toHaveLength(1);
     expect(html).not.toContain('/workbench/lyrics');
     expect(html).toContain('obs-overlay-preview__capture-meta');
@@ -71,14 +92,50 @@ describe('ObsOverlayPreview', () => {
   it('projects controlled habits into the inspection iframe without exposing a second guide layer', async () => {
     const html = await renderPreview({
       previewBackdrop: 'dark',
-      showLyricsGuide: false,
+      lyricsPreviewMode: 'none',
     });
 
     expect(html).toContain('data-backdrop="dark"');
-    expect(html).toContain('backdrop=dark&amp;guide=0');
+    expect(html).toContain('backdrop=transparent&amp;guide=0');
     expect(html).not.toContain('obs-streamer-preview');
-    expect(html).toContain('>顯示人物參考</span>');
-    expect(html).toContain('aria-pressed="false"');
+    const action = nextBackgroundButton(html, 'performer');
+    expect(action).toContain('顯示人物參考');
+    expect(action).toContain('lucide-user-round');
+    expect(html).not.toContain('<video');
+  });
+
+  it('keeps the person selected by default even when an MV is available', async () => {
+    previewVideo.value = {
+      url: 'utawakui-media://track-video/song/revision',
+      offsetMs: 100,
+    };
+    const defaultHtml = await renderPreview();
+    expect(defaultHtml).toContain('obs-streamer-preview');
+    const showMv = nextBackgroundButton(defaultHtml, 'mv');
+    expect(showMv).toContain('切換至 MV');
+    expect(showMv).toContain('lucide-film');
+    expect(defaultHtml).not.toContain('<video');
+
+    const mvHtml = await renderPreview({ lyricsPreviewMode: 'mv' });
+    const hide = nextBackgroundButton(mvHtml, 'none');
+    expect(hide).toContain('隱藏預覽背景');
+    expect(hide).toContain('lucide-eye-off');
+    expect(mvHtml).toContain('<video');
+    expect(mvHtml).toContain('obs-streamer-preview');
+    expect(mvHtml.match(/<iframe[^>]+src="([^"]+)"/u)?.[1]).not.toContain(
+      'track-video',
+    );
+  });
+
+  it('uses the person while the selected MV is unavailable', async () => {
+    const defaultHtml = await renderPreview();
+    const hide = nextBackgroundButton(defaultHtml, 'none');
+    expect(hide).toContain('隱藏預覽背景');
+    expect(hide).toContain('lucide-eye-off');
+
+    const mvHtml = await renderPreview({ lyricsPreviewMode: 'mv' });
+    expect(mvHtml).toContain('obs-streamer-preview');
+    expect(mvHtml).not.toContain('<video');
   });
 
   it('keeps icon-only preview actions on the icon button contract', async () => {
@@ -111,7 +168,7 @@ describe('ObsOverlayPreview', () => {
     const html = await renderPreview();
 
     expect(html).toContain(
-      'overlay/lyrics?workbench=1&amp;backdrop=transparent&amp;guide=1&amp;reload=',
+      'overlay/lyrics?workbench=1&amp;backdrop=transparent&amp;guide=0&amp;reload=',
     );
     expect(html).not.toContain('lyricsDebug');
   });

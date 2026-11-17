@@ -786,6 +786,28 @@
     object-fit: cover;
   }
 
+  .artwork-overlay__filters {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  :root[data-ovl-artwork-grade='on'] .artwork-overlay__image {
+    filter: url('#output-artwork-grade');
+  }
+
+  .artwork-overlay__paper-grain {
+    display: none;
+  }
+
+  :root[data-ovl-grain='on'] .artwork-overlay__image {
+    filter: var(--ovl-grain-filters);
+  }
+
+  :root[data-ovl-artwork-grade='on'][data-ovl-grain='on']
+    .artwork-overlay__image {
+    filter: url('#output-artwork-grade') var(--ovl-grain-filters);
+  }
+
   .artwork-overlay__fallback {
     position: relative;
   }
@@ -1049,7 +1071,7 @@
   :root[data-ovl-template='cover-player'] .artwork-overlay__artist {
     display: block;
     overflow: hidden;
-    font-family: var(--ovl-font-ui);
+    font-family: var(--ovl-user-font-family);
     text-overflow: ellipsis;
     white-space: nowrap;
     grid-column: 1;

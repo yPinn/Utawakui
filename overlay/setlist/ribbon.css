@@ -239,16 +239,21 @@
 .ribbon-setlist__title {
   min-inline-size: 0;
   overflow-wrap: anywhere;
+  font-family: var(--ovl-local-font-prefix,)
+    var(
+      --ovl-font-preset-override,
+      var(--ribbon-title-font, var(--ovl-font-ui))
+    );
   -webkit-text-stroke: 0.95px currentColor;
 }
 
 .ribbon-setlist__row[data-script] .ribbon-setlist__title {
-  font-family: var(--ribbon-title-font);
   -webkit-text-stroke-width: 0.35px;
 }
 
 .ribbon-setlist__latin {
-  font-family: var(--ovl-font-ui);
+  font-family: var(--ovl-local-font-prefix,)
+    var(--ovl-font-preset-override, var(--ovl-font-ui));
 }
 
 .ribbon-setlist__title[data-truncated] {

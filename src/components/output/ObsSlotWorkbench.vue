@@ -51,7 +51,7 @@ const props = defineProps({
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
   previewBackdrop: { type: String, default: 'checker' },
-  showLyricsGuide: { type: Boolean, default: true },
+  lyricsPreviewMode: { type: String, default: 'performer' },
   outputError: { type: String, default: '' },
   recentColors: { type: Array, default: () => [] },
   savedColors: { type: Array, default: () => [] },
@@ -67,7 +67,7 @@ const emit = defineEmits([
   'update:sideCollapsed',
   'update:compactSideOpen',
   'update:previewBackdrop',
-  'update:showLyricsGuide',
+  'update:lyricsPreviewMode',
   'changeSettings',
   'commitColor',
   'toggleSavedColor',
@@ -377,12 +377,14 @@ function resetAppearance() {
             :preview-url="previewUrl"
             :obs-url="obsUrl"
             :preview-backdrop="previewBackdrop"
-            :show-lyrics-guide="showLyricsGuide"
+            :lyrics-preview-mode="lyricsPreviewMode"
             :element-ids="elementIds"
             :selected-element-id="selectedTargetId"
             @update:capture-size="updateCaptureSize"
             @update:preview-backdrop="emit('update:previewBackdrop', $event)"
-            @update:show-lyrics-guide="emit('update:showLyricsGuide', $event)"
+            @update:lyrics-preview-mode="
+              emit('update:lyricsPreviewMode', $event)
+            "
             @refresh-projection="emit('refreshProjection')"
             @select-element="selectTarget"
           />
@@ -489,6 +491,7 @@ function resetAppearance() {
           v-for="field in group.fields"
           :key="field.key"
           :field="field"
+          :kinetic-material="draft.kineticMaterial"
           :model-value="draft[field.key]"
           :disabled="
             field.key === 'lookAmount' && draft.paletteId === 'original'

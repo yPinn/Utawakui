@@ -160,6 +160,15 @@
     z-index: 2;
   }
 
+  :root:is([data-ovl-grain='on'], [data-ovl-composition-grade='on'])
+    .lyrics-overlay__composition {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    filter: var(--ovl-composition-grade,) var(--ovl-grain-filters,);
+  }
+
   .lyrics-overlay {
     /* Template layer: override these per profile/style set later. */
     --ovl-template-lyrics-current-size: 3.5em;
@@ -332,9 +341,14 @@
     margin: -0.11em -0.16em -0.18em -0.11em;
     padding: 0.11em 0.16em 0.18em 0.11em;
     color: var(--ovl-ktv-fill-unsung);
-    font-family:
-      'Utawakui Open Huninn', 'Microsoft JhengHei', 'Noto Sans CJK TC',
-      sans-serif;
+    font-family: var(--ovl-local-font-prefix,)
+      var(
+        --ovl-font-preset-override,
+        'Utawakui Open Huninn',
+        'Microsoft JhengHei',
+        'Noto Sans CJK TC',
+        sans-serif
+      );
     font-size: 5.4em;
     font-weight: 900;
     letter-spacing: 0.015em;
@@ -544,9 +558,14 @@
     min-block-size: 1.3em;
     overflow: visible;
     color: transparent;
-    font-family:
-      'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP',
-      sans-serif;
+    font-family: var(--ovl-local-font-prefix,)
+      var(
+        --ovl-font-preset-override,
+        'Utawakui M PLUS Rounded 1c',
+        'M PLUS Rounded 1c',
+        'Noto Sans CJK JP',
+        sans-serif
+      );
     font-size: 5em;
     font-weight: 800;
     line-height: 1.04;
@@ -555,9 +574,14 @@
   }
 
   :root[data-ovl-template='kinetic-pop'][lang^='zh'] .lyrics-overlay__current {
-    font-family:
-      'Utawakui Open Huninn', 'Microsoft JhengHei', 'Noto Sans CJK TC',
-      sans-serif;
+    font-family: var(--ovl-local-font-prefix,)
+      var(
+        --ovl-font-preset-override,
+        'Utawakui Open Huninn',
+        'Microsoft JhengHei',
+        'Noto Sans CJK TC',
+        sans-serif
+      );
     font-weight: 900;
   }
 
@@ -587,9 +611,14 @@
 
   :root[data-ovl-template='kinetic-pop']
     .lyrics-overlay__kinetic-line[data-kinetic-material='candy-rim'] {
-    font-family:
-      'Utawakui Keifont', 'Utawakui M PLUS Rounded 1c', 'Noto Sans CJK JP',
-      sans-serif;
+    font-family: var(--ovl-local-font-prefix,)
+      var(
+        --ovl-font-preset-override,
+        'Utawakui Keifont',
+        'Utawakui M PLUS Rounded 1c',
+        'Noto Sans CJK JP',
+        sans-serif
+      );
     font-size: 1.18em;
     font-weight: 900;
     line-height: 1.12;
@@ -744,6 +773,8 @@
     font:
       400 4.5vh / 1.16 'Utawakui Open Huninn',
       sans-serif;
+    font-family: var(--ovl-local-font-prefix,)
+      var(--ovl-font-preset-override, 'Utawakui Open Huninn', sans-serif);
     letter-spacing: 0.08em;
     writing-mode: vertical-rl;
     text-orientation: mixed;
@@ -775,20 +806,32 @@
 
   :root[data-ovl-template='centered-vertical'][data-ovl-font='chen-yu-luo-yan']
     .lyrics-overlay__current,
-  :root[data-ovl-template='centered-vertical'][data-ovl-font='lyrics-auto']
+  :root[data-ovl-template='centered-vertical']:is(
+      [data-ovl-font='lyrics-auto'],
+      [data-ovl-font='local']
+    )
     .lyrics-overlay__current:lang(zh):not(
       :lang(zh-Hans),
       :lang(zh-CN),
       :lang(zh-SG)
     ) {
-    font-family: 'Utawakui ChenYuLuoYan', 'Utawakui Open Huninn', sans-serif;
+    font-family:
+      var(--ovl-local-font-prefix,) 'Utawakui ChenYuLuoYan',
+      'Utawakui Open Huninn',
+      sans-serif;
   }
 
   :root[data-ovl-template='centered-vertical'][data-ovl-font='klee-one']
     .lyrics-overlay__current,
-  :root[data-ovl-template='centered-vertical'][data-ovl-font='lyrics-auto']
+  :root[data-ovl-template='centered-vertical']:is(
+      [data-ovl-font='lyrics-auto'],
+      [data-ovl-font='local']
+    )
     .lyrics-overlay__current:lang(ja) {
-    font-family: 'Utawakui Klee One', 'Utawakui Open Huninn', sans-serif;
+    font-family:
+      var(--ovl-local-font-prefix,) 'Utawakui Klee One',
+      'Utawakui Open Huninn',
+      sans-serif;
     font-weight: 600;
   }
 
@@ -816,7 +859,8 @@
     inline-size: 100%;
     block-size: 100%;
     max-inline-size: none;
-    font-family: 'Utawakui Open Huninn', sans-serif;
+    font-family: var(--ovl-local-font-prefix,)
+      var(--ovl-font-preset-override, 'Utawakui Open Huninn', sans-serif);
     font-size: 4.5vh;
     font-weight: 400;
     line-height: 1.12;

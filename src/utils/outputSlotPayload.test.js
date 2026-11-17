@@ -19,13 +19,13 @@ describe('buildOutputSlotPayload', () => {
     expect(payload).toEqual({
       templateId: 'karaoke-stack',
       styleSetIds: ['runtime-source', 'lyrics-type'],
-      settings: { fontFamily: 'serif', fontScale: 'large' },
+      settings: { fontFamily: 'template', fontScale: 'large' },
     });
 
     slot.styleSetIds.push('lyrics-surface');
     slot.settings.fontFamily = 'sans';
     expect(payload.styleSetIds).toEqual(['runtime-source', 'lyrics-type']);
-    expect(payload.settings.fontFamily).toBe('serif');
+    expect(payload.settings.fontFamily).toBe('template');
   });
 
   it('drops unsupported nested values before IPC', () => {
@@ -71,9 +71,8 @@ describe('buildOutputSlotPayload', () => {
       { templateId: 'focus-line', settings: { fontFamily: 'serif' } },
       { templateId: 'manga-frame' },
     );
-    // Karaoke has no font field, so the slot default stands for untouched.
     const throughKaraoke = buildOutputSlotPayload(
-      { templateId: 'karaoke-stack', settings: { fontFamily: 'serif' } },
+      { templateId: 'karaoke-stack', settings: { fontFamily: 'template' } },
       { templateId: 'manga-frame' },
     );
 

@@ -50,6 +50,7 @@ const categories = [
       { id: 'custom-color' },
       { id: 'surface' },
       { id: 'decoration' },
+      { id: 'material' },
     ],
   },
 ];

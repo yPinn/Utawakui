@@ -43,8 +43,11 @@ const DATASET_TARGETS = Object.freeze({
   vinylSurfaceLight: 'vinylSurfaceLight',
 });
 
-// These settings go directly to the Canvas painter or timing projection.
+// These settings go to the Canvas painter, timing projection or SVG grain
+// filters, so the path is checked on the normalized value.
 const FISHEYE_FIELDS = new Set([
+  'filmGrainAmount',
+  'filmGrainSize',
   'fisheyeLayout',
   'fisheyeRim',
   'fisheyeReflection',
@@ -206,7 +209,10 @@ describe('Output settings path', () => {
           ).toBe(
             field.key === 'vinylSurfaceLight' && templateId !== 'art-card'
               ? undefined
-              : String(expectedValue),
+              : field.key === 'paletteId' && settings.lookAmount === 0
+                ? // A 0% look renders the template's original colors.
+                  'original'
+                : String(expectedValue),
           );
           continue;
         }

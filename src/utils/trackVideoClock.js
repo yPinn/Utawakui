@@ -4,6 +4,7 @@ export function trackVideoFrame(
   monitorDelayMs,
   duration,
   segments,
+  { hideOutside = false } = {},
 ) {
   const playing = sample.phase === 'playing';
   const delay = playing ? monitorDelayMs * sample.rate : 0;
@@ -17,6 +18,7 @@ export function trackVideoFrame(
   if (!Number.isFinite(position) || !Number.isFinite(duration) || duration <= 0)
     return null;
   const lastPosition = Math.max(0, duration - 0.001);
+  if (hideOutside && (position < 0 || position >= duration)) return null;
   return {
     position: Math.min(Math.max(position, 0), lastPosition),
     rate: sample.rate,

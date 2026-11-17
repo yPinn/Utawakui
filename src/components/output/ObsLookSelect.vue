@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { OUTPUT_LOOK_PRESETS } from '../../../shared/outputAppearance.mjs';
 import UiCombobox from '../ui/UiCombobox.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -11,15 +12,47 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(['update:modelValue']);
-const items = computed(() =>
-  props.options.map((option) => ({ ...option, value: option.id })),
-);
+const alphabet = new Intl.Collator('en', {
+  numeric: true,
+  sensitivity: 'base',
+});
+const items = computed(() => {
+  const groups = { basic: [], film: [] };
+  for (const option of props.options) {
+    const { colors, section = 'basic' } = OUTPUT_LOOK_PRESETS[option.id] ?? {};
+    groups[section].push({
+      ...option,
+      value: option.id,
+      swatches: colors && {
+        '--ui-output-look-preview-ink': colors.ink,
+        '--ui-output-look-preview-paper': colors.paper,
+        '--ui-output-look-preview-accent': colors.current,
+      },
+    });
+  }
+  return Object.entries(groups)
+    .filter(([, options]) => options.length > 0)
+    .map(([section, options]) => {
+      const sortKey = (option) => {
+        if (option.id === 'original') return '';
+        return section === 'basic' ? option.id : option.label;
+      };
+      return {
+        label: t(`outputPanel.lookGroups.${section}`),
+        options: options.sort((left, right) =>
+          alphabet.compare(sortKey(left), sortKey(right)),
+        ),
+      };
+    });
+});
 const displayedValue = computed(
   () =>
     props.options.find(
       (option) => option.id === props.modelValue && !option.disabled,
     )?.id ??
-    props.options.find((option) => !option.disabled)?.id ??
+    items.value
+      .flatMap(({ options }) => options)
+      .find((option) => !option.disabled)?.id ??
     '',
 );
 function updateValue(value) {
@@ -46,6 +79,7 @@ function updateValue(value) {
           v-if="item"
           class="obs-look-select__preview"
           :data-look="item.id"
+          :style="item.swatches"
           aria-hidden="true"
         >
           <span class="obs-look-select__swatch--ink" />
@@ -58,10 +92,11 @@ function updateValue(value) {
       </span>
     </template>
     <template #option="{ item }">
-      <span class="obs-look-select__choice">
+      <span class="obs-look-select__choice obs-look-select__choice--option">
         <span
           class="obs-look-select__preview"
           :data-look="item.id"
+          :style="item.swatches"
           aria-hidden="true"
         >
           <span class="obs-look-select__swatch--ink" />
@@ -84,6 +119,9 @@ function updateValue(value) {
 }
 
 .obs-look-select__preview {
+  --ui-output-look-preview-ink: var(--ui-output-look-original-ink);
+  --ui-output-look-preview-paper: var(--ui-output-look-original-paper);
+  --ui-output-look-preview-accent: var(--ui-output-look-original-accent);
   inline-size: 2.25rem;
   block-size: 0.75rem;
   overflow: hidden;
@@ -105,40 +143,15 @@ function updateValue(value) {
   background: var(--ui-output-look-preview-accent);
 }
 
-.obs-look-select__preview[data-look='original'] {
-  --ui-output-look-preview-ink: var(--ui-output-look-original-ink);
-  --ui-output-look-preview-paper: var(--ui-output-look-original-paper);
-  --ui-output-look-preview-accent: var(--ui-output-look-original-accent);
-}
-
-.obs-look-select__preview[data-look='warm'] {
-  --ui-output-look-preview-ink: var(--ui-output-look-warm-ink);
-  --ui-output-look-preview-paper: var(--ui-output-look-warm-paper);
-  --ui-output-look-preview-accent: var(--ui-output-look-warm-accent);
-}
-
-.obs-look-select__preview[data-look='cool'] {
-  --ui-output-look-preview-ink: var(--ui-output-look-cool-ink);
-  --ui-output-look-preview-paper: var(--ui-output-look-cool-paper);
-  --ui-output-look-preview-accent: var(--ui-output-look-cool-accent);
-}
-
-.obs-look-select__preview[data-look='monochrome'] {
-  --ui-output-look-preview-ink: var(--ui-output-look-monochrome-ink);
-  --ui-output-look-preview-paper: var(--ui-output-look-monochrome-paper);
-  --ui-output-look-preview-accent: var(--ui-output-look-monochrome-accent);
-}
-
-.obs-look-select__preview[data-look='high-contrast'] {
-  --ui-output-look-preview-ink: var(--ui-output-look-contrast-ink);
-  --ui-output-look-preview-paper: var(--ui-output-look-contrast-paper);
-  --ui-output-look-preview-accent: var(--ui-output-look-contrast-accent);
-}
-
 .obs-look-select__label {
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.obs-look-select__choice--option .obs-look-select__label {
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 </style>

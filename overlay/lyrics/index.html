@@ -24,84 +24,86 @@
     <div class="lyrics-workbench__guide" aria-hidden="true">
       <div class="lyrics-workbench__guide-region"></div>
     </div>
-    <main
-      id="lyrics-overlay"
-      class="lyrics-overlay"
-      aria-live="polite"
-      aria-atomic="true"
-      dir="auto"
-      hidden
-    >
-      <div
-        id="lyrics-live-stage-chrome"
-        class="lyrics-overlay__live-stage-chrome"
-        aria-hidden="true"
+    <div class="lyrics-overlay__composition">
+      <main
+        id="lyrics-overlay"
+        class="lyrics-overlay"
+        aria-live="polite"
+        aria-atomic="true"
+        dir="auto"
         hidden
       >
-        <div class="lyrics-overlay__live-stage-brand">
-          <strong class="lyrics-overlay__live-stage-brand-mark">U</strong>
-          <span class="lyrics-overlay__live-stage-brand-copy">
-            <span>UTAWAKUI</span>
-            <strong>LIVE STAGE</strong>
-          </span>
+        <div
+          id="lyrics-live-stage-chrome"
+          class="lyrics-overlay__live-stage-chrome"
+          aria-hidden="true"
+          hidden
+        >
+          <div class="lyrics-overlay__live-stage-brand">
+            <strong class="lyrics-overlay__live-stage-brand-mark">U</strong>
+            <span class="lyrics-overlay__live-stage-brand-copy">
+              <span>UTAWAKUI</span>
+              <strong>LIVE STAGE</strong>
+            </span>
+          </div>
+          <strong class="lyrics-overlay__live-stage-channel">UW</strong>
         </div>
-        <strong class="lyrics-overlay__live-stage-channel">UW</strong>
-      </div>
-      <section
-        id="lyrics-live-stage-card"
-        class="lyrics-overlay__live-stage-card"
-        hidden
-      >
-        <span class="lyrics-overlay__live-stage-card-mark" aria-hidden="true">
-          <strong>U</strong>
-          <span>LIVE</span>
-        </span>
-        <span class="lyrics-overlay__live-stage-card-copy">
-          <strong
-            id="lyrics-live-stage-title"
-            class="lyrics-overlay__live-stage-title"
-          ></strong>
-          <span
-            id="lyrics-live-stage-artist"
-            class="lyrics-overlay__live-stage-artist"
-          ></span>
-        </span>
-      </section>
-      <div
-        id="lyrics-manga-bubbles"
-        class="lyrics-overlay__manga-bubbles"
-        aria-hidden="true"
-        hidden
-      ></div>
-      <div
-        id="lyrics-ktv-count-in"
-        class="lyrics-overlay__ktv-count-in"
-        aria-hidden="true"
-        hidden
-      >
-        <span class="lyrics-overlay__ktv-count-in-dot"></span>
-        <span class="lyrics-overlay__ktv-count-in-dot"></span>
-        <span class="lyrics-overlay__ktv-count-in-dot"></span>
-        <span class="lyrics-overlay__ktv-count-in-dot"></span>
-      </div>
+        <section
+          id="lyrics-live-stage-card"
+          class="lyrics-overlay__live-stage-card"
+          hidden
+        >
+          <span class="lyrics-overlay__live-stage-card-mark" aria-hidden="true">
+            <strong>U</strong>
+            <span>LIVE</span>
+          </span>
+          <span class="lyrics-overlay__live-stage-card-copy">
+            <strong
+              id="lyrics-live-stage-title"
+              class="lyrics-overlay__live-stage-title"
+            ></strong>
+            <span
+              id="lyrics-live-stage-artist"
+              class="lyrics-overlay__live-stage-artist"
+            ></span>
+          </span>
+        </section>
+        <div
+          id="lyrics-manga-bubbles"
+          class="lyrics-overlay__manga-bubbles"
+          aria-hidden="true"
+          hidden
+        ></div>
+        <div
+          id="lyrics-ktv-count-in"
+          class="lyrics-overlay__ktv-count-in"
+          aria-hidden="true"
+          hidden
+        >
+          <span class="lyrics-overlay__ktv-count-in-dot"></span>
+          <span class="lyrics-overlay__ktv-count-in-dot"></span>
+          <span class="lyrics-overlay__ktv-count-in-dot"></span>
+          <span class="lyrics-overlay__ktv-count-in-dot"></span>
+        </div>
+        <canvas
+          id="lyrics-fisheye"
+          class="lyrics-overlay__fisheye"
+          width="1920"
+          height="1080"
+          role="img"
+          hidden
+        ></canvas>
+        <p id="lyrics-current" class="lyrics-overlay__current"></p>
+        <p id="lyrics-next" class="lyrics-overlay__next"></p>
+      </main>
       <canvas
-        id="lyrics-fisheye"
-        class="lyrics-overlay__fisheye"
-        width="1920"
-        height="1080"
-        role="img"
+        id="lyrics-fisheye-effect"
+        class="lyrics-fisheye-effect"
+        width="960"
+        height="540"
+        aria-hidden="true"
         hidden
       ></canvas>
-      <p id="lyrics-current" class="lyrics-overlay__current"></p>
-      <p id="lyrics-next" class="lyrics-overlay__next"></p>
-    </main>
-    <canvas
-      id="lyrics-fisheye-effect"
-      class="lyrics-fisheye-effect"
-      width="960"
-      height="540"
-      aria-hidden="true"
-      hidden
-    ></canvas>
+    </div>
   </body>
 </html>

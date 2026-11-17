@@ -29,9 +29,21 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
-  'ribbon-setlist': ['surface', 'receiptReview', 'receiptReviewInterval'],
+  'ribbon-setlist': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
+    'surface',
+    'receiptReview',
+    'receiptReviewInterval',
+    'filmGrainAmount',
+    'filmGrainSize',
+  ],
   'fisheye-lens': [
+    'paletteId',
+    'lookAmount',
     'fisheyeLayout',
+    'fontFamily',
     'fontScale',
     'textColor',
     'fisheyeRim',
@@ -41,12 +53,19 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fisheyePulse',
     'fisheyeBlur',
     'fisheyeGranularity',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'receipt-setlist': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
     'fontScale',
     'receiptDirection',
     'receiptReview',
     'receiptReviewInterval',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'queue-board': [
     'paletteId',
@@ -56,21 +75,39 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontWeight',
     'surface',
     'spacingDensity',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
-  'karaoke-stack': ['paletteId', 'lookAmount', 'fontScale'],
+  'karaoke-stack': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
+    'fontScale',
+    'filmGrainAmount',
+    'filmGrainSize',
+  ],
   'centered-vertical': [
+    'paletteId',
+    'lookAmount',
     'fontFamily',
     'fontScale',
     'contrastStyle',
     'textColor',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'chalkboard-vertical': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
     'fontScale',
     'textColor',
     'chalkboardRuleColor',
     'positionAnchor',
     'positionOffsetX',
     'positionOffsetY',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'live-stage': [
     'paletteId',
@@ -78,13 +115,18 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontFamily',
     'fontScale',
     'contrastStyle',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'kinetic-pop': [
     'paletteId',
     'lookAmount',
+    'fontFamily',
     'fontScale',
     'kineticMaterial',
     'kineticArrangement',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'ornate-vertical': [
     'paletteId',
@@ -98,6 +140,8 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'positionAnchor',
     'positionOffsetX',
     'positionOffsetY',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'manga-frame': [
     'paletteId',
@@ -106,6 +150,8 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontScale',
     'fontWeight',
     'furigana',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
   'art-card': [
     'paletteId',
@@ -114,14 +160,27 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontScale',
     'fontWeight',
     'vinylSurfaceLight',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
-  'ticket-stub': ['fontScale', 'fontWeight'],
+  'ticket-stub': [
+    'paletteId',
+    'lookAmount',
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+    'filmGrainAmount',
+    'filmGrainSize',
+  ],
   'cover-player': [
     'paletteId',
     'lookAmount',
+    'fontFamily',
     'fontScale',
     'fontWeight',
     'surface',
+    'filmGrainAmount',
+    'filmGrainSize',
   ],
 });
 
@@ -285,6 +344,8 @@ describe('output template registry', () => {
       'fontFamily',
       'fontScale',
       'contrastStyle',
+      'filmGrainAmount',
+      'filmGrainSize',
     ]);
     expect(liveStage.presentationFields).toEqual([
       expect.objectContaining({
@@ -434,7 +495,14 @@ describe('output template registry', () => {
         layoutLabel: '錯位雙行',
         motionLabel: '逐字掃色',
       },
-      editableAppearanceKeys: ['paletteId', 'lookAmount', 'fontScale'],
+      editableAppearanceKeys: [
+        'paletteId',
+        'lookAmount',
+        'fontFamily',
+        'fontScale',
+        'filmGrainAmount',
+        'filmGrainSize',
+      ],
       detail: expect.stringContaining('提示點先行倒數'),
       settings: expect.arrayContaining([
         { label: '顯示', value: '上列靠左、下列靠右' },
@@ -494,9 +562,12 @@ describe('output template registry', () => {
       editableAppearanceKeys: [
         'paletteId',
         'lookAmount',
+        'fontFamily',
         'fontScale',
         'kineticMaterial',
         'kineticArrangement',
+        'filmGrainAmount',
+        'filmGrainSize',
       ],
     });
     expect(
@@ -529,6 +600,8 @@ describe('output template registry', () => {
         'positionAnchor',
         'positionOffsetX',
         'positionOffsetY',
+        'filmGrainAmount',
+        'filmGrainSize',
       ],
       appearanceFields: expect.arrayContaining([
         expect.objectContaining({

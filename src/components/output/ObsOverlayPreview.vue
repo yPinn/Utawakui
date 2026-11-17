@@ -14,8 +14,9 @@ import {
   onMounted,
   shallowRef,
   useTemplateRef,
+  watch,
 } from 'vue';
-import { Copy, UserRound } from '../../icons/index.js';
+import { Copy, EyeOff, Film, UserRound } from '../../icons/index.js';
 import streamerPreviewImage from '../../../overlay/assets/streamer-guide.png';
 import {
   calculateCapturePreviewScale,
@@ -23,6 +24,9 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import { buildOutputDropUrl } from '../../utils/outputRoutes.js';
 import { useOutputClipboard } from '../../composables/output/useOutputClipboard.js';
+import { usePlayer } from '../../composables/usePlayer.js';
+import { useTrackVideoAsset } from '../../composables/useTrackVideoAsset.js';
+import TrackVideoPlayback from '../playback/TrackVideoPlayback.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStack from '../ui/UiStack.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
@@ -44,7 +48,7 @@ const props = defineProps({
     default: 'checker',
     validator: (value) => ['checker', 'dark', 'light'].includes(value),
   },
-  showLyricsGuide: { type: Boolean, default: true },
+  lyricsPreviewMode: { type: String, default: 'performer' },
   elementIds: { type: Array, default: () => [] },
   selectedElementId: { type: String, default: 'template' },
 });
@@ -52,7 +56,7 @@ const props = defineProps({
 const emit = defineEmits([
   'update:captureSize',
   'update:previewBackdrop',
-  'update:showLyricsGuide',
+  'update:lyricsPreviewMode',
   'refreshProjection',
   'selectElement',
 ]);
@@ -67,6 +71,33 @@ const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height;
 let resizeObserver = null;
 
 const isLyrics = computed(() => props.activeKind === 'lyrics');
+const { state: player } = usePlayer();
+const { asset: previewVideo } = useTrackVideoAsset({
+  trackId: () => player.track?.id,
+  enabled: isLyrics,
+});
+const previewActions = {
+  performer: {
+    icon: UserRound,
+    label: t('outputPanel.overlay.showPreviewPerformer'),
+  },
+  mv: { icon: Film, label: t('outputPanel.overlay.showPreviewMv') },
+  none: { icon: EyeOff, label: t('outputPanel.overlay.hidePreviewBackground') },
+};
+const nextPreviewMode = computed(() => {
+  if (props.lyricsPreviewMode === 'none') return 'performer';
+  return props.lyricsPreviewMode === 'performer' && previewVideo.value
+    ? 'mv'
+    : 'none';
+});
+const nextPreviewAction = computed(() => previewActions[nextPreviewMode.value]);
+const showPreviewVideo = computed(
+  () => props.lyricsPreviewMode === 'mv' && Boolean(previewVideo.value),
+);
+const previewVideoVisible = shallowRef(false);
+watch([showPreviewVideo, () => previewVideo.value?.url], () => {
+  previewVideoVisible.value = false;
+});
 const selectedCaptureSize = computed(
   () => props.captureSize ?? props.supportedCaptureSizes[0] ?? 'small',
 );
@@ -85,12 +116,13 @@ const inspectionUrl = computed(() => {
     // Opt-in lyrics diagnostics: keep them out of production preview iframes.
     if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');
   }
-  // The unscaled renderer frame owns checker paint.
+  // The renderer frame owns the Lyrics backdrop and its local media.
   const iframeBackdrop =
-    props.previewBackdrop === 'checker' ? 'transparent' : props.previewBackdrop;
+    isLyrics.value || props.previewBackdrop === 'checker'
+      ? 'transparent'
+      : props.previewBackdrop;
   url.searchParams.set('backdrop', iframeBackdrop);
-  if (isLyrics.value)
-    url.searchParams.set('guide', props.showLyricsGuide ? '1' : '0');
+  if (isLyrics.value) url.searchParams.set('guide', '0');
   url.searchParams.set('reload', previewReloadToken);
   return url.toString();
 });
@@ -170,8 +202,19 @@ onBeforeUnmount(() => {
           :style="previewFrameStyle"
         >
           <ObsStreamerPreview
-            v-if="isLyrics && showLyricsGuide && !hasRuntimeTemplate"
+            v-if="
+              lyricsPreviewMode !== 'none' &&
+              (!showPreviewVideo || !previewVideoVisible)
+            "
             :src="streamerPreviewImage"
+          />
+          <TrackVideoPlayback
+            v-if="showPreviewVideo"
+            :key="previewVideo.url"
+            class="obs-overlay-preview__video"
+            :asset="previewVideo"
+            background
+            @visibility-change="previewVideoVisible = $event"
           />
           <iframe
             v-if="hasRuntimeTemplate"
@@ -239,17 +282,10 @@ onBeforeUnmount(() => {
         <UiStack class="obs-overlay-preview__actions" align="center" :gap="3">
           <UiIconButton
             v-if="isLyrics"
-            :icon="UserRound"
-            :label="
-              t(
-                showLyricsGuide
-                  ? 'outputPanel.overlay.hideGuide'
-                  : 'outputPanel.overlay.showGuide',
-              )
-            "
-            :active="showLyricsGuide"
-            :aria-pressed="showLyricsGuide"
-            @click="emit('update:showLyricsGuide', !showLyricsGuide)"
+            :icon="nextPreviewAction.icon"
+            :label="nextPreviewAction.label"
+            :data-next-preview-mode="nextPreviewMode"
+            @click="emit('update:lyricsPreviewMode', nextPreviewMode)"
           />
           <ObsPreviewBackdropToggle
             :model-value="previewBackdrop"
@@ -352,7 +388,16 @@ onBeforeUnmount(() => {
   transform-origin: left top;
 }
 
+.obs-overlay-preview__video {
+  position: absolute;
+  z-index: var(--ui-output-preview-layer-guide);
+  inset: 0;
+  pointer-events: none;
+}
+
 .obs-overlay-preview__fallback {
+  position: relative;
+  z-index: var(--ui-output-preview-layer-output);
   display: grid;
   align-content: end;
   gap: var(--ui-space-2);

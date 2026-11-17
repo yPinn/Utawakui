@@ -17,6 +17,33 @@ describe('Now Playing artwork layouts', () => {
     expect(html).toContain('/overlay/now-playing/artwork.css');
   });
 
+  it('targets both cover images with an in-document RGB filter', () => {
+    expect(html).toContain(
+      'id="output-artwork-grade" color-interpolation-filters="sRGB"',
+    );
+    expect(html).toContain('id="output-artwork-grade-matrix"');
+    expect(html).toContain(
+      'class="artwork-overlay__image artwork-overlay__incoming-image"',
+    );
+    expect(artworkStyles).toMatch(
+      /\[data-ovl-artwork-grade='on'\] \.artwork-overlay__image\s*\{\s*filter: url\('#output-artwork-grade'\);/,
+    );
+  });
+
+  it('composes film grain with cover grading and confines it to artwork and ticket paper', () => {
+    const ticketStyles = readFileSync(
+      new URL('./ticket.css', import.meta.url),
+      'utf8',
+    );
+    expect(html).toContain('class="artwork-overlay__paper-grain"');
+    expect(artworkStyles).toMatch(
+      /filter:\s*url\('#output-artwork-grade'\)\s*var\(--ovl-grain-filters\)/,
+    );
+    expect(ticketStyles).toMatch(
+      /\[data-ovl-template='ticket-stub'\]\[data-ovl-grain='on'\]\s*\.artwork-overlay__paper-grain\s*\{[^}]*filter: var\(--ovl-grain-filters\);/,
+    );
+  });
+
   it('scales and positions Cover Player inside its capture container', () => {
     expect(artworkStyles).toMatch(
       /:root\[data-ovl-template='cover-player'\] body\s*\{[^}]*container-type: size;/s,

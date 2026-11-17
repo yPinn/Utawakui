@@ -14,10 +14,24 @@
     <script type="module" src="/overlay/now-playing/now-playing.mjs"></script>
   </head>
   <body>
+    <svg
+      class="artwork-overlay__filters"
+      width="0"
+      height="0"
+      aria-hidden="true"
+    >
+      <filter id="output-artwork-grade" color-interpolation-filters="sRGB">
+        <feColorMatrix id="output-artwork-grade-matrix" type="matrix" />
+      </filter>
+    </svg>
     <main id="artwork-overlay" class="artwork-overlay" dir="auto" hidden>
       <div class="artwork-overlay__vinyl-stage">
         <div class="artwork-overlay__album-panel">
           <div class="artwork-overlay__sleeve ticket-paper ticket-cut">
+            <span
+              class="artwork-overlay__paper-grain"
+              aria-hidden="true"
+            ></span>
             <div class="artwork-overlay__mark ticket-cover" aria-hidden="true">
               <img
                 id="artwork-image"

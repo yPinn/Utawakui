@@ -1,11 +1,16 @@
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { createLocalFontsCatalog } from '../../composables/output/useLocalFonts.js';
 import ObsFontFamilySelect from './ObsFontFamilySelect.vue';
-import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiModal from '../ui/UiModal.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -16,7 +21,10 @@ import {
 } from '../ui/uiTestHost.js';
 
 for (const [component, filename] of [
-  [UiButton, '../ui/UiButton.vue'],
+  [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiModal, '../ui/UiModal.vue'],
+  [UiSeparator, '../ui/UiSeparator.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiField, '../ui/UiField.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
@@ -34,6 +42,15 @@ const OPTIONS = [
 
 let body;
 let queryLocalFonts;
+let catalog;
+
+vi.mock(
+  '../../composables/output/useLocalFonts.js',
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    useLocalFonts: () => catalog,
+  }),
+);
 
 beforeEach(() => {
   body = hostNode('body');
@@ -45,6 +62,7 @@ beforeEach(() => {
       style: 'Regular',
     },
   ]);
+  catalog = createLocalFontsCatalog();
   vi.stubGlobal('document', {
     activeElement: null,
     body,
@@ -83,24 +101,41 @@ function action(root, label) {
 }
 
 describe('ObsFontFamilySelect', () => {
-  it('shows the selected name in UI type and a multilingual font sample', () => {
+  it('keeps multilingual samples behind the information button', async () => {
     const { app, root } = mount(ObsFontFamilySelect, {
       id: 'output-appearance-fontFamily',
       label: '字型',
-      modelValue: 'sans',
+      modelValue: 'rounded',
       options: OPTIONS,
     });
 
-    expect(combobox(root).props.value).toBe('無襯線');
-    expect(textContent(root)).toContain('舞台 · 무대 · ステージ · Stage 123');
+    expect(combobox(root).props.value).toBe('圓體');
+    expect(textContent(root)).not.toContain('星光照亮舞臺');
+    trigger(action(root, '字型預覽'), 'onClick');
+    await nextTick();
+    const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
+    expect(textContent(dialog)).toContain('星光照亮舞臺');
     expect(
-      findAll(root, (node) => node.props?.['data-font-source'] === 'preset'),
-    ).toHaveLength(1);
+      findAll(dialog, (node) => node.type === 'h3').map(textContent),
+    ).toEqual(['圓體']);
+    expect(textContent(dialog)).toContain(
+      '拉丁字元優先用 Arial Rounded MT Bold',
+    );
+    const samples = findAll(dialog, (node) => node.type === 'dd');
+    expect(samples.map((node) => node.props.lang)).toEqual([
+      'zh-Hant',
+      'en',
+      'ja',
+      'ko',
+    ]);
+    for (const sample of samples) {
+      expect(sample.props.style.fontFamily).toContain('Arial Rounded MT Bold');
+    }
     expect(queryLocalFonts).not.toHaveBeenCalled();
     app.unmount();
   });
 
-  it('opens preset font options when the field is clicked', async () => {
+  it('opens template fonts immediately and matches the Output font stacks', async () => {
     const { app, root } = mount(ObsFontFamilySelect, {
       id: 'output-appearance-fontFamily',
       label: '字型',
@@ -110,9 +145,11 @@ describe('ObsFontFamilySelect', () => {
     const control = combobox(root);
 
     trigger(control, 'onClick');
+    expect(queryLocalFonts).toHaveBeenCalledOnce();
     await nextTick();
 
     expect(control.props['aria-expanded']).toBe(true);
+    expect(control.props.value).toBe('');
     const presetOptions = findAll(
       body,
       (node) =>
@@ -120,14 +157,29 @@ describe('ObsFontFamilySelect', () => {
         findAll(node, (child) => child.props?.['data-font-source'] === 'preset')
           .length > 0,
     );
-    expect(presetOptions).toHaveLength(OPTIONS.length);
-    expect(textContent(presetOptions[0])).toContain(
-      '舞台 · 무대 · ステージ · Stage 123',
+    expect(presetOptions.map((option) => textContent(option).trim())).toEqual(
+      OPTIONS.map(({ label }) => label),
     );
+    const overlayCss = ['fallback', 'appearance']
+      .map((file) =>
+        readFileSync(
+          new URL(`../../../overlay/shared/${file}.css`, import.meta.url),
+          'utf8',
+        ),
+      )
+      .join('\n')
+      .replaceAll(/\s+/g, ' ');
+    for (const option of presetOptions) {
+      const sample = findAll(
+        option,
+        (node) => node.props?.style?.fontFamily,
+      )[0];
+      expect(overlayCss).toContain(sample.props.style.fontFamily);
+    }
     app.unmount();
   });
 
-  it('loads local fonts only after the explicit action and previews each option', async () => {
+  it('loads once on keyboard opening and lets the operator search local fonts', async () => {
     const { app, root } = mount(ObsFontFamilySelect, {
       id: 'output-appearance-fontFamily',
       label: '字型',
@@ -135,13 +187,18 @@ describe('ObsFontFamilySelect', () => {
       options: OPTIONS,
     });
 
-    trigger(action(root, '載入本機字體'), 'onClick');
+    const control = combobox(root);
+    trigger(control, 'onKeydown', { key: 'ArrowDown', preventDefault() {} });
+    expect(queryLocalFonts).toHaveBeenCalledOnce();
     await Promise.resolve();
     await nextTick();
+    expect(textContent(body)).toContain('模板字型');
+    expect(textContent(body)).toContain('本機字型');
+    trigger(control, 'onBlur');
+    trigger(control, 'onClick');
     expect(queryLocalFonts).toHaveBeenCalledOnce();
-    expect(textContent(root)).toContain('已載入 1 個字體家族');
 
-    trigger(combobox(root), 'onInput', { target: { value: 'Stage' } });
+    trigger(control, 'onInput', { target: { value: 'Stage' } });
     await nextTick();
     const localPreview = findAll(
       body,
@@ -149,9 +206,11 @@ describe('ObsFontFamilySelect', () => {
     );
     expect(localPreview).toHaveLength(1);
     expect(textContent(localPreview[0])).toContain('Stage Sans');
-    expect(textContent(localPreview[0])).toContain(
-      '舞台 · 무대 · ステージ · Stage 123',
-    );
+    expect(textContent(localPreview[0])).not.toContain('星光照亮舞臺');
+    expect(
+      findAll(localPreview[0], (node) => node.props?.style?.fontFamily)[0].props
+        .style.fontFamily,
+    ).toContain('"Stage Sans"');
     app.unmount();
   });
 
@@ -164,7 +223,7 @@ describe('ObsFontFamilySelect', () => {
       options: OPTIONS,
       'onUpdate:modelValue': update,
     });
-    trigger(action(root, '載入本機字體'), 'onClick');
+    trigger(combobox(root), 'onClick');
     await Promise.resolve();
     await nextTick();
     trigger(combobox(root), 'onInput', { target: { value: 'Stage' } });
@@ -200,14 +259,41 @@ describe('ObsFontFamilySelect', () => {
       },
       options: OPTIONS,
     });
-    trigger(action(root, '載入本機字體'), 'onClick');
+    trigger(combobox(root), 'onClick');
     await Promise.resolve();
     await nextTick();
 
-    expect(textContent(root)).toContain('本機字體不可用，輸出會使用預設字體');
+    expect(textContent(root)).toContain('本機字型不可用，輸出將使用預設字型');
     expect(
-      findAll(root, (node) => node.props?.['data-font-source'] === 'missing'),
+      findAll(body, (node) => node.props?.['data-font-source'] === 'missing'),
     ).toHaveLength(1);
+    app.unmount();
+  });
+
+  it('keeps the presets usable when access fails and can retry from the icon', async () => {
+    queryLocalFonts.mockRejectedValueOnce(new Error('query failed'));
+    const { app, root } = mount(ObsFontFamilySelect, {
+      id: 'output-appearance-fontFamily',
+      label: '字型',
+      modelValue: 'sans',
+      options: OPTIONS,
+    });
+    trigger(combobox(root), 'onClick');
+    await Promise.resolve();
+    await nextTick();
+    expect(textContent(body)).toContain('無法讀取本機字型');
+    expect(textContent(body)).toContain('模板字型');
+    expect(
+      findAll(body, (node) => node.props?.role === 'option').map((node) =>
+        textContent(node).trim(),
+      ),
+    ).toEqual(OPTIONS.map(({ label }) => label));
+    trigger(action(root, '重新讀取本機字型'), 'onClick');
+    await Promise.resolve();
+    await nextTick();
+    expect(queryLocalFonts).toHaveBeenCalledTimes(2);
+    expect(textContent(body)).toContain('Stage Sans');
+    expect(action(root, '重新讀取本機字型')).toBeUndefined();
     app.unmount();
   });
 });

@@ -20,7 +20,22 @@ const {
 } = require('../../shared/presentation/lyricsPresentationPolicies.mjs');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
-const OUTPUT_SLOTS_VERSION = 4;
+const OUTPUT_SLOTS_VERSION = 5;
+const PREVIOUS_FONT_OPTIONS = new Map([
+  ['receipt-setlist', []],
+  ['ribbon-setlist', []],
+  ['ticket-stub', []],
+  ['cover-player', []],
+  ['karaoke-stack', []],
+  ['kinetic-pop', []],
+  ['fisheye-lens', []],
+  ['chalkboard-vertical', []],
+  [
+    'centered-vertical',
+    ['lyrics-auto', 'chen-yu-luo-yan', 'klee-one', 'open-huninn'],
+  ],
+  ['ornate-vertical', ['ornate', 'antique']],
+]);
 const MAX_STYLE_SET_IDS = 32;
 const MAX_SETTINGS = 100;
 const MAX_ID_LENGTH = 100;
@@ -201,6 +216,17 @@ function migrateV3Document(value) {
   ) {
     lyrics.settings.fontFamily = 'antique';
   }
+  return dropInactiveLegacyFonts(document);
+}
+
+function dropInactiveLegacyFonts(document) {
+  // A previously ignored setting must not start changing a template on upgrade.
+  for (const slot of Object.values(document.slots)) {
+    const allowed = PREVIOUS_FONT_OPTIONS.get(slot.templateId);
+    if (allowed && !allowed.includes(slot.settings.fontFamily)) {
+      delete slot.settings.fontFamily;
+    }
+  }
   return document;
 }
 
@@ -255,6 +281,12 @@ function loadOutputSlots(dir) {
   if (data.version === 3 && data.slots) {
     const migrated = migrateV3Document(data);
     fs.copyFileSync(filePath, `${filePath}.v3-${Date.now()}.bak`);
+    writeOutputSlots(dir, migrated);
+    return migrated;
+  }
+  if (data.version === 4 && data.slots) {
+    const migrated = dropInactiveLegacyFonts(normalizeDocument(data));
+    fs.copyFileSync(filePath, `${filePath}.v4-${Date.now()}.bak`);
     writeOutputSlots(dir, migrated);
     return migrated;
   }

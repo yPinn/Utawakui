@@ -311,7 +311,7 @@ describe('Output F1 acceptance foundation', () => {
   });
 
   it.each(ids)(
-    '%s allows installed local font descriptors only when declared',
+    '%s stores and normalizes the shared Look, material and installed font controls',
     (id) => {
       const { baseline } = loadOutputAppearanceFixtures();
       const template = baseline.templates.find((item) => item.id === id);
@@ -323,13 +323,24 @@ describe('Output F1 acceptance foundation', () => {
       };
       const stored = sanitizeOutputSlot(template.kind, {
         templateId: id,
-        settings: { fontFamily: font },
+        settings: {
+          fontFamily: font,
+          paletteId: 'cool-film',
+          lookAmount: 50,
+          filmGrainAmount: 35,
+          filmGrainSize: 'coarse',
+        },
       });
       const appearance = normalizeOutputAppearance(stored.settings, {
         templateId: id,
       });
-      if (id === 'live-stage') expect(appearance.fontFamily).toEqual(font);
-      else expect(appearance.fontFamily).not.toEqual(font);
+      expect(appearance).toMatchObject({
+        fontFamily: font,
+        paletteId: 'cool-film',
+        lookAmount: 50,
+        filmGrainAmount: 35,
+        filmGrainSize: 'coarse',
+      });
       const unsafe = normalizeOutputAppearance(
         { fontFamily: { ...font, family: 'url(file:///private)' } },
         { templateId: id },

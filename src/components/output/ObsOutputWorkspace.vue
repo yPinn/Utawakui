@@ -55,12 +55,12 @@ const {
   setCompactSideOpen,
   activeKind,
   previewBackdrop,
-  showLyricsGuide,
+  lyricsPreviewMode,
   selectPage: rememberPage,
   selectKind: rememberKind,
   ensureAvailableKind,
   selectPreviewBackdrop,
-  setLyricsGuideVisible,
+  selectLyricsPreviewMode,
 } = useOutputWorkspaceNavigation();
 const browsedPresetIds = reactive(
   Object.fromEntries(
@@ -308,7 +308,7 @@ onBeforeUnmount(() => {
           :preview-url="workbenchUrls.previewUrl"
           :obs-url="workbenchUrls.obsUrl"
           :preview-backdrop="previewBackdrop"
-          :show-lyrics-guide="showLyricsGuide"
+          :lyrics-preview-mode="lyricsPreviewMode"
           :output-error="outputState.error || outputState.preferenceError"
           :recent-colors="outputState.preferences.recentColors"
           :saved-colors="outputState.preferences.savedColors"
@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
           @update:side-collapsed="setSideCollapsed"
           @update:compact-side-open="setCompactSideOpen"
           @update:preview-backdrop="selectPreviewBackdrop"
-          @update:show-lyrics-guide="setLyricsGuideVisible"
+          @update:lyrics-preview-mode="selectLyricsPreviewMode"
           @change-settings="queueAppearanceSave"
           @commit-color="saveRecentColor"
           @toggle-saved-color="toggleSavedColor"

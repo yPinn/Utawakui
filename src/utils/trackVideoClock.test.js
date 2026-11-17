@@ -39,6 +39,17 @@ describe('trackVideoFrame', () => {
     expect(trackVideoFrame(sample, 0, 0, NaN)).toBeNull();
   });
 
+  it('hides the preview video outside its media range after applying the offset', () => {
+    const at = (offset) =>
+      trackVideoFrame({ ...sample, phase: 'paused' }, offset, 0, 20, null, {
+        hideOutside: true,
+      });
+    expect(at(-10001)).toBeNull();
+    expect(at(-10000)).toEqual({ position: 0, rate: 1, playing: false });
+    expect(at(9999)).toEqual({ position: 19.999, rate: 1, playing: false });
+    expect(at(10000)).toBeNull();
+  });
+
   it('continues the prior section through a gap and switches at the next audible anchor', () => {
     const segments = [
       { startMs: 0, endMs: 171000, offsetMs: 18766 },

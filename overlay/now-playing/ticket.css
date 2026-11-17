@@ -1,5 +1,16 @@
 @import '../shared/ticketShape.css';
 
+:root[data-ovl-template='ticket-stub'][data-ovl-grain='on']
+  .artwork-overlay__paper-grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  pointer-events: none;
+  background: var(--ticket-paper) url('../shared/paper-grain.svg?no-inline');
+  filter: var(--ovl-grain-filters);
+}
+
 :is(
   :root[data-ovl-template='ticket-stub'] .artwork-overlay,
   .now-playing-ticket

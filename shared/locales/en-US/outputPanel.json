@@ -420,23 +420,53 @@
   "swatch": {
     "applyNamed": "Apply {label} {color}"
   },
+  "lookGroups": {
+    "basic": "Basic",
+    "film": "Film"
+  },
   "font": {
-    "presetWord": "Default",
-    "localWord": "Local",
+    "templateGroup": "Template fonts",
+    "localGroup": "Local fonts",
     "unavailable": "Unavailable",
-    "load": "Load local fonts",
     "reload": "Reload local fonts",
-    "idle": "Local fonts are read only after you press this",
     "loading": "Reading local fonts…",
-    "loaded": "{count} font family loaded | {count} font families loaded",
     "none": "No usable local fonts found",
     "unsupported": "Local font access isn't supported here",
-    "denied": "Local font access wasn't allowed",
+    "denied": "Can't access local fonts right now",
     "search": "Search fonts",
-    "reading": "Reading local fonts",
-    "missing": "The local font isn't available; output uses the default font",
-    "rightsNotice": "Local fonts are used in public output. Make sure you have the rights needed for streaming, recording, VOD, editing and commercial use.",
-    "readFailed": "Local fonts can't be read right now. Try again."
+    "missing": "The local font is unavailable. Output will use the default font.",
+    "rightsNotice": "Check the font license for streaming, recording, VOD, clips and commercial use.",
+    "usage": "Lyrics use a fallback if the font or glyph is missing.",
+    "trackUsage": "Song titles and artist names use a fallback if the font or glyph is missing.",
+    "readFailed": "Can't read local fonts. Try again.",
+    "presets": {
+      "sans": "System sans-serif, such as Segoe UI",
+      "serif": "GenWanMin2 and Noto Serif",
+      "rounded": "Arial Rounded MT Bold first for Latin text",
+      "ornate": "Japanese serif",
+      "antique": "Japanese manga font",
+      "lyricsAuto": "ChenYuLuoYan for Traditional Chinese, Klee One for Japanese, Open Huninn for other text",
+      "chenYuLuoYan": "Traditional Chinese handwriting with Open Huninn fallback",
+      "kleeOne": "Japanese handwriting with Open Huninn fallback",
+      "openHuninn": "Rounded Traditional Chinese"
+    },
+    "templateDetails": {
+      "receiptSetlist": "Yu Gothic UI and Microsoft JhengHei",
+      "ribbonSetlist": "Microsoft JhengHei, Yu Gothic UI or Malgun Gothic, depending on the script",
+      "karaokeStack": "Open Huninn and Microsoft JhengHei",
+      "kineticPop": "Open Huninn, M PLUS Rounded 1c or Keifont, depending on output language and material",
+      "fisheyeLens": "Microsoft JhengHei and Yu Gothic",
+      "chalkboardVertical": "Open Huninn"
+    },
+    "preview": {
+      "title": "Font preview",
+      "languages": {
+        "zh-Hant": "Traditional Chinese",
+        "en": "English",
+        "ja": "Japanese",
+        "ko": "Korean"
+      }
+    }
   },
   "color": {
     "removeSaved": "Remove saved",
@@ -481,8 +511,9 @@
     "label": "Browser Source preview",
     "live": "Browser Source live preview",
     "fixed": "Fixed",
-    "hideGuide": "Hide performer guide",
-    "showGuide": "Show performer guide",
+    "showPreviewPerformer": "Show performer guide",
+    "showPreviewMv": "Switch to MV",
+    "hidePreviewBackground": "Hide preview background",
     "copyUrl": "Copy URL",
     "copyUrlHint": "Copy the URL, or drag it into your streaming software"
   },
@@ -633,11 +664,19 @@
       "readability": "Readability",
       "surface": "Background",
       "decoration": "Decoration",
+      "material": "Material",
       "layout": "Layout",
       "motion": "History review",
       "content": "Content"
     },
     "fields": {
+      "filmGrainAmount": {
+        "label": "Grain amount"
+      },
+      "filmGrainSize": {
+        "label": "Grain size",
+        "options": { "fine": "Fine", "medium": "Medium", "coarse": "Coarse" }
+      },
       "vinylSurfaceLight": {
         "label": "Record highlight",
         "options": { "off": "Off", "soft": "Soft", "standard": "Standard" }
@@ -715,16 +754,22 @@
           "original": "Original",
           "warm": "Warm stage",
           "cool": "Cool stage",
+          "warmFilm": "Fujifilm NOSTALGIC Neg.",
+          "coolFilm": "Fujifilm ETERNA",
+          "velviaStyle": "Fujifilm Velvia",
+          "kodakGold200Style": "Kodak Gold 200",
+          "polaroid600Style": "Polaroid 600",
           "monochrome": "Black and white",
           "highContrast": "High contrast"
         }
       },
       "lookAmount": {
-        "label": "Intensity"
+        "label": "Look strength"
       },
       "fontFamily": {
         "label": "Font",
         "options": {
+          "template": "Follow template",
           "sans": "Sans serif",
           "serif": "Serif",
           "rounded": "Rounded",

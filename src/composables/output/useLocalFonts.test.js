@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createLocalFontsCatalog } from './useLocalFonts.js';
+import { createLocalFontsCatalog, useLocalFonts } from './useLocalFonts.js';
 
 describe('useLocalFonts', () => {
+  it('shares one catalog across control instances for the session', () => {
+    expect(useLocalFonts()).toBe(useLocalFonts());
+  });
+
   it('loads and normalizes fonts only after the explicit action runs', async () => {
     let calls = 0;
     const catalog = createLocalFontsCatalog({
@@ -57,6 +61,6 @@ describe('useLocalFonts', () => {
     });
     await failed.load();
     expect(failed.status.value).toBe('error');
-    expect(failed.error.value).toBe('目前無法讀取本機字體，請再試一次。');
+    expect(failed.error.value).toBe('無法讀取本機字型，請再試一次。');
   });
 });

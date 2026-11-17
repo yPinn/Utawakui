@@ -29,6 +29,8 @@ export {
   Ellipsis,
   ExternalLink,
   Eye,
+  EyeOff,
+  Film,
   Folder,
   FolderInput,
   FolderOpen,

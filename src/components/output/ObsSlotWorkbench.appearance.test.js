@@ -1,11 +1,15 @@
 import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppearance.mjs';
 import { localizeAppearanceField } from '../../utils/outputPanelCopy.js';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
+
+vi.mock('../../composables/usePlayer.js', () => ({
+  usePlayer: () => ({ state: { track: null } }),
+}));
 
 // Production fields reach the workbench localized (outputTemplates.js).
 const fieldsFor = (templateId) =>
@@ -22,10 +26,10 @@ const templateTabLabels = {
   'live-stage': ['顯示', '文字', '色彩'],
   'manga-frame': ['顯示', '文字', '色彩'],
   'art-card': ['文字', '色彩'],
-  'ticket-stub': ['文字'],
+  'ticket-stub': ['文字', '色彩'],
   'cover-player': ['文字', '色彩'],
-  'receipt-setlist': ['動態', '版面', '文字'],
-  'ribbon-setlist': ['動態', '色彩'],
+  'receipt-setlist': ['動態', '版面', '文字', '色彩'],
+  'ribbon-setlist': ['動態', '文字', '色彩'],
 };
 
 async function renderRegisteredTemplate(
@@ -58,6 +62,29 @@ async function renderRegisteredTemplate(
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it.each(getOutputWorkbenchData().templates.map(({ id }) => id))(
+    'separates the fixed color look and material controls in %s',
+    async (templateId) => {
+      const { groups } = outputInspectorTabs(fieldsFor(templateId)).find(
+        ({ id }) => id === 'color',
+      );
+      const keysFor = (id) =>
+        groups.find((group) => group.id === id).fields.map(({ key }) => key);
+      expect(keysFor('color-treatment')).toEqual(['paletteId', 'lookAmount']);
+      expect(keysFor('material')).toEqual(['filmGrainAmount', 'filmGrainSize']);
+
+      const html = await renderRegisteredTemplate(
+        templateId,
+        {},
+        { paletteId: 'monochrome' },
+      );
+      expect(html).toContain('套用強度');
+      expect(html).toContain('>材質</h3>');
+      expect(html).toContain('output-appearance-filmGrainAmount');
+      expect(html).toContain('output-appearance-filmGrainSize');
+    },
+  );
+
   it('groups independent Fisheye rim and reflection choices under Decoration', async () => {
     const decoration = outputInspectorTabs(fieldsFor('fisheye-lens'))
       .find(({ id }) => id === 'color')
@@ -204,7 +231,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     ).toEqual([
       ['動態', ['receiptReview', 'receiptReviewInterval']],
       ['版面', ['receiptDirection']],
-      ['文字', ['fontScale']],
+      ['文字', ['fontFamily', 'fontScale']],
+      ['色彩', ['paletteId', 'lookAmount', 'filmGrainAmount', 'filmGrainSize']],
     ]);
 
     const html = await renderRegisteredTemplate('receipt-setlist');
@@ -212,11 +240,10 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
         ([, label]) => label,
       ),
-    ).toEqual(['動態', '版面', '文字']);
+    ).toEqual(templateTabLabels['receipt-setlist']);
     expect(html).toContain('>字體設定</h3>');
     expect(html).toContain('>歷史回顧</h3>');
     expect(html).not.toContain('data-output-side-toggle');
-    expect(html).not.toContain('output-appearance-paletteId');
     for (const { key } of fields) {
       expect(html).toContain(`output-appearance-${key}`);
     }
@@ -224,7 +251,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       outputInspectorTabs(fields.filter(({ group }) => group !== 'motion')).map(
         ({ id }) => id,
       ),
-    ).toEqual(['arrangement', 'text']);
+    ).toEqual(['arrangement', 'text', 'color']);
   });
 
   it('uses the same motion controls for the Ribbon and Receipt Setlists', async () => {
@@ -277,13 +304,20 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     ],
     [
       'ticket-stub',
-      ['fontScale', 'fontWeight'],
-      ['surface', 'paletteId', 'lookAmount', 'vinylSurfaceLight'],
+      ['paletteId', 'lookAmount', 'fontFamily', 'fontScale', 'fontWeight'],
+      ['surface', 'vinylSurfaceLight'],
     ],
     [
       'cover-player',
-      ['paletteId', 'lookAmount', 'fontScale', 'fontWeight', 'surface'],
-      ['fontFamily', 'alignment'],
+      [
+        'paletteId',
+        'lookAmount',
+        'fontFamily',
+        'fontScale',
+        'fontWeight',
+        'surface',
+      ],
+      ['alignment'],
     ],
   ])(
     'renders the effective %s appearance controls',
@@ -436,7 +470,6 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
 
     expect(html).not.toContain('role="status"');
-    expect(html).not.toContain('aria-live="polite"');
     expect(html).not.toContain('已儲存');
     expect(html).not.toMatch(/<button[^>]*>\s*儲存\s*<\/button>/u);
   });
@@ -503,7 +536,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               id: 'karaoke-stack',
               name: 'Classic KTV',
               kind: 'lyrics',
-              editableAppearanceKeys: ['fontScale'],
+              editableAppearanceKeys: ['fontFamily', 'fontScale'],
               appearanceFields: fieldsFor('karaoke-stack'),
             },
             activeKind: 'lyrics',
@@ -523,7 +556,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
 
     expect(html).toContain('字級');
-    expect(html).not.toContain('output-appearance-fontFamily');
+    expect(html).toContain('output-appearance-fontFamily');
     expect(html).not.toContain('output-appearance-fontWeight');
     expect(html).not.toContain('output-appearance-alignment');
     expect(html).not.toContain('output-appearance-surface');
@@ -693,7 +726,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
             outputSlot: {
               templateId: 'ornate-vertical',
               settings: {
-                fontFamily: 'serif',
+                fontFamily: 'ornate',
                 fontScale: 'medium',
                 textColor: '#fff8ec',
                 accentColor: '#ffffff',
@@ -728,7 +761,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       /obs-slot-workbench__inspector-header[^]*?<h2[^]*?<\/h2>[^]*?<button(?=[^>]*ui-icon-btn)(?=[^>]*obs-slot-workbench__reset)[^>]*>[^]*?重設模板[^]*?<\/button>[^]*?obs-property-section/u,
     );
     expect(html).toMatch(
-      /<select id="output-appearance-fontFamily"[^>]*value="ornate"/,
+      /<input[^>]*id="output-appearance-fontFamily"[^>]*value="華麗明朝（Hina Mincho）"/,
     );
     expect(html).toContain('華麗明朝（Hina Mincho）');
     expect(html).not.toContain('output-appearance-fontWeight');

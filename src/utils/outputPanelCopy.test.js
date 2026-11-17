@@ -35,6 +35,7 @@ describe('output panel copy', () => {
       '可讀性',
       '背景',
       '裝飾',
+      '材質',
       '版面',
       '歷史回顧',
       '內容顯示',
@@ -51,8 +52,13 @@ describe('output panel copy', () => {
       groupLabel: '整體配色',
       options: [
         { id: 'original', label: '模板原色' },
-        { id: 'warm', label: '暖色舞台' },
-        { id: 'cool', label: '冷色舞台' },
+        { id: 'warm', label: '暖調舞台' },
+        { id: 'cool', label: '冷調舞台' },
+        { id: 'warm-film', label: 'Fujifilm NOSTALGIC Neg.' },
+        { id: 'cool-film', label: 'Fujifilm ETERNA' },
+        { id: 'velvia-style', label: 'Fujifilm Velvia' },
+        { id: 'kodak-gold-200-style', label: 'Kodak Gold 200' },
+        { id: 'polaroid-600-style', label: 'Polaroid 600' },
         { id: 'monochrome', label: '黑白' },
         { id: 'high-contrast', label: '高對比' },
       ],
@@ -63,6 +69,9 @@ describe('output panel copy', () => {
     expect(font.options).toEqual([
       { id: 'ornate', label: '華麗明朝（Hina Mincho）' },
       { id: 'antique', label: '古典明朝（GenEi Antique）' },
+      { id: 'sans', label: '無襯線' },
+      { id: 'serif', label: '襯線' },
+      { id: 'rounded', label: '圓體' },
     ]);
   });
 
