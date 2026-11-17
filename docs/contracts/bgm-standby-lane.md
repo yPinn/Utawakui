@@ -266,7 +266,9 @@ BGM fade 至零、確認 deck paused，再完成 pre-roll。buffering／stalled�
   separation 成本、等待時間與 artifact lifecycle 仍由既有 audio-processing flow 管理。
 - 選取來源依 `hasSeparation` 與 `stemsUrl`，不把只有 recipe 名稱或尚未產生的 artifact 當就緒。沒有結果時使用原始音訊，或由使用者先執行既有分離流程；不得在按下 play 後才隱式排程處理。原曲本身含有人聲時，導唱開關不能宣稱能移除它。
 - 展開的操作列依序是 BGM 導唱（MicVocal）、壓低音量（Volume1 單音波）、靜音與音量。兩個開關沿用 `UiIconButton`、active／aria-pressed 與動作提示；壓低提示為相對降低 dB 或按下恢復，不顯示成另一個絕對音量。狀態列顯示「伴奏」、「伴奏＋導唱」或「原曲」，維持原本固定行高。
-- BGM 需要獨立 volume／mute，並可為單一 item 保存 bounded gain trim；不得改寫原始音訊。
+- BGM 需要獨立 volume／mute。單曲微調沿用演唱播放器的[本首音量](player-audio-controls.md#本首音量)：
+  同一首歌在兩邊共用一個值，乘在 BGM volume 之前，fade、Dim、mute 都以含微調的目標為準；
+  不另存在 BGM 計畫內，也不得改寫原始音訊。
   自動 loudness normalization 目前未實作，若後續加入，必須保存分析 metadata、使用
   non-destructive gain、設定 true-peak ceiling，且不把一般播放音量或演唱 mix 一起改掉。
 - Utawakui 不偵測、擷取或推論 microphone activity，因此 MVP 不做 app-owned 自動 mic
