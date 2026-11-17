@@ -280,6 +280,19 @@ for the source and translation, including untranslated lines. Playback reads
 the saved text locally. The translation selection starts off when the lyrics
 workspace opens.
 
+The supported languages and the row length limit live in
+`shared/lyricsTranslationValues.json`. A file written before a language was
+added reads that language as empty. Output carries every saved language of the
+playing source as `translations` keyed by stable line ID; hidden credit or
+label lines drop their rows. The Output translation setting (`output`, `off`
+or a language) defaults to following the Output language and applies live
+through the overlay configuration. The overlay lyrics frame carries the current
+line's translation, empty for an untranslated line, whenever the chosen
+language has saved rows. Live Stage draws it as a smaller row under the
+caption and keeps that row for an untranslated line. Other templates, the
+prompter and the companion do not show it. A save in the editor reaches Output without
+reloading the file.
+
 ## Reading data
 
 Furigana, romanization, translation, and manual reading corrections remain in

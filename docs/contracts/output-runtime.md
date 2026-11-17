@@ -41,6 +41,7 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 
 - 四個 OBS URL 不變。內建 overlay 協商 `utawakui.output.v3` subprotocol；不帶 subprotocol 的 client 與 `/api/v1/state` 保留 snapshot v2；未知 subprotocol 直接拒絕。
 - V3 只在 canonical 值改變時送 `lyrics.document`、`queue.document`；動態 `state.snapshot` 帶時鐘、phase、延遲、曲目 scalar 與內容 reference。連線時依序送設定、內容、狀態；引用未知內容的狀態 fail closed。Socket 唯讀，overlay 不能請求內容或傳入命令。
+- `lyrics.document` 可帶 `translations`：依語言列出 `{ lineId, text }`，Main 只收共用語言清單、存在且不重複的行與有界非空文字。`overlayConfig.translationLanguage` 由「畫面輸出譯文」設定解析，與 `language` 一起即時推送；切換不重送歌詞文件。見[譯文契約](lyrics-timing-contract.md#local-translation-data)。
 - 每個 client 一個 in-flight send 與有界 pending slot：時鐘修正 latest-wins，新語意狀態取代舊時鐘修正，內容排在使用它的狀態之前。逾時或持續超過 high-water 只斷開該 client。Diagnostics 只記總數與 bytes，不記曲名、歌詞或 payload。
 - HTTP：health／state `no-store`；runtime HTML／JS／CSS 用 strong ETag ＋ `no-cache`；封面以 track id 指標重新驗證後轉址到 SHA-256 digest route，該 route 一年 immutable。都不接受檔名或路徑。
 - Server 只綁 `127.0.0.1`，exact route allowlist、明確 media type、`nosniff`、restrictive CSP。
