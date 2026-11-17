@@ -33,6 +33,7 @@
 - [外部服務限流與重試](external-service-request-policy.md)
 - [歌詞來源：搜尋、自動取得與各來源](lyrics-sources.md)
 - [Self-View提詞與窄域控制](performer-prompter-contract.md)
+- [手機遙控與提詞](mobile-companion.md)
 
 ## 音樂分析與識別
 

@@ -38,3 +38,4 @@
 | [0030](0030-release-runtime-bundles.md)                            | 正式版 runtime bundles 與 unpack 邊界 | Accepted                          |
 | [0031](0031-scoped-release-private-symbols.md)                     | 正式版 Main 私有符號的限範圍轉換      | Accepted                          |
 | [0032](0032-ui-and-output-languages.md)                            | 介面語言與 Output 語言                | Accepted                          |
+| [0033](0033-mobile-companion-local-network.md)                     | 手機遙控與提詞的區網通道              | Accepted                          |

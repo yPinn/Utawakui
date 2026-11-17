@@ -100,9 +100,10 @@ user configuration than read-only events.
   observed adapter states, not silent fallback to unauthenticated access.
 - Rate limits apply per identity and command type.
 
-The first release does not expose a general remote/LAN API. Any future LAN access
-needs a separate threat model, TLS/pairing, origin policy, and user-facing network
-scope.
+The first release does not expose a general remote/LAN API. The only planned LAN
+access is the paired phone companion, a separate plane with its own threat model,
+pairing, origin policy and network scope ([ADR 0033](../adr/0033-mobile-companion-local-network.md),
+[contract](mobile-companion.md)). Other LAN access needs its own decision.
 
 ## Adapter lifecycle
 
