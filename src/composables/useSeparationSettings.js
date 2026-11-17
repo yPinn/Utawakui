@@ -13,6 +13,17 @@ export function useSeparationSettings(options = {}) {
     readMessage: t('capabilities.gpu.readFailed'),
     saveMessage: t('capabilities.gpu.saveFailed'),
   });
+  // Shared by key, so Settings and the Import dock show one value.
+  const autoSeparation = useSettingsPreference({
+    scope: bridge,
+    key: 'auto-separation',
+    initialValue: false,
+    read: () => bridge.getAutoSeparation(),
+    write: (value) => bridge.setAutoSeparation(value),
+    validate: (value) => typeof value === 'boolean',
+    readMessage: t('capabilities.autoSeparation.readFailed'),
+    saveMessage: t('capabilities.autoSeparation.saveFailed'),
+  });
   return {
     gpuAcceleration: preference.value,
     preferenceBusy: preference.busy,
@@ -23,5 +34,13 @@ export function useSeparationSettings(options = {}) {
     preferenceError: preference.error,
     refreshPreference: preference.refresh,
     setGpuAcceleration: preference.save,
+    autoSeparate: autoSeparation.value,
+    autoSeparationBusy: autoSeparation.busy,
+    autoSeparationReading: autoSeparation.reading,
+    autoSeparationLoaded: autoSeparation.loaded,
+    autoSeparationReadError: autoSeparation.readError,
+    autoSeparationSaveError: autoSeparation.saveError,
+    refreshAutoSeparation: autoSeparation.refresh,
+    setAutoSeparate: autoSeparation.save,
   };
 }

@@ -52,6 +52,14 @@
     "readFailed": "目前無法讀取 GPU 加速設定，請重新讀取。",
     "saveFailed": "目前無法儲存 GPU 加速設定，已恢復原設定。"
   },
+  "autoSeparation": {
+    "title": "匯入後自動產生伴奏",
+    "guidance": "需先準備好伴奏工具。OBS 直播或錄影時，等結束後再處理。",
+    "toggle": "自動產生伴奏",
+    "toggleLabel": "匯入曲目後自動產生伴奏",
+    "readFailed": "目前無法讀取自動產生伴奏設定，請重新讀取。",
+    "saveFailed": "目前無法儲存自動產生伴奏設定，已恢復原設定。"
+  },
   "toolGroups": {
     "separation": "人聲分離",
     "bpm": "BPM 分析"

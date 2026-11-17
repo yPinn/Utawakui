@@ -36,6 +36,7 @@ import { useLyricsAcousticCapability } from '../../composables/lyrics/useLyricsA
 import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 import OutputRuntimeSettingsBlock from './OutputRuntimeSettingsBlock.vue';
 import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
+import SeparationAutoSettingsRow from './SeparationAutoSettingsRow.vue';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
 import SettingsDependencyList from './SettingsDependencyList.vue';
 import { t } from '../../utils/i18n.js';
@@ -350,6 +351,7 @@ onMounted(() => {
   musicAnalysisSettings.initialize();
   lyricsAcousticCapability.refresh();
   separationSettings.refreshPreference();
+  separationSettings.refreshAutoSeparation();
   youtubeLoginSettings.refresh();
   obsIntegrationSettings.refreshSettings();
 });
@@ -503,6 +505,20 @@ onUnmounted(() => clearFeatureGateRequest());
                       @set-gpu-acceleration="
                         separationSettings.setGpuAcceleration
                       "
+                    />
+                    <SeparationAutoSettingsRow
+                      :auto-separate="separationSettings.autoSeparate.value"
+                      :busy="separationSettings.autoSeparationBusy.value"
+                      :error="separationSettings.autoSeparationSaveError.value"
+                      :read-error="
+                        separationSettings.autoSeparationReadError.value
+                      "
+                      :reading="separationSettings.autoSeparationReading.value"
+                      :loaded="separationSettings.autoSeparationLoaded.value"
+                      @refresh-preference="
+                        separationSettings.refreshAutoSeparation
+                      "
+                      @set-auto-separate="separationSettings.setAutoSeparate"
                     />
                     <GuidePitchSettingsRow v-if="GuidePitchSettingsRow" />
                   </template>

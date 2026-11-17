@@ -17,6 +17,32 @@ vi.mock('../../composables/useLocalImport.js', () => ({
     importFiles: vi.fn(),
   }),
 }));
+vi.mock('../../composables/useFeatureGates.js', () => ({
+  useFeatureGates: () => ({
+    isFeatureEnabled: () => fixture.audioGate ?? false,
+  }),
+}));
+vi.mock('../../composables/useSeparationSettings.js', () => ({
+  useSeparationSettings: () => fixture.separation,
+}));
+vi.mock('../ui/UiCheckbox.vue', () => ({
+  default: {
+    props: ['id', 'label', 'modelValue', 'disabled'],
+    emits: ['update:modelValue'],
+    setup:
+      (props, { emit }) =>
+      () =>
+        h(
+          'button',
+          {
+            id: props.id,
+            'data-checked': String(props.modelValue),
+            onClick: () => emit('update:modelValue', !props.modelValue),
+          },
+          props.label,
+        ),
+  },
+}));
 vi.mock('../layout/AppRightDockSection.vue', () => ({
   default: {
     props: ['heading'],
@@ -128,6 +154,15 @@ import Dock from './ImportDockContent.vue';
 attachClientRender(Dock, './ImportDockContent.vue', import.meta.url);
 const node = (root, id) => findAll(root, (n) => n.props.id === id)[0];
 beforeEach(() => {
+  fixture.audioGate = false;
+  fixture.separation = {
+    autoSeparate: shallowRef(false),
+    autoSeparationLoaded: shallowRef(true),
+    autoSeparationBusy: shallowRef(false),
+    autoSeparationSaveError: shallowRef(''),
+    refreshAutoSeparation: vi.fn(),
+    setAutoSeparate: vi.fn(),
+  };
   const state = reactive({
     input: 'a',
     sourceKind: 'playlist',
@@ -264,6 +299,25 @@ describe('Import Dock accepted work', () => {
     trigger(node(mounted.root, 'monitor-accepted'), 'onClick');
     await nextTick();
     expect(findAll(mounted.root, (n) => n.type === 'dialog')).toHaveLength(1);
+    mounted.app.unmount();
+  });
+});
+
+describe('automatic accompaniment toggle', () => {
+  it('stays hidden until audio processing is enabled', () => {
+    const mounted = mount(Dock, { active: true });
+    expect(node(mounted.root, 'import-dock-auto-separation')).toBeUndefined();
+    expect(fixture.separation.refreshAutoSeparation).toHaveBeenCalled();
+    mounted.app.unmount();
+  });
+
+  it('shows the saved value and writes the opposite choice', () => {
+    fixture.audioGate = true;
+    const mounted = mount(Dock, { active: true });
+    const toggle = node(mounted.root, 'import-dock-auto-separation');
+    expect(toggle.props['data-checked']).toBe('false');
+    trigger(toggle, 'onClick');
+    expect(fixture.separation.setAutoSeparate).toHaveBeenCalledWith(true);
     mounted.app.unmount();
   });
 });

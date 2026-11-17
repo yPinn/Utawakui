@@ -52,6 +52,14 @@
     "readFailed": "The GPU acceleration setting can't be read. Reload it.",
     "saveFailed": "The GPU acceleration setting can't be saved and has been restored."
   },
+  "autoSeparation": {
+    "title": "Accompaniment after import",
+    "guidance": "Needs the accompaniment tools ready. Waits while OBS is streaming or recording.",
+    "toggle": "Make accompaniment automatically",
+    "toggleLabel": "Make accompaniment automatically after importing tracks",
+    "readFailed": "The automatic accompaniment setting can't be read. Reload it.",
+    "saveFailed": "The automatic accompaniment setting can't be saved and has been restored."
+  },
   "toolGroups": {
     "separation": "Vocal separation",
     "bpm": "BPM analysis"

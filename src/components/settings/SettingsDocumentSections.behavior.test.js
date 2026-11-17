@@ -190,6 +190,14 @@ vi.mock('../../composables/useSeparationSettings.js', async () => {
       preferenceReading: shallowRef(false),
       refreshPreference: mocks.refreshSeparationPreference,
       setGpuAcceleration: vi.fn(),
+      autoSeparate: shallowRef(false),
+      autoSeparationBusy: shallowRef(false),
+      autoSeparationSaveError: shallowRef(''),
+      autoSeparationReadError: shallowRef(''),
+      autoSeparationLoaded: shallowRef(true),
+      autoSeparationReading: shallowRef(false),
+      refreshAutoSeparation: vi.fn(),
+      setAutoSeparate: vi.fn(),
     }),
   };
 });

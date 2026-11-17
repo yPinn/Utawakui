@@ -1,5 +1,5 @@
 <script setup>
-import { computed, shallowRef, watch } from 'vue';
+import { computed, onMounted, shallowRef, watch } from 'vue';
 import { useLibraryArtwork } from '../../composables/useLibraryArtwork.js';
 import {
   releaseMetadataLabel,
@@ -14,6 +14,9 @@ import {
 } from '../../icons/index.js';
 import { useImportSession } from '../../composables/useImportSession.js';
 import { useLocalImport } from '../../composables/useLocalImport.js';
+import { useFeatureGates } from '../../composables/useFeatureGates.js';
+import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
+import { FEATURE_IDS } from '../../constants/featureGates.js';
 import {
   candidateId,
   playbackKindLabel,
@@ -21,6 +24,7 @@ import {
 import { isImportBatchRunning } from '../../utils/importBatch.js';
 import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -56,6 +60,18 @@ const {
   confirmImport,
   getTrackStatusClass,
 } = useImportSession();
+
+const { isFeatureEnabled } = useFeatureGates();
+const separationSettings = useSeparationSettings();
+// Read failures stay in Settings; the dock only offers a known value.
+const showAutoSeparation = computed(
+  () =>
+    isFeatureEnabled(FEATURE_IDS.AUDIO_PROCESSING_FLOW) &&
+    separationSettings.autoSeparationLoaded.value,
+);
+onMounted(() => {
+  void separationSettings.refreshAutoSeparation();
+});
 
 const reviewOpen = shallowRef(false);
 const { collectionArtwork } = useLibraryArtwork();
@@ -249,6 +265,17 @@ watch(
       :batch="reviewBatch"
       @close="reviewOpen = false"
       @submitted="handleSubmitted"
+    />
+
+    <UiCheckbox
+      v-if="showAutoSeparation"
+      id="import-dock-auto-separation"
+      :label="t('capabilities.autoSeparation.title')"
+      :aria-label="t('capabilities.autoSeparation.toggleLabel')"
+      :model-value="separationSettings.autoSeparate.value"
+      :disabled="separationSettings.autoSeparationBusy.value"
+      :error="separationSettings.autoSeparationSaveError.value"
+      @update:model-value="separationSettings.setAutoSeparate"
     />
 
     <AppRightDockSection :heading="t('import.dock.localAudio')">
