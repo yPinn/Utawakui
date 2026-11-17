@@ -502,8 +502,11 @@ Batch identity combines source-line identity with source ranges, independently
 of text equality. Equal adjacent text starts a new entrance/paint lifecycle;
 progress ticks within the same batch do not. T1 fallback fill uses derived page
 progress only while playing; native/coarse/fine evidence keeps its original
-intervals. Partial coarse cuts do not invent completion times. Seek and reduced
-motion settle directly and cancel active caption entrances. Live Stage's lyric
+intervals. A page boundary after separator whitespace can use the next word's
+source onset when the pages meet minimum dwell. KTV keeps the word's sweep
+when only edge whitespace changes pages. Partial coarse cuts do not invent
+completion times. Seek and reduced motion settle directly and cancel active
+caption entrances. Live Stage's lyric
 caption entrance is independent of its title-card window.
 The local Performer uses the same pure planner with its own content-box measure
 and reading-scale invalidation. The document reader keeps canonical line identity

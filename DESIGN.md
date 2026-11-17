@@ -1033,19 +1033,18 @@ a dashed accent outline and the selected element a solid focus-width outline.
 The layer is `aria-hidden`; the `調整對象` select remains the keyboard and
 assistive-technology path, so no focusable canvas targets are added.
 
-Live Stage alone pilots local font selection. Its font control is a searchable
-combobox: clicking the closed field opens the complete available list and highlights
-the committed family, then brings that option back into the nearest visible portion
-of the list; only text the operator actually types activates filtering. The committed
-family name remains in control-panel UI type,
-while a separate Traditional Chinese／Korean／Japanese／Latin sample uses the
-candidate family in both the closed control and rich options. Bundled presets stay
-visible before any permission request. The app never scans at startup; an explicit
-`載入本機字體` action requests access and reports loading, ready, unsupported,
-denied, or retryable failure. Local selections show a concise public-output rights
-notice. A saved family is marked unavailable only after a completed catalog check,
-then the Overlay falls back to its safe UI stack. Fixed-artwork templates keep their
-bundled font contract and do not inherit this capability.
+Every Output template offers local font selection in one searchable combobox. The closed
+field shows the committed family in control-panel UI type. Opening the field
+highlights the current selection and exposes an empty search input. Option names
+use the font they represent. The first user-initiated opening reads installed
+families in the trusted control panel and shares the catalog for the control-panel
+session. The Local fonts group shows loading and failure states, with an icon to
+retry a failed read. The adjacent information button opens a compact dialog with
+Traditional Chinese, English, Japanese and Korean samples using the selected
+Browser Source font stack. The dialog identifies font families, explains fallback and shows the
+public-output rights notice for local selections. A completed check can mark a
+saved family unavailable, in which case the samples use the template default.
+The font field applies to lyric text or song metadata by Output kind.
 
 The `live-stage` Lyrics template follows an original K-pop broadcast hierarchy on
 the fixed 1920×1080 canvas. Top chrome shares the 6.25%／5% horizontal safe anchors
@@ -1399,6 +1398,7 @@ Performer display settings use the shared Popover panel-style interface for a bo
 
 ### Sliders / Transport Controls
 
+- **Wheel input:** vertical wheel input over a focused range advances one native step by default. `UiVolumeControl` accepts wheel input over its range without focus. Playback and BGM progress opt out. A wheel adjustment emits the same input and change events as a native edit. At a limit, on a disabled range, or for modified and horizontal gestures, the wheel keeps its default behavior. Use `wheelSteps` for a supported multiple of the native step, such as 10 ms for microphone activity timing. Visual stops mark reference values independently of input steps.
 - **Sliders:** use for continuous values such as volume, pitch cents, and tempo rate.
 - **Primitive ownership:** `UiRangeControl` owns the single native range input, authored track／fill／thumb, optional in-track stops and pointer-position preview. It also supports an opt-in numeric default: only an enabled caller that provides `defaultValue` converts right-click／keyboard context-menu intent into a bounded, step-aligned model update followed by a `reset` intent; disabled controls and consumers without a default preserve the native context menu. The caller remains responsible for persistence. Output appearance and performance adjustments with canonical domain defaults opt in explicitly: Transpose／Pitch／Speed and monitor／capture guide-vocal mix all reuse `PLAYER_AUDIO_DEFAULTS`; playback progress and playback／BGM volume remain transport controls and do not gain reset behavior merely because they reuse the primitive. `UiRange` adds Field label／hint／error and optional current-value output, and only forwards that optional default／reset contract; compact transport and tool recipes use the bare control instead of forcing a Field wrapper into dense chrome.
 - **Volume composition.** `UiVolumeControl` combines the existing icon button and bare range. PlayerBar and BGM keep both controls visible. In the track preview header, reserve the range width on the start side so hover, focus or dragging reveals the range without moving the mute or close buttons. Input without hover keeps the range visible. Use the existing spacing and density tokens for the gap and width; each caller owns volume, mute and persistence.

@@ -72,7 +72,7 @@ V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount�
 
 ## Browser Source 頁面生命週期
 
-固定頁面入口為 `/overlay/lyrics`、`/overlay/now-playing` 與 `/overlay/setlist`。Lyrics 的本機檢視直接在同一入口加上有界的 `workbench=1`、`guide=0/1` 與 backdrop 選項，不另包一層 Workbench iframe 頁面。`overlay/assets/streamer-guide.png` 是檢視模式與 renderer 無 runtime fallback 共用的唯一圖片來源；HTTP 僅開放該明列資產，不開放資料夾。
+固定頁面入口為 `/overlay/lyrics`、`/overlay/now-playing` 與 `/overlay/setlist`。Lyrics 檢視模式共用相同入口，接受有界的 `workbench=1`、`guide=0/1` 與 backdrop 選項。App 內工作台使用透明歌詞 iframe，由 renderer 在 iframe 下方合成已同步 MV 或人物參考。`overlay/assets/streamer-guide.png` 是檢視模式和 App 工作台共用的人物圖，HTTP 僅開放該明列資產。App 工作台的 MV 由 renderer 經 `utawakui-media:` 讀取。
 
 | 模組                          | 責任                                                                      | 不持有                            |
 | ----------------------------- | ------------------------------------------------------------------------- | --------------------------------- |
