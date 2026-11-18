@@ -6,14 +6,15 @@ import {
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
-import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
 import { createOutputPreferencesController } from './output/useOutputPreferences.js';
 import { useOutputProjectionPublisher } from './output/useOutputProjectionPublisher.js';
+import { createOutputSlotStore } from './output/useOutputSlotStore.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
+import { usePlayer } from './usePlayer.js';
 import { usePlaylists } from './usePlaylists.js';
 import { t } from '../utils/i18n.js';
 
@@ -99,14 +100,13 @@ const preferencesController = createOutputPreferencesController({
     ),
 });
 
-function applySlots(document = {}) {
-  state.slots =
-    typeof document.slots === 'object' && document.slots !== null
-      ? { ...document.slots }
-      : {};
-  preferencesController.apply(document);
-  state.slotsLoaded = true;
-}
+const slotStore = createOutputSlotStore({
+  state,
+  bridgeMethod,
+  reportOutputError,
+  applyPreferences: preferencesController.apply,
+  isOutputEnabled: () => isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW),
+});
 
 const projectionPublisher = useOutputProjectionPublisher({
   getBootId: () => state.status.bootId,
@@ -328,64 +328,9 @@ async function openWindow(kind) {
   }
 }
 
-async function loadSlots(seedSlots = {}) {
-  if (state.isLoadingSlots) return;
-  state.isLoadingSlots = true;
-  try {
-    let document = await bridgeMethod('listOutputSlots')();
-    for (const [kind, seedSlot] of Object.entries(seedSlots)) {
-      if (document.slots?.[kind]) continue;
-      const payload = buildOutputSlotPayload(seedSlot);
-      if (payload) {
-        document = await bridgeMethod('upsertOutputSlot')(kind, payload);
-      }
-    }
-    applySlots(document);
-    state.error = '';
-  } catch (error) {
-    state.error = reportOutputError(
-      error,
-      'load-slots',
-      t('outputPanel.runtime.settingsReadFailed'),
-    );
-  } finally {
-    state.isLoadingSlots = false;
-  }
-}
-
-async function saveOutputSlot(kind, changes, seedSlot = null) {
-  const slot = state.slots[kind] ?? seedSlot;
-  const payload = buildOutputSlotPayload(slot, changes);
-  if (!payload) return false;
-
-  state.isSavingSlot = true;
-  try {
-    const document = await bridgeMethod('upsertOutputSlot')(kind, payload);
-    applySlots(document);
-    state.error = '';
-    return true;
-  } catch (error) {
-    state.error = reportOutputError(
-      error,
-      'save-slot',
-      t('outputPanel.runtime.styleNotSaved'),
-    );
-    return false;
-  } finally {
-    state.isSavingSlot = false;
-  }
-}
-
-function saveTemplateSelection(kind, templateId, seedSlot = null) {
-  return saveOutputSlot(kind, { templateId }, seedSlot);
-}
-
-function saveSlotSettings(kind, settings, seedSlot = null) {
-  return saveOutputSlot(kind, { settings }, seedSlot);
-}
-
 function initialize() {
   if (initializationPromise) return initializationPromise;
+  usePlayer().onEnded(slotStore.followSingerAfterPlayback);
   initializationPromise = (async () => {
     try {
       await Promise.all([refreshSettings(), refreshConfirmations()]);
@@ -436,11 +381,12 @@ export function useOutputRuntime() {
     start,
     stop,
     openWindow,
-    loadSlots,
-    saveOutputSlot,
+    loadSlots: slotStore.loadSlots,
+    saveOutputSlot: slotStore.saveOutputSlot,
     saveRecentColor: preferencesController.saveRecentColor,
     toggleSavedColor: preferencesController.toggleSavedColor,
-    saveSlotSettings,
-    saveTemplateSelection,
+    saveSlotSettings: slotStore.saveSlotSettings,
+    saveTemplateSelection: slotStore.saveTemplateSelection,
+    appearanceAutosaveFor: slotStore.appearanceAutosaveFor,
   };
 }

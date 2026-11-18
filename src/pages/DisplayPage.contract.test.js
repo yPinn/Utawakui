@@ -31,7 +31,7 @@ describe('Display page composition contract', () => {
     expect(workspaceSource).toMatch(
       /<template\s+#header>[\s\S]*?<UiSegmentedControl[\s\S]*?@update:model-value="selectPage"/u,
     );
-    expect(workspaceSource).toContain('await appearanceAutosave.flush()');
+    expect(workspaceSource).toContain('await appearanceAutosave.value.flush()');
     expect(workspaceSource).toContain(':preview-backdrop="previewBackdrop"');
     expect(workspaceSource).toContain(
       ':lyrics-preview-mode="lyricsPreviewMode"',

@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
 import { useAppView } from '../../composables/useAppView.js';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
-import { useOutputAppearanceAutosave } from '../../composables/output/useOutputAppearanceAutosave.js';
 import { MonitorUp, Settings } from '../../icons/index.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import { UI_LOCALE } from '../../utils/uiLocale.js';
@@ -80,15 +79,16 @@ const {
   openWindow,
   loadSlots,
   saveRecentColor,
-  saveSlotSettings,
+  appearanceAutosaveFor,
   saveTemplateSelection,
   toggleSavedColor,
 } = useOutputRuntimeContext();
-const appearanceAutosave = useOutputAppearanceAutosave({
-  save: ({ kind, settings }) =>
-    saveSlotSettings(kind, settings, props.slotDefaults[kind]),
-});
-const appearanceSaveStatus = appearanceAutosave.status;
+const appearanceAutosave = computed(() =>
+  appearanceAutosaveFor(activeKind.value),
+);
+const appearanceSaveStatus = computed(
+  () => appearanceAutosave.value.status.value,
+);
 const { openSettings } = useAppView();
 
 const browsedPreset = computed(
@@ -155,7 +155,7 @@ function selectPreset(id) {
 
 async function selectPage(page) {
   if (page !== activePage.value && activePage.value === 'workbench') {
-    const flushed = await appearanceAutosave.flush();
+    const flushed = await appearanceAutosave.value.flush();
     if (!flushed) return false;
   }
   return rememberPage(page);
@@ -163,7 +163,7 @@ async function selectPage(page) {
 
 async function selectKind(kind) {
   if (kind !== activeKind.value) {
-    const flushed = await appearanceAutosave.flush();
+    const flushed = await appearanceAutosave.value.flush();
     if (!flushed) return false;
   }
   return rememberKind(kind, availableKindIds.value);
@@ -172,7 +172,7 @@ async function selectKind(kind) {
 async function applyPreset(id) {
   const preset = orderedPresets.value.find((candidate) => candidate.id === id);
   if (!preset || preset.availability?.available === false) return;
-  const flushed = await appearanceAutosave.flush();
+  const flushed = await appearanceAutosave.value.flush();
   if (!flushed) return;
   const saved = await saveTemplateSelection(
     preset.kind,
@@ -184,10 +184,10 @@ async function applyPreset(id) {
 
 function queueAppearanceSave(change) {
   if (!change?.settings) return Promise.resolve(false);
-  return appearanceAutosave.schedule(
+  return appearanceAutosave.value.schedule(
     {
-      kind: activeKind.value,
       settings: change.settings,
+      seedSlot: props.slotDefaults[activeKind.value],
     },
     { immediate: change.mode === 'immediate' },
   );
@@ -195,7 +195,7 @@ function queueAppearanceSave(change) {
 
 async function openCaptureWindow() {
   const kind = activeKind.value;
-  if (!(await appearanceAutosave.flush())) return false;
+  if (!(await appearanceAutosave.value.flush())) return false;
   return openWindow(kind);
 }
 
@@ -207,7 +207,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  void appearanceAutosave.flush();
+  void appearanceAutosave.value.flush();
 });
 </script>
 

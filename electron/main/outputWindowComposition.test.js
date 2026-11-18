@@ -29,7 +29,7 @@ describe('output capture composition', () => {
       ':disabled="!outputState.status.running || runtimeBusy"',
     );
     expect(ui).toMatch(
-      /async function openCaptureWindow\(\) \{[\s\S]*?await appearanceAutosave.flush\(\)[\s\S]*?return openWindow\(kind\);/,
+      /async function openCaptureWindow\(\) \{[\s\S]*?await appearanceAutosave.value.flush\(\)[\s\S]*?return openWindow\(kind\);/,
     );
   });
 });

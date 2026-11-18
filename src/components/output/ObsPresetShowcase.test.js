@@ -394,9 +394,11 @@ describe('OBS output workspace layout contract', () => {
     expect(workbenchSource).not.toContain('@click="saveSettings"');
     expect(workbenchSource).toContain("if (saveStatus !== 'saved') return;");
     expect(workbenchSource).toContain('() => props.saveStatus');
-    expect(workspaceSource).toContain('useOutputAppearanceAutosave');
-    expect(workspaceSource).toContain('appearanceAutosave.schedule');
-    expect(workspaceSource).toContain('await appearanceAutosave.flush()');
+    expect(workspaceSource).toContain(
+      'appearanceAutosaveFor(activeKind.value)',
+    );
+    expect(workspaceSource).toContain('appearanceAutosave.value.schedule');
+    expect(workspaceSource).toContain('await appearanceAutosave.value.flush()');
     expect(workspaceSource).toContain('@change-settings="queueAppearanceSave"');
     expect(workspaceSource).toContain('@retry-save="appearanceAutosave.retry"');
     expect(workspaceSource).toContain('@apply-preset="applyPreset"');

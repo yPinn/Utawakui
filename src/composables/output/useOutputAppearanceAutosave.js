@@ -10,6 +10,7 @@ export function useOutputAppearanceAutosave(options = {}) {
   let pendingSnapshot = null;
   let pendingSnapshotKey = null;
   let failedSnapshot = null;
+  let activeSnapshot = null;
   let activeSnapshotKey = null;
   let workerPromise = null;
   let disposed = false;
@@ -23,6 +24,7 @@ export function useOutputAppearanceAutosave(options = {}) {
   async function processQueue() {
     while (pendingSnapshot && !disposed) {
       const snapshot = pendingSnapshot;
+      activeSnapshot = snapshot;
       activeSnapshotKey = pendingSnapshotKey;
       pendingSnapshot = null;
       pendingSnapshotKey = null;
@@ -35,6 +37,7 @@ export function useOutputAppearanceAutosave(options = {}) {
         succeeded = false;
       }
       activeSnapshotKey = null;
+      activeSnapshot = null;
 
       if (disposed) return succeeded;
 
@@ -116,6 +119,8 @@ export function useOutputAppearanceAutosave(options = {}) {
   return {
     status: readonly(status),
     canRetry,
+    getLatestSnapshot: () =>
+      pendingSnapshot ?? failedSnapshot ?? activeSnapshot,
     schedule,
     flush,
     retry,

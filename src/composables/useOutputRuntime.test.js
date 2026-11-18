@@ -47,8 +47,10 @@ let textProcessingOverride;
 let mediaPositionMs;
 let samplePlaybackClock;
 let artistIndexState;
+let finishTrack;
 
 beforeEach(() => {
+  finishTrack = null;
   hiddenCreditIds = shallowRef([]);
   textProcessingOverride = null;
   mediaPositionMs = null;
@@ -199,7 +201,13 @@ beforeEach(() => {
   vi.stubGlobal('window', { Utawakui: bridge });
 
   vi.doMock('./usePlayer.js', () => ({
-    usePlayer: () => ({ state: playerState, samplePlaybackClock }),
+    usePlayer: () => ({
+      state: playerState,
+      samplePlaybackClock,
+      onEnded: (listener) => {
+        finishTrack = listener;
+      },
+    }),
   }));
   vi.doMock('./usePerformanceSessionPlayback.js', () => ({
     usePerformanceSessionPlayback: () => ({
@@ -284,6 +292,7 @@ it('preserves the exact public runtime API', async () => {
   const runtime = await loadRuntime();
 
   expect(Object.keys(runtime).sort()).toEqual([
+    'appearanceAutosaveFor',
     'initialize',
     'loadSlots',
     'openWindow',
@@ -1957,6 +1966,77 @@ describe('output runtime actions', () => {
         settings: { alignment: 'center' },
       }),
     );
+  });
+
+  it('returns to Follow artist on natural completion without opening the Workbench', async () => {
+    const items = [
+      {
+        id: '00000000-0000-4000-8000-000000000011',
+        phantomArtistName: 'Aster',
+        phantomPortraitPhoto: '',
+        phantomPortraitColor: '#112233',
+      },
+    ];
+    const settings = { phantomPortraitSets: { activeId: items[0].id, items } };
+    const runtime = await initializeRuntime();
+    bridge.listOutputSlots.mockResolvedValue({
+      slots: { lyrics: { templateId: 'phantom-thieves', settings } },
+    });
+    expect(runtime.state.slotsLoaded).toBe(false);
+
+    await finishTrack();
+    expect(bridge.upsertOutputSlot).toHaveBeenCalledExactlyOnceWith(
+      'lyrics',
+      expect.objectContaining({
+        templateId: 'phantom-thieves',
+        settings: expect.objectContaining({
+          phantomPortraitSets: { activeId: '', items },
+        }),
+      }),
+    );
+    expect(
+      runtime.state.slots.lyrics.settings.phantomPortraitSets.activeId,
+    ).toBe('');
+    await finishTrack();
+    expect(bridge.upsertOutputSlot).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets the queued portrait selection while retaining pending appearance edits', async () => {
+    const items = [
+      {
+        id: '00000000-0000-4000-8000-000000000011',
+        phantomArtistName: 'Aster',
+        phantomPortraitPhoto: '',
+        phantomPortraitColor: '#112233',
+      },
+    ];
+    const base = {
+      templateId: 'phantom-thieves',
+      settings: { phantomPortraitSets: { activeId: '', items } },
+    };
+    const runtime = await initializeRuntime();
+    bridge.listOutputSlots.mockResolvedValue({ slots: { lyrics: base } });
+    await runtime.loadSlots();
+    const autosave = runtime.appearanceAutosaveFor('lyrics');
+    const first = deferred();
+    bridge.upsertOutputSlot.mockReturnValueOnce(first.promise);
+    const chosen = {
+      ...base.settings,
+      phantomPortraitSets: { activeId: items[0].id, items },
+    };
+    void autosave.schedule({ settings: chosen }, { immediate: true });
+    await flushMicrotasks();
+    expect(bridge.upsertOutputSlot).toHaveBeenCalledTimes(1);
+    void autosave.schedule({ settings: { ...chosen, fontScale: 'large' } });
+
+    const reset = finishTrack();
+    first.resolve({ slots: { lyrics: { ...base, settings: chosen } } });
+    await reset;
+    expect(bridge.upsertOutputSlot).toHaveBeenCalledTimes(2);
+    expect(runtime.state.slots.lyrics.settings).toMatchObject({
+      fontScale: 'large',
+      phantomPortraitSets: { activeId: '', items },
+    });
   });
 
   it('loads and persists one shared bounded recent-color history', async () => {

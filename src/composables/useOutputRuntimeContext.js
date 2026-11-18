@@ -37,6 +37,13 @@ const unavailableState = Object.freeze({
   errors: Object.freeze({}),
 });
 
+const unavailableAutosave = Object.freeze({
+  status: Object.freeze({ value: 'saved' }),
+  schedule: async () => false,
+  flush: async () => true,
+  retry: async () => false,
+});
+
 const unavailableRuntime = Object.freeze({
   state: unavailableState,
   refreshProjection: async () => false,
@@ -51,6 +58,7 @@ const unavailableRuntime = Object.freeze({
   toggleSavedColor: async () => false,
   saveSlotSettings: async () => false,
   saveTemplateSelection: async () => false,
+  appearanceAutosaveFor: () => unavailableAutosave,
 });
 
 export function useOutputRuntimeContext() {
