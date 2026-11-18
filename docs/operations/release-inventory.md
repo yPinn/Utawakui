@@ -482,9 +482,9 @@ ticket styling for the renderer preview and the shared cut and grain for Folder.
 The retired Workbench wrapper
 HTML／CSS／JS and compact Now Playing stylesheet are removed along with their
 HTTP routes. `overlay/assets/streamer-guide.png` is the single source for the
-Lyrics inspection route and the renderer's fallback import; Vite emits the
-renderer copy normally. The existing overlay builder glob includes the moved
-asset without any new unpack rule.
+Lyrics inspection route and the renderer's fallback import. Vite inlines the
+renderer copy for local image processing. The existing overlay builder glob
+includes the inspection asset without any new unpack rule.
 
 `shared/**/*` includes `shared/sessionExportTimepoints.mjs` for the Main CSV writer and renderer preview, `shared/sessionPerformedItems.mjs` for session archives, and `shared/trackTitleHints.mjs` for Main work search and renderer version suggestions. It also includes the canonical JSON／JS／MJS contracts, pure presentation
 modules and font source/license files; `!shared/**/*.test.js` excludes adjacent

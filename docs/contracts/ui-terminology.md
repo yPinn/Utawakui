@@ -29,6 +29,7 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 「隨模板」（Follow template）是使用模板原有排版字型的選項，其字型可能依文字語系或材質改變。
 
 「人物組合」（Portrait preset）是幻影怪盜中一組可切換的照片、顯示名稱與底色。
+「搜尋名稱」（Search names）依人物組合的顯示名稱篩選清單。
 「編輯照片」（Edit photo）在匯入前提供拖曳與縮放取景。「移除背景」（Remove background）在本機辨識原圖主體並提供透明去背預覽。「去背範圍」（Cutout range）可多保留或多移除主體的邊緣。「重設取景」（Reset framing）回到預設構圖。「套用照片」（Apply photo）將預覽中的版本帶回人物組合草稿。
 「邊緣銳化」（Edge sharpness）調整透明邊緣的清晰度。「局部修正」（Local retouch）提供「智慧套索擦除」（Smart lasso erase）與「套索還原」（Lasso restore），拖曳圈選後分別擦除區域與補回照片像素。
 「構圖輔助」（Composition guides）在照片取景時顯示九宮格與吸附線。
@@ -55,7 +56,7 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 | 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
 | 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                       |
 | 幻影怪盜           |                  | 畫面輸出的拼貼歌詞模板                                     | Phantom Thieves                    |
-| 選句剪報           |                  | 幻影怪盜中以斜切側欄與疊放紙帶顯示歌詞的構圖               | Choice Stack                       |
+| 選句剪報           |                  | 幻影怪盜中以黑白折角紙帶顯示前後句與當句的構圖             | Choice Stack                       |
 | 有頭像             |                  | 顯示人像框的側邊彈卡樣式                                   | With Avatar                        |
 | 呈現方式、聊天外形 |                  | 幻影怪盜的構圖選項及聊天變化                               | Presentation, Chat Shape           |
 | 畫面角落、彈卡樣式 |                  | 幻影怪盜的位置及側邊彈卡的角色呈現                         | Screen Corner, Dialogue Card Style |
@@ -75,6 +76,9 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 | 波形對照           |                  | 本機音源與影片參考音軌在同一時間軸的對照                   | Waveform comparison                |
 | 播放片段、停止預覽 |                  | 預覽目前檢視區間的本機音源與影片畫面                       | Play segment, Stop preview         |
 | 預覽背景           |                  | 歌詞工作台顯示的同步 MV 或人物參考                         | Preview background                 |
+| 模型佔位           |                  | 歌詞工作台用來檢查人物大小、對位和遮擋的範圍               | Model placement                    |
+| 遮罩形狀           |                  | 模型佔位的裁切外形                                         | Mask shape                         |
+| 佔位圖片           |                  | 模型佔位內顯示的內建或本機圖片                             | Placement image                    |
 
 「介面元件」指畫面上的元件，不屬於「工具」的範圍。
 
