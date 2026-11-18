@@ -23,14 +23,12 @@ const {
 const { loadIndex } = require('./library/metadataIndex');
 const { resolveTrackAudioPath } = require('./library/paths');
 const { isCutoutPortraitId } = require('../../shared/outputAppearance.mjs');
+const { maxEditedEdge } = require('../../shared/outputPortraitImage.json');
 
 const PORTRAIT_DIR = 'output-portraits';
-const PORTRAIT_EXTENSIONS = ['.png', '.webp'];
+const PORTRAIT_EXTENSIONS = ['.png', '.webp', '.jpg'];
 
-async function importOutputPortrait(directory, sourcePath) {
-  const stats = await fsp.stat(sourcePath);
-  if (!stats.isFile() || stats.size > MAX_ARTWORK_BYTES) return null;
-  const buffer = await fsp.readFile(sourcePath);
+function inspectPortrait(buffer) {
   const image = inspectArtworkImage(buffer);
   if (
     buffer.length > MAX_ARTWORK_BYTES ||
@@ -40,11 +38,47 @@ async function importOutputPortrait(directory, sourcePath) {
   )
     return null;
 
+  return image;
+}
+
+async function readOutputPortrait(sourcePath) {
+  const file = await fsp.open(sourcePath, 'r');
+  try {
+    const stats = await file.stat();
+    if (!stats.isFile() || stats.size > MAX_ARTWORK_BYTES) return null;
+    const buffer = Buffer.alloc(stats.size + 1);
+    const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+    if (bytesRead !== stats.size) return null;
+    const bytes = buffer.subarray(0, bytesRead);
+    const image = inspectPortrait(bytes);
+    return image ? { bytes, ...image } : null;
+  } finally {
+    await file.close();
+  }
+}
+
+async function writeOutputPortrait(directory, buffer, { edited = false } = {}) {
+  if (!(buffer instanceof Uint8Array) || buffer.byteLength > MAX_ARTWORK_BYTES)
+    return null;
+  const bytes = Buffer.from(
+    buffer.buffer,
+    buffer.byteOffset,
+    buffer.byteLength,
+  );
+  const image = inspectPortrait(bytes);
+  if (
+    !image ||
+    (edited &&
+      (image.extension !== '.png' ||
+        Math.max(image.width, image.height) > maxEditedEdge))
+  )
+    return null;
+
   const root = path.join(await fsp.realpath(directory), PORTRAIT_DIR);
   fs.mkdirSync(root, { recursive: true });
   if ((await fsp.realpath(root)) !== root) return null;
   const id = randomUUID();
-  atomicWriteBuffer(path.join(root, id + image.extension), buffer);
+  atomicWriteBuffer(path.join(root, id + image.extension), bytes);
   return id;
 }
 
@@ -96,7 +130,8 @@ async function resolveTrackArtistPhoto(directory, trackId) {
 }
 
 module.exports = {
-  importOutputPortrait,
+  readOutputPortrait,
   resolveOutputPortrait,
   resolveTrackArtistPhoto,
+  writeOutputPortrait,
 };

@@ -43,7 +43,7 @@ describe('runtime configuration boundaries', () => {
     }
   });
 
-  it('packages fixed notices, app-owned Python workers and Audio catalogs', () => {
+  it('packages fixed notices, the portrait model, app-owned Python workers and Audio catalogs', () => {
     const builder = yaml.load(read('electron-builder.yml'), {
       schema: yaml.JSON_SCHEMA,
     });
@@ -51,6 +51,7 @@ describe('runtime configuration boundaries', () => {
 
     expect(resources).toEqual([
       'third-party',
+      'resources/output-portrait/u2netp.onnx',
       'resources/audio-processing/audio_python_worker.py',
       'resources/audio-processing/lyrics_acoustic_probe.py',
       'resources/audio-processing/lyrics-acoustic-catalog.json',

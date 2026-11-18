@@ -290,6 +290,9 @@ const {
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
 const {
+  createOutputPortraitSegmentation,
+} = require('./lib/outputPortraitSegmentation');
+const {
   resolveOutputPortrait,
   resolveTrackArtistPhoto,
 } = require('./lib/outputPortraits');
@@ -1548,6 +1551,13 @@ if (!gotSingleInstanceLock) {
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       writeClipboardText: (value) => clipboard.writeText(value),
+      segmentPortrait: createOutputPortraitSegmentation({
+        resourcesRoot: isPackagedRuntime
+          ? process.resourcesPath
+          : path.join(app.getAppPath(), 'resources'),
+        workerPath: resolveRuntimeEntry(app.getAppPath(), 'portraitWorker'),
+        logger: runtimeDiagnosticsLogger,
+      }),
       logger: runtimeDiagnosticsLogger,
     });
     registerOutputWindowHandlers({

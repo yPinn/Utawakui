@@ -280,7 +280,11 @@ describe('AudioPythonRuntimeHost', () => {
         to: `audio-processing/${filename}`,
       });
     }
-    expect(JSON.stringify(config.extraResources)).not.toMatch(
+    // The offline portrait model is the only bundled weight.
+    const audioResources = config.extraResources.filter(
+      (entry) => entry.to !== 'output-portrait/u2netp.onnx',
+    );
+    expect(JSON.stringify(audioResources)).not.toMatch(
       /fixture|python\.exe|site-packages|\.onnx|\.ckpt|\.pth/i,
     );
     expect(AUDIO_PYTHON_PROTOCOL_VERSION).toBe(1);

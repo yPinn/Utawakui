@@ -12,8 +12,18 @@ import http from './outputServer/http.js';
 const photo = fileURLToPath(
   new URL('../../overlay/assets/streamer-guide.png', import.meta.url),
 );
-const { importOutputPortrait, resolveOutputPortrait, resolveTrackArtistPhoto } =
-  portraits;
+const jpegPhoto = fileURLToPath(
+  new URL(
+    '../../src/assets/demo/track-thumb/track-thumb-crop-square.jpg',
+    import.meta.url,
+  ),
+);
+const {
+  readOutputPortrait,
+  resolveOutputPortrait,
+  resolveTrackArtistPhoto,
+  writeOutputPortrait,
+} = portraits;
 
 describe('Output portraits', () => {
   let directory;
@@ -23,7 +33,10 @@ describe('Output portraits', () => {
   afterEach(() => fs.rmSync(directory, { recursive: true, force: true }));
 
   it('imports a verified raster image and serves it by an opaque id', async () => {
-    const id = await importOutputPortrait(directory, photo);
+    const { bytes, mimeType } = await readOutputPortrait(photo);
+    expect(mimeType).toBe('image/png');
+    expect(fs.existsSync(path.join(directory, 'output-portraits'))).toBe(false);
+    const id = await writeOutputPortrait(directory, bytes);
     expect(id).toMatch(/^[0-9a-f-]{36}$/u);
     const saved = await resolveOutputPortrait(directory, id);
     expect(fs.readFileSync(saved)).toEqual(fs.readFileSync(photo));
@@ -31,7 +44,29 @@ describe('Output portraits', () => {
 
     const invalid = path.join(directory, 'unsafe.png');
     fs.writeFileSync(invalid, '<svg />');
-    expect(await importOutputPortrait(directory, invalid)).toBeNull();
+    expect(await readOutputPortrait(invalid)).toBeNull();
+    expect(await writeOutputPortrait(directory, '../unsafe.png')).toBeNull();
+    expect(
+      await writeOutputPortrait(directory, Buffer.from('<svg />'), {
+        edited: true,
+      }),
+    ).toBeNull();
+  });
+
+  it('preserves a selected JPEG and only accepts a bounded PNG as an edited image', async () => {
+    const { bytes, mimeType } = await readOutputPortrait(jpegPhoto);
+    expect(mimeType).toBe('image/jpeg');
+    const id = await writeOutputPortrait(directory, bytes);
+    expect(await resolveOutputPortrait(directory, id)).toMatch(/\.jpg$/u);
+    expect(
+      await writeOutputPortrait(directory, bytes, { edited: true }),
+    ).toBeNull();
+
+    const oversizedPng = Buffer.from(fs.readFileSync(photo));
+    oversizedPng.writeUInt32BE(1025, 16);
+    expect(
+      await writeOutputPortrait(directory, oversizedPng, { edited: true }),
+    ).toBeNull();
   });
 
   it('uses the first credited artist’s library photo', async () => {

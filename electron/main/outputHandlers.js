@@ -7,8 +7,13 @@ const {
   upsertOutputSlot,
 } = require('../lib/outputSlots');
 const { isValidOutputRuntime } = require('../lib/config');
-const { importOutputPortrait } = require('../lib/outputPortraits');
+const { randomUUID } = require('node:crypto');
+const {
+  readOutputPortrait,
+  writeOutputPortrait,
+} = require('../lib/outputPortraits');
 const { t } = require('../lib/i18n');
+const { maskEdge } = require('../../shared/outputPortraitImage.json');
 const {
   findAvailableOutputPorts,
   isOutputPortAvailable,
@@ -50,9 +55,13 @@ function registerOutputHandlers({
   writeClipboardText = null,
   dialog,
   getMainWindow,
-  importPortrait = importOutputPortrait,
+  readPortrait = readOutputPortrait,
+  writePortrait = writeOutputPortrait,
+  segmentPortrait,
   logger = console,
 }) {
+  const portraitDrafts = new WeakMap();
+
   function outputDir() {
     return resolveDownloadDir(getConfig());
   }
@@ -162,8 +171,14 @@ function registerOutputHandlers({
     return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));
   });
 
-  ipcMain.handle('output-slots:choose-portrait', async () => {
+  ipcMain.handle('output-slots:choose-portrait', async ({ sender }) => {
     requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+    const previous = portraitDrafts.get(sender);
+    if (previous && (!previous.photo || previous.saving))
+      return { status: 'error' };
+    previous?.processing?.abort();
+    const draft = { id: randomUUID() };
+    portraitDrafts.set(sender, draft);
     try {
       const directory = outputDir();
       const result = await dialog.showOpenDialog(getMainWindow(), {
@@ -171,20 +186,107 @@ function registerOutputHandlers({
         filters: [
           {
             name: t('outputPanel.portrait.fileTypes'),
-            extensions: ['png', 'webp'],
+            extensions: ['png', 'webp', 'jpg', 'jpeg'],
           },
         ],
       });
       if (result.canceled || !result.filePaths[0])
         return { status: 'cancelled' };
+      const photo = await readPortrait(result.filePaths[0]);
       if (directory !== outputDir()) return { status: 'error' };
-      const id = await importPortrait(directory, result.filePaths[0]);
-      return id ? { status: 'ok', id } : { status: 'invalid-image' };
+      if (!photo) return { status: 'invalid-image' };
+      Object.assign(draft, { photo, directory });
+      return {
+        status: 'ok',
+        id: draft.id,
+        bytes: photo.bytes,
+        mimeType: photo.mimeType,
+      };
     } catch (error) {
       logger.error?.('[output] Could not import portrait', error);
       return { status: 'error' };
+    } finally {
+      if (!draft.photo) portraitDrafts.delete(sender);
     }
   });
+
+  ipcMain.handle('output-slots:discard-portrait', ({ sender }, id) => {
+    const draft = portraitDrafts.get(sender);
+    if (!draft || draft.id !== id || draft.saving) return;
+    draft.processing?.abort();
+    portraitDrafts.delete(sender);
+  });
+
+  ipcMain.handle(
+    'output-slots:segment-portrait',
+    async ({ sender }, id, rgba) => {
+      requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+      const draft = portraitDrafts.get(sender);
+      if (
+        !draft?.photo ||
+        draft.id !== id ||
+        draft.saving ||
+        draft.processing ||
+        !(rgba instanceof Uint8Array) ||
+        rgba.length !== maskEdge ** 2 * 4
+      ) {
+        return { status: 'error' };
+      }
+      const processing = new AbortController();
+      draft.processing = processing;
+      try {
+        if (draft.directory !== outputDir()) return { status: 'error' };
+        const result = await segmentPortrait(rgba, processing.signal);
+        if (processing.signal.aborted) return { status: 'cancelled' };
+        requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+        return draft.directory === outputDir() ? result : { status: 'error' };
+      } catch (error) {
+        if (processing.signal.aborted) return { status: 'cancelled' };
+        if (error.code === 'FEATURE_GATE_REQUIRED') throw error;
+        logger.error?.(
+          '[output] Could not separate the portrait subject',
+          error,
+        );
+        return { status: 'error' };
+      } finally {
+        draft.processing = null;
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'output-slots:save-portrait',
+    async ({ sender }, draftId, png = null) => {
+      requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+      const draft = portraitDrafts.get(sender);
+      if (
+        !draft?.photo ||
+        draft.id !== draftId ||
+        draft.saving ||
+        draft.processing
+      )
+        return { status: 'error' };
+      draft.saving = true;
+      try {
+        if (draft.directory !== outputDir()) return { status: 'error' };
+        const id = await writePortrait(
+          draft.directory,
+          png ?? draft.photo.bytes,
+          {
+            edited: png !== null,
+          },
+        );
+        if (!id) return { status: 'invalid-image' };
+        portraitDrafts.delete(sender);
+        return { status: 'ok', id };
+      } catch (error) {
+        logger.error?.('[output] Could not save portrait', error);
+        return { status: 'error' };
+      } finally {
+        draft.saving = false;
+      }
+    },
+  );
 
   ipcMain.handle('output-slots:set-recent-colors', async (event, colors) => {
     return setOutputRecentColors(outputDir(), colors);

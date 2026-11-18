@@ -56,7 +56,7 @@ files:
   # App-owned Main/preloads/workers are built independently from the renderer.
   # R02 Mic policy is bundled in Main but remains closed in production; its
   # development-only renderer adds no packaged asset or external dependency.
-  # beforePack regenerates these seven minified CJS entries from current source.
+  # beforePack regenerates these minified CJS entries from current source.
   # Lyrics request budgets/rate/cache policy is included in the Main closure.
   # Local lyric revisions and LRC/SRT writers are included in the Main closure.
   # Local lyric translation storage is included in the Main closure.
@@ -148,6 +148,7 @@ asarUnpack:
   - runtime/video-sync.cjs
   - runtime/separation.cjs
   - runtime/probe.cjs
+  - runtime/portrait.cjs
   # Waveform metadata/hash worker uses plain Node, including metadata's ESM graph.
   - node_modules/music-metadata/**/*
   - node_modules/@borewit/text-codec/**/*
@@ -188,9 +189,8 @@ asarUnpack:
   # Its platform binding and DLL dependencies must resolve from the real disk.
   - node_modules/@napolab/texture-bridge*/**/*
 
-# App-owned workers only. Provider Python and the independent Audio Python /
-# PyTorch runtime remain explicit, removable downloads under userData; no
-# interpreter, provider package, or model is bundled into the base installer.
+# App-owned resources and the offline portrait model. Provider Python and the
+# independent Audio Python / PyTorch runtime remain explicit downloads under userData.
 extraResources:
   # Full texts stay readable outside ASAR, with pinned version/checksum metadata.
   - from: third-party
@@ -198,6 +198,8 @@ extraResources:
     filter:
       - NOTICES.txt
       - manifest.json
+  - from: resources/output-portrait/u2netp.onnx
+    to: output-portrait/u2netp.onnx
   - from: resources/audio-processing/audio_python_worker.py
     to: audio-processing/audio_python_worker.py
   - from: resources/audio-processing/lyrics_acoustic_probe.py

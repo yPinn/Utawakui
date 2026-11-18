@@ -167,7 +167,7 @@ network install or signed-installer acceptance; see the
   routes declared by `electron/lib/outputServer/http.js` and composed by
   `outputServer.js`.
 - App-owned Node files outside ASAR: only `runtime/reading.cjs`,
-  `runtime/separation.cjs`, `runtime/waveform.cjs`, `runtime/video-sync.cjs` and `runtime/probe.cjs`. `runtimeEntries.js` maps
+  `runtime/separation.cjs`, `runtime/waveform.cjs`, `runtime/video-sync.cjs`, `runtime/probe.cjs` and `runtime/portrait.cjs`. `runtimeEntries.js` maps
   packaged worker/probe launches to these physical paths. ONNX native binaries,
   Node wrappers and `onnxruntime-common/dist/cjs`, kuromoji with async/lodash,
   doublearray/zlibjs, wanakana and koroman remain unpacked as required by plain
@@ -441,7 +441,7 @@ When adding a dependency, classify it before installing:
 
 ## Packaging Locations
 
-`runtime/*.cjs` includes eight generated Main/preload/worker entries. Original
+`runtime/*.cjs` includes nine generated Main/preload/worker entries. Original
 Electron modules, tests and synthetic corpora are not separately shipped; the
 latter remain in source for artist-credit, music
 structure and LRCLIB parser regressions and benchmark tooling. Music identity
@@ -449,6 +449,15 @@ consumers load `electron/lib/musicIdentity/` submodules directly; the unused
 root re-export barrel is removed. The generic Audio Python host and Refined
 probe modules remain packaged as the non-activating foundation defined by
 ADR 0014.
+
+The Phantom Thieves photo editor uses the unpacked `runtime/portrait.cjs` and
+the existing ONNX Runtime native dependency. The checked-in 4.57 MB U²-Net Portable
+weight comes from the [rembg release](https://github.com/danielgatis/rembg/releases/tag/v0.0.0)
+and ships through `extraResources` at `resources/output-portrait/u2netp.onnx`.
+Main checks the exact length and SHA-256 on the Remove background action. The
+builder verifies the delivered weight hash and preserves the U²-Net and rembg
+license texts in the third-party notice collection. Verify first and repeated
+use while offline with a fresh app profile.
 
 Receipt Setlist ships `overlay/setlist/receiptView.mjs`, `receiptMotion.mjs`,
 `receipt.css` and the generated textless `receipt-paper.png` / `receipt-grain.png`; its pure frame and

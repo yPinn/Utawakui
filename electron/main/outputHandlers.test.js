@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { maskEdge } from '../../shared/outputPortraitImage.json';
 import outputHandlersModule from './outputHandlers.js';
 
 const { registerOutputHandlers } = outputHandlersModule;
@@ -25,12 +26,64 @@ describe('output handlers', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('imports only a photo selected in the main-owned picker', async () => {
+  it('segments only a bounded sample for the active draft and discards cancelled inference', async () => {
+    const ipcMain = createIpcMain();
+    const completed = Promise.withResolvers();
+    const segmentPortrait = vi.fn(() => completed.promise);
+    const requireFeatureGate = vi.fn();
+    const sender = {};
+    const event = { sender };
+    registerOutputHandlers({
+      ipcMain,
+      server: {},
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => dir,
+      dialog: { showOpenDialog: async () => ({ filePaths: ['picked.png'] }) },
+      getMainWindow: () => ({}),
+      readPortrait: async () => ({
+        bytes: Buffer.from('photo'),
+        mimeType: 'image/png',
+      }),
+      requireFeatureGate,
+      segmentPortrait,
+    });
+    const { id } = await ipcMain.handlers.get('output-slots:choose-portrait')(
+      event,
+    );
+    const pixels = new Uint8Array(maskEdge ** 2 * 4);
+    const segment = ipcMain.handlers.get('output-slots:segment-portrait');
+    expect(await segment({ sender: {} }, id, pixels)).toEqual({
+      status: 'error',
+    });
+    expect(await segment(event, id, pixels.subarray(1))).toEqual({
+      status: 'error',
+    });
+    expect(segmentPortrait).not.toHaveBeenCalled();
+    const active = segment(event, id, pixels);
+    const [, signal] = segmentPortrait.mock.calls[0];
+    expect(await segment(event, id, pixels)).toEqual({ status: 'error' });
+    expect(
+      await ipcMain.handlers.get('output-slots:save-portrait')(event, id),
+    ).toEqual({ status: 'error' });
+    ipcMain.handlers.get('output-slots:discard-portrait')(event, id);
+    expect(signal.aborted).toBe(true);
+    completed.resolve({ status: 'ok', alpha: new Uint8Array(maskEdge ** 2) });
+    expect(await active).toEqual({ status: 'cancelled' });
+    expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
+  });
+
+  it('commits only the current photo draft selected in the main-owned picker', async () => {
     const ipcMain = createIpcMain();
     const requireFeatureGate = vi.fn();
     const dialog = { showOpenDialog: vi.fn() };
-    const importPortrait = vi.fn().mockResolvedValue('imported-id');
+    const bytes = Buffer.from('original image');
+    const readPortrait = vi
+      .fn()
+      .mockResolvedValue({ bytes, mimeType: 'image/png' });
+    const writePortrait = vi.fn().mockResolvedValue('imported-id');
     const mainWindow = {};
+    const event = { sender: {} };
     registerOutputHandlers({
       ipcMain,
       server: {},
@@ -40,25 +93,65 @@ describe('output handlers', () => {
       resolveDownloadDir: () => dir,
       dialog,
       getMainWindow: () => mainWindow,
-      importPortrait,
+      readPortrait,
+      writePortrait,
     });
     const choosePortrait = ipcMain.handlers.get('output-slots:choose-portrait');
+    const savePortrait = ipcMain.handlers.get('output-slots:save-portrait');
+    const discardPortrait = ipcMain.handlers.get(
+      'output-slots:discard-portrait',
+    );
     dialog.showOpenDialog.mockResolvedValueOnce({ canceled: true });
-    expect(await choosePortrait()).toEqual({ status: 'cancelled' });
-    expect(importPortrait).not.toHaveBeenCalled();
-    dialog.showOpenDialog.mockResolvedValueOnce({ filePaths: ['picked.png'] });
-    expect(await choosePortrait({}, 'renderer.png')).toEqual({
+    expect(await choosePortrait(event)).toEqual({ status: 'cancelled' });
+    expect(readPortrait).not.toHaveBeenCalled();
+    dialog.showOpenDialog.mockResolvedValue({ filePaths: ['picked.png'] });
+    const picked = await choosePortrait(event, 'renderer.png');
+    expect(picked).toMatchObject({
+      status: 'ok',
+      bytes,
+      mimeType: 'image/png',
+    });
+    expect(writePortrait).not.toHaveBeenCalled();
+    expect(await savePortrait({ sender: {} }, picked.id)).toEqual({
+      status: 'error',
+    });
+    discardPortrait(event, picked.id);
+    expect(await savePortrait(event, picked.id)).toEqual({ status: 'error' });
+    expect(writePortrait).not.toHaveBeenCalled();
+    const next = await choosePortrait(event);
+    expect(await savePortrait(event, next.id)).toEqual({
       status: 'ok',
       id: 'imported-id',
     });
+    expect(writePortrait).toHaveBeenCalledExactlyOnceWith(dir, bytes, {
+      edited: false,
+    });
+    const stale = await choosePortrait(event);
+    const edited = await choosePortrait(event);
+    expect(await savePortrait(event, stale.id)).toEqual({ status: 'error' });
+    const png = new Uint8Array([1, 2, 3]);
+    expect(await savePortrait(event, edited.id, png)).toEqual({
+      status: 'ok',
+      id: 'imported-id',
+    });
+    expect(writePortrait).toHaveBeenLastCalledWith(dir, png, { edited: true });
     expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
     expect(dialog.showOpenDialog).toHaveBeenCalledWith(
       mainWindow,
       expect.objectContaining({
-        filters: [expect.objectContaining({ extensions: ['png', 'webp'] })],
+        filters: [
+          expect.objectContaining({
+            extensions: ['png', 'webp', 'jpg', 'jpeg'],
+          }),
+        ],
       }),
     );
-    expect(importPortrait).toHaveBeenCalledExactlyOnceWith(dir, 'picked.png');
+    expect(readPortrait.mock.calls).toEqual([
+      ['picked.png'],
+      ['picked.png'],
+      ['picked.png'],
+      ['picked.png'],
+    ]);
   });
 
   it('contains an unavailable library during startup registration', () => {

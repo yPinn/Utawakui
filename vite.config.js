@@ -22,6 +22,7 @@ const RUNTIME_TEST_PATTERNS = [
   'electron/lib/kuromoji*.test.js',
   'electron/lib/japaneseReading/**/*.test.js',
   'electron/lib/vocalSeparation.test.js',
+  'electron/lib/outputPortraitSegmentation.test.js',
   'electron/lib/audioProcessing/separationOutputJob.runtime.test.js',
   'electron/lib/audioProcessing/separationOutputRecovery.runtime.test.js',
   'electron/lib/lyricsAcoustic/artifacts.test.js',

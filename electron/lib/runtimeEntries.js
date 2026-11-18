@@ -19,6 +19,11 @@ const RUNTIME_ENTRIES = Object.freeze({
     file: 'separation.cjs',
     physical: true,
   },
+  portraitWorker: {
+    source: 'electron/lib/outputPortraitWorker.js',
+    file: 'portrait.cjs',
+    physical: true,
+  },
   lyricsProbe: {
     source: 'electron/lib/lyricsAcoustic/probe.js',
     file: 'probe.cjs',

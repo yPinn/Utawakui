@@ -871,6 +871,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('output-slots:upsert', kind, slot),
   chooseOutputPortrait: () =>
     ipcRenderer.invoke('output-slots:choose-portrait'),
+  segmentOutputPortrait: (draftId, rgba) =>
+    ipcRenderer.invoke('output-slots:segment-portrait', draftId, rgba),
+  saveOutputPortrait: (draftId, png) =>
+    ipcRenderer.invoke('output-slots:save-portrait', draftId, png),
+  discardOutputPortrait: (draftId) =>
+    ipcRenderer.invoke('output-slots:discard-portrait', draftId),
   updateOutputRecentColors: (colors) =>
     ipcRenderer.invoke('output-slots:set-recent-colors', colors),
   updateOutputSavedColors: (colors) =>
