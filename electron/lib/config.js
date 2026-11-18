@@ -37,7 +37,10 @@ const {
 } = require('../../shared/performerViewContract.mjs');
 const { normalizePerformerWindowBounds } = require('./performerWindowBounds');
 const storageValues = require('../../shared/libraryStorageValues.json');
-const { normalizeCompanionSettings } = require('./companion/runtime');
+const {
+  DEFAULT_COMPANION_SETTINGS,
+  normalizeCompanionSettings,
+} = require('./companion/runtime');
 const audioControlValues = require('../../shared/audioControlValues.json');
 const {
   OUTPUT_LANGUAGE_PREFERENCES,
@@ -135,11 +138,7 @@ const DEFAULTS = {
     separationLimitBytes: storageValues.defaultSeparationLimitBytes,
   }),
   // Phone companion intent only; device credentials live in safeStorage.
-  companion: Object.freeze({
-    enabled: false,
-    interfaceAddress: null,
-    port: 8710,
-  }),
+  companion: DEFAULT_COMPANION_SETTINGS,
   outputRuntime: Object.freeze({
     autoStart: true,
     port: DEFAULT_OUTPUT_PORT,

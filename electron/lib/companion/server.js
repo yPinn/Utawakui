@@ -243,7 +243,10 @@ function createCompanionServer({
         server = null;
         reject(
           serverError(
-            error.code === 'EADDRINUSE' ? 'port-in-use' : 'listen-failed',
+            // EACCES is how Windows reports a reserved (excluded) port.
+            error.code === 'EADDRINUSE' || error.code === 'EACCES'
+              ? 'port-in-use'
+              : 'listen-failed',
           ),
         );
       });
