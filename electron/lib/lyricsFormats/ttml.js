@@ -13,6 +13,7 @@ const TTML_NAMESPACE = 'http://www.w3.org/ns/ttml';
 const TTML_METADATA_NAMESPACE = 'http://www.w3.org/ns/ttml#metadata';
 const ITUNES_NAMESPACE = 'http://itunes.apple.com/lyric-ttml-extensions';
 const ITUNES_INTERNAL_NAMESPACE = 'http://music.apple.com/lyric-ttml-internal';
+const XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
 const AUXILIARY_ROLES = new Set(['x-bg', 'x-translation', 'x-roman']);
 const MAX_XML_ELEMENTS = 50_000;
 const MAX_XML_DEPTH = 128;
@@ -65,6 +66,13 @@ function attribute(node, local, uri = '') {
   )?.value;
 }
 
+// Line keys appear as lrc:key or itunes:key depending on the producer.
+function keyAttribute(node) {
+  return Object.values(node.attributes).find(
+    (candidate) => candidate.local === 'key',
+  )?.value;
+}
+
 function validInterval(begin, end, parentBegin = 0, parentEnd = Infinity) {
   return (
     Number.isSafeInteger(begin) &&
@@ -90,6 +98,22 @@ function textContent(children) {
       return textContent(child.children);
     })
     .join('');
+}
+
+// Inline form: <span ttm:role="x-translation" xml:lang>…</span> inside a line.
+function inlineTranslations(children, found = new Map()) {
+  for (const child of children) {
+    if (typeof child === 'string') continue;
+    if (child.role === 'x-translation') {
+      const text = child.children
+        .filter((part) => typeof part === 'string')
+        .join('')
+        .replace(/\s+/gu, ' ')
+        .trim();
+      if (text && !found.has(child.language)) found.set(child.language, text);
+    } else inlineTranslations(child.children, found);
+  }
+  return found;
 }
 
 function hasTimedDescendant(node) {
@@ -188,7 +212,37 @@ function createState(options) {
     spanStack: [],
     currentLine: null,
     lines: [],
+    // Head translations: language -> line key -> text.
+    translations: new Map(),
+    translationLanguage: null,
+    translationText: null,
   };
+}
+
+// Head form: <translations><translation xml:lang><text for="L1">…</text>.
+function openTranslationElement(state, node) {
+  if (state.bodyDepth > 0) return;
+  if (node.local === 'translation') {
+    state.translationLanguage = attribute(node, 'lang', XML_NAMESPACE) ?? null;
+  } else if (node.local === 'text' && state.translationLanguage) {
+    const key = attribute(node, 'for');
+    state.translationText = key ? { key, parts: [] } : null;
+  }
+}
+
+function closeTranslationElement(state, node) {
+  if (node.local === 'text' && state.translationText) {
+    const { key, parts } = state.translationText;
+    const text = parts.join('').replace(/\s+/gu, ' ').trim();
+    if (text) {
+      if (!state.translations.has(state.translationLanguage))
+        state.translations.set(state.translationLanguage, new Map());
+      state.translations.get(state.translationLanguage).set(key, text);
+    }
+    state.translationText = null;
+  } else if (node.local === 'translation') {
+    state.translationLanguage = null;
+  }
 }
 
 function openElement(state, node) {
@@ -216,6 +270,7 @@ function openElement(state, node) {
     }
     return;
   }
+  openTranslationElement(state, node);
   if (node.uri !== TTML_NAMESPACE) return;
   if (node.local === 'body') {
     state.bodyDepth += 1;
@@ -262,6 +317,7 @@ function openElement(state, node) {
       end: parseTtmlTime(attribute(node, 'end')),
       parentBegin: parent?.begin ?? 0,
       parentEnd: parent?.end ?? state.bodyDuration,
+      key: keyAttribute(node) ?? null,
       children: [],
     };
     state.currentLine = line;
@@ -276,6 +332,7 @@ function openElement(state, node) {
       end: parseTtmlTime(endValue),
       hasExplicitTiming: beginValue !== undefined || endValue !== undefined,
       role: attribute(node, 'role', TTML_METADATA_NAMESPACE) || null,
+      language: attribute(node, 'lang', XML_NAMESPACE) ?? null,
       children: [],
     };
     const container = state.spanStack.at(-1) || state.currentLine;
@@ -285,6 +342,10 @@ function openElement(state, node) {
 }
 
 function addText(state, value) {
+  if (state.translationText) {
+    state.translationText.parts.push(value);
+    return;
+  }
   if (!state.currentLine || value.length === 0) return;
   const container = state.spanStack.at(-1) || state.currentLine;
   container.children.push(value);
@@ -292,6 +353,7 @@ function addText(state, value) {
 
 function closeElement(state) {
   const node = state.elementStack.pop();
+  if (node) closeTranslationElement(state, node);
   if (!node || node.uri !== TTML_NAMESPACE) return;
   if (node.local === 'span' && state.currentLine) state.spanStack.pop();
   if (node.local === 'p') {
@@ -380,6 +442,8 @@ function normalizeLines(state) {
       startMs: rawLine.begin,
       endMs: rawLine.end,
       words,
+      key: rawLine.key,
+      inlineTranslations: inlineTranslations(rawLine.children),
     });
   }
   if (lines.length === 0) return null;
@@ -455,6 +519,27 @@ function validateCanonicalT2(lines, recordId) {
   }
 }
 
+// Head translations match by line key; inline ones belong to their line.
+function lineTranslations(state, lines) {
+  const languages = new Set(state.translations.keys());
+  for (const line of lines)
+    for (const language of line.inlineTranslations.keys())
+      languages.add(language);
+  const result = {};
+  for (const language of languages) {
+    if (!language) continue;
+    const byKey = state.translations.get(language);
+    const texts = lines.map(
+      (line) =>
+        line.inlineTranslations.get(language) ??
+        (line.key ? byKey?.get(line.key) : undefined) ??
+        '',
+    );
+    if (texts.some(Boolean)) result[language] = texts;
+  }
+  return result;
+}
+
 function analyzeTtml(value, options = {}) {
   if (typeof value !== 'string' || value.length === 0) {
     return { status: 'error', reason: 'invalid-ttml' };
@@ -479,6 +564,11 @@ function analyzeTtml(value, options = {}) {
   }
   const normalized = normalizeLines(state);
   if (!normalized) return { status: 'error', reason: 'invalid-ttml' };
+  const translations = lineTranslations(state, normalized.lines);
+  // Keep line objects exactly as before; translation lookups are done above.
+  normalized.lines = normalized.lines.map(
+    ({ text, startMs, endMs, words }) => ({ text, startMs, endMs, words }),
+  );
   if (
     normalized.completeT2 &&
     !validateCanonicalT2(normalized.lines, options.recordId)
@@ -514,6 +604,8 @@ function analyzeTtml(value, options = {}) {
       plain: normalized.lines.map((line) => line.text).join('\n'),
       lines: normalized.lines,
     },
+    // Language tag -> one entry per normalized line ('' when untranslated).
+    translations,
     lineCount: normalized.lines.length,
     segmentCount: normalized.completeT2
       ? normalized.lines.reduce((sum, line) => sum + line.words.length, 0)

@@ -37,6 +37,9 @@ const {
   loadTranslations,
   saveTranslations,
 } = require('../../lib/library/lyricsTranslations');
+const {
+  loadSourceTranslations,
+} = require('../../lib/library/lyricsSourceTranslations');
 
 function registerLyricsDocumentHandlers({
   ipcMain,
@@ -147,9 +150,24 @@ function registerLyricsDocumentHandlers({
             });
             if (document.documentId !== documentId)
               throw createAppError({ code: 'LYRICS_SOURCE_STALE' });
-            return mutate
-              ? saveTranslations(trackDir, filename, document, revision, rows)
-              : loadTranslations(trackDir, filename, document);
+            if (mutate)
+              return saveTranslations(
+                trackDir,
+                filename,
+                document,
+                revision,
+                rows,
+              );
+            let sourceRows = {};
+            try {
+              sourceRows = loadSourceTranslations(trackDir, filename, document);
+            } catch {
+              // Provider extras are optional; saved translations still load.
+            }
+            return {
+              ...loadTranslations(trackDir, filename, document),
+              sourceRows,
+            };
           },
         ),
     );

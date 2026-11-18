@@ -176,6 +176,40 @@ describe('provider-neutral TTML normalization golden behavior', () => {
     });
   });
 
+  it('collects head and inline translations per normalized line without changing lines', () => {
+    const value = `<tt xmlns="http://www.w3.org/ns/ttml"
+    xmlns:ttm="http://www.w3.org/ns/ttml#metadata"
+    xmlns:lrc="http://lrc.red/lyric-ttml-internal" xml:lang="ja">
+  <head><metadata><sourceMetadata xmlns="http://lrc.red/lyric-ttml-internal">
+    <translations><translation type="subtitle" xml:lang="en-US">
+      <text for="L1">First line</text><text for="L3">Third  line</text>
+    </translation></translations>
+    <transliterations><transliteration xml:lang="ja-Latn">
+      <text for="L1">ichi</text>
+    </transliteration></transliterations>
+  </sourceMetadata></metadata></head>
+  <body dur="10s">
+    <p begin="1s" end="2s" lrc:key="L1">一行目</p>
+    <p begin="2s" end="3s" lrc:key="L2"> </p>
+    <p begin="3s" end="4s" lrc:key="L3">三行目<span ttm:role="x-translation" xml:lang="zh-Hant">第三行</span></p>
+  </body>
+</tt>`;
+    const result = analyzeTtml(value);
+    expect(result.status).toBe('ok');
+    expect(result.document.lines.map((line) => line.text)).toEqual([
+      '一行目',
+      '三行目',
+    ]);
+    expect(Object.keys(result.document.lines[0]).sort()).toEqual(
+      ['endMs', 'startMs', 'text', 'words'].sort(),
+    );
+    expect(result.translations).toEqual({
+      'en-US': ['First line', 'Third line'],
+      'zh-Hant': ['', '第三行'],
+    });
+    expect(analyzeTtml(wordTtml()).translations).toEqual({});
+  });
+
   it('downgrades incomplete primary word timing instead of persisting partial T2', () => {
     const value = wordTtml(
       '<p begin="4s" end="6s"><span begin="4s" end="5s">Part</span> missing</p>',

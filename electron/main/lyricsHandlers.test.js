@@ -431,7 +431,12 @@ describe('lyrics timing IPC', () => {
         opened.sourceSession,
         documentId,
       ),
-    ).toEqual({ revision: null, rows: { 'zh-TW': [], en: [] } });
+    ).toEqual({
+      revision: null,
+      rows: { 'zh-TW': [], en: [] },
+      // A plain local source carries no provider translations.
+      sourceRows: {},
+    });
 
     const rows = {
       'zh-TW': [{ lineId: lines[0].lineId, original: 'Hello', text: '你好' }],
@@ -455,7 +460,7 @@ describe('lyrics timing IPC', () => {
         opened.sourceSession,
         documentId,
       ),
-    ).toEqual({ revision: saved.revision, rows });
+    ).toEqual({ revision: saved.revision, rows, sourceRows: {} });
 
     await expect(
       get(trusted, 'track-a', 'main.lrc', opened.sourceSession, 'other-doc'),
