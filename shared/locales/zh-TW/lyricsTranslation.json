@@ -8,6 +8,8 @@
   "off": "關閉",
   "traditionalChinese": "繁中",
   "english": "英文",
+  "sourceAvailable": "這份歌詞附帶{language}譯文。",
+  "loadSource": "載入譯文",
   "importText": "貼上譯文",
   "importHint": "可按段貼上原詞與譯文。只貼譯文時，每句一行，缺譯留空行。",
   "importFile": "匯入 TXT",

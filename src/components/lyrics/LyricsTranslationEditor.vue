@@ -80,6 +80,39 @@ const skippedNotice = computed(() =>
   }),
 );
 
+// Translations that came with the lyrics source; loading only fills the draft.
+const sourceDraft = computed(() =>
+  Object.fromEntries(
+    (props.saved.sourceRows?.[language.value] ?? []).map((row) => [
+      row.lineId,
+      row.text,
+    ]),
+  ),
+);
+const sourceOffer = computed(() => {
+  const rows = Object.entries(sourceDraft.value);
+  if (
+    !rows.length ||
+    rows.every(
+      ([lineId, text]) => drafts.value[language.value][lineId] === text,
+    )
+  )
+    return '';
+  return t('lyricsTranslation.sourceAvailable', {
+    language: props.languages.find(({ id }) => id === language.value)?.label,
+  });
+});
+
+function loadSourceTranslation() {
+  clearNotice();
+  drafts.value[language.value] = Object.assign(
+    Object.create(null),
+    drafts.value[language.value],
+    sourceDraft.value,
+  );
+  reviewScroll.value?.scrollTo({ top: 0 });
+}
+
 function clearNotice() {
   error.value = '';
   skippedRanges.value = [];
@@ -201,6 +234,15 @@ async function save() {
           :aria-label="t('lyricsTranslation.language')"
           :disabled="busy"
           @update:model-value="clearNotice"
+        />
+        <UiNotice
+          v-if="sourceOffer"
+          tone="info"
+          :message="sourceOffer"
+          :action-label="t('lyricsTranslation.loadSource')"
+          :action-disabled="busy"
+          compact
+          @action="loadSourceTranslation"
         />
         <UiTextarea
           :id="`${id}-import`"

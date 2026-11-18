@@ -8,6 +8,8 @@
   "off": "Off",
   "traditionalChinese": "Traditional Chinese",
   "english": "English",
+  "sourceAvailable": "Translation available: {language}.",
+  "loadSource": "Load translation",
   "importText": "Paste translations",
   "importHint": "Paste blocks of original lyrics followed by translations, or paste one translation per line with blanks for missing lines.",
   "importFile": "Import TXT",
