@@ -849,33 +849,15 @@ describe('automatic separation seam', () => {
     });
   }
 
-  it('reports readiness from prepared tools without a stale-path callback', () => {
-    const ffmpeg = vi.fn(() => 'ffmpeg-path');
-    const api = registerApi({ getPreparedSeparationFfmpegPath: ffmpeg });
-    expect(api.isReady()).toBe(true);
-    expect(ffmpeg).toHaveBeenCalledWith('user-data', 'C:\ffmpeg.exe');
-  });
-
-  it('is not ready when FFmpeg or the default model is missing', () => {
-    const missing = () => {
-      throw new Error('missing dependency');
-    };
-    expect(
-      registerApi({ getPreparedSeparationFfmpegPath: missing }).isReady(),
-    ).toBe(false);
-    expect(registerApi({ getPreparedSeparationModel: missing }).isReady()).toBe(
-      false,
-    );
-  });
-
-  it('queues the default recipe and can withdraw a pending item', () => {
+  it('queues the default recipe as visible work held while OBS is live', () => {
     const queue = {
       enqueue: vi.fn(() => ({ itemIds: ['item-1'] })),
-      waitForItem: vi.fn(),
-      remove: vi.fn(() => true),
+      wake: vi.fn(),
       getStatus: vi.fn(),
     };
-    const api = registerApi({ createSeparationQueue: () => queue });
+    const isObsLive = vi.fn(() => false);
+    const createSeparationQueue = vi.fn(() => queue);
+    const api = registerApi({ createSeparationQueue, isObsLive });
     expect(api.enqueue({ trackIds: ['track-1'] })).toEqual({
       itemIds: ['item-1'],
     });
@@ -883,7 +865,10 @@ describe('automatic separation seam', () => {
       trackIds: ['track-1'],
       recipeId: 'general',
       regenerate: false,
+      holdWhileLive: true,
     });
-    expect(api.remove('item-1')).toBe(true);
+    expect(createSeparationQueue.mock.calls[0][0].isLive).toBe(isObsLive);
+    api.wake();
+    expect(queue.wake).toHaveBeenCalledOnce();
   });
 });

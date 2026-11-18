@@ -79,6 +79,7 @@ function createSeparationQueueService({
   scheduleTask = queueMicrotask,
   now = Date.now,
   getScopeKey = () => '',
+  isLive = () => false,
 }) {
   if (
     typeof resolveRecipe !== 'function' ||
@@ -87,7 +88,8 @@ function createSeparationQueueService({
     typeof cancelActiveTrack !== 'function' ||
     typeof createItemId !== 'function' ||
     typeof onUpdate !== 'function' ||
-    typeof scheduleTask !== 'function'
+    typeof scheduleTask !== 'function' ||
+    typeof isLive !== 'function'
   ) {
     throw new Error('invalid separation queue dependencies');
   }
@@ -170,9 +172,28 @@ function createSeparationQueueService({
     }
   }
 
+  function liveNow() {
+    try {
+      return isLive() === true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Automatic items wait while OBS is live; manual items keep their turn.
+  function nextStartable() {
+    const live = liveNow();
+    return (
+      items.find(
+        ({ status, holdWhileLive }) =>
+          status === 'pending' && !(live && holdWhileLive),
+      ) ?? null
+    );
+  }
+
   function requestDrain() {
     if (drainScheduled || draining || paused) return;
-    if (!items.some(({ status }) => status === 'pending')) return;
+    if (!nextStartable()) return;
     drainScheduled = true;
     scheduleTask(async () => {
       drainScheduled = false;
@@ -185,7 +206,7 @@ function createSeparationQueueService({
     draining = true;
     try {
       while (!paused) {
-        const entry = items.find(({ status }) => status === 'pending');
+        const entry = nextStartable();
         if (!entry) break;
 
         activeItemId = entry.itemId;
@@ -279,9 +300,10 @@ function createSeparationQueueService({
     recipeId,
     regenerate = false,
     outputFormat,
+    holdWhileLive = false,
   } = {}) {
     const format = normalizeSeparationOutputFormat(outputFormat);
-    if (typeof regenerate !== 'boolean') {
+    if (typeof regenerate !== 'boolean' || typeof holdWhileLive !== 'boolean') {
       throw new Error('invalid separation queue options');
     }
     const uniqueTrackIds = validateTrackIds(trackIds);
@@ -321,6 +343,10 @@ function createSeparationQueueService({
         if (regenerate && existing.status === 'pending') {
           existing.regenerate = true;
         }
+        // A manual request for the same track no longer waits for OBS.
+        if (!holdWhileLive && existing.status === 'pending') {
+          existing.holdWhileLive = false;
+        }
         itemIds.push(existing.itemId);
         continue;
       }
@@ -335,6 +361,7 @@ function createSeparationQueueService({
         outputFormat: format,
         scopeKey,
         regenerate,
+        holdWhileLive,
         status: 'pending',
         cancelRequested: false,
         waiters: [],
@@ -433,6 +460,7 @@ function createSeparationQueueService({
     Object.assign(entry, {
       status: 'pending',
       cancelRequested: false,
+      holdWhileLive: false,
       waiters: [],
     });
     delete entry.error;
@@ -508,6 +536,8 @@ function createSeparationQueueService({
     clearPending,
     clearCompleted,
     cancelActive,
+    // Rechecks held items after OBS stops.
+    wake: requestDrain,
   };
 }
 

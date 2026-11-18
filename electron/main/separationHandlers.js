@@ -79,6 +79,7 @@ function registerSeparationHandlers({
   hasStoredSeparationResultFile = hasSeparationResultFile,
   enforceLibraryStoragePolicy = async () => undefined,
   getLibraryScope = () => ({ dir: resolveDownloadDir(getConfig()), epoch: 0 }),
+  isObsLive = () => false,
 }) {
   const assertOutputFormat = (value) => {
     const format = normalizeSeparationOutputFormat(value);
@@ -220,6 +221,7 @@ function registerSeparationHandlers({
       return JSON.stringify([path.resolve(scope.dir), scope.epoch]);
     },
     createItemId: randomUUID,
+    isLive: isObsLive,
     hasCurrentResult: ({ trackId, recipeId }) => {
       const recipe = resolveRecipe(recipeId);
       const dir = resolveDownloadDir(getConfig());
@@ -427,33 +429,16 @@ function registerSeparationHandlers({
     return { ok: true };
   });
 
-  // Main-only seam for opt-in automatic work. Readiness only verifies
-  // prepared tools; it never downloads or clears a stale system path.
+  // Main-only seam for automatic work; items wait while OBS is live.
   return {
-    isReady() {
-      try {
-        const userDataDir = resolveUserDataDir();
-        getPreparedSeparationFfmpegPath(
-          userDataDir,
-          getConfig().systemFfmpegPath,
-        );
-        getPreparedSeparationModel(
-          userDataDir,
-          resolveRecipe(DEFAULT_RECIPE_ID).modelIds[0],
-        );
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    enqueue: ({ trackIds, regenerate = false }) =>
+    enqueue: ({ trackIds }) =>
       queueService.enqueue({
         trackIds,
         recipeId: DEFAULT_RECIPE_ID,
-        regenerate,
+        regenerate: false,
+        holdWhileLive: true,
       }),
-    waitForItem: (itemId) => queueService.waitForItem(itemId),
-    remove: (itemId) => queueService.remove(itemId),
+    wake: () => queueService.wake(),
   };
 }
 

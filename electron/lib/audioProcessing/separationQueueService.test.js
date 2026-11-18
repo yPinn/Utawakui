@@ -226,6 +226,65 @@ describe('separation queue service', () => {
     });
   });
 
+  it('holds automatic items while live but lets manual work run past them', async () => {
+    let live = true;
+    const harness = createHarness({ isLive: () => live });
+
+    const auto = harness.service.enqueue({
+      trackIds: ['auto-1'],
+      recipeId: 'general',
+      holdWhileLive: true,
+    });
+    await flush();
+    expect(harness.runTrack).not.toHaveBeenCalled();
+    expect(auto.queue).toMatchObject({ pending: 1 });
+
+    harness.service.enqueue({ trackIds: ['manual-1'], recipeId: 'general' });
+    await flush();
+    expect(harness.runs.map(({ trackId }) => trackId)).toEqual(['manual-1']);
+    harness.runs[0].task.resolve({ ok: true });
+    await flush();
+    expect(harness.runTrack).toHaveBeenCalledTimes(1);
+
+    live = false;
+    harness.service.wake();
+    await flush();
+    expect(harness.runs.map(({ trackId }) => trackId)).toEqual([
+      'manual-1',
+      'auto-1',
+    ]);
+  });
+
+  it('releases a held item when the same track is requested manually', async () => {
+    const harness = createHarness({ isLive: () => true });
+    harness.service.enqueue({
+      trackIds: ['track-1'],
+      recipeId: 'general',
+      holdWhileLive: true,
+    });
+    await flush();
+    expect(harness.runTrack).not.toHaveBeenCalled();
+
+    harness.service.enqueue({ trackIds: ['track-1'], recipeId: 'general' });
+    await flush();
+    expect(harness.runTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a throwing live probe as not live', async () => {
+    const harness = createHarness({
+      isLive: () => {
+        throw new Error('adapter unavailable');
+      },
+    });
+    harness.service.enqueue({
+      trackIds: ['track-1'],
+      recipeId: 'general',
+      holdWhileLive: true,
+    });
+    await flush();
+    expect(harness.runTrack).toHaveBeenCalledTimes(1);
+  });
+
   it('upgrades a still-pending duplicate when regeneration is requested later', async () => {
     const harness = createHarness();
     harness.hasCurrentResult.mockResolvedValue(true);

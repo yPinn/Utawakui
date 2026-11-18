@@ -1170,8 +1170,6 @@ if (!gotSingleInstanceLock) {
       isFeatureEnabled: isFeatureGateEnabled,
       featureId: FEATURE_IDS.AUDIO_PROCESSING_FLOW,
       getSeparation: () => separationAutomation,
-      isObsLive: () => isObsLiveStatus(obsAdapterController?.getStatus()),
-      logger: runtimeDiagnosticsLogger,
     });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       identityResolver: createLyricsIdentityResolver({
@@ -1863,6 +1861,7 @@ if (!gotSingleInstanceLock) {
       },
       recordDiagnostic,
       enforceLibraryStoragePolicy,
+      isObsLive: () => isObsLiveStatus(obsAdapterController?.getStatus()),
     });
 
     registerFeatureDependencyHandlers({
