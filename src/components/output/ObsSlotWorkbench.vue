@@ -12,6 +12,7 @@ import {
   Check,
   CircleAlert,
   Loader2,
+  LocateFixed,
   RotateCcw,
   Video,
 } from '../../icons/index.js';
@@ -34,12 +35,15 @@ import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsPhantomPortraitEditor from './ObsPhantomPortraitEditor.vue';
 import ObsPhantomPortraitGrid from './ObsPhantomPortraitGrid.vue';
+import ObsPerformerGuideControls from './ObsPerformerGuideControls.vue';
 import ObsFisheyeCameraControls from './ObsFisheyeCameraControls.vue';
 import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
 import { useOutputElementTarget } from '../../composables/output/useOutputElementTarget.js';
+import { useOutputPerformerGuide } from '../../composables/output/useOutputPerformerGuide.js';
+import { useOutputPerformerGuideImage } from '../../composables/output/useOutputPerformerGuideImage.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import UiButton from '../ui/UiButton.vue';
 import UiFolderInspector from '../ui/UiFolderInspector.vue';
@@ -96,6 +100,9 @@ const selectedPortraitSet = computed(() =>
 const sideWidth = shallowRef(null);
 const tools = useTemplateRef('tools');
 const { state: player } = usePlayer();
+const performerGuide = useOutputPerformerGuide();
+const performerGuideImage = useOutputPerformerGuideImage();
+const performerGuideTab = 'performer-guide';
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
 const presentationFields = computed(
@@ -201,6 +208,14 @@ const inspectorTabs = computed(() => {
       id: 'camera-effects',
       icon: Video,
       label: t('outputPanel.cameraEffects.label'),
+      groups: [],
+    });
+  }
+  if (props.activeKind === 'lyrics') {
+    tabs.push({
+      id: performerGuideTab,
+      icon: LocateFixed,
+      label: t('outputPanel.performerGuide.label'),
       groups: [],
     });
   }
@@ -497,7 +512,7 @@ function removePortraitSet() {
     <template #tools
       ><div ref="tools" class="obs-slot-workbench__tools"
     /></template>
-    <template #main>
+    <template #main="main">
       <main class="obs-slot-workbench__canvas">
         <UiScrollRegion
           class="obs-slot-workbench__stage"
@@ -514,6 +529,12 @@ function removePortraitSet() {
             :obs-url="obsUrl"
             :preview-backdrop="previewBackdrop"
             :lyrics-preview-mode="lyricsPreviewMode"
+            :performer-guide="performerGuide.guide.value"
+            :performer-guide-image="performerGuideImage.src.value"
+            :custom-performer-guide-image="performerGuideImage.custom.value"
+            :editing-performer-guide="
+              main?.activeItem?.id === performerGuideTab
+            "
             :element-ids="elementIds"
             :selected-element-id="selectedTargetId"
             @update:capture-size="updateCaptureSize"
@@ -521,6 +542,8 @@ function removePortraitSet() {
             @update:lyrics-preview-mode="
               emit('update:lyricsPreviewMode', $event)
             "
+            @preview-performer-guide="performerGuide.preview"
+            @commit-performer-guide="performerGuide.commit"
             @refresh-projection="emit('refreshProjection')"
             @select-element="selectTarget"
           />
@@ -528,13 +551,17 @@ function removePortraitSet() {
       </main>
     </template>
 
-    <template #side-header>
+    <template #side-header="header">
       <div class="obs-slot-workbench__inspector-header">
         <h2 class="obs-slot-workbench__title">
           {{ preset?.name ?? t('outputPanel.workbench.noTemplate') }}
         </h2>
         <div
-          v-if="showSaveStatus || configurationFields.length > 0"
+          v-if="
+            showSaveStatus ||
+            (configurationFields.length > 0 &&
+              header?.item?.id !== performerGuideTab)
+          "
           class="obs-slot-workbench__header-actions"
         >
           <div
@@ -555,7 +582,10 @@ function removePortraitSet() {
             </UiButton>
           </div>
           <UiIconButton
-            v-if="configurationFields.length > 0"
+            v-if="
+              configurationFields.length > 0 &&
+              header?.item?.id !== performerGuideTab
+            "
             class="obs-slot-workbench__reset"
             :icon="RotateCcw"
             :label="t('outputPanel.workbench.resetTemplate')"
@@ -595,6 +625,17 @@ function removePortraitSet() {
       </div>
     </template>
     <template #side="{ item, active }">
+      <ObsPerformerGuideControls
+        v-if="item?.id === performerGuideTab && active"
+        :guide="performerGuide.guide.value"
+        :available="lyricsPreviewMode === 'performer'"
+        :custom-image="performerGuideImage.custom.value"
+        :image-busy="performerGuideImage.busy.value"
+        :image-error="performerGuideImage.error.value"
+        :save-image="performerGuideImage.change"
+        @commit="performerGuide.commit"
+        @show="emit('update:lyricsPreviewMode', 'performer')"
+      />
       <ObsFisheyeCameraControls
         v-if="item?.id === 'camera-effects' && active"
       />

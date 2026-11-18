@@ -17,13 +17,13 @@ import {
   watch,
 } from 'vue';
 import { Copy, EyeOff, Film, UserRound } from '../../icons/index.js';
-import streamerPreviewImage from '../../../overlay/assets/streamer-guide.png';
 import {
   calculateCapturePreviewScale,
   OUTPUT_LYRICS_CAPTURE_SIZE,
 } from '../../constants/outputCaptureSizes.js';
 import { buildOutputDropUrl } from '../../utils/outputRoutes.js';
 import { useOutputClipboard } from '../../composables/output/useOutputClipboard.js';
+import { DEFAULT_PERFORMER_GUIDE } from '../../utils/outputPerformerGuide.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { useTrackVideoAsset } from '../../composables/useTrackVideoAsset.js';
 import TrackVideoPlayback from '../playback/TrackVideoPlayback.vue';
@@ -32,6 +32,7 @@ import UiStack from '../ui/UiStack.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
+import ObsPerformerGuideSelection from './ObsPerformerGuideSelection.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -49,6 +50,10 @@ const props = defineProps({
     validator: (value) => ['checker', 'dark', 'light'].includes(value),
   },
   lyricsPreviewMode: { type: String, default: 'performer' },
+  performerGuide: { type: Object, default: () => DEFAULT_PERFORMER_GUIDE },
+  performerGuideImage: { type: String, default: null },
+  customPerformerGuideImage: { type: Boolean, default: false },
+  editingPerformerGuide: { type: Boolean, default: false },
   elementIds: { type: Array, default: () => [] },
   selectedElementId: { type: String, default: 'template' },
 });
@@ -57,6 +62,8 @@ const emit = defineEmits([
   'update:captureSize',
   'update:previewBackdrop',
   'update:lyricsPreviewMode',
+  'previewPerformerGuide',
+  'commitPerformerGuide',
   'refreshProjection',
   'selectElement',
 ]);
@@ -195,18 +202,24 @@ onBeforeUnmount(() => {
     :aria-label="t('outputPanel.overlay.label')"
   >
     <div ref="previewStage" class="obs-overlay-preview__stage">
-      <div v-if="isLyrics" class="obs-overlay-preview__canvas-group">
+      <div
+        v-if="isLyrics"
+        class="obs-overlay-preview__canvas-group"
+        :style="previewFrameStyle"
+      >
         <div
           class="obs-overlay-preview__frame"
           :data-backdrop="previewBackdrop"
-          :style="previewFrameStyle"
         >
           <ObsStreamerPreview
             v-if="
+              performerGuideImage &&
               lyricsPreviewMode !== 'none' &&
               (!showPreviewVideo || !previewVideoVisible)
             "
-            :src="streamerPreviewImage"
+            :src="performerGuideImage"
+            :guide="performerGuide"
+            :custom-image="customPerformerGuideImage"
           />
           <TrackVideoPlayback
             v-if="showPreviewVideo"
@@ -242,6 +255,13 @@ onBeforeUnmount(() => {
             </span>
           </div>
         </div>
+        <ObsPerformerGuideSelection
+          v-if="editingPerformerGuide && lyricsPreviewMode === 'performer'"
+          :key="performerGuide.shape"
+          :guide="performerGuide"
+          @preview="emit('previewPerformerGuide', $event)"
+          @commit="emit('commitPerformerGuide', $event)"
+        />
       </div>
       <ObsWidgetCapturePreview
         v-else
@@ -327,24 +347,25 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__canvas-group {
+  --ui-output-preview-layer-guide: 1;
+  --ui-output-preview-layer-output: 2;
+  --ui-output-preview-layer-selection: 3;
+
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: var(--ui-output-preview-aspect-ratio);
   min-inline-size: 0;
   min-block-size: 0;
   display: grid;
-  justify-items: center;
-  gap: var(--ui-space-2);
 }
 
 .obs-overlay-preview__frame {
-  --ui-output-preview-layer-guide: 1;
-  --ui-output-preview-layer-output: 2;
-
   position: relative;
-  aspect-ratio: var(--ui-output-preview-aspect-ratio);
   min-width: 0;
   overflow: hidden;
   display: grid;
-  justify-self: center;
-  border: var(--ui-border-width) solid var(--ui-color-border);
+  outline: var(--ui-border-width) solid var(--ui-color-border);
+  outline-offset: calc(-1 * var(--ui-border-width));
   border-radius: var(--ui-radius-sm);
   background: conic-gradient(
       var(--ui-output-preview-canvas) 25%,

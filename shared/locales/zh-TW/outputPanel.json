@@ -308,6 +308,28 @@
     "applyPhoto": "套用照片",
     "importFailed": "無法匯入照片，請再試一次。"
   },
+  "performerGuide": {
+    "label": "模型佔位",
+    "imageSection": "圖片",
+    "placementSection": "遮罩與位置",
+    "replaceImage": "換圖",
+    "defaultImage": "預設圖",
+    "applyImage": "套用",
+    "imageSaveFailed": "無法儲存佔位圖片，請再試一次。",
+    "shape": "遮罩形狀",
+    "shapeOption": "{shape}（{ratio}）",
+    "shapes": {
+      "circle": "正圓形",
+      "ellipse": "直橢圓",
+      "roundedRectangle": "圓角矩形",
+      "square": "正方形",
+      "rectangle": "直長方形"
+    },
+    "x": "中心 X（%）",
+    "y": "中心 Y（%）",
+    "width": "寬度（%）",
+    "height": "高度（%）"
+  },
   "cameraEffects": {
     "label": "攝影機特效",
     "automatic": "自動穿插",

@@ -308,6 +308,28 @@
     "applyPhoto": "Apply photo",
     "importFailed": "Couldn't import the photo. Try again."
   },
+  "performerGuide": {
+    "label": "Model placement",
+    "imageSection": "Image",
+    "placementSection": "Mask and position",
+    "replaceImage": "Replace",
+    "defaultImage": "Default image",
+    "applyImage": "Apply",
+    "imageSaveFailed": "Couldn't save the placement image. Try again.",
+    "shape": "Mask shape",
+    "shapeOption": "{shape} ({ratio})",
+    "shapes": {
+      "circle": "Circle",
+      "ellipse": "Tall ellipse",
+      "roundedRectangle": "Rounded rectangle",
+      "square": "Square",
+      "rectangle": "Tall rectangle"
+    },
+    "x": "Center X (%)",
+    "y": "Center Y (%)",
+    "width": "Width (%)",
+    "height": "Height (%)"
+  },
   "cameraEffects": {
     "label": "Camera effects",
     "automatic": "Automatic bursts",

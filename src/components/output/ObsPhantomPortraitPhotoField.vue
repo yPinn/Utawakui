@@ -1,5 +1,6 @@
 <script setup>
-import { onBeforeUnmount, shallowRef } from 'vue';
+import { watch } from 'vue';
+import { useOutputPhotoDraft } from '../../composables/output/useOutputPhotoDraft.js';
 import { ImagePlus, RotateCcw } from '../../icons/index.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsPhantomPortraitImageModal from './ObsPhantomPortraitImageModal.vue';
@@ -16,59 +17,19 @@ defineProps({
   background: { type: String, required: true },
 });
 const emit = defineEmits(['update:modelValue', 'update:busy']);
-const busy = shallowRef(false);
-const error = shallowRef('');
-const photoDraft = shallowRef(null);
-let mounted = true;
-onBeforeUnmount(() => {
-  mounted = false;
-  if (photoDraft.value) discardDraft(photoDraft.value.id);
-});
-
-function discardDraft(id) {
-  void window.Utawakui?.discardOutputPortrait?.(id)?.catch(() => undefined);
-}
-
-function finishPhoto() {
-  photoDraft.value = null;
-  busy.value = false;
-  emit('update:busy', false);
-}
-
-function closePhoto() {
-  discardDraft(photoDraft.value.id);
-  finishPhoto();
-}
+const {
+  draft: photoDraft,
+  busy,
+  choosing,
+  error,
+  choose: choosePhoto,
+  close: closePhoto,
+} = useOutputPhotoDraft();
+watch(busy, (value) => emit('update:busy', value), { flush: 'sync' });
 
 function applyPhoto(id) {
   emit('update:modelValue', id);
-  finishPhoto();
-}
-
-async function choosePhoto() {
-  if (busy.value) return;
-  busy.value = true;
-  emit('update:busy', true);
-  error.value = '';
-  try {
-    const result = await window.Utawakui?.chooseOutputPortrait?.();
-    if (!mounted) {
-      if (result?.status === 'ok') discardDraft(result.id);
-      return;
-    }
-    if (result?.status === 'ok') photoDraft.value = result;
-    else if (result?.status !== 'cancelled') {
-      error.value = t(
-        result?.status === 'invalid-image'
-          ? 'outputPanel.portrait.invalidImage'
-          : 'outputPanel.portrait.importFailed',
-      );
-    }
-  } catch {
-    if (mounted) error.value = t('outputPanel.portrait.importFailed');
-  } finally {
-    if (mounted && !photoDraft.value) finishPhoto();
-  }
+  photoDraft.value = null;
 }
 
 function resetPhoto() {
@@ -119,7 +80,7 @@ function resetPhoto() {
               "
               :tooltip-detail="t('outputPanel.portrait.photoHint')"
               :aria-describedby="error ? `${id}-error` : `${id}-format`"
-              :loading="busy && !photoDraft"
+              :loading="choosing"
               @click="choosePhoto"
             />
             <UiIconButton
@@ -136,7 +97,7 @@ function resetPhoto() {
         {{ t('outputPanel.portrait.photoHint') }}
       </span>
       <UiHint v-if="error" :id="`${id}-error`" tone="danger" role="alert">{{
-        error
+        t(error)
       }}</UiHint>
     </UiStack>
   </ObsAppearanceControlRow>

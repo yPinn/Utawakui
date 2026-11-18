@@ -66,6 +66,10 @@ function registerOutputHandlers({
     return resolveDownloadDir(getConfig());
   }
 
+  function isCurrentPortraitLibrary(draft) {
+    return draft.previewOnly || draft.directory === outputDir();
+  }
+
   function syncOutputSlots(document = loadOutputSlots(outputDir())) {
     server.setOverlaySlots?.(document.slots);
     return document;
@@ -171,16 +175,17 @@ function registerOutputHandlers({
     return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));
   });
 
-  ipcMain.handle('output-slots:choose-portrait', async ({ sender }) => {
-    requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+  ipcMain.handle('output-slots:choose-portrait', async ({ sender }, target) => {
+    const previewOnly = target === 'performer-guide';
+    if (!previewOnly) requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
     const previous = portraitDrafts.get(sender);
     if (previous && (!previous.photo || previous.saving))
       return { status: 'error' };
     previous?.processing?.abort();
-    const draft = { id: randomUUID() };
+    const draft = { id: randomUUID(), previewOnly };
     portraitDrafts.set(sender, draft);
     try {
-      const directory = outputDir();
+      if (!previewOnly) draft.directory = outputDir();
       const result = await dialog.showOpenDialog(getMainWindow(), {
         properties: ['openFile'],
         filters: [
@@ -193,9 +198,9 @@ function registerOutputHandlers({
       if (result.canceled || !result.filePaths[0])
         return { status: 'cancelled' };
       const photo = await readPortrait(result.filePaths[0]);
-      if (directory !== outputDir()) return { status: 'error' };
+      if (!isCurrentPortraitLibrary(draft)) return { status: 'error' };
       if (!photo) return { status: 'invalid-image' };
-      Object.assign(draft, { photo, directory });
+      draft.photo = photo;
       return {
         status: 'ok',
         id: draft.id,
@@ -235,11 +240,11 @@ function registerOutputHandlers({
       const processing = new AbortController();
       draft.processing = processing;
       try {
-        if (draft.directory !== outputDir()) return { status: 'error' };
+        if (!isCurrentPortraitLibrary(draft)) return { status: 'error' };
         const result = await segmentPortrait(rgba, processing.signal);
         if (processing.signal.aborted) return { status: 'cancelled' };
         requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
-        return draft.directory === outputDir() ? result : { status: 'error' };
+        return isCurrentPortraitLibrary(draft) ? result : { status: 'error' };
       } catch (error) {
         if (processing.signal.aborted) return { status: 'cancelled' };
         if (error.code === 'FEATURE_GATE_REQUIRED') throw error;
@@ -261,6 +266,7 @@ function registerOutputHandlers({
       const draft = portraitDrafts.get(sender);
       if (
         !draft?.photo ||
+        draft.previewOnly ||
         draft.id !== draftId ||
         draft.saving ||
         draft.processing

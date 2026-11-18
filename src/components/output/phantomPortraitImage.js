@@ -1,4 +1,8 @@
 import { maskEdge } from '../../../shared/outputPortraitImage.json';
+import {
+  OUTPUT_COMPOSITION_LINES,
+  closestOutputAlignment,
+} from '../../utils/outputAlignmentGuides.js';
 
 export function portraitSubjectBounds(alpha, width, height, edge = maskEdge) {
   let left = edge;
@@ -27,33 +31,31 @@ export function squarePortraitFrame(alpha, width, height, edge = maskEdge) {
   const subject = alpha
     ? portraitSubjectBounds(alpha, width, height, edge)
     : null;
-  const bounds = subject ?? { left: 0, top: 0, width, height };
-  const size = Math.max(bounds.width, bounds.height) * (subject ? 1.16 : 1);
+  return fitPortraitFrame(
+    subject ?? { left: 0, top: 0, width, height },
+    1,
+    subject ? 1.16 : 1,
+  );
+}
+
+export function fitPortraitFrame(bounds, aspect, margin = 1) {
+  const width = Math.max(bounds.width, bounds.height * aspect) * margin;
+  const height = width / aspect;
   return {
-    left: bounds.left + (bounds.width - size) / 2,
-    top: bounds.top + (bounds.height - size) / 2,
-    width: size,
-    height: size,
+    left: bounds.left + (bounds.width - width) / 2,
+    top: bounds.top + (bounds.height - height) / 2,
+    width,
+    height,
   };
 }
 
-const snappingLines = [0.5, 1 / 3, 2 / 3];
-
 function closestPortraitGuide(origin, size, screenSize, candidates, previous) {
-  function distance({ anchor, line }) {
-    return Math.abs((anchor - origin) / size - line) * screenSize;
-  }
-  // Keep the active line through a slightly wider range so slow drags do not flicker.
-  if (previous && distance(previous) <= 11) return previous;
-  let nearest = null;
-  let nearby = 7;
-  for (const guide of candidates) {
-    const pixels = distance(guide);
-    if (pixels > nearby) continue;
-    nearby = pixels;
-    nearest = guide;
-  }
-  return nearest;
+  return closestOutputAlignment(
+    candidates,
+    ({ anchor, line }) =>
+      Math.abs((anchor - origin) / size - line) * screenSize,
+    previous,
+  );
 }
 
 export function snapPortraitFrame(frame, subject, viewport, previous = {}) {
@@ -63,7 +65,7 @@ export function snapPortraitFrame(frame, subject, viewport, previous = {}) {
     frame.left,
     frame.width,
     viewport.width,
-    snappingLines.map((line) => ({ anchor: centerX, line })),
+    OUTPUT_COMPOSITION_LINES.map((line) => ({ anchor: centerX, line })),
     previous.vertical,
   );
   const horizontal = closestPortraitGuide(
@@ -71,7 +73,7 @@ export function snapPortraitFrame(frame, subject, viewport, previous = {}) {
     frame.height,
     viewport.height,
     [
-      ...snappingLines.map((line) => ({ anchor: centerY, line })),
+      ...OUTPUT_COMPOSITION_LINES.map((line) => ({ anchor: centerY, line })),
       { anchor: subject.top + subject.height, line: 1 },
     ],
     previous.horizontal,
@@ -118,12 +120,14 @@ export function zoomPortraitFrame(frame, scale, x = 0.5, y = 0.5) {
 
 export function drawPortraitCrop(canvas, photo, frame) {
   const size = Math.max(photo.width, photo.height);
-  if (canvas.width !== size) canvas.width = size;
-  if (canvas.height !== size) canvas.height = size;
+  const scale = size / Math.max(frame.width, frame.height);
+  const width = Math.max(1, Math.round(frame.width * scale));
+  const height = Math.max(1, Math.round(frame.height * scale));
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
   const context = canvas.getContext('2d');
-  context.clearRect(0, 0, size, size);
+  context.clearRect(0, 0, width, height);
   context.imageSmoothingQuality = 'high';
-  const scale = size / frame.width;
   context.drawImage(
     photo,
     -frame.left * scale,

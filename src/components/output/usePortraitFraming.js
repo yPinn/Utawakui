@@ -1,6 +1,7 @@
 import { computed, shallowRef } from 'vue';
 import {
   constrainPortraitFrame,
+  fitPortraitFrame,
   portraitImageBounds,
   portraitSubjectBounds,
   snapPortraitFrame,
@@ -17,6 +18,7 @@ export function usePortraitFraming({
   getVisibleMask,
   guidesEnabled,
   enabled,
+  previewCrop,
 }) {
   const adjusted = shallowRef(null);
   const fittedMask = shallowRef(null);
@@ -37,6 +39,14 @@ export function usePortraitFraming({
   const home = computed(() => {
     if (!photo.value) return null;
     const { width, height } = photo.value;
+    if (previewCrop) {
+      const maskBounds =
+        fittedMask.value &&
+        portraitSubjectBounds(fittedMask.value, width, height);
+      const { aspect, radius } = previewCrop();
+      const margin = radius === '50%' ? Math.SQRT2 : maskBounds ? 1.16 : 1;
+      return fitPortraitFrame(maskBounds || imageBounds.value, aspect, margin);
+    }
     return squarePortraitFrame(fittedMask.value, width, height);
   });
   const frame = computed(() => adjusted.value ?? home.value);

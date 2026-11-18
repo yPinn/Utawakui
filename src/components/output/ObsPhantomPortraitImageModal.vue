@@ -42,6 +42,9 @@ import { usePortraitFraming } from './usePortraitFraming.js';
 
 const props = defineProps({
   photo: { type: Object, required: true },
+  previewCrop: { type: Object, default: null },
+  savePhoto: { type: Function, default: null },
+  allowCutout: { type: Boolean, default: true },
 });
 const emit = defineEmits(['close', 'apply']);
 const prefix = useId();
@@ -69,6 +72,10 @@ const useCutout = shallowRef(false);
 const saving = shallowRef(false);
 const segmenting = shallowRef(false);
 const error = shallowRef('');
+const previewStyle = computed(() => ({
+  '--output-image-editor-aspect': props.previewCrop?.aspect ?? 1,
+  '--output-image-editor-radius': props.previewCrop?.radius,
+}));
 const {
   frame,
   adjusted: adjustedFrame,
@@ -90,6 +97,7 @@ const {
   getVisibleMask: () => (useCutout.value ? editedMask.value : null),
   guidesEnabled,
   enabled: () => !saving.value && !lassoSelection.value,
+  previewCrop: props.previewCrop ? () => props.previewCrop : null,
 });
 const lassoTools = [
   { id: 'erase', icon: Lasso, label: t('outputPanel.portrait.lasso.erase') },
@@ -243,9 +251,10 @@ async function apply() {
   saving.value = true;
   error.value = '';
   try {
-    let png = null;
+    let blob = null;
     const { left, top, width, height } = frame.value;
     if (
+      props.savePhoto ||
       useCutout.value ||
       left !== 0 ||
       top !== 0 ||
@@ -254,12 +263,19 @@ async function apply() {
     ) {
       const photo = useCutout.value ? cutout.value : original.value;
       drawPortraitCrop(preview.value, photo, frame.value);
-      const blob = await new Promise((resolve) =>
+      blob = await new Promise((resolve) =>
         preview.value.toBlob(resolve, 'image/png'),
       );
       if (!blob) throw new Error('portrait encoding unavailable');
-      png = new Uint8Array(await blob.arrayBuffer());
     }
+    if (disposed) return;
+    if (props.savePhoto) {
+      if (!(await props.savePhoto(blob)))
+        throw new Error('placement image save failed');
+      if (!disposed) emit('apply');
+      return;
+    }
+    const png = blob ? new Uint8Array(await blob.arrayBuffer()) : null;
     if (disposed) return;
     const result = await window.Utawakui.saveOutputPortrait(
       props.photo.id,
@@ -285,7 +301,7 @@ async function apply() {
     :close-disabled="saving"
     @close="emit('close')"
   >
-    <div class="obs-portrait-image-editor">
+    <div class="obs-portrait-image-editor" :style="previewStyle">
       <UiStack
         class="obs-portrait-image-editor__photo"
         direction="column"
@@ -424,11 +440,17 @@ async function apply() {
         </UiStack>
       </UiStack>
       <UiStack
+        v-if="allowCutout || error"
         class="obs-portrait-image-editor__tools"
         direction="column"
         :gap="3"
       >
-        <UiStack v-if="!cutoutMask" align="start" direction="column" :gap="2">
+        <UiStack
+          v-if="allowCutout && !cutoutMask"
+          align="start"
+          direction="column"
+          :gap="2"
+        >
           <UiButton
             variant="secondary"
             :disabled="!original || saving"
@@ -443,7 +465,7 @@ async function apply() {
           }}</UiHint>
         </UiStack>
         <UiSwitch
-          v-else
+          v-else-if="cutoutMask"
           :id="`${prefix}-cutout`"
           v-model="useCutout"
           :label="t('outputPanel.portrait.useCutout')"
@@ -533,7 +555,13 @@ async function apply() {
         :disabled="!original || saving || segmenting || Boolean(lassoSelection)"
         @click="apply"
       >
-        {{ t('outputPanel.portrait.applyPhoto') }}
+        {{
+          t(
+            previewCrop
+              ? 'outputPanel.performerGuide.applyImage'
+              : 'outputPanel.portrait.applyPhoto',
+          )
+        }}
       </UiButton>
     </template>
   </UiModal>
@@ -549,16 +577,20 @@ async function apply() {
 
 .obs-portrait-image-editor__preview {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: var(--output-image-editor-aspect);
   min-inline-size: 0;
   overflow: hidden;
   background: var(--ui-photo-frame-background);
   border: var(--ui-border-width) solid var(--ui-photo-frame-border-color);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--output-image-editor-radius, var(--ui-radius-md));
 }
 
 .obs-portrait-image-editor__photo {
-  inline-size: min(100%, 54dvh);
+  inline-size: min(
+    100%,
+    54dvh,
+    calc(54dvh * var(--output-image-editor-aspect))
+  );
   min-inline-size: 0;
   justify-self: center;
 }

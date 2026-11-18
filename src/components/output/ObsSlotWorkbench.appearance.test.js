@@ -147,13 +147,16 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
 
   it.each(getOutputWorkbenchData().templates)(
     'uses only the supported folder tabs and renders every field for $id',
-    async ({ id, appearanceFields, presentationFields }) => {
+    async ({ id, kind, appearanceFields, presentationFields }) => {
       const html = await renderRegisteredTemplate(id);
       expect(
         [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
           ([, label]) => label,
         ),
-      ).toEqual(templateTabLabels[id]);
+      ).toEqual([
+        ...templateTabLabels[id],
+        ...(kind === 'lyrics' ? ['模型佔位'] : []),
+      ]);
       expect(html).toMatch(
         new RegExp(
           `aria-label="${templateTabLabels[id][0]}"[^>]+aria-selected="true"`,
@@ -265,7 +268,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const labels = [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
       ([, label]) => label,
     );
-    expect(labels).toEqual(['定位', '文字', '色彩']);
+    expect(labels).toEqual(['定位', '文字', '色彩', '模型佔位']);
     expect(html).toMatch(/aria-label="定位"[^>]+aria-selected="true"/u);
     expect(html).toContain('定位基準');
     expect(html).toContain('位置微調');

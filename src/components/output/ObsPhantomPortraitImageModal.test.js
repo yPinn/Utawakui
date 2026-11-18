@@ -49,7 +49,7 @@ for (const [component, file] of [
 
 afterEach(() => vi.unstubAllGlobals());
 
-function mountPhoto({ width = 32, height = 32, api, onApply }) {
+function mountPhoto({ width = 32, height = 32, api, onApply, ...options }) {
   const context = {
     clearRect() {},
     drawImage() {},
@@ -70,6 +70,7 @@ function mountPhoto({ width = 32, height = 32, api, onApply }) {
   const { app, root } = mount(ObsPhantomPortraitImageModal, {
     photo: { id: 'draft', bytes: new Uint8Array(), mimeType: 'image/png' },
     onApply,
+    ...options,
   });
   const nodes = (type) => findAll(root, (node) => node.type === type);
   const canvas = markRaw(nodes('canvas')[0]);
@@ -119,6 +120,37 @@ it.each([
     }
   },
 );
+
+it('encodes the selected placement ratio and delegates the PNG to the preview store', async () => {
+  const api = { saveOutputPortrait: vi.fn(), segmentOutputPortrait: vi.fn() };
+  const savePhoto = vi.fn().mockResolvedValue(true);
+  const png = new Blob(['preview'], { type: 'image/png' });
+  const applied = Promise.withResolvers();
+  const { app, nodes, canvas, draw } = mountPhoto({
+    width: 32,
+    height: 64,
+    api,
+    onApply: applied.resolve,
+    previewCrop: { aspect: 0.75, radius: '50%' },
+    allowCutout: false,
+    savePhoto,
+  });
+  canvas.toBlob = (callback) => callback(png);
+  try {
+    await Promise.resolve();
+    await nextTick();
+    expect([canvas.width, canvas.height]).toEqual([48, 64]);
+    expect(draw.mock.lastCall[3] / draw.mock.lastCall[4]).toBeCloseTo(32 / 64);
+    expect(nodes('button').map(textContent)).not.toContain('自動去背');
+    const apply = nodes('button').find((node) => textContent(node) === '套用');
+    trigger(apply, 'onClick');
+    await applied.promise;
+    expect(savePhoto).toHaveBeenCalledWith(png);
+    expect(api.saveOutputPortrait).not.toHaveBeenCalled();
+  } finally {
+    app.unmount();
+  }
+});
 
 it('preserves manual framing when enabling cutout and restores the signed percentage settings', async () => {
   const result = Promise.withResolvers();

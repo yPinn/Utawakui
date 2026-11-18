@@ -24,6 +24,7 @@ function renderPreview(props = {}) {
           preset: { tone: 'stage', preview: { title: 'Live Stage' } },
           activeKind: 'lyrics',
           previewUrl: 'http://127.0.0.1:8700/overlay/lyrics?preview=1',
+          performerGuideImage: 'blob:placement-image',
           ...props,
         }),
     }),
@@ -67,6 +68,13 @@ describe('ObsOverlayPreview', () => {
     expect(iframeSrc(secondHtml)).not.toBe(iframeSrc(firstHtml));
   });
 
+  it('uses the silhouette fit only with the built-in placement image', async () => {
+    expect(await renderPreview()).toContain('data-built-in-shape="ellipse"');
+    expect(
+      await renderPreview({ customPerformerGuideImage: true }),
+    ).not.toContain('data-built-in-shape');
+  });
+
   it('composes one direct Lyrics iframe with bounded Workbench-only inspection state', async () => {
     const html = await renderPreview();
 
@@ -78,6 +86,10 @@ describe('ObsOverlayPreview', () => {
       html.indexOf('<iframe'),
     );
     expect(html).toContain('obs-streamer-preview');
+    expect(html).toContain('src="blob:placement-image"');
+    expect(html.match(/<iframe[^>]+src="([^"]+)"/u)?.[1]).not.toContain(
+      'placement-image',
+    );
     expect(html.match(/<iframe/g)).toHaveLength(1);
     expect(html).not.toContain('/workbench/lyrics');
     expect(html).toContain('obs-overlay-preview__capture-meta');
@@ -137,6 +149,56 @@ describe('ObsOverlayPreview', () => {
     expect(mvHtml).toContain('obs-streamer-preview');
     expect(mvHtml).not.toContain('<video');
   });
+
+  it('draws the placement controls above the live frame and keeps them out of its URL', async () => {
+    const html = await renderPreview({
+      editingPerformerGuide: true,
+      performerGuide: { x: 0.4, y: 0.6, width: 0.3, height: 0.5 },
+    });
+    expect(html.indexOf('<iframe')).toBeLessThan(
+      html.indexOf('obs-performer-guide-selection'),
+    );
+    expect(html).toMatch(
+      /<\/iframe><\/div><div[^>]+class="obs-performer-guide-selection"/u,
+    );
+    expect(html.match(/left:40%;top:60%;width:30%;height:50%;/gu)).toHaveLength(
+      2,
+    );
+    expect(html.match(/data-performer-handle=/gu)).toHaveLength(8);
+    expect(html.match(/<iframe[^>]+src="([^"]+)"/u)?.[1]).not.toContain(
+      'guideX',
+    );
+  });
+
+  it.each([
+    ['ellipse', '50%'],
+    ['circle', '50%'],
+    ['rectangle', '0'],
+    ['square', '0'],
+    ['roundedRectangle', '14%'],
+  ])(
+    'uses the same %s mask for the character and the editing outline',
+    async (shape, radius) => {
+      const html = await renderPreview({
+        editingPerformerGuide: true,
+        performerGuide: { x: 0.4, y: 0.6, width: 0.3, height: 0.5, shape },
+      });
+      expect(
+        html.match(new RegExp(`border-radius:${radius};`, 'gu')),
+      ).toHaveLength(2);
+    },
+  );
+
+  it.each(['mv', 'none'])(
+    'hides the placement controls in %s mode',
+    async (mode) => {
+      const html = await renderPreview({
+        editingPerformerGuide: true,
+        lyricsPreviewMode: mode,
+      });
+      expect(html).not.toContain('obs-performer-guide-selection');
+    },
+  );
 
   it('keeps icon-only preview actions on the icon button contract', async () => {
     const html = await renderPreview({

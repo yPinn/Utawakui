@@ -869,8 +869,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   listOutputSlots: () => ipcRenderer.invoke('output-slots:list'),
   upsertOutputSlot: (kind, slot) =>
     ipcRenderer.invoke('output-slots:upsert', kind, slot),
-  chooseOutputPortrait: () =>
-    ipcRenderer.invoke('output-slots:choose-portrait'),
+  chooseOutputPortrait: (target) =>
+    ipcRenderer.invoke('output-slots:choose-portrait', target),
   segmentOutputPortrait: (draftId, rgba) =>
     ipcRenderer.invoke('output-slots:segment-portrait', draftId, rgba),
   saveOutputPortrait: (draftId, png) =>

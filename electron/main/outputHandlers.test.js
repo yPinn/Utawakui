@@ -154,6 +154,56 @@ describe('output handlers', () => {
     ]);
   });
 
+  it('opens a local preview draft without a library and reserves library writes for Output portraits', async () => {
+    const ipcMain = createIpcMain();
+    const writePortrait = vi.fn();
+    const requireFeatureGate = vi.fn();
+    const segmentPortrait = vi.fn().mockResolvedValue({ status: 'no-subject' });
+    registerOutputHandlers({
+      ipcMain,
+      server: {},
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => ({}),
+      resolveDownloadDir() {
+        throw new Error('library unavailable');
+      },
+      logger: { warn: vi.fn() },
+      dialog: { showOpenDialog: async () => ({ filePaths: ['picked.png'] }) },
+      getMainWindow: () => ({}),
+      readPortrait: async () => ({
+        bytes: Buffer.from('photo'),
+        mimeType: 'image/png',
+      }),
+      requireFeatureGate,
+      segmentPortrait,
+      writePortrait,
+    });
+    const event = { sender: {} };
+    const { status, id } = await ipcMain.handlers.get(
+      'output-slots:choose-portrait',
+    )(event, 'performer-guide');
+    expect(status).toBe('ok');
+    expect(requireFeatureGate).not.toHaveBeenCalled();
+    expect(
+      await ipcMain.handlers.get('output-slots:save-portrait')(event, id),
+    ).toEqual({ status: 'error' });
+    expect(writePortrait).not.toHaveBeenCalled();
+
+    const sample = new Uint8Array(maskEdge ** 2 * 4);
+    expect(
+      await ipcMain.handlers.get('output-slots:segment-portrait')(
+        event,
+        id,
+        sample,
+      ),
+    ).toEqual({ status: 'no-subject' });
+    expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
+    expect(segmentPortrait).toHaveBeenCalledWith(
+      sample,
+      expect.any(AbortSignal),
+    );
+  });
+
   it('contains an unavailable library during startup registration', () => {
     const ipcMain = createIpcMain();
     const logger = { warn: vi.fn() };

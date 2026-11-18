@@ -260,7 +260,7 @@ onBeforeUnmount(() => {
       @keydown.esc="dismissCompact"
     >
       <div class="ui-folder-inspector__main">
-        <slot name="main" />
+        <slot name="main" :active-item="activeItem" />
       </div>
       <button
         v-if="compact && open && !isResizing"
