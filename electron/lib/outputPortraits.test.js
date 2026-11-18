@@ -28,7 +28,10 @@ const {
 describe('Output portraits', () => {
   let directory;
   beforeEach(() => {
-    directory = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-portraits-'));
+    // Resolved like Main does, so 8.3 short names and /private temp links match.
+    directory = fs.realpathSync.native(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-portraits-')),
+    );
   });
   afterEach(() => fs.rmSync(directory, { recursive: true, force: true }));
 
