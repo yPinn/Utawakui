@@ -2,6 +2,7 @@
 import { onBeforeUnmount, shallowRef } from 'vue';
 import { ImagePlus, RotateCcw } from '../../icons/index.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
+import ObsCutoutPortraitImageModal from './ObsCutoutPortraitImageModal.vue';
 import ObsCutoutPortraitThumb from './ObsCutoutPortraitThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -12,16 +13,37 @@ defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
   modelValue: { type: String, required: true },
-  trackId: { type: String, default: '' },
   background: { type: String, required: true },
 });
 const emit = defineEmits(['update:modelValue', 'update:busy']);
 const busy = shallowRef(false);
 const error = shallowRef('');
+const photoDraft = shallowRef(null);
 let mounted = true;
 onBeforeUnmount(() => {
   mounted = false;
+  if (photoDraft.value) discardDraft(photoDraft.value.id);
 });
+
+function discardDraft(id) {
+  void window.Utawakui?.discardOutputPortrait?.(id)?.catch(() => undefined);
+}
+
+function finishPhoto() {
+  photoDraft.value = null;
+  busy.value = false;
+  emit('update:busy', false);
+}
+
+function closePhoto() {
+  discardDraft(photoDraft.value.id);
+  finishPhoto();
+}
+
+function applyPhoto(id) {
+  emit('update:modelValue', id);
+  finishPhoto();
+}
 
 async function choosePhoto() {
   if (busy.value) return;
@@ -30,8 +52,11 @@ async function choosePhoto() {
   error.value = '';
   try {
     const result = await window.Utawakui?.chooseOutputPortrait?.();
-    if (!mounted) return;
-    if (result?.status === 'ok') emit('update:modelValue', result.id);
+    if (!mounted) {
+      if (result?.status === 'ok') discardDraft(result.id);
+      return;
+    }
+    if (result?.status === 'ok') photoDraft.value = result;
     else if (result?.status !== 'cancelled') {
       error.value = t(
         result?.status === 'invalid-image'
@@ -42,10 +67,7 @@ async function choosePhoto() {
   } catch {
     if (mounted) error.value = t('outputPanel.portrait.importFailed');
   } finally {
-    if (mounted) {
-      busy.value = false;
-      emit('update:busy', false);
-    }
+    if (mounted && !photoDraft.value) finishPhoto();
   }
 }
 
@@ -73,7 +95,6 @@ function resetPhoto() {
         <ObsCutoutPortraitThumb
           size="var(--ui-artwork-size-lg)"
           :photo-id="modelValue"
-          :track-id="trackId"
           :background="background"
         />
         <UiStack direction="column" align="start" :gap="1">
@@ -82,7 +103,7 @@ function resetPhoto() {
               t(
                 modelValue
                   ? 'outputPanel.portrait.customSource'
-                  : 'outputPanel.portrait.artistSource',
+                  : 'outputPanel.portrait.noCustomPhoto',
               )
             }}
           </UiHint>
@@ -98,7 +119,7 @@ function resetPhoto() {
               "
               :tooltip-detail="t('outputPanel.portrait.photoHint')"
               :aria-describedby="error ? `${id}-error` : `${id}-format`"
-              :loading="busy"
+              :loading="busy && !photoDraft"
               @click="choosePhoto"
             />
             <UiIconButton
@@ -119,4 +140,10 @@ function resetPhoto() {
       }}</UiHint>
     </UiStack>
   </ObsAppearanceControlRow>
+  <ObsCutoutPortraitImageModal
+    v-if="photoDraft"
+    :photo="photoDraft"
+    @close="closePhoto"
+    @apply="applyPhoto"
+  />
 </template>

@@ -614,7 +614,6 @@ function removePortraitSet() {
         v-if="item?.id === 'portrait' && portraitEditor"
         :fields="portraitFields"
         :values="portraitEditor.values"
-        :track-id="player.track?.id"
         :is-new="portraitEditor.id === null"
         :recent-colors="recentColors"
         :saved-colors="savedColors"

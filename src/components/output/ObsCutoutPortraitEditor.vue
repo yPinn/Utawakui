@@ -11,7 +11,6 @@ import { t } from '../../utils/i18n.js';
 const props = defineProps({
   fields: { type: Array, required: true },
   values: { type: Object, required: true },
-  trackId: { type: String, default: '' },
   isNew: { type: Boolean, default: false },
   recentColors: { type: Array, default: () => [] },
   savedColors: { type: Array, default: () => [] },
@@ -61,7 +60,6 @@ onMounted(() =>
         :id="`output-appearance-${photoField.key}`"
         v-model="draft[photoField.key]"
         :label="photoField.label"
-        :track-id="trackId"
         :background="
           draft[colorField?.key] || 'var(--ui-output-portrait-indigo)'
         "

@@ -5,7 +5,9 @@ import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppeara
 import { localizeAppearanceField } from '../../utils/outputPanelCopy.js';
 import UiHint from '../ui/UiHint.vue';
 import UiStack from '../ui/UiStack.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -32,13 +34,29 @@ vi.mock('../ui/UiIconButton.vue', () => ({
   },
 }));
 
+vi.mock('./ObsCutoutPortraitImageModal.vue', () => ({
+  default: {
+    props: ['photo'],
+    emits: ['apply', 'close'],
+    setup:
+      (props, { emit }) =>
+      () =>
+        h('div', { 'data-photo-draft': props.photo.id }, [
+          h('button', { onClick: () => emit('close') }, 'close'),
+          h('button', { onClick: () => emit('apply', 'photo-2') }, 'apply'),
+        ]),
+  },
+}));
+
 for (const [component, path] of [
   [ObsAppearanceControlRow, './ObsAppearanceControlRow.vue'],
   [ObsCutoutPortraitPhotoField, './ObsCutoutPortraitPhotoField.vue'],
   [ObsCutoutPortraitThumb, './ObsCutoutPortraitThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiStack, '../ui/UiStack.vue'],
+  [UiStatusIcon, '../ui/UiStatusIcon.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, path, import.meta.url);
 }
@@ -51,7 +69,7 @@ describe('cutout portrait editor', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it.each([
-    ['', '/artist/track-1'],
+    ['', null],
     ['photo-1', '/custom/photo-1'],
   ])(
     'previews the draft photo and color before the remaining fields (%s)',
@@ -61,7 +79,6 @@ describe('cutout portrait editor', () => {
           render: () =>
             h(ObsCutoutPortraitEditor, {
               fields,
-              trackId: 'track-1',
               values: {
                 cutoutArtistName: 'Reze',
                 cutoutPortraitPhoto: photoId,
@@ -71,7 +88,13 @@ describe('cutout portrait editor', () => {
         }),
       );
 
-      expect(html).toContain(`src="utawakui-media://cutout-portrait${path}"`);
+      if (path) {
+        expect(html).toContain(`src="utawakui-media://cutout-portrait${path}"`);
+      } else {
+        expect(html).not.toContain('<img');
+        expect(html).toContain('lucide-user-round');
+        expect(html).toContain('未設定自訂照片');
+      }
       expect(html).toContain('--ui-track-thumb-background:#f3d648');
       expect(html).toMatch(
         /id="output-appearance-cutoutPortraitPhoto".*id="output-appearance-cutoutArtistName".*id="output-appearance-cutoutPortraitColor"/s,
@@ -84,8 +107,15 @@ describe('cutout portrait editor', () => {
 
   it('updates the draft preview after import, color changes and restore', async () => {
     const picker = Promise.withResolvers();
+    const discard = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('window', {
-      Utawakui: { chooseOutputPortrait: () => picker.promise },
+      Utawakui: {
+        chooseOutputPortrait: vi
+          .fn()
+          .mockReturnValueOnce(picker.promise)
+          .mockResolvedValue({ status: 'ok', id: 'draft-2' }),
+        discardOutputPortrait: discard,
+      },
     });
     const state = reactive({ modelValue: '', background: '#f3d648' });
     const onBusy = vi.fn();
@@ -95,7 +125,6 @@ describe('cutout portrait editor', () => {
           ...state,
           id: 'photo',
           label: 'Portrait',
-          trackId: 'track-1',
           'onUpdate:busy': onBusy,
           'onUpdate:modelValue': (value) => (state.modelValue = value),
         }),
@@ -108,15 +137,25 @@ describe('cutout portrait editor', () => {
         (node) => node.props.style?.['--ui-track-thumb-background'],
       )[0];
 
-    expect(image().props.src).toMatch(/\/artist\/track-1$/);
+    expect(image()).toBeUndefined();
     trigger(buttons()[0], 'onClick');
     await nextTick();
     expect(buttons()[0].props.disabled).toBe(true);
     expect(onBusy).toHaveBeenLastCalledWith(true);
-    expect(image().props.src).toMatch(/\/artist\/track-1$/);
+    expect(image()).toBeUndefined();
 
-    picker.resolve({ status: 'ok', id: 'photo-2' });
+    picker.resolve({ status: 'ok', id: 'draft-1' });
     await picker.promise;
+    await nextTick();
+    expect(image()).toBeUndefined();
+    expect(onBusy).toHaveBeenLastCalledWith(true);
+    trigger(buttons()[1], 'onClick');
+    await nextTick();
+    expect(discard).toHaveBeenCalledWith('draft-1');
+    expect(onBusy).toHaveBeenLastCalledWith(false);
+    trigger(buttons()[0], 'onClick');
+    await vi.waitFor(() => expect(buttons()).toHaveLength(3));
+    trigger(buttons()[2], 'onClick');
     await nextTick();
     expect(image().props.src).toMatch(/\/custom\/photo-2$/);
     expect(onBusy).toHaveBeenLastCalledWith(false);
@@ -128,7 +167,7 @@ describe('cutout portrait editor', () => {
     );
     trigger(buttons()[1], 'onClick');
     await nextTick();
-    expect(image().props.src).toMatch(/\/artist\/track-1$/);
+    expect(image()).toBeUndefined();
     expect(thumbnail().props.style['--ui-track-thumb-background']).toBe(
       '#654321',
     );
