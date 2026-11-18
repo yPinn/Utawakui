@@ -1,13 +1,6 @@
 <script setup>
-import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue';
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Trash2,
-} from '../../icons/index.js';
+import { computed, nextTick, shallowRef, useTemplateRef } from 'vue';
+import { Check, Pencil, Plus, Trash2 } from '../../icons/index.js';
 import {
   canAddPhantomPortraitSet,
   PHANTOM_PORTRAIT_DEFAULTS,
@@ -22,6 +15,7 @@ import { t } from '../../utils/i18n.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import ObsPhantomPortraitThumb from './ObsPhantomPortraitThumb.vue';
@@ -34,74 +28,64 @@ const props = defineProps({
 });
 const emit = defineEmits(['select', 'add', 'edit', 'remove']);
 
-const PAGE_SIZE = 6;
+const alphabet = new Intl.Collator('en', {
+  numeric: true,
+  sensitivity: 'base',
+});
 const { state: player } = usePlayer();
 const grid = useTemplateRef('grid');
-const page = shallowRef(0);
+const search = useTemplateRef('search');
+const query = shallowRef('');
+const artistName = computed(() => player.track?.artist?.trim());
 
-const cards = computed(() =>
-  [PHANTOM_PORTRAIT_DEFAULTS, ...props.items].map((item, number) => {
-    const customName = item.phantomArtistName?.trim();
-    const name = customName || player.track?.artist?.trim();
-    const fallback = number
-      ? t('outputPanel.portrait.numberedSet', { number })
-      : t('outputPanel.portrait.defaultSet');
-    return {
-      id: number ? item.id : '',
-      name: (number && name) || fallback,
-      lang:
-        number && name
-          ? customName
-            ? contentLangAttribute(customName)
-            : trackContentLang(player.track)
-          : undefined,
-      label: name
-        ? t(
-            number
-              ? 'outputPanel.portrait.namedSet'
-              : 'outputPanel.portrait.defaultNamedSet',
-            { number, name },
-          )
-        : fallback,
-      photoId: item.phantomPortraitPhoto,
-      color:
-        item.phantomPortraitColor ||
-        `var(${phantomPortraitColorToken(name, player.track?.id)})`,
-    };
-  }),
+function portraitColor(name) {
+  return `var(${phantomPortraitColorToken(name, player.track?.id)})`;
+}
+
+const defaultCard = computed(() => {
+  const name = t('outputPanel.portrait.defaultSet');
+  return {
+    id: '',
+    name,
+    label: artistName.value
+      ? t('outputPanel.portrait.defaultNamedSet', { name: artistName.value })
+      : name,
+    photoId: PHANTOM_PORTRAIT_DEFAULTS.phantomPortraitPhoto,
+    color: portraitColor(artistName.value),
+  };
+});
+const customCards = computed(() =>
+  props.items
+    .map((item) => {
+      const customName = item.phantomArtistName?.trim();
+      const name = customName || artistName.value;
+      const label = name || t('outputPanel.portrait.unnamedSet');
+      return {
+        id: item.id,
+        name: label,
+        label,
+        lang: customName
+          ? contentLangAttribute(customName)
+          : trackContentLang(player.track),
+        photoId: item.phantomPortraitPhoto,
+        color: item.phantomPortraitColor || portraitColor(name),
+      };
+    })
+    .sort((left, right) => alphabet.compare(left.name, right.name)),
 );
+const visibleCards = computed(() => {
+  const cards = [defaultCard.value, ...customCards.value];
+  const term = query.value.trim().normalize('NFKC').toLowerCase();
+  return cards.filter(({ label }) =>
+    label.normalize('NFKC').toLowerCase().includes(term),
+  );
+});
 const canAdd = computed(() => canAddPhantomPortraitSet(props.items));
-const pageCount = computed(() => Math.ceil(cards.value.length / PAGE_SIZE));
-const pageCards = computed(() =>
-  cards.value.slice(page.value * PAGE_SIZE, (page.value + 1) * PAGE_SIZE),
-);
-const showAddTile = computed(
-  () => canAdd.value && pageCards.value.length < PAGE_SIZE,
-);
 const canEdit = computed(
   () =>
     Boolean(props.activeId) &&
-    pageCards.value.some(({ id }) => id === props.activeId),
+    visibleCards.value.some(({ id }) => id === props.activeId),
 );
-const emptySlots = computed(
-  () => PAGE_SIZE - pageCards.value.length - Number(showAddTile.value),
-);
-
-watch(
-  () => props.activeId,
-  (id) => {
-    const index = cards.value.findIndex((card) => card.id === id);
-    page.value = Math.floor(Math.max(0, index) / PAGE_SIZE);
-  },
-  { immediate: true },
-);
-watch(pageCount, (count) => {
-  page.value = Math.min(page.value, count - 1);
-});
-
-function changePage(offset) {
-  page.value = Math.max(0, Math.min(page.value + offset, pageCount.value - 1));
-}
 
 let editorTrigger = null;
 
@@ -110,18 +94,29 @@ function openEditor(action, event) {
   emit(action);
 }
 
-function focusAfterEdit(saved) {
-  const target = saved
-    ? grid.value?.querySelector('[aria-pressed="true"]')
-    : editorTrigger;
-  target?.focus();
+function focusSelectedCard() {
+  const selected = grid.value?.querySelector('[aria-pressed="true"]');
+  if (selected) selected.focus();
+  else search.value?.focus();
+}
+
+async function focusAfterEdit(saved) {
+  if (!saved) {
+    editorTrigger?.focus();
+  } else {
+    if (!visibleCards.value.some(({ id }) => id === props.activeId)) {
+      query.value = '';
+      await nextTick();
+    }
+    focusSelectedCard();
+  }
   editorTrigger = null;
 }
 
 async function removeSet() {
   emit('remove');
   await nextTick();
-  focusAfterEdit(true);
+  focusSelectedCard();
 }
 
 defineExpose({ focusAfterEdit });
@@ -132,9 +127,34 @@ defineExpose({ focusAfterEdit });
     class="obs-portrait-grid"
     :aria-label="t('outputPanel.portrait.set')"
   >
+    <UiStack align="center" :gap="1">
+      <UiSearchBox
+        ref="search"
+        v-model="query"
+        class="obs-portrait-grid__search"
+        :label="t('outputPanel.portrait.searchSets')"
+        :placeholder="t('outputPanel.portrait.searchSets')"
+      />
+      <UiIconButton
+        :icon="Pencil"
+        :label="t('outputPanel.portrait.editSet')"
+        :aria-disabled="!canEdit"
+        @click="openEditor('edit', $event)"
+      />
+      <UiIconButton
+        :icon="Trash2"
+        :label="t('outputPanel.portrait.removeSet')"
+        intent="danger"
+        :aria-disabled="!canEdit"
+        @click="removeSet"
+      />
+    </UiStack>
+    <UiHint v-if="!visibleCards.length" role="status">
+      {{ t('outputPanel.portrait.noMatchingSets') }}
+    </UiHint>
     <div ref="grid" class="obs-portrait-grid__cells">
       <div
-        v-for="card in pageCards"
+        v-for="card in visibleCards"
         :key="card.id"
         class="obs-portrait-grid__tile"
       >
@@ -176,100 +196,46 @@ defineExpose({ focusAfterEdit });
           >{{ card.name }}</span
         >
       </div>
-      <div
-        v-if="showAddTile"
-        class="obs-portrait-grid__slot obs-portrait-grid__slot--add"
-      >
+      <div class="obs-portrait-grid__slot obs-portrait-grid__slot--add">
         <UiIconButton
           :icon="Plus"
           :label="t('outputPanel.portrait.addSet')"
+          :title="
+            canAdd
+              ? undefined
+              : t('outputPanel.portrait.setLimit', {
+                  count: MAX_PHANTOM_PORTRAIT_SETS,
+                })
+          "
+          :aria-disabled="!canAdd"
           shape="inherit"
           stretch
           @click="openEditor('add', $event)"
         />
       </div>
-      <span
-        v-for="space in emptySlots"
-        :key="space"
-        class="obs-portrait-grid__slot obs-portrait-grid__slot--empty"
-        aria-hidden="true"
-      />
-    </div>
-
-    <div class="obs-portrait-grid__toolbar">
-      <UiIconButton
-        v-if="!showAddTile"
-        class="obs-portrait-grid__toolbar-add"
-        :icon="Plus"
-        :label="t('outputPanel.portrait.addSet')"
-        :title="
-          canAdd
-            ? undefined
-            : t('outputPanel.portrait.setLimit', {
-                count: MAX_PHANTOM_PORTRAIT_SETS,
-              })
-        "
-        :aria-disabled="!canAdd"
-        @click="openEditor('add', $event)"
-      />
-      <UiStack
-        class="obs-portrait-grid__pagination"
-        align="center"
-        justify="center"
-      >
-        <UiIconButton
-          :icon="ChevronLeft"
-          :label="t('common.previousPage')"
-          :aria-disabled="page === 0"
-          @click="changePage(-1)"
-        />
-        <UiHint class="obs-portrait-grid__page" role="status">
-          <span aria-hidden="true">{{ page + 1 }} / {{ pageCount }}</span>
-          <span class="ui-visually-hidden">{{
-            t('outputPanel.portrait.setPage', {
-              page: page + 1,
-              total: pageCount,
-            })
-          }}</span>
-        </UiHint>
-        <UiIconButton
-          :icon="ChevronRight"
-          :label="t('common.nextPage')"
-          :aria-disabled="page + 1 === pageCount"
-          @click="changePage(1)"
-        />
-      </UiStack>
-      <UiStack class="obs-portrait-grid__actions">
-        <UiIconButton
-          :icon="Pencil"
-          :label="t('outputPanel.portrait.editSet')"
-          :aria-disabled="!canEdit"
-          @click="openEditor('edit', $event)"
-        />
-        <UiIconButton
-          :icon="Trash2"
-          :label="t('outputPanel.portrait.removeSet')"
-          intent="danger"
-          :aria-disabled="!canEdit"
-          @click="removeSet"
-        />
-      </UiStack>
     </div>
   </section>
 </template>
 
 <style scoped>
 .obs-portrait-grid {
+  --obs-portrait-tile-size: calc(var(--ui-artwork-size-md) + var(--ui-space-2));
   display: grid;
-  gap: var(--ui-space-1);
+  gap: var(--ui-space-2);
+  max-inline-size: calc(
+    3 * var(--obs-portrait-tile-size) + 2 * var(--ui-space-2)
+  );
+  margin-inline: auto;
   padding-block: var(--ui-space-2);
 }
 
+.obs-portrait-grid__search {
+  flex: 1;
+}
+
 .obs-portrait-grid__cells {
-  --obs-portrait-tile-size: calc(var(--ui-artwork-size-md) + var(--ui-space-2));
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, var(--obs-portrait-tile-size)));
-  justify-content: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--ui-space-2);
 }
 
@@ -315,37 +281,7 @@ defineExpose({ focusAfterEdit });
   text-overflow: ellipsis;
 }
 
-.obs-portrait-grid__slot--empty,
 .obs-portrait-grid__slot--add {
-  border: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.obs-portrait-grid__slot--add {
-  border-style: dashed;
-  border-color: var(--ui-color-border-strong);
-}
-
-.obs-portrait-grid__toolbar {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-}
-
-.obs-portrait-grid__toolbar-add {
-  justify-self: start;
-}
-
-.obs-portrait-grid__pagination {
-  grid-column: 2;
-}
-
-.obs-portrait-grid__page {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.obs-portrait-grid__actions {
-  grid-column: 3;
-  justify-self: end;
+  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
 }
 </style>

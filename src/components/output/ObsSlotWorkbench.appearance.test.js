@@ -228,7 +228,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(side).not.toContain('id="output-appearance-phantomPortraitPhoto"');
     expect(side).not.toContain('id="output-portrait-set"');
     expect(side).toContain('aria-label="人物組合"');
-    expect(side).toMatch(/aria-pressed="true"[^>]*aria-label="1 · Guest"/u);
+    expect(side).toMatch(/aria-pressed="true"[^>]*aria-label="Guest"/u);
     expect(side).toContain('--ui-track-thumb-background:#4466aa');
     expect(side).toContain('>Guest</span>');
     expect(side).toMatch(/class="ui-visually-hidden"[^>]*>編輯人物組合/u);
