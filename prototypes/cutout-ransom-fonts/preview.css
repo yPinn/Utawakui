@@ -1,0 +1,68 @@
+@font-face {
+  font-family: 'Utawakui Open Huninn';
+  src: url('../../shared/assets/fonts/jf-open-huninn-2.1.ttf')
+    format('truetype');
+  font-display: swap;
+}
+
+body {
+  margin: 0;
+  color-scheme: dark;
+  color: CanvasText;
+  background: Canvas;
+  font-family: system-ui, sans-serif;
+}
+
+.font-comparison {
+  max-width: 78rem;
+  padding: 1.5rem;
+  margin-inline: auto;
+}
+
+.font-comparison__previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+}
+
+.font-comparison__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.font-comparison__canvas {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin-block-end: 1rem;
+  background: #28242b;
+  overflow: hidden;
+}
+
+.font-comparison[data-backdrop='light'] .font-comparison__canvas {
+  background: #d9d1c8;
+}
+
+.font-comparison[data-backdrop='stage'] .font-comparison__canvas {
+  background:
+    radial-gradient(ellipse at 50% 103%, #292f4a 0 18%, transparent 18.5%),
+    radial-gradient(ellipse at 50% 48%, #292f4a 0 8%, transparent 8.5%),
+    conic-gradient(
+      from 143deg at 22% 0%,
+      transparent 0 11deg,
+      #ec817638 12deg 32deg,
+      transparent 33deg
+    ),
+    conic-gradient(
+      from 202deg at 75% 0%,
+      transparent 0 14deg,
+      #83b9d740 15deg 31deg,
+      transparent 32deg
+    ),
+    linear-gradient(#181626, #4a3b54);
+}
+
+.font-comparison .cutout-dialogue {
+  --cutout-ransom-offset: 0px;
+}

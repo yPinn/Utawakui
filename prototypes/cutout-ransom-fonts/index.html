@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>預告信字體對照</title>
+    <link rel="icon" href="data:," />
+    <script type="module" src="./main.mjs"></script>
+  </head>
+  <body>
+    <main class="font-comparison">
+      <h1>預告信字體對照</h1>
+      <label>
+        試排歌詞
+        <select id="sample">
+          <option value="ja">日英長句</option>
+          <option value="tc">中英長句</option>
+          <option value="sc">簡體中文</option>
+          <option value="en">英文</option>
+          <option value="ko">韓英混句</option>
+          <option value="ar">阿拉伯文</option>
+          <option value="short">日文短句</option>
+          <option value="compact">短句框寬</option>
+          <option value="nameplate">長名牌與短歌詞</option>
+          <option value="paragraph">跨行段落</option>
+          <option value="phraseWrap">中文斷句</option>
+        </select>
+      </label>
+      <label>
+        預覽背景
+        <select id="backdrop">
+          <option value="stage">舞台示意</option>
+          <option value="dark">深色</option>
+          <option value="light">淺色</option>
+        </select>
+      </label>
+      <div class="font-comparison__previews">
+        <section>
+          <h2>M PLUS Rounded 1c</h2>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+          <p data-status>專案內建</p>
+        </section>
+        <section data-font="kaitou">
+          <h2>怪盗予告ゴシック</h2>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+          <label>
+            載入怪盗予告ゴシック
+            <input type="file" accept=".otf,.ttf,.woff,.woff2" />
+          </label>
+          <label>
+            點綴色
+            <input data-ink type="color" value="#b91d34" />
+          </label>
+          <p data-status role="status">專案內建</p>
+        </section>
+        <section data-font="kaibunsyo">
+          <h2>怪聞書</h2>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+          <label>
+            載入怪聞書
+            <input type="file" accept=".otf,.ttf,.woff,.woff2" />
+          </label>
+          <label>
+            點綴色
+            <input data-ink type="color" value="#b91d34" />
+          </label>
+          <p data-status role="status">專案內建</p>
+        </section>
+      </div>
+      <h2>手機與側邊彈卡</h2>
+      <div class="font-comparison__controls">
+        <label>
+          彈卡位置
+          <select id="dialogue-corner">
+            <option value="bottom-left">左下</option>
+            <option value="bottom-right">右下</option>
+            <option value="top-left">左上</option>
+            <option value="top-right">右上</option>
+          </select>
+        </label>
+        <button type="button" id="dialogue-replay">重播進場</button>
+        <button type="button" id="dialogue-hide">隱藏彈卡</button>
+      </div>
+      <div class="font-comparison__previews">
+        <section data-layout="phone">
+          <h3>手機聊天</h3>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+        </section>
+        <section data-layout="text-only">
+          <h3>純對話框</h3>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+        </section>
+        <section data-layout="portrait">
+          <h3>有角色</h3>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+        </section>
+        <section data-layout="radial">
+          <h3>放射短句</h3>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+        </section>
+        <section data-layout="choice-stack">
+          <h3>選句剪報</h3>
+          <div class="font-comparison__canvas">
+            <div class="cutout-dialogue" hidden></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>
