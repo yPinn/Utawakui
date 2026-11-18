@@ -31,14 +31,17 @@ server and shares no port, route, channel or credential with it.
 - **Off by default and gated.** A new `mobile-companion` feature gate guards
   enabling, pairing and every request. With the gate off the listener does not
   exist and adds no startup work.
-- **One interface, private networks only.** The user picks one IPv4 interface.
-  Main binds only that address and refuses to start when Windows reports the
+- **One interface, private networks only.** Main uses the only private IPv4
+  interface, or the one the user picks when there are several, and binds only
+  that address and refuses to start when Windows reports the
   network as Public or unknown. Host and Origin must equal that address and
   port exactly. Plain HTTP is used; self-signed TLS was rejected because phone
   browsers show warnings users cannot meaningfully judge.
 - **Pairing by QR with a one-time code, approved on the computer.** The
-  pairing code is hidden in Settings until the user reveals it, so a streamed
-  or captured Settings window shows nothing scannable by default. The QR URL's
+  QR shows in Settings as soon as the listener runs, so pairing needs no extra
+  click (owner decision, 2026-11-18); a used or expired code is covered by a
+  scrim offering a new one. A QR leaked on a stream can only open a request
+  the user must approve. The QR URL's
   fragment carries a single-use, short-lived code; fragments are not sent in
   requests, logged or exported. A valid code only opens a pending request: the
   phone and the computer both show a four-digit match code, and the device
@@ -73,7 +76,7 @@ server and shares no port, route, channel or credential with it.
 | Threat                                        | Mitigation                                                                                                              |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Another device on the LAN sends commands      | No command without a paired device credential; a credential is issued only after approval on the computer.              |
-| QR code shown on a stream or recording        | Code hidden until revealed; a scan only opens a request the user must approve after comparing match codes.              |
+| QR code shown on a stream or recording        | Short-lived single-use code; a scan only opens a request the user must approve after comparing match codes.             |
 | Code or credential leaks through URLs or logs | Pairing code only in the URL fragment; credential only in headers or the first socket message; never logged.            |
 | Passive sniffing on the LAN (plain HTTP)      | Accepted residual risk on private networks. Capabilities are limited to transport and display; revocation is one click. |
 | DNS rebinding or cross-site requests          | Exact Host and Origin checks; no CORS; JSON only; strict CSP on the phone page.                                         |
