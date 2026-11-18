@@ -10,14 +10,14 @@ import {
 import Split from './ObsOutputSplitLayout.vue';
 import Scroll from '../ui/UiScrollLayout.vue';
 import Region from '../ui/UiScrollRegion.vue';
-import Button from '../ui/UiButton.vue';
+import IconButton from '../ui/UiIconButton.vue';
 import Tooltip from '../ui/tooltip/UiTooltipSurface.vue';
 import Separator from '../ui/UiSeparator.vue';
 for (const [c, p] of [
   [Split, './ObsOutputSplitLayout.vue'],
   [Scroll, '../ui/UiScrollLayout.vue'],
   [Region, '../ui/UiScrollRegion.vue'],
-  [Button, '../ui/UiButton.vue'],
+  [IconButton, '../ui/UiIconButton.vue'],
   [Tooltip, '../ui/tooltip/UiTooltipSurface.vue'],
   [Separator, '../ui/UiSeparator.vue'],
 ])

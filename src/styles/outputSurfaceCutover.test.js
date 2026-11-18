@@ -137,14 +137,17 @@ describe('Output Token v2 surface cutover', () => {
     }
   });
 
-  it('defaults the Workbench Dock to its own minimum width', () => {
+  it('gives Gallery and Workbench the same side width, starting at its minimum', () => {
     expect(workbenchSource).toContain('class="obs-slot-workbench"');
-    expect(outputFeatureSource).toMatch(
-      /\.obs-slot-workbench\s*\{\s*--ui-output-side-min-width:\s*16rem;\s*--ui-output-side-width-default:\s*var\(--ui-output-side-min-width\);/u,
-    );
-    expect(outputFeatureSource).toContain('--ui-output-side-min-width: 14rem;');
+    expect(outputFeatureSource).toContain('--ui-output-side-min-width: 16rem;');
     expect(outputFeatureSource).toContain(
-      '--ui-output-side-width-default: 18rem;',
+      '--ui-output-side-width-default: var(--ui-output-side-min-width);',
+    );
+    expect(outputFeatureSource).not.toMatch(
+      /\.obs-slot-workbench\s*\{\s*--ui-output-side/u,
+    );
+    expect(outputFeatureSource).toMatch(
+      /^\.obs-output-split-layout--compact > \.obs-output-split-layout__side \{/mu,
     );
   });
 

@@ -1,10 +1,10 @@
 [data-ui-system] {
   /* Output control-panel geometry belongs to this feature, not either core
      token system. Keep these values stable while v1 and v2 surfaces coexist. */
-  /* Measured with both modes: below 14rem segmented labels clip. The upper
-     bound is a workspace policy, additionally limited by the main minimum. */
-  --ui-output-side-min-width: 14rem;
-  --ui-output-side-width-default: 18rem;
+  /* Gallery and Workbench share one side width and start at its minimum. The
+     upper bound is a workspace policy, additionally limited by the main minimum. */
+  --ui-output-side-min-width: 16rem;
+  --ui-output-side-width-default: var(--ui-output-side-min-width);
   --ui-output-side-max-width: 24rem;
   --ui-output-main-min-width: 16rem;
   /* Keep a usable preview before retaining the tabbed two-column layout. */
@@ -104,13 +104,7 @@
   --ui-output-preview-aspect-ratio: 16 / 9;
   --ui-output-preview-cycle-duration: 4.8s;
 }
-.obs-slot-workbench {
-  --ui-output-side-min-width: 16rem;
-  --ui-output-side-width-default: var(--ui-output-side-min-width);
-}
-
-.obs-slot-workbench.obs-output-split-layout--compact
-  > .obs-output-split-layout__side {
+.obs-output-split-layout--compact > .obs-output-split-layout__side {
   inline-size: min(100%, var(--ui-output-side-width-default));
   justify-self: end;
 }

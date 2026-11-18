@@ -11,7 +11,8 @@ import {
 } from 'vue';
 import { useResizeDrag } from '../../composables/useResizeDrag.js';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
-import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import { PanelRightClose, PanelRightOpen } from '../../icons/index.js';
 import UiSeparator from '../ui/UiSeparator.vue';
 import { t } from '../../utils/i18n.js';
 
@@ -185,14 +186,11 @@ onBeforeUnmount(() => {
   >
     <div ref="toggleHost" class="obs-output-split-layout__toolbar">
       <slot name="tools" />
-      <UiButton
+      <UiIconButton
         v-if="sideVisible"
         data-output-side-toggle
-        :aria-controls="sideId"
-        :aria-expanded="sideOpen"
-        @click="toggleSide"
-      >
-        {{
+        :icon="sideOpen ? PanelRightClose : PanelRightOpen"
+        :label="
           t(
             sideOpen
               ? compact
@@ -200,8 +198,12 @@ onBeforeUnmount(() => {
                 : 'outputPanel.split.collapse'
               : 'outputPanel.split.expand',
           )
-        }}
-      </UiButton>
+        "
+        tooltip-placement="bottom"
+        :aria-controls="sideId"
+        :aria-expanded="sideOpen"
+        @click="toggleSide"
+      />
     </div>
     <div
       v-show="!compact || !sideOpen"

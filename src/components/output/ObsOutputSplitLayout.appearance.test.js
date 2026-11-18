@@ -30,6 +30,14 @@ describe('ObsOutputSplitLayout focus-safe inspector boundary', () => {
     );
   });
 
+  it('toggles the side panel with an icon button that keeps its label', () => {
+    expect(splitLayoutSource).toContain('<UiIconButton');
+    expect(splitLayoutSource).toContain(
+      ':icon="sideOpen ? PanelRightClose : PanelRightOpen"',
+    );
+    expect(splitLayoutSource).not.toContain('<UiButton');
+  });
+
   it('reserves the outward focus ring and overlay scrollbar inside the side viewport', () => {
     expect(splitLayoutSource).toMatch(
       /--ui-output-side-focus-safe-inset:\s*var\(--ui-focus-safe-inset\);/u,
