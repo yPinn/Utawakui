@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createOutputServer } from './outputServer.js';
 import {
   loadOutputSlots,
   OUTPUT_SLOTS_FILENAME,
@@ -74,6 +76,147 @@ describe('outputSlots', () => {
       },
       lyrics: { settings: { captureSize: 'full', fontFamily: 'template' } },
     });
+  });
+
+  it('persists Cutout Dialogue choices in the lyrics slot', () => {
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'cutout-dialogue',
+      settings: { cutoutMode: 'chat', cutoutChatShape: 'stacked' },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics).toMatchObject({
+      templateId: 'cutout-dialogue',
+      settings: {
+        captureSize: 'full',
+        cutoutMode: 'chat',
+        cutoutChatShape: 'stacked',
+      },
+    });
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'cutout-dialogue',
+      settings: { cutoutMode: 'ransom', cutoutRansomFont: 'kaibunsyo' },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
+      cutoutMode: 'ransom',
+      cutoutRansomFont: 'kaibunsyo',
+    });
+    expect(() =>
+      upsertOutputSlot(dir, 'setlist', {
+        templateId: 'cutout-dialogue',
+        settings: {},
+      }),
+    ).toThrow();
+  });
+
+  it('retains portrait sets across templates and publishes only the selected portrait', () => {
+    const first = {
+      id: '00000000-0000-4000-8000-000000000001',
+      cutoutArtistName: 'Aster',
+      cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+      cutoutPortraitColor: '#4466aa',
+    };
+    const second = {
+      id: '00000000-0000-4000-8000-000000000002',
+      cutoutArtistName: 'Guest',
+      cutoutPortraitPhoto: '',
+      cutoutPortraitColor: '#f3d648',
+    };
+    const settings = {
+      cutoutMode: 'side-card',
+      cutoutCardStyle: 'portrait',
+      cutoutArtistName: 'Original',
+      cutoutPortraitSets: { activeId: first.id, items: [first, second] },
+    };
+    upsertOutputSlot(dir, 'lyrics', { templateId: 'karaoke-stack', settings });
+    const stored = loadOutputSlots(dir).slots.lyrics.settings;
+    expect(stored.cutoutPortraitSets).toEqual({
+      activeId: first.id,
+      items: [
+        expect.objectContaining({ cutoutArtistName: 'Original' }),
+        first,
+        second,
+      ],
+    });
+    expect(stored.cutoutArtistName).toBe('');
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'cutout-dialogue',
+      settings: stored,
+    });
+    const server = createOutputServer({ port: 0 });
+    server.setOverlaySlots(loadOutputSlots(dir).slots);
+    const projected = server.getOverlayConfig().slots.lyrics.settings;
+    expect(projected).toMatchObject({
+      cutoutArtistName: 'Aster',
+      cutoutPortraitPhoto: first.cutoutPortraitPhoto,
+      cutoutPortraitColor: first.cutoutPortraitColor,
+    });
+    expect(projected).not.toHaveProperty('cutoutPortraitSets');
+
+    server.setOverlaySlots({
+      lyrics: {
+        templateId: 'cutout-dialogue',
+        settings: {
+          ...stored,
+          cutoutPortraitSets: { ...stored.cutoutPortraitSets, activeId: '' },
+        },
+      },
+    });
+    expect(server.getOverlayConfig().slots.lyrics.settings).toMatchObject({
+      cutoutArtistName: '',
+      cutoutPortraitPhoto: '',
+      cutoutPortraitColor: '',
+    });
+  });
+
+  it('moves the old yellow first slot to automatic color while preserving a saved yellow preset', () => {
+    const preset = { id: randomUUID(), cutoutPortraitColor: '#f3d648' };
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'cutout-dialogue',
+      settings: {
+        cutoutPortraitColor: '#f3d648',
+        cutoutPortraitSets: { activeId: preset.id, items: [preset] },
+      },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
+      cutoutPortraitColor: '',
+      cutoutPortraitSets: { activeId: preset.id, items: [preset] },
+    });
+  });
+
+  it('preserves a legacy first-cell override and all 12 custom sets across saves', () => {
+    const items = Array.from({ length: 12 }, () => ({ id: randomUUID() }));
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 5,
+        slots: {
+          lyrics: {
+            templateId: 'cutout-dialogue',
+            settings: {
+              cutoutArtistName: 'Original',
+              cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+              cutoutPortraitColor: '#4466aa',
+              cutoutPortraitSets: { activeId: '', items },
+            },
+          },
+        },
+      }),
+    );
+    const slot = loadOutputSlots(dir).slots.lyrics;
+    const sets = slot.settings.cutoutPortraitSets;
+    expect(sets.items.map(({ id }) => id)).toEqual([
+      sets.activeId,
+      ...items.map(({ id }) => id),
+    ]);
+    expect(sets.items[0]).toMatchObject({
+      cutoutArtistName: 'Original',
+      cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+      cutoutPortraitColor: '#4466aa',
+    });
+    sets.activeId = '';
+    upsertOutputSlot(dir, 'lyrics', slot);
+    expect(
+      loadOutputSlots(dir).slots.lyrics.settings.cutoutPortraitSets,
+    ).toEqual(sets);
   });
 
   it('reads legacy Fisheye decorations and persists independent choices', () => {

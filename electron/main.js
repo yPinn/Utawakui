@@ -289,6 +289,10 @@ const {
   registerOutputRuntimeLifecycle,
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
+const {
+  resolveOutputPortrait,
+  resolveTrackArtistPhoto,
+} = require('./lib/outputPortraits');
 const { registerOutputWindowHandlers } = require('./main/outputWindowHandlers');
 const { createOutputWindowManager } = require('./main/windows/outputWindow');
 const {
@@ -1269,6 +1273,10 @@ if (!gotSingleInstanceLock) {
       if (!policy.autoManageSeparation) return undefined;
       return libraryStorageService.enforcePolicy(policy, options);
     };
+    const resolveCutoutPortraitAsset = (directory, source, id) =>
+      source === 'custom'
+        ? resolveOutputPortrait(directory, id)
+        : resolveTrackArtistPhoto(directory, id);
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
@@ -1276,6 +1284,12 @@ if (!gotSingleInstanceLock) {
         resolveTrackArtworkPath(
           configState.resolveDownloadDir(configState.getConfig()),
           trackId,
+        ),
+      resolvePortraitAsset: (source, id) =>
+        resolveCutoutPortraitAsset(
+          configState.resolveDownloadDir(configState.getConfig()),
+          source,
+          id,
         ),
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
       devFrameOrigin: windowState.isDev ? DEV_SERVER_ORIGIN : null,
@@ -1516,6 +1530,10 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       resolveVideoCandidate: trackVideo.resolveCandidate,
+      resolvePortraitAsset: (directory, source, id, config) =>
+        isFeatureGateEnabled(config, FEATURE_IDS.PUBLIC_OUTPUT_FLOW)
+          ? resolveCutoutPortraitAsset(directory, source, id)
+          : null,
       logger: runtimeDiagnosticsLogger,
     });
 
@@ -1524,6 +1542,8 @@ if (!gotSingleInstanceLock) {
       server: outputRuntimeController,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,

@@ -25,6 +25,42 @@ describe('output handlers', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
+  it('imports only a photo selected in the main-owned picker', async () => {
+    const ipcMain = createIpcMain();
+    const requireFeatureGate = vi.fn();
+    const dialog = { showOpenDialog: vi.fn() };
+    const importPortrait = vi.fn().mockResolvedValue('imported-id');
+    const mainWindow = {};
+    registerOutputHandlers({
+      ipcMain,
+      server: {},
+      requireFeatureGate,
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => dir,
+      dialog,
+      getMainWindow: () => mainWindow,
+      importPortrait,
+    });
+    const choosePortrait = ipcMain.handlers.get('output-slots:choose-portrait');
+    dialog.showOpenDialog.mockResolvedValueOnce({ canceled: true });
+    expect(await choosePortrait()).toEqual({ status: 'cancelled' });
+    expect(importPortrait).not.toHaveBeenCalled();
+    dialog.showOpenDialog.mockResolvedValueOnce({ filePaths: ['picked.png'] });
+    expect(await choosePortrait({}, 'renderer.png')).toEqual({
+      status: 'ok',
+      id: 'imported-id',
+    });
+    expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
+    expect(dialog.showOpenDialog).toHaveBeenCalledWith(
+      mainWindow,
+      expect.objectContaining({
+        filters: [expect.objectContaining({ extensions: ['png', 'webp'] })],
+      }),
+    );
+    expect(importPortrait).toHaveBeenCalledExactlyOnceWith(dir, 'picked.png');
+  });
+
   it('contains an unavailable library during startup registration', () => {
     const ipcMain = createIpcMain();
     const logger = { warn: vi.fn() };

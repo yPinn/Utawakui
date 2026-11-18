@@ -5,11 +5,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Readable } = require('node:stream');
 const { OUTPUT_STATE_VERSION } = require('../../../shared/outputContract');
+const { isBoundedTrackId } = require('../library/paths');
 const {
   maxTelemetryBytes: OUTPUT_MAX_TELEMETRY_BYTES,
 } = require('../../../shared/startupTraceValues.json');
 
 const OUTPUT_ARTWORK_PATH_PREFIX = '/media/artwork/';
+const OUTPUT_PORTRAIT_ARTIST_PATH_PREFIX = '/media/cutout-portrait/artist/';
+const OUTPUT_PORTRAIT_CUSTOM_PATH_PREFIX = '/media/cutout-portrait/custom/';
 const OUTPUT_STARTUP_TRACE_PATH = '/api/v1/startup-trace';
 const OVERLAY_TRACE_MILESTONES = new Set([
   'first-instance-ready',
@@ -42,6 +45,8 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/': ['lyrics', 'index.html'],
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
+  '/overlay/lyrics/cutoutDialogue.css': ['lyrics', 'cutoutDialogue.css'],
+  '/overlay/lyrics/cutoutDialogue.mjs': ['lyrics', 'cutoutDialogue.mjs'],
   '/overlay/lyrics/fisheyeLens.mjs': ['lyrics', 'fisheyeLens.mjs'],
   '/overlay/lyrics/fisheyeEffects.mjs': ['lyrics', 'fisheyeEffects.mjs'],
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
@@ -146,6 +151,16 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'MPLUSRounded1c-ExtraBold.ttf',
   ],
   '/shared/assets/fonts/Keifont.ttf': ['assets', 'fonts', 'Keifont.ttf'],
+  '/shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf': [
+    'assets',
+    'fonts',
+    'KaitouYokokuGothic-Heavy.ttf',
+  ],
+  '/shared/assets/fonts/Kaibunsyo-Regular.ttf': [
+    'assets',
+    'fonts',
+    'Kaibunsyo-Regular.ttf',
+  ],
   '/shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf': [
     'assets',
     'fonts',
@@ -366,9 +381,8 @@ function writeArtwork(request, response, asset, contentType) {
   else streamAsset(response, asset);
 }
 
-function parseArtworkRoute(pathname) {
-  if (!pathname.startsWith(OUTPUT_ARTWORK_PATH_PREFIX)) return null;
-  const parts = pathname.slice(OUTPUT_ARTWORK_PATH_PREFIX.length).split('/');
+function parseArtworkRoute(pathname, prefix) {
+  const parts = pathname.slice(prefix.length).split('/');
   if (!parts[0] || parts.length > 2) return null;
   if (parts.length === 2 && !parts[1]) return null;
   const digest = parts[1] || null;
@@ -394,6 +408,7 @@ function createOutputHttpHandler(options = {}) {
   const overlayRoot = options.overlayRoot ?? DEFAULT_OVERLAY_ROOT;
   const sharedRoot = options.sharedRoot ?? DEFAULT_SHARED_ROOT;
   const resolveArtworkAsset = options.resolveArtworkAsset ?? (() => null);
+  const resolvePortraitAsset = options.resolvePortraitAsset ?? (() => null);
   const logger = options.logger ?? console;
   const contentSecurityPolicy = overlayContentSecurityPolicy(
     options.devFrameOrigin ?? null,
@@ -512,18 +527,34 @@ function createOutputHttpHandler(options = {}) {
       return;
     }
 
-    if (pathname.startsWith(OUTPUT_ARTWORK_PATH_PREFIX)) {
-      const route = parseArtworkRoute(pathname);
-      const filePath = route ? await resolveArtworkAsset(route.trackId) : null;
-      const contentType =
-        typeof filePath === 'string'
-          ? ARTWORK_MIME_TYPES[path.extname(filePath).toLowerCase()]
-          : null;
-      if (!filePath || !contentType) {
-        writeJson(response, 404, { error: 'not_found' });
-        return;
-      }
+    const mediaPrefix = [
+      OUTPUT_ARTWORK_PATH_PREFIX,
+      OUTPUT_PORTRAIT_ARTIST_PATH_PREFIX,
+      OUTPUT_PORTRAIT_CUSTOM_PATH_PREFIX,
+    ].find((prefix) => pathname.startsWith(prefix));
+    if (mediaPrefix) {
+      const route = parseArtworkRoute(pathname, mediaPrefix);
       try {
+        const filePath = !route
+          ? null
+          : mediaPrefix === OUTPUT_ARTWORK_PATH_PREFIX
+            ? await resolveArtworkAsset(route.trackId)
+            : isBoundedTrackId(route.trackId)
+              ? await resolvePortraitAsset(
+                  mediaPrefix === OUTPUT_PORTRAIT_CUSTOM_PATH_PREFIX
+                    ? 'custom'
+                    : 'artist',
+                  route.trackId,
+                )
+              : null;
+        const contentType =
+          typeof filePath === 'string'
+            ? ARTWORK_MIME_TYPES[path.extname(filePath).toLowerCase()]
+            : null;
+        if (!contentType) {
+          writeJson(response, 404, { error: 'not_found' });
+          return;
+        }
         const asset = await readCachedAsset(
           artworkAssetCache,
           filePath,
@@ -542,7 +573,7 @@ function createOutputHttpHandler(options = {}) {
             return;
           }
           response.writeHead(302, {
-            Location: `${OUTPUT_ARTWORK_PATH_PREFIX}${encodeURIComponent(
+            Location: `${mediaPrefix}${encodeURIComponent(
               route.trackId,
             )}/${asset.digest}`,
             'Cache-Control': 'no-cache',

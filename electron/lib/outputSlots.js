@@ -4,9 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const {
+  activeCutoutPortraitSet,
+  CUTOUT_PORTRAIT_FIELDS,
   OUTPUT_APPEARANCE_DEFAULTS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   isOutputElementSettingKey,
+  migrateLegacyCutoutPortraitSettings,
+  sanitizeCutoutPortraitSets,
   sanitizeOutputAppearanceSetting,
 } = require('../../shared/outputAppearance.mjs');
 const {
@@ -90,6 +94,20 @@ function sanitizeSettings(value, templateId) {
       if (normalized !== undefined) entries.push([key, normalized]);
       continue;
     }
+    if (key === 'cutoutPortraitSets') {
+      if (TEMPLATE_KINDS[templateId] === 'lyrics') {
+        entries.push([key, sanitizeCutoutPortraitSets(setting)]);
+      }
+      continue;
+    }
+    if (
+      CUTOUT_PORTRAIT_FIELDS.includes(key) &&
+      TEMPLATE_KINDS[templateId] === 'lyrics'
+    ) {
+      const normalized = sanitizeOutputAppearanceSetting(key, setting);
+      if (normalized !== undefined) entries.push([key, normalized]);
+      continue;
+    }
     if (
       Object.hasOwn(OUTPUT_APPEARANCE_DEFAULTS, key) ||
       isOutputElementSettingKey(key)
@@ -143,7 +161,10 @@ function sanitizeOutputSlot(kindValue, value) {
   return {
     templateId,
     styleSetIds,
-    settings,
+    settings:
+      kind === 'lyrics'
+        ? migrateLegacyCutoutPortraitSettings(settings)
+        : settings,
   };
 }
 
@@ -335,10 +356,41 @@ function setOutputSavedColors(dir, savedColors) {
   });
 }
 
+function projectPublicOutputSlots(slots) {
+  const projected = structuredClone(slots);
+  const lyrics = projected.lyrics;
+  if (!lyrics?.settings) return projected;
+  const selected = activeCutoutPortraitSet(lyrics.settings.cutoutPortraitSets);
+  if (lyrics.templateId === 'cutout-dialogue' && selected) {
+    for (const key of CUTOUT_PORTRAIT_FIELDS)
+      lyrics.settings[key] = selected[key];
+  }
+  delete lyrics.settings.cutoutPortraitSets;
+  return projected;
+}
+
+function canServeOutputPortrait(lyrics, source, id) {
+  const settings = lyrics?.settings ?? {};
+  if (
+    lyrics?.templateId !== 'cutout-dialogue' ||
+    (settings.cutoutMode ?? OUTPUT_APPEARANCE_DEFAULTS.cutoutMode) !==
+      'side-card' ||
+    (settings.cutoutCardStyle ?? OUTPUT_APPEARANCE_DEFAULTS.cutoutCardStyle) !==
+      'portrait'
+  ) {
+    return false;
+  }
+  const portrait =
+    activeCutoutPortraitSet(settings.cutoutPortraitSets) ?? settings;
+  return source !== 'custom' || portrait.cutoutPortraitPhoto === id;
+}
+
 module.exports = {
+  canServeOutputPortrait,
   loadOutputSlots,
   OUTPUT_SLOTS_FILENAME,
   OUTPUT_SLOTS_VERSION,
+  projectPublicOutputSlots,
   sanitizeOutputSlot,
   saveOutputSlots,
   setOutputRecentColors,

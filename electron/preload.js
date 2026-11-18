@@ -869,6 +869,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   listOutputSlots: () => ipcRenderer.invoke('output-slots:list'),
   upsertOutputSlot: (kind, slot) =>
     ipcRenderer.invoke('output-slots:upsert', kind, slot),
+  chooseOutputPortrait: () =>
+    ipcRenderer.invoke('output-slots:choose-portrait'),
   updateOutputRecentColors: (colors) =>
     ipcRenderer.invoke('output-slots:set-recent-colors', colors),
   updateOutputSavedColors: (colors) =>

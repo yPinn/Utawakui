@@ -7,6 +7,7 @@ const {
   resolveSeparationResultPath,
   resolveTrackPath,
 } = require('../lib/library');
+const { isBoundedTrackId } = require('../lib/library/paths');
 const { resolveArtistPhotoPath } = require('../lib/artists/artistPhotos');
 const {
   resolveFolderPageAssetPath,
@@ -14,6 +15,7 @@ const {
 const { MEDIA_SCHEME } = require('./mediaScheme');
 const { resolveTrackVideoPath } = require('../lib/library/trackVideo');
 const { resolveSessionCoverPath } = require('../lib/performanceSessionArchive');
+const { isCutoutPortraitId } = require('../../shared/outputAppearance.mjs');
 
 // Serves local audio files to the sandboxed renderer (nodeIntegration:
 // false means it has no direct filesystem access). Dispatches on
@@ -23,7 +25,8 @@ const { resolveSessionCoverPath } = require('../lib/performanceSessionArchive');
 // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
 // cover image (resolvePlaylistCoverPath); 'artist-photo' resolves the one
 // recorded artist photo (resolveArtistPhotoPath); 'folder-asset' resolves one
-// manifest-owned page image; 'local' resolves legacy pre-migration audio
+// manifest-owned page image; 'cutout-portrait' resolves a saved portrait or a
+// track's artist photo; 'local' resolves legacy pre-migration audio
 // through resolveTrackPath. Every hostname and segment count is allowlisted
 // before a filesystem resolver sees it.
 function notFoundResponse() {
@@ -52,13 +55,41 @@ function registerMediaProtocol({
   resolveFolderPageAssetPath:
     resolveFolderAssetPath = resolveFolderPageAssetPath,
   resolveVideoCandidate = () => null,
+  resolvePortraitAsset = () => null,
   logger = console,
 }) {
+  function serveFile(filePath, request) {
+    if (!filePath) return notFoundResponse();
+    try {
+      // Keep explicit range support. net.fetch(file://...) does not return
+      // the partial content and headers needed by media playback.
+      return createRangeResponse(filePath, request.headers.get('range'));
+    } catch (error) {
+      // The file may have disappeared since resolution.
+      logger.error?.('[media] Failed to serve media', error);
+      return notFoundResponse();
+    }
+  }
+
+  async function servePortrait(request, config, dir, source, id) {
+    try {
+      return serveFile(
+        await resolvePortraitAsset(dir, source, id, config),
+        request,
+      );
+    } catch (error) {
+      logger.error?.('[media] Failed to resolve portrait', error);
+      return notFoundResponse();
+    }
+  }
+
   protocol.handle(MEDIA_SCHEME, (request) => {
     const url = new URL(request.url);
+    let config;
     let dir;
     try {
-      dir = resolveDownloadDir(getConfig());
+      config = getConfig();
+      dir = resolveDownloadDir(config);
     } catch {
       // An unavailable custom library is an expected recoverable state. Do
       // not let every artwork/audio request become an unhandled protocol
@@ -67,6 +98,17 @@ function registerMediaProtocol({
     }
     const segments = decodePathSegments(url.pathname);
     if (!segments) return notFoundResponse();
+
+    if (url.hostname === 'cutout-portrait') {
+      if (segments.length !== 2) return notFoundResponse();
+      const [source, id] = segments;
+      const valid =
+        (source === 'custom' && isCutoutPortraitId(id)) ||
+        (source === 'artist' && isBoundedTrackId(id));
+      return valid
+        ? servePortrait(request, config, dir, source, id)
+        : notFoundResponse();
+    }
 
     let filePath;
     if (url.hostname === 'track') {
@@ -108,24 +150,7 @@ function registerMediaProtocol({
     } else {
       return notFoundResponse();
     }
-    if (!filePath) {
-      return notFoundResponse();
-    }
-    try {
-      // Real 206 Partial Content support — see buildRangeResponse's own
-      // comment for why net.fetch(pathToFileURL(...)) doesn't actually
-      // provide this despite looking like it should.
-      return createRangeResponse(filePath, request.headers.get('range'));
-    } catch (error) {
-      // Most likely the file was deleted between resolveTrackPath (which
-      // only checks the path is safe, not that the file exists) and here
-      // — same response as "never existed" rather than letting fs
-      // errors escape the handler. Logged so a genuine bug here (as
-      // opposed to the expected deleted-file race) is still visible
-      // instead of silently degrading to "track won't play".
-      logger.error?.('[media] Failed to serve media', error);
-      return notFoundResponse();
-    }
+    return serveFile(filePath, request);
   });
 }
 

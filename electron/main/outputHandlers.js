@@ -7,6 +7,8 @@ const {
   upsertOutputSlot,
 } = require('../lib/outputSlots');
 const { isValidOutputRuntime } = require('../lib/config');
+const { importOutputPortrait } = require('../lib/outputPortraits');
+const { t } = require('../lib/i18n');
 const {
   findAvailableOutputPorts,
   isOutputPortAvailable,
@@ -46,6 +48,9 @@ function registerOutputHandlers({
   isPortAvailable = isOutputPortAvailable,
   findAvailablePorts = findAvailableOutputPorts,
   writeClipboardText = null,
+  dialog,
+  getMainWindow,
+  importPortrait = importOutputPortrait,
   logger = console,
 }) {
   function outputDir() {
@@ -155,6 +160,30 @@ function registerOutputHandlers({
 
   ipcMain.handle('output-slots:upsert', async (event, kind, slot) => {
     return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));
+  });
+
+  ipcMain.handle('output-slots:choose-portrait', async () => {
+    requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
+    try {
+      const directory = outputDir();
+      const result = await dialog.showOpenDialog(getMainWindow(), {
+        properties: ['openFile'],
+        filters: [
+          {
+            name: t('outputPanel.portrait.fileTypes'),
+            extensions: ['png', 'webp'],
+          },
+        ],
+      });
+      if (result.canceled || !result.filePaths[0])
+        return { status: 'cancelled' };
+      if (directory !== outputDir()) return { status: 'error' };
+      const id = await importPortrait(directory, result.filePaths[0]);
+      return id ? { status: 'ok', id } : { status: 'invalid-image' };
+    } catch (error) {
+      logger.error?.('[output] Could not import portrait', error);
+      return { status: 'error' };
+    }
   });
 
   ipcMain.handle('output-slots:set-recent-colors', async (event, colors) => {

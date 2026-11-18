@@ -7,6 +7,10 @@ const { createOutputClientDelivery } = require('./outputDeliveryQueue');
 const { createOutputFisheyeEffects } = require('./outputFisheyeEffects');
 const { createOutputHttpHandler, writeJson } = require('./outputServer/http');
 const {
+  canServeOutputPortrait,
+  projectPublicOutputSlots,
+} = require('./outputSlots');
+const {
   createEmptyOutputSnapshot,
   parseOutputSnapshot,
 } = require('../../shared/outputContract');
@@ -149,6 +153,11 @@ function createOutputServer(options = {}) {
     overlayRoot: options.overlayRoot,
     recordStartupMilestone: options.recordStartupMilestone,
     resolveArtworkAsset: options.resolveArtworkAsset,
+    resolvePortraitAsset(source, id) {
+      return canServeOutputPortrait(overlaySlots.lyrics, source, id)
+        ? (options.resolvePortraitAsset?.(source, id) ?? null)
+        : null;
+    },
     sharedRoot: options.sharedRoot,
   });
   const closedDeliveryStats = {
@@ -214,7 +223,7 @@ function createOutputServer(options = {}) {
       revision: overlayConfigRevision,
       language: overlayLanguage,
       translationLanguage: overlayTranslationLanguage,
-      slots: structuredClone(overlaySlots),
+      slots: projectPublicOutputSlots(overlaySlots),
     };
   }
 

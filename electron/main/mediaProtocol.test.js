@@ -27,6 +27,7 @@ function setup() {
   const getConfig = vi.fn(() => ({ downloadDir: 'configured' }));
   const resolveDownloadDir = vi.fn(() => 'E:\\Library');
   const resolveVideoCandidate = vi.fn(() => null);
+  const resolvePortraitAsset = vi.fn(async () => null);
   registerMediaProtocol({
     protocol,
     getConfig,
@@ -39,6 +40,7 @@ function setup() {
     resolveArtistPhotoPath: library.resolveArtistPhotoPath,
     resolveFolderPageAssetPath: library.resolveFolderPageAssetPath,
     resolveVideoCandidate,
+    resolvePortraitAsset,
     logger,
   });
   return {
@@ -48,6 +50,7 @@ function setup() {
     protocol,
     resolveDownloadDir,
     resolveVideoCandidate,
+    resolvePortraitAsset,
   };
 }
 
@@ -76,6 +79,32 @@ beforeEach(() => {
 });
 
 describe('registerMediaProtocol', () => {
+  it.each([
+    ['custom', '00000000-0000-4000-8000-000000000011'],
+    ['artist', 'track-a'],
+  ])(
+    'serves local %s portraits through the dedicated resolver',
+    async (source, id) => {
+      const { handler, resolvePortraitAsset } = setup();
+      resolvePortraitAsset.mockResolvedValueOnce('E:\\Library\\portrait.webp');
+      const url = `utawakui-media://cutout-portrait/${source}/${id}`;
+      expect((await handler(request(url))).status).toBe(206);
+      expect(resolvePortraitAsset).toHaveBeenCalledWith(
+        'E:\\Library',
+        source,
+        id,
+        {
+          downloadDir: 'configured',
+        },
+      );
+      expect(library.buildRangeResponse).toHaveBeenCalledWith(
+        'E:\\Library\\portrait.webp',
+        null,
+      );
+      expect((await handler(request(url))).status).toBe(404);
+    },
+  );
+
   it('serves candidate byte ranges only through the dedicated resolver', () => {
     const { handler, resolveVideoCandidate } = setup();
     resolveVideoCandidate.mockReturnValueOnce(
@@ -187,6 +216,11 @@ describe('registerMediaProtocol', () => {
     'utawakui-media://playlist-cover/id/cover.webp/ignored',
     'utawakui-media://artist-photo/artist-0123456789abcdef',
     'utawakui-media://artist-photo/id/photo.jpg/ignored',
+    'utawakui-media://cutout-portrait/artist',
+    'utawakui-media://cutout-portrait/artist/track-a/extra',
+    'utawakui-media://cutout-portrait/artist/..%2Fprivate',
+    'utawakui-media://cutout-portrait/custom/file.png',
+    'utawakui-media://cutout-portrait/other/00000000-0000-4000-8000-000000000011',
     'utawakui-media://folder-asset/asset-1',
     'utawakui-media://folder-asset/asset-1/image.png/ignored',
     'utawakui-media://session-cover/id',
@@ -195,7 +229,7 @@ describe('registerMediaProtocol', () => {
     'utawakui-media://local/file.mp3/ignored',
     'utawakui-media://track/%E0%A4%A/audio.wav',
   ])('fails closed for a non-allowlisted route: %s', (url) => {
-    const { handler } = setup();
+    const { handler, resolvePortraitAsset } = setup();
 
     const response = handler(request(url));
 
@@ -206,6 +240,7 @@ describe('registerMediaProtocol', () => {
     expect(library.resolveTrackPath).not.toHaveBeenCalled();
     expect(library.resolveArtistPhotoPath).not.toHaveBeenCalled();
     expect(library.resolveFolderPageAssetPath).not.toHaveBeenCalled();
+    expect(resolvePortraitAsset).not.toHaveBeenCalled();
     expect(library.buildRangeResponse).not.toHaveBeenCalled();
   });
 

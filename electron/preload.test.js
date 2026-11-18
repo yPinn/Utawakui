@@ -276,6 +276,7 @@ const MAIN_INVOKE_CHANNELS = [
   'obs:get-settings',
   'obs:get-status',
   'obs:update-settings',
+  'output-slots:choose-portrait',
   'output-slots:list',
   'output-slots:set-recent-colors',
   'output-slots:set-saved-colors',

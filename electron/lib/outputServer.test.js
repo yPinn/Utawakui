@@ -642,6 +642,7 @@ describe('outputServer', () => {
         '/overlay/lyrics/lyricsFit.mjs',
         '/overlay/lyrics/chalkboardVertical.mjs',
         '/overlay/lyrics/fisheyeLens.mjs',
+        '/overlay/lyrics/cutoutDialogue.mjs',
         '/overlay/lyrics/fisheyeEffects.mjs',
         '/shared/browser/fisheyePaint.mjs',
         '/shared/browser/fisheyeMotion.mjs',
@@ -652,6 +653,23 @@ describe('outputServer', () => {
     expect(graph.routes).toContain(
       '/shared/presentation/lyricsPresentation.mjs',
     );
+    const style = await fetch(
+      `${status.httpUrl}/overlay/lyrics/cutoutDialogue.css`,
+    );
+    expect(style.ok).toBe(true);
+    expect(await style.text()).toContain('.cutout-dialogue');
+    for (const font of [
+      'KaitouYokokuGothic-Heavy.ttf',
+      'Kaibunsyo-Regular.ttf',
+    ]) {
+      // The Output plane serves GET only; check headers without reading the body.
+      const response = await fetch(
+        `${status.httpUrl}/shared/assets/fonts/${font}`,
+      );
+      expect(response.ok).toBe(true);
+      expect(response.headers.get('content-type')).toBe('font/ttf');
+      await response.body?.cancel();
+    }
   });
 
   it('revalidates a changed allowlisted static asset instead of serving stale cache data', async () => {
