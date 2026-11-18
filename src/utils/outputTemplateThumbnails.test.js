@@ -16,9 +16,12 @@ describe('bundled output template thumbnails', () => {
     const blocked = [];
     for (const preset of OUTPUT_TEMPLATES) {
       const record = provenance.templates[preset.id];
-      expect(record.file).toBe(
-        `${preset.id}.${preset.id === 'ribbon-setlist' ? 'png' : 'jpg'}`,
-      );
+      const extension = ['ribbon-setlist', 'cutout-dialogue'].includes(
+        preset.id,
+      )
+        ? 'png'
+        : 'jpg';
+      expect(record.file).toBe(`${preset.id}.${extension}`);
       const bytes = readFileSync(
         new URL(
           `../assets/output-template-thumbnails/${record.file}`,
@@ -60,6 +63,7 @@ describe('bundled output template thumbnails', () => {
     expect(blocked.sort()).toEqual([
       'art-card',
       'cover-player',
+      'cutout-dialogue',
       'karaoke-stack',
       'live-stage',
       'manga-frame',

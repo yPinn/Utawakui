@@ -37,6 +37,7 @@ describe('output panel copy', () => {
       '裝飾',
       '材質',
       '版面',
+      '人物外觀',
       '歷史回顧',
       '內容顯示',
     ]);
@@ -99,6 +100,10 @@ describe('output panel copy', () => {
       (field) => field.key === 'receiptReviewInterval',
     );
     expect(interval.unit).toBe(' 秒');
+    const name = OUTPUT_APPEARANCE_FIELDS.map(localizeAppearanceField).find(
+      (field) => field.key === 'cutoutArtistName',
+    );
+    expect(name.placeholder).toBe('跟隨歌手名稱');
   });
 
   it('names every lyrics presentation policy and output slot', () => {

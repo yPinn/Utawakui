@@ -16,6 +16,7 @@ const fieldsFor = (templateId) =>
   outputAppearanceFieldsForTemplate(templateId).map(localizeAppearanceField);
 
 const templateTabLabels = {
+  'cutout-dialogue': ['版面', '文字', '人物', '色彩'],
   'queue-board': ['版面', '文字', '色彩'],
   'karaoke-stack': ['文字', '色彩'],
   'kinetic-pop': ['版面', '文字', '色彩'],
@@ -160,11 +161,102 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         ),
       );
       expect(html).not.toContain('data-output-side-toggle');
-      for (const { key } of [...appearanceFields, ...presentationFields]) {
+      for (const { key, group } of [
+        ...appearanceFields,
+        ...presentationFields,
+      ]) {
+        if (
+          group === 'portrait' ||
+          ['cutoutChatShape', 'cutoutCardStyle', 'cutoutRansomFont'].includes(
+            key,
+          )
+        )
+          continue;
         expect(html).toContain(`output-appearance-${key}`);
       }
     },
   );
+
+  it('shows the chat shape control only when Chat is selected', async () => {
+    const initial = await renderRegisteredTemplate('cutout-dialogue');
+    const chat = await renderRegisteredTemplate(
+      'cutout-dialogue',
+      {},
+      {
+        cutoutMode: 'chat',
+        cutoutChatShape: 'phone',
+      },
+    );
+    expect(initial).not.toContain('output-appearance-cutoutChatShape');
+    expect(chat).toMatch(
+      /id="output-appearance-cutoutChatShape"[^>]*value="phone"/u,
+    );
+    expect(chat).not.toContain('output-appearance-cutoutCardStyle');
+    const side = await renderRegisteredTemplate(
+      'cutout-dialogue',
+      {},
+      {
+        cutoutMode: 'side-card',
+        cutoutCardStyle: 'portrait',
+        cutoutCorner: 'top-right',
+        cutoutPortraitSets: {
+          activeId: '00000000-0000-4000-8000-000000000001',
+          items: [
+            {
+              id: '00000000-0000-4000-8000-000000000001',
+              cutoutArtistName: 'Guest',
+              cutoutPortraitColor: '#4466aa',
+              cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+            },
+          ],
+        },
+      },
+    );
+    expect(side).not.toContain('output-appearance-cutoutChatShape');
+    expect(side).toMatch(
+      /id="output-appearance-cutoutCardStyle"[^>]*value="portrait"/u,
+    );
+    expect(side).toMatch(
+      /id="output-appearance-cutoutCorner"[^>]*value="top-right"/u,
+    );
+    expect(side).not.toContain('output-appearance-cutoutRansomFont');
+    expect(side).toContain('aria-label="人物"');
+    expect(side).not.toContain('id="output-appearance-cutoutArtistName"');
+    expect(side).not.toContain('id="output-appearance-cutoutPortraitColor"');
+    expect(side).not.toContain('id="output-appearance-cutoutPortraitPhoto"');
+    expect(side).not.toContain('id="output-portrait-set"');
+    expect(side).toContain('aria-label="人物組合"');
+    expect(side).toMatch(/aria-pressed="true"[^>]*aria-label="1 · Guest"/u);
+    expect(side).toContain('--ui-track-thumb-background:#4466aa');
+    expect(side).toContain('>Guest</span>');
+    expect(side).toMatch(/class="ui-visually-hidden"[^>]*>編輯人物組合/u);
+    const ransom = await renderRegisteredTemplate(
+      'cutout-dialogue',
+      {},
+      {
+        cutoutMode: 'ransom',
+        cutoutRansomFont: 'kaibunsyo',
+      },
+    );
+    expect(ransom).toMatch(
+      /id="output-appearance-cutoutRansomFont"[^>]*value="kaibunsyo"/u,
+    );
+  });
+
+  it('selects Choice Stack within Phantom Thieves', async () => {
+    const html = await renderRegisteredTemplate(
+      'cutout-dialogue',
+      {},
+      {
+        cutoutMode: 'choice-stack',
+      },
+    );
+    expect(html).toMatch(
+      /id="output-appearance-cutoutMode"[^>]*value="choice-stack"/u,
+    );
+    expect(html).toContain('output-appearance-cutoutCorner');
+    expect(html).not.toContain('output-appearance-cutoutCardStyle');
+  });
 
   it('keeps ornate vertical positioning split into its anchor and offsets', async () => {
     const html = await renderRegisteredTemplate('ornate-vertical');

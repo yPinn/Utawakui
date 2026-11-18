@@ -2,6 +2,7 @@ import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import {
   carryOutputAppearanceToTemplate,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
+  sanitizeCutoutPortraitSets,
   sanitizeOutputLocalFont,
 } from '../../shared/outputAppearance.mjs';
 
@@ -12,6 +13,9 @@ function cloneScalarSettings(settings) {
 
   return Object.fromEntries(
     Object.entries(settings).flatMap(([key, value]) => {
+      if (key === 'cutoutPortraitSets') {
+        return [[key, sanitizeCutoutPortraitSets(value)]];
+      }
       if (
         typeof value === 'string' ||
         typeof value === 'boolean' ||

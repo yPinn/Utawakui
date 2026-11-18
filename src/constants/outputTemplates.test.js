@@ -12,6 +12,7 @@ import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 
 const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
+  'cutout-dialogue': '幻影怪盜',
   'receipt-setlist': '票據歌單',
   'ribbon-setlist': '紅黑緞帶',
   'queue-board': '夜色歌單',
@@ -29,6 +30,22 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
+  'cutout-dialogue': [
+    'paletteId',
+    'lookAmount',
+    'cutoutMode',
+    'cutoutChatShape',
+    'cutoutCardStyle',
+    'cutoutPortraitColor',
+    'cutoutArtistName',
+    'cutoutPortraitPhoto',
+    'cutoutCorner',
+    'fontFamily',
+    'cutoutRansomFont',
+    'fontScale',
+    'filmGrainAmount',
+    'filmGrainSize',
+  ],
   'ribbon-setlist': [
     'paletteId',
     'lookAmount',
@@ -443,6 +460,7 @@ describe('output template registry', () => {
       'manga-frame',
       'centered-vertical',
       'fisheye-lens',
+      'cutout-dialogue',
     ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),

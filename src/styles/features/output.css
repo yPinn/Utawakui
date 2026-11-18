@@ -27,6 +27,10 @@
   --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
   --ui-output-range-value-width: 3.5rem; /* stable numeric lane; slider consumes the remaining width */
   --ui-output-setting-label-min-width: 4rem; /* compact setting label column */
+  --ui-output-portrait-indigo: var(--ui-palette-indigo-300);
+  --ui-output-portrait-plum: var(--ui-palette-plum-300);
+  --ui-output-portrait-red: var(--ui-palette-red-300);
+  --ui-output-portrait-amber: var(--ui-palette-amber-300);
 
   /* Representative swatches for the ungraded, template-dependent original. */
   --ui-output-look-original-ink: #111417;

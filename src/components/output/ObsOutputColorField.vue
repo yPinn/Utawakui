@@ -8,6 +8,7 @@ defineProps({
   modelValue: { type: String, required: true },
   modified: { type: Boolean, default: false },
   paletteTarget: { type: Boolean, default: false },
+  stacked: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
@@ -26,13 +27,14 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
       :label="label"
       :labels-control="false"
       :modified="modified"
+      :stacked="stacked"
     >
       <UiColorField
         :id="id"
         :label="label"
         :model-value="modelValue"
         label-hidden
-        align="end"
+        :align="stacked ? 'start' : 'end'"
         @update:model-value="emit('update:modelValue', $event)"
         @commit="emit('commit', $event)"
       />
@@ -45,7 +47,10 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
   min-width: 0;
 }
 
-.obs-output-color-field > .obs-output-color-field__controls {
+.obs-output-color-field
+  > .obs-output-color-field__controls:not(
+    .obs-appearance-control-row--stacked
+  ) {
   grid-template-columns: minmax(0, max-content) minmax(
       calc(
         var(--ui-control-height) + var(--ui-space-2) +

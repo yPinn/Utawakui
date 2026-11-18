@@ -13,6 +13,7 @@ const props = defineProps({
   label: { type: String, required: true },
   title: { type: String, default: undefined },
   tooltipSuffix: { type: String, default: '' },
+  tooltipDetail: { type: String, default: '' },
   tooltipPlacement: {
     type: String,
     default: 'top',
@@ -114,6 +115,7 @@ function buttonAttrs(triggerProps) {
       :open="tooltipOpen"
       :text="titleText"
       :suffix="tooltipSuffix"
+      :detail="tooltipDetail"
       :tooltip-id="tooltipId"
       :position="tooltipPosition"
       :placement="tooltipPlacement"

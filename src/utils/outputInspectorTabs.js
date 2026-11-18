@@ -5,6 +5,7 @@ import {
   Palette,
   Repeat,
   Type,
+  UserRound,
 } from '../icons/index.js';
 import { t } from './i18n.js';
 
@@ -42,6 +43,7 @@ const categories = [
     icon: Type,
     groups: [{ id: 'typography' }, { id: 'readability' }],
   },
+  { id: 'portrait', icon: UserRound, groups: [{ id: 'portrait' }] },
   {
     id: 'color',
     icon: Palette,

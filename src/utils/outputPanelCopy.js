@@ -12,6 +12,7 @@ export function localizeAppearanceField(field) {
     ? `outputPanel.appearance.elementFields.${field.propertyKey}`
     : `outputPanel.appearance.fields.${field.key}`;
   const unitKey = `${base}.unit`;
+  const placeholderKey = `${base}.placeholder`;
   const groupLabel =
     field.group === 'motion' && field.key.startsWith('fisheye')
       ? t('outputPanel.inspector.motion')
@@ -21,6 +22,9 @@ export function localizeAppearanceField(field) {
     label: t(`${base}.label`),
     groupLabel,
     ...(i18n.global.te(unitKey) ? { unit: t(unitKey) } : {}),
+    ...(field.control === 'text' && i18n.global.te(placeholderKey)
+      ? { placeholder: t(placeholderKey) }
+      : {}),
     ...(field.options
       ? {
           options: field.options.map((option) => ({

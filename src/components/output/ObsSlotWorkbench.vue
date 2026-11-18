@@ -1,6 +1,7 @@
 <script setup>
 import {
   computed,
+  nextTick,
   onBeforeUnmount,
   reactive,
   shallowRef,
@@ -15,7 +16,13 @@ import {
   Video,
 } from '../../icons/index.js';
 import {
+  activeCutoutPortraitSet,
+  canAddCutoutPortraitSet,
+  CUTOUT_PORTRAIT_DEFAULTS,
+  CUTOUT_PORTRAIT_FIELDS,
   isOutputLocalFont,
+  migrateLegacyCutoutPortraitSettings,
+  sanitizeCutoutPortraitSets,
   sanitizeOutputAppearanceSetting,
 } from '../../../shared/outputAppearance.mjs';
 import { normalizeLyricsPresentationPolicyId } from '../../../shared/presentation/lyricsPresentationPolicies.mjs';
@@ -25,12 +32,15 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
+import ObsCutoutPortraitEditor from './ObsCutoutPortraitEditor.vue';
+import ObsCutoutPortraitGrid from './ObsCutoutPortraitGrid.vue';
 import ObsFisheyeCameraControls from './ObsFisheyeCameraControls.vue';
 import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
 import { useOutputElementTarget } from '../../composables/output/useOutputElementTarget.js';
+import { usePlayer } from '../../composables/usePlayer.js';
 import UiButton from '../ui/UiButton.vue';
 import UiFolderInspector from '../ui/UiFolderInspector.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -41,6 +51,7 @@ import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import { t } from '../../utils/i18n.js';
 import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
+import { cutoutPortraitColorToken } from './cutoutPortraitPalette.js';
 
 const props = defineProps({
   sideCollapsed: { type: Boolean, default: false },
@@ -76,8 +87,15 @@ const emit = defineEmits([
 ]);
 
 const draft = reactive({ captureSize: 'small' });
+const portraitSets = shallowRef({ activeId: '', items: [] });
+const portraitEditor = shallowRef(null);
+const portraitGrid = useTemplateRef('portraitGrid');
+const selectedPortraitSet = computed(() =>
+  activeCutoutPortraitSet(portraitSets.value),
+);
 const sideWidth = shallowRef(null);
 const tools = useTemplateRef('tools');
+const { state: player } = usePlayer();
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
 const presentationFields = computed(
@@ -112,6 +130,9 @@ const configurationFields = computed(() => [
   ...templateFields.value,
   ...elementTargets.value.flatMap(({ fields }) => fields),
 ]);
+const portraitFields = computed(() =>
+  templateFields.value.filter(({ group }) => group === 'portrait'),
+);
 const templateId = computed(
   () => props.preset?.id ?? props.outputSlot?.templateId ?? null,
 );
@@ -125,7 +146,13 @@ const {
 const visibleFields = computed(() =>
   selectedTarget.value
     ? sortConfigurationFields(selectedTarget.value.fields)
-    : templateFields.value,
+    : templateFields.value.filter(
+        ({ key, group }) =>
+          (group !== 'portrait' || draft.cutoutMode === 'side-card') &&
+          (key !== 'cutoutChatShape' || draft.cutoutMode === 'chat') &&
+          (key !== 'cutoutCardStyle' || draft.cutoutMode === 'side-card') &&
+          (key !== 'cutoutRansomFont' || draft.cutoutMode === 'ransom'),
+      ),
 );
 const activeColorFieldKey = shallowRef(null);
 const colorFields = computed(() =>
@@ -144,6 +171,9 @@ watch(
   },
   { flush: 'sync' },
 );
+watch([templateId, () => draft.cutoutMode], () => {
+  portraitEditor.value = null;
+});
 const configurationFieldGroups = computed(() => {
   const groups = new Map();
   for (const field of visibleFields.value) {
@@ -234,7 +264,27 @@ function normalizedControlValue(field, settings) {
 }
 
 function isFieldModified(field) {
-  return draft[field.key] !== field.defaultValue;
+  return fieldValue(field) !== field.defaultValue;
+}
+
+function fieldValue(field) {
+  return field.group === 'portrait' && selectedPortraitSet.value
+    ? selectedPortraitSet.value[field.key]
+    : draft[field.key];
+}
+
+function setFieldValue(field, value) {
+  const selected = selectedPortraitSet.value;
+  if (field.group !== 'portrait' || !selected) {
+    draft[field.key] = value;
+    return;
+  }
+  portraitSets.value = {
+    ...portraitSets.value,
+    items: portraitSets.value.items.map((item) =>
+      item.id === selected.id ? { ...item, [field.key]: value } : item,
+    ),
+  };
 }
 
 const isConfigurationAtDefaults = computed(() =>
@@ -250,12 +300,19 @@ watch(
   ],
   ([activeKind, outputSlot, activeTemplateId, saveStatus]) => {
     if (saveStatus !== 'saved') return;
+    const settings =
+      activeTemplateId === 'cutout-dialogue'
+        ? migrateLegacyCutoutPortraitSettings(outputSlot?.settings)
+        : outputSlot?.settings;
+    portraitSets.value = sanitizeCutoutPortraitSets(
+      settings?.cutoutPortraitSets,
+    );
     for (const field of configurationFields.value) {
-      draft[field.key] = normalizedControlValue(field, outputSlot?.settings);
+      draft[field.key] = normalizedControlValue(field, settings);
     }
     draft.captureSize = normalizeCaptureSizeId(
       activeKind,
-      outputSlot?.settings?.captureSize,
+      settings?.captureSize,
       activeTemplateId,
     );
   },
@@ -289,6 +346,9 @@ function settingsSnapshot() {
     ...Object.fromEntries(
       configurationFields.value.map(({ key }) => [key, draft[key]]),
     ),
+    ...(templateId.value === 'cutout-dialogue' && {
+      cutoutPortraitSets: portraitSets.value,
+    }),
     captureSize: draft.captureSize,
   };
 }
@@ -301,8 +361,8 @@ function emitSettingsChange(mode = 'debounced') {
 }
 
 function updateAppearanceField(field, value) {
-  if (draft[field.key] === value) return;
-  draft[field.key] = value;
+  if (fieldValue(field) === value) return;
+  setFieldValue(field, value);
   emitSettingsChange(field.control === 'select' ? 'immediate' : 'debounced');
 }
 
@@ -319,20 +379,96 @@ function commitSettings() {
 function applyPaletteColor(color) {
   const field = activeColorField.value;
   if (!field) return;
-  draft[field.key] = color;
+  setFieldValue(field, color);
   commitSettings();
   emit('commitColor', color);
 }
 
 function resetFields(fields) {
   for (const field of fields) {
-    draft[field.key] = field.defaultValue;
+    setFieldValue(field, field.defaultValue);
   }
   emitSettingsChange('immediate');
 }
 
 function resetAppearance() {
+  portraitEditor.value = null;
   resetFields(configurationFields.value);
+}
+
+function selectPortraitSet(activeId) {
+  if (activeId === portraitSets.value.activeId) return;
+  portraitSets.value = { ...portraitSets.value, activeId };
+  commitSettings();
+}
+
+function portraitEditorValues(values) {
+  if (values.cutoutPortraitColor || !tools.value) return values;
+  const token = cutoutPortraitColorToken(
+    values.cutoutArtistName || player.track?.artist,
+    player.track?.id,
+  );
+  const color = getComputedStyle(tools.value).getPropertyValue(token).trim();
+  return { ...values, cutoutPortraitColor: color };
+}
+
+function startPortraitSet() {
+  if (!canAddCutoutPortraitSet(portraitSets.value.items)) return;
+  portraitEditor.value = {
+    id: null,
+    values: portraitEditorValues(CUTOUT_PORTRAIT_DEFAULTS),
+  };
+}
+
+function editPortraitSet() {
+  const selected = selectedPortraitSet.value;
+  if (!selected) return;
+  portraitEditor.value = {
+    id: selected.id,
+    values: portraitEditorValues(selected),
+  };
+}
+
+async function closePortraitEditor(saved = false) {
+  portraitEditor.value = null;
+  await nextTick();
+  portraitGrid.value?.focusAfterEdit(saved);
+}
+
+function savePortraitSet(values) {
+  const editor = portraitEditor.value;
+  if (!editor) return;
+  const { items } = portraitSets.value;
+  const fields = Object.fromEntries(
+    CUTOUT_PORTRAIT_FIELDS.map((key) => [key, values[key]]),
+  );
+  if (editor.id === null) {
+    if (!canAddCutoutPortraitSet(items)) return;
+    const id = globalThis.crypto.randomUUID();
+    portraitSets.value = { activeId: id, items: [...items, { id, ...fields }] };
+  } else {
+    portraitSets.value = {
+      ...portraitSets.value,
+      items: items.map((item) =>
+        item.id === editor.id ? { ...item, ...fields } : item,
+      ),
+    };
+  }
+  commitSettings();
+  if (fields.cutoutPortraitColor !== editor.values.cutoutPortraitColor) {
+    emit('commitColor', fields.cutoutPortraitColor);
+  }
+  closePortraitEditor(true);
+}
+
+function removePortraitSet() {
+  const { activeId, items } = portraitSets.value;
+  if (!activeId) return;
+  portraitSets.value = {
+    activeId: '',
+    items: items.filter(({ id }) => id !== activeId),
+  };
+  commitSettings();
 }
 </script>
 
@@ -462,8 +598,34 @@ function resetAppearance() {
       <ObsFisheyeCameraControls
         v-if="item?.id === 'camera-effects' && active"
       />
+      <ObsCutoutPortraitGrid
+        v-if="item?.id === 'portrait'"
+        v-show="!portraitEditor"
+        ref="portraitGrid"
+        :active="active && !portraitEditor"
+        :items="portraitSets.items"
+        :active-id="portraitSets.activeId"
+        @select="selectPortraitSet"
+        @add="startPortraitSet"
+        @edit="editPortraitSet"
+        @remove="removePortraitSet"
+      />
+      <ObsCutoutPortraitEditor
+        v-if="item?.id === 'portrait' && portraitEditor"
+        :fields="portraitFields"
+        :values="portraitEditor.values"
+        :track-id="player.track?.id"
+        :is-new="portraitEditor.id === null"
+        :recent-colors="recentColors"
+        :saved-colors="savedColors"
+        @save="savePortraitSet"
+        @cancel="closePortraitEditor()"
+        @toggle-saved-color="emit('toggleSavedColor', $event)"
+      />
       <ObsPropertySection
-        v-for="group in item?.groups ?? configurationFieldGroups"
+        v-for="group in (item?.groups ?? configurationFieldGroups).filter(
+          ({ id }) => id !== 'portrait',
+        )"
         :key="group.id"
         :title="group.label"
         :modified="group.fields.some(isFieldModified)"
@@ -492,7 +654,7 @@ function resetAppearance() {
           :key="field.key"
           :field="field"
           :kinetic-material="draft.kineticMaterial"
-          :model-value="draft[field.key]"
+          :model-value="fieldValue(field)"
           :disabled="
             field.key === 'lookAmount' && draft.paletteId === 'original'
           "
@@ -506,7 +668,7 @@ function resetAppearance() {
         <ObsOutputColorPalette
           v-if="activeColorField && group.fields.includes(activeColorField)"
           :label="activeColorField.label"
-          :model-value="String(draft[activeColorField.key])"
+          :model-value="String(fieldValue(activeColorField))"
           :recent-colors="recentColors"
           :saved-colors="savedColors"
           @select="applyPaletteColor"

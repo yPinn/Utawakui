@@ -4,6 +4,7 @@ import ArtCardPreview from './ArtCardPreview.vue';
 import ChalkboardVerticalPreview from './ChalkboardVerticalPreview.vue';
 import CenteredVerticalPreview from './CenteredVerticalPreview.vue';
 import CoverPlayerPreview from './CoverPlayerPreview.vue';
+import CutoutDialoguePreview from './CutoutDialoguePreview.vue';
 import FisheyeLensPreview from './FisheyeLensPreview.vue';
 import KaraokeStackPreview from './KaraokeStackPreview.vue';
 import KineticPopPreview from './KineticPopPreview.vue';
@@ -27,6 +28,7 @@ const TEMPLATE_PREVIEWS = Object.freeze({
   'chalkboard-vertical': ChalkboardVerticalPreview,
   'centered-vertical': CenteredVerticalPreview,
   'fisheye-lens': FisheyeLensPreview,
+  'cutout-dialogue': CutoutDialoguePreview,
   'manga-frame': MangaFramePreview,
   'live-stage': LiveStagePreview,
   'art-card': ArtCardPreview,

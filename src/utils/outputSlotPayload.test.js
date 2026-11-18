@@ -66,6 +66,40 @@ describe('buildOutputSlotPayload', () => {
     expect(() => structuredClone(payload)).not.toThrow();
   });
 
+  it('copies and sanitizes the portrait presets across IPC', () => {
+    const id = '00000000-0000-4000-8000-000000000001';
+    const slot = reactive({
+      templateId: 'cutout-dialogue',
+      settings: {
+        cutoutPortraitSets: {
+          activeId: id,
+          items: [
+            {
+              id,
+              cutoutArtistName: ' Guest ',
+              cutoutPortraitPhoto: '../unsafe',
+              cutoutPortraitColor: '#AABBCC',
+            },
+            { id, cutoutArtistName: 'Duplicate' },
+            { id: '../bad' },
+          ],
+        },
+      },
+    });
+    const payload = buildOutputSlotPayload(slot);
+    expect(structuredClone(payload).settings.cutoutPortraitSets).toEqual({
+      activeId: id,
+      items: [
+        {
+          id,
+          cutoutArtistName: 'Guest',
+          cutoutPortraitPhoto: '',
+          cutoutPortraitColor: '#aabbcc',
+        },
+      ],
+    });
+  });
+
   it('moves untouched settings to the next template default', () => {
     const fromFocusLine = buildOutputSlotPayload(
       { templateId: 'focus-line', settings: { fontFamily: 'serif' } },

@@ -5,6 +5,7 @@ defineProps({
   label: { type: String, required: true },
   labelsControl: { type: Boolean, default: true },
   alignStart: { type: Boolean, default: false },
+  stacked: { type: Boolean, default: false },
   modified: { type: Boolean, default: false },
 });
 </script>
@@ -12,7 +13,10 @@ defineProps({
 <template>
   <div
     class="obs-appearance-control-row"
-    :class="{ 'obs-appearance-control-row--align-start': alignStart }"
+    :class="{
+      'obs-appearance-control-row--align-start': alignStart,
+      'obs-appearance-control-row--stacked': stacked,
+    }"
   >
     <label
       v-if="labelsControl"
@@ -59,6 +63,7 @@ defineProps({
 }
 
 .obs-appearance-control-row__label {
+  overflow-wrap: anywhere;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
   font-weight: var(--ui-type-caption-weight);
@@ -85,5 +90,10 @@ defineProps({
 
 .obs-appearance-control-row--align-start .obs-appearance-control-row__label {
   padding-block-start: var(--ui-space-2);
+}
+
+.obs-appearance-control-row--stacked {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ui-space-1);
 }
 </style>

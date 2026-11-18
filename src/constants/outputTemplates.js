@@ -205,6 +205,20 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ]),
   },
   {
+    id: 'cutout-dialogue',
+    kind: 'lyrics',
+    order: 65,
+    name: t('outputPanel.templates.cutoutDialogue.name'),
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.cutoutDialogue.facts.direction')],
+      ['language', t('outputPanel.templates.cutoutDialogue.facts.language')],
+      [
+        'translation',
+        t('outputPanel.templates.cutoutDialogue.facts.translation'),
+      ],
+    ]),
+  },
+  {
     id: 'art-card',
     kind: 'now-playing',
     order: 10,

@@ -61,6 +61,14 @@
         "translation": "不顯示"
       }
     },
+    "cutoutDialogue": {
+      "name": "幻影怪盜",
+      "facts": {
+        "direction": "橫排",
+        "language": "中日英",
+        "translation": "不顯示"
+      }
+    },
     "fisheyeLens": {
       "name": "魚眼鏡筒",
       "facts": {
@@ -238,6 +246,7 @@
     "toggle": "預覽背景：{current}，切換為{next}"
   },
   "inspector": {
+    "portrait": "人物",
     "label": "外觀分類",
     "layout": "定位",
     "arrangement": "版面",
@@ -247,6 +256,27 @@
     "motion": "動態",
     "anchor": "定位基準",
     "offset": "位置微調"
+  },
+  "portrait": {
+    "set": "人物組合",
+    "defaultSet": "跟隨歌手",
+    "defaultNamedSet": "跟隨歌手 · {name}",
+    "numberedSet": "組合 {number}",
+    "namedSet": "{number} · {name}",
+    "setPage": "第 {page}／{total} 頁",
+    "addSet": "新增人物組合",
+    "editSet": "編輯人物組合",
+    "removeSet": "移除人物組合",
+    "setLimit": "最多 {count} 組",
+    "artistSource": "歌手照片",
+    "customSource": "自訂照片",
+    "choosePhoto": "選擇自訂照片",
+    "replacePhoto": "更換自訂照片",
+    "useArtistPhoto": "還原歌手照片",
+    "fileTypes": "人像圖片",
+    "photoHint": "PNG／WebP · 10 MB 內 · 建議去背",
+    "invalidImage": "請選擇 10 MB 以內且尺寸有效的 PNG 或 WebP。",
+    "importFailed": "無法匯入照片，請再試一次。"
   },
   "cameraEffects": {
     "label": "攝影機特效",
@@ -350,6 +380,7 @@
   },
   "appearance": {
     "groups": {
+      "portrait": "人物外觀",
       "colorTreatment": "整體配色",
       "customColor": "自訂色彩",
       "typography": "字體設定",
@@ -362,6 +393,12 @@
       "content": "內容顯示"
     },
     "fields": {
+      "cutoutPortraitColor": { "label": "人像底色" },
+      "cutoutArtistName": {
+        "label": "顯示名稱",
+        "placeholder": "跟隨歌手名稱"
+      },
+      "cutoutPortraitPhoto": { "label": "人像照片" },
       "filmGrainAmount": {
         "label": "顆粒強度"
       },
@@ -537,6 +574,50 @@
           "candyRim": "樣式 2｜漸層白框",
           "chromaticDepth": "樣式 3｜右下錯位",
           "cycle": "三款依句序切換"
+        }
+      },
+      "cutoutMode": {
+        "label": "呈現方式",
+        "options": {
+          "radial": "放射短句",
+          "ransom": "預告信",
+          "chat": "聊天",
+          "sideCard": "側邊彈卡",
+          "choiceStack": "選句剪報"
+        }
+      },
+      "cutoutChatShape": {
+        "label": "聊天外形",
+        "options": {
+          "bubble": "泡泡",
+          "thought": "思考泡泡",
+          "stacked": "堆疊卡",
+          "phone": "手機"
+        }
+      },
+      "cutoutCardStyle": {
+        "label": "彈卡樣式",
+        "options": {
+          "textOnly": "純對話框",
+          "portrait": "有頭像"
+        }
+      },
+      "cutoutRansomFont": {
+        "label": "點綴字體",
+        "options": {
+          "kaitou": "怪盗予告ゴシック",
+          "kaibunsyo": "怪聞書",
+          "none": "無"
+        }
+      },
+      "cutoutCorner": {
+        "label": "畫面角落",
+        "options": {
+          "auto": "依呈現方式",
+          "topLeft": "左上",
+          "topRight": "右上",
+          "bottomLeft": "左下",
+          "bottomRight": "右下"
         }
       },
       "kineticArrangement": {

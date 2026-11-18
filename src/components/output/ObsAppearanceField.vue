@@ -7,8 +7,10 @@ import ObsOutputColorField from './ObsOutputColorField.vue';
 import ObsPositionPicker from './ObsPositionPicker.vue';
 import ObsSegmentedAppearanceChoice from './ObsSegmentedAppearanceChoice.vue';
 import UiSelect from '../ui/UiSelect.vue';
+import UiTextField from '../ui/UiTextField.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import { contentLangAttribute } from '../../utils/contentLanguage.js';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
@@ -17,6 +19,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   modified: { type: Boolean, default: false },
   paletteTarget: { type: Boolean, default: false },
+  stacked: { type: Boolean, default: false },
   kineticMaterial: { type: String, default: undefined },
 });
 
@@ -78,6 +81,7 @@ function commitColor(value) {
     :model-value="String(modelValue)"
     :modified="modified"
     :palette-target="paletteTarget"
+    :stacked="stacked"
     @activate="emit('activateColor')"
     @update:model-value="updateValue"
     @commit="commitColor"
@@ -87,8 +91,9 @@ function commitColor(value) {
     v-else
     :control-id="controlId"
     :label="field.label"
-    :labels-control="field.control === 'range'"
+    :labels-control="['range', 'text'].includes(field.control)"
     :modified="modified"
+    :stacked="stacked"
     :align-start="editor === 'position-grid' || editor === 'font-family'"
   >
     <ObsLookSelect
@@ -139,6 +144,20 @@ function commitColor(value) {
       :options="selectOptions"
       label-hidden
       @update:model-value="updateValue"
+    />
+
+    <UiTextField
+      v-else-if="field.control === 'text'"
+      :id="controlId"
+      :label="field.label"
+      :model-value="String(modelValue)"
+      :maxlength="field.maxLength"
+      :placeholder="field.placeholder"
+      :aria-label="field.label"
+      :lang="contentLangAttribute(modelValue)"
+      label-hidden
+      @update:model-value="updateValue"
+      @blur="emit('commit')"
     />
 
     <div

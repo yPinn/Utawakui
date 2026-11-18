@@ -31,6 +31,9 @@ function markThumbnailFailed() {
     <img
       v-if="showBundledThumbnail"
       class="obs-template-thumbnail"
+      :class="{
+        'obs-template-thumbnail--contain': preset?.id === 'cutout-dialogue',
+      }"
       :src="bundledSource"
       width="1280"
       height="720"
@@ -78,5 +81,9 @@ function markThumbnailFailed() {
   box-sizing: border-box;
   object-fit: cover;
   pointer-events: none;
+}
+
+.obs-template-thumbnail--contain {
+  object-fit: contain;
 }
 </style>
