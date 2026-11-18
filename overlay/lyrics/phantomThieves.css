@@ -147,103 +147,62 @@
   justify-items: start;
 }
 
-.phantom-thieves__choice-panel {
-  position: absolute;
-  inset: var(--phantom-top) var(--phantom-right) var(--phantom-bottom)
-    var(--phantom-left);
-  width: 24cqw;
-  height: 65%;
-  isolation: isolate;
-  background: var(--phantom-paper);
-  clip-path: polygon(34% 0, 100% 0, 100% 79%, 80% 100%, 0 100%);
-}
-
-.phantom-thieves__choice-panel::before,
-.phantom-thieves__choice-panel::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
-
-.phantom-thieves__choice-panel::before {
-  background: linear-gradient(
-    155deg,
-    var(--phantom-accent),
-    var(--phantom-ink) 76%
-  );
-  clip-path: polygon(38% 0, 100% 0, 100% 73%, 76% 100%, 6% 100%);
-}
-
-.phantom-thieves__choice-panel::after {
-  background: var(--phantom-grain);
-  clip-path: polygon(39% 11%, 100% 4%, 100% 58%, 16% 91%);
-}
-
-.phantom-thieves[data-corner$='left'] .phantom-thieves__choice-panel {
-  scale: -1 1;
+.phantom-thieves:is([data-mode='choice-stack'], [data-mode='side-card']) {
+  --phantom-frame-paper: #fff;
+  --phantom-frame-ink: #000;
 }
 
 .phantom-thieves__choices {
-  width: 45cqw;
+  width: 40cqw;
   display: grid;
   justify-items: end;
-  gap: 0.6cqw;
-  padding: 0 6cqw;
-  box-sizing: border-box;
-  --choice-mirror: 1;
+  gap: 0.55cqw;
 }
 
 .phantom-thieves[data-corner$='left'] .phantom-thieves__choices {
   justify-items: start;
-  --choice-mirror: -1;
 }
 
 .phantom-thieves__choice {
-  --choice-shape: polygon(3% 6%, 88% 0, 100% 52%, 88% 94%, 0 100%);
-  --choice-tilt: 3deg;
+  --phantom-choice-inset: 1cqw;
+  --phantom-frame-fill: var(--phantom-frame-ink);
+  --phantom-frame-outline: var(--phantom-frame-paper);
+  --phantom-frame-stroke: 0.19cqw;
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
   width: max-content;
-  min-width: min(14cqw, 100%);
-  max-width: 90%;
-  padding: 0.8cqw 3cqw;
-  rotate: calc(var(--choice-mirror) * var(--choice-tilt));
+  min-width: 16cqw;
+  max-width: calc(100% - var(--phantom-choice-inset));
+  margin-inline-end: var(--phantom-choice-inset);
+  padding: 0.92cqw 2.9cqw 0.8cqw 3.5cqw;
+  color: var(--phantom-frame-paper);
 }
 
-.phantom-thieves__choice::before,
-.phantom-thieves__choice::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: var(--phantom-paper);
-  clip-path: var(--choice-shape);
-  scale: var(--choice-mirror) 1;
+.phantom-thieves[data-corner$='right'] .phantom-thieves__choice {
+  margin-inline: var(--phantom-choice-inset) 0;
+  padding-inline: 2.9cqw 3.5cqw;
 }
 
-.phantom-thieves__choice::after {
-  inset: 0.16cqw;
-  background: var(--phantom-ink);
+.phantom-thieves__card-frame[data-frame='choice'] .phantom-thieves__frame-face {
+  stroke-linejoin: miter;
+}
+
+.phantom-thieves__card-frame[data-frame='choice'] .phantom-thieves__frame-tab {
+  fill: var(--phantom-frame-paper);
 }
 
 .phantom-thieves__choice[data-choice='current'] {
-  --choice-tilt: -5deg;
-  min-width: min(23cqw, 100%);
-  max-width: 100%;
-  color: var(--phantom-ink);
-}
-
-.phantom-thieves__choice[data-choice='current']::before {
-  background: var(--phantom-accent);
-}
-
-.phantom-thieves__choice[data-choice='current']::after {
-  background: var(--phantom-paper);
+  --phantom-choice-inset: 0cqw;
+  --phantom-frame-fill: var(--phantom-frame-paper);
+  --phantom-frame-outline: var(--phantom-frame-ink);
+  --phantom-frame-stroke: 0.3cqw;
+  min-width: 23cqw;
+  color: var(--phantom-frame-ink);
 }
 
 .phantom-thieves__choice[data-choice='next'] {
-  --choice-tilt: 1deg;
+  --phantom-choice-inset: 1.7cqw;
 }
 
 .phantom-thieves__choice .phantom-thieves__copy {
@@ -510,7 +469,10 @@
 }
 
 .phantom-thieves[data-mode='side-card'] .phantom-thieves__cluster {
-  --phantom-side-card-max-width: 40cqw;
+  --phantom-side-card-max-width: calc(200cqw / 3);
+  /* Room for the tail that reaches out past the dialogue box. */
+  --phantom-side-card-tail-reach: 3cqw;
+  margin-inline-start: var(--phantom-side-card-tail-reach);
   width: max-content;
   max-width: var(--phantom-side-card-max-width);
   display: grid;
@@ -519,8 +481,13 @@
 .phantom-thieves[data-mode='side-card'] .phantom-thieves__cluster > * {
   grid-area: 1 / 1;
 }
+.phantom-thieves[data-mode='side-card'][data-corner$='right']
+  .phantom-thieves__cluster {
+  margin-inline: 0 var(--phantom-side-card-tail-reach);
+}
 .phantom-thieves[data-mode='side-card']
   .phantom-thieves__cluster:has(> .phantom-thieves__portrait) {
+  --phantom-side-card-tail-reach: 0cqw;
   --phantom-portrait-width: 14cqw;
   --phantom-portrait-overlap: 0.65cqw;
   --phantom-portrait-track: calc(
@@ -552,9 +519,12 @@
   padding-top: 5.7cqw;
 }
 .phantom-thieves[data-mode='side-card'] .phantom-thieves__card {
-  --phantom-card-tail-padding: 3cqw;
-  --phantom-card-tab-padding: 4.55cqw;
-  min-width: 15cqw;
+  --phantom-card-tail-padding: max(
+    var(--phantom-card-copy-inset),
+    var(--phantom-card-name-inset, 0px)
+  );
+  --phantom-card-tab-padding: 6cqw;
+  min-width: 24cqw;
   max-width: min(100%, var(--phantom-side-card-max-width));
   width: var(--phantom-card-width, fit-content);
   padding-block: 2cqw 2.25cqw;
@@ -573,6 +543,8 @@
 
 .phantom-thieves[data-mode='side-card'] .phantom-thieves__copy {
   --phantom-copy-size: 2.05cqw;
+  min-block-size: 1.5lh;
+  align-content: center;
   font-family: var(--phantom-font, var(--phantom-thieves-face));
   font-weight: 700;
   font-synthesis: none;
@@ -619,6 +591,13 @@
     'Malgun Gothic', 'Noto Sans CJK KR', system-ui, sans-serif;
 }
 
+/* Latin names use the heavy rounded face; the default face has no bold. */
+.phantom-thieves[data-mode='side-card']
+  .phantom-thieves__name[data-script='latin'] {
+  --phantom-thieves-face:
+    'Utawakui Phantom Rounded', var(--phantom-thieves-fallback);
+}
+
 .phantom-thieves[data-mode='side-card']
   .phantom-thieves__copy[data-script='latin'] {
   --phantom-thieves-face: Georgia, 'Times New Roman', serif;
@@ -633,19 +612,50 @@
 }
 
 .phantom-thieves__card-frame[data-frame='side-card'] {
-  transform-origin: left 1.95cqw;
+  transform-origin: var(--phantom-card-tail-x)
+    calc(100% - var(--phantom-card-tip-from-bottom));
+}
+
+.phantom-thieves__card-frame[data-frame='side-card']
+  .phantom-thieves__frame-shadow {
+  fill: none;
+  stroke: var(--phantom-frame-ink);
+  stroke-width: 1.44cqw;
+  stroke-linejoin: miter;
+  stroke-miterlimit: 3;
+}
+
+.phantom-thieves__card-frame[data-frame='side-card']
+  .phantom-thieves__frame-inner {
+  fill: none;
+  stroke: var(--phantom-frame-paper);
+  stroke-width: 0.28cqw;
+  stroke-linejoin: miter;
+}
+
+.phantom-thieves__card-frame[data-frame='side-card']
+  .phantom-thieves__frame-band {
+  fill: var(--phantom-frame-paper);
+  fill-rule: evenodd;
 }
 
 .phantom-thieves[data-corner$='right']
   .phantom-thieves__card-frame[data-frame='side-card'] {
-  transform-origin: right 1.95cqw;
+  transform-origin: calc(100% - var(--phantom-card-tail-x))
+    calc(100% - var(--phantom-card-tip-from-bottom));
 }
 
 .phantom-thieves__card-frame[data-frame='side-card']
   .phantom-thieves__frame-face {
-  fill: #000;
-  fill-opacity: 0.78;
-  stroke-width: calc(var(--phantom-frame-stroke) * 1.45);
+  --phantom-side-card-fill-opacity: 0.78;
+  fill: var(--phantom-frame-ink);
+  /* GSAP ramps the multiplier while the box grows in. */
+  fill-opacity: calc(
+    var(--phantom-side-card-fill-opacity) *
+      var(--phantom-side-card-fill-ramp, 1)
+  );
+  /* The white band is its own layer, so the face has no outline. */
+  stroke: none;
 }
 
 .phantom-thieves[data-corner$='right'] .phantom-thieves__portrait {
@@ -653,11 +663,12 @@
 }
 
 .phantom-thieves[data-corner$='right'] .phantom-thieves__name {
-  right: 0;
+  --phantom-name-label-direction: -1;
+  right: var(--phantom-name-inset);
   left: auto;
-  transform: rotate(15deg);
+  transform: rotate(var(--phantom-name-tilt));
   transform-origin: calc(100% - var(--phantom-name-tail-x))
-    calc(100% - var(--phantom-name-tail-bottom));
+    calc(100% + var(--phantom-name-tip-extension));
 }
 
 .phantom-thieves[data-mode='side-card']
@@ -669,6 +680,13 @@
   width: var(--phantom-portrait-width);
   aspect-ratio: 4 / 3;
   isolation: isolate;
+  /* Grow from the edge that meets the dialogue tail. */
+  transform-origin: right bottom;
+}
+.phantom-thieves[data-corner$='right']
+  .phantom-thieves__cluster
+  > .phantom-thieves__portrait {
+  transform-origin: left bottom;
 }
 
 .phantom-thieves__portrait .phantom-thieves__frame-back {
@@ -735,12 +753,15 @@
 
 .phantom-thieves__name {
   position: absolute;
-  /* The nameplate crosses the upper frame edge above the lyric text. */
   z-index: 1;
-  inset: auto auto calc(100% - 2.3cqw) 0;
+  inset: auto auto
+    calc(
+      var(--phantom-name-tip-from-bottom) + var(--phantom-name-tip-extension)
+    )
+    var(--phantom-name-inset);
   box-sizing: border-box;
   width: max-content;
-  min-width: max(10cqw, 35%);
+  min-width: 12cqw;
   max-width: 25cqw;
   padding: 0.3cqw 2cqw;
   isolation: isolate;
@@ -751,23 +772,24 @@
   font-weight: 700;
   font-synthesis: none;
   line-height: 1.25;
-  transform: rotate(-15deg);
-  /* Pivot on the shared arrow axis so rotating the plate keeps its tip aligned. */
+  transform: rotate(calc(-1 * var(--phantom-name-tilt)));
+  /* Keep the nameplate tip in place when rotating the plate. */
   transform-origin: var(--phantom-name-tail-x)
-    calc(100% - var(--phantom-name-tail-bottom));
+    calc(100% + var(--phantom-name-tip-extension));
 }
 .phantom-thieves__card-frame[data-frame='nameplate']
-  .phantom-thieves__frame-face {
-  fill: #ecebea;
-  stroke: #292828;
-  stroke-width: calc(var(--phantom-frame-stroke) * 2);
-}
+  .phantom-thieves__frame-face,
 .phantom-thieves__card-frame[data-frame='side-card']
   .phantom-thieves__frame-tab {
-  fill: #ecebea;
-  stroke: #292828;
-  stroke-linejoin: round;
-  stroke-width: calc(var(--phantom-frame-stroke) * 2);
+  fill: var(--phantom-frame-paper);
+  stroke: var(--phantom-frame-ink);
+  stroke-width: 0.72cqw;
+  stroke-linejoin: miter;
+  stroke-miterlimit: 3;
+  paint-order: stroke fill;
+}
+.phantom-thieves__card-frame[data-frame='side-card']
+  .phantom-thieves__frame-marker {
   scale: var(--phantom-marker-scale, 1);
   transform-box: fill-box;
   transform-origin: center;
@@ -778,6 +800,10 @@
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
+  translate: calc(
+      var(--phantom-name-label-x, 0px) * var(--phantom-name-label-direction, 1)
+    )
+    var(--phantom-name-label-y, 0px);
 }
 .phantom-thieves__name-accent {
   font-family: 'Utawakui Kaitou Yokoku Gothic', var(--phantom-thieves-face);

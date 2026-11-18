@@ -2484,9 +2484,19 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       ? {
           phantomThieves: {
             artist: text(snapshot.playback?.track?.artist),
+            documentId: snapshot.lyrics?.documentId,
+            ended: snapshot.playback?.status === 'ended',
             previousText: displayableLyricsText(
               lines[frame.lineIndex - 1]?.text,
             ),
+            // Back-to-back lines keep the dialogue frame instead of re-entering.
+            continuesPrevious:
+              snapshot.lyrics?.synced === true &&
+              Boolean(
+                displayableLyricsText(lines[frame.lineIndex - 1]?.text),
+              ) &&
+              effectiveLineEnd(snapshot, lines, frame.lineIndex - 1) >=
+                (phantomLine?.startMs ?? 0) - 34,
             ageMs: Math.max(
               0,
               lyricsPositionMs(snapshot, nowMs) -

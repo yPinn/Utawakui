@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import gsap from 'gsap';
 import {
   clearPhantomThieves,
+  insetPolygon,
+  PHANTOM_SIDE_CARD_POSES,
   phantomFramePoints,
   phantomPhrases,
   planRansomRows,
@@ -107,6 +110,22 @@ describe('Phantom Thieves', () => {
     });
   });
 
+  // GSAP tweens the fake nodes as plain objects, so seed animated fields.
+  function createMotionStage() {
+    const stage = createTestStage();
+    const { createElement } = stage.ownerDocument;
+    stage.ownerDocument.createElement = stage.ownerDocument.createElementNS =
+      () =>
+        Object.assign(createElement(), {
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+          '--phantom-side-card-fill-ramp': 1,
+          '--phantom-marker-scale': 1,
+        });
+    return stage;
+  }
+
   function createTestStage() {
     const document = { createElement, createElementNS: createElement };
     function createElement() {
@@ -151,7 +170,7 @@ describe('Phantom Thieves', () => {
       nowMs: Date.parse(snapshot.generatedAt),
     });
     const appearance = { phantomMode: 'choice-stack' };
-    const rows = () => stage.children[1].children;
+    const rows = () => stage.children[0].children;
     renderPhantomThieves(stage, frame, { appearance });
     expect(stage.dataset.corner).toBe('bottom-right');
     expect(rows().map((row) => row.dataset.choice)).toEqual([
@@ -169,12 +188,54 @@ describe('Phantom Thieves', () => {
       undefined,
       'true',
     ]);
+    expect(rows().map((row) => row.children[1].dataset.frame)).toEqual([
+      'choice',
+      'choice',
+      'choice',
+    ]);
     renderPhantomThieves(stage, { ...frame, nextText: '' }, { appearance });
     expect(rows()).toHaveLength(2);
     renderPhantomThieves(stage, frame, {
       appearance: { ...appearance, phantomCorner: 'top-left' },
     });
     expect(stage.dataset.corner).toBe('top-left');
+  });
+
+  it('uses folded paper strips while keeping the ends fixed as each lyric widens', () => {
+    const height = 36;
+    const [previous, tab] = phantomFramePoints('choice', 160, height, 10, {
+      choice: 'previous',
+    });
+    const [wide, wideTab] = phantomFramePoints('choice', 260, height, 10, {
+      choice: 'previous',
+    });
+    const [current, currentTab] = phantomFramePoints(
+      'choice',
+      160,
+      height,
+      10,
+      { choice: 'current' },
+    );
+    const [next] = phantomFramePoints('choice', 160, height, 10, {
+      choice: 'next',
+    });
+
+    expect(previous[0][1]).toBeGreaterThan(previous[1][1]);
+    expect(previous[2][0]).toBeLessThan(previous[1][0]);
+    expect(previous[2][1]).toBe(previous[3][1]);
+    expect(previous[1][0]).toBeGreaterThan(160);
+    expect(previous[1][1]).toBeLessThan(0);
+    expect(previous[2][1]).toBeGreaterThan(height);
+    expect(Math.min(...previous.map(([, y]) => y))).toBeLessThan(
+      previous[1][1],
+    );
+    expect(Math.max(...next.map(([, y]) => y))).toBeGreaterThan(height);
+    expect(wide.slice(3)).toEqual(previous.slice(3));
+    expect(wide[1][0] - previous[1][0]).toBeCloseTo(100);
+    expect(wideTab[2][0] - tab[2][0]).toBeCloseTo(100);
+    expect(tab[2][0]).toBeGreaterThan(160);
+    expect(current).toEqual(previous);
+    expect(currentTab).toEqual([]);
   });
 
   it('interleaves sparse accent glyphs and keeps punctuation in the base treatment', () => {
@@ -424,6 +485,72 @@ describe('Phantom Thieves', () => {
     );
   });
 
+  it('keeps the current lyric and portrait mounted and uses the latest selection for the next line', () => {
+    const stage = createTestStage();
+    const render = (name, color, photo, lineIndex, playing) =>
+      renderPhantomThieves(
+        stage,
+        {
+          visible: true,
+          // Repeated lyrics still belong to distinct lines.
+          currentText: 'Moonlight',
+          lineIndex,
+          phantomThieves: { trackId: 'track', documentId: 'lyrics', playing },
+        },
+        {
+          portraitPhotos: true,
+          appearance: {
+            phantomArtistName: name,
+            phantomPortraitColor: color,
+            phantomPortraitPhoto: photo,
+          },
+        },
+      );
+
+    render('Aster', '#112233', 'photo-a', 0, true);
+    const current = stage.children[0];
+    const [card, portrait] = current.children;
+    render('Guest', '#445566', 'photo-b', 0, true);
+    render('Singer', '#778899', 'photo-c', 0, false);
+    expect(stage.children[0]).toBe(current);
+    expect(card.children[0].attributes['aria-label']).toBe('Aster');
+    expect(portrait.style['--phantom-portrait-fill']).toBe('#112233');
+    expect(portrait.children[1].children[0].src).toBe(
+      '/media/phantom-portrait/custom/photo-a',
+    );
+
+    render('Singer', '#778899', 'photo-c', 1, true);
+    const [nextCard, nextPortrait] = stage.children[0].children;
+    expect(stage.children[0]).not.toBe(current);
+    expect(nextCard.children[0].attributes['aria-label']).toBe('Singer');
+    expect(nextPortrait.style['--phantom-portrait-fill']).toBe('#778899');
+    expect(nextPortrait.children[1].children[0].src).toBe(
+      '/media/phantom-portrait/custom/photo-c',
+    );
+  });
+
+  it('applies selections immediately before playback and on a new lyrics document', () => {
+    const stage = createTestStage();
+    const render = (name, documentId, playing) => {
+      renderPhantomThieves(
+        stage,
+        {
+          visible: true,
+          currentText: 'Moonlight',
+          lineIndex: 0,
+          phantomThieves: { trackId: 'track', documentId, playing },
+        },
+        { appearance: { phantomArtistName: name } },
+      );
+      return stage.children[0].children[0].children[0].attributes['aria-label'];
+    };
+    expect(render('Aster', 'lyrics-1', false)).toBe('Aster');
+    expect(render('Guest', 'lyrics-1', false)).toBe('Guest');
+    expect(render('Guest', 'lyrics-1', true)).toBe('Guest');
+    expect(render('Singer', 'lyrics-1', true)).toBe('Guest');
+    expect(render('Singer', 'lyrics-2', true)).toBe('Singer');
+  });
+
   it('mixes nameplate fonts by grapheme and keeps the same name stable between lines', () => {
     const stage = createTestStage();
     const artist = '9A\u0301ster・ほし 👩‍🎤';
@@ -615,20 +742,53 @@ describe('Phantom Thieves', () => {
     expect(shortCard.children[0].textContent).toBe(shortText);
   });
 
-  it('keeps the nameplate body centered on its text box as the width changes', () => {
+  it('keeps the long nameplate edges nearly parallel as the text box widens', () => {
     for (const width of [100, 250]) {
-      const [[topLeft, topRight, bottomRight, bottomEdge, tip, tail]] =
+      const [[topLeft, topRight, bottomRight, bottomEdge, shoulder, tip]] =
         phantomFramePoints('nameplate', width, 30, 10);
-      expect(topLeft[0] + bottomRight[0]).toBeCloseTo(width);
-      expect(topRight[1]).toBeCloseTo(topLeft[1]);
-      expect(bottomEdge[1]).toBeCloseTo(bottomRight[1]);
-      expect(topLeft[1] + bottomRight[1]).toBeCloseTo(30);
-      expect(tip[1]).toBeGreaterThan(bottomRight[1]);
-      expect(tail[0]).toBeLessThan(topLeft[0]);
+      expect(bottomRight[0]).toBeCloseTo(width + 2.3);
+      expect(topRight[0]).toBeLessThan(bottomRight[0]);
+      expect(topRight[1]).toBe(topLeft[1]);
+      expect(bottomEdge[1]).toBeGreaterThan(bottomRight[1]);
+      const edgeAngle = Math.atan2(
+        bottomEdge[1] - bottomRight[1],
+        bottomRight[0] - bottomEdge[0],
+      );
+      expect((edgeAngle * 180) / Math.PI).toBeLessThan(1);
+      expect(shoulder[1]).toBeGreaterThan(bottomEdge[1]);
+      expect(shoulder[1]).toBeGreaterThan(tip[1]);
+      expect(tip[0]).toBeLessThan(topLeft[0]);
+      expect(bottomEdge[0] - topLeft[0]).toBeGreaterThan(35);
+      const [shoulderX, shoulderY] = shoulder;
+      const toPlate = [bottomEdge[0] - shoulderX, bottomEdge[1] - shoulderY];
+      const toTip = [tip[0] - shoulderX, tip[1] - shoulderY];
+      const cornerDot = toPlate[0] * toTip[0] + toPlate[1] * toTip[1];
+      expect(cornerDot).toBeGreaterThan(0);
     }
   });
 
-  it('aligns the nameplate and dialogue tails regardless of their widths', () => {
+  it('traces the side card from the sample and stretches only its middle', () => {
+    const unit = 10;
+    const short = phantomFramePoints('side-card', 260, 80, unit);
+    const long = phantomFramePoints('side-card', 460, 80, unit);
+    const [outline] = short;
+    // The tail tip leads, reaching past the box's left edge.
+    expect(Math.min(...outline.map(([x]) => x))).toBe(outline[7][0]);
+    expect(outline[7][0]).toBeLessThan(0);
+    expect(outline[1][1]).toBeLessThan(0);
+    expect(outline[2][0]).toBeGreaterThan(260);
+    expect(outline[2][1]).toBeGreaterThan(80);
+    // Left details keep their place; right details follow the right end.
+    short.forEach((points, layer) =>
+      points.forEach(([x, y], vertex) => {
+        const [longX, longY] = long[layer][vertex];
+        expect(longY).toBeCloseTo(y);
+        expect(longX - x).toBeCloseTo(x > 130 ? 200 : 0);
+      }),
+    );
+  });
+
+  it('keeps both tips in the lower half of the portrait when the dialogue wraps', () => {
     const stage = createTestStage();
     renderPhantomThieves(
       stage,
@@ -639,28 +799,314 @@ describe('Phantom Thieves', () => {
       },
       { appearance: { phantomMode: 'side-card' } },
     );
-    const plate = stage.children[0].children[0].children[0];
+    const card = stage.children[0].children[0];
+    const [plate] = card.children;
     const unit = 10;
-    const height = 30;
-    const [name] = phantomFramePoints('nameplate', 100, height, unit);
-    const [dialogue] = phantomFramePoints('side-card', 260, 80, unit);
+    const plateHeight = 30;
+    const portraitHeight = 105; // 14cqw at 4:3.
     const originX = parseFloat(plate.style['--phantom-name-tail-x']) * unit;
-    const tailBottom = parseFloat(plate.style['--phantom-name-tail-bottom']);
-    expect(name[5]).toEqual([originX, height - tailBottom * unit]);
-    expect(Math.min(...dialogue.map(([x]) => x))).toBe(originX);
+    const plateInset = parseFloat(plate.style['--phantom-name-inset']) * unit;
+    const originY =
+      plateHeight +
+      parseFloat(plate.style['--phantom-name-tip-extension']) * unit;
+    const nameFromBottom =
+      parseFloat(plate.style['--phantom-name-tip-from-bottom']) * unit;
+    const dialogueFromBottom =
+      parseFloat(card.style['--phantom-card-tip-from-bottom']) * unit;
+    const [name] = phantomFramePoints('nameplate', 100, plateHeight, unit);
+    expect(name[5]).toEqual([originX, originY]);
+    const tilt = parseFloat(plate.style['--phantom-name-tilt']);
+    for (const [vertex, angle] of [
+      [4, -12],
+      [6, -27],
+    ]) {
+      const [x, y] = name[vertex];
+      const edgeAngle = (Math.atan2(y - originY, x - originX) * 180) / Math.PI;
+      expect(edgeAngle - tilt).toBeCloseTo(angle);
+    }
+    for (const cardHeight of [64, 92, 155]) {
+      const [dialogue] = phantomFramePoints('side-card', 260, cardHeight, unit);
+      const nameTipY = cardHeight - nameFromBottom;
+      const [dialogueTipX, dialogueTipY] = dialogue[7];
+      expect(dialogueTipX).toBeCloseTo(
+        parseFloat(card.style['--phantom-card-tail-x']) * unit,
+      );
+      expect(dialogueTipY).toBeCloseTo(cardHeight - dialogueFromBottom);
+      expect(plateInset + originX - dialogueTipX).toBeCloseTo(5.3);
+      expect(dialogueTipY - nameTipY).toBeCloseTo(6.8);
+      for (const tipY of [nameTipY, dialogueTipY]) {
+        const portraitPosition = 1 - (cardHeight - tipY) / portraitHeight;
+        expect(portraitPosition).toBeGreaterThan(0.5);
+        expect(portraitPosition).toBeLessThan(2 / 3);
+      }
+    }
+  });
+
+  it('layers the nameplate over the dialogue corner and W fold', () => {
+    const stage = createTestStage();
+    renderPhantomThieves(stage, {
+      visible: true,
+      currentText: 'Moonlight',
+      phantomThieves: { artist: 'Winter' },
+    });
+    const [plate] = stage.children[0].children[0].children;
+    const unit = 10;
+    const tilt =
+      (parseFloat(plate.style['--phantom-name-tilt']) * Math.PI) / 180;
+    const tipFromBottom =
+      parseFloat(plate.style['--phantom-name-tip-from-bottom']) * unit;
+    const plateInset = parseFloat(plate.style['--phantom-name-inset']) * unit;
+    for (const fontScale of [0.85, 1, 1.2]) {
+      const plateHeight = (0.6 + 2.1 * 1.25 * fontScale) * unit;
+      const [name] = phantomFramePoints('nameplate', 120, plateHeight, unit);
+      const [tipX, tipY] = name[5];
+      // The text starts at least two stage units in, centered vertically.
+      const dx = 2 * unit - tipX;
+      const dy = plateHeight / 2 - tipY;
+      const labelStartX =
+        plateInset + tipX + dx * Math.cos(tilt) + dy * Math.sin(tilt);
+      for (const rows of [1, 2]) {
+        const cardHeight =
+          (4.25 + 2.05 * 1.24 * fontScale * Math.max(1.5, rows)) * unit;
+        const [face, , fold] = phantomFramePoints(
+          'side-card',
+          500,
+          cardHeight,
+          unit,
+          {
+            hasNameplate: true,
+          },
+        );
+        const [[leftX, leftY], [rightX, rightY]] = face;
+        const topAtLabel =
+          leftY + ((rightY - leftY) * (labelStartX - leftX)) / (rightX - leftX);
+        const labelStartY =
+          cardHeight -
+          tipFromBottom -
+          dx * Math.sin(tilt) +
+          dy * Math.cos(tilt);
+        const gap = (topAtLabel - labelStartY) / unit;
+        expect(gap).toBeGreaterThan(-0.5);
+        expect(gap).toBeLessThan(2.4);
+
+        // A ray from the actual roof corner crosses the plate once if it is covered.
+        const contour = name.map(([x, y]) => [
+          plateInset +
+            tipX +
+            (x - tipX) * Math.cos(tilt) +
+            (y - tipY) * Math.sin(tilt),
+          cardHeight -
+            tipFromBottom -
+            (x - tipX) * Math.sin(tilt) +
+            (y - tipY) * Math.cos(tilt),
+        ]);
+        const crossings = contour.filter(([x, y], index) => {
+          const [nextX, nextY] = contour[(index + 1) % contour.length];
+          if (y > leftY === nextY > leftY) return false;
+          return x + ((nextX - x) * (leftY - y)) / (nextY - y) > leftX;
+        });
+        expect(crossings).toHaveLength(1);
+
+        const [foldX, foldY] = fold.at(-1);
+        const [baseX, baseY] = contour[5];
+        const [shoulderX, shoulderY] = contour[4];
+        const baseAtFold =
+          baseY + ((shoulderY - baseY) * (foldX - baseX)) / (shoulderX - baseX);
+        expect(foldX).toBeGreaterThan(baseX);
+        expect(foldX).toBeLessThan(shoulderX);
+        expect(foldY).toBeCloseTo(baseAtFold - 0.4 * unit);
+      }
+    }
   });
 
   it('extends the body of the side frame while keeping both end details fixed', () => {
-    const [shortFace, shortTab] = phantomFramePoints('side-card', 160, 52, 8);
-    const [longFace, longTab] = phantomFramePoints('side-card', 460, 86, 8);
+    const [shortFace, shortTab, shortW] = phantomFramePoints(
+      'side-card',
+      160,
+      52,
+      8,
+    );
+    const [longFace, longTab, longW] = phantomFramePoints(
+      'side-card',
+      460,
+      86,
+      8,
+    );
     expect(longFace[0]).toEqual(shortFace[0]);
-    expect(longFace[3]).toEqual([
-      shortFace[3][0],
-      expect.closeTo(shortFace[3][1] + 34),
-    ]);
+    expect(longFace.slice(3)).toEqual(
+      shortFace.slice(3).map(([x, y]) => [x, expect.closeTo(y + 34)]),
+    );
+    expect(longW).toEqual(shortW.map(([x, y]) => [x, expect.closeTo(y + 34)]));
     expect(longTab.map(([x, y]) => [x - 300, y])).toEqual(
       shortTab.map(([x, y]) => [expect.closeTo(x), expect.closeTo(y + 34)]),
     );
+  });
+
+  it('keeps the open W fold connected as the frame wobbles or resizes', () => {
+    const stage = createMotionStage();
+    stage.clientWidth = 1000;
+    const document = stage.ownerDocument;
+    let resize;
+    let cardHeight = 80;
+    document.defaultView = {
+      ResizeObserver: class {
+        constructor(callback) {
+          resize = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    };
+    document.createRange = () => ({
+      selectNodeContents() {},
+      getBoundingClientRect: () => ({ width: 60, top: 28 }),
+    });
+    const { createElement } = document;
+    document.createElement = () => ({
+      ...createElement(),
+      getBoundingClientRect: () => ({ width: 200, top: 0 }),
+      get clientWidth() {
+        return this.className === 'phantom-thieves__name' ? 100 : 260;
+      },
+      get clientHeight() {
+        return this.className === 'phantom-thieves__name' ? 30 : cardHeight;
+      },
+    });
+    const renderAt = (ageMs) =>
+      renderPhantomThieves(
+        stage,
+        {
+          visible: true,
+          currentText: 'Moonlight',
+          lineIndex: 0,
+          phantomThieves: {
+            artist: 'Aster',
+            ageMs,
+            lineDurationMs: 2000,
+            playing: false,
+          },
+        },
+        {
+          appearance: {
+            phantomMode: 'side-card',
+            phantomCardStyle: 'text-only',
+          },
+          gsap,
+        },
+      );
+    renderAt(0);
+    const card = stage.children[0].children[0];
+    const [plate] = card.children;
+    const plateParts = plate.children.at(-1).children[0].children;
+    expect(plateParts.map((part) => part.attributes.class)).toEqual([
+      'phantom-thieves__frame-face',
+    ]);
+    const [plateFace] = plateParts;
+    const nameShape = plateFace.attributes.points;
+    expect(card.style['--phantom-card-copy-inset']).toBe('4.35cqw');
+    expect(card.style['--phantom-card-name-inset']).toBeUndefined();
+    const frame = card.children.at(-1);
+    const { children } = frame.children[0];
+    const band = children.find(
+      (node) => node.attributes.class === 'phantom-thieves__frame-band',
+    );
+    const blackRim = children.find(
+      (node) => node.attributes.class === 'phantom-thieves__frame-shadow',
+    );
+    const face = children.find(
+      (node) => node.attributes.class === 'phantom-thieves__frame-face',
+    );
+    expect(blackRim.attributes.d).toBe(face.attributes.d);
+    expect(blackRim.attributes.d).toMatch(/^M.+Z$/);
+    const [defs] = children;
+    const [mask] = defs.children;
+    expect(mask.attributes).toMatchObject({
+      maskUnits: 'userSpaceOnUse',
+      x: -260,
+      y: -80,
+      width: 780,
+      height: 240,
+    });
+    const [outline, , foldOutline] = phantomFramePoints(
+      'side-card',
+      260,
+      80,
+      10,
+      {
+        hasNameplate: true,
+      },
+    );
+    const points = band.attributes.d.slice(1, -1).split(' ');
+    expect(points.slice(0, 8)).toEqual(
+      outline.slice(0, 8).map((point) => point.join(',')),
+    );
+    expect(points).not.toContain(outline[8].join(','));
+    expect(points).not.toContain(outline[9].join(','));
+
+    cardHeight = 110;
+    resize();
+    expect(plateFace.attributes.points).toBe(nameShape);
+    const inset = parseFloat(card.style['--phantom-card-name-inset']);
+    expect(inset).toBeGreaterThan(43.5);
+    expect(inset).toBeLessThan(100);
+
+    cardHeight = 80;
+    resize();
+    expect(card.style['--phantom-card-name-inset']).toBeUndefined();
+
+    const fold = children.find(
+      (node) => node.attributes.class === 'phantom-thieves__frame-inner',
+    );
+    const stillBand = band.attributes.d;
+    const labelOffsetX = plate.style['--phantom-name-label-x'];
+    const labelOffsetY = plate.style['--phantom-name-label-y'];
+    for (const ageMs of [0, 260, 420, 580, 920]) {
+      renderAt(ageMs);
+      expect(plate.style['--phantom-name-label-x']).toBe(labelOffsetX);
+      expect(plate.style['--phantom-name-label-y']).toBe(labelOffsetY);
+      const [topLeft, topRight, bottomRight, bottomEdge, , , notch] =
+        plateFace.attributes.points
+          .split(' ')
+          .map((point) => point.split(',').map(Number));
+      const labelX = plate.clientWidth / 2 + parseFloat(labelOffsetX);
+      const labelY = plate.clientHeight / 2 + parseFloat(labelOffsetY);
+      const sideAtLabel = ([x, y], [endX, endY]) =>
+        x + ((endX - x) * (labelY - y)) / (endY - y);
+      const longEdgeAtLabel = ([x, y], [endX, endY]) =>
+        y + ((endY - y) * (labelX - x)) / (endX - x);
+      const horizontalCenter =
+        (sideAtLabel(topLeft, notch) + sideAtLabel(topRight, bottomRight)) / 2;
+      const verticalCenter =
+        (longEdgeAtLabel(topLeft, topRight) +
+          longEdgeAtLabel(bottomEdge, bottomRight)) /
+        2;
+      expect(Math.abs(labelX - horizontalCenter)).toBeLessThanOrEqual(2);
+      expect(Math.abs(labelY - verticalCenter)).toBeLessThanOrEqual(1);
+
+      const [outerTip, innerTip] = band.attributes.d
+        .slice(1, -1)
+        .split(' ')
+        .slice(7, 9)
+        .map((point) => point.split(',').map(Number));
+      const join = fold.attributes.points.split(' ')[0].split(',').map(Number);
+      expect(join).toEqual(
+        outerTip.map((value, axis) =>
+          expect.closeTo((value + innerTip[axis]) / 2),
+        ),
+      );
+      expect(fold.attributes.points.split(' ').at(-1)).toBe(
+        foldOutline.at(-1).join(','),
+      );
+      const turns = fold.attributes.points.split(' ').slice(1);
+      const rim = blackRim.attributes.d.slice(1, -1).split(' ');
+      expect(rim.slice(-(turns.length + 1))).toEqual([
+        outerTip.join(','),
+        ...turns,
+      ]);
+    }
+    expect(plateFace.attributes.points).not.toBe(nameShape);
+    expect(band.attributes.d).not.toBe(stillBand);
+    clearPhantomThieves(stage);
   });
 
   it('redraws each radial frame to its own text box on stage resize', () => {
@@ -701,86 +1147,144 @@ describe('Phantom Thieves', () => {
   });
 
   it.each([
-    ['bottom-left', -1],
-    ['bottom-right', 1],
+    ['enters', false, PHANTOM_SIDE_CARD_POSES.enter, 4, [3, 8]],
+    ['continues', true, PHANTOM_SIDE_CARD_POSES.continue, 1, [2, 4]],
   ])(
-    'animates the portrait and dialogue together at %s',
-    (corner, direction) => {
-      const stage = createTestStage();
-      const motion = {
-        fromTo: vi.fn(),
-        to: vi.fn(),
-        timeScale: vi.fn().mockReturnThis(),
-        pause: vi.fn(),
-        duration: () => 0.21,
-        kill: vi.fn(),
-      };
+    'samples the measured side-card poses per frame when it %s',
+    (_, continuesPrevious, poses, labelFrame, [dark, lit]) => {
+      const stage = createMotionStage();
       const options = {
-        appearance: {
-          phantomMode: 'side-card',
-          phantomCardStyle: 'portrait',
-          phantomCorner: corner,
-        },
-        gsap: { timeline: () => motion },
+        appearance: { phantomMode: 'side-card', phantomCardStyle: 'text-only' },
+        gsap,
       };
+      const at = (index) =>
+        renderPhantomThieves(
+          stage,
+          {
+            visible: true,
+            currentText: 'Moonlight',
+            lineIndex: 2,
+            phantomThieves: {
+              artist: 'Aster',
+              trackId: 'track',
+              ageMs: (index * 1000) / 30,
+              lineDurationMs: 3000,
+              rate: 1,
+              playing: false,
+              continuesPrevious,
+            },
+          },
+          options,
+        );
+      at(0);
+      const [card] = stage.children[0].children;
+      const [plate, copy, shell] = card.children;
+      const [label] = plate.children;
+      for (const [index, scale] of poses) {
+        at(index);
+        expect(shell.scale).toBeCloseTo(scale, 5);
+        expect(shell.opacity).toBe(1);
+      }
+      at(labelFrame - 1);
+      expect(label.opacity).toBe(0);
+      at(labelFrame);
+      expect(label.opacity).toBe(1);
+      at(dark);
+      expect(copy.opacity).toBe(0);
+      at(dark + 1);
+      expect(copy.opacity).toBeGreaterThan(0.3);
+      at(lit);
+      expect(copy.opacity).toBe(1);
+      // Seeking back restores the earlier pose.
+      at(poses[0][0]);
+      expect(shell.scale).toBeCloseTo(poses[0][1], 5);
+      clearPhantomThieves(stage);
+    },
+  );
+
+  it('insets outline corners by each width and grows them outward when negative', () => {
+    const square = [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ];
+    const round = (points) =>
+      points.map(([x, y]) => [
+        Math.round(x * 100) / 100,
+        Math.round(y * 100) / 100,
+      ]);
+    expect(round(insetPolygon(square, [1, 1, 1, 1]))).toEqual([
+      [1, 1],
+      [9, 1],
+      [9, 9],
+      [1, 9],
+    ]);
+    expect(round(insetPolygon([...square].reverse(), [1, 0, 0, 0]))[0]).toEqual(
+      [1, 9],
+    );
+    expect(round(insetPolygon(square, [-2, 0, 0, 0]))[0]).toEqual([-2, -2]);
+  });
+
+  it('keeps the box hidden on the frame where the nameplate leads', () => {
+    const stage = createMotionStage();
+    renderPhantomThieves(
+      stage,
+      {
+        visible: true,
+        currentText: 'Moonlight',
+        lineIndex: 0,
+        phantomThieves: {
+          artist: 'Aster',
+          ageMs: 0,
+          lineDurationMs: 3000,
+          rate: 1,
+          playing: false,
+        },
+      },
+      {
+        appearance: { phantomMode: 'side-card', phantomCardStyle: 'text-only' },
+        gsap,
+      },
+    );
+    const [plate, , shell] = stage.children[0].children[0].children;
+    expect(shell.opacity).toBe(0);
+    expect(plate.opacity).toBe(1);
+    clearPhantomThieves(stage);
+  });
+
+  it('reveals and pulses the blade as a single outlined polygon', () => {
+    const stage = createMotionStage();
+    const options = { appearance: { phantomMode: 'side-card' }, gsap };
+    const at = (index) =>
       renderPhantomThieves(
         stage,
         {
           visible: true,
           currentText: 'Moonlight',
+          lineIndex: 0,
           phantomThieves: {
-            artist: 'Aster',
-            ageMs: 80,
-            lineDurationMs: 2000,
-            rate: 1,
+            ageMs: (index * 1000) / 30,
+            lineDurationMs: 3000,
             playing: false,
           },
         },
         options,
       );
-      const [frame, body, marker, pulse] = motion.fromTo.mock.calls;
-      const group = stage.children[0];
-      const [card, portrait] = group.children;
-      card.offsetWidth = 300;
-      card.offsetHeight = 100;
-      expect(portrait.className).toBe('phantom-thieves__portrait');
-      expect(frame[0]).toBe(group);
-      expect(frame[1]).toMatchObject({ scale: 0.6, rotation: 2 * direction });
-      expect(frame[1].x()).toBe(9 * direction);
-      expect(frame[1].y()).toBe(5);
-      expect(frame[2]).toMatchObject({ scale: 1, duration: 0.1 });
-      expect(motion.to).toHaveBeenCalledExactlyOnceWith(
-        group,
-        { ...frame[1], opacity: 0, duration: 4 / 30, ease: 'power2.in' },
-        2 - 4 / 30,
-      );
-      expect(marker.slice(1)).toEqual([
-        { '--phantom-marker-scale': 0 },
-        { '--phantom-marker-scale': 1, duration: 2 / 30 },
-        8 / 30,
-      ]);
-      expect(pulse[0]).toBe(marker[0]);
-      expect(pulse.slice(1)).toEqual([
-        { '--phantom-marker-scale': 1 },
-        {
-          '--phantom-marker-scale': 0.84,
-          duration: 0.42,
-          yoyo: true,
-          repeat: expect.any(Number),
-          ease: 'sine.inOut',
-          immediateRender: false,
-        },
-        10 / 30,
-      ]);
-      expect(body[0].className).toBe('phantom-thieves__copy');
-      expect(body[3]).toBeGreaterThan(frame[3]);
-      expect(motion.pause).toHaveBeenCalledWith(0.08);
-      renderPhantomThieves(stage, { visible: false }, options);
-      expect(motion.kill).toHaveBeenCalledOnce();
-      expect(stage.hidden).toBe(true);
-      expect(stage.children).toHaveLength(0);
-    },
-  );
+    at(4);
+    const card = stage.children[0].children[0];
+    const frame = card.children.at(-1);
+    const marker = frame.children[0].children.at(-1);
+    expect(marker.children.map((child) => child.attributes.class)).toEqual([
+      'phantom-thieves__frame-tab',
+    ]);
+    expect(marker['--phantom-marker-scale']).toBe(0);
+    at(10);
+    expect(marker['--phantom-marker-scale']).toBe(1);
+    at(20);
+    expect(marker['--phantom-marker-scale']).toBeLessThan(1);
+    clearPhantomThieves(stage);
+  });
 
   it('bounds radial strips while keeping Latin words and all lyric text', () => {
     const line =
@@ -793,6 +1297,7 @@ describe('Phantom Thieves', () => {
 
   it('projects the current lyric, previous lyric and the source clock from the seek position', () => {
     const snapshot = createOutputPreviewSnapshot();
+    snapshot.lyrics.documentId = 'demo-lyrics';
     const line = snapshot.lyrics.lines[1];
     line.endMs = line.startMs + 1800;
     snapshot.playback.positionMs = line.startMs + 220;
@@ -804,6 +1309,7 @@ describe('Phantom Thieves', () => {
     expect(selectLyricsOverlayFrame(snapshot, options)).toMatchObject({
       currentText: line.text,
       phantomThieves: {
+        documentId: 'demo-lyrics',
         previousText: snapshot.lyrics.lines[0].text,
         artist: snapshot.playback.track.artist,
         ageMs: 220,
@@ -811,5 +1317,21 @@ describe('Phantom Thieves', () => {
         playing: false,
       },
     });
+  });
+
+  it('marks back-to-back lines so the dialogue frame continues', () => {
+    const snapshot = createOutputPreviewSnapshot();
+    const [previous, line] = snapshot.lyrics.lines;
+    snapshot.playback.positionMs = line.startMs + 100;
+    snapshot.playback.status = 'paused';
+    const project = () =>
+      selectLyricsOverlayFrame(snapshot, {
+        templateId: 'phantom-thieves',
+        nowMs: Date.parse(snapshot.generatedAt),
+      }).phantomThieves.continuesPrevious;
+    previous.endMs = line.startMs;
+    expect(project()).toBe(true);
+    previous.endMs = line.startMs - 500;
+    expect(project()).toBe(false);
   });
 });
