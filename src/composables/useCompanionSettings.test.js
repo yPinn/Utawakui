@@ -99,6 +99,20 @@ describe('useCompanionSettings', () => {
     expect(await settings.configure({ enabled: true })).toBe(false);
   });
 
+  it('keeps the change listener until the last user stops', async () => {
+    const { bridge } = createBridge();
+    const unsubscribe = vi.fn();
+    bridge.onCompanionStatusChanged.mockReturnValue(unsubscribe);
+    const settings = useCompanionSettings({ bridge });
+    await settings.start();
+    await settings.start();
+    expect(bridge.onCompanionStatusChanged).toHaveBeenCalledOnce();
+    settings.stop();
+    expect(unsubscribe).not.toHaveBeenCalled();
+    settings.stop();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
   it('forwards approval decisions to Main', async () => {
     const { bridge } = createBridge();
     const settings = useCompanionSettings({ bridge });

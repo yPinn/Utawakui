@@ -13,6 +13,8 @@ export function useCompanionSettings(options = {}) {
   const error = shallowRef('');
   const pairing = shallowRef(null);
   let unsubscribe = null;
+  // Several views can share one instance; the listener lives while any uses it.
+  let users = 0;
 
   async function refresh() {
     try {
@@ -52,11 +54,14 @@ export function useCompanionSettings(options = {}) {
   }
 
   function start() {
+    users += 1;
     unsubscribe ??= bridge?.onCompanionStatusChanged?.(() => void refresh());
     return refresh();
   }
 
   function stop() {
+    users = Math.max(0, users - 1);
+    if (users) return;
     unsubscribe?.();
     unsubscribe = null;
   }
@@ -86,4 +91,13 @@ export function useCompanionSettings(options = {}) {
     revoke: (deviceId) => act(() => bridge.revokeCompanionDevice(deviceId)),
     revokeAll: () => act(() => bridge.revokeAllCompanionDevices()),
   };
+}
+
+let shared = null;
+
+// One mirror for the whole renderer, so an approval raised while Settings is
+// closed still reaches the App-level dialog.
+export function useSharedCompanion() {
+  shared ??= useCompanionSettings();
+  return shared;
 }

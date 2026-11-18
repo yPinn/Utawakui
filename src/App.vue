@@ -23,6 +23,7 @@ import AutoErrorReportModal from './components/settings/AutoErrorReportModal.vue
 import FeedbackReportModal from './components/settings/FeedbackReportModal.vue';
 import ObsSessionExportModal from './components/settings/ObsSessionExportModal.vue';
 import AppConfirmationModal from './components/layout/AppConfirmationModal.vue';
+import AppCompanionApprovalModal from './components/layout/AppCompanionApprovalModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import WorkVersionEditor from './components/library/WorkVersionEditor.vue';
 import ReleaseInfoEditor from './components/library/ReleaseInfoEditor.vue';
@@ -638,6 +639,8 @@ useKeyboardShortcuts({
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
     <AppConfirmationModal />
+    <!-- Main only raises a request while the gated listener runs. -->
+    <AppCompanionApprovalModal />
     <WorkVersionEditor />
     <ReleaseInfoEditor />
     <ReleaseCatalogModal />

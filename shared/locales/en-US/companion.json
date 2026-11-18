@@ -74,6 +74,7 @@
     "label": "Confirm new phone",
     "title": "Allow “{name}” to connect?",
     "hint": "Check that the phone shows the same code. If it isn't your phone, choose Deny.",
+    "codeLabel": "Match code",
     "allow": "Allow",
     "deny": "Deny"
   }

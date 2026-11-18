@@ -144,7 +144,7 @@ describe('CompanionSettingsBlock', () => {
     expect(stopped.beginPairing).not.toHaveBeenCalled();
   });
 
-  it('asks to allow a waiting phone with its match code', async () => {
+  it('leaves the approval to the App dialog and hides the QR meanwhile', async () => {
     const html = await render(
       settingsWith({
         ...base,
@@ -159,12 +159,8 @@ describe('CompanionSettingsBlock', () => {
         },
       }),
     );
-    expect(html).toContain('允許「Pixel」連線？');
-    expect(html).toContain('4321');
-    expect(html).toContain('不是你的手機請按拒絕');
-    expect(html).toContain('>允許<');
-    expect(html).toContain('>拒絕<');
-    // The approval takes the QR's place until it is answered.
+    expect(html).not.toContain('允許「Pixel」連線？');
+    expect(html).not.toContain('4321');
     expect(html).not.toContain('companion-settings-block__qr');
   });
 

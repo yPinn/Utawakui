@@ -7,7 +7,7 @@ import {
   Smartphone,
   Trash2,
 } from '../../icons/index.js';
-import { useCompanionSettings } from '../../composables/useCompanionSettings.js';
+import { useSharedCompanion } from '../../composables/useCompanionSettings.js';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -21,8 +21,9 @@ const props = defineProps({
   settings: { type: Object, default: null },
 });
 
-const companion = props.settings ?? useCompanionSettings();
+const companion = props.settings ?? useSharedCompanion();
 const SETUP_STEPS = ['companion.steps.scan', 'companion.steps.allow'];
+// The App-level dialog asks for approval; the QR steps aside meanwhile.
 const approvalRequest = computed(() => status.value?.pairing?.request ?? null);
 
 // The QR shows as soon as the remote runs. A used or expired code stays
@@ -178,32 +179,6 @@ onBeforeUnmount(() => {
             {{ t('companion.pairingTitle') }}
           </figcaption>
         </figure>
-        <section
-          v-if="approvalRequest"
-          class="companion-settings-block__approval"
-          :aria-label="t('companion.approval.label')"
-        >
-          <strong>{{
-            t('companion.approval.title', { name: approvalRequest.label })
-          }}</strong>
-          <span class="companion-settings-block__match-code">{{
-            approvalRequest.matchCode
-          }}</span>
-          <UiHint>{{ t('companion.approval.hint') }}</UiHint>
-          <div class="companion-settings-block__approval-actions">
-            <UiButton
-              variant="accent"
-              :disabled="companion.busy.value"
-              @click="companion.approve(approvalRequest.id)"
-              >{{ t('companion.approval.allow') }}</UiButton
-            >
-            <UiButton
-              :disabled="companion.busy.value"
-              @click="companion.deny(approvalRequest.id)"
-              >{{ t('companion.approval.deny') }}</UiButton
-            >
-          </div>
-        </section>
         <ul v-if="!firstSetup" class="companion-settings-block__devices">
           <li v-for="device in status?.devices ?? []" :key="device.id">
             <span class="companion-settings-block__device-name">{{
@@ -301,25 +276,6 @@ onBeforeUnmount(() => {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-type-caption-size);
   line-height: var(--ui-type-caption-line-height);
-}
-
-.companion-settings-block__approval {
-  display: grid;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-accent);
-  border-radius: var(--ui-radius-sm);
-}
-
-.companion-settings-block__match-code {
-  font-size: var(--ui-font-size-xl);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.2em;
-}
-
-.companion-settings-block__approval-actions {
-  display: flex;
-  gap: var(--ui-space-2);
 }
 
 .companion-settings-block__devices {
