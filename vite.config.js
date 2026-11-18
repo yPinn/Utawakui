@@ -122,6 +122,8 @@ module.exports = defineConfig({
           exclude: TEST_EXCLUDE,
           // Real child processes and dictionary loads; not a hang budget.
           testTimeout: 20_000 * TIMEOUT_SCALE,
+          // Release-bundle builds run in beforeAll hooks.
+          hookTimeout: 20_000 * TIMEOUT_SCALE,
           sequence: { groupOrder: 1 },
         },
       },
