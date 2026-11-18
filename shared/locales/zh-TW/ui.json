@@ -13,7 +13,8 @@
   },
   "colorField": {
     "invalid": "請輸入 #RRGGBB 六位色碼",
-    "picker": "{label}色票"
+    "picker": "{label}色票",
+    "random": "隨機產生「{label}」色碼"
   },
   "combobox": {
     "noResults": "沒有符合的結果"

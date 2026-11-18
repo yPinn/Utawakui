@@ -3,6 +3,8 @@ import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiColorField from './UiColorField.vue';
 import UiField from './UiField.vue';
+import UiIconButton from './UiIconButton.vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -14,6 +16,8 @@ import {
 for (const [component, filename] of [
   [UiField, './UiField.vue'],
   [UiColorField, './UiColorField.vue'],
+  [UiIconButton, './UiIconButton.vue'],
+  [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -30,6 +34,10 @@ function hexInput(root) {
     root,
     (node) => node.type === 'input' && node.props.type === 'text',
   )[0];
+}
+
+function randomButton(root) {
+  return findAll(root, (node) => node.type === 'button')[0];
 }
 
 describe('UiColorField', () => {
@@ -136,7 +144,40 @@ describe('UiColorField', () => {
     app.unmount();
   });
 
-  it('disables both native controls and lets caller errors take precedence', () => {
+  it('applies a random padded hex code and commits it through the same field events', async () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(10 / 0x1000000);
+    const events = [];
+    const { app, root } = mount(UiColorField, {
+      id: 'ink-color',
+      label: '文字顏色',
+      modelValue: '#112233',
+      'onUpdate:modelValue': (value) => events.push(['update', value]),
+      onCommit: (value) => events.push(['commit', value]),
+    });
+    try {
+      const button = randomButton(root);
+      expect(textContent(button)).toBe('隨機產生「文字顏色」色碼');
+      expect(button.props).toMatchObject({
+        'aria-controls': 'ink-color',
+        type: 'button',
+      });
+      trigger(hexInput(root), 'onInput', { target: { value: '#12' } });
+      trigger(button, 'onClick');
+      await nextTick();
+      expect(hexInput(root).props.value).toBe('#00000a');
+      expect(colorPicker(root).props.value).toBe('#00000a');
+      expect(hexInput(root).props['aria-invalid']).toBeUndefined();
+      expect(events).toEqual([
+        ['update', '#00000a'],
+        ['commit', '#00000a'],
+      ]);
+    } finally {
+      random.mockRestore();
+      app.unmount();
+    }
+  });
+
+  it('disables the color controls and lets caller errors take precedence', () => {
     const { app, root } = mount(UiColorField, {
       id: 'paper-color',
       label: '紙張色',
@@ -150,6 +191,7 @@ describe('UiColorField', () => {
 
     expect(input.props.disabled).toBe(true);
     expect(picker.props.disabled).toBe(true);
+    expect(randomButton(root).props.disabled).toBe(true);
     expect(input.props['aria-invalid']).toBe(true);
     expect(textContent(alert)).toBe('這個色彩與樣板不相容');
     app.unmount();
@@ -183,7 +225,7 @@ describe('UiColorField', () => {
     for (const token of [
       '--ui-control-height',
       '--ui-field-foreground',
-      '--ui-field-hex-value-inline-size',
+      '--ui-field-color-inline-size',
       '--ui-field-font-size',
       '--ui-field-font-weight',
       '--ui-field-line-height',
@@ -204,12 +246,13 @@ describe('UiColorField', () => {
     const rule = source.match(/\.ui-color-field\s*\{([\s\S]*?)\}/u)?.[1] ?? '';
 
     expect(rule).toContain('inline-size: 100%');
-    expect(rule).toContain('max-inline-size: calc(');
+    expect(rule).toContain(
+      'max-inline-size: var(--ui-field-color-inline-size)',
+    );
     expect(rule).toContain('var(--ui-control-height)');
     expect(rule).toContain('var(--ui-space-2)');
-    expect(rule).toContain('var(--ui-field-hex-value-inline-size)');
-    expect(rule).toContain(
-      'grid-template-columns: var(--ui-control-height) minmax(0, 1fr)',
+    expect(rule).toMatch(
+      /grid-template-columns:\s*var\(--ui-control-height\) minmax\(0, 1fr\) var\(\s*--ui-icon-button-size-md\s*\)/u,
     );
   });
 });

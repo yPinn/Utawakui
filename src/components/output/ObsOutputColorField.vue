@@ -52,10 +52,7 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
     .obs-appearance-control-row--stacked
   ) {
   grid-template-columns: minmax(0, max-content) minmax(
-      calc(
-        var(--ui-control-height) + var(--ui-space-2) +
-          var(--ui-field-hex-value-inline-size)
-      ),
+      var(--ui-field-color-inline-size),
       1fr
     );
   gap: var(--ui-space-2);

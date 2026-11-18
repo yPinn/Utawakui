@@ -13,7 +13,8 @@
   },
   "colorField": {
     "invalid": "Enter a six-digit #RRGGBB color",
-    "picker": "{label} swatch"
+    "picker": "{label} swatch",
+    "random": "Randomize {label}"
   },
   "combobox": {
     "noResults": "No matches"

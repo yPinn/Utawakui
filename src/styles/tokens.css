@@ -668,6 +668,10 @@
     7ch + var(--ui-field-padding-inline) + var(--ui-field-padding-inline) +
       var(--ui-border-width) + var(--ui-border-width)
   );
+  --ui-field-color-inline-size: calc(
+    var(--ui-control-height) + var(--ui-field-hex-value-inline-size) +
+      var(--ui-icon-button-size-md) + var(--ui-space-2) * 2
+  );
   --ui-field-radius: var(--ui-radius-md);
   --ui-field-background: var(--ui-color-surface-raised);
   --ui-field-background-hover: var(--ui-color-surface-hover);

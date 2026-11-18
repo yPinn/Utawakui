@@ -24,6 +24,7 @@ export {
   Columns3,
   Copy,
   Cpu,
+  Dices,
   Disc3,
   Download,
   Ellipsis,

@@ -1,8 +1,10 @@
 <script setup>
 import { t } from '../../utils/i18n.js';
 import { computed, ref, useAttrs, useTemplateRef, watch } from 'vue';
+import { Dices } from '../../icons/index.js';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
+import UiIconButton from './UiIconButton.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -25,6 +27,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
+  randomLabel: { type: String, default: '' },
   align: {
     type: String,
     default: 'start',
@@ -78,6 +81,14 @@ function updatePicker(event) {
 function commitPicker(event) {
   draft.value = event.target.value;
   if (validDraft.value) emit('commit', draft.value);
+}
+
+function randomizeColor() {
+  const rgb = Math.floor(Math.random() * 0x1000000);
+  const color = `#${rgb.toString(16).padStart(6, '0')}`;
+  draft.value = color;
+  emit('update:modelValue', color);
+  emit('commit', color);
 }
 
 function focus() {
@@ -136,6 +147,13 @@ defineExpose({ focus });
           @input="updateText"
           @change="commitText"
         />
+        <UiIconButton
+          :icon="Dices"
+          :label="randomLabel || t('ui.colorField.random', { label })"
+          :aria-controls="id"
+          :disabled="disabled"
+          @click="randomizeColor"
+        />
       </div>
     </template>
   </UiField>
@@ -146,12 +164,11 @@ defineExpose({ focus });
   min-width: 0;
   min-height: var(--ui-field-height);
   inline-size: 100%;
-  max-inline-size: calc(
-    var(--ui-control-height) + var(--ui-space-2) +
-      var(--ui-field-hex-value-inline-size)
-  );
+  max-inline-size: var(--ui-field-color-inline-size);
   display: grid;
-  grid-template-columns: var(--ui-control-height) minmax(0, 1fr);
+  grid-template-columns: var(--ui-control-height) minmax(0, 1fr) var(
+      --ui-icon-button-size-md
+    );
   align-items: center;
   gap: var(--ui-space-2);
 }

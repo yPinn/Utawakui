@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(565);
+    expect(uniqueNames.size).toBe(566);
     expect(uniqueNames).toContain('--ui-motion-easing-reversible');
     expect(uniqueNames).toContain('--ui-shell-workspace-min-inline-size');
     expect(uniqueNames).toContain('--ui-shell-layout-recovery-inline-size');
@@ -409,6 +409,7 @@ describe('Studio Library workspace prototype isolation', () => {
       '--ui-field-background-readonly-in-container',
     );
     expect(uniqueNames).toContain('--ui-field-hex-value-inline-size');
+    expect(uniqueNames).toContain('--ui-field-color-inline-size');
     expect(uniqueNames).not.toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-right-dock-width');
     expect(uniqueNames).toContain('--ui-right-dock-rail-width');
