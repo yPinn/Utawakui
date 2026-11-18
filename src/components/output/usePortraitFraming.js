@@ -6,7 +6,7 @@ import {
   snapPortraitFrame,
   squarePortraitFrame,
   zoomPortraitFrame,
-} from './cutoutPortraitImage.js';
+} from './phantomPortraitImage.js';
 
 const MAX_ZOOM = 300;
 const MIN_ZOOM = 50;

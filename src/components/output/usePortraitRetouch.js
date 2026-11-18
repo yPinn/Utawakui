@@ -1,6 +1,6 @@
 import { shallowRef, watch } from 'vue';
 import { maskEdge } from '../../../shared/outputPortraitImage.json';
-import { editPortraitLasso } from './cutoutPortraitImage.js';
+import { editPortraitLasso } from './phantomPortraitImage.js';
 
 const MAX_UNDO_SELECTIONS = 10;
 const MAX_LASSO_POINTS = 512;

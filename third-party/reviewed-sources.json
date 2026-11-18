@@ -374,9 +374,9 @@
       "targetPath": "shared/assets/fonts/licenses/lavsic/TheZenKurenaido.txt"
     },
     {
-      "sourcePath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt",
+      "sourcePath": "shared/assets/fonts/SOURCE-LAVSIC.txt",
       "location": "asar",
-      "targetPath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt"
+      "targetPath": "shared/assets/fonts/SOURCE-LAVSIC.txt"
     },
     {
       "sourcePath": "node_modules/electron/dist/LICENSE",

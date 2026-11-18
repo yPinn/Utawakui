@@ -12,8 +12,8 @@ import UiStack from '../ui/UiStack.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
-import ObsCutoutPortraitGrid from './ObsCutoutPortraitGrid.vue';
-import ObsCutoutPortraitThumb from './ObsCutoutPortraitThumb.vue';
+import ObsPhantomPortraitGrid from './ObsPhantomPortraitGrid.vue';
+import ObsPhantomPortraitThumb from './ObsPhantomPortraitThumb.vue';
 
 const { player } = vi.hoisted(() => ({ player: { track: null } }));
 vi.mock('../../composables/usePlayer.js', () => ({
@@ -40,8 +40,8 @@ vi.mock('../ui/UiIconButton.vue', () => ({
 }));
 
 for (const [component, path] of [
-  [ObsCutoutPortraitGrid, './ObsCutoutPortraitGrid.vue'],
-  [ObsCutoutPortraitThumb, './ObsCutoutPortraitThumb.vue'],
+  [ObsPhantomPortraitGrid, './ObsPhantomPortraitGrid.vue'],
+  [ObsPhantomPortraitThumb, './ObsPhantomPortraitThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiStack, '../ui/UiStack.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
@@ -52,21 +52,21 @@ for (const [component, path] of [
 }
 
 function setup(count, activeId = '') {
-  const defaultSet = { cutoutArtistName: '', cutoutPortraitColor: '#f3d648' };
+  const defaultSet = { phantomArtistName: '', phantomPortraitColor: '#f3d648' };
   const model = reactive({
     activeId,
     items: Array.from({ length: count }, (_, index) => ({
       id: `preset-${index + 1}`,
-      cutoutArtistName: `Singer ${index + 1}`,
-      cutoutPortraitColor: '#4466aa',
-      cutoutPortraitPhoto: `photo-${index + 1}`,
+      phantomArtistName: `Singer ${index + 1}`,
+      phantomPortraitColor: '#4466aa',
+      phantomPortraitPhoto: `photo-${index + 1}`,
     })),
   });
   const startAdd = vi.fn();
   const startEdit = vi.fn();
   const { app, root } = mount({
     setup: () => () =>
-      h(ObsCutoutPortraitGrid, {
+      h(ObsPhantomPortraitGrid, {
         ...model,
         active: true,
         onSelect: (id) => (model.activeId = id),
@@ -111,7 +111,7 @@ function setup(count, activeId = '') {
   };
 }
 
-describe('cutout portrait grid', () => {
+describe('phantom portrait grid', () => {
   it('pages six cells and opens the editor before the new preset is added', async () => {
     const {
       app,

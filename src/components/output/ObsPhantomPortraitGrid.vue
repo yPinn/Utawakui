@@ -9,9 +9,9 @@ import {
   Trash2,
 } from '../../icons/index.js';
 import {
-  canAddCutoutPortraitSet,
-  CUTOUT_PORTRAIT_DEFAULTS,
-  MAX_CUTOUT_PORTRAIT_SETS,
+  canAddPhantomPortraitSet,
+  PHANTOM_PORTRAIT_DEFAULTS,
+  MAX_PHANTOM_PORTRAIT_SETS,
 } from '../../../shared/outputAppearance.mjs';
 import { usePlayer } from '../../composables/usePlayer.js';
 import {
@@ -24,8 +24,8 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
-import ObsCutoutPortraitThumb from './ObsCutoutPortraitThumb.vue';
-import { cutoutPortraitColorToken } from './cutoutPortraitPalette.js';
+import ObsPhantomPortraitThumb from './ObsPhantomPortraitThumb.vue';
+import { phantomPortraitColorToken } from './phantomPortraitPalette.js';
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -40,8 +40,8 @@ const grid = useTemplateRef('grid');
 const page = shallowRef(0);
 
 const cards = computed(() =>
-  [CUTOUT_PORTRAIT_DEFAULTS, ...props.items].map((item, number) => {
-    const customName = item.cutoutArtistName?.trim();
+  [PHANTOM_PORTRAIT_DEFAULTS, ...props.items].map((item, number) => {
+    const customName = item.phantomArtistName?.trim();
     const name = customName || player.track?.artist?.trim();
     const fallback = number
       ? t('outputPanel.portrait.numberedSet', { number })
@@ -63,14 +63,14 @@ const cards = computed(() =>
             { number, name },
           )
         : fallback,
-      photoId: item.cutoutPortraitPhoto,
+      photoId: item.phantomPortraitPhoto,
       color:
-        item.cutoutPortraitColor ||
-        `var(${cutoutPortraitColorToken(name, player.track?.id)})`,
+        item.phantomPortraitColor ||
+        `var(${phantomPortraitColorToken(name, player.track?.id)})`,
     };
   }),
 );
-const canAdd = computed(() => canAddCutoutPortraitSet(props.items));
+const canAdd = computed(() => canAddPhantomPortraitSet(props.items));
 const pageCount = computed(() => Math.ceil(cards.value.length / PAGE_SIZE));
 const pageCards = computed(() =>
   cards.value.slice(page.value * PAGE_SIZE, (page.value + 1) * PAGE_SIZE),
@@ -149,7 +149,7 @@ defineExpose({ focusAfterEdit });
             :title="card.label"
             @click="emit('select', card.id)"
           >
-            <ObsCutoutPortraitThumb
+            <ObsPhantomPortraitThumb
               size="auto"
               class="obs-portrait-grid__photo"
               :background="card.color"
@@ -165,7 +165,7 @@ defineExpose({ focusAfterEdit });
                 tone="text"
                 decorative
               />
-            </ObsCutoutPortraitThumb>
+            </ObsPhantomPortraitThumb>
           </UiButton>
         </div>
         <span
@@ -206,7 +206,7 @@ defineExpose({ focusAfterEdit });
           canAdd
             ? undefined
             : t('outputPanel.portrait.setLimit', {
-                count: MAX_CUTOUT_PORTRAIT_SETS,
+                count: MAX_PHANTOM_PORTRAIT_SETS,
               })
         "
         :aria-disabled="!canAdd"

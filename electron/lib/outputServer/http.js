@@ -11,8 +11,8 @@ const {
 } = require('../../../shared/startupTraceValues.json');
 
 const OUTPUT_ARTWORK_PATH_PREFIX = '/media/artwork/';
-const OUTPUT_PORTRAIT_ARTIST_PATH_PREFIX = '/media/cutout-portrait/artist/';
-const OUTPUT_PORTRAIT_CUSTOM_PATH_PREFIX = '/media/cutout-portrait/custom/';
+const OUTPUT_PORTRAIT_ARTIST_PATH_PREFIX = '/media/phantom-portrait/artist/';
+const OUTPUT_PORTRAIT_CUSTOM_PATH_PREFIX = '/media/phantom-portrait/custom/';
 const OUTPUT_STARTUP_TRACE_PATH = '/api/v1/startup-trace';
 const OVERLAY_TRACE_MILESTONES = new Set([
   'first-instance-ready',
@@ -45,8 +45,8 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/': ['lyrics', 'index.html'],
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
-  '/overlay/lyrics/cutoutDialogue.css': ['lyrics', 'cutoutDialogue.css'],
-  '/overlay/lyrics/cutoutDialogue.mjs': ['lyrics', 'cutoutDialogue.mjs'],
+  '/overlay/lyrics/phantomThieves.css': ['lyrics', 'phantomThieves.css'],
+  '/overlay/lyrics/phantomThieves.mjs': ['lyrics', 'phantomThieves.mjs'],
   '/overlay/lyrics/fisheyeLens.mjs': ['lyrics', 'fisheyeLens.mjs'],
   '/overlay/lyrics/fisheyeEffects.mjs': ['lyrics', 'fisheyeEffects.mjs'],
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],

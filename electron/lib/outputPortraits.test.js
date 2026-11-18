@@ -102,13 +102,13 @@ describe('Output portraits', () => {
       return response.writeHead.mock.calls[0];
     }
     const [status, headers] = await request(
-      '/media/cutout-portrait/artist/recording',
+      '/media/phantom-portrait/artist/recording',
     );
     expect(status).toBe(302);
     expect(headers.Location).toMatch(
-      /^\/media\/cutout-portrait\/artist\/recording\/[a-f0-9]{64}$/u,
+      /^\/media\/phantom-portrait\/artist\/recording\/[a-f0-9]{64}$/u,
     );
-    expect(await request('/media/cutout-portrait/artist/%2Fescape')).toEqual(
+    expect(await request('/media/phantom-portrait/artist/%2Fescape')).toEqual(
       expect.arrayContaining([404]),
     );
     expect(resolvePortraitAsset).toHaveBeenCalledExactlyOnceWith(

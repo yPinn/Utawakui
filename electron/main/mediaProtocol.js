@@ -15,7 +15,7 @@ const {
 const { MEDIA_SCHEME } = require('./mediaScheme');
 const { resolveTrackVideoPath } = require('../lib/library/trackVideo');
 const { resolveSessionCoverPath } = require('../lib/performanceSessionArchive');
-const { isCutoutPortraitId } = require('../../shared/outputAppearance.mjs');
+const { isPhantomPortraitId } = require('../../shared/outputAppearance.mjs');
 
 // Serves local audio files to the sandboxed renderer (nodeIntegration:
 // false means it has no direct filesystem access). Dispatches on
@@ -25,7 +25,7 @@ const { isCutoutPortraitId } = require('../../shared/outputAppearance.mjs');
 // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
 // cover image (resolvePlaylistCoverPath); 'artist-photo' resolves the one
 // recorded artist photo (resolveArtistPhotoPath); 'folder-asset' resolves one
-// manifest-owned page image; 'cutout-portrait' resolves a saved portrait or a
+// manifest-owned page image; 'phantom-portrait' resolves a saved portrait or a
 // track's artist photo; 'local' resolves legacy pre-migration audio
 // through resolveTrackPath. Every hostname and segment count is allowlisted
 // before a filesystem resolver sees it.
@@ -99,11 +99,11 @@ function registerMediaProtocol({
     const segments = decodePathSegments(url.pathname);
     if (!segments) return notFoundResponse();
 
-    if (url.hostname === 'cutout-portrait') {
+    if (url.hostname === 'phantom-portrait') {
       if (segments.length !== 2) return notFoundResponse();
       const [source, id] = segments;
       const valid =
-        (source === 'custom' && isCutoutPortraitId(id)) ||
+        (source === 'custom' && isPhantomPortraitId(id)) ||
         (source === 'artist' && isBoundedTrackId(id));
       return valid
         ? servePortrait(request, config, dir, source, id)

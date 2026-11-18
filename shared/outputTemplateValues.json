@@ -35,7 +35,7 @@
     "receipt-setlist": "setlist",
     "ribbon-setlist": "setlist",
     "fisheye-lens": "lyrics",
-    "cutout-dialogue": "lyrics"
+    "phantom-thieves": "lyrics"
   },
   "templateCaptureSizes": {
     "receipt-setlist": {
@@ -90,7 +90,7 @@
       "default": "full",
       "supported": ["full"]
     },
-    "cutout-dialogue": {
+    "phantom-thieves": {
       "default": "full",
       "supported": ["full"]
     },

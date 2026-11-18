@@ -78,30 +78,30 @@ describe('outputSlots', () => {
     });
   });
 
-  it('persists Cutout Dialogue choices in the lyrics slot', () => {
+  it('persists Phantom Thieves choices in the lyrics slot', () => {
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'cutout-dialogue',
-      settings: { cutoutMode: 'chat', cutoutChatShape: 'stacked' },
+      templateId: 'phantom-thieves',
+      settings: { phantomMode: 'chat', phantomChatShape: 'stacked' },
     });
     expect(loadOutputSlots(dir).slots.lyrics).toMatchObject({
-      templateId: 'cutout-dialogue',
+      templateId: 'phantom-thieves',
       settings: {
         captureSize: 'full',
-        cutoutMode: 'chat',
-        cutoutChatShape: 'stacked',
+        phantomMode: 'chat',
+        phantomChatShape: 'stacked',
       },
     });
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'cutout-dialogue',
-      settings: { cutoutMode: 'ransom', cutoutRansomFont: 'kaibunsyo' },
+      templateId: 'phantom-thieves',
+      settings: { phantomMode: 'ransom', phantomRansomFont: 'kaibunsyo' },
     });
     expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
-      cutoutMode: 'ransom',
-      cutoutRansomFont: 'kaibunsyo',
+      phantomMode: 'ransom',
+      phantomRansomFont: 'kaibunsyo',
     });
     expect(() =>
       upsertOutputSlot(dir, 'setlist', {
-        templateId: 'cutout-dialogue',
+        templateId: 'phantom-thieves',
         settings: {},
       }),
     ).toThrow();
@@ -110,75 +110,75 @@ describe('outputSlots', () => {
   it('retains portrait sets across templates and publishes only the selected portrait', () => {
     const first = {
       id: '00000000-0000-4000-8000-000000000001',
-      cutoutArtistName: 'Aster',
-      cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
-      cutoutPortraitColor: '#4466aa',
+      phantomArtistName: 'Aster',
+      phantomPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+      phantomPortraitColor: '#4466aa',
     };
     const second = {
       id: '00000000-0000-4000-8000-000000000002',
-      cutoutArtistName: 'Guest',
-      cutoutPortraitPhoto: '',
-      cutoutPortraitColor: '#f3d648',
+      phantomArtistName: 'Guest',
+      phantomPortraitPhoto: '',
+      phantomPortraitColor: '#f3d648',
     };
     const settings = {
-      cutoutMode: 'side-card',
-      cutoutCardStyle: 'portrait',
-      cutoutArtistName: 'Original',
-      cutoutPortraitSets: { activeId: first.id, items: [first, second] },
+      phantomMode: 'side-card',
+      phantomCardStyle: 'portrait',
+      phantomArtistName: 'Original',
+      phantomPortraitSets: { activeId: first.id, items: [first, second] },
     };
     upsertOutputSlot(dir, 'lyrics', { templateId: 'karaoke-stack', settings });
     const stored = loadOutputSlots(dir).slots.lyrics.settings;
-    expect(stored.cutoutPortraitSets).toEqual({
+    expect(stored.phantomPortraitSets).toEqual({
       activeId: first.id,
       items: [
-        expect.objectContaining({ cutoutArtistName: 'Original' }),
+        expect.objectContaining({ phantomArtistName: 'Original' }),
         first,
         second,
       ],
     });
-    expect(stored.cutoutArtistName).toBe('');
+    expect(stored.phantomArtistName).toBe('');
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'cutout-dialogue',
+      templateId: 'phantom-thieves',
       settings: stored,
     });
     const server = createOutputServer({ port: 0 });
     server.setOverlaySlots(loadOutputSlots(dir).slots);
     const projected = server.getOverlayConfig().slots.lyrics.settings;
     expect(projected).toMatchObject({
-      cutoutArtistName: 'Aster',
-      cutoutPortraitPhoto: first.cutoutPortraitPhoto,
-      cutoutPortraitColor: first.cutoutPortraitColor,
+      phantomArtistName: 'Aster',
+      phantomPortraitPhoto: first.phantomPortraitPhoto,
+      phantomPortraitColor: first.phantomPortraitColor,
     });
-    expect(projected).not.toHaveProperty('cutoutPortraitSets');
+    expect(projected).not.toHaveProperty('phantomPortraitSets');
 
     server.setOverlaySlots({
       lyrics: {
-        templateId: 'cutout-dialogue',
+        templateId: 'phantom-thieves',
         settings: {
           ...stored,
-          cutoutPortraitSets: { ...stored.cutoutPortraitSets, activeId: '' },
+          phantomPortraitSets: { ...stored.phantomPortraitSets, activeId: '' },
         },
       },
     });
     expect(server.getOverlayConfig().slots.lyrics.settings).toMatchObject({
-      cutoutArtistName: '',
-      cutoutPortraitPhoto: '',
-      cutoutPortraitColor: '',
+      phantomArtistName: '',
+      phantomPortraitPhoto: '',
+      phantomPortraitColor: '',
     });
   });
 
   it('moves the old yellow first slot to automatic color while preserving a saved yellow preset', () => {
-    const preset = { id: randomUUID(), cutoutPortraitColor: '#f3d648' };
+    const preset = { id: randomUUID(), phantomPortraitColor: '#f3d648' };
     upsertOutputSlot(dir, 'lyrics', {
-      templateId: 'cutout-dialogue',
+      templateId: 'phantom-thieves',
       settings: {
-        cutoutPortraitColor: '#f3d648',
-        cutoutPortraitSets: { activeId: preset.id, items: [preset] },
+        phantomPortraitColor: '#f3d648',
+        phantomPortraitSets: { activeId: preset.id, items: [preset] },
       },
     });
     expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
-      cutoutPortraitColor: '',
-      cutoutPortraitSets: { activeId: preset.id, items: [preset] },
+      phantomPortraitColor: '',
+      phantomPortraitSets: { activeId: preset.id, items: [preset] },
     });
   });
 
@@ -190,32 +190,32 @@ describe('outputSlots', () => {
         version: 5,
         slots: {
           lyrics: {
-            templateId: 'cutout-dialogue',
+            templateId: 'phantom-thieves',
             settings: {
-              cutoutArtistName: 'Original',
-              cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
-              cutoutPortraitColor: '#4466aa',
-              cutoutPortraitSets: { activeId: '', items },
+              phantomArtistName: 'Original',
+              phantomPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+              phantomPortraitColor: '#4466aa',
+              phantomPortraitSets: { activeId: '', items },
             },
           },
         },
       }),
     );
     const slot = loadOutputSlots(dir).slots.lyrics;
-    const sets = slot.settings.cutoutPortraitSets;
+    const sets = slot.settings.phantomPortraitSets;
     expect(sets.items.map(({ id }) => id)).toEqual([
       sets.activeId,
       ...items.map(({ id }) => id),
     ]);
     expect(sets.items[0]).toMatchObject({
-      cutoutArtistName: 'Original',
-      cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
-      cutoutPortraitColor: '#4466aa',
+      phantomArtistName: 'Original',
+      phantomPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+      phantomPortraitColor: '#4466aa',
     });
     sets.activeId = '';
     upsertOutputSlot(dir, 'lyrics', slot);
     expect(
-      loadOutputSlots(dir).slots.lyrics.settings.cutoutPortraitSets,
+      loadOutputSlots(dir).slots.lyrics.settings.phantomPortraitSets,
     ).toEqual(sets);
   });
 

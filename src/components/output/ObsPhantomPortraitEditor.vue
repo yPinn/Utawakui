@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, shallowRef, useTemplateRef } from 'vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
-import ObsCutoutPortraitPhotoField from './ObsCutoutPortraitPhotoField.vue';
+import ObsPhantomPortraitPhotoField from './ObsPhantomPortraitPhotoField.vue';
 import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -55,7 +55,7 @@ onMounted(() =>
 <template>
   <form ref="form" :aria-label="title" @submit.prevent="save">
     <ObsPropertySection :title="title">
-      <ObsCutoutPortraitPhotoField
+      <ObsPhantomPortraitPhotoField
         v-if="photoField"
         :id="`output-appearance-${photoField.key}`"
         v-model="draft[photoField.key]"

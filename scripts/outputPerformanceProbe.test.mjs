@@ -111,8 +111,8 @@ describe('F5 synthetic workload and resource evidence', () => {
     const files = collectProbeRuntimeFiles();
     for (const expected of [
       'overlay/lyrics/lyrics.mjs',
-      'overlay/lyrics/cutoutDialogue.css',
-      'overlay/lyrics/cutoutDialogue.mjs',
+      'overlay/lyrics/phantomThieves.css',
+      'overlay/lyrics/phantomThieves.mjs',
       'shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf',
       'shared/assets/fonts/Kaibunsyo-Regular.ttf',
       'shared/presentation/state.mjs',

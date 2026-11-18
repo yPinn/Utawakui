@@ -1,0 +1,933 @@
+@font-face {
+  font-family: 'Utawakui Phantom Antique';
+  src: url('../../shared/assets/fonts/GenEiAntiqueNv6-M.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root[data-ovl-template='phantom-thieves'] .lyrics-overlay {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  transform: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-ovl-template='phantom-thieves']
+  .lyrics-overlay
+  > :not(.phantom-thieves) {
+  display: none;
+}
+
+@font-face {
+  font-family: 'Utawakui Phantom Rounded';
+  src: url('../../shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf')
+    format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Utawakui Kaitou Yokoku Gothic';
+  src: url('../../shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf')
+    format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Utawakui Kaibunsyo';
+  src: url('../../shared/assets/fonts/Kaibunsyo-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+.phantom-thieves {
+  --phantom-ink: #141218;
+  --phantom-paper: #fff6ec;
+  /* Match the project's portrait palette with standalone Output tokens. */
+  --phantom-portrait-tone-indigo: #a5b3d8;
+  --phantom-portrait-tone-plum: #d496b2;
+  --phantom-portrait-tone-red: #ffa9a8;
+  --phantom-portrait-tone-amber: #f7d37b;
+  --phantom-accent: #b91d34;
+  --phantom-muted: #ded1ce;
+  --phantom-edge-x: 4%;
+  --phantom-edge-y: 7%;
+  --phantom-top: auto;
+  --phantom-right: auto;
+  --phantom-bottom: auto;
+  --phantom-left: auto;
+  --phantom-font-scale-ratio: var(
+    --phantom-font-scale,
+    var(--ovl-user-font-scale-ratio, 1)
+  );
+  --phantom-copy-size: 3cqw;
+  --phantom-name-size: 2.1cqw;
+  --phantom-thieves-fallback:
+    'Utawakui Open Huninn', 'Microsoft JhengHei', system-ui, sans-serif;
+  --phantom-grain: repeating-radial-gradient(
+    ellipse at 20% 75%,
+    #fff0 0 0.32em,
+    #ffffff12 0.35em 0.39em,
+    #fff0 0.42em 0.62em
+  );
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  color: var(--phantom-paper);
+  font-family: var(
+    --phantom-font,
+    'Utawakui Phantom Antique',
+    'Microsoft JhengHei',
+    sans-serif
+  );
+  line-height: 1.24;
+  pointer-events: none;
+}
+
+.phantom-thieves:is([data-corner='top-left'], [data-corner='top-right']) {
+  --phantom-top: var(--phantom-edge-y);
+}
+
+.phantom-thieves:is([data-corner='bottom-left'], [data-corner='bottom-right']) {
+  --phantom-bottom: var(--phantom-edge-y);
+}
+
+.phantom-thieves[data-corner$='left'] {
+  --phantom-left: var(--phantom-edge-x);
+}
+
+.phantom-thieves[data-corner$='right'] {
+  --phantom-right: var(--phantom-edge-x);
+}
+
+.phantom-thieves__corner {
+  position: absolute;
+  inset: var(--phantom-top) var(--phantom-right) var(--phantom-bottom)
+    var(--phantom-left);
+}
+
+.phantom-thieves[hidden] {
+  display: none;
+}
+
+:root[data-ovl-template='phantom-thieves']:not([data-ovl-font='template'])
+  .phantom-thieves {
+  --phantom-font: var(--ovl-user-font-family);
+}
+
+.phantom-thieves__copy {
+  display: block;
+  position: relative;
+  font-size: calc(
+    var(--phantom-copy-size) * var(--phantom-copy-scale, 1) *
+      var(--phantom-font-scale-ratio)
+  );
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.phantom-thieves[data-mode='radial'] {
+  --phantom-copy-size: 2.35cqw;
+  font-family: var(
+    --phantom-font,
+    'Utawakui Phantom Rounded',
+    'Microsoft JhengHei',
+    sans-serif
+  );
+}
+
+.phantom-thieves__radial {
+  width: 36%;
+  display: grid;
+  gap: 0.55cqw;
+  justify-items: start;
+}
+
+.phantom-thieves__choice-panel {
+  position: absolute;
+  inset: var(--phantom-top) var(--phantom-right) var(--phantom-bottom)
+    var(--phantom-left);
+  width: 24cqw;
+  height: 65%;
+  isolation: isolate;
+  background: var(--phantom-paper);
+  clip-path: polygon(34% 0, 100% 0, 100% 79%, 80% 100%, 0 100%);
+}
+
+.phantom-thieves__choice-panel::before,
+.phantom-thieves__choice-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.phantom-thieves__choice-panel::before {
+  background: linear-gradient(
+    155deg,
+    var(--phantom-accent),
+    var(--phantom-ink) 76%
+  );
+  clip-path: polygon(38% 0, 100% 0, 100% 73%, 76% 100%, 6% 100%);
+}
+
+.phantom-thieves__choice-panel::after {
+  background: var(--phantom-grain);
+  clip-path: polygon(39% 11%, 100% 4%, 100% 58%, 16% 91%);
+}
+
+.phantom-thieves[data-corner$='left'] .phantom-thieves__choice-panel {
+  scale: -1 1;
+}
+
+.phantom-thieves__choices {
+  width: 45cqw;
+  display: grid;
+  justify-items: end;
+  gap: 0.6cqw;
+  padding: 0 6cqw;
+  box-sizing: border-box;
+  --choice-mirror: 1;
+}
+
+.phantom-thieves[data-corner$='left'] .phantom-thieves__choices {
+  justify-items: start;
+  --choice-mirror: -1;
+}
+
+.phantom-thieves__choice {
+  --choice-shape: polygon(3% 6%, 88% 0, 100% 52%, 88% 94%, 0 100%);
+  --choice-tilt: 3deg;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: min(14cqw, 100%);
+  max-width: 90%;
+  padding: 0.8cqw 3cqw;
+  rotate: calc(var(--choice-mirror) * var(--choice-tilt));
+}
+
+.phantom-thieves__choice::before,
+.phantom-thieves__choice::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--phantom-paper);
+  clip-path: var(--choice-shape);
+  scale: var(--choice-mirror) 1;
+}
+
+.phantom-thieves__choice::after {
+  inset: 0.16cqw;
+  background: var(--phantom-ink);
+}
+
+.phantom-thieves__choice[data-choice='current'] {
+  --choice-tilt: -5deg;
+  min-width: min(23cqw, 100%);
+  max-width: 100%;
+  color: var(--phantom-ink);
+}
+
+.phantom-thieves__choice[data-choice='current']::before {
+  background: var(--phantom-accent);
+}
+
+.phantom-thieves__choice[data-choice='current']::after {
+  background: var(--phantom-paper);
+}
+
+.phantom-thieves__choice[data-choice='next'] {
+  --choice-tilt: 1deg;
+}
+
+.phantom-thieves__choice .phantom-thieves__copy {
+  --phantom-copy-size: 1.35cqw;
+  font-family: var(--phantom-font, var(--phantom-thieves-fallback));
+  font-weight: 700;
+  line-height: 1.22;
+  text-align: center;
+}
+
+.phantom-thieves__choice .phantom-thieves__copy:lang(ja) {
+  font-family: var(
+    --phantom-font,
+    'Utawakui Phantom Rounded',
+    var(--phantom-thieves-fallback)
+  );
+}
+
+.phantom-thieves__choice:not([data-choice='current']) .phantom-thieves__copy {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.phantom-thieves__choice[data-choice='current'] .phantom-thieves__copy {
+  --phantom-copy-size: 1.9cqw;
+}
+
+.phantom-thieves[data-corner$='right'] .phantom-thieves__radial {
+  justify-items: end;
+}
+
+.phantom-thieves__lane {
+  max-width: 100%;
+}
+
+.phantom-thieves__lane:nth-child(even) {
+  margin-inline: 0.65cqw;
+  max-width: calc(100% - 1.3cqw);
+}
+
+.phantom-thieves__strip {
+  position: relative;
+  display: block;
+  width: max-content;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0.65cqw 1.65cqw 0.75cqw 3.05cqw;
+  isolation: isolate;
+  transform: rotate(var(--phantom-strip-tilt, -6deg));
+  transform-origin: left center;
+}
+
+.phantom-thieves__lane:nth-child(3n + 2) {
+  --phantom-strip-tilt: 0deg;
+}
+
+.phantom-thieves__lane:nth-child(3n) {
+  --phantom-strip-tilt: 6deg;
+}
+
+.phantom-thieves[data-corner$='right'] .phantom-thieves__strip {
+  padding-inline: 1.65cqw 3.05cqw;
+  transform: rotate(calc(-1 * var(--phantom-strip-tilt, -6deg)));
+  transform-origin: right center;
+}
+
+.phantom-thieves__lane:last-child {
+  color: var(--phantom-ink);
+  --phantom-frame-fill: var(--phantom-paper);
+  --phantom-frame-outline: var(--phantom-ink);
+}
+
+.phantom-thieves__card-frame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.phantom-thieves__card-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.phantom-thieves[data-corner$='right'] .phantom-thieves__card-frame svg {
+  scale: -1 1;
+}
+
+.phantom-thieves__frame-face {
+  fill: var(--phantom-frame-fill, var(--phantom-ink));
+  stroke: var(--phantom-frame-outline, var(--phantom-paper));
+  stroke-width: var(--phantom-frame-stroke);
+  stroke-linejoin: round;
+}
+
+.phantom-thieves__frame-tab {
+  fill: var(--phantom-paper);
+}
+
+.phantom-thieves__ransom {
+  width: 43%;
+  text-align: left;
+  white-space: nowrap;
+  font-size: calc(
+    3.8cqw * var(--phantom-copy-scale, 1) * var(--phantom-font-scale-ratio)
+  );
+  font-family: var(
+    --phantom-font,
+    'Utawakui Phantom Rounded',
+    'Utawakui Open Huninn',
+    'Microsoft JhengHei',
+    sans-serif
+  );
+  line-height: 1.4;
+}
+
+.phantom-thieves[data-corner$='right'] .phantom-thieves__ransom {
+  text-align: right;
+}
+
+.phantom-thieves__word,
+.phantom-thieves__gap {
+  display: inline-block;
+  white-space: pre;
+}
+
+.phantom-thieves__gap[hidden] {
+  display: none;
+}
+
+.phantom-thieves__tile {
+  --phantom-ransom-paper: var(--phantom-ink);
+  --phantom-ransom-grain-ink: color-mix(in srgb, currentColor 4%, transparent);
+  --phantom-ransom-grain: none;
+  --phantom-ransom-edge: none;
+  position: relative;
+  display: inline-block;
+  padding-inline: 0.065em;
+  margin-inline: 0.045em;
+  isolation: isolate;
+  color: var(--phantom-paper);
+}
+
+.phantom-thieves__tile::before {
+  content: '';
+  position: absolute;
+  inset: -2% 0 0;
+  z-index: -1;
+  background: var(--phantom-ransom-grain), var(--phantom-ransom-paper);
+  clip-path: var(--phantom-ransom-edge);
+  rotate: var(--phantom-ransom-tilt, 0deg);
+}
+
+.phantom-thieves__tile[data-ransom-word] {
+  padding-inline: 0.12em;
+}
+
+.phantom-thieves__tile[data-ransom-mirrored]::before {
+  scale: -1 1;
+}
+
+.phantom-thieves__tile[data-ransom-paper='paper'] {
+  --phantom-ransom-paper: var(--phantom-paper);
+  color: var(--phantom-ink);
+}
+
+.phantom-thieves__tile[data-ransom-paper='color'] {
+  --phantom-ransom-paper: var(--phantom-accent);
+}
+
+.phantom-thieves__tile[data-ransom-texture='fibers'] {
+  --phantom-ransom-grain: repeating-linear-gradient(
+    104deg,
+    transparent 0 0.24em,
+    var(--phantom-ransom-grain-ink) 0.29em,
+    transparent 0.34em 0.46em
+  );
+}
+
+.phantom-thieves__tile[data-ransom-texture='wash'] {
+  --phantom-ransom-grain: linear-gradient(
+    155deg,
+    var(--phantom-ransom-grain-ink),
+    transparent 70%
+  );
+}
+
+.phantom-thieves__tile[data-ransom-edge='slant'] {
+  --phantom-ransom-edge: polygon(0 3%, 98% 0, 100% 97%, 2% 100%);
+}
+
+.phantom-thieves__tile[data-ransom-edge='taper'] {
+  --phantom-ransom-edge: polygon(3% 0, 97% 1%, 100% 100%, 0 98%);
+}
+
+.phantom-thieves__tile[data-ransom-punctuation]::before {
+  inset-block: 9% 0;
+  background: var(--phantom-ransom-paper);
+}
+
+.phantom-thieves__tile[data-ransom-punctuation='low']::before {
+  inset-block-start: 52%;
+}
+
+.phantom-thieves__tile[data-ransom-punctuation='wide-low']::before {
+  inset-block-start: 34%;
+}
+
+.phantom-thieves[data-ransom-font='kaitou'] {
+  --ransom-accent-font: 'Utawakui Kaitou Yokoku Gothic';
+}
+
+.phantom-thieves[data-ransom-font='kaibunsyo'] {
+  --ransom-accent-font: 'Utawakui Kaibunsyo';
+}
+
+.phantom-thieves
+  .phantom-thieves__word
+  > .phantom-thieves__tile[data-ransom-accent] {
+  font-family:
+    var(--ransom-accent-font), 'Utawakui Phantom Rounded',
+    'Utawakui Open Huninn', sans-serif;
+  color: var(--phantom-paper);
+}
+
+.phantom-thieves
+  .phantom-thieves__word
+  > .phantom-thieves__tile[data-ransom-accent='color'] {
+  color: var(--ransom-accent-ink, var(--phantom-accent));
+}
+
+.phantom-thieves
+  .phantom-thieves__word
+  > .phantom-thieves__tile[data-ransom-accent]::before {
+  /* These glyphs carry their own irregular paper outline. */
+  content: none;
+}
+
+.phantom-thieves__card {
+  position: relative;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  padding: 1.45cqw 2.65cqw;
+  isolation: isolate;
+}
+
+.phantom-thieves__card::before,
+.phantom-thieves__card::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  clip-path: polygon(1% 14%, 24% 10%, 31% 0, 32% 8%, 99% 2%, 96% 92%, 4% 100%);
+  background: var(--phantom-paper);
+}
+
+.phantom-thieves__card::after {
+  inset: 0.18cqw;
+  background: var(--phantom-grain), var(--phantom-ink);
+}
+
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__cluster {
+  --phantom-side-card-max-width: 40cqw;
+  width: max-content;
+  max-width: var(--phantom-side-card-max-width);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__cluster > * {
+  grid-area: 1 / 1;
+}
+.phantom-thieves[data-mode='side-card']
+  .phantom-thieves__cluster:has(> .phantom-thieves__portrait) {
+  --phantom-portrait-width: 14cqw;
+  --phantom-portrait-overlap: 0.65cqw;
+  --phantom-portrait-track: calc(
+    var(--phantom-portrait-width) - var(--phantom-portrait-overlap)
+  );
+  max-width: calc(
+    var(--phantom-side-card-max-width) + var(--phantom-portrait-track)
+  );
+  grid-template-columns: var(--phantom-portrait-track) minmax(0, 1fr);
+  grid-template-areas: 'portrait dialogue';
+  align-items: end;
+  transform-origin: var(--phantom-portrait-track) bottom;
+}
+.phantom-thieves[data-mode='side-card'][data-corner$='right']
+  .phantom-thieves__cluster:has(> .phantom-thieves__portrait) {
+  grid-template-columns: minmax(0, 1fr) var(--phantom-portrait-track);
+  grid-template-areas: 'dialogue portrait';
+  transform-origin: calc(100% - var(--phantom-portrait-track)) bottom;
+}
+.phantom-thieves[data-mode='side-card']
+  .phantom-thieves__cluster:has(> .phantom-thieves__portrait)
+  > .phantom-thieves__card {
+  grid-area: dialogue;
+}
+.phantom-thieves[data-corner^='top']
+  .phantom-thieves__cluster:has(
+    :is(.phantom-thieves__name, .phantom-thieves__portrait)
+  ) {
+  padding-top: 5.7cqw;
+}
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__card {
+  --phantom-card-tail-padding: 3cqw;
+  --phantom-card-tab-padding: 4.55cqw;
+  min-width: 15cqw;
+  max-width: min(100%, var(--phantom-side-card-max-width));
+  width: var(--phantom-card-width, fit-content);
+  padding-block: 2cqw 2.25cqw;
+  padding-inline: var(--phantom-card-tail-padding)
+    var(--phantom-card-tab-padding);
+  transform-origin: left bottom;
+}
+
+.phantom-thieves[data-mode='side-card'][data-corner$='right']
+  .phantom-thieves__card {
+  justify-self: end;
+  padding-inline: var(--phantom-card-tab-padding)
+    var(--phantom-card-tail-padding);
+  transform-origin: right bottom;
+}
+
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__copy {
+  --phantom-copy-size: 2.05cqw;
+  font-family: var(--phantom-font, var(--phantom-thieves-face));
+  font-weight: 700;
+  font-synthesis: none;
+  line-height: 1.24;
+  line-break: strict;
+  text-align: start;
+  text-wrap: wrap;
+  white-space: pre-line;
+}
+
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__copy[data-measuring] {
+  white-space: nowrap;
+}
+
+.phantom-thieves[data-mode='side-card']
+  .phantom-thieves__copy[data-planned-rows] {
+  white-space: pre;
+}
+
+.phantom-thieves[data-mode='side-card']
+  :is(.phantom-thieves__copy, .phantom-thieves__name) {
+  --phantom-thieves-face: var(--phantom-thieves-fallback);
+}
+
+.phantom-thieves[data-mode='side-card']
+  :is(.phantom-thieves__copy, .phantom-thieves__name):lang(ja) {
+  --phantom-thieves-face:
+    'Utawakui Phantom Rounded', 'Yu Gothic', var(--phantom-thieves-fallback);
+}
+
+.phantom-thieves[data-mode='side-card']
+  :is(.phantom-thieves__copy, .phantom-thieves__name):is(
+    :lang(zh-Hans),
+    :lang(zh-CN),
+    :lang(zh-SG)
+  ) {
+  --phantom-thieves-face:
+    'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif;
+}
+
+.phantom-thieves[data-mode='side-card']
+  :is(.phantom-thieves__copy, .phantom-thieves__name):lang(ko) {
+  --phantom-thieves-face:
+    'Malgun Gothic', 'Noto Sans CJK KR', system-ui, sans-serif;
+}
+
+.phantom-thieves[data-mode='side-card']
+  .phantom-thieves__copy[data-script='latin'] {
+  --phantom-thieves-face: Georgia, 'Times New Roman', serif;
+  --phantom-copy-size: 2.15cqw;
+}
+
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__card::before,
+.phantom-thieves[data-mode='side-card'] .phantom-thieves__card::after,
+.phantom-thieves[data-chat-shape='stacked'] .phantom-thieves__card::before,
+.phantom-thieves[data-chat-shape='stacked'] .phantom-thieves__card::after {
+  content: none;
+}
+
+.phantom-thieves__card-frame[data-frame='side-card'] {
+  transform-origin: left 1.95cqw;
+}
+
+.phantom-thieves[data-corner$='right']
+  .phantom-thieves__card-frame[data-frame='side-card'] {
+  transform-origin: right 1.95cqw;
+}
+
+.phantom-thieves__card-frame[data-frame='side-card']
+  .phantom-thieves__frame-face {
+  fill: #000;
+  fill-opacity: 0.78;
+  stroke-width: calc(var(--phantom-frame-stroke) * 1.45);
+}
+
+.phantom-thieves[data-corner$='right'] .phantom-thieves__portrait {
+  justify-self: end;
+}
+
+.phantom-thieves[data-corner$='right'] .phantom-thieves__name {
+  right: 0;
+  left: auto;
+  transform: rotate(15deg);
+  transform-origin: calc(100% - var(--phantom-name-tail-x))
+    calc(100% - var(--phantom-name-tail-bottom));
+}
+
+.phantom-thieves[data-mode='side-card']
+  .phantom-thieves__cluster
+  > .phantom-thieves__portrait {
+  grid-area: portrait;
+  position: relative;
+  order: -1;
+  width: var(--phantom-portrait-width);
+  aspect-ratio: 4 / 3;
+  isolation: isolate;
+}
+
+.phantom-thieves__portrait .phantom-thieves__frame-back {
+  fill: var(--phantom-ink);
+}
+
+.phantom-thieves__portrait .phantom-thieves__frame-mat {
+  fill: var(--phantom-paper);
+}
+
+.phantom-thieves__portrait .phantom-thieves__frame-fill {
+  fill: var(--phantom-portrait-fill, var(--phantom-portrait-tone-indigo));
+}
+
+.phantom-thieves__portrait-region {
+  --phantom-portrait-silhouette-top: -36%;
+  position: absolute;
+  inset: 0;
+  clip-path: var(--phantom-portrait-photo-clip);
+}
+
+.phantom-thieves__portrait-region[data-silhouette] {
+  clip-path: var(--phantom-portrait-silhouette-clip);
+}
+
+.phantom-thieves__portrait-image {
+  position: absolute;
+  inset: 19% auto auto 15.5%;
+  width: 70%;
+  height: 64.2%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.phantom-thieves__portrait-image:not([data-loaded]) {
+  visibility: hidden;
+}
+
+/* The photo covers the fill polygon's bounding box before clipping. */
+.phantom-thieves__portrait-image[data-source='artist'] {
+  object-fit: cover;
+  object-position: center;
+}
+
+.phantom-thieves__portrait-region[data-silhouette]
+  .phantom-thieves__portrait-image {
+  --phantom-portrait-silhouette-drop: 5%;
+  /* Let the silhouette extend through the slanted bottom edge before clipping. */
+  inset: calc(
+      var(--phantom-portrait-silhouette-top) +
+        var(--phantom-portrait-silhouette-drop)
+    )
+    auto auto 16%;
+  width: 78%;
+  height: calc(83.2% - var(--phantom-portrait-silhouette-top));
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.phantom-thieves[data-corner$='right']
+  :is(.phantom-thieves__portrait-region, .phantom-thieves__portrait-image) {
+  scale: -1 1;
+}
+
+.phantom-thieves__name {
+  position: absolute;
+  /* The nameplate crosses the upper frame edge above the lyric text. */
+  z-index: 1;
+  inset: auto auto calc(100% - 2.3cqw) 0;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: max(10cqw, 35%);
+  max-width: 25cqw;
+  padding: 0.3cqw 2cqw;
+  isolation: isolate;
+  color: var(--phantom-ink);
+  white-space: nowrap;
+  font-family: var(--phantom-thieves-face);
+  font-size: calc(var(--phantom-name-size) * var(--phantom-font-scale-ratio));
+  font-weight: 700;
+  font-synthesis: none;
+  line-height: 1.25;
+  transform: rotate(-15deg);
+  /* Pivot on the shared arrow axis so rotating the plate keeps its tip aligned. */
+  transform-origin: var(--phantom-name-tail-x)
+    calc(100% - var(--phantom-name-tail-bottom));
+}
+.phantom-thieves__card-frame[data-frame='nameplate']
+  .phantom-thieves__frame-face {
+  fill: #ecebea;
+  stroke: #292828;
+  stroke-width: calc(var(--phantom-frame-stroke) * 2);
+}
+.phantom-thieves__card-frame[data-frame='side-card']
+  .phantom-thieves__frame-tab {
+  fill: #ecebea;
+  stroke: #292828;
+  stroke-linejoin: round;
+  stroke-width: calc(var(--phantom-frame-stroke) * 2);
+  scale: var(--phantom-marker-scale, 1);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.phantom-thieves__name-label {
+  display: block;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+.phantom-thieves__name-accent {
+  font-family: 'Utawakui Kaitou Yokoku Gothic', var(--phantom-thieves-face);
+}
+
+.phantom-thieves[data-mode='chat'] .phantom-thieves__cluster {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.6cqw;
+}
+
+.phantom-thieves[data-mode='chat'][data-corner$='right']
+  .phantom-thieves__cluster {
+  align-items: end;
+}
+
+.phantom-thieves[data-mode='chat'] .phantom-thieves__previous {
+  opacity: 0.69;
+  margin-inline: 1cqw;
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='bubble']
+  .phantom-thieves__card::before,
+.phantom-thieves[data-mode='chat'][data-chat-shape='bubble']
+  .phantom-thieves__card::after {
+  clip-path: none;
+  border-radius: 2cqw 2.4cqw 0.35cqw 2.3cqw;
+}
+
+.phantom-thieves[data-mode='chat']:not([data-alternate])
+  .phantom-thieves__active,
+.phantom-thieves[data-mode='chat'][data-alternate] .phantom-thieves__previous {
+  color: var(--phantom-ink);
+}
+
+.phantom-thieves[data-mode='chat']:not([data-alternate])
+  .phantom-thieves__active::after,
+.phantom-thieves[data-mode='chat'][data-alternate]
+  .phantom-thieves__previous::after {
+  background: var(--phantom-paper);
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='thought']
+  .phantom-thieves__active {
+  color: var(--phantom-paper);
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='thought']
+  .phantom-thieves__active::before,
+.phantom-thieves[data-mode='chat'][data-chat-shape='thought']
+  .phantom-thieves__active::after {
+  clip-path: none;
+  border-radius: 47% 35% 43% 38% / 55% 50% 47% 48%;
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='thought']
+  .phantom-thieves__active::after {
+  background: var(--phantom-grain), var(--phantom-ink);
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='stacked']
+  .phantom-thieves__previous {
+  margin-bottom: -0.45cqw;
+  rotate: -3deg;
+  color: var(--phantom-ink);
+  --phantom-frame-fill: var(--phantom-paper);
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='stacked']
+  .phantom-thieves__active {
+  color: var(--phantom-paper);
+}
+
+.phantom-thieves[data-chat-shape='stacked'] .phantom-thieves__card {
+  padding: 1.4cqw 2.05cqw 1.9cqw;
+}
+
+.phantom-thieves__card-frame[data-frame='collage'] {
+  --phantom-frame-outline: var(--phantom-ink);
+}
+
+.phantom-thieves__card-frame[data-frame='collage']
+  :is(.phantom-thieves__frame-back, .phantom-thieves__frame-tab) {
+  fill: var(--phantom-accent);
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='phone']
+  .phantom-thieves__cluster {
+  width: 22%;
+  rotate: 3deg;
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='phone'][data-corner$='left']
+  .phantom-thieves__cluster {
+  rotate: -3deg;
+}
+
+.phantom-thieves__phone-screen {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 27cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: end;
+  gap: 0.85cqw;
+  padding: 2.3cqw 1.35cqw 1.35cqw;
+  border: 0.45cqw solid var(--phantom-ink);
+  border-radius: 0.9cqw 0.55cqw 0.8cqw 0.5cqw;
+  outline: 0.27cqw solid var(--phantom-paper);
+  box-shadow: 0.45cqw 0.65cqw var(--phantom-ink);
+  background:
+    radial-gradient(circle at 2px 2px, #0003 1px, transparent 1.5px) 0 0 /
+      0.65cqw 0.65cqw,
+    linear-gradient(150deg, var(--phantom-accent) 60%, #771324 60%);
+}
+
+.phantom-thieves__phone-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0.65cqw 37% auto;
+  height: 0.28cqw;
+  border-radius: 0.2cqw;
+  background: var(--phantom-ink);
+}
+
+.phantom-thieves__phone-name {
+  align-self: start;
+  max-width: 100%;
+  margin-bottom: auto;
+  padding: 0.15cqw 0.8cqw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--phantom-paper);
+  color: var(--phantom-ink);
+  font-size: 1.25cqw;
+  transform: skewX(-8deg);
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='phone']
+  .phantom-thieves__card {
+  width: 100%;
+  margin: 0;
+  padding: 1cqw 1.65cqw;
+}
+
+.phantom-thieves[data-mode='chat'][data-chat-shape='phone'] {
+  --phantom-copy-size: 1.85cqw;
+}

@@ -16,7 +16,7 @@ describe('bundled output template thumbnails', () => {
     const blocked = [];
     for (const preset of OUTPUT_TEMPLATES) {
       const record = provenance.templates[preset.id];
-      const extension = ['ribbon-setlist', 'cutout-dialogue'].includes(
+      const extension = ['ribbon-setlist', 'phantom-thieves'].includes(
         preset.id,
       )
         ? 'png'
@@ -63,10 +63,10 @@ describe('bundled output template thumbnails', () => {
     expect(blocked.sort()).toEqual([
       'art-card',
       'cover-player',
-      'cutout-dialogue',
       'karaoke-stack',
       'live-stage',
       'manga-frame',
+      'phantom-thieves',
       'receipt-setlist',
       'ribbon-setlist',
     ]);

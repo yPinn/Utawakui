@@ -205,16 +205,16 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ]),
   },
   {
-    id: 'cutout-dialogue',
+    id: 'phantom-thieves',
     kind: 'lyrics',
     order: 65,
-    name: t('outputPanel.templates.cutoutDialogue.name'),
+    name: t('outputPanel.templates.phantomThieves.name'),
     facts: templateFacts([
-      ['direction', t('outputPanel.templates.cutoutDialogue.facts.direction')],
-      ['language', t('outputPanel.templates.cutoutDialogue.facts.language')],
+      ['direction', t('outputPanel.templates.phantomThieves.facts.direction')],
+      ['language', t('outputPanel.templates.phantomThieves.facts.language')],
       [
         'translation',
-        t('outputPanel.templates.cutoutDialogue.facts.translation'),
+        t('outputPanel.templates.phantomThieves.facts.translation'),
       ],
     ]),
   },

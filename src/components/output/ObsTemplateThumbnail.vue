@@ -32,7 +32,7 @@ function markThumbnailFailed() {
       v-if="showBundledThumbnail"
       class="obs-template-thumbnail"
       :class="{
-        'obs-template-thumbnail--contain': preset?.id === 'cutout-dialogue',
+        'obs-template-thumbnail--contain': preset?.id === 'phantom-thieves',
       }"
       :src="bundledSource"
       width="1280"

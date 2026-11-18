@@ -345,18 +345,18 @@ export const OUTPUT_PROPERTY_TIERS = Object.freeze(['basic', 'advanced']);
 const COLOR_RE = /^#[0-9a-f]{6}$/iu;
 const PORTRAIT_ID_RE = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u;
 // Legacy slot overrides use a stable ID outside the range of newly generated v4 IDs.
-const LEGACY_CUTOUT_PORTRAIT_ID = '00000000-0000-5000-8000-000000000001';
-export const CUTOUT_PORTRAIT_NAME_MAX = 80;
-export const MAX_CUTOUT_PORTRAIT_SETS = 12;
-export const CUTOUT_PORTRAIT_FIELDS = Object.freeze([
-  'cutoutArtistName',
-  'cutoutPortraitPhoto',
-  'cutoutPortraitColor',
+const LEGACY_PHANTOM_PORTRAIT_ID = '00000000-0000-5000-8000-000000000001';
+export const PHANTOM_PORTRAIT_NAME_MAX = 80;
+export const MAX_PHANTOM_PORTRAIT_SETS = 12;
+export const PHANTOM_PORTRAIT_FIELDS = Object.freeze([
+  'phantomArtistName',
+  'phantomPortraitPhoto',
+  'phantomPortraitColor',
 ]);
 
-const CUTOUT_PORTRAIT_TONES = ['indigo', 'plum', 'red', 'amber'];
+const PHANTOM_PORTRAIT_TONES = ['indigo', 'plum', 'red', 'amber'];
 
-export function cutoutPortraitTone(artist, trackId) {
+export function phantomPortraitTone(artist, trackId) {
   const identity = (artist?.trim() || trackId || '')
     .normalize('NFC')
     .toLowerCase();
@@ -364,24 +364,24 @@ export function cutoutPortraitTone(artist, trackId) {
   for (const character of identity) {
     hash = Math.imul(hash, 31) + character.codePointAt(0);
   }
-  return CUTOUT_PORTRAIT_TONES[(hash >>> 0) % CUTOUT_PORTRAIT_TONES.length];
+  return PHANTOM_PORTRAIT_TONES[(hash >>> 0) % PHANTOM_PORTRAIT_TONES.length];
 }
 
-export function isCutoutPortraitId(value) {
+export function isPhantomPortraitId(value) {
   return typeof value === 'string' && PORTRAIT_ID_RE.test(value);
 }
 
-export function activeCutoutPortraitSet(value) {
-  if (!isCutoutPortraitId(value?.activeId) || !Array.isArray(value.items)) {
+export function activePhantomPortraitSet(value) {
+  if (!isPhantomPortraitId(value?.activeId) || !Array.isArray(value.items)) {
     return undefined;
   }
   return value.items.find((item) => item?.id === value.activeId);
 }
 
-export function canAddCutoutPortraitSet(items) {
+export function canAddPhantomPortraitSet(items) {
   return (
-    items.filter(({ id }) => id !== LEGACY_CUTOUT_PORTRAIT_ID).length <
-    MAX_CUTOUT_PORTRAIT_SETS
+    items.filter(({ id }) => id !== LEGACY_PHANTOM_PORTRAIT_ID).length <
+    MAX_PHANTOM_PORTRAIT_SETS
   );
 }
 const MAX_LOCAL_FONT_NAME_LENGTH = 160;
@@ -637,7 +637,7 @@ const FIELD_DEFINITIONS = [
     options: [{ id: 'straight' }, { id: 'subtle-offset' }],
   }),
   fieldDefinition('layout', {
-    key: 'cutoutMode',
+    key: 'phantomMode',
     family: 'layout',
     tier: 'basic',
     reflow: true,
@@ -653,7 +653,7 @@ const FIELD_DEFINITIONS = [
     ],
   }),
   fieldDefinition('layout', {
-    key: 'cutoutChatShape',
+    key: 'phantomChatShape',
     family: 'layout',
     tier: 'basic',
     reflow: true,
@@ -668,7 +668,7 @@ const FIELD_DEFINITIONS = [
     ],
   }),
   fieldDefinition('layout', {
-    key: 'cutoutCardStyle',
+    key: 'phantomCardStyle',
     family: 'layout',
     tier: 'basic',
     reflow: true,
@@ -678,7 +678,7 @@ const FIELD_DEFINITIONS = [
     options: [{ id: 'portrait' }, { id: 'text-only' }],
   }),
   fieldDefinition('portrait', {
-    key: 'cutoutPortraitColor',
+    key: 'phantomPortraitColor',
     family: 'fill',
     tier: 'basic',
     reflow: false,
@@ -687,17 +687,17 @@ const FIELD_DEFINITIONS = [
     defaultValue: '',
   }),
   fieldDefinition('portrait', {
-    key: 'cutoutArtistName',
+    key: 'phantomArtistName',
     family: 'document',
     tier: 'basic',
     reflow: true,
     order: 10,
     control: 'text',
-    maxLength: CUTOUT_PORTRAIT_NAME_MAX,
+    maxLength: PHANTOM_PORTRAIT_NAME_MAX,
     defaultValue: '',
   }),
   fieldDefinition('portrait', {
-    key: 'cutoutPortraitPhoto',
+    key: 'phantomPortraitPhoto',
     family: 'asset',
     tier: 'basic',
     reflow: false,
@@ -706,7 +706,7 @@ const FIELD_DEFINITIONS = [
     defaultValue: '',
   }),
   fieldDefinition('typography', {
-    key: 'cutoutRansomFont',
+    key: 'phantomRansomFont',
     family: 'character',
     tier: 'basic',
     reflow: true,
@@ -716,7 +716,7 @@ const FIELD_DEFINITIONS = [
     options: [{ id: 'kaitou' }, { id: 'kaibunsyo' }, { id: 'none' }],
   }),
   fieldDefinition('layout', {
-    key: 'cutoutCorner',
+    key: 'phantomCorner',
     family: 'layout',
     tier: 'basic',
     reflow: true,
@@ -1051,17 +1051,17 @@ const TEMPLATE_OVERRIDES = {
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
     },
   },
-  'cutout-dialogue': {
+  'phantom-thieves': {
     keys: [
-      'cutoutMode',
-      'cutoutChatShape',
-      'cutoutCardStyle',
-      'cutoutPortraitColor',
-      'cutoutArtistName',
-      'cutoutPortraitPhoto',
-      'cutoutCorner',
+      'phantomMode',
+      'phantomChatShape',
+      'phantomCardStyle',
+      'phantomPortraitColor',
+      'phantomArtistName',
+      'phantomPortraitPhoto',
+      'phantomCorner',
       'fontFamily',
-      'cutoutRansomFont',
+      'phantomRansomFont',
       'fontScale',
     ],
     fields: {
@@ -1336,70 +1336,73 @@ export const OUTPUT_APPEARANCE_DEFAULTS = Object.freeze(
   ),
 );
 
-export const CUTOUT_PORTRAIT_DEFAULTS = Object.freeze(
+export const PHANTOM_PORTRAIT_DEFAULTS = Object.freeze(
   Object.fromEntries(
-    CUTOUT_PORTRAIT_FIELDS.map((key) => [key, OUTPUT_APPEARANCE_DEFAULTS[key]]),
+    PHANTOM_PORTRAIT_FIELDS.map((key) => [
+      key,
+      OUTPUT_APPEARANCE_DEFAULTS[key],
+    ]),
   ),
 );
 
-export function sanitizeCutoutPortraitSets(value) {
+export function sanitizePhantomPortraitSets(value) {
   const items = [];
   const ids = new Set();
   // A legacy override can coexist with all 12 previously saved custom sets.
   const candidates = Array.isArray(value?.items)
-    ? value.items.slice(0, MAX_CUTOUT_PORTRAIT_SETS + 1)
+    ? value.items.slice(0, MAX_PHANTOM_PORTRAIT_SETS + 1)
     : [];
   let customCount = 0;
   for (const item of candidates) {
-    if (!isCutoutPortraitId(item?.id) || ids.has(item.id)) continue;
-    if (item.id !== LEGACY_CUTOUT_PORTRAIT_ID) {
-      if (customCount >= MAX_CUTOUT_PORTRAIT_SETS) continue;
+    if (!isPhantomPortraitId(item?.id) || ids.has(item.id)) continue;
+    if (item.id !== LEGACY_PHANTOM_PORTRAIT_ID) {
+      if (customCount >= MAX_PHANTOM_PORTRAIT_SETS) continue;
       customCount += 1;
     }
     ids.add(item.id);
-    const fields = CUTOUT_PORTRAIT_FIELDS.map((key) => [
+    const fields = PHANTOM_PORTRAIT_FIELDS.map((key) => [
       key,
       sanitizeOutputAppearanceSetting(key, item[key]) ??
-        CUTOUT_PORTRAIT_DEFAULTS[key],
+        PHANTOM_PORTRAIT_DEFAULTS[key],
     ]);
     items.push({ id: item.id, ...Object.fromEntries(fields) });
   }
   return { activeId: ids.has(value?.activeId) ? value.activeId : '', items };
 }
 
-export function migrateLegacyCutoutPortraitSettings(settings) {
-  const entries = CUTOUT_PORTRAIT_FIELDS.map((key) => [
+export function migrateLegacyPhantomPortraitSettings(settings) {
+  const entries = PHANTOM_PORTRAIT_FIELDS.map((key) => [
     key,
     sanitizeOutputAppearanceSetting(key, settings?.[key]) ??
-      CUTOUT_PORTRAIT_DEFAULTS[key],
+      PHANTOM_PORTRAIT_DEFAULTS[key],
   ]);
   if (
-    entries.every(([key, value]) => value === CUTOUT_PORTRAIT_DEFAULTS[key])
+    entries.every(([key, value]) => value === PHANTOM_PORTRAIT_DEFAULTS[key])
   ) {
     return settings;
   }
   const portrait = Object.fromEntries(entries);
   if (
-    !portrait.cutoutArtistName &&
-    !portrait.cutoutPortraitPhoto &&
-    portrait.cutoutPortraitColor === '#f3d648'
+    !portrait.phantomArtistName &&
+    !portrait.phantomPortraitPhoto &&
+    portrait.phantomPortraitColor === '#f3d648'
   ) {
     // The old built-in first tile stored its yellow default as an ordinary color.
-    return { ...settings, cutoutPortraitColor: '' };
+    return { ...settings, phantomPortraitColor: '' };
   }
-  const { activeId, items } = sanitizeCutoutPortraitSets(
-    settings.cutoutPortraitSets,
+  const { activeId, items } = sanitizePhantomPortraitSets(
+    settings.phantomPortraitSets,
   );
   const existing = items.find(
     (item) =>
-      item.id === LEGACY_CUTOUT_PORTRAIT_ID ||
+      item.id === LEGACY_PHANTOM_PORTRAIT_ID ||
       entries.every(([key, value]) => item[key] === value),
   );
-  const id = existing?.id ?? LEGACY_CUTOUT_PORTRAIT_ID;
+  const id = existing?.id ?? LEGACY_PHANTOM_PORTRAIT_ID;
   return {
     ...settings,
-    ...CUTOUT_PORTRAIT_DEFAULTS,
-    cutoutPortraitSets: {
+    ...PHANTOM_PORTRAIT_DEFAULTS,
+    phantomPortraitSets: {
       activeId: activeId || id,
       items: existing ? items : [{ id, ...portrait }, ...items],
     },
@@ -1486,7 +1489,7 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   } else if (baseField.control === 'color') {
     sanitized =
       typeof value === 'string' &&
-      (COLOR_RE.test(value) || (key === 'cutoutPortraitColor' && value === ''))
+      (COLOR_RE.test(value) || (key === 'phantomPortraitColor' && value === ''))
         ? value.toLowerCase()
         : undefined;
   } else if (baseField.control === 'range') {
@@ -1503,7 +1506,7 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
       .toWellFormed();
   } else if (
     baseField.control === 'portrait-photo' &&
-    (value === '' || isCutoutPortraitId(value))
+    (value === '' || isPhantomPortraitId(value))
   ) {
     sanitized = value;
   }
@@ -1646,8 +1649,8 @@ export function normalizeOutputAppearance(settings = {}, options = {}) {
   const normalized = {};
   const templateId = String(options.templateId ?? '');
   const portraitSet =
-    templateId === 'cutout-dialogue'
-      ? activeCutoutPortraitSet(settings?.cutoutPortraitSets)
+    templateId === 'phantom-thieves'
+      ? activePhantomPortraitSet(settings?.phantomPortraitSets)
       : undefined;
   const compatibleFields = new Map(
     (templateId

@@ -3,10 +3,10 @@ import { computed, useTemplateRef } from 'vue';
 import gsap from 'gsap';
 import { outputLocalFontCssValue } from '../../../../shared/outputAppearance.mjs';
 import {
-  clearCutoutDialogue,
-  renderCutoutDialogue,
-} from '../../../../overlay/lyrics/cutoutDialogue.mjs';
-import '../../../../overlay/lyrics/cutoutDialogue.css';
+  clearPhantomThieves,
+  renderPhantomThieves,
+} from '../../../../overlay/lyrics/phantomThieves.mjs';
+import '../../../../overlay/lyrics/phantomThieves.css';
 import { useOutputPreviewMotion } from '../../../composables/output/useOutputPreviewMotion.js';
 
 const props = defineProps({
@@ -24,8 +24,8 @@ const fontStyle = computed(() => {
       rounded: 'var(--ui-output-preview-font-rounded)',
     }[fontFamily] ?? outputLocalFontCssValue(fontFamily);
   return {
-    '--cutout-font': stack,
-    '--cutout-font-scale': { small: 0.85, large: 1.2 }[fontScale] ?? 1,
+    '--phantom-font': stack,
+    '--phantom-font-scale': { small: 0.85, large: 1.2 }[fontScale] ?? 1,
   };
 });
 function renderDemo(playing = false, next = false) {
@@ -35,7 +35,7 @@ function renderDemo(playing = false, next = false) {
   const currentText = next
     ? lyrics?.next
     : (frame?.currentText ?? lyrics?.current);
-  renderCutoutDialogue(
+  renderPhantomThieves(
     node,
     {
       visible: Boolean(currentText),
@@ -44,12 +44,12 @@ function renderDemo(playing = false, next = false) {
       language: frame?.language ?? lyrics?.language,
       lineIndex: (frame?.lineIndex ?? lyrics?.lineIndex ?? 0) + Number(next),
       lineRemainingMs: 2000,
-      cutoutDialogue: {
-        trackId: frame?.cutoutDialogue?.trackId ?? track?.id,
+      phantomThieves: {
+        trackId: frame?.phantomThieves?.trackId ?? track?.id,
         artist: track?.artist,
         previousText: next
           ? lyrics?.current
-          : frame?.cutoutDialogue?.previousText,
+          : frame?.phantomThieves?.previousText,
         ageMs: 0,
         lineDurationMs: 2000,
         playing,
@@ -74,7 +74,7 @@ useOutputPreviewMotion({
     timeline.call(() => renderDemo(true), [], 4);
     return () => {
       timeline.kill();
-      clearCutoutDialogue(stage.value);
+      clearPhantomThieves(stage.value);
     };
   },
   stop: renderDemo,
@@ -82,5 +82,5 @@ useOutputPreviewMotion({
 </script>
 
 <template>
-  <div ref="stage" class="cutout-dialogue" :style="fontStyle" hidden></div>
+  <div ref="stage" class="phantom-thieves" :style="fontStyle" hidden></div>
 </template>

@@ -36,7 +36,7 @@ import {
   drawPortraitCrop,
   portraitMaskInput,
   sharpenPortraitMask,
-} from './cutoutPortraitImage.js';
+} from './phantomPortraitImage.js';
 import { usePortraitRetouch } from './usePortraitRetouch.js';
 import { usePortraitFraming } from './usePortraitFraming.js';
 
@@ -220,7 +220,7 @@ async function removeBackground() {
       error.value =
         {
           'no-subject': 'outputPanel.portrait.noSubject',
-          'model-unavailable': 'outputPanel.portrait.cutoutModelUnavailable',
+          'model-unavailable': 'outputPanel.portrait.phantomModelUnavailable',
           busy: 'outputPanel.portrait.cutoutBusy',
         }[result?.status] ?? 'outputPanel.portrait.cutoutFailed';
     }

@@ -14,7 +14,7 @@
 | 順序 | 提案                              | Working ID         | 來源時間／turn ID                                                  |
 | ---- | --------------------------------- | ------------------ | ------------------------------------------------------------------ |
 | 1    | [魚眼鏡筒](fisheye-lens.md)       | `fisheye-lens`     | 07:32；`01a12d4f-dc61-7bf2-a0a7-e56649e3ac8c`                      |
-| 2    | [幻影怪盜](cutout-dialogue.md)    | `cutout-dialogue`  | 08:03；`01a12d6b-9bab-7d22-9198-14b4fd15da33`                      |
+| 2    | [幻影怪盜](phantom-thieves.md)    | `phantom-thieves`  | 08:03；`01a12d6b-9bab-7d22-9198-14b4fd15da33`                      |
 | 3    | [寬銀幕字幕](cinema-letterbox.md) | `cinema-letterbox` | 08:12；`01a12d73-ebdf-7571-8447-71b4900f2b30`                      |
 | 4    | [直書白帶](vertical-ribbons.md)   | `vertical-ribbons` | 08:17 提出、08:18 回覆收錄；`01a12d78-5ab5-7a73-9b27-2a655f163e55` |
 

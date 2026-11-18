@@ -87,7 +87,7 @@ describe('registerMediaProtocol', () => {
     async (source, id) => {
       const { handler, resolvePortraitAsset } = setup();
       resolvePortraitAsset.mockResolvedValueOnce('E:\\Library\\portrait.webp');
-      const url = `utawakui-media://cutout-portrait/${source}/${id}`;
+      const url = `utawakui-media://phantom-portrait/${source}/${id}`;
       expect((await handler(request(url))).status).toBe(206);
       expect(resolvePortraitAsset).toHaveBeenCalledWith(
         'E:\\Library',
@@ -215,7 +215,7 @@ describe('registerMediaProtocol', () => {
     resolvePortraitAsset.mockRejectedValueOnce(error);
 
     const response = await handler(
-      request('utawakui-media://cutout-portrait/artist/track-a'),
+      request('utawakui-media://phantom-portrait/artist/track-a'),
     );
 
     expect(response.status).toBe(404);
@@ -230,7 +230,7 @@ describe('registerMediaProtocol', () => {
     const { handler } = setup();
 
     const response = await handler(
-      request('utawakui-media://cutout-portrait/artist/track-a'),
+      request('utawakui-media://phantom-portrait/artist/track-a'),
     );
 
     expect(response.status).toBe(404);
@@ -248,7 +248,7 @@ describe('registerMediaProtocol', () => {
 
     const response = await handler(
       request(
-        'utawakui-media://cutout-portrait/custom/00000000-0000-4000-8000-000000000011',
+        'utawakui-media://phantom-portrait/custom/00000000-0000-4000-8000-000000000011',
       ),
     );
 
@@ -263,11 +263,11 @@ describe('registerMediaProtocol', () => {
     'utawakui-media://playlist-cover/id/cover.webp/ignored',
     'utawakui-media://artist-photo/artist-0123456789abcdef',
     'utawakui-media://artist-photo/id/photo.jpg/ignored',
-    'utawakui-media://cutout-portrait/artist',
-    'utawakui-media://cutout-portrait/artist/track-a/extra',
-    'utawakui-media://cutout-portrait/artist/..%2Fprivate',
-    'utawakui-media://cutout-portrait/custom/file.png',
-    'utawakui-media://cutout-portrait/other/00000000-0000-4000-8000-000000000011',
+    'utawakui-media://phantom-portrait/artist',
+    'utawakui-media://phantom-portrait/artist/track-a/extra',
+    'utawakui-media://phantom-portrait/artist/..%2Fprivate',
+    'utawakui-media://phantom-portrait/custom/file.png',
+    'utawakui-media://phantom-portrait/other/00000000-0000-4000-8000-000000000011',
     'utawakui-media://folder-asset/asset-1',
     'utawakui-media://folder-asset/asset-1/image.png/ignored',
     'utawakui-media://session-cover/id',

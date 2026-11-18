@@ -1,5 +1,5 @@
 import {
-  cutoutPortraitTone,
+  phantomPortraitTone,
   OUTPUT_APPEARANCE_DEFAULTS,
 } from '../../shared/outputAppearance.mjs';
 import {
@@ -25,7 +25,7 @@ const words = new Intl.Segmenter(undefined, { granularity: 'word' });
 const kana = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
 const hangul = /\p{Script=Hangul}/u;
 const latin = /^[\p{Script=Latin}\P{L}]+$/u;
-const cutoutNameLetters =
+const phantomNameLetters =
   /^[\p{Script=Latin}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\P{L}]+$/u;
 const modeCorners = {
   radial: 'top-left',
@@ -39,7 +39,7 @@ function characters(text) {
   return Array.from(graphemes.segment(text), ({ segment }) => segment);
 }
 
-export function cutoutPhrases(text) {
+export function phantomPhrases(text) {
   const chunks =
     text.match(/[^，、。！？,!?]+[，、。！？,!?]*|[，、。！？,!?]+/gu) ?? [];
   const phrases = [];
@@ -78,7 +78,7 @@ function add(parent, className, text = '') {
   return node;
 }
 
-export function cutoutFramePoints(kind, width, height, unit) {
+export function phantomFramePoints(kind, width, height, unit) {
   if (kind === 'portrait') {
     return [
       [
@@ -189,13 +189,13 @@ export function cutoutFramePoints(kind, width, height, unit) {
 
 function addFrame(parent, kind) {
   const document = parent.ownerDocument;
-  const frame = add(parent, 'cutout-dialogue__card-frame');
+  const frame = add(parent, 'phantom-thieves__card-frame');
   frame.dataset.frame = kind;
   frame.setAttribute('aria-hidden', 'true');
   const svg = document.createElementNS(svgNamespace, 'svg');
   const polygons = frameParts[kind].map((part) => {
     const polygon = document.createElementNS(svgNamespace, 'polygon');
-    polygon.setAttribute('class', `cutout-dialogue__frame-${part}`);
+    polygon.setAttribute('class', `phantom-thieves__frame-${part}`);
     svg.append(polygon);
     return polygon;
   });
@@ -207,8 +207,8 @@ function addFrame(parent, kind) {
       const { clientWidth: width, clientHeight: height } = parent;
       if (!width || !height) return;
       svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-      svg.style.setProperty('--cutout-frame-stroke', `${unit * 0.17}px`);
-      cutoutFramePoints(kind, width, height, unit).forEach((points, index) => {
+      svg.style.setProperty('--phantom-frame-stroke', `${unit * 0.17}px`);
+      phantomFramePoints(kind, width, height, unit).forEach((points, index) => {
         polygons[index].setAttribute(
           'points',
           points.map(([px, py]) => `${px},${py}`).join(' '),
@@ -227,18 +227,18 @@ function dialogueLanguage(text, language = 'und') {
 }
 
 function addNameplate(card, artist) {
-  const plate = add(card, 'cutout-dialogue__name');
-  plate.style.setProperty('--cutout-name-tail-x', `${sideCardTailX}cqw`);
+  const plate = add(card, 'phantom-thieves__name');
+  plate.style.setProperty('--phantom-name-tail-x', `${sideCardTailX}cqw`);
   plate.style.setProperty(
-    '--cutout-name-tail-bottom',
+    '--phantom-name-tail-bottom',
     `${nameplateTailBottom}cqw`,
   );
   plate.dir = 'auto';
   plate.lang = dialogueLanguage(artist);
   plate.setAttribute('role', 'img');
   plate.setAttribute('aria-label', artist);
-  const label = add(plate, 'cutout-dialogue__name-label');
-  if (!cutoutNameLetters.test(artist)) {
+  const label = add(plate, 'phantom-thieves__name-label');
+  if (!phantomNameLetters.test(artist)) {
     label.textContent = artist;
     return plate;
   }
@@ -251,7 +251,7 @@ function addNameplate(card, artist) {
     (_, index) => index % 5 === firstAccent,
   )) {
     if (index > start) label.append(artist.slice(start, index));
-    add(label, 'cutout-dialogue__name-accent', segment);
+    add(label, 'phantom-thieves__name-accent', segment);
     start = index + segment.length;
   }
   if (start < artist.length) label.append(artist.slice(start));
@@ -259,12 +259,12 @@ function addNameplate(card, artist) {
 }
 
 function addCopy(card, text, { paragraph = false } = {}) {
-  const copy = add(card, 'cutout-dialogue__copy', text);
+  const copy = add(card, 'phantom-thieves__copy', text);
   copy.dir = 'auto';
   if (!paragraph) {
     const length = characters(text).length;
     copy.style.setProperty(
-      '--cutout-copy-scale',
+      '--phantom-copy-scale',
       Math.max(0.58, Math.min(1, 37 / length)),
     );
   }
@@ -331,7 +331,7 @@ export function planRansomRows(tokens, capacity) {
   };
 }
 
-function watchCutoutLayout(stage, reflow) {
+function watchPhantomLayout(stage, reflow) {
   const view = stage.ownerDocument.defaultView;
   if (!view) return undefined;
   reflow();
@@ -348,7 +348,7 @@ function watchCutoutLayout(stage, reflow) {
 }
 
 function watchFrames(stage, frames, fit) {
-  return watchCutoutLayout(stage, () => {
+  return watchPhantomLayout(stage, () => {
     fit?.();
     const unit = stage.clientWidth / 100;
     if (unit > 0) for (const frame of frames) frame.resize(unit);
@@ -362,8 +362,8 @@ function fitSideCard(card, copy) {
   const range = ownerDocument.createRange();
   return () => {
     card.style.setProperty(
-      '--cutout-card-width',
-      'var(--cutout-side-card-max-width)',
+      '--phantom-card-width',
+      'var(--phantom-side-card-max-width)',
     );
     copy.textContent = text;
     delete copy.dataset.plannedRows;
@@ -383,7 +383,7 @@ function fitSideCard(card, copy) {
         keepJapaneseContractions: true,
       });
     } else {
-      card.style.removeProperty('--cutout-card-width');
+      card.style.removeProperty('--phantom-card-width');
     }
     delete copy.dataset.measuring;
     if (fitsOneLine || rows) copy.dataset.plannedRows = '';
@@ -397,7 +397,7 @@ const ransomEdges = ['straight', 'slant', 'taper'];
 
 function ransomRandom(frame) {
   const identity = JSON.stringify([
-    frame.cutoutDialogue?.trackId,
+    frame.phantomThieves?.trackId,
     frame.lineIndex,
     frame.currentText,
   ]);
@@ -411,7 +411,7 @@ function ransomRandom(frame) {
 }
 
 function renderRansom(stage, frame, accents) {
-  const line = add(stage, 'cutout-dialogue__ransom cutout-dialogue__corner');
+  const line = add(stage, 'phantom-thieves__ransom phantom-thieves__corner');
   line.dir = 'auto';
   const targets = [];
   const pick = ransomRandom(frame);
@@ -427,11 +427,11 @@ function renderRansom(stage, frame, accents) {
     const gap = /^\s+$/u.test(text);
     const node = add(
       line,
-      gap ? 'cutout-dialogue__gap' : 'cutout-dialogue__word',
+      gap ? 'phantom-thieves__gap' : 'phantom-thieves__word',
       gap ? ' ' : '',
     );
     if (!gap) {
-      const tile = add(node, 'cutout-dialogue__tile', text);
+      const tile = add(node, 'phantom-thieves__tile', text);
       const word = characters(text).length > 1;
       if (word) tile.dataset.ransomWord = '';
       const paper = pick(20);
@@ -456,7 +456,7 @@ function renderRansom(stage, frame, accents) {
       tile.dataset.ransomEdge = ransomEdges[pick(ransomEdges.length)];
       if (pick(2)) tile.dataset.ransomMirrored = '';
       const tilt = (pick(7) - 3) * (word ? 0.5 : 1);
-      tile.style.setProperty('--cutout-ransom-tilt', `${tilt}deg`);
+      tile.style.setProperty('--phantom-ransom-tilt', `${tilt}deg`);
       targets.push(tile);
     }
     return { text, node, gap };
@@ -487,7 +487,7 @@ function renderRansom(stage, frame, accents) {
     if (width <= 1) return;
     rowBreak.remove();
     if (hiddenGap) hiddenGap.hidden = false;
-    line.style.setProperty('--cutout-copy-scale', 1);
+    line.style.setProperty('--phantom-copy-scale', 1);
     const { index, scale } = planRansomRows(
       tokens.map(({ text, node }) => ({
         text,
@@ -501,11 +501,11 @@ function renderRansom(stage, frame, accents) {
       hiddenGap = gap.gap ? gap.node : undefined;
       if (hiddenGap) hiddenGap.hidden = true;
     }
-    line.style.setProperty('--cutout-copy-scale', scale);
+    line.style.setProperty('--phantom-copy-scale', scale);
   }
   return {
     targets,
-    dispose: watchCutoutLayout(stage, reflow),
+    dispose: watchPhantomLayout(stage, reflow),
   };
 }
 
@@ -532,19 +532,19 @@ function hasTransparentPortraitBackground(image) {
 
 function addPortraitPhoto(portrait, { customPhoto, artistPhoto }) {
   if (!customPhoto && !artistPhoto) return;
-  const region = add(portrait, 'cutout-dialogue__portrait-region');
-  const [, , fill] = cutoutFramePoints('portrait', 100, 100, 1);
+  const region = add(portrait, 'phantom-thieves__portrait-region');
+  const [, , fill] = phantomFramePoints('portrait', 100, 100, 1);
   const corners = fill.map(([x, y]) => `${x}% ${y}%`);
   region.style.setProperty(
-    '--cutout-portrait-photo-clip',
+    '--phantom-portrait-photo-clip',
     `polygon(${corners.join(', ')})`,
   );
   region.style.setProperty(
-    '--cutout-portrait-silhouette-clip',
-    `polygon(0 var(--cutout-portrait-silhouette-top), 100% var(--cutout-portrait-silhouette-top), ${corners.slice(2).join(', ')})`,
+    '--phantom-portrait-silhouette-clip',
+    `polygon(0 var(--phantom-portrait-silhouette-top), 100% var(--phantom-portrait-silhouette-top), ${corners.slice(2).join(', ')})`,
   );
   const image = portrait.ownerDocument.createElement('img');
-  image.className = 'cutout-dialogue__portrait-image';
+  image.className = 'phantom-thieves__portrait-image';
   image.alt = '';
   image.decoding = 'async';
   image.dataset.source = customPhoto ? 'custom' : 'artist';
@@ -572,15 +572,15 @@ function addPortraitPhoto(portrait, { customPhoto, artistPhoto }) {
 
 function content(stage, frame, mode, shape, cardStyle, personalization) {
   const { currentText, lineIndex } = frame;
-  const { artist, previousText } = frame.cutoutDialogue ?? {};
+  const { artist, previousText } = frame.phantomThieves ?? {};
   if (mode === 'choice-stack') {
-    add(stage, 'cutout-dialogue__choice-panel').setAttribute(
+    add(stage, 'phantom-thieves__choice-panel').setAttribute(
       'aria-hidden',
       'true',
     );
     const stack = add(
       stage,
-      'cutout-dialogue__choices cutout-dialogue__corner',
+      'phantom-thieves__choices phantom-thieves__corner',
     );
     const targets = [
       ['previous', previousText],
@@ -588,7 +588,7 @@ function content(stage, frame, mode, shape, cardStyle, personalization) {
       ['next', frame.nextText],
     ].flatMap(([position, text]) => {
       if (!text?.trim()) return [];
-      const row = add(stack, 'cutout-dialogue__choice');
+      const row = add(stack, 'phantom-thieves__choice');
       row.dataset.choice = position;
       if (position !== 'current') row.setAttribute('aria-hidden', 'true');
       const copy = addCopy(row, text.trim(), { paragraph: true });
@@ -600,12 +600,12 @@ function content(stage, frame, mode, shape, cardStyle, personalization) {
   if (mode === 'radial') {
     const cluster = add(
       stage,
-      'cutout-dialogue__radial cutout-dialogue__corner',
+      'phantom-thieves__radial phantom-thieves__corner',
     );
     const frames = [];
-    const targets = cutoutPhrases(currentText).map((phrase) => {
-      const lane = add(cluster, 'cutout-dialogue__lane');
-      const strip = add(lane, 'cutout-dialogue__strip');
+    const targets = phantomPhrases(currentText).map((phrase) => {
+      const lane = add(cluster, 'phantom-thieves__lane');
+      const strip = add(lane, 'phantom-thieves__strip');
       const copy = addCopy(strip, phrase);
       frames.push(addFrame(strip, 'strip'));
       return copy;
@@ -614,36 +614,36 @@ function content(stage, frame, mode, shape, cardStyle, personalization) {
   }
   const cluster = add(
     stage,
-    'cutout-dialogue__cluster cutout-dialogue__corner',
+    'phantom-thieves__cluster phantom-thieves__corner',
   );
   let messageList = cluster;
   if (mode === 'chat' && shape === 'phone') {
-    messageList = add(cluster, 'cutout-dialogue__phone-screen');
-    if (artist) add(messageList, 'cutout-dialogue__phone-name', artist);
+    messageList = add(cluster, 'phantom-thieves__phone-screen');
+    if (artist) add(messageList, 'phantom-thieves__phone-name', artist);
   }
   const frames = [];
   if (mode === 'chat' && previousText && shape !== 'thought') {
     const previous = add(
       messageList,
-      'cutout-dialogue__card cutout-dialogue__previous',
+      'phantom-thieves__card phantom-thieves__previous',
     );
     addCopy(previous, previousText);
     if (shape === 'stacked') frames.push(addFrame(previous, 'collage'));
   }
   const card = add(
     messageList,
-    'cutout-dialogue__card cutout-dialogue__active',
+    'phantom-thieves__card phantom-thieves__active',
   );
   if (mode === 'side-card') {
     const portrait =
       cardStyle === 'portrait'
-        ? add(cluster, 'cutout-dialogue__portrait')
+        ? add(cluster, 'phantom-thieves__portrait')
         : null;
     if (portrait) {
       portrait.setAttribute('aria-hidden', 'true');
       if (personalization.color) {
         portrait.style.setProperty(
-          '--cutout-portrait-fill',
+          '--phantom-portrait-fill',
           personalization.color,
         );
       }
@@ -759,16 +759,16 @@ function buildMotion(gsap, targets, mode, duration, fromRight, portraitEnd) {
     );
     timeline.fromTo(
       marker,
-      { '--cutout-marker-scale': 0 },
-      { '--cutout-marker-scale': 1, duration: 2 * tick },
+      { '--phantom-marker-scale': 0 },
+      { '--phantom-marker-scale': 1, duration: 2 * tick },
       8 * tick,
     );
     if (duration > 10 * tick)
       timeline.fromTo(
         marker,
-        { '--cutout-marker-scale': 1 },
+        { '--phantom-marker-scale': 1 },
         {
-          '--cutout-marker-scale': 0.84,
+          '--phantom-marker-scale': 0.84,
           duration: 0.42,
           yoyo: true,
           repeat: Math.ceil((duration - 10 * tick) / 0.42),
@@ -797,7 +797,7 @@ function buildMotion(gsap, targets, mode, duration, fromRight, portraitEnd) {
   return timeline;
 }
 
-export function clearCutoutDialogue(stage) {
+export function clearPhantomThieves(stage) {
   const scene = scenes.get(stage);
   if (!scene) return;
   scene.dispose?.();
@@ -807,39 +807,39 @@ export function clearCutoutDialogue(stage) {
   scenes.delete(stage);
 }
 
-export function renderCutoutDialogue(stage, frame, options = {}) {
+export function renderPhantomThieves(stage, frame, options = {}) {
   if (!stage) return;
   if (!frame.visible || !frame.currentText) {
-    clearCutoutDialogue(stage);
+    clearPhantomThieves(stage);
     return;
   }
   const mode =
-    options.appearance?.cutoutMode ?? OUTPUT_APPEARANCE_DEFAULTS.cutoutMode;
-  const shape = options.appearance?.cutoutChatShape ?? 'bubble';
+    options.appearance?.phantomMode ?? OUTPUT_APPEARANCE_DEFAULTS.phantomMode;
+  const shape = options.appearance?.phantomChatShape ?? 'bubble';
   const cardStyle =
-    options.appearance?.cutoutCardStyle ??
-    OUTPUT_APPEARANCE_DEFAULTS.cutoutCardStyle;
-  const position = options.appearance?.cutoutCorner ?? 'auto';
+    options.appearance?.phantomCardStyle ??
+    OUTPUT_APPEARANCE_DEFAULTS.phantomCardStyle;
+  const position = options.appearance?.phantomCorner ?? 'auto';
   const corner = position === 'auto' ? modeCorners[mode] : position;
   const accentFont =
-    mode === 'ransom' ? options.appearance?.cutoutRansomFont : undefined;
+    mode === 'ransom' ? options.appearance?.phantomRansomFont : undefined;
   const accents = accentFont === 'kaitou' || accentFont === 'kaibunsyo';
-  const timing = frame.cutoutDialogue;
+  const timing = frame.phantomThieves;
   const appearance = options.appearance;
   const personalization =
     mode === 'side-card'
       ? {
-          name: appearance?.cutoutArtistName,
+          name: appearance?.phantomArtistName,
           color:
-            appearance?.cutoutPortraitColor ||
-            `var(--cutout-portrait-tone-${cutoutPortraitTone(appearance?.cutoutArtistName || timing?.artist, timing?.trackId)})`,
+            appearance?.phantomPortraitColor ||
+            `var(--phantom-portrait-tone-${phantomPortraitTone(appearance?.phantomArtistName || timing?.artist, timing?.trackId)})`,
           customPhoto:
-            options.portraitPhotos && appearance?.cutoutPortraitPhoto
-              ? `/media/cutout-portrait/custom/${encodeURIComponent(appearance.cutoutPortraitPhoto)}`
+            options.portraitPhotos && appearance?.phantomPortraitPhoto
+              ? `/media/phantom-portrait/custom/${encodeURIComponent(appearance.phantomPortraitPhoto)}`
               : null,
           artistPhoto:
             options.portraitPhotos && timing?.trackId
-              ? `/media/cutout-portrait/artist/${encodeURIComponent(timing.trackId)}`
+              ? `/media/phantom-portrait/artist/${encodeURIComponent(timing.trackId)}`
               : null,
         }
       : null;
@@ -874,7 +874,7 @@ export function renderCutoutDialogue(stage, frame, options = {}) {
   ]);
   let scene = scenes.get(stage);
   if (scene?.key !== key) {
-    clearCutoutDialogue(stage);
+    clearPhantomThieves(stage);
     stage.dataset.mode = mode;
     delete stage.dataset.alternate;
     stage.dataset.chatShape = shape;

@@ -2,8 +2,8 @@
 import { onBeforeUnmount, shallowRef } from 'vue';
 import { ImagePlus, RotateCcw } from '../../icons/index.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
-import ObsCutoutPortraitImageModal from './ObsCutoutPortraitImageModal.vue';
-import ObsCutoutPortraitThumb from './ObsCutoutPortraitThumb.vue';
+import ObsPhantomPortraitImageModal from './ObsPhantomPortraitImageModal.vue';
+import ObsPhantomPortraitThumb from './ObsPhantomPortraitThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiStack from '../ui/UiStack.vue';
@@ -92,7 +92,7 @@ function resetPhoto() {
       :aria-label="label"
     >
       <UiStack align="center" :gap="3">
-        <ObsCutoutPortraitThumb
+        <ObsPhantomPortraitThumb
           size="var(--ui-artwork-size-lg)"
           :photo-id="modelValue"
           :background="background"
@@ -140,7 +140,7 @@ function resetPhoto() {
       }}</UiHint>
     </UiStack>
   </ObsAppearanceControlRow>
-  <ObsCutoutPortraitImageModal
+  <ObsPhantomPortraitImageModal
     v-if="photoDraft"
     :photo="photoDraft"
     @close="closePhoto"

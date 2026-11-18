@@ -22,7 +22,7 @@ const {
 } = require('./artists/artistPhotos');
 const { loadIndex } = require('./library/metadataIndex');
 const { resolveTrackAudioPath } = require('./library/paths');
-const { isCutoutPortraitId } = require('../../shared/outputAppearance.mjs');
+const { isPhantomPortraitId } = require('../../shared/outputAppearance.mjs');
 const { maxEditedEdge } = require('../../shared/outputPortraitImage.json');
 
 const PORTRAIT_DIR = 'output-portraits';
@@ -83,7 +83,7 @@ async function writeOutputPortrait(directory, buffer, { edited = false } = {}) {
 }
 
 async function resolveOutputPortrait(directory, id) {
-  if (!isCutoutPortraitId(id)) return null;
+  if (!isPhantomPortraitId(id)) return null;
   const root = path.join(await fsp.realpath(directory), PORTRAIT_DIR);
   for (const extension of PORTRAIT_EXTENSIONS) {
     const candidate = path.join(root, id + extension);

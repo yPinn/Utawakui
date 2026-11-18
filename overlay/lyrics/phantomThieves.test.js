@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  clearCutoutDialogue,
-  cutoutFramePoints,
-  cutoutPhrases,
+  clearPhantomThieves,
+  phantomFramePoints,
+  phantomPhrases,
   planRansomRows,
-  renderCutoutDialogue,
-} from './cutoutDialogue.mjs';
+  renderPhantomThieves,
+} from './phantomThieves.mjs';
 import { createOutputPreviewSnapshot } from '../../shared/presentation/outputPreviewScene.mjs';
 import { selectLyricsOverlayFrame } from '../../shared/presentation/state.mjs';
 
-describe('Cutout Dialogue', () => {
+describe('Phantom Thieves', () => {
   function ransomLayout(units, capacity) {
     const tokens = units.map(([text, width]) => ({ text, width }));
     const { index, scale } = planRansomRows(tokens, capacity);
@@ -147,12 +147,12 @@ describe('Cutout Dialogue', () => {
     snapshot.playback.positionMs = lines[1].startMs + 100;
     snapshot.playback.status = 'paused';
     const frame = selectLyricsOverlayFrame(snapshot, {
-      templateId: 'cutout-dialogue',
+      templateId: 'phantom-thieves',
       nowMs: Date.parse(snapshot.generatedAt),
     });
-    const appearance = { cutoutMode: 'choice-stack' };
+    const appearance = { phantomMode: 'choice-stack' };
     const rows = () => stage.children[1].children;
-    renderCutoutDialogue(stage, frame, { appearance });
+    renderPhantomThieves(stage, frame, { appearance });
     expect(stage.dataset.corner).toBe('bottom-right');
     expect(rows().map((row) => row.dataset.choice)).toEqual([
       'previous',
@@ -169,10 +169,10 @@ describe('Cutout Dialogue', () => {
       undefined,
       'true',
     ]);
-    renderCutoutDialogue(stage, { ...frame, nextText: '' }, { appearance });
+    renderPhantomThieves(stage, { ...frame, nextText: '' }, { appearance });
     expect(rows()).toHaveLength(2);
-    renderCutoutDialogue(stage, frame, {
-      appearance: { ...appearance, cutoutCorner: 'top-left' },
+    renderPhantomThieves(stage, frame, {
+      appearance: { ...appearance, phantomCorner: 'top-left' },
     });
     expect(stage.dataset.corner).toBe('top-left');
   });
@@ -186,16 +186,16 @@ describe('Cutout Dialogue', () => {
       lineIndex: 0,
     };
     const options = {
-      appearance: { cutoutMode: 'ransom' },
+      appearance: { phantomMode: 'ransom' },
       reducedMotion: true,
     };
     const tiles = () =>
       stage.children[0].children.flatMap((word) => word.children);
-    renderCutoutDialogue(stage, frame, options);
+    renderPhantomThieves(stage, frame, options);
     expect(tiles().every((tile) => !tile.dataset.ransomAccent)).toBe(true);
-    renderCutoutDialogue(stage, frame, {
+    renderPhantomThieves(stage, frame, {
       ...options,
-      appearance: { cutoutMode: 'ransom', cutoutRansomFont: 'kaibunsyo' },
+      appearance: { phantomMode: 'ransom', phantomRansomFont: 'kaibunsyo' },
     });
     expect(stage.dataset.ransomFont).toBe('kaibunsyo');
     const accents = tiles().filter((tile) => tile.dataset.ransomAccent);
@@ -239,23 +239,23 @@ describe('Cutout Dialogue', () => {
 
   it('keeps each ransom line reproducible and varies all paper treatments between lines', () => {
     const stage = createTestStage();
-    const appearance = { cutoutMode: 'ransom', cutoutRansomFont: 'kaitou' };
+    const appearance = { phantomMode: 'ransom', phantomRansomFont: 'kaitou' };
     const currentText = '同一句歌詞重唱 Keep singing under the city lights';
     const render = (lineIndex) => {
-      renderCutoutDialogue(
+      renderPhantomThieves(
         stage,
         {
           visible: true,
           currentText,
           lineIndex,
-          cutoutDialogue: { trackId: 'track' },
+          phantomThieves: { trackId: 'track' },
         },
         { appearance, reducedMotion: true },
       );
       return stage.children[0].children.flatMap((word) =>
         word.children.map((tile) => ({
           ...tile.dataset,
-          tilt: tile.style['--cutout-ransom-tilt'],
+          tilt: tile.style['--phantom-ransom-tilt'],
         })),
       );
     };
@@ -272,7 +272,7 @@ describe('Cutout Dialogue', () => {
         first.map((tile) => tile[property]),
       );
     }
-    clearCutoutDialogue(stage);
+    clearPhantomThieves(stage);
     expect(render(3)).toEqual(first);
     const redCounts = Array.from(
       { length: 12 },
@@ -288,21 +288,21 @@ describe('Cutout Dialogue', () => {
       visible: true,
       currentText: 'Moonlight',
       lineIndex: 1,
-      cutoutDialogue: { artist: 'Demo Artist', previousText: 'Nightfall' },
+      phantomThieves: { artist: 'Demo Artist', previousText: 'Nightfall' },
     };
-    const render = (cutoutMode, cutoutChatShape) =>
-      renderCutoutDialogue(stage, frame, {
-        appearance: { cutoutMode, cutoutChatShape },
+    const render = (phantomMode, phantomChatShape) =>
+      renderPhantomThieves(stage, frame, {
+        appearance: { phantomMode, phantomChatShape },
         reducedMotion: true,
       });
     render('radial');
     expect(stage.dataset.corner).toBe('top-left');
     expect(stage.children[0].children[0].className).toBe(
-      'cutout-dialogue__lane',
+      'phantom-thieves__lane',
     );
     render('ransom');
     expect(stage.dataset.corner).toBe('bottom-right');
-    expect(stage.children[0].className).toContain('cutout-dialogue__ransom');
+    expect(stage.children[0].className).toContain('phantom-thieves__ransom');
     render('chat', 'stacked');
     expect(stage.dataset.corner).toBe('top-right');
     expect(stage.children[0].children).toHaveLength(2);
@@ -314,9 +314,9 @@ describe('Cutout Dialogue', () => {
     render('side-card');
     expect(stage.dataset.corner).toBe('bottom-left');
     expect(stage.children[0].children[0].children[0].className).toBe(
-      'cutout-dialogue__name',
+      'phantom-thieves__name',
     );
-    renderCutoutDialogue(stage, { visible: false });
+    renderPhantomThieves(stage, { visible: false });
     expect(stage.hidden).toBe(true);
     expect(stage.children).toHaveLength(0);
   });
@@ -326,27 +326,27 @@ describe('Cutout Dialogue', () => {
     const frame = {
       visible: true,
       currentText: 'Moonlight',
-      cutoutDialogue: { artist: 'Demo Artist', previousText: 'Nightfall' },
+      phantomThieves: { artist: 'Demo Artist', previousText: 'Nightfall' },
     };
     const render = (appearance) =>
-      renderCutoutDialogue(stage, frame, { appearance });
+      renderPhantomThieves(stage, frame, { appearance });
     render({
-      cutoutMode: 'chat',
-      cutoutChatShape: 'phone',
-      cutoutCorner: 'bottom-right',
+      phantomMode: 'chat',
+      phantomChatShape: 'phone',
+      phantomCorner: 'bottom-right',
     });
     expect(stage.dataset.corner).toBe('bottom-right');
     const screen = stage.children[0].children[0];
-    expect(screen.className).toBe('cutout-dialogue__phone-screen');
+    expect(screen.className).toBe('phantom-thieves__phone-screen');
     expect(
       screen.children.map(
         (node) => node.children[0]?.textContent ?? node.textContent,
       ),
     ).toEqual(['Demo Artist', 'Nightfall', 'Moonlight']);
-    render({ cutoutMode: 'side-card', cutoutCardStyle: 'portrait' });
+    render({ phantomMode: 'side-card', phantomCardStyle: 'portrait' });
     const [card, portrait] = stage.children[0].children;
-    expect(card.className).toContain('cutout-dialogue__active');
-    expect(portrait.className).toBe('cutout-dialogue__portrait');
+    expect(card.className).toContain('phantom-thieves__active');
+    expect(portrait.className).toBe('phantom-thieves__portrait');
     expect(portrait.attributes['aria-hidden']).toBe('true');
     const [portraitFrame] = portrait.children;
     expect(portraitFrame.dataset.frame).toBe('portrait');
@@ -355,11 +355,11 @@ describe('Cutout Dialogue', () => {
         ({ attributes }) => attributes.class,
       ),
     ).toEqual([
-      'cutout-dialogue__frame-back',
-      'cutout-dialogue__frame-mat',
-      'cutout-dialogue__frame-fill',
+      'phantom-thieves__frame-back',
+      'phantom-thieves__frame-mat',
+      'phantom-thieves__frame-fill',
     ]);
-    render({ cutoutMode: 'side-card', cutoutCardStyle: 'text-only' });
+    render({ phantomMode: 'side-card', phantomCardStyle: 'text-only' });
     expect(stage.children[0].children).toHaveLength(1);
   });
 
@@ -381,43 +381,46 @@ describe('Cutout Dialogue', () => {
     const frame = {
       visible: true,
       currentText: 'Moonlight',
-      cutoutDialogue: { artist: 'Aster', trackId: 'track one' },
+      phantomThieves: { artist: 'Aster', trackId: 'track one' },
     };
-    const appearance = { cutoutMode: 'side-card', cutoutCardStyle: 'portrait' };
-    renderCutoutDialogue(stage, frame, {
+    const appearance = {
+      phantomMode: 'side-card',
+      phantomCardStyle: 'portrait',
+    };
+    renderPhantomThieves(stage, frame, {
       portraitPhotos: true,
       appearance: {
         ...appearance,
-        cutoutArtistName: 'Guest',
-        cutoutPortraitColor: '#4466aa',
-        cutoutPortraitPhoto: id,
+        phantomArtistName: 'Guest',
+        phantomPortraitColor: '#4466aa',
+        phantomPortraitPhoto: id,
       },
     });
     const [card, portrait] = stage.children[0].children;
     expect(card.children[0].attributes['aria-label']).toBe('Guest');
-    expect(portrait.style['--cutout-portrait-fill']).toBe('#4466aa');
+    expect(portrait.style['--phantom-portrait-fill']).toBe('#4466aa');
     const region = portrait.children[1];
     const image = region.children[0];
-    expect(image.src).toBe(`/media/cutout-portrait/custom/${id}`);
+    expect(image.src).toBe(`/media/phantom-portrait/custom/${id}`);
     for (let x = 0; x < 12; x++) pixels[x * 4 + 3] = 0;
     image.onload();
     expect(region.dataset.silhouette).toBe('');
-    expect(region.style['--cutout-portrait-silhouette-clip']).toContain(
-      '0 var(--cutout-portrait-silhouette-top)',
+    expect(region.style['--phantom-portrait-silhouette-clip']).toContain(
+      '0 var(--phantom-portrait-silhouette-top)',
     );
     image.onerror();
-    expect(image.src).toBe('/media/cutout-portrait/artist/track%20one');
+    expect(image.src).toBe('/media/phantom-portrait/artist/track%20one');
     expect(image.dataset.source).toBe('artist');
     image.onload();
     expect(region.dataset.silhouette).toBeUndefined();
 
-    renderCutoutDialogue(stage, frame, { portraitPhotos: true });
+    renderPhantomThieves(stage, frame, { portraitPhotos: true });
     const [resetCard, resetPortrait] = stage.children[0].children;
     expect(stage.dataset.mode).toBe('side-card');
     expect(resetCard.children[0].attributes['aria-label']).toBe('Aster');
     expect(resetPortrait.children[1].children[0].src).toBe(image.src);
-    expect(resetPortrait.style['--cutout-portrait-fill']).toBe(
-      'var(--cutout-portrait-tone-amber)',
+    expect(resetPortrait.style['--phantom-portrait-fill']).toBe(
+      'var(--phantom-portrait-tone-amber)',
     );
   });
 
@@ -425,12 +428,12 @@ describe('Cutout Dialogue', () => {
     const stage = createTestStage();
     const artist = '9A\u0301ster・ほし 👩‍🎤';
     const options = {
-      appearance: { cutoutMode: 'side-card', cutoutCardStyle: 'portrait' },
+      appearance: { phantomMode: 'side-card', phantomCardStyle: 'portrait' },
     };
     const renderName = (currentText) => {
-      renderCutoutDialogue(
+      renderPhantomThieves(
         stage,
-        { visible: true, currentText, cutoutDialogue: { artist } },
+        { visible: true, currentText, phantomThieves: { artist } },
         options,
       );
       const plate = stage.children[0].children[0].children[0];
@@ -444,9 +447,9 @@ describe('Cutout Dialogue', () => {
     expect(first.map(({ text }) => text).join('')).toBe(artist);
     expect(first).toEqual([
       { text: '9' },
-      { text: 'A\u0301', accent: 'cutout-dialogue__name-accent' },
+      { text: 'A\u0301', accent: 'phantom-thieves__name-accent' },
       { text: 'ster・' },
-      { text: 'ほ', accent: 'cutout-dialogue__name-accent' },
+      { text: 'ほ', accent: 'phantom-thieves__name-accent' },
       { text: 'し 👩‍🎤' },
     ]);
     expect(renderName('Sunrise')).toEqual(first);
@@ -465,10 +468,10 @@ describe('Cutout Dialogue', () => {
     'sets the text language and script for %s',
     (currentText, language, lang, script) => {
       const stage = createTestStage();
-      renderCutoutDialogue(
+      renderPhantomThieves(
         stage,
         { visible: true, currentText, language },
-        { appearance: { cutoutMode: 'side-card' } },
+        { appearance: { phantomMode: 'side-card' } },
       );
       const copy = stage.children[0].children[0].children[0];
       expect(copy.lang).toBe(lang);
@@ -485,20 +488,20 @@ describe('Cutout Dialogue', () => {
     ['별빛', '빛'],
   ])('uses the base font and one Kaitou accent for %s', (artist, accent) => {
     const stage = createTestStage();
-    renderCutoutDialogue(
+    renderPhantomThieves(
       stage,
       {
         visible: true,
         currentText: 'Sing with me',
-        cutoutDialogue: { artist },
+        phantomThieves: { artist },
       },
-      { appearance: { cutoutMode: 'side-card' } },
+      { appearance: { phantomMode: 'side-card' } },
     );
     const label = stage.children[0].children[0].children[0].children[0];
     const glyphs = label.children.filter((node) => typeof node !== 'string');
     expect(glyphs).toHaveLength(1);
     expect(glyphs[0]).toMatchObject({
-      className: 'cutout-dialogue__name-accent',
+      className: 'phantom-thieves__name-accent',
       textContent: accent,
     });
     expect(
@@ -510,15 +513,15 @@ describe('Cutout Dialogue', () => {
     'keeps the artist name %s together independently of the lyric language',
     (artist) => {
       const stage = createTestStage();
-      renderCutoutDialogue(
+      renderPhantomThieves(
         stage,
         {
           visible: true,
           currentText: 'Sing with me',
           language: 'en',
-          cutoutDialogue: { artist },
+          phantomThieves: { artist },
         },
-        { appearance: { cutoutMode: 'side-card' } },
+        { appearance: { phantomMode: 'side-card' } },
       );
       const plate = stage.children[0].children[0].children[0];
       expect(plate.dir).toBe('auto');
@@ -531,15 +534,15 @@ describe('Cutout Dialogue', () => {
     const stage = createTestStage();
     const currentText =
       '星空慢慢安靜下來，\nKeep singing with me until the morning comes.';
-    for (const cutoutCardStyle of ['text-only', 'portrait']) {
-      renderCutoutDialogue(
+    for (const phantomCardStyle of ['text-only', 'portrait']) {
+      renderPhantomThieves(
         stage,
         { visible: true, currentText },
-        { appearance: { cutoutMode: 'side-card', cutoutCardStyle } },
+        { appearance: { phantomMode: 'side-card', phantomCardStyle } },
       );
       const copy = stage.children[0].children[0].children[0];
       expect(copy.textContent).toBe(currentText.replace('\n', ' '));
-      expect(copy.style['--cutout-copy-scale']).toBeUndefined();
+      expect(copy.style['--phantom-copy-scale']).toBeUndefined();
     }
   });
 
@@ -563,7 +566,7 @@ describe('Cutout Dialogue', () => {
       getBoundingClientRect() {
         const card = stage.children[0].children[0];
         return {
-          width: card.style['--cutout-card-width'] ? capacity : 4,
+          width: card.style['--phantom-card-width'] ? capacity : 4,
         };
       },
     });
@@ -577,17 +580,17 @@ describe('Cutout Dialogue', () => {
     });
     const currentText =
       '最深的黑夜  是否難以入眠\n輾轉來到　某個起點 又想起了明天';
-    renderCutoutDialogue(
+    renderPhantomThieves(
       stage,
       { visible: true, currentText },
       {
-        appearance: { cutoutMode: 'side-card' },
+        appearance: { phantomMode: 'side-card' },
       },
     );
     const card = stage.children[0].children[0];
     const copy = card.children[0];
-    expect(card.style['--cutout-card-width']).toBe(
-      'var(--cutout-side-card-max-width)',
+    expect(card.style['--phantom-card-width']).toBe(
+      'var(--phantom-side-card-max-width)',
     );
     expect(copy.dataset.plannedRows).toBe('');
     expect(copy.textContent).toBe(
@@ -595,19 +598,19 @@ describe('Cutout Dialogue', () => {
     );
     capacity = 40;
     resized();
-    expect(card.style['--cutout-card-width']).toBeUndefined();
+    expect(card.style['--phantom-card-width']).toBeUndefined();
     expect(copy.dataset.plannedRows).toBe('');
     expect(copy.textContent).toBe(currentText.replace(/\s+/gu, ' '));
 
     capacity = 16;
     const shortText = 'それじゃまた';
-    renderCutoutDialogue(
+    renderPhantomThieves(
       stage,
       { visible: true, currentText: shortText, language: 'ja' },
-      { appearance: { cutoutMode: 'side-card' } },
+      { appearance: { phantomMode: 'side-card' } },
     );
     const shortCard = stage.children[0].children[0];
-    expect(shortCard.style['--cutout-card-width']).toBeUndefined();
+    expect(shortCard.style['--phantom-card-width']).toBeUndefined();
     expect(shortCard.children[0].dataset.plannedRows).toBe('');
     expect(shortCard.children[0].textContent).toBe(shortText);
   });
@@ -615,7 +618,7 @@ describe('Cutout Dialogue', () => {
   it('keeps the nameplate body centered on its text box as the width changes', () => {
     for (const width of [100, 250]) {
       const [[topLeft, topRight, bottomRight, bottomEdge, tip, tail]] =
-        cutoutFramePoints('nameplate', width, 30, 10);
+        phantomFramePoints('nameplate', width, 30, 10);
       expect(topLeft[0] + bottomRight[0]).toBeCloseTo(width);
       expect(topRight[1]).toBeCloseTo(topLeft[1]);
       expect(bottomEdge[1]).toBeCloseTo(bottomRight[1]);
@@ -627,29 +630,29 @@ describe('Cutout Dialogue', () => {
 
   it('aligns the nameplate and dialogue tails regardless of their widths', () => {
     const stage = createTestStage();
-    renderCutoutDialogue(
+    renderPhantomThieves(
       stage,
       {
         visible: true,
         currentText: 'Moonlight',
-        cutoutDialogue: { artist: 'Aster' },
+        phantomThieves: { artist: 'Aster' },
       },
-      { appearance: { cutoutMode: 'side-card' } },
+      { appearance: { phantomMode: 'side-card' } },
     );
     const plate = stage.children[0].children[0].children[0];
     const unit = 10;
     const height = 30;
-    const [name] = cutoutFramePoints('nameplate', 100, height, unit);
-    const [dialogue] = cutoutFramePoints('side-card', 260, 80, unit);
-    const originX = parseFloat(plate.style['--cutout-name-tail-x']) * unit;
-    const tailBottom = parseFloat(plate.style['--cutout-name-tail-bottom']);
+    const [name] = phantomFramePoints('nameplate', 100, height, unit);
+    const [dialogue] = phantomFramePoints('side-card', 260, 80, unit);
+    const originX = parseFloat(plate.style['--phantom-name-tail-x']) * unit;
+    const tailBottom = parseFloat(plate.style['--phantom-name-tail-bottom']);
     expect(name[5]).toEqual([originX, height - tailBottom * unit]);
     expect(Math.min(...dialogue.map(([x]) => x))).toBe(originX);
   });
 
   it('extends the body of the side frame while keeping both end details fixed', () => {
-    const [shortFace, shortTab] = cutoutFramePoints('side-card', 160, 52, 8);
-    const [longFace, longTab] = cutoutFramePoints('side-card', 460, 86, 8);
+    const [shortFace, shortTab] = phantomFramePoints('side-card', 160, 52, 8);
+    const [longFace, longTab] = phantomFramePoints('side-card', 460, 86, 8);
     expect(longFace[0]).toEqual(shortFace[0]);
     expect(longFace[3]).toEqual([
       shortFace[3][0],
@@ -680,10 +683,10 @@ describe('Cutout Dialogue', () => {
       clientWidth: 100,
       clientHeight: 36,
     });
-    renderCutoutDialogue(
+    renderPhantomThieves(
       stage,
       { visible: true, currentText: 'Hello! See you!' },
-      { appearance: { cutoutMode: 'radial' } },
+      { appearance: { phantomMode: 'radial' } },
     );
     const strips = stage.children[0].children.map((lane) => lane.children[0]);
     const svgs = strips.map((strip) => strip.children[1].children[0]);
@@ -714,18 +717,18 @@ describe('Cutout Dialogue', () => {
       };
       const options = {
         appearance: {
-          cutoutMode: 'side-card',
-          cutoutCardStyle: 'portrait',
-          cutoutCorner: corner,
+          phantomMode: 'side-card',
+          phantomCardStyle: 'portrait',
+          phantomCorner: corner,
         },
         gsap: { timeline: () => motion },
       };
-      renderCutoutDialogue(
+      renderPhantomThieves(
         stage,
         {
           visible: true,
           currentText: 'Moonlight',
-          cutoutDialogue: {
+          phantomThieves: {
             artist: 'Aster',
             ageMs: 80,
             lineDurationMs: 2000,
@@ -740,7 +743,7 @@ describe('Cutout Dialogue', () => {
       const [card, portrait] = group.children;
       card.offsetWidth = 300;
       card.offsetHeight = 100;
-      expect(portrait.className).toBe('cutout-dialogue__portrait');
+      expect(portrait.className).toBe('phantom-thieves__portrait');
       expect(frame[0]).toBe(group);
       expect(frame[1]).toMatchObject({ scale: 0.6, rotation: 2 * direction });
       expect(frame[1].x()).toBe(9 * direction);
@@ -752,15 +755,15 @@ describe('Cutout Dialogue', () => {
         2 - 4 / 30,
       );
       expect(marker.slice(1)).toEqual([
-        { '--cutout-marker-scale': 0 },
-        { '--cutout-marker-scale': 1, duration: 2 / 30 },
+        { '--phantom-marker-scale': 0 },
+        { '--phantom-marker-scale': 1, duration: 2 / 30 },
         8 / 30,
       ]);
       expect(pulse[0]).toBe(marker[0]);
       expect(pulse.slice(1)).toEqual([
-        { '--cutout-marker-scale': 1 },
+        { '--phantom-marker-scale': 1 },
         {
-          '--cutout-marker-scale': 0.84,
+          '--phantom-marker-scale': 0.84,
           duration: 0.42,
           yoyo: true,
           repeat: expect.any(Number),
@@ -769,10 +772,10 @@ describe('Cutout Dialogue', () => {
         },
         10 / 30,
       ]);
-      expect(body[0].className).toBe('cutout-dialogue__copy');
+      expect(body[0].className).toBe('phantom-thieves__copy');
       expect(body[3]).toBeGreaterThan(frame[3]);
       expect(motion.pause).toHaveBeenCalledWith(0.08);
-      renderCutoutDialogue(stage, { visible: false }, options);
+      renderPhantomThieves(stage, { visible: false }, options);
       expect(motion.kill).toHaveBeenCalledOnce();
       expect(stage.hidden).toBe(true);
       expect(stage.children).toHaveLength(0);
@@ -782,7 +785,7 @@ describe('Cutout Dialogue', () => {
   it('bounds radial strips while keeping Latin words and all lyric text', () => {
     const line =
       '月光借我一句話，Turn it up，跨過長夜，看見遠方，再走一步，再唱一遍，不必等待';
-    const phrases = cutoutPhrases(line);
+    const phrases = phantomPhrases(line);
     expect(phrases).toHaveLength(6);
     expect(phrases).toContain('Turn it');
     expect(phrases.join('').replace(/\s/gu, '')).toBe(line.replace(/\s/gu, ''));
@@ -795,12 +798,12 @@ describe('Cutout Dialogue', () => {
     snapshot.playback.positionMs = line.startMs + 220;
     snapshot.playback.status = 'paused';
     const options = {
-      templateId: 'cutout-dialogue',
+      templateId: 'phantom-thieves',
       nowMs: Date.parse(snapshot.generatedAt),
     };
     expect(selectLyricsOverlayFrame(snapshot, options)).toMatchObject({
       currentText: line.text,
-      cutoutDialogue: {
+      phantomThieves: {
         previousText: snapshot.lyrics.lines[0].text,
         artist: snapshot.playback.track.artist,
         ageMs: 220,

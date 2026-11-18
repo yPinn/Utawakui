@@ -29,7 +29,7 @@ vi.mock('../ui/UiFolderInspector.vue', () => ({
   },
 }));
 
-vi.mock('./ObsCutoutPortraitGrid.vue', () => ({
+vi.mock('./ObsPhantomPortraitGrid.vue', () => ({
   default: {
     emits: ['add', 'edit', 'select'],
     setup(_, { emit, expose }) {
@@ -47,13 +47,13 @@ vi.mock('./ObsCutoutPortraitGrid.vue', () => ({
 
 const { guest } = vi.hoisted(() => ({
   guest: {
-    cutoutArtistName: 'Guest',
-    cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
-    cutoutPortraitColor: '#4466aa',
+    phantomArtistName: 'Guest',
+    phantomPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+    phantomPortraitColor: '#4466aa',
   },
 }));
 
-vi.mock('./ObsCutoutPortraitEditor.vue', () => ({
+vi.mock('./ObsPhantomPortraitEditor.vue', () => ({
   default: {
     props: ['values'],
     emits: ['save', 'cancel'],
@@ -76,7 +76,7 @@ describe('workbench portrait preset editing', () => {
     const getPropertyValue = vi.fn(() => '#a5b3d8');
     vi.stubGlobal('getComputedStyle', () => ({ getPropertyValue }));
     const { templates, slotDefaults } = getOutputWorkbenchData();
-    const preset = templates.find(({ id }) => id === 'cutout-dialogue');
+    const preset = templates.find(({ id }) => id === 'phantom-thieves');
     const onChangeSettings = vi.fn();
     const { app, root } = mount(ObsSlotWorkbench, {
       preset,
@@ -86,8 +86,8 @@ describe('workbench portrait preset editing', () => {
         templateId: preset.id,
         settings: {
           ...slotDefaults.lyrics.settings,
-          cutoutArtistName: 'Current singer',
-          cutoutPortraitColor: '#770011',
+          phantomArtistName: 'Current singer',
+          phantomPortraitColor: '#770011',
         },
       },
       onChangeSettings,
@@ -99,15 +99,15 @@ describe('workbench portrait preset editing', () => {
     };
 
     await click('edit');
-    expect(byId('editor').props.startValues.cutoutArtistName).toBe(
+    expect(byId('editor').props.startValues.phantomArtistName).toBe(
       'Current singer',
     );
     await click('cancel');
     await click('add');
     expect(byId('editor').props.startValues).toEqual({
-      cutoutArtistName: '',
-      cutoutPortraitPhoto: '',
-      cutoutPortraitColor: '#a5b3d8',
+      phantomArtistName: '',
+      phantomPortraitPhoto: '',
+      phantomPortraitColor: '#a5b3d8',
     });
     expect(getPropertyValue).toHaveBeenCalledWith(
       '--ui-output-portrait-indigo',
@@ -123,13 +123,13 @@ describe('workbench portrait preset editing', () => {
     expect(onChangeSettings).toHaveBeenCalledOnce();
     const [{ settings, mode }] = onChangeSettings.mock.calls[0];
     expect(mode).toBe('immediate');
-    expect(settings.cutoutArtistName).toBe('');
-    const { activeId, items } = settings.cutoutPortraitSets;
+    expect(settings.phantomArtistName).toBe('');
+    const { activeId, items } = settings.phantomPortraitSets;
     expect(activeId).toBeTruthy();
     expect(items).toEqual([
       expect.objectContaining({
-        cutoutArtistName: 'Current singer',
-        cutoutPortraitColor: '#770011',
+        phantomArtistName: 'Current singer',
+        phantomPortraitColor: '#770011',
       }),
       { id: activeId, ...guest },
     ]);
@@ -141,10 +141,10 @@ describe('workbench portrait preset editing', () => {
     expect(onChangeSettings).toHaveBeenLastCalledWith({
       mode: 'immediate',
       settings: expect.objectContaining({
-        cutoutArtistName: '',
-        cutoutPortraitPhoto: '',
-        cutoutPortraitColor: '',
-        cutoutPortraitSets: { activeId: '', items },
+        phantomArtistName: '',
+        phantomPortraitPhoto: '',
+        phantomPortraitColor: '',
+        phantomPortraitSets: { activeId: '', items },
       }),
     });
     await click('edit');

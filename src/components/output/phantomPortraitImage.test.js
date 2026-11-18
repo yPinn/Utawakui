@@ -11,7 +11,7 @@ import {
   snapPortraitFrame,
   squarePortraitFrame,
   zoomPortraitFrame,
-} from './cutoutPortraitImage.js';
+} from './phantomPortraitImage.js';
 
 describe('portrait photo editing', () => {
   it('fits the complete original into a square without an inferred mask', () => {

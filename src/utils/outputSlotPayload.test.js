@@ -69,32 +69,32 @@ describe('buildOutputSlotPayload', () => {
   it('copies and sanitizes the portrait presets across IPC', () => {
     const id = '00000000-0000-4000-8000-000000000001';
     const slot = reactive({
-      templateId: 'cutout-dialogue',
+      templateId: 'phantom-thieves',
       settings: {
-        cutoutPortraitSets: {
+        phantomPortraitSets: {
           activeId: id,
           items: [
             {
               id,
-              cutoutArtistName: ' Guest ',
-              cutoutPortraitPhoto: '../unsafe',
-              cutoutPortraitColor: '#AABBCC',
+              phantomArtistName: ' Guest ',
+              phantomPortraitPhoto: '../unsafe',
+              phantomPortraitColor: '#AABBCC',
             },
-            { id, cutoutArtistName: 'Duplicate' },
+            { id, phantomArtistName: 'Duplicate' },
             { id: '../bad' },
           ],
         },
       },
     });
     const payload = buildOutputSlotPayload(slot);
-    expect(structuredClone(payload).settings.cutoutPortraitSets).toEqual({
+    expect(structuredClone(payload).settings.phantomPortraitSets).toEqual({
       activeId: id,
       items: [
         {
           id,
-          cutoutArtistName: 'Guest',
-          cutoutPortraitPhoto: '',
-          cutoutPortraitColor: '#aabbcc',
+          phantomArtistName: 'Guest',
+          phantomPortraitPhoto: '',
+          phantomPortraitColor: '#aabbcc',
         },
       ],
     });

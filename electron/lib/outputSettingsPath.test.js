@@ -58,16 +58,16 @@ const FISHEYE_FIELDS = new Set([
   'fisheyeGranularity',
 ]);
 
-// Cutout Dialogue reads these in its own runtime, so check the normalized value.
-const CUTOUT_FIELDS = new Set([
-  'cutoutMode',
-  'cutoutChatShape',
-  'cutoutCardStyle',
-  'cutoutPortraitColor',
-  'cutoutArtistName',
-  'cutoutPortraitPhoto',
-  'cutoutRansomFont',
-  'cutoutCorner',
+// Phantom Thieves reads these in its own runtime, so check the normalized value.
+const PHANTOM_FIELDS = new Set([
+  'phantomMode',
+  'phantomChatShape',
+  'phantomCardStyle',
+  'phantomPortraitColor',
+  'phantomArtistName',
+  'phantomPortraitPhoto',
+  'phantomRansomFont',
+  'phantomCorner',
 ]);
 
 const STYLE_TARGETS = Object.freeze({
@@ -232,7 +232,7 @@ describe('Output settings path', () => {
           );
           continue;
         }
-        if (FISHEYE_FIELDS.has(field.key) || CUTOUT_FIELDS.has(field.key)) {
+        if (FISHEYE_FIELDS.has(field.key) || PHANTOM_FIELDS.has(field.key)) {
           expect(
             normalizeOutputAppearance(slot.settings, { templateId })[field.key],
             `${templateId}.${field.key}`,

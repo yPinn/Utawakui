@@ -12,7 +12,7 @@ const props = defineProps({
   active: { type: Boolean, default: true },
 });
 
-const mediaBase = 'utawakui-media://cutout-portrait';
+const mediaBase = 'utawakui-media://phantom-portrait';
 const customPhoto = computed(() =>
   props.photoId
     ? `${mediaBase}/custom/${encodeURIComponent(props.photoId)}`
@@ -36,16 +36,16 @@ const photo = computed(() =>
 
 <template>
   <UiTrackThumb
-    class="obs-cutout-portrait-thumb"
+    class="obs-phantom-portrait-thumb"
     :size="size"
     :background="background"
   >
     <img
       v-if="photo"
       :key="photo"
-      class="obs-cutout-portrait-thumb__image"
+      class="obs-phantom-portrait-thumb__image"
       :class="{
-        'obs-cutout-portrait-thumb__image--artist': photo === artistPhoto,
+        'obs-phantom-portrait-thumb__image--artist': photo === artistPhoto,
       }"
       :src="photo"
       alt=""
@@ -58,11 +58,11 @@ const photo = computed(() =>
 </template>
 
 <style scoped>
-.obs-cutout-portrait-thumb {
+.obs-phantom-portrait-thumb {
   --ui-status-icon-background: var(--ui-color-surface-raised);
 }
 
-.obs-cutout-portrait-thumb__image {
+.obs-phantom-portrait-thumb__image {
   position: absolute;
   inset: 0;
   inline-size: 100%;
@@ -70,7 +70,7 @@ const photo = computed(() =>
   object-fit: contain;
 }
 
-.obs-cutout-portrait-thumb__image--artist {
+.obs-phantom-portrait-thumb__image--artist {
   object-fit: cover;
 }
 </style>

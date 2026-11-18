@@ -15,9 +15,9 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
-import ObsCutoutPortraitEditor from './ObsCutoutPortraitEditor.vue';
-import ObsCutoutPortraitPhotoField from './ObsCutoutPortraitPhotoField.vue';
-import ObsCutoutPortraitThumb from './ObsCutoutPortraitThumb.vue';
+import ObsPhantomPortraitEditor from './ObsPhantomPortraitEditor.vue';
+import ObsPhantomPortraitPhotoField from './ObsPhantomPortraitPhotoField.vue';
+import ObsPhantomPortraitThumb from './ObsPhantomPortraitThumb.vue';
 
 vi.mock('../ui/UiIconButton.vue', () => ({
   default: {
@@ -34,7 +34,7 @@ vi.mock('../ui/UiIconButton.vue', () => ({
   },
 }));
 
-vi.mock('./ObsCutoutPortraitImageModal.vue', () => ({
+vi.mock('./ObsPhantomPortraitImageModal.vue', () => ({
   default: {
     props: ['photo'],
     emits: ['apply', 'close'],
@@ -50,8 +50,8 @@ vi.mock('./ObsCutoutPortraitImageModal.vue', () => ({
 
 for (const [component, path] of [
   [ObsAppearanceControlRow, './ObsAppearanceControlRow.vue'],
-  [ObsCutoutPortraitPhotoField, './ObsCutoutPortraitPhotoField.vue'],
-  [ObsCutoutPortraitThumb, './ObsCutoutPortraitThumb.vue'],
+  [ObsPhantomPortraitPhotoField, './ObsPhantomPortraitPhotoField.vue'],
+  [ObsPhantomPortraitThumb, './ObsPhantomPortraitThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiStack, '../ui/UiStack.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
@@ -61,11 +61,11 @@ for (const [component, path] of [
   attachClientRender(component, path, import.meta.url);
 }
 
-const fields = outputAppearanceFieldsForTemplate('cutout-dialogue')
+const fields = outputAppearanceFieldsForTemplate('phantom-thieves')
   .filter(({ group }) => group === 'portrait')
   .map(localizeAppearanceField);
 
-describe('cutout portrait editor', () => {
+describe('phantom portrait editor', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it.each([
@@ -77,19 +77,21 @@ describe('cutout portrait editor', () => {
       const html = await renderToString(
         createSSRApp({
           render: () =>
-            h(ObsCutoutPortraitEditor, {
+            h(ObsPhantomPortraitEditor, {
               fields,
               values: {
-                cutoutArtistName: 'Reze',
-                cutoutPortraitPhoto: photoId,
-                cutoutPortraitColor: '#f3d648',
+                phantomArtistName: 'Reze',
+                phantomPortraitPhoto: photoId,
+                phantomPortraitColor: '#f3d648',
               },
             }),
         }),
       );
 
       if (path) {
-        expect(html).toContain(`src="utawakui-media://cutout-portrait${path}"`);
+        expect(html).toContain(
+          `src="utawakui-media://phantom-portrait${path}"`,
+        );
       } else {
         expect(html).not.toContain('<img');
         expect(html).toContain('lucide-user-round');
@@ -97,7 +99,7 @@ describe('cutout portrait editor', () => {
       }
       expect(html).toContain('--ui-track-thumb-background:#f3d648');
       expect(html).toMatch(
-        /id="output-appearance-cutoutPortraitPhoto".*id="output-appearance-cutoutArtistName".*id="output-appearance-cutoutPortraitColor"/s,
+        /id="output-appearance-phantomPortraitPhoto".*id="output-appearance-phantomArtistName".*id="output-appearance-phantomPortraitColor"/s,
       );
       expect(html.match(/obs-appearance-control-row--stacked/g)).toHaveLength(
         3,
@@ -121,7 +123,7 @@ describe('cutout portrait editor', () => {
     const onBusy = vi.fn();
     const { app, root } = mount({
       setup: () => () =>
-        h(ObsCutoutPortraitPhotoField, {
+        h(ObsPhantomPortraitPhotoField, {
           ...state,
           id: 'photo',
           label: 'Portrait',

@@ -16,7 +16,7 @@ const fieldsFor = (templateId) =>
   outputAppearanceFieldsForTemplate(templateId).map(localizeAppearanceField);
 
 const templateTabLabels = {
-  'cutout-dialogue': ['版面', '文字', '人物', '色彩'],
+  'phantom-thieves': ['版面', '文字', '人物', '色彩'],
   'queue-board': ['版面', '文字', '色彩'],
   'karaoke-stack': ['文字', '色彩'],
   'kinetic-pop': ['版面', '文字', '色彩'],
@@ -167,9 +167,11 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ]) {
         if (
           group === 'portrait' ||
-          ['cutoutChatShape', 'cutoutCardStyle', 'cutoutRansomFont'].includes(
-            key,
-          )
+          [
+            'phantomChatShape',
+            'phantomCardStyle',
+            'phantomRansomFont',
+          ].includes(key)
         )
           continue;
         expect(html).toContain(`output-appearance-${key}`);
@@ -178,52 +180,52 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
   );
 
   it('shows the chat shape control only when Chat is selected', async () => {
-    const initial = await renderRegisteredTemplate('cutout-dialogue');
+    const initial = await renderRegisteredTemplate('phantom-thieves');
     const chat = await renderRegisteredTemplate(
-      'cutout-dialogue',
+      'phantom-thieves',
       {},
       {
-        cutoutMode: 'chat',
-        cutoutChatShape: 'phone',
+        phantomMode: 'chat',
+        phantomChatShape: 'phone',
       },
     );
-    expect(initial).not.toContain('output-appearance-cutoutChatShape');
+    expect(initial).not.toContain('output-appearance-phantomChatShape');
     expect(chat).toMatch(
-      /id="output-appearance-cutoutChatShape"[^>]*value="phone"/u,
+      /id="output-appearance-phantomChatShape"[^>]*value="phone"/u,
     );
-    expect(chat).not.toContain('output-appearance-cutoutCardStyle');
+    expect(chat).not.toContain('output-appearance-phantomCardStyle');
     const side = await renderRegisteredTemplate(
-      'cutout-dialogue',
+      'phantom-thieves',
       {},
       {
-        cutoutMode: 'side-card',
-        cutoutCardStyle: 'portrait',
-        cutoutCorner: 'top-right',
-        cutoutPortraitSets: {
+        phantomMode: 'side-card',
+        phantomCardStyle: 'portrait',
+        phantomCorner: 'top-right',
+        phantomPortraitSets: {
           activeId: '00000000-0000-4000-8000-000000000001',
           items: [
             {
               id: '00000000-0000-4000-8000-000000000001',
-              cutoutArtistName: 'Guest',
-              cutoutPortraitColor: '#4466aa',
-              cutoutPortraitPhoto: '00000000-0000-4000-8000-000000000011',
+              phantomArtistName: 'Guest',
+              phantomPortraitColor: '#4466aa',
+              phantomPortraitPhoto: '00000000-0000-4000-8000-000000000011',
             },
           ],
         },
       },
     );
-    expect(side).not.toContain('output-appearance-cutoutChatShape');
+    expect(side).not.toContain('output-appearance-phantomChatShape');
     expect(side).toMatch(
-      /id="output-appearance-cutoutCardStyle"[^>]*value="portrait"/u,
+      /id="output-appearance-phantomCardStyle"[^>]*value="portrait"/u,
     );
     expect(side).toMatch(
-      /id="output-appearance-cutoutCorner"[^>]*value="top-right"/u,
+      /id="output-appearance-phantomCorner"[^>]*value="top-right"/u,
     );
-    expect(side).not.toContain('output-appearance-cutoutRansomFont');
+    expect(side).not.toContain('output-appearance-phantomRansomFont');
     expect(side).toContain('aria-label="人物"');
-    expect(side).not.toContain('id="output-appearance-cutoutArtistName"');
-    expect(side).not.toContain('id="output-appearance-cutoutPortraitColor"');
-    expect(side).not.toContain('id="output-appearance-cutoutPortraitPhoto"');
+    expect(side).not.toContain('id="output-appearance-phantomArtistName"');
+    expect(side).not.toContain('id="output-appearance-phantomPortraitColor"');
+    expect(side).not.toContain('id="output-appearance-phantomPortraitPhoto"');
     expect(side).not.toContain('id="output-portrait-set"');
     expect(side).toContain('aria-label="人物組合"');
     expect(side).toMatch(/aria-pressed="true"[^>]*aria-label="1 · Guest"/u);
@@ -231,31 +233,31 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(side).toContain('>Guest</span>');
     expect(side).toMatch(/class="ui-visually-hidden"[^>]*>編輯人物組合/u);
     const ransom = await renderRegisteredTemplate(
-      'cutout-dialogue',
+      'phantom-thieves',
       {},
       {
-        cutoutMode: 'ransom',
-        cutoutRansomFont: 'kaibunsyo',
+        phantomMode: 'ransom',
+        phantomRansomFont: 'kaibunsyo',
       },
     );
     expect(ransom).toMatch(
-      /id="output-appearance-cutoutRansomFont"[^>]*value="kaibunsyo"/u,
+      /id="output-appearance-phantomRansomFont"[^>]*value="kaibunsyo"/u,
     );
   });
 
   it('selects Choice Stack within Phantom Thieves', async () => {
     const html = await renderRegisteredTemplate(
-      'cutout-dialogue',
+      'phantom-thieves',
       {},
       {
-        cutoutMode: 'choice-stack',
+        phantomMode: 'choice-stack',
       },
     );
     expect(html).toMatch(
-      /id="output-appearance-cutoutMode"[^>]*value="choice-stack"/u,
+      /id="output-appearance-phantomMode"[^>]*value="choice-stack"/u,
     );
-    expect(html).toContain('output-appearance-cutoutCorner');
-    expect(html).not.toContain('output-appearance-cutoutCardStyle');
+    expect(html).toContain('output-appearance-phantomCorner');
+    expect(html).not.toContain('output-appearance-phantomCardStyle');
   });
 
   it('keeps ornate vertical positioning split into its anchor and offsets', async () => {

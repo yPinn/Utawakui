@@ -546,11 +546,11 @@ new model, dependency or unpacked payload. Co-located tests remain excluded;
 the closed module-graph delivery test covers all three routes.
 
 Phantom Thieves uses the existing Overlay packaging glob and exact routes for
-`overlay/lyrics/cutoutDialogue.mjs` and `overlay/lyrics/cutoutDialogue.css`.
+`overlay/lyrics/phantomThieves.mjs` and `overlay/lyrics/phantomThieves.css`.
 The renderer Gallery preview bundles the same drawing code and styles.
 The two accent fonts have exact Browser Source routes and ship in
 `shared/assets/fonts/` as `KaitouYokokuGothic-Heavy.ttf` and
-`Kaibunsyo-Regular.ttf`. `SOURCE-LAVSIC-CUTOUT.txt` records their source and
+`Kaibunsyo-Regular.ttf`. `SOURCE-LAVSIC.txt` records their source and
 checksums. The upstream notices ship under `shared/assets/fonts/licenses/lavsic/`.
 
 Chalkboard Vertical adds `overlay/lyrics/chalkboardVertical.mjs` under the

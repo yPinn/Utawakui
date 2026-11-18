@@ -101,7 +101,7 @@ describe('output panel copy', () => {
     );
     expect(interval.unit).toBe(' 秒');
     const name = OUTPUT_APPEARANCE_FIELDS.map(localizeAppearanceField).find(
-      (field) => field.key === 'cutoutArtistName',
+      (field) => field.key === 'phantomArtistName',
     );
     expect(name.placeholder).toBe('跟隨歌手名稱');
   });

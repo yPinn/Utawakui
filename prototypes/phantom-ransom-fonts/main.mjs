@@ -2,10 +2,10 @@
 
 import gsap from 'gsap';
 import {
-  clearCutoutDialogue,
-  renderCutoutDialogue,
-} from '../../overlay/lyrics/cutoutDialogue.mjs';
-import '../../overlay/lyrics/cutoutDialogue.css';
+  clearPhantomThieves,
+  renderPhantomThieves,
+} from '../../overlay/lyrics/phantomThieves.mjs';
+import '../../overlay/lyrics/phantomThieves.css';
 import './preview.css';
 
 const samples = {
@@ -48,18 +48,18 @@ const dialogueCorner = document.querySelector('#dialogue-corner');
 const dialogueHide = document.querySelector('#dialogue-hide');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 let dialogueVisible = true;
-const baseline = document.querySelector('section .cutout-dialogue');
+const baseline = document.querySelector('section .phantom-thieves');
 const loadedFonts = new Map();
 const fontPreviews = [
   { stage: baseline, font: 'none' },
   ...[...document.querySelectorAll('[data-font]')].map((section) => ({
-    stage: section.querySelector('.cutout-dialogue'),
+    stage: section.querySelector('.phantom-thieves'),
     font: section.dataset.font,
   })),
 ];
 const layoutPreviews = [...document.querySelectorAll('[data-layout]')].map(
   (section) => ({
-    stage: section.querySelector('.cutout-dialogue'),
+    stage: section.querySelector('.phantom-thieves'),
     layout: section.dataset.layout,
   }),
 );
@@ -67,24 +67,24 @@ const layoutPreviews = [...document.querySelectorAll('[data-layout]')].map(
 function renderSamples(replay = false) {
   const [language, artist, currentText] = samples[sample.value];
   for (const { stage, font } of fontPreviews) {
-    renderCutoutDialogue(
+    renderPhantomThieves(
       stage,
       { visible: true, currentText, lineIndex: 0 },
       {
-        appearance: { cutoutMode: 'ransom', cutoutRansomFont: font },
+        appearance: { phantomMode: 'ransom', phantomRansomFont: font },
         reducedMotion: true,
       },
     );
   }
   for (const { stage, layout } of layoutPreviews) {
-    const cutoutMode =
+    const phantomMode =
       { phone: 'chat', radial: 'radial', 'choice-stack': 'choice-stack' }[
         layout
       ] ?? 'side-card';
-    const sideCard = cutoutMode === 'side-card';
+    const sideCard = phantomMode === 'side-card';
     const animate = sideCard && replay && !reducedMotion.matches;
-    if (animate) clearCutoutDialogue(stage);
-    renderCutoutDialogue(
+    if (animate) clearPhantomThieves(stage);
+    renderPhantomThieves(
       stage,
       {
         visible: !sideCard || dialogueVisible,
@@ -92,7 +92,7 @@ function renderSamples(replay = false) {
         nextText: '次の声が聞こえる。',
         language,
         lineIndex: 0,
-        cutoutDialogue: {
+        phantomThieves: {
           artist,
           previousText: '声を重ねて、ここから。',
           ageMs: 0,
@@ -102,10 +102,10 @@ function renderSamples(replay = false) {
       },
       {
         appearance: {
-          cutoutMode,
-          cutoutChatShape: 'phone',
-          cutoutCardStyle: layout,
-          cutoutCorner: sideCard ? dialogueCorner.value : 'auto',
+          phantomMode,
+          phantomChatShape: 'phone',
+          phantomCardStyle: layout,
+          phantomCorner: sideCard ? dialogueCorner.value : 'auto',
         },
         gsap,
         reducedMotion: !animate,
@@ -135,7 +135,7 @@ updateBackdrop();
 for (const section of document.querySelectorAll('[data-font]')) {
   const input = section.querySelector('input[type="file"]');
   const ink = section.querySelector('[data-ink]');
-  const stage = section.querySelector('.cutout-dialogue');
+  const stage = section.querySelector('.phantom-thieves');
   const status = section.querySelector('[data-status]');
   ink.addEventListener('input', () => {
     stage.style.setProperty('--ransom-accent-ink', ink.value);
@@ -152,7 +152,7 @@ for (const section of document.querySelectorAll('[data-font]')) {
       loadedFonts.set(stage, face);
       stage.style.setProperty('--ransom-accent-font', `"${family}"`);
       status.textContent = file.name;
-      clearCutoutDialogue(stage);
+      clearPhantomThieves(stage);
       renderSamples();
     } catch {
       status.textContent = '無法載入這個字型檔。';

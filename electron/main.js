@@ -1276,7 +1276,7 @@ if (!gotSingleInstanceLock) {
       if (!policy.autoManageSeparation) return undefined;
       return libraryStorageService.enforcePolicy(policy, options);
     };
-    const resolveCutoutPortraitAsset = (directory, source, id) =>
+    const resolvePhantomPortraitAsset = (directory, source, id) =>
       source === 'custom'
         ? resolveOutputPortrait(directory, id)
         : resolveTrackArtistPhoto(directory, id);
@@ -1289,7 +1289,7 @@ if (!gotSingleInstanceLock) {
           trackId,
         ),
       resolvePortraitAsset: (source, id) =>
-        resolveCutoutPortraitAsset(
+        resolvePhantomPortraitAsset(
           configState.resolveDownloadDir(configState.getConfig()),
           source,
           id,
@@ -1535,7 +1535,7 @@ if (!gotSingleInstanceLock) {
       resolveVideoCandidate: trackVideo.resolveCandidate,
       resolvePortraitAsset: (directory, source, id, config) =>
         isFeatureGateEnabled(config, FEATURE_IDS.PUBLIC_OUTPUT_FLOW)
-          ? resolveCutoutPortraitAsset(directory, source, id)
+          ? resolvePhantomPortraitAsset(directory, source, id)
           : null,
       logger: runtimeDiagnosticsLogger,
     });

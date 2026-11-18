@@ -2472,17 +2472,17 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
   const fisheyeLayoutChangedAt =
     fisheyeChorus?.startMs ??
     fisheyeRanges.findLast(({ endMs }) => endMs <= fisheyeAudioPosition)?.endMs;
-  const cutoutLine =
-    templateId === 'cutout-dialogue' ? lines[frame.lineIndex] : null;
-  const cutoutLineEndMs =
-    cutoutLine && snapshot.lyrics?.synced === true
+  const phantomLine =
+    templateId === 'phantom-thieves' ? lines[frame.lineIndex] : null;
+  const phantomLineEndMs =
+    phantomLine && snapshot.lyrics?.synced === true
       ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
       : null;
   return {
     ...frame,
-    ...(templateId === 'cutout-dialogue' && frame.currentText
+    ...(templateId === 'phantom-thieves' && frame.currentText
       ? {
-          cutoutDialogue: {
+          phantomThieves: {
             artist: text(snapshot.playback?.track?.artist),
             previousText: displayableLyricsText(
               lines[frame.lineIndex - 1]?.text,
@@ -2493,9 +2493,9 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
                 (lines[frame.lineIndex]?.startMs ?? 0),
             ),
             lineDurationMs:
-              Number.isFinite(cutoutLineEndMs) &&
-              cutoutLineEndMs > cutoutLine.startMs
-                ? cutoutLineEndMs - cutoutLine.startMs
+              Number.isFinite(phantomLineEndMs) &&
+              phantomLineEndMs > phantomLine.startMs
+                ? phantomLineEndMs - phantomLine.startMs
                 : null,
             rate: playbackRate(snapshot),
             playing:

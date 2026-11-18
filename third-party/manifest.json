@@ -1427,7 +1427,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "f456de520924aca1ad99e13c38303453cad929b9a88333c7395fc83fe8b22545"
+      "sha256": "299ae6d51ade9139732acc7a887ef8c5e2e4b7db55b6e2baa9567afc3c3a68d7"
     },
     {
       "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
@@ -1610,9 +1610,9 @@
       "sha256": "31d7eface0bbcfc2bea600a7af42b6355e76f0aa87f0c7f811006d8366257f25"
     },
     {
-      "sourcePath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt",
+      "sourcePath": "shared/assets/fonts/SOURCE-LAVSIC.txt",
       "location": "asar",
-      "targetPath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt",
+      "targetPath": "shared/assets/fonts/SOURCE-LAVSIC.txt",
       "sha256": "9e09d10660eddf3b5d94104004ec43f914f8c236094e06f87b1f76db976836e6"
     },
     {

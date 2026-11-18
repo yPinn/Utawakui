@@ -642,7 +642,7 @@ describe('outputServer', () => {
         '/overlay/lyrics/lyricsFit.mjs',
         '/overlay/lyrics/chalkboardVertical.mjs',
         '/overlay/lyrics/fisheyeLens.mjs',
-        '/overlay/lyrics/cutoutDialogue.mjs',
+        '/overlay/lyrics/phantomThieves.mjs',
         '/overlay/lyrics/fisheyeEffects.mjs',
         '/shared/browser/fisheyePaint.mjs',
         '/shared/browser/fisheyeMotion.mjs',
@@ -654,10 +654,10 @@ describe('outputServer', () => {
       '/shared/presentation/lyricsPresentation.mjs',
     );
     const style = await fetch(
-      `${status.httpUrl}/overlay/lyrics/cutoutDialogue.css`,
+      `${status.httpUrl}/overlay/lyrics/phantomThieves.css`,
     );
     expect(style.ok).toBe(true);
-    expect(await style.text()).toContain('.cutout-dialogue');
+    expect(await style.text()).toContain('.phantom-thieves');
     for (const font of [
       'KaitouYokokuGothic-Heavy.ttf',
       'Kaibunsyo-Regular.ttf',
@@ -684,21 +684,21 @@ describe('outputServer', () => {
       'streamer-guide.png',
     );
 
-    function portraitLyrics(settings = {}, templateId = 'cutout-dialogue') {
+    function portraitLyrics(settings = {}, templateId = 'phantom-thieves') {
       return {
         lyrics: {
           templateId,
           settings: {
-            cutoutMode: 'side-card',
-            cutoutCardStyle: 'portrait',
-            cutoutPortraitSets: {
+            phantomMode: 'side-card',
+            phantomCardStyle: 'portrait',
+            phantomPortraitSets: {
               activeId: '00000000-0000-4000-8000-000000000001',
               items: [
                 {
                   id: '00000000-0000-4000-8000-000000000001',
-                  cutoutArtistName: 'Aster',
-                  cutoutPortraitPhoto: selectedPhoto,
-                  cutoutPortraitColor: '#4466aa',
+                  phantomArtistName: 'Aster',
+                  phantomPortraitPhoto: selectedPhoto,
+                  phantomPortraitColor: '#4466aa',
                 },
               ],
             },
@@ -728,9 +728,9 @@ describe('outputServer', () => {
         await startWith(portraitLyrics());
 
       expect(
-        await status404(`/media/cutout-portrait/custom/${selectedPhoto}`),
+        await status404(`/media/phantom-portrait/custom/${selectedPhoto}`),
       ).toBe(302);
-      expect(await status404('/media/cutout-portrait/artist/track-1')).toBe(
+      expect(await status404('/media/phantom-portrait/artist/track-1')).toBe(
         302,
       );
       expect(resolvePortraitAsset.mock.calls).toEqual([
@@ -752,12 +752,12 @@ describe('outputServer', () => {
       ],
       [
         'a presentation without the side card',
-        portraitLyrics({ cutoutMode: 'chat' }),
+        portraitLyrics({ phantomMode: 'chat' }),
         'artist/track-1',
       ],
       [
         'the text-only side card',
-        portraitLyrics({ cutoutCardStyle: 'text-only' }),
+        portraitLyrics({ phantomCardStyle: 'text-only' }),
         `custom/${selectedPhoto}`,
       ],
     ])(
@@ -765,7 +765,7 @@ describe('outputServer', () => {
       async (_label, slots, route) => {
         const { resolvePortraitAsset, status404 } = await startWith(slots);
 
-        expect(await status404(`/media/cutout-portrait/${route}`)).toBe(404);
+        expect(await status404(`/media/phantom-portrait/${route}`)).toBe(404);
         expect(resolvePortraitAsset).not.toHaveBeenCalled();
       },
     );

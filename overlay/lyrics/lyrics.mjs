@@ -3,9 +3,9 @@ import { createLyricsFitController } from './lyricsFit.mjs';
 import { clearFisheyeLens, renderFisheyeLens } from './fisheyeLens.mjs';
 import { createFisheyeEffects } from './fisheyeEffects.mjs';
 import {
-  clearCutoutDialogue,
-  renderCutoutDialogue,
-} from './cutoutDialogue.mjs';
+  clearPhantomThieves,
+  renderPhantomThieves,
+} from './phantomThieves.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   clearChalkboardVertical,
@@ -1564,7 +1564,7 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearOrnateVerticalPresentation(elements, options);
   clearChalkboardVertical(elements);
   clearFisheyeLens(elements);
-  clearCutoutDialogue(elements.cutoutDialogue);
+  clearPhantomThieves(elements.phantomThieves);
 }
 
 let performanceRenderId = 0;
@@ -1639,8 +1639,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isChalkboard = templateId === 'chalkboard-vertical';
   const isCenteredVertical = templateId === 'centered-vertical';
   const isFisheye = templateId === 'fisheye-lens';
-  const isCutout = templateId === 'cutout-dialogue';
-  if (!isCutout) clearCutoutDialogue(elements.cutoutDialogue);
+  const isPhantom = templateId === 'phantom-thieves';
+  if (!isPhantom) clearPhantomThieves(elements.phantomThieves);
   if (!isFisheye) clearFisheyeLens(elements);
   if (!isChalkboard) clearChalkboardVertical(elements);
   if (
@@ -1650,7 +1650,7 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     isChalkboard ||
     isCenteredVertical ||
     isFisheye ||
-    isCutout
+    isPhantom
   ) {
     entranceAnimations.get(elements.current)?.cancel?.();
     entranceAnimations.delete(elements.current);
@@ -1688,7 +1688,7 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     return;
   }
   clearKineticPopPresentation(elements, renderOptions);
-  if (isCutout) {
+  if (isPhantom) {
     clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
     clearMangaLyrics(elements);
@@ -1696,8 +1696,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     clearLyricsRenderState(elements.next, renderOptions);
     elements.root.hidden = !frame.visible || !frame.currentText;
     elements.root.setAttribute('lang', frame.language || 'und');
-    renderCutoutDialogue(elements.cutoutDialogue, frame, {
-      appearance: options.cutoutAppearance,
+    renderPhantomThieves(elements.phantomThieves, frame, {
+      appearance: options.phantomAppearance,
       portraitPhotos: true,
       gsap: resolveGsap(options),
       reducedMotion: options.reducedMotion,
@@ -2186,7 +2186,7 @@ function boot() {
     root: document.querySelector('#lyrics-overlay'),
     current: document.querySelector('#lyrics-current'),
     fisheye: document.querySelector('#lyrics-fisheye'),
-    cutoutDialogue: document.querySelector('#lyrics-cutout-dialogue'),
+    phantomThieves: document.querySelector('#lyrics-phantom-thieves'),
     liveStageCard: document.querySelector('#lyrics-live-stage-card'),
     liveStageChrome: document.querySelector('#lyrics-live-stage-chrome'),
     liveStageTitle: document.querySelector('#lyrics-live-stage-title'),
@@ -2270,7 +2270,7 @@ function boot() {
       );
       renderLyricsFrameSafely(elements, visibleFrame, {
         fisheyeAppearance: slotAppearance,
-        cutoutAppearance: slotAppearance,
+        phantomAppearance: slotAppearance,
         gsap,
         reportError,
         reducedMotion,
@@ -2327,7 +2327,7 @@ function boot() {
       if (
         !reprojected &&
         (slot?.templateId === 'fisheye-lens' ||
-          slot?.templateId === 'cutout-dialogue' ||
+          slot?.templateId === 'phantom-thieves' ||
           (ovlTemplate === 'centered-vertical' &&
             slot?.templateId === ovlTemplate &&
             ovlFont !== document.documentElement.dataset.ovlFont))

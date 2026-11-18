@@ -61,7 +61,7 @@
         "translation": "不顯示"
       }
     },
-    "cutoutDialogue": {
+    "phantomThieves": {
       "name": "幻影怪盜",
       "facts": {
         "direction": "橫排",
@@ -290,7 +290,7 @@
     "removeBackground": "移除背景",
     "separatingSubject": "正在分離人物…",
     "noSubject": "未辨識到清楚的主體。請試試以單一人物為主的照片。",
-    "cutoutModelUnavailable": "無法載入內建的去背模型。請重新安裝 Utawakui 後再試一次。",
+    "phantomModelUnavailable": "無法載入內建的去背模型。請重新安裝 Utawakui 後再試一次。",
     "cutoutBusy": "另一張照片正在處理中，請稍後再試。",
     "cutoutFailed": "無法移除背景，請再試一次。",
     "useCutout": "使用去背結果",
@@ -423,12 +423,12 @@
       "content": "內容顯示"
     },
     "fields": {
-      "cutoutPortraitColor": { "label": "人像底色" },
-      "cutoutArtistName": {
+      "phantomPortraitColor": { "label": "人像底色" },
+      "phantomArtistName": {
         "label": "顯示名稱",
         "placeholder": "跟隨歌手名稱"
       },
-      "cutoutPortraitPhoto": { "label": "人像照片" },
+      "phantomPortraitPhoto": { "label": "人像照片" },
       "filmGrainAmount": {
         "label": "顆粒強度"
       },
@@ -606,7 +606,7 @@
           "cycle": "三款依句序切換"
         }
       },
-      "cutoutMode": {
+      "phantomMode": {
         "label": "呈現方式",
         "options": {
           "radial": "放射短句",
@@ -616,7 +616,7 @@
           "choiceStack": "選句剪報"
         }
       },
-      "cutoutChatShape": {
+      "phantomChatShape": {
         "label": "聊天外形",
         "options": {
           "bubble": "泡泡",
@@ -625,14 +625,14 @@
           "phone": "手機"
         }
       },
-      "cutoutCardStyle": {
+      "phantomCardStyle": {
         "label": "彈卡樣式",
         "options": {
           "textOnly": "純對話框",
           "portrait": "有頭像"
         }
       },
-      "cutoutRansomFont": {
+      "phantomRansomFont": {
         "label": "點綴字體",
         "options": {
           "kaitou": "怪盗予告ゴシック",
@@ -640,7 +640,7 @@
           "none": "無"
         }
       },
-      "cutoutCorner": {
+      "phantomCorner": {
         "label": "畫面角落",
         "options": {
           "auto": "依呈現方式",

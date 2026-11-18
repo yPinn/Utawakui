@@ -61,7 +61,7 @@
         "translation": "Not shown"
       }
     },
-    "cutoutDialogue": {
+    "phantomThieves": {
       "name": "Phantom Thieves",
       "facts": {
         "direction": "Horizontal",
@@ -290,7 +290,7 @@
     "removeBackground": "Remove background",
     "separatingSubject": "Separating the subject…",
     "noSubject": "No clear subject was detected. Try a photo centered on one person.",
-    "cutoutModelUnavailable": "Unable to load the built-in background removal model. Reinstall Utawakui and try again.",
+    "phantomModelUnavailable": "Unable to load the built-in background removal model. Reinstall Utawakui and try again.",
     "cutoutBusy": "Another photo is being processed. Try again shortly.",
     "cutoutFailed": "Could not remove the background. Try again.",
     "useCutout": "Use cutout",
@@ -423,12 +423,12 @@
       "content": "Content"
     },
     "fields": {
-      "cutoutPortraitColor": { "label": "Portrait background" },
-      "cutoutArtistName": {
+      "phantomPortraitColor": { "label": "Portrait background" },
+      "phantomArtistName": {
         "label": "Display name",
         "placeholder": "Use the artist name"
       },
-      "cutoutPortraitPhoto": { "label": "Portrait photo" },
+      "phantomPortraitPhoto": { "label": "Portrait photo" },
       "filmGrainAmount": {
         "label": "Grain amount"
       },
@@ -610,7 +610,7 @@
           "cycle": "Rotate the three by line"
         }
       },
-      "cutoutMode": {
+      "phantomMode": {
         "label": "Presentation",
         "options": {
           "radial": "Radial Phrases",
@@ -620,7 +620,7 @@
           "choiceStack": "Choice Stack"
         }
       },
-      "cutoutChatShape": {
+      "phantomChatShape": {
         "label": "Chat Shape",
         "options": {
           "bubble": "Bubble",
@@ -629,14 +629,14 @@
           "phone": "Phone"
         }
       },
-      "cutoutCardStyle": {
+      "phantomCardStyle": {
         "label": "Dialogue Card Style",
         "options": {
           "textOnly": "Dialogue Only",
           "portrait": "With Avatar"
         }
       },
-      "cutoutRansomFont": {
+      "phantomRansomFont": {
         "label": "Accent Font",
         "options": {
           "kaitou": "Kaitou Yokoku Gothic",
@@ -644,7 +644,7 @@
           "none": "None"
         }
       },
-      "cutoutCorner": {
+      "phantomCorner": {
         "label": "Screen Corner",
         "options": {
           "auto": "By Presentation",

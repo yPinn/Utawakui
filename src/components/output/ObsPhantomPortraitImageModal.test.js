@@ -19,7 +19,7 @@ import {
   textContent,
   trigger,
 } from '../ui/uiTestHost.js';
-import ObsCutoutPortraitImageModal from './ObsCutoutPortraitImageModal.vue';
+import ObsPhantomPortraitImageModal from './ObsPhantomPortraitImageModal.vue';
 
 vi.mock('../ui/UiModal.vue', () => ({
   default: {
@@ -31,7 +31,7 @@ vi.mock('../ui/UiModal.vue', () => ({
 }));
 
 for (const [component, file] of [
-  [ObsCutoutPortraitImageModal, './ObsCutoutPortraitImageModal.vue'],
+  [ObsPhantomPortraitImageModal, './ObsPhantomPortraitImageModal.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiDisclosure, '../ui/UiDisclosure.vue'],
   [UiField, '../ui/UiField.vue'],
@@ -67,7 +67,7 @@ function mountPhoto({ width = 32, height = 32, api, onApply }) {
     createElement: () => ({ getContext: () => context }),
   });
   vi.stubGlobal('window', { Utawakui: api });
-  const { app, root } = mount(ObsCutoutPortraitImageModal, {
+  const { app, root } = mount(ObsPhantomPortraitImageModal, {
     photo: { id: 'draft', bytes: new Uint8Array(), mimeType: 'image/png' },
     onApply,
   });
