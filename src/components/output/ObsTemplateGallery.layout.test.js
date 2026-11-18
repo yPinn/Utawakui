@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import ObsTemplateGallery from './ObsTemplateGallery.vue';
 
-async function renderGallery(empty = false) {
+async function renderGallery(empty = false, presetId = 'queue-board') {
   const data = getOutputWorkbenchData();
-  const preset = data.templates.find((item) => item.id === 'queue-board');
+  const preset = data.templates.find((item) => item.id === presetId);
   return renderToString(
     createSSRApp({
       render: () =>
@@ -22,7 +22,7 @@ async function renderGallery(empty = false) {
 }
 
 describe('Output Gallery bounded Folder composition', () => {
-  it('keeps catalogue tiles to static artwork and title while retaining detail copy', async () => {
+  it('keeps catalogue tiles to static artwork and title', async () => {
     const html = await renderGallery();
     expect(html).not.toContain('obs-template-thumb__meta');
     const tiles = [
@@ -37,19 +37,19 @@ describe('Output Gallery bounded Folder composition', () => {
       expect(tile).not.toContain('ui-chip');
     }
     expect(tiles.some(([tile]) => tile.includes('紅黑緞帶'))).toBe(true);
-    const preset = getOutputWorkbenchData().templates.find(
-      (item) => item.id === 'queue-board',
-    );
-    expect(html).toContain(preset.detail);
+    expect(html).toContain('內容');
+    expect(html).toContain('已唱曲目逐頁輪播');
   });
 
   it('keeps identity and apply outside the scrolling preview and description', async () => {
-    const html = await renderGallery();
+    const html = await renderGallery(false, 'cover-player');
+    expect(html).toContain('封面');
+    expect(html).toContain('缺圖時顯示曲名首字');
     const header = html.indexOf('obs-output-split-layout__side-header');
     const title = html.indexOf('obs-template-gallery__detail-title');
     const scroll = html.indexOf('obs-output-split-layout__side-scroll');
     const preview = html.indexOf('obs-template-preview-stage');
-    const copy = html.indexOf('obs-template-gallery__detail-copy');
+    const copy = html.indexOf('obs-template-gallery__facts');
     const footer = html.indexOf('obs-output-split-layout__side-footer');
     const apply = html.indexOf('套用模板');
 

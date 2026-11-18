@@ -169,7 +169,12 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(componentSource).not.toContain('雙擊套用');
     expect(componentSource).not.toContain('內建模板');
-    expect(componentSource).toContain('selectedAvailabilitySummary');
+    // Regular-width search at the toolbar's right end; the row stays empty.
+    expect(componentSource).toContain(
+      'max-inline-size: var(--ui-output-side-min-width);',
+    );
+    expect(componentSource).not.toContain('selectedAvailabilitySummary');
+    expect(componentSource).not.toContain('selectedPreset.tags');
     expect(componentSource).not.toContain('startOutput');
     expect(componentSource).toContain('ObsTemplateThumbnail');
     expect(componentSource).toContain('ObsTemplatePreviewStage');

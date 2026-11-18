@@ -8,7 +8,6 @@ import ObsPreviewBackdropToggle from './ObsPreviewBackdropToggle.vue';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import ObsPreviewCaption from './ObsPreviewCaption.vue';
 import { captureSizeForKind } from '../../constants/outputCaptureSizes.js';
-import { outputPreviewLimitations } from '../../constants/outputPreviewLimitations.js';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
@@ -33,7 +32,6 @@ const motionLabel = computed(() =>
     ? t('outputPanel.stage.pauseMotion')
     : t('outputPanel.stage.playMotion'),
 );
-const limitations = computed(() => outputPreviewLimitations(props.preset?.id));
 
 watch(
   () => props.preset?.id,
@@ -157,9 +155,6 @@ onBeforeUnmount(stopPreview);
               : 'outputPanel.stage.reference',
           )
         }}</UiChip>
-        <span class="obs-template-preview-stage__motion">
-          {{ preset?.preview?.motionLabel ?? t('outputPanel.stage.static') }}
-        </span>
       </UiStack>
     </header>
 
@@ -188,11 +183,6 @@ onBeforeUnmount(stopPreview);
         </div>
       </div>
     </div>
-    <span
-      class="obs-template-preview-stage__motion obs-template-preview-stage__limitations"
-      role="note"
-      >{{ limitations.join(t('common.sentenceJoin')) }}</span
-    >
     <span
       v-if="previewFailed"
       class="obs-template-preview-stage__motion"
@@ -272,10 +262,5 @@ onBeforeUnmount(stopPreview);
   line-height: var(--ui-type-caption-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.obs-template-preview-stage__limitations {
-  white-space: normal;
-  overflow: visible;
 }
 </style>

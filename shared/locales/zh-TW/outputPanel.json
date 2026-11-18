@@ -2,398 +2,108 @@
   "templates": {
     "ribbonSetlist": {
       "name": "紅黑緞帶",
-      "availability": { "summary": "可在歌單輸出使用" },
-      "summary": "紅黑斜帶錯落排列，曲名保持水平與固定列距。",
-      "detail": "曲目依演唱順序由上往下填頁，目前曲目捲開入場。可定時回顧較早的頁面，背景可選白底或透明。",
-      "preview": { "layoutLabel": "單欄紅黑緞帶", "motionLabel": "捲開換字" },
-      "tags": ["紅黑緞帶", "可用透明底", "固定列距"],
-      "settings": [{ "label": "背景", "value": "白底或透明" }]
+      "facts": {
+        "content": "目前曲目與已唱曲目",
+        "paging": "分頁，定時回顧前頁（可關閉）"
+      }
     },
     "receiptSetlist": {
       "name": "票據歌單",
-      "availability": {
-        "summary": "演出安排顯示已唱明細，一般播放顯示紀錄。"
-      },
-      "summary": "熱感小票風格的曲目與已唱紀錄。",
-      "detail": "唱完自動出紙，可切換方向並定時回顧已唱明細。",
-      "preview": {
-        "layoutLabel": "連續小票",
-        "motionLabel": "送紙與回顧"
-      },
-      "tags": {
-        "0": "熱感小票",
-        "1": "雙向出紙",
-        "2": "歷史回顧"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "目前曲目、已唱明細"
-        },
-        "1": {
-          "label": "方向",
-          "value": "預設向下，可選向上"
-        },
-        "2": {
-          "label": "曲名",
-          "value": "最多兩行，超長省略"
-        },
-        "3": {
-          "label": "回顧",
-          "value": "定時回顧，可關閉"
-        }
+      "facts": {
+        "content": "目前曲目與已唱曲目",
+        "paging": "分頁，定時回顧前頁（可關閉）"
       }
     },
     "queueBoard": {
       "name": "夜色歌單",
-      "availability": {
-        "summary": "使用目前曲目與已唱紀錄。"
-      },
-      "summary": "黑底細線風格的演唱紀錄。",
-      "detail": "目前曲目置頂，已唱紀錄向下累積並平順滾動。",
-      "preview": {
-        "layoutLabel": "目前＋已唱",
-        "motionLabel": "溢位滾動"
-      },
-      "tags": {
-        "0": "黑底細線",
-        "1": "演唱紀錄",
-        "2": "幕間畫面"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "目前曲目、已唱紀錄"
-        },
-        "1": {
-          "label": "密度",
-          "value": "易讀"
-        },
-        "2": {
-          "label": "紀錄",
-          "value": "最近八首"
-        },
-        "3": {
-          "label": "動態",
-          "value": "超出時滾動"
-        }
+      "facts": {
+        "content": "目前曲目與已唱曲目",
+        "paging": "已唱曲目逐頁輪播"
       }
     },
     "karaokeStack": {
       "name": "經典字幕",
-      "availability": {
-        "summary": "支援逐字掃色，無逐字資料時依行長估算。"
-      },
-      "summary": "雙行交替、倒數與逐字掃色。",
-      "detail": "雙行交替接唱，提示點先行倒數，文字隨進度掃色。",
-      "preview": {
-        "layoutLabel": "錯位雙行",
-        "motionLabel": "逐字掃色"
-      },
-      "tags": {
-        "0": "經典伴唱",
-        "1": "錯位雙行",
-        "2": "進度掃色"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "上列靠左、下列靠右"
-        },
-        "1": {
-          "label": "倒數",
-          "value": "依歌曲節拍對齊"
-        },
-        "2": {
-          "label": "換詞",
-          "value": "唱完保留零點六秒"
-        },
-        "3": {
-          "label": "外觀",
-          "value": "白字藍框、角色色掃字"
-        },
-        "4": {
-          "label": "進度",
-          "value": "逐行估算／逐字精確"
-        },
-        "5": {
-          "label": "背景",
-          "value": "透明"
-        }
+      "facts": {
+        "direction": "橫書",
+        "language": "中日英",
+        "translation": "不顯示"
       }
     },
     "mangaFrame": {
       "name": "分格對白",
-      "availability": {
-        "summary": "使用目前行，可顯示已有的日文讀音。"
-      },
-      "summary": "左右交替的漫畫直書對白。",
-      "detail": "歌詞分成一至三個直書對話框，隨句左右交替。",
-      "preview": {
-        "layoutLabel": "直書對白",
-        "motionLabel": "整框淡入"
-      },
-      "tags": {
-        "0": "黑白漫畫",
-        "1": "左右對白",
-        "2": "直書歌詞"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "一至三個歌詞斷句"
-        },
-        "1": {
-          "label": "排版",
-          "value": "直書置中、左右交替"
-        },
-        "2": {
-          "label": "分句",
-          "value": "空格與括號分框"
-        },
-        "3": {
-          "label": "切換",
-          "value": "整框淡入淡出"
-        },
-        "4": {
-          "label": "假名",
-          "value": "有資料時顯示"
-        }
+      "facts": {
+        "direction": "直書",
+        "language": "日文為主",
+        "translation": "不顯示"
       }
     },
     "kineticPop": {
       "name": "躍動字幕",
-      "availability": {
-        "summary": "使用逐行歌詞。"
-      },
-      "summary": "漸層粗體字，逐字交錯跳入。",
-      "detail": "文字定點交錯跳入，可固定或輪替三款材質。",
-      "preview": {
-        "layoutLabel": "底部跳字",
-        "motionLabel": "定點交錯"
-      },
-      "tags": {
-        "0": "日系字卡",
-        "1": "材質可選",
-        "2": "交錯跳字"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "目前行"
-        },
-        "1": {
-          "label": "材質",
-          "value": "預設漸層白框，可固定或輪替"
-        },
-        "2": {
-          "label": "排列",
-          "value": "可選端正或些微偏移"
-        },
-        "3": {
-          "label": "切換",
-          "value": "逐字定點交錯跳入"
-        },
-        "4": {
-          "label": "字型",
-          "value": "日文圓體粗字"
-        },
-        "5": {
-          "label": "背景",
-          "value": "透明"
-        }
+      "facts": {
+        "direction": "橫書",
+        "language": "日文為主",
+        "translation": "不顯示"
       }
     },
     "ornateVertical": {
       "name": "和風直書",
-      "availability": {
-        "summary": "使用逐行歌詞，自動組合日文漢字。"
-      },
-      "summary": "明朝直書，漢字成組、假名逐字呈現。",
-      "detail": "明朝體直書，長句自動分欄；可調字色、大小與位置。",
-      "preview": {
-        "layoutLabel": "華麗直書",
-        "motionLabel": "群字綴現"
-      },
-      "tags": {
-        "0": "日文直書",
-        "1": "漢字群組",
-        "2": "墨色殘影"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "目前行"
-        },
-        "1": {
-          "label": "排版",
-          "value": "直書、固定右側"
-        },
-        "2": {
-          "label": "長句",
-          "value": "自動拆成至多三欄"
-        },
-        "3": {
-          "label": "切換",
-          "value": "漢字成組、假名逐字"
-        },
-        "4": {
-          "label": "藝術字",
-          "value": "同尺寸輕墨層"
-        },
-        "5": {
-          "label": "字型",
-          "value": "日文明朝體"
-        },
-        "6": {
-          "label": "背景",
-          "value": "透明"
-        }
+      "facts": {
+        "direction": "直書",
+        "language": "日文",
+        "translation": "不顯示"
       }
     },
     "centeredVertical": {
       "name": "中央直書",
-      "availability": "使用逐行歌詞。",
-      "summary": "單欄直書，水平與垂直置中。",
-      "detail": "適合中文、日文等直排歌詞；英文為主建議用橫排。由上往下讀，長句分頁，換句直接切換。",
-      "layoutLabel": "中央單欄",
-      "motionLabel": "直接切換",
-      "columnTag": "單欄直書",
-      "anchorTag": "畫面正中央",
-      "surfaceTag": "透明背景"
+      "facts": {
+        "direction": "直書",
+        "language": "中文、日文",
+        "translation": "不顯示"
+      }
     },
     "fisheyeLens": {
       "name": "魚眼鏡筒",
-      "availability": "套用後顯示正在播放的同步歌詞",
-      "summary": "沿門鏡左右弧緣排列歌詞。",
-      "detail": "鏡心保留人物空間，字形錯拍縮放，換句時沿鏡弧翻轉。",
-      "layoutLabel": "雙側弧列",
-      "motionLabel": "沿弧翻轉",
-      "lensTag": "魚眼",
-      "columnTag": "弧列",
-      "motionTag": "翻轉"
+      "facts": {
+        "direction": "沿弧線排列",
+        "language": "中日英",
+        "translation": "不顯示"
+      }
     },
     "chalkboardVertical": {
       "name": "黑板直書",
-      "availability": "使用逐行歌詞。",
-      "summary": "粉筆白字與直線逐字寫入。",
-      "detail": "字幕可放在左區或右區，由右至左讀，文字與右線逐字分向擦除。",
-      "layoutLabel": "偏側直欄",
-      "motionLabel": "分向擦除",
-      "chalkTag": "粉筆白字",
-      "columnTag": "逐字書寫",
-      "sideTag": "左右構圖"
+      "facts": {
+        "direction": "直書",
+        "language": "中文、日文",
+        "translation": "不顯示"
+      }
     },
     "liveStage": {
       "name": "轉播字卡",
-      "availability": {
-        "summary": "需逐行時間，開場字卡使用曲目資訊。"
-      },
-      "summary": "轉播風格的歌詞與開場字卡。",
-      "detail": "歌詞置於左下、開場字卡置於右下，中央留給表演者。",
-      "preview": {
-        "layoutLabel": "舞台雙行",
-        "motionLabel": "字卡進場"
-      },
-      "tags": {
-        "0": "轉播字幕",
-        "1": "開場字卡",
-        "2": "舞台識別"
-      },
-      "settings": {
-        "0": {
-          "label": "歌詞",
-          "value": "左下寬幅、最多兩行"
-        },
-        "1": {
-          "label": "呈現",
-          "value": "精簡、平衡或忠實原文"
-        },
-        "2": {
-          "label": "字卡",
-          "value": "右下精簡、播放後四至八秒"
-        },
-        "3": {
-          "label": "成員",
-          "value": "解析但不顯示"
-        },
-        "4": {
-          "label": "品牌",
-          "value": "上方低干擾舞台識別"
-        }
+      "facts": {
+        "direction": "橫書",
+        "language": "各種語言",
+        "translation": "顯示於歌詞下方"
       }
     },
     "artCard": {
       "name": "星空黑膠",
-      "availability": {
-        "summary": "使用本機封面，缺圖時顯示曲名首字。"
-      },
-      "summary": "專輯封面搭配星染黑膠。",
-      "detail": "左側封面、右側星染唱盤，隨播放緩慢旋轉。",
-      "preview": {
-        "layoutLabel": "封面＋唱盤",
-        "motionLabel": "星塵旋轉"
-      },
-      "tags": {
-        "0": "專輯封面",
-        "1": "星染黑膠",
-        "2": "播放狀態"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "封面、唱盤、歌名、歌手"
-        },
-        "1": {
-          "label": "動態",
-          "value": "播放旋轉、暫停靜止"
-        },
-        "2": {
-          "label": "缺圖",
-          "value": "曲名首字替代"
-        }
+      "facts": {
+        "artwork": "缺圖時顯示曲名首字",
+        "progress": "不顯示，唱盤隨播放轉動"
       }
     },
     "ticketStub": {
       "name": "演出票根",
-      "availability": "透明畫布，票根靠下緣。",
-      "summary": "把正在播放的曲目排成暖白票根。",
-      "detail": "方形封面與曲名並排，打孔線分出副券，適合放在演出畫面下緣。",
-      "layoutLabel": "橫式票根",
-      "motionLabel": "隨曲更新",
-      "coverTag": "方形封面",
-      "paperTag": "暖白紙面",
-      "backdropTag": "透明外圍"
+      "facts": {
+        "artwork": "缺圖時顯示曲名首字",
+        "progress": "不顯示"
+      }
     },
     "coverPlayer": {
       "name": "封面電台",
-      "availability": {
-        "summary": "使用本機封面，缺圖時顯示曲名首字。"
-      },
-      "summary": "大幅封面搭配取色背景與播放進度。",
-      "detail": "直式播放器，呈現封面、曲目、進度與音量。",
-      "preview": {
-        "layoutLabel": "直式封面卡",
-        "motionLabel": "進度同步"
-      },
-      "tags": {
-        "0": "大幅封面",
-        "1": "播放進度",
-        "2": "播放狀態"
-      },
-      "settings": {
-        "0": {
-          "label": "顯示",
-          "value": "封面、歌名、歌手、進度"
-        },
-        "1": {
-          "label": "控制列",
-          "value": "僅顯示播放狀態"
-        },
-        "2": {
-          "label": "缺圖",
-          "value": "曲名首字替代"
-        }
+      "facts": {
+        "artwork": "缺圖時顯示曲名首字",
+        "progress": "進度條"
       }
     }
   },
@@ -581,7 +291,15 @@
     "noMatch": "找不到符合的模板。",
     "none": "目前沒有可用模板。",
     "choose": "請選擇模板。",
-    "features": "模板特性",
+    "facts": {
+      "direction": "方向",
+      "language": "語言",
+      "translation": "譯文",
+      "content": "內容",
+      "paging": "換頁",
+      "artwork": "封面",
+      "progress": "進度"
+    },
     "unavailable": "尚未提供",
     "apply": "套用模板",
     "noThumbnail": "暫無縮圖"
@@ -593,7 +311,6 @@
     "fixed": "固定",
     "motionSample": "動態示例",
     "reference": "參考圖",
-    "static": "靜態",
     "motionFailed": "無法載入動態預覽，請再試一次"
   },
   "widget": {
@@ -626,24 +343,6 @@
     "failedNamed": "無法複製{label}網址",
     "tryAgain": "請再試一次。",
     "retry": "重試"
-  },
-  "previewLimits": {
-    "fisheyeLens": "示範外弧字幕與副歌貼近。可在工作臺用實曲確認時序。",
-    "common": "預設外觀示意，實際輸出請至工作臺確認。",
-    "queueBoard": "捲動示意，正式輸出採逐頁顯示。",
-    "receiptSetlist": "使用示例紀錄，正式回顧最多一百筆。",
-    "ribbonSetlist": "動態預覽使用合成曲名，正式輸出依實際列高分頁。",
-    "karaokeStack": "掃色示意，非實際逐字同步。",
-    "kineticPop": "固定句段示意，未呈現整首換句。",
-    "ornateVertical": "兩句循環示意，未呈現完整換詞。",
-    "chalkboardVertical": "示範書寫與擦除。實際分欄依曲目而定。",
-    "centeredVertical": "定格示意，實際分頁和換句請看工作台。",
-    "liveStage": "示範標題卡進退與字幕換句，使用縮短的示範時序。",
-    "mangaFrame": "以示範歌詞呈現對白框交接。實際同步依曲目而定。",
-    "artCard": "文字封面示意，旋轉不對應播放位置。",
-    "coverPlayer": "封面與進度僅供示意。",
-    "ticketStub": "示範曲使用曲名首字，實際播放會顯示可用封面。",
-    "fallback": "僅供風格參考。"
   },
   "obs": {
     "statusReadRestart": "無法讀取 OBS 連線狀態，請重新啟動後再試。",

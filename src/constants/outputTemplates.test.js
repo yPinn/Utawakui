@@ -192,13 +192,7 @@ function visibleTemplateCopy(template) {
   return [
     template.name,
     template.availability?.label,
-    template.availability?.summary,
-    template.summary,
-    template.detail,
-    template.preview?.layoutLabel,
-    template.preview?.motionLabel,
-    ...(template.tags ?? []),
-    ...(template.settings ?? []).flatMap(({ label, value }) => [label, value]),
+    ...(template.facts ?? []).flatMap(({ label, value }) => [label, value]),
   ]
     .filter(Boolean)
     .join(' ');
@@ -368,18 +362,6 @@ describe('output template registry', () => {
     ).toBe(true);
   });
 
-  it('describes the Kinetic Pop burst consistently for every visible phrase', () => {
-    const kineticPop = getOutputWorkbenchData().templates.find(
-      (template) => template.id === 'kinetic-pop',
-    );
-    const copy = visibleTemplateCopy(kineticPop);
-
-    expect(copy).toContain('逐字交錯跳入');
-    expect(copy).toContain('逐字定點交錯跳入');
-    expect(copy).toContain('可選端正或些微偏移');
-    expect(copy).not.toMatch(/短句|長句直切|長句保持穩定/);
-  });
-
   it('keeps stable storage ids behind a distinctive Chinese display system', () => {
     const templates = getOutputWorkbenchData().templates;
 
@@ -400,53 +382,51 @@ describe('output template registry', () => {
     }
   });
 
-  it('keeps every template copy layer within its gallery reading budget', () => {
+  // The gallery preview shows look and motion; facts say what it cannot, with
+  // the same fields for every template of a kind.
+  it('gives every template its kind’s fact fields and nothing else', () => {
     const templates = getOutputWorkbenchData().templates;
+    const fieldsByKind = {
+      lyrics: ['direction', 'language', 'translation'],
+      setlist: ['content', 'paging'],
+      'now-playing': ['artwork', 'progress'],
+    };
 
     for (const template of templates) {
       expect(
-        graphemeCount(template.summary),
-        `${template.id} summary`,
-      ).toBeLessThanOrEqual(24);
-      expect(
-        graphemeCount(template.detail),
-        `${template.id} detail`,
-      ).toBeLessThanOrEqual(48);
-      expect(
-        graphemeCount(template.availability.summary),
-        `${template.id} availability`,
-      ).toBeLessThanOrEqual(32);
-      expect(
-        graphemeCount(template.preview.layoutLabel),
-        `${template.id} layout label`,
-      ).toBeLessThanOrEqual(7);
-      expect(
-        graphemeCount(template.preview.motionLabel),
-        `${template.id} motion label`,
-      ).toBeLessThanOrEqual(6);
-      expect(
-        graphemeCount(template.preview.layoutLabel) +
-          graphemeCount(template.preview.motionLabel),
-        `${template.id} card metadata`,
-      ).toBeLessThanOrEqual(14);
-      expect(template.tags).toHaveLength(3);
-      for (const tag of template.tags) {
+        template.facts.map(({ key }) => key),
+        template.id,
+      ).toEqual(fieldsByKind[template.kind]);
+      for (const fact of template.facts) {
+        expect(fact.label, `${template.id} ${fact.key}`).toBeTruthy();
         expect(
-          graphemeCount(tag),
-          `${template.id} tag: ${tag}`,
-        ).toBeGreaterThanOrEqual(2);
-        expect(
-          graphemeCount(tag),
-          `${template.id} tag: ${tag}`,
-        ).toBeLessThanOrEqual(5);
+          graphemeCount(fact.value),
+          `${template.id} ${fact.key}`,
+        ).toBeLessThanOrEqual(20);
       }
-      for (const setting of template.settings) {
-        expect(
-          graphemeCount(setting.value),
-          `${template.id} setting: ${setting.label}`,
-        ).toBeLessThanOrEqual(16);
-      }
+      for (const retired of [
+        'summary',
+        'detail',
+        'tags',
+        'settings',
+        'preview',
+      ])
+        expect(retired in template, `${template.id} ${retired}`).toBe(false);
+      expect(template.availability.summary, template.id).toBeUndefined();
     }
+    const fact = (id, key) =>
+      templates
+        .find((template) => template.id === id)
+        .facts.find((entry) => entry.key === key).value;
+    expect(fact('live-stage', 'translation')).toBe('顯示於歌詞下方');
+    expect(fact('karaoke-stack', 'translation')).toBe('不顯示');
+    expect(fact('ornate-vertical', 'language')).toBe('日文');
+    expect(fact('karaoke-stack', 'language')).toBe('中日英');
+    expect(fact('ornate-vertical', 'direction')).toBe('直書');
+    expect(fact('fisheye-lens', 'direction')).toBe('沿弧線排列');
+    expect(fact('queue-board', 'paging')).toBe('已唱曲目逐頁輪播');
+    expect(fact('cover-player', 'progress')).toBe('進度條');
+    expect(fact('ticket-stub', 'artwork')).toBe('缺圖時顯示曲名首字');
   });
 
   it('registers the first bundled appearance batch as independent Lyrics templates', () => {
@@ -468,33 +448,16 @@ describe('output template registry', () => {
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
     ).toMatchObject({
       kind: 'lyrics',
-      detail: '歌詞置於左下、開場字卡置於右下，中央留給表演者。',
-      preview: {
-        layoutLabel: '舞台雙行',
-        motionLabel: '字卡進場',
-      },
-      settings: expect.arrayContaining([
-        { label: '歌詞', value: '左下寬幅、最多兩行' },
-        { label: '字卡', value: '右下精簡、播放後四至八秒' },
-        { label: '品牌', value: '上方低干擾舞台識別' },
-      ]),
     });
     expect(
       lyricsGroup.templates.find((template) => template.id === 'manga-frame'),
-    ).toMatchObject({
-      kind: 'lyrics',
-      preview: { layoutLabel: '直書對白', motionLabel: '整框淡入' },
-    });
+    ).toMatchObject({ kind: 'lyrics' });
     expect(
       lyricsGroup.templates.find((template) => template.id === 'karaoke-stack'),
     ).toMatchObject({
       id: 'karaoke-stack',
       name: '經典字幕',
       kind: 'lyrics',
-      preview: {
-        layoutLabel: '錯位雙行',
-        motionLabel: '逐字掃色',
-      },
       editableAppearanceKeys: [
         'paletteId',
         'lookAmount',
@@ -503,14 +466,6 @@ describe('output template registry', () => {
         'filmGrainAmount',
         'filmGrainSize',
       ],
-      detail: expect.stringContaining('提示點先行倒數'),
-      settings: expect.arrayContaining([
-        { label: '顯示', value: '上列靠左、下列靠右' },
-        { label: '倒數', value: '依歌曲節拍對齊' },
-        { label: '換詞', value: '唱完保留零點六秒' },
-        { label: '外觀', value: '白字藍框、角色色掃字' },
-        { label: '進度', value: '逐行估算／逐字精確' },
-      ]),
     });
     expect(
       lyricsGroup.templates.some((template) => template.id === 'classic-ktv'),
@@ -555,10 +510,6 @@ describe('output template registry', () => {
       id: 'kinetic-pop',
       name: '躍動字幕',
       kind: 'lyrics',
-      preview: {
-        layoutLabel: '底部跳字',
-        motionLabel: '定點交錯',
-      },
       editableAppearanceKeys: [
         'paletteId',
         'lookAmount',
@@ -578,16 +529,6 @@ describe('output template registry', () => {
       id: 'ornate-vertical',
       name: '和風直書',
       kind: 'lyrics',
-      preview: {
-        layoutLabel: '華麗直書',
-        motionLabel: '群字綴現',
-      },
-      detail: '明朝體直書，長句自動分欄；可調字色、大小與位置。',
-      settings: expect.arrayContaining([
-        { label: '排版', value: '直書、固定右側' },
-        { label: '長句', value: '自動拆成至多三欄' },
-        { label: '藝術字', value: '同尺寸輕墨層' },
-      ]),
       editableAppearanceKeys: [
         'paletteId',
         'lookAmount',
@@ -636,7 +577,6 @@ describe('output template registry', () => {
       ),
     ).toMatchObject({
       kind: 'now-playing',
-      preview: { layoutLabel: '直式封面卡', motionLabel: '進度同步' },
     });
     expect(
       getOutputWorkbenchData().templateGroups.some(
@@ -659,15 +599,9 @@ describe('output template registry', () => {
     );
     expect(OUTPUT_PREVIEW_SCENE.label).toBe(expected.label);
     expect(data.previewScene).toEqual(OUTPUT_PREVIEW_SCENE);
-    expect(
-      data.templates.every(
-        (template) =>
-          template.preview?.layoutLabel &&
-          template.preview?.motionLabel &&
-          !('title' in template.preview) &&
-          !('lines' in template.preview),
-      ),
-    ).toBe(true);
+    expect(data.templates.some((template) => 'preview' in template)).toBe(
+      false,
+    );
 
     data.previewScene.track.title = 'changed';
     expect(OUTPUT_PREVIEW_SCENE.track.title).toBe(expected.track.title);
@@ -685,7 +619,6 @@ describe('output template registry', () => {
           ? { label: '建議', tone: 'accent', available: true }
           : { label: '可用', tone: 'muted', available: true },
       );
-      expect(template.availability.summary, template.id).toBeTruthy();
       expect('tone' in template, template.id).toBe(false);
     }
     expect(

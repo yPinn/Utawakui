@@ -6,7 +6,6 @@ import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
-import UiChip from '../ui/UiChip.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiTooltip from '../ui/UiTooltip.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
@@ -53,16 +52,6 @@ const isApplied = computed(
 const isSelectedPresetAvailable = computed(
   () => selectedPreset.value?.availability?.available !== false,
 );
-const selectedAvailabilitySummary = computed(() => {
-  const availability = selectedPreset.value?.availability;
-  if (
-    !availability?.summary ||
-    (availability.available !== false && availability.status === 'available')
-  ) {
-    return '';
-  }
-  return availability.summary;
-});
 const visibleGroups = computed(() =>
   props.templateGroups.filter((group) => group.templates.length),
 );
@@ -77,7 +66,7 @@ const filteredTemplates = computed(() => {
   return (activeGroup.value?.templates ?? []).filter(
     (preset) =>
       !query ||
-      [preset.name, preset.detail, ...(preset.tags ?? [])]
+      [preset.name, ...(preset.facts ?? []).map(({ value }) => value)]
         .join(' ')
         .toLocaleLowerCase()
         .includes(query),
@@ -206,25 +195,19 @@ function applyPreset(preset) {
           :preset="selectedPreset"
           :scene="selectedPreviewScene"
         />
-        <div v-if="selectedPreset" class="obs-template-gallery__detail-copy">
-          <p class="obs-template-gallery__detail-summary">
-            {{ selectedPreset.detail }}
-          </p>
-          <p
-            v-if="selectedAvailabilitySummary"
-            class="obs-template-gallery__availability"
-          >
-            {{ selectedAvailabilitySummary }}
-          </p>
+        <dl
+          v-if="selectedPreset?.facts?.length"
+          class="obs-template-gallery__facts"
+        >
           <div
-            class="obs-template-gallery__tags"
-            :aria-label="t('outputPanel.gallery.features')"
+            v-for="fact in selectedPreset.facts"
+            :key="fact.key"
+            class="obs-template-gallery__fact"
           >
-            <UiChip v-for="tag in selectedPreset.tags" :key="tag" tone="muted">
-              {{ tag }}
-            </UiChip>
+            <dt class="obs-template-gallery__fact-label">{{ fact.label }}</dt>
+            <dd class="obs-template-gallery__fact-value">{{ fact.value }}</dd>
           </div>
-        </div>
+        </dl>
       </template>
 
       <template #side-footer>
@@ -257,9 +240,12 @@ function applyPreset(preset) {
   min-width: 0;
 }
 
+/* Regular search width at the right end of the toolbar; the rest of the row
+   stays empty. */
 .obs-template-gallery__search {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  max-inline-size: var(--ui-output-side-min-width);
 }
 
 .obs-template-gallery__catalog {
@@ -323,7 +309,6 @@ function applyPreset(preset) {
 
 .obs-template-thumb__body,
 .obs-template-gallery__heading,
-.obs-template-gallery__tags,
 .obs-template-gallery__actions {
   display: flex;
   align-items: center;
@@ -349,11 +334,42 @@ function applyPreset(preset) {
 }
 
 .obs-template-gallery__detail-header,
-.obs-template-gallery__detail-copy {
+/* Label / value rows: short facts the preview cannot show. */
+/* Two-column label / value list. Rows use `display: contents` so every
+   label shares one column and every value starts at the same edge. */
+.obs-template-gallery__facts {
   min-width: 0;
   display: grid;
-  align-content: start;
-  gap: var(--ui-space-2);
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: var(--ui-space-3);
+  row-gap: var(--ui-space-2);
+  align-items: baseline;
+  margin: 0;
+}
+
+.obs-template-gallery__fact {
+  display: contents;
+}
+
+/* Label role, muted: names the field and never wraps. */
+.obs-template-gallery__fact-label {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
+  white-space: nowrap;
+}
+
+/* Compact body role: the value is the content and wraps inside its column. */
+.obs-template-gallery__fact-value {
+  min-width: 0;
+  margin: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-compact-line-height);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
 .obs-template-gallery__detail-header {
@@ -380,27 +396,6 @@ function applyPreset(preset) {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-}
-
-.obs-template-gallery__detail-summary,
-.obs-template-gallery__availability {
-  max-inline-size: 56ch;
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
-}
-
-.obs-template-gallery__availability {
-  padding-inline-start: var(--ui-space-2);
-  border-inline-start: var(--ui-border-width) solid
-    var(--ui-color-border-strong);
-}
-
-.obs-template-gallery__tags {
-  flex-wrap: wrap;
-  gap: var(--ui-space-1);
 }
 
 .obs-template-gallery__actions {

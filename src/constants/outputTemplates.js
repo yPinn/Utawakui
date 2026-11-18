@@ -44,494 +44,195 @@ function deepFreeze(value) {
 // Immutable compatibility facade; each preview projects this same snapshot for its template.
 export const OUTPUT_PREVIEW_SCENE = deepFreeze(createOutputPreviewScene());
 
+const FACT_LABELS = Object.freeze({
+  direction: t('outputPanel.gallery.facts.direction'),
+  language: t('outputPanel.gallery.facts.language'),
+  translation: t('outputPanel.gallery.facts.translation'),
+  content: t('outputPanel.gallery.facts.content'),
+  paging: t('outputPanel.gallery.facts.paging'),
+  artwork: t('outputPanel.gallery.facts.artwork'),
+  progress: t('outputPanel.gallery.facts.progress'),
+});
+
+function templateFacts(entries) {
+  return entries.map(([key, value]) => ({
+    key,
+    label: FACT_LABELS[key],
+    value,
+  }));
+}
+
+// The gallery preview shows look and motion. Facts state what it cannot,
+// with the same short fields per kind, ordered by what a user checks first.
 const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'ribbon-setlist',
     kind: 'setlist',
     order: 30,
     name: t('outputPanel.templates.ribbonSetlist.name'),
-    availability: {
-      summary: t('outputPanel.templates.ribbonSetlist.availability.summary'),
-    },
-    summary: t('outputPanel.templates.ribbonSetlist.summary'),
-    detail: t('outputPanel.templates.ribbonSetlist.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.ribbonSetlist.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.ribbonSetlist.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.ribbonSetlist.tags.0'),
-      t('outputPanel.templates.ribbonSetlist.tags.1'),
-      t('outputPanel.templates.ribbonSetlist.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.ribbonSetlist.settings.0.label'),
-        value: t('outputPanel.templates.ribbonSetlist.settings.0.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['content', t('outputPanel.templates.ribbonSetlist.facts.content')],
+      ['paging', t('outputPanel.templates.ribbonSetlist.facts.paging')],
+    ]),
   },
   {
     id: 'receipt-setlist',
     kind: 'setlist',
     order: 10,
     name: t('outputPanel.templates.receiptSetlist.name'),
-    availability: {
-      summary: t('outputPanel.templates.receiptSetlist.availability.summary'),
-    },
-    summary: t('outputPanel.templates.receiptSetlist.summary'),
-    detail: t('outputPanel.templates.receiptSetlist.detail'),
-    preview: {
-      layoutLabel: t(
-        'outputPanel.templates.receiptSetlist.preview.layoutLabel',
-      ),
-      motionLabel: t(
-        'outputPanel.templates.receiptSetlist.preview.motionLabel',
-      ),
-    },
-    tags: [
-      t('outputPanel.templates.receiptSetlist.tags.0'),
-      t('outputPanel.templates.receiptSetlist.tags.1'),
-      t('outputPanel.templates.receiptSetlist.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.receiptSetlist.settings.0.label'),
-        value: t('outputPanel.templates.receiptSetlist.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.receiptSetlist.settings.1.label'),
-        value: t('outputPanel.templates.receiptSetlist.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.receiptSetlist.settings.2.label'),
-        value: t('outputPanel.templates.receiptSetlist.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.receiptSetlist.settings.3.label'),
-        value: t('outputPanel.templates.receiptSetlist.settings.3.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['content', t('outputPanel.templates.receiptSetlist.facts.content')],
+      ['paging', t('outputPanel.templates.receiptSetlist.facts.paging')],
+    ]),
   },
   {
     id: 'queue-board',
     kind: 'setlist',
     order: 20,
     name: t('outputPanel.templates.queueBoard.name'),
-    availability: {
-      summary: t('outputPanel.templates.queueBoard.availability.summary'),
-    },
-    summary: t('outputPanel.templates.queueBoard.summary'),
-    detail: t('outputPanel.templates.queueBoard.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.queueBoard.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.queueBoard.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.queueBoard.tags.0'),
-      t('outputPanel.templates.queueBoard.tags.1'),
-      t('outputPanel.templates.queueBoard.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.queueBoard.settings.0.label'),
-        value: t('outputPanel.templates.queueBoard.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.queueBoard.settings.1.label'),
-        value: t('outputPanel.templates.queueBoard.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.queueBoard.settings.2.label'),
-        value: t('outputPanel.templates.queueBoard.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.queueBoard.settings.3.label'),
-        value: t('outputPanel.templates.queueBoard.settings.3.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['content', t('outputPanel.templates.queueBoard.facts.content')],
+      ['paging', t('outputPanel.templates.queueBoard.facts.paging')],
+    ]),
   },
   {
     id: 'karaoke-stack',
     kind: 'lyrics',
     order: 10,
     name: t('outputPanel.templates.karaokeStack.name'),
-    availability: {
-      summary: t('outputPanel.templates.karaokeStack.availability.summary'),
-    },
-    summary: t('outputPanel.templates.karaokeStack.summary'),
-    detail: t('outputPanel.templates.karaokeStack.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.karaokeStack.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.karaokeStack.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.karaokeStack.tags.0'),
-      t('outputPanel.templates.karaokeStack.tags.1'),
-      t('outputPanel.templates.karaokeStack.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.karaokeStack.settings.0.label'),
-        value: t('outputPanel.templates.karaokeStack.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.karaokeStack.settings.1.label'),
-        value: t('outputPanel.templates.karaokeStack.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.karaokeStack.settings.2.label'),
-        value: t('outputPanel.templates.karaokeStack.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.karaokeStack.settings.3.label'),
-        value: t('outputPanel.templates.karaokeStack.settings.3.value'),
-      },
-      {
-        label: t('outputPanel.templates.karaokeStack.settings.4.label'),
-        value: t('outputPanel.templates.karaokeStack.settings.4.value'),
-      },
-      {
-        label: t('outputPanel.templates.karaokeStack.settings.5.label'),
-        value: t('outputPanel.templates.karaokeStack.settings.5.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.karaokeStack.facts.direction')],
+      ['language', t('outputPanel.templates.karaokeStack.facts.language')],
+      [
+        'translation',
+        t('outputPanel.templates.karaokeStack.facts.translation'),
+      ],
+    ]),
   },
   {
     id: 'manga-frame',
     kind: 'lyrics',
     order: 30,
     name: t('outputPanel.templates.mangaFrame.name'),
-    availability: {
-      summary: t('outputPanel.templates.mangaFrame.availability.summary'),
-    },
-    summary: t('outputPanel.templates.mangaFrame.summary'),
-    detail: t('outputPanel.templates.mangaFrame.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.mangaFrame.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.mangaFrame.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.mangaFrame.tags.0'),
-      t('outputPanel.templates.mangaFrame.tags.1'),
-      t('outputPanel.templates.mangaFrame.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.mangaFrame.settings.0.label'),
-        value: t('outputPanel.templates.mangaFrame.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.mangaFrame.settings.1.label'),
-        value: t('outputPanel.templates.mangaFrame.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.mangaFrame.settings.2.label'),
-        value: t('outputPanel.templates.mangaFrame.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.mangaFrame.settings.3.label'),
-        value: t('outputPanel.templates.mangaFrame.settings.3.value'),
-      },
-      {
-        label: t('outputPanel.templates.mangaFrame.settings.4.label'),
-        value: t('outputPanel.templates.mangaFrame.settings.4.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.mangaFrame.facts.direction')],
+      ['language', t('outputPanel.templates.mangaFrame.facts.language')],
+      ['translation', t('outputPanel.templates.mangaFrame.facts.translation')],
+    ]),
   },
   {
     id: 'kinetic-pop',
     kind: 'lyrics',
     order: 25,
     name: t('outputPanel.templates.kineticPop.name'),
-    availability: {
-      summary: t('outputPanel.templates.kineticPop.availability.summary'),
-    },
-    summary: t('outputPanel.templates.kineticPop.summary'),
-    detail: t('outputPanel.templates.kineticPop.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.kineticPop.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.kineticPop.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.kineticPop.tags.0'),
-      t('outputPanel.templates.kineticPop.tags.1'),
-      t('outputPanel.templates.kineticPop.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.kineticPop.settings.0.label'),
-        value: t('outputPanel.templates.kineticPop.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.kineticPop.settings.1.label'),
-        value: t('outputPanel.templates.kineticPop.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.kineticPop.settings.2.label'),
-        value: t('outputPanel.templates.kineticPop.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.kineticPop.settings.3.label'),
-        value: t('outputPanel.templates.kineticPop.settings.3.value'),
-      },
-      {
-        label: t('outputPanel.templates.kineticPop.settings.4.label'),
-        value: t('outputPanel.templates.kineticPop.settings.4.value'),
-      },
-      {
-        label: t('outputPanel.templates.kineticPop.settings.5.label'),
-        value: t('outputPanel.templates.kineticPop.settings.5.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.kineticPop.facts.direction')],
+      ['language', t('outputPanel.templates.kineticPop.facts.language')],
+      ['translation', t('outputPanel.templates.kineticPop.facts.translation')],
+    ]),
   },
   {
     id: 'ornate-vertical',
     kind: 'lyrics',
     order: 28,
     name: t('outputPanel.templates.ornateVertical.name'),
-    availability: {
-      summary: t('outputPanel.templates.ornateVertical.availability.summary'),
-    },
-    summary: t('outputPanel.templates.ornateVertical.summary'),
-    detail: t('outputPanel.templates.ornateVertical.detail'),
-    preview: {
-      layoutLabel: t(
-        'outputPanel.templates.ornateVertical.preview.layoutLabel',
-      ),
-      motionLabel: t(
-        'outputPanel.templates.ornateVertical.preview.motionLabel',
-      ),
-    },
-    tags: [
-      t('outputPanel.templates.ornateVertical.tags.0'),
-      t('outputPanel.templates.ornateVertical.tags.1'),
-      t('outputPanel.templates.ornateVertical.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.0.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.1.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.2.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.3.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.3.value'),
-      },
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.4.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.4.value'),
-      },
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.5.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.5.value'),
-      },
-      {
-        label: t('outputPanel.templates.ornateVertical.settings.6.label'),
-        value: t('outputPanel.templates.ornateVertical.settings.6.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.ornateVertical.facts.direction')],
+      ['language', t('outputPanel.templates.ornateVertical.facts.language')],
+      [
+        'translation',
+        t('outputPanel.templates.ornateVertical.facts.translation'),
+      ],
+    ]),
   },
   {
     id: 'centered-vertical',
     kind: 'lyrics',
     order: 31,
     name: t('outputPanel.templates.centeredVertical.name'),
-    availability: {
-      summary: t('outputPanel.templates.centeredVertical.availability'),
-    },
-    summary: t('outputPanel.templates.centeredVertical.summary'),
-    detail: t('outputPanel.templates.centeredVertical.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.centeredVertical.layoutLabel'),
-      motionLabel: t('outputPanel.templates.centeredVertical.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.centeredVertical.columnTag'),
-      t('outputPanel.templates.centeredVertical.anchorTag'),
-      t('outputPanel.templates.centeredVertical.surfaceTag'),
-    ],
-    settings: [],
+    facts: templateFacts([
+      [
+        'direction',
+        t('outputPanel.templates.centeredVertical.facts.direction'),
+      ],
+      ['language', t('outputPanel.templates.centeredVertical.facts.language')],
+      [
+        'translation',
+        t('outputPanel.templates.centeredVertical.facts.translation'),
+      ],
+    ]),
   },
   {
     id: 'chalkboard-vertical',
     kind: 'lyrics',
     order: 29,
     name: t('outputPanel.templates.chalkboardVertical.name'),
-    availability: {
-      summary: t('outputPanel.templates.chalkboardVertical.availability'),
-    },
-    summary: t('outputPanel.templates.chalkboardVertical.summary'),
-    detail: t('outputPanel.templates.chalkboardVertical.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.chalkboardVertical.layoutLabel'),
-      motionLabel: t('outputPanel.templates.chalkboardVertical.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.chalkboardVertical.chalkTag'),
-      t('outputPanel.templates.chalkboardVertical.columnTag'),
-      t('outputPanel.templates.chalkboardVertical.sideTag'),
-    ],
-    settings: [],
+    facts: templateFacts([
+      [
+        'direction',
+        t('outputPanel.templates.chalkboardVertical.facts.direction'),
+      ],
+      [
+        'language',
+        t('outputPanel.templates.chalkboardVertical.facts.language'),
+      ],
+      [
+        'translation',
+        t('outputPanel.templates.chalkboardVertical.facts.translation'),
+      ],
+    ]),
   },
   {
     id: 'live-stage',
     kind: 'lyrics',
     order: 20,
     name: t('outputPanel.templates.liveStage.name'),
-    availability: {
-      summary: t('outputPanel.templates.liveStage.availability.summary'),
-    },
-    summary: t('outputPanel.templates.liveStage.summary'),
-    detail: t('outputPanel.templates.liveStage.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.liveStage.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.liveStage.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.liveStage.tags.0'),
-      t('outputPanel.templates.liveStage.tags.1'),
-      t('outputPanel.templates.liveStage.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.liveStage.settings.0.label'),
-        value: t('outputPanel.templates.liveStage.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.liveStage.settings.1.label'),
-        value: t('outputPanel.templates.liveStage.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.liveStage.settings.2.label'),
-        value: t('outputPanel.templates.liveStage.settings.2.value'),
-      },
-      {
-        label: t('outputPanel.templates.liveStage.settings.3.label'),
-        value: t('outputPanel.templates.liveStage.settings.3.value'),
-      },
-      {
-        label: t('outputPanel.templates.liveStage.settings.4.label'),
-        value: t('outputPanel.templates.liveStage.settings.4.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.liveStage.facts.direction')],
+      ['language', t('outputPanel.templates.liveStage.facts.language')],
+      ['translation', t('outputPanel.templates.liveStage.facts.translation')],
+    ]),
   },
   {
     id: 'fisheye-lens',
     kind: 'lyrics',
     order: 60,
     name: t('outputPanel.templates.fisheyeLens.name'),
-    availability: {
-      summary: t('outputPanel.templates.fisheyeLens.availability'),
-    },
-    summary: t('outputPanel.templates.fisheyeLens.summary'),
-    detail: t('outputPanel.templates.fisheyeLens.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.fisheyeLens.layoutLabel'),
-      motionLabel: t('outputPanel.templates.fisheyeLens.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.fisheyeLens.lensTag'),
-      t('outputPanel.templates.fisheyeLens.columnTag'),
-      t('outputPanel.templates.fisheyeLens.motionTag'),
-    ],
-    settings: [],
+    facts: templateFacts([
+      ['direction', t('outputPanel.templates.fisheyeLens.facts.direction')],
+      ['language', t('outputPanel.templates.fisheyeLens.facts.language')],
+      ['translation', t('outputPanel.templates.fisheyeLens.facts.translation')],
+    ]),
   },
   {
     id: 'art-card',
     kind: 'now-playing',
     order: 10,
     name: t('outputPanel.templates.artCard.name'),
-    availability: {
-      summary: t('outputPanel.templates.artCard.availability.summary'),
-    },
-    summary: t('outputPanel.templates.artCard.summary'),
-    detail: t('outputPanel.templates.artCard.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.artCard.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.artCard.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.artCard.tags.0'),
-      t('outputPanel.templates.artCard.tags.1'),
-      t('outputPanel.templates.artCard.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.artCard.settings.0.label'),
-        value: t('outputPanel.templates.artCard.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.artCard.settings.1.label'),
-        value: t('outputPanel.templates.artCard.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.artCard.settings.2.label'),
-        value: t('outputPanel.templates.artCard.settings.2.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['artwork', t('outputPanel.templates.artCard.facts.artwork')],
+      ['progress', t('outputPanel.templates.artCard.facts.progress')],
+    ]),
   },
   {
     id: 'ticket-stub',
     kind: 'now-playing',
     order: 20,
     name: t('outputPanel.templates.ticketStub.name'),
-    availability: {
-      summary: t('outputPanel.templates.ticketStub.availability'),
-    },
-    summary: t('outputPanel.templates.ticketStub.summary'),
-    detail: t('outputPanel.templates.ticketStub.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.ticketStub.layoutLabel'),
-      motionLabel: t('outputPanel.templates.ticketStub.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.ticketStub.coverTag'),
-      t('outputPanel.templates.ticketStub.paperTag'),
-      t('outputPanel.templates.ticketStub.backdropTag'),
-    ],
-    settings: [],
+    facts: templateFacts([
+      ['artwork', t('outputPanel.templates.ticketStub.facts.artwork')],
+      ['progress', t('outputPanel.templates.ticketStub.facts.progress')],
+    ]),
   },
   {
     id: 'cover-player',
     kind: 'now-playing',
     order: 30,
     name: t('outputPanel.templates.coverPlayer.name'),
-    availability: {
-      summary: t('outputPanel.templates.coverPlayer.availability.summary'),
-    },
-    summary: t('outputPanel.templates.coverPlayer.summary'),
-    detail: t('outputPanel.templates.coverPlayer.detail'),
-    preview: {
-      layoutLabel: t('outputPanel.templates.coverPlayer.preview.layoutLabel'),
-      motionLabel: t('outputPanel.templates.coverPlayer.preview.motionLabel'),
-    },
-    tags: [
-      t('outputPanel.templates.coverPlayer.tags.0'),
-      t('outputPanel.templates.coverPlayer.tags.1'),
-      t('outputPanel.templates.coverPlayer.tags.2'),
-    ],
-    settings: [
-      {
-        label: t('outputPanel.templates.coverPlayer.settings.0.label'),
-        value: t('outputPanel.templates.coverPlayer.settings.0.value'),
-      },
-      {
-        label: t('outputPanel.templates.coverPlayer.settings.1.label'),
-        value: t('outputPanel.templates.coverPlayer.settings.1.value'),
-      },
-      {
-        label: t('outputPanel.templates.coverPlayer.settings.2.label'),
-        value: t('outputPanel.templates.coverPlayer.settings.2.value'),
-      },
-    ],
+    facts: templateFacts([
+      ['artwork', t('outputPanel.templates.coverPlayer.facts.artwork')],
+      ['progress', t('outputPanel.templates.coverPlayer.facts.progress')],
+    ]),
   },
 ];
 
