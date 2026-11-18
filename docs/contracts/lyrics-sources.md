@@ -23,7 +23,7 @@ LRCLIB 的逐行與純文字候選可展開同步詳情，區分來源未提供�
 - 搜尋結果只是 discovery。保存前一律以 id 或相同查詢重新取得並比對 SHA-256 fingerprint；內容變更時回傳 `record-changed` 與新摘要，需使用者再次確認，絕不靜默保存。取消會保留原畫面、選擇、offset 與人工 T2。
 - 保存是 track lyrics tree 內的小 transaction：provider artifact → compatibility LRC → canonical timing sidecar（只在完整 T2 時）→ 最後發布 manifest。寫入原子、可冪等；中途失敗以舊 manifest 為準。刪除來源時一併移除 artifact、timing 與讀音資料。
 - Manifest 只保存 scalar metadata 與 provenance，不存 URL 或絕對路徑。
-- 不同來源的 line、word、translation 或 timing 永遠不互相拼接。
+- 不同來源的 line、word、translation 或 timing 永遠不互相拼接。來源自帶的譯文只對應同一份來源，見[譯文契約](lyrics-timing-contract.md#local-translation-data)。
 
 ## 搜尋與排序
 

@@ -293,6 +293,15 @@ caption and keeps that row for an untranslated line. Other templates, the
 prompter and the companion do not show it. A save in the editor reaches Output without
 reloading the file.
 
+A saved Better Lyrics source keeps its provider TTML. Reading translations also
+returns `sourceRows`: the TTML's own translations, from the head
+`<translations>` block by line key or from inline `x-translation` spans, in the
+supported languages (`en*` and Traditional Chinese tags). They bind only when
+every provider line still equals the saved document line in order, and a line
+already identical to its translation is skipped. The editor offers them as a
+draft for the current language; nothing is saved until the operator saves, and
+Output reads only saved rows. Reading makes no network request.
+
 ## Reading data
 
 Furigana, romanization, translation, and manual reading corrections remain in
