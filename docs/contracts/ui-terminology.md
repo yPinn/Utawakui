@@ -29,8 +29,13 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 「隨模板」（Follow template）是使用模板原有排版字型的選項，其字型可能依文字語系或材質改變。
 
 「人物組合」（Portrait preset）是幻影怪盜中一組可切換的照片、顯示名稱與底色。
+「編輯照片」（Edit photo）在匯入前提供拖曳與縮放取景。「移除背景」（Remove background）在本機辨識原圖主體並提供透明去背預覽。「去背範圍」（Cutout range）可多保留或多移除主體的邊緣。「重設取景」（Reset framing）回到預設構圖。「套用照片」（Apply photo）將預覽中的版本帶回人物組合草稿。
+「邊緣銳化」（Edge sharpness）調整透明邊緣的清晰度。「局部修正」（Local retouch）提供「智慧套索擦除」（Smart lasso erase）與「套索還原」（Lasso restore），拖曳圈選後分別擦除區域與補回照片像素。
+「構圖輔助」（Composition guides）在照片取景時顯示九宮格與吸附線。
 
 「配色風格」（Color style）分為「基本配色」（Basic）與「底片風格」（Film），模板原色置頂。底片區按品牌與片名的英文字母排序，選項使用「品牌＋片名」，表示參考具名膠片或膠片模擬的自製配色。
+
+「隨機產生『欄位名稱』色碼」（Randomize {label}）為目前顏色欄位產生並套用一個六位 HEX 色碼。
 
 場次封面（session cover）是封存場次的主圖。「更換場次封面」選取本機圖片，「還原場次封面」回到預設顯示。
 場次票券的無障礙名稱使用「查看 {場次名稱}」（View {session name}）。
