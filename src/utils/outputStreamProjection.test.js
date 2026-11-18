@@ -166,6 +166,44 @@ describe('output stream projection', () => {
     expect(JSON.stringify(document)).not.toContain('filename');
   });
 
+  it('projects saved translations only for known lines with text', () => {
+    const base = {
+      trackId: 'track-1',
+      source: { language: 'ja', kind: 'manual' },
+      document: {
+        documentId: 'lyrics-1',
+        granularity: 'T1',
+        lines: [
+          { lineId: 'line-1', text: '歌詞', startMs: 0, endMs: 1000 },
+          { lineId: 'line-2', text: '続き', startMs: 1000, endMs: 2000 },
+        ],
+      },
+    };
+    const document = projectLyricsOutputDocument({
+      ...base,
+      translationRows: {
+        en: [
+          { lineId: 'line-1', text: 'Lyrics', note: 'private' },
+          { lineId: 'line-9', text: 'Unknown line' },
+          { lineId: 'line-2', text: '' },
+          null,
+        ],
+        ko: 'not rows',
+        zh: [{ lineId: 'line-9', text: '無對應' }],
+      },
+    });
+
+    expect(document.translations).toEqual({
+      en: [{ lineId: 'line-1', text: 'Lyrics' }],
+    });
+    expect(
+      projectLyricsOutputDocument({ ...base, translationRows: { en: [] } }),
+    ).not.toHaveProperty('translations');
+    expect(
+      projectLyricsOutputDocument({ ...base, translationRows: 'invalid' }),
+    ).not.toHaveProperty('translations');
+  });
+
   it('projects only identity-matched Japanese readings as public ruby segments', () => {
     const sourceFingerprint = 'a'.repeat(64);
     const document = projectLyricsOutputDocument({
