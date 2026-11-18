@@ -45,24 +45,28 @@ function runPowerShell(script) {
   });
 }
 
-// Maps adapter alias to whether Windows treats its network as private. Any
-// failure reads as unknown, which callers must treat as not private.
-async function readPrivateAliases(run = runPowerShell) {
+// Joined by interface index and reported by IPv4 address: adapter names can
+// be localized (e.g. 乙太網路) and arrive garbled in the console code page.
+const PRIVATE_ADDRESS_SCRIPT = [
+  '$p=@{}',
+  'Get-NetConnectionProfile | ForEach-Object { $p[[int]$_.InterfaceIndex] = [int]$_.NetworkCategory }',
+  '@(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $p.ContainsKey([int]$_.InterfaceIndex) } | ForEach-Object { [pscustomobject]@{ IPAddress = $_.IPAddress; NetworkCategory = $p[[int]$_.InterfaceIndex] } }) | ConvertTo-Json -Compress',
+].join('; ');
+
+// IPv4 addresses whose network Windows treats as private. Any failure reads
+// as unknown, which callers must treat as not private.
+async function readPrivateAddresses(run = runPowerShell) {
   let parsed;
   try {
-    parsed = JSON.parse(
-      await run(
-        'Get-NetConnectionProfile | Select-Object InterfaceAlias,NetworkCategory | ConvertTo-Json -Compress',
-      ),
-    );
+    parsed = JSON.parse(await run(PRIVATE_ADDRESS_SCRIPT));
   } catch {
     return new Set();
   }
-  const profiles = Array.isArray(parsed) ? parsed : [parsed];
+  const entries = Array.isArray(parsed) ? parsed : [parsed];
   return new Set(
-    profiles
-      .filter((profile) => PRIVATE_CATEGORIES.has(profile?.NetworkCategory))
-      .map((profile) => String(profile.InterfaceAlias)),
+    entries
+      .filter((entry) => PRIVATE_CATEGORIES.has(entry?.NetworkCategory))
+      .map((entry) => String(entry.IPAddress)),
   );
 }
 
@@ -71,12 +75,12 @@ async function describeNetworkScope({
   run = runPowerShell,
 } = {}) {
   const interfaces = listPrivateInterfaces(networkInterfaces);
-  const privateAliases = interfaces.length
-    ? await readPrivateAliases(run)
+  const privateAddresses = interfaces.length
+    ? await readPrivateAddresses(run)
     : new Set();
   return interfaces.map((entry) => ({
     ...entry,
-    privateNetwork: privateAliases.has(entry.name),
+    privateNetwork: privateAddresses.has(entry.address),
   }));
 }
 
@@ -84,5 +88,5 @@ module.exports = {
   describeNetworkScope,
   isPrivateIpv4,
   listPrivateInterfaces,
-  readPrivateAliases,
+  readPrivateAddresses,
 };

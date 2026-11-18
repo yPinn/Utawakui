@@ -3,7 +3,7 @@ import {
   describeNetworkScope,
   isPrivateIpv4,
   listPrivateInterfaces,
-  readPrivateAliases,
+  readPrivateAddresses,
 } from './networkScope.js';
 
 const interfaces = () => ({
@@ -43,26 +43,51 @@ describe('companion network scope', () => {
     ]);
   });
 
-  it('reads private and domain profiles, and treats failures as unknown', async () => {
+  it('reads private and domain profiles by address, and treats failures as unknown', async () => {
     const run = vi.fn(async () =>
       JSON.stringify([
-        { InterfaceAlias: 'Wi-Fi', NetworkCategory: 1 },
-        { InterfaceAlias: 'Ethernet', NetworkCategory: 0 },
-        { InterfaceAlias: 'Corp', NetworkCategory: 'DomainAuthenticated' },
+        { IPAddress: '192.168.1.20', NetworkCategory: 1 },
+        { IPAddress: '10.0.0.5', NetworkCategory: 0 },
+        { IPAddress: '172.16.0.2', NetworkCategory: 2 },
       ]),
     );
-    expect([...(await readPrivateAliases(run))]).toEqual(['Wi-Fi', 'Corp']);
+    expect([...(await readPrivateAddresses(run))]).toEqual([
+      '192.168.1.20',
+      '172.16.0.2',
+    ]);
+    expect(run.mock.calls[0][0]).toContain('InterfaceIndex');
+    expect(run.mock.calls[0][0]).not.toContain('InterfaceAlias');
     expect(
-      await readPrivateAliases(async () => {
+      await readPrivateAddresses(async () => {
         throw new Error('blocked');
       }),
     ).toEqual(new Set());
-    expect(await readPrivateAliases(async () => 'not json')).toEqual(new Set());
+    expect(await readPrivateAddresses(async () => 'not json')).toEqual(
+      new Set(),
+    );
   });
 
-  it('marks each adapter with its profile and accepts a single profile object', async () => {
+  it('matches localized adapter names by address, not by name', async () => {
+    // Windows reported 乙太網路 as private while the alias came back garbled.
     const run = async () =>
-      JSON.stringify({ InterfaceAlias: 'Wi-Fi', NetworkCategory: 'Private' });
+      JSON.stringify({ IPAddress: '192.168.1.106', NetworkCategory: 1 });
+    expect(
+      await describeNetworkScope({
+        networkInterfaces: () => ({
+          乙太網路: [
+            { family: 'IPv4', address: '192.168.1.106', internal: false },
+          ],
+        }),
+        run,
+      }),
+    ).toEqual([
+      { name: '乙太網路', address: '192.168.1.106', privateNetwork: true },
+    ]);
+  });
+
+  it('marks each adapter with its profile and accepts a single object', async () => {
+    const run = async () =>
+      JSON.stringify({ IPAddress: '192.168.1.20', NetworkCategory: 'Private' });
     expect(
       await describeNetworkScope({ networkInterfaces: interfaces, run }),
     ).toEqual([
