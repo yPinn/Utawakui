@@ -9,6 +9,7 @@
 # Line-ending conversion would invalidate their recorded source/delivery hashes.
 third-party/upstream/** -text
 third-party/NOTICES.txt -text
+shared/assets/fonts/licenses/lavsic/** -text
 
 # Binary assets and packaged/runtime artifacts must never be line-normalized.
 *.png binary

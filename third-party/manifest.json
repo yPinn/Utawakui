@@ -1402,7 +1402,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "9cc76e6b818e2b736803b865ce3e6f6c075dff6f97473b77a9a03225ebb554c6"
+      "sha256": "3f5877e5e8fd8fa30b564b190b48351fd971ddff3634a3e359234588e3fdd0ac"
     },
     {
       "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
@@ -1529,6 +1529,66 @@
       "location": "asar",
       "targetPath": "shared/assets/fonts/SOURCE.txt",
       "sha256": "62f548dc0c3841f613d8a49c15634c20980437d743b0157d510f5422a972dd3f"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/Kaibunsyo-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/Kaibunsyo-Regular.ttf",
+      "sha256": "e24f7116fab213fbf76ffaba677131469360ae48007f0febbb2a9696c06fe8e5"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf",
+      "sha256": "12899834d3497064f6090462030202efce484f83bfc75ee51e7a12082a80058e"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/LICENSE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/LICENSE.txt",
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/lineseed.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/lineseed.txt",
+      "sha256": "feecc56521b13b8baa0da65c1b84b3ab9cb8d411be9a37752c57a8d7e95d1b4d"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheNewTegomin.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheNewTegomin.txt",
+      "sha256": "127184d896675893dab6f39d0a5b13070736ea7dd5f8b19103fee8a239303f45"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheReggae.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheReggae.txt",
+      "sha256": "d1e11860cfcdd5a72b4bd8b8d35f07a42b83879a99af7bf75de57c334a2b570b"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheRocknroll.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheRocknroll.txt",
+      "sha256": "f38fce336649ad54db2295971b0062d7c9d9d08b463b5d9d701e846c6873b45f"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheStick.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheStick.txt",
+      "sha256": "7ad0301a27ecad9108305ebcbee8dffc6bfe25b0dc0885c8ea103ebe6b33b50c"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheZenKurenaido.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheZenKurenaido.txt",
+      "sha256": "31d7eface0bbcfc2bea600a7af42b6355e76f0aa87f0c7f811006d8366257f25"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt",
+      "sha256": "9e09d10660eddf3b5d94104004ec43f914f8c236094e06f87b1f76db976836e6"
     },
     {
       "sourcePath": "node_modules/electron/dist/LICENSE",

@@ -536,6 +536,14 @@ separate display-time provenance and local font/container measurement, with no
 new model, dependency or unpacked payload. Co-located tests remain excluded;
 the closed module-graph delivery test covers all three routes.
 
+Phantom Thieves uses the existing Overlay packaging glob and exact routes for
+`overlay/lyrics/cutoutDialogue.mjs` and `overlay/lyrics/cutoutDialogue.css`.
+The renderer Gallery preview bundles the same drawing code and styles.
+The two accent fonts have exact Browser Source routes and ship in
+`shared/assets/fonts/` as `KaitouYokokuGothic-Heavy.ttf` and
+`Kaibunsyo-Regular.ttf`. `SOURCE-LAVSIC-CUTOUT.txt` records their source and
+checksums. The upstream notices ship under `shared/assets/fonts/licenses/lavsic/`.
+
 Chalkboard Vertical adds `overlay/lyrics/chalkboardVertical.mjs` under the
 existing overlay package rule and one exact Browser Source route. It reuses the
 bundled Open Huninn font and GSAP runtime. Its CSS grain adds no external

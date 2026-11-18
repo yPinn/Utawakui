@@ -1,0 +1,16 @@
+KaitouYokokuGothic-Heavy.ttf (version 1.001)
+Author: lavsic
+Upstream: https://booth.pm/ja/items/7920588
+Archive member: KaitouYokokuGothic.zip / KaitouYokokuGothic/KaitouYokokuGothic.ttf
+SHA-256: 12899834d3497064f6090462030202efce484f83bfc75ee51e7a12082a80058e
+
+Kaibunsyo-Regular.ttf (version 1.000)
+Author: lavsic
+Upstream: https://booth.pm/ja/items/8356578
+Archive member: kaibunsyo.zip / kaibunsyo/Kaibunsyo.ttf
+SHA-256: e24f7116fab213fbf76ffaba677131469360ae48007f0febbb2a9696c06fe8e5
+
+License: SIL Open Font License 1.1. See licenses/lavsic/LICENSE.txt.
+Both fonts retain the original notices in their font metadata, including copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Kaibunsyo contributor notices supplied in the original archive are preserved in licenses/lavsic/.
+Only the installed filenames were changed. Original TTF bytes and embedded names are preserved.

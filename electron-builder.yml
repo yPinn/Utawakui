@@ -96,6 +96,7 @@ files:
   # Fisheye Lens uses its exact-route view, painter, GSAP recipe and lyrics projection.
   - overlay/**/*
   - '!overlay/**/*.test.js'
+  # Includes Cutout Dialogue's bundled accent fonts and their original notices.
   # Main and renderer use the same session timestamp and CSV projection.
   - shared/**/*
   - '!shared/**/*.test.js'

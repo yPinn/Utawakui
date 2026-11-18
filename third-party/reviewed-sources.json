@@ -304,6 +304,56 @@
       "targetPath": "shared/assets/fonts/SOURCE.txt"
     },
     {
+      "sourcePath": "shared/assets/fonts/Kaibunsyo-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/Kaibunsyo-Regular.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/LICENSE.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/LICENSE.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/lineseed.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/lineseed.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheNewTegomin.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheNewTegomin.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheReggae.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheReggae.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheRocknroll.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheRocknroll.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheStick.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheStick.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/licenses/lavsic/TheZenKurenaido.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/licenses/lavsic/TheZenKurenaido.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-LAVSIC-CUTOUT.txt"
+    },
+    {
       "sourcePath": "node_modules/electron/dist/LICENSE",
       "location": "app",
       "targetPath": "LICENSE.electron.txt"
