@@ -58,6 +58,18 @@ const FISHEYE_FIELDS = new Set([
   'fisheyeGranularity',
 ]);
 
+// Cutout Dialogue reads these in its own runtime, so check the normalized value.
+const CUTOUT_FIELDS = new Set([
+  'cutoutMode',
+  'cutoutChatShape',
+  'cutoutCardStyle',
+  'cutoutPortraitColor',
+  'cutoutArtistName',
+  'cutoutPortraitPhoto',
+  'cutoutRansomFont',
+  'cutoutCorner',
+]);
+
 const STYLE_TARGETS = Object.freeze({
   accentColor: ['--ovl-user-accent-color', ''],
   chalkboardRuleColor: ['--ovl-user-chalkboard-rule-color', ''],
@@ -75,6 +87,10 @@ function nonDefaultValue(field) {
     );
   }
   if (field.control === 'color') return '#123456';
+  if (field.control === 'text') return 'Test Name';
+  if (field.control === 'portrait-photo') {
+    return '00000000-0000-4000-8000-000000000011';
+  }
   if (field.control === 'range') {
     return field.max === field.defaultValue ? field.min : field.max;
   }
@@ -216,7 +232,7 @@ describe('Output settings path', () => {
           );
           continue;
         }
-        if (FISHEYE_FIELDS.has(field.key)) {
+        if (FISHEYE_FIELDS.has(field.key) || CUTOUT_FIELDS.has(field.key)) {
           expect(
             normalizeOutputAppearance(slot.settings, { templateId })[field.key],
             `${templateId}.${field.key}`,

@@ -322,6 +322,7 @@ export const OUTPUT_APPEARANCE_GROUPS = Object.freeze([
   Object.freeze({ id: 'decoration', order: 55 }),
   Object.freeze({ id: 'material', order: 56 }),
   Object.freeze({ id: 'layout', order: 60 }),
+  Object.freeze({ id: 'portrait', order: 65 }),
   Object.freeze({ id: 'motion', order: 70 }),
   Object.freeze({ id: 'content', order: 80 }),
 ]);
@@ -342,6 +343,47 @@ export const OUTPUT_PROPERTY_FAMILIES = Object.freeze([
 export const OUTPUT_PROPERTY_TIERS = Object.freeze(['basic', 'advanced']);
 
 const COLOR_RE = /^#[0-9a-f]{6}$/iu;
+const PORTRAIT_ID_RE = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u;
+// Legacy slot overrides use a stable ID outside the range of newly generated v4 IDs.
+const LEGACY_CUTOUT_PORTRAIT_ID = '00000000-0000-5000-8000-000000000001';
+export const CUTOUT_PORTRAIT_NAME_MAX = 80;
+export const MAX_CUTOUT_PORTRAIT_SETS = 12;
+export const CUTOUT_PORTRAIT_FIELDS = Object.freeze([
+  'cutoutArtistName',
+  'cutoutPortraitPhoto',
+  'cutoutPortraitColor',
+]);
+
+const CUTOUT_PORTRAIT_TONES = ['indigo', 'plum', 'red', 'amber'];
+
+export function cutoutPortraitTone(artist, trackId) {
+  const identity = (artist?.trim() || trackId || '')
+    .normalize('NFC')
+    .toLowerCase();
+  let hash = 0;
+  for (const character of identity) {
+    hash = Math.imul(hash, 31) + character.codePointAt(0);
+  }
+  return CUTOUT_PORTRAIT_TONES[(hash >>> 0) % CUTOUT_PORTRAIT_TONES.length];
+}
+
+export function isCutoutPortraitId(value) {
+  return typeof value === 'string' && PORTRAIT_ID_RE.test(value);
+}
+
+export function activeCutoutPortraitSet(value) {
+  if (!isCutoutPortraitId(value?.activeId) || !Array.isArray(value.items)) {
+    return undefined;
+  }
+  return value.items.find((item) => item?.id === value.activeId);
+}
+
+export function canAddCutoutPortraitSet(items) {
+  return (
+    items.filter(({ id }) => id !== LEGACY_CUTOUT_PORTRAIT_ID).length <
+    MAX_CUTOUT_PORTRAIT_SETS
+  );
+}
 const MAX_LOCAL_FONT_NAME_LENGTH = 160;
 const UNSAFE_LOCAL_FONT_NAME_RE = /[\\/;{}<>]|(?:url|var)\s*\(/iu;
 const GROUP_MAP = new Map(
@@ -593,6 +635,101 @@ const FIELD_DEFINITIONS = [
     control: 'select',
     defaultValue: 'straight',
     options: [{ id: 'straight' }, { id: 'subtle-offset' }],
+  }),
+  fieldDefinition('layout', {
+    key: 'cutoutMode',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
+    order: 10,
+    control: 'select',
+    defaultValue: 'side-card',
+    options: [
+      { id: 'side-card' },
+      { id: 'radial' },
+      { id: 'ransom' },
+      { id: 'chat' },
+      { id: 'choice-stack' },
+    ],
+  }),
+  fieldDefinition('layout', {
+    key: 'cutoutChatShape',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
+    order: 20,
+    control: 'select',
+    defaultValue: 'bubble',
+    options: [
+      { id: 'bubble' },
+      { id: 'thought' },
+      { id: 'stacked' },
+      { id: 'phone' },
+    ],
+  }),
+  fieldDefinition('layout', {
+    key: 'cutoutCardStyle',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
+    order: 20,
+    control: 'select',
+    defaultValue: 'portrait',
+    options: [{ id: 'portrait' }, { id: 'text-only' }],
+  }),
+  fieldDefinition('portrait', {
+    key: 'cutoutPortraitColor',
+    family: 'fill',
+    tier: 'basic',
+    reflow: false,
+    order: 30,
+    control: 'color',
+    defaultValue: '',
+  }),
+  fieldDefinition('portrait', {
+    key: 'cutoutArtistName',
+    family: 'document',
+    tier: 'basic',
+    reflow: true,
+    order: 10,
+    control: 'text',
+    maxLength: CUTOUT_PORTRAIT_NAME_MAX,
+    defaultValue: '',
+  }),
+  fieldDefinition('portrait', {
+    key: 'cutoutPortraitPhoto',
+    family: 'asset',
+    tier: 'basic',
+    reflow: false,
+    order: 20,
+    control: 'portrait-photo',
+    defaultValue: '',
+  }),
+  fieldDefinition('typography', {
+    key: 'cutoutRansomFont',
+    family: 'character',
+    tier: 'basic',
+    reflow: true,
+    order: 15,
+    control: 'select',
+    defaultValue: 'kaitou',
+    options: [{ id: 'kaitou' }, { id: 'kaibunsyo' }, { id: 'none' }],
+  }),
+  fieldDefinition('layout', {
+    key: 'cutoutCorner',
+    family: 'layout',
+    tier: 'basic',
+    reflow: true,
+    order: 30,
+    control: 'select',
+    defaultValue: 'auto',
+    options: [
+      { id: 'auto' },
+      { id: 'top-left' },
+      { id: 'top-right' },
+      { id: 'bottom-left' },
+      { id: 'bottom-right' },
+    ],
   }),
   fieldDefinition('custom-color', {
     key: 'textColor',
@@ -914,6 +1051,23 @@ const TEMPLATE_OVERRIDES = {
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
     },
   },
+  'cutout-dialogue': {
+    keys: [
+      'cutoutMode',
+      'cutoutChatShape',
+      'cutoutCardStyle',
+      'cutoutPortraitColor',
+      'cutoutArtistName',
+      'cutoutPortraitPhoto',
+      'cutoutCorner',
+      'fontFamily',
+      'cutoutRansomFont',
+      'fontScale',
+    ],
+    fields: {
+      fontFamily: { defaultValue: 'template', optionIds: ['template'] },
+    },
+  },
   'fisheye-lens': {
     keys: [
       'fisheyeLayout',
@@ -1182,6 +1336,76 @@ export const OUTPUT_APPEARANCE_DEFAULTS = Object.freeze(
   ),
 );
 
+export const CUTOUT_PORTRAIT_DEFAULTS = Object.freeze(
+  Object.fromEntries(
+    CUTOUT_PORTRAIT_FIELDS.map((key) => [key, OUTPUT_APPEARANCE_DEFAULTS[key]]),
+  ),
+);
+
+export function sanitizeCutoutPortraitSets(value) {
+  const items = [];
+  const ids = new Set();
+  // A legacy override can coexist with all 12 previously saved custom sets.
+  const candidates = Array.isArray(value?.items)
+    ? value.items.slice(0, MAX_CUTOUT_PORTRAIT_SETS + 1)
+    : [];
+  let customCount = 0;
+  for (const item of candidates) {
+    if (!isCutoutPortraitId(item?.id) || ids.has(item.id)) continue;
+    if (item.id !== LEGACY_CUTOUT_PORTRAIT_ID) {
+      if (customCount >= MAX_CUTOUT_PORTRAIT_SETS) continue;
+      customCount += 1;
+    }
+    ids.add(item.id);
+    const fields = CUTOUT_PORTRAIT_FIELDS.map((key) => [
+      key,
+      sanitizeOutputAppearanceSetting(key, item[key]) ??
+        CUTOUT_PORTRAIT_DEFAULTS[key],
+    ]);
+    items.push({ id: item.id, ...Object.fromEntries(fields) });
+  }
+  return { activeId: ids.has(value?.activeId) ? value.activeId : '', items };
+}
+
+export function migrateLegacyCutoutPortraitSettings(settings) {
+  const entries = CUTOUT_PORTRAIT_FIELDS.map((key) => [
+    key,
+    sanitizeOutputAppearanceSetting(key, settings?.[key]) ??
+      CUTOUT_PORTRAIT_DEFAULTS[key],
+  ]);
+  if (
+    entries.every(([key, value]) => value === CUTOUT_PORTRAIT_DEFAULTS[key])
+  ) {
+    return settings;
+  }
+  const portrait = Object.fromEntries(entries);
+  if (
+    !portrait.cutoutArtistName &&
+    !portrait.cutoutPortraitPhoto &&
+    portrait.cutoutPortraitColor === '#f3d648'
+  ) {
+    // The old built-in first tile stored its yellow default as an ordinary color.
+    return { ...settings, cutoutPortraitColor: '' };
+  }
+  const { activeId, items } = sanitizeCutoutPortraitSets(
+    settings.cutoutPortraitSets,
+  );
+  const existing = items.find(
+    (item) =>
+      item.id === LEGACY_CUTOUT_PORTRAIT_ID ||
+      entries.every(([key, value]) => item[key] === value),
+  );
+  const id = existing?.id ?? LEGACY_CUTOUT_PORTRAIT_ID;
+  return {
+    ...settings,
+    ...CUTOUT_PORTRAIT_DEFAULTS,
+    cutoutPortraitSets: {
+      activeId: activeId || id,
+      items: existing ? items : [{ id, ...portrait }, ...items],
+    },
+  };
+}
+
 export function ornateSectionAccentColor(appearance) {
   return appearance.accentColor === OUTPUT_APPEARANCE_DEFAULTS.accentColor
     ? '#d96879'
@@ -1243,7 +1467,7 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   const baseField = FIELD_MAP.get(key);
   if (!baseField) return undefined;
   if (
-    baseField.family === 'asset' &&
+    (baseField.family === 'asset' || baseField.group === 'portrait') &&
     options.templateId &&
     !templateConfig(options.templateId).keys.includes(key)
   )
@@ -1261,11 +1485,27 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
       : undefined;
   } else if (baseField.control === 'color') {
     sanitized =
-      typeof value === 'string' && COLOR_RE.test(value)
+      typeof value === 'string' &&
+      (COLOR_RE.test(value) || (key === 'cutoutPortraitColor' && value === ''))
         ? value.toLowerCase()
         : undefined;
   } else if (baseField.control === 'range') {
     sanitized = sanitizedRangeValue(baseField, value);
+  } else if (baseField.control === 'text' && typeof value === 'string') {
+    const name = [...value].filter((character) => {
+      const codePoint = character.codePointAt(0);
+      return codePoint >= 32 && codePoint !== 127;
+    });
+    sanitized = name
+      .join('')
+      .trim()
+      .slice(0, baseField.maxLength)
+      .toWellFormed();
+  } else if (
+    baseField.control === 'portrait-photo' &&
+    (value === '' || isCutoutPortraitId(value))
+  ) {
+    sanitized = value;
   }
 
   if (
@@ -1405,6 +1645,10 @@ export function outputAppearanceFieldKeysForTemplate(templateId) {
 export function normalizeOutputAppearance(settings = {}, options = {}) {
   const normalized = {};
   const templateId = String(options.templateId ?? '');
+  const portraitSet =
+    templateId === 'cutout-dialogue'
+      ? activeCutoutPortraitSet(settings?.cutoutPortraitSets)
+      : undefined;
   const compatibleFields = new Map(
     (templateId
       ? outputAppearanceFieldsForTemplate(templateId)
@@ -1418,7 +1662,9 @@ export function normalizeOutputAppearance(settings = {}, options = {}) {
     const sanitized = compatibleField
       ? sanitizeOutputAppearanceSetting(
           baseField.key,
-          settings?.[baseField.key],
+          (baseField.group === 'portrait'
+            ? (portraitSet ?? settings)
+            : settings)?.[baseField.key],
           templateId ? { templateId } : undefined,
         )
       : undefined;

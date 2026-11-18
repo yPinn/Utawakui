@@ -274,6 +274,14 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
       outputAppearanceFieldKeysForTemplate('chalkboard-vertical'),
     ),
   }),
+  'cutout-dialogue': Object.freeze({
+    id: 'cutout-dialogue',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('cutout-dialogue'),
+    ),
+  }),
   'fisheye-lens': Object.freeze({
     id: 'fisheye-lens',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
@@ -307,6 +315,7 @@ const TEMPLATE_PROFILE_IDS = Object.freeze({
   'chalkboard-vertical': 'chalkboard-vertical',
   'centered-vertical': 'centered-vertical',
   'fisheye-lens': 'fisheye-lens',
+  'cutout-dialogue': 'cutout-dialogue',
   'manga-frame': 'manga-frame',
   'live-stage': 'live-stage',
 });
@@ -2037,6 +2046,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         'chalkboard-vertical',
         'centered-vertical',
         'fisheye-lens',
+        'cutout-dialogue',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
         ? analyzeLyricsSource(sourceText, {

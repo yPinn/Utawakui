@@ -34,7 +34,8 @@
     "cover-player": "now-playing",
     "receipt-setlist": "setlist",
     "ribbon-setlist": "setlist",
-    "fisheye-lens": "lyrics"
+    "fisheye-lens": "lyrics",
+    "cutout-dialogue": "lyrics"
   },
   "templateCaptureSizes": {
     "receipt-setlist": {
@@ -86,6 +87,10 @@
       "supported": ["small"]
     },
     "fisheye-lens": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "cutout-dialogue": {
       "default": "full",
       "supported": ["full"]
     },

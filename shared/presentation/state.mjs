@@ -2472,8 +2472,39 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
   const fisheyeLayoutChangedAt =
     fisheyeChorus?.startMs ??
     fisheyeRanges.findLast(({ endMs }) => endMs <= fisheyeAudioPosition)?.endMs;
+  const cutoutLine =
+    templateId === 'cutout-dialogue' ? lines[frame.lineIndex] : null;
+  const cutoutLineEndMs =
+    cutoutLine && snapshot.lyrics?.synced === true
+      ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
+      : null;
   return {
     ...frame,
+    ...(templateId === 'cutout-dialogue' && frame.currentText
+      ? {
+          cutoutDialogue: {
+            artist: text(snapshot.playback?.track?.artist),
+            previousText: displayableLyricsText(
+              lines[frame.lineIndex - 1]?.text,
+            ),
+            ageMs: Math.max(
+              0,
+              lyricsPositionMs(snapshot, nowMs) -
+                (lines[frame.lineIndex]?.startMs ?? 0),
+            ),
+            lineDurationMs:
+              Number.isFinite(cutoutLineEndMs) &&
+              cutoutLineEndMs > cutoutLine.startMs
+                ? cutoutLineEndMs - cutoutLine.startMs
+                : null,
+            rate: playbackRate(snapshot),
+            playing:
+              snapshot.lyrics?.synced === true &&
+              snapshot.playback?.status === 'playing',
+            trackId: snapshot.playback?.track?.id,
+          },
+        }
+      : {}),
     ...(templateId === 'fisheye-lens'
       ? { fisheyeVariant: fisheyeChorus ? 'chorus' : 'base' }
       : {}),

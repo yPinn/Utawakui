@@ -409,7 +409,8 @@ export function createLyricsFitController(options = {}) {
   }
   window?.addEventListener?.('resize', resized);
   function prepare(snapshot, frame, settings = {}) {
-    if (settings.templateId === 'fisheye-lens') {
+    if (['fisheye-lens', 'cutout-dialogue'].includes(settings.templateId)) {
+      lastPrepared = null;
       if (notice) notice.hidden = true;
       if (elements) elements.root.dataset.fitActive = 'false';
       return { frame, delayMs: null };

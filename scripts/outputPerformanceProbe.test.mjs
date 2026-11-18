@@ -111,6 +111,10 @@ describe('F5 synthetic workload and resource evidence', () => {
     const files = collectProbeRuntimeFiles();
     for (const expected of [
       'overlay/lyrics/lyrics.mjs',
+      'overlay/lyrics/cutoutDialogue.css',
+      'overlay/lyrics/cutoutDialogue.mjs',
+      'shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf',
+      'shared/assets/fonts/Kaibunsyo-Regular.ttf',
       'shared/presentation/state.mjs',
       'overlay/shared/lifecycle.mjs',
       'electron/lib/outputDeliveryQueue.js',
@@ -119,7 +123,7 @@ describe('F5 synthetic workload and resource evidence', () => {
       expect(files).toContain(expected);
     expect(files).not.toContain('shared/performerViewContract.mjs');
     expect(files).not.toContain('shared/presentation/performerFrame.mjs');
-    expect(files.filter((f) => /\.(?:woff2?|ttf)$/.test(f))).toHaveLength(7);
+    expect(files.filter((f) => /\.(?:woff2?|ttf)$/.test(f))).toHaveLength(9);
     expect(files.some((f) => f.includes('.test.'))).toBe(false);
   });
   it('advances the real-time workload without mutating canonical player or fixture data', () => {

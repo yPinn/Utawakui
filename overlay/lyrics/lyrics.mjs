@@ -2,6 +2,10 @@ import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 import { clearFisheyeLens, renderFisheyeLens } from './fisheyeLens.mjs';
 import { createFisheyeEffects } from './fisheyeEffects.mjs';
+import {
+  clearCutoutDialogue,
+  renderCutoutDialogue,
+} from './cutoutDialogue.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   clearChalkboardVertical,
@@ -1560,6 +1564,7 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearOrnateVerticalPresentation(elements, options);
   clearChalkboardVertical(elements);
   clearFisheyeLens(elements);
+  clearCutoutDialogue(elements.cutoutDialogue);
 }
 
 let performanceRenderId = 0;
@@ -1634,6 +1639,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isChalkboard = templateId === 'chalkboard-vertical';
   const isCenteredVertical = templateId === 'centered-vertical';
   const isFisheye = templateId === 'fisheye-lens';
+  const isCutout = templateId === 'cutout-dialogue';
+  if (!isCutout) clearCutoutDialogue(elements.cutoutDialogue);
   if (!isFisheye) clearFisheyeLens(elements);
   if (!isChalkboard) clearChalkboardVertical(elements);
   if (
@@ -1642,7 +1649,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     isOrnateVertical ||
     isChalkboard ||
     isCenteredVertical ||
-    isFisheye
+    isFisheye ||
+    isCutout
   ) {
     entranceAnimations.get(elements.current)?.cancel?.();
     entranceAnimations.delete(elements.current);
@@ -1680,6 +1688,23 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     return;
   }
   clearKineticPopPresentation(elements, renderOptions);
+  if (isCutout) {
+    clearOrnateVerticalPresentation(elements, renderOptions);
+    stopMangaAnimations(elements, renderOptions, true);
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, renderOptions);
+    clearLyricsRenderState(elements.next, renderOptions);
+    elements.root.hidden = !frame.visible || !frame.currentText;
+    elements.root.setAttribute('lang', frame.language || 'und');
+    renderCutoutDialogue(elements.cutoutDialogue, frame, {
+      appearance: options.cutoutAppearance,
+      portraitPhotos: true,
+      gsap: resolveGsap(options),
+      reducedMotion: options.reducedMotion,
+    });
+    elements.root.dataset.revision = String(frame.revision);
+    return;
+  }
   if (isFisheye) {
     clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
@@ -2161,6 +2186,7 @@ function boot() {
     root: document.querySelector('#lyrics-overlay'),
     current: document.querySelector('#lyrics-current'),
     fisheye: document.querySelector('#lyrics-fisheye'),
+    cutoutDialogue: document.querySelector('#lyrics-cutout-dialogue'),
     liveStageCard: document.querySelector('#lyrics-live-stage-card'),
     liveStageChrome: document.querySelector('#lyrics-live-stage-chrome'),
     liveStageTitle: document.querySelector('#lyrics-live-stage-title'),
@@ -2185,7 +2211,7 @@ function boot() {
   const reducedMotionPreference = window.matchMedia(
     '(prefers-reduced-motion: reduce)',
   );
-  let fisheyeAppearance;
+  let slotAppearance;
   let frameScheduler = null;
   const fit = createLyricsFitController({
     onTrace,
@@ -2243,7 +2269,8 @@ function boot() {
         previewMode,
       );
       renderLyricsFrameSafely(elements, visibleFrame, {
-        fisheyeAppearance,
+        fisheyeAppearance: slotAppearance,
+        cutoutAppearance: slotAppearance,
         gsap,
         reportError,
         reducedMotion,
@@ -2288,7 +2315,7 @@ function boot() {
       const appearance = normalizeOverlayAppearance(slot?.settings, {
         templateId: slot?.templateId,
       });
-      fisheyeAppearance = appearance;
+      slotAppearance = appearance;
       const reprojected = frameScheduler.setPresentationSettings({
         fisheyeGranularity: appearance.fisheyeGranularity,
         kineticMaterial: appearance.kineticMaterial,
@@ -2300,6 +2327,7 @@ function boot() {
       if (
         !reprojected &&
         (slot?.templateId === 'fisheye-lens' ||
+          slot?.templateId === 'cutout-dialogue' ||
           (ovlTemplate === 'centered-vertical' &&
             slot?.templateId === ovlTemplate &&
             ovlFont !== document.documentElement.dataset.ovlFont))

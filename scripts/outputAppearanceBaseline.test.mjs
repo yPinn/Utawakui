@@ -35,6 +35,7 @@ const ids = [
   'receipt-setlist',
   'ribbon-setlist',
   'fisheye-lens',
+  'cutout-dialogue',
 ];
 
 describe('Output F1 acceptance foundation', () => {

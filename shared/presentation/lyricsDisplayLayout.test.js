@@ -4,6 +4,7 @@ import {
   selectLyricsDisplayPage,
   nextLyricsDisplayBoundaryMs,
   sliceLyricsReading,
+  splitLyricsDisplayRows,
 } from './lyricsDisplayLayout.mjs';
 
 const line = (text, extra = {}) => ({
@@ -17,6 +18,19 @@ const fits = (text) =>
     .length <= 18;
 
 describe('bounded lyric display pages', () => {
+  it('prefers punctuation over a later space only when the text must wrap', () => {
+    const text = 'Hold on, stay with me tonight';
+    const rows = (capacity) =>
+      splitLyricsDisplayRows(
+        text,
+        (value) => value.trimEnd().length <= capacity,
+        Infinity,
+        { preferExplicitBreaks: true },
+      ).map((row) => row.text.trimEnd());
+    expect(rows(40)).toEqual([text]);
+    expect(rows(21)).toEqual(['Hold on,', 'stay with me tonight']);
+  });
+
   it.each([
     '我們在清明、冬至、新年拜的祖宗墳',
     '我們在清明 、 冬至 、 新年拜的祖宗墳',

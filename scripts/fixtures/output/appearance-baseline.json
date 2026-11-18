@@ -191,6 +191,46 @@
     },
     "filmGrainSize": {
       "level": "opt"
+    },
+    "cutoutMode": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutChatShape": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutCardStyle": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutCorner": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutRansomFont": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutPortraitColor": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutArtistName": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "cutoutPortraitPhoto": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
     }
   },
   "projectShared": {
@@ -3776,6 +3816,362 @@
       "localSourceLimitations": [
         "Fine units require matching source timing and fall back to the complete line."
       ]
+    },
+    {
+      "id": "cutout-dialogue",
+      "kind": "lyrics",
+      "capture": {
+        "default": "full",
+        "supported": ["full"]
+      },
+      "fields": [
+        {
+          "scope": "template",
+          "key": "paletteId",
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "order": 10,
+          "control": "select",
+          "editor": "look",
+          "defaultValue": "original",
+          "options": [
+            {
+              "id": "original"
+            },
+            {
+              "id": "warm"
+            },
+            {
+              "id": "cool"
+            },
+            {
+              "id": "warm-film"
+            },
+            {
+              "id": "cool-film"
+            },
+            {
+              "id": "velvia-style"
+            },
+            {
+              "id": "kodak-gold-200-style"
+            },
+            {
+              "id": "polaroid-600-style"
+            },
+            {
+              "id": "monochrome"
+            },
+            {
+              "id": "high-contrast"
+            }
+          ],
+          "group": "color-treatment",
+          "groupOrder": 10
+        },
+        {
+          "scope": "template",
+          "key": "lookAmount",
+          "family": "document",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "color-treatment",
+          "groupOrder": 10
+        },
+        {
+          "scope": "template",
+          "key": "cutoutMode",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "order": 10,
+          "control": "select",
+          "defaultValue": "side-card",
+          "options": [
+            {
+              "id": "side-card"
+            },
+            {
+              "id": "radial"
+            },
+            {
+              "id": "ransom"
+            },
+            {
+              "id": "chat"
+            },
+            {
+              "id": "choice-stack"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "cutoutChatShape",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "defaultValue": "bubble",
+          "options": [
+            {
+              "id": "bubble"
+            },
+            {
+              "id": "thought"
+            },
+            {
+              "id": "stacked"
+            },
+            {
+              "id": "phone"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "cutoutCardStyle",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "defaultValue": "portrait",
+          "options": [
+            {
+              "id": "portrait"
+            },
+            {
+              "id": "text-only"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "cutoutPortraitColor",
+          "family": "fill",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "color",
+          "defaultValue": "",
+          "group": "portrait",
+          "groupOrder": 65
+        },
+        {
+          "scope": "template",
+          "key": "cutoutArtistName",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 10,
+          "control": "text",
+          "maxLength": 80,
+          "defaultValue": "",
+          "group": "portrait",
+          "groupOrder": 65
+        },
+        {
+          "scope": "template",
+          "key": "cutoutPortraitPhoto",
+          "family": "asset",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "portrait-photo",
+          "defaultValue": "",
+          "group": "portrait",
+          "groupOrder": 65
+        },
+        {
+          "scope": "template",
+          "key": "cutoutCorner",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": true,
+          "order": 30,
+          "control": "select",
+          "defaultValue": "auto",
+          "options": [
+            {
+              "id": "auto"
+            },
+            {
+              "id": "top-left"
+            },
+            {
+              "id": "top-right"
+            },
+            {
+              "id": "bottom-left"
+            },
+            {
+              "id": "bottom-right"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "fontFamily",
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "order": 10,
+          "control": "select",
+          "editor": "font-family",
+          "allowLocalFonts": true,
+          "defaultValue": "template",
+          "options": [
+            {
+              "id": "template"
+            },
+            {
+              "id": "sans"
+            },
+            {
+              "id": "serif"
+            },
+            {
+              "id": "rounded"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30,
+          "templateId": "cutout-dialogue"
+        },
+        {
+          "scope": "template",
+          "key": "cutoutRansomFont",
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "order": 15,
+          "control": "select",
+          "defaultValue": "kaitou",
+          "options": [
+            {
+              "id": "kaitou"
+            },
+            {
+              "id": "kaibunsyo"
+            },
+            {
+              "id": "none"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScale",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 20,
+          "control": "select",
+          "editor": "font-scale",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "small"
+            },
+            {
+              "id": "medium"
+            },
+            {
+              "id": "large"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "filmGrainAmount",
+          "family": "asset",
+          "tier": "basic",
+          "reflow": false,
+          "order": 10,
+          "control": "range",
+          "defaultValue": 0,
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "material",
+          "groupOrder": 56
+        },
+        {
+          "scope": "template",
+          "key": "filmGrainSize",
+          "family": "asset",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "select",
+          "defaultValue": "medium",
+          "options": [
+            {
+              "id": "fine"
+            },
+            {
+              "id": "medium"
+            },
+            {
+              "id": "coarse"
+            }
+          ],
+          "group": "material",
+          "groupOrder": 56
+        }
+      ],
+      "timing": {
+        "minimumTimingTier": "T1",
+        "t1Progress": "line-entry",
+        "t2Progress": "not-consumed",
+        "usesSourceMappedTiming": false,
+        "music": {
+          "cadence": false,
+          "beatPhase": false,
+          "sections": false
+        },
+        "scheduler": ["lyrics-lines"],
+        "presentationPolicyIds": []
+      },
+      "lockedInvariants": [
+        "ordered-modes",
+        "source-clock",
+        "preserve-lyric-content"
+      ],
+      "unavailableControls": {
+        "localImageImport": {
+          "status": "not-implemented",
+          "reason": "Artwork is generated by the selected presentation."
+        },
+        "localFontFileImport": {
+          "status": "planned",
+          "reason": "Font choices use bundled or installed fonts through the shared selector."
+        }
+      },
+      "localSourceLimitations": ["Uses line time for all presentations."]
     }
   ]
 }

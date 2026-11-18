@@ -168,6 +168,7 @@ function partition(
   keepLatinRuns = phraseRows,
   keepJapaneseContractions = false,
   phraseText = null,
+  preferExplicitBreaks = false,
 ) {
   const boundaries = [...glyphs.segment(text)]
     .map((p) => p.index)
@@ -269,19 +270,25 @@ function partition(
       const choices = mapped.length
         ? mapped
         : possible.filter((c) => c.offset - from >= (end - from) * 0.45);
+      const explicit = preferExplicitBreaks
+        ? (possible.findLast(({ basis }) => basis === 'punctuation') ??
+          possible.findLast(({ offset }) => /\s/u.test(text[offset - 1])))
+        : undefined;
       const balance =
         phraseRows &&
         end !== authoredEnd &&
         (authoredEnd === undefined || authoredEnd === text.length) &&
         fits(text.slice(end), { sourceStart: end, sourceEnd: text.length });
       const target = from + (text.length - from) / 2;
-      const candidate = choices.sort(
-        (a, b) =>
-          b.priority - a.priority ||
-          (balance
-            ? Math.abs(a.offset - target) - Math.abs(b.offset - target)
-            : b.offset - a.offset),
-      )[0];
+      const candidate =
+        explicit ??
+        choices.sort(
+          (a, b) =>
+            b.priority - a.priority ||
+            (balance
+              ? Math.abs(a.offset - target) - Math.abs(b.offset - target)
+              : b.offset - a.offset),
+        )[0];
       if (candidate) end = candidate.offset;
     }
     // Separators belong to the preceding content range, never a blank batch.
@@ -478,6 +485,7 @@ export function splitLyricsDisplayRows(
     options.authoredPhraseSpaces === true
       ? text.replaceAll('\u3000', ' ')
       : null,
+    options.preferExplicitBreaks === true,
   );
 }
 

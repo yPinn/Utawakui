@@ -1,0 +1,931 @@
+@font-face {
+  font-family: 'Utawakui Cutout Antique';
+  src: url('../../shared/assets/fonts/GenEiAntiqueNv6-M.ttf') format('truetype');
+  font-display: swap;
+}
+
+:root[data-ovl-template='cutout-dialogue'] .lyrics-overlay {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  transform: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-ovl-template='cutout-dialogue']
+  .lyrics-overlay
+  > :not(.cutout-dialogue) {
+  display: none;
+}
+
+@font-face {
+  font-family: 'Utawakui Cutout Rounded';
+  src: url('../../shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf')
+    format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Utawakui Kaitou Yokoku Gothic';
+  src: url('../../shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf')
+    format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Utawakui Kaibunsyo';
+  src: url('../../shared/assets/fonts/Kaibunsyo-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+.cutout-dialogue {
+  --cutout-ink: #141218;
+  --cutout-paper: #fff6ec;
+  /* Match the project's portrait palette with standalone Output tokens. */
+  --cutout-portrait-tone-indigo: #a5b3d8;
+  --cutout-portrait-tone-plum: #d496b2;
+  --cutout-portrait-tone-red: #ffa9a8;
+  --cutout-portrait-tone-amber: #f7d37b;
+  --cutout-accent: #b91d34;
+  --cutout-muted: #ded1ce;
+  --cutout-edge-x: 4%;
+  --cutout-edge-y: 7%;
+  --cutout-top: auto;
+  --cutout-right: auto;
+  --cutout-bottom: auto;
+  --cutout-left: auto;
+  --cutout-font-scale-ratio: var(
+    --cutout-font-scale,
+    var(--ovl-user-font-scale-ratio, 1)
+  );
+  --cutout-copy-size: 3cqw;
+  --cutout-name-size: 2.1cqw;
+  --cutout-dialogue-fallback:
+    'Utawakui Open Huninn', 'Microsoft JhengHei', system-ui, sans-serif;
+  --cutout-grain: repeating-radial-gradient(
+    ellipse at 20% 75%,
+    #fff0 0 0.32em,
+    #ffffff12 0.35em 0.39em,
+    #fff0 0.42em 0.62em
+  );
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  color: var(--cutout-paper);
+  font-family: var(
+    --cutout-font,
+    'Utawakui Cutout Antique',
+    'Microsoft JhengHei',
+    sans-serif
+  );
+  line-height: 1.24;
+  pointer-events: none;
+}
+
+.cutout-dialogue:is([data-corner='top-left'], [data-corner='top-right']) {
+  --cutout-top: var(--cutout-edge-y);
+}
+
+.cutout-dialogue:is([data-corner='bottom-left'], [data-corner='bottom-right']) {
+  --cutout-bottom: var(--cutout-edge-y);
+}
+
+.cutout-dialogue[data-corner$='left'] {
+  --cutout-left: var(--cutout-edge-x);
+}
+
+.cutout-dialogue[data-corner$='right'] {
+  --cutout-right: var(--cutout-edge-x);
+}
+
+.cutout-dialogue__corner {
+  position: absolute;
+  inset: var(--cutout-top) var(--cutout-right) var(--cutout-bottom)
+    var(--cutout-left);
+}
+
+.cutout-dialogue[hidden] {
+  display: none;
+}
+
+:root[data-ovl-template='cutout-dialogue']:not([data-ovl-font='template'])
+  .cutout-dialogue {
+  --cutout-font: var(--ovl-user-font-family);
+}
+
+.cutout-dialogue__copy {
+  display: block;
+  position: relative;
+  font-size: calc(
+    var(--cutout-copy-size) * var(--cutout-copy-scale, 1) *
+      var(--cutout-font-scale-ratio)
+  );
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.cutout-dialogue[data-mode='radial'] {
+  --cutout-copy-size: 2.35cqw;
+  font-family: var(
+    --cutout-font,
+    'Utawakui Cutout Rounded',
+    'Microsoft JhengHei',
+    sans-serif
+  );
+}
+
+.cutout-dialogue__radial {
+  width: 36%;
+  display: grid;
+  gap: 0.55cqw;
+  justify-items: start;
+}
+
+.cutout-dialogue__choice-panel {
+  position: absolute;
+  inset: var(--cutout-top) var(--cutout-right) var(--cutout-bottom)
+    var(--cutout-left);
+  width: 24cqw;
+  height: 65%;
+  isolation: isolate;
+  background: var(--cutout-paper);
+  clip-path: polygon(34% 0, 100% 0, 100% 79%, 80% 100%, 0 100%);
+}
+
+.cutout-dialogue__choice-panel::before,
+.cutout-dialogue__choice-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.cutout-dialogue__choice-panel::before {
+  background: linear-gradient(
+    155deg,
+    var(--cutout-accent),
+    var(--cutout-ink) 76%
+  );
+  clip-path: polygon(38% 0, 100% 0, 100% 73%, 76% 100%, 6% 100%);
+}
+
+.cutout-dialogue__choice-panel::after {
+  background: var(--cutout-grain);
+  clip-path: polygon(39% 11%, 100% 4%, 100% 58%, 16% 91%);
+}
+
+.cutout-dialogue[data-corner$='left'] .cutout-dialogue__choice-panel {
+  scale: -1 1;
+}
+
+.cutout-dialogue__choices {
+  width: 45cqw;
+  display: grid;
+  justify-items: end;
+  gap: 0.6cqw;
+  padding: 0 6cqw;
+  box-sizing: border-box;
+  --choice-mirror: 1;
+}
+
+.cutout-dialogue[data-corner$='left'] .cutout-dialogue__choices {
+  justify-items: start;
+  --choice-mirror: -1;
+}
+
+.cutout-dialogue__choice {
+  --choice-shape: polygon(3% 6%, 88% 0, 100% 52%, 88% 94%, 0 100%);
+  --choice-tilt: 3deg;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: min(14cqw, 100%);
+  max-width: 90%;
+  padding: 0.8cqw 3cqw;
+  rotate: calc(var(--choice-mirror) * var(--choice-tilt));
+}
+
+.cutout-dialogue__choice::before,
+.cutout-dialogue__choice::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--cutout-paper);
+  clip-path: var(--choice-shape);
+  scale: var(--choice-mirror) 1;
+}
+
+.cutout-dialogue__choice::after {
+  inset: 0.16cqw;
+  background: var(--cutout-ink);
+}
+
+.cutout-dialogue__choice[data-choice='current'] {
+  --choice-tilt: -5deg;
+  min-width: min(23cqw, 100%);
+  max-width: 100%;
+  color: var(--cutout-ink);
+}
+
+.cutout-dialogue__choice[data-choice='current']::before {
+  background: var(--cutout-accent);
+}
+
+.cutout-dialogue__choice[data-choice='current']::after {
+  background: var(--cutout-paper);
+}
+
+.cutout-dialogue__choice[data-choice='next'] {
+  --choice-tilt: 1deg;
+}
+
+.cutout-dialogue__choice .cutout-dialogue__copy {
+  --cutout-copy-size: 1.35cqw;
+  font-family: var(--cutout-font, var(--cutout-dialogue-fallback));
+  font-weight: 700;
+  line-height: 1.22;
+  text-align: center;
+}
+
+.cutout-dialogue__choice .cutout-dialogue__copy:lang(ja) {
+  font-family: var(
+    --cutout-font,
+    'Utawakui Cutout Rounded',
+    var(--cutout-dialogue-fallback)
+  );
+}
+
+.cutout-dialogue__choice:not([data-choice='current']) .cutout-dialogue__copy {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.cutout-dialogue__choice[data-choice='current'] .cutout-dialogue__copy {
+  --cutout-copy-size: 1.9cqw;
+}
+
+.cutout-dialogue[data-corner$='right'] .cutout-dialogue__radial {
+  justify-items: end;
+}
+
+.cutout-dialogue__lane {
+  max-width: 100%;
+}
+
+.cutout-dialogue__lane:nth-child(even) {
+  margin-inline: 0.65cqw;
+  max-width: calc(100% - 1.3cqw);
+}
+
+.cutout-dialogue__strip {
+  position: relative;
+  display: block;
+  width: max-content;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0.65cqw 1.65cqw 0.75cqw 3.05cqw;
+  isolation: isolate;
+  transform: rotate(var(--cutout-strip-tilt, -6deg));
+  transform-origin: left center;
+}
+
+.cutout-dialogue__lane:nth-child(3n + 2) {
+  --cutout-strip-tilt: 0deg;
+}
+
+.cutout-dialogue__lane:nth-child(3n) {
+  --cutout-strip-tilt: 6deg;
+}
+
+.cutout-dialogue[data-corner$='right'] .cutout-dialogue__strip {
+  padding-inline: 1.65cqw 3.05cqw;
+  transform: rotate(calc(-1 * var(--cutout-strip-tilt, -6deg)));
+  transform-origin: right center;
+}
+
+.cutout-dialogue__lane:last-child {
+  color: var(--cutout-ink);
+  --cutout-frame-fill: var(--cutout-paper);
+  --cutout-frame-outline: var(--cutout-ink);
+}
+
+.cutout-dialogue__card-frame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.cutout-dialogue__card-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.cutout-dialogue[data-corner$='right'] .cutout-dialogue__card-frame svg {
+  scale: -1 1;
+}
+
+.cutout-dialogue__frame-face {
+  fill: var(--cutout-frame-fill, var(--cutout-ink));
+  stroke: var(--cutout-frame-outline, var(--cutout-paper));
+  stroke-width: var(--cutout-frame-stroke);
+  stroke-linejoin: round;
+}
+
+.cutout-dialogue__frame-tab {
+  fill: var(--cutout-paper);
+}
+
+.cutout-dialogue__ransom {
+  width: 43%;
+  text-align: left;
+  white-space: nowrap;
+  font-size: calc(
+    3.8cqw * var(--cutout-copy-scale, 1) * var(--cutout-font-scale-ratio)
+  );
+  font-family: var(
+    --cutout-font,
+    'Utawakui Cutout Rounded',
+    'Utawakui Open Huninn',
+    'Microsoft JhengHei',
+    sans-serif
+  );
+  line-height: 1.4;
+}
+
+.cutout-dialogue[data-corner$='right'] .cutout-dialogue__ransom {
+  text-align: right;
+}
+
+.cutout-dialogue__word,
+.cutout-dialogue__gap {
+  display: inline-block;
+  white-space: pre;
+}
+
+.cutout-dialogue__gap[hidden] {
+  display: none;
+}
+
+.cutout-dialogue__tile {
+  --cutout-ransom-paper: var(--cutout-ink);
+  --cutout-ransom-grain-ink: color-mix(in srgb, currentColor 4%, transparent);
+  --cutout-ransom-grain: none;
+  --cutout-ransom-edge: none;
+  position: relative;
+  display: inline-block;
+  padding-inline: 0.065em;
+  margin-inline: 0.045em;
+  isolation: isolate;
+  color: var(--cutout-paper);
+}
+
+.cutout-dialogue__tile::before {
+  content: '';
+  position: absolute;
+  inset: -2% 0 0;
+  z-index: -1;
+  background: var(--cutout-ransom-grain), var(--cutout-ransom-paper);
+  clip-path: var(--cutout-ransom-edge);
+  rotate: var(--cutout-ransom-tilt, 0deg);
+}
+
+.cutout-dialogue__tile[data-ransom-word] {
+  padding-inline: 0.12em;
+}
+
+.cutout-dialogue__tile[data-ransom-mirrored]::before {
+  scale: -1 1;
+}
+
+.cutout-dialogue__tile[data-ransom-paper='paper'] {
+  --cutout-ransom-paper: var(--cutout-paper);
+  color: var(--cutout-ink);
+}
+
+.cutout-dialogue__tile[data-ransom-paper='color'] {
+  --cutout-ransom-paper: var(--cutout-accent);
+}
+
+.cutout-dialogue__tile[data-ransom-texture='fibers'] {
+  --cutout-ransom-grain: repeating-linear-gradient(
+    104deg,
+    transparent 0 0.24em,
+    var(--cutout-ransom-grain-ink) 0.29em,
+    transparent 0.34em 0.46em
+  );
+}
+
+.cutout-dialogue__tile[data-ransom-texture='wash'] {
+  --cutout-ransom-grain: linear-gradient(
+    155deg,
+    var(--cutout-ransom-grain-ink),
+    transparent 70%
+  );
+}
+
+.cutout-dialogue__tile[data-ransom-edge='slant'] {
+  --cutout-ransom-edge: polygon(0 3%, 98% 0, 100% 97%, 2% 100%);
+}
+
+.cutout-dialogue__tile[data-ransom-edge='taper'] {
+  --cutout-ransom-edge: polygon(3% 0, 97% 1%, 100% 100%, 0 98%);
+}
+
+.cutout-dialogue__tile[data-ransom-punctuation]::before {
+  inset-block: 9% 0;
+  background: var(--cutout-ransom-paper);
+}
+
+.cutout-dialogue__tile[data-ransom-punctuation='low']::before {
+  inset-block-start: 52%;
+}
+
+.cutout-dialogue__tile[data-ransom-punctuation='wide-low']::before {
+  inset-block-start: 34%;
+}
+
+.cutout-dialogue[data-ransom-font='kaitou'] {
+  --ransom-accent-font: 'Utawakui Kaitou Yokoku Gothic';
+}
+
+.cutout-dialogue[data-ransom-font='kaibunsyo'] {
+  --ransom-accent-font: 'Utawakui Kaibunsyo';
+}
+
+.cutout-dialogue
+  .cutout-dialogue__word
+  > .cutout-dialogue__tile[data-ransom-accent] {
+  font-family:
+    var(--ransom-accent-font), 'Utawakui Cutout Rounded',
+    'Utawakui Open Huninn', sans-serif;
+  color: var(--cutout-paper);
+}
+
+.cutout-dialogue
+  .cutout-dialogue__word
+  > .cutout-dialogue__tile[data-ransom-accent='color'] {
+  color: var(--ransom-accent-ink, var(--cutout-accent));
+}
+
+.cutout-dialogue
+  .cutout-dialogue__word
+  > .cutout-dialogue__tile[data-ransom-accent]::before {
+  /* These glyphs carry their own irregular paper outline. */
+  content: none;
+}
+
+.cutout-dialogue__card {
+  position: relative;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  padding: 1.45cqw 2.65cqw;
+  isolation: isolate;
+}
+
+.cutout-dialogue__card::before,
+.cutout-dialogue__card::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  clip-path: polygon(1% 14%, 24% 10%, 31% 0, 32% 8%, 99% 2%, 96% 92%, 4% 100%);
+  background: var(--cutout-paper);
+}
+
+.cutout-dialogue__card::after {
+  inset: 0.18cqw;
+  background: var(--cutout-grain), var(--cutout-ink);
+}
+
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__cluster {
+  --cutout-side-card-max-width: 40cqw;
+  width: max-content;
+  max-width: var(--cutout-side-card-max-width);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__cluster > * {
+  grid-area: 1 / 1;
+}
+.cutout-dialogue[data-mode='side-card']
+  .cutout-dialogue__cluster:has(> .cutout-dialogue__portrait) {
+  --cutout-portrait-width: 14cqw;
+  --cutout-portrait-overlap: 0.65cqw;
+  --cutout-portrait-track: calc(
+    var(--cutout-portrait-width) - var(--cutout-portrait-overlap)
+  );
+  max-width: calc(
+    var(--cutout-side-card-max-width) + var(--cutout-portrait-track)
+  );
+  grid-template-columns: var(--cutout-portrait-track) minmax(0, 1fr);
+  grid-template-areas: 'portrait dialogue';
+  align-items: end;
+  transform-origin: var(--cutout-portrait-track) bottom;
+}
+.cutout-dialogue[data-mode='side-card'][data-corner$='right']
+  .cutout-dialogue__cluster:has(> .cutout-dialogue__portrait) {
+  grid-template-columns: minmax(0, 1fr) var(--cutout-portrait-track);
+  grid-template-areas: 'dialogue portrait';
+  transform-origin: calc(100% - var(--cutout-portrait-track)) bottom;
+}
+.cutout-dialogue[data-mode='side-card']
+  .cutout-dialogue__cluster:has(> .cutout-dialogue__portrait)
+  > .cutout-dialogue__card {
+  grid-area: dialogue;
+}
+.cutout-dialogue[data-corner^='top']
+  .cutout-dialogue__cluster:has(
+    :is(.cutout-dialogue__name, .cutout-dialogue__portrait)
+  ) {
+  padding-top: 5.7cqw;
+}
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__card {
+  --cutout-card-tail-padding: 3cqw;
+  --cutout-card-tab-padding: 4.55cqw;
+  min-width: 15cqw;
+  max-width: min(100%, var(--cutout-side-card-max-width));
+  width: var(--cutout-card-width, fit-content);
+  padding-block: 2cqw 2.25cqw;
+  padding-inline: var(--cutout-card-tail-padding) var(--cutout-card-tab-padding);
+  transform-origin: left bottom;
+}
+
+.cutout-dialogue[data-mode='side-card'][data-corner$='right']
+  .cutout-dialogue__card {
+  justify-self: end;
+  padding-inline: var(--cutout-card-tab-padding) var(--cutout-card-tail-padding);
+  transform-origin: right bottom;
+}
+
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__copy {
+  --cutout-copy-size: 2.05cqw;
+  font-family: var(--cutout-font, var(--cutout-dialogue-face));
+  font-weight: 700;
+  font-synthesis: none;
+  line-height: 1.24;
+  line-break: strict;
+  text-align: start;
+  text-wrap: wrap;
+  white-space: pre-line;
+}
+
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__copy[data-measuring] {
+  white-space: nowrap;
+}
+
+.cutout-dialogue[data-mode='side-card']
+  .cutout-dialogue__copy[data-planned-rows] {
+  white-space: pre;
+}
+
+.cutout-dialogue[data-mode='side-card']
+  :is(.cutout-dialogue__copy, .cutout-dialogue__name) {
+  --cutout-dialogue-face: var(--cutout-dialogue-fallback);
+}
+
+.cutout-dialogue[data-mode='side-card']
+  :is(.cutout-dialogue__copy, .cutout-dialogue__name):lang(ja) {
+  --cutout-dialogue-face:
+    'Utawakui Cutout Rounded', 'Yu Gothic', var(--cutout-dialogue-fallback);
+}
+
+.cutout-dialogue[data-mode='side-card']
+  :is(.cutout-dialogue__copy, .cutout-dialogue__name):is(
+    :lang(zh-Hans),
+    :lang(zh-CN),
+    :lang(zh-SG)
+  ) {
+  --cutout-dialogue-face:
+    'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif;
+}
+
+.cutout-dialogue[data-mode='side-card']
+  :is(.cutout-dialogue__copy, .cutout-dialogue__name):lang(ko) {
+  --cutout-dialogue-face:
+    'Malgun Gothic', 'Noto Sans CJK KR', system-ui, sans-serif;
+}
+
+.cutout-dialogue[data-mode='side-card']
+  .cutout-dialogue__copy[data-script='latin'] {
+  --cutout-dialogue-face: Georgia, 'Times New Roman', serif;
+  --cutout-copy-size: 2.15cqw;
+}
+
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__card::before,
+.cutout-dialogue[data-mode='side-card'] .cutout-dialogue__card::after,
+.cutout-dialogue[data-chat-shape='stacked'] .cutout-dialogue__card::before,
+.cutout-dialogue[data-chat-shape='stacked'] .cutout-dialogue__card::after {
+  content: none;
+}
+
+.cutout-dialogue__card-frame[data-frame='side-card'] {
+  transform-origin: left 1.95cqw;
+}
+
+.cutout-dialogue[data-corner$='right']
+  .cutout-dialogue__card-frame[data-frame='side-card'] {
+  transform-origin: right 1.95cqw;
+}
+
+.cutout-dialogue__card-frame[data-frame='side-card']
+  .cutout-dialogue__frame-face {
+  fill: #000;
+  fill-opacity: 0.78;
+  stroke-width: calc(var(--cutout-frame-stroke) * 1.45);
+}
+
+.cutout-dialogue[data-corner$='right'] .cutout-dialogue__portrait {
+  justify-self: end;
+}
+
+.cutout-dialogue[data-corner$='right'] .cutout-dialogue__name {
+  right: 0;
+  left: auto;
+  transform: rotate(15deg);
+  transform-origin: calc(100% - var(--cutout-name-tail-x))
+    calc(100% - var(--cutout-name-tail-bottom));
+}
+
+.cutout-dialogue[data-mode='side-card']
+  .cutout-dialogue__cluster
+  > .cutout-dialogue__portrait {
+  grid-area: portrait;
+  position: relative;
+  order: -1;
+  width: var(--cutout-portrait-width);
+  aspect-ratio: 4 / 3;
+  isolation: isolate;
+}
+
+.cutout-dialogue__portrait .cutout-dialogue__frame-back {
+  fill: var(--cutout-ink);
+}
+
+.cutout-dialogue__portrait .cutout-dialogue__frame-mat {
+  fill: var(--cutout-paper);
+}
+
+.cutout-dialogue__portrait .cutout-dialogue__frame-fill {
+  fill: var(--cutout-portrait-fill, var(--cutout-portrait-tone-indigo));
+}
+
+.cutout-dialogue__portrait-region {
+  --cutout-portrait-silhouette-top: -36%;
+  position: absolute;
+  inset: 0;
+  clip-path: var(--cutout-portrait-photo-clip);
+}
+
+.cutout-dialogue__portrait-region[data-silhouette] {
+  clip-path: var(--cutout-portrait-silhouette-clip);
+}
+
+.cutout-dialogue__portrait-image {
+  position: absolute;
+  inset: 19% auto auto 15.5%;
+  width: 70%;
+  height: 64.2%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.cutout-dialogue__portrait-image:not([data-loaded]) {
+  visibility: hidden;
+}
+
+/* The photo covers the fill polygon's bounding box before clipping. */
+.cutout-dialogue__portrait-image[data-source='artist'] {
+  object-fit: cover;
+  object-position: center;
+}
+
+.cutout-dialogue__portrait-region[data-silhouette]
+  .cutout-dialogue__portrait-image {
+  --cutout-portrait-silhouette-drop: 5%;
+  /* Let the silhouette extend through the slanted bottom edge before clipping. */
+  inset: calc(
+      var(--cutout-portrait-silhouette-top) +
+        var(--cutout-portrait-silhouette-drop)
+    )
+    auto auto 16%;
+  width: 78%;
+  height: calc(83.2% - var(--cutout-portrait-silhouette-top));
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.cutout-dialogue[data-corner$='right']
+  :is(.cutout-dialogue__portrait-region, .cutout-dialogue__portrait-image) {
+  scale: -1 1;
+}
+
+.cutout-dialogue__name {
+  position: absolute;
+  /* The nameplate crosses the upper frame edge above the lyric text. */
+  z-index: 1;
+  inset: auto auto calc(100% - 2.3cqw) 0;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: max(10cqw, 35%);
+  max-width: 25cqw;
+  padding: 0.3cqw 2cqw;
+  isolation: isolate;
+  color: var(--cutout-ink);
+  white-space: nowrap;
+  font-family: var(--cutout-dialogue-face);
+  font-size: calc(var(--cutout-name-size) * var(--cutout-font-scale-ratio));
+  font-weight: 700;
+  font-synthesis: none;
+  line-height: 1.25;
+  transform: rotate(-15deg);
+  /* Pivot on the shared arrow axis so rotating the plate keeps its tip aligned. */
+  transform-origin: var(--cutout-name-tail-x)
+    calc(100% - var(--cutout-name-tail-bottom));
+}
+.cutout-dialogue__card-frame[data-frame='nameplate']
+  .cutout-dialogue__frame-face {
+  fill: #ecebea;
+  stroke: #292828;
+  stroke-width: calc(var(--cutout-frame-stroke) * 2);
+}
+.cutout-dialogue__card-frame[data-frame='side-card']
+  .cutout-dialogue__frame-tab {
+  fill: #ecebea;
+  stroke: #292828;
+  stroke-linejoin: round;
+  stroke-width: calc(var(--cutout-frame-stroke) * 2);
+  scale: var(--cutout-marker-scale, 1);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.cutout-dialogue__name-label {
+  display: block;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+.cutout-dialogue__name-accent {
+  font-family: 'Utawakui Kaitou Yokoku Gothic', var(--cutout-dialogue-face);
+}
+
+.cutout-dialogue[data-mode='chat'] .cutout-dialogue__cluster {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.6cqw;
+}
+
+.cutout-dialogue[data-mode='chat'][data-corner$='right']
+  .cutout-dialogue__cluster {
+  align-items: end;
+}
+
+.cutout-dialogue[data-mode='chat'] .cutout-dialogue__previous {
+  opacity: 0.69;
+  margin-inline: 1cqw;
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='bubble']
+  .cutout-dialogue__card::before,
+.cutout-dialogue[data-mode='chat'][data-chat-shape='bubble']
+  .cutout-dialogue__card::after {
+  clip-path: none;
+  border-radius: 2cqw 2.4cqw 0.35cqw 2.3cqw;
+}
+
+.cutout-dialogue[data-mode='chat']:not([data-alternate])
+  .cutout-dialogue__active,
+.cutout-dialogue[data-mode='chat'][data-alternate] .cutout-dialogue__previous {
+  color: var(--cutout-ink);
+}
+
+.cutout-dialogue[data-mode='chat']:not([data-alternate])
+  .cutout-dialogue__active::after,
+.cutout-dialogue[data-mode='chat'][data-alternate]
+  .cutout-dialogue__previous::after {
+  background: var(--cutout-paper);
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='thought']
+  .cutout-dialogue__active {
+  color: var(--cutout-paper);
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='thought']
+  .cutout-dialogue__active::before,
+.cutout-dialogue[data-mode='chat'][data-chat-shape='thought']
+  .cutout-dialogue__active::after {
+  clip-path: none;
+  border-radius: 47% 35% 43% 38% / 55% 50% 47% 48%;
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='thought']
+  .cutout-dialogue__active::after {
+  background: var(--cutout-grain), var(--cutout-ink);
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='stacked']
+  .cutout-dialogue__previous {
+  margin-bottom: -0.45cqw;
+  rotate: -3deg;
+  color: var(--cutout-ink);
+  --cutout-frame-fill: var(--cutout-paper);
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='stacked']
+  .cutout-dialogue__active {
+  color: var(--cutout-paper);
+}
+
+.cutout-dialogue[data-chat-shape='stacked'] .cutout-dialogue__card {
+  padding: 1.4cqw 2.05cqw 1.9cqw;
+}
+
+.cutout-dialogue__card-frame[data-frame='collage'] {
+  --cutout-frame-outline: var(--cutout-ink);
+}
+
+.cutout-dialogue__card-frame[data-frame='collage']
+  :is(.cutout-dialogue__frame-back, .cutout-dialogue__frame-tab) {
+  fill: var(--cutout-accent);
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='phone']
+  .cutout-dialogue__cluster {
+  width: 22%;
+  rotate: 3deg;
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='phone'][data-corner$='left']
+  .cutout-dialogue__cluster {
+  rotate: -3deg;
+}
+
+.cutout-dialogue__phone-screen {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 27cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: end;
+  gap: 0.85cqw;
+  padding: 2.3cqw 1.35cqw 1.35cqw;
+  border: 0.45cqw solid var(--cutout-ink);
+  border-radius: 0.9cqw 0.55cqw 0.8cqw 0.5cqw;
+  outline: 0.27cqw solid var(--cutout-paper);
+  box-shadow: 0.45cqw 0.65cqw var(--cutout-ink);
+  background:
+    radial-gradient(circle at 2px 2px, #0003 1px, transparent 1.5px) 0 0 /
+      0.65cqw 0.65cqw,
+    linear-gradient(150deg, var(--cutout-accent) 60%, #771324 60%);
+}
+
+.cutout-dialogue__phone-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0.65cqw 37% auto;
+  height: 0.28cqw;
+  border-radius: 0.2cqw;
+  background: var(--cutout-ink);
+}
+
+.cutout-dialogue__phone-name {
+  align-self: start;
+  max-width: 100%;
+  margin-bottom: auto;
+  padding: 0.15cqw 0.8cqw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--cutout-paper);
+  color: var(--cutout-ink);
+  font-size: 1.25cqw;
+  transform: skewX(-8deg);
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='phone']
+  .cutout-dialogue__card {
+  width: 100%;
+  margin: 0;
+  padding: 1cqw 1.65cqw;
+}
+
+.cutout-dialogue[data-mode='chat'][data-chat-shape='phone'] {
+  --cutout-copy-size: 1.85cqw;
+}

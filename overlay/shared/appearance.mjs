@@ -40,6 +40,7 @@ const filterNodesByDocument = new WeakMap();
 const COMPOSITION_GRADE_TEMPLATES = new Set([
   'centered-vertical',
   'chalkboard-vertical',
+  'cutout-dialogue',
   'fisheye-lens',
   'receipt-setlist',
 ]);
