@@ -1,6 +1,6 @@
-# 剪報對白
+# 幻影怪盜
 
-Working ID 為 `cutout-dialogue`。仍屬 Proposal 階段，方向已收斂為一個模板內依序排列的四個呈現選項，數值為樣張草稿。採用狀態見[產品規格第 7.3 節](../../../spec.md#73-研究候選尚未接受為開發路線)。參見[候選索引](README.md)與[共用格式](proposal-template.md)。
+模板 ID 為 `cutout-dialogue`。本文件保存早期的研究樣張與動態對照。現行行為見[外觀契約](../../../contracts/output-appearance.md#幻影怪盜)，採用狀態見[產品規格](../../../spec.md#3-功能現況)。參見[候選索引](README.md)與[共用格式](proposal-template.md)。
 
 ## 意圖與參考
 
@@ -62,7 +62,7 @@ Working ID 為 `cutout-dialogue`。仍屬 Proposal 階段，方向已收斂為�
 
 ![預告信細節：不規則底板、圓潤粗體與紅、黑、白、灰配色](cutout-dialogue-ransom.webp)
 
-字型只用 `shared/assets/fonts/` 已封裝的字型：對話框與堆疊卡用 GenEi Antique，放射條帶與預告信用 M PLUS Rounded 1c ExtraBold，預告信夾雜 Keifont，聊天泡泡用 jf open 粉圓。
+側邊彈卡以日文圓黑體與英文粗襯線為參考。正文與姓名的字級依 Output 畫布寬度計算，再套用使用者的文字大小設定。正文保留歌詞語言，混排維持同一段文字以支援自然斷行。缺少語言線索時，以假名或韓文判斷日韓，純漢字依預設字型堆疊顯示。簡中、韓文及其他字系可用系統字型補足。姓名獨立排版，適合逐字裝飾的姓名才穿插怪盜字形。
 
 ## 動畫
 

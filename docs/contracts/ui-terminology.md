@@ -28,40 +28,48 @@
 Output 字型選單採用「模板字型」（Template fonts）指模板提供的字型組合。「本機字型」（Local fonts）指控制台可列舉的已安裝字型。
 「隨模板」（Follow template）是使用模板原有排版字型的選項，其字型可能依文字語系或材質改變。
 
+「人物組合」（Portrait preset）是幻影怪盜中一組可切換的照片、顯示名稱與底色。
+
 「配色風格」（Color style）分為「基本配色」（Basic）與「底片風格」（Film），模板原色置頂。底片區按品牌與片名的英文字母排序，選項使用「品牌＋片名」，表示參考具名膠片或膠片模擬的自製配色。
 
 場次封面（session cover）是封存場次的主圖。「更換場次封面」選取本機圖片，「還原場次封面」回到預設顯示。
 場次票券的無障礙名稱使用「查看 {場次名稱}」（View {session name}）。
 
-| 用                 | 不用             | 說明                                                       | en-US                       |
-| ------------------ | ---------------- | ---------------------------------------------------------- | --------------------------- |
-| 儲存               | 保存             | 寫入資料的動作。資料沒有被刪除寫「保留」                   | save；kept                  |
-| 重設               | 全部清除         | 清除這次輸入，並將編輯中的內容恢復到已儲存狀態             | reset                       |
-| 本機               | 本地             | 這台電腦                                                   | on this computer            |
-| ～未完成、無法～   | ～失敗           | 錯誤標題與句子；清單中的狀態標籤與計數可寫「失敗」         | didn't finish；Couldn't     |
-| 請再試一次         | 請重試           | 本機操作                                                   | Try again.                  |
-| 請稍後再試         |                  | 連線的外部服務（線上搜尋、YouTube 等），或要等目前工作結束 | Try again later.            |
-| 工具、模型；準備   | 元件；安裝       | 需要另外取得的處理程式與模型，與設定頁「工具與模型」一致   | tool、model；prepare        |
-| 磁碟空間           | 空間（單獨使用） | 電腦儲存空間；曲庫占用寫「曲庫空間」                       | disk space；library storage |
-| 作品、版本、發行   |                  | 見作品與版本契約                                           | work、version、release      |
-| 文字陰影           |                  | Output 正文字形的投影，選項為「標準」和「關閉」            | Text shadow                 |
-| 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights          |
-| 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                |
-| 鏡頭構圖、貼近     |                  | 魚眼鏡圈與歌詞弧列的尺寸和位置，貼近用於人物近景           | Camera framing, Close-up    |
-| 鏡框               |                  | 魚眼鏡筒的前景裝飾，樣式為關閉、柔和及標準                 | Lens rim                    |
-| 進場動畫、退場動畫 |                  | 字幕顯示與消失時各自使用的動畫                             | Entrance, Exit              |
-| 停留縮放、動態模糊 |                  | 字形停留時的縮放幅度與沿弧快速移動時的拖影                 | Hold scaling, Motion blur   |
-| 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity        |
-| 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight            |
-| 裝飾               |                  | Output 可選用的視覺物件                                    | Decoration                  |
-| 鏡內反光           |                  | 魚眼鏡筒的可選環形反光，樣式為關閉、柔和及標準             | Lens reflection             |
-| 攝影機特效         |                  | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects              |
-| 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts            |
-| 監聽跟隨擷取       |                  | 監聽採用擷取端的導唱開關與比例                             | Monitor follows capture     |
-| 伴奏               |                  | 曲目分離後可用於演唱及混入導唱的音訊                       | Accompaniment               |
-| 波形對照           |                  | 本機音源與影片參考音軌在同一時間軸的對照                   | Waveform comparison         |
-| 播放片段、停止預覽 |                  | 預覽目前檢視區間的本機音源與影片畫面                       | Play segment, Stop preview  |
-| 預覽背景           |                  | 歌詞工作台顯示的同步 MV 或人物參考                         | Preview background          |
+| 用                 | 不用             | 說明                                                       | en-US                              |
+| ------------------ | ---------------- | ---------------------------------------------------------- | ---------------------------------- |
+| 儲存               | 保存             | 寫入資料的動作。資料沒有被刪除寫「保留」                   | save；kept                         |
+| 重設               | 全部清除         | 清除這次輸入，並將編輯中的內容恢復到已儲存狀態             | reset                              |
+| 本機               | 本地             | 這台電腦                                                   | on this computer                   |
+| ～未完成、無法～   | ～失敗           | 錯誤標題與句子；清單中的狀態標籤與計數可寫「失敗」         | didn't finish；Couldn't            |
+| 請再試一次         | 請重試           | 本機操作                                                   | Try again.                         |
+| 請稍後再試         |                  | 連線的外部服務（線上搜尋、YouTube 等），或要等目前工作結束 | Try again later.                   |
+| 工具、模型；準備   | 元件；安裝       | 需要另外取得的處理程式與模型，與設定頁「工具與模型」一致   | tool、model；prepare               |
+| 磁碟空間           | 空間（單獨使用） | 電腦儲存空間；曲庫占用寫「曲庫空間」                       | disk space；library storage        |
+| 作品、版本、發行   |                  | 見作品與版本契約                                           | work、version、release             |
+| 文字陰影           |                  | Output 正文字形的投影，選項為「標準」和「關閉」            | Text shadow                        |
+| 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
+| 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                       |
+| 幻影怪盜           |                  | 畫面輸出的拼貼歌詞模板                                     | Phantom Thieves                    |
+| 選句剪報           |                  | 幻影怪盜中以斜切側欄與疊放紙帶顯示歌詞的構圖               | Choice Stack                       |
+| 有頭像             |                  | 顯示人像框的側邊彈卡樣式                                   | With Avatar                        |
+| 呈現方式、聊天外形 |                  | 幻影怪盜的構圖選項及聊天變化                               | Presentation, Chat Shape           |
+| 畫面角落、彈卡樣式 |                  | 幻影怪盜的位置及側邊彈卡的角色呈現                         | Screen Corner, Dialogue Card Style |
+| 點綴字體           |                  | 預告信中局部穿插的字型                                     | Accent Font                        |
+| 鏡頭構圖、貼近     |                  | 魚眼鏡圈與歌詞弧列的尺寸和位置，貼近用於人物近景           | Camera framing, Close-up           |
+| 鏡框               |                  | 魚眼鏡筒的前景裝飾，樣式為關閉、柔和及標準                 | Lens rim                           |
+| 進場動畫、退場動畫 |                  | 字幕顯示與消失時各自使用的動畫                             | Entrance, Exit                     |
+| 停留縮放、動態模糊 |                  | 字形停留時的縮放幅度與沿弧快速移動時的拖影                 | Hold scaling, Motion blur          |
+| 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity               |
+| 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight                   |
+| 裝飾               |                  | Output 可選用的視覺物件                                    | Decoration                         |
+| 鏡內反光           |                  | 魚眼鏡筒的可選環形反光，樣式為關閉、柔和及標準             | Lens reflection                    |
+| 攝影機特效         |                  | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects                     |
+| 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts                   |
+| 監聽跟隨擷取       |                  | 監聽採用擷取端的導唱開關與比例                             | Monitor follows capture            |
+| 伴奏               |                  | 曲目分離後可用於演唱及混入導唱的音訊                       | Accompaniment                      |
+| 波形對照           |                  | 本機音源與影片參考音軌在同一時間軸的對照                   | Waveform comparison                |
+| 播放片段、停止預覽 |                  | 預覽目前檢視區間的本機音源與影片畫面                       | Play segment, Stop preview         |
+| 預覽背景           |                  | 歌詞工作台顯示的同步 MV 或人物參考                         | Preview background                 |
 
 「介面元件」指畫面上的元件，不屬於「工具」的範圍。
 
