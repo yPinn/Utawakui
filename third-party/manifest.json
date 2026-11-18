@@ -1312,6 +1312,31 @@
   ],
   "additional": [
     {
+      "id": "U²-Net Portable ONNX weights",
+      "version": "rembg release v0.0.0",
+      "note": "U²-Net Portable by Xuebin Qin, Zichen Zhang, Chenyang Huang, Masood Dehghan, Osmar Zaiane, and Martin Jagersand (Pattern Recognition, 2020). U²-Net is published under Apache-2.0. This unmodified ONNX file is distributed by the MIT-licensed rembg project.",
+      "files": [
+        {
+          "path": "third-party/upstream/u2net-apache-2.0.txt",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "source": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+          "path": "third-party/upstream/rembg-license.txt",
+          "sha256": "587880ce4cd65578c8fae3fd4aed30298801eed4224f0bb6fd62e1649479333f",
+          "source": "https://raw.githubusercontent.com/danielgatis/rembg/main/LICENSE.txt"
+        }
+      ],
+      "artifacts": [
+        {
+          "sourcePath": "resources/output-portrait/u2netp.onnx",
+          "packagedPath": "resources/output-portrait/u2netp.onnx",
+          "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8",
+          "source": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx"
+        }
+      ]
+    },
+    {
       "id": "Microsoft DirectML",
       "version": "1.15.4",
       "owner": {
@@ -1402,7 +1427,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "3f5877e5e8fd8fa30b564b190b48351fd971ddff3634a3e359234588e3fdd0ac"
+      "sha256": "f456de520924aca1ad99e13c38303453cad929b9a88333c7395fc83fe8b22545"
     },
     {
       "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
@@ -1603,5 +1628,5 @@
       "sha256": "c971fa90cb787337e9df73773f3b43cd5621f035e53cded439bd927b3b759e0c"
     }
   ],
-  "noticeSha256": "966b23e78eab7d5b5c7b0caed83ffb175094f93b43ba1561a7353554f6b9815f"
+  "noticeSha256": "ce919c89697a8e3f0953aeae59e93e2076c9bd4e2b85ef412b1140e6cd3c05e4"
 }

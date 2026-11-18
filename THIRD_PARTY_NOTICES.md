@@ -18,6 +18,8 @@ browser-root dependency closure, which also includes some build-time packages.
 Upstream aggregate notices can mention additional platforms or components;
 retaining them does not assert that all of those components are distributed.
 Electron/Chromium and bundled fonts retain their original separate notice files.
+The bundled U²-Net Portable ONNX weights include the upstream U²-Net and rembg
+license texts and the exact release artifact checksum in the full-text collection.
 App-managed provider/audio runtimes and models are separate downloads; this
 installer notice repair does not resolve their outstanding source or service rights.
 

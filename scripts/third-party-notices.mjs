@@ -182,8 +182,10 @@ export function collectThirdPartyNotices(
     };
   });
   const additional = policy.additional.map((item) => {
-    if (lock[item.owner.path]?.version !== item.owner.version)
+    if (item.owner && lock[item.owner.path]?.version !== item.owner.version)
       throw new Error(`Unreviewed version for ${item.id}`);
+    if (!item.owner && !item.artifacts?.length)
+      throw new Error(`Missing reviewed artifact for ${item.id}`);
     const files = reviewedFiles(root, item.files);
     texts.push(
       `Additional component: ${item.id} ${item.version}\n${item.note || ''}\n`,

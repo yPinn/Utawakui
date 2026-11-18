@@ -1,6 +1,6 @@
 # 隨應用程式交付的資源
 
-本目錄保存 main 擁有的 Python worker 與固定 runtime／環境／模型描述，沒有 Python 安裝、模型權重或使用者曲庫。
+本目錄保存 Main 擁有的 Python worker、固定 runtime／環境／模型描述，以及 `output-portrait/u2netp.onnx` 的內建去背權重。
 實際交付路徑以根目錄 `electron-builder.yml` 的 `extraResources` 明確清單為準；封裝規則見 [release inventory](../docs/operations/release-inventory.md)。
 
 ## 資源與責任
@@ -50,4 +50,4 @@ Main 端路徑解析、manifest 驗證與打包邊界由 `npm test` 內的相關
 - 不合併 Provider Python 與 Audio Python 的環境、activation 或 process policy。
 - 更新固定版本須同步 identity、hash、lock、catalog 與 consumer 驗證；不以「版本較舊」直接刪除或更新描述。
 - 移動或刪除 runtime 檔案時，同步 `electron-builder.yml`、release inventory、路徑解析及 packaging tests；本導覽與 Python 測試不隨應用程式交付。
-- 模型、套件、runtime 安裝與 activation 由各能力在 userData 管理；不要把它們搬回本目錄，亦不要將 ignored 本機資產視為可直接清空。
+- 選用的音訊模型、套件與 runtime 安裝由各能力在 userData 管理；不要把它們搬回本目錄，亦不要將 ignored 本機資產視為可直接清空。

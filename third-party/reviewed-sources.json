@@ -108,6 +108,31 @@
   ],
   "additional": [
     {
+      "id": "U²-Net Portable ONNX weights",
+      "version": "rembg release v0.0.0",
+      "note": "U²-Net Portable by Xuebin Qin, Zichen Zhang, Chenyang Huang, Masood Dehghan, Osmar Zaiane, and Martin Jagersand (Pattern Recognition, 2020). U²-Net is published under Apache-2.0. This unmodified ONNX file is distributed by the MIT-licensed rembg project.",
+      "files": [
+        {
+          "path": "upstream/u2net-apache-2.0.txt",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "source": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+          "path": "upstream/rembg-license.txt",
+          "sha256": "587880ce4cd65578c8fae3fd4aed30298801eed4224f0bb6fd62e1649479333f",
+          "source": "https://raw.githubusercontent.com/danielgatis/rembg/main/LICENSE.txt"
+        }
+      ],
+      "artifacts": [
+        {
+          "sourcePath": "resources/output-portrait/u2netp.onnx",
+          "packagedPath": "resources/output-portrait/u2netp.onnx",
+          "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8",
+          "source": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx"
+        }
+      ]
+    },
+    {
       "id": "Microsoft DirectML",
       "version": "1.15.4",
       "owner": {
