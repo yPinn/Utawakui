@@ -1,13 +1,18 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, shallowRef, watch } from 'vue';
-import { Eye, EyeOff, Smartphone, Trash2 } from '../../icons/index.js';
+import {
+  Play,
+  Power,
+  RefreshCw,
+  Smartphone,
+  Trash2,
+} from '../../icons/index.js';
 import { useCompanionSettings } from '../../composables/useCompanionSettings.js';
+import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSelect from '../ui/UiSelect.vue';
-import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import CompanionPairingQr from './CompanionPairingQr.vue';
 import { t } from '../../utils/i18n.js';
@@ -17,29 +22,51 @@ const props = defineProps({
 });
 
 const companion = props.settings ?? useCompanionSettings();
-const portDraft = shallowRef('');
-// The pairing code stays hidden until asked for, so a captured or streamed
-// Settings window does not show it by default.
-const revealed = shallowRef(false);
-watch(
-  () => companion.pairing.value?.url,
-  () => {
-    revealed.value = false;
-  },
-);
+const SETUP_STEPS = ['companion.steps.scan', 'companion.steps.allow'];
 const approvalRequest = computed(() => status.value?.pairing?.request ?? null);
 
+// The QR shows as soon as the remote runs. A used or expired code stays
+// drawn under a scrim that offers a fresh one.
+const lastUrl = shallowRef('');
+const expired = shallowRef(true);
+let expiryTimer = null;
+watch(
+  () => companion.pairing.value,
+  (pairing) => {
+    clearTimeout(expiryTimer);
+    const left = pairing ? pairing.expiresAt - Date.now() : 0;
+    expired.value = left <= 0;
+    if (!pairing) return;
+    lastUrl.value = pairing.url;
+    if (left > 0)
+      expiryTimer = setTimeout(() => {
+        expired.value = true;
+      }, left);
+  },
+  { immediate: true },
+);
+watch(
+  () => Boolean(companion.status.value?.running),
+  (running) => {
+    if (!running) lastUrl.value = '';
+    else if (!companion.pairing.value) void companion.beginPairing();
+  },
+  { immediate: true },
+);
+const showQr = computed(
+  () => Boolean(companion.status.value?.running) && !approvalRequest.value,
+);
+
 const status = computed(() => companion.status.value);
+// Main picks the only private network itself; a choice is offered only
+// when the computer is on several.
 const interfaceOptions = computed(() =>
-  (status.value?.interfaces ?? []).map((entry) => ({
-    value: entry.address,
-    label: t(
-      entry.privateNetwork
-        ? 'companion.interfaceOption'
-        : 'companion.interfacePublic',
-      entry,
-    ),
-  })),
+  (status.value?.interfaces ?? [])
+    .filter((entry) => entry.privateNetwork)
+    .map((entry) => ({
+      value: entry.address,
+      label: t('companion.interfaceOption', entry),
+    })),
 );
 const errorText = computed(() => {
   const code = companion.error.value || status.value?.error;
@@ -48,10 +75,9 @@ const errorText = computed(() => {
 const stateLabel = computed(() =>
   status.value?.running ? t('companion.running') : t('companion.stopped'),
 );
-const address = computed(() =>
-  status.value?.running
-    ? `http://${status.value.interfaceAddress}:${status.value.port}/m/`
-    : '',
+// Setup help stays until the first phone is paired.
+const firstSetup = computed(() =>
+  Boolean(status.value && !status.value.devices.length),
 );
 const formatDate = (value) =>
   new Intl.DateTimeFormat(undefined, {
@@ -59,17 +85,13 @@ const formatDate = (value) =>
     timeStyle: 'short',
   }).format(new Date(value));
 
-function savePort() {
-  const port = Number(portDraft.value);
-  if (!portDraft.value || port === status.value?.port) return;
-  void companion.configure({ port });
-}
-
-onMounted(async () => {
-  await companion.start();
-  portDraft.value = String(status.value?.port ?? '');
+onMounted(() => companion.start());
+// A code is only good while Settings shows it.
+onBeforeUnmount(() => {
+  clearTimeout(expiryTimer);
+  if (companion.pairing.value) void companion.cancelPairing();
+  companion.stop();
 });
-onBeforeUnmount(() => companion.stop());
 </script>
 
 <template>
@@ -82,89 +104,80 @@ onBeforeUnmount(() => companion.stop());
       :guidance="t('companion.guidance')"
     >
       <template #actions>
-        <UiCheckbox
-          id="companion-enabled"
-          :label="t('companion.enable')"
-          :model-value="Boolean(status?.enabled)"
+        <!-- Start also retries a failed start, e.g. after a network fix. -->
+        <UiButton
+          v-if="!status?.running"
+          :icon="Play"
+          variant="accent"
           :disabled="companion.busy.value || !status"
-          @update:model-value="companion.configure({ enabled: $event })"
-        />
+          @click="companion.configure({ enabled: true })"
+          >{{ t('companion.start') }}</UiButton
+        >
+        <UiButton
+          v-if="status?.enabled"
+          :icon="Power"
+          variant="secondary"
+          :disabled="companion.busy.value"
+          @click="companion.configure({ enabled: false })"
+          >{{ t('companion.stop') }}</UiButton
+        >
       </template>
       <template #feedback>
-        <div class="companion-settings-block__fields">
-          <UiSelect
-            id="companion-interface"
-            :label="t('companion.interface')"
-            :placeholder="t('companion.interfacePlaceholder')"
-            :options="interfaceOptions"
-            :model-value="status?.interfaceAddress ?? ''"
-            :disabled="companion.busy.value || !interfaceOptions.length"
-            @update:model-value="
-              companion.configure({ interfaceAddress: $event })
-            "
-          />
-          <UiTextField
-            id="companion-port"
-            :label="t('companion.port')"
-            inputmode="numeric"
-            :model-value="portDraft"
-            :disabled="companion.busy.value"
-            @update:model-value="portDraft = $event"
-            @change="savePort"
-          />
-        </div>
-        <UiHint v-if="status && !interfaceOptions.length">{{
-          t('companion.noInterface')
-        }}</UiHint>
+        <ol
+          v-if="firstSetup"
+          class="companion-settings-block__steps"
+          :aria-label="t('companion.steps.label')"
+        >
+          <li v-for="step in SETUP_STEPS" :key="step">{{ t(step) }}</li>
+        </ol>
+        <UiSelect
+          v-if="status?.enabled && interfaceOptions.length > 1"
+          id="companion-interface"
+          class="companion-settings-block__interface"
+          :label="t('companion.interface')"
+          :placeholder="t('companion.interfacePlaceholder')"
+          :options="interfaceOptions"
+          :model-value="status?.interfaceAddress ?? ''"
+          :disabled="companion.busy.value"
+          @update:model-value="
+            companion.configure({ interfaceAddress: $event })
+          "
+        />
         <UiHint v-if="errorText" tone="danger" role="status">{{
           errorText
         }}</UiHint>
-        <UiHint v-if="address">{{ address }}</UiHint>
-        <UiHint v-if="status?.enabled">{{ t('companion.firewall') }}</UiHint>
+        <UiHint v-if="status?.enabled && firstSetup">{{
+          t('companion.firewall')
+        }}</UiHint>
       </template>
     </SettingsDocumentItem>
 
     <SettingsDocumentItem :title="t('companion.devices')" variant="nested">
-      <template #actions>
-        <UiButton
-          v-if="!companion.pairing.value"
-          variant="secondary"
-          :disabled="companion.busy.value || !status?.running"
-          @click="companion.beginPairing()"
-          >{{ t('companion.pair') }}</UiButton
-        >
-        <UiButton v-else variant="ghost" @click="companion.cancelPairing()">{{
-          t('companion.cancelPairing')
-        }}</UiButton>
-      </template>
       <template #feedback>
-        <div
-          v-if="companion.pairing.value"
-          class="companion-settings-block__pairing"
-          role="status"
-        >
-          <strong>{{ t('companion.pairingTitle') }}</strong>
-          <template v-if="revealed">
+        <figure v-if="showQr" class="companion-settings-block__pairing">
+          <div class="companion-settings-block__qr ui-artwork-composite">
             <CompanionPairingQr
-              :value="companion.pairing.value.url"
+              v-if="lastUrl"
+              :value="lastUrl"
               :label="t('companion.pairingQr')"
             />
-            <code class="companion-settings-block__url">{{
-              companion.pairing.value.url
-            }}</code>
-          </template>
-          <p v-else class="companion-settings-block__concealed">
-            {{ t('companion.pairingHidden') }}
-          </p>
-          <UiButton
-            :icon="revealed ? EyeOff : Eye"
-            @click="revealed = !revealed"
-            >{{
-              t(revealed ? 'companion.hidePairing' : 'companion.showPairing')
-            }}</UiButton
-          >
-          <UiHint>{{ t('companion.pairingHint') }}</UiHint>
-        </div>
+            <UiArtworkOverlay v-if="lastUrl && expired">
+              <div class="companion-settings-block__qr-scrim" role="status">
+                <span>{{ t('companion.pairingExpired') }}</span>
+                <UiButton
+                  :icon="RefreshCw"
+                  variant="overlay"
+                  :disabled="companion.busy.value"
+                  @click="companion.beginPairing()"
+                  >{{ t('companion.renewPairing') }}</UiButton
+                >
+              </div>
+            </UiArtworkOverlay>
+          </div>
+          <figcaption class="companion-settings-block__qr-caption">
+            {{ t('companion.pairingTitle') }}
+          </figcaption>
+        </figure>
         <section
           v-if="approvalRequest"
           class="companion-settings-block__approval"
@@ -191,10 +204,7 @@ onBeforeUnmount(() => companion.stop());
             >
           </div>
         </section>
-        <UiHint v-if="status && !status.devices.length">{{
-          t('companion.noDevices')
-        }}</UiHint>
-        <ul v-else class="companion-settings-block__devices">
+        <ul v-if="!firstSetup" class="companion-settings-block__devices">
           <li v-for="device in status?.devices ?? []" :key="device.id">
             <span class="companion-settings-block__device-name">{{
               device.label
@@ -231,27 +241,66 @@ onBeforeUnmount(() => companion.stop());
   min-inline-size: 0;
 }
 
-.companion-settings-block__fields {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 8rem);
-  gap: var(--ui-space-2);
+.companion-settings-block__steps {
+  inline-size: 100%;
+  margin: 0;
+  padding-inline-start: var(--ui-space-5);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
+}
+
+.companion-settings-block__interface {
+  inline-size: min(100%, 24rem);
 }
 
 .companion-settings-block__pairing {
   display: grid;
-  gap: var(--ui-space-1);
+  justify-items: start;
+  gap: var(--ui-space-2);
+  inline-size: 100%;
+  margin: 0;
 }
 
-.companion-settings-block__concealed {
+/* Empty while the first code is created, then the QR fills it. */
+.companion-settings-block__qr {
+  position: relative;
   display: grid;
-  place-items: center;
   inline-size: min(100%, 12rem);
   aspect-ratio: 1;
-  margin: 0;
-  border: var(--ui-border-width) dashed var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-sm);
-  color: var(--ui-color-text-muted);
+  overflow: hidden;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-palette-neutral-50);
+}
+
+.companion-settings-block__qr > :deep(.companion-pairing-qr) {
+  inline-size: 100%;
+  border-radius: 0;
+}
+
+.companion-settings-block__qr-scrim {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3);
+  background: var(--ui-color-overlay-scrim-active);
+  color: var(--ui-color-overlay-contrast);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
   text-align: center;
+}
+
+/* The feedback row pushes buttons to the end; keep this one centred. */
+.companion-settings-block .companion-settings-block__qr-scrim :deep(button) {
+  margin-inline-start: 0;
+}
+
+.companion-settings-block__qr-caption {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-type-caption-size);
+  line-height: var(--ui-type-caption-line-height);
 }
 
 .companion-settings-block__approval {
@@ -271,11 +320,6 @@ onBeforeUnmount(() => companion.stop());
 .companion-settings-block__approval-actions {
   display: flex;
   gap: var(--ui-space-2);
-}
-
-.companion-settings-block__url {
-  overflow-wrap: anywhere;
-  user-select: all;
 }
 
 .companion-settings-block__devices {

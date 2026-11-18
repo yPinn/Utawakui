@@ -1,6 +1,6 @@
 import { createSSRApp, h, readonly, shallowRef } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import CompanionSettingsBlock from './CompanionSettingsBlock.vue';
 
 function settingsWith(status, extra = {}) {
@@ -44,29 +44,104 @@ const base = {
 };
 
 describe('CompanionSettingsBlock', () => {
-  it('shows the running address, labelled networks and paired phones', async () => {
+  it('shows paired phones without network details or setup help', async () => {
     const html = await render(settingsWith(base));
     expect(html).toContain('手機可連線');
-    expect(html).toContain('http://192.168.1.20:8710/m/');
-    expect(html).toContain('Wi-Fi（192.168.1.20）');
-    expect(html).toContain('Hotel（10.0.0.8，公用網路）');
+    expect(html).not.toContain('8710');
+    expect(html).not.toContain('companion-interface');
+    expect(html).not.toContain('companion-port');
+    expect(html).not.toContain('配對步驟');
+    expect(html).not.toContain('請只允許私人網路');
     expect(html).toContain('移除 Pixel');
     expect(html).toContain('全部移除');
+  });
+
+  it('starts and stops with buttons instead of a checkbox', async () => {
+    const running = await render(settingsWith(base));
+    expect(running).toContain('>停止<');
+    expect(running).not.toContain('>啟動<');
+    expect(running).not.toContain('type="checkbox"');
+    const off = await render(
+      settingsWith({ ...base, enabled: false, running: false }),
+    );
+    expect(off).toContain('>啟動<');
+    expect(off).not.toContain('>停止<');
+    // A failed start can be retried or turned off.
+    const failed = await render(
+      settingsWith({ ...base, running: false, error: 'port-in-use' }),
+    );
+    expect(failed).toContain('>啟動<');
+    expect(failed).toContain('>停止<');
+  });
+
+  it('guides the first pairing in two steps', async () => {
+    const html = await render(settingsWith({ ...base, devices: [] }));
+    expect(html).toContain('aria-label="配對步驟"');
+    expect(html).toContain('用手機相機掃描下方 QR 碼。');
+    expect(html).toContain('再按「允許」。');
+    expect(html).not.toContain('配對手機');
     expect(html).toContain('請只允許私人網路');
   });
 
-  it('keeps the pairing code hidden until it is asked for', async () => {
+  it('offers a network choice only between several private networks', async () => {
     const html = await render(
-      settingsWith(base, {
-        pairing: { url: 'http://192.168.1.20:8710/m/#pair=abc', expiresAt: 1 },
+      settingsWith({
+        ...base,
+        running: false,
+        error: 'choose-interface',
+        interfaces: [
+          ...base.interfaces,
+          { name: 'Ethernet', address: '192.168.1.30', privateNetwork: true },
+        ],
       }),
     );
+    expect(html).toContain('companion-interface');
+    expect(html).toContain('請選擇手機也連著的那一個');
+  });
+
+  it('shows the QR by default and creates a code once running', async () => {
+    const idle = settingsWith(base);
+    idle.beginPairing = vi.fn(async () => true);
+    const empty = await render(idle);
+    expect(idle.beginPairing).toHaveBeenCalledOnce();
+    expect(empty).toContain('companion-settings-block__qr');
+
+    const html = await render(
+      settingsWith(base, {
+        pairing: {
+          url: 'http://192.168.1.20:8710/m/#pair=abc',
+          expiresAt: Date.now() + 60_000,
+        },
+      }),
+    );
+    expect(html).toContain('companion-pairing-qr');
+    expect(html).toContain('aria-label="配對用 QR 碼"');
+    expect(html).toContain('用手機相機掃描以加入手機');
+    expect(html).not.toContain('配對碼已失效');
     expect(html).not.toContain('#pair=abc');
-    expect(html).not.toContain('companion-pairing-qr');
-    expect(html).toContain('配對碼已隱藏');
-    expect(html).toContain('顯示配對碼');
-    expect(html).toContain('取消配對');
-    expect(html).not.toContain('>配對手機<');
+  });
+
+  it('covers an expired code with a scrim that renews it', async () => {
+    const html = await render(
+      settingsWith(base, {
+        pairing: {
+          url: 'http://192.168.1.20:8710/m/#pair=abc',
+          expiresAt: Date.now() - 1,
+        },
+      }),
+    );
+    expect(html).toContain('companion-pairing-qr');
+    expect(html).toMatch(/ui-artwork-overlay[\s\S]*配對碼已失效/u);
+    expect(html).toContain('ui-btn--overlay');
+    expect(html).toContain('重新產生');
+  });
+
+  it('shows no QR while stopped', async () => {
+    const stopped = settingsWith({ ...base, enabled: false, running: false });
+    stopped.beginPairing = vi.fn(async () => true);
+    const html = await render(stopped);
+    expect(html).not.toContain('companion-settings-block__qr');
+    expect(stopped.beginPairing).not.toHaveBeenCalled();
   });
 
   it('asks to allow a waiting phone with its match code', async () => {
@@ -89,19 +164,29 @@ describe('CompanionSettingsBlock', () => {
     expect(html).toContain('不是你的手機請按拒絕');
     expect(html).toContain('>允許<');
     expect(html).toContain('>拒絕<');
+    // The approval takes the QR's place until it is answered.
+    expect(html).not.toContain('companion-settings-block__qr');
   });
 
-  it('explains public networks and missing interfaces', async () => {
+  it('explains public networks, missing networks and busy connections', async () => {
     const blocked = await render(
       settingsWith({ ...base, running: false, error: 'public-network' }),
     );
     expect(blocked).toContain('請在 Windows 設定改為私人網路');
     expect(blocked).toContain('未開啟');
     const none = await render(
-      settingsWith({ ...base, running: false, interfaces: [], devices: [] }),
+      settingsWith({
+        ...base,
+        running: false,
+        error: 'no-interface',
+        interfaces: [],
+      }),
     );
-    expect(none).toContain('找不到私人網路');
-    expect(none).toContain('還沒有配對的手機');
+    expect(none).toContain('找不到可用的網路');
+    const busy = await render(
+      settingsWith({ ...base, running: false, error: 'port-in-use' }),
+    );
+    expect(busy).toContain('請關閉其他程式，之後會自動重試');
   });
 });
 
