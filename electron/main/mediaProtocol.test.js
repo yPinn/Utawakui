@@ -209,6 +209,53 @@ describe('registerMediaProtocol', () => {
     );
   });
 
+  it('answers 404 and logs when the portrait resolver fails', async () => {
+    const { handler, logger, resolvePortraitAsset } = setup();
+    const error = new Error('index unreadable');
+    resolvePortraitAsset.mockRejectedValueOnce(error);
+
+    const response = await handler(
+      request('utawakui-media://cutout-portrait/artist/track-a'),
+    );
+
+    expect(response.status).toBe(404);
+    expect(logger.error).toHaveBeenCalledWith(
+      '[media] Failed to resolve portrait',
+      error,
+    );
+    expect(library.buildRangeResponse).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 when no portrait file is found', async () => {
+    const { handler } = setup();
+
+    const response = await handler(
+      request('utawakui-media://cutout-portrait/artist/track-a'),
+    );
+
+    expect(response.status).toBe(404);
+    expect(library.buildRangeResponse).not.toHaveBeenCalled();
+  });
+
+  it('serves no portraits when the caller registers no portrait resolver', async () => {
+    let handler;
+    registerMediaProtocol({
+      protocol: { handle: (scheme, next) => (handler = next) },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'E:\\Library',
+      buildRangeResponse: library.buildRangeResponse,
+    });
+
+    const response = await handler(
+      request(
+        'utawakui-media://cutout-portrait/custom/00000000-0000-4000-8000-000000000011',
+      ),
+    );
+
+    expect(response.status).toBe(404);
+    expect(library.buildRangeResponse).not.toHaveBeenCalled();
+  });
+
   it.each([
     'utawakui-media://unknown/file.mp3',
     'utawakui-media://track/id/audio.wav/ignored',

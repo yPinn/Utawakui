@@ -672,6 +672,105 @@ describe('outputServer', () => {
     }
   });
 
+  describe('portrait media gate', () => {
+    const selectedPhoto = '00000000-0000-4000-8000-000000000011';
+    const otherPhoto = '00000000-0000-4000-8000-000000000012';
+    const photoFile = path.join(
+      __dirname,
+      '..',
+      '..',
+      'overlay',
+      'assets',
+      'streamer-guide.png',
+    );
+
+    function portraitLyrics(settings = {}, templateId = 'cutout-dialogue') {
+      return {
+        lyrics: {
+          templateId,
+          settings: {
+            cutoutMode: 'side-card',
+            cutoutCardStyle: 'portrait',
+            cutoutPortraitSets: {
+              activeId: '00000000-0000-4000-8000-000000000001',
+              items: [
+                {
+                  id: '00000000-0000-4000-8000-000000000001',
+                  cutoutArtistName: 'Aster',
+                  cutoutPortraitPhoto: selectedPhoto,
+                  cutoutPortraitColor: '#4466aa',
+                },
+              ],
+            },
+            ...settings,
+          },
+        },
+      };
+    }
+
+    async function startWith(slots) {
+      const resolvePortraitAsset = vi.fn(() => photoFile);
+      const server = createServer({ resolvePortraitAsset });
+      server.setOverlaySlots(slots);
+      const status = await server.start();
+      const status404 = async (route) => {
+        const response = await fetch(`${status.httpUrl}${route}`, {
+          redirect: 'manual',
+        });
+        await response.body?.cancel();
+        return response.status;
+      };
+      return { resolvePortraitAsset, status404 };
+    }
+
+    it('serves the selected custom photo and the track artist photo for the portrait card', async () => {
+      const { resolvePortraitAsset, status404 } =
+        await startWith(portraitLyrics());
+
+      expect(
+        await status404(`/media/cutout-portrait/custom/${selectedPhoto}`),
+      ).toBe(302);
+      expect(await status404('/media/cutout-portrait/artist/track-1')).toBe(
+        302,
+      );
+      expect(resolvePortraitAsset.mock.calls).toEqual([
+        ['custom', selectedPhoto],
+        ['artist', 'track-1'],
+      ]);
+    });
+
+    it.each([
+      [
+        'a custom photo that is not the selected one',
+        portraitLyrics(),
+        `custom/${otherPhoto}`,
+      ],
+      [
+        'another lyrics template',
+        portraitLyrics({}, 'karaoke-stack'),
+        'artist/track-1',
+      ],
+      [
+        'a presentation without the side card',
+        portraitLyrics({ cutoutMode: 'chat' }),
+        'artist/track-1',
+      ],
+      [
+        'the text-only side card',
+        portraitLyrics({ cutoutCardStyle: 'text-only' }),
+        `custom/${selectedPhoto}`,
+      ],
+    ])(
+      'refuses %s without touching the library',
+      async (_label, slots, route) => {
+        const { resolvePortraitAsset, status404 } = await startWith(slots);
+
+        expect(await status404(`/media/cutout-portrait/${route}`)).toBe(404);
+        expect(resolvePortraitAsset).not.toHaveBeenCalled();
+      },
+    );
+  });
+
   it('revalidates a changed allowlisted static asset instead of serving stale cache data', async () => {
     const dir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'utawakui-output-static-'),
