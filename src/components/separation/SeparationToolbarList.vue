@@ -292,7 +292,7 @@ function dragItem(item) {
           @keydown="openItemMenuFromKeyboard(item, $event)"
           @navigate="emit('navigate', $event)"
         >
-          <template v-if="item.backend" #trail>
+          <template v-if="separationBackendLabel(item.backend)" #trail>
             <UiChip>{{ separationBackendLabel(item.backend) }}</UiChip>
           </template>
         </TrackIdentityRow>
@@ -388,7 +388,7 @@ function dragItem(item) {
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
-            <UiChip v-if="item.backend">{{
+            <UiChip v-if="separationBackendLabel(item.backend)">{{
               separationBackendLabel(item.backend)
             }}</UiChip>
             <UiStatusIcon
@@ -423,7 +423,7 @@ function dragItem(item) {
           @navigate="emit('navigate', $event)"
         >
           <template #trail>
-            <UiChip v-if="item.backend">{{
+            <UiChip v-if="separationBackendLabel(item.backend)">{{
               separationBackendLabel(item.backend)
             }}</UiChip>
             <UiStatusIcon

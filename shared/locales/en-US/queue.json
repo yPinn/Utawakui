@@ -53,8 +53,6 @@
       "cancelled": "Stopped"
     },
     "backend": {
-      "directml": "GPU (DirectML)",
-      "cpu": "CPU",
       "cpuFallback": "CPU fallback"
     },
     "idle": "Prepared in playback order",

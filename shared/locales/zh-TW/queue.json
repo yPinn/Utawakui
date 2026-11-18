@@ -53,8 +53,6 @@
       "cancelled": "已停止"
     },
     "backend": {
-      "directml": "GPU（DirectML）",
-      "cpu": "CPU",
       "cpuFallback": "已改用 CPU"
     },
     "idle": "依播放順序準備",

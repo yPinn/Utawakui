@@ -30,7 +30,7 @@ const source = readCatalogSource(
 );
 
 describe('SeparationToolbarList', () => {
-  it('shows the selected backend in active and finished rows', async () => {
+  it('badges only a CPU fallback, not the normal GPU or CPU backend', async () => {
     const app = createSSRApp(SeparationToolbarList, {
       activeItems: [
         {
@@ -59,10 +59,10 @@ describe('SeparationToolbarList', () => {
       }),
     });
     const html = await renderToString(app);
-    expect(html).toContain('>GPU（DirectML）<');
-    expect(html).toContain('>CPU<');
+    expect(html).not.toContain('DirectML');
+    expect(html).not.toContain('>CPU<');
     expect(html).toContain('>已改用 CPU<');
-    expect(html.match(/class="ui-chip__label"/gu)).toHaveLength(3);
+    expect(html.match(/class="ui-chip__label"/gu)).toHaveLength(1);
   });
 
   it('groups active, pending, attention, and complete history states', () => {
