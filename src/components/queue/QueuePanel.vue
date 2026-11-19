@@ -5,6 +5,7 @@ import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { usePerformanceQueueActions } from '../../composables/usePerformanceQueueActions.js';
 import { usePlaybackHistory } from '../../composables/usePlaybackHistory.js';
+import { usePlaybackTransport } from '../../composables/usePlaybackTransport.js';
 import { useRecentPlaybackActivation } from '../../composables/useRecentPlaybackActivation.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { useSongEditor } from '../../composables/useSongEditor.js';
@@ -50,13 +51,13 @@ const {
   currentTrack,
   queuedTracks,
   sourceUpcomingTracks,
-  setCurrentTrack,
   enqueueTrack,
   clearQueuedTracks,
   removeQueuedTrack,
   reorderQueuedTrack,
   reorderSourceTrack,
 } = usePlaybackQueue();
+const { playQueueSelection } = usePlaybackTransport();
 const {
   state: playlistState,
   create: createPlaylist,
@@ -71,7 +72,7 @@ const tabs = [
   { id: 'queue', label: t('queue.panel.queue') },
   { id: 'recent', label: t('queue.panel.recent') },
 ];
-const activeTab = shallowRef('queue');
+const activeTab = dock.queueTab;
 const selectedTrackId = shallowRef(null);
 const selectedRecentEntryKey = shallowRef(null);
 const trackMenu = shallowRef(null);
@@ -182,18 +183,13 @@ async function handleTrackMenuSelect(value) {
 
 function selectTab(tabId) {
   closeTrackMenu();
-  activeTab.value = tabId;
+  dock.selectQueueTab(tabId);
   nextTick(() => {
     dockPanel.value?.scrollTo({ top: 0 });
   });
 }
 
 function playCurrentTrack(track) {
-  playTrack(toPlayableTrack(track));
-}
-
-function playQueuedTrack(track, options = {}) {
-  setCurrentTrack(track.id, options);
   playTrack(toPlayableTrack(track));
 }
 
@@ -211,7 +207,7 @@ function toggleCurrentTrackPlayback(track) {
 
 function toggleQueuedTrackPlayback(track, options = {}) {
   toggleTrackPlayback(track, (nextTrack) =>
-    playQueuedTrack(nextTrack, options),
+    playQueueSelection(nextTrack, options),
   );
 }
 
@@ -412,7 +408,7 @@ const {
           :drop-target-track-id="dropTargetQueuedTrackId"
           :drop-position="queuedDropPosition"
           @select-track="selectQueueTrack"
-          @activate-track="playQueuedTrack($event, { source: false })"
+          @activate-track="playQueueSelection($event, { source: false })"
           @toggle-track-playback="
             toggleQueuedTrackPlayback($event, { source: false })
           "
@@ -449,7 +445,7 @@ const {
           :title-link-aria-label="upcomingSourceLinkLabel"
           :empty-text="t('queue.panel.noNext')"
           @select-track="selectQueueTrack"
-          @activate-track="playQueuedTrack($event, { source: true })"
+          @activate-track="playQueueSelection($event, { source: true })"
           @toggle-track-playback="
             toggleQueuedTrackPlayback($event, { source: true })
           "

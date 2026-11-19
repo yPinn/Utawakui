@@ -2,6 +2,7 @@ import { effectScope, reactive, shallowRef } from 'vue';
 import { useLyricsTextProcessing } from './lyrics/useLyricsTextProcessing.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectLyricsTextSelection } from '../../shared/presentation/lyricsTextProcessing.mjs';
+import { projectCompanionOutputSlot } from '../../shared/companionOutput.mjs';
 
 function deferred() {
   let resolve;
@@ -293,6 +294,7 @@ it('preserves the exact public runtime API', async () => {
 
   expect(Object.keys(runtime).sort()).toEqual([
     'appearanceAutosaveFor',
+    'applyCompanionOutputOption',
     'initialize',
     'loadSlots',
     'openWindow',
@@ -324,6 +326,50 @@ it('opens a read-only window with only a kind intent and contains failures for r
   );
   expect(runtime.state.isOpeningWindow).toBe(false);
   await expect(runtime.openWindow('lyrics')).resolves.toBe(true);
+});
+
+it('applies a phone option to the saved slot and rejects changes from a stale projection', async () => {
+  const runtime = await loadRuntime();
+  const slot = {
+    templateId: 'phantom-thieves',
+    styleSetIds: ['runtime-source'],
+    settings: {
+      phantomMode: 'side-card',
+      phantomCorner: 'auto',
+      textColor: '#123456',
+    },
+  };
+  bridge.listOutputSlots.mockResolvedValue({ slots: { lyrics: slot } });
+  await runtime.loadSlots();
+  const published = projectCompanionOutputSlot(slot);
+  const change = {
+    templateId: slot.templateId,
+    fieldKey: 'phantomMode',
+    value: 'chat',
+  };
+
+  expect(
+    await runtime.applyCompanionOutputOption(published, {
+      ...change,
+      fieldKey: 'phantomChatShape',
+      value: 'thought',
+    }),
+  ).toBe('unavailable');
+  expect(await runtime.applyCompanionOutputOption(published, change)).toBe(
+    'applied',
+  );
+  expect(runtime.state.slots.lyrics.settings).toMatchObject({
+    ...slot.settings,
+    phantomMode: 'chat',
+  });
+  expect(
+    await runtime.applyCompanionOutputOption(published, {
+      ...change,
+      fieldKey: 'phantomCorner',
+      value: 'top-right',
+    }),
+  ).toBe('stale');
+  expect(bridge.upsertOutputSlot).toHaveBeenCalledOnce();
 });
 
 it('deduplicates concurrent UI opens while the main operation is pending', async () => {

@@ -2,6 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./usePerformerSelfView.js', () => ({ usePerformerSelfView: vi.fn() }));
 vi.mock('./useShortcutCommands.js', () => ({ useShortcutCommands: vi.fn() }));
+const queueOwner = vi.hoisted(() => ({
+  queuedTracks: { value: [] },
+  clearQueuedTracks: vi.fn(),
+  reorderSourceTrack: vi.fn(),
+  removeQueuedTrack: vi.fn(),
+}));
+vi.mock('./usePlaybackQueue.js', () => ({
+  usePlaybackQueue: () => queueOwner,
+}));
 
 import { useCompanionRemote } from './useCompanionRemote.js';
 
@@ -12,6 +21,8 @@ function setup({ matches = true, status = 'executed', control = true } = {}) {
   };
   const selfView = {
     matchesPublishedContext: vi.fn(() => matches),
+    resolvePublishedQueueSelection: vi.fn(),
+    publishedQueueContext: vi.fn(),
     applyControlIntent: vi.fn(async () => control),
   };
   const executor = { execute: vi.fn(async () => ({ status })) };
@@ -27,6 +38,69 @@ const message = (command) => ({
 });
 
 describe('useCompanionRemote', () => {
+  it('clears only the published manual queue and never falls back to source removal', async () => {
+    const { remote, selfView } = setup();
+    queueOwner.clearQueuedTracks.mockClear();
+    queueOwner.queuedTracks.value = [{ id: 'b' }];
+    selfView.publishedQueueContext.mockReturnValue({ manualIds: ['a'] });
+    expect(await remote.handle(message('queue.clear'))).toBe('stale');
+    expect(queueOwner.clearQueuedTracks).not.toHaveBeenCalled();
+    selfView.publishedQueueContext.mockReturnValue({ manualIds: ['b'] });
+    expect(await remote.handle(message('queue.clear'))).toBe('applied');
+    expect(queueOwner.clearQueuedTracks).toHaveBeenCalledOnce();
+
+    selfView.resolvePublishedQueueSelection.mockReturnValue({
+      track: { id: 'b' },
+      source: true,
+    });
+    expect(
+      await remote.handle({ ...message('queue.remove'), queueIndex: 0 }),
+    ).toBe('unavailable');
+    expect(queueOwner.removeQueuedTrack).not.toHaveBeenCalled();
+  });
+
+  it('moves published neighboring rows within their own group', async () => {
+    const { remote, selfView } = setup();
+    selfView.publishedQueueContext.mockReturnValue({});
+    selfView.resolvePublishedQueueSelection.mockImplementation(
+      (_revision, _track, index) =>
+        [
+          { track: { id: 'manual' }, source: false },
+          { track: { id: 'b' }, source: true },
+          { track: { id: 'c' }, source: true },
+        ][index],
+    );
+    queueOwner.reorderSourceTrack.mockReturnValue(true);
+    expect(
+      await remote.handle({ ...message('queue.move-up'), queueIndex: 1 }),
+    ).toBe('stale');
+    expect(
+      await remote.handle({ ...message('queue.move-up'), queueIndex: 2 }),
+    ).toBe('applied');
+    expect(queueOwner.reorderSourceTrack).toHaveBeenCalledWith(
+      'c',
+      'b',
+      'before',
+    );
+  });
+  it('plays only a queue row resolved from the requested snapshot', async () => {
+    const { remote, selfView, executor } = setup();
+    const pick = { ...message('queue.play'), queueIndex: 2 };
+    expect(await remote.handle(pick)).toBe('stale');
+    expect(executor.execute).not.toHaveBeenCalled();
+    const queueSelection = { track: { id: 'b' }, source: true };
+    selfView.resolvePublishedQueueSelection.mockReturnValue(queueSelection);
+    expect(await remote.handle(pick)).toBe('applied');
+    expect(selfView.resolvePublishedQueueSelection).toHaveBeenCalledWith(
+      4,
+      'a',
+      2,
+    );
+    expect(executor.execute).toHaveBeenCalledWith('queue.play', {
+      scope: 'companion',
+      queueSelection,
+    });
+  });
   it('runs transport commands through the shortcut executor when current', async () => {
     const { remote, bridge, executor, selfView } = setup();
     expect(await remote.handle(message('player.next'))).toBe('applied');

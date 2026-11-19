@@ -11,6 +11,13 @@ vi.mock('./usePlayer.js', () => ({
 vi.mock('./usePlaybackQueue.js', () => ({
   usePlaybackQueue: () => ({ state: {}, upcomingTracks: shallowRef([]) }),
 }));
+vi.mock('./usePerformanceSessionPlayback.js', () => ({
+  usePerformanceSessionPlayback: () => ({
+    currentItem: shallowRef(null),
+    pendingItems: shallowRef([]),
+    historyItems: shallowRef([]),
+  }),
+}));
 vi.mock('./useLyrics.js', () => ({
   useLyrics: () =>
     lyricsOwner ?? {

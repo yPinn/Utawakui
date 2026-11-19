@@ -8,7 +8,12 @@ import { selectPerformerFrame } from '../../shared/presentation/performerFrame.m
 import { normalizeAppError } from '../utils/appErrors.js';
 import { t } from '../utils/i18n.js';
 
-export function usePerformerViewState() {
+export function usePerformerViewState({
+  pauseWhenHidden = false,
+  showWordCues = true,
+  bridge = globalThis.window?.UtawakuiPerformer,
+} = {}) {
+  const visibilityDocument = pauseWhenHidden ? globalThis.document : null;
   const snapshot = shallowRef(null);
   const clockNow = shallowRef(Date.now());
   const windowState = reactive({
@@ -28,6 +33,7 @@ export function usePerformerViewState() {
     clearTimeout(displayBoundaryTimer);
     displayBoundaryTimer = null;
     if (
+      visibilityDocument?.hidden ||
       snapshot.value?.state?.playback?.status !== 'playing' ||
       !Number.isFinite(delay) ||
       delay < 0
@@ -42,11 +48,14 @@ export function usePerformerViewState() {
   let unsubscribeWindowState = null;
 
   const frame = computed(() =>
-    selectPerformerFrame(snapshot.value, { nowMs: clockNow.value }),
+    selectPerformerFrame(snapshot.value, {
+      nowMs: clockNow.value,
+      wordCue: showWordCues ? snapshot.value?.wordCue : null,
+    }),
   );
 
   function bridgeMethod(name) {
-    const method = window.UtawakuiPerformer?.[name];
+    const method = bridge?.[name];
     if (typeof method !== 'function') {
       throw new Error(t('performer.viewState.bridgeMissing'));
     }
@@ -64,7 +73,7 @@ export function usePerformerViewState() {
     });
     try {
       Promise.resolve(
-        window.UtawakuiPerformer?.recordDiagnostic?.({
+        bridge?.recordDiagnostic?.({
           level: 'error',
           source: 'performer-window',
           operation,
@@ -90,17 +99,21 @@ export function usePerformerViewState() {
     clearTimeout(boundaryTimer);
     boundaryTimer = null;
     const state = snapshot.value?.state;
-    if (!state) return;
+    if (!state || visibilityDocument?.hidden) return;
     const nowMs = Date.now();
-    const cue = snapshot.value.wordCue;
-    const position =
-      playbackPositionMs(state, nowMs) + (state.lyrics?.offsetMs ?? 0);
+    const cue = showWordCues ? snapshot.value.wordCue : null;
+    const position = cue
+      ? playbackPositionMs(state, nowMs) + (state.lyrics?.offsetMs ?? 0)
+      : 0;
     const edge =
       cue && state.playback?.status === 'playing'
         ? [cue.startMs, cue.endMs].find((ms) => ms > position)
         : null;
     const delays = [
-      nextLyricsBoundaryDelayMs(state, { nowMs }),
+      nextLyricsBoundaryDelayMs(state, {
+        nowMs,
+        includeSegments: showWordCues,
+      }),
       Number.isFinite(edge)
         ? Math.max(1, Math.ceil((edge - position) / (state.playback.rate || 1)))
         : null,
@@ -111,6 +124,12 @@ export function usePerformerViewState() {
       clockNow.value = Date.now();
       scheduleBoundary();
     }, delay + 1);
+  }
+
+  function refreshVisibility() {
+    if (visibilityDocument.hidden) setDisplayBoundary(null);
+    else clockNow.value = Date.now();
+    scheduleBoundary();
   }
 
   function applySnapshot(value) {
@@ -219,6 +238,7 @@ export function usePerformerViewState() {
   }
 
   onMounted(async () => {
+    visibilityDocument?.addEventListener('visibilitychange', refreshVisibility);
     try {
       unsubscribeSnapshot = bridgeMethod('onSnapshot')(applySnapshot);
       unsubscribeWindowState = bridgeMethod('onWindowState')(applyWindowState);
@@ -237,6 +257,10 @@ export function usePerformerViewState() {
   });
 
   onUnmounted(() => {
+    visibilityDocument?.removeEventListener(
+      'visibilitychange',
+      refreshVisibility,
+    );
     clearTimeout(boundaryTimer);
     clearTimeout(displayBoundaryTimer);
     unsubscribeSnapshot?.();

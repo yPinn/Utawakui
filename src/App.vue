@@ -204,7 +204,13 @@ onMounted(() => {
   prefetchWhenIdle([loadSettingsPage, loadDisplayPage, loadPerformancePage]);
 });
 const performerView = usePerformerSelfView();
-performerView.initialize();
+const { isFeatureEnabled } = useFeatureGates();
+performerView.initialize({
+  output: {
+    runtime: outputRuntime,
+    isEnabled: () => isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW),
+  },
+});
 useCompanionRemote().initialize();
 
 // Root-level so the passive "update available" tab marker reflects the

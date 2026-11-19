@@ -123,7 +123,7 @@ describe('QueuePanel shared Dock content', () => {
 
   it('keeps true Queue and Recently Played tabpanels below fixed shared chrome', () => {
     expect(source).toContain("import UiTabs from '../ui/UiTabs.vue';");
-    expect(source).toContain("const activeTab = shallowRef('queue');");
+    expect(source).toContain('const activeTab = dock.queueTab;');
     expect(source).toContain('variant="bar"');
     expect(source).toContain('<template #actions>');
     expect(source).not.toContain('.ui-tabs__tab');
@@ -256,7 +256,7 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain('const selectedTrackId = shallowRef(null);');
     expect(source).toContain('@select-track="selectQueueTrack"');
     expect(source).toContain('@activate-track="playCurrentTrack"');
-    expect(source).toContain('@activate-track="playQueuedTrack(');
+    expect(source).toContain('@activate-track="playQueueSelection(');
     expect(sectionSource).toContain(':active="track.id === selectedTrackId"');
     expect(sectionSource).toContain("'activateTrack'");
     expect(rowSource).toContain(

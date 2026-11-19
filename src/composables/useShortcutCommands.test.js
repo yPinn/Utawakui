@@ -82,9 +82,11 @@ function fixture() {
   };
   const transport = {
     arrangementBusy: ref(false),
+    arrangementActive: ref(false),
     canPlayNext: ref(true),
     playPrevious: vi.fn().mockResolvedValue(true),
     playNext: vi.fn().mockResolvedValue(true),
+    playQueueSelection: vi.fn().mockResolvedValue(true),
   };
   const lyrics = {
     state: reactive({
@@ -120,6 +122,100 @@ function fixture() {
 }
 
 describe('shortcut command owners', () => {
+  it('plays a resolved queue selection from idle and respects arrangement ownership', async () => {
+    const { executor, transport, state } = fixture();
+    state.track = null;
+    const track = { id: 'b' };
+    const options = {
+      scope: 'companion',
+      queueSelection: { track, source: true },
+    };
+    expect(await executor.execute('queue.play', options)).toMatchObject({
+      status: 'executed',
+    });
+    expect(transport.playQueueSelection).toHaveBeenCalledWith(track, {
+      source: true,
+    });
+    transport.arrangementActive.value = true;
+    expect(await executor.execute('queue.play', options)).toMatchObject({
+      status: 'unavailable',
+    });
+    expect(transport.playQueueSelection).toHaveBeenCalledTimes(1);
+  });
+  it('refuses to mutate desktop lyrics offset from companion scope', async () => {
+    const { executor } = fixture();
+    for (const command of ['lyrics.offset-up', 'lyrics.offset-down'])
+      expect(
+        (await executor.execute(command, { scope: 'companion' })).status,
+      ).toBe('unavailable');
+  });
+
+  it('seeks within the active track only for a current companion command', async () => {
+    const { player, state, executor } = fixture();
+    state.duration = 12.5;
+    player.seek = vi.fn();
+    const options = { scope: 'companion', positionMs: 1250 };
+    expect(
+      (await executor.execute('player.seek', { positionMs: 1250 })).status,
+    ).toBe('unknown');
+    expect(
+      (
+        await executor.execute('player.seek', {
+          ...options,
+          isCurrent: () => false,
+        })
+      ).status,
+    ).toBe('stale');
+    expect(
+      (await executor.execute('player.seek', { ...options, positionMs: 12501 }))
+        .status,
+    ).toBe('unavailable');
+    expect(player.seek).not.toHaveBeenCalled();
+    expect((await executor.execute('player.seek', options)).status).toBe(
+      'executed',
+    );
+    expect(player.seek).toHaveBeenCalledOnce();
+    expect(player.seek).toHaveBeenCalledWith(1.25);
+  });
+  it('applies companion-only presets through the existing audio control owner', async () => {
+    const f = fixture();
+    f.player.applyAudioControls = vi.fn(async () => ({
+      ok: true,
+      status: 'applied',
+    }));
+    const companion = { scope: 'companion' };
+    expect((await f.executor.execute('player.tempo-90')).status).toBe(
+      'unknown',
+    );
+    expect(
+      (await f.executor.execute('player.tempo-90', companion)).status,
+    ).toBe('executed');
+    expect(f.player.applyAudioControls).toHaveBeenLastCalledWith(
+      {
+        transposeSemitones: 0,
+        pitchCents: 0,
+        tempoRate: 0.9,
+        monitorGuideVocalEnabled: true,
+      },
+      { isCurrent: expect.any(Function) },
+    );
+    expect(
+      (await f.executor.execute('player.accompaniment', companion)).status,
+    ).toBe('unavailable');
+    f.state.track.usesSeparatedAudio = true;
+    expect(
+      (await f.executor.execute('player.accompaniment', companion)).status,
+    ).toBe('executed');
+    expect(f.player.applyAudioControls).toHaveBeenLastCalledWith(
+      expect.objectContaining({ monitorGuideVocalEnabled: false }),
+      { isCurrent: expect.any(Function) },
+    );
+    f.state.captureDeviceId = 'capture';
+    f.state.monitorGuideVocalFollowsCapture = true;
+    expect(
+      (await f.executor.execute('player.guide-vocal', companion)).status,
+    ).toBe('unavailable');
+  });
   it.each([
     ['lyrics.offset-down', 100],
     ['lyrics.offset-up', -100],

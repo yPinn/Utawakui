@@ -1,6 +1,10 @@
 import { effectScope } from 'vue';
 import outputTemplates from '../../../shared/outputTemplateValues.json';
 import { sanitizePhantomPortraitSets } from '../../../shared/outputAppearance.mjs';
+import {
+  companionOutputSettingsPatch,
+  projectCompanionOutputSlot,
+} from '../../../shared/companionOutput.mjs';
 import { buildOutputSlotPayload } from '../../utils/outputSlotPayload.js';
 import { t } from '../../utils/i18n.js';
 import { useOutputAppearanceAutosave } from './useOutputAppearanceAutosave.js';
@@ -73,12 +77,38 @@ export function createOutputSlotStore({
     return slotsLoad;
   }
 
-  function saveOutputSlot(kind, changes, seedSlot = null) {
-    const write = slotWrite.then(() =>
-      persistOutputSlot(kind, changes, seedSlot),
-    );
+  function queueSlotWrite(apply) {
+    const write = slotWrite.then(apply);
     slotWrite = write.catch(() => {});
     return write;
+  }
+
+  function saveOutputSlot(kind, changes, seedSlot = null) {
+    return queueSlotWrite(() => persistOutputSlot(kind, changes, seedSlot));
+  }
+
+  function applyCompanionOutputOption(
+    published,
+    { templateId, fieldKey, value },
+  ) {
+    const kind = outputTemplates.templateKinds[templateId];
+    return queueSlotWrite(async () => {
+      if (!isOutputEnabled()) return 'unavailable';
+      if (!published || !kind) return 'stale';
+      if (appearanceAutosaves.get(kind).status.value !== 'saved') return 'busy';
+      const current = projectCompanionOutputSlot(state.slots[kind]);
+      if (!current || JSON.stringify(current) !== JSON.stringify(published))
+        return 'stale';
+      const settings = companionOutputSettingsPatch(
+        current,
+        { templateId, fieldKey, value },
+        state.slots[kind].settings,
+      );
+      if (!settings) return 'unavailable';
+      if (!Object.keys(settings).length) return 'applied';
+      const saved = await persistOutputSlot(kind, { settings });
+      return saved ? 'applied' : 'failed';
+    });
   }
 
   async function persistOutputSlot(kind, changes, seedSlot) {
@@ -137,6 +167,7 @@ export function createOutputSlotStore({
     saveOutputSlot,
     saveTemplateSelection,
     saveSlotSettings,
+    applyCompanionOutputOption,
     followSingerAfterPlayback,
     appearanceAutosaveFor: (kind) =>
       appearanceAutosaves.get(kind) ?? appearanceAutosaves.get('lyrics'),

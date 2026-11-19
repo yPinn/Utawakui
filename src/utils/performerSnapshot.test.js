@@ -2,6 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { projectPerformerSnapshot } from './performerSnapshot.js';
 
 describe('projectPerformerSnapshot', () => {
+  it('projects whole-line roles in the order of the published lyrics', () => {
+    const input = {
+      player: { track: { id: 'track' } },
+      lyrics: {
+        trackId: 'track',
+        lines: [
+          { lineId: 'a', text: 'first', start: 1 },
+          { lineId: 'b', text: 'second', start: 2 },
+        ],
+        vocalRoles: { a: 'female', b: 'mixed' },
+      },
+    };
+    expect(projectPerformerSnapshot(input).vocalRoles).toEqual([
+      'female',
+      null,
+    ]);
+    input.player.track.id = 'other';
+    expect(projectPerformerSnapshot(input)).not.toHaveProperty('vocalRoles');
+  });
+
   it.each(['t2', 'acoustic-estimate'])(
     'projects only the existing %s active word with bounded source coordinates',
     (timingSource) => {

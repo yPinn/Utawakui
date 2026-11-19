@@ -3,6 +3,8 @@ import { usePlaybackTransport } from './usePlaybackTransport.js';
 import { useLyrics } from './useLyrics.js';
 import { SHORTCUT_COMMANDS } from '../../shared/keyboardShortcutContract.mjs';
 import { validPerformanceSettings } from '../../shared/performanceSettings.mjs';
+import companionAudioCommands from '../../shared/companionAudioCommands.json';
+import { monitorGuideVocalMix } from './player/usePlayerAudioGraph.js';
 
 const COMMANDS = new Set(SHORTCUT_COMMANDS.map(({ id }) => id));
 const isVolume = (command) =>
@@ -16,8 +18,9 @@ const result = (status) => Object.freeze({ ok: status === 'executed', status });
 const domain = (command) =>
   command.startsWith('lyrics.')
     ? 'offset'
-    : command.includes('transpose')
-      ? 'transpose'
+    : command.includes('transpose') ||
+        Object.hasOwn(companionAudioCommands, command)
+      ? 'audio-controls'
       : 'transport';
 
 // Commands coordinate existing owners. They do not own a queue, audio clock,
@@ -28,8 +31,22 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
   const pending = new Map();
   const state = player.state;
   const pausing = () => state.isPlaying || Boolean(state.pendingStartTrackId);
-  function availability(command) {
-    if (!COMMANDS.has(command)) return 'unknown';
+  function availability(command, scope) {
+    const companionAudio = Object.hasOwn(companionAudioCommands, command)
+      ? companionAudioCommands[command]
+      : null;
+    if (
+      !COMMANDS.has(command) &&
+      !(
+        scope === 'companion' &&
+        (companionAudio ||
+          command === 'player.seek' ||
+          command === 'queue.play')
+      )
+    )
+      return 'unknown';
+    if (scope === 'companion' && domain(command) === 'offset')
+      return 'unavailable';
     if (disposed) return 'blocked';
     // Main-player preferences remain usable without a loaded song or while a
     // transport/profile transaction is busy. These existing owners are sync.
@@ -56,11 +73,17 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
       return 'busy';
     if (command === 'player.next')
       return transport.canPlayNext.value ? null : 'unavailable';
+    if (command === 'queue.play')
+      return transport.arrangementActive.value ? 'unavailable' : null;
     if (!state.track) return 'unavailable';
     if (command === 'player.play-pause' || command === 'player.previous')
       return null;
+    if (command === 'player.seek')
+      return state.duration > 0 && Number.isFinite(state.duration)
+        ? null
+        : 'unavailable';
     if (player.performanceSettings.busy.value) return 'busy';
-    if (domain(command) === 'transpose') {
+    if (domain(command) === 'audio-controls') {
       const applied = state.audioControlApplication;
       if (applied?.status === 'pending') return 'busy';
       const values = applied?.applied;
@@ -76,6 +99,15 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
         values.monitorGuideVocalEnabled !== state.guideVocalOn
       )
         return 'unavailable';
+      if (companionAudio) {
+        if (
+          'monitorGuideVocalEnabled' in companionAudio &&
+          (!state.track.usesSeparatedAudio ||
+            monitorGuideVocalMix(state).followsCapture)
+        )
+          return 'unavailable';
+        return null;
+      }
       const next =
         values.transposeSemitones + (command.endsWith('up') ? 1 : -1);
       return next < -12 || next > 12 ? 'unavailable' : null;
@@ -115,11 +147,25 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
 
   async function execute(
     command,
-    { isCurrent = () => true, scope = 'app' } = {},
+    { isCurrent = () => true, scope = 'app', positionMs, queueSelection } = {},
   ) {
-    const unavailable = availability(command);
+    const unavailable = availability(command, scope);
     if (unavailable) return result(unavailable);
     if (!isCurrent()) return result('stale');
+    if (command === 'player.seek') {
+      if (
+        !Number.isSafeInteger(positionMs) ||
+        positionMs < 0 ||
+        positionMs > Math.round(state.duration * 1000)
+      )
+        return result('unavailable');
+      try {
+        player.seek(Math.min(state.duration, positionMs / 1000));
+        return result('executed');
+      } catch {
+        return result('failed');
+      }
+    }
     if (command === 'player.mute' || isVolume(command)) {
       try {
         if (command === 'player.mute') player.toggleMute();
@@ -147,13 +193,20 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
       isCurrent();
     const stamp = playerStamp();
     try {
-      if (key === 'transpose') {
-        const next =
-          state.audioControlApplication.applied.transposeSemitones +
-          (command.endsWith('up') ? 1 : -1);
-        const applied = await player.setTransposeSemitones(next, {
+      if (key === 'audio-controls') {
+        const values = state.audioControlApplication.applied;
+        const options = {
           isCurrent: () => current() && samePlayer(stamp),
-        });
+        };
+        const applied = Object.hasOwn(companionAudioCommands, command)
+          ? await player.applyAudioControls(
+              { ...values, ...companionAudioCommands[command] },
+              options,
+            )
+          : await player.setTransposeSemitones(
+              values.transposeSemitones + (command.endsWith('up') ? 1 : -1),
+              options,
+            );
         if (!current() || !samePlayer(stamp)) return result('stale');
         return result(
           applied?.ok && applied.status === 'applied' ? 'executed' : 'failed',
@@ -217,7 +270,13 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
       }
       let task;
       if (command === 'player.play-pause') task = player.play();
-      else {
+      else if (command === 'queue.play') {
+        if (!queueSelection?.track) return result('unavailable');
+        task = transport.playQueueSelection(queueSelection.track, {
+          source: queueSelection.source,
+          ...(queueSelection.interrupt ? { interrupt: true } : {}),
+        });
+      } else {
         player.practiceBoundary.intent('replace');
         task =
           command === 'player.next'
@@ -231,7 +290,7 @@ export function useShortcutCommandExecutor({ player, transport, lyrics }) {
       const completed = await task;
       if (
         !current() ||
-        (command === 'player.play-pause' &&
+        ((command === 'player.play-pause' || command === 'queue.play') &&
           started !== player.getPlaybackStartRequestRevision())
       )
         return result('stale');

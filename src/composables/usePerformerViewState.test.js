@@ -28,6 +28,105 @@ function snapshot(revision) {
 }
 
 describe('usePerformerViewState', () => {
+  it('follows phone lyrics at the line boundary and ignores word cues', async () => {
+    vi.useFakeTimers();
+    try {
+      const value = {
+        state: {
+          revision: 10,
+          generatedAt: new Date().toISOString(),
+          playback: {
+            status: 'playing',
+            positionMs: 0,
+            rate: 2,
+            track: { id: 'a' },
+          },
+          lyrics: {
+            trackId: 'a',
+            synced: true,
+            offsetMs: 100,
+            lines: [
+              { text: 'First', startMs: 0, endMs: 400 },
+              { text: 'Second', startMs: 400, endMs: 1000 },
+            ],
+          },
+        },
+        wordCue: { lineIndex: 0, from: 0, to: 1, startMs: 200, endMs: 360 },
+      };
+      bridge.getSnapshot.mockResolvedValue(value);
+      const owner = usePerformerViewState({ showWordCues: false });
+      await lifecycle.mounted[0]();
+      expect(owner.frame.value.currentWordCue).toBeNull();
+      await vi.advanceTimersByTimeAsync(100);
+      expect(owner.frame.value.lyricPositionMs).toBe(100);
+      expect(owner.frame.value.currentWordCue).toBeNull();
+      expect(owner.frame.value.currentLine.text).toBe('First');
+      await vi.advanceTimersByTimeAsync(51);
+      expect(owner.frame.value.currentLine.text).toBe('Second');
+      expect(owner.snapshot.value.state.playback.positionMs).toBe(0);
+      expect(owner.frame.value.lyricsOffset.milliseconds).toBe(100);
+
+      snapshotListener({
+        state: {
+          ...value.state,
+          playback: { ...value.state.playback, status: 'paused' },
+        },
+      });
+      expect(owner.frame.value.currentLine.text).toBe('First');
+      expect(owner.frame.value.lyricPositionMs).toBe(100);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      for (const unmount of lifecycle.unmounted) unmount();
+      vi.useRealTimers();
+    }
+  });
+
+  it('suspends the phone clock in the background and catches up on return', async () => {
+    vi.useFakeTimers();
+    const visibility = new EventTarget();
+    visibility.hidden = false;
+    vi.stubGlobal('document', visibility);
+    try {
+      bridge.getSnapshot.mockResolvedValue({
+        state: {
+          revision: 10,
+          generatedAt: new Date().toISOString(),
+          playback: {
+            status: 'playing',
+            positionMs: 0,
+            rate: 1,
+            track: { id: 'a' },
+          },
+          lyrics: {
+            trackId: 'a',
+            synced: true,
+            lines: [
+              { text: 'First', startMs: 0, endMs: 500 },
+              { text: 'Second', startMs: 500, endMs: 3000 },
+            ],
+          },
+        },
+      });
+      const owner = usePerformerViewState({ pauseWhenHidden: true });
+      for (const mount of lifecycle.mounted) await mount();
+      expect(owner.frame.value.currentLine?.text).toBe('First');
+
+      visibility.hidden = true;
+      visibility.dispatchEvent(new Event('visibilitychange'));
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(owner.frame.value.currentLine?.text).toBe('First');
+
+      visibility.hidden = false;
+      visibility.dispatchEvent(new Event('visibilitychange'));
+      expect(owner.frame.value.currentLine?.text).toBe('Second');
+    } finally {
+      for (const unmount of lifecycle.unmounted) unmount();
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
+  });
+
   it('expires a word cue on the existing boundary timer without waiting for another snapshot', async () => {
     vi.useFakeTimers();
     try {

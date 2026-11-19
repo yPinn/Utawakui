@@ -24,6 +24,7 @@ const isExpanded = shallowRef(false);
 const lastSurface = shallowRef(null);
 const preparationTab = shallowRef('import');
 const queueVariant = shallowRef('queue');
+const queueTab = shallowRef('queue');
 const arrangementTab = shallowRef('pending');
 
 function selectArrangementTab(tab) {
@@ -36,6 +37,10 @@ function selectQueueVariant(variant) {
   if (!['queue', 'arrangement'].includes(variant))
     throw new RangeError(`Unknown queue variant: ${variant}`);
   queueVariant.value = variant;
+}
+
+function selectQueueTab(tab) {
+  if (['queue', 'recent'].includes(tab)) queueTab.value = tab;
 }
 
 function showQueueVariant(variant) {
@@ -181,6 +186,8 @@ export function useAppRightDock() {
     lastSurface: readonly(lastSurface),
     preparationTab: readonly(preparationTab),
     queueVariant: readonly(queueVariant),
+    queueTab: readonly(queueTab),
+    selectQueueTab,
     arrangementTab: readonly(arrangementTab),
     selectArrangementTab,
     selectQueueVariant,

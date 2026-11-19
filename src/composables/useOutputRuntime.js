@@ -386,6 +386,7 @@ export function useOutputRuntime() {
     saveRecentColor: preferencesController.saveRecentColor,
     toggleSavedColor: preferencesController.toggleSavedColor,
     saveSlotSettings: slotStore.saveSlotSettings,
+    applyCompanionOutputOption: slotStore.applyCompanionOutputOption,
     saveTemplateSelection: slotStore.saveTemplateSelection,
     appearanceAutosaveFor: slotStore.appearanceAutosaveFor,
   };

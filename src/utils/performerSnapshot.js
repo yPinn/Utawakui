@@ -1,10 +1,12 @@
 import performerValues from '../../shared/performerContractValues.json';
 import timingLimits from '../../shared/lyricsTimingValues.json';
 import {
+  isPerformerVocalRole,
   normalizePerformerReadingVariant,
   parsePerformerWordCue,
 } from '../../shared/performerViewContract.mjs';
 import { projectOutputSnapshot } from './outputSnapshot.js';
+import { monitorGuideVocalMix } from '../composables/player/usePlayerAudioGraph.js';
 
 function projectReadingLine(line, lyricText) {
   if (!line || line.text !== lyricText) return null;
@@ -111,10 +113,47 @@ export function projectPerformerSnapshot(input = {}, options = {}) {
     : [];
 
   const wordCue = projectWordCue(input, state);
+  const sourceLines = Array.isArray(input.lyrics?.lines)
+    ? input.lyrics.lines
+    : [];
+  const vocalRoles = sourceLines
+    .filter((line) => typeof line?.text === 'string')
+    .slice(0, state.lyrics.lines.length)
+    .map(({ lineId }) => {
+      const role = input.lyrics?.vocalRoles?.[lineId];
+      return isPerformerVocalRole(role) ? role : null;
+    });
+  const hasGuideVocal = input.player?.track?.usesSeparatedAudio === true;
+  const guideVocal = hasGuideVocal ? monitorGuideVocalMix(input.player) : null;
   return {
     version: performerValues.stateVersion,
     state,
+    ...(input.queueView
+      ? {
+          queueView: {
+            tab: input.queueView.tab,
+            variant: input.queueView.variant,
+            arrangementTab: input.queueView.arrangementTab,
+            arrangement: input.queueView.arrangement,
+            recent: input.queueView.recent.map(({ id, title, artist }) => ({
+              id,
+              title: title || id,
+              artist: artist || '',
+            })),
+          },
+        }
+      : {}),
+    ...(Number.isSafeInteger(input.queue?.manualQueueCount) &&
+    input.queue.manualQueueCount >= 0
+      ? {
+          manualQueueCount: Math.min(
+            input.queue.manualQueueCount,
+            state.queue.items.filter(({ state }) => state === 'queued').length,
+          ),
+        }
+      : {}),
     ...(wordCue ? { wordCue } : {}),
+    ...(vocalRoles.some(Boolean) ? { vocalRoles } : {}),
     adjustments: {
       transposeSemitones: Number.isFinite(input.player?.transposeSemitones)
         ? input.player.transposeSemitones
@@ -144,6 +183,14 @@ export function projectPerformerSnapshot(input = {}, options = {}) {
     },
     controls: {
       lyricsOffset: projectLyricsOffsetControls(input, state),
+      ...(guideVocal
+        ? {
+            guideVocal: {
+              enabled: guideVocal.on === true,
+              available: !guideVocal.followsCapture,
+            },
+          }
+        : {}),
     },
   };
 }

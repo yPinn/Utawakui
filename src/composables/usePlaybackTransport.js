@@ -15,8 +15,14 @@ export function registerPlaybackArrangement(controller) {
 // system media session so a hardware key does exactly what the on-screen button does.
 export function usePlaybackTransport() {
   const { playTrack, restartTrack, state: playerState } = usePlayer();
-  const { previousTrack, nextTrack, restartSourceQueue, canGoNext } =
-    usePlaybackQueue();
+  const {
+    previousTrack,
+    nextTrack,
+    restartSourceQueue,
+    canGoNext,
+    setCurrentTrack,
+    interruptWithTrack,
+  } = usePlaybackQueue();
   const arrangementActive = computed(
     () => arrangement.value?.ownsPlayback.value === true,
   );
@@ -32,6 +38,12 @@ export function usePlaybackTransport() {
   function playQueuedTrack(track) {
     if (!track) return;
     return playTrack(toPlayableTrack(track));
+  }
+
+  function playQueueSelection(track, { source, interrupt } = {}) {
+    if (interrupt) interruptWithTrack(track);
+    else setCurrentTrack(track.id, { source });
+    return playQueuedTrack(track);
   }
 
   function playPrevious() {
@@ -71,6 +83,7 @@ export function usePlaybackTransport() {
 
   return {
     playQueuedTrack,
+    playQueueSelection,
     playPrevious,
     playNext,
     playAfterEnded,

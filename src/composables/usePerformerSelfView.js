@@ -23,13 +23,27 @@ import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
+import { usePlaybackHistory } from './usePlaybackHistory.js';
+import { useAppRightDock } from './useAppRightDock.js';
+import { usePerformanceSessionPlayback } from './usePerformanceSessionPlayback.js';
+import outputValues from '../../shared/outputContractValues.json';
+import outputTemplates from '../../shared/outputTemplateValues.json';
+import { projectCompanionOutputSlot } from '../../shared/companionOutput.mjs';
 import { usePlayer } from './usePlayer.js';
 import { t } from '../utils/i18n.js';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 const { state: playerState, play, pause, samplePlaybackClock } = usePlayer();
-const { state: queueState, upcomingTracks } = usePlaybackQueue();
+const {
+  state: queueState,
+  upcomingTracks,
+  queuedTracks,
+  sourceUpcomingTracks,
+} = usePlaybackQueue();
+const dock = useAppRightDock();
+const arrangement = usePerformanceSessionPlayback();
+const { recentItems } = usePlaybackHistory();
 const { state: artistIndexState } = useArtistIndex();
 const { tracksById } = useLibrary();
 function presentTrack(track) {
@@ -44,6 +58,7 @@ const {
   lyricLines,
   activeLineIndex,
   localLyricsFrame,
+  lyricsTextProcessing,
   adjustOffset,
   resetOffset,
   retryOffsetSave,
@@ -54,6 +69,8 @@ const {
   loadReading,
 } = useLyricsReading();
 const notifications = useAppNotifications();
+const companionOutput = shallowRef(null);
+const latestSnapshot = shallowRef(null);
 let errorOperation = null;
 
 const state = reactive({
@@ -70,6 +87,19 @@ function isPublishing() {
   return state.open || state.remoteReaders > 0;
 }
 
+const canProjectOutput = computed(
+  () => state.remoteReaders > 0 && companionOutput.value?.isEnabled() === true,
+);
+const companionOutputSlots = computed(() => {
+  if (!canProjectOutput.value) return null;
+  const { state: outputState } = companionOutput.value.runtime;
+  if (!outputState.slotsLoaded) return null;
+  const slots = outputTemplates.slots.map(({ id }) =>
+    projectCompanionOutputSlot(outputState.slots[id]),
+  );
+  return slots.every(Boolean) ? slots : null;
+});
+
 let initialized = false;
 let revision = 0;
 let unsubscribeStatus = null;
@@ -78,6 +108,7 @@ let unsubscribeControlIntent = null;
 let readingDisplayScope = null;
 const readingDisplay = shallowRef(null);
 let stopProjectionWatch = null;
+let stopOutputWatch = null;
 let stopReadingWatch = null;
 const publishedContexts = new Map();
 const MAX_PUBLISHED_CONTEXTS = 12;
@@ -116,14 +147,29 @@ function clearPerformerError(operation) {
 
 function applyStatus(status = {}) {
   const wasPublishing = isPublishing();
+  const wasConnected = state.remoteReaders > 0;
   state.open = status.open === true;
   state.fullScreen = status.fullScreen === true;
   state.alwaysOnTop = status.alwaysOnTop === true;
   state.remoteReaders = Number.isSafeInteger(status.remoteReaders)
     ? Math.max(0, status.remoteReaders)
     : 0;
+  const connected = state.remoteReaders > 0;
+  if (connected !== wasConnected) {
+    notifications.notify({
+      key: NOTIFICATION_KEYS.COMPANION_CONNECTION,
+      title: t(
+        connected
+          ? 'companion.desktop.connected'
+          : 'companion.desktop.disconnected',
+      ),
+      tone: connected ? 'success' : 'info',
+      lifecycle: 'transient',
+    });
+  }
   if (!wasPublishing && isPublishing()) publisher.request(currentSnapshot());
   if (!isPublishing()) {
+    latestSnapshot.value = null;
     readingDisplayScope?.stop();
     readingDisplayScope = null;
     readingDisplay.value = null;
@@ -161,8 +207,36 @@ const alignedReadings = computed(() => {
   );
 });
 
+function displayedArrangement() {
+  if (dock.queueVariant.value !== 'arrangement') return [];
+  if (dock.arrangementTab.value === 'history')
+    return arrangement.historyItems.value.filter(
+      ({ progress }) => progress === 'completed',
+    );
+  return [
+    arrangement.currentItem.value,
+    ...arrangement.pendingItems.value,
+  ].filter(Boolean);
+}
+
 function projectionInput() {
   return {
+    queueView: {
+      tab: dock.queueTab.value,
+      variant: dock.queueVariant.value,
+      arrangementTab: dock.arrangementTab.value,
+      arrangement: displayedArrangement()
+        .slice(0, outputValues.maxQueueItems)
+        .map((row) => ({
+          id: row.itemId,
+          title: row.displayTitle,
+          artist: row.displayArtist,
+          current: row.itemId === arrangement.currentItem.value?.itemId,
+        })),
+      recent: recentItems.value
+        .slice(0, outputValues.maxQueueItems)
+        .map(({ track }) => presentTrack(track)),
+    },
     player: { ...playerState, track: presentTrack(playerState.track) },
     queue: {
       historyEntries: (queueState.historyEntries ?? []).map((entry) => ({
@@ -171,6 +245,7 @@ function projectionInput() {
       })),
       currentTrack: presentTrack(queueState.currentTrack),
       upcomingTracks: (upcomingTracks.value ?? []).map(presentTrack),
+      manualQueueCount: queuedTracks?.value.length ?? 0,
       sourceName: queueState.sourceName,
     },
     lyrics: {
@@ -179,6 +254,7 @@ function projectionInput() {
       lines: lyricLines.value,
       activeLineIndex: activeLineIndex.value,
       wordFrame: localLyricsFrame?.value,
+      vocalRoles: lyricsTextProcessing?.lineRoles.value,
       offsetSeconds:
         lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds,
       offsetSave: lyricsState.offsetSave,
@@ -195,12 +271,13 @@ function projectionInput() {
   };
 }
 
-const projectedState = computed(() =>
-  projectPerformerSnapshot(projectionInput(), {
+const projectedState = computed(() => ({
+  ...projectPerformerSnapshot(projectionInput(), {
     revision: 0,
     generatedAt: PROJECTION_TIMESTAMP,
   }),
-);
+  outputSlots: companionOutputSlots.value,
+}));
 
 function currentSnapshot() {
   revision += 1;
@@ -218,6 +295,8 @@ function currentSnapshot() {
     revision,
     generatedAt: matched ? sample.sampledAt : new Date().toISOString(),
   });
+  const outputSlots = companionOutputSlots.value;
+  if (outputSlots) snapshot.outputSlots = outputSlots;
   if (import.meta.env.DEV && matched) {
     const track = playerState.track;
     const recipeId = track.separation?.selectedRecipeId;
@@ -247,10 +326,22 @@ function currentSnapshot() {
         : null,
     };
   }
-  publishedContexts.set(revision, currentLyricsContext());
+  publishedContexts.set(revision, {
+    ...currentLyricsContext(),
+    outputSlots,
+    upcoming: snapshot.state.queue.items.filter(
+      ({ state }) => state === 'queued',
+    ),
+    manualQueueCount: snapshot.manualQueueCount,
+    manualIds: queuedTracks?.value.map(({ id }) => id) ?? [],
+    recentKeys: recentItems.value
+      .slice(0, outputValues.maxQueueItems)
+      .map(({ key }) => key),
+  });
   while (publishedContexts.size > MAX_PUBLISHED_CONTEXTS) {
     publishedContexts.delete(publishedContexts.keys().next().value);
   }
+  latestSnapshot.value = snapshot;
   return snapshot;
 }
 
@@ -304,6 +395,46 @@ function handleControlIntent(intent) {
     );
     return false;
   });
+}
+
+function publishedQueueContext(revision, trackId) {
+  const published = publishedContexts.get(revision);
+  if (
+    !published ||
+    (published.playerTrackId ?? '') !== trackId ||
+    (playerState.track?.id ?? '') !== trackId
+  )
+    return null;
+  return published;
+}
+
+function applyOutputOption({ revision, trackId, outputChange }) {
+  if (!canProjectOutput.value) return 'unavailable';
+  const context = publishedContexts.get(revision);
+  if (!context || (context.playerTrackId ?? '') !== trackId) return 'stale';
+  const slot = context.outputSlots?.find(
+    ({ templateId }) => templateId === outputChange.templateId,
+  );
+  return companionOutput.value.runtime.applyCompanionOutputOption(
+    slot,
+    outputChange,
+  );
+}
+
+function resolvePublishedQueueSelection(revision, trackId, queueIndex) {
+  const published = publishedQueueContext(revision, trackId);
+  if (!published) return null;
+  const target = published.upcoming[queueIndex]?.track;
+  if (!target) return null;
+  const source = queueIndex >= published.manualQueueCount;
+  const tracks = source ? sourceUpcomingTracks.value : queuedTracks.value;
+  const track = tracks.find(({ id }) => id === target.id);
+  return track ? { track, source } : null;
+}
+
+function resolvePublishedRecentSelection(revision, trackId, index) {
+  const key = publishedQueueContext(revision, trackId)?.recentKeys[index];
+  return key ? recentItems.value.find((item) => item.key === key)?.track : null;
 }
 
 const publisher = createLatestAsyncPublisher(
@@ -378,9 +509,10 @@ async function toggle() {
   return state.open ? close() : open();
 }
 
-async function initialize() {
+async function initialize({ output } = {}) {
   if (initialized) return;
   initialized = true;
+  companionOutput.value = output ?? null;
 
   await refreshStatus();
   if (typeof window.Utawakui?.onPerformerViewStatus === 'function') {
@@ -397,6 +529,15 @@ async function initialize() {
   stopProjectionWatch = watch(projectedState, () => {
     if (isPublishing()) publisher.request(currentSnapshot());
   });
+  stopOutputWatch = watch(
+    canProjectOutput,
+    (enabled) => {
+      if (!enabled) return;
+      const { runtime } = companionOutput.value;
+      if (!runtime.state.slotsLoaded) void runtime.loadSlots();
+    },
+    { immediate: true },
+  );
   stopReadingWatch = watch(
     () => [lyricsTrack.value?.id, lyricsSource.value?.filename],
     ([trackId, filename]) => {
@@ -413,6 +554,7 @@ if (import.meta.hot) {
     unsubscribeControlIntent?.();
     readingDisplayScope?.stop();
     stopProjectionWatch?.();
+    stopOutputWatch?.();
     stopReadingWatch?.();
   });
 }
@@ -420,12 +562,17 @@ if (import.meta.hot) {
 export function usePerformerSelfView() {
   return {
     state: readonly(state),
+    latestSnapshot: readonly(latestSnapshot),
     initialize,
+    applyOutputOption,
     open,
     close,
     toggle,
     refreshStatus,
     matchesPublishedContext,
+    resolvePublishedQueueSelection,
+    publishedQueueContext,
+    resolvePublishedRecentSelection,
     applyControlIntent: handleControlIntent,
   };
 }

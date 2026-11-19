@@ -3,6 +3,7 @@
 // key must be as wide as the result it stands for, and no wider.
 export const NOTIFICATION_KEYS = Object.freeze({
   AUTO_ERROR_REPORT: 'auto-error-report',
+  COMPANION_CONNECTION: 'companion-connection',
   LIBRARY_CLEANUP: 'library-cleanup',
   LIBRARY_DELETE_TRACK: 'library-delete-track',
   LIBRARY_SEPARATION_ENQUEUE: 'library-separation-enqueue',
