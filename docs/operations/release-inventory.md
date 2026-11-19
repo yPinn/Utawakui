@@ -88,10 +88,15 @@ network install or signed-installer acceptance; see the
   `electron/main/companionHandlers.js` use the existing Main bundle dependency
   closure and the existing `ws`/Node `http` modules. Fixed `companion:*` intents use
   the main preload. Paired-device hashes live in userData as
-  `companion-devices.bin`, encrypted with `safeStorage`. The phone page is the
+  `companion-devices.bin`, encrypted with `safeStorage`. The fixed phone audio
+  intents are defined in `shared/companionAudioCommands.json`. The phone page is the
   `companion` renderer entry under `dist/src/entries/companion/`; the listener
-  serves only the files listed for it in `dist/utawakui-manifest.json`, both shipped
-  by the existing `dist/**/*` rule. `uqr` is a renderer-only QR encoder bundled into
+  serves its manifest dependencies from `dist/utawakui-manifest.json` and the
+  existing `dist/assets/icons/app-icon.png` identified by `shared/appIdentity.json`, all shipped
+  by the existing `dist/**/*` rule. Main serves authenticated library track
+  thumbnails through `electron/lib/companion/artwork.js`, using Electron's
+  existing image runtime for PNG and JPEG. Validated WebP artwork keeps
+  its original encoding. `uqr` is a renderer-only QR encoder bundled into
   the Dock phone panel ([ADR 0033](../adr/0033-mobile-companion-local-network.md)).
 
 - Track performance settings: `electron/lib/performanceSettings/` and
@@ -488,7 +493,8 @@ includes the inspection asset without any new unpack rule.
 
 `shared/**/*` includes `shared/sessionExportTimepoints.mjs` for the Main CSV writer and renderer preview, `shared/sessionPerformedItems.mjs` for session archives, and `shared/trackTitleHints.mjs` for Main work search and renderer version suggestions. It also includes the canonical JSON／JS／MJS contracts, pure presentation
 modules and font source/license files; `!shared/**/*.test.js` excludes adjacent
-tests. Output appearance uses `shared/outputAppearance.mjs`; the retired
+tests. Output appearance uses `shared/outputAppearance.mjs`. The phone's Output
+quick adjustment schema uses `shared/companionOutput.mjs` under the same glob. The retired
 `outputAppearanceValues.json` marker is not a runtime schema and is no longer
 kept or shipped. The existing builder globs need no additional inclusion or
 unpack rule. Cross-runtime ownership is mapped in the

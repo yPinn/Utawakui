@@ -307,7 +307,11 @@
 
 `electron/lib/companion/` 維護獨立的手機 HTTP／WebSocket listener，綁定一個符合條件的區域網路 IPv4 位址。`electron/main/companionHandlers.js` 經 preload 接收配對與裝置管理意圖，Main 驗證功能 gate、配對憑證與遙控指令。手機頁由 `src/entries/companion/` 建置，listener 依建置清單提供頁面與資產。
 
-桌面標題列的手機入口控制右側 Dock 配對面板。App 層的確認視窗處理已掃描的要求，設定頁管理記住的手機，三者共用 `useCompanionSettings` 的狀態鏡像。手機提詞與遙控沿用 renderer 的播放狀態與指令路徑。詳見[手機遙控契約](contracts/mobile-companion.md)與 [ADR 0033](adr/0033-mobile-companion-local-network.md)。
+桌面標題列的手機入口控制右側 Dock 配對面板。App 層的確認視窗處理已掃描的要求，設定頁管理記住的手機，三者共用 `useCompanionSettings` 的狀態鏡像。手機提詞與遙控沿用 renderer 的播放狀態與指令路徑。`shared/companionAudioCommands.json` 定義手機可送出的固定音訊指令與主 renderer 套用的值。手機本機保存歌詞版型與字級。詳見[手機遙控契約](contracts/mobile-companion.md)與 [ADR 0033](adr/0033-mobile-companion-local-network.md)。
+
+手機「模板」頁從提詞器快照取得目前套用的模板、可調欄位與人物選項，由 `shared/companionOutput.mjs` 共用欄位定義。經 Main 驗證的選項變更由桌面 renderer 比對快照，再交由既有 Output 槽儲存流程寫入。
+
+Dock 的手機外框以提詞器狀態的區網讀者數切換配對與預覽。`CompanionDockPreview` 在桌面重用 `CompanionApp`，讀取同一份 renderer 快照並走桌面指令處理；區網憑證與讀者席位只供手機瀏覽器使用。桌面與區網的曲庫查詢共用 `shared/companionCatalog.mjs` 的搜尋與分頁規則。
 
 ## Output Boundary
 

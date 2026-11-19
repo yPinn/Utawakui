@@ -19,6 +19,12 @@
 
 ## 已定案
 
+「手機預覽」（Phone preview）指桌面手機外框內可操作的手機遙控頁面。
+
+手機遙控的「歌詞版型」（Lyrics layout）指手機提詞方式。「捲動歌詞」（Scrolling lyrics）列出整首歌詞並跟隨當前句。「兩句聚焦」（Two-line focus）顯示當前句與下一句。
+
+手機播放器的「監聽混音」（Monitor mix）用「純伴奏」（Backing only）與「加導唱」（With guide vocal）切換分離音軌的監聽導唱。「播放速度」（Playback speed）以倍率表示。
+
 「同步詳情」（Sync details）說明歌詞來源目前可用的同步精度背後的判定原因。
 
 「原詞與對時」（Lyrics and timing）處理原詞與播放時間。「譯文」（Translations）處理同一來源的其他語言文字。「來源代號」（source code）用於區分選單中的同名歌詞版本。

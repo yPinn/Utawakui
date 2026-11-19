@@ -59,33 +59,41 @@ server and shares no port, route, channel or credential with it.
   authenticated endpoint. Each device holds the capabilities `prompter.read`
   and `player.transport.write`.
 - **Bounded commands.** The first release accepts the existing shortcut command
-  set (play/pause, previous/next, transpose ±1, volume ±/mute, lyrics offset ±)
-  and the performer reading variants. Each command is a fixed enum plus the
-  context revision and track id it was issued against. Main validates gate,
+  set (play/pause, previous/next, transpose ±1, volume ±/mute)
+  and the performer reading variants. The mobile player also supports original
+  key, fixed tempo presets and the monitor guide-vocal mix for separated audio.
+  The phone follows whole lyric lines using the published playback clock. The companion command gate rejects desktop lyrics offset changes.
+  Each command is a fixed enum plus the context revision and track id it was
+  issued against. Seek also carries an integer position bounded by the
+  current track duration. Queue playback carries a bounded index into the published upcoming queue. It resolves only while the target remains in its original group. Main validates gate,
   credential, capability, schema, rate and readiness, then hands the intent to
   the renderer's existing executor. Results distinguish rejected, accepted,
   applied and timed out. Nothing is queued while the renderer is unavailable,
-  and stale or replayed commands are rejected. Queue editing, seeking and
-  destructive actions are out of scope.
+  and stale or replayed commands are rejected. Manual queue edits use fixed intents. Library deletion and performance plan editing remain desktop operations.
+- **Output template quick adjustments.** While the Output gate is open, the
+  snapshot includes the applied template and bounded editable settings per slot.
+  The paired phone can edit those fields, select an existing portrait, or reset the editable template settings.
+  Main checks both feature gates and the desktop compares the published options
+  with the current slot before persisting the change.
 - **Own entry and assets.** The phone page is a dedicated renderer entry served
-  from an exact asset allowlist with a strict CSP. It reuses `PerformerSurface`,
-  `selectPerformerFrame` and the performer tokens through a companion transport
+  from an exact asset allowlist with a strict CSP. It reuses `PerformerLyricCue`,
+  `selectPerformerFrame` with its own surface tokens through a companion transport
   adapter. The snapshot publisher no longer depends on the desktop prompter
   window being open.
 
 ## Threat model
 
-| Threat                                        | Mitigation                                                                                                                                                                                 |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Another device on the LAN sends commands      | No command without a paired device credential; a credential is issued only after approval on the computer.                                                                                 |
-| QR code shown on a stream or recording        | Short-lived single-use code; a scan only opens a request the user must approve after comparing match codes.                                                                                |
-| Code or credential leaks through URLs or logs | Pairing code only in the URL fragment; credential only in headers or the first socket message; never logged.                                                                               |
-| Passive sniffing on the LAN (plain HTTP)      | Accepted residual risk; higher on a public network the user chose to use, so that is per network and explicit. Capabilities are limited to transport and display; revocation is one click. |
-| DNS rebinding or cross-site requests          | Exact Host and Origin checks; no CORS; JSON only; strict CSP on the phone page.                                                                                                            |
-| Replay or stale commands                      | Per-device monotonic sequence, context revision and track id checks, short admission window.                                                                                               |
-| Flooding                                      | Per-device and per-command rate limits; bounded payload, fragment and connection counts.                                                                                                   |
-| Exposure on public Wi-Fi                      | Off by default. A public profile requires explicit approval for that profile. An unidentified profile stays blocked until Windows reports a profile name.                                  |
-| Data disclosure                               | Snapshot carries only what the desktop prompter already shows; no paths, URLs, library lists or provider data.                                                                             |
+| Threat                                        | Mitigation                                                                                                                                                                                                                 |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Another device on the LAN sends commands      | No command without a paired device credential; a credential is issued only after approval on the computer.                                                                                                                 |
+| QR code shown on a stream or recording        | Short-lived single-use code; a scan only opens a request the user must approve after comparing match codes.                                                                                                                |
+| Code or credential leaks through URLs or logs | Pairing code only in the URL fragment; credential only in headers or the first socket message; never logged.                                                                                                               |
+| Passive sniffing on the LAN (plain HTTP)      | Accepted residual risk; higher on a public network the user chose to use, so that is per network and explicit. Capabilities are limited to transport and display; revocation is one click.                                 |
+| DNS rebinding or cross-site requests          | Exact Host and Origin checks; no CORS; JSON only; strict CSP on the phone page.                                                                                                                                            |
+| Replay or stale commands                      | Per-device monotonic sequence, context revision and track id checks, short admission window.                                                                                                                               |
+| Flooding                                      | Per-device and per-command rate limits; bounded payload, fragment and connection counts.                                                                                                                                   |
+| Exposure on public Wi-Fi                      | Off by default. A public profile requires explicit approval for that profile. An unidentified profile stays blocked until Windows reports a profile name.                                                                  |
+| Data disclosure                               | Snapshot carries performer state and bounded settings and portrait choices for applied Output templates, never paths, URLs or provider data. Library search and artwork are served on request to the connected phone only. |
 
 ## Consequences
 

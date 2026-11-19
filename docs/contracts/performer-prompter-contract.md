@@ -134,3 +134,4 @@ Normal window bounds `{ x, y, width, height }` 由 Electron main 驗證並保存
 ## Mobile transport 邊界
 
 本契約不授權把 Performer preload、loopback Output WebSocket 或 renderer IPC 暴露到 LAN。手機控制需要另一個產品與 security 決策，至少定義 pairing、authentication、session expiry、network binding、read／write channel 分離與撤銷。完成該決策前，mobile work 只能重用 presentation contract、components、tokens 與 bounded intent interface。
+手機讀取的 Performer snapshot 可另帶 `vocalRoles`。陣列與已投影的歌詞行對齊，逐行限 `male`、`female`、`group` 或 `null`。整句無指定角色時沿用預設螢光筆色。
