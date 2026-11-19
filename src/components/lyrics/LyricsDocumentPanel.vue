@@ -16,6 +16,7 @@ import {
   splitRomajiAt,
 } from '../../utils/lyricsLineBreak.js';
 import { rubySegmentGaps } from '../../utils/rubyLayout.js';
+import { scrollToLyric } from '../../utils/lyricsReaderScroll.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -24,6 +25,7 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import LyricsFineText from './LyricsFineText.vue';
 import { t } from '../../utils/i18n.js';
+import '../../styles/features/lyricsCue.css';
 
 const props = defineProps({
   experimentalFrame: { type: Object, default: null },
@@ -319,44 +321,13 @@ function canSeekLine(line) {
   return Number.isFinite(line?.start);
 }
 
-function shouldReduceMotion() {
-  return Boolean(
-    globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
-  );
-}
-
 async function scrollActiveLineIntoView() {
   await nextTick();
   const scrollPanel = panelViewport();
   const activeLine = scrollPanel?.querySelector?.('.lyrics-line--active');
-  if (
-    !scrollPanel ||
-    !activeLine ||
-    typeof scrollPanel.getBoundingClientRect !== 'function' ||
-    typeof activeLine.getBoundingClientRect !== 'function' ||
-    typeof scrollPanel.scrollTo !== 'function'
-  ) {
-    return;
-  }
-  const containerRect = scrollPanel.getBoundingClientRect();
   const primary =
-    activeLine.querySelector?.('.lyrics-line__text') ?? activeLine;
-  const activeRect = primary.getBoundingClientRect();
-  const rubyReserve =
-    typeof globalThis.getComputedStyle === 'function'
-      ? Number.parseFloat(getComputedStyle(primary).paddingBlockStart) || 0
-      : 0;
-  scrollPanel.scrollTo({
-    top: Math.max(
-      0,
-      scrollPanel.scrollTop +
-        activeRect.top -
-        containerRect.top -
-        scrollPanel.clientHeight / 3 +
-        rubyReserve,
-    ),
-    behavior: shouldReduceMotion() ? 'auto' : 'smooth',
-  });
+    activeLine?.querySelector?.('.lyrics-line__text') ?? activeLine;
+  scrollToLyric(scrollPanel, primary, 'smooth');
 }
 
 function pauseActiveLineFollowing() {
@@ -564,7 +535,15 @@ watch(
                   <span
                     class="lyrics-line__text"
                     :style="{ '--lyrics-piece': pieceIndex }"
-                    ><span class="lyrics-line__ink">
+                    ><span
+                      class="lyrics-line__ink lyrics-ink"
+                      :class="{
+                        'lyrics-ink--marked':
+                          index === locatedLineIndex ||
+                          (isPaintingVocals && vocalRoles[line.lineId]),
+                      }"
+                      :data-lyric-role="vocalRoles[line.lineId]"
+                    >
                       <LyricsFineText
                         v-if="activeTimingFrame && index === activeLineIndex"
                         :frame="activeTimingFrame"
@@ -707,7 +686,6 @@ watch(
   gap: var(--ui-space-1);
   border-radius: var(--ui-radius-md);
   color: var(--ui-color-text-muted);
-  --lyrics-line-highlight: var(--ui-lyrics-highlight);
 }
 .lyrics-line__row,
 .lyrics-line__edit-row {
@@ -816,44 +794,6 @@ watch(
   font-weight: var(--ui-lyrics-romaji-font-weight);
   line-height: var(--ui-lyrics-romaji-line-height);
   overflow-wrap: anywhere;
-}
-/* The current line always keeps its marker, independent of timing tier. */
-.lyrics-line__ink {
-  padding-inline: var(--ui-space-3);
-  margin-inline: calc(-1 * var(--ui-space-3));
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-.lyrics-line--role-male {
-  --lyrics-line-highlight: var(--ui-lyrics-highlight-male);
-}
-.lyrics-line--role-female {
-  --lyrics-line-highlight: var(--ui-lyrics-highlight-female);
-}
-.lyrics-line--role-group {
-  --lyrics-line-highlight: var(--ui-lyrics-highlight-group);
-}
-.lyrics-line--active .lyrics-line__ink,
-.lyrics-line--marked .lyrics-line__ink {
-  background-image: linear-gradient(
-    104deg,
-    transparent var(--ui-lyrics-marker-cut),
-    var(--lyrics-line-highlight)
-      calc(var(--ui-lyrics-marker-cut) + var(--ui-border-width)),
-    var(--lyrics-line-highlight)
-      calc(100% - var(--ui-lyrics-marker-cut) - var(--ui-border-width)),
-    transparent calc(100% - var(--ui-lyrics-marker-cut))
-  );
-  background-position: 0 calc(100% - var(--ui-lyrics-marker-bottom));
-  background-size: 100% var(--ui-lyrics-marker-height);
-  background-repeat: no-repeat;
-}
-@media (forced-colors: active) {
-  .lyrics-line--active .lyrics-line__ink,
-  .lyrics-line--marked .lyrics-line__ink {
-    outline: var(--ui-border-width) solid Highlight;
-    outline-offset: var(--ui-border-width);
-  }
 }
 /* Sheet: ink on paper, readings printed above. */
 .lyrics-preview--sheet .lyrics-line {

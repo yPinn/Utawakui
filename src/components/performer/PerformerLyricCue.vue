@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { lyricsCueTextGroups } from '../../utils/lyricsCueText.js';
 import { t } from '../../utils/i18n.js';
+import '../../styles/features/lyricsCue.css';
 
 const props = defineProps({
   line: { type: Object, default: null },
@@ -9,6 +10,8 @@ const props = defineProps({
   language: { type: String, default: 'und' },
   current: { type: Boolean, default: false },
   wordCue: { type: Object, default: null },
+  lineMarker: { type: Boolean, default: false },
+  vocalRole: { type: String, default: undefined },
 });
 
 const romanizationLanguage = computed(() => {
@@ -41,18 +44,27 @@ const groups = computed(() => {
     :data-cue-priority="current ? 'primary' : 'secondary'"
   >
     <p class="performer-lyric-cue__text" :lang="language">
-      <component
-        :is="group.reading ? 'ruby' : 'span'"
-        v-for="group in groups"
-        :key="group.from"
+      <span
+        :class="{
+          'lyrics-ink': lineMarker,
+          'lyrics-ink--marked': lineMarker && current,
+        }"
+        :data-lyric-role="vocalRole"
+        ><component
+          :is="group.reading ? 'ruby' : 'span'"
+          v-for="group in groups"
+          :key="group.from"
+        >
+          <span
+            v-for="part in group.parts"
+            :key="part.from"
+            :class="{
+              'lyrics-word-cue performer-lyric-cue__word--active': part.cue,
+            }"
+            >{{ part.text }}</span
+          ><rt v-if="group.reading">{{ group.reading }}</rt>
+        </component></span
       >
-        <span
-          v-for="part in group.parts"
-          :key="part.from"
-          :class="{ 'performer-lyric-cue__word--active': part.cue }"
-          >{{ part.text }}</span
-        ><rt v-if="group.reading">{{ group.reading }}</rt>
-      </component>
     </p>
     <p v-if="reading?.romaji" class="performer-lyric-cue__reading">
       <span v-if="reading.romajiScope === 'line'">{{
@@ -67,7 +79,7 @@ const groups = computed(() => {
 .performer-lyric-cue {
   min-width: 0;
   color: var(--ui-performer-secondary-foreground);
-  text-align: center;
+  text-align: var(--ui-performer-cue-align, center);
 }
 
 .performer-lyric-cue__text,
@@ -75,18 +87,11 @@ const groups = computed(() => {
   margin: 0;
   overflow-wrap: anywhere;
   white-space: pre-line;
-  text-wrap: balance;
+  text-wrap: var(--ui-performer-cue-wrap, balance);
 }
-.performer-lyric-cue__word--active {
-  text-decoration: underline;
-  text-decoration-color: var(--ui-color-accent);
-  text-underline-offset: 0.15em;
-  text-decoration-skip-ink: none;
-}
-
 .performer-lyric-cue__text {
   font-size: var(--ui-performer-cue-next-font-size);
-  font-weight: var(--ui-type-body-weight);
+  font-weight: var(--ui-performer-cue-next-weight, var(--ui-type-body-weight));
   line-height: var(--ui-type-body-line-height);
 }
 
@@ -96,7 +101,10 @@ const groups = computed(() => {
 
 .performer-lyric-cue--current .performer-lyric-cue__text {
   font-size: var(--ui-performer-cue-current-font-size);
-  font-weight: var(--ui-font-weight-bold);
+  font-weight: var(
+    --ui-performer-cue-current-weight,
+    var(--ui-font-weight-bold)
+  );
   line-height: var(--ui-type-body-line-height);
 }
 

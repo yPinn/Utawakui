@@ -81,16 +81,19 @@ export function selectPerformerFrame(snapshot, options = {}) {
   const linked = Boolean(
     state.playback?.track?.id && lyrics.trackId === state.playback.track.id,
   );
-  let readingIndex = linked
-    ? lines.findLastIndex(
-        (line) =>
-          text(line?.text) &&
-          Number.isFinite(line.startMs) &&
-          line.startMs <= lyricPositionMs,
-      )
-    : -1;
-  if (linked && (lyrics.synced !== true || readingIndex < 0))
-    readingIndex = lines.findIndex((line) => text(line?.text));
+  const positionedLineIndex =
+    linked && lyrics.synced === true
+      ? lines.findLastIndex(
+          (line) =>
+            text(line?.text) &&
+            Number.isFinite(line.startMs) &&
+            line.startMs <= lyricPositionMs,
+        )
+      : -1;
+  const readingIndex =
+    linked && positionedLineIndex < 0
+      ? lines.findIndex((line) => text(line?.text))
+      : positionedLineIndex;
   const upcomingIndex = linked
     ? nextLineIndex(lines, readingIndex, lyricPositionMs)
     : -1;
@@ -142,6 +145,8 @@ export function selectPerformerFrame(snapshot, options = {}) {
           artist: text(track.artist),
         }
       : null,
+    currentLineIndex: readingIndex,
+    positionedLineIndex,
     currentLine:
       currentLine &&
       currentLine.endMs == null &&
@@ -154,6 +159,7 @@ export function selectPerformerFrame(snapshot, options = {}) {
         : null,
     currentWordCue:
       linked &&
+      positionedLineIndex === readingIndex &&
       wordCue?.lineIndex === readingIndex &&
       lyricPositionMs >= wordCue.startMs &&
       lyricPositionMs < wordCue.endMs

@@ -11,9 +11,14 @@ const source = readFileSync(
   'utf8',
 );
 
-function rule(selector) {
-  const start = source.indexOf(`${selector} {`);
-  return start < 0 ? '' : source.slice(start, source.indexOf('}', start));
+const cueStyles = readFileSync(
+  new URL('../../styles/features/lyricsCue.css', import.meta.url),
+  'utf8',
+);
+
+function rule(selector, css = source) {
+  const start = css.indexOf(`${selector} {`);
+  return start < 0 ? '' : css.slice(start, css.indexOf('}', start));
 }
 
 function render(props) {
@@ -224,7 +229,7 @@ describe('LyricsDocumentPanel presentation', () => {
       expect(rule('.lyrics-line__experimental-active')).not.toContain(
         'background: var(',
       );
-      expect(rule('.lyrics-line--marked .lyrics-line__ink')).toContain(
+      expect(rule('.lyrics-ink--marked', cueStyles)).toContain(
         'var(--lyrics-line-highlight)',
       );
     },
@@ -309,17 +314,19 @@ describe('LyricsDocumentPanel presentation', () => {
     expect(
       rule('.lyrics-preview--sheet .lyrics-line--active .lyrics-line__row'),
     ).toContain('background: transparent;');
-    expect(rule('.lyrics-line--marked .lyrics-line__ink')).toContain(
+    expect(rule('.lyrics-ink--marked', cueStyles)).toContain(
       'var(--lyrics-line-highlight)',
     );
-    expect(rule('.lyrics-line')).toContain(
+    expect(rule('.lyrics-ink', cueStyles)).toContain(
       '--lyrics-line-highlight: var(--ui-lyrics-highlight);',
     );
     for (const role of ['male', 'female', 'group'])
-      expect(rule(`.lyrics-line--role-${role}`)).toContain(
-        `var(--ui-lyrics-highlight-${role})`,
-      );
-    expect(rule('.lyrics-line__ink')).toContain('box-decoration-break: clone');
+      expect(
+        rule(`.lyrics-ink[data-lyric-role='${role}']`, cueStyles),
+      ).toContain(`var(--ui-lyrics-highlight-${role})`);
+    expect(rule('.lyrics-ink', cueStyles)).toContain(
+      'box-decoration-break: clone',
+    );
   });
   it('does not invent a word underline on a plain unsupported line', async () => {
     const html = await render({ presentation: 'sheet' });
@@ -336,8 +343,8 @@ describe('LyricsDocumentPanel presentation', () => {
   });
 
   it('keeps a whole-line cue when forced colors remove the marker image', () => {
-    expect(source).toMatch(
-      /@media \(forced-colors: active\)\s*\{\s*\.lyrics-line--active \.lyrics-line__ink,\s*\.lyrics-line--marked \.lyrics-line__ink\s*\{\s*outline: var\(--ui-border-width\) solid Highlight;/u,
+    expect(cueStyles).toMatch(
+      /@media \(forced-colors: active\)\s*\{\s*\.lyrics-ink--marked\s*\{\s*outline: var\(--ui-border-width\) solid Highlight;/u,
     );
   });
 
@@ -346,7 +353,9 @@ describe('LyricsDocumentPanel presentation', () => {
       new URL('./LyricsFineText.vue', import.meta.url),
       'utf8',
     );
-    expect(cueSource).toContain('text-decoration-skip-ink: none;');
+    expect(rule('.lyrics-word-cue', cueStyles)).toContain(
+      'text-decoration-skip-ink: none;',
+    );
     expect(cueSource).not.toContain('::after');
     expect(cueSource).not.toContain('--lyrics-fine-progress');
     expect(cueSource).not.toContain('paintLyricsFineUnit');

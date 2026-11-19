@@ -21,8 +21,6 @@
   --ui-lyrics-marker-height-compact: var(--ui-space-3);
   --ui-lyrics-marker-height-default: var(--ui-space-4);
   --ui-lyrics-marker-height-large: var(--ui-space-4);
-  --ui-lyrics-marker-bottom: var(--ui-space-1);
-  --ui-lyrics-marker-cut: var(--ui-space-1);
 }
 
 /* Each reader size is an explicit combination of existing foundation tiers. */

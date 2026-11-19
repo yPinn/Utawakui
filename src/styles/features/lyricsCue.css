@@ -1,0 +1,50 @@
+.lyrics-ink {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight);
+  --ui-lyrics-marker-bottom: var(--ui-space-1);
+  --ui-lyrics-marker-cut: var(--ui-space-1);
+  padding-inline: var(--ui-space-3);
+  margin-inline: calc(-1 * var(--ui-space-3));
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.lyrics-ink[data-lyric-role='male'] {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight-male);
+}
+
+.lyrics-ink[data-lyric-role='female'] {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight-female);
+}
+
+.lyrics-ink[data-lyric-role='group'] {
+  --lyrics-line-highlight: var(--ui-lyrics-highlight-group);
+}
+
+.lyrics-ink--marked {
+  background-image: linear-gradient(
+    104deg,
+    transparent var(--ui-lyrics-marker-cut),
+    var(--lyrics-line-highlight)
+      calc(var(--ui-lyrics-marker-cut) + var(--ui-border-width)),
+    var(--lyrics-line-highlight)
+      calc(100% - var(--ui-lyrics-marker-cut) - var(--ui-border-width)),
+    transparent calc(100% - var(--ui-lyrics-marker-cut))
+  );
+  background-position: 0 calc(100% - var(--ui-lyrics-marker-bottom));
+  background-size: 100% var(--ui-lyrics-marker-height, var(--ui-space-4));
+  background-repeat: no-repeat;
+}
+
+@media (forced-colors: active) {
+  .lyrics-ink--marked {
+    outline: var(--ui-border-width) solid Highlight;
+    outline-offset: var(--ui-border-width);
+  }
+}
+
+.lyrics-word-cue {
+  text-decoration: underline;
+  text-decoration-color: var(--ui-color-accent);
+  text-underline-offset: 0.15em;
+  text-decoration-skip-ink: none;
+}

@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { lyricsCueTextGroups } from '../../utils/lyricsCueText.js';
+import '../../styles/features/lyricsCue.css';
 
 const props = defineProps({
   frame: { type: Object, required: true },
@@ -50,7 +51,8 @@ const groups = computed(() => {
         v-for="part in group.parts"
         :key="part.from"
         :class="{
-          'lyrics-fine-text__cue lyrics-line__experimental-active': part.cue,
+          'lyrics-word-cue lyrics-fine-text__cue lyrics-line__experimental-active':
+            part.cue,
         }"
         >{{ part.text }}</span
       ><rt v-if="group.reading">{{ group.reading }}</rt>
@@ -59,12 +61,6 @@ const groups = computed(() => {
 </template>
 
 <style scoped>
-.lyrics-fine-text__cue {
-  text-decoration: underline;
-  text-decoration-color: var(--ui-color-accent);
-  text-underline-offset: 0.15em;
-  text-decoration-skip-ink: none;
-}
 .lyrics-fine-text rt {
   font-size: var(--ui-lyrics-ruby-font-size);
   font-weight: var(--ui-lyrics-ruby-font-weight);

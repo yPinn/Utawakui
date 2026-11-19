@@ -55,6 +55,24 @@ function snapshot() {
 }
 
 describe('selectPerformerFrame', () => {
+  it('marks only started lines and keeps the marker through a timing gap', () => {
+    const value = snapshot();
+    value.state.lyrics.lines[0].endMs = 1600;
+    expect(selectPerformerFrame(value, { positionMs: 1100 })).toMatchObject({
+      positionedLineIndex: -1,
+      currentLineIndex: 0,
+    });
+    expect(selectPerformerFrame(value, { positionMs: 2000 })).toMatchObject({
+      mode: 'waiting',
+      positionedLineIndex: 0,
+      currentWordCue: null,
+    });
+    expect(selectPerformerFrame(value, { positionMs: 2200 })).toMatchObject({
+      mode: 'live',
+      positionedLineIndex: 1,
+    });
+  });
+
   it('uses one supplied media position for the lyric line and a buffered word cue', () => {
     const value = snapshot();
     value.wordCue = {
