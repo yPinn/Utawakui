@@ -92,7 +92,7 @@ network install or signed-installer acceptance; see the
   `companion` renderer entry under `dist/src/entries/companion/`; the listener
   serves only the files listed for it in `dist/utawakui-manifest.json`, both shipped
   by the existing `dist/**/*` rule. `uqr` is a renderer-only QR encoder bundled into
-  Settings ([ADR 0033](../adr/0033-mobile-companion-local-network.md)).
+  the Dock phone panel ([ADR 0033](../adr/0033-mobile-companion-local-network.md)).
 
 - Track performance settings: `electron/lib/performanceSettings/` and
   `electron/main/performanceSettingsHandlers.js` use the existing Main bundle

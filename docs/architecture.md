@@ -303,6 +303,12 @@
 
 `shared/assets/fonts/` 保留五套實際使用的字型及各自的來源／授權全文。Renderer CSS 經 `viteSharedAssets.js` 使用封裝內唯一的 shared 字型副本；Output 仍只開放明列的 HTTP module／font routes。封裝與測試邊界見 [release inventory](operations/release-inventory.md#packaging-locations)。
 
+## Mobile Companion Boundary
+
+`electron/lib/companion/` 維護獨立的手機 HTTP／WebSocket listener，綁定一個符合條件的區域網路 IPv4 位址。`electron/main/companionHandlers.js` 經 preload 接收配對與裝置管理意圖，Main 驗證功能 gate、配對憑證與遙控指令。手機頁由 `src/entries/companion/` 建置，listener 依建置清單提供頁面與資產。
+
+桌面標題列的手機入口控制右側 Dock 配對面板。App 層的確認視窗處理已掃描的要求，設定頁管理記住的手機，三者共用 `useCompanionSettings` 的狀態鏡像。手機提詞與遙控沿用 renderer 的播放狀態與指令路徑。詳見[手機遙控契約](contracts/mobile-companion.md)與 [ADR 0033](adr/0033-mobile-companion-local-network.md)。
+
 ## Output Boundary
 
 Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有外部投影的收斂點。傳輸、狀態與頁面生命週期見 [Output runtime](contracts/output-runtime.md)，外觀與模板呈現見 [Output 外觀](contracts/output-appearance.md)。

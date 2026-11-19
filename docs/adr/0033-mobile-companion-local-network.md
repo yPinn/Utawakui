@@ -25,17 +25,19 @@ presentation. Existing boundaries forbid the obvious shortcuts:
 ## Decision
 
 Add a **companion plane**: a separate Main-owned HTTP and WebSocket listener for
-paired phones on one private network interface. It is unrelated to the Output
+paired phones on one network interface. It is unrelated to the Output
 server and shares no port, route, channel or credential with it.
 
 - **Off by default and gated.** A new `mobile-companion` feature gate guards
   enabling, pairing and every request. With the gate off the listener does not
   exist and adds no startup work.
-- **One interface, private networks only.** Main uses the only private IPv4
+- **One interface, private by default.** Main uses the only usable IPv4
   interface, or the one the user picks when there are several, and binds only
-  that address and refuses to start when Windows reports the
-  network as Public or unknown. Host and Origin must equal that address and
-  port exactly. Plain HTTP is used; self-signed TLS was rejected because phone
+  that address. A public Windows network profile requires the user to choose
+  "use anyway". Consent is remembered by profile name, so another public
+  profile asks again (owner decision, 2026-11-18: some computers cannot change
+  their network profile). Unidentified profiles stay blocked. Host and Origin
+  must equal that address and port exactly. Plain HTTP is used; self-signed TLS was rejected because phone
   browsers show warnings users cannot meaningfully judge.
 - **Pairing by QR with a one-time code, approved on the computer.** The
   QR shows in Settings as soon as the listener runs, so pairing needs no extra
@@ -73,22 +75,24 @@ server and shares no port, route, channel or credential with it.
 
 ## Threat model
 
-| Threat                                        | Mitigation                                                                                                              |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Another device on the LAN sends commands      | No command without a paired device credential; a credential is issued only after approval on the computer.              |
-| QR code shown on a stream or recording        | Short-lived single-use code; a scan only opens a request the user must approve after comparing match codes.             |
-| Code or credential leaks through URLs or logs | Pairing code only in the URL fragment; credential only in headers or the first socket message; never logged.            |
-| Passive sniffing on the LAN (plain HTTP)      | Accepted residual risk on private networks. Capabilities are limited to transport and display; revocation is one click. |
-| DNS rebinding or cross-site requests          | Exact Host and Origin checks; no CORS; JSON only; strict CSP on the phone page.                                         |
-| Replay or stale commands                      | Per-device monotonic sequence, context revision and track id checks, short admission window.                            |
-| Flooding                                      | Per-device and per-command rate limits; bounded payload, fragment and connection counts.                                |
-| Exposure on public Wi-Fi                      | Refuse to start on Public or unknown network profiles; off by default; status visible while on.                         |
-| Data disclosure                               | Snapshot carries only what the desktop prompter already shows; no paths, URLs, library lists or provider data.          |
+| Threat                                        | Mitigation                                                                                                                                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Another device on the LAN sends commands      | No command without a paired device credential; a credential is issued only after approval on the computer.                                                                                 |
+| QR code shown on a stream or recording        | Short-lived single-use code; a scan only opens a request the user must approve after comparing match codes.                                                                                |
+| Code or credential leaks through URLs or logs | Pairing code only in the URL fragment; credential only in headers or the first socket message; never logged.                                                                               |
+| Passive sniffing on the LAN (plain HTTP)      | Accepted residual risk; higher on a public network the user chose to use, so that is per network and explicit. Capabilities are limited to transport and display; revocation is one click. |
+| DNS rebinding or cross-site requests          | Exact Host and Origin checks; no CORS; JSON only; strict CSP on the phone page.                                                                                                            |
+| Replay or stale commands                      | Per-device monotonic sequence, context revision and track id checks, short admission window.                                                                                               |
+| Flooding                                      | Per-device and per-command rate limits; bounded payload, fragment and connection counts.                                                                                                   |
+| Exposure on public Wi-Fi                      | Off by default. A public profile requires explicit approval for that profile. An unidentified profile stays blocked until Windows reports a profile name.                                  |
+| Data disclosure                               | Snapshot carries only what the desktop prompter already shows; no paths, URLs, library lists or provider data.                                                                             |
 
 ## Consequences
 
-- Windows Defender Firewall prompts on first listen. The settings copy explains
-  the prompt and recommends allowing private networks only.
+- Windows Defender Firewall prompts on first listen. The phone screen
+  recommends allowing private networks only, or public networks too while on
+  one the user chose. A computer whose firewall cannot be changed may still
+  block phones; the app cannot work around that.
 - A remembered credential on a lost phone stays valid until revoked; Settings
   shows the last-seen time to help spot that.
 - A new feature gate means a new notice version and acceptance cases.
