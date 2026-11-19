@@ -1,7 +1,9 @@
 import {
   computed,
+  inject,
   nextTick,
   onBeforeUnmount,
+  provide,
   shallowRef,
   toValue,
   useId,
@@ -14,6 +16,15 @@ import {
 
 export const TOOLTIP_PLACEMENTS = ['bottom', 'end', 'start', 'top'];
 export const TOOLTIP_SKIP_DELAY_MS = 300;
+const TOOLTIP_ENABLED = Symbol('ui-tooltip-enabled');
+
+export function disableUiTooltips() {
+  provide(TOOLTIP_ENABLED, false);
+}
+
+export function useUiTooltipsEnabled() {
+  return inject(TOOLTIP_ENABLED, true);
+}
 
 // Shared by every tooltip: only one is visible at a time, and moving to a
 // neighbouring trigger soon after one starts closing skips the hover delay.
@@ -30,6 +41,7 @@ export function isTooltipPlacement(value) {
 }
 
 export function useTooltip(options) {
+  const tooltipEnabled = useUiTooltipsEnabled();
   const anchorRef = shallowRef(null);
   const tooltipRef = shallowRef(null);
   const tooltipId = `ui-tooltip-${useId()}`;
@@ -58,7 +70,11 @@ export function useTooltip(options) {
   let dismissed = false;
 
   function canShow() {
-    return !toValue(options.disabled) && Boolean(toValue(options.text));
+    return (
+      tooltipEnabled &&
+      !toValue(options.disabled) &&
+      Boolean(toValue(options.text))
+    );
   }
 
   function triggerExpanded() {
@@ -154,6 +170,7 @@ export function useTooltip(options) {
   }
 
   function handleFocusin(event) {
+    if (!tooltipEnabled) return;
     const focusTarget = event?.target ?? event?.currentTarget;
     if (
       typeof focusTarget?.matches === 'function' &&
@@ -166,7 +183,7 @@ export function useTooltip(options) {
   }
 
   function scheduleShow(event) {
-    if (event?.pointerType === 'touch') return;
+    if (!tooltipEnabled || event?.pointerType === 'touch') return;
     pointerInside = true;
     clearTimers();
     if (!canShow()) return;
@@ -193,7 +210,7 @@ export function useTooltip(options) {
   }
 
   function scheduleHide() {
-    if (pointerInside || keyboardFocused) return;
+    if (!tooltipEnabled || pointerInside || keyboardFocused) return;
     if (open.value) lastLeftAt = Date.now();
     clearTimers();
     closeTimer = setTimeout(

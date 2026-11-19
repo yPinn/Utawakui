@@ -24,6 +24,27 @@ const items = [
 ];
 
 describe('UiTabs', () => {
+  it('renders dot tabs as a fixed rail with accessible names', () => {
+    const { app, root } = mount(UiTabs, {
+      items,
+      activeId: 'recent',
+      ariaLabel: 'Playback pages',
+      tabIdPrefix: 'pages',
+      panelIdPrefix: 'pages',
+      variant: 'dots',
+    });
+    const tabs = findAll(root, (node) => node.props.role === 'tab');
+    expect(tabs.map(textContent)).toEqual(['', '']);
+    expect(tabs.map(({ props }) => props['aria-label'])).toEqual(
+      items.map(({ label }) => label),
+    );
+    expect(tabs[1].props['aria-selected']).toBe(true);
+    expect(tabs[1].props['aria-controls']).toBe('pages-recent-panel');
+    expect(
+      findAll(root, (node) => String(node.props.class).includes('ui-scroll')),
+    ).toHaveLength(0);
+    app.unmount();
+  });
   it('keeps content-sized tabs from shrinking into overlapping labels when the rail overflows', () => {
     expect(source).toMatch(
       /\.ui-tabs__tab\s*\{[^}]*flex:\s*0 0 auto;[^}]*white-space:\s*nowrap;/su,
@@ -110,6 +131,36 @@ describe('UiTabs', () => {
     await nextTick();
 
     expect(onUpdate).toHaveBeenCalledWith('recent');
+    expect(tabs[1].focus).toHaveBeenCalledOnce();
+    app.unmount();
+  });
+
+  it('uses horizontal navigation and accessible names for top folder tabs', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(UiTabs, {
+      items,
+      activeId: 'queue',
+      ariaLabel: 'Template settings',
+      tabIdPrefix: 'template-settings',
+      variant: 'folder',
+      folderOrientation: 'horizontal',
+      'onUpdate:activeId': update,
+    });
+    const [tablist] = findAll(root, (node) => node.props.role === 'tablist');
+    const tabs = findAll(root, (node) => node.props.role === 'tab');
+    expect(tablist.props['aria-orientation']).toBe('horizontal');
+    expect(tabs[0].props['aria-label']).toBe(items[0].label);
+    trigger(tabs[0], 'onKeydown', {
+      key: 'ArrowDown',
+      preventDefault: vi.fn(),
+    });
+    expect(update).not.toHaveBeenCalled();
+    trigger(tabs[0], 'onKeydown', {
+      key: 'ArrowRight',
+      preventDefault: vi.fn(),
+    });
+    await nextTick();
+    expect(update).toHaveBeenCalledWith('recent');
     expect(tabs[1].focus).toHaveBeenCalledOnce();
     app.unmount();
   });

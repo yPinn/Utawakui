@@ -71,7 +71,7 @@ afterEach(() => {
 describe('DemoRangeAppearance', () => {
   it('keeps invalid authoritative over interaction colors for the complete track', () => {
     expect(candidateSource).toContain(
-      '.ui-range-control__native:where(:hover:not(:disabled))',
+      ":hover:where(:not([data-ui-interaction='touch'] *)):not(:disabled)",
     );
     expect(candidateSource).toContain(
       '.ui-range-control__native:where(:active:not(:disabled))',
@@ -158,7 +158,7 @@ describe('DemoRangeAppearance', () => {
       /::-webkit-slider-thumb\s*\{[\s\S]*?opacity:\s*0;/u,
     );
     expect(candidateSource).toMatch(
-      /:hover:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
+      /:hover:where\(\s*:not\(\[data-ui-interaction='touch'\] \*\)\s*\):not\(:disabled\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
     );
   });
   it('previews a pointer-position time without changing the controlled value', async () => {

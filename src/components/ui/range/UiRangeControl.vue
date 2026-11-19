@@ -14,6 +14,7 @@ import {
 } from '../floatingPosition.js';
 import { nativeControlAttrs } from '../fieldAttrs.js';
 import UiTooltipSurface from '../tooltip/UiTooltipSurface.vue';
+import { useUiTooltipsEnabled } from '../useTooltip.js';
 
 defineOptions({ inheritAttrs: false });
 
@@ -44,6 +45,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'reset']);
 const attrs = useAttrs();
+const tooltipEnabled = useUiTooltipsEnabled();
 const rangeRef = useTemplateRef('range');
 const previewTooltipRef = shallowRef(null);
 const previewOpen = shallowRef(false);
@@ -128,6 +130,7 @@ function updatePreviewPosition() {
 
 function previewPointerValue(event) {
   if (
+    !tooltipEnabled ||
     props.disabled ||
     event.pointerType === 'touch' ||
     !Number.isFinite(event.clientX)
@@ -299,6 +302,7 @@ defineExpose({ focus });
       </span>
     </span>
     <UiTooltipSurface
+      v-if="tooltipEnabled"
       :open="previewOpen"
       :text="previewText"
       :tooltip-id="previewTooltipId"
@@ -434,7 +438,9 @@ defineExpose({ focus });
     background: var(--ui-color-text);
   }
 
-  .ui-range-control__native:where(:hover:not(:disabled))
+  .ui-range-control__native:where(
+      :hover:where(:not([data-ui-interaction='touch'] *)):not(:disabled)
+    )
     + .ui-range-control__track
     .ui-range-control__fill,
   .ui-range-control__native:where(:focus-visible)
@@ -449,7 +455,9 @@ defineExpose({ focus });
     background: var(--ui-range-fill-active);
   }
 
-  .ui-range-control__native:hover:not(:disabled)::-webkit-slider-thumb,
+  .ui-range-control__native:hover:where(
+      :not([data-ui-interaction='touch'] *)
+    ):not(:disabled)::-webkit-slider-thumb,
   .ui-range-control__native:focus-visible::-webkit-slider-thumb,
   .ui-range-control__native:active:not(:disabled)::-webkit-slider-thumb {
     opacity: 1;

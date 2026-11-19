@@ -1,4 +1,4 @@
-import { nextTick, reactive, shallowRef } from 'vue';
+import { h, nextTick, reactive, shallowRef } from 'vue';
 import {
   afterEach,
   beforeAll,
@@ -17,6 +17,7 @@ import {
   textContent,
   trigger,
 } from './uiTestHost.js';
+import { disableUiTooltips } from './useTooltip.js';
 
 let UiOverflowTooltip;
 let body;
@@ -87,6 +88,30 @@ function setOverflow(
 }
 
 describe('UiOverflowTooltip', () => {
+  it('keeps clipped text available without opening a tooltip when disabled by the host', async () => {
+    const mounted = mount({
+      setup() {
+        disableUiTooltips();
+        return () =>
+          h(UiOverflowTooltip, { text: 'Long track name', tabindex: 0 });
+      },
+    });
+    const root = findAll(mounted.root, (node) => node.type === 'span')[0];
+    setOverflow(root, { clientWidth: 50, scrollWidth: 200 });
+    trigger(root, 'onFocusin', { currentTarget: root });
+    trigger(root, 'onPointerenter', {
+      currentTarget: root,
+      pointerType: 'mouse',
+    });
+    await vi.runAllTimersAsync();
+    expect(textContent(root)).toBe('Long track name');
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    expect(root.props['aria-describedby'] ?? undefined).toBeUndefined();
+    mounted.app.unmount();
+  });
+
   it('reports trailing overflow after scroll and resize', async () => {
     const instance = shallowRef(null);
     const mounted = mount(UiOverflowTooltip, {

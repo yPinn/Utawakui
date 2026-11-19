@@ -33,8 +33,13 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(567);
+    expect(names.size).toBe(572);
     expect(names).toContain('--ui-companion-phone-radius');
+    expect(names).toContain('--ui-companion-shell-max-inline-size');
+    expect(names).toContain('--ui-companion-connection-max-inline-size');
+    expect(names).toContain('--ui-companion-remote-group-min-inline-size');
+    expect(names).toContain('--ui-companion-match-code-letter-spacing');
+    expect(names).toContain('--ui-companion-page-enter-opacity');
     expect(names).toContain('--ui-motion-easing-reversible');
     expect(names).toContain('--ui-shell-workspace-min-inline-size');
     expect(names).toContain('--ui-shell-layout-recovery-inline-size');

@@ -13,7 +13,12 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'panel',
-    validator: (value) => ['panel', 'bar', 'folder'].includes(value),
+    validator: (value) => ['panel', 'bar', 'folder', 'dots'].includes(value),
+  },
+  folderOrientation: {
+    type: String,
+    default: 'vertical',
+    validator: (value) => ['vertical', 'horizontal'].includes(value),
   },
   distribution: {
     type: String,
@@ -25,7 +30,22 @@ const props = defineProps({
 const emit = defineEmits(['update:activeId']);
 const tabRefs = new Map();
 const groupRef = useTemplateRef('group');
-const vertical = computed(() => props.variant === 'folder');
+const folder = computed(() => props.variant === 'folder');
+const vertical = computed(
+  () => folder.value && props.folderOrientation === 'vertical',
+);
+const dots = computed(() => props.variant === 'dots');
+const railAttrs = computed(() =>
+  dots.value
+    ? { class: 'ui-tabs__dots' }
+    : {
+        class: 'ui-tabs__scroll',
+        scrollbarReserve: 'overflow',
+        axis: vertical.value ? 'vertical' : 'horizontal',
+        scrollbarVisibility: folder.value ? 'hidden' : 'auto',
+        contentClass: 'ui-tabs__list',
+      },
+);
 
 const enabledItems = computed(() =>
   props.items.filter((item) => !item.disabled),
@@ -152,15 +172,9 @@ function moveFocus(item, event) {
     :class="[`ui-tabs--${variant}`, `ui-tabs--${distribution}`]"
     role="tablist"
     :aria-label="ariaLabel"
-    :aria-orientation="vertical ? 'vertical' : undefined"
+    :aria-orientation="folder ? folderOrientation : undefined"
   >
-    <UiScrollLayout
-      scrollbar-reserve="overflow"
-      class="ui-tabs__scroll"
-      :axis="vertical ? 'vertical' : 'horizontal'"
-      :scrollbar-visibility="vertical ? 'hidden' : 'auto'"
-      content-class="ui-tabs__list"
-    >
+    <component :is="dots ? 'div' : UiScrollLayout" v-bind="railAttrs">
       <component
         :is="item.tooltipPlacement ? UiTooltip : PlainTrigger"
         v-for="item in items"
@@ -185,7 +199,7 @@ function moveFocus(item, event) {
             :class="{ 'is-active': item.id === activeId }"
             role="tab"
             :aria-label="
-              vertical || item.tooltipPlacement ? item.label : undefined
+              dots || folder || item.tooltipPlacement ? item.label : undefined
             "
             :aria-selected="item.id === activeId"
             :aria-controls="panelId(item)"
@@ -195,14 +209,15 @@ function moveFocus(item, event) {
             @click="select(item)"
             @keydown="moveFocus(item, $event)"
           >
-            <span class="ui-tabs__label">
+            <span v-if="dots" class="ui-tabs__dot" aria-hidden="true" />
+            <span v-else class="ui-tabs__label">
               <slot name="label" :item="item">{{ item.label }}</slot>
             </span>
             <slot name="after" :item="item" />
           </button>
         </template>
       </component>
-    </UiScrollLayout>
+    </component>
   </div>
 </template>
 
@@ -291,7 +306,9 @@ function moveFocus(item, event) {
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
-.ui-tabs__tab:where(:hover:not(:disabled)) {
+.ui-tabs__tab:where(
+  :hover:where(:not([data-ui-interaction='touch'] *)):not(:disabled)
+) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
@@ -318,6 +335,39 @@ function moveFocus(item, event) {
   color: var(--ui-color-accent);
 }
 
+.ui-tabs__dots {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(
+    0,
+    var(--ui-tabs-dot-target-width, var(--ui-control-height))
+  );
+  justify-content: center;
+}
+
+.ui-tabs--dots .ui-tabs__tab {
+  min-inline-size: 0;
+  justify-content: center;
+  padding-inline: 0;
+  outline-offset: var(--ui-focus-offset-inset);
+}
+
+.ui-tabs__dot {
+  inline-size: var(--ui-tabs-dot-size, var(--ui-space-2));
+  block-size: var(--ui-tabs-dot-size, var(--ui-space-2));
+  border: var(--ui-border-width) solid currentColor;
+  border-radius: var(--ui-radius-pill);
+}
+
+.ui-tabs--dots .ui-tabs__tab.is-active {
+  background: transparent;
+}
+
+.ui-tabs--dots .is-active .ui-tabs__dot {
+  inline-size: var(--ui-tabs-active-dot-width, var(--ui-space-3));
+  background: currentColor;
+}
+
 .ui-tabs--bar .ui-tabs__tab {
   position: relative;
   min-inline-size: var(--ui-control-height);
@@ -332,7 +382,10 @@ function moveFocus(item, event) {
   color: var(--ui-color-accent);
 }
 
-.ui-tabs--bar .ui-tabs__tab.is-active:hover:not(:disabled) {
+.ui-tabs--bar
+  .ui-tabs__tab.is-active:hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ):not(:disabled) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-accent-hover);
 }
@@ -353,7 +406,9 @@ function moveFocus(item, event) {
   min-block-size: 0;
 }
 
-.ui-tabs--folder .ui-tabs__scroll :deep(.ui-tabs__list) {
+.ui-tabs--folder[aria-orientation='vertical']
+  .ui-tabs__scroll
+  :deep(.ui-tabs__list) {
   flex-direction: column;
   gap: var(--ui-folder-tool-tab-gap);
 }
@@ -393,11 +448,39 @@ function moveFocus(item, event) {
   content: '';
 }
 
-.ui-tabs--folder .ui-tabs__tab:hover {
+.ui-tabs--folder[aria-orientation='horizontal']
+  .ui-tabs__scroll
+  :deep(.ui-tabs__list) {
+  inline-size: max-content;
+  min-inline-size: 100%;
+  justify-content: flex-end;
+  gap: var(--ui-space-1);
+  padding-inline: var(--ui-space-3);
+}
+
+.ui-tabs--folder[aria-orientation='horizontal'] .ui-tabs__tab {
+  --ui-folder-tab-face-height: var(--ui-space-6);
+  inline-size: var(--ui-control-height-live);
+  block-size: var(--ui-control-height-live);
+  padding-block-start: calc(
+    var(--ui-control-height-live) - var(--ui-folder-tab-face-height)
+  );
+}
+
+.ui-tabs--folder[aria-orientation='horizontal'] .ui-tabs__tab::before {
+  inset: auto 0 0;
+  inline-size: 100%;
+  block-size: var(--ui-folder-tab-face-height);
+  transform: none;
+}
+
+.ui-tabs--folder
+  .ui-tabs__tab:hover:where(:not([data-ui-interaction='touch'] *)) {
   color: var(--ui-color-accent);
 }
 
-.ui-tabs--folder .ui-tabs__tab:hover::before {
+.ui-tabs--folder
+  .ui-tabs__tab:hover:where(:not([data-ui-interaction='touch'] *))::before {
   background: var(--ui-color-surface-selected);
 }
 

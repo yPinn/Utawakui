@@ -225,7 +225,9 @@ function buttonAttrs(tooltipTriggerProps) {
   color: var(--ui-color-text-muted);
 }
 
-.ui-btn--ghost:not(:disabled):not([aria-disabled='true']):hover {
+.ui-btn--ghost:not(:disabled):not([aria-disabled='true']):hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
@@ -244,7 +246,9 @@ function buttonAttrs(tooltipTriggerProps) {
   color: var(--ui-color-text);
 }
 
-.ui-btn--secondary:not(:disabled):not([aria-disabled='true']):hover {
+.ui-btn--secondary:not(:disabled):not([aria-disabled='true']):hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ) {
   border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-hover);
 }
@@ -260,7 +264,9 @@ function buttonAttrs(tooltipTriggerProps) {
   color: var(--ui-color-accent-contrast);
 }
 
-.ui-btn--accent:not(:disabled):not([aria-disabled='true']):hover {
+.ui-btn--accent:not(:disabled):not([aria-disabled='true']):hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ) {
   background: var(--ui-color-accent-hover);
 }
 
@@ -271,7 +277,9 @@ function buttonAttrs(tooltipTriggerProps) {
   color: var(--ui-color-overlay-contrast);
 }
 
-.ui-btn--overlay:not(:disabled):not([aria-disabled='true']):hover {
+.ui-btn--overlay:not(:disabled):not([aria-disabled='true']):hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ) {
   background: var(--ui-color-overlay-scrim-hover);
 }
 
@@ -289,7 +297,7 @@ function buttonAttrs(tooltipTriggerProps) {
 
 .ui-btn--intent-danger.ui-btn--ghost:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   background: var(--ui-button-danger-surface-hover);
   color: var(--ui-button-danger-text);
 }
@@ -301,7 +309,7 @@ function buttonAttrs(tooltipTriggerProps) {
 
 .ui-btn--intent-danger.ui-btn--secondary:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   border-color: var(--ui-button-danger-border);
   background: var(--ui-button-danger-surface-hover);
   color: var(--ui-button-danger-text);
@@ -314,7 +322,7 @@ function buttonAttrs(tooltipTriggerProps) {
 
 .ui-btn--intent-danger.ui-btn--accent:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   background: var(--ui-button-danger-fill-hover);
 }
 

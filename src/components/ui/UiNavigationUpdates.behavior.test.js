@@ -195,7 +195,9 @@ describe('navigation items recovery', () => {
         new URL(`./${file}.vue`, import.meta.url),
         'utf8',
       );
-      expect(source).toContain(':where(:hover:not(:disabled))');
+      expect(source).toContain(
+        ":hover:where(:not([data-ui-interaction='touch'] *)):not(:disabled)",
+      );
       expect(source).toContain('text-overflow: ellipsis');
       expect(source).toContain(
         `class="${file === 'UiTabs' ? 'ui-tabs' : 'ui-segmented-control'}__label"`,

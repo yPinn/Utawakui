@@ -28,6 +28,7 @@ const props = defineProps({
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
   randomLabel: { type: String, default: '' },
+  stretch: { type: Boolean, default: false },
   align: {
     type: String,
     default: 'start',
@@ -114,7 +115,10 @@ defineExpose({ focus });
     <template #default="{ describedBy, invalid: controlInvalid }">
       <div
         class="ui-color-field"
-        :class="{ 'ui-color-field--align-end': align === 'end' }"
+        :class="{
+          'ui-color-field--align-end': align === 'end',
+          'ui-color-field--stretch': stretch,
+        }"
       >
         <input
           class="ui-field-surface ui-color-field__picker"
@@ -175,6 +179,10 @@ defineExpose({ focus });
 
 .ui-color-field--align-end {
   margin-inline-start: auto;
+}
+
+.ui-color-field--stretch {
+  max-inline-size: none;
 }
 
 .ui-color-field__picker,

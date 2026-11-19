@@ -17,11 +17,29 @@ const props = defineProps({
     validator: (value) => ['auto', 'ltr', 'rtl'].includes(value),
   },
   disabled: { type: Boolean, default: false },
+  wrap: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue', 'reselect']);
 const groupRef = useTemplateRef('group');
 const optionRefs = new Map();
+const railAttrs = computed(() =>
+  props.wrap
+    ? {
+        class: [
+          'ui-segmented-control__wrap',
+          `ui-segmented-control__wrap--${props.orientation}`,
+        ],
+      }
+    : {
+        class: 'ui-segmented-control__scroll',
+        scrollbarReserve: 'overflow',
+        axis: props.orientation === 'horizontal' ? 'horizontal' : 'vertical',
+        contentClass: 'ui-segmented-control__options',
+        scrollbarVisibility:
+          props.orientation === 'horizontal' ? 'auto' : 'hidden',
+      },
+);
 
 function itemDisabled(item) {
   return props.disabled || Boolean(item.disabled);
@@ -138,13 +156,7 @@ function moveFocus(item, event) {
     :aria-orientation="orientation"
     :dir="dir === 'auto' ? undefined : dir"
   >
-    <UiScrollLayout
-      scrollbar-reserve="overflow"
-      class="ui-segmented-control__scroll"
-      :axis="orientation === 'horizontal' ? 'horizontal' : 'vertical'"
-      content-class="ui-segmented-control__options"
-      :scrollbar-visibility="orientation === 'horizontal' ? 'auto' : 'hidden'"
-    >
+    <component :is="wrap ? 'div' : UiScrollLayout" v-bind="railAttrs">
       <button
         v-for="item in items"
         :key="item.id"
@@ -170,7 +182,7 @@ function moveFocus(item, event) {
         </span>
         <slot name="after" :item="item" />
       </button>
-    </UiScrollLayout>
+    </component>
   </div>
 </template>
 
@@ -209,6 +221,26 @@ function moveFocus(item, event) {
   max-width: 100%;
 }
 
+.ui-segmented-control__wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1);
+}
+
+.ui-segmented-control__wrap--vertical {
+  flex-direction: column;
+}
+
+.ui-segmented-control__wrap .ui-segmented-control__option {
+  max-inline-size: 100%;
+}
+
+.ui-segmented-control__wrap .ui-segmented-control__label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .ui-segmented-control__option {
   flex: 0 0 auto;
   min-width: 0;
@@ -237,7 +269,9 @@ function moveFocus(item, event) {
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
-.ui-segmented-control__option:where(:hover:not(:disabled)) {
+.ui-segmented-control__option:where(
+  :hover:where(:not([data-ui-interaction='touch'] *)):not(:disabled)
+) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }

@@ -191,7 +191,11 @@ describe('UiScrollRegion production migration', () => {
         ? 'UiScrollLayout'
         : 'UiScrollRegion';
       expect(source).toContain(`import ${component} from './${component}.vue'`);
-      expect(source).toContain(`<${component}`);
+      if (['tabs', 'segmented control'].includes(name)) {
+        expect(source).toMatch(/:is="[^"]*UiScrollLayout"/u);
+      } else {
+        expect(source).toContain(`<${component}`);
+      }
       expect(source).not.toContain('scrollbar-color:');
       expect(source).not.toContain('scrollbar-width:');
     },

@@ -158,7 +158,9 @@ function buttonAttrs(triggerProps) {
     background: var(--ui-color-accent-active);
   }
 
-  .ui-icon-btn--command:not(:disabled):not([aria-disabled='true']):hover {
+  .ui-icon-btn--command:not(:disabled):not([aria-disabled='true']):hover:where(
+      :not([data-ui-interaction='touch'] *)
+    ) {
     background: var(--ui-color-command-surface-hover);
   }
 
@@ -166,7 +168,9 @@ function buttonAttrs(triggerProps) {
     background: var(--ui-color-command-surface-active);
   }
 
-  .ui-icon-btn--overlay:not(:disabled):not([aria-disabled='true']):hover {
+  .ui-icon-btn--overlay:not(:disabled):not([aria-disabled='true']):hover:where(
+      :not([data-ui-interaction='touch'] *)
+    ) {
     background: var(--ui-color-overlay-scrim-hover);
   }
 
@@ -215,7 +219,9 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-text-muted);
 }
 
-.ui-icon-btn--ghost:not(:disabled):not([aria-disabled='true']):hover {
+.ui-icon-btn--ghost:not(:disabled):not([aria-disabled='true']):hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
@@ -232,7 +238,7 @@ function buttonAttrs(triggerProps) {
 
 .ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-accent);
 }
@@ -249,7 +255,9 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-accent-contrast);
 }
 
-.ui-icon-btn--accent:not(:disabled):not([aria-disabled='true']):hover {
+.ui-icon-btn--accent:not(:disabled):not([aria-disabled='true']):hover:where(
+    :not([data-ui-interaction='touch'] *)
+  ) {
   background: var(--ui-color-accent-hover);
 }
 
@@ -271,7 +279,7 @@ function buttonAttrs(triggerProps) {
 
 .ui-icon-btn--intent-danger.ui-icon-btn--ghost:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   background: var(--ui-button-danger-surface-hover);
   color: var(--ui-button-danger-text);
 }
@@ -290,7 +298,7 @@ function buttonAttrs(triggerProps) {
 
 .ui-icon-btn--intent-danger.ui-icon-btn--command:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   border-color: var(--ui-button-danger-border);
   background: var(--ui-button-danger-surface-hover);
   color: var(--ui-button-danger-text);
@@ -312,10 +320,10 @@ function buttonAttrs(triggerProps) {
 
 .ui-icon-btn--intent-danger.ui-icon-btn--accent:not(:disabled):not(
     [aria-disabled='true']
-  ):hover,
+  ):hover:where(:not([data-ui-interaction='touch'] *)),
 .ui-icon-btn--intent-danger.ui-icon-btn--overlay:not(:disabled):not(
     [aria-disabled='true']
-  ):hover {
+  ):hover:where(:not([data-ui-interaction='touch'] *)) {
   background: var(--ui-button-danger-fill-hover);
 }
 

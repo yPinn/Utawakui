@@ -256,6 +256,12 @@
     var(--ui-color-surface) 88%,
     transparent
   );
+  /* Companion layout and pairing code */
+  --ui-companion-shell-max-inline-size: 48rem;
+  --ui-companion-connection-max-inline-size: 26rem;
+  --ui-companion-remote-group-min-inline-size: 14rem;
+  --ui-companion-match-code-letter-spacing: 0.2em;
+  --ui-companion-page-enter-opacity: 0.85;
   /* Phone-remote device frame: a device value outside the --ui-radius-*
      scale, matching an iPhone's ~14% corner at the default frame width. */
   --ui-companion-phone-radius: 2rem;

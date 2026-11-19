@@ -241,7 +241,7 @@ describe('UiSegmentedControl', () => {
     expect(source).toMatch(
       /\.ui-segmented-control__option--selected\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-bold\);/su,
     );
-    expect(source).toContain('<UiScrollLayout');
+    expect(source).toContain("wrap ? 'div' : UiScrollLayout");
     expect(source).toContain(
       "orientation === 'horizontal' ? 'auto' : 'hidden'",
     );

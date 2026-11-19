@@ -101,7 +101,7 @@ describe('Token v2 Range formal adoption', () => {
       /::-webkit-slider-thumb\s*\{[\s\S]*?opacity:\s*0;/u,
     );
     expect(controlSource).toMatch(
-      /:hover:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
+      /:hover:where\(\s*:not\(\[data-ui-interaction='touch'\] \*\)\s*\):not\(:disabled\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
     );
     expect(controlSource).toContain('@media (forced-colors: active)');
     expect(controlSource).not.toContain(

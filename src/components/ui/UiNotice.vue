@@ -24,6 +24,11 @@ const props = defineProps({
   actionLabel: { type: String, default: '' },
   actionDisabled: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
+  variant: {
+    type: String,
+    default: 'card',
+    validator: (value) => ['card', 'banner'].includes(value),
+  },
 });
 
 const emit = defineEmits(['action']);
@@ -66,6 +71,7 @@ const role = computed(() =>
       `ui-notice--${resolvedTone}`,
       {
         'ui-notice--compact': compact,
+        'ui-notice--banner': variant === 'banner',
         'ui-notice--inline-action':
           resolvedActionLabel && !$slots.actions && !reportable,
       },
@@ -153,6 +159,13 @@ const role = computed(() =>
 
 .ui-notice--compact {
   padding: var(--ui-space-2);
+}
+
+.ui-notice--banner {
+  inline-size: 100%;
+  border-inline: 0;
+  border-block-start: 0;
+  border-radius: 0;
 }
 
 .ui-notice--info {
