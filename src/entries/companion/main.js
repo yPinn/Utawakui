@@ -17,7 +17,7 @@ const matchCode = shallowRef('');
 createApp(CompanionApp, {
   status: companionStatus,
   matchCode,
-  remote: { sendCommand: companion.sendCommand },
+  remote: { sendCommand: companion.sendCommand, resume: companion.resume },
 }).mount(surfaceRoot);
 
 async function start() {

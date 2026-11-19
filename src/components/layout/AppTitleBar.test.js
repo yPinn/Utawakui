@@ -50,6 +50,7 @@ describe('AppTitleBar', () => {
         expect(labels).toEqual([
           ...(enabled ? [t('shell.panel.maximize')] : []),
           t('shell.rightDock.expandImport'),
+          t('shell.titleBar.companionOpen'),
           t('shell.titleBar.performerOpen'),
           ...(enabled ? [t('shell.titleBar.themeDark')] : []),
           t('shell.titleBar.settings'),
@@ -83,6 +84,26 @@ describe('AppTitleBar', () => {
     expect(source).not.toContain('class="app-title-bar__status-cluster"');
   });
 
+  it('discloses the phone remote panel in the Right Dock', () => {
+    const { app, root } = mount(AppTitleBar, {
+      companionActive: true,
+      companionControls: 'right-dock-content',
+    });
+    try {
+      const button = findAll(
+        root,
+        (node) =>
+          node.type === 'button' &&
+          node.props['aria-label'] === t('shell.titleBar.companionClose'),
+      )[0];
+      expect(button.props['aria-expanded']).toBe(true);
+      expect(button.props['aria-controls']).toBe('right-dock-content');
+    } finally {
+      app.unmount();
+    }
+    expect(source).toContain("'toggleCompanion'");
+  });
+
   it('separates global utility actions with the shared control gap', () => {
     expect(source).toContain('gap: var(--ui-space-2)');
     expect(source).toContain('padding-right: var(--ui-space-2)');
@@ -100,9 +121,12 @@ describe('AppTitleBar', () => {
     expect(source).not.toContain('toggleSession');
     expect(preparationIndex).toBeGreaterThan(-1);
     expect(performerIndex).toBeGreaterThan(preparationIndex);
+    const companionIndex = source.indexOf(':icon="Smartphone"');
+    expect(companionIndex).toBeGreaterThan(preparationIndex);
+    expect(performerIndex).toBeGreaterThan(companionIndex);
     expect(themeIndex).toBeGreaterThan(performerIndex);
     expect(settingsIndex).toBeGreaterThan(themeIndex);
-    expect(source.match(/variant="ghost"/gu)).toHaveLength(4);
+    expect(source.match(/variant="ghost"/gu)).toHaveLength(5);
     expect(source).not.toContain('variant="overlay"');
   });
 

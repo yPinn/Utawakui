@@ -87,7 +87,7 @@ onBeforeUnmount(() => {
 .app-companion-approval {
   display: grid;
   justify-items: center;
-  gap: var(--ui-space-4);
+  gap: var(--ui-modal-section-gap);
 }
 
 .app-companion-approval__message {
@@ -95,6 +95,7 @@ onBeforeUnmount(() => {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
   line-height: var(--ui-type-body-line-height);
 }
 

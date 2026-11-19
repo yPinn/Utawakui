@@ -49,7 +49,9 @@ export function useCompanionSettings(options = {}) {
       return false;
     } finally {
       busy.value = false;
-      await refresh();
+      // The reply already carries what the caller needs (a new code shows
+      // at once); the full status follows in the background.
+      void refresh();
     }
   }
 
@@ -83,13 +85,24 @@ export function useCompanionSettings(options = {}) {
     },
     async cancelPairing() {
       pairing.value = null;
-      return act(() => bridge.cancelCompanionPairing());
+      try {
+        const result = await bridge.cancelCompanionPairing();
+        if (result?.ok) return true;
+        error.value = result?.status ?? 'failed';
+      } catch {
+        error.value = 'failed';
+      } finally {
+        void refresh();
+      }
+      return false;
     },
     approve: (requestId) =>
       act(() => bridge.approveCompanionPairing(requestId)),
     deny: (requestId) => act(() => bridge.denyCompanionPairing(requestId)),
     revoke: (deviceId) => act(() => bridge.revokeCompanionDevice(deviceId)),
     revokeAll: () => act(() => bridge.revokeAllCompanionDevices()),
+    rename: (deviceId, label) =>
+      act(() => bridge.renameCompanionDevice(deviceId, label)),
   };
 }
 

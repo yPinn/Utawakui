@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, shallowRef } from 'vue';
 import PerformerSurface from '../components/performer/PerformerSurface.vue';
 import CompanionRemoteControls from './CompanionRemoteControls.vue';
+import UiButton from '../components/ui/UiButton.vue';
 import { usePerformerViewState } from '../composables/usePerformerViewState.js';
 import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
 import { registeredOverlayHostAttributes } from '../utils/rendererSurfaceRegistry.js';
@@ -81,6 +82,14 @@ const message = computed(() =>
         class="companion-app__match-code"
         >{{ matchCode.value }}</strong
       >
+      <!-- Still paired: one tap takes the connection back. -->
+      <UiButton
+        v-if="state === 'displaced' && remote?.resume"
+        class="companion-app__resume"
+        variant="accent"
+        @click="remote.resume()"
+        >{{ t('companion.page.resume') }}</UiButton
+      >
     </p>
     <PerformerSurface
       v-if="state === 'live' || state === 'reconnecting'"
@@ -117,12 +126,21 @@ const message = computed(() =>
   color: var(--ui-color-text);
 }
 
+/* Same display tier as the computer's approval dialog it is compared with. */
 .companion-app__match-code {
   display: block;
   margin-block-start: var(--ui-space-3);
-  font-size: var(--ui-font-size-xl);
+  font-size: var(--ui-type-display-size);
+  font-weight: var(--ui-type-display-weight);
+  line-height: var(--ui-type-display-line-height);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.2em;
+}
+
+/* Layout only: the button's own anatomy comes from UiButton. */
+.companion-app__resume {
+  display: flex;
+  margin: var(--ui-space-3) auto 0;
 }
 
 .companion-app__status {

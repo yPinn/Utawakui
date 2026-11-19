@@ -256,6 +256,9 @@
     var(--ui-color-surface) 88%,
     transparent
   );
+  /* Phone-remote device frame: a device value outside the --ui-radius-*
+     scale, matching an iPhone's ~14% corner at the default frame width. */
+  --ui-companion-phone-radius: 2rem;
   --ui-player-padding-block-end: var(--ui-shell-content-inset-block);
   --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
   --ui-player-leading-padding-inline: calc(

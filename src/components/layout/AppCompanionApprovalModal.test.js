@@ -40,7 +40,7 @@ describe('AppCompanionApprovalModal', () => {
     expect(html).toContain('ui-modal--with-footer');
     expect(html).toContain('允許「Pixel」連線？');
     expect(html).toMatch(/<output[^>]*aria-label="對照代碼"[^>]*>4321</u);
-    expect(html).toContain('不是你的手機請按拒絕');
+    expect(html).toContain('不是你的手機請拒絕');
     expect(html).toMatch(/ui-btn--secondary[\s\S]*拒絕/u);
     expect(html).toMatch(/ui-btn--accent[\s\S]*允許/u);
   });

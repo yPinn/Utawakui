@@ -6,6 +6,7 @@ import {
   onMounted,
   onUnmounted,
   provide,
+  shallowRef,
   useTemplateRef,
   watch,
 } from 'vue';
@@ -77,6 +78,8 @@ import {
   RIGHT_DOCK_SURFACE_PREPARATION,
   useAppRightDock,
 } from './composables/useAppRightDock.js';
+import { useFeatureGates } from './composables/useFeatureGates.js';
+import { FEATURE_IDS } from './constants/featureGates.js';
 import { useCollectionDrag } from './composables/useCollectionDrag.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
 import { usePlaybackDockDisplay } from './composables/usePlaybackDockDisplay.js';
@@ -108,6 +111,10 @@ const PlaybackInfoContextView = defineAsyncComponent(
 const PreparationDockPanel = defineAsyncComponent(
   () => import('./components/preparation/PreparationDockPanel.vue'),
 );
+const CompanionDockPhone = defineAsyncComponent(
+  () => import('./components/companion/CompanionDockPhone.vue'),
+);
+const COMPANION_PHONE_ID = 'app-companion-phone';
 
 // These workbenches are development aids, not user-facing product pages.
 // Keeping their imports inside a compile-time DEV branch lets Vite omit the
@@ -391,6 +398,26 @@ function togglePreparationSurface() {
   rightDock.cyclePreparation();
 }
 
+// The phone stands directly in the Dock bay, not inside a Dock panel: showing
+// it collapses the Dock, and expanding the Dock puts it away. An unconfirmed
+// feature gate shows its notice first.
+const { ensureFeatureGate } = useFeatureGates();
+const companionVisible = shallowRef(false);
+const companionMounted = shallowRef(false);
+async function toggleCompanionPhone() {
+  if (companionVisible.value) {
+    companionVisible.value = false;
+    return;
+  }
+  if (!(await ensureFeatureGate(FEATURE_IDS.MOBILE_COMPANION))) return;
+  collapseRightDock();
+  companionMounted.value = true;
+  companionVisible.value = true;
+}
+watch(rightDock.isExpanded, (expanded) => {
+  if (expanded) companionVisible.value = false;
+});
+
 function closeDockSurface(surface) {
   rememberRightDockTrigger();
   rightDock.hideSurface(surface);
@@ -422,15 +449,18 @@ function handleRightDockKeydown(event) {
   if (
     event.key !== 'Escape' ||
     event.defaultPrevented ||
-    !rightDockExpanded.value ||
     panelView.maximizedId.value ||
     hasOpenTransientOverlay()
   ) {
     return;
   }
-
-  event.preventDefault();
-  collapseRightDock();
+  if (rightDockExpanded.value) {
+    event.preventDefault();
+    collapseRightDock();
+  } else if (companionVisible.value) {
+    event.preventDefault();
+    companionVisible.value = false;
+  }
 }
 
 watch(
@@ -511,10 +541,13 @@ useKeyboardShortcuts({
       :preparation-controls="RIGHT_DOCK_CONTENT_ID"
       :preparation-status="preparationIndicator.state"
       :preparation-status-label="preparationIndicator.label"
+      :companion-active="companionVisible"
+      :companion-controls="COMPANION_PHONE_ID"
       :performer-active="performerView.state.open"
       :performer-busy="performerView.state.isOpening"
       :settings-active="isSettingsView"
       :update-available="appUpdateReady"
+      @toggle-companion="toggleCompanionPhone"
       @toggle-preparation="togglePreparationSurface"
       @toggle-performer="performerView.toggle"
       @toggle-settings="toggleSettings"
@@ -620,6 +653,16 @@ useKeyboardShortcuts({
             @collapse="collapseRightDock"
           />
         </AppRightDock>
+        <div
+          v-if="companionMounted"
+          :id="COMPANION_PHONE_ID"
+          class="shell__dock-phone"
+          :class="{ 'shell__dock-phone--active': companionVisible }"
+          :aria-hidden="!companionVisible"
+          :inert="!companionVisible"
+        >
+          <CompanionDockPhone :active="companionVisible" />
+        </div>
       </div>
     </main>
     <PlayerBar
@@ -774,6 +817,7 @@ useKeyboardShortcuts({
 }
 
 .shell__dock {
+  position: relative;
   display: flex;
   justify-content: flex-end;
   min-width: 0;
@@ -791,6 +835,42 @@ useKeyboardShortcuts({
 .shell__dock--collapsed {
   /* Only the restore control paints inside the reserved composition space. */
   align-items: flex-end;
+}
+
+/* The phone stands in the reserved bay itself, clear of the restore
+   control below it, and takes pointer events only while shown. */
+.shell__dock-phone {
+  position: absolute;
+  /* The phone's top lines up with the Folder body's top edge, below its
+     tabs (the tab row overlaps the body by the cover size). */
+  inset: calc(
+      var(--ui-shell-content-inset-block) + var(--ui-folder-tab-height-active) -
+        var(--ui-folder-tab-cover-size)
+    )
+    0 calc(var(--ui-right-dock-rail-width) + var(--ui-space-2));
+  /* Sizes the phone from both bay dimensions. */
+  container-type: size;
+  display: grid;
+  place-items: start center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(var(--ui-space-2));
+  pointer-events: none;
+  transition:
+    opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    transform var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    visibility 0s linear var(--ui-motion-duration-fast);
+}
+
+.shell__dock-phone--active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+  transition:
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    transform var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    visibility 0s linear 0s;
 }
 
 .shell__dock-surface {

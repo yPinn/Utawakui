@@ -113,6 +113,52 @@ describe('useCompanionSettings', () => {
     expect(unsubscribe).toHaveBeenCalledOnce();
   });
 
+  it('shows a new pairing code without waiting for the slower status read', async () => {
+    const { bridge } = createBridge({
+      // A status read that has not answered yet.
+      getCompanionStatus: vi.fn(() => new Promise(() => {})),
+    });
+    const settings = useCompanionSettings({ bridge });
+    expect(await settings.beginPairing()).toBe(true);
+    expect(settings.pairing.value.url).toContain('#pair=');
+    expect(settings.busy.value).toBe(false);
+    expect(bridge.getCompanionStatus).toHaveBeenCalled();
+  });
+
+  it('withdraws the pairing code while another settings action is pending', async () => {
+    const rename = Promise.withResolvers();
+    const { bridge } = createBridge({
+      renameCompanionDevice: vi.fn(() => rename.promise),
+    });
+    const settings = useCompanionSettings({ bridge });
+    const renaming = settings.rename('d1', 'Phone');
+
+    expect(settings.busy.value).toBe(true);
+    expect(await settings.cancelPairing()).toBe(true);
+    expect(bridge.cancelCompanionPairing).toHaveBeenCalledOnce();
+    expect(settings.busy.value).toBe(true);
+
+    rename.resolve({ ok: true });
+    await renaming;
+  });
+
+  it('forwards a new phone name to Main', async () => {
+    const { bridge } = createBridge({
+      renameCompanionDevice: vi.fn(async (id, label) => ({
+        ok: true,
+        device: { id, label },
+      })),
+    });
+    const settings = useCompanionSettings({ bridge });
+    expect(await settings.rename('d1', '主唱的 iPhone')).toMatchObject({
+      device: { label: '主唱的 iPhone' },
+    });
+    expect(bridge.renameCompanionDevice).toHaveBeenCalledWith(
+      'd1',
+      '主唱的 iPhone',
+    );
+  });
+
   it('forwards approval decisions to Main', async () => {
     const { bridge } = createBridge();
     const settings = useCompanionSettings({ bridge });

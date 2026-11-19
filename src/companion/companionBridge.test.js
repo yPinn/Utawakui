@@ -195,6 +195,31 @@ describe('companion bridge', () => {
     expect(storage.data.has(CREDENTIAL_STORAGE_KEY)).toBe(false);
   });
 
+  it('stays paired but stops retrying when another phone takes over, then resumes', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      status: 409,
+      json: async () => ({ result: 'rejected', reason: 'displaced' }),
+    }));
+    const { bridge, storage, statuses, timers } = setup({ fetchImpl });
+    bridge.connect();
+    FakeSocket.instances[0].emit('close', { code: 4410 });
+    expect(statuses.at(-1)).toBe('displaced');
+    expect(timers).toHaveLength(0);
+    expect(storage.data.get(CREDENTIAL_STORAGE_KEY)).toBe('cred');
+
+    expect(
+      await bridge.sendCommand('player.next', { revision: 1, trackId: 'a' }),
+    ).toBe('displaced');
+    expect(statuses.at(-1)).toBe('displaced');
+
+    bridge.resume();
+    expect(FakeSocket.instances).toHaveLength(2);
+    expect(statuses.at(-1)).toBe('connecting');
+    // A second tap while connecting opens nothing more.
+    bridge.resume();
+    expect(FakeSocket.instances).toHaveLength(2);
+  });
+
   it('keeps reading scale on the phone and stays read-only', async () => {
     const { bridge, storage } = setup();
     expect(await bridge.performerBridge.getReadingScale()).toBe('near');

@@ -28,6 +28,8 @@
     "themeLight": "切換為淺色主題",
     "performerOpen": "開啟提詞器",
     "performerClose": "關閉提詞器",
+    "companionOpen": "顯示手機遙控",
+    "companionClose": "收起手機遙控",
     "settings": "設定",
     "settingsUpdate": "設定（有可用更新）",
     "resources": "Utawakui 的資源用量",

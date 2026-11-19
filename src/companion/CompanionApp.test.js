@@ -50,7 +50,7 @@ describe('CompanionApp', () => {
   });
 
   it.each([
-    ['unpaired', '這支手機尚未配對'],
+    ['unpaired', '尚未配對。請按電腦標題列的手機按鈕'],
     ['pairing-failed', '配對碼可能已過期或已使用'],
     ['devices-full', '已達上限'],
     ['connecting', '正在連線到電腦'],
@@ -80,6 +80,17 @@ describe('CompanionApp', () => {
     expect(html).toContain('請在電腦上按「允許」');
     expect(html).toContain('4321');
     expect(html).not.toContain('surface:');
+  });
+
+  it('offers to take the connection back after another phone took over', async () => {
+    const html = await render('displaced', {
+      sendCommand: vi.fn(),
+      resume: vi.fn(),
+    });
+    expect(html).toContain('已改由其他手機連線。');
+    expect(html).toMatch(/ui-btn--accent[\s\S]*改用這支手機/u);
+    expect(html).not.toContain('surface:');
+    expect(await render('displaced')).not.toContain('改用這支手機');
   });
 
   it.each([

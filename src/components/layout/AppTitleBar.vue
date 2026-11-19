@@ -12,6 +12,7 @@ import {
   Moon,
   PictureInPicture2,
   Settings,
+  Smartphone,
   Sun,
 } from '../../icons/index.js';
 import { useObsIntegration } from '../../composables/useObsIntegration.js';
@@ -30,6 +31,8 @@ const props = defineProps({
   preparationControls: { type: String, default: '' },
   preparationStatus: { type: String, default: 'idle' },
   preparationStatusLabel: { type: String, default: '' },
+  companionActive: { type: Boolean, default: false },
+  companionControls: { type: String, default: '' },
   performerActive: { type: Boolean, default: false },
   performerBusy: { type: Boolean, default: false },
   settingsActive: { type: Boolean, default: false },
@@ -37,6 +40,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  'toggleCompanion',
   'togglePreparation',
   'togglePerformer',
   'toggleSettings',
@@ -255,6 +259,24 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           :aria-expanded="preparationActive"
           :aria-controls="preparationControls || undefined"
           @click="emit('togglePreparation')"
+        />
+
+        <UiIconButton
+          data-app-companion-trigger
+          :icon="Smartphone"
+          :label="
+            t(
+              companionActive
+                ? 'shell.titleBar.companionClose'
+                : 'shell.titleBar.companionOpen',
+            )
+          "
+          variant="ghost"
+          size="md"
+          :active="companionActive"
+          :aria-expanded="companionActive"
+          :aria-controls="companionControls || undefined"
+          @click="emit('toggleCompanion')"
         />
 
         <UiIconButton

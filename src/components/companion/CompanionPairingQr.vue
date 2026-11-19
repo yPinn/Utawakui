@@ -39,10 +39,11 @@ const qr = computed(() => {
 </template>
 
 <style scoped>
+/* Fills its container, which owns the size, outline and radius. */
 .companion-pairing-qr {
-  inline-size: min(100%, 12rem);
+  display: block;
+  inline-size: 100%;
   block-size: auto;
-  border-radius: var(--ui-radius-sm);
 }
 
 .companion-pairing-qr__field {

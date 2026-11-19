@@ -28,6 +28,8 @@
     "themeLight": "Switch to light theme",
     "performerOpen": "Open prompter",
     "performerClose": "Close prompter",
+    "companionOpen": "Show phone remote",
+    "companionClose": "Collapse phone remote",
     "settings": "Settings",
     "settingsUpdate": "Settings (update available)",
     "resources": "Utawakui resource usage",

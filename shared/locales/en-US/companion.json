@@ -1,20 +1,22 @@
 {
   "title": "Phone remote",
-  "guidance": "Read lyrics and control playback from your phone. The phone and this computer must be on the same network.",
-  "start": "Start",
-  "stop": "Stop",
+  "guidance": "The phone and this computer must share a network.",
+  "dock": {
+    "phone": "Phone pairing screen",
+    "awaitingApproval": "Confirm in the dialog."
+  },
+  "noDevices": "None yet. Use the phone button in the title bar.",
   "steps": {
     "label": "Pairing steps",
-    "scan": "Scan the QR code below with your phone camera.",
-    "allow": "Check that the phone and this computer show the same code, then select Allow."
+    "scan": "Scan with your phone camera.",
+    "allow": "Match the code, then select Allow."
   },
   "interface": "Network",
   "interfacePlaceholder": "Choose a network",
   "interfaceOption": "{name} ({address})",
-  "running": "Phones can connect",
-  "stopped": "Off",
-  "firewall": "Windows may ask to allow connections the first time. Allow private networks only.",
-  "pairingTitle": "Scan with your phone camera to add a phone",
+  "firewall": "If Windows asks, allow private networks only.",
+  "firewallPublic": "If Windows asks, allow public networks too.",
+  "allowPublic": "Use anyway",
   "pairingQr": "Pairing QR code",
   "pairingExpired": "This pairing code has expired",
   "renewPairing": "Get a new code",
@@ -22,15 +24,16 @@
   "deviceMeta": "Last connected {date}",
   "revoke": "Remove",
   "revokeNamed": "Remove {name}",
+  "renameNamed": "Rename {name}",
   "revokeAll": "Remove all",
   "errors": {
-    "no-interface": "No network found. Connect this computer to your home or studio Wi-Fi or wired network; the remote turns on once connected.",
-    "choose-interface": "This computer is on several networks. Choose the one your phone uses.",
-    "public-network": "Windows treats this network as public. Change it to private in Windows Settings; the remote turns on once it is.",
-    "port-in-use": "Another app is blocking the phone remote. Close other apps; it retries automatically.",
+    "no-interface": "No network found. It turns on once Wi-Fi or a cable connects.",
+    "choose-interface": "Choose the network your phone uses.",
+    "public-network": "This is a public network. Set it to private in Windows, or use it anyway.",
+    "port-in-use": "Another app is blocking the connection; it retries once that app closes.",
     "secure-storage-unavailable": "This computer can't encrypt pairing data right now, so the phone remote can't turn on.",
     "listen-failed": "The phone remote couldn't turn on. Try again later.",
-    "not-running": "Select Start first.",
+    "not-running": "The connection isn't ready yet. Wait a moment.",
     "invalid": "That setting isn't valid. Choose again.",
     "read-failed": "The phone remote status can't be read right now.",
     "failed": "That didn't finish. Try again."
@@ -39,13 +42,15 @@
     "connecting": "Connecting to the computer…",
     "reconnecting": "Connection lost. Reconnecting…",
     "pairing": "Pairing…",
-    "unpaired": "This phone isn't paired. On the computer, open Settings → Phone remote, then scan the QR code.",
+    "unpaired": "Not paired. Select the phone button in the computer's title bar, then scan the QR code.",
     "pairing-failed": "Pairing didn't finish. The code may have expired or been used. Create a new one on the computer and scan again.",
     "devices-full": "The paired phone limit is reached. Remove an unused phone in the computer's Settings first.",
     "stopped": "Disconnected.",
     "awaiting-approval": "Choose Allow on the computer. Check that it shows the same code:",
     "pairing-denied": "The computer refused this pairing. If this is your phone, create a new code on the computer and scan again.",
-    "pairing-busy": "The computer is confirming another phone. Scan again shortly."
+    "pairing-busy": "The computer is confirming another phone. Scan again shortly.",
+    "displaced": "Another phone is connected now.",
+    "resume": "Use this phone"
   },
   "remote": {
     "label": "Remote",
@@ -67,13 +72,14 @@
       "busy": "The computer is busy. Try again shortly.",
       "rate-limited": "Too fast. Wait a moment.",
       "timed_out": "The computer didn't respond. Try again.",
-      "failed": "That didn't finish. Try again."
+      "failed": "That didn't finish. Try again.",
+      "displaced": "Another phone is connected now."
     }
   },
   "approval": {
     "label": "Confirm new phone",
     "title": "Allow “{name}” to connect?",
-    "hint": "Check that the phone shows the same code. If it isn't your phone, choose Deny.",
+    "hint": "The phone should show the same code; if it isn't yours, deny.",
     "codeLabel": "Match code",
     "allow": "Allow",
     "deny": "Deny"

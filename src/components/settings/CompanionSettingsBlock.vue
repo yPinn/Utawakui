@@ -1,285 +1,120 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, shallowRef, watch } from 'vue';
 import {
-  Play,
-  Power,
-  RefreshCw,
-  Smartphone,
-  Trash2,
-} from '../../icons/index.js';
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  shallowRef,
+} from 'vue';
+import { Pencil, Trash2 } from '../../icons/index.js';
 import { useSharedCompanion } from '../../composables/useCompanionSettings.js';
-import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiSelect from '../ui/UiSelect.vue';
+import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
-import CompanionPairingQr from './CompanionPairingQr.vue';
 import { t } from '../../utils/i18n.js';
 
+// Settings keeps only the paired-phone record; pairing and connection
+// controls live in the title-bar phone panel.
 const props = defineProps({
   settings: { type: Object, default: null },
 });
 
+// Matches the device store's name limit.
+const LABEL_MAX = 40;
+
 const companion = props.settings ?? useSharedCompanion();
-const SETUP_STEPS = ['companion.steps.scan', 'companion.steps.allow'];
-// The App-level dialog asks for approval; the QR steps aside meanwhile.
-const approvalRequest = computed(() => status.value?.pairing?.request ?? null);
-
-// The QR shows as soon as the remote runs. A used or expired code stays
-// drawn under a scrim that offers a fresh one.
-const lastUrl = shallowRef('');
-const expired = shallowRef(true);
-let expiryTimer = null;
-watch(
-  () => companion.pairing.value,
-  (pairing) => {
-    clearTimeout(expiryTimer);
-    const left = pairing ? pairing.expiresAt - Date.now() : 0;
-    expired.value = left <= 0;
-    if (!pairing) return;
-    lastUrl.value = pairing.url;
-    if (left > 0)
-      expiryTimer = setTimeout(() => {
-        expired.value = true;
-      }, left);
-  },
-  { immediate: true },
-);
-watch(
-  () => Boolean(companion.status.value?.running),
-  (running) => {
-    if (!running) lastUrl.value = '';
-    else if (!companion.pairing.value) void companion.beginPairing();
-  },
-  { immediate: true },
-);
-const showQr = computed(
-  () => Boolean(companion.status.value?.running) && !approvalRequest.value,
-);
-
-const status = computed(() => companion.status.value);
-// Main picks the only private network itself; a choice is offered only
-// when the computer is on several.
-const interfaceOptions = computed(() =>
-  (status.value?.interfaces ?? [])
-    .filter((entry) => entry.privateNetwork)
-    .map((entry) => ({
-      value: entry.address,
-      label: t('companion.interfaceOption', entry),
-    })),
-);
-const errorText = computed(() => {
-  const code = companion.error.value || status.value?.error;
-  return code ? t(`companion.errors.${code}`) : '';
-});
-const stateLabel = computed(() =>
-  status.value?.running ? t('companion.running') : t('companion.stopped'),
-);
-// Setup help stays until the first phone is paired.
-const firstSetup = computed(() =>
-  Boolean(status.value && !status.value.devices.length),
-);
+const devices = computed(() => companion.status.value?.devices ?? []);
 const formatDate = (value) =>
   new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value));
 
+// One phone is renamed in place at a time; Enter or leaving the field saves,
+// Escape keeps the old name.
+const editingId = shallowRef(null);
+const draft = shallowRef('');
+let renameField = null;
+
+async function startRename(device) {
+  editingId.value = device.id;
+  draft.value = device.label;
+  await nextTick();
+  renameField?.focus();
+}
+
+function finishRename(device) {
+  if (editingId.value !== device.id) return;
+  editingId.value = null;
+  const label = draft.value.trim();
+  if (label && label !== device.label) void companion.rename(device.id, label);
+}
+
+function cancelRename() {
+  editingId.value = null;
+}
+
 onMounted(() => companion.start());
-// A code is only good while Settings shows it.
-onBeforeUnmount(() => {
-  clearTimeout(expiryTimer);
-  if (companion.pairing.value) void companion.cancelPairing();
-  companion.stop();
-});
+onBeforeUnmount(() => companion.stop());
 </script>
 
 <template>
-  <div class="companion-settings-block">
-    <SettingsDocumentItem
-      :icon="Smartphone"
-      :title="t('companion.title')"
-      :status="stateLabel"
-      :status-tone="status?.running ? 'success' : 'muted'"
-      :guidance="t('companion.guidance')"
-    >
-      <template #actions>
-        <!-- Start also retries a failed start, e.g. after a network fix. -->
-        <UiButton
-          v-if="!status?.running"
-          :icon="Play"
-          variant="accent"
-          :disabled="companion.busy.value || !status"
-          @click="companion.configure({ enabled: true })"
-          >{{ t('companion.start') }}</UiButton
-        >
-        <UiButton
-          v-if="status?.enabled"
-          :icon="Power"
-          variant="secondary"
-          :disabled="companion.busy.value"
-          @click="companion.configure({ enabled: false })"
-          >{{ t('companion.stop') }}</UiButton
-        >
-      </template>
-      <template #feedback>
-        <ol
-          v-if="firstSetup"
-          class="companion-settings-block__steps"
-          :aria-label="t('companion.steps.label')"
-        >
-          <li v-for="step in SETUP_STEPS" :key="step">{{ t(step) }}</li>
-        </ol>
-        <UiSelect
-          v-if="status?.enabled && interfaceOptions.length > 1"
-          id="companion-interface"
-          class="companion-settings-block__interface"
-          :label="t('companion.interface')"
-          :placeholder="t('companion.interfacePlaceholder')"
-          :options="interfaceOptions"
-          :model-value="status?.interfaceAddress ?? ''"
-          :disabled="companion.busy.value"
-          @update:model-value="
-            companion.configure({ interfaceAddress: $event })
-          "
-        />
-        <UiHint v-if="errorText" tone="danger" role="status">{{
-          errorText
-        }}</UiHint>
-        <UiHint v-if="status?.enabled && firstSetup">{{
-          t('companion.firewall')
-        }}</UiHint>
-      </template>
-    </SettingsDocumentItem>
-
-    <SettingsDocumentItem :title="t('companion.devices')" variant="nested">
-      <template #feedback>
-        <figure v-if="showQr" class="companion-settings-block__pairing">
-          <div class="companion-settings-block__qr ui-artwork-composite">
-            <CompanionPairingQr
-              v-if="lastUrl"
-              :value="lastUrl"
-              :label="t('companion.pairingQr')"
-            />
-            <UiArtworkOverlay v-if="lastUrl && expired">
-              <div class="companion-settings-block__qr-scrim" role="status">
-                <span>{{ t('companion.pairingExpired') }}</span>
-                <UiButton
-                  :icon="RefreshCw"
-                  variant="overlay"
-                  :disabled="companion.busy.value"
-                  @click="companion.beginPairing()"
-                  >{{ t('companion.renewPairing') }}</UiButton
-                >
-              </div>
-            </UiArtworkOverlay>
-          </div>
-          <figcaption class="companion-settings-block__qr-caption">
-            {{ t('companion.pairingTitle') }}
-          </figcaption>
-        </figure>
-        <ul v-if="!firstSetup" class="companion-settings-block__devices">
-          <li v-for="device in status?.devices ?? []" :key="device.id">
-            <span class="companion-settings-block__device-name">{{
-              device.label
-            }}</span>
-            <UiHint>{{
-              t('companion.deviceMeta', {
-                date: formatDate(device.lastSeenAt),
-              })
-            }}</UiHint>
-            <UiIconButton
-              :icon="Trash2"
-              :label="t('companion.revokeNamed', { name: device.label })"
-              :disabled="companion.busy.value"
-              @click="companion.revoke(device.id)"
-            />
-          </li>
-        </ul>
-        <UiButton
-          v-if="(status?.devices.length ?? 0) > 1"
-          variant="ghost"
-          :disabled="companion.busy.value"
-          @click="companion.revokeAll()"
-          >{{ t('companion.revokeAll') }}</UiButton
-        >
-      </template>
-    </SettingsDocumentItem>
-  </div>
+  <SettingsDocumentItem :title="t('companion.devices')" variant="nested">
+    <template v-if="devices.length > 1" #actions>
+      <UiButton
+        variant="ghost"
+        :disabled="companion.busy.value"
+        @click="companion.revokeAll()"
+        >{{ t('companion.revokeAll') }}</UiButton
+      >
+    </template>
+    <template #feedback>
+      <UiHint v-if="!devices.length">{{ t('companion.noDevices') }}</UiHint>
+      <ul v-else class="companion-settings-block__devices">
+        <li v-for="device in devices" :key="device.id">
+          <UiTextField
+            v-if="editingId === device.id"
+            :id="`companion-device-name-${device.id}`"
+            :ref="(field) => (renameField = field)"
+            :label="t('companion.renameNamed', { name: device.label })"
+            label-hidden
+            :maxlength="LABEL_MAX"
+            :model-value="draft"
+            @update:model-value="draft = $event"
+            @keydown.enter.prevent="finishRename(device)"
+            @keydown.esc.stop.prevent="cancelRename"
+            @blur="finishRename(device)"
+          />
+          <span v-else class="companion-settings-block__device-name">{{
+            device.label
+          }}</span>
+          <UiHint>{{
+            t('companion.deviceMeta', { date: formatDate(device.lastSeenAt) })
+          }}</UiHint>
+          <UiIconButton
+            :icon="Pencil"
+            :label="t('companion.renameNamed', { name: device.label })"
+            :disabled="companion.busy.value || editingId === device.id"
+            @click="startRename(device)"
+          />
+          <UiIconButton
+            :icon="Trash2"
+            :label="t('companion.revokeNamed', { name: device.label })"
+            :disabled="companion.busy.value"
+            @click="companion.revoke(device.id)"
+          />
+        </li>
+      </ul>
+    </template>
+  </SettingsDocumentItem>
 </template>
 
 <style scoped>
-.companion-settings-block {
-  display: grid;
-  gap: var(--ui-space-2);
-  min-inline-size: 0;
-}
-
-.companion-settings-block__steps {
-  inline-size: 100%;
-  margin: 0;
-  padding-inline-start: var(--ui-space-5);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-}
-
-.companion-settings-block__interface {
-  inline-size: min(100%, 24rem);
-}
-
-.companion-settings-block__pairing {
-  display: grid;
-  justify-items: start;
-  gap: var(--ui-space-2);
-  inline-size: 100%;
-  margin: 0;
-}
-
-/* Empty while the first code is created, then the QR fills it. */
-.companion-settings-block__qr {
-  position: relative;
-  display: grid;
-  inline-size: min(100%, 12rem);
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-palette-neutral-50);
-}
-
-.companion-settings-block__qr > :deep(.companion-pairing-qr) {
-  inline-size: 100%;
-  border-radius: 0;
-}
-
-.companion-settings-block__qr-scrim {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-3);
-  background: var(--ui-color-overlay-scrim-active);
-  color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-  text-align: center;
-}
-
-/* The feedback row pushes buttons to the end; keep this one centred. */
-.companion-settings-block .companion-settings-block__qr-scrim :deep(button) {
-  margin-inline-start: 0;
-}
-
-.companion-settings-block__qr-caption {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  line-height: var(--ui-type-caption-line-height);
-}
-
 .companion-settings-block__devices {
   display: grid;
+  inline-size: 100%;
   gap: var(--ui-space-1);
   margin: 0;
   padding: 0;
@@ -288,12 +123,17 @@ onBeforeUnmount(() => {
 
 .companion-settings-block__devices li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: var(--ui-space-2);
 }
 
+/* A dense value row: body-compact, like other Settings values. */
 .companion-settings-block__device-name {
+  color: var(--ui-color-text);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-compact-line-height);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

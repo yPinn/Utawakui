@@ -7,6 +7,8 @@ export const READING_SCALE_STORAGE_KEY = 'utawakui.companion.reading-scale';
 const SUBPROTOCOL = 'utawakui.companion.v1';
 const RETRY_DELAYS_MS = [1000, 2000, 5000, 10000];
 const UNAUTHORIZED = 4401;
+// Another phone took over: keep the credential, stop retrying, offer resume.
+const DISPLACED = 4410;
 const PAIR_POLL_MS = 1500;
 const CONTROL_COMMANDS = Object.freeze({
   play: 'player.play-pause',
@@ -162,6 +164,13 @@ export function createCompanionBridge({
         setStatus('unpaired');
         return;
       }
+      // Retrying would take the connection straight back, so wait for the
+      // person to choose this phone again.
+      if (event.code === DISPLACED) {
+        retry = 0;
+        setStatus('displaced');
+        return;
+      }
       if (stopped) return;
       setStatus('reconnecting');
       const delay =
@@ -198,6 +207,10 @@ export function createCompanionBridge({
       setStatus('unpaired');
       socket?.close();
       return 'unauthorized';
+    }
+    if (body?.reason === 'displaced') {
+      setStatus('displaced');
+      return 'displaced';
     }
     return body?.result === 'applied'
       ? 'applied'
@@ -245,5 +258,19 @@ export function createCompanionBridge({
     recordDiagnostic: async () => undefined,
   };
 
-  return { pair, hasCredential, connect, stop, sendCommand, performerBridge };
+  // Takes the connection back from whichever phone holds it now.
+  function resume() {
+    if (socket) return;
+    connect();
+  }
+
+  return {
+    pair,
+    hasCredential,
+    connect,
+    resume,
+    stop,
+    sendCommand,
+    performerBridge,
+  };
 }
