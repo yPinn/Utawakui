@@ -3,6 +3,7 @@
   "guidance": "The phone and this computer must share a network.",
   "dock": {
     "phone": "Phone pairing screen",
+    "preview": "Phone preview",
     "awaitingApproval": "Confirm in the dialog."
   },
   "noDevices": "None yet. Use the phone button in the title bar.",
@@ -39,20 +40,114 @@
     "failed": "That didn't finish. Try again."
   },
   "page": {
-    "connecting": "Connecting to the computer…",
-    "reconnecting": "Connection lost. Reconnecting…",
-    "pairing": "Pairing…",
-    "unpaired": "Not paired. Select the phone button in the computer's title bar, then scan the QR code.",
-    "pairing-failed": "Pairing didn't finish. The code may have expired or been used. Create a new one on the computer and scan again.",
-    "devices-full": "The paired phone limit is reached. Remove an unused phone in the computer's Settings first.",
-    "stopped": "Disconnected.",
-    "awaiting-approval": "Choose Allow on the computer. Check that it shows the same code:",
-    "pairing-denied": "The computer refused this pairing. If this is your phone, create a new code on the computer and scan again.",
-    "pairing-busy": "The computer is confirming another phone. Scan again shortly.",
-    "displaced": "Another phone is connected now.",
+    "connectedShort": "Connected",
+    "reconnectingShort": "Reconnecting",
     "resume": "Use this phone"
   },
+  "setup": {
+    "states": {
+      "unpaired": {
+        "title": "Phone not paired",
+        "detail": "Pair your phone to follow lyrics and control playback."
+      },
+      "connecting": {
+        "title": "Connecting to the computer",
+        "detail": "Keep Utawakui open on the computer."
+      },
+      "connectFailed": {
+        "title": "Could not reach the computer",
+        "detail": "Check that Mobile Remote is on and both devices are on the same network. This page will retry automatically."
+      },
+      "pairing": {
+        "title": "Sending pairing request",
+        "detail": "Look for the pairing prompt on the computer."
+      },
+      "awaiting-approval": {
+        "title": "Waiting for computer approval",
+        "detail": "Check that the codes match, then choose Allow on the computer."
+      },
+      "pairing-failed": {
+        "title": "Pairing could not finish",
+        "detail": "The pairing code may have expired or already been used. Generate a new QR code on the computer and scan it."
+      },
+      "pairing-denied": {
+        "title": "Pairing was declined",
+        "detail": "Get a new QR code from the computer. Scan it, check the codes, and choose Allow on the computer."
+      },
+      "pairing-busy": {
+        "title": "The computer is confirming another phone",
+        "detail": "Wait for that pairing to finish, then scan the QR code again."
+      },
+      "devices-full": {
+        "title": "Paired phone limit reached",
+        "detail": "Remove an unused phone in the computer’s settings, then try pairing again."
+      },
+      "displaced": {
+        "title": "Another phone is connected",
+        "detail": "Use the button below to control playback from this phone."
+      },
+      "stopped": {
+        "title": "Disconnected",
+        "detail": "Check that Mobile Remote is on, then reload this page."
+      }
+    },
+    "steps": {
+      "network": "Connect the phone and computer to the same network.",
+      "desktop": "Open Utawakui on the computer and select the phone button in the title bar.",
+      "scan": "Scan the QR code on the computer with your phone’s camera."
+    }
+  },
+  "tabs": {
+    "lyrics": "Lyrics",
+    "player": "Remote",
+    "templates": "Templates"
+  },
+  "queue": {
+    "empty": "No tracks are queued to play next.",
+    "confirmClear": "Confirm clear",
+    "arrangement": "Performance",
+    "moveUp": "Up",
+    "moveDown": "Down",
+    "remove": "Remove",
+    "catalog": {
+      "library": "All tracks",
+      "search": "Search title, artist or album",
+      "groupBy": "Group by",
+      "all": "Ungrouped",
+      "artist": "Artist",
+      "album": "Album",
+      "uncategorized": "Uncategorized",
+      "loading": "Loading tracks…",
+      "loadFailed": "Couldn’t load tracks.",
+      "more": "Load more",
+      "empty": "No matching tracks."
+    }
+  },
+  "desktop": {
+    "connected": "Mobile remote connected",
+    "disconnected": "Mobile remote disconnected"
+  },
+  "lyrics": {
+    "noTrack": "No track loaded",
+    "noLyrics": "No lyrics available for this track"
+  },
+  "templates": {
+    "quickTools": "Lyrics quick controls",
+    "smaller": "Decrease lyrics text size",
+    "larger": "Increase lyrics text size",
+    "list": "Scrolling lyrics",
+    "focus": "Two-line focus",
+    "outputUnavailable": "Output template settings are currently unavailable."
+  },
   "remote": {
+    "mix": "Monitor mix",
+    "accompaniment": "Backing only",
+    "guide-vocal": "With guide vocal",
+    "mixUnavailable": "Available when the track uses separate audio stems.",
+    "mixFollowsCapture": "Monitor guide vocals currently follow the capture output.",
+    "originalKey": "Reset key",
+    "tempo": "Playback speed",
+    "tempoValue": "{value}×",
     "label": "Remote",
     "groups": {
       "track": "Track",
@@ -66,6 +161,9 @@
     "volumeDown": "Volume down",
     "volumeUp": "Volume up",
     "mute": "Mute",
+    "lockScreen": "Lock screen controls",
+    "lockScreenHint": "Pauses other audio on this phone.",
+    "lockScreenFailed": "Couldn't turn on lock screen controls.",
     "results": {
       "stale": "The display just changed. Tap again.",
       "unavailable": "Can't do that now. Check that the computer is playing.",

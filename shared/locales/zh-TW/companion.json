@@ -3,6 +3,7 @@
   "guidance": "手機和電腦需連同一個網路。",
   "dock": {
     "phone": "手機配對畫面",
+    "preview": "手機預覽",
     "awaitingApproval": "請在視窗中確認。"
   },
   "noDevices": "尚未配對。按標題列的手機按鈕開始。",
@@ -39,20 +40,114 @@
     "failed": "操作未完成，請再試一次。"
   },
   "page": {
-    "connecting": "正在連線到電腦…",
-    "reconnecting": "連線中斷，正在重新連線…",
-    "pairing": "正在配對…",
-    "unpaired": "尚未配對。請按電腦標題列的手機按鈕，再掃描 QR 碼。",
-    "pairing-failed": "配對未完成。配對碼可能已過期或已使用，請在電腦重新產生後再掃描。",
-    "devices-full": "已配對的手機已達上限。請先在電腦的設定移除不用的手機。",
-    "stopped": "已停止連線。",
-    "awaiting-approval": "請在電腦上按「允許」。確認電腦顯示相同的代碼：",
-    "pairing-denied": "電腦拒絕了這次配對。若是你的手機，請在電腦重新產生配對碼後再掃描。",
-    "pairing-busy": "電腦正在確認另一支手機，請稍後再掃描。",
-    "displaced": "已改由其他手機連線。",
+    "connectedShort": "已連線",
+    "reconnectingShort": "重新連線中",
     "resume": "改用這支手機"
   },
+  "setup": {
+    "states": {
+      "unpaired": {
+        "title": "尚未配對",
+        "detail": "配對後即可在手機看歌詞、遙控播放。"
+      },
+      "connecting": {
+        "title": "正在連線到電腦",
+        "detail": "請保持電腦上的 Utawakui 開啟。"
+      },
+      "connectFailed": {
+        "title": "無法連線到電腦",
+        "detail": "請確認電腦已開啟手機遙控，且兩台裝置在同一個網路。此頁會自動重試。"
+      },
+      "pairing": {
+        "title": "正在送出配對要求",
+        "detail": "請在電腦上留意配對提示。"
+      },
+      "awaiting-approval": {
+        "title": "等待電腦確認",
+        "detail": "請核對電腦顯示的代碼，確認相同後按「允許」。"
+      },
+      "pairing-failed": {
+        "title": "配對未完成",
+        "detail": "配對碼可能已過期或已使用。請在電腦重新產生 QR 碼後再掃描。"
+      },
+      "pairing-denied": {
+        "title": "配對已被拒絕",
+        "detail": "請從電腦重新取得 QR 碼。掃描後，請核對代碼並在電腦按「允許」。"
+      },
+      "pairing-busy": {
+        "title": "電腦正在確認另一支手機",
+        "detail": "請等電腦完成目前的配對，再重新掃描 QR 碼。"
+      },
+      "devices-full": {
+        "title": "已達配對上限",
+        "detail": "請在電腦的設定移除一支不用的手機，再重新配對。"
+      },
+      "displaced": {
+        "title": "目前由另一支手機連線",
+        "detail": "點選下方按鈕即可改由這支手機遙控。"
+      },
+      "stopped": {
+        "title": "已停止連線",
+        "detail": "請確認電腦上的手機遙控已開啟，再重新載入此頁。"
+      }
+    },
+    "steps": {
+      "network": "讓手機和電腦連到同一個網路。",
+      "desktop": "在電腦開啟 Utawakui，點選標題列的手機按鈕。",
+      "scan": "用手機相機掃描電腦顯示的 QR 碼。"
+    }
+  },
+  "tabs": {
+    "lyrics": "歌詞",
+    "player": "遙控",
+    "templates": "模板"
+  },
+  "queue": {
+    "empty": "接下來沒有排定的曲目。",
+    "confirmClear": "確認清空",
+    "arrangement": "演出安排",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "remove": "移除",
+    "catalog": {
+      "library": "全部曲目",
+      "search": "搜尋曲名、歌手或專輯",
+      "groupBy": "分組方式",
+      "all": "不分組",
+      "artist": "歌手",
+      "album": "專輯",
+      "uncategorized": "未分類",
+      "loading": "正在載入曲目…",
+      "loadFailed": "無法載入曲目。",
+      "more": "載入更多",
+      "empty": "沒有符合的曲目。"
+    }
+  },
+  "desktop": {
+    "connected": "手機遙控已連線",
+    "disconnected": "手機遙控已中斷"
+  },
+  "lyrics": {
+    "noTrack": "尚未播放曲目",
+    "noLyrics": "這首曲目沒有可顯示的歌詞"
+  },
+  "templates": {
+    "quickTools": "歌詞快調",
+    "smaller": "縮小歌詞字級",
+    "larger": "放大歌詞字級",
+    "list": "捲動歌詞",
+    "focus": "兩句聚焦",
+    "outputUnavailable": "目前無法調整畫面輸出模板。"
+  },
   "remote": {
+    "mix": "監聽混音",
+    "accompaniment": "純伴奏",
+    "guide-vocal": "加導唱",
+    "mixUnavailable": "曲目使用分離音軌時可切換。",
+    "mixFollowsCapture": "監聽導唱目前跟隨輸出設定。",
+    "originalKey": "還原原調",
+    "tempo": "播放速度",
+    "tempoValue": "{value}×",
     "label": "遙控",
     "groups": {
       "track": "換曲",
@@ -66,6 +161,9 @@
     "volumeDown": "音量變小",
     "volumeUp": "音量變大",
     "mute": "靜音",
+    "lockScreen": "鎖定畫面控制",
+    "lockScreenHint": "開啟後會暫停手機上的其他音樂。",
+    "lockScreenFailed": "無法開啟鎖定畫面控制。",
     "results": {
       "stale": "畫面已更新，請再按一次。",
       "unavailable": "目前無法操作，請確認電腦正在播放。",

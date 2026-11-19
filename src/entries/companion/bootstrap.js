@@ -1,13 +1,12 @@
-// Runs before any module reads the UI locale: installs the companion bridge
-// as the performer bridge and derives the language from the phone browser.
+// Installs the phone transport as the shared performer bridge.
 import { shallowRef } from 'vue';
 import {
   createCompanionBridge,
   takePairingCode,
 } from '../../companion/companionBridge.js';
 
-export const companionStatus = shallowRef('connecting');
 export const pairingCode = takePairingCode(window.location, window.history);
+export const companionStatus = shallowRef(pairingCode ? 'pairing' : 'unpaired');
 
 export const companion = createCompanionBridge({
   location: window.location,
@@ -16,12 +15,10 @@ export const companion = createCompanionBridge({
     companionStatus.value = status;
   },
 });
+if (!pairingCode && companion.hasCredential())
+  companionStatus.value = 'connecting';
 
-const language = String(globalThis.navigator?.language ?? '').toLowerCase();
-window.UtawakuiPerformer = {
-  ...companion.performerBridge,
-  initialUiLocale: language.startsWith('zh') ? 'zh-TW' : 'en-US',
-};
+window.UtawakuiPerformer = companion.performerBridge;
 
 export function deviceLabel() {
   const agent = String(globalThis.navigator?.userAgent ?? '');

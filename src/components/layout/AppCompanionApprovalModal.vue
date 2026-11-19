@@ -110,6 +110,6 @@ onBeforeUnmount(() => {
   font-weight: var(--ui-type-display-weight);
   line-height: var(--ui-type-display-line-height);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.2em;
+  letter-spacing: var(--ui-companion-match-code-letter-spacing);
 }
 </style>

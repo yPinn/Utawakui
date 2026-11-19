@@ -4,6 +4,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { readCatalogSource } from '../../utils/catalogSourceText.js';
 import CompanionDockPhone from './CompanionDockPhone.vue';
 
+const performer = vi.hoisted(() => ({ remoteReaders: 0 }));
+vi.mock('../../composables/useCompanionRemote.js', () => ({
+  useCompanionRemote: () => ({ apply: vi.fn() }),
+}));
+vi.mock('../../composables/usePerformerSelfView.js', () => ({
+  usePerformerSelfView: () => ({
+    state: performer,
+    latestSnapshot: shallowRef(null),
+  }),
+}));
+
 const base = {
   enabled: true,
   running: true,
@@ -73,14 +84,46 @@ describe('CompanionDockPhone', () => {
     expect(html).not.toContain('ui-btn--accent');
   });
 
-  it('drops steps and notes once a phone has been paired', async () => {
+  it('keeps the full pairing instructions when a paired phone is offline', async () => {
     const html = await render(companionWith(base, pairing(60_000)));
     expect(html).toContain('companion-pairing-qr');
-    expect(html).not.toContain('配對步驟');
-    expect(html).not.toContain('手機和電腦需連同一個網路。');
-    expect(html).not.toContain('私人網路');
-    // Only the flow remains: no notes, and no network choice for one network.
-    expect(html).not.toContain('class="ui-separator');
+    expect(html).toContain('配對步驟');
+    expect(html).toContain('手機和電腦需連同一個網路。');
+    expect(html).toContain('私人網路');
+    expect(html).not.toContain('companion-interface');
+  });
+
+  it('shows the live phone page only while the listener has a connected reader', async () => {
+    performer.remoteReaders = 1;
+    try {
+      const companion = companionWith(base, pairing(60_000));
+      const live = await render(companion);
+      expect(live).toContain('companion-dock-preview__viewport');
+      expect(live).toContain('companion-lyrics-tab');
+      expect(live).toContain('已連線');
+      expect(live).not.toContain('lucide-qr-code');
+      expect(live).not.toContain('companion-dock-phone__steps');
+      expect(live).not.toContain('companion.setup.states.undefined');
+      expect(live).not.toContain('companion-pairing-qr');
+      expect(companion.beginPairing).not.toHaveBeenCalled();
+      expect(await render(companion, false)).not.toContain(
+        'companion-lyrics-tab',
+      );
+      expect(
+        await render(companionWith({ ...base, running: false })),
+      ).not.toContain('companion-lyrics-tab');
+      const pending = await render(
+        companionWith({ ...base, pairing: { request: { id: 'r1' } } }),
+      );
+      expect(pending).not.toContain('請在視窗中確認。');
+      expect(pending).toContain('companion-lyrics-tab');
+    } finally {
+      performer.remoteReaders = 0;
+    }
+    const offline = await render(companionWith(base, pairing(60_000)));
+    expect(offline).toContain('companion-pairing-qr');
+    expect(offline).toContain('companion-dock-phone__steps');
+    expect(offline).toContain('手機和電腦需連同一個網路。');
   });
 
   it('creates a code only while shown and running', async () => {

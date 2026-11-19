@@ -1,8 +1,14 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import {
+  computed,
+  defineAsyncComponent,
+  onBeforeUnmount,
+  onMounted,
+} from 'vue';
 import { RefreshCw } from '../../icons/index.js';
 import { useSharedCompanion } from '../../composables/useCompanionSettings.js';
 import { useCompanionPairingQr } from '../../composables/useCompanionPairingQr.js';
+import { usePerformerSelfView } from '../../composables/usePerformerSelfView.js';
 import UiArtworkOverlay from '../ui/UiArtworkOverlay.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -22,11 +28,21 @@ const props = defineProps({
 });
 
 const companion = props.companion ?? useSharedCompanion();
+const DockPreview = defineAsyncComponent(
+  async () => (await import('./CompanionDockPreview.vue')).default,
+);
+const { state: performer } = usePerformerSelfView();
 const status = computed(() => companion.status.value);
 const busy = computed(() => companion.busy.value);
 const running = computed(() => Boolean(status.value?.running));
 const approvalPending = computed(() => Boolean(status.value?.pairing?.request));
-const qr = useCompanionPairingQr(companion, () => props.active);
+const showPreview = computed(
+  () => running.value && performer.remoteReaders > 0,
+);
+const qr = useCompanionPairingQr(
+  companion,
+  () => props.active && !showPreview.value,
+);
 
 const SETUP_STEPS = ['companion.steps.scan', 'companion.steps.allow'];
 const interfaces = computed(() => status.value?.interfaces ?? []);
@@ -60,75 +76,76 @@ const onPublicNetwork = computed(() => {
   );
   return Boolean(running.value && current && !current.privateNetwork);
 });
-const firstSetup = computed(() =>
-  Boolean(status.value && !status.value.devices.length),
-);
-
 onMounted(() => companion.start());
 onBeforeUnmount(() => companion.stop());
 </script>
 
 <template>
   <section class="companion-dock-phone" :aria-label="t('companion.title')">
-    <CompanionPhoneFrame :label="t('companion.dock.phone')">
-      <!-- Pairing flow -->
-      <!-- Always on, so there is no on／off state to show: the QR frame stays
+    <CompanionPhoneFrame
+      :label="
+        t(showPreview ? 'companion.dock.preview' : 'companion.dock.phone')
+      "
+      :immersive="showPreview"
+    >
+      <DockPreview v-if="showPreview && active" />
+      <template v-else-if="!showPreview">
+        <!-- Pairing flow -->
+        <!-- Always on, so there is no on／off state to show: the QR frame stays
            in place and fills once the connection is ready. -->
-      <div class="companion-dock-phone__section">
-        <p v-if="approvalPending" class="companion-dock-phone__message">
-          {{ t('companion.dock.awaitingApproval') }}
-        </p>
-        <template v-else>
-          <!-- A new code crossfades over the old one; the scrim fades. -->
-          <div class="companion-dock-phone__qr ui-artwork-composite">
-            <Transition name="companion-dock-phone-qr">
-              <CompanionPairingQr
-                v-if="qr.url.value"
-                :key="qr.url.value"
-                :value="qr.url.value"
-                :label="t('companion.pairingQr')"
-              />
-            </Transition>
-            <Transition name="companion-dock-phone-scrim">
-              <UiArtworkOverlay v-if="qr.url.value && qr.expired.value">
-                <div class="companion-dock-phone__scrim" role="status">
-                  <span>{{ t('companion.pairingExpired') }}</span>
-                  <UiButton
-                    :icon="RefreshCw"
-                    variant="overlay"
-                    :disabled="busy"
-                    @click="qr.renew()"
-                    >{{ t('companion.renewPairing') }}</UiButton
-                  >
-                </div>
-              </UiArtworkOverlay>
-            </Transition>
-          </div>
-          <ol
-            v-if="firstSetup && running"
-            class="companion-dock-phone__steps"
-            :aria-label="t('companion.steps.label')"
-          >
-            <li v-for="step in SETUP_STEPS" :key="step">{{ t(step) }}</li>
-          </ol>
-          <!-- Main retries on its own; only a public network needs a choice. -->
-          <UiHint v-if="!running && errorText" tone="danger" role="status">{{
-            errorText
-          }}</UiHint>
-          <UiButton
-            v-if="!running && publicCandidate"
-            variant="accent"
-            :disabled="busy"
-            @click="
-              companion.configure({ allowNetwork: publicCandidate.network })
-            "
-            >{{ t('companion.allowPublic') }}</UiButton
-          >
-        </template>
-      </div>
+        <div class="companion-dock-phone__section">
+          <p v-if="approvalPending" class="companion-dock-phone__message">
+            {{ t('companion.dock.awaitingApproval') }}
+          </p>
+          <template v-else>
+            <!-- A new code crossfades over the old one; the scrim fades. -->
+            <div class="companion-dock-phone__qr ui-artwork-composite">
+              <Transition name="companion-dock-phone-qr">
+                <CompanionPairingQr
+                  v-if="qr.url.value"
+                  :key="qr.url.value"
+                  :value="qr.url.value"
+                  :label="t('companion.pairingQr')"
+                />
+              </Transition>
+              <Transition name="companion-dock-phone-scrim">
+                <UiArtworkOverlay v-if="qr.url.value && qr.expired.value">
+                  <div class="companion-dock-phone__scrim" role="status">
+                    <span>{{ t('companion.pairingExpired') }}</span>
+                    <UiButton
+                      :icon="RefreshCw"
+                      variant="overlay"
+                      :disabled="busy"
+                      @click="qr.renew()"
+                      >{{ t('companion.renewPairing') }}</UiButton
+                    >
+                  </div>
+                </UiArtworkOverlay>
+              </Transition>
+            </div>
+            <ol
+              v-if="running"
+              class="companion-dock-phone__steps"
+              :aria-label="t('companion.steps.label')"
+            >
+              <li v-for="step in SETUP_STEPS" :key="step">{{ t(step) }}</li>
+            </ol>
+            <!-- Main retries on its own; only a public network needs a choice. -->
+            <UiHint v-if="!running && errorText" tone="danger" role="status">{{
+              errorText
+            }}</UiHint>
+            <UiButton
+              v-if="!running && publicCandidate"
+              variant="accent"
+              :disabled="busy"
+              @click="
+                companion.configure({ allowNetwork: publicCandidate.network })
+              "
+              >{{ t('companion.allowPublic') }}</UiButton
+            >
+          </template>
+        </div>
 
-      <!-- Notes only matter until the first phone is paired. -->
-      <template v-if="firstSetup">
         <UiSeparator />
 
         <div class="companion-dock-phone__section">
@@ -141,25 +158,25 @@ onBeforeUnmount(() => companion.stop());
             )
           }}</UiHint>
         </div>
-      </template>
 
-      <!-- A network choice appears only between several usable networks. -->
-      <template v-if="interfaceOptions.length > 1">
-        <UiSeparator />
+        <!-- A network choice appears only between several usable networks. -->
+        <template v-if="interfaceOptions.length > 1">
+          <UiSeparator />
 
-        <div class="companion-dock-phone__section">
-          <UiSelect
-            id="companion-interface"
-            :label="t('companion.interface')"
-            :placeholder="t('companion.interfacePlaceholder')"
-            :options="interfaceOptions"
-            :model-value="status?.interfaceAddress ?? ''"
-            :disabled="busy"
-            @update:model-value="
-              companion.configure({ interfaceAddress: $event })
-            "
-          />
-        </div>
+          <div class="companion-dock-phone__section">
+            <UiSelect
+              id="companion-interface"
+              :label="t('companion.interface')"
+              :placeholder="t('companion.interfacePlaceholder')"
+              :options="interfaceOptions"
+              :model-value="status?.interfaceAddress ?? ''"
+              :disabled="busy"
+              @update:model-value="
+                companion.configure({ interfaceAddress: $event })
+              "
+            />
+          </div>
+        </template>
       </template>
     </CompanionPhoneFrame>
   </section>

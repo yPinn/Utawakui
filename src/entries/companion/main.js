@@ -12,17 +12,32 @@ import '../../styles/tokens.css';
 import '../../styles/base.css';
 
 document.documentElement.lang = UI_LOCALE;
+const lightTheme = window.matchMedia('(prefers-color-scheme: light)');
 const surfaceRoot = registerRendererSurfaceRoot('performer');
+const themeColor = document.querySelector('meta[name="theme-color"]');
+function syncTheme() {
+  document.documentElement.dataset.uiTheme = lightTheme.matches
+    ? 'light'
+    : 'dark';
+  const surface = getComputedStyle(surfaceRoot)
+    .getPropertyValue('--ui-color-surface')
+    .trim();
+  if (surface) {
+    themeColor.content = surface;
+    document.documentElement.style.backgroundColor = surface;
+  }
+}
+syncTheme();
+lightTheme.addEventListener('change', syncTheme);
 const matchCode = shallowRef('');
 createApp(CompanionApp, {
   status: companionStatus,
   matchCode,
-  remote: { sendCommand: companion.sendCommand, resume: companion.resume },
+  remote: companion,
 }).mount(surfaceRoot);
 
 async function start() {
   if (pairingCode) {
-    companionStatus.value = 'pairing';
     const result = await companion
       .pair(pairingCode, deviceLabel(), {
         onMatchCode: (code) => {

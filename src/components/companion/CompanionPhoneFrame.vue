@@ -15,6 +15,7 @@ import {
 
 defineProps({
   label: { type: String, required: true },
+  immersive: { type: Boolean, default: false },
 });
 
 // The status bar shows this computer's time, 24-hour like the phone's.
@@ -57,7 +58,10 @@ onBeforeUnmount(() => clearTimeout(clockTimer));
           <BatteryFull :size="ICON_SIZE" />
         </span>
       </div>
-      <div class="companion-phone-frame__content">
+      <div
+        class="companion-phone-frame__content"
+        :class="{ 'companion-phone-frame__content--immersive': immersive }"
+      >
         <slot />
       </div>
     </div>
@@ -194,5 +198,19 @@ onBeforeUnmount(() => clearTimeout(clockTimer));
     var(--ui-companion-phone-screen-inset)
     var(--ui-companion-phone-screen-radius);
   text-align: center;
+}
+
+.companion-phone-frame__content--immersive {
+  align-content: stretch;
+  padding-inline: 0;
+  padding-block-end: 0;
+  overflow: hidden;
+  text-align: start;
+  background: var(--ui-color-canvas);
+}
+
+.companion-phone-frame__content,
+.companion-phone-frame__content :deep(*) {
+  scrollbar-width: none;
 }
 </style>

@@ -26,4 +26,21 @@ describe('UI_LOCALE', () => {
       'zh-TW',
     );
   });
+
+  it.each([
+    ['zh-Hant', 'zh-TW'],
+    ['en-GB', 'en-US'],
+  ])(
+    'resolves phone browser locale %s before the companion bridge initializes',
+    async (language, expected) => {
+      expect(
+        await loadUiLocale({
+          document: {
+            documentElement: { dataset: { uiLocaleSource: 'browser' } },
+          },
+          navigator: { language },
+        }),
+      ).toBe(expected);
+    },
+  );
 });

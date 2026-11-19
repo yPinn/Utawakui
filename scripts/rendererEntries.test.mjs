@@ -22,6 +22,7 @@ describe('renderer entry and window ownership boundary', () => {
     expect(viteConfig.build.manifest).toBe('utawakui-manifest.json');
     // The phone page is served by the companion listener, never an Electron window.
     expect(read(entries.companion)).not.toContain('Content-Security-Policy');
+    expect(read(entries.companion)).toContain('viewport-fit=cover');
     expect(read('src/entries/companion/main.js')).toMatch(
       /^import \{[^}]*\} from '\.\/bootstrap\.js';/u,
     );

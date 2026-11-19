@@ -23,6 +23,12 @@ body,
   block-size: 100%;
 }
 
+/* Keeps iOS Safari from enlarging text after rotating to landscape. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: Canvas;
