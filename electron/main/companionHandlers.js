@@ -79,6 +79,14 @@ function registerCompanionHandlers({
       gated: false,
     }),
   );
+  // Naming a remembered phone never needs the gate, like removal.
+  ipcMain.handle('companion:rename-device', (_event, deviceId, label) =>
+    run(
+      'rename-device',
+      async () => ({ device: runtime.rename(deviceId, label) }),
+      { gated: false },
+    ),
+  );
   ipcMain.handle('companion:revoke-all', () =>
     run('revoke-all', async () => ({ removed: runtime.revokeAll() }), {
       gated: false,

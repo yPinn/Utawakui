@@ -62,6 +62,7 @@ const MAIN_INVOKE_CHANNELS = [
   'companion:cancel-pairing',
   'companion:revoke',
   'companion:revoke-all',
+  'companion:rename-device',
   'companion:command-result',
   'companion:approve-pairing',
   'companion:deny-pairing',

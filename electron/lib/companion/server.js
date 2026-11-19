@@ -157,6 +157,10 @@ function createCompanionServer({
     if (!commands) return reject(404, 'unavailable');
     const device = devices.authenticate(bearer(request));
     if (!device) return reject(401, 'unauthorized');
+    // Only the connected phone controls playback; a displaced one must take
+    // over first.
+    if (readers && !readers.isActive(device.id))
+      return reject(409, 'displaced');
     const parsed = parseCompanionCommand(await readJsonBody(request));
     if (!parsed) return reject(400, 'invalid');
     const refused = commands.admission.admit(device.id, parsed);
@@ -187,6 +191,11 @@ function createCompanionServer({
     if (!isGateEnabled())
       return sendJson(response, 503, { error: 'unavailable' });
     const url = new URL(request.url, origin);
+    // A typed or trimmed address still reaches the phone page.
+    if (request.method === 'GET' && ['/', '/m'].includes(url.pathname)) {
+      response.writeHead(302, { Location: '/m/', 'Cache-Control': 'no-store' });
+      return response.end();
+    }
     const route = routes.get(`${request.method} ${url.pathname}`);
     if (route) return route(request, response);
     if (request.method === 'GET' && servePage(url.pathname, response)) return;

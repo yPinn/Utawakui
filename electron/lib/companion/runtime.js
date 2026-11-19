@@ -14,12 +14,23 @@ const PORT_MAX = 49151;
 // A failed start (network not up yet, profile still public, ports busy) is
 // retried in the background so it recovers without a click.
 const RETRY_MS = 10_000;
-// On by default: turning the feature on is the only step before pairing.
+// Public networks the user chose to use anyway, by Windows profile name.
+const MAX_ALLOWED_NETWORKS = 16;
+const MAX_NETWORK_NAME_LENGTH = 256;
+// There is no on／off setting: the listener runs whenever the feature is on.
 const DEFAULT_SETTINGS = Object.freeze({
-  enabled: true,
   interfaceAddress: null,
   port: DEFAULT_PORT,
+  allowedNetworks: Object.freeze([]),
 });
+
+function isNetworkName(value) {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= MAX_NETWORK_NAME_LENGTH
+  );
+}
 
 function runtimeError(code) {
   return Object.assign(new Error(`Companion runtime: ${code}`), {
@@ -30,7 +41,6 @@ function runtimeError(code) {
 function normalizeCompanionSettings(value) {
   const port = Number(value?.port);
   return {
-    enabled: value?.enabled !== false,
     interfaceAddress: isPrivateIpv4(value?.interfaceAddress)
       ? value.interfaceAddress
       : null,
@@ -38,21 +48,30 @@ function normalizeCompanionSettings(value) {
       Number.isInteger(port) && port >= PORT_MIN && port <= PORT_MAX
         ? port
         : DEFAULT_PORT,
+    allowedNetworks: Array.isArray(value?.allowedNetworks)
+      ? [...new Set(value.allowedNetworks.filter(isNetworkName))].slice(
+          -MAX_ALLOWED_NETWORKS,
+        )
+      : [],
   };
 }
 
-// The saved private interface wins; otherwise the only private one is picked.
-function resolveInterface(savedAddress, scope) {
-  const privates = scope.filter((entry) => entry.privateNetwork);
-  const saved = privates.find((entry) => entry.address === savedAddress);
+// Usable networks are private ones plus public ones the user allowed. The
+// saved one wins; otherwise the only usable one is picked.
+function resolveInterface(savedAddress, scope, allowedNetworks = []) {
+  const usable = scope.filter(
+    (entry) =>
+      entry.privateNetwork ||
+      (entry.network && allowedNetworks.includes(entry.network)),
+  );
+  const saved = usable.find((entry) => entry.address === savedAddress);
   if (saved) return { entry: saved };
-  if (privates.length === 1) return { entry: privates[0] };
-  if (privates.length > 1) return { failure: 'choose-interface' };
+  if (usable.length === 1) return { entry: usable[0] };
+  if (usable.length > 1) return { failure: 'choose-interface' };
   return { failure: scope.length ? 'public-network' : 'no-interface' };
 }
 
-// Owns the paired-phone listener: it runs only while the gate and setting are
-// on and the chosen interface is on a network Windows reports as private.
+// Owns the listener while the gate is on and the selected network is allowed.
 function createCompanionRuntime({
   getSettings,
   saveSettings,
@@ -74,6 +93,7 @@ function createCompanionRuntime({
   let error = null;
   let reconciling = Promise.resolve();
   let retryTimer = null;
+  let lastScope = null;
   let reported = '';
 
   function scheduleRetry() {
@@ -97,14 +117,17 @@ function createCompanionRuntime({
 
   async function reconcile() {
     const settings = normalizeCompanionSettings(getSettings());
-    if (!isGateEnabled() || !settings.enabled) {
+    if (!isGateEnabled()) {
       error = null;
+      lastScope = null;
       return stopServer();
     }
     const scope = await describeNetworkScope();
+    lastScope = scope;
     const { entry: chosen, failure: missing } = resolveInterface(
       settings.interfaceAddress,
       scope,
+      settings.allowedNetworks,
     );
     const failure =
       missing ?? (devices.available() ? null : 'secure-storage-unavailable');
@@ -176,10 +199,13 @@ function createCompanionRuntime({
   async function status() {
     await reconciling;
     const settings = normalizeCompanionSettings(getSettings());
+    // Reads reuse the networks the last start check saw instead of querying
+    // Windows again; the background retry keeps them current while it fails.
     let interfaces = [];
     if (isGateEnabled()) {
       try {
-        interfaces = await describeNetworkScope();
+        lastScope ??= await describeNetworkScope();
+        interfaces = lastScope;
       } catch {
         interfaces = [];
       }
@@ -190,13 +216,24 @@ function createCompanionRuntime({
     } catch {
       deviceList = [];
     }
+    // The approval shows the name the phone will be saved under.
+    const request = approvals.status();
+    let label = request?.label;
+    try {
+      label = (request && devices.uniqueLabel?.(request.label)) || label;
+    } catch {
+      /* Keep the phone's own label when the store cannot be read. */
+    }
     return {
       ...settings,
       running: Boolean(server),
       error,
       interfaces,
       devices: deviceList,
-      pairing: { ...pairing.status(), request: approvals.status() },
+      pairing: {
+        ...pairing.status(),
+        request: request ? { ...request, label } : request,
+      },
     };
   }
 
@@ -204,15 +241,27 @@ function createCompanionRuntime({
     if (!input || typeof input !== 'object') throw runtimeError('invalid');
     const current = normalizeCompanionSettings(getSettings());
     const next = { ...current };
-    if ('enabled' in input) {
-      if (typeof input.enabled !== 'boolean') throw runtimeError('invalid');
-      next.enabled = input.enabled;
-    }
     if ('interfaceAddress' in input) {
       if (!isPrivateIpv4(input.interfaceAddress)) throw runtimeError('invalid');
       next.interfaceAddress = input.interfaceAddress;
     }
-    if ('port' in input) throw runtimeError('invalid');
+    // Neither the port nor an on／off switch is a setting any more.
+    if ('port' in input || 'enabled' in input) throw runtimeError('invalid');
+    // Using a public network is an explicit, per-network choice, and only for
+    // a public network this computer is on right now.
+    if ('allowNetwork' in input) {
+      const name = input.allowNetwork;
+      const scope = isNetworkName(name) ? await describeNetworkScope() : [];
+      const entry = scope.find(
+        (item) => item.network === name && !item.privateNetwork,
+      );
+      if (!entry) throw runtimeError('invalid');
+      next.allowedNetworks = [
+        ...current.allowedNetworks.filter((item) => item !== name),
+        name,
+      ].slice(-MAX_ALLOWED_NETWORKS);
+      next.interfaceAddress = entry.address;
+    }
     saveSettings(next);
     await refresh();
     return status();
@@ -232,7 +281,6 @@ function createCompanionRuntime({
 
   function cancelPairing() {
     pairing.cancel();
-    approvals.cancel();
     onChange();
   }
 
@@ -278,6 +326,15 @@ function createCompanionRuntime({
     return removed;
   }
 
+  function rename(id, label) {
+    if (typeof id !== 'string' || typeof label !== 'string')
+      throw runtimeError('invalid');
+    const device = devices.rename(id, label);
+    if (!device) throw runtimeError('invalid');
+    onChange();
+    return device;
+  }
+
   return {
     status,
     configure,
@@ -288,6 +345,7 @@ function createCompanionRuntime({
     denyPairing,
     revoke,
     revokeAll,
+    rename,
     stop: async () => {
       clearTimeout(retryTimer);
       retryTimer = null;

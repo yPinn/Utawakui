@@ -306,8 +306,12 @@ describe('companion server page and reader socket', () => {
       "script-src 'self'",
     );
     expect((await get(port, '/assets/a.js')).status).toBe(200);
+    for (const path of ['/', '/m']) {
+      const moved = await get(port, path);
+      expect(moved.status).toBe(302);
+      expect(moved.headers.location).toBe('/m/');
+    }
     for (const path of [
-      '/m',
       '/assets/../package.json',
       '/assets/b.js',
       '/index.html',
@@ -360,7 +364,7 @@ describe('companion server page and reader socket', () => {
 });
 
 describe('companion server commands', () => {
-  async function startCommands({ dispatch, admit = () => null } = {}) {
+  async function startCommands({ dispatch, admit = () => null, readers } = {}) {
     const probe = http.createServer();
     await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
     const { port } = probe.address();
@@ -378,11 +382,39 @@ describe('companion server commands', () => {
           credential === 'k'.repeat(43) ? { id: 'd1' } : null,
       },
       commands,
+      ...(readers ? { readers } : {}),
     });
     servers.push(server);
     await server.start();
     return { port, commands };
   }
+
+  it('accepts commands only from the connected phone', async () => {
+    let active = 'd2';
+    const { port, commands } = await startCommands({
+      readers: {
+        attach: vi.fn(),
+        closeAll: vi.fn(),
+        closeDevice: vi.fn(),
+        isActive: (id) => id === active,
+      },
+    });
+    expect(
+      await request(port, { path: '/m/api/v1/command', headers: auth, body }),
+    ).toMatchObject({
+      status: 409,
+      body: { result: 'rejected', reason: 'displaced' },
+    });
+    expect(commands.dispatch).not.toHaveBeenCalled();
+    active = 'd1';
+    expect(
+      await request(port, {
+        path: '/m/api/v1/command',
+        headers: auth,
+        body: { ...body, sequence: 2 },
+      }),
+    ).toMatchObject({ status: 200, body: { result: 'applied' } });
+  });
 
   const body = {
     command: 'player.next',

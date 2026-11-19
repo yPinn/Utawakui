@@ -5,12 +5,23 @@ import {
 } from './runtime.js';
 
 function setup(overrides = {}) {
-  let settings = { enabled: false, interfaceAddress: null, port: 8710 };
+  let settings = { interfaceAddress: null, port: 8710 };
   const state = {
     gate: true,
+    scopeReads: 0,
     scope: [
-      { name: 'Wi-Fi', address: '192.168.1.20', privateNetwork: true },
-      { name: 'Hotel', address: '10.0.0.8', privateNetwork: false },
+      {
+        name: 'Wi-Fi',
+        address: '192.168.1.20',
+        network: 'Home',
+        privateNetwork: true,
+      },
+      {
+        name: 'Hotel',
+        address: '10.0.0.8',
+        network: 'Hotel Guest',
+        privateNetwork: false,
+      },
     ],
   };
   const servers = [];
@@ -55,7 +66,10 @@ function setup(overrides = {}) {
     isGateEnabled: () => state.gate,
     devices,
     pairing,
-    describeNetworkScope: async () => state.scope,
+    describeNetworkScope: async () => {
+      state.scopeReads += 1;
+      return state.scope;
+    },
     createServer,
     onChange,
     ...(overrides.approvals ? { approvals: overrides.approvals } : {}),
@@ -79,19 +93,59 @@ const twoPrivate = [
 
 describe('companion runtime', () => {
   it('normalizes saved settings to safe defaults', () => {
-    // On by default; only an explicit stop turns it off.
+    // No on／off setting is kept; an old saved switch is dropped.
     expect(normalizeCompanionSettings(null)).toEqual({
-      enabled: true,
       interfaceAddress: null,
       port: 8710,
+      allowedNetworks: [],
     });
     expect(
       normalizeCompanionSettings({
         enabled: false,
         interfaceAddress: '8.8.8.8',
         port: 80,
+        allowedNetworks: ['Cafe', '', 5, 'Cafe', 'x'.repeat(257)],
       }),
-    ).toEqual({ enabled: false, interfaceAddress: null, port: 8710 });
+    ).toEqual({
+      interfaceAddress: null,
+      port: 8710,
+      allowedNetworks: ['Cafe'],
+    });
+  });
+
+  it('uses a public network only after the user allows that network', async () => {
+    const { runtime, state, createServer, saved } = setup();
+    state.scope = [state.scope[1]];
+    expect(await runtime.configure({})).toMatchObject({
+      running: false,
+      error: 'public-network',
+    });
+    expect(createServer).not.toHaveBeenCalled();
+
+    expect(
+      await runtime.configure({ allowNetwork: 'Hotel Guest' }),
+    ).toMatchObject({
+      running: true,
+      error: null,
+      interfaceAddress: '10.0.0.8',
+    });
+    expect(saved().allowedNetworks).toEqual(['Hotel Guest']);
+
+    // Another public network still asks first.
+    state.scope = [{ ...state.scope[0], network: 'Airport' }];
+    await runtime.refresh();
+    expect(await runtime.status()).toMatchObject({
+      running: false,
+      error: 'public-network',
+    });
+  });
+
+  it('refuses to allow a network this computer is not on, or a private one', async () => {
+    const { runtime } = setup();
+    for (const allowNetwork of ['Airport', 'Home', '', 42])
+      await expect(runtime.configure({ allowNetwork })).rejects.toMatchObject({
+        companionStatus: 'invalid',
+      });
   });
 
   it('retries a failed start in the background until it recovers', async () => {
@@ -99,7 +153,7 @@ describe('companion runtime', () => {
     try {
       const { runtime, state, onChange } = setup();
       state.scope = [state.scope[1]];
-      await runtime.configure({ enabled: true });
+      await runtime.configure({});
       expect(await runtime.status()).toMatchObject({
         running: false,
         error: 'public-network',
@@ -123,23 +177,33 @@ describe('companion runtime', () => {
     }
   });
 
-  it('does not retry when stopped or when secure storage is missing', async () => {
+  it('does not retry while the feature is off or secure storage is missing', async () => {
     vi.useFakeTimers();
     try {
       const off = setup();
-      await off.runtime.configure({ enabled: false });
+      off.state.gate = false;
+      await off.runtime.refresh();
       expect(vi.getTimerCount()).toBe(0);
       const insecure = setup({ secure: false });
-      await insecure.runtime.configure({ enabled: true });
+      await insecure.runtime.configure({});
       expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
     }
   });
 
+  it('answers status reads from the last network check without querying Windows again', async () => {
+    const { runtime, state } = setup();
+    await runtime.configure({});
+    const reads = state.scopeReads;
+    for (let i = 0; i < 3; i += 1) await runtime.status();
+    expect(state.scopeReads).toBe(reads);
+    expect((await runtime.status()).interfaces).toHaveLength(2);
+  });
+
   it('picks the only private network and the default port by itself', async () => {
     const { runtime, createServer, saved } = setup();
-    const status = await runtime.configure({ enabled: true });
+    const status = await runtime.configure({});
     expect(createServer).toHaveBeenCalledOnce();
     expect(createServer.mock.calls[0][0]).toMatchObject({
       address: '192.168.1.20',
@@ -148,7 +212,6 @@ describe('companion runtime', () => {
     expect(status).toMatchObject({
       running: true,
       error: null,
-      enabled: true,
       interfaceAddress: '192.168.1.20',
     });
     expect(saved().interfaceAddress).toBe('192.168.1.20');
@@ -158,7 +221,7 @@ describe('companion runtime', () => {
   it('asks for a choice only between several private networks', async () => {
     const { runtime, state, createServer } = setup();
     state.scope = twoPrivate;
-    expect(await runtime.configure({ enabled: true })).toMatchObject({
+    expect(await runtime.configure({})).toMatchObject({
       running: false,
       error: 'choose-interface',
     });
@@ -172,7 +235,7 @@ describe('companion runtime', () => {
     const { runtime, state, createServer } = setup();
     state.scope = [state.scope[1]];
     expect(
-      await runtime.configure({ enabled: true, interfaceAddress: '10.0.0.8' }),
+      await runtime.configure({ interfaceAddress: '10.0.0.8' }),
     ).toMatchObject({ running: false, error: 'public-network' });
     state.scope = [];
     expect(await runtime.refresh().then(runtime.status)).toMatchObject({
@@ -182,7 +245,7 @@ describe('companion runtime', () => {
     expect(createServer).not.toHaveBeenCalled();
 
     const insecure = setup({ secure: false });
-    expect(await insecure.runtime.configure({ enabled: true })).toMatchObject({
+    expect(await insecure.runtime.configure({})).toMatchObject({
       running: false,
       error: 'secure-storage-unavailable',
     });
@@ -192,7 +255,6 @@ describe('companion runtime', () => {
     const { runtime, state, servers } = setup();
     state.scope = twoPrivate;
     await runtime.configure({
-      enabled: true,
       interfaceAddress: '192.168.1.20',
     });
     await runtime.configure({ interfaceAddress: '192.168.1.30' });
@@ -209,7 +271,7 @@ describe('companion runtime', () => {
 
   it('moves to the next free port and keeps it for later starts', async () => {
     const { runtime, createServer, saved } = setup({ busyPorts: [8710] });
-    expect(await runtime.configure({ enabled: true })).toMatchObject({
+    expect(await runtime.configure({})).toMatchObject({
       running: true,
       error: null,
       port: 8711,
@@ -224,7 +286,7 @@ describe('companion runtime', () => {
     const { runtime, createServer } = setup({
       busyPorts: [8710, 8711, 8712, 8713, 8714],
     });
-    expect(await runtime.configure({ enabled: true })).toMatchObject({
+    expect(await runtime.configure({})).toMatchObject({
       running: false,
       error: 'port-in-use',
     });
@@ -235,7 +297,7 @@ describe('companion runtime', () => {
     const { runtime, createServer } = setup({
       startError: new Error('boom'),
     });
-    expect(await runtime.configure({ enabled: true })).toMatchObject({
+    expect(await runtime.configure({})).toMatchObject({
       running: false,
       error: 'listen-failed',
     });
@@ -245,7 +307,6 @@ describe('companion runtime', () => {
   it('gives each listener a reader hub and disconnects revoked phones', async () => {
     const { runtime, servers, createServer } = setup();
     await runtime.configure({
-      enabled: true,
       interfaceAddress: '192.168.1.20',
     });
     const options = createServer.mock.calls[0][0];
@@ -278,6 +339,43 @@ describe('companion runtime', () => {
     expect(() => runtime.denyPairing(null)).toThrow();
   });
 
+  it('asks about a phone under the name it will be saved as', async () => {
+    const approvals = {
+      approve: vi.fn(),
+      deny: vi.fn(),
+      cancel: vi.fn(),
+      status: () => ({ id: 'r1', label: 'iPhone', matchCode: '1234' }),
+    };
+    const { runtime, devices } = setup({ approvals });
+    devices.uniqueLabel = vi.fn(() => 'iPhone 2');
+    expect((await runtime.status()).pairing.request).toMatchObject({
+      label: 'iPhone 2',
+      matchCode: '1234',
+    });
+    devices.uniqueLabel = vi.fn(() => {
+      throw new Error('unreadable');
+    });
+    expect((await runtime.status()).pairing.request.label).toBe('iPhone');
+  });
+
+  it('renames a remembered phone and refuses unknown or invalid input', () => {
+    const { runtime, devices, onChange } = setup();
+    devices.rename = vi.fn((id, label) => (id === 'd1' ? { id, label } : null));
+    expect(runtime.rename('d1', '主唱的 iPhone')).toEqual({
+      id: 'd1',
+      label: '主唱的 iPhone',
+    });
+    expect(onChange).toHaveBeenCalled();
+    for (const args of [
+      ['missing', 'Name'],
+      [1, 'Name'],
+      ['d1', null],
+    ])
+      expect(() => runtime.rename(...args)).toThrow(
+        expect.objectContaining({ companionStatus: 'invalid' }),
+      );
+  });
+
   it('denies the request when the device list is full', () => {
     const approvals = {
       approve: vi.fn((id, issue) => issue('Pixel')),
@@ -301,7 +399,6 @@ describe('companion runtime', () => {
       companionStatus: 'not-running',
     });
     await runtime.configure({
-      enabled: true,
       interfaceAddress: '192.168.1.20',
     });
     expect(await runtime.beginPairing()).toEqual({
@@ -312,11 +409,31 @@ describe('companion runtime', () => {
     expect(pairing.cancel).toHaveBeenCalled();
   });
 
+  it('withdraws the QR code without losing a scanned pairing request', async () => {
+    const { runtime, pairing, createServer, devices } = setup();
+    devices.add = vi.fn(() => ({ credential: 'issued-credential' }));
+    await runtime.refresh();
+    const { approvals } = createServer.mock.calls[0][0];
+    const { claimToken } = approvals.open('Phone');
+    const { id } = approvals.status();
+
+    runtime.cancelPairing();
+    expect(pairing.cancel).toHaveBeenCalled();
+    expect(approvals.poll(claimToken)).toEqual({ state: 'pending' });
+
+    expect(runtime.approvePairing(id)).toBe(true);
+    runtime.cancelPairing();
+    expect(approvals.poll(claimToken)).toEqual({
+      state: 'approved',
+      credential: 'issued-credential',
+    });
+  });
+
   it('validates configuration and forwards revocation', async () => {
     const { runtime, devices, onChange } = setup();
     for (const input of [
       null,
-      { enabled: 1 },
+      { enabled: true },
       { interfaceAddress: '8.8.8.8' },
       { port: 8711 },
     ])

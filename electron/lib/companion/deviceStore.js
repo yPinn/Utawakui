@@ -95,9 +95,23 @@ function createCompanionDeviceStore({
     return load().map(view);
   }
 
+  // Browsers only reveal the device kind ("iPhone"), so a second phone of
+  // the same kind is numbered: "iPhone", "iPhone 2", "iPhone 3"…
+  function uniqueLabel(labelInput) {
+    const base = normalizeLabel(labelInput);
+    if (!base) return null;
+    const taken = new Set(load().map((device) => device.label));
+    if (!taken.has(base)) return base;
+    for (let n = 2; ; n += 1) {
+      const suffix = ` ${n}`;
+      const candidate = `${base.slice(0, LABEL_MAX - suffix.length).trimEnd()}${suffix}`;
+      if (!taken.has(candidate)) return candidate;
+    }
+  }
+
   function add(labelInput) {
     if (!available()) throw storeError('secure-storage-unavailable');
-    const label = normalizeLabel(labelInput);
+    const label = uniqueLabel(labelInput);
     if (!label) throw storeError('invalid');
     if (load().length >= MAX_DEVICES) throw storeError('full');
     const credential = randomBytes(32).toString('base64url');
@@ -139,6 +153,19 @@ function createCompanionDeviceStore({
     return view(match);
   }
 
+  // A name the person chose is kept as typed.
+  function rename(id, labelInput) {
+    const label = normalizeLabel(labelInput);
+    if (!label) throw storeError('invalid');
+    const device = load().find((item) => item.id === id);
+    if (!device) return null;
+    if (device.label !== label) {
+      device.label = label;
+      save();
+    }
+    return view(device);
+  }
+
   function revoke(id) {
     const before = load().length;
     devices = devices.filter((device) => device.id !== id);
@@ -154,7 +181,16 @@ function createCompanionDeviceStore({
     return count;
   }
 
-  return { available, list, add, authenticate, revoke, revokeAll };
+  return {
+    available,
+    list,
+    add,
+    uniqueLabel,
+    rename,
+    authenticate,
+    revoke,
+    revokeAll,
+  };
 }
 
 module.exports = {

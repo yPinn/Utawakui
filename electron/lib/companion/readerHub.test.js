@@ -117,17 +117,45 @@ describe('companion reader hub', () => {
       hub.attach(socket);
       socket.say({ type: 'auth', credential: 'good' });
     }
-    const other = new FakeSocket();
-    hub.attach(other);
-    other.say({ type: 'auth', credential: 'other' });
     expect(sockets[0].closed.code).toBe(CLOSE.replaced);
-    expect(hub.count()).toBe(3);
+    expect(hub.count()).toBe(2);
     hub.closeDevice('d1');
     expect(sockets[1].closed.code).toBe(CLOSE.unauthorized);
     expect(sockets[2].closed.code).toBe(CLOSE.unauthorized);
-    expect(other.closed).toBeNull();
+    expect(hub.count()).toBe(0);
+  });
+
+  it('connects one phone at a time: a new phone displaces the others', () => {
+    const { hub, publish } = setup();
+    const first = [new FakeSocket(), new FakeSocket()];
+    for (const socket of first) {
+      hub.attach(socket);
+      socket.say({ type: 'auth', credential: 'good' });
+    }
+    expect(hub.isActive('d1')).toBe(true);
+
+    const second = new FakeSocket();
+    hub.attach(second);
+    second.say({ type: 'auth', credential: 'other' });
+    for (const socket of first)
+      expect(socket.closed).toEqual({
+        code: CLOSE.displaced,
+        reason: 'displaced',
+      });
+    expect(hub.isActive('d1')).toBe(false);
+    expect(hub.isActive('d2')).toBe(true);
+    expect(hub.count()).toBe(1);
+    publish({ revision: 9 });
+    expect(first[0].sent.at(-1).snapshot).not.toEqual({ revision: 9 });
+
+    // The displaced phone stays paired and can take the connection back.
+    const back = new FakeSocket();
+    hub.attach(back);
+    back.say({ type: 'auth', credential: 'good' });
+    expect(second.closed.code).toBe(CLOSE.displaced);
+    expect(hub.isActive('d1')).toBe(true);
     hub.closeAll();
-    expect(other.closed.code).toBe(CLOSE.shutdown);
+    expect(back.closed.code).toBe(CLOSE.shutdown);
     expect(hub.count()).toBe(0);
   });
 

@@ -1987,8 +1987,8 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic,
       commandRelay: companionCommands,
     });
-    if (configState.getConfig().companion.enabled)
-      void companionRuntime.refresh();
+    // Starts only when the feature gate is on; otherwise this is a no-op.
+    void companionRuntime.refresh();
     app.once('will-quit', () => void companionRuntime.stop());
     registerFeatureGateHandlers({
       ipcMain,

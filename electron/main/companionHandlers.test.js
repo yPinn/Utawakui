@@ -13,6 +13,7 @@ function setup({ gate = true } = {}) {
     cancelPairing: vi.fn(),
     revoke: vi.fn(() => true),
     revokeAll: vi.fn(() => 2),
+    rename: vi.fn((id, label) => ({ id, label })),
   };
   const requireFeatureGate = vi.fn(() => {
     if (!gate)
@@ -67,6 +68,12 @@ describe('companion IPC', () => {
       removed: 2,
     });
     expect(runtime.revoke).toHaveBeenCalledWith('d1');
+    await expect(
+      call('companion:rename-device', 'd1', '主唱的 iPhone'),
+    ).resolves.toEqual({
+      ok: true,
+      device: { id: 'd1', label: '主唱的 iPhone' },
+    });
   });
 
   it('settles renderer command results through the relay only', async () => {

@@ -8,11 +8,15 @@ const CLOSE = Object.freeze({
   policy: 1008,
   unauthorized: 4401,
   replaced: 4409,
+  // Another phone took over; this one keeps its credential to resume.
+  displaced: 4410,
   shutdown: 1001,
 });
 
 // Authenticated, server-to-client lyric readers. A socket must authenticate
-// with its first message; after that any client message closes it.
+// with its first message; after that any client message closes it. Only one
+// phone is connected at a time: a newly authenticated phone displaces the
+// others, which stay paired and can take over again.
 function createReaderHub({
   devices,
   snapshots,
@@ -70,7 +74,17 @@ function createReaderHub({
     onReaderCount(count());
   }
 
+  function displaceOthers(deviceId) {
+    for (const [id, sockets] of readers) {
+      if (id === deviceId) continue;
+      // Dropped first so no snapshot reaches a socket that is closing.
+      readers.delete(id);
+      for (const socket of sockets) socket.close(CLOSE.displaced, 'displaced');
+    }
+  }
+
   function admit(socket, device) {
+    displaceOthers(device.id);
     const sockets = readers.get(device.id) ?? new Set();
     readers.set(device.id, sockets);
     if (sockets.size >= MAX_READERS_PER_DEVICE) {
@@ -139,7 +153,10 @@ function createReaderHub({
     onReaderCount(0);
   }
 
-  return { attach, closeDevice, closeAll, count };
+  // The connected phone, the only one whose commands are accepted.
+  const isActive = (deviceId) => readers.has(deviceId);
+
+  return { attach, closeDevice, closeAll, count, isActive };
 }
 
 module.exports = {

@@ -32,6 +32,17 @@ describe('HTML brand identity', () => {
     },
   );
 
+  it('names the phone page so a home-screen shortcut reads clearly', () => {
+    const file = 'src/entries/companion/index.html';
+    const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    const result = createAppIdentityPlugin().transformIndexHtml.handler(
+      source,
+      { path: `/${file}` },
+    );
+    expect(result).toContain('<title>Utawakui 手機遙控</title>');
+    expect(result).not.toContain('undefined');
+  });
+
   it('does not transform unrelated HTML', () => {
     const html = '<title>Other</title>';
     expect(

@@ -45,28 +45,36 @@ function runPowerShell(script) {
   });
 }
 
-// Joined by interface index and reported by IPv4 address: adapter names can
-// be localized (e.g. 乙太網路) and arrive garbled in the console code page.
-const PRIVATE_ADDRESS_SCRIPT = [
+// Joined by interface index and keyed by IPv4 address. Output is forced to
+// UTF-8 so localized profile names (e.g. 網路 3) survive the console.
+const PROFILE_SCRIPT = [
+  '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8',
   '$p=@{}',
-  'Get-NetConnectionProfile | ForEach-Object { $p[[int]$_.InterfaceIndex] = [int]$_.NetworkCategory }',
-  '@(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $p.ContainsKey([int]$_.InterfaceIndex) } | ForEach-Object { [pscustomobject]@{ IPAddress = $_.IPAddress; NetworkCategory = $p[[int]$_.InterfaceIndex] } }) | ConvertTo-Json -Compress',
+  'Get-NetConnectionProfile | ForEach-Object { $p[[int]$_.InterfaceIndex] = $_ }',
+  '@(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $p.ContainsKey([int]$_.InterfaceIndex) } | ForEach-Object { $c = $p[[int]$_.InterfaceIndex]; [pscustomobject]@{ IPAddress = $_.IPAddress; NetworkCategory = [int]$c.NetworkCategory; Name = [string]$c.Name } }) | ConvertTo-Json -Compress',
 ].join('; ');
 
-// IPv4 addresses whose network Windows treats as private. Any failure reads
-// as unknown, which callers must treat as not private.
-async function readPrivateAddresses(run = runPowerShell) {
+// Windows network profile per IPv4 address: whether it is private and the
+// profile's name. Any failure reads as unknown, which callers must treat as
+// not private.
+async function readNetworkProfiles(run = runPowerShell) {
   let parsed;
   try {
-    parsed = JSON.parse(await run(PRIVATE_ADDRESS_SCRIPT));
+    parsed = JSON.parse(await run(PROFILE_SCRIPT));
   } catch {
-    return new Set();
+    return new Map();
   }
   const entries = Array.isArray(parsed) ? parsed : [parsed];
-  return new Set(
+  return new Map(
     entries
-      .filter((entry) => PRIVATE_CATEGORIES.has(entry?.NetworkCategory))
-      .map((entry) => String(entry.IPAddress)),
+      .filter((entry) => entry?.IPAddress)
+      .map((entry) => [
+        String(entry.IPAddress),
+        {
+          privateNetwork: PRIVATE_CATEGORIES.has(entry.NetworkCategory),
+          network: typeof entry.Name === 'string' ? entry.Name : '',
+        },
+      ]),
   );
 }
 
@@ -75,18 +83,22 @@ async function describeNetworkScope({
   run = runPowerShell,
 } = {}) {
   const interfaces = listPrivateInterfaces(networkInterfaces);
-  const privateAddresses = interfaces.length
-    ? await readPrivateAddresses(run)
-    : new Set();
-  return interfaces.map((entry) => ({
-    ...entry,
-    privateNetwork: privateAddresses.has(entry.address),
-  }));
+  const profiles = interfaces.length
+    ? await readNetworkProfiles(run)
+    : new Map();
+  return interfaces.map((entry) => {
+    const profile = profiles.get(entry.address);
+    return {
+      ...entry,
+      network: profile?.network ?? '',
+      privateNetwork: Boolean(profile?.privateNetwork),
+    };
+  });
 }
 
 module.exports = {
   describeNetworkScope,
   isPrivateIpv4,
   listPrivateInterfaces,
-  readPrivateAddresses,
+  readNetworkProfiles,
 };

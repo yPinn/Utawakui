@@ -54,6 +54,33 @@ describe('companion device store', () => {
     expect(createStore().list()[0].lastSeenAt).toBe('2026-11-17T12:02:00.000Z');
   });
 
+  it('numbers a second phone of the same kind and keeps chosen names', () => {
+    const store = createStore();
+    expect(store.add('iPhone').device.label).toBe('iPhone');
+    expect(store.uniqueLabel('iPhone')).toBe('iPhone 2');
+    expect(store.add('iPhone').device.label).toBe('iPhone 2');
+    expect(store.add('iPhone').device.label).toBe('iPhone 3');
+    expect(store.add('Android').device.label).toBe('Android');
+    const long = 'x'.repeat(40);
+    store.add(long);
+    expect(store.add(long).device.label).toBe(`${'x'.repeat(38)} 2`);
+    expect(store.uniqueLabel('  ')).toBeNull();
+  });
+
+  it('renames a phone and keeps the name after a restart', () => {
+    const store = createStore();
+    const { device } = store.add('iPhone');
+    expect(store.rename(device.id, ' 主唱的 iPhone ')).toMatchObject({
+      id: device.id,
+      label: '主唱的 iPhone',
+    });
+    expect(createStore().list()[0].label).toBe('主唱的 iPhone');
+    expect(store.rename('missing', 'Name')).toBeNull();
+    expect(() => store.rename(device.id, '\u0007 ')).toThrow(
+      expect.objectContaining({ companionStatus: 'invalid' }),
+    );
+  });
+
   it('revokes one device or all devices', () => {
     const store = createStore();
     const a = store.add('A');

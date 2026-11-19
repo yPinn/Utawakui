@@ -802,6 +802,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   revokeCompanionDevice: (deviceId) =>
     ipcRenderer.invoke('companion:revoke', deviceId),
   revokeAllCompanionDevices: () => ipcRenderer.invoke('companion:revoke-all'),
+  renameCompanionDevice: (deviceId, label) =>
+    ipcRenderer.invoke('companion:rename-device', deviceId, label),
   onCompanionCommand: (callback) => {
     const listener = (_event, command) => callback(command);
     ipcRenderer.on('companion:command', listener);

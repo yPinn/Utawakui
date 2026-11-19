@@ -6,6 +6,7 @@
   "roles": {
     "main": "控制台",
     "prompter": "提詞器",
-    "output": "輸出"
+    "output": "輸出",
+    "companion": "手機遙控"
   }
 }
