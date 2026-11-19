@@ -51,3 +51,25 @@ export function lyricsPresentationPolicyOptionsForTemplate(templateId) {
     lyricsTemplateCapabilities(templateId).presentationPolicyIds;
   return policyIds.map((id) => ({ id }));
 }
+
+export function lyricsPresentationFieldsForTemplate(templateId) {
+  const options = lyricsPresentationPolicyOptionsForTemplate(templateId);
+  return options.length
+    ? [
+        {
+          key: 'lyricsPresentationPolicyId',
+          control: 'select',
+          settingKind: 'lyrics-presentation',
+          family: 'document',
+          tier: 'basic',
+          reflow: true,
+          scope: 'template',
+          group: 'template-presentation',
+          groupOrder: 90,
+          order: 20,
+          defaultValue: normalizeLyricsPresentationPolicyId(templateId),
+          options,
+        },
+      ]
+    : [];
+}

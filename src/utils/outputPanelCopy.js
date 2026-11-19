@@ -8,6 +8,17 @@ export const lyricsPolicyLabel = (policyId) =>
   t(`outputPanel.policies.${catalogKey(policyId)}`);
 
 export function localizeAppearanceField(field) {
+  if (field.settingKind === 'lyrics-presentation') {
+    return {
+      ...field,
+      label: t('outputPanel.presentationPolicy'),
+      groupLabel: t('outputPanel.presentationGroup'),
+      options: field.options.map((option) => ({
+        ...option,
+        label: lyricsPolicyLabel(option.id),
+      })),
+    };
+  }
   const base = field.propertyKey
     ? `outputPanel.appearance.elementFields.${field.propertyKey}`
     : `outputPanel.appearance.fields.${field.key}`;

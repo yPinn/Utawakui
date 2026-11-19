@@ -90,6 +90,40 @@ attachClientRender(
 );
 
 describe('ObsAppearanceField', () => {
+  it.each([
+    [
+      { key: 'textColor', label: 'Color', control: 'color' },
+      '#fff8ec',
+      'ui-color-field--stretch',
+    ],
+    [
+      {
+        key: 'positionAnchor',
+        label: 'Position',
+        control: 'select',
+        editor: 'position-grid',
+        options: [{ id: 'center', label: 'Center' }],
+      },
+      'center',
+      'obs-position-picker--stretch',
+    ],
+  ])(
+    'lets a stacked %j control use the whole field width',
+    (field, modelValue, className) => {
+      const { app, root } = mount(ObsAppearanceField, {
+        field,
+        modelValue,
+        stacked: true,
+      });
+      expect(
+        findAll(root, (node) =>
+          String(node.props.class).split(' ').includes(className),
+        ),
+      ).toHaveLength(1);
+      app.unmount();
+    },
+  );
+
   it('renders an allowlisted select and emits its string value', async () => {
     const update = vi.fn();
     const { app, root } = mount(ObsAppearanceField, {

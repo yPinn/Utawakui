@@ -15,11 +15,13 @@ import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
   field: { type: Object, required: true },
+  idPrefix: { type: String, default: 'output-appearance' },
   modelValue: { type: [String, Number, Object], required: true },
   disabled: { type: Boolean, default: false },
   modified: { type: Boolean, default: false },
   paletteTarget: { type: Boolean, default: false },
   stacked: { type: Boolean, default: false },
+  builtInFontsOnly: { type: Boolean, default: false },
   kineticMaterial: { type: String, default: undefined },
 });
 
@@ -30,7 +32,7 @@ const emit = defineEmits([
   'activateColor',
 ]);
 
-const controlId = computed(() => `output-appearance-${props.field.key}`);
+const controlId = computed(() => `${props.idPrefix}-${props.field.key}`);
 const controlHintId = computed(() => `${controlId.value}-hint`);
 const editor = computed(() => props.field.editor ?? props.field.control);
 const disabledHint = computed(() =>
@@ -102,6 +104,7 @@ function commitColor(value) {
       :label="field.label"
       :model-value="String(modelValue)"
       :options="field.options"
+      :disabled="disabled"
       @update:model-value="updateValue"
     />
 
@@ -114,6 +117,8 @@ function commitColor(value) {
       :default-value="field.defaultValue"
       :template-id="field.templateId"
       :kinetic-material="kineticMaterial"
+      :built-in-only="builtInFontsOnly"
+      :disabled="disabled"
       @update:model-value="updateValue"
     />
 
@@ -123,6 +128,7 @@ function commitColor(value) {
       :label="field.label"
       :model-value="String(modelValue)"
       :options="field.options"
+      :stretch="stacked"
       @update:model-value="updateValue"
     />
 
@@ -142,6 +148,7 @@ function commitColor(value) {
       :label="field.label"
       :model-value="modelValue"
       :options="selectOptions"
+      :disabled="disabled"
       label-hidden
       @update:model-value="updateValue"
     />

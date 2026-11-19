@@ -34,6 +34,7 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
         :label="label"
         :model-value="modelValue"
         label-hidden
+        :stretch="stacked"
         :align="stacked ? 'start' : 'end'"
         @update:model-value="emit('update:modelValue', $event)"
         @commit="emit('commit', $event)"

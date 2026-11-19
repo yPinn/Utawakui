@@ -21,6 +21,7 @@ import {
   canAddPhantomPortraitSet,
   PHANTOM_PORTRAIT_DEFAULTS,
   PHANTOM_PORTRAIT_FIELDS,
+  isOutputAppearanceFieldVisible,
   isOutputLocalFont,
   migrateLegacyPhantomPortraitSettings,
   sanitizePhantomPortraitSets,
@@ -54,7 +55,10 @@ import UiSelect from '../ui/UiSelect.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import { t } from '../../utils/i18n.js';
-import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
+import {
+  outputInspectorTabs,
+  sortOutputInspectorFields,
+} from '../../utils/outputInspectorTabs.js';
 import { phantomPortraitColorToken } from './phantomPortraitPalette.js';
 
 const props = defineProps({
@@ -108,26 +112,8 @@ const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
 const presentationFields = computed(
   () => props.preset?.presentationFields ?? [],
 );
-function configurationFieldRank(field, key, fallback) {
-  return Number.isFinite(field?.[key]) ? field[key] : fallback;
-}
-
-function sortConfigurationFields(fields) {
-  return [...fields].sort((left, right) => {
-    const groupDelta =
-      configurationFieldRank(left, 'groupOrder', 100) -
-      configurationFieldRank(right, 'groupOrder', 100);
-    if (groupDelta !== 0) return groupDelta;
-    const fieldDelta =
-      configurationFieldRank(left, 'order', 100) -
-      configurationFieldRank(right, 'order', 100);
-    if (fieldDelta !== 0) return fieldDelta;
-    return String(left.key).localeCompare(String(right.key));
-  });
-}
-
 const templateFields = computed(() =>
-  sortConfigurationFields([
+  sortOutputInspectorFields([
     ...appearanceFields.value,
     ...presentationFields.value,
   ]),
@@ -152,13 +138,9 @@ const {
 } = useOutputElementTarget({ elementTargets, templateId });
 const visibleFields = computed(() =>
   selectedTarget.value
-    ? sortConfigurationFields(selectedTarget.value.fields)
-    : templateFields.value.filter(
-        ({ key, group }) =>
-          (group !== 'portrait' || draft.phantomMode === 'side-card') &&
-          (key !== 'phantomChatShape' || draft.phantomMode === 'chat') &&
-          (key !== 'phantomCardStyle' || draft.phantomMode === 'side-card') &&
-          (key !== 'phantomRansomFont' || draft.phantomMode === 'ransom'),
+    ? sortOutputInspectorFields(selectedTarget.value.fields)
+    : templateFields.value.filter((field) =>
+        isOutputAppearanceFieldVisible(field, draft),
       ),
 );
 const activeColorFieldKey = shallowRef(null);
@@ -646,6 +628,7 @@ function removePortraitSet() {
         :active="active && !portraitEditor"
         :items="portraitSets.items"
         :active-id="portraitSets.activeId"
+        :track="player.track"
         @select="selectPortraitSet"
         @add="startPortraitSet"
         @edit="editPortraitSet"

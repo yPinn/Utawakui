@@ -6,7 +6,6 @@ import {
   PHANTOM_PORTRAIT_DEFAULTS,
   MAX_PHANTOM_PORTRAIT_SETS,
 } from '../../../shared/outputAppearance.mjs';
-import { usePlayer } from '../../composables/usePlayer.js';
 import {
   contentLangAttribute,
   trackContentLang,
@@ -25,6 +24,11 @@ const props = defineProps({
   items: { type: Array, required: true },
   activeId: { type: String, required: true },
   active: { type: Boolean, default: false },
+  track: { type: Object, default: null },
+  selectionOnly: { type: Boolean, default: false },
+  stretch: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
+  thumbnailFor: { type: Function, default: null },
 });
 const emit = defineEmits(['select', 'add', 'edit', 'remove']);
 
@@ -32,14 +36,13 @@ const alphabet = new Intl.Collator('en', {
   numeric: true,
   sensitivity: 'base',
 });
-const { state: player } = usePlayer();
 const grid = useTemplateRef('grid');
 const search = useTemplateRef('search');
 const query = shallowRef('');
-const artistName = computed(() => player.track?.artist?.trim());
+const artistName = computed(() => props.track?.artist?.trim());
 
 function portraitColor(name) {
-  return `var(${phantomPortraitColorToken(name, player.track?.id)})`;
+  return `var(${phantomPortraitColorToken(name, props.track?.id)})`;
 }
 
 const defaultCard = computed(() => {
@@ -66,7 +69,7 @@ const customCards = computed(() =>
         label,
         lang: customName
           ? contentLangAttribute(customName)
-          : trackContentLang(player.track),
+          : trackContentLang(props.track),
         photoId: item.phantomPortraitPhoto,
         color: item.phantomPortraitColor || portraitColor(name),
       };
@@ -125,6 +128,7 @@ defineExpose({ focusAfterEdit });
 <template>
   <section
     class="obs-portrait-grid"
+    :class="{ 'obs-portrait-grid--stretch': stretch }"
     :aria-label="t('outputPanel.portrait.set')"
   >
     <UiStack align="center" :gap="1">
@@ -136,12 +140,14 @@ defineExpose({ focusAfterEdit });
         :placeholder="t('outputPanel.portrait.searchSets')"
       />
       <UiIconButton
+        v-if="!selectionOnly"
         :icon="Pencil"
         :label="t('outputPanel.portrait.editSet')"
         :aria-disabled="!canEdit"
         @click="openEditor('edit', $event)"
       />
       <UiIconButton
+        v-if="!selectionOnly"
         :icon="Trash2"
         :label="t('outputPanel.portrait.removeSet')"
         intent="danger"
@@ -167,14 +173,16 @@ defineExpose({ focusAfterEdit });
             :aria-pressed="card.id === activeId"
             :aria-label="card.label"
             :title="card.label"
+            :disabled="disabled"
             @click="emit('select', card.id)"
           >
             <ObsPhantomPortraitThumb
               size="auto"
               class="obs-portrait-grid__photo"
               :background="card.color"
-              :photo-id="card.photoId"
-              :track-id="player.track?.id"
+              :photo-id="thumbnailFor ? '' : card.photoId"
+              :track-id="thumbnailFor ? '' : track?.id"
+              :thumbnail="thumbnailFor?.(card.id)"
               :active="active"
             >
               <UiStatusIcon
@@ -196,7 +204,10 @@ defineExpose({ focusAfterEdit });
           >{{ card.name }}</span
         >
       </div>
-      <div class="obs-portrait-grid__slot obs-portrait-grid__slot--add">
+      <div
+        v-if="!selectionOnly"
+        class="obs-portrait-grid__slot obs-portrait-grid__slot--add"
+      >
         <UiIconButton
           :icon="Plus"
           :label="t('outputPanel.portrait.addSet')"
@@ -231,6 +242,11 @@ defineExpose({ focusAfterEdit });
 
 .obs-portrait-grid__search {
   flex: 1;
+}
+
+.obs-portrait-grid--stretch {
+  max-inline-size: none;
+  margin-inline: 0;
 }
 
 .obs-portrait-grid__cells {

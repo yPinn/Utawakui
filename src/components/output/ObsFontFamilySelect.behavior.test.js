@@ -246,6 +246,29 @@ describe('ObsFontFamilySelect', () => {
     app.unmount();
   });
 
+  it('uses the same preview picker on the phone without querying its installed fonts', async () => {
+    const update = vi.fn();
+    const { app, root } = mount(ObsFontFamilySelect, {
+      id: 'output-appearance-fontFamily',
+      label: '字型',
+      modelValue: '',
+      options: OPTIONS,
+      builtInOnly: true,
+      'onUpdate:modelValue': update,
+    });
+    const control = combobox(root);
+    expect(control.props.value).toBe('本機字型');
+    trigger(control, 'onClick');
+    await nextTick();
+    expect(queryLocalFonts).not.toHaveBeenCalled();
+    const entries = findAll(body, (node) => node.props?.role === 'option');
+    expect(entries).toHaveLength(OPTIONS.length + 1);
+    expect(entries.at(-1).props['aria-disabled']).toBe(true);
+    trigger(entries[0], 'onClick');
+    expect(update).toHaveBeenCalledWith('sans');
+    app.unmount();
+  });
+
   it('marks a saved local font unavailable after a completed catalog check', async () => {
     queryLocalFonts.mockResolvedValue([]);
     const { app, root } = mount(ObsFontFamilySelect, {

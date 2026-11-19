@@ -12,6 +12,15 @@ import { t } from './i18n.js';
 const anchorKeys = ['positionAnchor'];
 const offsetKeys = ['positionOffsetX', 'positionOffsetY'];
 
+export function sortOutputInspectorFields(fields) {
+  return [...fields].sort(
+    (left, right) =>
+      (left.groupOrder ?? 100) - (right.groupOrder ?? 100) ||
+      (left.order ?? 100) - (right.order ?? 100) ||
+      left.key.localeCompare(right.key),
+  );
+}
+
 const categories = [
   { id: 'motion', icon: Repeat, groups: [{ id: 'motion' }] },
   {

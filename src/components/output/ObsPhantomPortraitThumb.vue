@@ -10,6 +10,7 @@ const props = defineProps({
   background: { type: String, required: true },
   size: { type: String, required: true },
   active: { type: Boolean, default: true },
+  thumbnail: { type: Object, default: null },
 });
 
 const mediaBase = 'utawakui-media://phantom-portrait';
@@ -24,12 +25,12 @@ const artistPhoto = computed(() =>
     : '',
 );
 const failed = reactive(new Set());
-watch([customPhoto, artistPhoto, () => props.active], () => failed.clear());
+const customUrl = computed(() => props.thumbnail?.custom || customPhoto.value);
+const artistUrl = computed(() => props.thumbnail?.artist || artistPhoto.value);
+watch([customUrl, artistUrl, () => props.active], () => failed.clear());
 const photo = computed(() =>
   props.active
-    ? [customPhoto.value, artistPhoto.value].find(
-        (url) => url && !failed.has(url),
-      )
+    ? [customUrl.value, artistUrl.value].find((url) => url && !failed.has(url))
     : undefined,
 );
 </script>
@@ -45,7 +46,7 @@ const photo = computed(() =>
       :key="photo"
       class="obs-phantom-portrait-thumb__image"
       :class="{
-        'obs-phantom-portrait-thumb__image--artist': photo === artistPhoto,
+        'obs-phantom-portrait-thumb__image--artist': photo === artistUrl,
       }"
       :src="photo"
       alt=""

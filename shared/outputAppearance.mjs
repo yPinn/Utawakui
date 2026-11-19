@@ -1544,6 +1544,16 @@ export function outputAppearanceFieldsForTemplate(templateId) {
   });
 }
 
+export function isOutputAppearanceFieldVisible({ group, key }, settings) {
+  const { phantomMode } = settings;
+  return (
+    (group !== 'portrait' || phantomMode === 'side-card') &&
+    (key !== 'phantomChatShape' || phantomMode === 'chat') &&
+    (key !== 'phantomCardStyle' || phantomMode === 'side-card') &&
+    (key !== 'phantomRansomFont' || phantomMode === 'ransom')
+  );
+}
+
 function sameSettingValue(left, right) {
   if (left === right) return true;
   return (

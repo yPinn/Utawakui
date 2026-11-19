@@ -364,7 +364,7 @@ describe('OBS output workspace layout contract', () => {
     expect(workbenchSource).toContain('ObsAppearanceField');
     expect(workbenchSource).toContain(':field="field"');
     expect(appearanceFieldSource).toContain(
-      'const controlId = computed(() => `output-appearance-${props.field.key}`)',
+      'const controlId = computed(() => `${props.idPrefix}-${props.field.key}`)',
     );
     expect(appearanceFieldSource).toContain('<UiSelect');
     expect(appearanceFieldSource).toContain('<ObsOutputColorField');

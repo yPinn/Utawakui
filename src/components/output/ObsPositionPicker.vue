@@ -19,6 +19,7 @@ const props = defineProps({
   label: { type: String, required: true },
   modelValue: { type: String, required: true },
   options: { type: Array, default: () => [] },
+  stretch: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -94,7 +95,10 @@ function moveFocus(choice, event) {
 </script>
 
 <template>
-  <div class="obs-position-picker">
+  <div
+    class="obs-position-picker"
+    :class="{ 'obs-position-picker--stretch': stretch }"
+  >
     <div
       :id="id"
       class="obs-position-picker__grid"
@@ -167,6 +171,24 @@ function moveFocus(choice, event) {
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),
     color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
+}
+
+.obs-position-picker--stretch,
+.obs-position-picker--stretch .obs-position-picker__grid,
+.obs-position-picker--stretch .obs-position-picker__option {
+  inline-size: 100%;
+}
+
+.obs-position-picker--stretch {
+  margin-inline-start: 0;
+}
+
+.obs-position-picker--stretch .obs-position-picker__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.obs-position-picker--stretch .obs-position-picker__option {
+  block-size: var(--ui-control-height-live);
 }
 
 .obs-position-picker__option:hover:not(:disabled) {

@@ -6,17 +6,13 @@ import {
   outputElementTargetsForTemplate,
 } from '../../shared/outputAppearance.mjs';
 import { lyricsPresentationProfileForTemplate } from '../../shared/presentation/lyricsPresentation.mjs';
-import {
-  lyricsPresentationPolicyOptionsForTemplate,
-  normalizeLyricsPresentationPolicyId,
-} from '../../shared/presentation/lyricsPresentationPolicies.mjs';
+import { lyricsPresentationFieldsForTemplate } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 import { createOutputPreviewScene } from '../../shared/presentation/outputPreviewScene.mjs';
 import {
   localizeAppearanceField,
   localizeElementTarget,
-  lyricsPolicyLabel,
   outputSlotLabel,
 } from '../utils/outputPanelCopy.js';
 import { UI_LOCALE } from '../utils/uiLocale.js';
@@ -250,40 +246,6 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   },
 ];
 
-const EMPTY_PRESENTATION_FIELDS = Object.freeze([]);
-const CONTENT_CONFIGURATION_GROUP = Object.freeze({
-  id: 'template-presentation',
-  label: t('outputPanel.presentationGroup'),
-  order: 90,
-});
-
-function presentationFieldsForTemplate(templateId) {
-  const options = lyricsPresentationPolicyOptionsForTemplate(templateId);
-  if (options.length === 0) return EMPTY_PRESENTATION_FIELDS;
-  return Object.freeze([
-    Object.freeze({
-      key: 'lyricsPresentationPolicyId',
-      label: t('outputPanel.presentationPolicy'),
-      control: 'select',
-      settingKind: 'lyrics-presentation',
-      family: 'document',
-      tier: 'basic',
-      reflow: true,
-      scope: 'template',
-      group: CONTENT_CONFIGURATION_GROUP.id,
-      groupLabel: CONTENT_CONFIGURATION_GROUP.label,
-      groupOrder: CONTENT_CONFIGURATION_GROUP.order,
-      order: 20,
-      defaultValue: normalizeLyricsPresentationPolicyId(templateId),
-      options: Object.freeze(
-        options.map((option) =>
-          Object.freeze({ ...option, label: lyricsPolicyLabel(option.id) }),
-        ),
-      ),
-    }),
-  ]);
-}
-
 const DEFAULT_TEMPLATE_IDS = new Set(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => slot.defaultTemplateId),
 );
@@ -315,7 +277,11 @@ export const OUTPUT_TEMPLATES = Object.freeze(
     const appearanceFields = outputAppearanceFieldsForTemplate(template.id).map(
       localizeAppearanceField,
     );
-    const presentationFields = presentationFieldsForTemplate(template.id);
+    const presentationFields = deepFreeze(
+      lyricsPresentationFieldsForTemplate(template.id).map(
+        localizeAppearanceField,
+      ),
+    );
     const elementTargets = outputElementTargetsForTemplate(template.id).map(
       localizeElementTarget,
     );

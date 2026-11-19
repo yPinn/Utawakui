@@ -22,6 +22,8 @@ const props = defineProps({
   defaultValue: { type: String, default: 'sans' },
   templateId: { type: String, default: '' },
   kineticMaterial: { type: String, default: undefined },
+  builtInOnly: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -37,7 +39,7 @@ const FONT_SAMPLES = Object.freeze([
 const catalog = useLocalFonts();
 const previewOpen = shallowRef(false);
 const savedLocalFont = computed(() =>
-  sanitizeOutputLocalFont(props.modelValue),
+  props.builtInOnly ? undefined : sanitizeOutputLocalFont(props.modelValue),
 );
 const selectedLocalFont = computed(() => {
   const saved = savedLocalFont.value;
@@ -91,8 +93,14 @@ const presetItems = computed(() =>
     };
   }),
 );
+const desktopFont = computed(() =>
+  props.builtInOnly && props.modelValue === ''
+    ? { value: '', label: t('outputPanel.font.localGroup'), disabled: true }
+    : null,
+);
 
 const localItems = computed(() => {
+  if (props.builtInOnly) return desktopFont.value ? [desktopFont.value] : [];
   const localFonts = [...catalog.fonts.value];
   if (
     savedLocalFont.value &&
@@ -124,7 +132,7 @@ const selectedItem = computed(() =>
   ),
 );
 const previewItem = computed(() =>
-  selectedLocalFontMissing.value
+  selectedLocalFontMissing.value || desktopFont.value
     ? { value: props.defaultValue }
     : selectedItem.value,
 );
@@ -148,20 +156,26 @@ const catalogMessage = computed(() => {
   if (catalog.status.value === 'denied') return t('outputPanel.font.denied');
   return catalog.error.value;
 });
-const canRetry = computed(() =>
-  ['error', 'denied'].includes(catalog.status.value),
+const canRetry = computed(
+  () =>
+    !props.builtInOnly && ['error', 'denied'].includes(catalog.status.value),
 );
 const groups = computed(() => [
   { label: t('outputPanel.font.templateGroup'), options: presetItems.value },
-  {
-    label: t('outputPanel.font.localGroup'),
-    options: localItems.value,
-    status: catalogMessage.value,
-  },
+  ...(!props.builtInOnly || localItems.value.length
+    ? [
+        {
+          label: t('outputPanel.font.localGroup'),
+          options: localItems.value,
+          status: props.builtInOnly ? '' : catalogMessage.value,
+        },
+      ]
+    : []),
 ]);
 
 function loadCatalogOnOpen() {
-  if (catalog.status.value === 'idle') void catalog.load();
+  if (!props.builtInOnly && catalog.status.value === 'idle')
+    void catalog.load();
 }
 
 function updateValue(value) {
@@ -182,6 +196,7 @@ function updateValue(value) {
         :label="label"
         :model-value="selectedValue"
         :items="groups"
+        :disabled="disabled"
         label-hidden
         search-on-open
         :placeholder="t('outputPanel.font.search')"
@@ -213,6 +228,7 @@ function updateValue(value) {
       <UiIconButton
         :icon="Info"
         :label="t('outputPanel.font.preview.title')"
+        :disabled="disabled"
         aria-haspopup="dialog"
         @click="previewOpen = true"
       />
@@ -225,7 +241,7 @@ function updateValue(value) {
       />
     </div>
 
-    <span class="ui-visually-hidden" aria-live="polite">
+    <span v-if="!builtInOnly" class="ui-visually-hidden" aria-live="polite">
       {{ catalogMessage }}
     </span>
 

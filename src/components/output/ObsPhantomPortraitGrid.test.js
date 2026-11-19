@@ -17,10 +17,6 @@ import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import ObsPhantomPortraitGrid from './ObsPhantomPortraitGrid.vue';
 import ObsPhantomPortraitThumb from './ObsPhantomPortraitThumb.vue';
 
-const { player } = vi.hoisted(() => ({ player: { track: null } }));
-vi.mock('../../composables/usePlayer.js', () => ({
-  usePlayer: () => ({ state: player }),
-}));
 vi.mock('../ui/UiButton.vue', () => ({
   default: {
     inheritAttrs: false,
@@ -64,7 +60,7 @@ function makeItems(names) {
   }));
 }
 
-function setup(items, activeId = '') {
+function setup(items, activeId = '', options = {}) {
   const model = reactive({
     activeId,
     items,
@@ -78,6 +74,7 @@ function setup(items, activeId = '') {
         ...model,
         ref: (instance) => (portraitGrid = instance),
         active: true,
+        ...options,
         onSelect: (id) => (model.activeId = id),
         onAdd: startAdd,
         onEdit: startEdit,
@@ -223,12 +220,12 @@ describe('phantom portrait grid', () => {
   });
 
   it('shows all saved presets up to the limit and falls back from custom photo to artist photo', async () => {
-    player.track = { id: 'track-a', artist: 'Original artist' };
     const { app, byLabel, cardLabels, current, search } = setup(
       makeItems(
         Array.from({ length: 12 }, (_, index) => `Singer ${index + 1}`),
       ),
       'preset-10',
+      { track: { id: 'track-a', artist: 'Original artist' } },
     );
     expect(cardLabels()).toHaveLength(13);
     expect(byLabel('新增人物組合').props['aria-disabled']).toBe(true);
@@ -253,6 +250,34 @@ describe('phantom portrait grid', () => {
     await search('original artist');
     expect(cardLabels()).toEqual(['跟隨歌手 · Original artist']);
     app.unmount();
-    player.track = null;
+  });
+
+  it('uses the same selectable grid with remote thumbnails and search on the phone', async () => {
+    const { app, root, byLabel, cardLabels, click, current, search } = setup(
+      makeItems(['Winter', 'Karina']),
+      '',
+      {
+        selectionOnly: true,
+        stretch: true,
+        thumbnailFor: (id) => (id ? { custom: `blob:${id}` } : {}),
+      },
+    );
+    expect(
+      findAll(root, (node) =>
+        String(node.props.class).includes('obs-portrait-grid--stretch'),
+      ),
+    ).toHaveLength(1);
+    expect(cardLabels()).toEqual(['跟隨歌手', 'Karina', 'Winter']);
+    expect(byLabel('新增人物組合')).toBeUndefined();
+    expect(byLabel('編輯人物組合')).toBeUndefined();
+    expect(
+      findAll(root, (node) => node.props.src?.startsWith('utawakui-media:')),
+    ).toHaveLength(0);
+    await search('winter');
+    await click('Winter');
+    expect(
+      findAll(current(), (node) => node.props.src === 'blob:preset-1'),
+    ).toHaveLength(1);
+    app.unmount();
   });
 });
