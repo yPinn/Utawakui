@@ -14,8 +14,17 @@ const valid = {
 
 describe('companion command gate', () => {
   it('lists the contract command set', () => {
-    expect(COMPANION_COMMANDS).toHaveLength(13);
-    expect(COMPANION_COMMANDS).not.toContain('queue.clear');
+    expect(new Set(COMPANION_COMMANDS).size).toBe(COMPANION_COMMANDS.length);
+    for (const command of [
+      'player.tempo-75',
+      'player.accompaniment',
+      'player.transpose-original',
+    ])
+      expect(parseCompanionCommand({ ...valid, command })).toEqual({
+        ...valid,
+        command,
+      });
+    expect(COMPANION_COMMANDS).toContain('queue.clear');
   });
 
   it('accepts exactly the four bounded fields', () => {
@@ -24,7 +33,11 @@ describe('companion command gate', () => {
       null,
       [],
       { ...valid, extra: 1 },
-      { ...valid, command: 'queue.clear' },
+      { ...valid, command: 'queue.edit' },
+      { ...valid, command: 'lyrics.offset-up' },
+      { ...valid, command: 'lyrics.offset-down' },
+      { ...valid, command: 'player.tempo-77' },
+      { ...valid, command: 'player.tempo-75', tempoRate: 4 },
       { ...valid, sequence: -1 },
       { ...valid, sequence: 1.5 },
       { ...valid, revision: '3' },
@@ -33,6 +46,56 @@ describe('companion command gate', () => {
       { command: 'player.next', sequence: 1, revision: 3 },
     ])
       expect(parseCompanionCommand(body)).toBeNull();
+  });
+
+  it('accepts an integer position only for seek', () => {
+    const seek = { ...valid, command: 'player.seek', positionMs: 2500 };
+    expect(parseCompanionCommand(seek)).toEqual(seek);
+    for (const positionMs of [undefined, -1, 1.5, '2500'])
+      expect(parseCompanionCommand({ ...seek, positionMs })).toBeNull();
+    expect(parseCompanionCommand({ ...valid, positionMs: 2500 })).toBeNull();
+  });
+
+  it('accepts only a known layout option for a specific template', () => {
+    const outputChange = {
+      templateId: 'phantom-thieves',
+      fieldKey: 'phantomMode',
+      value: 'chat',
+    };
+    const change = {
+      ...valid,
+      command: 'output.set-option',
+      trackId: '',
+      outputChange,
+    };
+    expect(parseCompanionCommand(change)).toEqual(change);
+    for (const invalid of [
+      { templateId: 'art-card' },
+      { fieldKey: 'phantomPortraitPhoto' },
+      { value: 'file:///image' },
+      { path: 'image.png' },
+    ]) {
+      expect(
+        parseCompanionCommand({
+          ...change,
+          outputChange: { ...outputChange, ...invalid },
+        }),
+      ).toBeNull();
+    }
+  });
+
+  it('accepts only a bounded published queue index for picking a track', () => {
+    const pick = {
+      ...valid,
+      command: 'queue.play',
+      queueIndex: 0,
+      trackId: '',
+    };
+    expect(parseCompanionCommand(pick)).toEqual(pick);
+    for (const queueIndex of [undefined, -1, 100, '0', 0.5])
+      expect(parseCompanionCommand({ ...pick, queueIndex })).toBeNull();
+    expect(parseCompanionCommand({ ...pick, url: 'file:///track' })).toBeNull();
+    expect(parseCompanionCommand({ ...valid, trackId: '' })).toBeNull();
   });
 
   it('rejects repeated or older sequences per device', () => {

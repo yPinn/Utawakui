@@ -82,6 +82,9 @@ function createCompanionRuntime({
   createServer,
   snapshots = { get: () => null, subscribe: () => () => {} },
   loadPage = () => new Map(),
+  readArtwork = null,
+  portraitArtwork = null,
+  searchCatalog = null,
   onReaderCount = () => {},
   createReaders = createReaderHub,
   dispatchCommand = null,
@@ -157,6 +160,13 @@ function createCompanionRuntime({
         devices,
         isGateEnabled,
         loadPage,
+        artwork: readArtwork
+          ? { getSnapshot: snapshots.get, read: readArtwork }
+          : null,
+        ...(portraitArtwork && {
+          portraitArtwork: { ...portraitArtwork, getSnapshot: snapshots.get },
+        }),
+        searchCatalog,
         readers: createReaders({ devices, snapshots, onReaderCount }),
         approvals,
         onPairingRequest: () => onChange(),

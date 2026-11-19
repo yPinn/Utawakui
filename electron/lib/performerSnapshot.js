@@ -4,6 +4,10 @@ const { parseOutputSnapshot } = require('../../shared/outputContract');
 const performerValues = require('../../shared/performerContractValues.json');
 const outputValues = require('../../shared/outputContractValues.json');
 const {
+  parseCompanionOutputSnapshot,
+} = require('../../shared/companionOutput.mjs');
+const {
+  isPerformerVocalRole,
   isPerformerReadingVariant,
   normalizePerformerReadingVariant,
   parsePerformerWordCue,
@@ -187,7 +191,24 @@ function parseControls(value) {
       'unavailable controls cannot be saving or expose an error',
     );
   }
-  return { lyricsOffset: { available, saving, error } };
+  const guide =
+    controls.guideVocal === undefined
+      ? null
+      : record(controls.guideVocal, 'controls.guideVocal');
+  return {
+    lyricsOffset: { available, saving, error },
+    ...(guide
+      ? {
+          guideVocal: {
+            enabled: boolean(guide.enabled, 'controls.guideVocal.enabled'),
+            available: boolean(
+              guide.available,
+              'controls.guideVocal.available',
+            ),
+          },
+        }
+      : {}),
+  };
 }
 
 function parseSingAlong(value) {
@@ -231,6 +252,47 @@ function parseSingAlong(value) {
   };
 }
 
+function parseQueueView(value) {
+  const view = record(value, 'queueView');
+  if (
+    !['queue', 'recent'].includes(view.tab) ||
+    !['queue', 'arrangement'].includes(view.variant) ||
+    !Array.isArray(view.recent) ||
+    view.recent.length > outputValues.maxQueueItems ||
+    !['pending', 'history'].includes(view.arrangementTab) ||
+    !Array.isArray(view.arrangement) ||
+    view.arrangement.length > outputValues.maxQueueItems
+  )
+    invalid('queueView', 'invalid queue view');
+  return {
+    tab: view.tab,
+    variant: view.variant,
+    arrangementTab: view.arrangementTab,
+    arrangement: view.arrangement.map((entry) => {
+      const row = record(entry, 'queueView.arrangement');
+      return {
+        id: boundedString(
+          row.id,
+          'queueView.arrangement.id',
+          MAX_TRACK_ID_LENGTH,
+        ),
+        title: string(row.title, 'queueView.arrangement.title'),
+        artist:
+          optionalString(row.artist, 'queueView.arrangement.artist') || '',
+        current: row.current === true,
+      };
+    }),
+    recent: view.recent.map((entry) => {
+      const track = record(entry, 'queueView.recent');
+      return {
+        id: boundedString(track.id, 'queueView.recent.id', MAX_TRACK_ID_LENGTH),
+        title: string(track.title, 'queueView.recent.title'),
+        artist: string(track.artist, 'queueView.recent.artist'),
+      };
+    }),
+  };
+}
+
 function parsePerformerSnapshot(value) {
   const snapshot = record(value, 'root');
   if (snapshot.version !== performerValues.stateVersion) {
@@ -241,10 +303,37 @@ function parsePerformerSnapshot(value) {
     invalid('state.displayDelayMs', 'must be 0 for local self-view');
   }
   const wordCue = parsePerformerWordCue(snapshot.wordCue, state);
+  const { manualQueueCount } = snapshot;
+  if (
+    manualQueueCount !== undefined &&
+    (!Number.isSafeInteger(manualQueueCount) ||
+      manualQueueCount < 0 ||
+      manualQueueCount >
+        state.queue.items.filter(({ state }) => state === 'queued').length)
+  ) {
+    invalid('manualQueueCount', 'expected a count within the upcoming queue');
+  }
+  const { vocalRoles } = snapshot;
+  if (
+    vocalRoles !== undefined &&
+    (!Array.isArray(vocalRoles) ||
+      vocalRoles.length !== state.lyrics.lines.length ||
+      vocalRoles.some((role) => role !== null && !isPerformerVocalRole(role)))
+  ) {
+    invalid('vocalRoles', 'expected one role or null per lyric line');
+  }
   return {
     version: performerValues.stateVersion,
     state,
+    ...(snapshot.outputSlots === undefined
+      ? {}
+      : { outputSlots: parseCompanionOutputSnapshot(snapshot.outputSlots) }),
+    ...(snapshot.queueView === undefined
+      ? {}
+      : { queueView: parseQueueView(snapshot.queueView) }),
+    ...(manualQueueCount === undefined ? {} : { manualQueueCount }),
     ...(wordCue ? { wordCue } : {}),
+    ...(vocalRoles === undefined ? {} : { vocalRoles: [...vocalRoles] }),
     ...(snapshot.singAlong === undefined
       ? {}
       : { singAlong: parseSingAlong(snapshot.singAlong) }),

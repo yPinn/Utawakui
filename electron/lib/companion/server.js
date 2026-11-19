@@ -69,6 +69,9 @@ function createCompanionServer({
   approvals = null,
   onPairingRequest = () => {},
   commands = null,
+  artwork = null,
+  portraitArtwork = null,
+  searchCatalog = null,
   createHttpServer = http.createServer,
 }) {
   const authority = `${address}:${port}`;
@@ -85,8 +88,10 @@ function createCompanionServer({
       "default-src 'self'",
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data:",
+      "img-src 'self' data: blob:",
       "font-src 'self'",
+      // Silent loop for lock-screen controls.
+      'media-src blob:',
       `connect-src 'self' ws://${authority}`,
       "frame-ancestors 'none'",
       "base-uri 'none'",
@@ -165,11 +170,23 @@ function createCompanionServer({
     if (!parsed) return reject(400, 'invalid');
     const refused = commands.admission.admit(device.id, parsed);
     if (refused) return reject(refused === 'stale' ? 409 : 429, refused);
-    const { command: name, revision, trackId } = parsed;
+    const {
+      command: name,
+      revision,
+      trackId,
+      positionMs,
+      queueIndex,
+      libraryTrackId,
+      outputChange,
+    } = parsed;
     const outcome = await commands.dispatch({
       command: name,
       revision,
       trackId,
+      ...(positionMs === undefined ? {} : { positionMs }),
+      ...(queueIndex === undefined ? {} : { queueIndex }),
+      ...(libraryTrackId === undefined ? {} : { libraryTrackId }),
+      ...(outputChange === undefined ? {} : { outputChange }),
     });
     if (outcome === 'applied')
       return sendJson(response, 200, { result: 'applied' });
@@ -178,10 +195,86 @@ function createCompanionServer({
     return reject(409, outcome);
   }
 
+  // Same scope as the catalog; non-library IDs read as missing.
+  function hasArtworkTrack(trackId) {
+    return (
+      typeof trackId === 'string' && trackId.length > 0 && trackId.length <= 200
+    );
+  }
+
+  async function sendArtwork(request, response, resolveTarget, read) {
+    const credential = bearer(request);
+    const device = devices.authenticate(credential);
+    if (!device) return sendJson(response, 401, { error: 'unauthorized' });
+    const allowedTarget = () =>
+      isGateEnabled() && readers?.isActive(device.id) ? resolveTarget() : null;
+    const target = allowedTarget();
+    if (!target) return sendJson(response, 404, { error: 'not-found' });
+    const asset = await read(target);
+    if (
+      !asset?.body?.length ||
+      allowedTarget() !== target ||
+      devices.authenticate(credential)?.id !== device.id
+    )
+      return sendJson(response, 404, { error: 'not-found' });
+    response.writeHead(200, {
+      ...SECURITY_HEADERS,
+      'Content-Type': asset.type,
+      'Content-Length': asset.body.length,
+    });
+    response.end(asset.body);
+  }
+
+  function trackArtwork(request, response, url) {
+    const id = url.searchParams.get('id');
+    return sendArtwork(
+      request,
+      response,
+      () => (hasArtworkTrack(id) ? id : null),
+      artwork.read,
+    );
+  }
+
+  function outputPortraitArtwork(request, response, url) {
+    const presetId = url.searchParams.get('id');
+    const artist = presetId === '';
+    function resolveTarget() {
+      if (!portraitArtwork.isEnabled() || presetId === null) return null;
+      const snapshot = portraitArtwork.getSnapshot();
+      const slot = snapshot?.outputSlots?.find(
+        ({ templateId }) => templateId === 'phantom-thieves',
+      );
+      if (slot?.options.phantomMode !== 'side-card') return null;
+      return artist
+        ? snapshot.state.playback.track?.id
+        : slot.portraits?.items.find(({ id }) => id === presetId)
+            ?.phantomPortraitPhoto;
+    }
+    return sendArtwork(request, response, resolveTarget, (id) =>
+      portraitArtwork.read(artist ? 'artist' : 'custom', id),
+    );
+  }
+
+  function catalog(request, response, url) {
+    const device = devices.authenticate(bearer(request));
+    if (!device) return sendJson(response, 401, { error: 'unauthorized' });
+    if (!readers?.isActive(device.id))
+      return sendJson(response, 409, { error: 'displaced' });
+    const result = searchCatalog(url.searchParams);
+    return result
+      ? sendJson(response, 200, result)
+      : sendJson(response, 400, { error: 'invalid' });
+  }
+
   const routes = new Map([
     ['POST /m/api/v1/pair', pair],
     ['POST /m/api/v1/pair/status', pairStatus],
     ['POST /m/api/v1/command', command],
+    ...(artwork ? [['GET /m/api/v1/artwork', trackArtwork]] : []),
+    ...(portraitArtwork
+      ? [['GET /m/api/v1/output-portrait', outputPortraitArtwork]]
+      : []),
+    ...(searchCatalog ? [['GET /m/api/v1/catalog', catalog]] : []),
   ]);
 
   async function handle(request, response) {
@@ -197,7 +290,7 @@ function createCompanionServer({
       return response.end();
     }
     const route = routes.get(`${request.method} ${url.pathname}`);
-    if (route) return route(request, response);
+    if (route) return route(request, response, url);
     if (request.method === 'GET' && servePage(url.pathname, response)) return;
     return sendJson(response, 404, { error: 'not-found' });
   }

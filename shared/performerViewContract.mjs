@@ -84,6 +84,10 @@ export function parsePerformerControlIntent(value) {
 
 // A bounded presentation cue for the current published line, never a timing
 // document or an authoring intent. Older snapshots simply omit this member.
+export function isPerformerVocalRole(value) {
+  return ['male', 'female', 'group'].includes(value);
+}
+
 export function parsePerformerWordCue(value, state) {
   if (value == null) return null;
   const invalid = () => {

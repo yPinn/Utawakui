@@ -1,8 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import performerSnapshotModule from './performerSnapshot.js';
+import templates from '../../shared/outputTemplateValues.json';
+import { projectCompanionOutputSlot } from '../../shared/companionOutput.mjs';
 
 const { createEmptyPerformerSnapshot, parsePerformerSnapshot } =
   performerSnapshotModule;
+
+it('validates only the current templates and bounded choice values for Output slots', () => {
+  const value = createEmptyPerformerSnapshot();
+  const outputSlots = templates.slots.map(({ defaultTemplateId }) =>
+    projectCompanionOutputSlot({ templateId: defaultTemplateId }),
+  );
+  expect(parsePerformerSnapshot({ ...value, outputSlots }).outputSlots).toEqual(
+    outputSlots,
+  );
+  const [lyrics, setlist, nowPlaying] = outputSlots;
+  expect(() =>
+    parsePerformerSnapshot({
+      ...value,
+      outputSlots: [setlist, lyrics, nowPlaying],
+    }),
+  ).toThrow('Invalid companion Output slot');
+  expect(() =>
+    parsePerformerSnapshot({
+      ...value,
+      outputSlots: [
+        lyrics,
+        {
+          ...setlist,
+          options: { ...setlist.options, receiptDirection: 'abc' },
+        },
+        nowPlaying,
+      ],
+    }),
+  ).toThrow('Invalid companion Output options');
+});
 
 function snapshot() {
   const value = createEmptyPerformerSnapshot({
@@ -54,6 +86,27 @@ function snapshot() {
 }
 
 describe('performer snapshot contract', () => {
+  it('bounds the manual queue count by the published upcoming rows', () => {
+    const value = snapshot();
+    value.state.queue.items = [
+      { state: 'queued', track: { id: 'b', title: 'Next' } },
+    ];
+    value.manualQueueCount = 1;
+    expect(parsePerformerSnapshot(value).manualQueueCount).toBe(1);
+    value.manualQueueCount = 2;
+    expect(() => parsePerformerSnapshot(value)).toThrow(/manualQueueCount/u);
+  });
+  it('accepts only aligned whole-line vocal roles', () => {
+    const value = snapshot();
+    expect(parsePerformerSnapshot(value)).not.toHaveProperty('vocalRoles');
+    value.vocalRoles = ['female'];
+    expect(parsePerformerSnapshot(value).vocalRoles).toEqual(['female']);
+    for (const invalid of [[], ['custom'], ['male', 'group']]) {
+      value.vocalRoles = invalid;
+      expect(() => parsePerformerSnapshot(value)).toThrow(/vocalRoles/u);
+    }
+  });
+
   it('carries a bounded monitor delay independently of the lyric offset', () => {
     const value = snapshot();
     value.state.lyrics.offsetMs = -100;

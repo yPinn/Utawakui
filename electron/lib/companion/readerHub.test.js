@@ -173,6 +173,8 @@ describe('companion reader hub', () => {
     quiet.say({ type: 'auth', credential: 'other' });
     fireHeartbeat();
     expect(quiet.ping).toHaveBeenCalled();
+    // Browsers hide WS pings, so the phone also gets a visible heartbeat.
+    expect(quiet.sent.at(-1)).toEqual({ type: 'heartbeat', sentAt: 1234 });
     fireHeartbeat();
     expect(quiet.terminate).toHaveBeenCalled();
   });

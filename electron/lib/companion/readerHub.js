@@ -1,7 +1,8 @@
 'use strict';
 
 const AUTH_TIMEOUT_MS = 3000;
-const HEARTBEAT_MS = 30_000;
+// Phones treat ~25s of silence as a lost connection; JS cannot see WS pings.
+const HEARTBEAT_MS = 10_000;
 const MAX_READERS_PER_DEVICE = 2;
 const MAX_BUFFERED_BYTES = 1024 * 1024;
 const CLOSE = Object.freeze({
@@ -39,14 +40,17 @@ function createReaderHub({
     return total;
   }
 
-  function send(socket, snapshot) {
+  function sendMessage(socket, message) {
     if (socket.readyState !== 1) return;
     if (socket.bufferedAmount > MAX_BUFFERED_BYTES) {
       socket.close(CLOSE.policy, 'slow reader');
       return;
     }
-    socket.send(JSON.stringify({ type: 'snapshot', sentAt: now(), snapshot }));
+    socket.send(JSON.stringify({ ...message, sentAt: now() }));
   }
+
+  const send = (socket, snapshot) =>
+    sendMessage(socket, { type: 'snapshot', snapshot });
 
   function broadcast(snapshot) {
     for (const sockets of readers.values())
@@ -62,6 +66,7 @@ function createReaderHub({
           else {
             socket.companionAlive = false;
             socket.ping();
+            sendMessage(socket, { type: 'heartbeat' });
           }
         }
     }, heartbeatMs);

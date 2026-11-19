@@ -19,7 +19,7 @@ const manifest = {
   '_base.js': {
     file: 'assets/base-b.js',
     css: ['assets/base-b.css'],
-    assets: ['assets/fonts/x.woff2'],
+    assets: ['assets/fonts/x.woff2', 'assets/template.jpg'],
     imports: [ENTRY_KEY],
   },
   'src/lazy.vue': { file: 'assets/lazy-c.js' },
@@ -41,6 +41,7 @@ describe('companion page assets', () => {
       'assets/companion-a.js',
       'assets/fonts/x.woff2',
       'assets/lazy-c.js',
+      'assets/template.jpg',
     ]);
   });
 
@@ -67,6 +68,8 @@ describe('companion page assets', () => {
     write(MANIFEST_NAME, JSON.stringify(manifest));
     write(ENTRY_KEY, '<html></html>');
     for (const file of collectEntryFiles(manifest)) write(file, file);
+    write('assets/icons/app-icon.png', 'icon');
+    write('assets/icons/other.png', 'other');
     const routes = loadCompanionPage(dir);
     expect([...routes.keys()].sort()).toEqual([
       '/assets/base-b.css',
@@ -74,7 +77,9 @@ describe('companion page assets', () => {
       '/assets/companion-a.css',
       '/assets/companion-a.js',
       '/assets/fonts/x.woff2',
+      '/assets/icons/app-icon.png',
       '/assets/lazy-c.js',
+      '/assets/template.jpg',
       '/m/',
     ]);
     expect(routes.get('/m/').type).toBe('text/html; charset=utf-8');
@@ -82,5 +87,8 @@ describe('companion page assets', () => {
       'assets/base-b.js',
     );
     expect(routes.has('/assets/main-d.js')).toBe(false);
+    expect(routes.get('/assets/icons/app-icon.png').type).toBe('image/png');
+    expect(routes.get('/assets/template.jpg').type).toBe('image/jpeg');
+    expect(routes.has('/assets/icons/other.png')).toBe(false);
   });
 });

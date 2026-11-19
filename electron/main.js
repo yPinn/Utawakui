@@ -16,6 +16,7 @@ const {
   dialog,
   protocol,
   nativeTheme,
+  nativeImage,
   screen,
   shell,
   clipboard,
@@ -173,6 +174,8 @@ const { createCompanionRuntime } = require('./lib/companion/runtime');
 const { createCompanionServer } = require('./lib/companion/server');
 const { describeNetworkScope } = require('./lib/companion/networkScope');
 const { loadCompanionPage } = require('./lib/companion/pageAssets');
+const { readCompanionArtwork } = require('./lib/companion/artwork');
+const { createCompanionCatalog } = require('./lib/companion/catalog');
 const { createCommandRelay } = require('./lib/companion/commandRelay');
 const { registerCompanionHandlers } = require('./main/companionHandlers');
 const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
@@ -1976,7 +1979,49 @@ if (!gotSingleInstanceLock) {
       },
       onReaderCount: (count) => performerWindowManager?.setRemoteReaders(count),
       loadPage: () => loadCompanionPage(path.join(__dirname, '..', 'dist')),
-      dispatchCommand: companionCommands.dispatch,
+      searchCatalog: createCompanionCatalog(() =>
+        listCatalogTracks(
+          configState.resolveDownloadDir(configState.getConfig()),
+        ),
+      ),
+      readArtwork: (trackId) =>
+        readCompanionArtwork(
+          resolveTrackArtworkPath(
+            configState.resolveDownloadDir(configState.getConfig()),
+            trackId,
+          ),
+          (buffer) => nativeImage.createFromBuffer(buffer),
+        ),
+      portraitArtwork: {
+        isEnabled: () =>
+          isFeatureGateEnabled(
+            configState.getConfig(),
+            FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+          ),
+        read: async (source, id) => {
+          const directory = configState.resolveDownloadDir(
+            configState.getConfig(),
+          );
+          const filename = await resolvePhantomPortraitAsset(
+            directory,
+            source,
+            id,
+          ).catch(() => null);
+          return readCompanionArtwork(
+            filename,
+            (buffer) => nativeImage.createFromBuffer(buffer),
+            { preserveAlpha: true },
+          );
+        },
+      },
+      dispatchCommand: (command) =>
+        command.command === 'output.set-option' &&
+        !isFeatureGateEnabled(
+          configState.getConfig(),
+          FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+        )
+          ? 'unavailable'
+          : companionCommands.dispatch(command),
       onChange: () => windowState.sendToMainWindow('companion:status-changed'),
     });
     registerCompanionHandlers({

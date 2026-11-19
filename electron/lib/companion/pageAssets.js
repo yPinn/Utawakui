@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const appIdentity = require('../../../shared/appIdentity.json');
 
 const MANIFEST_NAME = 'utawakui-manifest.json';
 const ENTRY_KEY = 'src/entries/companion/index.html';
@@ -14,12 +15,14 @@ const CONTENT_TYPES = Object.freeze({
   '.ttf': 'font/ttf',
   '.otf': 'font/otf',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
   '.svg': 'image/svg+xml',
   '.webp': 'image/webp',
 });
 
-// Every file the companion entry can load, from Vite's build manifest. Only
-// these paths are ever served; nothing is resolved from the request path.
+// Bundled dependencies come from Vite's build manifest. Public assets with
+// stable names are listed explicitly when building the route table.
 function collectEntryFiles(manifest, entryKey = ENTRY_KEY) {
   const files = new Set();
   const visited = new Set();
@@ -56,7 +59,10 @@ function loadCompanionPage(distDir) {
     body: fs.readFileSync(path.join(distDir, ENTRY_KEY)),
     type: CONTENT_TYPES['.html'],
   });
-  for (const file of collectEntryFiles(manifest)) {
+  for (const file of [
+    ...collectEntryFiles(manifest),
+    appIdentity.favicon.slice(1),
+  ]) {
     const type = CONTENT_TYPES[path.extname(file).toLowerCase()];
     if (!type) continue;
     routes.set(`/${file}`, {

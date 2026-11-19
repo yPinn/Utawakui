@@ -440,6 +440,33 @@ describe('companion server commands', () => {
     });
   });
 
+  it('relays a bounded Output option even with no playing track', async () => {
+    const { port, commands } = await startCommands();
+    const outputChange = {
+      templateId: 'phantom-thieves',
+      fieldKey: 'phantomCorner',
+      value: 'top-right',
+    };
+    expect(
+      await request(port, {
+        path: '/m/api/v1/command',
+        headers: auth,
+        body: {
+          ...body,
+          command: 'output.set-option',
+          trackId: '',
+          outputChange,
+        },
+      }),
+    ).toMatchObject({ status: 200, body: { result: 'applied' } });
+    expect(commands.dispatch).toHaveBeenCalledWith({
+      command: 'output.set-option',
+      revision: body.revision,
+      trackId: '',
+      outputChange,
+    });
+  });
+
   it('rejects missing credentials, invalid bodies and refused admission', async () => {
     const { port, commands } = await startCommands({
       admit: (_device, parsed) =>
@@ -452,7 +479,7 @@ describe('companion server commands', () => {
       await request(port, {
         path: '/m/api/v1/command',
         headers: auth,
-        body: { ...body, command: 'queue.clear' },
+        body: { ...body, command: 'queue.edit' },
       }),
     ).toMatchObject({ status: 400, body: { reason: 'invalid' } });
     expect(

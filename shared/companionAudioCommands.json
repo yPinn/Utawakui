@@ -1,0 +1,10 @@
+{
+  "player.tempo-75": { "tempoRate": 0.75 },
+  "player.tempo-90": { "tempoRate": 0.9 },
+  "player.tempo-100": { "tempoRate": 1 },
+  "player.tempo-110": { "tempoRate": 1.1 },
+  "player.tempo-125": { "tempoRate": 1.25 },
+  "player.transpose-original": { "transposeSemitones": 0, "pitchCents": 0 },
+  "player.accompaniment": { "monitorGuideVocalEnabled": false },
+  "player.guide-vocal": { "monitorGuideVocalEnabled": true }
+}
