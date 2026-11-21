@@ -2,6 +2,32 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('overlay CSS tokens', () => {
+  it('keeps translation legible after scaling and uses dedicated contrast roles', () => {
+    const lyrics = fs.readFileSync(
+      new URL('../lyrics/lyrics.css', import.meta.url),
+      'utf8',
+    );
+    const tokens = fs.readFileSync(
+      new URL('./tokens.css', import.meta.url),
+      'utf8',
+    );
+    const translation = lyrics.match(
+      /\.lyrics-translation\s*\{([^}]+)\}/u,
+    )?.[1];
+    expect(translation).toMatch(
+      /font-size:\s*max\(\s*var\(--ovl-text-min-size\),\s*calc\(2\.6vmin \* var\(--ovl-translation-font-scale, 1\)\)\s*\);/u,
+    );
+    expect(translation).toContain('font-family: var(--ovl-font-ui)');
+    expect(translation).toContain('color: var(--ovl-color-translation-text)');
+    expect(translation).toContain('var(--ovl-color-translation-stroke)');
+    expect(tokens).toContain(
+      '--ovl-color-translation-text: var(--ovl-primitive-color-paper);',
+    );
+    expect(tokens).toContain(
+      '--ovl-color-translation-stroke: var(--ovl-primitive-color-stroke-strong);',
+    );
+  });
+
   it('keeps both KTV lanes available for one active batch and its bounded preview', () => {
     const lyrics = fs.readFileSync(
       new URL('../lyrics/lyrics.css', import.meta.url),

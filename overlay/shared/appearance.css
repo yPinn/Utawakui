@@ -306,7 +306,10 @@
       var(--ovl-user-local-font-family), var(--ovl-font-ui);
   }
 
-  :root[data-ovl-template='ornate-vertical'][data-ovl-font='local'] {
+  :root:is(
+      [data-ovl-template='ornate-vertical'],
+      [data-ovl-template='textured-credits']
+    )[data-ovl-font='local'] {
     --ovl-user-font-family:
       var(--ovl-user-local-font-family), 'Utawakui Hina Mincho', 'Hina Mincho',
       'Yu Mincho', 'Noto Serif CJK JP', serif;

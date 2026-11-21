@@ -154,19 +154,9 @@ function renderCaption(elements, frame, options) {
   const documentApi =
     elements.current.ownerDocument ?? elements.root.ownerDocument;
   delete elements.current.dataset.segmented;
-  // Fit measures the caption alone; the row stays empty when a line has none.
-  const translation =
-    options.renderPhase !== 0 &&
-    presentation.lines.length > 0 &&
-    typeof frame.currentTranslation === 'string'
-      ? frame.currentTranslation
-      : null;
-  const childCount = presentation.lines.length + (translation === null ? 0 : 1);
   const renderKey = JSON.stringify([
     lyricsDisplayBatchKey(frame),
     presentation.lines,
-    translation,
-    frame.translationLanguage ?? null,
   ]);
   const changed = captionRenderKeys.get(elements.current) !== renderKey;
   if (
@@ -181,7 +171,7 @@ function renderCaption(elements, frame, options) {
   if (documentApi?.createElement) {
     const canReuse =
       captionRenderKeys.get(elements.current) === renderKey &&
-      elements.current.children.length === childCount;
+      elements.current.children.length === presentation.lines.length;
     if (!canReuse) {
       setTextContent(elements.current, '');
       for (const line of presentation.lines) {
@@ -190,23 +180,10 @@ function renderCaption(elements, frame, options) {
         lineElement.textContent = line;
         elements.current.append(lineElement);
       }
-      if (translation !== null) {
-        const translationElement = documentApi.createElement('span');
-        translationElement.className = 'lyrics-overlay__live-stage-translation';
-        translationElement.setAttribute('lang', frame.translationLanguage);
-        translationElement.textContent = translation;
-        elements.current.append(translationElement);
-      }
       captionRenderKeys.set(elements.current, renderKey);
     }
   } else {
-    setTextContent(
-      elements.current,
-      [
-        ...presentation.lines,
-        ...(translation === null ? [] : [translation]),
-      ].join('\n'),
-    );
+    setTextContent(elements.current, presentation.lines.join('\n'));
     captionRenderKeys.set(elements.current, renderKey);
   }
 

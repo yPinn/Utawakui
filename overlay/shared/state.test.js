@@ -12,6 +12,7 @@ import {
   selectLiveStageFrame,
   selectMusicStructureFrame,
   selectLyricsOverlayFrame,
+  selectLyricsTranslationFrame,
   selectLyricsFrame,
   selectArtworkFrame,
   selectNowPlayingFrame,
@@ -93,6 +94,36 @@ describe('overlay state selectors', () => {
 
     for (const language of ['zh-TW', null])
       expect(select(language)).not.toHaveProperty('currentTranslation');
+  });
+
+  it('resolves translation on the source line through seeks and cue gaps', () => {
+    const value = snapshot();
+    value.lyrics.translations = {
+      en: [
+        '',
+        'The tide comes ashore',
+        'Do not display on a blank line',
+        'Next lyric',
+      ],
+    };
+    const nowMs = Date.parse(value.generatedAt);
+    const options = { nowMs, translationLanguage: 'en' };
+    expect(selectLyricsTranslationFrame(value, options)).toEqual({
+      currentTranslation: 'The tide comes ashore',
+      translationLanguage: 'en',
+    });
+    expect(
+      selectLyricsTranslationFrame(value, { ...options, nowMs: nowMs + 3000 }),
+    ).toMatchObject({ currentTranslation: '' });
+    value.playback = {
+      ...value.playback,
+      status: 'seeking',
+      positionMs: 16000,
+    };
+    expect(selectLyricsTranslationFrame(value, options)).toMatchObject({
+      currentTranslation: 'Next lyric',
+    });
+    expect(selectLyricsTranslationFrame(value, { nowMs })).toEqual({});
   });
 
   it('caps only the estimated final cue hold at six seconds', () => {

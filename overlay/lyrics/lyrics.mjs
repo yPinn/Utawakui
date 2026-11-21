@@ -1,11 +1,9 @@
 import { createOverlayHost } from '../shared/lifecycle.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
-import { clearFisheyeLens, renderFisheyeLens } from './fisheyeLens.mjs';
-import { createFisheyeEffects } from './fisheyeEffects.mjs';
 import {
-  clearPhantomThieves,
-  renderPhantomThieves,
-} from './phantomThieves.mjs';
+  loadLyricsTemplateModule,
+  lyricsTemplateModule,
+} from './templateModules.mjs';
 import { clearFineLyricsText, renderFineLyricsText } from './lyricsFine.mjs';
 import {
   clearChalkboardVertical,
@@ -14,6 +12,7 @@ import {
 } from './chalkboardVertical.mjs';
 import {
   applyOverlayAppearance,
+  applyOverlayTranslationAppearance,
   normalizeOverlayAppearance,
 } from '../shared/appearance.mjs';
 import {
@@ -24,9 +23,12 @@ import {
   previewSceneForSlot,
 } from '../shared/preview.mjs';
 import {
+  lyricsAppearanceBoundary,
+  lyricsAppearanceBoundaryDelayMs,
   nextPresentationBoundaryDelayMs,
   prepareLyricsOverlaySnapshot,
   selectLyricsOverlayFrame,
+  selectLyricsTranslationFrame,
 } from '../shared/state.mjs';
 import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
 import { ornateVerticalScriptMotionEnabled } from '../../shared/presentation/ornateVerticalMotion.mjs';
@@ -39,15 +41,22 @@ import {
 } from '../shared/lyricsPresentation.mjs';
 import { normalizeLyricsPresentationPolicyId } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
 import {
+  DEFAULT_MANGA_FRAME_ID,
+  DEFAULT_MANGA_TAIL_TARGET,
+  MANGA_WORKBENCH_TARGET_MESSAGE,
   mangaFrameLengthTier,
+  mangaBubbleFrameId,
   mangaFramePlacementForBubble,
   mangaFrameTextLayout,
+  readMangaTailTarget,
 } from '../shared/mangaFrameContract.mjs';
 import {
   addMangaBubbleFade,
+  addMangaBubbleHandoff,
   applyMangaFramePresentation,
   MANGA_FADE_IN_DURATION_SECONDS,
   renderMangaFrameSvg,
+  updateMangaFrameTails,
 } from './mangaFrame.mjs';
 import {
   clearLiveStagePresentation,
@@ -939,11 +948,12 @@ function createMangaBubble(
   svg.setAttribute('focusable', 'false');
   renderMangaFrameSvg(
     svg,
-    presentation.kind === 'aside'
-      ? options.mangaFrameId === 'whisper'
-        ? 'thought'
-        : 'whisper'
-      : options.mangaFrameId,
+    mangaBubbleFrameId(
+      presentation.kind,
+      presentation.kind === 'aside'
+        ? (options.mangaDefaultFrameId ?? options.mangaFrameId)
+        : options.mangaFrameId,
+    ),
   );
 
   const text = documentApi.createElement('strong');
@@ -1061,6 +1071,7 @@ function renderMangaLyrics(elements, frame, options) {
   const renderKey = [
     lyricLineKey(frame),
     options.mangaFrameId ?? '',
+    options.mangaDefaultFrameId ?? '',
     String(frame.language ?? ''),
     furiganaEnabled ? 'furigana' : 'plain',
     JSON.stringify(frame.currentReading ?? null),
@@ -1323,6 +1334,9 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
   elements.root.dataset.revision = String(frame.revision);
+  // Measure tails last so this commit forces at most one layout.
+  if (isMangaFrame)
+    updateMangaFrameTails(elements.mangaBubbles, options.mangaTailTarget);
 }
 
 function finiteKtvHostRect(element) {
@@ -1432,10 +1446,6 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
   }
   if (activeTransition) {
     activeTransition.timeline?.kill?.();
-    if (activeTransition.incomingTargets?.length)
-      gsap.set(activeTransition.incomingTargets, {
-        clearProps: 'opacity,visibility',
-      });
     clearMangaTransition(root, activeTransition);
   }
 
@@ -1463,7 +1473,6 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
       return;
     }
     const incomingBubbles = mangaEnteringBubbleTargets(elements, token.frame);
-    token.incomingTargets = incomingBubbles;
     gsap.set(incomingBubbles, { autoAlpha: 0 });
     addMangaBubbleFade(
       timeline,
@@ -1491,15 +1500,14 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
     }
     commitMangaTransitionFrame(elements, token);
     const incomingBubbles = mangaEnteringBubbleTargets(elements, token.frame);
-    token.incomingTargets = incomingBubbles;
     gsap.set(incomingBubbles, { autoAlpha: 0 });
-    addMangaBubbleFade(timeline, outgoingBubbles, 'exit', true, 0);
-    addMangaBubbleFade(
+    addMangaBubbleHandoff(
       timeline,
+      outgoingBubbles.filter(
+        (bubble) => bubble.dataset.mangaTimingState !== 'upcoming',
+      ),
       incomingBubbles,
-      'enter',
       !['t2', 'model-starts'].includes(token.frame.currentTimingSource),
-      0,
     );
     return;
   }
@@ -1563,13 +1571,53 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearKineticPopPresentation(elements, options);
   clearOrnateVerticalPresentation(elements, options);
   clearChalkboardVertical(elements);
-  clearFisheyeLens(elements);
-  clearPhantomThieves(elements.phantomThieves);
+  clearLazyTemplates(elements);
+}
+
+// Lazily loaded templates can only have drawn after their module loaded.
+function clearLazyTemplates(elements, activeTemplateId = null) {
+  if (activeTemplateId !== 'fisheye-lens')
+    lyricsTemplateModule('fisheye-lens')?.clearFisheyeLens(elements);
+  if (activeTemplateId !== 'phantom-thieves')
+    lyricsTemplateModule('phantom-thieves')?.clearPhantomThieves(
+      elements.phantomThieves,
+    );
+  if (activeTemplateId !== 'textured-credits')
+    lyricsTemplateModule('textured-credits')?.releaseTexturedCredits(
+      elements.texturedCredits,
+    );
 }
 
 let performanceRenderId = 0;
 
+const TRANSLATION_POSITIONS = new Set([
+  'bottom-left',
+  'bottom-right',
+  'top-left',
+  'top-right',
+]);
+
+function renderLyricsTranslation(element, frame, position = 'bottom-left') {
+  if (!element) return;
+  const text = frame?.currentTranslation?.trim() ?? '';
+  if (element.textContent !== text) element.textContent = text;
+  const hidden = text.length === 0;
+  if (element.hidden !== hidden) element.hidden = hidden;
+  if (hidden) return;
+
+  const language = frame.translationLanguage;
+  if (element.lang !== language) element.lang = language;
+  const anchor = TRANSLATION_POSITIONS.has(position) ? position : 'bottom-left';
+  if (element.dataset.position !== anchor) element.dataset.position = anchor;
+}
+
 export function renderLyricsFrame(elements, sourceFrame, options = {}) {
+  if (options.renderPhase !== 0)
+    renderLyricsTranslation(
+      elements.translation,
+      sourceFrame,
+      options.translationPosition,
+    );
   if (!options.onTrace)
     return renderLyricsFrameInternal(elements, sourceFrame, options);
   const now = options.measureNow ?? (() => performance.now());
@@ -1620,7 +1668,14 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     templateId === 'karaoke-stack' ? projectKtvFrame(sourceFrame) : sourceFrame;
   const previousText =
     elements.current.dataset.currentText ?? elements.current.textContent;
-  const renderOptions = { ...options, templateId };
+  const renderOptions = {
+    ...options,
+    templateId,
+    ...(templateId === 'manga-frame' && {
+      mangaDefaultFrameId: options.mangaFrameId ?? DEFAULT_MANGA_FRAME_ID,
+      mangaFrameId: frame.mangaFrameCue ?? options.mangaFrameId,
+    }),
+  };
   traceLyrics(renderOptions, 'frame', {
     lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
     lineProgress: Number.isFinite(frame.lineProgress)
@@ -1640,8 +1695,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const isCenteredVertical = templateId === 'centered-vertical';
   const isFisheye = templateId === 'fisheye-lens';
   const isPhantom = templateId === 'phantom-thieves';
-  if (!isPhantom) clearPhantomThieves(elements.phantomThieves);
-  if (!isFisheye) clearFisheyeLens(elements);
+  const isTexturedCredits = templateId === 'textured-credits';
+  clearLazyTemplates(elements, templateId);
   if (!isChalkboard) clearChalkboardVertical(elements);
   if (
     isLiveStage ||
@@ -1650,7 +1705,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     isChalkboard ||
     isCenteredVertical ||
     isFisheye ||
-    isPhantom
+    isPhantom ||
+    isTexturedCredits
   ) {
     entranceAnimations.get(elements.current)?.cancel?.();
     entranceAnimations.delete(elements.current);
@@ -1688,15 +1744,37 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     return;
   }
   clearKineticPopPresentation(elements, renderOptions);
+  if (isTexturedCredits) {
+    clearOrnateVerticalPresentation(elements, renderOptions);
+    stopMangaAnimations(elements, renderOptions, true);
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, renderOptions);
+    clearLyricsRenderState(elements.next, renderOptions);
+    lyricsTemplateModule('textured-credits')?.renderTexturedCredits(
+      elements.texturedCredits,
+      frame,
+      {
+        ...renderOptions,
+        gsap: resolveGsap(renderOptions),
+        pixi: renderOptions.pixi ?? globalThis.PIXI ?? null,
+      },
+    );
+    elements.root.hidden = elements.texturedCredits?.hidden !== false;
+    elements.root.setAttribute('lang', frame.language || 'und');
+    elements.root.dataset.revision = String(frame.revision);
+    return;
+  }
   if (isPhantom) {
     clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
     clearMangaLyrics(elements);
     clearLyricsRenderState(elements.current, renderOptions);
     clearLyricsRenderState(elements.next, renderOptions);
-    elements.root.hidden = !frame.visible || !frame.currentText;
+    const phantomThieves = lyricsTemplateModule('phantom-thieves');
+    elements.root.hidden =
+      !phantomThieves || !frame.visible || !frame.currentText;
     elements.root.setAttribute('lang', frame.language || 'und');
-    renderPhantomThieves(elements.phantomThieves, frame, {
+    phantomThieves?.renderPhantomThieves(elements.phantomThieves, frame, {
       appearance: options.phantomAppearance,
       portraitPhotos: true,
       gsap: resolveGsap(options),
@@ -1711,7 +1789,11 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     clearMangaLyrics(elements);
     clearLyricsRenderState(elements.current, renderOptions);
     clearLyricsRenderState(elements.next, renderOptions);
-    renderFisheyeLens(elements, frame, renderOptions);
+    lyricsTemplateModule('fisheye-lens')?.renderFisheyeLens(
+      elements,
+      frame,
+      renderOptions,
+    );
     elements.root.hidden = elements.fisheye?.hidden !== false;
     elements.root.setAttribute('lang', frame.language || 'und');
     elements.root.dataset.revision = String(frame.revision);
@@ -1876,7 +1958,11 @@ export function createLyricsFrameScheduler(options = {}) {
     options.cancelSchedule ?? window.clearTimeout.bind(window);
   let latestSnapshot = null;
   let timer = null;
+  let timerDeadlineMs = Infinity;
   let stopped = false;
+  let configuredAppearanceKey;
+  let pendingAppearance = null;
+  let committedMangaCue = null;
   // Keep recovery armed across catch-up passes and deferred timer commits.
   let settleNextFrame = false;
   let templateId =
@@ -1907,6 +1993,7 @@ export function createLyricsFrameScheduler(options = {}) {
       traceSink?.('timer-cancel', { ...armedContext });
     }
     timer = null;
+    timerDeadlineMs = Infinity;
     armedContext = null;
   }
 
@@ -1923,12 +2010,14 @@ export function createLyricsFrameScheduler(options = {}) {
       targetMs: deadlineMs,
       delayMs: delay,
     });
+    timerDeadlineMs = deadlineMs;
     timer = schedule(() => {
       if (currentGeneration !== generation || stopped) {
         traceSink?.('timer-stale', { ...timerContext });
         return;
       }
       timer = null;
+      timerDeadlineMs = Infinity;
       armedContext = null;
       renderLatest(1, timerContext);
     }, delay);
@@ -1962,34 +2051,44 @@ export function createLyricsFrameScheduler(options = {}) {
       generation === currentGeneration &&
       latestSnapshot === snapshot;
     onTrace?.('scheduler', { revision: snapshot.revision });
-    let stageAt = onTrace ? measureNow() : 0;
     const lyrics = snapshot.lyrics ?? {};
-    const presentationDocument = presentationCache.get(
-      {
-        documentId: lyrics.documentId,
-        documentRevision: lyrics.documentRevision,
-        language: lyrics.source?.language,
-        lines: lyrics.lines,
-        synced: lyrics.synced,
-        trackId: lyrics.trackId,
-      },
-      {
-        kineticMaterial,
-        lyricsPresentationPolicyId,
-        sectionAccent,
-        templateId,
-      },
-    );
-    onTrace?.('presentation', {
-      durationMs: measureNow() - stageAt,
-      cacheHit: Number(lastPresentationDocument === presentationDocument),
-    });
-    if (onTrace) lastPresentationDocument = presentationDocument;
     // Bound synchronous catch-up. Cold preparation may cross an onset; never
     // add its cost to a previously calculated relative timer or commit that
     // stale projection. A second crossing yields to one immediate task.
     for (let pass = 0; pass < 2; pass++) {
       const nowMs = pass === 0 ? enteredAtMs : now();
+      let appearanceDelay = Infinity;
+      if (pendingAppearance) {
+        const delay = lyricsAppearanceBoundaryDelayMs(
+          snapshot,
+          pendingAppearance.boundary,
+          nowMs,
+        );
+        if (delay > 0) appearanceDelay = delay;
+        else commitAppearance();
+      }
+      let stageAt = onTrace ? measureNow() : 0;
+      const presentationDocument = presentationCache.get(
+        {
+          documentId: lyrics.documentId,
+          documentRevision: lyrics.documentRevision,
+          language: lyrics.source?.language,
+          lines: lyrics.lines,
+          synced: lyrics.synced,
+          trackId: lyrics.trackId,
+        },
+        {
+          kineticMaterial,
+          lyricsPresentationPolicyId,
+          sectionAccent,
+          templateId,
+        },
+      );
+      onTrace?.('presentation', {
+        durationMs: measureNow() - stageAt,
+        cacheHit: Number(lastPresentationDocument === presentationDocument),
+      });
+      if (onTrace) lastPresentationDocument = presentationDocument;
       const projectionOptions = {
         fisheyeGranularity,
         kineticMaterial,
@@ -2002,7 +2101,36 @@ export function createLyricsFrameScheduler(options = {}) {
         ...(cycle ? { traceContext: { ...cycle, pass } } : {}),
       };
       stageAt = onTrace ? measureNow() : 0;
-      const frame = selectLyricsOverlayFrame(snapshot, projectionOptions);
+      const frame = selectLyricsOverlayFrame(snapshot, {
+        ...projectionOptions,
+        translationLanguage: null,
+      });
+      const mangaCueKey =
+        templateId === 'manga-frame' &&
+        frame.lineIndex !== null &&
+        (frame.mangaFrameCue || committedMangaCue)
+          ? JSON.stringify([
+              lyrics.trackId,
+              lyrics.documentId,
+              lyrics.source?.filename,
+              lyrics.offsetMs,
+              frame.lineIndex,
+            ])
+          : null;
+      if (
+        mangaCueKey &&
+        committedMangaCue?.key === mangaCueKey &&
+        !frame.mangaFrameCue &&
+        !frame.timelineDiscontinuity &&
+        !settleNextFrame
+      ) {
+        // The publisher can clear a cue while this delayed output still shows its line.
+        frame.mangaFrameCue = committedMangaCue.frameId;
+      }
+      const translation = selectLyricsTranslationFrame(
+        snapshot,
+        projectionOptions,
+      );
       onTrace?.('select', { durationMs: measureNow() - stageAt, pass });
       stageAt = onTrace ? measureNow() : 0;
       const boundaryDelay = nextPresentationBoundaryDelayMs(
@@ -2043,6 +2171,7 @@ export function createLyricsFrameScheduler(options = {}) {
           ? nextChalkboardTransitionDelayMs(visibleFrame)
           : null;
       const delay = Math.min(
+        appearanceDelay,
         boundaryDelay ?? Infinity,
         display?.delayMs ?? Infinity,
         chalkboardDelay ?? Infinity,
@@ -2056,7 +2185,14 @@ export function createLyricsFrameScheduler(options = {}) {
       stageAt = onTrace ? measureNow() : 0;
       onTrace?.('commit-start', { lineIndex: frame.lineIndex, pass });
       settleNextFrame = false;
-      onFrame(visibleFrame, projectionOptions.traceContext);
+      committedMangaCue =
+        mangaCueKey && visibleFrame.mangaFrameCue
+          ? { key: mangaCueKey, frameId: visibleFrame.mangaFrameCue }
+          : null;
+      onFrame(
+        { ...visibleFrame, ...translation },
+        projectionOptions.traceContext,
+      );
       onTrace?.('commit', {
         durationMs: measureNow() - stageAt,
         lineIndex: frame.lineIndex,
@@ -2079,6 +2215,9 @@ export function createLyricsFrameScheduler(options = {}) {
     if (stopped) return;
     generation++;
     settleNextFrame ||= context?.recovering === true;
+    if (context?.recovering && pendingAppearance) {
+      pendingAppearance.boundary = null;
+    }
     latestSnapshot = snapshot;
     if (traceSink) deliveryId = context?.deliveryId ?? 0;
     clearTimer();
@@ -2090,12 +2229,14 @@ export function createLyricsFrameScheduler(options = {}) {
     stopped = true;
     clearTimer();
     latestSnapshot = null;
+    pendingAppearance = null;
   }
 
   function suspend() {
     generation++;
     clearTimer();
     latestSnapshot = null;
+    committedMangaCue = null;
   }
 
   function refresh() {
@@ -2104,7 +2245,7 @@ export function createLyricsFrameScheduler(options = {}) {
     renderLatest(2);
   }
 
-  function setPresentationSettings(nextSettings = {}) {
+  function assignPresentationSettings(nextSettings = {}) {
     const normalizedTemplateId =
       typeof nextSettings.templateId === 'string' && nextSettings.templateId
         ? nextSettings.templateId
@@ -2143,15 +2284,81 @@ export function createLyricsFrameScheduler(options = {}) {
     ) {
       return false;
     }
-    settleNextFrame ||= Boolean(latestSnapshot);
     translationLanguage = nextTranslationLanguage;
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
     sectionAccent = nextSectionAccent;
     fisheyeGranularity = nextFisheyeGranularity;
     lyricsPresentationPolicyId = normalizedLyricsPresentationPolicyId;
+    return true;
+  }
+
+  function setPresentationSettings(nextSettings) {
+    if (!assignPresentationSettings(nextSettings)) return false;
+    settleNextFrame ||= Boolean(latestSnapshot);
     refresh();
     return true;
+  }
+
+  function commitAppearance() {
+    const { key, slot } = pendingAppearance;
+    pendingAppearance = null;
+    configuredAppearanceKey = key;
+    assignPresentationSettings(
+      options.onApplyAppearance?.(slot) ?? { templateId: slot?.templateId },
+    );
+  }
+
+  function setAppearanceConfig(slot, nextTranslationLanguage = null) {
+    if (stopped) return;
+    const translationChanged = translationLanguage !== nextTranslationLanguage;
+    translationLanguage = nextTranslationLanguage;
+    options.onTranslationAppearance?.(slot?.settings?.translationFontScale);
+
+    const settings = Object.entries(slot?.settings ?? {})
+      .filter(
+        ([key]) =>
+          key !== 'captureSize' &&
+          key !== 'translationFontScale' &&
+          key !== 'mangaTailX' &&
+          key !== 'mangaTailY',
+      )
+      .sort(([left], [right]) => left.localeCompare(right));
+    const key = JSON.stringify([slot?.templateId, settings]);
+    if (key === configuredAppearanceKey) {
+      pendingAppearance = null;
+      if (translationChanged) refresh();
+      return;
+    }
+    if (key === pendingAppearance?.key) {
+      pendingAppearance.slot = slot;
+      if (translationChanged) refresh();
+      return;
+    }
+
+    const nowMs = now();
+    const boundary =
+      configuredAppearanceKey === undefined
+        ? null
+        : lyricsAppearanceBoundary(latestSnapshot, nowMs);
+    pendingAppearance = { key, slot, boundary };
+    if (!boundary) {
+      commitAppearance();
+      settleNextFrame ||= Boolean(latestSnapshot);
+      refresh();
+      return;
+    }
+    if (translationChanged) {
+      refresh();
+      return;
+    }
+    const deadlineMs =
+      nowMs + lyricsAppearanceBoundaryDelayMs(latestSnapshot, boundary, nowMs);
+    if (deadlineMs < timerDeadlineMs) {
+      generation++;
+      clearTimer();
+      arm(deadlineMs, generation, null);
+    }
   }
 
   function setTemplateId(nextTemplateId) {
@@ -2172,6 +2379,7 @@ export function createLyricsFrameScheduler(options = {}) {
 
   return {
     refresh,
+    setAppearanceConfig,
     setKineticMaterial,
     setPresentationSettings,
     setTemplateId,
@@ -2187,22 +2395,28 @@ function boot() {
     current: document.querySelector('#lyrics-current'),
     fisheye: document.querySelector('#lyrics-fisheye'),
     phantomThieves: document.querySelector('#lyrics-phantom-thieves'),
+    texturedCredits: document.querySelector('#lyrics-textured-credits'),
     liveStageCard: document.querySelector('#lyrics-live-stage-card'),
     liveStageChrome: document.querySelector('#lyrics-live-stage-chrome'),
     liveStageTitle: document.querySelector('#lyrics-live-stage-title'),
     liveStageArtist: document.querySelector('#lyrics-live-stage-artist'),
     mangaBubbles: document.querySelector('#lyrics-manga-bubbles'),
     next: document.querySelector('#lyrics-next'),
+    translation: document.querySelector('#lyrics-translation'),
     ktvCountIn: document.querySelector('#lyrics-ktv-count-in'),
   };
   if (!elements.root || !elements.current || !elements.next) return;
 
   const gsap = globalThis.gsap ?? null;
-  const fisheyeEffects = createFisheyeEffects({
-    canvas: document.querySelector('#lyrics-fisheye-effect'),
-    lens: elements.fisheye,
-    gsap,
-  });
+  let fisheyeEffects = null;
+  function ensureFisheyeEffects() {
+    const module = lyricsTemplateModule('fisheye-lens');
+    fisheyeEffects ??= module?.createFisheyeEffects({
+      canvas: document.querySelector('#lyrics-fisheye-effect'),
+      lens: elements.fisheye,
+      gsap,
+    });
+  }
   pagePerformanceTrace = createLyricsPerformanceTrace({
     location: window.location,
   });
@@ -2212,7 +2426,15 @@ function boot() {
     '(prefers-reduced-motion: reduce)',
   );
   let slotAppearance;
+  let savedMangaTarget = DEFAULT_MANGA_TAIL_TARGET;
+  let workbenchMangaTarget = null;
   let frameScheduler = null;
+  function mangaTailTarget() {
+    return document.documentElement.dataset.ovlTemplate === 'manga-frame' &&
+      slotAppearance?.mangaTailDirection === 'performer'
+      ? (workbenchMangaTarget ?? savedMangaTarget)
+      : null;
+  }
   const fit = createLyricsFitController({
     onTrace,
     inspection:
@@ -2224,6 +2446,7 @@ function boot() {
     renderForMeasurement: (frame, settings) =>
       renderLyricsFrameSafely(elements, frame, {
         ...settings,
+        mangaTailTarget: mangaTailTarget(),
         gsap,
         reportError,
         reducedMotion: true,
@@ -2238,6 +2461,7 @@ function boot() {
   const previewMode = isPreviewMode(window.location);
   let previewScene = previewSceneForSlot('lyrics');
   const workbenchMode = isWorkbenchMode(window.location);
+  const embeddedWorkbench = workbenchMode && window.parent !== window;
   const trace = createLyricsDiagnostics({ location: window.location });
   const reportError = createLyricsErrorReporter({ location: window.location });
   applyOverlayAppearance(document, null);
@@ -2255,39 +2479,105 @@ function boot() {
       trace,
     });
   }
+  const params = new URLSearchParams(window.location.search);
+  const translationPosition = params.get('translationPosition') ?? undefined;
+  const resizeMangaTails = () =>
+    updateMangaFrameTails(elements.mangaBubbles, mangaTailTarget());
+  function receiveMangaGuideCenter(event) {
+    if (
+      event.source !== window.parent ||
+      event.data?.type !== MANGA_WORKBENCH_TARGET_MESSAGE
+    )
+      return;
+    const point = readMangaTailTarget(event.data.x, event.data.y);
+    if (!point) return;
+    workbenchMangaTarget = point;
+    resizeMangaTails();
+  }
   frameScheduler = createLyricsFrameScheduler({
     onTrace,
-    ornateMotionTrackId: new URLSearchParams(window.location.search).get(
-      'ornateMotionTrack',
-    ),
+    ornateMotionTrackId: params.get('ornateMotionTrack'),
     templateId: 'karaoke-stack',
     prepareFrame: fit.prepare,
+    onTranslationAppearance: (scale) =>
+      applyOverlayTranslationAppearance(document, scale),
+    onApplyAppearance: (slot) => {
+      if (slot?.templateId !== 'fisheye-lens') fisheyeEffects?.stop();
+      onTrace?.('config');
+      previewScene = previewSceneForSlot('lyrics', slot);
+      applyOverlayAppearance(document, slot);
+      fit.invalidate(3);
+      const appearance = normalizeOverlayAppearance(slot?.settings, {
+        templateId: slot?.templateId,
+      });
+      slotAppearance = appearance;
+      resizeMangaTails();
+      prepareFocusStyles();
+      return {
+        fisheyeGranularity: appearance.fisheyeGranularity,
+        kineticMaterial: appearance.kineticMaterial,
+        lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
+        sectionAccent: appearance.sectionAccent,
+        templateId: slot?.templateId ?? 'karaoke-stack',
+      };
+    },
     onFrame: (frame, traceContext) => {
       const visibleFrame = withPreviewFallback(
         frame,
         previewScene.frame,
         previewMode,
       );
-      renderLyricsFrameSafely(elements, visibleFrame, {
-        fisheyeAppearance: slotAppearance,
-        phantomAppearance: slotAppearance,
-        gsap,
-        reportError,
-        reducedMotion,
-        trace,
-        onTrace,
-        renderPhase: 1,
-        traceContext,
-      });
+      renderLyricsFrameSafely(
+        elements,
+        {
+          ...visibleFrame,
+          currentTranslation: frame.currentTranslation,
+          translationLanguage: frame.translationLanguage,
+        },
+        {
+          fisheyeAppearance: slotAppearance,
+          phantomAppearance: slotAppearance,
+          mangaFrameId: slotAppearance?.mangaBubbleStyle,
+          mangaTailTarget: mangaTailTarget(),
+          gsap,
+          reportError,
+          reducedMotion:
+            reducedMotion ||
+            (previewMode &&
+              !frame.visible &&
+              document.documentElement.dataset.ovlTemplate ===
+                'textured-credits'),
+          trace,
+          onTrace,
+          renderPhase: 1,
+          traceContext,
+          translationPosition,
+        },
+      );
     },
   });
   let deliveryId = 0;
+  let configToken = 0;
+  let configApplied = false;
+  let disposed = false;
+  let holdingSnapshots = false;
+  let heldSnapshot = null;
+  function applyConfig(slot, translationLanguage) {
+    if (slot?.templateId === 'fisheye-lens') ensureFisheyeEffects();
+    frameScheduler.setAppearanceConfig(slot, translationLanguage);
+    configApplied = true;
+    holdingSnapshots = false;
+    if (!heldSnapshot) return;
+    const [snapshot, context] = heldSnapshot;
+    heldSnapshot = null;
+    frameScheduler.update(snapshot, context);
+  }
   const host = createOverlayHost({
     kind: 'lyrics',
     previewMode,
     onReducedMotion: (value) => {
       reducedMotion = value;
-      if (value) fisheyeEffects.stop();
+      if (value) fisheyeEffects?.stop();
       frameScheduler.refresh();
     },
     onFontsChanged: () => {
@@ -2299,42 +2589,50 @@ function boot() {
     onActivity: (active) => {
       onTrace?.('activity', { activeIndex: Number(active) });
       if (!active) {
-        fisheyeEffects.stop();
+        fisheyeEffects?.stop();
         fit.suspend();
         frameScheduler.suspend();
+        renderLyricsTranslation(elements.translation);
         destroyLyricsAnimations(elements, { gsap });
       } else prepareFocusStyles();
     },
-    onConfig: (slot, { translationLanguage = null } = {}) => {
-      if (slot?.templateId !== 'fisheye-lens') fisheyeEffects.stop();
-      onTrace?.('config');
-      previewScene = previewSceneForSlot('lyrics', slot);
-      const { ovlTemplate, ovlFont } = document.documentElement.dataset;
-      applyOverlayAppearance(document, slot);
-      fit.invalidate(3);
-      const appearance = normalizeOverlayAppearance(slot?.settings, {
-        templateId: slot?.templateId,
-      });
-      slotAppearance = appearance;
-      const reprojected = frameScheduler.setPresentationSettings({
-        fisheyeGranularity: appearance.fisheyeGranularity,
-        kineticMaterial: appearance.kineticMaterial,
-        lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
-        sectionAccent: appearance.sectionAccent,
-        templateId: slot?.templateId ?? 'karaoke-stack',
-        translationLanguage,
-      });
+    onConfig: (slot, { translationLanguage } = {}) => {
       if (
-        !reprojected &&
-        (slot?.templateId === 'fisheye-lens' ||
-          slot?.templateId === 'phantom-thieves' ||
-          (ovlTemplate === 'centered-vertical' &&
-            slot?.templateId === ovlTemplate &&
-            ovlFont !== document.documentElement.dataset.ovlFont))
+        slot?.templateId === 'manga-frame' &&
+        slot.settings?.mangaTailDirection !== 'fixed'
       ) {
-        frameScheduler.refresh();
+        const nextTarget =
+          readMangaTailTarget(
+            slot.settings?.mangaTailX,
+            slot.settings?.mangaTailY,
+          ) ?? DEFAULT_MANGA_TAIL_TARGET;
+        if (
+          nextTarget.x !== savedMangaTarget.x ||
+          nextTarget.y !== savedMangaTarget.y
+        ) {
+          savedMangaTarget = nextTarget;
+          resizeMangaTails();
+        }
       }
-      prepareFocusStyles();
+      const token = ++configToken;
+      const loading = loadLyricsTemplateModule(slot?.templateId, document);
+      if (!loading) {
+        applyConfig(slot, translationLanguage);
+        return;
+      }
+      // Keep the current template visible while the new one loads.
+      if (!configApplied) holdingSnapshots = true;
+      loading
+        .catch((error) =>
+          reportError?.(error, {
+            phase: 'template-load',
+            templateId: slot?.templateId ?? null,
+          }),
+        )
+        .then(() => {
+          if (!disposed && token === configToken)
+            applyConfig(slot, translationLanguage);
+        });
     },
     onFisheyeEffect: (effect) => {
       if (
@@ -2342,21 +2640,38 @@ function boot() {
         !reducedMotionPreference.matches &&
         document.documentElement.dataset.ovlTemplate === 'fisheye-lens'
       ) {
-        fisheyeEffects.play(effect);
+        fisheyeEffects?.play(effect);
       }
     },
     onSnapshot: (snapshot, { recovering }) => {
       const delivery = onTrace ? { deliveryId: ++deliveryId } : undefined;
       onTrace?.('receive', { revision: snapshot.revision, ...delivery });
+      if (holdingSnapshots) {
+        const held = heldSnapshot?.[1].recovering === true;
+        heldSnapshot = [
+          snapshot,
+          { ...delivery, recovering: recovering || held },
+        ];
+        return;
+      }
       frameScheduler.update(snapshot, { ...delivery, recovering });
     },
     onDispose: () => {
-      fisheyeEffects.stop();
+      disposed = true;
+      heldSnapshot = null;
+      window.removeEventListener('resize', resizeMangaTails);
+      if (embeddedWorkbench)
+        window.removeEventListener('message', receiveMangaGuideCenter);
+      fisheyeEffects?.stop();
       fit.stop();
       frameScheduler.stop();
+      renderLyricsTranslation(elements.translation);
       destroyLyricsAnimations(elements, { gsap });
     },
   });
+  window.addEventListener('resize', resizeMangaTails);
+  if (embeddedWorkbench)
+    window.addEventListener('message', receiveMangaGuideCenter);
   host.start();
 }
 

@@ -13,6 +13,11 @@ import {
 } from '../../shared/presentation/state.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
+import outputTemplates from '../../shared/outputTemplateValues.json';
+
+const lyricsTemplateIds = Object.keys(outputTemplates.templateKinds).filter(
+  (id) => outputTemplates.templateKinds[id] === 'lyrics',
+);
 
 function gsapHarness() {
   const timelines = [];
@@ -151,6 +156,7 @@ function domElements() {
     mangaBubbles: element(documentApi),
     next: element(documentApi),
     ktvCountIn: element(documentApi),
+    translation: element(documentApi),
   };
 }
 
@@ -4485,49 +4491,58 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('');
   });
 
-  it('adds the current translation below the Live Stage caption', () => {
+  it('keeps translation outside the template caption and fit pass', () => {
     const elements = domElements();
     const frame = {
       revision: 4,
       visible: true,
-      currentText: '潮聲沿著夜色靠岸',
+      currentText: 'Original lyric',
       nextText: '',
-      language: 'zh-Hant',
+      language: 'ja',
       currentTranslation: 'The tide comes ashore',
       translationLanguage: 'en',
       liveStage: { active: true, cardVisible: false },
     };
-    renderLyricsFrame(elements, frame, {
+    const options = {
       templateId: 'live-stage',
-      reducedMotion: true,
-    });
-    const translation = elements.current.children.at(-1);
-    expect(translation.className).toBe(
-      'lyrics-overlay__live-stage-translation',
+      translationPosition: 'top-right',
+    };
+    renderLyricsFrame(elements, frame, options);
+    expect(elements.current.children.map((line) => line.textContent)).toEqual([
+      'Original',
+      'lyric',
+    ]);
+    const { translation } = elements;
+    expect(translation.textContent).toBe('The tide comes ashore');
+    expect(translation.lang).toBe('en');
+    expect(translation.dataset.position).toBe('top-right');
+    expect(translation.hidden).toBe(false);
+    const writes = translation.textContentWriteCount;
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, currentTranslation: '' },
+      {
+        ...options,
+        renderPhase: 0,
+      },
     );
     expect(translation.textContent).toBe('The tide comes ashore');
-    expect(translation.attributes.lang).toBe('en');
-    expect(elements.root.dataset.liveStageCaptionLines).toBe(
-      String(elements.current.children.length - 1),
-    );
+
+    renderLyricsFrame(elements, frame, {
+      ...options,
+      templateId: 'centered-vertical',
+    });
+    expect(translation.textContentWriteCount).toBe(writes);
+    expect(translation.dataset.position).toBe('top-right');
 
     renderLyricsFrame(
       elements,
-      { ...frame, revision: 5, currentTranslation: '' },
-      { templateId: 'live-stage', reducedMotion: true },
+      { ...frame, currentTranslation: '   ' },
+      options,
     );
-    expect(elements.current.children.at(-1).textContent).toBe('');
-
-    renderLyricsFrame(
-      elements,
-      { ...frame, revision: 6, currentTranslation: undefined },
-      { templateId: 'live-stage', reducedMotion: true },
-    );
-    expect(
-      elements.current.children.every(
-        (line) => line.className === 'lyrics-overlay__live-stage-caption-line',
-      ),
-    ).toBe(true);
+    expect(translation.hidden).toBe(true);
+    expect(translation.textContent).toBe('');
   });
 
   it('keeps one typography contract for a long asymmetric Live Stage pair', () => {
@@ -4748,7 +4763,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.root.attributes['aria-label']).toBeUndefined();
   });
 
-  it('crossfades Manga bubbles with new content mounted before the old bubble exits', () => {
+  it('mounts the next Manga bubble hidden until the shared lane clears', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
 
@@ -4790,7 +4805,6 @@ describe('lyrics overlay renderer', () => {
         duration: 0.14,
         ease: 'power2.in',
         overwrite: 'auto',
-        stagger: { each: 0.06, from: 'start' },
       },
     });
     expect(elements.current.animate).not.toHaveBeenCalled();
@@ -4801,7 +4815,7 @@ describe('lyrics overlay renderer', () => {
     expect(outgoingGroup.children).toContain(outgoingBubble);
     expect(timelines[0].labelPositions).toEqual([
       { label: 'exit', position: 0 },
-      { label: 'enter', position: 0 },
+      { label: 'enter', position: 0.14 },
     ]);
 
     expect(elements.current.textContent).toBe('current line');
@@ -5147,8 +5161,12 @@ describe('lyrics overlay renderer', () => {
       vars: {
         autoAlpha: 0,
         duration: 0.14,
-        stagger: { each: 0.06, from: 'start' },
       },
+    });
+    expect(timelines[0].tweens[0].vars).not.toHaveProperty('stagger');
+    expect(timelines[0].labelPositions).toContainEqual({
+      label: 'enter',
+      position: 0.14,
     });
 
     const incoming = [...elements.mangaBubbles.children];
@@ -6061,6 +6079,259 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children[0].animate).not.toHaveBeenCalled();
   });
 
+  it.each(lyricsTemplateIds)(
+    'projects and renders the source translation for %s',
+    (templateId) => {
+      const elements = domElements();
+      const generatedAt = '2026-08-22T00:00:00.000Z';
+      const scheduler = createLyricsFrameScheduler({
+        now: () => Date.parse(generatedAt),
+        schedule: vi.fn(),
+        cancelSchedule: vi.fn(),
+        templateId,
+        translationLanguage: 'en',
+        onFrame: (frame) =>
+          renderLyricsFrame(elements, frame, {
+            templateId,
+            reducedMotion: true,
+          }),
+      });
+      const snapshot = {
+        version: 2,
+        revision: 1,
+        generatedAt,
+        displayDelayMs: 0,
+        playback: {
+          status: 'paused',
+          positionMs: 1000,
+          durationMs: 10000,
+          rate: 1,
+          track: { id: 'track-1', title: 'Song' },
+        },
+        lyrics: {
+          trackId: 'track-1',
+          source: { language: 'ja' },
+          synced: true,
+          offsetMs: 0,
+          activeLineIndex: 0,
+          lines: [
+            { text: 'First lyric', startMs: 0, endMs: 2000 },
+            { text: '', startMs: 2000, endMs: 3000 },
+            { text: 'Last lyric', startMs: 3000, endMs: 5000 },
+          ],
+          translations: { en: ['First translation', '', 'Final translation'] },
+        },
+      };
+      const translation = elements.translation;
+      const seek = (revision, positionMs) =>
+        scheduler.update({
+          ...snapshot,
+          revision,
+          playback: { ...snapshot.playback, status: 'seeking', positionMs },
+        });
+
+      try {
+        scheduler.update(snapshot);
+        expect(translation).toMatchObject({
+          hidden: false,
+          textContent: 'First translation',
+          lang: 'en',
+          dataset: { position: 'bottom-left' },
+        });
+        expect(elements.current.textContent).not.toContain('First translation');
+
+        seek(2, 2500);
+        expect(translation).toMatchObject({ hidden: true, textContent: '' });
+
+        seek(3, 3500);
+        expect(translation).toMatchObject({
+          hidden: false,
+          textContent: 'Final translation',
+        });
+
+        scheduler.setPresentationSettings({ translationLanguage: null });
+        expect(translation).toMatchObject({ hidden: true, textContent: '' });
+      } finally {
+        scheduler.stop();
+      }
+    },
+  );
+
+  it('keeps the outgoing appearance and one-shot bubble through the current line, then applies the latest saved appearance', () => {
+    const generatedAt = '2026-08-22T00:00:00.000Z';
+    const origin = Date.parse(generatedAt);
+    let nowMs = origin + 250;
+    const applyAppearance = vi.fn((slot) => ({ templateId: slot.templateId }));
+    const translationAppearance = vi.fn();
+    const frames = [];
+    let wake;
+    const scheduler = createLyricsFrameScheduler({
+      now: () => nowMs,
+      onApplyAppearance: applyAppearance,
+      onTranslationAppearance: translationAppearance,
+      onFrame: (frame) => frames.push(frame),
+      schedule: (callback, delay) => (wake = { callback, at: nowMs + delay }),
+      cancelSchedule: () => {
+        wake = null;
+      },
+    });
+    const snapshot = {
+      generatedAt,
+      displayDelayMs: 250,
+      playback: {
+        status: 'playing',
+        positionMs: 1400,
+        rate: 1,
+        durationMs: 8000,
+        track: { id: 'song' },
+      },
+      lyrics: {
+        documentId: 'lyrics',
+        trackId: 'song',
+        synced: true,
+        offsetMs: 100,
+        mangaFrameCues: [{ lineIndex: 0, frameId: 'thought' }],
+        lines: [
+          { text: 'First', startMs: 1000, endMs: 1900 },
+          { text: 'Second', startMs: 2400, endMs: 3700 },
+        ],
+      },
+    };
+    const initialSlot = { templateId: 'manga-frame' };
+    scheduler.setAppearanceConfig(initialSlot);
+    scheduler.update(snapshot);
+    expect(frames.at(-1)).toMatchObject({
+      currentText: 'First',
+      mangaFrameCue: 'thought',
+    });
+
+    const beforeConfig = frames.length;
+    scheduler.setAppearanceConfig({
+      templateId: 'manga-frame',
+      settings: { mangaTailX: 0.38, mangaTailY: 0.7 },
+    });
+    expect(frames).toHaveLength(beforeConfig);
+    expect(applyAppearance).toHaveBeenCalledExactlyOnceWith(initialSlot);
+
+    scheduler.setAppearanceConfig({ templateId: 'ornate-vertical' });
+    scheduler.setAppearanceConfig({
+      templateId: 'manga-frame',
+      settings: { fontScale: 'large' },
+    });
+    const latestSlot = {
+      templateId: 'kinetic-pop',
+      settings: { translationFontScale: 125 },
+    };
+    scheduler.setAppearanceConfig(latestSlot);
+    expect(frames).toHaveLength(beforeConfig);
+    expect(applyAppearance).toHaveBeenCalledExactlyOnceWith(initialSlot);
+    expect(translationAppearance).toHaveBeenLastCalledWith(125);
+
+    scheduler.update({
+      ...snapshot,
+      lyrics: { ...snapshot.lyrics, mangaFrameCues: [] },
+    });
+    expect(frames.at(-1)).toMatchObject({
+      currentText: 'First',
+      mangaFrameCue: 'thought',
+    });
+    for (const stopAt of [origin + 1149, origin + 1150]) {
+      while (wake?.at <= stopAt) {
+        nowMs = wake.at;
+        wake.callback();
+      }
+      if (stopAt === origin + 1149)
+        expect(applyAppearance).toHaveBeenCalledTimes(1);
+    }
+    expect(applyAppearance.mock.calls).toEqual([[initialSlot], [latestSlot]]);
+    expect(frames.at(-1).currentText).toBe('Second');
+    scheduler.stop();
+  });
+
+  it('keeps the final line intact, cancels a reverted request and settles at playback discontinuities', () => {
+    const generatedAt = '2026-08-22T00:00:00.000Z';
+    const onApplyAppearance = vi.fn();
+    const scheduler = createLyricsFrameScheduler({
+      now: () => Date.parse(generatedAt),
+      onApplyAppearance,
+      schedule: vi.fn(),
+      cancelSchedule: vi.fn(),
+    });
+    const snapshot = {
+      generatedAt,
+      playback: {
+        status: 'playing',
+        positionMs: 1500,
+        durationMs: 5000,
+        track: { id: 'song' },
+      },
+      lyrics: {
+        trackId: 'song',
+        synced: true,
+        lines: [{ text: 'Final', startMs: 1000, endMs: 3000 }],
+      },
+    };
+    const initial = { templateId: 'karaoke-stack' };
+    const next = { templateId: 'manga-frame' };
+    scheduler.setAppearanceConfig(initial);
+    scheduler.update(snapshot);
+    scheduler.setAppearanceConfig(next);
+    scheduler.setAppearanceConfig(initial);
+    scheduler.update({
+      ...snapshot,
+      playback: { ...snapshot.playback, status: 'paused' },
+    });
+    expect(onApplyAppearance).toHaveBeenCalledExactlyOnceWith(initial);
+
+    scheduler.update(snapshot);
+    scheduler.setAppearanceConfig(next);
+    expect(onApplyAppearance).toHaveBeenCalledTimes(1);
+    scheduler.update({
+      ...snapshot,
+      playback: { ...snapshot.playback, status: 'buffering' },
+    });
+    expect(onApplyAppearance).toHaveBeenCalledTimes(1);
+    scheduler.update({
+      ...snapshot,
+      playback: { ...snapshot.playback, status: 'ended' },
+    });
+    expect(onApplyAppearance).toHaveBeenLastCalledWith(next);
+    scheduler.setAppearanceConfig(initial);
+    expect(onApplyAppearance).toHaveBeenLastCalledWith(initial);
+    scheduler.stop();
+  });
+
+  it('applies appearance immediately during the outro after the final line', () => {
+    const generatedAt = '2026-08-22T00:00:00.000Z';
+    const onApplyAppearance = vi.fn();
+    const scheduler = createLyricsFrameScheduler({
+      now: () => Date.parse(generatedAt),
+      onApplyAppearance,
+      schedule: vi.fn(),
+      cancelSchedule: vi.fn(),
+    });
+    const snapshot = {
+      generatedAt,
+      playback: {
+        status: 'playing',
+        positionMs: 3500,
+        durationMs: 90000,
+        track: { id: 'song' },
+      },
+      lyrics: {
+        trackId: 'song',
+        synced: true,
+        lines: [{ text: 'Final', startMs: 1000, endMs: 3000 }],
+      },
+    };
+    scheduler.setAppearanceConfig({ templateId: 'karaoke-stack' });
+    scheduler.update(snapshot);
+    const next = { templateId: 'manga-frame' };
+    scheduler.setAppearanceConfig(next);
+    expect(onApplyAppearance).toHaveBeenLastCalledWith(next);
+    scheduler.stop();
+  });
+
   it('renders again at the next timed lyric boundary without a new snapshot', () => {
     let nowMs = Date.parse('2026-08-22T00:00:00.000Z');
     const scheduled = [];
@@ -6388,6 +6659,79 @@ describe('lyrics overlay renderer', () => {
     expect(cancelSchedule).toHaveBeenCalledWith(1);
     scheduled[0].callback();
     expect(scheduled).toHaveLength(1);
+  });
+
+  it('renders the cued main bubble only on its target line', () => {
+    const elements = domElements();
+    const render = (lineIndex, mangaFrameCue) => {
+      renderLyricsFrame(
+        elements,
+        {
+          revision: lineIndex,
+          lineIndex,
+          visible: true,
+          language: 'en',
+          currentText: 'Main phrase (soft aside)',
+          nextText: '',
+          mangaFrameCue,
+        },
+        { templateId: 'manga-frame', mangaFrameId: 'spoken' },
+      );
+      return elements.mangaBubbles.children.map(
+        (bubble) => bubble.children[0].dataset.frameId,
+      );
+    };
+    expect(render(0)).toEqual(['spoken', 'whisper']);
+    expect(render(1, 'whisper')).toEqual(['whisper', 'whisper']);
+    expect(render(2)).toEqual(['spoken', 'whisper']);
+  });
+
+  it('projects a queued manga style only at the target lyric boundary', () => {
+    const generatedAt = '2026-08-22T00:00:00.000Z';
+    let now = Date.parse(generatedAt);
+    const onFrame = vi.fn();
+    const scheduler = createLyricsFrameScheduler({
+      templateId: 'manga-frame',
+      now: () => now,
+      schedule: vi.fn(),
+      cancelSchedule: vi.fn(),
+      onFrame,
+    });
+    scheduler.update({
+      revision: 1,
+      generatedAt,
+      playback: {
+        status: 'playing',
+        positionMs: 0,
+        durationMs: 3000,
+        rate: 1,
+        track: { id: 'track-1', title: 'Song' },
+      },
+      lyrics: {
+        trackId: 'track-1',
+        source: { language: 'en' },
+        synced: true,
+        offsetMs: 0,
+        mangaFrameCues: [{ lineIndex: 1, frameId: 'thought' }],
+        lines: ['First', 'Second', 'Third'].map((text, index) => ({
+          text,
+          startMs: index * 1000,
+          endMs: (index + 1) * 1000,
+        })),
+      },
+    });
+    expect(onFrame.mock.lastCall[0]).toMatchObject({ currentText: 'First' });
+    expect(onFrame.mock.lastCall[0]).not.toHaveProperty('mangaFrameCue');
+    now += 1000;
+    scheduler.refresh();
+    expect(onFrame.mock.lastCall[0]).toMatchObject({
+      currentText: 'Second',
+      mangaFrameCue: 'thought',
+    });
+    now += 1000;
+    scheduler.refresh();
+    expect(onFrame.mock.lastCall[0]).toMatchObject({ currentText: 'Third' });
+    expect(onFrame.mock.lastCall[0]).not.toHaveProperty('mangaFrameCue');
   });
 
   it('settles a deferred recovery once, then animates normal playback boundaries', () => {

@@ -21,27 +21,13 @@ const output = {
   ],
   loaded: true,
 };
-const translation = {
-  preference: 'output',
-  items: [
-    { value: 'output', label: '跟隨畫面輸出語言' },
-    { value: 'off', label: '不顯示' },
-  ],
-  loaded: true,
-};
-
-function render(
-  uiOverrides = {},
-  outputOverrides = {},
-  translationOverrides = {},
-) {
+function render(uiOverrides = {}, outputOverrides = {}) {
   return renderToString(
     createSSRApp({
       render: () =>
         h(LanguageSettingsRow, {
           ui: { ...ui, ...uiOverrides },
           output: { ...output, ...outputOverrides },
-          translation: { ...translation, ...translationOverrides },
         }),
     }),
   );
@@ -54,18 +40,8 @@ describe('LanguageSettingsRow', () => {
     expect(html).toContain('介面語言重新啟動後套用；畫面輸出語言立即套用。');
     expect(html).toContain('介面語言');
     expect(html).toContain('畫面輸出語言');
-    expect(html).toContain('畫面輸出譯文');
+    expect(html).not.toContain('output-translation-preference');
     expect(html).not.toContain('立即重新啟動');
-  });
-
-  it('reports an Output translation read failure with a reload action', async () => {
-    const html = await render(
-      {},
-      {},
-      { readError: '無法讀取畫面輸出譯文設定。' },
-    );
-    expect(html).toContain('無法讀取畫面輸出譯文設定。');
-    expect(html).toContain('重新讀取');
   });
 
   it('offers a restart while another UI language is pending', async () => {

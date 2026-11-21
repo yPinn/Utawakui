@@ -62,6 +62,19 @@ function setup(options = {}) {
 }
 
 describe('F2 shared Overlay host', () => {
+  it('only reapplies configuration when the receiving surface or its language changes', () => {
+    const onConfig = vi.fn();
+    const state = setup({ kind: 'now-playing', onConfig });
+    state.host.start();
+    state.callbacks.onConfig({ templateId: 'art-card' }, 'zh-TW', 'en');
+    state.callbacks.onConfig({ templateId: 'art-card' }, 'zh-TW', 'ja');
+    expect(onConfig).toHaveBeenCalledOnce();
+    state.callbacks.onConfig({ templateId: 'cover-player' }, 'zh-TW', 'ja');
+    state.callbacks.onConfig({ templateId: 'cover-player' }, 'en-US', 'ja');
+    expect(onConfig).toHaveBeenCalledTimes(3);
+    state.host.dispose();
+  });
+
   it('defers font remeasurement while inactive and drops config/font callbacks after dispose', async () => {
     const fonts = { ...events(), ready: Promise.resolve() };
     const onFontsChanged = vi.fn();

@@ -16,6 +16,8 @@ export function createOverlayHost(options = {}) {
   let activated = false;
   let reducedMotion = false;
   let fontsDirty = false;
+  let configKey;
+  let configLanguage;
   let stopFonts = () => {};
   let removeMotion = () => {};
 
@@ -54,7 +56,17 @@ export function createOverlayHost(options = {}) {
     kind: options.kind,
     onConfig(slot, language, translationLanguage = null) {
       if (disposed) return;
-      setOverlayLanguage(document, language);
+      const key = JSON.stringify([
+        slot,
+        language,
+        options.kind === 'lyrics' ? translationLanguage : null,
+      ]);
+      if (key === configKey) return;
+      if (configKey === undefined || language !== configLanguage) {
+        configLanguage = language;
+        setOverlayLanguage(document, language);
+      }
+      configKey = key;
       options.onConfig?.(slot, { translationLanguage });
     },
     onSnapshot(snapshot) {

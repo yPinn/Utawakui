@@ -9,6 +9,7 @@ import {
   outputAppearanceOptionIds,
   outputElementFontWeight,
   outputLocalFontCssValue,
+  sanitizeOutputTranslationFontScale,
 } from '../../shared/outputAppearance.mjs';
 import { OUTPUT_TEMPLATE_ELEMENTS } from '../../shared/outputTemplateElements.mjs';
 
@@ -280,6 +281,17 @@ export function normalizeOverlayAppearance(settings = {}, options = {}) {
   return normalizeOutputAppearance(settings, options);
 }
 
+export function applyOverlayTranslationAppearance(document, value) {
+  const root = document?.documentElement;
+  if (!root) return;
+  const scale = sanitizeOutputTranslationFontScale(value);
+  setOrRemoveProperty(
+    root,
+    '--ovl-translation-font-scale',
+    scale === undefined ? undefined : String(scale / 100),
+  );
+}
+
 export function applyOverlayAppearance(document, slot) {
   const root = document?.documentElement;
   if (!root) return;
@@ -311,6 +323,10 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlContentWidth = appearance.contentWidth;
   root.dataset.ovlPosition = appearance.positionAnchor;
   root.dataset.ovlTemplate = templateId;
+  applyOverlayTranslationAppearance(
+    document,
+    slot?.settings?.translationFontScale,
+  );
   applyElementAppearance(root, templateId, slot?.settings);
   root.dataset.ovlReceiptDirection = appearance.receiptDirection;
   root.dataset.ovlReceiptReview = appearance.receiptReview;

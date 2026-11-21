@@ -136,6 +136,68 @@ function effectiveLineEnd(snapshot, lines, lineIndex) {
     : null;
 }
 
+export function lyricsAppearanceBoundary(snapshot, nowMs) {
+  const lyrics = snapshot?.lyrics;
+  const trackId = snapshot?.playback?.track?.id;
+  if (
+    !['playing', 'buffering'].includes(snapshot?.playback?.status) ||
+    lyrics?.synced !== true ||
+    !trackId ||
+    trackId !== lyrics.trackId
+  )
+    return null;
+
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  let current;
+  let endMs = Infinity;
+  for (const line of prepareLyricsOverlaySnapshot(snapshot).lyrics.lines ??
+    []) {
+    if (!Number.isFinite(line.startMs) || !displayableLyricsText(line.text))
+      continue;
+    if (line.startMs <= positionMs) {
+      current = line;
+      continue;
+    }
+    endMs = line.startMs;
+    break;
+  }
+  if (!current) return null;
+  // The final line waits only for its (estimated) display end, not the outro.
+  if (endMs === Infinity) {
+    endMs = current.endMs > current.startMs ? current.endMs : null;
+    if (!(positionMs < endMs)) return null;
+  }
+  return {
+    trackId,
+    documentId: lyrics.documentId,
+    sourceFile: lyrics.source?.filename,
+    offsetMs: lyricsOffsetMs(snapshot),
+    startMs: current.startMs,
+    endMs,
+  };
+}
+
+export function lyricsAppearanceBoundaryDelayMs(snapshot, boundary, nowMs) {
+  const lyrics = snapshot?.lyrics;
+  const status = snapshot?.playback?.status;
+  if (
+    !boundary ||
+    (status !== 'playing' && status !== 'buffering') ||
+    lyrics?.synced !== true ||
+    snapshot.playback.track?.id !== boundary.trackId ||
+    lyrics.trackId !== boundary.trackId ||
+    lyrics.documentId !== boundary.documentId ||
+    lyrics.source?.filename !== boundary.sourceFile ||
+    lyricsOffsetMs(snapshot) !== boundary.offsetMs
+  )
+    return 0;
+
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  if (positionMs < boundary.startMs || positionMs >= boundary.endMs) return 0;
+  if (status === 'buffering') return Infinity;
+  return Math.ceil((boundary.endMs - positionMs) / playbackRate(snapshot));
+}
+
 function boundedProgress(positionMs, startMs, endMs) {
   if (!Number.isFinite(endMs) || endMs <= startMs) return null;
   return Math.min(1, Math.max(0, (positionMs - startMs) / (endMs - startMs)));
@@ -2059,6 +2121,9 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
     : new Set(lyricsTemplateCapabilities(templateId).scheduler);
   if (
     legacyAllTemplates ||
+    Array.isArray(
+      snapshot?.lyrics?.translations?.[options.translationLanguage],
+    ) ||
     schedulerCapabilities.has('lyrics-lines') ||
     schedulerCapabilities.has('lyrics-segments')
   ) {
@@ -2178,6 +2243,39 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   return delays.length > 0 ? Math.min(...delays) : null;
 }
 
+function lyricsTranslationAt(lyrics, language, lineIndex, currentText) {
+  const rows = language ? lyrics?.translations?.[language] : null;
+  if (!Array.isArray(rows)) return {};
+  return {
+    currentTranslation: currentText ? String(rows[lineIndex] ?? '') : '',
+    translationLanguage: language,
+  };
+}
+
+export function selectLyricsTranslationFrame(snapshot, options = {}) {
+  const { translationLanguage } = options;
+  if (!Array.isArray(snapshot?.lyrics?.translations?.[translationLanguage]))
+    return {};
+
+  const prepared = prepareLyricsOverlaySnapshot(snapshot);
+  const { lyrics, playback } = prepared;
+  if (!playback?.track?.id || lyrics.trackId !== playback.track.id) return {};
+
+  const lines = Array.isArray(lyrics.lines) ? lyrics.lines : [];
+  const lineIndex = activeLyricIndex(
+    prepared,
+    lines,
+    options.nowMs ?? Date.now(),
+  );
+  const currentText = displayableLyricsText(lines[lineIndex]?.text);
+  return lyricsTranslationAt(
+    lyrics,
+    translationLanguage,
+    lineIndex,
+    currentText,
+  );
+}
+
 export function selectLyricsFrame(snapshot, options = {}) {
   const trackId = snapshot?.playback?.track?.id;
   const lyrics = snapshot?.lyrics;
@@ -2201,11 +2299,6 @@ export function selectLyricsFrame(snapshot, options = {}) {
     Array.isArray(readingLine.segments)
       ? readingLine
       : null;
-  // Present whenever the chosen language has saved rows, so a template can
-  // keep its translation row even for an untranslated line.
-  const translationTexts = options.translationLanguage
-    ? lyrics?.translations?.[options.translationLanguage]
-    : null;
   let nextText = '';
   let nextIndex = null;
   for (let index = activeIndex + 1; index < lines.length; index += 1) {
@@ -2264,14 +2357,12 @@ export function selectLyricsFrame(snapshot, options = {}) {
     lineIndex: activeIndex,
     currentVisibleLineIndex: visibleLyricLineIndex(lines, activeIndex),
     nextVisibleLineIndex: visibleLyricLineIndex(lines, nextIndex),
-    ...(Array.isArray(translationTexts)
-      ? {
-          currentTranslation: currentText
-            ? String(translationTexts[activeIndex] ?? '')
-            : '',
-          translationLanguage: options.translationLanguage,
-        }
-      : {}),
+    ...lyricsTranslationAt(
+      lyrics,
+      options.translationLanguage,
+      activeIndex,
+      currentText,
+    ),
     ...(currentReading ? { currentReading } : {}),
     ...(snapshot?.playback?.status === 'seeking'
       ? { timelineDiscontinuity: true }
@@ -2301,6 +2392,48 @@ export function selectLyricsFrame(snapshot, options = {}) {
       : {}),
     ...(musicStructure ? { musicStructure } : {}),
     ...(lyricsRhythm ? { lyricsRhythm } : {}),
+  };
+}
+
+function projectTexturedCreditsTiming(snapshot, lines, frame, nowMs) {
+  if (snapshot.lyrics?.synced !== true || !frame.currentText) return null;
+  const { lineIndex } = frame;
+  const startMs = lines[lineIndex]?.startMs;
+  const endMs = effectiveLineEnd(snapshot, lines, lineIndex);
+  if (!Number.isFinite(startMs) || !(endMs > startMs)) return null;
+
+  const previousLine = lines[lineIndex - 1];
+  const previousText = displayableLyricsText(previousLine?.text);
+  const previousEndMs = previousText
+    ? effectiveLineEnd(snapshot, lines, lineIndex - 1)
+    : null;
+  // The active lyric keeps precedence if two authored intervals overlap.
+  const hasPrevious =
+    Number.isFinite(previousLine?.startMs) &&
+    previousEndMs >= startMs &&
+    previousEndMs > previousLine.startMs &&
+    previousEndMs < endMs;
+  const activeStartMs = hasPrevious ? previousEndMs : startMs;
+  const nextLine = lines[lineIndex + 1];
+  const continuesIntoNext =
+    Number.isFinite(nextLine?.startMs) &&
+    nextLine.startMs <= endMs &&
+    Boolean(displayableLyricsText(nextLine.text)) &&
+    effectiveLineEnd(snapshot, lines, lineIndex + 1) > endMs;
+
+  return {
+    ageMs: Math.max(0, lyricsPositionMs(snapshot, nowMs) - activeStartMs),
+    durationMs: endMs - activeStartMs,
+    rate: playbackRate(snapshot),
+    playing: snapshot.playback?.status === 'playing',
+    ...(continuesIntoNext ? { continuesIntoNext } : {}),
+    ...(hasPrevious
+      ? {
+          previous: {
+            text: previousText,
+          },
+        }
+      : {}),
   };
 }
 
@@ -2348,6 +2481,11 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           lyricsPositionMs(snapshot, nowMs),
         )
       : null;
+  const mangaFrameCue =
+    templateId === 'manga-frame' &&
+    snapshot.lyrics?.mangaFrameCues?.find(
+      ({ lineIndex }) => lineIndex >= 0 && lineIndex === frame.lineIndex,
+    )?.frameId;
   const mixedKinetic =
     templateId === 'kinetic-pop'
       ? mixedKineticPhrasing(lines[frame.lineIndex])
@@ -2478,8 +2616,13 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     phantomLine && snapshot.lyrics?.synced === true
       ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
       : null;
+  const texturedCreditsTiming =
+    templateId === 'textured-credits'
+      ? projectTexturedCreditsTiming(snapshot, lines, frame, nowMs)
+      : null;
   return {
     ...frame,
+    ...(texturedCreditsTiming ? { texturedCreditsTiming } : {}),
     ...(templateId === 'phantom-thieves' && frame.currentText
       ? {
           phantomThieves: {
@@ -2580,6 +2723,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
         }
       : {}),
     ...(mangaBubbleTiming ? { mangaBubbleTiming } : {}),
+    ...(mangaFrameCue ? { mangaFrameCue } : {}),
     ...(kineticPop ? { kineticPop } : {}),
     ...(ornateVertical ? { ornateVertical } : {}),
     ...(legacyAllTemplates || templateId === 'karaoke-stack'

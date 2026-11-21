@@ -94,6 +94,29 @@ describe('overlay appearance', () => {
     });
   });
 
+  it('applies translation size independently of the original lyrics size', () => {
+    const setProperty = vi.fn();
+    const removeProperty = vi.fn();
+    const document = {
+      documentElement: { dataset: {}, style: { setProperty, removeProperty } },
+    };
+    applyOverlayAppearance(document, {
+      templateId: 'karaoke-stack',
+      settings: { fontScale: 'large', translationFontScale: 900 },
+    });
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-translation-font-scale',
+      '1.5',
+    );
+    expect(document.documentElement.dataset.ovlScale).toBe('large');
+
+    applyOverlayAppearance(document, {
+      templateId: 'live-stage',
+      settings: { translationFontScale: 'invalid' },
+    });
+    expect(removeProperty).toHaveBeenCalledWith('--ovl-translation-font-scale');
+  });
+
   it('applies distinct Chalkboard ink and guide colors to Browser Source', () => {
     const setProperty = vi.fn();
     const document = {
