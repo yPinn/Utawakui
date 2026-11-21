@@ -35,6 +35,10 @@ retention contract existed; this ADR is that contract for one narrow report.
   navigations (`ERR_ABORTED`) are not recorded.
 - Renderer Vue／window／rejection events carry a bounded stack; main redacts it
   and rewrites bundle frames to `app:` so their fingerprints stay distinct.
+- Auto reports run only in the packaged runtime. Without an app frame, Vue,
+  window and rejection exceptions escalate only for an allowlisted reason.
+  Unidentified exceptions remain in local diagnostics. Pending S2 reports
+  previously grouped by exception code alone are discarded.
 - Every other code, `info` and `debug` stays local. New codes are local until
   this table lists them.
 
@@ -57,10 +61,10 @@ dropped. There is no user text, library, lyrics, track, path or event list.
 
 ### Frequency and retention
 
-- One report per fingerprint (code, window role when present, and top app
-  frame without line numbers) per 24 hours, and at most three reports per
-  local day. Lifecycle events have no stack, so the role keeps one window's
-  failures from escalating another's.
+- One report per fingerprint per 24 hours, and at most three reports per
+  local day. Generic exceptions use the top app frame including its position
+  or an allowlisted stackless reason. Lifecycle events use the window role
+  when available.
 - Throttle history and one pending report live in `userData`, bounded to
   recent fingerprints, so a crash loop cannot flood the channel.
 - The pending report is written synchronously before sending; a failed or
@@ -68,6 +72,8 @@ dropped. There is no user text, library, lyrics, track, path or event list.
 - The relay accepts `kind: 'auto'` only in its fixed shape, under its own
   per-IP rate limit, and forwards it to Discord. Discord retention follows the
   maintainer's channel; the app keeps no copy after a successful send.
+- Discord displays a fixed feature summary, occurrence count, version and
+  report reference. It does not publish raw event messages or app frames.
 
 ## Consequences
 

@@ -7,21 +7,29 @@ The former P1E pause and completed implementation batches are no longer a work q
 
 ## Read, Export And Clear
 
-In Settings → 支援與維護, 錯誤紀錄 shows a bounded recent-record count, not the
-total number of records on disk. Export is the primary action; the overflow menu
-offers refresh, open folder, clear and issue reporting. Clear requires confirmation.
-`usePersistentDiagnostics.js` reduces recent events to a count without retaining
-their bodies in Settings reactive state. The composition owner is
-`src/components/settings/SettingsSupportSection.vue`; its control is
-`src/components/settings/DiagnosticsSettingsRow.vue`.
+In Settings → 支援與維護, open 問題排查與回報. The first section shows audio
+capture and OBS status, recovery actions, and the library reconciliation scan.
+The reporting section opens the feedback form and contains the automatic
+reporting preference. Support package export and development-only log controls
+are also inside this dialog.
+Lyrics search guidance appears alongside the search result.
 
-- Export opens a main-owned save dialog and writes one JSON support bundle.
-  Cancelling is expected control flow, not a diagnostic failure.
-- The export contains at most 500 normalized/redacted recent events, plus bundle
-  and application metadata. It can include sanitized stack and session identifiers;
-  users should inspect it before choosing to share it.
-- Opening the folder uses the main-owned logs location; renderer never supplies
-  or receives its filesystem path. Clearing affects managed diagnostic files and
+- Export previews the types of data and time range, then opens the main-owned
+  save dialog for a `.utawakui-support` package. Cancelling writes nothing.
+- Configure `UTAWAKUI_SUPPORT_PUBLIC_KEY` with the maintainer's RSA public PEM
+  before building the release runtime. Release workflows read the repository
+  variable of the same name. The package covers up to 500 recent support
+  records. Warnings, errors and automatic report receipts are selected before
+  applying the limit. The records use allowlisted fields and are compressed and encrypted
+  via AES-256-GCM with an RSA-OAEP SHA-256 wrapped key. Without the configured
+  key, only the summary is written. Manual feedback attachments use the same
+  format. Deploy the relay before distributing a client with the new format.
+- To open the encrypted data, run
+  `node scripts/open-support-package.cjs <package> <private-key.pem>`.
+  The command also accepts the JSON saved when a feedback submission fails.
+  Store the output as JSON for import into the developer diagnostics workbench.
+- Developer builds can inspect recent records and open the main-owned logs
+  location. Clearing affects managed diagnostic files and
   default-named `startup-trace-*.jsonl` files; a traced launch keeps the newest
   five traces. Auto-report throttle state and a pending consented report are not
   cleared; the report prompt and its setting govern them.
