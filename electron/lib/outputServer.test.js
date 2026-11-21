@@ -82,8 +82,9 @@ function deepFreeze(value) {
   return Object.freeze(value);
 }
 
+// Template modules load through import(), so the graph follows both forms.
 const STATIC_MODULE_SPECIFIER_PATTERN =
-  /\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/gu;
+  /\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]|\bimport\(\s*['"]([^'"]+)['"]\s*\)/gu;
 
 async function inspectServedModuleGraph(baseUrl, entryRoute) {
   const pendingRoutes = [entryRoute];
@@ -109,7 +110,7 @@ async function inspectServedModuleGraph(baseUrl, entryRoute) {
 
     const source = await response.text();
     for (const match of source.matchAll(STATIC_MODULE_SPECIFIER_PATTERN)) {
-      const specifier = match[1];
+      const specifier = match[1] ?? match[2];
       if (!specifier.startsWith('.')) continue;
       pendingRoutes.push(new URL(specifier, `${baseUrl}${route}`).pathname);
     }
@@ -606,6 +607,18 @@ describe('outputServer', () => {
     expect(gsap.headers.get('content-type')).toContain('text/javascript');
     expect(await gsap.text()).toContain('GreenSock');
 
+    for (const [route, marker] of [
+      ['/overlay/vendor/pixi.min.js', 'PixiJS - v8.22.0'],
+      ['/overlay/vendor/pixi-unsafe-eval.min.js', 'PixiJS - v8.22.0'],
+      ['/overlay/vendor/pixi-filters.js', 'pixi-filters - v6.1.5'],
+      ['/shared/browser/doodleCloudEffect.mjs', 'createDoodleCloudEffect'],
+    ]) {
+      const response = await fetch(`${status.httpUrl}${route}`);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toContain('text/javascript');
+      expect(await response.text()).toContain(marker);
+    }
+
     const encodedTraversal = await fetch(
       `${status.httpUrl}/overlay/%2e%2e%2fpackage.json`,
     );
@@ -644,6 +657,7 @@ describe('outputServer', () => {
         '/overlay/lyrics/fisheyeLens.mjs',
         '/overlay/lyrics/phantomThieves.mjs',
         '/overlay/lyrics/fisheyeEffects.mjs',
+        '/overlay/lyrics/texturedCredits.mjs',
         '/shared/browser/fisheyePaint.mjs',
         '/shared/browser/fisheyeMotion.mjs',
         '/shared/presentation/fisheyeLyrics.mjs',
@@ -658,6 +672,11 @@ describe('outputServer', () => {
     );
     expect(style.ok).toBe(true);
     expect(await style.text()).toContain('.phantom-thieves');
+    const creditsStyle = await fetch(
+      `${status.httpUrl}/overlay/lyrics/texturedCredits.css`,
+    );
+    expect(creditsStyle.ok).toBe(true);
+    expect(await creditsStyle.text()).toContain('.textured-credits');
     for (const font of [
       'KaitouYokokuGothic-Heavy.ttf',
       'Kaibunsyo-Regular.ttf',

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./preview.css" />
+    <script defer src="./preview.js"></script>
+    <title>紋理顯字｜歌詞原型</title>
+  </head>
+  <body>
+    <main>
+      <h1>紋理顯字</h1>
+      <div class="stage" id="stage" data-backdrop="dusk">
+        <div class="credit" id="credit">
+          <div class="credit__layer" id="text">
+            <p class="credit__line" lang="ja"></p>
+            <p class="credit__translation"></p>
+          </div>
+          <div
+            class="credit__layer credit__layer--texture"
+            id="texture"
+            aria-hidden="true"
+          >
+            <p class="credit__line" lang="ja"></p>
+            <p class="credit__translation"></p>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="replay" type="button">重播</button>
+        <button id="toggle" type="button">播放</button>
+        <label>
+          速度
+          <select id="speed">
+            <option value="1">1×</option>
+            <option value="0.25">0.25×</option>
+          </select>
+        </label>
+        <label>
+          背景
+          <select id="backdrop">
+            <option value="dusk">暮色</option>
+            <option value="light">淺色</option>
+            <option value="dark">深色</option>
+          </select>
+        </label>
+      </div>
+      <label class="timeline">
+        <span>時間軸</span>
+        <input id="timeline" type="range" min="0" max="0" value="0" step="1" />
+        <output id="phase" for="timeline" aria-live="off"></output>
+      </label>
+    </main>
+  </body>
+</html>

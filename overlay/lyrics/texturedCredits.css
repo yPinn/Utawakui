@@ -1,0 +1,161 @@
+@layer ovl-template {
+  :root[data-ovl-template='textured-credits'] .lyrics-overlay {
+    inset: 0;
+    inline-size: auto;
+    max-inline-size: none;
+    transform: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :root[data-ovl-template='textured-credits']
+    .lyrics-overlay
+    > :not(.textured-credits) {
+    display: none;
+  }
+}
+
+.textured-credits {
+  position: absolute;
+  left: var(--credits-anchor, 50%);
+  top: 50%;
+  inline-size: var(--credits-block-width, 72%);
+  transform: translate(-50%, -50%);
+  isolation: isolate;
+  color: var(--credits-ink, #f6fcff);
+  font-family: var(--credits-font, var(--ovl-user-font-family, serif));
+  font-weight: 400;
+  text-align: center;
+}
+
+:root[data-ovl-template='textured-credits'][data-ovl-align='left']
+  .textured-credits,
+.textured-credits[data-alignment='left'] {
+  --credits-anchor: 25%;
+  --credits-block-width: 39%;
+  --credits-shift: 25cqw;
+}
+
+:root[data-ovl-template='textured-credits'][data-ovl-align='right']
+  .textured-credits,
+.textured-credits[data-alignment='right'] {
+  --credits-anchor: 75%;
+  --credits-block-width: 39%;
+  --credits-shift: -25cqw;
+}
+
+.textured-credits[hidden],
+.textured-credits [hidden] {
+  display: none;
+}
+
+.textured-credits__cue {
+  position: relative;
+  display: flow-root;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  margin-inline: auto;
+}
+
+/* Only opacity animates here; glow and wipe effects draw on the GPU canvas. */
+.textured-credits__ink {
+  position: relative;
+  display: grid;
+  margin: -0.25cqw;
+  padding: 0.25cqw;
+  text-shadow:
+    0 0.045em 0.12em rgb(8 21 33 / 82%),
+    0 0 0.045em rgb(8 21 33 / 45%);
+}
+
+.textured-credits__ink > .textured-credits__line {
+  grid-area: 1 / 1;
+}
+
+/* The fluorescent copy: shown while the textures play, then crossfaded to
+   the white line underneath (opacity only, so neither copy repaints). */
+.textured-credits__line-glow {
+  color: #b9f6ff;
+  text-shadow:
+    0 0 0.12em rgb(150 236 255),
+    0 0 0.4em rgb(98 215 255 / 85%),
+    0 0 0.9em rgb(72 180 244 / 55%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.textured-credits__previous {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  inline-size: max-content;
+  max-inline-size: 100%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * The doodle canvas covers the whole output: doodles follow every lyric line,
+ * which can span most of the frame. The template root is centered on its
+ * anchor, so --credits-shift moves the canvas back onto the frame.
+ */
+.textured-credits__artwork {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100cqw;
+  height: 100cqh;
+  transform: translate(calc(-50% + var(--credits-shift, 0cqw)), -50%);
+  pointer-events: none;
+}
+
+.textured-credits__line {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: calc(
+    3.7cqw * var(--credits-scale, var(--ovl-user-font-scale-ratio, 1))
+  );
+  letter-spacing: 0.075em;
+  line-height: 1.28;
+  text-wrap: pretty;
+}
+
+.textured-credits__ink[data-writing='vertical'] .textured-credits__line {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  /* Long enough that a whole phrase usually fits one column. */
+  max-inline-size: 88cqh;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: start;
+  text-wrap: wrap;
+}
+
+/* After the writing rules so their text-wrap never overrides these. Fitting
+   measures one unwrapped run; a vertical column fills its length. */
+.textured-credits__ink[data-measuring] .textured-credits__line {
+  inline-size: 100vmax;
+  white-space: nowrap;
+  text-wrap-mode: nowrap;
+}
+
+/* Rows planned by the shared break rules render exactly as planned. */
+.textured-credits__ink[data-planned-rows] .textured-credits__line {
+  max-inline-size: none;
+  white-space: pre;
+  text-wrap-mode: nowrap;
+}
+
+/* A long vertical lyric shows as two column blocks, the second to the left. */
+.textured-credits__block {
+  display: block;
+}
+
+.textured-credits__block + .textured-credits__block {
+  margin-block-start: 14cqw;
+}

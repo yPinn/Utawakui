@@ -10,6 +10,10 @@ import path from 'node:path';
 import { createRequire, isBuiltin } from 'node:module';
 import outputTemplates from '../shared/outputTemplateValues.json' with { type: 'json' };
 
+const { PIXI_BROWSER_ASSETS } = createRequire(import.meta.url)(
+  '../electron/lib/outputServer/http.js',
+);
+
 // Check the served module graph, not just files on disk. A valid import can still
 // be absent from the server's explicit route allowlist during parallel edits.
 export async function inspectProbeModuleGraph(
@@ -100,9 +104,9 @@ export function collectProbeRuntimeFiles(root = AUDIT_ROOT) {
     else
       references = [
         ...text.matchAll(
-          /\b(?:import|export)\s+(?:[^;"']*?\s+from\s*)?["']([^"']+)["']|\b(?:require(?:\.resolve)?|import)\(\s*["']([^"']+)["']\s*\)/g,
+          /\b(?:import|export)\s+(?:[^;"']*?\s+from\s*)?["']([^"']+)["']|\b(?:require(?:\.resolve)?|import)\(\s*["']([^"']+)["']\s*\)|["'](\/overlay\/[^"']+\.(?:css|js))["']/g,
         ),
-      ].map((m) => m[1] ?? m[2]);
+      ].map((m) => m[1] ?? m[2] ?? m[3]);
     for (let reference of references) {
       if (
         reference.startsWith('data:') ||
@@ -114,6 +118,12 @@ export function collectProbeRuntimeFiles(root = AUDIT_ROOT) {
       reference = reference.replace(/[?#].*$/u, '');
       if (reference === '/overlay/vendor/gsap.min.js')
         reference = createRequire(file).resolve('gsap/dist/gsap.min.js');
+      else if (PIXI_BROWSER_ASSETS[reference])
+        reference = path.join(
+          root,
+          'node_modules',
+          PIXI_BROWSER_ASSETS[reference],
+        );
       let target;
       if (reference.startsWith('/overlay/') || reference.startsWith('/shared/'))
         target = path.join(root, reference.slice(1));

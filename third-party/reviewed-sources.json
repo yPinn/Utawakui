@@ -104,6 +104,17 @@
           "source": "https://raw.githubusercontent.com/vuejs/devtools-v6/v6.6.4/LICENSE"
         }
       ]
+    },
+    {
+      "path": "node_modules/@pixi/colord",
+      "version": "2.9.6",
+      "files": [
+        {
+          "path": "upstream/pixi-colord-license.txt",
+          "sha256": "7613d4594ee8b6163926af3435dae61c9e3d5a27cd137bd76a543ba40002d8fc",
+          "source": "https://raw.githubusercontent.com/pixijs/colord/v2.9.6/LICENSE.md"
+        }
+      ]
     }
   ],
   "additional": [

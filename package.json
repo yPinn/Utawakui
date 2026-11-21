@@ -108,6 +108,8 @@
     "obs-websocket-js": "^5.0.8",
     "onnxruntime-node": "^1.30.0",
     "opencc-js": "1.4.2",
+    "pixi-filters": "6.1.5",
+    "pixi.js": "8.22.0",
     "sax": "^1.6.1",
     "wanakana": "^5.3.1",
     "ws": "^8.21.3"

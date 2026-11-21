@@ -45,11 +45,16 @@ function save() {
     pathToFileURL(path.join(__dirname, 'outputAppearanceAudit.mjs')).href
   );
   report = JSON.parse(fs.readFileSync(path.join(dir, 'report.json'), 'utf8'));
+  // The report went through JSON, which drops undefined fields.
   assert.deepEqual(
     report.cases,
-    helpers.buildAuditPlan(
-      JSON.parse(fs.readFileSync(path.join(dir, 'request.json'), 'utf8')),
-    ).cases,
+    JSON.parse(
+      JSON.stringify(
+        helpers.buildAuditPlan(
+          JSON.parse(fs.readFileSync(path.join(dir, 'request.json'), 'utf8')),
+        ).cases,
+      ),
+    ),
   );
   report.versions = {
     ...report.versions,

@@ -121,6 +121,29 @@ files:
   - '!node_modules/gsap/**/*'
   - node_modules/gsap/package.json
   - node_modules/gsap/dist/gsap.min.js
+  # GPU effects load only the PixiJS IIFE builds, which already bundle the
+  # packages' own dependencies; sources, ESM builds and maps never load.
+  # eventemitter3 stays because obs-websocket-js also requires it.
+  - '!node_modules/pixi.js/**/*'
+  - node_modules/pixi.js/package.json
+  - node_modules/pixi.js/LICENSE
+  - node_modules/pixi.js/dist/pixi.min.js
+  - node_modules/pixi.js/dist/packages/unsafe-eval.min.js
+  - '!node_modules/pixi-filters/**/*'
+  - node_modules/pixi-filters/package.json
+  - node_modules/pixi-filters/LICENSE
+  - node_modules/pixi-filters/dist/pixi-filters.js
+  - '!node_modules/@pixi/colord/**/*'
+  - '!node_modules/@types/earcut/**/*'
+  - '!node_modules/@types/gradient-parser/**/*'
+  - '!node_modules/@webgpu/types/**/*'
+  - '!node_modules/@xmldom/xmldom/**/*'
+  - '!node_modules/earcut/**/*'
+  - '!node_modules/gifuct-js/**/*'
+  - '!node_modules/js-binary-schema-parser/**/*'
+  - '!node_modules/ismobilejs/**/*'
+  - '!node_modules/parse-svg-path/**/*'
+  - '!node_modules/tiny-lru/**/*'
   # queryVariants.js requires only the UMD cn2t/t2cn converters; keep those
   # and the license files, drop the ESM builds and the full bundle.
   - '!node_modules/opencc-js/dist/esm/**/*'

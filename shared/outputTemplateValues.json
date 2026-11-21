@@ -35,8 +35,10 @@
     "receipt-setlist": "setlist",
     "ribbon-setlist": "setlist",
     "fisheye-lens": "lyrics",
-    "phantom-thieves": "lyrics"
+    "phantom-thieves": "lyrics",
+    "textured-credits": "lyrics"
   },
+  "developmentTemplateIds": ["textured-credits"],
   "templateCaptureSizes": {
     "receipt-setlist": {
       "default": "large",
@@ -91,6 +93,10 @@
       "supported": ["full"]
     },
     "phantom-thieves": {
+      "default": "full",
+      "supported": ["full"]
+    },
+    "textured-credits": {
       "default": "full",
       "supported": ["full"]
     },

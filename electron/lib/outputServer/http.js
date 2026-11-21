@@ -25,6 +25,14 @@ const CACHED_BODY_MAX_BYTES = 1024 * 1024;
 const DEFAULT_OVERLAY_ROOT = path.resolve(__dirname, '../../../overlay');
 const DEFAULT_SHARED_ROOT = path.resolve(__dirname, '../../../shared');
 const GSAP_BROWSER_ASSET = require.resolve('gsap/dist/gsap.min.js');
+// PixiJS does not export its browser builds, so locate them from the app root.
+const NODE_MODULES_ROOT = path.resolve(__dirname, '../../../node_modules');
+const PIXI_BROWSER_ASSETS = Object.freeze({
+  '/overlay/vendor/pixi.min.js': 'pixi.js/dist/pixi.min.js',
+  '/overlay/vendor/pixi-unsafe-eval.min.js':
+    'pixi.js/dist/packages/unsafe-eval.min.js',
+  '/overlay/vendor/pixi-filters.js': 'pixi-filters/dist/pixi-filters.js',
+});
 // The dev renderer origin may frame previews only when main runs with --dev.
 function overlayContentSecurityPolicy(devFrameOrigin = null) {
   return [
@@ -45,8 +53,11 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/': ['lyrics', 'index.html'],
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
+  '/overlay/lyrics/templateModules.mjs': ['lyrics', 'templateModules.mjs'],
   '/overlay/lyrics/phantomThieves.css': ['lyrics', 'phantomThieves.css'],
   '/overlay/lyrics/phantomThieves.mjs': ['lyrics', 'phantomThieves.mjs'],
+  '/overlay/lyrics/texturedCredits.css': ['lyrics', 'texturedCredits.css'],
+  '/overlay/lyrics/texturedCredits.mjs': ['lyrics', 'texturedCredits.mjs'],
   '/overlay/lyrics/fisheyeLens.mjs': ['lyrics', 'fisheyeLens.mjs'],
   '/overlay/lyrics/fisheyeEffects.mjs': ['lyrics', 'fisheyeEffects.mjs'],
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
@@ -115,8 +126,15 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
 });
 const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
+  ...Object.fromEntries(
+    Object.entries(PIXI_BROWSER_ASSETS).map(([route, file]) => [
+      route,
+      path.join(NODE_MODULES_ROOT, file),
+    ]),
+  ),
 });
 const SHARED_STATIC_ROUTES = Object.freeze({
+  '/shared/browser/doodleCloudEffect.mjs': ['browser', 'doodleCloudEffect.mjs'],
   '/shared/presentation/receiptSetlist.mjs': [
     'presentation',
     'receiptSetlist.mjs',
@@ -637,6 +655,7 @@ function createOutputHttpHandler(options = {}) {
 }
 
 module.exports = {
+  PIXI_BROWSER_ASSETS,
   createOutputHttpHandler,
   overlayContentSecurityPolicy,
   writeJson,

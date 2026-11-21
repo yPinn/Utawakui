@@ -82,6 +82,18 @@ function bareSpecifiers() {
   return uses;
 }
 
+// Browser builds the Output server streams by file path, not by require.
+function servedVendorFiles() {
+  return Object.values(
+    require('./electron/lib/outputServer/http.js').PIXI_BROWSER_ASSETS,
+  ).map((file) => ({
+    name: file.startsWith('@')
+      ? file.split('/').slice(0, 2).join('/')
+      : file.split('/')[0],
+    file: `node_modules/${file}`,
+  }));
+}
+
 const dependencies = new Set(Object.keys(packageJson.dependencies));
 let bundleDirectory;
 let bundledSources;
@@ -532,6 +544,9 @@ describe('packaged dependency boundary', () => {
       ['overlay/lyrics/fisheyeLens.mjs', true],
       ['overlay/lyrics/phantomThieves.css', true],
       ['overlay/lyrics/phantomThieves.mjs', true],
+      ['overlay/lyrics/texturedCredits.css', true],
+      ['overlay/lyrics/texturedCredits.mjs', true],
+      ['overlay/lyrics/texturedCredits.test.js', false],
       ['shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf', true],
       ['shared/assets/fonts/Kaibunsyo-Regular.ttf', true],
       ['shared/assets/fonts/licenses/lavsic/LICENSE.txt', true],
@@ -575,9 +590,32 @@ describe('packaged dependency boundary', () => {
   });
 
   it('keeps no production dependency the packaged runtime never loads', () => {
-    const used = new Set(bareSpecifiers().map(({ name }) => name));
+    const used = new Set([
+      ...bareSpecifiers().map(({ name }) => name),
+      ...servedVendorFiles().map(({ name }) => name),
+    ]);
 
     expect([...dependencies].filter((name) => !used.has(name))).toEqual([]);
+  });
+
+  it('ships every vendor browser build the Output server serves by path', () => {
+    const missing = servedVendorFiles()
+      .filter(({ file }) => {
+        const included = builder.files.some(
+          (glob) => !glob.startsWith('!') && path.matchesGlob(file, glob),
+        );
+        const excluded = builder.files.some(
+          (glob) =>
+            glob.startsWith('!') &&
+            path.matchesGlob(file, glob.slice(1)) &&
+            !builder.files.includes(file),
+        );
+        return !existsSync(path.join(root, file)) || !included || excluded;
+      })
+      .map(({ file }) => file);
+
+    expect(servedVendorFiles().length).toBeGreaterThan(0);
+    expect(missing).toEqual([]);
   });
 
   it('never trims a file the packaged runtime resolves', () => {

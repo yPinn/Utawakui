@@ -282,6 +282,14 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
       outputAppearanceFieldKeysForTemplate('phantom-thieves'),
     ),
   }),
+  'textured-credits': Object.freeze({
+    id: 'textured-credits',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('textured-credits'),
+    ),
+  }),
   'fisheye-lens': Object.freeze({
     id: 'fisheye-lens',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
@@ -316,6 +324,7 @@ const TEMPLATE_PROFILE_IDS = Object.freeze({
   'centered-vertical': 'centered-vertical',
   'fisheye-lens': 'fisheye-lens',
   'phantom-thieves': 'phantom-thieves',
+  'textured-credits': 'textured-credits',
   'manga-frame': 'manga-frame',
   'live-stage': 'live-stage',
 });
@@ -2047,6 +2056,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         'centered-vertical',
         'fisheye-lens',
         'phantom-thieves',
+        'textured-credits',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
         ? analyzeLyricsSource(sourceText, {

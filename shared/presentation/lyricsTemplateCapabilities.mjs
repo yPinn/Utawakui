@@ -20,6 +20,7 @@ function freezeCapabilities(capabilities) {
 
 export const LYRICS_TEMPLATE_CAPABILITIES = Object.freeze({
   'phantom-thieves': UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
+  'textured-credits': UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
   'fisheye-lens': freezeCapabilities({
     ...UNKNOWN_LYRICS_TEMPLATE_CAPABILITIES,
     t2Progress: 'source-mapped-phrases-and-segments',

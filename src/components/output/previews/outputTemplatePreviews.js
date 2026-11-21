@@ -15,6 +15,7 @@ import QueueBoardPreview from './QueueBoardPreview.vue';
 import ReceiptSetlistPreview from './ReceiptSetlistPreview.vue';
 import RibbonSetlistPreview from './RibbonSetlistPreview.vue';
 import TicketStubPreview from './TicketStubPreview.vue';
+import TexturedCreditsPreview from './TexturedCreditsPreview.vue';
 
 // Each preview renders inside the shared ObsTemplateMockup canvas and takes
 // the same props: { scene, size, animated }.
@@ -29,6 +30,7 @@ const TEMPLATE_PREVIEWS = Object.freeze({
   'centered-vertical': CenteredVerticalPreview,
   'fisheye-lens': FisheyeLensPreview,
   'phantom-thieves': PhantomThievesPreview,
+  'textured-credits': TexturedCreditsPreview,
   'manga-frame': MangaFramePreview,
   'live-stage': LiveStagePreview,
   'art-card': ArtCardPreview,
