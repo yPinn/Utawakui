@@ -59,6 +59,23 @@ const FATAL_ONLY_CODES = new Set(['RENDER_PROCESS_GONE']);
 const ERROR_LEVEL_ONLY_CODES = new Set(['CHILD_PROCESS_GONE']);
 const S2_ESCALATION = Object.freeze({ count: 3, windowMs: 60 * 60 * 1000 });
 const MAX_APP_FRAMES = 10;
+const STACKLESS_EXCEPTION_CODES = new Set([
+  'VUE_UNHANDLED_ERROR',
+  'WINDOW_ERROR',
+  'UNHANDLED_REJECTION',
+]);
+const STACKLESS_REASONS = new Map([
+  ['Player media boundary already owned', 'duplicate-player-owner'],
+  [
+    "Cannot read properties of undefined (reading 'active')",
+    'missing-active-state',
+  ],
+  [
+    "Failed to execute 'observe' on 'ResizeObserver': parameter 1 is not of type 'Element'.",
+    'invalid-resize-target',
+  ],
+  ['stopOutputWatch is not defined', 'missing-output-cleanup'],
+]);
 
 function classifyDiagnosticEvent(event) {
   if (event?.level !== 'error' && event?.level !== 'warning') return 'S4';
@@ -90,18 +107,29 @@ function appFramesOf(stack) {
     .slice(0, MAX_APP_FRAMES);
 }
 
-// Line and column are dropped so a report groups across small code moves.
-// Lifecycle events carry no stack, so the window role keeps one window's
-// failures from counting toward another's.
+// Generic exceptions use the full position to distinguish errors raised at
+// different points in a bundled function. Lifecycle events can group by role.
 function fingerprintOf(event) {
   const [topFrame = ''] = appFramesOf(event?.stack);
   const role = event?.context?.windowRole;
-  return `${event?.code ?? 'UNKNOWN'}${role ? `@${role}` : ''}|${topFrame.replace(/:\d+(?::\d+)?\)?$/u, '')}`;
+  const code = event?.code ?? 'UNKNOWN';
+  const prefix = `${code}${role ? `@${role}` : ''}|`;
+  const genericException = STACKLESS_EXCEPTION_CODES.has(code);
+  if (topFrame) {
+    return (
+      prefix +
+      (genericException ? topFrame : topFrame.replace(/:\d+(?::\d+)?\)?$/u, ''))
+    );
+  }
+  if (!genericException) return prefix;
+  const reason = STACKLESS_REASONS.get(event.message);
+  return reason ? `${prefix}reason:${reason}` : null;
 }
 
 module.exports = {
   S2_ESCALATION,
   SEVERITY_BY_CODE,
+  STACKLESS_EXCEPTION_CODES,
   appFramesOf,
   classifyDiagnosticEvent,
   fingerprintOf,

@@ -39,6 +39,26 @@ describe('useAutoErrorReport', () => {
     expect(report.state.prompt).toEqual(prompt);
   });
 
+  it('keeps a prompt dismissed by a preference change while the initial read resolves', async () => {
+    let resolvePending;
+    let onPrompt;
+    const report = await load({
+      getPendingAutoReport: () =>
+        new Promise((resolve) => {
+          resolvePending = resolve;
+        }),
+      onAutoReportPrompt: (callback) => {
+        onPrompt = callback;
+      },
+    });
+    const initialized = report.initialize();
+    onPrompt(prompt);
+    onPrompt(null);
+    resolvePending(prompt);
+    await initialized;
+    expect(report.state.prompt).toBeNull();
+  });
+
   it('answers the prompt and confirms a sent report', async () => {
     const respondAutoReport = vi.fn(async () => ({ ok: true, sent: true }));
     const report = await load({

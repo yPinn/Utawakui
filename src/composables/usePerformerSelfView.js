@@ -18,6 +18,7 @@ import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
 import { withMergedArtist } from '../utils/artistPage.js';
 import { trackDisplayTitle } from '../utils/trackTitlePresentation.js';
 import { useArtistIndex } from './useArtistIndex.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useAppNotifications } from './useAppNotifications.js';
 import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
@@ -169,6 +170,7 @@ function applyStatus(status = {}) {
   }
   if (!wasPublishing && isPublishing()) publisher.request(currentSnapshot());
   if (!isPublishing()) {
+    clearPerformerError('publish');
     latestSnapshot.value = null;
     readingDisplayScope?.stop();
     readingDisplayScope = null;
@@ -443,14 +445,26 @@ const publisher = createLatestAsyncPublisher(
     // Every projection change republishes; only the first failure of a
     // streak is recorded and shown, and the next success withdraws it.
     onError: (error) => {
-      if (errorOperation === 'publish') return;
+      if (!isPublishing() || errorOperation === 'publish') return;
       state.error = reportPerformerError(
         error,
         'publish',
         t('performer.selfView.tryAgain'),
       );
     },
-    onSuccess: () => clearPerformerError('publish'),
+    onSuccess: () => {
+      if (errorOperation === 'publish' && isPublishing()) {
+        useAppDiagnostics().recordError(null, {
+          code: 'PERFORMER_PUBLISH_RECOVERED',
+          severity: 'info',
+          source: 'performer',
+          operation: 'publish',
+          diagnosticMessage: 'Performer updates resumed',
+          context: { status: 'recovered' },
+        });
+      }
+      clearPerformerError('publish');
+    },
   },
 );
 

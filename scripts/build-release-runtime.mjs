@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createPublicKey } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build, transformWithOxc } from 'vite';
@@ -99,6 +100,21 @@ export async function buildReleaseRuntime({
   if (typeof protectSymbols !== 'boolean')
     throw new TypeError('Invalid release symbol mode');
   const root = path.resolve(rootDirectory);
+  const configuredSupportKey = process.env.UTAWAKUI_SUPPORT_PUBLIC_KEY;
+  const supportKey = configuredSupportKey
+    ? createPublicKey(configuredSupportKey)
+    : null;
+  if (
+    supportKey &&
+    (supportKey.asymmetricKeyType !== 'rsa' ||
+      supportKey.asymmetricKeyDetails.modulusLength < 2048)
+  ) {
+    throw new Error(
+      'Support package public key must be RSA with at least 2048 bits',
+    );
+  }
+  const supportPublicKey =
+    supportKey?.export({ type: 'spki', format: 'pem' }) ?? '';
   const output = outputPath(root, outputDirectory);
   const existing = await fs.lstat(output).catch((error) => {
     if (error.code !== 'ENOENT') throw error;
@@ -118,6 +134,10 @@ export async function buildReleaseRuntime({
         root,
         publicDir: false,
         logLevel: 'silent',
+        define: {
+          'process.env.UTAWAKUI_SUPPORT_PUBLIC_KEY':
+            JSON.stringify(supportPublicKey),
+        },
         plugins: [
           releaseModuleLocations(root, entry),
           ...(key === 'main' && protectSymbols

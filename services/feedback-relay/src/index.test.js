@@ -241,7 +241,7 @@ describe('feedback relay worker', () => {
     expect(fetchImpl.mock.calls[0][0]).toBe('https://discord.example/webhook');
   });
 
-  it('forwards an automatic report with app frames to its own channel', async () => {
+  it('forwards a readable automatic summary to its own channel', async () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValue(new Response(null, { status: 204 }));
@@ -260,10 +260,13 @@ describe('feedback relay worker', () => {
     const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
     expect(body.allowed_mentions).toEqual({ parse: [] });
     const [embed] = body.embeds;
-    expect(embed.title).toContain('致命');
-    expect(JSON.stringify(embed.fields)).toContain(
-      'app:electron/main.js:994:9',
-    );
+    expect(embed.title).toBe('應用程式發生異常');
+    expect(embed.fields).toEqual([
+      { name: '影響功能', value: '應用程式', inline: true },
+      { name: '發生次數', value: '1', inline: true },
+    ]);
+    expect(JSON.stringify(embed)).not.toContain('app:electron/main.js');
+    expect(JSON.stringify(embed)).not.toContain('UNCAUGHT_EXCEPTION');
   });
 
   it('falls back to the shared channel when no automatic webhook is bound', async () => {

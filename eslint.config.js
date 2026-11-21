@@ -128,7 +128,6 @@ const I18N_MIGRATED = [
   'src/composables/useWindowsIntegrationSettings.js',
   'src/pages/SettingsPage.vue',
   'src/utils/appErrors.js',
-  'src/utils/feedbackDiagnosticsSummary.js',
   'src/utils/metronomeClickEngine.js',
   'src/utils/notePapers.js',
   'src/utils/sourceCatalog.js',

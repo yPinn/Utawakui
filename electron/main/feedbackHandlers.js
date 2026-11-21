@@ -5,8 +5,14 @@ const crypto = require('node:crypto');
 const { atomicWriteJson } = require('../lib/atomicWrite');
 const { buildFeedbackPayload } = require('../lib/feedback/payload');
 const {
+  buildDiagnosticsSupportBundle,
+  isSupportDiagnostic,
+  packageDiagnostics,
+} = require('../lib/diagnosticsExport');
+const {
   DIAGNOSTICS_ALLOWED_KINDS,
   DIAGNOSTICS_EVENT_LIMIT,
+  MAX_PAYLOAD_BYTES,
 } = require('../lib/feedback/constants');
 
 const DEFAULT_MAX_SUBMISSIONS_PER_WINDOW = 5;
@@ -18,25 +24,14 @@ function errorCodeFromReason(reason) {
   return `FEEDBACK_${String(reason).toUpperCase().replaceAll('-', '_')}`;
 }
 
-function buildPayloadFromInput(
-  input,
-  { service, environment, idGenerator, now },
-) {
+function buildPayloadFromInput(input, { environment, idGenerator, now }) {
   const rawInput = input && typeof input === 'object' ? input : {};
-  const kind = rawInput.kind;
-  const includeDiagnostics =
-    Boolean(rawInput.includeDiagnostics) && DIAGNOSTICS_ALLOWED_KINDS.has(kind);
-  const diagnosticsEvents = includeDiagnostics
-    ? service.listRecent(DIAGNOSTICS_EVENT_LIMIT)
-    : [];
   return buildFeedbackPayload({
-    kind,
+    kind: rawInput.kind,
     description: rawInput.description,
     contact: rawInput.contact,
     trackLabel: rawInput.trackLabel,
     environment,
-    includeDiagnostics,
-    diagnosticsEvents,
     reportId: idGenerator(),
     createdAt: new Date(now()).toISOString(),
   });
@@ -55,6 +50,7 @@ function registerFeedbackHandlers({
   appVersion = '',
   electronVersion = '',
   locale = '',
+  supportPublicKey,
   idGenerator = () => crypto.randomUUID(),
   writeExportFile = (filePath, data) => atomicWriteJson(filePath, data),
   maxSubmissionsPerWindow = DEFAULT_MAX_SUBMISSIONS_PER_WINDOW,
@@ -122,7 +118,6 @@ function registerFeedbackHandlers({
 
   ipcMain.handle('feedback:build-preview', async (event, input) => {
     const built = buildPayloadFromInput(input, {
-      service,
       environment,
       idGenerator,
       now,
@@ -130,8 +125,43 @@ function registerFeedbackHandlers({
     if (built.status !== 'ok') {
       return { ok: false, errorCode: errorCodeFromReason(built.reason) };
     }
+    if (
+      input?.includeDiagnostics === true &&
+      DIAGNOSTICS_ALLOWED_KINDS.has(built.payload.kind)
+    ) {
+      try {
+        const events = await service.listRecent(
+          DIAGNOSTICS_EVENT_LIMIT,
+          isSupportDiagnostic,
+        );
+        if (events.length > 0) {
+          const bundle = buildDiagnosticsSupportBundle({ events, appVersion });
+          built.payload.diagnostics = await packageDiagnostics(bundle, {
+            publicKey: supportPublicKey,
+            reference: built.payload.reportId,
+          });
+        }
+      } catch {
+        return { ok: false, errorCode: 'FEEDBACK_DIAGNOSTICS_UNAVAILABLE' };
+      }
+    }
+    if (
+      Buffer.byteLength(JSON.stringify(built.payload), 'utf8') >
+      MAX_PAYLOAD_BYTES
+    ) {
+      return { ok: false, errorCode: 'FEEDBACK_PAYLOAD_TOO_LARGE' };
+    }
     rememberPreview(built.payload);
-    return { ok: true, payload: built.payload };
+    const { diagnostics, ...preview } = built.payload;
+    if (!diagnostics) return { ok: true, payload: preview };
+    const { sealed, ...summary } = diagnostics;
+    return {
+      ok: true,
+      payload: {
+        ...preview,
+        diagnostics: { ...summary, encrypted: Boolean(sealed) },
+      },
+    };
   });
 
   ipcMain.handle('feedback:submit', async (event, input) => {

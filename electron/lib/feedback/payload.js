@@ -1,11 +1,9 @@
 'use strict';
 
-const { buildDiagnosticsSupportBundle } = require('../diagnosticsExport');
 const {
   FEEDBACK_SCHEMA_VERSION,
   FEEDBACK_KINDS,
   FEEDBACK_KIND_VALUES,
-  DIAGNOSTICS_ALLOWED_KINDS,
   MAX_DESCRIPTION_LENGTH,
   MAX_CONTACT_LENGTH,
   MAX_TRACK_LABEL_LENGTH,
@@ -62,29 +60,12 @@ function byteLength(value) {
   return Buffer.byteLength(JSON.stringify(value), 'utf8');
 }
 
-// Diagnostic events are already normalized/redacted by diagnostics.js at
-// write time (createDiagnosticsService().listRecent() only ever returns
-// sanitized records); this only trims the bundle when it still doesn't fit
-// the relay's payload ceiling, dropping the oldest events first (the caller
-// passes them newest-first, matching listRecent()'s read order).
-function fitDiagnosticsBundle(bundle, maxBytes) {
-  const events = [...bundle.events];
-  let trimmed = { ...bundle, events };
-  while (events.length > 0 && byteLength(trimmed) > maxBytes) {
-    events.pop();
-    trimmed = { ...bundle, events, eventCount: events.length };
-  }
-  return trimmed;
-}
-
 function buildFeedbackPayload({
   kind,
   description,
   contact = '',
   trackLabel = '',
   environment,
-  includeDiagnostics = false,
-  diagnosticsEvents = [],
   reportId,
   createdAt,
 } = {}) {
@@ -124,26 +105,7 @@ function buildFeedbackPayload({
     payload.trackLabel = normalizedTrackLabel;
   }
 
-  if (
-    includeDiagnostics &&
-    DIAGNOSTICS_ALLOWED_KINDS.has(kind) &&
-    Array.isArray(diagnosticsEvents) &&
-    diagnosticsEvents.length > 0
-  ) {
-    const bundle = buildDiagnosticsSupportBundle({
-      events: diagnosticsEvents,
-      appVersion: payload.environment.appVersion,
-      electronVersion: payload.environment.electronVersion,
-      exportedAt: payload.createdAt,
-    });
-    const remainingBudget = MAX_PAYLOAD_BYTES - byteLength(payload);
-    payload.diagnostics = fitDiagnosticsBundle(bundle, remainingBudget);
-  }
-
   if (byteLength(payload) > MAX_PAYLOAD_BYTES) {
-    // Diagnostics are already fitted above; a still-oversized payload means
-    // the description itself is the problem (rare given the 2000-char cap).
-    // Fail rather than silently truncate user-authored content further.
     return { status: 'error', reason: 'payload-too-large' };
   }
 

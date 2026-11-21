@@ -25,6 +25,7 @@ const OPTIONS = Object.freeze([
 <template>
   <SettingsDocumentItem
     :title="t('settings.autoReport.title')"
+    title-tag="h4"
     :guidance="t('settings.autoReport.guidance')"
   >
     <template #actions>
@@ -56,7 +57,10 @@ const OPTIONS = Object.freeze([
 
 <style scoped>
 .auto-error-reporting-settings-row__select {
-  inline-size: var(--settings-select-inline-size);
+  inline-size: var(
+    --settings-select-inline-size,
+    calc(10ic + var(--ui-space-6))
+  );
   min-inline-size: min(100%, 6ic);
   max-inline-size: 100%;
 }

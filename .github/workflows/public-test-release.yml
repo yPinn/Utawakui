@@ -116,6 +116,8 @@ jobs:
           }
 
       - name: Build unsigned installer
+        env:
+          UTAWAKUI_SUPPORT_PUBLIC_KEY: ${{ vars.UTAWAKUI_SUPPORT_PUBLIC_KEY }}
         run: npm run package
 
       - name: Verify unsigned updater bundle and create checksum

@@ -78,6 +78,14 @@ describe('auto report severity', () => {
     );
     expect(fingerprintOf(unresponsive())).toBe('RENDERER_UNRESPONSIVE|');
   });
+
+  it('distinguishes positions within the same bundled function for Vue exceptions', () => {
+    const error = (column) => ({
+      code: 'VUE_UNHANDLED_ERROR',
+      stack: `at render (app:dist/assets/main.js:1:${column})`,
+    });
+    expect(fingerprintOf(error(20))).not.toBe(fingerprintOf(error(30)));
+  });
 });
 
 // Prompt titles are looked up by code at runtime, out of the static catalog test's sight.

@@ -3,8 +3,13 @@
 const { t } = require('../lib/i18n');
 const fs = require('node:fs');
 const path = require('node:path');
+const { randomUUID } = require('node:crypto');
 const { atomicWriteJson } = require('../lib/atomicWrite');
-const { buildDiagnosticsSupportBundle } = require('../lib/diagnosticsExport');
+const {
+  buildDiagnosticsSupportBundle,
+  isSupportDiagnostic,
+  packageDiagnostics,
+} = require('../lib/diagnosticsExport');
 
 const DEFAULT_RECENT_LIMIT = 100;
 const MAX_RECENT_LIMIT = 500;
@@ -72,6 +77,8 @@ function registerDiagnosticsHandlers({
   getMainWindow = () => null,
   appVersion = '',
   electronVersion = '',
+  supportPublicKey,
+  internalTools = true,
   writeExportFile = (filePath, data) => atomicWriteJson(filePath, data),
   readBundleFile = readBoundedText,
   clearAdditional = () => ({ ok: true, removed: 0 }),
@@ -101,7 +108,11 @@ function registerDiagnosticsHandlers({
   });
 
   ipcMain.handle('diagnostics:list-recent', async (event, limit) =>
-    service.listRecent(boundedRecentLimit(limit)).map(toPublicDiagnosticEvent),
+    internalTools
+      ? (await service.listRecent(boundedRecentLimit(limit))).map(
+          toPublicDiagnosticEvent,
+        )
+      : [],
   );
 
   // Sibling log files (startup traces) are cleared with the records.
@@ -123,6 +134,8 @@ function registerDiagnosticsHandlers({
   });
 
   ipcMain.handle('diagnostics:open-folder', async () => {
+    if (!internalTools)
+      return { ok: false, errorCode: 'OPEN_LOGS_DIRECTORY_FAILED' };
     try {
       const errorMessage = await openLogsDirectory();
       return errorMessage
@@ -139,12 +152,47 @@ function registerDiagnosticsHandlers({
   ipcMain.handle('diagnostics:export', async () => {
     try {
       const ownerWindow = getMainWindow();
+      const bundle = buildDiagnosticsSupportBundle({
+        events: await service.listRecent(MAX_RECENT_LIMIT, isSupportDiagnostic),
+        appVersion,
+        electronVersion,
+        exportedAt: new Date(now()).toISOString(),
+      });
+      const supportPackage = await packageDiagnostics(bundle, {
+        publicKey: supportPublicKey,
+        reference: randomUUID(),
+      });
+      const detail =
+        supportPackage.from && supportPackage.to
+          ? t('settings.troubleshooting.exportRange', {
+              count: supportPackage.eventCount,
+              from: new Date(supportPackage.from).toLocaleString(),
+              to: new Date(supportPackage.to).toLocaleString(),
+            })
+          : t('settings.troubleshooting.exportEmpty');
+      const confirmation = {
+        type: 'question',
+        message: t('settings.troubleshooting.confirmExport'),
+        detail: [
+          detail,
+          supportPackage.sealed
+            ? t('settings.troubleshooting.exportEncrypted')
+            : t('settings.troubleshooting.exportSummaryOnly'),
+        ].join('\n'),
+        buttons: [t('settings.troubleshooting.export'), t('common.cancel')],
+        defaultId: 0,
+        cancelId: 1,
+      };
+      const choice = ownerWindow
+        ? await dialog.showMessageBox(ownerWindow, confirmation)
+        : await dialog.showMessageBox(confirmation);
+      if (choice.response !== 0) return { ok: true, cancelled: true };
       const dialogOptions = {
-        title: t('settings.diagnostics.export'),
-        defaultPath: `utawakui-diagnostics-${new Date(now())
+        title: t('settings.troubleshooting.export'),
+        defaultPath: `utawakui-support-${new Date(now())
           .toISOString()
-          .replace(/[:.]/g, '-')}.json`,
-        filters: [{ name: 'JSON', extensions: ['json'] }],
+          .replace(/[:.]/g, '-')}.utawakui-support`,
+        filters: [{ name: 'Utawakui', extensions: ['utawakui-support'] }],
       };
       const result = ownerWindow
         ? await dialog.showSaveDialog(ownerWindow, dialogOptions)
@@ -153,13 +201,7 @@ function registerDiagnosticsHandlers({
         return { ok: true, cancelled: true };
       }
 
-      const bundle = buildDiagnosticsSupportBundle({
-        events: service.listRecent(MAX_RECENT_LIMIT),
-        appVersion,
-        electronVersion,
-        exportedAt: new Date(now()).toISOString(),
-      });
-      writeExportFile(result.filePath, bundle);
+      writeExportFile(result.filePath, supportPackage);
       return { ok: true, cancelled: false };
     } catch {
       return { ok: false, errorCode: 'DIAGNOSTICS_EXPORT_FAILED' };
@@ -169,6 +211,8 @@ function registerDiagnosticsHandlers({
   // Dev-only triage reads an export chosen in a main-owned open dialog; the
   // renderer gets the file name and bounded text, never the path.
   ipcMain.handle('diagnostics:open-bundle', async () => {
+    if (!internalTools)
+      return { ok: false, errorCode: 'DIAGNOSTICS_BUNDLE_READ_FAILED' };
     try {
       const ownerWindow = getMainWindow();
       const dialogOptions = {

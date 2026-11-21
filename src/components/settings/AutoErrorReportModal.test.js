@@ -31,8 +31,9 @@ describe('AutoErrorReportModal', () => {
     expect(html).toContain('畫面程序異常結束');
     expect(html).toContain('2 次');
     expect(html).toContain('不含曲庫、歌詞或檔案');
-    for (const label of ['不要', '傳送', '自動傳送', '查看內容']) {
+    for (const label of ['不要', '傳送', '自動傳送']) {
       expect(html).toContain(label);
     }
+    expect(html).not.toContain('Renderer process terminated unexpectedly');
   });
 });

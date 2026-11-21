@@ -298,16 +298,23 @@ function parseDiagnosticJsonLines(raw) {
   if (typeof raw !== 'string' || raw.length === 0) return [];
   const events = [];
   for (const line of raw.split(/\r?\n/)) {
-    if (!line.trim()) continue;
-    try {
-      const event = sanitizeStoredDiagnosticEvent(JSON.parse(line));
-      if (event) events.push(event);
-    } catch {
-      // A crash may leave the final append partial. Diagnostics must remain
-      // readable without recursively trying to log their own parse warning.
-    }
+    const event = parseDiagnosticLine(line);
+    if (event) events.push(event);
   }
   return events;
+}
+
+function parseDiagnosticLine(line, include) {
+  if (!line.trim()) return null;
+  try {
+    const value = JSON.parse(line);
+    return !include || include(value)
+      ? sanitizeStoredDiagnosticEvent(value)
+      : null;
+  } catch {
+    // A crash can leave a partial line. Keep the other records readable.
+    return null;
+  }
 }
 
 function errorCode(error, fallback = 'DIAGNOSTICS_IO_FAILED') {
@@ -365,6 +372,7 @@ function createDiagnosticsService(options = {}) {
 
   // Each launch starts its own file, so rotations keep recent launches.
   let launchFileStarted = false;
+  let logGeneration = 0;
 
   function rotateIfNeeded(nextBytes) {
     const startsLaunch = !launchFileStarted;
@@ -374,6 +382,7 @@ function createDiagnosticsService(options = {}) {
     if (currentBytes === 0) return;
     if (!startsLaunch && currentBytes + nextBytes <= maxFileBytes) return;
 
+    logGeneration += 1;
     if (maxRotations === 0) {
       fsApi.unlinkSync(activePath);
       return;
@@ -422,32 +431,36 @@ function createDiagnosticsService(options = {}) {
     return () => listeners.delete(listener);
   }
 
-  function listRecent(limit = 100) {
+  async function listRecent(limit = 100, include) {
     const safeLimit = Number.isSafeInteger(limit)
       ? Math.min(1000, Math.max(0, limit))
       : 100;
     if (safeLimit === 0) return [];
-    const pathsInChronologicalOrder = [
-      ...Array.from({ length: maxRotations }, (_, index) =>
-        rotationPath(maxRotations - index),
-      ),
-      activePath,
-    ];
-    const events = [];
-    for (const filePath of pathsInChronologicalOrder) {
-      try {
-        if (!fsApi.existsSync(filePath)) continue;
-        events.push(
-          ...parseDiagnosticJsonLines(fsApi.readFileSync(filePath, 'utf8')),
-        );
-      } catch {
-        // One unreadable rotation must not hide the other usable records.
+    // Rotation can move paths while an asynchronous read is in flight.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const generation = logGeneration;
+      const events = [];
+      for (const filePath of managedPaths()) {
+        const raw = await fsApi.promises
+          .readFile(filePath, 'utf8')
+          .catch(() => '');
+        if (generation !== logGeneration) break;
+        let end = raw.length;
+        while (end > 0 && events.length < safeLimit) {
+          const start = raw.lastIndexOf('\n', end - 1);
+          const event = parseDiagnosticLine(raw.slice(start + 1, end), include);
+          if (event) events.push(event);
+          end = start;
+        }
+        if (events.length === safeLimit) break;
       }
+      if (generation === logGeneration) return events;
     }
-    return events.slice(-safeLimit).reverse();
+    throw new Error('Diagnostic logs changed during read');
   }
 
   function clear() {
+    logGeneration += 1;
     let removed = 0;
     let firstErrorCode = null;
     for (const filePath of managedPaths()) {

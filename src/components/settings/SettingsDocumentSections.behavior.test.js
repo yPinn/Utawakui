@@ -403,6 +403,7 @@ import CaptureOutputSettings from './CaptureOutputSettings.vue';
 import SettingsCapabilitiesSection from './SettingsCapabilitiesSection.vue';
 import SettingsLibrarySection from './SettingsLibrarySection.vue';
 import SettingsSupportSection from './SettingsSupportSection.vue';
+import TroubleshootingModal from './TroubleshootingModal.vue';
 
 const { createRenderer, nextTick } = Vue;
 
@@ -473,8 +474,8 @@ const renderer = createRenderer({
   },
 });
 
-function mountSetup(component) {
-  const app = renderer.createApp({ ...component, render: () => null });
+function mountSetup(component, props) {
+  const app = renderer.createApp({ ...component, render: () => null }, props);
   app.provide(Vue.ssrContextKey, { modules: new Set() });
   app.mount(hostNode('root'));
   return app;
@@ -601,10 +602,24 @@ describe('Settings document section behavior', () => {
     expect(mocks.refreshAppUpdateStatus).toHaveBeenCalledOnce();
     expect(mocks.refreshAppUpdateAutoCheck).toHaveBeenCalledOnce();
     expect(mocks.refreshWindowsPreference).toHaveBeenCalledOnce();
-    expect(mocks.refreshDiagnostics).toHaveBeenCalledOnce();
+    expect(mocks.refreshDiagnostics).not.toHaveBeenCalled();
 
     applicationApp.unmount();
     supportApp.unmount();
+  });
+
+  it('loads diagnostics and the reporting preference only after opening troubleshooting', () => {
+    const getAutoErrorReporting = vi.fn(async () => 'ask');
+    window.Utawakui.getAutoErrorReporting = getAutoErrorReporting;
+    const closed = mountSetup(TroubleshootingModal, { open: false });
+    expect(mocks.refreshDiagnostics).not.toHaveBeenCalled();
+    expect(getAutoErrorReporting).not.toHaveBeenCalled();
+    closed.unmount();
+
+    const open = mountSetup(TroubleshootingModal, { open: true });
+    expect(mocks.refreshDiagnostics).toHaveBeenCalledOnce();
+    expect(getAutoErrorReporting).toHaveBeenCalledOnce();
+    open.unmount();
   });
 
   it('rereads close behavior when the settings window regains focus', () => {

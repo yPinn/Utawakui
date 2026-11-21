@@ -35,7 +35,7 @@ describe('FeedbackReportModal', () => {
     const html = await renderModal();
 
     expect(html).toContain('回報與建議');
-    expect(html).toContain('附上最近的錯誤紀錄');
+    expect(html).toContain('附上支援資料');
     expect(html).not.toContain('歌曲資訊');
     const toolbar = html.slice(
       html.indexOf('class="ui-modal__header-actions"'),
@@ -57,7 +57,7 @@ describe('FeedbackReportModal', () => {
     const html = await renderModal();
 
     expect(html).toContain('歌曲資訊');
-    expect(html).not.toContain('附上最近的錯誤紀錄');
+    expect(html).not.toContain('附上支援資料');
   });
 
   it('pre-fills the description from an error record', async () => {
@@ -92,7 +92,7 @@ describe('FeedbackReportModal', () => {
     const html = await renderModal();
 
     expect(html).toContain('整首歌卡住');
-    expect(html).toContain('已附上最近');
+    expect(html).toContain('涵蓋最近');
     expect(html).toContain('3');
     expect(html).not.toContain('schemaVersion');
     expect(html).not.toContain('{');
@@ -110,7 +110,7 @@ describe('FeedbackReportModal', () => {
     );
   });
 
-  it('lets the user inspect attached events without codes or stacks', async () => {
+  it('shows support data scope and date range without individual event text', async () => {
     const feedback = useFeedbackReport();
     feedback.openReport({ kind: 'bug' });
     feedback.updateDraft({ description: '整首歌卡住' });
@@ -124,6 +124,9 @@ describe('FeedbackReportModal', () => {
             environment: { appVersion: '1.0.0', platform: 'win32' },
             diagnostics: {
               eventCount: 1,
+              encrypted: true,
+              from: '2026-10-24T01:05:00.000Z',
+              to: '2026-10-24T01:05:00.000Z',
               events: [
                 {
                   id: 'e-1',
@@ -143,8 +146,11 @@ describe('FeedbackReportModal', () => {
     await feedback.goToPreview();
     const html = await renderModal();
 
-    expect(html).toContain('查看內容');
-    expect(html).toContain('Renderer process terminated unexpectedly');
+    expect(html).toContain('涵蓋');
+    expect(html).toContain(
+      '支援包內的事件分類、發生時間和回報識別資料已加密。',
+    );
+    expect(html).not.toContain('Renderer process terminated unexpectedly');
     expect(html).not.toContain('RENDER_PROCESS_GONE');
     expect(html).not.toContain('app:electron');
   });

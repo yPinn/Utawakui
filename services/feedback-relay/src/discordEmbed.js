@@ -12,12 +12,6 @@ const KIND_PRESENTATION = Object.freeze({
   content: { label: '🎵 內容／歌詞來源問題', color: 0xe0a44d },
 });
 
-const PLATFORM_LABELS = Object.freeze({
-  win32: 'Windows',
-  darwin: 'macOS',
-  linux: 'Linux',
-});
-
 const UNKNOWN_VALUE = '未知';
 const ZERO_WIDTH_SPACE = String.fromCodePoint(0x200b);
 const BARE_URL_PATTERN = /https?:\/\/[^\s<>"']+/giu;
@@ -92,14 +86,11 @@ function formatEnvironmentValue(value) {
   return escapeAndTruncate(normalized, MAX_ENVIRONMENT_VALUE_LENGTH);
 }
 
-function formatPlatform(value) {
-  if (typeof value !== 'string') return UNKNOWN_VALUE;
-  const normalized = value.replace(/\s+/gu, ' ').trim();
-  if (!normalized) return UNKNOWN_VALUE;
-  return escapeAndTruncate(
-    PLATFORM_LABELS[normalized] ?? normalized,
-    MAX_ENVIRONMENT_VALUE_LENGTH,
-  );
+function reportFooter(payload) {
+  const version = formatEnvironmentValue(payload.environment?.appVersion);
+  return {
+    text: `Utawakui ${version} · 回報碼 ${formatFeedbackReportReference(payload.reportId)}`,
+  };
 }
 
 // One embed per report, one Discord webhook body per embed — no per-kind
@@ -110,11 +101,6 @@ export function buildDiscordWebhookBody(payload) {
     label: payload.kind,
     color: 0x808080,
   };
-  const environment = payload.environment || {};
-
-  // Discord owns the final width of inline fields. Variable user-authored
-  // content stays full-width; only the fixed pair of compact technical
-  // groups is eligible for a stable two-column row.
   const fields = [];
   if (payload.trackLabel) {
     fields.push({
@@ -124,17 +110,33 @@ export function buildDiscordWebhookBody(payload) {
     });
   }
 
-  const diagnosticsAttachment = payload.diagnostics
-    ? {
-        filename: `diagnostics-${payload.reportId}.json`,
-        content: JSON.stringify(payload.diagnostics, null, 2),
-      }
-    : null;
+  const diagnostics = payload.diagnostics;
+  const diagnosticsAttachment =
+    diagnostics?.format === 'utawakui-support-v1' && diagnostics.sealed
+      ? {
+          filename: `diagnostics-${payload.reportId}.utawakui-support`,
+          content: JSON.stringify({
+            format: diagnostics.format,
+            reference: diagnostics.reference,
+            eventCount: diagnostics.eventCount,
+            from: diagnostics.from,
+            to: diagnostics.to,
+            sealed: {
+              key: diagnostics.sealed.key,
+              iv: diagnostics.sealed.iv,
+              tag: diagnostics.sealed.tag,
+              data: diagnostics.sealed.data,
+            },
+          }),
+        }
+      : null;
 
-  if (diagnosticsAttachment) {
+  if (diagnostics?.format === 'utawakui-support-v1') {
     fields.push({
       name: '診斷資料',
-      value: `已附加（${payload.diagnostics.eventCount ?? '?'} 筆事件）`,
+      value: diagnosticsAttachment
+        ? `已附支援包（${diagnostics.eventCount} 筆事件）`
+        : `診斷摘要（${diagnostics.eventCount} 筆事件）`,
       inline: false,
     });
   }
@@ -147,27 +149,12 @@ export function buildDiscordWebhookBody(payload) {
     });
   }
 
-  fields.push(
-    {
-      name: '版本',
-      value: `Utawakui ${formatEnvironmentValue(environment.appVersion)}\nElectron ${formatEnvironmentValue(environment.electronVersion)}`,
-      inline: true,
-    },
-    {
-      name: '環境',
-      value: `${formatPlatform(environment.platform)}\n${formatEnvironmentValue(environment.locale)}`,
-      inline: true,
-    },
-  );
-
   const embed = {
     title: truncate(presentation.label, 256),
     color: presentation.color,
     description: escapeAndTruncate(payload.description, 3500),
     fields,
-    footer: {
-      text: `回報碼 · ${formatFeedbackReportReference(payload.reportId)}`,
-    },
+    footer: reportFooter(payload),
     timestamp: payload.createdAt,
   };
 
@@ -177,66 +164,43 @@ export function buildDiscordWebhookBody(payload) {
   };
 }
 
-const AUTO_SEVERITY_PRESENTATION = Object.freeze({
-  S1: { label: '自動錯誤回報 · 致命', color: 0xc62828 },
-  S2: { label: '自動錯誤回報 · 反覆發生', color: 0xe08a1e },
-});
+const AUTO_REPORT_PRESENTATION = new Map([
+  ['UNCAUGHT_EXCEPTION', ['應用程式發生異常', '應用程式']],
+  ['RENDER_PROCESS_GONE', ['視窗意外關閉', '視窗']],
+  ['PRELOAD_FAILED', ['視窗功能載入失敗', '視窗']],
+  ['STARTUP_DEFERRED_MIGRATION_FAILED', ['啟動時未能更新本機資料', '啟動']],
+  ['RENDERER_UNRESPONSIVE', ['視窗無回應', '視窗']],
+  ['RENDERER_LOAD_FAILED', ['畫面載入失敗', '畫面']],
+  ['VUE_UNHANDLED_ERROR', ['畫面更新異常', '畫面']],
+  ['WINDOW_ERROR', ['畫面執行異常', '畫面']],
+  ['OUTPUT_AUTOMATIC_START_FAILED', ['輸出未能自動啟動', '輸出']],
+]);
 
-// ADR 0029 report: fixed fields only. Frames sit in a code block, so any
-// backtick is neutralised before it could close the block.
 export function buildAutoReportWebhookBody(payload) {
-  const presentation = AUTO_SEVERITY_PRESENTATION[payload.severity];
-  const environment = payload.environment || {};
-  const fields = [
-    { name: '錯誤代碼', value: `\`${payload.code}\``, inline: true },
-    {
-      name: '發生位置',
-      value: escapeAndTruncate(
-        `${payload.process} · ${payload.source}/${payload.operation}`,
-        1024,
-      ),
-      inline: true,
-    },
+  const [title, feature] = AUTO_REPORT_PRESENTATION.get(payload.code) ?? [
+    '應用程式發生異常',
+    '應用程式',
   ];
-  if (payload.message) {
-    fields.push({
-      name: '訊息',
-      value: escapeAndTruncate(payload.message, 1024),
-      inline: false,
-    });
-  }
-  if (payload.appFrames.length > 0) {
-    const frames = payload.appFrames.join('\n').replaceAll('`', "'");
-    fields.push({
-      name: '程式位置',
-      value: `\`\`\`\n${truncate(frames, 1000)}\n\`\`\``,
-      inline: false,
-    });
-  }
-  fields.push(
-    {
-      name: '版本',
-      value: `Utawakui ${formatEnvironmentValue(environment.appVersion)}\nElectron ${formatEnvironmentValue(environment.electronVersion)}`,
-      inline: true,
-    },
-    {
-      name: '環境',
-      value: `${formatPlatform(environment.platform)}\n${formatEnvironmentValue(environment.locale)}`,
-      inline: true,
-    },
-  );
+  const critical = payload.severity === 'S1';
   return {
     payloadJson: {
       allowed_mentions: { parse: [] },
       embeds: [
         {
-          title: truncate(presentation.label, 256),
-          color: presentation.color,
-          description: escapeAndTruncate(payload.summary, 1000),
-          fields,
-          footer: {
-            text: `回報碼 · ${formatFeedbackReportReference(payload.reportId)}`,
-          },
+          title,
+          color: critical ? 0xc62828 : 0xe08a1e,
+          description: critical
+            ? '系統已記錄這次嚴重異常。'
+            : '同一異常在一小時內反覆出現。',
+          fields: [
+            { name: '影響功能', value: feature, inline: true },
+            {
+              name: '發生次數',
+              value: String(payload.occurrences),
+              inline: true,
+            },
+          ],
+          footer: reportFooter(payload),
           timestamp: payload.createdAt,
         },
       ],

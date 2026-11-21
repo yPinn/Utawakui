@@ -9,6 +9,7 @@ const captureSource = readSource('./CaptureOutputSettings.vue');
 const applicationSource = readSource('./SettingsApplicationSection.vue');
 const capabilitiesSource = readSource('./SettingsCapabilitiesSection.vue');
 const supportSource = readSource('./SettingsSupportSection.vue');
+const troubleshootingSource = readSource('./TroubleshootingModal.vue');
 
 describe('Settings document section ownership', () => {
   it('keeps SettingsView as the ordered document composer', () => {
@@ -77,11 +78,15 @@ describe('Settings document section ownership', () => {
 
   it('keeps feedback, announcements, and diagnostics with the support section', () => {
     expect(supportSource).toContain('title="支援與維護"');
-    expect(supportSource).toContain('usePersistentDiagnostics');
-    expect(supportSource).toContain('useFeedbackReport');
+    expect(supportSource).toContain('<TroubleshootingModal');
+    expect(troubleshootingSource).toContain('usePersistentDiagnostics');
+    expect(troubleshootingSource).toContain('useFeedbackReport');
     expect(supportSource).toContain('useAppAnnouncement');
-    expect(supportSource).toContain('<FeedbackReportSettingsRow');
-    expect(supportSource).toContain('<DiagnosticsSettingsRow');
+    expect(supportSource).not.toContain('<FeedbackReportSettingsRow');
+    expect(troubleshootingSource).toContain('<FeedbackReportSettingsRow');
+    expect(troubleshootingSource).toContain('<AutoErrorReportingSettingsRow');
+    expect(supportSource).not.toContain('<DiagnosticsSettingsRow');
+    expect(troubleshootingSource).toContain('<DiagnosticsSettingsRow');
     expect(supportSource).not.toContain('<FeedbackReportModal');
   });
 });

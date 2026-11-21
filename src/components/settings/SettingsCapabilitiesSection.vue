@@ -174,8 +174,19 @@ watch(
   async (section) => {
     if (!section) return;
     clearSettingsSection();
+    if (section === 'obs-connection') {
+      await revealSettingsTarget(
+        `settings-feature-${FEATURE_IDS.OBS_INTEGRATION}`,
+      );
+      return;
+    }
     await revealSettingsTarget(
-      ['application', 'support', 'platform-accounts'].includes(section)
+      [
+        'application',
+        'support',
+        'platform-accounts',
+        'capture-output',
+      ].includes(section)
         ? `settings-${section}`
         : `settings-group-${section}`,
     );

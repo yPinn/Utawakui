@@ -86,7 +86,7 @@ describe('registerFeedbackHandlers', () => {
 
     const result = await ipcMain.handlers.get('feedback:build-preview')(
       null,
-      bugInput({ description: '' }),
+      bugInput({ description: '', includeDiagnostics: true }),
     );
     expect(result).toEqual({
       ok: false,
@@ -110,6 +110,8 @@ describe('registerFeedbackHandlers', () => {
       bugInput({ includeDiagnostics: true }),
     );
     expect(withDiagnostics.payload.diagnostics).toBeDefined();
+    expect(withDiagnostics.payload.diagnostics.eventCount).toBe(1);
+    expect(withDiagnostics.payload.diagnostics).not.toHaveProperty('events');
     expect(service.listRecent).toHaveBeenCalledTimes(1);
 
     service.listRecent.mockClear();
@@ -278,7 +280,13 @@ describe('registerFeedbackHandlers', () => {
 
     await ipcMain.handlers.get('feedback:submit')(null, { previewId: 'p-1' });
 
-    expect(client.submit.mock.calls[0][0]).toBe(preview.payload);
+    expect(client.submit.mock.calls[0][0]).toMatchObject({
+      reportId: preview.payload.reportId,
+      diagnostics: { eventCount: preview.payload.diagnostics.eventCount },
+    });
+    expect(client.submit.mock.calls[0][0].diagnostics).not.toHaveProperty(
+      'events',
+    );
     expect(JSON.stringify(client.submit.mock.calls[0][0])).not.toContain(
       'arrived after preview',
     );

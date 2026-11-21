@@ -311,9 +311,11 @@ describe('obsAdapter', () => {
     const client = new FakeObsClient();
     client.connect.mockRejectedValue(fixture.error);
     const scheduleTimeout = vi.fn(() => ({ unref: () => {} }));
+    const logger = { warn: vi.fn(), error: vi.fn() };
     const adapter = createObsAdapter({
       createClient: () => client,
       scheduleTimeout,
+      logger,
     });
 
     const status = await adapter.configure({
@@ -328,6 +330,9 @@ describe('obsAdapter', () => {
     });
     expect(JSON.stringify(status.error)).not.toContain('private-host');
     expect(JSON.stringify(status.error)).not.toContain('127.0.0.1:4455');
+    const refused = fixture.code === 'OBS_CONNECTION_REFUSED';
+    expect(logger.warn).toHaveBeenCalledTimes(refused ? 1 : 0);
+    expect(logger.error).toHaveBeenCalledTimes(refused ? 0 : 1);
   });
 
   it('bounds a stalled connection, closes its transport, and schedules one retry', async () => {

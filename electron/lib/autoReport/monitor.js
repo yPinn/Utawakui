@@ -2,6 +2,7 @@
 
 const {
   S2_ESCALATION,
+  STACKLESS_EXCEPTION_CODES,
   classifyDiagnosticEvent,
   fingerprintOf,
   labelOf,
@@ -19,14 +20,13 @@ const PENDING_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const CONSENTS = new Set(['ask', 'always', 'never']);
 const DECISIONS = new Set(['once', 'always', 'never', 'dismiss']);
 
-// What the renderer prompt shows: the readable label, count and message.
+// The renderer prompt shows the readable label and count.
 function promptOf(report) {
   return {
     reportId: report.reportId,
     title: labelOf(report.code),
     occurrences: report.occurrences,
     escalated: report.escalated,
-    message: report.message,
   };
 }
 
@@ -34,6 +34,7 @@ function promptOf(report) {
 // written synchronously before any send so a main-process crash leaves the
 // report pending for the next launch instead of losing or repeating it.
 function createAutoReportMonitor({
+  enabled,
   readState,
   writeState,
   getConsent,
@@ -57,10 +58,21 @@ function createAutoReportMonitor({
       stored = null;
     }
     const pending = stored?.pending;
+    const validPending =
+      pending &&
+      typeof pending.reportId === 'string' &&
+      pending.report &&
+      !(
+        pending.report.severity === 'S2' &&
+        STACKLESS_EXCEPTION_CODES.has(pending.report.code) &&
+        (typeof pending.fingerprint !== 'string' ||
+          pending.fingerprint.endsWith('|'))
+      );
     state = {
       ...normalizeThrottleState(stored ?? emptyThrottleState()),
-      pending: pending && typeof pending.reportId === 'string' ? pending : null,
+      pending: validPending ? pending : null,
     };
+    if (pending && !validPending) save();
     return state;
   }
 
@@ -91,7 +103,7 @@ function createAutoReportMonitor({
       if (result?.status !== 'ok') return false;
       state = { ...markSent(state, pending.fingerprint, now()), pending: null };
       save();
-      notifySent({ reportId: pending.reportId });
+      notifySent({ reportId: pending.reportId }, pending.diagnosticId);
       return true;
     } catch {
       return false;
@@ -107,6 +119,8 @@ function createAutoReportMonitor({
     if (current === 'never') {
       state = { ...state, pending: null };
       save();
+    } else if (sending) {
+      return;
     } else if (current === 'always') {
       dispatch();
     } else {
@@ -115,22 +129,23 @@ function createAutoReportMonitor({
   }
 
   function observe(event) {
+    if (!enabled) return;
     const severity = classifyDiagnosticEvent(event);
     if (severity !== 'S1' && severity !== 'S2') return;
+    if (consent() === 'never') return;
     const at = now();
     const fingerprint = fingerprintOf(event);
-    const occurrence = recordOccurrence(load(), fingerprint, at);
+    if (!fingerprint) return;
+    const current = load();
+    if (sendBlockReason(current, fingerprint, at)) return;
+    const occurrence = recordOccurrence(current, fingerprint, at);
     state = { ...state, ...occurrence.state };
     const escalated = severity === 'S2';
     if (escalated && occurrence.recentS2 < S2_ESCALATION.count) {
       save();
       return;
     }
-    if (
-      sendBlockReason(state, fingerprint, at) ||
-      consent() === 'never' ||
-      state.pending
-    ) {
+    if (state.pending) {
       save();
       return;
     }
@@ -150,6 +165,7 @@ function createAutoReportMonitor({
       pending: {
         reportId: report.reportId,
         fingerprint,
+        diagnosticId: event.id,
         createdAt: at,
         report,
       },
@@ -160,6 +176,7 @@ function createAutoReportMonitor({
 
   // Startup: retry or re-offer a report left by the previous session.
   function resumePending() {
+    if (!enabled) return;
     const pending = load().pending;
     if (!pending) return;
     if (now() - pending.createdAt > PENDING_TTL_MS) {
@@ -171,13 +188,20 @@ function createAutoReportMonitor({
   }
 
   function pendingPrompt() {
+    if (!enabled) return null;
     const pending = load().pending;
     return pending && consent() === 'ask' ? promptOf(pending.report) : null;
   }
 
   async function respond(reportId, decision) {
+    if (!enabled) return { ok: false };
     const pending = load().pending;
-    if (!pending || pending.reportId !== reportId || !DECISIONS.has(decision)) {
+    if (
+      !pending ||
+      pending.reportId !== reportId ||
+      !DECISIONS.has(decision) ||
+      consent() !== 'ask'
+    ) {
       return { ok: false };
     }
     if (decision === 'always' || decision === 'never') setConsent(decision);
@@ -189,7 +213,13 @@ function createAutoReportMonitor({
     return { ok: true, sent: await dispatch() };
   }
 
-  return { observe, pendingPrompt, respond, resumePending };
+  function preferenceChanged() {
+    if (!enabled) return;
+    promptUser(null);
+    resumePending();
+  }
+
+  return { observe, pendingPrompt, respond, resumePending, preferenceChanged };
 }
 
 module.exports = { createAutoReportMonitor };

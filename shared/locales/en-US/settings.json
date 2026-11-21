@@ -37,16 +37,44 @@
     "clear": "Clear log",
     "importTitle": "Load an error log export"
   },
+  "troubleshooting": {
+    "title": "Troubleshooting and reporting",
+    "open": "View",
+    "checksSection": "Environment checks",
+    "reportingSection": "Problem reporting",
+    "noIssue": "No issues to address",
+    "audioSection": "Audio capture",
+    "obsSection": "OBS connection",
+    "unavailable": "Connection status unavailable",
+    "export": "Export support package",
+    "audioDeviceUnavailable": "Capture device unavailable",
+    "audioDeviceGuidance": "Reconnect the device or select another one.",
+    "audioInterrupted": "Capture output interrupted",
+    "audioGuidance": "Select a device again, then check the OBS audio meter.",
+    "openAudio": "Audio settings",
+    "obs": "Not connected",
+    "obsWaiting": "Waiting for OBS",
+    "obsWaitingGuidance": "Open OBS. If it’s already open, check WebSocket and the port.",
+    "obsGuidance": "Check the connection settings and retry.",
+    "openObs": "Connection settings",
+    "library": "Library files",
+    "checkLibrary": "Check library",
+    "confirmExport": "Export support package?",
+    "exportRange": "{count} errors and warnings from {from} to {to}.",
+    "exportEmpty": "There are no errors or warnings to export.",
+    "exportSummaryOnly": "This support package contains only the event count and time range.",
+    "exportEncrypted": "Event categories, occurrence times, and diagnostic references are encrypted."
+  },
   "autoReport": {
     "title": "Critical error reports",
-    "guidance": "When a critical error happens, send its type, location and the app version to the developer; never your library, lyrics or files.",
+    "guidance": "Reports include the error type, location, and app version. Library data, lyrics, and files stay private.",
     "ask": "Ask every time",
     "always": "Send automatically",
     "never": "Don't send"
   },
   "feedback": {
     "title": "Feedback and suggestions",
-    "open": "Open feedback and suggestions"
+    "open": "Write report"
   },
   "appInfo": {
     "restart": "Restart the app to read the version info.",
@@ -99,7 +127,6 @@
     "saveFailed": "The Output language wasn't changed. Try again."
   },
   "outputTranslation": {
-    "label": "Output translation",
     "output": "Same as Output language",
     "off": "Don't show",
     "readFailed": "Couldn't read the Output translation setting.",

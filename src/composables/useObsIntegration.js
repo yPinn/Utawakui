@@ -21,6 +21,7 @@ const state = reactive({
     recording: { active: false, timecode: null, durationMs: null },
   },
   error: null,
+  statusLoaded: false,
   statusReadError: '',
 });
 
@@ -37,6 +38,7 @@ function hasBridge(method) {
 function applyStatus(status) {
   if (!status) return;
   ++statusRevision;
+  state.statusLoaded = true;
   state.statusReadError = '';
   state.desired = { ...state.desired, ...status.desired };
   state.observed = {

@@ -20,6 +20,17 @@ function basePayload(overrides = {}) {
   };
 }
 
+function sealedSupport(reference = 'report-1') {
+  return {
+    format: 'utawakui-support-v1',
+    reference,
+    eventCount: 3,
+    from: null,
+    to: null,
+    sealed: { key: 'a2V5', iv: 'aXY=', tag: 'dGFn', data: 'ZGF0YQ==' },
+  };
+}
+
 describe('buildDiscordWebhookBody', () => {
   it('keeps the report content primary and moves tracking metadata to the footer', () => {
     const { payloadJson, diagnosticsAttachment } =
@@ -31,15 +42,8 @@ describe('buildDiscordWebhookBody', () => {
     expect(embed.title).toContain('錯誤回報');
     expect(embed.description).toBe('整首歌卡住');
     expect(embed.timestamp).toBe('2026-09-13T00:00:00.000Z');
-    expect(embed.footer).toEqual({ text: '回報碼 · REPO-RT1' });
-    expect(embed.fields).toEqual([
-      {
-        name: '版本',
-        value: 'Utawakui 1.0.0\nElectron 30.0.0',
-        inline: true,
-      },
-      { name: '環境', value: 'Windows\nzh-TW', inline: true },
-    ]);
+    expect(embed.footer).toEqual({ text: 'Utawakui 1.0.0 · 回報碼 REPO-RT1' });
+    expect(embed.fields).toEqual([]);
   });
 
   it.each([
@@ -55,15 +59,7 @@ describe('buildDiscordWebhookBody', () => {
     },
   );
 
-  it('omits absent optional content without changing the metadata pair', () => {
-    const { payloadJson } = buildDiscordWebhookBody(basePayload());
-    expect(payloadJson.embeds[0].fields.map((field) => field.name)).toEqual([
-      '版本',
-      '環境',
-    ]);
-  });
-
-  it('keeps variable content full-width before the compact metadata pair', () => {
+  it('keeps variable content full-width', () => {
     const { payloadJson } = buildDiscordWebhookBody(
       basePayload({
         kind: 'content',
@@ -74,26 +70,20 @@ describe('buildDiscordWebhookBody', () => {
     expect(payloadJson.embeds[0].fields).toEqual([
       { name: '歌曲資訊', value: '歌手 - 歌名', inline: false },
       { name: '聯絡方式', value: 'user@example.com', inline: false },
-      {
-        name: '版本',
-        value: 'Utawakui 1.0.0\nElectron 30.0.0',
-        inline: true,
-      },
-      { name: '環境', value: 'Windows\nzh-TW', inline: true },
     ]);
   });
 
   it('orders a diagnostics note before contact and keeps both full-width', () => {
-    const diagnostics = { eventCount: 3, events: [{ level: 'error' }] };
+    const diagnostics = sealedSupport();
     const { diagnosticsAttachment, payloadJson } = buildDiscordWebhookBody(
       basePayload({ diagnostics, contact: 'tester@example.com' }),
     );
     expect(diagnosticsAttachment).toEqual({
-      filename: 'diagnostics-report-1.json',
-      content: JSON.stringify(diagnostics, null, 2),
+      filename: 'diagnostics-report-1.utawakui-support',
+      content: JSON.stringify(diagnostics),
     });
     expect(payloadJson.embeds[0].fields.slice(0, 2)).toEqual([
-      { name: '診斷資料', value: '已附加（3 筆事件）', inline: false },
+      { name: '診斷資料', value: '已附支援包（3 筆事件）', inline: false },
       { name: '聯絡方式', value: 'tester@example.com', inline: false },
     ]);
   });
@@ -103,46 +93,35 @@ describe('buildDiscordWebhookBody', () => {
     const { diagnosticsAttachment, payloadJson } = buildDiscordWebhookBody(
       basePayload({
         reportId,
-        diagnostics: { eventCount: 1, events: [{}] },
+        diagnostics: sealedSupport(reportId),
       }),
     );
 
     expect(payloadJson.embeds[0].footer).toEqual({
-      text: '回報碼 · AEB6-AB26-F40B',
+      text: 'Utawakui 1.0.0 · 回報碼 AEB6-AB26-F40B',
     });
-    expect(diagnosticsAttachment.filename).toBe(`diagnostics-${reportId}.json`);
-  });
-
-  it.each([
-    ['darwin', 'macOS'],
-    ['linux', 'Linux'],
-    ['freebsd', 'freebsd'],
-  ])('formats the %s platform label as %s', (platform, label) => {
-    const { payloadJson } = buildDiscordWebhookBody(
-      basePayload({ environment: { platform } }),
+    expect(diagnosticsAttachment.filename).toBe(
+      `diagnostics-${reportId}.utawakui-support`,
     );
-    expect(payloadJson.embeds[0].fields).toEqual([
-      {
-        name: '版本',
-        value: 'Utawakui 未知\nElectron 未知',
-        inline: true,
-      },
-      { name: '環境', value: `${label}\n未知`, inline: true },
-    ]);
   });
 
-  it('uses bounded fallbacks when environment metadata is absent', () => {
+  it('keeps raw diagnostic events out of reports from legacy clients', () => {
+    const body = buildDiscordWebhookBody(
+      basePayload({
+        diagnostics: { eventCount: 1, events: [{ message: 'raw diagnostic' }] },
+      }),
+    );
+    expect(body.diagnosticsAttachment).toBeNull();
+    expect(JSON.stringify(body.payloadJson)).not.toContain('raw diagnostic');
+  });
+
+  it('uses a bounded fallback when the version is absent', () => {
     const { payloadJson } = buildDiscordWebhookBody(
       basePayload({ environment: undefined }),
     );
-    expect(payloadJson.embeds[0].fields).toEqual([
-      {
-        name: '版本',
-        value: 'Utawakui 未知\nElectron 未知',
-        inline: true,
-      },
-      { name: '環境', value: '未知\n未知', inline: true },
-    ]);
+    expect(payloadJson.embeds[0].footer.text).toBe(
+      'Utawakui 未知 · 回報碼 REPO-RT1',
+    );
   });
 
   it('truncates an overlong description defensively', () => {
@@ -198,7 +177,7 @@ describe('buildDiscordWebhookBody', () => {
     });
   });
 
-  it('escapes environment metadata without breaking the compact pair', () => {
+  it('keeps only the app version from the supplied environment', () => {
     const { payloadJson } = buildDiscordWebhookBody(
       basePayload({
         environment: {
@@ -210,18 +189,10 @@ describe('buildDiscordWebhookBody', () => {
       }),
     );
 
-    expect(payloadJson.embeds[0].fields).toEqual([
-      {
-        name: '版本',
-        value: 'Utawakui \\*1.0.0\\* forged\nElectron \\`30.0.0\\` forged',
-        inline: true,
-      },
-      {
-        name: '環境',
-        value: '\\# forged platform\n\\|\\|hidden\\|\\| locale',
-        inline: true,
-      },
-    ]);
+    expect(payloadJson.embeds[0].footer.text).toBe(
+      'Utawakui \\*1.0.0\\* forged · 回報碼 REPO-RT1',
+    );
+    expect(payloadJson.embeds[0].fields).toEqual([]);
   });
 
   it('stays within Discord embed limits at the relay content bounds', () => {
@@ -248,7 +219,7 @@ describe('buildDiscordWebhookBody', () => {
       ...embed.fields.flatMap((field) => [field.name, field.value]),
     ].join('');
 
-    expect(embed.fields).toHaveLength(4);
+    expect(embed.fields).toHaveLength(2);
     expect(embed.fields.every((field) => field.name.length <= 256)).toBe(true);
     expect(embed.fields.every((field) => field.value.length <= 1024)).toBe(
       true,
@@ -283,7 +254,7 @@ describe('postToDiscordWebhook', () => {
       .fn()
       .mockResolvedValue(new Response(null, { status: 204 }));
     const body = buildDiscordWebhookBody(
-      basePayload({ diagnostics: { eventCount: 1, events: [] } }),
+      basePayload({ diagnostics: sealedSupport() }),
     );
 
     await postToDiscordWebhook(

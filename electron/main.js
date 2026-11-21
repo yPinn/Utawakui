@@ -364,6 +364,7 @@ const diagnosticsService = createDiagnosticsService({
   electronVersion: process.versions.electron,
 });
 const recordDiagnostic = (event) => diagnosticsService.record(event);
+const supportPublicKey = process.env.UTAWAKUI_SUPPORT_PUBLIC_KEY || undefined;
 const runtimeDiagnosticsLogger = createRuntimeDiagnosticsLogger({
   service: diagnosticsService,
 });
@@ -377,6 +378,7 @@ function systemLocale() {
 // Subscribed before lifecycle monitoring so an early crash is still seen.
 const autoReportStore = createAutoReportStateStore(app.getPath('userData'));
 const autoReportMonitor = createAutoReportMonitor({
+  enabled: isPackagedRuntime,
   readState: autoReportStore.read,
   writeState: autoReportStore.write,
   getConsent: () => configState.getConfig().autoErrorReporting,
@@ -385,7 +387,18 @@ const autoReportMonitor = createAutoReportMonitor({
   submit: (report) => feedbackClient.submit(report),
   promptUser: (prompt) =>
     windowState.sendToMainWindow('auto-report:prompt', prompt),
-  notifySent: (sent) => windowState.sendToMainWindow('auto-report:sent', sent),
+  notifySent: (sent, diagnosticId) => {
+    recordDiagnostic({
+      level: 'info',
+      source: 'auto-report',
+      operation: 'submit',
+      code: 'AUTO_REPORT_SENT',
+      message: 'Automatic report sent',
+      correlationId: sent.reportId,
+      context: { reason: diagnosticId },
+    });
+    windowState.sendToMainWindow('auto-report:sent', sent);
+  },
   environment: () => ({
     appVersion: app.getVersion(),
     electronVersion: process.versions.electron,
@@ -1457,6 +1470,8 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       appVersion: app.getVersion(),
       electronVersion: process.versions.electron,
+      internalTools: !isPackagedRuntime,
+      supportPublicKey,
     });
     registerFeedbackHandlers({
       ipcMain,
@@ -1467,6 +1482,7 @@ if (!gotSingleInstanceLock) {
       appVersion: app.getVersion(),
       electronVersion: process.versions.electron,
       locale: systemLocale(),
+      supportPublicKey,
     });
     registerAutoReportHandlers({ ipcMain, monitor: autoReportMonitor });
     autoReportMonitor.resumePending();
@@ -1544,6 +1560,7 @@ if (!gotSingleInstanceLock) {
     registerOutputHandlers({
       ipcMain,
       server: outputRuntimeController,
+      isDev: windowState.isDev,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       dialog,
@@ -1880,6 +1897,7 @@ if (!gotSingleInstanceLock) {
     registerConfigHandlers({
       ipcMain,
       onAutoSeparationChanged: () => separationAutoQueue.refresh(),
+      onAutoErrorReportingChanged: autoReportMonitor.preferenceChanged,
       onLibraryDirectoryChanged: () => {
         trackVideo.invalidate();
         notifyTrackVideo(null);

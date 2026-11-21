@@ -19,6 +19,9 @@ const optionalSource = readSource(
 const supportSource = readSource(
   '../components/settings/SettingsSupportSection.vue',
 );
+const troubleshootingSource = readSource(
+  '../components/settings/TroubleshootingModal.vue',
+);
 const researchSource = readSource(
   '../components/settings/LyricsResearchSettingsBlock.vue',
 );
@@ -94,8 +97,8 @@ describe('SettingsView document composition', () => {
     expect(researchSource).toContain('<LyricsExperimentalQueueSettings />');
     expect(viewSource).not.toContain('LyricsExperimentalQueueSettings');
     expect(supportSource).toContain('title="支援與維護"');
-    expect(supportSource).toContain('<FeedbackReportSettingsRow');
-    expect(supportSource).toContain('<DiagnosticsSettingsRow');
+    expect(troubleshootingSource).toContain('<FeedbackReportSettingsRow');
+    expect(supportSource).toContain('<TroubleshootingModal');
   });
 
   it('reveals deep-linked capability groups and feature requests in the same document', () => {
@@ -209,8 +212,9 @@ describe('SettingsView behavior wiring', () => {
   it('keeps low-frequency support and maintenance entries together', () => {
     expect(supportSource).toContain('announcement.reopen');
     expect(supportSource).toContain('openCommunityDiscord');
-    expect(supportSource).toContain('<FeedbackReportSettingsRow');
-    expect(supportSource).toContain('<DiagnosticsSettingsRow');
+    expect(supportSource).not.toContain('<FeedbackReportSettingsRow');
+    expect(troubleshootingSource).toContain('<DiagnosticsSettingsRow');
+    expect(supportSource).not.toContain('<DiagnosticsSettingsRow');
     expect(supportSource).not.toContain('announcement.summary');
     expect(supportSource).toContain('@click="announcement.reopen"');
   });
@@ -237,8 +241,8 @@ describe('SettingsView behavior wiring', () => {
   });
 
   it('retains destructive confirmations and protected credentials', () => {
-    expect(source).toContain("title: '清除錯誤紀錄？'");
-    expect(source).toContain("confirmLabel: '清除紀錄'");
+    expect(troubleshootingSource).toContain("title: '清除錯誤紀錄？'");
+    expect(troubleshootingSource).toContain("confirmLabel: '清除紀錄'");
     expect(source).toContain("title: '移除 BPM 分析工具？'");
     expect(source).toContain('歌曲與既有分析資料都會保留');
     expect(source).toContain('@remove="handleRemoveMusicAnalysis"');

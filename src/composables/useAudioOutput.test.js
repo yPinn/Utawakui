@@ -146,6 +146,7 @@ describe('useAudioOutput', () => {
       expect.any(Error),
       expect.objectContaining({
         code: 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE',
+        severity: 'warning',
         source: 'audio-output',
         message: '先前的裝置無法使用。',
         actionLabel: '選擇裝置',
@@ -198,6 +199,13 @@ describe('useAudioOutput', () => {
     await Promise.resolve();
 
     expect(loaded.setCaptureDevice).toHaveBeenCalledWith(null);
+    expect(loaded.recordError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        code: 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE',
+        severity: 'warning',
+      }),
+    );
     expect(loaded.audioOutput.captureErrorNotice.value).toMatchObject({
       title: '擷取輸出已關閉',
       message: '先前的裝置無法使用。',

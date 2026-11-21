@@ -22,7 +22,7 @@
   "description": "說明",
   "track": "歌曲資訊（選填）",
   "trackPlaceholder": "藝人 - 歌名",
-  "attachDiagnostics": "附上最近的錯誤紀錄",
+  "attachDiagnostics": "附上支援資料",
   "contact": "聯絡方式（選填）",
   "contactHint": "需要回覆時使用，例如 Discord 帳號或 Email。",
   "contactPlaceholder": "可留空",
@@ -32,9 +32,9 @@
   "contactHeading": "聯絡方式",
   "environment": "環境資訊",
   "environmentValue": "App {version}・{platform}",
-  "diagnosticsHeading": "錯誤紀錄",
-  "diagnosticsAttached": "已附上最近 {count} 筆紀錄",
-  "viewDetails": "查看內容",
+  "diagnosticsHeading": "支援資料",
+  "diagnosticsAttached": "涵蓋最近 {count} 筆錯誤及警告。",
+  "diagnosticsRange": "涵蓋 {from} 至 {to}。",
   "fallbackIntro": "無法送出時，可另存檔案再自行傳給開發者。",
   "sent": "回饋已送出，謝謝！",
   "reportCode": "回報碼：{reference}",
@@ -49,6 +49,7 @@
     "restartTitle": "需要重新啟動",
     "restartMessage": "重新啟動後即可送出回饋。",
     "previewFailed": "無法建立預覽",
+    "supportDataUnavailable": "目前無法附上支援資料。可先取消勾選「附上支援資料」，再繼續回報。",
     "rateLimited": "這台電腦短時間內送出太多次，請稍後再試。",
     "submitUnavailable": "目前無法送出，可另存檔案再自行傳給開發者。",
     "submitFailed": "無法送出",
@@ -56,12 +57,5 @@
     "exportedTitle": "已另存檔案",
     "exportedMessage": "檔案已儲存，請自行傳給開發者。"
   },
-  "eventMeta": "{time}・{level}",
-  "saveDialogTitle": "另存意見回饋",
-  "levels": {
-    "error": "錯誤",
-    "warning": "警告",
-    "info": "資訊",
-    "debug": "偵錯"
-  }
+  "saveDialogTitle": "另存意見回饋"
 }

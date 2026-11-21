@@ -20,7 +20,11 @@ const captureDeviceLabel = computed(() => {
 </script>
 
 <template>
-  <div id="settings-capture-output" class="capture-output-settings">
+  <div
+    id="settings-capture-output"
+    class="capture-output-settings"
+    tabindex="-1"
+  >
     <AudioOutputSettingsBlock
       :enabled="Boolean(playerState.captureDeviceId)"
       :device-label="captureDeviceLabel"

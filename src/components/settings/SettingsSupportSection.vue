@@ -1,32 +1,18 @@
 <script setup>
-import { onMounted } from 'vue';
-import { ExternalLink, Info } from '../../icons/index.js';
+import { onMounted, shallowRef } from 'vue';
+import { ExternalLink, Info, ListChecks } from '../../icons/index.js';
 import { useAppAnnouncement } from '../../composables/useAppAnnouncement.js';
 import { useAppInfo } from '../../composables/useAppInfo.js';
 import { useAppUpdate } from '../../composables/useAppUpdate.js';
-import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
-import { useAutoErrorReportingSetting } from '../../composables/useAutoErrorReport.js';
-import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
-import { usePersistentDiagnostics } from '../../composables/usePersistentDiagnostics.js';
 import SettingsSection from './SettingsSection.vue';
+import TroubleshootingModal from './TroubleshootingModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import DiagnosticsSettingsRow from './DiagnosticsSettingsRow.vue';
+import UiButton from '../ui/UiButton.vue';
 import AppUpdateSettingsRow from './AppUpdateSettingsRow.vue';
-import AutoErrorReportingSettingsRow from './AutoErrorReportingSettingsRow.vue';
-import FeedbackReportSettingsRow from './FeedbackReportSettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import { t } from '../../utils/i18n.js';
 
-const {
-  state: persistentDiagnosticsState,
-  refresh: refreshDiagnostics,
-  clear: clearDiagnostics,
-  openFolder: openDiagnosticsFolder,
-  exportBundle: exportDiagnostics,
-} = usePersistentDiagnostics();
-const { confirm: confirmAction } = useAppConfirmation();
-const feedback = useFeedbackReport();
-const autoErrorReporting = useAutoErrorReportingSetting();
+const troubleshootingOpen = shallowRef(false);
 const announcement = useAppAnnouncement();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
@@ -43,39 +29,10 @@ function openCommunityDiscord() {
   window.Utawakui?.openExternalTarget?.('community-discord');
 }
 
-async function handleClearDiagnostics() {
-  const confirmed = await confirmAction({
-    title: t('settings.support.clearTitle'),
-    message: t('settings.support.clearMessage'),
-    detail: t('settings.support.clearDetail'),
-    confirmLabel: t('settings.support.clearConfirm'),
-    intent: 'danger',
-  });
-  if (confirmed) await clearDiagnostics();
-}
-
-function handleDiagnosticsNoticeAction(operation) {
-  if (operation === 'open-folder') {
-    openDiagnosticsFolder();
-    return;
-  }
-  if (operation === 'clear') {
-    handleClearDiagnostics();
-    return;
-  }
-  if (operation === 'export') {
-    exportDiagnostics();
-    return;
-  }
-  refreshDiagnostics();
-}
-
 onMounted(() => {
   refreshAppInfo();
   refreshAppUpdateStatus();
   refreshAppUpdateAutoCheck();
-  refreshDiagnostics();
-  autoErrorReporting.refreshPreference();
 });
 </script>
 
@@ -123,7 +80,6 @@ onMounted(() => {
       </template>
     </AppUpdateSettingsRow>
 
-    <FeedbackReportSettingsRow @open="feedback.openReport()" />
     <SettingsDocumentItem
       :icon="ExternalLink"
       :title="t('settings.support.discord')"
@@ -137,25 +93,23 @@ onMounted(() => {
         />
       </template>
     </SettingsDocumentItem>
-    <AutoErrorReportingSettingsRow
-      :reporting="autoErrorReporting.reporting.value"
-      :busy="autoErrorReporting.preferenceBusy.value"
-      :reading="autoErrorReporting.preferenceReading.value"
-      :loaded="autoErrorReporting.preferenceLoaded.value"
-      :error="autoErrorReporting.preferenceSaveError.value"
-      :read-error="autoErrorReporting.preferenceReadError.value"
-      @refresh-preference="autoErrorReporting.refreshPreference"
-      @set-reporting="autoErrorReporting.setReporting"
-    />
-    <DiagnosticsSettingsRow
-      :record-count="persistentDiagnosticsState.recordCount"
-      :is-loading="persistentDiagnosticsState.isLoading"
-      :notice="persistentDiagnosticsState.notice"
-      @refresh="refreshDiagnostics"
-      @open-folder="openDiagnosticsFolder"
-      @clear="handleClearDiagnostics"
-      @export="exportDiagnostics"
-      @notice-action="handleDiagnosticsNoticeAction"
+    <SettingsDocumentItem
+      :icon="ListChecks"
+      :title="t('settings.troubleshooting.title')"
+    >
+      <template #actions>
+        <UiButton
+          variant="secondary"
+          aria-haspopup="dialog"
+          @click="troubleshootingOpen = true"
+        >
+          {{ t('settings.troubleshooting.open') }}
+        </UiButton>
+      </template>
+    </SettingsDocumentItem>
+    <TroubleshootingModal
+      :open="troubleshootingOpen"
+      @close="troubleshootingOpen = false"
     />
   </SettingsSection>
 </template>

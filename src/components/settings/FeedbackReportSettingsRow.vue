@@ -11,11 +11,13 @@ const emit = defineEmits(['open']);
   <SettingsDocumentItem
     :icon="MessageSquare"
     :title="t('settings.feedback.title')"
+    title-tag="h4"
   >
     <template #actions>
       <UiIconButton
         :icon="MessageSquare"
         :label="t('settings.feedback.open')"
+        aria-haspopup="dialog"
         @click="emit('open')"
       />
     </template>

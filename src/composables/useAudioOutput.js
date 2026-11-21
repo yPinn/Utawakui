@@ -25,7 +25,7 @@ function recordCaptureUnavailable(error) {
     error instanceof Error ? error : new Error(String(error));
   return recordError(technicalError, {
     code: 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE',
-    severity: 'error',
+    severity: 'warning',
     title: t('audio.notify.closedTitle'),
     message: t('audio.notify.closedMessage'),
     actionLabel: t('audio.notify.selectDevice'),

@@ -63,6 +63,7 @@ function registerConfigHandlers({
   getPreferredSystemLanguages = () => [],
   applyOutputLanguage = () => undefined,
   onAutoSeparationChanged = () => undefined,
+  onAutoErrorReportingChanged = () => undefined,
 }) {
   ipcMain.handle('config:get-obs-arrangement-dock', async () =>
     runConfigOperation(
@@ -374,6 +375,11 @@ function registerConfigHandlers({
       },
       () => {
         updateConfig({ autoErrorReporting: value });
+        try {
+          onAutoErrorReportingChanged();
+        } catch {
+          // The preference is already saved and the monitor reads it on demand.
+        }
         return getConfig().autoErrorReporting;
       },
     );

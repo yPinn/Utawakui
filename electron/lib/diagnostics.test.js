@@ -309,7 +309,7 @@ describe('diagnostic JSONL', () => {
 });
 
 describe('createDiagnosticsService', () => {
-  it('persists records and reads the newest events first', () => {
+  it('persists records and reads the newest events first', async () => {
     const logsDir = makeTempDir();
     let nextId = 0;
     const service = createDiagnosticsService({
@@ -335,7 +335,7 @@ describe('createDiagnosticsService', () => {
       message: 'second',
     });
 
-    expect(service.listRecent(10).map((event) => event.code)).toEqual([
+    expect((await service.listRecent(10)).map((event) => event.code)).toEqual([
       'SECOND',
       'FIRST',
     ]);
@@ -364,7 +364,7 @@ describe('createDiagnosticsService', () => {
     expect(seen[0].message).toBe('boom [path]');
   });
 
-  it('rotates before append and keeps only the configured generations', () => {
+  it('rotates before append and keeps only the configured generations', async () => {
     const logsDir = makeTempDir();
     let nextId = 0;
     const service = createDiagnosticsService({
@@ -392,10 +392,29 @@ describe('createDiagnosticsService', () => {
     expect(fs.existsSync(path.join(logsDir, 'diagnostics.3.jsonl'))).toBe(
       false,
     );
-    expect(service.listRecent(10).map((event) => event.code)).toEqual([
+    expect((await service.listRecent(10)).map((event) => event.code)).toEqual([
       'EVENT_5',
       'EVENT_4',
       'EVENT_3',
+    ]);
+  });
+
+  it('finds an older warning without counting newer debug noise against the limit', async () => {
+    const logsDir = makeTempDir();
+    createDiagnosticsService({ logsDir }).record({
+      level: 'warning',
+      code: 'OLDER_WARNING',
+    });
+    const service = createDiagnosticsService({ logsDir });
+    service.record({ level: 'debug', code: 'NEWER_DEBUG' });
+
+    const matching = await service.listRecent(
+      1,
+      (event) => event?.level === 'warning',
+    );
+    expect(matching.map(({ code }) => code)).toEqual(['OLDER_WARNING']);
+    expect((await service.listRecent(1)).map(({ code }) => code)).toEqual([
+      'NEWER_DEBUG',
     ]);
   });
 

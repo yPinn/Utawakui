@@ -19,6 +19,7 @@ const props = defineProps({
   recordCount: { type: Number, default: 0 },
   isLoading: { type: Boolean, default: false },
   notice: { type: Object, default: null },
+  showExport: { type: Boolean, default: true },
 });
 
 const emit = defineEmits([
@@ -120,6 +121,7 @@ function handleMenuSelect(actionId) {
     >
       <template #actions>
         <UiIconButton
+          v-if="showExport"
           :icon="Download"
           :label="t('settings.diagnostics.export')"
           :disabled="isLoading"

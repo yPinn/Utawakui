@@ -17,9 +17,7 @@ import {
   MAX_TRACK_LABEL_LENGTH,
 } from '../../constants/feedback.js';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
-import { summarizeFeedbackDiagnostics } from '../../utils/feedbackDiagnosticsSummary.js';
 import UiButton from '../ui/UiButton.vue';
-import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiModal from '../ui/UiModal.vue';
@@ -38,9 +36,14 @@ const {
   exportFallback,
 } = useFeedbackReport();
 
-const diagnosticsSummary = computed(() =>
-  summarizeFeedbackDiagnostics(state.previewPayload?.diagnostics),
-);
+const diagnosticsRange = computed(() => {
+  const { from, to } = state.previewPayload?.diagnostics ?? {};
+  if (!from || !to) return '';
+  return t('feedback.diagnosticsRange', {
+    from: new Date(from).toLocaleString(),
+    to: new Date(to).toLocaleString(),
+  });
+});
 
 const descriptionField = useTemplateRef('descriptionField');
 const previewSummary = useTemplateRef('previewSummary');
@@ -264,23 +267,14 @@ const descriptionPlaceholder = computed(
                   state.previewPayload.diagnostics.eventCount,
                 )
               }}
-              <UiDisclosure
-                v-if="diagnosticsSummary.length"
-                class="feedback-report__events"
-                :label="t('feedback.viewDetails')"
-              >
-                <ol class="feedback-report__event-list">
-                  <li v-for="row in diagnosticsSummary" :key="row.key">
-                    <span class="feedback-report__event-meta">{{
-                      t('feedback.eventMeta', {
-                        time: row.time,
-                        level: row.level,
-                      })
-                    }}</span>
-                    {{ row.message }}
-                  </li>
-                </ol>
-              </UiDisclosure>
+              <p v-if="diagnosticsRange">{{ diagnosticsRange }}</p>
+              <p>
+                {{
+                  state.previewPayload.diagnostics.encrypted
+                    ? t('settings.troubleshooting.exportEncrypted')
+                    : t('settings.troubleshooting.exportSummaryOnly')
+                }}
+              </p>
             </dd>
           </div>
         </dl>
@@ -349,25 +343,6 @@ const descriptionPlaceholder = computed(
 
 .feedback-report__description {
   white-space: pre-wrap;
-}
-
-.feedback-report__events {
-  margin-top: var(--ui-space-2);
-}
-
-.feedback-report__event-list {
-  display: grid;
-  gap: var(--ui-space-1);
-  max-height: 12rem;
-  margin: 0;
-  padding-left: var(--ui-space-4);
-  overflow-y: auto;
-  font-size: var(--ui-type-caption-size);
-  overflow-wrap: anywhere;
-}
-
-.feedback-report__event-meta {
-  color: var(--ui-color-text-muted);
 }
 
 .feedback-report__report-id {

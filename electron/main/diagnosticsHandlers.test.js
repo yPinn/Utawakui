@@ -264,6 +264,7 @@ describe('diagnostics:export', () => {
   } = {}) {
     const ipcMain = createIpcMain();
     const dialog = {
+      showMessageBox: vi.fn(async () => ({ response: 0 })),
       showSaveDialog: vi.fn(async () => dialogResult),
     };
     registerDiagnosticsHandlers({
@@ -310,13 +311,12 @@ describe('diagnostics:export', () => {
     expect(writeExportFile).toHaveBeenCalledWith(
       'C:\\Users\\Alice\\export.json',
       expect.objectContaining({
-        bundleVersion: 1,
-        appVersion: '1.2.3',
-        electronVersion: '30.0.0',
+        format: 'utawakui-support-v1',
+        reference: expect.any(String),
         eventCount: 1,
-        events,
       }),
     );
+    expect(writeExportFile.mock.calls[0][1]).not.toHaveProperty('events');
   });
 
   it('treats a cancelled save dialog as expected control flow', async () => {

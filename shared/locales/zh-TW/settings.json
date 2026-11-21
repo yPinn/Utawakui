@@ -37,16 +37,44 @@
     "clear": "清除紀錄",
     "importTitle": "載入錯誤紀錄匯出檔"
   },
+  "troubleshooting": {
+    "title": "問題排查與回報",
+    "open": "查看",
+    "checksSection": "使用環境檢查",
+    "reportingSection": "問題回報",
+    "noIssue": "無待處理問題",
+    "audioSection": "擷取音訊",
+    "obsSection": "OBS 連線",
+    "unavailable": "無法讀取連線狀態",
+    "export": "匯出支援包",
+    "audioDeviceUnavailable": "擷取裝置無法使用",
+    "audioDeviceGuidance": "重新接上裝置，或改選其他裝置。",
+    "audioInterrupted": "擷取輸出中斷",
+    "audioGuidance": "重新選擇裝置，再查看 OBS 音量表。",
+    "openAudio": "音訊設定",
+    "obs": "未連線",
+    "obsWaiting": "等待 OBS 連線",
+    "obsWaitingGuidance": "請先開啟 OBS。若已開啟，請檢查 WebSocket 與連接埠。",
+    "obsGuidance": "檢查連線設定後重試。",
+    "openObs": "連線設定",
+    "library": "曲庫檔案",
+    "checkLibrary": "檢查曲庫",
+    "confirmExport": "匯出支援包？",
+    "exportRange": "{count} 筆錯誤及警告，涵蓋 {from} 至 {to}。",
+    "exportEmpty": "目前沒有可匯出的錯誤或警告。",
+    "exportSummaryOnly": "這份支援包只包含事件數量和時間範圍。",
+    "exportEncrypted": "支援包內的事件分類、發生時間和回報識別資料已加密。"
+  },
   "autoReport": {
     "title": "嚴重錯誤回報",
-    "guidance": "發生嚴重錯誤時，把錯誤類型、發生位置與版本傳給開發者；不含曲庫、歌詞或檔案。",
+    "guidance": "回報含錯誤類型、位置與版本，不含曲庫、歌詞或檔案。",
     "ask": "每次詢問",
     "always": "自動傳送",
     "never": "不傳送"
   },
   "feedback": {
     "title": "回報與建議",
-    "open": "開啟回報與建議"
+    "open": "填寫回報"
   },
   "appInfo": {
     "restart": "需要重新啟動應用程式才能讀取版本資訊。",
@@ -99,7 +127,6 @@
     "saveFailed": "畫面輸出語言未變更，請再試一次。"
   },
   "outputTranslation": {
-    "label": "畫面輸出譯文",
     "output": "跟隨畫面輸出語言",
     "off": "不顯示",
     "readFailed": "無法讀取畫面輸出譯文設定。",

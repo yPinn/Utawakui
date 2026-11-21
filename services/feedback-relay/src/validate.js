@@ -55,16 +55,38 @@ function isBoundedDiagnostics(diagnostics) {
   if (
     !diagnostics ||
     typeof diagnostics !== 'object' ||
-    Array.isArray(diagnostics) ||
-    !Array.isArray(diagnostics.events)
+    Array.isArray(diagnostics)
   ) {
     return false;
   }
-  return (
-    Number.isSafeInteger(diagnostics.eventCount) &&
-    diagnostics.eventCount >= 0 &&
-    diagnostics.eventCount <= MAX_DIAGNOSTICS_EVENT_COUNT &&
-    diagnostics.eventCount === diagnostics.events.length
+  const { eventCount, format, reference, from, to, sealed } = diagnostics;
+  if (
+    !Number.isSafeInteger(eventCount) ||
+    eventCount < 0 ||
+    eventCount > MAX_DIAGNOSTICS_EVENT_COUNT
+  )
+    return false;
+  if (format === undefined)
+    return (
+      Array.isArray(diagnostics.events) &&
+      diagnostics.events.length === eventCount
+    );
+  if (
+    format !== 'utawakui-support-v1' ||
+    !isNonEmptyString(reference, MAX_REPORT_ID_LENGTH) ||
+    ![from, to].every(
+      (value) => value === null || isCanonicalIsoTimestamp(value),
+    )
+  )
+    return false;
+  if (sealed === undefined) return true;
+  return Boolean(
+    sealed &&
+    ['key', 'iv', 'tag', 'data'].every(
+      (field) =>
+        typeof sealed[field] === 'string' &&
+        /^[A-Za-z0-9+/]+={0,2}$/u.test(sealed[field]),
+    ),
   );
 }
 
@@ -120,7 +142,9 @@ export function validateFeedbackPayload(payload) {
   }
   if (
     payload.diagnostics !== undefined &&
-    !isBoundedDiagnostics(payload.diagnostics)
+    (!isBoundedDiagnostics(payload.diagnostics) ||
+      (payload.diagnostics.format !== undefined &&
+        payload.diagnostics.reference !== payload.reportId))
   ) {
     return { ok: false, reason: 'invalid-diagnostics' };
   }

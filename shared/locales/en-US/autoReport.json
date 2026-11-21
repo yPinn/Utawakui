@@ -3,7 +3,6 @@
   "lead": "{error}. Report it to the developer?",
   "leadRepeated": "{error} ({count} times). Report it to the developer?",
   "scope": "Only the error type, location and version are sent, never your library, lyrics or files. You can change this in Settings.",
-  "viewDetails": "View details",
   "never": "Don't send",
   "once": "Send",
   "always": "Always send",

@@ -488,12 +488,16 @@ function createObsAdapter({
         if (client !== nextClient || operationEpoch !== activeEpoch) {
           return getStatus();
         }
-        logger.error?.('[obs-adapter] Connect failed', error);
-        handleDisconnected(
+        const code =
           error?.code === 'OBS_REQUEST_TIMEOUT'
             ? 'OBS_REQUEST_TIMEOUT'
-            : classifyConnectionError(error),
-        );
+            : classifyConnectionError(error);
+        if (code === 'OBS_CONNECTION_REFUSED') {
+          logger.warn?.('[obs-adapter] Waiting for OBS', error);
+        } else {
+          logger.error?.('[obs-adapter] Connect failed', error);
+        }
+        handleDisconnected(code);
         if (
           error?.code === 'OBS_CONNECT_TIMEOUT' ||
           error?.code === 'OBS_REQUEST_TIMEOUT'
@@ -587,10 +591,12 @@ function createObsAdapter({
       try {
         await connect();
       } catch (error) {
-        logger.error?.(
-          '[obs-adapter] Initial connect after configure failed',
-          error,
-        );
+        if (!status.error) {
+          logger.error?.(
+            '[obs-adapter] Initial connect after configure failed',
+            error,
+          );
+        }
       }
     }
     return getStatus();

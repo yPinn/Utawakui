@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildFeedbackPayload, normalizeUserText } from './payload.js';
-import { MAX_DESCRIPTION_LENGTH, MAX_PAYLOAD_BYTES } from './constants.js';
+import { MAX_DESCRIPTION_LENGTH } from './constants.js';
 
 const environment = {
   appVersion: '1.2.3',
@@ -101,62 +101,6 @@ describe('buildFeedbackPayload', () => {
       baseInput({ kind: 'bug', trackLabel: '歌手 - 歌名' }),
     );
     expect(bugResult.payload).not.toHaveProperty('trackLabel');
-  });
-
-  it('attaches a diagnostics bundle for a bug report when requested', () => {
-    const diagnosticsEvents = [
-      { level: 'error', message: 'a', timestamp: '2026-09-13T00:00:00.000Z' },
-      {
-        level: 'warning',
-        message: 'b',
-        timestamp: '2026-09-13T00:00:01.000Z',
-      },
-    ];
-    const result = buildFeedbackPayload(
-      baseInput({ includeDiagnostics: true, diagnosticsEvents }),
-    );
-    expect(result.status).toBe('ok');
-    expect(result.payload.diagnostics).toMatchObject({
-      bundleVersion: 1,
-      eventCount: 2,
-      levelCounts: { debug: 0, info: 0, warning: 1, error: 1 },
-      events: diagnosticsEvents,
-    });
-  });
-
-  it.each(['feature', 'experience', 'content'])(
-    'never attaches diagnostics for a %s report even if requested',
-    (kind) => {
-      const result = buildFeedbackPayload(
-        baseInput({
-          kind,
-          includeDiagnostics: true,
-          diagnosticsEvents: [{ level: 'error', message: 'a' }],
-        }),
-      );
-      expect(result.status).toBe('ok');
-      expect(result.payload).not.toHaveProperty('diagnostics');
-    },
-  );
-
-  it('trims the oldest diagnostic events first to stay under the payload cap', () => {
-    // Each event is padded well past what 50 of them could ever need, so the
-    // trimmer must drop entries rather than fail the whole submission.
-    const diagnosticsEvents = Array.from({ length: 50 }, (_, index) => ({
-      level: 'error',
-      message: `event-${index}`,
-      padding: 'p'.repeat(10_000),
-    }));
-    const result = buildFeedbackPayload(
-      baseInput({ includeDiagnostics: true, diagnosticsEvents }),
-    );
-    expect(result.status).toBe('ok');
-    expect(result.payload.diagnostics.events.length).toBeLessThan(50);
-    // Newest-first input means trimming pops from the end (oldest) first.
-    expect(result.payload.diagnostics.events[0].message).toBe('event-0');
-    expect(
-      Buffer.byteLength(JSON.stringify(result.payload), 'utf8'),
-    ).toBeLessThanOrEqual(MAX_PAYLOAD_BYTES);
   });
 
   it('fails rather than truncate when the description alone exceeds the cap', () => {

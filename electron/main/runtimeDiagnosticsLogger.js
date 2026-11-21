@@ -4,6 +4,15 @@ const DEFAULT_COOLDOWN_MS = 60_000;
 
 const EVENT_DEFINITIONS = new Map([
   [
+    '[obs-adapter] Waiting for OBS',
+    {
+      source: 'obs-adapter',
+      operation: 'connect-refused',
+      code: 'OBS_CONNECTION_REFUSED',
+      message: 'OBS connection is not available yet',
+    },
+  ],
+  [
     '[output] Automatic startup failed',
     {
       source: 'output',

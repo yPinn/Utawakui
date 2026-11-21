@@ -193,6 +193,19 @@ async function goToPreview() {
   try {
     const result = await buildPreview(currentInput());
     if (current !== requestRevision) return false;
+    if (
+      [
+        'FEEDBACK_DIAGNOSTICS_UNAVAILABLE',
+        'FEEDBACK_PAYLOAD_TOO_LARGE',
+      ].includes(result?.errorCode)
+    ) {
+      state.notice = failureNotice({
+        title: t('feedback.failure.previewFailed'),
+        message: t('feedback.failure.supportDataUnavailable'),
+        operation: 'preview',
+      });
+      return false;
+    }
     if (!result?.ok) throw new Error('feedback preview failed');
     state.previewPayload = result.payload;
     state.step = 'preview';

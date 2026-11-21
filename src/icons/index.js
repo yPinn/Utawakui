@@ -6,6 +6,7 @@ import { createLucideIcon } from '@lucide/vue';
 export { ICON_SIZE } from '../constants/ui.js';
 
 export {
+  Activity,
   ArrowLeft,
   ArrowDownToLine,
   BadgeCheck,
@@ -50,6 +51,7 @@ export {
   Languages,
   Lasso,
   LassoSelect,
+  LayoutTemplate,
   Library,
   Link,
   ListChecks,
@@ -98,6 +100,7 @@ export {
   Signal,
   Settings,
   Smartphone,
+  Sparkles,
   SkipBack,
   SkipForward,
   SlidersHorizontal,

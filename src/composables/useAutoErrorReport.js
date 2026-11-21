@@ -9,13 +9,17 @@ import { t } from '../utils/i18n.js';
 // Module singleton: main raises at most one pending severe-error report.
 const state = reactive({ prompt: null, busy: false });
 let initialized = false;
+let promptRevision = 0;
+let lastSentReportId = null;
 
 function bridge() {
   return globalThis.window?.Utawakui;
 }
 
 function notifySent({ reportId } = {}) {
-  if (typeof reportId !== 'string') return;
+  if (typeof reportId !== 'string' || reportId === lastSentReportId) return;
+  if (state.prompt?.reportId === reportId) showPrompt(null);
+  lastSentReportId = reportId;
   const reference = formatFeedbackReportReference(reportId);
   useAppNotifications().notify({
     key: NOTIFICATION_KEYS.AUTO_ERROR_REPORT,
@@ -34,7 +38,10 @@ function notifySent({ reportId } = {}) {
 }
 
 function showPrompt(prompt) {
-  if (prompt && typeof prompt.reportId === 'string') state.prompt = prompt;
+  if (prompt === null || typeof prompt?.reportId === 'string') {
+    promptRevision += 1;
+    state.prompt = prompt;
+  }
 }
 
 async function initialize() {
@@ -43,8 +50,10 @@ async function initialize() {
   initialized = true;
   api.onAutoReportPrompt?.(showPrompt);
   api.onAutoReportSent?.(notifySent);
+  const revision = promptRevision;
   try {
-    showPrompt(await api.getPendingAutoReport());
+    const pending = await api.getPendingAutoReport();
+    if (revision === promptRevision) showPrompt(pending);
   } catch {
     // A missing prompt only defers the question to the next launch.
   }
@@ -57,11 +66,11 @@ async function respond(decision) {
   state.busy = true;
   try {
     const result = await api.respondAutoReport(prompt.reportId, decision);
-    state.prompt = null;
+    if (state.prompt?.reportId === prompt.reportId) state.prompt = null;
     if (result?.sent) notifySent({ reportId: prompt.reportId });
     return Boolean(result?.ok);
   } catch {
-    state.prompt = null;
+    if (state.prompt?.reportId === prompt.reportId) state.prompt = null;
     return false;
   } finally {
     state.busy = false;
