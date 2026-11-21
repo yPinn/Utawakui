@@ -3,7 +3,7 @@
   "restartToSave": "Restart the app and try again.",
   "saveIncomplete": "Lyrics have not been saved. Try again.",
   "savedRefreshFailed": "Lyrics were saved. Reopen the lyrics list.",
-  "noResults": "No matching lyrics found. Try the original title or another name.",
+  "noResults": "No matching lyrics found. Try searching with the original title or switch to manual import.",
   "searchUnavailable": "Lyrics search is temporarily unavailable. Try again later.",
   "moreUnavailable": "More results are unavailable right now. You can still use the lyrics already found.",
   "retry": "Retry",

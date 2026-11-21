@@ -3,7 +3,7 @@
   "restartToSave": "請重新啟動應用程式後再試。",
   "saveIncomplete": "歌詞尚未儲存，請再試一次。",
   "savedRefreshFailed": "歌詞已儲存，請重新開啟歌詞清單。",
-  "noResults": "找不到符合的歌詞。試試原文曲名或其他名稱。",
+  "noResults": "找不到符合的歌詞。可改用原文曲名重試，或切換到手動匯入。",
   "searchUnavailable": "暫時無法搜尋歌詞，請稍後再試。",
   "moreUnavailable": "暫時無法取得更多結果，現有歌詞仍可使用。",
   "retry": "重試",

@@ -629,7 +629,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     );
     await vi.waitFor(() =>
       expect(nodeText(root)).toContain(
-        '找不到符合的歌詞。試試原文曲名或其他名稱。',
+        '找不到符合的歌詞。可改用原文曲名重試，或切換到手動匯入。',
       ),
     );
 
@@ -639,7 +639,9 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('找到 0 個版本');
     expect(
-      nodeText(root).match(/找不到符合的歌詞。試試原文曲名或其他名稱。/g),
+      nodeText(root).match(
+        /找不到符合的歌詞。可改用原文曲名重試，或切換到手動匯入。/g,
+      ),
     ).toHaveLength(1);
 
     app.unmount();
@@ -700,7 +702,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(nodeText(root)).not.toContain('找不到歌詞。試試其他關鍵字。');
     expect(nodeText(root)).not.toContain('公開快取');
     expect(nodeText(root)).toContain(
-      '找不到符合的歌詞。試試原文曲名或其他名稱。',
+      '找不到符合的歌詞。可改用原文曲名重試，或切換到手動匯入。',
     );
 
     app.unmount();
@@ -1296,7 +1298,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const { app, root } = mount(Workspace);
     await vi.waitFor(() =>
       expect(nodeText(root)).toContain(
-        '找不到符合的歌詞。試試原文曲名或其他名稱。',
+        '找不到符合的歌詞。可改用原文曲名重試，或切換到手動匯入。',
       ),
     );
 
