@@ -197,6 +197,8 @@ function moveFocus(item, event) {
             type="button"
             class="ui-tabs__tab"
             :class="{ 'is-active': item.id === activeId }"
+            :data-folder-shade="folder ? item.folderShade : undefined"
+            :data-folder-tone="folder ? item.folderTone : undefined"
             role="tab"
             :aria-label="
               dots || folder || item.tooltipPlacement ? item.label : undefined
@@ -485,11 +487,109 @@ function moveFocus(item, event) {
 }
 
 .ui-tabs--folder .ui-tabs__tab[aria-selected='true'] {
-  color: var(--ui-color-folder-primary-foreground);
+  color: var(
+    --folder-tab-foreground,
+    var(--ui-color-folder-primary-foreground)
+  );
 }
 
 .ui-tabs--folder .ui-tabs__tab[aria-selected='true']::before {
-  background: var(--ui-color-folder-primary);
+  background: var(--folder-tab-color, var(--ui-color-folder-primary));
+}
+
+.ui-tabs--folder .ui-tabs__tab[data-folder-tone='primary'] {
+  --folder-tab-color: var(--ui-color-folder-primary);
+  --folder-tab-foreground: var(--ui-color-folder-primary-foreground);
+}
+
+.ui-tabs--folder .ui-tabs__tab[data-folder-tone='secondary'] {
+  --folder-tab-color: var(--ui-color-folder-secondary);
+  --folder-tab-foreground: var(--ui-color-folder-secondary-foreground);
+}
+
+.ui-tabs--folder .ui-tabs__tab[data-folder-tone='tertiary'] {
+  --folder-tab-color: var(--ui-color-folder-tertiary);
+  --folder-tab-foreground: var(--ui-color-folder-tertiary-foreground);
+}
+
+.ui-tabs--folder
+  .ui-tabs__tab:is(
+    [data-folder-tone='neutral'],
+    [data-folder-shade='neutral']
+  ) {
+  --folder-tab-color: color-mix(
+    in srgb,
+    var(--ui-color-folder-neutral) 84%,
+    var(--ui-color-folder-neutral-foreground)
+  );
+  --folder-tab-rest-color: var(--ui-color-folder-neutral);
+  --folder-tab-foreground: var(--ui-color-folder-neutral-foreground);
+}
+
+.ui-tabs--folder .ui-tabs__tab[data-folder-shade='strong'] {
+  --folder-tab-rest-color: var(--ui-folder-tab-primary-strong);
+}
+
+.ui-tabs--folder .ui-tabs__tab[data-folder-shade='medium'] {
+  --folder-tab-rest-color: var(--ui-folder-tab-primary-medium);
+}
+
+.ui-tabs--folder .ui-tabs__tab[data-folder-shade='soft'] {
+  --folder-tab-rest-color: var(--ui-folder-tab-primary-soft);
+}
+
+.ui-tabs--folder
+  .ui-tabs__tab[data-folder-shade]:not([data-folder-shade='neutral']) {
+  --folder-tab-color: var(--ui-folder-tab-primary-selected);
+  --folder-tab-foreground: var(--ui-folder-tab-primary-selected-foreground);
+  --folder-tab-rest-foreground: var(--ui-folder-tab-primary-foreground);
+  --folder-tab-hover-color: color-mix(
+    in srgb,
+    var(--folder-tab-rest-color) 94%,
+    var(--folder-tab-color)
+  );
+}
+
+.ui-tabs--folder
+  .ui-tabs__tab:is([data-folder-tone], [data-folder-shade]):not(.is-active) {
+  color: var(--folder-tab-rest-foreground, var(--folder-tab-foreground));
+}
+
+.ui-tabs--folder
+  .ui-tabs__tab:is([data-folder-tone], [data-folder-shade]):not(
+    .is-active
+  )::before {
+  background: var(
+    --folder-tab-rest-color,
+    color-mix(
+      in srgb,
+      var(--folder-tab-color) 94%,
+      var(--ui-color-folder-neutral)
+    )
+  );
+}
+
+.ui-tabs--folder
+  .ui-tabs__tab:is([data-folder-tone], [data-folder-shade]):not(.is-active):not(
+    :disabled
+  ):hover:where(:not([data-ui-interaction='touch'] *))::before {
+  background: var(--folder-tab-hover-color, var(--folder-tab-color));
+}
+
+@media (forced-colors: active) {
+  .ui-tabs--folder .ui-tabs__tab[data-folder-shade][aria-selected='true'] {
+    forced-color-adjust: none;
+    color: HighlightText;
+  }
+
+  .ui-tabs--folder
+    .ui-tabs__tab[data-folder-shade][aria-selected='true']::before {
+    background: Highlight;
+  }
+
+  .ui-tabs--folder .ui-tabs__tab[data-folder-shade]:focus-visible {
+    outline-color: Highlight;
+  }
 }
 
 .ui-tabs--folder .ui-tabs__tab:focus-visible {

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 18,
+  "appearanceSchemaVersion": 20,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -231,6 +231,14 @@
       "level": "opt",
       "scope": "slot-template",
       "activation": "explicit-selection"
+    },
+    "mangaBubbleStyle": {
+      "level": "opt",
+      "reason": "Choose the default silhouette while keeping lyric layout and timing."
+    },
+    "mangaTailDirection": {
+      "level": "opt",
+      "reason": "Follow the visible performer mask center by default, with a fixed direction option."
     }
   },
   "projectShared": {
@@ -2221,6 +2229,52 @@
           ],
           "group": "content",
           "groupOrder": 80
+        },
+        {
+          "scope": "template",
+          "key": "mangaBubbleStyle",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": false,
+          "order": 20,
+          "control": "select",
+          "defaultValue": "spoken",
+          "options": [
+            {
+              "id": "spoken"
+            },
+            {
+              "id": "whisper"
+            },
+            {
+              "id": "thought"
+            },
+            {
+              "id": "shout"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
+        },
+        {
+          "scope": "template",
+          "key": "mangaTailDirection",
+          "family": "layout",
+          "tier": "basic",
+          "reflow": false,
+          "order": 30,
+          "control": "select",
+          "defaultValue": "performer",
+          "options": [
+            {
+              "id": "performer"
+            },
+            {
+              "id": "fixed"
+            }
+          ],
+          "group": "layout",
+          "groupOrder": 60
         },
         {
           "scope": "template",

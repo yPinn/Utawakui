@@ -9,9 +9,14 @@ const {
   OUTPUT_APPEARANCE_DEFAULTS,
   OUTPUT_SLOT_APPEARANCE_DEFAULTS,
   isOutputElementSettingKey,
+  isOutputLocalFont,
+  isSharedOutputAppearanceField,
+  isSharedOutputFont,
   migrateLegacyPhantomPortraitSettings,
+  outputAppearanceFieldsForTemplate,
   sanitizePhantomPortraitSets,
   sanitizeOutputAppearanceSetting,
+  sanitizeOutputTranslationFontScale,
 } = require('../../shared/outputAppearance.mjs');
 const {
   normalizeOutputRecentColors,
@@ -22,6 +27,9 @@ const OUTPUT_TEMPLATE_VALUES = require('../../shared/outputTemplateValues.json')
 const {
   sanitizeLyricsPresentationPolicyId,
 } = require('../../shared/presentation/lyricsPresentationPolicies.mjs');
+const {
+  sanitizeMangaTailCoordinate,
+} = require('../../shared/presentation/mangaFrameContract.mjs');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
 const OUTPUT_SLOTS_VERSION = 5;
@@ -86,6 +94,18 @@ function sanitizeSettings(value, templateId) {
   for (const [key, setting] of Object.entries(value)) {
     if (entries.length >= MAX_SETTINGS) break;
     if (!SAFE_SETTING_KEY_RE.test(key) || key.length > MAX_ID_LENGTH) continue;
+    if (key === 'mangaTailX' || key === 'mangaTailY') {
+      const coordinate = sanitizeMangaTailCoordinate(setting);
+      if (templateId === 'manga-frame' && coordinate !== undefined)
+        entries.push([key, coordinate]);
+      continue;
+    }
+    if (key === 'translationFontScale') {
+      const normalized = sanitizeOutputTranslationFontScale(setting);
+      if (TEMPLATE_KINDS[templateId] === 'lyrics' && normalized !== undefined)
+        entries.push([key, normalized]);
+      continue;
+    }
     if (key === 'lyricsPresentationPolicyId') {
       const normalized = sanitizeLyricsPresentationPolicyId(
         templateId,
@@ -168,6 +188,128 @@ function sanitizeOutputSlot(kindValue, value) {
   };
 }
 
+function sharedAppearance(settings) {
+  return Object.fromEntries(
+    Object.entries(settings ?? {}).flatMap(([key, raw]) => {
+      if (!isSharedOutputAppearanceField({ key })) return [];
+      const value = sanitizeOutputAppearanceSetting(key, raw);
+      if (
+        value === undefined ||
+        (key === 'fontFamily' && !isSharedOutputFont(value))
+      )
+        return [];
+      return [[key, value]];
+    }),
+  );
+}
+
+function templateAppearance(settings, templateId) {
+  const fields = new Map(
+    outputAppearanceFieldsForTemplate(templateId).map((field) => [
+      field.key,
+      field,
+    ]),
+  );
+  return Object.fromEntries(
+    Object.entries(sanitizeSettings(settings, templateId)).filter(
+      ([key, value]) => {
+        if (
+          key === 'captureSize' ||
+          key === 'lyricsPresentationPolicyId' ||
+          key === 'mangaTailX' ||
+          key === 'mangaTailY' ||
+          isOutputElementSettingKey(key)
+        )
+          return true;
+        const field = fields.get(key);
+        if (!field) return false;
+        if (field.options && !field.options.some(({ id }) => id === value))
+          return false;
+        if (key === 'fontFamily' && !isSharedOutputFont(value)) return true;
+        return !isSharedOutputAppearanceField(field);
+      },
+    ),
+  );
+}
+
+function normalizeAppearanceHistory(history) {
+  const entries = [];
+  for (const kind of SLOT_IDS) {
+    const record = history?.[kind];
+    if (!record) continue;
+    const shared = sharedAppearance(record.shared);
+    const templates = Object.fromEntries(
+      Object.entries(TEMPLATE_KINDS)
+        .filter(([id, owner]) => owner === kind && record.templates?.[id])
+        .map(([id]) => [id, templateAppearance(record.templates[id], id)]),
+    );
+    entries.push([kind, { shared, templates }]);
+  }
+  return Object.fromEntries(entries);
+}
+
+function recallTemplateAppearance(current, next, history = {}, overrides) {
+  const shared = { ...history.shared };
+  const templates = { ...history.templates };
+  const remembered = templateAppearance(current.settings, current.templateId);
+  const fields = outputAppearanceFieldsForTemplate(current.templateId);
+  const fieldKeys = new Set(fields.map(({ key }) => key));
+  const slotDefaults =
+    OUTPUT_SLOT_APPEARANCE_DEFAULTS[TEMPLATE_KINDS[current.templateId]];
+  for (const [key, value] of Object.entries(
+    sharedAppearance(current.settings),
+  )) {
+    if (
+      !fieldKeys.has(key) &&
+      !Object.hasOwn(shared, key) &&
+      value !== slotDefaults[key]
+    )
+      shared[key] = value;
+  }
+  for (const field of fields) {
+    if (!isSharedOutputAppearanceField(field)) continue;
+    const { key, defaultValue } = field;
+    const value = current.settings[key];
+    if (value === undefined) continue;
+    if (key === 'fontFamily' && !isSharedOutputFont(value)) {
+      if (
+        value === defaultValue &&
+        !shared.fontFamily &&
+        !templates[current.templateId]?.fontFamily
+      )
+        delete remembered.fontFamily;
+      continue;
+    }
+    if (value !== defaultValue || Object.hasOwn(shared, key))
+      shared[key] = value;
+  }
+  templates[current.templateId] = remembered;
+
+  const settings = { ...templates[next.templateId] };
+  for (const field of outputAppearanceFieldsForTemplate(next.templateId)) {
+    const { key, options } = field;
+    const value = shared[key];
+    if (
+      value !== undefined &&
+      !Object.hasOwn(settings, key) &&
+      (!options ||
+        options.some(({ id }) => id === value) ||
+        (key === 'fontFamily' &&
+          field.allowLocalFonts &&
+          isOutputLocalFont(value)))
+    )
+      settings[key] = value;
+  }
+  for (const key of ['translationFontScale', 'phantomPortraitSets']) {
+    if (Object.hasOwn(current.settings, key))
+      settings[key] = current.settings[key];
+  }
+  for (const key of Object.keys(overrides ?? {})) {
+    if (Object.hasOwn(next.settings, key)) settings[key] = next.settings[key];
+  }
+  return { settings, history: { shared, templates } };
+}
+
 function normalizeDocument(value) {
   const slots = {};
   const source =
@@ -190,9 +332,13 @@ function normalizeDocument(value) {
       });
     slots[slot.id] = normalized;
   }
+  const appearanceHistory = normalizeAppearanceHistory(
+    value?.appearanceHistory,
+  );
   return {
     version: OUTPUT_SLOTS_VERSION,
     slots,
+    ...(Object.keys(appearanceHistory).length && { appearanceHistory }),
     preferences: {
       recentColors: normalizeOutputRecentColors(
         value?.preferences?.recentColors,
@@ -328,16 +474,33 @@ function upsertOutputSlot(dir, kind, value) {
   const slot = sanitizeOutputSlot(kind, value);
   if (!slot) throw new TypeError('Invalid output slot');
   const document = loadOutputSlots(dir);
+  const current = document.slots[kind];
+  if (
+    value.recallAppearance === true &&
+    current.templateId !== slot.templateId
+  ) {
+    const recalled = recallTemplateAppearance(
+      current,
+      slot,
+      document.appearanceHistory?.[kind],
+      value.settings,
+    );
+    slot.settings = recalled.settings;
+    document.appearanceHistory = {
+      ...document.appearanceHistory,
+      [kind]: recalled.history,
+    };
+  }
   return saveOutputSlots(dir, {
+    ...document,
     slots: { ...document.slots, [kind]: slot },
-    preferences: document.preferences,
   });
 }
 
 function setOutputRecentColors(dir, recentColors) {
   const document = loadOutputSlots(dir);
   return saveOutputSlots(dir, {
-    slots: document.slots,
+    ...document,
     preferences: {
       ...document.preferences,
       recentColors,
@@ -348,7 +511,7 @@ function setOutputRecentColors(dir, recentColors) {
 function setOutputSavedColors(dir, savedColors) {
   const document = loadOutputSlots(dir);
   return saveOutputSlots(dir, {
-    slots: document.slots,
+    ...document,
     preferences: {
       ...document.preferences,
       savedColors,
@@ -366,6 +529,13 @@ function projectPublicOutputSlots(slots) {
   if (lyrics.templateId === 'phantom-thieves' && selected) {
     for (const key of PHANTOM_PORTRAIT_FIELDS)
       lyrics.settings[key] = selected[key];
+  }
+  if (
+    lyrics.templateId !== 'manga-frame' ||
+    lyrics.settings.mangaTailDirection === 'fixed'
+  ) {
+    delete lyrics.settings.mangaTailX;
+    delete lyrics.settings.mangaTailY;
   }
   delete lyrics.settings.phantomPortraitSets;
   return projected;

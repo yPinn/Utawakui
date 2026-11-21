@@ -25,72 +25,69 @@
       "name": "經典字幕",
       "facts": {
         "direction": "橫書",
-        "language": "中日英",
-        "translation": "不顯示"
+        "language": "中日英"
       }
     },
     "mangaFrame": {
       "name": "分格對白",
       "facts": {
         "direction": "直書",
-        "language": "日文為主",
-        "translation": "不顯示"
+        "language": "日文為主"
       }
     },
     "kineticPop": {
       "name": "躍動字幕",
       "facts": {
         "direction": "橫書",
-        "language": "日文為主",
-        "translation": "不顯示"
+        "language": "日文為主"
       }
     },
     "ornateVertical": {
       "name": "和風直書",
       "facts": {
         "direction": "直書",
-        "language": "日文",
-        "translation": "不顯示"
+        "language": "日文"
       }
     },
     "centeredVertical": {
       "name": "中央直書",
       "facts": {
         "direction": "直書",
-        "language": "中文、日文",
-        "translation": "不顯示"
+        "language": "中文、日文"
+      }
+    },
+    "texturedCredits": {
+      "name": "紋理顯字",
+      "facts": {
+        "direction": "日文直排，其他語言橫排"
       }
     },
     "phantomThieves": {
       "name": "幻影怪盜",
       "facts": {
         "direction": "橫排",
-        "language": "中日英",
-        "translation": "不顯示"
+        "language": "中日英"
       }
     },
     "fisheyeLens": {
       "name": "魚眼鏡筒",
       "facts": {
         "direction": "沿弧線排列",
-        "language": "中日英",
-        "translation": "不顯示"
+        "language": "中日英"
       }
     },
     "chalkboardVertical": {
       "name": "黑板直書",
       "facts": {
         "direction": "直書",
-        "language": "中文、日文",
-        "translation": "不顯示"
+        "language": "中文、日文"
       }
     },
     "liveStage": {
       "name": "轉播字卡",
       "facts": {
         "direction": "橫書",
-        "language": "各種語言",
-        "translation": "顯示於歌詞下方"
+        "language": "各種語言"
       }
     },
     "artCard": {
@@ -245,17 +242,31 @@
     "checker": "透明背景",
     "toggle": "預覽背景：{current}，切換為{next}"
   },
+  "translation": {
+    "show": "顯示譯文",
+    "fontScale": "譯文字級"
+  },
   "inspector": {
+    "translation": "翻譯",
     "portrait": "人物",
-    "label": "外觀分類",
-    "layout": "定位",
-    "arrangement": "版面",
+    "label": "模板設定分頁",
+    "layout": "版面",
+    "decoration": "修飾",
     "text": "文字",
-    "color": "色彩",
+    "color": "外觀",
     "display": "顯示",
+    "effects": "特效",
+    "placement": "佔位",
+    "templates": "模板",
     "motion": "動態",
     "anchor": "定位基準",
     "offset": "位置微調"
+  },
+  "mangaBubbles": {
+    "label": "氣泡",
+    "pending": "下一句：{style}。再按一次取消。",
+    "choose": "選擇下一句的氣泡樣式。",
+    "unavailable": "目前沒有下一句同步歌詞。"
   },
   "portrait": {
     "set": "人物組合",
@@ -361,6 +372,7 @@
     "presentationHint": "只影響此模板的歌詞顯示，不會改動歌詞本身。",
     "conciseHint": "「轉播精簡」會省略部分重複詞；要保留完整文字請選「平衡分行」或「忠實原文」。",
     "resetTemplate": "重設模板",
+    "switchTemplateNextLine": "同步歌詞播放中，換句時套用。",
     "wholeTemplate": "整個模板"
   },
   "gallery": {
@@ -377,6 +389,7 @@
       "direction": "方向",
       "language": "語言",
       "translation": "譯文",
+      "separateTranslation": "獨立字幕",
       "content": "內容",
       "paging": "換頁",
       "artwork": "封面",
@@ -645,6 +658,22 @@
           "thought": "思考泡泡",
           "stacked": "堆疊卡",
           "phone": "手機"
+        }
+      },
+      "mangaBubbleStyle": {
+        "label": "氣泡樣式",
+        "options": {
+          "spoken": "一般對話",
+          "whisper": "低語",
+          "thought": "思考",
+          "shout": "爆發"
+        }
+      },
+      "mangaTailDirection": {
+        "label": "尾巴朝向",
+        "options": {
+          "fixed": "固定朝向",
+          "performer": "跟隨模型佔位"
         }
       },
       "phantomCardStyle": {

@@ -3,6 +3,14 @@ import { describe, expect, it } from 'vitest';
 import { buildOutputSlotPayload } from './outputSlotPayload.js';
 
 describe('buildOutputSlotPayload', () => {
+  it('keeps translation size when a different lyrics template is applied', () => {
+    const payload = buildOutputSlotPayload(
+      { templateId: 'karaoke-stack', settings: { translationFontScale: 135 } },
+      { templateId: 'ornate-vertical' },
+    );
+    expect(payload.settings.translationFontScale).toBe(135);
+  });
+
   it('copies a reactive slot into structured-cloneable plain data', () => {
     const slot = reactive({
       templateId: 'focus-line',

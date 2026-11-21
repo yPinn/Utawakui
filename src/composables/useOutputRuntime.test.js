@@ -295,9 +295,12 @@ it('preserves the exact public runtime API', async () => {
   expect(Object.keys(runtime).sort()).toEqual([
     'appearanceAutosaveFor',
     'applyCompanionOutputOption',
+    'canCueMangaFrame',
+    'cueMangaFrame',
     'initialize',
     'loadSlots',
     'openWindow',
+    'pendingMangaFrameId',
     'refreshProjection',
     'refreshSettings',
     'refreshStatus',
@@ -311,6 +314,59 @@ it('preserves the exact public runtime API', async () => {
     'toggleSavedColor',
     'updateSettings',
   ]);
+});
+
+it('queues one manga style for the next timed lyric and clears it on a seek', async () => {
+  const track = { id: 'track-1', title: 'Song', url: 'media://song' };
+  playerState.track = track;
+  playerState.playbackPhase = 'playing';
+  playerState.currentTime = 0.5;
+  playerState.duration = 6;
+  selectedLyricsTrack.value = track;
+  lyricsDocument.value = {
+    documentId: 'manga-cues',
+    granularity: 'T1',
+    lines: [
+      { lineId: 'one', text: 'One', startMs: 0, endMs: 1000 },
+      { lineId: 'gap', text: ' ', startMs: 1000, endMs: 2000 },
+      { lineId: 'two', text: 'Two', startMs: 2000, endMs: 3000 },
+      { lineId: 'three', text: 'Three', startMs: 3000, endMs: 6000 },
+    ],
+  };
+  const runtime = await loadRuntime();
+  const initializing = runtime.initialize();
+  libraryHydration.resolve();
+  playlistHydration.resolve();
+  lyricsHydration.resolve();
+  await initializing;
+  await runtime.saveTemplateSelection('lyrics', 'manga-frame');
+
+  const cues = () =>
+    bridge.publishOutputSnapshot.mock.calls
+      .map(([envelope]) => envelope)
+      .filter(({ stream }) => stream === 'state.snapshot')
+      .at(-1).payload.lyrics.mangaFrameCues;
+
+  expect(runtime.canCueMangaFrame.value).toBe(true);
+  runtime.cueMangaFrame('thought');
+  runtime.cueMangaFrame('thought');
+  expect(runtime.pendingMangaFrameId.value).toBeNull();
+  runtime.cueMangaFrame('shout');
+  await flushMicrotasks();
+  expect(cues()).toEqual([{ lineId: 'two', frameId: 'shout' }]);
+
+  playerState.currentTime = 2.1;
+  expect(runtime.pendingMangaFrameId.value).toBeNull();
+  runtime.cueMangaFrame('whisper');
+  await flushMicrotasks();
+  expect(cues()).toEqual([
+    { lineId: 'two', frameId: 'shout' },
+    { lineId: 'three', frameId: 'whisper' },
+  ]);
+  playerState.continuityRevision += 1;
+  await flushMicrotasks();
+  expect(cues()).toBeUndefined();
+  expect(runtime.pendingMangaFrameId.value).toBeNull();
 });
 
 it('opens a read-only window with only a kind intent and contains failures for retry', async () => {

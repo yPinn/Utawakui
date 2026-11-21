@@ -196,7 +196,7 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).toMatch(
       /selectedPreset\.value\?\.id === 'ribbon-setlist'\s*\?\s*undefined\s*:\s*props\.previewScene/u,
     );
-    expect(thumbnailSource).not.toContain('ObsTemplateMockup');
+    expect(thumbnailSource).not.toContain(':animated');
     expect(previewStageSource).toContain("import('./ObsTemplateMockup.vue')");
     expect(previewStageSource).toContain('v-if="livePreview"');
     expect(previewStageSource).toContain(':animated="true"');

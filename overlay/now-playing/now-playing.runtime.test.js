@@ -136,6 +136,11 @@ describe('Now Playing template runtime', () => {
         expect(harness.motion.update).toHaveBeenLastCalledWith(
           expect.objectContaining({ active: artworkMotionActive }),
         );
+        if (next === 'art-card') {
+          expect(harness.motion.update).toHaveBeenLastCalledWith(
+            expect.objectContaining({ active: true, settle: true }),
+          );
+        }
         if (artworkMotionActive) expect(harness.render).not.toHaveBeenCalled();
         else
           expect(harness.render).toHaveBeenCalledWith(

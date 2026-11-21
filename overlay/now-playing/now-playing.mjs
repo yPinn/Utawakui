@@ -180,7 +180,11 @@ function boot() {
         ...slot,
         templateId: activeTemplateId,
       });
-      if (host.active) renderCurrentFrame();
+      if (host.active) {
+        renderCurrentFrame({
+          recovering: renderedTemplateId !== activeTemplateId,
+        });
+      }
     },
     onSnapshot: (snapshot, context) => {
       currentFrame = withPreviewFallback(

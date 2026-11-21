@@ -114,6 +114,7 @@
 }
 
 .obs-output-folder-inspector {
+  --ui-folder-inspector-idle-seam: transparent;
   --ui-folder-inspector-min: var(--ui-output-side-min-width);
   --ui-folder-inspector-default: var(--ui-output-side-width-default);
   --ui-folder-inspector-max: var(--ui-output-side-max-width);
@@ -127,6 +128,7 @@
   .obs-output-folder-inspector
     .ui-folder-inspector__scroll
     .obs-appearance-control-row:not(.obs-output-color-field__controls) {
+    --obs-appearance-label-inset: var(--ui-space-0);
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-space-1);
   }

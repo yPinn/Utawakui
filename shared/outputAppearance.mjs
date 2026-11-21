@@ -1,6 +1,17 @@
 import { OUTPUT_TEMPLATE_ELEMENTS } from './outputTemplateElements.mjs';
+import {
+  DEFAULT_MANGA_FRAME_ID,
+  MANGA_BUBBLE_STYLE_IDS,
+} from './presentation/mangaFrameContract.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 18;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 20;
+
+export const OUTPUT_TRANSLATION_FONT_SCALE = Object.freeze({
+  min: 75,
+  max: 150,
+  step: 5,
+  defaultValue: 100,
+});
 
 // A Look owns semantic color targets and optional artwork grading.
 function filmColors({
@@ -668,6 +679,26 @@ const FIELD_DEFINITIONS = [
     ],
   }),
   fieldDefinition('layout', {
+    key: 'mangaBubbleStyle',
+    family: 'layout',
+    tier: 'basic',
+    reflow: false,
+    order: 20,
+    control: 'select',
+    defaultValue: DEFAULT_MANGA_FRAME_ID,
+    options: MANGA_BUBBLE_STYLE_IDS.map((id) => ({ id })),
+  }),
+  fieldDefinition('layout', {
+    key: 'mangaTailDirection',
+    family: 'layout',
+    tier: 'basic',
+    reflow: false,
+    order: 30,
+    control: 'select',
+    defaultValue: 'performer',
+    options: [{ id: 'performer' }, { id: 'fixed' }],
+  }),
+  fieldDefinition('layout', {
     key: 'phantomCardStyle',
     family: 'layout',
     tier: 'basic',
@@ -950,6 +981,16 @@ const ELEMENT_PROPERTY_DEFINITIONS = Object.freeze(
 const ELEMENT_SETTING_KEY_RE = /^element.([a-z][a-z0-9-]*).([A-Za-z]+)$/u;
 const LOOK_KEYS = ['paletteId', 'lookAmount'];
 const MATERIAL_GRAIN_KEYS = ['filmGrainAmount', 'filmGrainSize'];
+const SLOT_APPEARANCE_KEYS = new Set([
+  ...LOOK_KEYS,
+  ...MATERIAL_GRAIN_KEYS,
+  'fontFamily',
+  'fontScale',
+  'fontWeight',
+  'contrastStyle',
+  'receiptReview',
+  'receiptReviewInterval',
+]);
 const BASIC_APPEARANCE_KEYS = Object.freeze([
   ...LOOK_KEYS,
   'fontFamily',
@@ -962,6 +1003,14 @@ const BASIC_APPEARANCE_KEYS = Object.freeze([
   'contentWidth',
 ]);
 const BASIC_FONT_IDS = Object.freeze(['sans', 'serif', 'rounded']);
+
+export function isSharedOutputAppearanceField(field) {
+  return field?.scope !== 'element' && SLOT_APPEARANCE_KEYS.has(field?.key);
+}
+
+export function isSharedOutputFont(value) {
+  return BASIC_FONT_IDS.includes(value) || isOutputLocalFont(value);
+}
 const ORNATE_FONT_IDS = Object.freeze(['ornate', 'antique']);
 const MANGA_FONT_IDS = Object.freeze(['antique']);
 const ORNATE_POSITION_IDS = Object.freeze([
@@ -1043,6 +1092,13 @@ const TEMPLATE_OVERRIDES = {
     keys: ['fontFamily', 'fontScale'],
     fields: {
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
+    },
+  },
+  'textured-credits': {
+    keys: ['fontFamily', 'fontScale', 'alignment'],
+    fields: {
+      fontFamily: { defaultValue: 'ornate', optionIds: ['ornate'] },
+      alignment: { defaultValue: 'center' },
     },
   },
   'kinetic-pop': {
@@ -1143,7 +1199,14 @@ const TEMPLATE_OVERRIDES = {
     },
   },
   'manga-frame': {
-    keys: ['fontFamily', 'fontScale', 'fontWeight', 'furigana'],
+    keys: [
+      'fontFamily',
+      'fontScale',
+      'fontWeight',
+      'furigana',
+      'mangaBubbleStyle',
+      'mangaTailDirection',
+    ],
     fields: {
       fontFamily: { defaultValue: 'antique', optionIds: MANGA_FONT_IDS },
       fontScale: { defaultValue: 'medium' },
@@ -1196,6 +1259,10 @@ function sanitizedRangeValue(field, value) {
   const clamped = Math.min(field.max, Math.max(field.min, value));
   const steps = Math.round((clamped - field.min) / field.step);
   return Number((field.min + steps * field.step).toFixed(6));
+}
+
+export function sanitizeOutputTranslationFontScale(value) {
+  return sanitizedRangeValue(OUTPUT_TRANSLATION_FONT_SCALE, value);
 }
 
 function legacyFisheyeDecorationStyle(value) {
@@ -1476,6 +1543,7 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   )
     return undefined;
   let sanitized;
+  if (key === 'mangaTailDirection' && value === 'default') value = 'performer';
   if (key === 'fisheyeRim' || key === 'fisheyeReflection')
     value = legacyFisheyeDecorationStyle(value) ?? value;
   if (baseField.control === 'select') {

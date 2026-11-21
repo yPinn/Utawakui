@@ -1,4 +1,4 @@
-import { inject } from 'vue';
+import { inject, shallowRef } from 'vue';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 
 export const OUTPUT_RUNTIME_KEY = Symbol('output-runtime');
@@ -59,6 +59,9 @@ const unavailableRuntime = Object.freeze({
   saveSlotSettings: async () => false,
   saveTemplateSelection: async () => false,
   appearanceAutosaveFor: () => unavailableAutosave,
+  canCueMangaFrame: shallowRef(false),
+  cueMangaFrame: () => false,
+  pendingMangaFrameId: shallowRef(null),
 });
 
 export function useOutputRuntimeContext() {

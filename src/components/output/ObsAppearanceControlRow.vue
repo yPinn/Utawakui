@@ -50,8 +50,8 @@ defineProps({
 
 <style scoped>
 .obs-appearance-control-row {
-  min-width: 0;
-  min-height: calc(var(--ui-control-height) + var(--ui-space-2));
+  min-inline-size: 0;
+  min-block-size: var(--ui-control-height);
   display: grid;
   grid-template-columns: var(--ui-output-setting-label-min-width) minmax(
       0,
@@ -59,15 +59,14 @@ defineProps({
     );
   align-items: center;
   gap: var(--ui-space-3);
-  padding-block: var(--ui-space-1);
 }
 
 .obs-appearance-control-row__label {
   overflow-wrap: anywhere;
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-type-caption-size);
-  font-weight: var(--ui-type-caption-weight);
-  line-height: var(--ui-type-caption-line-height);
+  font-size: var(--ui-type-body-compact-size);
+  font-weight: var(--ui-type-body-compact-weight);
+  line-height: var(--ui-type-body-compact-line-height);
 }
 
 .obs-appearance-control-row__modified {
@@ -81,7 +80,7 @@ defineProps({
 }
 
 .obs-appearance-control-row__control {
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .obs-appearance-control-row--align-start {
@@ -89,10 +88,11 @@ defineProps({
 }
 
 .obs-appearance-control-row--align-start .obs-appearance-control-row__label {
-  padding-block-start: var(--ui-space-2);
+  padding-block-start: var(--obs-appearance-label-inset, var(--ui-space-2));
 }
 
 .obs-appearance-control-row--stacked {
+  --obs-appearance-label-inset: var(--ui-space-0);
   grid-template-columns: minmax(0, 1fr);
   gap: var(--ui-space-1);
 }

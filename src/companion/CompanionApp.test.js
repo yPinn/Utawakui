@@ -213,16 +213,20 @@ it.each([
     expect(html).toMatch(
       /class="ui-tabs ui-tabs--folder[^"]*"[^>]*aria-orientation="horizontal".*class="companion-output__controls"/su,
     );
-    expect(html).toMatch(/id="companion-output-category-[^"]*-text-tab"/u);
-    expect(html).toMatch(/id="companion-output-category-[^"]*-color-tab"/u);
-    if (mode === 'side-card')
-      expect(html).toMatch(
-        /id="companion-output-category-[^"]*-portrait-tab"/u,
-      );
-    else
-      expect(html).not.toMatch(
-        /id="companion-output-category-[^"]*-portrait-tab"/u,
-      );
+    const categories = [
+      ...html.matchAll(
+        /<button[^>]*id="companion-output-category-[^"]*-tab"[^>]*aria-label="([^"]+)"[^>]*>[\s\S]*?lucide-([\w-]+)[\s\S]*?<\/button>/gu,
+      ),
+    ].map(([, label, icon]) => [label, icon]);
+    expect(categories).toEqual([
+      ['文字', 'type'],
+      ...(mode === 'side-card' ? [['人物', 'user-round']] : []),
+      ['外觀', 'palette'],
+      ['版面', 'layout-template'],
+    ]);
+    expect(html).toMatch(
+      /<h2 class="obs-inspector-header__title"[^>]*>版面<\/h2>/u,
+    );
     expect(html).toContain('companion-output-lyrics-phantomMode');
     expect(html).toContain('companion-output-lyrics-phantomCorner');
     expect(html).toContain(`companion-output-lyrics-${visible}`);

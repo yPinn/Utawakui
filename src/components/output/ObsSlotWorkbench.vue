@@ -3,61 +3,69 @@ import {
   computed,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   reactive,
   shallowRef,
   useTemplateRef,
   watch,
 } from 'vue';
-import {
-  Check,
-  CircleAlert,
-  Loader2,
-  LocateFixed,
-  RotateCcw,
-  Video,
-} from '../../icons/index.js';
+import { Check, CircleAlert, Loader2, RotateCcw } from '../../icons/index.js';
 import {
   activePhantomPortraitSet,
   canAddPhantomPortraitSet,
   PHANTOM_PORTRAIT_DEFAULTS,
   PHANTOM_PORTRAIT_FIELDS,
+  OUTPUT_TRANSLATION_FONT_SCALE,
   isOutputAppearanceFieldVisible,
   isOutputLocalFont,
+  isSharedOutputAppearanceField,
   migrateLegacyPhantomPortraitSettings,
   sanitizePhantomPortraitSets,
   sanitizeOutputAppearanceSetting,
+  sanitizeOutputTranslationFontScale,
 } from '../../../shared/outputAppearance.mjs';
+import {
+  DEFAULT_MANGA_TAIL_TARGET,
+  readMangaTailTarget,
+  sanitizeMangaTailCoordinate,
+} from '../../../shared/presentation/mangaFrameContract.mjs';
 import { normalizeLyricsPresentationPolicyId } from '../../../shared/presentation/lyricsPresentationPolicies.mjs';
 import {
   normalizeCaptureSizeId,
   supportedCaptureSizeIdsForTemplate,
 } from '../../constants/outputCaptureSizes.js';
-import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsPhantomPortraitEditor from './ObsPhantomPortraitEditor.vue';
 import ObsPhantomPortraitGrid from './ObsPhantomPortraitGrid.vue';
 import ObsPerformerGuideControls from './ObsPerformerGuideControls.vue';
 import ObsFisheyeCameraControls from './ObsFisheyeCameraControls.vue';
+import ObsInspectorHeader from './ObsInspectorHeader.vue';
+import ObsInspectorTarget from './ObsInspectorTarget.vue';
+import ObsMangaBubbleGrid from './ObsMangaBubbleGrid.vue';
 import ObsOutputColorPalette from './ObsOutputColorPalette.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsPropertySection from './ObsPropertySection.vue';
+import ObsTemplateFilmstrip from './ObsTemplateFilmstrip.vue';
+import ObsTranslationControls from './ObsTranslationControls.vue';
 import { useOutputElementTarget } from '../../composables/output/useOutputElementTarget.js';
 import { useOutputPerformerGuide } from '../../composables/output/useOutputPerformerGuide.js';
 import { useOutputPerformerGuideImage } from '../../composables/output/useOutputPerformerGuideImage.js';
 import { usePlayer } from '../../composables/usePlayer.js';
+import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import UiButton from '../ui/UiButton.vue';
 import UiFolderInspector from '../ui/UiFolderInspector.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import UiSelect from '../ui/UiSelect.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import { t } from '../../utils/i18n.js';
 import {
+  outputInspectorTab,
   outputInspectorTabs,
   sortOutputInspectorFields,
+  sortOutputInspectorTabs,
 } from '../../utils/outputInspectorTabs.js';
 import { phantomPortraitColorToken } from './phantomPortraitPalette.js';
 
@@ -65,6 +73,8 @@ const props = defineProps({
   sideCollapsed: { type: Boolean, default: false },
   compactSideOpen: { type: Boolean, default: false },
   preset: { type: Object, default: null },
+  quickSwitchPresets: { type: Array, default: () => [] },
+  applyingPreset: { type: Boolean, default: false },
   outputSlot: { type: Object, default: null },
   activeKind: { type: String, default: null },
   previewUrl: { type: String, default: null },
@@ -91,10 +101,14 @@ const emit = defineEmits([
   'commitColor',
   'toggleSavedColor',
   'retrySave',
+  'applyPreset',
   'refreshProjection',
 ]);
 
-const draft = reactive({ captureSize: 'small' });
+const draft = reactive({
+  captureSize: 'small',
+  translationFontScale: OUTPUT_TRANSLATION_FONT_SCALE.defaultValue,
+});
 const portraitSets = shallowRef({ activeId: '', items: [] });
 const portraitEditor = shallowRef(null);
 const portraitGrid = useTemplateRef('portraitGrid');
@@ -104,9 +118,16 @@ const selectedPortraitSet = computed(() =>
 const sideWidth = shallowRef(null);
 const tools = useTemplateRef('tools');
 const { state: player } = usePlayer();
+const { canCueMangaFrame, cueMangaFrame, pendingMangaFrameId } =
+  useOutputRuntimeContext();
 const performerGuide = useOutputPerformerGuide();
 const performerGuideImage = useOutputPerformerGuideImage();
 const performerGuideTab = 'performer-guide';
+const mangaBubbleTab = 'manga-bubbles';
+const translationTab = 'translation';
+const filmstripTab = outputInspectorTab('template-filmstrip', {
+  folderTone: 'neutral',
+});
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
 const presentationFields = computed(
@@ -123,6 +144,11 @@ const configurationFields = computed(() => [
   ...templateFields.value,
   ...elementTargets.value.flatMap(({ fields }) => fields),
 ]);
+const templateLocalFields = computed(() =>
+  configurationFields.value.filter(
+    (field) => !isSharedOutputAppearanceField(field),
+  ),
+);
 const portraitFields = computed(() =>
   templateFields.value.filter(({ group }) => group === 'portrait'),
 );
@@ -179,30 +205,30 @@ const configurationFieldGroups = computed(() => {
   return [...groups.values()];
 });
 const inspectorTabs = computed(() => {
-  const tabs = outputInspectorTabs(visibleFields.value);
-  if (templateId.value === 'fisheye-lens' && !selectedTarget.value) {
-    const order = ['motion', 'display', 'arrangement', 'text', 'color'];
-    tabs.sort(
-      (left, right) => order.indexOf(left.id) - order.indexOf(right.id),
-    );
-    const motionIndex = tabs.findIndex(({ id }) => id === 'motion');
-    tabs.splice(motionIndex + 1, 0, {
-      id: 'camera-effects',
-      icon: Video,
-      label: t('outputPanel.cameraEffects.label'),
-      groups: [],
-    });
-  }
+  const tabs = outputInspectorTabs(visibleFields.value).map((tab) => ({
+    ...tab,
+    folderTone: tab.folderTone ?? 'primary',
+  }));
   if (props.activeKind === 'lyrics') {
-    tabs.push({
-      id: performerGuideTab,
-      icon: LocateFixed,
-      label: t('outputPanel.performerGuide.label'),
-      groups: [],
-    });
+    tabs.push(outputInspectorTab(translationTab, { folderTone: 'secondary' }));
+    if (templateId.value === 'fisheye-lens' && !selectedTarget.value) {
+      tabs.push(
+        outputInspectorTab('camera-effects', { folderTone: 'tertiary' }),
+      );
+    }
+    if (templateId.value === 'manga-frame' && !selectedTarget.value) {
+      tabs.push(outputInspectorTab(mangaBubbleTab, { folderTone: 'tertiary' }));
+    }
+    tabs.push(
+      outputInspectorTab(performerGuideTab, { folderTone: 'tertiary' }),
+    );
   }
+  if (props.quickSwitchPresets.length > 1) tabs.push(filmstripTab);
   return tabs;
 });
+const orderedInspectorTabs = computed(() =>
+  sortOutputInspectorTabs(inspectorTabs.value),
+);
 const useFolderInspector = computed(
   () =>
     inspectorTabs.value.length > 0 &&
@@ -285,7 +311,7 @@ function setFieldValue(field, value) {
 }
 
 const isConfigurationAtDefaults = computed(() =>
-  configurationFields.value.every((field) => !isFieldModified(field)),
+  templateLocalFields.value.every((field) => !isFieldModified(field)),
 );
 
 watch(
@@ -306,6 +332,14 @@ watch(
     );
     for (const field of configurationFields.value) {
       draft[field.key] = normalizedControlValue(field, settings);
+    }
+    draft.translationFontScale =
+      sanitizeOutputTranslationFontScale(settings?.translationFontScale) ??
+      OUTPUT_TRANSLATION_FONT_SCALE.defaultValue;
+    if (activeTemplateId === 'manga-frame') {
+      const { x, y } = performerGuide.guide.value;
+      draft.mangaTailX = sanitizeMangaTailCoordinate(settings?.mangaTailX) ?? x;
+      draft.mangaTailY = sanitizeMangaTailCoordinate(settings?.mangaTailY) ?? y;
     }
     draft.captureSize = normalizeCaptureSizeId(
       activeKind,
@@ -338,6 +372,32 @@ watch(
 
 onBeforeUnmount(() => clearTimeout(saveStatusTimer));
 
+onMounted(() => {
+  watch(
+    [() => props.outputSlot, templateId, () => props.saveStatus],
+    ([slot, id, status]) => {
+      if (
+        id !== 'manga-frame' ||
+        slot?.templateId !== id ||
+        status !== 'saved' ||
+        draft.mangaTailDirection !== 'performer'
+      )
+        return;
+      const current =
+        readMangaTailTarget(
+          slot.settings?.mangaTailX,
+          slot.settings?.mangaTailY,
+        ) ?? DEFAULT_MANGA_TAIL_TARGET;
+      const { x, y } = performerGuide.saved.value;
+      if (current.x === x && current.y === y) return;
+      draft.mangaTailX = x;
+      draft.mangaTailY = y;
+      commitSettings();
+    },
+    { immediate: true, flush: 'post' },
+  );
+});
+
 function settingsSnapshot() {
   return {
     ...Object.fromEntries(
@@ -345,6 +405,14 @@ function settingsSnapshot() {
     ),
     ...(templateId.value === 'phantom-thieves' && {
       phantomPortraitSets: portraitSets.value,
+    }),
+    ...(templateId.value === 'manga-frame' &&
+      draft.mangaTailDirection === 'performer' && {
+        mangaTailX: draft.mangaTailX,
+        mangaTailY: draft.mangaTailY,
+      }),
+    ...(props.activeKind === 'lyrics' && {
+      translationFontScale: draft.translationFontScale,
     }),
     captureSize: draft.captureSize,
   };
@@ -360,13 +428,46 @@ function emitSettingsChange(mode = 'debounced') {
 function updateAppearanceField(field, value) {
   if (fieldValue(field) === value) return;
   setFieldValue(field, value);
+  if (field.key === 'mangaTailDirection' && value === 'performer') {
+    const { x, y } = performerGuide.guide.value;
+    draft.mangaTailX = x;
+    draft.mangaTailY = y;
+  }
   emitSettingsChange(field.control === 'select' ? 'immediate' : 'debounced');
+}
+
+function commitPerformerGuide(value) {
+  performerGuide.commit(value);
+  if (
+    !value ||
+    templateId.value !== 'manga-frame' ||
+    draft.mangaTailDirection !== 'performer'
+  )
+    return;
+  const { x, y } = performerGuide.guide.value;
+  if (draft.mangaTailX === x && draft.mangaTailY === y) return;
+  draft.mangaTailX = x;
+  draft.mangaTailY = y;
+  commitSettings();
 }
 
 function updateCaptureSize(value) {
   if (draft.captureSize === value) return;
   draft.captureSize = value;
   emitSettingsChange('immediate');
+}
+
+function updateTranslationFontScale(value) {
+  if (draft.translationFontScale === value) return;
+  draft.translationFontScale = value;
+  emitSettingsChange();
+}
+
+function canResetTemplate(item) {
+  return (
+    templateLocalFields.value.length > 0 &&
+    (!item?.folderTone || item.folderTone === 'primary')
+  );
 }
 
 function commitSettings() {
@@ -390,7 +491,7 @@ function resetFields(fields) {
 
 function resetAppearance() {
   portraitEditor.value = null;
-  resetFields(configurationFields.value);
+  resetFields(templateLocalFields.value);
 }
 
 function selectPortraitSet(activeId) {
@@ -479,7 +580,8 @@ function removePortraitSet() {
     v-bind="
       useFolderInspector
         ? {
-            items: inspectorTabs,
+            items: orderedInspectorTabs,
+            defaultItemId: inspectorTabs[0]?.id,
             tabsLabel: t('outputPanel.inspector.label'),
             class:
               'obs-output-folder-inspector obs-slot-workbench__folder-inspector',
@@ -525,7 +627,7 @@ function removePortraitSet() {
               emit('update:lyricsPreviewMode', $event)
             "
             @preview-performer-guide="performerGuide.preview"
-            @commit-performer-guide="performerGuide.commit"
+            @commit-performer-guide="commitPerformerGuide"
             @refresh-projection="emit('refreshProjection')"
             @select-element="selectTarget"
           />
@@ -534,17 +636,19 @@ function removePortraitSet() {
     </template>
 
     <template #side-header="header">
-      <div class="obs-slot-workbench__inspector-header">
-        <h2 class="obs-slot-workbench__title">
-          {{ preset?.name ?? t('outputPanel.workbench.noTemplate') }}
-        </h2>
-        <div
-          v-if="
-            showSaveStatus ||
-            (configurationFields.length > 0 &&
-              header?.item?.id !== performerGuideTab)
-          "
-          class="obs-slot-workbench__header-actions"
+      <ObsInspectorHeader
+        :title="
+          header?.item?.label ??
+          preset?.name ??
+          t('outputPanel.workbench.noTemplate')
+        "
+        :context="
+          header?.item && header.item.id !== filmstripTab.id ? preset?.name : ''
+        "
+      >
+        <template
+          v-if="showSaveStatus || canResetTemplate(header?.item)"
+          #actions
         >
           <div
             v-if="showSaveStatus"
@@ -564,10 +668,7 @@ function removePortraitSet() {
             </UiButton>
           </div>
           <UiIconButton
-            v-if="
-              configurationFields.length > 0 &&
-              header?.item?.id !== performerGuideTab
-            "
+            v-if="canResetTemplate(header?.item)"
             class="obs-slot-workbench__reset"
             :icon="RotateCcw"
             :label="t('outputPanel.workbench.resetTemplate')"
@@ -575,11 +676,11 @@ function removePortraitSet() {
             :disabled="isConfigurationAtDefaults"
             @click="resetAppearance"
           />
-        </div>
-      </div>
+        </template>
+      </ObsInspectorHeader>
     </template>
 
-    <template #side-top>
+    <template #side-top="side">
       <UiNotice
         v-if="outputError"
         class="obs-slot-workbench__notice"
@@ -588,25 +689,46 @@ function removePortraitSet() {
         :message="outputError"
         compact
       />
+      <UiHint
+        v-if="activeKind === 'lyrics' && side?.item?.id === filmstripTab.id"
+        class="obs-slot-workbench__filmstrip-hint"
+      >
+        {{ t('outputPanel.workbench.switchTemplateNextLine') }}
+      </UiHint>
 
-      <div v-if="elementTargets.length" class="obs-slot-workbench__target">
-        <ObsAppearanceControlRow
-          control-id="output-appearance-target"
-          :label="t('outputPanel.workbench.target')"
-          :labels-control="false"
-        >
-          <UiSelect
-            id="output-appearance-target"
-            :label="t('outputPanel.workbench.target')"
-            :model-value="selectedTargetId"
-            :options="targetOptions"
-            label-hidden
-            @update:model-value="selectTarget"
-          />
-        </ObsAppearanceControlRow>
-      </div>
+      <ObsInspectorTarget
+        v-if="
+          elementTargets.length &&
+          side?.item?.id !== translationTab &&
+          side?.item?.id !== filmstripTab.id
+        "
+        id="output-appearance-target"
+        :model-value="selectedTargetId"
+        :options="targetOptions"
+        @update:model-value="selectTarget"
+      />
     </template>
     <template #side="{ item, active }">
+      <ObsTemplateFilmstrip
+        v-if="item?.id === filmstripTab.id && active"
+        :key="activeKind"
+        :presets="quickSwitchPresets"
+        :active-id="preset?.id"
+        :busy="applyingPreset"
+        @select="emit('applyPreset', $event)"
+      />
+      <ObsMangaBubbleGrid
+        v-if="item?.id === mangaBubbleTab"
+        :available="canCueMangaFrame"
+        :pending-id="pendingMangaFrameId"
+        @select="cueMangaFrame"
+      />
+      <ObsTranslationControls
+        v-if="item?.id === translationTab"
+        :font-scale="draft.translationFontScale"
+        @update:font-scale="updateTranslationFontScale"
+        @commit="commitSettings"
+      />
       <ObsPerformerGuideControls
         v-if="item?.id === performerGuideTab && active"
         :guide="performerGuide.guide.value"
@@ -615,7 +737,7 @@ function removePortraitSet() {
         :image-busy="performerGuideImage.busy.value"
         :image-error="performerGuideImage.error.value"
         :save-image="performerGuideImage.change"
-        @commit="performerGuide.commit"
+        @commit="commitPerformerGuide"
         @show="emit('update:lyricsPreviewMode', 'performer')"
       />
       <ObsFisheyeCameraControls
@@ -707,6 +829,42 @@ function removePortraitSet() {
   block-size: 100%;
 }
 
+.obs-slot-workbench__folder-inspector
+  :deep(
+    .ui-folder-inspector__tabs
+      .ui-tabs__list:has(
+        > :is([id$='-performer-guide-tab'], [id$='-template-filmstrip-tab'])
+      )
+  ) {
+  min-block-size: 100%;
+}
+
+.obs-slot-workbench__folder-inspector :deep([id$='-performer-guide-tab']),
+.obs-slot-workbench__folder-inspector
+  :deep(
+    .ui-tabs__list:not(:has(> [id$='-performer-guide-tab']))
+      > [id$='-template-filmstrip-tab']
+  ) {
+  margin-block-start: auto;
+}
+
+.obs-slot-workbench__folder-inspector
+  :deep(
+    .ui-scroll-layout__content:has(
+      > [role='tabpanel'] > .obs-template-filmstrip
+    )
+  ) {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100%;
+}
+
+.obs-slot-workbench__folder-inspector
+  :deep([role='tabpanel']:has(> .obs-template-filmstrip)) {
+  display: grid;
+  flex: 1;
+}
+
 .obs-slot-workbench__canvas {
   min-height: 0;
   min-width: 0;
@@ -720,16 +878,12 @@ function removePortraitSet() {
   flex: 1;
 }
 
-.obs-slot-workbench__inspector-header {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
-}
-
 .obs-slot-workbench__notice {
   margin-block: var(--ui-space-3);
+}
+
+.obs-slot-workbench__filmstrip-hint {
+  margin-block: var(--ui-space-2) 0;
 }
 
 .obs-slot-workbench__stage {
@@ -744,23 +898,6 @@ function removePortraitSet() {
   justify-items: center;
 }
 
-.obs-slot-workbench__inspector-header,
-.obs-slot-workbench__target {
-  padding-block: var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.obs-slot-workbench__inspector-header {
-  padding-block: var(--ui-space-1);
-}
-
-.obs-slot-workbench__header-actions {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-}
-
 .obs-slot-workbench__save-state {
   min-width: 0;
   display: inline-flex;
@@ -772,19 +909,5 @@ function removePortraitSet() {
   font-weight: var(--ui-type-caption-weight);
   line-height: var(--ui-type-caption-line-height);
   white-space: nowrap;
-}
-
-.obs-slot-workbench__title {
-  margin: 0;
-  min-width: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-type-subtitle-size);
-  font-weight: var(--ui-type-subtitle-weight);
-  line-height: var(--ui-type-subtitle-line-height);
-  overflow-wrap: anywhere;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 </style>

@@ -6,12 +6,14 @@ const source = readCatalogSource(
 );
 
 describe('output template thumbnail', () => {
-  it('uses bundled images without mounting a live mockup even when an image is missing', () => {
+  it('uses bundled images and gives Textured Credits a static mockup fallback', () => {
     expect(source).toContain('getOutputTemplateThumbnail');
     expect(source).toContain('<img');
     expect(source).toContain('v-if="showBundledThumbnail"');
-    expect(source).not.toContain('ObsTemplateMockup');
-    expect(source).toContain('v-else');
+    expect(source).toMatch(
+      /<ObsTemplateMockup\s+v-else-if="preset\?\.id === 'textured-credits'"\s+:preset="preset"\s+size="thumbnail"\s*\/>/u,
+    );
+    expect(source).toContain('<span v-else');
     expect(source).toContain('暫無縮圖');
   });
 

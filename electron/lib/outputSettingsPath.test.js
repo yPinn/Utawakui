@@ -70,6 +70,9 @@ const PHANTOM_FIELDS = new Set([
   'phantomCorner',
 ]);
 
+// Manga Frame reads its bubble style and tail direction in its own runtime.
+const MANGA_FIELDS = new Set(['mangaBubbleStyle', 'mangaTailDirection']);
+
 const STYLE_TARGETS = Object.freeze({
   accentColor: ['--ovl-user-accent-color', ''],
   chalkboardRuleColor: ['--ovl-user-chalkboard-rule-color', ''],
@@ -232,7 +235,11 @@ describe('Output settings path', () => {
           );
           continue;
         }
-        if (FISHEYE_FIELDS.has(field.key) || PHANTOM_FIELDS.has(field.key)) {
+        if (
+          FISHEYE_FIELDS.has(field.key) ||
+          PHANTOM_FIELDS.has(field.key) ||
+          MANGA_FIELDS.has(field.key)
+        ) {
           expect(
             normalizeOutputAppearance(slot.settings, { templateId })[field.key],
             `${templateId}.${field.key}`,

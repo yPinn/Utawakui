@@ -58,6 +58,13 @@ function templateFacts(entries) {
   }));
 }
 
+function lyricsTemplateFacts(entries) {
+  return templateFacts([
+    ...entries,
+    ['translation', t('outputPanel.gallery.facts.separateTranslation')],
+  ]);
+}
+
 // The gallery preview shows look and motion. Facts state what it cannot,
 // with the same short fields per kind, ordered by what a user checks first.
 const OUTPUT_TEMPLATE_DEFINITIONS = [
@@ -96,13 +103,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 10,
     name: t('outputPanel.templates.karaokeStack.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.karaokeStack.facts.direction')],
       ['language', t('outputPanel.templates.karaokeStack.facts.language')],
-      [
-        'translation',
-        t('outputPanel.templates.karaokeStack.facts.translation'),
-      ],
     ]),
   },
   {
@@ -110,10 +113,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 30,
     name: t('outputPanel.templates.mangaFrame.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.mangaFrame.facts.direction')],
       ['language', t('outputPanel.templates.mangaFrame.facts.language')],
-      ['translation', t('outputPanel.templates.mangaFrame.facts.translation')],
     ]),
   },
   {
@@ -121,10 +123,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 25,
     name: t('outputPanel.templates.kineticPop.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.kineticPop.facts.direction')],
       ['language', t('outputPanel.templates.kineticPop.facts.language')],
-      ['translation', t('outputPanel.templates.kineticPop.facts.translation')],
     ]),
   },
   {
@@ -132,13 +133,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 28,
     name: t('outputPanel.templates.ornateVertical.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.ornateVertical.facts.direction')],
       ['language', t('outputPanel.templates.ornateVertical.facts.language')],
-      [
-        'translation',
-        t('outputPanel.templates.ornateVertical.facts.translation'),
-      ],
     ]),
   },
   {
@@ -146,16 +143,12 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 31,
     name: t('outputPanel.templates.centeredVertical.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       [
         'direction',
         t('outputPanel.templates.centeredVertical.facts.direction'),
       ],
       ['language', t('outputPanel.templates.centeredVertical.facts.language')],
-      [
-        'translation',
-        t('outputPanel.templates.centeredVertical.facts.translation'),
-      ],
     ]),
   },
   {
@@ -163,7 +156,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 29,
     name: t('outputPanel.templates.chalkboardVertical.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       [
         'direction',
         t('outputPanel.templates.chalkboardVertical.facts.direction'),
@@ -172,10 +165,6 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
         'language',
         t('outputPanel.templates.chalkboardVertical.facts.language'),
       ],
-      [
-        'translation',
-        t('outputPanel.templates.chalkboardVertical.facts.translation'),
-      ],
     ]),
   },
   {
@@ -183,10 +172,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 20,
     name: t('outputPanel.templates.liveStage.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.liveStage.facts.direction')],
       ['language', t('outputPanel.templates.liveStage.facts.language')],
-      ['translation', t('outputPanel.templates.liveStage.facts.translation')],
     ]),
   },
   {
@@ -194,10 +182,9 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 60,
     name: t('outputPanel.templates.fisheyeLens.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.fisheyeLens.facts.direction')],
       ['language', t('outputPanel.templates.fisheyeLens.facts.language')],
-      ['translation', t('outputPanel.templates.fisheyeLens.facts.translation')],
     ]),
   },
   {
@@ -205,13 +192,18 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     kind: 'lyrics',
     order: 65,
     name: t('outputPanel.templates.phantomThieves.name'),
-    facts: templateFacts([
+    facts: lyricsTemplateFacts([
       ['direction', t('outputPanel.templates.phantomThieves.facts.direction')],
       ['language', t('outputPanel.templates.phantomThieves.facts.language')],
-      [
-        'translation',
-        t('outputPanel.templates.phantomThieves.facts.translation'),
-      ],
+    ]),
+  },
+  {
+    id: 'textured-credits',
+    kind: 'lyrics',
+    order: 70,
+    name: t('outputPanel.templates.texturedCredits.name'),
+    facts: lyricsTemplateFacts([
+      ['direction', t('outputPanel.templates.texturedCredits.facts.direction')],
     ]),
   },
   {
@@ -273,7 +265,11 @@ function availabilityForTemplate(template, available = true) {
 }
 
 export const OUTPUT_TEMPLATES = Object.freeze(
-  OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
+  OUTPUT_TEMPLATE_DEFINITIONS.filter(
+    ({ id }) =>
+      import.meta.env.MODE === 'development' ||
+      !OUTPUT_TEMPLATE_VALUES.developmentTemplateIds.includes(id),
+  ).map((template) => {
     const appearanceFields = outputAppearanceFieldsForTemplate(template.id).map(
       localizeAppearanceField,
     );

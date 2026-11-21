@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppearance.mjs';
 import { localizeAppearanceField } from '../../utils/outputPanelCopy.js';
 import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
-import { outputInspectorTabs } from '../../utils/outputInspectorTabs.js';
+import {
+  outputInspectorTab,
+  outputInspectorTabs,
+  sortOutputInspectorTabs,
+} from '../../utils/outputInspectorTabs.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 
 vi.mock('../../composables/usePlayer.js', () => ({
@@ -16,27 +20,41 @@ const fieldsFor = (templateId) =>
   outputAppearanceFieldsForTemplate(templateId).map(localizeAppearanceField);
 
 const templateTabLabels = {
-  'phantom-thieves': ['版面', '文字', '人物', '色彩'],
-  'queue-board': ['版面', '文字', '色彩'],
-  'karaoke-stack': ['文字', '色彩'],
-  'kinetic-pop': ['版面', '文字', '色彩'],
-  'ornate-vertical': ['定位', '文字', '色彩'],
-  'chalkboard-vertical': ['定位', '文字', '色彩'],
-  'centered-vertical': ['文字', '色彩'],
-  'fisheye-lens': ['動態', '攝影機特效', '顯示', '版面', '文字', '色彩'],
-  'live-stage': ['顯示', '文字', '色彩'],
-  'manga-frame': ['顯示', '文字', '色彩'],
-  'art-card': ['文字', '色彩'],
-  'ticket-stub': ['文字', '色彩'],
-  'cover-player': ['文字', '色彩'],
-  'receipt-setlist': ['動態', '版面', '文字', '色彩'],
-  'ribbon-setlist': ['動態', '文字', '色彩'],
+  'phantom-thieves': ['版面', '人物', '文字', '外觀'],
+  'queue-board': ['版面', '文字', '外觀'],
+  'karaoke-stack': ['文字', '外觀'],
+  'kinetic-pop': ['文字', '外觀'],
+  'ornate-vertical': ['版面', '修飾', '文字', '外觀'],
+  'chalkboard-vertical': ['版面', '修飾', '文字', '外觀'],
+  'centered-vertical': ['外觀', '文字'],
+  'fisheye-lens': ['動態', '版面', '修飾', '文字', '外觀'],
+  'live-stage': ['文字', '外觀'],
+  'manga-frame': ['文字', '版面', '外觀'],
+  'art-card': ['外觀', '文字'],
+  'ticket-stub': ['文字', '外觀'],
+  'cover-player': ['外觀', '文字'],
+  'receipt-setlist': ['動態', '文字', '外觀'],
+  'ribbon-setlist': ['動態', '外觀'],
 };
+const workbenchTabOrder = [
+  '顯示',
+  '文字',
+  '氣泡',
+  '特效',
+  '人物',
+  '翻譯',
+  '外觀',
+  '修飾',
+  '動態',
+  '版面',
+  '佔位',
+];
 
 async function renderRegisteredTemplate(
   templateId,
   presetOverrides = {},
   slotSettings = {},
+  workbenchProps = {},
 ) {
   const data = getOutputWorkbenchData();
   const preset = {
@@ -57,12 +75,38 @@ async function renderRegisteredTemplate(
           preset,
           activeKind: preset.kind,
           outputSlot,
+          ...workbenchProps,
         }),
     }),
   );
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it('groups the shared translation preference and saved size in their own panel', async () => {
+    const html = await renderRegisteredTemplate(
+      'manga-frame',
+      {},
+      {
+        translationFontScale: 125,
+      },
+    );
+    expect(html).toMatch(/role="tab" aria-label="翻譯"/u);
+    expect(html).toContain('顯示譯文');
+    expect(html).toContain('value="off"');
+    expect(html).toContain('譯文字級');
+    expect(html).toContain('125%');
+    const translationControls = html.match(
+      /<section[^>]*id="[^"]+-translation-panel"[^>]*>([\s\S]*?)<\/section>/u,
+    )?.[1];
+    expect(translationControls).not.toContain('<h3');
+    expect(
+      translationControls?.match(/obs-appearance-control-row--stacked/gu),
+    ).toHaveLength(2);
+    expect(await renderRegisteredTemplate('art-card')).not.toContain(
+      'output-translation-preference',
+    );
+  });
+
   it.each(getOutputWorkbenchData().templates.map(({ id }) => id))(
     'separates the fixed color look and material controls in %s',
     async (templateId) => {
@@ -88,7 +132,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
 
   it('groups independent Fisheye rim and reflection choices under Decoration', async () => {
     const decoration = outputInspectorTabs(fieldsFor('fisheye-lens'))
-      .find(({ id }) => id === 'color')
+      .find(({ id }) => id === 'decoration')
       .groups.find(({ id }) => id === 'decoration');
     expect(decoration.fields.map(({ key }) => key)).toEqual([
       'fisheyeRim',
@@ -107,6 +151,91 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         /value="off"[^>]*>關閉<.*value="soft"[^>]*>柔和<.*value="standard"[^>]*>標準</su,
       );
     }
+  });
+
+  it('marks shared properties and live tools with the existing folder tones', async () => {
+    const html = await renderRegisteredTemplate('fisheye-lens');
+    expect(html).toMatch(
+      /data-folder-tone="secondary" role="tab" aria-label="外觀"/u,
+    );
+    expect(html).toMatch(
+      /data-folder-tone="secondary" role="tab" aria-label="翻譯"/u,
+    );
+    expect(html).toMatch(
+      /data-folder-tone="tertiary" role="tab" aria-label="特效"/u,
+    );
+    expect(html).toMatch(/data-folder-shade="soft"[^>]*aria-label="佔位"/u);
+    expect(html).toMatch(/data-folder-shade="soft"[^>]*aria-label="外觀"/u);
+    expect(html).toMatch(/data-folder-shade="medium"[^>]*aria-label="翻譯"/u);
+    expect(html).toMatch(/data-folder-shade="soft"[^>]*aria-label="版面"/u);
+    expect(html).toMatch(/data-folder-shade="medium"[^>]*aria-label="特效"/u);
+    for (const [label, icon] of [
+      ['文字', 'type'],
+      ['外觀', 'palette'],
+      ['翻譯', 'languages'],
+      ['特效', 'video'],
+      ['版面', 'layout-template'],
+      ['修飾', 'sparkles'],
+      ['動態', 'activity'],
+      ['佔位', 'locate-fixed'],
+    ]) {
+      const tab = html.match(
+        new RegExp(
+          `role="tab" aria-label="${label}"[^>]*>[\\s\\S]*?</button>`,
+          'u',
+        ),
+      )?.[0];
+      expect(tab).toContain(`lucide-${icon}`);
+    }
+    const tabs = outputInspectorTabs(fieldsFor('fisheye-lens'));
+    expect(
+      tabs.find(({ id }) => id === 'decoration').folderTone,
+    ).toBeUndefined();
+    expect(tabs.find(({ id }) => id === 'text').folderTone).toBe('secondary');
+  });
+
+  it('places output review before live tools, styling, and placement', () => {
+    const tabs = [
+      'performer-guide',
+      'text',
+      'layout',
+      'portrait',
+      'motion',
+      'translation',
+      'decoration',
+      'display',
+      'camera-effects',
+      'color',
+      'manga-bubbles',
+    ].map((id) => outputInspectorTab(id));
+    expect(sortOutputInspectorTabs(tabs).map(({ label }) => label)).toEqual(
+      workbenchTabOrder,
+    );
+  });
+
+  it('keeps the neutral template filmstrip at the end of the rail', async () => {
+    const html = await renderRegisteredTemplate(
+      'manga-frame',
+      {},
+      {},
+      {
+        quickSwitchPresets: getOutputWorkbenchData().templates.filter(
+          ({ kind }) => kind === 'lyrics',
+        ),
+      },
+    );
+    expect(html).toMatch(
+      /data-folder-tone="neutral" role="tab" aria-label="模板"/u,
+    );
+    expect(html).toMatch(/data-folder-shade="neutral"[^>]*aria-label="模板"/u);
+    expect(
+      [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)]
+        .slice(-2)
+        .map(([, label]) => label),
+    ).toEqual(['佔位', '模板']);
+    expect(html).toMatch(
+      /data-folder-tone="tertiary" role="tab" aria-label="氣泡"/u,
+    );
   });
 
   it('lists the shared Fisheye transitions in matching order before entrance-only effects', async () => {
@@ -149,14 +278,19 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     'uses only the supported folder tabs and renders every field for $id',
     async ({ id, kind, appearanceFields, presentationFields }) => {
       const html = await renderRegisteredTemplate(id);
+      const availableLabels = [
+        ...templateTabLabels[id],
+        ...(kind === 'lyrics' ? ['佔位', '翻譯'] : []),
+        ...(id === 'fisheye-lens' ? ['特效'] : []),
+        ...(id === 'manga-frame' ? ['氣泡'] : []),
+      ];
       expect(
         [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
           ([, label]) => label,
         ),
-      ).toEqual([
-        ...templateTabLabels[id],
-        ...(kind === 'lyrics' ? ['模型佔位'] : []),
-      ]);
+      ).toEqual(
+        workbenchTabOrder.filter((label) => availableLabels.includes(label)),
+      );
       expect(html).toMatch(
         new RegExp(
           `aria-label="${templateTabLabels[id][0]}"[^>]+aria-selected="true"`,
@@ -164,6 +298,14 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         ),
       );
       expect(html).not.toContain('data-output-side-toggle');
+      for (const { groups } of outputInspectorTabs([
+        ...appearanceFields,
+        ...presentationFields,
+      ])) {
+        expect(groups.flatMap(({ fields }) => fields).length).toBeGreaterThan(
+          1,
+        );
+      }
       for (const { key, group } of [
         ...appearanceFields,
         ...presentationFields,
@@ -268,8 +410,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const labels = [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
       ([, label]) => label,
     );
-    expect(labels).toEqual(['定位', '文字', '色彩', '模型佔位']);
-    expect(html).toMatch(/aria-label="定位"[^>]+aria-selected="true"/u);
+    expect(labels).toEqual(['文字', '翻譯', '外觀', '修飾', '版面', '佔位']);
+    expect(html).toMatch(/aria-label="版面"[^>]+aria-selected="true"/u);
     expect(html).toContain('定位基準');
     expect(html).toContain('位置微調');
     expect(html).toContain('文字陰影');
@@ -285,8 +427,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ({ group }) => group === 'typography' || group === 'custom-color',
     );
     expect(outputInspectorTabs(fields).map(({ id }) => id)).toEqual([
+      'decoration',
       'text',
-      'color',
     ]);
     const html = await renderRegisteredTemplate('ornate-vertical', {
       appearanceFields: [
@@ -311,7 +453,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ]),
     ).toEqual([
       ['title', ['文字']],
-      ['artist', ['顯示', '文字']],
+      ['artist', ['文字']],
       ['progress', ['顯示']],
       ['transport', ['顯示']],
     ]);
@@ -326,10 +468,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
         groups.flatMap(({ fields }) => fields.map(({ key }) => key)),
       ]),
     ).toEqual([
-      ['動態', ['receiptReview', 'receiptReviewInterval']],
-      ['版面', ['receiptDirection']],
+      ['動態', ['receiptReview', 'receiptReviewInterval', 'receiptDirection']],
       ['文字', ['fontFamily', 'fontScale']],
-      ['色彩', ['paletteId', 'lookAmount', 'filmGrainAmount', 'filmGrainSize']],
+      ['外觀', ['paletteId', 'lookAmount', 'filmGrainAmount', 'filmGrainSize']],
     ]);
 
     const html = await renderRegisteredTemplate('receipt-setlist');
@@ -337,7 +478,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
         ([, label]) => label,
       ),
-    ).toEqual(templateTabLabels['receipt-setlist']);
+    ).toEqual(['文字', '外觀', '動態']);
     expect(html).toContain('>字體設定</h3>');
     expect(html).toContain('>歷史回顧</h3>');
     expect(html).not.toContain('data-output-side-toggle');
@@ -348,7 +489,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       outputInspectorTabs(fields.filter(({ group }) => group !== 'motion')).map(
         ({ id }) => id,
       ),
-    ).toEqual(['arrangement', 'text', 'color']);
+    ).toEqual(['layout', 'text', 'color']);
   });
 
   it('uses the same motion controls for the Ribbon and Receipt Setlists', async () => {
@@ -467,7 +608,12 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const coverPlayer = await renderRegisteredTemplate('cover-player');
     const artCard = await renderRegisteredTemplate('art-card');
 
-    expect(coverPlayer).toContain('調整對象');
+    expect(coverPlayer).toMatch(
+      /obs-inspector-target[^]*?obs-appearance-control-row__label[^>]*>\s*調整對象\s*</u,
+    );
+    expect(coverPlayer).toMatch(
+      /<label[^>]+for="output-appearance-target"[^>]*>\s*調整對象\s*</u,
+    );
     for (const label of ['整個模板', '曲名', '藝人', '進度', '播放控制']) {
       expect(coverPlayer).toContain(label);
     }
@@ -487,7 +633,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
   });
 
-  it('renders Live Stage presentation policy separately from appearance controls', async () => {
+  it('keeps the Live Stage presentation policy in its own section of the text tab', async () => {
     const html = await renderRegisteredTemplate('live-stage');
 
     expect(html).toContain('歌詞呈現');
@@ -500,6 +646,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('轉播精簡');
     expect(html).toContain('平衡分行');
     expect(html).toContain('忠實原文');
+    expect(html).toMatch(
+      /id="[^"]+-text-panel"[^>]*>[\s\S]*?id="output-appearance-lyricsPresentationPolicyId"/u,
+    );
   });
 
   it('sorts configuration groups and fields by product order, not input order', async () => {
@@ -533,11 +682,11 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
     const labels = [
       '內容顯示',
-      '版面',
       '字體設定',
       '可讀性',
       '整體配色',
       '背景',
+      '版面',
     ];
 
     for (let index = 1; index < labels.length; index += 1) {
@@ -855,7 +1004,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('aria-label="顯示位置"');
     expect(html).not.toContain('<select id="output-appearance-positionAnchor"');
     expect(html).toMatch(
-      /obs-slot-workbench__inspector-header[^]*?<h2[^]*?<\/h2>[^]*?<button(?=[^>]*ui-icon-btn)(?=[^>]*obs-slot-workbench__reset)[^>]*>[^]*?重設模板[^]*?<\/button>[^]*?obs-property-section/u,
+      /obs-inspector-header[^]*?<h2[^>]*>版面<\/h2>[^]*?<button(?=[^>]*ui-icon-btn)(?=[^>]*obs-slot-workbench__reset)[^>]*>[^]*?重設模板[^]*?<\/button>[^]*?obs-property-section/u,
     );
     expect(html).toMatch(
       /<input[^>]*id="output-appearance-fontFamily"[^>]*value="華麗明朝（Hina Mincho）"/,

@@ -1,8 +1,16 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  shallowRef,
+  watch,
+} from 'vue';
 import { useAppView } from '../../composables/useAppView.js';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
+import { readOutputPerformerGuide } from '../../composables/output/useOutputPerformerGuide.js';
 import { MonitorUp, Settings } from '../../icons/index.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import { UI_LOCALE } from '../../utils/uiLocale.js';
@@ -31,6 +39,7 @@ function orderPresets(presets) {
 }
 
 const orderedPresets = computed(() => orderPresets(props.presets));
+const applyingPreset = shallowRef(false);
 const modeItems = [
   { id: 'workbench', label: t('outputPanel.workspace.workbench') },
   { id: 'gallery', label: t('outputPanel.workspace.gallery') },
@@ -111,6 +120,13 @@ const appliedPreset = computed(
       (preset) => preset.id === activeSlot.value?.templateId,
     ) ?? null,
 );
+const quickSwitchPresets = computed(() =>
+  orderedPresets.value.filter(
+    (preset) =>
+      preset.kind === activeKind.value &&
+      preset.availability?.available !== false,
+  ),
+);
 const appliedPresetIds = computed(() =>
   Object.fromEntries(
     props.slotDefinitions.map((slot) => [
@@ -171,15 +187,30 @@ async function selectKind(kind) {
 
 async function applyPreset(id) {
   const preset = orderedPresets.value.find((candidate) => candidate.id === id);
-  if (!preset || preset.availability?.available === false) return;
-  const flushed = await appearanceAutosave.value.flush();
-  if (!flushed) return;
-  const saved = await saveTemplateSelection(
-    preset.kind,
-    preset.id,
-    props.slotDefaults[preset.kind],
-  );
-  if (saved) browsedPresetIds[preset.kind] = id;
+  if (
+    applyingPreset.value ||
+    !preset ||
+    preset.kind !== activeKind.value ||
+    preset.availability?.available === false ||
+    id === appliedPreset.value?.id
+  )
+    return;
+
+  applyingPreset.value = true;
+  try {
+    if (!(await appearanceAutosaveFor(preset.kind).flush())) return;
+    const guide =
+      preset.id === 'manga-frame' ? readOutputPerformerGuide() : null;
+    const saved = await saveTemplateSelection(
+      preset.kind,
+      preset.id,
+      props.slotDefaults[preset.kind],
+      guide ? { mangaTailX: guide.x, mangaTailY: guide.y } : undefined,
+    );
+    if (saved) browsedPresetIds[preset.kind] = id;
+  } finally {
+    applyingPreset.value = false;
+  }
 }
 
 function queueAppearanceSave(change) {
@@ -285,7 +316,7 @@ onBeforeUnmount(() => {
           :active-kind="activeKind"
           :selected-preset-id="browsedPreset?.id ?? null"
           :applied-preset-ids="appliedPresetIds"
-          :is-applying="outputState.isSavingSlot"
+          :is-applying="applyingPreset || outputState.isSavingSlot"
           @update:side-width="setSideWidth"
           @update:side-collapsed="setSideCollapsed"
           @update:compact-side-open="setCompactSideOpen"
@@ -303,6 +334,8 @@ onBeforeUnmount(() => {
           :side-collapsed="sideCollapsed"
           :compact-side-open="compactSideOpen"
           :preset="appliedPreset"
+          :quick-switch-presets="quickSwitchPresets"
+          :applying-preset="applyingPreset"
           :output-slot="activeSlot"
           :active-kind="activeKind"
           :preview-url="workbenchUrls.previewUrl"
@@ -321,6 +354,7 @@ onBeforeUnmount(() => {
           @commit-color="saveRecentColor"
           @toggle-saved-color="toggleSavedColor"
           @retry-save="appearanceAutosave.retry"
+          @apply-preset="applyPreset"
           @refresh-projection="refreshProjection"
         />
       </section>

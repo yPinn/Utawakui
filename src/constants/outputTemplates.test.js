@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { outputAppearanceFieldKeysForTemplate } from '../../shared/outputAppearance.mjs';
 import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import {
@@ -27,6 +27,34 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'art-card': '星空黑膠',
   'ticket-stub': '演出票根',
   'cover-player': '封面電台',
+});
+
+it('includes Textured Credits as a selectable Lyrics template in development', async () => {
+  expect(
+    getOutputWorkbenchData().templates.find(
+      ({ id }) => id === 'textured-credits',
+    ),
+  ).toBeUndefined();
+  vi.stubEnv('MODE', 'development');
+  vi.resetModules();
+  try {
+    const dev = await import('./outputTemplates.js');
+    const lyrics = dev
+      .getOutputWorkbenchData()
+      .templateGroups.find(({ kind }) => kind === 'lyrics');
+    expect(
+      lyrics.templates.find(({ id }) => id === 'textured-credits'),
+    ).toMatchObject({
+      name: '紋理顯字',
+      availability: { available: true },
+      facts: expect.arrayContaining([
+        expect.objectContaining({ key: 'translation', value: '獨立字幕' }),
+      ]),
+    });
+  } finally {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
 });
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
@@ -167,6 +195,8 @@ const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
     'fontScale',
     'fontWeight',
     'furigana',
+    'mangaBubbleStyle',
+    'mangaTailDirection',
     'filmGrainAmount',
     'filmGrainSize',
   ],
@@ -435,8 +465,9 @@ describe('output template registry', () => {
       templates
         .find((template) => template.id === id)
         .facts.find((entry) => entry.key === key).value;
-    expect(fact('live-stage', 'translation')).toBe('顯示於歌詞下方');
-    expect(fact('karaoke-stack', 'translation')).toBe('不顯示');
+    for (const { id } of templates.filter(({ kind }) => kind === 'lyrics')) {
+      expect(fact(id, 'translation'), id).toBe('獨立字幕');
+    }
     expect(fact('ornate-vertical', 'language')).toBe('日文');
     expect(fact('karaoke-stack', 'language')).toBe('中日英');
     expect(fact('ornate-vertical', 'direction')).toBe('直書');

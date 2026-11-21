@@ -19,6 +19,34 @@ import {
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it('defaults Textured Credits to its middle block and supports both side blocks', () => {
+    const templateId = 'textured-credits';
+    const field = outputAppearanceFieldsForTemplate(templateId).find(
+      ({ key }) => key === 'alignment',
+    );
+    expect(field.options.map(({ id }) => id)).toEqual([
+      'left',
+      'center',
+      'right',
+    ]);
+    const defaults = OUTPUT_SLOT_APPEARANCE_DEFAULTS.lyrics;
+    expect(
+      carryOutputAppearanceToTemplate(defaults, {
+        fromTemplateId: 'karaoke-stack',
+        toTemplateId: templateId,
+        slotDefaults: defaults,
+      }).alignment,
+    ).toBe('center');
+    expect(normalizeOutputAppearance({}, { templateId }).alignment).toBe(
+      'center',
+    );
+    for (const alignment of ['left', 'right']) {
+      expect(
+        normalizeOutputAppearance({ alignment }, { templateId }).alignment,
+      ).toBe(alignment);
+    }
+  });
+
   it('interpolates artwork grading and preserves alpha at every strength', () => {
     expect(outputArtworkGradeMatrix('monochrome', 0)).toBeUndefined();
     expect(outputArtworkGradeMatrix('original', 100)).toBeUndefined();
@@ -382,6 +410,8 @@ describe('output appearance schema', () => {
       fontWeight: 'semibold',
       phantomMode: 'side-card',
       phantomChatShape: 'bubble',
+      mangaBubbleStyle: 'spoken',
+      mangaTailDirection: 'performer',
       phantomCardStyle: 'portrait',
       phantomPortraitColor: '',
       phantomArtistName: '',

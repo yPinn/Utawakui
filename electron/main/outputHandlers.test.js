@@ -309,6 +309,39 @@ describe('output handlers', () => {
     expect(controlFisheyeEffects).toHaveBeenCalledOnce();
   });
 
+  it('persists a development template in dev and projects the default in other builds', async () => {
+    const slot = { templateId: 'textured-credits', settings: {} };
+    function handlers(isDev) {
+      const ipcMain = createIpcMain();
+      const setOverlaySlots = vi.fn();
+      registerOutputHandlers({
+        ipcMain,
+        server: { setOverlaySlots },
+        getConfig: () => ({}),
+        resolveDownloadDir: () => dir,
+        isDev,
+      });
+      return { handlers: ipcMain.handlers, setOverlaySlots };
+    }
+    const dev = handlers(true);
+    await dev.handlers.get('output-slots:upsert')(null, 'lyrics', slot);
+    expect(dev.setOverlaySlots).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        lyrics: expect.objectContaining({ templateId: slot.templateId }),
+      }),
+    );
+    const release = handlers(false);
+    expect(await release.handlers.get('output-slots:list')()).toMatchObject({
+      slots: { lyrics: { templateId: 'karaoke-stack' } },
+    });
+    await expect(
+      release.handlers.get('output-slots:upsert')(null, 'lyrics', slot),
+    ).rejects.toThrow('Invalid output slot');
+    expect(await dev.handlers.get('output-slots:list')()).toMatchObject({
+      slots: { lyrics: { templateId: 'textured-credits' } },
+    });
+  });
+
   it('loads and independently upserts portable output slots', async () => {
     const ipcMain = createIpcMain();
     const setOverlaySlots = vi.fn();

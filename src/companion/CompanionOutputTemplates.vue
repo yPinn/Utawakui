@@ -8,14 +8,15 @@ import {
   companionOutputResetPatch,
 } from '../../shared/companionOutput.mjs';
 import { outputElementTargetsForTemplate } from '../../shared/outputAppearance.mjs';
-import { ICON_SIZE, RotateCcw, UserRound } from '../icons/index.js';
+import { ICON_SIZE, RotateCcw } from '../icons/index.js';
 import ObsAppearanceField from '../components/output/ObsAppearanceField.vue';
+import ObsInspectorHeader from '../components/output/ObsInspectorHeader.vue';
+import ObsInspectorTarget from '../components/output/ObsInspectorTarget.vue';
 import ObsPhantomPortraitGrid from '../components/output/ObsPhantomPortraitGrid.vue';
 import ObsPropertySection from '../components/output/ObsPropertySection.vue';
 import UiFolderTabShape from '../components/ui/UiFolderTabShape.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiIconButton from '../components/ui/UiIconButton.vue';
-import UiSelect from '../components/ui/UiSelect.vue';
 import UiTabs from '../components/ui/UiTabs.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { catalogKey, t } from '../utils/i18n.js';
@@ -24,8 +25,10 @@ import {
   outputSlotLabel,
 } from '../utils/outputPanelCopy.js';
 import {
+  outputInspectorTab,
   outputInspectorTabs,
   sortOutputInspectorFields,
+  sortOutputInspectorTabs,
 } from '../utils/outputInspectorTabs.js';
 import { getOutputTemplateThumbnail } from '../utils/outputTemplateThumbnails.js';
 import '../styles/features/output.css';
@@ -89,21 +92,21 @@ const categories = computed(() => {
     ),
   );
   if (hasPortrait.value && !targetId.value) {
-    const portrait = {
-      id: 'portrait',
-      icon: UserRound,
-      label: t('outputPanel.inspector.portrait'),
-      groups: [],
-    };
-    const colorIndex = entries.findIndex(({ id }) => id === 'color');
+    const portrait = outputInspectorTab('portrait');
+    const sharedIndex = entries.findIndex(
+      ({ folderTone }) => folderTone === 'secondary',
+    );
     entries.splice(
-      colorIndex === -1 ? entries.length : colorIndex,
+      sharedIndex === -1 ? entries.length : sharedIndex,
       0,
       portrait,
     );
   }
   return entries;
 });
+const orderedCategories = computed(() =>
+  sortOutputInspectorTabs(categories.value),
+);
 const activeCategory = computed(
   () =>
     categories.value.find(({ id }) => id === categoryId.value) ??
@@ -232,7 +235,7 @@ function commitColor(field, value) {
           <UiFolderTabShape :shape-id="shapeId" />
           <UiTabs
             :style="{ '--_folder-tab-shape': `url('#${shapeId}')` }"
-            :items="categories"
+            :items="orderedCategories"
             :active-id="activeCategory?.id"
             :aria-label="t('outputPanel.inspector.label')"
             :tab-id-prefix="categoryPrefix"
@@ -246,15 +249,19 @@ function commitColor(field, value) {
             </template>
           </UiTabs>
           <div class="companion-output__controls">
-            <UiSelect
+            <ObsInspectorHeader
+              v-if="activeCategory"
+              :title="activeCategory.label"
+            />
+            <ObsInspectorTarget
               v-if="targets.length"
               :id="`companion-output-target-${uid}`"
               v-model="targetId"
-              :label="t('outputPanel.workbench.target')"
               :options="targetOptions"
+              stacked
             />
             <section
-              v-for="category in categories"
+              v-for="category in orderedCategories"
               :id="`${categoryPrefix}-${category.id}-panel`"
               :key="category.id"
               :aria-labelledby="`${categoryPrefix}-${category.id}-tab`"
@@ -353,7 +360,7 @@ function commitColor(field, value) {
 
 .companion-output__controls {
   min-inline-size: 0;
-  padding: var(--ui-space-3);
+  padding: 0 var(--ui-space-3) var(--ui-space-3);
   background: var(--ui-companion-panel);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }

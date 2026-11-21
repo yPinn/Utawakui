@@ -36,6 +36,13 @@ describe('bundled output template thumbnails', () => {
         blocked.push(preset.id);
         expect(record.delivery).toBe('blocked-G01');
         expect(record.rights).toBe('unverified');
+      } else if (preset.id === 'manga-frame') {
+        expect(record.content).toBe('current-programmatic-render');
+        expect(record.delivery).toBe('pending-user-visual-acceptance');
+        expect(record.rights).toBe(
+          'project-owned-runtime-and-synthetic-lyrics',
+        );
+        expect(record.origin).toContain('1280 × 720');
       } else if (
         [
           'receipt-setlist',
@@ -65,7 +72,6 @@ describe('bundled output template thumbnails', () => {
       'cover-player',
       'karaoke-stack',
       'live-stage',
-      'manga-frame',
       'phantom-thieves',
       'receipt-setlist',
       'ribbon-setlist',

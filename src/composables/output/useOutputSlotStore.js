@@ -113,12 +113,22 @@ export function createOutputSlotStore({
 
   async function persistOutputSlot(kind, changes, seedSlot) {
     const slot = state.slots[kind] ?? seedSlot;
-    const payload = buildOutputSlotPayload(slot, changes);
+    const switching =
+      changes.templateId && changes.templateId !== slot?.templateId;
+    const payload = buildOutputSlotPayload(
+      switching
+        ? { ...slot, templateId: changes.templateId, settings: {} }
+        : slot,
+      changes,
+    );
     if (!payload) return false;
+    const request = switching
+      ? { ...payload, recallAppearance: true }
+      : payload;
 
     state.isSavingSlot = true;
     try {
-      const document = await bridgeMethod('upsertOutputSlot')(kind, payload);
+      const document = await bridgeMethod('upsertOutputSlot')(kind, request);
       applySlots(document);
       state.error = '';
       return true;
@@ -134,8 +144,8 @@ export function createOutputSlotStore({
     }
   }
 
-  function saveTemplateSelection(kind, templateId, seedSlot = null) {
-    return saveOutputSlot(kind, { templateId }, seedSlot);
+  function saveTemplateSelection(kind, templateId, seedSlot = null, settings) {
+    return saveOutputSlot(kind, { templateId, settings }, seedSlot);
   }
 
   function saveSlotSettings(kind, settings, seedSlot = null) {

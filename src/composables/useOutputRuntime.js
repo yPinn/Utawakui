@@ -111,6 +111,7 @@ const slotStore = createOutputSlotStore({
 const projectionPublisher = useOutputProjectionPublisher({
   getBootId: () => state.status.bootId,
   getDisplayDelayMs: () => state.settings.displayDelayMs,
+  getLyricsTemplateId: () => state.slots.lyrics?.templateId,
   isOutputEnabled: () => isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW),
   publishSnapshot: (envelope) =>
     bridgeMethod('publishOutputSnapshot')(envelope),
@@ -330,7 +331,10 @@ async function openWindow(kind) {
 
 function initialize() {
   if (initializationPromise) return initializationPromise;
-  usePlayer().onEnded(slotStore.followSingerAfterPlayback);
+  usePlayer().onEnded(() => {
+    projectionPublisher.clearMangaFrameCues();
+    return slotStore.followSingerAfterPlayback();
+  });
   initializationPromise = (async () => {
     try {
       await Promise.all([refreshSettings(), refreshConfirmations()]);
@@ -389,5 +393,8 @@ export function useOutputRuntime() {
     applyCompanionOutputOption: slotStore.applyCompanionOutputOption,
     saveTemplateSelection: slotStore.saveTemplateSelection,
     appearanceAutosaveFor: slotStore.appearanceAutosaveFor,
+    canCueMangaFrame: projectionPublisher.canCueMangaFrame,
+    cueMangaFrame: projectionPublisher.cueMangaFrame,
+    pendingMangaFrameId: projectionPublisher.pendingMangaFrameId,
   };
 }

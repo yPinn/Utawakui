@@ -7,6 +7,7 @@ import { createOutputServer } from './outputServer.js';
 import {
   loadOutputSlots,
   OUTPUT_SLOTS_FILENAME,
+  projectPublicOutputSlots,
   saveOutputSlots,
   setOutputRecentColors,
   setOutputSavedColors,
@@ -29,6 +30,121 @@ describe('outputSlots', () => {
   afterEach(() => {
     expect(path.dirname(dir)).toBe(path.resolve(testTmpRoot));
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('persists and publishes bounded translation sizing for the lyrics slot', () => {
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'karaoke-stack',
+      settings: { translationFontScale: 138, fontScale: 'small' },
+    });
+    upsertOutputSlot(dir, 'setlist', {
+      templateId: 'receipt-setlist',
+      settings: { translationFontScale: 135 },
+    });
+
+    const { slots } = loadOutputSlots(dir);
+    expect(slots.lyrics.settings).toMatchObject({
+      translationFontScale: 140,
+      fontScale: 'small',
+    });
+    expect(slots.setlist.settings).not.toHaveProperty('translationFontScale');
+    expect(projectPublicOutputSlots(slots).lyrics.settings).toHaveProperty(
+      'translationFontScale',
+      140,
+    );
+  });
+
+  it('publishes the manga placement center only while following the performer', () => {
+    const save = (settings) =>
+      upsertOutputSlot(dir, 'lyrics', {
+        templateId: 'manga-frame',
+        settings,
+      });
+    save({
+      mangaBubbleStyle: 'thought',
+      mangaTailDirection: 'performer',
+      mangaTailX: 0.35,
+      mangaTailY: 0.62,
+    });
+    const publicSettings = () =>
+      projectPublicOutputSlots(loadOutputSlots(dir).slots).lyrics.settings;
+    expect(publicSettings()).toMatchObject({
+      mangaBubbleStyle: 'thought',
+      mangaTailDirection: 'performer',
+      mangaTailX: 0.35,
+      mangaTailY: 0.62,
+    });
+    save({ mangaTailDirection: 'fixed', mangaTailX: 0.35, mangaTailY: 2 });
+    expect(publicSettings()).not.toHaveProperty('mangaTailX');
+    expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
+      'mangaTailY',
+    );
+    save({ mangaTailDirection: 'default', mangaTailX: 0.4, mangaTailY: 0.7 });
+    expect(publicSettings()).toMatchObject({
+      mangaTailDirection: 'performer',
+      mangaTailX: 0.4,
+      mangaTailY: 0.7,
+    });
+  });
+
+  it('carries shared appearance through unsupported fields and recalls each template on disk', () => {
+    const switchTo = (templateId) =>
+      upsertOutputSlot(dir, 'lyrics', {
+        templateId,
+        settings: {},
+        recallAppearance: true,
+      }).slots.lyrics.settings;
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'manga-frame',
+      settings: {
+        paletteId: 'cool-film',
+        lookAmount: 0,
+        filmGrainAmount: 25,
+        filmGrainSize: 'large',
+        fontScale: 'small',
+        fontWeight: 'regular',
+        mangaBubbleStyle: 'thought',
+        mangaTailDirection: 'performer',
+        mangaTailX: 0.4,
+        mangaTailY: 0.6,
+        translationFontScale: 120,
+      },
+    });
+
+    const centered = switchTo('centered-vertical');
+    expect(centered).toMatchObject({
+      paletteId: 'cool-film',
+      lookAmount: 0,
+      filmGrainAmount: 25,
+      fontScale: 'small',
+      translationFontScale: 120,
+    });
+    expect(centered).not.toHaveProperty('mangaBubbleStyle');
+    expect(centered).not.toHaveProperty('fontWeight');
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'centered-vertical',
+      settings: {
+        ...centered,
+        textColor: '#112233',
+        fontFamily: 'lyrics-auto',
+      },
+    });
+    expect(switchTo('karaoke-stack')).not.toHaveProperty('textColor');
+    setOutputSavedColors(dir, ['#223344']);
+
+    expect(switchTo('manga-frame')).toMatchObject({
+      fontScale: 'small',
+      fontWeight: 'regular',
+      mangaBubbleStyle: 'thought',
+      mangaTailX: 0.4,
+      mangaTailY: 0.6,
+    });
+    expect(switchTo('centered-vertical')).toMatchObject({
+      textColor: '#112233',
+    });
+    expect(loadOutputSlots(dir).slots.setlist.settings.paletteId).toBe(
+      'original',
+    );
   });
 
   it('replaces retired saved templates and rejects selecting them again', () => {

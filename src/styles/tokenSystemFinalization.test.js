@@ -33,7 +33,7 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(572);
+    expect(names.size).toBe(578);
     expect(names).toContain('--ui-companion-phone-radius');
     expect(names).toContain('--ui-companion-shell-max-inline-size');
     expect(names).toContain('--ui-companion-connection-max-inline-size');

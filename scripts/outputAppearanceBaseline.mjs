@@ -62,7 +62,9 @@ export function loadOutputAppearanceFixtures() {
 
 export function validateOutputAppearanceBaseline({ baseline, scenarios }) {
   const issues = [];
-  const templateIds = Object.keys(registry.templateKinds);
+  const templateIds = Object.keys(registry.templateKinds).filter(
+    (id) => !registry.developmentTemplateIds.includes(id),
+  );
   if (!isDeepStrictEqual(baseline.captureSizes, captureSizes))
     issues.push('capture-geometry');
   if (baseline.version !== 1 || scenarios.version !== 1)

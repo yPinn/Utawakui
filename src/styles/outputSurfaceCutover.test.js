@@ -13,6 +13,10 @@ const splitLayoutSource = readSource(
   '../components/output/ObsOutputSplitLayout.vue',
 );
 const workbenchSource = readSource('../components/output/ObsSlotWorkbench.vue');
+const inspectorHeaderSource = readSource(
+  '../components/output/ObsInspectorHeader.vue',
+  '../components/output/ObsInspectorTarget.vue',
+);
 const runtimeStatusSource = readSource(
   '../components/output/ObsOutputRuntimeStatus.vue',
 );
@@ -37,6 +41,8 @@ const publicOverlayTokens = readSource('../../overlay/shared/tokens.css');
 
 const outputConsumerPaths = [
   '../components/output/ObsAppearanceControlRow.vue',
+  '../components/output/ObsInspectorHeader.vue',
+  '../components/output/ObsPropertySection.vue',
   '../components/output/ObsOutputRuntimeStatus.vue',
   '../components/settings/OutputRuntimeSettingsBlock.vue',
   '../components/output/ObsOutputSplitLayout.vue',
@@ -162,9 +168,17 @@ describe('Output Token v2 surface cutover', () => {
     expect(outputFeatureSource).not.toContain(
       '--ui-output-settings-column-min-width:',
     );
-    expect(workbenchSource).toContain('var(--ui-type-subtitle-size)');
-    expect(workbenchSource).toContain('var(--ui-type-subtitle-weight)');
-    expect(workbenchSource).toContain('var(--ui-type-subtitle-line-height)');
+    expect(inspectorHeaderSource).toContain('var(--ui-type-subtitle-size)');
+    expect(inspectorHeaderSource).toContain('var(--ui-type-subtitle-weight)');
+    expect(inspectorHeaderSource).toContain(
+      'var(--ui-type-subtitle-line-height)',
+    );
+    for (const path of [
+      '../components/output/ObsSlotWorkbench.vue',
+      '../companion/CompanionOutputTemplates.vue',
+    ]) {
+      expect(readSource(path)).toContain('<ObsInspectorTarget');
+    }
   });
 
   it('includes transitive shared compounds in the no-T1 contract', () => {

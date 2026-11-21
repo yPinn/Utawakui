@@ -25,72 +25,69 @@
       "name": "Classic Karaoke",
       "facts": {
         "direction": "Horizontal",
-        "language": "Chinese, Japanese, English",
-        "translation": "Not shown"
+        "language": "Chinese, Japanese, English"
       }
     },
     "mangaFrame": {
       "name": "Manga Panels",
       "facts": {
         "direction": "Vertical",
-        "language": "Mostly Japanese",
-        "translation": "Not shown"
+        "language": "Mostly Japanese"
       }
     },
     "kineticPop": {
       "name": "Kinetic Pop",
       "facts": {
         "direction": "Horizontal",
-        "language": "Mostly Japanese",
-        "translation": "Not shown"
+        "language": "Mostly Japanese"
       }
     },
     "ornateVertical": {
       "name": "Japanese Vertical",
       "facts": {
         "direction": "Vertical",
-        "language": "Japanese",
-        "translation": "Not shown"
+        "language": "Japanese"
       }
     },
     "centeredVertical": {
       "name": "Centered Vertical",
       "facts": {
         "direction": "Vertical",
-        "language": "Chinese, Japanese",
-        "translation": "Not shown"
+        "language": "Chinese, Japanese"
+      }
+    },
+    "texturedCredits": {
+      "name": "Textured Credits",
+      "facts": {
+        "direction": "Vertical Japanese, horizontal for other languages"
       }
     },
     "phantomThieves": {
       "name": "Phantom Thieves",
       "facts": {
         "direction": "Horizontal",
-        "language": "Chinese, Japanese, English",
-        "translation": "Not shown"
+        "language": "Chinese, Japanese, English"
       }
     },
     "fisheyeLens": {
       "name": "Fisheye Lens",
       "facts": {
         "direction": "Along the lens arc",
-        "language": "Chinese, Japanese, English",
-        "translation": "Not shown"
+        "language": "Chinese, Japanese, English"
       }
     },
     "chalkboardVertical": {
       "name": "Chalkboard Vertical",
       "facts": {
         "direction": "Vertical",
-        "language": "Chinese, Japanese",
-        "translation": "Not shown"
+        "language": "Chinese, Japanese"
       }
     },
     "liveStage": {
       "name": "Stage Captions",
       "facts": {
         "direction": "Horizontal",
-        "language": "Any language",
-        "translation": "Shown below the lyrics"
+        "language": "Any language"
       }
     },
     "artCard": {
@@ -245,17 +242,31 @@
     "checker": "Transparent background",
     "toggle": "Preview background: {current}; switch to {next}"
   },
+  "translation": {
+    "show": "Show translation",
+    "fontScale": "Translation size"
+  },
   "inspector": {
+    "translation": "Translation",
     "portrait": "Portrait",
-    "label": "Appearance categories",
-    "layout": "Position",
-    "arrangement": "Layout",
+    "label": "Template settings tabs",
+    "layout": "Layout",
+    "decoration": "Styling",
     "text": "Text",
-    "color": "Color",
+    "color": "Appearance",
     "display": "Display",
+    "effects": "Effects",
+    "placement": "Placement",
+    "templates": "Templates",
     "motion": "Motion",
     "anchor": "Anchor position",
     "offset": "Position offsets"
+  },
+  "mangaBubbles": {
+    "label": "Bubbles",
+    "pending": "Next line: {style}. Select again to cancel.",
+    "choose": "Choose a bubble style for the next line.",
+    "unavailable": "There is no upcoming synced lyric line."
   },
   "portrait": {
     "set": "Portrait preset",
@@ -361,6 +372,7 @@
     "presentationHint": "Affects how lyrics show in this template only; the lyrics themselves aren't changed.",
     "conciseHint": "Broadcast concise drops some repeated words; to keep the full text, choose Balanced lines or Faithful to original.",
     "resetTemplate": "Reset template",
+    "switchTemplateNextLine": "While synced lyrics are playing, changes apply on the next line.",
     "wholeTemplate": "Whole template"
   },
   "gallery": {
@@ -377,6 +389,7 @@
       "direction": "Direction",
       "language": "Language",
       "translation": "Translation",
+      "separateTranslation": "Separate subtitle",
       "content": "Content",
       "paging": "Paging",
       "artwork": "Artwork",
@@ -649,6 +662,22 @@
           "thought": "Thought Bubble",
           "stacked": "Stacked Cards",
           "phone": "Phone"
+        }
+      },
+      "mangaBubbleStyle": {
+        "label": "Bubble Style",
+        "options": {
+          "spoken": "Dialogue",
+          "whisper": "Whisper",
+          "thought": "Thought",
+          "shout": "Shout"
+        }
+      },
+      "mangaTailDirection": {
+        "label": "Tail Direction",
+        "options": {
+          "fixed": "Fixed Direction",
+          "performer": "Follow Model Placement"
         }
       },
       "phantomCardStyle": {

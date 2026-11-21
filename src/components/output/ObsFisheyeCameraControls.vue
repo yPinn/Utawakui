@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, shallowRef, useId } from 'vue';
+import ObsPropertySection from './ObsPropertySection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -72,8 +73,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section
-    class="obs-fisheye-camera"
+  <ObsPropertySection
+    role="group"
     :aria-label="t('outputPanel.cameraEffects.label')"
   >
     <UiHint aria-live="polite">{{ stateLabel }}</UiHint>
@@ -97,16 +98,10 @@ onBeforeUnmount(() => {
       </UiButton>
     </div>
     <UiHint v-if="notice" aria-live="polite">{{ notice }}</UiHint>
-  </section>
+  </ObsPropertySection>
 </template>
 
 <style scoped>
-.obs-fisheye-camera {
-  display: grid;
-  gap: var(--ui-space-3);
-  padding-block: var(--ui-space-3);
-}
-
 .obs-fisheye-camera__buttons {
   display: flex;
   flex-wrap: wrap;

@@ -21,6 +21,7 @@ const props = defineProps({
   ariaLabel: { type: String, required: true },
   sideLabel: { type: String, required: true },
   tabsLabel: { type: String, required: true },
+  defaultItemId: { type: String, default: null },
   side: { type: String, default: 'right' },
   labelMode: { type: String, default: 'icon' },
   idPrefix: { type: String, default: '' },
@@ -45,7 +46,10 @@ const shapeId = `${ids}-shape`;
 const shapeStyle = { '--_folder-tab-shape': `url("#${shapeId}")` };
 const selectedId = shallowRef(null);
 const activeItem = computed(
-  () => props.items.find(({ id }) => id === selectedId.value) ?? props.items[0],
+  () =>
+    props.items.find(({ id }) => id === selectedId.value) ??
+    props.items.find(({ id }) => id === props.defaultItemId) ??
+    props.items[0],
 );
 const tabs = computed(() =>
   props.items.map((item) => ({
@@ -53,8 +57,8 @@ const tabs = computed(() =>
     tooltipPlacement:
       props.labelMode === 'icon' && item.icon
         ? props.side === 'left'
-          ? 'right'
-          : 'left'
+          ? 'end'
+          : 'start'
         : undefined,
   })),
 );
@@ -339,7 +343,7 @@ onBeforeUnmount(() => {
               tabindex="0"
               :aria-label="sideLabel"
             >
-              <slot name="side-top" />
+              <slot name="side-top" :item="activeItem" />
               <section
                 v-for="item in items"
                 v-show="activeItem?.id === item.id"
@@ -494,12 +498,18 @@ onBeforeUnmount(() => {
 
 .ui-folder-inspector__resize::before {
   inline-size: var(--ui-drag-indicator-width);
-  background: var(--inspector-seam);
+  background: var(--ui-folder-inspector-idle-seam, var(--inspector-seam));
   content: '';
 }
 
 .ui-folder-inspector__workspace[data-open='true']
-  .ui-folder-inspector__resize::before,
+  .ui-folder-inspector__resize::before {
+  background: var(
+    --ui-folder-inspector-idle-seam,
+    var(--ui-color-folder-primary)
+  );
+}
+
 .ui-folder-inspector__workspace[data-resizing='true']
   .ui-folder-inspector__resize::before {
   background: var(--ui-color-folder-primary);

@@ -289,7 +289,7 @@ function boot() {
         refreshTypography();
       }
       ribbon.setActive(active && templateId === 'ribbon-setlist', {
-        reveal: previousTemplateId !== templateId,
+        reveal: !latestSnapshot && previousTemplateId !== templateId,
       });
     },
     onSnapshot: present,

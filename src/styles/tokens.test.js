@@ -76,7 +76,7 @@ function tokenBlock(selector) {
 
 function resolveColor(name, definitions) {
   const value = definitions[name];
-  const reference = value?.match(/^var\((--[\w-]+)\)$/)?.[1];
+  const reference = value?.match(/^var\(\s*(--[\w-]+)\s*\)$/)?.[1];
   if (reference) return resolveColor(reference, definitions);
   if (/^#[\da-f]{6}$/i.test(value)) return value;
   throw new Error(
@@ -302,7 +302,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(572);
+    expect(uniqueNames.size).toBe(578);
     expect(uniqueNames).toContain('--ui-motion-easing-reversible');
     expect(uniqueNames).toContain('--ui-shell-workspace-min-inline-size');
     expect(uniqueNames).toContain('--ui-shell-layout-recovery-inline-size');
@@ -641,6 +641,7 @@ describe('Studio Library workspace prototype isolation', () => {
       ['--ui-segmented-selected-foreground', '--ui-color-surface-selected'],
       ['--ui-color-text-muted', '--ui-color-canvas'],
       ['--ui-color-text-muted', '--ui-color-surface'],
+      ['--ui-color-text-muted', '--ui-color-surface-raised'],
       ['--ui-color-text-muted', '--ui-color-surface-selected'],
       ['--ui-color-current', '--ui-color-surface'],
       ['--ui-color-current', '--ui-color-surface-hover'],
@@ -654,6 +655,37 @@ describe('Studio Library workspace prototype isolation', () => {
         `--ui-color-folder-${role}-foreground`,
         `--ui-color-folder-${role}`,
       ]);
+    }
+    const neutralTab = resolveColor('--ui-color-folder-neutral', definitions);
+    const neutralTabInk = resolveColor(
+      '--ui-color-folder-neutral-foreground',
+      definitions,
+    );
+    expect(
+      contrastRatio(neutralTabInk, mixColors(neutralTab, neutralTabInk, 0.84)),
+      'selected neutral folder tab',
+    ).toBeGreaterThanOrEqual(4.5);
+    const tabInk = resolveColor(
+      '--ui-folder-tab-primary-foreground',
+      definitions,
+    );
+    const selectedTab = resolveColor(
+      '--ui-folder-tab-primary-selected',
+      definitions,
+    );
+    pairs.push([
+      '--ui-folder-tab-primary-selected-foreground',
+      '--ui-folder-tab-primary-selected',
+    ]);
+    for (const shade of ['strong', 'medium', 'soft']) {
+      const background = `--ui-folder-tab-primary-${shade}`;
+      pairs.push(['--ui-folder-tab-primary-foreground', background]);
+      expect(
+        contrastRatio(
+          tabInk,
+          mixColors(resolveColor(background, definitions), selectedTab, 0.94),
+        ),
+      ).toBeGreaterThanOrEqual(4.5);
     }
     for (const status of [
       '--ui-color-neutral',

@@ -2,6 +2,7 @@
 
 const {
   loadOutputSlots,
+  sanitizeOutputSlot,
   setOutputRecentColors,
   setOutputSavedColors,
   upsertOutputSlot,
@@ -23,6 +24,7 @@ const {
 } = require('../../shared/outputRuntimeValues.json');
 const {
   slots: OUTPUT_SLOT_DEFINITIONS,
+  developmentTemplateIds,
 } = require('../../shared/outputTemplateValues.json');
 
 const OUTPUT_PATH_BY_KIND = new Map(
@@ -45,6 +47,7 @@ function buildOutputUrl(status, kind) {
 function registerOutputHandlers({
   ipcMain,
   server,
+  isDev = false,
   requireFeatureGate,
   featureIds,
   getConfig,
@@ -70,9 +73,28 @@ function registerOutputHandlers({
     return draft.previewOnly || draft.directory === outputDir();
   }
 
+  function availableOutputSlots(document) {
+    if (isDev) return document;
+    const slots = { ...document.slots };
+    for (const { id, defaultTemplateId } of OUTPUT_SLOT_DEFINITIONS) {
+      if (developmentTemplateIds.includes(slots[id]?.templateId)) {
+        slots[id] = sanitizeOutputSlot(id, {
+          ...slots[id],
+          templateId: defaultTemplateId,
+        });
+      }
+    }
+    return { ...document, slots };
+  }
+
   function syncOutputSlots(document = loadOutputSlots(outputDir())) {
-    server.setOverlaySlots?.(document.slots);
-    return document;
+    const available = availableOutputSlots(document);
+    server.setOverlaySlots?.(available.slots);
+    return {
+      version: available.version,
+      slots: available.slots,
+      preferences: available.preferences,
+    };
   }
 
   try {
@@ -172,6 +194,13 @@ function registerOutputHandlers({
   });
 
   ipcMain.handle('output-slots:upsert', async (event, kind, slot) => {
+    if (
+      !isDev &&
+      typeof slot?.templateId === 'string' &&
+      developmentTemplateIds.includes(slot.templateId.trim())
+    ) {
+      throw new TypeError('Invalid output slot');
+    }
     return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));
   });
 
@@ -295,11 +324,11 @@ function registerOutputHandlers({
   );
 
   ipcMain.handle('output-slots:set-recent-colors', async (event, colors) => {
-    return setOutputRecentColors(outputDir(), colors);
+    return availableOutputSlots(setOutputRecentColors(outputDir(), colors));
   });
 
   ipcMain.handle('output-slots:set-saved-colors', async (event, colors) => {
-    return setOutputSavedColors(outputDir(), colors);
+    return availableOutputSlots(setOutputSavedColors(outputDir(), colors));
   });
 }
 

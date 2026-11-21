@@ -5,7 +5,7 @@ import UiIconButton from '../ui/UiIconButton.vue';
 import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
-  title: { type: String, required: true },
+  title: { type: String, default: '' },
   modified: { type: Boolean, default: false },
 });
 
@@ -17,8 +17,8 @@ const resetLabel = computed(() =>
 </script>
 
 <template>
-  <section class="obs-property-section">
-    <header class="obs-property-section__header">
+  <component :is="title ? 'section' : 'div'" class="obs-property-section">
+    <header v-if="title" class="obs-property-section__header">
       <h3 class="obs-property-section__title">{{ title }}</h3>
       <UiIconButton
         v-if="modified"
@@ -33,20 +33,23 @@ const resetLabel = computed(() =>
     <div class="obs-property-section__fields">
       <slot />
     </div>
-  </section>
+  </component>
 </template>
 
 <style scoped>
 .obs-property-section {
-  min-width: 0;
+  min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-2);
   padding-block: var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.obs-property-section + .obs-property-section {
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .obs-property-section__header {
-  min-width: 0;
+  min-inline-size: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -60,6 +63,7 @@ const resetLabel = computed(() =>
 
 .obs-property-section__title {
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--ui-color-text);
   font-size: inherit;
   font-weight: var(--ui-type-label-weight);
@@ -79,8 +83,8 @@ const resetLabel = computed(() =>
 }
 
 .obs-property-section__fields {
-  min-width: 0;
+  min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-1);
+  gap: var(--ui-space-2);
 }
 </style>
