@@ -61,7 +61,7 @@
 
 模板背景、主內容、前景的開發順序、透明驗收和素材歸屬見 [Output 圖層分階段實作計畫](output-layer-implementation-plan.md)。
 
-動畫編排、逐款處置與驗收順序見 [Output GSAP 動畫改寫計畫](output-gsap-migration-plan.md)。
+動畫編排、逐款處置與驗收順序見 [Output GSAP 動畫改寫計畫](output-gsap-migration-plan.md)；渲染分工、效能預算與動畫師交付見 [ADR 0034](../adr/0034-output-motion-rendering-and-animation-handoff.md)。
 
 ## 尚待完成與下一步
 

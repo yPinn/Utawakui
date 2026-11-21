@@ -551,6 +551,9 @@ separate display-time provenance and local font/container measurement, with no
 new model, dependency or unpacked payload. Co-located tests remain excluded;
 the closed module-graph delivery test covers all three routes.
 
+Lyrics template code that loads on demand goes through the exact route for
+`overlay/lyrics/templateModules.mjs`; the files it loads keep their own routes.
+
 Phantom Thieves uses the existing Overlay packaging glob and exact routes for
 `overlay/lyrics/phantomThieves.mjs` and `overlay/lyrics/phantomThieves.css`.
 The renderer Gallery preview bundles the same drawing code and styles.
@@ -558,6 +561,16 @@ The two accent fonts have exact Browser Source routes and ship in
 `shared/assets/fonts/` as `KaitouYokokuGothic-Heavy.ttf` and
 `Kaibunsyo-Regular.ttf`. `SOURCE-LAVSIC.txt` records their source and
 checksums. The upstream notices ship under `shared/assets/fonts/licenses/lavsic/`.
+
+Textured Credits uses the same Overlay glob and exact routes for
+`overlay/lyrics/texturedCredits.mjs`, `texturedCredits.css` and
+`shared/browser/doodleCloudEffect.mjs`. Its GPU effect loads `pixi.js` 8.22.0
+(`dist/pixi.min.js`, `dist/packages/unsafe-eval.min.js`) and `pixi-filters`
+6.1.5 (`dist/pixi-filters.js`) through `/overlay/vendor/` routes;
+`electron-builder.yml` ships only those files, and the IIFE builds already
+bundle the packages' own dependencies. The template is
+selectable in development mode. Other builds resolve a saved development
+selection to the default Lyrics template. The texture is generated locally.
 
 Chalkboard Vertical adds `overlay/lyrics/chalkboardVertical.mjs` under the
 existing overlay package rule and one exact Browser Source route. It reuses the

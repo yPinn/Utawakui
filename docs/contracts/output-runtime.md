@@ -1,6 +1,6 @@
 # Output Runtime 契約
 
-Output server、投影傳輸與 Browser Source 頁面生命週期。決策見 [ADR 0012](../adr/0012-state-convergence-and-startup-phases.md)；外觀見 [Output 外觀契約](output-appearance.md)；未來 pack 見 [Overlay pack 規劃](overlay-pack.md)。
+Output server、投影傳輸與 Browser Source 頁面生命週期。決策見 [ADR 0012](../adr/0012-state-convergence-and-startup-phases.md)；外觀見 [Output 外觀契約](output-appearance.md)；動畫、渲染與效能見 [Output 動態與渲染契約](output-motion-rendering.md)；模板組成與資產邊界見 [Overlay pack](overlay-pack.md)。
 
 ## 歌詞間奏清字
 
@@ -35,13 +35,13 @@ Renderer 的投影帶 `contractVersion`、main 發的 `bootId`、renderer 發的
 - 建立視窗不等待 Output listener 或曲庫列舉；migration 先比對版本，需要時才讀曲目。
 - Renderer 在 App mount 後才開始 hydration，待 player、queue、曲庫、playlist 與目前歌詞就緒後送出一次 full 投影。
 - Listener 可在 source ready 前啟動，此時 Browser Source 收到 unavailable 的空投影，不顯示舊內容。
-- 更新檢查與 adapter 探索在 shell 可互動後才開始；字型、GSAP 等只在使用中的 surface 需要時載入。
+- 更新檢查與 adapter 探索在 shell 可互動後才開始；字型、GSAP 等只在使用中的 surface 需要時載入。模板模組、特效元件與渲染引擎依目前模板載入，見[載入與釋放](output-motion-rendering.md#載入與釋放)。
 
 ## 傳輸
 
 - 四個 OBS URL 不變。內建 overlay 協商 `utawakui.output.v3` subprotocol；不帶 subprotocol 的 client 與 `/api/v1/state` 保留 snapshot v2；未知 subprotocol 直接拒絕。
 - V3 只在 canonical 值改變時送 `lyrics.document`、`queue.document`；動態 `state.snapshot` 帶時鐘、phase、延遲、曲目 scalar 與內容 reference。連線時依序送設定、內容、狀態；引用未知內容的狀態 fail closed。Socket 唯讀，overlay 不能請求內容或傳入命令。
-- `lyrics.document` 可帶 `translations`：依語言列出 `{ lineId, text }`，Main 只收共用語言清單、存在且不重複的行與有界非空文字。`overlayConfig.translationLanguage` 由「畫面輸出譯文」設定解析，與 `language` 一起即時推送；切換不重送歌詞文件。見[譯文契約](lyrics-timing-contract.md#local-translation-data)。
+- `lyrics.document` 可帶 `translations`：依語言列出 `{ lineId, text }`，Main 只收共用語言清單、存在且不重複的行與有界非空文字。`overlayConfig.translationLanguage` 由歌詞工作臺「翻譯」分頁的「顯示譯文」設定解析，與 `language` 一起即時推送；切換不重送歌詞文件。見[譯文契約](lyrics-timing-contract.md#local-translation-data)。
 - 每個 client 一個 in-flight send 與有界 pending slot：時鐘修正 latest-wins，新語意狀態取代舊時鐘修正，內容排在使用它的狀態之前。逾時或持續超過 high-water 只斷開該 client。Diagnostics 只記總數與 bytes，不記曲名、歌詞或 payload。
 - HTTP：health／state `no-store`；runtime HTML／JS／CSS 用 strong ETag ＋ `no-cache`；封面以 track id 指標重新驗證後轉址到 SHA-256 digest route，該 route 一年 immutable。都不接受檔名或路徑。
 - Server 只綁 `127.0.0.1`，exact route allowlist、明確 media type、`nosniff`、restrictive CSP。
@@ -75,12 +75,13 @@ V3 queue.document及相容snapshot-v2的queue可選帶receipt：completedCount�
 
 固定頁面入口為 `/overlay/lyrics`、`/overlay/now-playing` 與 `/overlay/setlist`。Lyrics 檢視模式共用相同入口，接受有界的 `workbench=1`、`guide=0/1` 與 backdrop 選項。App 內工作台使用透明歌詞 iframe，由 renderer 在 iframe 下方合成已同步 MV 或人物參考。`overlay/assets/streamer-guide.png` 是檢視模式和 App 工作台共用的人物圖，HTTP 僅開放該明列資產。App 工作台的 MV 由 renderer 經 `utawakui-media:` 讀取。
 
-| 模組                          | 責任                                                                      | 不持有                            |
-| ----------------------------- | ------------------------------------------------------------------------- | --------------------------------- |
-| overlay/shared/lifecycle.mjs  | 每頁單一 host；pagehide、visibility、reduced motion、字型通知；啟動與清理 | 播放時鐘、revision 規則、動畫配方 |
-| overlay/shared/runtime.mjs    | 唯一 WebSocket、重連退避、split documents、boot／epoch／revision 收斂     | DOM、模板 timeline、本機資產      |
-| overlay/shared/appearance.mjs | 設定投影與 FontFaceSet 通知                                               | 字型下載或列舉                    |
-| 各 route boot adapter         | 把 host callback 交給既有 scheduler／controller                           | 新的全域播放器                    |
+| 模組                               | 責任                                                                      | 不持有                            |
+| ---------------------------------- | ------------------------------------------------------------------------- | --------------------------------- |
+| overlay/shared/lifecycle.mjs       | 每頁單一 host；pagehide、visibility、reduced motion、字型通知；啟動與清理 | 播放時鐘、revision 規則、動畫配方 |
+| overlay/shared/runtime.mjs         | 唯一 WebSocket、重連退避、split documents、boot／epoch／revision 收斂     | DOM、模板 timeline、本機資產      |
+| overlay/shared/appearance.mjs      | 設定投影與 FontFaceSet 通知                                               | 字型下載或列舉                    |
+| overlay/lyrics/templateModules.mjs | 歌詞按需模板的程式與樣式載入及快取                                        | 播放時鐘、模板設定                |
+| 各 route boot adapter              | 把 host callback 交給既有 scheduler／controller                           | 新的全域播放器                    |
 
 - `createOverlayHost()` 在 `start()` 才訂閱與連線；重複 start 無作用，dispose 冪等且不可再 start。Pagehide 依序移除訂閱、執行 route cleanup、停止 connection；cleanup 拋錯仍須停止 connection。換模板不重建 connection。
 - 頁面可見、transport 已連線且收到該連線的新 snapshot 後才 active；不恢復上一條連線的舊內容。隱藏時停止 scheduler 與量測，只保留最後 snapshot，恢復時只交付最新一份，不補播隱藏期間換曲。

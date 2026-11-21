@@ -31,7 +31,7 @@
 
 [合規參考](governance/legal-compliance.md)、[外觀 set 計畫](governance/appearance-sets-plan.md)、[依賴查核](governance/community-dependency-boundaries-2026-10-20.md)、[服務／模型／元件授權查核](governance/release-license-review-2026-10-18.md)、[功能說明查核](governance/feature-notice-review-2026-10-18.md)
 
-Output 外觀實作規劃見[圖層與素材](governance/output-layer-implementation-plan.md)與 [GSAP 動畫改寫](governance/output-gsap-migration-plan.md)。
+Output 外觀實作規劃見[圖層與素材](governance/output-layer-implementation-plan.md)與 [GSAP 動畫改寫](governance/output-gsap-migration-plan.md)；渲染分工、效能與動畫師交付見[動態與渲染契約](contracts/output-motion-rendering.md)及[動畫交付規格](contracts/output-animation-handoff.md)。
 
 ## 發行與歷史
 

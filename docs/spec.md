@@ -120,7 +120,8 @@ v0.6.0 工作樹變更如下。
 ### 4.4 Output
 
 - Server 只綁定 loopback，以 exact route allowlist 提供資產；snapshot 不含路徑、provider payload 或任意 HTML。
-- 三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；模板與設定見[顯示契約](contracts/output-appearance.md)。
+- 三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線，也是同時使用的上限；模板與設定見[顯示契約](contracts/output-appearance.md)。
+- 同步動態只依播放時鐘取樣，由 GSAP 編排；2D GPU 特效採 PixiJS，模板資源按需載入；動畫師交付動態規格與素材。[ADR 0034](adr/0034-output-motion-rendering-and-animation-handoff.md) · [動態與渲染契約](contracts/output-motion-rendering.md)
 - 演出安排中未開始的項目不進公開輸出；confirmed playing 後才使用該次的顯示名稱。
 - OBS WebSocket 是獨立、可停用的唯讀 adapter，不經 Browser Source 通道。魚眼攝影機特效由 Output 自行呈現。
 
@@ -153,13 +154,13 @@ Gate confirmation 只保存 featureId、notice version、時間與 enabled，不
 
 ### 6.2 已接受方向：依前置條件推進
 
-| 方向             | 下一步                                                                                              | 前置條件                                                                                                                          |
-| ---------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 本地演出與回放   | 在已驗收的場次時間軸上補 VOD／clip 狀態與輸出 review。                                              | 一般權利告知採版本化的一次確認，保留重開說明入口；個別素材權利由使用者確認。                                                      |
-| 手機遙控／提詞器 | 實機驗收：真實手機掃碼配對、讀詞延遲與時鐘校正、遙控指令與撤銷，以及 Windows 防火牆與網路類型偵測。 | 依 [ADR 0033](adr/0033-mobile-companion-local-network.md) 與[手機遙控契約](contracts/mobile-companion.md)；保持現有 Output 唯讀。 |
-| 音訊準備與設定   | 評估新分離結果的受控 FLAC 5／WAV 回退，並分別定義變調／速度預渲染與 preset 匯出入。                 | 先驗品質、取消與失敗復原；定保存與缺曲處理，既有音訊保留原格式。[音訊處理 ADR](adr/0009-tiered-audio-processing-runtime.md)       |
-| Output 外觀交付  | 分期定義 Instance、Presentation Pack／User Variant 與逐模板改善。                                   | 先定可分享範圍、取得與復原；帳號、付款與遠端取得各自決策。[外觀交付計畫](governance/appearance-sets-plan.md)                      |
-| 曲庫細節         | 先驗[曲目演唱語言](#622-曲目演唱語言)，再推進[曲風覆核與歌曲電台](#621-曲庫風格標籤與歌曲電台)。    | 沿既有人工校對與作品／版本關係保存證據。歌曲電台的預設排序等試聽評分。[作品與版本](contracts/works-versions-and-releases.md)      |
+| 方向             | 下一步                                                                                                                                                                               | 前置條件                                                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 本地演出與回放   | 在已驗收的場次時間軸上補 VOD／clip 狀態與輸出 review。                                                                                                                               | 一般權利告知採版本化的一次確認，保留重開說明入口；個別素材權利由使用者確認。                                                                                                                                |
+| 手機遙控／提詞器 | 實機驗收：真實手機掃碼配對、讀詞延遲與時鐘校正、遙控指令與撤銷，以及 Windows 防火牆與網路類型偵測。                                                                                  | 依 [ADR 0033](adr/0033-mobile-companion-local-network.md) 與[手機遙控契約](contracts/mobile-companion.md)；保持現有 Output 唯讀。                                                                           |
+| 音訊準備與設定   | 評估新分離結果的受控 FLAC 5／WAV 回退，並分別定義變調／速度預渲染與 preset 匯出入。                                                                                                  | 先驗品質、取消與失敗復原；定保存與缺曲處理，既有音訊保留原格式。[音訊處理 ADR](adr/0009-tiered-audio-processing-runtime.md)                                                                                 |
+| Output 外觀交付  | textured-credits 的 PixiJS 多層紋路已試作，魚眼鏡筒、幻影怪盜與 textured-credits 已按需載入；建立三來源效能基準並在 OBS 實測後，其餘模板再逐款改善並改為按需載入。多 Instance 延後。 | 先量測三來源同時運作的成本再定預算。Presentation Pack／User Variant 的分享、取得與復原另行決策。[動態與渲染契約](contracts/output-motion-rendering.md) · [外觀交付計畫](governance/appearance-sets-plan.md) |
+| 曲庫細節         | 先驗[曲目演唱語言](#622-曲目演唱語言)，再推進[曲風覆核與歌曲電台](#621-曲庫風格標籤與歌曲電台)。                                                                                     | 沿既有人工校對與作品／版本關係保存證據。歌曲電台的預設排序等試聽評分。[作品與版本](contracts/works-versions-and-releases.md)                                                                                |
 
 逐曲設定、區段練習、對時確認及快捷鍵的驗收案例沿[排練規劃](research/product/player-practice-planning-2026-10-26.md)推進。
 

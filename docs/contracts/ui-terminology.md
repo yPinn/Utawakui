@@ -19,6 +19,8 @@
 
 ## 已定案
 
+「問題排查」（Troubleshooting）提供目前可處理的功能問題與下一步。「支援包」（Support package）是給維護者的診斷匯出。
+
 「手機預覽」（Phone preview）指桌面手機外框內可操作的手機遙控頁面。
 
 手機遙控的「歌詞版型」（Lyrics layout）指手機提詞方式。「捲動歌詞」（Scrolling lyrics）列出整首歌詞並跟隨當前句。「兩句聚焦」（Two-line focus）顯示當前句與下一句。
@@ -33,6 +35,11 @@
 
 Output 字型選單採用「模板字型」（Template fonts）指模板提供的字型組合。「本機字型」（Local fonts）指控制台可列舉的已安裝字型。
 「隨模板」（Follow template）是使用模板原有排版字型的選項，其字型可能依文字語系或材質改變。
+
+模板庫以「獨立字幕」（Separate subtitle）說明譯文在輸出畫面有自己的顯示位置。
+Output 工作臺的「模板」（Templates）分頁提供底片清單，可直接切換目前輸出類別使用的模板。
+「模板設定分頁」（Template settings tabs）是工作臺與手機遙控中調整模板的分頁列名稱。
+歌詞輸出的「翻譯」（Translation）分頁用「顯示譯文」（Show translation）選擇畫面輸出的譯文，用「譯文字級」（Translation size）調整字幕大小。
 
 「人物組合」（Portrait preset）是幻影怪盜中一組可切換的照片、顯示名稱與底色。
 「搜尋名稱」（Search names）依人物組合的顯示名稱篩選清單。
@@ -62,6 +69,7 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 | 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
 | 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                       |
 | 幻影怪盜           |                  | 畫面輸出的拼貼歌詞模板                                     | Phantom Thieves                    |
+| 紋理顯字           |                  | 開發版的畫面輸出歌詞模板                                   | Textured Credits                   |
 | 選句剪報           |                  | 幻影怪盜中以黑白折角紙帶顯示前後句與當句的構圖             | Choice Stack                       |
 | 有頭像             |                  | 顯示人像框的側邊彈卡樣式                                   | With Avatar                        |
 | 呈現方式、聊天外形 |                  | 幻影怪盜的構圖選項及聊天變化                               | Presentation, Chat Shape           |
@@ -75,14 +83,20 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 | 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight                   |
 | 裝飾               |                  | Output 可選用的視覺物件                                    | Decoration                         |
 | 鏡內反光           |                  | 魚眼鏡筒的可選環形反光，樣式為關閉、柔和及標準             | Lens reflection                    |
-| 攝影機特效         |                  | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects                     |
+| 攝影機特效         | 特效             | 作用於輸出畫幅頂層的 Glitch、推拉和雜訊                    | Camera effects                     |
 | 自動穿插           |                  | 輸出按隨機間隔顯示短暫特效                                 | Automatic bursts                   |
 | 監聽跟隨擷取       |                  | 監聽採用擷取端的導唱開關與比例                             | Monitor follows capture            |
 | 伴奏               |                  | 曲目分離後可用於演唱及混入導唱的音訊                       | Accompaniment                      |
 | 波形對照           |                  | 本機音源與影片參考音軌在同一時間軸的對照                   | Waveform comparison                |
 | 播放片段、停止預覽 |                  | 預覽目前檢視區間的本機音源與影片畫面                       | Play segment, Stop preview         |
 | 預覽背景           |                  | 歌詞工作台顯示的同步 MV 或人物參考                         | Preview background                 |
-| 模型佔位           |                  | 歌詞工作台用來檢查人物大小、對位和遮擋的範圍               | Model placement                    |
+| 模型佔位           | 佔位             | 歌詞工作台用來檢查人物大小、對位和遮擋的範圍               | Model placement                    |
+| 氣泡樣式           | 氣泡             | 分格對白的主歌詞外框                                       | Bubble style                       |
+| 尾巴朝向           |                  | 分格對白氣泡的短箭尾或思考圓點所指的方向                   | Tail direction                     |
+| 版面               |                  | 輸出模板的排列、定位、構圖與位置微調                       | Layout                             |
+| 修飾               |                  | 目前模板專屬的色彩、背景、裝飾與文字效果                   | Styling                            |
+| 顯示               |                  | 輸出模板的內容呈現方式與元素顯示設定                       | Display                            |
+| 外觀               |                  | 輸出模板的調色、材質顆粒與相關視覺設定                     | Appearance                         |
 | 遮罩形狀           |                  | 模型佔位的裁切外形                                         | Mask shape                         |
 | 佔位圖片           |                  | 模型佔位內顯示的內建或本機圖片                             | Placement image                    |
 

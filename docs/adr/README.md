@@ -16,7 +16,7 @@
 | [0008](0008-local-diagnostics-and-error-handling.md)               | 本機diagnostics與錯誤                 | Accepted                          |
 | [0009](0009-tiered-audio-processing-runtime.md)                    | 分級音訊環境                          | Accepted for implementation       |
 | [0010](0010-lyrics-timing-granularity-and-output-content-split.md) | 歌詞T0／T1／T2與投影                  | Accepted                          |
-| [0011](0011-overlay-instances-and-presentation-pack-delivery.md)   | Overlay instance／pack方向            | Accepted for planning             |
+| [0011](0011-overlay-instances-and-presentation-pack-delivery.md)   | Overlay instance／pack方向            | Accepted for planning；由0034修訂 |
 | [0012](0012-state-convergence-and-startup-phases.md)               | 狀態收斂與啟動階段                    | Accepted                          |
 | [0013](0013-external-integration-planes.md)                        | 外部整合平面                          | Accepted                          |
 | [0014](0014-audio-python-runtime-family.md)                        | Audio Python runtime family           | Accepted                          |
@@ -39,3 +39,4 @@
 | [0031](0031-scoped-release-private-symbols.md)                     | 正式版 Main 私有符號的限範圍轉換      | Accepted                          |
 | [0032](0032-ui-and-output-languages.md)                            | 介面語言與 Output 語言                | Accepted                          |
 | [0033](0033-mobile-companion-local-network.md)                     | 手機遙控與提詞的區網通道              | Accepted                          |
+| [0034](0034-output-motion-rendering-and-animation-handoff.md)      | Output 動態渲染分工與動畫交付         | Accepted                          |

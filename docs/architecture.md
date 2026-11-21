@@ -29,7 +29,7 @@
 - Raw `ipcMain` 只交給 `electron/main/ipcSenderPolicy.js`。未列出的 channel 預設只接受目前主視窗的 main frame；Performer 只取得自己的視窗控制、snapshot／status、diagnostic、閱讀距離、固定 offset action 與播放／暫停／讀音 control intent。開發版跟唱另有獨立的短期音訊 lease。導唱分析、三軌試聽與標記由 main 依目前曲目及分離版本解析。Offset 與 control intent 只帶 action、revision、track id，由 main 驗證後轉送主 renderer。驗證同時比對 `event.sender`、`senderFrame` 與 owner 的 main frame，subframe 不繼承 capability。
 - Renderer 仍由 `file://` 載入，CSP 的 `'self'` 因此涵蓋整個磁碟：`connect-src` 只列 dev server，`frame-src` 不含 `'self'`（`scripts/rendererContentSecurityPolicy.test.mjs`）。
 - Output server 的 HTTP 只接受 `Host: 127.0.0.1:<port>`，WebSocket 另要求同值 Origin，以阻擋 DNS rebinding。
-- Output 頁面與控制台之間只有一條單向訊息：Workbench 預覽（`workbench=1` 且被嵌入時）以動態 import 載入 `overlay/shared/elementReporter.mjs`，把元素矩形 `postMessage` 給 parent。Output 頁面不註冊任何 message listener；targetOrigin 為 `*`（正式控制台是不透明的 `file://` origin），可嵌入者由 CSP `frame-ancestors` 限定。控制台只接受自己預覽 iframe 的 `event.source`、預覽 URL 的 origin，並以 `shared/outputElementMessage.mjs` 驗證型別、元素 id 與數量上限（ADR 0027 P4）。
+- Workbench 預覽（`workbench=1` 且被嵌入時）以動態 import 載入 `overlay/shared/elementReporter.mjs`，把元素矩形 `postMessage` 給 parent。此方向的 targetOrigin 為 `*`（正式控制台是不透明的 `file://` origin）。控制台核對預覽 iframe 的 `event.source`、預覽 URL 的 origin，並用 `shared/outputElementMessage.mjs` 驗證欄位（ADR 0027 P4）。分格對白的工作台亦把遮罩中心 0–1 X／Y 傳給精確的預覽 URL origin。只有被嵌入的歌詞 Workbench 頁面會接收，並驗證訊息來源為直接 parent、種類及座標範圍。可嵌入者由 CSP `frame-ancestors` 限定。
 - 這些是固定 shell 不變式，不是使用者設定。
 - 曲庫名稱與依賴 ZIP entry 共用 `lib/textGuards.js` 的 Windows filename 驗證：拒絕 NTFS alternate streams、DOS device names、控制字元、尾端點／空白及保留字元；ZIP 保留正常 `./` 與巢狀目錄。這補充 lexical containment，不提供本機管理員竄改防護。驗證與發行限制見[防禦檢查](research/engineering/defensive-security-review-2026-10-26.md)。
 
@@ -121,7 +121,7 @@
 - `lyrics/useLinkedLyricsReference.js` 管理翻唱的播放參照、舊來源相容與過期請求；`lyrics/useLyricsPlaybackProjection.js` 從目前顯示文件與媒體時鐘推導行、逐字進度與本機畫面。
 - `lyrics/useLyricsTextProcessing.js` 持有 Output-only 隱藏／還原選擇，從曲目 artist 確認歌手前綴；`shared/presentation/lyricsTextProcessing.mjs` 將正文與有界 `vocalParts` 角色範圍分開投影。Main stream schema 驗證，Browser Source runtime 重組，共用 state／fit／preview 消費；模板不另猜姓名或寫回來源。見[文字處理契約](contracts/lyrics-text-processing.md)。
 - `lyrics/useLyricsVocalRoles.js` 在既有文字 owner 內持有版本綁定的手動男／女／合標註、螢光筆整行／範圍塗色、載入競態及保存狀態，文字 owner 另提供閱讀頁用的逐行角色；`library/lyricsVocalRoles.js` 由 document handlers 固定 IPC 讀寫獨立 `lyrics/vocal-roles/` sidecar。Main 自行驗來源 SHA／document identity 與 revision，角色投影不改來源或 timing，刪來源同步清理。
-- 歌詞編輯頁的譯文分頁由 `LyricsTranslationEditor.vue` 持有貼上、TXT 配對與校對草稿；編輯頁與影片版共用 `useLyricsTranslations.js` 讀取目前來源的已儲存譯文。Main 的歌詞 document handlers 驗來源 session，`library/lyricsTranslations.js` 依文件、原文、行 ID 與版本讀寫來源專屬譯文。影片版用既有歌詞播放位置投影當句繁中或英文。Output publisher 以同一 composable 讀取播放中來源的譯文並放入 `lyrics.document`，編輯器存檔經模組共享狀態即時送達；Main 由 `uiLocale.resolveOutputTranslationLanguage` 把設定解析進 overlay 設定，overlay 歌詞 frame 帶當句譯文，目前由 Live Stage 字幕下方顯示。`library/lyricsSourceTranslations.js` 從 Better Lyrics 已存的 TTML 取出來源譯文，隨讀取結果以 `sourceRows` 交給編輯器當草稿，不寫入譯文檔。[譯文契約](contracts/lyrics-timing-contract.md#local-translation-data)
+- 歌詞編輯頁的譯文分頁由 `LyricsTranslationEditor.vue` 持有貼上、TXT 配對與校對草稿；編輯頁與影片版共用 `useLyricsTranslations.js` 讀取目前來源的已儲存譯文。Main 的歌詞 document handlers 驗來源 session，`library/lyricsTranslations.js` 依文件、原文、行 ID 與版本讀寫來源專屬譯文。影片版用既有歌詞播放位置投影當句繁中或英文。Output publisher 以同一 composable 讀取播放中來源的譯文並放入 `lyrics.document`，編輯器存檔經模組共享狀態即時送達；Main 由 `uiLocale.resolveOutputTranslationLanguage` 把設定解析進 overlay 設定，Browser Source 依歌曲時間投影當句譯文，並在歌詞模板外的獨立字幕層顯示。`library/lyricsSourceTranslations.js` 從 Better Lyrics 已存的 TTML 取出來源譯文，隨讀取結果以 `sourceRows` 交給編輯器當草稿，不寫入譯文檔。[譯文契約](contracts/lyrics-timing-contract.md#local-translation-data)
 - `usePlayer.samplePlaybackClock()` 同步唯讀採樣 audio 位置、實際倍率、phase、identity 與配對時間，不回寫 transport state。`useLyrics` 內部的 `lyrics/useLyricsClock.js` 在既有 timeupdate／控制事件與 T1／T2／已套用 T1+ 起點期限重新讀取媒體，只更新歌詞顯示位置；晚到不累加推算位置。Output publisher 在內容傳送 await 後與拒絕重試前重查文件／continuity，再採樣發布，手動演出維持其虛擬投影。細節見[歌詞時間契約](contracts/lyrics-timing-contract.md)與[Output 契約](contracts/output-runtime.md)。
 - 內部 composable 以具名依賴組合、不互相 import：`lyrics/useLyricsAcquisition.js`（手動候選搜尋，與 dormant Musixmatch probe）、`lyrics/useLyricsSourceDocuments.js`（本機來源、offset、timing、label、刪除與匯入）。候選保存綁搜尋世代、選曲與 attempt；Main 的 `lyricsProviders/requestPolicy.js` 擁有逐來源共享速率、實際請求預算／期限、有界 endpoint 探索快取與獨立 caller 取消，保存另走 fresh 重驗。手動 Provider 初查以約三筆可用候選供比較為目標，仍可明確擴搜；Main 合併同 id 新舊摘要並失效不相容時間軸 evidence，partial 只保留為追加快照、不當完整成功快取。追加期間保留列表及有效展開，失敗不清空；不新增漸進 UI 交付。見[歌詞來源契約](contracts/lyrics-sources.md)。
 - Better Lyrics預覽與保存透過中立TTML parser共用Main推導的曲目長度，只對明確Line文件的偏短body dur提供有界相容與warning，原文及時間不變；段落／句／字的其餘驗證保留。共用origin冷卻在連續429／5xx時取服務Retry-After與本機倍增等待的較大值，仍不主動重送；細節見[請求契約](contracts/external-service-request-policy.md)。
@@ -319,8 +319,12 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 
 配色預設由 `shared/outputAppearance.mjs` 提供。Renderer 從預設取選單色票，Overlay 透過同一資料投影語意目標色與選用的封面 RGB 矩陣。矩陣只套用於播放中的封面影像。
 
+- 歌詞 Browser Source 的魚眼鏡筒、幻影怪盜與 textured-credits 由 `overlay/lyrics/templateModules.mjs` 按需載入程式與樣式，載入完成才切換模板（[載入與釋放](contracts/output-motion-rendering.md#載入與釋放)）。textured-credits 的紋路由 `shared/browser/doodleCloudEffect.mjs` 以 PixiJS 繪製：每句依文字行位置以 Canvas 2D 為每層畫一次紋路，GPU 依時間軸的單一 `burn.progress` 讓各層沿自己的方向燃入再燃出，並負責 bloom、模糊與漂移；歌詞斷行由 `texturedCredits.mjs` 以共用 `splitLyricsDisplayRows` 量測規劃，白字與螢光副本兩層交叉淡化，不逐幀改色；PixiJS 的 IIFE build 由同一登記隨模板載入，Output server 以明列路由提供。分格對白的箭尾以 `getScreenCTM()` 的 a–f 係數換算座標，相容舊式 `SVGMatrix`。
 - 歌詞工作台的本機預覽背景由 `ObsOverlayPreview.vue` 合成。它沿用 `useTrackVideoAsset`、`TrackVideoPlayback` 和主播放器時鐘，在透明歌詞 iframe 下方顯示已同步 MV 或人物參考。
-- `useOutputPerformerGuide` 持有歌詞工作台的模型佔位草稿，將遮罩形狀與畫布比例保存為本機 renderer 偏好。人物裁切與 iframe 上方的操作層共用同一組幾何。這組資料不進入 Output slot、投影或 iframe 訊息。
+- Output 切換模板由 Main 在同一次 slot 寫入中保留共用偏好，保存離開模板的專屬外觀，並恢復目標模板的專屬設定。欄位範圍由 `shared/outputAppearance.mjs` 決定。過往外觀只存在 Main 的 `overlays.json`，已套用的 slot 透過既有設定路徑送出。
+- `useOutputPerformerGuide` 持有歌詞工作台的模型佔位草稿，將遮罩形狀與畫布比例保存為本機 renderer 偏好。人物裁切與 iframe 上方的操作層共用同一組幾何。分格對白預設跟隨遮罩中心，工作台預覽讀草稿座標，Main 驗證已確認的中心後隨歌詞 slot 送給 OBS。只改中心時會更新箭尾幾何，模板和其他外觀變更沿用歌詞換句時序；最後一句以其顯示結束為界，尾奏期間立即套用。其餘遮罩資料由工作台持有。
+- 分格對白的下一句樣式由 `useOutputProjectionPublisher` 依播放器時鐘排定，利用歌詞 document 的行識別碼綁定。Main 驗證 `state.snapshot` 內的樣式及數量，工作台預覽與 OBS 的 Browser Source 依同一歌詞行套用。排定狀態在 renderer 記憶體中，播放接續變更、換歌詞、切模板或曲目結束即清除。
+- 歌詞外觀先由 Main 儲存，Browser Source 的 Lyrics scheduler 保留當前來源行的外觀，按含顯示延遲及偏移的播放時鐘，在新來源行測量之前一次套用最新設定。翻譯維持獨立，沒有相符的同步播放時直接收斂。見[外觀套用時機](contracts/output-appearance.md#外觀套用時機)。
 - 圖片編輯視窗共用 main 擁有的選檔草稿與有界去背請求。模型佔位草稿可獨立選檔，依遮罩比例編碼後由 `useOutputPerformerGuideImage` 存入 IndexedDB。預覽草稿無法寫入曲庫肖像。工作台以 renderer Blob URL 顯示圖片，Output 路由與投影不取得自訂圖片。
 - Renderer 分層：`useOutputRuntime.js` 是唯一 public facade（狀態、設定、port 復原、start／stop、slot 保存）；`output/useOutputRuntimeStatus.js` 集中狀態正規化與錯誤；`output/useOutputSlotStore.js` 處理 slot 載入與依序保存；`output/useOutputProjectionPublisher.js` 發布 player／queue／lyrics／讀音／音樂結構投影，負責 document-before-state 排序、`sourceEpoch` 與各 stream revision；`output/useSpoutOutput.js` 只處理 Spout 狀態、FPS 與 start／stop。其餘模組都以具名 callback 取得邊界。
 - 外觀：`shared/outputAppearance.mjs` 單一擁有欄位型別、預設、值域與模板相容性；元素宣告由 `shared/outputTemplateElements.mjs` 擁有（純資料，目前只有 cover-player），元素設定以 `element.<元素>.<屬性>` 鍵保存（ADR 0027）；Electron 在 slot 保存邊界驗證、renderer 依欄位 metadata 建控制、Browser Source 再正規化。`output/useOutputSlotStore.js` 持有 slot 讀寫，並為各 slot 建立 `useOutputAppearanceAutosave`，以 350ms debounce、single-flight、latest-wins 保存，切頁或套用模板前 flush，失敗保留草稿。播放器自然播畢時，人物選擇的重設也經同一歌詞 slot 儲存佇列，保留其他外觀草稿。最近／常用色票是 Output workspace 的偏好，不影響模板預設。各 Output 模板的本機字型只在使用者開啟字型選單後經 Local Font Access 取得，permission handler 只允許可信 main frame。CSS 與魚眼 Canvas 分別套用所選字型，缺字時沿用模板字型順序。歌詞呈現策略由 `lyricsPresentationPolicies.mjs` 另行擁有。
@@ -337,6 +341,8 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 - 開發用 `scripts/output-appearance-audit.mjs` 與 `scripts/output-performance-probe.mjs` 使用隔離 profile 與合成資料，不進封裝，見[驗收 runbook](operations/output-appearance-acceptance.md#f4-隔離-capture-重跑)。
 
 ## 錯誤與 Diagnostics
+
+設定的問題排查使用音訊擷取與 OBS 的即時狀態。支援包由 main 將警告與錯誤投影成有界欄位，再以發行時配置的公鑰加密。未配置時匯出摘要。手動回饋的預覽只取得摘要，main 保存使用者確認的附件。正式封裝版的設定與 IPC 不開放原始紀錄瀏覽。部署順序、金鑰與解包見 [診斷維運](operations/diagnostics-rollout.md)。
 
 1. Handler 在 gated 操作開始前檢查；gate 關閉是預期流程，不記為失敗。
 2. 失敗由 main diagnostics service 保存原始錯誤與有限分類 context。

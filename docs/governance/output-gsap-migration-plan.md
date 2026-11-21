@@ -1,12 +1,13 @@
 # Output GSAP 動畫改寫計畫
 
-2026-11-13 規劃，依 [ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md#use-gsap-as-the-overlay-choreography-core) 推進。現行行為見 [Output 外觀契約](../contracts/output-appearance.md)，實作結果記入 [Output 外觀驗收](../operations/output-appearance-acceptance.md)。盤點涵蓋 14 款模板。魚眼鏡筒的描述取自當時本機 `main`（`05671254`）上的未提交重構，後續以交接版本重新核對。
+2026-11-13 規劃，依 [ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md#use-gsap-as-the-overlay-choreography-core) 推進；2026-11-22 起渲染分工、PixiJS 採用與按需載入依 [ADR 0034](../adr/0034-output-motion-rendering-and-animation-handoff.md) 與 [Output 動態與渲染契約](../contracts/output-motion-rendering.md)。現行行為見 [Output 外觀契約](../contracts/output-appearance.md)，實作結果記入 [Output 外觀驗收](../operations/output-appearance-acceptance.md)。盤點涵蓋 14 款模板。魚眼鏡筒的描述取自當時本機 `main`（`05671254`）上的未提交重構，後續以交接版本重新核對。
 
 ## 動畫與繪製分工
 
 - GSAP 統籌需要多段協調、中斷或依播放位置取樣的動畫。用少量姿勢、時長、緩動和逐字延遲表達效果，讓時間軸連續插值。保留經畫面驗證的停格、空鏡與文字顯露節奏。
 - 同步歌詞與鏡頭由播放器的權威時間投影驅動。回顧間隔等獨立事件可用定時器排程，開始後由動畫控制器負責交接、取消及清理。每個動畫屬性由一個引擎持有。原生線性掃字、直接換句或換曲依各模板需求沿用。
-- CSS、SVG 與 Canvas 負責版面、遮罩和材質。Canvas 需要逐畫面繪製時，先量測重繪、同步像素讀寫與版面讀寫。動畫時序和繪製路徑分開驗證。
+- CSS、SVG 與 Canvas 負責版面、靜態遮罩和材質。發光、模糊、置換、光掃、粒子與動態遮罩交給 PixiJS 特效，不以每幀變動的 filter、mask 或 text-shadow 實作。Canvas 需要逐畫面繪製時，先量測重繪、同步像素讀寫與版面讀寫。動畫時序和繪製路徑分開驗證。
+- 不需對齊歌曲的簡單轉場可留在 CSS 或 Web Animations，不必為一致而改成 GSAP。
 - 使用者依物件選樣式或關閉可選的歌詞、裝飾及背景。視覺比重可由樣式預設表達。遮罩、疊放、光照參數與時間軸由模板管理。魚眼鏡內反光的樣式選擇見圖層計畫。[Output 圖層與素材計畫](output-layer-implementation-plan.md#素材歸屬與共用條件)
 
 ## 分段實作與停點
@@ -14,7 +15,7 @@
 1. **魚眼鏡筒重構交接與量測。** 確認重構的分支、版本與檔案差異。驗證 GSAP 連續取樣、回跳後的姿勢、短句、空鏡、暫停、間奏、減少動態與鏡頭構圖。分開量測旋渦、反光及兩者同開的成本，特別檢查旋渦的 Canvas 像素讀寫。保存基準後依結果決定是否另提繪製優化。
 2. **紅黑緞帶改由 GSAP 編排。** 先記錄卷邊、印字、雙刷幕遮蓋、換頁、停留及返回的現有畫面和時點。保留回顧排程和頁面資料規則，將卷邊、印字和刷幕交給可取消的 GSAP 時間軸。CSS 持有紙面和刷痕。正式輸出和模板庫沿用同一編排，樣張可用自己的示範間隔。驗證同曲刷新、換曲、設定變更、重連、減少動態及透明接縫。
 3. **模板庫動效一致性。** 優先補分格對白、黑板直書和轉播字卡。以固定資料重播代表性場景，優先沿用正式輸出的動效控制器或可單獨測試的時間軸。樣張的循環與播放由模板庫管理。按模板交付，檢查暫停、離開後清理及切換樣張。
-4. **光照、鏡頭與材質試點。** 局部高光或柔光先評估 CSS／Canvas。魚眼旋渦或折射有可重現的成本或畫質缺口時，比較現有 Canvas 與單一 2D GPU 濾鏡，例如 PixiJS。需要三維攝影機、遮擋和受光材質時再評估 Three.js。魚眼突發事件在 Output 的全幅前景層驗證。試點涵蓋減少動態、渲染失敗回退及多來源效能。[動畫與渲染決策](../adr/0011-overlay-instances-and-presentation-pack-delivery.md#use-gsap-as-the-overlay-choreography-core)
+4. **按需載入與 GPU 特效試點。** 魚眼鏡筒、幻影怪盜與 textured-credits 已按需載入，其餘歌詞模板改寫時一併轉換。textured-credits 已改為 PixiJS 多層紋路：每句隨機 3–5 層，各層沿自己的方向以固定 0.7 秒燃入再燃出，起點錯開、終點一致，只佔每句開頭；歌詞隨之以螢光色出現，紋路消散時轉為白字。Electron 量測：Paint 由約 70 ms 降至約 4 ms（30 秒）；每多一層約增加每秒 3 ms GPU，紋路密度不影響成本，主要成本是每句重建材質（[量測紀錄](../contracts/output-motion-rendering.md#效能量測)）。接著建立三個來源同時運作的效能基準，並從紋路特效抽出第一批共用元件。魚眼旋渦或折射有可重現的成本或畫質缺口時，比較現有 Canvas 與 PixiJS 濾鏡。需要三維攝影機、遮擋和受光材質時才使用 Three.js。魚眼突發事件在 Output 的全幅前景層驗證。試點涵蓋減少動態、渲染失敗回退及三來源效能。[動態與渲染契約](../contracts/output-motion-rendering.md)
 
 每段完成後記錄實測畫面、效能差異、待驗項與下一段，總結後停下。以單一模板或單一繪製變更交付，便於撤回。
 

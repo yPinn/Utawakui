@@ -45,7 +45,9 @@
 
 - [Output runtime：投影、傳輸與頁面生命週期](output-runtime.md)
 - [Output 外觀：欄位、模板、本機來源與預覽](output-appearance.md)
-- [Overlay pack 與資產安全（規劃）](overlay-pack.md)
+- [Output 動態與渲染：分工、載入與效能](output-motion-rendering.md)
+- [Output 動畫交付規格（After Effects）](output-animation-handoff.md)
+- [Overlay pack：模板組成與資產邊界（遠端交付延後）](overlay-pack.md)
 - [整合adapter邊界](integration-adapter-contract.md)
 
 ## 操作介面與共同規則
