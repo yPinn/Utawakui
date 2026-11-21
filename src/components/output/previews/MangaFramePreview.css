@@ -46,6 +46,7 @@
   font-size: var(--ui-manga-text-size-by-count);
   --manga-frame-ink: var(--ui-output-preview-manga-ink);
   --manga-frame-paper: var(--ui-output-preview-manga-paper);
+  --manga-frame-stroke-unit: calc(var(--obs-canvas-rem) / 16);
 }
 
 .obs-template-mockup__manga-bubbles[data-manga-count='2']
@@ -56,7 +57,7 @@
 
 .obs-template-mockup__manga-bubbles[data-manga-count='3']
   .obs-template-mockup__manga-bubble {
-  --ui-manga-bubble-row-cap: calc(20 * var(--obs-canvas-rem));
+  --ui-manga-bubble-row-cap: min(calc(20 * var(--obs-canvas-rem)), 34%);
   --ui-manga-text-size-by-count: calc(1.9 * var(--obs-canvas-rem));
 }
 

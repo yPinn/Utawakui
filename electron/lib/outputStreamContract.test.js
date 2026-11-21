@@ -513,6 +513,25 @@ function stateEnvelope(overrides = {}) {
 }
 
 describe('output stream contract', () => {
+  it('carries at most two one-line manga cues using registered styles', () => {
+    const envelope = stateEnvelope();
+    const cue = { lineId: 'line-2', frameId: 'shout' };
+    envelope.payload.lyrics.mangaFrameCues = [cue];
+    expect(
+      parseOutputStreamEnvelope(envelope, 'boot-1').payload.lyrics
+        .mangaFrameCues,
+    ).toEqual([cue]);
+    for (const invalid of [
+      [cue, cue],
+      [{ ...cue, frameId: 'frameless' }],
+      [cue, { ...cue, lineId: 'line-3' }, { ...cue, lineId: 'line-4' }],
+    ]) {
+      envelope.payload.lyrics.mangaFrameCues = invalid;
+      expect(() => parseOutputStreamEnvelope(envelope, 'boot-1')).toThrow(
+        TypeError,
+      );
+    }
+  });
   it('retains bounded audio state in state envelopes and rejects invalid values', () => {
     const envelope = stateEnvelope();
     envelope.payload.playback.volume = 0.42;

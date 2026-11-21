@@ -6,7 +6,7 @@ import {
 
 const STORAGE_KEY = 'utawakui.output.performer-guide';
 
-function readGuide() {
+export function readOutputPerformerGuide() {
   try {
     const saved = JSON.parse(
       globalThis.localStorage?.getItem(STORAGE_KEY) ?? 'null',
@@ -20,14 +20,14 @@ function readGuide() {
     ) {
       return DEFAULT_PERFORMER_GUIDE;
     }
-    return saved;
+    return normalizePerformerGuide(saved);
   } catch {
-    return null;
+    return DEFAULT_PERFORMER_GUIDE;
   }
 }
 
 export function useOutputPerformerGuide() {
-  const saved = shallowRef(normalizePerformerGuide(readGuide()));
+  const saved = shallowRef(readOutputPerformerGuide());
   const draft = shallowRef(null);
   const guide = computed(() => draft.value ?? saved.value);
 
@@ -47,5 +47,5 @@ export function useOutputPerformerGuide() {
     }
   }
 
-  return { guide, preview, commit };
+  return { guide, saved, preview, commit };
 }

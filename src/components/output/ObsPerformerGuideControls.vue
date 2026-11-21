@@ -187,6 +187,6 @@ function change(key, event) {
 .obs-performer-guide-controls__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: var(--ui-space-2);
+  gap: var(--ui-space-2);
 }
 </style>

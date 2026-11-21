@@ -1,4 +1,4 @@
-import { computed, watch } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import OUTPUT_CONTRACT_VALUES from '../../../shared/outputContractValues.json';
 import { createLatestAsyncPublisher } from '../../utils/latestAsyncPublisher.js';
 import {
@@ -22,6 +22,7 @@ import { usePerformanceSessionPlayback } from '../usePerformanceSessionPlayback.
 import { usePerformanceSessionPlan } from '../usePerformanceSessionPlan.js';
 import { projectPerformanceSessionOutput } from '../../utils/performanceSessionOutput.js';
 import { deriveLyricsPlaybackState } from '../../utils/lyricsDocument.js';
+import { MANGA_BUBBLE_STYLE_IDS } from '../../../shared/presentation/mangaFrameContract.mjs';
 
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -35,6 +36,7 @@ function defaultSourceEpoch() {
 export function useOutputProjectionPublisher({
   getBootId,
   getDisplayDelayMs,
+  getLyricsTemplateId,
   isOutputEnabled,
   publishSnapshot,
   refreshStatus,
@@ -43,6 +45,7 @@ export function useOutputProjectionPublisher({
   now = () => new Date().toISOString(),
 }) {
   const { state: playerState, samplePlaybackClock } = usePlayer();
+  const mangaFrameCues = shallowRef([]);
   const { state: queueState, upcomingTracks } = usePlaybackQueue();
   const arrangement = usePerformanceSessionPlayback();
   const { state: arrangementPlanState } = usePerformanceSessionPlan();
@@ -76,6 +79,9 @@ export function useOutputProjectionPublisher({
     activeLineId,
     activeSegmentId,
   } = lyrics;
+  const lyricOffsetSeconds = computed(
+    () => lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds ?? 0,
+  );
   const { record: translationRecord } = useLyricsTranslations(lyrics);
   const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
   const {
@@ -164,9 +170,7 @@ export function useOutputProjectionPublisher({
       sample && !manual && lyricsTrack.value?.id === player.track?.id
         ? deriveLyricsPlaybackState(
             projectedLyricsDocument.value,
-            sample.positionMs +
-              (lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds) *
-                1000,
+            sample.positionMs + lyricOffsetSeconds.value * 1000,
             player.duration * 1000 || null,
           )
         : {
@@ -191,10 +195,15 @@ export function useOutputProjectionPublisher({
         },
         output: { displayDelayMs: getDisplayDelayMs() },
         lyrics: {
-          offsetSeconds:
-            lyricsState.playbackOffsetSeconds ?? lyricsState.offsetSeconds,
+          offsetSeconds: lyricOffsetSeconds.value,
           activeLineId: active.activeLineId,
           activeSegmentId: active.activeSegmentId,
+          mangaFrameCues: !manual
+            ? mangaFrameCues.value.map(({ lineId, frameId }) => ({
+                lineId,
+                frameId,
+              }))
+            : [],
           reference: null,
         },
         queue: { reference: null },
@@ -213,6 +222,71 @@ export function useOutputProjectionPublisher({
         playerState.continuityRevision ?? 0
       }`,
   );
+
+  function clearMangaFrameCues() {
+    if (mangaFrameCues.value.length) mangaFrameCues.value = [];
+  }
+
+  watch(
+    [
+      continuityKey,
+      lyricOffsetSeconds,
+      () => projectedLyricsDocument.value?.documentId,
+    ],
+    clearMangaFrameCues,
+    { flush: 'sync' },
+  );
+  watch(getLyricsTemplateId, clearMangaFrameCues, { flush: 'sync' });
+
+  function mangaCueTarget(positionMs) {
+    if (
+      getLyricsTemplateId() !== 'manga-frame' ||
+      ['ended', 'error', 'seeking'].includes(playerState.playbackPhase) ||
+      (arrangementProjection.value &&
+        arrangement.currentItem.value?.mode === 'manual')
+    )
+      return null;
+    const positionWithOffset = positionMs + lyricOffsetSeconds.value * 1000;
+    return projectedLyricsDocument.value?.lines.find(
+      (line) =>
+        Number.isFinite(line.startMs) &&
+        line.startMs > positionWithOffset &&
+        line.text.trim() &&
+        line.lineId,
+    );
+  }
+
+  const upcomingMangaLine = computed(() =>
+    mangaCueTarget((playerState.currentTime ?? 0) * 1000),
+  );
+  const canCueMangaFrame = computed(() => Boolean(upcomingMangaLine.value));
+  const pendingMangaFrameId = computed(
+    () =>
+      mangaFrameCues.value.find(
+        ({ lineId }) => lineId === upcomingMangaLine.value?.lineId,
+      )?.frameId ?? null,
+  );
+
+  function cueMangaFrame(frameId) {
+    if (frameId !== null && !MANGA_BUBBLE_STYLE_IDS.includes(frameId))
+      return false;
+    const line = mangaCueTarget(samplePlaybackClock({ now }).positionMs);
+    if (!line) return false;
+    const existing = mangaFrameCues.value.find(
+      ({ lineId }) => lineId === line.lineId,
+    );
+    const previous = mangaFrameCues.value
+      .filter(({ startMs }) => startMs < line.startMs)
+      .slice(-1);
+    mangaFrameCues.value =
+      frameId === null || existing?.frameId === frameId
+        ? previous
+        : [
+            ...previous,
+            { lineId: line.lineId, startMs: line.startMs, frameId },
+          ];
+    return true;
+  }
 
   const currentLibraryTrack = computed(
     () => libraryTracksById.value.get(playerState.track?.id) ?? null,
@@ -492,6 +566,10 @@ export function useOutputProjectionPublisher({
   }
 
   return {
+    canCueMangaFrame,
+    clearMangaFrameCues,
+    cueMangaFrame,
+    pendingMangaFrameId,
     isHandshakeComplete: () => handshakeComplete,
     publishCurrentProjection,
     refreshCurrentMusicStructure,

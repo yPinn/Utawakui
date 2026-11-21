@@ -11,10 +11,16 @@ const props = defineProps({
 });
 
 const frame = computed(() => resolveMangaFrame(props.frameId));
-const frameStyle = computed(() => ({
-  '--manga-frame-line-join': frame.value.lineJoin ?? 'round',
-  '--manga-frame-stroke-width': String(frame.value.strokeWidth ?? 7),
-}));
+const frameStyle = computed(() => {
+  const [dash, gap] =
+    frame.value.elements[0]?.attrs['stroke-dasharray']?.split(' ') ?? [];
+  return {
+    '--manga-frame-line-join': frame.value.lineJoin ?? 'round',
+    '--manga-frame-stroke-width': String(frame.value.strokeWidth ?? 7),
+    ...(dash &&
+      gap && { '--manga-frame-dash': dash, '--manga-frame-gap': gap }),
+  };
+});
 </script>
 
 <template>
@@ -52,7 +58,16 @@ const frameStyle = computed(() => ({
   stroke: var(--manga-frame-ink, currentColor);
   stroke-linecap: round;
   stroke-linejoin: var(--manga-frame-line-join, round);
-  stroke-width: var(--manga-frame-stroke-width, 7);
+  stroke-width: calc(
+    var(--manga-frame-stroke-width, 7) * var(--manga-frame-stroke-unit, 1px)
+  );
   vector-effect: non-scaling-stroke;
+}
+
+.manga-frame-svg__shape[stroke-dasharray] {
+  stroke-dasharray: calc(
+      var(--manga-frame-dash) * var(--manga-frame-stroke-unit, 1px)
+    )
+    calc(var(--manga-frame-gap) * var(--manga-frame-stroke-unit, 1px));
 }
 </style>

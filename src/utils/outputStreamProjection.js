@@ -293,6 +293,9 @@ function lyricsReference(lyrics = {}) {
       typeof lyrics.activeSegmentId === 'string'
         ? lyrics.activeSegmentId
         : null,
+    ...(lyrics.mangaFrameCues?.length && {
+      mangaFrameCues: lyrics.mangaFrameCues,
+    }),
   };
 }
 

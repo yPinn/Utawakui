@@ -29,7 +29,10 @@ project artwork, not additional third-party source images.
 ## Provenance and replacement review
 
 `provenance.json` maps every active template to the existing image hash and its
-content status. Seven templates (`karaoke-stack`, `live-stage`, `manga-frame`,
+content status. The original Manga Frame reference remains in Git history.
+Its current cover uses the template's shared SVG, placement and synthetic
+lyrics, with the 1920 × 1080 stroke scaled to 1280 × 720.
+Other templates (`karaoke-stack`, `live-stage`,
 `art-card`, `receipt-setlist`, `cover-player`, `ribbon-setlist`) use style
 references. Their rights remain unverified and G01 remains a delivery blocker.
 The older programmatic captures retain their previous review status.

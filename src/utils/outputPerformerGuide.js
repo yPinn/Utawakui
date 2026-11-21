@@ -1,4 +1,5 @@
 import OUTPUT_CAPTURE_VALUES from '../../shared/outputCaptureValues.json';
+import { DEFAULT_MANGA_TAIL_TARGET } from '../../shared/presentation/mangaFrameContract.mjs';
 import {
   OUTPUT_COMPOSITION_LINES,
   OUTPUT_GUIDE_RELEASE_DISTANCE,
@@ -25,8 +26,7 @@ function shapeAspect(shape) {
 const DEFAULT_HEIGHT = 0.84;
 export const DEFAULT_PERFORMER_GUIDE = Object.freeze({
   shape: 'ellipse',
-  x: 0.5,
-  y: 0.58,
+  ...DEFAULT_MANGA_TAIL_TARGET,
   width: (DEFAULT_HEIGHT * shapeAspect('ellipse')) / CANVAS_ASPECT,
   height: DEFAULT_HEIGHT,
 });

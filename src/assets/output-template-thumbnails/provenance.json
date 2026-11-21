@@ -86,11 +86,16 @@
     },
     "manga-frame": {
       "file": "manga-frame.jpg",
-      "sha256": "535a111b87dec823ad1379b07c5cdb55d5fa1893fe261b2702e475d06d79889d",
-      "content": "style-reference",
-      "rights": "unverified",
-      "delivery": "blocked-G01",
-      "humanReview": "not-tested"
+      "sha256": "597466d02926b9a4b00441aaf8268d07f5d082ceece13ef9f202301a2444c7a5",
+      "content": "current-programmatic-render",
+      "rights": "project-owned-runtime-and-synthetic-lyrics",
+      "delivery": "pending-user-visual-acceptance",
+      "humanReview": "not-tested",
+      "origin": "Default showcase-t1-v1 scene at 5000 ms. Shared Manga Frame SVG, placement, vertical lyric columns and bundled GenEi Antique, composed at 1920 × 1080 with a 7 px stroke over #202020 and scaled to 1280 × 720.",
+      "previousReference": {
+        "commit": "cc9af12c02639435575093ef29220bb8ccaf3c1d",
+        "sha256": "535a111b87dec823ad1379b07c5cdb55d5fa1893fe261b2702e475d06d79889d"
+      }
     },
     "art-card": {
       "file": "art-card.jpg",

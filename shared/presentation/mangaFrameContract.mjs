@@ -1,6 +1,31 @@
 // App-wide presentation contract shared by renderer previews and Browser Source.
 export const MANGA_FRAME_VIEW_BOX = '0 0 400 600';
 export const DEFAULT_MANGA_FRAME_ID = 'spoken';
+export const DEFAULT_MANGA_TAIL_TARGET = Object.freeze({ x: 0.5, y: 0.58 });
+export const MANGA_WORKBENCH_TARGET_MESSAGE = 'utawakui:manga-workbench-target';
+export const MANGA_BUBBLE_STYLE_IDS = Object.freeze([
+  'spoken',
+  'whisper',
+  'thought',
+  'shout',
+]);
+
+export function sanitizeMangaTailCoordinate(value) {
+  return Number.isFinite(value) && value >= 0 && value <= 1 ? value : undefined;
+}
+
+export function readMangaTailTarget(x, y) {
+  const targetX = sanitizeMangaTailCoordinate(x);
+  const targetY = sanitizeMangaTailCoordinate(y);
+  return targetX === undefined || targetY === undefined
+    ? null
+    : { x: targetX, y: targetY };
+}
+
+export function mangaBubbleFrameId(kind, frameId = DEFAULT_MANGA_FRAME_ID) {
+  if (kind !== 'aside') return frameId;
+  return frameId === 'whisper' ? 'thought' : 'whisper';
+}
 
 const MANGA_TEXT_LINE_HEIGHT = 1.16;
 const MANGA_RUBY_LANE_WIDTH = 0.46;
@@ -32,9 +57,9 @@ const MANGA_PLACEMENT_PATTERNS = Object.freeze({
     Object.freeze({ side: 'left', anchorYPercent: 54, jitterYPercent: 1 }),
   ]),
   3: Object.freeze([
-    Object.freeze({ side: 'right', anchorYPercent: 33, jitterYPercent: 1 }),
+    Object.freeze({ side: 'right', anchorYPercent: 26, jitterYPercent: 1 }),
     Object.freeze({ side: 'left', anchorYPercent: 50, jitterYPercent: 2 }),
-    Object.freeze({ side: 'right', anchorYPercent: 67, jitterYPercent: 1 }),
+    Object.freeze({ side: 'right', anchorYPercent: 74, jitterYPercent: 1 }),
   ]),
 });
 const MANGA_INLINE_JITTER_REM = Object.freeze([0, 0.5, 1]);
@@ -132,6 +157,78 @@ export const MANGA_FRAMES = Object.freeze([
 const MANGA_FRAME_BY_ID = new Map(
   MANGA_FRAMES.map((definition) => [definition.id, definition]),
 );
+
+const MANGA_SPEECH_BODY = { x: 201, y: 290, rx: 167, ry: 268 };
+const MANGA_THOUGHT_CENTER = { x: 188, y: 273 };
+
+export function mangaFrameShapes(frame, target, cloudContains) {
+  if (!target || !['spoken', 'whisper', 'thought'].includes(frame.id))
+    return frame.elements;
+  if (frame.id === 'thought') {
+    const [body] = frame.elements;
+    if (!cloudContains || cloudContains(target)) return [body];
+    const x = target.x - MANGA_THOUGHT_CENTER.x;
+    const y = target.y - MANGA_THOUGHT_CENTER.y;
+    const distance = Math.hypot(x, y);
+    const along = (length) => ({
+      x: MANGA_THOUGHT_CENTER.x + (x * length) / distance,
+      y: MANGA_THOUGHT_CENTER.y + (y * length) / distance,
+    });
+    let inner = 0;
+    let outer = distance;
+    while (outer - inner > 1) {
+      const middle = (inner + outer) / 2;
+      if (cloudContains(along(middle))) inner = middle;
+      else outer = middle;
+    }
+    return [
+      body,
+      ...[
+        [28, 16],
+        [66, 9],
+      ]
+        .filter(([gap, radius]) => outer + gap + radius <= distance)
+        .map(([gap, radius]) => {
+          const point = along(outer + gap);
+          return {
+            tag: 'circle',
+            attrs: {
+              cx: roundHundredths(point.x),
+              cy: roundHundredths(point.y),
+              r: radius,
+            },
+          };
+        }),
+    ];
+  }
+
+  const { x, y, rx, ry } = MANGA_SPEECH_BODY;
+  const angle = Math.atan2((target.y - y) / ry, (target.x - x) / rx);
+  const ellipse = (at) => ({
+    x: x + rx * Math.cos(at),
+    y: y + ry * Math.sin(at),
+  });
+  const anchor = ellipse(angle);
+  const inside = Math.hypot((target.x - x) / rx, (target.y - y) / ry) <= 1;
+  let d = `M${x - rx} ${y}a${rx} ${ry} 0 1 0 ${rx * 2} 0a${rx} ${ry} 0 1 0 ${-rx * 2} 0Z`;
+  if (!inside && Math.hypot(target.x - anchor.x, target.y - anchor.y) >= 18) {
+    const halfOpening =
+      28 / Math.hypot(rx * Math.sin(angle), ry * Math.cos(angle));
+    const start = ellipse(angle + halfOpening);
+    const end = ellipse(angle - halfOpening);
+    const base = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const dx = target.x - base.x;
+    const dy = target.y - base.y;
+    const distance = Math.hypot(dx, dy);
+    const length = Math.min(72, distance);
+    const tipX = base.x + (dx * length) / distance;
+    const tipY = base.y + (dy * length) / distance;
+    const coordinates = (pointX, pointY) =>
+      `${roundHundredths(pointX)} ${roundHundredths(pointY)}`;
+    d = `M${coordinates(start.x, start.y)}A${rx} ${ry} 0 1 1 ${coordinates(end.x, end.y)}L${coordinates(tipX, tipY)}Z`;
+  }
+  return [{ tag: 'path', attrs: { ...frame.elements[0].attrs, d } }];
+}
 
 export function resolveMangaFrame(frameId) {
   return (

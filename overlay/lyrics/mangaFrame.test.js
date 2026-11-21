@@ -7,14 +7,19 @@ import {
   DEFAULT_MANGA_FRAME_ID,
   MANGA_FRAMES,
   mangaFrameLengthTier,
+  mangaFrameShapes,
   mangaFramePlacementForBubble,
   mangaFrameSideForLine,
   mangaFrameTextLayout,
   mangaFrameTextScript,
+  readMangaTailTarget,
+  resolveMangaFrame,
 } from '../shared/mangaFrameContract.mjs';
 import {
+  addMangaBubbleHandoff,
   applyMangaFramePresentation,
   renderMangaFrameSvg,
+  updateMangaFrameTails,
 } from './mangaFrame.mjs';
 
 function svgNode(ownerDocument = null) {
@@ -111,6 +116,72 @@ describe('manga frame contract', () => {
     expect(svg.ownerDocument.createElementNS).toHaveBeenCalledTimes(calls);
   });
 
+  it('points speech tails in both directions and retracts the tail inside the bubble', () => {
+    const spoken = resolveMangaFrame('spoken');
+    const getPath = (target) => mangaFrameShapes(spoken, target)[0].attrs.d;
+    expect(getPath({ x: -400, y: 290 })).toMatch(/L-\d+\.\d+ 290Z$/u);
+    expect(getPath({ x: 800, y: 290 })).toMatch(/L4\d+\.\d+ 290Z$/u);
+    expect(getPath({ x: 201, y: -400 })).toMatch(/L201 -\d+\.\d+Z$/u);
+    expect(getPath({ x: 201, y: 290 })).not.toContain('L');
+    const whisper = resolveMangaFrame('whisper');
+    expect(
+      mangaFrameShapes(whisper, { x: 800, y: 290 })[0].attrs,
+    ).toHaveProperty('stroke-dasharray', '14 12');
+    const shout = resolveMangaFrame('shout');
+    expect(mangaFrameShapes(shout, { x: 800, y: 290 })).toBe(shout.elements);
+  });
+
+  it('aligns the tail from its two joins through the visible mask center', () => {
+    const svg = svgFixture();
+    svg.ownerDocument.defaultView = { innerWidth: 1920, innerHeight: 1080 };
+    // Right-hand bubble is mirrored and the SVG is letterboxed by its viewBox.
+    // A plain a–f object stands in for the legacy SVGMatrix (no transformPoint).
+    const inverse = {
+      a: -1 / 0.6,
+      b: 0,
+      c: 0,
+      d: 1 / 0.6,
+      e: 1600 / 0.6,
+      f: -240 / 0.6,
+    };
+    svg.getScreenCTM = () => ({ inverse: () => inverse });
+    renderMangaFrameSvg(svg, 'spoken');
+    const group = { children: [{ children: [svg] }] };
+    updateMangaFrameTails(group, readMangaTailTarget(0.55, 0.51));
+    const path = svg.children[0].attributes.d;
+    const [startX, startY, , , , , , endX, endY, tipX, tipY] = path
+      .match(/-?[0-9]+(?:\.[0-9]+)?/gu)
+      .map(Number);
+    const baseX = (startX + endX) / 2;
+    const baseY = (startY + endY) / 2;
+    // Screen point (1056, 550.8) mapped through the inverse matrix.
+    const target = { x: (1600 - 1056) / 0.6, y: (550.8 - 240) / 0.6 };
+    const targetAngle = Math.atan2(target.y - baseY, target.x - baseX);
+    expect(Math.atan2(tipY - baseY, tipX - baseX)).toBeCloseTo(targetAngle, 3);
+    expect(Math.hypot(tipX - baseX, tipY - baseY)).toBeCloseTo(72, 1);
+    expect(readMangaTailTarget('0.55', 0.51)).toBeNull();
+    expect(readMangaTailTarget(0.55, 1.01)).toBeNull();
+  });
+
+  it('places thought dots outside the cloud and leaves short gaps clear', () => {
+    const thought = resolveMangaFrame('thought');
+    const contains = ({ x }) => x <= 350;
+    const [body, first, second] = mangaFrameShapes(
+      thought,
+      { x: 900, y: 273 },
+      contains,
+    );
+    expect(body).toEqual(thought.elements[0]);
+    expect(first.attrs.cx).toBeCloseTo(378, 0);
+    expect(second.attrs.cx).toBeCloseTo(416, 0);
+    expect(mangaFrameShapes(thought, { x: 365, y: 273 }, contains)).toEqual([
+      body,
+    ]);
+    expect(mangaFrameShapes(thought, { x: 190, y: 273 }, contains)).toEqual([
+      body,
+    ]);
+  });
+
   it('projects an explicit frame, occasional side variant, and bounded size tier', () => {
     const elements = {
       mangaFrame: svgFixture(),
@@ -196,9 +267,27 @@ describe('manga frame contract', () => {
         .map(({ anchorYPercent }) => anchorYPercent)
         .sort((a, b) => a - b),
     );
-    expect(
-      three[2].anchorYPercent - three[0].anchorYPercent,
-    ).toBeGreaterThanOrEqual(32);
+    const innerGap = three[2].anchorYPercent - three[0].anchorYPercent - 34;
+    // Even at maximum frame height the gap leaves space for both 75/600 tails.
+    expect(innerGap).toBeGreaterThan(2 * 34 * (75 / 600));
+  });
+
+  it('crossfades different lanes and serializes same-lane handoffs', () => {
+    const right = { dataset: { mangaSide: 'right' } };
+    const left = { dataset: { mangaSide: 'left' } };
+    const timeline = { addLabel: vi.fn(), to: vi.fn() };
+    addMangaBubbleHandoff(timeline, [right], [left], true, 1);
+    expect(timeline.addLabel.mock.calls).toEqual([
+      ['exit', 1],
+      ['enter', 1],
+    ]);
+    timeline.addLabel.mockClear();
+    addMangaBubbleHandoff(timeline, [left, right], [right]);
+    expect(timeline.addLabel.mock.calls).toEqual([
+      ['exit', 0],
+      ['enter', 0.14],
+    ]);
+    expect(timeline.to.mock.calls.at(-2)[1]).not.toHaveProperty('stagger');
   });
 
   it('keeps bounded placement deterministic across seek and reconnect renders', () => {
@@ -253,7 +342,7 @@ describe('manga frame contract', () => {
     expect(css).toContain('var(--ovl-manga-frame-required-block-size)');
     expect(css).toContain('--ovl-manga-bubble-row-cap: min(55.556vh, 37.5rem)');
     expect(css).toContain('--ovl-manga-bubble-row-cap: min(55vh, 37rem)');
-    expect(css).toContain('--ovl-manga-bubble-row-cap: min(30vh, 20rem)');
+    expect(css).toContain('--ovl-manga-bubble-row-cap: min(30vh, 20rem, 34%)');
   });
 
   it('grows the frame instead of resizing the fixed Manga type', () => {

@@ -10,6 +10,9 @@ const {
   parseReceiptSetlist,
 } = require('./outputContract');
 const { validateLyricsFineTiming } = require('./lyricsFineTiming.mjs');
+const {
+  MANGA_BUBBLE_STYLE_IDS,
+} = require('./presentation/mangaFrameContract.mjs');
 const translationValues = require('./lyricsTranslationValues.json');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
@@ -741,6 +744,23 @@ function parseNullableId(value, path) {
   return value === null ? null : id(value, path);
 }
 
+function parseMangaFrameCues(value) {
+  const path = 'payload.lyrics.mangaFrameCues';
+  if (!Array.isArray(value) || value.length > 2)
+    invalid(path, 'expected at most two cues');
+  const seen = new Set();
+  return value.map((rawCue, index) => {
+    const cuePath = `${path}[${index}]`;
+    const cue = record(rawCue, cuePath);
+    const lineId = id(cue.lineId, `${cuePath}.lineId`);
+    if (seen.has(lineId)) invalid(cuePath, 'duplicate line id');
+    seen.add(lineId);
+    if (!MANGA_BUBBLE_STYLE_IDS.includes(cue.frameId))
+      invalid(`${cuePath}.frameId`, 'expected a manga bubble style');
+    return { lineId, frameId: cue.frameId };
+  });
+}
+
 function parseDynamicState(value) {
   const state = record(value, 'payload');
   const generatedAt = string(
@@ -765,6 +785,10 @@ function parseDynamicState(value) {
     lyrics.activeSegmentId,
     'payload.lyrics.activeSegmentId',
   );
+  const mangaFrameCues =
+    lyrics.mangaFrameCues === undefined
+      ? []
+      : parseMangaFrameCues(lyrics.mangaFrameCues);
   const musicStructure = parseReference(
     state.musicStructure ?? { documentId: null, documentRevision: 0 },
     'payload.musicStructure',
@@ -772,7 +796,7 @@ function parseDynamicState(value) {
   );
   if (
     lyricsReference.documentId === null &&
-    (activeLineId !== null || activeSegmentId !== null)
+    (activeLineId !== null || activeSegmentId !== null || mangaFrameCues.length)
   ) {
     invalid('payload.lyrics', 'active ids require a document');
   }
@@ -791,6 +815,7 @@ function parseDynamicState(value) {
       }),
       activeLineId,
       activeSegmentId,
+      ...(mangaFrameCues.length && { mangaFrameCues }),
     },
     queue: parseReference(state.queue, 'payload.queue'),
     musicStructure,

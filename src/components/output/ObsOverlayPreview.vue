@@ -17,6 +17,7 @@ import {
   watch,
 } from 'vue';
 import { Copy, EyeOff, Film, UserRound } from '../../icons/index.js';
+import { MANGA_WORKBENCH_TARGET_MESSAGE } from '../../../shared/presentation/mangaFrameContract.mjs';
 import {
   calculateCapturePreviewScale,
   OUTPUT_LYRICS_CAPTURE_SIZE,
@@ -71,6 +72,7 @@ const emit = defineEmits([
 const previewReloadToken = claimPreviewReloadToken();
 const { copy: copyOutputUrl } = useOutputClipboard();
 const previewStage = useTemplateRef('previewStage');
+const lyricsFrame = useTemplateRef('lyricsFrame');
 const previewInfo = useTemplateRef('previewInfo');
 const previewScale = shallowRef(1);
 const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width;
@@ -168,8 +170,34 @@ function measurePreview() {
 }
 
 function handlePreviewLoad() {
+  sendMangaGuideCenter();
   emit('refreshProjection');
 }
+
+function sendMangaGuideCenter() {
+  const iframe = lyricsFrame.value;
+  if (
+    props.preset?.id !== 'manga-frame' ||
+    !iframe?.contentWindow ||
+    !inspectionUrl.value
+  )
+    return;
+  const { x, y } = props.performerGuide;
+  iframe.contentWindow.postMessage(
+    { type: MANGA_WORKBENCH_TARGET_MESSAGE, x, y },
+    new URL(inspectionUrl.value).origin,
+  );
+}
+
+watch(
+  [
+    () => props.preset?.id,
+    () => props.performerGuide.x,
+    () => props.performerGuide.y,
+  ],
+  sendMangaGuideCenter,
+  { flush: 'post' },
+);
 
 function startUrlDrag(event) {
   if (!dropUrl.value || !event.dataTransfer) return;
@@ -232,6 +260,7 @@ onBeforeUnmount(() => {
           <iframe
             v-if="hasRuntimeTemplate"
             :key="inspectionUrl"
+            ref="lyricsFrame"
             class="obs-overlay-preview__iframe"
             :src="inspectionUrl"
             :style="previewCanvasStyle"

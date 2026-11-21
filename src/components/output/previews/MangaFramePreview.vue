@@ -1,8 +1,12 @@
 <script setup>
 import { computed, useTemplateRef } from 'vue';
 import gsap from 'gsap';
-import { addMangaBubbleFade } from '../../../../overlay/lyrics/mangaFrame.mjs';
 import {
+  addMangaBubbleFade,
+  addMangaBubbleHandoff,
+} from '../../../../overlay/lyrics/mangaFrame.mjs';
+import {
+  mangaBubbleFrameId,
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
   mangaFrameTextLayout,
@@ -31,6 +35,10 @@ function bubblesFor(text, lineIndex, reading) {
   // Same placement contract the runtime Overlay applies to each bubble.
   return bubbles.map((bubble, index) => ({
     ...bubble,
+    frameId: mangaBubbleFrameId(
+      bubble.kind,
+      props.scene?.appearance?.mangaBubbleStyle,
+    ),
     layout: mangaFrameTextLayout(bubble.text, bubbles.length, {
       language: lyrics.value.language,
       readingLine:
@@ -74,9 +82,8 @@ useOutputPreviewMotion({
     timeline.set([...current, ...next], { autoAlpha: 0 }, 0);
     addMangaBubbleFade(timeline, current, 'enter', true, 0);
     const handoff = timeline.duration() + 1.2;
-    addMangaBubbleFade(timeline, current, 'exit', true, handoff);
     if (next.length) {
-      addMangaBubbleFade(timeline, next, 'enter', true, handoff);
+      addMangaBubbleHandoff(timeline, current, next, true, handoff);
       addMangaBubbleFade(
         timeline,
         next,
@@ -84,7 +91,7 @@ useOutputPreviewMotion({
         true,
         timeline.duration() + 1.2,
       );
-    }
+    } else addMangaBubbleFade(timeline, current, 'exit', true, handoff);
     timeline.play();
     return () => timeline.kill();
   },
@@ -128,7 +135,7 @@ useOutputPreviewMotion({
         >
           <MangaFrameSvg
             class="obs-template-mockup__manga-frame"
-            frame-id="spoken"
+            :frame-id="bubble.frameId"
           />
           <strong class="obs-template-mockup__manga-text">
             <template

@@ -301,6 +301,16 @@ function assembleSplitSnapshot(
             (line) => line.lineId === state.lyrics.activeLineId,
           ),
           activeSegmentId: state.lyrics.activeSegmentId,
+          ...(state.lyrics.mangaFrameCues?.length && {
+            mangaFrameCues: state.lyrics.mangaFrameCues.map(
+              ({ lineId, frameId }) => ({
+                lineIndex: lyricsDocument.lines.findIndex(
+                  (line) => line.lineId === lineId,
+                ),
+                frameId,
+              }),
+            ),
+          }),
           lines,
           ...(lyricsDocument.reading
             ? { reading: lyricsDocument.reading }

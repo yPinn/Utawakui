@@ -46,7 +46,10 @@ describe('Manga Frame gallery mockup', () => {
       ['--ovl-manga-bubble-base-block-size: min(36vh, 24rem);', canvasRem(24)],
       ['--ovl-manga-bubble-row-cap: min(55.556vh, 37.5rem);', canvasRem(37.5)],
       ['--ovl-manga-bubble-row-cap: min(55vh, 37rem);', canvasRem(37)],
-      ['--ovl-manga-bubble-row-cap: min(30vh, 20rem);', canvasRem(20)],
+      [
+        '--ovl-manga-bubble-row-cap: min(30vh, 20rem, 34%);',
+        `min(${canvasRem(20)}, 34%)`,
+      ],
       ['--ovl-manga-bubble-row-cap: min(46vh, 31rem);', canvasRem(31)],
       ['--ovl-manga-text-size-by-count: 2.9em;', canvasRem(2.9)],
       ['--ovl-manga-text-size-by-count: 2.35em;', canvasRem(2.35)],
