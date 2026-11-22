@@ -116,15 +116,18 @@ function sourceTimedPages(pages, text, timing, start, end) {
   };
 }
 
-export function chalkboardColumnStarts(line, page, rows) {
+export function lyricsDisplayColumnStarts(line, page, rows, advanceMs = 0) {
   const { sourceStart, sourceEnd, startMs, endMs } = page;
-  const start = sourceStart === 0 ? line.startMs : startMs;
+  const start = advanceMs > 0 && sourceStart === 0 ? line.startMs : startMs;
   if (!Number.isFinite(start) || !Number.isFinite(endMs) || endMs <= start)
     return null;
 
+  const rawStarts = timingMap(line).starts;
+  const starts =
+    advanceMs > 0 ? rawStarts : visibleTimingStarts(line.text, rawStarts);
   const anchors = [
     [sourceStart, start],
-    ...[...timingMap(line).starts].filter(
+    ...[...starts].filter(
       ([offset, at]) =>
         offset > sourceStart && offset < sourceEnd && at > start && at < endMs,
     ),
@@ -146,7 +149,7 @@ export function chalkboardColumnStarts(line, page, rows) {
     const [right, next] = anchors[anchor + 1];
     const fraction = weight(left, from) / Math.max(1, weight(left, right));
     const onset = at + (next - at) * fraction;
-    const lead = Math.min(120, Math.max(0, onset - previous) / 2);
+    const lead = Math.min(advanceMs, Math.max(0, onset - previous) / 2);
     previous = onset;
     return onset - lead;
   });

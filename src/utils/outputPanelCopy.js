@@ -24,24 +24,32 @@ export function localizeAppearanceField(field) {
     : `outputPanel.appearance.fields.${field.key}`;
   const unitKey = `${base}.unit`;
   const placeholderKey = `${base}.placeholder`;
-  const groupLabel =
-    field.group === 'motion' && field.key.startsWith('fisheye')
-      ? t('outputPanel.inspector.motion')
-      : t(`outputPanel.appearance.groups.${catalogKey(field.group)}`);
+  let groupKey = `outputPanel.appearance.groups.${catalogKey(field.group)}`;
+  if (field.group === 'motion') {
+    if (field.key.startsWith('fisheye'))
+      groupKey = 'outputPanel.inspector.motion';
+    if (field.key.startsWith('ornate'))
+      groupKey = 'outputPanel.appearance.groups.ornateMotion';
+  }
   return {
     ...field,
     label: t(`${base}.label`),
-    groupLabel,
+    groupLabel: t(groupKey),
     ...(i18n.global.te(unitKey) ? { unit: t(unitKey) } : {}),
     ...(field.control === 'text' && i18n.global.te(placeholderKey)
       ? { placeholder: t(placeholderKey) }
       : {}),
     ...(field.options
       ? {
-          options: field.options.map((option) => ({
-            ...option,
-            label: t(`${base}.options.${catalogKey(option.id)}`),
-          })),
+          options: field.options.map((option) => {
+            const key = catalogKey(option.id);
+            const hintKey = `${base}.optionHints.${key}`;
+            return {
+              ...option,
+              label: t(`${base}.options.${key}`),
+              ...(i18n.global.te(hintKey) ? { hint: t(hintKey) } : {}),
+            };
+          }),
         }
       : {}),
   };

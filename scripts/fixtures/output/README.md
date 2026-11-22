@@ -3,7 +3,7 @@
 These files are development and test inputs, not runtime configuration or a
 Presentation Pack. The application must not import or serve this directory.
 
-- `appearance-baseline.json` pins the eight active templates, exposed fields,
+- `appearance-baseline.json` pins the shipped templates, exposed fields,
   defaults, bounds, timing capabilities, source limitations and invariant reasons.
   It records current behavior; it does not enable controls or become a second
   implementation of `shared/outputAppearance.mjs`.
@@ -28,5 +28,6 @@ cases therefore retain pending runtime/manual evidence.
 
 Baseline values are per slot/template, not a global user project or theme sync.
 `not-exposed` differs from a template invariant and from an unimplemented file
-import. The distinction and the eight-template manual checklist are documented in
-[the appearance contract](../../../docs/contracts/output-appearance.md).
+import. See [the appearance contract](../../../docs/contracts/output-appearance.md)
+and the [manual acceptance matrix](../../../docs/operations/output-appearance-acceptance.md#模板適用矩陣)
+for the current coverage.

@@ -13,6 +13,8 @@ import {
 } from '../../shared/presentation/state.mjs';
 import { createLyricsFitController } from './lyricsFit.mjs';
 import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
+import { createOutputPreviewSnapshot } from '../../shared/presentation/outputPreviewScene.mjs';
+import { adaptOrnateVerticalLyricsPresentation } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import outputTemplates from '../../shared/outputTemplateValues.json';
 
 const lyricsTemplateIds = Object.keys(outputTemplates.templateKinds).filter(
@@ -138,6 +140,7 @@ function element(ownerDocument = null, localName = '') {
 function domElements() {
   const documentApi = {
     createElement: vi.fn((localName) => element(documentApi, localName)),
+    createTextNode: (text) => ({ textContent: text }),
     createElementNS: vi.fn(() => {
       const svgElement = element(documentApi);
       Object.defineProperty(svgElement, 'className', {
@@ -163,6 +166,74 @@ function domElements() {
 function kineticLineTracks(line) {
   return line.children.flatMap((row) => row.children);
 }
+
+it('discards lyrics held during the initial template load when Output disconnects', async () => {
+  const elements = domElements();
+  const documentApi = elements.root.ownerDocument;
+  documentApi.documentElement = element(documentApi);
+  documentApi.querySelector = (selector) =>
+    ({
+      '#lyrics-overlay': elements.root,
+      '#lyrics-current': elements.current,
+      '#lyrics-next': elements.next,
+      '#lyrics-translation': elements.translation,
+    })[selector] ?? null;
+  const windowApi = {
+    location: new URL('http://localhost/overlay/lyrics'),
+    matchMedia: () => ({ matches: true }),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    setTimeout,
+    clearTimeout,
+  };
+  let connection;
+  const loading = Promise.withResolvers();
+  vi.resetModules();
+  vi.doMock('../shared/runtime.mjs', async (original) => ({
+    ...(await original()),
+    createOverlayConnection(options) {
+      connection = options;
+      return { start() {}, stop() {} };
+    },
+  }));
+  vi.doMock('./templateModules.mjs', () => ({
+    loadLyricsTemplateModule: () => loading.promise,
+    lyricsTemplateModule: () => null,
+  }));
+  vi.stubGlobal('document', documentApi);
+  vi.stubGlobal('window', windowApi);
+  try {
+    await import('./lyrics.mjs');
+    const snapshot = createOutputPreviewSnapshot();
+    snapshot.lyrics.translations = { en: ['Held translation', '', ''] };
+    connection.onStatus('connected');
+    connection.onConfig({ templateId: 'phantom-thieves' }, 'en-US', 'en');
+    connection.onSnapshot(snapshot);
+    connection.onStatus('reconnecting');
+
+    loading.resolve();
+    await new Promise(setImmediate);
+    expect(elements.translation).toMatchObject({
+      hidden: true,
+      textContent: '',
+    });
+
+    connection.onStatus('connected');
+    connection.onSnapshot(snapshot);
+    expect(elements.translation).toMatchObject({
+      hidden: false,
+      textContent: 'Held translation',
+    });
+  } finally {
+    windowApi.addEventListener.mock.calls.find(
+      ([type]) => type === 'pagehide',
+    )?.[1]();
+    vi.unstubAllGlobals();
+    vi.doUnmock('../shared/runtime.mjs');
+    vi.doUnmock('./templateModules.mjs');
+    vi.resetModules();
+  }
+});
 
 it('replaces the Centered Vertical caption immediately and hides it between cues', () => {
   const elements = domElements();
@@ -1817,6 +1888,133 @@ describe('lyrics overlay renderer', () => {
     });
   });
 
+  it('shows the Lantern demo only in the idle dev Ornate workbench', () => {
+    const onFrame = vi.fn();
+    const scheduler = createLyricsFrameScheduler({
+      templateId: 'ornate-vertical',
+      ornateStrokePreview: true,
+      onFrame,
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+    });
+    const idle = { revision: 1, playback: { status: 'idle' }, lyrics: null };
+    scheduler.update(idle);
+    expect(onFrame.mock.lastCall[0]).toMatchObject({
+      visible: true,
+      currentText: '帰り道の灯',
+      ornateStrokeClock: { demo: true },
+    });
+
+    scheduler.update({
+      ...idle,
+      revision: 2,
+      playback: { status: 'paused', track: { id: 'loaded-track' } },
+    });
+    expect(onFrame.mock.lastCall[0]).toMatchObject({ visible: false });
+    scheduler.stop();
+  });
+
+  it('extends the column-final Lamp hook on the dev clock and clears it on reduced motion', () => {
+    const elements = domElements();
+    const documentApi = elements.current.ownerDocument;
+    documentApi.documentElement = {
+      dataset: { ovlFont: 'ornate', ovlTextShadow: 'off' },
+    };
+    elements.root.getBoundingClientRect = () => ({ bottom: 900 });
+    documentApi.createElementNS.mockImplementation((_namespace, name) => ({
+      ...element(documentApi, name),
+      getBoundingClientRect: () => ({ top: 650, height: 50 }),
+    }));
+    const timeline = {
+      to: vi.fn(),
+      time: vi.fn(() => 0),
+      duration: () => 0.54,
+      timeScale: vi.fn(),
+      paused: vi.fn(),
+      kill: vi.fn(),
+    };
+    const gsap = { timeline: vi.fn(() => timeline) };
+    const frame = {
+      visible: true,
+      currentText: '灯',
+      ornateVertical: {
+        text: '灯',
+        units: [{ kind: 'han', text: '灯', reveal: 'group' }],
+      },
+      ornateStrokeClock: {
+        elapsedMs: 350,
+        durationMs: 2000,
+        playing: false,
+        rate: 1.5,
+      },
+    };
+    const options = { gsap, templateId: 'ornate-vertical' };
+    renderLyricsFrame(elements, frame, options);
+
+    expect(gsap.timeline).toHaveBeenCalledExactlyOnceWith({ paused: true });
+    expect(timeline.time).toHaveBeenCalledWith(0.35);
+    expect(timeline.timeScale).toHaveBeenCalledWith(1.5);
+    expect(timeline.paused).toHaveBeenCalledWith(true);
+    const [pose, tween, onset] = timeline.to.mock.calls[0];
+    expect(onset).toBe(0.12);
+    expect(tween.extension).toBe(320);
+    const glyph =
+      elements.current.children[0].children[0].children[0].children[0]
+        .children[1];
+    const [native, svg] = glyph.children;
+    const [fire, hook] = svg.children;
+    const fireOutline = fire.attributes.d;
+    pose.extension = 100;
+    tween.onUpdate();
+    expect(glyph.dataset.ornateStrokeExtended).toBe('true');
+    expect(native.textContent).toBe('灯');
+    expect(fire.attributes.d).toBe(fireOutline);
+    expect(hook.attributes.d).toContain('719 -680L719 80.00');
+    expect(elements.current.attributes['aria-label']).toBe('灯');
+
+    renderLyricsFrame(elements, frame, { ...options, reducedMotion: true });
+    expect(timeline.kill).toHaveBeenCalledOnce();
+    const [restingGlyph] =
+      elements.current.children[0].children[0].children[0].children;
+    expect(restingGlyph.textContent).toBe('灯');
+    expect(restingGlyph.children).toHaveLength(0);
+  });
+
+  it('switches the current Ornate line to mixed sizes without changing reveal units', () => {
+    const elements = domElements();
+    const text = '夕食を。';
+    const frame = {
+      visible: true,
+      currentText: text,
+      ornateVertical: {
+        text,
+        units: [
+          { kind: 'han', text: '夕食', reveal: 'group', emphasis: 'keyword' },
+          { kind: 'kana', text: 'を。', reveal: 'character' },
+        ],
+      },
+    };
+    const options = { templateId: 'ornate-vertical', reducedMotion: true };
+    renderLyricsFrame(elements, frame, options);
+    const uniform = elements.current.children[0].children[0].children[0];
+    expect(uniform.children[0].dataset.ornateShadow).toBe('夕');
+    expect(uniform.children[0].style.fontSize).toBeUndefined();
+
+    elements.current.ownerDocument.documentElement = {
+      dataset: { ovlOrnateArrangement: 'mixed-sizes' },
+    };
+    renderLyricsFrame(elements, frame, options);
+    const [han, kana] = elements.current.children[0].children[0].children;
+    expect(han.dataset.ornateReveal).toBe('group');
+    expect(han.children[0].dataset.ornateEcho).toBe('夕');
+    expect(han.children[0].dataset.ornateShadow).toBe('夕');
+    expect(han.children[0].style.fontSize).toBe('1.25em');
+    expect(han.children[1].style.marginInlineEnd).toBe('0.096em');
+    expect(kana.children[0].style.fontSize).toBe('0.8em');
+    expect(kana.children[1].style.fontSize).toBeUndefined();
+    expect(elements.current.attributes['aria-label']).toBe(text);
+  });
+
   it('renders a split Ornate Vertical line as right-to-left visual segments', () => {
     const elements = domElements();
     const units = (text, startIndex) =>
@@ -1856,6 +2054,10 @@ describe('lyrics overlay renderer', () => {
 
     const line = elements.current.children[0];
     expect(line.dataset.ornateSegmentCount).toBe('2');
+    expect(line.style.values['--ornate-column-gap']).toBe('0.5em');
+    expect(
+      line.children.map((segment) => segment.style.values['margin-top']),
+    ).toEqual(['0em', '1.25em']);
     expect(line.children.map((segment) => segment.dataset)).toEqual([
       expect.objectContaining({
         ornateSegmentIndex: '0',
@@ -1924,10 +2126,16 @@ describe('lyrics overlay renderer', () => {
     expect(timelines[0].labelPositions).toEqual([
       { label: 'enter', position: 0 },
     ]);
-    expect(timelines[0].tweens).toHaveLength(1);
-    expect(timelines[0].tweens[0].target).toBe(secondUnit);
+    expect(timelines[0].tweens).toMatchObject([
+      {
+        target: firstUnit,
+        vars: { '--ornate-shadow-progress': 1 },
+        position: 'enter+=0',
+      },
+      { target: secondUnit, vars: { autoAlpha: 1 } },
+    ]);
     expect(gsap.set.mock.calls.some(([target]) => target === firstUnit)).toBe(
-      false,
+      true,
     );
     expect(timelines[0].additionPositions).toEqual([]);
     expect(elements.root.dataset.ornatePlacement).toBe('right');
@@ -1950,48 +2158,179 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
   });
 
-  it('reveals trial kana and moves Han from opposite sides without moving the first unit', () => {
+  it('reveals full Han and kana glyphs individually and keeps the right column while the left arrives', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
-    const units = [
-      { kind: 'kana', text: 'あ' },
-      { kind: 'han', text: '夜' },
-      { kind: 'han', text: '星' },
-      { kind: 'kana', text: 'が' },
-    ];
+    const currentText = '星が沈むまで、夜明けを待っていた';
     const frame = {
       visible: true,
       language: 'ja',
       lineIndex: 0,
-      currentText: units.map(({ text }) => text).join(''),
-      ornateScriptMotion: true,
-      ornateVertical: {
-        segments: [
-          { index: 0, text: 'あ夜', units: units.slice(0, 2) },
-          { index: 1, text: '星が', units: units.slice(2) },
-        ],
-        units,
-      },
+      currentText,
+      ornateVertical: adaptOrnateVerticalLyricsPresentation(currentText),
     };
 
     renderLyricsFrame(elements, frame, { gsap, templateId: 'ornate-vertical' });
     const [right, left] = elements.current.children[0].children;
-    const [first, rightHan] = right.children;
-    const [leftHan, kana] = left.children;
+    expect(right.textContent).toBe('星が沈むまで、');
+    expect(left.children.slice(0, 3).map((unit) => unit.textContent)).toEqual([
+      '夜',
+      '明',
+      'け',
+    ]);
     const startingPoses = new Map(
       gsap.set.mock.calls.filter(([, vars]) => vars.autoAlpha === 0),
     );
-    expect(startingPoses.has(first)).toBe(false);
-    expect(startingPoses.get(rightHan)).toMatchObject({ xPercent: 18 });
-    expect(startingPoses.get(leftHan)).toMatchObject({ xPercent: -18 });
-    expect(startingPoses.get(kana)).toMatchObject({
-      clipPath: 'inset(0 0 100% 0)',
-    });
-    expect(timelines[0].tweens.map(({ vars }) => vars.xPercent)).toEqual([
-      0,
-      0,
-      undefined,
+    const entrants = [...right.children.slice(1), ...left.children];
+    expect(startingPoses.has(right.children[0])).toBe(false);
+    expect([...startingPoses]).toEqual(
+      entrants.map((unit) => [unit, { autoAlpha: 0 }]),
+    );
+    const fades = timelines[0].tweens.filter(
+      ({ vars }) => vars.autoAlpha === 1,
+    );
+    expect(fades.map(({ target }) => target)).toEqual(entrants);
+    const onsets = fades.map(({ position }) => Number(position.split('+=')[1]));
+    expect(
+      onsets.every((onset, index) => index === 0 || onset > onsets[index - 1]),
+    ).toBe(true);
+    expect(fades.map(({ vars }) => vars)).toEqual(
+      entrants.map(() => ({
+        autoAlpha: 1,
+        clearProps: 'opacity,visibility',
+        duration: 0.12,
+        ease: 'power2.out',
+      })),
+    );
+    const shadows = timelines[0].tweens.filter(
+      ({ vars }) => vars['--ornate-shadow-progress'] === 1,
+    );
+    expect(shadows.map(({ target }) => target.textContent)).toEqual([
+      '星',
+      '沈',
+      '夜',
+      '明',
+      '待',
     ]);
+    for (const { target, position, vars } of shadows.slice(1)) {
+      expect(position).toBe(
+        fades.find((fade) => fade.target === target).position,
+      );
+      expect(vars).toMatchObject({
+        duration: 0.18,
+        clearProps: '--ornate-shadow-progress',
+      });
+    }
+    expect(elements.current.children[0].children).toEqual([right, left]);
+  });
+
+  it('slides only new units and clears their displacement on pause', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    elements.current.ownerDocument.documentElement = {
+      dataset: { ovlOrnateEntrance: 'random-slide', ovlTextShadow: 'off' },
+    };
+    const currentText = '星が沈むまで、夜明けを待っていた';
+    const presentation = adaptOrnateVerticalLyricsPresentation(currentText);
+    const frame = {
+      visible: true,
+      currentText,
+      ornateVertical: presentation,
+      ornateColumnTiming: {
+        index: 1,
+        playing: true,
+        settledUnits: presentation.segments[0].units.length,
+      },
+    };
+    const options = { gsap, templateId: 'ornate-vertical' };
+    renderLyricsFrame(elements, frame, options);
+    const line = elements.current.children[0];
+    const [, left] = line.children;
+    const starts = gsap.set.mock.calls.filter(
+      ([, vars]) => vars.autoAlpha === 0,
+    );
+    expect(line.dataset.ornateEntrance).toBe('random-slide');
+    expect(starts.map(([unit]) => unit.textContent)).toEqual(
+      left.children.map((unit) => unit.textContent),
+    );
+    expect(starts[0][1]).toMatchObject({
+      x: expect.stringMatching(/em$/),
+      y: expect.stringMatching(/em$/),
+    });
+    expect(timelines[0].tweens[0]).toMatchObject({
+      position: 'enter+=0',
+      vars: {
+        autoAlpha: 1,
+        x: 0,
+        y: 0,
+        clearProps: 'opacity,visibility,transform',
+        duration: 0.3,
+      },
+    });
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        ornateColumnTiming: { ...frame.ornateColumnTiming, playing: false },
+      },
+      options,
+    );
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(timelines).toHaveLength(1);
+    expect(gsap.set).toHaveBeenCalledWith(expect.any(Array), {
+      clearProps: 'opacity,visibility,transform,--ornate-shadow-progress',
+    });
+    expect(elements.current.children[0]).toBe(line);
+  });
+
+  it('only animates a single Han shadow on a normal entrance with shadows enabled', () => {
+    const frame = {
+      visible: true,
+      currentText: '月',
+      ornateVertical: adaptOrnateVerticalLyricsPresentation('月'),
+    };
+    for (const [textShadow, reducedMotion, seek, expected] of [
+      ['standard', false, false, 1],
+      ['off', false, false, 0],
+      ['standard', true, false, 0],
+      ['standard', false, true, 0],
+    ]) {
+      const elements = domElements();
+      const { gsap, timelines } = gsapHarness();
+      elements.current.ownerDocument.documentElement = {
+        dataset: { ovlTextShadow: textShadow },
+      };
+      renderLyricsFrame(
+        elements,
+        { ...frame, timelineDiscontinuity: seek },
+        {
+          gsap,
+          reducedMotion,
+          templateId: 'ornate-vertical',
+        },
+      );
+      expect(timelines).toHaveLength(expected);
+      expect(elements.current.textContent).toBe('月');
+    }
+  });
+
+  it('commits an extremely short Ornate batch immediately so every glyph stays readable', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const currentText = '夜明け';
+    renderLyricsFrame(
+      elements,
+      {
+        visible: true,
+        currentText,
+        ornateVertical: adaptOrnateVerticalLyricsPresentation(currentText),
+        ornateRevealRemainingMs: 220,
+      },
+      { gsap, templateId: 'ornate-vertical' },
+    );
+    expect(timelines).toHaveLength(0);
+    expect(elements.current.textContent).toBe(currentText);
   });
 
   it('keeps only the latest Ornate batch during an interrupted reveal', () => {
@@ -2062,7 +2401,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children).toHaveLength(1);
     expect(elements.current.children[0].dataset.ornateText).toBe('CC');
     expect(gsap.set).toHaveBeenCalledWith(expect.any(Array), {
-      clearProps: 'clipPath,opacity,visibility,transform',
+      clearProps: 'opacity,visibility,--ornate-shadow-progress',
     });
 
     timelines[0].options.onComplete();

@@ -31,7 +31,7 @@ import {
   selectLyricsTranslationFrame,
 } from '../shared/state.mjs';
 import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
-import { ornateVerticalScriptMotionEnabled } from '../../shared/presentation/ornateVerticalMotion.mjs';
+import { adaptOrnateVerticalLyricsPresentation } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import {
   adaptKtvLyricsPresentation,
@@ -85,6 +85,7 @@ const PRESENTATION_SECTION_ROLES = new Set([
 ]);
 const KTV_DEFAULT_LANE_REPLACEMENT_DELAY_MS = 600;
 const KTV_MAX_LANE_REPLACEMENT_DELAY_MS = 5000;
+const ORNATE_STROKE_DEMO_TEXT = '帰り道の灯';
 const ktvFallbackAnimations = new WeakMap();
 const ktvFallbackAnimationKeys = new WeakMap();
 const ktvLanePresentations = new WeakMap();
@@ -1825,8 +1826,8 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
       elements.next.textContent = '';
       elements.root.hidden = !text;
     } else {
-      renderOrnateVerticalPresentation(elements, frame, renderOptions);
       elements.root.hidden = !frame.visible;
+      renderOrnateVerticalPresentation(elements, frame, renderOptions);
     }
     elements.root.setAttribute('lang', frame.language || 'und');
     elements.root.dataset.revision = String(frame.revision);
@@ -1971,6 +1972,8 @@ export function createLyricsFrameScheduler(options = {}) {
     kineticMaterial: options.kineticMaterial,
   }).kineticMaterial;
   let sectionAccent = options.sectionAccent === 'auto' ? 'auto' : 'off';
+  let ornateColumnMode =
+    options.ornateColumnMode === 'replace' ? 'replace' : 'retain';
   let fisheyeGranularity = options.fisheyeGranularity ?? 'line';
   let translationLanguage = options.translationLanguage ?? null;
   let lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
@@ -2092,12 +2095,14 @@ export function createLyricsFrameScheduler(options = {}) {
       const projectionOptions = {
         fisheyeGranularity,
         kineticMaterial,
+        ornateColumnMode,
         lyricsPresentationPolicyId,
         sectionAccent,
         nowMs,
         presentationDocument,
         templateId,
         translationLanguage,
+        ...(options.ornateStrokePreview && { ornateStrokePreview: true }),
         ...(cycle ? { traceContext: { ...cycle, pass } } : {}),
       };
       stageAt = onTrace ? measureNow() : 0;
@@ -2154,14 +2159,22 @@ export function createLyricsFrameScheduler(options = {}) {
       if (!isCurrent()) return;
       let preparedFrame = display?.frame ?? frame;
       if (
+        options.ornateStrokePreview &&
         templateId === 'ornate-vertical' &&
-        ornateVerticalScriptMotionEnabled(
-          options.ornateMotionTrackId,
-          snapshot.playback?.track?.id,
-          preparedFrame.language,
-        )
+        !snapshot.playback?.track &&
+        !preparedFrame.visible
       ) {
-        preparedFrame = { ...preparedFrame, ornateScriptMotion: true };
+        preparedFrame = {
+          ...preparedFrame,
+          visible: true,
+          currentText: ORNATE_STROKE_DEMO_TEXT,
+          displayBatchId: 'ornate-stroke-demo',
+          language: 'ja',
+          ornateVertical: adaptOrnateVerticalLyricsPresentation(
+            ORNATE_STROKE_DEMO_TEXT,
+          ),
+          ornateStrokeClock: { demo: true },
+        };
       }
       const visibleFrame = settleNextFrame
         ? { ...preparedFrame, timelineDiscontinuity: true }
@@ -2266,6 +2279,8 @@ export function createLyricsFrameScheduler(options = {}) {
       );
     const nextSectionAccent =
       (nextSettings.sectionAccent ?? sectionAccent) === 'auto' ? 'auto' : 'off';
+    const nextOrnateColumnMode =
+      nextSettings.ornateColumnMode ?? ornateColumnMode;
     const nextFisheyeGranularity =
       nextSettings.fisheyeGranularity ?? fisheyeGranularity;
     const nextTranslationLanguage = Object.hasOwn(
@@ -2278,6 +2293,7 @@ export function createLyricsFrameScheduler(options = {}) {
       normalizedTemplateId === templateId &&
       normalizedKineticMaterial === kineticMaterial &&
       nextSectionAccent === sectionAccent &&
+      nextOrnateColumnMode === ornateColumnMode &&
       nextFisheyeGranularity === fisheyeGranularity &&
       normalizedLyricsPresentationPolicyId === lyricsPresentationPolicyId &&
       nextTranslationLanguage === translationLanguage
@@ -2288,6 +2304,7 @@ export function createLyricsFrameScheduler(options = {}) {
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
     sectionAccent = nextSectionAccent;
+    ornateColumnMode = nextOrnateColumnMode;
     fisheyeGranularity = nextFisheyeGranularity;
     lyricsPresentationPolicyId = normalizedLyricsPresentationPolicyId;
     return true;
@@ -2496,7 +2513,8 @@ function boot() {
   }
   frameScheduler = createLyricsFrameScheduler({
     onTrace,
-    ornateMotionTrackId: params.get('ornateMotionTrack'),
+    ornateStrokePreview:
+      embeddedWorkbench && params.get('ornateStroke') === '1',
     templateId: 'karaoke-stack',
     prepareFrame: fit.prepare,
     onTranslationAppearance: (scale) =>
@@ -2516,6 +2534,7 @@ function boot() {
       return {
         fisheyeGranularity: appearance.fisheyeGranularity,
         kineticMaterial: appearance.kineticMaterial,
+        ornateColumnMode: appearance.ornateColumnMode,
         lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
         sectionAccent: appearance.sectionAccent,
         templateId: slot?.templateId ?? 'karaoke-stack',
@@ -2589,6 +2608,7 @@ function boot() {
     onActivity: (active) => {
       onTrace?.('activity', { activeIndex: Number(active) });
       if (!active) {
+        heldSnapshot = null;
         fisheyeEffects?.stop();
         fit.suspend();
         frameScheduler.suspend();

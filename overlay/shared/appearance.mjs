@@ -316,6 +316,8 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlFurigana = appearance.furigana;
   root.dataset.ovlKineticMaterial = appearance.kineticMaterial;
   root.dataset.ovlKineticArrangement = appearance.kineticArrangement;
+  root.dataset.ovlOrnateArrangement = appearance.ornateArrangement;
+  root.dataset.ovlOrnateEntrance = appearance.ornateEntrance;
   root.dataset.ovlContrast = appearance.contrastStyle;
   root.dataset.ovlTextShadow = appearance.textShadow;
   root.dataset.ovlSectionAccent = appearance.sectionAccent;

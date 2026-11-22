@@ -57,8 +57,16 @@
     --ovl-primitive-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     --ovl-primitive-text-shadow:
       0 0.08em 0.08em rgb(0 0 0 / 92%), 0 0.16em 0.45em rgb(0 0 0 / 72%);
+    --ovl-primitive-ornate-shadow-near: 0 0.018em 0.012em rgb(0 0 0 / 76%);
+    --ovl-primitive-ornate-shadow-far: 0 0.055em 0.1em rgb(0 0 0 / 34%);
+    --ovl-primitive-ornate-cast-ink: rgb(0 0 0 / 68%);
     --ovl-primitive-ornate-text-shadow:
-      0 0.018em 0.012em rgb(0 0 0 / 76%), 0 0.055em 0.1em rgb(0 0 0 / 34%);
+      var(--ovl-primitive-ornate-shadow-near),
+      var(--ovl-primitive-ornate-shadow-far);
+    --ovl-primitive-ornate-stroke-shadow: drop-shadow(
+        var(--ovl-primitive-ornate-shadow-near)
+      )
+      drop-shadow(var(--ovl-primitive-ornate-shadow-far));
     --ovl-primitive-mark-shadow: drop-shadow(
       0 0.18rem 0.12rem rgb(0 0 0 / 55%)
     );

@@ -1,52 +1,73 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ornateVerticalEnterPose,
-  ornateVerticalScriptMotionEnabled,
+  ORNATE_VERTICAL_ENTER_DURATION_SECONDS,
+  ornateVerticalEntrancePlan,
   ornateVerticalRevealDelaySeconds,
+  ornateVerticalRevealDelays,
 } from './ornateVerticalMotion.mjs';
 
 describe('Ornate Vertical motion contract', () => {
   it('keeps the reveal sequential, short, and bounded across long lines', () => {
     const delays = Array.from({ length: 20 }, (_value, index) =>
-      ornateVerticalRevealDelaySeconds(index),
+      ornateVerticalRevealDelaySeconds(index, 20),
     );
 
-    expect(delays.slice(0, 6)).toEqual([0, 0.045, 0.09, 0.135, 0.18, 0.225]);
-    expect(delays.at(-1)).toBe(0.27);
-  });
-
-  it('opts in one Japanese track only', () => {
-    expect(ornateVerticalScriptMotionEnabled('test', 'test', 'ja-JP')).toBe(
-      true,
-    );
-    expect(ornateVerticalScriptMotionEnabled('test', 'other', 'ja')).toBe(
-      false,
-    );
-    expect(ornateVerticalScriptMotionEnabled('test', 'test', 'zh-Hant')).toBe(
-      false,
-    );
-    expect(ornateVerticalScriptMotionEnabled('', '', 'ja')).toBe(false);
-  });
-
-  it('slides Han from the column side and uncovers kana downward in the trial', () => {
+    expect(delays[0]).toBe(0);
     expect(
-      ornateVerticalEnterPose('han', { scriptMotion: true, columnIndex: 0 }),
-    ).toEqual({ xPercent: 18 });
-    expect(
-      ornateVerticalEnterPose('han', { scriptMotion: true, columnIndex: 1 }),
-    ).toEqual({ xPercent: -18 });
-    expect(ornateVerticalEnterPose('kana', { scriptMotion: true })).toEqual({
-      clipPath: 'inset(0 0 100% 0)',
-    });
+      delays.every((delay, index) => index === 0 || delay > delays[index - 1]),
+    ).toBe(true);
+    expect(delays.at(-1) + ORNATE_VERTICAL_ENTER_DURATION_SECONDS).toBeCloseTo(
+      0.96,
+    );
   });
 
-  it('distinguishes Han cut-in from kana without changing layout position', () => {
-    expect(ornateVerticalEnterPose('han', 0)).toEqual({
-      clipPath: 'inset(0 0 100% 0)',
-    });
-    expect(ornateVerticalEnterPose('kana', 1)).toEqual({
-      clipPath: 'inset(0 0 0% 0)',
-    });
+  it('preserves a short interval between letters in short phrases', () => {
+    expect(
+      [0, 1, 2, 3].map((index) => ornateVerticalRevealDelaySeconds(index, 4)),
+    ).toEqual([0, 0.12, 0.24, 0.36]);
+    expect(ornateVerticalRevealDelaySeconds(0, 1)).toBe(0);
+    expect(ornateVerticalRevealDelaySeconds(3, 4, 0.3)).toBe(0.18);
+  });
+
+  it('starts with one focus Han glyph and fills the other slots in reading order', () => {
+    const units = [
+      { kind: 'kana' },
+      { kind: 'han' },
+      { kind: 'han', emphasis: 'keyword' },
+      { kind: 'kana' },
+    ];
+    expect(ornateVerticalRevealDelays(units, 1, true)).toEqual([
+      0.12, 0.24, 0, 0.36,
+    ]);
+    expect(ornateVerticalRevealDelays(units, 1, false)).toEqual([
+      0, 0.12, 0.24, 0.36,
+    ]);
+    expect(ornateVerticalRevealDelays(units.slice(0, 2), 1, true)).toEqual([
+      0.12, 0,
+    ]);
+    expect(ornateVerticalRevealDelays(units.slice(0, 1), 1, true)).toEqual([0]);
+  });
+
+  it('keeps slide offsets stable per cue and unit across column rebuilds', () => {
+    const units = Array.from({ length: 8 }, (_, index) => ({ index }));
+    const plan = ornateVerticalEntrancePlan(units, 0.6, 'random-slide', '10');
+    const shifted = ornateVerticalEntrancePlan(
+      units.slice(3),
+      0.6,
+      'random-slide',
+      '10',
+    );
+    expect(shifted.offsets).toEqual(plan.offsets.slice(3));
+    expect(
+      ornateVerticalEntrancePlan(units, 0.6, 'random-slide', '28').offsets,
+    ).not.toEqual(plan.offsets);
+    expect(plan.offsets.some(({ x }) => parseFloat(x) < 0)).toBe(true);
+    expect(plan.offsets.some(({ x }) => parseFloat(x) > 0)).toBe(true);
+    expect(plan.delays[0]).toBe(0);
+    expect(plan.delays.at(-1) + plan.duration).toBeCloseTo(0.6);
+    expect(
+      ornateVerticalEntrancePlan(units, 0.2, 'random-slide', '10').duration,
+    ).toBe(0.2);
   });
 });

@@ -24,7 +24,7 @@ const templateTabLabels = {
   'queue-board': ['版面', '文字', '外觀'],
   'karaoke-stack': ['文字', '外觀'],
   'kinetic-pop': ['文字', '外觀'],
-  'ornate-vertical': ['版面', '修飾', '文字', '外觀'],
+  'ornate-vertical': ['版面', '動態', '修飾', '文字', '外觀'],
   'chalkboard-vertical': ['版面', '修飾', '文字', '外觀'],
   'centered-vertical': ['外觀', '文字'],
   'fisheye-lens': ['動態', '版面', '修飾', '文字', '外觀'],
@@ -410,7 +410,15 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const labels = [...html.matchAll(/role="tab" aria-label="([^"]+)"/gu)].map(
       ([, label]) => label,
     );
-    expect(labels).toEqual(['文字', '翻譯', '外觀', '修飾', '版面', '佔位']);
+    expect(labels).toEqual([
+      '文字',
+      '翻譯',
+      '外觀',
+      '修飾',
+      '動態',
+      '版面',
+      '佔位',
+    ]);
     expect(html).toMatch(/aria-label="版面"[^>]+aria-selected="true"/u);
     expect(html).toContain('定位基準');
     expect(html).toContain('位置微調');
@@ -992,6 +1000,21 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('顯示位置');
     expect(html).toContain('水平微調');
     expect(html).toContain('垂直微調');
+    expect(html).toMatch(
+      /<select[^>]*id="output-appearance-ornateColumnMode"[^>]*value="retain"/u,
+    );
+    expect(html).toMatch(
+      /<select[^>]*id="output-appearance-ornateEntrance"[^>]*value="sequential"/u,
+    );
+    expect(html).toContain('>欄位與文字</h3>');
+    expect(html).not.toContain('>歷史回顧</h3>');
+    expect(html).toContain('>多欄顯示 ');
+    expect(html).toContain('>文字進場 ');
+    expect(html).toContain('一次一欄');
+    expect(html).toContain('重點漢字先入');
+    expect(html).toMatch(
+      /<option[^>]*value="random-slide"[^>]*>左右滑入<\/option>/u,
+    );
     expect(html).toContain('type="color"');
     expect(html).toContain('type="range"');
     expect(html.match(/aria-label="最近使用色票"/gu)).toHaveLength(1);
@@ -1011,5 +1034,22 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
     expect(html).toContain('華麗明朝（Hina Mincho）');
     expect(html).not.toContain('output-appearance-fontWeight');
+  });
+
+  it('describes each selected Ornate Vertical mode beside its dropdown', async () => {
+    const html = await renderRegisteredTemplate(
+      'ornate-vertical',
+      {},
+      { ornateColumnMode: 'replace', ornateEntrance: 'random-slide' },
+    );
+    expect(html).toMatch(
+      /<select[^>]*id="output-appearance-ornateColumnMode"[^>]*value="replace"[^>]*aria-describedby="output-appearance-ornateColumnMode-hint"/u,
+    );
+    expect(html).toMatch(
+      /<select[^>]*id="output-appearance-ornateEntrance"[^>]*value="random-slide"[^>]*aria-describedby="output-appearance-ornateEntrance-hint"/u,
+    );
+    expect(html).toContain('新欄出現時，前一欄會消失。');
+    expect(html).toContain('文字依序從左右不同位置滑回字位。');
+    expect(html).not.toContain('新欄出現在左側，前欄繼續顯示。');
   });
 });

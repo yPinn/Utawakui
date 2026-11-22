@@ -1,3 +1,9 @@
+import {
+  analyzeLyricsText,
+  isProtectedLyricsBreak,
+  isSafeLyricsBreak,
+} from './lyricsTextProcessing.mjs';
+
 const GRAPHEME_SEGMENTER =
   typeof Intl?.Segmenter === 'function'
     ? new Intl.Segmenter('ja', { granularity: 'grapheme' })
@@ -12,16 +18,30 @@ const KANA_GRAPHEME_RE =
   /^(?:[\p{Script=Hiragana}\p{Script=Katakana}\u30fc]\p{M}*)$/u;
 const WORD_GRAPHEME_RE = /^[\p{L}\p{M}\p{N}]+$/u;
 const ATTACHED_MARK_RE = /^[\s\p{P}]+$/u;
+const OPENING_MARK_RE = /^[\p{Ps}\p{Pi}]$/u;
 const LIGHTWEIGHT_MARK_RE = /^[\s\p{P}\p{S}]+$/u;
 const AUTHORED_BREAK_RE = /(?:\r?\n|\s)$/u;
-const PHRASE_PUNCTUATION_RE = /[、，,。．.!！?？;；:：…]$/u;
+const PHRASE_PUNCTUATION_RE = /[、，,。．.!！?？;；:：…‥][\p{Pe}\p{Pf}"]*$/u;
+const SENTENCE_END_RE = /[。．.!！?？][\p{Pe}\p{Pf}"]*$/u;
+const NUMBER_SEPARATOR_RE = /\d[.,，．]$/u;
 const JAPANESE_PARTICLE_RE =
   /(?:から|まで|より|けれど|けど|ので|のに|なら|ても|でも|って|とは|には|では|は|が|を|に|へ|で|と|も|の|て)$/u;
+const JAPANESE_LYRIC_RE = /\p{Script=Hiragana}/u;
+const JAPANESE_PHRASE_END_RE =
+  /(?:以外|のほか|だって|たって|ても|けれど|けど|ので|のに)$/u;
+const JAPANESE_NOMINAL_END_RE = /以外(?=\p{Script=Han}\p{Script=Hiragana})/gu;
+const JAPANESE_VERB_START_RE =
+  /^\p{Script=Han}{1,3}(?![のはがをにへと])\p{Script=Hiragana}/u;
+const KATAKANA_WORD_RE = /[\p{Script=Katakana}ー]{4,}/gu;
+const CJK_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 const ORNATE_VERTICAL_SPLIT_THRESHOLD = 12;
 const ORNATE_VERTICAL_HARD_SPLIT_THRESHOLD = 17;
 const ORNATE_VERTICAL_MIN_SEGMENT_WEIGHT = 4;
 const ORNATE_VERTICAL_MIN_SEGMENT_RATIO = 0.3;
 const ORNATE_VERTICAL_PLACEMENT = 'right';
+
+export const ORNATE_VERTICAL_COLUMN_GAP = '0.5em';
+export const ORNATE_VERTICAL_COLUMN_STEP_EM = 1.25;
 
 function splitGraphemes(value) {
   const text = String(value ?? '');
@@ -37,6 +57,58 @@ function graphemeKind(grapheme) {
   return 'symbol';
 }
 
+export function ornateVerticalGlyphGapEm(glyph, nextGlyph) {
+  if (!nextGlyph) return 0;
+  const kind = graphemeKind(glyph);
+  const nextKind = graphemeKind(nextGlyph);
+  if (kind === 'han' && nextKind === 'han') return 0.08;
+  if (
+    (kind === 'han' && nextKind === 'kana') ||
+    (kind === 'kana' && nextKind === 'han')
+  )
+    return 0.12;
+  return 0;
+}
+
+// One column at a time. Keep Latin runs intact and put the extra space on
+// the preceding glyph, in units of the column's base font size.
+export function ornateVerticalGlyphParts(units, mixedSizes) {
+  const byUnit = units.map((unit) => {
+    const split = unit.kind === 'han' || (mixedSizes && unit.kind === 'kana');
+    if (!split)
+      return mixedSizes ? (unit.parts ?? [{ text: unit.text }]) : unit.parts;
+    const parts = unit.parts ?? [{ text: unit.text }];
+    return parts.flatMap((part) =>
+      splitGraphemes(part.text).map((text) => ({
+        ...part,
+        text,
+        kind: graphemeKind(text),
+      })),
+    );
+  });
+  if (!mixedSizes) return byUnit;
+  const column = byUnit.flat();
+  let index = 0;
+  return byUnit.map((parts) =>
+    parts.map((part) => {
+      const next = column[++index];
+      const { kind } = part;
+      if (kind !== 'han' && kind !== 'kana') return part;
+      const scale = kind === 'han' ? 1.25 : 0.8;
+      const gap = ornateVerticalGlyphGapEm(part.text, next?.text);
+      return {
+        ...part,
+        style: {
+          fontSize: `${scale}em`,
+          ...(gap
+            ? { marginInlineEnd: `${Number((gap / scale).toFixed(5))}em` }
+            : {}),
+        },
+      };
+    }),
+  );
+}
+
 function hanKey(unit) {
   return (
     String(unit?.text ?? '')
@@ -45,8 +117,17 @@ function hanKey(unit) {
   );
 }
 
-export function splitOrnateVerticalUnits(value) {
+export function splitOrnateVerticalUnits(value, { splitHan = false } = {}) {
+  const text = String(value ?? '');
+  const quoteStarts = new Set(
+    text.includes('"')
+      ? analyzeLyricsText(text).pairedRanges.map(
+          ({ sourceStart }) => sourceStart,
+        )
+      : [],
+  );
   const units = [];
+  let offset = 0;
   let leadingText = '';
   let groupedUnit = null;
 
@@ -56,9 +137,16 @@ export function splitOrnateVerticalUnits(value) {
     groupedUnit = null;
   };
 
-  for (const grapheme of splitGraphemes(value)) {
+  for (const grapheme of splitGraphemes(text)) {
+    const opens =
+      OPENING_MARK_RE.test(grapheme) ||
+      (grapheme === '"' && quoteStarts.has(offset));
+    offset += grapheme.length;
     if (ATTACHED_MARK_RE.test(grapheme)) {
-      if (groupedUnit) {
+      if (opens || leadingText) {
+        flushGroupedUnit();
+        leadingText += grapheme;
+      } else if (groupedUnit) {
         groupedUnit.text += grapheme;
         flushGroupedUnit();
       } else if (units.length > 0) {
@@ -70,7 +158,7 @@ export function splitOrnateVerticalUnits(value) {
     }
 
     const kind = graphemeKind(grapheme);
-    if (kind === 'kana' || kind === 'symbol') {
+    if (kind === 'kana' || kind === 'symbol' || (splitHan && kind === 'han')) {
       flushGroupedUnit();
       units.push({ kind, text: `${leadingText}${grapheme}` });
       leadingText = '';
@@ -93,6 +181,12 @@ export function splitOrnateVerticalUnits(value) {
   return units;
 }
 
+export function splitOrnateVerticalRevealUnit(unit) {
+  return unit.kind === 'han'
+    ? splitOrnateVerticalUnits(unit.text, { splitHan: true })
+    : [unit];
+}
+
 function ornateUnitVisualWeight(unit) {
   return splitGraphemes(unit?.text).reduce(
     (total, grapheme) =>
@@ -110,11 +204,37 @@ function wordBoundaryOffsets(value) {
   );
 }
 
-function splitBoundaryStrength(unit, sourceOffset, wordBoundaries, hardSplit) {
+function punctuationStrength(before) {
+  if (SENTENCE_END_RE.test(before)) return 6;
+  return PHRASE_PUNCTUATION_RE.test(before) ? 5 : 0;
+}
+
+function ornateColumnBoundary(text, offset, analysis) {
+  if (
+    isProtectedLyricsBreak(analysis, offset) ||
+    !isSafeLyricsBreak(text, offset) ||
+    (/^\d/u.test(text[offset] ?? '') &&
+      NUMBER_SEPARATOR_RE.test(text.slice(offset - 2, offset)))
+  )
+    return null;
+  return {
+    before: text.slice(0, offset).trimEnd(),
+    after: text.slice(offset).trimStart(),
+  };
+}
+
+function splitBoundaryStrength(
+  unit,
+  sourceOffset,
+  wordBoundaries,
+  hardSplit,
+  punctuation,
+) {
   const source = String(unit?.text ?? '');
   const trimmed = source.trimEnd();
-  if (AUTHORED_BREAK_RE.test(source)) return 5;
-  if (PHRASE_PUNCTUATION_RE.test(trimmed)) return 4;
+  if (source.includes('\n')) return 7;
+  if (punctuation) return punctuation;
+  if (AUTHORED_BREAK_RE.test(source)) return 4;
   if (wordBoundaries.has(sourceOffset) && JAPANESE_PARTICLE_RE.test(trimmed)) {
     return 3;
   }
@@ -122,7 +242,94 @@ function splitBoundaryStrength(unit, sourceOffset, wordBoundaries, hardSplit) {
   return hardSplit ? 1 : 0;
 }
 
-function groupOrnateVerticalColumns(text, units, allowThirdColumn) {
+function separateNominalPhrases(text, units) {
+  const ends = [...text.matchAll(JAPANESE_NOMINAL_END_RE)].map(
+    ({ index, 0: word }) => index + word.length,
+  );
+  if (!ends.length) return units;
+  const wordBoundaries = wordBoundaryOffsets(text);
+  let offset = 0;
+  return units.flatMap((unit) => {
+    const start = offset;
+    offset += unit.text.length;
+    const end = ends.find(
+      (at) => at > start && at < offset && wordBoundaries.has(at),
+    );
+    return unit.kind === 'han' && end !== undefined
+      ? [
+          { ...unit, text: unit.text.slice(0, end - start) },
+          { ...unit, text: unit.text.slice(end - start) },
+        ]
+      : [unit];
+  });
+}
+
+function ornatePhraseColumns(text, units, analysis) {
+  const authored = [];
+  const punctuated = [];
+  const phrases = [];
+  const japanese = JAPANESE_LYRIC_RE.test(text);
+  const loanwordBreaks = japanese
+    ? [...text.matchAll(KATAKANA_WORD_RE)].flatMap(({ index, 0: word }) => {
+        const end = index + word.length;
+        return text[index - 1] === 'の' &&
+          /^を\p{Script=Han}/u.test(text.slice(end))
+          ? [index, end]
+          : [];
+      })
+    : [];
+  let offset = 0;
+  let phraseStart = 0;
+  for (const [index, unit] of units.slice(0, -1).entries()) {
+    offset += unit.text.length;
+    const boundary = ornateColumnBoundary(text, offset, analysis);
+    if (!boundary) continue;
+    const { before, after } = boundary;
+    if (
+      AUTHORED_BREAK_RE.test(unit.text) &&
+      CJK_RE.test(before.at(-1)) &&
+      CJK_RE.test(after[0])
+    ) {
+      authored.push(index + 1);
+    } else if (punctuationStrength(before)) {
+      punctuated.push(index + 1);
+    } else if (
+      japanese &&
+      (JAPANESE_PHRASE_END_RE.test(before) ||
+        (before.endsWith('を') &&
+          offset - phraseStart >= 3 &&
+          offset - phraseStart <= 8 &&
+          JAPANESE_VERB_START_RE.test(after)) ||
+        loanwordBreaks.includes(offset))
+    ) {
+      phrases.push(index + 1);
+      phraseStart = offset;
+    }
+  }
+  const boundaries = authored.length
+    ? authored
+    : punctuated.length
+      ? punctuated
+      : phrases;
+  if (!boundaries.length || boundaries.length > 2) return null;
+  const columns = [0, ...boundaries].map((start, index) =>
+    units.slice(start, boundaries[index]),
+  );
+  return columns.every((column) => {
+    const weight = column.reduce(
+      (total, unit) => total + ornateUnitVisualWeight(unit),
+      0,
+    );
+    return (
+      weight >= 3 &&
+      (boundaries !== punctuated || weight <= ORNATE_VERTICAL_SPLIT_THRESHOLD)
+    );
+  })
+    ? columns
+    : null;
+}
+
+function groupOrnateVerticalColumns(text, units, allowThirdColumn, analysis) {
   if (units.length <= 1) return [units];
 
   const weights = units.map(ornateUnitVisualWeight);
@@ -139,12 +346,15 @@ function groupOrnateVerticalColumns(text, units, allowThirdColumn) {
   for (let unitIndex = 0; unitIndex < units.length - 1; unitIndex += 1) {
     leftWeight += weights[unitIndex];
     sourceOffset += units[unitIndex].text.length;
+    const boundary = ornateColumnBoundary(text, sourceOffset, analysis);
+    if (!boundary) continue;
     const rightWeight = totalWeight - leftWeight;
     const strength = splitBoundaryStrength(
       units[unitIndex],
       sourceOffset,
       wordBoundaries,
       hardSplit,
+      punctuationStrength(boundary.before),
     );
     if (
       allowThirdColumn &&
@@ -177,10 +387,12 @@ function groupOrnateVerticalColumns(text, units, allowThirdColumn) {
 
   if (shortOpening) {
     const boundary = shortOpening.unitIndex + 1;
+    const remainderText = text.slice(shortOpening.sourceOffset);
     const remainder = groupOrnateVerticalColumns(
-      text.slice(shortOpening.sourceOffset),
+      remainderText,
       units.slice(boundary),
       false,
+      analyzeLyricsText(remainderText),
     );
     if (remainder.length === 2) return [units.slice(0, boundary), ...remainder];
   }
@@ -189,17 +401,20 @@ function groupOrnateVerticalColumns(text, units, allowThirdColumn) {
 }
 
 export function splitOrnateVerticalSegments(value) {
-  const text = String(value ?? '').trim();
+  const source = String(value ?? '');
+  const text = source.trim();
   const units = splitOrnateVerticalUnits(text);
-  const columns = groupOrnateVerticalColumns(text, units, true);
-  return columns.map((segmentUnits, index) => ({
-    index,
-    text: segmentUnits
-      .map((unit) => unit.text)
-      .join('')
-      .trim(),
-    units: segmentUnits,
-  }));
+  const analysis = analyzeLyricsText(text);
+  const columns =
+    ornatePhraseColumns(text, separateNominalPhrases(text, units), analysis) ??
+    groupOrnateVerticalColumns(text, units, true, analysis);
+  let offset = source.length - source.trimStart().length;
+  return columns.map((segmentUnits, index) => {
+    const raw = segmentUnits.map((unit) => unit.text).join('');
+    const sourceStart = offset;
+    offset += raw.length;
+    return { index, text: raw.trim(), units: segmentUnits, sourceStart };
+  });
 }
 
 function sourceLineText(line) {
@@ -370,7 +585,7 @@ function accentParts(text, offset, accents) {
 export function adaptOrnateVerticalLyricsPresentation(value, options = {}) {
   const sourceText = String(value ?? '');
   const text = sourceText.trim();
-  const sourceSegments = splitOrnateVerticalSegments(text);
+  const sourceSegments = splitOrnateVerticalSegments(sourceText);
   const sourceUnits = sourceSegments.flatMap((segment) => segment.units);
   const keyword = selectKeyword(sourceUnits, options.documentContext);
   let offset = sourceText.length - sourceText.trimStart().length;
@@ -382,29 +597,38 @@ export function adaptOrnateVerticalLyricsPresentation(value, options = {}) {
       options.documentContext?.sectionAccents?.[options.lineIndex],
     );
   const units = [];
+  let layoutUnitIndex = 0;
+  let presentedKeyword = null;
   const segments = sourceSegments.map((segment) => {
-    const segmentUnits = segment.units.map((unit) => {
-      const index = units.length;
-      const parts = accentParts(unit.text, offset, accents);
-      offset += unit.text.length;
-      const presentedUnit = Object.freeze({
-        ...unit,
-        emphasis: keyword?.index === index ? 'keyword' : 'normal',
-        index,
-        reveal: unit.kind === 'han' ? 'group' : 'character',
-        ...(parts.length ? { parts } : {}),
+    const segmentUnits = segment.units.flatMap((layoutUnit) => {
+      const emphasized = keyword?.index === layoutUnitIndex;
+      layoutUnitIndex += 1;
+      if (emphasized) {
+        presentedKeyword = Object.freeze({ ...keyword, index: units.length });
+      }
+      return splitOrnateVerticalRevealUnit(layoutUnit).map((unit) => {
+        const parts = accentParts(unit.text, offset, accents);
+        offset += unit.text.length;
+        const presentedUnit = Object.freeze({
+          ...unit,
+          emphasis: emphasized ? 'keyword' : 'normal',
+          index: units.length,
+          reveal: unit.kind === 'word' ? 'group' : 'character',
+          ...(parts.length ? { parts } : {}),
+        });
+        units.push(presentedUnit);
+        return presentedUnit;
       });
-      units.push(presentedUnit);
-      return presentedUnit;
     });
     return Object.freeze({
       index: segment.index,
+      sourceStart: segment.sourceStart,
       text: segment.text,
       units: Object.freeze(segmentUnits),
     });
   });
   return Object.freeze({
-    keyword,
+    keyword: presentedKeyword,
     ...(accents.length ? { sectionAccentRanges: accents } : {}),
     placement: ORNATE_VERTICAL_PLACEMENT,
     segments: Object.freeze(segments),

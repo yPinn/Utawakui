@@ -229,6 +229,13 @@ const inspectorTabs = computed(() => {
 const orderedInspectorTabs = computed(() =>
   sortOutputInspectorTabs(inspectorTabs.value),
 );
+const defaultInspectorTabId = computed(() => {
+  const tabs = inspectorTabs.value;
+  const layout =
+    templateId.value === 'ornate-vertical' &&
+    tabs.find(({ id }) => id === 'layout');
+  return (layout || tabs[0])?.id;
+});
 const useFolderInspector = computed(
   () =>
     inspectorTabs.value.length > 0 &&
@@ -581,7 +588,7 @@ function removePortraitSet() {
       useFolderInspector
         ? {
             items: orderedInspectorTabs,
-            defaultItemId: inspectorTabs[0]?.id,
+            defaultItemId: defaultInspectorTabId,
             tabsLabel: t('outputPanel.inspector.label'),
             class:
               'obs-output-folder-inspector obs-slot-workbench__folder-inspector',

@@ -457,6 +457,7 @@
       "material": "Material",
       "layout": "Layout",
       "motion": "History review",
+      "ornateMotion": "Columns and text",
       "content": "Content"
     },
     "fields": {
@@ -583,6 +584,37 @@
           "small": "Small",
           "medium": "Standard",
           "large": "Large"
+        }
+      },
+      "ornateArrangement": {
+        "label": "Text arrangement",
+        "options": {
+          "uniform": "Uniform",
+          "mixedSizes": "Mixed sizes"
+        }
+      },
+      "ornateColumnMode": {
+        "label": "Multiple columns",
+        "options": {
+          "retain": "Keep earlier",
+          "replace": "One at a time"
+        },
+        "optionHints": {
+          "retain": "New columns appear on the left while earlier ones stay visible.",
+          "replace": "The previous column disappears when the next one appears."
+        }
+      },
+      "ornateEntrance": {
+        "label": "Text entrance",
+        "options": {
+          "sequential": "Sequential fade",
+          "focusFirst": "Key kanji first",
+          "randomSlide": "Slide in"
+        },
+        "optionHints": {
+          "sequential": "Characters appear from the top of each column downward.",
+          "focusFirst": "If a column contains kanji, one key kanji appears first. The rest follow in order.",
+          "randomSlide": "Characters slide into place in order from varying positions on either side."
         }
       },
       "fontWeight": {

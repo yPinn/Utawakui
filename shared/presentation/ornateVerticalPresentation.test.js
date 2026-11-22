@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
+  ornateVerticalGlyphParts,
   splitOrnateVerticalSegments,
   splitOrnateVerticalUnits,
 } from './ornateVerticalPresentation.mjs';
@@ -25,6 +26,48 @@ function accentsFor(lines, synced = true) {
 }
 
 describe('Ornate Vertical presentation', () => {
+  it('adds mixed-size gaps only to adjacent Han and kana within a column', () => {
+    const source = '夕食をご飯、灯 Go';
+    const units = adaptOrnateVerticalLyricsPresentation(source, {
+      sectionAccentRanges: [{ from: 0, to: 1 }],
+    }).units;
+    const parts = ornateVerticalGlyphParts(units, true).flat();
+    expect(parts.map(({ text }) => text).join('')).toBe(source);
+    expect(
+      parts
+        .filter(({ style }) => style)
+        .map(({ text, accent, style }) => [
+          text,
+          Boolean(accent),
+          style.fontSize,
+          style.marginInlineEnd,
+        ]),
+    ).toEqual([
+      ['夕', true, '1.25em', '0.064em'],
+      ['食', false, '1.25em', '0.096em'],
+      ['を', false, '0.8em', undefined],
+      ['ご', false, '0.8em', '0.15em'],
+      ['飯', false, '1.25em', undefined],
+      ['灯', false, '1.25em', undefined],
+    ]);
+    const [last] = ornateVerticalGlyphParts(
+      splitOrnateVerticalUnits('灯'),
+      true,
+    );
+    expect(last[0].style).toEqual({ fontSize: '1.25em' });
+  });
+
+  it('keeps attached punctuation out of the cast shadow in both arrangements', () => {
+    const units = adaptOrnateVerticalLyricsPresentation('月、が').units;
+    for (const mixedSizes of [false, true]) {
+      const [parts] = ornateVerticalGlyphParts(units, mixedSizes);
+      expect(parts).toMatchObject([
+        { text: '月', kind: 'han' },
+        { text: '、', kind: 'symbol' },
+      ]);
+    }
+  });
+
   it('accents the three complete seven-line refrains in a 50-card sequence', () => {
     const verse = (name, length) =>
       Array.from({ length }, (_, index) => `${name} verse line ${index}`);
@@ -166,7 +209,7 @@ describe('Ornate Vertical presentation', () => {
         .presentation.sectionAccentRanges,
     ).toBeUndefined();
   });
-  it('groups continuous Han while revealing Japanese kana by grapheme', () => {
+  it('groups continuous Han when choosing column breaks', () => {
     expect(splitOrnateVerticalUnits('後悔ばかりが募って。')).toEqual([
       { kind: 'han', text: '後悔' },
       { kind: 'kana', text: 'ば' },
@@ -177,6 +220,24 @@ describe('Ornate Vertical presentation', () => {
       { kind: 'kana', text: 'っ' },
       { kind: 'kana', text: 'て。' },
     ]);
+  });
+
+  it('reveals Han and kana by grapheme, retaining punctuation and Latin words', () => {
+    const text = '「後悔」か\u3099、ABC123!';
+    const { units, keyword } = adaptOrnateVerticalLyricsPresentation(text);
+    expect(units.map(({ text }) => text)).toEqual([
+      '「後',
+      '悔」',
+      'か\u3099、',
+      'ABC123!',
+    ]);
+    expect(units.map(({ reveal }) => reveal)).toEqual([
+      'character',
+      'character',
+      'character',
+      'group',
+    ]);
+    expect(keyword).toEqual({ index: 0, text: '後悔' });
   });
 
   it('keeps combining kana graphemes intact and groups Latin letters with numbers', () => {
@@ -205,8 +266,10 @@ describe('Ornate Vertical presentation', () => {
 
     expect(repeated.keyword).toEqual({ index: 0, text: '後悔' });
     expect(
-      repeated.units.filter((unit) => unit.emphasis === 'keyword'),
-    ).toHaveLength(1);
+      repeated.units
+        .filter((unit) => unit.emphasis === 'keyword')
+        .map(({ text }) => text),
+    ).toEqual(['後', '悔']);
     expect(allKana.keyword).toBeNull();
   });
 
@@ -252,6 +315,7 @@ describe('Ornate Vertical presentation', () => {
     expect(splitOrnateVerticalSegments('後悔ばかりが募って')).toEqual([
       {
         index: 0,
+        sourceStart: 0,
         text: '後悔ばかりが募って',
         units: splitOrnateVerticalUnits('後悔ばかりが募って'),
       },
@@ -276,6 +340,38 @@ describe('Ornate Vertical presentation', () => {
       '静かな夜に、',
       '言葉を残して歩いていく',
     ]);
+  });
+
+  it.each(
+    [
+      ['星が瞬く、', '夜が明ける。'],
+      ['星が瞬く。', '夜が明ける！'],
+      ['時計は 3.14、', '夜の街は静かだ。'],
+      ['値は 3,141、', '夜の街は静かだ。'],
+      ['星が瞬く，', '「ここ、だよ？」', '空が光る。'],
+      ['星が瞬く、', '"ここだよ?"', '空が光る。'],
+      ['星が瞬く、', '（風が鳴る、こわい？）', '空が光る。'],
+    ].map((columns) => [columns]),
+  )('keeps short punctuation-delimited phrases as columns (%j)', (columns) => {
+    const text = columns.join('');
+    const segments = splitOrnateVerticalSegments(text);
+    expect(segments.map((column) => column.text)).toEqual(columns);
+    expect(
+      segments.map(({ sourceStart, text: columnText }) =>
+        text.slice(sourceStart, sourceStart + columnText.length),
+      ),
+    ).toEqual(columns);
+  });
+
+  it('reveals opening marks with the next glyph and closing marks with the previous glyph', () => {
+    const { segments } =
+      adaptOrnateVerticalLyricsPresentation(
+        '星が瞬く、「ここだよ？」空が光る。',
+      );
+    expect(segments[0].units.at(-1).text).toBe('く、');
+    expect(segments[1].units[0].text).toBe('「こ');
+    expect(segments[1].units.at(-1).text).toBe('よ？」');
+    expect(segments[2].units.at(-1).text).toBe('る。');
   });
 
   it('rejects a strongly marked split when it would create an unbalanced stub', () => {
@@ -315,8 +411,14 @@ describe('Ornate Vertical presentation', () => {
       ),
     ).toEqual(presentation.units.map((unit) => unit.index));
     expect(
-      presentation.units.filter((unit) => unit.emphasis === 'keyword'),
-    ).toHaveLength(1);
+      presentation.units
+        .filter((unit) => unit.emphasis === 'keyword')
+        .map(({ text }) => text)
+        .join(''),
+    ).toBe(presentation.keyword.text);
+    expect(presentation.units[presentation.keyword.index].emphasis).toBe(
+      'keyword',
+    );
   });
 });
 
@@ -332,4 +434,20 @@ it('preserves a short punctuated opening as the first of three columns', () => {
       .map((unit) => unit.text)
       .join(''),
   ).toBe(text);
+});
+
+it.each([
+  ['春以外どこにも行きたくない', ['春以外', 'どこにも行きたくない']],
+  ['春以外旅したくないんだよね', ['春以外', '旅したくないんだよね']],
+  ['星の名前を覚えてみて', ['星の名前を', '覚えてみて']],
+  [
+    '長い旅路を歩いたって帰れるように',
+    ['長い旅路を', '歩いたって', '帰れるように'],
+  ],
+  ['静かな シンフォニーを聴こう', ['静かな', 'シンフォニーを聴こう']],
+  ['月夜のセレナーデを聴こう', ['月夜の', 'セレナーデ', 'を聴こう']],
+])('keeps short semantic columns in %s', (text, expected) => {
+  expect(
+    splitOrnateVerticalSegments(text).map((column) => column.text),
+  ).toEqual(expected);
 });

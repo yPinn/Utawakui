@@ -47,6 +47,9 @@ const selectOptions = computed(() =>
     disabled: option.disabled,
   })),
 );
+const selectedOptionHint = computed(
+  () => props.field.options?.find(({ id }) => id === props.modelValue)?.hint,
+);
 function formatRangeValue(value) {
   const numericValue = Number(value);
   const prefix = props.field.signed && numericValue > 0 ? '+' : '';
@@ -96,7 +99,11 @@ function commitColor(value) {
     :labels-control="['range', 'text'].includes(field.control)"
     :modified="modified"
     :stacked="stacked"
-    :align-start="editor === 'position-grid' || editor === 'font-family'"
+    :align-start="
+      editor === 'position-grid' ||
+      editor === 'font-family' ||
+      Boolean(selectedOptionHint)
+    "
   >
     <ObsLookSelect
       v-if="editor === 'look'"
@@ -148,6 +155,7 @@ function commitColor(value) {
       :label="field.label"
       :model-value="modelValue"
       :options="selectOptions"
+      :hint="selectedOptionHint"
       :disabled="disabled"
       label-hidden
       @update:model-value="updateValue"

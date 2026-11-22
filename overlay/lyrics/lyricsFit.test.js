@@ -296,6 +296,7 @@ describe('lyric fit controller lifecycle', () => {
       const node = {
         textContent: '',
         children: [],
+        dataset: {},
         hidden: false,
         className: '',
         style: {},
@@ -316,6 +317,7 @@ describe('lyric fit controller lifecycle', () => {
         node.children = children;
         contents = children.map((child) => child.textContent).join('');
       };
+      node.append = (child) => node.replaceChildren(...node.children, child);
       node.cloneNode = () => {
         const clone = make();
         Object.assign(clone.style, node.style);
@@ -340,7 +342,7 @@ describe('lyric fit controller lifecycle', () => {
             };
         return node.style.whiteSpace === 'pre-wrap'
           ? (options.wrappedBounds?.(rect, node) ?? rect)
-          : rect;
+          : (options.lineBounds?.(rect, node) ?? rect);
       };
       Object.defineProperty(node, 'scrollWidth', {
         get: () => node.getBoundingClientRect().width,
@@ -1150,15 +1152,16 @@ describe('lyric fit controller lifecycle', () => {
     },
   );
 
-  it('keeps fitted Ornate columns together without a preliminary paint', () => {
+  it('fits Ornate columns with room for each lowered top without a preliminary paint', () => {
     const renderForMeasurement = vi.fn();
     const s = surface('ornate-vertical', { renderForMeasurement });
     const columns = ['それでも、', '口が別の生き物に', 'なったかのように、'];
     const text = columns.join('');
-    s.window.innerHeight = 300;
+    s.window.innerHeight = 360;
     s.snapshot.lyrics.lines[0].text = text;
     s.frame.currentText = text;
     s.frame.language = 'ja';
+    s.snapshot.playback.positionMs = s.snapshot.lyrics.lines[0].endMs - 1;
 
     const result = s.controller.prepare(s.snapshot, s.frame, s.settings);
 
@@ -1166,7 +1169,107 @@ describe('lyric fit controller lifecycle', () => {
     expect(
       result.frame.ornateVertical.segments.map(({ text }) => text),
     ).toEqual(columns);
+
+    s.window.innerHeight = 320;
+    s.controller.invalidate();
+    expect(
+      s.controller.prepare(s.snapshot, s.frame, s.settings).frame.displayFit
+        .pageCount,
+    ).toBeGreaterThan(1);
     expect(renderForMeasurement).not.toHaveBeenCalled();
+    s.controller.stop();
+  });
+
+  it('reports the fitted media clock to the dev stroke preview', () => {
+    const s = surface('ornate-vertical');
+    s.snapshot.lyrics.lines = [
+      { text: '帰り道の灯', startMs: 1000, endMs: 4000 },
+    ];
+    s.frame.currentText = '帰り道の灯';
+    s.snapshot.playback.positionMs = 1450;
+    const { frame } = s.controller.prepare(s.snapshot, s.frame, {
+      ...s.settings,
+      ornateStrokePreview: true,
+    });
+    expect(frame.ornateStrokeClock).toEqual({
+      elapsedMs: 450,
+      durationMs: 3000,
+      playing: false,
+      rate: 1,
+    });
+    expect(frame.ornateRevealRemainingMs).toBeUndefined();
+
+    s.snapshot.playback.status = 'playing';
+    s.snapshot.playback.rate = 2;
+    expect(
+      s.controller.prepare(s.snapshot, s.frame, s.settings).frame
+        .ornateRevealRemainingMs,
+    ).toBe(1275);
+    s.controller.stop();
+  });
+
+  it('wakes at the next Ornate column on the playback clock and keeps the prior column settled', () => {
+    const s = surface('ornate-vertical');
+    const text = '星の名前を 覚えてみて';
+    s.snapshot.lyrics.lines = [
+      {
+        text,
+        startMs: 1000,
+        endMs: 4200,
+        segments: [
+          { text: '星の名前を', startMs: 1000, endMs: 2600 },
+          { text: ' 覚えてみて', startMs: 2600, endMs: 4200 },
+        ],
+      },
+    ];
+    s.frame.currentText = text;
+    s.snapshot.playback.status = 'playing';
+    s.snapshot.playback.positionMs = 1800;
+    const first = s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(first.frame.ornateVertical.text).toBe('星の名前を');
+    expect(first.delayMs).toBe(800);
+    s.snapshot.playback.positionMs = 2600;
+    const second = s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(second.frame.ornateVertical.text).toBe(text);
+    expect(second.frame.ornateColumnTiming.settledUnits).toBe(5);
+    expect(second.delayMs).toBeNull();
+    s.controller.stop();
+  });
+
+  it('remeasures the Ornate batch with the mixed-size ink when the arrangement changes', () => {
+    const lineBounds = vi.fn((rect, node) => {
+      const styles = node.children.flatMap((unit) =>
+        unit.children.map((glyph) => glyph.style),
+      );
+      if (styles.length === 0) return rect;
+      return {
+        ...rect,
+        height: styles.reduce((height, style) => {
+          const size = 16 * parseFloat(style.fontSize);
+          return height + size * (1 + parseFloat(style.marginInlineEnd ?? '0'));
+        }, 0),
+      };
+    });
+    const s = surface('ornate-vertical', { lineBounds });
+    s.document.documentElement = {
+      dataset: { ovlOrnateArrangement: 'uniform' },
+    };
+    s.window.innerHeight = 150;
+    s.frame.currentText = s.snapshot.lyrics.lines[0].text = '山川風月灯';
+
+    expect(
+      s.controller.prepare(s.snapshot, s.frame, s.settings).frame.displayFit
+        .pageCount,
+    ).toBe(1);
+    s.document.documentElement.dataset.ovlOrnateArrangement = 'mixed-sizes';
+    expect(
+      s.controller.prepare(s.snapshot, s.frame, s.settings).frame.displayFit
+        .pageCount,
+    ).toBeGreaterThan(1);
+    const reads = s.reads();
+    s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(s.reads()).toBe(reads);
+    expect(s.probes()).toBe(0);
     s.controller.stop();
   });
 

@@ -36,6 +36,8 @@ const DATASET_TARGETS = Object.freeze({
   furigana: 'ovlFurigana',
   kineticArrangement: 'ovlKineticArrangement',
   kineticMaterial: 'ovlKineticMaterial',
+  ornateArrangement: 'ovlOrnateArrangement',
+  ornateEntrance: 'ovlOrnateEntrance',
   paletteId: 'ovlPalette',
   positionAnchor: 'ovlPosition',
   spacingDensity: 'ovlDensity',
@@ -83,6 +85,7 @@ const STYLE_TARGETS = Object.freeze({
 });
 
 function nonDefaultValue(field) {
+  if (field.key === 'ornateEntrance') return 'random-slide';
   if (field.control === 'select') {
     return (
       field.options.find((option) => option.id !== field.defaultValue)?.id ??
@@ -238,7 +241,8 @@ describe('Output settings path', () => {
         if (
           FISHEYE_FIELDS.has(field.key) ||
           PHANTOM_FIELDS.has(field.key) ||
-          MANGA_FIELDS.has(field.key)
+          MANGA_FIELDS.has(field.key) ||
+          field.key === 'ornateColumnMode'
         ) {
           expect(
             normalizeOutputAppearance(slot.settings, { templateId })[field.key],

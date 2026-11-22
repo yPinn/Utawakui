@@ -457,6 +457,7 @@
       "material": "材質",
       "layout": "版面",
       "motion": "歷史回顧",
+      "ornateMotion": "欄位與文字",
       "content": "內容顯示"
     },
     "fields": {
@@ -579,6 +580,37 @@
           "small": "小",
           "medium": "標準",
           "large": "大"
+        }
+      },
+      "ornateArrangement": {
+        "label": "字體排列",
+        "options": {
+          "uniform": "等大",
+          "mixedSizes": "大小字"
+        }
+      },
+      "ornateColumnMode": {
+        "label": "多欄顯示",
+        "options": {
+          "retain": "保留前欄",
+          "replace": "一次一欄"
+        },
+        "optionHints": {
+          "retain": "新欄出現在左側，前欄繼續顯示。",
+          "replace": "新欄出現時，前一欄會消失。"
+        }
+      },
+      "ornateEntrance": {
+        "label": "文字進場",
+        "options": {
+          "sequential": "逐字淡入",
+          "focusFirst": "重點漢字先入",
+          "randomSlide": "左右滑入"
+        },
+        "optionHints": {
+          "sequential": "文字從欄頂往下依序出現。",
+          "focusFirst": "有漢字時，每欄先顯示一個重點漢字，再依序補上其餘文字。",
+          "randomSlide": "文字依序從左右不同位置滑回字位。"
         }
       },
       "fontWeight": {

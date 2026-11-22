@@ -116,6 +116,11 @@
       "scope": "slot-template",
       "activation": "explicit-selection"
     },
+    "ornateArrangement": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
     "textShadow": {
       "level": "opt",
       "scope": "slot-template",
@@ -239,6 +244,16 @@
     "mangaTailDirection": {
       "level": "opt",
       "reason": "Follow the visible performer mask center by default, with a fixed direction option."
+    },
+    "ornateColumnMode": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
+    },
+    "ornateEntrance": {
+      "level": "opt",
+      "scope": "slot-template",
+      "activation": "explicit-selection"
     }
   },
   "projectShared": {
@@ -1138,6 +1153,69 @@
           ],
           "group": "typography",
           "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "ornateArrangement",
+          "family": "character",
+          "tier": "basic",
+          "reflow": true,
+          "order": 25,
+          "control": "select",
+          "defaultValue": "uniform",
+          "options": [
+            {
+              "id": "uniform"
+            },
+            {
+              "id": "mixed-sizes"
+            }
+          ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "ornateColumnMode",
+          "family": "motion",
+          "tier": "basic",
+          "reflow": true,
+          "order": 25,
+          "control": "select",
+          "defaultValue": "retain",
+          "options": [
+            {
+              "id": "retain"
+            },
+            {
+              "id": "replace"
+            }
+          ],
+          "group": "motion",
+          "groupOrder": 70
+        },
+        {
+          "scope": "template",
+          "key": "ornateEntrance",
+          "family": "motion",
+          "tier": "basic",
+          "reflow": false,
+          "order": 26,
+          "control": "select",
+          "defaultValue": "sequential",
+          "options": [
+            {
+              "id": "sequential"
+            },
+            {
+              "id": "focus-first"
+            },
+            {
+              "id": "random-slide"
+            }
+          ],
+          "group": "motion",
+          "groupOrder": 70
         },
         {
           "scope": "template",

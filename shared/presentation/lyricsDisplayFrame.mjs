@@ -5,7 +5,7 @@ import {
 import { adaptOrnateVerticalLyricsPresentation } from './ornateVerticalPresentation.mjs';
 import { sliceLyricsVocalParts } from './lyricsTextProcessing.mjs';
 import {
-  chalkboardColumnStarts,
+  lyricsDisplayColumnStarts,
   selectLyricsDisplayPage,
   sliceLyricsReading,
 } from './lyricsDisplayLayout.mjs';
@@ -236,7 +236,7 @@ export function projectLyricsDisplayFrame(
     projected.chalkboardColumns = rows.map((row) => row.text);
     if (Number.isFinite(page.endMs)) {
       const rate = options.rate || 1;
-      const starts = chalkboardColumnStarts(line, page, rows);
+      const starts = lyricsDisplayColumnStarts(line, page, rows, 120);
       if (starts)
         projected.chalkboardColumnDelaysMs = starts.map(
           (start) => (start - positionMs) / rate,
@@ -272,12 +272,56 @@ export function projectLyricsDisplayFrame(
         from: from - page.sourceStart,
         to: to - page.sourceStart,
       }));
-    projected.ornateVertical = adaptOrnateVerticalLyricsPresentation(
-      page.text,
-      {
-        sectionAccentRanges,
-      },
-    );
+    const presentation = adaptOrnateVerticalLyricsPresentation(page.text, {
+      sectionAccentRanges,
+    });
+    projected.ornateVertical = presentation;
+    if (presentation.segments.length > 1) {
+      const starts = lyricsDisplayColumnStarts(
+        line,
+        page,
+        presentation.segments,
+      );
+      const rate = options.rate > 0 ? options.rate : 1;
+      // A very short column cue would interrupt reading before the next one.
+      if (
+        starts?.every(
+          (start, i) => ((starts[i + 1] ?? page.endMs) - start) / rate >= 380,
+        )
+      ) {
+        const columnIndex = Math.max(
+          0,
+          starts.findLastIndex((start) => start <= positionMs),
+        );
+        const replace = options.ornateColumnMode === 'replace';
+        const first = replace ? columnIndex : 0;
+        const end = columnIndex + 1;
+        const kept = presentation.segments.slice(first, end);
+        const segments = replace ? [{ ...kept[0], index: 0 }] : kept;
+        const next = starts[end];
+        projected.ornateVertical = {
+          ...presentation,
+          text: page.text
+            .slice(kept[0].sourceStart, presentation.segments[end]?.sourceStart)
+            .trim(),
+          segments,
+          units: segments.flatMap(({ units }) => units),
+        };
+        projected.ornateColumnTiming = {
+          index: columnIndex,
+          playing: options.playing === true,
+          settledUnits: replace
+            ? 0
+            : kept
+                .slice(0, -1)
+                .reduce((count, column) => count + column.units.length, 0),
+          remainingMs: Math.max(0, ((next ?? page.endMs) - positionMs) / rate),
+          nextDelayMs: Number.isFinite(next)
+            ? (next - positionMs) / rate
+            : null,
+        };
+      }
+    }
   }
   if (options.templateId === 'live-stage') {
     projected.liveStageDisplayLines = rows.map((row) => row.text);

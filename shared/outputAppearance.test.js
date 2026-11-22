@@ -286,6 +286,9 @@ describe('output appearance schema', () => {
       'accentColor',
       'fontFamily',
       'fontScale',
+      'ornateArrangement',
+      'ornateColumnMode',
+      'ornateEntrance',
       'textShadow',
       'sectionAccent',
       'positionAnchor',
@@ -356,6 +359,25 @@ describe('output appearance schema', () => {
     ).toBe('standard');
   });
 
+  it('keeps mixed sizes opt-in and limited to Ornate Vertical', () => {
+    const settings = { ornateArrangement: 'mixed-sizes' };
+    const options = { templateId: 'ornate-vertical' };
+    expect(normalizeOutputAppearance({}, options).ornateArrangement).toBe(
+      'uniform',
+    );
+    expect(normalizeOutputAppearance(settings, options).ornateArrangement).toBe(
+      'mixed-sizes',
+    );
+    expect(
+      normalizeOutputAppearance({ ornateArrangement: 'invalid' }, options)
+        .ornateArrangement,
+    ).toBe('uniform');
+    expect(
+      normalizeOutputAppearance(settings, { templateId: 'centered-vertical' })
+        .ornateArrangement,
+    ).toBe('uniform');
+  });
+
   it('normalizes legacy and unsafe values through template defaults', () => {
     expect(
       normalizeOutputAppearance(
@@ -407,6 +429,9 @@ describe('output appearance schema', () => {
       lookAmount: 100,
       fontFamily: 'rounded',
       fontScale: 'large',
+      ornateArrangement: 'uniform',
+      ornateColumnMode: 'retain',
+      ornateEntrance: 'sequential',
       fontWeight: 'semibold',
       phantomMode: 'side-card',
       phantomChatShape: 'bubble',

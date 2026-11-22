@@ -26,6 +26,67 @@ const plan = {
   ],
 };
 describe('capacity pages keep existing template projections', () => {
+  it.each([
+    ['星の名前を', '覚えてみて', 5],
+    ['星が瞬く、', '「ここだよ？」', 4],
+  ])(
+    'uses the source cue for Ornate columns after %s',
+    (first, second, settledUnits) => {
+      const text = `${first} ${second}`;
+      const source = {
+        text,
+        startMs: 1000,
+        endMs: 5000,
+        segments: [
+          { text: first, startMs: 1000, endMs: 2800 },
+          { text: ` ${second}`, startMs: 2800, endMs: 5000 },
+        ],
+      };
+      const displayPlan = {
+        ...plan,
+        pages: [
+          {
+            text,
+            sourceStart: 0,
+            sourceEnd: text.length,
+            startMs: 1000,
+            endMs: 5000,
+          },
+        ],
+      };
+      const at = (positionMs, ornateColumnMode, playing = true) =>
+        projectLyricsDisplayFrame(
+          { visible: true, currentText: text },
+          source,
+          displayPlan,
+          positionMs,
+          {
+            templateId: 'ornate-vertical',
+            force: true,
+            ornateColumnMode,
+            rate: 2,
+            playing,
+          },
+        );
+
+      expect(at(2798).ornateVertical.text).toBe(first);
+      expect(at(2798).ornateColumnTiming.nextDelayMs).toBe(1);
+      const retained = at(2800);
+      expect(
+        retained.ornateVertical.segments.map((column) => column.text),
+      ).toEqual([first, second]);
+      expect(retained.ornateColumnTiming.settledUnits).toBe(settledUnits);
+      const switched = at(2800, 'replace');
+      expect(switched.currentText).toBe(text);
+      expect(switched.ornateVertical.text).toBe(second);
+      expect(
+        switched.ornateVertical.segments.map((column) => column.index),
+      ).toEqual([0]);
+      expect(at(4700, 'replace', false).ornateVertical.text).toBe(second);
+      expect(at(1300, 'replace', false).ornateVertical.text).toBe(first);
+    },
+  );
+
   it('maps a section accent onto its own page without coloring the other page', () => {
     const base = {
       visible: true,

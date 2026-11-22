@@ -11,10 +11,15 @@ import {
   selectLyricsDisplayPage,
 } from '../../shared/presentation/lyricsDisplayLayout.mjs';
 import { projectLyricsDisplayFrame } from '../../shared/presentation/lyricsDisplayFrame.mjs';
-import { splitOrnateVerticalSegments } from '../../shared/presentation/ornateVerticalPresentation.mjs';
+import {
+  ORNATE_VERTICAL_COLUMN_STEP_EM,
+  splitOrnateVerticalRevealUnit,
+  splitOrnateVerticalSegments,
+} from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import { fineTextParts } from '../../shared/presentation/lyricsFineFrame.mjs';
 import { sliceLyricsVocalParts } from '../../shared/presentation/lyricsTextProcessing.mjs';
 import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
+import { appendOrnateSegmentUnits } from './ornateVertical.mjs';
 
 function fineMeasurementSource(line, frame, templateId) {
   const units = frame.currentFineTiming?.units;
@@ -60,6 +65,9 @@ function createMeasurement(
   const chalkboard = templateId === 'chalkboard-vertical';
   const centered = templateId === 'centered-vertical';
   const ornate = templateId === 'ornate-vertical';
+  const mixedSizes =
+    ornate &&
+    document.documentElement?.dataset.ovlOrnateArrangement === 'mixed-sizes';
   const vertical =
     centered ||
     chalkboard ||
@@ -134,7 +142,11 @@ function createMeasurement(
     top: '0',
     visibility: 'hidden',
     display: 'block',
-    whiteSpace: centered ? 'preserve-spaces nowrap' : 'pre',
+    whiteSpace: centered
+      ? 'preserve-spaces nowrap'
+      : mixedSizes
+        ? 'nowrap'
+        : 'pre',
     inlineSize: 'max-content',
     fontFamily: style.fontFamily,
     fontSize: style.fontSize,
@@ -163,23 +175,26 @@ function createMeasurement(
   const measured = new Map(),
     layouts = new Map(),
     wrappedPages = new Map();
-  const fitsLine = (text) => {
-    if (measured.has(text)) return measured.get(text);
-    probe.textContent = text.trimEnd();
-    if (counters) counters.probeCount++;
-    const rect = probe.getBoundingClientRect();
-    const fits =
+  const fitsLine = (text, units, topOffset = 0) => {
+    let rect = measured.get(text);
+    if (!rect) {
+      probe.textContent = units ? '' : text.trimEnd();
+      if (units) appendOrnateSegmentUnits(document, probe, units, true);
+      if (counters) counters.probeCount++;
+      rect = probe.getBoundingClientRect();
+      measured.set(text, rect);
+    }
+    return (
       rect.width <= (chalkboard || centered ? lineHeight * 1.2 : width) &&
-      rect.height <= (vertical ? height : lineHeight * 1.2);
-    measured.set(text, fits);
-    return fits;
+      rect.height + topOffset <= (vertical ? height : lineHeight * 1.2)
+    );
   };
   const layout = (text) => {
     if (!layouts.has(text)) {
       const at = counters ? measureNow() : 0;
       layouts.set(
         text,
-        splitLyricsDisplayRows(text, fitsLine, rows, {
+        splitLyricsDisplayRows(text, (rowText) => fitsLine(rowText), rows, {
           literalPrefixes,
           authoredLineBreaks: chalkboard,
           authoredPhraseSpaces: chalkboard,
@@ -197,8 +212,15 @@ function createMeasurement(
     fits: (text, range) => {
       const inkText = text.trimEnd();
       if (ornate) {
-        return splitOrnateVerticalSegments(inkText).every(({ text }) =>
-          fitsLine(text),
+        return splitOrnateVerticalSegments(inkText).every(
+          ({ text, units, index }) =>
+            fitsLine(
+              text,
+              mixedSizes
+                ? units.flatMap(splitOrnateVerticalRevealUnit)
+                : undefined,
+              index * ORNATE_VERTICAL_COLUMN_STEP_EM * size,
+            ),
         );
       }
       // A generous advance budget cheaply rejects obviously excessive text.
@@ -510,6 +532,9 @@ export function createLyricsFitController(options = {}) {
       snapshot.lyrics.trackId,
       settings.templateId,
       settings.kineticMaterial,
+      settings.templateId === 'ornate-vertical'
+        ? document?.documentElement?.dataset.ovlOrnateArrangement
+        : null,
       settings.lyricsPresentationPolicyId,
       line,
       canonical.estimatedFineTiming,
@@ -683,11 +708,33 @@ export function createLyricsFitController(options = {}) {
       data.fitPageTiming = entry.plan.pageTiming ?? '';
       data.fitActive = String(active);
     }
+    const { startMs, endMs } = selected.page ?? {};
+    if (settings.templateId === 'ornate-vertical') {
+      const playing = snapshot.playback?.status === 'playing';
+      projected.ornateRevealPlaying = playing;
+      if (playing && Number.isFinite(endMs))
+        projected.ornateRevealRemainingMs = Math.max(0, (endMs - at) / rate);
+    }
+    if (
+      settings.ornateStrokePreview &&
+      settings.templateId === 'ornate-vertical' &&
+      entry.plan.status === 'ready' &&
+      Number.isFinite(startMs) &&
+      endMs > startMs
+    ) {
+      projected.ornateStrokeClock = {
+        elapsedMs: Math.max(0, at - startMs),
+        durationMs: endMs - startMs,
+        playing: snapshot.playback?.status === 'playing',
+        rate,
+      };
+    }
     return {
       frame: projected,
       delayMs:
         snapshot.playback?.status === 'playing'
-          ? nextLyricsDisplayBoundaryMs(entry.plan, at, rate)
+          ? (projected.ornateColumnTiming?.nextDelayMs ??
+            nextLyricsDisplayBoundaryMs(entry.plan, at, rate))
           : null,
     };
   }

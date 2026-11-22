@@ -8,6 +8,7 @@ import {
 import { OUTPUT_TEMPLATE_ELEMENTS } from '../../shared/outputTemplateElements.mjs';
 import { LYRICS_PRESENTATION_POLICIES } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import { i18n } from './i18n.js';
 import {
   localizeAppearanceField,
   localizeElementTarget,
@@ -104,6 +105,28 @@ describe('output panel copy', () => {
       (field) => field.key === 'phantomArtistName',
     );
     expect(name.placeholder).toBe('跟隨歌手名稱');
+  });
+
+  it.each([
+    ['zh-TW', '欄位與文字'],
+    ['en-US', 'Columns and text'],
+  ])('describes the Ornate Vertical motion options in %s', (locale, title) => {
+    const previous = i18n.global.locale.value;
+    try {
+      i18n.global.locale.value = locale;
+      const fields = outputAppearanceFieldsForTemplate('ornate-vertical')
+        .filter(({ group }) => group === 'motion')
+        .map(localizeAppearanceField);
+      for (const field of fields) {
+        expect(field.groupLabel).toBe(title);
+        for (const { label, hint } of field.options) {
+          expect(isText(label)).toBe(true);
+          expect(isText(hint)).toBe(true);
+        }
+      }
+    } finally {
+      i18n.global.locale.value = previous;
+    }
   });
 
   it('names every lyrics presentation policy and output slot', () => {

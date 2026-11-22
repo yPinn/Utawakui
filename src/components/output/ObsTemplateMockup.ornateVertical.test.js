@@ -34,7 +34,13 @@ ${fs.readFileSync(
 
     expect(source).toContain('adaptOrnateVerticalLyricsPresentation');
     expect(source).toContain('createOrnateVerticalDocumentContext');
-    expect(source).toContain('ornateVerticalRevealDelaySeconds');
+    expect(source).toContain('ornateVerticalEntrancePlan');
+    expect(source).toMatch(
+      /\[data-entrance='random-slide'\][^}]*animation-name: ornate-preview-slide-cycle/,
+    );
+    expect(source).toMatch(
+      /@keyframes ornate-preview-unit-cycle\s*\{[^}]*0%,\s*55%,\s*100%\s*\{[^}]*opacity: 0;/u,
+    );
     expect(source).toContain('props.scene?.lyrics?.current');
     expect(source).toContain('v-for="(line, lineIndex) in previewLines"');
     expect(source).toContain('v-for="segment in line.segments"');
@@ -116,6 +122,12 @@ ${fs.readFileSync(
     );
     expect(preview).toContain('inset: 18% 8% 4% 4%;');
     expect(preview).toContain('line-height: 0.96;');
+    expect(preview).toContain(
+      "'--ornate-column-gap': ORNATE_VERTICAL_COLUMN_GAP",
+    );
+    expect(preview).toContain('column-gap: var(--ornate-column-gap);');
+    expect(preview).toContain('segment.index * ORNATE_VERTICAL_COLUMN_STEP_EM');
+    expect(runtimeCss).toContain('column-gap: var(--ornate-column-gap);');
     expect(preview).not.toContain("[data-size='thumbnail']");
   });
 });
