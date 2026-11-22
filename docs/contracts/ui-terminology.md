@@ -66,6 +66,8 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 磁碟空間           | 空間（單獨使用） | 電腦儲存空間；曲庫占用寫「曲庫空間」                       | disk space；library storage        |
 | 作品、版本、發行   |                  | 見作品與版本契約                                           | work、version、release             |
 | 文字陰影           |                  | Output 正文字形的投影，選項為「標準」和「關閉」            | Text shadow                        |
+| 字體排列           |                  | 和風直書的字級排列方式，選項為「等大」和「大小字」         | Text arrangement                   |
+| 多欄顯示           |                  | 和風直書新欄出現時，可保留前欄或一次只顯示一欄             | Multiple columns                   |
 | 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
 | 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                       |
 | 幻影怪盜           |                  | 畫面輸出的拼貼歌詞模板                                     | Phantom Thieves                    |
@@ -78,6 +80,8 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 鏡頭構圖、貼近     |                  | 魚眼鏡圈與歌詞弧列的尺寸和位置，貼近用於人物近景           | Camera framing, Close-up           |
 | 鏡框               |                  | 魚眼鏡筒的前景裝飾，樣式為關閉、柔和及標準                 | Lens rim                           |
 | 進場動畫、退場動畫 |                  | 字幕顯示與消失時各自使用的動畫                             | Entrance, Exit                     |
+| 文字進場           |                  | 和風直書每一欄的文字出現方式                               | Text entrance                      |
+| 左右滑入           |                  | 字從左右不同位置短距離滑回各自字位                         | Slide in                           |
 | 停留縮放、動態模糊 |                  | 字形停留時的縮放幅度與沿弧快速移動時的拖影                 | Hold scaling, Motion blur          |
 | 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity               |
 | 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight                   |

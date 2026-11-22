@@ -1,6 +1,6 @@
 # Output 驗收清單
 
-現行步驟更新於 2026-10-24；F1–F5 與 W3 的當輪日期及結果保留於各節。F1–F5 本機範圍與 Live Stage 補驗已有紀錄；全模板的 Browser Source／透明合成、完整耐久與人工作品驗收仍待完成。以下方法與局部結果不代表全矩陣通過。
+現行模板見 [ADR 0034 標準普查](#adr-0034-標準普查2026-11-22)。F1–F5 與 W3 的當輪日期及結果保留於各節；全模板的 Browser Source／透明合成、完整耐久與人工作品驗收仍待完成。
 設定值域、default／opt／advanced、模板不變條件與本機來源以[顯示契約](../contracts/output-appearance.md)為準；後續階段見[現行計畫](../governance/appearance-sets-plan.md)。
 
 下節保留原選定三模板的 Browser Source 短輪次；這組步驟尚未有人工結果。W3 視窗擷取已有另一組有限通過紀錄，見[收尾結果](#w3-收尾紀錄2026-10-21)，兩種擷取方式分開判讀。其餘章節保存工程重跑與歷史證據。
@@ -89,27 +89,41 @@ OBS官方[Browser Source說明](https://obsproject.com/kb/browser-source)定義�
 在 Windows 受限環境遇到既有檔案 rename 的 EPERM，依既有測試慣例把 TEMP／TMP 指到工作區內獨立 tasks 目錄重跑；不要改正式存檔語意來消除環境錯誤。
 
 工具與 [fixtures](../../scripts/fixtures/output/README.md) 不讀真實曲庫、不列舉私人字型／圖片，不啟動 OBS 或驅動 UI。
-`createAcceptanceMatrix()` 為每個已登錄模板提供 32 case 的機器清單，applicability 與 evidence 分開記錄。下方 F2–F5 歷史結果仍保留當時八模板的範圍。
+`createAcceptanceMatrix()` 為每個正式模板提供 32 case 的機器清單，applicability 與 evidence 分開記錄。下方 F2–F5 歷史結果仍保留當時八模板的範圍。
 projection-only 不是畫面已通過；runtime-pending／manual-pending 也不是測試失敗，代表尚未執行該層驗收。
 
 ## 模板適用矩陣
 
-以下為人工驗收索引。完整案例的可見畫面與真實 OBS 仍待逐項驗收；F2 局部結果見末節。不適用須寫原因，不可當成通過數。
+尺寸與版本狀態依 [模板登錄](../../shared/outputTemplateValues.json)。下表畫面紀錄限其原版本與案例，屬於定格的證據只覆蓋該時點。共用驗收涵蓋字型缺失或延遲、減少動態、隱藏與重連、深淺與複雜背景、透明合成。播放中三款另驗缺封面與解碼失敗。中／日／韓／英短長句及混語的排版以實際畫面判斷。
 
-| 模板            | 宣告 capture     | 歌詞 T0／T1／T2 | 封面故障 | 已安裝字型拒絕 | 預設之外的重點                                       |
-| --------------- | ---------------- | --------------- | -------- | -------------- | ---------------------------------------------------- |
-| queue-board     | 480×810          | 不適用          | 不適用   | 不適用         | 字型／字重、surface、密度；current／played 與分頁    |
-| receipt-setlist | 480×810          | 不適用          | 不適用   | 不適用         | 雙向出紙、完成才列印、回顧中斷、最近100筆與紙面alpha |
-| karaoke-stack   | 1920×1080        | 適用            | 不適用   | 不適用         | 共用 Look／字級；雙 lane 與 timing 不可由外觀改寫    |
-| kinetic-pop     | 1920×1080        | 適用            | 不適用   | 不適用         | material／cycle、arrangement；三層順序固定           |
-| ornate-vertical | 1920×1080        | T2 按行級回退   | 不適用   | 不適用         | 六位 Hex、兩種字型、右側 anchor／有界 offset         |
-| live-stage      | 1920×1080        | 適用            | 不適用   | 適用           | 本機字型描述、contrast、獨立文字 policy              |
-| manga-frame     | 1920×1080        | 適用            | 不適用   | 不適用         | 字型／字重、reading auto／off；ruby／框內安全區      |
-| art-card        | 480×270          | 不適用          | 適用     | 不適用         | 字型／字重、封套與播放位置                           |
-| cover-player    | 360×480、480×640 | 不適用          | 適用     | 不適用         | 字重、surface、封面與進度                            |
+| 模板                                  | 尺寸             | 預設構圖與時序                                              | 既有畫面證據與逐款驗收重點                                                                 |
+| ------------------------------------- | ---------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 經典字幕 `karaoke-stack`              | 1920×1080        | 下方雙列、線性掃色；T1 估計、T2 來源片語                    | OBS 圖層基線與人物佔位回放。補看長句雙列、逐字交接、間奏與複雜底。                         |
+| 躍動字幕 `kinetic-pop`                | 1920×1080        | 下方置中單列、三層材質、片語進場；T2 取來源片語             | OBS 人物佔位回放曾見換句右緣越界。沿用該案例重查無空白長句、材質疊放與進場活動範圍。       |
+| 和風直書 `ornate-vertical`            | 1920×1080        | 預設右上、由右至左逐單元揭示；T2 沿用行級                   | OBS 人物佔位回放曾見右側長句與偏移後出界。重查三欄容量、錨點／偏移極值、漢字群與拉丁詞。   |
+| 黑板直書 `chalkboard-vertical`        | 1920×1080        | 預設左區、每頁最多三欄，GSAP 裁切寫入和擦除；T2 來源分頁    | OBS 靜態縮圖來源與 Gallery 動態短測。驗同線收放、分頁交接、可重現的跳播姿勢及裁切成本。    |
+| 中央直書 `centered-vertical`          | 1920×1080        | 單欄置中，直接換句／頁；T2 來源分頁                         | OBS 靜態縮圖來源。驗長句跨頁、拉丁詞側轉與不同語言的字型回退。                             |
+| 轉播字卡 `live-stage`                 | 1920×1080        | 左下歌詞、右下曲名卡，字幕淡入與 GSAP 卡片交接；T2 來源分頁 | OBS 圖層基線及人物佔位回放。重查開場曲名卡與字幕安全區、長句分頁及本機字型拒絕。           |
+| 分格對白 `manga-frame`                | 1920×1080        | 左右交替氣泡，GSAP 交接；T2 來源氣泡                        | OBS 佔位回放曾見舊版交接越框，Gallery 另有動態短測。用現版三框與模型朝向重查長混語及尾巴。 |
+| 魚眼鏡筒 `fisheye-lens`               | 1920×1080        | 左右弧列、透明鏡心，GSAP／Canvas 2D；T2 來源片語與字段      | OBS 鏡框、反光與三來源短測。重查雙列近景的 60 fps 成本、短句、缺副歌區間及字形裁切。       |
+| 幻影怪盜 `phantom-thieves`            | 1920×1080        | 預設側邊彈卡，五種呈現用行級時鐘                            | 已有來源分鏡及 Gallery 樣張。補驗五種模式的正式畫面、長混語、名牌疊放與下句切換頭像。      |
+| 紋理顯字 `textured-credits`（開發版） | 1920×1080        | 置中文字依語言橫／直書，GSAP／PixiJS 行級紋路交接           | Electron 單來源效能初測。補驗短句螢光字到白字的交接、長混語、GPU 回退與正式 OBS。          |
+| 夜色歌單 `queue-board`                | 480×810          | 目前曲目與已唱清單，GSAP 交接及逐列分頁                     | F5 可見 Electron 與 W3 視窗擷取。補驗長曲名、密度、滿頁和正式 OBS 透明合成。               |
+| 票據歌單 `receipt-setlist`            | 480×810          | 熱感紙、預設向下出紙，GSAP 出紙與定時回顧                   | F5 可見 Electron。驗紙面 alpha、反向出紙、最近 100 筆與回顧中斷。                          |
+| 紅黑緞帶 `ribbon-setlist`             | 480×810          | 預設白底、傾斜緞帶，GSAP 展開、刷幕與回顧                   | OBS 刷幕接縫及 alpha 短測。補驗窄內容兩行長曲名、滿頁、透明底及長時間切換。                |
+| 星空黑膠 `art-card`                   | 480×270          | 封套、唱盤、曲名，GSAP 換曲與唱盤；高光預設關閉             | OBS 唱片高光與三來源短測。補驗缺封面、混語長標題及快速切歌。                               |
+| 演出票根 `ticket-stub`                | 480×270          | 暖白橫票、兩側透明切口，跟隨曲目直接更新                    | 有 Electron 靜態縮圖來源。補驗 OBS 切口 alpha、缺封面及長曲名／藝人。                      |
+| 封面電台 `cover-player`               | 360×480、480×640 | 直式方形封面、曲名藝人及進度列，GSAP 曲目交接               | OBS 圖層基線與元素編輯驗收。兩個尺寸均補驗長曲名省略、缺封面與快速換曲。                   |
 
-字型缺失／延遲與 reduced motion 在全部模板皆須按其實際字型／動態驗收；不能因不支援本機字型選單就略過 bundled font 失敗。
-語言案例是中／日／韓／英壓力輸入，不因資料存在就承諾該模板已通過所有語言排版。
+畫面來源見 [五款字幕人物佔位回看](../research/design/lyrics-overlays/production-vtuber-placement-review.md)、[縮圖來源](../../src/assets/output-template-thumbnails/provenance.json) 與下方有日期的驗收紀錄。幻影怪盜的影片時間碼見[來源研究](../research/design/lyrics-overlays/phantom-thieves.md)。紋理顯字量測見[動態與渲染契約](../contracts/output-motion-rendering.md#效能量測)。
+
+### ADR 0034 標準普查（2026-11-22）
+
+- 核對 `f88cabc0` 加本機工作樹的登錄、渲染入口與時間能力。歌詞 10 款、歌單 3 款、播放中 3 款。15 款正式模板使用固定基線，開發版紋理顯字以同一合成輸入另跑投影與定向測試。
+- 158 次純投影檢查通過。歌詞每款取展示、T0／T1／T2、中日韓英各短／長句、混語與空態；歌單及播放中每款取展示、長混語曲名及空態。這些檢查只確認固定輸入的 frame 可見狀態，畫布邊界及實際字型另驗。
+- 歌詞三款延後載入 JS。幻影怪盜及紋理顯字另有延後載入的獨立 CSS，魚眼鏡筒用共用樣式。其餘七款隨頁面載入，依改寫時機逐款遷移。三個來源加工作台的效能預算仍待 OBS 量測。
+- 回歸測試重現兩個歌詞載入缺口並驗證修正。必要資源失敗時不開啟特效腳本，讓同頁重試維持腳本相依順序。首載期間失去連線或進入隱藏時清掉暫存投影，重新啟用後取 host 最新投影。
+- 本輪可見 Electron audit 在啟動前期退出，15 款正式模板均未擷取。本地 loopback 主動連線探測回傳 `EACCES`，正式 Browser Source／OBS 與來源影片比對保留待驗。
 
 ## 共用情境與通過條件
 
@@ -197,7 +211,7 @@ npm run output:audit
 npm run output:audit -- --template art-card,cover-player --scenario empty,missing-artwork
 ```
 
-預設八模板皆用 F3 `showcase-t1-v1`、paused 5 秒、預設外觀、reduced motion。
+預設正式模板皆用 F3 `showcase-t1-v1`、paused 5 秒、預設外觀、reduced motion。
 `--template` 與 `--scenario` 只接受 registry／F1 cases／F3 showcase 的 id，以逗號分隔；`--list` 不啟動 Electron。
 不接受輸出目錄、URL、HTML、曲庫或任意素材路徑。未識別／重複參數或情境直接失敗。
 每次產生新的 `tasks/output-appearance-audit-*` 目錄，故不會把上一次成功 PNG 誤認為本輪結果。
@@ -215,7 +229,7 @@ F1 的 `synthetic-cover` 是要求環境提示，本版不注入封面 bytes，`
 | cases                            | 模板、scenario／nowMs、原始播放意圖及 capture snapshot、預期 frame、normalized settings 與 server 實際傳送 slot             |
 | observed                         | CSS viewport、devicePixelRatio、root 設定、reduced motion、可見／空態、fonts readiness、images 解碼觀察及 JavaScript errors |
 | capture                          | 本輪 PNG 相對路徑、實際尺寸、PNG hash 與 pixel hash；CSS 畫布與 PNG 尺寸分開                                                |
-| matrix                           | 沿用 F1 八模板 × 32 情境適用矩陣；未執行的矩陣項保持未測，不能把一張 showcase 當全矩陣通過                                  |
+| matrix                           | 沿用 F1 正式模板 × 32 情境適用矩陣；未執行的矩陣項保持未測，不能把一張 showcase 當全矩陣通過                                |
 | captureStatus／visualReview／obs | 工具結構檢查／人工作品查核／真實 OBS 分層；各自為 passed、failed、not-tested、not-applicable，取消另記整輪 cancelled        |
 
 `captureStatus: passed` 只表示本輪視窗可見、資料與尺寸／motion／正式模式檢查成功並產生影像。人工可讀性、藝術排版、素材權利及 alpha 合成仍須在本清單逐項驗收。
