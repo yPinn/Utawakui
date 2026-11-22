@@ -76,11 +76,17 @@ describe('lyrics template modules', () => {
     expect(typeof module.createFisheyeEffects).toBe('function');
   });
 
-  it('retries after a stylesheet fails and does not mark the template ready', async () => {
+  it('retries in the same document without starting effect scripts after a stylesheet failure', async () => {
     const document = fakeDocument();
-    document.head.append = (link) => {
-      document.links.push(link);
-      queueMicrotask(() => link.listeners.error?.());
+    const append = document.head.append.bind(document.head);
+    document.head.append = (element) => {
+      if (!element.href) {
+        // Keep the first vendor script pending across the stylesheet failure.
+        document.links.push(element);
+        return;
+      }
+      document.links.push(element);
+      queueMicrotask(() => element.listeners.error?.());
     };
     await expect(
       loadLyricsTemplateModule('textured-credits', document),
@@ -88,11 +94,13 @@ describe('lyrics template modules', () => {
     expect(lyricsTemplateModule('textured-credits')).toBe(null);
     expect(document.links).toEqual([]);
 
-    const retry = fakeDocument();
-    await loadLyricsTemplateModule('textured-credits', retry);
+    document.head.append = append;
+    await loadLyricsTemplateModule('textured-credits', document);
     expect(lyricsTemplateModule('textured-credits')).not.toBe(null);
     // PixiJS IIFE builds attach to one global and must load in order.
-    expect(retry.links.map((element) => element.src).filter(Boolean)).toEqual([
+    expect(
+      document.links.map((element) => element.src).filter(Boolean),
+    ).toEqual([
       '/overlay/vendor/pixi.min.js',
       '/overlay/vendor/pixi-unsafe-eval.min.js',
       '/overlay/vendor/pixi-filters.js',

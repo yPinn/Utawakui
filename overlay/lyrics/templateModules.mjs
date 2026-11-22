@@ -95,10 +95,12 @@ export function loadLyricsTemplateModule(
     const pending = Promise.all([
       entry.load(),
       entry.stylesheet ? loadStylesheet(documentApi, entry.stylesheet) : null,
-      // Effect runtimes are optional: the template falls back to DOM text.
-      loadScripts(documentApi, entry.scripts).catch(() => null),
     ])
-      .then(([module]) => {
+      .then(async ([module]) => {
+        // Start optional scripts only after the required assets are ready so a
+        // retry can never skip a vendor script that is still loading.
+        if (entry.scripts)
+          await loadScripts(documentApi, entry.scripts).catch(() => null);
         loadedModules.set(templateId, module);
         return module;
       })

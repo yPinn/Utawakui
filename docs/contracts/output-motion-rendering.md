@@ -4,7 +4,7 @@
 
 ## 現況
 
-- 已有：GSAP 時間軸；魚眼鏡筒、幻影怪盜與 textured-credits 按需載入。textured-credits 以 PixiJS 繪製多層紋路（`shared/browser/doodleCloudEffect.mjs`），PixiJS 隨模板按需載入。
+- 已有：GSAP 時間軸；魚眼鏡筒、幻影怪盜與 textured-credits 的程式按需載入。幻影怪盜及 textured-credits 另按需載入專屬樣式；魚眼鏡筒沿用共用歌詞樣式。textured-credits 以 PixiJS 繪製多層紋路（`shared/browser/doodleCloudEffect.mjs`），PixiJS 隨模板按需載入。
 - 尚未實作：其他共用特效元件；其餘歌詞模板仍隨頁面載入。
 - 效能預算尚未固定，須先完成[效能量測](#效能量測)。
 
@@ -57,7 +57,7 @@
 ## 載入與釋放
 
 - 模板模組、特效元件、渲染引擎、shader 與素材依目前模板載入，不在所有頁面預先載入。GSAP 本體由使用它的頁面載入。
-- 歌詞頁的按需模板登記於 `overlay/lyrics/templateModules.mjs`，新模板預設加入。套用設定時先載入模板的程式與樣式，完成後才切換；載入期間維持原畫面，首次設定前收到的 snapshot 等載入完成再呈現。載入失敗時記錄診斷，模板容器保持隱藏。
+- 歌詞頁的按需模板登記於 `overlay/lyrics/templateModules.mjs`，新模板預設加入。套用設定時先載入必要的程式和樣式，再依序載入選用的特效腳本。必要資源失敗時記錄診斷，模板容器保持隱藏；特效腳本失敗時回到文字呈現。載入期間維持原畫面，首次設定前收到的 snapshot 等載入完成再呈現。期間若斷線或隱藏，清空暫存 snapshot，恢復後取 host 最新投影。
 - 換模板時釋放舊模板的時間軸、GPU 資源、貼圖與解碼後的影格。
 - 素材在首次需要前預先解碼，shader 在載入時預先編譯，避免第一句出現時卡頓。
 - 每個新檔案須登記於 Output server 的明列路由，並一併核對封裝清單、授權附文與測試。
