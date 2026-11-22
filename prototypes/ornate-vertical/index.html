@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>和風直書｜動畫與字形</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --surface: #111216;
+        --panel: #191b21;
+        --ink: #fbf3e7;
+        --muted: #bdb7af;
+        --border: #42424b;
+        --focus: #ebc997;
+        font-family: 'Microsoft JhengHei UI', 'Segoe UI', sans-serif;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        margin: auto;
+        padding: clamp(24px, 4vw, 72px);
+        max-width: 1920px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+      h1 {
+        margin: 0 0 5px;
+        font-size: clamp(28px, 3vw, 48px);
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 650;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 12px;
+      }
+      label {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .spacing {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 40px;
+      }
+      .spacing input {
+        accent-color: var(--focus);
+      }
+      button,
+      select {
+        min-height: 40px;
+        padding: 5px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--ink);
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .sample {
+        margin-bottom: 12px;
+        font-size: clamp(15px, 1.3vw, 20px);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .cards[data-enlarged='true'] {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 1260px;
+      }
+      article {
+        min-width: 0;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .stage {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        background: #141421;
+      }
+      iframe {
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 1920px;
+        height: 1080px;
+        border: 0;
+        transform: scale(var(--stage-scale, 0));
+        transform-origin: top left;
+        pointer-events: none;
+      }
+      .caption {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        background: var(--panel);
+      }
+      .caption p {
+        margin-top: 4px;
+        font-size: 13px;
+      }
+      @media (max-width: 960px) {
+        .cards {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>和風直書</h1>
+          <p id="comparison-note">同一句、同字型、同錨點，比較文字動態。</p>
+        </div>
+        <div class="controls">
+          <label>
+            比較項目
+            <select id="comparison">
+              <option value="motion">文字動態</option>
+              <option value="phrases">斷句與進場</option>
+              <option value="entrances">進場動畫</option>
+              <option value="type">字形比例</option>
+            </select>
+          </label>
+          <label>
+            歌詞樣本
+            <select id="sample">
+              <option value="short">短日文</option>
+              <option value="long">長日文</option>
+              <option value="mixed">中日英韓混排</option>
+              <option value="zh">繁體中文</option>
+            </select>
+          </label>
+          <label>
+            背景
+            <select id="backdrop">
+              <option value="dusk">暮色</option>
+              <option value="dark">深色</option>
+              <option value="light">淺色</option>
+            </select>
+          </label>
+          <label class="spacing">
+            <input id="spacing" type="checkbox" checked />
+            微調字距
+          </label>
+          <button id="replay" type="button">重播動態</button>
+          <button id="compare" type="button" hidden>並排比較</button>
+        </div>
+      </header>
+      <p id="sample-text" class="sample" aria-live="polite"></p>
+      <section class="cards" aria-label="比較樣張">
+        <article data-variant="a">
+          <div class="stage"><iframe title="A 現版直書"></iframe></div>
+          <div class="caption">
+            <div>
+              <h2>A 現版</h2>
+              <p>漢字與假名同字級</p>
+            </div>
+            <button type="button" aria-label="放大 A 現版">放大</button>
+          </div>
+        </article>
+        <article data-variant="b">
+          <div class="stage"><iframe title="B 大小字"></iframe></div>
+          <div class="caption">
+            <div>
+              <h2>B 大小字</h2>
+              <p>漢字 125% · 假名 80%</p>
+            </div>
+            <button type="button" aria-label="放大 B 大小字">放大</button>
+          </div>
+        </article>
+        <article data-variant="c">
+          <div class="stage"><iframe title="C 焦點拉長"></iframe></div>
+          <div class="caption">
+            <div>
+              <h2>C 焦點拉長</h2>
+              <p id="focus-note"></p>
+            </div>
+            <button type="button" aria-label="放大 C 焦點拉長">放大</button>
+          </div>
+        </article>
+      </section>
+    </main>
+    <script type="text/plain" id="overlay-style">
+      <!-- embedded-stage-css -->
+    </script>
+    <template id="font-license"><!-- embedded-font-license --></template>
+    <script>
+      /* embedded-script */
+    </script>
+  </body>
+</html>

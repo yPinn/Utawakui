@@ -32,6 +32,8 @@
 
 2026-11-07 依使用者提供的 Instagram 歌詞影片，另收錄[固定起點的片語歌詞](anchored-lyric-phrases.md)（Working ID `anchored-lyric-phrases`）。比較直式錨點、字區容量和片語揭示，保留行級時間回退。
 
+2026-11-22 收錄[和風直書改版提案](ornate-vertical.md)。沿用 `ornate-vertical`，先以〈晩餐歌〉比較大小字與焦點字拉長，再以〈スピカ〉比較逐字與留欄。
+
 ## 共用格式
 
 五款正式字幕的現況回填、左中右人物佔位與位置調整候選另見[VTuber 佔位回看](production-vtuber-placement-review.md)。
