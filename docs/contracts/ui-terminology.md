@@ -90,6 +90,7 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 波形對照           |                  | 本機音源與影片參考音軌在同一時間軸的對照                   | Waveform comparison                |
 | 播放片段、停止預覽 |                  | 預覽目前檢視區間的本機音源與影片畫面                       | Play segment, Stop preview         |
 | 預覽背景           |                  | 歌詞工作台顯示的同步 MV 或人物參考                         | Preview background                 |
+| 白底、黑底         |                  | Output 工作台的固定純色預覽背景                            | White background, Black background |
 | 模型佔位           | 佔位             | 歌詞工作台用來檢查人物大小、對位和遮擋的範圍               | Model placement                    |
 | 氣泡樣式           | 氣泡             | 分格對白的主歌詞外框                                       | Bubble style                       |
 | 尾巴朝向           |                  | 分格對白氣泡的短箭尾或思考圓點所指的方向                   | Tail direction                     |

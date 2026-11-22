@@ -69,18 +69,23 @@ describe('ObsOverlayPreview', () => {
   });
 
   it('uses the silhouette fit only with the built-in placement image', async () => {
-    expect(await renderPreview()).toContain('data-built-in-shape="ellipse"');
+    expect(await renderPreview({ lyricsPreviewMode: 'performer' })).toContain(
+      'data-built-in-shape="ellipse"',
+    );
     expect(
-      await renderPreview({ customPerformerGuideImage: true }),
+      await renderPreview({
+        lyricsPreviewMode: 'performer',
+        customPerformerGuideImage: true,
+      }),
     ).not.toContain('data-built-in-shape');
   });
 
   it('composes one direct Lyrics iframe with bounded Workbench-only inspection state', async () => {
-    const html = await renderPreview();
+    const html = await renderPreview({ lyricsPreviewMode: 'performer' });
 
     expect(html).toContain('data-backdrop="checker"');
     expect(html).toMatch(
-      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;backdrop=transparent&amp;guide=0&amp;reload=\d+"/,
+      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;ornateStroke=1&amp;backdrop=transparent&amp;guide=0&amp;reload=\d+"/,
     );
     expect(html.indexOf('obs-streamer-preview')).toBeLessThan(
       html.indexOf('<iframe'),
@@ -103,11 +108,10 @@ describe('ObsOverlayPreview', () => {
 
   it('projects controlled habits into the inspection iframe without exposing a second guide layer', async () => {
     const html = await renderPreview({
-      previewBackdrop: 'dark',
-      lyricsPreviewMode: 'none',
+      previewBackdrop: 'black',
     });
 
-    expect(html).toContain('data-backdrop="dark"');
+    expect(html).toContain('data-backdrop="black"');
     expect(html).toContain('backdrop=transparent&amp;guide=0');
     expect(html).not.toContain('obs-streamer-preview');
     const action = nextBackgroundButton(html, 'performer');
@@ -116,42 +120,53 @@ describe('ObsOverlayPreview', () => {
     expect(html).not.toContain('<video');
   });
 
-  it('keeps the person selected by default even when an MV is available', async () => {
+  it('cycles from hidden to MV, to the person, and back to hidden', async () => {
     previewVideo.value = {
       url: 'utawakui-media://track-video/song/revision',
       offsetMs: 100,
     };
     const defaultHtml = await renderPreview();
-    expect(defaultHtml).toContain('obs-streamer-preview');
+    expect(defaultHtml).not.toContain('obs-streamer-preview');
     const showMv = nextBackgroundButton(defaultHtml, 'mv');
     expect(showMv).toContain('切換至 MV');
     expect(showMv).toContain('lucide-film');
     expect(defaultHtml).not.toContain('<video');
 
     const mvHtml = await renderPreview({ lyricsPreviewMode: 'mv' });
-    const hide = nextBackgroundButton(mvHtml, 'none');
-    expect(hide).toContain('隱藏預覽背景');
-    expect(hide).toContain('lucide-eye-off');
+    const showPerformer = nextBackgroundButton(mvHtml, 'performer');
+    expect(showPerformer).toContain('顯示人物參考');
+    expect(showPerformer).toContain('lucide-user-round');
     expect(mvHtml).toContain('<video');
     expect(mvHtml).toContain('obs-streamer-preview');
     expect(mvHtml.match(/<iframe[^>]+src="([^"]+)"/u)?.[1]).not.toContain(
       'track-video',
     );
-  });
 
-  it('uses the person while the selected MV is unavailable', async () => {
-    const defaultHtml = await renderPreview();
-    const hide = nextBackgroundButton(defaultHtml, 'none');
+    const performerHtml = await renderPreview({
+      lyricsPreviewMode: 'performer',
+    });
+    const hide = nextBackgroundButton(performerHtml, 'none');
     expect(hide).toContain('隱藏預覽背景');
     expect(hide).toContain('lucide-eye-off');
+    expect(performerHtml).toContain('obs-streamer-preview');
+    expect(performerHtml).not.toContain('<video');
+  });
+
+  it('skips MV when unavailable and uses the person if a selected MV becomes unavailable', async () => {
+    const defaultHtml = await renderPreview();
+    expect(nextBackgroundButton(defaultHtml, 'performer')).toBeDefined();
+    expect(defaultHtml).not.toContain('obs-streamer-preview');
+    expect(defaultHtml).not.toContain('<video');
 
     const mvHtml = await renderPreview({ lyricsPreviewMode: 'mv' });
+    expect(nextBackgroundButton(mvHtml, 'performer')).toBeDefined();
     expect(mvHtml).toContain('obs-streamer-preview');
     expect(mvHtml).not.toContain('<video');
   });
 
   it('draws the placement controls above the live frame and keeps them out of its URL', async () => {
     const html = await renderPreview({
+      lyricsPreviewMode: 'performer',
       editingPerformerGuide: true,
       performerGuide: { x: 0.4, y: 0.6, width: 0.3, height: 0.5 },
     });
@@ -180,6 +195,7 @@ describe('ObsOverlayPreview', () => {
     'uses the same %s mask for the character and the editing outline',
     async (shape, radius) => {
       const html = await renderPreview({
+        lyricsPreviewMode: 'performer',
         editingPerformerGuide: true,
         performerGuide: { x: 0.4, y: 0.6, width: 0.3, height: 0.5, shape },
       });
@@ -233,10 +249,14 @@ describe('ObsOverlayPreview', () => {
       'overlay/lyrics?workbench=1&amp;backdrop=transparent&amp;guide=0&amp;reload=',
     );
     expect(html).not.toContain('lyricsDebug');
+    expect(html).not.toContain('ornateStroke');
   });
 
   it('leaves the unavailable-runtime fallback transparent and uses the renderer guide', async () => {
-    const html = await renderPreview({ previewUrl: null });
+    const html = await renderPreview({
+      previewUrl: null,
+      lyricsPreviewMode: 'performer',
+    });
 
     expect(html).toContain('data-backdrop="checker"');
     expect(html).toContain('obs-streamer-preview');
@@ -255,16 +275,23 @@ describe('ObsOverlayPreview', () => {
     );
   });
 
-  it('delegates widget checker paint to its unscaled renderer frame', async () => {
-    const html = await renderPreview({
-      activeKind: 'now-playing',
-      captureSize: 'small',
-      supportedCaptureSizes: ['small'],
-      previewUrl: 'http://127.0.0.1:8700/overlay/now-playing',
-    });
+  it.each(['checker', 'white', 'black'])(
+    'paints the widget %s backdrop on its frame and keeps iframes transparent',
+    async (previewBackdrop) => {
+      const html = await renderPreview({
+        activeKind: 'now-playing',
+        captureSize: 'small',
+        supportedCaptureSizes: ['small'],
+        previewUrl: 'http://127.0.0.1:8700/overlay/now-playing',
+        previewBackdrop,
+      });
 
-    expect(html).toContain('backdrop=transparent');
-  });
+      expect(html).toContain(
+        `class="obs-widget-capture-preview__frame" data-backdrop="${previewBackdrop}"`,
+      );
+      expect(html).toMatch(/<iframe[^>]+src="[^"\s]*backdrop=transparent/u);
+    },
+  );
 
   it('marks widget inspection iframes as Workbench previews but not the OBS URL', async () => {
     const html = await renderPreview({

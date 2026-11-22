@@ -48,9 +48,9 @@ const props = defineProps({
   previewBackdrop: {
     type: String,
     default: 'checker',
-    validator: (value) => ['checker', 'dark', 'light'].includes(value),
+    validator: (value) => ['checker', 'white', 'black'].includes(value),
   },
-  lyricsPreviewMode: { type: String, default: 'performer' },
+  lyricsPreviewMode: { type: String, default: 'none' },
   performerGuide: { type: Object, default: () => DEFAULT_PERFORMER_GUIDE },
   performerGuideImage: { type: String, default: null },
   customPerformerGuideImage: { type: Boolean, default: false },
@@ -94,10 +94,9 @@ const previewActions = {
   none: { icon: EyeOff, label: t('outputPanel.overlay.hidePreviewBackground') },
 };
 const nextPreviewMode = computed(() => {
-  if (props.lyricsPreviewMode === 'none') return 'performer';
-  return props.lyricsPreviewMode === 'performer' && previewVideo.value
-    ? 'mv'
-    : 'none';
+  if (props.lyricsPreviewMode === 'performer') return 'none';
+  if (props.lyricsPreviewMode === 'none' && previewVideo.value) return 'mv';
+  return 'performer';
 });
 const nextPreviewAction = computed(() => previewActions[nextPreviewMode.value]);
 const showPreviewVideo = computed(
@@ -123,14 +122,13 @@ const inspectionUrl = computed(() => {
   if (isLyrics.value) {
     url.pathname = '/overlay/lyrics';
     // Opt-in lyrics diagnostics: keep them out of production preview iframes.
-    if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');
+    if (import.meta.env.DEV) {
+      url.searchParams.set('lyricsDebug', '1');
+      url.searchParams.set('ornateStroke', '1');
+    }
   }
-  // The renderer frame owns the Lyrics backdrop and its local media.
-  const iframeBackdrop =
-    isLyrics.value || props.previewBackdrop === 'checker'
-      ? 'transparent'
-      : props.previewBackdrop;
-  url.searchParams.set('backdrop', iframeBackdrop);
+  // Workbench frames paint the backdrop behind the live iframe.
+  url.searchParams.set('backdrop', 'transparent');
   if (isLyrics.value) url.searchParams.set('guide', '0');
   url.searchParams.set('reload', previewReloadToken);
   return url.toString();
@@ -337,6 +335,7 @@ onBeforeUnmount(() => {
             @click="emit('update:lyricsPreviewMode', nextPreviewMode)"
           />
           <ObsPreviewBackdropToggle
+            workbench
             :model-value="previewBackdrop"
             @update:model-value="emit('update:previewBackdrop', $event)"
           />
@@ -418,12 +417,12 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.obs-overlay-preview__frame[data-backdrop='dark'] {
-  background: var(--ui-color-canvas);
+.obs-overlay-preview__frame[data-backdrop='white'] {
+  background: var(--ui-output-preview-backdrop-white);
 }
 
-.obs-overlay-preview__frame[data-backdrop='light'] {
-  background: var(--ui-color-overlay-contrast);
+.obs-overlay-preview__frame[data-backdrop='black'] {
+  background: var(--ui-output-preview-backdrop-black);
 }
 
 .obs-overlay-preview__iframe {

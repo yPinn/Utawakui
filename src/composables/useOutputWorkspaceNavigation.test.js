@@ -17,7 +17,7 @@ describe('useOutputWorkspaceNavigation', () => {
     expect(navigation.activePage.value).toBe('workbench');
     expect(navigation.activeKind.value).toBeNull();
     expect(navigation.previewBackdrop.value).toBe('checker');
-    expect(navigation.lyricsPreviewMode.value).toBe('performer');
+    expect(navigation.lyricsPreviewMode.value).toBe('none');
   });
 
   it('shares the last valid page and kind with later consumers in the same session', async () => {
@@ -28,14 +28,14 @@ describe('useOutputWorkspaceNavigation', () => {
     expect(
       firstConsumer.selectKind('lyrics', ['now-playing', 'lyrics', 'artwork']),
     ).toBe(true);
-    expect(firstConsumer.selectPreviewBackdrop('dark')).toBe(true);
+    expect(firstConsumer.selectPreviewBackdrop('white')).toBe(true);
     expect(firstConsumer.selectLyricsPreviewMode('mv')).toBe(true);
 
     const laterConsumer = useOutputWorkspaceNavigation();
 
     expect(laterConsumer.activePage.value).toBe('gallery');
     expect(laterConsumer.activeKind.value).toBe('lyrics');
-    expect(laterConsumer.previewBackdrop.value).toBe('dark');
+    expect(laterConsumer.previewBackdrop.value).toBe('white');
     expect(laterConsumer.lyricsPreviewMode.value).toBe('mv');
   });
 
@@ -54,7 +54,7 @@ describe('useOutputWorkspaceNavigation', () => {
     expect(navigation.activePage.value).toBe('gallery');
     expect(navigation.activeKind.value).toBe('setlist');
     expect(navigation.previewBackdrop.value).toBe('checker');
-    expect(navigation.lyricsPreviewMode.value).toBe('performer');
+    expect(navigation.lyricsPreviewMode.value).toBe('none');
   });
 
   it('falls back to the first available kind when memory is empty or stale', async () => {

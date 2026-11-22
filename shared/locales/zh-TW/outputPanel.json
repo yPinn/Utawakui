@@ -240,6 +240,8 @@
     "dark": "暗色背景",
     "light": "亮色背景",
     "checker": "透明背景",
+    "white": "白底",
+    "black": "黑底",
     "toggle": "預覽背景：{current}，切換為{next}"
   },
   "translation": {

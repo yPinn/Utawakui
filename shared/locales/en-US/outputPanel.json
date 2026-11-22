@@ -240,6 +240,8 @@
     "dark": "Dark background",
     "light": "Light background",
     "checker": "Transparent background",
+    "white": "White background",
+    "black": "Black background",
     "toggle": "Preview background: {current}; switch to {next}"
   },
   "translation": {

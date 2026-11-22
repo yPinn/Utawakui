@@ -99,6 +99,37 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('preview backdrop control', () => {
+  it.each([
+    { workbench: true, order: ['checker', 'white', 'black', 'checker'] },
+    { workbench: false, order: ['dark', 'light', 'checker', 'dark'] },
+  ])(
+    'cycles the preview backdrops in order for $workbench',
+    async ({ workbench, order }) => {
+      const value = shallowRef(null);
+      const { root, app } = mount({
+        setup: () => () =>
+          h(Backdrop, {
+            workbench,
+            modelValue: value.value,
+            'onUpdate:modelValue': (next) => {
+              value.value = next;
+            },
+          }),
+      });
+      apps.push(app);
+      const button = () => findAll(root, (node) => node.type === 'button')[0];
+      expect(button().props['data-backdrop']).toBe(order[0]);
+      for (const next of order.slice(1)) {
+        trigger(button(), 'onClick');
+        await nextTick();
+        expect(value.value).toBe(next);
+        expect(button().props['data-backdrop']).toBe(next);
+      }
+    },
+  );
+});
+
 describe('static-first selected template preview', () => {
   it('discards a pending automatic import if reduced motion changes before it resolves', async () => {
     const view = setup();

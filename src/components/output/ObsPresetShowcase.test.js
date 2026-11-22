@@ -208,16 +208,7 @@ describe('OBS output workspace layout contract', () => {
     expect(previewStageSource).toContain(
       "const backdrop = shallowRef('dark');",
     );
-    // One cycling button; order is dark, light, then the transparency check.
     expect(backdropToggleSource).toContain('<UiIconButton');
-    expect(backdropToggleSource).toContain(
-      '(currentIndex.value + 1) % PREVIEW_BACKDROPS.length',
-    );
-    const backdropOrder = ["id: 'dark'", "id: 'light'", "id: 'checker'"].map(
-      (id) => backdropToggleSource.indexOf(id),
-    );
-    expect(backdropOrder.every((index) => index > -1)).toBe(true);
-    expect([...backdropOrder].sort((a, b) => a - b)).toEqual(backdropOrder);
     expect(mockupSource).toContain(
       'animated: { type: Boolean, default: false }',
     );
@@ -332,8 +323,8 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain("url.searchParams.set('backdrop'");
     expect(previewSource).not.toContain("searchParams.set('preview'");
     expect(previewSource).toContain('var(--ui-output-preview-canvas)');
-    expect(previewSource).toContain('var(--ui-color-canvas)');
-    expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
+    expect(previewSource).toContain('var(--ui-output-preview-backdrop-white)');
+    expect(previewSource).toContain('var(--ui-output-preview-backdrop-black)');
     expect(previewSource).toContain('ObsWidgetCapturePreview');
     expect(previewSource).toContain('v-if="isLyrics"');
     expect(previewSource).toContain(':src="performerGuideImage"');

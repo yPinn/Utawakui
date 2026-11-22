@@ -4,28 +4,41 @@ import { Grid2X2, Moon, Sun } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import { t } from '../../utils/i18n.js';
 
-// Default first, then its contrast, then the transparency check.
-const PREVIEW_BACKDROPS = Object.freeze([
+const CHECKER_BACKDROP = {
+  id: 'checker',
+  label: t('outputPanel.backdrop.checker'),
+  icon: Grid2X2,
+};
+const GALLERY_BACKDROPS = Object.freeze([
   { id: 'dark', label: t('outputPanel.backdrop.dark'), icon: Moon },
   { id: 'light', label: t('outputPanel.backdrop.light'), icon: Sun },
-  { id: 'checker', label: t('outputPanel.backdrop.checker'), icon: Grid2X2 },
+  CHECKER_BACKDROP,
+]);
+const WORKBENCH_BACKDROPS = Object.freeze([
+  CHECKER_BACKDROP,
+  { id: 'white', label: t('outputPanel.backdrop.white'), icon: Sun },
+  { id: 'black', label: t('outputPanel.backdrop.black'), icon: Moon },
 ]);
 
 const props = defineProps({
-  modelValue: { type: String, default: 'dark' },
+  modelValue: { type: String, default: null },
+  workbench: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
 });
 const emit = defineEmits(['update:modelValue']);
 
+const backdrops = computed(() =>
+  props.workbench ? WORKBENCH_BACKDROPS : GALLERY_BACKDROPS,
+);
 const currentIndex = computed(() =>
   Math.max(
     0,
-    PREVIEW_BACKDROPS.findIndex((option) => option.id === props.modelValue),
+    backdrops.value.findIndex((option) => option.id === props.modelValue),
   ),
 );
-const current = computed(() => PREVIEW_BACKDROPS[currentIndex.value]);
+const current = computed(() => backdrops.value[currentIndex.value]);
 const next = computed(
-  () => PREVIEW_BACKDROPS[(currentIndex.value + 1) % PREVIEW_BACKDROPS.length],
+  () => backdrops.value[(currentIndex.value + 1) % backdrops.value.length],
 );
 const label = computed(() =>
   t('outputPanel.backdrop.toggle', {

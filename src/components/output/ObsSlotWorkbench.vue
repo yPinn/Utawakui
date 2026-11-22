@@ -80,7 +80,7 @@ const props = defineProps({
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
   previewBackdrop: { type: String, default: 'checker' },
-  lyricsPreviewMode: { type: String, default: 'performer' },
+  lyricsPreviewMode: { type: String, default: 'none' },
   outputError: { type: String, default: '' },
   recentColors: { type: Array, default: () => [] },
   savedColors: { type: Array, default: () => [] },

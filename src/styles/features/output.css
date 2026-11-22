@@ -43,6 +43,8 @@
   --ui-output-preview-backdrop-light: #f2f2f0;
   --ui-output-preview-backdrop-checker-a: #d9d9d9;
   --ui-output-preview-backdrop-checker-b: #f5f5f5;
+  --ui-output-preview-backdrop-white: #fff;
+  --ui-output-preview-backdrop-black: #000;
   --ui-output-preview-surface: rgb(8 11 13 / 74%);
   --ui-output-preview-surface-muted: rgb(255 255 255 / 18%);
   /* Overlay appearance roles (overlay/shared/fallback.css, appearance.css). */

@@ -1,12 +1,16 @@
 import { readonly, shallowRef } from 'vue';
 
 const OUTPUT_PAGE_IDS = Object.freeze(['workbench', 'gallery']);
-const OUTPUT_PREVIEW_BACKDROP_IDS = Object.freeze(['checker', 'dark', 'light']);
+const OUTPUT_PREVIEW_BACKDROP_IDS = Object.freeze([
+  'checker',
+  'white',
+  'black',
+]);
 
 const activePage = shallowRef('workbench');
 const activeKind = shallowRef(null);
 const previewBackdrop = shallowRef('checker');
-const lyricsPreviewMode = shallowRef('performer');
+const lyricsPreviewMode = shallowRef('none');
 // The Gallery retains its width across visits. A null value uses its CSS default.
 const sideWidth = shallowRef(null);
 const sideCollapsed = shallowRef(false);
