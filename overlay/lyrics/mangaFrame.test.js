@@ -131,7 +131,7 @@ describe('manga frame contract', () => {
     expect(mangaFrameShapes(shout, { x: 800, y: 290 })).toBe(shout.elements);
   });
 
-  it('aligns the tail from its two joins through the visible mask center', () => {
+  it('tilts the tail below a level mask center on a mirrored bubble', () => {
     const svg = svgFixture();
     svg.ownerDocument.defaultView = { innerWidth: 1920, innerHeight: 1080 };
     // Right-hand bubble is mirrored and the SVG is letterboxed by its viewBox.
@@ -147,16 +147,18 @@ describe('manga frame contract', () => {
     svg.getScreenCTM = () => ({ inverse: () => inverse });
     renderMangaFrameSvg(svg, 'spoken');
     const group = { children: [{ children: [svg] }] };
-    updateMangaFrameTails(group, readMangaTailTarget(0.55, 0.51));
+    updateMangaFrameTails(group, readMangaTailTarget(0.55, 414 / 1080));
     const path = svg.children[0].attributes.d;
     const [startX, startY, , , , , , endX, endY, tipX, tipY] = path
       .match(/-?[0-9]+(?:\.[0-9]+)?/gu)
       .map(Number);
     const baseX = (startX + endX) / 2;
     const baseY = (startY + endY) / 2;
-    // Screen point (1056, 550.8) mapped through the inverse matrix.
-    const target = { x: (1600 - 1056) / 0.6, y: (550.8 - 240) / 0.6 };
+    // The level center (1056, 414) is shifted 4% down the canvas before mapping.
+    const target = { x: (1600 - 1056) / 0.6, y: (457.2 - 240) / 0.6 };
     const targetAngle = Math.atan2(target.y - baseY, target.x - baseX);
+    expect(tipY).toBeGreaterThan(baseY);
+    expect(tipX).toBeGreaterThan(baseX);
     expect(Math.atan2(tipY - baseY, tipX - baseX)).toBeCloseTo(targetAngle, 3);
     expect(Math.hypot(tipX - baseX, tipY - baseY)).toBeCloseTo(72, 1);
     expect(readMangaTailTarget('0.55', 0.51)).toBeNull();

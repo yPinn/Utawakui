@@ -8,6 +8,7 @@ import {
 } from '../shared/mangaFrameContract.mjs';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const MANGA_TAIL_DOWNWARD_OFFSET = 0.04;
 const tailRenderKeys = new WeakMap();
 export const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
@@ -136,7 +137,9 @@ export function updateMangaFrameTails(group, target) {
     const point = matrix
       ? applyMatrix(matrix.inverse(), {
           x: view.innerWidth * target.x,
-          y: view.innerHeight * target.y,
+          y:
+            view.innerHeight *
+            Math.min(1, target.y + MANGA_TAIL_DOWNWARD_OFFSET),
         })
       : null;
     if (point && (!Number.isFinite(point.x) || !Number.isFinite(point.y)))
