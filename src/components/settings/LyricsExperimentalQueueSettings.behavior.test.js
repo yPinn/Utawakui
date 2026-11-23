@@ -100,7 +100,9 @@ describe('experimental lyrics global preference', () => {
     expect(textContent(mounted.root)).not.toContain('歌曲紀錄');
     expect(textContent(mounted.root)).not.toContain('取消分析');
     expect(textContent(mounted.root)).not.toContain('重試分析');
-    expect(textContent(mounted.root)).toContain('到歌詞頁查看與套用結果');
+    expect(textContent(mounted.root)).toContain(
+      '原歌詞保留，結果可在歌詞頁套用',
+    );
     expect(bridge.cancelExperimentalLyrics).not.toHaveBeenCalled();
     expect(bridge.retryExperimentalLyrics).not.toHaveBeenCalled();
   });
@@ -109,7 +111,7 @@ describe('experimental lyrics global preference', () => {
     await flush();
     expect(input().props.checked).toBe(false);
     expect(bridge.setExperimentalLyricsEnabled).not.toHaveBeenCalled();
-    expect(textContent(mounted.root)).toContain('不會自動下載工具');
+    expect(textContent(mounted.root)).toContain('工具需手動下載');
     trigger(input(), 'onChange', { target: { checked: true } });
     await flush();
     expect(bridge.setExperimentalLyricsEnabled).toHaveBeenCalledWith(true);

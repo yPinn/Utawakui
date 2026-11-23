@@ -1,5 +1,4 @@
 <script setup>
-import { MicVocal } from '../../icons/index.js';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -20,7 +19,6 @@ const emit = defineEmits(['setAutoSeparate', 'refreshPreference']);
 
 <template>
   <SettingsDocumentItem
-    :icon="MicVocal"
     :title="t('capabilities.autoSeparation.title')"
     :guidance="t('capabilities.autoSeparation.guidance')"
     variant="nested"

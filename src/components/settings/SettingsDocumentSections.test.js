@@ -19,6 +19,7 @@ describe('Settings document section ownership', () => {
       'SettingsCapabilitiesSection',
       'CaptureOutputSettings',
       'SettingsSupportSection',
+      'SettingsTestingSection',
     ];
     let previousPosition = -1;
 
@@ -41,7 +42,7 @@ describe('Settings document section ownership', () => {
     expect(librarySource).toContain('usePlaybackHistory');
     expect(librarySource).toContain('<LibraryStorageSettingsRow');
     expect(librarySource).toContain('<PlaybackHistorySettingsRow');
-    expect(librarySource).toContain("title: '清理去人聲空間？'");
+    expect(librarySource).toContain('await libraryStorage.cleanup()');
     expect(librarySource).toContain("title: '清除最近播放紀錄？'");
   });
 
@@ -51,7 +52,12 @@ describe('Settings document section ownership', () => {
     expect(captureSource).toContain('useAudioOutput');
     expect(captureSource).toContain('<AudioOutputSettingsBlock');
     expect(captureSource).toContain('<CaptureDeviceModal');
-    expect(capabilitiesSource).toContain('<slot :name="`${group.id}-end`" />');
+    expect(capabilitiesSource).toContain(
+      '<slot v-if="group.id === \'output\'" name="output-start" />',
+    );
+    expect(capabilitiesSource.indexOf('name="output-start"')).toBeLessThan(
+      capabilitiesSource.indexOf('<SettingsFeatureGateRow'),
+    );
   });
 
   it('keeps Windows behavior with application and updates with support', () => {
@@ -82,8 +88,7 @@ describe('Settings document section ownership', () => {
     expect(troubleshootingSource).toContain('usePersistentDiagnostics');
     expect(troubleshootingSource).toContain('useFeedbackReport');
     expect(supportSource).toContain('useAppAnnouncement');
-    expect(supportSource).not.toContain('<FeedbackReportSettingsRow');
-    expect(troubleshootingSource).toContain('<FeedbackReportSettingsRow');
+    expect(troubleshootingSource).toContain('closeThen(openReport)');
     expect(troubleshootingSource).toContain('<AutoErrorReportingSettingsRow');
     expect(supportSource).not.toContain('<DiagnosticsSettingsRow');
     expect(troubleshootingSource).toContain('<DiagnosticsSettingsRow');

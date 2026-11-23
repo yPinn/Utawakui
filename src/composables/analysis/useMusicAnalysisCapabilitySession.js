@@ -25,7 +25,7 @@ export function useMusicAnalysisCapabilitySession({ bridge } = {}) {
   });
   const capability = shallowRef(null);
   let feedback = null;
-  const openSettings = () => useAppView().openSettings('processing');
+  const openSettings = () => useAppView().openSettings('testing');
   const owner = useMusicAnalysisCapability({
     state,
     capability,

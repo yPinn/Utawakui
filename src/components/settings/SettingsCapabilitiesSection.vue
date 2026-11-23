@@ -1,7 +1,6 @@
 <script setup>
 import {
   computed,
-  defineAsyncComponent,
   nextTick,
   onMounted,
   onUnmounted,
@@ -20,31 +19,23 @@ import { useFeatureDependencies } from '../../composables/useFeatureDependencies
 import { useFeatureGateAccess } from '../../composables/useFeatureGateAccess.js';
 import { useFeatureGatePresentation } from '../../composables/useFeatureGatePresentation.js';
 import { useFeatureGates } from '../../composables/useFeatureGates.js';
-import { useMusicAnalysisSettings } from '../../composables/useMusicAnalysisSettings.js';
 import { useObsIntegrationSettings } from '../../composables/useObsIntegrationSettings.js';
 import { useSeparationSettings } from '../../composables/useSeparationSettings.js';
 import { useYoutubeLoginSettings } from '../../composables/useYoutubeLoginSettings.js';
 import { useOnFirstVisible } from '../../composables/useOnFirstVisible.js';
 import SettingsSection from './SettingsSection.vue';
-import MusicAnalysisPreferenceRow from './MusicAnalysisPreferenceRow.vue';
 import YoutubeLoginRow from './YoutubeLoginRow.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import FfmpegSourceModal from './FfmpegSourceModal.vue';
-import MusicAnalysisSettingsRow from './MusicAnalysisSettingsRow.vue';
-import LyricsAcousticSettingsRow from './LyricsAcousticSettingsRow.vue';
-import { useLyricsAcousticCapability } from '../../composables/lyrics/useLyricsAcousticCapability.js';
 import ObsIntegrationSettingsBlock from './ObsIntegrationSettingsBlock.vue';
 import CompanionSettingsBlock from './CompanionSettingsBlock.vue';
 import OutputRuntimeSettingsBlock from './OutputRuntimeSettingsBlock.vue';
 import SeparationGpuSettingsRow from './SeparationGpuSettingsRow.vue';
 import SeparationAutoSettingsRow from './SeparationAutoSettingsRow.vue';
 import SettingsFeatureGateRow from './SettingsFeatureGateRow.vue';
-import SettingsDependencyList from './SettingsDependencyList.vue';
+import SettingsDependencyRows from './SettingsDependencyRows.vue';
 import { t } from '../../utils/i18n.js';
-
-const GuidePitchSettingsRow = import.meta.env.DEV
-  ? defineAsyncComponent(() => import('./GuidePitchSettingsRow.vue'))
-  : null;
 
 const OPTIONAL_FEATURE_GROUPS = Object.freeze([
   {
@@ -76,16 +67,6 @@ const SETTINGS_FEATURES = new Set([
   FEATURE_IDS.OBS_INTEGRATION,
   FEATURE_IDS.MOBILE_COMPANION,
 ]);
-const musicToolNeedsAttention = computed(() =>
-  Boolean(
-    musicAnalysisSettings.capabilityError.value ||
-    musicAnalysisSettings.capabilityReadError.value ||
-    (musicAnalysisSettings.capability.value &&
-      !musicAnalysisSettings.capabilityBusy.value &&
-      musicAnalysisSettings.capability.value.status !== 'ready'),
-  ),
-);
-
 const {
   state: featureGateState,
   isFeatureEnabled,
@@ -100,8 +81,6 @@ const {
   removeDependency,
   repairDependency,
 } = useFeatureDependencies();
-const musicAnalysisSettings = useMusicAnalysisSettings();
-const lyricsAcousticCapability = useLyricsAcousticCapability();
 const separationSettings = useSeparationSettings();
 const youtubeLoginSettings = useYoutubeLoginSettings();
 const youtubeLogin = computed(() => ({
@@ -144,21 +123,19 @@ const optionalFeatureGroups = computed(() => {
   }));
 });
 
-// Processing tools in setup order: FFmpeg first, then each feature with its switches.
-const SEPARATION_MODEL_ORDER = Object.freeze([
+const PROCESSING_TOOL_ORDER = [
+  FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS,
   'uvr-mdxnet-inst-hq-4',
   'uvr-mdxnet-kara-2',
   'uvr-mdxnet-inst-hq-3',
-]);
-function processingToolGroups(items = []) {
+];
+
+function orderedProcessingTools(items) {
   const byId = new Map(items.map((item) => [item.id, item]));
-  return {
-    ffmpeg: items.filter((item) => item.id === 'ffmpeg-gyan-essentials'),
-    separation: SEPARATION_MODEL_ORDER.map((id) => byId.get(id)).filter(
-      Boolean,
-    ),
-  };
+  return PROCESSING_TOOL_ORDER.map((id) => byId.get(id)).filter(Boolean);
 }
+
+const processingToolsOpen = shallowRef(false);
 
 const { settingsSection, clearSettingsSection } = useAppView();
 
@@ -172,12 +149,15 @@ async function revealSettingsTarget(targetId) {
 watch(
   settingsSection,
   async (section) => {
-    if (!section) return;
+    if (!section || section === 'testing') return;
+    if (section === 'processing') processingToolsOpen.value = true;
     clearSettingsSection();
-    if (section === 'obs-connection') {
-      await revealSettingsTarget(
-        `settings-feature-${FEATURE_IDS.OBS_INTEGRATION}`,
-      );
+    const outputFeature = {
+      'obs-connection': FEATURE_IDS.OBS_INTEGRATION,
+      'output-browser': FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+    }[section];
+    if (outputFeature) {
+      await revealSettingsTarget(`settings-feature-${outputFeature}`);
       return;
     }
     await revealSettingsTarget(
@@ -195,8 +175,12 @@ watch(
 );
 
 watch(
-  () => featureGateAccessState.request?.featureId,
-  async (featureId) => {
+  () => featureGateAccessState.request,
+  async (request) => {
+    const featureId = request?.featureId;
+    if (featureId === FEATURE_IDS.AUDIO_PROCESSING_FLOW) {
+      processingToolsOpen.value = true;
+    }
     if (featureId) {
       await revealSettingsTarget(`settings-feature-${featureId}`);
     }
@@ -255,30 +239,6 @@ async function detectSystemFfmpeg() {
   } catch {
     // Best-effort hint only. Failed detection keeps the existing unknown state.
   }
-}
-
-async function handleRemoveMusicAnalysis() {
-  const confirmed = await confirmAction({
-    title: t('capabilities.confirm.removeBpmTitle'),
-    message: t('capabilities.confirm.removeBpmMessage'),
-    detail: t('capabilities.confirm.removeBpmDetail'),
-    confirmLabel: t('capabilities.confirm.removeComponent'),
-    intent: 'danger',
-  });
-  if (!confirmed) return;
-
-  await musicAnalysisSettings.remove();
-}
-
-async function handleRemoveLyricsAcoustic() {
-  const confirmed = await confirmAction({
-    title: t('capabilities.confirm.removeAcousticTitle'),
-    message: t('capabilities.confirm.removeAcousticMessage'),
-    detail: t('capabilities.confirm.removeAcousticDetail'),
-    confirmLabel: t('capabilities.confirm.removeComponent'),
-    intent: 'danger',
-  });
-  if (confirmed) await lyricsAcousticCapability.remove();
 }
 
 async function handleClearObsPassword() {
@@ -366,8 +326,6 @@ function handleFeatureGateRequestAction() {
 onMounted(() => {
   refreshConfirmations();
   refreshDependencies();
-  musicAnalysisSettings.initialize();
-  lyricsAcousticCapability.refresh();
   separationSettings.refreshPreference();
   separationSettings.refreshAutoSeparation();
   youtubeLoginSettings.refresh();
@@ -404,6 +362,7 @@ onUnmounted(() => clearFeatureGateRequest());
           :title="group.title"
           tabindex="-1"
         >
+          <slot v-if="group.id === 'output'" name="output-start" />
           <SettingsFeatureGateRow
             v-for="gate in group.gates"
             :id="`settings-feature-${gate.id}`"
@@ -496,123 +455,56 @@ onUnmounted(() => clearFeatureGateRequest());
             </template>
             <template #tools>
               <template v-if="gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW">
-                <SettingsDependencyList
-                  bare
-                  :items="processingToolGroups(gate.items).ffmpeg"
-                  @item-action="handleWorkflowItemAction"
-                  @item-advanced-action="handleWorkflowItemAdvancedAction"
-                  @notice-action="handleFeatureDependencyNoticeAction"
+                <SeparationAutoSettingsRow
+                  :auto-separate="separationSettings.autoSeparate.value"
+                  :busy="separationSettings.autoSeparationBusy.value"
+                  :error="separationSettings.autoSeparationSaveError.value"
+                  :read-error="separationSettings.autoSeparationReadError.value"
+                  :reading="separationSettings.autoSeparationReading.value"
+                  :loaded="separationSettings.autoSeparationLoaded.value"
+                  @refresh-preference="separationSettings.refreshAutoSeparation"
+                  @set-auto-separate="separationSettings.setAutoSeparate"
                 />
-                <SettingsDependencyList
-                  :title="t('capabilities.toolGroups.separation')"
-                  :items="processingToolGroups(gate.items).separation"
-                  @item-action="handleWorkflowItemAction"
-                  @item-advanced-action="handleWorkflowItemAdvancedAction"
-                  @notice-action="handleFeatureDependencyNoticeAction"
+                <UiDisclosure
+                  v-model:open="processingToolsOpen"
+                  class="settings-section__disclosure"
+                  :label="t('capabilities.manageProcessingTools')"
                 >
-                  <template #after>
-                    <SeparationGpuSettingsRow
-                      :gpu-acceleration="
-                        separationSettings.gpuAcceleration.value
-                      "
-                      :preference-busy="separationSettings.preferenceBusy.value"
-                      :preference-error="
-                        separationSettings.preferenceSaveError.value
-                      "
-                      :read-error="separationSettings.preferenceReadError.value"
-                      :reading="separationSettings.preferenceReading.value"
-                      :loaded="separationSettings.preferenceLoaded.value"
-                      @refresh-preference="separationSettings.refreshPreference"
-                      @set-gpu-acceleration="
-                        separationSettings.setGpuAcceleration
-                      "
-                    />
-                    <SeparationAutoSettingsRow
-                      :auto-separate="separationSettings.autoSeparate.value"
-                      :busy="separationSettings.autoSeparationBusy.value"
-                      :error="separationSettings.autoSeparationSaveError.value"
-                      :read-error="
-                        separationSettings.autoSeparationReadError.value
-                      "
-                      :reading="separationSettings.autoSeparationReading.value"
-                      :loaded="separationSettings.autoSeparationLoaded.value"
-                      @refresh-preference="
-                        separationSettings.refreshAutoSeparation
-                      "
-                      @set-auto-separate="separationSettings.setAutoSeparate"
-                    />
-                    <GuidePitchSettingsRow v-if="GuidePitchSettingsRow" />
-                  </template>
-                </SettingsDependencyList>
-                <SettingsDependencyList
-                  :title="t('capabilities.toolGroups.bpm')"
-                  :additional-count="1"
-                  :additional-busy="musicAnalysisSettings.capabilityBusy.value"
-                  :additional-attention="musicToolNeedsAttention"
-                  :additional-loaded="
-                    Boolean(
-                      musicAnalysisSettings.capability.value ||
-                      musicAnalysisSettings.capabilityReadError.value,
-                    )
-                  "
-                >
-                  <MusicAnalysisSettingsRow
-                    :capability="musicAnalysisSettings.capability.value"
-                    :capability-busy="
-                      musicAnalysisSettings.capabilityBusy.value
-                    "
-                    :stage-label="musicAnalysisSettings.stageLabel.value"
-                    :progress-percent="
-                      musicAnalysisSettings.progressPercent.value
-                    "
-                    :capability-error="
-                      musicAnalysisSettings.capabilityError.value
-                    "
-                    :capability-read-error="
-                      musicAnalysisSettings.capabilityReadError.value
-                    "
-                    @refresh-capability="
-                      musicAnalysisSettings.refreshCapability
-                    "
-                    @prepare="musicAnalysisSettings.prepare"
-                    @repair="musicAnalysisSettings.repair"
-                    @remove="handleRemoveMusicAnalysis"
-                  />
-                  <template #after>
-                    <MusicAnalysisPreferenceRow
-                      :auto-analyze="musicAnalysisSettings.autoAnalyze.value"
-                      :busy="musicAnalysisSettings.preferenceBusy.value"
-                      :reading="musicAnalysisSettings.preferenceReading.value"
-                      :loaded="musicAnalysisSettings.preferenceLoaded.value"
-                      :error="musicAnalysisSettings.preferenceSaveError.value"
-                      :read-error="
-                        musicAnalysisSettings.preferenceReadError.value
-                      "
-                      @refresh-preference="
-                        musicAnalysisSettings.refreshPreference
-                      "
-                      @set-auto-analyze="musicAnalysisSettings.setAutoAnalyze"
-                    />
-                  </template>
-                </SettingsDependencyList>
-                <SettingsDependencyList bare>
-                  <LyricsAcousticSettingsRow
-                    :capability="lyricsAcousticCapability.capability.value"
-                    :busy="lyricsAcousticCapability.busy.value"
-                    :operation="lyricsAcousticCapability.operation.value"
-                    :error="lyricsAcousticCapability.error.value"
-                    @refresh="lyricsAcousticCapability.refresh"
-                    @prepare="lyricsAcousticCapability.prepare"
-                    @verify="lyricsAcousticCapability.verify"
-                    @repair="lyricsAcousticCapability.repair"
-                    @remove="handleRemoveLyricsAcoustic"
-                    @cancel="lyricsAcousticCapability.cancel"
-                  />
-                </SettingsDependencyList>
+                  <SettingsDependencyRows
+                    :items="orderedProcessingTools(gate.items)"
+                    @item-action="handleWorkflowItemAction"
+                    @item-advanced-action="handleWorkflowItemAdvancedAction"
+                    @notice-action="handleFeatureDependencyNoticeAction"
+                  >
+                    <template #after>
+                      <SeparationGpuSettingsRow
+                        :gpu-acceleration="
+                          separationSettings.gpuAcceleration.value
+                        "
+                        :preference-busy="
+                          separationSettings.preferenceBusy.value
+                        "
+                        :preference-error="
+                          separationSettings.preferenceSaveError.value
+                        "
+                        :read-error="
+                          separationSettings.preferenceReadError.value
+                        "
+                        :reading="separationSettings.preferenceReading.value"
+                        :loaded="separationSettings.preferenceLoaded.value"
+                        @refresh-preference="
+                          separationSettings.refreshPreference
+                        "
+                        @set-gpu-acceleration="
+                          separationSettings.setGpuAcceleration
+                        "
+                      />
+                    </template>
+                  </SettingsDependencyRows>
+                </UiDisclosure>
               </template>
             </template>
           </SettingsFeatureGateRow>
-          <slot :name="`${group.id}-end`" />
         </SettingsSection>
       </template>
     </div>

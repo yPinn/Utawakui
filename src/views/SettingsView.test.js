@@ -22,6 +22,12 @@ const supportSource = readSource(
 const troubleshootingSource = readSource(
   '../components/settings/TroubleshootingModal.vue',
 );
+const testingSource = readSource(
+  '../components/settings/SettingsTestingSection.vue',
+);
+const testToolsSource = readSource(
+  '../components/settings/SettingsTestingTools.vue',
+);
 const researchSource = readSource(
   '../components/settings/LyricsResearchSettingsBlock.vue',
 );
@@ -30,12 +36,14 @@ const sectionSources = [
   applicationSource,
   optionalSource,
   supportSource,
+  testingSource,
 ];
 const source = [
   viewSource,
   ...sectionSources,
   captureSource,
   researchSource,
+  testToolsSource,
 ].join('\n');
 
 describe('SettingsView document composition', () => {
@@ -45,9 +53,9 @@ describe('SettingsView document composition', () => {
       'SettingsApplicationSection',
       'SettingsLibrarySection',
       'SettingsCapabilitiesSection',
-      'LyricsResearchSettingsBlock',
       'CaptureOutputSettings',
       'SettingsSupportSection',
+      'SettingsTestingSection',
     ];
     let previousStart = -1;
     for (const component of sectionComponents) {
@@ -79,9 +87,8 @@ describe('SettingsView document composition', () => {
     expect(librarySource).toContain('<PlaybackHistorySettingsRow');
     expect(captureSource).toContain('<AudioOutputSettingsBlock');
     expect(viewSource).toContain(
-      '<template #output-end><CaptureOutputSettings /></template>',
+      '<template #output-start><CaptureOutputSettings /></template>',
     );
-    expect(optionalSource).toContain('<slot :name="`${group.id}-end`" />');
     expect(applicationSource).toContain('title="應用程式"');
     expect(applicationSource).toContain('<WindowsBackgroundSettingsRow');
     expect(applicationSource).not.toContain('<AppUpdateSettingsRow');
@@ -89,15 +96,18 @@ describe('SettingsView document composition', () => {
     expect(optionalSource).toContain("title: '外部來源與歌詞'");
     expect(optionalSource).toContain('<SettingsFeatureGateRow');
     expect(optionalSource).not.toContain('LyricsResearchSettingsBlock');
-    expect(researchSource).toContain('實驗功能：歌詞時間分析');
+    expect(researchSource).toContain('label="歌詞時間分析"');
     expect(researchSource).not.toContain('<SettingsSection');
-    expect(viewSource).toContain(
-      '<template #processing-end><LyricsResearchSettingsBlock /></template>',
-    );
+    expect(viewSource).not.toContain('LyricsResearchSettingsBlock');
+    expect(testingSource).toContain('<SettingsTestingTools v-if="open" />');
+    expect(testToolsSource).toContain('<LyricsResearchSettingsBlock>');
+    expect(testToolsSource).toContain('<LyricsAcousticSettingsRow');
+    expect(testToolsSource).toContain('<MusicAnalysisSettingsRow');
+    expect(testToolsSource).toContain('<SpoutOutputSettingsRow');
     expect(researchSource).toContain('<LyricsExperimentalQueueSettings />');
     expect(viewSource).not.toContain('LyricsExperimentalQueueSettings');
     expect(supportSource).toContain('title="支援與維護"');
-    expect(troubleshootingSource).toContain('<FeedbackReportSettingsRow');
+    expect(troubleshootingSource).toContain('closeThen(openReport)');
     expect(supportSource).toContain('<TroubleshootingModal');
   });
 
@@ -135,7 +145,7 @@ describe('SettingsView document composition', () => {
     expect(source).not.toContain('使用前請閱讀各功能說明，再選擇是否啟用。');
     expect(source).toContain("title: '外部來源與歌詞'");
     expect(source).toContain("title: '本機音訊處理'");
-    expect(source).toContain("title: '公開輸出與 OBS'");
+    expect(source).toContain("title: '直播與錄影'");
     expect(optionalSource).toContain('v-for="group in optionalFeatureGroups"');
     expect(source).not.toContain('enabledGateCount');
     expect(source).not.toContain('額外元件只在需要時下載。');
@@ -176,11 +186,11 @@ describe('SettingsView behavior wiring', () => {
     );
     expect(source).toContain('libraryStorage.initialize(),');
     expect(source).toContain('libraryStorage.dispose');
-    expect(source).toContain("title: '清理去人聲空間？'");
+    expect(source).toContain("title: '清理去人聲版本？'");
     expect(source).not.toContain('useLibraryMetadataMaintenance');
   });
 
-  it('groups each processing switch with its tools in setup order', () => {
+  it('puts the automatic accompaniment switch before the collapsed tools', () => {
     const tools = optionalSource.slice(
       optionalSource.indexOf('<template #tools>'),
       optionalSource.indexOf('</SettingsFeatureGateRow>'),
@@ -189,16 +199,16 @@ describe('SettingsView behavior wiring', () => {
     expect(tools).toMatch(
       /v-if="gate\.id === FEATURE_IDS\.AUDIO_PROCESSING_FLOW"/u,
     );
-    // FFmpeg, then separation (models + GPU), BPM (tool + switch), lyrics timing.
     const order = [
-      'processingToolGroups(gate.items).ffmpeg',
-      '人聲分離',
+      '<SeparationAutoSettingsRow',
+      '管理伴奏工具',
+      'orderedProcessingTools(gate.items)',
       '<SeparationGpuSettingsRow',
-      'BPM 分析',
-      '<MusicAnalysisSettingsRow',
-      '<MusicAnalysisPreferenceRow',
-      '<LyricsAcousticSettingsRow',
     ];
+    expect(tools).not.toMatch(/GuidePitch|MusicAnalysis|LyricsAcoustic/u);
+    expect(optionalSource).toContain(
+      'const processingToolsOpen = shallowRef(false)',
+    );
     for (let index = 1; index < order.length; index += 1) {
       expect(at(order[index]), order[index]).toBeGreaterThan(
         at(order[index - 1]),
@@ -212,7 +222,6 @@ describe('SettingsView behavior wiring', () => {
   it('keeps low-frequency support and maintenance entries together', () => {
     expect(supportSource).toContain('announcement.reopen');
     expect(supportSource).toContain('openCommunityDiscord');
-    expect(supportSource).not.toContain('<FeedbackReportSettingsRow');
     expect(troubleshootingSource).toContain('<DiagnosticsSettingsRow');
     expect(supportSource).not.toContain('<DiagnosticsSettingsRow');
     expect(supportSource).not.toContain('announcement.summary');

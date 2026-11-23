@@ -7,14 +7,13 @@
   },
   "settings": {
     "title": "Lyrics timing analysis (experimental)",
-    "notice": "For local research trials only. Timing accuracy hasn't been checked by people yet, and the licensing scope for using and distributing the model weights (HubertFA, Whisper small) and dictionaries is still being clarified.",
+    "notice": "Local trial only. Timing accuracy awaits manual review. Model and dictionary licensing for use and distribution is pending.",
     "tool": "Lyrics analysis tools",
-    "toolDescription": "Estimates part timing for Chinese, Japanese and English lyrics. Requires the FFmpeg provided by Utawakui.",
-    "size": "About 0.78 GB to download and 1.00 GB installed. Keep 4 GB free.",
+    "toolDescription": "Supports Chinese, Japanese, and English. Select the Utawakui-managed FFmpeg under Manage accompaniment tools.",
+    "size": "Downloads about 0.78 GB. Keep 4 GB free.",
     "cancelLabel": "Cancel and wait for cleanup",
-    "previewTitle": "Part preview (advanced)",
-    "previewRequirement": "Choose “Utawakui managed version” under Local audio processing → Tools and models → Audio conversion tool (FFmpeg).",
-    "previewLimit": "Each analysis covers about 30 seconds and up to 10 lines. Results are previewed here only.",
+    "previewTitle": "Preview excerpt",
+    "previewLimit": "Preview up to 10 lines over about 30 seconds.",
     "stage": {
       "download": "Downloading tools",
       "prepare": "Preparing",
@@ -41,7 +40,7 @@
       "refresh": "Reload",
       "remove": "Remove tools"
     },
-    "disclosure": "Experimental: lyrics timing analysis"
+    "disclosure": "Lyrics timing analysis"
   },
   "preview": {
     "track": "Library song",
@@ -49,10 +48,10 @@
     "language": "Analysis language",
     "line": "Start from line",
     "linePlaceholder": "Choose a timed line",
-    "source": "Lyrics source: {source}. Your chosen source is used first; otherwise one is picked by language.",
+    "source": "Lyrics source: {source}",
     "generate": "Create preview",
     "label": "Analysis result preview",
-    "hint": "Original word timing is used first; when the analysis doesn't fit, the whole line is shown. This is a preview only and isn't applied to the lyrics or performance screen.",
+    "hint": "Uses existing word timing first. Shows whole lines when the analysis differs from the lyrics.",
     "modeResearch": "Analyzed parts",
     "playLine": "Play from this line",
     "contradiction": "The analysis doesn't match the lyrics, so the whole line is shown.",
@@ -89,9 +88,8 @@
     }
   },
   "queue": {
-    "title": "Analyze lyrics after accompaniment finishes",
-    "guidance": "Analyzes after accompaniment finishes; view and apply results on the lyrics page. Tools aren't downloaded and the original lyrics aren't changed automatically.",
-    "auto": "Analyze automatically",
+    "title": "Automatically analyze lyrics after accompaniment finishes",
+    "guidance": "Keeps the original lyrics. Apply results on the lyrics page. Download tools manually.",
     "autoLabel": "Automatically analyze lyrics after accompaniment finishes",
     "enableProcessing": "Turn on audio processing first.",
     "loading": "Loading the automatic analysis setting…",
@@ -115,7 +113,7 @@
     "needsTimed": "Add lyrics with sync timing first.",
     "checking": "Checking analysis settings.",
     "needsProcessing": "Turn on audio processing in Settings first.",
-    "needsExperiment": "Turn on experimental lyrics analysis in Settings first.",
+    "needsExperiment": "Turn on lyrics timing analysis in Settings → Test features first.",
     "needsTools": "Prepare or repair the lyrics analysis tools in Settings first.",
     "savingOffset": "Saving the timing; analysis can start when it finishes.",
     "offsetFailed": "Retry saving the timing before analyzing.",

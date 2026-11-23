@@ -4,18 +4,18 @@
   "deviceNameUnreadable": "Device name can't be read",
   "systemDefault": "System default output",
   "capture": {
-    "title": "Capture output device",
+    "title": "Audio capture",
     "enabled": "On",
     "disabled": "Off",
-    "guidance": "For capture by streaming or recording software; set separately from local listening.",
-    "select": "Choose capture output device",
-    "volume": "Stream capture master volume",
-    "volumeHint": "Adjusts the vocal and interlude music volume your stream receives; doesn't affect monitoring."
+    "guidance": "Send playback audio to a device for streaming or recording to capture.",
+    "select": "Choose device",
+    "volume": "Capture volume",
+    "volumeHint": "Sets playback volume for capture. Monitoring volume is separate."
   },
   "modal": {
-    "title": "Choose capture output device",
+    "title": "Choose capture device",
     "help": "How to choose a capture device",
-    "description": "Choose the device your streaming or recording software captures. Takes effect right away.",
+    "description": "Changes take effect immediately. For VB-CABLE, choose CABLE Input here. In OBS, add an Audio Input Capture source and choose CABLE Output.",
     "offOption": "Capture off (still plays through {device})",
     "groupCapture": "Capture audio",
     "groupVirtual": "Virtual audio devices",

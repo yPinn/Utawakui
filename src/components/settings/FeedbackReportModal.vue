@@ -3,7 +3,7 @@ import { t } from '../../utils/i18n.js';
 // Self-contained like CaptureDeviceModal.vue: this modal owns its own
 // composable rather than SettingsView.vue passing every field down as
 // props, since useFeedbackReport() is a module singleton any entry point
-// (an error notice's action, this general Settings row) can already open
+// (an error notice's action, the troubleshooting dialog) can already open
 // without prop drilling.
 import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { ArrowLeft, Download } from '../../icons/index.js';

@@ -64,7 +64,10 @@ function handleMenuSelect(actionId) {
 </script>
 
 <template>
-  <div class="settings-dependency-actions">
+  <div
+    v-if="item.actionIcon || hasMenuItems"
+    class="settings-dependency-actions"
+  >
     <UiIconButton
       v-if="item.actionIcon"
       :icon="primaryIcon"

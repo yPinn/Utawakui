@@ -115,6 +115,9 @@ describe('Settings progressive disclosure', () => {
     const details = find(root, 'details');
     expect(details).toBeDefined();
     expect(details.props.open).toBe(false);
+    expect(
+      findAll(root, (node) => node.props.id === 'obs-integration-enabled'),
+    ).toHaveLength(0);
     toggle(details, true);
     await nextTick();
     const host = findAll(
@@ -145,7 +148,7 @@ describe('Settings progressive disclosure', () => {
       (node) => node.props.id === 'obs-integration-enabled',
     )[0];
     expect(button.type).toBe('button');
-    expect(textContent(button)).toBe('停止');
+    expect(textContent(button)).toBe('停止連線');
     trigger(button, 'onClick');
     expect(save).toHaveBeenCalledWith({ enabled: false });
     app.unmount();

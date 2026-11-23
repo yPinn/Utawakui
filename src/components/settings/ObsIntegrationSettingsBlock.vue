@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, shallowRef, watch } from 'vue';
-import { Play, Power, RefreshCw, Trash2, Video } from '../../icons/index.js';
+import { Power, RefreshCw, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -16,6 +16,9 @@ import { t } from '../../utils/i18n.js';
 const MAX_PASSWORD_LENGTH = obsConnectionValues.maxPasswordLength;
 const DEFAULT_HOST = obsConnectionValues.defaultHost;
 const DEFAULT_PORT = String(obsConnectionValues.defaultPort);
+const DEFAULT_SKIP_THRESHOLD_SECONDS = String(
+  obsSessionValues.defaultSkipThresholdMs / 1000,
+);
 const dockPreference = usePlaybackDockPreference();
 
 const props = defineProps({
@@ -29,8 +32,7 @@ const props = defineProps({
   password: { type: String, default: '' },
   skipThresholdSeconds: {
     type: String,
-    default: () =>
-      String(Math.round(obsSessionValues.defaultSkipThresholdMs / 1000)),
+    default: () => String(obsSessionValues.defaultSkipThresholdMs / 1000),
   },
   hasStoredPassword: { type: Boolean, default: false },
   isSaving: { type: Boolean, default: false },
@@ -94,11 +96,21 @@ const canRetry = computed(
     isEnabled.value &&
     RETRYABLE_LIFECYCLES.includes(lifecycle.value),
 );
+const statusFeedback = computed(
+  () =>
+    props.readError ||
+    props.status.statusReadError ||
+    props.error ||
+    props.status.error?.message ||
+    props.connectionError,
+);
 
 const outputSummary = computed(() => {
-  if (!CONNECTED_LIFECYCLES.includes(lifecycle.value)) {
-    return t('obs.summaryIdle');
-  }
+  if (
+    props.status.statusReadError ||
+    !CONNECTED_LIFECYCLES.includes(lifecycle.value)
+  )
+    return '';
   const streaming = props.status?.observed?.streaming;
   const recording = props.status?.observed?.recording;
   return t('obs.summary', {
@@ -147,26 +159,22 @@ watch(
 <template>
   <div class="obs-integration-settings-block">
     <SettingsDocumentItem
-      :icon="Video"
       :title="t('obs.title')"
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
-      :guidance="t('obs.guidance')"
       variant="nested"
     >
       <template #actions>
         <UiButton
-          v-if="featureEnabled"
+          v-if="featureEnabled && isEnabled"
           id="obs-integration-enabled"
-          :icon="isEnabled ? Power : Play"
-          :variant="isEnabled ? 'secondary' : 'accent'"
-          :aria-label="
-            t(isEnabled ? 'obs.disconnectLabel' : 'obs.connectLabel')
-          "
+          :icon="Power"
+          variant="secondary"
+          :aria-label="t('obs.disconnectLabel')"
           :disabled="isSaving || isLoading || Boolean(readError)"
-          @click="emit('save', { enabled: !isEnabled })"
-          >{{ t(isEnabled ? 'obs.disconnect' : 'obs.connect') }}</UiButton
+          @click="emit('save', { enabled: false })"
+          >{{ t('obs.disconnect') }}</UiButton
         >
         <UiButton
           v-if="canRetry"
@@ -177,58 +185,50 @@ watch(
           >{{ t('obs.retry') }}</UiButton
         >
       </template>
-      <template
-        v-if="status?.error || connectionError || status.statusReadError"
-        #feedback
-      >
+      <template v-if="statusFeedback" #feedback>
         <UiHint
-          v-if="status?.error || connectionError"
-          tone="warning"
+          :tone="
+            readError || status.statusReadError || error ? 'danger' : 'warning'
+          "
           role="alert"
-          >{{ status?.error?.message || connectionError }}</UiHint
+          >{{ statusFeedback }}</UiHint
         >
-        <UiHint v-if="status.statusReadError" tone="danger" role="alert">{{
-          status.statusReadError
-        }}</UiHint>
         <UiButton
-          v-if="status.statusReadError"
+          v-if="readError"
+          variant="ghost"
+          :loading="isLoading"
+          @click="emit('refreshSettings')"
+          >{{ t('obs.reloadSettings') }}</UiButton
+        >
+        <UiButton
+          v-else-if="status.statusReadError"
           variant="ghost"
           @click="emit('refreshStatus')"
           >{{ t('obs.reloadStatus') }}</UiButton
         >
       </template>
     </SettingsDocumentItem>
-    <UiHint v-if="readError" tone="danger" role="alert">{{ readError }}</UiHint>
-    <UiButton
-      v-if="readError"
-      class="obs-integration-settings-block__read-retry"
-      variant="ghost"
-      :loading="isLoading"
-      @click="emit('refreshSettings')"
-      >{{ t('obs.reloadSettings') }}</UiButton
-    >
 
-    <div
+    <SettingsDocumentItem
       v-if="(!featureEnabled || !isEnabled) && hasStoredPassword"
-      class="obs-integration-settings-block__stored-credential"
+      variant="nested"
+      title-tag="span"
+      :title="t('obs.passwordSaved')"
     >
-      <span>{{ t('obs.passwordSaved') }}</span>
-      <UiButton
-        variant="ghost"
-        :disabled="isSaving"
-        intent="danger"
-        @click="emit('clearPassword')"
-      >
-        {{ t('obs.removePassword') }}
-      </UiButton>
-    </div>
-
-    <UiHint
-      v-if="passwordError && (!featureEnabled || !isEnabled)"
-      tone="danger"
-      role="alert"
-      >{{ passwordError }}</UiHint
-    >
+      <template #actions>
+        <UiButton
+          variant="ghost"
+          :disabled="isSaving"
+          intent="danger"
+          @click="emit('clearPassword')"
+        >
+          {{ t('obs.removePassword') }}
+        </UiButton>
+      </template>
+      <template v-if="passwordError" #feedback>
+        <UiHint tone="danger" role="alert">{{ passwordError }}</UiHint>
+      </template>
+    </SettingsDocumentItem>
 
     <UiDisclosure
       v-if="featureEnabled"
@@ -236,7 +236,10 @@ watch(
       class="settings-section__disclosure"
       :label="t('obs.settings')"
     >
-      <div class="obs-integration-settings-block__form">
+      <div class="settings-section__form">
+        <UiHint v-if="!isEnabled || canRetry">{{
+          t('obs.setupGuidance')
+        }}</UiHint>
         <div class="obs-integration-settings-block__connection">
           <UiTextField
             id="obs-integration-host"
@@ -261,7 +264,7 @@ watch(
               }
             "
             :error="fieldErrors.port"
-            class="obs-integration-settings-block__port"
+            class="settings-section__port-field"
             :label="t('obs.port')"
             :model-value="port"
             :placeholder="DEFAULT_PORT"
@@ -270,38 +273,36 @@ watch(
           />
         </div>
 
-        <div class="obs-integration-settings-block__credential">
-          <UiTextField
-            id="obs-integration-password"
-            :ref="
-              (instance) => {
-                fieldRefs.password = instance;
-              }
-            "
-            :error="fieldErrors.password"
-            class="obs-integration-settings-block__password"
-            :label="t('obs.password')"
-            type="password"
-            :model-value="password"
-            :placeholder="hasStoredPassword ? t('obs.passwordPlaceholder') : ''"
-            :maxlength="MAX_PASSWORD_LENGTH"
-            autocomplete="off"
-            :disabled="isSaving || isLoading || Boolean(readError)"
-            @update:model-value="emit('update:password', $event)"
-          >
-            <template #action>
-              <UiIconButton
-                v-if="hasStoredPassword && isEnabled"
-                :icon="Trash2"
-                :label="t('obs.removePassword')"
-                variant="ghost"
-                :disabled="isSaving || isLoading || Boolean(readError)"
-                intent="danger"
-                @click="emit('clearPassword')"
-              />
-            </template>
-          </UiTextField>
-        </div>
+        <UiTextField
+          id="obs-integration-password"
+          :ref="
+            (instance) => {
+              fieldRefs.password = instance;
+            }
+          "
+          :error="fieldErrors.password"
+          class="obs-integration-settings-block__password"
+          :label="t('obs.password')"
+          type="password"
+          :model-value="password"
+          :placeholder="hasStoredPassword ? t('obs.passwordPlaceholder') : ''"
+          :maxlength="MAX_PASSWORD_LENGTH"
+          autocomplete="off"
+          :disabled="isSaving || isLoading || Boolean(readError)"
+          @update:model-value="emit('update:password', $event)"
+        >
+          <template #action>
+            <UiIconButton
+              v-if="hasStoredPassword && isEnabled"
+              :icon="Trash2"
+              :label="t('obs.removePassword')"
+              variant="ghost"
+              :disabled="isSaving || isLoading || Boolean(readError)"
+              intent="danger"
+              @click="emit('clearPassword')"
+            />
+          </template>
+        </UiTextField>
 
         <UiHint v-if="passwordError && isEnabled" tone="danger" role="alert">{{
           passwordError
@@ -317,7 +318,7 @@ watch(
           :error="fieldErrors.skipThresholdSeconds"
           :label="t('obs.skipThreshold')"
           :model-value="skipThresholdSeconds"
-          placeholder="10"
+          :placeholder="DEFAULT_SKIP_THRESHOLD_SECONDS"
           class="obs-integration-settings-block__threshold"
           :hint="t('obs.skipThresholdHint')"
           :disabled="isSaving || isLoading || Boolean(readError)"
@@ -327,79 +328,55 @@ watch(
         <UiHint v-if="saveError" tone="danger" role="alert">{{
           saveError
         }}</UiHint>
-        <div class="obs-integration-settings-block__submit">
-          <UiButton
-            variant="accent"
-            :loading="isSaving"
-            :disabled="isLoading || Boolean(readError)"
-            @click="emit('save', { enabled: true })"
-          >
-            {{
-              t(
-                !isEnabled
-                  ? 'obs.saveAndConnect'
-                  : canRetry
-                    ? 'obs.saveAndReconnect'
-                    : 'obs.save',
-              )
-            }}
-          </UiButton>
-        </div>
+        <UiButton
+          class="settings-section__form-action"
+          variant="accent"
+          :loading="isSaving"
+          :disabled="isLoading || Boolean(readError)"
+          @click="emit('save', { enabled: true })"
+        >
+          {{
+            t(
+              !isEnabled
+                ? 'obs.saveAndConnect'
+                : canRetry
+                  ? 'obs.saveAndReconnect'
+                  : 'obs.save',
+            )
+          }}
+        </UiButton>
       </div>
+      <SettingsDocumentItem
+        :title="t('obs.dock.title')"
+        :guidance="t('obs.dock.guidance')"
+        variant="nested"
+      >
+        <template #actions>
+          <UiCheckbox
+            id="obs-auto-arrangement-dock"
+            :label="t('obs.dock.auto')"
+            :model-value="dockPreference.value.value"
+            :disabled="
+              dockPreference.busy.value || dockPreference.reading.value
+            "
+            :error="dockPreference.error.value"
+            @update:model-value="dockPreference.save"
+          />
+        </template>
+        <template v-if="dockPreference.readError.value" #feedback>
+          <UiButton variant="ghost" @click="dockPreference.refresh">{{
+            t('obs.dock.reload')
+          }}</UiButton>
+        </template>
+      </SettingsDocumentItem>
     </UiDisclosure>
-
-    <SettingsDocumentItem
-      :title="t('obs.dock.title')"
-      :guidance="t('obs.dock.guidance')"
-      variant="nested"
-    >
-      <template #actions>
-        <UiCheckbox
-          id="obs-auto-arrangement-dock"
-          :label="t('obs.dock.auto')"
-          :model-value="dockPreference.value.value"
-          :disabled="dockPreference.busy.value || dockPreference.reading.value"
-          :error="dockPreference.error.value"
-          @update:model-value="dockPreference.save"
-        />
-      </template>
-      <template v-if="dockPreference.readError.value" #feedback>
-        <UiButton variant="ghost" @click="dockPreference.refresh">{{
-          t('obs.dock.reload')
-        }}</UiButton>
-      </template>
-    </SettingsDocumentItem>
-
-    <UiHint v-if="error" tone="danger" role="alert">{{ error }}</UiHint>
   </div>
 </template>
 
 <style scoped>
 .obs-integration-settings-block {
-  min-width: 0;
+  min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-2);
-}
-
-.obs-integration-settings-block__form {
-  /* Three logical groups, not one flat grid of equal-weight cells — the
-     connection target (host/port), the credential, and the commit action
-     each read as their own unit, separated by --ui-space-3 (tighter than
-     the --ui-space-5 page-level rhythm DESIGN.md reserves for real section
-     breaks, since this is still one small settings row, not a new page). */
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-3);
-  padding-inline-start: var(--settings-copy-inset, 0);
-}
-
-.obs-integration-settings-block__stored-credential {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
-  padding-inline-start: var(--settings-copy-inset, 0);
-  color: var(--ui-color-text-muted);
 }
 
 .obs-integration-settings-block__connection {
@@ -417,23 +394,8 @@ watch(
   max-inline-size: 100%;
 }
 
-.obs-integration-settings-block__port {
-  /* Fixed to what a 1-5 digit port number actually needs, not stretched to
-     match the host field — equal-width columns for unequal content is the
-     "monotonous grid" this replaces. */
-  flex: 0 0 var(--settings-port-inline-size);
-  max-inline-size: 100%;
-}
-
-.obs-integration-settings-block__credential {
-  display: flex;
-  align-items: start;
-  gap: var(--ui-space-2);
-}
-
 .obs-integration-settings-block__password {
-  flex: 0 1 var(--settings-long-text-inline-size);
-  min-inline-size: min(100%, 20ch);
+  inline-size: var(--settings-long-text-inline-size);
   max-inline-size: 100%;
 }
 
@@ -442,19 +404,5 @@ watch(
 
   inline-size: var(--settings-text-inline-size);
   max-inline-size: 100%;
-}
-
-.obs-integration-settings-block__stored-credential {
-  inline-size: var(--settings-long-text-inline-size);
-  max-inline-size: 100%;
-}
-.obs-integration-settings-block__read-retry {
-  justify-self: end;
-}
-
-.obs-integration-settings-block__submit {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
 }
 </style>

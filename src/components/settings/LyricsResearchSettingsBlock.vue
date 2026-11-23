@@ -2,14 +2,15 @@
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import { useLyricsResearch } from '../../composables/lyrics/useLyricsResearch.js';
 import {
-  Captions,
+  Check,
+  Download,
   RefreshCw,
   Trash2,
   Wrench,
-  Check,
 } from '../../icons/index.js';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
+import SettingsDependencyRows from './SettingsDependencyRows.vue';
 import LyricsExperimentalQueueSettings from './LyricsExperimentalQueueSettings.vue';
 import LyricsResearchPreviewTools from './LyricsResearchPreviewTools.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -62,14 +63,17 @@ const primary = computed(
   () =>
     ({
       missing: {
+        icon: Download,
         label: t('lyricsResearch.settings.actions.download'),
         action: 'prepare',
       },
       unverified: {
+        icon: Check,
         label: t('lyricsResearch.settings.actions.check'),
         action: 'verify',
       },
       damaged: {
+        icon: Wrench,
         label: t('lyricsResearch.settings.actions.repair'),
         action: 'prepare',
       },
@@ -79,13 +83,20 @@ const installed = computed(() =>
   Boolean(status.value && status.value !== 'missing'),
 );
 const managementItem = computed(() => ({
+  id: 'lyrics-research',
   title: t('lyricsResearch.settings.tool'),
+  actionIcon: research.busy.value ? null : primary.value?.icon,
+  actionLabel: primary.value?.label,
   advancedActions: [
-    {
-      id: 'refresh',
-      label: t('lyricsResearch.settings.actions.refresh'),
-      icon: RefreshCw,
-    },
+    ...(status.value
+      ? [
+          {
+            id: 'refresh',
+            label: t('lyricsResearch.settings.actions.refresh'),
+            icon: RefreshCw,
+          },
+        ]
+      : []),
     ...(status.value === 'ready'
       ? [
           {
@@ -116,6 +127,10 @@ const managementItem = computed(() => ({
       : []),
   ].map((action) => ({ ...action, disabled: research.busy.value })),
 }));
+function runPrimary() {
+  if (!research.busy.value && primary.value)
+    void research.action(primary.value.action);
+}
 function manage({ action }) {
   if (research.busy.value) return;
   if (!managementItem.value.advancedActions.some((item) => item.id === action))
@@ -132,39 +147,27 @@ onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
-  <!-- The rights notice stays outside the collapsed experiment. -->
-  <div class="lyrics-settings">
-    <UiHint class="lyrics-settings__notice">
-      {{ t('lyricsResearch.settings.notice') }}
-    </UiHint>
-    <UiDisclosure
-      v-model:open="experimentOpen"
-      class="settings-section__disclosure"
-      :label="t('lyricsResearch.settings.disclosure')"
-    >
+  <UiDisclosure
+    v-model:open="experimentOpen"
+    class="settings-section__disclosure"
+    :label="t('lyricsResearch.settings.disclosure')"
+  >
+    <SettingsDependencyRows>
+      <UiHint class="lyrics-settings__notice" tone="warning">
+        {{ t('lyricsResearch.settings.notice') }}
+      </UiHint>
+      <slot />
       <SettingsDocumentItem
-        :icon="Captions"
         :title="t('lyricsResearch.settings.tool')"
         :description="t('lyricsResearch.settings.toolDescription')"
         :guidance="status === 'ready' ? '' : t('lyricsResearch.settings.size')"
         :status="statusLabel"
         :status-tone="statusTone"
         status-live
+        variant="nested"
+        title-tag="h3"
       >
         <template #actions>
-          <UiButton
-            v-if="primary && !research.busy.value"
-            variant="accent"
-            @click="research.action(primary.action)"
-            >{{ primary.label }}</UiButton
-          >
-          <UiButton
-            v-else-if="!status"
-            variant="ghost"
-            :disabled="research.busy.value"
-            @click="research.refresh"
-            >{{ t('lyricsResearch.settings.actions.refresh') }}</UiButton
-          >
           <UiButton
             v-if="research.busy.value"
             variant="secondary"
@@ -174,11 +177,20 @@ onUnmounted(() => clearInterval(timer));
           >
           <SettingsDependencyActions
             :item="managementItem"
+            @primary-action="runPrimary"
             @advanced-action="manage"
           />
         </template>
-        <template v-if="research.error.value" #feedback>
-          <UiHint tone="danger" role="alert">{{ research.error.value }}</UiHint>
+        <template v-if="research.error.value || !status" #feedback>
+          <UiHint v-if="research.error.value" tone="danger" role="alert">{{
+            research.error.value
+          }}</UiHint>
+          <UiButton
+            v-if="!status && !research.busy.value"
+            variant="ghost"
+            @click="research.refresh"
+            >{{ t('lyricsResearch.settings.actions.refresh') }}</UiButton
+          >
         </template>
       </SettingsDocumentItem>
 
@@ -189,26 +201,18 @@ onUnmounted(() => clearInterval(timer));
         class="settings-section__disclosure"
         :label="t('lyricsResearch.settings.previewTitle')"
       >
-        <div v-if="toolsOpen" class="lyrics-settings__details">
-          <UiHint>{{ t('lyricsResearch.settings.previewRequirement') }}</UiHint>
+        <div v-if="toolsOpen" class="settings-section__form">
           <UiHint>{{ t('lyricsResearch.settings.previewLimit') }}</UiHint>
           <LyricsResearchPreviewTools />
         </div>
       </UiDisclosure>
-    </UiDisclosure>
-  </div>
+    </SettingsDependencyRows>
+  </UiDisclosure>
 </template>
 
 <style scoped>
 .lyrics-settings__notice {
   padding-block: var(--settings-row-padding-block, var(--ui-space-4));
   padding-inline-start: var(--settings-copy-inset, 0);
-}
-.lyrics-settings__details {
-  display: grid;
-  gap: var(--ui-space-3);
-  padding-block: var(--settings-child-padding-block, var(--ui-space-3));
-  padding-inline-start: var(--settings-copy-inset, 0);
-  min-inline-size: 0;
 }
 </style>

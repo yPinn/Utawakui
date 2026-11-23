@@ -13,7 +13,7 @@ const windowsSource = readSource('./WindowsBackgroundSettingsRow.vue');
 const capabilitiesSource = readSource('./SettingsCapabilitiesSection.vue');
 const outputSource = readSource('./OutputRuntimeSettingsBlock.vue');
 const obsSource = readSource('./ObsIntegrationSettingsBlock.vue');
-const feedbackSource = readSource('./FeedbackReportSettingsRow.vue');
+const feedbackSource = readSource('./FeedbackReportModal.vue');
 const supportSource = readSource('./SettingsSupportSection.vue');
 
 describe('Settings copy density', () => {
@@ -50,21 +50,14 @@ describe('Settings copy density', () => {
     expect(metadataSource).not.toContain('<UiHint>從來源更新會連線');
     expect(historySource).toContain('自動儲存；清除不影響佇列或播放清單。');
     expect(windowsSource).toContain('背景執行時，播放、OBS 與輸出會繼續。');
-    expect(obsSource).toContain('讀取直播／錄影與時間標記，不變更場景。');
+    expect(obsSource).toContain('工具 → WebSocket 伺服器設定');
   });
 
   it('uses concise supporting copy for integrations and support actions', () => {
-    expect(audioOutputSource).toContain(
-      '供直播或錄影擷取；與本機聆聽分開設定。',
-    );
-    expect(outputSource).toContain(
-      '透過直播或錄影軟體的瀏覽器來源顯示歌詞與曲目。',
-    );
-    expect(outputSource).toContain(
-      '實驗性透明歌詞輸出，需接收軟體支援 Spout2。',
-    );
-    // The title alone says what the feedback row does.
-    expect(feedbackSource).not.toContain(':guidance=');
+    expect(audioOutputSource).toContain('供直播或錄影擷取。');
+    expect(outputSource).toContain('從輸出工作臺複製網址');
+    expect(outputSource).not.toContain('Spout2');
+    expect(feedbackSource).toContain('填寫問題或建議，預覽確認後再送出。');
     expect(supportSource).toContain('公告、交流與開發者聯絡。');
   });
 });

@@ -109,7 +109,7 @@ async function handleCleanupLibraryStorage() {
     title: t('librarySettings.storage.cleanupTitle'),
     message: t('librarySettings.storage.cleanupMessage'),
     detail: t('librarySettings.storage.cleanupDetail'),
-    confirmLabel: t('librarySettings.storage.cleanupConfirm'),
+    confirmLabel: t('librarySettings.storage.cleanup'),
     intent: 'danger',
   });
   if (confirmed) await libraryStorage.cleanup();

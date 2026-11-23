@@ -7,6 +7,7 @@ import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiChip from '../ui/UiChip.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
+import SettingsDependencyRows from './SettingsDependencyRows.vue';
 import {
   attachClientRender,
   mount,
@@ -127,6 +128,7 @@ for (const [component, path] of [
   [UiDisclosure, '../ui/UiDisclosure.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [SettingsDependencyActions, './SettingsDependencyActions.vue'],
+  [SettingsDependencyRows, './SettingsDependencyRows.vue'],
 ])
   attachClientRender(component, path, import.meta.url);
 let mounted;
@@ -188,13 +190,13 @@ async function disclose(text, open) {
 }
 async function open() {
   mounted = mount(Component);
-  await disclose('實驗功能', true);
+  await disclose('歌詞時間分析', true);
   await disclose('片段預覽', true);
   await nextTick();
   await nextTick();
 }
 describe('integrated experimental lyrics settings', () => {
-  it('uses the real settings row and disclosure while keeping the rights notice outside collapsed content', async () => {
+  it('uses the shared disclosure and shows the rights notice before the download action', async () => {
     mounted = mount(Component);
     await nextTick();
     const details = findAll(mounted.root, (n) => n.type === 'details');
@@ -206,9 +208,11 @@ describe('integrated experimental lyrics settings', () => {
       (n) => n.type === 'p' && textContent(n).includes('散布授權'),
     )[0];
     expect(notice).toBeDefined();
-    expect(
-      details.some((n) => findAll(n, (child) => child === notice).length),
-    ).toBe(false);
+    const content = textContent(details[0]);
+    expect(content.indexOf('散布授權')).toBeLessThan(
+      content.indexOf('下載工具'),
+    );
+    expect(button('下載工具')).toBeUndefined();
     const state = findAll(
       mounted.root,
       (n) => n.type === 'span' && n.props.class?.includes('ui-chip__label'),
@@ -217,7 +221,7 @@ describe('integrated experimental lyrics settings', () => {
   });
   it('reads environment status without downloads or inference and collapses advanced tools', async () => {
     mounted = mount(Component);
-    await disclose('實驗功能', true);
+    await disclose('歌詞時間分析', true);
     await nextTick();
     expect(state.owner.refresh).toHaveBeenCalledTimes(1);
     expect(state.owner.action).not.toHaveBeenCalled();
@@ -235,7 +239,7 @@ describe('integrated experimental lyrics settings', () => {
   ])('offers the correct next action for %s', async (status, label, action) => {
     state.owner.status.value = { status };
     mounted = mount(Component);
-    await disclose('實驗功能', true);
+    await disclose('歌詞時間分析', true);
     await nextTick();
     trigger(button(label), 'onClick');
     expect(state.owner.action).toHaveBeenCalledWith(action);
@@ -244,7 +248,7 @@ describe('integrated experimental lyrics settings', () => {
   it('keeps cancellation visible with advanced tools closed', async () => {
     state.owner.busy.value = true;
     mounted = mount(Component);
-    await disclose('實驗功能', true);
+    await disclose('歌詞時間分析', true);
     await nextTick();
     trigger(button('取消'), 'onClick');
     expect(state.owner.cancel).toHaveBeenCalled();
@@ -253,7 +257,7 @@ describe('integrated experimental lyrics settings', () => {
   it('keeps maintenance in the overflow menu and dispatches each original intent', async () => {
     state.owner.status.value = { status: 'ready' };
     mounted = mount(Component);
-    await disclose('實驗功能', true);
+    await disclose('歌詞時間分析', true);
     await nextTick();
     expect(textContent(mounted.root)).toContain('可使用');
     expect(textContent(mounted.root)).toContain('伴奏完成後自動產生詞塊');
@@ -279,7 +283,7 @@ describe('integrated experimental lyrics settings', () => {
   it('blocks a maintenance menu selection if a background operation starts while open', async () => {
     state.owner.status.value = { status: 'ready' };
     mounted = mount(Component);
-    await disclose('實驗功能', true);
+    await disclose('歌詞時間分析', true);
     await nextTick();
     trigger(button('歌詞分析工具選項'), 'onClick', {
       stopPropagation() {},
@@ -296,7 +300,7 @@ describe('integrated experimental lyrics settings', () => {
   });
   it('refreshes status even with research tools closed and stops polling when unmounted', async () => {
     mounted = mount(Component);
-    await disclose('實驗功能', true);
+    await disclose('歌詞時間分析', true);
     await nextTick();
     await vi.advanceTimersByTimeAsync(1000);
     expect(state.owner.refresh).toHaveBeenCalledTimes(2);
@@ -397,6 +401,9 @@ describe('integrated experimental lyrics settings', () => {
   });
   it('sends selected song, language and line only; plays through the existing player', async () => {
     await open();
+    expect(button('產生預覽').props.class).toContain(
+      'settings-section__form-action',
+    );
     state.owner.status.value = { status: 'ready' };
     state.owner.inspection.value = {
       sourceLabel: 'main.vtt',

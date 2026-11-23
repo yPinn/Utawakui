@@ -5,7 +5,6 @@ import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiHint from '../ui/UiHint.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
-import { Captions } from '../../icons/index.js';
 import { t } from '../../utils/i18n.js';
 
 const queue = useExperimentalLyricsQueue();
@@ -33,15 +32,16 @@ onUnmounted(() => clearInterval(timer));
 
 <template>
   <SettingsDocumentItem
-    :icon="Captions"
     :title="t('lyricsResearch.queue.title')"
     :guidance="t('lyricsResearch.queue.guidance')"
+    variant="nested"
+    title-tag="h3"
   >
     <template #actions>
       <UiCheckbox
         :id="id"
-        :label="t('lyricsResearch.queue.auto')"
-        :aria-label="t('lyricsResearch.queue.autoLabel')"
+        :label="t('lyricsResearch.queue.autoLabel')"
+        label-hidden
         :model-value="queue.state.value?.enabled === true"
         :disabled="
           saving ||

@@ -10,6 +10,7 @@ import {
 import { useLyricsResearch } from '../../composables/lyrics/useLyricsResearch.js';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { usePlayer } from '../../composables/usePlayer.js';
+import { Play } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSelect from '../ui/UiSelect.vue';
@@ -139,7 +140,7 @@ async function playLine(line) {
       })
     }}</UiHint>
     <UiButton
-      class="lyrics-research__generate"
+      class="settings-section__form-action"
       variant="accent"
       :disabled="
         research.busy.value ||
@@ -171,9 +172,15 @@ async function playLine(line) {
                   ? t('lyricsEditor.phrase.timingWord')
                   : t('lyricsEditor.acoustic.timingPlain')
             }}</span
-          ><UiButton @click="playLine(line)">{{
-            t('lyricsResearch.preview.playLine')
-          }}</UiButton>
+          >
+          <UiButton
+            :icon="Play"
+            variant="secondary"
+            size="sm"
+            @click="playLine(line)"
+          >
+            {{ t('lyricsResearch.preview.playLine') }}
+          </UiButton>
         </div>
         <p v-if="!pieces(line).length" class="lyrics-research__text">
           {{ line.text }}
@@ -219,9 +226,6 @@ async function playLine(line) {
   align-items: center;
   justify-content: space-between;
 }
-.lyrics-research__generate {
-  justify-self: end;
-}
 .lyrics-research__fields {
   display: flex;
   flex-wrap: wrap;
@@ -252,6 +256,7 @@ async function playLine(line) {
 }
 .lyrics-research__text,
 .lyrics-research__chunks {
+  margin: 0;
   font-size: var(--ui-type-body-size);
   font-weight: var(--ui-type-body-weight);
   line-height: var(--ui-type-body-line-height);

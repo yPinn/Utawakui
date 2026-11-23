@@ -65,7 +65,7 @@ describe('ObsIntegrationSettingsBlock', () => {
 
     expect(html).not.toContain('匯出時間標記');
     expect(html).toContain('演出待唱側欄');
-    expect(html).toContain('與一般播放分開，不會自動播放');
+    expect(html).toContain('播放仍由你操作');
     expect(html).not.toContain('匯出 YouTube 章節');
   });
 
@@ -110,9 +110,12 @@ describe('ObsIntegrationSettingsBlock', () => {
           ?.filter((button) => button.includes('移除密碼')),
       ).toEqual([expect.stringContaining('ui-btn--intent-danger')]);
     }
-    expect(featureDisabled).not.toContain('aria-label="連線至 OBS"');
+    expect(featureDisabled).not.toContain('儲存並連線');
+    expect(featureDisabled).not.toContain('演出待唱側欄');
     expect(featureDisabled).not.toContain('id="obs-integration-password"');
-    expect(connectionDisabled).toContain('aria-label="連線至 OBS"');
+    expect(connectionDisabled).not.toContain('id="obs-integration-enabled"');
+    expect(connectionDisabled).toContain('工具 → WebSocket 伺服器設定');
+    expect(connectionDisabled).toContain('儲存並連線');
     expect(connectionDisabled).toContain('id="obs-integration-password"');
   });
 
@@ -148,6 +151,23 @@ describe('ObsIntegrationSettingsBlock', () => {
 
     expect(html).toContain('role="alert"');
     expect(html).toContain('無法移除密碼，請再試一次。');
+  });
+
+  it('shows one aligned retry when reading OBS settings and status both fail', async () => {
+    const html = await renderBlock({
+      readError: '無法讀取設定',
+      status: {
+        desired: { enabled: true },
+        observed: { lifecycle: 'ready' },
+        statusReadError: '無法讀取狀態',
+      },
+    });
+    const feedback = html.indexOf('settings-document-item__feedback');
+    expect(feedback).toBeGreaterThan(-1);
+    expect(html.indexOf('無法讀取設定')).toBeGreaterThan(feedback);
+    expect(html).toContain('重新讀取 OBS 設定');
+    expect(html).not.toContain('重新讀取 OBS 狀態');
+    expect(html).not.toContain('無法讀取狀態');
   });
 
   it('derives connection defaults and placeholders from the shared OBS values', async () => {

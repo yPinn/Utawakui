@@ -4,18 +4,18 @@
   "deviceNameUnreadable": "裝置名稱無法讀取",
   "systemDefault": "系統預設輸出",
   "capture": {
-    "title": "擷取輸出裝置",
+    "title": "音訊擷取",
     "enabled": "已啟用",
     "disabled": "未啟用",
-    "guidance": "供直播或錄影擷取；與本機聆聽分開設定。",
-    "select": "選擇擷取輸出裝置",
-    "volume": "直播擷取總音量",
-    "volumeHint": "調整直播收到的演唱與場間音樂音量，不影響監聽。"
+    "guidance": "將播放聲音送到指定裝置，供直播或錄影擷取。",
+    "select": "選擇裝置",
+    "volume": "擷取音量",
+    "volumeHint": "調整擷取裝置的播放音量。監聽音量獨立設定。"
   },
   "modal": {
-    "title": "選擇擷取輸出裝置",
+    "title": "選擇擷取裝置",
     "help": "如何選擇擷取裝置",
-    "description": "選擇讓直播或錄影軟體擷取的裝置，立即生效。",
+    "description": "選擇會立即生效。使用 VB-CABLE 時，在這裡選 CABLE Input，再於 OBS 新增「音訊輸入擷取」並選 CABLE Output。",
     "offOption": "關閉擷取（仍從 {device} 播放）",
     "groupCapture": "擷取音訊",
     "groupVirtual": "虛擬音效裝置",

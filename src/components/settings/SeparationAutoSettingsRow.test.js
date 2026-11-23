@@ -14,7 +14,7 @@ describe('SeparationAutoSettingsRow', () => {
     const html = await renderRow();
     expect(html).toContain('匯入後自動產生伴奏');
     expect(html).toContain('aria-label="匯入曲目後自動產生伴奏"');
-    expect(html).toContain('OBS 直播或錄影時');
+    expect(html).toContain('OBS 直播或錄影結束後才會處理');
     expect(html).not.toContain('checked');
   });
 

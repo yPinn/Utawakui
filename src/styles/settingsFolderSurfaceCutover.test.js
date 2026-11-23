@@ -177,7 +177,7 @@ describe('Settings Folder surface cutover', () => {
       '@container settings-section (max-width: 30rem)',
     );
     expect(libraryStorageSettingsRowSource).toContain(
-      '@container app-folder-layout (max-width: 35rem)',
+      '@container settings-section (max-width: 35rem)',
     );
   });
 
@@ -234,7 +234,7 @@ describe('Settings Folder surface cutover', () => {
       expect(position, title).toBeGreaterThan(previousPosition);
       previousPosition = position;
     }
-    for (const title of ['外部來源與歌詞', '本機音訊處理', '公開輸出與 OBS']) {
+    for (const title of ['外部來源與歌詞', '本機音訊處理', '直播與錄影']) {
       expect(settingsCapabilitiesSectionSource).toContain(`title: '${title}'`);
     }
     expect(settingsCapabilitiesSectionSource).not.toContain('title="選用功能"');

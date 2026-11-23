@@ -4,7 +4,6 @@ import {
   Download,
   Ellipsis,
   FolderOpen,
-  ListChecks,
   ListX,
   RefreshCw,
 } from '../../icons/index.js';
@@ -102,7 +101,7 @@ function handleMenuSelect(actionId) {
 <template>
   <div class="diagnostics-settings-row">
     <SettingsDocumentItem
-      :icon="ListChecks"
+      variant="nested"
       :title="t('settings.diagnostics.title')"
       :value="
         notice

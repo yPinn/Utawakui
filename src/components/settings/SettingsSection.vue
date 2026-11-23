@@ -64,6 +64,7 @@ const headingId = `settings-section-${useId()}`;
   --settings-port-inline-size: calc(
     5ch + 2 * var(--ui-field-padding-inline) + 2 * var(--ui-border-width)
   );
+  --settings-port-field-inline-size: 18ch;
   /* Content-sized controls; their consumers still clamp to the container. */
   --settings-number-inline-size: calc(
     8ch + 2 * var(--ui-field-padding-inline) + 2 * var(--ui-border-width)
@@ -71,7 +72,6 @@ const headingId = `settings-section-${useId()}`;
   --settings-select-inline-size: calc(10ic + var(--ui-space-6));
   --settings-text-inline-size: 32ch;
   --settings-long-text-inline-size: 48ch;
-  --settings-range-min-inline-size: 16rem;
   --settings-range-max-inline-size: 24rem;
   --settings-copy-inset: calc(
     var(--ui-icon-button-size-md) + var(--ui-space-3)
@@ -109,5 +109,22 @@ const headingId = `settings-section-${useId()}`;
 .settings-section__content
   :deep(.settings-section__disclosure > .ui-disclosure__body) {
   padding: 0;
+}
+.settings-section__content :deep(.settings-section__form) {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-space-3);
+  padding-inline-start: var(--settings-copy-inset);
+  padding-block: var(--ui-space-1) var(--settings-child-padding-block);
+}
+.settings-section__content :deep(.settings-section__form-action) {
+  justify-self: end;
+}
+.settings-section__content :deep(.settings-section__port-field) {
+  --ui-text-field-control-max-inline-size: var(--settings-port-inline-size);
+
+  flex: 0 1 auto;
+  inline-size: var(--settings-port-field-inline-size);
+  max-inline-size: 100%;
 }
 </style>

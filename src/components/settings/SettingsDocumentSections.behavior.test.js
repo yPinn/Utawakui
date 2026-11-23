@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   isFeatureEnabled: vi.fn(() => false),
   openDiagnosticsFolder: vi.fn(),
   openDownloadDir: vi.fn(),
+  openFeedbackReport: vi.fn(),
   prepareDependency: vi.fn(),
   recordError: vi.fn(),
   refreshAppInfo: vi.fn(),
@@ -302,7 +303,7 @@ vi.mock('../../composables/usePersistentDiagnostics.js', async () => {
 });
 
 vi.mock('../../composables/useFeedbackReport.js', () => ({
-  useFeedbackReport: () => ({ openReport: vi.fn() }),
+  useFeedbackReport: () => ({ openReport: mocks.openFeedbackReport }),
 }));
 
 vi.mock('../../composables/useAppAnnouncement.js', () => ({
@@ -403,6 +404,7 @@ import CaptureOutputSettings from './CaptureOutputSettings.vue';
 import SettingsCapabilitiesSection from './SettingsCapabilitiesSection.vue';
 import SettingsLibrarySection from './SettingsLibrarySection.vue';
 import SettingsSupportSection from './SettingsSupportSection.vue';
+import SettingsTestingSection from './SettingsTestingSection.vue';
 import TroubleshootingModal from './TroubleshootingModal.vue';
 
 const { createRenderer, nextTick } = Vue;
@@ -608,17 +610,42 @@ describe('Settings document section behavior', () => {
     supportApp.unmount();
   });
 
-  it('loads diagnostics and the reporting preference only after opening troubleshooting', () => {
+  it('loads diagnostics and the reporting preference only after expanding more support options', () => {
     const getAutoErrorReporting = vi.fn(async () => 'ask');
     window.Utawakui.getAutoErrorReporting = getAutoErrorReporting;
     const closed = mountSetup(TroubleshootingModal, { open: false });
+    closed._instance.setupState.setSupportOpen(true);
     expect(mocks.refreshDiagnostics).not.toHaveBeenCalled();
     expect(getAutoErrorReporting).not.toHaveBeenCalled();
     closed.unmount();
 
     const open = mountSetup(TroubleshootingModal, { open: true });
+    const state = open._instance.setupState;
+    expect(mocks.refreshDiagnostics).not.toHaveBeenCalled();
+    expect(getAutoErrorReporting).not.toHaveBeenCalled();
+
+    state.setSupportOpen(true);
+    state.setSupportOpen(true);
+    expect(state.supportOpen).toBe(true);
     expect(mocks.refreshDiagnostics).toHaveBeenCalledOnce();
     expect(getAutoErrorReporting).toHaveBeenCalledOnce();
+
+    state.onAfterLeave();
+    expect(state.supportOpen).toBe(false);
+    open.unmount();
+  });
+
+  it('opens the feedback form after troubleshooting finishes closing', () => {
+    const onClose = vi.fn();
+    const open = mountSetup(TroubleshootingModal, { open: true, onClose });
+    const state = open._instance.setupState;
+
+    state.closeThen(mocks.openFeedbackReport);
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(mocks.openFeedbackReport).not.toHaveBeenCalled();
+
+    state.onAfterLeave();
+    expect(mocks.openFeedbackReport).toHaveBeenCalledOnce();
     open.unmount();
   });
 
@@ -637,6 +664,26 @@ describe('Settings document section behavior', () => {
     expect(mocks.refreshWindowsPreference).toHaveBeenCalledTimes(2);
   });
 
+  it('opens the separate test section when a notification requests it', async () => {
+    const target = { scrollIntoView: vi.fn(), focus: vi.fn() };
+    const getElementById = vi.fn(() => target);
+    vi.stubGlobal('document', { getElementById });
+    const capabilities = mountSetup(SettingsCapabilitiesSection);
+    const testing = mountSetup(SettingsTestingSection);
+    expect(testing._instance.setupState.open).toBe(false);
+
+    useAppView().openSettings('testing');
+    await nextTick();
+    await nextTick();
+
+    expect(testing._instance.setupState.open).toBe(true);
+    expect(useAppView().settingsSection.value).toBeNull();
+    expect(getElementById).toHaveBeenCalledExactlyOnceWith('settings-testing');
+    expect(target.focus).toHaveBeenCalledWith({ preventScroll: true });
+    testing.unmount();
+    capabilities.unmount();
+  });
+
   it('owns capability lifecycle and reveals one-shot section and feature targets', async () => {
     const sectionTarget = {
       scrollIntoView: vi.fn(),
@@ -646,10 +693,14 @@ describe('Settings document section behavior', () => {
       scrollIntoView: vi.fn(),
       focus: vi.fn(),
     };
+    const obsTarget = { scrollIntoView: vi.fn(), focus: vi.fn() };
     const getElementById = vi.fn((id) => {
       if (id === 'settings-group-output') return sectionTarget;
       if (id === `settings-feature-${FEATURE_IDS.PUBLIC_OUTPUT_FLOW}`) {
         return featureTarget;
+      }
+      if (id === `settings-feature-${FEATURE_IDS.OBS_INTEGRATION}`) {
+        return obsTarget;
       }
       return null;
     });
@@ -659,12 +710,13 @@ describe('Settings document section behavior', () => {
     useFeatureGateAccess().requestFeatureSetup(FEATURE_IDS.PUBLIC_OUTPUT_FLOW);
 
     const app = mountSetup(SettingsCapabilitiesSection);
+    expect(app._instance.setupState.processingToolsOpen).toBe(false);
     await nextTick();
     await nextTick();
 
     expect(mocks.refreshConfirmations).toHaveBeenCalledOnce();
     expect(mocks.refreshDependencies).toHaveBeenCalledOnce();
-    expect(mocks.initializeMusicAnalysis).toHaveBeenCalledOnce();
+    expect(mocks.initializeMusicAnalysis).not.toHaveBeenCalled();
     expect(mocks.refreshSeparationPreference).toHaveBeenCalledOnce();
     expect(mocks.refreshObsSettings).toHaveBeenCalledOnce();
     // Setup alone has no visible document target; the optional hint is deferred.
@@ -678,6 +730,27 @@ describe('Settings document section behavior', () => {
       expect(target.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
       expect(target.focus).toHaveBeenCalledWith({ preventScroll: true });
     }
+
+    getElementById.mockClear();
+    useAppView().openSettings('output-browser');
+    await nextTick();
+    await nextTick();
+    expect(getElementById).toHaveBeenCalledExactlyOnceWith(
+      `settings-feature-${FEATURE_IDS.PUBLIC_OUTPUT_FLOW}`,
+    );
+
+    useAppView().openSettings('obs-connection');
+    await nextTick();
+    await nextTick();
+    expect(obsTarget.focus).toHaveBeenCalledExactlyOnceWith({
+      preventScroll: true,
+    });
+
+    useAppView().openSettings('processing');
+    await nextTick();
+    await nextTick();
+    expect(app._instance.setupState.processingToolsOpen).toBe(true);
+    expect(getElementById).toHaveBeenCalledWith('settings-group-processing');
 
     app.unmount();
     expect(mocks.disposeMusicAnalysis).not.toHaveBeenCalled();

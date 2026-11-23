@@ -24,8 +24,8 @@ const OPTIONS = Object.freeze([
 
 <template>
   <SettingsDocumentItem
+    variant="nested"
     :title="t('settings.autoReport.title')"
-    title-tag="h4"
     :guidance="t('settings.autoReport.guidance')"
   >
     <template #actions>

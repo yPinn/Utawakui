@@ -1,7 +1,11 @@
 {
   "sections": {
     "application": "Application",
-    "support": "Support and maintenance"
+    "support": "Support and maintenance",
+    "testing": "Test features"
+  },
+  "testing": {
+    "open": "Show test tools"
   },
   "reading": "Loading",
   "reload": "Reload",
@@ -39,25 +43,30 @@
   },
   "troubleshooting": {
     "title": "Troubleshooting and reporting",
-    "open": "View",
-    "checksSection": "Environment checks",
-    "reportingSection": "Problem reporting",
-    "noIssue": "No issues to address",
+    "open": "Open troubleshooting",
+    "entryGuidance": "Find help with playback, missing audio in OBS, or OBS connection issues.",
+    "checksSection": "Common issues",
+    "moreSupport": "More support options",
     "audioSection": "Audio capture",
     "obsSection": "OBS connection",
     "unavailable": "Connection status unavailable",
+    "supportPackage": "Support package",
+    "supportPackageGuidance": "Review the summary, then save the file to share with the developer.",
     "export": "Export support package",
+    "audioHelp": "If OBS is silent while local audio plays, check the capture device and OBS audio source. Play a track and watch the meter.",
     "audioDeviceUnavailable": "Capture device unavailable",
-    "audioDeviceGuidance": "Reconnect the device or select another one.",
+    "audioDeviceGuidance": "The device may have been disconnected or disabled. Reconnect it or choose another device.",
     "audioInterrupted": "Capture output interrupted",
     "audioGuidance": "Select a device again, then check the OBS audio meter.",
     "openAudio": "Audio settings",
-    "obs": "Not connected",
+    "obsHelp": "To record session timestamps, open and connect to OBS, then start streaming or recording.",
     "obsWaiting": "Waiting for OBS",
     "obsWaitingGuidance": "Open OBS. If it’s already open, check WebSocket and the port.",
-    "obsGuidance": "Check the connection settings and retry.",
+    "obsAuthGuidance": "Make sure the connection password matches your OBS WebSocket settings, then try again.",
+    "obsGuidance": "Enable WebSocket in OBS and verify the host and port, then try again.",
     "openObs": "Connection settings",
-    "library": "Library files",
+    "library": "Library and playback",
+    "libraryGuidance": "If a track is missing or won't play, scan for missing audio files. The scan only reads your library.",
     "checkLibrary": "Check library",
     "confirmExport": "Export support package?",
     "exportRange": "{count} errors and warnings from {from} to {to}.",
@@ -71,10 +80,6 @@
     "ask": "Ask every time",
     "always": "Send automatically",
     "never": "Don't send"
-  },
-  "feedback": {
-    "title": "Feedback and suggestions",
-    "open": "Write report"
   },
   "appInfo": {
     "restart": "Restart the app to read the version info.",

@@ -7,11 +7,13 @@ The former P1E pause and completed implementation batches are no longer a work q
 
 ## Read, Export And Clear
 
-In Settings → 支援與維護, open 問題排查與回報. The first section shows audio
-capture and OBS status, recovery actions, and the library reconciliation scan.
-The reporting section opens the feedback form and contains the automatic
-reporting preference. Support package export and development-only log controls
-are also inside this dialog.
+In Settings → 支援與維護, open 問題排查與回報. Common issues follows the
+workflow from library playback through audio capture and OBS connection. Each
+entry explains the symptom or current state and links to the relevant action.
+The footer opens the feedback form, which can attach support data to a bug
+report. The collapsed More support options section contains standalone support
+package export, the automatic reporting preference, and development-only error
+log controls.
 Lyrics search guidance appears alongside the search result.
 
 - Export previews the types of data and time range, then opens the main-owned

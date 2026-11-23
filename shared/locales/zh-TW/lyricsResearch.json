@@ -7,14 +7,13 @@
   },
   "settings": {
     "title": "歌詞時間分析（實驗）",
-    "notice": "僅供本機研究試用。時間精度尚待人工驗證；模型權重（HubertFA、Whisper small）及字典之使用與散布授權範圍尚待釐清。",
+    "notice": "僅供本機試用。時間精度尚待人工驗證，模型與字典的使用及散布授權待確認。",
     "tool": "歌詞分析工具",
-    "toolDescription": "估算中、日、英文歌詞分段時間；需使用 Utawakui 提供的 FFmpeg。",
-    "size": "下載約 0.78 GB，安裝約 1.00 GB；建議預留 4 GB 空間。",
+    "toolDescription": "適用中、日、英文歌詞。請在「管理伴奏工具」選用 Utawakui 管理版 FFmpeg。",
+    "size": "下載約 0.78 GB，建議預留 4 GB。",
     "cancelLabel": "取消操作並等待清理",
-    "previewTitle": "片段預覽（進階）",
-    "previewRequirement": "需在「本機音訊處理 → 工具與模型 → 音訊轉換工具（FFmpeg）」選用「Utawakui 管理版本」。",
-    "previewLimit": "每次分析約 30 秒、最多 10 句歌詞，結果僅在此預覽。",
+    "previewTitle": "片段預覽",
+    "previewLimit": "每次約 30 秒、最多 10 句，僅供預覽。",
     "stage": {
       "download": "下載工具中",
       "prepare": "準備中",
@@ -41,18 +40,18 @@
       "refresh": "重新讀取",
       "remove": "移除工具"
     },
-    "disclosure": "實驗功能：歌詞時間分析"
+    "disclosure": "歌詞時間分析"
   },
   "preview": {
     "track": "曲庫歌曲",
     "trackPlaceholder": "選擇已有歌詞的曲目",
     "language": "分析語言",
-    "line": "從哪句開始試算",
+    "line": "起始句",
     "linePlaceholder": "選擇有時間的歌詞句",
-    "source": "歌詞來源：{source}。優先使用你選擇的來源，未選擇時依語言挑選。",
+    "source": "歌詞來源：{source}",
     "generate": "產生預覽",
     "label": "分析結果預覽",
-    "hint": "優先使用原有的逐字時間；分析結果不適用時，仍按整句顯示。此處僅供預覽，不會套用至歌詞或演出畫面。",
+    "hint": "優先沿用原有逐字時間。分析不符時顯示整句。",
     "modeResearch": "分析分段",
     "playLine": "從本句播放",
     "contradiction": "分析與歌詞內容不一致，已改為整句顯示。",
@@ -89,9 +88,8 @@
     }
   },
   "queue": {
-    "title": "伴奏完成後分析歌詞",
-    "guidance": "伴奏完成後自動分析，到歌詞頁查看與套用結果。不會自動下載工具或改寫原歌詞。",
-    "auto": "自動分析",
+    "title": "伴奏完成後自動分析歌詞",
+    "guidance": "原歌詞保留，結果可在歌詞頁套用。工具需手動下載。",
     "autoLabel": "伴奏完成後自動分析歌詞",
     "enableProcessing": "請先啟用音訊處理功能。",
     "loading": "讀取中；尚未確認自動分析設定。",
@@ -115,7 +113,7 @@
     "needsTimed": "請先加入含同步時間的歌詞。",
     "checking": "正在確認分析設定。",
     "needsProcessing": "請先至設定啟用音訊處理功能。",
-    "needsExperiment": "請先在設定啟用實驗性歌詞分析。",
+    "needsExperiment": "請先在「設定 → 測試功能」啟用歌詞時間分析。",
     "needsTools": "請先至設定準備或修復歌詞分析工具。",
     "savingOffset": "正在儲存校時，完成後才能分析。",
     "offsetFailed": "請先重試儲存校時，再分析。",

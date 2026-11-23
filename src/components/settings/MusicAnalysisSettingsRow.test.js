@@ -25,6 +25,7 @@ async function renderRow(props = {}) {
             canRemove: true,
           },
           stageLabel: '分析功能已就緒',
+          preference: { loaded: true, autoAnalyze: true },
           ...props,
         }),
     }),
@@ -32,25 +33,48 @@ async function renderRow(props = {}) {
 }
 
 describe('MusicAnalysisSettingsRow', () => {
-  it('shows component management independently of the automatic analysis preference', async () => {
+  it('shows the preference and tool management in one document row', async () => {
     const html = await renderRow();
 
     expect(html).toContain('BPM 分析');
     expect(html).not.toContain('供本機 歌曲速度與節拍（BPM）使用。');
     expect(html).not.toContain('title="在本機分析 BPM 與節拍，不會上傳歌曲。"');
-    expect(html).not.toContain('自動分析');
-    expect(html).not.toContain('auto-music-analysis');
+    expect(html).toContain('匯入後自動分析');
+    expect(html).toContain('不上傳歌曲');
+    expect(html).toMatch(/id="auto-music-analysis"[^>]*checked/u);
+    expect(
+      html.match(/aria-labelledby="settings-document-item-/gu),
+    ).toHaveLength(1);
     expect(html).toContain('BPM 分析選項');
     expect(html).not.toContain('settings-action-row__value');
     expect(html).not.toContain('產生 BPM 與節拍資料');
     expect(html).not.toContain('約 152 MB');
     expect(html).not.toContain('約 532 MB');
-    expect(html).not.toContain('匯入後自動分析');
     expect(html).not.toContain('Beat This!');
     expect(html).not.toContain('1.1.0');
     expect(html).not.toContain('Python');
     expect(html).not.toContain('runtime');
     expect(html).not.toContain('sidecar');
+  });
+
+  it('keeps tool and preference reload actions distinct', async () => {
+    const html = await renderRow({
+      capabilityReadError: '無法讀取工具',
+      preference: { loaded: false, readError: '無法讀取自動分析設定' },
+    });
+    expect(html).toMatch(/<input[^>]*disabled/u);
+    expect(html).not.toMatch(/id="auto-music-analysis"[^>]*checked/u);
+    expect(html).toContain('重新讀取自動分析設定');
+    expect(html).toContain('重新讀取工具狀態');
+  });
+
+  it('associates a failed save with the preference checkbox', async () => {
+    const html = await renderRow({
+      preference: { loaded: true, autoAnalyze: false, error: '自動分析未儲存' },
+    });
+    expect(html).toContain('自動分析未儲存');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('auto-music-analysis-error');
   });
 
   it('reuses the parent feature-group inset instead of drawing another one', () => {

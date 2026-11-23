@@ -61,7 +61,7 @@ describe('describeOutputRuntimeStatus', () => {
       state: 'source-ready',
       label: '等待連線',
       tone: 'accent',
-      detail: '到「工作台」複製網址，或直接拖進直播軟體。',
+      detail: '從輸出工作臺複製網址，貼到瀏覽器來源。',
     });
 
     expect(

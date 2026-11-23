@@ -1,29 +1,19 @@
 <script setup>
 import { computed, onMounted, shallowRef, watch } from 'vue';
-import { Cable, MonitorUp, Play, Power } from '../../icons/index.js';
+import { Play, Power } from '../../icons/index.js';
 import OUTPUT_RUNTIME_VALUES from '../../../shared/outputRuntimeValues.json';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
-import { useSpoutOutput } from '../../composables/output/useSpoutOutput.js';
 import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
-import { describeSpoutOutputStatus } from '../../utils/spoutOutputStatus.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiHint from '../ui/UiHint.vue';
-import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import { t } from '../../utils/i18n.js';
 
-const FRAME_RATE_ITEMS = Object.freeze([
-  { id: 'reduced', label: '30 FPS' },
-  { id: 'standard', label: '60 FPS' },
-]);
-
 const output = useOutputRuntimeContext();
-const spout = useSpoutOutput();
 const outputState = output.state;
-const spoutState = spout.state;
 
 const draftPort = shallowRef(String(outputState.settings.port));
 const draftDisplayDelayMs = shallowRef(
@@ -55,11 +45,6 @@ const busy = computed(
     outputState.isLoadingSettings ||
     outputState.isSavingSettings,
 );
-const spoutBusy = computed(
-  () =>
-    spoutState.isConfiguring || spoutState.isStarting || spoutState.isStopping,
-);
-
 function isIntegerInRange(value, min, max) {
   if (!/^-?\d+$/.test(String(value).trim())) return false;
   const number = Number(value);
@@ -125,46 +110,12 @@ const serviceStatus = computed(() => {
     };
   return runtimeStatus.value;
 });
-
-const spoutPresentation = computed(() =>
-  describeSpoutOutputStatus(spoutState.status),
-);
-const spoutSupported = computed(() => spoutState.status.supported !== false);
-const spoutSurface = computed(
-  () =>
-    spoutState.status.desired?.surface ?? {
-      senderName: 'Utawakui.Lyrics',
-      width: 1920,
-      height: 1080,
-    },
-);
-const spoutValue = computed(() =>
-  spoutSupported.value
-    ? t('output.spout.surface', {
-        name: spoutSurface.value.senderName,
-        width: spoutSurface.value.width,
-        height: spoutSurface.value.height,
-      })
-    : spoutPresentation.value.detail,
-);
-const spoutSending = computed(
-  () => spoutState.status.observed?.lifecycle === 'sending',
-);
-const spoutActive = computed(() =>
-  ['starting', 'sending', 'stopping'].includes(
-    spoutState.status.observed?.lifecycle,
-  ),
-);
-const spoutFrameRate = computed(
-  () => spoutState.status.desired?.frameRateProfile ?? 'standard',
-);
-const spoutReadError = computed(() => spoutState.errors?.refresh || '');
-const spoutConfigurationError = computed(
-  () => spoutState.errors?.['set-frame-rate-profile'] || '',
-);
-const spoutOperationError = computed(
-  () => spoutState.errors?.start || spoutState.errors?.stop || '',
-);
+const browserSetupGuidance = computed(() => {
+  if (serviceStatus.value.state === 'stopped') return t('output.guidance');
+  if (serviceStatus.value.state === 'source-ready')
+    return serviceStatus.value.detail;
+  return '';
+});
 
 function commitSettings(overrides) {
   if (busy.value || settingsReadError.value) return;
@@ -200,7 +151,6 @@ function chooseSuggestedPort(port) {
 
 onMounted(() => {
   output.refreshStatus?.();
-  spout.refresh();
 });
 </script>
 
@@ -208,23 +158,14 @@ onMounted(() => {
   <div class="output-runtime-settings-block">
     <div class="output-runtime-settings-block__service">
       <SettingsDocumentItem
-        :icon="Cable"
         :title="t('output.title')"
-        :value="serviceStatus.detail"
+        :value="browserSetupGuidance ? '' : serviceStatus.detail"
         :status="serviceStatus.label"
         :status-tone="serviceStatus.tone"
-        :guidance="t('output.guidance')"
+        :guidance="browserSetupGuidance"
         variant="nested"
       >
         <template #actions>
-          <UiCheckbox
-            id="output-runtime-auto-start"
-            :label="t('output.autoStart')"
-            :aria-label="t('output.autoStartLabel')"
-            :model-value="outputState.settings.autoStart"
-            :disabled="busy || Boolean(settingsReadError)"
-            @update:model-value="commitSettings({ autoStart: $event })"
-          />
           <UiButton
             v-if="!outputState.status.running"
             :icon="Play"
@@ -274,12 +215,21 @@ onMounted(() => {
         class="settings-section__disclosure"
         :label="t('output.portSettings')"
       >
-        <div class="output-runtime-settings-block__form">
+        <div class="settings-section__form">
+          <UiCheckbox
+            id="output-runtime-auto-start"
+            class="output-runtime-settings-block__auto-start"
+            :label="t('output.autoStartLabel')"
+            :model-value="outputState.settings.autoStart"
+            :disabled="busy || Boolean(settingsReadError)"
+            @update:model-value="commitSettings({ autoStart: $event })"
+          />
           <UiHint v-if="settingsReadError" tone="danger" role="alert">{{
             settingsReadError
           }}</UiHint>
           <UiButton
             v-if="settingsReadError"
+            class="settings-section__form-action"
             variant="ghost"
             :loading="outputState.isLoadingSettings"
             @click="output.refreshSettings()"
@@ -290,7 +240,7 @@ onMounted(() => {
             <UiTextField
               id="output-runtime-port"
               v-model="draftPort"
-              class="output-runtime-settings-block__number"
+              class="settings-section__port-field"
               :label="t('output.port')"
               inputmode="numeric"
               :error="
@@ -349,102 +299,21 @@ onMounted(() => {
               {{ port }}
             </UiButton>
           </div>
-          <div class="output-runtime-settings-block__submit">
-            <UiButton
-              variant="accent"
-              :disabled="
-                busy ||
-                Boolean(settingsReadError) ||
-                !isPortValid ||
-                !isDisplayDelayValid
-              "
-              @click="commitSettings()"
-              >{{ t('output.save') }}</UiButton
-            >
-          </div>
+          <UiButton
+            class="settings-section__form-action"
+            variant="accent"
+            :disabled="
+              busy ||
+              Boolean(settingsReadError) ||
+              !isPortValid ||
+              !isDisplayDelayValid
+            "
+            @click="commitSettings()"
+            >{{ t('output.save') }}</UiButton
+          >
         </div>
       </UiDisclosure>
     </div>
-
-    <SettingsDocumentItem
-      :icon="MonitorUp"
-      :title="t('output.spout.title')"
-      :value="spoutReadError ? t('output.spout.unconfirmed') : spoutValue"
-      :status="
-        spoutReadError ? t('output.unreadable') : spoutPresentation.label
-      "
-      :status-tone="spoutReadError ? 'warning' : spoutPresentation.tone"
-      :guidance="t('output.spout.guidance')"
-      variant="nested"
-    >
-      <template #actions>
-        <UiSegmentedControl
-          :items="FRAME_RATE_ITEMS"
-          :model-value="spoutFrameRate"
-          :aria-label="t('output.spout.fps')"
-          :disabled="
-            spoutBusy ||
-            spoutActive ||
-            !spoutSupported ||
-            Boolean(spoutReadError)
-          "
-          @update:model-value="spout.setFrameRateProfile($event)"
-        />
-        <UiButton
-          v-if="!spoutSending"
-          :icon="Play"
-          variant="accent"
-          :disabled="spoutBusy || !spoutSupported || Boolean(spoutReadError)"
-          @click="spout.start()"
-        >
-          {{ t('output.start') }}
-        </UiButton>
-        <UiButton
-          v-else
-          :icon="Power"
-          variant="secondary"
-          :disabled="spoutBusy"
-          @click="spout.stop()"
-        >
-          {{ t('output.stop') }}
-        </UiButton>
-      </template>
-      <template
-        v-if="
-          spoutConfigurationError ||
-          spoutReadError ||
-          spoutOperationError ||
-          spoutPresentation.state === 'error'
-        "
-        #feedback
-      >
-        <UiHint v-if="spoutConfigurationError" tone="danger" role="alert">{{
-          spoutConfigurationError
-        }}</UiHint>
-        <UiHint v-if="spoutReadError" tone="danger" role="alert">{{
-          spoutReadError
-        }}</UiHint>
-        <UiButton
-          v-if="spoutReadError"
-          variant="ghost"
-          :loading="spoutState.isRefreshing"
-          @click="spout.refresh()"
-          >{{ t('output.spout.reload') }}</UiButton
-        >
-        <UiHint
-          v-if="spoutOperationError && spoutPresentation.state !== 'error'"
-          tone="danger"
-          role="alert"
-          >{{ spoutOperationError }}</UiHint
-        >
-        <UiHint
-          v-if="spoutPresentation.state === 'error'"
-          tone="warning"
-          role="alert"
-          >{{ spoutPresentation.detail }}</UiHint
-        >
-      </template>
-    </SettingsDocumentItem>
   </div>
 </template>
 
@@ -459,27 +328,16 @@ onMounted(() => {
   display: grid;
 }
 
-.output-runtime-settings-block__form {
-  display: grid;
-  gap: var(--ui-space-3);
-  padding-inline-start: var(--settings-copy-inset, 0);
+.output-runtime-settings-block__auto-start {
+  justify-self: start;
+  max-inline-size: 100%;
 }
 
 .output-runtime-settings-block__fields {
   display: flex;
   flex-wrap: wrap;
   align-items: start;
-  gap: var(--ui-space-3);
-}
-.output-runtime-settings-block__submit {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* Five port digits; the delay field keeps room for its hint. */
-.output-runtime-settings-block__number {
-  flex: 0 0 var(--settings-port-inline-size);
-  max-inline-size: 100%;
+  gap: var(--ui-space-2);
 }
 
 .output-runtime-settings-block__delay {

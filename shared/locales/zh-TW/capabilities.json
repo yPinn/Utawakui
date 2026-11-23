@@ -2,7 +2,7 @@
   "groups": {
     "sources": "外部來源與歌詞",
     "processing": "本機音訊處理",
-    "output": "公開輸出與 OBS",
+    "output": "直播與錄影",
     "remote": "手機"
   },
   "unreadableTitle": "功能狀態無法讀取",
@@ -25,14 +25,14 @@
     "removeComponent": "移除工具"
   },
   "bpm": {
-    "title": "匯入後自動分析",
-    "guidance": "在本機分析，不上傳歌曲。",
-    "auto": "自動分析",
+    "guidance": "在本機分析節拍，不上傳歌曲。",
+    "auto": "匯入後自動分析",
     "autoLabel": "匯入曲目後自動分析 BPM 與節拍",
     "readFailed": "目前無法讀取自動分析設定，請重新讀取。",
     "saveFailed": "目前無法儲存自動分析設定，已恢復原設定。",
     "componentTitle": "BPM 分析工具",
-    "reloadStatus": "重新讀取 BPM 狀態",
+    "reloadStatus": "重新讀取工具狀態",
+    "reloadPreference": "重新讀取自動分析設定",
     "name": "BPM 分析",
     "unreadable": "無法讀取",
     "preparing": "準備中",
@@ -55,16 +55,13 @@
   },
   "autoSeparation": {
     "title": "匯入後自動產生伴奏",
-    "guidance": "需先準備好伴奏工具。OBS 直播或錄影時，等結束後再處理。",
+    "guidance": "請先準備伴奏工具。OBS 直播或錄影結束後才會處理。",
     "toggle": "自動產生伴奏",
     "toggleLabel": "匯入曲目後自動產生伴奏",
     "readFailed": "目前無法讀取自動產生伴奏設定，請重新讀取。",
     "saveFailed": "目前無法儲存自動產生伴奏設定，已恢復原設定。"
   },
-  "toolGroups": {
-    "separation": "人聲分離",
-    "bpm": "BPM 分析"
-  },
+  "manageProcessingTools": "管理伴奏工具",
   "youtubeLogin": {
     "title": "YouTube 登入",
     "guidance": "有些影片要登入才能下載，下載失敗時才會使用。",

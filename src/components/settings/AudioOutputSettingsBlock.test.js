@@ -20,9 +20,10 @@ async function renderBlock(props = {}) {
 describe('AudioOutputSettingsBlock', () => {
   it('exposes a separately labelled capture master at 50% with its canonical reset', async () => {
     const html = await renderBlock();
-    expect(html).toContain('直播擷取總音量');
-    expect(html).toContain('調整直播收到的演唱與場間音樂音量，不影響監聽。');
+    expect(html).toContain('擷取音量');
+    expect(html).toContain('監聽音量獨立設定');
     expect(html).toContain('id="capture-master-volume"');
+    expect(html).toContain('ui-field--label-end');
     expect(html).toContain('aria-valuetext="50%"');
     expect(html).toMatch(
       /<output[^>]+for="capture-master-volume"[^>]*>50%<\/output>/u,
@@ -37,20 +38,15 @@ describe('AudioOutputSettingsBlock', () => {
     const html = await renderBlock();
 
     expect(html).not.toContain('>音訊輸出<');
-    expect(html).toContain('擷取輸出裝置');
-    expect(html).toContain('與本機聆聽分開設定');
-    expect(html).not.toContain('將伴奏送到直播或錄影軟體');
-    expect(html).not.toContain('OBS 擷取裝置');
-    expect(html).not.toContain('OBS 用的虛擬音效裝置');
+    expect(html).toContain('音訊擷取');
+    expect(html).toContain('供直播或錄影擷取');
     expect(html).toContain('未啟用');
-    expect(html).toContain('未選擇');
-    expect(html).toMatch(
-      /class="ui-visually-hidden"[^>]*>選擇擷取輸出裝置<\/span>/u,
-    );
-    expect(html).not.toContain('aria-label="選擇擷取輸出裝置"');
-    expect(html).not.toContain('aria-describedby="ui-tooltip-');
-    expect(html).not.toContain('title="選擇擷取輸出裝置"');
-    expect(html).not.toContain('僅透過');
+    expect(html).not.toContain('未選擇');
+    const chooseButton = html
+      .match(/<button\b[^>]*>[\s\S]*?<\/button>/gu)
+      ?.find((button) => button.includes('選擇裝置'));
+    expect(chooseButton).toContain('aria-haspopup="dialog"');
+    expect(chooseButton).toContain('ui-btn--secondary');
   });
 
   it('reuses the shared notice component without exposing technical details', async () => {

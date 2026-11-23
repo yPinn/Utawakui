@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue';
-import { Cpu, Download, Trash2, Wrench } from '../../icons/index.js';
+import { Download, Trash2, Wrench } from '../../icons/index.js';
 import UiHint from '../ui/UiHint.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import { t } from '../../utils/i18n.js';
@@ -14,9 +15,17 @@ const props = defineProps({
   progressPercent: { type: Number, default: null },
   capabilityError: { type: String, default: '' },
   capabilityReadError: { type: String, default: '' },
+  preference: { type: Object, required: true },
 });
 
-const emit = defineEmits(['prepare', 'repair', 'remove', 'refreshCapability']);
+const emit = defineEmits([
+  'prepare',
+  'repair',
+  'remove',
+  'refreshCapability',
+  'refreshPreference',
+  'setAutoAnalyze',
+]);
 
 const installed = computed(() => props.capability?.installed === true);
 const damaged = computed(() => props.capability?.status === 'damaged');
@@ -79,12 +88,6 @@ const actionItem = computed(() => {
     advancedActions,
   };
 });
-const hasManagementActions = computed(
-  () =>
-    Boolean(actionItem.value.actionIcon) ||
-    actionItem.value.advancedActions.length > 0,
-);
-
 function handlePrimaryAction() {
   emit(damaged.value ? 'repair' : 'prepare');
 }
@@ -95,45 +98,68 @@ function handleAdvancedAction({ action }) {
 </script>
 
 <template>
-  <div class="music-analysis-settings-row">
-    <SettingsDocumentItem
-      :icon="Cpu"
-      :title="t('capabilities.bpm.componentTitle')"
-      :status="status"
-      :status-tone="statusTone"
-      variant="nested"
+  <SettingsDocumentItem
+    :title="t('capabilities.bpm.name')"
+    :guidance="t('capabilities.bpm.guidance')"
+    :status="status"
+    :status-tone="statusTone"
+    variant="nested"
+    title-tag="h3"
+    status-live
+  >
+    <template #actions>
+      <UiCheckbox
+        id="auto-music-analysis"
+        :label="t('capabilities.bpm.auto')"
+        :aria-label="t('capabilities.bpm.autoLabel')"
+        :model-value="preference.loaded && preference.autoAnalyze"
+        :disabled="preference.busy || preference.reading || !preference.loaded"
+        :error="preference.error"
+        @update:model-value="emit('setAutoAnalyze', $event)"
+      />
+      <SettingsDependencyActions
+        :item="actionItem"
+        @primary-action="handlePrimaryAction"
+        @advanced-action="handleAdvancedAction"
+      />
+    </template>
+    <template
+      v-if="
+        capabilityError ||
+        capabilityReadError ||
+        preference.readError ||
+        !preference.loaded
+      "
+      #feedback
     >
-      <template #actions>
-        <SettingsDependencyActions
-          v-if="hasManagementActions"
-          :item="actionItem"
-          @primary-action="handlePrimaryAction"
-          @advanced-action="handleAdvancedAction"
-        />
-      </template>
-      <template v-if="capabilityError || capabilityReadError" #feedback>
-        <UiHint v-if="capabilityError" tone="danger" role="alert">{{
-          capabilityError
-        }}</UiHint>
-        <UiHint v-if="capabilityReadError" tone="danger" role="alert">{{
-          capabilityReadError
-        }}</UiHint>
-        <UiButton
-          v-if="capabilityReadError"
-          variant="ghost"
-          :disabled="capabilityBusy"
-          @click="emit('refreshCapability')"
-          >{{ t('capabilities.bpm.reloadStatus') }}</UiButton
-        >
-      </template>
-    </SettingsDocumentItem>
-  </div>
+      <UiHint v-if="capabilityError" tone="danger" role="alert">{{
+        capabilityError
+      }}</UiHint>
+      <UiHint v-if="capabilityReadError" tone="danger" role="alert">{{
+        capabilityReadError
+      }}</UiHint>
+      <UiButton
+        v-if="capabilityReadError"
+        variant="ghost"
+        :disabled="capabilityBusy"
+        @click="emit('refreshCapability')"
+        >{{ t('capabilities.bpm.reloadStatus') }}</UiButton
+      >
+      <UiHint
+        v-if="preference.readError || !preference.loaded"
+        :tone="preference.readError ? 'danger' : 'muted'"
+        role="status"
+      >
+        {{ preference.readError || t('capabilities.unconfirmed') }}
+      </UiHint>
+      <UiButton
+        v-if="preference.readError"
+        variant="ghost"
+        :loading="preference.reading"
+        @click="emit('refreshPreference')"
+      >
+        {{ t('capabilities.bpm.reloadPreference') }}
+      </UiButton>
+    </template>
+  </SettingsDocumentItem>
 </template>
-
-<style scoped>
-.music-analysis-settings-row {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-</style>

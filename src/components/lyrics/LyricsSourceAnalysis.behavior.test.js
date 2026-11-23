@@ -144,7 +144,7 @@ describe('selected source analysis in available lyrics', () => {
     setup();
     await flush();
     expect(textContent(mounted.root)).toContain(
-      '請先在設定啟用實驗性歌詞分析。',
+      '請先在「設定 → 測試功能」啟用歌詞時間分析。',
     );
     expect(
       findAll(mounted.root, (node) => node.type === 'select'),

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Download, Trash2, Wrench } from '../../icons/index.js';
+import { Check, Download, Trash2, Wrench } from '../../icons/index.js';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import UiButton from '../ui/UiButton.vue';
@@ -36,11 +36,20 @@ const status = computed(
       removing: t('lyricsResearch.acoustic.status.removing'),
     })[props.capability?.status] ?? t('lyricsResearch.acoustic.status.unknown'),
 );
+const canVerify = computed(() => props.capability?.canVerify && !busy.value);
 const actions = computed(() => ({
   id: 'lyrics-acoustic',
   title: t('lyricsResearch.acoustic.title'),
-  actionIcon: props.capability?.canPrepare ? Download : null,
-  actionLabel: t('lyricsResearch.acoustic.prepare'),
+  actionIcon: canVerify.value
+    ? Check
+    : props.capability?.canPrepare
+      ? Download
+      : null,
+  actionLabel: t(
+    canVerify.value
+      ? 'lyricsResearch.acoustic.verify'
+      : 'lyricsResearch.acoustic.prepare',
+  ),
   actionDisabled: busy.value,
   advancedActions: [
     ...(props.capability?.canRepair
@@ -64,6 +73,11 @@ const actions = computed(() => ({
       : []),
   ].map((item) => ({ ...item, disabled: busy.value })),
 }));
+function primary() {
+  if (busy.value) return;
+  if (canVerify.value) emit('verify');
+  else if (props.capability?.canPrepare) emit('prepare');
+}
 function advanced({ action }) {
   if (action === 'repair' || action === 'remove') emit(action);
 }
@@ -75,15 +89,9 @@ function advanced({ action }) {
     :status="busy ? t('lyricsResearch.acoustic.busy') : status"
     :status-tone="capability?.status === 'ready' ? 'success' : 'muted'"
     variant="nested"
+    title-tag="h3"
   >
     <template #actions>
-      <UiButton
-        v-if="capability?.canVerify && !busy"
-        variant="accent"
-        :disabled="busy"
-        @click="emit('verify')"
-        >{{ t('lyricsResearch.acoustic.verify') }}</UiButton
-      >
       <UiButton
         v-if="
           busy && operation !== 'remove' && capability?.status !== 'removing'
@@ -93,9 +101,8 @@ function advanced({ action }) {
         >{{ t('lyricsResearch.acoustic.cancel') }}</UiButton
       >
       <SettingsDependencyActions
-        v-if="actions.actionIcon || actions.advancedActions.length"
         :item="actions"
-        @primary-action="emit('prepare')"
+        @primary-action="primary"
         @advanced-action="advanced"
       />
     </template>

@@ -42,6 +42,7 @@ const status = computed(() => {
 });
 
 async function run(mode) {
+  if (operation.value) return;
   operation.value = mode;
   try {
     const result =
@@ -65,29 +66,34 @@ async function run(mode) {
     :status="status"
     status-live
     variant="nested"
+    title-tag="h3"
   >
     <template #actions>
       <UiButton
-        size="sm"
-        :disabled="Boolean(operation)"
+        v-if="operation !== 'backfill'"
+        variant="secondary"
+        :loading="operation === 'inspect'"
         @click="run('inspect')"
       >
         {{ t('guidePitchSettings.check') }}
       </UiButton>
       <UiButton
-        v-if="operation === 'backfill'"
-        size="sm"
-        @click="access.stopGuidePitchBackfill()"
+        v-if="operation === 'backfill' || canBackfill"
+        :variant="operation === 'backfill' ? 'secondary' : 'accent'"
+        :disabled="operation === 'inspect'"
+        @click="
+          operation === 'backfill'
+            ? access.stopGuidePitchBackfill()
+            : run('backfill')
+        "
       >
-        {{ t('guidePitchSettings.stop') }}
-      </UiButton>
-      <UiButton
-        v-else-if="canBackfill"
-        size="sm"
-        :disabled="Boolean(operation)"
-        @click="run('backfill')"
-      >
-        {{ t('guidePitchSettings.fill') }}
+        {{
+          t(
+            operation === 'backfill'
+              ? 'guidePitchSettings.stop'
+              : 'guidePitchSettings.fill',
+          )
+        }}
       </UiButton>
     </template>
   </SettingsDocumentItem>

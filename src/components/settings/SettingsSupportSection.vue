@@ -43,6 +43,21 @@ onMounted(() => {
     :title="t('settings.sections.support')"
     tabindex="-1"
   >
+    <SettingsDocumentItem
+      :icon="ListChecks"
+      :title="t('settings.troubleshooting.title')"
+      :guidance="t('settings.troubleshooting.entryGuidance')"
+    >
+      <template #actions>
+        <UiButton
+          variant="secondary"
+          aria-haspopup="dialog"
+          @click="troubleshootingOpen = true"
+        >
+          {{ t('settings.troubleshooting.open') }}
+        </UiButton>
+      </template>
+    </SettingsDocumentItem>
     <AppUpdateSettingsRow
       :current-version="
         appInfoState.currentVersion || appUpdateState.currentVersion
@@ -91,20 +106,6 @@ onMounted(() => {
           :label="t('settings.support.openDiscord')"
           @click="openCommunityDiscord"
         />
-      </template>
-    </SettingsDocumentItem>
-    <SettingsDocumentItem
-      :icon="ListChecks"
-      :title="t('settings.troubleshooting.title')"
-    >
-      <template #actions>
-        <UiButton
-          variant="secondary"
-          aria-haspopup="dialog"
-          @click="troubleshootingOpen = true"
-        >
-          {{ t('settings.troubleshooting.open') }}
-        </UiButton>
       </template>
     </SettingsDocumentItem>
     <TroubleshootingModal

@@ -25,7 +25,8 @@ describe('optional lyrics environment settings', () => {
       canRemove: true,
     });
     expect(html).toContain('待檢查');
-    expect(html).toMatch(/>檢查(?:<!--[^>]*-->|<\/?span[^>]*>)*<\/button>/u);
+    expect(html).toMatch(/<button[^>]*ui-icon-btn--accent[^>]*>/u);
+    expect(html).toMatch(/ui-visually-hidden[^>]*>檢查<\/span>/u);
     expect(html).toContain('歌詞時間估計選項');
     const busy = await render({
       status: 'preparing',

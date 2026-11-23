@@ -28,12 +28,15 @@ describe('platform terminology', () => {
     expect(sessionExportModal).not.toContain('title="匯出 YouTube 章節"');
   });
 
-  it('keeps Browser Source and virtual audio copy destination-neutral', () => {
+  it('keeps general output destination-neutral and shows OBS as a concrete cable setup example', () => {
     expect(outputWorkspace).toContain('aria-label="輸出畫面"');
     expect(outputWorkspace).not.toContain('aria-label="OBS');
     expect(outputRuntime).toContain('再啟動 Browser Source 輸出');
     expect(outputRuntime).not.toContain('建立 OBS Browser Source');
-    expect(captureDeviceModal).toContain('選擇讓直播或錄影軟體擷取的裝置');
+    expect(captureDeviceModal).toContain('選 CABLE Input');
+    expect(captureDeviceModal).toContain(
+      '於 OBS 新增「音訊輸入擷取」並選 CABLE Output',
+    );
     expect(captureDeviceModal).toContain('如何選擇擷取裝置');
     expect(captureDeviceModal).toContain(
       '找不到可用裝置。請先安裝虛擬音效裝置。',

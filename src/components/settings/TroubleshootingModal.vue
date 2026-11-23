@@ -1,5 +1,5 @@
 <script setup>
-import { computed, useId, watch } from 'vue';
+import { computed, shallowRef, useId } from 'vue';
 import { useAppConfirmation } from '../../composables/useAppConfirmation.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
@@ -10,10 +10,10 @@ import { useObsIntegration } from '../../composables/useObsIntegration.js';
 import { usePersistentDiagnostics } from '../../composables/usePersistentDiagnostics.js';
 import { t } from '../../utils/i18n.js';
 import UiButton from '../ui/UiButton.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiModal from '../ui/UiModal.vue';
 import AutoErrorReportingSettingsRow from './AutoErrorReportingSettingsRow.vue';
 import DiagnosticsSettingsRow from './DiagnosticsSettingsRow.vue';
-import FeedbackReportSettingsRow from './FeedbackReportSettingsRow.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 
 const props = defineProps({ open: { type: Boolean, default: false } });
@@ -27,54 +27,64 @@ const diagnostics = usePersistentDiagnostics();
 const autoErrorReporting = useAutoErrorReportingSetting();
 const { openReport } = useFeedbackReport();
 const checksHeading = useId();
-const reportingHeading = useId();
+const supportOpen = shallowRef(false);
 const internalTools = import.meta.env.DEV;
-const captureDeviceUnavailable = computed(
-  () => captureErrorNotice?.value?.code === 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE',
-);
-const captureInterrupted = computed(
-  () => captureErrorNotice?.value?.code === 'AUDIO_OUTPUT_PROCESSING_FAILED',
-);
-const captureNeedsAttention = computed(
-  () => captureDeviceUnavailable.value || captureInterrupted.value,
-);
-const captureStatus = computed(() => {
-  if (captureDeviceUnavailable.value)
-    return t('settings.troubleshooting.audioDeviceUnavailable');
-  if (captureInterrupted.value)
-    return t('settings.troubleshooting.audioInterrupted');
-  return t('settings.troubleshooting.noIssue');
+const capture = computed(() => {
+  const notice = captureErrorNotice.value;
+  switch (notice?.code) {
+    case 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE':
+      return {
+        status: t('settings.troubleshooting.audioDeviceUnavailable'),
+        guidance: t('settings.troubleshooting.audioDeviceGuidance'),
+      };
+    case 'AUDIO_OUTPUT_PROCESSING_FAILED':
+      return {
+        status: t('settings.troubleshooting.audioInterrupted'),
+        guidance: t('settings.troubleshooting.audioGuidance'),
+      };
+    default:
+      return {
+        status: notice?.title,
+        guidance: notice?.message || t('settings.troubleshooting.audioHelp'),
+      };
+  }
 });
-const obsUnavailable = computed(
-  () => obs.state.desired.enabled && obs.state.observed.lifecycle === 'error',
+const obsNeedsAttention = computed(
+  () =>
+    obs.state.desired.enabled &&
+    ['error', 'degraded'].includes(obs.state.observed.lifecycle),
 );
 const obsWaiting = computed(
   () =>
-    obsUnavailable.value && obs.state.error?.code === 'OBS_CONNECTION_REFUSED',
+    obsNeedsAttention.value &&
+    obs.state.error?.code === 'OBS_CONNECTION_REFUSED',
 );
 const obsStatus = computed(() => {
   if (obs.state.statusReadError)
     return t('settings.troubleshooting.unavailable');
   if (!obs.state.statusLoaded) return t('settings.reading');
   if (obsWaiting.value) return t('settings.troubleshooting.obsWaiting');
-  if (obsUnavailable.value) return t('settings.troubleshooting.obs');
   return t(`obs.lifecycle.${obs.state.observed.lifecycle}`);
 });
 const obsGuidance = computed(() => {
-  if (!obsUnavailable.value || obs.state.statusReadError) return '';
+  if (obs.state.statusReadError) return obs.state.statusReadError;
+  if (!obs.state.statusLoaded || !obsNeedsAttention.value) {
+    return t('settings.troubleshooting.obsHelp');
+  }
   if (obsWaiting.value) return t('settings.troubleshooting.obsWaitingGuidance');
+  if (obs.state.error?.code === 'OBS_AUTH_FAILED') {
+    return t('settings.troubleshooting.obsAuthGuidance');
+  }
   return obs.state.error?.message || t('settings.troubleshooting.obsGuidance');
 });
 
-watch(
-  () => props.open,
-  (open) => {
-    if (!open) return;
-    void autoErrorReporting.refreshPreference();
-    if (internalTools) void diagnostics.refresh();
-  },
-  { immediate: true },
-);
+function setSupportOpen(open) {
+  if (!props.open || open === supportOpen.value) return;
+  supportOpen.value = open;
+  if (!open) return;
+  void autoErrorReporting.refreshPreference();
+  if (internalTools) void diagnostics.refresh();
+}
 
 let afterClose;
 function closeThen(action) {
@@ -83,6 +93,7 @@ function closeThen(action) {
 }
 
 function onAfterLeave() {
+  supportOpen.value = false;
   const action = afterClose;
   afterClose = undefined;
   action?.();
@@ -119,18 +130,26 @@ async function clearDiagnostics() {
         </h3>
         <SettingsDocumentItem
           variant="nested"
-          title-tag="h4"
-          :title="t('settings.troubleshooting.audioSection')"
-          :value="captureStatus"
-          :guidance="
-            captureDeviceUnavailable
-              ? t('settings.troubleshooting.audioDeviceGuidance')
-              : captureInterrupted
-                ? t('settings.troubleshooting.audioGuidance')
-                : ''
-          "
+          :title="t('settings.troubleshooting.library')"
+          :guidance="t('settings.troubleshooting.libraryGuidance')"
         >
-          <template v-if="captureNeedsAttention" #actions>
+          <template #actions>
+            <UiButton
+              variant="secondary"
+              :disabled="reconciliation.state.busy"
+              @click="closeThen(reconciliation.open)"
+            >
+              {{ t('settings.troubleshooting.checkLibrary') }}
+            </UiButton>
+          </template>
+        </SettingsDocumentItem>
+        <SettingsDocumentItem
+          variant="nested"
+          :title="t('settings.troubleshooting.audioSection')"
+          :value="capture.status"
+          :guidance="capture.guidance"
+        >
+          <template #actions>
             <UiButton
               variant="secondary"
               @click="closeThen(() => openSettings('capture-output'))"
@@ -141,12 +160,11 @@ async function clearDiagnostics() {
         </SettingsDocumentItem>
         <SettingsDocumentItem
           variant="nested"
-          title-tag="h4"
           :title="t('settings.troubleshooting.obsSection')"
           :value="obsStatus"
           :guidance="obsGuidance"
         >
-          <template v-if="obsUnavailable || obs.state.statusReadError" #actions>
+          <template #actions>
             <UiButton
               v-if="obs.state.statusReadError"
               variant="secondary"
@@ -163,62 +181,61 @@ async function clearDiagnostics() {
             </UiButton>
           </template>
         </SettingsDocumentItem>
-        <SettingsDocumentItem
-          variant="nested"
-          title-tag="h4"
-          :title="t('settings.troubleshooting.library')"
-        >
-          <template #actions>
-            <UiButton
-              variant="secondary"
-              :disabled="reconciliation.state.busy"
-              @click="closeThen(reconciliation.open)"
-            >
-              {{ t('settings.troubleshooting.checkLibrary') }}
-            </UiButton>
-          </template>
-        </SettingsDocumentItem>
       </section>
-      <section
-        class="troubleshooting-modal__group"
-        :aria-labelledby="reportingHeading"
+      <UiDisclosure
+        class="troubleshooting-modal__more"
+        :label="t('settings.troubleshooting.moreSupport')"
+        :open="supportOpen"
+        @update:open="setSupportOpen"
       >
-        <h3 :id="reportingHeading" class="troubleshooting-modal__heading">
-          {{ t('settings.troubleshooting.reportingSection') }}
-        </h3>
-        <FeedbackReportSettingsRow @open="closeThen(openReport)" />
-        <AutoErrorReportingSettingsRow
-          :reporting="autoErrorReporting.reporting.value"
-          :busy="autoErrorReporting.preferenceBusy.value"
-          :reading="autoErrorReporting.preferenceReading.value"
-          :loaded="autoErrorReporting.preferenceLoaded.value"
-          :error="autoErrorReporting.preferenceSaveError.value"
-          :read-error="autoErrorReporting.preferenceReadError.value"
-          @refresh-preference="autoErrorReporting.refreshPreference"
-          @set-reporting="autoErrorReporting.setReporting"
-        />
-      </section>
-      <DiagnosticsSettingsRow
-        v-if="internalTools"
-        :show-export="false"
-        :record-count="diagnostics.state.recordCount"
-        :is-loading="diagnostics.state.isLoading"
-        :notice="diagnostics.state.notice"
-        @refresh="diagnostics.refresh"
-        @open-folder="diagnostics.openFolder"
-        @clear="clearDiagnostics"
-        @notice-action="diagnostics.refresh"
-      />
+        <div v-if="supportOpen" class="troubleshooting-modal__support">
+          <SettingsDocumentItem
+            variant="nested"
+            :title="t('settings.troubleshooting.supportPackage')"
+            :guidance="t('settings.troubleshooting.supportPackageGuidance')"
+          >
+            <template #actions>
+              <UiButton
+                variant="secondary"
+                :loading="diagnostics.state.isLoading"
+                @click="diagnostics.exportBundle"
+              >
+                {{ t('settings.troubleshooting.export') }}
+              </UiButton>
+            </template>
+          </SettingsDocumentItem>
+          <AutoErrorReportingSettingsRow
+            :reporting="autoErrorReporting.reporting.value"
+            :busy="autoErrorReporting.preferenceBusy.value"
+            :reading="autoErrorReporting.preferenceReading.value"
+            :loaded="autoErrorReporting.preferenceLoaded.value"
+            :error="autoErrorReporting.preferenceSaveError.value"
+            :read-error="autoErrorReporting.preferenceReadError.value"
+            @refresh-preference="autoErrorReporting.refreshPreference"
+            @set-reporting="autoErrorReporting.setReporting"
+          />
+          <DiagnosticsSettingsRow
+            v-if="internalTools"
+            :show-export="false"
+            :record-count="diagnostics.state.recordCount"
+            :is-loading="diagnostics.state.isLoading"
+            :notice="diagnostics.state.notice"
+            @refresh="diagnostics.refresh"
+            @open-folder="diagnostics.openFolder"
+            @clear="clearDiagnostics"
+            @notice-action="diagnostics.refresh"
+          />
+        </div>
+      </UiDisclosure>
     </div>
     <template #footer>
       <UiButton
-        variant="secondary"
-        :loading="diagnostics.state.isLoading"
-        @click="diagnostics.exportBundle"
+        variant="accent"
+        aria-haspopup="dialog"
+        @click="closeThen(openReport)"
       >
-        {{ t('settings.troubleshooting.export') }}
+        {{ t('feedback.title') }}
       </UiButton>
-      <UiButton @click="emit('close')">{{ t('common.close') }}</UiButton>
     </template>
   </UiModal>
 </template>
@@ -226,17 +243,25 @@ async function clearDiagnostics() {
 <style scoped>
 .troubleshooting-modal {
   --settings-copy-inset: 0px;
+  container: settings-section / inline-size;
   display: grid;
   gap: var(--ui-space-4);
 }
 
-.troubleshooting-modal__group > * + * + * {
+.troubleshooting-modal__group > * + * + *,
+.troubleshooting-modal__support > * + * {
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .troubleshooting-modal__heading {
   margin: 0;
   font-size: var(--ui-type-subtitle-size);
+  font-weight: var(--ui-type-subtitle-weight);
   line-height: var(--ui-type-subtitle-line-height);
+}
+
+.troubleshooting-modal__more :deep(.ui-disclosure__body) {
+  padding-inline: 0;
+  padding-block-start: 0;
 }
 </style>

@@ -90,6 +90,33 @@ describe('settings document presentation', () => {
     );
   });
 
+  it('uses the section inset and separate control width for both output forms', () => {
+    const sectionSource = settingsComponentSources.find(
+      ({ name }) => name === 'SettingsSection.vue',
+    ).source;
+    expect(sectionSource).toContain(
+      'padding-inline-start: var(--settings-copy-inset)',
+    );
+    expect(sectionSource).toContain(
+      'padding-block: var(--ui-space-1) var(--settings-child-padding-block)',
+    );
+    expect(sectionSource).toContain(
+      '--ui-text-field-control-max-inline-size: var(--settings-port-inline-size)',
+    );
+
+    for (const name of [
+      'ObsIntegrationSettingsBlock.vue',
+      'OutputRuntimeSettingsBlock.vue',
+    ]) {
+      const { source } = settingsComponentSources.find(
+        (file) => file.name === name,
+      );
+      expect(source).toContain('class="settings-section__form"');
+      expect(source).toContain('class="settings-section__port-field"');
+      expect(source).toContain('class="settings-section__form-action"');
+    }
+  });
+
   it('does not leave the retired tooltip prop on document-item consumers', () => {
     for (const { name, source } of settingsComponentSources) {
       expect(source, name).not.toMatch(

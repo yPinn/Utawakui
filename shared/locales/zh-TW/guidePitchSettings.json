@@ -1,9 +1,9 @@
 {
   "title": "導唱音高",
-  "guidance": "分離完成後自動準備。也能檢查並補齊曲庫既有導唱的音高資料。",
+  "guidance": "伴奏完成後自動準備，也可補齊既有曲目。",
   "check": "檢查",
-  "fill": "補齊導唱音高",
-  "stop": "停止補齊",
+  "fill": "補齊",
+  "stop": "停止",
   "checking": "正在檢查導唱音高…",
   "preparing": "正在補齊導唱音高…",
   "counts": "{ready} 首可用，{missing} 首缺少，{invalid} 首需重建，{noGuide} 首無可用導唱。",

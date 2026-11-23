@@ -1,7 +1,11 @@
 {
   "sections": {
     "application": "應用程式",
-    "support": "支援與維護"
+    "support": "支援與維護",
+    "testing": "測試功能"
+  },
+  "testing": {
+    "open": "查看測試工具"
   },
   "reading": "讀取中",
   "reload": "重新讀取",
@@ -39,25 +43,30 @@
   },
   "troubleshooting": {
     "title": "問題排查與回報",
-    "open": "查看",
-    "checksSection": "使用環境檢查",
-    "reportingSection": "問題回報",
-    "noIssue": "無待處理問題",
-    "audioSection": "擷取音訊",
+    "open": "開啟排查",
+    "entryGuidance": "排查曲目播放、OBS 無聲或連線問題。",
+    "checksSection": "常見問題",
+    "moreSupport": "更多支援選項",
+    "audioSection": "音訊擷取",
     "obsSection": "OBS 連線",
     "unavailable": "無法讀取連線狀態",
+    "supportPackage": "支援包",
+    "supportPackageGuidance": "先確認摘要，再儲存檔案給開發者排查。",
     "export": "匯出支援包",
+    "audioHelp": "本機有聲、OBS 沒聲時，核對擷取裝置與 OBS 音訊來源，再播放曲目查看音量表。",
     "audioDeviceUnavailable": "擷取裝置無法使用",
-    "audioDeviceGuidance": "重新接上裝置，或改選其他裝置。",
+    "audioDeviceGuidance": "裝置可能已移除或停用。請重新接上裝置，或改選其他裝置。",
     "audioInterrupted": "擷取輸出中斷",
     "audioGuidance": "重新選擇裝置，再查看 OBS 音量表。",
     "openAudio": "音訊設定",
-    "obs": "未連線",
+    "obsHelp": "若要記錄場次時間，請開啟 OBS 並連線，接著開始直播或錄影。",
     "obsWaiting": "等待 OBS 連線",
     "obsWaitingGuidance": "請先開啟 OBS。若已開啟，請檢查 WebSocket 與連接埠。",
-    "obsGuidance": "檢查連線設定後重試。",
+    "obsAuthGuidance": "請確認連線設定的密碼與 OBS WebSocket 設定一致，再重試。",
+    "obsGuidance": "確認 OBS 已開啟 WebSocket，並核對主機與連接埠後重試。",
     "openObs": "連線設定",
-    "library": "曲庫檔案",
+    "library": "曲庫與播放",
+    "libraryGuidance": "曲目找不到或無法播放時，可掃描缺少的音檔。掃描只讀取曲庫。",
     "checkLibrary": "檢查曲庫",
     "confirmExport": "匯出支援包？",
     "exportRange": "{count} 筆錯誤及警告，涵蓋 {from} 至 {to}。",
@@ -71,10 +80,6 @@
     "ask": "每次詢問",
     "always": "自動傳送",
     "never": "不傳送"
-  },
-  "feedback": {
-    "title": "回報與建議",
-    "open": "填寫回報"
   },
   "appInfo": {
     "restart": "需要重新啟動應用程式才能讀取版本資訊。",

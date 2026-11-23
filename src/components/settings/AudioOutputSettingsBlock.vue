@@ -1,6 +1,6 @@
 <script setup>
 import { Headphones } from '../../icons/index.js';
-import UiIconButton from '../ui/UiIconButton.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import SettingsDocumentItem from './SettingsDocumentItem.vue';
 import UiRange from '../ui/UiRange.vue';
@@ -26,63 +26,60 @@ const formatVolumePercent = (value) => `${Math.round(value * 100)}%`;
     <SettingsDocumentItem
       :icon="Headphones"
       :title="t('audio.capture.title')"
-      :value="deviceLabel"
+      :value="enabled ? deviceLabel : ''"
       :status="t(enabled ? 'audio.capture.enabled' : 'audio.capture.disabled')"
       :status-tone="enabled ? 'success' : 'muted'"
       :guidance="t('audio.capture.guidance')"
     >
       <template #actions>
-        <UiIconButton
-          :icon="Headphones"
-          :label="t('audio.capture.select')"
+        <UiButton
+          variant="secondary"
           aria-haspopup="dialog"
           @click="emit('selectDevice')"
-        />
+        >
+          {{ t('audio.capture.select') }}
+        </UiButton>
       </template>
     </SettingsDocumentItem>
 
-    <UiRange
-      id="capture-master-volume"
-      class="audio-output-settings-block__volume"
-      :label="t('audio.capture.volume')"
-      :model-value="captureVolume"
-      :min="AUDIO_CONTROL_VALUES.captureVolume.min"
-      :max="AUDIO_CONTROL_VALUES.captureVolume.max"
-      :step="AUDIO_CONTROL_VALUES.captureVolume.step"
-      :default-value="AUDIO_CONTROL_VALUES.captureVolume.defaultValue"
-      :value-text="formatVolumePercent(captureVolume)"
-      :format-value="formatVolumePercent"
-      :hint="t('audio.capture.volumeHint')"
-      @update:model-value="emit('update:captureVolume', $event)"
-    />
+    <div class="audio-output-settings-block__details">
+      <UiRange
+        id="capture-master-volume"
+        class="audio-output-settings-block__volume"
+        :label="t('audio.capture.volume')"
+        :model-value="captureVolume"
+        :min="AUDIO_CONTROL_VALUES.captureVolume.min"
+        :max="AUDIO_CONTROL_VALUES.captureVolume.max"
+        :step="AUDIO_CONTROL_VALUES.captureVolume.step"
+        :default-value="AUDIO_CONTROL_VALUES.captureVolume.defaultValue"
+        :value-text="formatVolumePercent(captureVolume)"
+        value-in-label
+        :format-value="formatVolumePercent"
+        :hint="t('audio.capture.volumeHint')"
+        @update:model-value="emit('update:captureVolume', $event)"
+      />
 
-    <UiNotice
-      v-if="errorNotice"
-      :notice="errorNotice"
-      compact
-      @action="emit('selectDevice')"
-    />
+      <UiNotice
+        v-if="errorNotice"
+        :notice="errorNotice"
+        compact
+        @action="emit('selectDevice')"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.audio-output-settings-block {
+.audio-output-settings-block__details {
   min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-2);
+  padding-inline-start: var(--settings-copy-inset, 0);
+  padding-block-end: var(--settings-row-padding-block, var(--ui-space-4));
 }
 
 .audio-output-settings-block__volume {
-  margin-inline-start: var(--settings-copy-inset, 0);
-  min-inline-size: min(
-    100% - var(--settings-copy-inset, 0px),
-    var(--settings-range-min-inline-size)
-  );
-  inline-size: min(
-    100% - var(--settings-copy-inset, 0px),
-    var(--settings-range-max-inline-size)
-  );
+  inline-size: 100%;
   max-inline-size: var(--settings-range-max-inline-size);
-  padding-block-end: var(--settings-row-padding-block, var(--ui-space-4));
 }
 </style>

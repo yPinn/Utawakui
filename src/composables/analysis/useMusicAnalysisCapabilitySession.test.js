@@ -33,7 +33,7 @@ it.each(['prepare', 'repair', 'remove'])(
       expect(bridge[method]).toHaveBeenCalledOnce();
       expect(
         (await import('../useAppView.js')).useAppView().settingsSection.value,
-      ).toBe('processing');
+      ).toBe('testing');
     } else {
       expect(bridge[method]).toHaveBeenCalledTimes(2);
       expect(notifications.items.value[0].tone).toBe('success');

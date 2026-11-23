@@ -2,7 +2,7 @@
 import SettingsApplicationSection from '../components/settings/SettingsApplicationSection.vue';
 import SettingsCapabilitiesSection from '../components/settings/SettingsCapabilitiesSection.vue';
 import CaptureOutputSettings from '../components/settings/CaptureOutputSettings.vue';
-import LyricsResearchSettingsBlock from '../components/settings/LyricsResearchSettingsBlock.vue';
+import SettingsTestingSection from '../components/settings/SettingsTestingSection.vue';
 import SettingsLibrarySection from '../components/settings/SettingsLibrarySection.vue';
 import SettingsSupportSection from '../components/settings/SettingsSupportSection.vue';
 import PlatformVideoAccountsSection from '../components/settings/PlatformVideoAccountsSection.vue';
@@ -14,10 +14,10 @@ import PlatformVideoAccountsSection from '../components/settings/PlatformVideoAc
     <SettingsLibrarySection />
     <PlatformVideoAccountsSection />
     <SettingsCapabilitiesSection>
-      <template #processing-end><LyricsResearchSettingsBlock /></template>
-      <template #output-end><CaptureOutputSettings /></template>
+      <template #output-start><CaptureOutputSettings /></template>
     </SettingsCapabilitiesSection>
     <SettingsSupportSection />
+    <SettingsTestingSection />
   </div>
 </template>
 

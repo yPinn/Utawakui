@@ -4,6 +4,15 @@ import { expect, it } from 'vitest';
 import { Download, Trash2 } from '../../icons/index.js';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 
+it('does not occupy a settings action slot without available actions', async () => {
+  const html = await renderToString(
+    createSSRApp({
+      render: () => h(SettingsDependencyActions, { item: { id: 'tool' } }),
+    }),
+  );
+  expect(html).not.toContain('settings-dependency-actions');
+});
+
 it('keeps the overflow menu last after the primary tool action', async () => {
   const html = await renderToString(
     createSSRApp({

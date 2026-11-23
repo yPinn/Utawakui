@@ -1,9 +1,9 @@
 {
   "title": "Guide vocal pitch",
-  "guidance": "Pitch is prepared after separation. Check the library to fill in pitch for existing guide vocals.",
+  "guidance": "Prepares pitch after separation. Fill in pitch for existing tracks here.",
   "check": "Check",
-  "fill": "Fill in guide pitch",
-  "stop": "Stop backfill",
+  "fill": "Fill in",
+  "stop": "Stop",
   "checking": "Checking guide vocal pitch…",
   "preparing": "Preparing guide vocal pitch…",
   "counts": "{ready} ready, {missing} missing, {invalid} to rebuild, {noGuide} without an eligible guide vocal.",
