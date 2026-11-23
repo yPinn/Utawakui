@@ -21,6 +21,12 @@
 
 「問題排查」（Troubleshooting）提供目前可處理的功能問題與下一步。「支援包」（Support package）是給維護者的診斷匯出。
 
+「直播與錄影」（Streaming and recording）依序放置「音訊擷取」（Audio capture）、「對外輸出」（Public output）與「OBS 連線」（OBS connection）。音訊擷取將應用程式播放聲音送到使用者選擇的裝置，對外輸出提供「瀏覽器來源」（Browser Source），OBS 連線讀取直播與錄影狀態並記錄場次。「瀏覽器來源設定」（Browser Source settings）管理自動啟動、輸出連接埠與畫面延遲。
+
+「管理伴奏工具」（Manage accompaniment tools）集中轉檔工具、分離模型與加速設定。「測試功能」（Test features）收錄仍在驗證的分析與輸出工具。「歌詞時間分析」（Lyrics timing analysis）集中試用工具、自動分析及片段預覽。「BPM 分析」（BPM analysis）同列管理工具與匯入後自動分析。
+
+「常見問題」（Common issues）依使用流程說明症狀、目前狀態與處理方式。「回報與建議」（Feedback and suggestions）開啟回報表單，可附上支援資料。「更多支援選項」（More support options）收錄支援包匯出、嚴重錯誤回報偏好及開發版的錯誤紀錄工具。
+
 「手機預覽」（Phone preview）指桌面手機外框內可操作的手機遙控頁面。
 
 手機遙控的「歌詞版型」（Lyrics layout）指手機提詞方式。「捲動歌詞」（Scrolling lyrics）列出整首歌詞並跟隨當前句。「兩句聚焦」（Two-line focus）顯示當前句與下一句。
@@ -37,8 +43,10 @@ Output 字型選單採用「模板字型」（Template fonts）指模板提供�
 「隨模板」（Follow template）是使用模板原有排版字型的選項，其字型可能依文字語系或材質改變。
 
 模板庫以「獨立字幕」（Separate subtitle）說明譯文在輸出畫面有自己的顯示位置。
+模板庫以「收藏模板」（Favorite template）和「取消收藏」（Remove from favorites）管理個人偏好。收藏置於「已收藏」（Favorites）區，其餘選項列在「其他模板」（Other templates）。
 Output 工作臺的「模板」（Templates）分頁提供底片清單，可直接切換目前輸出類別使用的模板。
 「模板設定分頁」（Template settings tabs）是工作臺與手機遙控中調整模板的分頁列名稱。
+工作臺欄位名稱以繁中四字內為原則。「字幕呈現」（Subtitle display）的「呈現策略」（Presentation policy）選擇字幕精簡或保留原文的方式。「定時回顧」（Timed review）切換票據歌單的歷史頁回顧。「透明度」（Opacity）用於背景的透明、半透明與實底選項。
 歌詞輸出的「翻譯」（Translation）分頁用「顯示譯文」（Show translation）選擇畫面輸出的譯文，用「譯文字級」（Translation size）調整字幕大小。
 
 「人物組合」（Portrait preset）是幻影怪盜中一組可切換的照片、顯示名稱與底色。
@@ -64,11 +72,12 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 請稍後再試         |                  | 連線的外部服務（線上搜尋、YouTube 等），或要等目前工作結束 | Try again later.                   |
 | 工具、模型；準備   | 元件；安裝       | 需要另外取得的處理程式與模型，與設定頁「工具與模型」一致   | tool、model；prepare               |
 | 磁碟空間           | 空間（單獨使用） | 電腦儲存空間；曲庫占用寫「曲庫空間」                       | disk space；library storage        |
+| 去人聲上限         |                  | 曲庫空間中去人聲版本的清理門檻                             | Vocal-removed limit                |
 | 作品、版本、發行   |                  | 見作品與版本契約                                           | work、version、release             |
 | 文字陰影           |                  | Output 正文字形的投影，選項為「標準」和「關閉」            | Text shadow                        |
 | 字體排列           |                  | 和風直書的字級排列方式，選項為「等大」和「大小字」         | Text arrangement                   |
-| 多欄顯示           |                  | 和風直書新欄出現時，可保留前欄或一次只顯示一欄             | Multiple columns                   |
-| 段落重點色         |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
+| 多欄顯示           |                  | 和風直書可同批顯示，或依歌詞時序一次顯示一欄               | Multiple columns                   |
+| 段落強調           |                  | 和風直書在重現歌詞段落套用的局部字色                       | Section highlights                 |
 | 魚眼鏡筒           |                  | 畫面輸出的門鏡弧列字幕模板                                 | Fisheye Lens                       |
 | 幻影怪盜           |                  | 畫面輸出的拼貼歌詞模板                                     | Phantom Thieves                    |
 | 紋理顯字           |                  | 開發版的畫面輸出歌詞模板                                   | Textured Credits                   |
@@ -83,7 +92,7 @@ Output 工作臺的「模板」（Templates）分頁提供底片清單，可直�
 | 文字進場           |                  | 和風直書每一欄的文字出現方式                               | Text entrance                      |
 | 左右滑入           |                  | 字從左右不同位置短距離滑回各自字位                         | Slide in                           |
 | 停留縮放、動態模糊 |                  | 字形停留時的縮放幅度與沿弧快速移動時的拖影                 | Hold scaling, Motion blur          |
-| 字幕顆粒度         |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle granularity               |
+| 字幕分段           |                  | 每次顯示整句、短句或有時間標記的來源段落                   | Subtitle breaks                    |
 | 唱片高光           |                  | 星空黑膠表面沿溝槽可見的掃光，樣式為關閉、柔和及標準       | Record highlight                   |
 | 裝飾               |                  | Output 可選用的視覺物件                                    | Decoration                         |
 | 鏡內反光           |                  | 魚眼鏡筒的可選環形反光，樣式為關閉、柔和及標準             | Lens reflection                    |

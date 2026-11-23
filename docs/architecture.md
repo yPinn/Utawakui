@@ -158,7 +158,7 @@
 
 - 開發限定 Mic 研究：`useMicrophoneResearch` 隨內部工具作用域建立／清理 `src/microphone/researchRuntime.js` 的獨立輸入；`inputProcessing.js` 持有裝置回傳／低切與增益後的雙 Analyser graph，`level.js` 只計算本機有界電平，`activity.js` 另持有不修改 PCM 的雙門檻／時間活動投影，runtime 管理其設定及校準條件失效；`useMicrophoneMeasurement`／`src/microphone/measurement.js` 持有操作者倒數窗口、數值歷史與快照摘要。Main 的 `microphoneResearchAccess.js` 經可信 IPC 發出短期 lease，`audioOutputPermissions.js` 的兩條 permission hook 只在 lease 有效時放行主 frame 音訊。正式 Main／preload 不開研究操作，renderer 不進正式 bundle。開發版跟唱沿用輸入生命週期，在提詞器 renderer 分析 PCM，依播放器媒體時間投影。Mic 音訊不接 player／BGM／Output、監聽或錄音。見[Mic 研究契約](contracts/microphone-level-research.md)及[跟唱契約](contracts/performer-prompter-contract.md#開發版跟唱)。
 
-- `SettingsPage` 擁有唯一 page scroll 與 local overlay host；`SettingsView` 組合曲庫、音訊、應用程式、選用功能與支援五個 domain，各 section component 持有自己的 lifecycle、確認與 deep-link。系統 FFmpeg 偵測經 `useOnFirstVisible` 延到區段可見時。
+- `SettingsPage` 擁有唯一 page scroll 與 local overlay host。各設定區段管理自己的生命週期、確認操作與定位。系統 FFmpeg 偵測經 `useOnFirstVisible` 延到區段可見時。音訊處理先顯示自動伴奏，工具準備與維護集中於同一個展開項。測試功能在展開時載入，沿用各功能原有的執行條件。
 - `useAppNotifications.js` 保存通知投影與私有 action callback，`App.vue` 掛載唯一 `AppNotificationHost`；`useTaskNotification.js` 由各 domain 事件更新同一投影。通知 key 登記於 `constants/notificationKeys.js`，操作失敗經 `notifyFailure` 同時記錄診斷與通知，可見中的相同失敗只算一次。Modal 與通知共用 `useUiModalStack.js`，modal 開啟期間暫停通知倒數。見 [Settings 操作回饋契約](contracts/settings-operation-feedback.md)。
 - 伴奏完成摘要由 App 持有的 `useSeparationQueue` 依本輪觀察到的項目終態收斂，歷史讀取與重複推送不重播；一般外部匯入由 `useImportExecution` 在 accepted batch 的下載及 collection 保存結束後投影一次，不依賴目前草稿或 Dock 掛載。兩類沿用原準備清單作為查看結果入口，詳見[背景工作通知](contracts/settings-operation-feedback.md#背景工作完成通知)。
 - 偏好與儲存狀態由 `useLibraryStorage`、`useSettingsPreference` 依 bridge 共用，切頁不重建寫入；OBS 密碼輸入離頁即清除。
@@ -301,7 +301,7 @@
 
 `shared/presentation/` 是 canonical 純呈現與 timing 投影；`overlay/shared/` 保留 Browser Source 路徑轉接。外觀 schema 只在 `shared/outputAppearance.mjs` 維護；Manga 尺寸從 `mangaFrameTextLayout()` 的 layout 結果取得。新增共用函式前先核對這些 owner，避免在各 surface 重寫相同投影。
 
-`shared/assets/fonts/` 保留五套實際使用的字型及各自的來源／授權全文。Renderer CSS 經 `viteSharedAssets.js` 使用封裝內唯一的 shared 字型副本；Output 仍只開放明列的 HTTP module／font routes。封裝與測試邊界見 [release inventory](operations/release-inventory.md#packaging-locations)。
+`shared/assets/fonts/` 保留內建字型及各自的來源與授權全文。Output 與 renderer 字型預覽各自宣告 Hangul `@font-face`，只比對 Hangul 字元。Renderer CSS 經 `viteSharedAssets.js` 使用封裝內的 shared 字型副本。Output 與手機頁面各自以明列路由提供這些字型。封裝與測試邊界見 [release inventory](operations/release-inventory.md#packaging-locations)。
 
 ## Mobile Companion Boundary
 
@@ -322,7 +322,7 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 是所有�
 - 歌詞 Browser Source 的魚眼鏡筒、幻影怪盜與 textured-credits 由 `overlay/lyrics/templateModules.mjs` 按需載入程式，幻影怪盜與 textured-credits 另載入專屬樣式，完成才切換模板（[載入與釋放](contracts/output-motion-rendering.md#載入與釋放)）。textured-credits 的紋路由 `shared/browser/doodleCloudEffect.mjs` 以 PixiJS 繪製：每句依文字行位置以 Canvas 2D 為每層畫一次紋路，GPU 依時間軸的單一 `burn.progress` 讓各層沿自己的方向燃入再燃出，並負責 bloom、模糊與漂移；歌詞斷行由 `texturedCredits.mjs` 以共用 `splitLyricsDisplayRows` 量測規劃，白字與螢光副本兩層交叉淡化，不逐幀改色；PixiJS 的 IIFE build 由同一登記隨模板載入，Output server 以明列路由提供。分格對白的箭尾以 `getScreenCTM()` 的 a–f 係數換算座標，相容舊式 `SVGMatrix`。
 - 歌詞工作台的本機預覽背景由 `ObsOverlayPreview.vue` 合成。它沿用 `useTrackVideoAsset`、`TrackVideoPlayback` 和主播放器時鐘，在透明歌詞 iframe 下方顯示已同步 MV 或人物參考。
 - Output 切換模板由 Main 在同一次 slot 寫入中保留共用偏好，保存離開模板的專屬外觀，並恢復目標模板的專屬設定。欄位範圍由 `shared/outputAppearance.mjs` 決定。過往外觀只存在 Main 的 `overlays.json`，已套用的 slot 透過既有設定路徑送出。
-- `useOutputPerformerGuide` 持有歌詞工作台的模型佔位草稿，將遮罩形狀與畫布比例保存為本機 renderer 偏好。人物裁切與 iframe 上方的操作層共用同一組幾何。分格對白預設跟隨遮罩中心，工作台預覽讀草稿座標，Main 驗證已確認的中心後隨歌詞 slot 送給 OBS。只改中心時會更新箭尾幾何，模板和其他外觀變更沿用歌詞換句時序；最後一句以其顯示結束為界，尾奏期間立即套用。其餘遮罩資料由工作台持有。
+- `useOutputPerformerGuide` 持有歌詞工作台的模型佔位草稿，將遮罩形狀與畫布比例保存為本機 renderer 偏好。人物裁切與 iframe 上方的操作層共用同一組幾何。分格對白預設跟隨遮罩中心，工作台預覽讀草稿座標，Main 驗證已確認的中心後隨歌詞 slot 送給 OBS。只改中心時會更新箭尾幾何，模板和其他外觀變更沿用歌詞換句時序；最後一句以其顯示結束為界，尾奏期間立即套用。顯示模型時，工作台另外把遮罩尺寸送給內嵌 iframe。`shared/presentation/outputOccupancy.mjs` 負責座標正規化及矩形相交，分格對白依量測結果試算水平位置。尺寸由工作台持有。
 - 分格對白的下一句樣式由 `useOutputProjectionPublisher` 依播放器時鐘排定，利用歌詞 document 的行識別碼綁定。Main 驗證 `state.snapshot` 內的樣式及數量，工作台預覽與 OBS 的 Browser Source 依同一歌詞行套用。排定狀態在 renderer 記憶體中，播放接續變更、換歌詞、切模板或曲目結束即清除。
 - 歌詞外觀先由 Main 儲存，Browser Source 的 Lyrics scheduler 保留當前來源行的外觀，按含顯示延遲及偏移的播放時鐘，在新來源行測量之前一次套用最新設定。翻譯維持獨立，沒有相符的同步播放時直接收斂。見[外觀套用時機](contracts/output-appearance.md#外觀套用時機)。
 - 圖片編輯視窗共用 main 擁有的選檔草稿與有界去背請求。模型佔位草稿可獨立選檔，依遮罩比例編碼後由 `useOutputPerformerGuideImage` 存入 IndexedDB。預覽草稿無法寫入曲庫肖像。工作台以 renderer Blob URL 顯示圖片，Output 路由與投影不取得自訂圖片。

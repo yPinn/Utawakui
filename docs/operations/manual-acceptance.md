@@ -106,7 +106,7 @@ contracts for the individual acceptance criteria.
       selected 30／60 FPS profile.
 - [ ] Verify the full sender／receiver／downstream chain with real Lyrics playback,
       pause, seek, track change, and Output restart.
-- [ ] Inspect checker／dark／light backgrounds for transparent edges, premultiplied
+- [ ] Inspect checker／white／black backgrounds for transparent edges, premultiplied
       alpha halos, channel order, color shift, vertical orientation, and frame size.
 - [ ] Exercise same-GPU and available cross-GPU paths, receiver restart, helper crash,
       display/GPU reset, sender-name collision, and repeated start／stop recovery.

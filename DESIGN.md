@@ -393,7 +393,7 @@ Accept each migrated page against this matrix:
 - Keep Settings as one continuous document with seven functional chapters in this order: Library and Storage, Audio Output, Application, External Sources and Lyrics, Local Audio Processing, Public Output and OBS, and Support and Maintenance. Do not add local tabs, an inner Scroll Region or a second sidebar until section count or findability demonstrates the need.
 - The library information row groups online album completion, reconciliation and offline reload under one named maintenance menu. An active online query exposes Stop directly. Keep feedback in the row and disclose item details on demand. Style suggestions have their own named menu for file import and preview, with explicit adoption inside the preview.
 - `SettingsPage` owns the Folder document composition and surface boundary. `SettingsView` is only the ordered section composer. The five focused section owners retain their domain entry points, confirmations and local dialogs; the capabilities owner presents three functional chapters. Singleton feedback and chapter dialogs mount once in the Shell so their state and keyboard ownership survive navigation. Deep-linked optional-feature requests scroll and focus their target within the same document.
-- Define the functional hierarchy before choosing surfaces: chapter → feature entry → child setting or service → that service's advanced fields. `SettingsSection` owns the H2 title band (`canvas`), shared content (`surface-raised`), outline and sibling dividers. `SettingsFeatureGateRow` owns a transparent H3 feature header, enablement and disclosure information; it is not a settings row. Its H4 child preferences and services share the chapter content without individual cards. Child settings and tools are explicit contracts; an empty conditional slot never creates a child surface. Browser Source connection settings belong inside its service group, with Spout2 as a peer. BPM automatic analysis and GPU preference remain directly visible; component install／repair／removal belongs in `SettingsDependencyList`, collapsed when ready and revealed for active work, faults or a setup request. A row followed by its disclosure has one divider, owned by the chapter.
+- Define the functional hierarchy before choosing surfaces: chapter → feature entry → child setting or service → that service's advanced fields. `SettingsSection` owns the H2 title band (`canvas`), shared content (`surface-raised`), outline and sibling dividers. `SettingsFeatureGateRow` owns a transparent H3 feature header, enablement and disclosure information; it is not a settings row. Its H4 child preferences and services share the chapter content without individual cards. Child settings and tools are explicit contracts; an empty conditional slot never creates a child surface. Browser Source connection settings belong inside its service group. Audio processing presents automatic accompaniment first and uses the same disclosure and dependency rows for tool setup, maintenance and GPU preference. Setup links open the tool disclosure. The separate Test features chapter loads lyrics timing, BPM／beat analysis, Spout2 and development-only guide pitch when expanded. A row followed by its disclosure has one divider, owned by the chapter.
 - Primitive roles stay distinct: `UiChip` reports read-only state; checkbox and select edit saved preferences; buttons execute connection, start／stop and maintenance actions; disclosure reveals the owning row's advanced content. Field validation stays in `UiField`; local read and operation failures use `UiHint` and a natural-width retry button in that row's feedback area. Reserve `UiNotice` for region-wide recovery, modal results and notifications. A feature being enabled does not mean its service is connected or its dependencies are ready.
 - Settings block copy keeps only purpose or an operational consequence. Chapter gaps inherit one SettingsView role, and SettingsSection owns row／child block padding for both ordinary rows and feature entries; children do not add another outer margin. Reuse existing spacing, field and border tokens before introducing a local geometry role. The shared port width derives from five digits plus field chrome; reading measures, scroll caps and responsive breakpoints retain their functional units instead of borrowing an unrelated component token.
 - Settings rows follow their actual `settings-section` container width rather than viewport or native density: wide chapters use the `3fr／2fr` copy-and-detail row; at `48rem` spacing tightens, at `40rem` rows stack, and below `30rem` decorative icons become hidden while their lane stays reserved. Every ordinary row, feature title, child setting and advanced disclosure summary shares one content text axis; decorative icons and disclosure arrows occupy the same leading lane. Advanced form labels align to that axis without adding primitive body padding. Feature headers and tool disclosures inherit the chapter content rather than painting extra bands. Nested rows do not repeat the feature icon. Chapter spacing follows the `app-folder-layout` container at `56.25rem`. Compact／Standard density remains Electron-window-state-owned and does not choose these breakpoints. The Folder document remains the only page scroll owner at every tier.
@@ -917,8 +917,17 @@ shared compact-pane reveal preserves a reachable return action and moves focus o
 any pane being hidden. Side subtrees stay mounted when collapsed. The external Dock
 reservation remains independent. Each pane retains its own Scroll Region and the page
 still has no vertical scroll owner.
-Gallery keeps the template name and apply command outside its detail scroll; preview and
-description scroll together so the preview cannot consume the entire detail pane height.
+Gallery aligns its fixed search box (preferred width capped at 14rem) with the
+thumbnail grid. Responsive columns have a 10.5rem minimum; static 16:9 thumbnails sit
+flush inside each tile's rim, with titles of up to two lines. Gallery and the
+Workbench filmstrip share one template tile: the applied tile uses an Accent caption
+and checkmark, while preview selection has its own outline and selected surface. The
+Folder paper uses Ghost icon controls for browsing and Settings, and outlined
+Secondary buttons for applying templates and starting or stopping Output. The
+template name and apply command stay outside the detail scroll; the preview and
+description scroll together inside one clipping frame shared by the motion sample
+and its static fallback. Search and favorites behavior is in the
+[appearance contract](docs/contracts/output-appearance.md).
 The inspector maps its visible inline inset into `UiScrollLayout` content padding.
 The shared `--ui-scrollbar-visual-reserve` token defines the visible thumb boundary for
 both the scroll layout and aligned fixed header/footer; the scroll layout adds its
@@ -927,6 +936,19 @@ Full-width fields stay inside that boundary without changing shared focus presen
 
 Output inspector titles use the complete Title role; appearance group headings use
 Label, and field labels, passive save feedback and preview metadata use Caption.
+Workbench setting rows keep labels and controls in two aligned columns at the default
+inspector width; Traditional Chinese field labels use up to four characters, longer
+localized labels wrap, and option hints share the control column. Short choices keep
+their content width at the end of the control column: font-size and alignment use
+the compact Segmented Control at normal hit height, Position keeps its grid
+footprint, selects size to their options, font and look pickers are width-capped,
+and sliders keep a bounded track with a narrow, stable value column. Section and
+field spacing use the compact inspector insets. Binary
+properties use the shared Checkbox and keep their setting IDs. The font preview
+action sits in the font field's heading before reset, and the section reset marks
+groups that differ from template defaults. Field order: Typography starts with
+family, size and fine adjustment; Layout puts layout choices before anchor and
+offsets; Motion follows entry, hold and exit.
 Empty states, disabled reasons and local-font status／warnings compose `UiHint`,
 preserving their existing live regions and control-description ids. These roles do
 not restyle template artwork or font samples. The range control's numeric lane uses
