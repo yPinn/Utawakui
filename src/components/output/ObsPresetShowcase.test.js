@@ -27,6 +27,9 @@ const mockupSource = readObsTemplateMockupSource();
 const thumbnailSource = readCatalogSource(
   new URL('./ObsTemplateThumbnail.vue', import.meta.url),
 );
+const tileSource = readCatalogSource(
+  new URL('./ObsTemplateTile.vue', import.meta.url),
+);
 const backdropToggleSource = readCatalogSource(
   new URL('./ObsPreviewBackdropToggle.vue', import.meta.url),
 );
@@ -156,7 +159,7 @@ describe('OBS output workspace layout contract', () => {
       'content-class="obs-template-gallery__grid"',
     );
     expect(componentSource).toContain("emit('applyPreset'");
-    expect(componentSource).toContain('@dblclick="applyPreset(preset)"');
+    expect(componentSource).toContain('@activate="applyPreset(preset)"');
     expect(componentSource).toContain(
       'preset.availability?.available === false',
     );
@@ -169,21 +172,26 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(componentSource).not.toContain('雙擊套用');
     expect(componentSource).not.toContain('內建模板');
-    // Regular-width search at the toolbar's right end; the row stays empty.
+    expect(previewTokenSource).toContain('--ui-output-gallery-search-width:');
     expect(componentSource).toContain(
-      'max-inline-size: var(--ui-output-side-min-width);',
+      'flex: 0 1 var(--ui-output-gallery-search-width);',
     );
+    expect(componentSource).toContain(
+      'margin-inline-start: var(--obs-template-gallery-content-inset);',
+    );
+    expect(componentSource).toContain('margin-inline-end: auto;');
     expect(componentSource).not.toContain('selectedAvailabilitySummary');
     expect(componentSource).not.toContain('selectedPreset.tags');
     expect(componentSource).not.toContain('startOutput');
-    expect(componentSource).toContain('ObsTemplateThumbnail');
+    expect(componentSource).toContain('<ObsTemplateTile');
+    expect(tileSource).toContain('<ObsTemplateThumbnail');
     expect(componentSource).toContain('ObsTemplatePreviewStage');
     expect(componentSource).not.toContain('ObsOverlayPreview');
     expect(componentSource).not.toContain('previewUrl');
     expect(componentSource).not.toContain('<UiTabs');
     expect(componentSource).not.toContain('ObsOutputTabs');
     expect(workbenchSource).not.toContain('<UiSegmentedControl');
-    expect(componentSource).toContain('v-for="preset in filteredTemplates"');
+    expect(componentSource).toContain('v-for="preset in section.templates"');
     expect(componentSource).not.toContain('v-for="preset in group.templates"');
     expect(compactSplitLayoutSource).toContain(
       'obs-output-split-layout--compact',
@@ -198,16 +206,12 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(thumbnailSource).not.toContain(':animated');
     expect(previewStageSource).toContain("import('./ObsTemplateMockup.vue')");
-    expect(previewStageSource).toContain('v-if="livePreview"');
+    expect(previewStageSource).toContain('v-if="!livePreview"');
     expect(previewStageSource).toContain(':animated="true"');
-    expect(previewStageSource).toContain('暫停動態預覽');
-    expect(previewStageSource).toContain('播放動態預覽');
-    expect(previewStageSource).toContain('動態示例');
-    expect(previewStageSource).toContain(':disabled="!isMotionPlaying"');
-    expect(previewStageSource).toContain(':backdrop="backdrop"');
-    expect(previewStageSource).toContain(
-      "const backdrop = shallowRef('dark');",
-    );
+    expect(componentSource).toContain(':active="active && open"');
+    expect(previewStageSource).not.toContain('UiChip');
+    expect(previewStageSource).not.toContain('ObsPreviewBackdropToggle');
+    expect(previewStageSource).not.toContain('UiIconButton');
     expect(backdropToggleSource).toContain('<UiIconButton');
     expect(mockupSource).toContain(
       'animated: { type: Boolean, default: false }',
@@ -277,8 +281,8 @@ describe('OBS output workspace layout contract', () => {
     expect(mockupSource).toContain('var(--ui-output-preview-cycle-duration)');
     expect(mockupSource).not.toMatch(/#[0-9a-f]{3,8}/i);
     expect(mockupSource).not.toContain('0.625rem');
-    // 0.7em only appears in the artist clamp copied from the runtime Overlay.
-    expect(mockupSource.split('0.7em')).toHaveLength(2);
+    // Both uses of 0.7em mirror bounded roles in the runtime Overlay.
+    expect(mockupSource.split('0.7em')).toHaveLength(3);
     expect(mockupSource).toContain(
       'clamp(0.75em, calc(0.7em + 0.5cqi), 0.875em)',
     );

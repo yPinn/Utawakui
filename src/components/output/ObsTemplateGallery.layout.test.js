@@ -11,7 +11,6 @@ async function renderGallery(empty = false, presetId = 'queue-board') {
     createSSRApp({
       render: () =>
         h(ObsTemplateGallery, {
-          presets: empty ? [] : data.templates,
           templateGroups: empty ? [] : data.templateGroups,
           previewScene: data.previewScene,
           activeKind: preset.kind,
@@ -65,6 +64,9 @@ describe('Output Gallery bounded Folder composition', () => {
 
   it('uses a scroll-safe catalogue and retains the detail geometry for an empty library', async () => {
     const html = await renderGallery();
+    expect(html.indexOf('obs-template-gallery__search')).toBeLessThan(
+      html.indexOf('obs-template-gallery__grid'),
+    );
     expect(html).toContain('ui-scroll-layout__content');
     expect(html).toContain('obs-template-gallery__grid');
     expect(html).toContain('data-scroll-axis="vertical"');

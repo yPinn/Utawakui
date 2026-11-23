@@ -101,6 +101,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'karaoke-stack',
     kind: 'lyrics',
+    recommendedLanguages: ['zh', 'ja', 'en'],
     order: 10,
     name: t('outputPanel.templates.karaokeStack.name'),
     facts: lyricsTemplateFacts([
@@ -111,6 +112,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'manga-frame',
     kind: 'lyrics',
+    recommendedLanguages: ['ja'],
     order: 30,
     name: t('outputPanel.templates.mangaFrame.name'),
     facts: lyricsTemplateFacts([
@@ -121,6 +123,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'kinetic-pop',
     kind: 'lyrics',
+    recommendedLanguages: ['ja'],
     order: 25,
     name: t('outputPanel.templates.kineticPop.name'),
     facts: lyricsTemplateFacts([
@@ -131,6 +134,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'ornate-vertical',
     kind: 'lyrics',
+    recommendedLanguages: ['ja'],
     order: 28,
     name: t('outputPanel.templates.ornateVertical.name'),
     facts: lyricsTemplateFacts([
@@ -141,6 +145,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'centered-vertical',
     kind: 'lyrics',
+    recommendedLanguages: ['zh', 'ja'],
     order: 31,
     name: t('outputPanel.templates.centeredVertical.name'),
     facts: lyricsTemplateFacts([
@@ -154,6 +159,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'chalkboard-vertical',
     kind: 'lyrics',
+    recommendedLanguages: ['zh', 'ja'],
     order: 29,
     name: t('outputPanel.templates.chalkboardVertical.name'),
     facts: lyricsTemplateFacts([
@@ -170,6 +176,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'live-stage',
     kind: 'lyrics',
+    recommendedLanguages: ['any'],
     order: 20,
     name: t('outputPanel.templates.liveStage.name'),
     facts: lyricsTemplateFacts([
@@ -180,6 +187,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'fisheye-lens',
     kind: 'lyrics',
+    recommendedLanguages: ['zh', 'ja', 'en'],
     order: 60,
     name: t('outputPanel.templates.fisheyeLens.name'),
     facts: lyricsTemplateFacts([
@@ -190,6 +198,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'phantom-thieves',
     kind: 'lyrics',
+    recommendedLanguages: ['zh', 'ja', 'en'],
     order: 65,
     name: t('outputPanel.templates.phantomThieves.name'),
     facts: lyricsTemplateFacts([
@@ -303,6 +312,7 @@ export const OUTPUT_TEMPLATES = Object.freeze(
       appearanceFields,
       presentationFields,
       elementTargets,
+      recommendedLanguages: Object.freeze(template.recommendedLanguages ?? []),
       lyricsCapabilities: lyricsTemplateCapabilities(template.id),
       presentationProfile,
     });

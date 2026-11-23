@@ -52,6 +52,7 @@ function markThumbnailFailed() {
       v-else-if="preset?.id === 'textured-credits'"
       :preset="preset"
       size="thumbnail"
+      class="obs-template-thumbnail__mockup"
     />
     <span v-else class="obs-template-thumbnail__unavailable">{{
       t('outputPanel.gallery.noThumbnail')
@@ -66,7 +67,9 @@ function markThumbnailFailed() {
   min-width: 0;
   aspect-ratio: var(--ui-output-preview-aspect-ratio);
   overflow: hidden;
-  border-radius: var(--ui-radius-sm);
+  border: var(--obs-template-preview-frame-border-width, var(--ui-border-width))
+    solid var(--ui-color-border);
+  border-radius: var(--obs-template-preview-frame-radius, var(--ui-radius-sm));
   background: var(--ui-output-preview-canvas);
 }
 
@@ -84,15 +87,16 @@ function markThumbnailFailed() {
   width: 100%;
   max-width: 100%;
   height: 100%;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-output-preview-canvas);
-  box-sizing: border-box;
   object-fit: cover;
   pointer-events: none;
 }
 
 .obs-template-thumbnail--contain {
   object-fit: contain;
+}
+
+.obs-template-thumbnail__mockup {
+  --obs-template-preview-frame-border-width: 0px;
+  --obs-template-preview-frame-radius: 0;
 }
 </style>

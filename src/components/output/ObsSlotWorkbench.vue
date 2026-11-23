@@ -75,6 +75,7 @@ const props = defineProps({
   compactSideOpen: { type: Boolean, default: false },
   preset: { type: Object, default: null },
   quickSwitchPresets: { type: Array, default: () => [] },
+  favoriteIds: { type: Set, default: () => new Set() },
   applyingPreset: { type: Boolean, default: false },
   outputSlot: { type: Object, default: null },
   activeKind: { type: String, default: null },
@@ -721,6 +722,7 @@ function removePortraitSet() {
         v-if="item?.id === filmstripTab.id && active"
         :key="activeKind"
         :presets="quickSwitchPresets"
+        :favorite-ids="favoriteIds"
         :active-id="preset?.id"
         :busy="applyingPreset"
         @select="emit('applyPreset', $event)"

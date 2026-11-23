@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
         :aria-label="sideLabel"
       >
         <slot name="side-top" />
-        <slot name="side" />
+        <slot name="side" :open="sideOpen" />
       </UiScrollLayout>
       <div
         v-if="$slots['side-footer']"

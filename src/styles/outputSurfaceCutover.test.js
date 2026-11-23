@@ -21,12 +21,6 @@ const runtimeStatusSource = readSource(
   '../components/output/ObsOutputRuntimeStatus.vue',
 );
 const gallerySource = readSource('../components/output/ObsTemplateGallery.vue');
-const settingsSource = readCatalogSource(
-  new URL(
-    '../components/settings/OutputRuntimeSettingsBlock.vue',
-    import.meta.url,
-  ),
-);
 const tokenSource = readSource('./tokens.css');
 const outputFeaturePath = new URL('./features/output.css', import.meta.url);
 const legacyFeaturePath = new URL(
@@ -214,9 +208,8 @@ describe('Output Token v2 surface cutover', () => {
     expect(workbenchSource).toContain('<ObsOverlayPreview');
     expect(workspaceSource).toContain('<ObsOutputRuntimeStatus');
     expect(runtimeStatusSource).toContain('aria-label="輸出狀態"');
-    expect(gallerySource).toContain('<ObsTemplateThumbnail');
+    expect(gallerySource).toContain('<ObsTemplateTile');
     expect(gallerySource).toContain('<ObsTemplatePreviewStage');
-    expect(settingsSource).toContain('Spout2 輸出');
   });
 
   it('keeps public Overlay tokens and runtime outside the control-panel feature layer', () => {

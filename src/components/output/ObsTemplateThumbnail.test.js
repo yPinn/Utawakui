@@ -11,7 +11,7 @@ describe('output template thumbnail', () => {
     expect(source).toContain('<img');
     expect(source).toContain('v-if="showBundledThumbnail"');
     expect(source).toMatch(
-      /<ObsTemplateMockup\s+v-else-if="preset\?\.id === 'textured-credits'"\s+:preset="preset"\s+size="thumbnail"\s*\/>/u,
+      /<ObsTemplateMockup\s+v-else-if="preset\?\.id === 'textured-credits'"\s+:preset="preset"\s+size="thumbnail"\s+class="obs-template-thumbnail__mockup"\s*\/>/u,
     );
     expect(source).toContain('<span v-else');
     expect(source).toContain('暫無縮圖');
@@ -39,5 +39,17 @@ describe('output template thumbnail', () => {
   it('does not bypass bundled thumbnails for the stable Karaoke Stack id', () => {
     expect(source).not.toContain("props.preset?.id === 'karaoke-stack'");
     expect(source).not.toContain('prefersLiveMockup');
+  });
+
+  it('clips image corners once at the frame and supports embedding in a clipped parent', () => {
+    const frame = source.match(
+      /\.obs-template-thumbnail__frame \{[^}]+\}/u,
+    )?.[0];
+    const image = source.match(/\.obs-template-thumbnail \{[^}]+\}/u)?.[0];
+    expect(frame).toContain('overflow: hidden');
+    expect(frame).toContain(
+      'var(--obs-template-preview-frame-radius, var(--ui-radius-sm))',
+    );
+    expect(image).not.toContain('border');
   });
 });

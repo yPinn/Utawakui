@@ -385,6 +385,11 @@
     "label": "模板庫",
     "side": "模板展示預覽",
     "search": "搜尋模板",
+    "searchPlaceholder": "搜尋名稱、語言等",
+    "favorite": "收藏模板",
+    "unfavorite": "取消收藏",
+    "favorites": "已收藏",
+    "otherTemplates": "其他模板",
     "thumbnails": "模板縮圖",
     "viewPreview": "查看模板預覽",
     "applied": "已套用",
@@ -406,13 +411,9 @@
     "noThumbnail": "暫無縮圖"
   },
   "stage": {
-    "pauseMotion": "暫停動態預覽",
-    "playMotion": "播放動態預覽",
     "label": "選中模板預覽",
     "fixed": "固定",
-    "motionSample": "動態示例",
-    "reference": "參考圖",
-    "motionFailed": "無法載入動態預覽，請再試一次"
+    "motionFailed": "無法載入動態預覽"
   },
   "widget": {
     "sizes": "Widget 擷取尺寸",

@@ -1,44 +1,82 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
-import { Check, ICON_SIZE } from '../../icons/index.js';
+import { computed, shallowRef, useTemplateRef, watch } from 'vue';
+import { Star } from '../../icons/index.js';
+import { t } from '../../utils/i18n.js';
+import {
+  filterOutputTemplates,
+  outputTemplateSearchKey,
+} from '../../utils/outputTemplateSearch.js';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
-import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
+import ObsTemplateTile from './ObsTemplateTile.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
-import UiTooltip from '../ui/UiTooltip.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
-import { t } from '../../utils/i18n.js';
 
 const props = defineProps({
+  active: { type: Boolean, default: true },
   sideWidth: { type: Number, default: null },
   sideCollapsed: { type: Boolean, default: false },
   compactSideOpen: { type: Boolean, default: false },
-  presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
   previewScene: { type: Object, default: () => ({}) },
   activeKind: { type: String, default: null },
   selectedPresetId: { type: String, default: null },
   appliedPresetIds: { type: Object, default: () => ({}) },
+  favoriteIds: { type: Set, default: () => new Set() },
   isApplying: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
   'update:selectedPresetId',
   'applyPreset',
+  'toggleFavorite',
   'update:sideWidth',
   'update:sideCollapsed',
   'update:compactSideOpen',
 ]);
 const search = shallowRef('');
+const catalog = useTemplateRef('catalog');
 
-const selectedPreset = computed(
-  () =>
-    props.presets.find((preset) => preset.id === props.selectedPresetId) ??
-    props.presets[0] ??
-    null,
+const query = computed(() => outputTemplateSearchKey(search.value));
+const activeGroup = computed(() =>
+  props.activeKind == null
+    ? props.templateGroups.find((group) => group.templates.length)
+    : props.templateGroups.find((group) => group.kind === props.activeKind),
 );
+const activeTemplates = computed(() => activeGroup.value?.templates ?? []);
+const filteredTemplates = computed(() =>
+  filterOutputTemplates(activeTemplates.value, query.value),
+);
+const sections = computed(() => {
+  const saved = [];
+  const other = [];
+  for (const preset of filteredTemplates.value) {
+    (props.favoriteIds.has(preset.id) ? saved : other).push(preset);
+  }
+  if (!saved.length) return [{ id: 'other', templates: other }];
+  return [
+    {
+      id: 'favorites',
+      title: t('outputPanel.gallery.favorites'),
+      templates: saved,
+    },
+    {
+      id: 'other',
+      title: t('outputPanel.gallery.otherTemplates'),
+      templates: other,
+    },
+  ].filter(({ templates }) => templates.length);
+});
+const selectedPreset = computed(() => {
+  const selection =
+    activeTemplates.value.find(
+      (preset) => preset.id === props.selectedPresetId,
+    ) ?? activeTemplates.value[0];
+  return filteredTemplates.value.includes(selection) ? selection : null;
+});
 const selectedPreviewScene = computed(() =>
   selectedPreset.value?.id === 'ribbon-setlist'
     ? undefined
@@ -52,26 +90,11 @@ const isApplied = computed(
 const isSelectedPresetAvailable = computed(
   () => selectedPreset.value?.availability?.available !== false,
 );
-const visibleGroups = computed(() =>
-  props.templateGroups.filter((group) => group.templates.length),
+const isFavorite = computed(() =>
+  props.favoriteIds.has(selectedPreset.value?.id),
 );
-const activeGroup = computed(
-  () =>
-    visibleGroups.value.find((group) => group.kind === props.activeKind) ??
-    visibleGroups.value[0] ??
-    null,
-);
-const filteredTemplates = computed(() => {
-  const query = search.value.trim().toLocaleLowerCase();
-  return (activeGroup.value?.templates ?? []).filter(
-    (preset) =>
-      !query ||
-      [preset.name, ...(preset.facts ?? []).map(({ value }) => value)]
-        .join(' ')
-        .toLocaleLowerCase()
-        .includes(query),
-  );
-});
+
+watch(query, () => catalog.value?.scrollTo({ top: 0 }));
 
 function selectPreset(id) {
   emit('update:selectedPresetId', id);
@@ -107,21 +130,23 @@ function applyPreset(preset) {
       @update:side-collapsed="emit('update:sideCollapsed', $event)"
       @update:compact-side-open="emit('update:compactSideOpen', $event)"
     >
-      <template #tools
-        ><UiSearchBox
+      <template #tools>
+        <UiSearchBox
           v-model="search"
           class="obs-template-gallery__search"
           :label="t('outputPanel.gallery.search')"
-          :placeholder="t('outputPanel.gallery.search')"
-      /></template>
+          :placeholder="t('outputPanel.gallery.searchPlaceholder')"
+        />
+      </template>
       <template #main>
         <div
           class="obs-template-gallery__catalog"
           :aria-label="t('outputPanel.gallery.thumbnails')"
         >
           <UiScrollLayout
-            v-if="activeGroup"
+            v-if="activeTemplates.length"
             :key="activeGroup.kind"
+            ref="catalog"
             class="obs-template-gallery__group"
             axis="vertical"
             viewport-tag="section"
@@ -130,38 +155,24 @@ function applyPreset(preset) {
             tabindex="0"
             :aria-label="t('outputPanel.gallery.thumbnails')"
           >
-            <UiTooltip
-              v-for="preset in filteredTemplates"
-              :key="preset.id"
-              :text="t('outputPanel.gallery.viewPreview')"
-            >
-              <template #trigger="{ triggerProps }">
-                <button
-                  v-bind="triggerProps"
-                  type="button"
-                  class="obs-template-thumb"
-                  :class="{
-                    'obs-template-thumb--active':
-                      preset.id === selectedPreset?.id,
-                  }"
-                  :aria-pressed="preset.id === selectedPreset?.id"
-                  @click="selectPreset(preset.id)"
-                  @dblclick="applyPreset(preset)"
-                >
-                  <ObsTemplateThumbnail :preset="preset" />
-                  <div class="obs-template-thumb__body">
-                    <span class="obs-template-thumb__name">
-                      {{ preset.name }}
-                    </span>
-                    <Check
-                      v-if="preset.id === appliedPresetIds[preset.kind]"
-                      :size="ICON_SIZE"
-                      :aria-label="t('outputPanel.gallery.applied')"
-                    />
-                  </div>
-                </button>
-              </template>
-            </UiTooltip>
+            <template v-for="section in sections" :key="section.id">
+              <h3
+                v-if="section.title"
+                class="obs-template-gallery__section-title"
+              >
+                {{ section.title }}
+              </h3>
+              <ObsTemplateTile
+                v-for="preset in section.templates"
+                :key="preset.id"
+                :preset="preset"
+                :selected="preset.id === selectedPreset?.id"
+                :applied="preset.id === appliedPresetIds[preset.kind]"
+                :tooltip="t('outputPanel.gallery.viewPreview')"
+                @select="selectPreset(preset.id)"
+                @activate="applyPreset(preset)"
+              />
+            </template>
             <UiHint
               v-if="!filteredTemplates.length"
               class="obs-template-gallery__empty"
@@ -178,20 +189,35 @@ function applyPreset(preset) {
 
       <template #side-header>
         <div v-if="selectedPreset" class="obs-template-gallery__detail-header">
-          <div class="obs-template-gallery__heading">
-            <h2 class="obs-template-gallery__detail-title">
-              {{ selectedPreset.name }}
-            </h2>
-          </div>
+          <h2 class="obs-template-gallery__detail-title">
+            {{ selectedPreset.name }}
+          </h2>
+          <UiIconButton
+            :icon="Star"
+            variant="ghost"
+            :label="t('outputPanel.gallery.favorite')"
+            :title="
+              t(
+                isFavorite
+                  ? 'outputPanel.gallery.unfavorite'
+                  : 'outputPanel.gallery.favorite',
+              )
+            "
+            :active="isFavorite"
+            :fill="isFavorite"
+            :aria-pressed="isFavorite"
+            @click="emit('toggleFavorite', selectedPreset.id)"
+          />
         </div>
         <UiHint v-else class="obs-template-gallery__empty">{{
           t('outputPanel.gallery.choose')
         }}</UiHint>
       </template>
 
-      <template #side>
+      <template #side="{ open }">
         <ObsTemplatePreviewStage
           v-if="selectedPreset"
+          :active="active && open"
           :preset="selectedPreset"
           :scene="selectedPreviewScene"
         />
@@ -213,7 +239,7 @@ function applyPreset(preset) {
       <template #side-footer>
         <div v-if="selectedPreset" class="obs-template-gallery__actions">
           <UiButton
-            variant="accent"
+            variant="secondary"
             :disabled="isApplying || isApplied || !isSelectedPresetAvailable"
             @click="applyPreset(selectedPreset)"
           >
@@ -235,17 +261,18 @@ function applyPreset(preset) {
 
 <style scoped>
 .obs-template-gallery {
+  --obs-template-gallery-content-inset: var(--ui-focus-safe-inset);
+
   height: 100%;
   min-height: 0;
   min-width: 0;
 }
 
-/* Regular search width at the right end of the toolbar; the rest of the row
-   stays empty. */
 .obs-template-gallery__search {
   min-width: 0;
-  flex: 1 1 auto;
-  max-inline-size: var(--ui-output-side-min-width);
+  flex: 0 1 var(--ui-output-gallery-search-width);
+  margin-inline-start: var(--obs-template-gallery-content-inset);
+  margin-inline-end: auto;
 }
 
 .obs-template-gallery__catalog {
@@ -258,8 +285,12 @@ function applyPreset(preset) {
 .obs-template-gallery__group {
   --ui-scroll-layout-padding-block-start: var(--ui-focus-safe-inset);
   --ui-scroll-layout-padding-block-end: var(--ui-focus-safe-inset);
-  --ui-scroll-layout-padding-inline-start: var(--ui-focus-safe-inset);
-  --ui-scroll-layout-padding-inline-end: var(--ui-focus-width);
+  --ui-scroll-layout-padding-inline-start: var(
+    --obs-template-gallery-content-inset
+  );
+  --ui-scroll-layout-padding-inline-end: var(
+    --obs-template-gallery-content-inset
+  );
   min-height: 0;
   min-width: 0;
 }
@@ -271,69 +302,33 @@ function applyPreset(preset) {
     minmax(min(100%, var(--ui-output-gallery-tile-min-width)), 1fr)
   );
   align-content: start;
-  gap: var(--ui-space-3);
+  gap: var(--ui-space-2);
   min-width: 0;
 }
 
-.obs-template-thumb {
-  min-width: 0;
-  min-height: var(--ui-output-template-thumb-min-height);
-  display: grid;
-  grid-template-rows: auto minmax(var(--ui-control-height), auto);
-  align-content: start;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.obs-template-thumb:hover {
-  border-color: var(--ui-color-border-strong);
-  background: var(--ui-color-surface-hover);
-}
-
-.obs-template-thumb:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.obs-template-thumb--active {
-  border-color: var(--ui-color-accent);
-  background: var(--ui-color-surface-selected);
-}
-
-.obs-template-thumb__body,
-.obs-template-gallery__heading,
+.obs-template-gallery__detail-header,
 .obs-template-gallery__actions {
   display: flex;
   align-items: center;
 }
 
-.obs-template-thumb__body {
-  flex: 1;
-  gap: var(--ui-space-2);
-  min-width: 0;
-  padding-inline: var(--ui-space-2);
+.obs-template-gallery__section-title,
+.obs-template-gallery__grid .obs-template-gallery__empty {
+  grid-column: 1 / -1;
 }
 
-.obs-template-thumb__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
+.obs-template-gallery__section-title {
+  margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-type-subtitle-size);
-  font-weight: var(--ui-type-subtitle-weight);
-  line-height: var(--ui-type-subtitle-line-height);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--ui-type-label-size);
+  font-weight: var(--ui-type-label-weight);
+  line-height: var(--ui-type-label-line-height);
 }
 
-.obs-template-gallery__detail-header,
+.obs-template-gallery__section-title:not(:first-child) {
+  margin-block-start: var(--ui-space-2);
+}
+
 /* Label / value rows: short facts the preview cannot show. */
 /* Two-column label / value list. Rows use `display: contents` so every
    label shares one column and every value starts at the same edge. */
@@ -373,20 +368,13 @@ function applyPreset(preset) {
 }
 
 .obs-template-gallery__detail-header {
-  gap: var(--ui-space-3);
+  justify-content: space-between;
+  gap: var(--ui-space-2);
   padding-block: var(--ui-space-1);
 }
 
-.obs-template-gallery__actions {
-  padding-block-start: var(--ui-space-3);
-}
-
-.obs-template-gallery__heading {
-  justify-content: space-between;
-  gap: var(--ui-space-2);
-}
-
 .obs-template-gallery__detail-title {
+  min-inline-size: 0;
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-type-title-size);
@@ -401,5 +389,6 @@ function applyPreset(preset) {
 .obs-template-gallery__actions {
   justify-content: flex-end;
   gap: var(--ui-space-2);
+  padding-block-start: var(--ui-space-3);
 }
 </style>

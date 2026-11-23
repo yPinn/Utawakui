@@ -15,5 +15,6 @@
   "src/utils/lyrics.js": 2,
   "src/utils/lyricsLineBreak.js": 1,
   "src/utils/lyricsSourcePresentation.js": 2,
+  "src/utils/outputTemplateSearch.js": 4,
   "src/utils/rubyLayout.js": 1
 }

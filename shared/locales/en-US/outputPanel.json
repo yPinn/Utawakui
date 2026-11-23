@@ -385,6 +385,11 @@
     "label": "Templates",
     "side": "Template preview",
     "search": "Search templates",
+    "searchPlaceholder": "Name, language, or detail",
+    "favorite": "Favorite template",
+    "unfavorite": "Remove from favorites",
+    "favorites": "Favorites",
+    "otherTemplates": "Other templates",
     "thumbnails": "Template thumbnails",
     "viewPreview": "View template preview",
     "applied": "Applied",
@@ -406,13 +411,9 @@
     "noThumbnail": "No thumbnail"
   },
   "stage": {
-    "pauseMotion": "Pause motion preview",
-    "playMotion": "Play motion preview",
     "label": "Selected template preview",
     "fixed": "Fixed",
-    "motionSample": "Motion sample",
-    "reference": "Reference",
-    "motionFailed": "The motion preview didn't load. Try again"
+    "motionFailed": "The motion preview didn't load."
   },
   "widget": {
     "sizes": "Widget capture size",

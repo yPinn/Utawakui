@@ -1,61 +1,55 @@
 <script setup>
-import { useTemplateRef, watchPostEffect } from 'vue';
-import { Check, ICON_SIZE } from '../../icons/index.js';
-import UiTooltip from '../ui/UiTooltip.vue';
-import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
+import { computed, useTemplateRef, watch } from 'vue';
+import ObsTemplateTile from './ObsTemplateTile.vue';
 
 const props = defineProps({
   presets: { type: Array, required: true },
+  favoriteIds: { type: Set, default: () => new Set() },
   activeId: { type: String, default: null },
   busy: { type: Boolean, default: false },
 });
 const emit = defineEmits(['select']);
 const strip = useTemplateRef('strip');
+const orderedPresets = computed(() =>
+  props.presets.toSorted(
+    (a, b) =>
+      Number(props.favoriteIds.has(b.id)) - Number(props.favoriteIds.has(a.id)),
+  ),
+);
 
 function select(id) {
-  if (!props.busy && id !== props.activeId) emit('select', id);
+  if (id !== props.activeId) emit('select', id);
 }
 
-watchPostEffect((onCleanup) => {
-  if (!props.activeId || !strip.value) return;
-  const frame = requestAnimationFrame(() => {
-    strip.value
-      ?.querySelector('[aria-pressed="true"]')
-      ?.scrollIntoView({ block: 'nearest', container: 'nearest' });
-  });
-  onCleanup(() => cancelAnimationFrame(frame));
-});
+watch(
+  [() => props.activeId, strip],
+  ([activeId, node], [, previousNode], onCleanup) => {
+    if (!activeId || !node) return;
+    const frame = requestAnimationFrame(() => {
+      // On entry, let the user see their favorites before following active changes.
+      if (!previousNode && props.favoriteIds.has(orderedPresets.value[0]?.id))
+        return;
+      node
+        .querySelector('[aria-pressed="true"]')
+        ?.scrollIntoView({ block: 'nearest', container: 'nearest' });
+    });
+    onCleanup(() => cancelAnimationFrame(frame));
+  },
+  { flush: 'post' },
+);
 </script>
 
 <template>
   <div ref="strip" class="obs-template-filmstrip">
-    <UiTooltip
-      v-for="preset in presets"
+    <ObsTemplateTile
+      v-for="preset in orderedPresets"
       :key="preset.id"
-      :text="preset.name"
-      :described-by="false"
-    >
-      <template #trigger="{ triggerProps }">
-        <button
-          v-bind="triggerProps"
-          type="button"
-          class="obs-template-filmstrip__frame"
-          :aria-pressed="preset.id === activeId"
-          :aria-disabled="busy || undefined"
-          @click="select(preset.id)"
-        >
-          <ObsTemplateThumbnail :preset="preset" aria-hidden="true" />
-          <span class="obs-template-filmstrip__caption">
-            <span class="obs-template-filmstrip__name">{{ preset.name }}</span>
-            <Check
-              v-if="preset.id === activeId"
-              :size="ICON_SIZE"
-              aria-hidden="true"
-            />
-          </span>
-        </button>
-      </template>
-    </UiTooltip>
+      :preset="preset"
+      :selected="preset.id === activeId"
+      :applied="preset.id === activeId"
+      :busy="busy"
+      @select="select(preset.id)"
+    />
   </div>
 </template>
 
@@ -81,62 +75,5 @@ watchPostEffect((onCleanup) => {
     var(--_filmstrip-perforations) right var(--ui-space-1) top /
       var(--ui-space-1) 100% no-repeat,
     var(--ui-color-canvas);
-}
-
-.obs-template-filmstrip__frame {
-  display: grid;
-  align-content: start;
-  gap: var(--ui-space-1);
-  min-inline-size: 0;
-  padding: var(--ui-space-1);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface-raised);
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.obs-template-filmstrip__frame:not([aria-disabled='true']):hover {
-  border-color: var(--ui-color-border-strong);
-  background: var(--ui-color-surface-hover);
-}
-
-.obs-template-filmstrip__frame[aria-disabled='true'] {
-  cursor: wait;
-}
-
-.obs-template-filmstrip__frame[aria-pressed='true'] {
-  border-color: var(--ui-color-accent);
-  background: var(--ui-color-surface-selected);
-}
-
-.obs-template-filmstrip__frame:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.obs-template-filmstrip__caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
-  min-inline-size: 0;
-  padding: var(--ui-space-1);
-  font-size: var(--ui-type-label-size);
-  font-weight: var(--ui-type-label-weight);
-  line-height: var(--ui-type-label-line-height);
-}
-
-.obs-template-filmstrip__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.obs-template-filmstrip__caption svg {
-  flex: none;
-  color: var(--ui-color-accent);
 }
 </style>

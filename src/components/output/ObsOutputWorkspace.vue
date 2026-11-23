@@ -11,6 +11,7 @@ import { useAppView } from '../../composables/useAppView.js';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
 import { readOutputPerformerGuide } from '../../composables/output/useOutputPerformerGuide.js';
+import { useOutputTemplateFavorites } from '../../composables/output/useOutputTemplateFavorites.js';
 import { MonitorUp, Settings } from '../../icons/index.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import { UI_LOCALE } from '../../utils/uiLocale.js';
@@ -39,6 +40,7 @@ function orderPresets(presets) {
 }
 
 const orderedPresets = computed(() => orderPresets(props.presets));
+const { favorites, toggleFavorite } = useOutputTemplateFavorites();
 const applyingPreset = shallowRef(false);
 const modeItems = [
   { id: 'workbench', label: t('outputPanel.workspace.workbench') },
@@ -287,7 +289,7 @@ onBeforeUnmount(() => {
               <UiIconButton
                 :icon="Settings"
                 :label="t('outputPanel.workspace.settings')"
-                @click="openSettings('output')"
+                @click="openSettings('output-browser')"
               />
             </ObsOutputRuntimeStatus>
           </div>
@@ -307,21 +309,23 @@ onBeforeUnmount(() => {
         class="obs-output-workspace__panel"
       >
         <ObsTemplateGallery
+          :active="activePage === 'gallery'"
           :side-width="sideWidth"
           :side-collapsed="sideCollapsed"
           :compact-side-open="compactSideOpen"
-          :presets="orderedPresets"
           :template-groups="templateGroups"
           :preview-scene="previewScene"
           :active-kind="activeKind"
           :selected-preset-id="browsedPreset?.id ?? null"
           :applied-preset-ids="appliedPresetIds"
+          :favorite-ids="favorites"
           :is-applying="applyingPreset || outputState.isSavingSlot"
           @update:side-width="setSideWidth"
           @update:side-collapsed="setSideCollapsed"
           @update:compact-side-open="setCompactSideOpen"
           @update:selected-preset-id="selectPreset"
           @apply-preset="applyPreset"
+          @toggle-favorite="toggleFavorite"
         />
       </section>
 
@@ -335,6 +339,7 @@ onBeforeUnmount(() => {
           :compact-side-open="compactSideOpen"
           :preset="appliedPreset"
           :quick-switch-presets="quickSwitchPresets"
+          :favorite-ids="favorites"
           :applying-preset="applyingPreset"
           :output-slot="activeSlot"
           :active-kind="activeKind"
