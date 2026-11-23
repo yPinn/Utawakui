@@ -264,7 +264,20 @@ export function projectLyricsDisplayFrame(
     };
   }
   if (options.templateId === 'ornate-vertical') {
-    const sectionAccentRanges = (base.ornateVertical?.sectionAccentRanges ?? [])
+    const continuation = line.continuation;
+    const accentRanges = continuation
+      ? [0, 1].flatMap((part) => {
+          const offset = part === 0 ? 0 : continuation.offset;
+          const original =
+            options.presentationDocument?.lines?.[continuation.index + part]
+              ?.presentation;
+          return (original?.sectionAccentRanges ?? []).map(({ from, to }) => ({
+            from: from + offset,
+            to: to + offset,
+          }));
+        })
+      : (base.ornateVertical?.sectionAccentRanges ?? []);
+    const sectionAccentRanges = accentRanges
       .filter(
         ({ from, to }) => from >= page.sourceStart && to <= page.sourceEnd,
       )
@@ -274,9 +287,41 @@ export function projectLyricsDisplayFrame(
       }));
     const presentation = adaptOrnateVerticalLyricsPresentation(page.text, {
       sectionAccentRanges,
+      segments: options.ornateSegments,
     });
     projected.ornateVertical = presentation;
-    if (presentation.segments.length > 1) {
+    if (continuation) {
+      const before = positionMs < continuation.startMs;
+      const right = presentation.segments.filter(
+        ({ sourceStart }) =>
+          sourceStart + page.sourceStart < continuation.offset,
+      );
+      const rate = options.rate > 0 ? options.rate : 1;
+      if (before)
+        projected.ornateVertical = {
+          ...presentation,
+          text: page.text
+            .slice(0, continuation.offset - page.sourceStart)
+            .trimEnd(),
+          segments: right,
+          units: right.flatMap(({ units }) => units),
+        };
+      projected.ornateColumnTiming = {
+        index: before ? 0 : 1,
+        playing: options.playing === true,
+        settledUnits: before
+          ? 0
+          : right.reduce((total, column) => total + column.units.length, 0),
+        remainingMs: Math.max(
+          0,
+          ((before ? continuation.startMs : page.endMs) - positionMs) / rate,
+        ),
+        nextDelayMs: before ? (continuation.startMs - positionMs) / rate : null,
+      };
+    } else if (
+      options.ornateColumnMode === 'replace' &&
+      presentation.segments.length > 1
+    ) {
       const starts = lyricsDisplayColumnStarts(
         line,
         page,
@@ -293,28 +338,21 @@ export function projectLyricsDisplayFrame(
           0,
           starts.findLastIndex((start) => start <= positionMs),
         );
-        const replace = options.ornateColumnMode === 'replace';
-        const first = replace ? columnIndex : 0;
+        const column = presentation.segments[columnIndex];
         const end = columnIndex + 1;
-        const kept = presentation.segments.slice(first, end);
-        const segments = replace ? [{ ...kept[0], index: 0 }] : kept;
         const next = starts[end];
         projected.ornateVertical = {
           ...presentation,
-          text: page.text
-            .slice(kept[0].sourceStart, presentation.segments[end]?.sourceStart)
-            .trim(),
-          segments,
-          units: segments.flatMap(({ units }) => units),
+          text: column.text,
+          segments: [
+            { ...column, index: 0, regionIndex: 0, regionColumnIndex: 0 },
+          ],
+          units: column.units,
         };
         projected.ornateColumnTiming = {
           index: columnIndex,
           playing: options.playing === true,
-          settledUnits: replace
-            ? 0
-            : kept
-                .slice(0, -1)
-                .reduce((count, column) => count + column.units.length, 0),
+          settledUnits: 0,
           remainingMs: Math.max(0, ((next ?? page.endMs) - positionMs) / rate),
           nextDelayMs: Number.isFinite(next)
             ? (next - positionMs) / rate

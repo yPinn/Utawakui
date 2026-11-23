@@ -52,16 +52,18 @@ export function ornateVerticalRevealDelays(
   );
 }
 
-export function ornateVerticalEntrancePlan(units, windowSeconds, mode, cue) {
+export function ornateVerticalEntrancePlan(columns, windowSeconds, mode, cue) {
   const slide = mode === 'random-slide';
   const duration = slide
     ? Math.max(0, Math.min(SLIDE_DURATION_SECONDS, windowSeconds))
     : ORNATE_VERTICAL_ENTER_DURATION_SECONDS;
-  const delays = ornateVerticalRevealDelays(
-    units,
-    windowSeconds,
-    mode === 'focus-first',
-    duration,
+  const delays = columns.flatMap((units) =>
+    ornateVerticalRevealDelays(
+      units,
+      windowSeconds,
+      mode === 'focus-first',
+      duration,
+    ),
   );
   if (!slide) return { duration, delays, offsets: null };
 
@@ -69,7 +71,7 @@ export function ornateVerticalEntrancePlan(units, windowSeconds, mode, cue) {
   let seed = 2166136261;
   for (const character of cue)
     seed = Math.imul(seed ^ character.codePointAt(0), 16777619);
-  const offsets = units.map(({ index }, order) => {
+  const offsets = columns.flat().map(({ index }, order) => {
     const value = Math.imul(seed ^ (index ?? order), 0x9e3779b9) >>> 16;
     const [x, y] = SLIDE_OFFSETS[value % SLIDE_OFFSETS.length];
     return { x: `${x}em`, y: `${y}em` };

@@ -1155,7 +1155,7 @@ describe('lyric fit controller lifecycle', () => {
   it('fits Ornate columns with room for each lowered top without a preliminary paint', () => {
     const renderForMeasurement = vi.fn();
     const s = surface('ornate-vertical', { renderForMeasurement });
-    const columns = ['それでも、', '口が別の生き物に', 'なったかのように、'];
+    const columns = ['それでも、口が別の生き物に', 'なったかのように、'];
     const text = columns.join('');
     s.window.innerHeight = 360;
     s.snapshot.lyrics.lines[0].text = text;
@@ -1170,7 +1170,7 @@ describe('lyric fit controller lifecycle', () => {
       result.frame.ornateVertical.segments.map(({ text }) => text),
     ).toEqual(columns);
 
-    s.window.innerHeight = 320;
+    s.window.innerHeight = 150;
     s.controller.invalidate();
     expect(
       s.controller.prepare(s.snapshot, s.frame, s.settings).frame.displayFit
@@ -1179,6 +1179,85 @@ describe('lyric fit controller lifecycle', () => {
     expect(renderForMeasurement).not.toHaveBeenCalled();
     s.controller.stop();
   });
+
+  it('keeps the authored 6/14 clause break within the Ornate safe area', () => {
+    const s = surface('ornate-vertical');
+    const columns = ['雨が降るから', '窓の向こうで朝まで待っている'];
+    const text = columns.join(' ');
+    s.window.innerHeight = 400;
+    s.snapshot.lyrics.lines[0].text = text;
+    s.frame.currentText = text;
+
+    const { frame } = s.controller.prepare(s.snapshot, s.frame, s.settings);
+    expect(frame.displayFit.pageCount).toBe(1);
+    expect(frame.ornateVertical.segments.map(({ text }) => text)).toEqual(
+      columns,
+    );
+    s.controller.stop();
+  });
+
+  it.each([
+    [360, ['だから一緒には居れないな'], [0, 0]],
+    [240, ['だから一緒には', '居れないな'], [0, 1, 1]],
+  ])(
+    'keeps a source-timed cause and continuation together at height %s',
+    (height, left, regions) => {
+      const right = '君を泣かすから';
+      const reply = 'だから一緒には居れないな';
+      const s = surface('ornate-vertical');
+      s.window.innerHeight = height;
+      Object.assign(s.snapshot.lyrics, {
+        trackId: 'example',
+        synced: true,
+        lines: [
+          { lineId: 'a', text: right, startMs: 1000, endMs: 2580 },
+          { lineId: 'b', text: reply, startMs: 2600, endMs: 5000 },
+        ],
+      });
+      Object.assign(s.snapshot.playback, {
+        track: { id: 'example' },
+        status: 'playing',
+      });
+      const at = (positionMs, mode = 'retain') => {
+        const snapshot = {
+          ...s.snapshot,
+          playback: { ...s.snapshot.playback, positionMs },
+        };
+        const settings = { ...s.settings, ornateColumnMode: mode };
+        return s.controller.prepare(
+          snapshot,
+          selectLyricsOverlayFrame(snapshot, settings),
+          settings,
+        );
+      };
+
+      const initial = at(1000);
+      expect(
+        initial.frame.ornateVertical.segments.map(({ text }) => text),
+      ).toEqual([right]);
+      expect(initial.delayMs).toBe(1600);
+      expect(at(2590).frame.ornateVertical.text).toBe(right);
+      expect(at(2590, 'replace').frame.visible).toBe(false);
+
+      const continued = at(2600);
+      expect(continued.frame.lineIndex).toBe(1);
+      expect(continued.frame.displayBatchId).toBe(initial.frame.displayBatchId);
+      expect(continued.frame.displayFit.pageCount).toBe(1);
+      expect(
+        continued.frame.ornateVertical.segments.map(({ text }) => text),
+      ).toEqual([right, ...left]);
+      expect(
+        continued.frame.ornateVertical.segments.map(
+          ({ regionIndex }) => regionIndex,
+        ),
+      ).toEqual(regions);
+      expect(continued.frame.ornateColumnTiming.settledUnits).toBe(
+        right.length,
+      );
+      expect(at(5000).frame.visible).toBe(false);
+      s.controller.stop();
+    },
+  );
 
   it('reports the fitted media clock to the dev stroke preview', () => {
     const s = surface('ornate-vertical');
@@ -1208,8 +1287,54 @@ describe('lyric fit controller lifecycle', () => {
     s.controller.stop();
   });
 
-  it('wakes at the next Ornate column on the playback clock and keeps the prior column settled', () => {
+  it('fits four columns across two measured regions in one batch before paging', () => {
     const s = surface('ornate-vertical');
+    const columns = [
+      '夜が明けるまで',
+      '窓辺で待って。',
+      '街が目覚めたら',
+      '港まで歩こう。',
+    ];
+    const text = columns.join('');
+    s.window.innerHeight = 270;
+    s.snapshot.lyrics.lines = [
+      {
+        text,
+        startMs: 1000,
+        endMs: 6600,
+        segments: columns.map((text, index) => ({
+          text,
+          startMs: 1000 + 1400 * index,
+          endMs: 2400 + 1400 * index,
+        })),
+      },
+    ];
+    s.frame.currentText = text;
+    s.frame.language = 'ja';
+    s.snapshot.playback.positionMs = 1000;
+    const first = s.controller.prepare(s.snapshot, s.frame, s.settings).frame;
+    expect(first.displayFit.pageCount).toBe(1);
+    expect(first.ornateVertical.segments.map(({ text }) => text)).toEqual(
+      columns,
+    );
+    expect(
+      first.ornateVertical.segments.map(({ regionIndex }) => regionIndex),
+    ).toEqual([0, 0, 1, 1]);
+    expect(first.ornateColumnTiming).toBeUndefined();
+    expect(first.ornateVertical.placement).toBe('right');
+
+    // Each column can fit on its own, but the complete row exceeds this width.
+    s.elements.root.getBoundingClientRect = () => ({ width: 100, height: 200 });
+    s.controller.invalidate();
+    const paged = s.controller.prepare(s.snapshot, s.frame, s.settings).frame;
+    expect(paged.displayFit.pageCount).toBeGreaterThan(1);
+    expect(s.probes()).toBe(0);
+    s.controller.stop();
+  });
+
+  it('wakes at the next Ornate column on the playback clock in replace mode', () => {
+    const s = surface('ornate-vertical');
+    s.settings.ornateColumnMode = 'replace';
     const text = '星の名前を 覚えてみて';
     s.snapshot.lyrics.lines = [
       {
@@ -1230,8 +1355,8 @@ describe('lyric fit controller lifecycle', () => {
     expect(first.delayMs).toBe(800);
     s.snapshot.playback.positionMs = 2600;
     const second = s.controller.prepare(s.snapshot, s.frame, s.settings);
-    expect(second.frame.ornateVertical.text).toBe(text);
-    expect(second.frame.ornateColumnTiming.settledUnits).toBe(5);
+    expect(second.frame.ornateVertical.text).toBe('覚えてみて');
+    expect(second.frame.ornateColumnTiming.settledUnits).toBe(0);
     expect(second.delayMs).toBeNull();
     s.controller.stop();
   });
@@ -1241,11 +1366,11 @@ describe('lyric fit controller lifecycle', () => {
       const styles = node.children.flatMap((unit) =>
         unit.children.map((glyph) => glyph.style),
       );
-      if (styles.length === 0) return rect;
+      if (!styles.some(({ fontSize }) => fontSize)) return rect;
       return {
         ...rect,
         height: styles.reduce((height, style) => {
-          const size = 16 * parseFloat(style.fontSize);
+          const size = 16 * parseFloat(style.fontSize ?? '1');
           return height + size * (1 + parseFloat(style.marginInlineEnd ?? '0'));
         }, 0),
       };
@@ -1254,7 +1379,7 @@ describe('lyric fit controller lifecycle', () => {
     s.document.documentElement = {
       dataset: { ovlOrnateArrangement: 'uniform' },
     };
-    s.window.innerHeight = 150;
+    s.window.innerHeight = 135;
     s.frame.currentText = s.snapshot.lyrics.lines[0].text = '山川風月灯';
 
     expect(

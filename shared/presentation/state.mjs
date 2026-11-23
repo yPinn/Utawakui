@@ -32,6 +32,7 @@ import {
 import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
+  ornateVerticalContinuationLine,
 } from './ornateVerticalPresentation.mjs';
 
 function text(value) {
@@ -2281,7 +2282,27 @@ export function selectLyricsFrame(snapshot, options = {}) {
   const lyrics = snapshot?.lyrics;
   const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
   const nowMs = options.nowMs ?? Date.now();
-  const activeIndex = activeLyricIndex(snapshot, lines, nowMs);
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  let activeIndex = activeLyricIndexAtPosition(lyrics, lines, positionMs);
+  if (
+    activeIndex < 0 &&
+    lyrics?.synced === true &&
+    options.templateId === 'ornate-vertical' &&
+    options.ornateColumnMode !== 'replace'
+  ) {
+    activeIndex = lines.findIndex((line, index) => {
+      const nextStart = lines[index + 1]?.startMs;
+      return (
+        line.endMs <= positionMs &&
+        positionMs < nextStart &&
+        ornateVerticalContinuationLine(
+          lines,
+          index,
+          effectiveLineEnd(snapshot, lines, index + 1),
+        )?.continuation.index === index
+      );
+    });
+  }
   if (
     !trackId ||
     lyrics?.trackId !== trackId ||
@@ -2317,7 +2338,6 @@ export function selectLyricsFrame(snapshot, options = {}) {
   );
   const currentSegments = currentSegmentProjection?.segments ?? null;
   const lineEndMs = effectiveLineEnd(snapshot, lines, activeIndex);
-  const positionMs = lyricsPositionMs(snapshot, nowMs);
   const lineProgress =
     lyrics?.synced === true && Number.isFinite(lines[activeIndex]?.startMs)
       ? boundedProgress(positionMs, lines[activeIndex].startMs, lineEndMs)

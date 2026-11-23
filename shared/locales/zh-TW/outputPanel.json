@@ -604,11 +604,11 @@
       "ornateColumnMode": {
         "label": "多欄顯示",
         "options": {
-          "retain": "保留前欄",
+          "retain": "同批顯示",
           "replace": "一次一欄"
         },
         "optionHints": {
-          "retain": "新欄出現在左側，前欄繼續顯示。",
+          "retain": "同批歌詞一起顯示，依序從右往左閱讀。",
           "replace": "新欄出現時，前一欄會消失。"
         }
       },
@@ -649,7 +649,7 @@
         }
       },
       "sectionAccent": {
-        "label": "段落重點色",
+        "label": "段落強調",
         "options": {
           "off": "關閉",
           "auto": "自動"

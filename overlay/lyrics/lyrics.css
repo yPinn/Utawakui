@@ -1047,7 +1047,7 @@
     display: block;
     flex: 0 0 auto;
     line-height: inherit;
-    white-space: nowrap;
+    white-space: pre;
     writing-mode: vertical-rl;
     text-orientation: mixed;
   }

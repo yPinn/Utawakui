@@ -6,9 +6,9 @@ import {
 } from '../../../../shared/presentation/ornateVerticalMotion.mjs';
 import {
   ORNATE_VERTICAL_COLUMN_GAP,
-  ORNATE_VERTICAL_COLUMN_STEP_EM,
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
+  ornateVerticalColumnSpacing,
   ornateVerticalGlyphParts,
 } from '../../../../shared/presentation/ornateVerticalPresentation.mjs';
 
@@ -50,36 +50,42 @@ const previewLines = computed(() => {
       lineIndex:
         documentLines[index]?.text?.trim() === text.trim() ? index : -1,
     });
+    const cue = `${index}\0${presentation.text}`;
 
     return {
       ...presentation,
       offset: lineIndex === 0 ? '0s' : '-3.2s',
       segments: presentation.segments.map((segment) => {
         const glyphParts = ornateVerticalGlyphParts(segment.units, mixedSizes);
+        const { topEm, extraGapEm } = ornateVerticalColumnSpacing(segment);
         const columnStart =
           (segment.units[0].index / presentation.units.length) * 3.2;
         const columnDwell =
           (segment.units.length / presentation.units.length) * 3.2;
+        const replace = replaceColumns.value;
         const { delays, offsets } = ornateVerticalEntrancePlan(
-          segment.units,
-          Math.max(0, columnDwell - 0.18),
+          [segment.units],
+          Math.max(0, (replace ? columnDwell : 3.2) - 0.18),
           entrance.value,
-          `${index}\0${presentation.text}`,
+          cue,
         );
         return {
           ...segment,
+          topEm,
+          extraGapEm,
           start: `${columnStart}s`,
-          visible: replaceColumns.value
-            ? `${(columnDwell / 6.4) * 100}%`
-            : '50%',
-          units: segment.units.map((unit, index) => ({
-            ...unit,
-            parts: glyphParts[index],
-            mixedSizes,
-            instant: !offsets && delays[index] === 0,
-            offset: offsets?.[index],
-            delay: `${columnStart + delays[index]}s`,
-          })),
+          visible: `${(columnDwell / 6.4) * 100}%`,
+          units: segment.units.map((unit, index) => {
+            const delay = delays[index];
+            return {
+              ...unit,
+              parts: glyphParts[index],
+              mixedSizes,
+              instant: !offsets && delay === 0,
+              offset: offsets?.[index],
+              delay: `${(replace ? columnStart : 0) + delay}s`,
+            };
+          }),
         };
       }),
     };
@@ -114,10 +120,10 @@ const previewLines = computed(() => {
           :key="`${lineIndex}-segment-${segment.index}-${segment.text}`"
           class="ornate-preview__segment"
           :data-segment-index="segment.index"
+          :data-region-index="segment.regionIndex"
           :style="{
-            marginTop: replaceColumns
-              ? undefined
-              : `${segment.index * ORNATE_VERTICAL_COLUMN_STEP_EM}em`,
+            marginTop: replaceColumns ? undefined : `${segment.topEm}em`,
+            marginRight: replaceColumns ? undefined : `${segment.extraGapEm}em`,
             '--ornate-column-start': segment.start,
             '--ornate-column-visible': segment.visible,
           }"
@@ -200,7 +206,7 @@ const previewLines = computed(() => {
   flex-direction: row-reverse;
   align-items: flex-start;
   column-gap: var(--ornate-column-gap);
-  font-size: var(--ui-output-preview-ornate-font-size);
+  font-size: calc(var(--ovl-authored-font-rem, 3) * var(--obs-canvas-rem));
   opacity: 0;
 }
 
@@ -210,7 +216,7 @@ const previewLines = computed(() => {
   line-height: inherit;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  white-space: nowrap;
+  white-space: pre;
 }
 
 .ornate-preview__line:first-child {
@@ -310,7 +316,8 @@ const previewLines = computed(() => {
   display: none;
 }
 
-.ornate-preview[data-animated='true'] .ornate-preview__segment {
+.ornate-preview[data-animated='true'][data-column-mode='replace']
+  .ornate-preview__segment {
   animation: ornate-preview-column-cycle 6.4s
     linear(
       0 0%,

@@ -51,23 +51,39 @@ describe('Ornate Vertical motion contract', () => {
 
   it('keeps slide offsets stable per cue and unit across column rebuilds', () => {
     const units = Array.from({ length: 8 }, (_, index) => ({ index }));
-    const plan = ornateVerticalEntrancePlan(units, 0.6, 'random-slide', '10');
+    const plan = ornateVerticalEntrancePlan([units], 0.6, 'random-slide', '10');
     const shifted = ornateVerticalEntrancePlan(
-      units.slice(3),
+      [units.slice(3)],
       0.6,
       'random-slide',
       '10',
     );
     expect(shifted.offsets).toEqual(plan.offsets.slice(3));
     expect(
-      ornateVerticalEntrancePlan(units, 0.6, 'random-slide', '28').offsets,
+      ornateVerticalEntrancePlan([units], 0.6, 'random-slide', '28').offsets,
     ).not.toEqual(plan.offsets);
     expect(plan.offsets.some(({ x }) => parseFloat(x) < 0)).toBe(true);
     expect(plan.offsets.some(({ x }) => parseFloat(x) > 0)).toBe(true);
     expect(plan.delays[0]).toBe(0);
     expect(plan.delays.at(-1) + plan.duration).toBeCloseTo(0.6);
     expect(
-      ornateVerticalEntrancePlan(units, 0.2, 'random-slide', '10').duration,
+      ornateVerticalEntrancePlan([units], 0.2, 'random-slide', '10').duration,
     ).toBe(0.2);
+  });
+
+  it('gives each column the same onset and its own reveal order in one batch', () => {
+    const columns = [
+      [{ kind: 'kana' }, { kind: 'han' }],
+      [{ kind: 'han' }, { kind: 'kana' }, { kind: 'kana' }],
+    ];
+    expect(
+      ornateVerticalEntrancePlan(columns, 1, 'sequential', '10').delays,
+    ).toEqual([0, 0.12, 0, 0.12, 0.24]);
+    expect(
+      ornateVerticalEntrancePlan(columns, 1, 'focus-first', '10').delays,
+    ).toEqual([0.12, 0, 0, 0.12, 0.24]);
+    expect(
+      ornateVerticalEntrancePlan(columns, 1, 'random-slide', '10').delays,
+    ).toEqual([0, 0.12, 0, 0.12, 0.24]);
   });
 });

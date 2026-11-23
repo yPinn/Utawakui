@@ -608,11 +608,11 @@
       "ornateColumnMode": {
         "label": "Multiple columns",
         "options": {
-          "retain": "Keep earlier",
+          "retain": "Show together",
           "replace": "One at a time"
         },
         "optionHints": {
-          "retain": "New columns appear on the left while earlier ones stay visible.",
+          "retain": "Columns in the same lyric batch appear together and read from right to left.",
           "replace": "The previous column disappears when the next one appears."
         }
       },

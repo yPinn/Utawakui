@@ -183,7 +183,7 @@ describe('overlay appearance', () => {
       ovlKineticMaterial: 'candy-rim',
       ovlKineticArrangement: 'straight',
       ovlOrnateArrangement: 'mixed-sizes',
-      ovlOrnateEntrance: 'sequential',
+      ovlOrnateEntrance: 'random-slide',
       ovlReceiptDirection: 'down',
       ovlReceiptReview: 'on',
       ovlReceiptReviewInterval: '15',

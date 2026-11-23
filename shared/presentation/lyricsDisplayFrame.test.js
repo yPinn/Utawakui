@@ -27,11 +27,11 @@ const plan = {
 };
 describe('capacity pages keep existing template projections', () => {
   it.each([
-    ['星の名前を', '覚えてみて', 5],
-    ['星が瞬く、', '「ここだよ？」', 4],
+    ['星の名前を', '覚えてみて'],
+    ['星が瞬く。', '「ここだよ？」'],
   ])(
-    'uses the source cue for Ornate columns after %s',
-    (first, second, settledUnits) => {
+    'projects one batch and uses the source cue only in replace mode after %s',
+    (first, second) => {
       const text = `${first} ${second}`;
       const source = {
         text,
@@ -69,13 +69,16 @@ describe('capacity pages keep existing template projections', () => {
           },
         );
 
-      expect(at(2798).ornateVertical.text).toBe(first);
-      expect(at(2798).ornateColumnTiming.nextDelayMs).toBe(1);
-      const retained = at(2800);
+      expect(at(2798, 'replace').ornateVertical.text).toBe(first);
+      expect(at(2798, 'replace').ornateColumnTiming.nextDelayMs).toBe(1);
+      const retained = at(1000, 'retain');
       expect(
         retained.ornateVertical.segments.map((column) => column.text),
       ).toEqual([first, second]);
-      expect(retained.ornateColumnTiming.settledUnits).toBe(settledUnits);
+      expect(retained.ornateColumnTiming).toBeUndefined();
+      expect(at(2800, 'retain').ornateVertical).toEqual(
+        retained.ornateVertical,
+      );
       const switched = at(2800, 'replace');
       expect(switched.currentText).toBe(text);
       expect(switched.ornateVertical.text).toBe(second);

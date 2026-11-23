@@ -12,7 +12,9 @@ import {
 } from '../../shared/presentation/lyricsDisplayLayout.mjs';
 import { projectLyricsDisplayFrame } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import {
-  ORNATE_VERTICAL_COLUMN_STEP_EM,
+  ORNATE_VERTICAL_COLUMN_GAP,
+  ornateVerticalColumnSpacing,
+  ornateVerticalContinuationLine,
   splitOrnateVerticalRevealUnit,
   splitOrnateVerticalSegments,
 } from '../../shared/presentation/ornateVerticalPresentation.mjs';
@@ -68,6 +70,9 @@ function createMeasurement(
   const mixedSizes =
     ornate &&
     document.documentElement?.dataset.ovlOrnateArrangement === 'mixed-sizes';
+  const slideWords =
+    ornate &&
+    document.documentElement?.dataset.ovlOrnateEntrance === 'random-slide';
   const vertical =
     centered ||
     chalkboard ||
@@ -113,8 +118,17 @@ function createMeasurement(
       window.innerWidth * 0.9,
     ) -
     padding * 2;
+  // Ornate's stage runs from 18% to 96% of the canvas. Leave room for the
+  // lowered column and its ink while preserving longer authored phrases.
+  const heightFraction = ornate
+    ? 0.74
+    : centered
+      ? 0.68
+      : chalkboard
+        ? 0.44
+        : 0.65;
   let height = Math.min(
-    window.innerHeight * (centered ? 0.68 : chalkboard ? 0.44 : 0.65),
+    window.innerHeight * heightFraction,
     window.innerHeight - padding * 2,
   );
   if (templateId === 'live-stage') {
@@ -135,6 +149,7 @@ function createMeasurement(
   if (width <= 0 || height <= 0) return null;
   const probe = document.createElement('span');
   probe.setAttribute('aria-hidden', 'true');
+  if (slideWords) probe.dataset.ornateEntrance = 'random-slide';
   if (centered) probe.lang = elements.root.lang;
   Object.assign(probe.style, {
     position: 'fixed',
@@ -142,11 +157,7 @@ function createMeasurement(
     top: '0',
     visibility: 'hidden',
     display: 'block',
-    whiteSpace: centered
-      ? 'preserve-spaces nowrap'
-      : mixedSizes
-        ? 'nowrap'
-        : 'pre',
+    whiteSpace: centered ? 'preserve-spaces nowrap' : 'pre',
     inlineSize: 'max-content',
     fontFamily: style.fontFamily,
     fontSize: style.fontSize,
@@ -175,19 +186,58 @@ function createMeasurement(
   const measured = new Map(),
     layouts = new Map(),
     wrappedPages = new Map();
-  const fitsLine = (text, units, topOffset = 0) => {
+  const measureLine = (text, units) => {
     let rect = measured.get(text);
     if (!rect) {
       probe.textContent = units ? '' : text.trimEnd();
-      if (units) appendOrnateSegmentUnits(document, probe, units, true);
+      if (units) appendOrnateSegmentUnits(document, probe, units, mixedSizes);
       if (counters) counters.probeCount++;
       rect = probe.getBoundingClientRect();
       measured.set(text, rect);
     }
+    return rect;
+  };
+  const fitsLine = (text, units) => {
+    const rect = measureLine(text, units);
     return (
       rect.width <= (chalkboard || centered ? lineHeight * 1.2 : width) &&
-      rect.height + topOffset <= (vertical ? height : lineHeight * 1.2)
+      rect.height <= (vertical ? height : lineHeight * 1.2)
     );
+  };
+  const ornateLayouts = new Map();
+  const ornateGap = parseFloat(ORNATE_VERTICAL_COLUMN_GAP) * size;
+  const fitsOrnateColumns = (columns, timedContinuation) => {
+    let occupiedWidth = (columns.length - 1) * ornateGap;
+    return (
+      columns.every((column) => {
+        const { text, units } = column;
+        const { topEm, extraGapEm } = ornateVerticalColumnSpacing(column, {
+          timedContinuation,
+        });
+        const rect = measureLine(
+          text,
+          units.flatMap(splitOrnateVerticalRevealUnit),
+        );
+        occupiedWidth += rect.width + extraGapEm * size;
+        return rect.height + topEm * size <= height;
+      }) && occupiedWidth <= width
+    );
+  };
+  const ornateColumns = (text, continuationOffset) => {
+    const key =
+      continuationOffset === undefined
+        ? text
+        : JSON.stringify([text, continuationOffset]);
+    if (!ornateLayouts.has(key)) {
+      const timedContinuation = continuationOffset !== undefined;
+      const fits = (columns) => fitsOrnateColumns(columns, timedContinuation);
+      const columns = splitOrnateVerticalSegments(text, {
+        fits,
+        continuationOffset,
+      });
+      ornateLayouts.set(key, { columns, fits: fits(columns) });
+    }
+    return ornateLayouts.get(key);
   };
   const layout = (text) => {
     if (!layouts.has(text)) {
@@ -209,20 +259,10 @@ function createMeasurement(
   const pageKey = (text, range) =>
     `${range?.sourceStart ?? 0}:${range?.sourceEnd ?? text.length}`;
   return {
+    ...(ornate && { ornateColumns }),
     fits: (text, range) => {
       const inkText = text.trimEnd();
-      if (ornate) {
-        return splitOrnateVerticalSegments(inkText).every(
-          ({ text, units, index }) =>
-            fitsLine(
-              text,
-              mixedSizes
-                ? units.flatMap(splitOrnateVerticalRevealUnit)
-                : undefined,
-              index * ORNATE_VERTICAL_COLUMN_STEP_EM * size,
-            ),
-        );
-      }
+      if (ornate) return ornateColumns(inkText).fits;
       // A generous advance budget cheaply rejects obviously excessive text.
       // The actual DOM measurement remains authoritative for every accepted page.
       if (
@@ -473,6 +513,18 @@ export function createLyricsFitController(options = {}) {
       settings.templateId === 'karaoke-stack' ? (frame.ktv ?? frame) : frame;
     const canonical = snapshot?.lyrics?.lines?.[base.lineIndex];
     if (!canonical) return { frame, delayMs: null };
+    const continuation =
+      settings.templateId === 'ornate-vertical' &&
+      settings.ornateColumnMode !== 'replace' &&
+      snapshot.lyrics.synced === true
+        ? ornateVerticalContinuationLine(
+            snapshot.lyrics.lines,
+            base.lineIndex,
+            Number.isFinite(snapshot.playback?.durationMs)
+              ? snapshot.playback.durationMs + (snapshot.lyrics.offsetMs ?? 0)
+              : undefined,
+          )
+        : null;
     const line = {
       ...canonical,
       endMs:
@@ -537,6 +589,7 @@ export function createLyricsFitController(options = {}) {
         : null,
       settings.lyricsPresentationPolicyId,
       line,
+      continuation,
       canonical.estimatedFineTiming,
       rate,
       base.currentReading,
@@ -608,7 +661,7 @@ export function createLyricsFitController(options = {}) {
         const layoutOptions = {
           fits: measurement.fits,
           rate,
-          sequentialRows: !chalkboard,
+          sequentialRows: !chalkboard && !ornate,
           phraseRows: !chalkboard && !ornate,
           keepLatinRuns: ornate || !chalkboard,
           preserveSourceStarts: centered,
@@ -616,7 +669,25 @@ export function createLyricsFitController(options = {}) {
           language: base.language,
           ...(chalkboard || centered ? { minimumDwellMs: 800 } : {}),
         };
-        let plan = planLyricsDisplay(line, layoutOptions);
+        const combined =
+          continuation &&
+          measurement.ornateColumns?.(
+            continuation.text,
+            continuation.continuation.offset,
+          );
+        const fitsTogether =
+          combined?.fits &&
+          combined.columns.some(
+            ({ sourceStart }) =>
+              sourceStart === continuation.continuation.offset,
+          );
+        const displayLine = fitsTogether ? continuation : line;
+        let plan = planLyricsDisplay(
+          displayLine,
+          fitsTogether
+            ? { ...layoutOptions, fits: (text) => text === continuation.text }
+            : layoutOptions,
+        );
         if ((chalkboard || centered) && plan.reason === 'duration-capacity') {
           // Preserve the entire source line when its cue is too short for the
           // preferred dwell. The renderer cuts the reveal for very short pages.
@@ -628,6 +699,15 @@ export function createLyricsFitController(options = {}) {
         const multiline = [];
         entry = {
           plan,
+          line: displayLine,
+          ornateSegments: measurement.ornateColumns
+            ? fitsTogether
+              ? [combined.columns]
+              : plan.pages.map(
+                  (page) =>
+                    measurement.ornateColumns(page.text.trimEnd()).columns,
+                )
+            : null,
           nextPreview:
             settings.templateId === 'karaoke-stack' && base.nextText
               ? (measurement.rows(base.nextText)?.[0] ?? null)
@@ -682,14 +762,21 @@ export function createLyricsFitController(options = {}) {
         'chalkboard-vertical',
         'centered-vertical',
       ].includes(settings.templateId);
-    const projected = projectLyricsDisplayFrame(frame, line, entry.plan, at, {
-      ...settings,
-      rows,
-      nextPreview: entry.nextPreview,
-      rate,
-      playing: snapshot.playback?.status === 'playing',
-      force: active,
-    });
+    const projected = projectLyricsDisplayFrame(
+      frame,
+      entry.line,
+      entry.plan,
+      at,
+      {
+        ...settings,
+        rows,
+        ornateSegments: entry.ornateSegments?.[selected.index],
+        nextPreview: entry.nextPreview,
+        rate,
+        playing: snapshot.playback?.status === 'playing',
+        force: active,
+      },
+    );
     lastPrepared = {
       key,
       batched: Boolean(

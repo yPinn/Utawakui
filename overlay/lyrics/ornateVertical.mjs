@@ -1,3 +1,4 @@
+import { OUTPUT_APPEARANCE_DEFAULTS } from '../../shared/outputAppearance.mjs';
 import {
   ORNATE_VERTICAL_ENTER_EASE,
   ORNATE_VERTICAL_SHADOW_DISTANCE,
@@ -7,7 +8,7 @@ import {
 import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
 import {
   ORNATE_VERTICAL_COLUMN_GAP,
-  ORNATE_VERTICAL_COLUMN_STEP_EM,
+  ornateVerticalColumnSpacing,
   ornateVerticalGlyphParts,
 } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 
@@ -277,13 +278,16 @@ function createOrnateLine(
   let stroke = null;
   for (const segment of presentation.segments) {
     const segmentElement = documentApi.createElement('span');
+    const { topEm, extraGapEm } = ornateVerticalColumnSpacing(segment, {
+      timedContinuation: presentation.timedContinuation,
+    });
     segmentElement.className = 'lyrics-overlay__ornate-segment';
     segmentElement.dataset.ornateSegmentIndex = String(segment.index);
+    segmentElement.dataset.ornateRegionIndex = String(segment.regionIndex);
     segmentElement.dataset.ornateSegmentText = segment.text;
-    segmentElement.style.setProperty(
-      'margin-top',
-      `${segment.index * ORNATE_VERTICAL_COLUMN_STEP_EM}em`,
-    );
+    segmentElement.style.setProperty('margin-top', `${topEm}em`);
+    if (extraGapEm)
+      segmentElement.style.setProperty('margin-right', `${extraGapEm}em`);
 
     const columnUnits = appendOrnateSegmentUnits(
       documentApi,
@@ -373,6 +377,8 @@ export function renderOrnateVerticalPresentation(
     ? source.segments
         .map((segment, index) => ({
           index: Number.isSafeInteger(segment?.index) ? segment.index : index,
+          regionIndex: segment?.regionIndex ?? 0,
+          regionColumnIndex: segment?.regionColumnIndex ?? index,
           text: String(segment?.text ?? ''),
           units: Array.isArray(segment?.units)
             ? segment.units.filter((unit) => String(unit?.text ?? ''))
@@ -384,13 +390,20 @@ export function renderOrnateVerticalPresentation(
     sourceSegments.length > 0
       ? sourceSegments
       : units.length > 0
-        ? [{ index: 0, text, units }]
+        ? [{ index: 0, regionIndex: 0, regionColumnIndex: 0, text, units }]
         : [];
   const placement = 'right';
-  const presentation = { placement, segments, text, units };
+  const presentation = {
+    placement,
+    segments,
+    text,
+    units,
+    timedContinuation: Boolean(frame.ornateColumnTiming),
+  };
   const appearance = elements.current.ownerDocument?.documentElement?.dataset;
   const mixedSizes = appearance?.ovlOrnateArrangement === 'mixed-sizes';
-  const entrance = appearance?.ovlOrnateEntrance ?? 'sequential';
+  const entrance =
+    appearance?.ovlOrnateEntrance ?? OUTPUT_APPEARANCE_DEFAULTS.ornateEntrance;
   const shadowEnabled = appearance?.ovlTextShadow !== 'off';
   const clock = frame.ornateStrokeClock;
   const gsap = options.gsap ?? globalThis.gsap ?? null;
@@ -412,7 +425,7 @@ export function renderOrnateVerticalPresentation(
     placement,
     source?.keyword?.text ?? null,
     source?.sectionAccentRanges ?? null,
-    segments.map((segment) => segment.text),
+    segments.map(({ text, regionIndex }) => [text, regionIndex]),
   ]);
   const documentApi = elements.current.ownerDocument ?? globalThis.document;
   const active = ornateVerticalTransitions.get(elements.root);
@@ -475,8 +488,14 @@ export function renderOrnateVerticalPresentation(
   const revealWindow = Number.isFinite(remainingMs)
     ? remainingMs / 1000 - 0.18
     : Infinity;
+  let unitsBeforeColumn = 0;
+  const freshColumns = segments.map(({ units }) => {
+    const pending = units.slice(Math.max(0, settledUnits - unitsBeforeColumn));
+    unitsBeforeColumn += units.length;
+    return pending;
+  });
   const { delays, duration, offsets } = ornateVerticalEntrancePlan(
-    segments.flatMap(({ units }) => units).slice(settledUnits),
+    freshColumns,
     revealWindow,
     entrance,
     `${batchKey}\0${frame.currentText ?? text}`,

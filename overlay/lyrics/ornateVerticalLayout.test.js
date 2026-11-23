@@ -17,13 +17,15 @@ describe('Ornate Vertical layout contract', () => {
     expect(css).not.toContain("data-ornate-placement='left'");
     expect(css).not.toContain("data-ornate-placement='center'");
     expect(css).toContain('writing-mode: vertical-rl');
-    expect(css).toContain('white-space: nowrap');
+    expect(css).toMatch(
+      /\.lyrics-overlay__ornate-segment\s*\{[^}]*white-space:\s*pre;/u,
+    );
     expect(css).toContain('align-self: var(--ovl-user-position-block)');
     expect(css).toContain('inset-inline-start: var(--ovl-user-position-x)');
     expect(css).toContain('inset-block-start: var(--ovl-user-position-y)');
-    expect(css).toContain('--ovl-ornate-font-size: 4.6vh');
-    expect(css).toContain("data-ovl-scale='small'");
-    expect(css).toContain("data-ovl-scale='large'");
+    expect(css).toMatch(
+      /font-size:\s*calc\(\s*var\(--ovl-authored-font-rem, 3\)\s*\*\s*max\(0\.75rem, min\(1rem, 1\.5vh\)\)\s*\);/u,
+    );
     expect(css).toMatch(
       /\.lyrics-overlay__ornate-line\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*row-reverse;[^}]*align-items:\s*flex-start;/s,
     );

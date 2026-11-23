@@ -568,7 +568,7 @@ const FIELD_DEFINITIONS = [
     reflow: false,
     order: 26,
     control: 'select',
-    defaultValue: 'sequential',
+    defaultValue: 'random-slide',
     options: [
       { id: 'sequential' },
       { id: 'focus-first' },

@@ -1918,7 +1918,11 @@ describe('lyrics overlay renderer', () => {
     const elements = domElements();
     const documentApi = elements.current.ownerDocument;
     documentApi.documentElement = {
-      dataset: { ovlFont: 'ornate', ovlTextShadow: 'off' },
+      dataset: {
+        ovlFont: 'ornate',
+        ovlTextShadow: 'off',
+        ovlOrnateEntrance: 'sequential',
+      },
     };
     elements.root.getBoundingClientRect = () => ({ bottom: 900 });
     documentApi.createElementNS.mockImplementation((_namespace, name) => ({
@@ -2057,7 +2061,7 @@ describe('lyrics overlay renderer', () => {
     expect(line.style.values['--ornate-column-gap']).toBe('0.5em');
     expect(
       line.children.map((segment) => segment.style.values['margin-top']),
-    ).toEqual(['0em', '1.25em']);
+    ).toEqual(['0em', '2em']);
     expect(line.children.map((segment) => segment.dataset)).toEqual([
       expect.objectContaining({
         ornateSegmentIndex: '0',
@@ -2070,8 +2074,38 @@ describe('lyrics overlay renderer', () => {
     ]);
   });
 
+  it('renders a four-column Ornate batch with a wider gap and a new top line for the left region', () => {
+    const elements = domElements();
+    const text =
+      '夜が明けるまで窓辺で、静かに君を待っていた。街が目覚めたら港まで、風の音を聞いて歩こう。';
+    renderLyricsFrame(
+      elements,
+      {
+        visible: true,
+        currentText: text,
+        ornateVertical: adaptOrnateVerticalLyricsPresentation(text),
+      },
+      { templateId: 'ornate-vertical', reducedMotion: true },
+    );
+
+    const line = elements.current.children[0];
+    expect(line.dataset.ornateSegmentCount).toBe('4');
+    expect(
+      line.children.map(({ dataset }) => dataset.ornateRegionIndex),
+    ).toEqual(['0', '0', '1', '1']);
+    expect(
+      line.children.map(({ style }) => style.values['margin-top']),
+    ).toEqual(['0em', '2em', '0em', '2em']);
+    expect(
+      line.children.map(({ style }) => style.values['margin-right'] ?? '0em'),
+    ).toEqual(['0em', '0em', '2em', '0em']);
+  });
+
   it('replaces Ornate Vertical without overlap and starts with visible ink', () => {
     const elements = domElements();
+    elements.current.ownerDocument.documentElement = {
+      dataset: { ovlOrnateEntrance: 'sequential' },
+    };
     const { gsap, timelines } = gsapHarness();
     const frame = (text, lineIndex) => ({
       revision: lineIndex + 1,
@@ -2158,10 +2192,13 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
   });
 
-  it('reveals full Han and kana glyphs individually and keeps the right column while the left arrives', () => {
+  it('starts both Ornate columns together and reveals full glyphs within each column', () => {
     const elements = domElements();
+    elements.current.ownerDocument.documentElement = {
+      dataset: { ovlOrnateEntrance: 'sequential' },
+    };
     const { gsap, timelines } = gsapHarness();
-    const currentText = '星が沈むまで、夜明けを待っていた';
+    const currentText = '星が沈んだ。夜明けを待っていた';
     const frame = {
       visible: true,
       language: 'ja',
@@ -2172,7 +2209,7 @@ describe('lyrics overlay renderer', () => {
 
     renderLyricsFrame(elements, frame, { gsap, templateId: 'ornate-vertical' });
     const [right, left] = elements.current.children[0].children;
-    expect(right.textContent).toBe('星が沈むまで、');
+    expect(right.textContent).toBe('星が沈んだ。');
     expect(left.children.slice(0, 3).map((unit) => unit.textContent)).toEqual([
       '夜',
       '明',
@@ -2181,8 +2218,9 @@ describe('lyrics overlay renderer', () => {
     const startingPoses = new Map(
       gsap.set.mock.calls.filter(([, vars]) => vars.autoAlpha === 0),
     );
-    const entrants = [...right.children.slice(1), ...left.children];
+    const entrants = [...right.children.slice(1), ...left.children.slice(1)];
     expect(startingPoses.has(right.children[0])).toBe(false);
+    expect(startingPoses.has(left.children[0])).toBe(false);
     expect([...startingPoses]).toEqual(
       entrants.map((unit) => [unit, { autoAlpha: 0 }]),
     );
@@ -2190,10 +2228,17 @@ describe('lyrics overlay renderer', () => {
       ({ vars }) => vars.autoAlpha === 1,
     );
     expect(fades.map(({ target }) => target)).toEqual(entrants);
-    const onsets = fades.map(({ position }) => Number(position.split('+=')[1]));
-    expect(
-      onsets.every((onset, index) => index === 0 || onset > onsets[index - 1]),
-    ).toBe(true);
+    for (const column of [right, left]) {
+      const onsets = fades
+        .filter(({ target }) => column.children.includes(target))
+        .map(({ position }) => Number(position.split('+=')[1]));
+      expect(onsets[0]).toBeGreaterThan(0);
+      expect(
+        onsets.every(
+          (onset, index) => index === 0 || onset > onsets[index - 1],
+        ),
+      ).toBe(true);
+    }
     expect(fades.map(({ vars }) => vars)).toEqual(
       entrants.map(() => ({
         autoAlpha: 1,
@@ -2212,9 +2257,9 @@ describe('lyrics overlay renderer', () => {
       '明',
       '待',
     ]);
-    for (const { target, position, vars } of shadows.slice(1)) {
+    for (const { target, position, vars } of shadows) {
       expect(position).toBe(
-        fades.find((fade) => fade.target === target).position,
+        fades.find((fade) => fade.target === target)?.position ?? 'enter+=0',
       );
       expect(vars).toMatchObject({
         duration: 0.18,
@@ -2224,13 +2269,13 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children[0].children).toEqual([right, left]);
   });
 
-  it('slides only new units and clears their displacement on pause', () => {
+  it('uses slide by default for new units and clears their displacement on pause', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
     elements.current.ownerDocument.documentElement = {
-      dataset: { ovlOrnateEntrance: 'random-slide', ovlTextShadow: 'off' },
+      dataset: { ovlTextShadow: 'off' },
     };
-    const currentText = '星が沈むまで、夜明けを待っていた';
+    const currentText = '星が沈んだ。夜明けを待っていた';
     const presentation = adaptOrnateVerticalLyricsPresentation(currentText);
     const frame = {
       visible: true,
@@ -2246,6 +2291,7 @@ describe('lyrics overlay renderer', () => {
     renderLyricsFrame(elements, frame, options);
     const line = elements.current.children[0];
     const [, left] = line.children;
+    expect(left.style.values['margin-top']).toBe('1.25em');
     const starts = gsap.set.mock.calls.filter(
       ([, vars]) => vars.autoAlpha === 0,
     );
@@ -2299,7 +2345,7 @@ describe('lyrics overlay renderer', () => {
       const elements = domElements();
       const { gsap, timelines } = gsapHarness();
       elements.current.ownerDocument.documentElement = {
-        dataset: { ovlTextShadow: textShadow },
+        dataset: { ovlTextShadow: textShadow, ovlOrnateEntrance: 'sequential' },
       };
       renderLyricsFrame(
         elements,
@@ -2401,7 +2447,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children).toHaveLength(1);
     expect(elements.current.children[0].dataset.ornateText).toBe('CC');
     expect(gsap.set).toHaveBeenCalledWith(expect.any(Array), {
-      clearProps: 'opacity,visibility,--ornate-shadow-progress',
+      clearProps: 'opacity,visibility,transform,--ornate-shadow-progress',
     });
 
     timelines[0].options.onComplete();

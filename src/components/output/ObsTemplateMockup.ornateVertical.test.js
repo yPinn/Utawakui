@@ -52,7 +52,7 @@ ${fs.readFileSync(
     expect(source).toContain('justify-self: end');
     expect(source).toContain('flex-direction: row-reverse');
     expect(source).toContain(
-      'font-size: var(--ui-output-preview-ornate-font-size)',
+      'font-size: calc(var(--ovl-authored-font-rem, 3) * var(--obs-canvas-rem))',
     );
     expect(source).toContain('position: absolute');
     expect(source).toContain("font-family: 'Utawakui Hina Mincho'");
@@ -112,10 +112,11 @@ ${fs.readFileSync(
       'utf8',
     );
 
-    // Runtime 4.6vh, where one canvas vh is 0.675 canvas rem.
-    expect(runtimeCss).toContain('--ovl-ornate-font-size: 4.6vh;');
+    expect(runtimeCss).toMatch(
+      /font-size:\s*calc\(\s*var\(--ovl-authored-font-rem, 3\)/u,
+    );
     expect(preview).toMatch(
-      /--ui-output-preview-ornate-font-size: calc\(\s*4\.6 \* 0\.675 \* var\(--obs-canvas-rem\)\s*\);/u,
+      /font-size: calc\(var\(--ovl-authored-font-rem, 3\) \* var\(--obs-canvas-rem\)\);/u,
     );
     expect(runtimeCss).toContain(
       'inset: max(var(--ovl-safe-block), 4%) max(var(--ovl-safe-inline), 4%);',
@@ -126,7 +127,7 @@ ${fs.readFileSync(
       "'--ornate-column-gap': ORNATE_VERTICAL_COLUMN_GAP",
     );
     expect(preview).toContain('column-gap: var(--ornate-column-gap);');
-    expect(preview).toContain('segment.index * ORNATE_VERTICAL_COLUMN_STEP_EM');
+    expect(preview).toContain('ornateVerticalColumnSpacing(segment)');
     expect(runtimeCss).toContain('column-gap: var(--ornate-column-gap);');
     expect(preview).not.toContain("[data-size='thumbnail']");
   });

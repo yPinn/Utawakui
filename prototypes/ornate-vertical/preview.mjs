@@ -13,15 +13,37 @@ import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
   ornateVerticalGlyphGapEm,
+  splitOrnateVerticalSegments,
 } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import { sampleGraphemes } from './typography.mjs';
 
 const samples = {
   short: { text: '窓辺の灯が揺れる', focus: '灯', lang: 'ja' },
   long: {
-    text: '窓の向こうで小さな灯が揺れて、夜明けまで帰り道を照らす',
-    focus: '灯',
+    text: '夜が明けるまで窓辺で、静かに君を待っていた。街が目覚めたら港まで、風の音を聞いて歩こう。',
+    focus: '夜',
     lang: 'ja',
+  },
+  'mv-verse': {
+    text: '雨が降るから 窓の向こうで朝まで待っている',
+    focus: '窓',
+    lang: 'ja',
+  },
+  'mv-chorus': {
+    text: '百冊もの本を読み切っても答えは出ないよ',
+    focus: '答',
+    lang: 'ja',
+  },
+  'mv-continuation': {
+    text: '君を泣かすから だから一緒には居れないな',
+    focus: '君',
+    lang: 'ja',
+  },
+  'mv-continuation-tight': {
+    text: '君を泣かすから だから一緒には居れないな',
+    focus: '君',
+    lang: 'ja',
+    maxGlyphs: 8,
   },
   mixed: {
     text: '夜の灯をたどって、Midnight Echo と 별빛 在風裡相遇',
@@ -47,7 +69,7 @@ const motionCaptions = {
   c: ['單筆延伸', '「灯」的右側豎鉤向下延伸'],
 };
 const phraseSample = {
-  text: 'きらめく星を見送ったって空は巡る',
+  text: samples['mv-chorus'].text,
   lang: 'ja',
   startMs: 0,
   endMs: 4200,
@@ -57,7 +79,7 @@ const punctuatedSample = {
   text: '星が瞬く、「ここだよ？」空が光る。',
 };
 const phraseCaptions = {
-  a: ['保留前欄', '續欄到點後在左側加入'],
+  a: ['同批顯示', '同一行拆成的各欄一起起筆'],
   b: ['一次一欄', '新欄出現時，前一欄會消失'],
   c: ['重點漢字先入', '先顯示重點漢字，其餘字依序出現'],
 };
@@ -251,7 +273,7 @@ async function renderStages() {
   comparisonNote.textContent = isTimed
     ? isEntrances
       ? '同一句歌詞、同一種欄位切換，比較三種進場。'
-      : '同一句歌詞比較保留前欄、一次一欄與重點漢字先入。'
+      : '同一句歌詞比較同批顯示、一次一欄與重點漢字先入。'
     : isMotion
       ? '同一句、同字型、同錨點，比較文字動態。'
       : '同一句、同字型、同錨點，比較字形比例。';
@@ -259,6 +281,14 @@ async function renderStages() {
   sampleText.lang = sample.lang;
   const presentation = adaptOrnateVerticalLyricsPresentation(sample.text, {
     documentContext,
+    segments: sample.maxGlyphs
+      ? splitOrnateVerticalSegments(sample.text, {
+          fits: (columns) =>
+            columns.every(
+              ({ text }) => sampleGraphemes(text).length <= sample.maxGlyphs,
+            ),
+        })
+      : undefined,
   });
   await Promise.all(
     stages.map(async (preview) => {
