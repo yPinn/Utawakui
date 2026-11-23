@@ -33,6 +33,7 @@ import {
 import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
 import { adaptOrnateVerticalLyricsPresentation } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
+import { outputOccupancyBounds } from '../../shared/presentation/outputOccupancy.mjs';
 import {
   adaptKtvLyricsPresentation,
   adaptMangaLyricsPresentation,
@@ -55,6 +56,7 @@ import {
   addMangaBubbleHandoff,
   applyMangaFramePresentation,
   MANGA_FADE_IN_DURATION_SECONDS,
+  placeMangaBubblesAroundOccupancy,
   renderMangaFrameSvg,
   updateMangaFrameTails,
 } from './mangaFrame.mjs';
@@ -1335,9 +1337,15 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
   elements.root.dataset.revision = String(frame.revision);
-  // Measure tails last so this commit forces at most one layout.
-  if (isMangaFrame)
+  // A moved bubble needs its final SVG transform before the tail is aimed.
+  if (isMangaFrame) {
+    if (options.mangaOccupancy)
+      placeMangaBubblesAroundOccupancy(
+        elements.mangaBubbles,
+        options.mangaOccupancy,
+      );
     updateMangaFrameTails(elements.mangaBubbles, options.mangaTailTarget);
+  }
 }
 
 function finiteKtvHostRect(element) {
@@ -2445,6 +2453,7 @@ function boot() {
   let slotAppearance;
   let savedMangaTarget = DEFAULT_MANGA_TAIL_TARGET;
   let workbenchMangaTarget = null;
+  let workbenchMangaOccupancy = null;
   let frameScheduler = null;
   function mangaTailTarget() {
     return document.documentElement.dataset.ovlTemplate === 'manga-frame' &&
@@ -2498,9 +2507,18 @@ function boot() {
   }
   const params = new URLSearchParams(window.location.search);
   const translationPosition = params.get('translationPosition') ?? undefined;
-  const resizeMangaTails = () =>
-    updateMangaFrameTails(elements.mangaBubbles, mangaTailTarget());
-  function receiveMangaGuideCenter(event) {
+  const updateMangaGeometry = () => {
+    const outgoing = embeddedWorkbench
+      ? mangaTransitions.get(elements.root)?.outgoingGroup
+      : undefined;
+    const target = mangaTailTarget();
+    for (const group of [elements.mangaBubbles, outgoing]) {
+      if (embeddedWorkbench)
+        placeMangaBubblesAroundOccupancy(group, workbenchMangaOccupancy);
+      updateMangaFrameTails(group, target);
+    }
+  };
+  function receiveMangaGuide(event) {
     if (
       event.source !== window.parent ||
       event.data?.type !== MANGA_WORKBENCH_TARGET_MESSAGE
@@ -2509,7 +2527,8 @@ function boot() {
     const point = readMangaTailTarget(event.data.x, event.data.y);
     if (!point) return;
     workbenchMangaTarget = point;
-    resizeMangaTails();
+    workbenchMangaOccupancy = outputOccupancyBounds(event.data.occupancy);
+    updateMangaGeometry();
   }
   frameScheduler = createLyricsFrameScheduler({
     onTrace,
@@ -2529,7 +2548,7 @@ function boot() {
         templateId: slot?.templateId,
       });
       slotAppearance = appearance;
-      resizeMangaTails();
+      updateMangaGeometry();
       prepareFocusStyles();
       return {
         fisheyeGranularity: appearance.fisheyeGranularity,
@@ -2557,6 +2576,7 @@ function boot() {
           fisheyeAppearance: slotAppearance,
           phantomAppearance: slotAppearance,
           mangaFrameId: slotAppearance?.mangaBubbleStyle,
+          mangaOccupancy: workbenchMangaOccupancy,
           mangaTailTarget: mangaTailTarget(),
           gsap,
           reportError,
@@ -2631,7 +2651,7 @@ function boot() {
           nextTarget.y !== savedMangaTarget.y
         ) {
           savedMangaTarget = nextTarget;
-          resizeMangaTails();
+          updateMangaGeometry();
         }
       }
       const token = ++configToken;
@@ -2679,9 +2699,9 @@ function boot() {
     onDispose: () => {
       disposed = true;
       heldSnapshot = null;
-      window.removeEventListener('resize', resizeMangaTails);
+      window.removeEventListener('resize', updateMangaGeometry);
       if (embeddedWorkbench)
-        window.removeEventListener('message', receiveMangaGuideCenter);
+        window.removeEventListener('message', receiveMangaGuide);
       fisheyeEffects?.stop();
       fit.stop();
       frameScheduler.stop();
@@ -2689,9 +2709,8 @@ function boot() {
       destroyLyricsAnimations(elements, { gsap });
     },
   });
-  window.addEventListener('resize', resizeMangaTails);
-  if (embeddedWorkbench)
-    window.addEventListener('message', receiveMangaGuideCenter);
+  window.addEventListener('resize', updateMangaGeometry);
+  if (embeddedWorkbench) window.addEventListener('message', receiveMangaGuide);
   host.start();
 }
 

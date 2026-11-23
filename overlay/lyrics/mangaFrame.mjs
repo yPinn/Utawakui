@@ -6,10 +6,18 @@ import {
   mangaFrameSideForLine,
   resolveMangaFrame,
 } from '../shared/mangaFrameContract.mjs';
+import {
+  nearestOutputInlineClearance,
+  outputBoxesOverlap,
+  shiftOutputBox,
+} from '../../shared/presentation/outputOccupancy.mjs';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const MANGA_TAIL_DOWNWARD_OFFSET = 0.04;
 const tailRenderKeys = new WeakMap();
+const placementKeys = new WeakMap();
+const bubbleOffsets = new WeakMap();
+const MANGA_OCCUPANCY_GAP = 0.008;
 export const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
 
@@ -58,19 +66,84 @@ export function addMangaBubbleHandoff(
   position = 0,
 ) {
   // A lane can be reused by a taller bubble or its tail, even across rows.
-  const sharedLane = outgoing.some((previous) =>
+  const serialize = outgoing.some((previous) =>
     incoming.some(
-      (next) => next.dataset.mangaSide === previous.dataset.mangaSide,
+      (next) =>
+        next.dataset.mangaSide === previous.dataset.mangaSide ||
+        ((bubbleOffsets.has(next) || bubbleOffsets.has(previous)) &&
+          outputBoxesOverlap(
+            previous.getBoundingClientRect(),
+            next.getBoundingClientRect(),
+          )),
     ),
   );
-  addMangaBubbleFade(timeline, outgoing, 'exit', !sharedLane, position);
+  addMangaBubbleFade(timeline, outgoing, 'exit', !serialize, position);
   addMangaBubbleFade(
     timeline,
     incoming,
     'enter',
     staggerEntrance,
-    position + (sharedLane ? MANGA_FADE_OUT_DURATION_SECONDS : 0),
+    position + (serialize ? MANGA_FADE_OUT_DURATION_SECONDS : 0),
   );
+}
+
+export function placeMangaBubblesAroundOccupancy(group, occupancy) {
+  if (!group || (occupancy && group.hidden)) return;
+  const bubbles = Array.from(group.children);
+  if (!occupancy) {
+    for (const bubble of bubbles) {
+      if (!bubbleOffsets.delete(bubble)) continue;
+      bubble.style.removeProperty('--ovl-manga-avoid-x');
+    }
+    placementKeys.delete(group);
+    return;
+  }
+
+  const { innerWidth: width, innerHeight: height } =
+    group.ownerDocument?.defaultView ?? {};
+  if (!(width > 0 && height > 0)) return;
+  const previous = placementKeys.get(group);
+  if (
+    previous?.occupancy === occupancy &&
+    previous.width === width &&
+    previous.height === height &&
+    previous.bubbles.length === bubbles.length &&
+    previous.bubbles.every((bubble, index) => bubble === bubbles[index])
+  )
+    return;
+  placementKeys.set(group, { occupancy, width, height, bubbles });
+
+  const boxes = bubbles.map((bubble) => {
+    const { left, top, right, bottom } = bubble.getBoundingClientRect();
+    const offset = bubbleOffsets.get(bubble) ?? 0;
+    return {
+      left: left / width - offset,
+      top: top / height,
+      right: right / width - offset,
+      bottom: bottom / height,
+    };
+  });
+  const offsets = boxes.map((box, index) => {
+    if (!outputBoxesOverlap(box, occupancy)) return 0;
+    const otherBubbles = boxes.filter((_, other) => other !== index);
+    const shift = nearestOutputInlineClearance(
+      box,
+      [occupancy, ...otherBubbles],
+      MANGA_OCCUPANCY_GAP,
+    );
+    if (shift === undefined) return 0;
+    boxes[index] = shiftOutputBox(box, shift);
+    return shift;
+  });
+  for (const [index, bubble] of bubbles.entries()) {
+    const shift = offsets[index];
+    if (shift) {
+      bubbleOffsets.set(bubble, shift);
+      bubble.style.setProperty('--ovl-manga-avoid-x', `${shift * 100}vw`);
+    } else if (bubbleOffsets.delete(bubble)) {
+      bubble.style.removeProperty('--ovl-manga-avoid-x');
+    }
+  }
 }
 
 export function renderMangaFrameSvg(

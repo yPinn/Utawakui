@@ -18,6 +18,7 @@ import {
 import {
   addMangaBubbleHandoff,
   applyMangaFramePresentation,
+  placeMangaBubblesAroundOccupancy,
   renderMangaFrameSvg,
   updateMangaFrameTails,
 } from './mangaFrame.mjs';
@@ -290,6 +291,47 @@ describe('manga frame contract', () => {
       ['enter', 0.14],
     ]);
     expect(timeline.to.mock.calls.at(-2)[1]).not.toHaveProperty('stagger');
+  });
+
+  it('shifts colliding preview bubbles, accounts for the shifted handoff and clears the shift with the guide', () => {
+    function bubbleAt(side, left) {
+      const styles = new Map();
+      return {
+        dataset: { mangaSide: side },
+        style: {
+          setProperty: (key, value) => styles.set(key, value),
+          removeProperty: (key) => styles.delete(key),
+        },
+        getBoundingClientRect() {
+          const shift =
+            parseFloat(styles.get('--ovl-manga-avoid-x') ?? '0') * 10;
+          return {
+            left: left + shift,
+            right: left + 150 + shift,
+            top: 200,
+            bottom: 400,
+          };
+        },
+      };
+    }
+    const previous = bubbleAt('left', 380);
+    const next = bubbleAt('right', 700);
+    const group = {
+      children: [next],
+      ownerDocument: { defaultView: { innerWidth: 1000, innerHeight: 500 } },
+    };
+    const model = { left: 0.6, top: 0, right: 1, bottom: 1 };
+    placeMangaBubblesAroundOccupancy(group, model);
+    expect(next.getBoundingClientRect().right).toBeCloseTo(592);
+    placeMangaBubblesAroundOccupancy(group, { ...model });
+    expect(next.getBoundingClientRect().right).toBeCloseTo(592);
+
+    const timeline = { addLabel: vi.fn(), to: vi.fn() };
+    addMangaBubbleHandoff(timeline, [previous], [next], false);
+    expect(timeline.addLabel).toHaveBeenLastCalledWith('enter', 0.14);
+
+    placeMangaBubblesAroundOccupancy(group, null);
+    expect(next.getBoundingClientRect().left).toBe(700);
   });
 
   it('keeps bounded placement deterministic across seek and reconnect renders', () => {

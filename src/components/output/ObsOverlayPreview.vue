@@ -168,11 +168,11 @@ function measurePreview() {
 }
 
 function handlePreviewLoad() {
-  sendMangaGuideCenter();
+  sendMangaGuide();
   emit('refreshProjection');
 }
 
-function sendMangaGuideCenter() {
+function sendMangaGuide() {
   const iframe = lyricsFrame.value;
   if (
     props.preset?.id !== 'manga-frame' ||
@@ -180,9 +180,17 @@ function sendMangaGuideCenter() {
     !inspectionUrl.value
   )
     return;
-  const { x, y } = props.performerGuide;
+  const { x, y, width, height } = props.performerGuide;
   iframe.contentWindow.postMessage(
-    { type: MANGA_WORKBENCH_TARGET_MESSAGE, x, y },
+    {
+      type: MANGA_WORKBENCH_TARGET_MESSAGE,
+      x,
+      y,
+      occupancy:
+        props.lyricsPreviewMode === 'performer'
+          ? { x, y, width, height }
+          : null,
+    },
     new URL(inspectionUrl.value).origin,
   );
 }
@@ -190,10 +198,13 @@ function sendMangaGuideCenter() {
 watch(
   [
     () => props.preset?.id,
+    () => props.lyricsPreviewMode,
     () => props.performerGuide.x,
     () => props.performerGuide.y,
+    () => props.performerGuide.width,
+    () => props.performerGuide.height,
   ],
-  sendMangaGuideCenter,
+  sendMangaGuide,
   { flush: 'post' },
 );
 

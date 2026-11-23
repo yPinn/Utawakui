@@ -1452,7 +1452,7 @@
     max-inline-size: var(--ovl-manga-lane-inline-size);
     aspect-ratio: 2 / 3;
     display: grid;
-    transform: translateY(-50%);
+    transform: translate(var(--ovl-manga-avoid-x, 0px), -50%);
     place-items: center;
     color: var(--ovl-color-ink);
     font-size: var(--ovl-manga-text-size-by-count);
