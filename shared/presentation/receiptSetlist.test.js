@@ -225,6 +225,7 @@ describe('receipt setlist presentation and bounded source contract', () => {
       'lookAmount',
       'fontFamily',
       'fontScale',
+      'fontScaleAdjustment',
       'receiptDirection',
       'receiptReview',
       'receiptReviewInterval',

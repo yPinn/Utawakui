@@ -1,13 +1,35 @@
-/* Mirrors overlay/setlist/setlist.css as it renders in the 480×810 capture:
-  1rem safe area, the max-width 42rem padding and every clamp() resolved at a
-  16px root; runtime rem -> canvas rem. */
+/* Mirrors overlay/setlist/setlist.css at the 480×810 capture size. */
 .obs-template-mockup__content--setlist {
-  --ui-setlist-preview-current-title-size: calc(1.85 * var(--obs-canvas-rem));
-  --ui-setlist-preview-history-title-size: calc(1.05 * var(--obs-canvas-rem));
-  --ui-setlist-preview-current-artist-size: calc(0.88 * var(--obs-canvas-rem));
-  --ui-setlist-preview-history-artist-size: calc(0.76 * var(--obs-canvas-rem));
-  --ui-setlist-preview-label-size: calc(0.75 * var(--obs-canvas-rem));
-  --ui-setlist-preview-counter-size: calc(0.7 * var(--obs-canvas-rem));
+  --ui-setlist-preview-current-title-size: clamp(
+    calc(1.75 * var(--obs-canvas-rem) * min(1, var(--ovl-user-font-fine, 1))),
+    1.85em,
+    calc(2.125 * var(--obs-canvas-rem))
+  );
+  --ui-setlist-preview-history-title-size: clamp(
+    var(--obs-canvas-rem),
+    1.05em,
+    calc(1.125 * var(--obs-canvas-rem))
+  );
+  --ui-setlist-preview-current-artist-size: clamp(
+    calc(0.8125 * var(--obs-canvas-rem)),
+    0.88em,
+    var(--obs-canvas-rem)
+  );
+  --ui-setlist-preview-history-artist-size: clamp(
+    calc(0.75 * var(--obs-canvas-rem)),
+    0.76em,
+    calc(0.875 * var(--obs-canvas-rem))
+  );
+  --ui-setlist-preview-label-size: clamp(
+    calc(0.75 * var(--obs-canvas-rem)),
+    0.72em,
+    calc(0.8125 * var(--obs-canvas-rem))
+  );
+  --ui-setlist-preview-counter-size: clamp(
+    calc(0.6875 * var(--obs-canvas-rem)),
+    0.7em,
+    calc(0.75 * var(--obs-canvas-rem))
+  );
 
   position: absolute;
   inset: calc(1 * var(--obs-canvas-rem));
@@ -25,7 +47,7 @@
   border-radius: calc(0.5 * var(--obs-canvas-rem));
   background: var(--obs-user-surface);
   font-family: var(--obs-user-font-family);
-  font-size: var(--obs-canvas-rem);
+  font-size: calc(var(--obs-canvas-rem) * var(--ovl-user-font-scale-ratio, 1));
   text-align: left;
 }
 

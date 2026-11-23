@@ -1,0 +1,9 @@
+Black Han Sans Regular
+
+Source: https://github.com/google/fonts/blob/main/ofl/blackhansans/BlackHanSans-Regular.ttf
+Local file: BlackHanSans-Regular.ttf
+Git blob: e0d7584294610df5ca721096e03a5c0b1dd2894e
+SHA-256: 31960809284026681774a8e52dc19ebcad26cf69b0ad9d560f288296fbb52739
+License: SIL Open Font License 1.1 (https://github.com/google/fonts/blob/main/ofl/blackhansans/OFL.txt)
+See OFL-BLACK-HAN-SANS.txt.
+CSS family: Utawakui Black Han Sans.

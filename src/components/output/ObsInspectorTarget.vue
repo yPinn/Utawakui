@@ -26,6 +26,8 @@ const label = t('outputPanel.workbench.target');
       :label="label"
       :model-value="modelValue"
       :options="options"
+      fit-content
+      :align="stacked ? 'start' : 'end'"
       label-hidden
       @update:model-value="emit('update:modelValue', $event)"
     />

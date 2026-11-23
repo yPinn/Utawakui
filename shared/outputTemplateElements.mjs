@@ -1,6 +1,13 @@
 // Element declarations from ADR 0027. A template declares elements only once
 // it consumes element-scoped properties; an element without `visible` cannot hide.
 export const OUTPUT_TEMPLATE_ELEMENTS = Object.freeze({
+  'ticket-stub': Object.freeze([
+    Object.freeze({
+      id: 'title',
+      kind: 'text',
+      properties: Object.freeze(['fontSizeScale']),
+    }),
+  ]),
   'cover-player': Object.freeze([
     Object.freeze({
       id: 'title',

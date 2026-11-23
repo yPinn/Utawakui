@@ -77,6 +77,7 @@ const categories = [
   {
     id: 'layout',
     groups: [
+      { id: 'layout', excludeKeys: [...anchorKeys, ...offsetKeys] },
       {
         id: 'layout',
         tier: 'basic',
@@ -89,7 +90,6 @@ const categories = [
         label: 'offset',
         keys: offsetKeys,
       },
-      { id: 'layout', excludeKeys: [...anchorKeys, ...offsetKeys] },
     ],
   },
   {
@@ -175,7 +175,7 @@ export function outputInspectorTabs(fields) {
             label: label
               ? t(`outputPanel.inspector.${label}`)
               : matches[0].groupLabel,
-            fields: matches,
+            fields: sortOutputInspectorFields(matches),
           },
         ];
       },

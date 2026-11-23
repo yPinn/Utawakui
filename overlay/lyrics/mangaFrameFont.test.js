@@ -73,6 +73,10 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
       'sans',
       'serif',
       'rounded',
+      'black-han-sans',
+      'gowun-batang',
+      'jua',
+      'single-day',
     ]);
     expect(appearanceCss).toMatch(
       /\[data-ovl-font='antique'\]\s*{[^}]*'Utawakui GenEi Antique'/,
@@ -93,7 +97,7 @@ describe('Manga Frame bundled Japanese typeface contract', () => {
       /\.obs-template-mockup__manga-text\s*{[^}]*font-family: var\(--obs-user-font-family\);/,
     );
     expect(mockup).toMatch(
-      /\[data-appearance-font='antique'\]\s*{\s*--obs-user-font-family: var\(--ui-output-preview-font-antique\);/,
+      /\[data-appearance-font='antique'\]\s*{\s*--obs-template-font-family: var\(--ui-output-preview-font-antique\);/,
     );
     expect(notices).toContain('GenEi Antique');
     expect(design).toContain('Utawakui GenEi Antique');

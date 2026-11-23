@@ -55,6 +55,7 @@ async function renderRegisteredTemplate(
   presetOverrides = {},
   slotSettings = {},
   workbenchProps = {},
+  renderContext,
 ) {
   const data = getOutputWorkbenchData();
   const preset = {
@@ -78,10 +79,20 @@ async function renderRegisteredTemplate(
           ...workbenchProps,
         }),
     }),
+    renderContext,
   );
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it('keeps registered Traditional Chinese settings labels within four characters', () => {
+    const labels = getOutputWorkbenchData().templates.flatMap(({ id }) =>
+      fieldsFor(id).map(({ label }) => label),
+    );
+    expect([
+      ...new Set(labels.filter((label) => [...label].length > 4)),
+    ]).toEqual([]);
+  });
+
   it('groups the shared translation preference and saved size in their own panel', async () => {
     const html = await renderRegisteredTemplate(
       'manga-frame',
@@ -100,8 +111,11 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     )?.[1];
     expect(translationControls).not.toContain('<h3');
     expect(
-      translationControls?.match(/obs-appearance-control-row--stacked/gu),
+      translationControls?.match(/class="obs-appearance-control-row(?:"| )/gu),
     ).toHaveLength(2);
+    expect(translationControls).not.toContain(
+      'obs-appearance-control-row--stacked',
+    );
     expect(await renderRegisteredTemplate('art-card')).not.toContain(
       'output-translation-preference',
     );
@@ -153,6 +167,41 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     }
   });
 
+  it('orders font presets before refinements and follows the motion timeline', () => {
+    const groupKeys = (templateId, tabId) =>
+      outputInspectorTabs([...fieldsFor(templateId)].reverse())
+        .find(({ id }) => id === tabId)
+        .groups.flatMap(({ fields }) => fields.map(({ key }) => key));
+    expect(groupKeys('ornate-vertical', 'text').slice(0, 4)).toEqual([
+      'fontFamily',
+      'fontScale',
+      'fontScaleAdjustment',
+      'ornateArrangement',
+    ]);
+    expect(groupKeys('fisheye-lens', 'motion')).toEqual([
+      'fisheyeEnter',
+      'fisheyePulse',
+      'fisheyeExit',
+      'fisheyeBlur',
+    ]);
+  });
+
+  it('mounts the font preview action in the typography heading', async () => {
+    const context = {};
+    const html = await renderRegisteredTemplate(
+      'ornate-vertical',
+      {},
+      {},
+      {},
+      context,
+    );
+    const headingId = html.match(
+      /<h3[^>]*>字體設定<\/h3>.*?id="(obs-property-actions-[^"]+)"/su,
+    )?.[1];
+    expect(headingId).toBeDefined();
+    expect(context.teleports[`#${headingId}`]).toContain('字型預覽');
+  });
+
   it('marks shared properties and live tools with the existing folder tones', async () => {
     const html = await renderRegisteredTemplate('fisheye-lens');
     expect(html).toMatch(
@@ -191,7 +240,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(
       tabs.find(({ id }) => id === 'decoration').folderTone,
     ).toBeUndefined();
-    expect(tabs.find(({ id }) => id === 'text').folderTone).toBe('secondary');
+    expect(tabs.find(({ id }) => id === 'text').folderTone).toBeUndefined();
   });
 
   it('places output review before live tools, styling, and placement', () => {
@@ -423,7 +472,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('定位基準');
     expect(html).toContain('位置微調');
     expect(html).toContain('文字陰影');
-    expect(html).toContain('段落重點色');
+    expect(html).toContain('段落強調');
     expect(html).not.toContain('data-output-side-toggle');
     for (const { key } of fieldsFor('ornate-vertical')) {
       expect(html).toContain(`output-appearance-${key}`);
@@ -477,7 +526,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       ]),
     ).toEqual([
       ['動態', ['receiptReview', 'receiptReviewInterval', 'receiptDirection']],
-      ['文字', ['fontFamily', 'fontScale']],
+      ['文字', ['fontFamily', 'fontScale', 'fontScaleAdjustment']],
       ['外觀', ['paletteId', 'lookAmount', 'filmGrainAmount', 'filmGrainSize']],
     ]);
 
@@ -508,7 +557,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
     const html = await renderRegisteredTemplate('ribbon-setlist');
     expect(html).toContain('>歷史回顧</h3>');
-    expect(html).toContain('定時回顧歷史');
+    expect(html).toContain('定時回顧');
     expect(html).toContain('回顧間隔');
   });
 
@@ -599,14 +648,14 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).not.toMatch(/恢復「[^」]+」預設/u);
   });
 
-  it('marks a modified field and offers a reset for its group only', async () => {
+  it('indicates edits through the affected group reset', async () => {
     const html = await renderRegisteredTemplate(
       'queue-board',
       {},
       { fontWeight: 'bold' },
     );
 
-    expect(html.match(/data-modified/gu)).toHaveLength(1);
+    expect(html).not.toContain('data-modified');
     expect(html).toContain('恢復「字體設定」預設');
     expect(html).not.toContain('恢復「整體配色」預設');
     expect(html).not.toContain('恢復「背景」預設');
@@ -644,9 +693,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
   it('keeps the Live Stage presentation policy in its own section of the text tab', async () => {
     const html = await renderRegisteredTemplate('live-stage');
 
-    expect(html).toContain('歌詞呈現');
-    expect(html).toContain('歌詞呈現策略');
-    expect(html).toContain('模板進階顯示');
+    expect(html).toContain('呈現策略');
+    expect(html).toContain('字幕呈現');
     expect(html).toContain('不會改動歌詞本身');
     expect(html).toMatch(
       /<select id="output-appearance-lyricsPresentationPolicyId"[^>]*value="balanced"/,
@@ -673,7 +721,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               presentationFields: [
                 {
                   key: 'lyricsPresentationPolicyId',
-                  label: '歌詞呈現策略',
+                  label: '呈現策略',
                   control: 'select',
                   group: 'content',
                   groupLabel: '內容顯示',
@@ -816,7 +864,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).not.toContain('output-appearance-surface');
   });
 
-  it('shows the Manga-only furigana selector with the approved wording', async () => {
+  it('shows the Manga-only furigana checkbox with the approved wording', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
@@ -843,7 +891,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     );
 
     expect(html).toContain('假名標音');
-    expect(html).toContain('有資料時顯示');
+    expect(html).toMatch(
+      /<input(?=[^>]*id="output-appearance-furigana")(?=[^>]*type="checkbox")[^>]*\bchecked/gu,
+    );
   });
 
   it('shows the kinetic material selector with material two selected by default', async () => {
@@ -1004,7 +1054,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       /<select[^>]*id="output-appearance-ornateColumnMode"[^>]*value="retain"/u,
     );
     expect(html).toMatch(
-      /<select[^>]*id="output-appearance-ornateEntrance"[^>]*value="sequential"/u,
+      /<select[^>]*id="output-appearance-ornateEntrance"[^>]*value="random-slide"/u,
     );
     expect(html).toContain('>欄位與文字</h3>');
     expect(html).not.toContain('>歷史回顧</h3>');
@@ -1040,16 +1090,16 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const html = await renderRegisteredTemplate(
       'ornate-vertical',
       {},
-      { ornateColumnMode: 'replace', ornateEntrance: 'random-slide' },
+      { ornateColumnMode: 'replace', ornateEntrance: 'sequential' },
     );
     expect(html).toMatch(
       /<select[^>]*id="output-appearance-ornateColumnMode"[^>]*value="replace"[^>]*aria-describedby="output-appearance-ornateColumnMode-hint"/u,
     );
     expect(html).toMatch(
-      /<select[^>]*id="output-appearance-ornateEntrance"[^>]*value="random-slide"[^>]*aria-describedby="output-appearance-ornateEntrance-hint"/u,
+      /<select[^>]*id="output-appearance-ornateEntrance"[^>]*value="sequential"[^>]*aria-describedby="output-appearance-ornateEntrance-hint"/u,
     );
     expect(html).toContain('新欄出現時，前一欄會消失。');
-    expect(html).toContain('文字依序從左右不同位置滑回字位。');
+    expect(html).toContain('文字從欄頂往下依序出現。');
     expect(html).not.toContain('新欄出現在左側，前欄繼續顯示。');
   });
 });

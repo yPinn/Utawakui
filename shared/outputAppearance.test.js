@@ -12,6 +12,7 @@ import {
   normalizeOutputElementAppearance,
   outputAppearanceFieldsForTemplate,
   outputArtworkGradeMatrix,
+  outputAuthoredFontRem,
   outputElementFontWeight,
   outputElementTargetsForTemplate,
   outputFontFamilyCss,
@@ -19,6 +20,46 @@ import {
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it('keeps fine font sizing local to the template and within layout limits', () => {
+    const settings = { fontScale: 'small', fontScaleAdjustment: 72 };
+    const karaoke = normalizeOutputAppearance(settings, {
+      templateId: 'karaoke-stack',
+    });
+    expect(karaoke.fontScaleAdjustment).toBe(70);
+    expect(outputAuthoredFontRem('karaoke-stack', karaoke)).toBeCloseTo(2.8);
+    const carried = carryOutputAppearanceToTemplate(karaoke, {
+      fromTemplateId: 'karaoke-stack',
+      toTemplateId: 'ornate-vertical',
+      slotDefaults: OUTPUT_SLOT_APPEARANCE_DEFAULTS.lyrics,
+    });
+    expect(carried).not.toHaveProperty('fontScaleAdjustment');
+    expect(
+      normalizeOutputAppearance(carried, { templateId: 'ornate-vertical' })
+        .fontScaleAdjustment,
+    ).toBe(100);
+    expect(
+      normalizeOutputAppearance(settings, { templateId: 'manga-frame' })
+        .fontScaleAdjustment,
+    ).toBe(80);
+    expect(
+      sanitizeOutputAppearanceSetting('fontScaleAdjustment', 85, {
+        templateId: 'ribbon-setlist',
+      }),
+    ).toBeUndefined();
+  });
+
+  it('exposes ticket title scaling independently of the artist', () => {
+    expect(
+      normalizeOutputElementAppearance(
+        {
+          'element.title.fontSizeScale': 83,
+          'element.artist.fontSizeScale': 80,
+        },
+        { templateId: 'ticket-stub' },
+      ),
+    ).toEqual({ 'element.title.fontSizeScale': 85 });
+  });
+
   it('defaults Textured Credits to its middle block and supports both side blocks', () => {
     const templateId = 'textured-credits';
     const field = outputAppearanceFieldsForTemplate(templateId).find(
@@ -189,6 +230,10 @@ describe('output appearance schema', () => {
       'sans',
       'serif',
       'rounded',
+      'black-han-sans',
+      'gowun-batang',
+      'jua',
+      'single-day',
     ];
     expect(field.defaultValue).toBe('lyrics-auto');
     expect(field.options.map(({ id }) => id)).toEqual(options);
@@ -286,6 +331,7 @@ describe('output appearance schema', () => {
       'accentColor',
       'fontFamily',
       'fontScale',
+      'fontScaleAdjustment',
       'ornateArrangement',
       'ornateColumnMode',
       'ornateEntrance',
@@ -306,11 +352,21 @@ describe('output appearance schema', () => {
         { id: 'sans' },
         { id: 'serif' },
         { id: 'rounded' },
+        { id: 'black-han-sans' },
+        { id: 'gowun-batang' },
+        { id: 'jua' },
+        { id: 'single-day' },
       ],
     });
     expect(fields.find((field) => field.key === 'fontScale')).toMatchObject({
       control: 'select',
       editor: 'font-scale',
+    });
+    expect(
+      normalizeOutputAppearance({}, { templateId: 'ornate-vertical' }),
+    ).toMatchObject({
+      ornateColumnMode: 'retain',
+      ornateEntrance: 'random-slide',
     });
     expect(
       fields.find((field) => field.key === 'positionAnchor'),
@@ -557,6 +613,10 @@ describe('output appearance schema', () => {
       expect(font.options.map(({ id }) => id)).toEqual(
         expect.arrayContaining([
           ...new Set([font.defaultValue, 'sans', 'serif', 'rounded']),
+          'black-han-sans',
+          'gowun-batang',
+          'jua',
+          'single-day',
         ]),
       );
       expect(normalizeOutputAppearance({}, { templateId }).fontFamily).toBe(
@@ -607,6 +667,17 @@ describe('output appearance schema', () => {
     );
   });
 
+  it('places the selected Hangul face and its bundled fallback before the template', () => {
+    expect(
+      outputFontFamilyCss('black-han-sans', 'centered-vertical', 'ja'),
+    ).toBe(
+      "'Utawakui Black Han Sans', 'Utawakui Gowun Batang', 'Utawakui Klee One', 'Utawakui Open Huninn', sans-serif",
+    );
+    expect(outputFontFamilyCss('jua', 'karaoke-stack', 'ko')).toMatch(
+      /^'Utawakui Jua', 'Utawakui Gowun Batang', 'Utawakui Open Huninn',/,
+    );
+  });
+
   it('exposes only appearance controls consumed by each non-Lyrics template', () => {
     const keysFor = (templateId) =>
       outputAppearanceFieldsForTemplate(templateId).map(({ key }) => key);
@@ -616,6 +687,7 @@ describe('output appearance schema', () => {
       'lookAmount',
       'fontFamily',
       'fontScale',
+      'fontScaleAdjustment',
       'fontWeight',
       'surface',
       'spacingDensity',
@@ -627,6 +699,7 @@ describe('output appearance schema', () => {
       'lookAmount',
       'fontFamily',
       'fontScale',
+      'fontScaleAdjustment',
       'fontWeight',
       'vinylSurfaceLight',
       'filmGrainAmount',
@@ -637,6 +710,7 @@ describe('output appearance schema', () => {
       'lookAmount',
       'fontFamily',
       'fontScale',
+      'fontScaleAdjustment',
       'fontWeight',
       'surface',
       'filmGrainAmount',
@@ -662,6 +736,7 @@ describe('output appearance schema', () => {
       'lookAmount',
       'fontFamily',
       'fontScale',
+      'fontScaleAdjustment',
       'fontWeight',
       'contrastStyle',
       'surface',
@@ -677,6 +752,7 @@ describe('output appearance schema', () => {
       'typography',
       'typography',
       'typography',
+      'typography',
       'readability',
       'surface',
       'layout',
@@ -686,7 +762,7 @@ describe('output appearance schema', () => {
       'material',
     ]);
     expect(fields.map(({ groupOrder }) => groupOrder)).toEqual([
-      10, 10, 30, 30, 30, 40, 50, 60, 60, 60, 56, 56,
+      10, 10, 30, 30, 30, 30, 40, 50, 60, 60, 60, 56, 56,
     ]);
   });
 

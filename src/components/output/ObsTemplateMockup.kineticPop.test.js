@@ -143,8 +143,12 @@ describe('Kinetic Pop gallery mockup', () => {
       ".obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']",
     );
 
-    expect(runtimeCurrent).toContain('font-size: 5em;');
-    expect(stage).toContain('font-size: calc(5 * var(--obs-canvas-rem));');
+    expect(runtimeCurrent).toContain(
+      'font-size: calc(var(--ovl-authored-font-rem, 4.5) * 1rem);',
+    );
+    expect(stage).toContain(
+      'font-size: calc(var(--ovl-authored-font-rem, 4.5) * var(--obs-canvas-rem));',
+    );
     for (const declaration of ['line-height: 1.04;', 'font-weight: 800;']) {
       expect(runtimeCurrent).toContain(declaration);
       expect(stage).toContain(declaration);

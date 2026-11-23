@@ -10,11 +10,13 @@ import ObsPositionPicker from './ObsPositionPicker.vue';
 import ObsSegmentedAppearanceChoice from './ObsSegmentedAppearanceChoice.vue';
 import UiColorField from '../ui/UiColorField.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiCombobox from '../ui/UiCombobox.vue';
 import UiField from '../ui/UiField.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -69,6 +71,7 @@ attachClientRender(UiHint, '../ui/UiHint.vue', import.meta.url);
 attachClientRender(UiIconButton, '../ui/UiIconButton.vue', import.meta.url);
 attachClientRender(UiModal, '../ui/UiModal.vue', import.meta.url);
 attachClientRender(UiButton, '../ui/UiButton.vue', import.meta.url);
+attachClientRender(UiCheckbox, '../ui/UiCheckbox.vue', import.meta.url);
 attachClientRender(UiCombobox, '../ui/UiCombobox.vue', import.meta.url);
 attachClientRender(UiSelect, '../ui/UiSelect.vue', import.meta.url);
 attachClientRender(
@@ -77,6 +80,7 @@ attachClientRender(
   import.meta.url,
 );
 attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue', import.meta.url);
+attachClientRender(UiScrollLayout, '../ui/UiScrollLayout.vue', import.meta.url);
 attachClientRender(UiColorField, '../ui/UiColorField.vue', import.meta.url);
 attachClientRender(
   UiRangeControl,
@@ -124,6 +128,30 @@ describe('ObsAppearanceField', () => {
     },
   );
 
+  it('uses the compact choice layout for desktop font scale and alignment', () => {
+    for (const editor of ['font-scale', 'alignment']) {
+      const { app, root } = mount(ObsAppearanceField, {
+        field: {
+          key: 'example',
+          label: 'Choice',
+          control: 'select',
+          editor,
+          options: [{ id: 'left', label: 'First' }],
+        },
+        modelValue: 'left',
+        compact: true,
+      });
+      const [group] = findAll(root, (node) => node.props.role === 'radiogroup');
+      expect(group.props.class).toContain('ui-segmented-control--compact');
+      expect(
+        findAll(group, (node) =>
+          String(node.props.class).includes('ui-segmented-control__wrap'),
+        ),
+      ).toHaveLength(1);
+      app.unmount();
+    }
+  });
+
   it('renders an allowlisted select and emits its string value', async () => {
     const update = vi.fn();
     const { app, root } = mount(ObsAppearanceField, {
@@ -137,11 +165,18 @@ describe('ObsAppearanceField', () => {
         ],
       },
       modelValue: 'ornate',
+      compact: true,
       'onUpdate:modelValue': update,
     });
 
     const select = findAll(root, (node) => node.type === 'select')[0];
     expect(select.props.id).toBe('output-appearance-fontFamily');
+    expect(select.parent.props.class).toContain(
+      'ui-select__control--fit-content',
+    );
+    expect(select.parent.props.class).toContain(
+      'ui-select__control--align-end',
+    );
     expect(textContent(root)).toContain('華麗明朝（Hina Mincho）');
     trigger(select, 'onChange', { target: { value: 'antique' } });
     await nextTick();
@@ -160,7 +195,6 @@ describe('ObsAppearanceField', () => {
         control: 'color',
       },
       modelValue: '#fff8ec',
-      modified: true,
       paletteTarget: true,
       'onUpdate:modelValue': colorUpdate,
       onCommit: colorCommit,
@@ -184,9 +218,6 @@ describe('ObsAppearanceField', () => {
       colorMount.root,
       (node) => node.props?.['data-palette-target'],
     )[0];
-    expect(
-      findAll(colorRow, (node) => 'data-modified' in node.props),
-    ).toHaveLength(1);
     trigger(colorRow, 'onFocusin');
     expect(activateColor).toHaveBeenCalledOnce();
     colorMount.app.unmount();
@@ -234,6 +265,44 @@ describe('ObsAppearanceField', () => {
   });
 
   it.each([
+    ['on', 'off'],
+    ['standard', 'off'],
+    ['auto', 'off'],
+    ['shown', 'hidden'],
+  ])(
+    'maps the Checkbox back to the persisted %s and %s values',
+    (checkedValue, uncheckedValue) => {
+      const update = vi.fn();
+      const { app, root } = mount(ObsAppearanceField, {
+        field: {
+          key: 'toggle',
+          label: 'Toggle',
+          control: 'select',
+          editor: 'checkbox',
+          checkedValue,
+          options: [{ id: uncheckedValue }, { id: checkedValue }],
+        },
+        modelValue: checkedValue,
+        'onUpdate:modelValue': update,
+      });
+
+      const [checkbox] = findAll(
+        root,
+        (node) => node.props.type === 'checkbox',
+      );
+      expect(checkbox.props).toMatchObject({
+        id: 'output-appearance-toggle',
+        checked: true,
+      });
+      expect(findAll(root, (node) => node.type === 'select')).toHaveLength(0);
+      trigger(checkbox, 'onChange', { target: { checked: false } });
+      trigger(checkbox, 'onChange', { target: { checked: true } });
+      expect(update.mock.calls).toEqual([[uncheckedValue], [checkedValue]]);
+      app.unmount();
+    },
+  );
+
+  it.each([
     ['position-grid', 'positionAnchor', '顯示位置', 'center-right'],
     ['font-scale', 'fontScale', '字級', 'medium'],
     ['alignment', 'alignment', '對齊', 'left'],
@@ -279,6 +348,7 @@ describe('ObsAppearanceField', () => {
         ],
       },
       modelValue: 'original',
+      compact: true,
     });
     const control = findAll(root, (node) => node.props?.role === 'combobox')[0];
 
@@ -287,6 +357,13 @@ describe('ObsAppearanceField', () => {
       'aria-label': 'Look',
       'aria-haspopup': 'listbox',
     });
+    expect(
+      findAll(root, (node) =>
+        String(node.props.class).includes(
+          'obs-appearance-field__picker--compact',
+        ),
+      ),
+    ).toHaveLength(1);
     expect(
       findAll(root, (node) => node.props?.role === 'radiogroup'),
     ).toHaveLength(0);

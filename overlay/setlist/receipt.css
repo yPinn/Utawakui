@@ -127,7 +127,7 @@
 .receipt-setlist__track,
 .receipt-setlist__current-artist,
 .receipt-setlist__artist {
-  font-family: var(--ovl-local-font-prefix,)
+  font-family: var(--ovl-hangul-font-prefix,) var(--ovl-local-font-prefix,)
     var(--ovl-font-preset-override, var(--receipt-text));
 }
 .receipt-setlist__current-title {

@@ -51,7 +51,7 @@ describe('Setlist performance-state layout', () => {
       .replace(/\s+\)/g, ')');
 
     for (const declaration of [
-      '--ovl-template-setlist-type-current-title: clamp(1.75rem, 1.85em, 2.125rem);',
+      '--ovl-template-setlist-type-current-title: clamp(calc(1.75rem * min(1, var(--ovl-user-font-fine, 1))), 1.85em, 2.125rem);',
       '--ovl-template-setlist-type-history-title: clamp(1rem, 1.05em, 1.125rem);',
       '--ovl-template-setlist-type-current-artist: clamp(0.8125rem, 0.88em, 1rem);',
       '--ovl-template-setlist-type-history-artist: clamp(0.75rem, 0.76em, 0.875rem);',

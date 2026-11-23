@@ -6,6 +6,7 @@ import ObsLookSelect from './ObsLookSelect.vue';
 import ObsOutputColorField from './ObsOutputColorField.vue';
 import ObsPositionPicker from './ObsPositionPicker.vue';
 import ObsSegmentedAppearanceChoice from './ObsSegmentedAppearanceChoice.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -18,11 +19,13 @@ const props = defineProps({
   idPrefix: { type: String, default: 'output-appearance' },
   modelValue: { type: [String, Number, Object], required: true },
   disabled: { type: Boolean, default: false },
-  modified: { type: Boolean, default: false },
   paletteTarget: { type: Boolean, default: false },
   stacked: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
   builtInFontsOnly: { type: Boolean, default: false },
   kineticMaterial: { type: String, default: undefined },
+  referenceRem: { type: Number, default: undefined },
+  fontPreviewTarget: { type: String, default: undefined },
 });
 
 const emit = defineEmits([
@@ -68,6 +71,13 @@ function updateValue(value) {
   emit('update:modelValue', value);
 }
 
+function updateCheckbox(checked) {
+  const option = props.field.options.find(
+    ({ id }) => (id === props.field.checkedValue) === checked,
+  );
+  if (option && !option.disabled) updateValue(option.id);
+}
+
 function updateNumber(value) {
   emit('update:modelValue', value);
 }
@@ -84,9 +94,9 @@ function commitColor(value) {
     :id="controlId"
     :label="field.label"
     :model-value="String(modelValue)"
-    :modified="modified"
     :palette-target="paletteTarget"
     :stacked="stacked"
+    :compact="compact"
     @activate="emit('activateColor')"
     @update:model-value="updateValue"
     @commit="commitColor"
@@ -96,18 +106,22 @@ function commitColor(value) {
     v-else
     :control-id="controlId"
     :label="field.label"
-    :labels-control="['range', 'text'].includes(field.control)"
-    :modified="modified"
+    :labels-control="
+      editor === 'checkbox' || ['range', 'text'].includes(field.control)
+    "
     :stacked="stacked"
     :align-start="
       editor === 'position-grid' ||
       editor === 'font-family' ||
+      (field.control === 'range' &&
+        (referenceRem !== undefined || Boolean(disabledHint))) ||
       Boolean(selectedOptionHint)
     "
   >
     <ObsLookSelect
       v-if="editor === 'look'"
       :id="controlId"
+      :class="{ 'obs-appearance-field__picker--compact': compact }"
       :label="field.label"
       :model-value="String(modelValue)"
       :options="field.options"
@@ -118,6 +132,7 @@ function commitColor(value) {
     <ObsFontFamilySelect
       v-else-if="editor === 'font-family'"
       :id="controlId"
+      :class="{ 'obs-appearance-field__picker--compact': compact }"
       :label="field.label"
       :model-value="modelValue"
       :options="field.options"
@@ -125,6 +140,7 @@ function commitColor(value) {
       :template-id="field.templateId"
       :kinetic-material="kineticMaterial"
       :built-in-only="builtInFontsOnly"
+      :preview-action-target="fontPreviewTarget"
       :disabled="disabled"
       @update:model-value="updateValue"
     />
@@ -135,7 +151,7 @@ function commitColor(value) {
       :label="field.label"
       :model-value="String(modelValue)"
       :options="field.options"
-      :stretch="stacked"
+      :stretch="stacked && !compact"
       @update:model-value="updateValue"
     />
 
@@ -144,9 +160,22 @@ function commitColor(value) {
       :id="controlId"
       :label="field.label"
       :editor="editor"
+      :compact="compact"
+      :disabled="disabled"
       :model-value="String(modelValue)"
       :options="field.options"
       @update:model-value="updateValue"
+    />
+
+    <UiCheckbox
+      v-else-if="editor === 'checkbox'"
+      :id="controlId"
+      class="obs-appearance-field__checkbox"
+      :label="field.label"
+      :model-value="modelValue === field.checkedValue"
+      :disabled="disabled"
+      label-hidden
+      @update:model-value="updateCheckbox"
     />
 
     <UiSelect
@@ -157,6 +186,8 @@ function commitColor(value) {
       :options="selectOptions"
       :hint="selectedOptionHint"
       :disabled="disabled"
+      :fit-content="compact"
+      :align="compact ? 'end' : 'start'"
       label-hidden
       @update:model-value="updateValue"
     />
@@ -178,6 +209,7 @@ function commitColor(value) {
     <div
       v-else-if="field.control === 'range'"
       class="obs-appearance-field__range-stack"
+      :class="{ 'obs-appearance-field__range-stack--compact': compact }"
     >
       <div
         class="obs-appearance-field__compound obs-appearance-field__compound--range"
@@ -209,6 +241,13 @@ function commitColor(value) {
       >
         {{ disabledHint }}
       </UiHint>
+      <UiHint v-if="referenceRem !== undefined">
+        {{
+          t('outputPanel.field.referenceFontRem', {
+            size: Number(referenceRem.toFixed(2)),
+          })
+        }}
+      </UiHint>
     </div>
   </ObsAppearanceControlRow>
 </template>
@@ -232,6 +271,29 @@ function commitColor(value) {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-1);
+}
+
+.obs-appearance-field__range-stack--compact {
+  max-inline-size: var(--ui-output-inspector-range-max-width);
+  inline-size: 100%;
+  margin-inline-start: auto;
+}
+
+.obs-appearance-field__range-stack--compact
+  .obs-appearance-field__compound--range {
+  grid-template-columns: minmax(var(--ui-control-height), 1fr) var(
+      --ui-output-inspector-range-value-width
+    );
+}
+
+.obs-appearance-field__picker--compact {
+  inline-size: 100%;
+  max-inline-size: var(--ui-output-inspector-picker-max-width);
+  margin-inline-start: auto;
+}
+
+.obs-appearance-field__checkbox {
+  margin-inline-start: auto;
 }
 
 .obs-appearance-field__range {

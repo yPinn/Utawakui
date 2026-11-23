@@ -16,9 +16,12 @@ defineProps({ scene: { type: Object, required: true } });
   max-inline-size: 39.375cqi;
   overflow: clip;
   color: var(--obs-preview-ink);
-  font:
-    400 2.53cqi / 1.16 'Utawakui Open Huninn',
+  font-family:
+    var(--ovl-hangul-font-prefix,) 'Utawakui Open Huninn',
     sans-serif;
+  font-size: calc(var(--ovl-authored-font-rem, 2.5) * var(--obs-canvas-rem));
+  font-weight: 400;
+  line-height: 1.16;
   letter-spacing: 0.08em;
   writing-mode: vertical-rl;
   white-space: pre;

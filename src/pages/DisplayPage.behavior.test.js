@@ -48,6 +48,10 @@ describe('DisplayPage', () => {
     ].map((marker) => html.indexOf(marker));
     expect(outputControls).not.toContain(-1);
     expect(outputControls).toEqual([...outputControls].sort((a, b) => a - b));
+    const runtimeCommand = html.match(
+      /<button[^>]*class="([^"]*obs-output-runtime-status__command[^"]*)"/u,
+    );
+    expect(runtimeCommand?.[1]).toContain('ui-btn--secondary');
     expect(html).not.toContain('id="obs-output-settings-tab"');
   });
 

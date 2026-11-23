@@ -91,21 +91,6 @@ function updateValue(value) {
         }}</span>
       </span>
     </template>
-    <template #option="{ item }">
-      <span class="obs-look-select__choice obs-look-select__choice--option">
-        <span
-          class="obs-look-select__preview"
-          :data-look="item.id"
-          :style="item.swatches"
-          aria-hidden="true"
-        >
-          <span class="obs-look-select__swatch--ink" />
-          <span class="obs-look-select__swatch--paper" />
-          <span class="obs-look-select__swatch--accent" />
-        </span>
-        <span class="obs-look-select__label">{{ item.label }}</span>
-      </span>
-    </template>
   </UiCombobox>
 </template>
 
@@ -148,10 +133,5 @@ function updateValue(value) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.obs-look-select__choice--option .obs-look-select__label {
-  overflow-wrap: anywhere;
-  white-space: normal;
 }
 </style>

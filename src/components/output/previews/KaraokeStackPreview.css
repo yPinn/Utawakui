@@ -6,11 +6,18 @@
 
 /* Mirrors overlay/lyrics/lyrics.css karaoke-stack at 1920px canvas em. */
 .obs-template-mockup__ktv-lines {
+  --obs-ktv-font-size: calc(
+    var(--ovl-authored-font-rem, 4.75) * var(--obs-canvas-rem)
+  );
+
   position: absolute;
   inset-inline: 4em;
   inset-block-end: 4em;
   display: grid;
-  grid-template-rows: repeat(2, minmax(5.832em, auto));
+  grid-template-rows: repeat(
+    2,
+    minmax(calc(1.08 * var(--obs-ktv-font-size)), auto)
+  );
   gap: 0.16em;
 }
 
@@ -25,8 +32,11 @@
   margin: -0.11em -0.16em -0.18em -0.11em;
   padding: 0.11em 0.16em 0.18em 0.11em;
   color: var(--ui-output-preview-ktv-fill-unsung);
-  font-family: 'Utawakui Open Huninn', 'Microsoft JhengHei', sans-serif;
-  font-size: 5.4em;
+  font-family:
+    var(--ovl-hangul-font-prefix,) 'Utawakui Open Huninn',
+    'Microsoft JhengHei',
+    sans-serif;
+  font-size: var(--obs-ktv-font-size);
   font-weight: 900;
   letter-spacing: 0.015em;
   line-height: 1.08;

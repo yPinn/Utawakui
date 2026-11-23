@@ -6,9 +6,9 @@ defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
   modelValue: { type: String, required: true },
-  modified: { type: Boolean, default: false },
   paletteTarget: { type: Boolean, default: false },
   stacked: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
@@ -17,6 +17,7 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
 <template>
   <div
     class="obs-output-color-field"
+    :class="{ 'obs-output-color-field--compact': compact }"
     :data-palette-target="paletteTarget || undefined"
     @focusin="emit('activate')"
     @click="emit('activate')"
@@ -26,7 +27,6 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
       :control-id="id"
       :label="label"
       :labels-control="false"
-      :modified="modified"
       :stacked="stacked"
     >
       <UiColorField
@@ -48,7 +48,7 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
   min-width: 0;
 }
 
-.obs-output-color-field
+.obs-output-color-field:not(.obs-output-color-field--compact)
   > .obs-output-color-field__controls:not(
     .obs-appearance-control-row--stacked
   ) {
@@ -57,18 +57,6 @@ const emit = defineEmits(['activate', 'update:modelValue', 'commit']);
       1fr
     );
   gap: var(--ui-space-2);
-}
-
-.obs-output-color-field__controls :deep(.obs-appearance-control-row__label) {
-  position: relative;
-  overflow-wrap: anywhere;
-}
-
-.obs-output-color-field__controls :deep(.obs-appearance-control-row__modified) {
-  position: absolute;
-  inset-block: 0;
-  inset-inline-end: calc(100% + var(--ui-space-1) / 2);
-  margin: auto 0;
 }
 
 .obs-output-color-field[data-palette-target]

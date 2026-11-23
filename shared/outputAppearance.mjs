@@ -4,7 +4,7 @@ import {
   MANGA_BUBBLE_STYLE_IDS,
 } from './presentation/mangaFrameContract.mjs';
 
-export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 20;
+export const OUTPUT_APPEARANCE_SCHEMA_VERSION = 21;
 
 export const OUTPUT_TRANSLATION_FONT_SCALE = Object.freeze({
   min: 75,
@@ -397,6 +397,13 @@ export function canAddPhantomPortraitSet(items) {
 }
 const MAX_LOCAL_FONT_NAME_LENGTH = 160;
 const UNSAFE_LOCAL_FONT_NAME_RE = /[\\/;{}<>]|(?:url|var)\s*\(/iu;
+const HANGUL_FONT_STACKS = Object.freeze({
+  'black-han-sans': "'Utawakui Black Han Sans', 'Utawakui Gowun Batang'",
+  'gowun-batang': "'Utawakui Gowun Batang'",
+  jua: "'Utawakui Jua', 'Utawakui Gowun Batang'",
+  'single-day': "'Utawakui Single Day'",
+});
+const HANGUL_FONT_IDS = Object.freeze(Object.keys(HANGUL_FONT_STACKS));
 const GROUP_MAP = new Map(
   OUTPUT_APPEARANCE_GROUPS.map((group) => [group.id, group]),
 );
@@ -445,6 +452,8 @@ const FIELD_DEFINITIONS = [
     reflow: false,
     order: 10,
     control: 'select',
+    editor: 'checkbox',
+    checkedValue: 'on',
     defaultValue: 'on',
     options: [{ id: 'on' }, { id: 'off' }],
   }),
@@ -505,6 +514,7 @@ const FIELD_DEFINITIONS = [
       { id: 'chen-yu-luo-yan' },
       { id: 'klee-one' },
       { id: 'open-huninn' },
+      ...HANGUL_FONT_IDS.map((id) => ({ id })),
     ],
   }),
   fieldDefinition('typography', {
@@ -517,6 +527,19 @@ const FIELD_DEFINITIONS = [
     editor: 'font-scale',
     defaultValue: 'medium',
     options: [{ id: 'small' }, { id: 'medium' }, { id: 'large' }],
+  }),
+  fieldDefinition('typography', {
+    key: 'fontScaleAdjustment',
+    family: 'document',
+    tier: 'basic',
+    reflow: true,
+    order: 21,
+    control: 'range',
+    defaultValue: 100,
+    min: 70,
+    max: 110,
+    step: 5,
+    unit: '%',
   }),
   fieldDefinition('typography', {
     key: 'ornateArrangement',
@@ -557,7 +580,7 @@ const FIELD_DEFINITIONS = [
     family: 'character',
     tier: 'basic',
     reflow: true,
-    order: 30,
+    order: 24,
     control: 'select',
     defaultValue: 'semibold',
     options: [{ id: 'regular' }, { id: 'semibold' }, { id: 'bold' }],
@@ -579,6 +602,8 @@ const FIELD_DEFINITIONS = [
     reflow: false,
     order: 40,
     control: 'select',
+    editor: 'checkbox',
+    checkedValue: 'standard',
     defaultValue: 'standard',
     options: [{ id: 'standard' }, { id: 'off' }],
   }),
@@ -589,6 +614,8 @@ const FIELD_DEFINITIONS = [
     reflow: false,
     order: 50,
     control: 'select',
+    editor: 'checkbox',
+    checkedValue: 'auto',
     defaultValue: 'off',
     options: [{ id: 'off' }, { id: 'auto' }],
   }),
@@ -653,6 +680,8 @@ const FIELD_DEFINITIONS = [
     reflow: true,
     order: 10,
     control: 'select',
+    editor: 'checkbox',
+    checkedValue: 'auto',
     defaultValue: 'auto',
     options: [{ id: 'auto' }, { id: 'off' }],
   }),
@@ -923,6 +952,9 @@ const FIELD_DEFINITIONS = [
       order: 30 + index * 10,
       control: 'select',
       defaultValue: ['arc', 'auto', 'off'][index],
+      ...(key === 'fisheyeBlur'
+        ? { editor: 'checkbox', checkedValue: 'on' }
+        : {}),
       options: (index === 2
         ? ['off', 'on']
         : index === 0
@@ -936,7 +968,7 @@ const FIELD_DEFINITIONS = [
     family: 'motion',
     tier: 'basic',
     reflow: false,
-    order: 45,
+    order: 35,
     control: 'range',
     defaultValue: 100,
     min: 0,
@@ -973,7 +1005,7 @@ const ELEMENT_PROPERTY_DEFINITIONS = Object.freeze(
         tier: 'basic',
         reflow: true,
         scope: 'element',
-        order: 10,
+        order: 30,
         control: 'select',
         defaultValue: 'inherit',
         options: [
@@ -1006,6 +1038,8 @@ const ELEMENT_PROPERTY_DEFINITIONS = Object.freeze(
         order: 10,
         control: 'select',
         defaultValue: 'shown',
+        editor: 'checkbox',
+        checkedValue: 'shown',
         options: [{ id: 'shown' }, { id: 'hidden' }],
       }),
     ].map((definition) => [definition.key, definition]),
@@ -1043,7 +1077,11 @@ export function isSharedOutputAppearanceField(field) {
 }
 
 export function isSharedOutputFont(value) {
-  return BASIC_FONT_IDS.includes(value) || isOutputLocalFont(value);
+  return (
+    BASIC_FONT_IDS.includes(value) ||
+    Boolean(outputHangulFontCssValue(value)) ||
+    isOutputLocalFont(value)
+  );
 }
 const ORNATE_FONT_IDS = Object.freeze(['ornate', 'antique']);
 const MANGA_FONT_IDS = Object.freeze(['antique']);
@@ -1155,6 +1193,7 @@ const TEMPLATE_OVERRIDES = {
       'fontScale',
     ],
     fields: {
+      fontScaleAdjustment: { min: 80, max: 100 },
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
     },
   },
@@ -1173,6 +1212,7 @@ const TEMPLATE_OVERRIDES = {
       'fisheyeGranularity',
     ],
     fields: {
+      fontScaleAdjustment: { min: 80, max: 100 },
       fontFamily: { defaultValue: 'template', optionIds: ['template'] },
       textColor: { defaultValue: '#a3f39e' },
     },
@@ -1245,6 +1285,7 @@ const TEMPLATE_OVERRIDES = {
       'mangaTailDirection',
     ],
     fields: {
+      fontScaleAdjustment: { min: 80, max: 100 },
       fontFamily: { defaultValue: 'antique', optionIds: MANGA_FONT_IDS },
       fontScale: { defaultValue: 'medium' },
       fontWeight: { defaultValue: 'bold' },
@@ -1265,7 +1306,16 @@ const TEMPLATE_OVERRIDES = {
 const TEMPLATE_CONFIGS = Object.fromEntries(
   Object.entries(TEMPLATE_OVERRIDES).map(([id, config]) => [
     id,
-    { ...config, keys: [...LOOK_KEYS, ...config.keys, ...MATERIAL_GRAIN_KEYS] },
+    {
+      ...config,
+      keys: [
+        ...LOOK_KEYS,
+        ...config.keys.flatMap((key) =>
+          key === 'fontScale' ? [key, 'fontScaleAdjustment'] : [key],
+        ),
+        ...MATERIAL_GRAIN_KEYS,
+      ],
+    },
   ]),
 );
 
@@ -1296,6 +1346,28 @@ function sanitizedRangeValue(field, value) {
   const clamped = Math.min(field.max, Math.max(field.min, value));
   const steps = Math.round((clamped - field.min) / field.step);
   return Number((field.min + steps * field.step).toFixed(6));
+}
+
+const AUTHORED_FONT_REM = {
+  'karaoke-stack': { small: 4, medium: 4.75, large: 6.5 },
+  'kinetic-pop': { small: 3.75, medium: 4.5, large: 6 },
+  'ornate-vertical': { small: 2.5, medium: 3, large: 3.75 },
+  'centered-vertical': { small: 2.5, medium: 3, large: 3.5 },
+  'chalkboard-vertical': { small: 2.5, medium: 3, large: 3.5 },
+};
+
+export function outputFontScaleRatio(
+  { fontScale, fontScaleAdjustment = 100 } = {},
+  ratios = { small: 0.85, medium: 1, large: 1.2 },
+) {
+  return ((ratios[fontScale] ?? 1) * fontScaleAdjustment) / 100;
+}
+
+export function outputAuthoredFontRem(templateId, appearance) {
+  const size = AUTHORED_FONT_REM[templateId]?.[appearance.fontScale];
+  return size === undefined
+    ? undefined
+    : (size * (appearance.fontScaleAdjustment ?? 100)) / 100;
 }
 
 export function sanitizeOutputTranslationFontScale(value) {
@@ -1358,6 +1430,16 @@ export function outputLocalFontCssValue(value) {
   return normalized ? JSON.stringify(normalized.family) : undefined;
 }
 
+export function outputHangulFontCssValue(value) {
+  return typeof value === 'string' && Object.hasOwn(HANGUL_FONT_STACKS, value)
+    ? HANGUL_FONT_STACKS[value]
+    : undefined;
+}
+
+export function outputDefaultFontId(templateId) {
+  return templateConfig(templateId).fields?.fontFamily?.defaultValue ?? 'sans';
+}
+
 const SYSTEM_SANS =
   "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const OPEN_HUNINN = "'Utawakui Open Huninn', sans-serif";
@@ -1397,10 +1479,9 @@ export function outputFontFamilyCss(
   kineticMaterial = 'candy-rim',
 ) {
   const primaryLanguage = language.toLowerCase().split('-')[0];
-  const localFamily = outputLocalFontCssValue(value);
-  const preset = localFamily
-    ? (templateConfig(templateId).fields?.fontFamily?.defaultValue ?? 'sans')
-    : value;
+  const selectedFamily =
+    outputLocalFontCssValue(value) ?? outputHangulFontCssValue(value);
+  const preset = selectedFamily ? outputDefaultFontId(templateId) : value;
   let stack = Object.hasOwn(PRESET_FONT_STACKS, preset)
     ? PRESET_FONT_STACKS[preset]
     : SYSTEM_SANS;
@@ -1427,7 +1508,7 @@ export function outputFontFamilyCss(
       }
     } else stack = TEMPLATE_FONT_STACKS[templateId] ?? SYSTEM_SANS;
   }
-  return localFamily ? `${localFamily}, ${stack}` : stack;
+  return selectedFamily ? `${selectedFamily}, ${stack}` : stack;
 }
 
 export const OUTPUT_APPEARANCE_FIELDS = Object.freeze(
@@ -1580,6 +1661,14 @@ export function sanitizeOutputAppearanceSetting(key, value, options = {}) {
   )
     return undefined;
   let sanitized;
+  if (key === 'fontScaleAdjustment' && options.templateId) {
+    const config = templateConfig(options.templateId);
+    if (!config.keys.includes(key)) return undefined;
+    return sanitizedRangeValue(
+      cloneField(baseField, config.fields?.[key]),
+      value,
+    );
+  }
   if (key === 'mangaTailDirection' && value === 'default') value = 'performer';
   if (key === 'fisheyeRim' || key === 'fisheyeReflection')
     value = legacyFisheyeDecorationStyle(value) ?? value;
@@ -1639,6 +1728,7 @@ export function outputAppearanceFieldsForTemplate(templateId) {
     const optionIds = [
       ...(templateOverride.optionIds ?? []),
       ...BASIC_FONT_IDS,
+      ...HANGUL_FONT_IDS,
     ];
     const options = new Map(field.options.map((option) => [option.id, option]));
     return {
@@ -1683,6 +1773,7 @@ export function carryOutputAppearanceToTemplate(settings, options = {}) {
     ]),
   );
   const next = { ...settings };
+  delete next.fontScaleAdjustment;
   for (const field of outputAppearanceFieldsForTemplate(toTemplateId)) {
     if (!(field.key in settings)) continue;
     const reference = fromDefaults.has(field.key)

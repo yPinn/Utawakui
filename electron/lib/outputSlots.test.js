@@ -102,6 +102,7 @@ describe('outputSlots', () => {
         filmGrainAmount: 25,
         filmGrainSize: 'large',
         fontScale: 'small',
+        fontScaleAdjustment: 72,
         fontWeight: 'regular',
         mangaBubbleStyle: 'thought',
         mangaTailDirection: 'performer',
@@ -121,6 +122,7 @@ describe('outputSlots', () => {
     });
     expect(centered).not.toHaveProperty('mangaBubbleStyle');
     expect(centered).not.toHaveProperty('fontWeight');
+    expect(centered).not.toHaveProperty('fontScaleAdjustment');
     upsertOutputSlot(dir, 'lyrics', {
       templateId: 'centered-vertical',
       settings: {
@@ -134,6 +136,7 @@ describe('outputSlots', () => {
 
     expect(switchTo('manga-frame')).toMatchObject({
       fontScale: 'small',
+      fontScaleAdjustment: 80,
       fontWeight: 'regular',
       mangaBubbleStyle: 'thought',
       mangaTailX: 0.4,
@@ -145,6 +148,24 @@ describe('outputSlots', () => {
     expect(loadOutputSlots(dir).slots.setlist.settings.paletteId).toBe(
       'original',
     );
+  });
+
+  it('recalls a bundled Hangul choice across templates of the same output', () => {
+    const initialSetlistFont =
+      loadOutputSlots(dir).slots.setlist.settings.fontFamily;
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'karaoke-stack',
+      settings: { fontFamily: 'jua' },
+    });
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'ornate-vertical',
+      settings: {},
+      recallAppearance: true,
+    });
+
+    const { slots } = loadOutputSlots(dir);
+    expect(slots.lyrics.settings.fontFamily).toBe('jua');
+    expect(slots.setlist.settings.fontFamily).toBe(initialSetlistFont);
   });
 
   it('replaces retired saved templates and rejects selecting them again', () => {

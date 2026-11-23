@@ -269,6 +269,9 @@ function boot() {
       const previousLocalFamily = root.style.getPropertyValue(
         '--ovl-user-local-font-family',
       );
+      const previousHangulPrefix = root.style.getPropertyValue(
+        '--ovl-hangul-font-prefix',
+      );
       templateId = slot?.templateId ?? 'queue-board';
       receipt.configure(slot?.settings);
       ribbon.configure(slot?.settings);
@@ -284,7 +287,9 @@ function boot() {
         templateId === previousTemplateId &&
         (root.dataset.ovlFont !== previousFont ||
           root.style.getPropertyValue('--ovl-user-local-font-family') !==
-            previousLocalFamily)
+            previousLocalFamily ||
+          root.style.getPropertyValue('--ovl-hangul-font-prefix') !==
+            previousHangulPrefix)
       ) {
         refreshTypography();
       }

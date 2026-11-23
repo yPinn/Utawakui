@@ -45,7 +45,7 @@ const runtimeStatus = computed(() =>
       v-if="!outputStatus.running"
       class="obs-output-runtime-status__command"
       :icon="Play"
-      variant="accent"
+      variant="secondary"
       :disabled="busy"
       @click="emit('start')"
     >

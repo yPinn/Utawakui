@@ -77,12 +77,13 @@
   inset: 0;
   container-type: inline-size;
   color: var(--phantom-paper);
-  font-family: var(
-    --phantom-font,
-    'Utawakui Phantom Antique',
-    'Microsoft JhengHei',
-    sans-serif
-  );
+  font-family: var(--ovl-hangul-font-prefix,)
+    var(
+      --phantom-font,
+      'Utawakui Phantom Antique',
+      'Microsoft JhengHei',
+      sans-serif
+    );
   line-height: 1.24;
   pointer-events: none;
 }
@@ -132,12 +133,13 @@
 
 .phantom-thieves[data-mode='radial'] {
   --phantom-copy-size: 2.35cqw;
-  font-family: var(
-    --phantom-font,
-    'Utawakui Phantom Rounded',
-    'Microsoft JhengHei',
-    sans-serif
-  );
+  font-family: var(--ovl-hangul-font-prefix,)
+    var(
+      --phantom-font,
+      'Utawakui Phantom Rounded',
+      'Microsoft JhengHei',
+      sans-serif
+    );
 }
 
 .phantom-thieves__radial {
@@ -207,18 +209,20 @@
 
 .phantom-thieves__choice .phantom-thieves__copy {
   --phantom-copy-size: 1.35cqw;
-  font-family: var(--phantom-font, var(--phantom-thieves-fallback));
+  font-family: var(--ovl-hangul-font-prefix,)
+    var(--phantom-font, var(--phantom-thieves-fallback));
   font-weight: 700;
   line-height: 1.22;
   text-align: center;
 }
 
 .phantom-thieves__choice .phantom-thieves__copy:lang(ja) {
-  font-family: var(
-    --phantom-font,
-    'Utawakui Phantom Rounded',
-    var(--phantom-thieves-fallback)
-  );
+  font-family: var(--ovl-hangul-font-prefix,)
+    var(
+      --phantom-font,
+      'Utawakui Phantom Rounded',
+      var(--phantom-thieves-fallback)
+    );
 }
 
 .phantom-thieves__choice:not([data-choice='current']) .phantom-thieves__copy {
@@ -312,13 +316,14 @@
   font-size: calc(
     3.8cqw * var(--phantom-copy-scale, 1) * var(--phantom-font-scale-ratio)
   );
-  font-family: var(
-    --phantom-font,
-    'Utawakui Phantom Rounded',
-    'Utawakui Open Huninn',
-    'Microsoft JhengHei',
-    sans-serif
-  );
+  font-family: var(--ovl-hangul-font-prefix,)
+    var(
+      --phantom-font,
+      'Utawakui Phantom Rounded',
+      'Utawakui Open Huninn',
+      'Microsoft JhengHei',
+      sans-serif
+    );
   line-height: 1.4;
 }
 
@@ -545,7 +550,8 @@
   --phantom-copy-size: 2.05cqw;
   min-block-size: 1.5lh;
   align-content: center;
-  font-family: var(--phantom-font, var(--phantom-thieves-face));
+  font-family: var(--ovl-hangul-font-prefix,)
+    var(--phantom-font, var(--phantom-thieves-face));
   font-weight: 700;
   font-synthesis: none;
   line-height: 1.24;

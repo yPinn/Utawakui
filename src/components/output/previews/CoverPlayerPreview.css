@@ -44,8 +44,8 @@
       transparent 65%
     ),
     var(--obs-cover-player-base);
-  font-size: var(--obs-canvas-rem);
-  font-family: var(--ui-output-preview-font-ui);
+  font-size: calc(var(--obs-canvas-rem) * var(--ovl-user-font-scale-ratio, 1));
+  font-family: var(--ovl-hangul-font-prefix,) var(--ui-output-preview-font-ui);
   text-align: start;
 }
 
@@ -100,14 +100,20 @@
 }
 
 .obs-template-mockup__cover-player-title {
-  font-size: 1.375em;
+  font-size: max(
+    min(calc(0.75 * var(--obs-canvas-rem)), 1.375em),
+    calc(1.375em * var(--ovl-el-title-size-scale, 1))
+  );
   font-weight: var(--obs-user-font-weight);
   line-height: 1.2;
 }
 
 .obs-template-mockup__cover-player-artist {
   color: var(--obs-cover-player-muted);
-  font-size: 1.125em;
+  font-size: max(
+    min(calc(0.75 * var(--obs-canvas-rem)), 1.125em),
+    calc(1.125em * var(--ovl-el-artist-size-scale, 1))
+  );
   line-height: 1.333333;
 }
 

@@ -1,0 +1,43 @@
+/* Renderer copy of overlay/shared/hangulFonts.css, limited to Hangul code points. */
+@font-face {
+  font-family: 'Utawakui Black Han Sans';
+  src: url('../../../shared/assets/fonts/BlackHanSans-Regular.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 900;
+  unicode-range:
+    U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7FF, U+FFA0-FFDC;
+}
+
+@font-face {
+  font-family: 'Utawakui Gowun Batang';
+  src: url('../../../shared/assets/fonts/GowunBatang-Regular.woff2')
+    format('woff2');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+  unicode-range:
+    U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7FF, U+FFA0-FFDC;
+}
+
+@font-face {
+  font-family: 'Utawakui Jua';
+  src: url('../../../shared/assets/fonts/Jua-Regular.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+  unicode-range:
+    U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7FF, U+FFA0-FFDC;
+}
+
+@font-face {
+  font-family: 'Utawakui Single Day';
+  src: url('../../../shared/assets/fonts/SingleDay-Regular.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+  unicode-range:
+    U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7FF, U+FFA0-FFDC;
+}

@@ -40,7 +40,9 @@
   --obs-preview-muted: var(--ui-output-preview-text-muted);
   --obs-preview-accent: var(--ui-output-preview-accent);
   /* Mirrors overlay/shared/appearance.css user roles. */
-  --obs-user-font-family: var(--ui-output-preview-font-ui);
+  --obs-template-font-family: var(--ui-output-preview-font-ui);
+  --obs-user-font-family: var(--ovl-hangul-font-prefix,)
+    var(--obs-template-font-family);
   --obs-user-font-weight: 600;
   --obs-user-surface: transparent;
   --obs-user-outline: transparent;
@@ -51,8 +53,9 @@
   min-width: 0;
   overflow: hidden;
   display: grid;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
+  border: var(--obs-template-preview-frame-border-width, var(--ui-border-width))
+    solid var(--ui-color-border);
+  border-radius: var(--obs-template-preview-frame-radius, var(--ui-radius-sm));
   background: var(--obs-preview-bg);
   color: var(--obs-preview-ink);
   contain: layout paint;
@@ -91,19 +94,19 @@
 }
 
 .obs-template-mockup[data-appearance-font='serif'] {
-  --obs-user-font-family: var(--ui-output-preview-font-display-cjk);
+  --obs-template-font-family: var(--ui-output-preview-font-display-cjk);
 }
 
 .obs-template-mockup[data-appearance-font='rounded'] {
-  --obs-user-font-family: var(--ui-output-preview-font-rounded);
+  --obs-template-font-family: var(--ui-output-preview-font-rounded);
 }
 
 .obs-template-mockup[data-appearance-font='ornate'] {
-  --obs-user-font-family: var(--ui-output-preview-font-ornate);
+  --obs-template-font-family: var(--ui-output-preview-font-ornate);
 }
 
 .obs-template-mockup[data-appearance-font='antique'] {
-  --obs-user-font-family: var(--ui-output-preview-font-antique);
+  --obs-template-font-family: var(--ui-output-preview-font-antique);
 }
 
 .obs-template-mockup[data-appearance-weight='regular'] {

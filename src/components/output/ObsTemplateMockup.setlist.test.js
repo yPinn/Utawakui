@@ -15,6 +15,10 @@ const runtimeCss = readFileSync(
   'utf8',
 );
 const canvasRem = (value) => `calc(${value} * var(--obs-canvas-rem))`;
+const normalizedRuntime = runtimeCss
+  .replace(/\s+/gu, ' ')
+  .replace(/\(\s+/gu, '(')
+  .replace(/\s+\)/gu, ')');
 
 describe('Setlist template mockup', () => {
   it('orders current song before completed history as distinct regions', () => {
@@ -45,38 +49,30 @@ describe('Setlist template mockup', () => {
     expect(normalized).toContain(`inset: ${canvasRem(1)};`);
   });
 
-  it('resolves every runtime type clamp at a 16px root', () => {
-    for (const [runtime, preview] of [
-      [
-        'clamp(1.75rem, 1.85em, 2.125rem)',
-        `--ui-setlist-preview-current-title-size: ${canvasRem(1.85)};`,
-      ],
-      [
-        'clamp(1rem, 1.05em, 1.125rem)',
-        `--ui-setlist-preview-history-title-size: ${canvasRem(1.05)};`,
-      ],
-      [
-        'clamp(0.8125rem, 0.88em, 1rem)',
-        `--ui-setlist-preview-current-artist-size: ${canvasRem(0.88)};`,
-      ],
-      [
-        'clamp(0.75rem, 0.72em, 0.8125rem)',
-        `--ui-setlist-preview-label-size: ${canvasRem(0.75)};`,
-      ],
-      [
-        'clamp(0.6875rem, 0.7em, 0.75rem)',
-        `--ui-setlist-preview-counter-size: ${canvasRem(0.7)};`,
-      ],
+  it('mirrors runtime type limits in canvas rem as the preset changes', () => {
+    for (const role of [
+      'current-title',
+      'history-title',
+      'current-artist',
+      'history-artist',
+      'label',
+      'counter',
     ]) {
-      expect(runtimeCss).toContain(runtime);
-      expect(normalized).toContain(preview);
+      const [, size] = normalizedRuntime.match(
+        new RegExp(`--ovl-template-setlist-type-${role}: ([^;]+);`, 'u'),
+      );
+      const canvasSize = size
+        .replace(/([\d.]+)rem/gu, (_, value) =>
+          value === '1' ? 'var(--obs-canvas-rem)' : canvasRem(value),
+        )
+        .replace(
+          'calc(calc(1.75 * var(--obs-canvas-rem)) * min(',
+          'calc(1.75 * var(--obs-canvas-rem) * min(',
+        );
+      expect(normalized).toContain(
+        `--ui-setlist-preview-${role}-size: ${canvasSize};`,
+      );
     }
-    expect(runtimeCss.replace(/\s+/gu, ' ')).toContain(
-      'clamp( 0.75rem, 0.76em, 0.875rem )',
-    );
-    expect(normalized).toContain(
-      `--ui-setlist-preview-history-artist-size: ${canvasRem(0.76)};`,
-    );
   });
 
   it('mirrors title-over-artist rows with one shared content edge', () => {

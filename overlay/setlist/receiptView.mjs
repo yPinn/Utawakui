@@ -1,5 +1,6 @@
 import { createReceiptMotionController } from './receiptMotion.mjs';
 import { createSetlistCurrentMotionController } from './setlistMotion.mjs';
+import { outputFontScaleRatio } from '../../shared/outputAppearance.mjs';
 import { receiptPageLayout } from '../../shared/presentation/receiptSetlist.mjs';
 import { overlayText } from '../shared/messages.mjs';
 
@@ -134,8 +135,7 @@ export function createReceiptView(host, { gsap = null } = {}) {
   return {
     update,
     configure(appearance) {
-      const nextScale =
-        { small: 0.85, medium: 1, large: 1.2 }[appearance?.fontScale] ?? 1;
+      const nextScale = outputFontScaleRatio(appearance);
       const scaleChanged = nextScale !== scale;
       const nextDirection =
         appearance?.receiptDirection === 'up' ? 'up' : 'down';

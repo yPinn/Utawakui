@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, useId } from 'vue';
 import { RotateCcw } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import { t } from '../../utils/i18n.js';
@@ -7,9 +7,11 @@ import { t } from '../../utils/i18n.js';
 const props = defineProps({
   title: { type: String, default: '' },
   modified: { type: Boolean, default: false },
+  headerActions: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['reset']);
+const headerActionsId = `obs-property-actions-${useId()}`;
 
 const resetLabel = computed(() =>
   t('outputPanel.field.resetNamed', { title: props.title }),
@@ -20,18 +22,31 @@ const resetLabel = computed(() =>
   <component :is="title ? 'section' : 'div'" class="obs-property-section">
     <header v-if="title" class="obs-property-section__header">
       <h3 class="obs-property-section__title">{{ title }}</h3>
-      <UiIconButton
-        v-if="modified"
-        class="obs-property-section__reset"
-        :icon="RotateCcw"
-        :label="resetLabel"
-        variant="ghost"
-        @click="emit('reset')"
-      />
+      <div
+        v-if="headerActions || modified"
+        class="obs-property-section__actions"
+      >
+        <div
+          v-if="headerActions"
+          :id="headerActionsId"
+          class="obs-property-section__action-slot"
+        ></div>
+        <UiIconButton
+          v-if="modified"
+          :icon="RotateCcw"
+          :label="resetLabel"
+          variant="ghost"
+          @click="emit('reset')"
+        />
+      </div>
     </header>
     <slot name="description" />
     <div class="obs-property-section__fields">
-      <slot />
+      <slot
+        :header-actions-target="
+          title && headerActions ? `#${headerActionsId}` : undefined
+        "
+      />
     </div>
   </component>
 </template>
@@ -41,7 +56,7 @@ const resetLabel = computed(() =>
   min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-2);
-  padding-block: var(--ui-space-3);
+  padding-block: var(--obs-property-section-inset, var(--ui-space-3));
 }
 
 .obs-property-section + .obs-property-section {
@@ -70,8 +85,15 @@ const resetLabel = computed(() =>
   line-height: inherit;
 }
 
-/* Keep the header at label height whether or not the reset action is shown. */
-.obs-property-section__reset {
+/* Keep the header at label height as its actions change. */
+.obs-property-section__actions,
+.obs-property-section__action-slot {
+  display: flex;
+  align-items: center;
+}
+
+.obs-property-section__actions {
+  gap: var(--ui-space-1);
   flex: none;
   margin-block: calc(
     (
@@ -85,6 +107,6 @@ const resetLabel = computed(() =>
 .obs-property-section__fields {
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-2);
+  gap: var(--obs-property-section-field-gap, var(--ui-space-2));
 }
 </style>

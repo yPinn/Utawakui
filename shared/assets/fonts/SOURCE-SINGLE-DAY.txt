@@ -1,0 +1,9 @@
+Single Day Regular
+
+Source: https://github.com/google/fonts/blob/main/ofl/singleday/SingleDay-Regular.ttf
+Local file: SingleDay-Regular.ttf
+Git blob: e870674a9a6f5d55444a918ec1f97bb044e2cc8d
+SHA-256: 716ff67a4b0675b35c26d60a4bb83173f7d153ab754474ed36c3369593ca1ca8
+License: SIL Open Font License 1.1 (https://github.com/google/fonts/blob/main/ofl/singleday/OFL.txt)
+See OFL-SINGLE-DAY.txt.
+CSS family: Utawakui Single Day.

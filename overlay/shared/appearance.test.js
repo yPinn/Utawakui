@@ -252,6 +252,35 @@ describe('overlay appearance', () => {
     },
   );
 
+  it('projects a Hangul face over the template stack and clears it on change', () => {
+    const root = {
+      dataset: {},
+      style: { setProperty: vi.fn(), removeProperty: vi.fn() },
+    };
+    const document = { documentElement: root };
+    const templateId = 'centered-vertical';
+
+    applyOverlayAppearance(document, {
+      templateId,
+      settings: { fontFamily: 'black-han-sans' },
+    });
+    expect(root.dataset.ovlFont).toBe('lyrics-auto');
+    expect(root.style.setProperty).toHaveBeenCalledWith(
+      '--ovl-hangul-font-prefix',
+      "'Utawakui Black Han Sans', 'Utawakui Gowun Batang',",
+    );
+
+    root.style.removeProperty.mockClear();
+    applyOverlayAppearance(document, {
+      templateId,
+      settings: { fontFamily: localFont },
+    });
+    expect(root.dataset.ovlFont).toBe('local');
+    expect(root.style.removeProperty).toHaveBeenCalledWith(
+      '--ovl-hangul-font-prefix',
+    );
+  });
+
   it('lets an Ornate palette color the template defaults without overriding custom colors', () => {
     const setProperty = vi.fn();
     const document = {

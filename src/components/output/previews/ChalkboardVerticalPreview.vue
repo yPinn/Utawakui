@@ -111,8 +111,10 @@ useOutputPreviewMotion({
   display: flex;
   gap: var(--chalkboard-preview-rule-gap);
   color: var(--obs-preview-ink);
-  font-family: 'Utawakui Open Huninn', sans-serif;
-  font-size: 2.53cqi;
+  font-family:
+    var(--ovl-hangul-font-prefix,) 'Utawakui Open Huninn',
+    sans-serif;
+  font-size: calc(var(--ovl-authored-font-rem, 3) * var(--obs-canvas-rem));
   letter-spacing: 0.075em;
   line-height: 1.12;
 }

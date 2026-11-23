@@ -3,10 +3,13 @@
   --obs-preview-accent: var(--ui-output-preview-stage-accent);
 
   /* Mirrors overlay/lyrics/lyrics.css live-stage; runtime rem -> canvas rem. */
-  --ui-live-stage-type-label: calc(1.125 * var(--obs-canvas-rem));
-  --ui-live-stage-type-support: calc(1.5 * var(--obs-canvas-rem));
-  --ui-live-stage-type-title: calc(2.5 * var(--obs-canvas-rem));
-  --ui-live-stage-type-caption: calc(3.5 * var(--obs-canvas-rem));
+  --ui-live-stage-font-rem: calc(
+    var(--obs-canvas-rem) * var(--ovl-user-font-scale-ratio, 1)
+  );
+  --ui-live-stage-type-label: calc(1.125 * var(--ui-live-stage-font-rem));
+  --ui-live-stage-type-support: calc(1.5 * var(--ui-live-stage-font-rem));
+  --ui-live-stage-type-title: calc(2.5 * var(--ui-live-stage-font-rem));
+  --ui-live-stage-type-caption: calc(3.5 * var(--ui-live-stage-font-rem));
 
   position: relative;
   padding: 0;
@@ -53,14 +56,14 @@
   clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
   background: var(--obs-preview-accent);
   color: var(--ui-output-preview-accent-contrast);
-  font-size: calc(2.25 * var(--obs-canvas-rem));
+  font-size: calc(2.25 * var(--ui-live-stage-font-rem));
   line-height: 1;
 }
 
 .obs-template-mockup__live-stage-channel {
   inset-block-start: 5.556%;
   inset-inline-end: 5%;
-  font-size: calc(4 * var(--obs-canvas-rem));
+  font-size: calc(4 * var(--ui-live-stage-font-rem));
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 0.9;

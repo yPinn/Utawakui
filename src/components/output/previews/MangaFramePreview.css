@@ -3,7 +3,7 @@
 .obs-template-mockup[data-template-id='manga-frame']
   .obs-template-mockup__content--lyrics {
   padding: 0;
-  font-size: var(--obs-canvas-rem);
+  font-size: calc(var(--obs-canvas-rem) * var(--ovl-user-font-scale-ratio, 1));
 }
 
 .obs-template-mockup__manga-bubbles {

@@ -24,6 +24,7 @@ const props = defineProps({
   kineticMaterial: { type: String, default: undefined },
   builtInOnly: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
+  previewActionTarget: { type: String, default: undefined },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -225,13 +226,19 @@ function updateValue(value) {
           </span>
         </template>
       </UiCombobox>
-      <UiIconButton
-        :icon="Info"
-        :label="t('outputPanel.font.preview.title')"
-        :disabled="disabled"
-        aria-haspopup="dialog"
-        @click="previewOpen = true"
-      />
+      <Teleport
+        :to="previewActionTarget || 'body'"
+        :disabled="!previewActionTarget"
+        defer
+      >
+        <UiIconButton
+          :icon="Info"
+          :label="t('outputPanel.font.preview.title')"
+          :disabled="disabled"
+          aria-haspopup="dialog"
+          @click="previewOpen = true"
+        />
+      </Teleport>
       <UiIconButton
         v-if="canRetry"
         :icon="RefreshCw"
@@ -297,6 +304,8 @@ function updateValue(value) {
     </UiModal>
   </div>
 </template>
+
+<style src="./hangulFonts.css"></style>
 
 <style scoped>
 .obs-font-family-select {

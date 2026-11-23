@@ -48,7 +48,7 @@ describe('Live Stage gallery mockup', () => {
       )?.[1];
       expect(value, runtimeVar).toBeDefined();
       expect(source).toContain(
-        `${previewVar}: calc(${value} * var(--obs-canvas-rem));`,
+        `${previewVar}: calc(${value} * var(--ui-live-stage-font-rem));`,
       );
     }
     expect(runtimeCss).toContain(
@@ -64,7 +64,9 @@ describe('Live Stage gallery mockup', () => {
     expect(runtimeCss).toContain(
       '--ovl-live-stage-channel-size: calc(4rem * var(--ovl-live-stage-scale));',
     );
-    expect(source).toContain('font-size: calc(4 * var(--obs-canvas-rem));');
+    expect(source).toContain(
+      'font-size: calc(4 * var(--ui-live-stage-font-rem));',
+    );
     expect(source).toMatch(
       /\.obs-template-mockup__live-stage-brand-copy\s*\{[\s\S]*?font-size:\s*var\(--ui-live-stage-type-label\);/u,
     );

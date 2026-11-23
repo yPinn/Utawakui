@@ -1596,7 +1596,7 @@
       "sourcePath": "THIRD_PARTY_NOTICES.md",
       "location": "asar",
       "targetPath": "THIRD_PARTY_NOTICES.md",
-      "sha256": "6fc803a4b680337b43da940653df6ebdbef3aab8a08ce6088e993be6fdacf015"
+      "sha256": "b233a2cbd0182621e7af1c41700b79fee693ef052e811d205a87360957a24ec6"
     },
     {
       "sourcePath": "shared/assets/fonts/ChenYuluoyan-2.0-Thin.ttf",
@@ -1783,6 +1783,78 @@
       "location": "asar",
       "targetPath": "shared/assets/fonts/SOURCE-LAVSIC.txt",
       "sha256": "9e09d10660eddf3b5d94104004ec43f914f8c236094e06f87b1f76db976836e6"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/BlackHanSans-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/BlackHanSans-Regular.ttf",
+      "sha256": "31960809284026681774a8e52dc19ebcad26cf69b0ad9d560f288296fbb52739"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/GowunBatang-Regular.woff2",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/GowunBatang-Regular.woff2",
+      "sha256": "0c6a288aa0c12081dccde769c312f71f290b353243747dd24fb8c57f94f01d72"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/Jua-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/Jua-Regular.ttf",
+      "sha256": "769677aef240bfc3b9965f2b50748075bff885e6c6992fc591a3fb268279f898"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SingleDay-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SingleDay-Regular.ttf",
+      "sha256": "716ff67a4b0675b35c26d60a4bb83173f7d153ab754474ed36c3369593ca1ca8"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-BLACK-HAN-SANS.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-BLACK-HAN-SANS.txt",
+      "sha256": "c324192c8b3a988bae45a9a7e4ac1258b684739003bda114e0523423440457c9"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-BLACK-HAN-SANS.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-BLACK-HAN-SANS.txt",
+      "sha256": "06fe298173d0bc4f928112fc7458cfa5b578a362b4443c6717cd204ffeb5704f"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-GOWUN-BATANG.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-GOWUN-BATANG.txt",
+      "sha256": "49a57cc769fa9affd6eefb9070a61e3d3f6b757c97cafb15848bc6d1c81acc78"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-GOWUN-BATANG.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-GOWUN-BATANG.txt",
+      "sha256": "e335e42b51c5dfb683a9277efe5968973e801b3a323db5382893dd9382da882b"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-JUA.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-JUA.txt",
+      "sha256": "44a7c6e4c5572392ae122d3b1d8c6ba6fd640a7797e675384585d947f2773e3c"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-JUA.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-JUA.txt",
+      "sha256": "988791ee1611b6bf4ce3a416434fe96293620b700e445a7023fc1d1a70260123"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-SINGLE-DAY.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-SINGLE-DAY.txt",
+      "sha256": "397e83b05703a4240be51e2c3a2be1d0d7693d7a2d8b1ff367c26a2b9afc013e"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-SINGLE-DAY.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-SINGLE-DAY.txt",
+      "sha256": "fc9ad75286f0728192ca7771e5ce1a4a7083e2863a4638544beb32ab6e50d3ca"
     },
     {
       "sourcePath": "node_modules/electron/dist/LICENSE",

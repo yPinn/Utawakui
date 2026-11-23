@@ -43,7 +43,6 @@ onMounted(refresh);
       control-id="output-translation-preference"
       :label="visibilityLabel"
       :labels-control="false"
-      stacked
     >
       <UiSelect
         id="output-translation-preference"
@@ -53,6 +52,8 @@ onMounted(refresh);
         :placeholder="loaded ? '' : t('settings.notLoaded')"
         :disabled="disabled"
         :error="saveError"
+        fit-content
+        align="end"
         label-hidden
         @update:model-value="setPreference"
       />
@@ -67,8 +68,7 @@ onMounted(refresh);
       :id-prefix="`output-translation-${id}`"
       :field="sizeField"
       :model-value="fontScale"
-      :modified="fontScale !== sizeField.defaultValue"
-      stacked
+      compact
       @update:model-value="emit('update:fontScale', $event)"
       @commit="emit('commit')"
     />

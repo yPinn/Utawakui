@@ -530,6 +530,8 @@ describe('packaged dependency boundary', () => {
       ['shared/presentation/outputPreviewScene.mjs', true],
       ['shared/presentation/lyricsDisplayLayout.mjs', true],
       ['shared/presentation/lyricsDisplayFrame.mjs', true],
+      ['shared/presentation/outputOccupancy.mjs', true],
+      ['shared/presentation/outputOccupancy.test.js', false],
       ['shared/presentation/lyricsFineFrame.mjs', true],
       ['shared/presentation/lyricsKtvHandoff.mjs', true],
       ['shared/presentation/lyricsKtvHandoff.test.js', false],
@@ -550,6 +552,19 @@ describe('packaged dependency boundary', () => {
       ['shared/assets/fonts/KaitouYokokuGothic-Heavy.ttf', true],
       ['shared/assets/fonts/Kaibunsyo-Regular.ttf', true],
       ['shared/assets/fonts/licenses/lavsic/LICENSE.txt', true],
+      ['overlay/shared/hangulFonts.css', true],
+      ['shared/assets/fonts/hangulFontFiles.json', true],
+      ...[
+        ['BLACK-HAN-SANS', 'BlackHanSans-Regular.ttf'],
+        ['GOWUN-BATANG', 'GowunBatang-Regular.woff2'],
+        ['JUA', 'Jua-Regular.ttf'],
+        ['SINGLE-DAY', 'SingleDay-Regular.ttf'],
+      ].flatMap(([name, file]) =>
+        [file, `OFL-${name}.txt`, `SOURCE-${name}.txt`].map((asset) => [
+          `shared/assets/fonts/${asset}`,
+          true,
+        ]),
+      ),
       ['overlay/lyrics/fisheyeEffects.mjs', true],
       ['shared/browser/fisheyePaint.mjs', true],
       ['shared/browser/fisheyeMotion.mjs', true],

@@ -164,9 +164,9 @@
   position: relative;
   max-inline-size: calc(100% - 7px);
   padding-block: 5px 7px;
-  font-size: 36px;
+  font-size: 2.25rem;
   font-weight: 900;
-  line-height: 36px;
+  line-height: 2.25rem;
   letter-spacing: -0.035em;
 }
 
@@ -175,8 +175,8 @@
 }
 
 .ribbon-setlist__row[data-compact] {
-  font-size: 30px;
-  line-height: 33px;
+  font-size: 1.875rem;
+  line-height: 2.0625rem;
 }
 
 .ribbon-setlist__row[data-script='han'] {
@@ -193,13 +193,13 @@
 }
 
 .ribbon-setlist__row[data-script] {
-  font-size: 32px;
+  font-size: 2rem;
   font-weight: 700;
   letter-spacing: normal;
 }
 
 .ribbon-setlist__row[data-script][data-compact] {
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .ribbon-setlist__row::before,
@@ -239,7 +239,7 @@
 .ribbon-setlist__title {
   min-inline-size: 0;
   overflow-wrap: anywhere;
-  font-family: var(--ovl-local-font-prefix,)
+  font-family: var(--ovl-hangul-font-prefix,) var(--ovl-local-font-prefix,)
     var(
       --ovl-font-preset-override,
       var(--ribbon-title-font, var(--ovl-font-ui))
@@ -252,7 +252,7 @@
 }
 
 .ribbon-setlist__latin {
-  font-family: var(--ovl-local-font-prefix,)
+  font-family: var(--ovl-hangul-font-prefix,) var(--ovl-local-font-prefix,)
     var(--ovl-font-preset-override, var(--ovl-font-ui));
 }
 

@@ -20,6 +20,7 @@ import {
   isOutputLocalFont,
   isSharedOutputAppearanceField,
   migrateLegacyPhantomPortraitSettings,
+  outputAuthoredFontRem,
   sanitizePhantomPortraitSets,
   sanitizeOutputAppearanceSetting,
   sanitizeOutputTranslationFontScale,
@@ -781,6 +782,9 @@ function removePortraitSet() {
         :key="group.id"
         :title="group.label"
         :modified="group.fields.some(isFieldModified)"
+        :header-actions="
+          group.fields.some(({ editor }) => editor === 'font-family')
+        "
         @reset="resetFields(group.fields)"
       >
         <template #description>
@@ -801,31 +805,39 @@ function removePortraitSet() {
             {{ t('outputPanel.workbench.fisheyeGranularityHint') }}
           </UiHint>
         </template>
-        <ObsAppearanceField
-          v-for="field in group.fields"
-          :key="field.key"
-          :field="field"
-          :kinetic-material="draft.kineticMaterial"
-          :model-value="fieldValue(field)"
-          :disabled="
-            field.key === 'lookAmount' && draft.paletteId === 'original'
-          "
-          :modified="isFieldModified(field)"
-          :palette-target="field === activeColorField"
-          @activate-color="activeColorFieldKey = field.key"
-          @update:model-value="updateAppearanceField(field, $event)"
-          @commit="commitSettings"
-          @commit-color="emit('commitColor', $event)"
-        />
-        <ObsOutputColorPalette
-          v-if="activeColorField && group.fields.includes(activeColorField)"
-          :label="activeColorField.label"
-          :model-value="String(fieldValue(activeColorField))"
-          :recent-colors="recentColors"
-          :saved-colors="savedColors"
-          @select="applyPaletteColor"
-          @toggle-saved-color="emit('toggleSavedColor', $event)"
-        />
+        <template #default="{ headerActionsTarget }">
+          <ObsAppearanceField
+            v-for="field in group.fields"
+            :key="field.key"
+            compact
+            :field="field"
+            :kinetic-material="draft.kineticMaterial"
+            :model-value="fieldValue(field)"
+            :font-preview-target="headerActionsTarget"
+            :reference-rem="
+              field.key === 'fontScaleAdjustment'
+                ? outputAuthoredFontRem(templateId, draft)
+                : undefined
+            "
+            :disabled="
+              field.key === 'lookAmount' && draft.paletteId === 'original'
+            "
+            :palette-target="field === activeColorField"
+            @activate-color="activeColorFieldKey = field.key"
+            @update:model-value="updateAppearanceField(field, $event)"
+            @commit="commitSettings"
+            @commit-color="emit('commitColor', $event)"
+          />
+          <ObsOutputColorPalette
+            v-if="activeColorField && group.fields.includes(activeColorField)"
+            :label="activeColorField.label"
+            :model-value="String(fieldValue(activeColorField))"
+            :recent-colors="recentColors"
+            :saved-colors="savedColors"
+            @select="applyPaletteColor"
+            @toggle-saved-color="emit('toggleSavedColor', $event)"
+          />
+        </template>
       </ObsPropertySection>
     </template>
   </component>

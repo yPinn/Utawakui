@@ -19,6 +19,12 @@ const props = defineProps({
   invalid: { type: Boolean, default: false },
   labelHidden: { type: Boolean, default: false },
   labelInline: { type: Boolean, default: false },
+  fitContent: { type: Boolean, default: false },
+  align: {
+    type: String,
+    default: 'start',
+    validator: (value) => ['start', 'end'].includes(value),
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -64,7 +70,13 @@ defineExpose({ focus });
     :label-inline="labelInline"
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
-      <span class="ui-select__control">
+      <span
+        class="ui-select__control"
+        :class="{
+          'ui-select__control--fit-content': fitContent,
+          'ui-select__control--align-end': align === 'end',
+        }"
+      >
         <select
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
@@ -122,6 +134,15 @@ defineExpose({ focus });
   position: relative;
   display: block;
   min-width: 0;
+}
+
+.ui-select__control--fit-content {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
+.ui-select__control--align-end {
+  margin-inline-start: auto;
 }
 
 .ui-select {

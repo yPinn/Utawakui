@@ -2,6 +2,11 @@
 import { computed, toRaw } from 'vue';
 import {
   normalizeOutputAppearance,
+  normalizeOutputElementAppearance,
+  outputAuthoredFontRem,
+  outputDefaultFontId,
+  outputFontScaleRatio,
+  outputHangulFontCssValue,
   ornateSectionAccentColor,
 } from '../../../shared/outputAppearance.mjs';
 import { createOutputPreviewScene } from '../../../shared/presentation/outputPreviewScene.mjs';
@@ -61,17 +66,42 @@ const appearance = computed(() =>
     templateId: props.preset?.id,
   }),
 );
+const hangulFont = computed(() =>
+  outputHangulFontCssValue(appearance.value.fontFamily),
+);
+const baseFont = computed(() =>
+  hangulFont.value
+    ? outputDefaultFontId(props.preset?.id)
+    : appearance.value.fontFamily,
+);
 // Widgets preview at their own capture size; lyrics use the 1920×1080 canvas.
 const canvasStyle = computed(() => {
   const { width, height } = captureSizeForKind(
     props.preset?.kind,
-    null,
+    effectiveSettings.value.captureSize,
     props.preset?.id,
   );
+  const templateId = props.preset?.id;
+  const elements = normalizeOutputElementAppearance(effectiveSettings.value, {
+    templateId,
+  });
   return {
     '--obs-canvas-width': String(width),
     '--obs-canvas-aspect': `${width} / ${height}`,
     '--obs-canvas-ratio': String(width / height),
+    '--ovl-authored-font-rem': outputAuthoredFontRem(
+      templateId,
+      appearance.value,
+    ),
+    '--ovl-user-font-scale-ratio': outputFontScaleRatio(appearance.value),
+    '--ovl-user-font-fine': appearance.value.fontScaleAdjustment / 100,
+    '--ovl-el-title-size-scale':
+      (elements['element.title.fontSizeScale'] ?? 100) / 100,
+    '--ovl-el-artist-size-scale':
+      (elements['element.artist.fontSizeScale'] ?? 100) / 100,
+    '--ovl-hangul-font-prefix': hangulFont.value
+      ? `${hangulFont.value},`
+      : undefined,
     ...(props.preset?.id === 'ornate-vertical'
       ? {
           '--obs-ornate-section-accent': ornateSectionAccentColor(
@@ -93,7 +123,7 @@ const canvasStyle = computed(() => {
     :data-backdrop="backdrop"
     :data-scenario-id="previewScene.scenarioId"
     :data-frame-time="previewScene.frameTimeMs"
-    :data-appearance-font="appearance.fontFamily"
+    :data-appearance-font="baseFont"
     :data-appearance-weight="appearance.fontWeight"
     :data-appearance-surface="appearance.surface"
     :data-appearance-text-shadow="appearance.textShadow"
@@ -114,4 +144,5 @@ const canvasStyle = computed(() => {
 </template>
 
 <!-- Shared canvas rules load first through the preview registry. -->
+<style src="./hangulFonts.css"></style>
 <style src="./ObsTemplateMockup.reduced-motion.css"></style>

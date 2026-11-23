@@ -1511,6 +1511,7 @@ export function renderPhantomThieves(stage, frame, options = {}) {
     accentFont,
     options.appearance?.fontFamily,
     options.appearance?.fontScale,
+    options.appearance?.fontScaleAdjustment,
     Boolean(animate),
   ]);
   if (scene?.key !== key) {

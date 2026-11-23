@@ -1,0 +1,11 @@
+Gowun Batang Regular
+
+Source: https://github.com/postmelee/alhangeul-macos/blob/main/Sources/HostApp/Resources/rhwp-studio/fonts/GowunBatang-Regular.woff2
+Upstream project: https://github.com/yangheeryu/Gowun-Batang
+The source above distributes the WOFF2 build of the Google Fonts face.
+Local file: GowunBatang-Regular.woff2
+Git blob: b9257e842be3e2b054220898b5deeb2747db4230
+SHA-256: 0c6a288aa0c12081dccde769c312f71f290b353243747dd24fb8c57f94f01d72
+License: SIL Open Font License 1.1 (https://github.com/google/fonts/blob/main/ofl/gowunbatang/OFL.txt)
+See OFL-GOWUN-BATANG.txt.
+CSS family: Utawakui Gowun Batang.

@@ -40,7 +40,9 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
     expect(karaokeCss).not.toContain('--ovl-ktv-shadow');
     expect(karaokeCss).toContain('background: transparent;');
     expect(karaokeCss).toContain('border: 0;');
-    expect(karaokeCss).toContain('--ovl-ktv-lane-block-size: 5.832em;');
+    expect(karaokeCss).toContain(
+      '--ovl-ktv-lane-block-size: calc(1.08 * var(--ovl-ktv-font-size));',
+    );
     expect(karaokeCss).toContain(
       'grid-template-rows: repeat(2, minmax(var(--ovl-ktv-lane-block-size), auto));',
     );
@@ -48,7 +50,7 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
       'inset-inline: max(var(--ovl-safe-inline), 3%);',
     );
     expect(karaokeCss).toContain('max-inline-size: 94%;');
-    expect(karaokeCss).toContain('font-size: 5.4em;');
+    expect(karaokeCss).toContain('font-size: var(--ovl-ktv-font-size);');
     expect(karaokeCss).toContain('padding: 0.11em 0.16em 0.18em 0.11em;');
     expect(karaokeCss).toContain('margin: -0.11em -0.16em -0.18em -0.11em;');
     expect(karaokeCss).not.toMatch(/font-size:[^;]*vw/u);

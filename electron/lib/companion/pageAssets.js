@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const appIdentity = require('../../../shared/appIdentity.json');
+const hangulFontFiles = require('../../../shared/assets/fonts/hangulFontFiles.json');
 
 const MANIFEST_NAME = 'utawakui-manifest.json';
 const ENTRY_KEY = 'src/entries/companion/index.html';
@@ -48,8 +49,8 @@ function collectEntryFiles(manifest, entryKey = ENTRY_KEY) {
   );
 }
 
-// Builds the exact route table: `/m/` for the page and `/assets/<file>` for
-// its dependencies. Files are read once so requests never touch the disk path.
+// Builds the exact route table from Vite's entry and the shared font allowlist.
+// Files are read once so requests never touch the disk path.
 function loadCompanionPage(distDir) {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(distDir, MANIFEST_NAME), 'utf8'),
@@ -68,6 +69,13 @@ function loadCompanionPage(distDir) {
     routes.set(`/${file}`, {
       body: fs.readFileSync(path.join(distDir, file)),
       type,
+    });
+  }
+  for (const file of hangulFontFiles) {
+    const relativePath = `shared/assets/fonts/${file}`;
+    routes.set(`/${relativePath}`, {
+      body: fs.readFileSync(path.join(distDir, '..', relativePath)),
+      type: CONTENT_TYPES[path.extname(file)],
     });
   }
   return routes;

@@ -13,7 +13,7 @@
   gap: 0;
   padding: calc(0.5 * var(--obs-canvas-rem));
   font-family: var(--obs-user-font-family);
-  font-size: var(--obs-canvas-rem);
+  font-size: calc(var(--obs-canvas-rem) * var(--ovl-user-font-scale-ratio, 1));
 }
 
 .obs-template-mockup__vinyl-stage {

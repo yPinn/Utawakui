@@ -2,6 +2,8 @@ import { fisheyeLetterScale } from '../presentation/fisheyeLyrics.mjs';
 import {
   fisheyeDecorationStrength,
   outputFontFamilyCss,
+  outputFontScaleRatio,
+  outputHangulFontCssValue,
 } from '../outputAppearance.mjs';
 
 export const FISHEYE_WIDTH = 960;
@@ -66,6 +68,37 @@ export function createFisheyePainter(canvas) {
   const center = FISHEYE_CENTER;
   const aperture = FISHEYE_APERTURE;
   const ridge = FISHEYE_RIDGE;
+  let fontRequest;
+
+  function prepareHangulFont(columns, pose, appearance) {
+    const family = outputHangulFontCssValue(appearance.fontFamily);
+    if (!family || !document.fonts?.load) {
+      fontRequest = undefined;
+      return;
+    }
+    if (fontRequest?.family !== family || fontRequest?.columns !== columns) {
+      const text = [...columns.left, ...columns.right].join('');
+      const request = { family, columns, repaint: undefined };
+      fontRequest = request;
+      if (/\p{Script=Hangul}/u.test(text)) {
+        // Canvas has no DOM text to trigger a paused frame's webfont load.
+        request.repaint = () => render(columns, pose, appearance);
+        document.fonts.load(`900 32px ${family}`, text).then(
+          () => {
+            const repaint = request.repaint;
+            request.repaint = undefined;
+            if (fontRequest === request && canvas.isConnected && !canvas.hidden)
+              repaint();
+          },
+          () => {
+            request.repaint = undefined;
+          },
+        );
+      }
+    }
+    if (fontRequest.repaint)
+      fontRequest.repaint = () => render(columns, pose, appearance);
+  }
 
   function clipView(scale = 1) {
     ellipse(glass, ridge.x, ridge.y, ridge.r * scale, ridge.r * scale);
@@ -225,6 +258,7 @@ export function createFisheyePainter(canvas) {
     reducedMotion = false,
     {
       fontScale = 'medium',
+      fontRatio = 1,
       fontFamily = DEFAULT_FONT_FAMILY,
       textColor = DEFAULT_TEXT_COLOR,
       pulse = 1,
@@ -280,7 +314,7 @@ export function createFisheyePainter(canvas) {
         (27 + (index % 3) * 2.6) *
           mix(1, 1.42, layoutMix) *
           (compact ? 0.9 : 1) *
-          FONT_SCALE[fontScale],
+          fontRatio,
         spacing * (fontScale === 'large' ? 0.94 : 0.8),
       );
       ctx.font = `900 ${fontSize}px ${fontFamily}`;
@@ -289,9 +323,7 @@ export function createFisheyePainter(canvas) {
       ctx.lineJoin = 'round';
       const maxWidth = 115;
       const border =
-        (compact ? 9 : 11) *
-        mix(1, 1.18, layoutMix) *
-        Math.min(1, FONT_SCALE[fontScale]);
+        (compact ? 9 : 11) * mix(1, 1.18, layoutMix) * Math.min(1, fontRatio);
       ctx.strokeStyle = '#9de1fa85';
       ctx.lineWidth = border + 4;
       ctx.strokeText(token, -1.4, 1, maxWidth);
@@ -394,6 +426,7 @@ export function createFisheyePainter(canvas) {
   }
 
   function render(columns, pose = {}, appearance = {}) {
+    prepareHangulFont(columns, pose, appearance);
     const {
       visible = true,
       scaleTransition,
@@ -429,6 +462,7 @@ export function createFisheyePainter(canvas) {
     if (visible || smoke)
       paintEffects(columns, pose, {
         fontScale,
+        fontRatio: outputFontScaleRatio(appearance, FONT_SCALE),
         fontFamily: outputFontFamilyCss(
           appearance.fontFamily ?? 'template',
           'fisheye-lens',

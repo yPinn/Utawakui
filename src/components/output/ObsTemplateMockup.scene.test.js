@@ -87,6 +87,26 @@ describe('F3 Gallery projected scene', () => {
       ),
     ).resolves.toContain('data-scenario-id');
   });
+  it('passes the Hangul preset to the preview while keeping each template base face', async () => {
+    for (const [id, baseFont] of [
+      ['karaoke-stack', 'template'],
+      ['ornate-vertical', 'ornate'],
+    ]) {
+      const html = await renderToString(
+        createSSRApp({
+          render: () =>
+            h(Mockup, {
+              preset: { id, kind: 'lyrics' },
+              settings: { fontFamily: 'jua' },
+            }),
+        }),
+      );
+      expect(html).toContain(`data-appearance-font="${baseFont}"`);
+      expect(html).toContain(
+        '--ovl-hangul-font-prefix:&#39;Utawakui Jua&#39;, &#39;Utawakui Gowun Batang&#39;,',
+      );
+    }
+  });
   it.each(getOutputWorkbenchData().templates)(
     '$id uses the shared scenario with its own normalized defaults',
     async (preset) => {

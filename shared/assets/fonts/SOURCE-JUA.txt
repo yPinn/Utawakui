@@ -1,0 +1,9 @@
+Jua Regular
+
+Source: https://github.com/google/fonts/blob/main/ofl/jua/Jua-Regular.ttf
+Local file: Jua-Regular.ttf
+Git blob: b2ac41e5b128d1455f3b49262a10a795f09f66d7
+SHA-256: 769677aef240bfc3b9965f2b50748075bff885e6c6992fc591a3fb268279f898
+License: SIL Open Font License 1.1 (https://github.com/google/fonts/blob/main/ofl/jua/OFL.txt)
+See OFL-JUA.txt.
+CSS family: Utawakui Jua.

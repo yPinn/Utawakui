@@ -62,7 +62,7 @@ describe('Classic KTV gallery mockup', () => {
     expect(source).not.toContain('var(--ui-output-preview-ktv-shadow)');
   });
 
-  it('sizes the preview in runtime em on a 1920px canvas', () => {
+  it('sizes the preview in runtime rem on a 1920px canvas', () => {
     const runtimeCss = readFileSync(
       fileURLToPath(
         new URL('../../../overlay/lyrics/lyrics.css', import.meta.url),
@@ -93,15 +93,16 @@ describe('Classic KTV gallery mockup', () => {
 
     const lines = cssBlock(source, '.obs-template-mockup__ktv-lines');
     expect(runtime('.lyrics-overlay')).toContain(
-      '--ovl-ktv-lane-block-size: 5.832em;',
+      '--ovl-ktv-lane-block-size: calc(1.08 * var(--ovl-ktv-font-size));',
     );
-    expect(lines).toContain('minmax(5.832em, auto)');
+    expect(lines).toContain(
+      'minmax(calc(1.08 * var(--obs-ktv-font-size)), auto)',
+    );
     // Runtime safe area is max(4rem, 3%) inline and max(4rem, 5%) block.
     expect(lines).toContain('inset-inline: 4em;');
     expect(lines).toContain('inset-block-end: 4em;');
 
     for (const declaration of [
-      'font-size: 5.4em;',
       'letter-spacing: 0.015em;',
       'line-height: 1.08;',
     ]) {
@@ -114,6 +115,14 @@ describe('Classic KTV gallery mockup', () => {
         declaration,
       );
     }
+    expect(
+      runtime(
+        ".lyrics-overlay__current,\n  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next",
+      ),
+    ).toContain('font-size: var(--ovl-ktv-font-size);');
+    expect(cssBlock(source, '.obs-template-mockup__ktv-line')).toContain(
+      'font-size: var(--obs-ktv-font-size);',
+    );
     for (const declaration of [
       'inset-block-start: -2.55em;',
       'inset-inline-start: 0.11em;',

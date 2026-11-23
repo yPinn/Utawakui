@@ -15,9 +15,11 @@
   min-width: 0;
   min-block-size: 1.3em;
   font-family:
-    'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP',
+    var(--ovl-hangul-font-prefix,) 'Utawakui M PLUS Rounded 1c',
+    'M PLUS Rounded 1c',
+    'Noto Sans CJK JP',
     sans-serif;
-  font-size: calc(5 * var(--obs-canvas-rem));
+  font-size: calc(var(--ovl-authored-font-rem, 4.5) * var(--obs-canvas-rem));
   font-weight: 800;
   line-height: 1.04;
   text-align: center;
@@ -80,7 +82,9 @@
 
 .obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim'] {
   font-family:
-    'Utawakui Keifont', 'Utawakui M PLUS Rounded 1c', 'Noto Sans CJK JP',
+    var(--ovl-hangul-font-prefix,) 'Utawakui Keifont',
+    'Utawakui M PLUS Rounded 1c',
+    'Noto Sans CJK JP',
     sans-serif;
   font-size: 1.18em;
   font-weight: 900;

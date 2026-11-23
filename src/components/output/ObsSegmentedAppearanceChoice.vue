@@ -12,6 +12,8 @@ const props = defineProps({
   },
   modelValue: { type: String, required: true },
   options: { type: Array, default: () => [] },
+  compact: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -28,10 +30,14 @@ const items = computed(() =>
   <UiSegmentedControl
     :id="id"
     class="obs-segmented-appearance-choice"
+    :class="{ 'obs-segmented-appearance-choice--compact': compact }"
     :data-editor="editor"
     :items="items"
     :model-value="modelValue"
     :aria-label="label"
+    :compact="compact"
+    :wrap="compact"
+    :disabled="disabled"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template #label="{ item }">
@@ -64,20 +70,30 @@ const items = computed(() =>
   inline-size: 100%;
 }
 
-.obs-segmented-appearance-choice :deep(.ui-segmented-control__option) {
+.obs-segmented-appearance-choice--compact {
+  display: block;
+  inline-size: fit-content;
+  margin-inline-start: auto;
+}
+
+.obs-segmented-appearance-choice:not(.obs-segmented-appearance-choice--compact)
+  :deep(.ui-segmented-control__option) {
   flex: 1 1 0;
   padding-inline: var(--ui-space-2);
 }
 
-.obs-segmented-appearance-choice__scale[data-scale='small'] {
+.obs-segmented-appearance-choice:not(.obs-segmented-appearance-choice--compact)
+  .obs-segmented-appearance-choice__scale[data-scale='small'] {
   font-size: var(--ui-font-size-sm);
 }
 
-.obs-segmented-appearance-choice__scale[data-scale='medium'] {
+.obs-segmented-appearance-choice:not(.obs-segmented-appearance-choice--compact)
+  .obs-segmented-appearance-choice__scale[data-scale='medium'] {
   font-size: var(--ui-font-size-md);
 }
 
-.obs-segmented-appearance-choice__scale[data-scale='large'] {
+.obs-segmented-appearance-choice:not(.obs-segmented-appearance-choice--compact)
+  .obs-segmented-appearance-choice__scale[data-scale='large'] {
   font-size: var(--ui-font-size-lg);
 }
 

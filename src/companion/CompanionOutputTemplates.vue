@@ -297,7 +297,6 @@ function commitColor(field, value) {
                     :model-value="
                       drafts[field.key] ?? slot.options[field.key] ?? ''
                     "
-                    :modified="slot.options[field.key] !== field.defaultValue"
                     :disabled="
                       disabled ||
                       (field.key === 'lookAmount' &&

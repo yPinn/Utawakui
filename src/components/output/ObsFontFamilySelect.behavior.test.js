@@ -135,6 +135,31 @@ describe('ObsFontFamilySelect', () => {
     app.unmount();
   });
 
+  it('opens the same preview from a section heading action', async () => {
+    const headingActions = hostNode('div');
+    body.appendChild(headingActions);
+    const querySelector = document.querySelector;
+    document.querySelector = (selector) =>
+      selector === '#font-actions' ? headingActions : querySelector(selector);
+    const { app, root } = mount(ObsFontFamilySelect, {
+      id: 'output-font-heading',
+      label: '字型',
+      modelValue: 'serif',
+      options: OPTIONS,
+      previewActionTarget: '#font-actions',
+    });
+
+    expect(action(root, '字型預覽')).toBeUndefined();
+    const triggerButton = action(headingActions, '字型預覽');
+    expect(triggerButton).toBeDefined();
+    trigger(triggerButton, 'onClick');
+    await nextTick();
+    const [dialog] = findAll(body, (node) => node.props.role === 'dialog');
+    expect(textContent(dialog)).toContain('襯線');
+    expect(findAll(dialog, (node) => node.type === 'dd')).toHaveLength(4);
+    app.unmount();
+  });
+
   it('opens template fonts immediately and matches the Output font stacks', async () => {
     const { app, root } = mount(ObsFontFamilySelect, {
       id: 'output-appearance-fontFamily',

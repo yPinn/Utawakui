@@ -10,8 +10,8 @@
 
   :root {
     /* Allowlisted user settings map to semantic roles outside template CSS. */
-    --ovl-user-font-family: var(--ovl-font-ui);
-    --ovl-user-font-scale: 100%;
+    --ovl-user-font-family: var(--ovl-hangul-font-prefix,) var(--ovl-font-ui);
+    --ovl-user-font-scale: calc(100% * var(--ovl-user-font-scale-ratio));
     --ovl-user-font-scale-ratio: 1;
     --ovl-user-font-weight: 600;
     --ovl-user-text-align: left;
@@ -285,7 +285,8 @@
   }
 
   :root[data-ovl-font='serif'] {
-    --ovl-user-font-family: var(--ovl-font-display-cjk);
+    --ovl-user-font-family: var(--ovl-hangul-font-prefix,)
+      var(--ovl-font-display-cjk);
   }
 
   :root[data-ovl-font='rounded'] {
@@ -328,22 +329,21 @@
 
   :root[data-ovl-font='ornate'] {
     --ovl-user-font-family:
-      'Utawakui Hina Mincho', 'Hina Mincho', 'Yu Mincho', 'Noto Serif CJK JP',
-      serif;
+      var(--ovl-hangul-font-prefix,) 'Utawakui Hina Mincho', 'Hina Mincho',
+      'Yu Mincho', 'Noto Serif CJK JP', serif;
   }
 
   :root[data-ovl-font='antique'] {
     --ovl-user-font-family:
-      'Utawakui GenEi Antique', 'Noto Serif CJK JP', 'Yu Mincho', serif;
+      var(--ovl-hangul-font-prefix,) 'Utawakui GenEi Antique',
+      'Noto Serif CJK JP', 'Yu Mincho', serif;
   }
 
   :root[data-ovl-scale='small'] {
-    --ovl-user-font-scale: 85%;
     --ovl-user-font-scale-ratio: 0.85;
   }
 
   :root[data-ovl-scale='large'] {
-    --ovl-user-font-scale: 120%;
     --ovl-user-font-scale-ratio: 1.2;
   }
 

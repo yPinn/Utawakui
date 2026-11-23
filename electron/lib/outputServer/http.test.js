@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { Readable } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import outputHttpModule from './http.js';
 
@@ -394,6 +394,36 @@ describe('output HTTP delivery', () => {
     expect(grain.headers.get('content-type')).toBe('image/png');
     expect(Buffer.from(await grain.arrayBuffer())).toEqual(grainBytes);
     expect(privateGrain.status).toBe(404);
+  });
+
+  it('serves each bundled Hangul face without exposing its source directory', async () => {
+    const handler = createOutputHttpHandler({ getSnapshot: () => null });
+    async function readStatic(url) {
+      const response = new PassThrough();
+      response.writeHead = vi.fn();
+      await handler({ method: 'GET', url, headers: {} }, response);
+      const chunks = [];
+      for await (const chunk of response) chunks.push(chunk);
+      const [status, headers] = response.writeHead.mock.calls[0];
+      return { status, headers, body: Buffer.concat(chunks) };
+    }
+    const stylesheet = await readStatic('/overlay/shared/hangulFonts.css');
+    expect(stylesheet.status).toBe(200);
+    const css = stylesheet.body.toString('utf8');
+    for (const [filename, type, header] of [
+      ['BlackHanSans-Regular.ttf', 'font/ttf', Buffer.from([0, 1, 0, 0])],
+      ['GowunBatang-Regular.woff2', 'font/woff2', Buffer.from('wOF2')],
+      ['Jua-Regular.ttf', 'font/ttf', Buffer.from([0, 1, 0, 0])],
+      ['SingleDay-Regular.ttf', 'font/ttf', Buffer.from([0, 1, 0, 0])],
+    ]) {
+      expect(css).toContain(filename);
+      const response = await readStatic(`/shared/assets/fonts/${filename}`);
+      expect(response.status).toBe(200);
+      expect(response.headers['Content-Type']).toBe(type);
+      expect(response.body.subarray(0, 4)).toEqual(header);
+    }
+    const license = await readStatic('/shared/assets/fonts/OFL-JUA.txt');
+    expect(license.status).toBe(404);
   });
 
   it('revalidates unchanged static assets with their strong ETag', async () => {

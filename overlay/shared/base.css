@@ -1,5 +1,7 @@
 @layer ovl-reset, ovl-fallback, ovl-semantic, ovl-template, ovl-appearance, ovl-constraints;
 
+@import './hangulFonts.css';
+
 @layer ovl-reset {
   *,
   *::before,

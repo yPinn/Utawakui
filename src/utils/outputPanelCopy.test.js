@@ -74,6 +74,10 @@ describe('output panel copy', () => {
       { id: 'sans', label: '無襯線' },
       { id: 'serif', label: '襯線' },
       { id: 'rounded', label: '圓體' },
+      { id: 'black-han-sans', label: 'Black Han Sans 검은고딕' },
+      { id: 'gowun-batang', label: 'Gowun Batang 고운바탕' },
+      { id: 'jua', label: 'Jua 주아' },
+      { id: 'single-day', label: 'Single Day 단하루' },
     ]);
   });
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "appearanceSchemaVersion": 20,
+  "appearanceSchemaVersion": 21,
   "captureSizes": {
     "small": {
       "width": 480,
@@ -254,6 +254,10 @@
       "level": "opt",
       "scope": "slot-template",
       "activation": "explicit-selection"
+    },
+    "fontScaleAdjustment": {
+      "level": "opt",
+      "scope": "slot-template"
     }
   },
   "projectShared": {
@@ -394,6 +398,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -426,11 +442,27 @@
         },
         {
           "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "fontWeight",
           "family": "character",
           "tier": "basic",
           "reflow": true,
-          "order": 30,
+          "order": 24,
           "control": "select",
           "defaultValue": "semibold",
           "options": [
@@ -650,6 +682,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -677,6 +721,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -851,6 +911,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -878,6 +950,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -1124,6 +1212,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -1151,6 +1251,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -1202,7 +1318,7 @@
           "reflow": false,
           "order": 26,
           "control": "select",
-          "defaultValue": "sequential",
+          "defaultValue": "random-slide",
           "options": [
             {
               "id": "sequential"
@@ -1225,6 +1341,8 @@
           "reflow": false,
           "order": 40,
           "control": "select",
+          "editor": "checkbox",
+          "checkedValue": "standard",
           "defaultValue": "standard",
           "options": [
             {
@@ -1245,6 +1363,8 @@
           "reflow": false,
           "order": 50,
           "control": "select",
+          "editor": "checkbox",
+          "checkedValue": "auto",
           "defaultValue": "off",
           "options": [
             {
@@ -1486,6 +1606,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -1513,6 +1645,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -1775,6 +1923,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -1802,6 +1962,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -2008,6 +2184,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -2035,6 +2223,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -2235,6 +2439,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -2267,11 +2483,27 @@
         },
         {
           "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 80,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "fontWeight",
           "family": "character",
           "tier": "basic",
           "reflow": true,
-          "order": 30,
+          "order": 24,
           "control": "select",
           "defaultValue": "bold",
           "options": [
@@ -2296,6 +2528,8 @@
           "reflow": true,
           "order": 10,
           "control": "select",
+          "editor": "checkbox",
+          "checkedValue": "auto",
           "defaultValue": "auto",
           "options": [
             {
@@ -2521,6 +2755,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -2553,11 +2799,27 @@
         },
         {
           "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "fontWeight",
           "family": "character",
           "tier": "basic",
           "reflow": true,
-          "order": 30,
+          "order": 24,
           "control": "select",
           "defaultValue": "bold",
           "options": [
@@ -2752,6 +3014,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -2784,11 +3058,27 @@
         },
         {
           "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "fontWeight",
           "family": "character",
           "tier": "basic",
           "reflow": true,
-          "order": 30,
+          "order": 24,
           "control": "select",
           "defaultValue": "bold",
           "options": [
@@ -2956,6 +3246,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -2988,11 +3290,27 @@
         },
         {
           "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "fontWeight",
           "family": "character",
           "tier": "basic",
           "reflow": true,
-          "order": 30,
+          "order": 24,
           "control": "select",
           "defaultValue": "bold",
           "options": [
@@ -3189,6 +3507,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -3221,6 +3551,22 @@
         },
         {
           "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 70,
+          "max": 110,
+          "step": 5,
+          "unit": "%",
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
           "key": "receiptDirection",
           "family": "layout",
           "tier": "basic",
@@ -3247,6 +3593,8 @@
           "reflow": false,
           "order": 10,
           "control": "select",
+          "editor": "checkbox",
+          "checkedValue": "on",
           "defaultValue": "on",
           "options": [
             {
@@ -3434,6 +3782,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -3468,6 +3828,8 @@
           "reflow": false,
           "order": 10,
           "control": "select",
+          "editor": "checkbox",
+          "checkedValue": "on",
           "defaultValue": "on",
           "options": [
             {
@@ -3672,6 +4034,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -3699,6 +4073,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 80,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },
@@ -3824,7 +4214,7 @@
           "family": "motion",
           "tier": "basic",
           "reflow": false,
-          "order": 45,
+          "order": 35,
           "control": "range",
           "defaultValue": 100,
           "min": 0,
@@ -3843,6 +4233,8 @@
           "order": 50,
           "control": "select",
           "defaultValue": "off",
+          "editor": "checkbox",
+          "checkedValue": "on",
           "options": [
             {
               "id": "off"
@@ -4182,6 +4574,18 @@
             },
             {
               "id": "rounded"
+            },
+            {
+              "id": "black-han-sans"
+            },
+            {
+              "id": "gowun-batang"
+            },
+            {
+              "id": "jua"
+            },
+            {
+              "id": "single-day"
             }
           ],
           "group": "typography",
@@ -4232,6 +4636,22 @@
               "id": "large"
             }
           ],
+          "group": "typography",
+          "groupOrder": 30
+        },
+        {
+          "scope": "template",
+          "key": "fontScaleAdjustment",
+          "family": "document",
+          "tier": "basic",
+          "reflow": true,
+          "order": 21,
+          "control": "range",
+          "defaultValue": 100,
+          "min": 80,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
           "group": "typography",
           "groupOrder": 30
         },

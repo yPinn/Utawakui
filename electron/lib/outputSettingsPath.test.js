@@ -85,7 +85,6 @@ const STYLE_TARGETS = Object.freeze({
 });
 
 function nonDefaultValue(field) {
-  if (field.key === 'ornateEntrance') return 'random-slide';
   if (field.control === 'select') {
     return (
       field.options.find((option) => option.id !== field.defaultValue)?.id ??
@@ -248,6 +247,12 @@ describe('Output settings path', () => {
             normalizeOutputAppearance(slot.settings, { templateId })[field.key],
             `${templateId}.${field.key}`,
           ).toBe(expectedValue);
+          continue;
+        }
+        if (field.key === 'fontScaleAdjustment') {
+          expect(styleValues.get('--ovl-user-font-fine'), templateId).toBe(
+            String(expectedValue / 100),
+          );
           continue;
         }
         const [styleTarget, unit] = STYLE_TARGETS[field.key];

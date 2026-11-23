@@ -112,16 +112,16 @@
       }
     }
   },
-  "presentationGroup": "模板進階顯示",
-  "presentationPolicy": "歌詞呈現策略",
+  "presentationGroup": "字幕呈現",
+  "presentationPolicy": "呈現策略",
   "availability": {
     "unavailable": "尚未提供",
     "recommended": "建議",
     "available": "可用"
   },
   "field": {
-    "modified": "（已修改）",
     "chooseLookFirst": "選擇配色風格後可調整",
+    "referenceFontRem": "基準字級 {size} rem",
     "chooseLook": "選擇配色風格",
     "resetNamed": "恢復「{title}」預設"
   },
@@ -156,7 +156,11 @@
       "lyricsAuto": "繁中用辰宇落雁體／日文用 Klee One／其餘用 Open Huninn",
       "chenYuLuoYan": "繁中手寫體，缺字用 Open Huninn",
       "kleeOne": "日文手寫體，缺字用 Open Huninn",
-      "openHuninn": "繁中圓體"
+      "openHuninn": "繁中圓體",
+      "blackHanSans": "韓文粗黑體，適合高對比短句",
+      "gowunBatang": "韓文明朝體，筆畫有襯線",
+      "jua": "韓文圓體，帶手繪招牌風格",
+      "singleDay": "韓文手寫體，筆畫輕盈"
     },
     "templateDetails": {
       "receiptSetlist": "Yu Gothic UI、微軟正黑體",
@@ -486,7 +490,7 @@
         }
       },
       "receiptReview": {
-        "label": "定時回顧歷史",
+        "label": "定時回顧",
         "options": {
           "on": "開啟",
           "off": "關閉"
@@ -534,11 +538,11 @@
       },
       "fisheyePulse": { "label": "停留縮放" },
       "fisheyeBlur": {
-        "label": "沿弧動態模糊",
+        "label": "動態模糊",
         "options": { "off": "關閉", "on": "開啟" }
       },
       "fisheyeGranularity": {
-        "label": "字幕顆粒度",
+        "label": "字幕分段",
         "options": { "line": "整句", "phrase": "短句", "segment": "來源段落" }
       },
       "paletteId": {
@@ -571,8 +575,15 @@
           "lyricsAuto": "依歌詞語言",
           "chenYuLuoYan": "辰宇落雁體",
           "kleeOne": "Klee One",
-          "openHuninn": "Open Huninn"
+          "openHuninn": "Open Huninn",
+          "blackHanSans": "Black Han Sans 검은고딕",
+          "gowunBatang": "Gowun Batang 고운바탕",
+          "jua": "Jua 주아",
+          "singleDay": "Single Day 단하루"
         }
+      },
+      "fontScaleAdjustment": {
+        "label": "字級微調"
       },
       "fontScale": {
         "label": "字級",
@@ -652,7 +663,7 @@
         }
       },
       "surface": {
-        "label": "背景透明度",
+        "label": "透明度",
         "options": {
           "transparent": "透明",
           "soft": "半透明",

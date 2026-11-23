@@ -13,7 +13,9 @@ describe('Classic KTV layout contract', () => {
     );
     const declarations = rootRule?.[1].replace(/\s+/gu, ' ') ?? '';
 
-    expect(declarations).toContain('--ovl-ktv-lane-block-size: 5.832em;');
+    expect(declarations).toContain(
+      '--ovl-ktv-lane-block-size: calc(1.08 * var(--ovl-ktv-font-size));',
+    );
     expect(declarations).toContain(
       'grid-template-rows: repeat(2, minmax(var(--ovl-ktv-lane-block-size), auto));',
     );

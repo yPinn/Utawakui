@@ -112,16 +112,16 @@
       }
     }
   },
-  "presentationGroup": "Advanced template display",
-  "presentationPolicy": "Lyrics presentation",
+  "presentationGroup": "Subtitle display",
+  "presentationPolicy": "Presentation policy",
   "availability": {
     "unavailable": "Not available yet",
     "recommended": "Recommended",
     "available": "Available"
   },
   "field": {
-    "modified": "(modified)",
     "chooseLookFirst": "Choose a color style to adjust",
+    "referenceFontRem": "Base text size {size} rem",
     "chooseLook": "Choose a color style",
     "resetNamed": "Reset \"{title}\" to default"
   },
@@ -156,7 +156,11 @@
       "lyricsAuto": "ChenYuLuoYan for Traditional Chinese, Klee One for Japanese, Open Huninn for other text",
       "chenYuLuoYan": "Traditional Chinese handwriting with Open Huninn fallback",
       "kleeOne": "Japanese handwriting with Open Huninn fallback",
-      "openHuninn": "Rounded Traditional Chinese"
+      "openHuninn": "Rounded Traditional Chinese",
+      "blackHanSans": "Heavy Korean sans serif for short, high-contrast lines",
+      "gowunBatang": "Korean serif with soft stroke endings",
+      "jua": "Rounded Korean lettering inspired by hand-painted signs",
+      "singleDay": "Light Korean handwriting"
     },
     "templateDetails": {
       "receiptSetlist": "Yu Gothic UI and Microsoft JhengHei",
@@ -486,7 +490,7 @@
         }
       },
       "receiptReview": {
-        "label": "Timed history review",
+        "label": "Timed review",
         "options": {
           "on": "On",
           "off": "Off"
@@ -534,11 +538,11 @@
       },
       "fisheyePulse": { "label": "Hold scaling" },
       "fisheyeBlur": {
-        "label": "Arc motion blur",
+        "label": "Motion blur",
         "options": { "off": "Off", "on": "On" }
       },
       "fisheyeGranularity": {
-        "label": "Subtitle granularity",
+        "label": "Subtitle breaks",
         "options": {
           "line": "Full line",
           "phrase": "Short phrase",
@@ -575,8 +579,15 @@
           "lyricsAuto": "Follow lyric language",
           "chenYuLuoYan": "ChenYuLuoYan",
           "kleeOne": "Klee One",
-          "openHuninn": "Open Huninn"
+          "openHuninn": "Open Huninn",
+          "blackHanSans": "Black Han Sans 검은고딕",
+          "gowunBatang": "Gowun Batang 고운바탕",
+          "jua": "Jua 주아",
+          "singleDay": "Single Day 단하루"
         }
+      },
+      "fontScaleAdjustment": {
+        "label": "Size adjustment"
       },
       "fontScale": {
         "label": "Font size",
@@ -656,7 +667,7 @@
         }
       },
       "surface": {
-        "label": "Background opacity",
+        "label": "Opacity",
         "options": {
           "transparent": "Transparent",
           "soft": "Translucent",

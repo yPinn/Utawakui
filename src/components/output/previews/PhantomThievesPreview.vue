@@ -1,7 +1,10 @@
 <script setup>
 import { computed, useTemplateRef } from 'vue';
 import gsap from 'gsap';
-import { outputLocalFontCssValue } from '../../../../shared/outputAppearance.mjs';
+import {
+  outputFontScaleRatio,
+  outputLocalFontCssValue,
+} from '../../../../shared/outputAppearance.mjs';
 import {
   clearPhantomThieves,
   renderPhantomThieves,
@@ -16,7 +19,7 @@ const props = defineProps({
 
 const stage = useTemplateRef('stage');
 const fontStyle = computed(() => {
-  const { fontFamily, fontScale } = props.scene.appearance ?? {};
+  const { fontFamily } = props.scene.appearance ?? {};
   const stack =
     {
       sans: 'var(--ui-output-preview-font-ui)',
@@ -25,7 +28,7 @@ const fontStyle = computed(() => {
     }[fontFamily] ?? outputLocalFontCssValue(fontFamily);
   return {
     '--phantom-font': stack,
-    '--phantom-font-scale': { small: 0.85, large: 1.2 }[fontScale] ?? 1,
+    '--phantom-font-scale': outputFontScaleRatio(props.scene.appearance),
   };
 });
 function renderDemo(playing = false, next = false) {

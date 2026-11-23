@@ -121,6 +121,10 @@ allowlist routes; the renderer Gallery bundles the same PixiJS packages.
 | Klee One | SemiBold | SIL Open Font License 1.1 | Japanese handwriting font for Centered Vertical lyrics. The upstream license and source record ship under `shared/assets/fonts/`. |
 | Kaitou Yokoku Gothic | 1.001 | SIL Open Font License 1.1 | lavsic collage typeface used for Phantom Thieves accents. Source metadata and license ship under `shared/assets/fonts/`. |
 | Kaibunsyo | 1.000 | SIL Open Font License 1.1 | lavsic collage typeface used for Phantom Thieves accents. Source metadata and upstream contributor notices ship under `shared/assets/fonts/`. |
+| Black Han Sans | Regular | SIL Open Font License 1.1 | Korean display typeface by Zess Type. Source and license ship under `shared/assets/fonts/`. |
+| Gowun Batang | Regular | SIL Open Font License 1.1 | Korean serif by Yanghee Ryu. Source and license ship under `shared/assets/fonts/`. |
+| Jua | Regular | SIL Open Font License 1.1 | Korean rounded typeface by Woowahan Brothers. Source and license ship under `shared/assets/fonts/`. |
+| Single Day | Regular | SIL Open Font License 1.1 | Korean handwriting by DXKorea. Source and license ship under `shared/assets/fonts/`. |
 
 The renderer dependency closure also includes MIT/BSD/ISC packages such as
 `@babel/*`, `@jridgewell/sourcemap-codec`, `entities`, `estree-walker`,

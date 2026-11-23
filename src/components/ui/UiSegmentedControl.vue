@@ -18,6 +18,7 @@ const props = defineProps({
   },
   disabled: { type: Boolean, default: false },
   wrap: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue', 'reselect']);
@@ -150,7 +151,10 @@ function moveFocus(item, event) {
   <div
     ref="group"
     class="ui-segmented-control"
-    :class="`ui-segmented-control--${orientation}`"
+    :class="[
+      `ui-segmented-control--${orientation}`,
+      { 'ui-segmented-control--compact': compact },
+    ]"
     role="radiogroup"
     :aria-label="ariaLabel"
     :aria-orientation="orientation"
@@ -241,6 +245,15 @@ function moveFocus(item, event) {
   overflow-wrap: anywhere;
 }
 
+.ui-segmented-control--compact .ui-segmented-control__scroll {
+  --ui-scroll-layout-padding-block-start: var(--ui-focus-width);
+  --ui-scroll-layout-padding-block-end: var(--ui-focus-width);
+}
+
+.ui-segmented-control--compact .ui-segmented-control__wrap {
+  padding-block: var(--ui-focus-width);
+}
+
 .ui-segmented-control__option {
   flex: 0 0 auto;
   min-width: 0;
@@ -276,6 +289,10 @@ function moveFocus(item, event) {
   color: var(--ui-color-text);
 }
 
+.ui-segmented-control--compact .ui-segmented-control__option {
+  padding-inline: var(--ui-space-2);
+}
+
 .ui-segmented-control__label {
   min-width: 0;
   overflow: hidden;
@@ -286,6 +303,10 @@ function moveFocus(item, event) {
 .ui-segmented-control__option:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-segmented-control--compact .ui-segmented-control__option:focus-visible {
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-segmented-control__option:disabled {

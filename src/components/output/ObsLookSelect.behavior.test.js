@@ -94,7 +94,7 @@ describe('ObsLookSelect', () => {
     app.unmount();
   });
 
-  it('groups adjacent Look families in order and uses their shared swatch colors', async () => {
+  it('groups text-only options and keeps the shared swatch on the selected value', async () => {
     const { app, overlayHost, root } = mount(ObsLookSelect, {
       id: 'output-appearance-paletteId',
       label: 'Look',
@@ -137,23 +137,19 @@ describe('ObsLookSelect', () => {
         'aria-selected'
       ],
     ).toBe(true);
-    for (const { id, label } of OPTIONS) {
-      const option = optionNodes.find(
-        (node) => textContent(node).trim() === label,
-      );
-      const swatch = findAll(
-        option,
-        (node) => node.props?.['data-look'] === id,
-      )[0];
-      expect(swatch).toBeDefined();
-      const { colors } = OUTPUT_LOOK_PRESETS[id];
-      if (!colors) continue;
-      expect(swatch.props.style).toEqual({
-        '--ui-output-look-preview-ink': colors.ink,
-        '--ui-output-look-preview-paper': colors.paper,
-        '--ui-output-look-preview-accent': colors.current,
-      });
-    }
+    expect(findAll(listbox, (node) => 'data-look' in node.props)).toHaveLength(
+      0,
+    );
+    const [swatch] = findAll(
+      triggerNode,
+      (node) => node.props['data-look'] === 'warm',
+    );
+    const { colors } = OUTPUT_LOOK_PRESETS.warm;
+    expect(swatch.props.style).toEqual({
+      '--ui-output-look-preview-ink': colors.ink,
+      '--ui-output-look-preview-paper': colors.paper,
+      '--ui-output-look-preview-accent': colors.current,
+    });
     app.unmount();
   });
 

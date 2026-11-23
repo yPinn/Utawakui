@@ -7,7 +7,10 @@ import {
   useTemplateRef,
 } from 'vue';
 import gsap from 'gsap';
-import { outputFontFamilyCss } from '../../../../shared/outputAppearance.mjs';
+import {
+  outputFontFamilyCss,
+  outputFontScaleRatio,
+} from '../../../../shared/outputAppearance.mjs';
 import {
   releaseTexturedCredits,
   renderTexturedCredits,
@@ -42,8 +45,7 @@ const fontStyle = computed(() => ({
     props.scene.appearance?.fontFamily,
     'textured-credits',
   ),
-  '--credits-scale':
-    { small: 0.85, large: 1.2 }[props.scene.appearance?.fontScale] ?? 1,
+  '--credits-scale': outputFontScaleRatio(props.scene.appearance),
 }));
 
 function render(playing = false, next = false, looped = false) {

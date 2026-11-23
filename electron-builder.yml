@@ -96,7 +96,7 @@ files:
   # Fisheye Lens uses its exact-route view, painter, GSAP recipe and lyrics projection.
   - overlay/**/*
   - '!overlay/**/*.test.js'
-  # Includes Phantom Thieves's bundled accent fonts and their original notices.
+  # Includes Phantom Thieves accent fonts, Hangul font presets and their notices.
   # Main and renderer use the same session timestamp and CSV projection.
   - shared/**/*
   - '!shared/**/*.test.js'

@@ -7,7 +7,11 @@ import {
   OUTPUT_LOOK_PRESETS,
   outputArtworkGradeMatrix,
   outputAppearanceOptionIds,
+  outputAuthoredFontRem,
+  outputDefaultFontId,
   outputElementFontWeight,
+  outputFontScaleRatio,
+  outputHangulFontCssValue,
   outputLocalFontCssValue,
   sanitizeOutputTranslationFontScale,
 } from '../../shared/outputAppearance.mjs';
@@ -305,8 +309,28 @@ export function applyOverlayAppearance(document, slot) {
   applyLook(document, root, templateId, lookId, appearance.lookAmount);
   applyGrains(document, root, lookId, appearance);
   const localFont = isOutputLocalFont(appearance.fontFamily);
-  root.dataset.ovlFont = localFont ? 'local' : appearance.fontFamily;
+  const hangulFont = outputHangulFontCssValue(appearance.fontFamily);
+  const presetFont = hangulFont
+    ? outputDefaultFontId(templateId)
+    : appearance.fontFamily;
+  root.dataset.ovlFont = localFont ? 'local' : presetFont;
   root.dataset.ovlScale = appearance.fontScale;
+  setOrRemoveProperty(
+    root,
+    '--ovl-user-font-scale-ratio',
+    String(outputFontScaleRatio(appearance)),
+  );
+  setOrRemoveProperty(
+    root,
+    '--ovl-user-font-fine',
+    String(appearance.fontScaleAdjustment / 100),
+  );
+  const authoredFontRem = outputAuthoredFontRem(templateId, appearance);
+  setOrRemoveProperty(
+    root,
+    '--ovl-authored-font-rem',
+    authoredFontRem === undefined ? undefined : String(authoredFontRem),
+  );
   root.dataset.ovlWeight = appearance.fontWeight;
   root.dataset.ovlAlign = appearance.alignment;
   root.dataset.ovlSurface = appearance.surface;
@@ -361,6 +385,11 @@ export function applyOverlayAppearance(document, slot) {
   );
   const localFontFamily = outputLocalFontCssValue(appearance.fontFamily);
   setOrRemoveProperty(root, '--ovl-user-local-font-family', localFontFamily);
+  setOrRemoveProperty(
+    root,
+    '--ovl-hangul-font-prefix',
+    hangulFont === undefined ? undefined : `${hangulFont},`,
+  );
   setOrRemoveProperty(
     root,
     '--ovl-local-font-prefix',

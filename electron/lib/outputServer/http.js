@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Readable } = require('node:stream');
 const { OUTPUT_STATE_VERSION } = require('../../../shared/outputContract');
+const hangulFontFiles = require('../../../shared/assets/fonts/hangulFontFiles.json');
 const { isBoundedTrackId } = require('../library/paths');
 const {
   maxTelemetryBytes: OUTPUT_MAX_TELEMETRY_BYTES,
@@ -105,6 +106,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/lifecycle.mjs': ['shared', 'lifecycle.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
+  '/overlay/shared/hangulFonts.css': ['shared', 'hangulFonts.css'],
   '/overlay/shared/ticketShape.css': ['shared', 'ticketShape.css'],
   '/overlay/shared/paper-grain.svg': ['shared', 'paper-grain.svg'],
   '/overlay/shared/fallback.css': ['shared', 'fallback.css'],
@@ -158,6 +160,12 @@ const SHARED_STATIC_ROUTES = Object.freeze({
   '/shared/outputAppearance.mjs': ['outputAppearance.mjs'],
   '/shared/outputTemplateElements.mjs': ['outputTemplateElements.mjs'],
   '/shared/outputElementMessage.mjs': ['outputElementMessage.mjs'],
+  ...Object.fromEntries(
+    hangulFontFiles.map((file) => [
+      `/shared/assets/fonts/${file}`,
+      ['assets', 'fonts', file],
+    ]),
+  ),
   '/shared/assets/fonts/jf-open-huninn-2.1.ttf': [
     'assets',
     'fonts',
@@ -252,6 +260,10 @@ const SHARED_STATIC_ROUTES = Object.freeze({
   '/shared/presentation/mangaFrameContract.mjs': [
     'presentation',
     'mangaFrameContract.mjs',
+  ],
+  '/shared/presentation/outputOccupancy.mjs': [
+    'presentation',
+    'outputOccupancy.mjs',
   ],
   '/shared/presentation/state.mjs': ['presentation', 'state.mjs'],
   '/shared/presentation/outputPreviewScene.mjs': [

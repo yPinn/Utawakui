@@ -390,6 +390,66 @@
       "targetPath": "shared/assets/fonts/SOURCE-LAVSIC.txt"
     },
     {
+      "sourcePath": "shared/assets/fonts/BlackHanSans-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/BlackHanSans-Regular.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/GowunBatang-Regular.woff2",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/GowunBatang-Regular.woff2"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/Jua-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/Jua-Regular.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SingleDay-Regular.ttf",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SingleDay-Regular.ttf"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-BLACK-HAN-SANS.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-BLACK-HAN-SANS.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-BLACK-HAN-SANS.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-BLACK-HAN-SANS.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-GOWUN-BATANG.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-GOWUN-BATANG.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-GOWUN-BATANG.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-GOWUN-BATANG.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-JUA.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-JUA.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-JUA.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-JUA.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/OFL-SINGLE-DAY.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/OFL-SINGLE-DAY.txt"
+    },
+    {
+      "sourcePath": "shared/assets/fonts/SOURCE-SINGLE-DAY.txt",
+      "location": "asar",
+      "targetPath": "shared/assets/fonts/SOURCE-SINGLE-DAY.txt"
+    },
+    {
       "sourcePath": "node_modules/electron/dist/LICENSE",
       "location": "app",
       "targetPath": "LICENSE.electron.txt"
