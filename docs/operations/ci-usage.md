@@ -41,14 +41,15 @@ so the `CI / build` check remains visible for every configured event.
 | -------------------------------------- | :-------------------: | :-----------: | :------: | :--------------: | :-------------: |
 | Draft pull request                     |          Yes          |      No       |    No    |        No        |       No        |
 | Ready pull request, documentation only |          Yes          |      No       |    No    |        No        |       No        |
-| Ready pull request, renderer-only      |          Yes          |      Yes      |    No    |        No        |       No        |
-| Ready pull request, package-sensitive  |          Yes          |      Yes      |    No    |  As classified   |       Yes       |
-| Unknown path                           |          Yes          |      Yes      |    No    |       Yes        |       Yes       |
+| Ready pull request, renderer-only      |          Yes          |      Yes      |   Yes    |        No        |       No        |
+| Ready pull request, package-sensitive  |          Yes          |      Yes      |   Yes    |  As classified   |       Yes       |
+| Unknown path                           |          Yes          |      Yes      |   Yes    |       Yes        |       Yes       |
 | `main` push                            |          Yes          |      Yes      |   Yes    |  As classified   |  As classified  |
 | Manual diagnostic                      |          Yes          |      Yes      |   Yes    |       Yes        |       Yes       |
 
-Pull requests run the quality suite without coverage instrumentation.
-`main` and manual runs retain the complete coverage gate. Ubuntu quality runs
+Every run that selects quality tests also runs the coverage gate, so a floor
+fails on the pull request instead of after merge. Floors stay at or below
+80/70/80/80 (statements／branches／functions／lines). Ubuntu quality runs
 include the real FFmpeg cases and the tracked Python test scripts. The Python
 suite uses the Requests version from the provider manifest for the loopback
 HTTP test.
@@ -56,6 +57,35 @@ HTTP test.
 When quality checks are selected, the Windows job runs the Windows-specific
 Vitest files and the Electron Settings layout probe after Ubuntu succeeds. The
 Windows package column governs the installer build and upgrade acceptance.
+
+## Cross-Platform Tests
+
+The product ships for Windows, but CI runs every Vitest file on Ubuntu. Only the
+files listed in the Windows job's runtime test step also run on Windows, so a
+test that passes locally can still fail in CI.
+
+- Pick path rules from the data, not the host. Code that handles a Windows-only
+  path (System32, drive roots, PowerShell, `taskkill`) uses `path.win32`. Code
+  that accepts either kind of absolute path chooses `path.win32` or
+  `path.posix` from the path itself.
+- Tests compare Windows paths with `path.win32` (`basename`, `join`) or with
+  literal backslash strings, never with the host `path`.
+- Normalize separators before comparing path strings that may come from either
+  platform.
+- A test that needs real Windows behavior, such as PowerShell extraction or NTFS
+  name rules, uses `it.skipIf(process.platform !== 'win32')` and is added to the
+  Windows job's runtime test step in `.github/workflows/ci.yml`.
+- Before pushing Windows path changes, run the affected tests on Linux with
+  `npm run test:linux -- <test files>`. It streams the working tree's tracked
+  and untracked, non-ignored files into a `node:24-bookworm` container (Docker
+  required) at the runner's checkout path, creates a git index, runs `npm ci`,
+  and then runs Vitest with the given arguments. With no arguments it runs the
+  full suite. FFmpeg-backed cases skip there; CI installs FFmpeg for them.
+
+Past Linux-only failures followed the same pattern: provider runtime roots
+(`2dfaf7337`, `55cc63381`), the NetEase `taskkill` path and benchmark templates
+(`c59a50df9`), diagnostics stack roots and pinned-artifact extraction
+(`37b329bc2`), and the System32 PowerShell path (`c36f855d8`).
 
 ## Test Fixture Isolation
 

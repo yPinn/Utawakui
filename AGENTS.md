@@ -57,6 +57,14 @@ in subdirectories. Browser-bound player composables need DOM and Web Audio mocks
 do not force them into the plain Node test environment without providing those
 boundaries.
 
+CI runs every Vitest file on Ubuntu; only the files in `ci.yml`'s Windows runtime
+step also run on Windows. Windows path logic and its tests must not depend on the
+host: use `path.win32` for Windows-only paths (System32, drive roots, PowerShell)
+and compare them with `path.win32` in tests. A test that needs real Windows
+behavior uses `it.skipIf(process.platform !== 'win32')` and joins that CI step.
+Check path changes with `npm run test:linux -- <files>` before pushing. See
+[cross-platform tests](docs/operations/ci-usage.md#cross-platform-tests).
+
 ## Runtime Rules
 
 ### Process Isolation
