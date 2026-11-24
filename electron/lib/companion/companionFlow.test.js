@@ -171,7 +171,8 @@ describe('companion pairing and reading flow', () => {
     flow.devices.revoke(paired.body.device.id);
     flow.readers.closeDevice(paired.body.device.id);
     expect(await reader.closed).toBe(4401);
-    expect(flow.readerCounts.at(-1)).toBe(0);
+    // Server-side release fires after the close handshake, possibly after the client.
+    await expect.poll(() => flow.readerCounts.at(-1)).toBe(0);
 
     const stale = openReader(flow, paired.body.credential);
     expect(await stale.closed).toBe(4401);
