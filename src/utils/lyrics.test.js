@@ -392,6 +392,37 @@ First line`);
     ]);
   });
 
+  it.each([
+    ['[offset:500]', [0.5, 2.5]],
+    ['[offset:+500]', [0.5, 2.5]],
+    ['[offset:-250]', [1.25, 3.25]],
+    ['[offset:0]', [1, 3]],
+    ['[offset:abc]', [1, 3]],
+    ['[offset:60001]', [1, 3]],
+    ['[offset:100]\n[offset:200]', [1, 3]],
+  ])('applies the LRC %s tag to line starts', (tags, starts) => {
+    const lines = parseLrc(`${tags}\n[00:01.00]First\n[00:03.00]Second`);
+    expect(lines.map(({ start }) => start)).toEqual(starts);
+    expect(lines[0].end).toBe(starts[1]);
+  });
+
+  it('shifts word timing with the LRC offset and clamps at zero', () => {
+    const [line] = parseLrc(
+      '[offset:500]\n[00:01.00]<00:01.00>A <00:01.50>B\n[00:03.00]Next',
+    );
+    expect(line.start).toBe(0.5);
+    expect(line.segments.map(({ start, end }) => [start, end])).toEqual([
+      [0.5, 1],
+      [1, 2.5],
+    ]);
+
+    const [early] = parseLrc(
+      '[offset:2000]\n[00:00.50]<00:00.50>A <00:01.00>B\n[00:03.00]Next',
+    );
+    expect(early.start).toBe(0);
+    expect(early.segments).toBeUndefined();
+  });
+
   it('renders manual plain-text imports through the LRC untimed fallback', () => {
     const lines = parseLyricsText('First line\nSecond line', {
       source: {

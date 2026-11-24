@@ -136,7 +136,7 @@ Provider 原生分數不跨來源比較。Main 以 title、artist、版本 marke
 - 固定HTTPS GET三條route：`mobileservice.kugou.com/api/v3/search/song`、`krcs.kugou.com/search`及`lyrics.kugou.com/download`，最後只要求`fmt=lrc`，不下載KRC、不帶登入cookie。Main推導hash／歌詞id／accesskey；Renderer只取得Main衍生的安全整數candidate id、標示與有界預覽，不接受URL或上游identifier意圖。
 - 曲名、歌手與有效長度缺一不可。最多三組探索條件，只取輸入中明確跨語別名、繁簡或完整合作歌手中的主唱；探索條件不能更改預期身份。Catalog須完整匹配已知曲名別名及全部演出者／feat、拒絕額外未知演出者、缺少合作署名、substring誤配及雙向版本矛盾，整秒時長差最多四秒。LRC的ti／ar若存在也須符合catalog／原身份，錯feat與Live矛盾拒絕，版本詞不當跨語別名。缺原文別名時不自動翻譯。
 - Catalog最多10筆、歌詞候選最多64筆；只hydration通過身份者。首次目標最多三個可選候選，整合備援階段最多五次實際HTTP／8秒，並受父12次／20秒限制，通常只能取得一至兩個；達預算保留partial。明確擴搜保留舊候選、尋找更多（最多20個），父新增8次／15秒，備援仍受階段5次／8秒限制。相同來源所有route／實例／保存共享1000ms起點間隔、Retry-After、request合併及30秒有界探索快取；主要、別名與備援共同扣父額度。
-- UTF-8、base64、body、時間行及描述metadata有界檢查；`hash／sign／qq／total`只允許有界描述行、不作身份證據，保存時移除。正式T1解析尚未套用LRC內建offset，所以非零offset保守拒絕。未知tag、無時間／重複空內容及版本矛盾不因增加覆蓋率而放寬。
+- UTF-8、base64、body、時間行及描述metadata有界檢查；`hash／sign／qq／total`只允許有界描述行、不作身份證據，保存時移除。本機解析已套用LRC內建offset（見[文字預處理](lyrics-text-processing.md#來源保真)），酷狗來源仍保守拒絕非零offset，放寬須另行決定。未知tag、無時間／重複空內容及版本矛盾不因增加覆蓋率而放寬。
 - 可見候選不自動保存。手動保存固定使用已授權query、身份證據及所選record，fresh重新取得catalog／同hash歌詞候選／同歌詞id LRC，三次實際HTTP／12秒且不使用探索快取完成。身份改變拒絕；fingerprint改變回`record-changed`、重看預覽再確認。舊hydration不能覆蓋新預覽；Main每track保存鎖、Renderer世代隔離及feature gate保持。
 - 保存`lyrics/kugou-<id>[-n].lrc`與`lyrics/providers/kugou-<id>.json`（`kugou-native-lrc-v1`，schema 1），只記T1、metadata、取得時間及fingerprint，不存accesskey／hash或T2 sidecar；來源、artifact、timing清理及manifest交易失敗會還原。離線重開可讀取、標示已保存、更新或刪除；不改寫既有來源或使用者偏好。私有hydration最多32組／8MiB。
 - 多語小樣本與選擇性複核只證明當次候選可取得，不保證覆蓋率、授權、服務穩定度或完整同步品質；原始研究收據不改寫為正式接入後的成績。

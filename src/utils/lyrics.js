@@ -299,10 +299,61 @@ function parseEnhancedSegments(lineText, lineStart, lineEnd) {
   return trimmed;
 }
 
+const LRC_OFFSET_LIMIT_MS = 60000;
+
+// LRC convention: a positive [offset:ms] shows lyrics sooner. Malformed,
+// out-of-range or conflicting tags are ignored rather than guessed.
+function lrcOffsetSeconds(rawLines) {
+  const values = new Set();
+  for (const line of rawLines) {
+    const match = /^\[offset:([^\]]*)\]$/iu.exec(line.trim());
+    if (!match) continue;
+    const value = match[1].trim();
+    if (!/^[+-]?\d+$/u.test(value)) return 0;
+    values.add(Number(value));
+  }
+  if (values.size !== 1) return 0;
+  const [offsetMs] = values;
+  return Math.abs(offsetMs) <= LRC_OFFSET_LIMIT_MS ? offsetMs / 1000 : 0;
+}
+
+function shiftLrcTime(seconds, shift) {
+  if (!Number.isFinite(seconds)) return seconds;
+  return Math.max(0, Math.round((seconds - shift) * 1000) / 1000);
+}
+
+function applyLrcOffset(lines, shift) {
+  if (!shift) return lines;
+  return lines.map((line) => {
+    const shifted = {
+      ...line,
+      start: shiftLrcTime(line.start, shift),
+      end: shiftLrcTime(line.end, shift),
+    };
+    if (!line.segments) return shifted;
+    const segments = line.segments.map((segment) => ({
+      ...segment,
+      start: shiftLrcTime(segment.start, shift),
+      end: shiftLrcTime(segment.end, shift),
+    }));
+    // Clamping at zero can collapse early words; keep line timing then.
+    if (segments.every((segment) => segment.end > segment.start)) {
+      shifted.segments = segments;
+    } else {
+      delete shifted.segments;
+    }
+    return shifted;
+  });
+}
+
 export function parseEnhancedLrc(text) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];
 
   const rawLines = normalizeLyricsNewlines(text).split('\n');
+  return applyLrcOffset(parseLrcLines(rawLines), lrcOffsetSeconds(rawLines));
+}
+
+function parseLrcLines(rawLines) {
   const starts = rawLines
     .flatMap((line) => {
       const starts = lrcTimestamps(line);
