@@ -189,24 +189,69 @@ function lyricsCapability(track, state) {
   };
 }
 
-export function createTrackReadiness(track, lyricsState = {}) {
-  if (!track) return [];
-  const lyrics = lyricsCapability(track, lyricsState);
-  const separation = track.hasSeparation
-    ? {
-        id: 'separation',
-        label: t('track.context.separation'),
-        status: t('track.context.separationReady'),
-        tone: 'success',
-        description: t('track.context.separationReadyDetail'),
-      }
-    : {
-        id: 'separation',
-        label: t('track.context.separation'),
-        status: t('track.context.separationMissing'),
-        tone: 'muted',
-        description: t('track.context.separationMissingDetail'),
-      };
+const OPEN_SEPARATION_STATUSES = new Set(['pending', 'checking', 'running']);
+const UNCONFIRMED_REVIEW_STATUSES = new Set([
+  'unconfirmed',
+  'expired',
+  'revoked',
+]);
 
-  return [lyrics, separation];
+function separationCapability(track, queueStatus) {
+  const state = track.hasSeparation
+    ? ['separationReady', 'success']
+    : OPEN_SEPARATION_STATUSES.has(queueStatus)
+      ? ['separationRunning', 'info']
+      : queueStatus === 'failed'
+        ? ['separationFailed', 'warning']
+        : ['separationMissing', 'muted'];
+  return {
+    id: 'separation',
+    label: t('track.context.separation'),
+    status: t(`track.context.${state[0]}`),
+    tone: state[1],
+    description: t(`track.context.${state[0]}Detail`),
+  };
+}
+
+// Only settled receipts show; loading or untimed sources omit the row.
+function timingReviewCapability(status) {
+  const confirmed = status === 'confirmed';
+  if (!confirmed && !UNCONFIRMED_REVIEW_STATUSES.has(status)) return null;
+  const key = confirmed ? 'timingConfirmed' : 'timingUnconfirmed';
+  return {
+    id: 'timing',
+    label: t('track.context.timing'),
+    status: t(`track.context.${key}`),
+    tone: confirmed ? 'success' : 'muted',
+    description: t(`track.context.${key}Detail`),
+  };
+}
+
+export function latestSeparationStatus(queue, trackId) {
+  const items = Array.isArray(queue?.items) ? queue.items : [];
+  return items.findLast((item) => item?.trackId === trackId)?.status ?? null;
+}
+
+export function createTrackReadiness(
+  track,
+  lyricsState = {},
+  { separationStatus = null, timingReviewStatus = null, hasVideo = false } = {},
+) {
+  if (!track) return [];
+  const timing = timingReviewCapability(timingReviewStatus);
+  const video = hasVideo
+    ? {
+        id: 'video',
+        label: t('track.context.video'),
+        status: t('track.context.videoReady'),
+        tone: 'success',
+        description: t('track.context.videoReadyDetail'),
+      }
+    : null;
+  return [
+    lyricsCapability(track, lyricsState),
+    timing,
+    separationCapability(track, separationStatus),
+    video,
+  ].filter(Boolean);
 }

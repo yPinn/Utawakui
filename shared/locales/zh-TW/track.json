@@ -23,7 +23,19 @@
     "separationReady": "素材已準備",
     "separationReadyDetail": "伴奏與導唱已準備。",
     "separationMissing": "尚未準備",
-    "separationMissingDetail": "尚未產生伴奏與導唱。"
+    "separationMissingDetail": "尚未產生伴奏與導唱。",
+    "separationRunning": "處理中",
+    "separationRunningDetail": "正在產生伴奏與導唱。",
+    "separationFailed": "未完成",
+    "separationFailedDetail": "上次沒有完成，可重新產生。",
+    "timing": "對時",
+    "timingConfirmed": "已確認",
+    "timingConfirmedDetail": "歌詞時間已確認過。",
+    "timingUnconfirmed": "尚未確認",
+    "timingUnconfirmedDetail": "可在歌詞工作區確認時間。",
+    "video": "影片",
+    "videoReady": "已加入",
+    "videoReadyDetail": "播放時會同步顯示影片。"
   },
   "columns": {
     "actions": "操作",

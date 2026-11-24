@@ -16,7 +16,9 @@ import { collectionForSource } from '../utils/collectionIdentity.js';
 import {
   createLocalArtistSummary,
   createTrackReadiness,
+  latestSeparationStatus,
 } from '../utils/trackContextPresentation.js';
+import { useSeparationQueueContext } from '../composables/useSeparationQueueContext.js';
 import TrackContextPanel from '../components/playback/context/TrackContextPanel.vue';
 import TrackVideoPlayback from '../components/playback/TrackVideoPlayback.vue';
 import { useLyricsVideoMode } from '../composables/useLyricsVideoMode.js';
@@ -60,7 +62,8 @@ const { openLiveLyrics } = useAppView();
 const { state: artistIndexState, ensureLoaded: ensureArtistIndex } =
   useArtistIndex();
 ensureArtistIndex();
-const { state: lyricsState, lyricsTextVariant } = useLyrics();
+const { state: lyricsState, lyricsTextVariant, timingReview } = useLyrics();
+const { queue: separationQueue } = useSeparationQueueContext();
 const liveLyricsOffset = computed(() =>
   lyricsState.isLoadingLyrics
     ? null
@@ -166,13 +169,28 @@ const artistSummary = computed(() =>
   ),
 );
 
-const readiness = computed(() =>
-  createTrackReadiness(currentLyricsTrack.value, {
-    document: lyricsDocument.value,
-    isLoading: lyricsLoading.value,
-    error: lyricsError.value,
-  }),
-);
+const { asset: readinessVideo } = useTrackVideoAsset({
+  trackId: () => currentLyricsTrack.value?.id,
+  enabled: true,
+});
+const readiness = computed(() => {
+  const trackId = currentLyricsTrack.value?.id;
+  // The shared review belongs to the selected lyrics track, not this panel.
+  const reviewMatches = trackId && lyricsState.selectedTrackId === trackId;
+  return createTrackReadiness(
+    currentLyricsTrack.value,
+    {
+      document: lyricsDocument.value,
+      isLoading: lyricsLoading.value,
+      error: lyricsError.value,
+    },
+    {
+      separationStatus: latestSeparationStatus(separationQueue.value, trackId),
+      timingReviewStatus: reviewMatches ? timingReview?.state?.status : null,
+      hasVideo: Boolean(readinessVideo.value),
+    },
+  );
+});
 </script>
 
 <template>

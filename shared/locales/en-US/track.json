@@ -23,7 +23,19 @@
     "separationReady": "Ready",
     "separationReadyDetail": "Accompaniment and guide vocal are ready.",
     "separationMissing": "Not prepared",
-    "separationMissingDetail": "Accompaniment and guide vocal haven't been generated."
+    "separationMissingDetail": "Accompaniment and guide vocal haven't been generated.",
+    "separationRunning": "Processing",
+    "separationRunningDetail": "Generating accompaniment and guide vocal.",
+    "separationFailed": "Not finished",
+    "separationFailedDetail": "The last attempt didn't finish; you can generate it again.",
+    "timing": "Timing",
+    "timingConfirmed": "Confirmed",
+    "timingConfirmedDetail": "Lyric timing has been confirmed.",
+    "timingUnconfirmed": "Not confirmed",
+    "timingUnconfirmedDetail": "Confirm the timing in the lyrics workspace.",
+    "video": "Video",
+    "videoReady": "Added",
+    "videoReadyDetail": "The video plays in sync with the song."
   },
   "columns": {
     "actions": "Actions",

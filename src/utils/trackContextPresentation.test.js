@@ -3,6 +3,7 @@ import {
   createLocalArtistSummary,
   createTrackLyricsPreview,
   createTrackReadiness,
+  latestSeparationStatus,
 } from './trackContextPresentation.js';
 
 describe('track context presentation', () => {
@@ -315,5 +316,87 @@ describe('track context presentation', () => {
         { error: new Error('private detail') },
       )[0],
     ).toMatchObject({ status: '暫時無法讀取', tone: 'danger' });
+  });
+
+  it.each([
+    ['pending', '處理中', 'info'],
+    ['checking', '處理中', 'info'],
+    ['running', '處理中', 'info'],
+    ['failed', '未完成', 'warning'],
+    ['cancelled', '尚未準備', 'muted'],
+    [null, '尚未準備', 'muted'],
+  ])(
+    'shows queue status %s for a track without separation',
+    (status, label, tone) => {
+      const separation = createTrackReadiness(
+        { lyrics: { status: 'missing' }, hasSeparation: false },
+        {},
+        { separationStatus: status },
+      ).find(({ id }) => id === 'separation');
+      expect(separation).toMatchObject({ status: label, tone });
+    },
+  );
+
+  it('keeps a prepared separation ready even when an older run failed', () => {
+    const separation = createTrackReadiness(
+      { lyrics: { status: 'missing' }, hasSeparation: true },
+      {},
+      { separationStatus: 'failed' },
+    ).find(({ id }) => id === 'separation');
+    expect(separation.status).toBe('素材已準備');
+  });
+
+  it.each([
+    ['confirmed', '已確認', 'success'],
+    ['unconfirmed', '尚未確認', 'muted'],
+    ['expired', '尚未確認', 'muted'],
+    ['revoked', '尚未確認', 'muted'],
+  ])('shows timing review %s', (status, label, tone) => {
+    const rows = createTrackReadiness(
+      { lyrics: { status: 'available' } },
+      {},
+      { timingReviewStatus: status },
+    );
+    expect(rows.map(({ id }) => id)).toEqual([
+      'lyrics',
+      'timing',
+      'separation',
+    ]);
+    expect(rows[1]).toMatchObject({ label: '對時', status: label, tone });
+  });
+
+  it.each(['loading', 'unavailable', 'not-applicable', 'corrupt', null])(
+    'omits the timing row while review is %s',
+    (status) => {
+      const ids = createTrackReadiness(
+        { lyrics: { status: 'available' } },
+        {},
+        { timingReviewStatus: status },
+      ).map(({ id }) => id);
+      expect(ids).not.toContain('timing');
+    },
+  );
+
+  it('lists an added video and omits the row when there is none', () => {
+    const track = { lyrics: { status: 'missing' } };
+    expect(
+      createTrackReadiness(track, {}, { hasVideo: true }).at(-1),
+    ).toMatchObject({ id: 'video', label: '影片', status: '已加入' });
+    expect(createTrackReadiness(track).map(({ id }) => id)).not.toContain(
+      'video',
+    );
+  });
+
+  it('reads the latest queue entry for a track', () => {
+    const queue = {
+      items: [
+        { trackId: 'a', status: 'failed' },
+        { trackId: 'b', status: 'running' },
+        { trackId: 'a', status: 'pending' },
+      ],
+    };
+    expect(latestSeparationStatus(queue, 'a')).toBe('pending');
+    expect(latestSeparationStatus(queue, 'c')).toBeNull();
+    expect(latestSeparationStatus(null, 'a')).toBeNull();
   });
 });
