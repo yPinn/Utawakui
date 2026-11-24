@@ -122,9 +122,10 @@ function isDependencyUpdateAvailable(dependency, installedVersion) {
     return false;
   }
 
+  // The fixed 'release' install slot is never replaced in place.
   if (
     dependency.id === FFMPEG_DEPENDENCY_ID &&
-    dependency.version === 'release'
+    (dependency.installVersion ?? dependency.version) === 'release'
   ) {
     return false;
   }

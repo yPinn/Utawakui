@@ -5,12 +5,7 @@ const path = require('path');
 const { atomicWriteBuffer } = require('../atomicWrite');
 const { FEATURE_IDS } = require('../featureGates');
 const { getFfmpegDependency, getFfmpegPaths } = require('./registry');
-const {
-  downloadBuffer,
-  downloadText,
-  emitProgress,
-  sha256,
-} = require('./download');
+const { downloadBuffer, emitProgress, sha256 } = require('./download');
 const { expandZipArchive, validateZipArchiveBuffer } = require('./archive');
 const {
   createMissingDependencyError,
@@ -18,41 +13,17 @@ const {
   writeDependencyNotices,
 } = require('./manifests');
 
-function parseSha256Text(text) {
-  const match = String(text).match(/\b[a-fA-F0-9]{64}\b/);
-  if (!match) {
-    throw new Error('FFmpeg checksum metadata did not contain a SHA-256 hash');
+const SHA256_RE = /^[a-f0-9]{64}$/u;
+
+// The checksum must ship pinned in the app. A checksum fetched from the same
+// host as the archive cannot detect a compromised host.
+function resolveFfmpegDependency(dependency) {
+  if (!SHA256_RE.test(dependency.sha256 ?? '')) {
+    throw new Error(`missing pinned FFmpeg checksum for ${dependency.id}`);
   }
-  return match[0].toLowerCase();
-}
-
-function replaceVersionTemplate(value, version) {
-  if (typeof value !== 'string') return value;
-  return value.replaceAll('{version}', version);
-}
-
-async function resolveFfmpegDependency(dependency, options = {}) {
-  const fetchImpl = options.fetchImpl;
-  const resolvedVersion = dependency.versionUrl
-    ? await downloadText(dependency.versionUrl, fetchImpl)
-    : dependency.version;
-  const resolvedSha = dependency.sha256Url
-    ? parseSha256Text(await downloadText(dependency.sha256Url, fetchImpl))
-    : dependency.sha256;
-
-  if (!resolvedSha) {
-    throw new Error(`missing FFmpeg checksum for ${dependency.id}`);
-  }
-
   return {
     ...dependency,
-    version: resolvedVersion,
     installVersion: dependency.installVersion || dependency.version,
-    sha256: resolvedSha,
-    archiveRoot: replaceVersionTemplate(
-      dependency.archiveRoot,
-      resolvedVersion,
-    ),
   };
 }
 
@@ -169,10 +140,7 @@ async function ensureFfmpegDependency(userDataDir, options = {}) {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
     fs.mkdirSync(tmpRoot, { recursive: true });
 
-    const resolvedDependency = await resolveFfmpegDependency(
-      dependency,
-      options,
-    );
+    const resolvedDependency = resolveFfmpegDependency(dependency);
     const extractedRoot = path.join(tmpRoot, resolvedDependency.archiveRoot);
     const { archive, cachePath } = await getVerifiedFfmpegArchive(
       userDataDir,

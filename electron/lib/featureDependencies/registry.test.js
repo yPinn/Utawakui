@@ -29,6 +29,18 @@ describe('feature dependency product units', () => {
     }
   });
 
+  it('pins a SHA-256 for every download instead of fetching one at runtime', () => {
+    const downloads = dependencyRegistry.dependencies.flatMap((dependency) => [
+      dependency,
+      ...(dependency.artifacts ?? []),
+    ]);
+    for (const entry of downloads.filter((item) => item.downloadUrl)) {
+      expect(entry.sha256, entry.downloadUrl).toMatch(/^[a-f0-9]{64}$/u);
+      expect(entry).not.toHaveProperty('sha256Url');
+      expect(entry).not.toHaveProperty('versionUrl');
+    }
+  });
+
   it('treats yt-dlp and anonymous YT Music lookup as one atomic provider runtime', () => {
     const providerUnits = getFeatureDependencies().filter(
       (dependency) => dependency.featureId === FEATURE_IDS.PROVIDER_FLOW,

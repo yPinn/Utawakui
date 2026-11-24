@@ -157,6 +157,12 @@ describe('dependency manifests and notices', () => {
         'previous',
       ),
     ).toBe(false);
+    expect(
+      isDependencyUpdateAvailable(
+        baseDependency({ version: '9.1', installVersion: 'release' }),
+        '9.0.1',
+      ),
+    ).toBe(false);
     expect(isDependencyUpdateAvailable(baseDependency(), '7.1')).toBe(false);
     expect(isDependencyUpdateAvailable(baseDependency(), '6.0')).toBe(true);
   });

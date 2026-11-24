@@ -491,89 +491,23 @@ describe('ensureFfmpegDependency', () => {
     expect(extractArchive).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves the current Gyan release version and checksum before installing FFmpeg', async () => {
+  it('refuses an FFmpeg manifest without a pinned checksum before downloading', async () => {
     const userDataDir = makeTempDir();
-    const archive = Buffer.from('fake release zip bytes');
-    const archiveSha = sha256(archive);
     const dependency = {
       ...makeDependency(Buffer.from('unused')),
-      version: 'release',
-      displayVersion: 'latest release',
-      downloadUrl:
-        'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip',
-      versionUrl:
-        'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.ver',
-      sha256Url:
-        'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.sha256',
       sha256: undefined,
-      archiveRoot: 'ffmpeg-{version}-essentials_build',
+      sha256Url: 'https://downloads.example.test/ffmpeg.zip.sha256',
     };
-    const fetchImpl = vi.fn(async (url) => {
-      if (url === dependency.versionUrl) {
-        return {
-          ok: true,
-          text: () => Promise.resolve('9.0.1\n'),
-        };
-      }
-      if (url === dependency.sha256Url) {
-        return {
-          ok: true,
-          text: () => Promise.resolve(`${archiveSha}\n`),
-        };
-      }
-      if (url === dependency.downloadUrl) {
-        return {
-          ok: true,
-          arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
-        };
-      }
-      throw new Error(`unexpected fetch: ${url}`);
-    });
-    const extractArchive = vi.fn(async (archivePath, destinationDir, dep) => {
-      expect(dep.version).toBe('9.0.1');
-      expect(dep.archiveRoot).toBe('ffmpeg-9.0.1-essentials_build');
-      expect(dep.sha256).toBe(archiveSha);
-      expect(fs.readFileSync(archivePath)).toEqual(archive);
-      const exeDir = path.join(
-        destinationDir,
-        dep.archiveRoot,
-        path.dirname(dep.executableRelativePath),
-      );
-      fs.mkdirSync(exeDir, { recursive: true });
-      fs.writeFileSync(path.join(exeDir, 'ffmpeg.exe'), 'exe');
-    });
+    const fetchImpl = vi.fn();
 
-    const exePath = await ensureFfmpegDependency(userDataDir, {
-      allowNonWindows: true,
-      dependency,
-      fetchImpl,
-      extractArchive,
-      now: () => new Date('2026-08-21T00:00:00.000Z'),
-    });
-
-    const paths = getFfmpegPaths(userDataDir, dependency);
-    expect(exePath).toBe(paths.executablePath);
-    expect(JSON.parse(fs.readFileSync(paths.manifestPath, 'utf8'))).toEqual({
-      id: dependency.id,
-      featureId: dependency.featureId,
-      name: dependency.name,
-      version: '9.0.1',
-      license: dependency.license,
-      sourceUrl: dependency.sourceUrl,
-      downloadUrl: dependency.downloadUrl,
-      sha256: archiveSha,
-      installedAt: '2026-08-21T00:00:00.000Z',
-      executableRelativePath: dependency.executableRelativePath,
-    });
-    expect(fetchImpl).toHaveBeenNthCalledWith(1, dependency.versionUrl, {
-      signal: expect.any(AbortSignal),
-    });
-    expect(fetchImpl).toHaveBeenNthCalledWith(2, dependency.sha256Url, {
-      signal: expect.any(AbortSignal),
-    });
-    expect(fetchImpl).toHaveBeenNthCalledWith(3, dependency.downloadUrl, {
-      signal: expect.any(AbortSignal),
-    });
+    await expect(
+      ensureFfmpegDependency(userDataDir, {
+        allowNonWindows: true,
+        dependency,
+        fetchImpl,
+      }),
+    ).rejects.toThrow('missing pinned FFmpeg checksum');
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it('returns an existing managed binary without downloading again', async () => {
