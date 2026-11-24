@@ -61,7 +61,9 @@ function pushValueFlag(args, flag, value) {
 function buildPythonYtdlpArgs(url, options = {}) {
   assertSupportedOptions(options);
 
-  const args = ['-m', 'yt_dlp'];
+  // User/portable config files and default plugin dirs could add flags such as
+  // --exec; only app-owned plugin dirs (via --plugin-dirs below) are loaded.
+  const args = ['-m', 'yt_dlp', '--ignore-config', '--no-plugin-dirs'];
   for (const [key, flag, type] of OPTION_FLAGS) {
     if (type === 'boolean') {
       pushBooleanFlag(args, flag, options[key]);

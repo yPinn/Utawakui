@@ -48,6 +48,8 @@ describe('buildPythonYtdlpArgs', () => {
     ).toEqual([
       '-m',
       'yt_dlp',
+      '--ignore-config',
+      '--no-plugin-dirs',
       '--dump-single-json',
       '--skip-download',
       '--no-playlist',
@@ -90,7 +92,15 @@ describe('buildPythonYtdlpArgs', () => {
 
   it('ends option parsing with `--` so the target can never be read as a flag', () => {
     expect(buildPythonYtdlpArgs('- ~/.bashrc', { skipDownload: true })).toEqual(
-      ['-m', 'yt_dlp', '--skip-download', '--', '- ~/.bashrc'],
+      [
+        '-m',
+        'yt_dlp',
+        '--ignore-config',
+        '--no-plugin-dirs',
+        '--skip-download',
+        '--',
+        '- ~/.bashrc',
+      ],
     );
   });
 
@@ -108,7 +118,14 @@ describe('buildPythonYtdlpArgs', () => {
         writeSubs: false,
         writeAutoSubs: false,
       }),
-    ).toEqual(['-m', 'yt_dlp', '--', 'https://example.test/video']);
+    ).toEqual([
+      '-m',
+      'yt_dlp',
+      '--ignore-config',
+      '--no-plugin-dirs',
+      '--',
+      'https://example.test/video',
+    ]);
   });
 
   it('repeats extractor-args when multiple extractor namespaces are configured', () => {
@@ -122,6 +139,8 @@ describe('buildPythonYtdlpArgs', () => {
     ).toEqual([
       '-m',
       'yt_dlp',
+      '--ignore-config',
+      '--no-plugin-dirs',
       '--extractor-args',
       'youtube:player_client=mweb',
       '--extractor-args',
