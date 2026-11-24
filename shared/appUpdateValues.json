@@ -1,7 +1,7 @@
 {
   "releaseRepository": "yPinn/Utawakui-Releases",
   "runtimeEnabled": true,
-  "signedManifestEnabled": false,
+  "signedManifestEnabled": true,
   "startupCheckDelayMs": 15000,
   "recheckIntervalMs": 21600000
 }

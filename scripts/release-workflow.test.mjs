@@ -77,12 +77,12 @@ describe('release workflow', () => {
     );
   });
 
-  it('enables packaged updates while explicitly disabling publisher verification', () => {
+  it('enables packaged updates with the signed manifest instead of publisher verification', () => {
     const updateValues = readJson('shared/appUpdateValues.json');
     const builder = readYaml('electron-builder.yml');
 
     expect(updateValues.runtimeEnabled).toBe(true);
-    expect(updateValues.signedManifestEnabled).toBe(false);
+    expect(updateValues.signedManifestEnabled).toBe(true);
     expect(builder.publish).toMatchObject({
       provider: 'github',
       owner: 'yPinn',

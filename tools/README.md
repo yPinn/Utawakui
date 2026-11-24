@@ -4,11 +4,11 @@
 
 ## 更新 Manifest 簽章
 
-| 工具                                                        | 用途                                                                                           | 使用者與寫入範圍                                                                                                             |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [generate-keypair.mjs](update-signing/generate-keypair.mjs) | `node tools/update-signing/generate-keypair.mjs` 產生開發用 Ed25519 keypair，輸出公鑰與 key id | 手動一次性準備；私鑰寫到本工具目錄的 `.local/dev-private-key.pem`，已存在時拒絕覆寫。不是正式金鑰佈署入口                    |
-| [sign-manifest.mjs](update-signing/sign-manifest.mjs)       | 依指定 installer 的 basename、size、SHA-512 產生 schema v2 manifest，支援多簽章                | 本機維護或 release workflow 的條件式 sign job；讀取明確提供的私鑰，寫入 `--out`，預設為目前工作目錄的 `update-manifest.json` |
-| [verify-manifest.mjs](update-signing/verify-manifest.mjs)   | 驗證 production registry、指定版本、必要簽章及每個 artifact 的大小與 hash                      | release workflow 的 sign／publish jobs 與手動發布前檢查；只讀取輸入，不簽署或產生金鑰                                        |
+| 工具                                                        | 用途                                                                                                                                   | 使用者與寫入範圍                                                                                                             |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [generate-keypair.mjs](update-signing/generate-keypair.mjs) | `node tools/update-signing/generate-keypair.mjs [--role production\|recovery --label <name>]` 產生 Ed25519 keypair，輸出 registry 條目 | 手動一次性準備；私鑰寫到 `.local/`（不印出），已存在時拒絕覆寫。正式金鑰的保管依發行手冊                                     |
+| [sign-manifest.mjs](update-signing/sign-manifest.mjs)       | 依指定 installer 的 basename、size、SHA-512 產生 schema v2 manifest，支援多簽章                                                        | 本機維護或 release workflow 的條件式 sign job；讀取明確提供的私鑰，寫入 `--out`，預設為目前工作目錄的 `update-manifest.json` |
+| [verify-manifest.mjs](update-signing/verify-manifest.mjs)   | 驗證 production registry、指定版本、必要簽章及每個 artifact 的大小與 hash                                                              | release workflow 的 sign／publish jobs 與手動發布前檢查；只讀取輸入，不簽署或產生金鑰                                        |
 
 請在專案根目錄執行。簽署與驗證的完整參數見各檔案的 usage；兩者不帶參數執行時只顯示 usage 並失敗退出。金鑰產生器不帶參數就會嘗試建立金鑰，不適合作為入口探測命令。
 

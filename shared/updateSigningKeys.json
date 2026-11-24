@@ -1,7 +1,25 @@
 {
   "schemaVersion": 1,
-  "activeProductionKeyId": null,
+  "activeProductionKeyId": "8c49f6737c95432bbcd5265971a07f36647b2668f0710005e64a7260f6f6f9e9",
   "keys": [
+    {
+      "keyId": "8c49f6737c95432bbcd5265971a07f36647b2668f0710005e64a7260f6f6f9e9",
+      "label": "prod-2026-11",
+      "environment": "production",
+      "algorithm": "ed25519",
+      "status": "active",
+      "publicKeyHex": "302a300506032b6570032100a00aa63ca206274fd84d3996087d06cfb3d12bce6ff348fd05c0d11c00b86b4e",
+      "note": "Private key held only in the protected update-signing GitHub environment."
+    },
+    {
+      "keyId": "b88b398620126e5afd5fe4789e748effa40e40436bd8f5c09ffe105ad4d2d34e",
+      "label": "recovery-2026-11",
+      "environment": "production",
+      "algorithm": "ed25519",
+      "status": "recovery",
+      "publicKeyHex": "302a300506032b6570032100b67404072cc0b727906cec832da8f58fbdb9ab5aeb59c037636f851f8f73c2b4",
+      "note": "Offline recovery key; never stored on GitHub or a release machine."
+    },
     {
       "keyId": "1f30c7d37d74786a9f3dab9df351903436edffd2ef4594054a4acb524535d7a2",
       "label": "dev-2026-09-15",

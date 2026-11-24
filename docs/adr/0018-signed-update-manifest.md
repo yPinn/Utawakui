@@ -2,13 +2,16 @@
 
 ## Status
 
-Accepted foundation; production activation pending (2026-09-26).
+Accepted; production enforcement activated in source (2026-11-25).
 
 The exact installer binding, multi-key verifier, signing／verification tools and
-split release workflow are implemented and tested. Production enforcement remains
-off through `shared/appUpdateValues.json` because no production key or protected
-signing secret has been provisioned. None of this shipped in v0.3.0, so the current
-public channel remains the explicitly accepted unsigned channel from ADR 0007.
+split release workflow are implemented and tested. The registry now carries one
+production `active` key, whose private key lives only in the protected
+`update-signing` GitHub environment, and one offline `recovery` key.
+`signedManifestEnabled` is true, so the first release built from this source signs
+its manifest, and the builds after it refuse unsigned updates. Builds released
+before activation still follow ADR 0007's unsigned channel until users install a
+signed version.
 
 ## Context
 
@@ -61,8 +64,8 @@ do not cross IPC.
 `shared/updateSigningKeys.json` is the packaged trust registry. Runtime production
 verification accepts only allowlisted production keys in `active`, `retiring` or
 `recovery` state. Development and revoked keys cannot authorize a production
-update. The current registry contains only a development key, and
-`signedManifestEnabled` is therefore false.
+update. The registry holds the production active and recovery keys plus the
+development key, and `signedManifestEnabled` is true.
 
 This design borrows TUF's target binding and overlapping trust ideas, but is not a
 TUF implementation. It has no root／targets／snapshot／timestamp role separation,
@@ -83,8 +86,8 @@ threshold policy, metadata expiry or freeze-attack protection.
    bundle and signed manifest, may read `PUBLIC_RELEASE_TOKEN`, and cannot read a
    signing key.
 
-The workflow creates only a draft. With the current disabled gate, `sign` is skipped
-and the existing unsigned draft path remains operational.
+The workflow creates only a draft. With the gate enabled, `sign` must succeed
+before `publish` runs.
 
 ## Rotation And Recovery
 
@@ -122,8 +125,8 @@ revoked without first trusting another valid signature.
   Windows publisher impersonation remain separate risks.
 - Missing or invalid `update-manifest.json` deliberately blocks in-app download after
   activation. Release acceptance must verify the public asset before publication.
-- The remaining work is operational: provision protected production／recovery keys,
-  activate the gate in a release, and complete v0.3.0-to-next-version acceptance.
+- The remaining work is the first signed release's update acceptance from the
+  previous public version.
 
 ## References
 

@@ -23,7 +23,7 @@
 | [0015](0015-recording-first-provider-discovery.md)                 | 錄音優先的Provider discovery          | Accepted                          |
 | [0016](0016-user-feedback-intake.md)                               | 使用者回饋流程                        | Accepted                          |
 | [0017](0017-directml-execution-provider-for-mdx-separation.md)     | MDX DirectML GPU／CPU回退             | Accepted                          |
-| [0018](0018-signed-update-manifest.md)                             | 更新manifest簽章                      | Accepted foundation；正式啟用待定 |
+| [0018](0018-signed-update-manifest.md)                             | 更新manifest簽章                      | Accepted；已啟用                  |
 | [0019](0019-signalsmith-stretch-pitch-transpose.md)                | Signalsmith pitch／transpose          | Proposed                          |
 | [0020](0020-metronome-lookahead-audio-scheduling.md)               | 節拍器lookahead排程                   | Proposed                          |
 | [0021](0021-bgm-standby-audio-and-handoff.md)                      | BGM lane與交接                        | Accepted                          |

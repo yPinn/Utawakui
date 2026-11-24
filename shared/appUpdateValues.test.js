@@ -4,7 +4,7 @@ import values from './appUpdateValues.json';
 describe('app update values', () => {
   it('keeps the packaged update channel enabled with bounded timers', () => {
     expect(values.runtimeEnabled).toBe(true);
-    expect(values.signedManifestEnabled).toBe(false);
+    expect(values.signedManifestEnabled).toBe(true);
     expect(Number.isSafeInteger(values.startupCheckDelayMs)).toBe(true);
     expect(values.startupCheckDelayMs).toBeGreaterThan(0);
   });

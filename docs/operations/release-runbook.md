@@ -164,9 +164,9 @@ stable release containing:
 - `SHA256SUMS.txt`.
 
 When `signedManifestEnabled` is true, a separate protected `update-signing` job
-adds `update-manifest.json` before publish. The current registry has no production
-key and the flag is false, so this job is skipped and the existing unsigned draft
-path remains operational.
+adds `update-manifest.json` before publish. The flag is true and the registry has
+one production active key, so every release must pass this job and needs a reviewer
+to approve the `update-signing` deployment.
 
 It refuses to modify a published release or use a prerelease as the stable updater
 feed. The workflow never publishes the draft automatically. Package-transfer and
@@ -184,7 +184,8 @@ a production private key as part of an ordinary source change.
    `activeProductionKeyId`, and keep any recovery entry as
    `production`／`recovery`.
 3. Create a protected GitHub `update-signing` environment restricted to release
-   tags, require review and prevent self-review. Store the Base64 PKCS#8 active key
+   tags and require review; a solo maintainer must allow self-review or the job
+   never runs. Store the Base64 PKCS#8 active key
    as `UPDATE_MANIFEST_PRIVATE_KEY_B64`. This environment must not contain
    `PUBLIC_RELEASE_TOKEN`.
 4. Change `signedManifestEnabled` to true in the reviewed release source. The
