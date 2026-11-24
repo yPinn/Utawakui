@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
+const { system32Executable } = require('./systemExecutables');
 
 // Kept in exact lockstep with vocalSeparation.js's decodeAudio() — the smoke
 // test below only means something if it exercises the identical decode path
@@ -14,9 +15,7 @@ const SMOKE_TEST_FRAMES = 4410; // 0.1s at SAMPLE_RATE
 const DEFAULT_PROCESS_TIMEOUT_MS = 15_000;
 
 function resolveWhereExePath() {
-  const systemRoot = process.env.SystemRoot || 'C:\\Windows';
-  const wherePath = path.join(systemRoot, 'System32', 'where.exe');
-  return fs.existsSync(wherePath) ? wherePath : 'where';
+  return system32Executable('where.exe');
 }
 
 function runProcess(

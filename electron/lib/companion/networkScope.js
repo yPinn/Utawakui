@@ -2,6 +2,7 @@
 
 const os = require('node:os');
 const { execFile } = require('node:child_process');
+const { windowsPowerShellPath } = require('../systemExecutables');
 
 const PROFILE_TIMEOUT_MS = 5000;
 // Windows NetworkCategory: 0 Public, 1 Private, 2 DomainAuthenticated.
@@ -37,7 +38,7 @@ function listPrivateInterfaces(networkInterfaces = os.networkInterfaces) {
 function runPowerShell(script) {
   return new Promise((resolve, reject) => {
     execFile(
-      'powershell.exe',
+      windowsPowerShellPath(),
       ['-NoProfile', '-NonInteractive', '-Command', script],
       { timeout: PROFILE_TIMEOUT_MS, windowsHide: true },
       (error, stdout) => (error ? reject(error) : resolve(String(stdout))),

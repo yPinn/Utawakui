@@ -1,10 +1,10 @@
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { dependencyDownloadLabel } = require('./download');
 const { isSafeWindowsFilename } = require('../textGuards');
+const { windowsPowerShellPath } = require('../systemExecutables');
 
 const DEFAULT_ARCHIVE_EXTRACTION_TIMEOUT_MS = 5 * 60_000;
 
@@ -102,20 +102,6 @@ function validateZipArchiveBuffer(buffer, destinationDir, dependency) {
   }
 }
 
-function resolvePowerShellPath() {
-  const systemRoot = process.env.SystemRoot || 'C:\\Windows';
-  const windowsPowerShell = path.join(
-    systemRoot,
-    'System32',
-    'WindowsPowerShell',
-    'v1.0',
-    'powershell.exe',
-  );
-  return fs.existsSync(windowsPowerShell)
-    ? windowsPowerShell
-    : 'powershell.exe';
-}
-
 function expandZipArchive(
   archivePath,
   destinationDir,
@@ -127,7 +113,7 @@ function expandZipArchive(
     // -Command re-parses trailing arguments as script text, so paths travel
     // through the environment to survive spaces, quotes and `$(...)`.
     const proc = spawnImpl(
-      resolvePowerShellPath(),
+      windowsPowerShellPath(),
       [
         '-NoProfile',
         '-ExecutionPolicy',

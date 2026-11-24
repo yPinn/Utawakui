@@ -3,6 +3,7 @@ const { fork, spawn } = require('node:child_process');
 const { performance } = require('node:perf_hooks');
 const { LIMITS } = require('../../../shared/waveform/policy.mjs');
 const { resolveRuntimeEntry } = require('../runtimeEntries');
+const { system32Executable } = require('../systemExecutables');
 const path = require('node:path');
 
 function createStreamingProducer(
@@ -55,7 +56,7 @@ function createStreamingProducer(
     if (process.platform === 'win32') {
       // Only the PID returned by this exact fork, never an image-wide kill.
       const killer = spawn(
-        'taskkill',
+        system32Executable('taskkill.exe'),
         ['/PID', String(worker.pid), '/T', '/F'],
         { shell: false, windowsHide: true, stdio: 'ignore' },
       );

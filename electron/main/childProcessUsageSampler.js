@@ -1,27 +1,12 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const { execFile } = require('child_process');
+const { windowsPowerShellPath } = require('../lib/systemExecutables');
 
 // Win32_Process's KernelModeTime/UserModeTime are FILETIME-style 100ns ticks.
 const CPU_TICKS_PER_SECOND = 10_000_000;
 const DEFAULT_TIMEOUT_MS = 2000;
 const DEFAULT_MAX_BUFFER = 10 * 1024 * 1024;
-
-function resolvePowerShellPath() {
-  const systemRoot = process.env.SystemRoot || 'C:\\Windows';
-  const windowsPowerShell = path.join(
-    systemRoot,
-    'System32',
-    'WindowsPowerShell',
-    'v1.0',
-    'powershell.exe',
-  );
-  return fs.existsSync(windowsPowerShell)
-    ? windowsPowerShell
-    : 'powershell.exe';
-}
 
 // PowerShell's ConvertTo-Json emits a bare object (not a one-element array)
 // when the pipeline only produced a single row — normalize both shapes.
@@ -87,7 +72,7 @@ function queryProcessTree({
 } = {}) {
   return new Promise((resolve) => {
     execFileImpl(
-      resolvePowerShellPath(),
+      windowsPowerShellPath(),
       [
         '-NoProfile',
         '-NonInteractive',
