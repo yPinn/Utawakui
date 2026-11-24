@@ -1,0 +1,138 @@
+{
+  "checkedAt": "2026-11-25",
+  "timezone": "Asia/Taipei",
+  "method": "Official release notes and changelog pages only; no product was installed or run.",
+  "qualityTested": false,
+  "products": [
+    {
+      "id": "setlista",
+      "name": "Setlista 3rd session",
+      "version": "0.27.0",
+      "releaseDateAsShown": "2026-11-10",
+      "status": "trial-public",
+      "sourceUrl": "https://nekosogi.org/setlista3",
+      "evidenceKind": "official-page-and-changelog",
+      "changesSincePreviousRound": []
+    },
+    {
+      "id": "elitesand",
+      "name": "聲嶼 Elitesand Pro",
+      "version": "v1.3.1",
+      "publishedAt": "2026-11-24T15:30:33Z",
+      "releaseUrl": "https://github.com/z22115554/elitesand-pro/releases/tag/v1.3.1",
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "Elitesand.Pro.Setup.1.3.1.exe",
+          "sha256": "3e8390847e17caa2a1eeb34e667309ce38da3651327a0eb977b29b8643c185cb"
+        }
+      ],
+      "changesSincePreviousRound": [
+        "Single-song OBS setlist board with user-written idle text, ten looks",
+        "Outro pause auto-finish: pausing for N seconds after the last line ends the song (off or 3-30 s, default 8)",
+        "Import Kugou .krc, KRC text and word-timed LRC with per-word timing",
+        "Korean romanization follows actual pronunciation (liaison, nasalization)",
+        "Separate accompaniment and vocal volume when vocal separation is on",
+        "Lyric cleanup of credits, section headers and subtitle position codes; [offset:] applied to OBS",
+        "Simplified/Traditional Chinese treated as the same song for search and dedupe",
+        "PIN attempt limit shared across entry points; downloaded tools verified by signature and hash"
+      ],
+      "previouslyMissed": [
+        {
+          "version": "v1.3.0",
+          "releaseUrl": "https://github.com/z22115554/elitesand-pro/releases/tag/v1.3.0",
+          "items": [
+            "Better quality and track sync for large key shifts (about ±4 and beyond)",
+            "Apple Music lyrics falls back to another source when unreachable",
+            "Text PV and sing-along view",
+            "EULA 2.3.0 adds lyric-source category codes to community offset requests"
+          ]
+        }
+      ],
+      "limitations": [
+        "Unsigned installer",
+        "Anonymous statistics and community offsets default on; disclosed, not network-audited"
+      ]
+    },
+    {
+      "id": "singing-stream-savior",
+      "name": "歌回救星 Singing Stream Savior",
+      "version": "v2.2.1.6",
+      "publishedAt": "2026-11-21T02:42:33Z",
+      "releaseUrl": "https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates/releases/tag/v2.2.1.6",
+      "prerelease": false,
+      "changesSincePreviousRound": [
+        "Restore a backed-up streamer identity for audience requests after reinstall or a new PC",
+        "Manual audio diagnostics record more detail when a monitor device switch fails",
+        "Official user Discord opened"
+      ],
+      "previouslyMissed": [
+        {
+          "version": "v2.2.1.1",
+          "items": [
+            "Signal Veil/Tide switch between waveform and spectrum",
+            "Launcher recovers when no beta exists and starts the installed version offline; repair entry added"
+          ]
+        },
+        {
+          "version": "v2.2.1.3",
+          "items": [
+            "Batch YouTube metadata: one timeout no longer fails unresolved songs; removal cancels pending work"
+          ]
+        },
+        {
+          "version": "v2.2.1.4",
+          "items": [
+            "Lower memory use",
+            "Default theme can hide section titles for custom backgrounds"
+          ]
+        },
+        {
+          "version": "v2.2.1.5",
+          "items": [
+            "OBS setlist scrolling resumes after the source is hidden and shown again"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kareokie",
+      "name": "KAREOKIE",
+      "version": "v4.4.0",
+      "publishedAt": "2026-11-24T05:10:39Z",
+      "releaseUrl": "https://github.com/a8594755-maker/KAREOKIE-releases/releases/tag/v4.4.0",
+      "prerelease": false,
+      "intermediateReleases": [
+        {
+          "version": "v4.1.0",
+          "publishedAt": "2026-11-22T18:48:35Z",
+          "prerelease": false
+        },
+        {
+          "version": "v4.1.1",
+          "publishedAt": "2026-11-23T00:42:08Z",
+          "prerelease": true
+        },
+        {
+          "version": "v4.1.2",
+          "publishedAt": "2026-11-23T03:58:30Z",
+          "prerelease": true
+        }
+      ],
+      "changesSincePreviousRound": [
+        "Version jumped from 0.3.6 to 4.1.0; V4 layout is standard",
+        "YouTube stage: app finds lyrics, times them to the video and adds scoring and pitch lane; timing shared after the first singer",
+        "Shared song library of about 28,000 songs; translations and readings for about 25,000 songs prepared server-side, human before AI",
+        "Optional live vocal removal on the PC, key -6 to +6, guide vocal slider",
+        "Duets by part with per-mic scoring; levels, titles and 14-day leaderboards",
+        "Account sync for playlists, favourites and history",
+        "4.4 restores local download mode with on-PC separation alongside YouTube mode",
+        "4.4 first-song help: mic check by singing a note, readiness of lyrics/timing/melody, clipping notice on results, vocal range test",
+        "Terms of Service v6 and Privacy Policy v10; analysis from eligible older-library songs shared by default"
+      ],
+      "limitations": [
+        "Account and cloud dependency deeper than previous round; disclosed, not network-audited"
+      ]
+    }
+  ]
+}
