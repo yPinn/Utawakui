@@ -14,6 +14,9 @@ const {
   MANGA_BUBBLE_STYLE_IDS,
 } = require('./presentation/mangaFrameContract.mjs');
 const translationValues = require('./lyricsTranslationValues.json');
+const {
+  LYRICS_REPEAT_MODES,
+} = require('./presentation/lyricsTextProcessing.mjs');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
 const OUTPUT_STREAMS = new Set([
@@ -134,6 +137,12 @@ function parseLine(value, path, usedIds, counters) {
   if (usedIds.has(lineId)) invalid(`${path}.lineId`, 'duplicate id');
   usedIds.add(lineId);
   const text = string(line.text, `${path}.text`, timingValues.maxTextLength);
+  if (
+    line.repeatMode !== undefined &&
+    !LYRICS_REPEAT_MODES.includes(line.repeatMode)
+  ) {
+    invalid(`${path}.repeatMode`, 'unsupported lyric repeat mode');
+  }
   let vocalParts;
   if (line.vocalParts !== undefined) {
     if (
@@ -274,6 +283,7 @@ function parseLine(value, path, usedIds, counters) {
   return {
     lineId,
     text,
+    ...(line.repeatMode ? { repeatMode: line.repeatMode } : {}),
     ...(vocalParts ? { vocalParts } : {}),
     startMs,
     endMs,

@@ -1,5 +1,9 @@
 // Template-only code and styles load when a slot first selects the template.
 const TEMPLATE_MODULES = Object.freeze({
+  'kinetic-pop': {
+    load: () => import('../../shared/browser/kineticPop.mjs'),
+    stylesheet: '/overlay/lyrics/kineticPop.css',
+  },
   'fisheye-lens': {
     load: () =>
       Promise.all([

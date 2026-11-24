@@ -8,8 +8,10 @@ import { lyricsPresentationPolicyForTemplate } from './lyricsPresentationPolicie
 import { outputAppearanceFieldKeysForTemplate } from '../outputAppearance.mjs';
 import {
   analyzeLyricsText,
+  collapseLyricsRepeats,
   isProtectedLyricsBreak,
   isSafeLyricsBreak,
+  lyricsDisplayRepeatRuns,
 } from './lyricsTextProcessing.mjs';
 
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
@@ -225,6 +227,12 @@ const KINETIC_POP_MATERIAL_SETTINGS = new Set([
   'cycle',
 ]);
 const KINETIC_POP_PUNCH_MAX_WEIGHT = 8;
+const KINETIC_POP_SOFT_MAX_WEIGHT = 12;
+const KINETIC_POP_MIN_INFERRED_WEIGHT = 4;
+const KINETIC_POP_MIN_DWELL_MS = 400;
+const KINETIC_POP_MIN_REPEAT_DWELL_MS = 200;
+const KINETIC_POP_ENGLISH_BINDERS =
+  /(?:^|\s)(?:a|an|the|my|your|our|their|this|these|those|to|of|and|or|if|when|while|because|with)$/iu;
 const LYRICS_PRESENTATION_PROFILES = Object.freeze({
   'generic-caption': Object.freeze({
     id: 'generic-caption',
@@ -751,13 +759,203 @@ function kineticPopVisualUnits(value) {
   return units;
 }
 
-function kineticPopPhrases(text, ranges = null) {
-  const groups =
-    ranges ??
-    [...text.matchAll(/\S+/gu)].map((match) => ({
-      sourceStart: match.index,
-      sourceEnd: match.index + match[0].length,
-    }));
+function kineticPopPhraseRanges(text, cue, repeats, heldRepeats) {
+  const whole = [{ sourceStart: 0, sourceEnd: text.length }];
+  if (!text) return whole;
+  const analysis = analyzeLyricsText(text);
+  if (analysis.malformedPairs) return whole;
+  const cjk = CJK_GLYPH_RE.test(text);
+  const japanese = KANA_RE.test(text);
+  const latin = !cjk && /\p{Script=Latin}/u.test(text);
+  const candidates = new Map(
+    lyricsDisplayBreakCandidates(text).map(({ offset, priority }) => [
+      offset,
+      priority,
+    ]),
+  );
+  for (const offset of lyricsAuthoredPhraseBreaks(text)) {
+    if (/\s/u.test(text[offset - 1])) candidates.set(offset, 5);
+  }
+  for (const { index, 0: ending } of text.matchAll(
+    /(?:[。!?！？…]+[」』）)】”’]*|[\r\n\u2028\u2029]+)\s*/gu,
+  )) {
+    const offset = index + ending.length;
+    if (
+      offset < text.length &&
+      !isProtectedLyricsBreak(analysis, offset) &&
+      isSafeLyricsBreak(text, offset)
+    )
+      candidates.set(offset, /[\r\n\u2028\u2029]/u.test(ending) ? 5 : 4);
+  }
+  const glyphs = [...(KINETIC_POP_GRAPHEME_SEGMENTER?.segment(text) ?? [])];
+  for (const repeat of repeats) {
+    const next = repeat.end + text.slice(repeat.end).match(/^\s*/u)[0].length;
+    for (const offset of [...repeat.starts, next]) {
+      if (
+        offset > 0 &&
+        !isProtectedLyricsBreak(analysis, offset) &&
+        isSafeLyricsBreak(text, offset) &&
+        (candidates.get(offset) ?? 0) < 4
+      )
+        candidates.set(offset, 4);
+    }
+  }
+  if (!candidates.size) return whole;
+
+  const weightAt = new Map([[0, 0]]);
+  let total = 0;
+  for (const glyph of glyphs) {
+    if (!KINETIC_POP_TRAILING_MARK_RE.test(glyph.segment)) total++;
+    weightAt.set(glyph.index + glyph.segment.length, total);
+  }
+  if (!total) return whole;
+  const { startMs = 0, endMs = Infinity, mappedStarts } = cue ?? {};
+  const timeAt = (offset) => {
+    if (offset === 0) return startMs;
+    if (offset === text.length) return endMs;
+    if (mappedStarts) return mappedStarts.get(offset);
+    return cue
+      ? startMs + ((endMs - startMs) * weightAt.get(offset)) / total
+      : offset;
+  };
+  const lastsLongEnough = (from, to) =>
+    !cue ||
+    timeAt(to) - timeAt(from) >=
+      (repeats.some(
+        ({ starts, end }) =>
+          starts.includes(from) &&
+          (starts.includes(to) ||
+            to === end ||
+            (to > end && !text.slice(end, to).trim())),
+      )
+        ? KINETIC_POP_MIN_REPEAT_DWELL_MS
+        : KINETIC_POP_MIN_DWELL_MS);
+  const ranges = lyricsLatinRuns(text);
+  const entries = [...candidates]
+    .filter(([offset, priority]) => {
+      if (
+        heldRepeats.some(
+          ({ start, end, attached }) =>
+            (offset > start || (attached && offset === start)) &&
+            (offset <= end || !text.slice(end, offset).trim()),
+        )
+      )
+        return false;
+      if (
+        repeats.some(
+          ({ start, end, starts }) =>
+            offset > start && offset < end && !starts.includes(offset),
+        )
+      )
+        return false;
+      if (!weightAt.has(offset) || (mappedStarts && !mappedStarts.has(offset)))
+        return false;
+      const before = text.slice(0, offset).trimEnd();
+      const after = text.slice(offset);
+      if (
+        priority === 4 &&
+        /\p{N}[,.，．]$/u.test(before) &&
+        /^\p{N}/u.test(after)
+      )
+        return false;
+      if (priority >= 4) return true;
+      if (
+        japanese &&
+        /^(?:[てで](?:い|お|み|く|しま|も)|なかっ|[ちじ]ゃ(?:い|っ|う|え)|っ[てた])/u.test(
+          after,
+        )
+      )
+        return false;
+      if (japanese && /[ちじ]ゃ$/u.test(before) && /^い[なま]/u.test(after))
+        return false;
+      if (latin && KINETIC_POP_ENGLISH_BINDERS.test(before)) return false;
+      // Keep an embedded Latin phrase together. Standalone English can split
+      // at words, while short Latin cues only split at an explicit/timed cue.
+      return (
+        !cjk ||
+        !ranges.some(
+          ({ sourceStart, sourceEnd }) =>
+            offset > sourceStart && offset < sourceEnd,
+        )
+      );
+    })
+    .map(([offset, priority]) => ({
+      offset,
+      priority:
+        mappedStarts && priority < 4 && /\s/u.test(text[offset - 1])
+          ? Math.max(priority, 3)
+          : priority,
+    }))
+    .sort((a, b) => a.offset - b.offset);
+
+  const cuts = [0, text.length];
+  for (const priority of [5, 4, 3]) {
+    for (const entry of entries) {
+      if (entry.priority !== priority || (priority === 3 && !mappedStarts))
+        continue;
+      const index = cuts.findIndex((cut) => cut > entry.offset);
+      const from = cuts[index - 1];
+      const to = cuts[index];
+      const minimum = priority === 3 ? KINETIC_POP_MIN_INFERRED_WEIGHT : 1;
+      if (
+        weightAt.get(entry.offset) - weightAt.get(from) >= minimum &&
+        weightAt.get(to) - weightAt.get(entry.offset) >= minimum &&
+        lastsLongEnough(from, entry.offset) &&
+        lastsLongEnough(entry.offset, to)
+      )
+        cuts.splice(index, 0, entry.offset);
+    }
+  }
+  const preferredLimit = latin
+    ? 20
+    : cuts.length > 2
+      ? KINETIC_POP_SOFT_MAX_WEIGHT
+      : 10;
+  for (let index = 0; index < cuts.length - 1; index++) {
+    const from = cuts[index];
+    const to = cuts[index + 1];
+    const weight = weightAt.get(to) - weightAt.get(from);
+    if (weight <= preferredLimit) continue;
+    const target = Math.min(
+      latin ? 15 : KINETIC_POP_PUNCH_MAX_WEIGHT,
+      weight / 2,
+    );
+    let best = null;
+    let lowest = Infinity;
+    for (const { offset, priority } of entries) {
+      const left = weightAt.get(offset) - weightAt.get(from);
+      const right = weightAt.get(to) - weightAt.get(offset);
+      if (
+        Math.min(left, right) < KINETIC_POP_MIN_INFERRED_WEIGHT ||
+        !lastsLongEnough(from, offset) ||
+        !lastsLongEnough(offset, to)
+      )
+        continue;
+      const endsClause = japanese
+        ? /(?:ように|ために|ながら|けれど|けど|のに|から|まで|て)$/u.test(
+            text.slice(from, offset).trimEnd(),
+          )
+        : latin &&
+          /^(?:when|while|because|until|although|but)\b/iu.test(
+            text.slice(offset),
+          );
+      const score =
+        Math.abs(left - target) - priority / 2 - (endsClause ? 4 : 0);
+      if (score < lowest) {
+        lowest = score;
+        best = offset;
+      }
+    }
+    if (best !== null) cuts.splice(index + 1, 0, best);
+  }
+  return cuts.slice(1).map((sourceEnd, index) => ({
+    sourceStart: cuts[index],
+    sourceEnd,
+  }));
+}
+
+function kineticPopPhrases(text, ranges) {
+  const groups = text ? ranges : [];
   return groups.map((range) => {
     const raw = text.slice(range.sourceStart, range.sourceEnd);
     const match = {
@@ -796,9 +994,37 @@ export function adaptKineticPopLyricsPresentation(value, options = {}) {
   const sourceText = String(value ?? '');
   const trimmedText = sourceText.trim();
   const text = trimmedText.replace(/\s+/gu, ' ');
-  const sourceUnits = kineticPopVisualUnits(text);
-  const phrases = kineticPopPhrases(trimmedText, options.phraseRanges);
+  const repeats = lyricsDisplayRepeatRuns(trimmedText, options.repeatMode).map(
+    (repeat) => ({
+      ...repeat,
+      attached:
+        (/\p{Script=Han}\p{Script=Hiragana}$/u.test(repeat.fragment) &&
+          /^\p{Script=Hiragana}/u.test(trimmedText.slice(repeat.end))) ||
+        (repeat.fragment === 'ない' &&
+          trimmedText.startsWith('ん', repeat.end)),
+    }),
+  );
+  const heldRepeats = repeats.filter(
+    ({ attached }) =>
+      options.repeatMode === 'hold' ||
+      (options.repeatMode !== 'replay' && attached),
+  );
+  const cue = options.cue;
+  const phrases = kineticPopPhrases(
+    trimmedText,
+    options.phraseRanges ??
+      kineticPopPhraseRanges(trimmedText, cue, repeats, heldRepeats),
+  );
   const phraseBreakProgresses = kineticPopPhraseBreakProgresses(phrases);
+  const phraseStartsMs = cue
+    ? phrases.map(({ sourceStart }, index) =>
+        index === 0
+          ? cue.startMs
+          : (cue.mappedStarts?.get(sourceStart) ??
+            cue.startMs +
+              (cue.endMs - cue.startMs) * phraseBreakProgresses[index - 1]),
+      )
+    : null;
   const lineProgress = Number.isFinite(options.lineProgress)
     ? Math.min(1, Math.max(0, options.lineProgress))
     : null;
@@ -808,18 +1034,50 @@ export function adaptKineticPopLyricsPresentation(value, options = {}) {
       : null;
   const phraseIndex =
     authoredPhraseIndex ??
-    (lineProgress === null || phrases.length <= 1
-      ? null
-      : Math.min(
-          phrases.length - 1,
-          phraseBreakProgresses.filter((boundary) => lineProgress >= boundary)
-            .length,
-        ));
-  const displayPhrase =
+    (phrases.length > 1 && phraseStartsMs
+      ? Math.max(
+          0,
+          phraseStartsMs.findLastIndex((start) => start <= cue.positionMs),
+        )
+      : lineProgress === null || phrases.length <= 1
+        ? null
+        : Math.min(
+            phrases.length - 1,
+            phraseBreakProgresses.filter((boundary) => lineProgress >= boundary)
+              .length,
+          ));
+  const sourcePhrase =
     phraseIndex === null
-      ? { text, units: sourceUnits }
-      : (phrases[phraseIndex] ?? { text, units: sourceUnits });
-  const visualWeight = sourceUnits.reduce(
+      ? { text: trimmedText, sourceStart: 0, sourceEnd: trimmedText.length }
+      : phrases[phraseIndex];
+  const visibleRepeats = repeats.flatMap(({ fragment, starts }) => {
+    const visible = starts.filter(
+      (start) =>
+        start >= sourcePhrase.sourceStart &&
+        start + fragment.length <= sourcePhrase.sourceEnd,
+    );
+    return visible.length < 2
+      ? []
+      : [
+          {
+            fragment,
+            start: visible[0] - sourcePhrase.sourceStart,
+            end: visible.at(-1) + fragment.length - sourcePhrase.sourceStart,
+          },
+        ];
+  });
+  const displayText = collapseLyricsRepeats(
+    sourcePhrase.text,
+    visibleRepeats,
+  ).replace(/\s+/gu, ' ');
+  const displayPhrase = {
+    text: displayText,
+    units:
+      sourcePhrase.units && displayText === sourcePhrase.text
+        ? sourcePhrase.units
+        : kineticPopVisualUnits(displayText),
+  };
+  const visualWeight = displayPhrase.units.reduce(
     (total, unit) => total + unit.weight,
     0,
   );
@@ -840,8 +1098,9 @@ export function adaptKineticPopLyricsPresentation(value, options = {}) {
     displayText: displayPhrase.text,
     phrases,
     phraseIndex,
-    ...(options.phraseTimingSource
-      ? { phraseTimingSource: options.phraseTimingSource }
+    ...(phraseStartsMs ? { phraseStartsMs } : {}),
+    ...(phraseIndex !== null && cue?.timingSource
+      ? { phraseTimingSource: cue.timingSource }
       : {}),
     phraseBreakProgresses,
     material:
@@ -1054,7 +1313,10 @@ export function adaptMangaLyricsPresentation(analysis, options = {}) {
     text: unit.text,
     sourceRanges: [{ start: unit.contentStart, end: unit.contentEnd }],
   }));
-  const bubbles = boundBubbles(mainBubbles, asideBubbles);
+  const distinctMainBubbles = mainBubbles.filter(
+    (bubble, index) => bubble.text !== mainBubbles[index - 1]?.text,
+  );
+  const bubbles = boundBubbles(distinctMainBubbles, asideBubbles);
   const transformed =
     asideBubbles.length > 0 ||
     mainBubbles.length > 1 ||

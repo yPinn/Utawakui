@@ -15,9 +15,12 @@ import {
 } from './lyricsFineFrame.mjs';
 import { ktvHandoffEndMs } from './lyricsKtvHandoff.mjs';
 import {
+  adjoiningEqualLyricLines,
   analyzeLyricsText,
   isProtectedLyricsBreak,
   isSafeLyricsBreak,
+  lyricsDisplayRepeatRuns,
+  projectCollapsedLyricsRepeats,
   sliceLyricsVocalParts,
 } from './lyricsTextProcessing.mjs';
 import { sliceLyricsReading } from './lyricsDisplayLayout.mjs';
@@ -538,45 +541,92 @@ function mangaBubbleStartMs(bubble, segments) {
   return interpolateSourceTimeAtOffset(segments, sourceStart);
 }
 
-function mixedKineticPhrasing(line) {
-  if (!line) return null;
-  const plan = planLyricsPhrases(line);
-  if (plan.status === 'unchanged') return null;
-  const leading = line.text.length - line.text.trimStart().length;
-  const length = line.text.trim().length;
-  const phraseRanges =
-    plan.status === 'ready'
-      ? plan.phrases.map((p) => ({
-          sourceStart: Math.max(0, p.sourceStart - leading),
-          sourceEnd: Math.min(length, p.sourceEnd - leading),
-        }))
-      : [{ sourceStart: 0, sourceEnd: length }];
-  return { plan, phraseRanges };
-}
-
-function kineticPopPhraseTimeline(snapshot, lines, lineIndex, presentation) {
-  const line = lines[lineIndex];
-  const mixed = mixedKineticPhrasing(line);
-  if (mixed)
-    return mixed.plan.status === 'ready'
-      ? mixed.plan.phrases.map((p) => ({ startMs: p.startMs }))
-      : null;
+function projectKineticPop(snapshot, lines, lineIndex, nowMs, options = {}) {
+  let first = lineIndex;
+  while (
+    lines[first]?.repeatMode !== 'original' &&
+    adjoiningEqualLyricLines(lines[first - 1], lines[first])
+  )
+    first--;
+  let last = lineIndex;
+  if (lines[first]?.repeatMode === 'hold') {
+    while (
+      lines[last + 1]?.repeatMode !== 'original' &&
+      adjoiningEqualLyricLines(lines[last], lines[last + 1])
+    )
+      last++;
+  } else {
+    first = lineIndex;
+  }
+  const grouped = first !== last;
+  const line = lines[first];
   const displayText = displayableLyricsText(line?.text);
-  const segments = authoredSegmentsForDisplay(
-    line,
-    effectiveLineEnd(snapshot, lines, lineIndex),
-    displayText,
-  );
-  const phrases = Array.isArray(presentation?.phrases)
-    ? presentation.phrases
-    : [];
-  if (!segments || phrases.length <= 1) return null;
-  const timeline = phrases.map((phrase) => ({
-    startMs: interpolateSourceTimeAtOffset(segments, phrase.sourceStart),
-  }));
-  return timeline.every(({ startMs }) => Number.isFinite(startMs))
-    ? timeline
-    : null;
+  const startMs = line?.startMs;
+  const endMs = effectiveLineEnd(snapshot, lines, last);
+  let cue;
+  if (
+    snapshot.lyrics?.synced === true &&
+    Number.isFinite(startMs) &&
+    Number.isFinite(endMs) &&
+    endMs > startMs
+  ) {
+    const native = Array.isArray(line.segments) && line.segments.length > 0;
+    const mapped = native
+      ? authoredLineSegments(line)
+      : modelLineSegments(line);
+    const mappedStarts = native || mapped ? new Map() : undefined;
+    if (mapped) {
+      let precedingEndMs = -Infinity;
+      for (const segment of authoredSegmentsForDisplay(
+        line,
+        endMs,
+        displayText,
+      ) ?? []) {
+        const source = displayText.slice(
+          segment.sourceStart,
+          segment.sourceEnd,
+        );
+        const trim = source.trimStart();
+        const offset = segment.sourceStart + source.length - trim.length;
+        if (
+          trim &&
+          segment.startMs > startMs &&
+          segment.startMs < endMs &&
+          segment.startMs >= precedingEndMs
+        )
+          mappedStarts.set(offset, segment.startMs);
+        if (trim && Number.isFinite(segment.endMs))
+          precedingEndMs = Math.max(precedingEndMs, segment.endMs);
+      }
+    }
+    cue = {
+      startMs,
+      endMs,
+      positionMs: lyricsPositionMs(snapshot, nowMs),
+      mappedStarts,
+      timingSource: native ? 't2' : mapped ? 'model-starts' : 'line-estimate',
+    };
+  }
+  const kineticPop = adaptKineticPopLyricsPresentation(displayText, {
+    ...options,
+    ...(grouped ? { lineIndex: visibleLyricLineIndex(lines, first) } : {}),
+    repeatMode: line?.repeatMode,
+    cue,
+  });
+  const phraseIndex = kineticPop.phraseIndex ?? 0;
+  return {
+    kineticPop,
+    ...(cue && {
+      kineticPopClock: {
+        sourceId: snapshot.lyrics.documentId ?? snapshot.lyrics.trackId,
+        ...(grouped ? { repeatGroupIndex: first } : {}),
+        positionMs: cue.positionMs,
+        startMs: kineticPop.phraseStartsMs[phraseIndex] ?? startMs,
+        endMs: kineticPop.phraseStartsMs[phraseIndex + 1] ?? endMs,
+        playing: snapshot.playback?.status === 'playing',
+      },
+    }),
+  };
 }
 
 function liveStagePageTimeline(
@@ -802,47 +852,25 @@ function nextKineticPopPhraseBoundaryDelayMs(snapshot, options = {}) {
 
   const nowMs = options.nowMs ?? Date.now();
   const lineIndex = activeLyricIndex(snapshot, lines, nowMs);
-  const line = lines[lineIndex];
-  if (!line || !Number.isFinite(line.startMs)) return null;
-  const lineEndMs = effectiveLineEnd(snapshot, lines, lineIndex);
-  if (!Number.isFinite(lineEndMs) || lineEndMs <= line.startMs) return null;
-
-  const positionMs = lyricsPositionMs(snapshot, nowMs);
-  const lineProgress = boundedProgress(positionMs, line.startMs, lineEndMs);
-  const mixed = mixedKineticPhrasing(line);
-  if (mixed?.plan.status === 'unresolved') return null;
-  const presentation = adaptKineticPopLyricsPresentation(
-    displayableLyricsText(line.text),
-    { lineProgress, phraseRanges: mixed?.phraseRanges },
-  );
-  const exactTimeline = kineticPopPhraseTimeline(
+  if (lineIndex < 0) return null;
+  const { kineticPop, kineticPopClock } = projectKineticPop(
     snapshot,
     lines,
     lineIndex,
-    presentation,
+    nowMs,
   );
-  const nextExactBoundaryMs = exactTimeline
-    ?.map(({ startMs }) => startMs)
-    .find((startMs) => startMs > positionMs);
-  if (exactTimeline) {
-    return Number.isFinite(nextExactBoundaryMs)
-      ? Math.max(
-          1,
-          Math.ceil(
-            (nextExactBoundaryMs - positionMs) / playbackRate(snapshot),
-          ),
-        )
-      : null;
-  }
-  const nextBoundary = presentation.phraseBreakProgresses.find(
-    (boundary) => boundary > lineProgress,
-  );
-  if (!Number.isFinite(nextBoundary)) return null;
-
-  const boundaryMs = line.startMs + (lineEndMs - line.startMs) * nextBoundary;
+  if (
+    !kineticPopClock ||
+    kineticPop.phraseIndex === null ||
+    kineticPop.phraseIndex + 1 >= kineticPop.phrases.length
+  )
+    return null;
   return Math.max(
     1,
-    Math.ceil((boundaryMs - positionMs) / playbackRate(snapshot)),
+    Math.ceil(
+      (kineticPopClock.endMs - kineticPopClock.positionMs) /
+        playbackRate(snapshot),
+    ),
   );
 }
 
@@ -1054,6 +1082,7 @@ function estimatedLongGapEndMs(
 }
 
 const preparedLyricsOverlays = new WeakMap();
+const collapsedRepeatLyrics = new WeakMap();
 
 export function prepareLyricsOverlaySnapshot(snapshot) {
   if (snapshot?.lyrics?.synced !== true) return snapshot;
@@ -1118,6 +1147,136 @@ export function prepareLyricsOverlaySnapshot(snapshot) {
   preparedLyricsOverlays.set(snapshot, prepared);
   preparedLyricsOverlays.set(prepared, prepared);
   return prepared;
+}
+
+function collapsedLyricsForDisplay(lyrics) {
+  const cached = collapsedRepeatLyrics.get(lyrics.lines);
+  if (
+    cached &&
+    cached.reading === lyrics.reading &&
+    cached.synced === lyrics.synced
+  )
+    return cached.result;
+  let changed = false;
+  const readings = lyrics.reading?.lines?.slice();
+  const lines = lyrics.lines.map((line, index) => {
+    if (!line?.text) return line;
+    const projection = projectCollapsedLyricsRepeats(line, readings?.[index]);
+    if (!projection) return line;
+    changed = true;
+    if (readings) readings[index] = projection.reading;
+    return projection.line;
+  });
+  if (lyrics.synced) {
+    for (let first = 0; first < lines.length; first++) {
+      let last = first;
+      while (
+        lyrics.lines[last + 1]?.repeatMode !== 'original' &&
+        adjoiningEqualLyricLines(lyrics.lines[last], lyrics.lines[last + 1])
+      )
+        last++;
+      if (last === first) continue;
+      if (!['original', 'replay'].includes(lyrics.lines[first].repeatMode)) {
+        changed = true;
+        lines[first] = {
+          ...lines[first],
+          endMs: lines[last].endMs,
+          endInferred: lines[last].endInferred,
+        };
+        for (let index = first + 1; index <= last; index++) {
+          lines[index] = { text: '', startMs: null, endMs: null };
+          if (readings) readings[index] = null;
+        }
+      }
+      first = last;
+    }
+  }
+  const result = changed
+    ? {
+        lines,
+        ...(readings
+          ? { reading: { ...lyrics.reading, lines: readings } }
+          : {}),
+      }
+    : null;
+  collapsedRepeatLyrics.set(lyrics.lines, {
+    reading: lyrics.reading,
+    synced: lyrics.synced,
+    result,
+  });
+  return result;
+}
+
+function lyricRepeatReplayStarts(line, endMs) {
+  const text = displayableLyricsText(line.text);
+  const offsets = lyricsDisplayRepeatRuns(text, line.repeatMode).flatMap(
+    ({ starts }) => starts.slice(1),
+  );
+  if (
+    !offsets.length ||
+    !Number.isFinite(endMs) ||
+    !Number.isFinite(line.startMs)
+  )
+    return [];
+  const segments = authoredSegmentsForDisplay(line, endMs, text);
+  const hasSourceTiming =
+    line.segments?.length || line.estimatedStarts?.segments?.length;
+  const starts = hasSourceTiming
+    ? offsets.flatMap((offset) => {
+        const span = segments?.find(
+          ({ sourceStart, sourceEnd }) =>
+            sourceStart +
+              text.slice(sourceStart, sourceEnd).match(/^\s*/u)[0].length ===
+            offset,
+        );
+        return span ? [span.startMs] : [];
+      })
+    : offsets.map(
+        (offset) =>
+          line.startMs + ((endMs - line.startMs) * offset) / text.length,
+      );
+  return starts.filter(
+    (start, index) =>
+      start > line.startMs && start < endMs && start !== starts[index - 1],
+  );
+}
+
+export function prepareLyricsTemplateSnapshot(snapshot, options = {}) {
+  const prepared = prepareLyricsOverlaySnapshot(snapshot);
+  const { templateId } = options;
+  const lyrics = prepared?.lyrics;
+  if (
+    !templateId ||
+    ['karaoke-stack', 'kinetic-pop'].includes(templateId) ||
+    !Array.isArray(lyrics?.lines)
+  )
+    return prepared;
+  const collapsed = collapsedLyricsForDisplay(lyrics);
+  if (!collapsed) return prepared;
+  const result = { ...prepared, lyrics: { ...lyrics, ...collapsed } };
+  if (templateId === 'centered-vertical' || !lyrics.synced) return result;
+  const nowMs = options.nowMs ?? Date.now();
+  const index = activeLyricIndex(result, collapsed.lines, nowMs);
+  const source = lyrics.lines[index];
+  if (source?.repeatMode !== 'replay' || collapsed.lines[index] === source)
+    return result;
+  const endMs = effectiveLineEnd(prepared, lyrics.lines, index);
+  const starts = lyricRepeatReplayStarts(source, endMs);
+  if (!starts.length) return result;
+  const position = lyricsPositionMs(result, nowMs);
+  const cueIndex = starts.findLastIndex((start) => start <= position);
+  const sliced = collapsed.lines.slice();
+  const line = collapsed.lines[index];
+  sliced[index] = {
+    ...line,
+    segments: undefined,
+    estimatedStarts: undefined,
+    estimatedFineTiming: undefined,
+    startMs: starts[cueIndex] ?? line.startMs,
+    endMs: starts[cueIndex + 1] ?? endMs,
+    repeatCueStartMs: starts[cueIndex] ?? line.startMs,
+  };
+  return { ...result, lyrics: { ...result.lyrics, lines: sliced } };
 }
 
 function resolvedKtvLineEndMs(
@@ -1668,11 +1827,17 @@ export function ktvFrameForUnit(
     positionMs,
     options.nowMs,
   );
+  const currentRepeatMode =
+    snapshot.lyrics.lines[unit.sourceLineIndex]?.repeatMode;
+  const nextRepeatMode =
+    snapshot.lyrics.lines[secondaryUnit?.sourceLineIndex]?.repeatMode;
   return {
     revision: revision(snapshot),
     visible: true,
     currentText: unit.text,
     nextText: secondaryUnit?.text ?? '',
+    ...(currentRepeatMode ? { currentRepeatMode } : {}),
+    ...(nextRepeatMode ? { nextRepeatMode } : {}),
     language: text(snapshot?.lyrics?.source?.language),
     lineIndex: unit.sourceLineIndex,
     currentVisibleLineIndex: unit.displayUnitIndex,
@@ -1755,6 +1920,44 @@ function ktvUnitReading(snapshot, unit) {
     : null;
 }
 
+function joinsKtvRepeat(lines, first, second) {
+  return (
+    lines[second?.sourceLineIndex]?.repeatMode !== 'original' &&
+    first?.role === second?.role &&
+    adjoiningEqualLyricLines(first, second, first?.handoffEndMs)
+  );
+}
+
+function ktvHoldRepeatLanes(lines, units) {
+  if (!lines.some(({ repeatMode }) => repeatMode === 'hold')) return units;
+  let laneIndex = 0;
+  let hold = false;
+  return units.map((unit, index) => {
+    const joins = joinsKtvRepeat(lines, units[index - 1], unit);
+    if (!joins) hold = lines[unit.sourceLineIndex]?.repeatMode === 'hold';
+    if (unit.laneIndex === 0) laneIndex = 0;
+    else if (!joins || !hold) laneIndex++;
+    return laneIndex === unit.laneIndex ? unit : { ...unit, laneIndex };
+  });
+}
+
+function holdKtvRepeat(snapshot, units, unit, positionMs, options) {
+  const { lines } = snapshot.lyrics;
+  let first = unit.displayUnitIndex;
+  while (joinsKtvRepeat(lines, units[first - 1], units[first])) first--;
+  const anchor = units[first];
+  if (lines[anchor.sourceLineIndex]?.repeatMode !== 'hold') return null;
+  let last = unit.displayUnitIndex;
+  while (joinsKtvRepeat(lines, units[last], units[last + 1])) last++;
+  if (first === last) return null;
+  const nextUnit = nextKtvDisplayUnit(units, units[last]);
+  const frame = ktvFrameForUnit(snapshot, units, anchor, positionMs, {
+    ...options,
+    nextUnit,
+  });
+  return { ...frame, repeatKtvFitThrough: nextUnit?.displayUnitIndex ?? last };
+}
+
 // Browser Source supplies a locally measured timeline. It is never published
 // back to the source document, playback authority or public state protocol.
 export function selectKtvTimelineFrame(snapshot, units, nowMs) {
@@ -1764,6 +1967,7 @@ export function selectKtvTimelineFrame(snapshot, units, nowMs) {
     return hiddenKtvFrame(snapshot);
   }
   if (units.length === 0) return hiddenKtvFrame(snapshot);
+  units = ktvHoldRepeatLanes(lyrics.lines, units);
   const positionMs = lyricsPositionMs(snapshot, nowMs);
   const entrance = ktvEntrances(snapshot, units).find(
     ({ visibleStartMs, unit }) =>
@@ -1771,6 +1975,10 @@ export function selectKtvTimelineFrame(snapshot, units, nowMs) {
   );
   const activeUnit = activeKtvDisplayUnit(units, positionMs);
   if (activeUnit) {
+    const held = holdKtvRepeat(snapshot, units, activeUnit, positionMs, {
+      nowMs,
+    });
+    if (held) return held;
     const overlappingEntrance =
       entrance?.unit.displayUnitIndex === activeUnit.displayUnitIndex + 1
         ? entrance
@@ -1809,12 +2017,16 @@ export function selectKtvTimelineFrame(snapshot, units, nowMs) {
       positionMs < unit.handoffEndMs + ktvCompletedHoldMs(units, unit),
   );
   return completedUnit
-    ? ktvFrameForUnit(snapshot, units, completedUnit, positionMs, {
+    ? (holdKtvRepeat(snapshot, units, completedUnit, positionMs, {
         nowMs,
         completed: true,
-        companionUnit: ktvTailCompanionUnit(units, completedUnit),
-        nextUnit: nextKtvDisplayUnit(units, completedUnit),
-      })
+      }) ??
+        ktvFrameForUnit(snapshot, units, completedUnit, positionMs, {
+          nowMs,
+          completed: true,
+          companionUnit: ktvTailCompanionUnit(units, completedUnit),
+          nextUnit: nextKtvDisplayUnit(units, completedUnit),
+        }))
     : hiddenKtvFrame(snapshot);
 }
 
@@ -2102,9 +2314,8 @@ function fisheyeChorusRanges(snapshot) {
 export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   if (snapshot?.playback?.status !== 'playing') return null;
   const sourceSnapshot = snapshot;
-  snapshot = prepareLyricsOverlaySnapshot(snapshot);
-
   const nowMs = options.nowMs ?? Date.now();
+  snapshot = prepareLyricsTemplateSnapshot(snapshot, { ...options, nowMs });
   const rate = playbackRate(snapshot);
   const delays = [];
   const templateId =
@@ -2429,6 +2640,7 @@ function projectTexturedCreditsTiming(snapshot, lines, frame, nowMs) {
     : null;
   // The active lyric keeps precedence if two authored intervals overlap.
   const hasPrevious =
+    Boolean(previousText && previousText !== frame.currentText) &&
     Number.isFinite(previousLine?.startMs) &&
     previousEndMs >= startMs &&
     previousEndMs > previousLine.startMs &&
@@ -2459,7 +2671,7 @@ function projectTexturedCreditsTiming(snapshot, lines, frame, nowMs) {
 
 export function selectLyricsOverlayFrame(snapshot, options = {}) {
   const sourceSnapshot = snapshot;
-  snapshot = prepareLyricsOverlaySnapshot(snapshot);
+  snapshot = prepareLyricsTemplateSnapshot(snapshot, options);
   const templateId =
     typeof options.templateId === 'string' ? options.templateId : null;
   if (
@@ -2506,46 +2718,13 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     snapshot.lyrics?.mangaFrameCues?.find(
       ({ lineIndex }) => lineIndex >= 0 && lineIndex === frame.lineIndex,
     )?.frameId;
-  const mixedKinetic =
+  const kinetic =
     templateId === 'kinetic-pop'
-      ? mixedKineticPhrasing(lines[frame.lineIndex])
-      : null;
-  const kineticPopBase =
-    templateId === 'kinetic-pop'
-      ? adaptKineticPopLyricsPresentation(frame.currentText, {
-          lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex,
-          lineProgress: frame.lineProgress,
-          kineticMaterial: options.kineticMaterial,
-          phraseRanges: mixedKinetic?.phraseRanges,
-        })
-      : null;
-  const kineticPopTimeline =
-    kineticPopBase && hasMappedTiming(frame.currentTimingSource)
-      ? kineticPopPhraseTimeline(
-          snapshot,
-          lines,
-          frame.lineIndex,
-          kineticPopBase,
-        )
-      : null;
-  const kineticPopPhraseIndex = kineticPopTimeline
-    ? Math.max(
-        0,
-        kineticPopTimeline.filter(
-          ({ startMs }) => startMs <= lyricsPositionMs(snapshot, nowMs),
-        ).length - 1,
-      )
-    : null;
-  const kineticPop =
-    kineticPopBase && kineticPopPhraseIndex !== null
-      ? adaptKineticPopLyricsPresentation(frame.currentText, {
+      ? projectKineticPop(snapshot, lines, frame.lineIndex, nowMs, {
           lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex,
           kineticMaterial: options.kineticMaterial,
-          phraseIndex: kineticPopPhraseIndex,
-          phraseTimingSource: frame.currentTimingSource,
-          phraseRanges: mixedKinetic?.phraseRanges,
         })
-      : kineticPopBase;
+      : null;
   const liveStageTimeline =
     templateId === 'live-stage' && hasMappedTiming(frame.currentTimingSource)
       ? liveStagePageTimeline(
@@ -2632,6 +2811,9 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     fisheyeRanges.findLast(({ endMs }) => endMs <= fisheyeAudioPosition)?.endMs;
   const phantomLine =
     templateId === 'phantom-thieves' ? lines[frame.lineIndex] : null;
+  const phantomPreviousText = phantomLine
+    ? displayableLyricsText(lines[frame.lineIndex - 1]?.text)
+    : '';
   const phantomLineEndMs =
     phantomLine && snapshot.lyrics?.synced === true
       ? effectiveLineEnd(snapshot, lines, frame.lineIndex)
@@ -2642,6 +2824,11 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       : null;
   return {
     ...frame,
+    ...(templateId === 'phantom-thieves' &&
+      frame.nextText === frame.currentText && { nextText: '' }),
+    ...(Number.isFinite(lines[frame.lineIndex]?.repeatCueStartMs) && {
+      repeatCueStartMs: lines[frame.lineIndex].repeatCueStartMs,
+    }),
     ...(texturedCreditsTiming ? { texturedCreditsTiming } : {}),
     ...(templateId === 'phantom-thieves' && frame.currentText
       ? {
@@ -2649,12 +2836,15 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
             artist: text(snapshot.playback?.track?.artist),
             documentId: snapshot.lyrics?.documentId,
             ended: snapshot.playback?.status === 'ended',
-            previousText: displayableLyricsText(
-              lines[frame.lineIndex - 1]?.text,
-            ),
+            previousText:
+              phantomPreviousText === frame.currentText ||
+              phantomPreviousText === frame.nextText
+                ? ''
+                : phantomPreviousText,
             // Back-to-back lines keep the dialogue frame instead of re-entering.
             continuesPrevious:
               snapshot.lyrics?.synced === true &&
+              !Number.isFinite(phantomLine?.repeatCueStartMs) &&
               Boolean(
                 displayableLyricsText(lines[frame.lineIndex - 1]?.text),
               ) &&
@@ -2744,7 +2934,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       : {}),
     ...(mangaBubbleTiming ? { mangaBubbleTiming } : {}),
     ...(mangaFrameCue ? { mangaFrameCue } : {}),
-    ...(kineticPop ? { kineticPop } : {}),
+    ...kinetic,
     ...(ornateVertical ? { ornateVertical } : {}),
     ...(legacyAllTemplates || templateId === 'karaoke-stack'
       ? {

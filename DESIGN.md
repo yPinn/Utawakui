@@ -1109,32 +1109,32 @@ Kinetic Pop never repairs an overlong source line by wrapping it into a second
 visual row. The lyric stage uses equal safe insets from the complete output canvas;
 its line, row, and depth／rim／fill tracks all span that same stage and center their
 glyph group within it. The programme artwork is never an alignment anchor, and an
-overwide `nowrap` phrase extends or clips equally on both sides instead of falling
-back to one-sided overflow. For this Japanese-first template, authored whitespace
-inside a source line is a sequential phrase boundary within its existing timing
-interval: presentation assigns each phrase a duration share by visual weight,
-shows the earlier phrase first, and then replaces it with the later phrase. This
-visual phrase schedule neither creates nor rewrites canonical or T2 timing. An
-unspaced overlong line still belongs to the upstream lyrics document and timing
-pipeline. Every visible phrase is split into
+overwide `nowrap` phrase scales around the visual center within the stage.
+One source line can advance through several short phrases. Prefer authored
+breaks, then punctuation and repeated hooks. Use safe word boundaries for long
+spans and keep quoted groups and embedded Latin phrases intact. The first phrase
+starts at the line cue. Interior cuts use exact T2 or applied T1+ starts when
+available, and relative glyph weights for line-only timing. Leave at least
+400 ms of song time per batch when splitting. Every visible phrase is split into
 presentation-owned, grapheme-aware visual entrance units; small kana and the
 prolonged-sound mark enter independently while punctuation stays attached to the
 preceding glyph. These units are choreography only and do not claim T2 timing.
-Caption and punch entrances, including each authored phrase replacement, use one
-interruptible GSAP timeline with a bounded interleaved burst rather than a
-left-to-right sweep. Every unit begins at its final horizontal slot; an eight-step
-deterministic phase pattern repeats across the row within a 28 ms window, while odd
-and even units start with opposing vertical offset, rotation, and scale. A 115 ms
-back-out settle supplies the single quick rebound. The three material tracks remain
+Each glyph has a fixed layout slot. Ordinary captions use a 95 ms entrance
+with up to 28 ms of stagger. Short phrases reveal glyphs out of order over up
+to 52 ms. Each glyph first expands from a small pose, then rebounds twice with
+diminishing displacement before settling. The entrance takes up to 183 ms and
+compresses proportionally for short cues. The previous phrase cuts at the next
+cue. Both Browser Source and Gallery sample the paused GSAP timeline from their
+respective playback clocks. The three material tracks remain
 ordered depth／rim／fill across the complete row, while the matching unit in each
 track receives the same delay, transform, and opacity tween. This preserves
 per-glyph motion without letting a neighboring glyph's white rim paint above the
 gradient face.
 Material two uses a 1.12 line-height so the clipped gradient background covers
-Keifont's full ascent instead of exposing a white cap. Reduced motion and playback
-discontinuities commit the readable final state immediately. The Gallery shows one
-fixed material-two sample in the shared line position; users choose a fixed
-material or the explicit three-material rotation from the Workbench, and may
+Keifont's full ascent instead of exposing a white cap. Reduced motion shows
+the selected phrase in its final pose. The Gallery cycles the selected sample's
+phrases in the shared line position. Users choose a fixed material or the
+explicit three-material rotation from the Workbench, and may
 preview either the straight or subtle-offset settled arrangement.
 
 `GenWanMin2 TW` and `Playfair Display` are suitable for bundling under SIL Open Font License 1.1, but release artifacts must include license notices.

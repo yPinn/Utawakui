@@ -532,6 +532,10 @@ the closed module-graph delivery test covers all three routes.
 Lyrics template code that loads on demand goes through the exact route for
 `overlay/lyrics/templateModules.mjs`; the files it loads keep their own routes.
 
+Kinetic Pop loads `overlay/lyrics/kineticPop.css` and
+`shared/browser/kineticPop.mjs` via exact routes covered by the existing Overlay
+and shared packaging globs. Gallery uses the same renderer and stylesheet.
+
 Phantom Thieves uses the existing Overlay packaging glob and exact routes for
 `overlay/lyrics/phantomThieves.mjs` and `overlay/lyrics/phantomThieves.css`.
 The renderer Gallery preview bundles the same drawing code and styles.

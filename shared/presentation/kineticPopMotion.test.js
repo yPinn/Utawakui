@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  KINETIC_POP_PUNCH_SECONDS,
   kineticPopBurstDelaySeconds,
   kineticPopEnterPose,
+  kineticPopPunchDelays,
+  kineticPopPunchStages,
   kineticPopRestPose,
 } from './kineticPopMotion.mjs';
 
@@ -35,6 +38,36 @@ describe('Kinetic Pop motion contract', () => {
       scale: 1.14,
       x: 0,
       y: -12,
+    });
+  });
+
+  it('stages a short word in a non-linear burst with an immediate leading glyph', () => {
+    expect(kineticPopPunchDelays(3, 0)).toEqual([0.052, 0, 0.034]);
+    expect(kineticPopPunchDelays(3, 1)).toEqual([0, 0.034, 0.014]);
+    expect(kineticPopPunchDelays(1, 0)).toEqual([0]);
+    expect(kineticPopPunchDelays(2, 2)[0]).toBeCloseTo(0.02);
+    expect(KINETIC_POP_PUNCH_SECONDS).toBeCloseTo(0.183);
+  });
+
+  it('rebounds in opposite directions and converges to the authored rest pose', () => {
+    const stages = kineticPopPunchStages(0, 0, 'straight');
+    const opposite = kineticPopPunchStages(1, 0, 'straight');
+    expect(stages.map(({ pose }) => pose.scale)).toEqual([
+      0.25, 1.16, 0.938, 1.032, 1,
+    ]);
+    expect(stages.map(({ pose }) => pose.opacity)).toEqual([0, 1, 1, 1, 1]);
+    expect(
+      stages.slice(1, 4).map(({ pose }) => Math.sign(parseFloat(pose.y))),
+    ).toEqual([-1, 1, -1]);
+    expect(
+      opposite.slice(1, 4).map(({ pose }) => Math.sign(parseFloat(pose.y))),
+    ).toEqual([1, -1, 1]);
+    expect(kineticPopPunchStages(0, 4, 'subtle-offset').at(-1).pose).toEqual({
+      opacity: 1,
+      rotation: -1.6,
+      scale: 1.01,
+      x: '-0.02em',
+      y: '0.025em',
     });
   });
 

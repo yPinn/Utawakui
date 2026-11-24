@@ -26,13 +26,18 @@ import {
   lyricsAppearanceBoundary,
   lyricsAppearanceBoundaryDelayMs,
   nextPresentationBoundaryDelayMs,
-  prepareLyricsOverlaySnapshot,
+  playbackPositionMs,
+  prepareLyricsTemplateSnapshot,
   selectLyricsOverlayFrame,
   selectLyricsTranslationFrame,
 } from '../shared/state.mjs';
 import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
 import { adaptOrnateVerticalLyricsPresentation } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import { lyricsDisplayBatchKey } from '../../shared/presentation/lyricsDisplayFrame.mjs';
+import {
+  lyricsDisplayRepeatRuns,
+  projectCollapsedLyricsRepeats,
+} from '../../shared/presentation/lyricsTextProcessing.mjs';
 import { outputOccupancyBounds } from '../../shared/presentation/outputOccupancy.mjs';
 import {
   adaptKtvLyricsPresentation,
@@ -64,11 +69,6 @@ import {
   clearLiveStagePresentation,
   renderLiveStagePresentation,
 } from './liveStage.mjs';
-import {
-  clearKineticPopPresentation,
-  renderKineticPopPresentation,
-  stopKineticPopTransition,
-} from './kineticPop.mjs';
 import {
   clearOrnateVerticalPresentation,
   renderOrnateVerticalPresentation,
@@ -482,6 +482,35 @@ function secondaryKtvFrame(frame) {
   };
 }
 
+function projectRepeatedKtvInk(text, segments, fineTiming, mode) {
+  const runs = lyricsDisplayRepeatRuns(text, mode);
+  if (!runs.length) return null;
+  const matching = segments?.map((segment) => segment.text).join('') === text;
+  if (mode === 'replay' && matching) {
+    let cursor = 0;
+    const reached = new Set();
+    for (const segment of segments) {
+      if (segment.state !== 'upcoming' && segment.state !== 'future') {
+        reached.add(
+          cursor + segment.text.length - segment.text.trimStart().length,
+        );
+      }
+      cursor += segment.text.length;
+    }
+    for (const run of runs)
+      run.keep = run.starts.findLast((start) => reached.has(start));
+  }
+  return projectCollapsedLyricsRepeats(
+    {
+      text,
+      segments: matching ? segments : undefined,
+      estimatedFineTiming: matching ? fineTiming : undefined,
+    },
+    null,
+    runs,
+  )?.line;
+}
+
 function ktvLaneElement(elements, lane) {
   if (lane === 'a') return elements.current;
   if (lane === 'b') return elements.next;
@@ -573,6 +602,7 @@ function applyKtvLaneReplacementDelay(elements, frame, options, presentation) {
     frame.ktvNextHeld === true ||
     !sequentialHandoff ||
     !previous.currentText ||
+    previous.currentText === frame.currentText ||
     !nextLane ||
     replacementDelayMs <= 0
   ) {
@@ -1563,7 +1593,6 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 export function destroyLyricsAnimations(elements, options = {}) {
   entranceAnimations.get(elements.current)?.cancel?.();
   entranceAnimations.delete(elements.current);
-  stopKineticPopTransition(elements, options);
   stopOrnateVerticalTransition(elements, options);
   stopMangaAnimations(elements, options, true);
   clearLyricsRenderState(elements.current, options);
@@ -1577,7 +1606,6 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearKtvFallbackProgress(elements.next);
   clearKtvLanePresentation(elements.root);
   clearLiveStagePresentation(elements, options);
-  clearKineticPopPresentation(elements, options);
   clearOrnateVerticalPresentation(elements, options);
   clearChalkboardVertical(elements);
   clearLazyTemplates(elements);
@@ -1585,6 +1613,8 @@ export function destroyLyricsAnimations(elements, options = {}) {
 
 // Lazily loaded templates can only have drawn after their module loaded.
 function clearLazyTemplates(elements, activeTemplateId = null) {
+  if (activeTemplateId !== 'kinetic-pop')
+    lyricsTemplateModule('kinetic-pop')?.clearKineticPopPresentation(elements);
   if (activeTemplateId !== 'fisheye-lens')
     lyricsTemplateModule('fisheye-lens')?.clearFisheyeLens(elements);
   if (activeTemplateId !== 'phantom-thieves')
@@ -1675,6 +1705,36 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   const templateId = activeTemplateId(elements, options);
   const frame =
     templateId === 'karaoke-stack' ? projectKtvFrame(sourceFrame) : sourceFrame;
+  if (templateId === 'karaoke-stack') {
+    const current = projectRepeatedKtvInk(
+      frame.currentText,
+      frame.currentSegments,
+      frame.currentFineTiming,
+      frame.currentRepeatMode,
+    );
+    const next = projectRepeatedKtvInk(
+      frame.nextText,
+      frame.nextSegments,
+      frame.nextFineTiming,
+      frame.nextRepeatMode,
+    );
+    if (current) {
+      frame.currentText = current.text;
+      frame.currentSegments = current.segments;
+      frame.currentFineTiming = current.estimatedFineTiming;
+    }
+    if (next) {
+      frame.nextText = next.text;
+      frame.nextSegments = next.segments;
+      frame.nextFineTiming = next.estimatedFineTiming;
+    }
+    if (frame.currentText && frame.currentText === frame.nextText) {
+      frame.nextText = '';
+      frame.nextSegments = undefined;
+      frame.nextFineTiming = undefined;
+      frame.ktvNextHeld = false;
+    }
+  }
   const previousText =
     elements.current.dataset.currentText ?? elements.current.textContent;
   const renderOptions = {
@@ -1728,7 +1788,6 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
   }
 
   if (isLiveStage) {
-    clearKineticPopPresentation(elements, renderOptions);
     clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
     renderLiveStageFrame(elements, frame, renderOptions);
@@ -1746,13 +1805,13 @@ function renderLyricsFrameInternal(elements, sourceFrame, options = {}) {
     clearLyricsRenderState(elements.next, renderOptions);
     applyKtvLanePresentation(elements, frame, templateId);
     applyKtvCountInPresentation(elements, frame, templateId);
-    renderKineticPopPresentation(elements, frame, renderOptions);
-    elements.root.hidden = !frame.visible;
+    const kinetic = lyricsTemplateModule('kinetic-pop');
+    elements.root.hidden = !frame.visible || !kinetic;
     elements.root.setAttribute('lang', frame.language || 'und');
     elements.root.dataset.revision = String(frame.revision);
+    kinetic?.renderKineticPopPresentation(elements, frame, renderOptions);
     return;
   }
-  clearKineticPopPresentation(elements, renderOptions);
   if (isTexturedCredits) {
     clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
@@ -2155,7 +2214,7 @@ export function createLyricsFrameScheduler(options = {}) {
       const display = options.prepareFrame?.(
         templateId === 'karaoke-stack'
           ? snapshot
-          : prepareLyricsOverlaySnapshot(snapshot),
+          : prepareLyricsTemplateSnapshot(snapshot, projectionOptions),
         frame,
         projectionOptions,
       );
@@ -2213,6 +2272,11 @@ export function createLyricsFrameScheduler(options = {}) {
       onFrame(
         { ...visibleFrame, ...translation },
         projectionOptions.traceContext,
+        visibleFrame.kineticPopClock
+          ? () =>
+              playbackPositionMs(snapshot, now()) +
+              (snapshot.lyrics?.offsetMs ?? 0)
+          : undefined,
       );
       onTrace?.('commit', {
         durationMs: measureNow() - stageAt,
@@ -2559,7 +2623,7 @@ function boot() {
         templateId: slot?.templateId ?? 'karaoke-stack',
       };
     },
-    onFrame: (frame, traceContext) => {
+    onFrame: (frame, traceContext, positionAt) => {
       const visibleFrame = withPreviewFallback(
         frame,
         previewScene.frame,
@@ -2579,6 +2643,8 @@ function boot() {
           mangaOccupancy: workbenchMangaOccupancy,
           mangaTailTarget: mangaTailTarget(),
           gsap,
+          arrangement: slotAppearance?.kineticArrangement,
+          positionAt,
           reportError,
           reducedMotion:
             reducedMotion ||

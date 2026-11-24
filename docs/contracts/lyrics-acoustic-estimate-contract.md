@@ -511,10 +511,10 @@ The available-lyrics modal exposes a collapsed `LyricsPhrasePreview`, with up to
 20 candidate lines from the selected document. It consumes the existing lyrics
 clock and the existing applied Output projection; source/offset invalidation drops
 model timing through the same owner. Untimed candidates are visibly text-only.
-Kinetic Pop is the first consuming template: it switches the two complete phrases
-at their exact onsets and uses the same timeline in its boundary scheduler.
-Other templates keep their existing layout contracts. Canonical text, timings,
-source preference, public snapshot shape and apply/disable state are unchanged.
+Kinetic Pop uses its own short-phrase display rules. It consumes native T2 or
+applied T1+ onsets when present and can use weighted display timing on T1 lines.
+Its animation and boundary scheduler share one phrase plan. See
+[Output appearance](output-appearance.md#歌詞模板呈現).
 
 This display path does not add mixed-language HubertFA inference, support for
 over-20-second model windows, new weights or new default downloads. Mixed T1

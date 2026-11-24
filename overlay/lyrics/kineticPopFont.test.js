@@ -96,70 +96,62 @@ describe('Kinetic Pop bundled Japanese typeface contract', () => {
     expect(builderConfig).toContain('- shared/**/*');
   });
 
-  it('keeps material one flat, enlarges material two, and offsets material three only down-right', () => {
+  it('uses warm gold, a fine white red rim and tight cyan/violet separation', () => {
     const css = fs.readFileSync(
-      path.join(lyricsDirectory, 'lyrics.css'),
+      path.join(lyricsDirectory, 'kineticPop.css'),
       'utf8',
     );
+    const layerRule = (material, layer) =>
+      css.match(
+        new RegExp(
+          String.raw`\[data-kinetic-material='${material}'\]\s*\.lyrics-overlay__kinetic-layer--${layer}\s*\{([^}]*)\}`,
+          'u',
+        ),
+      )?.[1];
 
-    expect(css).toContain("font-family: 'Utawakui Keifont';");
-    expect(css).toContain("url('/shared/assets/fonts/Keifont.ttf')");
-    expect(css).toMatch(
-      /\[data-kinetic-material='solid-outline'\][\s\S]*?lyrics-overlay__kinetic-layer--depth[\s\S]*?display: none;/,
+    expect(layerRule('solid-outline', 'depth')).toContain('display: none;');
+    expect(layerRule('solid-outline', 'rim')).toContain(
+      '0.14em var(--kinetic-ink)',
     );
+    expect(css).toContain('--kinetic-base-yellow: #f8df0e');
     expect(css).toMatch(
-      /\[data-kinetic-material='candy-rim'\][\s\S]*?font-size: 1\.18em;/,
+      /data-kinetic-composition='punch'[\s\S]*?linear-gradient\([\s\S]*?var\(--kinetic-ochre\)/u,
     );
-    expect(css).toContain('transform: translate(0.065em, 0.075em);');
-    expect(css).toContain('transform: translate(0.12em, 0.14em);');
-    expect(css).not.toContain('transform: translate(-0.06em, 0.045em);');
 
-    const candyStart = css.indexOf("[data-kinetic-material='candy-rim']");
-    const candyEnd = css.indexOf(
-      "[data-kinetic-material='chromatic-depth']",
-      candyStart,
+    expect(layerRule('candy-rim', 'depth')).toContain(
+      '0.145em var(--kinetic-ink)',
     );
-    const candyCss = css.slice(candyStart, candyEnd);
-    const candyRimRule = candyCss.match(
-      /\[data-kinetic-material='candy-rim'\]\s*\.lyrics-overlay__kinetic-layer--rim\s*{([^}]*)}/s,
-    )?.[1];
+    expect(layerRule('candy-rim', 'depth')).toContain(
+      'translate(0.014em, 0.022em)',
+    );
+    expect(layerRule('candy-rim', 'rim')).toContain(
+      '0.038em var(--kinetic-paper)',
+    );
+    expect(layerRule('candy-rim', 'fill')).toMatch(
+      /to bottom,\s*var\(--kinetic-candy-deep\),\s*var\(--kinetic-candy-light\)/u,
+    );
+    expect(layerRule('candy-rim', 'fill')).not.toContain('-webkit-text-stroke');
+
+    expect(layerRule('chromatic-depth', 'depth')).toContain(
+      'translate(-0.042em, -0.014em)',
+    );
+    expect(layerRule('chromatic-depth', 'rim')).toContain(
+      'translate(0.045em, 0.06em)',
+    );
+    expect(layerRule('chromatic-depth', 'fill')).toContain(
+      '0.06em var(--kinetic-ink)',
+    );
+    expect(layerRule('chromatic-depth', 'fill')).toContain(
+      'var(--kinetic-cool-paper)',
+    );
     expect(css).toMatch(
-      /\.lyrics-overlay__kinetic-layer\s*{[^}]*-webkit-text-stroke-color: transparent;[^}]*-webkit-text-stroke-width: 0;/s,
+      /lyrics-overlay__kinetic-layer-track--depth[\s\S]*?z-index: 0;[\s\S]*?lyrics-overlay__kinetic-layer-track--rim[\s\S]*?z-index: 1;[\s\S]*?lyrics-overlay__kinetic-layer-track--fill[\s\S]*?z-index: 2;/u,
     );
-    expect(candyCss).toContain('color: var(--ovl-color-kinetic-ink);');
-    expect(candyCss).toContain('transform: translate(0.07em, 0.09em);');
-    expect(candyCss).toContain('color: var(--ovl-color-kinetic-paper);');
-    expect(candyRimRule).toContain(
-      '-webkit-text-stroke: 0.03em var(--ovl-color-kinetic-paper);',
-    );
-    expect(candyRimRule).not.toContain(
-      '-webkit-text-stroke: 0.045em var(--ovl-color-kinetic-paper);',
-    );
-    expect(candyCss).toContain('line-height: 1.12;');
-    expect(css).toMatch(
-      /lyrics-overlay__kinetic-layer-track--depth[\s\S]*?z-index: 0;[\s\S]*?lyrics-overlay__kinetic-layer-track--rim[\s\S]*?z-index: 1;[\s\S]*?lyrics-overlay__kinetic-layer-track--fill[\s\S]*?z-index: 2;/,
-    );
-    expect(candyCss).toContain('to bottom left');
-    expect(candyCss).toContain('var(--ovl-color-kinetic-candy-deep)');
-    expect(candyCss).toContain('var(--ovl-color-kinetic-candy-light)');
-    expect(candyCss).not.toContain('var(--ovl-color-kinetic-ochre)');
-    const candyFillRule = candyCss.match(
-      /lyrics-overlay__kinetic-layer--fill\s*{([^}]*)}/s,
-    )?.[1];
-    expect(candyFillRule).toContain(
-      '-webkit-text-stroke: 0.0125em var(--ovl-color-kinetic-paper);',
-    );
-    expect(candyFillRule).not.toContain(
-      '-webkit-text-stroke: 0.025em var(--ovl-color-kinetic-paper);',
-    );
-    expect(candyFillRule).toContain('paint-order: fill stroke;');
-    expect(candyFillRule).not.toContain('var(--ovl-color-kinetic-ink)');
-    expect(candyFillRule).not.toContain('-webkit-text-stroke-width: 0;');
   });
 
   it('keeps straight rows neutral and applies only the selected subtle rest pose', () => {
     const css = fs.readFileSync(
-      path.join(lyricsDirectory, 'lyrics.css'),
+      path.join(lyricsDirectory, 'kineticPop.css'),
       'utf8',
     );
 
@@ -171,17 +163,15 @@ describe('Kinetic Pop bundled Japanese typeface contract', () => {
 
   it('centers every single-row lyric against the full symmetric stage', () => {
     const css = fs.readFileSync(
-      path.join(lyricsDirectory, 'lyrics.css'),
+      path.join(lyricsDirectory, 'kineticPop.css'),
       'utf8',
     );
     const lineRule = css.match(
-      /:root\[data-ovl-template='kinetic-pop'\] \.lyrics-overlay__kinetic-line\s*{([^}]*)}/,
+      /\.lyrics-overlay__kinetic-line\s*{([^}]*)}/,
     )?.[1];
-    const rowRule = css.match(
-      /:root\[data-ovl-template='kinetic-pop'\] \.lyrics-overlay__kinetic-row\s*{([^}]*)}/,
-    )?.[1];
+    const rowRule = css.match(/\.lyrics-overlay__kinetic-row\s*{([^}]*)}/)?.[1];
     const trackRule = css.match(
-      /:root\[data-ovl-template='kinetic-pop'\] \.lyrics-overlay__kinetic-layer-track\s*{([^}]*)}/,
+      /\.lyrics-overlay__kinetic-layer-track\s*{([^}]*)}/,
     )?.[1];
 
     expect(lineRule).toContain('inline-size: 100%;');

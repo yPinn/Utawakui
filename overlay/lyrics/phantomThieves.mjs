@@ -1496,6 +1496,7 @@ export function renderPhantomThieves(stage, frame, options = {}) {
     timing?.previousText,
     mode === 'choice-stack' ? frame.nextText : undefined,
     frame.lineIndex,
+    frame.repeatCueStartMs,
     frame.currentText,
     mode === 'side-card' || mode === 'choice-stack'
       ? frame.language

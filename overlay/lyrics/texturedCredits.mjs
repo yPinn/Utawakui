@@ -422,7 +422,7 @@ export function renderTexturedCredits(
   const language = frame.language || 'und';
   const state = states.get(root) ?? createLayers(root);
   const writing = writeInk(state, frame.currentText, language, root);
-  const cueKey = `${frame.lineIndex ?? ''}:${writing}:${frame.currentText}`;
+  const cueKey = `${frame.lineIndex ?? ''}:${frame.repeatCueStartMs ?? ''}:${writing}:${frame.currentText}`;
   if (state.cueKey !== cueKey) {
     stopAnimation(state);
     state.cueKey = cueKey;

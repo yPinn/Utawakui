@@ -24,6 +24,10 @@ vi.mock('../../composables/useLyrics.js', async () => {
           },
         ]),
         hiddenLineIds: shallowRef(['credit']),
+        repeatCandidates: shallowRef([
+          { lineId: 'repeat', index: 2, text: 'Echo Echo' },
+        ]),
+        repeatModes: shallowRef(new Map([['repeat', 'replay']])),
         setHidden: vi.fn(),
         restore: vi.fn(),
       },
@@ -45,6 +49,11 @@ describe('shared text processing controls', () => {
     expect(html).toMatch(/\schecked(?:[\s=>])/u);
     expect(html).toContain('全部還原');
     expect(html).toContain('ui-btn--accent');
+    expect(html).toContain('重複歌詞入場');
+    expect(html).toContain('Echo Echo');
+    expect(html).toMatch(/<select[^>]*value="replay"/u);
+    expect(html).toMatch(/<option value="original"[^>]*>保留原文<\/option>/u);
+    expect(html).toMatch(/<option value="replay"[^>]*>逐次入場<\/option>/u);
     expect(html).toContain('第 2 行 · 片段');
   });
 });

@@ -419,6 +419,7 @@ describe('overlay WebSocket runtime', () => {
             {
               lineId: 'line-1',
               text: 'first',
+              repeatMode: 'replay',
               vocalParts: [{ from: 0, to: 5, label: '男', role: 'male' }],
               startMs: 0,
               endMs: 1000,
@@ -485,6 +486,7 @@ describe('overlay WebSocket runtime', () => {
     expect(configs).toEqual([['karaoke-stack', 'en']]);
     expect(received).toHaveLength(1);
     expect(received[0].lyrics.translations).toEqual({ en: ['', 'Second'] });
+    expect(received[0].lyrics.lines[0].repeatMode).toBe('replay');
     expect(received[0].lyrics.lines[0].estimatedStarts).toEqual({
       version: 1,
       segments: [{ segmentId: 'model-first', text: 'first', startMs: 0 }],

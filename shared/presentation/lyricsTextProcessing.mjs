@@ -1,6 +1,106 @@
 // Lossless annotations. Explicit bylines default to Output-hidden; ambiguous
 // credit-like prose remains a candidate. The source document is never filtered.
 export const LYRICS_TEXT_PROCESSING_VERSION = 5;
+
+export const LYRICS_REPEAT_MODES = Object.freeze([
+  'original',
+  'hold',
+  'replay',
+]);
+
+const SPACED_LYRIC_REPEAT =
+  /(?<![\p{L}\p{M}\p{N}'’ʼ\-‐‑])(?<fragment>[\p{L}\p{M}]+(?:[ \t]+[\p{L}\p{M}]+){0,3}?)(?:[ \t]+\k<fragment>)+(?![\p{L}\p{M}\p{N}'’ʼ\-‐‑])/gu;
+const JOINED_LYRIC_REPEAT =
+  /(?<fragment>[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{M}]{2,8}?)(?:\k<fragment>){2,}/gu;
+const WHOLE_JOINED_LYRIC_REPEAT =
+  /^\s*(?<fragment>[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{M}]{2,8}?)\k<fragment>\s*$/u;
+
+export function lyricsRepeatRuns(value) {
+  const text = String(value ?? '');
+  if (text.length > 2000) return [];
+  const matches = [
+    ...text.matchAll(SPACED_LYRIC_REPEAT),
+    ...text.matchAll(JOINED_LYRIC_REPEAT),
+  ].sort((a, b) => a.index - b.index || b[0].length - a[0].length);
+  if (!matches.length) {
+    const fragment = WHOLE_JOINED_LYRIC_REPEAT.exec(text)?.groups.fragment;
+    if (!fragment || new Set(fragment).size < 2) return [];
+    const start = text.length - text.trimStart().length;
+    return [
+      {
+        start,
+        end: start + fragment.length * 2,
+        fragment,
+        starts: [start, start + fragment.length],
+      },
+    ];
+  }
+  const analysis = analyzeLyricsText(text);
+  if (analysis.malformedPairs) return [];
+  const runs = [];
+  for (const match of matches) {
+    const { fragment } = match.groups;
+    const start = match.index;
+    const end = start + match[0].length;
+    if (
+      start < (runs.at(-1)?.end ?? 0) ||
+      new Set(fragment).size < 2 ||
+      analysis.pairedRanges.some(
+        ({ sourceStart, sourceEnd }) => start < sourceEnd && end > sourceStart,
+      )
+    )
+      continue;
+    const starts = [start];
+    for (let offset = start + fragment.length; offset < end;) {
+      offset += text.slice(offset, end).match(/^[ \t]*/u)[0].length;
+      starts.push(offset);
+      offset += fragment.length;
+    }
+    runs.push({ start, end, fragment, starts });
+  }
+  return runs;
+}
+
+export function lyricsDisplayRepeatRuns(text, mode) {
+  if (mode === 'original') return [];
+  const runs = lyricsRepeatRuns(text);
+  if (mode === 'hold' || mode === 'replay') return runs;
+  return runs.filter(({ fragment, start, starts }) => {
+    // A spaced single word often marks a sung rhythm or refrain.
+    const spacedWord =
+      starts[1] > start + fragment.length && !/\s/u.test(fragment);
+    return starts.length >= (spacedWord ? 4 : 3);
+  });
+}
+
+export function collapseLyricsRepeats(
+  text,
+  runs = lyricsDisplayRepeatRuns(text),
+) {
+  let result = '';
+  let cursor = 0;
+  for (const { start, end, fragment } of runs) {
+    result += text.slice(cursor, start) + fragment;
+    cursor = end;
+  }
+  return result + text.slice(cursor);
+}
+
+export function adjoiningEqualLyricLines(
+  first,
+  second,
+  firstEndMs = first?.endMs,
+) {
+  const text = first?.text?.trim();
+  return (
+    Boolean(text) &&
+    text === second?.text?.trim() &&
+    Number.isFinite(first.startMs) &&
+    Number.isFinite(second.startMs) &&
+    second.startMs > first.startMs &&
+    Math.abs((firstEndMs ?? second.startMs) - second.startMs) <= 34
+  );
+}
 const CREDIT_ROLE = [
   '作詞',
   '作词',
@@ -402,7 +502,7 @@ function selectionHash(value) {
   return (hash >>> 0).toString(36);
 }
 
-function labelProjection(line, ranges) {
+function removeLyricsRanges(line, ranges) {
   // Only character coordinates change. Retained segment/fine intervals are
   // copied verbatim; removing a label never interpolates or borrows its time.
   const offsets = new Uint16Array(line.text.length + 1);
@@ -465,6 +565,32 @@ function labelProjection(line, ranges) {
       delete result.romajiScope;
       return result;
     },
+  };
+}
+
+export function projectCollapsedLyricsRepeats(line, reading, runs) {
+  const ranges = (
+    runs ?? lyricsDisplayRepeatRuns(line.text, line.repeatMode)
+  ).flatMap(({ start, end, fragment, keep = start }) =>
+    [
+      { sourceStart: start, sourceEnd: keep },
+      { sourceStart: keep + fragment.length, sourceEnd: end },
+    ].filter(({ sourceStart, sourceEnd }) => sourceStart < sourceEnd),
+  );
+  if (!ranges.length) return null;
+  const projection = removeLyricsRanges(line, ranges);
+  if (line.vocalParts) {
+    projection.line.vocalParts = line.vocalParts
+      .map((part) => ({
+        ...part,
+        from: projection.offsets[part.from],
+        to: projection.offsets[part.to],
+      }))
+      .filter((part) => part.from < part.to);
+  }
+  return {
+    line: projection.line,
+    reading: reading ? projection.reading(reading) : null,
   };
 }
 
@@ -572,7 +698,7 @@ export function projectLyricsTextSelection(
     }
     let projection = null;
     if (selected && analysis.outputLabelRanges.length) {
-      projection = labelProjection(line, analysis.outputLabelRanges);
+      projection = removeLyricsRanges(line, analysis.outputLabelRanges);
       if (!projection.line.text.trim()) hidden.add(line.lineId);
       else edited.set(line.lineId, projection);
     }

@@ -4,7 +4,7 @@
 
 ## 現況
 
-- 已有：GSAP 時間軸；魚眼鏡筒、幻影怪盜與 textured-credits 的程式按需載入。幻影怪盜及 textured-credits 另按需載入專屬樣式；魚眼鏡筒沿用共用歌詞樣式。textured-credits 以 PixiJS 繪製多層紋路（`shared/browser/doodleCloudEffect.mjs`），PixiJS 隨模板按需載入。
+- 已有：GSAP 時間軸；躍動字幕、魚眼鏡筒、幻影怪盜與 textured-credits 的程式按需載入。躍動字幕、幻影怪盜及 textured-credits 另按需載入專屬樣式；魚眼鏡筒沿用共用歌詞樣式。textured-credits 以 PixiJS 繪製多層紋路（`shared/browser/doodleCloudEffect.mjs`），PixiJS 隨模板按需載入。
 - 尚未實作：其他共用特效元件；其餘歌詞模板仍隨頁面載入。
 - 效能預算尚未固定，須先完成[效能量測](#效能量測)。
 

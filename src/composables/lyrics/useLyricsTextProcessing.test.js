@@ -3,6 +3,47 @@ import { describe, expect, it } from 'vitest';
 import { useLyricsTextProcessing } from './useLyricsTextProcessing.js';
 
 describe('source-owned text selections', () => {
+  it('uses independent repeat choices for individual lines and restores them when revisiting that source', () => {
+    const scope = effectScope();
+    const lines = [
+      {
+        lineId: 'held',
+        text: '会い会い会いたくなんだよね',
+        startMs: 0,
+        endMs: 3000,
+      },
+      {
+        lineId: 'replayed',
+        text: 'すてっぷすてっぷ',
+        startMs: 3000,
+        endMs: 6000,
+      },
+    ];
+    const original = { documentId: 'repeat-demo', lines };
+    const document = shallowRef(original);
+    const owner = scope.run(() =>
+      useLyricsTextProcessing({ document, sourceKey: () => 'repeat-test' }),
+    );
+    expect(owner.repeatCandidates.value.map(({ lineId }) => lineId)).toEqual([
+      'held',
+      'replayed',
+    ]);
+    expect(owner.setRepeatMode('held', 'hold')).toBe(true);
+    expect(owner.setRepeatMode('replayed', 'replay')).toBe(true);
+    expect(
+      owner.project(original).lines.map(({ repeatMode }) => repeatMode),
+    ).toEqual(['hold', 'replay']);
+    expect(original.lines.every((line) => !('repeatMode' in line))).toBe(true);
+    document.value = { ...original, documentId: 'another-source' };
+    expect(owner.repeatModes.value.size).toBe(0);
+    document.value = original;
+    expect(owner.repeatModes.value.get('replayed')).toBe('replay');
+    expect(owner.setRepeatMode('held', 'auto')).toBe(true);
+    expect(owner.project(original).lines[0]).toEqual(lines[0]);
+    expect(owner.setRepeatMode('replayed', 'original')).toBe(true);
+    expect(owner.project(original).lines[1].repeatMode).toBe('original');
+    scope.stop();
+  });
   it('defaults screenshot planning credits to whole-line hiding and restores them independently', () => {
     const scope = effectScope();
     const document = shallowRef({

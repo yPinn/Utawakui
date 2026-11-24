@@ -1083,7 +1083,7 @@ describe('lyric fit controller lifecycle', () => {
   );
 
   it('keeps row measurement for other templates and injected measurements without wrapped metadata', () => {
-    for (const templateId of ['focus-line', 'kinetic-pop', 'live-stage']) {
+    for (const templateId of ['focus-line', 'live-stage']) {
       const rows = vi.fn((text) => [
         { text: text.slice(0, 2) },
         { text: text.slice(2) },
@@ -1102,6 +1102,28 @@ describe('lyric fit controller lifecycle', () => {
       s.controller.stop();
     }
   });
+
+  it.each([1, null])(
+    'preserves the Kinetic Pop cue instead of repaging it (phrase %s)',
+    (phraseIndex) => {
+      const measure = vi.fn();
+      const surfaceState = surface('kinetic-pop', { measure });
+      const frame = {
+        ...surfaceState.frame,
+        kineticPop: { phraseIndex, displayText: 'second' },
+        kineticPopClock: { startMs: 1700, endMs: 2300, positionMs: 1720 },
+      };
+      expect(
+        surfaceState.controller.prepare(
+          surfaceState.snapshot,
+          frame,
+          surfaceState.settings,
+        ).frame,
+      ).toBe(frame);
+      expect(measure).not.toHaveBeenCalled();
+      surfaceState.controller.stop();
+    },
+  );
 
   it.each(['甲\n乙', '甲\n\n乙\n', '\t甲乙', ' 甲乙 '])(
     'keeps conservative row handling for whitespace-sensitive text %j',
@@ -1122,7 +1144,6 @@ describe('lyric fit controller lifecycle', () => {
   it.each([
     'focus-line',
     'karaoke-stack',
-    'kinetic-pop',
     'manga-frame',
     'ornate-vertical',
     'live-stage',

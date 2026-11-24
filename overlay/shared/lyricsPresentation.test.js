@@ -424,6 +424,66 @@ describe('lyrics presentation profiles', () => {
     expect(unspaced.rows).toHaveLength(1);
   });
 
+  it.each([
+    [
+      '走れ、夜を越えて、光をつかめ！',
+      ['走れ、', '夜を越えて、', '光をつかめ！'],
+    ],
+    [
+      '逃げるように隠れるように飛び出していく',
+      ['逃げるように', '隠れるように', '飛び出していく'],
+    ],
+    [
+      '踊るすてっぷすてっぷすてっぷ',
+      ['踊る', 'すてっぷ', 'すてっぷ', 'すてっぷ'],
+    ],
+    ['走れ夜を越えて光をつかめ', ['走れ夜を越えて', '光をつかめ']],
+    ['あんたわかっちゃいない', ['あんたわかっちゃいない']],
+    [
+      '夜明けの街を駆け抜けて遠くの光を追いかける',
+      ['夜明けの街を駆け抜けて', '遠くの光を追いかける'],
+    ],
+    [
+      '映画には1,000人、いまも見ている',
+      ['映画には1,000人、', 'いまも見ている'],
+    ],
+    [
+      '「待って、お願い！」聞いてほしい',
+      ['「待って、お願い！」', '聞いてほしい'],
+    ],
+    [
+      'I can hear the music when the night is over',
+      ['I can hear the music', 'when the night is over'],
+    ],
+    [
+      '街へ飛び出して kick it back 夜を駆け抜ける',
+      ['街へ飛び出して', 'kick it back', '夜を駆け抜ける'],
+    ],
+    [
+      '내 마음을 따라 오늘도 달려갈 거야',
+      ['내 마음을 따라', '오늘도 달려갈 거야'],
+    ],
+    ['我想聽你說完再一起往前走', ['我想聽你說完', '再一起往前走']],
+  ])('keeps natural Kinetic Pop groups in %s', (source, expected) => {
+    const presentation = adaptKineticPopLyricsPresentation(source, {
+      cue: { startMs: 0, endMs: 4200, positionMs: 0 },
+    });
+    expect(presentation.phrases.map(({ text }) => text)).toEqual(expected);
+    expect(presentation.rows.map(({ text }) => text)).toEqual(
+      expected.slice(0, 1),
+    );
+    expect(presentation.sourceText).toBe(source);
+  });
+
+  it('merges short cues into readable Kinetic Pop batches without dropping text', () => {
+    const source = '走れ、夜を越えて、光をつかめ！';
+    const presentation = adaptKineticPopLyricsPresentation(source, {
+      cue: { startMs: 1000, endMs: 1700, positionMs: 1200 },
+    });
+    expect(presentation.displayText).toBe(source);
+    expect(presentation.phraseStartsMs).toEqual([1000]);
+  });
+
   it('caches static compilation by document revision, language, and profile', () => {
     const compile = vi.fn(compileLyricsPresentationDocument);
     const cache = createLyricsPresentationDocumentCache({ compile });

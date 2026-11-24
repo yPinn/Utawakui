@@ -6,8 +6,48 @@ import {
   preprocessLyricsDocument,
   projectLyricsTextSelection,
   isSafeLyricsBreak,
+  collapseLyricsRepeats,
+  lyricsDisplayRepeatRuns,
   lyricsLineVocalRoles,
 } from './lyricsTextProcessing.mjs';
+
+describe('conservative inline repeat display', () => {
+  it.each([
+    '在這裡等等再走',
+    'すてっぷすてっぷ',
+    'stand by stand by',
+    'no no no, I still believe',
+    'no, no, no, no',
+    '唱「別走別走別走」給你聽',
+    '說（別走別走別走）然後離開',
+    "can't can't can't can't",
+    '3go go go go',
+  ])('preserves %s in automatic display', (text) => {
+    expect(collapseLyricsRepeats(text)).toBe(text);
+  });
+
+  it.each([
+    ['我說別走別走別走，等一下', '我說別走，等一下'],
+    ['we can we can we can make it', 'we can make it'],
+    ['no no no no, I still believe', 'no, I still believe'],
+    ['같이 가 같이 가 같이 가 지금', '같이 가 지금'],
+  ])('collapses only the exact adjacent copies in %s', (text, expected) => {
+    expect(collapseLyricsRepeats(text)).toBe(expected);
+    expect(
+      collapseLyricsRepeats(text, lyricsDisplayRepeatRuns(text, 'original')),
+    ).toBe(text);
+  });
+
+  it.each(['hold', 'replay'])(
+    'allows an explicit %s for two copies',
+    (mode) => {
+      const text = 'stand by stand by';
+      expect(
+        collapseLyricsRepeats(text, lyricsDisplayRepeatRuns(text, mode)),
+      ).toBe('stand by');
+    },
+  );
+});
 
 describe('lossless shared text annotations', () => {
   it.each([

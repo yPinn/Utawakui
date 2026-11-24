@@ -260,7 +260,6 @@ describe('capacity pages keep existing template projections', () => {
     'focus-line',
     'karaoke-stack',
     'manga-frame',
-    'kinetic-pop',
     'ornate-vertical',
     'live-stage',
   ])('projects %s without changing the input frame', (templateId) => {
@@ -272,7 +271,6 @@ describe('capacity pages keep existing template projections', () => {
         { text: 'first ', state: 'past', progress: 1 },
         { text: 'second', state: 'active', progress: null },
       ],
-      kineticPop: {},
       lineIndex: 0,
     };
     const frame = { ...base, ktv: { ...base } },
@@ -286,8 +284,6 @@ describe('capacity pages keep existing template projections', () => {
       { text: 'second', state: 'active', progress: null },
     ]);
     expect(current.displayFit.pageTiming).toBe('model-starts');
-    if (templateId === 'kinetic-pop')
-      expect(current.kineticPop.displayText).toBe('second');
     if (templateId === 'live-stage')
       expect(current.liveStageDisplayLines).toEqual(['second']);
     if (templateId === 'ornate-vertical')

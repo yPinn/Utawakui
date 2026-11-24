@@ -1,89 +1,153 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, shallowRef, useTemplateRef } from 'vue';
+import gsap from 'gsap';
+import { OUTPUT_LOOK_PRESETS } from '../../../../shared/outputAppearance.mjs';
 import {
-  kineticPopBurstDelaySeconds,
-  kineticPopRestPose,
-} from '../../../../shared/presentation/kineticPopMotion.mjs';
+  clearKineticPopPresentation,
+  renderKineticPopPresentation,
+} from '../../../../shared/browser/kineticPop.mjs';
 import { adaptKineticPopLyricsPresentation } from '../../../../shared/presentation/lyricsPresentation.mjs';
+import { useOutputPreviewMotion } from '../../../composables/output/useOutputPreviewMotion.js';
 
 const props = defineProps({
   scene: { type: Object, default: () => ({}) },
-  size: { type: String, default: 'detail' },
   animated: { type: Boolean, default: false },
 });
 
-const lyrics = computed(() => props.scene?.lyrics ?? {});
-const kineticPreviewArrangement = computed(
-  () => lyrics.value.kinetic?.arrangement ?? 'straight',
+const stage = useTemplateRef('stage');
+const current = useTemplateRef('current');
+const painted = shallowRef(false);
+const arrangement = computed(
+  () => props.scene.lyrics?.kinetic?.arrangement ?? 'straight',
 );
-const kineticPreviewLine = computed(() => {
-  const presentation =
-    props.scene?.frame?.kineticPop ??
-    adaptKineticPopLyricsPresentation(lyrics.value.current, {
-      kineticMaterial: lyrics.value.kinetic?.material ?? 'candy-rim',
-    });
-  let unitIndex = 0;
-  return {
-    ...presentation,
-    rows: presentation.rows.map((row) => {
-      return {
-        ...row,
-        units: row.units.map((unit) => {
-          const restPose = kineticPopRestPose(
-            unitIndex,
-            kineticPreviewArrangement.value,
-          );
-          const previewUnit = {
-            delay: `${kineticPopBurstDelaySeconds(unitIndex)}s`,
-            restRotation: `${restPose.rotation}deg`,
-            restScale: String(restPose.scale),
-            restX: `${restPose.xEm}em`,
-            restY: `${restPose.yEm}em`,
-            text: unit.text,
-          };
-          unitIndex += 1;
-          return previewUnit;
-        }),
-      };
+const presentation = computed(
+  () =>
+    props.scene.frame?.kineticPop ??
+    adaptKineticPopLyricsPresentation(props.scene.lyrics?.current, {
+      kineticMaterial: props.scene.lyrics?.kinetic?.material,
+      phraseIndex: 0,
     }),
+);
+const paletteStyle = computed(() => {
+  const { paletteId, lookAmount } = props.scene.appearance ?? {};
+  if (!(lookAmount > 0) || !Object.hasOwn(OUTPUT_LOOK_PRESETS, paletteId))
+    return undefined;
+  return {
+    '--ovl-look-amount': `${lookAmount}%`,
+    ...Object.fromEntries(
+      Object.entries(OUTPUT_LOOK_PRESETS[paletteId].colors ?? {})
+        .filter(([role]) => role.startsWith('kinetic-'))
+        .map(([role, color]) => [`--ovl-look-color-${role}`, color]),
+    ),
   };
 });
+const SAMPLE_DURATION_MS = 3200;
+
+function elements() {
+  return { root: stage.value, current: current.value };
+}
+
+function paint(kineticPop, kineticPopClock, positionAt) {
+  renderKineticPopPresentation(
+    elements(),
+    {
+      ...props.scene.frame,
+      visible: true,
+      kineticPop,
+      kineticPopClock,
+    },
+    {
+      gsap,
+      arrangement: arrangement.value,
+      positionAt,
+      reducedMotion: !positionAt,
+    },
+  );
+  painted.value = true;
+}
+
+useOutputPreviewMotion({
+  scene: () => props.scene,
+  animated: () => props.animated,
+  start() {
+    const { sourceText, material, phrases, phraseBreakProgresses } =
+      presentation.value;
+    if (phrases.length === 0) return;
+    const batches = phrases.map((_, phraseIndex) =>
+      adaptKineticPopLyricsPresentation(sourceText, {
+        phraseRanges: phrases,
+        phraseIndex,
+        kineticMaterial: material,
+      }),
+    );
+    const holdMs = 500;
+    const duration = Math.max(SAMPLE_DURATION_MS, batches.length * holdMs);
+    const boundaries = [0, ...phraseBreakProgresses, 1].map(
+      (part, index) =>
+        index * holdMs + part * (duration - batches.length * holdMs),
+    );
+    const epoch = performance.now();
+    let timer;
+    const replay = () => {
+      const elapsed = performance.now() - epoch;
+      const cycle = epoch + Math.floor(elapsed / duration) * duration;
+      const positionMs = elapsed % duration;
+      const index = boundaries.findLastIndex((at) => at <= positionMs);
+      const endMs = boundaries[index + 1];
+      paint(
+        batches[index],
+        { startMs: boundaries[index], endMs, positionMs, playing: true },
+        () => performance.now() - cycle,
+      );
+      timer = setTimeout(replay, Math.max(1, endMs - positionMs));
+    };
+    replay();
+    return () => clearTimeout(timer);
+  },
+  stop: () => paint(presentation.value),
+});
+
+onBeforeUnmount(() => clearKineticPopPresentation(elements()));
 </script>
 
 <template>
   <div
     class="obs-template-mockup__content obs-template-mockup__content--lyrics"
   >
-    <span class="obs-template-mockup__kinetic-stage">
-      <strong
-        class="obs-template-mockup__kinetic-line"
-        :data-kinetic-material="kineticPreviewLine.material"
-        :data-kinetic-arrangement="kineticPreviewArrangement"
-      >
+    <span
+      ref="stage"
+      class="obs-template-mockup__kinetic-stage"
+      data-kinetic-stage
+      :data-ovl-scale="scene.appearance?.fontScale"
+      :lang="scene.frame?.language || 'und'"
+      :data-ovl-kinetic-arrangement="arrangement"
+      :style="paletteStyle"
+    >
+      <span v-if="!painted" data-kinetic-current>
         <span
-          v-for="(row, rowIndex) in kineticPreviewLine.rows"
-          :key="`${kineticPreviewLine.material}-row-${rowIndex}`"
-          class="obs-template-mockup__kinetic-row"
+          class="lyrics-overlay__kinetic-line"
+          :data-kinetic-material="presentation.material"
+          :data-kinetic-composition="presentation.composition"
         >
-          <span
-            v-for="(unit, unitIndex) in row.units"
-            :key="`${kineticPreviewLine.material}-${rowIndex}-${unitIndex}`"
-            class="obs-template-mockup__kinetic-unit"
-            :data-text="unit.text"
-            :style="{
-              '--kinetic-unit-delay': unit.delay,
-              '--kinetic-rest-x': unit.restX,
-              '--kinetic-rest-y': unit.restY,
-              '--kinetic-rest-rotation': unit.restRotation,
-              '--kinetic-rest-scale': unit.restScale,
-            }"
-          >
-            {{ unit.text }}
+          <span class="lyrics-overlay__kinetic-row">
+            <span
+              v-for="layer in ['depth', 'rim', 'fill']"
+              :key="layer"
+              class="lyrics-overlay__kinetic-layer"
+              :class="`lyrics-overlay__kinetic-layer--${layer}`"
+              >{{ presentation.displayText }}</span
+            >
           </span>
         </span>
-      </strong>
+      </span>
+      <span
+        ref="current"
+        data-kinetic-current
+        :style="{ visibility: painted ? undefined : 'hidden' }"
+      />
     </span>
   </div>
 </template>
 
+<style src="../../../../overlay/lyrics/kineticPop.css"></style>
 <style src="./KineticPopPreview.css"></style>

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import gsapRuntime from 'gsap';
 import {
   createLyricsDiagnostics,
   createLyricsErrorReporter,
@@ -16,6 +17,9 @@ import { createKtvDisplayFit } from './ktvDisplayFit.mjs';
 import { createOutputPreviewSnapshot } from '../../shared/presentation/outputPreviewScene.mjs';
 import { adaptOrnateVerticalLyricsPresentation } from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import outputTemplates from '../../shared/outputTemplateValues.json';
+import { loadLyricsTemplateModule } from './templateModules.mjs';
+
+await loadLyricsTemplateModule('kinetic-pop', null);
 
 const lyricsTemplateIds = Object.keys(outputTemplates.templateKinds).filter(
   (id) => outputTemplates.templateKinds[id] === 'lyrics',
@@ -36,6 +40,7 @@ function gsapHarness() {
         options,
         tweens: [],
         kill: vi.fn(),
+        time: vi.fn(),
         addLabel(label, position) {
           this.labels.push(label);
           this.labelPositions.push({ label, position });
@@ -481,6 +486,7 @@ it.each([
       currentText: '同じ',
       nextText: '',
       displayBatchId: 'line:0:2',
+      kineticPopClock: { positionMs: 35, startMs: 0, endMs: 1000 },
       kineticPop: {
         text: '同じ',
         displayText: '同じ',
@@ -2634,534 +2640,215 @@ describe('lyrics overlay renderer', () => {
     ).toEqual([text.length, text.length, text.length]);
   });
 
-  it('cross-swaps Kinetic Pop lines on one interruptible three-layer GSAP timeline', () => {
-    const elements = domElements();
-    const { gsap, timelines } = gsapHarness();
-    const first = {
-      revision: 1,
+  function kineticFrame({
+    lineIndex = 0,
+    phraseIndex = 0,
+    positionMs = 1030,
+    startMs = 1000,
+    endMs = 2000,
+    playing = false,
+    composition = 'punch',
+  } = {}) {
+    return {
       visible: true,
-      currentText: 'すてっぷ！',
-      nextText: '',
-      language: 'ja',
-      lineIndex: 0,
-      currentVisibleLineIndex: 0,
-      kineticPop: {
-        text: 'すてっぷ！',
-        material: 'solid-outline',
-        composition: 'punch',
-        units: [
-          { text: 'す', weight: 1 },
-          { text: 'てっ', weight: 2 },
-          { text: 'ぷ！', weight: 1 },
-        ],
-      },
-    };
-    const second = {
-      ...first,
-      revision: 2,
-      currentText: '仰せのまま',
-      lineIndex: 1,
-      currentVisibleLineIndex: 1,
-      kineticPop: {
-        text: '仰せのまま',
-        material: 'candy-rim',
-        composition: 'punch',
-        units: [
-          { text: '仰', weight: 1 },
-          { text: 'せ', weight: 1 },
-          { text: 'の', weight: 1 },
-          { text: 'ま', weight: 1 },
-          { text: 'ま', weight: 1 },
-        ],
-      },
-    };
-
-    renderLyricsFrame(elements, first, {
-      gsap,
-      templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-    gsap.set.mockClear();
-    renderLyricsFrame(elements, second, {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(1);
-    expect(timelines[0].labels).toContain('swap');
-    expect(timelines[0].tweens).toHaveLength(6);
-    expect(
-      timelines[0].tweens.slice(0, 3).every(({ vars }) =>
-        Object.entries({
-          autoAlpha: 0,
-          duration: 0.08,
-          ease: 'power2.in',
-          x: 0,
-        }).every(([key, value]) => vars[key] === value),
-      ),
-    ).toBe(true);
-    expect(
-      timelines[0].tweens.slice(3).every(({ vars }) =>
-        Object.entries({
-          autoAlpha: 1,
-          duration: 0.115,
-          ease: 'back.out(2.2)',
-          scale: 1,
-        }).every(([key, value]) => vars[key] === value),
-      ),
-    ).toBe(true);
-    const exitDelays = timelines[0].tweens
-      .slice(0, 3)
-      .map(({ vars }) =>
-        first.kineticPop.units.map((_unit, index) => vars.stagger(index)),
-      );
-    expect(exitDelays[0]).toEqual([0.018, 0, 0.025]);
-    expect(exitDelays[1]).toEqual(exitDelays[0]);
-    expect(exitDelays[2]).toEqual(exitDelays[0]);
-    expect(elements.current.children).toHaveLength(2);
-    for (const track of kineticLineTracks(elements.current.children[1])) {
-      expect(gsap.set).toHaveBeenCalledWith(
-        track.children,
-        expect.objectContaining({
-          autoAlpha: 0,
-          scale: expect.any(Function),
-          x: 0,
-        }),
-      );
-    }
-
-    timelines[0].options.onComplete();
-    expect(elements.current.children).toHaveLength(1);
-    expect(elements.current.children[0].dataset.kineticMaterial).toBe(
-      'candy-rim',
-    );
-  });
-
-  it('normalizes an interrupted Kinetic Pop swap before a third punch arrives', () => {
-    const elements = domElements();
-    const { gsap, timelines } = gsapHarness();
-    const frame = (text, revision, material) => ({
-      revision,
-      visible: true,
-      currentText: text,
-      nextText: '',
-      language: 'ja',
-      lineIndex: revision,
-      currentVisibleLineIndex: revision,
-      kineticPop: {
-        text,
-        material,
-        composition: 'punch',
-        units: [...text].map((unit) => ({ text: unit, weight: 1 })),
-      },
-    });
-
-    renderLyricsFrame(elements, frame('最初', 1, 'solid-outline'), {
-      gsap,
-      templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-    renderLyricsFrame(elements, frame('途中', 2, 'candy-rim'), {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-    renderLyricsFrame(elements, frame('最後', 3, 'chromatic-depth'), {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(2);
-    expect(timelines[0].kill).toHaveBeenCalledOnce();
-    expect(elements.current.children).toHaveLength(2);
-    expect(
-      elements.current.children.map((line) => line.dataset.kineticText),
-    ).toEqual(['途中', '最後']);
-    expect(timelines[1].tweens[0].target).toEqual(
-      kineticLineTracks(elements.current.children[0])[0].children,
-    );
-
-    timelines[1].options.onComplete();
-    expect(elements.current.children).toHaveLength(1);
-    expect(elements.current.children[0].dataset.kineticText).toBe('最後');
-  });
-
-  it('animates repeated Kinetic Pop text when the source line and material change', () => {
-    const elements = domElements();
-    const { gsap, timelines } = gsapHarness();
-    const frame = (revision, lineIndex, material) => ({
-      revision,
-      visible: true,
-      currentText: '同じ',
-      nextText: '',
-      language: 'ja',
+      currentText: 'Step',
       lineIndex,
       currentVisibleLineIndex: lineIndex,
       kineticPop: {
-        text: '同じ',
-        material,
-        composition: 'punch',
-        units: [
-          { text: '同', weight: 1 },
-          { text: 'じ', weight: 1 },
-        ],
-      },
-    });
-
-    renderLyricsFrame(elements, frame(1, 0, 'solid-outline'), {
-      gsap,
-      templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-    renderLyricsFrame(elements, frame(2, 1, 'candy-rim'), {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(1);
-    expect(elements.current.children).toHaveLength(2);
-    expect(
-      elements.current.children.map((line) => line.dataset.kineticMaterial),
-    ).toEqual(['solid-outline', 'candy-rim']);
-
-    timelines[0].options.onComplete();
-    expect(elements.current.children).toHaveLength(1);
-    expect(elements.current.children[0].dataset.kineticMaterial).toBe(
-      'candy-rim',
-    );
-  });
-
-  it('bursts the first Kinetic Pop punch in place with synchronized interleaved layer tracks', () => {
-    const elements = domElements();
-    const { gsap, timelines } = gsapHarness();
-    const frame = {
-      revision: 1,
-      visible: true,
-      currentText: '選ばれる',
-      nextText: '',
-      language: 'ja',
-      lineIndex: 0,
-      currentVisibleLineIndex: 0,
-      kineticPop: {
-        text: '選ばれる',
-        material: 'solid-outline',
-        composition: 'punch',
-        units: [...'選ばれる'].map((text) => ({ text, weight: 1 })),
-      },
-    };
-
-    renderLyricsFrame(elements, frame, {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(1);
-    expect(timelines[0].tweens).toHaveLength(3);
-    expect(timelines[0].tweens.map(({ target }) => target)).toEqual(
-      kineticLineTracks(elements.current.children[0]).map(
-        (track) => track.children,
-      ),
-    );
-    expect(
-      timelines[0].tweens.every(({ target }) =>
-        target.every(
-          (unit) =>
-            unit.className === 'lyrics-overlay__kinetic-unit' &&
-            !unit.className.includes('lyrics-overlay__kinetic-layer--'),
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      timelines[0].tweens.every(({ vars }) =>
-        Object.entries({
-          autoAlpha: 1,
-          duration: 0.115,
-          ease: 'back.out(2.2)',
-          scale: 1,
-        }).every(([key, value]) => vars[key] === value),
-      ),
-    ).toBe(true);
-
-    const entranceDelays = timelines[0].tweens.map(({ vars }) =>
-      frame.kineticPop.units.map((_unit, index) => vars.stagger(index)),
-    );
-    expect(entranceDelays[0]).toEqual([0.018, 0, 0.025, 0.006]);
-    expect(entranceDelays[1]).toEqual(entranceDelays[0]);
-    expect(entranceDelays[2]).toEqual(entranceDelays[0]);
-    expect(entranceDelays[0][0]).toBeGreaterThan(entranceDelays[0][1]);
-
-    const entranceSetCalls = gsap.set.mock.calls.filter(
-      ([, vars]) => vars.autoAlpha === 0,
-    );
-    expect(entranceSetCalls).toHaveLength(3);
-    for (const [, vars] of entranceSetCalls) {
-      expect(vars.x).toBe(0);
-      expect(vars.y(0)).toBeGreaterThan(0);
-      expect(vars.y(1)).toBeLessThan(0);
-      expect(vars.rotation(0)).toBeLessThan(0);
-      expect(vars.rotation(1)).toBeGreaterThan(0);
-      expect(vars.scale(0)).toBeLessThan(1);
-      expect(vars.scale(1)).toBeGreaterThan(1);
-    }
-  });
-
-  it('animates every visual unit when a caption first appears without T2 timings', () => {
-    const elements = domElements();
-    const { gsap, timelines } = gsapHarness();
-    const text = '何千回の夜を過ごしたって';
-    const frame = {
-      revision: 1,
-      visible: true,
-      currentText: text,
-      nextText: '',
-      language: 'ja',
-      lineIndex: 0,
-      currentVisibleLineIndex: 0,
-      kineticPop: {
-        text,
+        text: 'Step',
+        phraseIndex,
         material: 'candy-rim',
-        composition: 'caption',
-        units: [...text].map((unit) => ({ text: unit, weight: 1 })),
+        composition,
+        units: [...'Step'].map((text) => ({ text, weight: 1 })),
+      },
+      kineticPopClock: {
+        sourceId: 'song',
+        positionMs,
+        startMs,
+        endMs,
+        playing,
       },
     };
+  }
 
-    renderLyricsFrame(elements, frame, {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(1);
-    expect(timelines[0].tweens).toHaveLength(3);
-    expect(timelines[0].tweens.map(({ target }) => target.length)).toEqual([
-      text.length,
-      text.length,
-      text.length,
-    ]);
-    const stagger = timelines[0].tweens[0].vars.stagger;
-    const delays = Array.from({ length: text.length }, (_unit, index) =>
-      stagger(index),
-    );
-    expect(Math.max(...delays)).toBeLessThanOrEqual(0.028);
-    expect(delays.slice(0, 8)).toEqual([
-      0.018, 0, 0.025, 0.006, 0.021, 0.003, 0.028, 0.009,
-    ]);
-    expect(kineticLineUnits(elements.current.children[0])).toHaveLength(
-      text.length * 3,
-    );
-  });
-
-  it('settles every Kinetic Pop material track into the selected subtle glyph arrangement', () => {
+  it('samples the same paused Kinetic Pop timeline when playback pauses or seeks back', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
-    elements.root.dataset.ovlKineticArrangement = 'subtle-offset';
-    const text = 'すてっぷ';
-    const units = [...text].map((unit) => ({ text: unit, weight: 1 }));
+    const options = { gsap, templateId: 'kinetic-pop' };
+    const frame = kineticFrame();
+    renderLyricsFrame(elements, frame, options);
+    const line = elements.current.children[0];
+    const timeline = timelines[0];
+    expect(timeline.options.paused).toBe(true);
+    expect(timeline.time).toHaveBeenLastCalledWith(0.03, true);
 
+    renderLyricsFrame(elements, kineticFrame({ positionMs: 1040 }), options);
     renderLyricsFrame(
       elements,
-      {
-        revision: 1,
-        visible: true,
-        currentText: text,
-        nextText: '',
-        language: 'ja',
-        lineIndex: 0,
-        currentVisibleLineIndex: 0,
-        kineticPop: {
-          text,
-          material: 'candy-rim',
-          composition: 'punch',
-          rows: [{ text, units }],
-          units,
-        },
-      },
-      { gsap, templateId: 'kinetic-pop' },
+      { ...kineticFrame({ positionMs: 1030 }), timelineDiscontinuity: true },
+      options,
     );
-
-    const tracks = kineticLineTracks(elements.current.children[0]);
-    expect(tracks.map((track) => track.children[0].style.values)).toEqual([
-      expect.objectContaining({
-        '--kinetic-rest-rotation': '-1.6deg',
-        '--kinetic-rest-scale': '1.01',
-        '--kinetic-rest-x': '-0.02em',
-        '--kinetic-rest-y': '0.025em',
-      }),
-      expect.objectContaining({
-        '--kinetic-rest-rotation': '-1.6deg',
-        '--kinetic-rest-scale': '1.01',
-        '--kinetic-rest-x': '-0.02em',
-        '--kinetic-rest-y': '0.025em',
-      }),
-      expect.objectContaining({
-        '--kinetic-rest-rotation': '-1.6deg',
-        '--kinetic-rest-scale': '1.01',
-        '--kinetic-rest-x': '-0.02em',
-        '--kinetic-rest-y': '0.025em',
-      }),
+    expect(timeline.time.mock.calls).toEqual([
+      [0.03, true],
+      [0.04, true],
+      [0.03, true],
     ]);
+    expect(elements.current.children).toEqual([line]);
+    expect(timelines).toHaveLength(1);
 
-    const restTweens = timelines[0].tweens.map(({ vars }) => ({
-      rotation: [vars.rotation(0), vars.rotation(1)],
-      scale: [vars.scale(0), vars.scale(1)],
-      x: [vars.x(0), vars.x(1)],
-      y: [vars.y(0), vars.y(1)],
-    }));
-    expect(restTweens).toEqual([restTweens[0], restTweens[0], restTweens[0]]);
-    expect(restTweens[0]).toEqual({
-      rotation: [-1.6, 1.3],
-      scale: [1.01, 0.99],
-      x: ['-0.02em', '0.012em'],
-      y: ['0.025em', '-0.02em'],
-    });
+    renderLyricsFrame(elements, kineticFrame({ positionMs: 1400 }), options);
+    expect(timeline.kill).toHaveBeenCalledOnce();
+    expect(elements.current.children).toEqual([line]);
+    expect(line.dataset.kineticMotion).toBeUndefined();
+    renderLyricsFrame(elements, frame, options);
+    expect(timelines[1].time).toHaveBeenCalledWith(0.03, true);
   });
 
-  it('cross-swaps authored phrases within one timed line and does not replay inside a phrase', () => {
+  it('takes playing samples from the host projection and cancels drawing at pause and teardown', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
-    const sourceText = 'いつでも僕らはこんな風に ぼんくらな夜に飽き飽き';
-    const frame = (displayText, phraseIndex, lineProgress) => {
-      const units = [...displayText].map((text) => ({ text, weight: 1 }));
-      return {
-        revision: 1,
-        visible: true,
-        currentText: sourceText,
-        nextText: '',
-        language: 'ja',
-        lineIndex: 0,
-        currentVisibleLineIndex: 0,
-        lineProgress,
-        kineticPop: {
-          text: sourceText,
-          displayText,
-          phraseIndex,
-          material: 'candy-rim',
-          composition: 'caption',
-          rows: [{ text: displayText, units }],
-          units,
-        },
-      };
+    const callbacks = new Map();
+    let requestId = 0;
+    elements.current.ownerDocument.defaultView = {
+      requestAnimationFrame(callback) {
+        callbacks.set(++requestId, callback);
+        return requestId;
+      },
+      cancelAnimationFrame(id) {
+        callbacks.delete(id);
+      },
     };
-
-    renderLyricsFrame(elements, frame('いつでも僕らはこんな風に', 0, 0.3), {
+    let position = 1015;
+    const options = {
       gsap,
       templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-    const firstLine = elements.current.children[0];
-    renderLyricsFrame(elements, frame('いつでも僕らはこんな風に', 0, 0.5), {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(0);
-    expect(elements.current.children[0]).toBe(firstLine);
-
-    renderLyricsFrame(elements, frame('ぼんくらな夜に飽き飽き', 1, 0.6), {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(1);
-    expect(timelines[0].tweens).toHaveLength(6);
-    expect(elements.current.attributes['aria-label']).toBe(
-      'ぼんくらな夜に飽き飽き',
-    );
-    expect(elements.current.dataset.currentText).toBe('ぼんくらな夜に飽き飽き');
-    expect(
-      elements.current.children.map((line) => line.dataset.kineticText),
-    ).toEqual(['いつでも僕らはこんな風に', 'ぼんくらな夜に飽き飽き']);
-    expect(elements.current.children[1].dataset.kineticPhrase).toBe('1');
+      positionAt: () => position,
+    };
+    renderLyricsFrame(elements, kineticFrame({ playing: true }), options);
+    expect(timelines[0].time).toHaveBeenLastCalledWith(0.015, true);
+    const [[id, draw]] = callbacks;
+    callbacks.delete(id);
+    position = 1070;
+    draw();
+    expect(timelines[0].time).toHaveBeenLastCalledWith(0.07, true);
+    renderLyricsFrame(elements, kineticFrame({ positionMs: 1070 }), options);
+    expect(callbacks.size).toBe(0);
+    renderLyricsFrame(elements, kineticFrame({ playing: true }), options);
+    expect(callbacks.size).toBe(1);
+    destroyLyricsAnimations(elements, options);
+    expect(callbacks.size).toBe(0);
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
   });
 
-  it('commits Kinetic Pop immediately for timeline discontinuities and reduced motion', () => {
+  it('cuts the previous line and reanimates identical words at the next cue', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
-    const frame = (text, revision, timelineDiscontinuity = false) => ({
-      revision,
-      visible: true,
-      currentText: text,
-      nextText: '',
-      language: 'ja',
-      lineIndex: revision,
-      currentVisibleLineIndex: revision,
-      timelineDiscontinuity,
-      kineticPop: {
-        text,
-        material: 'chromatic-depth',
-        composition: 'punch',
-        units: [{ text, weight: 1 }],
-      },
-    });
-
-    renderLyricsFrame(elements, frame('前', 1), {
-      gsap,
-      templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-    renderLyricsFrame(elements, frame('後', 2, true), {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(0);
-    expect(elements.current.children).toHaveLength(1);
-    expect(elements.current.dataset.currentText).toBe('後');
-    expect(gsap.killTweensOf).toHaveBeenCalled();
-  });
-
-  it('stops an active Kinetic Pop swap when reduced motion is enabled for the same phrase', () => {
-    const elements = domElements();
-    const { gsap, timelines } = gsapHarness();
-    const frame = (text, lineIndex) => ({
-      revision: lineIndex + 1,
-      visible: true,
-      currentText: text,
-      nextText: '',
-      language: 'ja',
-      lineIndex,
-      currentVisibleLineIndex: lineIndex,
-      kineticPop: {
-        text,
-        material: 'candy-rim',
-        composition: 'caption',
-        units: [...text].map((unit) => ({ text: unit, weight: 1 })),
-      },
-    });
-
-    renderLyricsFrame(elements, frame('前半', 0), {
-      gsap,
-      templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-    const incomingFrame = frame('後半', 1);
-    renderLyricsFrame(elements, incomingFrame, {
-      gsap,
-      templateId: 'kinetic-pop',
-    });
-
-    expect(timelines).toHaveLength(1);
-    expect(elements.current.children).toHaveLength(2);
-
-    renderLyricsFrame(elements, incomingFrame, {
-      gsap,
-      templateId: 'kinetic-pop',
-      reducedMotion: true,
-    });
-
+    const options = { gsap, templateId: 'kinetic-pop' };
+    renderLyricsFrame(elements, kineticFrame(), options);
+    const previous = elements.current.children[0];
+    renderLyricsFrame(elements, kineticFrame({ lineIndex: 1 }), options);
     expect(timelines[0].kill).toHaveBeenCalledOnce();
     expect(elements.current.children).toHaveLength(1);
-    const committedLine = elements.current.children[0];
-    const committedUnits = kineticLineUnits(committedLine);
-    expect(committedLine.dataset.kineticText).toBe('後半');
-    expect(gsap.set).toHaveBeenCalledWith(committedUnits, {
-      clearProps: 'opacity,visibility,transform,transformOrigin',
-    });
+    const line = elements.current.children[0];
+    expect(line).not.toBe(previous);
+    const introductions = timelines[1].tweens.filter(({ from }) => from);
+    expect(introductions.map(({ target }) => target)).toEqual(
+      Array.from({ length: 4 }, (_, index) =>
+        kineticLineTracks(line).map((track) => track.children[index]),
+      ),
+    );
+    expect(introductions.map(({ position }) => position)).toEqual([
+      0, 0.034, 0.014, 0.048,
+    ]);
+    expect(introductions[0].from.opacity).toBe(0);
+    const leadingGlyph = timelines[1].tweens.filter(
+      ({ target }) => target === introductions[0].target,
+    );
+    expect(leadingGlyph.map(({ vars }) => vars.scale)).toEqual([
+      1.16, 0.938, 1.032, 1,
+    ]);
+  });
 
-    renderLyricsFrame(elements, incomingFrame, {
+  it('samples the same short-word impact and rebound with the GSAP runtime', () => {
+    const elements = domElements();
+    const document = elements.current.ownerDocument;
+    const createElement = document.createElement.bind(document);
+    document.createElement = (name) =>
+      Object.assign(createElement(name), {
+        opacity: 1,
+        scale: 1,
+        x: '0em',
+        y: '0em',
+        rotation: 0,
+      });
+    // The DOM fixture stands in for property targets; the paused GSAP timeline
+    // is real so delayed fromTo initialization and reverse sampling are checked.
+    const gsap = { timeline: gsapRuntime.timeline, set: vi.fn() };
+    const sample = (age) => {
+      renderLyricsFrame(elements, kineticFrame({ positionMs: 1000 + age }), {
+        gsap,
+        templateId: 'kinetic-pop',
+      });
+      const tracks = kineticLineTracks(elements.current.children[0]);
+      const states = tracks.map(({ children }) =>
+        children.map(({ opacity, scale, y }) => ({ opacity, scale, y })),
+      );
+      expect(states[1]).toEqual(states[0]);
+      expect(states[2]).toEqual(states[0]);
+      return states[0];
+    };
+
+    const first = sample(12);
+    expect(first[1].opacity).toBeGreaterThan(0);
+    expect(first[0].opacity).toBe(0);
+    expect(first[2].opacity).toBe(0);
+    expect(sample(38)[1].scale).toBeCloseTo(1.16);
+    expect(sample(66)[1].scale).toBeCloseTo(0.938);
+    expect(sample(92)[1].scale).toBeCloseTo(1.032);
+    expect(sample(12)).toEqual(first);
+    destroyLyricsAnimations(elements, { gsap });
+  });
+
+  it('shortens the caption entrance and settles immediately when reduced motion is enabled', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const options = {
       gsap,
       templateId: 'kinetic-pop',
-      reducedMotion: true,
+      arrangement: 'subtle-offset',
+    };
+    const frame = kineticFrame({ composition: 'caption', endMs: 1120 });
+    renderLyricsFrame(elements, frame, options);
+    const line = elements.current.children[0];
+    const [first] = timelines[0].tweens;
+    expect(first.from.opacity).toBe(0.75);
+    expect(first.vars.duration).toBeLessThan(0.095);
+    expect(first.vars.scale(0)).toBe(1.01);
+    expect(first.vars.rotation(0)).toBe(-1.6);
+    renderLyricsFrame(elements, frame, { ...options, reducedMotion: true });
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(elements.current.children).toEqual([line]);
+    expect(gsap.set).toHaveBeenCalledWith(kineticLineUnits(line), {
+      clearProps: 'opacity,transform',
     });
-    expect(elements.current.children[0]).toBe(committedLine);
+  });
+
+  it('fits the complete ink train symmetrically before its entrance', () => {
+    const elements = domElements();
+    const document = elements.current.ownerDocument;
+    const createElement = document.createElement.bind(document);
+    document.createElement = (name) =>
+      Object.assign(createElement(name), { offsetWidth: 100 });
+    document.defaultView = { getComputedStyle: () => ({ fontSize: '50px' }) };
+    elements.current.clientWidth = 350;
+
+    renderLyricsFrame(elements, kineticFrame(), { templateId: 'kinetic-pop' });
+    const line = elements.current.children[0];
+    expect(Number(line.style.values['--kinetic-fit-scale'])).toBeCloseTo(
+      350 / (400 + 74),
+    );
+    expect(kineticLineUnits(line)).toHaveLength(12);
+    expect(elements.current.attributes['aria-label']).toBe('Step');
   });
 
   it('emits bounded sweep diagnostics only when lyricsDebug is explicitly enabled', () => {
@@ -4082,6 +3769,141 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.textContent).toBe('fallback stays still');
     expect(gsap.to).not.toHaveBeenCalled();
   });
+
+  it('keeps one KTV copy through an identical upcoming cue and lane handoff', () => {
+    const elements = domElements();
+    const schedule = vi.fn();
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule,
+    };
+    const frame = {
+      visible: true,
+      revision: 1,
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      nextVisibleLineIndex: 1,
+      currentText: 'Same cue',
+      nextText: 'Same cue',
+    };
+    renderLyricsFrame(elements, frame, options);
+    expect(elements.current.textContent).toBe('Same cue');
+    expect(elements.next.textContent).toBe('');
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        lineIndex: 1,
+        currentVisibleLineIndex: 1,
+        nextVisibleLineIndex: 2,
+        nextText: 'Following cue',
+      },
+      options,
+    );
+    expect(elements.next.textContent).toBe('Same cue');
+    expect(elements.current.textContent).toBe('Following cue');
+    expect(schedule).not.toHaveBeenCalled();
+    expect(frame.nextText).toBe('Same cue');
+  });
+
+  it('measures the distinct lyric after a held KTV repeat before displaying its preview', () => {
+    const nowMs = Date.now();
+    const options = { templateId: 'karaoke-stack', nowMs };
+    const following = 'Following cue';
+    const snapshot = {
+      generatedAt: new Date(nowMs).toISOString(),
+      playback: {
+        track: { id: 'song' },
+        status: 'playing',
+        positionMs: 2400,
+        rate: 1,
+      },
+      lyrics: {
+        trackId: 'song',
+        synced: true,
+        lines: [
+          { text: 'Echo', startMs: 1000, endMs: 2000, repeatMode: 'hold' },
+          { text: 'Echo', startMs: 2000, endMs: 3000 },
+          { text: following, startMs: 3000, endMs: 4500 },
+        ],
+      },
+    };
+    const measure = vi.fn(() => ({ fits: () => true }));
+    const fit = createKtvDisplayFit(measure);
+    const source = selectLyricsOverlayFrame(snapshot, options);
+    const result = fit.prepare(snapshot, source, options);
+    expect(measure.mock.calls.map(([line]) => line.text)).toContain(following);
+    expect(result.frame.ktv).toMatchObject({
+      currentText: 'Echo',
+      nextText: following,
+    });
+  });
+
+  it('keeps the original timed KTV occurrence when repainting a deduplicated fragment', () => {
+    const elements = domElements();
+    const segments = [
+      { text: 'すてっぷ', segmentId: 'first', progress: 1, state: 'past' },
+      {
+        text: 'すてっぷ',
+        segmentId: 'second',
+        progress: 0.25,
+        state: 'active',
+      },
+      { text: 'すてっぷ', segmentId: 'third', progress: 0, state: 'upcoming' },
+    ];
+    renderLyricsFrame(
+      elements,
+      {
+        visible: true,
+        revision: 1,
+        lineIndex: 0,
+        currentVisibleLineIndex: 0,
+        currentText: segments.map(({ text }) => text).join(''),
+        currentSegments: segments,
+        currentRepeatMode: 'replay',
+        nextText: '',
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+    expect(elements.current.children.map((node) => node.dataset.text)).toEqual([
+      'すてっぷ',
+    ]);
+    expect(elements.current.children[0].dataset.segmentState).toBe('active');
+    expect(segments).toHaveLength(3);
+  });
+
+  it.each([
+    [undefined, ['Go', ' Go', ' Go'], ['Go', ' Go', ' Go']],
+    [undefined, ['Go', ' Go', ' Go', ' Go'], ['Go']],
+    ['original', ['Go', ' Go', ' Go', ' Go'], ['Go', ' Go', ' Go', ' Go']],
+  ])(
+    'applies the inline repeat policy to KTV paint in %s mode',
+    (mode, parts, expected) => {
+      const elements = domElements();
+      const segments = parts.map((text, index) => ({
+        text,
+        segmentId: String(index),
+        progress: index === 0 ? 1 : 0,
+        state: index === 0 ? 'past' : 'upcoming',
+      }));
+      renderLyricsFrame(
+        elements,
+        {
+          visible: true,
+          currentVisibleLineIndex: 0,
+          currentText: parts.join(''),
+          currentSegments: segments,
+          currentRepeatMode: mode,
+          nextText: '',
+        },
+        { templateId: 'karaoke-stack', reducedMotion: true },
+      );
+      expect(
+        elements.current.children.map((node) => node.dataset.text),
+      ).toEqual(expected);
+    },
+  );
 
   it('keeps Classic KTV A and B as fixed lanes while the active lyric alternates in place', () => {
     const elements = domElements();

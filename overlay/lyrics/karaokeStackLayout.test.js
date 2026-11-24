@@ -21,7 +21,10 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
 
   it('keeps the existing id while replacing the panel with a transparent lower third', () => {
     const start = css.indexOf(":root[data-ovl-template='karaoke-stack']");
-    const end = css.indexOf(":root[data-ovl-template='kinetic-pop']", start);
+    const end = css.indexOf(
+      ":root[data-ovl-template='chalkboard-vertical']",
+      start,
+    );
     const karaokeCss = css.slice(start, end);
 
     expect(start).toBeGreaterThanOrEqual(0);
@@ -59,7 +62,10 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
 
   it('uses offset twin lanes and a clipped text duplicate for T2 sung progress', () => {
     const start = css.indexOf(":root[data-ovl-template='karaoke-stack']");
-    const end = css.indexOf(":root[data-ovl-template='kinetic-pop']", start);
+    const end = css.indexOf(
+      ":root[data-ovl-template='chalkboard-vertical']",
+      start,
+    );
     const karaokeCss = css.slice(start, end);
 
     expect(css).toContain(

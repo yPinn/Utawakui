@@ -660,6 +660,7 @@ describe('outputServer', () => {
         '/overlay/lyrics/texturedCredits.mjs',
         '/shared/browser/fisheyePaint.mjs',
         '/shared/browser/fisheyeMotion.mjs',
+        '/shared/browser/kineticPop.mjs',
         '/shared/presentation/fisheyeLyrics.mjs',
         '/overlay/lyrics/ktvDisplayFit.mjs',
       ]),
@@ -672,6 +673,13 @@ describe('outputServer', () => {
     );
     expect(style.ok).toBe(true);
     expect(await style.text()).toContain('.phantom-thieves');
+    const kineticStyle = await fetch(
+      `${status.httpUrl}/overlay/lyrics/kineticPop.css`,
+    );
+    expect(kineticStyle.ok).toBe(true);
+    expect(await kineticStyle.text()).toContain(
+      '.lyrics-overlay__kinetic-line',
+    );
     const creditsStyle = await fetch(
       `${status.httpUrl}/overlay/lyrics/texturedCredits.css`,
     );

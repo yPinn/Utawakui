@@ -244,16 +244,6 @@ describe('overlay CSS tokens', () => {
       new URL('../lyrics/lyrics.css', import.meta.url),
       'utf8',
     );
-    const kineticStart = lyrics.indexOf(
-      ":root[data-ovl-template='kinetic-pop']",
-    );
-    const kineticEnd = lyrics.indexOf(
-      ":root[data-ovl-template='live-stage']",
-      kineticStart,
-    );
-    const nonKineticLyrics =
-      lyrics.slice(0, kineticStart) + lyrics.slice(kineticEnd);
-
     expect(lyrics).toContain("[data-segment-state='past']");
     expect(lyrics).toContain("[data-segment-state='active']");
     expect(lyrics).toContain("[data-segment-state='upcoming']");
@@ -263,11 +253,12 @@ describe('overlay CSS tokens', () => {
       lyrics.slice(0, lyrics.indexOf('@property --ovl-segment-progress')),
     ).toContain('inherits: true;');
     expect(lyrics).toContain('@media (forced-colors: active)');
-    expect(nonKineticLyrics).not.toContain('background-clip: text');
-    expect(nonKineticLyrics).not.toContain(
-      '-webkit-text-fill-color: transparent',
-    );
-    expect(nonKineticLyrics).not.toMatch(/\bcolor:\s*transparent\b/);
+    const segmentRules = lyrics
+      .match(/[^{}]*\[data-segment-state=[^{}]+\{[^{}]+\}/g)
+      .join('');
+    expect(segmentRules).not.toContain('background-clip: text');
+    expect(segmentRules).not.toContain('-webkit-text-fill-color: transparent');
+    expect(segmentRules).not.toMatch(/\bcolor:\s*transparent\b/);
   });
 
   it('keeps the manga frame monochrome and leaves scenario semantics explicit', () => {

@@ -80,9 +80,7 @@ function createMeasurement(
   const target =
     templateId === 'manga-frame'
       ? elements.mangaBubbles?.querySelector('.lyrics-overlay__manga-text')
-      : (elements.current.querySelector?.(
-          '.lyrics-overlay__kinetic-layer--fill',
-        ) ?? elements.current);
+      : elements.current;
   if (!target || !window.innerWidth || !window.innerHeight) return null;
   let phaseAt = counters ? measureNow() : 0;
   const style = window.getComputedStyle(target);
@@ -111,7 +109,7 @@ function createMeasurement(
     phaseAt = measureNow();
   }
   const lineHeight = parseFloat(style.lineHeight) || size * 1.2;
-  const padding = size * (templateId === 'kinetic-pop' ? 0.8 : 0.3);
+  const padding = size * 0.3;
   let width =
     Math.min(
       rootRect.width || window.innerWidth * 0.9,
@@ -472,9 +470,12 @@ export function createLyricsFitController(options = {}) {
   window?.addEventListener?.('resize', resized);
   function prepare(snapshot, frame, settings = {}) {
     if (
-      ['fisheye-lens', 'phantom-thieves', 'textured-credits'].includes(
-        settings.templateId,
-      )
+      [
+        'kinetic-pop',
+        'fisheye-lens',
+        'phantom-thieves',
+        'textured-credits',
+      ].includes(settings.templateId)
     ) {
       lastPrepared = null;
       if (notice) notice.hidden = true;
@@ -583,7 +584,6 @@ export function createLyricsFitController(options = {}) {
     const key = JSON.stringify([
       snapshot.lyrics.trackId,
       settings.templateId,
-      settings.kineticMaterial,
       settings.templateId === 'ornate-vertical'
         ? document?.documentElement?.dataset.ovlOrnateArrangement
         : null,
@@ -630,15 +630,10 @@ export function createLyricsFitController(options = {}) {
       const ornate = settings.templateId === 'ornate-vertical';
       if (centered && elements) elements.root.lang = base.language || 'und';
       if (
-        ['manga-frame', 'kinetic-pop'].includes(settings.templateId) &&
+        settings.templateId === 'manga-frame' &&
         (lastPrepared?.key !== key || !lastPrepared.batched)
       ) {
-        options.renderForMeasurement?.(
-          settings.templateId === 'manga-frame'
-            ? { ...frame, mangaFit: true }
-            : frame,
-          settings,
-        );
+        options.renderForMeasurement?.({ ...frame, mangaFit: true }, settings);
       }
       trace?.('fit-render', { durationMs: measureNow() - startedAt });
       const measurement =
@@ -757,7 +752,6 @@ export function createLyricsFitController(options = {}) {
         'karaoke-stack',
         'live-stage',
         'manga-frame',
-        'kinetic-pop',
         'ornate-vertical',
         'chalkboard-vertical',
         'centered-vertical',

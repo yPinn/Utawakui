@@ -1,7 +1,4 @@
-import {
-  adaptKineticPopLyricsPresentation,
-  analyzeLyricsSource,
-} from './lyricsPresentation.mjs';
+import { analyzeLyricsSource } from './lyricsPresentation.mjs';
 import { adaptOrnateVerticalLyricsPresentation } from './ornateVerticalPresentation.mjs';
 import { sliceLyricsVocalParts } from './lyricsTextProcessing.mjs';
 import {
@@ -14,7 +11,10 @@ import {
 // different source ranges. It never changes canonical line identity or time.
 export function lyricsDisplayBatchKey(frame) {
   if (frame?.displayBatchId) return frame.displayBatchId;
-  return `${frame?.currentVisibleLineIndex ?? frame?.lineIndex ?? ''}\0${frame?.currentText ?? ''}`;
+  const key = `${frame?.currentVisibleLineIndex ?? frame?.lineIndex ?? ''}\0${frame?.currentText ?? ''}`;
+  return Number.isFinite(frame?.repeatCueStartMs)
+    ? `${key}\0${frame.repeatCueStartMs}`
+    : key;
 }
 
 function batchId(base, line, page) {
@@ -23,6 +23,7 @@ function batchId(base, line, page) {
     base.currentSourceRange?.from ?? 0,
     page.sourceStart,
     page.sourceEnd,
+    ...(Number.isFinite(base.repeatCueStartMs) ? [base.repeatCueStartMs] : []),
   ]);
 }
 
@@ -248,20 +249,6 @@ export function projectLyricsDisplayFrame(
         projected.chalkboardDurationMs =
           (page.endMs - (starts?.[0] ?? page.startMs)) / rate;
     }
-  }
-  if (options.templateId === 'kinetic-pop') {
-    const presentation = adaptKineticPopLyricsPresentation(page.text, {
-      lineIndex: base.lineIndex,
-      kineticMaterial: options.kineticMaterial,
-      phraseRanges: [{ sourceStart: 0, sourceEnd: page.text.length }],
-    });
-    projected.kineticPop = {
-      ...presentation,
-      rows: rows.map((row) => ({
-        text: row.text,
-        units: adaptKineticPopLyricsPresentation(row.text).units,
-      })),
-    };
   }
   if (options.templateId === 'ornate-vertical') {
     const continuation = line.continuation;

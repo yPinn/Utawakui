@@ -20,6 +20,21 @@ import {
 } from './outputAppearance.mjs';
 
 describe('output appearance schema', () => {
+  it('uses the calibrated Kinetic Pop large preset before fine sizing', () => {
+    const templateId = 'kinetic-pop';
+    const appearance = normalizeOutputAppearance(
+      { fontScale: 'large' },
+      { templateId },
+    );
+    expect(outputAuthoredFontRem(templateId, appearance)).toBe(8.5);
+    expect(
+      outputAuthoredFontRem(templateId, {
+        ...appearance,
+        fontScaleAdjustment: 90,
+      }),
+    ).toBeCloseTo(7.65);
+  });
+
   it('keeps fine font sizing local to the template and within layout limits', () => {
     const settings = { fontScale: 'small', fontScaleAdjustment: 72 };
     const karaoke = normalizeOutputAppearance(settings, {

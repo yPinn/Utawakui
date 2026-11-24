@@ -1350,7 +1350,7 @@ function sanitizedRangeValue(field, value) {
 
 const AUTHORED_FONT_REM = {
   'karaoke-stack': { small: 4, medium: 4.75, large: 6.5 },
-  'kinetic-pop': { small: 3.75, medium: 4.5, large: 6 },
+  'kinetic-pop': { small: 3.75, medium: 4.5, large: 8.5 },
   'ornate-vertical': { small: 2.5, medium: 3, large: 3.75 },
   'centered-vertical': { small: 2.5, medium: 3, large: 3.5 },
   'chalkboard-vertical': { small: 2.5, medium: 3, large: 3.5 },

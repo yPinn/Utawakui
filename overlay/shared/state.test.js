@@ -494,6 +494,15 @@ describe('overlay state selectors', () => {
       displayText: 'ぼんくらな夜に飽き飽き',
       phraseIndex: 1,
     });
+    expect(first.kineticPopClock).toMatchObject({
+      startMs: 9000,
+      positionMs: 11000,
+    });
+    expect(second.kineticPopClock).toMatchObject({
+      startMs: first.kineticPopClock.endMs,
+      endMs: 15000,
+      positionMs: 13000,
+    });
     expect(
       nextPresentationBoundaryDelayMs(valueAt(11000), {
         nowMs,
@@ -556,6 +565,19 @@ describe('overlay state selectors', () => {
       displayText: 'second',
       phraseIndex: 1,
       phraseTimingSource: 't2',
+    });
+    const paused = valueAt(13540);
+    paused.playback.status = 'paused';
+    expect(
+      selectLyricsOverlayFrame(paused, {
+        nowMs: nowMs + 2000,
+        templateId: 'kinetic-pop',
+      }).kineticPopClock,
+    ).toMatchObject({
+      startMs: 13500,
+      endMs: 15000,
+      positionMs: 13540,
+      playing: false,
     });
     expect(
       nextPresentationBoundaryDelayMs(valueAt(12000), {

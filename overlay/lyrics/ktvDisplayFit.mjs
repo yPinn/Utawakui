@@ -74,7 +74,10 @@ export function createKtvDisplayFit(measure, onTrace) {
     });
     // Measure the prefix needed for deterministic lane parity, plus the future
     // source unit before it can appear. A genuine section gap resets parity.
-    const end = Math.min(source.length - 1, base.currentVisibleLineIndex + 1);
+    const end = Math.min(
+      source.length - 1,
+      base.repeatKtvFitThrough ?? base.currentVisibleLineIndex + 1,
+    );
     let start = base.currentVisibleLineIndex;
     while (start > 0 && source[start]?.laneIndex !== 0) start--;
     // The preceding section's held tail may also be visible during count-in.

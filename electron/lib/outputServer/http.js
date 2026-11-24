@@ -61,7 +61,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/texturedCredits.mjs': ['lyrics', 'texturedCredits.mjs'],
   '/overlay/lyrics/fisheyeLens.mjs': ['lyrics', 'fisheyeLens.mjs'],
   '/overlay/lyrics/fisheyeEffects.mjs': ['lyrics', 'fisheyeEffects.mjs'],
-  '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
+  '/overlay/lyrics/kineticPop.css': ['lyrics', 'kineticPop.css'],
   '/overlay/lyrics/lyricsFit.mjs': ['lyrics', 'lyricsFit.mjs'],
   '/overlay/lyrics/ktvDisplayFit.mjs': ['lyrics', 'ktvDisplayFit.mjs'],
   '/overlay/lyrics/lyricsFine.mjs': ['lyrics', 'lyricsFine.mjs'],
@@ -145,6 +145,7 @@ const SHARED_STATIC_ROUTES = Object.freeze({
   '/shared/browser/lyricsFinePaint.mjs': ['browser', 'lyricsFinePaint.mjs'],
   '/shared/browser/fisheyePaint.mjs': ['browser', 'fisheyePaint.mjs'],
   '/shared/browser/fisheyeMotion.mjs': ['browser', 'fisheyeMotion.mjs'],
+  '/shared/browser/kineticPop.mjs': ['browser', 'kineticPop.mjs'],
   '/shared/presentation/fisheyeLyrics.mjs': [
     'presentation',
     'fisheyeLyrics.mjs',

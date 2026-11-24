@@ -256,6 +256,15 @@
     "noTiming": "目前沒有可用的分頁時間；以下僅為文字分組。"
   },
   "textProcessing": {
+    "repeat": {
+      "title": "重複歌詞入場",
+      "hint": "句內重複兩次仍照原文顯示。要保留更多反覆唱詞，可選保留原文。",
+      "line": "第 {line} 行 · {text}",
+      "auto": "依模板",
+      "original": "保留原文",
+      "hold": "入場一次",
+      "replay": "逐次入場"
+    },
     "part": "片段",
     "line": "整行",
     "candidate": "第 {line} 行 · {action}：{text}",

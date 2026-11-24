@@ -37,6 +37,8 @@
 
 「原詞與對時」（Lyrics and timing）處理原詞與播放時間。「譯文」（Translations）處理同一來源的其他語言文字。「來源代號」（source code）用於區分選單中的同名歌詞版本。
 
+「重複歌詞入場」（Repeated lyric entrances）控制同一段在 Output 的入場方式。「保留原文」（Keep original）完整顯示反覆唱詞，「入場一次」（Enter once）持續顯示一份文字，「逐次入場」（Re-enter each time）依可用的演唱起點重播入場。
+
 「演唱語言」（Sung languages）是錄音實際演唱的語言，與歌詞文字、譯文及曲風分開，分為中文、日語、韓語、英語、其他語言（Other languages）與無人聲。「無人聲」（No vocals）表示錄音沒有演唱或說唱。演唱語言寫「日語、英語」等「～語」，歌詞文字、讀音與字型沿用「日文、英文」等「～文」。
 
 Output 字型選單採用「模板字型」（Template fonts）指模板提供的字型組合。「本機字型」（Local fonts）指控制台可列舉的已安裝字型。

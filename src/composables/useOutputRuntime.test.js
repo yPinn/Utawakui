@@ -526,6 +526,55 @@ describe('output source handshake', () => {
     }
   });
 
+  it('publishes and clears per-line repeat modes without changing text or timing', async () => {
+    const scope = effectScope();
+    try {
+      playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+      selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+      const lines = [
+        { lineId: 'held', text: 'Echo Echo', startMs: 0, endMs: 1500 },
+        { lineId: 'replayed', text: 'Hello Hello', startMs: 1500, endMs: 3000 },
+      ];
+      lyricsDocument.value = {
+        documentId: 'repeat-mode-document',
+        source: { filename: 'source.lrc' },
+        granularity: 'T1',
+        lines,
+      };
+      textProcessingOverride = scope.run(() =>
+        useLyricsTextProcessing({
+          document: lyricsDocument,
+          sourceKey: () => 'track-1/source',
+        }),
+      );
+      const runtime = await loadRuntime();
+      const initialization = runtime.initialize();
+      libraryHydration.resolve();
+      playlistHydration.resolve();
+      lyricsHydration.resolve();
+      await initialization;
+      const latest = () =>
+        bridge.publishOutputSnapshot.mock.calls
+          .map(([message]) => message)
+          .findLast(({ stream }) => stream === 'lyrics.document');
+      const original = latest();
+      textProcessingOverride.setRepeatMode('held', 'hold');
+      textProcessingOverride.setRepeatMode('replayed', 'replay');
+      await flushMicrotasks();
+      expect(latest().revision).toBeGreaterThan(original.revision);
+      expect(latest().payload.document.lines).toEqual([
+        { ...lines[0], repeatMode: 'hold' },
+        { ...lines[1], repeatMode: 'replay' },
+      ]);
+      textProcessingOverride.setRepeatMode('held', 'auto');
+      await flushMicrotasks();
+      expect(latest().payload.document.lines[0]).toEqual(lines[0]);
+      expect(lyricsDocument.value.lines).toEqual(lines);
+    } finally {
+      scope.stop();
+    }
+  });
+
   it('publishes automatic Producer exclusions and per-line restoration through the real text owner', async () => {
     const scope = effectScope();
     try {

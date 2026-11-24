@@ -7,14 +7,7 @@
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__ktv-count-in,
   .obs-template-mockup[data-motion='playing']
-    .obs-template-mockup__progress-fill,
-  .obs-template-mockup[data-motion='playing']
-    .obs-template-mockup__kinetic-unit {
+    .obs-template-mockup__progress-fill {
     animation: none;
-  }
-
-  .obs-template-mockup[data-motion='playing']
-    .obs-template-mockup__kinetic-line {
-    opacity: 1;
   }
 }

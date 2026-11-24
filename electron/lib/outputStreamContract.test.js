@@ -17,6 +17,27 @@ const identity = {
 };
 
 describe('filtered text source boundaries', () => {
+  it('accepts bounded repeat modes without changing the lyric document and times', () => {
+    const value = lyricsEnvelope();
+    value.payload.document.granularity = 'T1';
+    const line = {
+      lineId: 'repeated',
+      text: 'Echo Echo',
+      startMs: 1000,
+      endMs: 3000,
+    };
+    value.payload.document.lines = [line];
+    for (const repeatMode of ['original', 'hold', 'replay']) {
+      line.repeatMode = repeatMode;
+      expect(
+        parseOutputStreamEnvelope(value, 'boot-1').payload.document.lines[0],
+      ).toEqual(line);
+    }
+    line.repeatMode = 'unknown';
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow(
+      /repeatMode/u,
+    );
+  });
   it('keeps derived document identity within the Main limit for maximum-length source ids', () => {
     const value = lyricsEnvelope();
     value.payload.document.documentId = 'd'.repeat(128);

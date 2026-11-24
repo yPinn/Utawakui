@@ -256,6 +256,15 @@
     "noTiming": "No page timing yet. Below is text grouping only."
   },
   "textProcessing": {
+    "repeat": {
+      "title": "Repeated lyric entrances",
+      "hint": "Two copies within a line stay visible by default. Choose Keep original to show every repetition.",
+      "line": "Line {line} · {text}",
+      "auto": "Template default",
+      "original": "Keep original",
+      "hold": "Enter once",
+      "replay": "Re-enter each time"
+    },
     "part": "Part",
     "line": "Whole line",
     "candidate": "Line {line} · {action}: {text}",

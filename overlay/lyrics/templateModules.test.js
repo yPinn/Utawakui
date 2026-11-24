@@ -38,9 +38,20 @@ function fakeDocument() {
 describe('lyrics template modules', () => {
   it('declares only templates whose code is not needed by the shared renderer', () => {
     expect(LAZY_LYRICS_TEMPLATE_IDS).toEqual([
+      'kinetic-pop',
       'fisheye-lens',
       'phantom-thieves',
       'textured-credits',
+    ]);
+  });
+
+  it('loads Kinetic Pop only when its material stylesheet is ready', async () => {
+    const document = fakeDocument();
+    expect(lyricsTemplateModule('kinetic-pop')).toBeNull();
+    const module = await loadLyricsTemplateModule('kinetic-pop', document);
+    expect(typeof module.renderKineticPopPresentation).toBe('function');
+    expect(document.links.map((link) => link.href)).toEqual([
+      '/overlay/lyrics/kineticPop.css',
     ]);
   });
 

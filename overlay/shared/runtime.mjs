@@ -209,6 +209,7 @@ function projectSplitLyricsLines(document) {
     text: line.text,
     startMs: line.startMs,
     endMs: line.endMs,
+    ...(line.repeatMode ? { repeatMode: line.repeatMode } : {}),
     ...(Array.isArray(line.vocalParts) ? { vocalParts: line.vocalParts } : {}),
     ...(line.endInferred === true ? { endInferred: true } : {}),
     ...(Array.isArray(line.segments) ? { segments: line.segments } : {}),
